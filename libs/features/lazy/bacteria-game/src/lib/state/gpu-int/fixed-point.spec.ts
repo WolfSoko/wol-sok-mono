@@ -15,12 +15,16 @@ describe('fixed point', () => {
     expect(toQ14(0.55)).toBe(9011);
     expect(toQ14(-1)).toBe(0);
     expect(toQ14(2)).toBe(ONE_Q14);
+    expect(toQ14(Number.NaN)).toBe(0);
+    expect(toQ14(Infinity)).toBe(ONE_Q14);
   });
 
   it('caps unsigned energies at what the state holds', () => {
     expect(toUnsignedQ14(1.75)).toBe(28672);
     expect(toUnsignedQ14(10)).toBe(Q14_STATE_MAX);
     expect(toUnsignedQ14(-0.2)).toBe(0);
+    expect(toUnsignedQ14(Number.NaN)).toBe(0);
+    expect(toUnsignedQ14(Infinity)).toBe(Q14_STATE_MAX);
   });
 
   it('turns chances into thresholds for a 32 bit draw', () => {
@@ -35,6 +39,7 @@ describe('fixed point', () => {
     expect(toTarget(12.5)).toBe(200);
     expect(toTarget(-3)).toBe(0);
     expect(toTarget(1e6)).toBe(TARGET_MAX);
+    expect(toTarget(Number.NaN)).toBe(0);
   });
 
   it('multiplies in Q14, rounding towards minus infinity like GLSL', () => {

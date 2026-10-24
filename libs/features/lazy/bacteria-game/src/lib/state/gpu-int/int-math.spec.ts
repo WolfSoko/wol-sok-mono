@@ -28,6 +28,13 @@ describe('integer maths', () => {
     expect(Array.from(unitQ14(-1, 1, out))).toEqual([-11585, 11585]);
   });
 
+  it('refuses what the shader could not take', () => {
+    const out = new Int32Array(2);
+    expect(() => unitQ14(0.5, 0.5, out)).toThrow(RangeError);
+    expect(() => unitQ14(Infinity, 0, out)).toThrow(RangeError);
+    expect(() => unitQ14(2 ** 30, 0, out)).toThrow(RangeError);
+  });
+
   it('keeps every direction within a unit of length 1', () => {
     const out = new Int32Array(2);
     for (let a = 0; a < 360; a += 3) {

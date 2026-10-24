@@ -30,9 +30,14 @@ export function isqrt(value: number): number {
  * per axis, as `unitQ14` in GLSL; (0, 0) for none. The vector is first
  * scaled by powers of two until its longer axis lies in [2^14, 2^15), which
  * keeps the squared length below 2^31 and the precision the same for short
- * and long vectors. Each component's magnitude must stay below 2^30.
+ * and long vectors. Each component must be an integer below 2^30 in
+ * magnitude, as the shader's `ivec2` is; anything else throws, since the
+ * scaling would never end on a fraction.
  */
 export function unitQ14(vx: number, vy: number, out: Int32Array): Int32Array {
+  if (!isSmallInt(vx) || !isSmallInt(vy)) {
+    throw new RangeError(`unitQ14 takes integers below 2^30: ${vx}, ${vy}`);
+  }
   if (vx === 0 && vy === 0) {
     out[0] = 0;
     out[1] = 0;
@@ -53,4 +58,8 @@ export function unitQ14(vx: number, vy: number, out: Int32Array): Int32Array {
   out[0] = Math.sign(vx) * Math.floor((ax * ONE_Q14 + half) / length);
   out[1] = Math.sign(vy) * Math.floor((ay * ONE_Q14 + half) / length);
   return out;
+}
+
+function isSmallInt(value: number): boolean {
+  return Number.isInteger(value) && Math.abs(value) < 2 ** 30;
 }

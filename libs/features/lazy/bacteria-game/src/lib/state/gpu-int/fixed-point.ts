@@ -31,17 +31,18 @@ export const TARGET_SHIFT = 4;
  */
 export const TARGET_MAX = 2048 << TARGET_SHIFT;
 
-/** A fraction 0..1 as Q14, rounded to the nearest. */
+/** A fraction 0..1 as Q14, rounded to the nearest; NaN counts as 0. */
 export function toQ14(value: number): number {
-  return Math.round(Math.min(1, Math.max(0, value)) * ONE_Q14);
+  return value > 0 ? Math.round(Math.min(1, value) * ONE_Q14) : 0;
 }
 
 /**
  * A non-negative value as Q14, rounded to the nearest and capped at
- * {@link Q14_STATE_MAX} - energies and other amounts that may pass 1.
+ * {@link Q14_STATE_MAX} - energies and other amounts that may pass 1. NaN
+ * counts as 0.
  */
 export function toUnsignedQ14(value: number): number {
-  return Math.min(Q14_STATE_MAX, Math.round(Math.max(0, value) * ONE_Q14));
+  return value > 0 ? Math.min(Q14_STATE_MAX, Math.round(value * ONE_Q14)) : 0;
 }
 
 /**
@@ -59,12 +60,14 @@ export function chanceThreshold(chance: number): number {
   return Math.floor(chance * 4294967296) >>> 0;
 }
 
-/** A crosshair position in cells as sixteenths, rounded and kept in range. */
+/**
+ * A crosshair position in cells as sixteenths, rounded and kept in range;
+ * NaN counts as 0.
+ */
 export function toTarget(cells: number): number {
-  return Math.min(
-    TARGET_MAX,
-    Math.max(0, Math.round(cells * (1 << TARGET_SHIFT)))
-  );
+  return cells > 0
+    ? Math.min(TARGET_MAX, Math.round(cells * (1 << TARGET_SHIFT)))
+    : 0;
 }
 
 /**
