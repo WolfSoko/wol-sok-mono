@@ -30,32 +30,33 @@
     <div class="skins" role="group" [attr.aria-label]="'colony.skin.title' | t">
       @for (skin of skins(); track skin.id) {
         @let name = skin.label | t;
-        @if (skin.owned) {
-          @let picked = worn() === skin.id;
-          <button
-            type="button"
-            class="skin"
-            [attr.data-skin]="skin.id"
-            [attr.aria-pressed]="picked"
-            [class.picked]="picked"
-            (click)="settings.setLook(skin.id)"
-          >
-            <feat-lazy-bac-game-look-preview
-              class="skin-preview"
-              [look]="skin.id"
-              [color]="playerRgb()"
-            />
-            <span class="skin-name">{{ name }}</span>
-          </button>
-        } @else {
-          <!-- A skin to buy: its preview to tempt, its price and a Buy button. -->
-          <div class="skin locked" [attr.data-skin]="skin.id">
-            <feat-lazy-bac-game-look-preview
-              class="skin-preview"
-              [look]="skin.id"
-              [color]="playerRgb()"
-            />
-            <span class="skin-name">{{ name }}</span>
+        @let picked = skin.owned && worn() === skin.id;
+        <!--
+          One tile per skin, the same element whether it is worn, owned or
+          still for sale: its preview and its name, and over them a button
+          that wears it - or, for sale, a Buy button with its price.
+        -->
+        <div
+          class="skin"
+          [attr.data-skin]="skin.id"
+          [class.picked]="picked"
+          [class.locked]="!skin.owned"
+        >
+          <feat-lazy-bac-game-look-preview
+            class="skin-preview"
+            [look]="skin.id"
+            [color]="playerRgb()"
+          />
+          <span class="skin-name">{{ name }}</span>
+          @if (skin.owned) {
+            <button
+              type="button"
+              class="wear"
+              [attr.aria-label]="name"
+              [attr.aria-pressed]="picked"
+              (click)="settings.setLook(skin.id)"
+            ></button>
+          } @else {
             <button
               mat-flat-button
               type="button"
@@ -72,8 +73,8 @@
                 {{ skin.cost }}
               </span>
             </button>
-          </div>
-        }
+          }
+        </div>
       }
     </div>
     <p class="section-note">{{ "colony.skin.note" | t }}</p>

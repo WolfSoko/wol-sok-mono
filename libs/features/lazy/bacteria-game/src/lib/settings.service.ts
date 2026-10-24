@@ -80,11 +80,6 @@ export interface StoredSettings {
   matchLevel?: string;
 }
 
-export {
-  BACTERIA_LOOKS,
-  isBacteriaLook,
-  type BacteriaLook,
-} from './state/skins';
 import { BacteriaLook, isBacteriaLook } from './state/skins';
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';

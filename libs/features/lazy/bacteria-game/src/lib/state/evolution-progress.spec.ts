@@ -32,9 +32,9 @@ import {
 } from './evolution-progress';
 import { RANKS } from './ranks';
 import {
-  allSkinsCost,
   BACTERIA_LOOKS,
   isPremiumSkin,
+  PREMIUM_SKINS,
   SKINS,
   skinCost,
 } from './skins';
@@ -336,7 +336,7 @@ describe('evolution progress', () => {
 
   describe('skins', () => {
     it('prices the five to buy at 102 strands together, the rest free', () => {
-      expect(allSkinsCost()).toBe(102);
+      expect(PREMIUM_SKINS.reduce((sum, { cost }) => sum + cost, 0)).toBe(102);
       expect(
         SKINS.filter(({ cost }) => cost === 0).map(({ id }) => id)
       ).toEqual(BACTERIA_LOOKS.slice(0, 8));

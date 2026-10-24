@@ -1,12 +1,14 @@
 import { AMBIENCE, DishAmbience } from './ambience';
 import { arenaTheme } from './arena-theme';
 
-/** A context that only counts what is drawn on it. */
+/** A context that only counts what is drawn on it, and where the arcs go. */
 function fakeContext() {
   const calls: string[] = [];
+  const arcs: { x: number; y: number; r: number }[] = [];
   const gradient = { addColorStop: () => undefined };
   const cx = {
     calls,
+    arcs,
     globalAlpha: 1,
     fillStyle: '' as unknown,
     strokeStyle: '',
@@ -14,37 +16,57 @@ function fakeContext() {
     clearRect: () => calls.push('clearRect'),
     beginPath: () => calls.push('beginPath'),
     moveTo: () => undefined,
-    arc: () => calls.push('arc'),
+    arc: (x: number, y: number, r: number) => {
+      calls.push('arc');
+      arcs.push({ x, y, r });
+    },
     fill: () => calls.push('fill'),
     stroke: () => calls.push('stroke'),
     fillRect: () => calls.push('fillRect'),
+    save: () => undefined,
+    restore: () => undefined,
+    translate: () => undefined,
     drawImage: () => calls.push('drawImage'),
     createLinearGradient: () => gradient,
   };
-  return cx as unknown as CanvasRenderingContext2D & { calls: string[] };
+  return cx as unknown as CanvasRenderingContext2D & {
+    calls: string[];
+    arcs: { x: number; y: number; r: number }[];
+  };
 }
 
+/** The bubbles a frame drew: the first arc of each, its film, in canvas pixels. */
+function bubblesDrawn(ambience: DishAmbience, view = VIEW) {
+  const cx = fakeContext();
+  ambience.paint(cx, view, 640, 360, true);
+  return cx.arcs.slice(0, cx.arcs.length / 2);
+}
+
+const VIEW = { x: 0, y: 0, width: 320, height: 180 };
+
 describe('DishAmbience', () => {
-  const view = { x: 0, y: 0, width: 320, height: 180 };
+  const view = VIEW;
 
   it('lets a few dozen bubbles rise, and starts each again at the bottom', () => {
     const ambience = new DishAmbience(320, 180, () => 0.5);
-    const before = ambience.bubblesNow();
+    const before = bubblesDrawn(ambience);
     expect(before).toHaveLength(Math.round((320 * 180) / 1400));
 
     ambience.advance(1);
-    const after = ambience.bubblesNow();
+    const after = bubblesDrawn(ambience);
     after.forEach((bubble, index) => {
       expect(bubble.y).toBeLessThan(before[index].y);
     });
 
-    // Long enough for every bubble to leave at the top.
+    // Long enough for every bubble to leave at the top - and come back.
     for (let i = 0; i < 200; i++) {
       ambience.advance(0.5);
     }
-    ambience.bubblesNow().forEach((bubble) => {
-      expect(bubble.y).toBeGreaterThan(-bubble.radius - 0.001);
-      expect(bubble.y).toBeLessThanOrEqual(180 + bubble.radius);
+    const again = bubblesDrawn(ambience);
+    expect(again).toHaveLength(before.length);
+    again.forEach((bubble) => {
+      expect(bubble.y).toBeGreaterThan(-bubble.r - 0.001);
+      expect(bubble.y).toBeLessThanOrEqual(360 + bubble.r);
     });
   });
 
@@ -59,7 +81,7 @@ describe('DishAmbience', () => {
     expect(cx.calls.filter((call) => call === 'fill')).toHaveLength(2);
     expect(cx.calls.filter((call) => call === 'stroke')).toHaveLength(1);
     expect(cx.calls.filter((call) => call === 'arc').length).toBe(
-      2 * ambience.bubblesNow().length
+      2 * Math.round((320 * 180) / 1400)
     );
     // The rim's four edges and the sheen.
     expect(cx.calls.filter((call) => call === 'fillRect')).toHaveLength(5);

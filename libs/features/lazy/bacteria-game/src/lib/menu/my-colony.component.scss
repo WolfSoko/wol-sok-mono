@@ -57,29 +57,25 @@
   gap: 0.75rem;
 }
 
-// A skin to pick: its preview and its name, gold while it is worn - or,
-// still to buy, with its price on a Buy button.
+// A skin: its preview and its name, gold while it is worn - or, still to
+// buy, with its price on a Buy button.
 .skin {
   @include screen.panel;
 
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   padding: 0.4rem;
   border-radius: 0.9rem;
   color: var(--bw-text);
-  font: inherit;
   font-weight: 700;
 
-  &:not(.locked) {
-    cursor: pointer;
-
-    &:hover {
-      border-color: var(--bw-line-strong);
-    }
+  &:not(.locked):hover {
+    border-color: var(--bw-line-strong);
   }
 
-  &:focus-visible {
+  &:has(.wear:focus-visible) {
     outline: 3px solid var(--bw-gold);
     outline-offset: 2px;
   }
@@ -87,6 +83,20 @@
   &.picked {
     border-color: var(--bw-gold);
     box-shadow: 0 0 0 1px var(--bw-gold);
+  }
+}
+
+// The whole tile wears the skin: an unseen button laid over it.
+.wear {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
   }
 }
 

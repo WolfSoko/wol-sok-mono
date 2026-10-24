@@ -1,7 +1,7 @@
 import { gameBalance } from '../state/game-balance';
 import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
-import { BACTERIA_LOOKS, BacteriaLook } from '../settings.service';
+import { BACTERIA_LOOKS, BacteriaLook } from '../state/skins';
 import { COLONY_COLORS } from '../state/colony-colors';
 
 import {

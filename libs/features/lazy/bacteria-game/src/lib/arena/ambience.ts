@@ -51,6 +51,21 @@ export const AMBIENCE = {
 /** The size of the sprite a wisp is drawn with. */
 const WISP_SPRITE = 128;
 
+/** The gradients the depth of the dish is painted with, for one scale and canvas. */
+interface DepthBrushes {
+  scale: number;
+  canvasWidth: number;
+  canvasHeight: number;
+  /** How far the rim's shadow reaches in, in canvas pixels. */
+  reach: number;
+  /** The shadow fading in each direction, from the origin. */
+  rightwards: CanvasGradient;
+  leftwards: CanvasGradient;
+  downwards: CanvasGradient;
+  upwards: CanvasGradient;
+  sheen: CanvasGradient;
+}
+
 /**
  * What makes the dish feel like a dish of liquid under glass, drawn over
  * the arena after the colonies, by both painters alike: bubbles rising
@@ -65,9 +80,12 @@ const WISP_SPRITE = 128;
 export class DishAmbience {
   private bubbles: Bubble[] = [];
   private wisps: Wisp[] = [];
-  private current = { x: 0, y: 0 };
-  private mist: Rgb = [255, 255, 255];
+  /** Room for the bubbles in view, three numbers each, kept between frames. */
+  private seen = new Float64Array(0);
+  private theme: ArenaTheme | null = null;
   private sprite: HTMLCanvasElement | null = null;
+  /** The brushes of the dish's depth, for the scale and the canvas last drawn on. */
+  private depth: DepthBrushes | null = null;
 
   public constructor(
     private readonly width: number,
@@ -79,9 +97,11 @@ export class DishAmbience {
 
   /** Follows another level's look: its current and the colour of its mist. */
   public setTheme(theme: ArenaTheme): void {
-    this.current = theme.current;
-    this.mist = theme.motes;
-    this.sprite = this.paintSprite();
+    if (theme === this.theme) {
+      return;
+    }
+    this.theme = theme;
+    this.sprite = this.paintSprite(theme.motes);
   }
 
   /** Scatters a fresh set of bubbles and wisps. */
@@ -92,6 +112,7 @@ export class DishAmbience {
     this.bubbles = Array.from({ length: count }, () =>
       this.spawnBubble(this.random() * this.height)
     );
+    this.seen = new Float64Array(count * 3);
     this.wisps = Array.from({ length: AMBIENCE.wisps }, () => ({
       x: this.random() * this.width,
       y: this.random() * this.height,
@@ -111,27 +132,24 @@ export class DishAmbience {
         Object.assign(bubble, this.spawnBubble(this.height + bubble.radius));
       }
     }
+    const current = this.theme?.current ?? { x: 0, y: 0 };
     for (const wisp of this.wisps) {
       wisp.x = wrap(
-        wisp.x + (this.current.x * 0.5 + wisp.vx) * deltaTimeSec,
+        wisp.x + (current.x * 0.5 + wisp.vx) * deltaTimeSec,
         this.width
       );
       wisp.y = wrap(
-        wisp.y + (this.current.y * 0.5 + wisp.vy) * deltaTimeSec,
+        wisp.y + (current.y * 0.5 + wisp.vy) * deltaTimeSec,
         this.height
       );
     }
   }
 
-  /** The bubbles as they are right now - for the tests. */
-  public bubblesNow(): readonly { x: number; y: number; radius: number }[] {
-    return this.bubbles.map(({ x, y, radius }) => ({ x, y, radius }));
-  }
-
   /**
    * Draws the ambience over `view` of the arena onto a canvas of that size,
    * cleared first. Without `motion` - the player asked their system for
-   * less - only the dish's depth is drawn, nothing that moves.
+   * less - only the dish's depth is drawn, nothing that moves; the caller
+   * may then skip frames on which nothing changed.
    */
   public paint(
     cx: CanvasRenderingContext2D,
@@ -171,29 +189,32 @@ export class DishAmbience {
     view: Rect,
     scale: number
   ): void {
-    const seen = this.bubbles
-      .map((bubble) => ({
-        x: (bubble.x + Math.sin(bubble.phase) * bubble.sway - view.x) * scale,
-        y: (bubble.y - view.y) * scale,
-        r: bubble.radius * scale,
-      }))
-      .filter(
-        ({ x, y, r }) =>
-          x + r > 0 &&
-          y + r > 0 &&
-          x - r < view.width * scale &&
-          y - r < view.height * scale
-      );
-    if (seen.length === 0) {
+    // The bubbles in view, as canvas pixels: x, y and radius each.
+    const seen = this.seen;
+    let count = 0;
+    const right = view.width * scale;
+    const bottom = view.height * scale;
+    for (const bubble of this.bubbles) {
+      const x =
+        (bubble.x + Math.sin(bubble.phase) * bubble.sway - view.x) * scale;
+      const y = (bubble.y - view.y) * scale;
+      const r = bubble.radius * scale;
+      if (x + r > 0 && y + r > 0 && x - r < right && y - r < bottom) {
+        seen[count++] = x;
+        seen[count++] = y;
+        seen[count++] = r;
+      }
+    }
+    if (count === 0) {
       return;
     }
     // The film of every bubble in one go, then every rim, then every spot
     // of light - three strokes of the brush, not three per bubble.
     cx.fillStyle = 'rgba(255, 255, 255, 0.07)';
     cx.beginPath();
-    for (const { x, y, r } of seen) {
-      cx.moveTo(x + r, y);
-      cx.arc(x, y, r, 0, Math.PI * 2);
+    for (let i = 0; i < count; i += 3) {
+      cx.moveTo(seen[i] + seen[i + 2], seen[i + 1]);
+      cx.arc(seen[i], seen[i + 1], seen[i + 2], 0, Math.PI * 2);
     }
     cx.fill();
     cx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
@@ -201,10 +222,11 @@ export class DishAmbience {
     cx.stroke();
     cx.fillStyle = 'rgba(255, 255, 255, 0.55)';
     cx.beginPath();
-    for (const { x, y, r } of seen) {
+    for (let i = 0; i < count; i += 3) {
+      const r = seen[i + 2];
       const spot = r * 0.28;
-      const sx = x - r * 0.38;
-      const sy = y - r * 0.4;
+      const sx = seen[i] - r * 0.38;
+      const sy = seen[i + 1] - r * 0.4;
       cx.moveTo(sx + spot, sy);
       cx.arc(sx, sy, spot, 0, Math.PI * 2);
     }
@@ -237,7 +259,8 @@ export class DishAmbience {
   /**
    * The depth of the dish: the shadow its rim throws over the floor along
    * each edge of the arena that is in view, and the sheen of the glass
-   * from the top left.
+   * from the top left. The rim's gradient is built once per scale, at the
+   * origin, and moved to each edge; the sheen once per canvas size.
    */
   private paintDepth(
     cx: CanvasRenderingContext2D,
@@ -246,57 +269,72 @@ export class DishAmbience {
     canvasWidth: number,
     canvasHeight: number
   ): void {
-    const reach = AMBIENCE.rimWidth * Math.min(this.width, this.height) * scale;
-    const shade = `rgba(0, 0, 0, ${AMBIENCE.rimShade})`;
-    const clear = 'rgba(0, 0, 0, 0)';
+    const depth = this.depthBrushes(cx, scale, canvasWidth, canvasHeight);
+    const { reach } = depth;
     const left = -view.x * scale;
     const top = -view.y * scale;
     const right = (this.width - view.x) * scale;
     const bottom = (this.height - view.y) * scale;
-    // Each edge: where the shadow starts and where it has faded, and the
-    // strip it covers.
-    const edges: {
-      from: [number, number];
-      to: [number, number];
-      strip: [number, number, number, number];
-    }[] = [
-      {
-        from: [left, 0],
-        to: [left + reach, 0],
-        strip: [left, 0, reach, canvasHeight],
-      },
-      {
-        from: [right, 0],
-        to: [right - reach, 0],
-        strip: [right - reach, 0, reach, canvasHeight],
-      },
-      {
-        from: [0, top],
-        to: [0, top + reach],
-        strip: [0, top, canvasWidth, reach],
-      },
-      {
-        from: [0, bottom],
-        to: [0, bottom - reach],
-        strip: [0, bottom - reach, canvasWidth, reach],
-      },
+    // Each edge: where its strip starts, and which way its shadow fades.
+    const edges: [number, number, CanvasGradient, number, number][] = [
+      [left, 0, depth.rightwards, reach, canvasHeight],
+      [right - reach, 0, depth.leftwards, reach, canvasHeight],
+      [0, top, depth.downwards, canvasWidth, reach],
+      [0, bottom - reach, depth.upwards, canvasWidth, reach],
     ];
-    for (const { from, to, strip } of edges) {
-      const gradient = cx.createLinearGradient(from[0], from[1], to[0], to[1]);
-      gradient.addColorStop(0, shade);
-      gradient.addColorStop(1, clear);
+    for (const [x, y, gradient, width, height] of edges) {
+      cx.save();
+      cx.translate(x, y);
       cx.fillStyle = gradient;
-      cx.fillRect(...strip);
+      cx.fillRect(0, 0, width, height);
+      cx.restore();
     }
-    const sheen = cx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
-    sheen.addColorStop(0, `rgba(255, 255, 255, ${AMBIENCE.sheen})`);
-    sheen.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
-    cx.fillStyle = sheen;
+    cx.fillStyle = depth.sheen;
     cx.fillRect(0, 0, canvasWidth, canvasHeight);
   }
 
+  /** The brushes of {@link paintDepth}, kept while the scale and the canvas stay. */
+  private depthBrushes(
+    cx: CanvasRenderingContext2D,
+    scale: number,
+    canvasWidth: number,
+    canvasHeight: number
+  ): DepthBrushes {
+    const kept = this.depth;
+    if (
+      kept !== null &&
+      kept.scale === scale &&
+      kept.canvasWidth === canvasWidth &&
+      kept.canvasHeight === canvasHeight
+    ) {
+      return kept;
+    }
+    const reach = AMBIENCE.rimWidth * Math.min(this.width, this.height) * scale;
+    const shadow = (x0: number, y0: number, x1: number, y1: number) => {
+      const gradient = cx.createLinearGradient(x0, y0, x1, y1);
+      gradient.addColorStop(0, `rgba(0, 0, 0, ${AMBIENCE.rimShade})`);
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      return gradient;
+    };
+    const sheen = cx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+    sheen.addColorStop(0, `rgba(255, 255, 255, ${AMBIENCE.sheen})`);
+    sheen.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
+    this.depth = {
+      scale,
+      canvasWidth,
+      canvasHeight,
+      reach,
+      rightwards: shadow(0, 0, reach, 0),
+      leftwards: shadow(reach, 0, 0, 0),
+      downwards: shadow(0, 0, 0, reach),
+      upwards: shadow(0, reach, 0, 0),
+      sheen,
+    };
+    return this.depth;
+  }
+
   /** A soft cloud in the mist's colour, drawn once and stamped per wisp. */
-  private paintSprite(): HTMLCanvasElement | null {
+  private paintSprite(mist: Rgb): HTMLCanvasElement | null {
     const canvas = createCanvas(WISP_SPRITE, WISP_SPRITE);
     const cx = canvas?.getContext?.('2d');
     if (canvas == null || cx == null) {
@@ -304,9 +342,9 @@ export class DishAmbience {
     }
     const half = WISP_SPRITE / 2;
     const gradient = cx.createRadialGradient(half, half, 0, half, half, half);
-    gradient.addColorStop(0, rgba(this.mist, 1));
-    gradient.addColorStop(0.5, rgba(this.mist, 0.35));
-    gradient.addColorStop(1, rgba(this.mist, 0));
+    gradient.addColorStop(0, rgba(mist, 1));
+    gradient.addColorStop(0.5, rgba(mist, 0.35));
+    gradient.addColorStop(1, rgba(mist, 0));
     cx.fillStyle = gradient;
     cx.fillRect(0, 0, WISP_SPRITE, WISP_SPRITE);
     return canvas;

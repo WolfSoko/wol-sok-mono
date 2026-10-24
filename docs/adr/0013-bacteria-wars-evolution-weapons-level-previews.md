@@ -55,8 +55,10 @@ skins bought are kept in the evolution progress, merge as the union of both
 sides whatever their epochs, survive a reset and keep counting as spent -
 a reset gives back the genes' and the weapons' strands only. The colonies
 wear the look picked in the device's settings only once the player owns it
-(`EvolutionService.wornSkin`); until the storage has answered, the pick is
-trusted, so the dish does not flicker to the slime on every start.
+(`EvolutionService.wornSkin`); until the storage has answered for the first
+time the pick is trusted, so the dish does not flicker to the slime on every
+start - but not after another player takes over, whose storage says what
+they own.
 
 ### Where evolution plays
 

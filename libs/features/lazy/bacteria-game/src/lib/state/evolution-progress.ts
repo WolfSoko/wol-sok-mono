@@ -265,7 +265,7 @@ export function resetEvolution(
   return {
     ...EMPTY_EVOLUTION,
     epoch: Math.max(held.epoch, stored.epoch) + 1,
-    skins: unionSkins(held.skins, stored.skins),
+    skins: orderedUnion(PREMIUM_SKIN_IDS, held.skins, stored.skins),
   };
 }
 
@@ -280,21 +280,30 @@ export function mergeEvolution(
   held: EvolutionProgress,
   other: EvolutionProgress
 ): EvolutionProgress {
-  if (other.epoch !== held.epoch) {
-    const winner = other.epoch > held.epoch ? other : held;
-    const skins = unionSkins(held.skins, other.skins);
-    return skins.length === winner.skins.length ? winner : { ...winner, skins };
-  }
+  // The skins are the union of both whatever the epochs; the rest is
+  // governed by the epoch.
+  const skins = orderedUnion(PREMIUM_SKIN_IDS, held.skins, other.skins);
+  const base =
+    other.epoch === held.epoch
+      ? mergeSameEpoch(held, other)
+      : other.epoch > held.epoch
+        ? other
+        : held;
+  return sameList(skins, base.skins) ? base : { ...base, skins };
+}
+
+/** {@link mergeEvolution} of two evolutions on the same epoch, the skins aside. */
+function mergeSameEpoch(
+  held: EvolutionProgress,
+  other: EvolutionProgress
+): EvolutionProgress {
   let merged = held;
   for (const { id } of GENES) {
     merged = withGeneLevel(merged, id, levelOf(other, id));
   }
-  const added = other.weapons.filter((w) => !merged.weapons.includes(w));
-  if (added.length > 0) {
-    merged = {
-      ...merged,
-      weapons: sortedWeapons([...merged.weapons, ...added]),
-    };
+  const weapons = orderedUnion(WEAPON_IDS, merged.weapons, other.weapons);
+  if (weapons !== merged.weapons) {
+    merged = { ...merged, weapons };
   }
   const pick = laterPick(held, other);
   if (
@@ -306,10 +315,6 @@ export function mergeEvolution(
       equipped: pick.equipped,
       equipCount: pick.equipCount,
     };
-  }
-  const skins = unionSkins(merged.skins, other.skins);
-  if (skins.length !== merged.skins.length) {
-    merged = { ...merged, skins };
   }
   return merged;
 }
@@ -380,9 +385,7 @@ export function parseEvolution(value: unknown): EvolutionProgress {
   const equipCount = value['equipCount'];
   const epoch = value['epoch'];
   const skins = Array.isArray(value['skins'])
-    ? sortedSkins(
-        (value['skins'] as unknown[]).filter(isPremiumSkin) as BacteriaLook[]
-      )
+    ? sortedSkins((value['skins'] as unknown[]).filter(isPremiumSkin))
     : [];
   return {
     genes,
@@ -404,28 +407,42 @@ export function sameEvolution(
     a.epoch === b.epoch &&
     a.equipped === b.equipped &&
     a.equipCount === b.equipCount &&
-    a.weapons.length === b.weapons.length &&
-    a.weapons.every((weapon, index) => b.weapons[index] === weapon) &&
-    a.skins.length === b.skins.length &&
-    a.skins.every((skin, index) => b.skins[index] === skin) &&
+    sameList(a.weapons, b.weapons) &&
+    sameList(a.skins, b.skins) &&
     GENES.every(({ id }) => levelOf(a, id) === levelOf(b, id))
   );
 }
 
+const WEAPON_IDS: readonly WeaponId[] = WEAPONS.map(({ id }) => id);
+const PREMIUM_SKIN_IDS: readonly BacteriaLook[] = PREMIUM_SKINS.map(
+  ({ id }) => id
+);
+
 /** Weapons without doubles, in the order the menus offer them. */
 function sortedWeapons(weapons: readonly WeaponId[]): WeaponId[] {
-  return WEAPONS.map(({ id }) => id).filter((id) => weapons.includes(id));
+  return WEAPON_IDS.filter((id) => weapons.includes(id));
 }
 
 /** Skins without doubles, in the gallery's order. */
 function sortedSkins(skins: readonly BacteriaLook[]): BacteriaLook[] {
-  return PREMIUM_SKINS.map(({ id }) => id).filter((id) => skins.includes(id));
+  return PREMIUM_SKIN_IDS.filter((id) => skins.includes(id));
 }
 
-/** The skins of both, in the gallery's order. */
-function unionSkins(
-  a: readonly BacteriaLook[],
-  b: readonly BacteriaLook[]
-): readonly BacteriaLook[] {
-  return b.every((skin) => a.includes(skin)) ? a : sortedSkins([...a, ...b]);
+/**
+ * The items of both lists, without doubles, in `order` - `a` itself when
+ * `b` adds nothing, so a caller can tell.
+ */
+function orderedUnion<T>(
+  order: readonly T[],
+  a: readonly T[],
+  b: readonly T[]
+): readonly T[] {
+  return b.every((item) => a.includes(item))
+    ? a
+    : order.filter((item) => a.includes(item) || b.includes(item));
+}
+
+/** True when two lists hold the same items in the same order. */
+function sameList<T>(a: readonly T[], b: readonly T[]): boolean {
+  return a.length === b.length && a.every((item, index) => b[index] === item);
 }

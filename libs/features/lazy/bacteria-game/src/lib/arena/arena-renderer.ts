@@ -9,6 +9,7 @@ import {
   putPixels,
   rgba,
   smoothstep,
+  valueNoise,
 } from './canvas-math';
 import { darker } from './colony-renderer';
 import { Zone } from '../state/zones';
@@ -807,19 +808,6 @@ function fractalNoise(x: number, y: number, seed: number): number {
   return (
     (valueNoise(x, y, seed) * 2 + valueNoise(x * 2.1, y * 2.1, seed + 1)) / 3
   );
-}
-
-/** Smoothly interpolated noise on an integer lattice, from 0 to 1. */
-function valueNoise(x: number, y: number, seed: number): number {
-  const ix = Math.floor(x);
-  const iy = Math.floor(y);
-  const fx = x - ix;
-  const fy = y - iy;
-  const sx = smoothstep(0, 1, fx);
-  const sy = smoothstep(0, 1, fy);
-  const top = lerp(hash(ix, iy, seed), hash(ix + 1, iy, seed), sx);
-  const bottom = lerp(hash(ix, iy + 1, seed), hash(ix + 1, iy + 1, seed), sx);
-  return lerp(top, bottom, sy);
 }
 
 /** RGBA pixels in an offscreen canvas, or null where there is no canvas. */

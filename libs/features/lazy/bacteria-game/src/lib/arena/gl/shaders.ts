@@ -241,9 +241,9 @@ ${ARENA_POSITION}
 
 const float EDGE_START = 0.07;
 const float EDGE_END = 0.17;
-const vec2 LIGHT = vec2(-0.6, -0.8);
 const float PI = 3.14159265;
 ${LOOK_CONSTANTS}
+const vec2 LIGHT = vec2(LIGHT_X, LIGHT_Y);
 
 // Crests closing in on the crosshair - see shimmerAt in colony-renderer.ts.
 float shimmer(vec2 p, float t) {
@@ -361,9 +361,13 @@ float cellEdge(float q2, float radius, float d) {
     * smoothstep(CELL_CLIP_START, CELL_CLIP_END, d);
 }
 
-// The colony's colour lightened - lookPalette's light.
+// The colony's colour lightened and darkened - lookPalette's light and dark.
 vec3 lightColor() {
   return mix(uColor, vec3(1.0), TINT_LIGHT);
+}
+
+vec3 darkColor() {
+  return mix(uColor, vec3(0.0), TINT_DARK);
 }
 
 // The gradient of the icon's cells on a unit disc: a light spot at the top
@@ -371,7 +375,7 @@ vec3 lightColor() {
 vec3 sphereShade(vec2 unit) {
   float t = clamp(length(unit - CELL_FOCAL) / SPHERE_REACH, 0.0, 1.0);
   vec3 light = lightColor();
-  vec3 dark = mix(uColor, vec3(0.0), TINT_DARK);
+  vec3 dark = darkColor();
   return t < SPHERE_BODY_STOP
     ? mix(light, uColor, t / SPHERE_BODY_STOP)
     : mix(uColor, dark, (t - SPHERE_BODY_STOP) / (1.0 - SPHERE_BODY_STOP));
@@ -545,8 +549,8 @@ vec2 densitySlope(vec2 p) {
 // The highlight of the light mirrored by a surface with that unit normal,
 // seen from straight above - highlight in colony-renderer.ts.
 float highlight(vec3 n, float shine, float strength) {
-  float lit = dot(n, SURFACE_LIGHT);
-  return pow(max(0.0, 2.0 * lit * n.z - SURFACE_LIGHT.z), shine) * strength;
+  float mirrored = 2.0 * dot(n, SURFACE_LIGHT) * n.z - SURFACE_LIGHT.z;
+  return mirrored <= 0.0 ? 0.0 : pow(mirrored, shine) * strength;
 }
 
 // A glass marble's colour on its unit disc - marbleShade.
@@ -560,7 +564,7 @@ vec3 marbleShade(vec2 u, float q2, float seed) {
   float away = -dot(u, SURFACE_LIGHT.xy) / length(SURFACE_LIGHT.xy);
   float glow = smoothstep(MARBLE_GLOW_START, MARBLE_GLOW_END, away) * MARBLE_GLOW * (1.0 - rim * 0.5);
   vec3 light = lightColor();
-  vec3 dark = mix(uColor, vec3(0.0), TINT_DARK);
+  vec3 dark = darkColor();
   vec3 body = mix(uColor, light, swirl * MARBLE_SWIRL) * lit;
   body = mix(body, dark, rim * MARBLE_RIM);
   body += (light - body) * glow;
@@ -797,7 +801,6 @@ void main() {
     return;
   }
 
-  vec2 texel = 1.0 / uArena;
   vec2 uv = p / uArena;
   vec2 sampled = texture(uDensity, uv).rg;
   float density = sampled.r;
@@ -834,11 +837,7 @@ void main() {
   }
 
   // The slope of the surface, per cell.
-  float slopeX = (texture(uDensity, uv + vec2(texel.x, 0.0)).r
-    - texture(uDensity, uv - vec2(texel.x, 0.0)).r) * 0.5;
-  float slopeY = (texture(uDensity, uv + vec2(0.0, texel.y)).r
-    - texture(uDensity, uv - vec2(0.0, texel.y)).r) * 0.5;
-  float lit = clamp(-(slopeX * LIGHT.x + slopeY * LIGHT.y) * 5.0, 0.0, 1.0);
+  float lit = clamp(-dot(densitySlope(p), LIGHT) * 5.0, 0.0, 1.0);
   float gloss = lit * lit * lit;
   // Thick slime is deeper in colour; the edge is a darker rim.
   float depth = 0.8 + 0.2 * (1.0 - min(1.0, density));

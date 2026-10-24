@@ -1,4 +1,4 @@
-import { BacteriaLook } from '../settings.service';
+import { BacteriaLook } from '../state/skins';
 import { Nutrient } from '../state/bacteria-simulation';
 import type { ActiveEffect, WeaponFire } from '../state/evolution';
 import { GameBalance } from '../state/game-balance';

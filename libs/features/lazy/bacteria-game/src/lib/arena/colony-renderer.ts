@@ -1,4 +1,4 @@
-import { BacteriaLook } from '../settings.service';
+import { BacteriaLook } from '../state/skins';
 import { Nutrient } from '../state/bacteria-simulation';
 import { GameBalance, gameBalance } from '../state/game-balance';
 import {
@@ -49,6 +49,11 @@ const SLIME_EDGE_END = 0.17;
 /** Where the light comes from - the top left, as for every glossy UI. */
 const LIGHT_X = -0.6;
 const LIGHT_Y = -0.8;
+/**
+ * How far the surface light leans over from that direction: the share of
+ * it that lies in the plane of the dish, the rest pointing at the viewer.
+ */
+const SURFACE_TILT = 0.84;
 
 /**
  * Stamps one colony into an RGBA pixel buffer the size of the arena, one
@@ -387,9 +392,11 @@ export interface LookDescription {
  * with the highlight and a bright fresnel rim.
  */
 export const LOOK_TUNING = {
-  SURFACE_LIGHT_X: -0.503,
-  SURFACE_LIGHT_Y: -0.671,
-  SURFACE_LIGHT_Z: 0.545,
+  LIGHT_X,
+  LIGHT_Y,
+  SURFACE_LIGHT_X: LIGHT_X * SURFACE_TILT,
+  SURFACE_LIGHT_Y: LIGHT_Y * SURFACE_TILT,
+  SURFACE_LIGHT_Z: Math.sqrt(1 - SURFACE_TILT * SURFACE_TILT),
   MARBLE_SPACING: 4,
   MARBLE_RADIUS: 0.7,
   MARBLE_RADIUS_MIN: 0.5,
@@ -1751,9 +1758,9 @@ function highlight(
 ): number {
   const lit =
     nx * SURFACE_LIGHT_X + ny * SURFACE_LIGHT_Y + nz * SURFACE_LIGHT_Z;
-  return (
-    Math.pow(Math.max(0, 2 * lit * nz - SURFACE_LIGHT_Z), shine) * strength
-  );
+  const mirrored = 2 * lit * nz - SURFACE_LIGHT_Z;
+  // Nothing but a tight spot mirrors the light - no power outside it.
+  return mirrored <= 0 ? 0 : Math.pow(mirrored, shine) * strength;
 }
 
 /**
@@ -2012,7 +2019,7 @@ export const paintGalaxy: LookPainter = (
         const dy = y / starSpacing - row - (0.25 + 0.5 * hash(col, row, 49));
         const twinkle =
           0.55 + 0.45 * Math.sin(timeSec * GALAXY_TWINKLE + h * 60);
-        const distance = Math.hypot(dx, dy);
+        const distance = Math.sqrt(dx * dx + dy * dy);
         star = (1 - smoothstep(0, GALAXY_STAR_RADIUS, distance)) * twinkle;
         starHalo =
           (1 - smoothstep(0, GALAXY_STAR_HALO, distance)) * 0.5 * twinkle;
@@ -2144,7 +2151,7 @@ export const paintChrome: LookPainter = (
         (fbm(x * scale, (y + step) * scale, 61) -
           fbm(x * scale, (y - step) * scale, 61)) *
           ripple;
-      const length = Math.hypot(nx, ny, 1);
+      const length = Math.sqrt(nx * nx + ny * ny + 1);
       nx /= length;
       ny /= length;
       const nz = 1 / length;
@@ -2155,7 +2162,7 @@ export const paintChrome: LookPainter = (
       const streak =
         1 +
         (valueNoise(x * scale * 0.3, y * scale * 3, 65) - 0.5) * CHROME_STREAK;
-      const fresnel = Math.pow(1 - nz, 2) * CHROME_FRESNEL;
+      const fresnel = (1 - nz) * (1 - nz) * CHROME_FRESNEL;
       const shine = highlight(nx, ny, nz, CHROME_SHINE, CHROME_SHINE_STRENGTH);
       for (let c = 0; c < 3; c++) {
         const env =

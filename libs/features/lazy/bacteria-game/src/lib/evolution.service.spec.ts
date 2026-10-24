@@ -5,17 +5,13 @@ import {
   EVOLUTION_WAIT_MS,
   EvolutionService,
 } from './evolution.service';
-import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { GameAccount } from './storage/game-account';
 import { DeviceStorage, GameStorage } from './storage/game-storage';
 import { FakeGameAccount } from '../testing/fake-game-account';
+import { PROGRESS_STORAGE_KEY } from './progress.service';
+import { earnXp as earn, progressWorth } from '../testing/earn-xp';
 import { LateGameStorage } from '../testing/late-game-storage';
-
-/** Progress worth `xp` XP from matches alone - `xp / 50` strands of DNA. */
-function progressWorth(xp: number) {
-  return { totals: { matchXp: xp } };
-}
 
 describe('EvolutionService', () => {
   beforeEach(() => {
@@ -29,13 +25,6 @@ describe('EvolutionService', () => {
 
   function stored(): Record<string, unknown> {
     return JSON.parse(localStorage.getItem(EVOLUTION_STORAGE_KEY) ?? 'null');
-  }
-
-  function earn(xp: number): void {
-    localStorage.setItem(
-      PROGRESS_STORAGE_KEY,
-      JSON.stringify(progressWorth(xp))
-    );
   }
 
   it('derives the DNA from the XP, less what is held', () => {

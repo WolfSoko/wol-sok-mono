@@ -38,7 +38,7 @@ import {
   withSkin,
   withWeapon,
 } from './state/evolution-progress';
-import { BacteriaLook, skinCost } from './state/skins';
+import { BacteriaLook } from './state/skins';
 import { GameAccount, PlayerSwitch } from './storage/game-account';
 import { DeviceStorage, GameStorage } from './storage/game-storage';
 
@@ -81,6 +81,11 @@ export class EvolutionService {
   private readonly state = signal(EMPTY_EVOLUTION);
   /** True once the storage has answered for the evolution. */
   private readonly answered = signal(false);
+  /**
+   * True while the device's pick of a skin is trusted without the storage:
+   * until it answers for the first time, or another player takes over.
+   */
+  private readonly trustsPick = signal(true);
   /** True once {@link EVOLUTION_WAIT_MS} passed since the player was known. */
   private readonly waitedOut = signal(false);
   private waiting: Subscription | null = null;
@@ -107,6 +112,7 @@ export class EvolutionService {
           this.state.set(merged);
         }
         this.answered.set(true);
+        this.trustsPick.set(false);
       });
   }
 
@@ -176,16 +182,14 @@ export class EvolutionService {
   /**
    * The skin the colonies wear for the look picked: that look, as long as
    * the player owns it - the slime otherwise. Until the storage has
-   * answered, the pick is trusted: it was made on this device, most likely
-   * by the player who owns it, and the dish must not flicker to the slime
-   * on every start. Reads signals, so a `computed` over it follows along.
+   * answered for the first time, the pick is trusted: it was made on this
+   * device, most likely by the player who owns it, and the dish must not
+   * flicker to the slime on every start. After another player takes over
+   * it is not: their storage says what they own. Reads signals, so a
+   * `computed` over it follows along.
    */
   public wornSkin(look: BacteriaLook): BacteriaLook {
-    return !this.answered() || ownsSkin(this.state(), look) ? look : 'slime';
-  }
-
-  public skinCost(skin: BacteriaLook): number {
-    return skinCost(skin);
+    return this.trustsPick() || ownsSkin(this.state(), look) ? look : 'slime';
   }
 
   public canBuySkin(skin: BacteriaLook): boolean {
@@ -276,6 +280,7 @@ export class EvolutionService {
   private switchTo({ adoptsGuest }: PlayerSwitch): void {
     const guest = this.state();
     this.answered.set(false);
+    this.trustsPick.set(false);
     this.waitForStorage();
     this.state.set(EMPTY_EVOLUTION);
     if (adoptsGuest) {

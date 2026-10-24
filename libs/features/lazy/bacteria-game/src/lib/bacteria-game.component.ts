@@ -245,6 +245,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly reducedMotion = prefersReducedMotion();
   /** The bubbles and the mist in the dish, over the arena - null without a painter. */
   private ambience: DishAmbience | null = null;
+  /** The view the ambience was last drawn still for - nothing to redraw while it holds. */
+  private stillAmbience: Rect | null = null;
   /** The skin the colonies wear: the look picked, once the player owns it. */
   private readonly skin = computed(() =>
     this.evolution.wornSkin(this.settings.look())
@@ -643,6 +645,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.walls();
       this.colors();
       this.skin();
+      this.settings.ambience();
       this.reducedMotion();
       this.draw();
     });
@@ -1356,32 +1359,44 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Draws the bubbles and the mist over the arena, on the canvas laid over
-   * it - at the device's pixels, up to two per CSS pixel. Still for a
-   * player who asked for less motion: then only the dish's depth is drawn.
+   * it, at the arena canvas's own pixels. Still for a player who asked for
+   * less motion, and while the match does not paint: then only the dish's
+   * depth is drawn, and only once per view and canvas size.
    */
   private paintAmbience(view: Rect, deltaTimeSec: number): void {
     const canvas = this.ambienceRef()?.nativeElement;
-    const size = this.canvasSize();
+    const arena = this.canvasRef()?.nativeElement;
     const ambience = this.ambience;
-    if (canvas == null || size == null || ambience == null) {
+    if (canvas == null || arena == null || ambience == null) {
       return;
     }
-    const pixelRatio = Math.min(2, window.devicePixelRatio || 1);
-    const width = Math.max(1, Math.round(size.width * pixelRatio));
-    const height = Math.max(1, Math.round(size.height * pixelRatio));
-    if (canvas.width !== width || canvas.height !== height) {
+    const { width, height } = arena;
+    const resized = canvas.width !== width || canvas.height !== height;
+    if (resized) {
       canvas.width = width;
       canvas.height = height;
+    }
+    const moving = !this.reducedMotion() && this.matchPaints();
+    const still = this.stillAmbience;
+    if (
+      !moving &&
+      !resized &&
+      still != null &&
+      still.x === view.x &&
+      still.y === view.y &&
+      still.width === view.width
+    ) {
+      return;
     }
     const cx = canvas.getContext('2d');
     if (cx == null) {
       return;
     }
-    const motion = !this.reducedMotion();
-    if (motion && this.matchPaints()) {
+    if (moving) {
       ambience.advance(deltaTimeSec);
     }
-    ambience.paint(cx, view, width, height, motion);
+    ambience.paint(cx, view, width, height, !this.reducedMotion());
+    this.stillAmbience = moving ? null : { ...view };
   }
 
   /**

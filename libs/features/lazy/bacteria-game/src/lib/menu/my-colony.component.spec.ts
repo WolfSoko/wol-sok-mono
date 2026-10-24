@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { EvolutionService } from '../evolution.service';
 import { I18nService } from '../i18n/i18n.service';
-import { PROGRESS_STORAGE_KEY } from '../progress.service';
-import { BACTERIA_LOOKS, GameSettingsService } from '../settings.service';
+import { GameSettingsService } from '../settings.service';
+import { BACTERIA_LOOKS } from '../state/skins';
+import { earnXp as earn } from '../../testing/earn-xp';
 import { MyColonyComponent } from './my-colony.component';
 
 describe('MyColonyComponent', () => {
@@ -22,21 +23,15 @@ describe('MyColonyComponent', () => {
       element,
       text: () => element.textContent?.replace(/\s+/g, ' ') ?? '',
       skins: () => Array.from(element.querySelectorAll<HTMLElement>('.skin')),
+      wearButtons: () =>
+        Array.from(element.querySelectorAll<HTMLButtonElement>('.skin .wear')),
       buyButtons: () =>
         Array.from(element.querySelectorAll<HTMLButtonElement>('.skin .buy')),
     };
   }
 
-  /** Progress worth `xp` XP from matches alone - `xp / 50` strands of DNA. */
-  function earn(xp: number): void {
-    localStorage.setItem(
-      PROGRESS_STORAGE_KEY,
-      JSON.stringify({ totals: { matchXp: xp } })
-    );
-  }
-
   it("shows every skin on the player's colony, the worn one picked", async () => {
-    const { text, skins } = await render();
+    const { text, skins, wearButtons } = await render();
 
     expect(text()).toContain('My Colony');
     expect(
@@ -57,12 +52,12 @@ describe('MyColonyComponent', () => {
       'Chrome',
     ]);
     expect(skins()).toHaveLength(BACTERIA_LOOKS.length);
-    // The free ones are toggles, the worn one pressed; the rest are for sale.
-    expect(skins().map((skin) => skin.getAttribute('aria-pressed'))).toEqual([
-      'true',
-      ...Array(7).fill('false'),
-      ...Array(5).fill(null),
-    ]);
+    // The free ones are worn by a button over the tile, the worn one
+    // pressed; the rest are for sale.
+    expect(
+      wearButtons().map((wear) => wear.getAttribute('aria-pressed'))
+    ).toEqual(['true', ...Array(7).fill('false')]);
+    expect(wearButtons()[1].getAttribute('aria-label')).toBe('Cells');
     expect(
       skins()
         .slice(8)
@@ -76,14 +71,15 @@ describe('MyColonyComponent', () => {
   });
 
   it('wears the skin that is picked', async () => {
-    const { fixture, skins } = await render();
+    const { fixture, skins, wearButtons } = await render();
 
-    skins()[2].click();
+    wearButtons()[2].click();
     await fixture.whenStable();
 
     expect(TestBed.inject(GameSettingsService).look()).toBe('honeycomb');
-    expect(skins()[2].getAttribute('aria-pressed')).toBe('true');
-    expect(skins()[0].getAttribute('aria-pressed')).toBe('false');
+    expect(wearButtons()[2].getAttribute('aria-pressed')).toBe('true');
+    expect(wearButtons()[0].getAttribute('aria-pressed')).toBe('false');
+    expect(skins()[2].classList).toContain('picked');
   });
 
   it('sells the skins for DNA, and wears the one bought', async () => {
@@ -111,7 +107,8 @@ describe('MyColonyComponent', () => {
     expect(evolution.ownsSkin('marbles')).toBe(true);
     expect(settings.look()).toBe('marbles');
     expect(element.querySelector('.dna-count')?.textContent?.trim()).toBe('2');
-    expect(skins()[8].getAttribute('aria-pressed')).toBe('true');
+    expect(skins()[8].classList).toContain('picked');
+    expect(skins()[8].classList).not.toContain('locked');
     expect(buyButtons()).toHaveLength(4);
     expect(text()).toContain('The Marbles skin is yours');
   });

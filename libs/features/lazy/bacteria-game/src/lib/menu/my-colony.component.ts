@@ -10,7 +10,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { LookPreviewComponent } from '../arena/look-preview.component';
 import { HERO_PREVIEW } from '../arena/look-preview';
 import {
@@ -50,7 +49,6 @@ import { ScreenHeaderComponent } from './screen-header.component';
     DnaHelixComponent,
     LookPreviewComponent,
     MatButtonModule,
-    MatIconModule,
     ScreenHeaderComponent,
     TranslatePipe,
   ],
@@ -83,8 +81,6 @@ export class MyColonyComponent {
   private readonly fx = viewChild.required<ElementRef<HTMLElement>>('fx');
 
   protected readonly heroSize = HERO_PREVIEW;
-  /** The skins whose purchase is under way - a double tap buys once. */
-  private readonly buying = new Set<BacteriaLook>();
   /** The last purchase, for a screen reader. */
   protected readonly announced = signal('');
 
@@ -111,28 +107,27 @@ export class MyColonyComponent {
     this.i18n.t(`colony.skin.names.${this.worn()}`)
   );
 
-  /** Buys a skin and wears it right away. */
+  /**
+   * Buys a skin and wears it right away - a second tap buys nothing, as
+   * the skin is owned by then. The tile stays the same element while it
+   * turns from for sale to worn, so the strands land on it.
+   */
   protected async buy(id: BacteriaLook): Promise<void> {
-    if (this.buying.has(id) || !this.evolution.buySkin(id)) {
+    if (!this.evolution.buySkin(id)) {
       return;
     }
-    this.buying.add(id);
     this.settings.setLook(id);
     const name = this.i18n.t(`colony.skin.names.${id}`);
     this.announced.set(this.i18n.t('colony.announce.bought', { name }));
     this.sound.evolve(1);
     this.haptics.evolve();
     const tile = this.host.nativeElement.querySelector(`[data-skin="${id}"]`);
-    try {
-      if (tile !== null) {
-        await celebrate(this.fx().nativeElement, this.host.nativeElement, {
-          from: this.counter().nativeElement,
-          to: tile,
-          color: this.playerRgb(),
-        });
-      }
-    } finally {
-      this.buying.delete(id);
+    if (tile !== null) {
+      await celebrate(this.fx().nativeElement, this.host.nativeElement, {
+        from: this.counter().nativeElement,
+        to: tile,
+        color: this.playerRgb(),
+      });
     }
   }
 }

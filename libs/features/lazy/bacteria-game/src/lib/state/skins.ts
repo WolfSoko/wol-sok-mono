@@ -82,7 +82,7 @@ const COST_BY_ID = Object.fromEntries(
 ) as Readonly<Record<BacteriaLook, number>>;
 
 export function isBacteriaLook(value: unknown): value is BacteriaLook {
-  return typeof value === 'string' && value in COST_BY_ID;
+  return BACTERIA_LOOKS.includes(value as BacteriaLook);
 }
 
 /** The DNA a skin costs - 0 for a free one. */
@@ -93,9 +93,4 @@ export function skinCost(look: BacteriaLook): number {
 /** True for a skin that is bought, not free from the start. */
 export function isPremiumSkin(value: unknown): value is BacteriaLook {
   return isBacteriaLook(value) && COST_BY_ID[value] > 0;
-}
-
-/** The DNA every skin to buy costs together. */
-export function allSkinsCost(): number {
-  return PREMIUM_SKINS.reduce((sum, { cost }) => sum + cost, 0);
 }
