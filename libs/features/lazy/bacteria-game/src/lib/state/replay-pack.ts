@@ -42,16 +42,22 @@ export interface PackedReplay {
  * How each kind of input is packed: the key it goes under, the numbers of
  * an entry and the grid its values lie on. The values are written as whole
  * numbers on that grid, each tick as the ticks since the input before -
- * small numbers that pack well.
+ * small numbers that pack well. An `optional` kind is left out while it is
+ * empty, as a replay from before it has none.
  */
 const KINDS = {
-  steers: { key: 's', size: 4, steps: STEER_STEPS },
-  drags: { key: 'd', size: 4, steps: DRAG_STEPS },
-  boosts: { key: 'b', size: 2, steps: 1 },
-  weapons: { key: 'w', size: 2, steps: 1 },
+  steers: { key: 's', size: 4, steps: STEER_STEPS, optional: false },
+  drags: { key: 'd', size: 4, steps: DRAG_STEPS, optional: false },
+  boosts: { key: 'b', size: 2, steps: 1, optional: false },
+  weapons: { key: 'w', size: 2, steps: 1, optional: true },
 } as const satisfies Record<
   keyof ReplayInputs,
-  { key: keyof PackedReplay; size: number; steps: number }
+  {
+    key: Exclude<keyof PackedReplay, 'h'>;
+    size: number;
+    steps: number;
+    optional: boolean;
+  }
 >;
 
 type Kind = keyof typeof KINDS;
@@ -67,15 +73,14 @@ export function packReplay(
     const { roomCode: _room, n: _n, client: _client, ...rest } = header;
     h = rest;
   }
-  return {
-    h,
-    s: flatten(inputs.steers, KINDS.steers.steps),
-    d: flatten(inputs.drags, KINDS.drags.steps),
-    b: flatten(inputs.boosts, KINDS.boosts.steps),
-    ...(inputs.weapons.length === 0
-      ? {}
-      : { w: flatten(inputs.weapons, KINDS.weapons.steps) }),
-  };
+  const packed: Partial<PackedReplay> = { h };
+  for (const kind of KIND_NAMES) {
+    const { key, steps, optional } = KINDS[kind];
+    if (!optional || inputs[kind].length > 0) {
+      packed[key] = flatten(inputs[kind], steps);
+    }
+  }
+  return packed as PackedReplay;
 }
 
 /** The packed replay back, parsed - null for anything that is not a whole one. */
@@ -89,9 +94,8 @@ export function unpackReplay(
   const fields = packed as Record<string, unknown>;
   const inputs: Record<string, unknown[][]> = {};
   for (const kind of KIND_NAMES) {
-    const { key, size, steps } = KINDS[kind];
-    // A plain replay has no list of weapons: none were fired.
-    const flat = kind === 'weapons' ? (fields[key] ?? []) : fields[key];
+    const { key, size, steps, optional } = KINDS[kind];
+    const flat = optional ? (fields[key] ?? []) : fields[key];
     const entries = unflatten(flat, size, steps);
     if (entries === null) {
       return null;
