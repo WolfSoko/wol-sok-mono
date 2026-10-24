@@ -563,8 +563,10 @@ The rules and `replayCommand` require `admin == true`,
   20,000 ranked ones (`limits.ts`).
 - The level statistics key a generated level by its style and heat
   (`gen-<recipe>-<difficulty>`), the daily and endless levels apart, since
-  every roll is a level of its own. Medallions are not counted yet: they
-  need the re-run's samples.
+  every roll is a level of its own. Medallions are counted from the
+  server's re-run, never the client: a verified re-run of a match against
+  the computer adds `rerun` and `medals.<tier>` to its level's statistics
+  (`verify.ts`, ADR 0012 step 5), once, with the state change.
 - **Deploys**: the release pipeline's non-cdk leg
   (`.github/workflows/deploy.yml`) runs the app's own `deploy` target
   (`--only functions:bacteria`, auth through `FIREBASE_TOKEN`) when a
