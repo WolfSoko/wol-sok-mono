@@ -296,6 +296,12 @@ export class MatchEngine {
           )
         );
       }
+      // The computer's weapon starts charging, so its first shot is not
+      // at the human's spawn a second into the match; a human's is ready.
+      const charging =
+        spawn.weapon != null && this.bots.has(index)
+          ? this.weaponCooldown(index, spawn.weapon)
+          : 0;
       return createPlayer({
         id: index,
         x: spawn.x,
@@ -305,6 +311,8 @@ export class MatchEngine {
         isBot: spawn.isBot,
         maxSpeed: options.crosshairSpeed ?? DEFAULT_CROSSHAIR_SPEED,
         weapon: spawn.weapon ?? null,
+        weaponCooldownSec: charging,
+        weaponCooldownFullSec: charging,
       });
     });
 
@@ -543,8 +551,7 @@ export class MatchEngine {
       return false;
     }
     const weapon = weaponOf(player.weapon);
-    const cooldown =
-      weapon.cooldownSec * (this.traits[playerId]?.weaponCooldownFactor ?? 1);
+    const cooldown = this.weaponCooldown(playerId, weapon.id);
     this.update(playerId, {
       weaponActiveSec: weapon.durationSec,
       weaponCooldownSec: cooldown,
@@ -563,6 +570,14 @@ export class MatchEngine {
       this.inputs.weapons.push([this.ticks, playerId]);
     }
     return true;
+  }
+
+  /** The seconds a seat's weapon takes to recharge, its genes counted. */
+  private weaponCooldown(playerId: number, id: WeaponId): number {
+    return (
+      weaponOf(id).cooldownSec *
+      (this.traits[playerId]?.weaponCooldownFactor ?? 1)
+    );
   }
 
   /**

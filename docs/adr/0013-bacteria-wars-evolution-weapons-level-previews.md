@@ -76,6 +76,9 @@ The bosses carry a weapon of their own (Meltdown a toxin bomb, Patient Zero
 a phage strike), but only in a match whose plan has loadouts. Arming them
 everywhere would change how every recorded boss match plays and force a new
 `BALANCE_VERSION`.
+A weapon the computer carries starts the match charging (its full
+cooldown), so its first shot does not land on the human's spawn a second
+in; a human's weapon is ready from the start.
 
 `planMatch` cannot tell the daily level from another generated one, so the
 replay parser does it for the leaderboards (ADR 0012): a replay with

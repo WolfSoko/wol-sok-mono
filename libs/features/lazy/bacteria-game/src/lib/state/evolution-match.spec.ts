@@ -544,7 +544,19 @@ describe('a boss with a weapon', () => {
   it.each(['meltdown', 'patient-zero'])(
     'fights back on %s with evolution',
     (levelId) => {
-      const engine = bossMatch(levelId, [PLAIN_LOADOUT, PLAIN_LOADOUT]);
+      // Evolved to the top, so the human lasts until the boss's weapon is
+      // charged.
+      const top: Loadout = {
+        genes: {
+          mitosis: 5,
+          toxins: 5,
+          membrane: 5,
+          flagella: 5,
+          metabolism: 5,
+        },
+        weapon: null,
+      };
+      const engine = bossMatch(levelId, [top, PLAIN_LOADOUT]);
 
       expect(engine.players[1].weapon).toBe(getLevel(levelId).boss?.weapon);
       expect(engine.players[1].weaponsFired).toBeGreaterThan(0);
@@ -552,6 +564,33 @@ describe('a boss with a weapon', () => {
       expect(engine.recorded.weapons).toEqual([]);
     }
   );
+
+  it('starts its weapon charging, so its first shot comes later', () => {
+    const plan: MatchPlan = {
+      ...PLAN,
+      levelId: 'meltdown',
+      width: 320,
+      height: 180,
+      loadouts: [EVOLVED, PLAIN_LOADOUT],
+    };
+    const engine = engineOf(plan);
+    const [human, boss] = engine.players;
+    const cooldown =
+      weaponOf('toxin-bomb').cooldownSec *
+      (getLevel('meltdown').boss?.traits?.weaponCooldownFactor ?? 1);
+
+    // The human's weapon is ready from the start, the boss's charging.
+    expect(human.weaponCooldownSec).toBe(0);
+    expect(boss.weaponCooldownSec).toBeCloseTo(cooldown);
+    expect(boss.weaponCooldownFullSec).toBeCloseTo(cooldown);
+
+    engine.setDragTarget(0, boss.x, boss.y);
+    const quiet = Math.floor(cooldown * TICKS_PER_SEC) - 1;
+    for (let tick = 0; tick < quiet && engine.outcome() == null; tick++) {
+      engine.tick(plan.width, plan.height);
+    }
+    expect(engine.players[1].weaponsFired).toBe(0);
+  });
 
   it('stays unarmed without evolution', () => {
     const engine = bossMatch('meltdown');
