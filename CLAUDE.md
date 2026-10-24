@@ -122,6 +122,14 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Exception: `bacteria-game-remote` is also a standalone PWA. Its federation build is `build-federation`; `build` then reruns `ngsw-config`, since the federation builder writes its files after Angular has hashed the output into `ngsw.json`.
 - `nx serve angular-examples` only serves the shell. Use `nx run angular-examples:serve-all` to boot the shell plus all remotes (ports 4200-4203).
 
+## Cloud Functions (Bacteria Wars)
+
+- `apps/bacteria-wars-functions` is the game's server code (ADR 0011, 0012): 2nd-gen functions, codebase `bacteria` in `firebase.bacteria-game-remote.json`, region `REGION` in `src/config.ts` (the Firestore location of `bacteria-wars`). It takes the engine from `@wolsok/feat-lazy-bac-game/engine` and bundles it (`@nx/esbuild`, ESM, `thirdParty: false`); `firebase-admin` and `firebase-functions` stay external, at the versions in the app's own `package.json`, which a spec keeps equal to the workspace's.
+- The client never calls a function: it writes command documents (`replaySubmissions`, `replayCommands`) that triggers process. Triggers run with retries off and are idempotent (`create()` or a transaction checks first).
+- `test` runs the pure specs; `test-emulator` runs `*.emulator.ts` against the Firestore emulator on ports of its own (`emulator.json`). The game's rules are tested the same way in `apps/bacteria-game-remote/rules-test` (`bacteria-game-remote:test-emulator`). CI runs both targets.
+- Handler modules import `firebase-functions/logger`, not `firebase-functions`: the root export loads the admin auth stack, which Jest on Node 22 cannot require.
+- There is no `deploy` target yet: functions are deployed by hand (`firebase deploy --only functions:bacteria --config firebase.bacteria-game-remote.json`) until the owner has set up the region, APIs and IAM (ADR 0011, "Owner's manual steps"). The game's hosting deploy leaves them alone (`--only hosting,firestore,database`).
+
 ## Android App
 
 - `apps/bacteria-wars-android` is a Gradle project, not a web build: a Trusted Web Activity that opens `https://bacteria-wars.wolsok.de` (the `bacteria-game-remote` PWA) fullscreen in Chrome. Game changes go into the PWA; the app picks them up with the next web deploy.
