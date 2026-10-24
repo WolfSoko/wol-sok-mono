@@ -8,14 +8,12 @@ export const evolution: Translation<typeof en> = {
     'Evolution zählt gegen den Computer in der Kampagne und auf generierten Levels, dort auch gegen deinen Geist, der mit dem spielt, was sein Lauf hatte. Das Tageslevel, Endlos-Läufe, Duelle am Gerät und Online-Matches bleiben ohne, fair für alle.',
   dna: {
     label: 'DNA',
-    available: '{count} DNA zum Ausgeben',
     earned: '{count} DNA insgesamt verdient',
     how: 'Alle 50 XP wächst ein Strang.',
     loading: 'Deine DNA wird gelesen…',
   },
   genes: {
     title: 'Gene',
-    level: 'Stufe {level} von {max}',
     none: 'Noch nicht gezüchtet',
     next: 'Nächste: {effect}',
     maxed: 'Voll entwickelt',

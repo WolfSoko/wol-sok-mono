@@ -1,12 +1,6 @@
 import type { Rgb } from '../arena/arena-theme';
 import type { TranslationKey } from '../i18n/dictionaries';
-import {
-  Gene,
-  GENES,
-  GeneId,
-  MAX_GENE_LEVEL,
-  WeaponId,
-} from '../state/evolution';
+import { Gene, GeneId, MAX_GENE_LEVEL, WeaponId } from '../state/evolution';
 import { clamp } from '../state/geometry';
 
 /**
@@ -59,9 +53,4 @@ export function genePercent(gene: Gene, level: number): number {
   return Math.round(
     Math.abs(gene.perLevel) * clamp(level, 0, MAX_GENE_LEVEL) * 100
   );
-}
-
-/** The gene with that id. */
-export function geneOf(id: GeneId): Gene {
-  return GENES.find((gene) => gene.id === id) as Gene;
 }

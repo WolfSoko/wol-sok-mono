@@ -44,6 +44,9 @@ const JINGLE_LAST_NOTE_SEC = 0.5;
  */
 export const EVOLVE_LAND_SEC = 0.85;
 
+/** The MIDI note the Evolution chimes climb from - C5. */
+const CHIME_ROOT = 72;
+
 /** Captures are heard at most this often, or a fight would be one long hiss. */
 const CAPTURE_INTERVAL_SEC = 0.07;
 /** Pellets eaten this close together climb a ladder of notes. */
@@ -604,17 +607,38 @@ export class GameSoundService {
    */
   private medalBells(tier: MedalTier, startSec: number): void {
     const degrees = [0, 2, 4, 7, 9, 11, 14].slice(0, 3 + medalRank(tier));
-    degrees.forEach((degree, step) => {
-      const last = step === degrees.length - 1;
-      const delay = startSec + step * 0.11;
-      // Two octaves above the bass register the root sits in.
-      const frequency = this.hz(degree, 2);
-      this.tone(frequency, last ? 0.8 : 0.18, {
-        type: 'sine',
-        volume: 0.14,
+    // Two octaves above the bass register the root sits in.
+    this.bellRun(
+      degrees.map((degree) => this.hz(degree, 2)),
+      startSec,
+      0.11,
+      { type: 'sine', volume: 0.14, noteSec: 0.18, lastSec: 0.8 }
+    );
+  }
+
+  /**
+   * A run of bells from `startSec` on, one every `stepSec`, the last one
+   * ringing on - each with an overtone an octave up for a bell's shimmer.
+   */
+  private bellRun(
+    frequencies: readonly number[],
+    startSec: number,
+    stepSec: number,
+    bell: {
+      type: OscillatorType;
+      volume: number;
+      noteSec: number;
+      lastSec: number;
+    }
+  ): void {
+    frequencies.forEach((frequency, step) => {
+      const last = step === frequencies.length - 1;
+      const delay = startSec + step * stepSec;
+      this.tone(frequency, last ? bell.lastSec : bell.noteSec, {
+        type: bell.type,
+        volume: bell.volume,
         delay,
       });
-      // An overtone an octave up gives the sine a bell's shimmer.
       this.tone(frequency * 2, last ? 0.5 : 0.1, {
         type: 'sine',
         volume: 0.04,
@@ -645,28 +669,19 @@ export class GameSoundService {
       sweepTo: 5000,
       attack: 0.3,
     });
-    // The chime: a pentatonic run, a step higher per level.
-    const degrees = [0, 2, 4, 7, 9, 12, 14, 16, 19];
-    const run = degrees.slice(level - 1, level + 3);
-    run.forEach((degree, step) => {
-      const frequency = 523.25 * 2 ** (degree / 12);
-      const last = step === run.length - 1;
-      const delay = EVOLVE_LAND_SEC + step * 0.07;
-      this.tone(frequency, last ? 0.7 : 0.16, {
-        type: 'triangle',
-        volume: 0.11,
-        delay,
-      });
-      this.tone(frequency * 2, last ? 0.5 : 0.1, {
-        type: 'sine',
-        volume: 0.04,
-        delay,
-      });
-    });
+    // The chime: a pentatonic run up from C5, a step higher per level.
+    const semitones = [0, 2, 4, 7, 9, 12, 14, 16, 19];
+    const run = semitones.slice(level - 1, level + 3);
+    this.bellRun(
+      run.map((semitone) => midiToHz(CHIME_ROOT + semitone)),
+      EVOLVE_LAND_SEC,
+      0.07,
+      { type: 'triangle', volume: 0.11, noteSec: 0.16, lastSec: 0.7 }
+    );
     if (maxed) {
       const at = EVOLVE_LAND_SEC + run.length * 0.07;
-      for (const degree of [0, 4, 7, 12]) {
-        this.tone(523.25 * 2 ** (degree / 12), 1.4, {
+      for (const semitone of [0, 4, 7, 12]) {
+        this.tone(midiToHz(CHIME_ROOT + semitone), 1.4, {
           type: 'sine',
           volume: 0.07,
           delay: at,
