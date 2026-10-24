@@ -174,53 +174,61 @@ export async function play(cells: readonly NamedCell[]): Promise<Played[]> {
   let next = 0;
   let done = 0;
   const started = Date.now();
-  await Promise.all(
-    Array.from(
-      { length: jobs },
-      () =>
-        new Promise<void>((resolveWorker, reject) => {
-          const worker = fork(
-            resolve(ROOT, 'tools/bacteria-game/balance/worker.ts'),
-            [],
-            {
-              execArgv: ['--import', 'tsx'],
-            }
-          );
-          workers.add(worker);
-          worker.on('exit', () => workers.delete(worker));
-          const feed = () => {
-            const job = order[next++];
-            if (job === undefined) {
-              worker.send('done');
-              return;
-            }
-            worker.send({ index: job.index, cell: job.cell });
-          };
-          worker.on('message', ({ index, match }: WorkerResult) => {
-            results[index] = match;
-            if (journal !== null) {
-              appendFileSync(
-                journal,
-                `${JSON.stringify({ cell: cells[index], match })}\n`
-              );
-            }
-            done++;
-            if (done % 10 === 0 || done === order.length) {
-              const minutes = ((Date.now() - started) / 60000).toFixed(1);
-              console.log(`  ${done}/${order.length} matches, ${minutes} min`);
-            }
+  try {
+    await Promise.all(
+      Array.from(
+        { length: jobs },
+        () =>
+          new Promise<void>((resolveWorker, reject) => {
+            const worker = fork(
+              resolve(ROOT, 'tools/bacteria-game/balance/worker.ts'),
+              [],
+              {
+                execArgv: ['--import', 'tsx'],
+              }
+            );
+            workers.add(worker);
+            worker.on('exit', () => workers.delete(worker));
+            const feed = () => {
+              const job = order[next++];
+              if (job === undefined) {
+                worker.send('done');
+                return;
+              }
+              worker.send({ index: job.index, cell: job.cell });
+            };
+            worker.on('message', ({ index, match }: WorkerResult) => {
+              results[index] = match;
+              if (journal !== null) {
+                appendFileSync(
+                  journal,
+                  `${JSON.stringify({ cell: cells[index], match })}\n`
+                );
+              }
+              done++;
+              if (done % 10 === 0 || done === order.length) {
+                const minutes = ((Date.now() - started) / 60000).toFixed(1);
+                console.log(
+                  `  ${done}/${order.length} matches, ${minutes} min`
+                );
+              }
+              feed();
+            });
+            worker.on('error', reject);
+            worker.on('exit', (code) =>
+              code === 0
+                ? resolveWorker()
+                : reject(new Error(`worker exited ${code}`))
+            );
             feed();
-          });
-          worker.on('error', reject);
-          worker.on('exit', (code) =>
-            code === 0
-              ? resolveWorker()
-              : reject(new Error(`worker exited ${code}`))
-          );
-          feed();
-        })
-    )
-  );
+          })
+      )
+    );
+  } catch (error) {
+    // One worker failed: stop the others before the error ends the run.
+    workers.forEach((worker) => worker.kill());
+    throw error;
+  }
   return cells.map((cell, index) => {
     const match = results[index];
     if (match === undefined) {
@@ -277,7 +285,11 @@ function reportText(report: BalanceReport): string {
 function finish(config: LabConfig, raw: Raw): boolean {
   const report = summarize(config, raw.played, raw.checked);
   const baseline = readReport(BASELINE);
-  const found = findings(report);
+  // Findings the committed baseline holds already are known, not news:
+  // only new ones fail the run and keep the nightly issue open. A finding
+  // that got worse reads differently (its numbers) and counts as new.
+  const known = new Set(baseline === null ? [] : findings(baseline));
+  const found = findings(report).filter((finding) => !known.has(finding));
   // A run of some levels only is compared on those.
   const moved =
     baseline === null ? ['no baseline yet'] : drift(baseline, report);
