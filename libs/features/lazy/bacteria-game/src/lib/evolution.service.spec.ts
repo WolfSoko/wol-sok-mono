@@ -162,6 +162,21 @@ describe('EvolutionService', () => {
       expect(evolution.dna()).toBe(10 - 6);
     });
 
+    it('tells when it has become known, for a match waiting to start', () => {
+      const evolution = createWith({
+        [PROGRESS_STORAGE_KEY]: progressWorth(500),
+        [EVOLUTION_STORAGE_KEY]: { genes: { mitosis: 2 } },
+      });
+      const told: boolean[] = [];
+      evolution.loaded$.subscribe((loaded) => told.push(loaded));
+      TestBed.tick();
+
+      storage.flush();
+      TestBed.tick();
+
+      expect(told).toEqual([false, true]);
+    });
+
     it('builds a purchase on what the storage holds, never undoing it', () => {
       const evolution = createWith({
         [PROGRESS_STORAGE_KEY]: progressWorth(2000),

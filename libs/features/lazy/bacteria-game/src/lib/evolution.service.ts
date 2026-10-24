@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map, switchMap, take } from 'rxjs';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { map, Observable, switchMap, take } from 'rxjs';
 import { ProgressService } from './progress.service';
 import { dnaEarned, GeneId, Loadout, WeaponId } from './state/evolution';
 import {
@@ -81,6 +81,9 @@ export class EvolutionService {
   public readonly loaded = computed(
     () => this.answered() && this.progress.loaded()
   );
+
+  /** {@link loaded} as it changes - what a match waits on to start. */
+  public readonly loaded$: Observable<boolean> = toObservable(this.loaded);
 
   /** Everything held. */
   public readonly evolution = this.state.asReadonly();

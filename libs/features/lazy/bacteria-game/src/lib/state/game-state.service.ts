@@ -6,10 +6,13 @@ import {
   filter,
   map,
   Observable,
+  race,
   Subject,
   Subscription,
   switchMap,
+  take,
   takeUntil,
+  timer,
 } from 'rxjs';
 import { FramePacer } from './frame-pacer';
 import { GameFrame, TICK_MS, TickClock, ticksToMs } from './fixed-tick';
@@ -81,6 +84,13 @@ const MAX_FRAME_MS = 3 * TICK_MS;
 const WAIT_NOTICE_FRAMES = 20;
 
 /**
+ * How long a match the evolution plays in waits for the storage to tell
+ * what the player evolved, in milliseconds. Offline with nothing cached it
+ * may never tell: the match then starts with what is known.
+ */
+export const EVOLUTION_WAIT_MS = 3000;
+
+/**
  * What the next match is set to outside the setup: a ghost to fight, a
  * level picked for it, the daily day it counts for. It holds for one match.
  */
@@ -108,6 +118,8 @@ export class GameStateService {
   private plan: MatchPlan | null = null;
   /** Frames in a row an online match could not go on, waiting for the other device. */
   private stalledFrames = 0;
+  /** A start that waits for the evolution to be known - see {@link start}. */
+  private heldStart: Subscription | null = null;
   /**
    * The host's word of the guest's own colours, null before it came - what
    * the host makes the online pair from, with its own.
@@ -438,8 +450,6 @@ export class GameStateService {
       headStart,
       ghost,
       matchLevel,
-      dailyDay,
-      endlessMatch,
     } = this.gameStateStore.snapshot();
     const planMode: GameMode = matchLevel === null ? mode : 'vs-computer';
     this.plan = {
@@ -455,9 +465,7 @@ export class GameStateService {
     };
     // Taken as the colonies spawn: the plan keeps it for the whole match,
     // whatever the storage or the player change meanwhile.
-    const evolved =
-      planMode === 'vs-computer' && dailyDay === null && !endlessMatch;
-    if (evolved) {
+    if (this.evolves()) {
       this.plan.loadouts = [this.playerLoadout(), PLAIN_LOADOUT];
     }
     const { spawns, options } = planMatch(this.plan, ghost);
@@ -465,10 +473,26 @@ export class GameStateService {
   }
 
   /**
-   * What the player at the screen evolved, for a match against the computer
-   * or a ghost on the ladder or a generated level - see `evolution.ts`. The
-   * daily level and endless runs feed the leaderboards and stay plain, as do
-   * couch and online matches. A ghost plays with what its run recorded
+   * True when the next match is one the evolution plays in: against the
+   * computer or a ghost on the ladder or a generated level - see
+   * `evolution.ts`. The daily level and endless runs feed the leaderboards
+   * and stay plain, as do couch and online matches.
+   */
+  private evolves(): boolean {
+    const { online, mode, matchLevel, dailyDay, endlessMatch } =
+      this.gameStateStore.snapshot();
+    const planMode: GameMode = matchLevel === null ? mode : 'vs-computer';
+    return (
+      online === null &&
+      planMode === 'vs-computer' &&
+      dailyDay === null &&
+      !endlessMatch
+    );
+  }
+
+  /**
+   * What the player at the screen evolved, for a match the evolution plays
+   * in ({@link evolves}). A ghost plays with what its run recorded
    * (`planMatch`).
    */
   private playerLoadout(): Loadout {
@@ -730,7 +754,36 @@ export class GameStateService {
     this.playerService.fireWeapon(playerId);
   }
 
-  start() {
+  /**
+   * Starts the match. One the evolution plays in waits until the storage
+   * has told what the player evolved - at most {@link EVOLUTION_WAIT_MS} -
+   * so it never starts plain only because the storage answered late, as at
+   * the start of the app or right after a sign-in. The match itself never
+   * waits on storage: once it runs, its loadouts are fixed.
+   */
+  start(): void {
+    this.cancelHeldStart();
+    if (this.evolves() && !untracked(this.evolution.loaded)) {
+      this.heldStart = race(
+        this.evolution.loaded$.pipe(filter(Boolean)),
+        timer(EVOLUTION_WAIT_MS)
+      )
+        .pipe(take(1))
+        .subscribe(() => {
+          this.heldStart = null;
+          this.begin();
+        });
+      return;
+    }
+    this.begin();
+  }
+
+  private cancelHeldStart(): void {
+    this.heldStart?.unsubscribe();
+    this.heldStart = null;
+  }
+
+  private begin(): void {
     const { online, dailyDay } = this.gameStateStore.snapshot();
     if (online !== null) {
       const match = this.onlineMatch(online);
@@ -803,6 +856,7 @@ export class GameStateService {
   }
 
   reset() {
+    this.cancelHeldStart();
     this.gameStateStore.update(() => ({
       currentState: GameState.END,
       timePassed: 0,
@@ -851,6 +905,7 @@ export class GameStateService {
   }
 
   cleanup(): void {
+    this.cancelHeldStart();
     this.pause();
     this.gameStateStore.update({ keysPressed: [], fps: 0 });
     this.subscriptions?.unsubscribe();
