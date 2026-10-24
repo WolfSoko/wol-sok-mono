@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.71.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.70.0...v74.71.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** deterministic readbacks for the integer GPU simulation ([#2610](https://github.com/WolfSoko/wol-sok-mono/issues/2610)) ([152c0ea](https://github.com/WolfSoko/wol-sok-mono/commit/152c0eab9f74c9de74c798e46f7d94a78fa94bb5))
+
 ## [74.70.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.69.0...v74.70.0) (2026-10-24)
 
 ### Features
