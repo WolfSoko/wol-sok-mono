@@ -195,10 +195,10 @@ export interface GpuSimulationOptions {
   /**
    * Runs the hunt, the movement, the division, combat and feeding as the
    * integer passes of ADR 0015, which every GPU computes alike, with draws
-   * seeded from `matchSeed` and every step as long as a tick. The weapons'
-   * circles are still float (step 4), and the divide budget and the pellets
-   * still follow the read backs' timing (step 5 of the rollout), so a match
-   * is not deterministic yet as a whole. Off by default.
+   * seeded from `matchSeed`, every step as long as a tick and the weapons'
+   * circles in integers. The divide budget and the pellets still follow the
+   * read backs' timing (step 5 of the rollout), so a match is not
+   * deterministic yet as a whole. Off by default.
    */
   deterministic?: boolean;
   /** The match's seed - see `MatchPlan.seed`. */
@@ -771,23 +771,23 @@ export class GpuSimulation implements Simulation {
       if (count >= MAX_EFFECTS || slot === null || weapon.reach === 'colony') {
         continue;
       }
-      u.effects[count * 4] = effect.x;
-      u.effects[count * 4 + 1] = effect.y;
-      u.effects[count * 4 + 2] = effect.radius * effect.radius;
-      u.effects[count * 4 + 3] = weapon.hostile ? 1 : 0;
-      u.effectKinds[count * 2] = WEAPON_CODE[effect.weapon];
-      u.effectKinds[count * 2 + 1] = slot + 1;
+      // Each mode fills only the circles its passes read.
       if (this.deterministic) {
-        setIntEffect(
-          this.intEffects,
-          count,
-          effect.x,
-          effect.y,
-          effect.radius,
-          weapon.hostile,
-          WEAPON_CODE[effect.weapon],
-          slot + 1
-        );
+        setIntEffect(this.intEffects, count, {
+          x: effect.x,
+          y: effect.y,
+          radius: effect.radius,
+          hostile: weapon.hostile,
+          kind: WEAPON_CODE[effect.weapon],
+          owner: slot + 1,
+        });
+      } else {
+        u.effects[count * 4] = effect.x;
+        u.effects[count * 4 + 1] = effect.y;
+        u.effects[count * 4 + 2] = effect.radius * effect.radius;
+        u.effects[count * 4 + 3] = weapon.hostile ? 1 : 0;
+        u.effectKinds[count * 2] = WEAPON_CODE[effect.weapon];
+        u.effectKinds[count * 2 + 1] = slot + 1;
       }
       count++;
     }

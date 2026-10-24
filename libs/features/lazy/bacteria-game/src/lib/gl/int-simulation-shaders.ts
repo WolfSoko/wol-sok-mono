@@ -37,23 +37,18 @@ import {
 } from '../state/gpu-int/int-frame-uniforms';
 import { INT_MAX_EFFECTS } from '../state/gpu-int/int-effects';
 import { INT_EFFECTS } from '../state/gpu-int/int-uniforms';
-import { WEAPON_CODE } from '../state/weapon-effects';
 import { INT_COMMON } from './int-common';
-import { COMMON, HUNT_COLONIES } from './simulation-shaders';
+import { COMMON, HUNT_COLONIES, WEAPON_CODES } from './simulation-shaders';
 
 /**
  * The weapons' effects acting this step, as integer circles with an owner -
  * `WEAPONS` of the float passes, tested in sixteenths of a cell. The square
  * around a circle is checked first, so each square summed is below 2^30.
  */
-const INT_WEAPONS = `
+const INT_WEAPONS = `${WEAPON_CODES}
 uniform ivec4 uEffects[${INT_MAX_EFFECTS}];     // centre x, y, radius in sixteenths, 1 when hostile
 uniform ivec2 uEffectKinds[${INT_MAX_EFFECTS}]; // the weapon's code and the owner's slot + 1
 uniform int uEffectCount;
-const int TOXIN_BOMB = ${WEAPON_CODE['toxin-bomb']};
-const int CRYO_PULSE = ${WEAPON_CODE['cryo-pulse']};
-const int PHAGE_STRIKE = ${WEAPON_CODE['phage-strike']};
-const int AGAR_BLOOM = ${WEAPON_CODE['agar-bloom']};
 
 /**
  * The slot + 1 of the colony whose effect of that kind acts on a cell of

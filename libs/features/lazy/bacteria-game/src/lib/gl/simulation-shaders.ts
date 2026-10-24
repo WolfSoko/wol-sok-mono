@@ -202,14 +202,18 @@ int pelletsInReach(ivec2 cell) {
  * `WeaponEffects`. The biofilm shield needs no circle: it changes its
  * colony's toughness, which combat takes per colony.
  */
-export const WEAPONS = `
-uniform vec4 uEffects[${MAX_EFFECTS}];      // centre x, y, radius squared, 1 when hostile
-uniform ivec2 uEffectKinds[${MAX_EFFECTS}]; // the weapon's code and the owner's slot + 1
-uniform int uEffectCount;
+/** The weapons' codes - `WEAPON_CODE` - for the float and integer passes. */
+export const WEAPON_CODES = `
 const int TOXIN_BOMB = ${WEAPON_CODE['toxin-bomb']};
 const int CRYO_PULSE = ${WEAPON_CODE['cryo-pulse']};
 const int PHAGE_STRIKE = ${WEAPON_CODE['phage-strike']};
 const int AGAR_BLOOM = ${WEAPON_CODE['agar-bloom']};
+`;
+
+export const WEAPONS = `${WEAPON_CODES}
+uniform vec4 uEffects[${MAX_EFFECTS}];      // centre x, y, radius squared, 1 when hostile
+uniform ivec2 uEffectKinds[${MAX_EFFECTS}]; // the weapon's code and the owner's slot + 1
+uniform int uEffectCount;
 
 /**
  * The slot + 1 of the colony whose effect of that kind acts on a cell of

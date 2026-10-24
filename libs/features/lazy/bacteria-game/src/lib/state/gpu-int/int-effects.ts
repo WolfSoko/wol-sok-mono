@@ -37,6 +37,18 @@ export function createIntEffectUniforms(): IntEffectUniforms {
   };
 }
 
+/** One weapon's circle, in cells, as the game holds it. */
+export interface IntEffect {
+  x: number;
+  y: number;
+  radius: number;
+  hostile: boolean;
+  /** The weapon's code - `WEAPON_CODE`. */
+  kind: number;
+  /** The owner's slot + 1. */
+  owner: number;
+}
+
 /**
  * Puts one effect in place `index`. Centre and radius are taken as 32 bit
  * floats (`Math.fround`), as the float passes hold them, so a caller with
@@ -45,12 +57,7 @@ export function createIntEffectUniforms(): IntEffectUniforms {
 export function setIntEffect(
   into: IntEffectUniforms,
   index: number,
-  x: number,
-  y: number,
-  radius: number,
-  hostile: boolean,
-  kind: number,
-  owner: number
+  { x, y, radius, hostile, kind, owner }: IntEffect
 ): void {
   const f32 = Math.fround;
   const r = Math.round(f32(radius) * (1 << TARGET_SHIFT));

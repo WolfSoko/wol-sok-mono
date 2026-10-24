@@ -57,16 +57,14 @@ function effect(
 ): IntEffectUniforms {
   const effects = createIntEffectUniforms();
   const hostile = weapon !== 'agar-bloom';
-  setIntEffect(
-    effects,
-    0,
-    20,
-    12,
-    radius,
-    hostile,
-    WEAPON_CODE[weapon],
-    hostile ? 1 : 2
-  );
+  setIntEffect(effects, 0, {
+    x: 20,
+    y: 12,
+    radius: radius,
+    hostile: hostile,
+    kind: WEAPON_CODE[weapon],
+    owner: hostile ? 1 : 2,
+  });
   effects.count = 1;
   return effects;
 }
@@ -189,7 +187,14 @@ describe('the integer weapons', () => {
     const none = intStateHash(intCombat(g, combatUniforms()));
     const zero = effect('toxin-bomb', 0);
     const away = createIntEffectUniforms();
-    setIntEffect(away, 0, -200, -200, 30, true, WEAPON_CODE['toxin-bomb'], 1);
+    setIntEffect(away, 0, {
+      x: -200,
+      y: -200,
+      radius: 30,
+      hostile: true,
+      kind: WEAPON_CODE['toxin-bomb'],
+      owner: 1,
+    });
     away.count = 1;
     expect(intStateHash(intCombat(g, combatUniforms(zero)))).toBe(none);
     expect(intStateHash(intCombat(g, combatUniforms(away)))).toBe(none);

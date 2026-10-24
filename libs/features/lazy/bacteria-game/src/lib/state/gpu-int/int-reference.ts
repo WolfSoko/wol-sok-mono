@@ -80,14 +80,15 @@ const AGAR_BLOOM = WEAPON_CODE['agar-bloom'];
 const PHAGE_STRIKE = WEAPON_CODE['phage-strike'];
 const TOXIN_BOMB = WEAPON_CODE['toxin-bomb'];
 
+const HEAT_AGGRESSION = INT_EFFECTS.heatAggression;
+const HEAT_MAX_AGGRESSION = INT_EFFECTS.heatMaxAggression;
+
 /** No effects at all - what a plain match has. */
 const NO_EFFECTS: IntEffectUniforms = {
   circles: new Int32Array(0),
   kinds: new Int32Array(0),
   count: 0,
 };
-const HEAT_AGGRESSION = INT_EFFECTS.heatAggression;
-const HEAT_MAX_AGGRESSION = INT_EFFECTS.heatMaxAggression;
 
 /** The eight neighbours, in the shaders' order. */
 const NEIGHBOURS: readonly (readonly [number, number])[] = [
@@ -223,8 +224,8 @@ export function intClaimAndApply(
     inside(x, y) ? mask[y * width + x] >>> ZONE_SHIFT : 0;
   const draw = (x: number, y: number, salt: number) => drawAt(x, y, seed, salt);
   const effects = u.effects ?? NO_EFFECTS;
-  const effectOver = (x: number, y: number, owner: number, weapon: number) =>
-    effects.count > 0 && intEffectOver(effects, x, y, owner, weapon) !== 0;
+  const inEffect = (x: number, y: number, owner: number, weapon: number) =>
+    intEffectOver(effects, x, y, owner, weapon) !== 0;
   const unit = new Int32Array(2);
 
   const freeNeighbourFrom = (x: number, y: number, salt: number): number => {
@@ -262,7 +263,7 @@ export function intClaimAndApply(
       return -1;
     }
     if (
-      effectOver(x, y, owner, CRYO_PULSE) &&
+      inEffect(x, y, owner, CRYO_PULSE) &&
       draw(x, y, stepSalt(SALT.cryoStay, step)) < CRYO_STAY
     ) {
       return -1;
@@ -348,8 +349,8 @@ export function intClaimAndApply(
     }
     const variant = divideVariant(
       zoneAt(x, y) === ZONE_CODE.agar,
-      effectOver(x, y, owner, AGAR_BLOOM),
-      effectOver(x, y, owner, CRYO_PULSE)
+      inEffect(x, y, owner, AGAR_BLOOM),
+      inEffect(x, y, owner, CRYO_PULSE)
     );
     const threshold = u.divideChance[(owner - 1) * DIVIDE_VARIANTS + variant];
     if (draw(x, y, SALT.divideChance) >= threshold) {
@@ -532,8 +533,8 @@ export function intCombat(
   const { match, frame } = u;
   const seed = u.seed >>> 0;
   const effects = u.effects ?? NO_EFFECTS;
-  const effectOver = (x: number, y: number, owner: number, weapon: number) =>
-    effects.count > 0 ? intEffectOver(effects, x, y, owner, weapon) : 0;
+  const effectOwner = (x: number, y: number, owner: number, weapon: number) =>
+    intEffectOver(effects, x, y, owner, weapon);
   const strength = new Int32Array(INT_COLONIES);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -545,7 +546,7 @@ export function intCombat(
         continue;
       }
       // An enemy's phages turn a share of the bacteria in their circle.
-      const phage = effectOver(x, y, owner, PHAGE_STRIKE);
+      const phage = effectOwner(x, y, owner, PHAGE_STRIKE);
       if (
         phage !== 0 &&
         drawAt(x, y, seed, SALT.phageConvert) < PHAGE_CONVERT
@@ -592,12 +593,12 @@ export function intCombat(
       if (antibiotic) {
         energy -= match.antibioticStep;
       }
-      const toxic = effectOver(x, y, owner, TOXIN_BOMB) !== 0;
+      const toxic = effectOwner(x, y, owner, TOXIN_BOMB) !== 0;
       if (toxic) {
         energy -= match.toxinStep;
       }
       const poisoned = antibiotic || toxic;
-      const frozen = effectOver(x, y, owner, CRYO_PULSE) !== 0;
+      const frozen = effectOwner(x, y, owner, CRYO_PULSE) !== 0;
       const pressure =
         enemy > 0
           ? enemy +
