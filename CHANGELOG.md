@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.73.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.73.0...v74.73.1) (2026-10-24)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** a faster TypeScript reference for the deterministic simulation ([#2614](https://github.com/WolfSoko/wol-sok-mono/issues/2614)) ([39b3c07](https://github.com/WolfSoko/wol-sok-mono/commit/39b3c0770004628c130b032467504b0c74e0cafc))
+
 ## [74.73.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.72.0...v74.73.0) (2026-10-24)
 
 ### Features
