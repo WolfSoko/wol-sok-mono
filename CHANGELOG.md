@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.62.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.61.0...v74.62.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ My Colony screen with a skin gallery of live previews ([#2597](https://github.com/WolfSoko/wol-sok-mono/issues/2597)) ([8e6bbd0](https://github.com/WolfSoko/wol-sok-mono/commit/8e6bbd0f36c8b14fee0ba7194f167c0c8e5ecd2b))
+
 ## [74.61.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.60.0...v74.61.0) (2026-10-24)
 
 ### Features
