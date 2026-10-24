@@ -8,6 +8,8 @@ import { common as enCommon } from './en/common';
 import { game as enGame } from './en/game';
 import { levels as enLevels } from './en/levels';
 import { settings as enSettings } from './en/settings';
+import { colony as deColony } from './de/colony';
+import { colony as enColony } from './en/colony';
 import { online as deOnline } from './de/online';
 import { online as enOnline } from './en/online';
 import { profile as deProfile } from './de/profile';
@@ -54,6 +56,7 @@ export const EN = {
   achievements: enAchievements,
   game: enGame,
   settings: enSettings,
+  colony: enColony,
   support: enSupport,
 } satisfies Dictionary;
 
@@ -72,6 +75,7 @@ export const DE: Translation<typeof EN> = {
   achievements: deAchievements,
   game: deGame,
   settings: deSettings,
+  colony: deColony,
   support: deSupport,
 };
 

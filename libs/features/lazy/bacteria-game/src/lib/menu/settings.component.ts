@@ -11,41 +11,31 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
-import {
-  ColonyColorsComponent,
-  ColorChange,
-} from '../colony-colors/colony-colors.component';
 import { Size } from '../fullscreen';
 import { TranslationKey } from '../i18n/dictionaries';
 import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
 import { Language, LANGUAGES } from '../i18n/language';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import {
-  BACTERIA_LOOKS,
-  GameSettingsService,
-  MAX_VOLUME,
-} from '../settings.service';
+import { GameSettingsService, MAX_VOLUME } from '../settings.service';
 import { SCREEN_RESOLUTIONS, SIM_RESOLUTIONS } from '../state/arena-size';
-import { GameMode } from '../state/game.states';
 import { arenaLockText } from '../state/unlocks';
 import { LEVELS, levelNameText } from '../state/levels';
 import { VAPORIZE_DURATIONS, VAPORIZE_QUALITIES } from '../vaporize-effect';
 import { ScreenHeaderComponent } from './screen-header.component';
 
 /**
- * The settings screen: colony colours, how the arena is drawn and
- * vaporized, sound, music and effects with their volumes, vibration, the
- * browser's fullscreen and the language. What only the game service keeps -
- * look, resolutions, the vaporize effect, frame rate, the music switch and
- * the volumes - it sets right there; what the game answers with a sound or a
- * buzz of its own - colours, the sound, effects and vibration switches,
- * fullscreen - it reports.
+ * The settings screen: how the arena is drawn and vaporized, sound, music
+ * and effects with their volumes, vibration, the browser's fullscreen and
+ * the language - the colony's colours and skin have the My Colony screen.
+ * What only the game service keeps - resolutions, the vaporize effect,
+ * frame rate, the music switch and the volumes - it sets right there; what
+ * the game answers with a sound or a buzz of its own - the sound, effects
+ * and vibration switches, fullscreen - it reports.
  */
 @Component({
   selector: 'feat-lazy-bac-game-settings',
   imports: [
-    ColonyColorsComponent,
     GameTextPipe,
     MatButtonToggleModule,
     MatFormFieldModule,
@@ -63,10 +53,7 @@ export class SettingsComponent {
   protected readonly settings = inject(GameSettingsService);
   private readonly i18n = inject(I18nService);
 
-  public readonly mode = input.required<GameMode>();
-  /** The colour ids of the left and the right colony. */
-  public readonly colors = input.required<readonly [string, string]>();
-  /** True while a match is on: colours and resolutions wait for the next. */
+  /** True while a match is on: the resolutions wait for the next. */
   public readonly locked = input(false);
   /** The arena in cells at the chosen simulation resolution. */
   public readonly arenaSize = input.required<Size>();
@@ -76,14 +63,11 @@ export class SettingsComponent {
   public readonly vibrationSupported = input(false);
   /** Names where the way back leads - the menu unless told otherwise. */
   public readonly backLabel = input<string | null>(null);
-  /** Why each colony colour still to earn is locked, by colour id. */
-  public readonly colorLocks = input<Readonly<Record<string, string>>>({});
   /** Why each level's arena is still locked, by level id. */
   public readonly arenaLocks = input<Readonly<Record<string, string>>>({});
   /** The arena every level is drawn in, null for each its own. */
   public readonly activeArena = input<string | null>(null);
 
-  public readonly colorChange = output<ColorChange>();
   public readonly soundChange = output<boolean>();
   public readonly effectsChange = output<boolean>();
   /** The effects slider moved - for a tick at the new volume. */
@@ -92,10 +76,6 @@ export class SettingsComponent {
   public readonly nativeFullscreenChange = output<boolean>();
   public readonly back = output<void>();
 
-  protected readonly looks = BACTERIA_LOOKS.map((id) => ({
-    id,
-    label: `settings.display.looks.${id}` satisfies TranslationKey,
-  }));
   /** The levels for the arena picker, each with why its arena is locked. */
   protected readonly levels = LEVELS.map((level) => ({
     id: level.id,
