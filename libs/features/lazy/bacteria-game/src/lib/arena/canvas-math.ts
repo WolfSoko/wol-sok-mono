@@ -43,3 +43,26 @@ export function createCanvas(
   canvas.height = height;
   return canvas;
 }
+
+/**
+ * Puts RGBA pixels on a canvas through its context - false without one, as
+ * in the test DOM.
+ */
+export function putPixels(
+  cx:
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D
+    | null
+    | undefined,
+  data: Uint8ClampedArray,
+  width: number,
+  height: number
+): boolean {
+  if (cx == null) {
+    return false;
+  }
+  const image = cx.createImageData(width, height);
+  image.data.set(data);
+  cx.putImageData(image, 0, 0);
+  return true;
+}

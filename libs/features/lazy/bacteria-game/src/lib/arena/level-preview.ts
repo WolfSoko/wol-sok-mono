@@ -1,20 +1,10 @@
 import { arenaSize } from '../state/arena-size';
-import {
-  DEFAULT_COLORS,
-  getColonyColor,
-  NEUTRAL_COLOR,
-} from '../state/colony-colors';
+import { DEFAULT_COLORS } from '../state/colony-colors';
 import { getLevel, levelBalance, levelMap, levelSize } from '../state/levels';
 import { DynamicWall, Rect } from '../state/maps';
-import { spawnSpots } from '../state/shapes';
+import { planMatch } from '../state/match-setup';
 import { mapZones, Zone } from '../state/zones';
-import {
-  BLOB_ALPHA,
-  BLOB_LAYERS,
-  blobColor,
-  blobLayer,
-  paintArenaBackground,
-} from './arena-renderer';
+import { drawWallBlobs, paintArenaBackground } from './arena-renderer';
 import { ArenaTheme, arenaTheme, Rgb } from './arena-theme';
 import { hash, mix, rgba } from './canvas-math';
 import { darker } from './colony-renderer';
@@ -77,12 +67,17 @@ export function levelPreviewScene(levelId: string): LevelPreviewScene {
   const { width, height } = arenaSize('normal', size);
   // On a bigger map the colonies start as big as on a base one.
   const radius = levelBalance(level).startBacteriaRadius;
-  const [leftSpot, rightSpot] = spawnSpots(width, height);
-  const [leftColor, rightColor] = DEFAULT_COLORS.map(
-    (id) => getColonyColor(id).rgb
-  );
-  const boss = level.boss;
-  const neutral: Rgb = [NEUTRAL_COLOR[0], NEUTRAL_COLOR[1], NEUTRAL_COLOR[2]];
+  // Where and how big the match spawns them - the boss in the right seat.
+  const { spawns } = planMatch({
+    levelId: level.id,
+    mode: 'vs-computer',
+    difficulty: 'normal',
+    colors: [DEFAULT_COLORS[0], DEFAULT_COLORS[1]],
+    headStart: 0,
+    width,
+    height,
+    seed: 0,
+  });
   return {
     levelId: level.id,
     width,
@@ -92,23 +87,20 @@ export function levelPreviewScene(levelId: string): LevelPreviewScene {
     walls: map.createWalls(width, height),
     dynamicWalls: map.createDynamicWalls?.(width, height, 0) ?? [],
     zones: mapZones(map, width, height),
-    colonies: [
-      { role: 'left', ...leftSpot, radius, color: leftColor },
-      {
-        role: boss === undefined ? 'right' : 'boss',
-        ...rightSpot,
-        // The scale is one of area: the radius grows by its root.
-        radius: radius * Math.sqrt(boss?.startScale ?? 1),
-        color: rightColor,
-      },
-      ...(level.neutrals ?? []).map((spot): PreviewColony => ({
-        role: 'neutral',
-        x: Math.round(spot.x * width),
-        y: Math.round(spot.y * height),
-        radius: radius * Math.sqrt(spot.startScale),
-        color: neutral,
-      })),
-    ],
+    colonies: spawns.map((spawn, seat): PreviewColony => ({
+      role: spawn.neutral
+        ? 'neutral'
+        : spawn.boss
+          ? 'boss'
+          : seat === 0
+            ? 'left'
+            : 'right',
+      x: spawn.x,
+      y: spawn.y,
+      // The scale is one of area: the radius grows by its root.
+      radius: radius * Math.sqrt(spawn.startScale ?? 1),
+      color: [spawn.color[0], spawn.color[1], spawn.color[2]],
+    })),
   };
 }
 
@@ -200,7 +192,7 @@ function drawWalls(
   walls: readonly Rect[],
   theme: ArenaTheme
 ): void {
-  drawBlobs(cx, walls, darker(theme.wall), theme);
+  drawWallBlobs(cx, walls, darker(theme.wall), theme, true);
   for (const wall of walls) {
     if (wall.round) {
       continue;
@@ -230,7 +222,7 @@ function drawDynamicWalls(
   walls: readonly DynamicWall[],
   theme: ArenaTheme
 ): void {
-  drawBlobs(cx, walls, theme.border, theme);
+  drawWallBlobs(cx, walls, theme.border, theme, true);
   for (const wall of walls) {
     if (wall.round || wall.width <= 0 || wall.height <= 0) {
       continue;
@@ -273,41 +265,6 @@ function hazardStripes(
   }
   cx.stroke();
   cx.restore();
-}
-
-/** The round walls among these, pass by pass, as the arena draws them. */
-function drawBlobs(
-  cx: PreviewContext,
-  walls: readonly Rect[],
-  rim: Rgb,
-  theme: ArenaTheme
-): void {
-  if (!walls.some((wall) => wall.round)) {
-    return;
-  }
-  const shape: Rect = { x: 0, y: 0, width: 0, height: 0 };
-  for (let layer = 0; layer < BLOB_LAYERS; layer++) {
-    cx.fillStyle = rgba(blobColor(layer, rim, theme), BLOB_ALPHA[layer]);
-    cx.beginPath();
-    for (const wall of walls) {
-      if (wall.round) {
-        const { x, y, width, height } = blobLayer(layer, wall, shape);
-        cx.moveTo(x + width, y + height / 2);
-        cx.ellipse(
-          x + width / 2,
-          y + height / 2,
-          width / 2,
-          height / 2,
-          0,
-          0,
-          2 * Math.PI
-        );
-      }
-    }
-    cx.fill();
-    // Only the first pass casts the shadow.
-    cx.shadowColor = 'transparent';
-  }
 }
 
 /** The colour a boss's spikes and aura burn in. */

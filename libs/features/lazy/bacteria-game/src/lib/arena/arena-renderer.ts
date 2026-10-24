@@ -1,7 +1,15 @@
 import { Motes } from './motes';
 import { DynamicWall, Rect } from '../state/maps';
 import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
-import { createCanvas, hash, lerp, mix, rgba, smoothstep } from './canvas-math';
+import {
+  createCanvas,
+  hash,
+  lerp,
+  mix,
+  putPixels,
+  rgba,
+  smoothstep,
+} from './canvas-math';
 import { darker } from './colony-renderer';
 import { Zone } from '../state/zones';
 import { clamp } from '../state/geometry';
@@ -153,7 +161,7 @@ export class ArenaRenderer {
     if (theme == null) {
       return;
     }
-    this.drawBlobs(cx, walls, darker(theme.wall), theme);
+    drawWallBlobs(cx, walls, darker(theme.wall), theme);
     for (const wall of walls) {
       if (wall.round) {
         continue;
@@ -180,7 +188,7 @@ export class ArenaRenderer {
       return;
     }
     // Living tissue rather than machinery: rimmed in the frame colour.
-    this.drawBlobs(cx, walls, theme.border, theme);
+    drawWallBlobs(cx, walls, theme.border, theme);
     for (const wall of walls) {
       if (wall.round) {
         continue;
@@ -203,39 +211,6 @@ export class ArenaRenderer {
         wall.width - 1,
         wall.height - 1
       );
-    }
-  }
-
-  /** The round walls among these, pass by pass - see {@link blobLayer}. */
-  private drawBlobs(
-    cx: CanvasRenderingContext2D,
-    walls: readonly Rect[],
-    rim: Rgb,
-    theme: ArenaTheme
-  ): void {
-    if (!walls.some((wall) => wall.round)) {
-      return;
-    }
-    const shape: Rect = { x: 0, y: 0, width: 0, height: 0 };
-    for (let layer = 0; layer < BLOB_LAYERS; layer++) {
-      cx.fillStyle = rgba(blobColor(layer, rim, theme), BLOB_ALPHA[layer]);
-      cx.beginPath();
-      for (const wall of walls) {
-        if (wall.round) {
-          const { x, y, width, height } = blobLayer(layer, wall, shape);
-          cx.moveTo(x + width, y + height / 2);
-          cx.ellipse(
-            x + width / 2,
-            y + height / 2,
-            width / 2,
-            height / 2,
-            0,
-            0,
-            2 * Math.PI
-          );
-        }
-      }
-      cx.fill();
     }
   }
 
@@ -649,6 +624,47 @@ export function blobLayer(layer: number, wall: Rect, out: Rect): Rect {
   return out;
 }
 
+/**
+ * The round walls among these, pass by pass - see {@link blobLayer} - on
+ * the arena or on a level preview. With `shadowOnce` only the first pass
+ * casts the shadow the context is set up with.
+ */
+export function drawWallBlobs(
+  cx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  walls: readonly Rect[],
+  rim: Rgb,
+  theme: ArenaTheme,
+  shadowOnce = false
+): void {
+  if (!walls.some((wall) => wall.round)) {
+    return;
+  }
+  const shape: Rect = { x: 0, y: 0, width: 0, height: 0 };
+  for (let layer = 0; layer < BLOB_LAYERS; layer++) {
+    cx.fillStyle = rgba(blobColor(layer, rim, theme), BLOB_ALPHA[layer]);
+    cx.beginPath();
+    for (const wall of walls) {
+      if (wall.round) {
+        const { x, y, width, height } = blobLayer(layer, wall, shape);
+        cx.moveTo(x + width, y + height / 2);
+        cx.ellipse(
+          x + width / 2,
+          y + height / 2,
+          width / 2,
+          height / 2,
+          0,
+          0,
+          2 * Math.PI
+        );
+      }
+    }
+    cx.fill();
+    if (shadowOnce) {
+      cx.shadowColor = 'transparent';
+    }
+  }
+}
+
 /** Width of one hazard stripe tile in arena cells - a dark and a light band. */
 export const HAZARD_TILE = 6;
 
@@ -815,12 +831,8 @@ function imageCanvas(
   height: number
 ): HTMLCanvasElement | null {
   const canvas = createCanvas(width, height);
-  const context = canvas?.getContext?.('2d');
-  if (canvas == null || context == null) {
-    return null;
-  }
-  const image = context.createImageData(width, height);
-  image.data.set(data);
-  context.putImageData(image, 0, 0);
-  return canvas;
+  return canvas != null &&
+    putPixels(canvas.getContext?.('2d'), data, width, height)
+    ? canvas
+    : null;
 }
