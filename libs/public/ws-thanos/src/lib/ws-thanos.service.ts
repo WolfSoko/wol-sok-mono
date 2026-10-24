@@ -2,20 +2,17 @@ import { DOCUMENT, Injectable, inject } from '@angular/core';
 
 import { default as html2canvas } from 'html2canvas';
 import {
-  animationFrameScheduler,
+  animationFrames,
   defer,
   finalize,
   from,
-  interval,
   map,
   Observable,
   switchMap,
   takeWhile,
   tap,
-  timeInterval,
 } from 'rxjs';
 import { AnimationState } from './animation.state';
-import { EFFECT_HEIGHT_SCALE, EFFECT_WIDTH_SCALE } from './capture-scale';
 import { fitImagesForCapture } from './fit-images';
 import {
   chooseParticleRenderer,
@@ -25,11 +22,19 @@ import {
 import { ParticleRenderer } from './particle-renderer';
 import { createParticles, Particles } from './particles';
 import { SnapSound, SnapSoundService } from './snap-sound.service';
+import { frontGeometry } from './vaporizing-front';
+import { EffectMargins, effectMargins, effectScale, windOf } from './wind';
 import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
 import type { WsThanosOptions } from './ws-thanos.options';
 
 /** a short cross fade hides small differences between capture and element */
 const FULL_COVERAGE_FADE_OUT_MS = 200;
+
+/**
+ * The longest step the simulation takes: after a stalled frame or a hidden tab
+ * the particles carry on instead of jumping away.
+ */
+const MAX_FRAME_SEC = 0.1;
 
 interface RunningEffect {
   renderer: ParticleRenderer;
@@ -110,8 +115,12 @@ export class WsThanosService {
     ].join(';');
     body.appendChild(elem);
 
-    const { maxParticleCount, maxCapturePixels, particleAcceleration } =
-      this.thanosOptions;
+    const {
+      maxParticleCount,
+      maxCapturePixels,
+      particleAcceleration,
+      windDirection,
+    } = this.thanosOptions;
     let rendererChoice: ParticleRendererChoice | undefined;
     let renderer: ParticleRenderer | undefined;
     try {
@@ -124,6 +133,8 @@ export class WsThanosService {
       ({ renderer } = this.createRenderer(rendererChoice, capture, {
         particleAcceleration,
         crumble: 'shards',
+        windDirection,
+        margins: effectMargins(windDirection),
       }));
       renderer.render({
         deltaTSec: 0,
@@ -148,6 +159,7 @@ export class WsThanosService {
       maxCapturePixels,
       particleAcceleration,
       crumble,
+      windDirection,
     } = options;
 
     elem.style.opacity = elem.style.opacity || '1';
@@ -158,22 +170,24 @@ export class WsThanosService {
     );
     let effect: RunningEffect | undefined;
 
+    const margins = effectMargins(windDirection);
     const capture = this.capture(elem, (width, height) =>
-      rendererChoice.captureScale(width, height)
+      rendererChoice.captureScale(width, height, effectScale(margins))
     );
     return from(capture).pipe(
       map((capture): RunningEffect => {
         const { renderer, particles } = this.createRenderer(
           rendererChoice,
           capture,
-          { particleAcceleration, crumble }
+          { particleAcceleration, crumble, windDirection, margins }
         );
 
         this.placeEffectCanvas(
           elem,
           renderer.canvas,
           capture.width,
-          capture.height
+          capture.height,
+          margins
         );
         renderer.canvas.dataset['wsThanosRenderer'] = renderer.kind;
         renderer.canvas.dataset['wsThanosCrumble'] = renderer.crumble;
@@ -198,16 +212,22 @@ export class WsThanosService {
         return effect;
       }),
       switchMap(({ renderer, sound }) => {
-        let time = 0;
-        return interval(1000 / 60, animationFrameScheduler).pipe(
-          timeInterval(),
-          tap((deltaT) => (time += deltaT.interval)),
-          map((deltaT): AnimationState => ({
-            deltaTSec: deltaT.interval / 1000,
-            animationT: time / animationLength,
-            maxWidth: renderer.canvas.width,
-            maxHeight: renderer.canvas.height,
-          })),
+        let previous = 0;
+        // one step per frame the screen shows, at whatever rate it refreshes
+        return animationFrames().pipe(
+          map(({ elapsed }): AnimationState => {
+            const deltaTSec = Math.min(
+              (elapsed - previous) / 1000,
+              MAX_FRAME_SEC
+            );
+            previous = elapsed;
+            return {
+              deltaTSec,
+              animationT: elapsed / animationLength,
+              maxWidth: renderer.canvas.width,
+              maxHeight: renderer.canvas.height,
+            };
+          }),
           tap((animationState) => renderer.render(animationState)),
           takeWhile((animationState) => animationState.animationT <= 1),
           // a completed effect lets the sound blow away, a cancelled one stops it
@@ -237,7 +257,7 @@ export class WsThanosService {
   /** draw the element into an image at the scale the renderer needs */
   private async capture(
     elem: HTMLElement,
-    captureScale: ParticleRendererChoice['captureScale']
+    captureScale: (width: number, height: number) => number
   ): Promise<Capture> {
     const window = this.document.defaultView;
     const { width, height } = elem.getBoundingClientRect();
@@ -266,46 +286,59 @@ export class WsThanosService {
     return { imageData, width, height, scale };
   }
 
+  /** the effect canvas reaches past the element where the wind blows the dust */
   private createRenderer(
     rendererChoice: ParticleRendererChoice,
     { imageData, scale }: Capture,
     {
       particleAcceleration,
       crumble,
-    }: Pick<WsThanosOptions, 'particleAcceleration' | 'crumble'>
+      windDirection,
+      margins,
+    }: Pick<
+      WsThanosOptions,
+      'particleAcceleration' | 'crumble' | 'windDirection'
+    > & { margins: EffectMargins }
   ): { renderer: ParticleRenderer; particles: Particles } {
-    const effectWidth = imageData.width * EFFECT_WIDTH_SCALE;
-    const effectHeight = imageData.height * EFFECT_HEIGHT_SCALE;
+    const { width, height } = imageData;
+    const offsetX = Math.round(width * margins.left);
+    const offsetY = Math.round(height * margins.top);
+    const bottom = Math.round(height * margins.bottom);
     const particles = createParticles(
       imageData,
       rendererChoice.maxParticleCount,
-      effectHeight
+      { x: offsetX, y: offsetY }
     );
+    const wind = windOf(windDirection);
     const renderer = rendererChoice.create(particles, {
-      width: effectWidth,
-      height: effectHeight,
+      width: offsetX + width + Math.round(width * margins.right),
+      height: offsetY + height + bottom,
       // particles move in device pixels, keep their speed in css pixels
       particleAcceleration: particleAcceleration * scale,
       pixelScale: scale,
       crumble,
       seed: Math.random() * 1000,
+      wind,
+      front: frontGeometry(particles.bounds, wind, { top: offsetY, bottom }),
     });
     return { renderer, particles };
   }
 
-  /** the element sits at the bottom left of the larger effect canvas */
+  /** the effect canvas covers the element and the margins around it */
   private placeEffectCanvas(
     elem: HTMLElement,
     canvas: HTMLCanvasElement,
     width: number,
-    height: number
+    height: number,
+    margins: EffectMargins
   ): void {
     const { left, top } = this.offsetInParent(elem);
+    const scale = effectScale(margins);
     canvas.style.position = 'absolute';
-    canvas.style.left = `${left}px`;
-    canvas.style.top = `${top - height * (EFFECT_HEIGHT_SCALE - 1)}px`;
-    canvas.style.width = `${width * EFFECT_WIDTH_SCALE}px`;
-    canvas.style.height = `${height * EFFECT_HEIGHT_SCALE}px`;
+    canvas.style.left = `${left - width * margins.left}px`;
+    canvas.style.top = `${top - height * margins.top}px`;
+    canvas.style.width = `${width * scale.width}px`;
+    canvas.style.height = `${height * scale.height}px`;
     canvas.style.zIndex = '2000';
     canvas.style.pointerEvents = 'none';
     elem.insertAdjacentElement('beforebegin', canvas);

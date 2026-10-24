@@ -6,20 +6,21 @@ import {
   ParticleStateIndex as P,
   Particles,
 } from './particles';
-import { SimplexNoise } from './simplex-noise';
-import { FLOW_FIELD, isBehindFront, vaporizingFront } from './vaporizing-front';
+import { FlowField } from './flow-field';
+import { FRAME_RATE, frameFade } from './frame-rate';
+import { isBehindFront, vaporizingFront } from './vaporizing-front';
 
 /** the CPU can't keep up with more particles than this */
 export const CANVAS_MAX_PARTICLE_COUNT = 400_000;
 
-const FLOW_FIELD_RES = 0.05;
-
 export interface UpdateParticlesParams {
   particles: Particles;
   animationState: AnimationState;
-  particleAcceleration: number;
-  noise: SimplexNoise;
-  seed: number;
+  params: Pick<
+    ParticleRendererParams,
+    'particleAcceleration' | 'seed' | 'wind' | 'front'
+  >;
+  flowField: FlowField;
 }
 
 /** Fallback renderer that simulates on the CPU and draws with a 2d context. */
@@ -27,11 +28,10 @@ export class CanvasParticleRenderer implements ParticleRenderer {
   public readonly kind = 'canvas';
   /** the CPU can't afford to simulate cracks and shards */
   public readonly crumble = 'dust';
-  private readonly noise = new SimplexNoise({
-    frequency: FLOW_FIELD.frequency,
-    min: 0,
-  });
+  private readonly flowField: FlowField;
   private readonly context: CanvasRenderingContext2D;
+  /** drawn into and put on the canvas every frame */
+  private readonly image: ImageData;
 
   public constructor(
     public readonly canvas: HTMLCanvasElement,
@@ -40,22 +40,23 @@ export class CanvasParticleRenderer implements ParticleRenderer {
   ) {
     canvas.width = params.width;
     canvas.height = params.height;
-    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const context = canvas.getContext('2d');
     if (context == null) {
       throw new Error('Could not get 2d context for vaporize canvas');
     }
     this.context = context;
+    this.image = context.createImageData(params.width, params.height);
+    this.flowField = new FlowField(params.width, params.height, params.seed);
   }
 
   public render(animationState: AnimationState): void {
     updateParticlesOnCpu({
       particles: this.particles,
       animationState,
-      particleAcceleration: this.params.particleAcceleration,
-      noise: this.noise,
-      seed: this.params.seed,
+      params: this.params,
+      flowField: this.flowField,
     });
-    drawParticlesOnCpu(this.context, this.particles);
+    drawParticlesOnCpu(this.context, this.image, this.particles);
   }
 
   public dispose(): void {
@@ -81,18 +82,18 @@ function isVisibleInside(
 }
 
 export function updateParticlesOnCpu({
-  particles: { state, count, maxParticleX, minParticleY },
+  particles: { state, count },
   animationState: { deltaTSec, animationT, maxWidth, maxHeight },
-  particleAcceleration,
-  noise,
-  seed,
+  params: { particleAcceleration, seed, wind, front: frontGeometry },
+  flowField,
 }: UpdateParticlesParams): void {
-  const front = vaporizingFront(
-    animationT,
-    maxParticleX,
-    minParticleY,
-    maxHeight
-  );
+  const front = vaporizingFront(animationT, frontGeometry);
+  const fade = frameFade(front.fade, deltaTSec);
+  // the flow field pushes as much per second at any frame rate
+  const flowPerFrame = deltaTSec * FRAME_RATE;
+  const flow = new Float32Array(2);
+  // forces are written for the default wind and rotated into this one
+  const { cos, sin } = wind;
 
   for (let i = 0; i < count; i++) {
     const base = i * PARTICLE_STATE_LENGTH;
@@ -104,45 +105,40 @@ export function updateParticlesOnCpu({
     const particleY = state[base + P.Y];
 
     if (state[base + P.RELEASED_AT] === 0) {
-      if (
-        isBehindFront(particleX, particleY, maxHeight, deltaTSec, seed, front)
-      ) {
+      if (isBehindFront(particleX, particleY, deltaTSec, seed, front)) {
         state[base + P.RELEASED_AT] = Math.max(animationT, 0.0001);
-        state[base + P.AX] = Math.random();
-        state[base + P.AY] = Math.random() * -1;
+        const ax = Math.random();
+        const ay = -Math.random();
+        state[base + P.AX] = cos * ax - sin * ay;
+        state[base + P.AY] = sin * ax + cos * ay;
       }
     } else {
       // flow along the noise velocity field
-      state[base + P.AX] += noise.scaled3D(
-        particleX,
-        particleY,
-        seed + FLOW_FIELD.xSeedOffset,
-        FLOW_FIELD_RES
-      );
-      state[base + P.AY] -= noise.scaled3D(
-        particleX,
-        seed / FLOW_FIELD.ySeedDivisor,
-        particleY,
-        FLOW_FIELD_RES
-      );
+      flowField.sample(particleX, particleY, flow);
+      const ax = flow[0] * flowPerFrame;
+      const ay = -flow[1] * flowPerFrame;
+      state[base + P.AX] += cos * ax - sin * ay;
+      state[base + P.AY] += sin * ax + cos * ay;
     }
 
     state[base + P.VX] += state[base + P.AX] * particleAcceleration * deltaTSec;
     state[base + P.VY] += state[base + P.AY] * particleAcceleration * deltaTSec;
     state[base + P.X] += state[base + P.VX] * deltaTSec;
     state[base + P.Y] += state[base + P.VY] * deltaTSec;
-    state[base + P.ALPHA] *= front.fade;
+    state[base + P.ALPHA] *= fade;
   }
 }
 
+/** paints the particles into image and puts it on the canvas, image has the canvas size */
 export function drawParticlesOnCpu(
   context: CanvasRenderingContext2D,
+  image: ImageData,
   { state, colors, count }: Particles
 ): void {
-  const { width, height } = context.canvas;
-  context.clearRect(0, 0, width, height);
-  const image = context.getImageData(0, 0, width, height);
+  const { width, height } = image;
   const pixels = image.data;
+  // putImageData replaces every pixel, so clearing the image clears the canvas
+  pixels.fill(0);
   for (let i = 0; i < count; i++) {
     const base = i * PARTICLE_STATE_LENGTH;
     if (!isVisibleInside(state, base, width, height)) {

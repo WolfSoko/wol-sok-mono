@@ -1,3 +1,4 @@
+import { FRAME_RATE } from '../frame-rate';
 import { MIN_PARTICLE_ALPHA } from '../particles';
 import { FLOW_FIELD, FRONT_FRAY } from '../vaporizing-front';
 import { WsThanosCrumble } from '../ws-thanos.options';
@@ -177,6 +178,11 @@ uniform float uFade;
 uniform float uCoarseCrack;
 uniform float uFineCrack;
 uniform float uShardGrow;
+/** where the dust blows to, rotates the forces written for the default wind */
+uniform mat2 uWind;
+uniform vec2 uFrontOrigin;
+/** see FlowField, sampled once by FLOW_FIELD_FRAGMENT_SHADER over the effect canvas */
+uniform sampler2D uFlowField;
 
 out vec2 vPosition;
 out vec2 vVelocity;
@@ -192,14 +198,8 @@ const float CHUNK_LIFE = 0.12;
 const float CHUNK_GRAVITY = 4.0;
 
 ${IS_VISIBLE_INSIDE}
-${SIMPLEX_NOISE_3D}
 ${HASH}
 ${SHARD_OFFSET}
-
-/** simplex noise mapped to [0, 1] like SimplexNoise({ min: 0 }) */
-float noise01(vec3 position) {
-  return snoise(position * ${f(FLOW_FIELD.frequency)}) * 0.5 + 0.5;
-}
 
 /** random number in [0, 1] per particle, frame and salt */
 float random(uint salt) {
@@ -208,13 +208,13 @@ float random(uint salt) {
 }
 
 vec2 dustAcceleration() {
-  return vec2(random(1u), -random(2u));
+  return uWind * vec2(random(1u), -random(2u));
 }
 
 /** has the vaporizing front passed this position, see isBehindFront() */
 bool isBehindFront(vec2 position) {
-  float pXLength = position.x + mod(position.x, uDeltaTSec) * 0.5;
-  float pYLength = uSize.y - position.y;
+  float pXLength = position.x - uFrontOrigin.x + mod(position.x, uDeltaTSec) * 0.5;
+  float pYLength = uFrontOrigin.y - position.y;
   pXLength += sin((pXLength / ${f(FRONT_FRAY.xWave)} + ${f(FRONT_FRAY.xPhase)}) * uFrontTime
     + uSeed * ${f(FRONT_FRAY.xSeed)}) * ${f(FRONT_FRAY.xAmplitude)};
   pYLength += cos((pYLength / ${f(FRONT_FRAY.yWave)} + ${f(FRONT_FRAY.yPhase)}) * uFrontTime
@@ -250,8 +250,8 @@ void main() {
       } else if (uCrumble == CHUNKS) {
         // the whole chunk shares velocity and gravity, so it flies in one piece
         float side = fract(aCellRandom * 13.7) - 0.5;
-        vVelocity = vec2(side * 90.0, -60.0 - aCellRandom * 70.0) * uPixelScale;
-        vAcceleration = vec2(0.0, CHUNK_GRAVITY);
+        vVelocity = uWind * vec2(side * 90.0, -60.0 - aCellRandom * 70.0) * uPixelScale;
+        vAcceleration = uWind * vec2(0.0, CHUNK_GRAVITY);
         vReleasedAt = -releaseT;
       } else {
         vAcceleration = dustAcceleration();
@@ -264,16 +264,52 @@ void main() {
       vReleasedAt = releaseT;
     }
   } else {
-    // flow along the noise velocity field
-    vAcceleration += vec2(
-      noise01(vec3(aPosition.x, aPosition.y, uSeed + ${f(FLOW_FIELD.xSeedOffset)})),
-      -noise01(vec3(aPosition.x, uSeed / ${f(FLOW_FIELD.ySeedDivisor)}, aPosition.y))
-    );
+    // flow along the noise velocity field, as much per second at any frame rate
+    vec2 flow = textureLod(uFlowField, aPosition / uSize, 0.0).rg;
+    vAcceleration += uWind * vec2(flow.x, -flow.y) * (uDeltaTSec * ${f(FRAME_RATE)});
   }
 
   vVelocity += vAcceleration * uParticleAcceleration * uDeltaTSec;
   vPosition += vVelocity * uDeltaTSec;
   vAlpha *= uFade;
+}
+`;
+
+/** one triangle that covers the whole viewport */
+export const FULL_VIEWPORT_VERTEX_SHADER = /* glsl */ `#version 300 es
+void main() {
+  vec2 corner = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  gl_Position = vec4(corner * 2.0 - 1.0, 0.0, 1.0);
+}
+`;
+
+/**
+ * Runs once: the noise field released particles flow along, a texel covers uCell device pixels.
+ * Red and green are the x and y flow, simplex noise mapped to [0, 1] like FlowField on the CPU.
+ */
+export const FLOW_FIELD_FRAGMENT_SHADER = /* glsl */ `#version 300 es
+precision highp float;
+
+uniform float uSeed;
+uniform vec2 uCell;
+
+out vec4 outColor;
+
+${SIMPLEX_NOISE_3D}
+
+float noise01(vec3 position) {
+  return snoise(position * ${f(FLOW_FIELD.frequency)}) * 0.5 + 0.5;
+}
+
+void main() {
+  // the texel centers, where linear filtering returns exactly this value
+  vec2 position = gl_FragCoord.xy * uCell;
+  outColor = vec4(
+    noise01(vec3(position, uSeed + ${f(FLOW_FIELD.xSeedOffset)})),
+    noise01(vec3(position.x, uSeed / ${f(FLOW_FIELD.ySeedDivisor)}, position.y)),
+    0.0,
+    1.0
+  );
 }
 `;
 

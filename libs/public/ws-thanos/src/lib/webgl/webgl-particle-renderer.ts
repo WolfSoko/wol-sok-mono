@@ -1,6 +1,6 @@
 import { AnimationState } from '../animation.state';
-import { EFFECT_HEIGHT_SCALE, EFFECT_WIDTH_SCALE } from '../capture-scale';
 import { crumbleShape } from '../crumble-shape';
+import { frameFade } from '../frame-rate';
 import { ParticleRenderer, ParticleRendererParams } from '../particle-renderer';
 import {
   PARTICLE_STATE_LENGTH,
@@ -18,6 +18,8 @@ import {
   DRAW_FRAGMENT_SHADER,
   DRAW_VERTEX_SHADER,
   FEEDBACK_FRAGMENT_SHADER,
+  FLOW_FIELD_FRAGMENT_SHADER,
+  FULL_VIEWPORT_VERTEX_SHADER,
   UPDATE_FEEDBACK_VARYINGS,
   UPDATE_VERTEX_SHADER,
 } from './webgl-shaders';
@@ -40,6 +42,9 @@ const UPDATE_UNIFORMS = [
   'uCoarseCrack',
   'uFineCrack',
   'uShardGrow',
+  'uWind',
+  'uFrontOrigin',
+  'uFlowField',
 ] as const;
 
 const DRAW_UNIFORMS = ['uSize', 'uPixelScale', 'uShardGrow'] as const;
@@ -64,6 +69,12 @@ interface AttributeBinding {
 const MIN_CELL_SIZE = 28;
 
 /**
+ * Device pixels per texel of the flow field. The noise changes over about a hundred pixels,
+ * so the linear filtered texture looks the same as computing the noise for every particle.
+ */
+const FLOW_FIELD_CELL = 4;
+
+/**
  * Simulates and draws the particles on the GPU.
  * The particle state lives in two buffers: every frame the update program reads
  * one and writes the other via transform feedback, then the draw program renders it.
@@ -73,11 +84,10 @@ export class WebGlParticleRenderer implements ParticleRenderer {
   public readonly kind = 'webgl';
   public readonly crumble: WsThanosCrumble;
   private readonly count: number;
-  private readonly maxParticleX: number;
-  private readonly minParticleY: number;
   private readonly updateProgram: WebGLProgram;
   private readonly drawProgram: WebGLProgram;
   private readonly buffers: WebGLBuffer[] = [];
+  private readonly flowField: WebGLTexture;
   private readonly stateBuffers: WebGLBuffer[];
   private readonly updateVaos: WebGLVertexArrayObject[];
   private readonly drawVaos: WebGLVertexArrayObject[];
@@ -122,8 +132,6 @@ export class WebGlParticleRenderer implements ParticleRenderer {
   ) {
     this.crumble = params.crumble;
     this.count = particles.count;
-    this.maxParticleX = particles.maxParticleX;
-    this.minParticleY = particles.minParticleY;
     canvas.width = params.width;
     canvas.height = params.height;
 
@@ -145,7 +153,8 @@ export class WebGlParticleRenderer implements ParticleRenderer {
     const colorBuffer = this.createBuffer(particles.colors, gl.STATIC_DRAW);
     // dust has no cracks, the shaders then read the default attribute values
     const crackBuffer =
-      params.crumble === 'dust' ? undefined : this.createCracks();
+      params.crumble === 'dust' ? undefined : this.createCracks(particles);
+    this.flowField = this.createFlowField();
 
     const crackAttributes: AttributeBinding[] = crackBuffer
       ? [
@@ -213,6 +222,21 @@ export class WebGlParticleRenderer implements ParticleRenderer {
     gl.uniform1f(this.updateUniforms.uSeed, params.seed);
     gl.uniform1i(this.updateUniforms.uCrumble, CRUMBLE_MODE[params.crumble]);
     gl.uniform1f(this.updateUniforms.uPixelScale, params.pixelScale);
+    const { cos, sin } = params.wind;
+    gl.uniformMatrix2fv(this.updateUniforms.uWind, false, [
+      cos,
+      sin,
+      -sin,
+      cos,
+    ]);
+    gl.uniform2f(
+      this.updateUniforms.uFrontOrigin,
+      params.front.originX,
+      params.front.originY
+    );
+    gl.uniform1i(this.updateUniforms.uFlowField, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.flowField);
     gl.useProgram(this.drawProgram);
     gl.uniform2f(this.drawUniforms.uSize, params.width, params.height);
     gl.uniform1f(this.drawUniforms.uPixelScale, params.pixelScale);
@@ -229,12 +253,7 @@ export class WebGlParticleRenderer implements ParticleRenderer {
       return;
     }
     const next = 1 - this.current;
-    const front = vaporizingFront(
-      animationT,
-      this.maxParticleX,
-      this.minParticleY,
-      params.height
-    );
+    const front = vaporizingFront(animationT, params.front);
     const shape = crumbleShape(params.crumble, animationT);
 
     // simulate: read the current state, write the next one
@@ -244,7 +263,7 @@ export class WebGlParticleRenderer implements ParticleRenderer {
     gl.uniform1f(uniforms.uAnimationT, animationT);
     gl.uniform1f(uniforms.uFrontTime, front.time);
     gl.uniform1f(uniforms.uFrontRadiusPow, front.radiusPow);
-    gl.uniform1f(uniforms.uFade, front.fade);
+    gl.uniform1f(uniforms.uFade, frameFade(front.fade, deltaTSec));
     gl.uniform1f(uniforms.uCoarseCrack, shape.coarseCrack * params.pixelScale);
     gl.uniform1f(uniforms.uFineCrack, shape.fineCrack * params.pixelScale);
     gl.uniform1f(uniforms.uShardGrow, shape.shardGrow);
@@ -268,6 +287,7 @@ export class WebGlParticleRenderer implements ParticleRenderer {
       gl.deleteVertexArray(vao)
     );
     this.buffers.forEach((buffer) => gl.deleteBuffer(buffer));
+    gl.deleteTexture(this.flowField);
     gl.deleteProgram(this.updateProgram);
     gl.deleteProgram(this.drawProgram);
     // browsers only allow a few live contexts, free this one right away
@@ -287,8 +307,59 @@ export class WebGlParticleRenderer implements ParticleRenderer {
     gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
   }
 
+  /** render the flow field once into a texture, the update program samples it */
+  private createFlowField(): WebGLTexture {
+    const { gl, params } = this;
+    const width = Math.ceil(params.width / FLOW_FIELD_CELL);
+    const height = Math.ceil(params.height / FLOW_FIELD_CELL);
+    const texture = gl.createTexture();
+    const framebuffer = gl.createFramebuffer();
+    const vao = gl.createVertexArray();
+    if (texture == null || framebuffer == null || vao == null) {
+      throw new Error('Could not create the WebGL flow field');
+    }
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, width, height);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    const program = this.createProgram(
+      FULL_VIEWPORT_VERTEX_SHADER,
+      FLOW_FIELD_FRAGMENT_SHADER
+    );
+    const uniforms = this.uniformLocations(program, [
+      'uSeed',
+      'uCell',
+    ] as const);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      texture,
+      0
+    );
+    gl.viewport(0, 0, width, height);
+    gl.useProgram(program);
+    gl.uniform1f(uniforms.uSeed, params.seed);
+    gl.uniform2f(uniforms.uCell, params.width / width, params.height / height);
+    // the vertex shader needs no attributes, the triangle comes from gl_VertexID
+    gl.bindVertexArray(vao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindVertexArray(null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    gl.deleteVertexArray(vao);
+    gl.deleteFramebuffer(framebuffer);
+    gl.deleteProgram(program);
+    return texture;
+  }
+
   /** run the crack program once: shard center and crack distances per particle */
-  private createCracks(): WebGLBuffer {
+  private createCracks({ bounds }: Particles): WebGLBuffer {
     const { gl, params } = this;
     const crackBuffer = this.createBuffer(
       this.count * CRACK_STRIDE,
@@ -300,8 +371,8 @@ export class WebGlParticleRenderer implements ParticleRenderer {
       CRACK_FEEDBACK_VARYINGS
     );
     const elementSize = Math.min(
-      params.width / EFFECT_WIDTH_SCALE,
-      params.height / EFFECT_HEIGHT_SCALE
+      bounds.right - bounds.left + 1,
+      bounds.bottom - bounds.top + 1
     );
     const cellSize = Math.max(
       MIN_CELL_SIZE * params.pixelScale,

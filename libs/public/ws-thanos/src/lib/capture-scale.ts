@@ -1,11 +1,10 @@
-/** the effect canvas is wider and taller than the element so particles have room to fly */
-export const EFFECT_WIDTH_SCALE = 2;
-export const EFFECT_HEIGHT_SCALE = 5;
 const MAX_DEVICE_PIXEL_RATIO = 2;
 
 export interface CaptureScaleParams {
   width: number;
   height: number;
+  /** the effect canvas size in element sizes, see effectScale() */
+  effectScale: { width: number; height: number };
   devicePixelRatio: number;
   maxCanvasSize: number;
   /** the most pixels to capture the element with, no limit when unset */
@@ -34,6 +33,7 @@ export function capturePixelsScale(
 export function computeCaptureScale({
   width,
   height,
+  effectScale,
   devicePixelRatio,
   maxCanvasSize,
   maxCapturePixels,
@@ -43,7 +43,7 @@ export function computeCaptureScale({
     pixelRatio,
     MAX_DEVICE_PIXEL_RATIO,
     capturePixelsScale(width, height, maxCapturePixels),
-    maxCanvasSize / Math.max(1, width * EFFECT_WIDTH_SCALE),
-    maxCanvasSize / Math.max(1, height * EFFECT_HEIGHT_SCALE)
+    maxCanvasSize / Math.max(1, width * effectScale.width),
+    maxCanvasSize / Math.max(1, height * effectScale.height)
   );
 }

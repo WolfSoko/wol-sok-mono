@@ -1,4 +1,8 @@
-import { capturePixelsScale, computeCaptureScale } from './capture-scale';
+import {
+  CaptureScaleParams,
+  capturePixelsScale,
+  computeCaptureScale,
+} from './capture-scale';
 import {
   CANVAS_MAX_PARTICLE_COUNT,
   CanvasParticleRenderer,
@@ -44,8 +48,12 @@ export interface ChooseParticleRendererParams {
 export interface ParticleRendererChoice {
   /** how many particles this renderer can handle */
   readonly maxParticleCount: number;
-  /** scale to capture an element of the given css size */
-  captureScale(width: number, height: number): number;
+  /** scale to capture an element of the given css size, see computeCaptureScale() */
+  captureScale(
+    width: number,
+    height: number,
+    effectScale: CaptureScaleParams['effectScale']
+  ): number;
   create(
     particles: Particles,
     params: ParticleRendererParams
@@ -109,10 +117,11 @@ export function chooseParticleRenderer({
   const maxCanvasSize = WebGlParticleRenderer.maxCanvasSize(gl);
   return {
     maxParticleCount,
-    captureScale: (width, height) =>
+    captureScale: (width, height, effectScale) =>
       computeCaptureScale({
         width,
         height,
+        effectScale,
         devicePixelRatio,
         maxCanvasSize,
         maxCapturePixels,

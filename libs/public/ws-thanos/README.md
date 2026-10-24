@@ -59,6 +59,7 @@ export class SharedModule {}
 | sound                | boolean |    true |                           play a windy, sandy sound while vaporizing |
 | soundVolume          | number  |     0.5 |                                      volume of the sound from 0 to 1 |
 | crumble              | string  |  shards |                   how the element breaks apart, see crumble variants |
+| windDirection        | number  |      45 |     degrees the dust blows to, clockwise from up, see wind direction |
 | preload              | boolean |    true |       warm up the effect while idle, so the first snap won't stutter |
 
 #### Sound
@@ -102,6 +103,11 @@ so the particles get coarser. `maxParticleCount` instead leaves out random pixel
 Both renderers follow it.
 The effect canvas has a `data-ws-thanos-renderer` attribute (`webgl` or `canvas`) showing which renderer is in use.
 
+#### Frame rate
+
+The effect draws one frame for every frame the screen shows (`requestAnimationFrame`), 120 per second on a 120 Hz screen,
+and looks the same at any frame rate. After a stalled frame or a hidden tab the particles carry on instead of jumping away.
+
 #### Images
 
 html2canvas captures the element, and it stretches every `<img>` over its box.
@@ -123,6 +129,22 @@ The `crumble` option decides how the element breaks apart while it vaporizes:
 The variants need WebGL2, the canvas fallback always turns into `'dust'`.
 The effect canvas shows the variant in use in its `data-ws-thanos-crumble` attribute.
 `WS_THANOS_CRUMBLES` lists all variants, e.g. to pick a random one for every snap.
+
+#### Wind direction
+
+`windDirection` turns the whole effect: the dust blows that way and the vaporizing front sweeps against it,
+so the element breaks apart on the side the dust blows to first.
+It is an angle in degrees, clockwise from up like a css gradient angle:
+`0` up, `90` right, `180` down, `270` left. The default `45` blows to the top right.
+
+```html
+<div wsThanos [wsThanosOptions]="{ windDirection: 270 }">
+  Blows away to the left
+</div>
+```
+
+The effect canvas reaches past the element where the dust flies, one element width sideways and four heights up or down.
+For a wind that blows down it reaches below the element, so near the end of the page it can make the page scroll for a moment.
 
 #### Options per element
 

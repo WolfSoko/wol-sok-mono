@@ -1,7 +1,9 @@
 import { computeCaptureScale } from './capture-scale';
+import { effectMargins, effectScale } from './wind';
 
 describe('computeCaptureScale', () => {
-  const smallCard = { width: 300, height: 400 };
+  const defaultWind = effectScale(effectMargins());
+  const smallCard = { width: 300, height: 400, effectScale: defaultWind };
 
   it('should use the device pixel ratio for crisp particles', () => {
     expect(
@@ -27,6 +29,7 @@ describe('computeCaptureScale', () => {
     const scale = computeCaptureScale({
       width: 1600,
       height: 900,
+      effectScale: defaultWind,
       devicePixelRatio: 2,
       maxCanvasSize: 16384,
       maxCapturePixels: 360_000,
@@ -64,6 +67,7 @@ describe('computeCaptureScale', () => {
     const scale = computeCaptureScale({
       width: 300,
       height: 800,
+      effectScale: defaultWind,
       devicePixelRatio: 2,
       maxCanvasSize: 4096,
     });
@@ -75,10 +79,25 @@ describe('computeCaptureScale', () => {
     const scale = computeCaptureScale({
       width: 3000,
       height: 100,
+      effectScale: defaultWind,
       devicePixelRatio: 1,
       maxCanvasSize: 4096,
     });
     expect(3000 * 2 * scale).toBeLessThanOrEqual(4096);
+  });
+
+  it('should fit the effect canvas the wind needs into the device limit', () => {
+    // dust blowing down needs room below and to both sides
+    const blowingDown = effectScale(effectMargins(180));
+    const scale = computeCaptureScale({
+      width: 1000,
+      height: 800,
+      effectScale: blowingDown,
+      devicePixelRatio: 2,
+      maxCanvasSize: 4096,
+    });
+    expect(800 * blowingDown.height * scale).toBeLessThanOrEqual(4096);
+    expect(1000 * blowingDown.width * scale).toBeLessThanOrEqual(4096);
   });
 
   it('should fall back to 1 for an unknown device pixel ratio', () => {

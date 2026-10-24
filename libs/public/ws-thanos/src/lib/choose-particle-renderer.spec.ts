@@ -7,6 +7,7 @@ import {
   GpuContextBudget,
 } from './choose-particle-renderer';
 import { createParticles, Particles } from './particles';
+import { effectMargins, effectScale, windOf } from './wind';
 import { WebGlParticleRenderer } from './webgl/webgl-particle-renderer';
 
 /** a WebGL2 context that answers every call, enough to set up the renderer */
@@ -44,7 +45,14 @@ function fakeCanvas(contexts: {
   return canvas;
 }
 
-const fake2d = { canvas: {} } as CanvasRenderingContext2D;
+const fake2d = {
+  canvas: {},
+  createImageData: (width: number, height: number) => ({
+    width,
+    height,
+    data: new Uint8ClampedArray(width * height * 4),
+  }),
+} as unknown as CanvasRenderingContext2D;
 const particles = createParticles(
   {
     width: 1,
@@ -52,7 +60,7 @@ const particles = createParticles(
     data: new Uint8ClampedArray([1, 2, 3, 255]),
   } as ImageData,
   10,
-  5
+  { x: 0, y: 4 }
 );
 const rendererParams = {
   width: 2,
@@ -61,7 +69,10 @@ const rendererParams = {
   pixelScale: 1,
   crumble: 'shards' as const,
   seed: 1,
+  wind: windOf(),
+  front: { originX: 0, originY: 4, reach: 5 },
 };
+const defaultEffectScale = effectScale(effectMargins());
 
 describe('chooseParticleRenderer', () => {
   describe('without WebGL2', () => {
@@ -80,7 +91,7 @@ describe('chooseParticleRenderer', () => {
     });
 
     it('should capture at css pixels to keep the CPU work low', () => {
-      expect(choose().captureScale(300, 400)).toBe(1);
+      expect(choose().captureScale(300, 400, defaultEffectScale)).toBe(1);
     });
 
     it('should capture a big element with fewer than css pixels within the max capture pixels', () => {
@@ -90,8 +101,10 @@ describe('chooseParticleRenderer', () => {
         maxCapturePixels: 360_000,
         createCanvas: () => fakeCanvas({ '2d': fake2d }),
       });
-      expect(choice.captureScale(1600, 900)).toBeCloseTo(0.5);
-      expect(choice.captureScale(300, 400)).toBe(1);
+      expect(choice.captureScale(1600, 900, defaultEffectScale)).toBeCloseTo(
+        0.5
+      );
+      expect(choice.captureScale(300, 400, defaultEffectScale)).toBe(1);
     });
 
     it('should cap the particles to what the CPU can handle', () => {
@@ -120,9 +133,11 @@ describe('chooseParticleRenderer', () => {
     });
 
     it('should capture at device pixels within the GPU canvas limit', () => {
-      expect(choose().captureScale(300, 400)).toBe(2);
+      expect(choose().captureScale(300, 400, defaultEffectScale)).toBe(2);
       // 4096 / (800 * 5)
-      expect(choose().captureScale(300, 800)).toBeCloseTo(1.024);
+      expect(choose().captureScale(300, 800, defaultEffectScale)).toBeCloseTo(
+        1.024
+      );
     });
 
     it('should capture within the max capture pixels', () => {
@@ -132,7 +147,9 @@ describe('chooseParticleRenderer', () => {
         maxCapturePixels: 360_000,
         createCanvas: () => fakeCanvas({ webgl2: fakeWebGl2(), '2d': fake2d }),
       });
-      expect(choice.captureScale(1600, 900)).toBeCloseTo(0.5);
+      expect(choice.captureScale(1600, 900, defaultEffectScale)).toBeCloseTo(
+        0.5
+      );
     });
 
     it('should fall back to the canvas renderer when the GPU setup fails', () => {
@@ -197,7 +214,7 @@ describe('chooseParticleRenderer', () => {
         data: new Uint8ClampedArray(size * size * 4).fill(255),
       } as ImageData,
       size * size,
-      size * 5
+      { x: 0, y: size * 4 }
     );
     const brokenGl = fakeWebGl2({ getShaderParameter: () => false });
 
