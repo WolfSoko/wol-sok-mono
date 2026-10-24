@@ -90,5 +90,11 @@ export const newGame: Translation<typeof en> = {
       difficultyLabel: 'Schwierigkeit des generierten Levels',
       generate: 'Generieren',
     },
+    /** Das Vorschaubild eines Levels. */
+    preview: {
+      alt: 'Karte von {title}',
+      size: '{size}× Karte',
+      sizeLabel: 'Eine Karte, {size}-mal so groß wie der Bildschirm',
+    },
   },
 };

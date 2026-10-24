@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.63.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.62.0...v74.63.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** evolution (genes + weapons), level previews, more big levels ([#2593](https://github.com/WolfSoko/wol-sok-mono/issues/2593)) ([f73e290](https://github.com/WolfSoko/wol-sok-mono/commit/f73e290977e57604f4ac62e1f602cfe8ac3f376e))
+
+## [74.62.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.61.0...v74.62.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ My Colony screen with a skin gallery of live previews ([#2597](https://github.com/WolfSoko/wol-sok-mono/issues/2597)) ([8e6bbd0](https://github.com/WolfSoko/wol-sok-mono/commit/8e6bbd0f36c8b14fee0ba7194f167c0c8e5ecd2b))
+
+## [74.61.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.60.0...v74.61.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ bubbles look with DNA snippets; fix stray cells along the other colony's box ([#2595](https://github.com/WolfSoko/wol-sok-mono/issues/2595)) ([ab2126f](https://github.com/WolfSoko/wol-sok-mono/commit/ab2126f3576e19bbb2493c1e4cee2479ff47984c)), closes [#2590](https://github.com/WolfSoko/wol-sok-mono/issues/2590)
+
+## [74.60.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.59.0...v74.60.0) (2026-10-23)
+
+### Features
+
+* **bacteria-game-remote:** ✨ install banner, legal footer and Impressum on the game's site ([#2591](https://github.com/WolfSoko/wol-sok-mono/issues/2591)) ([96a7d6a](https://github.com/WolfSoko/wol-sok-mono/commit/96a7d6a2633c013d7c6fee36681158cded44ca3e))
+* **feat-lazy-bacteria-game:** ✨ five new bacteria skins - cells, honeycomb, crystal, neon and ink ([#2590](https://github.com/WolfSoko/wol-sok-mono/issues/2590)) ([c9f05a8](https://github.com/WolfSoko/wol-sok-mono/commit/c9f05a8f45252cd0aa14a9c3a756857338189d29))
+
+## [74.59.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.58.0...v74.59.0) (2026-10-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** replay v2 for the server — wave 2 of ADR 0011/0012 ([#2592](https://github.com/WolfSoko/wol-sok-mono/issues/2592)) ([1bd7d0c](https://github.com/WolfSoko/wol-sok-mono/commit/1bd7d0cc16aad71e026a4dc83b3ca3c29e709c03))
+* **ws-thanos:** ✨ keep images in shape when they vaporize, new tech tiles ([#2589](https://github.com/WolfSoko/wol-sok-mono/issues/2589)) ([83db2ee](https://github.com/WolfSoko/wol-sok-mono/commit/83db2eedc17fffdf880d3e22000bf8113cf27725))
+
+### Chore
+
+* **release:** publish ([d39183d](https://github.com/WolfSoko/wol-sok-mono/commit/d39183dfc16bc7a42104c15873e3b41cc5da4a24))
+
 ## [74.58.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.57.0...v74.58.0) (2026-10-23)
 
 ### Features

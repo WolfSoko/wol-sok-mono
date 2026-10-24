@@ -27,6 +27,10 @@ export const levels = {
     quarantine: 'Quarantine',
     'feeding-ground': 'Feeding Ground',
     expanse: 'Expanse',
+    archipelago: 'Archipelago',
+    bloodstream: 'Bloodstream',
+    'root-network': 'Root Network',
+    leviathan: 'Leviathan',
   },
   descriptions: {
     'petri-dish':
@@ -69,6 +73,14 @@ export const levels = {
       'Food everywhere and colonies too sluggish to fight. The first to eat up 40 pellets wins - a pellet goes to whoever ate the most of it.',
     expanse:
       'Four times the room, strewn with rocks, and two grey colonies to feed on. The camera follows you - zoom out with the mouse wheel to find the enemy. Biggest colony after four minutes wins.',
+    archipelago:
+      'Islands in a sea of antibiotic, linked by narrow bridges. Hold the white zone on the island in the middle for forty seconds - the way there leads over the islands to the north and the south.',
+    bloodstream:
+      'Three vessels side by side, a heart beating between you and the enemy - every beat squeezes the way past it. Valves that take turns to open and pinch shut lead out into the outer vessels, hot by the heart and icy at the far ends. Biggest colony after four minutes wins.',
+    'root-network':
+      'A cave of pillars, overgrown with fungal threads. Two grey colonies sit in hollows on golden agar, more agar lies in pockets along the way. Biggest colony after three minutes wins.',
+    leviathan:
+      'Something four times your size lives down in the abyss - it divides faster, hits harder and boosts more often. Keep your colony alive for two and a half minutes, or wipe the leviathan out.',
   },
   chapters: {
     petri: {
@@ -94,7 +106,8 @@ export const levels = {
     },
     expanse: {
       name: 'Expanse',
-      blurb: 'Maps bigger than the screen - the camera follows your colony.',
+      blurb:
+        'Maps bigger than the screen - the camera follows you over islands, vessels and caves to the leviathan.',
     },
   },
   /** How a level is won, in a few words - none for annihilation. */

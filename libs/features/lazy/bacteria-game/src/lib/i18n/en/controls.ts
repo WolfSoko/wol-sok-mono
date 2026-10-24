@@ -12,6 +12,18 @@ export const controls = {
     recharge: 'Boost recharge',
     share: 'Share of all bacteria',
   },
+  /*
+   * The keys that fire a weapon. Only a match against the computer arms
+   * anyone, so they fire the one weapon at the screen:
+   * "In a match against the computer, E or the right Shift fires your weapon."
+   */
+  weaponKeys: {
+    before: 'In a match against the computer,',
+    e: 'E',
+    or: 'or the',
+    shift: 'right Shift',
+    after: 'fires your weapon.',
+  },
   colors: {
     left: 'Left player',
     right: 'Right player',

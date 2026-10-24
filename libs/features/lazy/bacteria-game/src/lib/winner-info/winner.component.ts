@@ -45,6 +45,9 @@ import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
 import { BOSS_SEAT, EndReason } from '../state/win-conditions';
 import { SocialService } from '../social/social.service';
+import { EvolutionService } from '../evolution.service';
+import { DnaHelixComponent } from '../menu/dna-helix.component';
+import { dnaEarned } from '../state/evolution';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =
@@ -54,7 +57,9 @@ export type MatchEndAction =
   | 'menu'
   | 'ghost'
   // On with the endless run - or a new one, once it is over.
-  | 'endless';
+  | 'endless'
+  // To the Evolution screen, to spend the DNA the match earned.
+  | 'evolve';
 
 /**
  * The screen a match ends on: who won, and what to play next. It sits in the
@@ -65,6 +70,7 @@ export type MatchEndAction =
   selector: 'feat-lazy-bac-game-winner',
   imports: [
     DatePipe,
+    DnaHelixComponent,
     GameTextPipe,
     MatButtonModule,
     MatIconModule,
@@ -402,6 +408,28 @@ export class WinnerComponent {
           : xpClimb(earnings.xpBefore, earnings.xp.total),
     };
   });
+
+  private readonly evolution = inject(EvolutionService);
+
+  /**
+   * The strands of DNA the match's XP grew, null where what was held before
+   * is not known - or where it grew none.
+   */
+  public readonly dna = computed(() => {
+    const earnings = this.earnings();
+    if (earnings === null || earnings.xpBefore === null) {
+      return null;
+    }
+    const before = earnings.xpBefore;
+    const gained = dnaEarned(before + earnings.xp.total) - dnaEarned(before);
+    return gained > 0 ? gained : null;
+  });
+
+  /** True when the DNA left buys something: the way to the Evolution screen. */
+  public readonly canEvolve = computed(
+    () =>
+      this.earnings() !== null && !this.online() && this.evolution.canEvolve()
+  );
 
   /** The medallion line of the award: what was won, or that nothing was. */
   public medalTitle: Signal<string> = computed(() => {

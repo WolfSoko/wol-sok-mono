@@ -8,7 +8,7 @@ import { getLevel, LEVELS, levelCrosshairSpeed } from './levels';
 import { PlayerStore } from './player.store';
 import { ANNIHILATION, judgeOutcome } from './win-conditions';
 import { PlayerService } from './player.service';
-import { playReplay, Replay, REPLAY_VERSION, replayOf } from './replay';
+import { playReplay, Replay, replayOf, REPLAY_VERSION } from './replay';
 import { replayLink } from './replay-link';
 import { signal } from '@angular/core';
 import { Subject } from 'rxjs';
@@ -314,7 +314,7 @@ describe('GameStateService', () => {
       },
       'cpu',
       120,
-      { steers: [[0, 0, 1, 0]], drags: [], boosts: [] }
+      { steers: [[0, 0, 1, 0]], drags: [], boosts: [], weapons: [] }
     );
 
     async function hashOf(replay: Replay): Promise<string> {

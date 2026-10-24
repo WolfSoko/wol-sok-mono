@@ -27,6 +27,10 @@
     <h1 class="title">Bacteria <span class="war">Wars</span></h1>
     <p class="tagline">{{ "menu.tagline" | t: { levels: totalLevels } }}</p>
 
+    @if (installOffer.visible()) {
+      <feat-lazy-bac-game-install-banner />
+    }
+
     @if (challenge(); as level) {
       <feat-lazy-bac-game-ghost-challenge
         [level]="level"
@@ -50,9 +54,29 @@
     </div>
 
     <nav class="tiles" [attr.aria-label]="'menu.more' | t">
+      <button type="button" class="tile" (click)="open.emit('colony')">
+        <mat-icon class="player">bubble_chart</mat-icon>
+        {{ "colony.title" | t }}
+      </button>
       <button type="button" class="tile" (click)="open.emit('profile')">
         <mat-icon class="gold">person</mat-icon>
         {{ "profile.title" | t }}
+      </button>
+      <button
+        type="button"
+        class="tile evolve"
+        [class.ready]="evolveDna() > 0"
+        (click)="open.emit('evolution')"
+      >
+        <feat-lazy-bac-game-dna-helix class="tile-helix" [size]="26" />
+        {{ "evolution.menu.tile" | t }}
+        @if (evolveDna() > 0) {
+          @let count = evolveDna();
+          <span class="count" aria-hidden="true">{{ count }}</span>
+          <span class="cdk-visually-hidden">{{
+            "evolution.menu.ready" | t: { count }
+          }}</span>
+        }
       </button>
       @if (friendsAvailable()) {
         <button type="button" class="tile" (click)="open.emit('friends')">
@@ -154,3 +178,7 @@
     </button>
   </aside>
 </div>
+
+@if (onSite) {
+  <feat-lazy-bac-game-site-footer />
+}

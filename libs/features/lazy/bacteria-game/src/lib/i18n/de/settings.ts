@@ -3,19 +3,10 @@ import type { settings as en } from '../en/settings';
 
 export const settings: Translation<typeof en> = {
   title: 'Einstellungen',
-  colonies: {
-    title: 'Kolonien',
-    swapNote: 'Wählst du die Farbe der anderen Kolonie, tauschen die beiden.',
-  },
   display: {
     title: 'Darstellung',
     arena: 'Arena',
     ownArena: 'Jedes Level seine eigene',
-    look: 'Aussehen der Bakterien',
-    looks: {
-      slime: 'Schleim',
-      pixels: 'Pixel',
-    },
     simResolution: 'Simulationsauflösung',
     simResolutions: {
       low: 'Niedrig',

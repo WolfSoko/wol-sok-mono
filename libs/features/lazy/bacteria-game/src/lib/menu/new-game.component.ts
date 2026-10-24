@@ -28,6 +28,7 @@ import {
   seriesKey,
   zoneKey,
 } from '../i18n/game-texts';
+import { EvolutionService } from '../evolution.service';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { BASE_ARENA } from '../state/arena-size';
@@ -41,6 +42,7 @@ import {
   Level,
   LEVELS,
   levelMap,
+  levelSize,
 } from '../state/levels';
 import { mapZones } from '../state/zones';
 import { Progress } from '../state/progress';
@@ -52,6 +54,8 @@ import {
 } from '../state/rivalry';
 import { winRuleOf } from '../state/win-conditions';
 import { LevelMapComponent } from './level-map.component';
+import { LevelPreviewComponent } from './level-preview.component';
+import { LevelPreviewService } from './level-preview.service';
 import { OnlineLobbyComponent } from './online-lobby.component';
 import { IDLE_LOBBY, OnlineLobby } from '../net/online-match.service';
 import {
@@ -83,6 +87,7 @@ import { ScreenHeaderComponent } from './screen-header.component';
   selector: 'feat-lazy-bac-game-new-game',
   imports: [
     LevelMapComponent,
+    LevelPreviewComponent,
     MatButtonModule,
     MatButtonToggleModule,
     MatIconModule,
@@ -98,6 +103,13 @@ import { ScreenHeaderComponent } from './screen-header.component';
 })
 export class NewGameComponent {
   private readonly i18n = inject(I18nService);
+  /** True where the briefing shows a picture of the level's map. */
+  protected readonly previews = inject(LevelPreviewService).supported;
+  /**
+   * False for the few moments after the app opened or a sign-in, until the
+   * storage told what the player evolved - Start waits for it.
+   */
+  protected readonly startReady = inject(EvolutionService).settled;
 
   /** The mode and the step the screen opens on. */
   public readonly entry = input<NewGameEntry>({ kind: null, step: 'mode' });
@@ -213,7 +225,9 @@ export class NewGameComponent {
     const level = getLevel(id);
     const made = parseGeneratedId(id);
     return {
+      id,
       level,
+      size: levelSize(level),
       // The ladder's number and name, or what was rolled.
       kicker: this.text(
         made === null

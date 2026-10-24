@@ -1,12 +1,15 @@
 import type { game as gameTexts } from '../i18n/en/game';
+import { clamp } from './geometry';
 
 /** The id of a rank, as the dictionaries list it. */
 export type RankId = keyof typeof gameTexts.ranks;
 
 /**
  * The ranks XP climbs, named after microbiology, from a dormant spore to a
- * bacterium nothing can stop. XP never unlocks gameplay - a rank is only
- * shown.
+ * bacterium nothing can stop. A rank itself is only shown, but the XP
+ * behind it does unlock gameplay: it earns the DNA the colony evolves with
+ * (`dnaEarned` in evolution.ts, ADR 0013), priced so that everything is
+ * bred about when the top rank is reached.
  */
 export interface Rank {
   /** The rank's id in the dictionaries. */
@@ -50,9 +53,7 @@ export function rankFor(xp: number): RankStanding {
     number: Math.max(0, index) + 1,
     next,
     progress:
-      next === null
-        ? 1
-        : Math.min(1, Math.max(0, (xp - rank.xp) / (next.xp - rank.xp))),
+      next === null ? 1 : clamp((xp - rank.xp) / (next.xp - rank.xp), 0, 1),
     toNext: next === null ? null : next.xp - xp,
   };
 }

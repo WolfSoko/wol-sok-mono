@@ -64,6 +64,8 @@ import { replayFromHash } from './replay-link';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
+import { EvolutionService } from '../evolution.service';
+import { PLAIN_LOADOUT } from './evolution';
 import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
@@ -125,6 +127,7 @@ export class GameStateService {
   private playerStore = inject(PlayerStore);
   private playerService = inject(PlayerService);
   private progress = inject(ProgressService);
+  private evolution = inject(EvolutionService);
   private online = inject(OnlineMatchService);
   /**
    * Asked for `GameReplays` only once a match is kept: asked any earlier,
@@ -141,6 +144,8 @@ export class GameStateService {
   private samples: SizeSample[] = [];
   /** What the colonies on the board were spawned from - see `initPlayers`. */
   private plan: MatchPlan | null = null;
+  /** True when evolution plays a part in that match - `planMatch` says. */
+  private planEvolved = false;
   /** Frames in a row an online match could not go on, waiting for the other device. */
   private stalledFrames = 0;
   /**
@@ -429,7 +434,8 @@ export class GameStateService {
                   outcome: end,
                   checksum: matchChecksum(this.playerService.players),
                 }),
-          }
+          },
+          this.planEvolved
         );
   }
 
@@ -578,8 +584,7 @@ export class GameStateService {
     } = this.gameStateStore.snapshot();
     this.plan = {
       levelId: matchLevel ?? levelId,
-      // A level picked for the match is fought against the computer.
-      mode: matchLevel === null ? mode : 'vs-computer',
+      mode: planModeOf(mode, matchLevel),
       difficulty,
       colors,
       headStart,
@@ -587,7 +592,13 @@ export class GameStateService {
       height,
       seed: ghost?.header.seed ?? randomSeed(),
     };
-    const { spawns, options } = planMatch(this.plan, ghost);
+    // Taken as the colonies spawn: the plan keeps it for the whole match,
+    // whatever the storage or the player change meanwhile.
+    if (this.evolves()) {
+      this.plan.loadouts = [untracked(this.evolution.loadout), PLAIN_LOADOUT];
+    }
+    const { spawns, options, evolved } = planMatch(this.plan, ghost);
+    this.planEvolved = evolved;
     const records = this.recordsLocal(this.plan, ghost);
     this.recordedAs = records ? 'local' : null;
     this.onlineRef = null;
@@ -598,6 +609,23 @@ export class GameStateService {
       // Recorded on the CPU, the simulation a replay plays back on.
       ...(records ? { recordedSeats: LOCAL_RECORDED_SEATS } : {}),
     });
+  }
+
+  /**
+   * True when the next match is one the evolution plays in: against the
+   * computer or a ghost on the ladder or a generated level - see
+   * `evolution.ts`. The daily level and endless runs feed the leaderboards
+   * and stay plain, as do couch and online matches.
+   */
+  private evolves(): boolean {
+    const { online, mode, matchLevel, dailyDay, endlessMatch } =
+      this.gameStateStore.snapshot();
+    return (
+      online === null &&
+      planModeOf(mode, matchLevel) === 'vs-computer' &&
+      dailyDay === null &&
+      !endlessMatch
+    );
   }
 
   /**
@@ -623,10 +651,11 @@ export class GameStateService {
       height,
       seed: match?.seed ?? 0,
     };
-    const { spawns, options } = planMatch(this.plan, null, {
+    const { spawns, options, evolved } = planMatch(this.plan, null, {
       seat: online.seat,
       drivers: match?.lockstep.drivers() ?? new Map(),
     });
+    this.planEvolved = evolved;
     // Every online match is recorded - both seats, as the lockstep played.
     this.recordedAs = match === undefined ? null : 'online';
     this.samples = [];
@@ -854,7 +883,21 @@ export class GameStateService {
     this.playerService.boost(playerId);
   }
 
-  start() {
+  /** Fires a player's weapon - the button equivalent of its key. */
+  public fireWeapon(playerId: number): void {
+    if (!this.isRunning()) {
+      return;
+    }
+    this.playerService.fireWeapon(playerId);
+  }
+
+  /**
+   * Starts the match, with what the player evolved as it is known now: the
+   * match never waits on storage, and once it runs its loadouts are fixed.
+   * The new game's Start waits for the evolution instead - see
+   * `EvolutionService.settled`.
+   */
+  start(): void {
     const { online, dailyDay } = this.gameStateStore.snapshot();
     if (online !== null) {
       const match = this.onlineMatch(online);
@@ -1027,3 +1070,11 @@ const SERIES_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
   'seriesLength',
   'headStart',
 ];
+
+/**
+ * The mode a match is planned in: a level picked for the match is fought
+ * against the computer, whatever the mode set.
+ */
+function planModeOf(mode: GameMode, matchLevel: string | null): GameMode {
+  return matchLevel === null ? mode : 'vs-computer';
+}

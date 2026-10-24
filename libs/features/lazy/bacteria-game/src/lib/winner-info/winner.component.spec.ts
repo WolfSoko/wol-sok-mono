@@ -264,7 +264,7 @@ describe('WinnerComponent', () => {
         simulation: 'cpu' as const,
         ticks: 600,
       },
-      inputs: { steers: [], drags: [], boosts: [] },
+      inputs: { steers: [], drags: [], boosts: [], weapons: [] },
     };
 
     function ghostButton(): HTMLButtonElement | undefined {

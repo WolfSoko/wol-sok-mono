@@ -13,8 +13,6 @@ describe('SettingsComponent', () => {
 
   async function render() {
     const fixture = TestBed.createComponent(SettingsComponent);
-    fixture.componentRef.setInput('mode', 'vs-computer');
-    fixture.componentRef.setInput('colors', ['orange', 'blue']);
     fixture.componentRef.setInput('arenaSize', { width: 1280, height: 720 });
     await fixture.whenStable();
     const loader = TestbedHarnessEnvironment.loader(fixture);

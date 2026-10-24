@@ -3,6 +3,7 @@ import {
   BotController,
   BotDifficulty,
   BotView,
+  BotWeaponView,
   ColonyView,
   neutralFood,
   straightRoutes,
@@ -28,6 +29,7 @@ function view(overrides: Partial<BotView> = {}): BotView {
     boostReady: true,
     objective: null,
     routes: straightRoutes(overrides.own ?? colony(80, 70, 100)),
+    weapon: null,
     ...overrides,
   };
 }
@@ -58,6 +60,18 @@ describe('BotController', () => {
 
     expect(controller.decide(view(), 0.1).target).toBeNull();
     expect(controller.decide(view(), 1).target).not.toBeNull();
+  });
+
+  it('says when it waits, so no view is built for a tick it waits out', () => {
+    const waiting = bot('normal');
+    const deciding = bot('normal');
+    waiting.decideNow(view());
+    deciding.decide(view(), 1 / 60);
+
+    expect(waiting.waits(0.1)).toBe(true);
+    expect(waiting.waits(1)).toBe(false);
+    deciding.decide(view(), 0.1);
+    expect(waiting.decideNow(view())).toEqual(deciding.decide(view(), 1));
   });
 
   it('attacks the enemy centre of mass once it is clearly stronger', () => {
@@ -203,7 +217,11 @@ describe('BotController', () => {
       1
     );
 
-    expect(boss).toEqual({ target: { x: 240, y: 70 }, boost: true });
+    expect(boss).toEqual({
+      target: { x: 240, y: 70 },
+      boost: true,
+      weapon: false,
+    });
     // A plain bot retreats, and an easy boss never boosts.
     expect(plain.boost).toBe(false);
     expect(easyBoss.boost).toBe(false);
@@ -276,7 +294,7 @@ describe('BotController', () => {
   it('does nothing once its colony is gone', () => {
     const decision = bot('hard').decide(view({ own: colony(0, 0, 0) }), 1);
 
-    expect(decision).toEqual({ target: null, boost: false });
+    expect(decision).toEqual({ target: null, boost: false, weapon: false });
   });
 
   describe('easy', () => {
@@ -350,6 +368,110 @@ describe('BotController', () => {
 
       expect(decision.boost).toBe(false);
     });
+  });
+});
+
+describe('BotController with a weapon', () => {
+  /** A weapon of 10 cells - a circle of about 314 - with what is round it. */
+  function weapon(
+    id: BotWeaponView['id'],
+    around: { own: number; enemy: number },
+    ready = true
+  ): BotWeaponView {
+    return { id, ready, radius: 10, around: () => around };
+  }
+
+  it.each<BotWeaponView['id']>(['toxin-bomb', 'cryo-pulse', 'phage-strike'])(
+    'fires %s once enough enemies are round its crosshair',
+    (id) => {
+      const crowd = bot('hard').decide(
+        view({ weapon: weapon(id, { own: 0, enemy: 200 }) }),
+        1
+      );
+      const few = bot('hard').decide(
+        view({ weapon: weapon(id, { own: 0, enemy: 20 }) }),
+        1
+      );
+
+      expect(crowd.weapon).toBe(true);
+      expect(few.weapon).toBe(false);
+    }
+  );
+
+  it('waits for a fatter target the easier it is set', () => {
+    const around = { own: 0, enemy: 80 };
+
+    expect(
+      bot('hard').decide(view({ weapon: weapon('toxin-bomb', around) }), 1)
+        .weapon
+    ).toBe(true);
+    expect(
+      bot('easy').decide(view({ weapon: weapon('toxin-bomb', around) }), 1)
+        .weapon
+    ).toBe(false);
+  });
+
+  it('blooms agar over a crowd of its own', () => {
+    expect(
+      bot('hard').decide(
+        view({ weapon: weapon('agar-bloom', { own: 200, enemy: 0 }) }),
+        1
+      ).weapon
+    ).toBe(true);
+    expect(
+      bot('hard').decide(
+        view({ weapon: weapon('agar-bloom', { own: 0, enemy: 200 }) }),
+        1
+      ).weapon
+    ).toBe(false);
+  });
+
+  it('shields its colony when it is losing a fight', () => {
+    const shield = weapon('biofilm-shield', { own: 0, enemy: 0 });
+    const losing = view({
+      own: colony(200, 70, 80),
+      enemy: colony(240, 70, 120),
+      weapon: shield,
+    });
+    const winning = view({
+      own: colony(200, 70, 150),
+      enemy: colony(240, 70, 120),
+      weapon: shield,
+    });
+    const apart = view({
+      own: colony(20, 70, 80),
+      enemy: colony(300, 70, 120),
+      weapon: shield,
+    });
+
+    expect(bot('normal').decide(losing, 1).weapon).toBe(true);
+    expect(bot('normal').decide(winning, 1).weapon).toBe(false);
+    expect(bot('normal').decide(apart, 1).weapon).toBe(false);
+  });
+
+  it('holds fire while the weapon recharges, and between decisions', () => {
+    const controller = bot('hard');
+    const loaded = view({
+      weapon: weapon('toxin-bomb', { own: 0, enemy: 300 }),
+    });
+
+    expect(
+      controller.decide(
+        view({ weapon: weapon('toxin-bomb', { own: 0, enemy: 300 }, false) }),
+        1
+      ).weapon
+    ).toBe(false);
+    expect(controller.decide(loaded, 0.01).weapon).toBe(false);
+  });
+
+  it('decides as a plain bot does, weapon or not, but for the shot', () => {
+    const plain = bot('hard').decide(view(), 1);
+    const armed = bot('hard').decide(
+      view({ weapon: weapon('toxin-bomb', { own: 0, enemy: 300 }) }),
+      1
+    );
+
+    expect(armed).toEqual({ ...plain, weapon: true });
   });
 });
 

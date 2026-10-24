@@ -27,6 +27,7 @@
     />
     <div
       class="seat"
+      [class.armed]="colony.weapon !== null"
       [attr.inert]="screenOpen() ? '' : null"
       [style.grid-area]="'boost-' + seat"
       [attr.data-seat]="seat"
@@ -36,6 +37,14 @@
         [disabled]="!running()"
         (boost)="boost(colony.id)"
       />
+      @if (colony.weapon; as weapon) {
+        <feat-lazy-bac-game-weapon-pad
+          [weapon]="weapon"
+          [disabled]="!running()"
+          [over]="matchOver()"
+          (fire)="fireWeapon(colony.id)"
+        />
+      }
     </div>
   }
 
@@ -138,6 +147,7 @@
               [challenge]="challengeLevel()"
               [friendsAvailable]="social.available"
               [friendRequests]="social.requests().length"
+              [evolveDna]="evolution.canEvolve() ? evolution.dna() : 0"
               (fightChallenge)="fightChallenge()"
               (dismissChallenge)="dismissChallenge()"
             />
@@ -171,6 +181,17 @@
               (back)="show('menu')"
             />
           }
+          @case ("colony") {
+            <feat-lazy-bac-game-my-colony
+              class="screen"
+              [mode]="mode()"
+              [colors]="colors()"
+              [locked]="running()"
+              [colorLocks]="colorLocks()"
+              (colorChange)="selectColor($event)"
+              (back)="show('menu')"
+            />
+          }
           @case ("profile") {
             <feat-lazy-bac-game-profile
               class="screen"
@@ -192,23 +213,26 @@
           @case ("settings") {
             <feat-lazy-bac-game-settings
               class="screen"
-              [mode]="mode()"
-              [colors]="colors()"
               [locked]="running()"
               [arenaSize]="arena()"
               [nativeFullscreenSupported]="nativeFullscreenSupported()"
               [nativeFullscreen]="nativeFullscreen()"
               [backLabel]="settingsBackLabel()"
               [vibrationSupported]="vibrationSupported"
-              (colorChange)="selectColor($event)"
               (soundChange)="setSound($event)"
               (effectsChange)="setEffects($event)"
               (effectsVolumePreview)="sound.previewEffects()"
               (vibrationChange)="setVibration($event)"
-              [colorLocks]="colorLocks()"
               [arenaLocks]="arenaLocks()"
               [activeArena]="campaign.activeArena()"
               (nativeFullscreenChange)="setNativeFullscreen($event)"
+              (back)="show('menu')"
+            />
+          }
+          @case ("evolution") {
+            <feat-lazy-bac-game-evolution
+              class="screen"
+              [color]="colonyRgb()[0]"
               (back)="show('menu')"
             />
           }

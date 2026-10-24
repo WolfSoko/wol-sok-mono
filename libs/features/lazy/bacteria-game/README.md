@@ -81,10 +81,16 @@ The stage opens on the menu screens ([`menu/`](./src/lib/menu)), which fill
 it, opaque, over a swarm of bacteria drifting in the players' colours (plain
 CSS animation, still for players who ask for less motion):
 
-- **Main menu** - the title, _New game_, the way to Profile, Settings and
-  How to play, and a card with the campaign so far: levels open, medallions
-  per metal and _Continue the campaign_, which starts the furthest open
-  level right away.
+- **Main menu** - the title, _New game_, the way to My Colony, Profile,
+  Settings and How to play, and a card with the campaign so far: levels
+  open, medallions per metal and _Continue the campaign_, which starts the
+  furthest open level right away.
+- **My Colony** ([`my-colony.component.ts`](./src/lib/menu/my-colony.component.ts)) -
+  the player's colony as it will look in the dish, drawn by the game's own
+  painter ([`look-preview.ts`](./src/lib/arena/look-preview.ts)), the skin
+  it wears - a gallery of every look, each on a sample colony in the
+  player's colour - and the colonies' colours. More of the colony is to be
+  shaped here in time.
 - **New game** ([`new-game.component.ts`](./src/lib/menu/new-game.component.ts)) -
   a Material stepper that goes through only the steps the mode picked needs
   ([`play-modes.ts`](./src/lib/menu/play-modes.ts)):
@@ -115,7 +121,7 @@ CSS animation, still for players who ask for less motion):
 
 - **Profile** - levels won, medallions per metal and every medallion level by
   level.
-- **Settings** - colony colours, how the bacteria look, the two resolutions,
+- **Settings** - the two resolutions,
   sound with music and effects switched and set in volume on their own,
   vibration where the device can, the frame rate badge and browser
   fullscreen.

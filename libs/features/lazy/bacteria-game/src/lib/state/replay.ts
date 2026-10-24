@@ -1,10 +1,12 @@
 import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
 import { BotDifficulty, difficultyOption } from './bot-controller';
 import { matchChecksum } from './checksum';
+import { isDailyLevelId } from './daily';
+import { isWeaponId, Loadout, parseGeneLevels } from './evolution';
 import { validColorPair } from './colony-colors';
 import { TICKS_PER_SEC } from './fixed-tick';
 import { BALANCE_VERSION } from './game-balance';
-import { isObject } from './is-object';
+import { isInteger, isObject } from './is-object';
 import { getLevel, isLevelId, levelSize } from './levels';
 import { isGameMode } from './game-mode';
 import { GhostController } from './ghost';
@@ -22,16 +24,67 @@ import { EndReason, MatchOutcome } from './win-conditions';
 /**
  * The format of a replay - a new one for every change old ones cannot follow.
  * Version 2 (ADR 0011) is the one that is stored and checked: CPU matches
- * only, with seats, outcome and checksum in the header.
+ * only, with seats, outcome and checksum in the header. It is always plain:
+ * no loadouts, no weapons fired - see {@link EVOLVED_REPLAY_VERSION}.
  */
 export const REPLAY_VERSION = 2;
 
 /**
+ * The format of a replay with evolution in it (ADR 0013): version 2 plus
+ * the seats' `loadouts` in the header and the weapons fired in the inputs.
+ * A replay takes it only when loadouts change the match (a gene, a weapon,
+ * or a boss they arm) or a weapon was fired; a plain match keeps version 2
+ * or 1. A client or a server from before evolution would drop both and
+ * play another match - with a version of its own, it refuses the replay
+ * instead. Unlike version 2 it may come from a match the GPU ran, good for
+ * a ghost race only, as version 1 is.
+ */
+export const EVOLVED_REPLAY_VERSION = 3;
+
+/**
  * The first format, still read for the ghost links in the wild - and still
- * written for a match the GPU ran, which version 2 does not take but a ghost
- * race can still play against.
+ * written for a plain match the GPU ran, which version 2 does not take but
+ * a ghost race can still play against. Always plain.
  */
 export const GHOST_REPLAY_VERSION = 1;
+
+/** What a version of the format may hold, and what it is good for. */
+interface VersionRules {
+  /** True when it may carry loadouts and weapons fired. */
+  evolved: boolean;
+  /** The simulations it may come from. */
+  simulations: readonly ReplayHeader['simulation'][];
+  /** True when `playReplay` plays it again - from the CPU only. */
+  playable: boolean;
+  /** True when the stored parse takes it - from the CPU only. */
+  storable: boolean;
+}
+
+/** The rules of each version this client reads - see the versions above. */
+const VERSIONS: ReadonlyMap<unknown, VersionRules> = new Map([
+  [
+    GHOST_REPLAY_VERSION,
+    {
+      evolved: false,
+      simulations: ['cpu', 'gpu'],
+      playable: false,
+      storable: false,
+    },
+  ],
+  [
+    REPLAY_VERSION,
+    { evolved: false, simulations: ['cpu'], playable: true, storable: true },
+  ],
+  [
+    EVOLVED_REPLAY_VERSION,
+    {
+      evolved: true,
+      simulations: ['cpu', 'gpu'],
+      playable: true,
+      storable: true,
+    },
+  ],
+]);
 
 /** The biggest grid a replay may ask for, in cells per side. */
 const MAX_GRID = 4096;
@@ -57,6 +110,8 @@ export type ReplaySteer = [
 export type ReplayDrag = [tick: number, playerId: number, x: number, y: number];
 /** Before this tick, a human fired a boost. */
 export type ReplayBoost = [tick: number, playerId: number];
+/** Before this tick, a human fired their weapon. */
+export type ReplayWeapon = [tick: number, playerId: number];
 
 /**
  * What the humans put in during a match, each input once, when it changed.
@@ -67,6 +122,8 @@ export interface ReplayInputs {
   steers: ReplaySteer[];
   drags: ReplayDrag[];
   boosts: ReplayBoost[];
+  /** Empty in a replay from before the weapons - it plays as it did. */
+  weapons: ReplayWeapon[];
 }
 
 /** Who played a seat - never who they are: no uids in a replay. */
@@ -91,6 +148,8 @@ export interface ReplayAttempt {
 /**
  * How a replay was played: the effective plan and what came of it. The
  * fields after `ticks` are version 2's; a version 1 header has none of them.
+ * The seats' `loadouts` (from the plan) only a version 3 header has: absent
+ * for plain colonies, as in every replay of a plain match.
  */
 export interface ReplayHeader extends MatchPlan {
   version: number;
@@ -146,27 +205,36 @@ export interface ReplayResult {
 /**
  * The replay of a match played from `plan`, now that it is over. For an
  * online match `plan` is the effective one - two players, no head start -
- * and `extras` carries the room and the outcome. A match the GPU ran gets a
- * version 1 header, good for a ghost race only.
+ * and `extras` carries the room and the outcome. A plain match the GPU ran
+ * gets a version 1 header, good for a ghost race only. A match with
+ * evolution in it takes {@link EVOLVED_REPLAY_VERSION} on either
+ * simulation; a plain one is written without loadouts, which change
+ * nothing in it.
+ *
+ * Whether evolution played a part is `planMatch`'s word (`evolved`): only
+ * it knows that a ghost race has no boss to arm. Without a ghost it can be
+ * asked again from the plan alone.
  */
 export function replayOf(
   plan: MatchPlan,
   simulation: ReplayHeader['simulation'],
   ticks: number,
   inputs: ReplayInputs,
-  extras: ReplayExtras = {}
+  extras: ReplayExtras = {},
+  evolved: boolean = planMatch(plan).evolved
 ): Replay {
+  const { loadouts: _loadouts, ...plain } = plan;
   const base = {
-    ...plan,
+    ...(evolved ? plan : plain),
     balanceVersion: BALANCE_VERSION,
     simulation,
     ticks,
   };
   const header: ReplayHeader =
-    simulation === 'cpu'
+    simulation === 'cpu' || evolved
       ? {
           ...base,
-          version: REPLAY_VERSION,
+          version: evolved ? EVOLVED_REPLAY_VERSION : REPLAY_VERSION,
           seats: extras.seats ?? seatsOf(plan.mode),
           ...definedOnly({
             roomCode: extras.roomCode,
@@ -184,6 +252,7 @@ export function replayOf(
       steers: inputs.steers.slice(),
       drags: inputs.drags.slice(),
       boosts: inputs.boosts.slice(),
+      weapons: inputs.weapons.slice(),
     },
   };
 }
@@ -200,12 +269,13 @@ export function replayOutcome(
 /**
  * Plays a recorded match again on the CPU simulation, without anyone
  * watching. Null for a replay that would not play out as it was played:
- * another format, another balance table, or a match the GPU ran.
+ * another format (version 2 and 3 play), another balance table, or a match
+ * the GPU ran.
  */
 export function playReplay(replay: Replay): ReplayResult | null {
   const { header, inputs } = replay;
   if (
-    header.version !== REPLAY_VERSION ||
+    VERSIONS.get(header.version)?.playable !== true ||
     header.balanceVersion !== BALANCE_VERSION ||
     header.simulation !== 'cpu'
   ) {
@@ -247,8 +317,10 @@ export function playReplay(replay: Replay): ReplayResult | null {
 /** How strict {@link parseReplay} is. */
 export interface ParseOptions {
   /**
-   * True for a replay to store and check (ADR 0011): version 2 only, on the
-   * online grid of its level, with its outcome and checksum.
+   * True for a replay to store and check (ADR 0011): version 2 or 3 from
+   * the CPU, on the online grid of its level, with its outcome and
+   * checksum - version 3 never for a ranked attempt or the daily level
+   * (ADR 0013).
    */
   stored?: boolean;
 }
@@ -257,27 +329,62 @@ export interface ParseOptions {
  * Reads a replay back from storage or a link. Null for anything that is not
  * a whole one - a replay with a damaged input could only play another match.
  * Version 1 replays are read as they always were, for ghost races; version 2
- * is strict about what a recording can hold.
+ * is strict about what a recording can hold, and version 3 as strict about
+ * its loadouts and weapons. Versions 1 and 2 must carry neither.
  */
 export function parseReplay(
   value: unknown,
   options: ParseOptions = {}
 ): Replay | null {
-  if (!isObject(value) || !isObject(value['header'])) {
+  if (
+    !isObject(value) ||
+    !isObject(value['header']) ||
+    !isObject(value['inputs'])
+  ) {
     return null;
   }
   const raw = value['header'];
-  const inputs = isObject(value['inputs']) ? value['inputs'] : null;
-  if (inputs == null) {
+  const inputs = value['inputs'];
+  const stored = options.stored === true;
+  const rules = VERSIONS.get(raw['version']);
+  if (rules === undefined || (stored && !rules.storable)) {
     return null;
   }
-  if (raw['version'] === GHOST_REPLAY_VERSION && options.stored !== true) {
-    return parseGhostReplay(raw, inputs);
-  }
-  if (raw['version'] !== REPLAY_VERSION) {
-    return null;
-  }
-  const header = parseHeaderV2(raw, options.stored === true);
+  const replay =
+    raw['version'] === GHOST_REPLAY_VERSION
+      ? parseGhostReplay(raw, inputs)
+      : parseStrictReplay(raw, inputs, stored);
+  return replay !== null && fitsVersion(replay, rules, stored) ? replay : null;
+}
+
+/**
+ * True when a replay holds only what its version may: a simulation it may
+ * come from - the CPU for one to store - and, for a plain version, no
+ * loadouts and no weapons fired: every client before evolution would drop
+ * them and play another match. An evolved one never belongs to a ranked
+ * attempt or the daily level, which the leaderboards keep plain (ADR 0013).
+ */
+function fitsVersion(
+  { header, inputs }: Replay,
+  rules: VersionRules,
+  stored: boolean
+): boolean {
+  return (
+    rules.simulations.includes(header.simulation) &&
+    (!stored || header.simulation === 'cpu') &&
+    (rules.evolved
+      ? header.attempt === undefined && !isDailyLevelId(header.levelId)
+      : header.loadouts === undefined && inputs.weapons.length === 0)
+  );
+}
+
+/** A version 2 or 3 replay, strict about what a recording can hold. */
+function parseStrictReplay(
+  raw: Record<string, unknown>,
+  inputs: Record<string, unknown>,
+  stored: boolean
+): Replay | null {
+  const header = parseHeaderV2(raw, stored);
   if (header == null) {
     return null;
   }
@@ -285,7 +392,15 @@ export function parseReplay(
   const steers = strictInputs(inputs['steers'], 4, header, humans, steerAt);
   const drags = strictInputs(inputs['drags'], 4, header, humans, dragAt);
   const boosts = strictInputs(inputs['boosts'], 2, header, humans, () => true);
-  if (steers == null || drags == null || boosts == null) {
+  // A plain replay has no list of weapons: none were fired.
+  const weapons = strictInputs(
+    inputs['weapons'] ?? [],
+    2,
+    header,
+    humans,
+    () => true
+  );
+  if (steers == null || drags == null || boosts == null || weapons == null) {
     return null;
   }
   return {
@@ -294,6 +409,7 @@ export function parseReplay(
       steers: steers as ReplaySteer[],
       drags: drags as ReplayDrag[],
       boosts: boosts as ReplayBoost[],
+      weapons: weapons as ReplayWeapon[],
     },
   };
 }
@@ -313,7 +429,9 @@ function parseGhostReplay(
   const steers = inputList(inputs['steers'], 4, seats, header.ticks);
   const drags = inputList(inputs['drags'], 4, seats, header.ticks);
   const boosts = inputList(inputs['boosts'], 2, seats, header.ticks);
-  if (steers == null || drags == null || boosts == null) {
+  // A replay from before the weapons has none.
+  const weapons = inputList(inputs['weapons'] ?? [], 2, seats, header.ticks);
+  if (steers == null || drags == null || boosts == null || weapons == null) {
     return null;
   }
   return {
@@ -322,11 +440,15 @@ function parseGhostReplay(
       steers: steers as ReplaySteer[],
       drags: drags as ReplayDrag[],
       boosts: boosts as ReplayBoost[],
+      weapons: weapons as ReplayWeapon[],
     },
   };
 }
 
-/** The fields both versions have - null where one is missing or broken. */
+/**
+ * The fields every version has - null where one is missing or broken - and
+ * the seats' loadouts, where it has them.
+ */
 function parsePlan(raw: Record<string, unknown>): ReplayHeader | null {
   const { levelId, mode, difficulty, headStart, simulation } = raw;
   const colors = validColorPair(raw['colors']);
@@ -354,6 +476,10 @@ function parsePlan(raw: Record<string, unknown>): ReplayHeader | null {
   ) {
     return null;
   }
+  const loadouts = parseLoadouts(raw['loadouts']);
+  if (loadouts === null) {
+    return null;
+  }
   return {
     version,
     balanceVersion,
@@ -367,7 +493,38 @@ function parsePlan(raw: Record<string, unknown>): ReplayHeader | null {
     width,
     height,
     seed,
+    ...(loadouts === undefined ? {} : { loadouts }),
   };
+}
+
+/**
+ * The seats' loadouts of a header: undefined where it has none - plain
+ * colonies - and null where they are damaged. Unlike a stored loadout,
+ * which keeps what it can, a damaged one could only play another match.
+ */
+function parseLoadouts(
+  value: unknown
+): readonly [Loadout, Loadout] | undefined | null {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(value) || value.length !== 2) {
+    return null;
+  }
+  const [left, right] = value.map(strictLoadout);
+  return left === null || right === null ? null : [left, right];
+}
+
+/** A loadout exactly as written, null for anything else. */
+function strictLoadout(value: unknown): Loadout | null {
+  if (!isObject(value)) {
+    return null;
+  }
+  const { genes, weapon } = value;
+  const levels = parseGeneLevels(genes, { strict: true });
+  return levels === null || (weapon !== null && !isWeaponId(weapon))
+    ? null
+    : { genes: levels, weapon };
 }
 
 const ROOM_CODE = /^[A-Z0-9]{4,16}$/;
@@ -383,13 +540,16 @@ const END_REASONS: readonly EndReason[] = [
   'desync',
 ];
 
-/** A version 2 header - null for anything a recording cannot hold. */
+/**
+ * A version 2 or 3 header - null for anything a recording cannot hold. What
+ * its version allows on top is {@link fitsVersion}'s to check.
+ */
 function parseHeaderV2(
   raw: Record<string, unknown>,
   stored: boolean
 ): ReplayHeader | null {
   const plan = parsePlan(raw);
-  if (plan == null || plan.simulation !== 'cpu') {
+  if (plan == null) {
     return null;
   }
   const seats = parseSeats(raw['seats'], plan.mode);
@@ -550,18 +710,6 @@ function strictInputs(
     lastBySeat[entry[1]] = entry[0];
   }
   return value as number[][];
-}
-
-function isInteger(
-  value: unknown,
-  min = -Infinity,
-  max = Infinity
-): value is number {
-  return (
-    Number.isInteger(value) &&
-    (value as number) >= min &&
-    (value as number) <= max
-  );
 }
 
 /**

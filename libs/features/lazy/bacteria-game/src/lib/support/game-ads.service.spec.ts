@@ -6,12 +6,11 @@ import {
   TcData,
   TCF_POLL_INTERVAL_MS,
 } from './game-ads.service';
+import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
 import { GAME_SUPPORT, GameSupportOptions } from './game-support';
 
 const OPTIONS: GameSupportOptions = {
-  buyMeACoffeeHandle: 'wolf',
-  playTipProductIds: [],
-  androidPackage: 'de.wolsok.bacteriawars',
+  ...GAME_SUPPORT_OPTIONS,
   ads: { client: 'ca-pub-1', slot: '42' },
 };
 

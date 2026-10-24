@@ -27,6 +27,7 @@ import { LEVELS } from '../state/levels';
 import { MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 import { ACHIEVEMENTS } from '../state/achievements';
 import { rankFor, RANKS } from '../state/ranks';
+import { dnaEarned } from '../state/evolution';
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { AdSlotComponent } from '../support/ad-slot.component';
 import {
@@ -119,6 +120,8 @@ export class ProfileComponent {
 
   /** The rank the XP has reached, and the way to the next. */
   protected readonly standing = computed(() => rankFor(this.xp()));
+  /** All the DNA the XP has grown, spent or not. */
+  protected readonly dna = computed(() => dnaEarned(this.xp()));
   protected readonly ranks = RANKS.map(({ id }) => ({ id, name: rankKey(id) }));
 
   /** Every achievement, earned ones with their day, the rest with their condition. */

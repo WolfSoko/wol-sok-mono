@@ -102,6 +102,13 @@ so the particles get coarser. `maxParticleCount` instead leaves out random pixel
 Both renderers follow it.
 The effect canvas has a `data-ws-thanos-renderer` attribute (`webgl` or `canvas`) showing which renderer is in use.
 
+#### Images
+
+html2canvas captures the element, and it stretches every `<img>` over its box.
+ws-thanos draws images with `object-fit` and `object-position` the way the browser shows them before html2canvas captures them,
+so logos and photos keep their shape while they vaporize.
+Images from another origin can't be read back and stay stretched; serve them from your origin or with CORS.
+
 #### Crumble variants
 
 The `crumble` option decides how the element breaks apart while it vaporizes:
@@ -115,6 +122,7 @@ The `crumble` option decides how the element breaks apart while it vaporizes:
 
 The variants need WebGL2, the canvas fallback always turns into `'dust'`.
 The effect canvas shows the variant in use in its `data-ws-thanos-crumble` attribute.
+`WS_THANOS_CRUMBLES` lists all variants, e.g. to pick a random one for every snap.
 
 #### Options per element
 

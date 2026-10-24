@@ -20,14 +20,14 @@ const LOCAL = replayOf(
   PLAN,
   'cpu',
   120,
-  { steers: [[0, 0, 1, 0]], drags: [], boosts: [[30, 0]] },
+  { steers: [[0, 0, 1, 0]], drags: [], boosts: [[30, 0]], weapons: [] },
   { outcome: { endedBy: 'time', winnerSeat: 0 }, checksum: 12345 }
 );
 const ONLINE = replayOf(
   { ...PLAN, mode: 'two-players' },
   'cpu',
   120,
-  { steers: [], drags: [], boosts: [] },
+  { steers: [], drags: [], boosts: [], weapons: [] },
   {
     outcome: { endedBy: 'annihilation', winnerSeat: 1 },
     checksum: 1,

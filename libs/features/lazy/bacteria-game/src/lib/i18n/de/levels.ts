@@ -24,6 +24,10 @@ export const levels: Translation<typeof en> = {
     quarantine: 'Quarantäne',
     'feeding-ground': 'Futterplatz',
     expanse: 'Weite',
+    archipelago: 'Archipel',
+    bloodstream: 'Blutbahn',
+    'root-network': 'Wurzelnetz',
+    leviathan: 'Leviathan',
   },
   descriptions: {
     'petri-dish':
@@ -66,6 +70,14 @@ export const levels: Translation<typeof en> = {
       'Überall Futter und Kolonien, zu träge zum Kämpfen. Wer zuerst 40 Pellets frisst, gewinnt – ein Pellet geht an den, der am meisten davon gefressen hat.',
     expanse:
       'Viermal so viel Platz, übersät mit Felsen, und zwei graue Kolonien zum Fressen. Die Kamera folgt dir – zoom mit dem Mausrad heraus, um den Gegner zu finden. Nach vier Minuten gewinnt die größte Kolonie.',
+    archipelago:
+      'Inseln in einem Meer aus Antibiotikum, verbunden durch schmale Brücken. Halte die weiße Zone auf der Insel in der Mitte vierzig Sekunden lang – der Weg dorthin führt über die Inseln im Norden und im Süden.',
+    bloodstream:
+      'Drei Adern nebeneinander, zwischen dir und dem Gegner schlägt ein Herz – jeder Schlag drückt den Weg daran vorbei zusammen. Klappen, die sich abwechselnd öffnen und zusammenziehen, führen hinaus in die äußeren Adern, heiß beim Herzen und eisig an den fernen Enden. Nach vier Minuten gewinnt die größte Kolonie.',
+    'root-network':
+      'Eine Höhle voller Säulen, überwuchert von Pilzfäden. Zwei graue Kolonien sitzen in Mulden auf goldenem Agar, weiterer Agar liegt in Nischen am Weg. Nach drei Minuten gewinnt die größte Kolonie.',
+    leviathan:
+      'Unten in der Tiefsee lebt etwas, viermal so groß wie du – es teilt sich schneller, schlägt härter zu und boostet öfter. Halte deine Kolonie zweieinhalb Minuten am Leben, oder vernichte den Leviathan.',
   },
   chapters: {
     petri: {
@@ -93,7 +105,7 @@ export const levels: Translation<typeof en> = {
     expanse: {
       name: 'Weite',
       blurb:
-        'Karten, größer als der Bildschirm – die Kamera folgt deiner Kolonie.',
+        'Karten, größer als der Bildschirm – die Kamera folgt dir über Inseln, Adern und Höhlen bis zum Leviathan.',
     },
   },
   rules: {

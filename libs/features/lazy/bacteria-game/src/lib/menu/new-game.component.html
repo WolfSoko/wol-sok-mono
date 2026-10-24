@@ -79,6 +79,15 @@
                   [style.--level-edge]="briefing()?.edge"
                 >
                   @if (briefing(); as chosen) {
+                    @if (previews) {
+                      <feat-lazy-bac-game-level-preview
+                        class="details-preview"
+                        [levelId]="chosen.id"
+                        [title]="chosen.title"
+                        [size]="chosen.size"
+                        urgent
+                      />
+                    }
                     <span class="details-number">{{ chosen.kicker }}</span>
                     <h3 class="details-title">{{ chosen.title }}</h3>
                     @if (chosen.facts.length > 0) {
@@ -203,6 +212,7 @@
                       mat-flat-button
                       type="button"
                       class="start"
+                      [disabled]="!startReady()"
                       (click)="startGame()"
                     >
                       <mat-icon>play_arrow</mat-icon>
