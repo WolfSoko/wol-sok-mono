@@ -9,10 +9,10 @@
  */
 
 import { distance, Point, seeded, wrap } from './geometry';
-import { DynamicWall, GameMap, pointSymmetric, Rect, rectCenter } from './maps';
+import { GameMap, pointSymmetric, Rect, rectCenter } from './maps';
 import { heartbeat } from './organic-maps';
-import { blob, growThread, hexLattice, spawnSpots } from './shapes';
-import { puddle, Zone, ZoneKind } from './zones';
+import { blob, growThread, hexLattice, movingBlob, nearSpawn } from './shapes';
+import { disc, puddle, Zone } from './zones';
 
 /** Where Expanse keeps room for its neutral colonies, as shares. */
 export const EXPANSE_NEUTRALS = [
@@ -69,11 +69,6 @@ function board(width: number, height: number) {
   };
 }
 
-/** A round zone around a point - see {@link blob}. */
-function disc(kind: ZoneKind, x: number, y: number, radius: number): Zone {
-  return { ...blob(x, y, radius), kind };
-}
-
 /**
  * The points every `step` cells along a line from `from` to `to`, swung off
  * it by a sine wave `wobble` cells high - a wall or a channel that grew
@@ -106,19 +101,12 @@ function wavyLine(
 
 /** True when the point keeps that far from both start spots. */
 function clearOfSpawns(
-  point: Point,
+  { x, y }: Point,
   reach: number,
   width: number,
   height: number
 ): boolean {
-  return spawnSpots(width, height).every(
-    (spawn) => distance(point, spawn) >= reach
-  );
-}
-
-/** A round wall that moves - a living, swelling part of a layout. */
-function movingBlob(x: number, y: number, radius: number): DynamicWall {
-  return { ...blob(x, y, radius), solid: true, warning: 0 };
+  return !nearSpawn(x, y, reach, width, height, 0);
 }
 
 /**

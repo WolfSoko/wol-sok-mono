@@ -4,7 +4,7 @@
  * in. The hand-made organic maps and the level generator both use them.
  */
 
-import { Rect } from './maps';
+import { DynamicWall, Rect } from './maps';
 
 /**
  * How far a wall stays from where a colony starts: the largest start radius
@@ -35,15 +35,24 @@ export function blob(x: number, y: number, radius: number): Rect {
   };
 }
 
-/** True when a blob there would reach into one of the two start spots. */
+/** A round wall that moves - a living, swelling part of a layout. */
+export function movingBlob(x: number, y: number, radius: number): DynamicWall {
+  return { ...blob(x, y, radius), solid: true, warning: 0 };
+}
+
+/**
+ * True when a blob there would reach into one of the two start spots -
+ * come closer to one than `clearance` cells of air.
+ */
 export function nearSpawn(
   x: number,
   y: number,
   radius: number,
   width: number,
-  height: number
+  height: number,
+  clearance = SPAWN_CLEARANCE
 ): boolean {
-  const reach = SPAWN_CLEARANCE + radius;
+  const reach = clearance + radius;
   const dy = y - height / 2;
   return (
     Math.hypot(x - width / 4, dy) < reach ||
