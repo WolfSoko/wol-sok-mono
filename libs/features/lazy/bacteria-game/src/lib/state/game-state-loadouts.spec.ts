@@ -101,7 +101,12 @@ describe('GameStateService loadouts', () => {
     if (recorded === null) {
       throw new Error('no plan');
     }
-    const inputs = { steers: [], drags: [], boosts: [] } as ReplayInputs;
+    const inputs: ReplayInputs = {
+      steers: [],
+      drags: [],
+      boosts: [],
+      weapons: [],
+    };
     const run = replayOf(
       { ...recorded, loadouts: undefined },
       'cpu',
