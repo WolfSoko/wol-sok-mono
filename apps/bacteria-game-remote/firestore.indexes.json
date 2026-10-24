@@ -1,11 +1,104 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "replays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "players", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "replays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "state", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicReplays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "removedAt", "order": "ASCENDING" },
+        { "fieldPath": "featuredAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicReplays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "balanceVersion", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicReplays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uids", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "removedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicReplays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "replayId", "order": "ASCENDING" },
+        { "fieldPath": "removedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "entries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sort", "order": "DESCENDING" },
+        { "fieldPath": "atHour", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "profiles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "avatar.kind", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "adminAudit",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "target.uid", "order": "ASCENDING" },
+        { "fieldPath": "at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "adminAudit",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rooms",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "taken", "order": "ASCENDING" },
+        { "fieldPath": "expireAt", "order": "ASCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": [
     {
       "collectionGroup": "rooms",
       "fieldPath": "expireAt",
       "ttl": true,
-      "indexes": []
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "DESCENDING", "queryScope": "COLLECTION" }
+      ]
     },
     {
       "collectionGroup": "invites",
@@ -21,6 +114,114 @@
     },
     {
       "collectionGroup": "queue",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "replays",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "blob",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "reports",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "replaySubmissions",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "replayCommands",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "attempts",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "notices",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "boards",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "entries",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "dailyRuns",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "endlessRuns",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "pairs",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "rankedReplays",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "rankedRooms",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "adminCommands",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "adminStats",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "adminAudit",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "banTombstones",
       "fieldPath": "expireAt",
       "ttl": true,
       "indexes": []

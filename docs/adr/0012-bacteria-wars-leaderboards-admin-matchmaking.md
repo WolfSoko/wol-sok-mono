@@ -230,8 +230,9 @@ firstAt, risenToday, todayDay }`.
 - **Idempotent**: a marker `rankedReplays/{replayId}` is written with
   `create()`, so a second event for the same replay changes nothing.
 - **"Not reported"**: the hourly function closes online replays still
-  `waiting` 2 hours after their creation (index `state` + `createdAt`,
-  ADR 0011). If the existing report has a regular ending (win, timeout or
+  `waiting` 2 hours after their creation (as built: by `closeAt`, which
+  the first report sets and the second report or the close removes, so a
+  closed replay is not read again). If the existing report has a regular ending (win, timeout or
   forfeit after 30 s), the stub's other uid gets `notReported + 1`. A
   network loss usually leaves both devices reporting, or the reports
   disagree (`disputed`), which counts for nobody. So the figure mostly
@@ -395,7 +396,8 @@ unranked daily match spends only a local one. The result screen says
   - A declared match without a replay or a pending submission 2 hours
     after its `at` counts as a lost life. `rankReplay` applies this
     lazily whenever it touches the run, and the hourly function sweeps the
-    rest.
+    rest. A stored replay `rankReplay` failed to take in is not swept: its
+    own retry takes it in within the hour.
   - Replays may arrive in any order; the run is recomputed from all of its
     attempts in a transaction each time.
   - The player's entry on `endless` is their best run that has not failed
@@ -404,8 +406,13 @@ unranked daily match spends only a local one. The result screen says
     update (`expireAt`); the best run keeps no `expireAt`.
 - **Verification is incremental and in order**, from the same trust-ordered
   candidate list: runs that would enter the top 10, then the next 10.
-  - The hourly function re-runs the run's wins one by one, keeping
-    `verifiedWins`.
+  - The hourly function re-runs the run's wins one by one; the run is
+    `verified` once every win it counts is.
+  - The run owns every match it has seen: a declared attempt only adds a
+    match it does not hold yet, or marks one void. For a match it holds,
+    its own `at` stays, so an attempt declared again (after its TTL) never
+    reopens a closed match. A match's seconds are worked out from its
+    ticks for the sort, not stored.
   - If win `k` fails, the run is cut to its verified prefix: depth `k`,
     status `verified`, marked "partly confirmed". Its remaining wins are
     dropped.
@@ -422,31 +429,69 @@ replay the boards already verified as a candidate without re-running it
 verified.
 
 **The CPU figure is measured before the budgets are fixed.** The only
-measurement so far is one bot on `petri-dish` on a dev core. The board
-functions' work package first benchmarks a generated level at the highest
-daily difficulty (7), on the largest map, with neutral colonies, at the
-online grid, on a 1 vCPU Cloud Run instance, and sets `budgets.ts` from it.
-The table assumes 20 s of CPU per match-minute:
+measurement before the board functions was one bot on `petri-dish` on a
+dev core. Step 5 measured it with the real engine in Node
+(`nx run bacteria-wars-functions:benchmark`,
+`src/benchmark/rerun-benchmark.ts`), on the online grid, median of 3
+runs per case:
 
-| Budget              | Match-minutes a day | CPU                                         |
-| ------------------- | ------------------- | ------------------------------------------- |
-| daily board         | 60                  | 1,200 s                                     |
-| endless board       | 180                 | 3,600 s                                     |
-| admin "verify now"  | 20                  | 400 s                                       |
-| **0012 total**      | **260 (hard cap)**  | **5,200 s, about 156,000 vCPU-s a month**   |
-| ADR 0011 worst case | 20 reruns of ≤ 80 s | 1,600 s, about 48,000 vCPU-s a month        |
-| light triggers      | about 50,000 a day  | about 40,000 vCPU-s a month on `gcf_gen1`\* |
+- **rerun** is `playReplay` of a recorded match whose human stands still,
+  exactly what `verify.ts` does (one bot, one ghost); the bot wins early.
+- **contest** plays both seats with the normal bot until the match ends or
+  3 minutes pass: two busy colonies all match long, the heavy case. A
+  re-run costs no more per tick, since a ghost steers for free where a bot
+  thinks.
+
+Generated levels, the daily and endless boards' levels, are never larger
+than the base arena and have no neutral colonies, so the daily levels of
+four Saturdays (difficulty 7, the four recipes) stand for them; the
+ladder's `quarantine` is the heaviest level with neutral colonies that
+plays online, `expanse` a big map (size 2), re-run only by the gallery.
+
+| Level (online grid)       | rerun, ms/tick | contest, ms/tick | CPU s per match-minute |
+| ------------------------- | -------------- | ---------------- | ---------------------- |
+| daily 2026-10-24 (7)      | 5.9            | 6.3              | 21-23                  |
+| daily 2026-10-31 (7)      | 7.9            | 5.4              | 19-29                  |
+| daily 2026-11-07 (7)      | 3.7            | 5.1              | 13-18                  |
+| daily 2026-11-14 (7)      | 5.6            | 5.2              | 19-20                  |
+| ladder `quarantine`       | 8.2            | 7.7              | 28-29                  |
+| ladder `expanse` (size 2) | 13.7           | 37.2             | 49-134                 |
+
+Measured on one core of a 2.8 GHz Xeon dev VM (Node 22), not yet on a
+1 vCPU Cloud Run instance; that check is one of the owner's manual steps.
+The old figure of 3.8 ms a tick was low by up to a factor of two.
+`budgets.ts` now assumes the worst of the levels that play online,
+**28 s of CPU per match-minute** (the comment on `BIG_MAP_COST`), and charges
+a re-run on a big map 5 times its ticks (`BIG_MAP_COST`, `rerunCost`).
+It keeps the owner's 260 match-minutes:
+
+| Budget             | Match-minutes a day            | CPU at 28 s per match-minute                |
+| ------------------ | ------------------------------ | ------------------------------------------- |
+| daily board        | 60                             | 1,680 s                                     |
+| endless board      | 180                            | 5,040 s                                     |
+| admin "verify now" | 20                             | 560 s                                       |
+| **0012 total**     | **260 (hard cap)**             | **7,280 s, about 218,000 vCPU-s a month**   |
+| ADR 0011 gallery   | 120 (20 reruns of ≤ 6 min)\*\* | ≤ 3,360 s, about 101,000 vCPU-s a month     |
+| light triggers     | about 50,000 a day             | about 40,000 vCPU-s a month on `gcf_gen1`\* |
+
+\*\* A big map counts 5 times, so the gallery's worst case stays near
+3,360 s; a typical day's 20 candidates of 2-3 minutes use about half.
 
 \* The light triggers (`acceptReplay`, `rankReplay`, `rankProgress`,
-`rebuildTop`, `boardProfileChanged`, `profileChanged`) run with
+`rebuildTop`, `profileChanged` with `boardProfileChanged`) run with
 `cpu: 'gcf_gen1'` (a fraction of a vCPU at 256 MiB) instead of the 2nd-gen
 default of one vCPU.
 
-Together about 245,000 vCPU-s and 280,000 GiB-s a month, against Cloud
-Run's free 180,000 vCPU-s and 360,000 GiB-s: about $1-4 a month above the
-free tier, bounded by the hard cap. Unused daily budget passes to endless.
-An exhausted budget never shows a claim as verified: rows wait in "Being
-checked".
+Together at most about 360,000 vCPU-s and 400,000 GiB-s a month, against
+Cloud Run's free 180,000 vCPU-s and 360,000 GiB-s: about $4-5 a month
+above the free tier when every budget is spent every day, at the top of
+the owner's $2-5, and bounded by the hard cap; real days spend less. If
+Cloud Run turns out slower than the dev core, `VERIFY_MINUTES` comes down,
+not the other way round. The hourly function spreads each board budget
+over the hours left in the UTC day (a pool may always start one re-run an
+hour, or a long match would never fit), and unused daily budget passes to
+endless. An exhausted budget never shows a claim as verified: rows wait in
+"Being checked".
 
 **Flooding** with fake top claims from many fresh guest accounts no longer
 starves honest entries: trust ordering puts fresh accounts last, each
@@ -473,7 +518,7 @@ All of it is written by functions only, except `attempts`,
 | `players/{uid}/attempts/{attemptId}`          | `{ at, expireAt }`, created by the player                                                                                                                                                                                                            | its player                                |
 | `players/{uid}/notices/{id}`                  | `{ type: 'profile-reset' \| 'image-removed' \| 'board-hidden' \| 'banned' \| 'unbanned', at, until?, reason?: 'cheating' \| 'offensive-profile' \| 'spam' \| 'other', expireAt }`                                                                    | its player (read and delete)              |
 | `dailyRuns/{day}_{uid}`                       | the day's attempts: `{ attemptId, replayId, sort, state }[]`                                                                                                                                                                                         | nobody                                    |
-| `endlessRuns/{uid}_{runId}`                   | `{ seed, attempts: [...], claimedDepth, verifiedWins, status, updatedAt, expireAt? }`                                                                                                                                                                | nobody                                    |
+| `endlessRuns/{uid}_{runId}`                   | `{ uid, runId, seed, matches: [...], cutAt?, depth, seconds, status, nextCloseAt, queued?, best, updatedAt, expireAt? }`                                                                                                                             | nobody                                    |
 | `pairs/{day}_{uidA}_{uidB}`                   | `{ count, expireAt }`                                                                                                                                                                                                                                | nobody                                    |
 | `rankedReplays/{replayId}`                    | `{ at, expireAt }`                                                                                                                                                                                                                                   | nobody                                    |
 | `rankedRooms/{roomCode}`                      | `{ stubCreatedAt, ticks, expireAt }`                                                                                                                                                                                                                 | nobody                                    |
@@ -793,9 +838,10 @@ chose not to share their status, and the privacy page says so.
   write only when `!newData.exists()`, or there is no `bans/$uid`, or its
   value is not `0` and at most `now`, the same inclusive end as
   `notBanned()`. Going offline still works.
-- **Enforced in functions**: `assertActive(uid)` (ADR 0011's hook) now
-  reads `bans/{uid}`, cached 60 s per instance, honours `until`, and throws
-  `Banned`. It is called only where the player's own write is acted on:
+- **Enforced in functions**: ADR 0011's hook, now `isActive(uid)`, reads
+  `bans/{uid}`, cached 60 s per instance, honours `until`, and answers
+  false for a ban. It is asked only where the player's own write is acted
+  on:
   - `acceptReplay` drops the submission (`result: 'banned'`);
   - `rankReplay` and `rankProgress` ignore the player, and an agreed online
     match with a banned player counts for neither side;
@@ -895,9 +941,25 @@ chose not to share their status, and the privacy page says so.
 | `countAccount`        | `auth.user().onCreate` (v1)                                                          | `stats/accounts` + 1, `boardMembers.accountCreatedAt`, the tombstone check for Google sign-ups.                                                                                                                                                                                                  |
 | `deletePlayerBoards`  | `auth.user().onDelete` (v1)                                                          | Writes a tombstone if the player is banned and Google-linked, then deletes the player's entries, `boardMembers`, runs, attempts, notices and ban, scrubs `before`/`after` of audit entries about them to `{ scrubbed: true }`, and lowers `stats/accounts`.                                      |
 
-All run in ADR 0011's codebase and region, with retries off, and are
-idempotent: a transaction checks the state first, and markers are created
-with `create()`. There is one new Cloud Scheduler job, so the project has
+As built, triggers on the same event are one function each, running
+their cores side by side (`Promise.allSettled`, every failure logged, the
+first rethrown): `profileChanged` runs ADR 0011's gallery update and
+`boardProfileChanged`, and the Auth onDelete function `deletePlayer` runs
+`deletePlayerReplays` and `deletePlayerBoards`. The table names the
+cores.
+
+All run in ADR 0011's codebase and region and are idempotent: a
+transaction checks the state first, and markers are created with
+`create()`. Retries are off, except for `rankReplay`: a stored replay it
+failed to take in (a transaction that lost, a timeout) would never rank,
+and its endless match would close as a lost life. So it retries, and
+every step it takes is safe to repeat - `countOnline` creates a marker,
+`acceptRanked` finds the replay taken or the attempt used, `applyRerun`
+leaves a decided attempt alone. An event older than an hour is logged and
+dropped (`RETRY_FOR_MS`), so a poison event cannot retry forever; an hour
+is well inside the 2 hours after which an open match closes. (A failed
+check's `moderation` count is written after the attempt is marked, and a
+retry does not count it again.) There is one new Cloud Scheduler job, so the project has
 two with `featureBest`. The three free jobs are counted per billing
 account, not per project, so other projects on the same billing account
 may already use them (a job costs $0.10 a month).
@@ -934,7 +996,7 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
 - `/curate` becomes the Replays view of `/admin` in the admin lib.
   `robots.txt` disallows `/admin` instead.
 - `replayCommand` writes `adminAudit` for its admin types.
-- `assertActive` reads bans and is called only by `acceptReplay`,
+- `isActive` (was `assertActive`) reads bans and is asked only by `acceptReplay`,
   `replayCommand`, `rankReplay` and `rankProgress`.
 - The admin claim is read by more rules, and `profiles` gets an admin
   `list`.
@@ -1025,23 +1087,104 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
 2. **Contracts** (`state/boards.ts`, `attempts.ts` with `rankedPlan`,
    `admin-commands.ts`). The `attempt` header field ships with replay v2
    itself [3], so the first release that stores v2 replays [5] already
-   knows it.
+   knows it. **Done**: exported through the engine entry, with specs.
+   The client's versions (the replay recording release) are the contract;
+   the functions of step 5 joined them and added what they needed in the
+   same modules: `boards.ts` gained the XP ledger (`countXp`), the top
+   rows (`topRows`), the online caps and reasons, the daily board's final
+   hour and the longest re-run; `attempts.ts` the attempt levels, the
+   ranked reasons and `ATTEMPT_CLOSE_MS`; `admin-commands.ts` the command
+   result, the notice types and the replay command types. `atHour` counts
+   whole hours since the epoch, a label's tag runs from 0000 to 9999, and
+   a `stats.*` command has `target: null`. `XP_FULL_COUNT_BEFORE` is
+   24 October 2026: the owner started the boards at once, since only test
+   players exist before it.
 3. **0011's functions and rules [4] already carry the 0012 changes to
    them** (attempt on submissions, writer pinning, `verified` candidates).
+   **Done** with 0011 [4]: `acceptReplay` copies the attempt with the
+   stored `at`, counts ranked submissions against their own cap and voids
+   the attempt of a submission it drops; `replayCommand` checks the
+   auth-context writer and writes `adminAudit`; `featureBest` takes
+   `verified` replays without re-running them; `isActive` (was
+   `assertActive`) reads `bans/{uid}`. The verification budgets live in
+   `apps/bacteria-wars-functions/src/replays/budgets.ts` (not
+   `boards/budgets.ts`), set by the benchmark of step 5.
 4. **Rules, indexes, RTDB rules**, including `notBanned()` (with no bans
-   yet, nothing changes) and the TTLs, after 0011's rules [4].
+   yet, nothing changes) and the TTLs, after 0011's rules [4]. **Done**,
+   with rules specs against the emulators (`test-rules`) and
+   `indexes.spec.ts` listing every query of both ADRs against
+   `firestore.indexes.json`. Command documents take an `expireAt` up to 2
+   days ahead (a client cannot write `request.time` + 1 day exactly).
 5. **Functions**: `rankReplay`, `rankProgress`, `rebuildTop`,
-   `boardProfileChanged`, `adminCommand`, `countAccount`,
-   `deletePlayerBoards`, and `hourly` with its schedule paused, after the
+   `boardProfileChanged` (inside `profileChanged`), `adminCommand`,
+   `countAccount`, `deletePlayerBoards` (inside `deletePlayer`), and
+   `hourly` with its schedule paused, after the
    CPU benchmark set the budgets. Deployed before the client that writes
-   attempts.
+   attempts. **Done** (not deployed), in `apps/bacteria-wars-functions`:
+   thin triggers in `main.ts` around cores in `src/boards/` (entries and
+   labels, `rankProgress`, the online count and "Not reported", ranked
+   days and runs, `rebuildTop`, `boardProfileChanged`, verification, the
+   hourly steps) and `src/admin/` (`adminCommand` with every command type,
+   bans, tombstones, notices and audit, statistics, `countAccount`,
+   `deletePlayerBoards`). How it was built:
+   - **The CPU benchmark** (above) set `budgets.ts`: 28 s per
+     match-minute, big maps charged 5 times, the owner's 260
+     match-minutes kept.
+   - **`hourly` cannot be created paused**: a deploy creates its Cloud
+     Scheduler job enabled. Like `featureBest`, it returns at once until
+     `HOURLY_ENABLED` in `config.ts` is true, a code change and a deploy
+     (step 6).
+   - **The tombstone key** comes from Secret Manager through
+     `defineSecret('BAN_TOMBSTONE_KEY')` on every function that reads or
+     writes a tombstone (`acceptReplay`, `rankProgress`, `adminCommand`,
+     `countAccount`, `deletePlayer`, `hourly`). A deploy fails until
+     the secret exists. In the emulator without a `.secret.local` the
+     functions run without tombstones.
+   - **`rankProgress`** triggers on the literal path
+     `players/{uid}/storage/bacteria-game.progress`; whether Eventarc
+     takes the dot is checked at the first deploy (owner's manual steps).
+     A guest's Google link is looked up at most every 10 minutes per
+     instance until `googleChecked` is set.
+   - **`acceptReplay`** gained the same one-time Google-link check, and
+     its level statistics now merge as nested fields (`durations.lt1m`
+     was written as one field of that name).
+   - **Bans** delete the challenges and friend requests a player sent by
+     streaming the `challenges` and `requests` collection groups: a
+     collection-group query cannot filter on a document id alone, as the
+     ADR assumed. Challenges expire within the hour and requests are few;
+     a ban is rare.
+   - **Entries** keep `baseStatus`, the status they show again once
+     nothing hides them. `boardMembers` also keeps `record` (the online
+     W/L/D/not reported), `checks` (the day each board last had a
+     candidate of the player re-run) and `verifiedBefore` (trust tier 1).
+     `hiddenBy: 'admin'` and `barred` are the owner's; `'ban'` and
+     `'optout'` are worked out again from the ban and the profile.
+   - **Online reasons**: an agreed match that does not count keeps
+     `rankedReason`, an `OnlineReason` (`unbound`, `short`,
+     `too-fast`, `desync`, `banned`, `capped`) in `state/boards.ts`.
+   - **Endless runs** are created by the first replay of the run, counted
+     or not (a run with no win ranks nothing), and a match waiting on an
+     open match before it is checked once that one closes.
+   - **ADR 0016 §4 medal counts**: a verified re-run of a match against
+     the computer adds `rerun` and `medals.{tier}` to its
+     `levelStats` document, once, with the state change. Only re-run
+     matches carry them (daily, endless, gallery candidates), so the
+     medal rate is `medals / rerun`, not `/ attempts`.
+   - **Tests**: unit specs for the pure parts (labels and hiding, runs,
+     the triggers' early returns, the slice, the tombstone key, the
+     budget) and `boards.emulator.spec.ts` next to the replays one
+     (`test-integration`) for every core. No rule changed.
+
+   Left for later steps: the client (step 6), the admin lib (step 7), and
+   turning on `HOURLY_ENABLED` and `FEATURE_BEST_ENABLED`.
+
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
-   result lines and the privacy text. Enable the `hourly` schedule the
-   same day. Needs 0011 [5].
+   result lines and the privacy text. Set `HOURLY_ENABLED` and deploy the
+   functions the same day. Needs 0011 [5].
 7. **Admin lib** with all views, including the moved curation page, with
-   or after 0011 [6]. Then enable `featureBest`, sign in, and run
-   `stats.recount` once.
+   or after 0011 [6]. Then set `FEATURE_BEST_ENABLED`, deploy, sign in,
+   and run `stats.recount` once.
 
 ## Owner's decisions
 
@@ -1068,16 +1211,32 @@ written.
 ## Owner's manual steps
 
 - Create the secret `BAN_TOMBSTONE_KEY` (32 random bytes) in Secret
-  Manager on `bacteria-wars`, and grant the functions' runtime account
-  access to it.
+  Manager on `bacteria-wars` before the first functions deploy (the
+  release that ships the functions, ADR 0011), which
+  fails without it (`firebase functions:secrets:set BAN_TOMBSTONE_KEY`
+  grants the runtime account access). Never rotate it while a ban runs:
+  existing tombstones would no longer match.
 - After the index deploy, check that TTL is on for every new `expireAt`
   field listed above, and that `rooms.expireAt` is indexed again.
 - Review the CPU benchmark and the budgets it sets before the functions
-  deploy.
+  deploy. It ran on a dev core: run `hourly` once on Cloud Run after
+  step 6 (or `board.verify` on a known entry) and compare its logged
+  verification time with 28 s per match-minute; lower `VERIFY_MINUTES` if
+  Cloud Run is much slower.
+- At the first functions deploy, check that `rankProgress` deployed on
+  the literal path `players/{uid}/storage/bacteria-game.progress`. If
+  Eventarc refuses the dot, switch it to `{key}` and return for any other
+  key, as the ADR allows.
+- The rules of step 4 deploy with the game remote's next release
+  (`firestore`, `database`); they need no function. Check after it that a
+  banned test guest's writes fail, as above.
 - After the first functions deploy, check that Cloud Scheduler shows
-  `hourly` (paused) and `featureBest` (paused), and how many free jobs the
-  billing account still has. Enable `hourly` the day step 6 ships, and
-  `featureBest` after step 7.
+  `hourly` and `featureBest`, and how many free jobs the billing account
+  still has. Both jobs fire from the first deploy, but their functions
+  return at once (logged "is paused") until `HOURLY_ENABLED` and
+  `FEATURE_BEST_ENABLED` in `apps/bacteria-wars-functions/src/config.ts`
+  are true. Set `HOURLY_ENABLED` and deploy the day step 6 ships, and
+  `FEATURE_BEST_ENABLED` after step 7.
 - Sign in at `https://bacteria-wars.wolsok.de/admin` with the Google
   account that has the claim (ADR 0011's grant script). Run "Recount
   accounts" once, and check that the overview figures look plausible.

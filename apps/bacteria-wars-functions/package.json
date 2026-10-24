@@ -1,0 +1,13 @@
+{
+  "name": "bacteria-wars-functions",
+  "version": "0.0.1",
+  "private": true,
+  "description": "The Cloud Functions of Bacteria Wars (codebase bacteria, ADR 0011)",
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "firebase-admin": "14.5.0",
+    "firebase-functions": "7.4.0"
+  }
+}

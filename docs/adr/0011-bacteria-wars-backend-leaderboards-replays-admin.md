@@ -150,7 +150,9 @@ The worst case for the one-hour cap (`MAX_TICKS`) is about 550 KB; a
 **Replays are kept in Firestore, not Cloud Storage.** Every replay fits
 under Firestore's 1 MiB document limit, the existing rules and TTL cover
 it, and there is no second store to secure and clean up. The blob sits in
-a subdocument so lists never load it.
+a subdocument so lists never load it. TTL deletes no subcollection with
+its parent, so the blob and the reports carry the replay's `expireAt`
+and expire by TTL of their own.
 
 ### `BALANCE_VERSION` decides what plays back
 
@@ -201,8 +203,8 @@ writes **command documents** the functions process:
 | `replaySubmissions/{auto}`           | see above                                                                                                                                                                                                                | the player (create only)            | nobody (functions)                                                     |
 | `replayCommands/{auto}`              | see above, plus `result`                                                                                                                                                                                                 | the player (create only); functions | its writer                                                             |
 | `replays/{id}`                       | `{ players: uid[], kind: 'online' \| 'computer' \| 'daily' \| 'endless', levelId, balanceVersion, replayVersion, createdAt, ticks, endedBy, winnerSeat, hint, state, score?, reasons?, optOut: uid[], expireAt }`        | functions                           | its players                                                            |
-| `replays/{id}/blob/data`             | `{ bytes, size }`                                                                                                                                                                                                        | functions                           | its players (`get` only)                                               |
-| `replays/{id}/reports/{uid}`         | `{ checksum, inputsHash, winnerSeat, endedBy, at }` (online, one per device)                                                                                                                                             | functions                           | nobody                                                                 |
+| `replays/{id}/blob/data`             | `{ bytes, size, expireAt? }`                                                                                                                                                                                             | functions                           | its players (`get` only)                                               |
+| `replays/{id}/reports/{uid}`         | `{ checksum, inputsHash, winnerSeat, endedBy, at, expireAt? }` (online, one per device)                                                                                                                                  | functions                           | nobody                                                                 |
 | `publicReplays/{publicId}`           | `{ replayId, uids, levelId, kind, balanceVersion, players: [{ label, name?, colorId, avatarPreset }], ticks, endedBy, winnerSeat, score, reasons, summary, featuredAt, featuredBy: 'auto' \| 'admin', day, removedAt? }` | functions                           | nobody (served by `publicSite`)                                        |
 | `publicReplays/{publicId}/blob/data` | `{ bytes, size }` (`forPublic`)                                                                                                                                                                                          | functions                           | nobody (served by `publicSite`)                                        |
 | `replayCandidates/{day}`             | the day's verified runners-up                                                                                                                                                                                            | functions                           | admin                                                                  |
@@ -234,13 +236,17 @@ a dead end), `verified`, `unverified`, `balance-mismatch`.
 - `publicReplays` documents carry `removedAt: null` until they are removed,
   so queries on `removedAt == null` find them (added by ADR 0012).
 - **Retention.** Private replays expire by TTL on `expireAt`, 30 days after
-  the match (Firestore's TTL runs up to a day late). Featuring clears
-  `expireAt` on the private copy. Public replays stay until removed.
-  Submissions and commands expire by TTL after a day.
+  the match (Firestore's TTL runs up to a day late). Their blob and
+  reports carry the same `expireAt`, since TTL deletes no subcollection.
+  Featuring clears `expireAt` on the private copy, its blob and its
+  reports, and taking it down sets it on all three again. Public replays
+  and their blobs stay until removed. Submissions and commands expire by
+  TTL after a day.
 - Indexes: `replays` on `players` (array-contains) + `createdAt desc`;
   `replays` on `createdAt` + `state` for `featureBest`; `publicReplays` on
   `removedAt` + `featuredAt desc` and `balanceVersion` + `score desc`. TTL
-  on `replays.expireAt`, `replaySubmissions.expireAt`,
+  on `replays.expireAt`, `blob.expireAt` and `reports.expireAt` (the
+  collection groups under a replay), `replaySubmissions.expireAt`,
   `replayCommands.expireAt`.
 
 ### Who is named in public
@@ -294,10 +300,13 @@ install --omit dev`).
   - The verifying code loads the engine with `await import()`, so
     `publicSite` does not pay for it on a cold start.
 - **2nd gen, Node 22, one region**: the Firestore location of
-  `bacteria-wars` (confirmed by the owner before the first deploy).
+  `bacteria-wars`, `europe-west1` (Belgium), where the Realtime Database
+  lives too.
   `setGlobalOptions({ region, maxInstances: 5 })`; `initializeApp()` without
-  a project id. Triggers run with retries off and are idempotent (a
-  transaction checks `state` first).
+  a project id. Triggers are idempotent (a transaction checks `state`
+  first) and run with retries off, except ADR 0012's `rankReplay`, which
+  retries for an hour: a stored replay it failed to rank would otherwise
+  never count.
 - **Deployed with the game's config**: `functions` entry with
   `codebase: "bacteria"`, `source: "dist/apps/bacteria-wars-functions"` in
   `firebase.bacteria-game-remote.json`; its own `deploy` target
@@ -306,7 +315,8 @@ install --omit dev`).
 - **Emulator**: functions on port 5401; `firebase-emulators` depends on the
   functions `build` and starts `auth,firestore,database,functions`.
 - `assertActive(uid)` in `limits.ts` is a no-op until the moderation ADR
-  adds bans. (Changed by ADR 0012: it reads `bans/{uid}`, and only
+  adds bans. (Changed by ADR 0012: it is `isActive(uid)`, reads
+  `bans/{uid}`, and only
   `acceptReplay` and `replayCommand` (for `remove`) here call it;
   `deletePlayerReplays` and `profileChanged` never do, so a banned
   player's deletion and an owner's profile reset still reach their
@@ -324,7 +334,9 @@ install --omit dev`).
 | `publicSite`          | HTTPS behind Hosting                                          | `/replays`, `/replays/{publicId}`, `/replays/index.json`, `/replays/{publicId}/replay.json`, `/sitemap.xml` (below).                                                                                                                                                                                                                                                                 |
 
 (Changed by ADR 0012: `replayCommand` also writes `adminAudit/{commandId}`
-for its admin types.)
+for its admin types. As built, `profileChanged` also runs ADR 0012's
+board relabelling, and `deletePlayerReplays` is a core of the one Auth
+onDelete function `deletePlayer`, next to ADR 0012's `deletePlayerBoards`.)
 
 **Choosing candidates, so the cost has a ceiling.** Nothing is rerun on
 submission. `featureBest` takes the previous day's replays that:
@@ -493,10 +505,13 @@ The rules and `replayCommand` require `admin == true`,
 
 1. Owner: Blaze, Firestore location, APIs, IAM (below).
 2. Engine entry point, lint guard, federation skip - no behaviour change.
+   **Done.**
 3. Replay v2, packing, scoring, recorded seats, the sampler, golden replay.
+   **Done.**
 4. Functions app, rules, indexes, emulator; deploy the functions **before**
    the hosting rewrites merge (a release whose rewrites name a function
-   that does not exist fails).
+   that does not exist fails). **Done in code**, deployed by the release
+   that ships it - see "Step 4 as built" below.
 5. Client: room stub, recording settings, submission, "My matches", the
    viewer.
 6. `publicSite`, `robots.txt`, privacy text, `/watch`, the curation view
@@ -505,6 +520,63 @@ The rules and `replayCommand` require `admin == true`,
    has shipped, so the owner can unfeature).
 7. Owner: grant the claim, sign out and in, check `/admin` (changed by
    ADR 0012).
+
+### Step 4 as built
+
+- `apps/bacteria-wars-functions` exports `acceptReplay`, `replayCommand`,
+  `profileChanged`, `deletePlayer` (the core `deletePlayerReplays`) and
+  `featureBest`, with the
+  ADR 0012 changes to them, and `acceptReplay` adds ADR 0016's
+  `levelStats` counters. `publicSite` belongs to step 6 and is not built.
+  Each function is a thin trigger around a core that takes the Firestore
+  it acts on (`src/replays/`), `verify.ts` re-runs for every caller from
+  per-pool daily budgets (`replays/budgets.ts`).
+- The build is `@nx/esbuild` with code splitting: the engine is loaded
+  with `await import()` (`src/engine.ts`, the only module allowed a value
+  import of the alias, an oxlint override) and lands in a chunk of its
+  own, which `bundle.spec.ts` checks. `generatePackageJson` stays on, but
+  the dependencies come from the app's own `package.json`
+  (`firebase-functions`, `firebase-admin`, pinned to the workspace's
+  versions, checked by `deploy-safety.spec.ts`): Nx would otherwise list
+  the game lib's Angular peers. The build writes a pruned lockfile next
+  to it.
+- The region is `REGION` in `src/config.ts`, `europe-west1` (Belgium):
+  the owner moved the Firestore database `(default)` there from `nam5` on
+  24 October 2026 (deleted and recreated), next to the Realtime Database.
+  Firestore triggers run in their database's region.
+- `featureBest` is deployed with its schedule, but does nothing while
+  `FEATURE_BEST_ENABLED` in `src/config.ts` is false (Cloud Scheduler
+  cannot create a paused job from a deploy). Turning it on is a code
+  change, after the Replays view of `/admin` ships.
+- Command documents (`replaySubmissions`, `replayCommands`, ADR 0012's
+  `adminCommands`) take an `expireAt` up to 2 days ahead instead of
+  exactly `request.time` + 1 day, which no client can write.
+- `endless` is derived from a declared run's attempt only: the id of an
+  endless level is an ordinary generated level id.
+- The global daily cap is 20,000 unranked submissions, next to ADR 0012's
+  20,000 ranked ones (`limits.ts`).
+- The level statistics key a generated level by its style and heat
+  (`gen-<recipe>-<difficulty>`), the daily and endless levels apart, since
+  every roll is a level of its own. Medallions are not counted yet: they
+  need the re-run's samples.
+- **Deploys**: the release pipeline's non-cdk leg
+  (`.github/workflows/deploy.yml`) runs the app's own `deploy` target
+  (`--only functions:bacteria`, auth through `FIREBASE_TOKEN`) when a
+  release affects it, next to the game remote's. The remote's `deploy`
+  stays `--only hosting,firestore,database`, so the hosting deploy never
+  takes the functions along, and no hosting rewrite names a function yet.
+  `deploy-safety.spec.ts` checks all of it.
+- **Emulators**: the e2e emulator set (`bacteria-game-remote:
+firebase-emulators`) stays `auth,firestore,database`, so e2e does not
+  wait for the functions build on the Nx Cloud workers. The functions
+  emulator (port 5401) runs with `nx run bacteria-wars-functions:emulators`,
+  which builds first and starts all four. ADR 0012's "the functions
+  emulator runs the triggers in e2e" waits for the client steps.
+- **Tests**: unit specs (`test`); the Firestore and Realtime Database
+  rules against the emulators (`test-rules`, `@firebase/rules-unit-testing`);
+  the cores against the Firestore emulator (`test-integration`). Both
+  emulator targets use ports of their own (`firebase.*-test.json`) and run
+  in CI.
 
 ## Owner's decisions
 
@@ -517,11 +589,19 @@ Decided by the owner on 2026-10-23:
 ## Owner's manual steps
 
 - Blaze plan and the APIs above on `bacteria-wars`.
-- `gcloud firestore databases describe --project bacteria-wars`: the
-  location becomes the functions region.
+- Done: the Firestore location is `europe-west1` (moved from `nam5` on
+  24 October 2026), so the functions run in `europe-west1` (`REGION`).
 - IAM roles for the deploying account; Artifact Registry cleanup policy.
 - Turn on TTL for the new `expireAt` fields if the index deploy does not.
-- First functions deploy by hand (or let CI do it) before the rewrites PR.
+- The release that ships the functions deploys them (the non-cdk leg of
+  `.github/workflows/deploy.yml`, through `FIREBASE_TOKEN`), before the
+  rewrites PR; the account behind the token needs the roles above.
+  `npx nx run bacteria-wars-functions:deploy` (builds, then
+  `firebase deploy --only functions:bacteria`) stays for a manual
+  redeploy.
+- After the first deploy, pause the `featureBest` job in Cloud Scheduler
+  if it should not even start before step 6 (it returns at once while
+  `FEATURE_BEST_ENABLED` is false); turn the flag on after step 7.
 - Once: `gcloud auth application-default login`, then
   `node tools/firebase/grant-admin.mjs <email> --project bacteria-wars --prod`.
 - After the first deploy: `curl` `/replays`, `/replays/<id>`, an unknown

@@ -105,6 +105,16 @@ storage until then. Settings stay with the device either way.
   `firebase-emulators`, a `demo-` project, no credentials needed). The
   emulators use their own ports (`firebase.bacteria-game-remote.json`), apart
   from rollapolla's, which may run on the same Nx Cloud worker.
+- The server side is `apps/bacteria-wars-functions` (ADR 0011, ADR 0012):
+  Cloud Functions that import the game only through the engine entry
+  (`@wolsok/feat-lazy-bac-game/engine`, loaded with `loadEngine()`), so
+  anything the engine exports must stay free of Angular, RxJS and
+  Firebase. The contracts it shares with the client and the admin area
+  are `state/boards.ts`, `state/attempts.ts` and `state/admin-commands.ts`.
+  Its `test-rules` target tests `firestore.rules` and
+  `database.rules.json` against the emulators, so change a rule together
+  with its spec there; `emulators` starts the functions emulator (port 5401) with the others. It is deployed by the release pipeline's non-cdk leg through its own
+  `deploy` target, never by the remote's hosting deploy.
 - E2E never touches the real project: Playwright serves `serve-e2e`, the
   production build with `environment.e2e.ts` (the emulators), in its own
   `dist/apps/bacteria-game-remote-e2e`, next to `firebase-emulators`. The

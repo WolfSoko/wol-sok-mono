@@ -5,7 +5,9 @@ import {
   boardAvatar,
   boardTag,
   compareRows,
+  BoardEntry,
   competitionRanks,
+  countXp,
   dailyBoardId,
   dailySort,
   endlessSort,
@@ -13,8 +15,14 @@ import {
   isBoardId,
   onlineSort,
   parseBoardId,
+  isVisible,
   posesAsLabel,
+  showsName,
+  TOP_ROWS,
+  topRows,
+  XP_FULL_COUNT,
   XP_FULL_COUNT_BEFORE,
+  XpLedger,
   xpRiseCap,
   xpSort,
 } from './boards';
@@ -209,6 +217,133 @@ describe('boards', () => {
       expect(new Date(XP_FULL_COUNT_BEFORE).toISOString()).toMatch(
         /T00:00:00\.000Z$/
       );
+    });
+  });
+
+  describe('top rows', () => {
+    const entry = (
+      entryId: string,
+      sort: number,
+      status: BoardEntry['status'],
+      atHour = 0
+    ): BoardEntry & { entryId: string } => ({
+      entryId,
+      sort,
+      atHour,
+      status,
+      name: null,
+      tag: boardTag(entryId),
+      avatar: boardAvatar(entryId),
+      show: { ticks: 0, won: true },
+    });
+
+    it('share positions between ties and leave hidden entries out', () => {
+      const rows = topRows(
+        [
+          entry('d', 10, 'counted'),
+          entry('b', 20, 'counted', 3),
+          entry('h', 25, 'hidden'),
+          entry('c', 20, 'counted', 1),
+          entry('a', 30, 'counted'),
+        ],
+        0
+      );
+      expect(rows.map((row) => [row.entryId, row.pos])).toEqual([
+        ['a', 1],
+        ['c', 2],
+        ['b', 2],
+        ['d', 4],
+      ]);
+      expect(rows.every((row) => row.rank === undefined)).toBe(true);
+    });
+
+    it('rank verified entries among themselves, inside the cut only', () => {
+      const rows = topRows(
+        [
+          entry('p', 100, 'provisional'),
+          ...Array.from({ length: 12 }, (_, i) =>
+            entry(`v${i}`, 90 - i, 'verified')
+          ),
+        ],
+        BOARD_CUT.daily
+      );
+      expect(rows[0]).toMatchObject({ entryId: 'p', pos: 1 });
+      expect(rows[0].rank).toBeUndefined();
+      expect(rows[1]).toMatchObject({ entryId: 'v0', pos: 2, rank: 1 });
+      expect(rows[10]).toMatchObject({ entryId: 'v9', rank: 10 });
+      expect(rows[11].rank).toBeUndefined();
+    });
+
+    it('hold at most TOP_ROWS', () => {
+      const entries = Array.from({ length: TOP_ROWS + 5 }, (_, i) =>
+        entry(`e${i}`, i, 'counted')
+      );
+      expect(topRows(entries, 0)).toHaveLength(TOP_ROWS);
+    });
+
+    it('show names on checked entries only, and hidden ones never', () => {
+      expect(showsName('counted')).toBe(true);
+      expect(showsName('verified')).toBe(true);
+      expect(showsName('provisional')).toBe(false);
+      expect(showsName('stale')).toBe(false);
+      expect(showsName('hidden')).toBe(false);
+      expect(isVisible('stale')).toBe(true);
+      expect(isVisible('hidden')).toBe(false);
+    });
+  });
+
+  describe('XP ledger', () => {
+    const HOUR = 3_600_000;
+    const NOW = Date.UTC(2027, 0, 10, 12);
+    const NEW_ACCOUNT = XP_FULL_COUNT_BEFORE + 1;
+
+    it('counts a new account at the hourly cap', () => {
+      expect(countXp(null, 9_000, NOW, NEW_ACCOUNT)).toEqual({
+        counted: 2_000,
+        claimed: 9_000,
+        lastAt: NOW,
+        firstAt: NOW,
+        risenToday: 2_000,
+        todayDay: '2027-01-10',
+      });
+    });
+
+    it('counts a player from before the boards up to 25,000 at once', () => {
+      const before = XP_FULL_COUNT_BEFORE - 1;
+      expect(countXp(null, 40_000, NOW, before).counted).toBe(XP_FULL_COUNT);
+      expect(countXp(null, 900, NOW, before).counted).toBe(900);
+    });
+
+    it('rises by 2,000 plus 3,000 an hour since the last change', () => {
+      const first = countXp(null, 50_000, NOW, NEW_ACCOUNT);
+      const later = countXp(first, 50_000, NOW + 2 * HOUR, NEW_ACCOUNT);
+      expect(later.counted - first.counted).toBe(2_000 + 2 * 3_000);
+    });
+
+    it('never rises more than 20,000 gross in a UTC day', () => {
+      let ledger: XpLedger = countXp(null, 0, NOW - 11 * HOUR, NEW_ACCOUNT);
+      ledger = countXp(ledger, 100_000, NOW, NEW_ACCOUNT);
+      expect(ledger.counted).toBe(20_000);
+      // A fall gives no room back.
+      ledger = countXp(ledger, 0, NOW + HOUR, NEW_ACCOUNT);
+      expect(ledger.counted).toBe(0);
+      ledger = countXp(ledger, 100_000, NOW + 2 * HOUR, NEW_ACCOUNT);
+      expect(ledger.counted).toBe(0);
+      // The next day starts over.
+      ledger = countXp(ledger, 100_000, NOW + 14 * HOUR, NEW_ACCOUNT);
+      expect(ledger.counted).toBeGreaterThan(0);
+      expect(ledger.todayDay).toBe('2027-01-11');
+    });
+
+    it('follows a reset progress down, and keeps the time while nothing rises', () => {
+      const first = countXp(null, 1_500, NOW, NEW_ACCOUNT);
+      expect(countXp(first, 200, NOW + HOUR, NEW_ACCOUNT).counted).toBe(200);
+      const same = countXp(first, 1_500, NOW + HOUR, NEW_ACCOUNT);
+      expect(same.lastAt).toBe(first.lastAt);
+    });
+
+    it('takes whole XP only', () => {
+      expect(() => countXp(null, 1.5, NOW, NEW_ACCOUNT)).toThrow(RangeError);
     });
   });
 });
