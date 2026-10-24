@@ -470,7 +470,10 @@ function tailPath(
     const along = size + (j / 7) * look.tail;
     const sway = Math.sin(t * (8 + look.speed * 6) + j * 0.9 + cell.phase);
     const side = sway * (1 + j * 0.5);
-    cx.lineTo(x + backX * along + sideX * side, y + backY * along + sideY * side);
+    cx.lineTo(
+      x + backX * along + sideX * side,
+      y + backY * along + sideY * side
+    );
   }
 }
 
