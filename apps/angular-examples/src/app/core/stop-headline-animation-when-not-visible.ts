@@ -10,8 +10,10 @@ export function stopHeadlineAnimationWhenNotVisible(
     const mainToolbarElem = document.getElementById('main-toolbar');
     if (mainToolbarElem) {
       observer.observe(mainToolbarElem);
+    } else if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => findToolbarAndObserve(observer));
     } else {
-      requestIdleCallback(() => findToolbarAndObserve(observer));
+      window.setTimeout(() => findToolbarAndObserve(observer), 200);
     }
   }
 
