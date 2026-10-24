@@ -72,7 +72,7 @@ const MIN_CELL_SIZE = 28;
  * Device pixels per texel of the flow field. The noise changes over about a hundred pixels,
  * so the linear filtered texture looks the same as computing the noise for every particle.
  */
-const FLOW_FIELD_CELL = 4;
+const FLOW_TEXTURE_CELL = 4;
 
 /**
  * Simulates and draws the particles on the GPU.
@@ -310,8 +310,8 @@ export class WebGlParticleRenderer implements ParticleRenderer {
   /** render the flow field once into a texture, the update program samples it */
   private createFlowField(): WebGLTexture {
     const { gl, params } = this;
-    const width = Math.ceil(params.width / FLOW_FIELD_CELL);
-    const height = Math.ceil(params.height / FLOW_FIELD_CELL);
+    const width = Math.ceil(params.width / FLOW_TEXTURE_CELL);
+    const height = Math.ceil(params.height / FLOW_TEXTURE_CELL);
     const texture = gl.createTexture();
     const framebuffer = gl.createFramebuffer();
     const vao = gl.createVertexArray();

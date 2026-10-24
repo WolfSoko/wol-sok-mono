@@ -17,6 +17,9 @@ import { WebGlParticleRenderer } from './webgl/webgl-particle-renderer';
  */
 const MAX_GPU_EFFECTS = 12;
 
+/** the largest canvas area Safari allows, the smallest limit of the common browsers */
+const MAX_CANVAS_PIXELS = 16_777_216;
+
 /** counts the effects that hold a WebGL context */
 export class GpuContextBudget {
   private live = 0;
@@ -86,8 +89,17 @@ export function chooseParticleRenderer({
   const canvasChoice: ParticleRendererChoice = {
     maxParticleCount: Math.min(maxParticleCount, CANVAS_MAX_PARTICLE_COUNT),
     // css pixels keep the CPU work low, fewer for a big element
-    captureScale: (width, height) =>
-      Math.min(1, capturePixelsScale(width, height, maxCapturePixels)),
+    captureScale: (width, height, effectScale) =>
+      Math.min(
+        1,
+        capturePixelsScale(width, height, maxCapturePixels),
+        // the effect canvas has to stay a canvas the browser can create
+        capturePixelsScale(
+          width * effectScale.width,
+          height * effectScale.height,
+          MAX_CANVAS_PIXELS
+        )
+      ),
     create: createCanvasRenderer,
     release: () => undefined,
   };

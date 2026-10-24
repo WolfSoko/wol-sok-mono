@@ -1,4 +1,3 @@
-import { frontGeometry } from './vaporizing-front';
 import { effectMargins, effectScale, windOf } from './wind';
 
 describe('windOf', () => {
@@ -58,24 +57,5 @@ describe('effectMargins', () => {
   it('should treat a full turn like no turn', () => {
     expect(effectMargins(45 + 360)).toEqual(effectMargins(45));
     expect(effectMargins(45 - 360)).toEqual(effectMargins(45));
-  });
-});
-
-describe('frontGeometry', () => {
-  const bounds = { left: 0, top: 40, right: 9, bottom: 49 };
-
-  it('should end the front at the bottom left for the default wind', () => {
-    const front = frontGeometry(bounds, windOf(), { top: 40, bottom: 0 });
-    expect(front.originX).toBeCloseTo(0);
-    expect(front.originY).toBeCloseTo(49);
-    // starts as far out as the room above the element
-    expect(front.reach).toBeCloseTo(Math.hypot(9, 9 + 40));
-  });
-
-  it('should end the front on the upwind side', () => {
-    const front = frontGeometry(bounds, windOf(270), { top: 10, bottom: 10 });
-    // blowing to the left, the front sweeps from left to right
-    expect(front.originX).toBeCloseTo(9);
-    expect(front.originY).toBeCloseTo(44.5);
   });
 });

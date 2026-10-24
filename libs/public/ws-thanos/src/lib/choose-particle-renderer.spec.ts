@@ -107,6 +107,14 @@ describe('chooseParticleRenderer', () => {
       expect(choice.captureScale(300, 400, defaultEffectScale)).toBe(1);
     });
 
+    it('should keep the effect canvas within the area browsers allow', () => {
+      const blowingLeft = effectScale(effectMargins(270));
+      const scale = choose().captureScale(2000, 1500, blowingLeft);
+      expect(
+        2000 * blowingLeft.width * 1500 * blowingLeft.height * scale * scale
+      ).toBeLessThanOrEqual(16_777_216);
+    });
+
     it('should cap the particles to what the CPU can handle', () => {
       expect(choose().maxParticleCount).toBe(CANVAS_MAX_PARTICLE_COUNT);
       expect(choose(500).maxParticleCount).toBe(500);

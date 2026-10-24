@@ -4,7 +4,10 @@
  */
 export const FRAME_RATE = 60;
 
-/** the fade for one frame of the given length, fade is the fade for a frame at FRAME_RATE */
+/**
+ * the fade for one frame of the given length, fade is the fade for a frame at FRAME_RATE.
+ * A fade below 0, past the end of the animation, fades out completely.
+ */
 export function frameFade(fade: number, deltaTSec: number): number {
-  return Math.pow(fade, deltaTSec * FRAME_RATE);
+  return Math.pow(Math.max(0, fade), deltaTSec * FRAME_RATE);
 }

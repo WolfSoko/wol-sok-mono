@@ -182,7 +182,7 @@ uniform float uShardGrow;
 uniform mat2 uWind;
 uniform vec2 uFrontOrigin;
 /** see FlowField, sampled once by FLOW_FIELD_FRAGMENT_SHADER over the effect canvas */
-uniform sampler2D uFlowField;
+uniform highp sampler2D uFlowField;
 
 out vec2 vPosition;
 out vec2 vVelocity;
@@ -194,7 +194,7 @@ out float vReleasedAt;
 const int CHUNKS = ${CRUMBLE_MODE.chunks};
 /** part of the animation a chunk flies before it crumbles */
 const float CHUNK_LIFE = 0.12;
-/** weak, the effect canvas ends at the bottom of the element, so chunks jump up and arc */
+/** weak and always down, chunks jump with the wind and arc */
 const float CHUNK_GRAVITY = 4.0;
 
 ${IS_VISIBLE_INSIDE}
@@ -251,7 +251,7 @@ void main() {
         // the whole chunk shares velocity and gravity, so it flies in one piece
         float side = fract(aCellRandom * 13.7) - 0.5;
         vVelocity = uWind * vec2(side * 90.0, -60.0 - aCellRandom * 70.0) * uPixelScale;
-        vAcceleration = uWind * vec2(0.0, CHUNK_GRAVITY);
+        vAcceleration = vec2(0.0, CHUNK_GRAVITY);
         vReleasedAt = -releaseT;
       } else {
         vAcceleration = dustAcceleration();

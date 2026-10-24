@@ -143,7 +143,8 @@ It is an angle in degrees, clockwise from up like a css gradient angle:
 </div>
 ```
 
-The effect canvas reaches past the element where the dust flies, one element width sideways and four heights up or down.
+The effect canvas reaches past the element where the dust flies: up to one element width sideways and four element heights up or down,
+less for the sides the dust only drifts towards.
 For a wind that blows down it reaches below the element, so near the end of the page it can make the page scroll for a moment.
 
 #### Options per element
