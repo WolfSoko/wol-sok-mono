@@ -9,7 +9,14 @@ import { getLevel, LEVELS, levelCrosshairSpeed } from './levels';
 import { PlayerStore } from './player.store';
 import { ANNIHILATION, judgeOutcome } from './win-conditions';
 import { PlayerService } from './player.service';
-import { playReplay, Replay, replayOf, REPLAY_VERSION } from './replay';
+import { LADDER_VERSION } from './difficulty-curve';
+import {
+  LADDER_REPLAY_VERSION,
+  playReplay,
+  Replay,
+  replayOf,
+  REPLAY_VERSION,
+} from './replay';
 import { replayLink } from './replay-link';
 import { signal } from '@angular/core';
 import { Subject } from 'rxjs';
@@ -269,9 +276,11 @@ describe('GameStateService', () => {
       }
 
       const replay = service['replay']() as Replay;
+      // Against the ladder's computer (ADR 0016): version 4.
       expect(replay.header).toEqual(
         expect.objectContaining({
-          version: REPLAY_VERSION,
+          version: LADDER_REPLAY_VERSION,
+          ladder: LADDER_VERSION,
           mode: 'vs-computer',
           difficulty: 'hard',
           simulation: 'cpu',
@@ -1075,9 +1084,10 @@ describe('GameStateService local recordings', () => {
 
     const recording = service.lastRecording();
     const replay = recording?.replay as Replay;
+    // A ladder match against the computer: its computer plays the curve.
     expect(replay.header).toEqual(
       expect.objectContaining({
-        version: REPLAY_VERSION,
+        version: LADDER_REPLAY_VERSION,
         simulation: 'cpu',
         mode: 'vs-computer',
         width: 320,

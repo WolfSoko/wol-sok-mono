@@ -68,6 +68,8 @@ import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
 import { EvolutionService } from '../evolution.service';
+import { computerLoadout } from './computer-opponent';
+import { LADDER_VERSION } from './difficulty-curve';
 import { PLAIN_LOADOUT } from './evolution';
 import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
@@ -611,9 +613,18 @@ export class GameStateService {
       seed: ghost?.header.seed ?? randomSeed(),
     };
     // Taken as the colonies spawn: the plan keeps it for the whole match,
-    // whatever the storage or the player change meanwhile.
+    // whatever the storage or the player change meanwhile. The computer
+    // evolves with the ladder (ADR 0016); a ghost race has none.
     if (this.evolves()) {
-      this.plan.loadouts = [untracked(this.evolution.loadout), PLAIN_LOADOUT];
+      this.plan.loadouts = [
+        untracked(this.evolution.loadout),
+        ghost === null
+          ? computerLoadout(this.plan.levelId, this.plan.difficulty)
+          : PLAIN_LOADOUT,
+      ];
+      if (ghost === null) {
+        this.plan.ladder = LADDER_VERSION;
+      }
     }
     const { spawns, options, evolved } = planMatch(this.plan, ghost);
     this.planEvolved = evolved;

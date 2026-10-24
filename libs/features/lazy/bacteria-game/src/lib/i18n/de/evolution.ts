@@ -5,7 +5,7 @@ export const evolution: Translation<typeof en> = {
   title: 'Evolution',
   tagline: 'Gib DNA aus. Züchte eine fiesere Kolonie.',
   plays:
-    'Evolution zählt gegen den Computer in der Kampagne und auf generierten Levels, dort auch gegen deinen Geist, der mit dem spielt, was sein Lauf hatte. Das Tageslevel, Endlos-Läufe, Duelle am Gerät und Online-Matches bleiben ohne, fair für alle.',
+    'Evolution zählt gegen den Computer in der Kampagne und auf generierten Levels, dort auch gegen deinen Geist, der mit dem spielt, was sein Lauf hatte. Der Computer entwickelt sich dort auch, Level für Level – das Briefing verrät, wie. Das Tageslevel, Endlos-Läufe, Duelle am Gerät und Online-Matches bleiben ohne, fair für alle.',
   dna: {
     label: 'DNA',
     earned: '{count} DNA insgesamt verdient',

@@ -219,6 +219,12 @@
                       <mat-icon aria-hidden="true">smart_toy</mat-icon>
                       <span>{{ difficultyTexts().description | t }}</span>
                     </p>
+                    @if (enemyEvolution(); as evolved) {
+                      <p class="opponent enemy-evolution">
+                        <mat-icon aria-hidden="true">biotech</mat-icon>
+                        <span>{{ evolved }}</span>
+                      </p>
+                    }
                     @if (standing(); as held) {
                       <div class="best">
                         <feat-lazy-bac-game-medallion

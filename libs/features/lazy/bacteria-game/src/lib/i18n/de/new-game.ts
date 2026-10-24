@@ -66,6 +66,13 @@ export const newGame: Translation<typeof en> = {
     },
   },
   opponent: 'Gegner',
+  /** What the computer evolved on this level and difficulty (ADR 0016). */
+  enemy: {
+    evolved: 'Der Gegner hat sich entwickelt: {list}',
+    plain: 'Der Gegner hat sich noch nicht entwickelt.',
+    /** A gene and its level in the list: "Venom Glands 3". */
+    gene: '{name} {level}',
+  },
   difficulty: 'Schwierigkeit',
   yourBest: 'Dein Bestwert auf {difficulty}',
   allMedals: 'Alle Medaillen dieses Levels gehören dir.',

@@ -9,6 +9,7 @@ import {
 import { ColonySummary, Simulation, SimulationFactory } from './simulation';
 import {
   BotController,
+  BotProfile,
   BotRoutes,
   BotDifficulty,
   BotWeaponView,
@@ -17,7 +18,12 @@ import {
   neutralFood,
 } from './bot-controller';
 import { countDown, TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
-import { GameBalance, gameBalance, PLAIN_TRAITS } from './game-balance';
+import {
+  colonyCapacity,
+  GameBalance,
+  gameBalance,
+  PLAIN_TRAITS,
+} from './game-balance';
 import {
   clamp,
   clampLength,
@@ -92,6 +98,18 @@ export interface MatchOptions {
   map?: GameMap;
   crosshairSpeed?: number;
   difficulty?: BotDifficulty;
+  /**
+   * How the computer plays - its difficulty's profile when absent. A match
+   * against the computer on the ladder or a generated level takes the
+   * profile of its place on the ladder (`computer-opponent.ts`).
+   */
+  botProfile?: BotProfile;
+  /**
+   * Seats a bot plays in place of a human, with the profile each is given:
+   * the balance lab's stand-in (ADR 0016). Its seat spawns as a bot, and
+   * its weapon is ready from the start, as a human's is.
+   */
+  standIns?: ReadonlyMap<number, BotProfile>;
   /**
    * The arena size, when it is known. The walls are only laid out once the
    * simulation has a size, and the start screen shows the gates and sliding
@@ -201,6 +219,8 @@ export class MatchEngine {
   public readonly seed: number;
   public readonly balance: GameBalance;
   public readonly simulation: Simulation;
+  /** The most bacteria a colony of this match may grow to. */
+  public readonly capacity: number;
   private playerList: Player[];
   /** True while `playerList` is this tick's own copy, free to change. */
   private ownsPlayers = false;
@@ -270,6 +290,7 @@ export class MatchEngine {
     this.onSecond = options.onSecond ?? null;
     this.win = winRuleOf(options);
     this.traits = spawns.map((spawn) => spawn.traits);
+    this.capacity = colonyCapacity(this.balance, spawns.length);
     this.map = options.map ?? getMap('corridors');
     const players = spawns.filter((spawn) => spawn.neutral !== true);
     if (spawns.slice(0, players.length).some((spawn) => spawn.neutral)) {
@@ -286,20 +307,22 @@ export class MatchEngine {
       };
     });
     this.playerList = players.map((spawn, index) => {
+      const standIn = options.standIns?.get(index);
       if (spawn.isBot && !this.ghosts.has(index)) {
         this.bots.set(
           index,
           new BotController(
             options.difficulty ?? DEFAULT_DIFFICULTY,
             seeded(streamSeed(this.seed, index + 1)),
-            spawn.boss === true
+            spawn.boss === true,
+            standIn ?? options.botProfile
           )
         );
       }
       // The computer's weapon starts charging, so its first shot is not
       // at the human's spawn a second into the match; a human's is ready.
       const charging =
-        spawn.weapon != null && this.bots.has(index)
+        spawn.weapon != null && this.bots.has(index) && standIn === undefined
           ? this.weaponCooldown(index, spawn.weapon)
           : 0;
       return createPlayer({
@@ -755,6 +778,7 @@ export class MatchEngine {
       id: player.weapon,
       ready: isWeaponReady(player),
       radius,
+      at: crosshair,
       around: () => this.bacteriaAround(player.id, crosshair, radius),
     };
   }
@@ -908,7 +932,8 @@ export class MatchEngine {
         this.unitAt(width),
         prey,
         this.win.kind === 'harvest',
-        this.botWeaponView(player, width)
+        this.botWeaponView(player, width),
+        this.capacity
       );
       const decision = bot.decideNow(view);
       if (decision.target != null) {
