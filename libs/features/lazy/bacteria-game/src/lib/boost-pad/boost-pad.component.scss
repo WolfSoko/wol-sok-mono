@@ -1,4 +1,5 @@
 @use '../colony';
+@use '../pad';
 
 // The pad fills whatever box the stage gives it and lays itself out by the
 // shape of that box - see the container query below.
@@ -49,33 +50,19 @@
   }
 }
 
-// The button sits in the middle of its recharge ring.
 .button-with-ring {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  @include pad.button-with-ring;
 }
 
 .charge {
-  --mat-progress-spinner-active-indicator-color: var(--seat-color);
+  @include pad.charge(var(--seat-color));
 }
 
 .boost-fab {
-  --mat-fab-container-color: var(--seat-color);
-  --mat-fab-foreground-color: #fff;
-  --mat-fab-container-shape: 50%;
-
-  position: absolute;
-  display: inline-flex;
-  flex-direction: column;
-  width: 88px;
-  height: 88px;
+  @include pad.fab(88px, var(--seat-color));
 
   mat-icon {
-    width: 2rem;
-    height: 2rem;
-    font-size: 2rem;
+    @include pad.fab-icon(2rem);
   }
 
   .boost-state {
