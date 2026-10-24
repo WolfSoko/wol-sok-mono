@@ -52,6 +52,7 @@ import {
 } from './arena/arena-view.component';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
+import { SimulationOverrideService } from './gl/simulation-override.service';
 import {
   chooseSimulation,
   DETERMINISTIC_SIMULATION,
@@ -235,6 +236,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   private readonly gpuSelfTest = inject(GpuSelfTestService);
+  private readonly simulationOverride = inject(SimulationOverrideService);
   protected readonly progress = inject(ProgressService);
   protected readonly evolution = inject(EvolutionService);
   private readonly document = inject(DOCUMENT);
@@ -1272,8 +1274,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const gl = painter instanceof GlArenaPainter ? painter : null;
     if (DETERMINISTIC_SIMULATION) {
       this.gpuSelfTest.check();
+      this.simulationOverride.start();
     }
-    const { factory, fallback } = chooseSimulation({
+    const { factory, fallback, ruleset, offers } = chooseSimulation({
       deterministic: DETERMINISTIC_SIMULATION,
       gpu:
         gl == null
@@ -1281,8 +1284,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           : (balance, random, options) =>
               gl.createSimulation(balance, random, options),
       gpuTrusted: () => this.gpuSelfTest.result()?.ok === true,
+      override: this.simulationOverride.override,
     });
-    this.playerService.useSimulation(factory, fallback);
+    this.playerService.useSimulation(factory, fallback, { ruleset, offers });
     this.gameStateService.setArenaSize(width, height);
     this.draw();
   }
