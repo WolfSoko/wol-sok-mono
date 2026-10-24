@@ -13,15 +13,16 @@ export const controls = {
     share: 'Share of all bacteria',
   },
   /*
-   * The keys that fire a weapon, next to the boost keys:
-   * "{left} fires the weapon with E, {right} with the right Shift."
+   * The keys that fire a weapon. Only a match against the computer arms
+   * anyone, so they fire the one weapon at the screen:
+   * "In a match against the computer, E or the right Shift fires your weapon."
    */
   weaponKeys: {
-    leftFires: '{name} fires the weapon with',
-    rightFires: '{name} with the',
+    before: 'In a match against the computer,',
     e: 'E',
+    or: 'or the',
     shift: 'right Shift',
-    both: 'Against the computer either key fires yours.',
+    after: 'fires your weapon.',
   },
   colors: {
     left: 'Left player',

@@ -116,8 +116,8 @@ describe('the weapon ring', () => {
 });
 
 describe('humanForWeaponKey', () => {
-  const left = createPlayer({ id: 0 });
-  const right = createPlayer({ id: 1 });
+  const left = { ...createPlayer({ id: 0 }), weapon: 'toxin-bomb' as const };
+  const right = { ...createPlayer({ id: 1 }), weapon: 'cryo-pulse' as const };
 
   it('hands E to the first human and the right Shift to the second', () => {
     expect(humanForWeaponKey([left, right], 'e', 'KeyE')).toBe(left);
@@ -127,6 +127,14 @@ describe('humanForWeaponKey', () => {
 
   it('gives both keys to a single human', () => {
     expect(humanForWeaponKey([left], 'Shift', 'ShiftRight')).toBe(left);
+  });
+
+  it('leaves the key alone for a human who carries no weapon', () => {
+    const plain = createPlayer({ id: 1 });
+
+    expect(humanForWeaponKey([left, plain], 'Shift', 'ShiftRight')).toBeNull();
+    expect(humanForWeaponKey([plain], 'e', 'KeyE')).toBeNull();
+    expect(humanForWeaponKey([plain], 'Shift', 'ShiftRight')).toBeNull();
   });
 
   it('ignores the left Shift and every other key', () => {

@@ -94,6 +94,10 @@ const WEAPON_KEYS: readonly WeaponKey[] = ['E', 'Shift'];
  * The human whose weapon a key fires, null for any other key - handed out
  * like the boost keys. Only the right Shift counts: the left one sits under
  * the first human's hand. `code` is the key's `KeyboardEvent.code`.
+ *
+ * Null as well when that human carries no weapon, so the key does what it
+ * did before there were weapons - only a match against the computer on the
+ * ladder or a generated level arms anyone.
  */
 export function humanForWeaponKey(
   humans: readonly Player[],
@@ -109,7 +113,8 @@ export function humanForWeaponKey(
   if (index < 0 || humans.length === 0) {
     return null;
   }
-  return humans[Math.min(index, humans.length - 1)];
+  const human = humans[Math.min(index, humans.length - 1)];
+  return human.weapon === null ? null : human;
 }
 
 /** True when two scoreboards show the same - every field of every colony. */

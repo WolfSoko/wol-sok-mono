@@ -1761,7 +1761,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // The boost and weapon keys belong to the game only while a match is
     // on, and never while a button has the focus: a keyboard user pressing
     // Enter on "Reset" expects a reset, not a boost. Outside of a match
-    // Space still scrolls.
+    // Space still scrolls. A weapon key counts only for a human who carries
+    // a weapon; anyone else's E or Shift does what it did before.
     const inMatch =
       this.store.snapshot().currentState === GameState.RUNNING &&
       !isInteractiveTarget($event.target);

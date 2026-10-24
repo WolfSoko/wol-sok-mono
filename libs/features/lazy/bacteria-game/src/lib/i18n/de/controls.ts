@@ -12,11 +12,11 @@ export const controls: Translation<typeof en> = {
     share: 'Anteil an allen Bakterien',
   },
   weaponKeys: {
-    leftFires: '{name} feuert die Waffe mit',
-    rightFires: '{name} mit der',
+    before: 'Im Match gegen den Computer feuert',
     e: 'E',
-    shift: 'rechten Umschalttaste',
-    both: 'Gegen den Computer feuert jede der beiden deine.',
+    or: 'oder die',
+    shift: 'rechte Umschalttaste',
+    after: 'deine Waffe ab.',
   },
   colors: {
     left: 'Linker Spieler',

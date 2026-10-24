@@ -61,14 +61,12 @@
       >.
       {{ "help.keyboard.both" | t }}
     </p>
-    <p>
-      {{ "controls.weaponKeys.leftFires" | t: { name: names()[0] } }}
-      <kbd>{{ "controls.weaponKeys.e" | t }}</kbd
-      >,
-      {{ "controls.weaponKeys.rightFires" | t: { name: names()[1] } }}
-      <kbd>{{ "controls.weaponKeys.shift" | t }}</kbd
-      >.
-      {{ "controls.weaponKeys.both" | t }}
+    <p class="weapon-keys">
+      {{ "controls.weaponKeys.before" | t }}
+      <kbd>{{ "controls.weaponKeys.e" | t }}</kbd>
+      {{ "controls.weaponKeys.or" | t }}
+      <kbd>{{ "controls.weaponKeys.shift" | t }}</kbd>
+      {{ "controls.weaponKeys.after" | t }}
     </p>
     <p>
       <kbd>P</kbd> {{ "help.keyboard.or" | t }} <kbd>Esc</kbd>
