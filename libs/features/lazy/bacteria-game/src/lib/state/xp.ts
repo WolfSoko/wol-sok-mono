@@ -41,14 +41,14 @@ const DIFFICULTY_FACTOR: Record<BotDifficulty, number> = {
   hard: 1.5,
 };
 /** XP a held medallion is worth - a better one replaces the one below. */
-const MEDAL_XP: Record<MedalTier, number> = {
+export const MEDAL_XP: Readonly<Record<MedalTier, number>> = {
   bronze: 20,
   silver: 40,
   gold: 70,
   platinum: 120,
 };
 /** XP an achievement is worth. */
-const ACHIEVEMENT_XP = 50;
+export const ACHIEVEMENT_XP = 50;
 /** XP a training mission done is worth. */
 const MISSION_XP = 25;
 /** XP for a match between two players. */
@@ -61,7 +61,9 @@ export const COUCH_XP = 15;
 export type XpMatch = MatchRecord | 'couch' | 'training';
 
 /** What a match against the computer is worth on its own. */
-export function matchXp(record: MatchRecord): number {
+export function matchXp(
+  record: Pick<MatchRecord, 'won' | 'difficulty'>
+): number {
   return Math.round(
     (FINISH_XP + (record.won ? WIN_XP : 0)) *
       DIFFICULTY_FACTOR[record.difficulty]

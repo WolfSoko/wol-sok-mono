@@ -51,6 +51,7 @@ export {
 export {
   EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
+  LADDER_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
   playReplay,
@@ -192,6 +193,15 @@ export type {
   WeaponId,
 } from './lib/state/evolution';
 
+// The ladder's computer: its skill along the curve and its evolution
+// (ADR 0016), which `planMatch` plays for a plan with `ladder`.
+export { computerLoadout } from './lib/state/computer-opponent';
+export {
+  computerProfile,
+  LADDER_VERSION,
+  targetWinRate,
+} from './lib/state/difficulty-curve';
+
 // Balance, levels and modes.
 export {
   BALANCE_VERSION,
@@ -219,7 +229,7 @@ export {
   DEFAULT_DIFFICULTY,
   difficultyOption,
 } from './lib/state/bot-controller';
-export type { BotDifficulty } from './lib/state/bot-controller';
+export type { BotDifficulty, BotProfile } from './lib/state/bot-controller';
 export { isHeadStart, isSeriesLength, startScales } from './lib/state/rivalry';
 export type { HeadStart, SeriesLength } from './lib/state/rivalry';
 export {

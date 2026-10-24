@@ -36,6 +36,11 @@ export function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
 }
 
+/** `t` of the way from `a` to `b` - `a` at 0, `b` at 1. */
+export function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
 /** `value` wrapped into `[0, size)`, also for negative values. */
 export function wrap(value: number, size: number): number {
   return ((value % size) + size) % size;

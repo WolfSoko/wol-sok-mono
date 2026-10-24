@@ -65,6 +65,13 @@ export const newGame = {
     },
   },
   opponent: 'Opponent',
+  /** What the computer evolved on this level and difficulty (ADR 0016). */
+  enemy: {
+    evolved: 'The enemy evolved: {list}',
+    plain: 'The enemy has not evolved yet.',
+    /** A gene and its level in the list: "Venom Glands 3". */
+    gene: '{name} {level}',
+  },
   difficulty: 'Difficulty',
   yourBest: 'Your best on {difficulty}',
   allMedals: 'Every medallion of this level is yours.',

@@ -81,6 +81,8 @@ export interface BotWeaponView {
   ready: boolean;
   /** The radius it acts in round the crosshair, in arena cells. */
   radius: number;
+  /** Where the crosshair stands - where it would be fired. */
+  at: Point;
   /**
    * The bot's own bacteria and everybody else's in that circle round its
    * crosshair - worked out only when asked.
@@ -122,6 +124,8 @@ export interface BotView {
   routes: BotRoutes;
   /** The weapon it carries, null without one. */
   weapon: BotWeaponView | null;
+  /** The most bacteria its colony may grow to. */
+  capacity: number;
 }
 
 export interface BotDecision {
@@ -136,7 +140,13 @@ export interface BotDecision {
 /** Where the bot steers and whether it boosts - a decision but for the weapon. */
 type Course = Omit<BotDecision, 'weapon'>;
 
-interface DifficultyProfile {
+/**
+ * How a bot plays: how quick, bold and accurate it is. The difficulties
+ * have one each ({@link BOT_PROFILES}); on the ladder the computer plays
+ * one interpolated along it (`computer-opponent.ts`), and the balance lab's
+ * stand-in for a human plays {@link REFERENCE_PROFILE}.
+ */
+export interface BotProfile {
   /** Seconds between two decisions. */
   reactionSec: number;
   /** The bot attacks once its colony is this many times the enemy's size. */
@@ -152,9 +162,29 @@ interface DifficultyProfile {
    * weaker bot waits for a fatter target.
    */
   weaponPatience: number;
+  /**
+   * True when it charges the enemy bacterium nearest to its own colony,
+   * false when it charges the enemy's centre of mass.
+   */
+  chargesNearest: boolean;
+  /**
+   * True when it attacks once its colony has grown to its cap, however big
+   * the enemy: it cannot grow stronger by waiting, as a human knows - two
+   * colonies at their cap that wait for each other stall the match.
+   */
+  attacksAtCap: boolean;
+  /**
+   * True when it pushes into the enemies its cryo pulse froze while the
+   * pulse lasts, with a boost where it has one: they can neither flee,
+   * divide nor recover. False when it goes on as before, which mostly buys
+   * the enemy a pause - the balance lab measured a pulse fired that way to
+   * gain nothing per shot.
+   */
+  pushesAfterCryo: boolean;
 }
 
-const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
+/** The profile of each difficulty - what a plain match plays. */
+export const BOT_PROFILES: Readonly<Record<BotDifficulty, BotProfile>> = {
   easy: {
     reactionSec: 1.2,
     attackRatio: 1.5,
@@ -162,6 +192,9 @@ const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
     usesBoost: false,
     boostRange: 0,
     weaponPatience: 1.6,
+    chargesNearest: false,
+    attacksAtCap: false,
+    pushesAfterCryo: false,
   },
   normal: {
     reactionSec: 0.6,
@@ -170,6 +203,9 @@ const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
     usesBoost: true,
     boostRange: 60,
     weaponPatience: 1.25,
+    chargesNearest: false,
+    attacksAtCap: false,
+    pushesAfterCryo: false,
   },
   hard: {
     reactionSec: 0.3,
@@ -178,7 +214,27 @@ const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
     usesBoost: true,
     boostRange: 90,
     weaponPatience: 1,
+    chargesNearest: true,
+    attacksAtCap: false,
+    pushesAfterCryo: false,
   },
+};
+
+/**
+ * The balance lab's stand-in for a human player (ADR 0016): about as good
+ * as a player at the level's stage - between the normal and the hard
+ * computer. Never the computer's.
+ */
+export const REFERENCE_PROFILE: BotProfile = {
+  reactionSec: 0.45,
+  attackRatio: 1.05,
+  aimNoise: 6,
+  usesBoost: true,
+  boostRange: 75,
+  weaponPatience: 1.1,
+  chargesNearest: true,
+  attacksAtCap: true,
+  pushesAfterCryo: true,
 };
 
 /**
@@ -207,24 +263,33 @@ const SHIELD_RANGE = 70;
 const RETREAT_DISTANCE = 50;
 /** A pellet the enemy is closer to than we are costs this much extra distance. */
 const CONTESTED_PENALTY = 60;
+/** Within this share of its cap a colony has grown as far as it can. */
+const AT_CAP = 0.95;
 /** Below this average energy the bot prefers food over a fight. */
 const HUNGRY_ENERGY = 0.65;
 
 export class BotController {
-  private readonly profile: DifficultyProfile;
+  private readonly profile: BotProfile;
   private readonly random: () => number;
   /** Seconds left until the next decision. 0 makes the first one immediate. */
   private cooldown = 0;
   /** Cells per base cell of the arena the bot last looked at. */
   private unit = 1;
+  /**
+   * Where its cryo pulse froze the enemy, and the seconds the push into
+   * them goes on - see `pushesAfterCryo`.
+   */
+  private push: { at: Point; sec: number } | null = null;
 
   constructor(
     public readonly difficulty: BotDifficulty,
     random: () => number = Math.random,
     /** A boss: once its colony has fallen behind, it charges with every boost. */
-    private readonly boss = false
+    private readonly boss = false,
+    /** How it plays - its difficulty's profile when absent. */
+    profile: BotProfile = BOT_PROFILES[difficulty]
   ) {
-    this.profile = PROFILES[difficulty];
+    this.profile = profile;
     this.random = random;
   }
 
@@ -245,6 +310,12 @@ export class BotController {
    */
   public waits(deltaTimeSec: number): boolean {
     this.cooldown = countDown(this.cooldown, deltaTimeSec);
+    if (this.push !== null) {
+      this.push.sec = countDown(this.push.sec, deltaTimeSec);
+      if (this.push.sec === 0) {
+        this.push = null;
+      }
+    }
     return this.cooldown > 0;
   }
 
@@ -253,28 +324,46 @@ export class BotController {
     this.cooldown = this.profile.reactionSec;
     // The bot thinks in cells of the base arena.
     this.unit = view.unit;
-    const { own, enemy } = view;
+    const course = this.override(view, view.enemy) ?? this.choose(view);
+    // Without a weapon nothing more is looked at - nor drawn from the
+    // random numbers: a plain bot decides as it always did.
+    const { weapon } = view;
+    const fires =
+      weapon !== null && weapon.ready && this.wantsWeapon(view, weapon);
+    if (fires && weapon.id === 'cryo-pulse' && this.profile.pushesAfterCryo) {
+      this.push = { at: weapon.at, sec: weaponOf(weapon.id).durationSec };
+    }
+    return { ...course, weapon: fires };
+  }
+
+  /**
+   * A course that goes before the bot's own choice, null for none: the push
+   * into the enemies its cryo pulse froze, else a boss's charge.
+   */
+  private override(view: BotView, enemy: ColonyView | null): Course | null {
+    const { own } = view;
+    if (this.push !== null && own.count > 0) {
+      return {
+        target: this.aim(view, this.push.at),
+        boost: this.profile.usesBoost && view.boostReady,
+      };
+    }
     // A boss that has fallen behind goes berserk: it charges the enemy with
     // every boost it gets - where its difficulty boosts at all.
-    const course: Course =
+    if (
       this.boss &&
       this.profile.usesBoost &&
       view.boostReady &&
       enemy != null &&
       own.count > 0 &&
       own.count < enemy.count
-        ? {
-            target: this.aim(view, this.attackPoint(view, enemy)),
-            boost: true,
-          }
-        : this.choose(view);
-    // Without a weapon nothing more is looked at - nor drawn from the
-    // random numbers: a plain bot decides as it always did.
-    const { weapon } = view;
-    return {
-      ...course,
-      weapon: weapon !== null && weapon.ready && this.wantsWeapon(view, weapon),
-    };
+    ) {
+      return {
+        target: this.aim(view, this.attackPoint(view, enemy)),
+        boost: true,
+      };
+    }
+    return null;
   }
 
   /**
@@ -321,7 +410,9 @@ export class BotController {
       return { target: this.aim(view, pellet), boost: false };
     }
 
-    const stronger = own.count >= enemy.count * this.profile.attackRatio;
+    const stronger =
+      own.count >= enemy.count * this.profile.attackRatio ||
+      (this.profile.attacksAtCap && own.count >= view.capacity * AT_CAP);
 
     // Where the level is won is the place to be - stronger or not, and with
     // no retreat. Only a hungry colony eats first.
@@ -348,12 +439,12 @@ export class BotController {
   }
 
   /**
-   * Where to send the colony when attacking: the hard bot charges the enemy
-   * bacterium nearest to its own colony, the others charge the enemy's centre
-   * of mass.
+   * Where to send the colony when attacking: a bold bot - the hard one -
+   * charges the enemy bacterium nearest to its own colony, the others
+   * charge the enemy's centre of mass.
    */
   private attackPoint(view: BotView, enemy: ColonyView): Point {
-    if (this.difficulty === 'hard' && view.nearestEnemy != null) {
+    if (this.profile.chargesNearest && view.nearestEnemy != null) {
       return view.nearestEnemy;
     }
     return enemy;
@@ -442,9 +533,10 @@ export function buildBotView(
   objective: Point | null,
   routes: (from: Point) => BotRoutes,
   unit: number,
-  prey: readonly Nutrient[] = [],
-  feeding = false,
-  weapon: BotWeaponView | null = null
+  prey: readonly Nutrient[],
+  feeding: boolean,
+  weapon: BotWeaponView | null,
+  capacity: number
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;
@@ -472,6 +564,7 @@ export function buildBotView(
     feeding,
     unit,
     weapon,
+    capacity,
   };
 }
 

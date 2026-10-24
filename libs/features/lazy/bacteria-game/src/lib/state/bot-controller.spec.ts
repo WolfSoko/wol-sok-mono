@@ -1,5 +1,6 @@
 import {
   BOT_DIFFICULTIES,
+  BOT_PROFILES,
   BotController,
   BotDifficulty,
   BotView,
@@ -8,6 +9,7 @@ import {
   neutralFood,
   straightRoutes,
 } from './bot-controller';
+import { weaponOf } from './evolution';
 import { ColonySummary } from './simulation';
 
 const WIDTH = 320;
@@ -30,6 +32,8 @@ function view(overrides: Partial<BotView> = {}): BotView {
     objective: null,
     routes: straightRoutes(overrides.own ?? colony(80, 70, 100)),
     weapon: null,
+    // No cap in sight.
+    capacity: Infinity,
     ...overrides,
   };
 }
@@ -297,6 +301,33 @@ describe('BotController', () => {
     expect(decision).toEqual({ target: null, boost: false, weapon: false });
   });
 
+  it('plays the profile it is given instead of its difficulty', () => {
+    const bold = new BotController('easy', () => 0.5, false, BOT_PROFILES.hard);
+
+    // An even fight, which the easy computer never takes.
+    expect(bold.decide(view(), 1).target).toEqual({ x: 200, y: 70 });
+  });
+
+  it('attacks at its cap however big the enemy, where its profile says so', () => {
+    const atCap = view({
+      own: colony(80, 70, 980),
+      enemy: colony(240, 70, 1000),
+      capacity: 1000,
+    });
+    const patient = bot('normal');
+    const pressing = new BotController('normal', () => 0.5, false, {
+      ...BOT_PROFILES.normal,
+      attacksAtCap: true,
+    });
+
+    expect(patient.decide(atCap, 1).target).not.toEqual({ x: 240, y: 70 });
+    expect(pressing.decide(atCap, 1).target).toEqual({ x: 240, y: 70 });
+    // Below its cap it waits for the odds, as before.
+    expect(
+      pressing.decide({ ...atCap, own: colony(80, 70, 700) }, 1).target
+    ).not.toEqual({ x: 240, y: 70 });
+  });
+
   describe('easy', () => {
     it('only attacks when far ahead', () => {
       const controller = bot('easy');
@@ -378,7 +409,13 @@ describe('BotController with a weapon', () => {
     around: { own: number; enemy: number },
     ready = true
   ): BotWeaponView {
-    return { id, ready, radius: 10, around: () => around };
+    return {
+      id,
+      ready,
+      radius: 10,
+      at: { x: 240, y: 70 },
+      around: () => around,
+    };
   }
 
   it.each<BotWeaponView['id']>(['toxin-bomb', 'cryo-pulse', 'phage-strike'])(
@@ -462,6 +499,39 @@ describe('BotController with a weapon', () => {
       ).weapon
     ).toBe(false);
     expect(controller.decide(loaded, 0.01).weapon).toBe(false);
+  });
+
+  describe('that pushes after its cryo pulse (the ladder)', () => {
+    const frontBot = () =>
+      new BotController('normal', () => 0.5, false, {
+        ...BOT_PROFILES.normal,
+        pushesAfterCryo: true,
+      });
+    const cryo = (around: { own: number; enemy: number }): BotWeaponView => ({
+      ...weapon('cryo-pulse', around),
+      at: { x: 230, y: 40 },
+    });
+
+    it('pushes into the frozen enemies with its boost while the pulse lasts', () => {
+      const controller = frontBot();
+      // Food on its own side: a plain bot would go for it.
+      const nutrients = [{ x: 60, y: 30, amount: 10 }];
+      controller.decide(
+        view({ nutrients, weapon: cryo({ own: 80, enemy: 200 }) }),
+        1
+      );
+
+      const pushing = controller.decide(view({ nutrients }), 1);
+      expect(pushing.target).toEqual({ x: 230, y: 40 });
+      expect(pushing.boost).toBe(true);
+
+      // Once it has thawed, the bot goes on as before.
+      controller.waits(weaponOf('cryo-pulse').durationSec);
+      expect(controller.decide(view({ nutrients }), 1).target).toEqual({
+        x: 60,
+        y: 30,
+      });
+    });
   });
 
   it('decides as a plain bot does, weapon or not, but for the shot', () => {

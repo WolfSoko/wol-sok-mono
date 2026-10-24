@@ -123,6 +123,24 @@ it breaks replays. Inputs reach the engine only on the input grid
 `BALANCE_VERSION`, so two devices with different balance tables refuse to
 play each other.
 
+## Balance: the lab and the ladder's computer (ADR 0016)
+
+- Against the computer on the ladder and on generated levels the menus
+  pass loadouts and `ladder: LADDER_VERSION` in the plan: the computer then
+  plays its place on the difficulty curve (`state/difficulty-curve.ts`) and
+  carries `computerLoadout` (`state/computer-opponent.ts`). Such a replay
+  is version 4. A change to `SKILL`, `STRENGTH`, the bands or a rule only the ladder's
+  profiles switch on (`attacksAtCap`, `pushesAfterCryo`) changes those matches:
+  raise `LADDER_VERSION` and take the new fingerprint in
+  `golden-match.spec.ts`. A plain match must not move (`BALANCE_VERSION`).
+- The balance lab (`state/balance/`, runner `tools/bacteria-game/balance/`)
+  plays the stand-in (`REFERENCE_PROFILE`) against that computer. A change
+  to the balance, the levels, the bots or the curve re-checks it:
+  `nx run feat-lazy-bacteria-game:balance-check` (short, against the
+  committed `state/balance/balance-report.json`); a new baseline with
+  `tsx tools/bacteria-game/balance/run.ts full --update` (hours; nightly on
+  GitHub, `.github/workflows/bacteria-balance.yml`).
+
 ## The deterministic simulation (ADR 0015)
 
 - `GridSimulation` (`state/grid-simulation.ts`) is what the GPU simulation
