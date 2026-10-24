@@ -13,7 +13,7 @@ import {
 import { ArenaTheme, Rgb } from '../arena-theme';
 import { darker, JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
-import type { WeaponId } from '../../state/evolution';
+import { WEAPON_CODE } from '../../state/weapon-effects';
 import { MarkLayer } from '../weapon-effects';
 
 /**
@@ -42,7 +42,7 @@ export const SHAPE = {
   hex: 7,
   /**
    * A weapon's effect over the circle in the rect: `p0` the weapon (see
-   * {@link WEAPON_INDEX}), `p1` its clock, `p2` how far it has spread.
+   * `WEAPON_CODE`, as the simulation's shaders know it), `p1` its clock, `p2` how far it has spread.
    */
   field: 8,
   /**
@@ -51,15 +51,6 @@ export const SHAPE = {
    */
   ellipse: 9,
 } as const;
-
-/** How the field shader tells the weapons apart. */
-export const WEAPON_INDEX: Record<WeaponId, number> = {
-  'toxin-bomb': 0,
-  'cryo-pulse': 1,
-  'phage-strike': 2,
-  'agar-bloom': 3,
-  'biofilm-shield': 4,
-};
 
 export type ShapeKind = (typeof SHAPE)[keyof typeof SHAPE];
 
@@ -353,7 +344,7 @@ export function pushWeaponMarks(batch: ShapeBatch, layer: MarkLayer): void {
           alpha,
           color2,
           alpha,
-          WEAPON_INDEX[mark.weapon],
+          WEAPON_CODE[mark.weapon],
           mark.timeSec,
           mark.growth
         );

@@ -1,3 +1,5 @@
+import { WEAPONS } from '../../state/evolution';
+import { WEAPON_CODE } from '../../state/weapon-effects';
 import { arenaTheme } from '../arena-theme';
 import { JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
@@ -9,7 +11,6 @@ import {
   SHAPE,
   SHAPE_STRIDE,
   ShapeBatch,
-  WEAPON_INDEX,
 } from './shape-batch';
 
 /** The kind of every instance in the batch, in drawing order. */
@@ -213,14 +214,25 @@ describe('pushWeaponMarks', () => {
     expect(instance(batch, 3).slice(13)).toEqual([1.5, 5, 1]);
     // A field: the weapon, its clock and how far it has spread.
     expect(instance(batch, 4).slice(13)).toEqual([
-      WEAPON_INDEX['cryo-pulse'],
+      WEAPON_CODE['cryo-pulse'],
       3,
       0.5,
     ]);
     expect(instance(batch, 4)[7]).toBeCloseTo(0.75);
   });
 
-  it('tells every weapon apart', () => {
-    expect(new Set(Object.values(WEAPON_INDEX)).size).toBe(5);
+  it("numbers each weapon's field as the simulation's shaders do", () => {
+    const layer = new MarkLayer();
+    for (const { id } of WEAPONS) {
+      layer.add('field', 60, 30, 20, [0, 0, 255], 1).weapon = id;
+    }
+    const batch = new ShapeBatch();
+
+    pushWeaponMarks(batch, layer);
+
+    expect(WEAPONS.map((_, i) => instance(batch, i)[13])).toEqual(
+      WEAPONS.map(({ id }) => WEAPON_CODE[id])
+    );
+    expect(new Set(Object.values(WEAPON_CODE)).size).toBe(WEAPONS.length);
   });
 });
