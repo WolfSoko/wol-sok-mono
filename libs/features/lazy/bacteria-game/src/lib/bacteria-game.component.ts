@@ -684,6 +684,20 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.draw();
     });
 
+    // The GPU self-test runs once this device plays the deterministic
+    // simulation: always with the rollout's switch on, else once the device
+    // override opts it in (`?sim=gpu-int`) - from the URL at once, from the
+    // storage maybe later than the arena.
+    this.simulationOverride.start();
+    effect(() => {
+      if (
+        DETERMINISTIC_SIMULATION ||
+        this.simulationOverride.override() === 'gpu-int'
+      ) {
+        untracked(() => this.gpuSelfTest.check());
+      }
+    });
+
     // The minimap is drawn afresh for another map, and goes with the match.
     effect(() => {
       const canvas = this.minimapRef()?.nativeElement;
@@ -1272,15 +1286,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // With a WebGL2 context the war itself runs on the GPU as well - for a
     // deterministic match only once the GPU passed the self-test.
     const gl = painter instanceof GlArenaPainter ? painter : null;
-    // The override is read from the URL at once: `?sim=gpu-int` opts this
-    // device in while the rollout's switch is off.
-    this.simulationOverride.start();
-    if (
-      DETERMINISTIC_SIMULATION ||
-      this.simulationOverride.override() === 'gpu-int'
-    ) {
-      this.gpuSelfTest.check();
-    }
     const { factory, fallback, ruleset, offers } = chooseSimulation({
       deterministic: DETERMINISTIC_SIMULATION,
       gpu:
