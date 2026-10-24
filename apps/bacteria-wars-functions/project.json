@@ -45,7 +45,8 @@
         "{workspaceRoot}/apps/bacteria-game-remote/database.rules.json"
       ],
       "options": {
-        "command": "firebase emulators:exec --only firestore,database --project demo-bacteria-wars --config apps/bacteria-wars-functions/firebase.rules-test.json \"npx jest -c apps/bacteria-wars-functions/jest.rules.config.ts\""
+        "command": "firebase emulators:exec --only firestore,database --project demo-bacteria-wars --config apps/bacteria-wars-functions/firebase.rules-test.json \"npx jest -c apps/bacteria-wars-functions/jest.rules.config.ts\"",
+        "forwardAllArgs": false
       }
     },
     "test-integration": {
@@ -53,7 +54,8 @@
       "cache": true,
       "inputs": ["default", "^production"],
       "options": {
-        "command": "firebase emulators:exec --only firestore --project demo-bacteria-wars --config apps/bacteria-wars-functions/firebase.integration-test.json \"npx jest -c apps/bacteria-wars-functions/jest.integration.config.ts\""
+        "command": "firebase emulators:exec --only firestore --project demo-bacteria-wars --config apps/bacteria-wars-functions/firebase.integration-test.json \"npx jest -c apps/bacteria-wars-functions/jest.integration.config.ts\"",
+        "forwardAllArgs": false
       }
     },
     "benchmark": {
