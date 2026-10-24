@@ -23,6 +23,7 @@ import {
   BlockCounts,
   ColonyLayer,
   ColonySummary,
+  Ruleset,
   Simulation,
 } from './simulation';
 import {
@@ -149,6 +150,7 @@ export abstract class GridSimulation implements Simulation {
   /** The integer passes' circles of the weapons' effects. */
   protected readonly intEffects: IntEffectUniforms = createIntEffectUniforms();
   protected readonly deterministic: boolean;
+  public readonly ruleset: Ruleset | null;
   protected readonly matchSeed: number;
 
   protected constructor(
@@ -157,6 +159,7 @@ export abstract class GridSimulation implements Simulation {
     options: GridSimulationOptions
   ) {
     this.deterministic = options.deterministic ?? false;
+    this.ruleset = this.deterministic ? 'gpu-int' : null;
     this.matchSeed = options.matchSeed ?? 0;
     this.pellets = new NutrientPellets(balance, random);
     this.layout = reportLayout(0, 0, balance.influenceCellSize);

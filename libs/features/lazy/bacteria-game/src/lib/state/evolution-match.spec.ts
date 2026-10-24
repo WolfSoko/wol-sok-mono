@@ -16,6 +16,7 @@ import { generatedLevelId } from './level-generator/generate-level';
 import {
   EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
+  GPU_INT_REPLAY_VERSION,
   parseReplay,
   playReplay,
   Replay,
@@ -473,11 +474,22 @@ describe('replays with evolution', () => {
         header: { ...replay.header, levelId: generated },
       })
     ).not.toBeNull();
-    // A plain one may be either.
+    // A plain one may be either - on the ranked boards' ruleset, gpu-int.
     const plain = record(PLAN, 60).replay;
     expect(
-      parseReplay({ ...plain, header: { ...plain.header, attempt } })
+      parseReplay({
+        ...plain,
+        header: {
+          ...plain.header,
+          attempt,
+          version: GPU_INT_REPLAY_VERSION,
+          simulation: 'gpu-int',
+        },
+      })
     ).not.toBeNull();
+    expect(
+      parseReplay({ ...plain, header: { ...plain.header, attempt } })
+    ).toBeNull();
   });
 
   it('keep a plain match in the format from before evolution', () => {
@@ -530,7 +542,7 @@ describe('replays with evolution', () => {
 
   it('refuse a format this client does not know', () => {
     const { replay } = record(plan, 60);
-    const header = { ...replay.header, version: EVOLVED_REPLAY_VERSION + 1 };
+    const header = { ...replay.header, version: GPU_INT_REPLAY_VERSION + 1 };
 
     expect(parseReplay({ ...replay, header })).toBeNull();
     expect(playReplay({ ...replay, header })).toBeNull();

@@ -13,8 +13,11 @@ import {
   OnlineSetup,
   OnlineStart,
   parseNetMessage,
+  agreedRuleset,
 } from './net-message';
 import { PeerLink } from './peer-link';
+import { PlayerService } from '../state/player.service';
+import type { Ruleset } from '../state/simulation';
 import { errorCode } from '../storage/retry';
 
 /** Where the lobby of an online match stands. */
@@ -87,6 +90,9 @@ export class OnlineMatchService {
     { initialValue: null }
   );
   private readonly peerState = signal<string | null>(null);
+  private readonly players = inject(PlayerService);
+  /** The rulesets the other device offered in its hello. */
+  private peerOffers: readonly Ruleset[] = ['cpu'];
   private readonly lobbyState = signal<OnlineLobby>(IDLE_LOBBY);
   private readonly events = new Subject<OnlineEvent>();
   private link: PeerLink | null = null;
@@ -244,6 +250,14 @@ export class OnlineMatchService {
   }
 
   /**
+   * The ruleset the next match plays by: `gpu-int` when both devices offer
+   * it, `cpu` else (ADR 0015) - the host starts it, the guest checks it.
+   */
+  public agreedRuleset(): Ruleset {
+    return agreedRuleset(this.players.rulesetOffers(), this.peerOffers);
+  }
+
+  /**
    * The room of the match under way and its number there - with the seed,
    * what its replay's id is made of (ADR 0011). Null before the first
    * match of a room.
@@ -283,6 +297,7 @@ export class OnlineMatchService {
     this.lockstep = null;
     this.pendingStart = null;
     this.greeted = false;
+    this.peerOffers = ['cpu'];
     this.lobbyState.set({ ...IDLE_LOBBY, ...lobby });
     if (wasConnected) {
       this.events.next({ type: 'ended', reason });
@@ -300,7 +315,13 @@ export class OnlineMatchService {
     link.messages$.subscribe((data) => this.receive(data));
     link.closed$.subscribe(() => this.onClosed(link));
     link.opened.then(
-      () => this.send({ k: 'hello', v: NET_VERSION, id: this.playerId() }),
+      () =>
+        this.send({
+          k: 'hello',
+          v: NET_VERSION,
+          id: this.playerId(),
+          r: [...this.players.rulesetOffers()],
+        }),
       () => undefined
     );
     return true;
@@ -313,6 +334,7 @@ export class OnlineMatchService {
     }
     if (message.k === 'hello') {
       this.peerState.set(message.id);
+      this.peerOffers = message.r;
       this.greet(message.v);
       return;
     }
@@ -332,12 +354,18 @@ export class OnlineMatchService {
         }
         return;
       case 'start':
+        if (role === 'guest' && message.ruleset !== this.agreedRuleset()) {
+          // A host that picks a ruleset both did not offer plays another game.
+          this.endWith(this.attempt, { key: 'online.notices.otherVersion' });
+          return;
+        }
         if (role === 'guest') {
           this.match = message.n;
           this.lockstep = this.newLockstep(1);
           const start: OnlineStart = {
             ...setupOf(message),
             seed: message.seed,
+            ruleset: message.ruleset,
           };
           this.pendingStart = { start, lockstep: this.lockstep };
           this.events.next({ type: 'start', start });
