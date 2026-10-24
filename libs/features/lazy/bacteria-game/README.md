@@ -89,9 +89,9 @@ CSS animation, still for players who ask for less motion):
   the player's colony as it will look in the dish, drawn by the game's own
   painter ([`look-preview.ts`](./src/lib/arena/look-preview.ts)), the skin
   it wears - a gallery of every look, each on a sample colony in the
-  player's colour - and the colonies' colours. The first eight skins are
-  free; the marbles, lava, galaxy, plasma and chrome are bought with the
-  DNA of the Evolution screen ([`state/skins.ts`](./src/lib/state/skins.ts),
+  player's colour - and the colonies' colours. The slime and the pixels
+  are free; every other skin is bought with the DNA of the Evolution screen
+  ([`state/skins.ts`](./src/lib/state/skins.ts),
   kept in the evolution progress, where they survive a reset) and worn from
   the moment they are bought. More of the colony is to be shaped here in
   time.

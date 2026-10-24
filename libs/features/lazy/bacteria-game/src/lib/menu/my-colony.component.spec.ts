@@ -38,13 +38,13 @@ describe('MyColonyComponent', () => {
       skins().map((skin) => skin.querySelector('.skin-name')?.textContent)
     ).toEqual([
       'Slime',
+      'Pixels',
       'Cells',
       'Honeycomb',
       'Crystal',
       'Neon',
       'Ink',
       'Bubbles',
-      'Pixels',
       'Marbles',
       'Lava',
       'Galaxy',
@@ -52,17 +52,17 @@ describe('MyColonyComponent', () => {
       'Chrome',
     ]);
     expect(skins()).toHaveLength(BACTERIA_LOOKS.length);
-    // The free ones are worn by a button over the tile, the worn one
-    // pressed; the rest are for sale.
+    // The two free ones are worn by a button over the tile, the worn one
+    // pressed; every special one is for sale.
     expect(
       wearButtons().map((wear) => wear.getAttribute('aria-pressed'))
-    ).toEqual(['true', ...Array(7).fill('false')]);
-    expect(wearButtons()[1].getAttribute('aria-label')).toBe('Cells');
+    ).toEqual(['true', 'false']);
+    expect(wearButtons()[1].getAttribute('aria-label')).toBe('Pixels');
     expect(
       skins()
-        .slice(8)
+        .slice(2)
         .map((skin) => skin.classList.contains('locked'))
-    ).toEqual(Array(5).fill(true));
+    ).toEqual(Array(11).fill(true));
     expect(
       skins()
         .map((skin) => skin.querySelector('canvas'))
@@ -73,13 +73,13 @@ describe('MyColonyComponent', () => {
   it('wears the skin that is picked', async () => {
     const { fixture, skins, wearButtons } = await render();
 
-    wearButtons()[2].click();
+    wearButtons()[1].click();
     await fixture.whenStable();
 
-    expect(TestBed.inject(GameSettingsService).look()).toBe('honeycomb');
-    expect(wearButtons()[2].getAttribute('aria-pressed')).toBe('true');
+    expect(TestBed.inject(GameSettingsService).look()).toBe('pixels');
+    expect(wearButtons()[1].getAttribute('aria-pressed')).toBe('true');
     expect(wearButtons()[0].getAttribute('aria-pressed')).toBe('false');
-    expect(skins()[2].classList).toContain('picked');
+    expect(skins()[1].classList).toContain('picked');
   });
 
   it('sells the skins for DNA, and wears the one bought', async () => {
@@ -90,27 +90,25 @@ describe('MyColonyComponent', () => {
 
     expect(element.querySelector('.dna-count')?.textContent?.trim()).toBe('14');
     expect(element.querySelector('.dna')?.classList).toContain('ready');
+    // 14 DNA buys everything up to the marbles, not the lava and beyond.
     expect(buyButtons().map((button) => button.disabled)).toEqual([
-      false,
-      true,
-      true,
-      true,
-      true,
+      ...Array(7).fill(false),
+      ...Array(4).fill(true),
     ]);
     expect(buyButtons()[0].getAttribute('aria-label')).toBe(
-      'Buy the Marbles skin for 12 DNA'
+      'Buy the Cells skin for 3 DNA'
     );
 
     buyButtons()[0].click();
     await fixture.whenStable();
 
-    expect(evolution.ownsSkin('marbles')).toBe(true);
-    expect(settings.look()).toBe('marbles');
-    expect(element.querySelector('.dna-count')?.textContent?.trim()).toBe('2');
-    expect(skins()[8].classList).toContain('picked');
-    expect(skins()[8].classList).not.toContain('locked');
-    expect(buyButtons()).toHaveLength(4);
-    expect(text()).toContain('The Marbles skin is yours');
+    expect(evolution.ownsSkin('cells')).toBe(true);
+    expect(settings.look()).toBe('cells');
+    expect(element.querySelector('.dna-count')?.textContent?.trim()).toBe('11');
+    expect(skins()[2].classList).toContain('picked');
+    expect(skins()[2].classList).not.toContain('locked');
+    expect(buyButtons()).toHaveLength(10);
+    expect(text()).toContain('The Cells skin is yours');
   });
 
   it('wears a skin picked only once it is owned', async () => {

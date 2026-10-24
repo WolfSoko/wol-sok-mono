@@ -1,8 +1,8 @@
 /**
- * The skins: how the bacteria are drawn. The first ones are free, the
- * fancier ones are bought with DNA (`evolution-progress.ts`) and kept for
- * good - a cosmetic, never a strength, so a reset gives their strands back
- * no more than it takes the skins away.
+ * The skins: how the bacteria are drawn. The slime and the pixels are
+ * free, every special one is bought with DNA (`evolution-progress.ts`) and
+ * kept for good - a cosmetic, never a strength, so a reset gives their
+ * strands back no more than it takes the skins away.
  *
  * - slime: one gooey, glossy slime per colony
  * - cells: dense glossy cells of different sizes, like on the app icon
@@ -46,20 +46,21 @@ export interface Skin {
 }
 
 /**
- * The skins in the order the gallery shows them: the free ones, then the
- * ones to buy, cheapest first. The five to buy come to 102 strands, 5,100
- * XP - about what the ladder's last chapters earn, after the genes and the
- * weapons.
+ * The skins in the order the gallery shows them: the two plain ones - the
+ * slime and the pixels - free, then every special one to buy, cheapest
+ * first. The eleven to buy come to 140 strands, 7,000 XP: the first one
+ * after a match or two, the chrome about when the genes and the weapons
+ * are bred.
  */
 export const SKINS: readonly Skin[] = [
   { id: 'slime', cost: 0 },
-  { id: 'cells', cost: 0 },
-  { id: 'honeycomb', cost: 0 },
-  { id: 'crystal', cost: 0 },
-  { id: 'neon', cost: 0 },
-  { id: 'ink', cost: 0 },
-  { id: 'bubbles', cost: 0 },
   { id: 'pixels', cost: 0 },
+  { id: 'cells', cost: 3 },
+  { id: 'honeycomb', cost: 5 },
+  { id: 'crystal', cost: 6 },
+  { id: 'neon', cost: 6 },
+  { id: 'ink', cost: 8 },
+  { id: 'bubbles', cost: 10 },
   { id: 'marbles', cost: 12 },
   { id: 'lava', cost: 16 },
   { id: 'galaxy', cost: 20 },

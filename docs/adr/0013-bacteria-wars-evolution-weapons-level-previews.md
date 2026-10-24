@@ -49,8 +49,8 @@ The shared model is `state/evolution.ts`.
 
 ### Skins for DNA (added 2026-10-24)
 
-The premium skins of the My Colony screen (`state/skins.ts`) are bought with
-the same DNA. They are cosmetics, so they do not follow the reset rule: the
+Every special skin of the My Colony screen (`state/skins.ts`) - all but the
+slime and the pixels - is bought with the same DNA. They are cosmetics, so they do not follow the reset rule: the
 skins bought are kept in the evolution progress, merge as the union of both
 sides whatever their epochs, survive a reset and keep counting as spent -
 a reset gives back the genes' and the weapons' strands only. The colonies
