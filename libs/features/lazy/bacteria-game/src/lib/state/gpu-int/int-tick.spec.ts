@@ -106,7 +106,7 @@ function play(
   let knownStep: number | null = null;
   let rendered: number[] | null = null;
   const hashes: number[] = [];
-  const collect = (tick: number) => {
+  const collect = (tick: number): number | null => {
     const due = readbacksToTake(
       pending.map(({ step, readyAt }) => ({
         step,
@@ -120,12 +120,17 @@ function play(
       known = report.counts;
       knownStep = report.step;
     }
+    return knownStep;
   };
   for (let tick = 1; tick <= ticks; tick++) {
     if (lag !== null) {
-      collect(tick);
       // Exactly the report of `lag` ticks ago, once there is one.
-      expect(knownStep === null || knownStep === tick - lag).toBe(true);
+      const taken = collect(tick);
+      if (taken !== null && taken !== tick - lag) {
+        throw new Error(
+          `tick ${tick}: report of step ${taken}, expected ${tick - lag}`
+        );
+      }
     }
     const behind =
       lag ?? Math.max(SLOTS, knownStep === null ? 0 : tick - knownStep);
