@@ -8,6 +8,7 @@ import {
 import { ArenaRenderer } from './arena-renderer';
 import { ArenaTheme } from './arena-theme';
 import { ColonyRenderer, drawJam, LOOKS } from './colony-renderer';
+import { WeaponFx } from './weapon-fx';
 
 /**
  * The arena drawn with the Canvas 2D API - the fallback for browsers
@@ -18,6 +19,8 @@ export class CanvasArenaPainter implements ArenaPainter {
   public readonly kind = 'canvas';
   private readonly arena: ArenaRenderer;
   private readonly colonies: ColonyRenderer;
+  /** The weapons going off and acting. */
+  private readonly weapons: WeaponFx;
   /** Cells per base cell - the jam and the crosshairs are as big on every grid. */
   private readonly unit: number;
 
@@ -31,6 +34,7 @@ export class CanvasArenaPainter implements ArenaPainter {
   ) {
     this.unit = unit;
     this.arena = new ArenaRenderer(width, height, Math.random, detail, unit);
+    this.weapons = new WeaponFx(unit);
     this.colonies = new ColonyRenderer(width, height, unit);
     cx.imageSmoothingEnabled = false;
   }
@@ -58,6 +62,8 @@ export class CanvasArenaPainter implements ArenaPainter {
     this.arena.drawMotes(cx, frame.deltaTimeSec);
     this.arena.drawWalls(cx, frame.walls);
     this.arena.drawDynamicWalls(cx, frame.dynamicWalls);
+    this.weapons.update(frame);
+    this.arena.drawWeaponMarks(cx, this.weapons.ground, false);
 
     const layer = this.colonies.render(
       frame.colonies,
@@ -67,12 +73,17 @@ export class CanvasArenaPainter implements ArenaPainter {
       view
     );
     if (layer != null) {
+      this.arena.tintColonies(layer, this.weapons.tints);
       // A layer drawn from the density is scaled up smoothly, the pixel
       // layer stays crisp.
       cx.imageSmoothingEnabled = LOOKS[frame.look].fromDensity;
       cx.drawImage(layer, 0, 0, this.width, this.height);
       cx.imageSmoothingEnabled = false;
     }
+    // The weapons over the colonies, then their light - under the jam and
+    // the crosshairs, which stay readable.
+    this.arena.drawWeaponMarks(cx, this.weapons.over, false);
+    this.arena.drawWeaponMarks(cx, this.weapons.light, true);
 
     drawJam(
       cx,

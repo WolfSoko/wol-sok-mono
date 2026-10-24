@@ -1,0 +1,455 @@
+@use '@angular/cdk';
+@use 'screen';
+
+@include cdk.a11y-visually-hidden;
+
+:host {
+  @include screen.screen;
+
+  position: relative;
+}
+
+// The DNA left to spend, in the header: a turning helix and the count.
+.dna {
+  @include screen.panel;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-left: auto;
+  padding: 0.35rem 1rem 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: var(--bw-surface-glass);
+
+  &.ready {
+    border-color: var(--bw-gold);
+    animation: ready 1.8s ease-in-out infinite;
+  }
+}
+
+.dna-count {
+  @include screen.figure;
+
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--bw-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.dna-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.dna-label {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.dna-earned {
+  font-size: 0.75rem;
+  color: var(--bw-muted);
+}
+
+@keyframes ready {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(233 185 73 / 0%);
+  }
+
+  50% {
+    box-shadow: 0 0 18px 2px rgb(233 185 73 / 45%);
+  }
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.lab {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+// The colony on its petri dish.
+.dish {
+  @include screen.panel;
+
+  position: relative;
+  padding: 0.75rem;
+  border-radius: 50%;
+  aspect-ratio: 1;
+  background:
+    radial-gradient(circle at 40% 35%, rgb(255 255 255 / 6%), transparent 60%),
+    radial-gradient(circle, #101a24 0%, #0a1018 70%);
+  box-shadow:
+    inset 0 0 40px rgb(0 0 0 / 60%),
+    0 10px 30px rgb(0 0 0 / 35%);
+}
+
+.preview {
+  width: 100%;
+}
+
+// The weapon carried, a pill on the dish's rim.
+.carried {
+  position: absolute;
+  left: 50%;
+  bottom: -0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.75rem 0.2rem 0.45rem;
+  border: 1px solid var(--weapon);
+  border-radius: 999px;
+  background: var(--bw-surface);
+  color: var(--bw-text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--weapon) 50%, transparent);
+
+  mat-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 1.1rem;
+    color: var(--weapon);
+  }
+}
+
+.tagline {
+  @include screen.figure;
+
+  margin: 0.5rem 0 0;
+  font-size: 1.2rem;
+}
+
+.note {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--bw-muted);
+}
+
+.reset {
+  align-self: flex-start;
+}
+
+.confirm {
+  @include screen.panel;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-color: var(--bw-opponent);
+
+  p {
+    margin: 0;
+    color: var(--bw-soft);
+    font-size: 0.9rem;
+  }
+}
+
+.confirm-title {
+  @include screen.figure;
+
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+// In the player's colour, like every other button that acts on this screen.
+.confirm-reset {
+  --mat-button-filled-container-color: var(--bw-player);
+  --mat-button-filled-label-text-color: var(--bw-on-player);
+}
+
+.shop {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+.section-title {
+  @include screen.section-title;
+}
+
+.genes,
+.weapons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gene,
+.weapon {
+  @include screen.panel;
+
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.6rem 0.9rem;
+  align-items: start;
+  padding: 1rem;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+.card-title {
+  @include screen.figure;
+
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.card-note {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--bw-soft);
+}
+
+.gene-icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, var(--gene) 45%, white),
+    var(--gene) 55%,
+    color-mix(in srgb, var(--gene) 60%, black)
+  );
+  color: #0b0f14;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--gene) 40%, transparent);
+}
+
+.effect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.6rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--bw-muted);
+
+  strong {
+    color: var(--gene);
+  }
+}
+
+.next {
+  color: var(--bw-faint);
+}
+
+.pips {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.pip {
+  flex: 1 1 0;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--bw-line);
+  transition:
+    background 0.35s,
+    box-shadow 0.35s;
+
+  &.on {
+    background: var(--gene);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--gene) 70%, transparent);
+  }
+}
+
+.buy {
+  @include screen.primary;
+
+  grid-column: 1 / -1;
+  height: 2.6rem;
+  font-size: 1rem;
+}
+
+.cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin-left: 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid currentcolor;
+  font-variant-numeric: tabular-nums;
+}
+
+.maxed-label {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  height: 2.6rem;
+  color: var(--bw-gold);
+  font-family: var(--bw-display);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+// A gene bred to the top wears a golden aura that never quite settles.
+.gene.maxed {
+  border-color: var(--bw-gold);
+  animation: golden 2.6s ease-in-out infinite;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--shine, 0deg),
+      transparent 0 70%,
+      #fff3c4 80%,
+      transparent 90%
+    );
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: shine 3s linear infinite;
+    pointer-events: none;
+  }
+}
+
+@property --shine {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes golden {
+  0%,
+  100% {
+    box-shadow:
+      0 0 12px rgb(233 185 73 / 25%),
+      inset 0 0 18px rgb(233 185 73 / 8%);
+  }
+
+  50% {
+    box-shadow:
+      0 0 26px rgb(233 185 73 / 50%),
+      inset 0 0 26px rgb(233 185 73 / 16%);
+  }
+}
+
+@keyframes shine {
+  to {
+    --shine: 360deg;
+  }
+}
+
+// Weapons.
+.weapon.owned {
+  border-color: color-mix(in srgb, var(--weapon) 45%, var(--bw-line));
+}
+
+.weapon.equipped {
+  border-color: var(--weapon);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--weapon) 35%, transparent);
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+
+  mat-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    font-size: 0.95rem;
+  }
+}
+
+.equip {
+  grid-column: 1 / -1;
+  height: 2.6rem;
+
+  mat-icon {
+    color: var(--weapon);
+  }
+}
+
+.weapon.equipped .equip {
+  --mat-button-outlined-outline-color: var(--weapon);
+}
+
+// A weapon's loop: three of yours, three of theirs, and what it does to them.
+// The purchase moment is played in here - see evolution-fx.ts. No height,
+// so nothing clips: it scrolls with the screen, its children overflow it.
+.fx {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 5;
+}
+
+// One column on a phone: the dish shrinks to sit above the shop.
+@media (max-width: 50rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lab {
+    position: static;
+  }
+
+  .dish {
+    width: min(18rem, 80%);
+    align-self: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dna.ready,
+  .gene.maxed,
+  .gene.maxed::before {
+    animation: none;
+  }
+}

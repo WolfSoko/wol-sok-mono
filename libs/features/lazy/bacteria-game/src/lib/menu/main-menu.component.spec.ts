@@ -6,7 +6,9 @@ import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
 import { I18nService } from '../i18n/i18n.service';
+import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { CampaignSummary, continueText } from '../state/campaign';
+import { LEVELS } from '../state/levels';
 import { MainMenuComponent } from './main-menu.component';
 
 const CAMPAIGN: CampaignSummary = {
@@ -49,8 +51,9 @@ describe('MainMenuComponent', () => {
 
   it('shows the campaign so far', () => {
     const card = host.querySelector('.card')?.textContent ?? '';
-    expect(card).toContain('5 of 20 levels open');
-    expect(card).toContain('9 of 60');
+    expect(card).toContain(`5 of ${LEVELS.length} levels open`);
+    // A medallion per level and difficulty.
+    expect(card).toContain(`9 of ${LEVELS.length * BOT_DIFFICULTIES.length}`);
     expect(card).toContain('5 · Pillar Field · Normal');
   });
 
@@ -89,6 +92,25 @@ describe('MainMenuComponent', () => {
 
     expect(sound).toHaveBeenCalledWith(false);
     expect(fullscreen.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it('opens Evolution, with a badge while the DNA buys something', () => {
+    const tile = () => button('Evolution');
+    expect(tile().querySelector('.count')).toBeNull();
+    expect(tile().classList).not.toContain('ready');
+
+    fixture.componentRef.setInput('evolveDna', 7);
+    fixture.detectChanges();
+
+    expect(tile().classList).toContain('ready');
+    expect(tile().querySelector('.count')?.textContent?.trim()).toBe('7');
+    expect(
+      tile().querySelector('.cdk-visually-hidden')?.textContent?.trim()
+    ).toBe('7 DNA to spend');
+    const open = jest.fn();
+    fixture.componentInstance.open.subscribe(open);
+    tile().click();
+    expect(open).toHaveBeenCalledWith('evolution');
   });
 
   it('shows the friends only with the cloud, with the requests waiting', () => {

@@ -29,6 +29,16 @@ export interface Zone extends Rect {
   kind: ZoneKind;
 }
 
+/** A round zone around a point - see {@link blob}. */
+export function disc(
+  kind: ZoneKind,
+  x: number,
+  y: number,
+  radius: number
+): Zone {
+  return { ...blob(x, y, radius), kind };
+}
+
 /** How strongly each kind of zone acts. */
 export const ZONE_EFFECTS = {
   /** Energy an antibiotic zone drains per second, regeneration stopped. */

@@ -22,6 +22,7 @@ function scripted(script: (tick: number) => Partial<GhostInputs>): SeatDriver {
       boost: false,
       drag: null,
       steer: null,
+      weapon: false,
       ...script(tick),
     }),
   };
@@ -70,13 +71,19 @@ describe('MatchEngine recording', () => {
       ],
       drags: [[10, 1, 100, 50.25]],
       boosts: [[40, 0]],
+      weapons: [],
     });
   });
 
   it('records no driven seat it is not told to - a ghost race ghost', () => {
     const engine = play({ ghosts: drivers() }, 60);
 
-    expect(engine.recorded).toEqual({ steers: [], drags: [], boosts: [] });
+    expect(engine.recorded).toEqual({
+      steers: [],
+      drags: [],
+      boosts: [],
+      weapons: [],
+    });
   });
 
   it('never records a bot, even when told to', () => {

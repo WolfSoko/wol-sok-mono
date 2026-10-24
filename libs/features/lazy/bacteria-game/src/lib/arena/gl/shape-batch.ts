@@ -13,6 +13,8 @@ import {
 import { ArenaTheme, Rgb } from '../arena-theme';
 import { darker, JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
+import { WEAPON_CODE } from '../../state/weapon-effects';
+import { MarkLayer } from '../weapon-fx';
 
 /**
  * What the shape shader draws for one instance. Every shape is a rect in
@@ -31,6 +33,23 @@ export const SHAPE = {
   disc: 4,
   /** A drop of jam: a glossy gradient from the second colour to the first. */
   jam: 5,
+  /** A soft glow filling the circle in the rect, gone at its rim. */
+  glow: 6,
+  /**
+   * A hexagon centred in the rect, its corners `p2` out, turned by `p0` -
+   * an outline `p1` wide, or filled for 0.
+   */
+  hex: 7,
+  /**
+   * A weapon's effect over the circle in the rect: `p0` the weapon (see
+   * `WEAPON_CODE`, as the simulation's shaders know it), `p1` its clock, `p2` how far it has spread.
+   */
+  field: 8,
+  /**
+   * An ellipse centred in the rect, turned by `p0`, its radii `p1` and
+   * `p2` - from the first colour at its base to the second at its tip.
+   */
+  ellipse: 9,
 } as const;
 
 export type ShapeKind = (typeof SHAPE)[keyof typeof SHAPE];
@@ -64,7 +83,8 @@ export class ShapeBatch {
     color2: Rgb = color,
     alpha2 = alpha,
     p0 = 0,
-    p1 = 0
+    p1 = 0,
+    p2 = 0
   ): void {
     if ((this.count + 1) * SHAPE_STRIDE > this.data.length) {
       const grown = new Float32Array(this.data.length * 2);
@@ -88,7 +108,7 @@ export class ShapeBatch {
     d[i++] = kind;
     d[i++] = p0;
     d[i++] = p1;
-    d[i] = 0;
+    d[i] = p2;
     this.count++;
   }
 }
@@ -254,14 +274,88 @@ export function pushForeground(
   }
 }
 
-/** A square centred on a point. */
+/**
+ * A layer of the weapons' effects - see `WeaponFx` - one instance per
+ * mark.
+ */
+export function pushWeaponMarks(batch: ShapeBatch, layer: MarkLayer): void {
+  for (let i = 0; i < layer.count; i++) {
+    const mark = layer.at(i);
+    const { x, y, radius, size, angle, color, color2, alpha } = mark;
+    switch (mark.kind) {
+      case 'glow':
+        batch.push(SHAPE.glow, square(x, y, radius), color, alpha);
+        break;
+      case 'ring':
+        batch.push(
+          SHAPE.ring,
+          square(x, y, radius + size),
+          color,
+          alpha,
+          color,
+          alpha,
+          radius,
+          size
+        );
+        break;
+      case 'hex':
+        batch.push(
+          SHAPE.hex,
+          square(x, y, radius + size),
+          color,
+          alpha,
+          color,
+          alpha,
+          angle,
+          size,
+          radius
+        );
+        break;
+      case 'ellipse':
+        batch.push(
+          SHAPE.ellipse,
+          square(x, y, Math.max(radius, size)),
+          color,
+          alpha,
+          color2,
+          alpha,
+          angle,
+          radius,
+          size
+        );
+        break;
+      case 'field':
+        batch.push(
+          SHAPE.field,
+          square(x, y, radius),
+          color,
+          alpha,
+          color2,
+          alpha,
+          WEAPON_CODE[mark.weapon],
+          mark.timeSec,
+          mark.growth
+        );
+        break;
+    }
+  }
+}
+
+/** Scratch for a shape's box - `push` copies it straight away. */
+const box: Rect = { x: 0, y: 0, width: 0, height: 0 };
+
+/** A square centred on a point, in {@link box}. */
 function square(x: number, y: number, half: number): Rect {
   return ellipse(x, y, half, half);
 }
 
-/** The box around an ellipse. */
+/** The box around an ellipse, in {@link box}. */
 function ellipse(x: number, y: number, rx: number, ry: number): Rect {
-  return { x: x - rx, y: y - ry, width: rx * 2, height: ry * 2 };
+  box.x = x - rx;
+  box.y = y - ry;
+  box.width = rx * 2;
+  box.height = ry * 2;
+  return box;
 }
 
 /**

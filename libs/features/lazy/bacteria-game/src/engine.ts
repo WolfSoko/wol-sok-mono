@@ -27,7 +27,11 @@ export type {
   SizeSample,
 } from './lib/state/match-engine';
 export { planMatch } from './lib/state/match-setup';
-export type { MatchPlan, OnlineSeats } from './lib/state/match-setup';
+export type {
+  MatchPlan,
+  OnlineSeats,
+  PlannedMatch,
+} from './lib/state/match-setup';
 export { BacteriaSimulation } from './lib/state/bacteria-simulation';
 export type {
   ColonySummary,
@@ -45,6 +49,7 @@ export {
 
 // Replays.
 export {
+  EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
@@ -66,6 +71,7 @@ export type {
   ReplayResult,
   ReplaySeat,
   ReplaySteer,
+  ReplayWeapon,
 } from './lib/state/replay';
 export {
   MAX_PACKED_BYTES,
@@ -87,6 +93,25 @@ export { matchChecksum } from './lib/state/checksum';
 export { replayFromHash, replayLink } from './lib/state/replay-link';
 export { GhostController } from './lib/state/ghost';
 export type { SeatDriver } from './lib/state/ghost';
+
+// Evolution: what a seat takes into a match against the computer (ADR 0013).
+export {
+  evolvedTraits,
+  GENES,
+  isPlainLoadout,
+  PLAIN_LOADOUT,
+  weaponOf,
+  WEAPON_EFFECTS,
+  WEAPONS,
+} from './lib/state/evolution';
+export type {
+  ActiveEffect,
+  EvolvedTraits,
+  GeneId,
+  Loadout,
+  WeaponFire,
+  WeaponId,
+} from './lib/state/evolution';
 
 // Balance, levels and modes.
 export {

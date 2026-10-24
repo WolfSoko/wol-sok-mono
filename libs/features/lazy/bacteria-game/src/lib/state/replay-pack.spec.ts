@@ -66,7 +66,7 @@ function hourOfSticks(): Replay {
     ONLINE,
     'cpu',
     MAX_TICKS,
-    { steers, drags: [], boosts: [] },
+    { steers, drags: [], boosts: [], weapons: [] },
     EXTRAS
   );
 }

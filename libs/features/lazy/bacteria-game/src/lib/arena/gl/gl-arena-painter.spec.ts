@@ -1,5 +1,54 @@
 import { gameBalance } from '../../state/game-balance';
-import { encodeCells, passMargins } from './gl-arena-painter';
+import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-fx';
+import { encodeCells, packTints, passMargins } from './gl-arena-painter';
+import { MAX_TINTS } from './shaders';
+
+describe('packTints', () => {
+  const ORANGE = [255, 140, 0, 255];
+  const BLUE = [40, 120, 255, 255];
+
+  function tint(
+    mode: ColonyTint['mode'],
+    enemies: boolean,
+    radius = 18
+  ): ColonyTint {
+    return {
+      mode,
+      x: 10,
+      y: 20,
+      radius,
+      strength: 0.5,
+      ownerColor: ORANGE,
+      enemies,
+    };
+  }
+
+  it('packs the tints that shade a colony for the colony shader', () => {
+    const circles = new Float32Array(MAX_TINTS * 4);
+    const modes = new Float32Array(4);
+    const tints = [tint('toxin', true), tint('shield', false, WHOLE_COLONY)];
+
+    // The enemy sickens in the cloud.
+    expect(packTints(tints, BLUE, circles, modes)).toBe(1);
+    expect(Array.from(circles.slice(0, 4))).toEqual([10, 20, 18, 0.5]);
+    expect(modes[0]).toBe(TINT_MODES.indexOf('toxin'));
+
+    // The owner wears its shield.
+    expect(packTints(tints, ORANGE, circles, modes)).toBe(1);
+    expect(circles[2]).toBe(WHOLE_COLONY);
+    expect(modes[0]).toBe(TINT_MODES.indexOf('shield'));
+  });
+
+  it('packs no more tints than the shader takes', () => {
+    const circles = new Float32Array(MAX_TINTS * 4);
+    const modes = new Float32Array(4);
+    const tints = Array.from({ length: MAX_TINTS + 3 }, () =>
+      tint('cryo', true)
+    );
+
+    expect(packTints(tints, BLUE, circles, modes)).toBe(MAX_TINTS);
+  });
+});
 
 describe('encodeCells', () => {
   const width = 8;

@@ -19,6 +19,7 @@ import { CampaignSummary } from '../state/campaign';
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { Level, LEVELS } from '../state/levels';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
+import { DnaHelixComponent } from './dna-helix.component';
 import { MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
@@ -31,7 +32,13 @@ import {
 } from '../support/support-dialog.component';
 
 /** The sub screens the main menu opens. */
-export type MenuPage = 'colony' | 'profile' | 'friends' | 'settings' | 'help';
+export type MenuPage =
+  | 'colony'
+  | 'profile'
+  | 'friends'
+  | 'settings'
+  | 'help'
+  | 'evolution';
 
 /**
  * The landing screen of the game: the title, a new game, the
@@ -52,6 +59,7 @@ export type MenuPage = 'colony' | 'profile' | 'friends' | 'settings' | 'help';
     MatTooltipModule,
     RankStandingComponent,
     GhostChallengeComponent,
+    DnaHelixComponent,
     InstallBannerComponent,
     SiteFooterComponent,
     TranslatePipe,
@@ -70,6 +78,11 @@ export class MainMenuComponent {
   public readonly friendsAvailable = input(false);
   /** The friend requests waiting for an answer, counted on the tile. */
   public readonly friendRequests = input(0);
+  /**
+   * The DNA left to spend while it buys something - the badge on the
+   * Evolution tile - 0 while it buys nothing.
+   */
+  public readonly evolveDna = input(0);
   /** True while the game fills the whole screen rather than its page. */
   public readonly fullscreen = input(false);
 

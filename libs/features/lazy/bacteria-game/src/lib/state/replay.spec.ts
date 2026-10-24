@@ -65,6 +65,7 @@ describe('replay', () => {
       ],
       drags: [[90, 0, 200, 30]],
       boosts: [[150, 0]],
+      weapons: [],
     });
     expect(result?.ticks).toBe(engine.tickCount);
     expect(result?.players).toEqual(engine.players);

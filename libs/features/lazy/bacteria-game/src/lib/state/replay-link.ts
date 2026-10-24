@@ -1,5 +1,5 @@
 import { BALANCE_VERSION } from './game-balance';
-import { GHOST_REPLAY_VERSION, Replay, REPLAY_VERSION } from './replay';
+import { Replay } from './replay';
 import { replayFromBytes, replayToBytes } from './replay-pack';
 
 /** The key of a run in the hash of a link: `#ghost=...`. */
@@ -22,7 +22,8 @@ export async function replayLink(
 /**
  * The run a link's hash carries, null for a hash without one, or with one
  * that is damaged or from another version of the game or its balance.
- * Version 1 links from before replay version 2 still carry their run.
+ * Version 1 links from before replay version 2 still carry their run, and
+ * version 3 ones a run with evolution in it.
  */
 export async function replayFromHash(hash: string): Promise<Replay | null> {
   const payload = new URLSearchParams(hash.replace(/^#/, '')).get(HASH_KEY);
@@ -30,13 +31,10 @@ export async function replayFromHash(hash: string): Promise<Replay | null> {
     return null;
   }
   try {
+    // Null as well for a format this client does not know.
     const replay = await replayFromBytes(fromBase64Url(payload));
-    const version = replay?.header.version;
     // A ghost of another balance would not play out as it was played.
-    return (version === REPLAY_VERSION || version === GHOST_REPLAY_VERSION) &&
-      replay?.header.balanceVersion === BALANCE_VERSION
-      ? replay
-      : null;
+    return replay?.header.balanceVersion === BALANCE_VERSION ? replay : null;
   } catch {
     return null;
   }

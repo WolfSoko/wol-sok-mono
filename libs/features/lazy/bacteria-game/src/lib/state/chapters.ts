@@ -55,7 +55,14 @@ export const CHAPTERS: readonly Chapter[] = [
   {
     id: 'expanse',
     name: 'Expanse',
-    blurb: 'Maps bigger than the screen - the camera follows your colony.',
-    levelIds: ['expanse'],
+    blurb:
+      'Maps bigger than the screen - the camera follows you over islands, vessels and caves to the leviathan.',
+    levelIds: [
+      'expanse',
+      'archipelago',
+      'bloodstream',
+      'root-network',
+      'leviathan',
+    ],
   },
 ];

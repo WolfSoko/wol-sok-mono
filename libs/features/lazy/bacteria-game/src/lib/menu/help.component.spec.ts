@@ -15,6 +15,23 @@ describe('HelpComponent', () => {
     return fixture.nativeElement;
   }
 
+  it('explains evolution: the DNA, the genes, the weapons and where they count', () => {
+    const section = render().querySelector('.evolution');
+
+    expect(section?.querySelector('h3')?.textContent?.trim()).toBe('Evolution');
+    expect(section?.textContent).toContain('Every 50 XP you earn');
+    expect(section?.textContent).toContain('second button next to the boost');
+    expect(section?.textContent).toContain('daily level, endless runs');
+  });
+
+  it('names the weapon keys for the one weapon a match ever arms', () => {
+    const keys = render().querySelector('.weapon-keys');
+
+    expect(keys?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      'In a match against the computer, E or the right Shift fires your weapon.'
+    );
+  });
+
   it('links to the privacy policy in a tab of its own', () => {
     const host = render();
 
@@ -36,6 +53,9 @@ describe('HelpComponent', () => {
     expect(text).toContain('Spielanleitung');
     expect(text).toContain('Blau die');
     expect(text).toContain('Bakterien teilen sich doppelt so schnell.');
+    expect(text.replace(/\s+/g, ' ')).toContain(
+      'Im Match gegen den Computer feuert E oder die rechte Umschalttaste deine Waffe ab.'
+    );
     expect(text).toContain('Datenschutzerklärung');
   });
 

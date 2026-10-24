@@ -950,7 +950,8 @@ the wheel or a pinch (6.2), with a minimap in a corner. The painters draw only t
 big as a base map's - the first camera scaled a canvas drawn whole with
 CSS, size² the pixels, which the Canvas 2D fallback could not keep up
 with (8 fps on Expanse, 41 now) - but without a level of detail yet.
-Expanse is the first big level. The cell passes of the GPU
+Expanse was the first big level; Archipelago, Bloodstream, Root Network and
+Leviathan (ADR 0013) followed it into the Expanse chapter. The cell passes of the GPU
 simulation run only around the colonies (6.3, 2). Split screen and fog are
 next. The CPU simulation on a big map at Ultra
 runs four times the cells of a base one, so a resolution cap on big maps

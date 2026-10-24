@@ -1,3 +1,4 @@
+import { weaponOf, WeaponId } from './evolution';
 import { countDown } from './fixed-tick';
 import { Nutrient } from './bacteria-simulation';
 import { clamp, distance, Point } from './geometry';
@@ -7,7 +8,8 @@ import { ColonySummary } from './simulation';
  * The computer opponent.
  *
  * It only ever does what a human can do: pick a point for its crosshair and
- * fire its boost. The colony itself is driven by the simulation exactly like a
+ * fire its boost - and a weapon, where it carries one, as a boss may. The
+ * colony itself is driven by the simulation exactly like a
  * human player's, so the computer never gets stronger bacteria - it only gets
  * quicker and smarter about where to send them the harder it is set.
  *
@@ -72,6 +74,20 @@ export interface BotRoutes {
   travel(to: Point): number;
 }
 
+/** The weapon a bot carries, as it sees it. */
+export interface BotWeaponView {
+  id: WeaponId;
+  /** True when it can be fired right now. */
+  ready: boolean;
+  /** The radius it acts in round the crosshair, in arena cells. */
+  radius: number;
+  /**
+   * The bot's own bacteria and everybody else's in that circle round its
+   * crosshair - worked out only when asked.
+   */
+  around(): { own: number; enemy: number };
+}
+
 /** Routes on open ground: straight there, as the crow flies. */
 export function straightRoutes(from: Point): BotRoutes {
   return { waypoint: (to) => to, travel: (to) => distance(from, to) };
@@ -104,6 +120,8 @@ export interface BotView {
   objective: Point | null;
   /** The way from the own colony round the walls, and what it costs. */
   routes: BotRoutes;
+  /** The weapon it carries, null without one. */
+  weapon: BotWeaponView | null;
 }
 
 export interface BotDecision {
@@ -111,7 +129,12 @@ export interface BotDecision {
   target: Point | null;
   /** True when the bot wants to fire its boost now. */
   boost: boolean;
+  /** True when it wants to fire its weapon at its crosshair now. */
+  weapon: boolean;
 }
+
+/** Where the bot steers and whether it boosts - a decision but for the weapon. */
+type Course = Omit<BotDecision, 'weapon'>;
 
 interface DifficultyProfile {
   /** Seconds between two decisions. */
@@ -124,6 +147,11 @@ interface DifficultyProfile {
   usesBoost: boolean;
   /** Distance to the enemy below which an attacking bot fires its boost. */
   boostRange: number;
+  /**
+   * Times the bacteria a weapon has to catch before the bot fires it - a
+   * weaker bot waits for a fatter target.
+   */
+  weaponPatience: number;
 }
 
 const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
@@ -133,6 +161,7 @@ const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
     aimNoise: 24,
     usesBoost: false,
     boostRange: 0,
+    weaponPatience: 1.6,
   },
   normal: {
     reactionSec: 0.6,
@@ -140,6 +169,7 @@ const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
     aimNoise: 10,
     usesBoost: true,
     boostRange: 60,
+    weaponPatience: 1.25,
   },
   hard: {
     reactionSec: 0.3,
@@ -147,8 +177,28 @@ const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
     aimNoise: 3,
     usesBoost: true,
     boostRange: 90,
+    weaponPatience: 1,
   },
 };
+
+/**
+ * The share of the circle a weapon has to catch filled before the bot
+ * fires it at its crosshair, at its most eager: enemy bacteria for the
+ * hostile weapons, its own for the others. A weapon that reaches the whole
+ * colony - the shield - is fired by another rule, see `wantsWeapon`.
+ */
+const WEAPON_FILL: Readonly<Partial<Record<WeaponId, number>>> = {
+  'toxin-bomb': 0.22,
+  'cryo-pulse': 0.25,
+  'phage-strike': 0.3,
+  'agar-bloom': 0.3,
+};
+/**
+ * The bot shields its colony once it is smaller than this share of the
+ * enemy's and the two are this close, in cells of the base arena.
+ */
+const SHIELD_SIZE_RATIO = 1;
+const SHIELD_RANGE = 70;
 
 /**
  * How far a retreating colony moves away from the enemy, in cells of the base
@@ -183,34 +233,77 @@ export class BotController {
    * Between decisions the crosshair keeps travelling to the last target.
    */
   public decide(view: BotView, deltaTimeSec: number): BotDecision {
+    return this.waits(deltaTimeSec)
+      ? { target: null, boost: false, weapon: false }
+      : this.decideNow(view);
+  }
+
+  /**
+   * Advances the reaction timer - true while it has not run out, and the
+   * bot does not decide yet. Once it has, {@link decideNow} decides: what
+   * {@link decide} does, without a view built for a tick it waits out.
+   */
+  public waits(deltaTimeSec: number): boolean {
     this.cooldown = countDown(this.cooldown, deltaTimeSec);
-    if (this.cooldown > 0) {
-      return { target: null, boost: false };
-    }
+    return this.cooldown > 0;
+  }
+
+  /** Makes a decision now - after {@link waits} said the bot no longer waits. */
+  public decideNow(view: BotView): BotDecision {
     this.cooldown = this.profile.reactionSec;
     // The bot thinks in cells of the base arena.
     this.unit = view.unit;
     const { own, enemy } = view;
     // A boss that has fallen behind goes berserk: it charges the enemy with
     // every boost it gets - where its difficulty boosts at all.
-    if (
+    const course: Course =
       this.boss &&
       this.profile.usesBoost &&
       view.boostReady &&
       enemy != null &&
       own.count > 0 &&
       own.count < enemy.count
-    ) {
-      return {
-        target: this.aim(view, this.attackPoint(view, enemy)),
-        boost: true,
-      };
+        ? {
+            target: this.aim(view, this.attackPoint(view, enemy)),
+            boost: true,
+          }
+        : this.choose(view);
+    // Without a weapon nothing more is looked at - nor drawn from the
+    // random numbers: a plain bot decides as it always did.
+    const { weapon } = view;
+    return {
+      ...course,
+      weapon: weapon !== null && weapon.ready && this.wantsWeapon(view, weapon),
+    };
+  }
+
+  /**
+   * Whether to fire the weapon at the crosshair now: a hostile one once
+   * enough enemies are in its circle, another over a crowd of its own, and
+   * one that reaches the whole colony - the shield - when the colony is
+   * losing ground in a fight.
+   */
+  private wantsWeapon(view: BotView, weapon: BotWeaponView): boolean {
+    const { own, enemy } = view;
+    if (own.count === 0 || enemy == null || enemy.count === 0) {
+      return false;
     }
-    return this.choose(view);
+    const { hostile, reach } = weaponOf(weapon.id);
+    if (reach === 'colony') {
+      return (
+        own.count < enemy.count * SHIELD_SIZE_RATIO &&
+        distance(own, enemy) <= SHIELD_RANGE * this.unit
+      );
+    }
+    const area = Math.PI * weapon.radius * weapon.radius;
+    const needed =
+      area * (WEAPON_FILL[weapon.id] ?? 1) * this.profile.weaponPatience;
+    const around = weapon.around();
+    return (hostile ? around.enemy : around.own) >= needed;
   }
 
   /** Where to send the crosshair now, and whether to boost. */
-  private choose(view: BotView): BotDecision {
+  private choose(view: BotView): Course {
     const { own, enemy } = view;
     if (own.count === 0) {
       return { target: null, boost: false };
@@ -350,7 +443,8 @@ export function buildBotView(
   routes: (from: Point) => BotRoutes,
   unit: number,
   prey: readonly Nutrient[] = [],
-  feeding = false
+  feeding = false,
+  weapon: BotWeaponView | null = null
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;
@@ -377,6 +471,7 @@ export function buildBotView(
     prey,
     feeding,
     unit,
+    weapon,
   };
 }
 

@@ -62,6 +62,22 @@
         <mat-icon class="gold">person</mat-icon>
         {{ "profile.title" | t }}
       </button>
+      <button
+        type="button"
+        class="tile evolve"
+        [class.ready]="evolveDna() > 0"
+        (click)="open.emit('evolution')"
+      >
+        <feat-lazy-bac-game-dna-helix class="tile-helix" [size]="26" />
+        {{ "evolution.menu.tile" | t }}
+        @if (evolveDna() > 0) {
+          @let count = evolveDna();
+          <span class="count" aria-hidden="true">{{ count }}</span>
+          <span class="cdk-visually-hidden">{{
+            "evolution.menu.ready" | t: { count }
+          }}</span>
+        }
+      </button>
       @if (friendsAvailable()) {
         <button type="button" class="tile" (click)="open.emit('friends')">
           <mat-icon>group</mat-icon>

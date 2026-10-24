@@ -4,14 +4,34 @@
   class="level-card"
   [class.current]="current()"
   [class.locked]="level.lock !== null"
+  [class.with-preview]="previews"
   [disabled]="level.lock !== null"
   [attr.aria-current]="current() ? 'true' : null"
   [style.--card-floor]="level.floor"
   [style.--card-edge]="level.edge"
   (click)="pick.emit(level.id)"
 >
+  @if (previews) {
+    <feat-lazy-bac-game-level-preview
+      class="preview"
+      [levelId]="level.id"
+      [title]="level.title"
+      [size]="level.size"
+      decorative
+    />
+  }
   <span class="card-top">
     <span class="number">{{ level.badge }}</span>
+    @if (!previews && level.size > 1) {
+      <!-- Without a picture the badge of a big map sits up here. -->
+      <span
+        class="size"
+        [attr.title]="
+          'newGame.levelMap.preview.sizeLabel' | t: { size: level.size }
+        "
+        >{{ "newGame.levelMap.preview.size" | t: { size: level.size } }}</span
+      >
+    }
     @if (level.lock !== null) {
       <mat-icon class="lock">lock</mat-icon>
     }

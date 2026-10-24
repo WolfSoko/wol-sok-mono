@@ -125,6 +125,9 @@ never a public candidate.
 There is no `kind` in the header: the server derives it (below). `simulation`
 stays, and only `'cpu'` replays are accepted. Version 1 replays (ghost links
 in the wild) still parse as ghosts.
+(Changed by ADR 0013: a replay with evolution in it - loadouts or weapons
+fired - takes version 3, version 2's format plus those fields; versions 1
+and 2 stay plain.)
 
 **Parsing is strict.** Ticks strictly increase per input kind and seat;
 drag points lie inside the grid; steer magnitude is at most 1; only seats

@@ -193,6 +193,13 @@
   overflow: auto;
 }
 
+// The map of the level, as big as the briefing has room for.
+.details-preview {
+  flex: none;
+  width: 100%;
+  max-width: 30rem;
+}
+
 .details-number {
   font-size: 0.85rem;
   color: var(--bw-muted);
@@ -312,6 +319,7 @@
 
   .mode-blurb,
   .details-description,
+  .details-preview,
   .opponent {
     display: none;
   }

@@ -47,6 +47,7 @@ import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { rgba } from './arena/canvas-math';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
+import { WeaponPadComponent } from './weapon-pad/weapon-pad.component';
 import {
   exitFullscreen,
   fitInside,
@@ -65,6 +66,7 @@ import { MainMenuComponent } from './menu/main-menu.component';
 import { DailyCard } from './menu/menu-cards';
 import { FriendsScreenComponent } from './menu/friends-screen.component';
 import { HelpComponent } from './menu/help.component';
+import { EvolutionComponent } from './menu/evolution.component';
 import { ProfileComponent } from './menu/profile.component';
 import { MyColonyComponent } from './menu/my-colony.component';
 import { SettingsComponent } from './menu/settings.component';
@@ -80,6 +82,7 @@ import { BotDifficulty } from './state/bot-controller';
 import { GameSettingsService } from './settings.service';
 import { vaporizePixels } from './vaporize-effect';
 import { ProgressService } from './progress.service';
+import { EvolutionService } from './evolution.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
 import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
@@ -103,8 +106,10 @@ import {
   FriendView,
   SocialService,
 } from './social/social.service';
-import { Camera } from './arena/camera';
+import { Camera, CameraShake } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
+import { particleBudget } from './arena/weapon-fx';
+import type { WeaponFire } from './state/evolution';
 import { GameHapticsService } from './haptics.service';
 import { GameSoundService, Soundtrack } from './sound/game-sound.service';
 import { MatchResult } from './state/match-engine';
@@ -117,6 +122,7 @@ import {
 import {
   ColonyStats,
   humanForBoostKey,
+  humanForWeaponKey,
   sameColonyStats,
   toColonyStats,
 } from './colony-stats';
@@ -182,6 +188,7 @@ interface HudGoal {
     SocialNoticesComponent,
     JoystickComponent,
     BoostPadComponent,
+    WeaponPadComponent,
     ElemResizedDirective,
     WinnerComponent,
     SwarmComponent,
@@ -192,6 +199,7 @@ interface HudGoal {
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
+    EvolutionComponent,
     TranslatePipe,
     GameTextPipe,
   ],
@@ -213,6 +221,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   protected readonly progress = inject(ProgressService);
+  protected readonly evolution = inject(EvolutionService);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   private readonly online = inject(OnlineMatchService);
@@ -252,8 +261,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private camera: Camera | null = null;
   /** When the camera last moved on, null before it ever did. */
   private cameraMovedAt: number | null = null;
+  /** The shake of the view as a weapon goes off - on every map. */
+  private readonly shake = new CameraShake();
   /** What of the arena the last frame showed. */
   private lastView: Rect | null = null;
+  /** Each seat's colony colour - built anew only when a match's colours do. */
+  private seatColors = new Map<number, readonly number[]>();
   /** The whole map in a corner, while the camera shows part of it. */
   private minimap: MinimapPainter | null = null;
   /** When the minimap last took in where the colonies are. */
@@ -850,8 +863,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         step: stepsOf(kind).includes('level') ? 'level' : 'mode',
       });
     }
-    this.screen.set(action === 'levels' ? 'new-game' : 'menu');
-    if (action === 'menu') {
+    this.screen.set(
+      action === 'levels'
+        ? 'new-game'
+        : action === 'evolve'
+          ? 'evolution'
+          : 'menu'
+    );
+    if (action === 'menu' || action === 'evolve') {
       this.gameStateService.endSeries();
       this.gameStateService.leaveOnline();
     }
@@ -1192,6 +1211,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.clearNextFrame = true;
     this.camera?.reset();
     this.cameraMovedAt = null;
+    this.shake.reset();
     this.gameStateService.cleanup();
     this.gameStateService.init(this.arena().width, this.arena().height);
     this.gameStateService.start();
@@ -1259,7 +1279,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const events = this.playerService.getFrameEvents();
     this.sound.frame(events);
     this.haptics.frame(events);
-    this.paint(frame.elapsedSec, false, frame.alpha);
+    this.shake.fire(events.weapons, this.reducedMotion());
+    this.paint(frame.elapsedSec, false, frame.alpha, events.weapons);
   }
 
   /**
@@ -1279,10 +1300,24 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  /** `alpha` is how far the crosshairs are drawn along their last tick. */
-  private paint(deltaTimeSec: number, clear: boolean, alpha: number): void {
+  /**
+   * `alpha` is how far the crosshairs are drawn along their last tick,
+   * `fires` the weapons fired since the frame before.
+   */
+  private paint(
+    deltaTimeSec: number,
+    clear: boolean,
+    alpha: number,
+    fires: readonly WeaponFire[] = []
+  ): void {
     this.animationSec += deltaTimeSec;
-    const view = this.moveCamera();
+    const camera = this.moveCamera();
+    // The shake goes with the match's frames: a pause holds the view still.
+    this.shake.advance(deltaTimeSec);
+    const { width, height } = this.arena();
+    const view = this.matchPaints()
+      ? this.shake.shake(camera, width, height)
+      : camera;
     // The trail of the last frame lies elsewhere in a view that moved - by
     // half a pixel or more: the spring creeps on by less for a long while.
     const last = this.lastView;
@@ -1298,11 +1333,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       deltaTimeSec,
       clear || this.clearNextFrame || moved,
       alpha,
-      view
+      view,
+      fires
     );
     this.clearNextFrame = false;
     this.painter?.paint(frame);
-    this.paintMinimap(view, frame.dynamicWalls);
+    this.paintMinimap(camera, frame.dynamicWalls);
   }
 
   /**
@@ -1413,7 +1449,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     deltaTimeSec: number,
     clear: boolean,
     alpha: number,
-    view: Rect
+    view: Rect,
+    fires: readonly WeaponFire[]
   ): ArenaFrame {
     const balance = this.balance();
     const players = untracked(this.playerStore.entities);
@@ -1453,7 +1490,33 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
             ? player.boostActiveSec / balance.boostDurationSec
             : null,
       })),
+      weaponFires: fires,
+      weaponEffects: this.playerService.getActiveEffects(),
+      seatColors: this.seatColorsOf(players),
+      particleBudget: particleBudget(
+        this.settings.screenResolution(),
+        this.reducedMotion()
+      ),
     };
+  }
+
+  /**
+   * The seats' colours for the painter: a match keeps its colours, so the
+   * map of the frame before is handed on until one of them is another.
+   */
+  private seatColorsOf(
+    players: readonly Player[]
+  ): ReadonlyMap<number, readonly number[]> {
+    const known = this.seatColors;
+    if (
+      known.size !== players.length ||
+      players.some((player) => known.get(player.id) !== player.color)
+    ) {
+      this.seatColors = new Map(
+        players.map((player) => [player.id, player.color])
+      );
+    }
+    return this.seatColors;
   }
 
   ngOnDestroy(): void {
@@ -1512,6 +1575,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Fires a player's boost - the button equivalent of Space / Enter. */
   protected boost(playerId: number): void {
     this.gameStateService.boost(playerId);
+  }
+
+  /** Fires a player's weapon - the button next to the boost. */
+  protected fireWeapon(playerId: number): void {
+    this.gameStateService.fireWeapon(playerId);
   }
 
   /** Pushes or releases a player's on-screen joystick. */
@@ -1713,19 +1781,32 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.onEscape();
       return;
     }
-    // The boost keys belong to the game only while a match is on, and never
-    // while a button has the focus: a keyboard user pressing Enter on "Reset"
-    // expects a reset, not a boost. Outside of a match Space still scrolls.
-    const boosted =
+    // The boost and weapon keys belong to the game only while a match is
+    // on, and never while a button has the focus: a keyboard user pressing
+    // Enter on "Reset" expects a reset, not a boost. Outside of a match
+    // Space still scrolls. A weapon key counts only for a human who carries
+    // a weapon; anyone else's E or Shift does what it did before.
+    const inMatch =
       this.store.snapshot().currentState === GameState.RUNNING &&
-      !isInteractiveTarget($event.target)
-        ? humanForBoostKey(this.humans(), $event.key)
-        : null;
+      !isInteractiveTarget($event.target);
+    const boosted = inMatch
+      ? humanForBoostKey(this.humans(), $event.key)
+      : null;
     if (boosted != null) {
       // Space would scroll the page.
       $event.preventDefault();
       if (!$event.repeat) {
         this.boost(boosted.id);
+      }
+      return;
+    }
+    const armed = inMatch
+      ? humanForWeaponKey(this.humans(), $event.key, $event.code)
+      : null;
+    if (armed != null) {
+      $event.preventDefault();
+      if (!$event.repeat) {
+        this.gameStateService.fireWeapon(armed.id);
       }
       return;
     }
@@ -1764,7 +1845,8 @@ export type MenuScreen =
   | 'profile'
   | 'friends'
   | 'settings'
-  | 'help';
+  | 'help'
+  | 'evolution';
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;

@@ -1,6 +1,13 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { EvolutionService } from '../evolution.service';
 import { I18nService } from '../i18n/i18n.service';
 import { getLevel, LEVELS } from '../state/levels';
+import {
+  drawPreviews,
+  fakePreviewUrl,
+  provideFakePreviews,
+} from '../../testing/fake-preview-renderer';
 import { NewGameComponent } from './new-game.component';
 import { NewGameEntry } from './play-modes';
 
@@ -211,6 +218,24 @@ describe('NewGameComponent', () => {
     expect(started).toHaveBeenCalledWith('online');
   });
 
+  it('waits with Start until the storage told what the player evolved', async () => {
+    const settled = signal(false);
+    TestBed.configureTestingModule({
+      providers: [{ provide: EvolutionService, useValue: { settled } }],
+    });
+    await render({
+      entry: { kind: 'campaign', step: 'start' } satisfies NewGameEntry,
+    });
+
+    const start = host().querySelector<HTMLButtonElement>('.start');
+    expect(start?.disabled).toBe(true);
+
+    settled.set(true);
+    await settle();
+
+    expect(start?.disabled).toBe(false);
+  });
+
   it('shows the best medallion, what the next one needs, and the rules', async () => {
     await render({
       entry: { kind: 'free', step: 'start' } satisfies NewGameEntry,
@@ -278,5 +303,31 @@ describe('NewGameComponent', () => {
     );
     expect(button('Blau ++')).toBeDefined();
     expect(button('Zurück')).toBeDefined();
+  });
+
+  it('briefs without a picture where previews are not drawn', async () => {
+    await render({ entry: { kind: 'free', step: 'start' } });
+
+    expect(host().querySelector('.details')).not.toBeNull();
+    expect(host().querySelector('.details-preview')).toBeNull();
+  });
+
+  it('shows the map of the level it briefs on', async () => {
+    TestBed.configureTestingModule({ providers: [provideFakePreviews()] });
+    await render({
+      entry: { kind: 'free', step: 'start' },
+      levelId: 'expanse',
+    });
+    await drawPreviews();
+    await settle();
+
+    const preview = host().querySelector('.details .details-preview');
+    expect(preview?.querySelector('img')?.getAttribute('src')).toBe(
+      fakePreviewUrl('expanse')
+    );
+    expect(preview?.querySelector('img')?.getAttribute('alt')).toBe(
+      `Map of ${host().querySelector('.details-title')?.textContent?.trim()}`
+    );
+    expect(preview?.querySelector('.size')?.textContent).toBe('2× map');
   });
 });

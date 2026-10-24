@@ -30,6 +30,8 @@ import { stage as deStage } from './de/stage';
 import { stage as enStage } from './en/stage';
 import { support as deSupport } from './de/support';
 import { support as enSupport } from './en/support';
+import { evolution as deEvolution } from './de/evolution';
+import { evolution as enEvolution } from './en/evolution';
 import type { Language } from './language';
 import type { Dictionary, EntryPath, Translation } from './translation';
 
@@ -58,6 +60,7 @@ export const EN = {
   settings: enSettings,
   colony: enColony,
   support: enSupport,
+  evolution: enEvolution,
 } satisfies Dictionary;
 
 export const DE: Translation<typeof EN> = {
@@ -77,6 +80,7 @@ export const DE: Translation<typeof EN> = {
   settings: deSettings,
   colony: deColony,
   support: deSupport,
+  evolution: deEvolution,
 };
 
 export const DICTIONARIES: Readonly<Record<Language, Dictionary>> = {

@@ -2,7 +2,7 @@ import { AchievementId, isAchievementId } from './achievement-ids';
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { isColonyColor } from './colony-colors';
 import { addAttempt, DailyRecord } from './daily';
-import { isObject } from './is-object';
+import { isInteger, isObject } from './is-object';
 import { LEVELS } from './levels';
 import { betterMedal, MatchRecord, MEDAL_TIERS, MedalTier } from './medallions';
 
@@ -283,13 +283,8 @@ export function parseProgress(value: unknown): Progress {
     achievements: parseAchievements(value['achievements']),
     couchWins: parseCouchWins(value['couchWins']),
     daily: parseDaily(value['daily']),
-    endlessBest: isCount(value['endlessBest']) ? value['endlessBest'] : 0,
+    endlessBest: isInteger(value['endlessBest'], 1) ? value['endlessBest'] : 0,
   };
-}
-
-/** True for a whole number above zero. */
-function isCount(value: unknown): value is number {
-  return Number.isInteger(value) && (value as number) > 0;
 }
 
 /** The daily record, null for anything else. */
@@ -300,8 +295,8 @@ function parseDaily(value: unknown): DailyRecord | null {
   const { day, attempts, streak } = value;
   return typeof day === 'string' &&
     ISO_DATE.test(day) &&
-    isCount(attempts) &&
-    isCount(streak)
+    isInteger(attempts, 1) &&
+    isInteger(streak, 1)
     ? { day, attempts, streak }
     : null;
 }

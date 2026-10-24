@@ -761,7 +761,7 @@ describe('BacteriaGameComponent', () => {
       },
       'cpu',
       600,
-      { steers: [[0, 0, 1, 0]], drags: [], boosts: [] }
+      { steers: [[0, 0, 1, 0]], drags: [], boosts: [], weapons: [] }
     );
 
     it('starts a match against it on Fight it', () => {

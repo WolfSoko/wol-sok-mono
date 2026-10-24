@@ -1,0 +1,61 @@
+// A dish of the arena's colours until its picture is drawn, then the
+// picture - rounded like the frame drawn into it (`PREVIEW_CORNER`).
+:host {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 4.5% / 8%;
+  background:
+    radial-gradient(
+      ellipse at 50% 45%,
+      rgb(var(--preview-floor, 18 24 33)) 40%,
+      rgb(var(--preview-floor, 18 24 33) / 55%) 100%
+    ),
+    var(--bw-ground);
+  box-shadow:
+    inset 0 0 0 2px rgb(var(--preview-edge, 38 49 66) / 55%),
+    0 4px 14px rgb(0 0 0 / 35%);
+}
+
+.picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: develop 320ms ease-out;
+}
+
+// A map bigger than the screen: how many times, in a corner.
+.size {
+  position: absolute;
+  top: 7%;
+  right: 4%;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgb(11 15 20 / 78%);
+  border: 1px solid rgb(var(--preview-edge, 233 185 73) / 85%);
+  color: var(--bw-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+@keyframes develop {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picture {
+    animation: none;
+  }
+}

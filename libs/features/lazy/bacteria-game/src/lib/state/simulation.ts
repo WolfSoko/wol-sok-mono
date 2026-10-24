@@ -1,3 +1,4 @@
+import type { ActiveEffect } from './evolution';
 import { ColonySpawn, Nutrient, StepEvents } from './bacteria-simulation';
 import { GameBalance } from './game-balance';
 import { CellBounds, Point } from './geometry';
@@ -102,6 +103,13 @@ export interface Simulation {
   step(players: Player[], deltaTimeSec: number): void;
   getNutrients(): Nutrient[];
   getDynamicWalls(): readonly DynamicWall[];
+  /** The weapons' effects acting on the war now - see `evolution.ts`. */
+  getActiveEffects(): readonly ActiveEffect[];
+  /**
+   * Lets a weapon's effect act on the war from the next step on, for as
+   * long as it lasts - one step for a strike.
+   */
+  addEffect(effect: ActiveEffect): void;
   /** What happened during the last tick. */
   getEvents(): StepEvents;
   summaries(): readonly ColonySummary[];
