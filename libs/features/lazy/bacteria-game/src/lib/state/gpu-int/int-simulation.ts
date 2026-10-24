@@ -52,6 +52,7 @@ export class IntSimulation extends GridSimulation {
   private reportBuffers: Uint32Array[] = [];
   /** What the painter gets - see `collectBacterias`. */
   private readonly bacterias: Bacteria[][] = [];
+  private bacteriaCounts = new Int32Array(0);
   private drawnState: Uint16Array | null = null;
   private drawnStep = -1;
   private readonly match: IntMatchUniforms;
@@ -191,7 +192,10 @@ export class IntSimulation extends GridSimulation {
     while (lists.length < slots) {
       lists.push([]);
     }
-    const counts = new Int32Array(slots);
+    if (this.bacteriaCounts.length !== slots) {
+      this.bacteriaCounts = new Int32Array(slots);
+    }
+    const counts = this.bacteriaCounts.fill(0);
     const state = this.state;
     const width = this.width;
     for (let cell = 0; cell < width * this.height; cell++) {

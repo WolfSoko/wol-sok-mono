@@ -82,14 +82,17 @@ export function intReferenceTick(
   const blocksY = Math.ceil(grid.height / pass.cellSize);
   const hunt = intHunt(intInfluence(grid, pass.cellSize), blocksX, blocksY);
   // One grid for every pass, its state swapped in as the passes go.
-  const at: IntGrid = { ...grid };
+  const shared: IntGrid = { ...grid };
+  const at = (state: Uint16Array): IntGrid => {
+    shared.state = state;
+    return shared;
+  };
   const next = (source: Uint16Array) =>
     buffers?.after(source) ?? new Uint16Array(source.length);
   let state = grid.state;
   for (let step = 0; step < inputs.escapeSteps; step++) {
-    at.state = state;
     state = intClaimAndApply(
-      at,
+      at(state),
       pass,
       hunt,
       INT_KIND.escape,
@@ -98,11 +101,9 @@ export function intReferenceTick(
       next(state)
     );
   }
-  at.state = state;
-  state = intCrush(at, next(state));
-  at.state = state;
+  state = intCrush(at(state), next(state));
   state = intCombat(
-    at,
+    at(state),
     {
       ...inputs.combat,
       seed: pass.seed,
@@ -114,11 +115,9 @@ export function intReferenceTick(
   if (trace != null) {
     trace.combat = state;
   }
-  at.state = state;
-  state = intFeed(at, inputs.match.feed, next(state));
-  at.state = state;
+  state = intFeed(at(state), inputs.match.feed, next(state));
   state = intClaimAndApply(
-    at,
+    at(state),
     pass,
     hunt,
     INT_KIND.divide,
@@ -127,9 +126,8 @@ export function intReferenceTick(
     next(state)
   );
   for (let step = 0; step < inputs.moveSteps; step++) {
-    at.state = state;
     state = intClaimAndApply(
-      at,
+      at(state),
       pass,
       hunt,
       INT_KIND.move,
