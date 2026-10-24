@@ -115,9 +115,9 @@ export interface Weapon {
 export const WEAPONS: readonly Weapon[] = [
   {
     id: 'toxin-bomb',
-    cooldownSec: 18,
+    cooldownSec: 22,
     durationSec: 4,
-    radius: 18,
+    radius: 15,
     icon: 'coronavirus',
   },
   {
@@ -153,7 +153,7 @@ export const WEAPONS: readonly Weapon[] = [
 /** How strongly the weapons act. */
 export const WEAPON_EFFECTS = {
   /** Energy a toxin cloud drains per second from an enemy bacterium. */
-  toxinDrainPerSec: 0.9,
+  toxinDrainPerSec: 0.65,
   /** The chance a frozen bacterium sits a movement step out. */
   cryoStayChance: 0.9,
   /** Times the chance a frozen bacterium divides. */
