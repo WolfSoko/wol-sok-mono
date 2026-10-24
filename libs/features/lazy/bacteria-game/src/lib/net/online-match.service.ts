@@ -91,7 +91,12 @@ export class OnlineMatchService {
   );
   private readonly peerState = signal<string | null>(null);
   private readonly players = inject(PlayerService);
-  /** The rulesets the other device offered in its hello. */
+  /**
+   * The rulesets each device offered in its hello. Both sides settle the
+   * ruleset on these, never on what this device would offer now - a
+   * self-test verdict that came in after the hello changes nothing.
+   */
+  private ownOffers: readonly Ruleset[] = ['cpu'];
   private peerOffers: readonly Ruleset[] = ['cpu'];
   private readonly lobbyState = signal<OnlineLobby>(IDLE_LOBBY);
   private readonly events = new Subject<OnlineEvent>();
@@ -250,11 +255,13 @@ export class OnlineMatchService {
   }
 
   /**
-   * The ruleset the next match plays by: `gpu-int` when both devices offer
-   * it, `cpu` else (ADR 0015) - the host starts it, the guest checks it.
+   * The ruleset the next match plays by: `gpu-int` when both devices
+   * offered it in their hellos, `cpu` else (ADR 0015) - the host starts it,
+   * the guest checks it. A device whose GPU failed since plays its
+   * `gpu-int` matches on `IntSimulation`, so the ruleset still holds.
    */
   public agreedRuleset(): Ruleset {
-    return agreedRuleset(this.players.rulesetOffers(), this.peerOffers);
+    return agreedRuleset(this.ownOffers, this.peerOffers);
   }
 
   /**
@@ -297,6 +304,7 @@ export class OnlineMatchService {
     this.lockstep = null;
     this.pendingStart = null;
     this.greeted = false;
+    this.ownOffers = ['cpu'];
     this.peerOffers = ['cpu'];
     this.lobbyState.set({ ...IDLE_LOBBY, ...lobby });
     if (wasConnected) {
@@ -315,13 +323,15 @@ export class OnlineMatchService {
     link.messages$.subscribe((data) => this.receive(data));
     link.closed$.subscribe(() => this.onClosed(link));
     link.opened.then(
-      () =>
+      () => {
+        this.ownOffers = [...this.players.rulesetOffers()];
         this.send({
           k: 'hello',
           v: NET_VERSION,
           id: this.playerId(),
-          r: [...this.players.rulesetOffers()],
-        }),
+          r: [...this.ownOffers],
+        });
+      },
       () => undefined
     );
     return true;
