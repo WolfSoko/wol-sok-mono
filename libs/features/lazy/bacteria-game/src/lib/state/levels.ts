@@ -12,6 +12,7 @@ import {
   generatedLevel,
   parseGeneratedId,
 } from './level-generator/generate-level';
+import { missionOfLevel, TRAINING_LEVELS } from './training-levels';
 
 /**
  * A level is a map plus the tuning that makes it play differently.
@@ -48,6 +49,12 @@ export interface Level {
    * food for whoever eats them first. Two at most, the GPU runs four.
    */
   neutrals?: readonly NeutralSpot[];
+  /**
+   * The right colony is a training dummy against the computer: it sits
+   * where it spawned and nobody steers it - a training mission's target,
+   * see `training.ts`.
+   */
+  dummy?: boolean;
 }
 
 /**
@@ -513,6 +520,11 @@ export function isLadderLevel(id: string): boolean {
   return LEVELS.some((level) => level.id === id);
 }
 
+/** True for the id of a training mission's level - see `training.ts`. */
+export function isTrainingLevel(id: string): boolean {
+  return missionOfLevel(id) !== null;
+}
+
 /** True for the id of a level of the game - a generated one included. */
 export function isLevelId(value: unknown): value is string {
   return (
@@ -522,12 +534,13 @@ export function isLevelId(value: unknown): value is string {
 }
 
 /**
- * The level with that id - a generated one for a `gen:` id - falling back to
- * the first one.
+ * The level with that id - a generated one for a `gen:` id, a training
+ * mission's - falling back to the first one.
  */
 export function getLevel(id: string): Level {
   return (
     LEVELS.find((level) => level.id === id) ??
+    TRAINING_LEVELS.find((level) => level.id === id) ??
     generatedLevel(id)?.level ??
     LEVELS[0]
   );
@@ -619,8 +632,12 @@ export function isLadderLevelId(id: string): id is LadderLevelId {
  * level the name it was given.
  */
 export function levelTitleText(level: Level): GameText {
-  return isLadderLevelId(level.id)
-    ? { key: `levels.titles.${level.id}` }
+  if (isLadderLevelId(level.id)) {
+    return { key: `levels.titles.${level.id}` };
+  }
+  const mission = missionOfLevel(level.id);
+  return mission !== null
+    ? { key: `training.missions.${mission}.title` }
     : // A level of neither kind is none of the game's - getLevel falls
       // back to the first one for it.
       (level.title ?? { key: 'levels.titles.petri-dish' });
@@ -644,6 +661,10 @@ export function levelNameText(level: Level): GameText {
 export function levelDescriptionText(level: Level): GameText {
   if (isLadderLevelId(level.id)) {
     return { key: `levels.descriptions.${level.id}` };
+  }
+  const mission = missionOfLevel(level.id);
+  if (mission !== null) {
+    return { key: `training.missions.${mission}.description` };
   }
   const recipe = parseGeneratedId(level.id)?.recipe ?? 'field';
   return { key: `levels.generated.styles.${recipe}.description` };

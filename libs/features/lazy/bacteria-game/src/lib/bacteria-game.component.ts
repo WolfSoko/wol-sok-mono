@@ -13,6 +13,7 @@ import {
   computed,
   effect,
   inject,
+  linkedSignal,
   signal,
   untracked,
   viewChild,
@@ -150,6 +151,7 @@ import {
 import { pickMatchLevel } from './state/match-level';
 import { DynamicWall, Rect } from './state/maps';
 import { harvestTarget, holdTarget } from './state/win-conditions';
+import { MissionId, missionOf, nextMission } from './state/training';
 import { mapZones, Zone } from './state/zones';
 import { isBoosted, Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
@@ -404,6 +406,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           target: harvest,
           of: 'pellets',
         };
+  });
+  /** The goal of the training mission under way, for the arena - null outside one. */
+  protected readonly missionGoal = computed((): TranslationKey | null => {
+    const mission = missionOf(this.store.level().id);
+    return mission === null ? null : `training.missions.${mission.id}.goal`;
   });
   /** True once a match is over and its result is shown, until the next one. */
   protected readonly matchOver: Signal<boolean>;
@@ -824,6 +831,32 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return { levelId, attemptsLeft, streak };
   });
 
+  /**
+   * The training mission picked in a new game - the first one still to do
+   * until the player picks another.
+   */
+  protected readonly missionId = linkedSignal(() =>
+    this.progress.nextMission()
+  );
+
+  /** Starts a training mission's match. */
+  protected playMission(id: MissionId): void {
+    if (this.resetting()) {
+      return;
+    }
+    this.missionId.set(id);
+    this.gameStateService.leaveOnline();
+    this.gameStateService.playMission(id);
+    this.startGame();
+  }
+
+  /** Opens the training's missions, from the main menu. */
+  protected openTraining(): void {
+    this.setPlayKind('training');
+    this.newGameEntry.set({ kind: 'training', step: 'level' });
+    this.show('new-game');
+  }
+
   /** True in a match of an endless run - no restart, it would cost no life. */
   protected readonly inEndlessRun = this.store.endlessMatch;
 
@@ -874,6 +907,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const next = action === 'next' ? this.upcomingLevel() : null;
+    const played = missionOf(this.level().id);
+    const mission =
+      action === 'mission' && played !== null ? nextMission(played.id) : null;
     // The reset ends a match set outside the setup: a rematch sets it again.
     const rematch =
       action === 'again' ? this.gameStateService.oneMatch() : null;
@@ -913,11 +949,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           if (action === 'endless') {
             this.gameStateService.advanceEndless();
           }
-          if (
+          if (mission !== null) {
+            this.missionId.set(mission.id);
+            this.gameStateService.playMission(mission.id);
+          }
+          if (action === 'campaign') {
+            this.continueCampaign();
+          } else if (
             action === 'again' ||
             action === 'next' ||
             action === 'ghost' ||
-            action === 'endless'
+            action === 'endless' ||
+            mission !== null
           ) {
             this.startGame();
           }
@@ -1065,13 +1108,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly lastKind = signal<PlayKind | null>(null);
 
   /**
-   * The mode last played: the one picked in a new game, else the daily
-   * level or an endless run while one is on, else who plays and whether
-   * the ladder applies.
+   * The mode last played: the training while one of its missions is set,
+   * else the one picked in a new game, else the daily level or an endless
+   * run while one is on, else who plays and whether the ladder applies.
+   * The training is played a mission at a time: picked once, it is no mode
+   * the campaign's Continue would come back to.
    */
   private readonly playKind = computed((): PlayKind => {
+    const matchLevel = this.store.matchLevel();
+    if (matchLevel !== null && missionOf(matchLevel) !== null) {
+      return 'training';
+    }
     const last = this.lastKind();
-    if (last !== null) {
+    if (last !== null && last !== 'training') {
       return last;
     }
     if (this.store.dailyDay() !== null) {
@@ -1112,7 +1161,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  /** Starts what a new game set up: a match, the daily level or a run. */
+  /**
+   * Starts what a new game set up: a match, the daily level, a run or a
+   * training mission.
+   */
   protected startNewGame(kind: PlayKind): void {
     switch (kind) {
       case 'daily':
@@ -1120,6 +1172,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         return;
       case 'endless':
         this.playEndless();
+        return;
+      case 'training':
+        this.playMission(this.missionId());
         return;
       default:
         this.startGame();

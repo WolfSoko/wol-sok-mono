@@ -84,6 +84,7 @@ export const game: Translation<typeof en> = {
     computer: 'Computer',
     ghost: 'Geist',
     neutral: 'Neutral',
+    dummy: 'Attrappe',
   },
   xp: {
     couch: 'Zwei Spieler',
@@ -93,6 +94,10 @@ export const game: Translation<typeof en> = {
     achievements: {
       one: 'Erfolg',
       other: '{count} Erfolge',
+    },
+    missions: {
+      one: 'Trainingsmission',
+      other: '{count} Trainingsmissionen',
     },
   },
   unlocks: {

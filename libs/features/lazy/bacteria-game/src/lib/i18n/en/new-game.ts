@@ -7,6 +7,10 @@ export const newGame = {
     start: 'Start',
   },
   modes: {
+    training: {
+      name: 'Training',
+      blurb: 'Five short missions that teach the game.',
+    },
     campaign: {
       name: 'Campaign',
       blurb: 'The ladder level by level - win one to open the next.',
@@ -34,6 +38,7 @@ export const newGame = {
   },
   /** The line under a mode: where the player stands in it. */
   notes: {
+    training: '{done} of {total} missions done',
     campaign: '{open} of {total} levels open',
     attemptsLeft: '{left} of {total} attempts left',
     attemptsUsed: 'Attempts used - practice until 00:00 UTC',

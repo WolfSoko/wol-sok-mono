@@ -515,6 +515,42 @@ describe('GameStateService', () => {
       });
     });
 
+    describe('a training mission', () => {
+      it('plays its level against the easy computer and keeps the mission', () => {
+        service.setMode('two-players');
+        service.setDifficulty('hard');
+        service.setLevel('corridors');
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.init(WIDTH, HEIGHT);
+
+        service.playMission('fight');
+        winMatch();
+
+        const state = store.snapshot();
+        expect(store.matchMode()).toBe('vs-computer');
+        expect(store.level().id).toBe('training-fight');
+        // The setup stays as it is, for the next match outside the training.
+        expect(state.levelId).toBe('corridors');
+        expect(state.difficulty).toBe('hard');
+        expect(state.earnings).toMatchObject({
+          award: null,
+          training: { mission: 'fight', done: true, first: true },
+        });
+        expect(TestBed.inject(ProgressService).training().fight).toBeDefined();
+      });
+
+      it('puts the training dummy across where the mission has one', () => {
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.playMission('attack');
+        service.start();
+
+        expect(playerStore.entities()[1]).toMatchObject({
+          name: 'Dummy',
+          isBot: true,
+        });
+      });
+    });
+
     describe('against the ghost', () => {
       it('plays the last run on its level, leaving the setup as it is', () => {
         winAgainst('vs-computer');

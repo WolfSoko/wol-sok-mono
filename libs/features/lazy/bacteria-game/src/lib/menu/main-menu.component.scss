@@ -75,6 +75,27 @@
   }
 }
 
+// The way into the training, for new players: under New game, quieter.
+.training {
+  height: auto;
+  min-height: 3.25rem;
+  padding-block: 0.4rem;
+  justify-content: flex-start;
+  border-color: var(--bw-gold);
+  color: var(--bw-text);
+  font-family: var(--bw-display);
+  font-size: 1.15rem;
+  text-align: left;
+
+  mat-icon {
+    color: var(--bw-gold);
+  }
+
+  ::ng-deep .mdc-button__label {
+    min-width: 0;
+  }
+}
+
 // The modes in a line under the name: beside it the note wrapped into a
 // ragged block next to the name at 1280px - and German is longer still.
 .play-text {

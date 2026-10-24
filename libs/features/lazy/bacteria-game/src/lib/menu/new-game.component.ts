@@ -53,6 +53,7 @@ import {
   SeriesLength,
 } from '../state/rivalry';
 import { winRuleOf } from '../state/win-conditions';
+import { MissionId, missionOf, MISSIONS } from '../state/training';
 import { LevelMapComponent } from './level-map.component';
 import { LevelPreviewComponent } from './level-preview.component';
 import { LevelPreviewService } from './level-preview.service';
@@ -75,10 +76,10 @@ import {
 import { ScreenHeaderComponent } from './screen-header.component';
 
 /**
- * A new game, step by step: first the mode - the campaign, the daily level,
- * an endless run, free play or two players - then only the steps that mode
- * needs: the level, where there is one to choose, and the start with the
- * opponent and a briefing.
+ * A new game, step by step: first the mode - the training, the campaign,
+ * the daily level, an endless run, free play or two players - then only the
+ * steps that mode needs: the level, where there is one to choose - the
+ * training's mission - and the start with the opponent and a briefing.
  *
  * A dumb component - it shows what it is given and reports what the player
  * picks. The host sets the game up for a mode once it is picked.
@@ -137,6 +138,10 @@ export class NewGameComponent {
   public readonly daily = input.required<DailyCard>();
   /** The most levels beaten in one endless run. */
   public readonly endlessBest = input(0);
+  /** The training mission picked. */
+  public readonly missionId = input<MissionId>('steer');
+  /** The day each training mission was done. */
+  public readonly training = input<Progress['training']>({});
   /** The lobby of an online match. */
   public readonly online = input<OnlineLobby>(IDLE_LOBBY);
   /** False where online matches cannot be played. */
@@ -145,6 +150,7 @@ export class NewGameComponent {
   /** A mode was picked - the host sets the game up for it. */
   public readonly kindChange = output<PlayKind>();
   public readonly levelChange = output<string>();
+  public readonly missionChange = output<MissionId>();
   public readonly difficultyChange = output<BotDifficulty>();
   public readonly seriesLengthChange = output<SeriesLength>();
   public readonly headStartChange = output<HeadStart>();
@@ -188,8 +194,12 @@ export class NewGameComponent {
     return [this.name(left), this.name(right)];
   });
 
+  /** True where the computer's difficulty is picked - the training has its own. */
   protected readonly vsComputer = computed(
-    () => this.kind() !== 'two-players' && this.kind() !== 'online'
+    () =>
+      this.kind() !== 'two-players' &&
+      this.kind() !== 'online' &&
+      this.kind() !== 'training'
   );
 
   /**
@@ -204,6 +214,47 @@ export class NewGameComponent {
     return phase === 'connected' && role === 'host';
   });
 
+  /**
+   * The training's missions, each with whether it is done - and the one to
+   * play next marked, the first still to do.
+   */
+  protected readonly missions = computed(() => {
+    const training = this.training();
+    const upNext = MISSIONS.find(({ id }) => training[id] == null)?.id;
+    return MISSIONS.map((mission, index) => ({
+      ...mission,
+      number: index + 1,
+      title: `training.missions.${mission.id}.title` as const,
+      goal: `training.missions.${mission.id}.goal` as const,
+      done: training[mission.id] != null,
+      upNext: mission.id === upNext,
+    }));
+  });
+
+  protected readonly missionCount = MISSIONS.length;
+
+  /** The missions done, for the training's line. */
+  protected readonly missionsDone = computed(
+    () => this.missions().filter(({ done }) => done).length
+  );
+
+  /** The mission picked, as its briefing tells it - null outside the training. */
+  protected readonly mission = computed(() => {
+    if (this.kind() !== 'training') {
+      return null;
+    }
+    const id = this.missionId();
+    const level = MISSIONS.find((mission) => mission.id === id)?.levelId;
+    return {
+      goal: `training.missions.${id}.goal` as const,
+      tip: `training.missions.${id}.tip` as const,
+      opponent:
+        level !== undefined && getLevel(level).dummy === true
+          ? ('training.opponents.dummy' as const)
+          : ('training.opponents.computer' as const),
+    };
+  });
+
   /** The id of the level the match is played on - none for a run. */
   private readonly briefedId = computed(() => {
     switch (this.kind()) {
@@ -211,6 +262,11 @@ export class NewGameComponent {
         return null;
       case 'daily':
         return this.daily().levelId;
+      case 'training':
+        return (
+          MISSIONS.find(({ id }) => id === this.missionId())?.levelId ??
+          MISSIONS[0].levelId
+        );
       default:
         return this.levelId();
     }
@@ -224,21 +280,30 @@ export class NewGameComponent {
     }
     const level = getLevel(id);
     const made = parseGeneratedId(id);
+    const mission = missionOf(id);
     return {
       id,
       level,
       size: levelSize(level),
-      // The ladder's number and name, or what was rolled.
+      // The ladder's number and name, the mission's, or what was rolled.
       kicker: this.text(
-        made === null
-          ? levelNameText(level)
-          : {
-              key: 'newGame.generatedKicker',
+        mission !== null
+          ? {
+              key: 'training.kicker',
               params: {
-                style: { key: recipeKeys(made.recipe).label },
-                difficulty: made.difficulty,
+                number: MISSIONS.indexOf(mission) + 1,
+                total: MISSIONS.length,
               },
             }
+          : made === null
+            ? levelNameText(level)
+            : {
+                key: 'newGame.generatedKicker',
+                params: {
+                  style: { key: recipeKeys(made.recipe).label },
+                  difficulty: made.difficulty,
+                },
+              }
       ),
       ...levelColors(id),
       facts: levelFacts(level).map(({ label, color }) => ({
@@ -332,6 +397,12 @@ export class NewGameComponent {
     this.step.set(stepsOf(kind)[1]);
   }
 
+  /** Picks a training mission and goes on to its start. */
+  protected pickMission(id: MissionId): void {
+    this.missionChange.emit(id);
+    this.step.set('start');
+  }
+
   /** Picks a level and goes on to the start. */
   protected pickLevel(id: string): void {
     this.levelChange.emit(id);
@@ -369,6 +440,11 @@ export class NewGameComponent {
   /** The line under a mode: where the player stands in it. */
   private modeNote(kind: PlayKind): string {
     switch (kind) {
+      case 'training':
+        return this.i18n.t('newGame.notes.training', {
+          done: this.missionsDone(),
+          total: MISSIONS.length,
+        });
       case 'campaign':
         return this.i18n.t('newGame.notes.campaign', {
           open: this.openLevels(),

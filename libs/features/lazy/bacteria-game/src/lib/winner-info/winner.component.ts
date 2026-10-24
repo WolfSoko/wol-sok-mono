@@ -43,6 +43,7 @@ import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
+import { missionOf, nextMission } from '../state/training';
 import { BOSS_SEAT, EndReason } from '../state/win-conditions';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
@@ -59,7 +60,11 @@ export type MatchEndAction =
   // On with the endless run - or a new one, once it is over.
   | 'endless'
   // To the Evolution screen, to spend the DNA the match earned.
-  | 'evolve';
+  | 'evolve'
+  // On to the next training mission.
+  | 'mission'
+  // From the training to the campaign, once the last mission is done.
+  | 'campaign';
 
 /**
  * The screen a match ends on: who won, and what to play next. It sits in the
@@ -165,6 +170,45 @@ export class WinnerComponent {
     }
     const lives = this.t('match.run.lives', { count: run.lives });
     return this.t('match.run.endless', { beaten, lives });
+  });
+
+  /** The training mission the match was played for, null for none. */
+  private trainingMission = computed(() => missionOf(this.level().id));
+
+  /**
+   * Where a training mission's match leaves the training: whether it did
+   * the mission, what it fell short of, and the mission after it - null
+   * outside the training.
+   */
+  public mission = computed(() => {
+    const result = this.earnings()?.training;
+    const mission = this.trainingMission();
+    if (mission === null) {
+      return null;
+    }
+    const next = nextMission(mission.id);
+    const done = result?.done === true;
+    return {
+      done,
+      line:
+        result === undefined
+          ? null
+          : done
+            ? this.t(
+                result.first ? 'training.result.first' : 'training.result.again'
+              )
+            : this.t('training.result.notYet', {
+                goal: this.render(
+                  result.shortfall ?? {
+                    key: `training.missions.${mission.id}.goal`,
+                  }
+                ),
+              }),
+      // Once the last mission is done, the training is.
+      allDone: done && next === null,
+      /** True when there is a next mission to go on to. */
+      next: done && next !== null,
+    };
   });
 
   /** What the match was part of - the daily level, an endless run - in a line. */
@@ -307,11 +351,13 @@ export class WinnerComponent {
 
   /**
    * True when the run just played can come back as a ghost - after a match
-   * against the computer, not against a ghost already.
+   * against the computer, not against a ghost already, nor a training
+   * mission's, whose dummy no ghost can stand in for.
    */
   public canFightGhost: Signal<boolean> = computed(
     () =>
       !this.againstGhost() &&
+      this.trainingMission() === null &&
       this.state.lastReplay()?.header.mode === 'vs-computer'
   );
 

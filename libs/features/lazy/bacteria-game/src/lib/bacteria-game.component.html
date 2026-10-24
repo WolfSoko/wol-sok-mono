@@ -48,6 +48,13 @@
     </div>
   }
 
+  @if (running() && !paused() && missionGoal(); as goal) {
+    <p class="mission-goal" role="status">
+      <mat-icon aria-hidden="true">school</mat-icon>
+      {{ goal | t }}
+    </p>
+  }
+
   @if (running() && !paused() && waitingForPeer()) {
     <p class="peer-wait" role="status">
       {{ "stage.waitingForPeer" | t }}
@@ -140,6 +147,8 @@
               [sound]="settings.sound()"
               (newGame)="openNewGame()"
               (continueCampaign)="continueCampaign()"
+              [missionsDone]="progress.missionsDone()"
+              (training)="openTraining()"
               (open)="show($event)"
               (soundChange)="setSound($event)"
               [fullscreen]="fullscreen()"
@@ -168,6 +177,9 @@
               [rivalry]="rivalry()"
               [daily]="dailyCard()"
               [endlessBest]="progress.endlessBest()"
+              [missionId]="missionId()"
+              [training]="progress.training()"
+              (missionChange)="missionId.set($event)"
               [online]="onlineLobby()"
               [onlineAvailable]="onlineAvailable"
               (hostOnline)="hostOnline()"

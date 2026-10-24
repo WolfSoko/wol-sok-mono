@@ -287,6 +287,37 @@
 }
 
 // Under the buttons: what the locked next level still needs.
+// Where a training mission's match leaves the training.
+.mission {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 1rem;
+  background: var(--bw-surface-raised, transparent);
+
+  p {
+    margin: 0.15rem 0;
+  }
+
+  &.done .mission-icon {
+    color: var(--bw-gold, inherit);
+  }
+}
+
+.mission-icon {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 2.25rem;
+}
+
+.mission-line {
+  font-family: var(--bw-display, inherit);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
 .run-note {
   margin: -0.25rem 0 0;
   color: var(--bw-gold, inherit);

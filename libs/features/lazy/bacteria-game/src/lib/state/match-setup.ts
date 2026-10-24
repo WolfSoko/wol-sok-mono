@@ -63,7 +63,8 @@ export interface OnlineSeats {
  * In `vs-computer` mode the second crosshair belongs to the bot, and the
  * names change with it so the scoreboard reads "You" and "Computer".
  * Between two players each one is called by their colour. Against a
- * `ghost` the second colony plays that recorded run instead of a bot.
+ * `ghost` the second colony plays that recorded run instead of a bot. On a
+ * level with a `dummy` it is the training dummy, which nobody steers.
  *
  * `online` makes it a match between two devices, played between two players
  * without a head start: the other device's seat spawns as a bot, as the
@@ -84,6 +85,7 @@ export function planMatch(
   const { width, height, mode } = plan;
   const level = getLevel(plan.levelId);
   const boss = ghost === null ? level.boss : undefined;
+  const dummy = ghost === null && level.dummy === true;
   const scale = gridScale(level, width);
   const versusComputer = mode === 'vs-computer';
   const [left, right] = plan.colors.map(getColonyColor);
@@ -118,7 +120,13 @@ export function planMatch(
         ...rightSpot,
         color: toPlayerColor(right),
         name:
-          ghost !== null ? 'Ghost' : versusComputer ? 'Computer' : right.name,
+          ghost !== null
+            ? 'Ghost'
+            : !versusComputer
+              ? right.name
+              : dummy
+                ? 'Dummy'
+                : 'Computer',
         isBot: versusComputer,
         // The boss plays from the right seat - BOSS_SEAT - whoever steers
         // it. Not a ghost: it replays a run played from the left seat.
@@ -155,7 +163,9 @@ export function planMatch(
       // The run was played from the left: the ghost plays it from the right.
       ghosts:
         ghost === null
-          ? undefined
+          ? versusComputer && dummy
+            ? new Map([[1, IDLE_SEAT]])
+            : undefined
           : new Map([
               [
                 1,
@@ -186,6 +196,14 @@ function ghostLoadouts(
     ? null
     : [human ?? PLAIN_LOADOUT, recorded ?? PLAIN_LOADOUT];
 }
+
+/**
+ * A seat nobody steers: a training dummy sits where it spawned - its
+ * bacteria still divide and fight back where they are attacked.
+ */
+const IDLE_SEAT: SeatDriver = {
+  before: () => ({ boost: false, drag: null, steer: null, weapon: false }),
+};
 
 /** The players and the rules of a planned match - see {@link planMatch}. */
 export interface PlannedMatch {

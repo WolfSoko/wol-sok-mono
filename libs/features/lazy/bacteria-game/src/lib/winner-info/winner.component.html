@@ -3,6 +3,21 @@
 @if (runNote(); as note) {
   <p class="run-note">{{ note }}</p>
 }
+@if (mission(); as mission) {
+  <div class="mission" [class.done]="mission.done">
+    <mat-icon class="mission-icon" aria-hidden="true">{{
+      mission.done ? "check_circle" : "school"
+    }}</mat-icon>
+    <div class="mission-text">
+      @if (mission.line; as line) {
+        <p class="mission-line">{{ line }}</p>
+      }
+      @if (mission.allDone) {
+        <p>{{ "training.result.allDone" | t }}</p>
+      }
+    </div>
+  </div>
+}
 
 @if (award(); as award) {
   <div class="award" [class.earned]="award.medal !== null">
@@ -186,6 +201,31 @@
       <mat-icon>all_inclusive</mat-icon>
       {{ label | t }}
     </button>
+  } @else if (mission(); as mission) {
+    @if (canChooseLevel()) {
+      <button mat-stroked-button type="button" (click)="action.emit('levels')">
+        <mat-icon>school</mat-icon>
+        {{ "training.actions.all" | t }}
+      </button>
+    }
+    <button mat-stroked-button type="button" (click)="action.emit('again')">
+      <mat-icon>replay</mat-icon>
+      {{
+        (mission.done ? "match.actions.playAgain" : "match.actions.tryAgain")
+          | t
+      }}
+    </button>
+    @if (mission.next) {
+      <button mat-flat-button type="button" (click)="action.emit('mission')">
+        <mat-icon>skip_next</mat-icon>
+        {{ "training.actions.next" | t }}
+      </button>
+    } @else if (mission.allDone) {
+      <button mat-flat-button type="button" (click)="action.emit('campaign')">
+        <mat-icon>flag</mat-icon>
+        {{ "training.actions.campaign" | t }}
+      </button>
+    }
   } @else {
     @if (canChooseLevel() && !online()) {
       <button mat-stroked-button type="button" (click)="action.emit('levels')">

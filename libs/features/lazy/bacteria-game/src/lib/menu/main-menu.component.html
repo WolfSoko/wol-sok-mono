@@ -51,6 +51,23 @@
           <span class="play-note">{{ "menu.newGameNote" | t }}</span>
         </span>
       </button>
+      @if (missionsDone() < totalMissions) {
+        <button
+          mat-stroked-button
+          type="button"
+          class="training"
+          (click)="training.emit()"
+        >
+          <mat-icon>school</mat-icon>
+          <span class="play-text">
+            <span class="play-title">{{ "training.menu.title" | t }}</span>
+            <span class="play-note">{{
+              "training.menu.note"
+                | t: { done: missionsDone(), total: totalMissions }
+            }}</span>
+          </span>
+        </button>
+      }
     </div>
 
     <nav class="tiles" [attr.aria-label]="'menu.more' | t">

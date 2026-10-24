@@ -120,6 +120,7 @@ const PLAYER_NAME_KEYS: Readonly<Record<string, TranslationKey>> = {
   Computer: 'game.players.computer',
   Ghost: 'game.players.ghost',
   Neutral: 'game.players.neutral',
+  Dummy: 'game.players.dummy',
   ...Object.fromEntries(
     COLONY_COLORS.map(({ id, name }) => [name, colonyColorText(id).key])
   ),
@@ -127,7 +128,7 @@ const PLAYER_NAME_KEYS: Readonly<Record<string, TranslationKey>> = {
 
 /**
  * A player's name as the match set it up - "You", "Computer", "Ghost",
- * "Neutral" or a colour's English name - as a text to translate; null for
+ * "Neutral", "Dummy" or a colour's English name - as a text to translate; null for
  * any other name, such as an online opponent's, which is shown as it is.
  */
 export function playerNameText(name: string): GameText | null {

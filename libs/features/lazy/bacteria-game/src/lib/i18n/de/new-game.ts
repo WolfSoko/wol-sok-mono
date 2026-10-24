@@ -9,6 +9,10 @@ export const newGame: Translation<typeof en> = {
     start: 'Start',
   },
   modes: {
+    training: {
+      name: 'Training',
+      blurb: 'Fünf kurze Missionen, die dir das Spiel beibringen.',
+    },
     campaign: {
       name: 'Kampagne',
       blurb:
@@ -36,6 +40,7 @@ export const newGame: Translation<typeof en> = {
     },
   },
   notes: {
+    training: '{done} von {total} Missionen geschafft',
     campaign: '{open} von {total} Levels offen',
     attemptsLeft: '{left} von {total} Versuchen übrig',
     attemptsUsed: 'Versuche verbraucht – Training bis 00:00 UTC',

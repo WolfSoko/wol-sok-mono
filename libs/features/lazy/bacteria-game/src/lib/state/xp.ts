@@ -4,15 +4,16 @@ import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { isLadderLevel, LEVELS } from './levels';
 import { MatchRecord, medalText, MedalTier } from './medallions';
 import { bestMedal, Progress } from './progress';
+import { missionsDone } from './training';
 
 /**
  * XP is not stored as such: it follows from the progress. What a match is
  * worth on its own - finishing, winning, the difficulty - is counted as it
  * is played (`totals.matchXp`); what the player holds - the best medallion
- * of each level and difficulty, every achievement - is worth its XP as long
- * as it is held. So XP merges as cleanly as the progress does, never pays
- * the same thing twice, and players who held medallions before XP existed
- * have theirs from the start.
+ * of each level and difficulty, every achievement, every training mission
+ * done - is worth its XP as long as it is held. So XP merges as cleanly as
+ * the progress does, never pays the same thing twice, and players who held
+ * medallions before XP existed have theirs from the start.
  */
 
 /** One line of what a match earned in XP, for the result screen. */
@@ -48,8 +49,16 @@ const MEDAL_XP: Record<MedalTier, number> = {
 };
 /** XP an achievement is worth. */
 const ACHIEVEMENT_XP = 50;
+/** XP a training mission done is worth. */
+const MISSION_XP = 25;
 /** XP for a match between two players. */
 export const COUCH_XP = 15;
+
+/**
+ * The match an XP gain is for: one against the computer, one between two
+ * players, or a training mission's, which is worth no XP on its own.
+ */
+export type XpMatch = MatchRecord | 'couch' | 'training';
 
 /** What a match against the computer is worth on its own. */
 export function matchXp(record: MatchRecord): number {
@@ -71,24 +80,28 @@ export function xpOf(progress: Progress): number {
   const achievements = ACHIEVEMENT_IDS.filter(
     (id) => progress.achievements[id] != null
   ).length;
-  return xp + achievements * ACHIEVEMENT_XP;
+  return (
+    xp + achievements * ACHIEVEMENT_XP + missionsDone(progress) * MISSION_XP
+  );
 }
 
 /**
  * What a match earned, from the progress before and after it, line by
- * line: the match itself, a better medallion, the achievements.
+ * line: the match itself, a better medallion, the achievements, the
+ * training missions.
  */
 export function xpGain(
   before: Progress,
   after: Progress,
-  record: MatchRecord | null
+  match: XpMatch
 ): XpGain {
   const parts: XpPart[] = [];
   const add = (text: GameText, xp: number) =>
     parts.push({ label: english(text), text, xp });
-  if (record === null) {
+  if (match === 'couch') {
     add({ key: 'game.xp.couch' }, COUCH_XP);
-  } else {
+  } else if (match !== 'training') {
+    const record = match;
     add(
       {
         key: record.won ? 'game.xp.win' : 'game.xp.played',
@@ -116,6 +129,13 @@ export function xpGain(
     add(
       { key: 'game.xp.achievements', params: { count: earned } },
       earned * ACHIEVEMENT_XP
+    );
+  }
+  const done = missionsDone(after) - missionsDone(before);
+  if (done > 0) {
+    add(
+      { key: 'game.xp.missions', params: { count: done } },
+      done * MISSION_XP
     );
   }
   return { parts, total: parts.reduce((sum, { xp }) => sum + xp, 0) };

@@ -5,6 +5,7 @@ import { addAttempt, DailyRecord } from './daily';
 import { isInteger, isObject } from './is-object';
 import { LEVELS } from './levels';
 import { betterMedal, MatchRecord, MEDAL_TIERS, MedalTier } from './medallions';
+import { isMissionId, MissionId } from './training-levels';
 
 /** What a player has done over all their matches. */
 export interface LifetimeTotals {
@@ -43,6 +44,8 @@ export interface Progress {
   daily: DailyRecord | null;
   /** The most levels beaten in one endless run. */
   endlessBest: number;
+  /** The day each training mission was done, as an ISO date. */
+  training: Partial<Record<MissionId, string>>;
 }
 
 export const NO_TOTALS: LifetimeTotals = {
@@ -64,6 +67,7 @@ export const EMPTY_PROGRESS: Progress = {
   couchWins: {},
   daily: null,
   endlessBest: 0,
+  training: {},
 };
 
 /**
@@ -178,9 +182,9 @@ export function addDailyAttempt(progress: Progress, day: string): Progress {
 /**
  * The progress with the best of either: the better medallion per level and
  * difficulty, the higher of each total and of each colour's wins, and the
- * earlier day of each achievement. Merging can only gain, so progress from several tabs or
- * devices converges whatever order it is merged in. Without a gain it is
- * the progress given.
+ * earlier day of each achievement and training mission. Merging can only
+ * gain, so progress from several tabs or devices converges whatever order
+ * it is merged in. Without a gain it is the progress given.
  *
  * A total takes the higher of the two - a match's numbers are added to the
  * stored totals when it is written (ProgressService), so the higher one is
@@ -225,6 +229,18 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
     merged = {
       ...merged,
       couchWins: { ...merged.couchWins, ...Object.fromEntries(moreWins) },
+    };
+  }
+  const doneEarlier = (
+    Object.entries(other.training) as [MissionId, string][]
+  ).filter(([id, date]) => {
+    const held = merged.training[id];
+    return held == null || date < held;
+  });
+  if (doneEarlier.length > 0) {
+    merged = {
+      ...merged,
+      training: { ...merged.training, ...Object.fromEntries(doneEarlier) },
     };
   }
   merged = addEndlessRun(merged, other.endlessBest);
@@ -284,7 +300,21 @@ export function parseProgress(value: unknown): Progress {
     couchWins: parseCouchWins(value['couchWins']),
     daily: parseDaily(value['daily']),
     endlessBest: isInteger(value['endlessBest'], 1) ? value['endlessBest'] : 0,
+    training: parseTraining(value['training']),
   };
+}
+
+function parseTraining(value: unknown): Progress['training'] {
+  const training: Progress['training'] = {};
+  if (!isObject(value)) {
+    return training;
+  }
+  for (const [id, date] of Object.entries(value)) {
+    if (isMissionId(id) && typeof date === 'string' && ISO_DATE.test(date)) {
+      training[id] = date;
+    }
+  }
+  return training;
 }
 
 /** The daily record, null for anything else. */
