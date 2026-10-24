@@ -28,6 +28,7 @@ import {
   WeaponId,
 } from '../state/evolution';
 import { spentDna } from '../state/evolution-progress';
+import { WeaponDemoComponent } from './weapon-demo.component';
 import { ColonyPreviewComponent } from './colony-preview.component';
 import { DnaHelixComponent } from './dna-helix.component';
 import { celebrate } from './evolution-fx';
@@ -68,6 +69,7 @@ interface Announcement {
     MatIconModule,
     ScreenHeaderComponent,
     TranslatePipe,
+    WeaponDemoComponent,
   ],
   templateUrl: './evolution.component.html',
   styleUrl: './evolution.component.scss',
@@ -92,7 +94,6 @@ export class EvolutionComponent {
 
   protected readonly pips = PIPS;
   /** The bacteria of a weapon's little demo - every other one an enemy. */
-  protected readonly bacs = [0, 1, 2, 3, 4, 5];
   protected readonly maxLevel = MAX_GENE_LEVEL;
 
   /** Levels bought whose strands are still flying, by gene - not shown yet. */

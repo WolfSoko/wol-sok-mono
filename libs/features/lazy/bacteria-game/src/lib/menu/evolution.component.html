@@ -177,18 +177,11 @@
             [class.equipped]="weapon.equipped"
             [style.--weapon]="weapon.css"
           >
-            <span
+            <feat-lazy-bac-game-weapon-demo
               class="demo"
-              aria-hidden="true"
-              [attr.data-weapon]="weapon.id"
-              [attr.data-weapon-demo]="weapon.id"
-            >
-              <span class="zone"></span>
-              @for (n of bacs; track n) {
-                <span class="bac" [class.foe]="n % 2 === 1"></span>
-              }
-              <mat-icon class="demo-icon">{{ weapon.icon }}</mat-icon>
-            </span>
+              [weapon]="weapon.id"
+              [icon]="weapon.icon"
+            />
             <div class="weapon-text">
               <h4 class="card-title">{{ name }}</h4>
               <p class="card-note">{{ weapon.description | t }}</p>
