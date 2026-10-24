@@ -94,6 +94,33 @@ export { replayFromHash, replayLink } from './lib/state/replay-link';
 export { GhostController } from './lib/state/ghost';
 export type { SeatDriver } from './lib/state/ghost';
 
+// The deterministic GPU simulation's integer building blocks (ADR 0015),
+// shared by the shaders and the TypeScript reference.
+export {
+  chanceThreshold,
+  mulQ14,
+  ONE_Q14,
+  Q14,
+  Q14_STATE_MAX,
+  TARGET_MAX,
+  TARGET_SHIFT,
+  toQ14,
+  toTarget,
+  toUnsignedQ14,
+} from './lib/state/gpu-int/fixed-point';
+export {
+  drawAt,
+  frameSeed,
+  pcg3d,
+  SALT,
+  SALT_SPREAD,
+  STEP_SALT_STRIDE,
+  stepSalt,
+} from './lib/state/gpu-int/draws';
+export { isqrt, unitQ14 } from './lib/state/gpu-int/int-math';
+export { intMatchUniforms } from './lib/state/gpu-int/int-uniforms';
+export type { IntMatchUniforms } from './lib/state/gpu-int/int-uniforms';
+
 // Evolution: what a seat takes into a match against the computer (ADR 0013).
 export {
   evolvedTraits,
