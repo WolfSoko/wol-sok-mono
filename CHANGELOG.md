@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.68.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.67.0...v74.68.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** integer movement, escape and division passes behind a flag ([#2604](https://github.com/WolfSoko/wol-sok-mono/issues/2604)) ([c07bdad](https://github.com/WolfSoko/wol-sok-mono/commit/c07bdada0a6ec72eeca674f803f5f113fc76dc43))
+
 ## [74.67.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.66.0...v74.67.0) (2026-10-24)
 
 ### Features
