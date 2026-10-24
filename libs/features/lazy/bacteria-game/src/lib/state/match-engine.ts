@@ -437,8 +437,7 @@ export class MatchEngine {
       this.movePlayer(player.id, width, height);
     }
     this.simulation.resize(width, height);
-    this.tickBoosts();
-    this.tickWeapons();
+    this.tickTimers();
     this.runBots(width, height);
     this.launchShots(width);
     this.simulation.step(this.steerNeutrals(width, height), TICK_SEC);
@@ -714,37 +713,27 @@ export class MatchEngine {
   }
 
   /**
-   * Counts the boost timers down. The boost runs out first, only then does
-   * the recharge start - so a player waits the full cooldown after a boost.
+   * Counts the boost and weapon timers down. Each runs its effect out
+   * first, only then does its recharge start - so a player waits the full
+   * cooldown after firing.
    */
-  private tickBoosts(): void {
+  private tickTimers(): void {
     for (const player of this.playerList) {
+      let change: Partial<Player> | null = null;
       if (player.boostActiveSec > 0) {
-        this.update(player.id, {
-          boostActiveSec: countDown(player.boostActiveSec),
-        });
+        change = { boostActiveSec: countDown(player.boostActiveSec) };
       } else if (player.boostCooldownSec > 0) {
-        this.update(player.id, {
-          boostCooldownSec: countDown(player.boostCooldownSec),
-        });
+        change = { boostCooldownSec: countDown(player.boostCooldownSec) };
       }
-    }
-  }
-
-  /**
-   * Counts the weapon timers down like the boost's: the effect runs out
-   * first, only then does the recharge start.
-   */
-  private tickWeapons(): void {
-    for (const player of this.playerList) {
       if (player.weaponActiveSec > 0) {
-        this.update(player.id, {
-          weaponActiveSec: countDown(player.weaponActiveSec),
-        });
+        change ??= {};
+        change.weaponActiveSec = countDown(player.weaponActiveSec);
       } else if (player.weaponCooldownSec > 0) {
-        this.update(player.id, {
-          weaponCooldownSec: countDown(player.weaponCooldownSec),
-        });
+        change ??= {};
+        change.weaponCooldownSec = countDown(player.weaponCooldownSec);
+      }
+      if (change !== null) {
+        this.update(player.id, change);
       }
     }
   }

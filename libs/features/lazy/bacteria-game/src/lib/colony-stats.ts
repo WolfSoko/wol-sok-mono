@@ -8,6 +8,7 @@ import {
   Player,
 } from './state/player.model';
 import type { WeaponId } from './state/evolution';
+import { isObject } from './state/is-object';
 
 /** Statistics of one colony, ready to be rendered by the template. */
 export interface ColonyStats {
@@ -75,7 +76,17 @@ export function humanForBoostKey(
   humans: readonly Player[],
   key: string
 ): Player | null {
-  const index = BOOST_KEYS.indexOf(key === ' ' ? 'Space' : (key as BoostKey));
+  return humanAt(
+    humans,
+    BOOST_KEYS.indexOf(key === ' ' ? 'Space' : (key as BoostKey))
+  );
+}
+
+/**
+ * The human a key handed out in player order belongs to - the last human
+ * takes the keys past the humans there are - null for no key (`index` -1).
+ */
+function humanAt(humans: readonly Player[], index: number): Player | null {
   if (index < 0 || humans.length === 0) {
     return null;
   }
@@ -83,12 +94,12 @@ export function humanForBoostKey(
 }
 
 /**
- * The keys that fire a weapon, next to each human's boost key: E for the
- * first human (W A S D and Space), the right Shift for the second (the
- * arrow keys and Enter).
+ * The keys that fire a weapon, next to each human's boost key, by the
+ * human they are handed out to: E for the first (W A S D and Space), the
+ * right Shift for the second (the arrow keys and Enter).
  */
-export type WeaponKey = 'E' | 'Shift';
-const WEAPON_KEYS: readonly WeaponKey[] = ['E', 'Shift'];
+const WEAPON_KEY_E = 0;
+const WEAPON_KEY_SHIFT = 1;
 
 /**
  * The human whose weapon a key fires, null for any other key - handed out
@@ -104,50 +115,42 @@ export function humanForWeaponKey(
   key: string,
   code: string
 ): Player | null {
-  const index =
+  const human = humanAt(
+    humans,
     key.toLowerCase() === 'e'
-      ? WEAPON_KEYS.indexOf('E')
+      ? WEAPON_KEY_E
       : key === 'Shift' && code === 'ShiftRight'
-        ? WEAPON_KEYS.indexOf('Shift')
-        : -1;
-  if (index < 0 || humans.length === 0) {
-    return null;
-  }
-  const human = humans[Math.min(index, humans.length - 1)];
-  return human.weapon === null ? null : human;
+        ? WEAPON_KEY_SHIFT
+        : -1
+  );
+  return human === null || human.weapon === null ? null : human;
 }
 
-/** True when two scoreboards show the same - every field of every colony. */
+/**
+ * True when two scoreboards show the same - every field of every colony,
+ * and of the objects in it, such as its weapon.
+ */
 export function sameColonyStats(
   a: readonly ColonyStats[],
   b: readonly ColonyStats[]
 ): boolean {
   return (
-    a.length === b.length &&
-    a.every((colony, index) => {
-      const other = b[index];
-      return (Object.keys(colony) as (keyof ColonyStats)[]).every((key) =>
-        key === 'weapon'
-          ? sameWeaponStats(colony.weapon, other.weapon)
-          : colony[key] === other[key]
-      );
-    })
+    a.length === b.length && a.every((colony, index) => sameFields(colony, b[index]))
   );
 }
 
-function sameWeaponStats(
-  a: WeaponStats | null,
-  b: WeaponStats | null
-): boolean {
+/** True when two values are the same, or objects with the same fields. */
+function sameFields(a: unknown, b: unknown): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (!isObject(a) || !isObject(b)) {
+    return false;
+  }
+  const keys = Object.keys(a);
   return (
-    a === b ||
-    (a !== null &&
-      b !== null &&
-      a.id === b.id &&
-      a.ready === b.ready &&
-      a.active === b.active &&
-      a.cooldown === b.cooldown &&
-      a.charge === b.charge)
+    keys.length === Object.keys(b).length &&
+    keys.every((key) => sameFields(a[key], b[key]))
   );
 }
 
@@ -191,21 +194,14 @@ export function weaponStatsOf(player: Player): WeaponStats | null {
     return null;
   }
   const ready = isWeaponReady(player);
-  const full = player.weaponCooldownFullSec;
-  const charge =
-    ready || full <= 0
-      ? 1
-      : clamp(
-          Math.round((1 - player.weaponCooldownSec / full) * 100) / 100,
-          0,
-          1
-        );
   return {
     id: player.weapon,
     ready,
     active: player.weaponActiveSec > 0,
     cooldown: ready ? 0 : Math.ceil(player.weaponCooldownSec),
-    charge: ready ? 1 : charge,
+    charge: ready
+      ? 1
+      : chargeOf(player.weaponCooldownSec, player.weaponCooldownFullSec),
   };
 }
 
@@ -224,8 +220,17 @@ function boostChargeOf(player: Player, balance: GameBalance): number {
   if (player.boostActiveSec > 0 || full <= 0) {
     return 0;
   }
-  const charge = 1 - player.boostCooldownSec / full;
-  return clamp(Math.round(charge * 100) / 100, 0, 1);
+  return chargeOf(player.boostCooldownSec, full);
+}
+
+/**
+ * How far a recharge of `fullSec` has come with `remainingSec` to go, 0..1
+ * in hundredths - 1 for one that takes no time.
+ */
+function chargeOf(remainingSec: number, fullSec: number): number {
+  return fullSec <= 0
+    ? 1
+    : clamp(Math.round((1 - remainingSec / fullSec) * 100) / 100, 0, 1);
 }
 
 /** What a boost button says: ready, running, or the seconds left to wait. */
