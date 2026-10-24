@@ -13,6 +13,9 @@ const baseURL = process.env['BASE_URL'] || 'http://localhost:4222';
 export default defineConfig({
   ...nxE2EPreset(__filename, { testDir: './e2e' }),
   timeout: 120_000,
+  // The first check after a load waits for the game to boot. Firefox on a
+  // busy CI agent can take longer than the default 5 s for it.
+  expect: { timeout: process.env['CI'] ? 15_000 : 5_000 },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,
