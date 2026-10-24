@@ -99,13 +99,16 @@ service cloud.firestore {
     // the match takes its seed from the server's time of the declaration.
     // Create only - the functions alone mark one void. Three daily attempts
     // a UTC day, in order; five endless runs a day, each match after the one
-    // before, and a run may go on past midnight.
+    // before, and a run may go on past midnight. Kept at least 30 days
+    // (the client asks for 31): a shorter TTL would delete it, and its id
+    // could be declared again.
     match /players/{uid}/attempts/{attemptId} {
       allow get, list: if isPlayer(uid);
       allow create: if isPlayer(uid) && notBanned() &&
         request.resource.data.keys().hasOnly(['at', 'expireAt']) &&
         request.resource.data.at == request.time &&
         expiresWithin(request.resource.data.expireAt, duration.value(32, 'd')) &&
+        request.resource.data.expireAt >= request.time + duration.value(30, 'd') &&
         (isDailyAttempt(uid, attemptId) || isEndlessAttempt(uid, attemptId));
     }
 

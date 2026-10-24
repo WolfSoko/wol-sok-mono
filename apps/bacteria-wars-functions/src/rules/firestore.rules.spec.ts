@@ -293,6 +293,24 @@ describe('declared attempts', () => {
     );
   });
 
+  it('refuses an expiry shorter than 30 days, which TTL would turn into another try', async () => {
+    const db = as('ana');
+    for (const expireAt of [later(60_000), later(29 * DAY)]) {
+      await assertFails(
+        setDoc(doc(db, `players/ana/attempts/${daily(1)}`), {
+          at: serverTimestamp(),
+          expireAt,
+        })
+      );
+    }
+    await assertSucceeds(
+      setDoc(doc(db, `players/ana/attempts/${daily(1)}`), {
+        at: serverTimestamp(),
+        expireAt: later(30 * DAY + HOUR),
+      })
+    );
+  });
+
   it('refuses another day, a client time, a long expiry, a second write and another player', async () => {
     const db = as('ana');
     await assertFails(
