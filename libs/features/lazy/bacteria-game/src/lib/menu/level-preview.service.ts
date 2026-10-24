@@ -39,7 +39,8 @@ export const PREVIEW_CACHE_LIMIT = 64;
  * A preview is asked for where it is shown, and drawn later, one at a time
  * while the browser idles, so opening the level map with all its cards stays
  * quick: until its image is drawn a card shows its colours. Asking again
- * before then waits for the same drawing.
+ * before then waits for the same drawing. A preview asked for as `urgent` -
+ * the level the player is looking at - jumps the queue of the cards.
  */
 @Injectable({ providedIn: 'root' })
 export class LevelPreviewService {
@@ -59,27 +60,34 @@ export class LevelPreviewService {
 
   /**
    * The preview of the level, null until it is drawn - asking for it
-   * starts the drawing. Reading it in a computed follows the drawing.
+   * starts the drawing, `urgent` before every other waiting. Reading it in
+   * a computed follows the drawing.
    */
-  public url(levelId: string): string | null {
+  public url(levelId: string, urgent = false): string | null {
     this.drawn();
     const url = this.urls.get(levelId);
     if (url !== undefined) {
       return url;
     }
-    this.request(levelId);
+    this.request(levelId, urgent);
     return null;
   }
 
-  private request(levelId: string): void {
-    if (
-      !this.supported ||
-      this.waiting.has(levelId) ||
-      this.failed.has(levelId)
-    ) {
+  private request(levelId: string, urgent: boolean): void {
+    if (!this.supported || this.failed.has(levelId)) {
       return;
     }
-    this.waiting.add(levelId);
+    if (urgent) {
+      // To the front: the rest move back behind it, in their order.
+      const rest = [...this.waiting].filter((id) => id !== levelId);
+      this.waiting.clear();
+      this.waiting.add(levelId);
+      rest.forEach((id) => this.waiting.add(id));
+    } else if (this.waiting.has(levelId)) {
+      return;
+    } else {
+      this.waiting.add(levelId);
+    }
     if (!this.drawing) {
       this.drawing = true;
       whenIdle(() => void this.drawNext());

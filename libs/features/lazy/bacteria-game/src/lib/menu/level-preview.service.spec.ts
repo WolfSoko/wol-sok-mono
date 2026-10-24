@@ -47,6 +47,27 @@ describe('LevelPreviewService', () => {
     expect(renderer.drawn).toEqual(['hourglass', 'corridors', 'expanse']);
   });
 
+  it('draws an urgent preview before the ones waiting', async () => {
+    const renderer = new FakePreviewRenderer();
+    const previews = setUp(renderer);
+
+    previews.url('hourglass');
+    previews.url('corridors');
+    previews.url('expanse');
+    // The briefing's level, asked for last - and again by a card after.
+    previews.url('pistons', true);
+    previews.url('corridors', true);
+    previews.url('pistons');
+    await drawPreviews();
+
+    expect(renderer.drawn).toEqual([
+      'corridors',
+      'pistons',
+      'hourglass',
+      'expanse',
+    ]);
+  });
+
   it('does not try again a preview that failed', async () => {
     const renderer = new FakePreviewRenderer(true, ['pistons']);
     const previews = setUp(renderer);

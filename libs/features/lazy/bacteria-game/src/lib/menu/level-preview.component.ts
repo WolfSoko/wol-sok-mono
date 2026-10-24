@@ -40,7 +40,14 @@ export class LevelPreviewComponent {
    * where the picture and its badge stay out of the accessible name.
    */
   public readonly decorative = input(false, { transform: booleanAttribute });
+  /**
+   * True for the level the player is looking at - the briefing's - whose
+   * picture is drawn before the cards' waiting.
+   */
+  public readonly urgent = input(false, { transform: booleanAttribute });
 
-  protected readonly url = computed(() => this.previews.url(this.levelId()));
+  protected readonly url = computed(() =>
+    this.previews.url(this.levelId(), this.urgent())
+  );
   protected readonly colors = computed(() => levelColors(this.levelId()));
 }
