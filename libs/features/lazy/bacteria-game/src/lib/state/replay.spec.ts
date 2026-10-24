@@ -7,6 +7,7 @@ import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import {
   GHOST_REPLAY_VERSION,
+  GPU_INT_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
   playReplay,
@@ -188,11 +189,11 @@ describe('replay', () => {
       expect(playReplay(replay)).toBeNull();
     });
 
-    it('reads back the whole header, the attempt with it', () => {
+    it('reads back the whole header of a gpu-int match, the attempt with it', () => {
       const { engine } = record({ ...ONLINE, headStart: 0 }, 120);
       const replay = replayOf(
         ONLINE,
-        'cpu',
+        'gpu-int',
         engine.tickCount,
         engine.recorded,
         {
@@ -214,6 +215,35 @@ describe('replay', () => {
         id: 'd_2026-10-23_2',
         at: 1_761_220_000_000,
       });
+    });
+
+    it('takes a ranked attempt on the gpu-int ruleset only', () => {
+      const { engine } = record({ ...ONLINE, headStart: 0 }, 60);
+      const extras = {
+        outcome: { endedBy: 'forfeit' as const, winnerSeat: 1 },
+        checksum: matchChecksum(engine.players),
+        attempt: { id: 'd_2026-10-23_2', at: 1_761_220_000_000 },
+      };
+      const of = (simulation: 'cpu' | 'gpu-int') =>
+        JSON.parse(
+          JSON.stringify(
+            replayOf(
+              ONLINE,
+              simulation,
+              engine.tickCount,
+              engine.recorded,
+              extras
+            )
+          )
+        ) as unknown;
+
+      expect(parseReplay(of('cpu'), { stored: true })).toBeNull();
+      expect(parseReplay(of('gpu-int'), { stored: true })?.header).toEqual(
+        expect.objectContaining({
+          version: GPU_INT_REPLAY_VERSION,
+          simulation: 'gpu-int',
+        })
+      );
     });
 
     it('still reads version 1 replays, as ghosts', () => {

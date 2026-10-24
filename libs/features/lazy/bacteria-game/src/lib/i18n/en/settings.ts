@@ -47,6 +47,15 @@ export const settings = {
     showFps: 'Show the frame rate',
     fullscreen: 'Browser fullscreen',
   },
+  simulation: {
+    gpuInt: 'Matches run on the GPU, alike on every device.',
+    cpu: 'Matches run on the CPU.',
+    forced: 'Set for this device by ?sim={ruleset}; ?sim=auto undoes it.',
+    passed: 'GPU self-test passed on {renderer}.',
+    failedAt: 'GPU self-test failed at tick {tick} on {renderer}.',
+    error: 'GPU self-test could not run on {renderer}: {error}',
+    pending: 'GPU self-test not run yet.',
+  },
   language: {
     title: 'Language',
     automatic: 'Automatic',

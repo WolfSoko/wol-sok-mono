@@ -153,10 +153,31 @@ play each other.
   Then regenerate the goldens: `golden-gpu-int.json`, `golden-gpu-sim.json`
   and `SELF_TEST_GOLDEN`, bumping `GPU_SELF_TEST_VERSION`, so devices test
   again.
+- Two rulesets (`Ruleset`, `state/simulation.ts`): `cpu`
+  (`BacteriaSimulation`) and `gpu-int` (the integer passes: `GpuSimulation`
+  with `deterministic`, or `IntSimulation`). `Simulation.ruleset` names a
+  simulation's; the float GPU one has none (null) and is never recorded.
 - The game picks a simulation with `chooseSimulation`
-  (`gl/simulation-choice.ts`): with `DETERMINISTIC_SIMULATION` on, the
-  integer GPU passes only on a GPU that passed `GpuSelfTestService`'s
-  self-test, `IntSimulation` otherwise. The flag stays off until step 8.
+  (`gl/simulation-choice.ts`): with `DETERMINISTIC_SIMULATION` on (the
+  rollout's switch, off until the owner's real-device check), the integer
+  GPU passes on a GPU that passed `GpuSelfTestService`'s self-test, the
+  `cpu` ruleset otherwise. While it is off, the float GPU simulation plays
+  as before. The
+  owner's policy: a device without a passing GPU plays and offers only
+  `cpu`; `IntSimulation` replays and checks `gpu-int` matches, it does not
+  play them live (except as the stand-in when the GPU fails to start in an
+  online `gpu-int` match).
+- Online, each `hello` names the rulesets the device offers
+  (`PlayerService.rulesetOffers`) and the host's `start` the agreed one
+  (`agreedRuleset`): `gpu-int` only if both offer it. Ranked attempts are
+  `gpu-int` only: a stored replay with an attempt must be one (replay
+  version 5, `GPU_INT_REPLAY_VERSION`; it may carry the ladder too).
+- The device override for a real-device check: `?sim=gpu-int`, `?sim=cpu`
+  or `?sim=auto` in the URL (`SimulationOverrideService`, kept in
+  `DeviceStorage`). It changes what local matches play, never what the
+  device offers online; while the switch is off, `?sim=gpu-int` is what
+  opts a device in (and runs the self-test). The settings ("Screen") show the ruleset local
+  matches play and the self-test's verdict (`gl/simulation-check.ts`).
 
 ## Texts: English and German
 

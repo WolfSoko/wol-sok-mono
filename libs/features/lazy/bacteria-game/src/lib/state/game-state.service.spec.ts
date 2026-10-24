@@ -1,3 +1,4 @@
+import type { Ruleset } from './simulation';
 import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
 import { dailyLevelId } from './daily';
@@ -771,6 +772,7 @@ describe('GameStateService online', () => {
         new Lockstep(0, (message) => this.sent.push({ ...start, ...message }))
     );
     public matchRef = jest.fn(() => ({ roomCode: 'K7QPXM', n: 1 }));
+    public agreedRuleset = jest.fn((): Ruleset => 'cpu');
     public takeStart() {
       const pending = this.pending;
       this.pending = null;
@@ -1052,6 +1054,7 @@ describe('GameStateService local recordings', () => {
     players.useSimulation((balance, random, seed) => {
       const simulation = cpuSimulation(balance, random, seed);
       Object.defineProperty(simulation, 'kind', { value: 'gpu' });
+      Object.defineProperty(simulation, 'ruleset', { value: null });
       return simulation;
     });
   }

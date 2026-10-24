@@ -1,4 +1,4 @@
-import { NET_VERSION, parseNetMessage } from './net-message';
+import { agreedRuleset, NET_VERSION, parseNetMessage } from './net-message';
 
 const send = (value: unknown) => JSON.stringify(value);
 
@@ -8,13 +8,23 @@ describe('parseNetMessage', () => {
       k: 'hello',
       v: NET_VERSION,
       id: null,
+      r: ['cpu'],
     });
     expect(
-      parseNetMessage(send({ k: 'hello', v: NET_VERSION, id: 'uid_1-A' }))
-    ).toEqual({ k: 'hello', v: NET_VERSION, id: 'uid_1-A' });
+      parseNetMessage(
+        send({ k: 'hello', v: NET_VERSION, id: 'uid_1-A', r: ['gpu-int'] })
+      )
+    ).toEqual({
+      k: 'hello',
+      v: NET_VERSION,
+      id: 'uid_1-A',
+      r: ['cpu', 'gpu-int'],
+    });
     expect(
-      parseNetMessage(send({ k: 'hello', v: NET_VERSION, id: '../x' }))
-    ).toEqual({ k: 'hello', v: NET_VERSION, id: null });
+      parseNetMessage(
+        send({ k: 'hello', v: NET_VERSION, id: '../x', r: ['gpu', 7, 'cpu'] })
+      )
+    ).toEqual({ k: 'hello', v: NET_VERSION, id: null, r: ['cpu'] });
     expect(
       parseNetMessage(
         send({ k: 'setup', levelId: 'petri-dish', colors: ['orange', 'blue'] })
@@ -32,6 +42,7 @@ describe('parseNetMessage', () => {
           seed: 77,
           levelId: 'petri-dish',
           colors: ['orange', 'blue'],
+          ruleset: 'gpu-int',
         })
       )
     ).toEqual({
@@ -40,6 +51,7 @@ describe('parseNetMessage', () => {
       seed: 77,
       levelId: 'petri-dish',
       colors: ['orange', 'blue'],
+      ruleset: 'gpu-int',
     });
     expect(
       parseNetMessage(
@@ -102,8 +114,32 @@ describe('parseNetMessage', () => {
           seed: -3,
           levelId: 'petri-dish',
           colors: ['orange', 'blue'],
+          ruleset: 'cpu',
         })
       )
     ).toBeNull();
+    expect(
+      parseNetMessage(
+        send({
+          k: 'start',
+          n: 1,
+          seed: 3,
+          levelId: 'petri-dish',
+          colors: ['orange', 'blue'],
+          ruleset: 'gpu',
+        })
+      )
+    ).toBeNull();
+  });
+});
+
+describe('agreedRuleset', () => {
+  it('takes gpu-int only when both devices offer it', () => {
+    expect(agreedRuleset(['cpu', 'gpu-int'], ['cpu', 'gpu-int'])).toBe(
+      'gpu-int'
+    );
+    expect(agreedRuleset(['cpu', 'gpu-int'], ['cpu'])).toBe('cpu');
+    expect(agreedRuleset(['cpu'], ['cpu', 'gpu-int'])).toBe('cpu');
+    expect(agreedRuleset(['cpu'], ['cpu'])).toBe('cpu');
   });
 });

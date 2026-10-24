@@ -89,6 +89,69 @@ describe('PlayerService', () => {
 
       expect(service.getSimulation()).toBeInstanceOf(IntSimulation);
     });
+
+    it('offers the CPU ruleset only once the GPU failed', () => {
+      service.useSimulation(failing, undefined, {
+        ruleset: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+      });
+      expect(service.rulesetOffers()).toEqual(['cpu', 'gpu-int']);
+
+      service.init(spawns(false), { arena: { width: WIDTH, height: HEIGHT } });
+
+      expect(service.getSimulation().ruleset).toBe('cpu');
+      expect(service.rulesetOffers()).toEqual(['cpu']);
+    });
+  });
+
+  describe('rulesets', () => {
+    /** A deterministic GPU simulation, as far as the game can tell. */
+    const gpuInt: SimulationFactory = (balance, random, seed) => {
+      const simulation = new IntSimulation(balance, random, seed);
+      Object.defineProperty(simulation, 'kind', { value: 'gpu' });
+      return simulation;
+    };
+
+    it('plays an online match on the ruleset both devices agreed on', () => {
+      service.useSimulation(gpuInt, undefined, {
+        ruleset: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+      });
+      const lockstep = new Lockstep(0, () => undefined);
+
+      service.init(spawns(false), { lockstep, ruleset: 'gpu-int' });
+      expect(service.getSimulation().kind).toBe('gpu');
+      expect(service.getSimulation().ruleset).toBe('gpu-int');
+
+      service.init(spawns(false), { lockstep, ruleset: 'cpu' });
+      expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
+    });
+
+    it('plays the CPU ruleset online when nothing was agreed', () => {
+      service.useSimulation(gpuInt, undefined, {
+        ruleset: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+      });
+
+      service.init(spawns(false), {
+        lockstep: new Lockstep(0, () => undefined),
+      });
+
+      expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
+    });
+
+    it('records a local match on the device ruleset - the CPU one for the float GPU', () => {
+      service.useSimulation(gpuInt, undefined, {
+        ruleset: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+      });
+      service.init(spawns(true), { recordedSeats: new Set([0]) });
+      expect(service.getSimulation().ruleset).toBe('gpu-int');
+
+      service.useSimulation(gpuInt);
+      service.init(spawns(true), { recordedSeats: new Set([0]) });
+      expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
+    });
   });
 
   describe('online', () => {

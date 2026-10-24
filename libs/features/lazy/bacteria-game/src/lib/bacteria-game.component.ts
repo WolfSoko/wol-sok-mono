@@ -52,6 +52,7 @@ import {
 } from './arena/arena-view.component';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
+import { SimulationOverrideService } from './gl/simulation-override.service';
 import {
   chooseSimulation,
   DETERMINISTIC_SIMULATION,
@@ -235,6 +236,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   private readonly gpuSelfTest = inject(GpuSelfTestService);
+  private readonly simulationOverride = inject(SimulationOverrideService);
   protected readonly progress = inject(ProgressService);
   protected readonly evolution = inject(EvolutionService);
   private readonly document = inject(DOCUMENT);
@@ -680,6 +682,20 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.settings.ambience();
       this.reducedMotion();
       this.draw();
+    });
+
+    // The GPU self-test runs once this device plays the deterministic
+    // simulation: always with the rollout's switch on, else once the device
+    // override opts it in (`?sim=gpu-int`) - from the URL at once, from the
+    // storage maybe later than the arena.
+    this.simulationOverride.start();
+    effect(() => {
+      if (
+        DETERMINISTIC_SIMULATION ||
+        this.simulationOverride.override() === 'gpu-int'
+      ) {
+        untracked(() => this.gpuSelfTest.check());
+      }
     });
 
     // The minimap is drawn afresh for another map, and goes with the match.
@@ -1270,10 +1286,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // With a WebGL2 context the war itself runs on the GPU as well - for a
     // deterministic match only once the GPU passed the self-test.
     const gl = painter instanceof GlArenaPainter ? painter : null;
-    if (DETERMINISTIC_SIMULATION) {
-      this.gpuSelfTest.check();
-    }
-    const { factory, fallback } = chooseSimulation({
+    const { factory, fallback, ruleset, offers } = chooseSimulation({
       deterministic: DETERMINISTIC_SIMULATION,
       gpu:
         gl == null
@@ -1281,8 +1294,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           : (balance, random, options) =>
               gl.createSimulation(balance, random, options),
       gpuTrusted: () => this.gpuSelfTest.result()?.ok === true,
+      override: this.simulationOverride.override,
     });
-    this.playerService.useSimulation(factory, fallback);
+    this.playerService.useSimulation(factory, fallback, { ruleset, offers });
     this.gameStateService.setArenaSize(width, height);
     this.draw();
   }

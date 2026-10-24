@@ -249,6 +249,7 @@ const NEIGHBOURS: readonly [number, number][] = [
  */
 export class BacteriaSimulation implements Simulation {
   public readonly kind = 'cpu';
+  public readonly ruleset = 'cpu';
   private readonly balance: GameBalance;
   private readonly random: () => number;
 

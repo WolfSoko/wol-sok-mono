@@ -12,6 +12,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
 import { Size } from '../fullscreen';
+import { GpuSelfTestService } from '../gl/gpu-self-test.service';
+import { simulationCheckLines } from '../gl/simulation-check';
+import { DETERMINISTIC_SIMULATION } from '../gl/simulation-choice';
+import { SimulationOverrideService } from '../gl/simulation-override.service';
 import { TranslationKey } from '../i18n/dictionaries';
 import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
@@ -52,6 +56,8 @@ import { ScreenHeaderComponent } from './screen-header.component';
 export class SettingsComponent {
   protected readonly settings = inject(GameSettingsService);
   private readonly i18n = inject(I18nService);
+  private readonly gpuSelfTest = inject(GpuSelfTestService);
+  private readonly simulationOverride = inject(SimulationOverrideService);
 
   /** True while a match is on: the resolutions wait for the next. */
   public readonly locked = input(false);
@@ -111,6 +117,20 @@ export class SettingsComponent {
   protected readonly languages = LANGUAGES;
   protected readonly languageChoice = computed(
     () => this.settings.language() ?? this.automatic
+  );
+
+  /**
+   * The simulation check (ADR 0015): the ruleset local matches play and what
+   * the GPU self-test found - null while the deterministic simulation is
+   * off and this device is not opted in (`?sim=gpu-int`).
+   */
+  protected readonly simulationCheck = computed(() =>
+    DETERMINISTIC_SIMULATION || this.simulationOverride.override() === 'gpu-int'
+      ? simulationCheckLines(
+          this.gpuSelfTest.result(),
+          this.simulationOverride.override()
+        )
+      : null
   );
 
   protected pickLanguage(value: Language | 'auto'): void {

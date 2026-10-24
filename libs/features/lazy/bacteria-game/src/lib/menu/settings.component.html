@@ -207,6 +207,13 @@
     >
       {{ "settings.screen.showFps" | t }}
     </mat-slide-toggle>
+    @if (simulationCheck(); as check) {
+      <p class="simulation-check" data-testid="simulation-check">
+        @for (line of check; track $index) {
+          <span>{{ line.key | t: line.params }}</span>
+        }
+      </p>
+    }
     @if (nativeFullscreenSupported()) {
       <mat-slide-toggle
         [checked]="nativeFullscreen()"

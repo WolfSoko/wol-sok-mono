@@ -49,6 +49,16 @@ export const settings: Translation<typeof en> = {
     showFps: 'Bildrate anzeigen',
     fullscreen: 'Browser-Vollbild',
   },
+  simulation: {
+    gpuInt: 'Partien laufen auf der GPU, auf jedem Gerät gleich.',
+    cpu: 'Partien laufen auf der CPU.',
+    forced:
+      'Für dieses Gerät mit ?sim={ruleset} festgelegt; ?sim=auto hebt es auf.',
+    passed: 'GPU-Selbsttest auf {renderer} bestanden.',
+    failedAt: 'GPU-Selbsttest auf {renderer} bei Tick {tick} durchgefallen.',
+    error: 'GPU-Selbsttest konnte auf {renderer} nicht laufen: {error}',
+    pending: 'GPU-Selbsttest noch nicht gelaufen.',
+  },
   language: {
     title: 'Sprache',
     automatic: 'Automatisch',

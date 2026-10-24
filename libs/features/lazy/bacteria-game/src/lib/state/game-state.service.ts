@@ -55,7 +55,7 @@ import { randomSeed } from './geometry';
 import { MatchOutcome } from './win-conditions';
 import { MatchPlan, planMatch } from './match-setup';
 import { Replay, ReplayExtras, replayOf, replayOutcome } from './replay';
-import type { Simulation } from './simulation';
+import { DETERMINISTIC_SIMULATION, type Ruleset } from './simulation';
 import { matchChecksum } from './checksum';
 import { replayScore } from './replay-score';
 import type { SizeSample } from './match-engine';
@@ -103,7 +103,7 @@ const LOCAL_RECORDED_SEATS: ReadonlySet<number> = new Set([0]);
 
 /** A recorded match (ADR 0011), as the last match left it. */
 export interface MatchRecording {
-  /** The version 2 replay, on the CPU and the online grid. */
+  /** The replay - version 2 to 4, on a ruleset and the online grid. */
   replay: Replay;
   /** The client's `replayScore` of it, 0-100. */
   hint: number;
@@ -113,7 +113,7 @@ export interface MatchRecording {
 
 /** What the player set about recording - see the settings. */
 export interface ReplayPrefs {
-  /** Local matches against the computer are recorded, on the CPU. */
+  /** Local matches against the computer are recorded, on the device's ruleset. */
   recordLocal: boolean;
   /** Recorded local matches are kept; online ones always are (ADR 0012). */
   saveMatches: boolean;
@@ -140,7 +140,10 @@ export class GameStateService {
    */
   private injector = inject(Injector);
   /** What the player set about recording - the settings tell. */
-  private replayPrefs: ReplayPrefs = { recordLocal: false, saveMatches: true };
+  private replayPrefs: ReplayPrefs = {
+    recordLocal: DETERMINISTIC_SIMULATION,
+    saveMatches: true,
+  };
   /** Whether the match on the board is recorded, and how - null if not. */
   private recordedAs: 'online' | 'local' | null = null;
   /** The room and number of the online match on the board. */
@@ -187,8 +190,8 @@ export class GameStateService {
 
   /**
    * The recording of the last match (ADR 0011) - online matches and local
-   * ones against the computer on the CPU; null for any other, and for
-   * couch, ghost and GPU matches.
+   * ones against the computer, on a ruleset (ADR 0015); null for any other,
+   * and for couch, ghost and float GPU matches.
    */
   public readonly lastRecording = signal<MatchRecording | null>(null);
 
@@ -434,7 +437,7 @@ export class GameStateService {
       ? null
       : replayOf(
           this.plan,
-          replaySimulation(this.playerService.getSimulation().kind),
+          this.playerService.getSimulation().ruleset ?? 'gpu',
           this.playerService.tickCount,
           this.playerService.recorded,
           {
@@ -460,7 +463,7 @@ export class GameStateService {
     this.recordedAs = null;
     if (
       recordedAs === null ||
-      this.playerService.getSimulation().kind !== 'cpu' ||
+      this.playerService.getSimulation().ruleset === null ||
       (recordedAs === 'online' && this.onlineRef === null)
     ) {
       this.lastRecording.set(null);
@@ -580,7 +583,7 @@ export class GameStateService {
    * from a fresh seed - every spawn is a match that may be played. A ghost
    * match is played on the seed of the ghost's run.
    */
-  private initPlayers(match?: { seed: number; lockstep: Lockstep }) {
+  private initPlayers(match?: OnlineMatchStart) {
     const { online } = this.gameStateStore.snapshot();
     if (online !== null) {
       this.initOnline(online, match);
@@ -632,7 +635,7 @@ export class GameStateService {
     this.playerService.init(spawns, {
       ...options,
       onSecond: this.sample,
-      // Recorded on the CPU, the simulation a replay plays back on.
+      // Recorded on a ruleset, a simulation a replay plays back on.
       ...(records ? { recordedSeats: LOCAL_RECORDED_SEATS } : {}),
     });
   }
@@ -660,10 +663,7 @@ export class GameStateService {
    * Spawns the colonies of an online match: the host's setup, on the grid
    * both devices run, played by the lockstep once the match starts.
    */
-  private initOnline(
-    online: OnlineSeat,
-    match?: { seed: number; lockstep: Lockstep }
-  ): void {
+  private initOnline(online: OnlineSeat, match?: OnlineMatchStart): void {
     const { difficulty } = this.gameStateStore.snapshot();
     const { width, height } = arenaSize(
       ONLINE_SIM_RESOLUTION,
@@ -691,6 +691,7 @@ export class GameStateService {
       ...options,
       onSecond: this.sample,
       lockstep: match?.lockstep,
+      ruleset: match?.ruleset,
     });
   }
 
@@ -974,27 +975,27 @@ export class GameStateService {
    * the guest takes the match the host started - and neither starts one on
    * its own. Null when there is none to start.
    */
-  private onlineMatch(
-    online: OnlineSeat
-  ): { seed: number; lockstep: Lockstep } | null {
+  private onlineMatch(online: OnlineSeat): OnlineMatchStart | null {
     if (online.seat === 0) {
       const seed = randomSeed();
+      const ruleset = this.online.agreedRuleset();
       const lockstep = this.online.startMatch({
         levelId: online.levelId,
         colors: online.colors,
         seed,
+        ruleset,
       });
       this.onlineRef = this.online.matchRef();
-      return lockstep === null ? null : { seed, lockstep };
+      return lockstep === null ? null : { seed, lockstep, ruleset };
     }
     const taken = this.online.takeStart();
     if (taken === null) {
       return null;
     }
     this.onlineRef = this.online.matchRef();
-    const { levelId, colors, seed } = taken.start;
+    const { levelId, colors, seed, ruleset } = taken.start;
     this.gameStateStore.update({ online: { ...online, levelId, colors } });
-    return { seed, lockstep: taken.lockstep };
+    return { seed, lockstep: taken.lockstep, ruleset };
   }
 
   /**
@@ -1119,11 +1120,9 @@ function planModeOf(mode: GameMode, matchLevel: string | null): GameMode {
   return matchLevel === null ? mode : 'vs-computer';
 }
 
-/**
- * How a replay names the simulation that ran it. The deterministic integer
- * one does not replay on `BacteriaSimulation` either, so it counts as `gpu`
- * until replays get a value of their own for it (ADR 0015, step 8).
- */
-function replaySimulation(kind: Simulation['kind']): 'cpu' | 'gpu' {
-  return kind === 'cpu' ? 'cpu' : 'gpu';
+/** An online match about to start: its seed, lockstep and agreed ruleset. */
+interface OnlineMatchStart {
+  seed: number;
+  lockstep: Lockstep;
+  ruleset: Ruleset;
 }
