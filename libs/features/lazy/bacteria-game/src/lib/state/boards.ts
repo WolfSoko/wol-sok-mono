@@ -277,10 +277,11 @@ export const XP_RISE_PER_DAY = 20_000;
 export const XP_FULL_COUNT = 25_000;
 /**
  * Progress documents created before this moment (their server
- * `createTime`) get the full first count; the release of the boards.
- * Move it to the actual release date before that client ships.
+ * `createTime`) get the full first count. The owner's cut (2026-10-24):
+ * every account there is today counts in full, every later one starts at
+ * the hourly cap.
  */
-export const XP_FULL_COUNT_BEFORE = Date.UTC(2026, 10, 1);
+export const XP_FULL_COUNT_BEFORE = Date.UTC(2026, 9, 25);
 
 /**
  * How far board XP may rise now: `min(2,000 + 3,000 × hours since the last
