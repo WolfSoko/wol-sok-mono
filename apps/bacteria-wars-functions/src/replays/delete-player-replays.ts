@@ -1,6 +1,6 @@
 import { FieldValue, Firestore } from 'firebase-admin/firestore';
 import { inBatches } from '../firestore';
-import type { PublicSeat } from './model';
+import type { PublicSeat, ReplayDoc } from './model';
 
 /** Replays handled per page of the deletion. */
 const PAGE = 200;
@@ -18,7 +18,8 @@ export interface DeletedReplays {
 /**
  * `deletePlayerReplays` (ADR 0011), on account deletion: replays the player
  * was the only player of are deleted with their blob and reports; from the
- * rest the uid and its report are removed; in public replays the name falls
+ * rest the uid - in `players` and the room's host or guest - and its report
+ * are removed; in public replays the name falls
  * back to the colour label and the uid goes. The player's limits go too.
  * Never checks a ban: a banned player's deletion must erase their data.
  */
@@ -42,8 +43,15 @@ export async function deletePlayerReplays(
         await db.recursiveDelete(doc.ref);
         result.deleted++;
       } else {
+        // The other player reads the replay: the room's copy of the uid
+        // goes too.
+        const room = doc.get('room') as ReplayDoc['room'];
         const batch = db.batch();
-        batch.update(doc.ref, { players: FieldValue.arrayRemove(uid) });
+        batch.update(doc.ref, {
+          players: FieldValue.arrayRemove(uid),
+          ...(room?.host === uid ? { 'room.host': null } : {}),
+          ...(room?.guest === uid ? { 'room.guest': null } : {}),
+        });
         batch.delete(doc.ref.collection('reports').doc(uid));
         await batch.commit();
         result.kept++;

@@ -930,9 +930,12 @@ describe('profiles and deleted accounts', () => {
       kept: 1,
       unnamed: 0,
     });
-    expect((await db.doc(`replays/${onlineId}`).get()).get('players')).toEqual([
-      'guest',
-    ]);
+    const kept = (await db.doc(`replays/${onlineId}`).get()).data();
+    expect(kept?.['players']).toEqual(['guest']);
+    // The guest still reads the replay: the room no longer names the host.
+    expect(kept?.['room']).toEqual(
+      expect.objectContaining({ host: null, guest: 'guest' })
+    );
     expect(
       (await db.doc(`replays/${onlineId}/reports/host`).get()).exists
     ).toBe(false);
