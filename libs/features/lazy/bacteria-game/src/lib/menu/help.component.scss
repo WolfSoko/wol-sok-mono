@@ -1,0 +1,81 @@
+@use 'screen';
+
+:host {
+  @include screen.screen;
+}
+
+.screen-sections {
+  @include screen.sections;
+}
+
+.screen-section {
+  @include screen.section;
+}
+
+.section-title {
+  @include screen.section-title;
+}
+
+.steps {
+  @include screen.sections(14rem);
+
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step-number {
+  @include screen.figure;
+
+  font-size: 2.25rem;
+  line-height: 1;
+  color: var(--bw-gold);
+}
+
+.steps li:first-child .step-number {
+  color: var(--bw-player);
+}
+
+.steps li:last-child .step-number {
+  color: var(--bw-opponent);
+}
+
+a {
+  color: var(--bw-gold);
+}
+
+kbd {
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--bw-line-strong);
+  border-radius: 0.35rem;
+  background: var(--bw-surface-raised);
+  color: var(--bw-text);
+  font: inherit;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.zones {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+}
+
+/* A patch of the ground as the arena tints it: a pale fill and a rim. */
+.swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 30%, transparent);
+  transform: translateY(2px);
+}

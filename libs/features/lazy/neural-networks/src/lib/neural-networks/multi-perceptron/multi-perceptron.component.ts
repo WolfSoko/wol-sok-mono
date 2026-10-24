@@ -6,10 +6,13 @@ import {
 } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { BrainSettingsComponent } from '../shared/brain-settings/brain-settings.component';
-import { BrainService } from '../shared/brain.service';
+import { BrainService, LabelDefinition } from '../shared/brain.service';
 import { DataViewComponent } from '../shared/data-view/data-view.component';
-import { PerceptronComponent } from '../shared/perceptron/perceptron.component';
+import { NetworkViewComponent } from '../shared/network-view/network-view.component';
 import { Point } from '../shared/point';
+
+const circleLabel: LabelDefinition = (x, y) =>
+  (x - 0.5) ** 2 + (y - 0.5) ** 2 < 0.3 ** 2 ? 1 : 0;
 
 @Component({
   selector: 'feat-lazy-neural-networks-multi-perceptron',
@@ -19,31 +22,23 @@ import { Point } from '../shared/point';
   imports: [
     MatCardModule,
     DataViewComponent,
-    PerceptronComponent,
+    NetworkViewComponent,
     BrainSettingsComponent,
   ],
 })
 export class MultiPerceptronComponent implements OnInit {
   private brainService = inject(BrainService);
 
-  width = 300;
-  height = 300;
-  perceptronPerLayer = [2, 3, 1];
+  width = 400;
+  height = 400;
+  perceptronPerLayer = [8, 1];
 
-  get perceptron() {
+  get layers() {
     return this.brainService.perceptrons;
   }
 
-  get inputPerceptron() {
-    return this.perceptron[0];
-  }
-
-  get hiddenPerceptron() {
-    return this.perceptron[1];
-  }
-
   get outputPerceptron() {
-    return this.perceptron[this.perceptron.length - 1][0];
+    return this.layers[this.layers.length - 1][0];
   }
 
   get learnedDataPoints() {
@@ -59,7 +54,9 @@ export class MultiPerceptronComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.brainService.labelDefinition = circleLabel;
     this.brainService.createMultiPerceptron(2, this.perceptronPerLayer);
+    this.brainService.updateTrainingData();
   }
 
   addPoint({ x, y, click }: { x: number; y: number; click: 'left' | 'right' }) {

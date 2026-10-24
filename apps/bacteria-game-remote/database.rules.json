@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "status": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['state', 'at']) && (newData.child('state').val() === 'online' || newData.child('state').val() === 'playing') && newData.child('at').isNumber()",
+        "state": { ".validate": true },
+        "at": { ".validate": true },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

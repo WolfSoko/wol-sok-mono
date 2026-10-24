@@ -300,6 +300,20 @@ function describeViolation(v) {
   return `\`${v.source}\` → \`${v.target}\` (${reason})`;
 }
 
+// libs/utils sits below libs/shared (`shared → utils`); the boundary rules can
+// only enforce that while each layer carries its own tag and not the other's.
+function layerTagProblem(p) {
+  if (p.group === 'utils') {
+    if (!p.tags.includes('utils')) return 'missing `utils`';
+    if (p.tags.includes('shared')) return 'also tagged `shared`';
+  }
+  if (p.group === 'shared') {
+    if (!p.tags.includes('shared')) return 'missing `shared`';
+    if (p.tags.includes('utils')) return 'also tagged `utils`';
+  }
+  return null;
+}
+
 function findings(projects, cycles, violations) {
   const out = [];
   const list = (items) => items.map((i) => `  - ${i}`).join('\n');
@@ -331,15 +345,12 @@ function findings(projects, cycles, violations) {
       : '- **Projects without tags:** none'
   );
 
-  const misplaced = projects.filter(
-    (p) =>
-      ['shared', 'utils'].includes(p.group) &&
-      p.tags.length === 1 &&
-      p.tags[0] === 'shared'
-  );
+  const misplaced = projects
+    .map((p) => ({ p, problem: layerTagProblem(p) }))
+    .filter((m) => m.problem);
   if (misplaced.length) {
     out.push(
-      `- **Layer tags too coarse:** ${misplaced.length} projects in \`libs/shared\`/\`libs/utils\` only carry the generic \`shared\` tag, so the boundary rules cannot tell a utility from a shared domain lib\n${list(misplaced.map((p) => `\`${p.name}\``))}`
+      `- **Layer tags too coarse:** ${misplaced.length} projects in \`libs/shared\`/\`libs/utils\` do not carry their layer's tag, so the boundary rules cannot tell a utility from a shared domain lib\n${list(misplaced.map((m) => `\`${m.p.name}\` (${m.problem})`))}`
     );
   }
 

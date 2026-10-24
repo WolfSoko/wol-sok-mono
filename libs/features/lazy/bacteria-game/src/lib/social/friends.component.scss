@@ -1,0 +1,88 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+}
+
+.text,
+.note {
+  margin: 0;
+  line-height: 1.4;
+  color: var(--bw-soft);
+}
+
+.note {
+  color: var(--bw-gold);
+  overflow-wrap: anywhere;
+}
+
+.people {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.face {
+  position: relative;
+  display: inline-flex;
+}
+
+.dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid var(--bw-surface);
+  border-radius: 50%;
+  background: var(--bw-faint);
+}
+
+[data-status='online'] .dot {
+  background: #3ad46a;
+}
+
+[data-status='playing'] .dot {
+  background: var(--bw-gold);
+}
+
+[data-status='pending'] .dot {
+  display: none;
+}
+
+.who {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 700;
+}
+
+.motto {
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: var(--bw-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invite {
+  align-self: flex-start;
+}

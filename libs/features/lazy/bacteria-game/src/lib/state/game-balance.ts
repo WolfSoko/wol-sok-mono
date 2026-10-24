@@ -70,7 +70,26 @@ export interface GameBalance {
   nutrientRadius: number;
   /** Delay before a depleted pellet reappears somewhere else. */
   nutrientRespawnDelaySec: number;
+
+  /** How long a boost lasts once a player fires it. */
+  boostDurationSec: number;
+  /** Seconds a player has to wait after firing a boost before the next one. */
+  boostCooldownSec: number;
+  /** Movement speed multiplier of a boosted colony. */
+  boostSpeedFactor: number;
+  /** Aggression of a boosted colony - replaces `aggression` while it lasts. */
+  boostAggression: number;
+  /** Multiplier on the pressure a boosted bacterium puts on its enemies. */
+  boostAttackFactor: number;
 }
+
+/**
+ * The version of the balance table and of the rules the simulation applies
+ * with it. Raise it with every change that plays a recorded match out
+ * differently: a replay only plays again under the version it was recorded
+ * with. Version 6 brings the `gpu-int` ruleset into play (ADR 0015, step 8).
+ */
+export const BALANCE_VERSION = 6;
 
 export const gameBalance: GameBalance = {
   startBacteriaRadius: 14,
@@ -102,4 +121,59 @@ export const gameBalance: GameBalance = {
   nutrientDrainPerSec: 2.5,
   nutrientRadius: 2,
   nutrientRespawnDelaySec: 2.5,
+
+  boostDurationSec: 3,
+  boostCooldownSec: 12,
+  boostSpeedFactor: 1.8,
+  boostAggression: 0.85,
+  boostAttackFactor: 1.6,
+};
+
+/**
+ * How many bacteria each colony may grow to: its even share of the arena's
+ * carrying capacity, never above the per-player cap. A single budget for all
+ * of them would let the bigger colony use it up and freeze the smaller one
+ * out of dividing altogether. Every colony of the match has its share
+ * for the whole match, a neutral one too: eating it adds its bacteria to
+ * yours, but not its share - or the colonies grow so big that the match
+ * stalls.
+ */
+export function colonyCapacity(balance: GameBalance, colonies: number): number {
+  return Math.max(
+    1,
+    Math.min(
+      balance.maxBacteriaPerPlayer,
+      Math.floor(balance.maxTotalBacteria / Math.max(1, colonies))
+    )
+  );
+}
+
+/**
+ * How one colony plays differently from the level's balance - a boss
+ * divides faster, hits harder and recharges its boost sooner.
+ */
+export interface ColonyTraits {
+  /** Times the chance to divide. */
+  divideFactor: number;
+  /** Times the pressure its bacteria exert, on top of a boost. */
+  attackFactor: number;
+  /** Times the boost's cooldown. */
+  cooldownFactor: number;
+}
+
+/** A colony like any other. */
+export const PLAIN_TRAITS: ColonyTraits = {
+  divideFactor: 1,
+  attackFactor: 1,
+  cooldownFactor: 1,
+};
+
+/**
+ * A neutral colony: nobody steers it, it grows slowly and bites back only
+ * weakly - food that takes some eating.
+ */
+export const NEUTRAL_TRAITS: ColonyTraits = {
+  divideFactor: 0.5,
+  attackFactor: 0.6,
+  cooldownFactor: 1,
 };

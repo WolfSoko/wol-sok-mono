@@ -5,11 +5,11 @@ test.describe('Home', () => {
     await homePage.expectTitleVisible();
   });
 
-  test('informs about coming soon', async ({ homePage }) => {
-    await homePage.expectComingSoonVisible();
+  test('explains what to do', async ({ homePage }) => {
+    await homePage.expectIntroDescriptionVisible();
   });
 
-  test('has a cta to follow X', async ({ homePage }) => {
-    await homePage.expectXLinkVisible();
+  test('offers to share RollaPolla', async ({ homePage }) => {
+    await homePage.expectShareLinksVisible();
   });
 });

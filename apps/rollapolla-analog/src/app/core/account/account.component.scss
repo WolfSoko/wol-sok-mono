@@ -1,0 +1,61 @@
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.error {
+  flex-basis: 100%;
+  text-align: end;
+}
+
+.signed-in {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.avatar {
+  border-radius: 50%;
+}
+
+button,
+.name {
+  white-space: nowrap;
+}
+
+.label-short {
+  display: none;
+}
+
+// phones: the header holds the brand, the browse link and this bar
+@media (max-width: 599.98px) {
+  .name,
+  .label-long {
+    display: none;
+  }
+
+  .label-short {
+    display: inline;
+  }
+
+  :host {
+    --mat-button-text-horizontal-padding: 0.5rem;
+    --mat-button-text-with-icon-horizontal-padding: 0.5rem;
+  }
+
+  .my-polls-link,
+  .admin-link {
+    min-width: 0;
+
+    .mat-icon {
+      margin: 0;
+    }
+  }
+}
+
+.error {
+  color: var(--mat-form-field-error-text-color, #ffb4ab);
+  margin: 0;
+}

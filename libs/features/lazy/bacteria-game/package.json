@@ -2,17 +2,19 @@
   "name": "@wolsok/feat-lazy-bac-game",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "22.2.1",
-    "@angular/core": "22.2.1",
-    "@angular/material": "22.2.1",
+    "@angular/common": "22.2.3",
+    "@angular/core": "22.2.3",
+    "@angular/material": "22.2.3",
     "@ngneat/until-destroy": "10.0.0",
-    "@wolsok/thanos": "^17.0.0",
+    "@wolsok/thanos": "^17.0.0 || ^18.0.0",
     "@wolsok/ui-kit": "0.0.1",
     "rxjs": "7.8.2",
-    "@angular/router": "22.2.1",
-    "@datorama/akita": "8.0.1",
+    "@angular/router": "22.2.3",
+    "@ngrx/signals": "22.0.1",
     "@wolsok/utils-measure-fps": "0.0.1",
-    "@angular/cdk": "22.2.1"
+    "@angular/cdk": "22.2.3",
+    "@angular/fire": "20.1.1",
+    "firebase": "11.10.0"
   },
   "devDependencies": {
     "tslib": "2.5.2"

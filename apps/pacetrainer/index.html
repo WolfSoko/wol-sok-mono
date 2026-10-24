@@ -1,26 +1,65 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="utf-8" />
     <title>Pace-Trainer</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <!-- mirror --mat-sys-surface of the azure theme in styles.scss -->
+    <meta
+      name="theme-color"
+      content="#f9f9ff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#111318"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta
+      name="description"
+      content="Pace-Trainer – dein digitaler Laufcoach: Plane Sprint-Intervalle mit Wiederholungen, Sprint- und Erholungszeiten und trainiere mit akustischen Signalen direkt im Browser."
+    />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://pace-trainer.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pace-trainer.com/" />
+    <meta property="og:site_name" content="Pace-Trainer" />
+    <meta property="og:locale" content="de_DE" />
+    <meta
+      property="og:title"
+      content="Pace-Trainer – dein digitaler Laufcoach"
+    />
+    <meta
+      property="og:description"
+      content="Plane Sprint-Intervalle mit Wiederholungen, Sprint- und Erholungszeiten und trainiere direkt im Browser."
+    />
+    <meta property="og:image" content="https://pace-trainer.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Pace-Trainer Logo: ein Intervall-Ring mit Blitz"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="/src/styles.scss" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
       rel="stylesheet"
     />
   </head>
-  <body class="mat-typography mat-app-background">
+  <body>
     <pace-root></pace-root>
     <script type="module" src="/src/main.ts"></script>
   </body>

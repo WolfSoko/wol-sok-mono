@@ -7,7 +7,8 @@
   .page-grid {
     display: grid;
     grid-template-rows: variables.$main-toolbar-height 1fr auto;
-    grid-template-columns: 1fr;
+    // minmax(0, …) keeps wide content from stretching the page past the viewport
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas: 'header' 'main' 'footer';
     height: 100%;
 
@@ -26,7 +27,7 @@
   .content-section {
     display: grid;
     grid-template-rows: 1fr;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas: 'content';
 
     router-outlet {

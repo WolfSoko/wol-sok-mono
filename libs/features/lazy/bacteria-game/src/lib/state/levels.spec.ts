@@ -1,3 +1,4 @@
+import { clockOf, winRuleOf } from './win-conditions';
 import { gameBalance } from './game-balance';
 import {
   DEFAULT_CROSSHAIR_SPEED,
@@ -6,13 +7,43 @@ import {
   levelBalance,
   levelCrosshairSpeed,
   levelMap,
+  levelTitle,
   nextLevel,
 } from './levels';
-import { GAME_MAPS } from './maps';
+import { GAME_MAPS } from './game-maps';
+import { TRAINING_LEVELS } from './training-levels';
+import { MAX_GPU_COLONIES } from '../gl/simulation-shaders';
 
 describe('LEVELS', () => {
-  it('uses unique ids', () => {
-    const ids = LEVELS.map((level) => level.id);
+  it('has room on the GPU for the colonies of every level, neutral ones included', () => {
+    for (const level of LEVELS) {
+      expect(2 + (level.neutrals?.length ?? 0)).toBeLessThanOrEqual(
+        MAX_GPU_COLONIES
+      );
+    }
+  });
+
+  it('asks a timed level for a win before its clock runs out for silver', () => {
+    // A win on time is bronze: silver and gold ask for a wipe-out before.
+    const timed = LEVELS.flatMap((level) =>
+      clockOf(winRuleOf(level)) === null
+        ? []
+        : [
+            {
+              silverSec: level.medal.silverSec,
+              limitSec: clockOf(winRuleOf(level)) ?? 0,
+            },
+          ]
+    );
+
+    expect(timed.length).toBeGreaterThan(0);
+    expect(
+      timed.filter(({ silverSec, limitSec }) => silverSec >= limitSec)
+    ).toEqual([]);
+  });
+
+  it('uses unique ids, the training missions included', () => {
+    const ids = [...LEVELS, ...TRAINING_LEVELS].map((level) => level.id);
 
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -20,13 +51,15 @@ describe('LEVELS', () => {
   it('only references maps that exist', () => {
     const mapIds = GAME_MAPS.map((map) => map.id);
 
-    for (const level of LEVELS) {
+    for (const level of [...LEVELS, ...TRAINING_LEVELS]) {
       expect(mapIds).toContain(level.mapId);
     }
   });
 
-  it('plays every map at least once', () => {
-    const played = new Set(LEVELS.map((level) => level.mapId));
+  it('plays every map at least once, on the ladder or in the training', () => {
+    const played = new Set(
+      [...LEVELS, ...TRAINING_LEVELS].map((level) => level.mapId)
+    );
 
     expect(played.size).toBe(GAME_MAPS.length);
   });
@@ -94,5 +127,34 @@ describe('nextLevel', () => {
 
   it('has nothing after an unknown level', () => {
     expect(nextLevel('nope')).toBeNull();
+  });
+});
+
+describe('levelBalance on a finer grid', () => {
+  const level = getLevel('petri-dish');
+
+  it('grows the lengths with the cells and the room with the area', () => {
+    const base = levelBalance(level);
+    const fine = levelBalance(level, 2);
+
+    expect(fine.startBacteriaRadius).toBe(base.startBacteriaRadius * 2);
+    expect(fine.maxTotalBacteria).toBe(base.maxTotalBacteria * 4);
+    expect(fine.maxBacteriaPerPlayer).toBe(base.maxBacteriaPerPlayer * 4);
+    expect(fine.influenceCellSize).toBe(base.influenceCellSize * 2);
+    expect(fine.nutrientEnergy).toBe(base.nutrientEnergy * 4);
+    expect(fine.aggression).toBe(base.aggression);
+  });
+
+  it('speeds the crosshairs up so they cross the arena as fast', () => {
+    expect(levelCrosshairSpeed(level, 1.5)).toBe(
+      levelCrosshairSpeed(level) * 1.5
+    );
+  });
+});
+
+describe('levelTitle', () => {
+  it('drops the number from the name', () => {
+    expect(levelTitle(getLevel('hourglass'))).toBe('Hourglass');
+    expect(LEVELS.every((level) => !/\d/.test(levelTitle(level)))).toBe(true);
   });
 });

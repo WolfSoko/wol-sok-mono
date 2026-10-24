@@ -5,7 +5,11 @@
     "types": [],
     "moduleResolution": "bundler"
   },
-  "files": ["src/main.ts", "src/main.server.ts"],
+  "files": [
+    "src/main.ts",
+    "src/main.server.ts",
+    "src/environments/environment.develop.ts"
+  ],
   "include": [
     "src/**/*.d.ts",
     "src/app/routes/**/*.ts",

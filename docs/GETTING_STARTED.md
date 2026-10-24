@@ -28,29 +28,13 @@ Welcome to the wol-sok-mono repository! This guide will help you set up your dev
    - Version: **2.x or higher**
    - Download: [git-scm.com](https://git-scm.com/)
 
-### System Dependencies (for node-gyp)
+### No Build Toolchain Needed
 
-The repository uses native modules that require compilation tools.
-
-#### macOS
-
-```bash
-xcode-select --install
-```
-
-#### Ubuntu/Debian Linux
-
-```bash
-sudo apt-get update
-sudo apt-get install -y build-essential python3 libx11-dev libxi-dev libxext-dev
-```
-
-#### Windows
-
-Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022):
-
-- Select "Desktop development with C++"
-- Or use: `npm install --global windows-build-tools`
+Every native module in the lockfile ships a prebuilt binary as an optional platform
+package, and the install scripts that may run are listed under `allowScripts` in
+`package.json`. The optional `gl` module (a dependency of `gpu.js` that is only used
+in the browser here) is denied there, so node-gyp, Python and C++ build tools are not
+required on any platform.
 
 ### Optional but Recommended
 
@@ -110,32 +94,25 @@ npx nx show projects
 
 ### Common Issues
 
-#### Issue: `node-gyp` Build Errors
+#### Issue: Native Module Build Errors
 
-**Symptom**: Installation fails with errors about `node-gyp`, `gl`, or native modules.
+**Symptom**: Installation tries to compile `gl` or another native module.
 
 **Solutions**:
 
-1. **Install system build tools** (see [Prerequisites](#system-dependencies-for-node-gyp))
+1. **Check `allowScripts`** in `package.json`: `gl` must stay denied (`"gl": false`), and
+   no entry should be added for a module whose prebuilt binary is missing. Run
+   `npm install-scripts ls` to see which install scripts are still unreviewed.
 
-2. **Clear npm cache**:
+2. **Clean install**:
 
    ```bash
-   npm cache clean --force
-   rm -rf node_modules package-lock.json
+   rm -rf node_modules
    npm ci
    ```
 
-3. **Set Python version** (if you have multiple Python installations):
-
-   ```bash
-   npm config set python /usr/bin/python3
-   ```
-
-4. **Skip optional dependencies** (temporary workaround):
-   ```bash
-   npm ci --no-optional
-   ```
+Do not use `npm ci --omit=optional` as a workaround: the prebuilt binaries of esbuild,
+oxlint, Nx and others are optional dependencies and would be skipped too.
 
 #### Issue: Port Already in Use
 

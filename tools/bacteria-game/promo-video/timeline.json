@@ -1,0 +1,39 @@
+{
+  "fps": 30,
+  "duration": 30000,
+  "scenes": [
+    { "kind": "title", "start": 0, "end": 3000 },
+    {
+      "kind": "clip",
+      "clip": "heartbeat",
+      "start": 3000,
+      "end": 11000,
+      "split": 4200,
+      "captions": ["steer", "swallow"]
+    },
+    {
+      "kind": "clip",
+      "clip": "meltdown",
+      "start": 11000,
+      "end": 16500,
+      "captions": ["twoPlayers"]
+    },
+    {
+      "kind": "clip",
+      "clip": "expanse",
+      "start": 16500,
+      "end": 22000,
+      "from": 0.8,
+      "captions": ["bigMaps"]
+    },
+    {
+      "kind": "clip",
+      "clip": "levels",
+      "start": 22000,
+      "end": 26000,
+      "from": 0.9,
+      "captions": ["levels"]
+    },
+    { "kind": "end", "start": 26000, "end": 30000 }
+  ]
+}

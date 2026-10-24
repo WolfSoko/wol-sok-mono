@@ -8,7 +8,7 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
   return {
     root: 'apps/pacetrainer',
     publicDir: 'src/public',
-    cacheDir: `../../node_modules/.vite`,
+    cacheDir: `../../node_modules/.vite/apps/pacetrainer`,
     build: {
       outDir: '../../dist/apps/pacetrainer/client',
       reportCompressedSize: true,

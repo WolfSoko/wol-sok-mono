@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "de.wolsok.bacteriawars",
+      "sha256_cert_fingerprints": [
+        "79:61:7C:2D:FC:08:64:EC:7C:C0:C0:16:04:1E:A6:E2:53:41:9B:3F:37:45:08:96:7C:8F:AB:33:B6:ED:FB:76",
+        "98:23:6B:F2:BB:B6:18:1A:74:A9:84:CD:26:F7:B9:CA:A9:37:6C:10:56:57:A7:CD:E0:DE:BE:72:3A:AA:3A:0C"
+      ]
+    }
+  }
+]

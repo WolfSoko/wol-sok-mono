@@ -55,37 +55,101 @@ export class InfoComponent {
 
   public technologies = signal([
     new Technology(
-      'Angular+',
-      'http://angular.io/',
+      'Angular',
+      'https://angular.dev/',
       'assets/logos/angular.svg'
     ),
-    new Technology('nrwl.io', 'https://nrwl.io/', 'assets/logos/nrwl-logo.svg'),
-    new Technology(
-      'Typescript',
-      'http://www.typescriptlang.org/',
-      'assets/logos/typescript.svg'
-    ),
-    new Technology('p5js', 'https://p5js.org', 'assets/logos/p5.svg'),
-    new Technology(
-      'three.js',
-      'https://threejs.org/',
-      'assets/logos/three-js.png'
-    ),
-    new Technology('gpu.js', 'http://gpu.rocks/', 'assets/logos/gpu-js.png'),
     new Technology(
       'Angular Material',
-      'http://angular.material.io/',
+      'https://material.angular.dev/',
       'assets/logos/angular-material.svg'
     ),
     new Technology(
-      'tensorflow.js',
-      'https://js.tensorflow.org',
-      'assets/logos/tensorflow-js.png'
+      'Nx',
+      'https://nx.dev/',
+      'assets/logos/nx.svg',
+      'assets/logos/nx-dark.svg'
     ),
     new Technology(
-      'firebase',
+      'TypeScript',
+      'https://www.typescriptlang.org/',
+      'assets/logos/typescript.svg'
+    ),
+    new Technology('RxJS', 'https://rxjs.dev/', 'assets/logos/rxjs.svg'),
+    new Technology('NgRx', 'https://ngrx.io/', 'assets/logos/ngrx.svg'),
+    new Technology(
+      'Analog',
+      'https://analogjs.org/',
+      'assets/logos/analog.svg'
+    ),
+    new Technology(
+      'Vite',
+      'https://vite.dev/',
+      'assets/logos/vite.svg',
+      'assets/logos/vite-dark.svg'
+    ),
+    new Technology(
+      'three.js',
+      'https://threejs.org/',
+      'assets/logos/threejs.svg',
+      'assets/logos/threejs-dark.svg'
+    ),
+    new Technology('p5.js', 'https://p5js.org/', 'assets/logos/p5.svg'),
+    new Technology('gpu.js', 'https://gpu.rocks/', 'assets/logos/gpu-js.png'),
+    new Technology(
+      'TensorFlow.js',
+      'https://www.tensorflow.org/js',
+      'assets/logos/tensorflow.svg'
+    ),
+    new Technology(
+      'Vega-Lite',
+      'https://vega.github.io/vega-lite/',
+      'assets/logos/vega-lite.svg'
+    ),
+    new Technology(
+      'math.js',
+      'https://mathjs.org/',
+      'assets/logos/mathjs.svg',
+      'assets/logos/mathjs-dark.svg'
+    ),
+    new Technology(
+      'WebAssembly',
+      'https://webassembly.org/',
+      'assets/logos/webassembly.svg'
+    ),
+    new Technology(
+      'AssemblyScript',
+      'https://www.assemblyscript.org/',
+      'assets/logos/assemblyscript.svg'
+    ),
+    new Technology(
+      'Firebase',
       'https://firebase.google.com/',
-      'assets/logos/firebase.png'
+      'assets/logos/firebase.svg'
+    ),
+    new Technology(
+      'AWS CDK',
+      'https://aws.amazon.com/cdk/',
+      'assets/logos/aws.svg',
+      'assets/logos/aws-dark.svg'
+    ),
+    new Technology(
+      'Sentry',
+      'https://sentry.io/',
+      'assets/logos/sentry.svg',
+      'assets/logos/sentry-dark.svg'
+    ),
+    new Technology(
+      'Vitest',
+      'https://vitest.dev/',
+      'assets/logos/vitest.svg',
+      'assets/logos/vitest-dark.svg'
+    ),
+    new Technology('Jest', 'https://jestjs.io/', 'assets/logos/jest.svg'),
+    new Technology(
+      'Playwright',
+      'https://playwright.dev/',
+      'assets/logos/playwright.svg'
     ),
   ]).asReadonly();
 

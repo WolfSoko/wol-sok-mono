@@ -1,6 +1,6 @@
 .about-container {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 1fr auto;
   grid-template-areas: 'title' 'description';
   grid-row-gap: 1rem;

@@ -26,18 +26,19 @@ import { MatInputModule } from '@angular/material/input';
       .form-field {
         width: 100%;
       }
-      .input-icon {
-        font-size: 1rem;
-        translate: 0.2rem 0.15rem;
+      kbd {
+        padding: 0 0.3em;
+        border: 1px solid var(--mat-sys-outline-variant);
+        border-radius: 4px;
+        font: inherit;
       }
       .submit-button-container {
-        width: 100%;
         display: flex;
         justify-content: end;
+        padding-top: 0.75rem;
       }
     }
   `,
-
   imports: [
     ReactiveFormsModule,
     MatFormFieldModule,

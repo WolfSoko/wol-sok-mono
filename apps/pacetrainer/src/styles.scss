@@ -2,70 +2,129 @@
 
 @import 'normalize.css/normalize.css';
 
-@include mat.elevation-classes();
-@include mat.app-background();
-
-$theme: mat.define-theme(
-  (
-    color: (
-      theme-type: light,
-      primary: mat.$azure-palette,
-    ),
-  )
-);
-
-$dark-theme: mat.define-theme(
-  (
-    color: (
-      theme-type: dark,
-      primary: mat.$azure-palette,
-    ),
-  )
-);
-
 html {
-  @include mat.toolbar-theme($theme);
-  @include mat.button-theme($theme);
-  @include mat.form-field-theme($theme);
-  @include mat.input-theme($theme);
-  @include mat.card-theme($theme);
-  @include mat.list-theme($theme);
-  @include mat.progress-spinner-theme($theme);
-  @include mat.expansion-theme($theme);
+  // One Material 3 theme for light and dark: every system color is emitted
+  // with light-dark(), so the page and all components follow the OS setting.
+  color-scheme: light dark;
 
-  @include mat.typography-hierarchy($theme);
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$orange-palette,
+      ),
+      typography: (
+        plain-family: Inter,
+        brand-family: Inter,
+        // Inter's 600 reads as Material's "medium" (labels, titles, buttons)
+        medium-weight: 600,
+      ),
+      density: 0,
+    )
+  );
 
-  // Apply the light theme only when the user prefers light themes.
-  @media (prefers-color-scheme: dark) {
-    // Use the `-color` mixins to only apply color styles without reapplying the same
-    // typography and density styles.
-    @include mat.toolbar-color($dark-theme);
-    @include mat.button-color($dark-theme);
-    @include mat.form-field-color($dark-theme);
-    @include mat.input-color($dark-theme);
-    @include mat.card-color($dark-theme);
-    @include mat.list-color($dark-theme);
-    @include mat.progress-spinner-color($dark-theme);
-    @include mat.expansion-color($dark-theme);
-    @include mat.typography-hierarchy($dark-theme);
-  }
+  // Softer corners than the Material defaults, shared by all surfaces.
+  @include mat.card-overrides(
+    (
+      outlined-container-shape: var(--mat-sys-corner-large),
+      outlined-container-color: var(--mat-sys-surface-container),
+      outlined-outline-color: var(--pace-hairline),
+    )
+  );
+  @include mat.form-field-overrides(
+    (
+      outlined-container-shape: var(--mat-sys-corner-medium),
+    )
+  );
+
+  // The two Intervall colors of the logo ring. Material's orange tone for
+  // light mode reads brown, so the Sprint takes a true orange there (4.5:1
+  // against white) and the palette color in dark mode.
+  --pace-sprint: light-dark(#c2570a, var(--mat-sys-tertiary));
+  --pace-on-sprint: light-dark(#ffffff, var(--mat-sys-on-tertiary));
+  --pace-sprint-container: var(--mat-sys-tertiary-container);
+  --pace-recovery: var(--mat-sys-primary);
+  --pace-on-recovery: var(--mat-sys-on-primary);
+  --pace-recovery-container: var(--mat-sys-primary-container);
+
+  --pace-hairline: color-mix(
+    in srgb,
+    var(--mat-sys-outline-variant) 60%,
+    transparent
+  );
 }
 
-body,
-html {
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
-  * {
-    box-sizing: border-box;
+// Accent per Phase of the Trainingslauf; components read --pace-accent*.
+// Without a tone they fall back to neutral colors.
+[data-tone='sprint'] {
+  --pace-accent: var(--pace-sprint);
+  --pace-on-accent: var(--pace-on-sprint);
+  --pace-accent-container: var(--pace-sprint-container);
+}
+[data-tone='recovery'] {
+  --pace-accent: var(--pace-recovery);
+  --pace-on-accent: var(--pace-on-recovery);
+  --pace-accent-container: var(--pace-recovery-container);
+}
 
-    &:before,
-    &:after {
-      box-sizing: border-box;
-    }
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  max-width: 1024px;
-  margin: 0 auto;
+  margin: 0;
+  min-height: 100dvh;
+  // brand tints from the logo: azure top left, orange top right
+  background:
+    radial-gradient(
+      60% 40% at 15% 0%,
+      color-mix(in srgb, var(--mat-sys-primary) 14%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      45% 30% at 100% 0%,
+      color-mix(in srgb, var(--mat-sys-tertiary) 10%, transparent),
+      transparent 70%
+    ),
+    var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-large);
   text-wrap: pretty;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+// Figures shown side by side: live times during a run, results after it.
+.pace-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+}
+
+.pace-tile {
+  display: flex;
+  flex-flow: column;
+  gap: 2px;
+  padding: 14px 16px;
+}
+
+.pace-tile-value {
+  font: var(--mat-sys-headline-small);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pace-tile-label {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
 }

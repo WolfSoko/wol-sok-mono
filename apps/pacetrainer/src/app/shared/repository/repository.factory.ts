@@ -9,10 +9,17 @@ import { JSONCompatible } from '../utils/json-utils/json-utils';
 export class RepositoryFactory {
   private readonly platformId = inject(PLATFORM_ID);
 
-  create<T extends JSONCompatible<T>>(localStorageKey: string): Repository<T> {
+  /**
+   * @param persist store data in localStorage (browser only). Off by default,
+   * because restoring a half-finished training run is not supported yet.
+   */
+  public create<T extends JSONCompatible<T>>(
+    localStorageKey: string,
+    persist = false
+  ): Repository<T> {
     return new Repository<T>(
       localStorageKey,
-      isPlatformBrowser(this.platformId) && false
+      persist && isPlatformBrowser(this.platformId)
     );
   }
 }

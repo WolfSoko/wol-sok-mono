@@ -1,44 +1,125 @@
-<main class="main text-centered">
-  <section class="page-header">
-    <img
-      mat-card-image
-      class="intro-logo"
-      src="/assets/logos/logo.svg"
-      alt="RollaPolla logo. A springgreen circle, with text RaP in front"
-    />
-    <h1>RollaPolla</h1>
+<main class="rap-container main">
+  <section
+    class="share-section"
+    aria-labelledby="share-title"
+    data-testid="site-share"
+  >
+    <rap-share [content]="shareContent" linkLabel="RollaPolla link">
+      <header class="section-header share-header">
+        <p class="rap-eyebrow">Spread the word</p>
+        <p id="share-title" class="section-title">Share RollaPolla</p>
+        <p class="section-subtitle">
+          Know a group that can never decide? Send them RollaPolla.
+        </p>
+      </header>
+    </rap-share>
   </section>
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title-group class="hero-title">
-        <mat-card-title>Easy Polling for Everyone!</mat-card-title>
-        <mat-card-subtitle>
-          Share your opinions and see what others think.
-        </mat-card-subtitle>
-      </mat-card-title-group>
-    </mat-card-header>
-    <mat-card-content>
-      <a
-        mat-button
-        class="intro-badge"
-        target="_blank"
-        href="https://x.com/rollapolla"
-      >
-        <mat-icon svgIcon="fa:xTwitter"> </mat-icon>
-        Follow
-      </a>
-      <p class="intro-description" data-testid="coming-soon">Coming Soon!</p>
-    </mat-card-content>
-  </mat-card>
-  @defer (hydrate on viewport) {
-    <rap-create-poll />
-  } @placeholder {
-    <mat-spinner />
-  }
-  <br />
-  @defer (hydrate on viewport) {
-    <rap-chat-live-stream />
-  } @placeholder {
-    <mat-spinner />
+
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <p class="rap-eyebrow">
+        <span class="rap-live-dot" aria-hidden="true"></span>
+        Live results · no sign-up
+      </p>
+      <h1 id="hero-title" class="hero-title">
+        Easy Polling for <span class="highlight">Everyone!</span>
+      </h1>
+      <p class="hero-subtitle">
+        Share your opinions and see what others think.
+      </p>
+      <p class="intro-description" data-testid="intro-description">
+        Create a poll, share the link and watch the votes roll in.
+      </p>
+      <ol class="steps">
+        @for (step of steps; track step.title; let i = $index) {
+          <li class="step">
+            <span class="step-icon" aria-hidden="true">
+              <mat-icon>{{ step.icon }}</mat-icon>
+            </span>
+            <span class="step-text">
+              <strong>{{ i + 1 }}. {{ step.title }}</strong>
+              <span>{{ step.text }}</span>
+            </span>
+          </li>
+        }
+      </ol>
+    </div>
+    <div class="hero-form">
+      @if (features().pollCreation) {
+        @defer (hydrate on viewport) {
+          <rap-create-poll />
+        } @placeholder {
+          <mat-spinner class="spinner" diameter="40" />
+        }
+      } @else {
+        <mat-card
+          appearance="outlined"
+          class="paused"
+          data-testid="poll-creation-paused"
+        >
+          <mat-card-header>
+            <mat-card-title>New polls are paused</mat-card-title>
+            <mat-card-subtitle>
+              Creating polls is switched off for the moment. You can still vote
+              on the polls below.
+            </mat-card-subtitle>
+          </mat-card-header>
+        </mat-card>
+      }
+    </div>
+  </section>
+
+  <section class="discover-section" aria-labelledby="hot-title">
+    <header class="section-header">
+      <p class="rap-eyebrow">
+        <span class="rap-live-dot" aria-hidden="true"></span>
+        Trending
+      </p>
+      <h2 id="hot-title" class="section-title">Hottest polls</h2>
+      <p class="section-subtitle">Where everyone is voting right now.</p>
+    </header>
+    @defer (hydrate on viewport) {
+      <rap-hot-polls />
+    } @placeholder {
+      <mat-spinner class="spinner" diameter="40" />
+    }
+  </section>
+
+  <section class="discover-section" aria-labelledby="featured-title">
+    <header class="section-header">
+      <p class="rap-eyebrow">Classics</p>
+      <h2 id="featured-title" class="section-title">
+        Settle these once and for all
+      </h2>
+      <p class="section-subtitle">
+        Our evergreen polls. Pick a side and see who agrees.
+      </p>
+    </header>
+    @defer (hydrate on viewport) {
+      <rap-featured-polls />
+    } @placeholder {
+      <mat-spinner class="spinner" diameter="40" />
+    }
+  </section>
+
+  @if (features().lobbyChat) {
+    <section
+      class="chat-section"
+      aria-labelledby="chat-title"
+      data-testid="lobby-chat-section"
+    >
+      <header class="section-header">
+        <p class="rap-eyebrow">Community</p>
+        <h2 id="chat-title" class="section-title">Join the conversation</h2>
+        <p class="section-subtitle">
+          Got an idea for the next big poll? Drop it in the live chat.
+        </p>
+      </header>
+      @defer (hydrate on viewport) {
+        <rap-chat-live-stream />
+      } @placeholder {
+        <mat-spinner class="spinner" diameter="40" />
+      }
+    </section>
   }
 </main>

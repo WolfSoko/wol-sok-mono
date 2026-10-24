@@ -1,0 +1,183 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // What the game stores for a player, a document per key
+    // (FirestoreGameStorage): only the player reads and writes it - a guest
+    // (anonymous) account as much as a Google one.
+    match /players/{playerId}/storage/{key} {
+      allow read: if isPlayer(playerId);
+      allow create, update: if isPlayer(playerId) &&
+        key.matches('bacteria-game[.][a-z-]+') &&
+        isStoredValue(request.resource.data);
+      allow delete: if isPlayer(playerId);
+    }
+
+    // The rooms online matches meet in (FirestoreGameRooms): the host opens
+    // one under a code with its offer, one guest answers it. Anyone signed
+    // in reads a room by its code - knowing the code is the invitation -
+    // but nobody lists them. A TTL policy on expireAt deletes old rooms.
+    match /rooms/{code} {
+      allow get: if request.auth != null;
+      allow create: if request.auth != null &&
+        code.matches('[A-HJ-NP-Z2-9]{6}') &&
+        request.resource.data.keys().hasOnly(['host', 'offer', 'createdAt', 'expireAt']) &&
+        request.resource.data.host == request.auth.uid &&
+        isDescription(request.resource.data.offer) &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.expireAt is timestamp &&
+        request.resource.data.expireAt < request.time + duration.value(2, 'h');
+      allow update: if request.auth != null &&
+        !('answer' in resource.data) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guest', 'answer']) &&
+        request.resource.data.guest == request.auth.uid &&
+        isDescription(request.resource.data.answer);
+      allow delete: if request.auth != null && request.auth.uid == resource.data.host;
+    }
+
+    // What other players see of a player (ADR 0010): anyone signed in reads
+    // a profile, only its owner writes it.
+    match /profiles/{uid} {
+      allow get: if signedIn();
+      allow create, update: if isPlayer(uid) && isProfile(request.resource.data);
+      allow delete: if isPlayer(uid);
+    }
+
+    // A player's friends, each side writing its own list - or the inviter's,
+    // with the token of an invitation the inviter made. A player may see
+    // whether someone lists them, and take themselves off a list.
+    match /players/{owner}/friends/{friend} {
+      allow get: if isPlayer(owner) || isPlayer(friend);
+      allow list: if isPlayer(owner);
+      // Update too: asking or accepting again rewrites an existing entry.
+      allow create, update: if owner != friend &&
+        request.resource.data.since == request.time &&
+        ((isPlayer(owner) && request.resource.data.keys().hasOnly(['since'])) ||
+         (isPlayer(friend) &&
+          request.resource.data.keys().hasOnly(['since', 'invite']) &&
+          request.resource.data.invite is string &&
+          get(/databases/$(database)/documents/invites/$(request.resource.data.invite)).data.from == owner));
+      allow delete: if isPlayer(owner) || isPlayer(friend);
+    }
+
+    // Asks to be friends, left by the one asking.
+    match /players/{owner}/requests/{from} {
+      allow get: if isPlayer(owner) || isPlayer(from);
+      allow list: if isPlayer(owner);
+      allow create, update: if isPlayer(from) && from != owner &&
+        request.resource.data.keys().hasOnly(['at']) &&
+        request.resource.data.at == request.time;
+      allow delete: if isPlayer(owner) || isPlayer(from);
+    }
+
+    // A friend's challenge to the match in a room - only from someone the
+    // challenged player lists as a friend.
+    match /players/{owner}/challenges/{from} {
+      allow get: if isPlayer(owner) || isPlayer(from);
+      allow list: if isPlayer(owner);
+      allow create, update: if isPlayer(from) &&
+        exists(/databases/$(database)/documents/players/$(owner)/friends/$(from)) &&
+        request.resource.data.keys().hasOnly(['code', 'at', 'expireAt']) &&
+        isRoomCode(request.resource.data.code) &&
+        request.resource.data.at == request.time &&
+        expiresWithin(request.resource.data.expireAt, duration.value(1, 'h'));
+      allow delete: if isPlayer(owner) || isPlayer(from);
+    }
+
+    // An invitation link to become friends, for a week.
+    match /invites/{token} {
+      allow get: if signedIn();
+      allow create: if signedIn() && token.matches('[a-z2-9]{20}') &&
+        request.resource.data.keys().hasOnly(['from', 'at', 'expireAt']) &&
+        request.resource.data.from == request.auth.uid &&
+        request.resource.data.at == request.time &&
+        expiresWithin(request.resource.data.expireAt, duration.value(8, 'd'));
+      allow delete: if signedIn() && resource.data.from == request.auth.uid;
+    }
+
+    // The matchmaking queue: a player's entry, with the level they would
+    // like (null for any), which a newer player may claim once by writing
+    // a room's code into it - and the level it picked, and whose choice
+    // that was (ADR 0012; an older claimer writes neither).
+    match /queue/{uid} {
+      allow read: if signedIn();
+      allow create: if isPlayer(uid) &&
+        request.resource.data.keys().hasOnly(['since', 'seen', 'expireAt', 'level', 'claim']) &&
+        request.resource.data.since == request.time &&
+        request.resource.data.seen == request.time &&
+        request.resource.data.claim == null &&
+        isQueueLevel(request.resource.data.get('level', null)) &&
+        expiresWithin(request.resource.data.expireAt, duration.value(1, 'h'));
+      allow update: if (isPlayer(uid) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seen', 'expireAt', 'level']) &&
+          request.resource.data.seen == request.time &&
+          isQueueLevel(request.resource.data.get('level', null)) &&
+          expiresWithin(request.resource.data.expireAt, duration.value(1, 'h'))) ||
+        (signedIn() && request.auth.uid != uid &&
+          resource.data.claim == null &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claim']) &&
+          request.resource.data.claim.keys().hasOnly(['by', 'code', 'level', 'pick']) &&
+          request.resource.data.claim.by == request.auth.uid &&
+          isRoomCode(request.resource.data.claim.code) &&
+          isQueueLevel(request.resource.data.claim.get('level', null)) &&
+          request.resource.data.claim.get('pick', 'waiting') in ['waiting', 'claimer', 'random']);
+      allow delete: if isPlayer(uid);
+    }
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isQueueLevel(level) {
+      return level == null || (level is string && level.matches('^[a-z0-9-]{1,40}$'));
+    }
+
+    function isRoomCode(code) {
+      return code is string && code.matches('[A-HJ-NP-Z2-9]{6}');
+    }
+
+    function expiresWithin(expireAt, span) {
+      return expireAt is timestamp && expireAt < request.time + span;
+    }
+
+    function isProfile(data) {
+      return data.keys().hasOnly(['name', 'motto', 'avatar', 'shareStatus', 'updatedAt']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 24 &&
+        data.motto is string && data.motto.size() <= 80 &&
+        data.shareStatus is bool &&
+        data.updatedAt == request.time &&
+        isAvatar(data.avatar);
+    }
+
+    // A drawn bacterium, the URL of a Google account's photo, or a small
+    // uploaded image.
+    function isAvatar(avatar) {
+      return avatar is map && (
+        (avatar.kind == 'preset' && avatar.keys().hasOnly(['kind', 'id']) &&
+          avatar.id is int && avatar.id >= 0 && avatar.id < 12) ||
+        (avatar.kind == 'photo' && avatar.keys().hasOnly(['kind', 'url']) &&
+          avatar.url is string && avatar.url.size() <= 500 &&
+          avatar.url.matches('https://lh[0-9]+[.]googleusercontent[.]com/.+')) ||
+        (avatar.kind == 'image' && avatar.keys().hasOnly(['kind', 'data']) &&
+          avatar.data is string && avatar.data.size() <= 40000 &&
+          avatar.data.matches('data:image/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+')));
+    }
+
+    // A WebRTC session description, with its candidates.
+    function isDescription(value) {
+      return value is string && value.size() <= 20000;
+    }
+
+    function isPlayer(playerId) {
+      return request.auth != null && request.auth.uid == playerId;
+    }
+
+    // The value as JSON, kept well below the document limit of 1 MiB.
+    function isStoredValue(data) {
+      return data.keys().hasOnly(['json', 'updatedAt']) &&
+        data.json is string &&
+        data.json.size() <= 200000 &&
+        data.updatedAt == request.time;
+    }
+  }
+}

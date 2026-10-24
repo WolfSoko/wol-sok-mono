@@ -1,0 +1,302 @@
+<feat-lazy-bac-game-screen-header
+  [title]="'newGame.title' | t"
+  [backLabel]="backLabel()"
+  (back)="goBack()"
+/>
+
+<!--
+  Linear only until a mode is picked: nothing lies ahead of it before. Set
+  before the index, so picking a mode can move on at once.
+-->
+<mat-stepper
+  class="stepper"
+  [linear]="kind() === null"
+  [selectedIndex]="index()"
+  (selectionChange)="goTo($event.selectedIndex)"
+>
+  <!-- A step keeps its number, done or not - the steps differ per mode. -->
+  <ng-template matStepperIcon="edit" let-index="index">{{
+    index + 1
+  }}</ng-template>
+  <ng-template matStepperIcon="done" let-index="index">{{
+    index + 1
+  }}</ng-template>
+  @for (id of steps(); track id; let position = $index) {
+    <!-- Done once passed - and nothing is, before a mode is picked. -->
+    <mat-step
+      [label]="stepLabels[id] | t"
+      [completed]="kind() !== null && position < index()"
+    >
+      <!-- Only the step on screen is rendered - the map is not kept behind. -->
+      <ng-template matStepContent>
+        @if (step() === id) {
+          @switch (id) {
+            @case ("mode") {
+              <div class="modes">
+                @for (mode of modes(); track mode.kind) {
+                  <button
+                    type="button"
+                    class="mode"
+                    [class.current]="mode.kind === kind()"
+                    (click)="pickKind(mode.kind)"
+                  >
+                    <mat-icon aria-hidden="true">{{ mode.icon }}</mat-icon>
+                    <span class="mode-name">{{ mode.name | t }}</span>
+                    <span class="mode-blurb">{{ mode.blurb | t }}</span>
+                    <span class="mode-note">{{ mode.note }}</span>
+                  </button>
+                }
+              </div>
+            }
+            @case ("level") {
+              @if (kind() === "training") {
+                <section
+                  class="missions"
+                  [attr.aria-label]="'training.title' | t"
+                >
+                  <p class="missions-intro">
+                    {{ "training.pick" | t }}
+                    <span class="missions-progress">{{
+                      "training.progress"
+                        | t: { done: missionsDone(), total: missionCount }
+                    }}</span>
+                  </p>
+                  <ol class="mission-list">
+                    @for (each of missions(); track each.id) {
+                      <li>
+                        <button
+                          type="button"
+                          class="mission"
+                          [class.current]="each.id === missionId()"
+                          [class.done]="each.done"
+                          (click)="pickMission(each.id)"
+                        >
+                          <mat-icon class="mission-icon" aria-hidden="true">{{
+                            each.done ? "check_circle" : each.icon
+                          }}</mat-icon>
+                          <span class="mission-text">
+                            <span class="mission-name"
+                              >{{ each.number }} · {{ each.title | t }}</span
+                            >
+                            <span class="mission-goal">{{
+                              each.goal | t
+                            }}</span>
+                          </span>
+                          @if (each.done) {
+                            <span class="mission-badge">{{
+                              "training.done" | t
+                            }}</span>
+                          } @else if (each.upNext) {
+                            <span class="mission-badge up-next">{{
+                              "training.upNext" | t
+                            }}</span>
+                          }
+                        </button>
+                      </li>
+                    }
+                  </ol>
+                </section>
+              } @else {
+                <div class="level-step">
+                  <feat-lazy-bac-game-level-map
+                    [levelId]="levelId()"
+                    [medals]="medals()"
+                    [locks]="locks()"
+                    [laddered]="kind() === 'campaign'"
+                    [showMedals]="vsComputer()"
+                    [generator]="kind() !== 'campaign'"
+                    (pick)="pickLevel($event)"
+                  />
+                  <button
+                    mat-flat-button
+                    type="button"
+                    class="next"
+                    (click)="next()"
+                  >
+                    {{ "newGame.next" | t }}
+                    <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+                  </button>
+                </div>
+              }
+            }
+            @case ("start") {
+              <div class="start-step" [class.lobby-only]="!briefed()">
+                <!-- Online, the level is only told once there is a match to play it in. -->
+                @if (briefed()) {
+                  <section
+                    class="details"
+                    [attr.aria-label]="'newGame.briefing' | t"
+                    [style.--level-floor]="briefing()?.floor"
+                    [style.--level-edge]="briefing()?.edge"
+                  >
+                    @if (briefing(); as chosen) {
+                      @if (previews) {
+                        <feat-lazy-bac-game-level-preview
+                          class="details-preview"
+                          [levelId]="chosen.id"
+                          [title]="chosen.title"
+                          [size]="chosen.size"
+                          urgent
+                        />
+                      }
+                      <span class="details-number">{{ chosen.kicker }}</span>
+                      <h3 class="details-title">{{ chosen.title }}</h3>
+                      @if (chosen.facts.length > 0) {
+                        <ul class="facts">
+                          @for (fact of chosen.facts; track $index) {
+                            <li class="fact" [style.--fact-color]="fact.color">
+                              {{ fact.label }}
+                            </li>
+                          }
+                        </ul>
+                      }
+                      <p class="details-description">
+                        {{ chosen.description }}
+                      </p>
+                      @if (kind() === "daily") {
+                        <p class="note">{{ dailyNote() }}</p>
+                      }
+                      @if (mission(); as brief) {
+                        <dl class="mission-brief">
+                          <dt>{{ "training.goalLabel" | t }}</dt>
+                          <dd>{{ brief.goal | t }}</dd>
+                          <dt>{{ "training.tipLabel" | t }}</dt>
+                          <dd>{{ brief.tip | t }}</dd>
+                        </dl>
+                      }
+                    } @else {
+                      <span class="details-number">{{
+                        "newGame.endless.kicker" | t
+                      }}</span>
+                      <h3 class="details-title">
+                        {{ "newGame.endless.title" | t }}
+                      </h3>
+                      <p class="details-description">
+                        {{
+                          "newGame.endless.description"
+                            | t: { count: endlessLives }
+                        }}
+                      </p>
+                    }
+                  </section>
+                }
+
+                <section
+                  class="setup"
+                  [attr.aria-label]="'newGame.opponent' | t"
+                >
+                  @if (kind() === "online") {
+                    <feat-lazy-bac-game-online-lobby
+                      [lobby]="online()"
+                      [available]="onlineAvailable()"
+                      [colonyNames]="colonyNames()"
+                      (host)="createOnline()"
+                      (join)="joinOnline.emit($event)"
+                      (leave)="leaveOnline.emit()"
+                    />
+                  } @else if (mission(); as brief) {
+                    <span class="best-label">{{ "newGame.opponent" | t }}</span>
+                    <p class="opponent">
+                      <mat-icon aria-hidden="true">smart_toy</mat-icon>
+                      <span>{{ brief.opponent | t }}</span>
+                    </p>
+                  } @else if (vsComputer()) {
+                    <span class="best-label">{{ "newGame.opponent" | t }}</span>
+                    <mat-button-toggle-group
+                      class="difficulty-picker"
+                      [attr.aria-label]="'newGame.difficulty' | t"
+                      hideSingleSelectionIndicator
+                      [value]="difficulty()"
+                      (change)="difficultyChange.emit($event.value)"
+                    >
+                      @for (option of difficulties; track option.id) {
+                        <mat-button-toggle [value]="option.id">{{
+                          option.name | t
+                        }}</mat-button-toggle>
+                      }
+                    </mat-button-toggle-group>
+                    <p class="opponent">
+                      <mat-icon aria-hidden="true">smart_toy</mat-icon>
+                      <span>{{ difficultyTexts().description | t }}</span>
+                    </p>
+                    @if (enemyEvolution(); as evolved) {
+                      <p class="opponent enemy-evolution">
+                        <mat-icon aria-hidden="true">biotech</mat-icon>
+                        <span>{{ evolved }}</span>
+                      </p>
+                    }
+                    @if (standing(); as held) {
+                      <div class="best">
+                        <feat-lazy-bac-game-medallion
+                          [tier]="held.best"
+                          [size]="56"
+                          [difficulty]="difficulty()"
+                        />
+                        <div class="best-text">
+                          <span class="best-label">{{
+                            "newGame.yourBest"
+                              | t: { difficulty: (difficultyTexts().name | t) }
+                          }}</span>
+                          <span class="best-name">{{ held.bestName }}</span>
+                          <span class="goal">{{ held.goal }}</span>
+                        </div>
+                      </div>
+                    }
+                  } @else {
+                    <span class="best-label">{{ "common.series" | t }}</span>
+                    <mat-button-toggle-group
+                      class="series-picker"
+                      [attr.aria-label]="'common.series' | t"
+                      hideSingleSelectionIndicator
+                      [value]="seriesLength()"
+                      (change)="seriesLengthChange.emit($event.value)"
+                    >
+                      @for (option of seriesLengths; track option.id) {
+                        <mat-button-toggle [value]="option.id">{{
+                          option.name | t
+                        }}</mat-button-toggle>
+                      }
+                    </mat-button-toggle-group>
+                    <span class="best-label">{{
+                      "newGame.headStart.label" | t
+                    }}</span>
+                    <mat-button-toggle-group
+                      class="head-start-picker"
+                      [attr.aria-label]="'newGame.headStart.label' | t"
+                      hideSingleSelectionIndicator
+                      [value]="headStart()"
+                      (change)="headStartChange.emit($event.value)"
+                    >
+                      @for (option of headStarts(); track option.value) {
+                        <mat-button-toggle [value]="option.value">{{
+                          option.label
+                        }}</mat-button-toggle>
+                      }
+                    </mat-button-toggle-group>
+                    <span class="goal">{{ "newGame.headStart.note" | t }}</span>
+                    <p class="rivalry">
+                      <span class="best-label">{{ "common.rivalry" | t }}</span>
+                      <span class="rivalry-score">{{ rivalryLine() }}</span>
+                    </p>
+                  }
+                  @if (canStart()) {
+                    <button
+                      mat-flat-button
+                      type="button"
+                      class="start"
+                      [disabled]="!startReady()"
+                      (click)="startGame()"
+                    >
+                      <mat-icon>play_arrow</mat-icon>
+                      {{ startLabel() }}
+                    </button>
+                  }
+                </section>
+              </div>
+            }
+          }
+        }
+      </ng-template>
+    </mat-step>
+  }
+</mat-stepper>

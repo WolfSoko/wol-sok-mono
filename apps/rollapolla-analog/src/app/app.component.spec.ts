@@ -1,15 +1,23 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MatIconRegistry } from '@angular/material/icon';
 import { Title } from '@angular/platform-browser';
-import { RouterModule } from '@angular/router';
+import { provideRouter } from '@angular/router';
+import { AccountAdapterMock } from './adapter/account-adapter-mock.service';
+import { AdminAdapterMock } from './adapter/admin-adapter-mock.service';
 import { AppComponent } from './app.component';
+import { AccountPort } from './ports/account.port';
+import { AdminPort } from './ports/admin.port';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RouterModule, AppComponent],
-      providers: [provideZonelessChangeDetection()],
+      imports: [AppComponent],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: AccountPort, useClass: AccountAdapterMock },
+        { provide: AdminPort, useClass: AdminAdapterMock },
+      ],
     }).compileComponents();
   });
 
@@ -23,22 +31,6 @@ describe('AppComponent', () => {
     TestBed.createComponent(AppComponent);
     expect(TestBed.inject(Title).getTitle()).toEqual(
       'Polls for everyone | RollaPolla.com'
-    );
-  });
-
-  it('should register xTwitter icons to MatIconRegistry', async () => {
-    const addSvgIconSpy = vi.spyOn(
-      TestBed.inject(MatIconRegistry),
-      'addSvgIconLiteralInNamespace'
-    );
-    TestBed.createComponent(AppComponent);
-
-    expect(addSvgIconSpy).toHaveBeenCalledWith(
-      'fa',
-      'xTwitter',
-      expect.objectContaining({
-        changingThisBreaksApplicationSecurity: expect.stringContaining('<svg'),
-      })
     );
   });
 });

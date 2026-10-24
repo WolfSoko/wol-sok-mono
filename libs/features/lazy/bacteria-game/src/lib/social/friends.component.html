@@ -1,0 +1,100 @@
+@if (social.requests().length > 0) {
+  <span class="label">{{ "social.friends.requests" | t }}</span>
+  <ul class="people">
+    @for (caller of social.requests(); track caller.uid) {
+      <li class="person">
+        <feat-lazy-bac-game-avatar
+          [avatar]="caller.card.avatar"
+          [label]="caller.card.name"
+        />
+        <span class="who">
+          <span class="name">{{ caller.card.name }}</span>
+          <span class="motto">{{ "social.friends.wantsToBeFriends" | t }}</span>
+        </span>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="busy()"
+          (click)="accept(caller.uid)"
+        >
+          {{ "social.friends.accept" | t }}
+        </button>
+        <button
+          mat-icon-button
+          type="button"
+          [attr.aria-label]="'social.friends.decline' | t"
+          [disabled]="busy()"
+          (click)="decline(caller.uid)"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </li>
+    }
+  </ul>
+}
+
+<span class="label">{{ "social.friends.title" | t }}</span>
+@if (social.friends().length === 0) {
+  <p class="text">{{ "social.friends.none" | t }}</p>
+} @else {
+  <ul class="people">
+    @for (friend of social.friends(); track friend.uid) {
+      <li
+        class="person"
+        [attr.data-status]="
+          friend.mutual ? (friend.status ?? 'offline') : 'pending'
+        "
+      >
+        <span class="face">
+          <feat-lazy-bac-game-avatar
+            [avatar]="friend.card.avatar"
+            [label]="friend.card.name"
+          />
+          <span class="dot" aria-hidden="true"></span>
+        </span>
+        <span class="who">
+          <span class="name">{{ friend.card.name }}</span>
+          <span class="motto">{{ statusLine(friend) }}</span>
+        </span>
+        @if (friend.mutual && friend.status === "online") {
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="!canChallenge()"
+            (click)="challenge.emit(friend)"
+          >
+            <mat-icon>sports_kabaddi</mat-icon>
+            {{ "social.friends.challenge" | t }}
+          </button>
+        }
+        <button
+          mat-icon-button
+          type="button"
+          [attr.aria-label]="
+            'social.friends.remove' | t: { name: friend.card.name }
+          "
+          [disabled]="busy()"
+          (click)="remove(friend)"
+        >
+          <mat-icon>person_remove</mat-icon>
+        </button>
+      </li>
+    }
+  </ul>
+}
+
+<button
+  mat-button
+  type="button"
+  class="invite"
+  [disabled]="busy()"
+  (click)="invite()"
+>
+  <mat-icon>person_add</mat-icon>
+  {{ "social.friends.invite" | t }}
+</button>
+@if (note(); as note) {
+  <p class="note" role="status">
+    {{ note.key === null ? note.link : (note.key | t) }}
+  </p>
+}

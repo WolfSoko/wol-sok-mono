@@ -12,31 +12,41 @@ export class HomePage {
   }
 
   async expectTitleVisible() {
+    await expect(this.page.getByTestId('home-link')).toContainText(
+      'RollaPolla'
+    );
     await expect(
       this.page.getByRole('heading', {
-        name: 'RollaPolla',
+        level: 1,
+        name: 'Easy Polling for Everyone!',
       })
     ).toBeVisible();
-    await expect(
-      this.page.getByText('Easy Polling for Everyone!')
-    ).toBeVisible();
   }
 
-  async expectComingSoonVisible() {
-    await expect(this.page.getByTestId('coming-soon')).toContainText(
-      'Coming Soon!'
+  async expectIntroDescriptionVisible() {
+    await expect(this.page.getByTestId('intro-description')).toContainText(
+      'Create a poll'
     );
   }
 
-  async expectXLinkVisible() {
-    const twitterLink = this.page.getByRole('link', {
-      name: 'Follow',
-    });
-    await expect(twitterLink).toBeVisible();
-    expect(await twitterLink.getAttribute('href')).toContain(
-      'https://x.com/rollapolla'
+  async expectShareLinksVisible() {
+    const share = this.page.getByTestId('site-share');
+    await expect(share.getByText('Share RollaPolla')).toBeVisible();
+    await expect(share.getByTestId('copy-link')).toBeVisible();
+    // The server builds the links on the site's origin, the browser on its
+    // own once it has hydrated the box.
+    const homeUrl = new URL('/', this.page.url()).href;
+    const whatsApp = share.getByTestId('share-whatsapp');
+    await expect(whatsApp).toHaveAttribute(
+      'href',
+      /^https:\/\/wa\.me\/\?text=/
     );
-    await expect(twitterLink).toHaveAttribute('target', '_blank');
-    await expect(twitterLink).toHaveScreenshot();
+    // The link ends the message, and it is the home page, no deeper page.
+    await expect
+      .poll(async () => {
+        const href = (await whatsApp.getAttribute('href')) ?? '';
+        return new URL(href).searchParams.get('text')?.split('\n').at(-1);
+      })
+      .toBe(homeUrl);
   }
 }

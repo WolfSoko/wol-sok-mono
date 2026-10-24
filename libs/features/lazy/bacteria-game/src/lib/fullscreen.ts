@@ -74,30 +74,66 @@ export function exitFullscreen(doc: FullscreenDocument): boolean {
 }
 
 /**
- * Puts the element on the screen, or takes it off again when it is already
- * there. Returns whether a request was made at all, so a caller can tell that
- * the browser refused the feature outright.
+ * Asks the browser to put the element on the whole screen, and settles once
+ * the browser has answered.
  *
- * Failures are swallowed: a browser rejects the request when it does not come
- * from a user gesture, and that must not break the game loop.
+ * Whether it granted the request is not reported here but by the document:
+ * the `fullscreenchange` event, which fires for every way in and out. The
+ * browser refuses a request that does not come from a user gesture, and the
+ * API is missing altogether on iPhones; the caller then keeps its own
+ * full-viewport layout and asks again with the next gesture. The call itself
+ * happens synchronously, inside the gesture that triggered it.
  */
-export function toggleFullscreen(
-  doc: FullscreenDocument,
+export async function requestFullscreen(
   element: FullscreenElement | null | undefined
-): boolean {
-  if (isFullscreen(doc)) {
-    return exitFullscreen(doc);
+): Promise<void> {
+  const request =
+    element?.requestFullscreen ?? element?.webkitRequestFullscreen;
+  if (element == null || request == null) {
+    return;
   }
+  try {
+    await request.call(element);
+  } catch {
+    // Refused: no gesture to spend, or a policy against it.
+  }
+}
 
-  if (element == null) {
-    return false;
+/** The part of `screen.orientation` the lock helpers use. */
+export interface OrientationLockScreen {
+  orientation?: {
+    lock?: (orientation: 'landscape') => Promise<void>;
+    unlock?: () => void;
+  };
+}
+
+/**
+ * Keeps a phone in landscape while the arena fills its screen - the arena is
+ * more than twice as wide as it is tall, and two players sit along its long
+ * edges. Browsers only honour the lock in fullscreen, and desktops reject it;
+ * both are fine, so the failure is swallowed.
+ */
+export async function lockLandscape(
+  screen: OrientationLockScreen
+): Promise<void> {
+  const orientation = screen.orientation;
+  if (orientation?.lock == null) {
+    return;
   }
-  const request = element.requestFullscreen ?? element.webkitRequestFullscreen;
-  if (request == null) {
-    return false;
+  try {
+    await orientation.lock('landscape');
+  } catch {
+    // Not in fullscreen, or a screen that does not turn.
   }
-  void Promise.resolve(request.call(element)).catch(() => undefined);
-  return true;
+}
+
+/** Lets the phone rotate freely again. */
+export function unlockOrientation(screen: OrientationLockScreen): void {
+  try {
+    screen.orientation?.unlock?.();
+  } catch {
+    // Not locked, or not supported - nothing to undo either way.
+  }
 }
 
 /** A width and a height in CSS pixels. */

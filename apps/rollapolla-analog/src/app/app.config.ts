@@ -4,6 +4,8 @@ import {
   ApplicationConfig,
   provideZonelessChangeDetection,
 } from '@angular/core';
+import { FirebaseApp } from '@angular/fire/app';
+import { connectAuthEmulator, getAuth, provideAuth } from '@angular/fire/auth';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import {
   provideClientHydration,
@@ -28,6 +30,15 @@ export const appConfig: ApplicationConfig = {
       emulated: !environment.prod,
       host: 'localhost',
       port: 8080,
+    }),
+    provideAuth((injector) => {
+      const auth = getAuth(injector.get(FirebaseApp));
+      if (!environment.prod) {
+        connectAuthEmulator(auth, 'http://localhost:9099', {
+          disableWarnings: true,
+        });
+      }
+      return auth;
     }),
     providePortsAndAdapter(),
   ],

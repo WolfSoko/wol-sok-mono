@@ -1,26 +1,38 @@
-@if (countdown()?.countdownTo; as countdownTo) {
-  <div class="next-training-name">
-    als Nächstes: {{ countdownTo | trainingName }}
-  </div>
-}
-@if (trainingState() !== "stopped" || trainingState() !== "initial") {
-  @if (currentExercise(); as current) {
-    <span class="mat-title-large">
-      {{ current.name | trainingName }}
-      [{{ current.repetitionCount }}/{{ current.totalRepetitionCount }}]
-      @if (trainingState() === "paused") {
-        - pausiert
+<header class="now">
+  @if (current(); as current) {
+    <span class="phase-name">{{ current.name | trainingName }}</span>
+    <span class="counter">
+      Intervall {{ current.index + 1 }} / {{ current.count }}
+      @if (phase() === "paused") {
+        <span class="paused-chip">pausiert</span>
       }
     </span>
-    <mat-list class="stats-list">
-      <mat-list-item>
-        Gesamtzeit:
-        {{ current.elapsedTrainingTime | trainingTime }}
-      </mat-list-item>
-      <mat-list-item>
-        Intervallzeit: {{ current.elapsedDuration | trainingTime }} von
-        {{ current.duration | trainingTime }}
-      </mat-list-item>
-    </mat-list>
+  } @else {
+    <span class="phase-name">Gleich geht's los</span>
+    <span class="counter">Mach dich bereit</span>
   }
+</header>
+
+<ng-content></ng-content>
+
+<p class="next">
+  @if (countdown()?.countdownTo; as countdownTo) {
+    als Nächstes: {{ countdownTo | trainingName }}
+  }
+</p>
+
+@if (current(); as current) {
+  <div class="pace-tiles">
+    <mat-card appearance="outlined" class="pace-tile">
+      <span class="pace-tile-label">Gesamtzeit</span>
+      <span class="pace-tile-value">{{ elapsed() | trainingTime }}</span>
+    </mat-card>
+    <mat-card appearance="outlined" class="pace-tile">
+      <span class="pace-tile-label">Intervallzeit</span>
+      <span class="pace-tile-value">{{ current.elapsed | trainingTime }}</span>
+      <span class="pace-tile-label"
+        >von {{ current.duration | trainingTime }}</span
+      >
+    </mat-card>
+  </div>
 }

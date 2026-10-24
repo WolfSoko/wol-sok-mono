@@ -1,20 +1,22 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { MatListModule } from '@angular/material/list';
+import { MatCardModule } from '@angular/material/card';
+import { Milliseconds } from '../../shared/model/constants/time-utils';
 import { CountdownModel } from '../../shared/model/training/countdown.model';
-import { CurrentExerciseViewModel } from '../../shared/model/training/current-exercise-view.model';
-import { TrainingRunnerState } from '../../shared/training-runner/training-runner.state';
+import { IntervalView, RunPhase } from '../../shared/training-run/training-run';
 import { TrainingNamePipe } from '../../shared/ui/training-name.pipe';
 import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 
+/** Frames the timer of a running Trainingslauf: what runs now, what comes next. */
 @Component({
   selector: 'pace-training-live-state',
   styleUrl: 'training-live-state.component.scss',
   templateUrl: 'training-live-state.component.html',
-  imports: [MatListModule, TrainingTimePipe, TrainingNamePipe],
+  imports: [MatCardModule, TrainingTimePipe, TrainingNamePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrainingLiveStateComponent {
-  countdown = input<CountdownModel | null>();
-  trainingState = input.required<TrainingRunnerState>();
-  currentExercise = input<CurrentExerciseViewModel>();
+  public readonly countdown = input<CountdownModel | null>();
+  public readonly phase = input.required<RunPhase>();
+  public readonly current = input<IntervalView>();
+  public readonly elapsed = input<Milliseconds>();
 }

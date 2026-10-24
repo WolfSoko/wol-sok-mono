@@ -1,0 +1,56 @@
+<section class="hero">
+  <div class="dish" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <p class="eyebrow">Wolfram Sokollek · wolsok.de</p>
+  <h1>Games, apps and wild experiments, <em>built for the web.</em></h1>
+  <p class="lead">
+    I build things in Angular that run fast in the browser: a GPU-powered
+    strategy game, fitness and running apps, polls, shaders, neural networks and
+    fractals. Everything here is live, and most of it is open source.
+  </p>
+  <nav class="jump" aria-label="Sections">
+    <a href="#apps">Apps</a>
+    <a href="#experiments">Experiments</a>
+    <a href="#open-source">Open source</a>
+  </nav>
+</section>
+
+<section id="apps" aria-labelledby="apps-title">
+  <h2 id="apps-title">Apps</h2>
+  <p class="intro">Each one on its own domain, ready to use.</p>
+  <div class="grid">
+    @for (project of apps; track project.name) {
+      <wolsok-project-card [project]="project" />
+    }
+  </div>
+</section>
+
+<section id="experiments" aria-labelledby="experiments-title">
+  <h2 id="experiments-title">Experiments</h2>
+  <p class="intro">
+    Interactive demos in the
+    <a href="https://angularexamples.wolsok.de/">Angular Examples</a> lab:
+    graphics, simulations and machine learning, all in the browser.
+  </p>
+  <div class="grid small">
+    @for (project of experiments; track project.name) {
+      <wolsok-project-card [project]="project" />
+    }
+  </div>
+</section>
+
+<section id="open-source" aria-labelledby="open-source-title">
+  <h2 id="open-source-title">Open source</h2>
+  <p class="intro">
+    Everything above lives in one Nx monorepo:
+    <a href="https://github.com/WolfSoko/wol-sok-mono"
+      >github.com/WolfSoko/wol-sok-mono</a
+    >. Two pieces of it are published on npm.
+  </p>
+  <div class="grid">
+    @for (project of packages; track project.name) {
+      <wolsok-project-card [project]="project" />
+    }
+  </div>
+</section>

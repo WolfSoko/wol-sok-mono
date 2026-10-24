@@ -1,7 +1,19 @@
 <div class="perceptron-container">
-  <mat-card>
+  <mat-card appearance="raised" class="data-card">
     <mat-card-header>
-      <mat-card-subtitle>Data</mat-card-subtitle>
+      <mat-card-title>A multi layer net</mat-card-title>
+      <mat-card-subtitle>
+        A hidden layer of {{ perceptronPerLayer[0] }} sigmoid perceptrons feeds
+        one output perceptron, trained with back propagation.
+        <br />
+        The generated points are class 1 inside the circle, a border no single
+        perceptron can learn.
+        <br />
+        The background is a heatmap of the network output, the dark line is
+        where it crosses 0.5.
+        <br />
+        Click left to add points of class 1, right for class 2.
+      </mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
       <feat-lazy-neural-networks-data-view
@@ -12,55 +24,20 @@
         (dataViewClicked)="addPoint($event)"
         [showLinearDivider]="false"
       />
-    </mat-card-content>
-  </mat-card>
-  <mat-card appearance="raised" class="inputLayer">
-    <mat-card-header>
-      <mat-card-subtitle>Input layer</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
       <div>
         Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}
       </div>
-      @for (perceptron of inputPerceptron; track perceptron) {
-        <feat-lazy-neural-networks-perceptron
-          [perceptron]="perceptron"
-          [canvasWidth]="200"
-          [canvasHeight]="200"
-        />
-      }
-    </mat-card-content>
-  </mat-card>
-  <mat-card appearance="raised" class="hiddenLayer">
-    <mat-card-header>
-      <mat-card-subtitle>Hidden layer</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <div>
-        Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}
-      </div>
-      @for (perceptron of hiddenPerceptron; track perceptron) {
-        <feat-lazy-neural-networks-perceptron
-          [perceptron]="perceptron"
-          [canvasWidth]="200"
-          [canvasHeight]="200"
-        />
-      }
-    </mat-card-content>
-  </mat-card>
-  <mat-card appearance="raised" class="outputLayer">
-    <mat-card-header>
-      <mat-card-subtitle>Output layer</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <feat-lazy-neural-networks-perceptron
-        [perceptron]="outputPerceptron"
-        [canvasWidth]="200"
-        [canvasHeight]="200"
-      />
     </mat-card-content>
   </mat-card>
   <feat-lazy-neural-networks-brain-settings
     [perceptronLayers]="perceptronPerLayer"
   />
+  <mat-card appearance="raised" class="network-card">
+    <mat-card-header>
+      <mat-card-title>The network</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <feat-lazy-neural-networks-network-view [canvasWidth]="560" />
+    </mat-card-content>
+  </mat-card>
 </div>

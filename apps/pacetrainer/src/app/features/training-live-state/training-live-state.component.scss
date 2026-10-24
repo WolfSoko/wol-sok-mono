@@ -2,9 +2,44 @@
   display: flex;
   flex-flow: column;
   align-items: center;
-  justify-content: center;
+  gap: 16px;
+  width: 100%;
 }
 
-.next-training-name {
-  height: 1lh;
+.now {
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.phase-name {
+  font: var(--mat-sys-display-small);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--pace-accent, var(--mat-sys-on-surface));
+}
+
+.counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.paused-chip {
+  padding: 2px 10px;
+  border-radius: var(--mat-sys-corner-full);
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  font: var(--mat-sys-label-large);
+}
+
+.next {
+  margin: 0;
+  min-height: 1lh;
+  font: var(--mat-sys-title-medium);
+  color: var(--mat-sys-on-surface-variant);
 }

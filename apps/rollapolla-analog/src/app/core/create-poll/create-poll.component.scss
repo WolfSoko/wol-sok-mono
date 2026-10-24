@@ -1,3 +1,110 @@
 :host {
   display: block;
 }
+
+.card {
+  padding: 0.75rem 0.5rem 0.5rem;
+  box-shadow: 0 24px 48px -24px
+    color-mix(in srgb, var(--mat-sys-primary) 35%, transparent);
+}
+
+.create-poll-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1.25rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.options-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0;
+  font: var(--mat-sys-title-small);
+}
+
+.options-count {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-secondary-container);
+  background: var(--mat-sys-secondary-container);
+}
+
+.option-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+// Centre the badge and the remove button on the 56px tall outline field.
+.option-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  margin-top: 0.75rem;
+  border-radius: 50%;
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-primary-container);
+  background: var(--mat-sys-primary-container);
+}
+
+.remove-button {
+  flex: none;
+  margin-top: 0.25rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.submit-button {
+  min-width: 10rem;
+}
+
+.submit-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.error {
+  color: var(--mat-sys-error);
+  margin: 0;
+}
+
+.visibility {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-top: 0.25rem;
+}
+
+.visibility-hint {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}

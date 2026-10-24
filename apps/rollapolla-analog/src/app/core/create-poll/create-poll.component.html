@@ -1,1 +1,164 @@
-<p>create-poll works!</p>
+<mat-card appearance="outlined" class="card">
+  <!-- no @if around title and subtitle: it would keep them out of their slots -->
+  <mat-card-header>
+    <mat-card-title>{{
+      poll() ? "Edit your poll" : "Create a poll"
+    }}</mat-card-title>
+    <mat-card-subtitle data-testid="create-poll-subtitle">
+      @if (poll(); as poll) {
+        Saving starts the poll over:
+        {{
+          poll.totalVotes === 1
+            ? "its 1 vote is"
+            : "all " + poll.totalVotes + " votes are"
+        }}
+        reset and everybody can vote again.
+      } @else {
+        Ask a question, share the link.
+      }
+    </mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <form
+      class="create-poll-form"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+      data-testid="create-poll-form"
+    >
+      <mat-form-field class="full-width">
+        <mat-label>Question</mat-label>
+        <input
+          matInput
+          formControlName="question"
+          data-testid="poll-question-input"
+          placeholder="What should we have for lunch?"
+        />
+        <mat-hint align="end">
+          {{ form.controls.question.value.length }}/{{ maxQuestionLength }}
+        </mat-hint>
+        @if (form.controls.question.hasError("required")) {
+          <mat-error>Please ask a question</mat-error>
+        } @else if (form.controls.question.errors?.["minlength"]; as error) {
+          <mat-error>
+            Minimal length is {{ error.requiredLength }} characters
+          </mat-error>
+        } @else if (form.controls.question.errors?.["maxlength"]; as error) {
+          <mat-error>
+            Maximum length is {{ error.requiredLength }} characters
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <fieldset formArrayName="options" class="options">
+        <legend class="options-legend">
+          Answers
+          <span class="options-count"
+            >{{ options.length }}/{{ maxOptions }}</span
+          >
+        </legend>
+        @for (option of options.controls; track option; let i = $index) {
+          <div class="option-row">
+            <span class="option-badge" aria-hidden="true">{{ i + 1 }}</span>
+            <mat-form-field class="full-width">
+              <mat-label>Option {{ i + 1 }}</mat-label>
+              <input
+                matInput
+                [formControlName]="i"
+                [attr.data-testid]="'poll-option-input-' + i"
+                [maxlength]="maxOptionLength"
+              />
+              @if (option.invalid) {
+                <mat-error>Please enter an option</mat-error>
+              }
+            </mat-form-field>
+            <button
+              mat-icon-button
+              type="button"
+              class="remove-button"
+              [disabled]="options.length <= minOptions"
+              (click)="removeOption(i)"
+              [attr.aria-label]="'Remove option ' + (i + 1)"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+      </fieldset>
+
+      <div class="visibility">
+        <mat-button-toggle-group
+          formControlName="listed"
+          aria-label="Who can find the poll"
+          hideSingleSelectionIndicator
+        >
+          <mat-button-toggle [value]="true">
+            <mat-icon>public</mat-icon>
+            Public
+          </mat-button-toggle>
+          <mat-button-toggle
+            [value]="false"
+            data-testid="poll-visibility-private"
+          >
+            <mat-icon>lock</mat-icon>
+            Private
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+        <p class="visibility-hint" data-testid="poll-visibility-hint">
+          {{
+            form.controls.listed.value
+              ? "Shown on the home page and in search."
+              : privatePollHint
+          }}
+        </p>
+      </div>
+
+      <div class="actions">
+        <button
+          mat-button
+          type="button"
+          [disabled]="options.length >= maxOptions"
+          (click)="addOption()"
+          data-testid="add-option-button"
+        >
+          <mat-icon>add</mat-icon>
+          Add option
+        </button>
+        <span class="submit-buttons">
+          @if (poll()) {
+            <button
+              mat-button
+              type="button"
+              (click)="editDone.emit()"
+              data-testid="cancel-edit-button"
+            >
+              Cancel
+            </button>
+          }
+          <button
+            mat-flat-button
+            type="submit"
+            class="submit-button"
+            [disabled]="form.invalid || saving()"
+            [attr.data-testid]="
+              poll() ? 'save-poll-button' : 'create-poll-button'
+            "
+          >
+            <!-- one element per @if, so the icons land in their button slots -->
+            @if (poll()) {
+              <mat-icon>restart_alt</mat-icon>
+            }
+            {{ poll() ? "Save and reset votes" : "Create poll" }}
+            @if (!poll()) {
+              <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+            }
+          </button>
+        </span>
+      </div>
+      @if (saveFailed()) {
+        <p class="error" role="alert" data-testid="create-poll-error">
+          Could not save the poll. Please try again.
+        </p>
+      }
+    </form>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,89 @@
+{
+  "name": "portfolio",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "wolsok",
+  "sourceRoot": "apps/portfolio/src",
+  "tags": ["app", "type:portfolio"],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{workspaceRoot}/dist/apps/portfolio"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": {
+          "base": "dist/apps/portfolio",
+          "browser": ""
+        },
+        "browser": "apps/portfolio/src/main.ts",
+        "tsConfig": "apps/portfolio/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/portfolio/public"
+          }
+        ],
+        "styles": ["apps/portfolio/src/styles.scss"],
+        "server": "apps/portfolio/src/main.server.ts",
+        "outputMode": "static"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      }
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "port": 4210
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "portfolio:build:production"
+        },
+        "development": {
+          "buildTarget": "portfolio:build:development"
+        }
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/portfolio/jest.config.cts",
+        "tsConfig": "apps/portfolio/tsconfig.spec.json"
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "dependsOn": ["build"],
+      "options": {
+        "staticFilePath": "dist/apps/portfolio",
+        "port": 4210,
+        "watch": false
+      }
+    }
+  }
+}

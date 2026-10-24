@@ -4,20 +4,18 @@
   (keyup)="$event.ctrlKey && $event.key === 'Enter' ? addMessage() : false"
 >
   <mat-form-field class="form-field">
-    <mat-label>Most fun poll</mat-label>
+    <mat-label>Your message</mat-label>
     <textarea
       data-testid="message-input"
-      rows="3"
+      rows="4"
       matInput
       formControlName="newMessage"
       name="newMessage"
-      placeholder="Please share your thoughts"
+      placeholder="Which poll should we run next?"
     ></textarea>
     <mat-hint align="start"
-      ><span
-        >Ctrl+Enter <mat-icon class="input-icon" fontIcon="input"></mat-icon
-      ></span>
-    </mat-hint>
+      ><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send</mat-hint
+    >
     <mat-hint align="end"
       >{{
         form.controls.newMessage.getRawValue().length + "/" + maxMessageLength()
@@ -42,12 +40,12 @@
     <button
       type="submit"
       [disabled]="form.invalid"
-      mat-button
+      mat-flat-button
       class="submit-button"
       title="Add message"
     >
       Send message
-      <mat-icon>add</mat-icon>
+      <mat-icon iconPositionEnd>send</mat-icon>
     </button>
   </div>
 </form>

@@ -1,167 +1,403 @@
-<mat-toolbar color="primary">
-  <mat-toolbar-row>
-    <h1>Bacteria War Game</h1>
-    <span class="toolbar-spacer"></span>
-    @if (fullscreenSupported()) {
-      <button
-        mat-icon-button
-        type="button"
-        [attr.aria-label]="fullscreen() ? 'Leave fullscreen' : 'Fullscreen'"
-        [matTooltip]="fullscreen() ? 'Leave fullscreen (F)' : 'Fullscreen (F)'"
-        (click)="toggleFullscreen()"
-      >
-        <mat-icon>{{
-          fullscreen() ? "fullscreen_exit" : "fullscreen"
-        }}</mat-icon>
-      </button>
-    }
-  </mat-toolbar-row>
-</mat-toolbar>
-<mat-card appearance="raised">
-  <mat-card-header>
-    <mat-card-title>
-      This is a game is for 2 players.<br />
-      Surround the other colony to eat it. Well fed bacteria divide, and the
-      green nutrients supercharge whoever grabs them first.<br />
-      Orange uses <b>WASD</b>, Blue uses the <b>arrow keys</b>, <b>P</b> pauses,
-      <b>F</b> goes fullscreen.<br />
-      On a touchscreen just drag the crosshairs - one finger each, so both
-      players can share the screen.
-    </mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <div class="level-picker">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Level</mat-label>
-        <mat-select
-          [value]="level().id"
-          [disabled]="(isRunning$ | async) ?? false"
-          (selectionChange)="selectLevel($event.value)"
-        >
-          @for (option of levels; track option.id) {
-            <mat-option [value]="option.id">{{ option.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <p class="level-description">{{ level().description }}</p>
+<!--
+  The stage, embedded in the page or laid over the whole viewport while
+  fullscreen - the same either way. Its children are placed on a grid: the
+  arena in the middle and, per human player, a joystick zone and a boost pad
+  at that player's edge, turned towards them - the stylesheet has the seating
+  plan.
+-->
+<div
+  #arenaStage
+  class="stage"
+  [class.fullscreen]="fullscreen()"
+  [style.--stage-top.px]="stageTop()"
+  [class.solo]="humanStats().length < 2"
+  [style.--arena-border]="arenaBorder()"
+  [style.--arena-rim]="arenaRim()"
+>
+  @for (colony of humanStats(); track colony.id; let seat = $index) {
+    <feat-lazy-bac-game-joystick
+      class="stick"
+      [attr.inert]="screenOpen() ? '' : null"
+      [style.grid-area]="'stick-' + seat"
+      [attr.data-seat]="seat"
+      [color]="colony.css"
+      [label]="colony.name"
+      [disabled]="!running()"
+      (steer)="steer(colony.id, $event)"
+    />
+    <div
+      class="seat"
+      [class.armed]="colony.weapon !== null"
+      [attr.inert]="screenOpen() ? '' : null"
+      [style.grid-area]="'boost-' + seat"
+      [attr.data-seat]="seat"
+    >
+      <feat-lazy-bac-game-boost-pad
+        [colony]="colony"
+        [disabled]="!running()"
+        (boost)="boost(colony.id)"
+      />
+      @if (colony.weapon; as weapon) {
+        <feat-lazy-bac-game-weapon-pad
+          [weapon]="weapon"
+          [disabled]="!running()"
+          [over]="matchOver()"
+          (fire)="fireWeapon(colony.id)"
+        />
+      }
     </div>
+  }
 
-    @if (state()) {
-      <ng-container *ngTemplateOutlet="scoreboard"></ng-container>
+  @if (running() && !paused() && missionGoal(); as goal) {
+    <p class="mission-goal" role="status">
+      <mat-icon aria-hidden="true">school</mat-icon>
+      {{ goal | t }}
+    </p>
+  }
+
+  @if (running() && !paused() && waitingForPeer()) {
+    <p class="peer-wait" role="status">
+      {{ "stage.waitingForPeer" | t }}
+    </p>
+  }
+
+  @if (panel(); as open) {
+    @if (open === "pause" || open === "over") {
+      <div
+        class="stage-panel"
+        [style.--bw-player]="colonyCss()[0]"
+        [style.--bw-opponent]="colonyCss()[1]"
+        [style.--bw-on-player]="onPlayerColor()"
+      >
+        <mat-card class="panel-card" appearance="raised">
+          @if (open === "pause") {
+            <mat-card-content class="menu">
+              <h2 class="panel-title">{{ "stage.pause.title" | t }}</h2>
+              <button
+                mat-flat-button
+                color="primary"
+                type="button"
+                class="menu-button"
+                (click)="togglePause()"
+              >
+                <mat-icon>play_arrow</mat-icon>
+                {{ "stage.pause.resume" | t }}
+              </button>
+              @if (canRestart()) {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="menu-button"
+                  (click)="startGame()"
+                >
+                  <mat-icon>replay</mat-icon>
+                  {{ "stage.pause.restart" | t }}
+                </button>
+              }
+              <button
+                mat-stroked-button
+                type="button"
+                class="menu-button"
+                (click)="show('settings')"
+              >
+                <mat-icon>tune</mat-icon>
+                {{ "settings.title" | t }}
+              </button>
+              <button
+                mat-stroked-button
+                type="button"
+                class="menu-button"
+                (click)="quitToMenu()"
+              >
+                <mat-icon>home</mat-icon>
+                {{ "stage.pause.quit" | t }}
+              </button>
+            </mat-card-content>
+          } @else {
+            <mat-card-content>
+              <feat-lazy-bac-game-winner
+                [upcomingLock]="upcomingLock()"
+                (action)="onMatchEnd($event)"
+              />
+            </mat-card-content>
+          }
+        </mat-card>
+      </div>
     } @else {
-      <mat-spinner>Loading</mat-spinner>
+      <!-- The menu screens fill the stage, over a drifting swarm. -->
+      <div
+        class="stage-panel screens"
+        [style.--bw-player]="colonyCss()[0]"
+        [style.--bw-opponent]="colonyCss()[1]"
+        [style.--bw-on-player]="onPlayerColor()"
+      >
+        <feat-lazy-bac-game-swarm [colors]="colonyRgb()" />
+        <feat-lazy-bac-game-social-notices
+          class="social-notices"
+          [invite]="inviteOffer()"
+          [canPlay]="onlineLobby().phase === 'idle'"
+          (play)="playChallenge($event)"
+          (inviteDone)="inviteOffer.set(null)"
+        />
+        @switch (open) {
+          @case ("menu") {
+            <feat-lazy-bac-game-main-menu
+              class="screen"
+              [campaign]="campaign.summary()"
+              [sound]="settings.sound()"
+              (newGame)="openNewGame()"
+              (continueCampaign)="continueCampaign()"
+              [missionsDone]="progress.missionsDone()"
+              (training)="openTraining()"
+              (open)="show($event)"
+              (soundChange)="setSound($event)"
+              [fullscreen]="fullscreen()"
+              (fullscreenChange)="setFullscreen($event)"
+              [challenge]="challengeLevel()"
+              [friendsAvailable]="social.available"
+              [friendRequests]="social.requests().length"
+              [evolveDna]="evolution.canEvolve() ? evolution.dna() : 0"
+              [colonyDna]="evolution.skinDna()"
+              (fightChallenge)="fightChallenge()"
+              (dismissChallenge)="dismissChallenge()"
+            />
+          }
+          @case ("new-game") {
+            <feat-lazy-bac-game-new-game
+              class="screen"
+              [entry]="newGameEntry()"
+              [difficulty]="difficulty()"
+              [levelId]="choiceLevelId()"
+              [medals]="medals()"
+              [locks]="choiceLocks()"
+              [openLevels]="openLevels()"
+              [seriesLength]="seriesLength()"
+              [headStart]="headStart()"
+              [colonyNames]="colorNames()"
+              [rivalry]="rivalry()"
+              [daily]="dailyCard()"
+              [endlessBest]="progress.endlessBest()"
+              [missionId]="missionId()"
+              [training]="progress.training()"
+              (missionChange)="pickMission($event)"
+              [online]="onlineLobby()"
+              [onlineAvailable]="onlineAvailable"
+              (hostOnline)="hostOnline()"
+              (joinOnline)="joinOnline($event)"
+              (leaveOnline)="leaveOnline()"
+              (kindChange)="setPlayKind($event)"
+              (levelChange)="selectLevel($event)"
+              (difficultyChange)="selectDifficulty($event)"
+              (seriesLengthChange)="selectSeriesLength($event)"
+              (headStartChange)="selectHeadStart($event)"
+              (start)="startNewGame($event)"
+              (back)="show('menu')"
+            />
+          }
+          @case ("colony") {
+            <feat-lazy-bac-game-my-colony
+              class="screen"
+              [mode]="mode()"
+              [colors]="colors()"
+              [locked]="running()"
+              [colorLocks]="colorLocks()"
+              (colorChange)="selectColor($event)"
+              (back)="show('menu')"
+            />
+          }
+          @case ("profile") {
+            <feat-lazy-bac-game-profile
+              class="screen"
+              [medals]="medals()"
+              [achievements]="achievements()"
+              [totals]="totals()"
+              [xp]="xp()"
+              (back)="show('menu')"
+            />
+          }
+          @case ("friends") {
+            <feat-lazy-bac-game-friends-screen
+              class="screen"
+              [canChallenge]="onlineLobby().phase === 'idle'"
+              (challenge)="challengeFriend($event)"
+              (back)="show('menu')"
+            />
+          }
+          @case ("settings") {
+            <feat-lazy-bac-game-settings
+              class="screen"
+              [locked]="running()"
+              [arenaSize]="arena()"
+              [nativeFullscreenSupported]="nativeFullscreenSupported()"
+              [nativeFullscreen]="nativeFullscreen()"
+              [backLabel]="settingsBackLabel()"
+              [vibrationSupported]="vibrationSupported"
+              (soundChange)="setSound($event)"
+              (effectsChange)="setEffects($event)"
+              (effectsVolumePreview)="sound.previewEffects()"
+              (vibrationChange)="setVibration($event)"
+              [arenaLocks]="arenaLocks()"
+              [activeArena]="campaign.activeArena()"
+              (nativeFullscreenChange)="setNativeFullscreen($event)"
+              (back)="show('menu')"
+            />
+          }
+          @case ("evolution") {
+            <feat-lazy-bac-game-evolution
+              class="screen"
+              [color]="colonyRgb()[0]"
+              (back)="show('menu')"
+            />
+          }
+          @case ("help") {
+            <feat-lazy-bac-game-help
+              class="screen"
+              [colorNames]="colorNames()"
+              (back)="show('menu')"
+            />
+          }
+        }
+      </div>
     }
+  }
 
-    <div #arenaStage class="canvas-container" [class.fullscreen]="fullscreen()">
-      @if (fullscreen()) {
-        <div class="arena-hud">
-          <span class="hud-level">{{ level().name }}</span>
-          <ng-container *ngTemplateOutlet="scoreboard"></ng-container>
-          <span class="hud-actions">
+  <div class="center" [attr.inert]="screenOpen() ? '' : null">
+    @if (!screenOpen()) {
+      <div class="stage-bar">
+        <span class="hud-level">{{ levelName() | gameText }}</span>
+        <span class="game-time" [class.running-out]="timeRunningOut()"
+          ><span class="cdk-visually-hidden">{{ clockLabel() }}: </span
+          >{{ clockText() }}</span
+        >
+        <span class="hud-colonies">
+          @for (colony of stats(); track colony.id) {
+            <span class="hud-colony" [class.boosting]="colony.boosting">
+              <span class="colony-name" [style.color]="colony.css">{{
+                colonyName(colony.name)
+              }}</span>
+              <span class="colony-count">{{ colony.bacterias }}</span>
+              @if (goal(); as goal) {
+                <span class="colony-held"
+                  ><mat-icon aria-hidden="true">{{ goal.icon }}</mat-icon
+                  >{{ colony[goal.of] }}/{{ goal.target
+                  }}<span class="cdk-visually-hidden">
+                    {{ goal.label | t }}</span
+                  ></span
+                >
+              }
+            </span>
+          }
+          @let neutral = neutralCount();
+          @if (neutral !== null) {
+            <span class="hud-colony neutral">
+              <span class="colony-name" [style.color]="neutralCss">{{
+                "game.players.neutral" | t
+              }}</span>
+              <span class="colony-count">{{ neutral }}</span>
+            </span>
+          }
+        </span>
+        <span class="hud-actions">
+          <button
+            mat-icon-button
+            type="button"
+            [attr.aria-label]="
+              (settings.sound() ? 'common.mute' : 'common.unmute') | t
+            "
+            [matTooltip]="
+              (settings.sound() ? 'common.mute' : 'common.unmute') | t
+            "
+            (click)="setSound(!settings.sound())"
+          >
+            <mat-icon>{{
+              settings.sound() ? "volume_up" : "volume_off"
+            }}</mat-icon>
+          </button>
+          @if (running() && !paused()) {
             <button
               mat-icon-button
               type="button"
-              [attr.aria-label]="(isPaused$ | async) ? 'Resume' : 'Pause'"
-              matTooltip="Pause (P)"
-              [disabled]="(isRunning$ | async) === false"
+              [attr.aria-label]="'stage.hud.pause' | t"
+              [matTooltip]="
+                'common.withKey'
+                  | t: { label: ('stage.hud.pause' | t), key: 'P' }
+              "
               (click)="togglePause()"
             >
-              <mat-icon>{{
-                (isPaused$ | async) ? "play_arrow" : "pause"
-              }}</mat-icon>
+              <mat-icon>pause</mat-icon>
             </button>
-            <button
-              mat-icon-button
-              type="button"
-              aria-label="Start"
-              matTooltip="Start"
-              [disabled]="(isRunning$ | async) ?? false"
-              (click)="startGame()"
-            >
-              <mat-icon>replay</mat-icon>
-            </button>
-            <button
-              mat-icon-button
-              type="button"
-              aria-label="Leave fullscreen"
-              matTooltip="Leave fullscreen (F)"
-              (click)="toggleFullscreen()"
-            >
-              <mat-icon>fullscreen_exit</mat-icon>
-            </button>
-          </span>
-        </div>
-      }
-      <div wsThanos class="thanos-container">
-        <ws-shared-ui-show-fps
-          [show]="true"
-          [fps]="(fps$ | async) ?? 0"
-        ></ws-shared-ui-show-fps>
-        <canvas
-          #canvasElement
-          id="canvasElement"
-          width="{{ width }}"
-          height="{{ height }}"
-          [style.width.px]="canvasSize()?.width"
-          [style.height.px]="canvasSize()?.height"
+          }
+          <button
+            mat-icon-button
+            type="button"
+            [attr.aria-label]="
+              (fullscreen() ? 'common.exitFullscreen' : 'common.fullscreen') | t
+            "
+            [matTooltip]="
+              'common.withKey'
+                | t
+                  : {
+                      label:
+                        ((fullscreen()
+                          ? 'common.exitFullscreen'
+                          : 'common.fullscreen'
+                        ) | t),
+                      key: 'F',
+                    }
+            "
+            (click)="setFullscreen(!fullscreen())"
+          >
+            <mat-icon>{{
+              fullscreen() ? "fullscreen_exit" : "fullscreen"
+            }}</mat-icon>
+          </button>
+        </span>
+      </div>
+    }
+    <div
+      wsThanos
+      class="thanos-container"
+      [wsThanosOptions]="thanosOptions()"
+      (wsSharedUiElemResized)="onArenaBoxResized($event)"
+      (wheel)="onWheel($event)"
+    >
+      <ws-shared-ui-show-fps
+        [show]="settings.showFps()"
+        [fps]="fps()"
+      ></ws-shared-ui-show-fps>
+      <div class="arena-frame">
+        <feat-lazy-bac-game-arena-view
+          canvasId="canvasElement"
+          [layout]="arenaLayout()"
+          [scene]="arenaScene"
+          [theme]="theme()"
+          [zones]="zones()"
+          [size]="canvasSize()"
+          (painterChange)="onPainterChange($event)"
           (pointerdown)="onPointerDown($event)"
           (pointermove)="onPointerMove($event)"
           (pointerup)="onPointerUp($event)"
           (pointercancel)="onPointerUp($event)"
-        >
-        </canvas>
+        ></feat-lazy-bac-game-arena-view>
+        @if (settings.ambience()) {
+          <!-- Bubbles and mist over the arena; the pointer goes through it. -->
+          <canvas
+            #ambienceElement
+            class="ambience"
+            aria-hidden="true"
+            [style.width.px]="canvasSize()?.width"
+            [style.height.px]="canvasSize()?.height"
+          ></canvas>
+        }
+        @if (showMinimap()) {
+          <canvas
+            #minimapElement
+            class="minimap"
+            width="240"
+            aria-hidden="true"
+          ></canvas>
+        }
       </div>
     </div>
-  </mat-card-content>
-  <mat-card-actions>
-    <button
-      mat-raised-button
-      (click)="startGame()"
-      [disabled]="isRunning$ | async"
-    >
-      Start
-    </button>
-    <button
-      mat-raised-button
-      (click)="togglePause()"
-      [disabled]="(isRunning$ | async) === false"
-    >
-      {{ (isPaused$ | async) ? "Resume" : "Pause" }}
-    </button>
-    <button
-      mat-raised-button
-      (click)="resetGame()"
-      [disabled]="(isRunning$ | async) === false"
-    >
-      Reset
-    </button>
-  </mat-card-actions>
-</mat-card>
-
-<!-- Rendered both in the page and in the fullscreen overlay. -->
-<ng-template #scoreboard>
-  <div class="statistics">
-    <span class="game-time">{{
-      "Game time: " + (state()?.timePassed ?? 0)
-    }}</span>
-    @for (colony of stats(); track colony.id) {
-      <div class="colony">
-        <span class="colony-name" [style.color]="colony.css"
-          >Player {{ colony.id + 1 }}</span
-        >
-        <span class="colony-count">{{ colony.bacterias }} bacterias</span>
-        <span class="colony-detail"
-          >⚡ {{ colony.energy }}% · 🍽 {{ colony.captured }} · ☠
-          {{ colony.lost }}</span
-        >
-        <span class="colony-bar">
-          <span
-            class="colony-bar-fill"
-            [style.width.%]="colony.share"
-            [style.backgroundColor]="colony.css"
-          ></span>
-        </span>
-      </div>
-    }
   </div>
-</ng-template>
+</div>
