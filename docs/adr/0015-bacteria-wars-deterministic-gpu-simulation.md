@@ -243,13 +243,15 @@ sits behind a flag; step 8 switches it on.
      real check is a playtest on a device that passed the self-test, and
      ranked `gpu-int` play. Revisit them before the boards open.
    - "Record local matches" is on by default.
-   - `DETERMINISTIC_SIMULATION` is on. For the real-device check, a device
-     override: opening the game with `?sim=gpu-int` plays local matches on
-     the integer GPU passes whatever the self-test said, `?sim=cpu` on the
-     CPU, `?sim=auto` follows the self-test again
-     (`SimulationOverrideService`, kept in `DeviceStorage`). It never
-     changes what the device offers online. The settings show the ruleset
-     local matches play and the self-test's verdict under "Screen".
+   - `DETERMINISTIC_SIMULATION` stays off until the owner's real-device
+     check passed; turning it on is a one-line change. Meanwhile a device
+     opts in with `?sim=gpu-int`: it runs the self-test, plays local
+     matches on the integer GPU passes whatever the self-test said and
+     shows the ruleset and the self-test's verdict in the settings under
+     "Screen". `?sim=cpu` forces the CPU, `?sim=auto` clears the override
+     (`SimulationOverrideService`, kept in `DeviceStorage`). While the
+     switch is off a device offers only `cpu` online, opted in or not; once
+     it is on, the override still changes local play only.
 9. Tune the CPU reference for the server. Done for a first round, bit for
    bit (every golden unchanged):
    - the passes read module-local copies of their constants and helpers,

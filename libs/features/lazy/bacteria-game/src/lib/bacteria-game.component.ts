@@ -1272,9 +1272,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // With a WebGL2 context the war itself runs on the GPU as well - for a
     // deterministic match only once the GPU passed the self-test.
     const gl = painter instanceof GlArenaPainter ? painter : null;
-    if (DETERMINISTIC_SIMULATION) {
+    // The override is read from the URL at once: `?sim=gpu-int` opts this
+    // device in while the rollout's switch is off.
+    this.simulationOverride.start();
+    if (
+      DETERMINISTIC_SIMULATION ||
+      this.simulationOverride.override() === 'gpu-int'
+    ) {
       this.gpuSelfTest.check();
-      this.simulationOverride.start();
     }
     const { factory, fallback, ruleset, offers } = chooseSimulation({
       deterministic: DETERMINISTIC_SIMULATION,

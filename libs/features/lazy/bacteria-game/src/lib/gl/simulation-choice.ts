@@ -7,10 +7,11 @@ import type { GpuSimulationOptions } from './gpu-simulation';
 /**
  * True when matches run the deterministic simulation of ADR 0015 where the
  * device can: the integer passes on a GPU that passed the self-test, the
- * CPU's ruleset else. The rollout's switch (step 8), kept as the one place
- * to turn it off again.
+ * CPU's ruleset else. The rollout's switch (step 8): off until the owner's
+ * real-device check passed - meanwhile `?sim=gpu-int` opts one device in
+ * for local play (see `chooseSimulation`).
  */
-export const DETERMINISTIC_SIMULATION = true;
+export const DETERMINISTIC_SIMULATION = false;
 
 /** Builds a GPU simulation on the arena's context. */
 export type GpuFactory = (
@@ -65,6 +66,20 @@ export function chooseSimulation(options: {
 }): SimulationChoice {
   const { gpu, gpuTrusted } = options;
   const override = options.override ?? (() => null);
+  if (!options.deterministic && gpu != null) {
+    // Switched off: the float GPU simulation - unless the device override
+    // opts this device in for a real-device check, locally only.
+    const optedIn = () => override() === 'gpu-int';
+    return {
+      factory: (balance, random, seed) =>
+        optedIn()
+          ? gpu(balance, random, { deterministic: true, matchSeed: seed })
+          : gpu(balance, random, { matchSeed: seed }),
+      fallback: cpuSimulation,
+      ruleset: () => (optedIn() ? 'gpu-int' : null),
+      offers: () => ['cpu'],
+    };
+  }
   if (!options.deterministic) {
     return {
       factory:

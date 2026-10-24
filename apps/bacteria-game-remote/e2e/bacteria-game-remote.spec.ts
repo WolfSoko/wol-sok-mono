@@ -265,14 +265,9 @@ test('should run the colony war on the GPU', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'WebGL2 is checked in Chromium');
   const po = new BacteriaGamePo(page);
   await po.goto();
-  // The deterministic integer passes run once the GPU passed its self-test
-  // (ADR 0015), which the game runs right after the first frame.
-  await expect
-    .poll(() => po.gpuSelfTest())
-    .toEqual(expect.objectContaining({ ok: true }));
+  await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
 
   await po.startMatch();
-  await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
   const start = await po.colonyCount(0);
 
   // The colonies divide - the GPU steps the war and the numbers come back.

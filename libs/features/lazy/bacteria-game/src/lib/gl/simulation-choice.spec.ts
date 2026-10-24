@@ -106,4 +106,26 @@ describe('chooseSimulation', () => {
       expect(ruleset()).toBe('cpu');
     });
   });
+
+  describe('switched off', () => {
+    it('opts a device in for local play with the override, offering only cpu', () => {
+      let forced: 'cpu' | 'gpu-int' | null = 'gpu-int';
+      const { factory, ruleset, offers } = chooseSimulation({
+        deterministic: false,
+        gpu,
+        gpuTrusted: () => true,
+        override: () => forced,
+      });
+      expect(factory?.(gameBalance, random, 7)).toBe(gpuSim);
+      expect(asked.at(-1)).toEqual({ deterministic: true, matchSeed: 7 });
+      expect(ruleset()).toBe('gpu-int');
+      expect(offers()).toEqual(['cpu']);
+
+      forced = null;
+      factory?.(gameBalance, random, 8);
+      expect(asked.at(-1)).toEqual({ matchSeed: 8 });
+      expect(ruleset()).toBeNull();
+      expect(offers()).toEqual(['cpu']);
+    });
+  });
 });

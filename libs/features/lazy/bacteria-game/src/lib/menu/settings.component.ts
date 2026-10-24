@@ -122,10 +122,10 @@ export class SettingsComponent {
   /**
    * The simulation check (ADR 0015): the ruleset local matches play and what
    * the GPU self-test found - null while the deterministic simulation is
-   * off.
+   * off and this device is not opted in (`?sim=gpu-int`).
    */
   protected readonly simulationCheck = computed(() =>
-    DETERMINISTIC_SIMULATION
+    DETERMINISTIC_SIMULATION || this.simulationOverride.override() === 'gpu-int'
       ? simulationCheckLines(
           this.gpuSelfTest.result(),
           this.simulationOverride.override()
