@@ -1,4 +1,5 @@
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/logger';
 import { isBanned } from '../limits';
 
 /** What a command asks; all but `remove` are the owner's (ADR 0011). */
@@ -38,7 +39,15 @@ export async function runReplayCommand(
   authId: string | undefined,
   now: number = Date.now()
 ): Promise<CommandResult> {
-  const result = await run(db, data, authId, now);
+  let result: CommandResult;
+  try {
+    result = await run(db, data, authId, now);
+  } catch (error) {
+    // Retries are off: the writer still gets an answer, and may send the
+    // command again - `remove` is idempotent.
+    logger.error('Replay command failed', { commandId, error });
+    result = { ok: false, reason: 'internal' };
+  }
   await db.doc(`replayCommands/${commandId}`).update({
     result: { ...result, at: FieldValue.serverTimestamp() },
   });

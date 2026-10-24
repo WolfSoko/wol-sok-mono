@@ -173,6 +173,7 @@ async function storeOnline(
     checksum: plan.record.checksum,
     winnerSeat: plan.record.winnerSeat,
     endedBy: plan.record.endedBy,
+    inputsHash: plan.inputsHash ?? null,
     at: FieldValue.serverTimestamp(),
   };
   return db.runTransaction(async (tx) => {
@@ -204,7 +205,8 @@ async function storeOnline(
       theirs?.exists === true &&
       theirs.get('checksum') === report.checksum &&
       theirs.get('winnerSeat') === report.winnerSeat &&
-      theirs.get('endedBy') === report.endedBy;
+      theirs.get('endedBy') === report.endedBy &&
+      theirs.get('inputsHash') === report.inputsHash;
     tx.create(ref.collection('reports').doc(meta.uid), report);
     tx.update(ref, {
       players: FieldValue.arrayUnion(meta.uid),

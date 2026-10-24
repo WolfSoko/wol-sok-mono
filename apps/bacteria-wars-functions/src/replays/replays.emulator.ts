@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { clearBanCache } from '../limits';
 import { acceptSubmission } from './accept';
+import { deleteReplayChildren } from './cleanup';
 import { runReplayCommand } from './command';
 import { deletePlayerReplays } from './delete-player';
 
@@ -38,9 +39,13 @@ const golden = parseReplay(
 ) as Replay;
 
 /** The golden replay as a device would store it, with `header` on top. */
-async function bytesOf(header: Partial<ReplayHeader> = {}): Promise<Buffer> {
+async function bytesOf(
+  header: Partial<ReplayHeader> = {},
+  inputs: Replay['inputs'] = golden.inputs
+): Promise<Buffer> {
   const replay: Replay = {
     ...golden,
+    inputs,
     header: {
       ...golden.header,
       balanceVersion: BALANCE_VERSION,
@@ -199,6 +204,19 @@ describe('acceptReplay', () => {
       expect((await ref.get()).get('state')).toBe('disputed');
     });
 
+    it('is disputed when a report brings other inputs to the same outcome', async () => {
+      await submit('s1', 'ada', await bytesOf(online()));
+      const doctored = {
+        ...golden.inputs,
+        drags: golden.inputs.drags.slice(0, 1),
+      };
+      expect(await submit('s2', 'bob', await bytesOf(online(), doctored))).toBe(
+        'reported'
+      );
+      const [ref] = await db.collection('replays').listDocuments();
+      expect((await ref.get()).get('state')).toBe('disputed');
+    });
+
     it('takes reports from the players of its room only, once each', async () => {
       const bytes = await bytesOf(online());
       expect(await submit('s1', 'eve', bytes)).toBe('not-in-room');
@@ -265,6 +283,16 @@ describe('replayCommand', () => {
     expect(
       await run({ uid: 'own', type: 'feature', replayId: 'r1' }, 'own')
     ).toEqual({ ok: false, reason: 'unsupported' });
+  });
+});
+
+describe('cleanReplay', () => {
+  it('takes the blob and the reports of a deleted replay along', async () => {
+    await db.doc('replays/r1/blob/data').set({ size: 1 });
+    await db.doc('replays/r1/reports/ada').set({ checksum: 1 });
+    await deleteReplayChildren(db, 'r1');
+    expect((await db.doc('replays/r1/blob/data').get()).exists).toBe(false);
+    expect((await db.doc('replays/r1/reports/ada').get()).exists).toBe(false);
   });
 });
 

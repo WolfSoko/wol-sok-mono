@@ -11,10 +11,12 @@ import { setGlobalOptions } from 'firebase-functions/v2';
 import {
   onDocumentCreated,
   onDocumentCreatedWithAuthContext,
+  onDocumentDeleted,
 } from 'firebase-functions/v2/firestore';
 import * as v1 from 'firebase-functions/v1';
 import { REGION } from './config';
 import { acceptSubmission } from './replays/accept';
+import { deleteReplayChildren } from './replays/cleanup';
 import { runReplayCommand } from './replays/command';
 import { deletePlayerReplays as deleteReplaysOf } from './replays/delete-player';
 
@@ -51,6 +53,12 @@ export const replayCommand = onDocumentCreatedWithAuthContext(
       }
     }
   }
+);
+
+/** An expired or deleted replay takes its blob and reports along. */
+export const cleanReplay = onDocumentDeleted(
+  { document: 'replays/{id}', memory: '256MiB', cpu: 'gcf_gen1' },
+  (event) => deleteReplayChildren(db(), event.params.id)
 );
 
 /** A deleted account leaves its replays. */

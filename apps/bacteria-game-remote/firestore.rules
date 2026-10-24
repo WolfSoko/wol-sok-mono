@@ -28,7 +28,9 @@ service cloud.firestore {
         request.resource.data.expireAt is timestamp &&
         request.resource.data.expireAt < request.time + duration.value(2, 'h');
       allow update: if request.auth != null && notBanned() && ((
-          !('answer' in resource.data) &&
+          // A guest answers an open room only - never its stub, which
+          // has no answer either.
+          !('answer' in resource.data) && !('guest' in resource.data) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guest', 'answer']) &&
           request.resource.data.guest == request.auth.uid &&
           isDescription(request.resource.data.answer)) ||

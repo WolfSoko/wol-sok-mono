@@ -4,6 +4,7 @@ import {
   parseAttemptId,
   type Replay,
 } from '@wolsok/feat-lazy-bac-game/engine';
+import { createHash } from 'node:crypto';
 import { dayOf } from '../limits';
 
 /** What kind of match a replay is - derived here, never claimed. */
@@ -28,6 +29,12 @@ export interface AcceptPlan {
   kind: ReplayKind;
   /** Online only: the room and the match number in it. */
   room?: { code: string; n: number };
+  /**
+   * Online only: a hash of what was played - the level, the seed, the
+   * length and every input. Both devices record the same inputs, so two
+   * reports agree only on the same match, not merely on its outcome.
+   */
+  inputsHash?: string;
   record: ReplayRecord;
 }
 
@@ -106,6 +113,7 @@ export function planAcceptance(
       id: onlineReplayId(header.roomCode, header.n, header.seed),
       kind: 'online',
       room: { code: header.roomCode, n: header.n },
+      inputsHash: inputsHashOf(replay),
       record: record('online'),
     };
   }
@@ -131,4 +139,12 @@ function localKind(
   return days.some((day) => dailyLevelId(day) === levelId)
     ? 'daily'
     : 'computer';
+}
+
+/** See {@link AcceptPlan.inputsHash}. */
+export function inputsHashOf({ header, inputs }: Replay): string {
+  return createHash('sha256')
+    .update(JSON.stringify([header.levelId, header.seed, header.ticks, inputs]))
+    .digest('hex')
+    .slice(0, 32);
 }

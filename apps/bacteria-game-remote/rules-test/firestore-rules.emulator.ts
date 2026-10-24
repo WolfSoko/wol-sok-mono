@@ -291,6 +291,14 @@ describe('the room stub', () => {
     );
   });
 
+  it('lets nobody take the guest seat of a stub', async () => {
+    const room = answered();
+    await seed('rooms/ABC234', stub(room));
+    await assertFails(
+      updateDoc(doc(db('eve'), 'rooms/ABC234'), { guest: 'eve', answer: 'a' })
+    );
+  });
+
   it('still lets a guest answer an open room', async () => {
     const { guest: _guest, answer: _answer, ...open } = answered();
     await seed('rooms/ABC234', open);
