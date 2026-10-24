@@ -53,6 +53,11 @@
   --mat-fab-container-color: color-mix(in srgb, var(--weapon) 55%, #111820);
 }
 
+// The match is over: dimmed, its ring empty.
+:host(.over) {
+  opacity: 0.4;
+}
+
 // While its effect acts the icon spins.
 :host(.active) .weapon-fab mat-icon {
   animation: spin 1.6s linear infinite;

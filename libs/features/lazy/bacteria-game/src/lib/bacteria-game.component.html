@@ -41,6 +41,7 @@
         <feat-lazy-bac-game-weapon-pad
           [weapon]="weapon"
           [disabled]="!running()"
+          [over]="matchOver()"
           (fire)="fireWeapon(colony.id)"
         />
       }

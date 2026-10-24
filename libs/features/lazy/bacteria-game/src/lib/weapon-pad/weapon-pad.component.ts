@@ -42,7 +42,7 @@ export const WEAPON_RING_SIZE = WEAPON_BUTTON_SIZE + 10;
       <mat-progress-spinner
         class="charge"
         mode="determinate"
-        [value]="state.charge * 100"
+        [value]="over() ? 0 : state.charge * 100"
         [diameter]="ringSize"
         [strokeWidth]="4"
         [attr.aria-label]="'evolution.pad.recharge' | t"
@@ -65,6 +65,7 @@ export const WEAPON_RING_SIZE = WEAPON_BUTTON_SIZE + 10;
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class.ready]': 'weapon().ready && !disabled()',
+    '[class.over]': 'over()',
     '[class.active]': 'weapon().active',
     '[style.--weapon]': 'color()',
   },
@@ -74,6 +75,11 @@ export class WeaponPadComponent {
   public readonly weapon = input.required<WeaponStats>();
   /** True while nobody is playing - the weapon cannot be fired then. */
   public readonly disabled = input(false);
+  /**
+   * True once the match is over: the pad dims and its ring empties, as
+   * there is nothing left to charge for.
+   */
+  public readonly over = input(false);
   /** The player fires their weapon. */
   public readonly fire = output<void>();
 

@@ -87,6 +87,21 @@ describe('WeaponPadComponent', () => {
     expect(button().disabled).toBe(true);
   });
 
+  it('dims and empties its ring once the match is over', async () => {
+    expect(host.querySelector('.charge')?.getAttribute('aria-valuenow')).toBe(
+      '100'
+    );
+    fixture.componentRef.setInput('disabled', true);
+    fixture.componentRef.setInput('over', true);
+    await fixture.whenStable();
+
+    expect(host.classList).toContain('over');
+    expect(host.classList).not.toContain('ready');
+    expect(host.querySelector('.charge')?.getAttribute('aria-valuenow')).toBe(
+      '0'
+    );
+  });
+
   it('speaks German', async () => {
     TestBed.inject(I18nService).setLanguage('de');
     fixture.componentRef.setInput('weapon', { ...READY, id: 'cryo-pulse' });
