@@ -246,7 +246,7 @@ describe('ProgressService', () => {
       });
       expect(progress.training().boost).toBeDefined();
       expect(progress.missionsDone()).toBe(1);
-      expect(progress.nextMission()).toBe('steer');
+      expect(progress.firstOpenMission()).toBe('steer');
       expect(progress.totals().matches).toBe(0);
       expect(progress.medals()).toEqual({});
 

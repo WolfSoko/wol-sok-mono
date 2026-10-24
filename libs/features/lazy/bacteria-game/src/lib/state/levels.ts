@@ -520,11 +520,6 @@ export function isLadderLevel(id: string): boolean {
   return LEVELS.some((level) => level.id === id);
 }
 
-/** True for the id of a training mission's level - see `training.ts`. */
-export function isTrainingLevel(id: string): boolean {
-  return missionOfLevel(id) !== null;
-}
-
 /** True for the id of a level of the game - a generated one included. */
 export function isLevelId(value: unknown): value is string {
   return (

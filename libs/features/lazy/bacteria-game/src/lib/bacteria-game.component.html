@@ -179,7 +179,7 @@
               [endlessBest]="progress.endlessBest()"
               [missionId]="missionId()"
               [training]="progress.training()"
-              (missionChange)="missionId.set($event)"
+              (missionChange)="pickMission($event)"
               [online]="onlineLobby()"
               [onlineAvailable]="onlineAvailable"
               (hostOnline)="hostOnline()"

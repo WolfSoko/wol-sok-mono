@@ -53,7 +53,15 @@ import {
   SeriesLength,
 } from '../state/rivalry';
 import { winRuleOf } from '../state/win-conditions';
-import { MissionId, missionOf, MISSIONS } from '../state/training';
+import {
+  firstOpenMission,
+  isMissionDone,
+  MissionId,
+  missionById,
+  missionOf,
+  MISSIONS,
+  missionsDone,
+} from '../state/training';
 import { LevelMapComponent } from './level-map.component';
 import { LevelPreviewComponent } from './level-preview.component';
 import { LevelPreviewService } from './level-preview.service';
@@ -219,23 +227,24 @@ export class NewGameComponent {
    * play next marked, the first still to do.
    */
   protected readonly missions = computed(() => {
-    const training = this.training();
-    const upNext = MISSIONS.find(({ id }) => training[id] == null)?.id;
+    const progress = { training: this.training() };
+    const done = (id: MissionId) => isMissionDone(progress, id);
+    const upNext = firstOpenMission(progress);
     return MISSIONS.map((mission, index) => ({
       ...mission,
       number: index + 1,
       title: `training.missions.${mission.id}.title` as const,
       goal: `training.missions.${mission.id}.goal` as const,
-      done: training[mission.id] != null,
-      upNext: mission.id === upNext,
+      done: done(mission.id),
+      upNext: mission.id === upNext && !done(mission.id),
     }));
   });
 
   protected readonly missionCount = MISSIONS.length;
 
   /** The missions done, for the training's line. */
-  protected readonly missionsDone = computed(
-    () => this.missions().filter(({ done }) => done).length
+  protected readonly missionsDone = computed(() =>
+    missionsDone({ training: this.training() })
   );
 
   /** The mission picked, as its briefing tells it - null outside the training. */
@@ -244,12 +253,11 @@ export class NewGameComponent {
       return null;
     }
     const id = this.missionId();
-    const level = MISSIONS.find((mission) => mission.id === id)?.levelId;
     return {
       goal: `training.missions.${id}.goal` as const,
       tip: `training.missions.${id}.tip` as const,
       opponent:
-        level !== undefined && getLevel(level).dummy === true
+        getLevel(missionById(id).levelId).dummy === true
           ? ('training.opponents.dummy' as const)
           : ('training.opponents.computer' as const),
     };
@@ -263,10 +271,7 @@ export class NewGameComponent {
       case 'daily':
         return this.daily().levelId;
       case 'training':
-        return (
-          MISSIONS.find(({ id }) => id === this.missionId())?.levelId ??
-          MISSIONS[0].levelId
-        );
+        return missionById(this.missionId()).levelId;
       default:
         return this.levelId();
     }

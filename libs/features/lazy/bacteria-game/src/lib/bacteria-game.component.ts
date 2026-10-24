@@ -13,7 +13,6 @@ import {
   computed,
   effect,
   inject,
-  linkedSignal,
   signal,
   untracked,
   viewChild,
@@ -835,16 +834,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * The training mission picked in a new game - the first one still to do
    * until the player picks another.
    */
-  protected readonly missionId = linkedSignal(() =>
-    this.progress.nextMission()
+  protected readonly missionId = computed(
+    () => this.pickedMission() ?? this.progress.firstOpenMission()
   );
+  /**
+   * The mission the player picked - kept whatever the progress tells
+   * meanwhile - null to offer the first one still to do.
+   */
+  private readonly pickedMission = signal<MissionId | null>(null);
+
+  /** Picks a training mission for the next start. */
+  protected pickMission(id: MissionId): void {
+    this.pickedMission.set(id);
+  }
 
   /** Starts a training mission's match. */
   protected playMission(id: MissionId): void {
     if (this.resetting()) {
       return;
     }
-    this.missionId.set(id);
+    this.pickedMission.set(id);
     this.gameStateService.leaveOnline();
     this.gameStateService.playMission(id);
     this.startGame();
@@ -852,6 +861,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Opens the training's missions, from the main menu. */
   protected openTraining(): void {
+    // Offers the first mission still to do.
+    this.pickedMission.set(null);
     this.setPlayKind('training');
     this.newGameEntry.set({ kind: 'training', step: 'level' });
     this.show('new-game');
@@ -908,8 +919,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     const next = action === 'next' ? this.upcomingLevel() : null;
     const played = missionOf(this.level().id);
+    // The mission after the one played - after the last, the first still
+    // to do, whichever order the player took them in.
     const mission =
-      action === 'mission' && played !== null ? nextMission(played.id) : null;
+      action === 'mission' && played !== null
+        ? (nextMission(played.id)?.id ?? this.progress.firstOpenMission())
+        : null;
     // The reset ends a match set outside the setup: a rematch sets it again.
     const rematch =
       action === 'again' ? this.gameStateService.oneMatch() : null;
@@ -950,8 +965,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
             this.gameStateService.advanceEndless();
           }
           if (mission !== null) {
-            this.missionId.set(mission.id);
-            this.gameStateService.playMission(mission.id);
+            this.pickedMission.set(mission);
+            this.gameStateService.playMission(mission);
           }
           if (action === 'campaign') {
             this.continueCampaign();

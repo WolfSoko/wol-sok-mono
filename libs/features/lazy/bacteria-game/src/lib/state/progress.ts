@@ -210,17 +210,9 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
     }
     merged = { ...merged, totals };
   }
-  const earlier = (
-    Object.entries(other.achievements) as [AchievementId, string][]
-  ).filter(([id, date]) => {
-    const held = merged.achievements[id];
-    return held == null || date < held;
-  });
-  if (earlier.length > 0) {
-    merged = {
-      ...merged,
-      achievements: { ...merged.achievements, ...Object.fromEntries(earlier) },
-    };
+  const achievements = earlierDays(merged.achievements, other.achievements);
+  if (achievements !== null) {
+    merged = { ...merged, achievements };
   }
   const moreWins = Object.entries(other.couchWins).filter(
     ([colorId, wins]) => (wins ?? 0) > (merged.couchWins[colorId] ?? 0)
@@ -231,17 +223,9 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
       couchWins: { ...merged.couchWins, ...Object.fromEntries(moreWins) },
     };
   }
-  const doneEarlier = (
-    Object.entries(other.training) as [MissionId, string][]
-  ).filter(([id, date]) => {
-    const held = merged.training[id];
-    return held == null || date < held;
-  });
-  if (doneEarlier.length > 0) {
-    merged = {
-      ...merged,
-      training: { ...merged.training, ...Object.fromEntries(doneEarlier) },
-    };
+  const training = earlierDays(merged.training, other.training);
+  if (training !== null) {
+    merged = { ...merged, training };
   }
   merged = addEndlessRun(merged, other.endlessBest);
   // The later day wins, and on the same day the more attempts.
@@ -268,6 +252,25 @@ export function adoptProgress(progress: Progress, guest: Progress): Progress {
     totals: NO_TOTALS,
     couchWins: {},
   });
+}
+
+/**
+ * Days by id with the earlier day of either for each - an achievement
+ * earned, a mission done - null when `other` has no earlier one.
+ */
+function earlierDays<K extends string>(
+  held: Partial<Record<K, string>>,
+  other: Partial<Record<K, string>>
+): Partial<Record<K, string>> | null {
+  const earlier = (Object.entries(other) as [K, string][]).filter(
+    ([id, day]) => {
+      const kept = held[id];
+      return kept == null || day < kept;
+    }
+  );
+  return earlier.length === 0
+    ? null
+    : { ...held, ...Object.fromEntries(earlier) };
 }
 
 /** Of two daily records the later one, or the one with more attempts. */

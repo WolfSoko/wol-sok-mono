@@ -352,7 +352,7 @@ export class ProgressService {
   public readonly missionsDone = computed(() => missionsDone(this.progress()));
 
   /** The first training mission still to do - where the training picks up. */
-  public readonly nextMission = computed(() =>
+  public readonly firstOpenMission = computed(() =>
     firstOpenMission(this.progress())
   );
 

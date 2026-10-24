@@ -7,6 +7,8 @@ import { LEVELS } from '../state/levels';
 import { MatchEarnings } from '../state/earnings';
 import { MedalAward } from '../state/medallions';
 import { createPlayer } from '../state/player.model';
+import { ProgressService } from '../progress.service';
+import { MISSIONS } from '../state/training';
 import { WinnerComponent } from './winner.component';
 
 describe('WinnerComponent', () => {
@@ -480,6 +482,9 @@ describe('WinnerComponent', () => {
   });
 
   describe('in the training', () => {
+    // The missions recorded here are stored: keep them out of other specs.
+    afterEach(() => localStorage.clear());
+
     function buttons(): HTMLButtonElement[] {
       fixture.detectChanges();
       return Array.from(
@@ -541,7 +546,39 @@ describe('WinnerComponent', () => {
       expect(text()).not.toContain('Next mission');
     });
 
-    it('leads on to the campaign once the last mission is done', () => {
+    /** The fight won, as the result shows it once it is recorded. */
+    function fightWon(): void {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You' }),
+        endedBy: 'time',
+        matchLevel: 'training-fight',
+        earnings: earnings({
+          training: {
+            mission: 'fight',
+            done: true,
+            first: true,
+            shortfall: null,
+          },
+        }),
+      });
+    }
+
+    it('leads on to a mission still to do after the last one, taken first', () => {
+      fightWon();
+
+      expect(text()).not.toContain('Training complete');
+      expect(text()).toContain('Next mission');
+    });
+
+    it('leads on to the campaign once every mission is done', () => {
+      const progress = TestBed.inject(ProgressService);
+      for (const mission of MISSIONS) {
+        progress.recordTraining(
+          aMatchRecord({ levelId: mission.levelId, boostsFired: 2 }),
+          mission
+        );
+      }
       store.update({
         mode: 'vs-computer',
         winner: createPlayer({ id: 0, name: 'You' }),

@@ -43,7 +43,7 @@ import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
-import { missionOf, nextMission } from '../state/training';
+import { missionOf, trainingDone } from '../state/training';
 import { BOSS_SEAT, EndReason } from '../state/win-conditions';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
@@ -153,7 +153,8 @@ export class WinnerComponent {
   private endless = computed(() =>
     this.state.endlessMatch() ? this.state.endless() : null
   );
-  private endlessBest = inject(ProgressService).endlessBest;
+  private progress = inject(ProgressService);
+  private endlessBest = this.progress.endlessBest;
 
   /** Where the endless run stands after the match, in a line. */
   public endlessNote: Signal<string | null> = computed(() => {
@@ -186,8 +187,10 @@ export class WinnerComponent {
     if (mission === null) {
       return null;
     }
-    const next = nextMission(mission.id);
     const done = result?.done === true;
+    // Once every mission is done, the training is - in whatever order.
+    const allDone =
+      done && trainingDone({ training: this.progress.training() });
     return {
       done,
       line:
@@ -204,10 +207,9 @@ export class WinnerComponent {
                   }
                 ),
               }),
-      // Once the last mission is done, the training is.
-      allDone: done && next === null,
-      /** True when there is a next mission to go on to. */
-      next: done && next !== null,
+      allDone,
+      /** True when there is a mission still to go on to. */
+      next: done && !allDone,
     };
   });
 

@@ -62,8 +62,8 @@ import { dailyLevelId } from './daily';
 import { afterMatch, endlessLevelId, isRunOver, newRun } from './endless';
 import {
   MissionId,
+  missionById,
   missionOf,
-  MISSIONS,
   TRAINING_DIFFICULTY,
 } from './training';
 import { replayFromHash } from './replay-link';
@@ -700,13 +700,10 @@ export class GameStateService {
    * for that one match; {@link reset} ends it.
    */
   public playMission(id: MissionId): void {
-    const mission = MISSIONS.find((each) => each.id === id);
-    if (mission !== undefined) {
-      this.gameStateStore.update({
-        ...NO_ONE_MATCH,
-        matchLevel: mission.levelId,
-      });
-    }
+    this.gameStateStore.update({
+      ...NO_ONE_MATCH,
+      matchLevel: missionById(id).levelId,
+    });
   }
 
   /** Starts a new endless run, set up for its first match. */

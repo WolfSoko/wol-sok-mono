@@ -54,10 +54,15 @@ export const MISSIONS: readonly Mission[] = MISSION_IDS.map((id) => ({
 /** The computer the missions are played against, where one plays. */
 export const TRAINING_DIFFICULTY: BotDifficulty = 'easy';
 
+/** The mission with that id. */
+export function missionById(id: MissionId): Mission {
+  return MISSIONS[MISSION_IDS.indexOf(id)];
+}
+
 /** The mission a level is played for, null for any other level. */
 export function missionOf(levelId: string): Mission | null {
   const id = missionOfLevel(levelId);
-  return MISSIONS.find((mission) => mission.id === id) ?? null;
+  return id === null ? null : missionById(id);
 }
 
 /** The mission after this one, null after the last. */
@@ -65,18 +70,29 @@ export function nextMission(id: MissionId): Mission | null {
   return MISSIONS[MISSION_IDS.indexOf(id) + 1] ?? null;
 }
 
+/** What the training needs to know of the progress: the missions done. */
+type TrainingProgress = Pick<Progress, 'training'>;
+
 /** True once the mission has been done. */
-export function isMissionDone(progress: Progress, id: MissionId): boolean {
+export function isMissionDone(
+  progress: TrainingProgress,
+  id: MissionId
+): boolean {
   return progress.training[id] != null;
 }
 
 /** The missions done so far. */
-export function missionsDone(progress: Progress): number {
+export function missionsDone(progress: TrainingProgress): number {
   return MISSION_IDS.filter((id) => isMissionDone(progress, id)).length;
 }
 
+/** True once every mission has been done. */
+export function trainingDone(progress: TrainingProgress): boolean {
+  return missionsDone(progress) === MISSION_IDS.length;
+}
+
 /** The first mission still to do - the first one again once all are done. */
-export function firstOpenMission(progress: Progress): MissionId {
+export function firstOpenMission(progress: TrainingProgress): MissionId {
   return MISSION_IDS.find((id) => !isMissionDone(progress, id)) ?? 'steer';
 }
 
