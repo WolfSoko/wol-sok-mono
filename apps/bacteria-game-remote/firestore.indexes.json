@@ -125,6 +125,18 @@
       "indexes": []
     },
     {
+      "collectionGroup": "blob",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "reports",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "replaySubmissions",
       "fieldPath": "expireAt",
       "ttl": true,
