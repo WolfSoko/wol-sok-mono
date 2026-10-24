@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.64.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.63.0...v74.64.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ five premium skins for DNA, and a dish of bubbles and mist ([#2601](https://github.com/WolfSoko/wol-sok-mono/issues/2601)) ([bcd60f5](https://github.com/WolfSoko/wol-sok-mono/commit/bcd60f5fb654f86418db0ee967704fbd1f0968ae))
+
 ## [74.63.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.62.0...v74.63.0) (2026-10-24)
 
 ### Features
