@@ -2,8 +2,12 @@ import { clampLength, SteeringVector } from '../state/geometry';
 import { DRAG_STEPS, onGrid, STEER_STEPS } from '../state/match-engine';
 import type { GhostInputs, SeatDriver } from '../state/ghost';
 import { TICKS_PER_SEC } from '../state/fixed-tick';
+import { matchChecksum } from '../state/checksum';
 import { Player } from '../state/player.model';
 import { NetMessage, TickInput } from './net-message';
+
+/** Moved to `state/checksum.ts` (ADR 0011); kept here for the net code. */
+export { matchChecksum } from '../state/checksum';
 
 /**
  * How many ticks after it is put in an input is played: 100 ms at 60 ticks
@@ -164,29 +168,4 @@ function played({ steer, drag, boost }: TickInput): GhostInputs {
     drag: drag === null ? null : { x: drag[0], y: drag[1] },
     steer: { x: steer[0], y: steer[1] },
   };
-}
-
-/**
- * A hash of what the players of a match have come to - their colonies and
- * crosshairs. Two devices that played the same match agree on it to the
- * bit.
- */
-export function matchChecksum(players: readonly Player[]): number {
-  const view = new DataView(new ArrayBuffer(8));
-  let hash = 0x811c9dc5;
-  const add = (value: number) => {
-    view.setFloat64(0, value);
-    for (let i = 0; i < 8; i++) {
-      hash = Math.imul(hash ^ view.getUint8(i), 0x01000193);
-    }
-  };
-  for (const player of players) {
-    add(player.bacteriaCount);
-    add(player.captured);
-    add(player.lost);
-    add(player.x);
-    add(player.y);
-    add(player.boostCooldownSec);
-  }
-  return hash >>> 0;
 }

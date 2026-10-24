@@ -24,6 +24,8 @@
         "assets": [
           "apps/bacteria-game-remote/src/favicon.ico",
           "apps/bacteria-game-remote/src/manifest.webmanifest",
+          "apps/bacteria-game-remote/src/robots.txt",
+          "apps/bacteria-game-remote/src/sitemap.xml",
           "apps/bacteria-game-remote/src/icons",
           "apps/bacteria-game-remote/src/assets",
           {

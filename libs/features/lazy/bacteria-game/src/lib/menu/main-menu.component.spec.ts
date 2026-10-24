@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { provideRouter } from '@angular/router';
+import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
@@ -37,6 +39,15 @@ describe('MainMenuComponent', () => {
     }
     return found;
   }
+
+  it('opens My Colony', () => {
+    const opened: string[] = [];
+    fixture.componentInstance.open.subscribe((page) => opened.push(page));
+
+    button('My Colony').click();
+
+    expect(opened).toEqual(['colony']);
+  });
 
   it('shows the campaign so far', () => {
     const card = host.querySelector('.card')?.textContent ?? '';
@@ -149,6 +160,9 @@ describe('MainMenuComponent', () => {
 
   it('offers no support where the game does not ask for it', () => {
     expect(host.textContent).not.toContain('Support');
+    // Inside the shell: neither the legal lines nor the offer to install.
+    expect(host.querySelector('footer')).toBeNull();
+    expect(host.querySelector('feat-lazy-bac-game-install-banner')).toBeNull();
   });
 });
 
@@ -156,13 +170,13 @@ describe('MainMenuComponent support tile', () => {
   function render(where: 'web' | 'app'): HTMLElement {
     TestBed.configureTestingModule({
       providers: [
+        // The footer's links are routes of the game's own site.
+        provideRouter([]),
         {
           provide: GAME_SUPPORT,
           useValue: {
-            buyMeACoffeeHandle: 'wolf',
-            androidPackage: 'de.wolsok.bacteriawars',
+            ...GAME_SUPPORT_OPTIONS,
             playTipProductIds: ['tip_small'],
-            ads: null,
           },
         },
       ],
@@ -192,6 +206,13 @@ describe('MainMenuComponent support tile', () => {
     expect(link?.textContent).toContain('Support');
     expect(link?.href).toBe('https://buymeacoffee.com/wolf');
     expect(link?.target).toBe('_blank');
+  });
+
+  it("ends in the legal lines on the game's own site", () => {
+    const footer = render('web').querySelector('footer');
+
+    expect(footer?.textContent).toContain('Privacy policy');
+    expect(footer?.textContent).toContain('Legal notice');
   });
 
   it('asks for support in German too', () => {

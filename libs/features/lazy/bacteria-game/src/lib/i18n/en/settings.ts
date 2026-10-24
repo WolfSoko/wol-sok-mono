@@ -1,19 +1,10 @@
 /** The settings screen. */
 export const settings = {
   title: 'Settings',
-  colonies: {
-    title: 'Colonies',
-    swapNote: "Picking the other colony's colour swaps the two.",
-  },
   display: {
     title: 'Display',
     arena: 'Arena',
     ownArena: 'Each level its own',
-    look: 'Bacteria look',
-    looks: {
-      slime: 'Slime',
-      pixels: 'Pixels',
-    },
     simResolution: 'Simulation resolution',
     simResolutions: {
       low: 'Low',

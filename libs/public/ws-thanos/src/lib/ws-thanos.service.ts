@@ -16,6 +16,7 @@ import {
 } from 'rxjs';
 import { AnimationState } from './animation.state';
 import { EFFECT_HEIGHT_SCALE, EFFECT_WIDTH_SCALE } from './capture-scale';
+import { fitImagesForCapture } from './fit-images';
 import {
   chooseParticleRenderer,
   GpuContextBudget,
@@ -258,6 +259,8 @@ export class WsThanosService {
       windowHeight: window?.innerHeight,
       windowWidth: window?.innerWidth,
       scrollY: -(window?.scrollY ?? 0),
+      onclone: (_document, clonedElem) =>
+        fitImagesForCapture(clonedElem, scale),
     });
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     return { imageData, width, height, scale };

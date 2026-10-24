@@ -1,0 +1,30 @@
+{
+  "header": {
+    "version": 2,
+    "balanceVersion": 5,
+    "simulation": "cpu",
+    "levelId": "quarantine",
+    "mode": "vs-computer",
+    "difficulty": "hard",
+    "colors": ["orange", "blue"],
+    "headStart": 0,
+    "width": 320,
+    "height": 180,
+    "seed": 20261023,
+    "ticks": 360,
+    "seats": [{ "isBot": false }, { "isBot": true }]
+  },
+  "inputs": {
+    "steers": [
+      [0, 0, 1, 0.25],
+      [60, 0, 0, 0],
+      [200, 0, -0.5, 1],
+      [260, 0, 0, 0]
+    ],
+    "drags": [
+      [90, 0, 160, 90],
+      [300, 0, 250.5, 40.25]
+    ],
+    "boosts": [[150, 0]]
+  }
+}

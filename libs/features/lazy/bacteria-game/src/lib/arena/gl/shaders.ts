@@ -6,10 +6,24 @@
  */
 
 import {
+  glslFloat,
   LOSER_SHIFT,
   MAX_GPU_COLONIES,
   RECORD_MASK,
 } from '../../gl/simulation-shaders';
+import { LOOK_TUNING, LOOKS } from '../colony-renderer';
+
+/** The looks' tuning and their `uLook` values, as GLSL constants. */
+const LOOK_CONSTANTS = [
+  ...Object.entries(LOOK_TUNING).map(
+    ([name, value]) => `const float ${name} = ${glslFloat(value)};`
+  ),
+  'const vec2 CELL_FOCAL = vec2(CELL_FOCAL_X, CELL_FOCAL_Y);',
+  ...Object.entries(LOOKS).map(
+    ([look, { glIndex }]) =>
+      `const int LOOK_${look.toUpperCase()} = ${glIndex};`
+  ),
+].join('\n');
 
 /** The most weapons' effects that shade one colony at once. */
 export const MAX_TINTS = 4;
@@ -21,7 +35,7 @@ vec2 arenaPosition(vec2 ndc) {
   return uView.xy + vec2(ndc.x + 1.0, 1.0 - ndc.y) * 0.5 * uView.zw;
 }`;
 
-/** A cheap integer hash, for sparkles that look random. */
+/** A cheap integer hash, for sparkles that look random - and as 0 to 1. */
 const HASH = `
 uint hash(uvec3 v) {
   v = v * 1664525u + 1013904223u;
@@ -31,6 +45,10 @@ uint hash(uvec3 v) {
   v ^= v >> 16u;
   v.x += v.y * v.z;
   return v.x;
+}
+
+float hash01(uvec3 v) {
+  return float(hash(v)) / 4294967295.0;
 }`;
 
 /** Value noise and its fractal sum, from the hash above. */
@@ -132,7 +150,8 @@ void main() {
 }`;
 
 /**
- * One colony, in the slime or the pixel look.
+ * One colony in one look - `uLook` the look's `glIndex` in {@link LOOKS},
+ * the numbers of every look from {@link LOOK_TUNING}, as `LOOK_CONSTANTS`.
  *
  * Slime: the blurred density is sampled with linear filtering, so the
  * outline where it crosses the threshold is a smooth curve at full canvas
@@ -140,6 +159,33 @@ void main() {
  * faces the light, white heat where the colony is overcharged - and while
  * it is boosted, waves of light rush across it towards its crosshair with a
  * sparkle here and there.
+ *
+ * Cells: the slime's outline as a dark base, and on it glossy round cells
+ * on a jittered hex lattice, each lit from the top left with a dark rim,
+ * as on the app icon. A cell grows with the density under its centre, so
+ * the cells are small along the front and big inside - the lattice of
+ * `paintCells` in colony-renderer.ts, `uUnit` base cells apart, and
+ * `uPixel` arena cells per canvas pixel for the anti-aliasing of its rims.
+ * Heat and the boost light the cells up like the slime.
+ *
+ * Honeycomb and crystal: the colony tiled, every fragment to the nearest
+ * point of a hex lattice - regular for the honeycomb, jittered for the
+ * crystal - wherever the density under the tile's centre suffices, over the
+ * same dark base. The honeycomb's tiles are glossy with dark seams, the
+ * crystal's facets flat in their own shades with bright seams. See
+ * `paintTiles` in colony-renderer.ts.
+ *
+ * Neon: the slime's outline as a glowing line in the colony's colour, a
+ * fainter line further in, a soft halo outside and a dark body between -
+ * `paintNeon`.
+ *
+ * Ink: a flat body hatched along `uHatch.xy`, crossed where the colony is
+ * thin or everywhere for `uHatch.z` - the colony's own pattern - inside a
+ * thick outline of ink - `paintInk`.
+ *
+ * Bubbles: glassy bubbles of different sizes on the cells' lattice, a
+ * faint film with a bright rim and a light spot, each with snippets of DNA
+ * drifting and turning inside with `uTime` - `paintBubbles`.
  *
  * Pixels: one crisp cell per bacterium from the raw cells, weak ones faded
  * and hot ones burning white.
@@ -160,6 +206,8 @@ uniform int uLook;
 uniform float uShimmer;
 uniform vec2 uBoostTarget;
 uniform float uUnit;
+uniform float uPixel;
+uniform vec3 uHatch;
 uniform float uTime;
 // The weapons' effects on this colony - see ColonyTint: centre, radius and
 // strength, and the mode of each (0 toxin, 1 cryo, 2 shield, 3 bloom).
@@ -172,6 +220,8 @@ ${ARENA_POSITION}
 const float EDGE_START = 0.07;
 const float EDGE_END = 0.17;
 const vec2 LIGHT = vec2(-0.6, -0.8);
+const float PI = 3.14159265;
+${LOOK_CONSTANTS}
 
 // Crests closing in on the crosshair - see shimmerAt in colony-renderer.ts.
 float shimmer(vec2 p, float t) {
@@ -184,8 +234,310 @@ float shimmer(vec2 p, float t) {
 ${HASH}
 
 bool sparkle(vec2 p, float t) {
-  uvec3 key = uvec3(uvec2(floor(p)), uint(floor(t * 10.0)));
-  return float(hash(key)) / 4294967295.0 > 0.992;
+  return hash01(uvec3(uvec2(floor(p)), uint(floor(t * 10.0)))) > 0.992;
+}
+
+// The white a fragment burns with: the look's own, the heat of an
+// overcharged colony and, while it is boosted, the waves and sparkles.
+float burn(vec2 p, float white, float heat) {
+  white = max(white, heat);
+  if (uShimmer >= 0.0) {
+    white = max(white, shimmer(p, uShimmer) * 0.8);
+    if (sparkle(p * 2.0, uShimmer)) {
+      white = 1.0;
+    }
+  }
+  return white;
+}
+
+float hash01(ivec2 lattice, uint salt) {
+  return hash01(uvec3(uvec2(lattice), salt));
+}
+
+// A look's colour over the dark base of the lattice looks, with the alpha
+// of both - see overBase in colony-renderer.ts.
+vec4 overBase(vec3 face, float alpha, float baseAlpha) {
+  float total = alpha + baseAlpha * (1.0 - alpha);
+  vec3 base = uColor * CELL_BASE;
+  return total > 0.0
+    ? vec4((face * alpha + base * baseAlpha * (1.0 - alpha)) / total, total)
+    : vec4(0.0);
+}
+
+float latticeOffset(int row, float spacing) {
+  return (row & 1) == 1 ? spacing * 0.5 : 0.0;
+}
+
+// The cell of a lattice point: its centre and its radius, 0 for none - see
+// cellBubble in colony-renderer.ts.
+vec3 cellBubble(ivec2 lattice, vec4 cells) {
+  float spacing = cells.x * uUnit;
+  float rowHeight = spacing * CELL_ROW_HEIGHT;
+  vec2 centre = vec2(
+    (float(lattice.x) + 0.5) * spacing + latticeOffset(lattice.y, spacing)
+      + (hash01(lattice, 1u) - 0.5) * spacing * CELL_JITTER,
+    (float(lattice.y) + 0.5) * rowHeight
+      + (hash01(lattice, 2u) - 0.5) * rowHeight * CELL_JITTER
+  );
+  float d = textureLod(uDensity, centre / uArena, 0.0).r;
+  if (d < CELL_MIN) {
+    return vec3(centre, 0.0);
+  }
+  float size = (0.5 + 0.5 * clamp((d - CELL_SIZE_FROM) / CELL_SIZE_RANGE, 0.0, 1.0))
+    * smoothstep(CELL_MIN, CELL_MIN + CELL_GROW, d);
+  float radius = spacing * cells.y * size * (cells.z + cells.w * hash01(lattice, 3u));
+  return vec3(centre, radius);
+}
+
+// The lattice of a look's cells: spacing in base cells, radius in spacings,
+// varied from a share up by this much - CELLS and BUBBLES in colony-renderer.ts.
+const vec4 CELLS = vec4(CELL_SPACING, CELL_RADIUS, CELL_RADIUS_MIN, CELL_RADIUS_VARY);
+const vec4 BUBBLES = vec4(BUBBLE_SPACING, BUBBLE_RADIUS, BUBBLE_RADIUS_MIN, BUBBLE_RADIUS_VARY);
+
+// The cell of a lattice look the fragment is deepest in: its unit disc
+// coordinates, its radius (0 for none), the square of the fragment's unit
+// distance and the lattice point it sits on - see nearestBubble in
+// colony-renderer.ts.
+struct Bubble {
+  vec2 unit;
+  float radius;
+  float q2;
+  ivec2 lattice;
+};
+
+Bubble nearestBubble(vec2 p, vec4 cells) {
+  float spacing = cells.x * uUnit;
+  float rowHeight = spacing * CELL_ROW_HEIGHT;
+  int row = int(floor(p.y / rowHeight));
+  Bubble best = Bubble(vec2(0.0), 0.0, 1e9, ivec2(0));
+  for (int dr = -1; dr <= 1; dr++) {
+    int candidateRow = row + dr;
+    int col = int(floor((p.x - latticeOffset(candidateRow, spacing)) / spacing));
+    for (int dc = -1; dc <= 1; dc++) {
+      ivec2 lattice = ivec2(col + dc, candidateRow);
+      vec3 bubble = cellBubble(lattice, cells);
+      if (bubble.z <= 0.0) {
+        continue;
+      }
+      vec2 v = (p - bubble.xy) / bubble.z;
+      float q2 = dot(v, v);
+      if (q2 < best.q2) {
+        best = Bubble(v, bubble.z, q2, lattice);
+      }
+    }
+  }
+  return best;
+}
+
+// How much of a lattice cell covers a fragment at that unit distance
+// squared: anti-aliased at the rim, one canvas pixel wide, and nothing where
+// the density under it is too thin for a cell to float over - cellEdge.
+float cellEdge(float q2, float radius, float d) {
+  return clamp((1.0 - sqrt(q2)) * radius / uPixel + 0.5, 0.0, 1.0)
+    * smoothstep(CELL_CLIP_START, CELL_CLIP_END, d);
+}
+
+// The colony's colour lightened - lookPalette's light.
+vec3 lightColor() {
+  return mix(uColor, vec3(1.0), TINT_LIGHT);
+}
+
+// The gradient of the icon's cells on a unit disc: a light spot at the top
+// left, the body colour around it and a dark rim.
+vec3 sphereShade(vec2 unit) {
+  float t = clamp(length(unit - CELL_FOCAL) / SPHERE_REACH, 0.0, 1.0);
+  vec3 light = lightColor();
+  vec3 dark = mix(uColor, vec3(0.0), TINT_DARK);
+  return t < SPHERE_BODY_STOP
+    ? mix(light, uColor, t / SPHERE_BODY_STOP)
+    : mix(uColor, dark, (t - SPHERE_BODY_STOP) / (1.0 - SPHERE_BODY_STOP));
+}
+
+// A byte of a hash, 0 to 1 - the helices take their numbers from a hash a
+// byte at a time, a hash being the costly part on a phone.
+float octet(uint h, uint i) {
+  return float((h >> (8u * i)) & 255u) / 255.0;
+}
+
+// How much of a DNA snippet covers a point of a bubble's unit disc - see
+// layHelices and dnaAt in colony-renderer.ts. aa is a pixel's width on the
+// disc.
+float dnaAt(vec2 u, ivec2 lattice, float aa) {
+  float cover = 0.0;
+  int count = 2 + (hash01(lattice, 20u) > 0.5 ? 1 : 0);
+  for (int k = 0; k < count; k++) {
+    uint h = hash(uvec3(uvec2(lattice), 21u + uint(k)));
+    uint h2 = hash(uvec3(uvec2(lattice), 25u + uint(k)));
+    float orbit = DNA_ORBIT_MIN + DNA_ORBIT_VARY * octet(h, 0u);
+    float drift = DNA_DRIFT * (0.6 + 0.8 * octet(h, 1u));
+    float angle = octet(h, 2u) * 2.0 * PI
+      + uTime * drift * (octet(h, 3u) < 0.5 ? -1.0 : 1.0);
+    vec2 d = u - orbit * vec2(cos(angle), sin(angle));
+    float theta = octet(h2, 0u) * 2.0 * PI + uTime * DNA_SPIN;
+    float c = cos(theta);
+    float s = sin(theta);
+    float along = d.x * c + d.y * s;
+    float halfLength = DNA_HALF_MIN + DNA_HALF_VARY * octet(h2, 1u);
+    if (abs(along) > halfLength) {
+      continue;
+    }
+    float across = -d.x * s + d.y * c;
+    // Strands and rungs stay within the helix's amplitude.
+    if (abs(across) > DNA_AMPLITUDE + DNA_WIDTH + aa) {
+      continue;
+    }
+    float phase = along * DNA_TWIST + uTime;
+    float wave = DNA_AMPLITUDE * sin(phase);
+    // The two backbones, and a rung between them every half turn.
+    float strand = max(
+      1.0 - smoothstep(DNA_WIDTH, DNA_WIDTH + aa, abs(across - wave)),
+      1.0 - smoothstep(DNA_WIDTH, DNA_WIDTH + aa, abs(across + wave))
+    );
+    float turn = phase + PI / 2.0;
+    float rung = abs(across) <= abs(wave) + DNA_WIDTH && mod(turn, PI) < DNA_RUNG
+      ? 0.8
+      : 0.0;
+    float ends = 1.0 - smoothstep(halfLength - 0.08, halfLength, abs(along));
+    cover = max(cover, max(strand, rung) * ends);
+  }
+  return cover;
+}
+
+// The bubbles look at p - see paintBubbles.
+vec4 bubblesLook(vec2 p, float d) {
+  if (d < CELL_CLIP_START) {
+    return vec4(0.0);
+  }
+  Bubble best = nearestBubble(p, BUBBLES);
+  float baseAlpha = BUBBLE_BASE_ALPHA * smoothstep(EDGE_START, EDGE_END, d);
+  float bubbleAlpha = 0.0;
+  vec3 face = vec3(0.0);
+  if (best.radius > 0.0) {
+    float edge = cellEdge(best.q2, best.radius, d);
+    if (edge > 0.0) {
+      float rim = smoothstep(BUBBLE_RIM_START, BUBBLE_RIM_END, sqrt(best.q2));
+      float spot = 1.0 - smoothstep(BUBBLE_SPOT_START, BUBBLE_SPOT_END, length(best.unit - CELL_FOCAL));
+      float dna = dnaAt(best.unit, best.lattice, uPixel / best.radius);
+      bubbleAlpha = max(max(BUBBLE_FILM, rim * BUBBLE_RIM), max(spot, dna)) * edge;
+      // The film and the rim in the light colour, the spot and the
+      // snippets towards white.
+      face = mix(lightColor(), vec3(1.0), max(spot, dna * 0.7));
+    }
+  }
+  return overBase(face, bubbleAlpha, baseAlpha);
+}
+
+// The cells look at p: the colour of the base or of the cell the fragment
+// is deepest in, and its alpha - d is the density under the fragment.
+vec4 cellsLook(vec2 p, float d) {
+  if (d < CELL_CLIP_START) {
+    return vec4(0.0);
+  }
+  Bubble best = nearestBubble(p, CELLS);
+  float baseAlpha = BASE_ALPHA * smoothstep(EDGE_START, EDGE_END, d);
+  float cellAlpha = best.radius > 0.0 ? cellEdge(best.q2, best.radius, d) : 0.0;
+  vec3 face = cellAlpha > 0.0 ? sphereShade(best.unit) : vec3(0.0);
+  return overBase(face, cellAlpha, baseAlpha);
+}
+
+// The tile of a lattice point for the honeycomb or the crystal: its centre
+// and the density under it - see latticeTile in colony-renderer.ts.
+vec3 latticeTile(ivec2 lattice, float spacing, bool crystal) {
+  float rowHeight = spacing * CELL_ROW_HEIGHT;
+  vec2 centre = vec2(
+    (float(lattice.x) + 0.5) * spacing + latticeOffset(lattice.y, spacing),
+    (float(lattice.y) + 0.5) * rowHeight
+  );
+  if (crystal) {
+    centre += vec2(
+      (hash01(lattice, 4u) - 0.5) * spacing,
+      (hash01(lattice, 5u) - 0.5) * rowHeight
+    ) * CRYSTAL_JITTER * 2.0;
+  }
+  return vec3(centre, textureLod(uDensity, centre / uArena, 0.0).r);
+}
+
+// The honeycomb or the crystal look at p - see paintTiles.
+vec4 tilesLook(vec2 p, float d, bool crystal) {
+  if (d < CELL_CLIP_START) {
+    return vec4(0.0);
+  }
+  float spacing = TILE_SPACING * uUnit;
+  float rowHeight = spacing * CELL_ROW_HEIGHT;
+  int row = int(floor(p.y / rowHeight));
+  // The nearest tile centre and the second nearest - the seam lies where
+  // they are as far away.
+  float nearest2 = 1e9;
+  float second2 = 1e9;
+  vec3 tile = vec3(0.0);
+  ivec2 at = ivec2(0);
+  for (int dr = -1; dr <= 1; dr++) {
+    int candidateRow = row + dr;
+    int col = int(floor((p.x - latticeOffset(candidateRow, spacing)) / spacing));
+    for (int dc = -1; dc <= 1; dc++) {
+      ivec2 lattice = ivec2(col + dc, candidateRow);
+      vec3 candidate = latticeTile(lattice, spacing, crystal);
+      vec2 v = p - candidate.xy;
+      float distance2 = dot(v, v);
+      if (distance2 < nearest2) {
+        second2 = nearest2;
+        nearest2 = distance2;
+        tile = candidate;
+        at = lattice;
+      } else if (distance2 < second2) {
+        second2 = distance2;
+      }
+    }
+  }
+
+  float baseAlpha = BASE_ALPHA * smoothstep(EDGE_START, EDGE_END, d);
+  float tileAlpha = smoothstep(TILE_MIN, TILE_MIN + TILE_FADE, tile.z)
+    * smoothstep(CELL_CLIP_START, CELL_CLIP_END, d);
+  vec3 face = vec3(0.0);
+  if (tileAlpha > 0.0) {
+    // 0 on the seam, 1 a seam's width into the tile.
+    float inside = smoothstep(0.0, TILE_SEAM, (sqrt(second2) - sqrt(nearest2)) / spacing);
+    if (crystal) {
+      float shade = CRYSTAL_SHADE_MIN + CRYSTAL_SHADE_VARY * hash01(at, 6u);
+      face = mix(lightColor(), uColor * shade, inside);
+    } else {
+      face = sphereShade((p - tile.xy) / (spacing * TILE_RADIUS))
+        * (SEAM_DARK + (1.0 - SEAM_DARK) * inside);
+    }
+  }
+  return overBase(face, tileAlpha, baseAlpha);
+}
+
+// The neon look at p - see paintNeon.
+vec4 neonLook(float d) {
+  float coverage = smoothstep(EDGE_START, EDGE_END, d);
+  float line = smoothstep(NEON_LINE_START, NEON_LINE_END, d);
+  float inner = smoothstep(NEON_INNER_START, NEON_INNER_END, d);
+  float glow = max(line * (1.0 - line) * 4.0, inner * (1.0 - inner) * 4.0 * NEON_INNER_GLOW);
+  float halo = smoothstep(0.0, NEON_LINE_START, d) * (1.0 - line) * NEON_HALO;
+  float alpha = max(NEON_BODY_ALPHA * coverage, max(glow, halo));
+  vec3 neon = mix(uColor, vec3(1.0), NEON_LIGHT);
+  vec3 rgb = min(vec3(1.0), uColor * NEON_BODY * coverage + neon * glow + uColor * halo);
+  return vec4(rgb, alpha);
+}
+
+bool inkStripe(float along, float spacing) {
+  return fract(along / spacing) < INK_HATCH_WIDTH;
+}
+
+// The ink look at p - see paintInk.
+vec4 inkLook(vec2 p, float d) {
+  float coverage = smoothstep(EDGE_START, EDGE_END, d);
+  if (coverage <= 0.0) {
+    return vec4(0.0);
+  }
+  float outline = 1.0 - smoothstep(EDGE_END, INK_OUTLINE_END, d);
+  float spacing = INK_HATCH_SPACING * uUnit;
+  bool lined = inkStripe(dot(p, uHatch.xy), spacing)
+    || ((uHatch.z > 0.5 || d < INK_CROSS_BELOW)
+      && inkStripe(p.x * uHatch.y - p.y * uHatch.x, spacing));
+  vec3 body = lined ? uColor * INK_HATCH : uColor;
+  return vec4(mix(body, uColor * INK, outline), INK_ALPHA * coverage);
 }
 
 ${HEX}
@@ -236,7 +588,7 @@ void main() {
   vec2 p = arenaPosition(vNdc);
   bool boosted = uShimmer >= 0.0;
 
-  if (uLook == 1) {
+  if (uLook == LOOK_PIXELS) {
     vec2 cell = floor(p);
     vec2 texel = texelFetch(uCells, ivec2(cell), 0).rg;
     if (texel.r <= 0.0) {
@@ -262,6 +614,28 @@ void main() {
   vec2 uv = p / uArena;
   vec2 sampled = texture(uDensity, uv).rg;
   float density = sampled.r;
+
+  if (uLook != LOOK_SLIME) {
+    if (density <= 0.0) {
+      discard;
+    }
+    vec4 look = uLook == LOOK_CELLS ? cellsLook(p, density)
+      : uLook == LOOK_HONEYCOMB || uLook == LOOK_CRYSTAL
+        ? tilesLook(p, density, uLook == LOOK_CRYSTAL)
+      : uLook == LOOK_NEON ? neonLook(density)
+      : uLook == LOOK_INK ? inkLook(p, density)
+      : bubblesLook(p, density);
+    if (look.a <= 0.0) {
+      discard;
+    }
+    float white = burn(p, 0.0, min(1.0, sampled.g / max(density, 0.05)));
+    outColor = vec4(
+      applyTints(look.rgb + (1.0 - look.rgb) * white, p),
+      look.a * uAlpha
+    );
+    return;
+  }
+
   float coverage = smoothstep(EDGE_START, EDGE_END, density);
   if (coverage <= 0.0) {
     discard;
@@ -278,15 +652,9 @@ void main() {
   float depth = 0.8 + 0.2 * (1.0 - min(1.0, density));
   float rim = 1.0 - 0.45 * coverage * (1.0 - coverage) * 4.0;
   float shade = depth * rim;
-  float white = max(gloss * 0.75, min(1.0, sampled.g / max(density, 0.05)));
-
+  float white = burn(p, gloss * 0.75, min(1.0, sampled.g / max(density, 0.05)));
   if (boosted) {
-    float wave = shimmer(p, uShimmer);
-    white = max(white, wave * 0.8);
-    shade = max(shade, 0.85 + 0.15 * wave);
-    if (sparkle(p * 2.0, uShimmer)) {
-      white = 1.0;
-    }
+    shade = max(shade, 0.85 + 0.15 * shimmer(p, uShimmer));
   }
 
   vec3 body = uColor * shade;
@@ -322,7 +690,7 @@ const vec2 AXES[4] = vec2[4](vec2(1.0, 0.0), vec2(-1.0, 0.0), vec2(0.0, 1.0), ve
 const vec2 DIAGONALS[4] = vec2[4](vec2(0.7, 0.7), vec2(-0.7, 0.7), vec2(0.7, -0.7), vec2(-0.7, -0.7));
 
 float noise(vec2 cell, float t, uint salt) {
-  return float(hash(uvec3(uvec2(cell), uint(t) * 7u + salt))) / 4294967295.0;
+  return hash01(uvec3(uvec2(cell), uint(t) * 7u + salt));
 }
 
 void main() {

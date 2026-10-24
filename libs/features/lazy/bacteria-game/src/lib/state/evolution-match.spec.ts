@@ -11,14 +11,18 @@ import { GhostController } from './ghost';
 import { getLevel, levelMap } from './levels';
 import { MatchEngine, PlayerSpawn } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
+import { dailyLevelId } from './daily';
+import { generatedLevelId } from './level-generator/generate-level';
 import {
+  EVOLVED_REPLAY_VERSION,
+  GHOST_REPLAY_VERSION,
   parseReplay,
-  PLAIN_REPLAY_VERSION,
   playReplay,
   Replay,
   replayOf,
   REPLAY_VERSION,
 } from './replay';
+import { packReplay, unpackReplay } from './replay-pack';
 
 const PLAN: MatchPlan = {
   levelId: 'petri-dish',
@@ -371,11 +375,80 @@ describe('replays with evolution', () => {
     expect(damaged([EVOLVED, PLAIN_LOADOUT])).not.toBeNull();
   });
 
-  it('take the new format, which older clients refuse', () => {
+  it('take a format of their own, which older clients refuse', () => {
     const { replay } = record(plan, 300);
 
-    expect(replay.header.version).toBe(REPLAY_VERSION);
-    expect(REPLAY_VERSION).toBeGreaterThan(PLAIN_REPLAY_VERSION);
+    expect(replay.header.version).toBe(EVOLVED_REPLAY_VERSION);
+    expect(EVOLVED_REPLAY_VERSION).toBeGreaterThan(REPLAY_VERSION);
+    // Version 2's header around the loadouts.
+    expect(replay.header.seats).toEqual([{ isBot: false }, { isBot: true }]);
+  });
+
+  it('pack the weapons fired and unpack them again', () => {
+    const { replay } = record(plan, 300);
+    const packed = packReplay(replay);
+
+    expect(packed.w?.length).toBe(replay.inputs.weapons.length * 2);
+    expect(unpackReplay(JSON.parse(JSON.stringify(packed)))).toEqual(replay);
+  });
+
+  it('pack a plain replay without a list of weapons', () => {
+    const { replay } = record(PLAN, 60);
+
+    expect(packReplay(replay).w).toBeUndefined();
+  });
+
+  it('take the evolved format on the GPU too, for a ghost race only', () => {
+    const { engine } = record(plan, 300);
+    const replay = replayOf(plan, 'gpu', engine.tickCount, engine.recorded);
+
+    expect(replay.header.version).toBe(EVOLVED_REPLAY_VERSION);
+    expect(parseReplay(JSON.parse(JSON.stringify(replay)))).toEqual(replay);
+    expect(parseReplay(replay, { stored: true })).toBeNull();
+    expect(playReplay(replay)).toBeNull();
+  });
+
+  it('keep a plain GPU match a version 1 ghost', () => {
+    const { engine } = record(PLAN, 60);
+    const replay = replayOf(
+      { ...PLAN, loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT] },
+      'gpu',
+      engine.tickCount,
+      { ...engine.recorded, weapons: [] }
+    );
+
+    expect(replay.header.version).toBe(GHOST_REPLAY_VERSION);
+    expect(replay.header.loadouts).toBeUndefined();
+  });
+
+  it('are never a ranked attempt or a daily run', () => {
+    const { replay } = record(plan, 60);
+    const attempt = { id: 'attempt-1', at: 1 };
+    const daily = dailyLevelId('2026-10-24');
+
+    expect(
+      parseReplay({ ...replay, header: { ...replay.header, attempt } })
+    ).toBeNull();
+    expect(
+      parseReplay({ ...replay, header: { ...replay.header, levelId: daily } })
+    ).toBeNull();
+    // Another generated level is fine.
+    const generated = generatedLevelId({
+      recipe: 'field',
+      seed: 777,
+      difficulty: 3,
+    });
+    expect(
+      parseReplay({
+        ...replay,
+        header: { ...replay.header, levelId: generated },
+      })
+    ).not.toBeNull();
+    // A plain one may be either.
+    const plain = record(PLAN, 60).replay;
+    expect(
+      parseReplay({ ...plain, header: { ...plain.header, attempt } })
+    ).not.toBeNull();
   });
 
   it('keep a plain match in the format from before evolution', () => {
@@ -386,7 +459,7 @@ describe('replays with evolution', () => {
     const { engine, replay } = record(plainPlan, 600);
     const before = record(PLAN, 600).replay;
 
-    expect(replay.header.version).toBe(PLAIN_REPLAY_VERSION);
+    expect(replay.header.version).toBe(REPLAY_VERSION);
     expect(JSON.stringify(replay.header)).toBe(JSON.stringify(before.header));
     expect(playReplay(replay)?.players).toEqual(engine.players);
   });
@@ -403,29 +476,32 @@ describe('replays with evolution', () => {
       60
     );
 
-    expect(replay.header.version).toBe(REPLAY_VERSION);
+    expect(replay.header.version).toBe(EVOLVED_REPLAY_VERSION);
     expect(replay.header.loadouts).toEqual([PLAIN_LOADOUT, PLAIN_LOADOUT]);
   });
 
-  it('refuse a replay in the plain format that carries evolution', () => {
-    const { replay } = record(plan, 300);
-    const plainFormat = { ...replay.header, version: PLAIN_REPLAY_VERSION };
+  it.each([REPLAY_VERSION, GHOST_REPLAY_VERSION])(
+    'refuse a replay in plain version %i that carries evolution',
+    (version) => {
+      const { replay } = record(plan, 300);
+      const plainFormat = { ...replay.header, version };
 
-    expect(parseReplay({ ...replay, header: plainFormat })).toBeNull();
-    const { loadouts, ...withoutLoadouts } = plainFormat;
-    expect(loadouts).toBeDefined();
-    expect(parseReplay({ ...replay, header: withoutLoadouts })).toBeNull();
-    expect(
-      parseReplay({
-        header: withoutLoadouts,
-        inputs: { ...replay.inputs, weapons: [] },
-      })
-    ).not.toBeNull();
-  });
+      expect(parseReplay({ ...replay, header: plainFormat })).toBeNull();
+      const { loadouts, ...withoutLoadouts } = plainFormat;
+      expect(loadouts).toBeDefined();
+      expect(parseReplay({ ...replay, header: withoutLoadouts })).toBeNull();
+      expect(
+        parseReplay({
+          header: withoutLoadouts,
+          inputs: { ...replay.inputs, weapons: [] },
+        })
+      ).not.toBeNull();
+    }
+  );
 
   it('refuse a format this client does not know', () => {
     const { replay } = record(plan, 60);
-    const header = { ...replay.header, version: REPLAY_VERSION + 1 };
+    const header = { ...replay.header, version: EVOLVED_REPLAY_VERSION + 1 };
 
     expect(parseReplay({ ...replay, header })).toBeNull();
     expect(playReplay({ ...replay, header })).toBeNull();

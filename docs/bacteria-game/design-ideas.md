@@ -48,7 +48,7 @@ below lists what they changed.
   every display frame on a 60 Hz screen, every second one on a 120 Hz screen,
   so a frame is never shown twice or skipped. The simulation still receives
   the measured frame delta, not a fixed tick.
-- **A WebGL2 painter** with slime or pixel looks, per-level `ArenaTheme`
+- **A WebGL2 painter** with eight looks (slime to pixels), per-level `ArenaTheme`
   (floor, one of twelve patterns, walls, motes), round walls drawn as glossy
   blobs that melt into each other, glow for fights, meals and pushes, and a
   boost shimmer that runs as waves towards the colony's crosshair. The canvas
@@ -201,13 +201,16 @@ Things that exist already can become rewards:
 
 - **Colony colours** (`COLONY_COLORS` has eight; orange and blue stay free, the
   rest unlock through medallions or achievements).
-- **Looks** (`BACTERIA_LOOKS`: slime, pixels) and new ones from section 7.
+- **Looks** (`BACTERIA_LOOKS`: slime, cells, honeycomb, crystal, neon, ink,
+  bubbles, pixels) and new ones from section 7.
 - **Arena patterns** (`ArenaPattern`, twelve of them) usable as an override for
   any level in free play.
 - **Crosshair shapes** and **boost sounds** - small, cheap variations.
 
 A locked item shows greyed out with its condition ("Gold on Hourglass"), so the
-player always knows what the next thing costs.
+player always knows what the next thing costs. The _My Colony_ screen is where
+the cosmetics live: the skin (every look, with a preview) and the colours today,
+the rest as it comes.
 
 ### 1.7 Daily level and streaks
 
@@ -821,9 +824,11 @@ A small chain on the final frame, each stage toggleable:
 
 ### 7.5 Looks and accessibility
 
-- New `BacteriaLook`s: _cells_ (visible individual rounded cells with nuclei),
-  _ink_ (high-contrast monochrome with hatching, great for colour blindness),
-  _neon_ (dark floor, glowing outlines).
+- Looks in: _cells_ (glossy round cells of different sizes on a dark base,
+  as on the app icon), _honeycomb_ and _crystal_ (the colony tiled), _neon_
+  (dark body, glowing outline), _ink_ (flat, hatched in each colony's own
+  direction, so two are told apart without colour) and _bubbles_ (glassy
+  bubbles with snippets of DNA drifting inside).
 - A **pattern overlay per colony** (dots for one, stripes for the other) as a
   setting, so two colonies are distinguishable without colour.
 - Palette presets checked for deuteranopia and protanopia distance; the

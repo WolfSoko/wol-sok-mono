@@ -8,7 +8,7 @@ import { getLevel, LEVELS, levelCrosshairSpeed } from './levels';
 import { PlayerStore } from './player.store';
 import { ANNIHILATION, judgeOutcome } from './win-conditions';
 import { PlayerService } from './player.service';
-import { PLAIN_REPLAY_VERSION, playReplay, Replay, replayOf } from './replay';
+import { playReplay, Replay, replayOf, REPLAY_VERSION } from './replay';
 import { replayLink } from './replay-link';
 import { signal } from '@angular/core';
 import { Subject } from 'rxjs';
@@ -258,7 +258,7 @@ describe('GameStateService', () => {
       const replay = service['replay']() as Replay;
       expect(replay.header).toEqual(
         expect.objectContaining({
-          version: PLAIN_REPLAY_VERSION,
+          version: REPLAY_VERSION,
           mode: 'vs-computer',
           difficulty: 'hard',
           simulation: 'cpu',

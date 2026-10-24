@@ -179,6 +179,9 @@ function ghostLoadouts(
     : [human ?? PLAIN_LOADOUT, recorded ?? PLAIN_LOADOUT];
 }
 
+/** The seats of an online match - both players. */
+const ONLINE_SEATS: ReadonlySet<number> = new Set([0, 1]);
+
 function planOnline(
   plan: MatchPlan,
   online: OnlineSeats
@@ -200,7 +203,12 @@ function planOnline(
             isBot: seat !== online.seat,
           }
     ),
-    options: { ...options, ghosts: online.drivers },
+    // Both seats are recorded: the replay plays them both back (ADR 0011).
+    options: {
+      ...options,
+      ghosts: online.drivers,
+      recordedSeats: ONLINE_SEATS,
+    },
   };
 }
 

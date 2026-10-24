@@ -1,7 +1,8 @@
 import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import {
-  PLAIN_REPLAY_VERSION,
+  EVOLVED_REPLAY_VERSION,
+  GHOST_REPLAY_VERSION,
   Replay,
   replayOf,
   REPLAY_VERSION,
@@ -51,7 +52,7 @@ describe('replay links', () => {
     const evolved: Replay = {
       header: {
         ...replay.header,
-        version: REPLAY_VERSION,
+        version: EVOLVED_REPLAY_VERSION,
         loadouts: [
           { genes: { mitosis: 2, flagella: 5 }, weapon: 'cryo-pulse' },
           { genes: {}, weapon: null },
@@ -118,20 +119,32 @@ describe('replay links', () => {
   it('carry nothing from another version of the game', async () => {
     const link = await replayLink('https://x.y/', {
       ...replay,
-      header: { ...replay.header, version: REPLAY_VERSION + 1 },
+      header: { ...replay.header, version: EVOLVED_REPLAY_VERSION + 1 },
     });
 
     expect(await replayFromHash(new URL(link).hash)).toBeNull();
   });
 
   it('carry a plain run in the format from before evolution', async () => {
-    expect(replay.header.version).toBe(PLAIN_REPLAY_VERSION);
+    expect(replay.header.version).toBe(REPLAY_VERSION);
     const link = await replayLink('https://x.y/', replay);
 
     expect((await replayFromHash(new URL(link).hash))?.header.version).toBe(
-      PLAIN_REPLAY_VERSION
+      REPLAY_VERSION
     );
   });
+
+  it.each([REPLAY_VERSION, GHOST_REPLAY_VERSION])(
+    'carry nothing that claims plain version %i but fires weapons',
+    async (version) => {
+      const link = await replayLink('https://x.y/', {
+        header: { ...replay.header, version },
+        inputs: { ...replay.inputs, weapons: [[100, 0]] },
+      });
+
+      expect(await replayFromHash(new URL(link).hash)).toBeNull();
+    }
+  );
 
   it('carry nothing that claims the plain format but carries evolution', async () => {
     const link = await replayLink('https://x.y/', {

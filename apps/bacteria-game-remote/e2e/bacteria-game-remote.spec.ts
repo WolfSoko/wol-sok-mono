@@ -231,7 +231,7 @@ test('should let the players pick their colours', async ({ page }) => {
   await po.chooseMode('Two players');
   await po.stepBackCta.click();
   await po.backCta.click();
-  await po.settingsCta.click();
+  await po.colonyCta.click();
 
   await po.chooseColor('Left player', 'Green');
   await po.chooseColor('Right player', 'Pink');
@@ -303,7 +303,7 @@ test('should keep the colours still to earn locked, saying what opens them', asy
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.settingsCta.click();
+  await po.colonyCta.click();
 
   const green = page
     .getByRole('radiogroup', { name: 'Colour of You' })
@@ -337,4 +337,31 @@ test('should show the privacy policy on a page of its own', async ({
   await expect(new BacteriaGamePo(page).playArea).toBeVisible({
     timeout: 15_000,
   });
+});
+
+test('should show the legal notice on a page of its own, reached from the menu', async ({
+  page,
+}) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+
+  await page
+    .locator('footer')
+    .getByRole('link', { name: 'Legal notice' })
+    .click();
+
+  await expect(page).toHaveTitle('Impressum - Bacteria Wars');
+  await expect(page.getByRole('heading', { name: 'Impressum' })).toBeVisible();
+  await expect(page.locator('address').first()).toContainText(
+    'Wolfram Sokollek'
+  );
+  await expect(page.locator('#bacteria-game-splash')).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'English' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Legal notice' })
+  ).toBeInViewport();
+
+  await page.getByRole('link', { name: /Back to the game/ }).click();
+  await expect(po.playArea).toBeVisible({ timeout: 15_000 });
 });

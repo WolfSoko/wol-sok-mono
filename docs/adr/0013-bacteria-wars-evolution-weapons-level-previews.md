@@ -77,10 +77,11 @@ a phage strike), but only in a match whose plan has loadouts. Arming them
 everywhere would change how every recorded boss match plays and force a new
 `BALANCE_VERSION`.
 
-`planMatch` cannot tell the daily level from another generated one, so a
-server that re-simulates daily or endless runs (ADR 0012) must reject a
-replay that carries loadouts - in practice every replay that is not in the
-plain format (`PLAIN_REPLAY_VERSION`, see below).
+`planMatch` cannot tell the daily level from another generated one, so the
+replay parser does it for the leaderboards (ADR 0012): a replay with
+evolution in it (version 3, see below) is refused when it declares a ranked
+attempt - daily and endless runs are started as one - or plays the daily
+level of any day (`isDailyLevelId`, which tells it from the id alone).
 
 ### Determinism
 
@@ -91,14 +92,37 @@ weapon is a human input on the input grid, recorded like a boost
 same. A plain match must play bit for bit as before, so `BALANCE_VERSION`
 stays unless a plain match changes.
 
-A replay with evolution in it - loadouts that change the match (a gene, a
-weapon, or a boss they arm) or a weapon fired - takes `REPLAY_VERSION` 2. A
-client from before would drop the loadouts and the shots and play another
-match; with the new version it refuses the replay instead. A plain replay
-keeps version 1 (`PLAIN_REPLAY_VERSION`) and leaves out loadouts that change
-nothing, so it reads as before in older clients and links. A replay in
-version 1 that carries loadouts or weapons fired is invalid. Online plays plain, so `NET_VERSION`
-does not move for this.
+#### Replay versions
+
+ADR 0011 gave version 2 to the strict format the server stores and checks;
+version 1 stays the ghost links' format, still written for a match the GPU
+ran. Both are plain, and both parsers before evolution build the header
+field by field and the inputs kind by kind, so they would silently drop
+`loadouts` and the weapons fired (packed under `w`) and play another match.
+An evolved replay therefore takes a version of its own:
+
+- **Version 3** (`EVOLVED_REPLAY_VERSION`) is version 2's header - seats,
+  outcome, checksum, attempt - plus the seats' `loadouts`, and version 2's
+  inputs plus `weapons`. A replay takes it when evolution plays a part:
+  loadouts that change the match (a gene, a weapon, or a boss they arm) or
+  a weapon fired. Every client and server from before refuses it by its
+  version rather than replaying an evolved run as plain.
+- It is written on either simulation. A match the GPU ran gets no version 1
+  ghost link when it is evolved - that link would lose the loadouts in every
+  client before this one - but a version 3 replay with `simulation: 'gpu'`,
+  good for a ghost race only, as version 1 is: `playReplay` and the stored
+  parse (`stored: true`) take version 3 from the CPU only.
+- A plain match writes exactly what ADR 0011 writes: version 2 from the CPU,
+  version 1 from the GPU, without loadouts, which change nothing in it, and
+  without a list of weapons in the packed form. `golden-replay.json` and
+  every plain link stay as they were.
+- Versions 1 and 2 that carry loadouts or weapons fired are invalid.
+- The stored parse takes version 3 for a match against the computer on the
+  ladder or a generated level, which the server keeps as kind `computer`
+  and reruns with its loadouts; never with an attempt or on the daily
+  level, as above.
+
+Online plays plain, so `NET_VERSION` does not move for this.
 
 ### Level previews
 

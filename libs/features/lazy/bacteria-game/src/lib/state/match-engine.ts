@@ -112,7 +112,25 @@ export interface MatchOptions {
   ghosts?: ReadonlyMap<number, SeatDriver>;
   /** How the match is won - by annihilation when absent. */
   win?: WinRule;
+  /**
+   * The seats whose inputs go into the recording - the humans at the screen
+   * when absent. A seat a recording drives is recorded too when it is in
+   * here, as the lockstep's are online; a bot never is (ADR 0011).
+   */
+  recordedSeats?: ReadonlySet<number>;
+  /**
+   * Called after every full second of match time with the colony sizes by
+   * seat - the timeline a replay's score and summary are worked out from.
+   * It only reads: nothing it does changes a tick.
+   */
+  onSecond?: SecondSampler;
 }
+
+/** The players' colony sizes, by seat, at the end of a second of match time. */
+export type SizeSample = readonly number[];
+
+/** Takes a match's colony sizes once a second - `second` counts from 1. */
+export type SecondSampler = (sizes: SizeSample, second: number) => void;
 
 /** A frame in which nothing happened. */
 export function noFrameEvents(): FrameEvents {
@@ -207,7 +225,7 @@ export class MatchEngine {
   /** What the ticks of the frame under way did so far. */
   private tickEvents: StepEvents = noEvents();
   private ticks = 0;
-  /** What the humans at the screen put in, for the replay. */
+  /** What the recorded seats put in, for the replay. */
   private readonly inputs: ReplayInputs = {
     steers: [],
     drags: [],
@@ -216,6 +234,9 @@ export class MatchEngine {
   };
   /** The players a recording drives, by seat. */
   private readonly ghosts: ReadonlyMap<number, SeatDriver>;
+  /** The seats to record - null for the humans at the screen. */
+  private readonly recordedSeats: ReadonlySet<number> | null;
+  private readonly onSecond: SecondSampler | null;
   private readonly win: WinRule;
   /** Each seat's traits, a boss's, evolved ones or none. */
   private readonly traits: readonly (EvolvedTraits | undefined)[];
@@ -245,6 +266,8 @@ export class MatchEngine {
     this.seed = options.seed;
     this.balance = options.balance ?? gameBalance;
     this.ghosts = options.ghosts ?? new Map();
+    this.recordedSeats = options.recordedSeats ?? null;
+    this.onSecond = options.onSecond ?? null;
     this.win = winRuleOf(options);
     this.traits = spawns.map((spawn) => spawn.traits);
     this.map = options.map ?? getMap('corridors');
@@ -324,7 +347,7 @@ export class MatchEngine {
     return this.ticks;
   }
 
-  /** What the humans put in so far - a match's worth once it is over. */
+  /** What the recorded seats put in so far - a match's worth once it is over. */
   public get recorded(): ReplayInputs {
     return this.inputs;
   }
@@ -415,6 +438,12 @@ export class MatchEngine {
     this.syncColonyStats(true);
     this.ownsPlayers = false;
     this.ticks++;
+    if (this.onSecond !== null && this.ticks % TICKS_PER_SEC === 0) {
+      this.onSecond(
+        this.playerList.map((player) => player.bacteriaCount),
+        this.ticks / TICKS_PER_SEC
+      );
+    }
   }
 
   /**
@@ -496,7 +525,7 @@ export class MatchEngine {
     });
     this.ownsPlayers = false;
     this.firedBoosts.push(player.isBot);
-    if (this.isLive(playerId)) {
+    if (this.isRecorded(playerId)) {
       // Fired between two ticks, it counts from the next one on.
       this.inputs.boosts.push([this.ticks, playerId]);
     }
@@ -529,7 +558,7 @@ export class MatchEngine {
       x: player.x,
       y: player.y,
     });
-    if (this.isLive(playerId)) {
+    if (this.isRecorded(playerId)) {
       // Fired between two ticks, it counts from the next one on.
       this.inputs.weapons.push([this.ticks, playerId]);
     }
@@ -569,14 +598,23 @@ export class MatchEngine {
     this.shots = [];
   }
 
-  /** Records what the humans changed since the last tick. */
+  /** True for a seat whose inputs go into the recording. */
+  private isRecorded(playerId: number): boolean {
+    return this.recordedSeats === null
+      ? this.isLive(playerId)
+      : this.recordedSeats.has(playerId) && !this.bots.has(playerId);
+  }
+
+  /** Records what the recorded seats changed since the last tick. */
   private record(): void {
     for (const [playerId, { x, y }] of this.newDrags) {
-      this.inputs.drags.push([this.ticks, playerId, x, y]);
+      if (this.isRecorded(playerId)) {
+        this.inputs.drags.push([this.ticks, playerId, x, y]);
+      }
     }
     this.newDrags.clear();
     for (const player of this.playerList) {
-      if (!this.isLive(player.id)) {
+      if (!this.isRecorded(player.id)) {
         continue;
       }
       const now = this.steering.get(player.id) ?? AT_REST;
@@ -600,6 +638,10 @@ export class MatchEngine {
       }
       if (drag != null) {
         this.dragTargets.set(playerId, drag);
+        // Only recorded seats, so a ghost's turned drags never get in.
+        if (this.isRecorded(playerId)) {
+          this.newDrags.set(playerId, drag);
+        }
       }
       if (steer != null) {
         this.steer(playerId, steer);

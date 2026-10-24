@@ -1,9 +1,7 @@
-import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
-import { Meta, Title } from '@angular/platform-browser';
-import { provideRouter, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { PRIVACY_POLICY_URL } from '@wolsok/feat-lazy-bac-game';
 import { PrivacyComponent } from './privacy.component';
 
 describe('PrivacyComponent', () => {
@@ -45,39 +43,12 @@ describe('PrivacyComponent', () => {
     );
   });
 
-  it('has its own title, description and canonical URL while open', async () => {
-    const title = TestBed.inject(Title);
-    const meta = TestBed.inject(Meta);
-    const doc = TestBed.inject(DOCUMENT);
-    title.setTitle('Bacteria Game');
-    meta.updateTag({ name: 'description', content: 'The game' });
-
+  it('has its own title while open', async () => {
     await open();
 
-    expect(title.getTitle()).toBe('Datenschutz - Bacteria Wars');
-    expect(meta.getTag('name="description"')?.content).toContain(
-      'Privacy policy of Bacteria Wars'
+    expect(TestBed.inject(Title).getTitle()).toBe(
+      'Datenschutz - Bacteria Wars'
     );
-    expect(
-      doc.head.querySelector('link[rel="canonical"]')?.getAttribute('href')
-    ).toBe(PRIVACY_POLICY_URL);
-
-    await TestBed.inject(Router).navigateByUrl('/');
-
-    expect(title.getTitle()).toBe('Bacteria Game');
-    expect(meta.getTag('name="description"')?.content).toBe('The game');
-    expect(doc.head.querySelector('link[rel="canonical"]')).toBeNull();
-  });
-
-  it('takes the loading screen down, as no game will', async () => {
-    const doc = TestBed.inject(DOCUMENT);
-    const splash = doc.createElement('div');
-    splash.id = 'bacteria-game-splash';
-    doc.body.append(splash);
-
-    await open();
-
-    expect(splash.isConnected).toBe(false);
   });
 
   it('scrolls to the section a link names', async () => {

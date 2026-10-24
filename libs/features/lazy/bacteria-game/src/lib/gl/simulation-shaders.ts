@@ -32,7 +32,7 @@ export const WALL_BIT = 1;
 export const ZONE_SHIFT = 1;
 
 /** A number as a GLSL float literal - "2.0", never the int "2". */
-function glslFloat(value: number): string {
+export function glslFloat(value: number): string {
   return Number.isInteger(value) ? value.toFixed(1) : String(value);
 }
 
