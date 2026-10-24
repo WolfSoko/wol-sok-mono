@@ -84,6 +84,7 @@ describe('GameStateService online colours', () => {
     public readonly startMatch = jest.fn(
       () => new Lockstep(0, () => undefined)
     );
+    public readonly matchRef = () => ({ roomCode: 'K7QPXM', n: 1 });
     public takeStart() {
       const pending = this.pending;
       this.pending = null;

@@ -78,6 +78,13 @@ export interface StoredSettings {
   language?: Language;
   /** The level the player would like to meet opponents on, absent for any. */
   matchLevel?: string;
+  /**
+   * Whether local matches against the computer are recorded - on the CPU,
+   * which a weak device may not afford (ADR 0011).
+   */
+  recordLocal?: boolean;
+  /** Whether recorded local matches are kept; online ones always are. */
+  saveMatches?: boolean;
 }
 
 import { BacteriaLook, isBacteriaLook } from './state/skins';
@@ -172,6 +179,19 @@ export class GameSettingsService {
   public readonly language = this.i18n.choice;
   /** The level the matchmaking asks for, null for any level. */
   public readonly matchLevel = signal<string | null>(null);
+  /**
+   * True while local matches against the computer are recorded - on the
+   * CPU, at the online grid. On by default (the owner's decision, ADR 0011);
+   * a weak device may turn it off and keep the GPU.
+   */
+  // Off until the generated levels' medal limits are checked on the CPU
+  // simulation, which recording switches local matches to (ADR 0011).
+  public readonly recordLocal = signal(false);
+  /**
+   * True while recorded local matches are kept, "Save my matches" - online
+   * matches are kept either way (ADR 0012).
+   */
+  public readonly saveMatches = signal(true);
 
   constructor() {
     // Synchronous, so a change is told apart from a restored setup.
@@ -292,6 +312,20 @@ export class GameSettingsService {
     this.changed('matchLevel');
   }
 
+  /** Records local matches against the computer from the next one on - or not. */
+  public setRecordLocal(on: boolean): void {
+    this.recordLocal.set(on);
+    this.gameState.setReplayPrefs({ recordLocal: on });
+    this.changed('recordLocal');
+  }
+
+  /** Keeps the recorded local matches from now on - or not. */
+  public setSaveMatches(on: boolean): void {
+    this.saveMatches.set(on);
+    this.gameState.setReplayPrefs({ saveMatches: on });
+    this.changed('saveMatches');
+  }
+
   /** Speaks a language from now on, or follows the browser for null. */
   public setLanguage(language: Language | null): void {
     this.i18n.setLanguage(language);
@@ -375,6 +409,16 @@ export class GameSettingsService {
     if (restores('matchLevel') && isMatchLevel(stored.matchLevel)) {
       this.matchLevel.set(stored.matchLevel);
     }
+    if (restores('recordLocal') && typeof stored.recordLocal === 'boolean') {
+      this.recordLocal.set(stored.recordLocal);
+    }
+    if (restores('saveMatches') && typeof stored.saveMatches === 'boolean') {
+      this.saveMatches.set(stored.saveMatches);
+    }
+    this.gameState.setReplayPrefs({
+      recordLocal: this.recordLocal(),
+      saveMatches: this.saveMatches(),
+    });
     if (restores('language')) {
       this.i18n.setLanguage(
         isLanguage(stored.language) ? stored.language : null
@@ -448,6 +492,8 @@ export class GameSettingsService {
       vibration: this.vibration(),
       language: this.language() ?? undefined,
       matchLevel: this.matchLevel() ?? undefined,
+      recordLocal: this.recordLocal(),
+      saveMatches: this.saveMatches(),
     };
     this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }

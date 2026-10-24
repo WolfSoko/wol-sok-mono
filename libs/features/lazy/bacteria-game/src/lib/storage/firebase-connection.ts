@@ -1,4 +1,9 @@
-import { EnvironmentProviders, inject } from '@angular/core';
+import {
+  EnvironmentProviders,
+  inject,
+  InjectionToken,
+  makeEnvironmentProviders,
+} from '@angular/core';
 import {
   FirebaseApp,
   initializeApp,
@@ -21,7 +26,15 @@ export interface FirebaseConnection {
   /** The Realtime Database, for the online status - null without one. */
   rtdb: Database | null;
   rtdbSdk: typeof rtdbSdk;
+  /**
+   * True once the project takes recorded matches - see
+   * `GameCloudOptions.replays`. Absent, the replays stay on the device.
+   */
+  replays?: boolean;
 }
+
+/** Whether the project takes recorded matches, from its options. */
+const TAKES_REPLAYS = new InjectionToken<boolean>('bacteria-wars replays');
 
 /**
  * The game's own Firebase app, named so it stands next to the shell's
@@ -41,6 +54,9 @@ export function provideFirebase(
 ): EnvironmentProviders[] {
   const { emulators } = options;
   return [
+    makeEnvironmentProviders([
+      { provide: TAKES_REPLAYS, useValue: options.replays === true },
+    ]),
     provideFirebaseApp(() => initializeApp(options.firebase, APP_NAME)),
     provideAuth((injector) => {
       // No popup resolver: getAuth's would load Google's sign-in frame on
@@ -111,5 +127,6 @@ export function injectFirebaseConnection(): FirebaseConnection {
     dbSdk,
     rtdb: inject(Database, { optional: true }),
     rtdbSdk,
+    replays: inject(TAKES_REPLAYS, { optional: true }) ?? false,
   };
 }

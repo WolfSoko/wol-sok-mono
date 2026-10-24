@@ -10,6 +10,9 @@ import { FirestoreGameSocial } from './firestore-game-social';
 import type { GamePresence, GameSocial } from './game-social';
 import { RtdbGamePresence } from './rtdb-game-presence';
 import { FirestoreGameStorage } from './firestore-game-storage';
+import { FirestoreGameReplays } from './firestore-game-replays';
+import type { GameReplays } from './game-replays';
+import { LocalGameReplays } from './local-game-replays';
 import type { GameRooms } from './game-rooms';
 import { LocalGameStorage } from './local-game-storage';
 
@@ -29,6 +32,13 @@ export interface GameCloudOptions {
     /** The Realtime Database emulator, on the Firestore emulator's host. */
     databasePort?: number;
   };
+  /**
+   * True once the project takes recorded matches: its functions and the
+   * rules for `replaySubmissions` and `replays` are deployed (ADR 0011).
+   * Until then the replays stay on this device - nothing may write a
+   * submission the rules would refuse.
+   */
+  replays?: boolean;
 }
 
 /**
@@ -46,7 +56,10 @@ export class GameCloud {
     rooms: GameRooms;
     social: GameSocial;
     presence: GamePresence | null;
+    replays: GameReplays | null;
   } | null = null;
+  /** The replays on this device, one for all who ask. */
+  private localReplays: GameReplays | null = null;
   /** Whether a service has asked already - a project comes too late then. */
   private asked = false;
 
@@ -86,6 +99,19 @@ export class GameCloud {
     return this.connected()?.presence ?? null;
   }
 
+  /**
+   * Where the recorded matches go: to the project once it takes them (see
+   * {@link GameCloudOptions.replays}), else onto this device.
+   */
+  public replays(): GameReplays {
+    const replays = this.connected()?.replays ?? null;
+    if (replays !== null) {
+      return replays;
+    }
+    this.localReplays ??= new LocalGameReplays(new LocalGameStorage());
+    return this.localReplays;
+  }
+
   private connected() {
     this.asked = true;
     const { connection } = this;
@@ -103,6 +129,10 @@ export class GameCloud {
           connection.rtdb == null
             ? null
             : new RtdbGamePresence(connection, connection.rtdb),
+        replays:
+          connection.replays === true
+            ? new FirestoreGameReplays(connection, account.playerIds)
+            : null,
       };
     }
     return this.backend;

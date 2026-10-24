@@ -156,7 +156,8 @@
     {
       "files": [
         "libs/features/lazy/bacteria-game/src/engine.ts",
-        "libs/features/lazy/bacteria-game/src/lib/state/**/*.ts"
+        "libs/features/lazy/bacteria-game/src/lib/state/**/*.ts",
+        "libs/features/lazy/bacteria-game/src/lib/social/profile.ts"
       ],
       "rules": {
         "no-restricted-imports": [
@@ -173,7 +174,7 @@
                   "firebase/*",
                   "**/arena/*"
                 ],
-                "message": "The game's engine (state/ and engine.ts) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase or arena/ imports."
+                "message": "The game's engine (state/ and engine.ts) runs in Node too (ADR 0011), and so does social/profile.ts: no Angular, NgRx, RxJS, Firebase or arena/ imports."
               }
             ]
           }

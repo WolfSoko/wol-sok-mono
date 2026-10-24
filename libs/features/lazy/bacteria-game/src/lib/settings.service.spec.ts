@@ -406,6 +406,48 @@ describe('GameSettingsService', () => {
       return TestBed.inject(GameSettingsService);
     }
 
+    it('keeps matches but records no local ones by default, and hands the stored choice to the game', () => {
+      const service = createWith({ saveMatches: false, recordLocal: true });
+      const prefs = jest.spyOn(
+        TestBed.inject(GameStateService),
+        'setReplayPrefs'
+      );
+      expect(service.saveMatches()).toBe(true);
+      expect(service.recordLocal()).toBe(false);
+
+      storage.flush();
+
+      expect(service.saveMatches()).toBe(false);
+      expect(service.recordLocal()).toBe(true);
+      expect(prefs).toHaveBeenLastCalledWith({
+        recordLocal: true,
+        saveMatches: false,
+      });
+    });
+
+    it('keeps "Save my matches" as switched before the storage answered', () => {
+      const service = createWith({ saveMatches: true });
+      const prefs = jest.spyOn(
+        TestBed.inject(GameStateService),
+        'setReplayPrefs'
+      );
+
+      service.setSaveMatches(false);
+      expect(prefs).toHaveBeenLastCalledWith({ saveMatches: false });
+      storage.flush();
+      storage.flush();
+
+      expect(service.saveMatches()).toBe(false);
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        saveMatches: false,
+        recordLocal: false,
+      });
+      expect(prefs).toHaveBeenLastCalledWith({
+        recordLocal: false,
+        saveMatches: false,
+      });
+    });
+
     it('restores the matchmaking level once the storage answers', () => {
       const service = createWith({ matchLevel: MATCH_LEVELS[1].id });
       expect(service.matchLevel()).toBeNull();

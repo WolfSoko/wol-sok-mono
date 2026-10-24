@@ -244,6 +244,18 @@ export class OnlineMatchService {
   }
 
   /**
+   * The room of the match under way and its number there - with the seed,
+   * what its replay's id is made of (ADR 0011). Null before the first
+   * match of a room.
+   */
+  public matchRef(): { roomCode: string; n: number } | null {
+    const { code } = this.lobby();
+    return code === null || this.match === 0
+      ? null
+      : { roomCode: code, n: this.match };
+  }
+
+  /**
    * The guest's game takes the match the host started - null when none
    * waits.
    */
