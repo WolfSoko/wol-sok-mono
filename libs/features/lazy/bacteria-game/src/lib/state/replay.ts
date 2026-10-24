@@ -5,6 +5,7 @@ import { isDailyLevelId } from './daily';
 import { isWeaponId, Loadout, parseGeneLevels } from './evolution';
 import { validColorPair } from './colony-colors';
 import { TICKS_PER_SEC } from './fixed-tick';
+import { LADDER_VERSION } from './difficulty-curve';
 import { BALANCE_VERSION } from './game-balance';
 import { isInteger, isObject } from './is-object';
 import { getLevel, isLevelId, levelSize } from './levels';
@@ -42,6 +43,16 @@ export const REPLAY_VERSION = 2;
 export const EVOLVED_REPLAY_VERSION = 3;
 
 /**
+ * The format of a match against the ladder's computer (ADR 0014): version
+ * 3 plus `ladder`, the version of the tables the computer played by - its
+ * skill along the difficulty curve, its rules of play. A version 3 replay
+ * played the difficulty's fixed computer, and plays it again; a client or
+ * a server that knows only version 3 refuses this one instead of playing
+ * the fixed computer against it.
+ */
+export const LADDER_REPLAY_VERSION = 4;
+
+/**
  * The first format, still read for the ghost links in the wild - and still
  * written for a plain match the GPU ran, which version 2 does not take but
  * a ghost race can still play against. Always plain.
@@ -52,6 +63,8 @@ export const GHOST_REPLAY_VERSION = 1;
 interface VersionRules {
   /** True when it may carry loadouts and weapons fired. */
   evolved: boolean;
+  /** True when it is a match against the ladder's computer - and only then. */
+  ladder: boolean;
   /** The simulations it may come from. */
   simulations: readonly ReplayHeader['simulation'][];
   /** True when `playReplay` plays it again - from the CPU only. */
@@ -66,6 +79,7 @@ const VERSIONS: ReadonlyMap<unknown, VersionRules> = new Map([
     GHOST_REPLAY_VERSION,
     {
       evolved: false,
+      ladder: false,
       simulations: ['cpu', 'gpu'],
       playable: false,
       storable: false,
@@ -73,12 +87,29 @@ const VERSIONS: ReadonlyMap<unknown, VersionRules> = new Map([
   ],
   [
     REPLAY_VERSION,
-    { evolved: false, simulations: ['cpu'], playable: true, storable: true },
+    {
+      evolved: false,
+      ladder: false,
+      simulations: ['cpu'],
+      playable: true,
+      storable: true,
+    },
   ],
   [
     EVOLVED_REPLAY_VERSION,
     {
       evolved: true,
+      ladder: false,
+      simulations: ['cpu', 'gpu'],
+      playable: true,
+      storable: true,
+    },
+  ],
+  [
+    LADDER_REPLAY_VERSION,
+    {
+      evolved: true,
+      ladder: true,
       simulations: ['cpu', 'gpu'],
       playable: true,
       storable: true,
@@ -148,8 +179,9 @@ export interface ReplayAttempt {
 /**
  * How a replay was played: the effective plan and what came of it. The
  * fields after `ticks` are version 2's; a version 1 header has none of them.
- * The seats' `loadouts` (from the plan) only a version 3 header has: absent
- * for plain colonies, as in every replay of a plain match.
+ * The seats' `loadouts` (from the plan) only a version 3 or 4 header has:
+ * absent for plain colonies, as in every replay of a plain match - and
+ * `ladder` only a version 4 one.
  */
 export interface ReplayHeader extends MatchPlan {
   version: number;
@@ -208,8 +240,8 @@ export interface ReplayResult {
  * and `extras` carries the room and the outcome. A plain match the GPU ran
  * gets a version 1 header, good for a ghost race only. A match with
  * evolution in it takes {@link EVOLVED_REPLAY_VERSION} on either
- * simulation; a plain one is written without loadouts, which change
- * nothing in it.
+ * simulation - {@link LADDER_REPLAY_VERSION} against the ladder's computer;
+ * a plain one is written without loadouts, which change nothing in it.
  *
  * Whether evolution played a part is `planMatch`'s word (`evolved`): only
  * it knows that a ghost race has no boss to arm. Without a ghost it can be
@@ -223,7 +255,7 @@ export function replayOf(
   extras: ReplayExtras = {},
   evolved: boolean = planMatch(plan).evolved
 ): Replay {
-  const { loadouts: _loadouts, ...plain } = plan;
+  const { loadouts: _loadouts, ladder: _ladder, ...plain } = plan;
   const base = {
     ...(evolved ? plan : plain),
     balanceVersion: BALANCE_VERSION,
@@ -234,7 +266,11 @@ export function replayOf(
     simulation === 'cpu' || evolved
       ? {
           ...base,
-          version: evolved ? EVOLVED_REPLAY_VERSION : REPLAY_VERSION,
+          version: !evolved
+            ? REPLAY_VERSION
+            : plan.ladder === undefined
+              ? EVOLVED_REPLAY_VERSION
+              : LADDER_REPLAY_VERSION,
           seats: extras.seats ?? seatsOf(plan.mode),
           ...definedOnly({
             roomCode: extras.roomCode,
@@ -269,14 +305,15 @@ export function replayOutcome(
 /**
  * Plays a recorded match again on the CPU simulation, without anyone
  * watching. Null for a replay that would not play out as it was played:
- * another format (version 2 and 3 play), another balance table, or a match
- * the GPU ran.
+ * another format (versions 2 to 4 play), another balance table, another
+ * ladder computer, or a match the GPU ran.
  */
 export function playReplay(replay: Replay): ReplayResult | null {
   const { header, inputs } = replay;
   if (
     VERSIONS.get(header.version)?.playable !== true ||
     header.balanceVersion !== BALANCE_VERSION ||
+    (header.ladder !== undefined && header.ladder !== LADDER_VERSION) ||
     header.simulation !== 'cpu'
   ) {
     return null;
@@ -374,7 +411,13 @@ function fitsVersion(
     (!stored || header.simulation === 'cpu') &&
     (rules.evolved
       ? header.attempt === undefined && !isDailyLevelId(header.levelId)
-      : header.loadouts === undefined && inputs.weapons.length === 0)
+      : header.loadouts === undefined && inputs.weapons.length === 0) &&
+    // The ladder's computer plays where loadouts do: against the computer.
+    (rules.ladder
+      ? header.ladder !== undefined &&
+        header.loadouts !== undefined &&
+        header.mode === 'vs-computer'
+      : header.ladder === undefined)
   );
 }
 
@@ -477,7 +520,8 @@ function parsePlan(raw: Record<string, unknown>): ReplayHeader | null {
     return null;
   }
   const loadouts = parseLoadouts(raw['loadouts']);
-  if (loadouts === null) {
+  const ladder = raw['ladder'];
+  if (loadouts === null || (ladder !== undefined && !isInteger(ladder, 1))) {
     return null;
   }
   return {
@@ -494,6 +538,7 @@ function parsePlan(raw: Record<string, unknown>): ReplayHeader | null {
     height,
     seed,
     ...(loadouts === undefined ? {} : { loadouts }),
+    ...(ladder === undefined ? {} : { ladder }),
   };
 }
 

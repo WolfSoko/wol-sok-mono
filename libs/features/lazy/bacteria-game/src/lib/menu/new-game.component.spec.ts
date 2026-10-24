@@ -252,6 +252,39 @@ describe('NewGameComponent', () => {
     expect(facts).toEqual(['Agar', 'Antibiotic', 'Ice', 'Heat']);
   });
 
+  it('names what the enemy evolved on the level and difficulty', async () => {
+    await render({
+      entry: { kind: 'campaign', step: 'start' } satisfies NewGameEntry,
+      levelId: 'leviathan',
+      difficulty: 'hard',
+    });
+
+    const line = host().querySelector('.enemy-evolution')?.textContent ?? '';
+    expect(line).toContain('The enemy evolved:');
+    expect(line).toContain('Venom Glands 5');
+    expect(line).toContain('Cryo Pulse');
+  });
+
+  it('tells a plain enemy on the first levels, in German too', async () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    await render({
+      entry: { kind: 'campaign', step: 'start' } satisfies NewGameEntry,
+      levelId: 'petri-dish',
+    });
+
+    expect(host().querySelector('.enemy-evolution')?.textContent).toContain(
+      'Der Gegner hat sich noch nicht entwickelt.'
+    );
+  });
+
+  it('names no evolution for the daily level', async () => {
+    await render({
+      entry: { kind: 'daily', step: 'start' } satisfies NewGameEntry,
+    });
+
+    expect(host().querySelector('.enemy-evolution')).toBeNull();
+  });
+
   it('notes the clock of a timed level', async () => {
     await render({
       entry: { kind: 'free', step: 'start' } satisfies NewGameEntry,

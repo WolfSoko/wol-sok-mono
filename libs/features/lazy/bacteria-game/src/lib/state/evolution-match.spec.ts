@@ -1,4 +1,6 @@
 import { scaleOf } from './arena-size';
+import { computerLoadout } from './computer-opponent';
+import { computerProfile, LADDER_VERSION } from './difficulty-curve';
 import {
   evolvedTraits,
   Loadout,
@@ -21,6 +23,7 @@ import {
   Replay,
   replayOf,
   REPLAY_VERSION,
+  LADDER_REPLAY_VERSION,
 } from './replay';
 import { packReplay, unpackReplay } from './replay-pack';
 
@@ -97,6 +100,40 @@ describe('planMatch with loadouts', () => {
     );
     expect(spawns[1].weapon).toBe(level.boss?.weapon);
     expect(spawns[1].weapon).toBeDefined();
+  });
+
+  it("plays the computer of the level's place on the ladder", () => {
+    const { options, evolved } = planMatch({
+      ...PLAN,
+      levelId: 'villi',
+      loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT],
+      ladder: LADDER_VERSION,
+    });
+
+    expect(options.botProfile).toEqual(computerProfile('villi', 'hard'));
+    expect(evolved).toBe(true);
+  });
+
+  it("keeps the difficulty's fixed computer without the ladder's", () => {
+    const levelId = 'villi';
+    expect(planMatch({ ...PLAN, levelId }).options.botProfile).toBeUndefined();
+    // Loadouts without it: a match recorded before the curve (version 3).
+    const before = planMatch({
+      ...PLAN,
+      levelId,
+      loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT],
+    });
+    expect(before.options.botProfile).toBeUndefined();
+    expect(before.evolved).toBe(false);
+    // Another version of the tables plays nothing of this one's.
+    expect(
+      planMatch({
+        ...PLAN,
+        levelId,
+        loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT],
+        ladder: LADDER_VERSION + 1,
+      }).options.botProfile
+    ).toBeUndefined();
   });
 
   it('leaves a match without loadouts as it was - the boss unarmed', () => {
@@ -410,12 +447,10 @@ describe('replays with evolution', () => {
 
   it('keep a plain GPU match a version 1 ghost', () => {
     const { engine } = record(PLAN, 60);
-    const replay = replayOf(
-      { ...PLAN, loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT] },
-      'gpu',
-      engine.tickCount,
-      { ...engine.recorded, weapons: [] }
-    );
+    const replay = replayOf(PLAN, 'gpu', engine.tickCount, {
+      ...engine.recorded,
+      weapons: [],
+    });
 
     expect(replay.header.version).toBe(GHOST_REPLAY_VERSION);
     expect(replay.header.loadouts).toBeUndefined();
@@ -493,6 +528,89 @@ describe('replays with evolution', () => {
     expect(playReplay(replay)?.players).toEqual(engine.players);
   });
 
+  describe("against the ladder's computer (ADR 0014)", () => {
+    const ladderPlan: MatchPlan = {
+      ...PLAN,
+      levelId: 'villi',
+      width: 320,
+      height: 180,
+      loadouts: [PLAIN_LOADOUT, computerLoadout('villi', 'hard')],
+      ladder: LADDER_VERSION,
+    };
+
+    it('take a format of their own and play out the same', () => {
+      const { engine, replay } = record(ladderPlan, 600);
+
+      expect(replay.header.version).toBe(LADDER_REPLAY_VERSION);
+      expect(replay.header.ladder).toBe(LADDER_VERSION);
+      expect(parseReplay(JSON.parse(JSON.stringify(replay)))).toEqual(replay);
+      expect(playReplay(replay)?.players).toEqual(engine.players);
+    });
+
+    it('take it with plain loadouts too: the computer plays the curve', () => {
+      const { replay } = record(
+        { ...ladderPlan, loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT] },
+        60
+      );
+
+      expect(replay.header.version).toBe(LADDER_REPLAY_VERSION);
+      expect(replay.header.loadouts).toEqual([PLAIN_LOADOUT, PLAIN_LOADOUT]);
+    });
+
+    it('refuse to play under another version of the tables', () => {
+      const { replay } = record(ladderPlan, 60);
+      const other = {
+        ...replay,
+        header: { ...replay.header, ladder: LADDER_VERSION + 1 },
+      };
+
+      expect(parseReplay(other)).not.toBeNull();
+      expect(playReplay(other)).toBeNull();
+    });
+
+    it('refuse the field in any other version, and the version without it', () => {
+      const { replay } = record(ladderPlan, 60);
+      const { ladder: _ladder, ...withoutLadder } = replay.header;
+
+      expect(
+        parseReplay({
+          ...replay,
+          header: { ...replay.header, version: EVOLVED_REPLAY_VERSION },
+        })
+      ).toBeNull();
+      expect(parseReplay({ ...replay, header: withoutLadder })).toBeNull();
+      expect(
+        parseReplay({ ...replay, header: { ...replay.header, ladder: 0 } })
+      ).toBeNull();
+    });
+  });
+
+  it('keep a plain ghost race in the format from before evolution', () => {
+    const { replay: run } = record(PLAN, 60);
+    const race: MatchPlan = {
+      ...PLAN,
+      loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT],
+    };
+    const planned = planMatch(race, run);
+    const engine = new MatchEngine(planned.spawns, planned.options);
+    for (let tick = 0; tick < 60; tick++) {
+      engine.tick(race.width, race.height);
+    }
+
+    const replay = replayOf(
+      race,
+      'cpu',
+      engine.tickCount,
+      engine.recorded,
+      {},
+      planned.evolved
+    );
+
+    expect(planned.evolved).toBe(false);
+    expect(replay.header.version).toBe(REPLAY_VERSION);
+    expect(replay.header.loadouts).toBeUndefined();
+  });
+
   it('take the new format for a boss armed by plain loadouts', () => {
     const { replay } = record(
       {
@@ -530,7 +648,7 @@ describe('replays with evolution', () => {
 
   it('refuse a format this client does not know', () => {
     const { replay } = record(plan, 60);
-    const header = { ...replay.header, version: EVOLVED_REPLAY_VERSION + 1 };
+    const header = { ...replay.header, version: LADDER_REPLAY_VERSION + 1 };
 
     expect(parseReplay({ ...replay, header })).toBeNull();
     expect(playReplay({ ...replay, header })).toBeNull();

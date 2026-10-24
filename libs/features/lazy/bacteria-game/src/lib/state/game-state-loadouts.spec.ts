@@ -1,7 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { EvolutionService } from '../evolution.service';
-import { Loadout, PLAIN_LOADOUT } from './evolution';
+import { computerLoadout } from './computer-opponent';
+import { isPlainLoadout, Loadout, PLAIN_LOADOUT } from './evolution';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
 import { MatchPlan } from './match-setup';
@@ -76,7 +77,21 @@ describe('GameStateService loadouts', () => {
     service.start();
 
     expect(store.level().id).toBe('gen:field:7:3');
-    expect(plan()?.loadouts).toEqual([EVOLVED, PLAIN_LOADOUT]);
+    expect(plan()?.loadouts).toEqual([
+      EVOLVED,
+      computerLoadout('gen:field:7:3', 'normal'),
+    ]);
+  });
+
+  it('evolves the computer as the ladder does (ADR 0014)', () => {
+    service.setMode('vs-computer');
+    service.setDifficulty('hard');
+    service.setLevel('villi');
+
+    service.start();
+
+    expect(plan()?.loadouts?.[1]).toEqual(computerLoadout('villi', 'hard'));
+    expect(isPlainLoadout(plan()?.loadouts?.[1] ?? PLAIN_LOADOUT)).toBe(false);
   });
 
   it('keeps the loadout of a match under way, whatever changes meanwhile', () => {

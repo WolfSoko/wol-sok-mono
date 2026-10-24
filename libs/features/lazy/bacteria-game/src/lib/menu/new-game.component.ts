@@ -34,6 +34,9 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 import { BASE_ARENA } from '../state/arena-size';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { BOT_DIFFICULTIES, BotDifficulty } from '../state/bot-controller';
+import { computerLoadout } from '../state/computer-opponent';
+import { isDailyLevelId } from '../state/daily';
+import { geneLevel, GENES, isPlainLoadout } from '../state/evolution';
 import { ENDLESS_LIVES } from '../state/endless';
 import { parseGeneratedId } from '../state/level-generator/generate-level';
 import {
@@ -53,6 +56,7 @@ import {
   SeriesLength,
 } from '../state/rivalry';
 import { winRuleOf } from '../state/win-conditions';
+import { geneKeys, weaponKeys } from './evolution-look';
 import { LevelMapComponent } from './level-map.component';
 import { LevelPreviewComponent } from './level-preview.component';
 import { LevelPreviewService } from './level-preview.service';
@@ -276,6 +280,39 @@ export class NewGameComponent {
         medalGoalText(level.medal, best) ?? { key: 'newGame.allMedals' }
       ),
     };
+  });
+
+  /**
+   * What the computer evolved on the level and difficulty picked - "The
+   * enemy evolved: Venom Glands 3, Cryo Pulse" - where evolution plays: on
+   * the campaign and in free play, not on the daily level (ADR 0014).
+   */
+  protected readonly enemyEvolution = computed(() => {
+    const id = this.briefedId();
+    const kind = this.kind();
+    if (
+      id === null ||
+      (kind !== 'campaign' && kind !== 'free') ||
+      isDailyLevelId(id)
+    ) {
+      return null;
+    }
+    const loadout = computerLoadout(id, this.difficulty());
+    if (isPlainLoadout(loadout)) {
+      return this.i18n.t('newGame.enemy.plain');
+    }
+    const parts = GENES.filter(
+      ({ id: gene }) => geneLevel(loadout, gene) > 0
+    ).map(({ id: gene }) =>
+      this.i18n.t('newGame.enemy.gene', {
+        name: this.i18n.t(geneKeys(gene).name),
+        level: geneLevel(loadout, gene),
+      })
+    );
+    if (loadout.weapon !== null) {
+      parts.push(this.i18n.t(weaponKeys(loadout.weapon).name));
+    }
+    return this.i18n.t('newGame.enemy.evolved', { list: parts.join(', ') });
   });
 
   /** The keys of the name and the briefing of the selected difficulty. */
