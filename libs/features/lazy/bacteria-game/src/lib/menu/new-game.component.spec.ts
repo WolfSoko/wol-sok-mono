@@ -247,11 +247,13 @@ describe('NewGameComponent', () => {
     expect(host().querySelector('feat-lazy-bac-game-level-map')).toBeNull();
     button('Open a match').click();
     await settle();
-    host()
-      .querySelector<HTMLButtonElement>(
-        'feat-lazy-bac-game-level-map button:not([disabled])'
-      )
-      ?.click();
+    const level = host().querySelector<HTMLButtonElement>(
+      'feat-lazy-bac-game-level-map button:not([disabled])'
+    );
+    if (level === null) {
+      throw new Error('no level to pick');
+    }
+    level.click();
     await settle();
     expect(levels).toHaveBeenCalled();
     expect(hosted).toHaveBeenCalledTimes(1);
@@ -283,6 +285,23 @@ describe('NewGameComponent', () => {
     await settle();
     button('Start').click();
     expect(started).toHaveBeenCalledWith('online');
+  });
+
+  it('opens a match on the level chosen when the player goes on with Next', async () => {
+    await render({
+      entry: { kind: 'online', step: 'start' } satisfies NewGameEntry,
+      online: { phase: 'idle', role: null, code: null, notice: null },
+      onlineAvailable: true,
+      colonyNames: ['Orange', 'Blue'],
+    });
+    const hosted = jest.fn();
+    fixture.componentInstance.hostOnline.subscribe(hosted);
+    button('Open a match').click();
+    await settle();
+    button('Next').click();
+    await settle();
+    expect(hosted).toHaveBeenCalledTimes(1);
+    expect(host().querySelector('feat-lazy-bac-game-level-map')).toBeNull();
   });
 
   it('waits with Start until the storage told what the player evolved', async () => {

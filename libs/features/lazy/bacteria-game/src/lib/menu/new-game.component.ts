@@ -175,10 +175,14 @@ export class NewGameComponent {
    * True while the player picks the level of an online match to open -
    * from the lobby's Open button until the match is opened or given up.
    */
-  protected readonly creating = linkedSignal(() => {
-    this.kind();
-    return false;
+  protected readonly creating = linkedSignal({
+    source: () => [this.entry(), this.kind()] as const,
+    computation: () => false,
   });
+  /** False in the online lobby before a match: no level to brief yet. */
+  protected readonly briefed = computed(
+    () => this.kind() !== 'online' || this.online().phase !== 'idle'
+  );
   protected readonly steps = computed(() =>
     stepsOf(this.kind(), this.creating())
   );
@@ -425,11 +429,23 @@ export class NewGameComponent {
    */
   protected pickLevel(id: string): void {
     this.levelChange.emit(id);
-    if (this.creating()) {
-      this.hostOnline.emit();
-      this.creating.set(false);
-    }
+    this.openCreatedMatch();
     this.step.set('start');
+  }
+
+  /**
+   * Opens the online match being created, on the level chosen - only from
+   * a lobby still idle, where online play is available.
+   */
+  private openCreatedMatch(): void {
+    if (
+      this.creating() &&
+      this.onlineAvailable() &&
+      this.online().phase === 'idle'
+    ) {
+      this.hostOnline.emit();
+    }
+    this.creating.set(false);
   }
 
   /** The lobby's Open button: first the level of the match to open. */
@@ -438,14 +454,12 @@ export class NewGameComponent {
     this.step.set('level');
   }
 
-  protected leaveOnlineMatch(): void {
-    this.creating.set(false);
-    this.leaveOnline.emit();
-  }
-
   protected goTo(index: number): void {
     const step = this.steps()[index] ?? 'mode';
-    if (step !== 'level') {
+    if (step === 'start') {
+      // On from the level of a match being created opens it on that level.
+      this.openCreatedMatch();
+    } else if (step !== 'level') {
       this.creating.set(false);
     }
     this.step.set(step);

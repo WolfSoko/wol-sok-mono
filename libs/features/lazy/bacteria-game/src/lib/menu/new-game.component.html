@@ -120,9 +120,9 @@
               }
             }
             @case ("start") {
-              <div class="start-step">
+              <div class="start-step" [class.lobby-only]="!briefed()">
                 <!-- Online, the level is only told once there is a match to play it in. -->
-                @if (kind() !== "online" || online().phase !== "idle") {
+                @if (briefed()) {
                   <section
                     class="details"
                     [attr.aria-label]="'newGame.briefing' | t"
@@ -192,7 +192,7 @@
                       [colonyNames]="colonyNames()"
                       (host)="createOnline()"
                       (join)="joinOnline.emit($event)"
-                      (leave)="leaveOnlineMatch()"
+                      (leave)="leaveOnline.emit()"
                     />
                   } @else if (mission(); as brief) {
                     <span class="best-label">{{ "newGame.opponent" | t }}</span>

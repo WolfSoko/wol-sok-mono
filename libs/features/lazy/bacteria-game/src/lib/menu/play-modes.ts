@@ -68,13 +68,9 @@ export function stepsOf(
   kind: PlayKind | null,
   creating = false
 ): readonly NewGameStep[] {
-  if (kind === 'daily' || kind === 'endless') {
-    return ['mode', 'start'];
-  }
-  if (kind === 'online' && !creating) {
-    return ['mode', 'start'];
-  }
-  return ['mode', 'level', 'start'];
+  const picksLevel =
+    kind !== 'daily' && kind !== 'endless' && (kind !== 'online' || creating);
+  return picksLevel ? ['mode', 'level', 'start'] : ['mode', 'start'];
 }
 
 /**
