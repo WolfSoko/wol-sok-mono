@@ -1,3 +1,4 @@
+import { computed } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   drawPreviews,
@@ -68,6 +69,25 @@ describe('LevelPreviewService', () => {
     ]);
   });
 
+  it('wakes only the cards of the level whose preview was drawn', async () => {
+    const previews = setUp(new FakePreviewRenderer());
+    let reads = 0;
+    const card = computed(() => {
+      reads++;
+      return previews.url('hourglass');
+    });
+    card();
+    await drawPreviews();
+    expect(card()).toBe(fakePreviewUrl('hourglass'));
+    const before = reads;
+
+    previews.url('corridors');
+    await drawPreviews();
+
+    expect(card()).toBe(fakePreviewUrl('hourglass'));
+    expect(reads).toBe(before);
+  });
+
   it('does not try again a preview that failed', async () => {
     const renderer = new FakePreviewRenderer(true, ['pistons']);
     const previews = setUp(renderer);
@@ -93,6 +113,7 @@ describe('LevelPreviewService', () => {
 
     expect(previews.url(ids[PREVIEW_CACHE_LIMIT])).not.toBeNull();
     // The first one was let go, and is drawn again once asked for.
+    expect(renderer.released).toEqual([fakePreviewUrl(ids[0])]);
     expect(previews.url(ids[0])).toBeNull();
     await drawPreviews();
     expect(renderer.drawn.filter((id) => id === ids[0])).toHaveLength(2);

@@ -1,3 +1,5 @@
+@use '../pad';
+
 :host {
   display: flex;
   align-items: center;
@@ -5,35 +7,24 @@
   padding: 0.25rem;
 }
 
-// The button sits in the middle of its recharge ring.
 .button-with-ring {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  @include pad.button-with-ring;
+
   border-radius: 50%;
 }
 
 .charge {
-  --mat-progress-spinner-active-indicator-color: var(--weapon);
+  @include pad.charge(var(--weapon));
 }
 
 .weapon-fab {
-  --mat-fab-container-color: color-mix(in srgb, var(--weapon) 30%, #111820);
-  --mat-fab-foreground-color: #fff;
-  --mat-fab-container-shape: 50%;
+  @include pad.fab(64px, color-mix(in srgb, var(--weapon) 30%, #111820));
 
-  position: absolute;
-  display: inline-flex;
-  flex-direction: column;
-  width: 64px;
-  height: 64px;
   border: 2px solid var(--weapon);
 
   mat-icon {
-    width: 1.6rem;
-    height: 1.6rem;
-    font-size: 1.6rem;
+    @include pad.fab-icon(1.6rem);
+
     color: var(--weapon);
   }
 

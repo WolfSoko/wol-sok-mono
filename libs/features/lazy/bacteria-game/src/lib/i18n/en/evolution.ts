@@ -10,14 +10,12 @@ export const evolution = {
     'Evolution counts against the computer on the campaign and on generated levels, and against your ghost there, which plays with what its run had. The daily level, endless runs, couch and online matches stay plain and fair.',
   dna: {
     label: 'DNA',
-    available: '{count} DNA to spend',
     earned: '{count} DNA earned in all',
     how: 'Every 50 XP grows a strand.',
     loading: 'Reading your DNA…',
   },
   genes: {
     title: 'Genes',
-    level: 'Level {level} of {max}',
     none: 'Not bred yet',
     next: 'Next: {effect}',
     maxed: 'Fully evolved',

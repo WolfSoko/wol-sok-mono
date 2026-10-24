@@ -1,4 +1,10 @@
-import { inject, Injectable, InjectionToken, signal } from '@angular/core';
+import {
+  inject,
+  Injectable,
+  InjectionToken,
+  signal,
+  WritableSignal,
+} from '@angular/core';
 import {
   floorPixels,
   grainPixels,
@@ -8,7 +14,7 @@ import {
   PREVIEW_WIDTH,
   zonePixels,
 } from '../arena/level-preview';
-import { keepRecent } from '../state/recent-cache';
+import { putPixels } from '../arena/canvas-math';
 
 /** Draws the preview image of a level. */
 export interface LevelPreviewRenderer {
@@ -19,6 +25,8 @@ export interface LevelPreviewRenderer {
   readonly supported: boolean;
   /** The preview of the level as an image URL, null where it failed. */
   render(levelId: string): Promise<string | null>;
+  /** Lets go of a URL `render` handed out, once nothing shows it any more. */
+  release?(url: string): void;
 }
 
 /** What draws the level previews - the browser's canvas, unless replaced. */
@@ -49,13 +57,17 @@ export class LevelPreviewService {
   /** True where previews are drawn at all. */
   public readonly supported = this.renderer.supported;
 
+  /** The previews drawn, the oldest first. */
   private readonly urls = new Map<string, string>();
+  /**
+   * Each level's preview as a signal of its own, so a drawing wakes only
+   * the cards of its level.
+   */
+  private readonly slots = new Map<string, WritableSignal<string | null>>();
   /** Asked for and not drawn yet, in the order asked. */
   private readonly waiting = new Set<string>();
   /** The levels whose preview failed - not tried again. */
   private readonly failed = new Set<string>();
-  /** Counts the previews drawn, so a computed reading a URL follows them. */
-  private readonly drawn = signal(0);
   private drawing = false;
 
   /**
@@ -64,20 +76,27 @@ export class LevelPreviewService {
    * a computed follows the drawing.
    */
   public url(levelId: string, urgent = false): string | null {
-    this.drawn();
-    const url = this.urls.get(levelId);
-    if (url !== undefined) {
-      return url;
+    const url = this.slot(levelId)();
+    if (url === null) {
+      this.request(levelId, urgent);
     }
-    this.request(levelId, urgent);
-    return null;
+    return url;
+  }
+
+  private slot(levelId: string): WritableSignal<string | null> {
+    let slot = this.slots.get(levelId);
+    if (slot === undefined) {
+      slot = signal(null);
+      this.slots.set(levelId, slot);
+    }
+    return slot;
   }
 
   private request(levelId: string, urgent: boolean): void {
     if (!this.supported || this.failed.has(levelId)) {
       return;
     }
-    if (urgent) {
+    if (urgent && this.waiting.values().next().value !== levelId) {
       // To the front: the rest move back behind it, in their order.
       const rest = [...this.waiting].filter((id) => id !== levelId);
       this.waiting.clear();
@@ -106,15 +125,32 @@ export class LevelPreviewService {
     if (url === null) {
       this.failed.add(levelId);
     } else {
-      keepRecent(this.urls, levelId, url, PREVIEW_CACHE_LIMIT);
+      this.keep(levelId, url);
     }
     this.waiting.delete(levelId);
-    this.drawn.update((count) => count + 1);
     if (this.waiting.size > 0) {
       whenIdle(() => void this.drawNext());
     } else {
       this.drawing = false;
     }
+  }
+
+  /** Keeps the preview, letting the oldest go once there are too many. */
+  private keep(levelId: string, url: string): void {
+    this.urls.set(levelId, url);
+    this.slot(levelId).set(url);
+    if (this.urls.size <= PREVIEW_CACHE_LIMIT) {
+      return;
+    }
+    const [oldest, oldUrl] = this.urls.entries().next().value as [
+      string,
+      string,
+    ];
+    this.urls.delete(oldest);
+    // Its cards ask again, and get a fresh slot then.
+    this.slots.get(oldest)?.set(null);
+    this.slots.delete(oldest);
+    this.renderer.release?.(oldUrl);
   }
 }
 
@@ -128,13 +164,14 @@ function whenIdle(callback: () => void): void {
 }
 
 /**
- * Draws the previews on a canvas off the page and hands them out as data
+ * Draws the previews on a canvas off the page and hands them out as object
  * URLs - WebP, or JPEG where the browser cannot write WebP. Without an
  * `OffscreenCanvas` - the test DOM, a server - it draws nothing.
  */
 export function canvasPreviewRenderer(): LevelPreviewRenderer {
   const supported =
-    typeof OffscreenCanvas === 'function' && typeof FileReader === 'function';
+    typeof OffscreenCanvas === 'function' &&
+    typeof URL.createObjectURL === 'function';
   let grain: OffscreenCanvas | null | undefined;
   return {
     supported,
@@ -159,8 +196,9 @@ export function canvasPreviewRenderer(): LevelPreviewRenderer {
             : pixelCanvas(zones.data, zones.width, zones.height),
         grain,
       });
-      return dataUrl(await encode(canvas));
+      return URL.createObjectURL(await encode(canvas));
     },
+    release: (url) => URL.revokeObjectURL(url),
   };
 }
 
@@ -174,14 +212,9 @@ function pixelCanvas(
   height: number
 ): OffscreenCanvas | null {
   const canvas = new OffscreenCanvas(width, height);
-  const cx = canvas.getContext('2d');
-  if (cx === null) {
-    return null;
-  }
-  const image = cx.createImageData(width, height);
-  image.data.set(data);
-  cx.putImageData(image, 0, 0);
-  return canvas;
+  return putPixels(canvas.getContext('2d'), data, width, height)
+    ? canvas
+    : null;
 }
 
 async function encode(canvas: OffscreenCanvas): Promise<Blob> {
@@ -193,14 +226,4 @@ async function encode(canvas: OffscreenCanvas): Promise<Blob> {
   return webp.type === 'image/webp'
     ? webp
     : canvas.convertToBlob({ type: 'image/jpeg', quality: 0.88 });
-}
-
-function dataUrl(blob: Blob): Promise<string | null> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () =>
-      resolve(typeof reader.result === 'string' ? reader.result : null);
-    reader.onerror = () => resolve(null);
-    reader.readAsDataURL(blob);
-  });
 }

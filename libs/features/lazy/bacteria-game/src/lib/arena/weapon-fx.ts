@@ -1,8 +1,9 @@
 import type { ScreenResolution } from '../state/arena-size';
 import type { ActiveEffect, WeaponFire, WeaponId } from '../state/evolution';
-import { clamp } from '../state/geometry';
+import { clamp, seeded } from '../state/geometry';
+import { isHostile } from '../state/weapon-effects';
 import { Rgb, WEAPON_COLORS } from './arena-theme';
-import { hash, lerp, smoothstep } from './canvas-math';
+import { hash, lerp, mix, smoothstep } from './canvas-math';
 
 /**
  * The weapons in the arena: what each looks like as it is fired and while
@@ -204,10 +205,13 @@ const TOXIC_DARK: Rgb = [55, 125, 30];
 const ICE: Rgb = WEAPON_COLORS['cryo-pulse'];
 const ICE_LIGHT: Rgb = [226, 247, 255];
 const PHAGE: Rgb = WEAPON_COLORS['phage-strike'];
+const PHAGE_LIGHT: Rgb = mix(PHAGE, WHITE, 0.3);
+const PHAGE_BURST: Rgb = mix(PHAGE, WHITE, 0.35);
 const GOLD: Rgb = WEAPON_COLORS['agar-bloom'];
 const GOLD_DEEP: Rgb = [232, 140, 28];
 const GOLD_LIGHT: Rgb = [255, 236, 160];
 const GOLD_PALE: Rgb = [255, 250, 215];
+const GOLD_SHIMMER: Rgb = [255, 200, 90];
 const MEMBRANE: Rgb = WEAPON_COLORS['biofilm-shield'];
 const SHADOW: Rgb = [0, 0, 0];
 
@@ -255,7 +259,6 @@ interface Burst {
 
 /** A phage strike, kept in view after the one frame it acts in. */
 interface Strike {
-  owner: number;
   x: number;
   y: number;
   radius: number;
@@ -272,7 +275,7 @@ interface Strike {
  * - `over`, over the colonies - the toxin cloud, the ice, the membrane,
  * - `light`, added over everything as light - flashes, shockwaves, sparks.
  */
-export class WeaponEffects {
+export class WeaponFx {
   public readonly ground = new MarkLayer();
   public readonly over = new MarkLayer();
   public readonly light = new MarkLayer();
@@ -281,6 +284,10 @@ export class WeaponEffects {
   private readonly bursts: Burst[] = [];
   private readonly strikes: Strike[] = [];
   private readonly particles: Particle[] = [];
+  /** The tints of earlier frames, taken again so a frame allocates none. */
+  private readonly tintPool: ColonyTint[] = [];
+  /** The colour of the colony an effect belongs to, reused per effect. */
+  private readonly owner: Color = [0, 0, 0];
   /** Where the search for a free particle starts. */
   private nextParticle = 0;
   private aliveCount = 0;
@@ -291,7 +298,7 @@ export class WeaponEffects {
     /** Cells per base cell - sparks are as big on every grid. */
     private readonly unit: number,
     /** The effects' own randomness - never the engine's. */
-    private readonly random: () => number = renderRandom()
+    private readonly random: () => number = seeded(0x5eed)
   ) {}
 
   /** The particles flying right now. */
@@ -311,30 +318,31 @@ export class WeaponEffects {
   public update(frame: WeaponFrame): void {
     const deltaSec = clamp(frame.deltaTimeSec, 0, 0.1);
     this.timeSec = frame.timeSec;
-    this.budget = Math.min(MAX_PARTICLES, Math.max(0, frame.particleBudget));
-    const colorOf = (seat: number): Color => {
-      const color = frame.seatColors.get(seat);
-      return color == null ? [255, 255, 255] : [color[0], color[1], color[2]];
-    };
+    this.budget = clamp(frame.particleBudget, 0, MAX_PARTICLES);
+    if (
+      this.aliveCount === 0 &&
+      this.bursts.length === 0 &&
+      this.strikes.length === 0 &&
+      frame.weaponFires.length === 0 &&
+      frame.weaponEffects.length === 0
+    ) {
+      // Nothing of a weapon about - most frames of most matches.
+      if (this.visible) {
+        this.clearMarks();
+      }
+      return;
+    }
 
     this.age(deltaSec);
     this.advanceParticles(deltaSec);
     for (const fire of frame.weaponFires) {
-      this.fire(fire, colorOf(fire.playerId));
-    }
-    for (const effect of frame.weaponEffects) {
-      if (effect.weapon === 'phage-strike') {
-        this.strike(effect.owner, effect.x, effect.y, effect.radius, () =>
-          colorOf(effect.owner)
-        );
-      }
+      this.fire(fire, seatRgb(frame.seatColors, fire.playerId));
     }
 
-    this.ground.clear();
-    this.over.clear();
-    this.light.clear();
-    this.tints.length = 0;
+    this.clearMarks();
     for (const effect of frame.weaponEffects) {
+      // A phage strike acts for one frame and is drawn from its fire,
+      // which the engine hands over in the same frame.
       if (effect.weapon !== 'phage-strike') {
         this.effectMarks(
           effect,
@@ -360,6 +368,10 @@ export class WeaponEffects {
       particle.alive = false;
     }
     this.aliveCount = 0;
+    this.clearMarks();
+  }
+
+  private clearMarks(): void {
     this.ground.clear();
     this.over.clear();
     this.light.clear();
@@ -373,8 +385,8 @@ export class WeaponEffects {
     for (const strike of this.strikes) {
       strike.age += deltaSec;
     }
-    removeWhere(this.bursts, (burst) => burst.age >= BURST_SEC);
-    removeWhere(this.strikes, (strike) => strike.age >= STRIKE_SEC);
+    removeWhere(this.bursts, burstOver);
+    removeWhere(this.strikes, strikeOver);
   }
 
   /** A weapon fired: its burst, the sparks it throws, a phage's strike. */
@@ -423,37 +435,21 @@ export class WeaponEffects {
       }
     }
     if (fire.weapon === 'phage-strike') {
-      this.strike(fire.playerId, fire.x, fire.y, fire.radius, () => ownerColor);
+      this.strike(fire.x, fire.y, fire.radius, ownerColor);
     }
   }
 
-  /**
-   * A phage strike, once: the strike fired and the one frame it acts in
-   * are the same strike. The phages fly in from around it.
-   */
+  /** A phage strike: the phages fly in from around it. */
   private strike(
-    owner: number,
     x: number,
     y: number,
     radius: number,
-    colorOf: () => Color
+    ownerColor: Color
   ): void {
-    const known = this.strikes.some(
-      (strike) =>
-        strike.owner === owner &&
-        strike.age < 0.3 &&
-        Math.abs(strike.x - x) < 2 &&
-        Math.abs(strike.y - y) < 2
-    );
-    if (known) {
-      return;
-    }
-    const ownerColor = colorOf();
-    this.strikes.push({ owner, x, y, radius, ownerColor, age: 0 });
+    this.strikes.push({ x, y, radius, ownerColor, age: 0 });
     // The phages in the weapon's colour; the bacteria they turn spark in
     // the striker's.
-    const phageColor = mixColor(PHAGE, WHITE, 0.3);
-    const turned = mixColor(ownerColor, WHITE, 0.3);
+    const turned = mix(ownerColor, WHITE, 0.3);
     const count = Math.round(clamp(this.budget * 0.12, 8, 32));
     for (let i = 0; i < count; i++) {
       const angle = this.random() * Math.PI * 2;
@@ -468,7 +464,7 @@ export class WeaponEffects {
         0,
         0.28 + this.random() * 0.14,
         (1.1 + this.random() * 0.8) * this.unit,
-        phageColor
+        PHAGE_LIGHT
       );
       if (particle != null) {
         particle.fromX = particle.x;
@@ -610,7 +606,6 @@ export class WeaponEffects {
       return;
     }
     const elapsed = Math.max(0, effect.durationSec - effect.remainingSec);
-    const ownerColor: Rgb = [ownerRgba[0], ownerRgba[1], ownerRgba[2]];
     switch (effect.weapon) {
       case 'toxin-bomb':
         this.toxinMarks(effect, fade, elapsed, deltaSec);
@@ -622,20 +617,25 @@ export class WeaponEffects {
         this.bloomMarks(effect, fade, elapsed, deltaSec);
         break;
       case 'biofilm-shield':
-        this.shieldMarks(effect, fade, elapsed, ownerColor, deltaSec);
+        copyColor(this.owner, ownerRgba);
+        this.shieldMarks(effect, fade, elapsed, this.owner, deltaSec);
         break;
     }
     const mode = TINT_OF[effect.weapon];
     if (mode !== null) {
-      this.tints.push({
-        mode,
-        x: effect.x,
-        y: effect.y,
-        radius: mode === 'shield' ? WHOLE_COLONY : effect.radius,
-        strength: fade,
-        ownerColor: ownerRgba,
-        enemies: mode === 'toxin' || mode === 'cryo',
-      });
+      let tint = this.tintPool[this.tints.length];
+      if (tint === undefined) {
+        tint = { ...BLANK_TINT };
+        this.tintPool.push(tint);
+      }
+      tint.mode = mode;
+      tint.x = effect.x;
+      tint.y = effect.y;
+      tint.radius = mode === 'shield' ? WHOLE_COLONY : effect.radius;
+      tint.strength = fade;
+      tint.ownerColor = ownerRgba;
+      tint.enemies = isHostile(effect.weapon);
+      this.tints.push(tint);
     }
   }
 
@@ -675,7 +675,7 @@ export class WeaponEffects {
         x + Math.cos(angle) * distance,
         y + Math.sin(angle) * distance,
         radius * (0.32 + 0.1 * Math.sin(t * 1.2 + i * 1.7)),
-        mixColor(TOXIC, TOXIC_LIGHT, hash(i, seed, 4) * 0.6),
+        mix(TOXIC, TOXIC_LIGHT, hash(i, seed, 4) * 0.6),
         0.28 * fade
       );
     }
@@ -880,12 +880,7 @@ export class WeaponEffects {
     agar.timeSec = t;
     agar.growth = grow;
 
-    const whorls: [number, number, number, Rgb, Rgb, number][] = [
-      // petals, length, width, base, tip, offset
-      [8, 0.7, 0.2, GOLD_DEEP, GOLD_LIGHT, 0],
-      [6, 0.42, 0.24, GOLD, GOLD_PALE, Math.PI / 6],
-    ];
-    for (const [petals, reach, width, base, tip, offset] of whorls) {
+    for (const [petals, reach, width, base, tip, offset] of WHORLS) {
       for (let i = 0; i < petals; i++) {
         const angle = turn + offset + (i / petals) * Math.PI * 2 + t * 0.06;
         const length =
@@ -909,7 +904,7 @@ export class WeaponEffects {
       x,
       y,
       radius,
-      [255, 200, 90],
+      GOLD_SHIMMER,
       0.13 * fade * (0.7 + 0.3 * Math.sin(t * 2.4))
     );
 
@@ -946,7 +941,7 @@ export class WeaponEffects {
     const { x, y, radius } = effect;
     const t = this.timeSec;
     const unit = this.unit;
-    const light = mixColor(ownerColor, MEMBRANE, 0.55);
+    const light = mix(ownerColor, MEMBRANE, 0.55);
     const pulse = 0.5 + 0.5 * Math.sin(t * 4);
 
     this.ground.add('glow', x, y, radius * 1.15, ownerColor, 0.18 * fade);
@@ -1044,13 +1039,13 @@ export class WeaponEffects {
       x,
       y,
       radius,
-      mixColor(ownerColor, WHITE, 0.4),
+      mix(ownerColor, WHITE, 0.4),
       0.5 * (1 - t) * (0.6 + 0.4 * Math.sin(age * 25))
     );
     rim.size = unit;
 
     if (age > 0.25 && age < 0.9) {
-      const sparkColor = mixColor(ownerColor, WHITE, 0.3);
+      const sparkColor = mix(ownerColor, WHITE, 0.3);
       for (let n = this.emitCount(90, deltaSec); n > 0; n--) {
         const [sx, sy] = this.pointIn(x, y, radius * 0.85);
         this.convertSparks(sx, sy, sparkColor, 1);
@@ -1145,7 +1140,7 @@ export class WeaponEffects {
         case 'sparkle': {
           // A four-pointed star, twinkling once.
           const twinkle = Math.sin(Math.PI * t);
-          for (const turn of [0, Math.PI / 2]) {
+          for (const turn of RAY_TURNS) {
             const ray = this.light.add(
               'ellipse',
               x,
@@ -1202,13 +1197,33 @@ export function burstColors(
     case 'cryo-pulse':
       return { core: ICE, light: ICE_LIGHT };
     case 'phage-strike':
-      return { core: WHITE_HOT, light: mixColor(PHAGE, WHITE, 0.35) };
+      return { core: WHITE_HOT, light: PHAGE_BURST };
     case 'agar-bloom':
       return { core: GOLD, light: GOLD_LIGHT };
     case 'biofilm-shield':
-      return { core: ownerColor, light: mixColor(ownerColor, MEMBRANE, 0.55) };
+      return { core: ownerColor, light: mix(ownerColor, MEMBRANE, 0.55) };
   }
 }
+
+/** The bloom's two whorls of petals: petals, length, width, base, tip, offset. */
+const WHORLS: readonly (readonly [number, number, number, Rgb, Rgb, number])[] =
+  [
+    [8, 0.7, 0.2, GOLD_DEEP, GOLD_LIGHT, 0],
+    [6, 0.42, 0.24, GOLD, GOLD_PALE, Math.PI / 6],
+  ];
+
+/** The two rays of a sparkle's star. */
+const RAY_TURNS: readonly number[] = [0, Math.PI / 2];
+
+const BLANK_TINT: ColonyTint = {
+  mode: 'toxin',
+  x: 0,
+  y: 0,
+  radius: 0,
+  strength: 0,
+  ownerColor: WHITE,
+  enemies: true,
+};
 
 /** How each weapon shades the colonies while it acts. */
 const TINT_OF: Record<WeaponId, TintMode | null> = {
@@ -1243,19 +1258,13 @@ function effectSeed(effect: ActiveEffect): number {
   );
 }
 
-/**
- * A small, fast random number generator (mulberry32) for the effects -
- * seeded, so a frame of them could be told again, and apart from the
- * engine's.
- */
-export function renderRandom(seed = 0x5eed): () => number {
-  let state = seed >>> 0;
-  return () => {
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), 1 | state);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+/** A seat's colony colour as RGB - white for a seat without one. */
+function seatRgb(
+  seatColors: ReadonlyMap<number, readonly number[]>,
+  seat: number
+): Color {
+  const color = seatColors.get(seat);
+  return color == null ? [255, 255, 255] : [color[0], color[1], color[2]];
 }
 
 function blankParticle(): Particle {
@@ -1283,6 +1292,14 @@ function blankParticle(): Particle {
   };
 }
 
+function burstOver(burst: Burst): boolean {
+  return burst.age >= BURST_SEC;
+}
+
+function strikeOver(strike: Strike): boolean {
+  return strike.age >= STRIKE_SEC;
+}
+
 function removeWhere<T>(items: T[], gone: (item: T) => boolean): void {
   let kept = 0;
   for (const item of items) {
@@ -1293,17 +1310,14 @@ function removeWhere<T>(items: T[], gone: (item: T) => boolean): void {
   items.length = kept;
 }
 
-function copyColor(into: Color, from: Rgb): void {
+function copyColor(into: Color, from: readonly number[]): void {
   into[0] = from[0];
   into[1] = from[1];
   into[2] = from[2];
 }
 
-function mixColor(a: Rgb, b: Rgb, t: number): Rgb {
-  return [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
-}
-
-function sameRgb(a: readonly number[], b: readonly number[]): boolean {
+/** True when both colours have the same red, green and blue. */
+export function sameRgb(a: readonly number[], b: readonly number[]): boolean {
   return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 }
 

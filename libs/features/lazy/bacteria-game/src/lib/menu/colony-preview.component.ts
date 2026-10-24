@@ -12,10 +12,10 @@ import {
 } from '@angular/core';
 import type { Rgb } from '../arena/arena-theme';
 import { mix, rgba } from '../arena/canvas-math';
+import { prefersReducedMotion } from '../reduced-motion';
 import { geneLevel, Loadout, MAX_GENE_LEVEL } from '../state/evolution';
 import { seeded } from '../state/geometry';
-import { WEAPON_COLORS } from './evolution-look';
-import { prefersReducedMotion } from './evolution-fx';
+import { GENE_COLORS, MAXED_COLOR, WEAPON_COLORS } from './evolution-look';
 
 /** The preview's size in CSS pixels - drawn sharper on dense screens. */
 const SIZE = 320;
@@ -23,8 +23,12 @@ const SIZE = 320;
 const RADIUS = 104;
 /** The most bacteria it shows - mitosis bred to the top. */
 const MAX_CELLS = 54;
-const TOXIC: Rgb = [170, 255, 80];
-const GOLD: Rgb = [255, 214, 110];
+const TOXIC: Rgb = GENE_COLORS.toxins;
+const WHITE: Rgb = [255, 255, 255];
+const BLACK: Rgb = [0, 0, 0];
+/** The spark of metabolism in each bacterium, its alpha set per beat. */
+const PULSE_FILL = rgba([255, 240, 170]);
+const SPIKE_SHADOW = rgba(TOXIC, 0.9);
 /** How long a celebration's flash runs through the colony. */
 const FLARE_MS = 900;
 
@@ -85,12 +89,25 @@ interface PreviewCell {
   drift: number;
 }
 
+/** The CSS colours a colony colour is drawn with, worked out once per colour. */
+interface CellPaint {
+  color: Rgb;
+  tail: string;
+  spike: string;
+  light: string;
+  body: string;
+  dark: string;
+  /** Each bacterium's body gradient, made while no flash changes its size. */
+  gradients: (CanvasGradient | undefined)[];
+}
+
 /**
  * The player's colony as they have evolved it, alive on a canvas: the
  * more mitosis the more bacteria, toxins grow glowing spikes, the membrane
  * a translucent ring round the colony, flagella wiggling tails and speed,
  * metabolism a pulse of energy - and the weapon carried glows round it all.
- * One frame only for players who ask for less motion.
+ * One frame only for players who ask for less motion; no frames at all
+ * while it is off the screen or the page is hidden.
  */
 @Component({
   selector: 'feat-lazy-bac-game-colony-preview',
@@ -126,36 +143,52 @@ export class ColonyPreviewComponent {
   private readonly look = computed(() => colonyLook(this.loadout()));
   private readonly cells: PreviewCell[] = previewCells(7);
   private context: CanvasRenderingContext2D | null = null;
+  /** The animation frame asked for, 0 while the loop stands still. */
   private frame = 0;
   private startMs = 0;
   /** When the last celebration started, in ms of the animation clock. */
   private flareAtMs = -Infinity;
-  private flareColor: Rgb = GOLD;
-  private readonly still = prefersReducedMotion();
+  private flareColor: Rgb = MAXED_COLOR;
+  private readonly reducedMotion = prefersReducedMotion();
+  /** False while the preview is scrolled out of view. */
+  private onScreen = true;
+  private paint: CellPaint | null = null;
 
   public constructor() {
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
       this.context = this.setUp();
-      if (this.context === null || this.still) {
+      if (this.context === null) {
         return;
       }
-      const loop = (now: number) => {
-        if (this.startMs === 0) {
-          this.startMs = now;
-        }
-        this.draw((now - this.startMs) / 1000);
-        this.frame = requestAnimationFrame(loop);
-      };
-      this.frame = requestAnimationFrame(loop);
+      const canvas = this.canvas().nativeElement;
+      const page = canvas.ownerDocument;
+      const onVisibility = () => this.runWhenSeen();
+      page.addEventListener('visibilitychange', onVisibility);
+      destroyRef.onDestroy(() =>
+        page.removeEventListener('visibilitychange', onVisibility)
+      );
+      if (typeof IntersectionObserver === 'function') {
+        const observer = new IntersectionObserver((entries) => {
+          this.onScreen = entries[entries.length - 1].isIntersecting;
+          this.runWhenSeen();
+        });
+        observer.observe(canvas);
+        destroyRef.onDestroy(() => observer.disconnect());
+      }
+      this.runWhenSeen();
     });
-    destroyRef.onDestroy(() => cancelAnimationFrame(this.frame));
+    destroyRef.onDestroy(() => this.stop());
     // Still, the one frame follows every change.
     effect(() => {
       this.look();
       this.color();
-      if (this.still && this.context !== null) {
-        this.draw(0);
+      const still = this.reducedMotion();
+      if (this.context !== null) {
+        if (still) {
+          this.draw(0);
+        }
+        this.runWhenSeen();
       }
     });
   }
@@ -163,11 +196,39 @@ export class ColonyPreviewComponent {
   /** A flash of light through the colony - for a purchase. */
   public celebrate(color: Rgb): void {
     // Still for players who ask for less motion.
-    if (this.still || this.startMs === 0) {
+    if (this.reducedMotion() || this.startMs === 0) {
       return;
     }
     this.flareColor = color;
     this.flareAtMs = performance.now() - this.startMs;
+  }
+
+  /** Runs the animation while it can be seen and may move, else stops it. */
+  private runWhenSeen(): void {
+    const page = this.canvas().nativeElement.ownerDocument;
+    const runs =
+      this.context !== null &&
+      this.onScreen &&
+      !page.hidden &&
+      !this.reducedMotion();
+    if (!runs) {
+      this.stop();
+    } else if (this.frame === 0) {
+      this.frame = requestAnimationFrame(this.loop);
+    }
+  }
+
+  private readonly loop = (now: number): void => {
+    if (this.startMs === 0) {
+      this.startMs = now;
+    }
+    this.draw((now - this.startMs) / 1000);
+    this.frame = requestAnimationFrame(this.loop);
+  };
+
+  private stop(): void {
+    cancelAnimationFrame(this.frame);
+    this.frame = 0;
   }
 
   private setUp(): CanvasRenderingContext2D | null {
@@ -195,6 +256,7 @@ export class ColonyPreviewComponent {
     }
     const look = this.look();
     const color = this.color();
+    const paint = this.paintFor(color);
     const center = SIZE / 2;
     const sinceFlare = t * 1000 - this.flareAtMs;
     const flare =
@@ -215,14 +277,39 @@ export class ColonyPreviewComponent {
       drawMembrane(cx, center, color, look.membrane, t);
     }
     const swirl = t * look.speed;
-    for (const cell of this.cells.slice(0, look.cells)) {
-      const angle = cell.a + swirl * cell.drift * 0.35;
-      const r = cell.r * RADIUS + Math.sin(t * 1.3 + cell.phase) * 4;
-      const x = center + Math.cos(angle) * r;
-      const y = center + Math.sin(angle) * r;
-      // Swirling round the centre: the tail points back along the way.
-      const heading = angle + Math.PI / 2;
-      drawCell(cx, look, color, cell, x, y, heading, t, flare);
+    const count = Math.min(look.cells, this.cells.length);
+    // Every bacterium's tail, then every spike under one shadow, then the
+    // bodies over them: a few strokes instead of a few per bacterium.
+    if (look.tail > 0) {
+      cx.strokeStyle = paint.tail;
+      cx.lineWidth = 1.3;
+      cx.beginPath();
+      for (let i = 0; i < count; i++) {
+        const cell = this.cells[i];
+        const at = cellAt(cell, center, swirl, t);
+        tailPath(cx, look, cell, at, cellSize(cell, flare), t);
+      }
+      cx.stroke();
+    }
+    if (look.spikes > 0) {
+      cx.save();
+      cx.shadowColor = SPIKE_SHADOW;
+      cx.shadowBlur = look.glow;
+      cx.strokeStyle = paint.spike;
+      cx.lineWidth = 1.4;
+      cx.beginPath();
+      for (let i = 0; i < count; i++) {
+        const cell = this.cells[i];
+        const at = cellAt(cell, center, swirl, t);
+        spikePath(cx, look, cell, at, cellSize(cell, flare), t);
+      }
+      cx.stroke();
+      cx.restore();
+    }
+    for (let i = 0; i < count; i++) {
+      const cell = this.cells[i];
+      const at = cellAt(cell, center, swirl, t);
+      drawBody(cx, look, paint, i, cell, at, flare, t);
     }
     if (flare > 0) {
       const ring = (1 - flare) * RADIUS * 1.5;
@@ -233,6 +320,52 @@ export class ColonyPreviewComponent {
       cx.stroke();
     }
   }
+
+  /** The colours of a colony colour, kept until the colour changes. */
+  private paintFor(color: Rgb): CellPaint {
+    if (this.paint?.color !== color) {
+      this.paint = {
+        color,
+        tail: rgba(mix(color, WHITE, 0.3), 0.7),
+        spike: rgba(mix(color, TOXIC, 0.6), 0.95),
+        light: rgba(mix(color, WHITE, 0.6)),
+        body: rgba(color),
+        dark: rgba(mix(color, BLACK, 0.4)),
+        gradients: [],
+      };
+    }
+    return this.paint;
+  }
+}
+
+/** Where a bacterium is this frame and which way it heads. */
+interface CellPlace {
+  x: number;
+  y: number;
+  heading: number;
+}
+
+/** One place, reused for every bacterium: a frame allocates none. */
+const place: CellPlace = { x: 0, y: 0, heading: 0 };
+
+function cellAt(
+  cell: PreviewCell,
+  center: number,
+  swirl: number,
+  t: number
+): CellPlace {
+  const angle = cell.a + swirl * cell.drift * 0.35;
+  const r = cell.r * RADIUS + Math.sin(t * 1.3 + cell.phase) * 4;
+  place.x = center + Math.cos(angle) * r;
+  place.y = center + Math.sin(angle) * r;
+  // Swirling round the centre: the tail points back along the way.
+  place.heading = angle + Math.PI / 2;
+  return place;
+}
+
+/** A bacterium's size, swollen by a celebration's flash. */
+function cellSize(cell: PreviewCell, flare: number): number {
+  return cell.size * (1 + flare * 0.35);
 }
 
 /** The bacteria of the preview, spread over a disc, the same each visit. */
@@ -318,69 +451,83 @@ function drawMembrane(
   cx.stroke();
 }
 
-function drawCell(
+/** A tail whipping from side to side behind the bacterium, into the path. */
+function tailPath(
   cx: CanvasRenderingContext2D,
   look: ColonyLook,
-  color: Rgb,
   cell: PreviewCell,
-  x: number,
-  y: number,
-  heading: number,
-  t: number,
-  flare: number
+  { x, y, heading }: CellPlace,
+  size: number,
+  t: number
 ): void {
-  const size = cell.size * (1 + flare * 0.35);
   const back = heading + Math.PI;
-  if (look.tail > 0) {
-    // A tail whipping from side to side behind the bacterium.
-    cx.strokeStyle = rgba(mix(color, [255, 255, 255], 0.3), 0.7);
-    cx.lineWidth = 1.3;
-    cx.beginPath();
-    cx.moveTo(x + Math.cos(back) * size, y + Math.sin(back) * size);
-    for (let j = 1; j <= 7; j++) {
-      const along = size + (j / 7) * look.tail;
-      const sway = Math.sin(t * (8 + look.speed * 6) + j * 0.9 + cell.phase);
-      const side = sway * (1 + j * 0.5);
-      cx.lineTo(
-        x + Math.cos(back) * along + Math.cos(heading + Math.PI / 2) * side,
-        y + Math.sin(back) * along + Math.sin(heading + Math.PI / 2) * side
-      );
-    }
-    cx.stroke();
+  const backX = Math.cos(back);
+  const backY = Math.sin(back);
+  const sideX = Math.cos(heading + Math.PI / 2);
+  const sideY = Math.sin(heading + Math.PI / 2);
+  cx.moveTo(x + backX * size, y + backY * size);
+  for (let j = 1; j <= 7; j++) {
+    const along = size + (j / 7) * look.tail;
+    const sway = Math.sin(t * (8 + look.speed * 6) + j * 0.9 + cell.phase);
+    const side = sway * (1 + j * 0.5);
+    cx.lineTo(
+      x + backX * along + sideX * side,
+      y + backY * along + sideY * side
+    );
   }
-  if (look.spikes > 0) {
-    cx.save();
-    cx.shadowColor = rgba(TOXIC, 0.9);
-    cx.shadowBlur = look.glow;
-    cx.strokeStyle = rgba(mix(color, TOXIC, 0.6), 0.95);
-    cx.lineWidth = 1.4;
-    cx.beginPath();
-    for (let k = 0; k < look.spikeCount; k++) {
-      const a = (k / look.spikeCount) * Math.PI * 2 + t * 0.6 + cell.phase;
-      cx.moveTo(x + Math.cos(a) * size, y + Math.sin(a) * size);
-      cx.lineTo(
-        x + Math.cos(a) * (size + look.spikes),
-        y + Math.sin(a) * (size + look.spikes)
-      );
-    }
-    cx.stroke();
-    cx.restore();
+}
+
+/** The toxin spikes round a bacterium, into the path. */
+function spikePath(
+  cx: CanvasRenderingContext2D,
+  look: ColonyLook,
+  cell: PreviewCell,
+  { x, y }: CellPlace,
+  size: number,
+  t: number
+): void {
+  for (let k = 0; k < look.spikeCount; k++) {
+    const a = (k / look.spikeCount) * Math.PI * 2 + t * 0.6 + cell.phase;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    cx.moveTo(x + cos * size, y + sin * size);
+    cx.lineTo(x + cos * (size + look.spikes), y + sin * (size + look.spikes));
   }
-  // The body: a lit, slightly long sphere along the way it goes.
+}
+
+/** The body: a lit, slightly long sphere along the way it goes. */
+function drawBody(
+  cx: CanvasRenderingContext2D,
+  look: ColonyLook,
+  paint: CellPaint,
+  index: number,
+  cell: PreviewCell,
+  { x, y, heading }: CellPlace,
+  flare: number,
+  t: number
+): void {
+  const size = cellSize(cell, flare);
   cx.save();
   cx.translate(x, y);
   cx.rotate(heading);
-  const body = cx.createRadialGradient(
-    -size * 0.3,
-    -size * 0.3,
-    size * 0.1,
-    0,
-    0,
-    size * 1.3
-  );
-  body.addColorStop(0, rgba(mix(color, [255, 255, 255], 0.6)));
-  body.addColorStop(0.5, rgba(color));
-  body.addColorStop(1, rgba(mix(color, [0, 0, 0], 0.4)));
+  // In the body's own frame, so it stays the same while its size does.
+  let body = flare > 0 ? undefined : paint.gradients[index];
+  if (body === undefined) {
+    body = cx.createRadialGradient(
+      -size * 0.3,
+      -size * 0.3,
+      size * 0.1,
+      0,
+      0,
+      size * 1.3
+    );
+    body.addColorStop(0, paint.light);
+    body.addColorStop(0.5, paint.body);
+    body.addColorStop(1, paint.dark);
+    if (flare === 0) {
+      paint.gradients[index] = body;
+    }
+  }
   cx.fillStyle = body;
   cx.beginPath();
   cx.ellipse(0, 0, size * 1.25, size, 0, 0, Math.PI * 2);
@@ -388,7 +535,8 @@ function drawCell(
   if (look.pulse > 0) {
     const beat =
       (1 + Math.sin(t * look.pulseHz * Math.PI * 2 + cell.phase)) / 2;
-    cx.fillStyle = rgba([255, 240, 170], look.pulse * 0.7 * beat);
+    cx.globalAlpha = look.pulse * 0.7 * beat;
+    cx.fillStyle = PULSE_FILL;
     cx.beginPath();
     cx.ellipse(0, 0, size * 0.55, size * 0.45, 0, 0, Math.PI * 2);
     cx.fill();

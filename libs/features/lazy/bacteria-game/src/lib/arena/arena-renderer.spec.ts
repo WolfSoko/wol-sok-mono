@@ -2,7 +2,7 @@ import { ArenaRenderer, paintArenaBackground } from './arena-renderer';
 import { arenaTheme } from './arena-theme';
 import { LEVELS } from '../state/levels';
 import { ActiveEffect, WEAPONS } from '../state/evolution';
-import { MarkLayer, WeaponEffects } from './weapon-effects';
+import { MarkLayer, WeaponFx } from './weapon-fx';
 
 /** A 2D context that records what is drawn and how it is blended. */
 function recordingContext() {
@@ -75,7 +75,7 @@ describe('ArenaRenderer weapons', () => {
   it.each(WEAPONS.map(({ id }) => id))(
     'draws %s, fired and acting, with the Canvas 2D API',
     (weapon) => {
-      const effects = new WeaponEffects(1);
+      const effects = new WeaponFx(1);
       effects.update({
         deltaTimeSec: 1 / 60,
         timeSec: 1,
@@ -102,7 +102,7 @@ describe('ArenaRenderer weapons', () => {
   );
 
   it('shades the colonies under a toxin cloud and the ice, only there', () => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
     effects.update({
       deltaTimeSec: 1 / 60,
       timeSec: 1,

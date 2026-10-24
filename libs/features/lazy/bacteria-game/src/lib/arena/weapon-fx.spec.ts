@@ -11,10 +11,10 @@ import {
   particleBudget,
   STRIKE_SEC,
   tintApplies,
-  WeaponEffects,
+  WeaponFx,
   WeaponFrame,
   WeaponMark,
-} from './weapon-effects';
+} from './weapon-fx';
 
 const ORANGE = [255, 140, 0, 255];
 const BLUE = [40, 120, 255, 255];
@@ -62,7 +62,7 @@ function frame(
 
 /** Runs frames of 1/60 s for that long, from `startSec`. */
 function run(
-  effects: WeaponEffects,
+  effects: WeaponFx,
   seconds: number,
   startSec = 0,
   changes: Partial<WeaponFrame> = {}
@@ -78,15 +78,15 @@ function marks(layer: MarkLayer): WeaponMark[] {
   return Array.from({ length: layer.count }, (_, i) => layer.at(i));
 }
 
-function fields(effects: WeaponEffects): WeaponMark[] {
+function fields(effects: WeaponFx): WeaponMark[] {
   return [effects.ground, effects.over, effects.light].flatMap((layer) =>
     layer.ofKind('field')
   );
 }
 
-describe('WeaponEffects', () => {
+describe('WeaponFx', () => {
   it('bursts out where a weapon is fired: a flash, a shockwave and sparks', () => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
 
     effects.update(frame(0, { weaponFires: [fire('toxin-bomb')] }));
     run(effects, 0.2);
@@ -101,7 +101,7 @@ describe('WeaponEffects', () => {
   });
 
   it('lets the burst die away', () => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
 
     effects.update(frame(0, { weaponFires: [fire('agar-bloom')] }));
     run(effects, BURST_SEC + 1);
@@ -113,7 +113,7 @@ describe('WeaponEffects', () => {
   it.each(
     WEAPONS.filter((weapon) => weapon.durationSec > 0).map(({ id }) => id)
   )('draws %s over its circle while it acts', (weapon) => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
 
     effects.update(frame(1, { weaponEffects: [effect(weapon)] }));
 
@@ -123,7 +123,7 @@ describe('WeaponEffects', () => {
   });
 
   it('lays the bloom under the colonies and the cloud, ice and membrane over them', () => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
 
     effects.update(
       frame(1, {
@@ -150,7 +150,7 @@ describe('WeaponEffects', () => {
   });
 
   it("draws the shield in its owner's colour", () => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
 
     effects.update(frame(1, { weaponEffects: [effect('biofilm-shield')] }));
 
@@ -167,7 +167,7 @@ describe('WeaponEffects', () => {
     // A strike acts for a frame, at full strength.
     expect(effectFade(effect('phage-strike', 0, 0))).toBe(1);
 
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
     effects.update(frame(1, { weaponEffects: [effect('cryo-pulse', 2, 3.5)] }));
     const full = fields(effects)[0].alpha;
     effects.update(
@@ -177,7 +177,7 @@ describe('WeaponEffects', () => {
   });
 
   it('keeps a phage strike in view for about a second after the frame it acts in', () => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
     const strike = effect('phage-strike', 0, 0);
 
     effects.update(
@@ -205,19 +205,29 @@ describe('WeaponEffects', () => {
     expect(effects.light.ofKind('field')).toHaveLength(0);
   });
 
-  it('strikes once for a strike that only shows as an effect', () => {
-    const effects = new WeaponEffects(1);
+  it('draws a phage strike from its fire alone, not from the frame it acts in', () => {
+    const effects = new WeaponFx(1);
 
     effects.update(frame(0, { weaponEffects: [effect('phage-strike', 0, 0)] }));
-    effects.update(
-      frame(1 / 60, { weaponEffects: [effect('phage-strike', 0, 0)] })
-    );
 
-    expect(effects.light.ofKind('field')).toHaveLength(1);
+    expect(effects.visible).toBe(false);
+  });
+
+  it('clears what it drew once nothing of a weapon is left', () => {
+    const effects = new WeaponFx(1);
+    effects.update(frame(1, { weaponEffects: [effect('toxin-bomb')] }));
+    expect(effects.visible).toBe(true);
+    run(effects, 3, 1);
+
+    effects.update(frame(5));
+
+    expect(effects.particleCount).toBe(0);
+    expect(effects.visible).toBe(false);
+    expect(effects.tints).toEqual([]);
   });
 
   it('never flies more particles than the budget allows', () => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
     const everything = WEAPONS.map(({ id }) => fire(id));
 
     effects.update(frame(0, { weaponFires: everything, particleBudget: 40 }));
@@ -231,7 +241,7 @@ describe('WeaponEffects', () => {
   });
 
   it('takes a spent particle again before the pool grows', () => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
     const pool = (effects as unknown as { particles: unknown[] }).particles;
     effects.update(frame(0, { weaponFires: [fire('toxin-bomb')] }));
     const first = pool.length;
@@ -258,7 +268,7 @@ describe('WeaponEffects', () => {
   });
 
   it('shades the enemy with toxin and ice, and only the owner with a shield or a bloom', () => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
 
     effects.update(
       frame(1, {
@@ -281,7 +291,7 @@ describe('WeaponEffects', () => {
 
   it('draws with a random of its own, never the one the war runs on', () => {
     const random = jest.spyOn(Math, 'random');
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
 
     effects.update(
       frame(0, { weaponFires: WEAPONS.map(({ id }) => fire(id)) })
@@ -295,7 +305,7 @@ describe('WeaponEffects', () => {
   });
 
   it('lets go of everything on a reset', () => {
-    const effects = new WeaponEffects(1);
+    const effects = new WeaponFx(1);
     effects.update(frame(0, { weaponFires: [fire('phage-strike')] }));
 
     effects.reset();

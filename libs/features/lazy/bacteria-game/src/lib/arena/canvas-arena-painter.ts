@@ -8,7 +8,7 @@ import {
 import { ArenaRenderer } from './arena-renderer';
 import { ArenaTheme } from './arena-theme';
 import { ColonyRenderer, drawJam, LOOKS } from './colony-renderer';
-import { WeaponEffects } from './weapon-effects';
+import { WeaponFx } from './weapon-fx';
 
 /**
  * The arena drawn with the Canvas 2D API - the fallback for browsers
@@ -20,7 +20,7 @@ export class CanvasArenaPainter implements ArenaPainter {
   private readonly arena: ArenaRenderer;
   private readonly colonies: ColonyRenderer;
   /** The weapons going off and acting. */
-  private readonly weapons: WeaponEffects;
+  private readonly weapons: WeaponFx;
   /** Cells per base cell - the jam and the crosshairs are as big on every grid. */
   private readonly unit: number;
 
@@ -34,7 +34,7 @@ export class CanvasArenaPainter implements ArenaPainter {
   ) {
     this.unit = unit;
     this.arena = new ArenaRenderer(width, height, Math.random, detail, unit);
-    this.weapons = new WeaponEffects(unit);
+    this.weapons = new WeaponFx(unit);
     this.colonies = new ColonyRenderer(width, height, unit);
     cx.imageSmoothingEnabled = false;
   }

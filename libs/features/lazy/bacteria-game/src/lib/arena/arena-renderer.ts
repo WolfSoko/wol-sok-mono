@@ -1,12 +1,20 @@
 import { Motes } from './motes';
 import { DynamicWall, Rect } from '../state/maps';
 import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
-import { createCanvas, hash, lerp, mix, rgba, smoothstep } from './canvas-math';
+import {
+  createCanvas,
+  hash,
+  lerp,
+  mix,
+  putPixels,
+  rgba,
+  smoothstep,
+} from './canvas-math';
 import { darker } from './colony-renderer';
 import { Zone } from '../state/zones';
 import { clamp } from '../state/geometry';
 import { paintZoneLayer } from './zone-decal';
-import { ColonyTint, MarkLayer, WeaponMark } from './weapon-effects';
+import { ColonyTint, MarkLayer, sameRgb, WeaponMark } from './weapon-fx';
 
 /**
  * Paints the floor of an arena into an RGBA pixel buffer: the theme's floor
@@ -153,7 +161,7 @@ export class ArenaRenderer {
     if (theme == null) {
       return;
     }
-    this.drawBlobs(cx, walls, darker(theme.wall), theme);
+    drawWallBlobs(cx, walls, darker(theme.wall), theme);
     for (const wall of walls) {
       if (wall.round) {
         continue;
@@ -180,7 +188,7 @@ export class ArenaRenderer {
       return;
     }
     // Living tissue rather than machinery: rimmed in the frame colour.
-    this.drawBlobs(cx, walls, theme.border, theme);
+    drawWallBlobs(cx, walls, theme.border, theme);
     for (const wall of walls) {
       if (wall.round) {
         continue;
@@ -206,41 +214,8 @@ export class ArenaRenderer {
     }
   }
 
-  /** The round walls among these, pass by pass - see {@link blobLayer}. */
-  private drawBlobs(
-    cx: CanvasRenderingContext2D,
-    walls: readonly Rect[],
-    rim: Rgb,
-    theme: ArenaTheme
-  ): void {
-    if (!walls.some((wall) => wall.round)) {
-      return;
-    }
-    const shape: Rect = { x: 0, y: 0, width: 0, height: 0 };
-    for (let layer = 0; layer < BLOB_LAYERS; layer++) {
-      cx.fillStyle = rgba(blobColor(layer, rim, theme), BLOB_ALPHA[layer]);
-      cx.beginPath();
-      for (const wall of walls) {
-        if (wall.round) {
-          const { x, y, width, height } = blobLayer(layer, wall, shape);
-          cx.moveTo(x + width, y + height / 2);
-          cx.ellipse(
-            x + width / 2,
-            y + height / 2,
-            width / 2,
-            height / 2,
-            0,
-            0,
-            2 * Math.PI
-          );
-        }
-      }
-      cx.fill();
-    }
-  }
-
   /**
-   * Draws a layer of the weapons' marks - see `WeaponEffects` - and, for
+   * Draws a layer of the weapons' marks - see `WeaponFx` - and, for
    * `light`, adds it over the frame as light.
    */
   public drawWeaponMarks(
@@ -282,21 +257,11 @@ export class ArenaRenderer {
         continue;
       }
       const alpha = 0.6 * tint.strength;
-      const gradient = cx.createRadialGradient(
-        tint.x,
-        tint.y,
-        0,
-        tint.x,
-        tint.y,
-        tint.radius
-      );
-      gradient.addColorStop(0, rgba(color, alpha));
-      gradient.addColorStop(0.85, rgba(color, alpha));
-      gradient.addColorStop(1, rgba(color, 0));
-      cx.fillStyle = gradient;
-      cx.beginPath();
-      cx.arc(tint.x, tint.y, tint.radius, 0, Math.PI * 2);
-      cx.fill();
+      fillGradientCircle(cx, tint.x, tint.y, tint.radius, [
+        [0, color, alpha],
+        [0.85, color, alpha],
+        [1, color, 0],
+      ]);
     }
     cx.restore();
   }
@@ -384,24 +349,23 @@ function drawMark(cx: CanvasRenderingContext2D, mark: WeaponMark): void {
     return;
   }
   switch (mark.kind) {
-    case 'glow': {
+    case 'glow':
       if (radius < 2.5) {
         // Too small for the gradient to show - a plain dot is cheaper.
         cx.fillStyle = rgba(color, alpha * 0.55);
+        cx.beginPath();
+        cx.arc(x, y, radius, 0, Math.PI * 2);
+        cx.fill();
       } else {
-        const gradient = cx.createRadialGradient(x, y, 0, x, y, radius);
         // The falloff of the WebGL glow, (1 - r²)².
-        gradient.addColorStop(0, rgba(color, alpha));
-        gradient.addColorStop(0.5, rgba(color, alpha * 0.56));
-        gradient.addColorStop(0.75, rgba(color, alpha * 0.19));
-        gradient.addColorStop(1, rgba(color, 0));
-        cx.fillStyle = gradient;
+        fillGradientCircle(cx, x, y, radius, [
+          [0, color, alpha],
+          [0.5, color, alpha * 0.56],
+          [0.75, color, alpha * 0.19],
+          [1, color, 0],
+        ]);
       }
-      cx.beginPath();
-      cx.arc(x, y, radius, 0, Math.PI * 2);
-      cx.fill();
       break;
-    }
     case 'ring':
       cx.strokeStyle = rgba(color, alpha);
       cx.lineWidth = size;
@@ -433,11 +397,7 @@ function drawMark(cx: CanvasRenderingContext2D, mark: WeaponMark): void {
       break;
     case 'ellipse': {
       const { color2 } = mark;
-      if (
-        color2[0] === color[0] &&
-        color2[1] === color[1] &&
-        color2[2] === color[2]
-      ) {
+      if (sameRgb(color, color2)) {
         cx.fillStyle = rgba(color, alpha);
       } else {
         // From its base to its tip, along the way it is turned.
@@ -564,10 +524,19 @@ function drawField(cx: CanvasRenderingContext2D, mark: WeaponMark): void {
       cx.strokeStyle = rgba(color2, (0.3 + 0.3 * pulse) * alpha);
       cx.lineWidth = Math.max(0.3, radius * 0.02);
       cx.beginPath();
-      for (let row = -7; row <= 7; row++) {
-        const cy = y + row * corner * 1.5;
+      // Only the cells that reach into the clipped circle, at most seven
+      // out from the centre each way.
+      const rowStep = corner * 1.5;
+      const rows = Math.min(7, Math.ceil((reach + corner) / rowStep));
+      for (let row = -rows; row <= rows; row++) {
+        const cy = y + row * rowStep;
         const shift = (row & 1) * 0.5 * width;
-        for (let column = -7; column <= 7; column++) {
+        const nearest = Math.max(0, Math.abs(row * rowStep) - corner);
+        const half =
+          Math.sqrt(Math.max(0, reach * reach - nearest * nearest)) + corner;
+        const first = Math.max(-7, Math.floor((-half - shift) / width));
+        const last = Math.min(7, Math.ceil((half - shift) / width));
+        for (let column = first; column <= last; column++) {
           const cellX = x + column * width + shift;
           for (let k = 0; k <= 6; k++) {
             const turn = Math.PI / 6 + (k * Math.PI) / 3;
@@ -651,6 +620,47 @@ export function blobLayer(layer: number, wall: Rect, out: Rect): Rect {
     out.height = height * 0.3;
   }
   return out;
+}
+
+/**
+ * The round walls among these, pass by pass - see {@link blobLayer} - on
+ * the arena or on a level preview. With `shadowOnce` only the first pass
+ * casts the shadow the context is set up with.
+ */
+export function drawWallBlobs(
+  cx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  walls: readonly Rect[],
+  rim: Rgb,
+  theme: ArenaTheme,
+  shadowOnce = false
+): void {
+  if (!walls.some((wall) => wall.round)) {
+    return;
+  }
+  const shape: Rect = { x: 0, y: 0, width: 0, height: 0 };
+  for (let layer = 0; layer < BLOB_LAYERS; layer++) {
+    cx.fillStyle = rgba(blobColor(layer, rim, theme), BLOB_ALPHA[layer]);
+    cx.beginPath();
+    for (const wall of walls) {
+      if (wall.round) {
+        const { x, y, width, height } = blobLayer(layer, wall, shape);
+        cx.moveTo(x + width, y + height / 2);
+        cx.ellipse(
+          x + width / 2,
+          y + height / 2,
+          width / 2,
+          height / 2,
+          0,
+          0,
+          2 * Math.PI
+        );
+      }
+    }
+    cx.fill();
+    if (shadowOnce) {
+      cx.shadowColor = 'transparent';
+    }
+  }
 }
 
 /** Width of one hazard stripe tile in arena cells - a dark and a light band. */
@@ -819,12 +829,8 @@ function imageCanvas(
   height: number
 ): HTMLCanvasElement | null {
   const canvas = createCanvas(width, height);
-  const context = canvas?.getContext?.('2d');
-  if (canvas == null || context == null) {
-    return null;
-  }
-  const image = context.createImageData(width, height);
-  image.data.set(data);
-  context.putImageData(image, 0, 0);
-  return canvas;
+  return canvas != null &&
+    putPixels(canvas.getContext?.('2d'), data, width, height)
+    ? canvas
+    : null;
 }

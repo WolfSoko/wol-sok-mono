@@ -1,12 +1,7 @@
 import type { Rgb } from '../arena/arena-theme';
 import type { TranslationKey } from '../i18n/dictionaries';
-import {
-  Gene,
-  GENES,
-  GeneId,
-  MAX_GENE_LEVEL,
-  WeaponId,
-} from '../state/evolution';
+import { Gene, GeneId, MAX_GENE_LEVEL, WeaponId } from '../state/evolution';
+import { clamp } from '../state/geometry';
 
 /**
  * How the menus show evolution: the colour of each weapon's aura and of
@@ -55,11 +50,7 @@ export function weaponKeys(id: WeaponId): {
  * for two levels of +6 %. The sign is the text's: "−10 % damage taken".
  */
 export function genePercent(gene: Gene, level: number): number {
-  const clamped = Math.max(0, Math.min(MAX_GENE_LEVEL, level));
-  return Math.round(Math.abs(gene.perLevel) * clamped * 100);
-}
-
-/** The gene with that id. */
-export function geneOf(id: GeneId): Gene {
-  return GENES.find((gene) => gene.id === id) as Gene;
+  return Math.round(
+    Math.abs(gene.perLevel) * clamp(level, 0, MAX_GENE_LEVEL) * 100
+  );
 }

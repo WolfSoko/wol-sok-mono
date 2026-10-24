@@ -14,7 +14,7 @@ import { ArenaTheme, Rgb } from '../arena-theme';
 import { darker, JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
 import { WEAPON_CODE } from '../../state/weapon-effects';
-import { MarkLayer } from '../weapon-effects';
+import { MarkLayer } from '../weapon-fx';
 
 /**
  * What the shape shader draws for one instance. Every shape is a rect in
@@ -274,20 +274,8 @@ export function pushForeground(
   }
 }
 
-/** Scratch for a mark's box - `push` copies it straight away. */
-const markBox: Rect = { x: 0, y: 0, width: 0, height: 0 };
-
-/** The box around a circle, in {@link markBox}. */
-function markSquare(x: number, y: number, half: number): Rect {
-  markBox.x = x - half;
-  markBox.y = y - half;
-  markBox.width = half * 2;
-  markBox.height = half * 2;
-  return markBox;
-}
-
 /**
- * A layer of the weapons' effects - see `WeaponEffects` - one instance per
+ * A layer of the weapons' effects - see `WeaponFx` - one instance per
  * mark.
  */
 export function pushWeaponMarks(batch: ShapeBatch, layer: MarkLayer): void {
@@ -296,12 +284,12 @@ export function pushWeaponMarks(batch: ShapeBatch, layer: MarkLayer): void {
     const { x, y, radius, size, angle, color, color2, alpha } = mark;
     switch (mark.kind) {
       case 'glow':
-        batch.push(SHAPE.glow, markSquare(x, y, radius), color, alpha);
+        batch.push(SHAPE.glow, square(x, y, radius), color, alpha);
         break;
       case 'ring':
         batch.push(
           SHAPE.ring,
-          markSquare(x, y, radius + size),
+          square(x, y, radius + size),
           color,
           alpha,
           color,
@@ -313,7 +301,7 @@ export function pushWeaponMarks(batch: ShapeBatch, layer: MarkLayer): void {
       case 'hex':
         batch.push(
           SHAPE.hex,
-          markSquare(x, y, radius + size),
+          square(x, y, radius + size),
           color,
           alpha,
           color,
@@ -326,7 +314,7 @@ export function pushWeaponMarks(batch: ShapeBatch, layer: MarkLayer): void {
       case 'ellipse':
         batch.push(
           SHAPE.ellipse,
-          markSquare(x, y, Math.max(radius, size)),
+          square(x, y, Math.max(radius, size)),
           color,
           alpha,
           color2,
@@ -339,7 +327,7 @@ export function pushWeaponMarks(batch: ShapeBatch, layer: MarkLayer): void {
       case 'field':
         batch.push(
           SHAPE.field,
-          markSquare(x, y, radius),
+          square(x, y, radius),
           color,
           alpha,
           color2,
@@ -353,14 +341,21 @@ export function pushWeaponMarks(batch: ShapeBatch, layer: MarkLayer): void {
   }
 }
 
-/** A square centred on a point. */
+/** Scratch for a shape's box - `push` copies it straight away. */
+const box: Rect = { x: 0, y: 0, width: 0, height: 0 };
+
+/** A square centred on a point, in {@link box}. */
 function square(x: number, y: number, half: number): Rect {
   return ellipse(x, y, half, half);
 }
 
-/** The box around an ellipse. */
+/** The box around an ellipse, in {@link box}. */
 function ellipse(x: number, y: number, rx: number, ry: number): Rect {
-  return { x: x - rx, y: y - ry, width: rx * 2, height: ry * 2 };
+  box.x = x - rx;
+  box.y = y - ry;
+  box.width = rx * 2;
+  box.height = ry * 2;
+  return box;
 }
 
 /**

@@ -1,5 +1,8 @@
 import type { Rgb } from '../arena/arena-theme';
 import { mix, rgba } from '../arena/canvas-math';
+import { reducedMotionNow } from '../reduced-motion';
+import type { Point } from '../state/geometry';
+import { MAXED_COLOR } from './evolution-look';
 
 /**
  * The purchase moment of the Evolution screen, played on the DOM with the
@@ -8,14 +11,6 @@ import { mix, rgba } from '../arena/canvas-math';
  * and shakes. Nothing of it for players who ask for less motion, nor where
  * the browser cannot animate - the purchase itself never waits on it.
  */
-
-/** True when the player asks for less motion. */
-export function prefersReducedMotion(): boolean {
-  return (
-    typeof matchMedia === 'function' &&
-    matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
-}
 
 export interface Celebration {
   /** Where the strands fly from - the DNA counter. */
@@ -30,7 +25,6 @@ export interface Celebration {
 
 /** How many strands fly per purchase. */
 const STRANDS = 14;
-const GOLD: Rgb = [255, 214, 110];
 const WHITE: Rgb = [255, 255, 255];
 
 /**
@@ -43,7 +37,7 @@ export async function celebrate(
   stage: HTMLElement,
   { from, to, color, maxed = false }: Celebration
 ): Promise<void> {
-  if (prefersReducedMotion() || typeof layer.animate !== 'function') {
+  if (reducedMotionNow() || typeof layer.animate !== 'function') {
     return;
   }
   const box = layer.getBoundingClientRect();
@@ -53,14 +47,9 @@ export async function celebrate(
     flyStrand(layer, start, end, color, index)
   );
   await Promise.all(strands.map(finished));
-  burst(layer, end, maxed ? GOLD : color, maxed);
-  glow(to, maxed ? GOLD : color);
+  burst(layer, end, maxed ? MAXED_COLOR : color, maxed);
+  glow(to, maxed ? MAXED_COLOR : color);
   flashAndShake(stage, maxed);
-}
-
-interface Point {
-  x: number;
-  y: number;
 }
 
 function centerOf(element: Element, box: DOMRect): Point {

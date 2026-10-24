@@ -10,6 +10,8 @@ import {
  */
 export class FakePreviewRenderer implements LevelPreviewRenderer {
   public readonly drawn: string[] = [];
+  /** The URLs let go of, in order. */
+  public readonly released: string[] = [];
 
   public constructor(
     public readonly supported = true,
@@ -19,6 +21,10 @@ export class FakePreviewRenderer implements LevelPreviewRenderer {
   public async render(levelId: string): Promise<string | null> {
     this.drawn.push(levelId);
     return this.fails.includes(levelId) ? null : fakePreviewUrl(levelId);
+  }
+
+  public release(url: string): void {
+    this.released.push(url);
   }
 }
 
