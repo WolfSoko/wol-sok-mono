@@ -58,15 +58,25 @@ describe('AccountComponent', () => {
     );
   });
 
-  it('signs in with Google and shows the name', async () => {
-    query('sign-in-button').nativeElement.click();
-    await fixture.whenStable();
+  it(
+    'signs in with Google and shows the name',
+    async () => {
+      query('sign-in-button').nativeElement.click();
+      await fixture.whenStable();
 
-    expect(query('account-name').nativeElement.textContent).toContain(
-      'Ada Lovelace'
-    );
-    expect(query('sign-in-button')).toBeNull();
-  });
+      expect(query('account-name').nativeElement.textContent).toContain(
+        'Ada Lovelace'
+      );
+      expect(query('sign-in-button')).toBeNull();
+    },
+    // Zoneless CD normally flushes this click's signal writes on a microtask,
+    // but once the scheduler's brief post-tick microtask window has closed it
+    // falls back to a requestAnimationFrame-raced callback in Angular's
+    // internal zoneless change-detection scheduler (@angular/core); under a
+    // loaded CI runner that can occasionally outlast the 5s default test
+    // timeout even though the app settles fine.
+    10000
+  );
 
   it('signs out', async () => {
     query('sign-in-button').nativeElement.click();
