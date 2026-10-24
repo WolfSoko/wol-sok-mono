@@ -4,7 +4,7 @@ import { scaleOf } from './arena-size';
 import { ColonyTraits, GameBalance, gameBalance } from './game-balance';
 import type { WeaponId } from './evolution';
 import { getMap } from './game-maps';
-import { EXPANSE_NEUTRALS } from './expanse-maps';
+import { EXPANSE_NEUTRALS, ROOT_NETWORK_NEUTRALS } from './expanse-maps';
 import { GameMap } from './maps';
 import { MedalLimits } from './medallions';
 import { WinRule } from './win-conditions';
@@ -419,6 +419,92 @@ export const LEVELS: readonly Level[] = [
       nutrientRespawnDelaySec: 1.5,
     },
     crosshairSpeed: 220,
+  },
+  // More big maps. A clock or a goal ends each: capped colonies on a map
+  // this big seldom wipe each other out.
+  {
+    id: 'archipelago',
+    name: '21 · Archipelago',
+    description:
+      'Islands in a sea of antibiotic, linked by narrow bridges. Hold the white zone on the island in the middle for forty seconds - the way there leads over the islands to the north and the south.',
+    mapId: 'archipelago',
+    // The hold takes forty seconds and the way there some ten: gold asks
+    // for a clean run at the zone.
+    medal: { silverSec: 70, goldSec: 50, goldLossShare: 2.6 },
+    win: { kind: 'hold', holdSec: 40 },
+    balance: {
+      aggression: 0.75,
+      divideChancePerSec: 3.8,
+      combatDrainPerSec: 2.2,
+      nutrientCount: 16,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 230,
+  },
+  {
+    id: 'bloodstream',
+    name: '22 · Bloodstream',
+    description:
+      'Three vessels side by side, a heart beating between you and the enemy - every beat squeezes the way past it. Valves that take turns to open and pinch shut lead out into the outer vessels, hot by the heart and icy at the far ends. Biggest colony after four minutes wins.',
+    mapId: 'bloodstream',
+    // Capped colonies on a map this big rarely wipe each other out: the
+    // clock decides, and silver and gold ask for a wipe-out first.
+    medal: { silverSec: 160, goldSec: 105, goldLossShare: 3.5 },
+    win: { kind: 'timed', limitSec: 240 },
+    balance: {
+      aggression: 0.8,
+      divideChancePerSec: 4,
+      combatDrainPerSec: 2.4,
+      nutrientCount: 16,
+      nutrientRespawnDelaySec: 1.4,
+    },
+    crosshairSpeed: 230,
+  },
+  {
+    id: 'root-network',
+    name: '23 · Root Network',
+    description:
+      'A cave of pillars, overgrown with fungal threads. Two grey colonies sit in hollows on golden agar, more agar lies in pockets along the way. Biggest colony after three minutes wins.',
+    mapId: 'root-network',
+    // As the other timed levels: silver and gold ask for a wipe-out first.
+    medal: { silverSec: 120, goldSec: 80, goldLossShare: 2.4 },
+    win: { kind: 'timed', limitSec: 180 },
+    neutrals: ROOT_NETWORK_NEUTRALS.map((spot) => ({
+      ...spot,
+      startScale: 2.5,
+    })),
+    balance: {
+      aggression: 0.7,
+      divideChancePerSec: 3.8,
+      combatDrainPerSec: 2.2,
+      nutrientCount: 16,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 230,
+  },
+  // The finale: a boss on a big map.
+  {
+    id: 'leviathan',
+    name: '24 · Leviathan',
+    description:
+      'Something four times your size lives down in the abyss - it divides faster, hits harder and boosts more often. Keep your colony alive for two and a half minutes, or wipe the leviathan out.',
+    mapId: 'abyss',
+    medal: {
+      silverSec: 120,
+      goldSec: 85,
+      goldLossShare: 4,
+      // Four times your size at the start: a quarter of it is where you begin.
+      platinumSizeRatio: 0.2,
+    },
+    win: { kind: 'survive', limitSec: 150 },
+    boss: {
+      startScale: 4,
+      traits: { divideFactor: 1.15, attackFactor: 1.1, cooldownFactor: 0.75 },
+      // The cold of the deep, breathed over your colony.
+      weapon: 'cryo-pulse',
+    },
+    balance: BOSS_BALANCE,
+    crosshairSpeed: 230,
   },
 ];
 
