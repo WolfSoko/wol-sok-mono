@@ -51,14 +51,17 @@ describe('the exported functions', () => {
     ]);
   });
 
-  it('all run in the one region, without retries', () => {
+  it('all run in the one region, without retries but rankReplay', () => {
     for (const [name, { __endpoint }] of Object.entries(functions)) {
       expect([name, __endpoint.region]).toEqual([name, [REGION]]);
       const retry =
         __endpoint.eventTrigger?.retry ??
         __endpoint.scheduleTrigger?.retryConfig?.retryCount;
       const scheduled = name === 'featureBest' || name === 'hourly';
-      expect([name, retry]).toEqual([name, scheduled ? 0 : false]);
+      expect([name, retry]).toEqual([
+        name,
+        scheduled ? 0 : name === 'rankReplay',
+      ]);
     }
   });
 

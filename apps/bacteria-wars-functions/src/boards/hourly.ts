@@ -1,14 +1,13 @@
-import { Firestore, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions';
 import { Moderation, unbanPlayer } from '../admin/bans';
 import { writeAudit } from '../admin/records';
 import { writeStats } from '../admin/stats';
 import type { ReplayDoc } from '../replays/model';
 import { DAY_MS, dayOf, MINUTE_MS } from '../time';
-import type { Engine } from '../engine';
 import type { EndlessRunDoc } from './model';
 import { closeWaiting } from './rank-online';
-import { acceptRanked, updateEndlessRun } from './ranked';
+import { updateEndlessRun } from './ranked';
 import {
   dailyFinalAt,
   hourSlice,
@@ -62,15 +61,12 @@ export async function expireBans(
   return ended.size;
 }
 
-/** Replays of a run `closeAttempts` looks through for missed ones. */
-const MISSED_LIMIT = 100;
-
 /**
  * Closes the declared endless matches without a replay 2 hours after
  * their declaration as lost lives (a pending submission keeps one open),
- * by recomputing the runs that have one due - after taking in the run's
- * stored replays `rankReplay` missed. A run that fails stays due for the
- * next hour.
+ * by recomputing the runs that have one due. A stored replay `rankReplay`
+ * failed to take in is retried by `rankReplay` itself, within the hour. A
+ * run that fails here stays due for the next hour.
  */
 export async function closeAttempts(
   moderation: Moderation,
@@ -86,49 +82,12 @@ export async function closeAttempts(
   for (const run of due.docs) {
     const { uid, runId } = run.data() as EndlessRunDoc;
     try {
-      await takeMissed(db, engine, run.data() as EndlessRunDoc, now);
       await updateEndlessRun(db, engine, uid, runId, now);
     } catch (error) {
       logger.warn('hourly: could not close the run', { uid, runId, error });
     }
   }
   return due.size;
-}
-
-/**
- * Takes in the stored replays of a run that never ranked: `rankReplay`
- * runs once, without retries, so a failed transaction left them out, and
- * their matches would close as lost lives. Looks from the first match the
- * run holds no replay for, or else from its last one.
- */
-async function takeMissed(
-  db: Firestore,
-  engine: Engine,
-  run: EndlessRunDoc,
-  now: number
-): Promise<void> {
-  const from =
-    run.matches.find((match) => match.replayId === null) ?? run.matches.at(-1);
-  if (from === undefined) {
-    return;
-  }
-  const replays = await db
-    .collection('replays')
-    .where('players', 'array-contains', run.uid)
-    .where('createdAt', '>=', Timestamp.fromMillis(from.at))
-    .orderBy('createdAt', 'desc')
-    .limit(MISSED_LIMIT)
-    .get();
-  for (const replay of replays.docs) {
-    const doc = replay.data() as ReplayDoc;
-    if (
-      doc.attempt?.id.startsWith(`e_${run.runId}_`) === true &&
-      doc.rankedAt === undefined &&
-      doc.rankedReason === undefined
-    ) {
-      await acceptRanked(db, engine, replay.id, doc, now);
-    }
-  }
 }
 
 /**

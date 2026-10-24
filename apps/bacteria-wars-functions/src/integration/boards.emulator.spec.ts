@@ -814,7 +814,7 @@ describe('ranked daily and endless matches', () => {
       expect((await ref.get()).get('nextCloseAt')).toBeNull();
     });
 
-    it('takes in a stored replay rankReplay missed before closing its match', async () => {
+    it('takes in a stored replay through the retry of a failed rankReplay, before its match closes', async () => {
       const at0 = NOW - 60_000;
       await declare('ana', attempt(0), at0);
       const runSeed = engine.attemptSeed('ana', attempt(0), at0);
@@ -826,8 +826,7 @@ describe('ranked daily and endless matches', () => {
       );
       const at1 = NOW - 30_000;
       await declare('ana', attempt(1), at1);
-      // Stored, but its rankReplay failed: never taken into the run.
-      const missed = await ranked(
+      const won = await ranked(
         'ana',
         attempt(1),
         at1,
@@ -839,7 +838,7 @@ describe('ranked daily and endless matches', () => {
         's1',
         {
           uid: 'ana',
-          bytes: Buffer.from(await bytesOf(missed)),
+          bytes: Buffer.from(await bytesOf(won)),
           hint: 50,
           createdAt: Timestamp.fromMillis(NOW),
           expireAt: Timestamp.fromMillis(NOW + DAY),
@@ -847,6 +846,32 @@ describe('ranked daily and endless matches', () => {
         },
         NOW
       );
+      const stored = (await db.doc('replays/l_s1').get()).data() as ReplayDoc;
+      // The first delivery fails half way (here: on reading the seed).
+      const failing = {
+        ...engine,
+        attemptSeed: () => {
+          throw new Error('unavailable');
+        },
+      } as Engine;
+      await expect(
+        rankReplay(db, failing, accounts, 'l_s1', undefined, stored, NOW)
+      ).rejects.toThrow('unavailable');
+      // The retry takes it in; a further delivery changes nothing.
+      for (const delivery of [1, 2]) {
+        expect([
+          delivery,
+          await rankReplay(
+            db,
+            engine,
+            accounts,
+            'l_s1',
+            undefined,
+            stored,
+            NOW
+          ),
+        ]).toEqual([delivery, 'ranked']);
+      }
       await db.doc(`endlessRuns/ana_${runId}`).update({
         nextCloseAt: Timestamp.fromMillis(NOW),
       });
@@ -857,9 +882,9 @@ describe('ranked daily and endless matches', () => {
         'won',
       ]);
       expect(run?.['depth']).toBe(2);
-      expect(
-        (await db.doc('replays/l_s1').get()).get('rankedAt')
-      ).toBeDefined();
+      const replay = (await db.doc('replays/l_s1').get()).data();
+      expect(replay?.['rankedAt']).toBeDefined();
+      expect(replay?.['rankedReason']).toBeUndefined();
     });
   });
 });

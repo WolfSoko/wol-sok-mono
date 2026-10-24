@@ -1,7 +1,7 @@
 import { Engine, loadEngine } from '../engine';
 import type { ReplayDoc } from '../replays/model';
 import { touchesBoards } from './board-profile-changed';
-import { rankReplay, touchesRanking } from './rank-replay';
+import { rankReplay, tooOldToRetry, touchesRanking } from './rank-replay';
 import { isRelevant } from './rebuild-top';
 import { dailyFinalAt, Slice } from './verification';
 
@@ -27,6 +27,13 @@ describe('the boards triggers', () => {
         touchesRanking(replay(), replay({ players: ['ana', 'bob'] }))
       ).toBe(true);
       expect(touchesRanking(replay(), undefined)).toBe(false);
+    });
+
+    it('gives up on an event once it is an hour old', () => {
+      const at = Date.parse('2026-10-24T12:00:00Z');
+      const time = new Date(at).toISOString();
+      expect(tooOldToRetry(time, at + 59 * 60_000)).toBe(false);
+      expect(tooOldToRetry(time, at + 61 * 60_000)).toBe(true);
     });
 
     it('returns before reading anything for a write it does not act on', async () => {

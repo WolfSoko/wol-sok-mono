@@ -50,7 +50,7 @@ const contains = (fieldPath: string): IndexField => ({
 /** Each query by where it runs, and the composite index it needs. */
 const QUERIES: [string, string, IndexField[]][] = [
   [
-    'My matches and closeAttempts: players array-contains uid, newest first',
+    'My matches: players array-contains uid, newest first',
     'replays',
     [contains('players'), desc('createdAt')],
   ],

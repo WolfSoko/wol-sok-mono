@@ -302,8 +302,10 @@ install --omit dev`).
 - **2nd gen, Node 22, one region**: the one Firebase pairs with the
   Firestore location of `bacteria-wars` - `nam5`, so `us-central1`.
   `setGlobalOptions({ region, maxInstances: 5 })`; `initializeApp()` without
-  a project id. Triggers run with retries off and are idempotent (a
-  transaction checks `state` first).
+  a project id. Triggers are idempotent (a transaction checks `state`
+  first) and run with retries off, except ADR 0012's `rankReplay`, which
+  retries for an hour: a stored replay it failed to rank would otherwise
+  never count.
 - **Deployed with the game's config**: `functions` entry with
   `codebase: "bacteria"`, `source: "dist/apps/bacteria-wars-functions"` in
   `firebase.bacteria-game-remote.json`; its own `deploy` target

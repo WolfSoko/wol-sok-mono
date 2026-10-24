@@ -1,8 +1,10 @@
 /**
  * The Cloud Functions of Bacteria Wars (ADR 0011, ADR 0012), codebase
- * `bacteria` in `firebase.bacteria-game-remote.json`. Every trigger runs
- * with retries off and is idempotent: a transaction checks the state first,
- * and documents are written with `create()`.
+ * `bacteria` in `firebase.bacteria-game-remote.json`. Every trigger is
+ * idempotent - a transaction checks the state first, and documents are
+ * written with `create()` - and runs with retries off, but `rankReplay`,
+ * which retries for an hour: a stored replay it fails to rank would
+ * otherwise never count.
  *
  * Each function is a thin wrapper around a core that takes the Firestore it
  * acts on, which the specs run against the emulator.
@@ -34,6 +36,7 @@ import { runHourly } from './boards/hourly';
 import { rankProgress as rankProgressOf } from './boards/rank-progress';
 import {
   rankReplay as rankReplayOf,
+  tooOldToRetry,
   touchesRanking,
 } from './boards/rank-replay';
 import { rebuildTop as rebuildTopOf } from './boards/rebuild-top';
@@ -187,11 +190,18 @@ export const featureBest = onSchedule(
 /**
  * The boards' view of a stored replay: counts agreed online matches, takes
  * replays of declared attempts into their day or run, and follows re-runs
- * - see `rankReplay`.
+ * - see `rankReplay`. Retried, for an hour at most (`RETRY_FOR_MS`).
  */
 export const rankReplay = onDocumentWritten(
-  { ...LIGHT, document: 'replays/{id}' },
+  { ...LIGHT, retry: true, document: 'replays/{id}' },
   async (event) => {
+    if (tooOldToRetry(event.time, Date.now())) {
+      logger.error('rankReplay: gave up on an event older than an hour', {
+        id: event.params.id,
+        time: event.time,
+      });
+      return;
+    }
     const before = event.data?.before.data() as ReplayDoc | undefined;
     const after = event.data?.after.data() as ReplayDoc | undefined;
     if (!touchesRanking(before, after)) {

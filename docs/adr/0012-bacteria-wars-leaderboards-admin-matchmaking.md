@@ -396,7 +396,8 @@ unranked daily match spends only a local one. The result screen says
   - A declared match without a replay or a pending submission 2 hours
     after its `at` counts as a lost life. `rankReplay` applies this
     lazily whenever it touches the run, and the hourly function sweeps the
-    rest.
+    rest. A stored replay `rankReplay` failed to take in is not swept: its
+    own retry takes it in within the hour.
   - Replays may arrive in any order; the run is recomputed from all of its
     attempts in a transaction each time.
   - The player's entry on `endless` is their best run that has not failed
@@ -939,9 +940,18 @@ chose not to share their status, and the privacy page says so.
 | `countAccount`        | `auth.user().onCreate` (v1)                                                          | `stats/accounts` + 1, `boardMembers.accountCreatedAt`, the tombstone check for Google sign-ups.                                                                                                                                                                                                  |
 | `deletePlayerBoards`  | `auth.user().onDelete` (v1)                                                          | Writes a tombstone if the player is banned and Google-linked, then deletes the player's entries, `boardMembers`, runs, attempts, notices and ban, scrubs `before`/`after` of audit entries about them to `{ scrubbed: true }`, and lowers `stats/accounts`.                                      |
 
-All run in ADR 0011's codebase and region, with retries off, and are
-idempotent: a transaction checks the state first, and markers are created
-with `create()`. There is one new Cloud Scheduler job, so the project has
+All run in ADR 0011's codebase and region and are idempotent: a
+transaction checks the state first, and markers are created with
+`create()`. Retries are off, except for `rankReplay`: a stored replay it
+failed to take in (a transaction that lost, a timeout) would never rank,
+and its endless match would close as a lost life. So it retries, and
+every step it takes is safe to repeat - `countOnline` creates a marker,
+`acceptRanked` finds the replay taken or the attempt used, `applyRerun`
+leaves a decided attempt alone. An event older than an hour is logged and
+dropped (`RETRY_FOR_MS`), so a poison event cannot retry forever; an hour
+is well inside the 2 hours after which an open match closes. (A failed
+check's `moderation` count is written after the attempt is marked, and a
+retry does not count it again.) There is one new Cloud Scheduler job, so the project has
 two with `featureBest`. The three free jobs are counted per billing
 account, not per project, so other projects on the same billing account
 may already use them (a job costs $0.10 a month).
