@@ -323,8 +323,6 @@ export interface LookDescription {
    */
   reach: number;
   glIndex: number;
-  /** Drawn differently from frame to frame, like the bubbles' snippets. */
-  animated: boolean;
 }
 
 /**
@@ -748,44 +746,39 @@ function cellsReach({ spacing, radius, min, vary }: LatticeCells): number {
 const TILES_REACH = latticeReach(TILE_SPACING * (0.5 + CRYSTAL_JITTER));
 
 export const LOOKS: Readonly<Record<BacteriaLook, LookDescription>> = {
-  slime: { fromDensity: true, reach: 0, glIndex: 0, animated: false },
-  pixels: { fromDensity: false, reach: 0, glIndex: 1, animated: false },
+  slime: { fromDensity: true, reach: 0, glIndex: 0 },
+  pixels: { fromDensity: false, reach: 0, glIndex: 1 },
   cells: {
     fromDensity: true,
     reach: cellsReach(CELLS),
     glIndex: 2,
-    animated: false,
   },
   honeycomb: {
     fromDensity: true,
     reach: TILES_REACH,
     glIndex: 3,
-    animated: false,
   },
   crystal: {
     fromDensity: true,
     reach: TILES_REACH,
     glIndex: 4,
-    animated: false,
   },
-  neon: { fromDensity: true, reach: 0, glIndex: 5, animated: false },
-  ink: { fromDensity: true, reach: 0, glIndex: 6, animated: false },
+  neon: { fromDensity: true, reach: 0, glIndex: 5 },
+  ink: { fromDensity: true, reach: 0, glIndex: 6 },
   bubbles: {
     fromDensity: true,
     reach: cellsReach(BUBBLES),
     glIndex: 7,
-    animated: true,
   },
   marbles: {
     fromDensity: true,
     reach: cellsReach(MARBLES),
     glIndex: 8,
-    animated: false,
   },
-  lava: { fromDensity: true, reach: 0, glIndex: 9, animated: true },
-  galaxy: { fromDensity: true, reach: 0, glIndex: 10, animated: true },
-  plasma: { fromDensity: true, reach: 0, glIndex: 11, animated: true },
-  chrome: { fromDensity: true, reach: 0, glIndex: 12, animated: false },
+  lava: { fromDensity: true, reach: 0, glIndex: 9 },
+  galaxy: { fromDensity: true, reach: 0, glIndex: 10 },
+  plasma: { fromDensity: true, reach: 0, glIndex: 11 },
+  chrome: { fromDensity: true, reach: 0, glIndex: 12 },
 };
 
 /** How many cells past the colony a look reaches on a grid of that unit. */
