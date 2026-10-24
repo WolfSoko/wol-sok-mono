@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
 } from '@angular/core';
@@ -50,4 +51,9 @@ export class LevelPreviewComponent {
     this.previews.url(this.levelId(), this.urgent())
   );
   protected readonly colors = computed(() => levelColors(this.levelId()));
+
+  public constructor() {
+    // While shown, the preview is wanted; gone, it is no longer drawn.
+    effect((onCleanup) => onCleanup(this.previews.want(this.levelId())));
+  }
 }

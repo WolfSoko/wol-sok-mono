@@ -48,6 +48,24 @@ describe('LevelPreviewService', () => {
     expect(renderer.drawn).toEqual(['hourglass', 'corridors', 'expanse']);
   });
 
+  it('drops a waiting preview nobody shows any more', async () => {
+    const renderer = new FakePreviewRenderer();
+    const previews = setUp(renderer);
+    const card = previews.want('hourglass');
+    const briefing = previews.want('corridors');
+    const other = previews.want('corridors');
+
+    previews.url('hourglass');
+    previews.url('corridors');
+    // The level map closes: its card goes, the briefing still shows its own.
+    card();
+    briefing();
+    await drawPreviews();
+
+    expect(renderer.drawn).toEqual(['corridors']);
+    other();
+  });
+
   it('draws an urgent preview before the ones waiting', async () => {
     const renderer = new FakePreviewRenderer();
     const previews = setUp(renderer);

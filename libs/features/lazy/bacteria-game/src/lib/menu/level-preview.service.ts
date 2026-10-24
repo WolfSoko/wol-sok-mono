@@ -68,6 +68,8 @@ export class LevelPreviewService {
   private readonly waiting = new Set<string>();
   /** The levels whose preview failed - not tried again. */
   private readonly failed = new Set<string>();
+  /** How many places show each level's preview - see {@link want}. */
+  private readonly wanted = new Map<string, number>();
   private drawing = false;
 
   /**
@@ -81,6 +83,28 @@ export class LevelPreviewService {
       this.request(levelId, urgent);
     }
     return url;
+  }
+
+  /**
+   * Marks the level's preview as shown somewhere, until the function it
+   * returns is called. A waiting preview nobody shows any more is dropped,
+   * so the level map's cards stop drawing once a match starts: a drawing
+   * takes the main thread for a frame or more.
+   */
+  public want(levelId: string): () => void {
+    this.wanted.set(levelId, (this.wanted.get(levelId) ?? 0) + 1);
+    let released = false;
+    return () => {
+      if (released) {
+        return;
+      }
+      released = true;
+      const left = Math.max(0, (this.wanted.get(levelId) ?? 1) - 1);
+      this.wanted.set(levelId, left);
+      if (left === 0) {
+        this.waiting.delete(levelId);
+      }
+    };
   }
 
   private slot(levelId: string): WritableSignal<string | null> {
@@ -116,6 +140,11 @@ export class LevelPreviewService {
   /** Draws the preview asked for first, then waits for idle time again. */
   private async drawNext(): Promise<void> {
     const [levelId] = this.waiting;
+    if (levelId === undefined) {
+      // Everything waiting was dropped meanwhile.
+      this.drawing = false;
+      return;
+    }
     let url: string | null = null;
     try {
       url = await this.renderer.render(levelId);
