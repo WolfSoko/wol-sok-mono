@@ -196,12 +196,13 @@ sits behind a flag; step 8 switches it on.
    - CI plays three whole-match scenarios through `GpuSimulation` on
      SwiftShader against `golden-gpu-sim.json`, which `sim-golden.spec.ts`
      keeps equal to `IntSimulation`'s hashes, and runs the self-test there.
-   - Open for step 8: `IntSimulation` is far too slow for live play. It takes
-     about 70 ms per tick at 320 x 180 cells on a desktop, against 16.7 ms
-     per tick at 60 ticks a second. Until step 9 makes it fast, a device
-     without a passing GPU (or before its verdict is in) should offer only
-     the `cpu` ruleset in the handshake, as decision 5 says, and use
-     `IntSimulation` only for replays and checks.
+   - Open for step 8: `IntSimulation` was too slow for live play here, at
+     21-28 ms per tick at 320 x 180 cells in Node on a desktop (an earlier
+     run measured about 70 ms), against 16.7 ms per tick at 60 ticks a
+     second. Step 9 brought it to about 7-9 ms (see below); a phone is
+     slower, so until it is measured on one, a device without a passing GPU
+     (or before its verdict is in) should still offer only the `cpu`
+     ruleset in the handshake, as decision 5 says.
 8. Switch it on:
    - bump `BALANCE_VERSION` and `NET_VERSION`;
    - add a replay version for `gpu-int` headers, and let the parser accept
@@ -212,7 +213,23 @@ sits behind a flag; step 8 switches it on.
    - update the golden replays;
    - check the medal limits;
    - turn "Record local matches" on by default.
-9. Tune the CPU reference for the server.
+9. Tune the CPU reference for the server. Done for a first round, bit for
+   bit (every golden unchanged):
+   - the passes read module-local copies of their constants and helpers,
+     as a CommonJS build reads every imported binding through a getter;
+   - claim and apply keep a free-cell map per step, take the step's salts
+     once and check the neighbours of inner cells without bounds tests;
+     combat and feeding loop over typed neighbour tables, and feeding skips
+     empty cells;
+   - `IntSimulation` passes its states and reports through reused buffers
+     (`IntStateBuffers`, a ring of report buffers) and refills the
+     painter's bacteria objects once per tick instead of building new ones
+     every frame.
+
+   `libs/features/lazy/bacteria-game/perf/int-simulation.bench.ts` prints the time per tick: in Node
+   on a desktop 96 x 64 went from 3.5-4.7 ms to about 2 ms, 320 x 180 from
+   21-28 ms to 7-9 ms. A phone and the server's runtime still need a
+   measurement of their own.
 
 The spike's code (integer movement shaders, the TypeScript reference, the
 cross-check across SwiftShader, llvmpipe and Firefox) is not part of this

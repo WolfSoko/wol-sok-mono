@@ -37,53 +37,103 @@ export interface IntTickTrace {
 }
 
 /**
+ * The state buffers a tick writes into, reused from tick to tick - see
+ * {@link intReferenceTick}. A state it returned, and the record after
+ * combat (`IntTickTrace.combat`), stay as they are until the next tick
+ * with the same buffers runs.
+ */
+export class IntStateBuffers {
+  private readonly a: Uint16Array;
+  private readonly b: Uint16Array;
+  public readonly combat: Uint16Array;
+
+  public constructor(length: number) {
+    this.a = new Uint16Array(length);
+    this.b = new Uint16Array(length);
+    this.combat = new Uint16Array(length);
+  }
+
+  /** A buffer to write the pass after `source` into - never `source`. */
+  public after(source: Uint16Array): Uint16Array {
+    return source === this.a ? this.b : this.a;
+  }
+}
+
+/**
  * One tick of the deterministic GPU simulation in TypeScript, in the order
  * `GpuSimulation.step` runs its passes: the hunt, escaping a wall, crushing,
  * combat, feeding, division and the steps of moving. Returns the new state;
  * the grid's is left alone. A `trace` gets the state after combat.
+ *
+ * Without `buffers` every pass writes a new array; with them the passes
+ * take turns in the same few, so a match allocates no state per tick.
  */
 export function intReferenceTick(
   grid: IntGrid,
   inputs: IntTickInputs,
   scratch: IntPassScratch = new IntPassScratch(grid.width, grid.height),
-  trace?: IntTickTrace
+  trace?: IntTickTrace,
+  buffers?: IntStateBuffers
 ): Uint16Array {
   const { pass } = inputs;
   const blocksX = Math.ceil(grid.width / pass.cellSize);
   const blocksY = Math.ceil(grid.height / pass.cellSize);
   const hunt = intHunt(intInfluence(grid, pass.cellSize), blocksX, blocksY);
-  const at = (state: Uint16Array): IntGrid => ({ ...grid, state });
+  // One grid for every pass, its state swapped in as the passes go.
+  const at: IntGrid = { ...grid };
+  const next = (source: Uint16Array) =>
+    buffers?.after(source) ?? new Uint16Array(source.length);
   let state = grid.state;
   for (let step = 0; step < inputs.escapeSteps; step++) {
+    at.state = state;
     state = intClaimAndApply(
-      at(state),
+      at,
       pass,
       hunt,
       INT_KIND.escape,
       step,
-      scratch
+      scratch,
+      next(state)
     );
   }
-  state = intCrush(at(state));
-  state = intCombat(at(state), {
-    ...inputs.combat,
-    seed: pass.seed,
-    match: inputs.match,
-    effects: pass.effects,
-  });
+  at.state = state;
+  state = intCrush(at, next(state));
+  at.state = state;
+  state = intCombat(
+    at,
+    {
+      ...inputs.combat,
+      seed: pass.seed,
+      match: inputs.match,
+      effects: pass.effects,
+    },
+    buffers?.combat ?? new Uint16Array(state.length)
+  );
   if (trace != null) {
     trace.combat = state;
   }
-  state = intFeed(at(state), inputs.match.feed);
-  state = intClaimAndApply(at(state), pass, hunt, INT_KIND.divide, 0, scratch);
+  at.state = state;
+  state = intFeed(at, inputs.match.feed, next(state));
+  at.state = state;
+  state = intClaimAndApply(
+    at,
+    pass,
+    hunt,
+    INT_KIND.divide,
+    0,
+    scratch,
+    next(state)
+  );
   for (let step = 0; step < inputs.moveSteps; step++) {
+    at.state = state;
     state = intClaimAndApply(
-      at(state),
+      at,
       pass,
       hunt,
       INT_KIND.move,
       step,
-      scratch
+      scratch,
+      next(state)
     );
   }
   return state;

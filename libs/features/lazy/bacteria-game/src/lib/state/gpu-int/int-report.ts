@@ -9,6 +9,19 @@ import {
 import { ReportLayout } from '../simulation-report';
 import { IntGrid } from './int-reference';
 
+// Module-local copies of what the loops read per cell: a CommonJS build
+// reads an imported binding through a getter on every use.
+const POISON_BIT = POISONED;
+const RECORD_BITS = RECORD_MASK;
+const LOSER_BITS = LOSER_SHIFT;
+const ZONE_BITS = ZONE_SHIFT;
+const ZONE_HILL = ZONE_CODE.hill;
+const COLONIES = MAX_GPU_COLONIES;
+const ROW_PELLETS = REPORT_ROWS.pellets;
+const ROW_CAPTURES = REPORT_ROWS.captures;
+const ROW_LOSSES = REPORT_ROWS.losses;
+const ROW_HILL = REPORT_ROWS.hill;
+
 /** What the report pass reads besides the state, the record and the mask. */
 export interface IntReportInputs {
   /**
@@ -66,49 +79,51 @@ export function intReport(
   // The rows below: captures and losses run on from the last report, the
   // deaths by antibiotic too, the hold zone is counted afresh.
   const pelletRow = 2 * blocksY;
-  const carried = [
-    REPORT_ROWS.pellets,
-    REPORT_ROWS.captures,
-    REPORT_ROWS.losses,
-  ];
+  const carried = [ROW_PELLETS, ROW_CAPTURES, ROW_LOSSES];
   if (previous != null) {
     for (const row of carried) {
       const start = texel(0, pelletRow + row);
       out.set(previous.subarray(start, start + layout.width * 4), start);
     }
   }
+  // The rows' offsets from a column's first texel.
+  const poisonedAt = texel(0, ROW_PELLETS) + 2;
+  const capturesAt = texel(0, ROW_CAPTURES);
+  const lossesAt = texel(0, ROW_LOSSES);
+  const hillAt = texel(0, ROW_HILL);
+  const countHill = inputs.countHill;
+  const columns = Math.min(width, blocksX * cellSize);
   for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width && x < blocksX * cellSize; x++) {
+    for (let x = 0; x < columns; x++) {
       const cell = y * width + x;
-      const column = Math.floor(x / cellSize);
       const record = events[cell * 4 + 3];
-      const base = texel(column, pelletRow) - 1;
-      if ((record & POISONED) !== 0) {
-        countIn(out, base + texel(0, REPORT_ROWS.pellets) + 2);
+      const owner = countHill ? state[cell * 4] : 0;
+      if (record === 0 && owner === 0) {
+        continue;
       }
-      const capturer = record & RECORD_MASK;
+      const base = texel(Math.floor(x / cellSize), pelletRow) - 1;
+      if ((record & POISON_BIT) !== 0) {
+        countIn(out, base + poisonedAt);
+      }
+      const capturer = record & RECORD_BITS;
       if (capturer !== 0) {
-        countIn(out, base + texel(0, REPORT_ROWS.captures) + capturer);
+        countIn(out, base + capturesAt + capturer);
       }
-      const loser = (record >> LOSER_SHIFT) & RECORD_MASK;
+      const loser = (record >> LOSER_BITS) & RECORD_BITS;
       if (loser !== 0) {
-        countIn(out, base + texel(0, REPORT_ROWS.losses) + loser);
+        countIn(out, base + lossesAt + loser);
       }
-      const owner = state[cell * 4];
-      if (
-        inputs.countHill &&
-        owner !== 0 &&
-        mask[cell] >> ZONE_SHIFT === ZONE_CODE.hill
-      ) {
-        countIn(out, base + texel(0, REPORT_ROWS.hill) + owner);
+      if (owner !== 0 && mask[cell] >> ZONE_BITS === ZONE_HILL) {
+        countIn(out, base + hillAt + owner);
       }
     }
   }
 
   // The pellets' eaters ride along in the row of the deaths by antibiotic.
   const radius = inputs.pelletRadius;
+  const byColony = new Uint32Array(COLONIES);
   for (let i = 0; i < layout.width; i++) {
-    const byColony = [0, 0, 0, 0];
+    byColony.fill(0);
     if (i < inputs.pelletCount) {
       const px = Math.trunc(Math.fround(inputs.pellets[i * 3]));
       const py = Math.trunc(Math.fround(inputs.pellets[i * 3 + 1]));
@@ -120,13 +135,13 @@ export function intReport(
             continue;
           }
           const owner = state[(y * width + x) * 4];
-          if (owner > 0 && owner <= MAX_GPU_COLONIES) {
+          if (owner > 0 && owner <= COLONIES) {
             byColony[owner - 1]++;
           }
         }
       }
     }
-    const at = texel(i, pelletRow + REPORT_ROWS.pellets);
+    const at = texel(i, pelletRow + ROW_PELLETS);
     out[at + 2] = (byColony[0] | (byColony[1] << 16)) >>> 0;
     out[at + 3] = (byColony[2] | (byColony[3] << 16)) >>> 0;
   }

@@ -163,7 +163,7 @@ function effect(
 }
 
 /** Four colonies across the test map, each weapon fired along the way. */
-function skirmish(
+export function skirmish(
   name: string,
   width: number,
   height: number,
