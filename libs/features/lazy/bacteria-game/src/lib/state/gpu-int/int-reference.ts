@@ -1,3 +1,4 @@
+import { WEAPON_CODE } from '../weapon-effects';
 import { WALL_BIT, ZONE_CODE, ZONE_SHIFT } from '../zones';
 import { drawAt, PICK_OF_8_SHIFT, SALT, stepSalt } from './draws';
 import {
@@ -15,6 +16,7 @@ import {
   INT_COLONIES,
   IntFrameUniforms,
 } from './int-frame-uniforms';
+import { IntEffectUniforms, intEffectOver } from './int-effects';
 import { unitQ14 } from './int-math';
 import { INT_EFFECTS, IntMatchUniforms } from './int-uniforms';
 
@@ -30,9 +32,8 @@ import { INT_EFFECTS, IntMatchUniforms } from './int-uniforms';
  * - signed values stay below 2^31 (see the shaders' bounds), so `*`, `+`
  *   and `>>` on them are exact in doubles and match GLSL's int.
  *
- * The weapons' circles are not ported: the shaders still test them in float
- * (step 4 of the rollout turns them into integers), so the reference covers
- * matches without an effect acting.
+ * The weapons' circles come in as {@link IntEffectUniforms}; without them
+ * no effect acts.
  */
 
 /** The arena as the GPU holds it - row y = 0 first, like `texImage2D`. */
@@ -59,6 +60,8 @@ export interface IntPassUniforms extends IntFrameUniforms {
   parentShare: number;
   /** Edge of a coarse cell. */
   cellSize: number;
+  /** The weapons' effects this frame - none when left out. */
+  effects?: IntEffectUniforms;
 }
 
 /** What a claim and apply pair does - `uKind` in the shaders. */
@@ -70,8 +73,22 @@ const RECORD_MASK = 7;
 const LOSER_SHIFT = 3;
 const POISONED = 1 << 6;
 const ICE_STAY = INT_EFFECTS.iceStayChance;
+const CRYO_STAY = INT_EFFECTS.cryoStayChance;
+const PHAGE_CONVERT = INT_EFFECTS.phageConvertChance;
+const CRYO_PULSE = WEAPON_CODE['cryo-pulse'];
+const AGAR_BLOOM = WEAPON_CODE['agar-bloom'];
+const PHAGE_STRIKE = WEAPON_CODE['phage-strike'];
+const TOXIN_BOMB = WEAPON_CODE['toxin-bomb'];
+
 const HEAT_AGGRESSION = INT_EFFECTS.heatAggression;
 const HEAT_MAX_AGGRESSION = INT_EFFECTS.heatMaxAggression;
+
+/** No effects at all - what a plain match has. */
+const NO_EFFECTS: IntEffectUniforms = {
+  circles: new Int32Array(0),
+  kinds: new Int32Array(0),
+  count: 0,
+};
 
 /** The eight neighbours, in the shaders' order. */
 const NEIGHBOURS: readonly (readonly [number, number])[] = [
@@ -206,6 +223,9 @@ export function intClaimAndApply(
   const zoneAt = (x: number, y: number) =>
     inside(x, y) ? mask[y * width + x] >>> ZONE_SHIFT : 0;
   const draw = (x: number, y: number, salt: number) => drawAt(x, y, seed, salt);
+  const effects = u.effects ?? NO_EFFECTS;
+  const inEffect = (x: number, y: number, owner: number, weapon: number) =>
+    intEffectOver(effects, x, y, owner, weapon) !== 0;
   const unit = new Int32Array(2);
 
   const freeNeighbourFrom = (x: number, y: number, salt: number): number => {
@@ -239,6 +259,12 @@ export function intClaimAndApply(
     if (
       zone === ZONE_CODE.ice &&
       draw(x, y, stepSalt(SALT.iceStay, step)) < ICE_STAY
+    ) {
+      return -1;
+    }
+    if (
+      inEffect(x, y, owner, CRYO_PULSE) &&
+      draw(x, y, stepSalt(SALT.cryoStay, step)) < CRYO_STAY
     ) {
       return -1;
     }
@@ -323,8 +349,8 @@ export function intClaimAndApply(
     }
     const variant = divideVariant(
       zoneAt(x, y) === ZONE_CODE.agar,
-      false,
-      false
+      inEffect(x, y, owner, AGAR_BLOOM),
+      inEffect(x, y, owner, CRYO_PULSE)
     );
     const threshold = u.divideChance[(owner - 1) * DIVIDE_VARIANTS + variant];
     if (draw(x, y, SALT.divideChance) >= threshold) {
@@ -489,12 +515,14 @@ export interface IntCombatUniforms {
   frame: Pick<IntFrameUniforms, 'attack' | 'drain' | 'pellets' | 'pelletCount'>;
   /** Chebyshev reach of a pellet. */
   pelletRadius: number;
+  /** The weapons' effects this frame - none when left out. */
+  effects?: IntEffectUniforms;
 }
 
 /**
  * Nutrients, combat, regeneration and captures per bacterium -
  * `INT_COMBAT_FRAGMENT`, into `out`, which carries the frame's records.
- * Every bacterium reads the state as it was, as on the GPU. No weapon acts.
+ * Every bacterium reads the state as it was, as on the GPU.
  */
 export function intCombat(
   grid: IntGrid,
@@ -504,6 +532,9 @@ export function intCombat(
   const { width, height, state, mask } = grid;
   const { match, frame } = u;
   const seed = u.seed >>> 0;
+  const effects = u.effects ?? NO_EFFECTS;
+  const effectOwner = (x: number, y: number, owner: number, weapon: number) =>
+    intEffectOver(effects, x, y, owner, weapon);
   const strength = new Int32Array(INT_COLONIES);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -512,6 +543,15 @@ export function intCombat(
       const owner = state[at];
       if (owner === 0) {
         texel(out, at, 0, state[at + 1], state[at + 2], state[at + 3]);
+        continue;
+      }
+      // An enemy's phages turn a share of the bacteria in their circle.
+      const phage = effectOwner(x, y, owner, PHAGE_STRIKE);
+      if (
+        phage !== 0 &&
+        drawAt(x, y, seed, SALT.phageConvert) < PHAGE_CONVERT
+      ) {
+        texel(out, at, phage, state[at + 1], 0, phage | (owner << LOSER_SHIFT));
         continue;
       }
       let own = 0;
@@ -549,10 +589,16 @@ export function intCombat(
         }
       }
       let energy = state[at + 1] + state[at + 2] + match.nutrientStep * pellets;
-      const poisoned = mask[cell] >>> ZONE_SHIFT === ZONE_CODE.antibiotic;
-      if (poisoned) {
+      const antibiotic = mask[cell] >>> ZONE_SHIFT === ZONE_CODE.antibiotic;
+      if (antibiotic) {
         energy -= match.antibioticStep;
       }
+      const toxic = effectOwner(x, y, owner, TOXIN_BOMB) !== 0;
+      if (toxic) {
+        energy -= match.toxinStep;
+      }
+      const poisoned = antibiotic || toxic;
+      const frozen = effectOwner(x, y, owner, CRYO_PULSE) !== 0;
       const pressure =
         enemy > 0
           ? enemy +
@@ -561,7 +607,7 @@ export function intCombat(
           : 0;
       if (pressure > 0) {
         energy -= mulShr(pressure, frame.drain[owner - 1], DRAIN_SHIFT);
-      } else if (energy < match.maxEnergy && !poisoned) {
+      } else if (energy < match.maxEnergy && !poisoned && !frozen) {
         energy = Math.min(match.maxEnergy, energy + match.regenStep);
       }
       if (energy > match.maxEnergy) {
