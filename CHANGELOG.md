@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.61.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.60.0...v74.61.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ bubbles look with DNA snippets; fix stray cells along the other colony's box ([#2595](https://github.com/WolfSoko/wol-sok-mono/issues/2595)) ([ab2126f](https://github.com/WolfSoko/wol-sok-mono/commit/ab2126f3576e19bbb2493c1e4cee2479ff47984c)), closes [#2590](https://github.com/WolfSoko/wol-sok-mono/issues/2590)
+
 ## [74.60.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.59.0...v74.60.0) (2026-10-23)
 
 ### Features
