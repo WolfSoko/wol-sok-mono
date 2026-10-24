@@ -192,16 +192,20 @@
 }
 
 // A colony with a weapon (ADR 0013) - only ever a single player against the
-// computer, so never turned: the weapon button below the boost pad, or
-// beside it in a band along the bottom edge.
+// computer, so never turned: the weapon button right beneath the boost pad,
+// the two centred together in the tall column, or beside it in a band along
+// the bottom edge.
 .stage .seat.armed {
   display: flex;
   flex-direction: column;
+  justify-content: center;
 
+  // The pad is a size container, so it takes the height it is given: about
+  // as much as its contents need, less where the column is shorter.
   feat-lazy-bac-game-boost-pad {
     position: relative;
     inset: auto;
-    flex: 1 1 0;
+    flex: 0 1 16rem;
     min-height: 0;
   }
 
@@ -213,6 +217,7 @@
     flex-direction: row;
 
     feat-lazy-bac-game-boost-pad {
+      flex: 1 1 0;
       min-width: 0;
     }
   }
