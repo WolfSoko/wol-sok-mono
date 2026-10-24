@@ -48,8 +48,18 @@ The shared model is `state/evolution.ts`.
 Only in matches against the computer on the campaign's ladder and on
 generated levels. The daily level and endless runs feed the verified
 leaderboards (ADR 0012), so they stay plain, as do couch matches, online
-matches and ghost races. The bosses are stronger already; they may carry a
-weapon of their own.
+matches and ghost races. The menus pass loadouts only for those matches,
+always for both seats (the computer's plain), and `planMatch` ignores them
+anywhere else.
+
+The bosses carry a weapon of their own (Meltdown a toxin bomb, Patient Zero
+a phage strike), but only in a match whose plan has loadouts. Arming them
+everywhere would change how every recorded boss match plays and force a new
+`BALANCE_VERSION`.
+
+`planMatch` cannot tell the daily level from another generated one, so a
+server that re-simulates daily or endless runs (ADR 0012) must reject a
+replay that carries loadouts.
 
 ### Determinism
 
