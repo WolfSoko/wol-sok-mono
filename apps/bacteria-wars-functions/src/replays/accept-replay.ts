@@ -38,6 +38,11 @@ export type DropReason =
   | 'evolved'
   /** Online: the room's stub names other players. */
   | 'wrong-room'
+  /**
+   * Online: a second report after the match was closed with one - counted
+   * as "Not reported" by the hourly function (ADR 0012).
+   */
+  | 'closed'
   /** Already stored, or already reported by that player. */
   | 'duplicate';
 
@@ -299,7 +304,8 @@ async function acceptLocal(
  * with it in a transaction: the same checksum and winner make it `agreed`,
  * anything else `disputed`, a dead end. The players are the uids the room's
  * stub names, each added once its own report arrives - nothing a peer said
- * over WebRTC is trusted.
+ * over WebRTC is trusted. A second report after the hourly function closed
+ * the match with one (`closeWaiting`) is dropped as `closed`.
  */
 async function acceptOnline(
   db: Firestore,
@@ -356,9 +362,16 @@ async function acceptOnline(
     if (existing.room?.host != null && !named.includes(uid)) {
       return { dropped: 'wrong-room' };
     }
-    const other = await tx.get(
-      db.doc(`replays/${id}/reports/${existing.players[0]}`)
+    // Closed with one report (`closeWaiting`'s marker, maybe a "Not
+    // reported" for this very player): a late second report changes
+    // nothing, or the match would count twice.
+    const [other, marker] = await tx.getAll(
+      db.doc(`replays/${id}/reports/${existing.players[0]}`),
+      db.doc(`rankedReplays/${id}`)
     );
+    if (marker.exists) {
+      return { dropped: 'closed' };
+    }
     const agree =
       other.get('checksum') === report.checksum &&
       other.get('winnerSeat') === report.winnerSeat;

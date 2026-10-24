@@ -6,6 +6,7 @@ import {
   forgetBans,
   HOURLY_SUBMISSIONS,
 } from '../limits';
+import { closeWaiting } from '../boards/rank-online';
 import { acceptSubmission, WAITING_CLOSE_MS } from '../replays/accept-replay';
 import {
   fixedPool,
@@ -14,6 +15,7 @@ import {
 } from '../replays/budgets';
 import { deletePlayerReplays } from '../replays/delete-player-replays';
 import { levelStatsId } from '../replays/derive';
+import type { ReplayDoc } from '../replays/model';
 import { featureBest } from '../replays/feature-best';
 import { onProfileChanged } from '../replays/profile-changed';
 import { publishReplay, takeDown } from '../replays/publish';
@@ -376,6 +378,29 @@ describe('acceptReplay', () => {
       ).toEqual({
         dropped: 'duplicate',
       });
+    });
+
+    it('drops a second report that comes after the match was closed with one', async () => {
+      await room();
+      const bytes = await bytesOf(await online());
+      await acceptSubmission(db, 's1', await submission('host', bytes), NOW);
+      const waiting = (
+        await db.doc(`replays/${id()}`).get()
+      ).data() as ReplayDoc;
+      // The hourly function closes it - a forfeit too short to count as
+      // "Not reported" for the guest, but closed all the same.
+      expect(await closeWaiting(db, engine, id(), waiting, NOW)).toBeNull();
+      expect((await db.doc(`rankedReplays/${id()}`).get()).exists).toBe(true);
+      expect(
+        await acceptSubmission(db, 's2', await submission('guest', bytes), NOW)
+      ).toEqual({ dropped: 'closed' });
+      const stored = (await db.doc(`replays/${id()}`).get()).data();
+      expect(stored).toEqual(
+        expect.objectContaining({ state: 'waiting', players: ['host'] })
+      );
+      expect((await db.doc(`replays/${id()}/reports/guest`).get()).exists).toBe(
+        false
+      );
     });
 
     it('keeps the reports and the blob while public, and lets them expire again', async () => {
