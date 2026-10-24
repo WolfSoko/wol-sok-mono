@@ -1097,6 +1097,25 @@ describe('BacteriaSimulation with evolution', () => {
       expect(simulation.getActiveEffects()).toEqual([]);
     });
 
+    it('looks the striking colony up once per strike, not per bacterium', () => {
+      const { simulation, colonies, players } = setup(
+        [
+          [bacterium(20, 60)],
+          [bacterium(40, 20), bacterium(42, 21), bacterium(41, 19)],
+        ],
+        { balance: STILL, random: () => 0.3 }
+      );
+      simulation.addEffect(
+        effect('phage-strike', 0, { remainingSec: 0, durationSec: 0 })
+      );
+      const lookups = jest.spyOn(colonies, 'findIndex');
+
+      simulation.step(players, 0.05);
+
+      expect(colonies[0].bacterias).toHaveLength(4);
+      expect(lookups).toHaveBeenCalledTimes(1);
+    });
+
     it('turns only a share of them, by the simulation’s random numbers', () => {
       const { simulation, colonies, players } = setup(
         [[bacterium(20, 60)], [bacterium(40, 20), bacterium(42, 21)]],

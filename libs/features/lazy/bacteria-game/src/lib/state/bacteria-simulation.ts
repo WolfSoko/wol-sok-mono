@@ -720,17 +720,16 @@ export class BacteriaSimulation implements Simulation {
         return;
       }
       const colony = this.colonies[victim];
+      // The striking colony of each phage, looked up once per strike.
+      const strikers = phages.map((phage) =>
+        this.colonies.findIndex(({ playerId }) => playerId === phage.owner)
+      );
       const kept: Bacteria[] = [];
       for (const bacterium of colony.bacterias) {
-        const phage = phages.find((effect) =>
+        const struck = phages.findIndex((effect) =>
           covers(effect, bacterium.x, bacterium.y)
         );
-        const winner =
-          phage === undefined
-            ? -1
-            : this.colonies.findIndex(
-                ({ playerId }) => playerId === phage.owner
-              );
+        const winner = struck < 0 ? -1 : strikers[struck];
         if (winner < 0 || this.random() >= WEAPON_EFFECTS.phageConvertShare) {
           kept.push(bacterium);
           continue;
