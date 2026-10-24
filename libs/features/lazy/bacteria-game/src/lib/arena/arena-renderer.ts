@@ -6,7 +6,7 @@ import { darker } from './colony-renderer';
 import { Zone } from '../state/zones';
 import { clamp } from '../state/geometry';
 import { paintZoneLayer } from './zone-decal';
-import { ColonyTint, MarkLayer, WeaponMark } from './weapon-effects';
+import { ColonyTint, MarkLayer, sameRgb, WeaponMark } from './weapon-fx';
 
 /**
  * Paints the floor of an arena into an RGBA pixel buffer: the theme's floor
@@ -240,7 +240,7 @@ export class ArenaRenderer {
   }
 
   /**
-   * Draws a layer of the weapons' marks - see `WeaponEffects` - and, for
+   * Draws a layer of the weapons' marks - see `WeaponFx` - and, for
    * `light`, adds it over the frame as light.
    */
   public drawWeaponMarks(
@@ -433,11 +433,7 @@ function drawMark(cx: CanvasRenderingContext2D, mark: WeaponMark): void {
       break;
     case 'ellipse': {
       const { color2 } = mark;
-      if (
-        color2[0] === color[0] &&
-        color2[1] === color[1] &&
-        color2[2] === color[2]
-      ) {
+      if (sameRgb(color, color2)) {
         cx.fillStyle = rgba(color, alpha);
       } else {
         // From its base to its tip, along the way it is turned.

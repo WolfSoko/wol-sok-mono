@@ -3,7 +3,7 @@ import { WEAPON_CODE } from '../../state/weapon-effects';
 import { arenaTheme } from '../arena-theme';
 import { JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
-import { MarkLayer } from '../weapon-effects';
+import { MarkLayer } from '../weapon-fx';
 import {
   pushBackground,
   pushForeground,

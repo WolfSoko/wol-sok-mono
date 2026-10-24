@@ -108,7 +108,7 @@ import {
 } from './social/social.service';
 import { Camera, CameraShake } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
-import { particleBudget } from './arena/weapon-effects';
+import { particleBudget } from './arena/weapon-fx';
 import type { WeaponFire } from './state/evolution';
 import { GameHapticsService } from './haptics.service';
 import { GameSoundService, Soundtrack } from './sound/game-sound.service';

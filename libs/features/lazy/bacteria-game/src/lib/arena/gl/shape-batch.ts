@@ -14,7 +14,7 @@ import { ArenaTheme, Rgb } from '../arena-theme';
 import { darker, JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
 import { WEAPON_CODE } from '../../state/weapon-effects';
-import { MarkLayer } from '../weapon-effects';
+import { MarkLayer } from '../weapon-fx';
 
 /**
  * What the shape shader draws for one instance. Every shape is a rect in
@@ -287,7 +287,7 @@ function markSquare(x: number, y: number, half: number): Rect {
 }
 
 /**
- * A layer of the weapons' effects - see `WeaponEffects` - one instance per
+ * A layer of the weapons' effects - see `WeaponFx` - one instance per
  * mark.
  */
 export function pushWeaponMarks(batch: ShapeBatch, layer: MarkLayer): void {

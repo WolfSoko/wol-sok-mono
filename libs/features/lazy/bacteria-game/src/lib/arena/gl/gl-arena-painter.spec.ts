@@ -1,5 +1,5 @@
 import { gameBalance } from '../../state/game-balance';
-import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-effects';
+import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-fx';
 import { encodeCells, packTints, passMargins } from './gl-arena-painter';
 import { MAX_TINTS } from './shaders';
 

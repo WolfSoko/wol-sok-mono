@@ -54,8 +54,8 @@ import {
   MarkLayer,
   TINT_MODES,
   tintApplies,
-  WeaponEffects,
-} from '../weapon-effects';
+  WeaponFx,
+} from '../weapon-fx';
 
 /**
  * Packs the weapons' tints that shade a colony - the one drawn in that
@@ -184,7 +184,7 @@ interface Resources {
 /**
  * The arena drawn on the GPU with WebGL2: the floor and the fading trail,
  * the colonies in either look, the walls and gates, the weapons' effects
- * (see `WeaponEffects`), the jam and the crosshairs. Per frame the CPU only packs each colony's cells into a small
+ * (see `WeaponFx`), the jam and the crosshairs. Per frame the CPU only packs each colony's cells into a small
  * texture and the shapes into one instance buffer.
  *
  * The frame is built in an offscreen texture that is kept between frames -
@@ -207,7 +207,7 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly background = new ShapeBatch();
   private readonly foreground = new ShapeBatch();
   /** The weapons going off and acting, and a batch per layer of them. */
-  private readonly weapons: WeaponEffects;
+  private readonly weapons: WeaponFx;
   private readonly weaponBatch = new ShapeBatch();
   private readonly tintCircles = new Float32Array(MAX_TINTS * 4);
   private readonly tintModes = new Float32Array(4);
@@ -264,7 +264,7 @@ export class GlArenaPainter implements ArenaPainter {
     this.detail = detail;
     this.view = { x: 0, y: 0, width, height };
     this.motes = new Motes(width, height);
-    this.weapons = new WeaponEffects(unit);
+    this.weapons = new WeaponFx(unit);
     this.cellBytes = new Uint8Array(width * height * 2);
     this.resources = this.setup();
 
