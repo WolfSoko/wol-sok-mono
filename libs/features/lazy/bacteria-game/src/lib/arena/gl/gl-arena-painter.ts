@@ -19,7 +19,7 @@ import {
   strengthOf,
 } from '../colony-renderer';
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
-import { GpuSimulation } from '../../gl/gpu-simulation';
+import { GpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
 import { Motes } from '../motes';
 import {
   bindTexture,
@@ -303,9 +303,10 @@ export class GlArenaPainter implements ArenaPainter {
    */
   public createSimulation(
     balance: GameBalance,
-    random: () => number
+    random: () => number,
+    options: GpuSimulationOptions = {}
   ): GpuSimulation {
-    return new GpuSimulation(this.gl, balance, random);
+    return new GpuSimulation(this.gl, balance, random, options);
   }
 
   /**

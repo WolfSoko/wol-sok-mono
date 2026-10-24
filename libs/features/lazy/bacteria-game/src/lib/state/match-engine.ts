@@ -318,7 +318,8 @@ export class MatchEngine {
 
     this.simulation = (options.simulation ?? cpuSimulation)(
       this.balance,
-      seeded(this.seed)
+      seeded(this.seed),
+      this.seed
     );
     if (options.arena != null) {
       this.simulation.resize(options.arena.width, options.arena.height);

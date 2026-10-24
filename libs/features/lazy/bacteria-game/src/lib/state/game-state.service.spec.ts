@@ -1002,8 +1002,8 @@ describe('GameStateService local recordings', () => {
 
   /** A GPU simulation, as far as the game can tell. */
   function useGpu(): void {
-    players.useSimulation((balance, random) => {
-      const simulation = cpuSimulation(balance, random);
+    players.useSimulation((balance, random, seed) => {
+      const simulation = cpuSimulation(balance, random, seed);
       Object.defineProperty(simulation, 'kind', { value: 'gpu' });
       return simulation;
     });

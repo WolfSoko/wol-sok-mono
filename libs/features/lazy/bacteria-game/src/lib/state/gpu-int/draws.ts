@@ -12,6 +12,9 @@
  * arithmetic, wrapping included.
  */
 
+/** A draw's top three bits pick one of eight: `draw >>> 29`. */
+export const PICK_OF_8_SHIFT = 29;
+
 /** The odd constant the salts are spread with - 2^32 / golden ratio. */
 export const SALT_SPREAD = 0x9e3779b1;
 

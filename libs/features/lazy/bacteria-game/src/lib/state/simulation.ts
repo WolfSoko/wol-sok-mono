@@ -128,9 +128,11 @@ export interface Simulation {
 
 /**
  * Builds the simulation of one match, drawing every chance - the pellets
- * included - from `random`.
+ * included - from `random`. `seed` is the match's own, for a simulation that
+ * draws its chances from it directly (the deterministic GPU one, ADR 0015).
  */
 export type SimulationFactory = (
   balance: GameBalance,
-  random: () => number
+  random: () => number,
+  seed: number
 ) => Simulation;

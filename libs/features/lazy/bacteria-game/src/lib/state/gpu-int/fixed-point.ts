@@ -22,12 +22,16 @@ export const ONE_Q14 = 1 << Q14;
  */
 export const Q14_STATE_MAX = 0xffff;
 
+/** A draw's top 14 bits as a Q14 fraction: `draw >>> 18`. */
+export const Q14_DRAW_SHIFT = 32 - Q14;
+
 /** Crosshairs are kept in sixteenths of a cell. */
 export const TARGET_SHIFT = 4;
 
 /**
- * The largest crosshair coordinate: the grid's longest side (well under
- * 2048 cells) in sixteenths.
+ * The largest crosshair coordinate either way: the grid's longest side
+ * (well under 2048 cells) in sixteenths. A crosshair may lie off the grid,
+ * so targets are signed.
  */
 export const TARGET_MAX = 2048 << TARGET_SHIFT;
 
@@ -61,13 +65,15 @@ export function chanceThreshold(chance: number): number {
 }
 
 /**
- * A crosshair position in cells as sixteenths, rounded and kept in range;
- * NaN counts as 0.
+ * A crosshair position in cells as sixteenths, rounded and kept within
+ * {@link TARGET_MAX} either way; NaN counts as 0.
  */
 export function toTarget(cells: number): number {
-  return cells > 0
-    ? Math.min(TARGET_MAX, Math.round(cells * (1 << TARGET_SHIFT)))
-    : 0;
+  if (Number.isNaN(cells)) {
+    return 0;
+  }
+  const target = Math.round(cells * (1 << TARGET_SHIFT));
+  return Math.max(-TARGET_MAX, Math.min(TARGET_MAX, target));
 }
 
 /**
