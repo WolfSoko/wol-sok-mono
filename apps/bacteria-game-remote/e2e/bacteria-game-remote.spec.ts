@@ -267,9 +267,7 @@ test('should run the colony war on the GPU', async ({ page, browserName }) => {
   await po.goto();
   // The deterministic integer passes run once the GPU passed its self-test
   // (ADR 0015), which the game runs right after the first frame.
-  await expect
-    .poll(() => po.gpuSelfTest())
-    .toEqual(expect.objectContaining({ ok: true }));
+  await expect(po.playArea).toHaveAttribute('data-gpu-self-test', 'passed');
 
   await po.startMatch();
   await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');

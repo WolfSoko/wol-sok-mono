@@ -51,6 +51,7 @@ import {
   ArenaViewComponent,
 } from './arena/arena-view.component';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
+import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
 import { SimulationOverrideService } from './gl/simulation-override.service';
 import {
@@ -695,6 +696,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         this.simulationOverride.override() === 'gpu-int'
       ) {
         untracked(() => this.gpuSelfTest.check());
+      }
+    });
+    // Its verdict on the canvas, beside the simulation - for the e2e tests
+    // and for debugging.
+    effect(() => {
+      const dataset = this.arenaView()?.canvas()?.dataset;
+      if (dataset != null) {
+        dataset['gpuSelfTest'] = selfTestState(this.gpuSelfTest.result());
       }
     });
 
@@ -1967,6 +1976,17 @@ export type StagePanel = MenuScreen | 'pause' | 'over' | null;
  * not throw the page into fullscreen.
  */
 /** Where the pointer is, in client pixels. */
+/** The GPU self-test's verdict, as the canvas carries it. */
+function selfTestState(result: GpuSelfTestResult | null): string {
+  if (result == null) {
+    return 'pending';
+  }
+  if (result.error != null) {
+    return 'error';
+  }
+  return result.ok ? 'passed' : 'failed';
+}
+
 function clientPoint(event: PointerEvent): Point {
   return { x: event.clientX, y: event.clientY };
 }
