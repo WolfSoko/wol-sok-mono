@@ -118,13 +118,80 @@ describe('planMatch with loadouts', () => {
     expect(evolved.spawns).toEqual(plain.spawns);
   });
 
-  it('plays plain against a ghost', () => {
-    const { replay } = record(PLAN, 60);
-    const plan: MatchPlan = { ...PLAN, loadouts: [EVOLVED, EVOLVED] };
+  describe('against a ghost', () => {
+    const OTHER: Loadout = { genes: { flagella: 4 }, weapon: 'cryo-pulse' };
 
-    expect(planMatch(plan, replay).spawns).toEqual(
-      planMatch(PLAN, replay).spawns
-    );
+    it('gives the ghost the loadout its run was played with, and the human theirs', () => {
+      const { replay } = record({ ...PLAN, loadouts: [EVOLVED, OTHER] }, 60);
+      const plan: MatchPlan = { ...PLAN, loadouts: [OTHER, PLAIN_LOADOUT] };
+
+      const { spawns } = planMatch(plan, replay);
+
+      expect(spawns[0].traits).toEqual(evolvedTraits(OTHER));
+      expect(spawns[0].weapon).toBe('cryo-pulse');
+      // The run was played from the left seat: its loadout, not the
+      // computer's beside it.
+      expect(spawns[1].traits).toEqual(evolvedTraits(EVOLVED));
+      expect(spawns[1].weapon).toBe('toxin-bomb');
+    });
+
+    it('races a plain run plain, beside the human evolved', () => {
+      const { replay } = record(PLAN, 60);
+      const plan: MatchPlan = { ...PLAN, loadouts: [EVOLVED, OTHER] };
+
+      const { spawns } = planMatch(plan, replay);
+
+      expect(spawns[0].weapon).toBe('toxin-bomb');
+      expect(spawns[1].traits).toEqual(evolvedTraits(PLAIN_LOADOUT));
+      expect(spawns[1].weapon).toBeNull();
+    });
+
+    it('races as before evolution where neither has a loadout', () => {
+      const { replay } = record(PLAN, 60);
+
+      const { spawns } = planMatch(PLAN, replay);
+
+      expect(spawns[0].traits).toBeUndefined();
+      expect(spawns[1].traits).toBeUndefined();
+      expect(spawns[1].weapon).toBeUndefined();
+    });
+
+    it('leaves the boss out, armed or not', () => {
+      const boss: MatchPlan = { ...PLAN, levelId: 'meltdown' };
+      const { replay } = record(
+        { ...boss, loadouts: [EVOLVED, PLAIN_LOADOUT] },
+        60
+      );
+
+      const { spawns } = planMatch(
+        { ...boss, loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT] },
+        replay
+      );
+
+      expect(spawns[1].boss).toBe(false);
+      expect(spawns[1].traits).toEqual(evolvedTraits(EVOLVED));
+      expect(spawns[1].weapon).toBe('toxin-bomb');
+    });
+
+    it("fires the ghost's weapon where its run fired it", () => {
+      const { replay } = record(
+        { ...PLAN, loadouts: [EVOLVED, PLAIN_LOADOUT] },
+        900
+      );
+      expect(replay.inputs.weapons.length).toBeGreaterThan(0);
+
+      const race = engineOf(
+        { ...PLAN, loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT] },
+        replay
+      );
+      for (let tick = 0; tick < 900 && race.outcome() == null; tick++) {
+        race.tick(PLAN.width, PLAN.height);
+      }
+
+      expect(race.players[1].weaponsFired).toBeGreaterThan(0);
+      // The ghost's shots are no input of the human at the screen.
+      expect(race.recorded.weapons).toEqual([]);
+    });
   });
 
   it('plays plain online', () => {

@@ -94,7 +94,7 @@ describe('GameStateService loadouts', () => {
     expect(plan()?.loadouts).toBeUndefined();
   });
 
-  it('races a ghost plain', () => {
+  it('races a ghost with the player evolved, as against the computer', () => {
     service.setMode('vs-computer');
     service.start();
     const recorded = plan();
@@ -113,10 +113,14 @@ describe('GameStateService loadouts', () => {
       0,
       inputs
     );
+    loadout.set({ genes: { flagella: 2 }, weapon: 'cryo-pulse' });
 
     service.playGhost(run);
     service.start();
 
-    expect(plan()?.loadouts).toBeUndefined();
+    expect(plan()?.loadouts?.[0]).toEqual({
+      genes: { flagella: 2 },
+      weapon: 'cryo-pulse',
+    });
   });
 });

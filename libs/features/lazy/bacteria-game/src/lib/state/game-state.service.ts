@@ -456,10 +456,7 @@ export class GameStateService {
     // Taken as the colonies spawn: the plan keeps it for the whole match,
     // whatever the storage or the player change meanwhile.
     const evolved =
-      planMode === 'vs-computer' &&
-      ghost === null &&
-      dailyDay === null &&
-      !endlessMatch;
+      planMode === 'vs-computer' && dailyDay === null && !endlessMatch;
     if (evolved) {
       this.plan.loadouts = [this.playerLoadout(), PLAIN_LOADOUT];
     }
@@ -469,9 +466,10 @@ export class GameStateService {
 
   /**
    * What the player at the screen evolved, for a match against the computer
-   * on the ladder or a generated level - see `evolution.ts`. The daily
-   * level and endless runs feed the leaderboards and stay plain, as do
-   * ghost races, couch and online matches.
+   * or a ghost on the ladder or a generated level - see `evolution.ts`. The
+   * daily level and endless runs feed the leaderboards and stay plain, as do
+   * couch and online matches. A ghost plays with what its run recorded
+   * (`planMatch`).
    */
   private playerLoadout(): Loadout {
     return untracked(this.evolution.loadout);

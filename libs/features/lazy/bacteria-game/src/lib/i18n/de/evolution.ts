@@ -5,7 +5,7 @@ export const evolution: Translation<typeof en> = {
   title: 'Evolution',
   tagline: 'Gib DNA aus. Züchte eine fiesere Kolonie.',
   plays:
-    'Evolution zählt gegen den Computer in der Kampagne und auf generierten Levels. Das Tageslevel, Endlos-Läufe, Geister, Duelle am Gerät und Online-Matches bleiben ohne, fair für alle.',
+    'Evolution zählt gegen den Computer in der Kampagne und auf generierten Levels, dort auch gegen deinen Geist, der mit dem spielt, was sein Lauf hatte. Das Tageslevel, Endlos-Läufe, Duelle am Gerät und Online-Matches bleiben ohne, fair für alle.',
   dna: {
     label: 'DNA',
     available: '{count} DNA zum Ausgeben',
@@ -113,7 +113,7 @@ export const evolution: Translation<typeof en> = {
       'Gene machen deine Kolonie stärker, je fünf Stufen: schnellere Teilung, härtere Bisse, eine zähere Membran, flinkere Geißeln, ein heißerer Stoffwechsel.',
     weapons:
       'Waffen sind Spezialangriffe. Rüste eine aus und feuere sie mit der zweiten Taste neben dem Boost aufs Fadenkreuz – dann lädt sie wieder auf.',
-    fair: 'Das alles zählt gegen den Computer in der Kampagne und auf generierten Levels. Das Tageslevel, Endlos-Läufe, Geister, Duelle am Gerät und Online-Matches bleiben ohne. Setz jederzeit zurück und bekomm jeden Strang zurück.',
+    fair: 'Das alles zählt gegen den Computer in der Kampagne und auf generierten Levels, dort auch gegen deinen Geist, der mit dem spielt, was sein Lauf hatte. Das Tageslevel, Endlos-Läufe, Duelle am Gerät und Online-Matches bleiben ohne. Setz jederzeit zurück und bekomm jeden Strang zurück.',
   },
   pad: {
     button: '{weapon} abfeuern',

@@ -13,9 +13,9 @@ import { ColonyTraits, PLAIN_TRAITS } from './game-balance';
  * Evolution plays in matches against the computer only: the campaign's
  * ladder and generated levels. The daily level and endless runs feed
  * leaderboards, so they stay plain, as do matches between two players at
- * one screen, online and against a ghost: there the players are measured,
- * not their DNA. A replay keeps the loadouts its colonies played with, so
- * it plays again the same.
+ * one screen and online: there the players are measured, not their DNA. A
+ * replay keeps the loadouts its colonies played with, so it plays again
+ * the same - and a ghost races with the loadout its run recorded.
  *
  * The engine knows only a {@link Loadout} per seat. What a player owns, and
  * what it cost, is the menus' business.

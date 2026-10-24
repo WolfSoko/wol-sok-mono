@@ -51,10 +51,18 @@ The shared model is `state/evolution.ts`.
 
 Only in matches against the computer on the campaign's ladder and on
 generated levels. The daily level and endless runs feed the verified
-leaderboards (ADR 0012), so they stay plain, as do couch matches, online
-matches and ghost races. The menus pass loadouts only for those matches,
-always for both seats (the computer's plain), and `planMatch` ignores them
-anywhere else.
+leaderboards (ADR 0012), so they stay plain, as do couch matches and online
+matches. The menus pass loadouts only for those matches, always for both
+seats (the computer's plain), and `planMatch` ignores them anywhere else.
+
+A ghost race replays inputs recorded with whatever the run was played
+with, so its ghost plays with the loadout its replay header recorded for
+the seat the run was played from (`header.loadouts?.[0]`, plain when
+absent) - else "race your last run" would be another match and its weapon
+shots would go nowhere. The human at the screen follows the same rule as
+against the computer: their own loadout on the ladder and on generated
+levels, which the menus pass for a ghost race as well. No boss joins a
+ghost race, armed or not.
 
 The bosses carry a weapon of their own (Meltdown a toxin bomb, Patient Zero
 a phage strike), but only in a match whose plan has loadouts. Arming them

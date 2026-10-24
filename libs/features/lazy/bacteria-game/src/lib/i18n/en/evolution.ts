@@ -7,7 +7,7 @@ export const evolution = {
   title: 'Evolution',
   tagline: 'Spend DNA. Breed a nastier colony.',
   plays:
-    'Evolution counts against the computer on the campaign and on generated levels. The daily level, endless runs, ghosts, couch and online matches stay plain and fair.',
+    'Evolution counts against the computer on the campaign and on generated levels, and against your ghost there, which plays with what its run had. The daily level, endless runs, couch and online matches stay plain and fair.',
   dna: {
     label: 'DNA',
     available: '{count} DNA to spend',
@@ -114,7 +114,7 @@ export const evolution = {
       'Genes make your colony stronger, five levels each: faster division, harder bites, a tougher membrane, quicker flagella, a hotter metabolism.',
     weapons:
       'Weapons are special moves. Equip one and fire it at your crosshair with the second button next to the boost - then it recharges.',
-    fair: 'It all counts against the computer on the campaign and on generated levels. The daily level, endless runs, ghosts, couch and online matches stay plain. Reset any time to get every strand back.',
+    fair: 'It all counts against the computer on the campaign and on generated levels, and against your ghost there, which plays with what its run had. The daily level, endless runs, couch and online matches stay plain. Reset any time to get every strand back.',
   },
   pad: {
     button: 'Fire {weapon}',

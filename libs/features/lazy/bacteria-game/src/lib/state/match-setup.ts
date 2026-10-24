@@ -1,4 +1,4 @@
-import { evolvedTraits, Loadout } from './evolution';
+import { evolvedTraits, Loadout, PLAIN_LOADOUT } from './evolution';
 import { BotDifficulty } from './bot-controller';
 import { getColonyColor, NEUTRAL_COLOR, toPlayerColor } from './colony-colors';
 import { NEUTRAL_TRAITS } from './game-balance';
@@ -37,9 +37,10 @@ export interface MatchPlan {
    * What each seat evolved - see `evolution.ts`. Plain when absent, as in
    * every match that is not against the computer on the ladder or a
    * generated level. Only a match against the computer plays them - not
-   * one against a ghost, between two players or online. With them, a boss
-   * carries its weapon too: a match without them plays as it did before
-   * there was evolution, which keeps its replays.
+   * one between two players or online. Against a ghost only the left
+   * seat's counts: the ghost plays with the loadout its run recorded. With
+   * them, a boss carries its weapon too: a match without them plays as it
+   * did before there was evolution, which keeps its replays.
    */
   loadouts?: readonly [Loadout, Loadout];
 }
@@ -85,8 +86,11 @@ export function planMatch(
     ? [1, 1]
     : startScales(plan.headStart);
   const [leftSpot, rightSpot] = spawnSpots(width, height);
-  const loadouts =
-    versusComputer && ghost === null ? (plan.loadouts ?? null) : null;
+  const loadouts = !versusComputer
+    ? null
+    : ghost === null
+      ? (plan.loadouts ?? null)
+      : ghostLoadouts(plan, ghost);
   return {
     spawns: [
       {
@@ -156,6 +160,23 @@ export function planMatch(
             ]),
     },
   };
+}
+
+/**
+ * The seats' loadouts in a race against a ghost: the left one the human's,
+ * as against the computer; the ghost the one its run was played with from
+ * the left seat - plain where the run recorded none. Null when neither has
+ * one, which plays as a race did before evolution.
+ */
+function ghostLoadouts(
+  plan: MatchPlan,
+  ghost: Replay
+): readonly [Loadout, Loadout] | null {
+  const human = plan.loadouts?.[0];
+  const recorded = ghost.header.loadouts?.[0];
+  return human === undefined && recorded === undefined
+    ? null
+    : [human ?? PLAIN_LOADOUT, recorded ?? PLAIN_LOADOUT];
 }
 
 function planOnline(
