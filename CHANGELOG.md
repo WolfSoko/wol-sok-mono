@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.76.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.75.0...v74.76.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** balance lab, a difficulty curve and an evolving computer (ADR 0016) ([#2600](https://github.com/WolfSoko/wol-sok-mono/issues/2600)) ([5cbb7a0](https://github.com/WolfSoko/wol-sok-mono/commit/5cbb7a0da13abfe6ac7a1f1f4a8328997e5f0207))
+
 ## [74.75.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.74.0...v74.75.0) (2026-10-24)
 
 ### Features
