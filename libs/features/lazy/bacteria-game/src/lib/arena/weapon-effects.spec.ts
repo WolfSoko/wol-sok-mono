@@ -230,6 +230,24 @@ describe('WeaponEffects', () => {
     expect(effects.particleCount).toBeGreaterThan(0);
   });
 
+  it('takes a spent particle again before the pool grows', () => {
+    const effects = new WeaponEffects(1);
+    const pool = (effects as unknown as { particles: unknown[] }).particles;
+    effects.update(frame(0, { weaponFires: [fire('toxin-bomb')] }));
+    const first = pool.length;
+    expect(first).toBeGreaterThan(0);
+
+    // Long enough for every particle of the burst to have died.
+    let timeSec = run(effects, 3);
+    expect(effects.particleCount).toBe(0);
+    for (let shot = 0; shot < 3; shot++) {
+      effects.update(frame(timeSec, { weaponFires: [fire('toxin-bomb')] }));
+      timeSec = run(effects, 3, timeSec);
+    }
+
+    expect(pool.length).toBe(first);
+  });
+
   it('flies fewer particles for players who asked for less motion', () => {
     expect(particleBudget('medium', true)).toBeLessThan(
       particleBudget('medium', false) / 2

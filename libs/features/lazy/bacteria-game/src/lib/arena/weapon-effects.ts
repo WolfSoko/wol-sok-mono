@@ -495,11 +495,10 @@ export class WeaponEffects {
     if (this.aliveCount >= this.budget) {
       return null;
     }
+    // A dead particle is taken again before the pool grows, so it stays as
+    // big as the most that flew at once and every frame walks only those.
     let particle: Particle | undefined;
-    if (this.particles.length < MAX_PARTICLES) {
-      particle = blankParticle();
-      this.particles.push(particle);
-    } else {
+    if (this.aliveCount < this.particles.length) {
       for (let tried = 0; tried < this.particles.length; tried++) {
         const candidate = this.particles[this.nextParticle];
         this.nextParticle = (this.nextParticle + 1) % this.particles.length;
@@ -508,6 +507,9 @@ export class WeaponEffects {
           break;
         }
       }
+    } else if (this.particles.length < MAX_PARTICLES) {
+      particle = blankParticle();
+      this.particles.push(particle);
     }
     if (particle === undefined) {
       return null;
