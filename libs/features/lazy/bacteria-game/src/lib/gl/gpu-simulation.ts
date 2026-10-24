@@ -52,6 +52,11 @@ import {
 } from '../state/gpu-int/int-effects';
 import { intMatchUniforms } from '../state/gpu-int/int-uniforms';
 import {
+  DETERMINISTIC_REPORT_LAG,
+  divideBudgetOf,
+  readbacksToTake,
+} from '../state/gpu-int/int-readback';
+import {
   bindTexture,
   createProgram,
   createQuad,
@@ -193,12 +198,12 @@ interface Resources {
 /** How a {@link GpuSimulation} runs. */
 export interface GpuSimulationOptions {
   /**
-   * Runs the hunt, the movement, the division, combat and feeding as the
-   * integer passes of ADR 0015, which every GPU computes alike, with draws
-   * seeded from `matchSeed`, every step as long as a tick and the weapons'
-   * circles in integers. The divide budget and the pellets still follow the
-   * read backs' timing (step 5 of the rollout), so a match is not
-   * deterministic yet as a whole. Off by default.
+   * Runs the war as the integer passes of ADR 0015, which every GPU
+   * computes alike, with draws seeded from `matchSeed` and every step as
+   * long as a tick. Nothing the passes read follows the GPU's timing: the
+   * report the colony counts, the pellets and the bots go by is always the
+   * one of `DETERMINISTIC_REPORT_LAG` ticks ago - waited for when the GPU is
+   * slow - and the cell passes cover the whole arena. Off by default.
    */
   deterministic?: boolean;
   /** The match's seed - see `MatchPlan.seed`. */
@@ -244,7 +249,8 @@ interface FrameUniforms {
  *
  * The CPU reads the report back without waiting for the GPU, so the
  * scoreboard, the computer opponent and the pellets work with numbers one
- * or two frames old. The walls, the gates and the pellets stay on the CPU:
+ * or two frames old - or, `deterministic`, exactly
+ * `DETERMINISTIC_REPORT_LAG` ticks old, waited for when the GPU is slow. The walls, the gates and the pellets stay on the CPU:
  * they are a handful of rects and points.
  */
 export class GpuSimulation implements Simulation {
@@ -488,6 +494,12 @@ export class GpuSimulation implements Simulation {
     const { programs } = resources;
     this.elapsedSec += deltaTimeSec;
     this.steps++;
+    // The deterministic simulation takes the reports due before anything of
+    // the tick reads them - the pellets, the bots and the divide budget - so
+    // the one in hand is exactly `DETERMINISTIC_REPORT_LAG` ticks old.
+    if (this.deterministic) {
+      this.collectReadbacks(resources);
+    }
     this.advanceDynamicWalls();
     if (this.maskDirty) {
       this.uploadMask(resources);
@@ -545,7 +557,9 @@ export class GpuSimulation implements Simulation {
 
     // 6. The report. The one read back is last frame's, which the GPU has
     // finished by now - reading this frame's would make the driver wait.
-    this.collectReadbacks(resources);
+    if (!this.deterministic) {
+      this.collectReadbacks(resources);
+    }
     this.requestReadback(resources);
     this.renderReport(resources);
     this.weaponEffects.end(deltaTimeSec);
@@ -795,27 +809,22 @@ export class GpuSimulation implements Simulation {
     return count;
   }
 
-  /**
-   * The most a bacterium of a colony may divide with this frame, whatever
-   * ground it is on. All of them divide in the same pass, and the count is
-   * a few frames old - so the chance is cut down until even the bacteria
-   * born in the frames the count lags behind fit into the room the colony
-   * has left.
-   */
+  /** The most a bacterium of a colony may divide with - see `divideBudgetOf`. */
   private divideBudget(slot: number, capacity: number): number {
     const count = this.colonySummaries[slot]?.count ?? 0;
-    const room = capacity - count;
-    return room <= 0
-      ? 0
-      : room / (Math.max(1, count) * (this.stepsBehind() + 1));
+    return divideBudgetOf(capacity, count, this.stepsBehind());
   }
 
   /**
    * How many steps the report in hand lags behind the war - at least the
    * read backs in flight. A display frame may run several steps, and the GPU
-   * finishes no read back between the steps of one frame.
+   * finishes no read back between the steps of one frame. The deterministic
+   * simulation's lag is fixed.
    */
   private stepsBehind(): number {
+    if (this.deterministic) {
+      return DETERMINISTIC_REPORT_LAG;
+    }
     const behind = this.report == null ? 0 : this.steps - this.reportStep;
     return Math.max(READBACK_SLOTS, behind);
   }
@@ -1025,6 +1034,13 @@ export class GpuSimulation implements Simulation {
    * the way, and when the report is further behind than the reach kept.
    */
   private updateArea(mostSteps: number): void {
+    if (this.deterministic) {
+      // The area follows the report and the frame's steps - exact, but a
+      // second thing the TypeScript reference would have to mirror. The
+      // whole arena changes nothing about the war.
+      this.area = null;
+      return;
+    }
     const reach = this.recentReach;
     reach.unshift(
       mostSteps +
@@ -1121,7 +1137,11 @@ export class GpuSimulation implements Simulation {
     if (!this.reportRendered) {
       return;
     }
-    const readback = resources.freeReadbacks.pop();
+    // The deterministic simulation needs every report: it never runs out of
+    // buffers (see DETERMINISTIC_REPORT_LAG), but takes another if it did.
+    const readback =
+      resources.freeReadbacks.pop() ??
+      (this.deterministic ? createReadback(this.gl, this.layout) : undefined);
     if (readback == null) {
       return;
     }
@@ -1152,22 +1172,28 @@ export class GpuSimulation implements Simulation {
   }
 
   /**
-   * Takes in every read back the GPU has finished, oldest first. The GPU
-   * finishes them in order, so the first unfinished one ends the round.
+   * Takes in the read backs due, oldest first - see `readbacksToTake`: every
+   * one the GPU has finished, or for the deterministic simulation every one
+   * `DETERMINISTIC_REPORT_LAG` ticks old, finished or not. Reading an
+   * unfinished one makes the driver wait for it.
    */
   private collectReadbacks(resources: Resources): void {
     const gl = this.gl;
     const data = resources.readbackData;
     const pending = resources.pendingReadbacks;
-    while (pending.length > 0) {
+    const due = readbacksToTake(
+      pending.map((readback) => ({
+        step: readback.step,
+        stale: readback.stale,
+        ready: readback.sync == null || this.isFinished(readback.sync),
+      })),
+      this.steps,
+      this.deterministic ? DETERMINISTIC_REPORT_LAG : null
+    );
+    for (let taken = 0; taken < due; taken++) {
       const readback = pending[0];
-      const sync = readback.sync;
-      if (sync != null) {
-        const status = gl.clientWaitSync(sync, 0, 0);
-        if (status === gl.TIMEOUT_EXPIRED || status === gl.WAIT_FAILED) {
-          return;
-        }
-        gl.deleteSync(sync);
+      if (readback.sync != null) {
+        gl.deleteSync(readback.sync);
         readback.sync = null;
       }
       pending.shift();
@@ -1184,6 +1210,11 @@ export class GpuSimulation implements Simulation {
         readback.generation
       );
     }
+  }
+
+  private isFinished(sync: WebGLSync): boolean {
+    const status = this.gl.clientWaitSync(sync, 0, 0);
+    return status !== this.gl.TIMEOUT_EXPIRED && status !== this.gl.WAIT_FAILED;
   }
 
   /** Turns a report into the scoreboard, the frame's events and the eaters. */
@@ -1445,17 +1476,7 @@ export class GpuSimulation implements Simulation {
       createTarget(gl, gl.RGBA8, this.width, this.height, gl.LINEAR);
     const freeReadbacks: Readback[] = Array.from(
       { length: READBACK_SLOTS },
-      () => {
-        const buffer = gl.createBuffer();
-        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buffer);
-        gl.bufferData(
-          gl.PIXEL_PACK_BUFFER,
-          layout.width * layout.height * 16,
-          gl.STREAM_READ
-        );
-        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-        return { buffer, sync: null, generation: [], step: 0, stale: false };
-      }
+      () => createReadback(gl, layout)
     );
 
     const resources: Resources = {
@@ -1508,6 +1529,22 @@ export class GpuSimulation implements Simulation {
     this.setMatchUniforms(programs);
     return resources;
   }
+}
+
+/** A buffer the report is read back into. */
+function createReadback(
+  gl: WebGL2RenderingContext,
+  layout: ReportLayout
+): Readback {
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buffer);
+  gl.bufferData(
+    gl.PIXEL_PACK_BUFFER,
+    layout.width * layout.height * 16,
+    gl.STREAM_READ
+  );
+  gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+  return { buffer, sync: null, generation: [], step: 0, stale: false };
 }
 
 /** Every target a frame renders into. */
