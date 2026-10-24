@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.67.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.66.0...v74.67.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** 💰 every special skin costs DNA ([#2605](https://github.com/WolfSoko/wol-sok-mono/issues/2605)) ([aa41022](https://github.com/WolfSoko/wol-sok-mono/commit/aa41022add4ea88650ee10f34548788323057b21))
+
 ## [74.66.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.65.0...v74.66.0) (2026-10-24)
 
 ### Features
