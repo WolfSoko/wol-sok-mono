@@ -45,29 +45,65 @@ export async function runReplayCommand(
   if (data === undefined || data['result'] !== undefined) {
     return { ok: false, reason: 'done' };
   }
-  const engine = await loadEngine();
   const { uid, type, replayId } = data;
   let result: ReplayCommandResult;
   if (
     typeof uid !== 'string' ||
-    !engine.isReplayCommandType(type) ||
     typeof replayId !== 'string' ||
-    !engine.REPLAY_ID.test(replayId)
+    !PLAIN_ID.test(replayId)
   ) {
     result = { ok: false, reason: 'invalid' };
   } else if (writer !== uid) {
     result = { ok: false, reason: 'not-writer' };
   } else if (type === 'remove') {
+    // A player's own command needs no engine: their replay is read by id.
     result = await remove(db, uid, replayId, now);
-  } else if (!(await isAdminNow(accounts, uid))) {
-    result = { ok: false, reason: 'not-admin' };
   } else {
-    result = await curate(db, engine, commandId, uid, type, replayId, now);
+    result = await curateChecked(
+      db,
+      accounts,
+      commandId,
+      uid,
+      type,
+      replayId,
+      now
+    );
   }
   await ref.update({
     result: { ...result, at: Timestamp.fromMillis(now) },
   });
   return result;
+}
+
+/**
+ * An id `replays/{id}` can name, no path - what every replay id is made of.
+ * The engine's `REPLAY_ID` checks the exact shape for the owner's commands;
+ * a `remove` of an id no replay has finds no replay of the player.
+ */
+const PLAIN_ID = /^[A-Za-z0-9_]{1,64}$/;
+
+/** The owner's commands, with the engine: the type and the id checked, then the claim. */
+async function curateChecked(
+  db: Firestore,
+  accounts: AccountLookup,
+  commandId: string,
+  uid: string,
+  type: unknown,
+  replayId: string,
+  now: number
+): Promise<ReplayCommandResult> {
+  const engine = await loadEngine();
+  if (
+    !engine.isReplayCommandType(type) ||
+    type === 'remove' ||
+    !engine.REPLAY_ID.test(replayId)
+  ) {
+    return { ok: false, reason: 'invalid' };
+  }
+  if (!(await isAdminNow(accounts, uid))) {
+    return { ok: false, reason: 'not-admin' };
+  }
+  return curate(db, engine, commandId, uid, type, replayId, now);
 }
 
 /** A player takes one of their replays out of the gallery for good. */

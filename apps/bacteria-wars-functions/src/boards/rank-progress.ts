@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { checkGoogleLink, Moderation } from '../admin/bans';
+import { checkGoogleLink, Moderation, noteGoogleChecked } from '../admin/bans';
 import { assertActive, Banned } from '../limits';
 import {
   entryRef,
@@ -33,7 +33,7 @@ export async function rankProgress(
   createdAt: number | undefined,
   now = Date.now()
 ): Promise<RankProgressResult> {
-  const { db, engine } = moderation;
+  const { db } = moderation;
   if (stored === undefined) {
     return { skipped: 'deleted' };
   }
@@ -48,6 +48,7 @@ export async function rankProgress(
   if (await checkGoogleLink(moderation, uid, now)) {
     return { skipped: 'banned' };
   }
+  const engine = await moderation.engine();
   let claimed: number;
   try {
     const json = stored['json'];
@@ -64,6 +65,9 @@ export async function rankProgress(
   }
   return db.runTransaction(async (tx): Promise<RankProgressResult> => {
     const member = memberOf(await tx.get(memberRef(db, uid)));
+    if (member.googleChecked === true) {
+      noteGoogleChecked(uid);
+    }
     const ref = entryRef(db, 'xp', member.entryIds.xp);
     const entry = await tx.get(ref);
     const standing = await readStanding(tx, db, uid, now);

@@ -336,7 +336,8 @@ interface KeptMatch extends RunMatch {
  * hours after its declaration is a lost life; replays may arrive in any
  * order; each match's level must follow from the run seed and the wins
  * before it. Writes the run, the player's best run, and their entry on the
- * endless board. `change` may mark verification first.
+ * endless board. `change` may mark verification first, and returns false
+ * to leave everything as it is - a re-run applied twice writes nothing.
  */
 export async function updateEndlessRun(
   db: Firestore,
@@ -345,7 +346,7 @@ export async function updateEndlessRun(
   runId: string,
   now: number,
   incoming?: RunReplay,
-  change: (run: EndlessRunDoc) => void = () => undefined
+  change: (run: EndlessRunDoc) => boolean = () => true
 ): Promise<RankedResult | null> {
   const runRef = db.doc(`endlessRuns/${uid}_${runId}`);
   const prefix = `e_${runId}_`;
@@ -466,7 +467,9 @@ export async function updateEndlessRun(
       best: stored?.best ?? false,
       updatedAt: Timestamp.fromMillis(now),
     };
-    change(run);
+    if (!change(run)) {
+      return null;
+    }
     const reasons = computeRun(engine, run, pendingIds, now);
     for (const [replayId, reason] of reasons) {
       tx.update(db.doc(`replays/${replayId}`), { rankedReason: reason });

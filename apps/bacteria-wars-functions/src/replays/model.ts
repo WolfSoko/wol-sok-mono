@@ -56,7 +56,10 @@ export interface ReplayDoc {
   state: ReplayState;
   /** Players who took it down: nothing features it again. */
   optOut: string[];
-  /** Absent once featured. */
+  /**
+   * Absent once featured. Its blob and reports carry the same, since TTL
+   * deletes no subcollection with its parent.
+   */
   expireAt?: Timestamp;
   /** The ranked attempt, with `at` from the stored attempt (ADR 0012). */
   attempt?: { id: string; at: number };
@@ -96,6 +99,8 @@ export interface ReplayReport {
   winnerSeat: number | null;
   endedBy: string;
   at: Timestamp;
+  /** The replay's own, so TTL deletes the report with it. */
+  expireAt?: Timestamp;
 }
 
 /** A seat as a public replay shows it - never a picture the player uploaded. */

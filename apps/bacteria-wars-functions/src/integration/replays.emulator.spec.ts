@@ -138,9 +138,10 @@ describe('acceptReplay', () => {
     expect((stored?.['expireAt'] as Timestamp | undefined)?.toMillis()).toBe(
       NOW + 30 * DAY
     );
-    expect((await db.doc('replays/l_s1/blob/data').get()).get('size')).toBe(
-      (data['bytes'] as Buffer).length
-    );
+    const blob = await db.doc('replays/l_s1/blob/data').get();
+    expect(blob.get('size')).toBe((data['bytes'] as Buffer).length);
+    // TTL deletes no subcollection: the blob expires with the replay.
+    expect((blob.get('expireAt') as Timestamp).toMillis()).toBe(NOW + 30 * DAY);
     expect((await db.doc('replaySubmissions/s1').get()).exists).toBe(false);
     const stats = (await db.doc('levelStats/quarantine_hard').get()).data();
     expect(stats).toEqual(
@@ -338,14 +339,55 @@ describe('acceptReplay', () => {
           }),
         })
       );
-      expect((await db.collection(`replays/${id()}/reports`).get()).size).toBe(
-        2
-      );
+      const reports = await db.collection(`replays/${id()}/reports`).get();
+      expect(reports.size).toBe(2);
+      expect(
+        reports.docs.map((report) =>
+          (report.get('expireAt') as Timestamp).toMillis()
+        )
+      ).toEqual([NOW + 30 * DAY, NOW + 30 * DAY]);
       expect(
         await acceptSubmission(db, 's3', await submission('guest', bytes), NOW)
       ).toEqual({
         dropped: 'duplicate',
       });
+    });
+
+    it('keeps the reports and the blob while public, and lets them expire again', async () => {
+      await room();
+      const bytes = await bytesOf(await online());
+      await acceptSubmission(db, 's1', await submission('host', bytes), NOW);
+      await acceptSubmission(db, 's2', await submission('guest', bytes), NOW);
+      // As if re-run: publishing wants a verified replay with a summary.
+      await db.doc(`replays/${id()}`).update({
+        state: 'verified',
+        summary: {
+          sizes: [1, 1],
+          endedBy: 'time',
+          winnerSeat: null,
+          ticks: 120,
+          timeline: { left: [], right: [] },
+        },
+      });
+      const expiries = async () =>
+        (
+          await db.getAll(
+            db.doc(`replays/${id()}/blob/data`),
+            db.doc(`replays/${id()}/reports/host`),
+            db.doc(`replays/${id()}/reports/guest`)
+          )
+        ).map((doc) =>
+          (doc.get('expireAt') as Timestamp | undefined)?.toMillis()
+        );
+      expect(await publishReplay(db, engine, id(), 'admin', NOW)).toEqual({
+        publicId: expect.any(String),
+      });
+      expect(await expiries()).toEqual([undefined, undefined, undefined]);
+      await takeDown(db, id(), NOW);
+      const expireAt = (
+        (await db.doc(`replays/${id()}`).get()).get('expireAt') as Timestamp
+      ).toMillis();
+      expect(await expiries()).toEqual([expireAt, expireAt, expireAt]);
     });
 
     it('does not re-run a match still waiting for its second report', async () => {
@@ -504,6 +546,14 @@ describe('verification and the gallery', () => {
     const privateCopy = (await db.doc(`replays/${id}`).get()).data();
     expect(privateCopy?.['publicId']).toBe(publicId);
     expect(privateCopy?.['expireAt']).toBeUndefined();
+    expect(
+      (await db.doc(`replays/${id}/blob/data`).get()).get('expireAt')
+    ).toBeUndefined();
+    expect(
+      (await db.doc(`publicReplays/${publicId}/blob/data`).get()).get(
+        'expireAt'
+      )
+    ).toBeUndefined();
     expect(await publishReplay(db, engine, id, 'auto', NOW)).toBe(
       'already-public'
     );
@@ -515,7 +565,17 @@ describe('verification and the gallery', () => {
     expect(
       (await db.doc(`publicReplays/${publicId}/blob/data`).get()).exists
     ).toBe(false);
-    expect((await db.doc(`replays/${id}`).get()).get('expireAt')).toBeDefined();
+    const expireAt = (await db.doc(`replays/${id}`).get()).get(
+      'expireAt'
+    ) as Timestamp;
+    expect(expireAt).toBeDefined();
+    expect(
+      (
+        (await db.doc(`replays/${id}/blob/data`).get()).get(
+          'expireAt'
+        ) as Timestamp
+      ).toMillis()
+    ).toBe(expireAt.toMillis());
   });
 
   it('keeps out the matches of players who opted out of the gallery', async () => {

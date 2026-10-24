@@ -119,7 +119,7 @@ export async function applyRerun(
           match.verified === true ||
           match.failed === true
         ) {
-          return;
+          return false;
         }
         if (state === 'verified') {
           match.verified = true;
@@ -127,6 +127,7 @@ export async function applyRerun(
           match.failed = true;
         }
         changed = true;
+        return true;
       }
     );
   }
@@ -559,6 +560,7 @@ export async function verifyRun(
             gone.gone = true;
           }
           delete current.queued;
+          return true;
         }
       );
       return 'stale';

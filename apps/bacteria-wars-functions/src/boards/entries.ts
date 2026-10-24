@@ -87,10 +87,24 @@ export async function readStanding(
   uid: string,
   now: number
 ): Promise<Standing> {
-  const [ban, profile] = await tx.getAll(
-    db.doc(`bans/${uid}`),
-    db.doc(`profiles/${uid}`)
-  );
+  const [ban, profile] = await tx.getAll(...standingRefs(db, uid));
+  return standingOf(ban, profile, now);
+}
+
+/** What {@link readStanding} reads: the player's ban and profile. */
+export function standingRefs(
+  db: Firestore,
+  uid: string
+): [DocumentReference, DocumentReference] {
+  return [db.doc(`bans/${uid}`), db.doc(`profiles/${uid}`)];
+}
+
+/** The standing from the snapshots of {@link standingRefs}. */
+export function standingOf(
+  ban: DocumentSnapshot,
+  profile: DocumentSnapshot,
+  now: number
+): Standing {
   return {
     banned: banActive(ban, now),
     profile: profile.exists ? profile.data() : undefined,
@@ -98,7 +112,7 @@ export async function readStanding(
 }
 
 /** True when a `bans/{uid}` snapshot holds a ban that has not ended. */
-export function banActive(ban: DocumentSnapshot, now: number): boolean {
+function banActive(ban: DocumentSnapshot, now: number): boolean {
   if (!ban.exists) {
     return false;
   }

@@ -76,7 +76,8 @@ export async function closeAttempts(
   moderation: Moderation,
   now = Date.now()
 ): Promise<number> {
-  const { db, engine } = moderation;
+  const { db } = moderation;
+  const engine = await moderation.engine();
   const due = await db
     .collection('endlessRuns')
     .where('nextCloseAt', '<=', Timestamp.fromMillis(now))
@@ -140,7 +141,8 @@ export async function closeWaitingOnline(
   now = Date.now(),
   limit = STEP_LIMIT
 ): Promise<number> {
-  const { db, engine } = moderation;
+  const { db } = moderation;
+  const engine = await moderation.engine();
   const waiting = await db
     .collection('replays')
     .where('closeAt', '<=', Timestamp.fromMillis(now))
@@ -168,7 +170,8 @@ export async function finaliseDailyBoards(
   moderation: Moderation,
   now = Date.now()
 ): Promise<string[]> {
-  const { db, engine } = moderation;
+  const { db } = moderation;
+  const engine = await moderation.engine();
   const finalised: string[] = [];
   for (let back = 1; back <= 3; back++) {
     const day = dayOf(now - back * DAY_MS);
@@ -205,7 +208,8 @@ export async function runHourly(
   startedAt = Date.now(),
   now = startedAt
 ): Promise<HourlyResult> {
-  const { db, engine, accounts, presence } = moderation;
+  const { db, accounts, presence } = moderation;
+  const engine = await moderation.engine();
   const step = async <T>(name: string, run: () => Promise<T>, empty: T) => {
     try {
       return await run();

@@ -28,6 +28,7 @@ import { rankProgress } from '../boards/rank-progress';
 import { rankReplay } from '../boards/rank-replay';
 import { rebuildTop } from '../boards/rebuild-top';
 import {
+  applyRerun,
   candidatesOf,
   fixedPool,
   recordFailure,
@@ -103,7 +104,7 @@ const accounts: AccountLookup = async (uids) =>
   );
 
 function moderation(): Moderation {
-  return { db, engine, presence, accounts, tombstones: KEY };
+  return { db, engine: loadEngine, presence, accounts, tombstones: KEY };
 }
 
 function adminDeps(users: string[] = []): AdminDeps {
@@ -660,6 +661,21 @@ describe('ranked daily and endless matches', () => {
       expect((await entry('ana', 'endless', 'endless'))?.status).toBe(
         'verified'
       );
+
+      // rankReplay sees the re-run's state change too: a no-op that writes
+      // nothing, so no rebuildTop follows.
+      const runRef = db.doc(`endlessRuns/ana_${runId}`);
+      const entryRef = db.doc(
+        `boards/endless/entries/${(await member('ana')).entryIds.endless}`
+      );
+      const written = async () =>
+        (await db.getAll(runRef, entryRef)).map((doc) =>
+          doc.updateTime?.toMillis()
+        );
+      const before = await written();
+      const verified = (await db.doc('replays/l_s0').get()).data() as ReplayDoc;
+      expect(await applyRerun(db, engine, 'l_s0', verified, NOW)).toBe(false);
+      expect(await written()).toEqual(before);
     });
 
     /** A run of two won matches, ranked as the client sends them. */
@@ -915,6 +931,15 @@ describe('rebuildTop', () => {
     ]);
     expect(top?.['rows'][0].rank).toBeUndefined();
     expect(top?.['expireAt']).toBeDefined();
+  });
+
+  it('rebuilds nothing while TTL drains a past daily board', async () => {
+    const boardId = `daily-${dayOf(NOW - 40 * DAY)}`;
+    await put(boardId, 'p', { sort: 50, status: 'provisional' });
+    expect(await rebuildTop(db, engine, boardId, 'gone', undefined, NOW)).toBe(
+      false
+    );
+    expect((await db.doc(`boards/${boardId}`).get()).exists).toBe(false);
   });
 });
 
@@ -1292,6 +1317,12 @@ describe('accounts and tombstones', () => {
       await checkGoogleLink(moderation(), 'guest', NOW + 11 * 60_000)
     ).toBe(true);
     expect((await member('guest')).googleChecked).toBe(true);
+    // Checked for good: the instance never reads the player's member again.
+    await db.doc('boardMembers/guest').delete();
+    expect(
+      await checkGoogleLink(moderation(), 'guest', NOW + 22 * 60_000)
+    ).toBe(false);
+    expect((await db.doc('boardMembers/guest').get()).exists).toBe(false);
     expect(
       await applyTombstone(
         moderation(),

@@ -26,10 +26,16 @@ import {
 import { checkGoogleLink, Moderation } from './admin/bans';
 import { tombstoneKey, TombstoneKey } from './admin/tombstones';
 import { auth, db, rtdb } from './app';
-import { boardProfileChanged as relabel } from './boards/board-profile-changed';
+import {
+  boardProfileChanged as relabel,
+  touchesBoards,
+} from './boards/board-profile-changed';
 import { runHourly } from './boards/hourly';
 import { rankProgress as rankProgressOf } from './boards/rank-progress';
-import { rankReplay as rankReplayOf } from './boards/rank-replay';
+import {
+  rankReplay as rankReplayOf,
+  touchesRanking,
+} from './boards/rank-replay';
 import { rebuildTop as rebuildTopOf } from './boards/rebuild-top';
 import type { EntryDoc } from './boards/model';
 import {
@@ -74,11 +80,14 @@ function tombstones(): TombstoneKey | null {
   }
 }
 
-/** What moderation, the boards and the hourly run work on. */
-async function moderation(): Promise<Moderation> {
+/**
+ * What moderation, the boards and the hourly run work on - the engine
+ * loaded only by what needs it.
+ */
+function moderation(): Moderation {
   return {
     db: db(),
-    engine: await loadEngine(),
+    engine: loadEngine,
     presence: rtdbPresence(rtdb),
     accounts: authAccounts(auth()),
     tombstones: tombstones(),
@@ -93,7 +102,7 @@ export const acceptReplay = onDocumentCreated(
     secrets: [BAN_TOMBSTONE_KEY],
   },
   async (event) => {
-    const deps = await moderation();
+    const deps = moderation();
     await acceptSubmission(
       deps.db,
       event.params.id,
@@ -183,13 +192,18 @@ export const featureBest = onSchedule(
 export const rankReplay = onDocumentWritten(
   { ...LIGHT, document: 'replays/{id}' },
   async (event) => {
+    const before = event.data?.before.data() as ReplayDoc | undefined;
+    const after = event.data?.after.data() as ReplayDoc | undefined;
+    if (!touchesRanking(before, after)) {
+      return;
+    }
     await rankReplayOf(
       db(),
       await loadEngine(),
       authAccounts(auth()),
       event.params.id,
-      event.data?.before.data() as ReplayDoc | undefined,
-      event.data?.after.data() as ReplayDoc | undefined
+      before,
+      after
     );
   }
 );
@@ -207,7 +221,7 @@ export const rankProgress = onDocumentWritten(
   async (event) => {
     const after = event.data?.after;
     await rankProgressOf(
-      await moderation(),
+      moderation(),
       event.params.uid,
       after?.exists ? after.data() : undefined,
       after?.createTime?.toMillis()
@@ -239,13 +253,12 @@ export const rebuildTop = onDocumentWritten(
 export const boardProfileChanged = onDocumentUpdated(
   { ...LIGHT, document: 'profiles/{uid}' },
   async (event) => {
-    await relabel(
-      db(),
-      await loadEngine(),
-      event.params.uid,
-      event.data?.before.data(),
-      event.data?.after.data()
-    );
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!touchesBoards(before, after)) {
+      return;
+    }
+    await relabel(db(), await loadEngine(), event.params.uid, before, after);
   }
 );
 
@@ -264,7 +277,7 @@ export const adminCommand = onDocumentCreatedWithAuthContext(
   },
   async (event) => {
     await runAdminCommand(
-      { ...(await moderation()), users: auth() },
+      { ...moderation(), users: auth() },
       event.params.id,
       event.data?.data(),
       event.authId
@@ -278,7 +291,7 @@ export const countAccount = functionsV1
   .runWith({ memory: '256MB', secrets: [BAN_TOMBSTONE_KEY] })
   .auth.user()
   .onCreate(async (user) => {
-    await countAccountOf(await moderation(), accountOf(user));
+    await countAccountOf(moderation(), accountOf(user));
   });
 
 /** Erases a deleted account from the boards (v1 only) - see `deletePlayerBoards`. */
@@ -291,7 +304,7 @@ export const deletePlayerBoards = functionsV1
   })
   .auth.user()
   .onDelete(async (user) => {
-    await deleteBoardsOf(await moderation(), accountOf(user));
+    await deleteBoardsOf(moderation(), accountOf(user));
   });
 
 /**
@@ -316,7 +329,7 @@ export const hourly = onSchedule(
       logger.info('hourly is paused (HOURLY_ENABLED is false)');
       return;
     }
-    const result = await runHourly(await moderation());
+    const result = await runHourly(moderation());
     logger.info('hourly done', result);
   }
 );

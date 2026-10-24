@@ -11,6 +11,7 @@ import type { Account, AccountLookup } from '../accounts';
 import { refreshEntries } from '../boards/entries';
 import type { Engine } from '../engine';
 import { forgetBans, isBanned } from '../limits';
+import { MINUTE_MS } from '../time';
 import type { Presence } from '../presence';
 import { takeDown } from '../replays/publish';
 import { countModeration, notify, writeAudit } from './records';
@@ -30,7 +31,11 @@ import {
 /** What moderation needs besides Firestore. */
 export interface Moderation {
   db: Firestore;
-  engine: Engine;
+  /**
+   * The engine, loaded on first use: a guest's account event or a banned
+   * player's submission never needs it.
+   */
+  engine: () => Promise<Engine>;
   presence: Presence;
   accounts: AccountLookup;
   /** Null when the secret is not there: no tombstones are written or read. */
@@ -115,7 +120,7 @@ export async function banPlayer(
     return { before, after, changed: true };
   }
   await clearOut(moderation, uid);
-  await refreshEntries(db, moderation.engine, uid, now);
+  await refreshEntries(db, await moderation.engine(), uid, now);
   const published = await db
     .collection('publicReplays')
     .where('uids', 'array-contains', uid)
@@ -212,7 +217,7 @@ export async function unbanPlayer(
   if (moderation.tombstones !== null && account?.googleUid) {
     await deleteTombstone(db, moderation.tombstones, account.googleUid);
   }
-  await refreshEntries(db, moderation.engine, uid, now);
+  await refreshEntries(db, await moderation.engine(), uid, now);
   await notify(db, uid, 'unbanned', now);
   return before;
 }
@@ -269,14 +274,15 @@ export async function applyTombstone(
  * The check after a guest linked Google (ADR 0012): once per player, when
  * their account has a Google identity, `boardMembers.googleChecked` is set
  * and the tombstone applied. A guest is looked up again at most every ten
- * minutes per instance.
+ * minutes per instance, and a player seen checked is not read again: the
+ * flag never reverts while the account exists.
  */
 export async function checkGoogleLink(
   moderation: Moderation,
   uid: string,
   now: number
 ): Promise<boolean> {
-  if (moderation.tombstones === null) {
+  if (moderation.tombstones === null || googleChecked.has(uid)) {
     return false;
   }
   const lastLook = guestLooks.get(uid);
@@ -285,6 +291,7 @@ export async function checkGoogleLink(
   }
   const member = moderation.db.doc(`boardMembers/${uid}`);
   if ((await member.get()).get('googleChecked') === true) {
+    googleChecked.add(uid);
     return false;
   }
   const account = (await moderation.accounts([uid])).get(uid);
@@ -293,13 +300,22 @@ export async function checkGoogleLink(
     return false;
   }
   await member.set({ googleChecked: true }, { merge: true });
+  googleChecked.add(uid);
   return applyTombstone(moderation, account, now);
 }
 
-const GUEST_LOOK_MS = 10 * 60_000;
+const GUEST_LOOK_MS = 10 * MINUTE_MS;
 const guestLooks = new Map<string, number>();
+/** Players this instance saw with `googleChecked` - checked for good. */
+const googleChecked = new Set<string>();
 
-/** Forgets the guests looked up - for tests. */
+/** Notes a player whose member document, read elsewhere, holds `googleChecked`. */
+export function noteGoogleChecked(uid: string): void {
+  googleChecked.add(uid);
+}
+
+/** Forgets the guests looked up and the players seen checked - for tests. */
 export function forgetGuestLooks(): void {
   guestLooks.clear();
+  googleChecked.clear();
 }

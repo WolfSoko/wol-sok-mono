@@ -55,7 +55,8 @@ export async function runAdminCommand(
   writer: string | undefined,
   now = Date.now()
 ): Promise<AdminCommandResult> {
-  const { db, engine } = deps;
+  const { db } = deps;
+  const engine = await deps.engine();
   const ref = db.doc(`adminCommands/${commandId}`);
   if (data === undefined || data['result'] !== undefined) {
     return { ok: false, error: 'done', at: now };
@@ -138,7 +139,8 @@ async function act(
   command: AdminCommand,
   now: number
 ): Promise<Done> {
-  const { db, engine } = deps;
+  const { db } = deps;
+  const engine = await deps.engine();
   switch (command.type) {
     case 'stats.refresh':
       await writeStats(db, engine, deps.presence, now);
@@ -224,7 +226,8 @@ async function resetProfile(
   uid: string,
   now: number
 ): Promise<Omit<Done, 'uid'>> {
-  const { db, engine } = deps;
+  const { db } = deps;
+  const engine = await deps.engine();
   const ref = db.doc(`profiles/${uid}`);
   const profile = await ref.get();
   if (!profile.exists) {
@@ -253,7 +256,8 @@ async function removeImage(
   uid: string,
   now: number
 ): Promise<Omit<Done, 'uid'>> {
-  const { db, engine } = deps;
+  const { db } = deps;
+  const engine = await deps.engine();
   const ref = db.doc(`profiles/${uid}`);
   const profile = await ref.get();
   const kind = (profile.get('avatar') as { kind?: string } | undefined)?.kind;
@@ -292,7 +296,8 @@ async function hide(
   uid: string,
   now: number
 ): Promise<Omit<Done, 'uid'>> {
-  const { db, engine } = deps;
+  const { db } = deps;
+  const engine = await deps.engine();
   let before: ReturnType<typeof hidesOf> | null = null;
   let after: ReturnType<typeof hidesOf> | null = null;
   // `board.hidePlayer` may name the player by one of their entries; it
@@ -330,7 +335,8 @@ async function restore(
   uid: string,
   now: number
 ): Promise<Omit<Done, 'uid'>> {
-  const { db, engine } = deps;
+  const { db } = deps;
+  const engine = await deps.engine();
   let before: ReturnType<typeof hidesOf> | null = null;
   let after: ReturnType<typeof hidesOf> | null = null;
   const boardId = entryOf(command.target)?.boardId;
@@ -363,7 +369,8 @@ async function verifyNow(
   uid: string,
   now: number
 ): Promise<Omit<Done, 'uid'>> {
-  const { db, engine } = deps;
+  const { db } = deps;
+  const engine = await deps.engine();
   const board = engine.parseBoardId(entryOf(command.target)?.boardId ?? '');
   const pay = fixedPool('admin');
   if (board?.kind === 'daily') {

@@ -11,13 +11,14 @@ import type { ReplayDoc } from '../replays/model';
 import { seatUids } from '../replays/publish';
 import { DAY_MS, dayOf, HOUR_MS } from '../time';
 import {
-  banActive,
   entryRef,
   memberOf,
   memberRef,
   putEntry,
   readStanding,
   Standing,
+  standingOf,
+  standingRefs,
 } from './entries';
 import type { MemberDoc, OnlineRecord } from './model';
 
@@ -82,23 +83,25 @@ export async function countOnline(
     const markerRef = db.doc(`rankedReplays/${replayId}`);
     const roomRef = db.doc(`rankedRooms/${room.code}`);
     const pairRef = db.doc(`pairs/${day}_${a}_${b}`);
-    const [marker, roomDoc, pair, hostBan, guestBan] = await tx.getAll(
+    const [marker, roomDoc, pair] = await tx.getAll(
       markerRef,
       roomRef,
-      pairRef,
-      db.doc(`bans/${host}`),
-      db.doc(`bans/${guest}`)
+      pairRef
     );
     if (marker.exists) {
       return { done: true };
     }
-    const members = await tx.getAll(memberRef(db, host), memberRef(db, guest));
-    const [hostMember, guestMember] = members.map((snapshot) =>
-      memberOf(snapshot)
-    );
+    const [hostSnap, guestSnap, hostBan, hostProfile, guestBan, guestProfile] =
+      await tx.getAll(
+        memberRef(db, host),
+        memberRef(db, guest),
+        ...standingRefs(db, host),
+        ...standingRefs(db, guest)
+      );
+    const [hostMember, guestMember] = [memberOf(hostSnap), memberOf(guestSnap)];
     const standings = [
-      await readStanding(tx, db, host, now),
-      await readStanding(tx, db, guest, now),
+      standingOf(hostBan, hostProfile, now),
+      standingOf(guestBan, guestProfile, now),
     ];
     const finish = (result: OnlineCount): OnlineCount => {
       tx.create(markerRef, {
@@ -127,7 +130,7 @@ export async function countOnline(
       // Six hours after the stub's own end, at most six after it opened.
       expireAt: Timestamp.fromMillis(stubCreatedAt + 12 * HOUR_MS),
     });
-    if (banActive(hostBan, now) || banActive(guestBan, now)) {
+    if (standings.some((standing) => standing.banned)) {
       return finish({ reason: 'banned' });
     }
     const earliest =

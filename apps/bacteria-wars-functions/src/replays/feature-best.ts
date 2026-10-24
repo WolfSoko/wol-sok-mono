@@ -38,12 +38,46 @@ const CANDIDATE_STATES: readonly ReplayState[] = [
   'verified',
 ];
 
+/** The human seats' uids of a replay - null when a room did not name both. */
+function humansOf(doc: ReplayDoc): string[] | null {
+  const seats = seatUids(doc);
+  return seats === null
+    ? null
+    : seats.filter((uid): uid is string => uid !== null);
+}
+
 /**
- * True for a replay the gallery may take (ADR 0011): local and submitted or
- * online and agreed - or verified already - on the current balance, at most
- * 6 minutes long, nobody took it down; only human seats on accounts that
- * are linked and at least 7 days old, two distinct ones online; nobody
- * keeps their matches out of the gallery.
+ * The part of {@link isCandidate} the replay alone decides, checked before
+ * any account is looked up: local and submitted or online and agreed - or
+ * verified already - on the current balance, at most 6 minutes long,
+ * nobody took it down, a human on a seat, both named online.
+ */
+export function fitsGallery(
+  doc: ReplayDoc,
+  engine: Pick<Engine, 'BALANCE_VERSION' | 'TICKS_PER_SEC'>
+): boolean {
+  const stateFits =
+    doc.state === 'verified' ||
+    (doc.kind === 'online'
+      ? doc.state === 'agreed'
+      : doc.state === 'submitted');
+  const humans = humansOf(doc);
+  return (
+    stateFits &&
+    doc.balanceVersion === engine.BALANCE_VERSION &&
+    doc.ticks <= minuteTicks(engine, MAX_GALLERY_MINUTES) &&
+    doc.optOut.length === 0 &&
+    humans !== null &&
+    humans.length > 0 &&
+    (doc.kind !== 'online' || doc.bound === true)
+  );
+}
+
+/**
+ * True for a replay the gallery may take (ADR 0011): it fits the gallery
+ * ({@link fitsGallery}), its human seats are on accounts that are linked
+ * and at least 7 days old, two distinct ones online, and nobody keeps
+ * their matches out of the gallery.
  */
 export function isCandidate(
   { doc }: StoredReplay,
@@ -52,22 +86,9 @@ export function isCandidate(
   optedOut: ReadonlySet<string>,
   now: number
 ): boolean {
-  const stateFits =
-    doc.state === 'verified' ||
-    (doc.kind === 'online'
-      ? doc.state === 'agreed'
-      : doc.state === 'submitted');
-  const seats = seatUids(doc);
-  const humans = (seats ?? []).filter((uid): uid is string => uid !== null);
   return (
-    stateFits &&
-    doc.balanceVersion === engine.BALANCE_VERSION &&
-    doc.ticks <= minuteTicks(engine, MAX_GALLERY_MINUTES) &&
-    doc.optOut.length === 0 &&
-    seats !== null &&
-    (doc.kind !== 'online' || doc.bound === true) &&
-    humans.length > 0 &&
-    humans.every((uid) => {
+    fitsGallery(doc, engine) &&
+    (humansOf(doc) ?? []).every((uid) => {
       const account = accounts.get(uid);
       return (
         account !== undefined &&
@@ -171,11 +192,11 @@ export async function featureBest(
     .where('createdAt', '<', Timestamp.fromMillis(start + DAY_MS))
     .limit(MAX_READ)
     .get();
-  const stored = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    doc: doc.data() as ReplayDoc,
-  }));
-  const uids = [...new Set(stored.flatMap(({ doc }) => doc.players))];
+  // The filters on the replay alone first: only their players are looked up.
+  const stored = snapshot.docs
+    .map((doc) => ({ id: doc.id, doc: doc.data() as ReplayDoc }))
+    .filter(({ doc }) => fitsGallery(doc, engine));
+  const uids = [...new Set(stored.flatMap(({ doc }) => humansOf(doc) ?? []))];
   const found = await accounts(uids);
   const optedOut = await galleryOptOuts(db, uids);
   const ranked = rankCandidates(

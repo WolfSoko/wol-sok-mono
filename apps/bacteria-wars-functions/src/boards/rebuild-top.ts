@@ -68,7 +68,9 @@ function asEntry(id: string, doc: EntryDoc): BoardEntry & { entryId: string } {
  * contend for the top document: returns at once unless the entry is
  * relevant, else rebuilds `boards/{boardId}` from the top 50 visible
  * entries and the top `cut` verified ones, with positions (ties share
- * them) and, inside the cut, the verified rank. Returns true when it wrote.
+ * them) and, inside the cut, the verified rank. A delete on a daily board
+ * past its TTL is TTL draining it, and rebuilds nothing. Returns true when
+ * it wrote.
  */
 export async function rebuildTop(
   db: Firestore,
@@ -80,6 +82,14 @@ export async function rebuildTop(
 ): Promise<boolean> {
   const board = engine.parseBoardId(boardId);
   if (board === null) {
+    return false;
+  }
+  // TTL draining a past daily board: its top document expires as well.
+  if (
+    after === undefined &&
+    board.kind === 'daily' &&
+    dailyExpireAt(board.day).toMillis() <= now
+  ) {
     return false;
   }
   const topRef = db.doc(`boards/${boardId}`);

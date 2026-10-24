@@ -150,7 +150,9 @@ The worst case for the one-hour cap (`MAX_TICKS`) is about 550 KB; a
 **Replays are kept in Firestore, not Cloud Storage.** Every replay fits
 under Firestore's 1 MiB document limit, the existing rules and TTL cover
 it, and there is no second store to secure and clean up. The blob sits in
-a subdocument so lists never load it.
+a subdocument so lists never load it. TTL deletes no subcollection with
+its parent, so the blob and the reports carry the replay's `expireAt`
+and expire by TTL of their own.
 
 ### `BALANCE_VERSION` decides what plays back
 
@@ -201,8 +203,8 @@ writes **command documents** the functions process:
 | `replaySubmissions/{auto}`           | see above                                                                                                                                                                                                                | the player (create only)            | nobody (functions)                                                     |
 | `replayCommands/{auto}`              | see above, plus `result`                                                                                                                                                                                                 | the player (create only); functions | its writer                                                             |
 | `replays/{id}`                       | `{ players: uid[], kind: 'online' \| 'computer' \| 'daily' \| 'endless', levelId, balanceVersion, replayVersion, createdAt, ticks, endedBy, winnerSeat, hint, state, score?, reasons?, optOut: uid[], expireAt }`        | functions                           | its players                                                            |
-| `replays/{id}/blob/data`             | `{ bytes, size }`                                                                                                                                                                                                        | functions                           | its players (`get` only)                                               |
-| `replays/{id}/reports/{uid}`         | `{ checksum, inputsHash, winnerSeat, endedBy, at }` (online, one per device)                                                                                                                                             | functions                           | nobody                                                                 |
+| `replays/{id}/blob/data`             | `{ bytes, size, expireAt? }`                                                                                                                                                                                             | functions                           | its players (`get` only)                                               |
+| `replays/{id}/reports/{uid}`         | `{ checksum, inputsHash, winnerSeat, endedBy, at, expireAt? }` (online, one per device)                                                                                                                                  | functions                           | nobody                                                                 |
 | `publicReplays/{publicId}`           | `{ replayId, uids, levelId, kind, balanceVersion, players: [{ label, name?, colorId, avatarPreset }], ticks, endedBy, winnerSeat, score, reasons, summary, featuredAt, featuredBy: 'auto' \| 'admin', day, removedAt? }` | functions                           | nobody (served by `publicSite`)                                        |
 | `publicReplays/{publicId}/blob/data` | `{ bytes, size }` (`forPublic`)                                                                                                                                                                                          | functions                           | nobody (served by `publicSite`)                                        |
 | `replayCandidates/{day}`             | the day's verified runners-up                                                                                                                                                                                            | functions                           | admin                                                                  |
@@ -234,13 +236,17 @@ a dead end), `verified`, `unverified`, `balance-mismatch`.
 - `publicReplays` documents carry `removedAt: null` until they are removed,
   so queries on `removedAt == null` find them (added by ADR 0012).
 - **Retention.** Private replays expire by TTL on `expireAt`, 30 days after
-  the match (Firestore's TTL runs up to a day late). Featuring clears
-  `expireAt` on the private copy. Public replays stay until removed.
-  Submissions and commands expire by TTL after a day.
+  the match (Firestore's TTL runs up to a day late). Their blob and
+  reports carry the same `expireAt`, since TTL deletes no subcollection.
+  Featuring clears `expireAt` on the private copy, its blob and its
+  reports, and taking it down sets it on all three again. Public replays
+  and their blobs stay until removed. Submissions and commands expire by
+  TTL after a day.
 - Indexes: `replays` on `players` (array-contains) + `createdAt desc`;
   `replays` on `createdAt` + `state` for `featureBest`; `publicReplays` on
   `removedAt` + `featuredAt desc` and `balanceVersion` + `score desc`. TTL
-  on `replays.expireAt`, `replaySubmissions.expireAt`,
+  on `replays.expireAt`, `blob.expireAt` and `reports.expireAt` (the
+  collection groups under a replay), `replaySubmissions.expireAt`,
   `replayCommands.expireAt`.
 
 ### Who is named in public

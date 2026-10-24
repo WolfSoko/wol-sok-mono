@@ -250,15 +250,21 @@ interface Creator {
   create(ref: DocumentReference, data: DocumentData): unknown;
 }
 
+/**
+ * Stores a replay's bytes beside it, with the replay's `expireAt`: TTL
+ * deletes no subcollection with its parent, so the blob expires itself.
+ */
 function addBlob(
   batch: Creator,
   db: Firestore,
   replayId: string,
-  bytes: Uint8Array
+  bytes: Uint8Array,
+  expireAt: Timestamp | undefined
 ): void {
   batch.create(db.doc(`replays/${replayId}/blob/data`), {
     bytes: Buffer.from(bytes),
     size: bytes.length,
+    ...(expireAt === undefined ? {} : { expireAt }),
   });
 }
 
@@ -300,7 +306,7 @@ async function acceptLocal(
   };
   const batch = db.batch();
   batch.create(db.doc(`replays/${id}`), doc);
-  addBlob(batch, db, id, submission.bytes);
+  addBlob(batch, db, id, submission.bytes, doc.expireAt);
   const increments = levelStatsIncrements(
     replay,
     engine.TICKS_PER_SEC,
@@ -375,8 +381,11 @@ async function acceptOnline(
         closeAt: Timestamp.fromMillis(submission.createdAt + WAITING_CLOSE_MS),
       };
       tx.create(replayRef, doc);
-      addBlob(tx, db, id, submission.bytes);
-      tx.create(db.doc(`replays/${id}/reports/${uid}`), report);
+      addBlob(tx, db, id, submission.bytes, doc.expireAt);
+      tx.create(db.doc(`replays/${id}/reports/${uid}`), {
+        ...report,
+        expireAt: doc.expireAt,
+      });
       return { stored: id, state: 'waiting' };
     }
     const existing = stored.data() as ReplayDoc;
@@ -405,7 +414,12 @@ async function acceptOnline(
       bound: existing.bound === true && room.live,
       closeAt: FieldValue.delete(),
     });
-    tx.create(db.doc(`replays/${id}/reports/${uid}`), report);
+    tx.create(db.doc(`replays/${id}/reports/${uid}`), {
+      ...report,
+      ...(existing.expireAt === undefined
+        ? {}
+        : { expireAt: existing.expireAt }),
+    });
     return { stored: id, state };
   });
 }

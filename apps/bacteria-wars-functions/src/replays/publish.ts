@@ -1,4 +1,9 @@
-import { FieldValue, Firestore, Timestamp } from 'firebase-admin/firestore';
+import {
+  DocumentReference,
+  FieldValue,
+  Firestore,
+  Timestamp,
+} from 'firebase-admin/firestore';
 import { REPLAY_DAYS } from '../config';
 import type { Engine } from '../engine';
 import { DAY_MS, dayOf } from '../time';
@@ -39,6 +44,23 @@ export function seatUids(doc: ReplayDoc): (string | null)[] | null {
     : null;
 }
 
+/**
+ * The documents under a replay that expire with it - its blob and, online,
+ * the players' reports: TTL deletes no subcollection with its parent, so
+ * each carries the replay's `expireAt`.
+ */
+function expiringWith(
+  replayRef: DocumentReference,
+  doc: Pick<ReplayDoc, 'kind' | 'players'>
+): DocumentReference[] {
+  return [
+    replayRef.collection('blob').doc('data'),
+    ...(doc.kind === 'online'
+      ? doc.players.map((uid) => replayRef.collection('reports').doc(uid))
+      : []),
+  ];
+}
+
 /** The preset avatar the gallery draws for a colour. */
 export function colorAvatar(engine: Engine, colorId: string): number {
   const index = engine.COLONY_COLORS.findIndex((color) => color.id === colorId);
@@ -64,7 +86,8 @@ function publicSeat(
  * Publishes a verified replay under a fresh random id, never the private
  * one: the header without room, match number and app version, the players
  * by colour and - only where they opted in - by their checked name. The
- * private copy keeps no `expireAt` while it is public.
+ * private copy, its blob and its reports keep no `expireAt` while it is
+ * public; the public blob never has one.
  */
 export async function publishReplay(
   db: Firestore,
@@ -138,6 +161,9 @@ export async function publishReplay(
     if ((current.get('optOut') as string[] | undefined)?.length) {
       return 'opted-out';
     }
+    const children = await tx.getAll(
+      ...expiringWith(replayRef, current.data() as ReplayDoc)
+    );
     tx.create(publicRef, publicDoc);
     tx.create(publicRef.collection('blob').doc('data'), {
       bytes: Buffer.from(publicBytes),
@@ -147,6 +173,11 @@ export async function publishReplay(
       publicId: publicRef.id,
       expireAt: FieldValue.delete(),
     });
+    for (const child of children) {
+      if (child.exists) {
+        tx.update(child.ref, { expireAt: FieldValue.delete() });
+      }
+    }
     return { publicId: publicRef.id };
   });
 }
@@ -154,7 +185,7 @@ export async function publishReplay(
 /**
  * Takes a replay's public copies down: `removedAt` set - a removed one
  * answers 410 and leaves the sitemap - and its blob deleted. The private
- * copy expires again like any other.
+ * copy, its blob and its reports expire again like any other.
  */
 export async function takeDown(
   db: Firestore,
@@ -175,11 +206,18 @@ export async function takeDown(
   const replay = await replayRef.get();
   if (replay.exists && typeof replay.get('publicId') === 'string') {
     const createdAt = (replay.get('createdAt') as Timestamp).toMillis();
-    const expireAt = Math.max(createdAt + REPLAY_DAYS * DAY_MS, now + DAY_MS);
-    batch.update(replayRef, {
-      publicId: FieldValue.delete(),
-      expireAt: Timestamp.fromMillis(expireAt),
-    });
+    const expireAt = Timestamp.fromMillis(
+      Math.max(createdAt + REPLAY_DAYS * DAY_MS, now + DAY_MS)
+    );
+    batch.update(replayRef, { publicId: FieldValue.delete(), expireAt });
+    const children = await db.getAll(
+      ...expiringWith(replayRef, replay.data() as ReplayDoc)
+    );
+    for (const child of children) {
+      if (child.exists) {
+        batch.update(child.ref, { expireAt });
+      }
+    }
   }
   await batch.commit();
   return published.docs.map((doc) => doc.id);

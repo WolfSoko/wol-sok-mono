@@ -56,7 +56,7 @@ export async function deletePlayerBoards(
   account: Account,
   now = Date.now()
 ): Promise<DeletedBoards> {
-  const { db, engine, presence } = moderation;
+  const { db, presence } = moderation;
   const { uid } = account;
   const result: DeletedBoards = { entries: 0, tombstone: false, scrubbed: 0 };
 
@@ -81,13 +81,17 @@ export async function deletePlayerBoards(
   if (memberSnap.exists) {
     const member = memberOf(memberSnap);
     const batch = db.batch();
-    for (const boardId of member.boards) {
-      if (engine.parseBoardId(boardId) === null) {
-        continue;
+    // Most guests hold no entry: the engine is loaded only for one that does.
+    if (member.boards.length > 0) {
+      const engine = await moderation.engine();
+      for (const boardId of member.boards) {
+        if (engine.parseBoardId(boardId) === null) {
+          continue;
+        }
+        const kind = kindOf(engine, boardId);
+        batch.delete(entryRef(db, boardId, member.entryIds[kind]));
+        result.entries++;
       }
-      const kind = kindOf(engine, boardId);
-      batch.delete(entryRef(db, boardId, member.entryIds[kind]));
-      result.entries++;
     }
     batch.delete(memberSnap.ref);
     await batch.commit();

@@ -113,6 +113,10 @@ describe('firestore.indexes.json', () => {
     'challenges',
     'queue',
     'replays',
+    // A replay's blob and reports carry its expireAt: TTL deletes no
+    // subcollection with its parent.
+    'blob',
+    'reports',
     'replaySubmissions',
     'replayCommands',
     'attempts',
