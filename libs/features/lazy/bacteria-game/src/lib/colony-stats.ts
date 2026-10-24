@@ -135,7 +135,8 @@ export function sameColonyStats(
   b: readonly ColonyStats[]
 ): boolean {
   return (
-    a.length === b.length && a.every((colony, index) => sameFields(colony, b[index]))
+    a.length === b.length &&
+    a.every((colony, index) => sameFields(colony, b[index]))
   );
 }
 

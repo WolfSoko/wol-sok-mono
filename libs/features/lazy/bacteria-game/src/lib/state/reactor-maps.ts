@@ -6,7 +6,7 @@
 
 import { GameMap, pointSymmetric, Rect } from './maps';
 import { blob } from './shapes';
-import { disc, puddle, Zone } from './zones';
+import { disc, puddle } from './zones';
 
 /** The fuel rods of the left half, as shares of the arena. */
 const RODS = [
