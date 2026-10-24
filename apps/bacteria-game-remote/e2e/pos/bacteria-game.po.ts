@@ -248,6 +248,17 @@ export class BacteriaGamePo {
     );
   }
 
+  /**
+   * The GPU self-test's stored verdict (ADR 0015) - null until the game
+   * has run it.
+   */
+  public async gpuSelfTest(): Promise<{ ok: boolean } | null> {
+    const json = await this.page.evaluate(() =>
+      localStorage.getItem('bacteria-game.gpu-self-test')
+    );
+    return json === null ? null : (JSON.parse(json) as { ok: boolean });
+  }
+
   /** The number of bacteria a colony has, as the stage bar shows it. */
   public async colonyCount(colony: number): Promise<number> {
     const text = await this.page

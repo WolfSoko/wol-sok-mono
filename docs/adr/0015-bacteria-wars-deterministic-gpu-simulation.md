@@ -199,7 +199,7 @@ sits behind a flag; step 8 switches it on.
    - `chooseSimulation` (`gl/simulation-choice.ts`) takes the integer GPU
      simulation for a GPU that passed, `IntSimulation` otherwise, and falls
      back to `IntSimulation` when a GPU simulation fails to start. It is
-     behind `DETERMINISTIC_SIMULATION`, still false.
+     behind `DETERMINISTIC_SIMULATION`, on since step 8.
    - CI plays three whole-match scenarios through `GpuSimulation` on
      SwiftShader against `golden-gpu-sim.json`, which `sim-golden.spec.ts`
      keeps equal to `IntSimulation`'s hashes, and runs the self-test there.
@@ -242,18 +242,16 @@ sits behind a flag; step 8 switches it on.
      from hard against normal, which the engine cannot set per seat, so the
      real check is a playtest on a device that passed the self-test, and
      ranked `gpu-int` play. Revisit them before the boards open.
-   - "Record local matches" is on by default once `DETERMINISTIC_SIMULATION`
-     is: while the switch is off a recorded match still plays on the CPU, so
-     the default follows the switch.
-   - `DETERMINISTIC_SIMULATION` stays off until the owner's real-device
-     check passed; turning it on is a one-line change. Meanwhile a device
-     opts in with `?sim=gpu-int`: it runs the self-test, plays local
-     matches on the integer GPU passes whatever the self-test said and
-     shows the ruleset and the self-test's verdict in the settings under
-     "Screen". `?sim=cpu` forces the CPU, `?sim=auto` clears the override
-     (`SimulationOverrideService`, kept in `DeviceStorage`). While the
-     switch is off a device offers only `cpu` online, opted in or not; once
-     it is on, the override still changes local play only.
+   - "Record local matches" is on by default, as is the switch: the
+     default follows `DETERMINISTIC_SIMULATION`.
+   - `DETERMINISTIC_SIMULATION` is on since the owner's real-device check
+     passed (2026-10-24). Before, while it was off, a device opted in with
+     `?sim=gpu-int`. The override stays for later checks: `?sim=gpu-int`
+     plays local matches on the integer GPU passes whatever the self-test
+     said, `?sim=cpu` forces the CPU, `?sim=auto` clears it
+     (`SimulationOverrideService`, kept in `DeviceStorage`); it changes
+     local play only, never what a device offers online. The settings
+     show the ruleset and the self-test's verdict under "Screen".
 9. Tune the CPU reference for the server. Done for a first round, bit for
    bit (every golden unchanged):
    - the passes read module-local copies of their constants and helpers,
