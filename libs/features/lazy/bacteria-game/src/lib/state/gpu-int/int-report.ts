@@ -82,20 +82,17 @@ export function intReport(
       const cell = y * width + x;
       const column = Math.floor(x / cellSize);
       const record = events[cell * 4 + 3];
-      const add = (row: number, slot: number) => {
-        const at = texel(column, pelletRow + row) + slot - 1;
-        out[at] = (out[at] + 1) >>> 0;
-      };
+      const base = texel(column, pelletRow) - 1;
       if ((record & POISONED) !== 0) {
-        add(REPORT_ROWS.pellets, 2);
+        countIn(out, base + texel(0, REPORT_ROWS.pellets) + 2);
       }
       const capturer = record & RECORD_MASK;
       if (capturer !== 0) {
-        add(REPORT_ROWS.captures, capturer);
+        countIn(out, base + texel(0, REPORT_ROWS.captures) + capturer);
       }
       const loser = (record >> LOSER_SHIFT) & RECORD_MASK;
       if (loser !== 0) {
-        add(REPORT_ROWS.losses, loser);
+        countIn(out, base + texel(0, REPORT_ROWS.losses) + loser);
       }
       const owner = state[cell * 4];
       if (
@@ -103,7 +100,7 @@ export function intReport(
         owner !== 0 &&
         mask[cell] >> ZONE_SHIFT === ZONE_CODE.hill
       ) {
-        add(REPORT_ROWS.hill, owner);
+        countIn(out, base + texel(0, REPORT_ROWS.hill) + owner);
       }
     }
   }
@@ -134,4 +131,9 @@ export function intReport(
     out[at + 3] = (byColony[2] | (byColony[3] << 16)) >>> 0;
   }
   return out;
+}
+
+/** Adds one to a report texel's channel, wrapping as the GPU's uint does. */
+function countIn(out: Uint32Array, at: number): void {
+  out[at] = (out[at] + 1) >>> 0;
 }

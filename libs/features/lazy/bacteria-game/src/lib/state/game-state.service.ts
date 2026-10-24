@@ -55,6 +55,7 @@ import { randomSeed } from './geometry';
 import { MatchOutcome } from './win-conditions';
 import { MatchPlan, planMatch } from './match-setup';
 import { Replay, ReplayExtras, replayOf, replayOutcome } from './replay';
+import type { Simulation } from './simulation';
 import { matchChecksum } from './checksum';
 import { replayScore } from './replay-score';
 import type { SizeSample } from './match-engine';
@@ -431,7 +432,7 @@ export class GameStateService {
       ? null
       : replayOf(
           this.plan,
-          this.playerService.getSimulation().kind,
+          replaySimulation(this.playerService.getSimulation().kind),
           this.playerService.tickCount,
           this.playerService.recorded,
           {
@@ -1105,4 +1106,13 @@ const SERIES_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
  */
 function planModeOf(mode: GameMode, matchLevel: string | null): GameMode {
   return matchLevel === null ? mode : 'vs-computer';
+}
+
+/**
+ * How a replay names the simulation that ran it. The deterministic integer
+ * one does not replay on `BacteriaSimulation` either, so it counts as `gpu`
+ * until replays get a value of their own for it (ADR 0015, step 8).
+ */
+function replaySimulation(kind: Simulation['kind']): 'cpu' | 'gpu' {
+  return kind === 'cpu' ? 'cpu' : 'gpu';
 }

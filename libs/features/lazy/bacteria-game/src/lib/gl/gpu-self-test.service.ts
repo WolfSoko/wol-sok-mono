@@ -20,7 +20,17 @@ export interface StoredSelfTest extends SelfTestDevice {
   balanceVersion: number;
   ok: boolean;
   firstBadTick?: number;
+  /** When it ran, in ms since the epoch - see {@link SELF_TEST_MAX_AGE_MS}. */
+  testedAt: number;
 }
+
+/**
+ * How long a stored result holds. Neither the renderer string nor the
+ * browser's names the driver's version on most devices, so a driver update
+ * goes unseen: testing again every week bounds how long a device plays on
+ * a verdict its new driver no longer earns.
+ */
+export const SELF_TEST_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** A stored result, as far as it can be read - null when it cannot. */
 export function parseStoredSelfTest(value: unknown): StoredSelfTest | null {
@@ -33,7 +43,8 @@ export function parseStoredSelfTest(value: unknown): StoredSelfTest | null {
     typeof v['balanceVersion'] !== 'number' ||
     typeof v['renderer'] !== 'string' ||
     typeof v['browser'] !== 'string' ||
-    typeof v['ok'] !== 'boolean'
+    typeof v['ok'] !== 'boolean' ||
+    typeof v['testedAt'] !== 'number'
   ) {
     return null;
   }
@@ -45,22 +56,26 @@ export function parseStoredSelfTest(value: unknown): StoredSelfTest | null {
     browser: v['browser'],
     ok: v['ok'],
     ...(typeof tick === 'number' ? { firstBadTick: tick } : {}),
+    testedAt: v['testedAt'],
   };
 }
 
 /**
  * True when a stored result still speaks for this device: the same test,
- * balance, GPU and browser - a browser or driver update tests again.
+ * balance, GPU and browser, and younger than {@link SELF_TEST_MAX_AGE_MS}.
  */
 export function storedResultHolds(
   stored: StoredSelfTest,
-  device: SelfTestDevice
+  device: SelfTestDevice,
+  now: number
 ): boolean {
   return (
     stored.version === GPU_SELF_TEST_VERSION &&
     stored.balanceVersion === BALANCE_VERSION &&
     stored.renderer === device.renderer &&
-    stored.browser === device.browser
+    stored.browser === device.browser &&
+    now - stored.testedAt >= 0 &&
+    now - stored.testedAt < SELF_TEST_MAX_AGE_MS
   );
 }
 
@@ -70,8 +85,10 @@ export function storedResultHolds(
  * once per page session and remembered per device in `DeviceStorage`, so
  * the test only runs again for another GPU, browser, balance or test.
  *
- * The answer comes late: until it does, `result` is null and a
- * deterministic match plays on the CPU.
+ * The answer comes late - the test runs in a task of its own, after the
+ * arena's first frame: until it does, `result` is null and a deterministic
+ * match plays on the CPU. A test that could not run to the end (`error`)
+ * fails for this page session only and is not stored.
  */
 @Injectable({ providedIn: 'root' })
 export class GpuSelfTestService {
@@ -88,7 +105,9 @@ export class GpuSelfTestService {
    */
   public check(
     run: () => GpuSelfTestResult = runGpuSelfTest,
-    device: () => SelfTestDevice = thisDevice
+    device: () => SelfTestDevice = thisDevice,
+    schedule: (task: () => void) => void = (task) => setTimeout(task),
+    now: () => number = Date.now
   ): void {
     if (this.started) {
       return;
@@ -100,7 +119,7 @@ export class GpuSelfTestService {
       .pipe(take(1))
       .subscribe((value) => {
         const stored = parseStoredSelfTest(value);
-        if (stored != null && storedResultHolds(stored, here)) {
+        if (stored != null && storedResultHolds(stored, here, now())) {
           this.verdict.set({
             ok: stored.ok,
             renderer: stored.renderer,
@@ -110,26 +129,39 @@ export class GpuSelfTestService {
           });
           return;
         }
-        const result = run();
-        if (!result.ok) {
-          console.warn(
-            'The GPU fails the deterministic self-test - matches play on the CPU',
-            result
-          );
-        }
-        this.verdict.set(result);
-        const record: StoredSelfTest = {
-          version: GPU_SELF_TEST_VERSION,
-          balanceVersion: BALANCE_VERSION,
-          renderer: here.renderer,
-          browser: here.browser,
-          ok: result.ok,
-          ...(result.firstBadTick == null
-            ? {}
-            : { firstBadTick: result.firstBadTick }),
-        };
-        this.storage.write(GPU_SELF_TEST_STORAGE_KEY, record);
+        schedule(() => this.runAndStore(run, here, now));
       });
+  }
+
+  private runAndStore(
+    run: () => GpuSelfTestResult,
+    here: SelfTestDevice,
+    now: () => number
+  ): void {
+    const result = run();
+    if (!result.ok) {
+      console.warn(
+        'The GPU fails the deterministic self-test - matches play on the CPU',
+        result
+      );
+    }
+    this.verdict.set(result);
+    // Kept only for the GPU it ran on, and only when it ran to the end.
+    if (result.error != null || result.renderer !== here.renderer) {
+      return;
+    }
+    const record: StoredSelfTest = {
+      version: GPU_SELF_TEST_VERSION,
+      balanceVersion: BALANCE_VERSION,
+      renderer: here.renderer,
+      browser: here.browser,
+      ok: result.ok,
+      ...(result.firstBadTick == null
+        ? {}
+        : { firstBadTick: result.firstBadTick }),
+      testedAt: now(),
+    };
+    this.storage.write(GPU_SELF_TEST_STORAGE_KEY, record);
   }
 }
 

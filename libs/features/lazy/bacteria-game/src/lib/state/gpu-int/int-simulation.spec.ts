@@ -106,7 +106,7 @@ describe('IntSimulation', () => {
 
   it('is a CPU simulation with no state before it has a size', () => {
     const simulation = simulationOf(SELF_TEST_SCENARIO);
-    expect(simulation.kind).toBe('cpu');
+    expect(simulation.kind).toBe('int');
     expect(simulation.readState()).toBeNull();
   });
 });

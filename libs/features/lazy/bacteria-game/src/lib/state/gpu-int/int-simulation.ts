@@ -39,7 +39,7 @@ interface PendingReport {
  * the one of tick `t` at the start of tick `t + DETERMINISTIC_REPORT_LAG`.
  */
 export class IntSimulation extends GridSimulation {
-  public readonly kind = 'cpu';
+  public readonly kind = 'int';
   private state: Uint16Array = new Uint16Array(0);
   private scratch = new IntPassScratch(0, 0);
   private readonly match: IntMatchUniforms;

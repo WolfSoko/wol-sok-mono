@@ -12,6 +12,11 @@ import { GpuSimulation } from './gpu-simulation';
 export interface GpuSelfTestResult extends SelfTestVerdict {
   /** The GPU and driver, as WebGL names them - `none` without WebGL2. */
   renderer: string;
+  /**
+   * Why the test could not run to the end - no WebGL2 context, a shader the
+   * driver rejected, a lost context. Absent when it compared every tick.
+   */
+  error?: string;
 }
 
 /**
@@ -22,8 +27,7 @@ export interface GpuSelfTestResult extends SelfTestVerdict {
  * other device does, and may play a deterministic match. Any error - a
  * shader the driver rejects, a format it cannot render into - fails it.
  *
- * It costs a few milliseconds of GPU time and waits for the GPU once per
- * tick; run it on a context of its own, as the programs' uniforms are
+ * It compiles the integer programs and waits for the GPU once per tick; run it on a context of its own, as the programs' uniforms are
  * shared by every simulation on one.
  */
 export function gpuSelfTest(gl: WebGL2RenderingContext): GpuSelfTestResult {
@@ -39,8 +43,8 @@ export function gpuSelfTest(gl: WebGL2RenderingContext): GpuSelfTestResult {
     );
     const hashes = playScenario(scenario, simulation);
     return { ...selfTestVerdict(hashes, SELF_TEST_GOLDEN.hashes), renderer };
-  } catch {
-    return { ok: false, firstBadTick: 1, renderer };
+  } catch (error) {
+    return { ok: false, renderer, error: String(error) };
   } finally {
     simulation?.dispose();
   }
@@ -60,7 +64,7 @@ export function runGpuSelfTest(
     gl = null;
   }
   if (gl == null) {
-    return { ok: false, renderer: 'none' };
+    return { ok: false, renderer: 'none', error: 'no WebGL2 context' };
   }
   try {
     return gpuSelfTest(gl);

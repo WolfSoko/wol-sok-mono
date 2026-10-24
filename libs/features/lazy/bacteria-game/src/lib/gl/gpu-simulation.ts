@@ -434,6 +434,9 @@ export class GpuSimulation extends GridSimulation {
     }
     this.requestReadback(resources);
     this.renderReport(resources);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindVertexArray(null);
   }
 
   /**

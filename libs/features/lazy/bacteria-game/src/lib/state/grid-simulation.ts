@@ -98,7 +98,7 @@ export interface GridSimulationOptions {
  * as their TypeScript reference - so both read the same inputs.
  */
 export abstract class GridSimulation implements Simulation {
-  public abstract readonly kind: 'cpu' | 'gpu';
+  public abstract readonly kind: 'gpu' | 'int';
   protected width = 0;
   protected height = 0;
   protected layout: ReportLayout;
