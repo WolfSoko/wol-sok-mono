@@ -121,62 +121,65 @@
             }
             @case ("start") {
               <div class="start-step">
-                <section
-                  class="details"
-                  [attr.aria-label]="'newGame.briefing' | t"
-                  [style.--level-floor]="briefing()?.floor"
-                  [style.--level-edge]="briefing()?.edge"
-                >
-                  @if (briefing(); as chosen) {
-                    @if (previews) {
-                      <feat-lazy-bac-game-level-preview
-                        class="details-preview"
-                        [levelId]="chosen.id"
-                        [title]="chosen.title"
-                        [size]="chosen.size"
-                        urgent
-                      />
+                <!-- Online, the level is only told once there is a match to play it in. -->
+                @if (kind() !== "online" || online().phase !== "idle") {
+                  <section
+                    class="details"
+                    [attr.aria-label]="'newGame.briefing' | t"
+                    [style.--level-floor]="briefing()?.floor"
+                    [style.--level-edge]="briefing()?.edge"
+                  >
+                    @if (briefing(); as chosen) {
+                      @if (previews) {
+                        <feat-lazy-bac-game-level-preview
+                          class="details-preview"
+                          [levelId]="chosen.id"
+                          [title]="chosen.title"
+                          [size]="chosen.size"
+                          urgent
+                        />
+                      }
+                      <span class="details-number">{{ chosen.kicker }}</span>
+                      <h3 class="details-title">{{ chosen.title }}</h3>
+                      @if (chosen.facts.length > 0) {
+                        <ul class="facts">
+                          @for (fact of chosen.facts; track $index) {
+                            <li class="fact" [style.--fact-color]="fact.color">
+                              {{ fact.label }}
+                            </li>
+                          }
+                        </ul>
+                      }
+                      <p class="details-description">
+                        {{ chosen.description }}
+                      </p>
+                      @if (kind() === "daily") {
+                        <p class="note">{{ dailyNote() }}</p>
+                      }
+                      @if (mission(); as brief) {
+                        <dl class="mission-brief">
+                          <dt>{{ "training.goalLabel" | t }}</dt>
+                          <dd>{{ brief.goal | t }}</dd>
+                          <dt>{{ "training.tipLabel" | t }}</dt>
+                          <dd>{{ brief.tip | t }}</dd>
+                        </dl>
+                      }
+                    } @else {
+                      <span class="details-number">{{
+                        "newGame.endless.kicker" | t
+                      }}</span>
+                      <h3 class="details-title">
+                        {{ "newGame.endless.title" | t }}
+                      </h3>
+                      <p class="details-description">
+                        {{
+                          "newGame.endless.description"
+                            | t: { count: endlessLives }
+                        }}
+                      </p>
                     }
-                    <span class="details-number">{{ chosen.kicker }}</span>
-                    <h3 class="details-title">{{ chosen.title }}</h3>
-                    @if (chosen.facts.length > 0) {
-                      <ul class="facts">
-                        @for (fact of chosen.facts; track $index) {
-                          <li class="fact" [style.--fact-color]="fact.color">
-                            {{ fact.label }}
-                          </li>
-                        }
-                      </ul>
-                    }
-                    <p class="details-description">
-                      {{ chosen.description }}
-                    </p>
-                    @if (kind() === "daily") {
-                      <p class="note">{{ dailyNote() }}</p>
-                    }
-                    @if (mission(); as brief) {
-                      <dl class="mission-brief">
-                        <dt>{{ "training.goalLabel" | t }}</dt>
-                        <dd>{{ brief.goal | t }}</dd>
-                        <dt>{{ "training.tipLabel" | t }}</dt>
-                        <dd>{{ brief.tip | t }}</dd>
-                      </dl>
-                    }
-                  } @else {
-                    <span class="details-number">{{
-                      "newGame.endless.kicker" | t
-                    }}</span>
-                    <h3 class="details-title">
-                      {{ "newGame.endless.title" | t }}
-                    </h3>
-                    <p class="details-description">
-                      {{
-                        "newGame.endless.description"
-                          | t: { count: endlessLives }
-                      }}
-                    </p>
-                  }
-                </section>
+                  </section>
+                }
 
                 <section
                   class="setup"
@@ -187,9 +190,9 @@
                       [lobby]="online()"
                       [available]="onlineAvailable()"
                       [colonyNames]="colonyNames()"
-                      (host)="hostOnline.emit()"
+                      (host)="createOnline()"
                       (join)="joinOnline.emit($event)"
-                      (leave)="leaveOnline.emit()"
+                      (leave)="leaveOnlineMatch()"
                     />
                   } @else if (mission(); as brief) {
                     <span class="best-label">{{ "newGame.opponent" | t }}</span>

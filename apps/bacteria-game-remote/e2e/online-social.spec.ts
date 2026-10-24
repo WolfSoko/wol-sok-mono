@@ -44,7 +44,7 @@ async function player(browser: Browser, name: string): Promise<Player> {
 
 /** On to the online lobby. */
 async function lobby({ po }: Player): Promise<void> {
-  await po.setUp('Online');
+  await po.setUpOnline();
 }
 
 test('players meet by matchmaking, become friends and challenge each other', async ({

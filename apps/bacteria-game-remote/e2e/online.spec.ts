@@ -25,7 +25,7 @@ async function device(
   const page = await (await browser.newContext()).newPage();
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.setUp('Online');
+  await po.setUpOnline();
   return { page, po };
 }
 
@@ -39,7 +39,7 @@ test('two devices play an online match, and the one left wins', async ({
   const host = await device(browser);
   const guest = await device(browser);
 
-  await host.page.getByRole('button', { name: 'Open a match' }).click();
+  await host.po.openMatch();
   const code = lobby(host.page).locator('.code');
   await expect(code).toHaveText(/^[A-Z2-9]{6}$/);
   await guest.page

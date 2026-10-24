@@ -171,7 +171,17 @@ export class NewGameComponent {
 
   /** The mode picked, null until one is. */
   protected readonly kind = linkedSignal(() => this.entry().kind);
-  protected readonly steps = computed(() => stepsOf(this.kind()));
+  /**
+   * True while the player picks the level of an online match to open -
+   * from the lobby's Open button until the match is opened or given up.
+   */
+  protected readonly creating = linkedSignal(() => {
+    this.kind();
+    return false;
+  });
+  protected readonly steps = computed(() =>
+    stepsOf(this.kind(), this.creating())
+  );
   /** The step the player is on - one the mode has, else its first. */
   protected readonly step = linkedSignal((): NewGameStep => this.entry().step);
   /** Where in the mode's steps that is, for the stepper. */
@@ -409,14 +419,36 @@ export class NewGameComponent {
     this.step.set('start');
   }
 
-  /** Picks a level and goes on to the start. */
+  /**
+   * Picks a level and goes on to the start - for an online match being
+   * created, it opens the match on that level too.
+   */
   protected pickLevel(id: string): void {
     this.levelChange.emit(id);
+    if (this.creating()) {
+      this.hostOnline.emit();
+      this.creating.set(false);
+    }
     this.step.set('start');
   }
 
+  /** The lobby's Open button: first the level of the match to open. */
+  protected createOnline(): void {
+    this.creating.set(true);
+    this.step.set('level');
+  }
+
+  protected leaveOnlineMatch(): void {
+    this.creating.set(false);
+    this.leaveOnline.emit();
+  }
+
   protected goTo(index: number): void {
-    this.step.set(this.steps()[index] ?? 'mode');
+    const step = this.steps()[index] ?? 'mode';
+    if (step !== 'level') {
+      this.creating.set(false);
+    }
+    this.step.set(step);
   }
 
   protected next(): void {
@@ -424,7 +456,11 @@ export class NewGameComponent {
   }
 
   protected goBack(): void {
-    if (this.index() === 0) {
+    if (this.creating() && this.step() === 'level') {
+      // Back from the level of a match to open is back to the lobby.
+      this.creating.set(false);
+      this.step.set('start');
+    } else if (this.index() === 0) {
       this.back.emit();
     } else {
       this.goTo(this.index() - 1);

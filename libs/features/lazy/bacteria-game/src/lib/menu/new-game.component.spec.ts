@@ -232,7 +232,30 @@ describe('NewGameComponent', () => {
     fixture.componentInstance.start.subscribe(started);
 
     expect(host().querySelector('.start')).toBeNull();
+    // The lobby comes first, with no level to pick or brief yet.
+    expect(host().querySelector('feat-lazy-bac-game-level-map')).toBeNull();
+    expect(host().querySelector('.details')).toBeNull();
+    const levels = jest.fn();
+    fixture.componentInstance.levelChange.subscribe(levels);
     button('Open a match').click();
+    await settle();
+    // Opening a match picks its level first; back is back to the lobby.
+    expect(host().querySelector('feat-lazy-bac-game-level-map')).not.toBeNull();
+    expect(hosted).not.toHaveBeenCalled();
+    button('Back').click();
+    await settle();
+    expect(host().querySelector('feat-lazy-bac-game-level-map')).toBeNull();
+    button('Open a match').click();
+    await settle();
+    host()
+      .querySelector<HTMLButtonElement>(
+        'feat-lazy-bac-game-level-map button:not([disabled])'
+      )
+      ?.click();
+    await settle();
+    expect(levels).toHaveBeenCalled();
+    expect(hosted).toHaveBeenCalledTimes(1);
+    expect(host().querySelector('feat-lazy-bac-game-level-map')).toBeNull();
     const input = host().querySelector<HTMLInputElement>('input[name="code"]');
     if (input === null) {
       throw new Error('no code input');

@@ -935,11 +935,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       action === 'again' ? this.gameStateService.oneMatch() : null;
     if (action === 'levels') {
       // The daily level and an endless run have no level to choose: their
-      // mode then, to pick another.
+      // mode then, to pick another. Online goes back to the lobby.
       const kind = this.playKind();
       this.newGameEntry.set({
         kind,
-        step: stepsOf(kind).includes('level') ? 'level' : 'mode',
+        step:
+          kind === 'online'
+            ? 'start'
+            : stepsOf(kind).includes('level')
+              ? 'level'
+              : 'mode',
       });
     }
     this.screen.set(
