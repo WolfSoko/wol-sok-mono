@@ -16,7 +16,7 @@ import {
   levelMap,
 } from './levels';
 import { MatchOptions, PlayerSpawn } from './match-engine';
-import { GhostController, SeatDriver, turnedOnto } from './ghost';
+import { GhostController, NO_INPUT, SeatDriver, turnedOnto } from './ghost';
 import { HeadStart, startScales } from './rivalry';
 import { spawnSpots } from './shapes';
 import type { Replay } from './replay';
@@ -64,7 +64,8 @@ export interface OnlineSeats {
  * names change with it so the scoreboard reads "You" and "Computer".
  * Between two players each one is called by their colour. Against a
  * `ghost` the second colony plays that recorded run instead of a bot. On a
- * level with a `dummy` it is the training dummy, which nobody steers.
+ * level played against a dummy (`opponent`) it is the training dummy,
+ * which nobody steers.
  *
  * `online` makes it a match between two devices, played between two players
  * without a head start: the other device's seat spawns as a bot, as the
@@ -85,9 +86,9 @@ export function planMatch(
   const { width, height, mode } = plan;
   const level = getLevel(plan.levelId);
   const boss = ghost === null ? level.boss : undefined;
-  const dummy = ghost === null && level.dummy === true;
   const scale = gridScale(level, width);
   const versusComputer = mode === 'vs-computer';
+  const dummy = ghost === null && versusComputer && level.opponent === 'dummy';
   const [left, right] = plan.colors.map(getColonyColor);
   const [leftScale, rightScale] = versusComputer
     ? [1, 1]
@@ -122,11 +123,11 @@ export function planMatch(
         name:
           ghost !== null
             ? 'Ghost'
-            : !versusComputer
-              ? right.name
-              : dummy
-                ? 'Dummy'
-                : 'Computer',
+            : dummy
+              ? 'Dummy'
+              : versusComputer
+                ? 'Computer'
+                : right.name,
         isBot: versusComputer,
         // The boss plays from the right seat - BOSS_SEAT - whoever steers
         // it. Not a ghost: it replays a run played from the left seat.
@@ -163,7 +164,7 @@ export function planMatch(
       // The run was played from the left: the ghost plays it from the right.
       ghosts:
         ghost === null
-          ? versusComputer && dummy
+          ? dummy
             ? new Map([[1, IDLE_SEAT]])
             : undefined
           : new Map([
@@ -201,9 +202,7 @@ function ghostLoadouts(
  * A seat nobody steers: a training dummy sits where it spawned - its
  * bacteria still divide and fight back where they are attacked.
  */
-const IDLE_SEAT: SeatDriver = {
-  before: () => ({ boost: false, drag: null, steer: null, weapon: false }),
-};
+const IDLE_SEAT: SeatDriver = { before: () => NO_INPUT };
 
 /** The players and the rules of a planned match - see {@link planMatch}. */
 export interface PlannedMatch {

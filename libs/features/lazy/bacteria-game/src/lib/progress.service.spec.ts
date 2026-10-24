@@ -242,7 +242,7 @@ describe('ProgressService', () => {
         award: null,
         achievements: [],
         xp: { parts: [{ label: 'Training mission', xp: 25 }], total: 25 },
-        training: { mission: 'boost', done: true, first: true },
+        training: { shortfall: null, first: true, next: 'attack' },
       });
       expect(progress.training().boost).toBeDefined();
       expect(progress.missionsDone()).toBe(1);
@@ -254,12 +254,13 @@ describe('ProgressService', () => {
       expect(create().training().boost).toBeDefined();
     });
 
-    it('is done once: again it is worth no XP', () => {
+    it('is done once: again it is worth no XP, and stores nothing', () => {
       const progress = create();
       progress.recordTraining(
         { ...mission(true), levelId: steer.levelId },
         steer
       );
+      const writes = jest.spyOn(TestBed.inject(GameStorage), 'update');
 
       expect(
         progress.recordTraining(
@@ -268,8 +269,9 @@ describe('ProgressService', () => {
         )
       ).toMatchObject({
         xp: { total: 0 },
-        training: { done: true, first: false },
+        training: { shortfall: null, first: false, next: 'feed' },
       });
+      expect(writes).not.toHaveBeenCalled();
     });
 
     it('tells a match what it fell short of', () => {
@@ -278,7 +280,7 @@ describe('ProgressService', () => {
       expect(progress.recordTraining(mission(true, 1), boost)).toMatchObject({
         xp: { total: 0 },
         training: {
-          done: false,
+          next: null,
           shortfall: {
             key: 'training.result.boosts',
             params: { count: 2, fired: 1 },
@@ -286,10 +288,10 @@ describe('ProgressService', () => {
         },
       });
       expect(progress.recordTraining(mission(false), boost).training).toEqual({
-        mission: 'boost',
-        done: false,
-        first: false,
         shortfall: { key: 'training.missions.boost.goal' },
+        first: false,
+        allDone: false,
+        next: null,
       });
       expect(progress.missionsDone()).toBe(0);
     });

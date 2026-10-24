@@ -19,7 +19,9 @@ import { COUCH_XP, matchXp, XpMatch, xpGain, xpOf } from './state/xp';
 import {
   addMission,
   firstOpenMission,
+  isMissionDone,
   Mission,
+  missionResult,
   missionsDone,
   missionShortfall,
 } from './state/training';
@@ -333,15 +335,28 @@ export class ProgressService {
    */
   public recordTraining(record: MatchRecord, mission: Mission): MatchEarnings {
     const shortfall = missionShortfall(mission, record);
-    const done = shortfall === null;
-    const first = done && this.progress().training[mission.id] == null;
+    const first =
+      shortfall === null && !isMissionDone(this.training(), mission.id);
     const day = today();
-    const gain = (progress: Progress) =>
-      done ? addMission(progress, mission.id, day) : progress;
+    // Only a mission done the first time changes the progress: any other
+    // match of one leaves it - and the storage - be.
+    const earned = first
+      ? this.record(
+          (progress) => addMission(progress, mission.id, day),
+          (progress) => progress,
+          'training'
+        )
+      : {
+          achievements: [],
+          xp: { parts: [], total: 0 },
+          xpBefore: this.loaded() ? this.xp() : null,
+          unlocked: [],
+          ...this.cosmetics([]),
+        };
     return {
       award: null,
-      ...this.record(gain, (progress) => progress, 'training'),
-      training: { mission: mission.id, done, first, shortfall },
+      ...earned,
+      training: missionResult(mission.id, shortfall, first, this.training()),
     };
   }
 
@@ -349,11 +364,11 @@ export class ProgressService {
   public readonly training = computed(() => this.progress().training);
 
   /** The training missions done so far. */
-  public readonly missionsDone = computed(() => missionsDone(this.progress()));
+  public readonly missionsDone = computed(() => missionsDone(this.training()));
 
   /** The first training mission still to do - where the training picks up. */
   public readonly firstOpenMission = computed(() =>
-    firstOpenMission(this.progress())
+    firstOpenMission(this.training())
   );
 
   /**

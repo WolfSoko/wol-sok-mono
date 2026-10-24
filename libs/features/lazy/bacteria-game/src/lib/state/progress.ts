@@ -258,7 +258,7 @@ export function adoptProgress(progress: Progress, guest: Progress): Progress {
  * Days by id with the earlier day of either for each - an achievement
  * earned, a mission done - null when `other` has no earlier one.
  */
-function earlierDays<K extends string>(
+export function earlierDays<K extends string>(
   held: Partial<Record<K, string>>,
   other: Partial<Record<K, string>>
 ): Partial<Record<K, string>> | null {
@@ -299,25 +299,12 @@ export function parseProgress(value: unknown): Progress {
   return {
     medals: parseMedals(value['medals']),
     totals: parseTotals(value['totals']),
-    achievements: parseAchievements(value['achievements']),
+    achievements: parseDays(value['achievements'], isAchievementId),
     couchWins: parseCouchWins(value['couchWins']),
     daily: parseDaily(value['daily']),
     endlessBest: isInteger(value['endlessBest'], 1) ? value['endlessBest'] : 0,
-    training: parseTraining(value['training']),
+    training: parseDays(value['training'], isMissionId),
   };
-}
-
-function parseTraining(value: unknown): Progress['training'] {
-  const training: Progress['training'] = {};
-  if (!isObject(value)) {
-    return training;
-  }
-  for (const [id, date] of Object.entries(value)) {
-    if (isMissionId(id) && typeof date === 'string' && ISO_DATE.test(date)) {
-      training[id] = date;
-    }
-  }
-  return training;
 }
 
 /** The daily record, null for anything else. */
@@ -391,19 +378,19 @@ function parseCouchWins(value: unknown): Progress['couchWins'] {
 /** A day as an achievement stores it, "2026-10-19". */
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-function parseAchievements(value: unknown): Progress['achievements'] {
-  const achievements: Progress['achievements'] = {};
+/** Days by id - an achievement's, a mission's - keeping the ids `isId` knows. */
+function parseDays<K extends string>(
+  value: unknown,
+  isId: (id: string) => id is K
+): Partial<Record<K, string>> {
+  const days: Partial<Record<K, string>> = {};
   if (!isObject(value)) {
-    return achievements;
+    return days;
   }
   for (const [id, date] of Object.entries(value)) {
-    if (
-      isAchievementId(id) &&
-      typeof date === 'string' &&
-      ISO_DATE.test(date)
-    ) {
-      achievements[id] = date;
+    if (isId(id) && typeof date === 'string' && ISO_DATE.test(date)) {
+      days[id] = date;
     }
   }
-  return achievements;
+  return days;
 }

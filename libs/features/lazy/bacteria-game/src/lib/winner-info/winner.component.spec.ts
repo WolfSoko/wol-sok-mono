@@ -7,8 +7,6 @@ import { LEVELS } from '../state/levels';
 import { MatchEarnings } from '../state/earnings';
 import { MedalAward } from '../state/medallions';
 import { createPlayer } from '../state/player.model';
-import { ProgressService } from '../progress.service';
-import { MISSIONS } from '../state/training';
 import { WinnerComponent } from './winner.component';
 
 describe('WinnerComponent', () => {
@@ -482,9 +480,6 @@ describe('WinnerComponent', () => {
   });
 
   describe('in the training', () => {
-    // The missions recorded here are stored: keep them out of other specs.
-    afterEach(() => localStorage.clear());
-
     function buttons(): HTMLButtonElement[] {
       fixture.detectChanges();
       return Array.from(
@@ -500,10 +495,10 @@ describe('WinnerComponent', () => {
         matchLevel: 'training-steer',
         earnings: earnings({
           training: {
-            mission: 'steer',
-            done: true,
-            first: true,
             shortfall: null,
+            first: true,
+            allDone: false,
+            next: 'feed',
           },
         }),
       });
@@ -528,13 +523,13 @@ describe('WinnerComponent', () => {
         matchLevel: 'training-boost',
         earnings: earnings({
           training: {
-            mission: 'boost',
-            done: false,
-            first: false,
             shortfall: {
               key: 'training.result.boosts',
               params: { count: 2, fired: 1 },
             },
+            first: false,
+            allDone: false,
+            next: null,
           },
         }),
       });
@@ -555,10 +550,10 @@ describe('WinnerComponent', () => {
         matchLevel: 'training-fight',
         earnings: earnings({
           training: {
-            mission: 'fight',
-            done: true,
-            first: true,
             shortfall: null,
+            first: true,
+            allDone: false,
+            next: 'steer',
           },
         }),
       });
@@ -572,31 +567,20 @@ describe('WinnerComponent', () => {
     });
 
     it('leads on to the campaign once every mission is done', () => {
-      const progress = TestBed.inject(ProgressService);
-      for (const mission of MISSIONS) {
-        progress.recordTraining(
-          aMatchRecord({ levelId: mission.levelId, boostsFired: 2 }),
-          mission
-        );
-      }
       store.update({
         mode: 'vs-computer',
         winner: createPlayer({ id: 0, name: 'You' }),
         endedBy: 'time',
         matchLevel: 'training-fight',
         earnings: earnings({
-          training: {
-            mission: 'fight',
-            done: true,
-            first: true,
-            shortfall: null,
-          },
+          training: { shortfall: null, first: true, allDone: true, next: null },
         }),
       });
       const picked = jest.fn();
       fixture.componentInstance.action.subscribe(picked);
 
       expect(text()).toContain('Training complete');
+      expect(text()).not.toContain('Next mission');
       buttons()
         .find((button) => button.textContent?.includes('To the campaign'))
         ?.click();

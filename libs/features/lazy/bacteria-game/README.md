@@ -425,21 +425,24 @@ While a mission runs, its goal stays at the top of the arena.
 
 A mission is a level of its own
 ([`state/training-levels.ts`](./src/lib/state/training-levels.ts)), apart
-from the ladder: it is set for one match like the daily level (`matchLevel`)
-and won by an existing win rule - hold, harvest, timed or annihilation -
-with the boosts fired checked on top where a mission asks for them. The first
-four put a _training dummy_ across: a level with `dummy` gives the right seat
-an idle seat driver (`planMatch`), so the colony sits where it spawned and
-only fights back where it is attacked; the engine is unchanged and stays
-deterministic. _First Fight_ plays the easy computer, whatever difficulty is
-picked. Missions play plain - no evolution - are not recorded and offer no
-ghost.
+from the ladder, that names its `mission` and its `opponent`: it is set for
+one match like the daily level (`matchLevel`) and won by an existing win
+rule - hold, harvest, timed or annihilation - with the boosts fired checked
+on top where a mission asks for them. The first four put a _training dummy_
+across: an `opponent` of `'dummy'` gives the right seat an idle seat driver
+(`planMatch`), so the colony sits where it spawned and only fights back
+where it is attacked; the engine is unchanged and stays deterministic.
+_First Fight_ names the easy computer, which plays whatever difficulty is
+picked (`levelDifficulty`). Missions play plain - no evolution - are not
+recorded and leave no ghost to fight.
 
 A done mission is kept in the progress with the day it was done, merged as
 the earlier day like an achievement, and is worth 25 XP while it is held.
-Missions count for nothing else: no medallion, no totals, no achievements. The
-result screen says whether the match did the mission - or what it fell short
-of - and goes on to the next mission, or to the campaign after the last one.
+Missions count for nothing else: no medallion, no totals, no achievements,
+and a mission played again or not done leaves the stored progress alone.
+The result screen says whether the match did the mission - or what it fell
+short of - and goes on to the next mission, or to the campaign once every
+mission is done.
 `training.spec.ts` plays every mission through with a scripted player, so a
 balance change that makes one unwinnable fails a test.
 

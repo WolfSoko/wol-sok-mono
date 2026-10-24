@@ -534,8 +534,10 @@ describe('GameStateService', () => {
         expect(state.difficulty).toBe('hard');
         expect(state.earnings).toMatchObject({
           award: null,
-          training: { mission: 'fight', done: true, first: true },
+          training: { shortfall: null, first: true, next: 'steer' },
         });
+        // A training match leaves no run to fight as a ghost.
+        expect(state.lastReplay).toBeNull();
         expect(TestBed.inject(ProgressService).training().fight).toBeDefined();
       });
 

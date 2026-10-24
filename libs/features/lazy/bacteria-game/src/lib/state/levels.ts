@@ -12,7 +12,8 @@ import {
   generatedLevel,
   parseGeneratedId,
 } from './level-generator/generate-level';
-import { missionOfLevel, TRAINING_LEVELS } from './training-levels';
+import type { BotDifficulty } from './bot-controller';
+import { MissionId, TRAINING_LEVELS } from './training-levels';
 
 /**
  * A level is a map plus the tuning that makes it play differently.
@@ -49,12 +50,14 @@ export interface Level {
    * food for whoever eats them first. Two at most, the GPU runs four.
    */
   neutrals?: readonly NeutralSpot[];
+  /** The training mission the level is played for - see `training.ts`. */
+  mission?: MissionId;
   /**
-   * The right colony is a training dummy against the computer: it sits
-   * where it spawned and nobody steers it - a training mission's target,
-   * see `training.ts`.
+   * Who the level is played against, whatever the setup says: the
+   * computer at that difficulty, or a training dummy - a colony that sits
+   * where it spawned and nobody steers. The picked difficulty when absent.
    */
-  dummy?: boolean;
+  opponent?: BotDifficulty | 'dummy';
 }
 
 /**
@@ -630,9 +633,8 @@ export function levelTitleText(level: Level): GameText {
   if (isLadderLevelId(level.id)) {
     return { key: `levels.titles.${level.id}` };
   }
-  const mission = missionOfLevel(level.id);
-  return mission !== null
-    ? { key: `training.missions.${mission}.title` }
+  return level.mission !== undefined
+    ? { key: `training.missions.${level.mission}.title` }
     : // A level of neither kind is none of the game's - getLevel falls
       // back to the first one for it.
       (level.title ?? { key: 'levels.titles.petri-dish' });
@@ -657,12 +659,24 @@ export function levelDescriptionText(level: Level): GameText {
   if (isLadderLevelId(level.id)) {
     return { key: `levels.descriptions.${level.id}` };
   }
-  const mission = missionOfLevel(level.id);
-  if (mission !== null) {
-    return { key: `training.missions.${mission}.description` };
+  if (level.mission !== undefined) {
+    return { key: `training.missions.${level.mission}.description` };
   }
   const recipe = parseGeneratedId(level.id)?.recipe ?? 'field';
   return { key: `levels.generated.styles.${recipe}.description` };
+}
+
+/**
+ * The computer's difficulty on a level: the level's own opponent where it
+ * names one, else the difficulty picked.
+ */
+export function levelDifficulty(
+  level: Level,
+  picked: BotDifficulty
+): BotDifficulty {
+  return level.opponent === undefined || level.opponent === 'dummy'
+    ? picked
+    : level.opponent;
 }
 
 /** The level before this one, or null when it is the first. */

@@ -43,7 +43,6 @@ import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
-import { missionOf, trainingDone } from '../state/training';
 import { BOSS_SEAT, EndReason } from '../state/win-conditions';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
@@ -173,43 +172,32 @@ export class WinnerComponent {
     return this.t('match.run.endless', { beaten, lives });
   });
 
-  /** The training mission the match was played for, null for none. */
-  private trainingMission = computed(() => missionOf(this.level().id));
-
   /**
    * Where a training mission's match leaves the training: whether it did
-   * the mission, what it fell short of, and the mission after it - null
-   * outside the training.
+   * the mission, what it fell short of, and whether a mission or the
+   * campaign comes next - null outside the training.
    */
   public mission = computed(() => {
-    const result = this.earnings()?.training;
-    const mission = this.trainingMission();
-    if (mission === null) {
+    if (this.level().mission === undefined) {
       return null;
     }
-    const done = result?.done === true;
-    // Once every mission is done, the training is - in whatever order.
-    const allDone =
-      done && trainingDone({ training: this.progress.training() });
+    const result = this.earnings()?.training ?? null;
+    const done = result !== null && result.shortfall === null;
     return {
       done,
       line:
-        result === undefined
+        result === null
           ? null
-          : done
+          : result.shortfall === null
             ? this.t(
                 result.first ? 'training.result.first' : 'training.result.again'
               )
             : this.t('training.result.notYet', {
-                goal: this.render(
-                  result.shortfall ?? {
-                    key: `training.missions.${mission.id}.goal`,
-                  }
-                ),
+                goal: this.render(result.shortfall),
               }),
-      allDone,
+      allDone: result?.allDone === true,
       /** True when there is a mission still to go on to. */
-      next: done && !allDone,
+      next: result?.next != null,
     };
   });
 
@@ -353,13 +341,11 @@ export class WinnerComponent {
 
   /**
    * True when the run just played can come back as a ghost - after a match
-   * against the computer, not against a ghost already, nor a training
-   * mission's, whose dummy no ghost can stand in for.
+   * against the computer, not against a ghost already.
    */
   public canFightGhost: Signal<boolean> = computed(
     () =>
       !this.againstGhost() &&
-      this.trainingMission() === null &&
       this.state.lastReplay()?.header.mode === 'vs-computer'
   );
 

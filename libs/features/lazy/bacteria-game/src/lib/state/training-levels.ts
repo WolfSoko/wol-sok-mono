@@ -31,17 +31,6 @@ export function isMissionId(value: unknown): value is MissionId {
   return MISSION_IDS.includes(value as MissionId);
 }
 
-/** The id of a mission's level: `training-steer`. */
-export function trainingLevelId(mission: MissionId): string {
-  return `training-${mission}`;
-}
-
-/** The mission a level is played for, null for a level of no mission. */
-export function missionOfLevel(levelId: string): MissionId | null {
-  const id = levelId.replace(/^training-/, '');
-  return id !== levelId && isMissionId(id) ? id : null;
-}
-
 /** The layouts only the training missions are played on. */
 export const TRAINING_MAPS: readonly GameMap[] = [trainingGround];
 
@@ -55,41 +44,51 @@ const CALM = {
   startBacteriaRadius: 12,
 } as const;
 
+/**
+ * What every mission's level shares: the crosshair speed, and medallion
+ * limits that only fill the type - a mission keeps no medallion.
+ */
+const MISSION_LEVEL = {
+  medal: { silverSec: 60, goldSec: 30, goldLossShare: 1 },
+  crosshairSpeed: 150,
+} as const;
+
 /*
  * The levels of the training missions (`training.ts`), one per mission and
- * apart from the campaign's ladder: they keep no medallion, so the limits
- * below only fill the type. The first four put a training dummy across -
- * a colony that sits where it spawned - the last one the easy computer.
+ * apart from the campaign's ladder. The first four put a training dummy
+ * across - a colony that sits where it spawned - the last one the easy
+ * computer.
  */
 export const TRAINING_LEVELS: readonly Level[] = [
   {
-    id: trainingLevelId('steer'),
+    ...MISSION_LEVEL,
+    id: 'training-steer',
     name: 'Steer',
     description: 'Steer your colony onto the white zone and hold it.',
     mapId: 'training-ground',
-    medal: { silverSec: 30, goldSec: 20, goldLossShare: 1 },
     balance: { ...CALM, nutrientCount: 2 },
     crosshairSpeed: 140,
     win: { kind: 'hold', holdSec: 4 },
-    dummy: true,
+    mission: 'steer',
+    opponent: 'dummy',
   },
   {
-    id: trainingLevelId('feed'),
+    ...MISSION_LEVEL,
+    id: 'training-feed',
     name: 'Feed',
     description: 'Eat the pellets - they make your bacteria divide.',
     mapId: 'open-field',
-    medal: { silverSec: 45, goldSec: 30, goldLossShare: 1 },
     balance: { ...CALM, nutrientCount: 6, nutrientRespawnDelaySec: 1.5 },
-    crosshairSpeed: 150,
     win: { kind: 'harvest', pellets: 8 },
-    dummy: true,
+    mission: 'feed',
+    opponent: 'dummy',
   },
   {
-    id: trainingLevelId('boost'),
+    ...MISSION_LEVEL,
+    id: 'training-boost',
     name: 'Boost',
     description: 'Boost to reach the pellets first.',
     mapId: 'open-field',
-    medal: { silverSec: 45, goldSec: 30, goldLossShare: 1 },
     // A boost that recharges quickly, to be fired twice in a short race.
     balance: {
       ...CALM,
@@ -97,28 +96,29 @@ export const TRAINING_LEVELS: readonly Level[] = [
       nutrientRespawnDelaySec: 1.5,
       boostCooldownSec: 3,
     },
-    crosshairSpeed: 150,
     win: { kind: 'harvest', pellets: 12 },
-    dummy: true,
+    mission: 'boost',
+    opponent: 'dummy',
   },
   {
-    id: trainingLevelId('attack'),
+    ...MISSION_LEVEL,
+    id: 'training-attack',
     name: 'Attack',
     description: 'Drive into the dummy and wipe it out.',
     mapId: 'open-field',
-    medal: { silverSec: 45, goldSec: 30, goldLossShare: 1 },
     balance: { ...CALM, aggression: 0.35, nutrientCount: 4 },
-    crosshairSpeed: 150,
-    dummy: true,
+    mission: 'attack',
+    opponent: 'dummy',
   },
   {
-    id: trainingLevelId('fight'),
+    ...MISSION_LEVEL,
+    id: 'training-fight',
     name: 'First Fight',
     description: 'Your first war against the computer, against the clock.',
     mapId: 'open-field',
-    medal: { silverSec: 120, goldSec: 90, goldLossShare: 1 },
     balance: { ...CALM, aggression: 0.25, nutrientCount: 6 },
-    crosshairSpeed: 150,
     win: { kind: 'timed', limitSec: 60 },
+    mission: 'fight',
+    opponent: 'easy',
   },
 ];

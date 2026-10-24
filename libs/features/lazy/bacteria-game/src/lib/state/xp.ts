@@ -81,7 +81,9 @@ export function xpOf(progress: Progress): number {
     (id) => progress.achievements[id] != null
   ).length;
   return (
-    xp + achievements * ACHIEVEMENT_XP + missionsDone(progress) * MISSION_XP
+    xp +
+    achievements * ACHIEVEMENT_XP +
+    missionsDone(progress.training) * MISSION_XP
   );
 }
 
@@ -131,7 +133,7 @@ export function xpGain(
       earned * ACHIEVEMENT_XP
     );
   }
-  const done = missionsDone(after) - missionsDone(before);
+  const done = missionsDone(after.training) - missionsDone(before.training);
   if (done > 0) {
     add(
       { key: 'game.xp.missions', params: { count: done } },

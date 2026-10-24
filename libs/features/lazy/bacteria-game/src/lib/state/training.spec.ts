@@ -1,6 +1,12 @@
 import { TICKS_PER_SEC } from './fixed-tick';
 import { distance, Point } from './geometry';
-import { getLevel, isLadderLevel, isLevelId, LEVELS } from './levels';
+import {
+  getLevel,
+  isLadderLevel,
+  isLevelId,
+  levelDifficulty,
+  LEVELS,
+} from './levels';
 import { MatchEngine } from './match-engine';
 import { MatchRecord } from './medallions';
 import { planMatch } from './match-setup';
@@ -10,12 +16,13 @@ import {
   firstOpenMission,
   isMissionDone,
   MissionId,
+  missionById,
   missionOf,
+  missionResult,
   MISSIONS,
   missionsDone,
   missionShortfall,
   nextMission,
-  TRAINING_DIFFICULTY,
 } from './training';
 import { TRAINING_LEVELS } from './training-levels';
 import { xpOf } from './xp';
@@ -63,6 +70,48 @@ describe('MISSIONS', () => {
   });
 });
 
+describe('levelDifficulty', () => {
+  it("plays a mission's own opponent, whatever difficulty is picked", () => {
+    expect(levelDifficulty(getLevel('training-fight'), 'hard')).toBe('easy');
+    // A dummy is no computer: the picked difficulty stays, unused.
+    expect(levelDifficulty(getLevel('training-steer'), 'hard')).toBe('hard');
+    expect(levelDifficulty(LEVELS[0], 'hard')).toBe('hard');
+  });
+});
+
+describe('missionResult', () => {
+  const short = { key: 'training.missions.feed.goal' } as const;
+
+  it('goes on to the mission after the one done', () => {
+    expect(missionResult('feed', null, true, { feed: '2026-10-24' })).toEqual({
+      shortfall: null,
+      first: true,
+      allDone: false,
+      next: 'boost',
+    });
+  });
+
+  it('goes on to the first still to do after the last one', () => {
+    expect(
+      missionResult('fight', null, true, { fight: '2026-10-24' }).next
+    ).toBe('steer');
+  });
+
+  it('goes on nowhere after a match short of the mission', () => {
+    expect(missionResult('feed', short, false, {}).next).toBeNull();
+  });
+
+  it('is the end of the training once every mission is done', () => {
+    const days = Object.fromEntries(
+      MISSIONS.map(({ id }) => [id, '2026-10-24'])
+    );
+    expect(missionResult('fight', null, true, days)).toMatchObject({
+      allDone: true,
+      next: null,
+    });
+  });
+});
+
 describe('missionShortfall', () => {
   const boost = MISSIONS[2];
 
@@ -88,7 +137,7 @@ describe('training progress', () => {
   it('keeps the day a mission was first done', () => {
     const done = addMission(EMPTY_PROGRESS, 'steer', '2026-10-24');
 
-    expect(isMissionDone(done, 'steer')).toBe(true);
+    expect(isMissionDone(done.training, 'steer')).toBe(true);
     expect(addMission(done, 'steer', '2026-10-25')).toBe(done);
     expect(addMission(done, 'steer', '2026-10-20').training.steer).toBe(
       '2026-10-20'
@@ -102,9 +151,9 @@ describe('training progress', () => {
       '2026-10-24'
     );
 
-    expect(missionsDone(progress)).toBe(2);
-    expect(firstOpenMission(progress)).toBe('feed');
-    expect(firstOpenMission(EMPTY_PROGRESS)).toBe('steer');
+    expect(missionsDone(progress.training)).toBe(2);
+    expect(firstOpenMission(progress.training)).toBe('feed');
+    expect(firstOpenMission({})).toBe('steer');
   });
 
   it('merges as the earlier day and survives the storage', () => {
@@ -154,14 +203,12 @@ function playMission(
   seed: number,
   playerAt: (engine: MatchEngine, tick: number) => void
 ) {
-  const mission = MISSIONS.find((each) => each.id === id);
-  if (mission === undefined) {
-    throw new Error(`No mission ${id}`);
-  }
+  const { levelId } = missionById(id);
   const { spawns, options } = planMatch({
-    levelId: mission.levelId,
+    levelId,
     mode: 'vs-computer',
-    difficulty: TRAINING_DIFFICULTY,
+    // Picked hard: the level's own opponent plays, as in the game.
+    difficulty: levelDifficulty(getLevel(levelId), 'hard'),
     colors: ['orange', 'blue'],
     headStart: 0,
     width: WIDTH,
@@ -175,11 +222,12 @@ function playMission(
       playerAt(engine, tick);
       engine.tick(WIDTH, HEIGHT);
     }
-    const [you] = engine.players;
+    const [you, opponent] = engine.players;
     return {
       outcome: engine.outcome(),
-      seconds: engine.tickCount / TICKS_PER_SEC,
       boosts: you.boostsFired,
+      opponent,
+      spawn: spawns[1],
     };
   } finally {
     engine.dispose();
@@ -260,12 +308,18 @@ describe('the training missions', () => {
     expect(boosts).toBeGreaterThanOrEqual(2);
   });
 
-  it('can wipe the dummy out', () => {
-    const { outcome } = playMission('attack', 1, charge);
+  it('can wipe the dummy out, which never moves', () => {
+    const { outcome, opponent, spawn } = playMission('attack', 1, charge);
 
     expect(outcome).toMatchObject({
       winner: { id: 0 },
       reason: 'annihilation',
+    });
+    expect(opponent).toMatchObject({
+      name: 'Dummy',
+      x: spawn.x,
+      y: spawn.y,
+      boostsFired: 0,
     });
   });
 
@@ -275,33 +329,5 @@ describe('the training missions', () => {
     );
 
     expect(outcome?.winner?.id).toBe(0);
-  });
-
-  it('keeps the dummy where it spawned', () => {
-    const { spawns, options } = planMatch({
-      levelId: 'training-attack',
-      mode: 'vs-computer',
-      difficulty: TRAINING_DIFFICULTY,
-      colors: ['orange', 'blue'],
-      headStart: 0,
-      width: WIDTH,
-      height: HEIGHT,
-      seed: 1,
-    });
-    const engine = new MatchEngine(spawns, options);
-    try {
-      for (let tick = 0; tick < 5 * TICKS_PER_SEC; tick++) {
-        engine.tick(WIDTH, HEIGHT);
-      }
-      const dummy = engine.players[1];
-      expect(dummy.name).toBe('Dummy');
-      expect({ x: dummy.x, y: dummy.y }).toEqual({
-        x: spawns[1].x,
-        y: spawns[1].y,
-      });
-      expect(dummy.boostsFired).toBe(0);
-    } finally {
-      engine.dispose();
-    }
   });
 });

@@ -1,6 +1,6 @@
 import { clampLength, SteeringVector } from '../state/geometry';
 import { DRAG_STEPS, onGrid, STEER_STEPS } from '../state/match-engine';
-import type { GhostInputs, SeatDriver } from '../state/ghost';
+import { GhostInputs, NO_INPUT, SeatDriver } from '../state/ghost';
 import { TICKS_PER_SEC } from '../state/fixed-tick';
 import { matchChecksum } from '../state/checksum';
 import { Player } from '../state/player.model';
@@ -19,14 +19,6 @@ export const INPUT_DELAY_TICKS = TICKS_PER_SEC / 10;
 
 /** How often the two devices compare their matches: once a second. */
 export const CHECK_EVERY_TICKS = TICKS_PER_SEC;
-
-/** An input that changes nothing - the ticks before the first inputs. */
-const NOTHING: GhostInputs = {
-  boost: false,
-  drag: null,
-  steer: null,
-  weapon: false,
-};
 
 /**
  * The input of every seat for every tick, put together from this device and
@@ -160,7 +152,8 @@ export class Lockstep {
         const input = inputs.get(tick);
         // Played once: what lies behind is no longer needed.
         inputs.delete(tick);
-        return input ?? NOTHING;
+        // The ticks before the first inputs change nothing.
+        return input ?? NO_INPUT;
       },
     };
   }

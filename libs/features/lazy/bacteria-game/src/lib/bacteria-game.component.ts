@@ -30,6 +30,7 @@ import {
   difficultyKeys,
   GameTextPipe,
   levelNameText,
+  missionKeys,
   playerNameText,
   renderGameText,
 } from './i18n/game-texts';
@@ -150,7 +151,7 @@ import {
 import { pickMatchLevel } from './state/match-level';
 import { DynamicWall, Rect } from './state/maps';
 import { harvestTarget, holdTarget } from './state/win-conditions';
-import { MissionId, missionOf, nextMission } from './state/training';
+import { MissionId } from './state/training';
 import { mapZones, Zone } from './state/zones';
 import { isBoosted, Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
@@ -408,8 +409,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   });
   /** The goal of the training mission under way, for the arena - null outside one. */
   protected readonly missionGoal = computed((): TranslationKey | null => {
-    const mission = missionOf(this.store.level().id);
-    return mission === null ? null : `training.missions.${mission.id}.goal`;
+    const { mission } = this.store.level();
+    return mission === undefined ? null : missionKeys(mission).goal;
   });
   /** True once a match is over and its result is shown, until the next one. */
   protected readonly matchOver: Signal<boolean>;
@@ -918,12 +919,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const next = action === 'next' ? this.upcomingLevel() : null;
-    const played = missionOf(this.level().id);
-    // The mission after the one played - after the last, the first still
-    // to do, whichever order the player took them in.
+    // Where the training goes on, as the mission's result says.
     const mission =
-      action === 'mission' && played !== null
-        ? (nextMission(played.id)?.id ?? this.progress.firstOpenMission())
+      action === 'mission'
+        ? (this.store.snapshot().earnings?.training?.next ?? null)
         : null;
     // The reset ends a match set outside the setup: a rematch sets it again.
     const rematch =
@@ -1131,7 +1130,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   private readonly playKind = computed((): PlayKind => {
     const matchLevel = this.store.matchLevel();
-    if (matchLevel !== null && missionOf(matchLevel) !== null) {
+    if (matchLevel !== null && getLevel(matchLevel).mission !== undefined) {
       return 'training';
     }
     const last = this.lastKind();

@@ -40,7 +40,6 @@ export const newGame: Translation<typeof en> = {
     },
   },
   notes: {
-    training: '{done} von {total} Missionen geschafft',
     campaign: '{open} von {total} Levels offen',
     attemptsLeft: '{left} von {total} Versuchen übrig',
     attemptsUsed: 'Versuche verbraucht – Training bis 00:00 UTC',

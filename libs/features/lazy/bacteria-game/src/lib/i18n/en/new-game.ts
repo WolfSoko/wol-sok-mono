@@ -38,7 +38,6 @@ export const newGame = {
   },
   /** The line under a mode: where the player stands in it. */
   notes: {
-    training: '{done} of {total} missions done',
     campaign: '{open} of {total} levels open',
     attemptsLeft: '{left} of {total} attempts left',
     attemptsUsed: 'Attempts used - practice until 00:00 UTC',

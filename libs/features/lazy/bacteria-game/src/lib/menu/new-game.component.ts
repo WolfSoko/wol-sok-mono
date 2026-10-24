@@ -21,6 +21,7 @@ import {
   levelTitleText,
   medalGoalText,
   medalKey,
+  missionKeys,
   playerNameText,
   recipeKeys,
   renderGameText,
@@ -58,7 +59,6 @@ import {
   isMissionDone,
   MissionId,
   missionById,
-  missionOf,
   MISSIONS,
   missionsDone,
 } from '../state/training';
@@ -202,12 +202,15 @@ export class NewGameComponent {
     return [this.name(left), this.name(right)];
   });
 
-  /** True where the computer's difficulty is picked - the training has its own. */
+  /**
+   * True where the computer's difficulty is picked: against the computer,
+   * on a level without an opponent of its own - a training mission's.
+   */
   protected readonly vsComputer = computed(
     () =>
       this.kind() !== 'two-players' &&
       this.kind() !== 'online' &&
-      this.kind() !== 'training'
+      this.briefing()?.level.opponent === undefined
   );
 
   /**
@@ -227,16 +230,14 @@ export class NewGameComponent {
    * play next marked, the first still to do.
    */
   protected readonly missions = computed(() => {
-    const progress = { training: this.training() };
-    const done = (id: MissionId) => isMissionDone(progress, id);
-    const upNext = firstOpenMission(progress);
+    const days = this.training();
+    const upNext = firstOpenMission(days);
     return MISSIONS.map((mission, index) => ({
       ...mission,
+      ...missionKeys(mission.id),
       number: index + 1,
-      title: `training.missions.${mission.id}.title` as const,
-      goal: `training.missions.${mission.id}.goal` as const,
-      done: done(mission.id),
-      upNext: mission.id === upNext && !done(mission.id),
+      done: isMissionDone(days, mission.id),
+      upNext: mission.id === upNext && !isMissionDone(days, mission.id),
     }));
   });
 
@@ -244,7 +245,7 @@ export class NewGameComponent {
 
   /** The missions done, for the training's line. */
   protected readonly missionsDone = computed(() =>
-    missionsDone({ training: this.training() })
+    missionsDone(this.training())
   );
 
   /** The mission picked, as its briefing tells it - null outside the training. */
@@ -252,12 +253,12 @@ export class NewGameComponent {
     if (this.kind() !== 'training') {
       return null;
     }
-    const id = this.missionId();
+    const { goal, tip } = missionKeys(this.missionId());
     return {
-      goal: `training.missions.${id}.goal` as const,
-      tip: `training.missions.${id}.tip` as const,
+      goal,
+      tip,
       opponent:
-        getLevel(missionById(id).levelId).dummy === true
+        this.briefing()?.level.opponent === 'dummy'
           ? ('training.opponents.dummy' as const)
           : ('training.opponents.computer' as const),
     };
@@ -285,19 +286,19 @@ export class NewGameComponent {
     }
     const level = getLevel(id);
     const made = parseGeneratedId(id);
-    const mission = missionOf(id);
+    const { mission } = level;
     return {
       id,
       level,
       size: levelSize(level),
       // The ladder's number and name, the mission's, or what was rolled.
       kicker: this.text(
-        mission !== null
+        mission !== undefined
           ? {
               key: 'training.kicker',
               params: {
-                number: MISSIONS.indexOf(mission) + 1,
-                total: MISSIONS.length,
+                number: MISSIONS.indexOf(missionById(mission)) + 1,
+                total: this.missionCount,
               },
             }
           : made === null
@@ -446,9 +447,9 @@ export class NewGameComponent {
   private modeNote(kind: PlayKind): string {
     switch (kind) {
       case 'training':
-        return this.i18n.t('newGame.notes.training', {
+        return this.i18n.t('training.progress', {
           done: this.missionsDone(),
-          total: MISSIONS.length,
+          total: this.missionCount,
         });
       case 'campaign':
         return this.i18n.t('newGame.notes.campaign', {

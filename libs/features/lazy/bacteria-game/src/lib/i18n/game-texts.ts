@@ -11,6 +11,7 @@ import type { LadderLevelId } from '../state/levels';
 import type { MedalTier } from '../state/medallions';
 import type { RankId } from '../state/ranks';
 import type { SeriesLength } from '../state/rivalry';
+import type { MissionId } from '../state/training-levels';
 import type { ZoneKind } from '../state/zones';
 import type { TranslationKey } from './dictionaries';
 import type { GameText } from './game-text';
@@ -90,6 +91,21 @@ export function zoneKey(kind: ZoneKind): TranslationKey {
 /** A colony colour's name - also a player's name between two players. */
 export function colorKey(id: ColonyColorId): TranslationKey {
   return `game.colors.${id}`;
+}
+
+/** A training mission: its title, its briefing, its goal and a tip. */
+export function missionKeys(id: MissionId): {
+  title: TranslationKey;
+  description: TranslationKey;
+  goal: TranslationKey;
+  tip: TranslationKey;
+} {
+  return {
+    title: `training.missions.${id}.title`,
+    description: `training.missions.${id}.description`,
+    goal: `training.missions.${id}.goal`,
+    tip: `training.missions.${id}.tip`,
+  };
 }
 
 /** The computer's difficulty: its name and what it does. */
