@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.65.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.64.0...v74.65.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** wave 3 of ADR 0011/0012 without the backend — contracts, ArenaView, replay recording ([#2596](https://github.com/WolfSoko/wol-sok-mono/issues/2596)) ([904e89f](https://github.com/WolfSoko/wol-sok-mono/commit/904e89fd39a1c7dbf3ec47eea302c148fd9ff652))
+
+### Chore
+
+* **release:** publish ([9a0b4e9](https://github.com/WolfSoko/wol-sok-mono/commit/9a0b4e97643a7f906710caa1cb3c68cd9d584316))
+
 ## [74.64.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.63.0...v74.64.0) (2026-10-24)
 
 ### Features
