@@ -3,13 +3,13 @@
  */
 
 /**
- * The one region all functions run in: the one Firebase pairs with the
- * location of the `bacteria-wars` Firestore database, `nam5` (US
- * multi-region), which cannot be moved. Every trigger is a Firestore, Auth
- * or schedule trigger; none reads the Realtime Database in europe-west1.
- * Hosting rewrites name this region too.
+ * The one region all functions run in: where the `bacteria-wars` Firestore
+ * database and the Realtime Database both live, europe-west1 (Belgium).
+ * Firestore triggers must run in their database's region, which cannot be
+ * moved once created (the owner moved `(default)` from `nam5` on 24
+ * October 2026 by recreating it). Hosting rewrites name this region too.
  */
-export const REGION = 'us-central1';
+export const REGION = 'europe-west1';
 
 /** No function scales past this many instances. */
 export const MAX_INSTANCES = 5;

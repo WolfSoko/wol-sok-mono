@@ -299,8 +299,9 @@ install --omit dev`).
     relative imports.
   - The verifying code loads the engine with `await import()`, so
     `publicSite` does not pay for it on a cold start.
-- **2nd gen, Node 22, one region**: the one Firebase pairs with the
-  Firestore location of `bacteria-wars` - `nam5`, so `us-central1`.
+- **2nd gen, Node 22, one region**: the Firestore location of
+  `bacteria-wars`, `europe-west1` (Belgium), where the Realtime Database
+  lives too.
   `setGlobalOptions({ region, maxInstances: 5 })`; `initializeApp()` without
   a project id. Triggers are idempotent (a transaction checks `state`
   first) and run with retries off, except ADR 0012's `rankReplay`, which
@@ -539,10 +540,10 @@ The rules and `replayCommand` require `admin == true`,
   versions, checked by `deploy-safety.spec.ts`): Nx would otherwise list
   the game lib's Angular peers. The build writes a pruned lockfile next
   to it.
-- The region is `REGION` in `src/config.ts`, `us-central1`: the owner
-  confirmed the Firestore location `nam5` (US multi-region), which Firebase
-  pairs with `us-central1`. The Realtime Database lives in `europe-west1`,
-  but no function triggers on it.
+- The region is `REGION` in `src/config.ts`, `europe-west1` (Belgium):
+  the owner moved the Firestore database `(default)` there from `nam5` on
+  24 October 2026 (deleted and recreated), next to the Realtime Database.
+  Firestore triggers run in their database's region.
 - `featureBest` is deployed with its schedule, but does nothing while
   `FEATURE_BEST_ENABLED` in `src/config.ts` is false (Cloud Scheduler
   cannot create a paused job from a deploy). Turning it on is a code
@@ -587,8 +588,8 @@ Decided by the owner on 2026-10-23:
 ## Owner's manual steps
 
 - Blaze plan and the APIs above on `bacteria-wars`.
-- Done: the Firestore location is `nam5`, so the functions run in
-  `us-central1` (`REGION`).
+- Done: the Firestore location is `europe-west1` (moved from `nam5` on
+  24 October 2026), so the functions run in `europe-west1` (`REGION`).
 - IAM roles for the deploying account; Artifact Registry cleanup policy.
 - Turn on TTL for the new `expireAt` fields if the index deploy does not.
 - First functions deploy by hand: `npx nx run bacteria-wars-functions:deploy`
