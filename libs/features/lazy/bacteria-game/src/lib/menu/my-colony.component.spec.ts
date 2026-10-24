@@ -39,7 +39,7 @@ describe('MyColonyComponent', () => {
       'Pixels',
     ]);
     expect(skins()).toHaveLength(BACTERIA_LOOKS.length);
-    expect(skins().map((skin) => skin.getAttribute('aria-checked'))).toEqual([
+    expect(skins().map((skin) => skin.getAttribute('aria-pressed'))).toEqual([
       'true',
       ...Array(BACTERIA_LOOKS.length - 1).fill('false'),
     ]);
@@ -57,8 +57,8 @@ describe('MyColonyComponent', () => {
     await fixture.whenStable();
 
     expect(TestBed.inject(GameSettingsService).look()).toBe('honeycomb');
-    expect(skins()[2].getAttribute('aria-checked')).toBe('true');
-    expect(skins()[0].getAttribute('aria-checked')).toBe('false');
+    expect(skins()[2].getAttribute('aria-pressed')).toBe('true');
+    expect(skins()[0].getAttribute('aria-pressed')).toBe('false');
   });
 
   it('speaks German too', async () => {

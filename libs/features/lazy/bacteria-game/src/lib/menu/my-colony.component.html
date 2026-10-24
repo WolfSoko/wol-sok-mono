@@ -18,18 +18,13 @@
     <h3 id="colony-skin" class="section-title">
       {{ "colony.skin.title" | t }}
     </h3>
-    <div
-      class="skins"
-      role="radiogroup"
-      [attr.aria-label]="'colony.skin.title' | t"
-    >
+    <div class="skins" role="group" [attr.aria-label]="'colony.skin.title' | t">
       @for (skin of skins; track skin.id) {
         @let picked = settings.look() === skin.id;
         <button
           type="button"
           class="skin"
-          role="radio"
-          [attr.aria-checked]="picked"
+          [attr.aria-pressed]="picked"
           [class.picked]="picked"
           (click)="settings.setLook(skin.id)"
         >
