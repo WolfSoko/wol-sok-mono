@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.78.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.77.0...v74.78.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** switch the deterministic simulation on, set the XP cut ([#2620](https://github.com/WolfSoko/wol-sok-mono/issues/2620)) ([cacd604](https://github.com/WolfSoko/wol-sok-mono/commit/cacd604e0e99f75e314067980df637f7b0b6f4b0))
+
 ## [74.77.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.76.0...v74.77.0) (2026-10-24)
 
 ### Features
