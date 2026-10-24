@@ -66,9 +66,15 @@ export interface LabShot {
 
 /** What a lab match measured. */
 export interface LabMatch {
-  /** True when the stand-in won, false when it lost, null when undecided. */
+  /**
+   * True when the stand-in won, false when it lost, null when undecided:
+   * cut off at the horizon, or stalled on a level won by annihilation.
+   */
   won: boolean | null;
-  /** Seconds of match time it took - the horizon when undecided. */
+  /**
+   * Seconds of match time it took - the horizon when undecided, or the
+   * second a match won by annihilation alone stalled.
+   */
   durationSec: number;
   /** The medallion the stand-in's win earned, null for none. */
   medal: MedalTier | null;
@@ -136,7 +142,7 @@ export function playLabMatch(cell: LabCell): LabMatch {
       botProfile: {
         ...(cell.skill === undefined
           ? computerProfile(cell.levelId, cell.difficulty)
-          : profileAt(cell.difficulty, cell.skill)),
+          : profileAt(cell.difficulty, cell.skill, level.boss !== undefined)),
         ...cell.tweaks,
       },
       standIns: new Map([[0, REFERENCE_PROFILE]]),
@@ -203,6 +209,11 @@ function measure(
       }
     }
     stalled = watch(standIn.bacteriaCount, computer.bacteriaCount);
+    // Won by annihilation alone, a stalled match is a stalemate: no need to
+    // play it to the horizon. A clock, a zone or the pellets still decide.
+    if (stalled && rule.kind === 'annihilation') {
+      break;
+    }
   }
   const outcome = engine.outcome();
   const [standIn] = engine.players;

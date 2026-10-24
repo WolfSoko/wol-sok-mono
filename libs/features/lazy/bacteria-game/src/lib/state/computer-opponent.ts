@@ -1,6 +1,6 @@
 import { BotDifficulty } from './bot-controller';
 import { ChapterId, CHAPTERS } from './chapters';
-import { ladderPosition } from './difficulty-curve';
+import { ladderPosition, strengthOf } from './difficulty-curve';
 import { GeneId, GENES, Loadout, PLAIN_LOADOUT, WeaponId } from './evolution';
 import { expectedDna, Purchase, spend } from './expected-player';
 import { getLevel, LEVELS } from './levels';
@@ -13,8 +13,9 @@ import { getLevel, LEVELS } from './levels';
  * player's.
  *
  * The budget follows the DNA a typical player holds at that point of the
- * ladder (`expected-player.ts`), times a factor per difficulty, and the
- * chapter's character decides how it is spent.
+ * ladder (`expected-player.ts`), times a factor per difficulty and the
+ * level's calibrated `STRENGTH`, and the chapter's character decides how
+ * it is spent.
  */
 
 /** Times the typical player's DNA the computer gets, by difficulty. */
@@ -76,7 +77,7 @@ export function computerBudget(
     return 0;
   }
   const dna = expectedDna(position * (LEVELS.length - 1));
-  return Math.round(dna * BUDGET_FACTOR[difficulty]);
+  return Math.round(dna * BUDGET_FACTOR[difficulty] * strengthOf(levelId));
 }
 
 /**

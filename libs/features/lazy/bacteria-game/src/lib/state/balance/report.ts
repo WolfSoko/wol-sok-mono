@@ -232,6 +232,8 @@ export interface CellStats {
   closeness: number;
   /** The median share of its colony at its peak the stand-in lost. */
   lostShare: number;
+  /** The same over its wins only - what gold's loss limit is set from. */
+  winLostShare: number | null;
   /** The share of matches that stalled at the cap. */
   stallRate: number;
   /** The stand-in's mean share of the players' bacteria. */
@@ -308,6 +310,7 @@ function statsOf(matches: readonly LabMatch[]): CellStats {
     closeness:
       median(matches.map(({ lowestSizeRatio }) => lowestSizeRatio)) ?? 0,
     lostShare: median(matches.map(({ lostShare }) => lostShare)) ?? 0,
+    winLostShare: median(wins.map(({ lostShare }) => lostShare)),
     stallRate: round(
       matches.filter(({ stalled }) => stalled).length / matches.length
     ),
@@ -553,6 +556,45 @@ export function checkDrift(
     });
   }
   return found;
+}
+
+/**
+ * Medallion limits as the measurements put them, next to the level's: on
+ * normal with the expected loadout, silver at the median win, gold at two
+ * thirds of it and gold's losses at the median share the wins lost.
+ */
+export function medalTable(report: BalanceReport): string[] {
+  const lines = [
+    '| Level | Wins | Median win | Silver | Gold | Gold losses |',
+    '| --- | --- | --- | --- | --- | --- |',
+  ];
+  for (const { id: levelId, medal } of LEVELS) {
+    const stats =
+      report.cells[
+        cellKey({ levelId, difficulty: 'normal', loadout: 'expected' })
+      ];
+    const proposal = stats === undefined ? null : measuredMedals(stats);
+    const pair = (now: number, measured: number | undefined) =>
+      measured === undefined ? `${now}` : `${now} → ${measured}`;
+    lines.push(
+      `| ${levelId} | ${stats === undefined ? '-' : `${Math.round(stats.winRate * stats.matches)}/${stats.matches}`} | ${stats?.medianWinSec ?? '-'} | ${pair(medal.silverSec, proposal?.silverSec)} | ${pair(medal.goldSec, proposal?.goldSec)} | ${pair(medal.goldLossShare, proposal?.goldLossShare)} |`
+    );
+  }
+  return lines;
+}
+
+/** The medallion limits a cell's wins put - null without wins. */
+export function measuredMedals(
+  stats: CellStats
+): { silverSec: number; goldSec: number; goldLossShare: number } | null {
+  if (stats.medianWinSec === null) {
+    return null;
+  }
+  return {
+    silverSec: Math.round(stats.medianWinSec / 5) * 5,
+    goldSec: Math.round((stats.medianWinSec * 2) / 3 / 5) * 5,
+    goldLossShare: Math.round((stats.winLostShare ?? 0) * 10) / 10,
+  };
 }
 
 /** The measured score of each level and difficulty next to its target. */

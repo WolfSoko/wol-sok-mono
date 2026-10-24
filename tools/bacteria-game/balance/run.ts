@@ -40,6 +40,7 @@ import {
   fullMatrix,
   gainsOf,
   LabConfig,
+  medalTable,
   NamedCell,
   summarize,
 } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/report';
@@ -147,9 +148,9 @@ export async function play(cells: readonly NamedCell[]): Promise<Played[]> {
   const journalPath = option('journal');
   const journal = journalPath === undefined ? null : resolve(ROOT, journalPath);
   const kept =
-    journal === null ? new Map<string, LabMatch>() : readJournal(journal);
+    journal === null ? new Map<string, Played>() : readJournal(journal);
   cells.forEach((cell, index) => {
-    results[index] = kept.get(JSON.stringify(cell));
+    results[index] = kept.get(JSON.stringify(cell))?.match;
   });
   // The big maps take longest: start them first, so no worker idles at the end.
   const order = cells
@@ -221,16 +222,16 @@ export async function play(cells: readonly NamedCell[]): Promise<Played[]> {
 }
 
 /** The matches a journal holds, by their cell. */
-function readJournal(path: string): Map<string, LabMatch> {
-  const kept = new Map<string, LabMatch>();
+function readJournal(path: string): Map<string, Played> {
+  const kept = new Map<string, Played>();
   if (!existsSync(path)) {
     mkdirSync(dirname(path), { recursive: true });
     return kept;
   }
   for (const line of readFileSync(path, 'utf8').split('\n')) {
     if (line.trim() !== '') {
-      const { cell, match } = JSON.parse(line) as Played;
-      kept.set(JSON.stringify(cell), match);
+      const played = JSON.parse(line) as Played;
+      kept.set(JSON.stringify(played.cell), played);
     }
   }
   return kept;
@@ -324,6 +325,9 @@ function summary(
     '## Score of the stand-in with the expected loadout - wins, undecided as half (target)',
     ...curveTable(report),
     '',
+    '## Medallion limits: the level\'s → measured (normal, expected loadout)',
+    ...medalTable(report),
+    '',
     '## Gain in points of share against plain, on normal',
     ...(header.length === 0
       ? ['None measured.']
@@ -392,11 +396,24 @@ async function main(): Promise<void> {
     }
     case 'merge': {
       const files = rest.filter(
-        (arg) => !arg.startsWith('--') && arg.endsWith('.json')
+        (arg) => !arg.startsWith('--') && /\.jsonl?$/.test(arg)
       );
-      const raws = files.map(
-        (file) => JSON.parse(readFileSync(resolve(ROOT, file), 'utf8')) as Raw
-      );
+      // A journal holds matches of the full run: the short check's cells
+      // are the ones its horizon tells.
+      const raws = files.map((file): Raw => {
+        if (!file.endsWith('.jsonl')) {
+          return JSON.parse(readFileSync(resolve(ROOT, file), 'utf8')) as Raw;
+        }
+        const played = [...readJournal(resolve(ROOT, file)).values()];
+        return {
+          played: played.filter(
+            ({ cell }) => cell.horizonSec !== FULL_RUN.checkHorizonSec
+          ),
+          checked: played.filter(
+            ({ cell }) => cell.horizonSec === FULL_RUN.checkHorizonSec
+          ),
+        };
+      });
       const raw: Raw = {
         played: raws.flatMap(({ played }) => played),
         checked: raws.flatMap(({ checked }) => checked),

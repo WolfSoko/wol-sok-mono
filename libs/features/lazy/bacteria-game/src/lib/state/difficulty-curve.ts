@@ -1,7 +1,7 @@
 import { BOT_DIFFICULTIES, BotDifficulty, BotProfile } from './bot-controller';
 import { clamp } from './geometry';
 import { heatOf, parseGeneratedId } from './level-generator/generate-level';
-import { LEVELS } from './levels';
+import { getLevel, LEVELS } from './levels';
 
 /**
  * The campaign's difficulty curve (ADR 0014): how often a player of the
@@ -185,6 +185,18 @@ export const SKILL: Readonly<
 };
 
 /**
+ * Times the computer's DNA budget on a level (`computerLoadout`), where
+ * its skill alone cannot reach the target - 1 for every level not listed.
+ * Calibrated with the balance lab, as {@link SKILL} is.
+ */
+export const STRENGTH: Readonly<Partial<Record<string, number>>> = {};
+
+/** Times the computer's DNA budget on a level - see {@link STRENGTH}. */
+export function strengthOf(levelId: string): number {
+  return STRENGTH[levelId] ?? 1;
+}
+
+/**
  * Where a level sits on the ladder, from 0 (the first level) to 1 (the
  * finale): a hand-made level by its place, a generated one by its heat.
  * Null for an id of neither kind.
@@ -226,16 +238,22 @@ export function computerProfile(
   levelId: string,
   difficulty: BotDifficulty
 ): BotProfile {
-  return profileAt(difficulty, skillOf(levelId, difficulty));
+  const level = getLevel(levelId);
+  return profileAt(
+    difficulty,
+    skillOf(levelId, difficulty),
+    level.id === levelId && level.boss !== undefined
+  );
 }
 
 /**
  * The computer's profile at `skill` of its difficulty's band - 0 its
- * weakest, 1 its strongest.
+ * weakest, 1 its strongest - a boss's when `boss`.
  */
 export function profileAt(
   difficulty: BotDifficulty,
-  skill: number
+  skill: number,
+  boss = false
 ): BotProfile {
   const t = clamp(skill, 0, 1);
   const { weak, strong } = SKILL_BANDS[difficulty];
@@ -253,8 +271,11 @@ export function profileAt(
     // the normal one in the second half of its band.
     chargesNearest:
       difficulty === 'hard' || (difficulty === 'normal' && t >= 0.5),
-    // Two colonies at their cap that wait for each other stall the match.
-    attacksAtCap: true,
+    // A boss does not wait at its cap for odds that never come - else a
+    // survive level stalls until its clock runs out. Any other computer
+    // waits: two colonies that charge each other at their cap stall the
+    // match just as well, as the balance lab found.
+    attacksAtCap: boss,
     pushesAfterCryo: true,
   };
 }

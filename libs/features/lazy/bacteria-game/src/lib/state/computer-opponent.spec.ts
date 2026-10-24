@@ -14,6 +14,7 @@ import {
   weaponOf,
 } from './evolution';
 import { geneCost } from './evolution-progress';
+import { strengthOf } from './difficulty-curve';
 import { expectedDna } from './expected-player';
 import { generatedLevelId } from './level-generator/generate-level';
 import { getLevel, LEVELS } from './levels';
@@ -64,7 +65,9 @@ describe('the computer opponent', () => {
     LEVELS.forEach(({ id }, index) => {
       for (const { id: difficulty } of BOT_DIFFICULTIES) {
         expect(computerBudget(id, difficulty)).toBe(
-          Math.round(expectedDna(index) * BUDGET_FACTOR[difficulty])
+          Math.round(
+            expectedDna(index) * BUDGET_FACTOR[difficulty] * strengthOf(id)
+          )
         );
       }
     });
