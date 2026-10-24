@@ -44,7 +44,11 @@ import {
   NamedCell,
   summarize,
 } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/report';
-import { LEVELS } from '../../../libs/features/lazy/bacteria-game/src/lib/state/levels';
+import {
+  getLevel,
+  LEVELS,
+  levelSize,
+} from '../../../libs/features/lazy/bacteria-game/src/lib/state/levels';
 import type { WorkerResult } from './worker';
 
 /** The workspace, where Nx runs the targets from. */
@@ -106,24 +110,15 @@ function configOf(): LabConfig {
     const value = option(name);
     return value === undefined ? fallback : Number(value);
   };
+  const curveSeeds = number('curve-seeds', 0);
+  const seeds =
+    option('curve-seeds') === undefined
+      ? null
+      : { easy: curveSeeds, normal: curveSeeds, hard: curveSeeds };
   return {
     ...FULL_RUN,
-    curveSeeds:
-      option('curve-seeds') === undefined
-        ? FULL_RUN.curveSeeds
-        : {
-            easy: number('curve-seeds', 0),
-            normal: number('curve-seeds', 0),
-            hard: number('curve-seeds', 0),
-          },
-    bigMapSeeds:
-      option('curve-seeds') === undefined
-        ? FULL_RUN.bigMapSeeds
-        : {
-            easy: number('curve-seeds', 0),
-            normal: number('curve-seeds', 0),
-            hard: number('curve-seeds', 0),
-          },
+    curveSeeds: seeds ?? FULL_RUN.curveSeeds,
+    bigMapSeeds: seeds ?? FULL_RUN.bigMapSeeds,
     gainSeeds: number('gain-seeds', FULL_RUN.gainSeeds),
     horizonSec: number('horizon', FULL_RUN.horizonSec),
     checkSeeds: number('check-seeds', FULL_RUN.checkSeeds),
@@ -256,8 +251,7 @@ function readJournal(path: string): Map<string, Played> {
 
 /** Roughly what a cell costs: a big map's ticks cost its area. */
 function weight(cell: NamedCell): number {
-  const index = LEVELS.findIndex(({ id }) => id === cell.levelId);
-  return cell.horizonSec * (index >= LEVELS.length - 5 ? 4 : 1);
+  return cell.horizonSec * (levelSize(getLevel(cell.levelId)) > 1 ? 4 : 1);
 }
 
 function readReport(path: string): BalanceReport | null {
@@ -304,7 +298,8 @@ function finish(config: LabConfig, raw: Raw): boolean {
     // Only a whole run of the full setup makes a baseline.
     if (
       JSON.stringify(config) !== JSON.stringify(FULL_RUN) ||
-      option('levels') !== undefined
+      option('levels') !== undefined ||
+      option('shard') !== undefined
     ) {
       throw new Error('--update takes the full run on every level only.');
     }
@@ -385,6 +380,9 @@ async function main(): Promise<void> {
         ...(baseline.balanceVersion === run.balanceVersion
           ? []
           : [`BALANCE_VERSION moved: run "full --update" to re-baseline`]),
+        ...(baseline.ladderVersion === run.ladderVersion
+          ? []
+          : [`LADDER_VERSION moved: run "full --update" to re-baseline`]),
         ...checkDrift(baseline, run),
       ];
       if (moved.length > 0) {
@@ -404,9 +402,11 @@ async function main(): Promise<void> {
       console.log(
         `Full run: ${played.length} matches, ${checked.length} of the short check`
       );
+      // One pool for both, so its workers idle at the end only once.
+      const both = await play([...played, ...checked]);
       const raw: Raw = {
-        played: await play(played),
-        checked: await play(checked),
+        played: both.slice(0, played.length),
+        checked: both.slice(played.length),
       };
       const rawPath = option('raw');
       if (rawPath !== undefined) {

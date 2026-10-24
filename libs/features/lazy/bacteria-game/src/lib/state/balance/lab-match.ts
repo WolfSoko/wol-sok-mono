@@ -172,6 +172,7 @@ function measure(
   const watch = stallWatch(capacity);
   let stalled = false;
   let shotsSeen = 0;
+  let computerShare = 0;
   const maxTicks = Math.round(limit * TICKS_PER_SEC);
   for (let tick = 0; tick < maxTicks && engine.outcome() == null; tick++) {
     engine.tick(width, height);
@@ -180,7 +181,7 @@ function measure(
       standIn.bacteriaCount +
       computer.bacteriaCount +
       (engine.neutralCount ?? 0);
-    const computerShare = all > 0 ? computer.bacteriaCount / all : 0;
+    computerShare = all > 0 ? computer.bacteriaCount / all : 0;
     for (; shotsSeen < computer.weaponsFired; shotsSeen++) {
       pending.push({
         atSec: engine.tickCount / TICKS_PER_SEC,
@@ -215,10 +216,22 @@ function measure(
       break;
     }
   }
+  // A shot the match ended within its window counts with the share at the
+  // end: often the one that decided it.
+  for (const shot of pending) {
+    shots.push({
+      atSec: round(shot.atSec),
+      gain: round((computerShare - shot.before) * 100),
+    });
+  }
   const outcome = engine.outcome();
   const [standIn] = engine.players;
   const durationSec = engine.tickCount / TICKS_PER_SEC;
-  const won = outcome === null ? null : outcome.winner?.id === 0;
+  // A draw - both colonies gone at once, a tie on time - is undecided.
+  const won =
+    outcome === null || outcome.winner === null
+      ? null
+      : outcome.winner.id === 0;
   // A decided match counts all or nothing for the seconds after its end, a
   // cut off one its last share.
   const rest = won === null ? (shares.at(-1) ?? 0.5) : won ? 1 : 0;

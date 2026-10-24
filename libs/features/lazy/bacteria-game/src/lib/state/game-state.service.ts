@@ -616,7 +616,7 @@ export class GameStateService {
       this.plan.loadouts = [
         untracked(this.evolution.loadout),
         ghost === null
-          ? computerLoadout(this.plan.levelId, difficulty)
+          ? computerLoadout(this.plan.levelId, this.plan.difficulty)
           : PLAIN_LOADOUT,
       ];
       if (ghost === null) {
