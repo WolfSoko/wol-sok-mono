@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.72.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.71.0...v74.72.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** GPU cross-check of the integer passes against the reference in CI ([#2611](https://github.com/WolfSoko/wol-sok-mono/issues/2611)) ([4c87d75](https://github.com/WolfSoko/wol-sok-mono/commit/4c87d75581af4a38b983696f91b27c8b3878cdd6))
+
+### Chore
+
+* **release:** publish ([577157c](https://github.com/WolfSoko/wol-sok-mono/commit/577157c1cdd77e41d81f5315b5fe84b75aa8fdc0))
+
 ## [74.71.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.70.0...v74.71.0) (2026-10-24)
 
 ### Features
