@@ -739,9 +739,10 @@ export class MatchEngine {
   }
 
   /**
-   * What a bot sees of the weapon it carries, null without one: the
-   * bacteria round its crosshair are counted only when it asks, from the
-   * blocks the simulation counts - a few times a second at the most.
+   * What a bot sees of the weapon it carries, null without one - built only
+   * when it decides: the bacteria round its crosshair are counted only when
+   * it asks, from the blocks the simulation counts - a few times a second
+   * at the most.
    */
   private botWeaponView(player: Player, width: number): BotWeaponView | null {
     if (player.weapon == null) {
@@ -772,7 +773,9 @@ export class MatchEngine {
       return around;
     }
     const { blocksX, blocksY, cellSize, counts } = blocks;
-    const summaries = this.simulation.summaries();
+    const own = this.simulation
+      .summaries()
+      .findIndex((summary) => summary.playerId === playerId);
     const reach = Math.ceil(radius / cellSize);
     const centerX = Math.floor(at.x / cellSize);
     const centerY = Math.floor(at.y / cellSize);
@@ -792,13 +795,13 @@ export class MatchEngine {
           continue;
         }
         const block = by * blocksX + bx;
-        counts.forEach((colony, index) => {
-          if (summaries[index]?.playerId === playerId) {
-            around.own += colony[block];
+        for (let index = 0; index < counts.length; index++) {
+          if (index === own) {
+            around.own += counts[index][block];
           } else {
-            around.enemy += colony[block];
+            around.enemy += counts[index][block];
           }
-        });
+        }
       }
     }
     return around;
@@ -883,7 +886,8 @@ export class MatchEngine {
     for (const [playerId, bot] of this.bots) {
       const player = this.playerList[playerId];
       const own = colonies.find((colony) => colony.playerId === playerId);
-      if (player == null || own == null) {
+      // Between its decisions the bot looks at nothing: no view to build.
+      if (player == null || own == null || bot.waits(TICK_SEC)) {
         continue;
       }
       const view = buildBotView(
@@ -905,7 +909,7 @@ export class MatchEngine {
         this.win.kind === 'harvest',
         this.botWeaponView(player, width)
       );
-      const decision = bot.decide(view, TICK_SEC);
+      const decision = bot.decideNow(view);
       if (decision.target != null) {
         this.dragTargets.set(playerId, decision.target);
       }

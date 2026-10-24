@@ -62,6 +62,18 @@ describe('BotController', () => {
     expect(controller.decide(view(), 1).target).not.toBeNull();
   });
 
+  it('says when it waits, so no view is built for a tick it waits out', () => {
+    const waiting = bot('normal');
+    const deciding = bot('normal');
+    waiting.decideNow(view());
+    deciding.decide(view(), 1 / 60);
+
+    expect(waiting.waits(0.1)).toBe(true);
+    expect(waiting.waits(1)).toBe(false);
+    deciding.decide(view(), 0.1);
+    expect(waiting.decideNow(view())).toEqual(deciding.decide(view(), 1));
+  });
+
   it('attacks the enemy centre of mass once it is clearly stronger', () => {
     const enemy = colony(240, 70, 50);
 

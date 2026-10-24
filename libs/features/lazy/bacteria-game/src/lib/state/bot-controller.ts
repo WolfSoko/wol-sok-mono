@@ -233,10 +233,23 @@ export class BotController {
    * Between decisions the crosshair keeps travelling to the last target.
    */
   public decide(view: BotView, deltaTimeSec: number): BotDecision {
+    return this.waits(deltaTimeSec)
+      ? { target: null, boost: false, weapon: false }
+      : this.decideNow(view);
+  }
+
+  /**
+   * Advances the reaction timer - true while it has not run out, and the
+   * bot does not decide yet. Once it has, {@link decideNow} decides: what
+   * {@link decide} does, without a view built for a tick it waits out.
+   */
+  public waits(deltaTimeSec: number): boolean {
     this.cooldown = countDown(this.cooldown, deltaTimeSec);
-    if (this.cooldown > 0) {
-      return { target: null, boost: false, weapon: false };
-    }
+    return this.cooldown > 0;
+  }
+
+  /** Makes a decision now - after {@link waits} said the bot no longer waits. */
+  public decideNow(view: BotView): BotDecision {
     this.cooldown = this.profile.reactionSec;
     // The bot thinks in cells of the base arena.
     this.unit = view.unit;
