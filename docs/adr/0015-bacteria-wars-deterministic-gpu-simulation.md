@@ -75,7 +75,17 @@ The GPU simulation becomes a deterministic ruleset of its own:
    - every uniform that feeds the state is a fixed-point integer with a
      written-down bound below 2^31, since GLSL ES 3.00 has no 64-bit
      multiply;
+   - every state-relevant intermediate (Q14 products, cross products,
+     energy sums) has a written-down bound below 2^31 too, so no value ever
+     wraps. Products round by an arithmetic right shift (towards minus
+     infinity) on both sides: `>>` on `int` in GLSL, `>>` on an
+     `Math.imul` result in TypeScript, so the two agree bit for bit;
    - no signed division or modulo.
+
+   The bounds are part of the code: each Q-format helper names its range,
+   and the TypeScript reference asserts it in tests. The CI cross-check
+   (decision 4) includes scenarios that drive energy, counts and vectors to
+   these bounds.
 
    Painting stays float; it never feeds back into the state.
 
@@ -84,8 +94,17 @@ The GPU simulation becomes a deterministic ruleset of its own:
    pellet eating, colony counts and the active area. Each is computed on the
    GPU from that tick's state, or read back at a fixed lag of k ticks. The
    active area is either proven to cover everything that can change, or
-   deterministic mode runs the full grid. The match seed is mixed into every
-   draw.
+   deterministic mode runs the full grid.
+
+   Random draws follow one contract on the GPU, in the TypeScript reference
+   and on the server. Each draw hashes the cell and a salted frame seed:
+   `pcg3d(x, y, frameSeed ^ salt * 0x9E3779B1)`. That is the PCG-based 3D
+   hash the spike used (Jarzynski and Olano), in 32-bit unsigned arithmetic,
+   returning `x ^ y ^ z`. `frameSeed` mixes the match seed (`MatchPlan.seed`,
+   carried in the replay header and the online handshake) with the step
+   number. Each pass names its salts as constants, so no draw depends on the
+   order in which cells are visited.
+
 3. **A bit-exact TypeScript reference of every pass.** It is pure, part of
    `engine.ts`, and runs in Node. The server's verification and CPU replays
    use it.
@@ -93,14 +112,26 @@ The GPU simulation becomes a deterministic ruleset of its own:
    SwiftShader (and llvmpipe where available) against the TypeScript
    reference, with golden hashes per `BALANCE_VERSION`. The CPU benchmark of
    ADR 0014 gains a fixture for the reference.
-5. **An on-device self-test.** At start the game runs a fixed scenario of
-   about 50 steps on the GPU and compares the result with a hash baked in at
-   build time. If they differ, the device uses the CPU simulation for
-   recorded, ranked and online play.
+5. **An on-device self-test.** At start the game runs a small set of test
+   vectors on the GPU and compares each result with a hash baked in at build
+   time. Together the vectors cover every state-relevant pass (movement,
+   escape, division, combat, feed, weapons, pellets) and the written bounds
+   of decision 1: energy at its maximum, the largest counts, and walls and
+   zones at the grid's edges. They are taken from the CI cross-check's
+   scenarios and take well under a second. If any hash differs, the device
+   uses the CPU simulation for recorded, ranked and online play. The result
+   is cached per device and GPU driver string, and the test runs again when
+   either changes.
 6. **Replays and the network know the ruleset.** A replay header and the
-   online handshake name the simulation ruleset (`cpu` or `gpu-int`), and
-   both seats must agree. Ranked boards accept both but compare like with
-   like, or one ruleset is chosen for ranked play when the boards ship.
+   online handshake name the simulation ruleset (`cpu` or `gpu-int`). Each
+   seat offers the rulesets it can run, and the match takes `gpu-int` only
+   if both offer it, otherwise `cpu`. This is settled in the handshake,
+   before the first tick. Every seat can run `cpu`, so a match never fails
+   over the ruleset.
+
+   Ranked boards stay CPU-only until their policy is decided. Before step 8
+   enables `gpu-int` for ranked play, either each ruleset gets its own
+   boards, or one ruleset is chosen for all ranked entries.
 
 ## Consequences
 
@@ -145,7 +176,11 @@ sits behind a flag; step 8 switches it on.
 7. The on-device self-test and the CPU fallback.
 8. Switch it on:
    - bump `BALANCE_VERSION` and `NET_VERSION`;
-   - add the ruleset to replays and the online handshake;
+   - add a replay version for `gpu-int` headers, and let the parser accept
+     `gpu-int`. Old `gpu` recordings stay version 1 headers, good for a
+     ghost race only, as today;
+   - add the ruleset choice to the online handshake (decision 6);
+   - settle the ranked boards' ruleset policy (decision 6);
    - update the golden replays;
    - check the medal limits;
    - turn "Record local matches" on by default.
