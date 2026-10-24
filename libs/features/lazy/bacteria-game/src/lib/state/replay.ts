@@ -117,6 +117,17 @@ const VERSIONS: ReadonlyMap<unknown, VersionRules> = new Map([
   ],
 ]);
 
+/**
+ * True for a replay whose version may carry evolution - loadouts, weapons
+ * fired, the ladder's computer (versions 3 and 4) - which the leaderboards
+ * keep out of ranked attempts and the daily level (ADR 0013).
+ */
+export function isEvolvedReplay(
+  header: Pick<ReplayHeader, 'version'>
+): boolean {
+  return VERSIONS.get(header.version)?.evolved === true;
+}
+
 /** The biggest grid a replay may ask for, in cells per side. */
 const MAX_GRID = 4096;
 /** The longest match a replay may hold: an hour. */
@@ -354,10 +365,10 @@ export function playReplay(replay: Replay): ReplayResult | null {
 /** How strict {@link parseReplay} is. */
 export interface ParseOptions {
   /**
-   * True for a replay to store and check (ADR 0011): version 2 or 3 from
-   * the CPU, on the online grid of its level, with its outcome and
-   * checksum - version 3 never for a ranked attempt or the daily level
-   * (ADR 0013).
+   * True for a replay to store and check (ADR 0011): version 2, 3 or 4
+   * from the CPU, on the online grid of its level, with its outcome and
+   * checksum - an evolved one (3, 4) never for a ranked attempt or the
+   * daily level (ADR 0013).
    */
   stored?: boolean;
 }

@@ -77,9 +77,11 @@ jobs:
       - name: Sync check
         run: npx nx sync:check
 
+      # test-rules and test-integration start the Firebase emulators (a JVM on
+      # the workers), on ports of their own apart from the e2e emulators.
       - name: run-checks in parallel on nx cloud workers
         run: |
-          npx nx affected -t="lint,lint-templates,test,build,e2e-ci" -c=ci
+          npx nx affected -t="lint,lint-templates,test,build,e2e-ci,test-rules,test-integration" -c=ci
 
       - name: Auto Fix CI
         if: always()

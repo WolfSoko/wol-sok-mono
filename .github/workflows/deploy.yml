@@ -50,9 +50,12 @@ jobs:
             deploy-tag-suffix: npm-deployed
             projects-filter: 'tag:published'
             extra-deploy-args: ''
+          # tag:deploy:manual - projects the owner deploys by hand for now:
+          # the game's Cloud Functions (bacteria-wars-functions) until the
+          # manual steps of ADR 0011 are done (Blaze, region, IAM).
           - app-type: non-cdk
             deploy-tag-suffix: non-cdk-deployed
-            exclude-pattern: 'tag:cdk,tag:published,tag:type:android'
+            exclude-pattern: 'tag:cdk,tag:published,tag:type:android,tag:deploy:manual'
             extra-deploy-args: ''
           - app-type: android
             deploy-tag-suffix: android-deployed

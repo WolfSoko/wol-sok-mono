@@ -1,7 +1,9 @@
 import {
   ADMIN_COMMAND_TYPES,
   DESTRUCTIVE_COMMAND_TYPES,
+  isReplayCommandType,
   parseAdminCommand,
+  REPLAY_COMMAND_TYPES,
 } from './admin-commands';
 
 const UID = 'aB3dE6gH9jK2mN5pQ8sT1vW4yZ7c';
@@ -238,5 +240,19 @@ describe('admin commands', () => {
       'profile.removeImage',
       'profile.reset',
     ]);
+  });
+
+  describe('replay commands', () => {
+    it('know the four types of ADR 0011 and nothing else', () => {
+      expect(REPLAY_COMMAND_TYPES).toEqual([
+        'remove',
+        'feature',
+        'unfeature',
+        'anonymise',
+      ]);
+      expect(isReplayCommandType('remove')).toBe(true);
+      expect(isReplayCommandType('delete')).toBe(false);
+      expect(isReplayCommandType(undefined)).toBe(false);
+    });
   });
 });

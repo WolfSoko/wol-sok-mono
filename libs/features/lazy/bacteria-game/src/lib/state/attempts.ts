@@ -1,7 +1,8 @@
 import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
 import { isUtcDay } from './boards';
 import { DEFAULT_COLORS } from './colony-colors';
-import { utcDay } from './daily';
+import { dailyLevelId, utcDay } from './daily';
+import { endlessLevelId } from './endless';
 import { isPlainLoadout } from './evolution';
 import { TICKS_PER_SEC } from './fixed-tick';
 import { getLevel, levelSize } from './levels';
@@ -45,6 +46,30 @@ export interface EndlessAttempt {
 }
 
 export type Attempt = DailyAttempt | EndlessAttempt;
+
+/**
+ * Why a replay of a declared attempt does not rank - kept on the replay as
+ * `rankedReason` and shown on the result screen.
+ */
+export type RankedReason =
+  /** No such attempt for that player. */
+  | 'no-attempt'
+  /** The server dropped the attempt's submission; it does not count. */
+  | 'void'
+  /** Another replay already ranked for that attempt. */
+  | 'used'
+  /** The seed is not the declaration's. */
+  | 'seed-mismatch'
+  /** The plan is not the ranked setup. */
+  | 'plan-mismatch'
+  /** The level is not the attempt's. */
+  | 'level-mismatch'
+  /** The match would have started before its declaration. */
+  | 'early'
+  /** The replay arrived after its deadline. */
+  | 'late'
+  /** A banned player. */
+  | 'banned';
 
 /** The id of the `n`th ranked attempt on `day`'s daily level. */
 export function dailyAttemptId(day: string, n: number): string {
@@ -176,6 +201,19 @@ export function attemptExpireAt(atMillis: number): number {
   return atMillis + ATTEMPT_DAYS * 86_400_000;
 }
 
+/** The level a daily attempt plays: that day's daily level. */
+export function dailyAttemptLevel(attempt: DailyAttempt): string {
+  return dailyLevelId(attempt.day);
+}
+
+/**
+ * The level of an endless run's match after `wins` won levels, from the
+ * seed of the run's match 0.
+ */
+export function endlessAttemptLevel(runSeed: number, wins: number): string {
+  return endlessLevelId({ seed: runSeed, wins, lives: 0 });
+}
+
 // --- Seed ------------------------------------------------------------------
 
 /**
@@ -246,6 +284,11 @@ export const COUNTDOWN_MS = 5_000;
 export const UPLOAD_WINDOW_MS = 300_000;
 /** The slack between the declaration plus the match and the replay's arrival. */
 export const ARRIVAL_SLACK_MS = 120_000;
+/**
+ * A declared match without a replay or a pending submission this long
+ * after its declaration is a lost life (an endless run) or a used attempt.
+ */
+export const ATTEMPT_CLOSE_MS = 2 * 3_600_000;
 
 function matchMs(ticks: number): number {
   return (ticks / TICKS_PER_SEC) * 1000;

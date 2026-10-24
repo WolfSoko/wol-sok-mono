@@ -293,8 +293,8 @@ install --omit dev`).
     relative imports.
   - The verifying code loads the engine with `await import()`, so
     `publicSite` does not pay for it on a cold start.
-- **2nd gen, Node 22, one region**: the Firestore location of
-  `bacteria-wars` (confirmed by the owner before the first deploy).
+- **2nd gen, Node 22, one region**: the one Firebase pairs with the
+  Firestore location of `bacteria-wars` - `nam5`, so `us-central1`.
   `setGlobalOptions({ region, maxInstances: 5 })`; `initializeApp()` without
   a project id. Triggers run with retries off and are idempotent (a
   transaction checks `state` first).
@@ -493,10 +493,13 @@ The rules and `replayCommand` require `admin == true`,
 
 1. Owner: Blaze, Firestore location, APIs, IAM (below).
 2. Engine entry point, lint guard, federation skip - no behaviour change.
+   **Done.**
 3. Replay v2, packing, scoring, recorded seats, the sampler, golden replay.
+   **Done.**
 4. Functions app, rules, indexes, emulator; deploy the functions **before**
    the hosting rewrites merge (a release whose rewrites name a function
-   that does not exist fails).
+   that does not exist fails). **Done in code, not deployed** - see
+   "Step 4 as built" below.
 5. Client: room stub, recording settings, submission, "My matches", the
    viewer.
 6. `publicSite`, `robots.txt`, privacy text, `/watch`, the curation view
@@ -505,6 +508,61 @@ The rules and `replayCommand` require `admin == true`,
    has shipped, so the owner can unfeature).
 7. Owner: grant the claim, sign out and in, check `/admin` (changed by
    ADR 0012).
+
+### Step 4 as built
+
+- `apps/bacteria-wars-functions` exports `acceptReplay`, `replayCommand`,
+  `profileChanged`, `deletePlayerReplays` and `featureBest`, with the
+  ADR 0012 changes to them, and `acceptReplay` adds ADR 0016's
+  `levelStats` counters. `publicSite` belongs to step 6 and is not built.
+  Each function is a thin trigger around a core that takes the Firestore
+  it acts on (`src/replays/`), `verify.ts` re-runs for every caller from
+  per-pool daily budgets (`replays/budgets.ts`).
+- The build is `@nx/esbuild` with code splitting: the engine is loaded
+  with `await import()` (`src/engine.ts`, the only module allowed a value
+  import of the alias, an oxlint override) and lands in a chunk of its
+  own, which `bundle.spec.ts` checks. `generatePackageJson` stays on, but
+  the dependencies come from the app's own `package.json`
+  (`firebase-functions`, `firebase-admin`, pinned to the workspace's
+  versions, checked by `deploy-safety.spec.ts`): Nx would otherwise list
+  the game lib's Angular peers. The build writes a pruned lockfile next
+  to it.
+- The region is `REGION` in `src/config.ts`, `us-central1`: the owner
+  confirmed the Firestore location `nam5` (US multi-region), which Firebase
+  pairs with `us-central1`. The Realtime Database lives in `europe-west1`,
+  but no function triggers on it.
+- `featureBest` is deployed with its schedule, but does nothing while
+  `FEATURE_BEST_ENABLED` in `src/config.ts` is false (Cloud Scheduler
+  cannot create a paused job from a deploy). Turning it on is a code
+  change, after the Replays view of `/admin` ships.
+- Command documents (`replaySubmissions`, `replayCommands`, ADR 0012's
+  `adminCommands`) take an `expireAt` up to 2 days ahead instead of
+  exactly `request.time` + 1 day, which no client can write.
+- `endless` is derived from a declared run's attempt only: the id of an
+  endless level is an ordinary generated level id.
+- The global daily cap is 20,000 unranked submissions, next to ADR 0012's
+  20,000 ranked ones (`limits.ts`).
+- The level statistics key a generated level by its style and heat
+  (`gen-<recipe>-<difficulty>`), the daily and endless levels apart, since
+  every roll is a level of its own. Medallions are not counted yet: they
+  need the re-run's samples.
+- **Deploy safety**: the app's `deploy` target (`--only
+functions:bacteria`) is tagged `deploy:manual`, which
+  `.github/workflows/deploy.yml` excludes, so releases do not deploy the
+  functions until the owner removes the tag and the exclusion. The game
+  remote's `deploy` stays `--only hosting,firestore,database`, and no
+  hosting rewrite names a function.
+- **Emulators**: the e2e emulator set (`bacteria-game-remote:
+firebase-emulators`) stays `auth,firestore,database`, so e2e does not
+  wait for the functions build on the Nx Cloud workers. The functions
+  emulator (port 5401) runs with `nx run bacteria-wars-functions:emulators`,
+  which builds first and starts all four. ADR 0012's "the functions
+  emulator runs the triggers in e2e" waits for the client steps.
+- **Tests**: unit specs (`test`); the Firestore and Realtime Database
+  rules against the emulators (`test-rules`, `@firebase/rules-unit-testing`);
+  the cores against the Firestore emulator (`test-integration`). Both
+  emulator targets use ports of their own (`firebase.*-test.json`) and run
+  in CI.
 
 ## Owner's decisions
 
@@ -517,11 +575,20 @@ Decided by the owner on 2026-10-23:
 ## Owner's manual steps
 
 - Blaze plan and the APIs above on `bacteria-wars`.
-- `gcloud firestore databases describe --project bacteria-wars`: the
-  location becomes the functions region.
+- Done: the Firestore location is `nam5`, so the functions run in
+  `us-central1` (`REGION`).
 - IAM roles for the deploying account; Artifact Registry cleanup policy.
 - Turn on TTL for the new `expireAt` fields if the index deploy does not.
-- First functions deploy by hand (or let CI do it) before the rewrites PR.
+- First functions deploy by hand: `npx nx run bacteria-wars-functions:deploy`
+  (builds, then `firebase deploy --only functions:bacteria`), before the
+  rewrites PR. The account deploying needs the roles above.
+- Then let releases deploy the functions: remove the `deploy:manual` tag
+  from `apps/bacteria-wars-functions/project.json` and
+  `tag:deploy:manual` from the non-cdk exclusion in
+  `.github/workflows/deploy.yml` (or keep deploying by hand).
+- After the first deploy, pause the `featureBest` job in Cloud Scheduler
+  if it should not even start before step 6 (it returns at once while
+  `FEATURE_BEST_ENABLED` is false); turn the flag on after step 7.
 - Once: `gcloud auth application-default login`, then
   `node tools/firebase/grant-admin.mjs <email> --project bacteria-wars --prod`.
 - After the first deploy: `curl` `/replays`, `/replays/<id>`, an unknown

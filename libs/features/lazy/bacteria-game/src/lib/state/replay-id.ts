@@ -27,3 +27,9 @@ function fnv1a(text: string, offset: number): number {
 function hex(value: number): string {
   return value.toString(16).padStart(8, '0');
 }
+
+/**
+ * A stored replay's id: `o_` and 16 hex digits for an online match
+ * ({@link onlineReplayId}), `l_` and the submission's auto id otherwise.
+ */
+export const REPLAY_ID = /^(o_[0-9a-f]{16}|l_[A-Za-z0-9]{1,40})$/;

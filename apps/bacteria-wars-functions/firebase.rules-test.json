@@ -1,0 +1,23 @@
+{
+  "firestore": {},
+  "database": {},
+  "emulators": {
+    "firestore": {
+      "port": 8381,
+      "websocketPort": 9161
+    },
+    "database": {
+      "port": 9411
+    },
+    "hub": {
+      "port": 4411
+    },
+    "logging": {
+      "port": 4511
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  }
+}

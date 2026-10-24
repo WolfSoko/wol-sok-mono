@@ -124,7 +124,7 @@
   "overrides": [
     {
       "files": [
-        "apps/{angular-examples,*-remote,*-cdk,nx-aws-cdk-v2-e2e,ws-thanos-test-app}/**/*.spec.ts",
+        "apps/{angular-examples,*-remote,*-cdk,nx-aws-cdk-v2-e2e,ws-thanos-test-app,bacteria-wars-functions}/**/*.spec.ts",
         "libs/**/*.spec.ts",
         "tools/**/*.spec.ts"
       ],
@@ -188,6 +188,33 @@
         "libs/features/lazy/bacteria-game/src/lib/state/game.states.ts",
         "libs/features/lazy/bacteria-game/src/lib/state/player.service.ts",
         "libs/features/lazy/bacteria-game/src/lib/state/player.store.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": ["apps/bacteria-wars-functions/src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@wolsok/feat-lazy-bac-game/engine",
+                "allowTypeImports": true,
+                "message": "Load the engine with loadEngine() (src/engine.ts) and import only its types elsewhere, so it stays in a chunk of its own (ADR 0011)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/bacteria-wars-functions/src/engine.ts",
+        "apps/bacteria-wars-functions/src/testing/**/*.ts",
+        "apps/bacteria-wars-functions/src/**/*.spec.ts"
       ],
       "rules": {
         "no-restricted-imports": "off"

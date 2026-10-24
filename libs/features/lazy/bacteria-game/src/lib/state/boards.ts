@@ -1,5 +1,6 @@
 import { AVATAR_COUNT } from '../social/profile';
 import { utcDay } from './daily';
+import { TICKS_PER_SEC } from './fixed-tick';
 import { MAX_TICKS } from './replay';
 
 /**
@@ -100,6 +101,23 @@ export interface BoardRow {
   show: EntryShow;
 }
 
+/** An entry document's shown fields: a row without its id and place. */
+export type BoardEntry = Omit<BoardRow, 'entryId' | 'pos' | 'rank'>;
+
+/** True for a status a board shows. */
+export function isVisible(status: EntryStatus): boolean {
+  return VISIBLE_STATUSES.includes(status);
+}
+
+/**
+ * True when an entry may show its player's name: counted and verified
+ * ones. A provisional or stale claim never does, so it is never a
+ * billboard.
+ */
+export function showsName(status: EntryStatus): boolean {
+  return status === 'counted' || status === 'verified';
+}
+
 /** A Firestore document id as entry ids are made: no slashes, short. */
 const ENTRY_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -190,6 +208,34 @@ export function competitionRanks(sorts: readonly number[]): number[] {
   return ranks;
 }
 
+/**
+ * A top document's rows from a board's entries: the visible ones in board
+ * order, at most {@link TOP_ROWS}, each with its `pos` (ties share it) and,
+ * for verified entries inside the cut, the `rank` among the verified ones.
+ */
+export function topRows(
+  entries: readonly (BoardEntry & { entryId: string })[],
+  cut: number
+): BoardRow[] {
+  const visible = entries
+    .filter((entry) => isVisible(entry.status))
+    .sort(compareRows);
+  const positions = competitionRanks(visible.map((entry) => entry.sort));
+  const verified = visible.filter((entry) => entry.status === 'verified');
+  const verifiedRanks = competitionRanks(verified.map((entry) => entry.sort));
+  const rankOf = new Map(
+    verified.map((entry, i) => [entry.entryId, verifiedRanks[i]])
+  );
+  return visible.slice(0, TOP_ROWS).map((entry, i) => {
+    const rank = rankOf.get(entry.entryId);
+    return {
+      ...entry,
+      pos: positions[i],
+      ...(rank !== undefined && rank <= cut ? { rank } : {}),
+    };
+  });
+}
+
 function count(value: number, what: string): number {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new RangeError(`${what} must be a whole number >= 0: ${value}`);
@@ -222,6 +268,11 @@ export const BOARD_CUT: Readonly<Record<BoardKind, number>> = {
   daily: 10,
   endless: 10,
 };
+
+/** A daily board is checked until this hour (UTC) of the next day, then final. */
+export const DAILY_FINAL_HOUR = 23;
+/** A daily or endless match longer than this is never re-run: 10 minutes. */
+export const MAX_RERUN_TICKS = 10 * 60 * TICKS_PER_SEC;
 
 // --- Names -----------------------------------------------------------------
 
@@ -277,10 +328,10 @@ export const XP_RISE_PER_DAY = 20_000;
 export const XP_FULL_COUNT = 25_000;
 /**
  * Progress documents created before this moment (their server
- * `createTime`) get the full first count; the release of the boards.
- * Move it to the actual release date before that client ships.
+ * `createTime`) get the full first count: the boards start on
+ * 24 October 2026 (owner's call - only test players exist before it).
  */
-export const XP_FULL_COUNT_BEFORE = Date.UTC(2026, 10, 1);
+export const XP_FULL_COUNT_BEFORE = Date.UTC(2026, 9, 24);
 
 /**
  * How far board XP may rise now: `min(2,000 + 3,000 × hours since the last
@@ -298,3 +349,112 @@ export function xpRiseCap(hoursSinceLast: number, risenToday: number): number {
     )
   );
 }
+
+/** What the server knows of a player's board XP, `boardMembers/{uid}.xp`. */
+export interface XpLedger {
+  /** The board XP. */
+  counted: number;
+  /** The XP the progress claimed last. */
+  claimed: number;
+  /** When `counted` last changed, ms since the epoch. */
+  lastAt: number;
+  /** When the player was first counted. */
+  firstAt: number;
+  /** The gross rises of `todayDay`: a fall gives no room back. */
+  risenToday: number;
+  todayDay: string;
+}
+
+/**
+ * The ledger after the progress claimed `claimed` XP at `now` (ms). At or
+ * below the board XP the board follows it down; above it, it rises by at
+ * most {@link xpRiseCap}. The first count starts at the hourly cap, or
+ * allows {@link XP_FULL_COUNT} at once for progress created before
+ * {@link XP_FULL_COUNT_BEFORE}. XP above the cap waits for the next count.
+ */
+export function countXp(
+  ledger: XpLedger | null,
+  claimed: number,
+  now: number,
+  progressCreatedAt: number
+): XpLedger {
+  const todayDay = utcDay(new Date(now));
+  const want = xpSort(claimed);
+  if (ledger === null) {
+    const counted = Math.min(
+      want,
+      progressCreatedAt < XP_FULL_COUNT_BEFORE ? XP_FULL_COUNT : xpRiseCap(0, 0)
+    );
+    return {
+      counted,
+      claimed: want,
+      lastAt: now,
+      firstAt: now,
+      risenToday: counted,
+      todayDay,
+    };
+  }
+  const risenToday = ledger.todayDay === todayDay ? ledger.risenToday : 0;
+  if (want <= ledger.counted) {
+    return {
+      ...ledger,
+      counted: want,
+      claimed: want,
+      lastAt: want < ledger.counted ? now : ledger.lastAt,
+      risenToday,
+      todayDay,
+    };
+  }
+  const rise = Math.min(
+    want - ledger.counted,
+    xpRiseCap((now - ledger.lastAt) / 3_600_000, risenToday)
+  );
+  return {
+    ...ledger,
+    counted: ledger.counted + rise,
+    claimed: want,
+    lastAt: rise > 0 ? now : ledger.lastAt,
+    risenToday: risenToday + rise,
+    todayDay,
+  };
+}
+
+// --- Online caps -----------------------------------------------------------
+
+/** What an agreed online match has to meet to count, and how much counts. */
+export const ONLINE_CAPS = {
+  /** A match counts from 30 s on. */
+  minTicks: 30 * TICKS_PER_SEC,
+  /** Counted results per pair of players and UTC day. */
+  perPairDay: 3,
+  /** Counted wins a day against opponents younger than... */
+  newOpponentWinsDay: 5,
+  /** ...this many days. */
+  newOpponentDays: 3,
+  /** Counted wins a day in all. */
+  winsDay: 30,
+  /** How much faster than the room's clock the reports may arrive. */
+  roomClockSlackMs: 60_000,
+} as const;
+
+/**
+ * Why an agreed online match did not count, kept on the replay as
+ * `rankedReason` ("Not counted: ..."). A match still `waiting` or
+ * `disputed` has none: its state says it.
+ */
+export const ONLINE_REASONS = [
+  /** The room's stub did not name both players, or had expired. */
+  'unbound',
+  /** Shorter than `ONLINE_CAPS.minTicks`. */
+  'short',
+  /** Reported faster than the room's clock allows. */
+  'too-fast',
+  /** The devices fell out of step. */
+  'desync',
+  /** A banned player played in it. */
+  'banned',
+  /** The pair of players reached their counted results of the day. */
+  'capped',
+] as const;
+
+export type OnlineReason = (typeof ONLINE_REASONS)[number];

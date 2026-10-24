@@ -56,6 +56,16 @@
       }
     ]
   },
+  "functions": [
+    {
+      "codebase": "bacteria",
+      "source": "dist/apps/bacteria-wars-functions",
+      "predeploy": [
+        "rm -rf \"$RESOURCE_DIR/node_modules\"",
+        "npm --prefix \"$RESOURCE_DIR\" install --omit dev"
+      ]
+    }
+  ],
   "firestore": {
     "rules": "apps/bacteria-game-remote/firestore.rules",
     "indexes": "apps/bacteria-game-remote/firestore.indexes.json"
@@ -70,6 +80,9 @@
     },
     "database": {
       "port": 9410
+    },
+    "functions": {
+      "port": 5401
     },
     "hub": {
       "port": 4410

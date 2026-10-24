@@ -51,6 +51,7 @@ export {
 export {
   EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
+  isEvolvedReplay,
   LADDER_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
@@ -89,7 +90,7 @@ export type {
   ReplayScore,
   ReplayScoreInput,
 } from './lib/state/replay-score';
-export { onlineReplayId } from './lib/state/replay-id';
+export { onlineReplayId, REPLAY_ID } from './lib/state/replay-id';
 export { matchChecksum } from './lib/state/checksum';
 export { replayFromHash, replayLink } from './lib/state/replay-link';
 export { GhostController } from './lib/state/ghost';
@@ -253,6 +254,8 @@ export {
   CHECKING_ROWS,
   compareRows,
   competitionRanks,
+  countXp,
+  DAILY_FINAL_HOUR,
   dailyBoardId,
   dailySort,
   DEFAULT_NAME,
@@ -261,13 +264,19 @@ export {
   isBoardId,
   isEntryId,
   isUtcDay,
+  isVisible,
+  MAX_RERUN_TICKS,
   NEXT_CANDIDATES,
+  ONLINE_CAPS,
+  ONLINE_REASONS,
   onlineSort,
   PAGE_ROWS,
   parseBoardId,
   posesAsLabel,
+  showsName,
   TAG_COUNT,
   TOP_ROWS,
+  topRows,
   VISIBLE_STATUSES,
   XP_FULL_COUNT,
   XP_FULL_COUNT_BEFORE,
@@ -278,23 +287,29 @@ export {
   xpSort,
 } from './lib/state/boards';
 export type {
+  BoardEntry,
   BoardId,
   BoardKind,
   BoardRef,
   BoardRow,
   EntryShow,
   EntryStatus,
+  OnlineReason,
+  XpLedger,
 } from './lib/state/boards';
 export {
   ARRIVAL_SLACK_MS,
+  ATTEMPT_CLOSE_MS,
   ATTEMPT_DAYS,
   attemptExpireAt,
   attemptSeed,
   canDeclare,
   COUNTDOWN_MS,
   dailyAttemptId,
+  dailyAttemptLevel,
   declaredBeforeMatch,
   endlessAttemptId,
+  endlessAttemptLevel,
   endlessRunId,
   isRankedPlan,
   nextDailyAttemptId,
@@ -313,25 +328,40 @@ export type {
   Attempt,
   DailyAttempt,
   EndlessAttempt,
+  RankedReason,
 } from './lib/state/attempts';
 export {
   ADMIN_COMMAND_TYPES,
   BAN_REASONS,
   DESTRUCTIVE_COMMAND_TYPES,
   isAdminCommandType,
+  isReplayCommandType,
   isUid,
   parseAdminCommand,
   REASON_MAX,
+  REPLAY_COMMAND_TYPES,
 } from './lib/state/admin-commands';
 export type {
   AdminCommand,
+  AdminCommandResult,
   AdminCommandType,
   BanReason,
   EntryTarget,
+  NoticeType,
   PlayerTarget,
+  ReplayCommandType,
 } from './lib/state/admin-commands';
 export { AVATAR_COUNT, defaultProfile } from './lib/social/profile';
 export type { Avatar, Profile } from './lib/social/profile';
+
+// What the server reads of a player's progress (ADR 0012): the XP the rank
+// board counts, and the medal a re-run match earns.
+export { parseProgress } from './lib/state/progress';
+export type { Progress } from './lib/state/progress';
+export { xpOf } from './lib/state/xp';
+export { rankFor } from './lib/state/ranks';
+export { matchRecord, medalFor } from './lib/state/medallions';
+export type { MatchRecord, MedalTier } from './lib/state/medallions';
 
 // Results.
 export { judgeOutcome, winRuleOf } from './lib/state/win-conditions';

@@ -6,7 +6,10 @@ import { BALANCE_VERSION } from './game-balance';
 import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import {
+  EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
+  isEvolvedReplay,
+  LADDER_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
   playReplay,
@@ -15,7 +18,7 @@ import {
   replayOutcome,
   REPLAY_VERSION,
 } from './replay';
-import { onlineReplayId } from './replay-id';
+import { onlineReplayId, REPLAY_ID } from './replay-id';
 
 const PLAN: MatchPlan = {
   levelId: 'petri-dish',
@@ -389,6 +392,23 @@ describe('replay', () => {
       expect(onlineReplayId('K7QPXM', 2, 42)).not.toBe(id);
       expect(onlineReplayId('K7QPXN', 1, 42)).not.toBe(id);
       expect(onlineReplayId('K7QPXM', 1, 43)).not.toBe(id);
+    });
+
+    it('makes ids the stored replay id pattern takes, as `l_` ids are', () => {
+      expect(REPLAY_ID.test(onlineReplayId('K7QPXM', 1, 42))).toBe(true);
+      expect(REPLAY_ID.test('l_AbC123xyz')).toBe(true);
+      expect(REPLAY_ID.test('o_123')).toBe(false);
+      expect(REPLAY_ID.test('l_a/b')).toBe(false);
+    });
+  });
+
+  describe('isEvolvedReplay', () => {
+    it('is true for the versions that may carry evolution, 3 and 4', () => {
+      expect(isEvolvedReplay({ version: GHOST_REPLAY_VERSION })).toBe(false);
+      expect(isEvolvedReplay({ version: REPLAY_VERSION })).toBe(false);
+      expect(isEvolvedReplay({ version: EVOLVED_REPLAY_VERSION })).toBe(true);
+      expect(isEvolvedReplay({ version: LADDER_REPLAY_VERSION })).toBe(true);
+      expect(isEvolvedReplay({ version: 99 })).toBe(false);
     });
   });
 });

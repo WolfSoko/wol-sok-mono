@@ -172,6 +172,13 @@ the cryo pulse is weak in the computer's hands.
   attempts, wins, losses, quits (a match declared but not finished),
   duration buckets, medallions, and, for evolved matches, plain versus
   evolved wins and the weapons carried. No uid, increments only.
+  (Built with ADR 0011's functions, step 4: a generated level counts under
+  its style and heat, `gen-<recipe>-<difficulty>_<botDifficulty>`, the
+  daily and endless levels apart; a quit is a forfeit. Medallions come
+  from re-runs, ADR 0012 step 5: a verified re-run of a match against the
+  computer adds `rerun` and `medals.{tier}`, so the medal rate is
+  `medals / rerun` - a sample of the daily, endless and gallery matches
+  that were re-run, not of all.)
 - The admin area (ADR 0012) gets a **Balance** view of those counters next to
   the lab's latest report: win rate per level against the target curve,
   attempts until the first win, where players stop on the ladder, gene and

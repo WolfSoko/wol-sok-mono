@@ -48,11 +48,7 @@ export interface ReplayListing {
 }
 
 /** What a player may ask of a replay; all but `remove` only the owner. */
-export type ReplayCommandType =
-  | 'remove'
-  | 'feature'
-  | 'unfeature'
-  | 'anonymise';
+export type { ReplayCommandType } from '../state/admin-commands';
 
 /** What the server made of a command. */
 export interface ReplayCommandResult {

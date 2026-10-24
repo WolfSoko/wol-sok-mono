@@ -2,12 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Every create and update a client makes also needs notBanned() (ADR
+    // 0012); deletes stay allowed, so a banned player can still erase their
+    // data and their account.
+
     // What the game stores for a player, a document per key
     // (FirestoreGameStorage): only the player reads and writes it - a guest
     // (anonymous) account as much as a Google one.
     match /players/{playerId}/storage/{key} {
       allow read: if isPlayer(playerId);
-      allow create, update: if isPlayer(playerId) &&
+      allow create, update: if isPlayer(playerId) && notBanned() &&
         key.matches('bacteria-game[.][a-z-]+') &&
         isStoredValue(request.resource.data);
       allow delete: if isPlayer(playerId);
@@ -17,9 +21,13 @@ service cloud.firestore {
     // one under a code with its offer, one guest answers it. Anyone signed
     // in reads a room by its code - knowing the code is the invitation -
     // but nobody lists them. A TTL policy on expireAt deletes old rooms.
+    // Once the guest connected, the host replaces the room with a stub that
+    // keeps only who played, without the offer and the answer, whose ICE
+    // candidates carry IP addresses; the functions read the players of an
+    // online match from it, for at most 6 hours (ADR 0011).
     match /rooms/{code} {
       allow get: if request.auth != null;
-      allow create: if request.auth != null &&
+      allow create: if request.auth != null && notBanned() &&
         code.matches('[A-HJ-NP-Z2-9]{6}') &&
         request.resource.data.keys().hasOnly(['host', 'offer', 'createdAt', 'expireAt']) &&
         request.resource.data.host == request.auth.uid &&
@@ -27,19 +35,22 @@ service cloud.firestore {
         request.resource.data.createdAt == request.time &&
         request.resource.data.expireAt is timestamp &&
         request.resource.data.expireAt < request.time + duration.value(2, 'h');
-      allow update: if request.auth != null &&
-        !('answer' in resource.data) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guest', 'answer']) &&
-        request.resource.data.guest == request.auth.uid &&
-        isDescription(request.resource.data.answer);
+      allow update: if request.auth != null && notBanned() && (
+        (!('answer' in resource.data) &&
+          !('taken' in resource.data) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guest', 'answer']) &&
+          request.resource.data.guest == request.auth.uid &&
+          isDescription(request.resource.data.answer)) ||
+        isRoomStub(code));
       allow delete: if request.auth != null && request.auth.uid == resource.data.host;
     }
 
     // What other players see of a player (ADR 0010): anyone signed in reads
-    // a profile, only its owner writes it.
+    // a profile, only its owner writes it. The owner's admin area lists them.
     match /profiles/{uid} {
       allow get: if signedIn();
-      allow create, update: if isPlayer(uid) && isProfile(request.resource.data);
+      allow list: if isAdmin();
+      allow create, update: if isPlayer(uid) && notBanned() && isProfile(request.resource.data);
       allow delete: if isPlayer(uid);
     }
 
@@ -50,7 +61,7 @@ service cloud.firestore {
       allow get: if isPlayer(owner) || isPlayer(friend);
       allow list: if isPlayer(owner);
       // Update too: asking or accepting again rewrites an existing entry.
-      allow create, update: if owner != friend &&
+      allow create, update: if owner != friend && notBanned() &&
         request.resource.data.since == request.time &&
         ((isPlayer(owner) && request.resource.data.keys().hasOnly(['since'])) ||
          (isPlayer(friend) &&
@@ -64,7 +75,7 @@ service cloud.firestore {
     match /players/{owner}/requests/{from} {
       allow get: if isPlayer(owner) || isPlayer(from);
       allow list: if isPlayer(owner);
-      allow create, update: if isPlayer(from) && from != owner &&
+      allow create, update: if isPlayer(from) && from != owner && notBanned() &&
         request.resource.data.keys().hasOnly(['at']) &&
         request.resource.data.at == request.time;
       allow delete: if isPlayer(owner) || isPlayer(from);
@@ -75,7 +86,7 @@ service cloud.firestore {
     match /players/{owner}/challenges/{from} {
       allow get: if isPlayer(owner) || isPlayer(from);
       allow list: if isPlayer(owner);
-      allow create, update: if isPlayer(from) &&
+      allow create, update: if isPlayer(from) && notBanned() &&
         exists(/databases/$(database)/documents/players/$(owner)/friends/$(from)) &&
         request.resource.data.keys().hasOnly(['code', 'at', 'expireAt']) &&
         isRoomCode(request.resource.data.code) &&
@@ -84,10 +95,30 @@ service cloud.firestore {
       allow delete: if isPlayer(owner) || isPlayer(from);
     }
 
+    // A ranked daily or endless match, declared before it starts (ADR 0012):
+    // the match takes its seed from the server's time of the declaration.
+    // Create only - the functions alone mark one void. Three daily attempts
+    // a UTC day, in order; five endless runs a day, each match after the one
+    // before, and a run may go on past midnight.
+    match /players/{uid}/attempts/{attemptId} {
+      allow get, list: if isPlayer(uid);
+      allow create: if isPlayer(uid) && notBanned() &&
+        request.resource.data.keys().hasOnly(['at', 'expireAt']) &&
+        request.resource.data.at == request.time &&
+        expiresWithin(request.resource.data.expireAt, duration.value(32, 'd')) &&
+        (isDailyAttempt(uid, attemptId) || isEndlessAttempt(uid, attemptId));
+    }
+
+    // What the owner's moderation tells a player (ADR 0012): theirs to read
+    // and dismiss. Written by the functions only.
+    match /players/{uid}/notices/{id} {
+      allow read, delete: if isPlayer(uid);
+    }
+
     // An invitation link to become friends, for a week.
     match /invites/{token} {
       allow get: if signedIn();
-      allow create: if signedIn() && token.matches('[a-z2-9]{20}') &&
+      allow create: if signedIn() && notBanned() && token.matches('[a-z2-9]{20}') &&
         request.resource.data.keys().hasOnly(['from', 'at', 'expireAt']) &&
         request.resource.data.from == request.auth.uid &&
         request.resource.data.at == request.time &&
@@ -101,14 +132,14 @@ service cloud.firestore {
     // that was (ADR 0012; an older claimer writes neither).
     match /queue/{uid} {
       allow read: if signedIn();
-      allow create: if isPlayer(uid) &&
+      allow create: if isPlayer(uid) && notBanned() &&
         request.resource.data.keys().hasOnly(['since', 'seen', 'expireAt', 'level', 'claim']) &&
         request.resource.data.since == request.time &&
         request.resource.data.seen == request.time &&
         request.resource.data.claim == null &&
         isQueueLevel(request.resource.data.get('level', null)) &&
         expiresWithin(request.resource.data.expireAt, duration.value(1, 'h'));
-      allow update: if (isPlayer(uid) &&
+      allow update: if notBanned() && ((isPlayer(uid) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seen', 'expireAt', 'level']) &&
           request.resource.data.seen == request.time &&
           isQueueLevel(request.resource.data.get('level', null)) &&
@@ -120,12 +151,219 @@ service cloud.firestore {
           request.resource.data.claim.by == request.auth.uid &&
           isRoomCode(request.resource.data.claim.code) &&
           isQueueLevel(request.resource.data.claim.get('level', null)) &&
-          request.resource.data.claim.get('pick', 'waiting') in ['waiting', 'claimer', 'random']);
+          request.resource.data.claim.get('pick', 'waiting') in ['waiting', 'claimer', 'random']));
       allow delete: if isPlayer(uid);
     }
 
+    // A recorded match handed to the functions (ADR 0011), create only;
+    // `acceptReplay` stores it and deletes the submission. TTL removes one a
+    // failed function left behind - the client sets `expireAt` a day ahead;
+    // it cannot hit request.time + 1 day exactly, so up to 2 days pass. A
+    // ranked one names its declared attempt (ADR 0012).
+    match /replaySubmissions/{id} {
+      allow create: if signedIn() && notBanned() &&
+        request.resource.data.keys().hasAll(['uid', 'bytes', 'hint', 'createdAt', 'expireAt']) &&
+        request.resource.data.keys().hasOnly(['uid', 'bytes', 'hint', 'createdAt', 'expireAt', 'attempt']) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.bytes is bytes &&
+        request.resource.data.bytes.size() <= 600000 &&
+        request.resource.data.hint is number &&
+        request.resource.data.hint >= 0 && request.resource.data.hint <= 100 &&
+        request.resource.data.createdAt == request.time &&
+        expiresWithin(request.resource.data.expireAt, duration.value(2, 'd')) &&
+        (!('attempt' in request.resource.data) ||
+          (request.resource.data.attempt is string &&
+           request.resource.data.attempt.matches('^[de]_[0-9a-z_-]{1,40}$') &&
+           exists(/databases/$(database)/documents/players/$(request.auth.uid)/attempts/$(request.resource.data.attempt))));
+    }
+
+    // What to do with a stored replay (ADR 0011): `remove` by any player,
+    // the curation types only by the owner. The writer may read its own
+    // command, to see the result `replayCommand` writes back.
+    match /replayCommands/{id} {
+      allow get: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn() && notBanned() &&
+        request.resource.data.keys().hasAll(['uid', 'type', 'replayId', 'createdAt', 'expireAt']) &&
+        request.resource.data.keys().hasOnly(['uid', 'type', 'replayId', 'createdAt', 'expireAt']) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.createdAt == request.time &&
+        expiresWithin(request.resource.data.expireAt, duration.value(2, 'd')) &&
+        request.resource.data.replayId is string &&
+        request.resource.data.replayId.matches('^(o_[0-9a-f]{16}|l_[A-Za-z0-9]{1,40})$') &&
+        (request.resource.data.type == 'remove' ||
+          (request.resource.data.type in ['feature', 'unfeature', 'anonymise'] && isAdmin()));
+    }
+
+    // Stored replays, written by the functions only: a player reads their
+    // own, and lists them only by `players array-contains` their uid, 50 at
+    // a time. The blob, too big for a list, only by `get`.
+    match /replays/{id} {
+      allow get: if signedIn() && request.auth.uid in resource.data.players;
+      allow list: if signedIn() && request.auth.uid in resource.data.players &&
+        request.query.limit <= 50;
+      match /blob/{doc} {
+        allow get: if signedIn() &&
+          request.auth.uid in get(/databases/$(database)/documents/replays/$(id)).data.players;
+      }
+    }
+
+    // The day's verified runners-up of the gallery, for the owner.
+    match /replayCandidates/{day} {
+      allow get: if isAdmin();
+    }
+
+    // The leaderboards (ADR 0012), written by the functions only. Boards
+    // are effectively public: every visitor gets a guest account. A list of
+    // entries must be limited to the visible statuses; the owner sees all.
+    match /boards/{boardId} {
+      allow get: if signedIn();
+      match /entries/{entryId} {
+        allow get: if signedIn() && (resource.data.status != 'hidden' || isAdmin());
+        allow list: if signedIn() &&
+          (resource.data.status in ['counted', 'verified', 'provisional', 'stale'] || isAdmin());
+      }
+    }
+
+    // Which entries are a player's: only they and the owner may tie them.
+    match /boardMembers/{uid} {
+      allow get: if isPlayer(uid) || isAdmin();
+      allow list: if isAdmin();
+    }
+
+    // A ban (ADR 0012): the player may read their own, to see why and until
+    // when. It names no admin.
+    match /bans/{uid} {
+      allow get: if isPlayer(uid) || isAdmin();
+      allow list: if isAdmin();
+    }
+
+    // The owner's records and statistics.
+    match /moderation/{uid} {
+      allow read: if isAdmin();
+    }
+    match /adminAudit/{id} {
+      allow read: if isAdmin();
+    }
+    match /adminStats/{id} {
+      allow read: if isAdmin();
+    }
+    // Per level and difficulty, no uid (ADR 0016), for the Balance view.
+    match /levelStats/{id} {
+      allow read: if isAdmin();
+    }
+
+    // Every admin action is a command the functions carry out (ADR 0012).
+    match /adminCommands/{id} {
+      allow get: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow list: if isAdmin();
+      allow create: if isAdmin() && isAdminCommand(request.resource.data);
+    }
+
+    // No client reads or writes publicReplays (served by publicSite),
+    // limits, counters, stats, dailyRuns, endlessRuns, pairs, rankedReplays,
+    // rankedRooms or banTombstones: nothing above matches them.
+
     function signedIn() {
       return request.auth != null;
+    }
+
+    // True unless the writer has a ban that has not ended - one read per
+    // request. A ban ends by itself at `until`; null is for good.
+    function notBanned() {
+      let ban = /databases/$(database)/documents/bans/$(request.auth.uid);
+      return request.auth != null &&
+        (!exists(ban) || (get(ban).data.until != null && get(ban).data.until <= request.time));
+    }
+
+    // The owner: the claim, a verified email and a Google sign-in.
+    function isAdmin() {
+      return request.auth != null &&
+        request.auth.token.admin == true &&
+        request.auth.token.email_verified == true &&
+        request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    // A sign-in within the last hour, for the destructive admin commands.
+    function signedInRecently() {
+      return request.auth.token.auth_time * 1000 > request.time.toMillis() - 3600000;
+    }
+
+    // The shape `parseAdminCommand` (state/admin-commands.ts) reads: a
+    // target and args always - the target null for `stats.*`, which need no
+    // reason - and the destructive types (DESTRUCTIVE_COMMAND_TYPES) only
+    // after a recent sign-in. The function checks the rest again.
+    function isAdminCommand(data) {
+      let destructive = ['profile.reset', 'profile.removeImage', 'board.hideEntry',
+        'board.hidePlayer', 'player.ban'];
+      let types = ['profile.reset', 'profile.removeImage', 'board.hideEntry',
+        'board.hidePlayer', 'board.restore', 'board.verify', 'player.ban',
+        'player.unban', 'stats.refresh', 'stats.recount'];
+      let stats = data.type in ['stats.refresh', 'stats.recount'];
+      return data.keys().hasAll(['uid', 'type', 'target', 'args', 'createdAt', 'expireAt']) &&
+        data.keys().hasOnly(['uid', 'type', 'target', 'reason', 'args', 'createdAt', 'expireAt']) &&
+        data.uid == request.auth.uid &&
+        data.createdAt == request.time &&
+        expiresWithin(data.expireAt, duration.value(2, 'd')) &&
+        data.type in types &&
+        (stats ? data.target == null :
+          (data.target is map && data.target.keys().hasOnly(['uid', 'boardId', 'entryId']))) &&
+        data.args is map &&
+        data.args.keys().hasOnly(['bar', 'until', 'reason']) &&
+        (stats ? (data.get('reason', '') is string && data.get('reason', '').size() <= 200) :
+          (data.get('reason', null) is string &&
+           data.reason.size() > 0 && data.reason.size() <= 200)) &&
+        (!(data.type in destructive) || signedInRecently());
+    }
+
+    // The stub of a matched room, written by its host over the room: the
+    // players and the times stay, the offer and the answer go, and it lives
+    // at most 6 hours after the room was opened.
+    function isRoomStub(code) {
+      return request.auth.uid == resource.data.host &&
+        'answer' in resource.data &&
+        request.resource.data.keys().hasOnly(['host', 'guest', 'createdAt', 'expireAt', 'taken']) &&
+        request.resource.data.host == resource.data.host &&
+        request.resource.data.guest == resource.data.guest &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.taken == true &&
+        request.resource.data.expireAt is timestamp &&
+        request.resource.data.expireAt <= resource.data.createdAt + duration.value(6, 'h');
+    }
+
+    function hasAttempt(uid, attemptId) {
+      return exists(/databases/$(database)/documents/players/$(uid)/attempts/$(attemptId));
+    }
+
+    function twoDigits(n) {
+      return n < 10 ? '0' + string(n) : string(n);
+    }
+
+    // The UTC day of the request, "2026-10-24".
+    function today() {
+      return string(request.time.year()) + '-' + twoDigits(request.time.month()) + '-' +
+        twoDigits(request.time.day());
+    }
+
+    // `d_YYYY-MM-DD_n`: today's day, n from 1 to 3, the one before first.
+    function isDailyAttempt(uid, id) {
+      let prefix = 'd_' + today() + '_';
+      return id == prefix + '1' ||
+        (id == prefix + '2' && hasAttempt(uid, prefix + '1')) ||
+        (id == prefix + '3' && hasAttempt(uid, prefix + '2'));
+    }
+
+    // `e_<runId>_<i>`, runId = YYYYMMDD and the run r from 1 to 5. A run's
+    // first match is declared on its day, after the day's run before; any
+    // later match after the match before it.
+    function isEndlessAttempt(uid, id) {
+      let day = today().replace('-', '');
+      return id == 'e_' + day + '1_0' ||
+        (id == 'e_' + day + '2_0' && hasAttempt(uid, 'e_' + day + '1_0')) ||
+        (id == 'e_' + day + '3_0' && hasAttempt(uid, 'e_' + day + '2_0')) ||
+        (id == 'e_' + day + '4_0' && hasAttempt(uid, 'e_' + day + '3_0')) ||
+        (id == 'e_' + day + '5_0' && hasAttempt(uid, 'e_' + day + '4_0')) ||
+        (id.matches('^e_[0-9]{8}[1-5]_[1-9][0-9]{0,2}$') &&
+          hasAttempt(uid, 'e_' + id.split('_')[1] + '_' + string(int(id.split('_')[2]) - 1)));
     }
 
     function isQueueLevel(level) {
@@ -140,11 +378,17 @@ service cloud.firestore {
       return expireAt is timestamp && expireAt < request.time + span;
     }
 
+    // The profile, with the opt-ins for the gallery and the boards (ADR 0011,
+    // ADR 0012), each false when missing.
     function isProfile(data) {
-      return data.keys().hasOnly(['name', 'motto', 'avatar', 'shareStatus', 'updatedAt']) &&
+      return data.keys().hasOnly(['name', 'motto', 'avatar', 'shareStatus', 'updatedAt',
+          'publicName', 'galleryOptOut', 'boardOptOut']) &&
         data.name is string && data.name.size() > 0 && data.name.size() <= 24 &&
         data.motto is string && data.motto.size() <= 80 &&
         data.shareStatus is bool &&
+        data.get('publicName', false) is bool &&
+        data.get('galleryOptOut', false) is bool &&
+        data.get('boardOptOut', false) is bool &&
         data.updatedAt == request.time &&
         isAvatar(data.avatar);
     }

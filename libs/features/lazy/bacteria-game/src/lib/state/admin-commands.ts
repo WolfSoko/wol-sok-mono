@@ -251,3 +251,44 @@ function parseUntil(value: unknown): number | null | undefined {
     ? (millis as number)
     : undefined;
 }
+
+/**
+ * What the `adminCommand` function writes back on a command as `result`,
+ * which the admin view watches: `error` is an id, never a text to show.
+ */
+export interface AdminCommandResult {
+  ok: boolean;
+  error?: string;
+  /** Ms since the epoch. */
+  at: number;
+}
+
+/** What a player's notices (`players/{uid}/notices`) tell of moderation. */
+export type NoticeType =
+  | 'profile-reset'
+  | 'image-removed'
+  | 'board-hidden'
+  | 'banned'
+  | 'unbanned';
+
+// --- Replay commands -------------------------------------------------------
+// Replay curation stays a `replayCommands` document (ADR 0011).
+
+/** What may be asked of a replay: `remove` by its player, the rest by the owner. */
+export const REPLAY_COMMAND_TYPES = [
+  'remove',
+  'feature',
+  'unfeature',
+  'anonymise',
+] as const;
+
+export type ReplayCommandType = (typeof REPLAY_COMMAND_TYPES)[number];
+
+export function isReplayCommandType(
+  value: unknown
+): value is ReplayCommandType {
+  return (
+    typeof value === 'string' &&
+    (REPLAY_COMMAND_TYPES as readonly string[]).includes(value)
+  );
+}
