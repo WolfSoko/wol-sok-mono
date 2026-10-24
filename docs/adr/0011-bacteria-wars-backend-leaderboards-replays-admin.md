@@ -497,6 +497,15 @@ The rules and `replayCommand` require `admin == true`,
 4. Functions app, rules, indexes, emulator; deploy the functions **before**
    the hosting rewrites merge (a release whose rewrites name a function
    that does not exist fails).
+   - So far: the app with `acceptReplay`, `replayCommand` (`remove`; the
+     gallery's types answer `unsupported` until step 6) and
+     `deletePlayerReplays`; the rules for submissions, commands, `replays`,
+     `bans` and the room stub, with ADR 0012's `notBanned()` on every
+     client write; the indexes and TTL policies; rules and handler specs
+     against the emulator. In the code, unlike the text above: a command's
+     `expireAt` is checked to lie within two days ahead, since the client
+     sets it by its own clock; and an unranked endless match is stored as
+     `computer`, as nothing in it tells it from another generated level.
 5. Client: room stub, recording settings, submission, "My matches", the
    viewer.
 6. `publicSite`, `robots.txt`, privacy text, `/watch`, the curation view

@@ -80,9 +80,19 @@
     "ui": {
       "enabled": false
     },
-    "singleProjectMode": true
+    "singleProjectMode": true,
+    "functions": {
+      "port": 5401
+    }
   },
   "database": {
     "rules": "apps/bacteria-game-remote/database.rules.json"
-  }
+  },
+  "functions": [
+    {
+      "codebase": "bacteria",
+      "source": "dist/apps/bacteria-wars-functions",
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" install --omit dev"]
+    }
+  ]
 }
