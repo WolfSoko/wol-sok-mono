@@ -188,8 +188,10 @@ export interface GpuSimulationOptions {
   /**
    * Runs the hunt, the movement and the division as the integer passes of
    * ADR 0015, which every GPU computes alike, with draws seeded from
-   * `matchSeed`. Combat and the rest stay the float passes for now, so a
-   * match is not deterministic yet as a whole. Off by default.
+   * `matchSeed`. Combat and the rest stay the float passes for now, and
+   * the divide budget still follows the read backs' timing (step 5 of the
+   * rollout), so a match is not deterministic yet as a whole. Off by
+   * default.
    */
   deterministic?: boolean;
   /** The match's seed - see `MatchPlan.seed`. */
@@ -780,18 +782,19 @@ export class GpuSimulation implements Simulation {
         gl.uniform1i(at[name], value);
       }
     };
+    // The integer passes take these as ints, and the threshold as a uint
+    // below; the float passes as floats.
     const ints = intMatchUniforms(b);
-    // The integer passes take them as ints, the threshold as a uint.
-    const intents: Record<string, number> = this.deterministic
-      ? {}
-      : {
-          uJitter: b.jitter,
-          uDivideThreshold: b.divideEnergyThreshold,
-          uParentShare: b.parentEnergyShare,
-        };
-    const intIntents: Record<string, number> = this.deterministic
-      ? { uJitter: ints.jitter, uParentShare: ints.parentShare }
-      : {};
+    const [intents, intIntents]: Record<string, number>[] = this.deterministic
+      ? [{}, { uJitter: ints.jitter, uParentShare: ints.parentShare }]
+      : [
+          {
+            uJitter: b.jitter,
+            uDivideThreshold: b.divideEnergyThreshold,
+            uParentShare: b.parentEnergyShare,
+          },
+          {},
+        ];
     const cellSize = b.influenceCellSize;
     set(programs.influence, {}, { uCellSize: cellSize });
     set(programs.hunt, {}, { uInfluence: UNIT.influence });

@@ -1,13 +1,6 @@
-import { ZONE_CODE, ZONE_EFFECTS } from '../zones';
+import { ZONE_CODE } from '../zones';
 import { drawAt, SALT, stepSalt } from './draws';
-import {
-  chanceThreshold,
-  mulQ14,
-  ONE_Q14,
-  Q14,
-  TARGET_SHIFT,
-  toQ14,
-} from './fixed-point';
+import { mulQ14, ONE_Q14, Q14, TARGET_SHIFT } from './fixed-point';
 import {
   DIVIDE_VARIANTS,
   divideVariant,
@@ -15,6 +8,7 @@ import {
   IntFrameUniforms,
 } from './int-frame-uniforms';
 import { unitQ14 } from './int-math';
+import { INT_EFFECTS } from './int-uniforms';
 
 /**
  * A bit-exact TypeScript port of the integer passes in
@@ -45,6 +39,8 @@ export interface IntGrid {
 
 /** What one frame's claim and apply passes read besides the state. */
 export interface IntPassUniforms extends IntFrameUniforms {
+  /** Movement steps per colony this frame - `uSteps`. */
+  steps: ArrayLike<number>;
   /** The frame seed - see `frameSeed`. */
   seed: number;
   /** Q14. */
@@ -63,9 +59,9 @@ export type IntKind = (typeof INT_KIND)[keyof typeof INT_KIND];
 
 const WALL_BIT = 1;
 const ZONE_SHIFT = 1;
-const ICE_STAY = chanceThreshold(ZONE_EFFECTS.iceStayChance);
-const HEAT_AGGRESSION = toQ14(ZONE_EFFECTS.heatAggression);
-const HEAT_MAX_AGGRESSION = toQ14(ZONE_EFFECTS.heatMaxAggression);
+const ICE_STAY = INT_EFFECTS.iceStayChance;
+const HEAT_AGGRESSION = INT_EFFECTS.heatAggression;
+const HEAT_MAX_AGGRESSION = INT_EFFECTS.heatMaxAggression;
 
 /** The eight neighbours, in the shaders' order. */
 const NEIGHBOURS: readonly (readonly [number, number])[] = [
@@ -174,7 +170,9 @@ export class IntPassScratch {
 
 /**
  * One claim and apply pair - a step of moving, escaping or dividing - into
- * a new state; the grid's state is left alone. `hunt` is {@link intHunt}'s.
+ * `out`, a new state unless given; the grid's state is left alone, so `out`
+ * must not be it. Pass `scratch` and two `out` buffers in turn to run
+ * step after step without allocating. `hunt` is {@link intHunt}'s.
  */
 export function intClaimAndApply(
   grid: IntGrid,
@@ -182,7 +180,8 @@ export function intClaimAndApply(
   hunt: Int32Array,
   kind: IntKind,
   step: number,
-  scratch: IntPassScratch = new IntPassScratch(grid.width, grid.height)
+  scratch: IntPassScratch = new IntPassScratch(grid.width, grid.height),
+  out: Uint16Array = new Uint16Array(grid.state.length)
 ): Uint16Array {
   const { width, height, state, mask } = grid;
   const { intents, claims, priorities } = scratch;
@@ -372,7 +371,7 @@ export function intClaimAndApply(
     }
   }
 
-  const next = new Uint16Array(state.length);
+  const next = out;
   const divide = kind === INT_KIND.divide;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {

@@ -28,8 +28,6 @@ export function divideVariant(
  * step 2), filled in place each frame.
  */
 export interface IntFrameUniforms {
-  /** Movement steps per colony this frame. */
-  steps: Int32Array;
   /** The crosshairs, x and y per colony, in sixteenths of a cell. */
   targets: Int32Array;
   /** Q14 per colony. */
@@ -40,7 +38,6 @@ export interface IntFrameUniforms {
 
 /** What the float passes take per frame - see `GpuSimulation`. */
 export interface FloatFrameUniforms {
-  steps: ArrayLike<number>;
   /** In cells, NaN for a colony that aims at nothing. */
   targets: ArrayLike<number>;
   aggression: ArrayLike<number>;
@@ -52,7 +49,6 @@ export interface FloatFrameUniforms {
 
 export function createIntFrameUniforms(): IntFrameUniforms {
   return {
-    steps: new Int32Array(INT_COLONIES),
     targets: new Int32Array(INT_COLONIES * 2),
     aggression: new Int32Array(INT_COLONIES),
     divideChance: new Uint32Array(INT_COLONIES * DIVIDE_VARIANTS),
@@ -68,7 +64,6 @@ export function fillIntFrameUniforms(
   from: FloatFrameUniforms
 ): IntFrameUniforms {
   for (let slot = 0; slot < INT_COLONIES; slot++) {
-    into.steps[slot] = from.steps[slot] ?? 0;
     into.targets[slot * 2] = cellTarget(from.targets[slot * 2]);
     into.targets[slot * 2 + 1] = cellTarget(from.targets[slot * 2 + 1]);
     into.aggression[slot] = toQ14(from.aggression[slot] ?? 0);
@@ -89,5 +84,5 @@ export function fillIntFrameUniforms(
 
 /** A crosshair coordinate - none (NaN) is 0, its colony does not move. */
 function cellTarget(cells: number | undefined): number {
-  return cells === undefined || Number.isNaN(cells) ? 0 : toTarget(cells);
+  return toTarget(cells ?? Number.NaN);
 }

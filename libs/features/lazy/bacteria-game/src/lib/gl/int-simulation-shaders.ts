@@ -19,20 +19,15 @@
  * and step 4 of the rollout turns them into integers as well.
  */
 
-import { WEAPON_EFFECTS } from '../state/evolution';
 import { SALT } from '../state/gpu-int/draws';
-import {
-  chanceThreshold,
-  TARGET_SHIFT,
-  toQ14,
-} from '../state/gpu-int/fixed-point';
+import { TARGET_SHIFT } from '../state/gpu-int/fixed-point';
 import {
   DIVIDE_VARIANTS,
   INT_COLONIES,
 } from '../state/gpu-int/int-frame-uniforms';
-import { ZONE_EFFECTS } from '../state/zones';
 import { INT_COMMON } from './int-common';
 import { COMMON, HUNT_COLONIES, WEAPONS } from './simulation-shaders';
+import { INT_EFFECTS } from '../state/gpu-int/int-uniforms';
 
 /**
  * The direction towards the enemies around a coarse cell, per colony, as a
@@ -81,10 +76,10 @@ uniform uint uDivideThreshold;            // Q14 energy
 uniform uint uDivideChance[${INT_COLONIES * DIVIDE_VARIANTS}]; // see DIVIDE_VARIANTS
 uniform int uParentShare;                 // Q14
 
-const uint ICE_STAY = ${chanceThreshold(ZONE_EFFECTS.iceStayChance)}u;
-const uint CRYO_STAY = ${chanceThreshold(WEAPON_EFFECTS.cryoStayChance)}u;
-const int HEAT_AGGRESSION = ${toQ14(ZONE_EFFECTS.heatAggression)};
-const int HEAT_MAX_AGGRESSION = ${toQ14(ZONE_EFFECTS.heatMaxAggression)};
+const uint ICE_STAY = ${INT_EFFECTS.iceStayChance}u;
+const uint CRYO_STAY = ${INT_EFFECTS.cryoStayChance}u;
+const int HEAT_AGGRESSION = ${INT_EFFECTS.heatAggression};
+const int HEAT_MAX_AGGRESSION = ${INT_EFFECTS.heatMaxAggression};
 const ivec2 OCTANT[8] = ivec2[8](
   ivec2(1, 0), ivec2(1, 1), ivec2(0, 1), ivec2(-1, 1),
   ivec2(-1, 0), ivec2(-1, -1), ivec2(0, -1), ivec2(1, -1)

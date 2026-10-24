@@ -5,6 +5,7 @@ import { toQ14 } from './fixed-point';
 import { createIntFrameUniforms, DIVIDE_VARIANTS } from './int-frame-uniforms';
 import {
   INT_KIND,
+  IntPassScratch,
   intClaimAndApply,
   IntGrid,
   intHunt,
@@ -59,12 +60,12 @@ function put(
 function uniforms(frame: number): IntPassUniforms {
   const fixed = intMatchUniforms(gameBalance);
   const u = createIntFrameUniforms();
-  u.steps.set([3, 2]);
   u.targets.set([40 * 16, 16 * 16, 6 * 16, 15 * 16]);
   u.aggression.set([toQ14(0.5), toQ14(0.3)]);
   u.divideChance.fill(0x40000000);
   return {
     ...u,
+    steps: [3, 2, 0, 0],
     seed: frameSeed(1234, frame),
     jitter: fixed.jitter,
     divideThreshold: fixed.divideThreshold,
@@ -127,6 +128,29 @@ describe('the integer reference', () => {
       0
     );
     expect(intStateHash(a)).not.toBe(intStateHash(b));
+  });
+
+  it('writes into the buffers it is given, to the same result', () => {
+    const grid = scenario();
+    const blocks = [
+      Math.ceil(WIDTH / CELL_SIZE),
+      Math.ceil(HEIGHT / CELL_SIZE),
+    ];
+    const hunt = intHunt(intInfluence(grid, CELL_SIZE), blocks[0], blocks[1]);
+    const out = new Uint16Array(grid.state.length);
+    const scratch = new IntPassScratch(WIDTH, HEIGHT);
+    const given = intClaimAndApply(
+      grid,
+      uniforms(1),
+      hunt,
+      INT_KIND.move,
+      0,
+      scratch,
+      out
+    );
+    const fresh = intClaimAndApply(grid, uniforms(1), hunt, INT_KIND.move, 0);
+    expect(given).toBe(out);
+    expect(intStateHash(given)).toBe(intStateHash(fresh));
   });
 
   it('moves bacteria without losing or doubling any', () => {

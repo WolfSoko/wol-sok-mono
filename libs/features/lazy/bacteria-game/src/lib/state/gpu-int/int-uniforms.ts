@@ -38,6 +38,19 @@ export interface IntMatchUniforms {
   heatMaxAggression: number;
 }
 
+/**
+ * The zone and weapon constants of the integer passes, converted once: the
+ * shaders bake them in, the reference and {@link intMatchUniforms} read
+ * them from here, so all three agree.
+ */
+export const INT_EFFECTS = {
+  iceStayChance: chanceThreshold(ZONE_EFFECTS.iceStayChance),
+  cryoStayChance: chanceThreshold(WEAPON_EFFECTS.cryoStayChance),
+  phageConvertChance: chanceThreshold(WEAPON_EFFECTS.phageConvertShare),
+  heatAggression: toQ14(ZONE_EFFECTS.heatAggression),
+  heatMaxAggression: toQ14(ZONE_EFFECTS.heatMaxAggression),
+} as const;
+
 export function intMatchUniforms(balance: GameBalance): IntMatchUniforms {
   return {
     jitter: toQ14(balance.jitter),
@@ -47,10 +60,6 @@ export function intMatchUniforms(balance: GameBalance): IntMatchUniforms {
     superMaxEnergy: toUnsignedQ14(balance.superChargedMaxEnergy),
     captureEnergy: toUnsignedQ14(balance.captureEnergy),
     consumeChance: chanceThreshold(balance.consumeChance),
-    iceStayChance: chanceThreshold(ZONE_EFFECTS.iceStayChance),
-    cryoStayChance: chanceThreshold(WEAPON_EFFECTS.cryoStayChance),
-    phageConvertChance: chanceThreshold(WEAPON_EFFECTS.phageConvertShare),
-    heatAggression: toQ14(ZONE_EFFECTS.heatAggression),
-    heatMaxAggression: toQ14(ZONE_EFFECTS.heatMaxAggression),
+    ...INT_EFFECTS,
   };
 }

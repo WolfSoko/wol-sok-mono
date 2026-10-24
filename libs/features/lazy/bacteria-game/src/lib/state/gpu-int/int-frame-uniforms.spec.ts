@@ -10,17 +10,15 @@ import {
 
 describe('int frame uniforms', () => {
   const floats = {
-    steps: [3, 1, 0, 0],
-    targets: [12.5, 40, 7, 0.25, NaN, NaN, NaN, NaN],
+    targets: [12.5, 40, -7, 0.25, NaN, NaN, NaN, NaN],
     aggression: [0.5, 1, 0.3, 0],
     divideChance: [0.01, 0.2, 0, 0],
     divideBudget: [1, 0.3, 1, 0],
   };
 
-  it('converts crosshairs, steps and aggression', () => {
+  it('converts crosshairs, off the grid too, and aggression', () => {
     const u = fillIntFrameUniforms(createIntFrameUniforms(), floats);
-    expect(Array.from(u.steps)).toEqual([3, 1, 0, 0]);
-    expect(Array.from(u.targets)).toEqual([200, 640, 112, 4, 0, 0, 0, 0]);
+    expect(Array.from(u.targets)).toEqual([200, 640, -112, 4, 0, 0, 0, 0]);
     expect(Array.from(u.aggression)).toEqual([8192, 16384, 4915, 0]);
   });
 

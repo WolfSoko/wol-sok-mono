@@ -35,10 +35,11 @@ describe('fixed point', () => {
     expect(chanceThreshold(1)).toBe(0xffffffff);
   });
 
-  it('keeps crosshairs in sixteenths of a cell, in range', () => {
+  it('keeps crosshairs in sixteenths of a cell, off the grid too', () => {
     expect(toTarget(12.5)).toBe(200);
-    expect(toTarget(-3)).toBe(0);
+    expect(toTarget(-3)).toBe(-48);
     expect(toTarget(1e6)).toBe(TARGET_MAX);
+    expect(toTarget(-1e6)).toBe(-TARGET_MAX);
     expect(toTarget(Number.NaN)).toBe(0);
   });
 
