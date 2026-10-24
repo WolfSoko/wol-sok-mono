@@ -265,6 +265,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly shake = new CameraShake();
   /** What of the arena the last frame showed. */
   private lastView: Rect | null = null;
+  /** Each seat's colony colour - built anew only when a match's colours do. */
+  private seatColors = new Map<number, readonly number[]>();
   /** The whole map in a corner, while the camera shows part of it. */
   private minimap: MinimapPainter | null = null;
   /** When the minimap last took in where the colonies are. */
@@ -1490,12 +1492,31 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       })),
       weaponFires: fires,
       weaponEffects: this.playerService.getActiveEffects(),
-      seatColors: new Map(players.map((player) => [player.id, player.color])),
+      seatColors: this.seatColorsOf(players),
       particleBudget: particleBudget(
         this.settings.screenResolution(),
         this.reducedMotion()
       ),
     };
+  }
+
+  /**
+   * The seats' colours for the painter: a match keeps its colours, so the
+   * map of the frame before is handed on until one of them is another.
+   */
+  private seatColorsOf(
+    players: readonly Player[]
+  ): ReadonlyMap<number, readonly number[]> {
+    const known = this.seatColors;
+    if (
+      known.size !== players.length ||
+      players.some((player) => known.get(player.id) !== player.color)
+    ) {
+      this.seatColors = new Map(
+        players.map((player) => [player.id, player.color])
+      );
+    }
+    return this.seatColors;
   }
 
   ngOnDestroy(): void {
