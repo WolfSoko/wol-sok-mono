@@ -32,6 +32,12 @@ export interface WsThanosOptions {
   soundVolume: number;
   /** how the element breaks apart */
   crumble: WsThanosCrumble;
+  /**
+   * the direction the dust blows to in degrees, clockwise from up like a css gradient angle:
+   * 0 up, 90 right, 180 down, 270 left. The vaporizing front sweeps against it.
+   * 45, to the top right, when unset.
+   */
+  windDirection?: number;
   /** warm up the effect while the browser is idle, so the first snap does not stutter */
   preload: boolean;
 }

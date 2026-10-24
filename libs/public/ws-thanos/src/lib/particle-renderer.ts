@@ -1,4 +1,6 @@
 import { AnimationState } from './animation.state';
+import { FrontGeometry } from './vaporizing-front';
+import { Wind } from './wind';
 import { WsThanosCrumble } from './ws-thanos.options';
 
 /** moves and draws the particles of one vaporizing element */
@@ -25,4 +27,8 @@ export interface ParticleRendererParams {
   crumble: WsThanosCrumble;
   /** random seed that makes every snap look different */
   seed: number;
+  /** where the dust blows to */
+  wind: Wind;
+  /** where the vaporizing front starts and ends */
+  front: FrontGeometry;
 }
