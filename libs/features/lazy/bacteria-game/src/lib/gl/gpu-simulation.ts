@@ -12,6 +12,7 @@ import {
   ColonySpawn,
   colonyIntent,
   divideChanceOf,
+  paceSteps,
   noEvents,
   Nutrient,
   StepEvents,
@@ -233,6 +234,8 @@ export class GpuSimulation implements Simulation {
   private readonly pellets: NutrientPellets;
   /** The weapons' effects - none at all in a plain match. */
   private readonly weaponEffects = new WeaponEffects();
+  /** The part of a step each colony's flagella have made up - see `paceSteps`. */
+  private readonly paces = new Float64Array(MAX_GPU_COLONIES);
   /** The pellet generations as of the report rendered last. */
   private renderedGeneration: readonly number[] = [];
   private events: StepEvents = noEvents();
@@ -366,6 +369,7 @@ export class GpuSimulation implements Simulation {
     this.recentAreas.length = 0;
     this.recentReach.length = 0;
     this.weaponEffects.clear();
+    this.paces.fill(0);
     this.buildMask();
     this.pellets.reset(this.width, this.height, this.isOpenCell);
     this.uploadSpawns(spawns);
@@ -584,19 +588,26 @@ export class GpuSimulation implements Simulation {
       if (target == null || intent == null) {
         return;
       }
-      u.steps[slot] = Math.min(MAX_MOVE_STEPS, intent.steps);
+      u.steps[slot] = Math.min(
+        MAX_MOVE_STEPS,
+        paceSteps(intent, this.paces, slot)
+      );
       u.targets[slot * 2] = target.x;
       u.targets[slot * 2 + 1] = target.y;
       this.reach[slot] = Math.min(
         MAX_MOVE_STEPS,
         Math.max(
           1,
-          Math.round(
-            target.maxSpeed *
-              b.boostSpeedFactor *
-              (traits.speedFactor ?? 1) *
-              deltaTimeSec
-          )
+          Math.round(target.maxSpeed * b.boostSpeedFactor * deltaTimeSec) +
+            // The step flagella add now and then.
+            ((traits.speedFactor ?? 1) > 1
+              ? Math.ceil(
+                  target.maxSpeed *
+                    b.boostSpeedFactor *
+                    ((traits.speedFactor ?? 1) - 1) *
+                    deltaTimeSec
+                )
+              : 0)
         )
       );
     });

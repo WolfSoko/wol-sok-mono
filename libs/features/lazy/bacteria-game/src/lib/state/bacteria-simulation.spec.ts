@@ -1,4 +1,9 @@
-import { BacteriaSimulation, Colony } from './bacteria-simulation';
+import {
+  BacteriaSimulation,
+  Colony,
+  colonyIntent,
+  paceSteps,
+} from './bacteria-simulation';
 import { ActiveEffect, WEAPON_EFFECTS, WeaponId } from './evolution';
 import { GameBalance, gameBalance } from './game-balance';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
@@ -877,6 +882,51 @@ describe('BacteriaSimulation with evolution', () => {
     });
   });
 
+  describe('flagella pace', () => {
+    it('carries the part of a step they add from frame to frame', () => {
+      const paces = [0];
+      const intent = { aggression: 0.5, steps: 3, extraSteps: 0.4 };
+
+      const steps = [1, 2, 3, 4, 5].map(() => paceSteps(intent, paces, 0));
+
+      expect(steps).toEqual([3, 3, 4, 3, 4]);
+      expect(paces[0]).toBeCloseTo(0);
+    });
+
+    it('leaves a plain colony at its steps, and its pace alone', () => {
+      const paces = [0.75];
+
+      expect(
+        paceSteps({ aggression: 0.5, steps: 3, extraSteps: 0 }, paces, 0)
+      ).toBe(3);
+      expect(paces).toEqual([0.75]);
+    });
+
+    it('makes a few percent more speed show despite the rounding', () => {
+      const player = createPlayer({ x: 300, y: 70, maxSpeed: 150 });
+      const plain = colonyIntent(player, gameBalance, 1 / 60);
+      const quick = colonyIntent(player, gameBalance, 1 / 60, {
+        divideFactor: 1,
+        attackFactor: 1,
+        cooldownFactor: 1,
+        speedFactor: 1.12,
+      });
+      if (plain === null || quick === null) {
+        throw new Error('Both aim at a crosshair');
+      }
+      const paces = [0];
+      let travelled = 0;
+      for (let tick = 0; tick < 60; tick++) {
+        travelled += paceSteps(quick, paces, 0);
+      }
+
+      // 2.5 cells a tick round to 3 either way; 12 % of 2.5 is 0.3 more.
+      expect(quick.steps).toBe(plain.steps);
+      expect(travelled - 60 * plain.steps).toBeGreaterThanOrEqual(17);
+      expect(travelled - 60 * plain.steps).toBeLessThanOrEqual(18);
+    });
+  });
+
   describe('weapons', () => {
     it('lists the effects that act, and drops them once they ran out', () => {
       const { simulation, players } = setup([[bacterium(20, 20)]], {
@@ -965,6 +1015,23 @@ describe('BacteriaSimulation with evolution', () => {
       expect(moved(false)).toBeGreaterThan(0);
       // Every roll of 0.5 is below the chance to sit the step out.
       expect(moved(true)).toBe(0);
+    });
+
+    it('keeps frozen bacteria from recovering', () => {
+      const frozen = bacterium(40, 20, 0.2);
+      const own = bacterium(44, 20, 0.2);
+      const { simulation, players } = setup([[own], [frozen]], {
+        balance: STILL,
+      });
+      simulation.addEffect(effect('cryo-pulse', 0));
+
+      simulation.step(players, 0.5);
+
+      expect(frozen.energy).toBeCloseTo(0.2, 5);
+      expect(own.energy).toBeCloseTo(
+        0.2 + gameBalance.energyRegenPerSec * 0.5,
+        5
+      );
     });
 
     it('keeps frozen bacteria from dividing as often', () => {

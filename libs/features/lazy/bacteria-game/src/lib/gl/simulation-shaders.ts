@@ -574,10 +574,12 @@ void main() {
     energy -= ${glslFloat(WEAPON_EFFECTS.toxinDrainPerSec)} * uDt;
   }
   bool poisoned = antibiotic || toxic;
+  // Frozen by an enemy's cryo pulse, it does not recover either.
+  bool frozen = uEffectCount > 0 && effectOver(cell, owner, CRYO_PULSE, true) != 0u;
   float pressure = enemy > 0.0 ? enemy + uFrontlinePressure - own * uDefenceFactor : 0.0;
   if (pressure > 0.0) {
     energy -= pressure * uToughness[int(owner) - 1] * uCombatDrain * uDt;
-  } else if (energy < uMaxEnergy && !poisoned) {
+  } else if (energy < uMaxEnergy && !poisoned && !frozen) {
     energy = min(uMaxEnergy, energy + uRegen * uDt);
   }
   if (energy > uMaxEnergy) {

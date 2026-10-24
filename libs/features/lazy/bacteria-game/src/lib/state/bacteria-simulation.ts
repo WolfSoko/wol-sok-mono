@@ -112,6 +112,19 @@ export function divideChanceOf(
   return balance.divideChancePerSec * traits.divideFactor * deltaTimeSec;
 }
 
+/** How a colony heads for its crosshair this frame - see {@link colonyIntent}. */
+export interface ColonyIntent {
+  aggression: number;
+  /** The cells it travels, as a plain colony does. */
+  steps: number;
+  /**
+   * The part of a cell more its flagella make it travel - 0 without. A
+   * few percent of a step would be lost to the rounding, so the simulations
+   * carry it on from frame to frame (see {@link paceSteps}).
+   */
+  extraSteps: number;
+}
+
 /**
  * How a colony heads for its crosshair this frame: how keen it is to hunt
  * and how many cells it travels - null while it aims at nothing.
@@ -121,19 +134,38 @@ export function colonyIntent(
   balance: GameBalance,
   deltaTimeSec: number,
   traits: EvolvedTraits = PLAIN_TRAITS
-): { aggression: number; steps: number } | null {
+): ColonyIntent | null {
   if (target == null || isNaN(target.x) || isNaN(target.y)) {
     return null;
   }
   const boosted = isBoosted(target);
-  // Times 1 without flagella - exact, so a plain colony moves as it did.
-  const speed =
-    (boosted ? target.maxSpeed * balance.boostSpeedFactor : target.maxSpeed) *
-    (traits.speedFactor ?? 1);
+  const speed = boosted
+    ? target.maxSpeed * balance.boostSpeedFactor
+    : target.maxSpeed;
   return {
     aggression: boosted ? balance.boostAggression : balance.aggression,
     steps: Math.max(1, Math.round(speed * deltaTimeSec)),
+    extraSteps: speed * ((traits.speedFactor ?? 1) - 1) * deltaTimeSec,
   };
+}
+
+/**
+ * The cells a colony travels this frame: a plain colony's, and the whole
+ * ones its flagella have made up by now - what is left over is carried in
+ * `paces`, by colony. A plain colony's pace never moves.
+ */
+export function paceSteps(
+  intent: ColonyIntent,
+  paces: number[] | Float64Array,
+  index: number
+): number {
+  if (intent.extraSteps === 0) {
+    return intent.steps;
+  }
+  const pace = (paces[index] ?? 0) + intent.extraSteps;
+  const whole = Math.floor(pace);
+  paces[index] = pace - whole;
+  return Math.max(1, intent.steps + whole);
 }
 
 export function noEvents(): StepEvents {
@@ -250,6 +282,8 @@ export class BacteriaSimulation implements Simulation {
   private events: StepEvents = noEvents();
   /** The weapons' effects - none at all in a plain match. */
   private readonly weaponEffects = new WeaponEffects();
+  /** The part of a step each colony's flagella have made up - see `paceSteps`. */
+  private paces: number[] = [];
 
   constructor(
     balance: GameBalance = gameBalance,
@@ -423,6 +457,7 @@ export class BacteriaSimulation implements Simulation {
     this.elapsedSec = 0;
     this.events = noEvents();
     this.weaponEffects.clear();
+    this.paces = this.colonies.map(() => 0);
     this.stampWalls();
     this.reset();
   }
@@ -909,6 +944,7 @@ export class BacteriaSimulation implements Simulation {
         this.colonies[colonyIndex].traits.toughnessFactor ??
         1;
       const toxins = hits?.[colonyIndex].toxins ?? NO_EFFECTS;
+      const cryo = hits?.[colonyIndex].cryo ?? NO_EFFECTS;
       for (let i = 0; i < bacterias.length; i++) {
         const bacterium = bacterias[i];
         const { x, y } = bacterium;
@@ -952,11 +988,13 @@ export class BacteriaSimulation implements Simulation {
           energy -= WEAPON_EFFECTS.toxinDrainPerSec * deltaTimeSec;
         }
         const poisoned = antibiotic || toxic;
+        // Frozen by an enemy's cryo pulse, it does not recover either.
+        const frozen = cryo.length > 0 && anyCovers(cryo, x, y);
         const pressure =
           enemy > 0 ? enemy + frontlinePressure - own * defenceFactor : 0;
         if (pressure > 0) {
           energy -= pressure * toughness * combatDrainPerSec * deltaTimeSec;
-        } else if (energy < maxEnergy && !poisoned) {
+        } else if (energy < maxEnergy && !poisoned && !frozen) {
           energy = Math.min(
             maxEnergy,
             energy + energyRegenPerSec * deltaTimeSec
@@ -1186,7 +1224,8 @@ export class BacteriaSimulation implements Simulation {
       const cryo = hits?.[colonyIndex].cryo ?? NO_EFFECTS;
       const huntOffset = colonyIndex * cells;
       const { x: targetX, y: targetY } = target;
-      const { aggression, steps: maxStep } = intent;
+      const { aggression } = intent;
+      const maxStep = paceSteps(intent, this.paces, colonyIndex);
 
       for (const bacterium of colony.bacterias) {
         const zone = this.hasZones
