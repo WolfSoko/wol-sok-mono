@@ -252,7 +252,7 @@ export async function verifyStored(
   if (replay === undefined) {
     return 'no-blob';
   }
-  const cost = rerunCost(engine, doc.levelId, doc.ticks);
+  const cost = rerunCost(engine, doc.levelId, doc.ticks, doc.replayVersion);
   const pool = pay.pool(cost);
   if (
     pool === null ||

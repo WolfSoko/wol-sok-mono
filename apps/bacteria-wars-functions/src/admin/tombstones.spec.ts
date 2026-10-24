@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadEngine } from '../engine';
-import { BIG_MAP_COST, rerunCost } from '../replays/budgets';
+import { BIG_MAP_COST, GPU_INT_COST, rerunCost } from '../replays/budgets';
 import { tombstoneKey } from './tombstones';
 
 describe('ban tombstones', () => {
@@ -30,8 +30,28 @@ describe('ban tombstones', () => {
 describe('the verification budget', () => {
   it('charges a big map more than its ticks', async () => {
     const engine = await loadEngine();
-    expect(rerunCost(engine, 'quarantine', 600)).toBe(600);
-    expect(rerunCost(engine, 'expanse', 600)).toBe(600 * BIG_MAP_COST);
-    expect(rerunCost(engine, engine.dailyLevelId('2026-10-24'), 600)).toBe(600);
+    const cpu = engine.REPLAY_VERSION;
+    expect(rerunCost(engine, 'quarantine', 600, cpu)).toBe(600);
+    expect(rerunCost(engine, 'expanse', 600, cpu)).toBe(600 * BIG_MAP_COST);
+    expect(rerunCost(engine, engine.dailyLevelId('2026-10-24'), 600, cpu)).toBe(
+      600
+    );
+  });
+
+  it('charges a gpu-int replay (version 5) more than its ticks', async () => {
+    const engine = await loadEngine();
+    const gpuInt = engine.GPU_INT_REPLAY_VERSION;
+    const daily = engine.dailyLevelId('2026-10-24');
+    expect(rerunCost(engine, daily, 600, gpuInt)).toBe(600 * GPU_INT_COST);
+    expect(rerunCost(engine, daily, 121, gpuInt)).toBe(
+      Math.ceil(121 * GPU_INT_COST)
+    );
+    expect(rerunCost(engine, 'expanse', 600, gpuInt)).toBe(
+      600 * BIG_MAP_COST * GPU_INT_COST
+    );
+    // The evolved CPU formats stay at their ticks.
+    expect(rerunCost(engine, daily, 600, engine.LADDER_REPLAY_VERSION)).toBe(
+      600
+    );
   });
 });

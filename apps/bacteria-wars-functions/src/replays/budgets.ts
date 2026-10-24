@@ -20,11 +20,20 @@ export type VerifyPool = 'gallery' | 'admin' | 'daily' | 'endless';
 export const BIG_MAP_COST = 5;
 
 /**
+ * What a re-run of the `gpu-int` ruleset (ADR 0015) costs against the CPU
+ * ruleset the budgets were measured on: `IntSimulation` took 6.8 to 9.8 ms
+ * of CPU a tick on the online grid where `BacteriaSimulation` took 2.6 to
+ * 4.6 ms in the same benchmark run (ADR 0012), 2.1 times the worst. A
+ * `gpu-int` re-run is charged this many times its ticks.
+ */
+export const GPU_INT_COST = 2.5;
+
+/**
  * Match minutes a pool may re-run in a UTC day - the owner's 260 for the
  * boards (60 daily, 180 endless, 20 for "verify now"), at most 7,280 CPU
  * seconds a day at the measured cost, and ADR 0011's 20 gallery
  * candidates of up to 6 minutes. A big map counts {@link BIG_MAP_COST}
- * times. The hourly function spreads each board pool over the hours left
+ * times, a `gpu-int` replay {@link GPU_INT_COST} times. The hourly function spreads each board pool over the hours left
  * in the day, and unused daily budget passes to endless.
  */
 export const VERIFY_MINUTES: Readonly<Record<VerifyPool, number>> = {
@@ -45,15 +54,21 @@ export function minuteTicks(
   return minutes * 60 * engine.TICKS_PER_SEC;
 }
 
-/** The ticks a re-run of a level is charged: more on a big map. */
+/**
+ * The ticks a re-run is charged: more on a big map, and more on the
+ * `gpu-int` ruleset (replay version 5, every ranked attempt), which
+ * `IntSimulation` re-runs - see {@link GPU_INT_COST}.
+ */
 export function rerunCost(
-  engine: Pick<Engine, 'getLevel' | 'levelSize'>,
+  engine: Pick<Engine, 'getLevel' | 'levelSize' | 'GPU_INT_REPLAY_VERSION'>,
   levelId: string,
-  ticks: number
+  ticks: number,
+  replayVersion: number
 ): number {
-  return engine.levelSize(engine.getLevel(levelId)) > 1
-    ? ticks * BIG_MAP_COST
-    : ticks;
+  const map = engine.levelSize(engine.getLevel(levelId)) > 1 ? BIG_MAP_COST : 1;
+  const ruleset =
+    replayVersion === engine.GPU_INT_REPLAY_VERSION ? GPU_INT_COST : 1;
+  return Math.ceil(ticks * map * ruleset);
 }
 
 /**

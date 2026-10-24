@@ -470,6 +470,34 @@ The old figure of 3.8 ms a tick was low by up to a factor of two.
 `budgets.ts` now assumes the worst of the levels that play online,
 **28 s of CPU per match-minute** (the comment on `BIG_MAP_COST`), and charges
 a re-run on a big map 5 times its ticks (`BIG_MAP_COST`, `rerunCost`).
+
+(Added with ADR 0015's rulesets: every ranked attempt is a `gpu-int`
+replay, version 5, which the server re-runs on `IntSimulation`. The
+benchmark plays each case on both rulesets now; one run on the same dev
+VM, Node 22, median of 3:
+
+| Level (online grid)       | `cpu` rerun / contest, ms/tick | `gpu-int` rerun / contest, ms/tick |
+| ------------------------- | ------------------------------ | ---------------------------------- |
+| daily 2026-10-24 (7)      | 3.3 / 3.8                      | 7.5 / 8.2                          |
+| daily 2026-10-31 (7)      | 3.9 / 3.6                      | 7.7 / 9.1                          |
+| daily 2026-11-07 (7)      | 2.6 / 3.6                      | 7.2 / 9.8                          |
+| daily 2026-11-14 (7)      | 3.8 / 3.5                      | 6.8 / 8.0                          |
+| ladder `quarantine`       | 4.6 / 4.6                      | 9.3 / 8.8                          |
+| ladder `expanse` (size 2) | 8.5 / 22.7                     | 28.9 / 39.0                        |
+
+The VM was faster that day than in the table above (the `cpu` figures are
+about 0.6 of it), so only the ratio counts: `IntSimulation`'s worst on
+the online grid is 2.1 times `BacteriaSimulation`'s (9.8 against 4.6 ms),
+up to 2.75 on one case. A `gpu-int` re-run is charged 2.5 times its ticks
+(`GPU_INT_COST`), on top of `BIG_MAP_COST` on a big map (12.5 times the
+ticks, against a measured 8.4). The budgets stay in match-minutes of the
+`cpu` ruleset, so the boards' 240 minutes re-run about 96 minutes of
+ranked `gpu-int` matches a day. At the old machine's speed a `gpu-int`
+match-minute is about 60 s of CPU: a 10-minute ranked match
+(`MAX_RERUN_TICKS`) would take about 600 s, more than the 540 s of
+`adminCommand`'s `board.verify`; the 6-minute gallery re-runs (about
+360 s) still fit.)
+
 It keeps the owner's 260 match-minutes:
 
 | Budget             | Match-minutes a day            | CPU at 28 s per match-minute                |
@@ -1137,7 +1165,8 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
    `deletePlayerBoards`). How it was built:
    - **The CPU benchmark** (above) set `budgets.ts`: 28 s per
      match-minute, big maps charged 5 times, the owner's 260
-     match-minutes kept.
+     match-minutes kept (and `gpu-int` replays 2.5 times since ADR
+     0015's rulesets).
    - **`hourly` cannot be created paused**: a deploy creates its Cloud
      Scheduler job enabled. Like `featureBest`, it returns at once until
      `HOURLY_ENABLED` in `config.ts` is true, a code change and a deploy

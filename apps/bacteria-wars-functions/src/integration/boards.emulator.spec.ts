@@ -37,7 +37,7 @@ import {
 } from '../boards/verification';
 import { Engine, loadEngine } from '../engine';
 import { forgetBans } from '../limits';
-import { fixedPool } from '../replays/budgets';
+import { fixedPool, GPU_INT_COST } from '../replays/budgets';
 import { acceptSubmission } from '../replays/accept-replay';
 import { levelStatsId } from '../replays/derive';
 import type { ReplayDoc } from '../replays/model';
@@ -1239,7 +1239,7 @@ describe('adminCommand', () => {
     );
     expect(
       (await db.doc(`counters/${TODAY}`).get()).get('verifyTicks.admin')
-    ).toBe(120);
+    ).toBe(120 * GPU_INT_COST);
   });
 });
 

@@ -270,7 +270,10 @@ sits behind a flag; step 8 switches it on.
    `libs/features/lazy/bacteria-game/perf/int-simulation.bench.ts` prints the time per tick: in Node
    on a desktop 96 x 64 went from 3.5-4.7 ms to about 2 ms, 320 x 180 from
    21-28 ms to 7-9 ms. A phone and the server's runtime still need a
-   measurement of their own.
+   measurement of their own. The functions' re-run benchmark (ADR 0012)
+   measured it next to the `cpu` ruleset in Node on a dev VM: 2.1 times
+   its CPU a tick at worst on the online grid, so the server charges a
+   `gpu-int` re-run 2.5 times its ticks (`GPU_INT_COST`).
 
 The spike's code (integer movement shaders, the TypeScript reference, the
 cross-check across SwiftShader, llvmpipe and Firefox) is not part of this
