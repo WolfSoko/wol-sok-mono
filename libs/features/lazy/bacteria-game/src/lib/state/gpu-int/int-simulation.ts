@@ -48,9 +48,8 @@ export class IntSimulation extends GridSimulation {
   private state: Uint16Array = new Uint16Array(0);
   private scratch = new IntPassScratch(0, 0);
   private buffers = new IntStateBuffers(0);
-  /** The reports' buffers, taken in turn - see `runTick`. */
+  /** The reports' buffers - see `takeReportBuffer`. */
   private reportBuffers: Uint32Array[] = [];
-  private nextReport = 0;
   /** What the painter gets - see `collectBacterias`. */
   private readonly bacterias: Bacteria[][] = [];
   private drawnState: Uint16Array | null = null;
@@ -182,7 +181,9 @@ export class IntSimulation extends GridSimulation {
   /**
    * The bacteria of each colony as the painter takes them, once per tick
    * whatever the frame rate: the objects are kept and refilled, as
-   * `BacteriaSimulation` keeps its own, so drawing allocates nothing.
+   * `BacteriaSimulation` keeps its own, so drawing allocates nothing. A
+   * layer `colonyLayers` returned changes with the next tick - copy what
+   * has to outlast it.
    */
   private collectBacterias(): void {
     const slots = this.spawns.length;
@@ -219,12 +220,23 @@ export class IntSimulation extends GridSimulation {
   }
 
   /**
-   * A report buffer no pending report and not the last report holds: at
-   * most `DETERMINISTIC_REPORT_LAG` reports wait at once.
+   * A report buffer neither a pending report nor the last report holds.
+   * At most `DETERMINISTIC_REPORT_LAG` reports wait at once, so one is
+   * always free; should more ever wait, another buffer is made rather than
+   * a waiting report overwritten.
    */
   private takeReportBuffer(): Uint32Array {
-    const buffer = this.reportBuffers[this.nextReport];
-    this.nextReport = (this.nextReport + 1) % this.reportBuffers.length;
+    const pending = this.pendingReports;
+    for (const buffer of this.reportBuffers) {
+      if (
+        buffer !== this.previousReport &&
+        !pending.some((report) => report.data === buffer)
+      ) {
+        return buffer;
+      }
+    }
+    const buffer = new Uint32Array(this.layout.width * this.layout.height * 4);
+    this.reportBuffers.push(buffer);
     return buffer;
   }
 

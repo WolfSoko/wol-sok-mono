@@ -62,11 +62,13 @@ export class IntStateBuffers {
 /**
  * One tick of the deterministic GPU simulation in TypeScript, in the order
  * `GpuSimulation.step` runs its passes: the hunt, escaping a wall, crushing,
- * combat, feeding, division and the steps of moving. Returns the new state;
- * the grid's is left alone. A `trace` gets the state after combat.
+ * combat, feeding, division and the steps of moving. Returns the new state.
+ * A `trace` gets the state after combat.
  *
- * Without `buffers` every pass writes a new array; with them the passes
- * take turns in the same few, so a match allocates no state per tick.
+ * Without `buffers` every pass writes a new array and the grid's state is
+ * left alone; with them the passes take turns in the same few, so a match
+ * allocates no state per tick - and a grid state that is one of them is
+ * overwritten.
  */
 export function intReferenceTick(
   grid: IntGrid,
