@@ -35,6 +35,7 @@ export type {
 export { BacteriaSimulation } from './lib/state/bacteria-simulation';
 export type {
   ColonySummary,
+  Ruleset,
   Simulation,
   SimulationFactory,
 } from './lib/state/simulation';
@@ -51,11 +52,13 @@ export {
 export {
   EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
+  GPU_INT_REPLAY_VERSION,
   isEvolvedReplay,
   LADDER_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
   playReplay,
+  playsEvolution,
   REPLAY_VERSION,
   replayOf,
   replayOutcome,
@@ -171,7 +174,10 @@ export {
 } from './lib/state/gpu-int/int-readback';
 // The whole deterministic simulation on the CPU - the fallback of a device
 // whose GPU fails the self-test, and what a server plays a match with.
-export { IntSimulation } from './lib/state/gpu-int/int-simulation';
+export {
+  IntSimulation,
+  intSimulation,
+} from './lib/state/gpu-int/int-simulation';
 export { WALL_BIT, ZONE_CODE, ZONE_SHIFT } from './lib/state/zones';
 export { WEAPON_CODE } from './lib/state/weapon-effects';
 
@@ -314,6 +320,7 @@ export {
   parseAttemptId,
   parseRunId,
   RANKED_DAILY_ATTEMPTS,
+  RANKED_RULESET,
   RANKED_RUNS_PER_DAY,
   rankedPlan,
   requiredAttempt,

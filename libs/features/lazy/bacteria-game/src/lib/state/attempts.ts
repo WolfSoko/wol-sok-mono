@@ -6,6 +6,7 @@ import { isPlainLoadout } from './evolution';
 import { TICKS_PER_SEC } from './fixed-tick';
 import { getLevel, levelSize } from './levels';
 import type { MatchPlan } from './match-setup';
+import type { Ruleset } from './simulation';
 
 /**
  * Declared attempts (ADR 0012): the ids a player declares before a ranked
@@ -242,6 +243,15 @@ export function rankedPlan(levelId: string, seed: number): MatchPlan {
     seed,
   };
 }
+
+/**
+ * The ruleset every ranked attempt plays (ADR 0015, the owner's policy):
+ * `gpu-int`, recorded as replay version 5. The plan does not name it - a
+ * replay's header does (`simulation`), and the stored parse refuses an
+ * attempt on any other; the functions check it again before a replay
+ * ranks.
+ */
+export const RANKED_RULESET: Ruleset = 'gpu-int';
 
 /**
  * True when a plan is exactly the ranked plan of its level and seed - no

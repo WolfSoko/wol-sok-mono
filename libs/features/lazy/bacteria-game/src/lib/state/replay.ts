@@ -145,13 +145,31 @@ const VERSIONS: ReadonlyMap<unknown, VersionRules> = new Map([
 
 /**
  * True for a replay whose version may carry evolution - loadouts, weapons
- * fired, the ladder's computer (versions 3 and 4) - which the leaderboards
- * keep out of ranked attempts and the daily level (ADR 0013).
+ * fired, the ladder's computer (versions 3 to 5). Version 5 may as well be
+ * plain, so whether a replay plays evolution is {@link playsEvolution}'s
+ * word, not its version's.
  */
 export function isEvolvedReplay(
   header: Pick<ReplayHeader, 'version'>
 ): boolean {
   return VERSIONS.get(header.version)?.evolved === true;
+}
+
+/**
+ * True for a replay with evolution in it - loadouts in the header (the
+ * ladder's computer brings them too) or a weapon fired - which the
+ * leaderboards keep out of ranked attempts and the daily level (ADR 0013).
+ * Read from what it holds, whatever its version: a version 5 replay may be
+ * plain or evolved, and only a plain one is a ranked attempt.
+ */
+export function playsEvolution({
+  header,
+  inputs,
+}: {
+  header: Pick<ReplayHeader, 'loadouts'>;
+  inputs: Pick<ReplayInputs, 'weapons'>;
+}): boolean {
+  return header.loadouts !== undefined || inputs.weapons.length > 0;
 }
 
 /** The biggest grid a replay may ask for, in cells per side. */
@@ -408,9 +426,10 @@ export function playReplay(replay: Replay): ReplayResult | null {
 export interface ParseOptions {
   /**
    * True for a replay to store and check (ADR 0011): version 2, 3 or 4
-   * from the CPU, on the online grid of its level, with its outcome and
-   * checksum - an evolved one (3, 4) never for a ranked attempt or the
-   * daily level (ADR 0013).
+   * from the CPU or version 5 from `gpu-int`, on the online grid of its
+   * level, with its outcome and checksum - evolution never in a ranked
+   * attempt or at the daily level (ADR 0013), and a ranked attempt only
+   * on `gpu-int` (ADR 0015).
    */
   stored?: boolean;
 }
@@ -455,14 +474,15 @@ export function parseReplay(
  * - evolution never in a ranked attempt or at the daily level, which the
  *   leaderboards keep plain (ADR 0013);
  * - a ranked attempt only on `gpu-int`, the ruleset the boards take
- *   (ADR 0015).
+ *   (ADR 0015, `RANKED_RULESET` in `attempts.ts`, whose imports reach this file
+ *   and so cannot be imported here).
  */
 function fitsVersion(
   { header, inputs }: Replay,
   rules: VersionRules,
   stored: boolean
 ): boolean {
-  const evolved = header.loadouts !== undefined || inputs.weapons.length > 0;
+  const evolved = playsEvolution({ header, inputs });
   const ranked = header.attempt !== undefined;
   return (
     rules.simulations.includes(header.simulation) &&
