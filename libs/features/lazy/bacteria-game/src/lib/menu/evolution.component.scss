@@ -172,8 +172,10 @@
   gap: 0.5rem;
 }
 
+// In the player's colour, like every other button that acts on this screen.
 .confirm-reset {
-  --mat-button-filled-container-color: var(--bw-opponent);
+  --mat-button-filled-container-color: var(--bw-player);
+  --mat-button-filled-label-text-color: var(--bw-on-player);
 }
 
 .shop {
