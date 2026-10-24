@@ -1197,7 +1197,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.playerService.useSimulation(
       gl == null
         ? null
-        : (balance, random) => gl.createSimulation(balance, random)
+        : (balance, random, seed) =>
+            gl.createSimulation(balance, random, { matchSeed: seed })
     );
     this.gameStateService.setArenaSize(width, height);
     this.draw();

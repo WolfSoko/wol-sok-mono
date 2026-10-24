@@ -98,10 +98,10 @@ export class PlayerService {
       ...rules,
       seed: options.seed ?? randomSeed(),
       // Sized in there, where the GPU may still fail and leave it to the CPU.
-      simulation: (balance, random) =>
+      simulation: (balance, random, seed) =>
         lockstep === undefined && rules.recordedSeats === undefined
-          ? this.createSimulation(balance, random, arena)
-          : sized(cpuSimulation(balance, random), arena),
+          ? this.createSimulation(balance, random, seed, arena)
+          : sized(cpuSimulation(balance, random, seed), arena),
     });
     this.localDrag = null;
     this.localBoost = false;
@@ -281,11 +281,12 @@ export class PlayerService {
   private createSimulation(
     balance: GameBalance,
     random: () => number,
+    seed: number,
     arena?: { width: number; height: number }
   ): Simulation {
     let simulation: Simulation | null = null;
     try {
-      simulation = this.simulationFactory(balance, random);
+      simulation = this.simulationFactory(balance, random, seed);
       return sized(simulation, arena);
     } catch (error) {
       // Let go of the context listeners, or a restored context revives it.
@@ -295,7 +296,7 @@ export class PlayerService {
       }
       console.warn('The colony war falls back to the CPU', error);
       this.simulationFactory = cpuSimulation;
-      return this.createSimulation(balance, random, arena);
+      return this.createSimulation(balance, random, seed, arena);
     }
   }
 

@@ -77,7 +77,7 @@ export const MAX_PELLETS = 16;
  */
 export const MAX_EFFECTS = 4;
 
-const COMMON = `#version 300 es
+export const COMMON = `#version 300 es
 precision highp float;
 precision highp int;
 precision highp usampler2D;
@@ -205,7 +205,7 @@ int pelletsInReach(ivec2 cell) {
  * `WeaponEffects`. The biofilm shield needs no circle: it changes its
  * colony's toughness, which combat takes per colony.
  */
-const WEAPONS = `
+export const WEAPONS = `
 uniform vec4 uEffects[${MAX_EFFECTS}];      // centre x, y, radius squared, 1 when hostile
 uniform ivec2 uEffectKinds[${MAX_EFFECTS}]; // the weapon's code and the owner's slot + 1
 uniform int uEffectCount;

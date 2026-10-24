@@ -40,6 +40,12 @@ import { getMap } from '../state/game-maps';
 import { NutrientPellets } from '../state/nutrient-pellets';
 import { createBacteriaBlob, isBoosted, Player } from '../state/player.model';
 import { BlockCounts, ColonySummary, Simulation } from '../state/simulation';
+import { frameSeed } from '../state/gpu-int/draws';
+import {
+  createIntFrameUniforms,
+  fillIntFrameUniforms,
+} from '../state/gpu-int/int-frame-uniforms';
+import { intMatchUniforms } from '../state/gpu-int/int-uniforms';
 import {
   bindTexture,
   createProgram,
@@ -75,6 +81,11 @@ import {
   ReportLayout,
   reportLayout,
 } from './simulation-report';
+import {
+  INT_APPLY_FRAGMENT,
+  INT_CLAIM_FRAGMENT,
+  INT_HUNT_FRAGMENT,
+} from './int-simulation-shaders';
 
 /**
  * The most cells a colony travels in one frame - each one is a claim and an
@@ -170,6 +181,19 @@ interface Resources {
   pendingReadbacks: Readback[];
   /** Where a finished read back lands. */
   readbackData: Uint32Array;
+}
+
+/** How a {@link GpuSimulation} runs. */
+export interface GpuSimulationOptions {
+  /**
+   * Runs the hunt, the movement and the division as the integer passes of
+   * ADR 0015, which every GPU computes alike, with draws seeded from
+   * `matchSeed`. Combat and the rest stay the float passes for now, so a
+   * match is not deterministic yet as a whole. Off by default.
+   */
+  deterministic?: boolean;
+  /** The match's seed - see `MatchPlan.seed`. */
+  matchSeed?: number;
 }
 
 /** The uniform arrays of a frame, filled in place. */
@@ -287,12 +311,19 @@ export class GpuSimulation implements Simulation {
     effects: new Float32Array(MAX_EFFECTS * 4),
     effectKinds: new Int32Array(MAX_EFFECTS * 2),
   };
+  /** The integer passes' share of the frame uniforms - see `deterministic`. */
+  private readonly intUniforms = createIntFrameUniforms();
+  private readonly deterministic: boolean;
+  private readonly matchSeed: number;
 
   public constructor(
     private readonly gl: WebGL2RenderingContext,
     private readonly balance: GameBalance,
-    random: () => number = Math.random
+    random: () => number = Math.random,
+    options: GpuSimulationOptions = {}
   ) {
+    this.deterministic = options.deterministic ?? false;
+    this.matchSeed = options.matchSeed ?? 0;
     this.pellets = new NutrientPellets(balance, random);
     this.layout = reportLayout(0, 0, balance.influenceCellSize);
     const canvas = gl.canvas;
@@ -305,6 +336,7 @@ export class GpuSimulation implements Simulation {
   /** The GPU forgot everything - nothing runs until it is back. */
   private readonly onContextLost = (): void => {
     PROGRAMS.delete(this.gl);
+    INT_PROGRAMS.delete(this.gl);
     this.resources = null;
   };
 
@@ -624,10 +656,19 @@ export class GpuSimulation implements Simulation {
     });
     const pelletCount = Math.min(nutrients.length, MAX_PELLETS);
 
+    const ints = this.deterministic
+      ? fillIntFrameUniforms(this.intUniforms, u)
+      : null;
     for (const program of [programs.claim, programs.apply]) {
       const at = program.uniforms;
       gl.useProgram(program.program);
       gl.uniform1iv(at['uSteps[0]'], u.steps);
+      if (ints != null) {
+        gl.uniform2iv(at['uTarget[0]'], ints.targets);
+        gl.uniform1iv(at['uAggression[0]'], ints.aggression);
+        gl.uniform1uiv(at['uDivideChance[0]'], ints.divideChance);
+        continue;
+      }
       gl.uniform2fv(at['uTarget[0]'], u.targets);
       gl.uniform1fv(at['uAggression[0]'], u.aggression);
       gl.uniform1fv(at['uDivideChance[0]'], u.divideChance);
@@ -739,25 +780,43 @@ export class GpuSimulation implements Simulation {
         gl.uniform1i(at[name], value);
       }
     };
-    const intents = {
-      uJitter: b.jitter,
-      uDivideThreshold: b.divideEnergyThreshold,
-      uParentShare: b.parentEnergyShare,
-    };
+    const ints = intMatchUniforms(b);
+    // The integer passes take them as ints, the threshold as a uint.
+    const intents: Record<string, number> = this.deterministic
+      ? {}
+      : {
+          uJitter: b.jitter,
+          uDivideThreshold: b.divideEnergyThreshold,
+          uParentShare: b.parentEnergyShare,
+        };
+    const intIntents: Record<string, number> = this.deterministic
+      ? { uJitter: ints.jitter, uParentShare: ints.parentShare }
+      : {};
     const cellSize = b.influenceCellSize;
     set(programs.influence, {}, { uCellSize: cellSize });
     set(programs.hunt, {}, { uInfluence: UNIT.influence });
     set(programs.claim, intents, {
+      ...intIntents,
       uCellSize: cellSize,
       uHunt: UNIT.hunt,
       uHuntMore: UNIT.huntMore,
     });
     set(programs.apply, intents, {
+      ...intIntents,
       uCellSize: cellSize,
       uHunt: UNIT.hunt,
       uHuntMore: UNIT.huntMore,
       uClaims: UNIT.claims,
     });
+    if (this.deterministic) {
+      for (const program of [programs.claim, programs.apply]) {
+        gl.useProgram(program.program);
+        gl.uniform1ui(
+          program.uniforms['uDivideThreshold'],
+          ints.divideThreshold
+        );
+      }
+    }
     set(programs.crush, {});
     set(
       programs.combat,
@@ -856,7 +915,12 @@ export class GpuSimulation implements Simulation {
     const gl = this.gl;
     gl.useProgram(program.program);
     bindTexture(gl, UNIT.state, resources.states[this.current].texture, null);
-    gl.uniform1ui(program.uniforms['uSeed'], (this.steps * 2654435761) >>> 0);
+    gl.uniform1ui(
+      program.uniforms['uSeed'],
+      this.deterministic
+        ? frameSeed(this.matchSeed, this.steps)
+        : (this.steps * 2654435761) >>> 0
+    );
     gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
     if (area == null) {
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -1286,7 +1350,9 @@ export class GpuSimulation implements Simulation {
    */
   private setup(): Resources {
     const gl = this.gl;
-    const programs = compiledPrograms(gl);
+    const programs = this.deterministic
+      ? { ...compiledPrograms(gl), ...compiledIntPrograms(gl) }
+      : compiledPrograms(gl);
     const { vao: quad, corners } = createQuad(gl);
     const state = () =>
       createTarget(gl, gl.RGBA16UI, this.width, this.height, gl.NEAREST);
@@ -1383,12 +1449,57 @@ function renderTargets(resources: Resources): Target[] {
  */
 const PROGRAMS = new WeakMap<WebGL2RenderingContext, Programs>();
 
+/** The integer passes of each context - see `GpuSimulationOptions`. */
+const INT_PROGRAMS = new WeakMap<
+  WebGL2RenderingContext,
+  Pick<Programs, 'hunt' | 'claim' | 'apply'>
+>();
+
+const COMMON_UNIFORMS = ['uState', 'uMask', 'uSize', 'uSeed'];
+const WEAPON_UNIFORMS = ['uEffects[0]', 'uEffectKinds[0]', 'uEffectCount'];
+
+function compiledIntPrograms(
+  gl: WebGL2RenderingContext
+): Pick<Programs, 'hunt' | 'claim' | 'apply'> {
+  const cached = INT_PROGRAMS.get(gl);
+  if (cached != null) {
+    return cached;
+  }
+  const intents = [
+    'uKind',
+    'uStep',
+    'uSteps[0]',
+    'uTarget[0]',
+    'uAggression[0]',
+    'uJitter',
+    'uCellSize',
+    'uHunt',
+    'uHuntMore',
+    'uDivideThreshold',
+    'uDivideChance[0]',
+    'uParentShare',
+    ...WEAPON_UNIFORMS,
+  ];
+  const program = (fragment: string, uniforms: string[]) =>
+    createProgram(gl, FULLSCREEN_VERTEX, fragment, [
+      ...COMMON_UNIFORMS,
+      ...uniforms,
+    ]);
+  const programs = {
+    hunt: program(INT_HUNT_FRAGMENT, ['uInfluence', 'uPair']),
+    claim: program(INT_CLAIM_FRAGMENT, intents),
+    apply: program(INT_APPLY_FRAGMENT, [...intents, 'uClaims']),
+  };
+  INT_PROGRAMS.set(gl, programs);
+  return programs;
+}
+
 function compiledPrograms(gl: WebGL2RenderingContext): Programs {
   const cached = PROGRAMS.get(gl);
   if (cached != null) {
     return cached;
   }
-  const common = ['uState', 'uMask', 'uSize', 'uSeed'];
+  const common = COMMON_UNIFORMS;
   const intents = [
     'uKind',
     'uStep',
@@ -1405,7 +1516,7 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
     'uParentShare',
   ];
   const pellets = ['uPellets[0]', 'uPelletCount', 'uPelletRadius'];
-  const weapons = ['uEffects[0]', 'uEffectKinds[0]', 'uEffectCount'];
+  const weapons = WEAPON_UNIFORMS;
   const program = (fragment: string, uniforms: string[]) =>
     createProgram(gl, FULLSCREEN_VERTEX, fragment, [...common, ...uniforms]);
   const programs: Programs = {
