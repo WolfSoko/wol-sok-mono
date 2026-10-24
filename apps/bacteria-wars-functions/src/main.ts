@@ -12,8 +12,17 @@ import {
   onDocumentCreated,
   onDocumentCreatedWithAuthContext,
   onDocumentDeleted,
+  onDocumentUpdated,
+  onDocumentWritten,
 } from 'firebase-functions/v2/firestore';
 import * as v1 from 'firebase-functions/v1';
+import { boardProfileChanged as relabelEntries } from './boards/profile-changed';
+import { rankOnline } from './boards/rank-online';
+import {
+  PROGRESS_KEY,
+  rankProgress as countProgress,
+} from './boards/rank-progress';
+import { rebuildTop as rebuildTopOf } from './boards/rebuild-top';
 import { REGION } from './config';
 import { acceptSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
@@ -69,3 +78,90 @@ export const deletePlayerReplays = v1
     const counts = await deleteReplaysOf(db(), user.uid);
     logger.info('Replays of a deleted account', { uid: user.uid, ...counts });
   });
+
+/** When an account was made - for the online board's new-account cap. */
+async function accountCreatedAt(uid: string): Promise<number | null> {
+  // Loaded here only: the auth stack is heavy, and the other functions
+  // never need it.
+  const { getAuth } = await import('firebase-admin/auth');
+  try {
+    const created = (await getAuth().getUser(uid)).metadata.creationTime;
+    return created ? Date.parse(created) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The XP board, from the player's stored progress (ADR 0012). */
+export const rankProgress = onDocumentWritten(
+  {
+    document: 'players/{uid}/storage/{key}',
+    memory: '256MiB',
+    cpu: 'gcf_gen1',
+  },
+  async (event) => {
+    // Settings and other keys share the collection; only progress counts.
+    const after = event.data?.after;
+    if (event.params.key !== PROGRESS_KEY || after?.exists !== true) {
+      return;
+    }
+    const createdAt = after.createTime?.toMillis() ?? Date.now();
+    await countProgress(db(), event.params.uid, after.data() ?? {}, createdAt);
+  }
+);
+
+/** The online board, once an online match turns `agreed` (ADR 0012). */
+export const rankReplay = onDocumentWritten(
+  { document: 'replays/{id}', memory: '256MiB', cpu: 'gcf_gen1' },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (
+      after === undefined ||
+      after['kind'] !== 'online' ||
+      after['state'] !== 'agreed' ||
+      before?.['state'] === 'agreed'
+    ) {
+      return;
+    }
+    const reason = await rankOnline(
+      db(),
+      event.params.id,
+      after,
+      accountCreatedAt
+    );
+    logger.info('Online match ranked', { id: event.params.id, reason });
+  }
+);
+
+/** A board's top document, one rebuild at a time. */
+export const rebuildTop = onDocumentWritten(
+  {
+    document: 'boards/{boardId}/entries/{entryId}',
+    memory: '256MiB',
+    cpu: 'gcf_gen1',
+    maxInstances: 1,
+    concurrency: 1,
+  },
+  async (event) => {
+    await rebuildTopOf(
+      db(),
+      event.params.boardId,
+      event.params.entryId,
+      event.data?.after.data()
+    );
+  }
+);
+
+/** A player's entries follow their name, opt-ins and preset. */
+export const boardProfileChanged = onDocumentUpdated(
+  { document: 'profiles/{uid}', memory: '256MiB', cpu: 'gcf_gen1' },
+  async (event) => {
+    await relabelEntries(
+      db(),
+      event.params.uid,
+      event.data?.before.data(),
+      event.data?.after.data()
+    );
+  }
+);

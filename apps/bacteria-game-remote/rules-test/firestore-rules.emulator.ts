@@ -234,6 +234,89 @@ describe('replays', () => {
   });
 });
 
+describe('the leaderboards', () => {
+  beforeEach(async () => {
+    await seed('boards/xp', { rows: [] });
+    await seed('boards/xp/entries/e1', { status: 'counted', sort: 5 });
+    await seed('boards/xp/entries/e2', { status: 'hidden', sort: 9 });
+    await seed('boardMembers/ada', { entryIds: { xp: 'e1' } });
+  });
+
+  const visible = ['counted', 'verified', 'provisional', 'stale'];
+
+  it('lets anyone signed in read a top document and page the visible entries', async () => {
+    await assertSucceeds(getDoc(doc(db('bob'), 'boards/xp')));
+    await assertSucceeds(getDoc(doc(db('bob'), 'boards/xp/entries/e1')));
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db('bob'), 'boards/xp/entries'),
+          where('status', 'in', visible),
+          orderBy('sort', 'desc'),
+          limit(25)
+        )
+      )
+    );
+    await assertFails(
+      getDoc(
+        doc(
+          env.unauthenticatedContext().firestore() as unknown as Firestore,
+          'boards/xp'
+        )
+      )
+    );
+  });
+
+  it('keeps hidden entries from players, not from the owner', async () => {
+    await assertFails(getDoc(doc(db('bob'), 'boards/xp/entries/e2')));
+    await assertFails(
+      getDocs(query(collection(db('bob'), 'boards/xp/entries'), limit(25)))
+    );
+    await assertSucceeds(
+      getDoc(doc(db('own', OWNER_TOKEN), 'boards/xp/entries/e2'))
+    );
+  });
+
+  it("lets a player read their own membership, nobody else's", async () => {
+    await assertSucceeds(getDoc(doc(db('ada'), 'boardMembers/ada')));
+    await assertFails(getDoc(doc(db('bob'), 'boardMembers/ada')));
+  });
+
+  it('lets no client write a board', async () => {
+    await assertFails(setDoc(doc(db('ada'), 'boards/xp'), { rows: [] }));
+    await assertFails(
+      setDoc(doc(db('ada'), 'boards/xp/entries/e1'), { status: 'counted' })
+    );
+    await assertFails(setDoc(doc(db('ada'), 'boardMembers/ada'), { xp: {} }));
+  });
+});
+
+describe('profiles', () => {
+  const profile = (extra: object = {}) => ({
+    name: 'Ada',
+    motto: '',
+    avatar: { kind: 'preset', id: 1 },
+    shareStatus: true,
+    updatedAt: serverTimestamp(),
+    ...extra,
+  });
+
+  it('take the public-name and opt-out flags, as booleans only', async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(db('ada'), 'profiles/ada'),
+        profile({ publicName: true, galleryOptOut: false, boardOptOut: true })
+      )
+    );
+    await assertFails(
+      setDoc(doc(db('ada'), 'profiles/ada'), profile({ publicName: 'yes' }))
+    );
+    await assertFails(
+      setDoc(doc(db('ada'), 'profiles/ada'), profile({ admin: true }))
+    );
+  });
+});
+
 describe('bans', () => {
   it('lets a player read their own ban, not another', async () => {
     await seed('bans/ada', { until: null });
