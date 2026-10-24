@@ -28,6 +28,7 @@ export const settings: Translation<typeof en> = {
       normal: 'Normal',
       long: 'Lang',
     },
+    ambience: 'Blasen und Nebel in der Schale',
     screenResolution: 'Bildschirmauflösung',
     locked:
       'Farben und Auflösungen wählst du vor einem Match – solange eines läuft, bleiben sie, wie sie sind.',

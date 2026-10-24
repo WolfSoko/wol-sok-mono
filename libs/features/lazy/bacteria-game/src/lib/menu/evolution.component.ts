@@ -27,9 +27,10 @@ import {
   WEAPONS,
   WeaponId,
 } from '../state/evolution';
-import { spentDna } from '../state/evolution-progress';
+import { refundableDna } from '../state/evolution-progress';
 import { WeaponDemoComponent } from './weapon-demo.component';
 import { ColonyPreviewComponent } from './colony-preview.component';
+import { DnaCounterComponent } from './dna-counter.component';
 import { DnaHelixComponent } from './dna-helix.component';
 import { celebrate } from './evolution-fx';
 import {
@@ -64,6 +65,7 @@ interface Announcement {
   selector: 'feat-lazy-bac-game-evolution',
   imports: [
     ColonyPreviewComponent,
+    DnaCounterComponent,
     DnaHelixComponent,
     MatButtonModule,
     MatIconModule,
@@ -87,8 +89,9 @@ export class EvolutionComponent {
 
   public readonly back = output<void>();
 
-  private readonly counter =
-    viewChild.required<ElementRef<HTMLElement>>('counter');
+  private readonly counter = viewChild.required('counter', {
+    read: ElementRef<HTMLElement>,
+  });
   private readonly fx = viewChild.required<ElementRef<HTMLElement>>('fx');
   private readonly preview = viewChild(ColonyPreviewComponent);
 
@@ -161,7 +164,7 @@ export class EvolutionComponent {
 
   /** True while there is nothing to reset. */
   protected readonly nothingHeld = computed(
-    () => spentDna(this.evolution.evolution()) === 0
+    () => refundableDna(this.evolution.evolution()) === 0
   );
 
   protected async buyGene(id: GeneId): Promise<void> {
@@ -239,7 +242,7 @@ export class EvolutionComponent {
   }
 
   protected reset(): void {
-    const back = spentDna(this.evolution.evolution());
+    const back = refundableDna(this.evolution.evolution());
     this.evolution.reset();
     this.confirmingReset.set(false);
     this.sound.devolve();

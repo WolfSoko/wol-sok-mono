@@ -1,4 +1,4 @@
-import { BACTERIA_LOOKS } from '../settings.service';
+import { BACTERIA_LOOKS } from '../state/skins';
 import { previewColony, renderLookLayer, SKIN_PREVIEW } from './look-preview';
 
 const ORANGE = [255, 100, 20];

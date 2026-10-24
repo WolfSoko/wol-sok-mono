@@ -145,7 +145,7 @@
 }
 
 // Evolution glows while its DNA buys something.
-.tile.evolve.ready {
+.tile.ready {
   border-color: var(--bw-gold);
   animation: evolve-ready 1.8s ease-in-out infinite;
 }
@@ -166,7 +166,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tile.evolve.ready {
+  .tile.ready {
     animation: none;
   }
 }

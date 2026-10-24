@@ -9,60 +9,6 @@
   position: relative;
 }
 
-// The DNA left to spend, in the header: a turning helix and the count.
-.dna {
-  @include screen.panel;
-
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-left: auto;
-  padding: 0.35rem 1rem 0.35rem 0.6rem;
-  border-radius: 999px;
-  background: var(--bw-surface-glass);
-
-  &.ready {
-    border-color: var(--bw-gold);
-    animation: ready 1.8s ease-in-out infinite;
-  }
-}
-
-.dna-count {
-  @include screen.figure;
-
-  font-size: 2rem;
-  line-height: 1;
-  color: var(--bw-gold);
-  font-variant-numeric: tabular-nums;
-}
-
-.dna-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-}
-
-.dna-label {
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.dna-earned {
-  font-size: 0.75rem;
-  color: var(--bw-muted);
-}
-
-@keyframes ready {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgb(233 185 73 / 0%);
-  }
-
-  50% {
-    box-shadow: 0 0 18px 2px rgb(233 185 73 / 45%);
-  }
-}
-
 .layout {
   display: grid;
   grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
@@ -447,7 +393,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dna.ready,
   .gene.maxed,
   .gene.maxed::before {
     animation: none;

@@ -2,25 +2,14 @@
   [title]="'evolution.title' | t"
   (back)="back.emit()"
 >
-  <div
+  <feat-lazy-bac-game-dna-counter
     #counter
-    class="dna"
     data-dna-counter
-    [class.ready]="evolution.canEvolve()"
-  >
-    <feat-lazy-bac-game-dna-helix class="dna-helix" [size]="40" />
-    <span class="dna-count">{{ evolution.dna() }}</span>
-    <span class="dna-text">
-      <span class="dna-label">{{ "evolution.dna.label" | t }}</span>
-      <span class="dna-earned">
-        @if (evolution.loaded()) {
-          {{ "evolution.dna.earned" | t: { count: evolution.earned() } }}
-        } @else {
-          {{ "evolution.dna.loading" | t }}
-        }
-      </span>
-    </span>
-  </div>
+    [dna]="evolution.dna()"
+    [earned]="evolution.earned()"
+    [loaded]="evolution.loaded()"
+    [ready]="evolution.canEvolve()"
+  />
 </feat-lazy-bac-game-screen-header>
 <p class="cdk-visually-hidden" role="status">{{ announced() }}</p>
 

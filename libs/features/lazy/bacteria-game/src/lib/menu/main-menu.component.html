@@ -54,9 +54,21 @@
     </div>
 
     <nav class="tiles" [attr.aria-label]="'menu.more' | t">
-      <button type="button" class="tile" (click)="open.emit('colony')">
+      <button
+        type="button"
+        class="tile"
+        [class.ready]="colonyDna() > 0"
+        (click)="open.emit('colony')"
+      >
         <mat-icon class="player">bubble_chart</mat-icon>
         {{ "colony.title" | t }}
+        @if (colonyDna() > 0) {
+          @let skinDna = colonyDna();
+          <span class="count" aria-hidden="true">{{ skinDna }}</span>
+          <span class="cdk-visually-hidden">{{
+            "colony.menu.ready" | t: { count: skinDna }
+          }}</span>
+        }
       </button>
       <button type="button" class="tile" (click)="open.emit('profile')">
         <mat-icon class="gold">person</mat-icon>
