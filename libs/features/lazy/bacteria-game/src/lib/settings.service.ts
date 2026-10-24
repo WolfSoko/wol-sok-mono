@@ -216,7 +216,9 @@ export class GameSettingsService {
    * CPU, at the online grid. On by default (the owner's decision, ADR 0011);
    * a weak device may turn it off and keep the GPU.
    */
-  public readonly recordLocal = signal(true);
+  // Off until the generated levels' medal limits are checked on the CPU
+  // simulation, which recording switches local matches to (ADR 0011).
+  public readonly recordLocal = signal(false);
   /**
    * True while recorded local matches are kept, "Save my matches" - online
    * matches are kept either way (ADR 0012).

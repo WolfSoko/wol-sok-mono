@@ -264,14 +264,6 @@ test('should draw the arena on the GPU and keep it readable', async ({
 test('should run the colony war on the GPU', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'WebGL2 is checked in Chromium');
   const po = new BacteriaGamePo(page);
-  // Local matches are recorded on the CPU by default (ADR 0011); a player
-  // who turned recording off keeps the GPU.
-  await page.addInitScript(() =>
-    localStorage.setItem(
-      'bacteria-game.settings',
-      JSON.stringify({ recordLocal: false })
-    )
-  );
   await po.goto();
   await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
 

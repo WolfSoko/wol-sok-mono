@@ -990,6 +990,8 @@ describe('GameStateService local recordings', () => {
     store = TestBed.inject(GameStateStore);
     players = TestBed.inject(PlayerService);
     service.setLevel('petri-dish');
+    // Off by default until the CPU's medal limits are checked (ADR 0011).
+    service.setReplayPrefs({ recordLocal: true });
   });
 
   afterEach(() => {

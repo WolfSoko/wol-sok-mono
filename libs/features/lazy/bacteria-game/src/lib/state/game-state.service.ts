@@ -135,7 +135,7 @@ export class GameStateService {
    */
   private injector = inject(Injector);
   /** What the player set about recording - the settings tell. */
-  private replayPrefs: ReplayPrefs = { recordLocal: true, saveMatches: true };
+  private replayPrefs: ReplayPrefs = { recordLocal: false, saveMatches: true };
   /** Whether the match on the board is recorded, and how - null if not. */
   private recordedAs: 'online' | 'local' | null = null;
   /** The room and number of the online match on the board. */

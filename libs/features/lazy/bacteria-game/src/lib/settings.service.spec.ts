@@ -395,21 +395,21 @@ describe('GameSettingsService', () => {
       return TestBed.inject(GameSettingsService);
     }
 
-    it('records and keeps matches by default, and hands the stored choice to the game', () => {
-      const service = createWith({ saveMatches: false, recordLocal: false });
+    it('keeps matches but records no local ones by default, and hands the stored choice to the game', () => {
+      const service = createWith({ saveMatches: false, recordLocal: true });
       const prefs = jest.spyOn(
         TestBed.inject(GameStateService),
         'setReplayPrefs'
       );
       expect(service.saveMatches()).toBe(true);
-      expect(service.recordLocal()).toBe(true);
+      expect(service.recordLocal()).toBe(false);
 
       storage.flush();
 
       expect(service.saveMatches()).toBe(false);
-      expect(service.recordLocal()).toBe(false);
+      expect(service.recordLocal()).toBe(true);
       expect(prefs).toHaveBeenLastCalledWith({
-        recordLocal: false,
+        recordLocal: true,
         saveMatches: false,
       });
     });
@@ -429,10 +429,10 @@ describe('GameSettingsService', () => {
       expect(service.saveMatches()).toBe(false);
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         saveMatches: false,
-        recordLocal: true,
+        recordLocal: false,
       });
       expect(prefs).toHaveBeenLastCalledWith({
-        recordLocal: true,
+        recordLocal: false,
         saveMatches: false,
       });
     });
