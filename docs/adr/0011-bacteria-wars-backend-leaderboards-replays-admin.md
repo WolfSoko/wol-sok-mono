@@ -510,8 +510,8 @@ The rules and `replayCommand` require `admin == true`,
    **Done.**
 4. Functions app, rules, indexes, emulator; deploy the functions **before**
    the hosting rewrites merge (a release whose rewrites name a function
-   that does not exist fails). **Done in code, not deployed** - see
-   "Step 4 as built" below.
+   that does not exist fails). **Done in code**, deployed by the release
+   that ships it - see "Step 4 as built" below.
 5. Client: room stub, recording settings, submission, "My matches", the
    viewer.
 6. `publicSite`, `robots.txt`, privacy text, `/watch`, the curation view
@@ -559,12 +559,13 @@ The rules and `replayCommand` require `admin == true`,
   (`gen-<recipe>-<difficulty>`), the daily and endless levels apart, since
   every roll is a level of its own. Medallions are not counted yet: they
   need the re-run's samples.
-- **Deploy safety**: the app's `deploy` target (`--only
-functions:bacteria`) is tagged `deploy:manual`, which
-  `.github/workflows/deploy.yml` excludes, so releases do not deploy the
-  functions until the owner removes the tag and the exclusion. The game
-  remote's `deploy` stays `--only hosting,firestore,database`, and no
-  hosting rewrite names a function.
+- **Deploys**: the release pipeline's non-cdk leg
+  (`.github/workflows/deploy.yml`) runs the app's own `deploy` target
+  (`--only functions:bacteria`, auth through `FIREBASE_TOKEN`) when a
+  release affects it, next to the game remote's. The remote's `deploy`
+  stays `--only hosting,firestore,database`, so the hosting deploy never
+  takes the functions along, and no hosting rewrite names a function yet.
+  `deploy-safety.spec.ts` checks all of it.
 - **Emulators**: the e2e emulator set (`bacteria-game-remote:
 firebase-emulators`) stays `auth,firestore,database`, so e2e does not
   wait for the functions build on the Nx Cloud workers. The functions
@@ -592,13 +593,12 @@ Decided by the owner on 2026-10-23:
   24 October 2026), so the functions run in `europe-west1` (`REGION`).
 - IAM roles for the deploying account; Artifact Registry cleanup policy.
 - Turn on TTL for the new `expireAt` fields if the index deploy does not.
-- First functions deploy by hand: `npx nx run bacteria-wars-functions:deploy`
-  (builds, then `firebase deploy --only functions:bacteria`), before the
-  rewrites PR. The account deploying needs the roles above.
-- Then let releases deploy the functions: remove the `deploy:manual` tag
-  from `apps/bacteria-wars-functions/project.json` and
-  `tag:deploy:manual` from the non-cdk exclusion in
-  `.github/workflows/deploy.yml` (or keep deploying by hand).
+- The release that ships the functions deploys them (the non-cdk leg of
+  `.github/workflows/deploy.yml`, through `FIREBASE_TOKEN`), before the
+  rewrites PR; the account behind the token needs the roles above.
+  `npx nx run bacteria-wars-functions:deploy` (builds, then
+  `firebase deploy --only functions:bacteria`) stays for a manual
+  redeploy.
 - After the first deploy, pause the `featureBest` job in Cloud Scheduler
   if it should not even start before step 6 (it returns at once while
   `FEATURE_BEST_ENABLED` is false); turn the flag on after step 7.

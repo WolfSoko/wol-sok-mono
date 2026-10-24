@@ -113,8 +113,8 @@ storage until then. Settings stay with the device either way.
   are `state/boards.ts`, `state/attempts.ts` and `state/admin-commands.ts`.
   Its `test-rules` target tests `firestore.rules` and
   `database.rules.json` against the emulators, so change a rule together
-  with its spec there; `emulators` starts the functions emulator (port 5401) with the others. It is deployed by hand (`deploy`, tagged
-  `deploy:manual`), never by the remote's deploy.
+  with its spec there; `emulators` starts the functions emulator (port 5401) with the others. It is deployed by the release pipeline's non-cdk leg through its own
+  `deploy` target, never by the remote's hosting deploy.
 - E2E never touches the real project: Playwright serves `serve-e2e`, the
   production build with `environment.e2e.ts` (the emulators), in its own
   `dist/apps/bacteria-game-remote-e2e`, next to `firebase-emulators`. The

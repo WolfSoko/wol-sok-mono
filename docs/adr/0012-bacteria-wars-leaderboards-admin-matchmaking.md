@@ -1211,7 +1211,8 @@ written.
 ## Owner's manual steps
 
 - Create the secret `BAN_TOMBSTONE_KEY` (32 random bytes) in Secret
-  Manager on `bacteria-wars` before the first functions deploy, which
+  Manager on `bacteria-wars` before the first functions deploy (the
+  release that ships the functions, ADR 0011), which
   fails without it (`firebase functions:secrets:set BAN_TOMBSTONE_KEY`
   grants the runtime account access). Never rotate it while a ban runs:
   existing tombstones would no longer match.

@@ -2,11 +2,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * Keeps the functions out of every deploy but their own, until the owner
- * has done the manual steps of ADR 0011 (Blaze, region, IAM): the game's
- * hosting deploy never takes them along, no hosting rewrite names one yet,
- * the release pipeline skips their deploy target, and the e2e emulators do
- * not wait for their build.
+ * How the functions deploy (ADR 0011): only through their own `deploy`
+ * target, which the release pipeline's non-cdk leg runs when a release
+ * affects them. The game's hosting deploy never takes them along, no
+ * hosting rewrite names one yet, the e2e emulators do not wait for their
+ * build, and the deployed dependencies are pinned.
  */
 
 const ROOT = join(__dirname, '../../..');
@@ -44,16 +44,26 @@ describe('deploy safety', () => {
     ).toContain('--only auth,firestore,database ');
   });
 
-  it('deploys the functions only by their own target, which the release skips', () => {
+  it('deploys the functions by their own target, from the release pipeline', () => {
     expect(functionsProject.targets.deploy.options.command).toContain(
       '--only functions:bacteria'
     );
-    expect(functionsProject.tags).toContain('deploy:manual');
+    expect(functionsProject.tags).not.toContain('deploy:manual');
     const deployWorkflow = read('.github/workflows/deploy.yml');
     const nonCdk = /app-type: non-cdk[\s\S]*?exclude-pattern: '([^']*)'/.exec(
       deployWorkflow
     );
-    expect(nonCdk?.[1].split(',')).toContain('tag:deploy:manual');
+    // The leg runs every deploy target whose project carries none of the
+    // excluded tags - and excludes by tags only, no project by name.
+    const excluded = nonCdk?.[1].split(',') ?? [];
+    expect(excluded).toContain('tag:cdk');
+    expect(excluded.filter((pattern) => !pattern.startsWith('tag:'))).toEqual(
+      []
+    );
+    const tags: string[] = functionsProject.tags;
+    expect(
+      excluded.filter((pattern) => tags.includes(pattern.slice(4)))
+    ).toEqual([]);
   });
 
   it('pins the deployed dependencies to the workspace versions', () => {
