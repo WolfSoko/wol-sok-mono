@@ -1,4 +1,4 @@
-import type { Loadout } from './evolution';
+import { evolvedTraits, Loadout } from './evolution';
 import { BotDifficulty } from './bot-controller';
 import { getColonyColor, NEUTRAL_COLOR, toPlayerColor } from './colony-colors';
 import { NEUTRAL_TRAITS } from './game-balance';
@@ -36,7 +36,10 @@ export interface MatchPlan {
   /**
    * What each seat evolved - see `evolution.ts`. Plain when absent, as in
    * every match that is not against the computer on the ladder or a
-   * generated level.
+   * generated level. Only a match against the computer plays them - not
+   * one against a ghost, between two players or online. With them, a boss
+   * carries its weapon too: a match without them plays as it did before
+   * there was evolution, which keeps its replays.
    */
   loadouts?: readonly [Loadout, Loadout];
 }
@@ -82,6 +85,8 @@ export function planMatch(
     ? [1, 1]
     : startScales(plan.headStart);
   const [leftSpot, rightSpot] = spawnSpots(width, height);
+  const loadouts =
+    versusComputer && ghost === null ? (plan.loadouts ?? null) : null;
   return {
     spawns: [
       {
@@ -90,6 +95,12 @@ export function planMatch(
         name: versusComputer ? 'You' : left.name,
         isBot: false,
         startScale: leftScale,
+        ...(loadouts === null
+          ? {}
+          : {
+              traits: evolvedTraits(loadouts[0]),
+              weapon: loadouts[0].weapon,
+            }),
       },
       {
         ...rightSpot,
@@ -100,7 +111,13 @@ export function planMatch(
         // The boss plays from the right seat - BOSS_SEAT - whoever steers
         // it. Not a ghost: it replays a run played from the left seat.
         startScale: rightScale * (boss?.startScale ?? 1),
-        traits: boss?.traits,
+        traits:
+          loadouts === null
+            ? boss?.traits
+            : evolvedTraits(loadouts[1], boss?.traits),
+        ...(loadouts === null
+          ? {}
+          : { weapon: loadouts[1].weapon ?? boss?.weapon ?? null }),
         boss: boss !== undefined,
       },
       // After the players: nobody steers them, so no seat is theirs.
@@ -145,10 +162,12 @@ function planOnline(
   plan: MatchPlan,
   online: OnlineSeats
 ): ReturnType<typeof planMatch> {
+  // Online plays plain: what one device evolved, the other cannot check.
   const { spawns, options } = planMatch({
     ...plan,
     mode: 'two-players',
     headStart: 0,
+    loadouts: undefined,
   });
   return {
     spawns: spawns.map((spawn, seat) =>

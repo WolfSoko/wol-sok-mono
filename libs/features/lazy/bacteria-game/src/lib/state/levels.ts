@@ -2,6 +2,7 @@ import { english, GameText } from '../i18n/game-text';
 import type { levels as levelTexts } from '../i18n/en/levels';
 import { scaleOf } from './arena-size';
 import { ColonyTraits, GameBalance, gameBalance } from './game-balance';
+import type { WeaponId } from './evolution';
 import { getMap } from './game-maps';
 import { EXPANSE_NEUTRALS } from './expanse-maps';
 import { GameMap } from './maps';
@@ -63,6 +64,11 @@ export interface NeutralSpot {
 export interface Boss {
   startScale: number;
   traits: ColonyTraits;
+  /**
+   * The weapon the boss fires at you - in a match with evolution, see
+   * `MatchPlan.loadouts` - none when absent.
+   */
+  weapon?: WeaponId;
 }
 
 /*
@@ -334,6 +340,8 @@ export const LEVELS: readonly Level[] = [
     boss: {
       startScale: 2,
       traits: { divideFactor: 1.15, attackFactor: 1.05, cooldownFactor: 0.8 },
+      // The reactor's poison, thrown at your colony.
+      weapon: 'toxin-bomb',
     },
     balance: BOSS_BALANCE,
     crosshairSpeed: 210,
@@ -353,6 +361,8 @@ export const LEVELS: readonly Level[] = [
     boss: {
       startScale: 1.6,
       traits: { divideFactor: 1.1, attackFactor: 1, cooldownFactor: 0.8 },
+      // Patient zero turns your bacteria into its own.
+      weapon: 'phage-strike',
     },
     balance: BOSS_BALANCE,
     crosshairSpeed: 210,

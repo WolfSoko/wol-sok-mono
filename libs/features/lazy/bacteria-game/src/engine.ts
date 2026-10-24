@@ -56,10 +56,31 @@ export type {
   ReplayInputs,
   ReplayResult,
   ReplaySteer,
+  ReplayWeapon,
 } from './lib/state/replay';
 export { replayFromHash, replayLink } from './lib/state/replay-link';
 export { GhostController } from './lib/state/ghost';
 export type { SeatDriver } from './lib/state/ghost';
+
+// Evolution: what a seat takes into a match against the computer (ADR 0013).
+export {
+  evolvedTraits,
+  GENES,
+  isPlainLoadout,
+  parseLoadout,
+  PLAIN_LOADOUT,
+  weaponOf,
+  WEAPON_EFFECTS,
+  WEAPONS,
+} from './lib/state/evolution';
+export type {
+  ActiveEffect,
+  EvolvedTraits,
+  GeneId,
+  Loadout,
+  WeaponFire,
+  WeaponId,
+} from './lib/state/evolution';
 
 // Balance, levels and modes.
 export {

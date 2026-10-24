@@ -11,6 +11,13 @@ export const controls: Translation<typeof en> = {
     recharge: 'Boost lädt auf',
     share: 'Anteil an allen Bakterien',
   },
+  weaponKeys: {
+    leftFires: '{name} feuert die Waffe mit',
+    rightFires: '{name} mit der',
+    e: 'E',
+    shift: 'rechten Umschalttaste',
+    both: 'Gegen den Computer feuert jede der beiden deine.',
+  },
   colors: {
     left: 'Linker Spieler',
     right: 'Rechter Spieler',

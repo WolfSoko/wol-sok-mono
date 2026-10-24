@@ -12,6 +12,17 @@ export const controls = {
     recharge: 'Boost recharge',
     share: 'Share of all bacteria',
   },
+  /*
+   * The keys that fire a weapon, next to the boost keys:
+   * "{left} fires the weapon with E, {right} with the right Shift."
+   */
+  weaponKeys: {
+    leftFires: '{name} fires the weapon with',
+    rightFires: '{name} with the',
+    e: 'E',
+    shift: 'right Shift',
+    both: 'Against the computer either key fires yours.',
+  },
   colors: {
     left: 'Left player',
     right: 'Right player',

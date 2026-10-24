@@ -82,6 +82,36 @@ export function humanForBoostKey(
   return humans[Math.min(index, humans.length - 1)];
 }
 
+/**
+ * The keys that fire a weapon, next to each human's boost key: E for the
+ * first human (W A S D and Space), the right Shift for the second (the
+ * arrow keys and Enter).
+ */
+export type WeaponKey = 'E' | 'Shift';
+const WEAPON_KEYS: readonly WeaponKey[] = ['E', 'Shift'];
+
+/**
+ * The human whose weapon a key fires, null for any other key - handed out
+ * like the boost keys. Only the right Shift counts: the left one sits under
+ * the first human's hand. `code` is the key's `KeyboardEvent.code`.
+ */
+export function humanForWeaponKey(
+  humans: readonly Player[],
+  key: string,
+  code: string
+): Player | null {
+  const index =
+    key.toLowerCase() === 'e'
+      ? WEAPON_KEYS.indexOf('E')
+      : key === 'Shift' && code === 'ShiftRight'
+        ? WEAPON_KEYS.indexOf('Shift')
+        : -1;
+  if (index < 0 || humans.length === 0) {
+    return null;
+  }
+  return humans[Math.min(index, humans.length - 1)];
+}
+
 /** True when two scoreboards show the same - every field of every colony. */
 export function sameColonyStats(
   a: readonly ColonyStats[],

@@ -105,6 +105,11 @@ export interface Simulation {
   getDynamicWalls(): readonly DynamicWall[];
   /** The weapons' effects acting on the war now - see `evolution.ts`. */
   getActiveEffects(): readonly ActiveEffect[];
+  /**
+   * Lets a weapon's effect act on the war from the next step on, for as
+   * long as it lasts - one step for a strike.
+   */
+  addEffect(effect: ActiveEffect): void;
   /** What happened during the last tick. */
   getEvents(): StepEvents;
   summaries(): readonly ColonySummary[];
