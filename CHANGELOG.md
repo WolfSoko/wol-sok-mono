@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.75.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.74.0...v74.75.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** open online play on the lobby, the level only for a new match ([#2616](https://github.com/WolfSoko/wol-sok-mono/issues/2616)) ([5807f1c](https://github.com/WolfSoko/wol-sok-mono/commit/5807f1c5eb1c4db56162c867e65521c892514097))
+
+## [74.74.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.73.1...v74.74.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ the colony in the skin preview lives ([#2615](https://github.com/WolfSoko/wol-sok-mono/issues/2615)) ([fa87745](https://github.com/WolfSoko/wol-sok-mono/commit/fa87745bea2e5706695757fb688f0c8cb9039596))
+
 ## [74.73.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.73.0...v74.73.1) (2026-10-24)
 
 ### Performance

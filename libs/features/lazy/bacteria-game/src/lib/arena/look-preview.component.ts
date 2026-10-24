@@ -8,19 +8,20 @@ import {
 } from '@angular/core';
 import { prefersReducedMotion } from '../reduced-motion';
 import { BacteriaLook } from '../state/skins';
-import { LOOKS } from './colony-renderer';
 import { paintLookPreview, PreviewSize, SKIN_PREVIEW } from './look-preview';
 
 /** How many canvas pixels a cell of the preview gets - two per layer pixel. */
 const PIXELS_PER_CELL = 4;
-/** How often a look that moves is drawn again, in ms - plenty for drifting snippets. */
+/** How often a living colony is drawn again, in ms - plenty for its drift. */
 const FRAME_MS = 66;
 
 /**
  * A look on a sample colony in a colour, drawn by the game's own painter -
  * the skin tiles of the My Colony screen, and the player's colony at its
- * top. A look that moves, like the bubbles, keeps moving where `animate`
- * asks for it and the system does not ask for less motion.
+ * top. Where `animate` asks for it and the system does not ask for less
+ * motion, the colony lives: it drifts, breathes and ripples along its edge
+ * like one in the dish, and a look that moves, like the bubbles, moves
+ * with it.
  */
 @Component({
   selector: 'feat-lazy-bac-game-look-preview',
@@ -63,8 +64,7 @@ export class LookPreviewComponent {
       const look = this.look();
       const color = this.color();
       const size = this.size();
-      const moving =
-        this.animate() && LOOKS[look].animated && !this.reducedMotion();
+      const moving = this.animate() && !this.reducedMotion();
       const cx = this.canvas().nativeElement.getContext('2d');
       if (cx == null) {
         return;
