@@ -400,6 +400,56 @@ describe('EvolutionService', () => {
       expect(evolution.level('mitosis')).toBe(2);
     });
 
+    it('loses nothing a guest bought when they sign in to an account that played elsewhere', () => {
+      const evolution = createFor({
+        [PROGRESS_STORAGE_KEY]: progressWorth(2000),
+        [EVOLUTION_STORAGE_KEY]: {
+          genes: { mitosis: 2 },
+          weapons: ['cryo-pulse'],
+          equipped: 'cryo-pulse',
+          equipCount: 1,
+        },
+      });
+      account.flush();
+      // Bought right before signing in, before the storage took it.
+      expect(evolution.buyGene('mitosis')).toBe(true);
+      account.seed('ada', {
+        [PROGRESS_STORAGE_KEY]: progressWorth(1000),
+        [EVOLUTION_STORAGE_KEY]: {
+          genes: { toxins: 1 },
+          weapons: ['toxin-bomb'],
+          equipped: 'toxin-bomb',
+          equipCount: 4,
+        },
+      });
+
+      account.switchTo('ada', true);
+
+      // Unlike the progress, which keeps the guest's until the account's
+      // arrives, the evolution starts over empty meanwhile - and nothing
+      // can be bought before both have been told.
+      expect(evolution.loaded()).toBe(false);
+      expect(evolution.level('mitosis')).toBe(0);
+      expect(evolution.canBuyGene('flagella')).toBe(false);
+      expect(evolution.buyGene('flagella')).toBe(false);
+
+      account.flush();
+
+      expect(evolution.loaded()).toBe(true);
+      expect(evolution.level('mitosis')).toBe(3);
+      expect(evolution.level('toxins')).toBe(1);
+      expect(evolution.owns('cryo-pulse')).toBe(true);
+      expect(evolution.owns('toxin-bomb')).toBe(true);
+      // The account keeps the weapon it carries.
+      expect(evolution.equipped()).toBe('toxin-bomb');
+      expect(
+        account.storageOf('ada').stored(EVOLUTION_STORAGE_KEY)
+      ).toMatchObject({
+        genes: { mitosis: 3, toxins: 1 },
+        weapons: ['toxin-bomb', 'cryo-pulse'],
+      });
+    });
+
     it('hands what this device bred before the cloud to the first player, once', () => {
       const device = new LateGameStorage({
         [EVOLUTION_STORAGE_KEY]: { genes: { metabolism: 2 } },
