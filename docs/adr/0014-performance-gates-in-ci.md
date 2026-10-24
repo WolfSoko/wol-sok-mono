@@ -47,11 +47,17 @@ report first and block only once their numbers have proven stable.
 Measured by Angular's own budgets on `esbuild:production`, which `build`
 already runs in CI. Deterministic: the same code gives the same bytes.
 
-- **Every app gets an `anyScript` budget**, so a lazy chunk that grows is
-  caught too. For `bacteria-game-remote`, the game chunk is the largest
-  script: `{ "type": "anyScript", "baseline": "815kb", "maximumWarning":
-"5%", "maximumError": "10%" }`. The other apps get the same form, with
-  their own largest script measured as baseline.
+- **Every app gets an `anyScript` budget** on its largest single script. For
+  `bacteria-game-remote` that is the game chunk:
+  `{ "type": "anyScript", "baseline": "815kb", "maximumWarning": "5%",
+"maximumError": "10%" }`. It caps any one script at that size, so the game
+  chunk cannot grow past it; it does not see a smaller chunk grow below it.
+- **Every app also gets an `allScript` budget** on the sum of all its
+  scripts, initial and lazy, which catches growth in any chunk, and a new
+  chunk: `bacteria-game-remote` totals about 1,061 kB raw, so
+  `{ "type": "allScript", "baseline": "1061kb", "maximumWarning": "5%",
+"maximumError": "10%" }`. The other apps get both forms, measured on
+  their own builds.
 - **`initial` stays**, tightened to the measured size plus headroom where it
   is far below its limit (`bacteria-game-remote`: baseline 241 kB, warning
   +10%, error +20%), so the shell's and the PWA's start-up cost is

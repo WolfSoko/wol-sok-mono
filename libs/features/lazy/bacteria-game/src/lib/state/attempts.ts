@@ -2,6 +2,7 @@ import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
 import { isUtcDay } from './boards';
 import { DEFAULT_COLORS } from './colony-colors';
 import { utcDay } from './daily';
+import { isPlainLoadout } from './evolution';
 import { TICKS_PER_SEC } from './fixed-tick';
 import { getLevel, levelSize } from './levels';
 import type { MatchPlan } from './match-setup';
@@ -218,7 +219,10 @@ export function rankedPlan(levelId: string, seed: number): MatchPlan {
   };
 }
 
-/** True when a plan is exactly the ranked plan of its level and seed. */
+/**
+ * True when a plan is exactly the ranked plan of its level and seed - no
+ * evolved loadouts either, which change what a match does.
+ */
 export function isRankedPlan(plan: MatchPlan): boolean {
   const ranked = rankedPlan(plan.levelId, plan.seed);
   return (
@@ -229,7 +233,8 @@ export function isRankedPlan(plan: MatchPlan): boolean {
     plan.colors[1] === ranked.colors[1] &&
     plan.headStart === ranked.headStart &&
     plan.width === ranked.width &&
-    plan.height === ranked.height
+    plan.height === ranked.height &&
+    (plan.loadouts === undefined || plan.loadouts.every(isPlainLoadout))
   );
 }
 

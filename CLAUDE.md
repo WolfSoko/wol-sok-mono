@@ -158,7 +158,7 @@ Planned and phased in [ADR 0014](docs/adr/0014-performance-gates-in-ci.md); this
 
 - **In place now**: Angular budgets on each app's `esbuild:production` (`initial`, `anyComponentStyle`). CI's `build -c=ci` falls back to `production`, so they run on every affected build. Lazy chunks are not covered yet: the game's chunk in `bacteria-game-remote` (815 kB raw, 181 kB transferred on 2026-10-24) has no budget.
 - **Coming, in this order** (one PR each):
-  1. `anyScript` budgets with a measured `baseline` (warning +5%, error +10%) and tightened `initial` budgets for every app. Blocking.
+  1. `anyScript` (largest single script) and `allScript` (all scripts together) budgets with a measured `baseline` (warning +5%, error +10%), and tightened `initial` budgets, for every app. Blocking.
   2. `perf` target on `feat-lazy-bacteria-game`: a Node benchmark of `engine.ts` on fixed replays (`tools/perf/`), gated on the ratio to a calibration loop against `tools/perf/engine-baseline.json` (fails above +20%). Report-only for two weeks, then blocking.
   3. A Playwright frame-time spec for the game, report-only.
   4. Lighthouse CI for the public pages, report-only.

@@ -1,3 +1,4 @@
+import { PLAIN_LOADOUT, WEAPONS } from './evolution';
 import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
 import {
   attemptExpireAt,
@@ -170,6 +171,20 @@ describe('declared attempts', () => {
       ]) {
         expect(isRankedPlan({ ...plan, ...change })).toBe(false);
       }
+    });
+
+    it('takes plain loadouts but not evolved ones', () => {
+      const plan = rankedPlan('petri-dish', 7);
+
+      expect(
+        isRankedPlan({ ...plan, loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT] })
+      ).toBe(true);
+      expect(
+        isRankedPlan({
+          ...plan,
+          loadouts: [{ genes: {}, weapon: WEAPONS[0].id }, PLAIN_LOADOUT],
+        })
+      ).toBe(false);
     });
   });
 
