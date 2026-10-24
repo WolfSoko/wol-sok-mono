@@ -1,6 +1,6 @@
 import { BALANCE_VERSION } from './game-balance';
 import { DRAG_STEPS, STEER_STEPS } from './match-engine';
-import { parseReplay, Replay, ReplayInputs, REPLAY_VERSION } from './replay';
+import { parseReplay, Replay, ReplayInputs } from './replay';
 
 /** The key of a run in the hash of a link: `#ghost=...`. */
 const HASH_KEY = 'ghost';
@@ -41,14 +41,12 @@ export async function replayFromHash(hash: string): Promise<Replay | null> {
       new DecompressionStream('deflate-raw'),
       MAX_UNPACKED_BYTES
     );
+    // Null as well for a format this client does not know.
     const replay = parseReplay(
       unpack(JSON.parse(new TextDecoder().decode(json)))
     );
     // A ghost of another balance would not play out as it was played.
-    return replay?.header.version === REPLAY_VERSION &&
-      replay.header.balanceVersion === BALANCE_VERSION
-      ? replay
-      : null;
+    return replay?.header.balanceVersion === BALANCE_VERSION ? replay : null;
   } catch {
     return null;
   }

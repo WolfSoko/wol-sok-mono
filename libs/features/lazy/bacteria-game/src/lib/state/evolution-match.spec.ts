@@ -11,7 +11,14 @@ import { GhostController } from './ghost';
 import { getLevel, levelMap } from './levels';
 import { MatchEngine, PlayerSpawn } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
-import { parseReplay, playReplay, Replay, replayOf } from './replay';
+import {
+  parseReplay,
+  PLAIN_REPLAY_VERSION,
+  playReplay,
+  Replay,
+  replayOf,
+  REPLAY_VERSION,
+} from './replay';
 
 const PLAN: MatchPlan = {
   levelId: 'petri-dish',
@@ -295,6 +302,66 @@ describe('replays with evolution', () => {
       damaged([EVOLVED, { genes: { gills: 1 }, weapon: null }])
     ).toBeNull();
     expect(damaged([EVOLVED, PLAIN_LOADOUT])).not.toBeNull();
+  });
+
+  it('take the new format, which older clients refuse', () => {
+    const { replay } = record(plan, 300);
+
+    expect(replay.header.version).toBe(REPLAY_VERSION);
+    expect(REPLAY_VERSION).toBeGreaterThan(PLAIN_REPLAY_VERSION);
+  });
+
+  it('keep a plain match in the format from before evolution', () => {
+    const plainPlan: MatchPlan = {
+      ...PLAN,
+      loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT],
+    };
+    const { engine, replay } = record(plainPlan, 600);
+    const before = record(PLAN, 600).replay;
+
+    expect(replay.header.version).toBe(PLAIN_REPLAY_VERSION);
+    expect(JSON.stringify(replay.header)).toBe(JSON.stringify(before.header));
+    expect(playReplay(replay)?.players).toEqual(engine.players);
+  });
+
+  it('take the new format for a boss armed by plain loadouts', () => {
+    const { replay } = record(
+      {
+        ...PLAN,
+        levelId: 'meltdown',
+        width: 320,
+        height: 180,
+        loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT],
+      },
+      60
+    );
+
+    expect(replay.header.version).toBe(REPLAY_VERSION);
+    expect(replay.header.loadouts).toEqual([PLAIN_LOADOUT, PLAIN_LOADOUT]);
+  });
+
+  it('refuse a replay in the plain format that carries evolution', () => {
+    const { replay } = record(plan, 300);
+    const plainFormat = { ...replay.header, version: PLAIN_REPLAY_VERSION };
+
+    expect(parseReplay({ ...replay, header: plainFormat })).toBeNull();
+    const { loadouts, ...withoutLoadouts } = plainFormat;
+    expect(loadouts).toBeDefined();
+    expect(parseReplay({ ...replay, header: withoutLoadouts })).toBeNull();
+    expect(
+      parseReplay({
+        header: withoutLoadouts,
+        inputs: { ...replay.inputs, weapons: [] },
+      })
+    ).not.toBeNull();
+  });
+
+  it('refuse a format this client does not know', () => {
+    const { replay } = record(plan, 60);
+    const header = { ...replay.header, version: REPLAY_VERSION + 1 };
+
+    expect(parseReplay({ ...replay, header })).toBeNull();
+    expect(playReplay({ ...replay, header })).toBeNull();
   });
 
   it('refuse weapons fired by a seat nobody plays', () => {

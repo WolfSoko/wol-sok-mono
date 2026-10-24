@@ -2,6 +2,7 @@ import { BotDifficulty, difficultyOption } from './bot-controller';
 import {
   GENES,
   isGeneId,
+  isPlainLoadout,
   isWeaponId,
   Loadout,
   MAX_GENE_LEVEL,
@@ -10,7 +11,7 @@ import { validColorPair } from './colony-colors';
 import { TICKS_PER_SEC } from './fixed-tick';
 import { BALANCE_VERSION } from './game-balance';
 import { isObject } from './is-object';
-import { isLevelId } from './levels';
+import { getLevel, isLevelId } from './levels';
 import { isGameMode } from './game-mode';
 import { GhostController } from './ghost';
 import { MatchEngine } from './match-engine';
@@ -19,8 +20,21 @@ import { Player } from './player.model';
 import { isHeadStart } from './rivalry';
 import { MatchOutcome } from './win-conditions';
 
-/** The format of a replay - a new one for every change old ones cannot follow. */
-export const REPLAY_VERSION = 1;
+/**
+ * The format of a replay - a new one for every change old ones cannot
+ * follow. This is the newest, which a replay with evolution in it takes:
+ * loadouts that change the match or weapons fired (ADR 0013). A client from
+ * before would drop both and play another match, so it refuses the replay
+ * instead.
+ */
+export const REPLAY_VERSION = 2;
+
+/**
+ * The format of a replay of a plain match - no loadout that changes it, no
+ * weapon fired. Such a replay keeps the format from before evolution, so
+ * older clients and links still play it.
+ */
+export const PLAIN_REPLAY_VERSION = 1;
 
 /** The biggest grid a replay may ask for, in cells per side. */
 const MAX_GRID = 4096;
@@ -85,21 +99,30 @@ export interface ReplayResult {
   ticks: number;
 }
 
-/** The replay of a match played from `plan`, now that it is over. */
+/**
+ * The replay of a match played from `plan`, now that it is over. A plain
+ * match is written as before evolution: without loadouts, which change
+ * nothing in it, and in {@link PLAIN_REPLAY_VERSION}.
+ */
 export function replayOf(
   plan: MatchPlan,
   simulation: ReplayHeader['simulation'],
   ticks: number,
   inputs: ReplayInputs
 ): Replay {
+  const evolved = carriesEvolution(plan, inputs);
+  const header: ReplayHeader = {
+    ...plan,
+    version: evolved ? REPLAY_VERSION : PLAIN_REPLAY_VERSION,
+    balanceVersion: BALANCE_VERSION,
+    simulation,
+    ticks,
+  };
+  if (!evolved) {
+    delete header.loadouts;
+  }
   return {
-    header: {
-      ...plan,
-      version: REPLAY_VERSION,
-      balanceVersion: BALANCE_VERSION,
-      simulation,
-      ticks,
-    },
+    header,
     inputs: {
       steers: inputs.steers.slice(),
       drags: inputs.drags.slice(),
@@ -110,6 +133,28 @@ export function replayOf(
 }
 
 /**
+ * True when evolution plays a part in a match: a weapon was fired, or it
+ * has loadouts that change it - as `planMatch` plays them, only against the
+ * computer, where they evolve a seat or arm the boss.
+ */
+function carriesEvolution(plan: MatchPlan, inputs: ReplayInputs): boolean {
+  if (inputs.weapons.length > 0) {
+    return true;
+  }
+  const { loadouts, mode, levelId } = plan;
+  return (
+    loadouts !== undefined &&
+    mode === 'vs-computer' &&
+    (!loadouts.every(isPlainLoadout) || getLevel(levelId).boss?.weapon != null)
+  );
+}
+
+/** True for a format this client reads. */
+function isKnownVersion(version: number): boolean {
+  return version === PLAIN_REPLAY_VERSION || version === REPLAY_VERSION;
+}
+
+/**
  * Plays a recorded match again on the CPU simulation, without anyone
  * watching. Null for a replay that would not play out as it was played:
  * another format, another balance table, or a match the GPU ran.
@@ -117,7 +162,7 @@ export function replayOf(
 export function playReplay(replay: Replay): ReplayResult | null {
   const { header, inputs } = replay;
   if (
-    header.version !== REPLAY_VERSION ||
+    !isKnownVersion(header.version) ||
     header.balanceVersion !== BALANCE_VERSION ||
     header.simulation !== 'cpu'
   ) {
@@ -146,7 +191,9 @@ export function playReplay(replay: Replay): ReplayResult | null {
 
 /**
  * Reads a replay back from storage or a link. Null for anything that is not
- * a whole one - a replay with a damaged input could only play another match.
+ * a whole one - a replay with a damaged input could only play another match
+ * - and for a format this client does not know. A replay in the plain
+ * format must carry no loadouts and no weapons fired.
  */
 export function parseReplay(value: unknown): Replay | null {
   if (!isObject(value) || !isObject(value['header'])) {
@@ -166,6 +213,9 @@ export function parseReplay(value: unknown): Replay | null {
   // A replay from before the weapons has none.
   const weapons = inputList(inputs['weapons'] ?? [], 2, seats, header.ticks);
   if (steers == null || drags == null || boosts == null || weapons == null) {
+    return null;
+  }
+  if (header.version === PLAIN_REPLAY_VERSION && weapons.length > 0) {
     return null;
   }
   return {
@@ -206,8 +256,14 @@ function parseHeader(raw: Record<string, unknown>): ReplayHeader | null {
   ) {
     return null;
   }
+  if (!isKnownVersion(version)) {
+    return null;
+  }
   const loadouts = parseLoadouts(raw['loadouts']);
-  if (loadouts === null) {
+  if (
+    loadouts === null ||
+    (version === PLAIN_REPLAY_VERSION && loadouts !== undefined)
+  ) {
     return null;
   }
   return {

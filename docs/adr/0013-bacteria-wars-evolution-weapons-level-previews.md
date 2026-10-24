@@ -42,9 +42,10 @@ The shared model is `state/evolution.ts`.
   another. The weapon equipped is the latest pick: each pick (putting it
   down included) counts up `equipCount`, the higher count wins a merge, and
   two devices that picked as often agree on the weapon later in the menus'
-  order. A value stored before the count reads as 0. DNA available = earned − cost of what is held; a merge that
-  overspends shows 0 and blocks buying, it never takes anything back. A free
-  reset refunds everything (an epoch counter wins over the max-merge).
+  order. A value stored before the count reads as 0. DNA available =
+  earned − cost of what is held; a merge that overspends shows 0 and blocks
+  buying, it never takes anything back. A free reset refunds everything (an
+  epoch counter wins over the max-merge).
 
 ### Where evolution plays
 
@@ -62,7 +63,8 @@ everywhere would change how every recorded boss match plays and force a new
 
 `planMatch` cannot tell the daily level from another generated one, so a
 server that re-simulates daily or endless runs (ADR 0012) must reject a
-replay that carries loadouts.
+replay that carries loadouts - in practice every replay that is not in the
+plain format (`PLAIN_REPLAY_VERSION`, see below).
 
 ### Determinism
 
@@ -71,7 +73,15 @@ weapon is a human input on the input grid, recorded like a boost
 (`ReplayInputs.weapons`); the replay header keeps the seats' loadouts
 (absent = plain), so old replays play as before and new ones play again the
 same. A plain match must play bit for bit as before, so `BALANCE_VERSION`
-stays unless a plain match changes. Online plays plain, so `NET_VERSION`
+stays unless a plain match changes.
+
+A replay with evolution in it - loadouts that change the match (a gene, a
+weapon, or a boss they arm) or a weapon fired - takes `REPLAY_VERSION` 2. A
+client from before would drop the loadouts and the shots and play another
+match; with the new version it refuses the replay instead. A plain replay
+keeps version 1 (`PLAIN_REPLAY_VERSION`) and leaves out loadouts that change
+nothing, so it reads as before in older clients and links. A replay in
+version 1 that carries loadouts or weapons fired is invalid. Online plays plain, so `NET_VERSION`
 does not move for this.
 
 ### Level previews

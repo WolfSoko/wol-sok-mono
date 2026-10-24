@@ -44,6 +44,7 @@ export {
 // Replays.
 export {
   parseReplay,
+  PLAIN_REPLAY_VERSION,
   playReplay,
   REPLAY_VERSION,
   replayOf,
