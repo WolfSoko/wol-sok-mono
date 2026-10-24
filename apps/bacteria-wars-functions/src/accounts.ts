@@ -34,7 +34,7 @@ export function accountOf(user: UserRecord): Account {
     admin:
       user.customClaims?.['admin'] === true &&
       user.emailVerified &&
-      providers.includes('google.com'),
+      google !== undefined,
     googleUid: google?.uid ?? null,
   };
 }

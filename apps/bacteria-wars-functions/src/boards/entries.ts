@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { randomInt } from 'node:crypto';
 import {
   DocumentReference,
   DocumentSnapshot,
@@ -39,9 +39,10 @@ const ID_CHARS =
 
 /** A random id of 20 letters and digits, like Firestore's own. */
 export function randomId(): string {
-  return [...randomBytes(20)]
-    .map((byte) => ID_CHARS[byte % ID_CHARS.length])
-    .join('');
+  return Array.from(
+    { length: 20 },
+    () => ID_CHARS[randomInt(ID_CHARS.length)]
+  ).join('');
 }
 
 export function memberRef(db: Firestore, uid: string): DocumentReference {
