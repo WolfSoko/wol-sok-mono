@@ -5,7 +5,7 @@ import { AUDIT_YEARS } from '../config';
 import { Engine, loadEngine } from '../engine';
 import { assertActive, Banned } from '../limits';
 import { DAY_MS } from '../time';
-import { MAX_GALLERY_MINUTES, minuteTicks } from './budgets';
+import { fixedPool, MAX_GALLERY_MINUTES, minuteTicks } from './budgets';
 import type { ReplayDoc } from './model';
 import { publishReplay, takeDown } from './publish';
 import { verifyStored } from './verify';
@@ -191,7 +191,7 @@ async function feature(
     db,
     engine,
     replayId,
-    'admin',
+    fixedPool('admin'),
     minuteTicks(engine, MAX_GALLERY_MINUTES),
     undefined,
     now

@@ -15,6 +15,46 @@ export type ReplayState =
   | 'unverified'
   | 'balance-mismatch';
 
+/** The states a re-run leaves: the replay is decided for good. */
+export const RERUN_RESULTS = [
+  'verified',
+  'unverified',
+  'balance-mismatch',
+] as const satisfies readonly ReplayState[];
+
+/** A state a re-run left. */
+export type RerunState = (typeof RERUN_RESULTS)[number];
+
+/** True once a re-run decided the replay. */
+export function isRerunState(state: ReplayState): state is RerunState {
+  return (RERUN_RESULTS as readonly ReplayState[]).includes(state);
+}
+
+/**
+ * What a re-run's state means for a board: `verified`, `failed` for an
+ * unverified replay or one of another balance, null before any re-run.
+ */
+export function verdictOf(state: ReplayState): 'verified' | 'failed' | null {
+  return !isRerunState(state)
+    ? null
+    : state === 'verified'
+      ? 'verified'
+      : 'failed';
+}
+
+/**
+ * True for a replay a re-run may decide now: a local one `submitted`, an
+ * online one with both reports in (`agreed` or `disputed`). Not one still
+ * `waiting`, nor one decided already.
+ */
+export function mayRerun(doc: Pick<ReplayDoc, 'state'>): boolean {
+  return (
+    doc.state === 'submitted' ||
+    doc.state === 'agreed' ||
+    doc.state === 'disputed'
+  );
+}
+
 /** What kind of match a replay is - derived by the server, never claimed. */
 export type ReplayKind = 'online' | 'computer' | 'daily' | 'endless';
 

@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions';
 import type { Account, AccountLookup } from '../accounts';
 import { Engine, loadEngine } from '../engine';
 import { DAY_MS, dayOf, dayStart } from '../time';
-import { MAX_GALLERY_MINUTES, minuteTicks } from './budgets';
+import { fixedPool, MAX_GALLERY_MINUTES, minuteTicks } from './budgets';
 import type { ReplayDoc, ReplayState } from './model';
 import { publishReplay, seatUids } from './publish';
 import { isFeat, Rerun, scoreOf, verifyStored } from './verify';
@@ -215,7 +215,7 @@ export async function featureBest(
       db,
       engine,
       id,
-      'gallery',
+      fixedPool('gallery'),
       minuteTicks(engine, MAX_GALLERY_MINUTES),
       (doc, rerun) => isFeat(engine, doc, rerun),
       now

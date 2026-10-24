@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { Engine, loadEngine } from '../engine';
 import type { DailyAttemptRow, EndlessRunDoc, RunMatch } from './model';
-import { bestRow, computeRun, rankedKind, stateAfterRerun } from './ranked';
+import { bestRow, computeRun, rankedKind } from './ranked';
 
 describe('ranked days and runs', () => {
   let engine: Engine;
@@ -44,7 +44,8 @@ describe('ranked days and runs', () => {
       seed = 12345;
     });
 
-    const level = (wins: number) => engine.endlessAttemptLevel(seed, wins);
+    const level = (wins: number) =>
+      engine.endlessLevelId({ seed, wins, lives: 0 });
     const run = (matches: Partial<RunMatch & Record<string, unknown>>[]) =>
       ({
         uid: 'ana',
@@ -58,12 +59,9 @@ describe('ranked days and runs', () => {
           state: 'open',
           ...match,
         })),
-        claimedDepth: 0,
-        verifiedWins: 0,
         depth: 0,
         seconds: 0,
         status: 'provisional',
-        going: true,
         nextCloseAt: null,
         best: false,
         updatedAt: Timestamp.fromMillis(NOW),
@@ -97,7 +95,7 @@ describe('ranked days and runs', () => {
       ]);
       expect(doc.depth).toBe(2);
       expect(doc.seconds).toBe(180);
-      expect(doc.going).toBe(false);
+      expect(doc.matches.some((match) => 'seconds' in match)).toBe(false);
       expect(doc.status).toBe('provisional');
     });
 
@@ -142,16 +140,11 @@ describe('ranked days and runs', () => {
         won(2),
       ]);
       computeRun(engine, doc, new Set(), NOW);
-      expect([doc.verifiedWins, doc.status]).toEqual([2, 'provisional']);
+      expect([doc.depth, doc.status]).toEqual([3, 'provisional']);
       doc.matches[2] = { ...doc.matches[2], failed: true } as RunMatch;
       computeRun(engine, doc, new Set(), NOW);
       expect(doc.cutAt).toBe(2);
-      expect([doc.depth, doc.verifiedWins, doc.status, doc.going]).toEqual([
-        2,
-        2,
-        'verified',
-        false,
-      ]);
+      expect([doc.depth, doc.status]).toEqual([2, 'verified']);
     });
 
     it('turns stale when an unverified win is from an older balance', () => {
@@ -161,10 +154,7 @@ describe('ranked days and runs', () => {
     });
   });
 
-  it('maps a re-run to the attempt state and a replay to its board', () => {
-    expect(stateAfterRerun('verified')).toBe('verified');
-    expect(stateAfterRerun('unverified')).toBe('failed');
-    expect(stateAfterRerun('balance-mismatch')).toBe('failed');
+  it('maps a replay to its board', () => {
     expect(
       rankedKind(engine, { attempt: { id: 'd_2026-10-24_1', at: 0 } })
     ).toBe('daily');

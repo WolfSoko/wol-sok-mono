@@ -4,11 +4,11 @@ import type { AccountLookup } from '../accounts';
 import type { Engine } from '../engine';
 import {
   minuteTicks,
-  rerunCost,
+  Payer,
   VERIFY_MINUTES,
   VerifyPool,
 } from '../replays/budgets';
-import type { ReplayDoc } from '../replays/model';
+import { ReplayDoc, verdictOf } from '../replays/model';
 import { verifyStored } from '../replays/verify';
 import { DAY_MS, dayOf, HOUR_MS } from '../time';
 import type {
@@ -20,7 +20,6 @@ import type {
 import {
   bestRow,
   rankedKind,
-  stateAfterRerun,
   updateDailyRun,
   updateEndlessRun,
 } from './ranked';
@@ -45,20 +44,6 @@ const KNOWN_AGE_MS = 3 * DAY_MS;
 export const ADMIN_RUN_MINUTES = 6;
 
 /**
- * Where a re-run is paid from: the pool for its cost - null when none may
- * pay it - and the charge, once the budget is reserved.
- */
-export interface Payer {
-  pool(cost: number): VerifyPool | null;
-  charge(pool: VerifyPool, cost: number): void;
-}
-
-/** A payer that always takes one pool, whose own budget is the limit. */
-export function fixedPool(pool: VerifyPool): Payer {
-  return { pool: () => pool, charge: () => undefined };
-}
-
-/**
  * Takes a re-run's result into the day or run of a ranked replay: verified
  * keeps its place, unverified or balance-mismatch marks the attempt and the
  * entry falls back to the player's next best. A failed check counts for
@@ -72,14 +57,10 @@ export async function applyRerun(
   doc: ReplayDoc,
   now = Date.now()
 ): Promise<boolean> {
-  if (
-    doc.state !== 'verified' &&
-    doc.state !== 'unverified' &&
-    doc.state !== 'balance-mismatch'
-  ) {
+  const verdict = verdictOf(doc.state);
+  if (verdict === null) {
     return false;
   }
-  const state = doc.state;
   const uid = doc.players[0];
   const kind = rankedKind(engine, doc);
   const parsed =
@@ -98,7 +79,7 @@ export async function applyRerun(
       ) {
         return false;
       }
-      row.state = stateAfterRerun(state);
+      row.state = verdict;
       changed = true;
       return true;
     });
@@ -121,7 +102,7 @@ export async function applyRerun(
         ) {
           return false;
         }
-        if (state === 'verified') {
+        if (verdict === 'verified') {
           match.verified = true;
         } else {
           match.failed = true;
@@ -131,7 +112,7 @@ export async function applyRerun(
       }
     );
   }
-  if (changed && state === 'unverified') {
+  if (changed && doc.state === 'unverified') {
     await recordFailure(db, uid, now);
   }
   return changed;
@@ -435,18 +416,15 @@ export async function verifyDaily(
     });
     return 'stale';
   }
-  if (best.ticks > engine.MAX_RERUN_TICKS) {
-    return 'too-long';
-  }
   const outcome = await rerunAndApply(db, engine, best.replayId, pay, now);
   return outcome === 'gone' ? 'nothing' : outcome;
 }
 
 /**
- * Re-runs a ranked replay and takes the result into its day or run. The
- * payer is charged what the re-run reserved (`rerunCost`), and only once
- * it reserved it. 'gone' when the replay or its bytes expired: it can
- * never be re-run.
+ * Re-runs a ranked replay, paid by `pay`, and takes the result into its
+ * day or run. A match longer than `MAX_RERUN_TICKS` is 'too-long' - the
+ * one place that limit is checked. 'gone' when the replay or its bytes
+ * expired: it can never be re-run.
  */
 async function rerunAndApply(
   db: Firestore,
@@ -455,31 +433,15 @@ async function rerunAndApply(
   pay: Payer,
   now: number
 ): Promise<CandidateResult | 'gone'> {
-  const replay = await db.doc(`replays/${replayId}`).get();
-  if (!replay.exists) {
-    return 'gone';
-  }
-  const stored = replay.data() as ReplayDoc;
-  const cost = rerunCost(engine, stored.levelId, stored.ticks);
-  const pool = pay.pool(cost);
-  if (pool === null) {
-    return 'no-budget';
-  }
   const result = await verifyStored(
     db,
     engine,
     replayId,
-    pool,
+    pay,
     engine.MAX_RERUN_TICKS,
     () => false,
     now
   );
-  if (
-    result === 'changed' ||
-    (typeof result !== 'string' && result.rerun !== undefined)
-  ) {
-    pay.charge(pool, cost);
-  }
   if (result === 'no-budget' || result === 'too-long') {
     return result;
   }
@@ -530,9 +492,6 @@ export async function verifyRun(
       return 'stale';
     }
     const ticks = match.ticks ?? 0;
-    if (ticks > engine.MAX_RERUN_TICKS) {
-      return 'too-long';
-    }
     if (spent > 0 && (spent + ticks > maxTicks || !timeLeft())) {
       all = false;
       break;

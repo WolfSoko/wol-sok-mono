@@ -116,8 +116,6 @@ export interface RunMatch {
   state: RunMatchState;
   /** Matches with a replay: their length in ticks, the one source. */
   ticks?: number;
-  /** Won matches: their length in seconds, rounded from `ticks` to show. */
-  seconds?: number;
   /** Why the replay does not rank, if it does not. */
   reason?: string;
   /** Won matches: true once re-run and confirmed. */
@@ -139,18 +137,16 @@ export interface EndlessRunDoc {
   /** The run seed: the seed of its match 0. */
   seed: number;
   matches: RunMatch[];
-  /** Wins before the third lost life, before verification cut any. */
-  claimedDepth: number;
-  /** The leading wins confirmed by re-runs. */
-  verifiedWins: number;
   /** Set once a win failed its re-run: the run ends at this depth. */
   cutAt?: number;
-  /** The depth and seconds the run ranks with. */
+  /**
+   * The depth and seconds the run ranks with: the wins before the third
+   * lost life (or the cut), and their seconds rounded from their ticks.
+   */
   depth: number;
   seconds: number;
+  /** `verified` once every win counted is confirmed by a re-run. */
   status: RunStatus;
-  /** True while no third life is lost. */
-  going: boolean;
   /** The earliest moment an open match closes as a lost life. */
   nextCloseAt: Timestamp | null;
   /** The owner asked for it to be verified: first in the hourly queue. */

@@ -8,7 +8,11 @@ import {
   HOURLY_SUBMISSIONS,
 } from '../limits';
 import { acceptSubmission, WAITING_CLOSE_MS } from '../replays/accept-replay';
-import { reserveVerification, VERIFY_MINUTES } from '../replays/budgets';
+import {
+  fixedPool,
+  reserveVerification,
+  VERIFY_MINUTES,
+} from '../replays/budgets';
 import { deletePlayerReplays } from '../replays/delete-player-replays';
 import { featureBest } from '../replays/feature-best';
 import { onProfileChanged } from '../replays/profile-changed';
@@ -395,7 +399,15 @@ describe('acceptReplay', () => {
       const bytes = await bytesOf(await online());
       await acceptSubmission(db, 's1', await submission('host', bytes), NOW);
       expect(
-        await verifyStored(db, engine, id(), 'admin', 6 * 3600, undefined, NOW)
+        await verifyStored(
+          db,
+          engine,
+          id(),
+          fixedPool('admin'),
+          6 * 3600,
+          undefined,
+          NOW
+        )
       ).toBe('waiting');
       expect(
         await acceptSubmission(db, 's2', await submission('guest', bytes), NOW)
@@ -471,7 +483,7 @@ describe('verification and the gallery', () => {
       db,
       engine,
       id,
-      'gallery',
+      fixedPool('gallery'),
       6 * 3600,
       undefined,
       NOW
@@ -486,7 +498,7 @@ describe('verification and the gallery', () => {
       db,
       engine,
       id,
-      'gallery',
+      fixedPool('gallery'),
       6 * 3600,
       undefined,
       NOW
@@ -507,7 +519,15 @@ describe('verification and the gallery', () => {
       )
     ).toBe(true);
     expect(
-      await verifyStored(db, engine, id, 'gallery', 6 * 3600, undefined, NOW)
+      await verifyStored(
+        db,
+        engine,
+        id,
+        fixedPool('gallery'),
+        6 * 3600,
+        undefined,
+        NOW
+      )
     ).toBe('no-budget');
     expect((await db.doc(`replays/${id}`).get()).get('state')).toBe(
       'submitted'
@@ -517,7 +537,15 @@ describe('verification and the gallery', () => {
   it('publishes under a fresh id, names only who opted in, and takes it down again', async () => {
     const id = await storedLocal();
     await db.doc('profiles/ana').set({ name: 'Ana', publicName: true });
-    await verifyStored(db, engine, id, 'gallery', 6 * 3600, undefined, NOW);
+    await verifyStored(
+      db,
+      engine,
+      id,
+      fixedPool('gallery'),
+      6 * 3600,
+      undefined,
+      NOW
+    );
     const published = await publishReplay(db, engine, id, 'auto', NOW);
     expect(published).toEqual({ publicId: expect.any(String) });
     const publicId = (published as { publicId: string }).publicId;
@@ -581,7 +609,15 @@ describe('verification and the gallery', () => {
   it('keeps out the matches of players who opted out of the gallery', async () => {
     const id = await storedLocal();
     await db.doc('profiles/ana').set({ name: 'Ana', galleryOptOut: true });
-    await verifyStored(db, engine, id, 'gallery', 6 * 3600, undefined, NOW);
+    await verifyStored(
+      db,
+      engine,
+      id,
+      fixedPool('gallery'),
+      6 * 3600,
+      undefined,
+      NOW
+    );
     expect(await publishReplay(db, engine, id, 'auto', NOW)).toBe('opted-out');
   });
 
@@ -763,7 +799,7 @@ describe('profiles and deleted accounts', () => {
       db,
       engine,
       `l_${submissionId}`,
-      'gallery',
+      fixedPool('gallery'),
       6 * 3600,
       undefined,
       NOW

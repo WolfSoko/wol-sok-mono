@@ -405,8 +405,13 @@ unranked daily match spends only a local one. The result screen says
     update (`expireAt`); the best run keeps no `expireAt`.
 - **Verification is incremental and in order**, from the same trust-ordered
   candidate list: runs that would enter the top 10, then the next 10.
-  - The hourly function re-runs the run's wins one by one, keeping
-    `verifiedWins`.
+  - The hourly function re-runs the run's wins one by one; the run is
+    `verified` once every win it counts is.
+  - The run owns every match it has seen: a declared attempt only adds a
+    match it does not hold yet, or marks one void. For a match it holds,
+    its own `at` stays, so an attempt declared again (after its TTL) never
+    reopens a closed match. A match's seconds are worked out from its
+    ticks for the sort, not stored.
   - If win `k` fails, the run is cut to its verified prefix: depth `k`,
     status `verified`, marked "partly confirmed". Its remaining wins are
     dropped.
@@ -512,7 +517,7 @@ All of it is written by functions only, except `attempts`,
 | `players/{uid}/attempts/{attemptId}`          | `{ at, expireAt }`, created by the player                                                                                                                                                                                                            | its player                                |
 | `players/{uid}/notices/{id}`                  | `{ type: 'profile-reset' \| 'image-removed' \| 'board-hidden' \| 'banned' \| 'unbanned', at, until?, reason?: 'cheating' \| 'offensive-profile' \| 'spam' \| 'other', expireAt }`                                                                    | its player (read and delete)              |
 | `dailyRuns/{day}_{uid}`                       | the day's attempts: `{ attemptId, replayId, sort, state }[]`                                                                                                                                                                                         | nobody                                    |
-| `endlessRuns/{uid}_{runId}`                   | `{ seed, attempts: [...], claimedDepth, verifiedWins, status, updatedAt, expireAt? }`                                                                                                                                                                | nobody                                    |
+| `endlessRuns/{uid}_{runId}`                   | `{ uid, runId, seed, matches: [...], cutAt?, depth, seconds, status, nextCloseAt, queued?, best, updatedAt, expireAt? }`                                                                                                                             | nobody                                    |
 | `pairs/{day}_{uidA}_{uidB}`                   | `{ count, expireAt }`                                                                                                                                                                                                                                | nobody                                    |
 | `rankedReplays/{replayId}`                    | `{ at, expireAt }`                                                                                                                                                                                                                                   | nobody                                    |
 | `rankedRooms/{roomCode}`                      | `{ stubCreatedAt, ticks, expireAt }`                                                                                                                                                                                                                 | nobody                                    |

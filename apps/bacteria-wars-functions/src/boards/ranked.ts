@@ -8,7 +8,7 @@ import {
 import type { Attempt, RankedReason } from '@wolsok/feat-lazy-bac-game/engine';
 import type { Engine } from '../engine';
 import { assertActive, Banned } from '../limits';
-import type { ReplayDoc } from '../replays/model';
+import { ReplayDoc, verdictOf } from '../replays/model';
 import { DAY_MS, HOUR_MS } from '../time';
 import {
   entryRef,
@@ -18,7 +18,6 @@ import {
   readStanding,
 } from './entries';
 import type {
-  AttemptState,
   DailyAttemptRow,
   DailyRunDoc,
   EndlessRunDoc,
@@ -122,7 +121,7 @@ export async function checkRanked(
   }
   if (
     attempt.kind === 'daily' &&
-    header.levelId !== engine.dailyAttemptLevel(attempt)
+    header.levelId !== engine.dailyLevelId(attempt.day)
   ) {
     return fail('level-mismatch');
   }
@@ -212,12 +211,7 @@ async function acceptDaily(
       atHour: engine.atHourOf(doc.createdAt.toMillis()),
       balanceVersion: doc.balanceVersion,
       // A replay the gallery verified already keeps what it came to.
-      state:
-        doc.state === 'verified'
-          ? 'verified'
-          : doc.state === 'unverified' || doc.state === 'balance-mismatch'
-            ? 'failed'
-            : 'provisional',
+      state: verdictOf(doc.state) ?? 'provisional',
     });
     tx.update(replayRef, { rankedAt: Timestamp.fromMillis(now) });
     return true;
@@ -373,13 +367,14 @@ export async function updateEndlessRun(
     const stored = runSnap.exists
       ? (runSnap.data() as EndlessRunDoc)
       : undefined;
-    const first = attempts.docs.find((doc) => doc.id === `${prefix}0`);
+    const firstId = engine.endlessAttemptId(runId, 0);
+    const first = attempts.docs.find((doc) => doc.id === firstId);
     const firstAt = (first?.get('at') as Timestamp | undefined)?.toMillis();
     const seed =
       stored?.seed ??
       (firstAt === undefined
         ? undefined
-        : engine.attemptSeed(uid, `${prefix}0`, firstAt));
+        : engine.attemptSeed(uid, firstId, firstAt));
     if (seed === undefined) {
       if (incoming !== undefined) {
         tx.update(db.doc(`replays/${incoming.replayId}`), {
@@ -389,7 +384,7 @@ export async function updateEndlessRun(
       return { reason: 'no-attempt' };
     }
     const kept = new Map<number, KeptMatch>(
-      (stored?.matches ?? []).map((match) => [match.index, match])
+      (stored?.matches ?? []).map((match) => [match.index, { ...match }])
     );
     if (incoming !== undefined) {
       const before = kept.get(incoming.index);
@@ -406,62 +401,53 @@ export async function updateEndlessRun(
     const pendingIds = new Set(
       pending.docs.map((doc) => doc.get('attempt') as string | undefined)
     );
-    const matches: KeptMatch[] = attempts.docs
-      .map((doc): KeptMatch | null => {
-        const parsed = engine.parseAttemptId(doc.id);
-        if (parsed?.kind !== 'endless') {
-          return null;
-        }
-        const old = kept.get(parsed.i);
-        const isIncoming = incoming?.index === parsed.i;
-        return {
-          ...old,
+    // The run owns every match it has seen, even one whose attempt expired
+    // (TTL): an attempt adds only a new index or its void flag, and for an
+    // index the run holds, its stored `at` wins, like its seed.
+    for (const doc of attempts.docs) {
+      const parsed = engine.parseAttemptId(doc.id);
+      if (parsed?.kind !== 'endless') {
+        continue;
+      }
+      const isVoid = doc.get('void') === true;
+      const known = kept.get(parsed.i);
+      if (known === undefined) {
+        kept.set(parsed.i, {
           index: parsed.i,
           attemptId: doc.id,
           at: (doc.get('at') as Timestamp).toMillis(),
-          replayId: isIncoming ? incoming.replayId : (old?.replayId ?? null),
-          state: doc.get('void') === true ? 'void' : 'open',
-          ...(isIncoming
-            ? {
-                levelId: incoming.doc.levelId,
-                ticks: incoming.doc.ticks,
-                won: incoming.doc.winnerSeat === 0,
-                balanceVersion: incoming.doc.balanceVersion,
-                ...(incoming.doc.state === 'verified'
-                  ? { verified: true }
-                  : incoming.doc.state === 'unverified' ||
-                      incoming.doc.state === 'balance-mismatch'
-                    ? { failed: true }
-                    : {}),
-                ...(incoming.reason === null
-                  ? {}
-                  : { reason: incoming.reason }),
-              }
-            : {}),
-        };
-      })
-      .filter((match): match is KeptMatch => match !== null);
-    // A match whose attempt expired (TTL) keeps what the run knew of it: a
-    // run is never rebuilt from part of its attempts.
-    for (const [index, match] of kept) {
-      if (!matches.some((other) => other.index === index)) {
-        matches.push(match);
+          replayId: null,
+          state: isVoid ? 'void' : 'open',
+        });
+      } else if (isVoid) {
+        known.state = 'void';
       }
     }
-    matches.sort((a, b) => a.index - b.index);
+    const taken = incoming === undefined ? undefined : kept.get(incoming.index);
+    if (incoming !== undefined && taken !== undefined) {
+      const verdict = verdictOf(incoming.doc.state);
+      Object.assign(taken, {
+        replayId: incoming.replayId,
+        levelId: incoming.doc.levelId,
+        ticks: incoming.doc.ticks,
+        won: incoming.doc.winnerSeat === 0,
+        balanceVersion: incoming.doc.balanceVersion,
+        ...(verdict === 'verified' ? { verified: true } : {}),
+        ...(verdict === 'failed' ? { failed: true } : {}),
+        ...(incoming.reason === null ? {} : { reason: incoming.reason }),
+      });
+    }
+    const matches = [...kept.values()].sort((a, b) => a.index - b.index);
 
     const run: EndlessRunDoc = {
       uid,
       runId,
       seed,
       matches,
-      claimedDepth: 0,
-      verifiedWins: 0,
       ...(stored?.cutAt === undefined ? {} : { cutAt: stored.cutAt }),
       depth: 0,
       seconds: 0,
       status: 'provisional',
-      going: true,
       nextCloseAt: null,
       ...(stored?.queued ? { queued: true } : {}),
       best: stored?.best ?? false,
@@ -560,8 +546,8 @@ export async function updateEndlessRun(
 
 /**
  * Works out a run from its matches in order, in place: the wins before the
- * third lost life, the seconds they took, the verified prefix and the cut,
- * and when the next open match closes. Returns the ranked reasons of
+ * third lost life, the seconds they took, the verified prefix (its status)
+ * and the cut, and when the next open match closes. Returns the ranked reasons of
  * replays newly found not to rank (a level that does not follow).
  */
 export function computeRun(
@@ -594,7 +580,8 @@ export function computeRun(
     if (match.replayId !== null && match.levelId !== undefined) {
       if (
         match.reason === undefined &&
-        match.levelId !== engine.endlessAttemptLevel(run.seed, wins)
+        match.levelId !==
+          engine.endlessLevelId({ seed: run.seed, wins, lives: 0 })
       ) {
         match.reason = 'level-mismatch';
         reasons.set(match.replayId, 'level-mismatch');
@@ -608,9 +595,8 @@ export function computeRun(
       }
       if (match.reason === undefined && match.won === true) {
         match.state = 'won';
-        match.seconds = Math.round((match.ticks ?? 0) / engine.TICKS_PER_SEC);
         wins++;
-        seconds += match.seconds;
+        seconds += Math.round((match.ticks ?? 0) / engine.TICKS_PER_SEC);
         verifiedPrefix = verifiedPrefix && match.verified === true;
         if (verifiedPrefix) {
           verifiedWins++;
@@ -640,11 +626,8 @@ export function computeRun(
       lost++;
     }
   }
-  run.claimedDepth = wins;
   run.depth = wins;
   run.seconds = seconds;
-  run.verifiedWins = verifiedWins;
-  run.going = lost < RUN_LIVES && run.cutAt === undefined;
   run.nextCloseAt = Number.isFinite(nextClose)
     ? Timestamp.fromMillis(nextClose)
     : null;
@@ -652,13 +635,6 @@ export function computeRun(
     verifiedWins === wins ? 'verified' : stale ? 'stale' : 'provisional';
   run.status = status;
   return reasons;
-}
-
-/** The daily board's attempt state a re-run leaves. */
-export function stateAfterRerun(
-  state: 'verified' | 'unverified' | 'balance-mismatch'
-): AttemptState {
-  return state === 'verified' ? 'verified' : 'failed';
 }
 
 /** The kind of a stored replay's board, from its attempt - null without one. */

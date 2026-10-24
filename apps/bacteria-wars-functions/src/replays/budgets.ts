@@ -60,6 +60,21 @@ export function rerunCost(
 }
 
 /**
+ * Where a re-run is paid from: the pool for its cost - null when none may
+ * pay it - and the charge, once the budget is reserved. `verifyStored`
+ * asks it, since it knows the cost.
+ */
+export interface Payer {
+  pool(cost: number): VerifyPool | null;
+  charge(pool: VerifyPool, cost: number): void;
+}
+
+/** A payer that always takes one pool, whose own budget is the limit. */
+export function fixedPool(pool: VerifyPool): Payer {
+  return { pool: () => pool, charge: () => undefined };
+}
+
+/**
  * Reserves `ticks` of match time from a pool's budget of the day - false,
  * and nothing reserved, when the rest of the budget is smaller. An
  * exhausted budget never shows a claim as verified: it waits.

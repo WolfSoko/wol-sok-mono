@@ -7,19 +7,20 @@ import type {
   SizeSample,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { Engine } from '../engine';
-import { rerunCost, reserveVerification, VerifyPool } from './budgets';
+import { Payer, rerunCost, reserveVerification } from './budgets';
 import { levelStatsId } from './derive';
-import type { ReplayDoc, ReplayState, ReplaySummary } from './model';
-
-/** What a re-run decides about a replay. */
-export type VerifiedState = Extract<
+import {
+  isRerunState,
+  mayRerun,
+  ReplayDoc,
   ReplayState,
-  'verified' | 'unverified' | 'balance-mismatch'
->;
+  ReplaySummary,
+  RerunState,
+} from './model';
 
 /** A replay played again, and what came of it. */
 export interface Rerun {
-  state: VerifiedState;
+  state: RerunState;
   /** The replay as read - null when the bytes hold none. */
   replay: Replay | null;
   /** What the re-run computed; only a verified one has it. */
@@ -214,19 +215,20 @@ export type NoRerun =
   | 'changed';
 
 /**
- * Re-runs `replays/{id}` from a pool's budget and stores what came of it:
- * the state and, when verified, the summary, score and reasons. Stored in a
- * transaction that first checks the state is still the one the re-run
- * started from, so two callers never overwrite each other. A replay the
- * boards or the gallery verified already is not re-run again, and an
- * online match still waiting for its second report is not re-run yet. The
- * budget is reserved only once the bytes are there to re-run.
+ * Re-runs `replays/{id}` and stores what came of it: the state and, when
+ * verified, the summary, score and reasons. Stored in a transaction that
+ * first checks the state is still the one the re-run started from, so two
+ * callers never overwrite each other. A replay the boards or the gallery
+ * decided already is not re-run again, and an online match still waiting
+ * for its second report is not re-run yet. The budget is reserved only
+ * once the bytes are there to re-run: `pay` picks the pool for the
+ * re-run's cost (`rerunCost`) and is charged once it is reserved.
  */
 export async function verifyStored(
   db: Firestore,
   engine: Engine,
   replayId: string,
-  pool: VerifyPool,
+  pay: Payer,
   maxTicks: number,
   feat: (doc: ReplayDoc, rerun: Rerun) => boolean = (doc, rerun) =>
     isFeat(engine, doc, rerun),
@@ -238,14 +240,10 @@ export async function verifyStored(
     return 'no-replay';
   }
   const doc = before.data() as ReplayDoc;
-  if (
-    doc.state === 'verified' ||
-    doc.state === 'unverified' ||
-    doc.state === 'balance-mismatch'
-  ) {
+  if (isRerunState(doc.state)) {
     return { state: doc.state, doc };
   }
-  if (doc.kind === 'online' && doc.state === 'waiting') {
+  if (!mayRerun(doc)) {
     return 'waiting';
   }
   if (doc.ticks > maxTicks) {
@@ -256,17 +254,15 @@ export async function verifyStored(
   if (bytes === undefined) {
     return 'no-blob';
   }
+  const cost = rerunCost(engine, doc.levelId, doc.ticks);
+  const pool = pay.pool(cost);
   if (
-    !(await reserveVerification(
-      db,
-      engine,
-      pool,
-      rerunCost(engine, doc.levelId, doc.ticks),
-      now
-    ))
+    pool === null ||
+    !(await reserveVerification(db, engine, pool, cost, now))
   ) {
     return 'no-budget';
   }
+  pay.charge(pool, cost);
   const rerun = await rerunReplay(engine, bytes);
   const { score, reasons } = scoreOf(engine, rerun, {
     online: doc.kind === 'online',

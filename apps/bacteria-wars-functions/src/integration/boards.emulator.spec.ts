@@ -26,11 +26,11 @@ import type { EntryDoc, MemberDoc } from '../boards/model';
 import { countOnline } from '../boards/rank-online';
 import { rankProgress } from '../boards/rank-progress';
 import { rankReplay } from '../boards/rank-replay';
+import { updateEndlessRun } from '../boards/ranked';
 import { rebuildTop } from '../boards/rebuild-top';
 import {
   applyRerun,
   candidatesOf,
-  fixedPool,
   recordFailure,
   Slice,
   verifyDaily,
@@ -38,6 +38,7 @@ import {
 } from '../boards/verification';
 import { Engine, loadEngine } from '../engine';
 import { forgetBans } from '../limits';
+import { fixedPool } from '../replays/budgets';
 import { acceptSubmission } from '../replays/accept-replay';
 import { levelStatsId } from '../replays/derive';
 import type { ReplayDoc } from '../replays/model';
@@ -130,6 +131,11 @@ async function entry(
   return (
     await db.doc(`boards/${boardId}/entries/${entryIds[kind]}`).get()
   ).data() as EntryDoc | undefined;
+}
+
+/** The level of a run's match after `wins` won ones. */
+function runLevel(seed: number, wins: number): string {
+  return engine.endlessLevelId({ seed, wins, lives: 0 });
 }
 
 function progress(matchXp: number): Record<string, unknown> {
@@ -610,13 +616,7 @@ describe('ranked daily and endless matches', () => {
       await submit(
         'ana',
         's0',
-        await ranked(
-          'ana',
-          attempt(0),
-          at0,
-          engine.endlessAttemptLevel(runSeed, 0),
-          true
-        ),
+        await ranked('ana', attempt(0), at0, runLevel(runSeed, 0), true),
         attempt(0)
       );
       // Match 1 was declared three hours ago and never uploaded: a lost life.
@@ -626,13 +626,7 @@ describe('ranked daily and endless matches', () => {
       await submit(
         'ana',
         's2',
-        await ranked(
-          'ana',
-          attempt(2),
-          at2,
-          engine.endlessAttemptLevel(runSeed, 1),
-          true
-        ),
+        await ranked('ana', attempt(2), at2, runLevel(runSeed, 1), true),
         attempt(2)
       );
       const run = (await db.doc(`endlessRuns/ana_${runId}`).get()).data();
@@ -641,7 +635,6 @@ describe('ranked daily and endless matches', () => {
           depth: 2,
           seconds: 4,
           status: 'provisional',
-          going: true,
           best: true,
         })
       );
@@ -689,13 +682,7 @@ describe('ranked daily and endless matches', () => {
         await submit(
           'ana',
           `s${i}`,
-          await ranked(
-            'ana',
-            attempt(i),
-            at,
-            engine.endlessAttemptLevel(runSeed, i),
-            true
-          ),
+          await ranked('ana', attempt(i), at, runLevel(runSeed, i), true),
           attempt(i)
         );
       }
@@ -709,7 +696,7 @@ describe('ranked daily and endless matches', () => {
       ).toBe('verified');
       const run = (await db.doc(`endlessRuns/ana_${runId}`).get()).data();
       expect(run).toEqual(
-        expect.objectContaining({ depth: 2, verifiedWins: 2 })
+        expect.objectContaining({ depth: 2, status: 'verified' })
       );
       expect((await entry('ana', 'endless', 'endless'))?.status).toBe(
         'verified'
@@ -739,11 +726,8 @@ describe('ranked daily and endless matches', () => {
       // 36,010 ticks: 600 s once rounded, 10 ticks over the re-run limit.
       const ticks = engine.MAX_RERUN_TICKS + 10;
       const ref = db.doc(`endlessRuns/ana_${runId}`);
-      const matches = (await ref.get()).get('matches') as {
-        ticks: number;
-        seconds: number;
-      }[];
-      matches[0] = { ...matches[0], ticks, seconds: 600 };
+      const matches = (await ref.get()).get('matches') as { ticks: number }[];
+      matches[0] = { ...matches[0], ticks };
       await ref.update({ matches });
       await db.doc('replays/l_s0').update({ ticks });
       expect(
@@ -757,13 +741,7 @@ describe('ranked daily and endless matches', () => {
       const stored = await submit(
         'ana',
         's0',
-        await ranked(
-          'ana',
-          attempt(0),
-          at0,
-          engine.endlessAttemptLevel(1, 5),
-          true
-        ),
+        await ranked('ana', attempt(0), at0, runLevel(1, 5), true),
         attempt(0)
       );
       expect(stored.rankedReason).toBe('level-mismatch');
@@ -777,13 +755,7 @@ describe('ranked daily and endless matches', () => {
       const late = await submit(
         'ana',
         's0',
-        await ranked(
-          'ana',
-          attempt(0),
-          at0,
-          engine.endlessAttemptLevel(runSeed, 0),
-          true
-        ),
+        await ranked('ana', attempt(0), at0, runLevel(runSeed, 0), true),
         attempt(0),
         at0 + 10 * 60_000
       );
@@ -801,13 +773,7 @@ describe('ranked daily and endless matches', () => {
       await submit(
         'ana',
         's0',
-        await ranked(
-          'ana',
-          attempt(0),
-          at0,
-          engine.endlessAttemptLevel(runSeed, 0),
-          true
-        ),
+        await ranked('ana', attempt(0), at0, runLevel(runSeed, 0), true),
         attempt(0)
       );
       await declare('ana', attempt(1), NOW);
@@ -822,6 +788,32 @@ describe('ranked daily and endless matches', () => {
       expect(run?.['nextCloseAt']).toBeNull();
     });
 
+    it('keeps a closed match closed when its attempt is declared again', async () => {
+      const at0 = NOW - 60_000;
+      await declare('ana', attempt(0), at0);
+      const runSeed = engine.attemptSeed('ana', attempt(0), at0);
+      await submit(
+        'ana',
+        's0',
+        await ranked('ana', attempt(0), at0, runLevel(runSeed, 0), true),
+        attempt(0)
+      );
+      await declare('ana', attempt(1), NOW - 3 * HOUR);
+      await updateEndlessRun(db, engine, 'ana', runId, NOW);
+      const ref = db.doc(`endlessRuns/ana_${runId}`);
+      expect((await ref.get()).get('matches')[1]).toEqual(
+        expect.objectContaining({ state: 'lost', at: NOW - 3 * HOUR })
+      );
+      // The attempt comes back with a new time (its TTL ran out, say): the
+      // run keeps the time it knew, and the match stays lost.
+      await declare('ana', attempt(1), NOW);
+      await updateEndlessRun(db, engine, 'ana', runId, NOW + 1);
+      expect((await ref.get()).get('matches')[1]).toEqual(
+        expect.objectContaining({ state: 'lost', at: NOW - 3 * HOUR })
+      );
+      expect((await ref.get()).get('nextCloseAt')).toBeNull();
+    });
+
     it('takes in a stored replay rankReplay missed before closing its match', async () => {
       const at0 = NOW - 60_000;
       await declare('ana', attempt(0), at0);
@@ -829,13 +821,7 @@ describe('ranked daily and endless matches', () => {
       await submit(
         'ana',
         's0',
-        await ranked(
-          'ana',
-          attempt(0),
-          at0,
-          engine.endlessAttemptLevel(runSeed, 0),
-          true
-        ),
+        await ranked('ana', attempt(0), at0, runLevel(runSeed, 0), true),
         attempt(0)
       );
       const at1 = NOW - 30_000;
@@ -845,7 +831,7 @@ describe('ranked daily and endless matches', () => {
         'ana',
         attempt(1),
         at1,
-        engine.endlessAttemptLevel(runSeed, 1),
+        runLevel(runSeed, 1),
         true
       );
       await acceptSubmission(
