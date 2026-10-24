@@ -5,6 +5,7 @@ import {
   isWeaponId,
   Loadout,
   MAX_GENE_LEVEL,
+  weaponOf,
   WEAPONS,
   WeaponId,
 } from './evolution';
@@ -57,20 +58,6 @@ export function geneLevelCost(level: number): number {
   return 2 * level;
 }
 
-/**
- * The DNA each weapon costs, in the order the menus offer them - 70 strands
- * for all five. Genes and weapons together come to 220 strands, 11,000 XP:
- * a player has bred everything about when they reach the top rank
- * (Superbug at 12,000 XP).
- */
-export const WEAPON_COSTS: Readonly<Record<WeaponId, number>> = {
-  'toxin-bomb': 6,
-  'cryo-pulse': 10,
-  'phage-strike': 14,
-  'agar-bloom': 18,
-  'biofilm-shield': 22,
-};
-
 /** The level bred of a gene. */
 export function levelOf(evolution: EvolutionProgress, gene: GeneId): number {
   return evolution.genes[gene] ?? 0;
@@ -92,7 +79,7 @@ export function spentDna(evolution: EvolutionProgress): number {
     0
   );
   return evolution.weapons.reduce(
-    (sum, weapon) => sum + WEAPON_COSTS[weapon],
+    (sum, weapon) => sum + weaponOf(weapon).cost,
     genes
   );
 }
@@ -136,7 +123,7 @@ export function canBuyWeapon(
 ): boolean {
   return (
     !evolution.weapons.includes(weapon) &&
-    WEAPON_COSTS[weapon] <= availableDna(earned, evolution)
+    weaponOf(weapon).cost <= availableDna(earned, evolution)
   );
 }
 

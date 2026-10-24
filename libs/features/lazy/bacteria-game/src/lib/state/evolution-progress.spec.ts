@@ -15,7 +15,6 @@ import {
   resetEvolution,
   sameEvolution,
   spentDna,
-  WEAPON_COSTS,
   withEquipped,
   withGeneLevel,
   withWeapon,
@@ -57,7 +56,7 @@ describe('evolution progress', () => {
       expect(
         nextGeneCost(evolution({ genes: { toxins: 5 } }), 'toxins')
       ).toBeNull();
-      expect(Object.values(WEAPON_COSTS)).toEqual([6, 10, 14, 18, 22]);
+      expect(WEAPONS.map(({ cost }) => cost)).toEqual([6, 10, 14, 18, 22]);
     });
   });
 

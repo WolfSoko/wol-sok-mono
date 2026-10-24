@@ -1,4 +1,4 @@
-import type { WeaponId } from './evolution';
+import { weaponOf, WeaponId } from './evolution';
 import { countDown } from './fixed-tick';
 import { Nutrient } from './bacteria-simulation';
 import { clamp, distance, Point } from './geometry';
@@ -120,8 +120,8 @@ export interface BotView {
   objective: Point | null;
   /** The way from the own colony round the walls, and what it costs. */
   routes: BotRoutes;
-  /** The weapon it carries - absent or null without one. */
-  weapon?: BotWeaponView | null;
+  /** The weapon it carries, null without one. */
+  weapon: BotWeaponView | null;
 }
 
 export interface BotDecision {
@@ -130,8 +130,11 @@ export interface BotDecision {
   /** True when the bot wants to fire its boost now. */
   boost: boolean;
   /** True when it wants to fire its weapon at its crosshair now. */
-  weapon?: boolean;
+  weapon: boolean;
 }
+
+/** Where the bot steers and whether it boosts - a decision but for the weapon. */
+type Course = Omit<BotDecision, 'weapon'>;
 
 interface DifficultyProfile {
   /** Seconds between two decisions. */
@@ -181,10 +184,10 @@ const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
 /**
  * The share of the circle a weapon has to catch filled before the bot
  * fires it at its crosshair, at its most eager: enemy bacteria for the
- * weapons that hit them, its own for the bloom. The shield is fired by
- * another rule - see `wantsShield`.
+ * hostile weapons, its own for the others. A weapon that reaches the whole
+ * colony - the shield - is fired by another rule, see `wantsWeapon`.
  */
-const WEAPON_FILL: Record<Exclude<WeaponId, 'biofilm-shield'>, number> = {
+const WEAPON_FILL: Readonly<Partial<Record<WeaponId, number>>> = {
   'toxin-bomb': 0.22,
   'cryo-pulse': 0.25,
   'phage-strike': 0.3,
@@ -232,7 +235,7 @@ export class BotController {
   public decide(view: BotView, deltaTimeSec: number): BotDecision {
     this.cooldown = countDown(this.cooldown, deltaTimeSec);
     if (this.cooldown > 0) {
-      return { target: null, boost: false };
+      return { target: null, boost: false, weapon: false };
     }
     this.cooldown = this.profile.reactionSec;
     // The bot thinks in cells of the base arena.
@@ -240,7 +243,7 @@ export class BotController {
     const { own, enemy } = view;
     // A boss that has fallen behind goes berserk: it charges the enemy with
     // every boost it gets - where its difficulty boosts at all.
-    const decision: BotDecision =
+    const course: Course =
       this.boss &&
       this.profile.usesBoost &&
       view.boostReady &&
@@ -254,38 +257,40 @@ export class BotController {
         : this.choose(view);
     // Without a weapon nothing more is looked at - nor drawn from the
     // random numbers: a plain bot decides as it always did.
-    if (view.weapon?.ready === true && this.wantsWeapon(view, view.weapon)) {
-      decision.weapon = true;
-    }
-    return decision;
+    const { weapon } = view;
+    return {
+      ...course,
+      weapon: weapon !== null && weapon.ready && this.wantsWeapon(view, weapon),
+    };
   }
 
   /**
-   * Whether to fire the weapon at the crosshair now: the weapons that hit
-   * enemies once enough of them are in its circle, the bloom over a crowd
-   * of its own, the shield when the colony is losing ground in a fight.
+   * Whether to fire the weapon at the crosshair now: a hostile one once
+   * enough enemies are in its circle, another over a crowd of its own, and
+   * one that reaches the whole colony - the shield - when the colony is
+   * losing ground in a fight.
    */
   private wantsWeapon(view: BotView, weapon: BotWeaponView): boolean {
     const { own, enemy } = view;
     if (own.count === 0 || enemy == null || enemy.count === 0) {
       return false;
     }
-    if (weapon.id === 'biofilm-shield') {
+    const { hostile, reach } = weaponOf(weapon.id);
+    if (reach === 'colony') {
       return (
         own.count < enemy.count * SHIELD_SIZE_RATIO &&
         distance(own, enemy) <= SHIELD_RANGE * this.unit
       );
     }
     const area = Math.PI * weapon.radius * weapon.radius;
-    const needed = area * WEAPON_FILL[weapon.id] * this.profile.weaponPatience;
+    const needed =
+      area * (WEAPON_FILL[weapon.id] ?? 1) * this.profile.weaponPatience;
     const around = weapon.around();
-    return weapon.id === 'agar-bloom'
-      ? around.own >= needed
-      : around.enemy >= needed;
+    return (hostile ? around.enemy : around.own) >= needed;
   }
 
   /** Where to send the crosshair now, and whether to boost. */
-  private choose(view: BotView): BotDecision {
+  private choose(view: BotView): Course {
     const { own, enemy } = view;
     if (own.count === 0) {
       return { target: null, boost: false };

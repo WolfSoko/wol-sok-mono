@@ -21,7 +21,12 @@ export const INPUT_DELAY_TICKS = TICKS_PER_SEC / 10;
 export const CHECK_EVERY_TICKS = TICKS_PER_SEC;
 
 /** An input that changes nothing - the ticks before the first inputs. */
-const NOTHING: GhostInputs = { boost: false, drag: null, steer: null };
+const NOTHING: GhostInputs = {
+  boost: false,
+  drag: null,
+  steer: null,
+  weapon: false,
+};
 
 /**
  * The input of every seat for every tick, put together from this device and
@@ -167,5 +172,7 @@ function played({ steer, drag, boost }: TickInput): GhostInputs {
     boost,
     drag: drag === null ? null : { x: drag[0], y: drag[1] },
     steer: { x: steer[0], y: steer[1] },
+    // Online plays plain: no seat carries a weapon.
+    weapon: false,
   };
 }

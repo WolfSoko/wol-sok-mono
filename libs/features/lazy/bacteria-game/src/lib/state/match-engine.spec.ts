@@ -22,6 +22,7 @@ function scripted(script: (tick: number) => Partial<GhostInputs>): SeatDriver {
       boost: false,
       drag: null,
       steer: null,
+      weapon: false,
       ...script(tick),
     }),
   };

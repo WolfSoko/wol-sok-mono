@@ -206,7 +206,7 @@ int pelletsInReach(ivec2 cell) {
  * colony's toughness, which combat takes per colony.
  */
 const WEAPONS = `
-uniform vec4 uEffects[${MAX_EFFECTS}];      // centre x, y and radius squared
+uniform vec4 uEffects[${MAX_EFFECTS}];      // centre x, y, radius squared, 1 when hostile
 uniform ivec2 uEffectKinds[${MAX_EFFECTS}]; // the weapon's code and the owner's slot + 1
 uniform int uEffectCount;
 const int TOXIN_BOMB = ${WEAPON_CODE['toxin-bomb']};
@@ -215,16 +215,17 @@ const int PHAGE_STRIKE = ${WEAPON_CODE['phage-strike']};
 const int AGAR_BLOOM = ${WEAPON_CODE['agar-bloom']};
 
 /**
- * The slot + 1 of the colony whose effect of that kind covers a cell, 0
- * for none: \`hostile\` an enemy's of the colony \`owner\` (slot + 1) -
- * every other colony counts as one - otherwise its own.
+ * The slot + 1 of the colony whose effect of that kind acts on a cell of
+ * the colony \`owner\` (slot + 1), 0 for none: a hostile one an enemy's -
+ * every other colony counts as one - any other its own.
  */
-uint effectOver(ivec2 cell, uint owner, int kind, bool hostile) {
+uint effectOver(ivec2 cell, uint owner, int kind) {
   for (int i = 0; i < ${MAX_EFFECTS}; i++) {
     if (i >= uEffectCount) {
       break;
     }
     ivec2 info = uEffectKinds[i];
+    bool hostile = uEffects[i].w > 0.5;
     if (info.x != kind || (uint(info.y) != owner) != hostile) {
       continue;
     }
@@ -342,7 +343,7 @@ int moveIntent(ivec2 cell) {
   }
   // Frozen by an enemy's cryo pulse, it all but sits the step out.
   if (uEffectCount > 0
-    && effectOver(cell, state.r, CRYO_PULSE, true) != 0u
+    && effectOver(cell, state.r, CRYO_PULSE) != 0u
     && random(cell, stepSalt(7u)) < ${glslFloat(WEAPON_EFFECTS.cryoStayChance)}) {
     return -1;
   }
@@ -403,10 +404,10 @@ int divideIntent(ivec2 cell) {
   }
   float effects = 1.0;
   if (uEffectCount > 0) {
-    if (effectOver(cell, state.r, AGAR_BLOOM, false) != 0u) {
+    if (effectOver(cell, state.r, AGAR_BLOOM) != 0u) {
       effects *= ${glslFloat(WEAPON_EFFECTS.agarBloomDivideFactor)};
     }
-    if (effectOver(cell, state.r, CRYO_PULSE, true) != 0u) {
+    if (effectOver(cell, state.r, CRYO_PULSE) != 0u) {
       effects *= ${glslFloat(WEAPON_EFFECTS.cryoDivideFactor)};
     }
   }
@@ -537,7 +538,7 @@ void main() {
   }
   uint owner = state.r;
   // An enemy's phages turn a share of the bacteria in their circle, at once.
-  uint phage = uEffectCount > 0 ? effectOver(cell, owner, PHAGE_STRIKE, true) : 0u;
+  uint phage = uEffectCount > 0 ? effectOver(cell, owner, PHAGE_STRIKE) : 0u;
   if (phage != 0u && random(cell, 43u) < ${glslFloat(WEAPON_EFFECTS.phageConvertShare)}) {
     outState = uvec4(phage, state.g, 0u, phage | (owner << LOSER_SHIFT));
     return;
@@ -569,13 +570,13 @@ void main() {
     energy -= ${glslFloat(ZONE_EFFECTS.antibioticDrainPerSec)} * uDt;
   }
   // An enemy's toxin cloud drains like antibiotic ground, only harder.
-  bool toxic = uEffectCount > 0 && effectOver(cell, owner, TOXIN_BOMB, true) != 0u;
+  bool toxic = uEffectCount > 0 && effectOver(cell, owner, TOXIN_BOMB) != 0u;
   if (toxic) {
     energy -= ${glslFloat(WEAPON_EFFECTS.toxinDrainPerSec)} * uDt;
   }
   bool poisoned = antibiotic || toxic;
   // Frozen by an enemy's cryo pulse, it does not recover either.
-  bool frozen = uEffectCount > 0 && effectOver(cell, owner, CRYO_PULSE, true) != 0u;
+  bool frozen = uEffectCount > 0 && effectOver(cell, owner, CRYO_PULSE) != 0u;
   float pressure = enemy > 0.0 ? enemy + uFrontlinePressure - own * uDefenceFactor : 0.0;
   if (pressure > 0.0) {
     energy -= pressure * uToughness[int(owner) - 1] * uCombatDrain * uDt;

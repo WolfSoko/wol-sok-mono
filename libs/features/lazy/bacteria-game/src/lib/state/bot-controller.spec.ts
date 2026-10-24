@@ -29,6 +29,7 @@ function view(overrides: Partial<BotView> = {}): BotView {
     boostReady: true,
     objective: null,
     routes: straightRoutes(overrides.own ?? colony(80, 70, 100)),
+    weapon: null,
     ...overrides,
   };
 }
@@ -204,7 +205,11 @@ describe('BotController', () => {
       1
     );
 
-    expect(boss).toEqual({ target: { x: 240, y: 70 }, boost: true });
+    expect(boss).toEqual({
+      target: { x: 240, y: 70 },
+      boost: true,
+      weapon: false,
+    });
     // A plain bot retreats, and an easy boss never boosts.
     expect(plain.boost).toBe(false);
     expect(easyBoss.boost).toBe(false);
@@ -277,7 +282,7 @@ describe('BotController', () => {
   it('does nothing once its colony is gone', () => {
     const decision = bot('hard').decide(view({ own: colony(0, 0, 0) }), 1);
 
-    expect(decision).toEqual({ target: null, boost: false });
+    expect(decision).toEqual({ target: null, boost: false, weapon: false });
   });
 
   describe('easy', () => {
@@ -377,7 +382,7 @@ describe('BotController with a weapon', () => {
       );
 
       expect(crowd.weapon).toBe(true);
-      expect(few.weapon).toBeUndefined();
+      expect(few.weapon).toBe(false);
     }
   );
 
@@ -391,7 +396,7 @@ describe('BotController with a weapon', () => {
     expect(
       bot('easy').decide(view({ weapon: weapon('toxin-bomb', around) }), 1)
         .weapon
-    ).toBeUndefined();
+    ).toBe(false);
   });
 
   it('blooms agar over a crowd of its own', () => {
@@ -406,7 +411,7 @@ describe('BotController with a weapon', () => {
         view({ weapon: weapon('agar-bloom', { own: 0, enemy: 200 }) }),
         1
       ).weapon
-    ).toBeUndefined();
+    ).toBe(false);
   });
 
   it('shields its colony when it is losing a fight', () => {
@@ -428,8 +433,8 @@ describe('BotController with a weapon', () => {
     });
 
     expect(bot('normal').decide(losing, 1).weapon).toBe(true);
-    expect(bot('normal').decide(winning, 1).weapon).toBeUndefined();
-    expect(bot('normal').decide(apart, 1).weapon).toBeUndefined();
+    expect(bot('normal').decide(winning, 1).weapon).toBe(false);
+    expect(bot('normal').decide(apart, 1).weapon).toBe(false);
   });
 
   it('holds fire while the weapon recharges, and between decisions', () => {
@@ -443,8 +448,8 @@ describe('BotController with a weapon', () => {
         view({ weapon: weapon('toxin-bomb', { own: 0, enemy: 300 }, false) }),
         1
       ).weapon
-    ).toBeUndefined();
-    expect(controller.decide(loaded, 0.01).weapon).toBeUndefined();
+    ).toBe(false);
+    expect(controller.decide(loaded, 0.01).weapon).toBe(false);
   });
 
   it('decides as a plain bot does, weapon or not, but for the shot', () => {

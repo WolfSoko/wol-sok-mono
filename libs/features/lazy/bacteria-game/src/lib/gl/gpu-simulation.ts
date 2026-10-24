@@ -1,6 +1,9 @@
-import type { ActiveEffect, EvolvedTraits } from '../state/evolution';
 import {
-  LiveEffect,
+  type ActiveEffect,
+  type EvolvedTraits,
+  weaponOf,
+} from '../state/evolution';
+import {
   toughnessOf,
   WEAPON_CODE,
   WeaponEffects,
@@ -178,7 +181,10 @@ interface FrameUniforms {
   divideBudget: Float32Array;
   pellets: Float32Array;
   toughness: Float32Array;
-  /** Per effect: its centre and its radius squared, and a spare. */
+  /**
+   * Per effect: its centre, its radius squared and 1 for a hostile one -
+   * acting on every colony but its owner's - else 0.
+   */
   effects: Float32Array;
   /** Per effect: the weapon's code and the owner's slot + 1. */
   effectKinds: Int32Array;
@@ -564,7 +570,7 @@ export class GpuSimulation implements Simulation {
   private fillFrameUniforms(
     players: Player[],
     deltaTimeSec: number,
-    effects: readonly LiveEffect[]
+    effects: readonly ActiveEffect[]
   ): number {
     const gl = this.gl;
     const b = this.balance;
@@ -659,25 +665,26 @@ export class GpuSimulation implements Simulation {
 
   /**
    * Puts the effects that act on cells this step into the uniform arrays -
-   * the shield acts through the toughness instead, and a strike only in
-   * its first step. Returns how many there are; more than the shaders take
-   * are left out, the oldest first in.
+   * not one that reaches the whole colony (the shield), which acts through
+   * the toughness instead. Returns how many there are; more than the
+   * shaders take are left out, the oldest first in.
    */
-  private fillEffectUniforms(effects: readonly LiveEffect[]): number {
+  private fillEffectUniforms(effects: readonly ActiveEffect[]): number {
     const u = this.uniforms;
     let count = 0;
     for (const effect of effects) {
       const slot = this.slotOf(effect.owner);
-      if (
-        count >= MAX_EFFECTS ||
-        slot === null ||
-        effect.weapon === 'biofilm-shield' ||
-        (effect.weapon === 'phage-strike' && !effect.fresh)
-      ) {
+      const weapon = weaponOf(effect.weapon);
+      if (count >= MAX_EFFECTS || slot === null || weapon.reach === 'colony') {
         continue;
       }
       u.effects.set(
-        [effect.x, effect.y, effect.radius * effect.radius, 0],
+        [
+          effect.x,
+          effect.y,
+          effect.radius * effect.radius,
+          weapon.hostile ? 1 : 0,
+        ],
         count * 4
       );
       u.effectKinds.set([WEAPON_CODE[effect.weapon], slot + 1], count * 2);

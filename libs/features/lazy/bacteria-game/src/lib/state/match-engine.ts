@@ -648,7 +648,7 @@ export class MatchEngine {
       if (boost) {
         this.fireBoost(playerId);
       }
-      if (weapon === true) {
+      if (weapon) {
         this.shoot(playerId);
       }
       if (drag != null) {
@@ -923,7 +923,7 @@ export class MatchEngine {
       if (decision.boost) {
         this.fireBoost(playerId);
       }
-      if (decision.weapon === true) {
+      if (decision.weapon) {
         this.shoot(playerId);
       }
     }

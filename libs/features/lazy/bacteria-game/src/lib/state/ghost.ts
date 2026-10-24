@@ -41,10 +41,10 @@ export interface GhostInputs {
   drag: Point | null;
   steer: SteeringVector | null;
   /**
-   * True when it fires its weapon - absent for a driver without weapons,
-   * as online, where both seats play plain.
+   * True when it fires its weapon - never for a driver without weapons, as
+   * online, where both seats play plain.
    */
-  weapon?: boolean;
+  weapon: boolean;
 }
 
 /**
@@ -97,11 +97,12 @@ export class GhostController implements SeatDriver {
 
   /** What the human put in before `tick`, each kind's last input winning. */
   public before(tick: number): GhostInputs {
-    const inputs: GhostInputs = { boost: false, drag: null, steer: null };
-    inputs.boost = [...this.boosts.dueBy(tick)].length > 0;
-    if ([...this.weapons.dueBy(tick)].length > 0) {
-      inputs.weapon = true;
-    }
+    const inputs: GhostInputs = {
+      boost: [...this.boosts.dueBy(tick)].length > 0,
+      drag: null,
+      steer: null,
+      weapon: [...this.weapons.dueBy(tick)].length > 0,
+    };
     for (const [, , x, y] of this.drags.dueBy(tick)) {
       inputs.drag = this.mapping.point({ x, y });
     }

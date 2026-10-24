@@ -88,18 +88,36 @@ export const GENES: readonly Gene[] = [
 /** How a weapon plays. Lengths are in cells of the base arena. */
 export interface Weapon {
   id: WeaponId;
+  /** The DNA it costs. */
+  cost: number;
   /** Seconds before it can be fired again. */
   cooldownSec: number;
-  /** Seconds its effect lasts - 0 for one that strikes at once. */
+  /**
+   * Seconds its effect lasts - 0 for a strike, which acts at once, in a
+   * single step.
+   */
   durationSec: number;
   /** Radius of the circle round the crosshair it acts in. */
   radius: number;
+  /**
+   * True for one that acts on the enemies of its owner - every other seat,
+   * a neutral colony too - false for one that acts on its own colony.
+   */
+  hostile: boolean;
+  /**
+   * Where it acts: on the bacteria in its `circle`, or on the whole
+   * `colony` - through its toughness, the circle only where it is drawn.
+   */
+  reach: 'circle' | 'colony';
   /** The material icon the menus and the button show it with. */
   icon: string;
 }
 
 /**
- * The weapons, in the order the menus offer them:
+ * The weapons, in the order the menus offer them - 70 strands of DNA for
+ * all five. Genes and weapons together come to 220 strands, 11,000 XP: a
+ * player has bred everything about when they reach the top rank (Superbug
+ * at 12,000 XP).
  *
  * - `toxin-bomb`: a cloud at the crosshair that drains only enemy bacteria,
  *   faster than antibiotic ground - a bacterium that stays in it dies.
@@ -115,37 +133,52 @@ export interface Weapon {
 export const WEAPONS: readonly Weapon[] = [
   {
     id: 'toxin-bomb',
+    cost: 6,
     cooldownSec: 22,
     durationSec: 4,
     radius: 15,
+    hostile: true,
+    reach: 'circle',
     icon: 'coronavirus',
   },
   {
     id: 'cryo-pulse',
+    cost: 10,
     cooldownSec: 20,
     durationSec: 3.5,
     radius: 24,
+    hostile: true,
+    reach: 'circle',
     icon: 'ac_unit',
   },
   {
     id: 'phage-strike',
+    cost: 14,
     cooldownSec: 24,
     durationSec: 0,
     radius: 14,
+    hostile: true,
+    reach: 'circle',
     icon: 'blur_on',
   },
   {
     id: 'agar-bloom',
+    cost: 18,
     cooldownSec: 22,
     durationSec: 6,
     radius: 20,
+    hostile: false,
+    reach: 'circle',
     icon: 'local_florist',
   },
   {
     id: 'biofilm-shield',
+    cost: 22,
     cooldownSec: 26,
     durationSec: 4,
     radius: 30,
+    hostile: false,
+    reach: 'colony',
     icon: 'hexagon',
   },
 ];
@@ -178,9 +211,13 @@ export const PLAIN_LOADOUT: Loadout = Object.freeze({
   weapon: null,
 }) as Loadout;
 
+const WEAPONS_BY_ID = Object.fromEntries(
+  WEAPONS.map((weapon) => [weapon.id, weapon])
+) as Readonly<Record<WeaponId, Weapon>>;
+
 /** The weapon with that id. */
 export function weaponOf(id: WeaponId): Weapon {
-  return WEAPONS.find((weapon) => weapon.id === id) as Weapon;
+  return WEAPONS_BY_ID[id];
 }
 
 /** A gene's level, clamped to the levels it has. */

@@ -3,7 +3,6 @@ import {
   anyCovers,
   covers,
   effectsOn,
-  LiveEffect,
   toughnessOf,
   WeaponEffects,
 } from './weapon-effects';
@@ -698,7 +697,7 @@ export class BacteriaSimulation implements Simulation {
   }
 
   /** Which effects act on each colony this step, by colony index. */
-  private weaponHits(effects: readonly LiveEffect[]): WeaponHits[] {
+  private weaponHits(effects: readonly ActiveEffect[]): WeaponHits[] {
     return this.colonies.map(({ playerId, traits }) => ({
       toughness: toughnessOf(traits, effects, playerId),
       toxins: effectsOn(effects, 'toxin-bomb', playerId),
@@ -1383,22 +1382,22 @@ interface WeaponHits {
   /** Times the pressure on its bacteria. */
   toughness: number;
   /** Enemies' toxin clouds. */
-  toxins: readonly LiveEffect[];
+  toxins: readonly ActiveEffect[];
   /** Enemies' cryo pulses. */
-  cryo: readonly LiveEffect[];
+  cryo: readonly ActiveEffect[];
   /** Enemies' phage strikes, in their first step. */
-  phages: readonly LiveEffect[];
+  phages: readonly ActiveEffect[];
   /** Its own agar blooms. */
-  blooms: readonly LiveEffect[];
+  blooms: readonly ActiveEffect[];
 }
 
-const NO_EFFECTS: readonly LiveEffect[] = Object.freeze([]);
+const NO_EFFECTS: readonly ActiveEffect[] = Object.freeze([]);
 
 /** Times a bacterium's chance to divide from a bloom and a freeze. */
 function effectDivideFactor(
   { x, y }: Bacteria,
-  blooms: readonly LiveEffect[],
-  cryo: readonly LiveEffect[]
+  blooms: readonly ActiveEffect[],
+  cryo: readonly ActiveEffect[]
 ): number {
   return (
     (anyCovers(blooms, x, y) ? WEAPON_EFFECTS.agarBloomDivideFactor : 1) *

@@ -2,7 +2,9 @@ import {
   ActiveEffect,
   EvolvedTraits,
   WEAPON_EFFECTS,
+  weaponOf,
   WeaponId,
+  WEAPONS,
 } from './evolution';
 import { countDown } from './fixed-tick';
 
@@ -13,25 +15,31 @@ import { countDown } from './fixed-tick';
  * when an effect acts and when it is gone.
  *
  * An effect acts from the step after it was added for as long as it lasts;
- * one that strikes at once (`durationSec` 0) acts in exactly one step. Once
- * run out it is still listed until the next step starts, so the painter
- * gets to draw a strike for a frame.
+ * a strike (`durationSec` 0) acts in exactly one step. Once run out it is
+ * still listed until the next step starts, so the painter gets to draw a
+ * strike for a frame - and dropped then, so no consumer has to tell a
+ * strike's first step from a later one.
  */
 export class WeaponEffects {
-  private entries: EffectEntry[] = [];
+  private readonly entries: EffectEntry[] = [];
+  /** The effects of `entries`, listed anew only when one comes or goes. */
+  private listed: readonly ActiveEffect[] = NONE;
 
   /** The effects as the painter draws them - run out ones included. */
   public get active(): readonly ActiveEffect[] {
-    return this.entries.map(({ effect }) => effect);
+    return this.listed;
   }
 
+  /** Adds an effect - a copy of it, whose clock the steps run down. */
   public add(effect: ActiveEffect): void {
-    this.entries.push({ effect, steps: 0, done: false });
+    this.entries.push({ effect: { ...effect }, stepped: false });
+    this.relist();
   }
 
   /** Drops every effect - a new match starts. */
   public clear(): void {
-    this.entries = [];
+    this.entries.length = 0;
+    this.listed = NONE;
   }
 
   /**
@@ -39,43 +47,54 @@ export class WeaponEffects {
    * returns the ones acting in this one - none in a plain match, which is
    * what keeps that match playing as it did before there were weapons.
    */
-  public begin(): readonly LiveEffect[] {
+  public begin(): readonly ActiveEffect[] {
     if (this.entries.length === 0) {
       return NONE;
     }
-    this.entries = this.entries.filter(({ done }) => !done);
-    return this.entries.map(({ effect, steps }) => ({
-      ...effect,
-      fresh: steps === 0,
-    }));
+    let kept = 0;
+    for (const entry of this.entries) {
+      if (!isDone(entry)) {
+        this.entries[kept++] = entry;
+      }
+    }
+    if (kept < this.entries.length) {
+      this.entries.length = kept;
+      this.relist();
+    }
+    return this.listed;
   }
 
   /** Ends a step: the effects' clocks run on by its length. */
   public end(deltaTimeSec: number): void {
     for (const entry of this.entries) {
-      const remainingSec = countDown(entry.effect.remainingSec, deltaTimeSec);
-      entry.steps++;
-      entry.done = remainingSec <= 0;
-      entry.effect = { ...entry.effect, remainingSec };
+      entry.effect.remainingSec = countDown(
+        entry.effect.remainingSec,
+        deltaTimeSec
+      );
+      entry.stepped = true;
     }
+  }
+
+  private relist(): void {
+    this.listed =
+      this.entries.length === 0
+        ? NONE
+        : this.entries.map(({ effect }) => effect);
   }
 }
 
 interface EffectEntry {
   effect: ActiveEffect;
-  /** Steps it acted in so far. */
-  steps: number;
-  /** True once it ran out - listed until the next step starts. */
-  done: boolean;
+  /** True once it acted in a step. */
+  stepped: boolean;
 }
 
-/** An effect acting in the step under way. */
-export interface LiveEffect extends ActiveEffect {
-  /** True in its first step - the one a strike acts in. */
-  fresh: boolean;
+/** True once an effect ran out - listed until the next step starts. */
+function isDone({ effect, stepped }: EffectEntry): boolean {
+  return stepped && effect.remainingSec <= 0;
 }
 
-const NONE: readonly LiveEffect[] = Object.freeze([]);
+const NONE: readonly ActiveEffect[] = Object.freeze([]);
 
 /** True when the effect's circle covers the cell. */
 export function covers(effect: ActiveEffect, x: number, y: number): boolean {
@@ -84,30 +103,22 @@ export function covers(effect: ActiveEffect, x: number, y: number): boolean {
   return dx * dx + dy * dy <= effect.radius * effect.radius;
 }
 
-/** True for an effect that acts on the enemies of its owner. */
-export function isHostile(weapon: WeaponId): boolean {
-  return (
-    weapon === 'toxin-bomb' ||
-    weapon === 'cryo-pulse' ||
-    weapon === 'phage-strike'
-  );
+/**
+ * True when an effect acts on a colony: a hostile weapon's on every colony
+ * but its owner's - a neutral colony too - any other on its owner's.
+ */
+export function actsOn(effect: ActiveEffect, playerId: number): boolean {
+  return (effect.owner === playerId) !== weaponOf(effect.weapon).hostile;
 }
 
-/**
- * The effects of one kind that act on a colony: an enemy's for the weapons
- * that hit enemies - every other seat counts as an enemy, a neutral colony
- * too - the colony's own for the others. A strike only in its first step.
- */
+/** The effects of one kind that act on a colony - see {@link actsOn}. */
 export function effectsOn(
-  effects: readonly LiveEffect[],
+  effects: readonly ActiveEffect[],
   weapon: WeaponId,
   playerId: number
-): LiveEffect[] {
+): ActiveEffect[] {
   return effects.filter(
-    (effect) =>
-      effect.weapon === weapon &&
-      (effect.weapon !== 'phage-strike' || effect.fresh) &&
-      (effect.owner === playerId) !== isHostile(weapon)
+    (effect) => effect.weapon === weapon && actsOn(effect, playerId)
   );
 }
 
@@ -126,25 +137,25 @@ export function anyCovers(
 }
 
 /**
- * Times the pressure on a colony's bacteria: its membrane, and a biofilm
- * shield of its own while one lasts.
+ * Times the pressure on a colony's bacteria: its membrane, and a weapon of
+ * its own that reaches the whole colony - the biofilm shield - while one
+ * lasts.
  */
 export function toughnessOf(
   traits: EvolvedTraits,
-  effects: readonly LiveEffect[],
+  effects: readonly ActiveEffect[],
   playerId: number
 ): number {
   const toughness = traits.toughnessFactor ?? 1;
-  return effectsOn(effects, 'biofilm-shield', playerId).length > 0
+  return effects.some(
+    (effect) =>
+      weaponOf(effect.weapon).reach === 'colony' && actsOn(effect, playerId)
+  )
     ? toughness * WEAPON_EFFECTS.shieldToughnessFactor
     : toughness;
 }
 
-/** The number each weapon is known by in the shaders. */
-export const WEAPON_CODE: Readonly<Record<WeaponId, number>> = {
-  'toxin-bomb': 0,
-  'cryo-pulse': 1,
-  'phage-strike': 2,
-  'agar-bloom': 3,
-  'biofilm-shield': 4,
-};
+/** The number each weapon is known by in the shaders: its place in `WEAPONS`. */
+export const WEAPON_CODE = Object.fromEntries(
+  WEAPONS.map(({ id }, index) => [id, index])
+) as Readonly<Record<WeaponId, number>>;

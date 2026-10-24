@@ -8,7 +8,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, Subscription, switchMap, take, timer } from 'rxjs';
 import { ProgressService } from './progress.service';
-import { dnaEarned, GeneId, Loadout, WeaponId } from './state/evolution';
+import {
+  dnaEarned,
+  GeneId,
+  Loadout,
+  weaponOf,
+  WeaponId,
+} from './state/evolution';
 import {
   adoptEvolution,
   availableDna,
@@ -24,7 +30,6 @@ import {
   parseEvolution,
   resetEvolution,
   sameEvolution,
-  WEAPON_COSTS,
   withEquipped,
   withGeneLevel,
   withWeapon,
@@ -141,7 +146,7 @@ export class EvolutionService {
   }
 
   public weaponCost(weapon: WeaponId): number {
-    return WEAPON_COSTS[weapon];
+    return weaponOf(weapon).cost;
   }
 
   public owns(weapon: WeaponId): boolean {

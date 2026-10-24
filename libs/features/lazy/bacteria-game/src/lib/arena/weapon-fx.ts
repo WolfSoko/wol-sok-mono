@@ -1,7 +1,11 @@
 import type { ScreenResolution } from '../state/arena-size';
-import type { ActiveEffect, WeaponFire, WeaponId } from '../state/evolution';
+import {
+  type ActiveEffect,
+  type WeaponFire,
+  type WeaponId,
+  weaponOf,
+} from '../state/evolution';
 import { clamp, seeded } from '../state/geometry';
-import { isHostile } from '../state/weapon-effects';
 import { Rgb, WEAPON_COLORS } from './arena-theme';
 import { hash, lerp, mix, smoothstep } from './canvas-math';
 
@@ -634,7 +638,7 @@ export class WeaponFx {
       tint.radius = mode === 'shield' ? WHOLE_COLONY : effect.radius;
       tint.strength = fade;
       tint.ownerColor = ownerRgba;
-      tint.enemies = isHostile(effect.weapon);
+      tint.enemies = weaponOf(effect.weapon).hostile;
       this.tints.push(tint);
     }
   }
