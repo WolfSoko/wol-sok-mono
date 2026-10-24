@@ -71,7 +71,8 @@ function calls, and server-verified match results.
   CPU before this setting ships.
   (Changed by ADR 0012: daily-level and endless matches started as ranked
   attempts always run on the CPU and are recorded and uploaded, whatever
-  this setting says.)
+  this setting says. Changed by ADR 0015: they run on the `gpu-int`
+  ruleset, recorded as replay version 5.)
 - **"Save my matches" (on by default)** decides whether recorded matches
   are uploaded. Off, a replay stays on the device until the next match.
   (Changed by ADR 0012: it governs local matches only. Online matches are
@@ -125,6 +126,11 @@ never a public candidate.
 There is no `kind` in the header: the server derives it (below). `simulation`
 stays, and only `'cpu'` replays are accepted. Version 1 replays (ghost links
 in the wild) still parse as ghosts.
+(Changed by ADR 0015: version 5 holds matches of the deterministic `gpu-int`
+ruleset, plain or evolved, and the server re-runs them on `IntSimulation`.
+A ranked attempt is only taken from a version 5 replay; whether a replay
+plays evolution is read from what it holds, `playsEvolution`, not from its
+version.)
 (Changed by ADR 0013: a replay with evolution in it - loadouts or weapons
 fired - takes version 3, version 2's format plus those fields; versions 1
 and 2 stay plain.)

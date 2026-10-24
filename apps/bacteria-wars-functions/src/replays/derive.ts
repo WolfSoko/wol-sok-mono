@@ -138,7 +138,7 @@ export function levelStatsId(
 export function levelStatsIncrements(
   replay: Replay,
   ticksPerSec: number,
-  /** True for an evolved replay - see the engine's `isEvolvedReplay`. */
+  /** True for a replay with evolution in it - the engine's `playsEvolution`. */
   evolved: boolean
 ): Record<string, number> {
   const { header } = replay;

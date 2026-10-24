@@ -249,10 +249,11 @@ async function acceptLocal(
     attempt?.parsed ?? null,
     submission.createdAt
   );
-  // The stored parse refuses an evolved replay (version 3, or 4 against
-  // the ladder's computer) of an attempt or a daily level already; this
-  // keeps any other way into a board shut too.
-  const evolved = engine.isEvolvedReplay(header);
+  // The stored parse refuses evolution - loadouts or a weapon fired, in
+  // version 3, 4 or 5 - in an attempt or at a daily level already; this
+  // keeps any other way into a board shut too. Read from what the replay
+  // holds: a version 5 replay may be plain, as every ranked attempt is.
+  const evolved = engine.playsEvolution(replay);
   if (evolved && kind !== 'computer') {
     return { dropped: 'evolved' };
   }

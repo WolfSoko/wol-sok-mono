@@ -342,6 +342,13 @@ endless" (on by default)**, lets a player on a weak device keep the GPU
 and their own setup, and go unranked. The medallion limits of generated
 levels are checked again on the CPU before this ships, as ADR 0011
 already requires for its recording setting.
+(Changed by ADR 0015: one ruleset for all ranked entries, `gpu-int`. A
+ranked attempt runs on the integer GPU passes of a device whose GPU passed
+the self-test and is recorded as replay version 5
+(`GPU_INT_REPLAY_VERSION`, `RANKED_RULESET`); the stored parse refuses an
+attempt on the `cpu` ruleset or with evolution in it, and `checkRanked`
+checks both again. The server re-runs it on `IntSimulation`. A device
+without a passing GPU cannot play ranked.)
 
 **Ranked attempts and the medallion's attempts** stay two counts. The
 three ranked attempts of a day are the server's; the local
@@ -976,7 +983,7 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
 
 - Daily and endless matches started as ranked attempts are always recorded
   on the CPU and uploaded, whatever "Record local matches" or "Save my
-  matches" says.
+  matches" says (on the `gpu-int` ruleset since ADR 0015).
 - Online matches are always uploaded; "Save my matches" governs local
   matches only.
 - The v2 header gets an optional `attempt: { id, at }`. `acceptReplay`
@@ -1024,7 +1031,8 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
   not only those sharing their status. That is far below the 200,000
   connections a Blaze database allows.
 - **Ranked daily and endless matches run on the CPU at the online grid,
-  on the ranked setup**: coarser and heavier than the GPU path, as in
+  on the ranked setup** (on the `gpu-int` ruleset since ADR 0015, see
+  above): coarser and heavier than the GPU path, as in
   online matches today, and with normal bots and no head start. A weak
   device, or a player who wants their own setup, can switch ranked play
   off.

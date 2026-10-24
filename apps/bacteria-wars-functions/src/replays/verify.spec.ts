@@ -4,6 +4,7 @@ import {
   bytesOf,
   ladderComputerPlan,
   ladderPlan,
+  rankedReplay,
   recordedReplay,
 } from '../testing/replays';
 import { isFeat, rerunReplay, scoreOf, timeline } from './verify';
@@ -47,6 +48,34 @@ describe('rerunReplay', () => {
     const rerun = rerunReplay(engine, await stored(replay));
     expect(rerun.state).toBe('verified');
     expect(rerun.summary?.ticks).toBe(replay.header.ticks);
+  });
+
+  it('verifies a ranked attempt on the gpu-int ruleset (replay version 5) on IntSimulation', async () => {
+    const plan = engine.rankedPlan(engine.dailyLevelId('2026-10-24'), 5);
+    const replay = await rankedReplay(plan, 120, {
+      attempt: { id: 'd_2026-10-24_1', at: 0 },
+    });
+    expect(replay.header).toEqual(
+      expect.objectContaining({
+        version: engine.GPU_INT_REPLAY_VERSION,
+        simulation: 'gpu-int',
+      })
+    );
+    const read = await stored(replay);
+    expect(read).not.toBeNull();
+    const rerun = rerunReplay(engine, read);
+    expect(rerun.state).toBe('verified');
+    expect(rerun.summary?.ticks).toBe(replay.header.ticks);
+    // The other ruleset comes to another match: a forged ruleset does not pass.
+    const asCpu = rerunReplay(engine, {
+      ...replay,
+      header: {
+        ...replay.header,
+        version: engine.REPLAY_VERSION,
+        simulation: 'cpu',
+      },
+    });
+    expect(asCpu.state).toBe('unverified');
   });
 
   it('judges the medallion of a won match against the computer', async () => {

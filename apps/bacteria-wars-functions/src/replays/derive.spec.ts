@@ -4,6 +4,7 @@ import {
   bytesOf,
   ladderComputerPlan,
   ladderPlan,
+  rankedReplay,
   recordedReplay,
 } from '../testing/replays';
 import { dayOf } from '../time';
@@ -143,7 +144,7 @@ describe('level statistics', () => {
       levelStatsIncrements(
         replay,
         engine.TICKS_PER_SEC,
-        engine.isEvolvedReplay(replay.header)
+        engine.playsEvolution(replay)
       )
     ).toEqual({
       attempts: 1,
@@ -209,12 +210,12 @@ describe("a match against the ladder's computer (replay version 4)", () => {
       throw new Error('not stored');
     }
     expect(deriveKind(engine, replay.header, null, NOW)).toBe('computer');
-    expect(engine.isEvolvedReplay(replay.header)).toBe(true);
+    expect(engine.playsEvolution(replay)).toBe(true);
     expect(
       levelStatsIncrements(
         replay,
         engine.TICKS_PER_SEC,
-        engine.isEvolvedReplay(replay.header)
+        engine.playsEvolution(replay)
       )
     ).toEqual(expect.objectContaining({ attempts: 1, evolved: 1 }));
   });
@@ -243,5 +244,80 @@ describe("a match against the ladder's computer (replay version 4)", () => {
         stored: true,
       })
     ).toBeNull();
+  });
+});
+
+describe('a match on the gpu-int ruleset (replay version 5, ADR 0015)', () => {
+  const day = dayOf(NOW);
+  const attempt = { id: `d_${day}_1`, at: NOW };
+  const plan = () => engine.rankedPlan(engine.dailyLevelId(day), 3);
+
+  async function stored(replay: Parameters<typeof bytesOf>[0]) {
+    return engine.replayFromBytes(new Uint8Array(await bytesOf(replay)), {
+      stored: true,
+    });
+  }
+
+  it('is a ranked attempt when plain, and counts as plain', async () => {
+    const replay = await stored(await rankedReplay(plan(), 120, { attempt }));
+    if (replay === null) {
+      throw new Error('not stored');
+    }
+    expect(replay.header.version).toBe(engine.GPU_INT_REPLAY_VERSION);
+    // The version may carry evolution; this replay does not.
+    expect(engine.isEvolvedReplay(replay.header)).toBe(true);
+    expect(engine.playsEvolution(replay)).toBe(false);
+    expect(
+      deriveKind(engine, replay.header, engine.parseAttemptId(attempt.id), NOW)
+    ).toBe('daily');
+    const increments = levelStatsIncrements(
+      replay,
+      engine.TICKS_PER_SEC,
+      engine.playsEvolution(replay)
+    );
+    expect(increments).toEqual(expect.objectContaining({ attempts: 1 }));
+    expect(increments['evolved']).toBeUndefined();
+  });
+
+  it('counts an evolved one as evolved', async () => {
+    const replay = await stored(
+      await rankedReplay({
+        ...(await ladderPlan()),
+        loadouts: [{ genes: {}, weapon: 'toxin-bomb' }, engine.PLAIN_LOADOUT],
+      })
+    );
+    if (replay === null) {
+      throw new Error('not stored');
+    }
+    expect(replay.header.version).toBe(engine.GPU_INT_REPLAY_VERSION);
+    expect(engine.playsEvolution(replay)).toBe(true);
+    expect(levelStatsIncrements(replay, engine.TICKS_PER_SEC, true)).toEqual(
+      expect.objectContaining({ evolved: 1, 'weapons.toxin-bomb': 1 })
+    );
+  });
+
+  it('is never an attempt with evolution in it', async () => {
+    const evolved = await rankedReplay(
+      {
+        ...plan(),
+        loadouts: [{ genes: {}, weapon: 'toxin-bomb' }, engine.PLAIN_LOADOUT],
+      },
+      120,
+      { attempt }
+    );
+    expect(evolved.header.loadouts).toBeDefined();
+    expect(await stored(evolved)).toBeNull();
+  });
+
+  it('is the only ruleset an attempt is stored from: version 2 is refused', async () => {
+    const cpu = await recordedReplay(plan(), 120, { attempt });
+    expect(cpu.header).toEqual(
+      expect.objectContaining({
+        version: engine.REPLAY_VERSION,
+        simulation: 'cpu',
+      })
+    );
+    expect(await stored(cpu)).toBeNull();
+    expect(engine.RANKED_RULESET).toBe('gpu-int');
   });
 });

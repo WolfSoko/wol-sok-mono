@@ -3,6 +3,7 @@ import type {
   Replay,
   ReplayExtras,
   ReplayInputs,
+  Ruleset,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { loadEngine } from '../engine';
 
@@ -56,23 +57,25 @@ export async function onlinePlan(seed = 11): Promise<MatchPlan> {
 const recorded = new Map<string, Replay>();
 
 /**
- * A replay as a device records it: played on the CPU engine for `ticks`
- * with the checksum it came to and - when the simulation did not end it -
- * a forfeit of the left seat, as when the player gives up.
+ * A replay as a device records it: played on `ruleset`'s simulation for
+ * `ticks` with the checksum it came to and - when the simulation did not
+ * end it - a forfeit of the left seat, as when the player gives up. `cpu`
+ * makes version 2 (3, 4 with evolution), `gpu-int` version 5.
  */
 export async function recordedReplay(
   plan: MatchPlan,
   ticks = 120,
   extras: ReplayExtras = {},
-  inputs: ReplayInputs = NO_INPUTS
+  inputs: ReplayInputs = NO_INPUTS,
+  ruleset: Ruleset = 'cpu'
 ): Promise<Replay> {
-  const key = JSON.stringify([plan, ticks, extras, inputs]);
+  const key = JSON.stringify([plan, ticks, extras, inputs, ruleset]);
   const cached = recorded.get(key);
   if (cached !== undefined) {
     return cached;
   }
   const engine = await loadEngine();
-  const draft = engine.replayOf(plan, 'cpu', ticks, inputs, extras);
+  const draft = engine.replayOf(plan, ruleset, ticks, inputs, extras);
   const played = engine.playReplay(draft);
   if (played === null) {
     throw new Error('The replay does not play');
@@ -91,6 +94,21 @@ export async function recordedReplay(
   };
   recorded.set(key, replay);
   return replay;
+}
+
+/**
+ * A replay of a ranked attempt as a device records it: on the ranked
+ * ruleset, `gpu-int` (replay version 5, ADR 0015), the only one the boards
+ * take.
+ */
+export async function rankedReplay(
+  plan: MatchPlan,
+  ticks = 120,
+  extras: ReplayExtras = {},
+  inputs: ReplayInputs = NO_INPUTS
+): Promise<Replay> {
+  const engine = await loadEngine();
+  return recordedReplay(plan, ticks, extras, inputs, engine.RANKED_RULESET);
 }
 
 /** The replay as a client uploads it. */

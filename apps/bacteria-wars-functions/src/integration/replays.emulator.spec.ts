@@ -13,6 +13,7 @@ import {
   VERIFY_MINUTES,
 } from '../replays/budgets';
 import { deletePlayerReplays } from '../replays/delete-player-replays';
+import { levelStatsId } from '../replays/derive';
 import { featureBest } from '../replays/feature-best';
 import { onProfileChanged } from '../replays/profile-changed';
 import { publishReplay, takeDown } from '../replays/publish';
@@ -25,6 +26,7 @@ import {
   ladderComputerPlan,
   ladderPlan,
   onlinePlan,
+  rankedReplay,
   recordedReplay,
 } from '../testing/replays';
 import { dayOf, hourOf } from '../time';
@@ -206,12 +208,9 @@ describe('acceptReplay', () => {
   describe('ranked attempts', () => {
     const attemptId = `d_${dayOf(NOW)}_1`;
     const declaredAt = NOW - 120_000;
-    const ranked = () => {
-      const plan = engine.rankedPlan(engine.dailyLevelId(dayOf(NOW)), 99);
-      return recordedReplay(plan, 120, {
-        attempt: { id: attemptId, at: declaredAt + 5 },
-      });
-    };
+    const plan = () => engine.rankedPlan(engine.dailyLevelId(dayOf(NOW)), 99);
+    const extras = () => ({ attempt: { id: attemptId, at: declaredAt + 5 } });
+    const ranked = () => rankedReplay(plan(), 120, extras());
 
     beforeEach(async () => {
       await db.doc(`players/ana/attempts/${attemptId}`).set({
@@ -230,8 +229,53 @@ describe('acceptReplay', () => {
         expect.objectContaining({
           kind: 'daily',
           attempt: { id: attemptId, at: declaredAt },
+          replayVersion: engine.GPU_INT_REPLAY_VERSION,
         })
       );
+      // A plain version 5 match counts as plain in the level statistics.
+      const level = engine.dailyLevelId(dayOf(NOW));
+      const stats = (
+        await db.doc(`levelStats/${levelStatsId(plan(), 'daily')}`).get()
+      ).data();
+      expect(stats).toEqual(
+        expect.objectContaining({ levelId: level, attempts: 1 })
+      );
+      expect(stats?.['evolved']).toBeUndefined();
+    });
+
+    it('refuses an attempt on the cpu ruleset (version 2), or with evolution in it', async () => {
+      const cpu = await recordedReplay(plan(), 120, extras());
+      expect(cpu.header.version).toBe(engine.REPLAY_VERSION);
+      expect(
+        await acceptSubmission(
+          db,
+          's1',
+          await submission('ana', await bytesOf(cpu), { attempt: attemptId }),
+          NOW
+        )
+      ).toEqual({ dropped: 'unparsable' });
+      const evolved = await rankedReplay(
+        {
+          ...plan(),
+          loadouts: [{ genes: {}, weapon: 'toxin-bomb' }, engine.PLAIN_LOADOUT],
+        },
+        120,
+        extras()
+      );
+      expect(evolved.header.version).toBe(engine.GPU_INT_REPLAY_VERSION);
+      expect(evolved.header.loadouts).toBeDefined();
+      expect(
+        await acceptSubmission(
+          db,
+          's2',
+          await submission('ana', await bytesOf(evolved), {
+            attempt: attemptId,
+          }),
+          NOW
+        )
+      ).toEqual({ dropped: 'unparsable' });
+      expect((await db.doc('replays/l_s1').get()).exists).toBe(false);
+      expect((await db.doc('replays/l_s2').get()).exists).toBe(false);
     });
 
     it('is exempt from the unranked cap, and voided when the ranked cap drops it', async () => {

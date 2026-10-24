@@ -40,12 +40,15 @@ export interface Rerun {
 const MAX_TIMELINE = 360;
 
 /**
- * Plays a stored replay again on the CPU engine in Node and compares it with
- * what the device recorded: the checksum, the outcome and the length. A
- * replay recorded on another balance cannot be played: `balance-mismatch`.
- * A mismatch is `unverified`, never "cheated": Safari's and Firefox's
- * `Math.sin`/`hypot` may round differently from V8 (ADR 0009) - and inputs
- * crafted against V8 pass, as does a scripted run.
+ * Plays a stored replay again in Node on its ruleset's simulation - the
+ * engine's `playReplay`: `BacteriaSimulation` for `cpu`, `IntSimulation`
+ * for `gpu-int` (version 5, every ranked attempt; ADR 0015) - and compares
+ * it with what the device recorded: the checksum, the outcome and the
+ * length. A replay recorded on another balance cannot be played:
+ * `balance-mismatch`. A mismatch is `unverified`, never "cheated": on
+ * `cpu`, Safari's and Firefox's `Math.sin`/`hypot` may round differently
+ * from V8 (ADR 0009) - and inputs crafted against V8 pass, as does a
+ * scripted run.
  *
  * The re-run stops at the claimed end tick, so refuting a fake costs no
  * more than its claimed length. Null - stored bytes that hold no replay -

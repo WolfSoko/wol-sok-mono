@@ -43,7 +43,7 @@ import { levelStatsId } from '../replays/derive';
 import type { ReplayDoc } from '../replays/model';
 import { emulatorFirestore, fakeAccounts } from '../testing/emulator';
 import { MemoryPresence } from '../testing/presence';
-import { bytesOf, recordedReplay } from '../testing/replays';
+import { bytesOf, rankedReplay } from '../testing/replays';
 import { dayOf } from '../time';
 
 /**
@@ -377,7 +377,7 @@ describe('ranked daily and endless matches', () => {
     won = false,
     seed = engine.attemptSeed(uid, id, at)
   ): Promise<Replay> {
-    const replay = await recordedReplay(engine.rankedPlan(levelId, seed), 120, {
+    const replay = await rankedReplay(engine.rankedPlan(levelId, seed), 120, {
       attempt: { id, at },
     });
     return won
@@ -446,6 +446,8 @@ describe('ranked daily and endless matches', () => {
         await ranked('ana', first, at, level()),
         first
       );
+      // A plain match on the ranked ruleset (ADR 0015): replay version 5.
+      expect(stored.replayVersion).toBe(engine.GPU_INT_REPLAY_VERSION);
       expect(stored.rankedReason).toBeUndefined();
       expect(stored.rankedAt).toBeDefined();
       const boardId = `daily-${TODAY}`;
@@ -480,6 +482,7 @@ describe('ranked daily and endless matches', () => {
         })
       );
       expect(stats?.['medals']).toBeUndefined();
+      expect(stats?.['evolved']).toBeUndefined();
       expect(
         await verifyDaily(db, engine, 'ana', TODAY, fixedPool('daily'), NOW)
       ).toBe('nothing');
@@ -1202,7 +1205,7 @@ describe('adminCommand', () => {
       at: Timestamp.fromMillis(at),
       expireAt: Timestamp.fromMillis(NOW + DAY),
     });
-    const replay = await recordedReplay(
+    const replay = await rankedReplay(
       engine.rankedPlan(
         engine.dailyLevelId(TODAY),
         engine.attemptSeed('ana', id, at)

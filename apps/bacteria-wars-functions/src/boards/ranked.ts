@@ -61,7 +61,8 @@ interface Checked {
 
 /**
  * Checks a replay against its stored attempt: it exists and is not void,
- * the seed is the declaration's, the plan is the ranked setup, the match
+ * the seed is the declaration's, the plan is the ranked setup on the
+ * ranked ruleset (`gpu-int`, replay version 5) without evolution, the match
  * started after the declaration and the replay arrived within 5 minutes of
  * its end. Daily: the level is the day's. An endless match's level depends
  * on the run, which {@link updateEndlessRun} checks.
@@ -110,7 +111,13 @@ export async function checkRanked(
   if (header.seed !== seed) {
     return fail('seed-mismatch');
   }
-  if (!engine.isRankedPlan(header)) {
+  // The ranked setup plays the ranked ruleset, plain (ADR 0015): the stored
+  // parse refuses anything else already, this keeps it so.
+  if (
+    !engine.isRankedPlan(header) ||
+    header.simulation !== engine.RANKED_RULESET ||
+    engine.playsEvolution(replay)
+  ) {
     return fail('plan-mismatch');
   }
   if (
