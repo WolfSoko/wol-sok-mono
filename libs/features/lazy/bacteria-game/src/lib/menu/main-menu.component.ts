@@ -83,6 +83,8 @@ export class MainMenuComponent {
    * Evolution tile - 0 while it buys nothing.
    */
   public readonly evolveDna = input(0);
+  /** The DNA left while it buys a skin - the badge on the My Colony tile - 0 otherwise. */
+  public readonly colonyDna = input(0);
   /** True while the game fills the whole screen rather than its page. */
   public readonly fullscreen = input(false);
 

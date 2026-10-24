@@ -126,6 +126,15 @@
 
   // Only a glance: small, in the top right corner, and never in the way of
   // a finger.
+  // The bubbles and the mist, laid over the arena canvas, as big as it.
+  .ambience {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    pointer-events: none;
+  }
+
   .minimap {
     position: absolute;
     top: 0.5rem;

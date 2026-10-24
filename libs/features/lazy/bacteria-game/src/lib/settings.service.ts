@@ -72,50 +72,20 @@ export interface StoredSettings {
   vaporize?: VaporizeQuality;
   /** How long it takes, in ms. */
   vaporizeMs?: number;
+  /** Whether bubbles rise and mist drifts through the dish. */
+  ambience?: boolean;
   /** The language the player picked, absent to follow the browser. */
   language?: Language;
   /** The level the player would like to meet opponents on, absent for any. */
   matchLevel?: string;
 }
 
-/**
- * How the bacteria are drawn - the skins, every one free to pick:
- * - slime: one gooey, glossy slime per colony
- * - cells: dense glossy cells of different sizes, like on the app icon
- * - honeycomb: a comb of glossy hexagonal tiles with dark seams
- * - crystal: irregular facets with bright seams, like shards of glass
- * - neon: a dark body with its outline glowing in the colony's colour
- * - ink: flat and hatched like a woodcut, with a thick outline - each
- *   colony hatched its own way, so two are told apart without colour
- * - bubbles: glassy bubbles of different sizes with snippets of DNA
- *   floating inside
- * - pixels: the crisp pixels the game started with
- */
-export type BacteriaLook =
-  | 'slime'
-  | 'cells'
-  | 'honeycomb'
-  | 'crystal'
-  | 'neon'
-  | 'ink'
-  | 'bubbles'
-  | 'pixels';
-
-/** The looks in the order the settings offer them; their names are texts. */
-export const BACTERIA_LOOKS: readonly BacteriaLook[] = [
-  'slime',
-  'cells',
-  'honeycomb',
-  'crystal',
-  'neon',
-  'ink',
-  'bubbles',
-  'pixels',
-];
-
-export function isBacteriaLook(value: unknown): value is BacteriaLook {
-  return BACTERIA_LOOKS.some((look) => look === value);
-}
+export {
+  BACTERIA_LOOKS,
+  isBacteriaLook,
+  type BacteriaLook,
+} from './state/skins';
+import { BacteriaLook, isBacteriaLook } from './state/skins';
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
@@ -138,7 +108,8 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
  * Keeps the player's choices - opponent, difficulty, level, colours, the
  * series and the head start between two players, free play or the campaign
  * ladder, the arena, how the bacteria look, the resolutions, how the arena
- * vaporizes and for how long, whether the
+ * vaporizes and for how long, whether the dish has its bubbles and mist,
+ * whether the
  * frame rate is shown, whether the game makes sound, plays music and
  * effects and how loud, whether the phone vibrates, the level the
  * matchmaking asks for and the language -
@@ -199,6 +170,8 @@ export class GameSettingsService {
   public readonly vaporize = signal<VaporizeQuality>(DEFAULT_VAPORIZE_QUALITY);
   /** How long the arena takes to blow away, in ms. */
   public readonly vaporizeMs = signal(DEFAULT_VAPORIZE_MS);
+  /** True while bubbles rise and mist drifts through the dish. */
+  public readonly ambience = signal(true);
 
   /** The language the player picked, null to follow the browser. */
   public readonly language = this.i18n.choice;
@@ -313,6 +286,11 @@ export class GameSettingsService {
     this.changed('vaporizeMs');
   }
 
+  public setAmbience(on: boolean): void {
+    this.ambience.set(on);
+    this.changed('ambience');
+  }
+
   /** Asks the matchmaking for a level that plays online, or any for null. */
   public setMatchLevel(levelId: string | null): void {
     this.matchLevel.set(isMatchLevel(levelId) ? levelId : null);
@@ -368,6 +346,9 @@ export class GameSettingsService {
     }
     if (restores('vaporizeMs') && isVaporizeMs(stored.vaporizeMs)) {
       this.vaporizeMs.set(stored.vaporizeMs);
+    }
+    if (restores('ambience') && typeof stored.ambience === 'boolean') {
+      this.ambience.set(stored.ambience);
     }
     if (restores('showFps') && typeof stored.showFps === 'boolean') {
       this.showFps.set(stored.showFps);
@@ -460,6 +441,7 @@ export class GameSettingsService {
       screenResolution: this.screenResolution(),
       vaporize: this.vaporize(),
       vaporizeMs: this.vaporizeMs(),
+      ambience: this.ambience(),
       showFps: this.showFps(),
       freePlay: this.freePlay(),
       arena: this.arena() ?? undefined,

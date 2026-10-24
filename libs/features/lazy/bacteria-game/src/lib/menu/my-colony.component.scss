@@ -1,7 +1,12 @@
+@use '@angular/cdk';
 @use 'screen';
+
+@include cdk.a11y-visually-hidden;
 
 :host {
   @include screen.screen;
+
+  position: relative;
 }
 
 .tagline {
@@ -52,7 +57,8 @@
   gap: 0.75rem;
 }
 
-// A skin to pick: its preview and its name, gold while it is worn.
+// A skin to pick: its preview and its name, gold while it is worn - or,
+// still to buy, with its price on a Buy button.
 .skin {
   @include screen.panel;
 
@@ -64,10 +70,13 @@
   color: var(--bw-text);
   font: inherit;
   font-weight: 700;
-  cursor: pointer;
 
-  &:hover {
-    border-color: var(--bw-line-strong);
+  &:not(.locked) {
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--bw-line-strong);
+    }
   }
 
   &:focus-visible {
@@ -79,6 +88,35 @@
     border-color: var(--bw-gold);
     box-shadow: 0 0 0 1px var(--bw-gold);
   }
+}
+
+.buy {
+  @include screen.primary;
+
+  height: 2.4rem;
+  font-size: 0.95rem;
+}
+
+.cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin-left: 0.4rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid currentcolor;
+  font-variant-numeric: tabular-nums;
+}
+
+// Where the strands of a purchase fly, over the whole screen.
+.fx {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 5;
 }
 
 .skin-preview {

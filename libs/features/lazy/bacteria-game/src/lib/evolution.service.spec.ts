@@ -6,6 +6,7 @@ import {
   EvolutionService,
 } from './evolution.service';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
+import { GameSettingsService } from './settings.service';
 import { GameAccount } from './storage/game-account';
 import { DeviceStorage, GameStorage } from './storage/game-storage';
 import { FakeGameAccount } from '../testing/fake-game-account';
@@ -55,6 +56,7 @@ describe('EvolutionService', () => {
       equipped: null,
       equipCount: 0,
       epoch: 0,
+      skins: [],
     });
   });
 
@@ -106,7 +108,33 @@ describe('EvolutionService', () => {
       equipped: null,
       equipCount: 0,
       epoch: 1,
+      skins: [],
     });
+  });
+
+  it('buys a skin and wears it once owned, the slime otherwise', () => {
+    earn(2000);
+    const settings = TestBed.inject(GameSettingsService);
+    settings.setLook('chrome');
+    const evolution = create();
+
+    // Not owned: the setting stays, the dish wears the slime.
+    expect(settings.look()).toBe('chrome');
+    expect(evolution.wornSkin(settings.look())).toBe('slime');
+    expect(evolution.skinDna()).toBe(40);
+    expect(evolution.buySkin('chrome')).toBe(true);
+    expect(evolution.buySkin('chrome')).toBe(false);
+    expect(evolution.wornSkin(settings.look())).toBe('chrome');
+    expect(evolution.dna()).toBe(10);
+    expect(evolution.skinDna()).toBe(0);
+    expect(stored()).toMatchObject({ skins: ['chrome'] });
+    expect(evolution.wornSkin('cells')).toBe('cells');
+
+    // A reset keeps the skin and its strands.
+    evolution.buyGene('mitosis');
+    evolution.reset();
+    expect(evolution.ownsSkin('chrome')).toBe(true);
+    expect(evolution.dna()).toBe(10);
   });
 
   it('takes in what another tab bred', () => {
@@ -221,6 +249,7 @@ describe('EvolutionService', () => {
         equipped: 'toxin-bomb',
         equipCount: 0,
         epoch: 0,
+        skins: [],
       });
       expect(evolution.level('membrane')).toBe(1);
     });
@@ -318,6 +347,7 @@ describe('EvolutionService', () => {
         equipped: null,
         equipCount: 0,
         epoch: 3,
+        skins: [],
       });
       expect(evolution.level('mitosis')).toBe(0);
       expect(evolution.dna()).toBe(40);

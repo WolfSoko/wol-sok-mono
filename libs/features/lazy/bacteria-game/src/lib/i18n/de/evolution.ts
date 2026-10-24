@@ -81,7 +81,7 @@ export const evolution: Translation<typeof en> = {
   reset: {
     button: 'Alles zurücksetzen',
     title: 'Ganz von vorn?',
-    text: 'Alle Gene und Waffen gehen, jeder DNA-Strang kommt zurück. Kostenlos, so oft du willst.',
+    text: 'Alle Gene und Waffen gehen, ihre DNA kommt zurück. Skins bleiben dir. Kostenlos, so oft du willst.',
     confirm: 'Zurücksetzen',
     cancel: 'Behalten',
   },
@@ -106,7 +106,7 @@ export const evolution: Translation<typeof en> = {
   },
   help: {
     title: 'Evolution',
-    dna: 'Alle 50 XP, die du verdienst, lassen einen DNA-Strang wachsen. Gib ihn im Evolution-Bildschirm aus.',
+    dna: 'Alle 50 XP, die du verdienst, lassen einen DNA-Strang wachsen. Gib ihn im Evolution-Bildschirm aus – oder für einen Skin in Meine Kolonie.',
     genes:
       'Gene machen deine Kolonie stärker, je fünf Stufen: schnellere Teilung, härtere Bisse, eine zähere Membran, flinkere Geißeln, ein heißerer Stoffwechsel.',
     weapons:

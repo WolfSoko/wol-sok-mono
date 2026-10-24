@@ -19,6 +19,7 @@ const LOOK_CONSTANTS = [
     ([name, value]) => `const float ${name} = ${glslFloat(value)};`
   ),
   'const vec2 CELL_FOCAL = vec2(CELL_FOCAL_X, CELL_FOCAL_Y);',
+  'const vec3 SURFACE_LIGHT = vec3(SURFACE_LIGHT_X, SURFACE_LIGHT_Y, SURFACE_LIGHT_Z);',
   ...Object.entries(LOOKS).map(
     ([look, { glIndex }]) =>
       `const int LOOK_${look.toUpperCase()} = ${glIndex};`
@@ -187,6 +188,27 @@ void main() {
  * faint film with a bright rim and a light spot, each with snippets of DNA
  * drifting and turning inside with `uTime` - `paintBubbles`.
  *
+ * Marbles: glass marbles of different sizes on a lattice of their own, each
+ * a sphere lit by `SURFACE_LIGHT` with a swirl of the light colour inside, a
+ * dark rim, a glow where the light leaves it and a hard highlight -
+ * `paintMarbles`.
+ *
+ * Lava: a dark crust bulging with the density, cracked along two levels of
+ * a slowly flowing noise, the cracks glowing hot and breathing with `uTime`,
+ * the front molten - `paintLava`.
+ *
+ * Galaxy: deep space in the colony's colour, clouds of gas from two noises,
+ * stars on a lattice that twinkle, a bright core and a faint rim -
+ * `paintGalaxy`.
+ *
+ * Plasma: a dark body full of arcs - the ridges of two noises moving with
+ * the time, sharpened, with a halo and a flicker - and a glowing outline -
+ * `paintPlasma`.
+ *
+ * Chrome: liquid metal, its normal from the density's slope - a bevel along
+ * the front - and a ripple of noise inside, mirroring a sky in the colony's
+ * colour, with the highlight and a fresnel rim - `paintChrome`.
+ *
  * Pixels: one crisp cell per bacterium from the raw cells, weak ones faded
  * and hot ones burning white.
  *
@@ -232,6 +254,7 @@ float shimmer(vec2 p, float t) {
 }
 
 ${HASH}
+${NOISE}
 
 bool sparkle(vec2 p, float t) {
   return hash01(uvec3(uvec2(floor(p)), uint(floor(t * 10.0)))) > 0.992;
@@ -293,6 +316,7 @@ vec3 cellBubble(ivec2 lattice, vec4 cells) {
 // varied from a share up by this much - CELLS and BUBBLES in colony-renderer.ts.
 const vec4 CELLS = vec4(CELL_SPACING, CELL_RADIUS, CELL_RADIUS_MIN, CELL_RADIUS_VARY);
 const vec4 BUBBLES = vec4(BUBBLE_SPACING, BUBBLE_RADIUS, BUBBLE_RADIUS_MIN, BUBBLE_RADIUS_VARY);
+const vec4 MARBLES = vec4(MARBLE_SPACING, MARBLE_RADIUS, MARBLE_RADIUS_MIN, MARBLE_RADIUS_VARY);
 
 // The cell of a lattice look the fragment is deepest in: its unit disc
 // coordinates, its radius (0 for none), the square of the fragment's unit
@@ -508,6 +532,169 @@ vec4 tilesLook(vec2 p, float d, bool crystal) {
   return overBase(face, tileAlpha, baseAlpha);
 }
 
+// The surface's slope at p, per cell, from the density - densitySlope.
+vec2 densitySlope(vec2 p) {
+  vec2 uv = p / uArena;
+  vec2 texel = 1.0 / uArena;
+  return vec2(
+    texture(uDensity, uv + vec2(texel.x, 0.0)).r - texture(uDensity, uv - vec2(texel.x, 0.0)).r,
+    texture(uDensity, uv + vec2(0.0, texel.y)).r - texture(uDensity, uv - vec2(0.0, texel.y)).r
+  ) * 0.5;
+}
+
+// The highlight of the light mirrored by a surface with that unit normal,
+// seen from straight above - highlight in colony-renderer.ts.
+float highlight(vec3 n, float shine, float strength) {
+  float lit = dot(n, SURFACE_LIGHT);
+  return pow(max(0.0, 2.0 * lit * n.z - SURFACE_LIGHT.z), shine) * strength;
+}
+
+// A glass marble's colour on its unit disc - marbleShade.
+vec3 marbleShade(vec2 u, float q2, float seed) {
+  float z = sqrt(max(0.0, 1.0 - q2));
+  float q = sqrt(q2);
+  vec3 n = vec3(u, z);
+  float lit = MARBLE_AMBIENT + (1.0 - MARBLE_AMBIENT) * max(0.0, dot(n, SURFACE_LIGHT));
+  float swirl = 0.5 + 0.5 * sin(atan(u.y, u.x) * MARBLE_SWIRL_TURNS + q * MARBLE_SWIRL_RINGS + seed * 2.0 * PI);
+  float rim = smoothstep(MARBLE_RIM_START, 1.0, q);
+  float away = -dot(u, SURFACE_LIGHT.xy) / length(SURFACE_LIGHT.xy);
+  float glow = smoothstep(MARBLE_GLOW_START, MARBLE_GLOW_END, away) * MARBLE_GLOW * (1.0 - rim * 0.5);
+  vec3 light = lightColor();
+  vec3 dark = mix(uColor, vec3(0.0), TINT_DARK);
+  vec3 body = mix(uColor, light, swirl * MARBLE_SWIRL) * lit;
+  body = mix(body, dark, rim * MARBLE_RIM);
+  body += (light - body) * glow;
+  return min(vec3(1.0), body + (1.0 - body) * highlight(n, MARBLE_SHINE, MARBLE_SHINE_STRENGTH));
+}
+
+// The marbles look at p - see paintMarbles.
+vec4 marblesLook(vec2 p, float d) {
+  if (d < CELL_CLIP_START) {
+    return vec4(0.0);
+  }
+  Bubble best = nearestBubble(p, MARBLES);
+  float baseAlpha = MARBLE_BASE_ALPHA * smoothstep(EDGE_START, EDGE_END, d);
+  float marbleAlpha = best.radius > 0.0 ? cellEdge(best.q2, best.radius, d) : 0.0;
+  vec3 face = marbleAlpha > 0.0
+    ? marbleShade(best.unit, best.q2, hash01(best.lattice, 7u))
+    : vec3(0.0);
+  return overBase(face, marbleAlpha, baseAlpha);
+}
+
+// 1 where a noise crosses level, 0 width away from it - crack.
+float crack(float noise, float level, float width) {
+  return 1.0 - smoothstep(0.0, width, abs(noise - level));
+}
+
+// The lava look at p - see paintLava.
+vec4 lavaLook(vec2 p, float d) {
+  float coverage = smoothstep(EDGE_START, EDGE_END, d);
+  if (coverage <= 0.0) {
+    return vec4(0.0);
+  }
+  float scale = 1.0 / (LAVA_SCALE * uUnit);
+  float flow = uTime * LAVA_FLOW;
+  float n = fbm(p * scale + vec2(flow, flow * 0.6) + 31.0);
+  vec2 slope = densitySlope(p);
+  float lit = clamp(0.55 - dot(slope, SURFACE_LIGHT.xy) * LAVA_RELIEF + (n - 0.5) * LAVA_BUMP, 0.2, 1.0);
+  float pulse = 0.65 + 0.35 * sin(uTime * LAVA_PULSE + n * 12.0);
+  float core = max(crack(n, 0.5, LAVA_CRACK), crack(n, LAVA_CRACK_2, LAVA_CRACK) * 0.7) * pulse;
+  float halo = max(crack(n, 0.5, LAVA_CRACK_HALO), crack(n, LAVA_CRACK_2, LAVA_CRACK_HALO) * 0.7)
+    * LAVA_HALO * pulse;
+  float front = (1.0 - smoothstep(EDGE_END, LAVA_EDGE_END, d)) * LAVA_EDGE_GLOW;
+  float glow = min(1.0, core + halo + front);
+  vec3 crust = mix(uColor * LAVA_CRUST, vec3(40.0 / 255.0), LAVA_GREY);
+  vec3 hot = mix(uColor, vec3(1.0), LAVA_GLOW_LIGHT);
+  vec3 molten = mix(crust * lit, hot, glow);
+  return vec4(molten + (1.0 - molten) * core * 0.6, coverage * LAVA_ALPHA);
+}
+
+// The galaxy look at p - see paintGalaxy.
+vec4 galaxyLook(vec2 p, float d) {
+  float coverage = smoothstep(EDGE_START, EDGE_END, d);
+  if (coverage <= 0.0) {
+    return vec4(0.0);
+  }
+  float scale = 1.0 / (GALAXY_SCALE * uUnit);
+  float drift = uTime * GALAXY_DRIFT;
+  float gas = fbm(p * scale + vec2(drift, 0.0) + 41.0);
+  float tint = fbm(p * scale * 2.1 + vec2(5.0 - drift, 3.0) + 43.0);
+  float cloud = smoothstep(GALAXY_GAS_FROM, GALAXY_GAS_TO, gas) * (0.5 + 0.5 * tint) * GALAXY_GAS;
+  float starSpacing = GALAXY_STAR_SPACING * uUnit;
+  vec2 cell = floor(p / starSpacing);
+  ivec2 lattice = ivec2(cell);
+  float h = hash01(lattice, 47u);
+  float star = 0.0;
+  float starHalo = 0.0;
+  if (h > 1.0 - GALAXY_STAR_SHARE) {
+    vec2 centre = cell + 0.25 + 0.5 * vec2(hash01(lattice, 48u), hash01(lattice, 49u));
+    float twinkle = 0.55 + 0.45 * sin(uTime * GALAXY_TWINKLE + h * 60.0);
+    float distance = length(p / starSpacing - centre);
+    star = (1.0 - smoothstep(0.0, GALAXY_STAR_RADIUS, distance)) * twinkle;
+    starHalo = (1.0 - smoothstep(0.0, GALAXY_STAR_HALO, distance)) * 0.5 * twinkle;
+  }
+  float shine = smoothstep(0.5, 1.0, d) * GALAXY_CORE + coverage * (1.0 - coverage) * 4.0 * GALAXY_RIM;
+  vec3 light = lightColor();
+  vec3 space = uColor * GALAXY_DEEP + mix(uColor, light, tint) * cloud + light * (shine + starHalo);
+  return vec4(min(vec3(1.0), space + (1.0 - space) * star), coverage * GALAXY_ALPHA);
+}
+
+// The plasma look at p - see paintPlasma.
+vec4 plasmaLook(vec2 p, float d) {
+  float coverage = smoothstep(EDGE_START, EDGE_END, d);
+  if (coverage <= 0.0) {
+    return vec4(0.0);
+  }
+  float scale = 1.0 / (PLASMA_SCALE * uUnit);
+  float scale2 = 1.0 / (PLASMA_SCALE_2 * uUnit);
+  float t = uTime * PLASMA_SPEED;
+  // The arcs run where each noise crosses its middle.
+  float n = fbm(p * scale + vec2(t, -t * 0.7) + 53.0);
+  float n2 = fbm(p * scale2 + vec2(9.0 - t * 0.6, 2.0 + t * 0.4) + 57.0);
+  float flicker = 0.75 + 0.25 * sin(uTime * PLASMA_FLICKER + n * 40.0);
+  float bolt = min(1.0, (crack(n, 0.5, PLASMA_BOLT) + crack(n2, 0.5, PLASMA_BOLT) * 0.8) * flicker);
+  float halo = (crack(n, 0.5, PLASMA_HALO_WIDTH) + crack(n2, 0.5, PLASMA_HALO_WIDTH) * 0.8)
+    * PLASMA_HALO * coverage;
+  float edge = coverage * (1.0 - coverage) * 4.0 * PLASMA_EDGE;
+  vec3 light = lightColor();
+  vec3 rgb = uColor * (PLASMA_BODY + halo) + mix(light, vec3(1.0), bolt) * bolt * PLASMA_GLOW + light * edge;
+  return vec4(min(vec3(1.0), rgb), max(coverage * PLASMA_ALPHA, min(1.0, bolt + edge)));
+}
+
+// The chrome look at p - see paintChrome.
+vec4 chromeLook(vec2 p, float d) {
+  float coverage = smoothstep(EDGE_START, EDGE_END, d);
+  if (coverage <= 0.0) {
+    return vec4(0.0);
+  }
+  float scale = 1.0 / (CHROME_RIPPLE_SCALE * uUnit);
+  float step = CHROME_RIPPLE_STEP * uUnit;
+  vec2 slope = densitySlope(p);
+  // The ripple's slope, read across a step either way.
+  float ripple = coverage * CHROME_RIPPLE / (2.0 * step);
+  vec3 n = normalize(vec3(
+    -slope.x * CHROME_RELIEF
+      + (fbm((p + vec2(step, 0.0)) * scale + 61.0) - fbm((p - vec2(step, 0.0)) * scale + 61.0)) * ripple,
+    -slope.y * CHROME_RELIEF
+      + (fbm((p + vec2(0.0, step)) * scale + 61.0) - fbm((p - vec2(0.0, step)) * scale + 61.0)) * ripple,
+    1.0
+  ));
+  // A surface facing up the screen sees the sky, one facing down the
+  // ground, and one facing the viewer the colony's colour at the horizon.
+  float up = -n.y;
+  vec3 light = lightColor();
+  vec3 sky = mix(light, vec3(1.0), CHROME_SKY);
+  vec3 ground = mix(uColor, vec3(0.0), CHROME_GROUND);
+  vec3 env = up > 0.0
+    ? mix(uColor, sky, smoothstep(0.0, CHROME_SKY_REACH, up))
+    : mix(uColor, ground, smoothstep(0.0, CHROME_GROUND_REACH, -up));
+  float streak = 1.0 + (valueNoise(p * scale * vec2(0.3, 3.0) + 65.0) - 0.5) * CHROME_STREAK;
+  float fresnel = pow(1.0 - n.z, 2.0) * CHROME_FRESNEL;
+  vec3 metal = min(vec3(1.0), env * streak + light * fresnel);
+  float shine = highlight(n, CHROME_SHINE, CHROME_SHINE_STRENGTH);
+  return vec4(metal + (1.0 - metal) * shine, coverage * CHROME_ALPHA);
+}
+
 // The neon look at p - see paintNeon.
 vec4 neonLook(float d) {
   float coverage = smoothstep(EDGE_START, EDGE_END, d);
@@ -624,7 +811,12 @@ void main() {
         ? tilesLook(p, density, uLook == LOOK_CRYSTAL)
       : uLook == LOOK_NEON ? neonLook(density)
       : uLook == LOOK_INK ? inkLook(p, density)
-      : bubblesLook(p, density);
+      : uLook == LOOK_BUBBLES ? bubblesLook(p, density)
+      : uLook == LOOK_MARBLES ? marblesLook(p, density)
+      : uLook == LOOK_LAVA ? lavaLook(p, density)
+      : uLook == LOOK_GALAXY ? galaxyLook(p, density)
+      : uLook == LOOK_PLASMA ? plasmaLook(p, density)
+      : chromeLook(p, density);
     if (look.a <= 0.0) {
       discard;
     }
