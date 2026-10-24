@@ -1,0 +1,105 @@
+name: Bacteria Wars balance
+
+# The balance lab's full matrix (ADR 0014): the stand-in for a human against
+# the computer on every level, difficulty and loadout. Too slow for every Nx
+# Cloud run, so it runs here at night, split over jobs, and opens or updates
+# an issue labelled `balance` when a check fails or the results drift from
+# the committed baseline. Needs nothing but the default GITHUB_TOKEN.
+on:
+  schedule:
+    - cron: '23 1 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NX_NO_CLOUD: true
+  SHARDS: 8
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: install deps
+        uses: ./.github/actions/install-deps
+
+      - name: Play a share of the matrix
+        run: >
+          npx nx run feat-lazy-bacteria-game:balance
+          --shard=${{ matrix.shard }}/${{ env.SHARDS }}
+          --raw=dist/balance/part-${{ matrix.shard }}.json
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: balance-part-${{ matrix.shard }}
+          path: dist/balance/part-${{ matrix.shard }}.json
+          if-no-files-found: error
+          retention-days: 3
+
+  report:
+    needs: matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: install deps
+        uses: ./.github/actions/install-deps
+
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: balance-part-*
+          path: dist/balance
+          merge-multiple: true
+
+      - name: Sum up, check and compare with the baseline
+        run: npx tsx tools/bacteria-game/balance/run.ts merge dist/balance/part-*.json
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: balance-report
+          path: |
+            dist/balance/balance-report.json
+            dist/balance/summary.md
+            dist/balance/status.json
+          if-no-files-found: error
+
+      - name: Open or update the balance issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          problems=$(jq '(.findings | length) + (.drift | length)' dist/balance/status.json)
+          open=$(gh issue list --label balance --state open --json number --jq '.[0].number // empty')
+          if [ "$problems" -eq 0 ]; then
+            if [ -n "$open" ]; then
+              gh issue comment "$open" --body "The nightly balance run is back in line with the baseline: $RUN_URL"
+            fi
+            exit 0
+          fi
+          { cat dist/balance/summary.md; echo; echo "Run: $RUN_URL"; } > "$RUNNER_TEMP/body.md"
+          gh label create balance --color FBCA04 \
+            --description "Bacteria Wars balance lab findings (ADR 0014)" 2>/dev/null || true
+          if [ -n "$open" ]; then
+            gh issue edit "$open" --body-file "$RUNNER_TEMP/body.md"
+            gh issue comment "$open" --body "Still off after tonight's run ($problems findings): $RUN_URL"
+          else
+            gh issue create --label balance \
+              --title "Bacteria Wars: balance drift or failed checks" \
+              --body-file "$RUNNER_TEMP/body.md"
+          fi
