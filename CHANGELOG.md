@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.66.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.65.0...v74.66.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** integer building blocks for the deterministic GPU simulation ([#2603](https://github.com/WolfSoko/wol-sok-mono/issues/2603)) ([645149d](https://github.com/WolfSoko/wol-sok-mono/commit/645149dc424d44b0833f48632eac454b317fb8fc))
+
+### Documentation
+
+* **feat-lazy-bacteria-game:** ADR 0015 deterministic GPU simulation ([#2602](https://github.com/WolfSoko/wol-sok-mono/issues/2602)) ([28831b9](https://github.com/WolfSoko/wol-sok-mono/commit/28831b981c7d9be0c38e0a294aa491192051a8b9))
+
 ## [74.65.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.64.0...v74.65.0) (2026-10-24)
 
 ### Features
