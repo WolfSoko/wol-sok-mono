@@ -22,6 +22,9 @@ export const ONE_Q14 = 1 << Q14;
  */
 export const Q14_STATE_MAX = 0xffff;
 
+/** A draw's top 14 bits as a Q14 fraction: `draw >>> 18`. */
+export const Q14_DRAW_SHIFT = 32 - Q14;
+
 /** Crosshairs are kept in sixteenths of a cell. */
 export const TARGET_SHIFT = 4;
 

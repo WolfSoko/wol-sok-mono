@@ -768,7 +768,8 @@ export class GpuSimulation implements Simulation {
     const set = (
       program: Program,
       values: Record<string, number>,
-      ints: Record<string, number> = {}
+      ints: Record<string, number> = {},
+      uints: Record<string, number> = {}
     ) => {
       gl.useProgram(program.program);
       const at = program.uniforms;
@@ -781,12 +782,20 @@ export class GpuSimulation implements Simulation {
       for (const [name, value] of Object.entries(ints)) {
         gl.uniform1i(at[name], value);
       }
+      for (const [name, value] of Object.entries(uints)) {
+        gl.uniform1ui(at[name], value);
+      }
     };
-    // The integer passes take these as ints, and the threshold as a uint
-    // below; the float passes as floats.
+    // The float passes take these as floats, the integer ones as ints and
+    // the threshold as a uint.
     const ints = intMatchUniforms(b);
-    const [intents, intIntents]: Record<string, number>[] = this.deterministic
-      ? [{}, { uJitter: ints.jitter, uParentShare: ints.parentShare }]
+    const [intents, intIntents, uintIntents]: Record<string, number>[] = this
+      .deterministic
+      ? [
+          {},
+          { uJitter: ints.jitter, uParentShare: ints.parentShare },
+          { uDivideThreshold: ints.divideThreshold },
+        ]
       : [
           {
             uJitter: b.jitter,
@@ -794,32 +803,34 @@ export class GpuSimulation implements Simulation {
             uParentShare: b.parentEnergyShare,
           },
           {},
+          {},
         ];
     const cellSize = b.influenceCellSize;
     set(programs.influence, {}, { uCellSize: cellSize });
     set(programs.hunt, {}, { uInfluence: UNIT.influence });
-    set(programs.claim, intents, {
-      ...intIntents,
-      uCellSize: cellSize,
-      uHunt: UNIT.hunt,
-      uHuntMore: UNIT.huntMore,
-    });
-    set(programs.apply, intents, {
-      ...intIntents,
-      uCellSize: cellSize,
-      uHunt: UNIT.hunt,
-      uHuntMore: UNIT.huntMore,
-      uClaims: UNIT.claims,
-    });
-    if (this.deterministic) {
-      for (const program of [programs.claim, programs.apply]) {
-        gl.useProgram(program.program);
-        gl.uniform1ui(
-          program.uniforms['uDivideThreshold'],
-          ints.divideThreshold
-        );
-      }
-    }
+    set(
+      programs.claim,
+      intents,
+      {
+        ...intIntents,
+        uCellSize: cellSize,
+        uHunt: UNIT.hunt,
+        uHuntMore: UNIT.huntMore,
+      },
+      uintIntents
+    );
+    set(
+      programs.apply,
+      intents,
+      {
+        ...intIntents,
+        uCellSize: cellSize,
+        uHunt: UNIT.hunt,
+        uHuntMore: UNIT.huntMore,
+        uClaims: UNIT.claims,
+      },
+      uintIntents
+    );
     set(programs.crush, {});
     set(
       programs.combat,
@@ -1460,6 +1471,31 @@ const INT_PROGRAMS = new WeakMap<
 
 const COMMON_UNIFORMS = ['uState', 'uMask', 'uSize', 'uSeed'];
 const WEAPON_UNIFORMS = ['uEffects[0]', 'uEffectKinds[0]', 'uEffectCount'];
+/** The intents' uniforms both kinds of pass share; the float ones add the budget. */
+const INTENT_UNIFORMS = [
+  'uKind',
+  'uStep',
+  'uSteps[0]',
+  'uTarget[0]',
+  'uAggression[0]',
+  'uJitter',
+  'uCellSize',
+  'uHunt',
+  'uHuntMore',
+  'uDivideThreshold',
+  'uDivideChance[0]',
+  'uParentShare',
+  ...WEAPON_UNIFORMS,
+];
+
+/** Compiles a pass with the uniforms every pass has, and its own. */
+function programOf(gl: WebGL2RenderingContext) {
+  return (fragment: string, uniforms: string[]): Program =>
+    createProgram(gl, FULLSCREEN_VERTEX, fragment, [
+      ...COMMON_UNIFORMS,
+      ...uniforms,
+    ]);
+}
 
 function compiledIntPrograms(
   gl: WebGL2RenderingContext
@@ -1468,30 +1504,11 @@ function compiledIntPrograms(
   if (cached != null) {
     return cached;
   }
-  const intents = [
-    'uKind',
-    'uStep',
-    'uSteps[0]',
-    'uTarget[0]',
-    'uAggression[0]',
-    'uJitter',
-    'uCellSize',
-    'uHunt',
-    'uHuntMore',
-    'uDivideThreshold',
-    'uDivideChance[0]',
-    'uParentShare',
-    ...WEAPON_UNIFORMS,
-  ];
-  const program = (fragment: string, uniforms: string[]) =>
-    createProgram(gl, FULLSCREEN_VERTEX, fragment, [
-      ...COMMON_UNIFORMS,
-      ...uniforms,
-    ]);
+  const program = programOf(gl);
   const programs = {
     hunt: program(INT_HUNT_FRAGMENT, ['uInfluence', 'uPair']),
-    claim: program(INT_CLAIM_FRAGMENT, intents),
-    apply: program(INT_APPLY_FRAGMENT, [...intents, 'uClaims']),
+    claim: program(INT_CLAIM_FRAGMENT, INTENT_UNIFORMS),
+    apply: program(INT_APPLY_FRAGMENT, [...INTENT_UNIFORMS, 'uClaims']),
   };
   INT_PROGRAMS.set(gl, programs);
   return programs;
@@ -1502,31 +1519,15 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
   if (cached != null) {
     return cached;
   }
-  const common = COMMON_UNIFORMS;
-  const intents = [
-    'uKind',
-    'uStep',
-    'uSteps[0]',
-    'uTarget[0]',
-    'uAggression[0]',
-    'uJitter',
-    'uCellSize',
-    'uHunt',
-    'uHuntMore',
-    'uDivideThreshold',
-    'uDivideChance[0]',
-    'uDivideBudget[0]',
-    'uParentShare',
-  ];
+  const intents = [...INTENT_UNIFORMS, 'uDivideBudget[0]'];
   const pellets = ['uPellets[0]', 'uPelletCount', 'uPelletRadius'];
   const weapons = WEAPON_UNIFORMS;
-  const program = (fragment: string, uniforms: string[]) =>
-    createProgram(gl, FULLSCREEN_VERTEX, fragment, [...common, ...uniforms]);
+  const program = programOf(gl);
   const programs: Programs = {
     influence: program(INFLUENCE_FRAGMENT, ['uCellSize']),
     hunt: program(HUNT_FRAGMENT, ['uInfluence', 'uPair']),
-    claim: program(CLAIM_FRAGMENT, [...intents, ...weapons]),
-    apply: program(APPLY_FRAGMENT, [...intents, ...weapons, 'uClaims']),
+    claim: program(CLAIM_FRAGMENT, intents),
+    apply: program(APPLY_FRAGMENT, [...intents, 'uClaims']),
     crush: program(CRUSH_FRAGMENT, []),
     combat: program(COMBAT_FRAGMENT, [
       ...weapons,

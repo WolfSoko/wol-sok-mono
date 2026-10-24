@@ -137,20 +137,23 @@ describe('the integer reference', () => {
       Math.ceil(HEIGHT / CELL_SIZE),
     ];
     const hunt = intHunt(intInfluence(grid, CELL_SIZE), blocks[0], blocks[1]);
-    const out = new Uint16Array(grid.state.length);
     const scratch = new IntPassScratch(WIDTH, HEIGHT);
-    const given = intClaimAndApply(
-      grid,
-      uniforms(1),
-      hunt,
-      INT_KIND.move,
-      0,
-      scratch,
-      out
-    );
-    const fresh = intClaimAndApply(grid, uniforms(1), hunt, INT_KIND.move, 0);
-    expect(given).toBe(out);
-    expect(intStateHash(given)).toBe(intStateHash(fresh));
+    for (const kind of [INT_KIND.move, INT_KIND.divide]) {
+      // A used buffer: whatever it held must not show through.
+      const out = new Uint16Array(grid.state.length).fill(0xbeef);
+      const given = intClaimAndApply(
+        grid,
+        uniforms(1),
+        hunt,
+        kind,
+        0,
+        scratch,
+        out
+      );
+      const fresh = intClaimAndApply(grid, uniforms(1), hunt, kind, 0);
+      expect(given).toBe(out);
+      expect(intStateHash(given)).toBe(intStateHash(fresh));
+    }
   });
 
   it('moves bacteria without losing or doubling any', () => {

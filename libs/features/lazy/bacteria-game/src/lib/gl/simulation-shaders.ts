@@ -24,12 +24,9 @@
 import { MIN_CELL_DENSITY } from '../arena/colony-renderer';
 import { WEAPON_EFFECTS } from '../state/evolution';
 import { WEAPON_CODE } from '../state/weapon-effects';
-import { ZONE_CODE, ZONE_EFFECTS } from '../state/zones';
+import { WALL_BIT, ZONE_CODE, ZONE_EFFECTS, ZONE_SHIFT } from '../state/zones';
 
-/** The bit of the mask that marks a wall - the zone sits above it. */
-export const WALL_BIT = 1;
-/** How far the zone code is shifted up in the mask, past the wall bit. */
-export const ZONE_SHIFT = 1;
+export { WALL_BIT, ZONE_SHIFT };
 
 /** A number as a GLSL float literal - "2.0", never the int "2". */
 export function glslFloat(value: number): string {

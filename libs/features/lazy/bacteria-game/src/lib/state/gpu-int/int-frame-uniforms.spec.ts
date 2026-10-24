@@ -8,6 +8,9 @@ import {
   fillIntFrameUniforms,
 } from './int-frame-uniforms';
 
+// The conversion takes its inputs as 32 bit floats, as the GPU path holds them.
+const f32 = Math.fround;
+
 describe('int frame uniforms', () => {
   const floats = {
     targets: [12.5, 40, -7, 0.25, NaN, NaN, NaN, NaN],
@@ -27,14 +30,14 @@ describe('int frame uniforms', () => {
     const at = (slot: number, variant: number) =>
       u.divideChance[slot * DIVIDE_VARIANTS + variant];
     expect(at(0, divideVariant(false, false, false))).toBe(
-      chanceThreshold(0.01)
+      chanceThreshold(f32(0.01))
     );
     expect(at(0, divideVariant(true, false, false))).toBe(
-      chanceThreshold(0.01 * ZONE_EFFECTS.agarDivideFactor)
+      chanceThreshold(f32(0.01) * ZONE_EFFECTS.agarDivideFactor)
     );
     expect(at(0, divideVariant(true, true, true))).toBe(
       chanceThreshold(
-        0.01 *
+        f32(0.01) *
           ZONE_EFFECTS.agarDivideFactor *
           WEAPON_EFFECTS.agarBloomDivideFactor *
           WEAPON_EFFECTS.cryoDivideFactor
@@ -47,7 +50,7 @@ describe('int frame uniforms', () => {
     const bloom = divideVariant(true, true, false);
     // 0.2 * 2 * 3 is over the budget of 0.3.
     expect(u.divideChance[1 * DIVIDE_VARIANTS + bloom]).toBe(
-      chanceThreshold(0.3)
+      chanceThreshold(f32(0.3))
     );
     expect(u.divideChance[3 * DIVIDE_VARIANTS]).toBe(0);
   });

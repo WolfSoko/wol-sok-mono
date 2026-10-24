@@ -1,6 +1,12 @@
-import { ZONE_CODE } from '../zones';
-import { drawAt, SALT, stepSalt } from './draws';
-import { mulQ14, ONE_Q14, Q14, TARGET_SHIFT } from './fixed-point';
+import { WALL_BIT, ZONE_CODE, ZONE_SHIFT } from '../zones';
+import { drawAt, PICK_OF_8_SHIFT, SALT, stepSalt } from './draws';
+import {
+  mulQ14,
+  ONE_Q14,
+  Q14,
+  Q14_DRAW_SHIFT,
+  TARGET_SHIFT,
+} from './fixed-point';
 import {
   DIVIDE_VARIANTS,
   divideVariant,
@@ -57,8 +63,6 @@ export interface IntPassUniforms extends IntFrameUniforms {
 export const INT_KIND = { move: 0, escape: 1, divide: 2 } as const;
 export type IntKind = (typeof INT_KIND)[keyof typeof INT_KIND];
 
-const WALL_BIT = 1;
-const ZONE_SHIFT = 1;
 const ICE_STAY = INT_EFFECTS.iceStayChance;
 const HEAT_AGGRESSION = INT_EFFECTS.heatAggression;
 const HEAT_MAX_AGGRESSION = INT_EFFECTS.heatMaxAggression;
@@ -199,7 +203,7 @@ export function intClaimAndApply(
   const unit = new Int32Array(2);
 
   const freeNeighbourFrom = (x: number, y: number, salt: number): number => {
-    const start = draw(x, y, salt) >>> 29;
+    const start = draw(x, y, salt) >>> PICK_OF_8_SHIFT;
     for (let k = 0; k < 8; k++) {
       const i = (start + k) % 8;
       if (freeAt(x + NEIGHBOURS[i][0], y + NEIGHBOURS[i][1])) {
@@ -209,7 +213,7 @@ export function intClaimAndApply(
     return -1;
   };
   const centred = (x: number, y: number, salt: number) =>
-    (draw(x, y, stepSalt(salt, step)) >>> (32 - Q14)) - (ONE_Q14 >> 1);
+    (draw(x, y, stepSalt(salt, step)) >>> Q14_DRAW_SHIFT) - (ONE_Q14 >> 1);
   const neighbourIndex = (ox: number, oy: number) => {
     const index = (oy + 1) * 3 + ox + 1;
     return index > 4 ? index - 1 : index;
@@ -284,7 +288,7 @@ export function intClaimAndApply(
       }
     }
     // Below 2^32 as in the shader's uint, and exact in doubles.
-    const roll = draw(x, y, stepSalt(SALT.moveOctant, step)) >>> (32 - Q14);
+    const roll = draw(x, y, stepSalt(SALT.moveOctant, step)) >>> Q14_DRAW_SHIFT;
     const high = roll * (a + b) < b * ONE_Q14;
     const offset = OCTANT[high ? (k + 1) % 8 : k];
     if (freeAt(x + offset[0], y + offset[1])) {
@@ -301,7 +305,8 @@ export function intClaimAndApply(
         return neighbourIndex(ox, oy);
       }
     }
-    const fallback = draw(x, y, stepSalt(SALT.moveFallback, step)) >>> 29;
+    const fallback =
+      draw(x, y, stepSalt(SALT.moveFallback, step)) >>> PICK_OF_8_SHIFT;
     const n = NEIGHBOURS[fallback];
     return freeAt(x + n[0], y + n[1]) ? fallback : -1;
   };
@@ -371,7 +376,6 @@ export function intClaimAndApply(
     }
   }
 
-  const next = out;
   const divide = kind === INT_KIND.divide;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -381,21 +385,25 @@ export function intClaimAndApply(
       if (claim !== 0) {
         const n = NEIGHBOURS[claim - 1];
         const from = ((y - n[1]) * width + (x - n[0])) * 4;
-        next[to] = state[from];
+        out[to] = state[from];
         if (divide) {
+          // A child starts with no food and no record, as the shader's
+          // uvec4(mover.r, energy, 0u, 0u).
           const energy = state[from + 1];
-          next[to + 1] = energy - mulQ14(energy, u.parentShare);
+          out[to + 1] = energy - mulQ14(energy, u.parentShare);
+          out[to + 2] = 0;
+          out[to + 3] = 0;
         } else {
-          next[to + 1] = state[from + 1];
-          next[to + 2] = state[from + 2];
-          next[to + 3] = state[from + 3];
+          out[to + 1] = state[from + 1];
+          out[to + 2] = state[from + 2];
+          out[to + 3] = state[from + 3];
         }
         continue;
       }
-      next[to] = state[to];
-      next[to + 1] = state[to + 1];
-      next[to + 2] = state[to + 2];
-      next[to + 3] = state[to + 3];
+      out[to] = state[to];
+      out[to + 1] = state[to + 1];
+      out[to + 2] = state[to + 2];
+      out[to + 3] = state[to + 3];
       const intent = intents[cell];
       if (state[to] === 0 || intent < 0) {
         continue;
@@ -405,13 +413,13 @@ export function intClaimAndApply(
         continue;
       }
       if (divide) {
-        next[to + 1] = mulQ14(state[to + 1], u.parentShare);
+        out[to + 1] = mulQ14(state[to + 1], u.parentShare);
       } else {
-        next.fill(0, to, to + 4);
+        out.fill(0, to, to + 4);
       }
     }
   }
-  return next;
+  return out;
 }
 
 /** FNV-1a over the texels' 16 bit values - to compare states quickly. */

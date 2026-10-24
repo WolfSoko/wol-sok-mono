@@ -57,18 +57,22 @@ export function createIntFrameUniforms(): IntFrameUniforms {
 
 /**
  * Converts the float frame uniforms into the integer ones, on the CPU,
- * where doubles round the same on every device.
+ * where doubles round the same on every device. The inputs are taken as
+ * 32 bit floats (`Math.fround`), as `GpuSimulation` holds them, so a caller
+ * with doubles - the reference, the server - gets the same integers.
  */
 export function fillIntFrameUniforms(
   into: IntFrameUniforms,
   from: FloatFrameUniforms
 ): IntFrameUniforms {
   for (let slot = 0; slot < INT_COLONIES; slot++) {
-    into.targets[slot * 2] = cellTarget(from.targets[slot * 2]);
-    into.targets[slot * 2 + 1] = cellTarget(from.targets[slot * 2 + 1]);
-    into.aggression[slot] = toQ14(from.aggression[slot] ?? 0);
-    const chance = from.divideChance[slot] ?? 0;
-    const budget = from.divideBudget[slot] ?? 0;
+    // No crosshair (NaN) is 0: its colony does not move anyway.
+    const f32 = Math.fround;
+    into.targets[slot * 2] = toTarget(f32(from.targets[slot * 2]));
+    into.targets[slot * 2 + 1] = toTarget(f32(from.targets[slot * 2 + 1]));
+    into.aggression[slot] = toQ14(f32(from.aggression[slot]));
+    const chance = f32(from.divideChance[slot]);
+    const budget = f32(from.divideBudget[slot]);
     for (let variant = 0; variant < DIVIDE_VARIANTS; variant++) {
       const factor =
         (variant & 1 ? ZONE_EFFECTS.agarDivideFactor : 1) *
@@ -80,9 +84,4 @@ export function fillIntFrameUniforms(
     }
   }
   return into;
-}
-
-/** A crosshair coordinate - none (NaN) is 0, its colony does not move. */
-function cellTarget(cells: number | undefined): number {
-  return toTarget(cells ?? Number.NaN);
 }

@@ -19,8 +19,12 @@
  * and step 4 of the rollout turns them into integers as well.
  */
 
-import { SALT } from '../state/gpu-int/draws';
-import { TARGET_SHIFT } from '../state/gpu-int/fixed-point';
+import { PICK_OF_8_SHIFT, SALT } from '../state/gpu-int/draws';
+import {
+  ONE_Q14,
+  Q14_DRAW_SHIFT,
+  TARGET_SHIFT,
+} from '../state/gpu-int/fixed-point';
 import {
   DIVIDE_VARIANTS,
   INT_COLONIES,
@@ -87,7 +91,7 @@ const ivec2 OCTANT[8] = ivec2[8](
 
 /** The first free neighbour, starting the round at a drawn one. */
 int freeNeighbourFrom(ivec2 cell, uint salt) {
-  int start = int(drawAt(cell, salt) >> 29u);
+  int start = int(drawAt(cell, salt) >> ${PICK_OF_8_SHIFT}u);
   for (int k = 0; k < 8; k++) {
     int i = (start + k) % 8;
     if (freeAt(cell + NEIGHBOURS[i])) {
@@ -99,7 +103,7 @@ int freeNeighbourFrom(ivec2 cell, uint salt) {
 
 /** A centred jitter draw, -2^13 .. 2^13 - 1. */
 int centred(ivec2 cell, uint salt) {
-  return int(drawAt(cell, salt) >> ${32 - 14}u) - ${1 << 13};
+  return int(drawAt(cell, salt) >> ${Q14_DRAW_SHIFT}u) - ${ONE_Q14 >> 1};
 }
 
 int moveIntent(ivec2 cell) {
@@ -170,7 +174,7 @@ int moveIntent(ivec2 cell) {
   // P(hi) = b / (a + b). |dir| < 2^17 per axis (the hunt < 2^16 after the
   // back projection, plus 2^13 of jitter), so a + b < 2^17 and the uint
   // product with a 14 bit roll stays below 2^32.
-  uint roll = drawAt(cell, intStepSalt(${SALT.moveOctant}u, uStep)) >> 18u;
+  uint roll = drawAt(cell, intStepSalt(${SALT.moveOctant}u, uStep)) >> ${Q14_DRAW_SHIFT}u;
   bool high = roll * uint(a + b) < uint(b) << 14u;
   ivec2 offset = OCTANT[high ? (k + 1) % 8 : k];
   if (freeAt(cell + offset)) {
@@ -189,7 +193,7 @@ int moveIntent(ivec2 cell) {
   if (second != ivec2(0) && freeAt(cell + second)) {
     return neighbourIndex(second);
   }
-  int fallback = int(drawAt(cell, intStepSalt(${SALT.moveFallback}u, uStep)) >> 29u);
+  int fallback = int(drawAt(cell, intStepSalt(${SALT.moveFallback}u, uStep)) >> ${PICK_OF_8_SHIFT}u);
   return freeAt(cell + NEIGHBOURS[fallback]) ? fallback : -1;
 }
 
