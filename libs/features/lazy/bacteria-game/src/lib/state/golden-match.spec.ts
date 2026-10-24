@@ -1,4 +1,6 @@
 import { BacteriaSimulation } from './bacteria-simulation';
+import { computerLoadout } from './computer-opponent';
+import { LADDER_VERSION } from './difficulty-curve';
 import { dailyLevelId } from './daily';
 import { BALANCE_VERSION } from './game-balance';
 import { MatchEngine } from './match-engine';
@@ -105,6 +107,48 @@ function fingerprint(engine: MatchEngine): string {
   }
   return `${text.length}:${hash.toString(16)}`;
 }
+
+/**
+ * A match against the ladder's computer (ADR 0014): its skill along the
+ * curve and its loadout. It plays bit for bit the same under one
+ * `LADDER_VERSION`, or every version 4 replay plays another match: a
+ * change that moves it on purpose raises `LADDER_VERSION` and takes the
+ * new fingerprint over.
+ */
+const LADDER_PLAN: MatchPlan = {
+  ...PLAN,
+  levelId: 'villi',
+  width: 320,
+  height: 180,
+  loadouts: [
+    { genes: { mitosis: 2, toxins: 1 }, weapon: 'toxin-bomb' },
+    computerLoadout('villi', 'hard'),
+  ],
+  ladder: LADDER_VERSION,
+};
+const LADDER_FINGERPRINT = '96657:a086f6df';
+
+describe("the ladder's computer", () => {
+  it('plays under the ladder version the fingerprint was taken with', () => {
+    expect(LADDER_VERSION).toBe(1);
+  });
+
+  it('plays a match bit for bit as before', () => {
+    const engine = play(LADDER_PLAN, 480);
+    try {
+      expect(fingerprint(engine)).toBe(LADDER_FINGERPRINT);
+      const replay = replayOf(
+        LADDER_PLAN,
+        'cpu',
+        engine.tickCount,
+        engine.recorded
+      );
+      expect(playReplay(replay)?.players).toEqual(engine.players);
+    } finally {
+      engine.dispose();
+    }
+  });
+});
 
 describe('plain matches', () => {
   it('play under the balance version the fingerprints were taken with', () => {

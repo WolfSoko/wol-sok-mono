@@ -72,11 +72,14 @@ export interface Boss {
 }
 
 /*
- * The medallion limits are a first pass from bot matches - the hard computer
- * against the normal one, four per level: silver near the median win, gold
- * near two thirds of it, and the gold losses near the median share lost. The
- * busy levels lose more bacteria than their colony ever held, hence shares
- * above 1. Tune them by playing.
+ * The medallion limits come from bot matches: silver near the median win,
+ * gold near two thirds of it, and the gold losses near the median share
+ * lost. The busy levels lose more bacteria than their colony ever held,
+ * hence shares above 1. Where the balance lab (ADR 0014) saw the stand-in
+ * win four times or more on normal, the base-size levels take its numbers,
+ * measured on the online grid a recorded match runs on; the rest keep the
+ * first pass, the hard computer against the normal one. The lab's summary
+ * lists what it measures for every level. Tune them by playing.
  */
 /** The balance the boss levels are fought with - the boss's traits on top. */
 const BOSS_BALANCE: Partial<GameBalance> = {
@@ -117,7 +120,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'One narrow waist in the centre that pinches shut now and then, and richer food. Holding the gap decides the match.',
     mapId: 'hourglass',
-    medal: { silverSec: 60, goldSec: 40, goldLossShare: 0.5 },
+    medal: { silverSec: 65, goldSec: 45, goldLossShare: 0.3 },
     balance: {
       aggression: 0.55,
       nutrientCount: 6,
@@ -146,7 +149,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Pillars everywhere and a shorter time to kill - the frontline breaks into pockets.',
     mapId: 'pillar-field',
-    medal: { silverSec: 40, goldSec: 25, goldLossShare: 0.3 },
+    medal: { silverSec: 65, goldSec: 45, goldLossShare: 0.3 },
     balance: {
       aggression: 0.7,
       combatDrainPerSec: 2,
@@ -193,7 +196,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Two sliding bars sweep the middle and shove both colonies around. Time your push between them.',
     mapId: 'pistons',
-    medal: { silverSec: 60, goldSec: 40, goldLossShare: 0.9 },
+    medal: { silverSec: 40, goldSec: 30, goldLossShare: 0.8 },
     balance: {
       aggression: 0.75,
       divideChancePerSec: 3.8,
@@ -211,7 +214,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Packed air sacs and nothing straight between them. Thread your colony through the channels before the enemy floods them.',
     mapId: 'alveoli',
-    medal: { silverSec: 100, goldSec: 60, goldLossShare: 0.6 },
+    medal: { silverSec: 50, goldSec: 35, goldLossShare: 0.3 },
     balance: {
       aggression: 0.8,
       divideChancePerSec: 4,
@@ -227,7 +230,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Fungal threads branch in from both edges - a maze nobody planned, with restless colonies in every pocket.',
     mapId: 'mycelium',
-    medal: { silverSec: 70, goldSec: 45, goldLossShare: 0.35 },
+    medal: { silverSec: 55, goldSec: 35, goldLossShare: 0.3 },
     balance: {
       aggression: 0.85,
       divideChancePerSec: 4.2,
@@ -244,7 +247,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'A heart in the middle swells with every beat and shoves both colonies away. Strike between the beats.',
     mapId: 'heartbeat',
-    medal: { silverSec: 80, goldSec: 50, goldLossShare: 1.8 },
+    medal: { silverSec: 55, goldSec: 35, goldLossShare: 0.8 },
     balance: {
       aggression: 0.9,
       divideChancePerSec: 4.4,
@@ -260,7 +263,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'The lining of a gut: soft fingers sway in from both edges and sweep everything along. The final and fiercest war.',
     mapId: 'villi',
-    medal: { silverSec: 45, goldSec: 30, goldLossShare: 3.4 },
+    medal: { silverSec: 40, goldSec: 25, goldLossShare: 1.9 },
     balance: {
       aggression: 0.95,
       divideChancePerSec: 4.6,
@@ -278,7 +281,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'The reactor shuts down after two and a half minutes - whoever holds the bigger colony then wins. Wipe the enemy out sooner for the better medallions.',
     mapId: 'reactor-core',
-    medal: { silverSec: 100, goldSec: 65, goldLossShare: 1.2 },
+    medal: { silverSec: 55, goldSec: 40, goldLossShare: 0.9 },
     win: { kind: 'timed', limitSec: 150 },
     balance: {
       aggression: 0.85,
@@ -295,7 +298,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Golden agar in the middle doubles division, violet antibiotic on the flanks kills whoever lingers. Ice slows, heat sends your colony at the enemy.',
     mapId: 'containment',
-    medal: { silverSec: 100, goldSec: 65, goldLossShare: 1.2 },
+    medal: { silverSec: 50, goldSec: 35, goldLossShare: 0.7 },
     balance: {
       aggression: 0.85,
       divideChancePerSec: 4.2,
@@ -374,7 +377,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Two grey colonies sit in isolation, between you and the enemy. Nobody steers them and they bite back only weakly - whoever eats them first has the bigger army.',
     mapId: 'quarantine',
-    medal: { silverSec: 95, goldSec: 65, goldLossShare: 0.5 },
+    medal: { silverSec: 40, goldSec: 25, goldLossShare: 0.5 },
     neutrals: [
       { x: 0.5, y: 0.2, startScale: 1.5 },
       { x: 0.5, y: 0.8, startScale: 1.5 },
@@ -467,7 +470,9 @@ export const LEVELS: readonly Level[] = [
       'A cave of pillars, overgrown with fungal threads. Two grey colonies sit in hollows on golden agar, more agar lies in pockets along the way. Biggest colony after three minutes wins.',
     mapId: 'root-network',
     // As the other timed levels: silver and gold ask for a wipe-out first.
-    medal: { silverSec: 120, goldSec: 80, goldLossShare: 2.4 },
+    // Measured (ADR 0014): a stand-in with everything bred wiped the enemy
+    // out in 87-147 s, losing a third to a half of its colony.
+    medal: { silverSec: 120, goldSec: 80, goldLossShare: 0.5 },
     win: { kind: 'timed', limitSec: 180 },
     neutrals: ROOT_NETWORK_NEUTRALS.map((spot) => ({
       ...spot,
@@ -490,9 +495,12 @@ export const LEVELS: readonly Level[] = [
       'Something four times your size lives down in the abyss - it divides faster, hits harder and boosts more often. Keep your colony alive for two and a half minutes, or wipe the leviathan out.',
     mapId: 'abyss',
     medal: {
+      // Measured (ADR 0014): a stand-in with everything bred wiped the
+      // leviathan out on easy in 22 and 147 s, losing under half of its
+      // colony - the normal one it did not.
       silverSec: 120,
       goldSec: 85,
-      goldLossShare: 4,
+      goldLossShare: 1,
       // Four times your size at the start: a quarter of it is where you begin.
       platinumSizeRatio: 0.2,
     },

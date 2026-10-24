@@ -104,6 +104,67 @@ the cryo pulse is weak in the computer's hands.
   replays play as they were and `BALANCE_VERSION` does not move. Medallions
   already held stay; new ones get harder.
 
+### As built (sections 1-3)
+
+- **The ladder's computer is a match of its own.** Its skill along the
+  curve changes what the computer does, plain loadouts or not, so a replay
+  has to say it played against it. The menus put `ladder: LADDER_VERSION`
+  into the plan next to the loadouts (ladder and generated levels against
+  the computer, never a ghost race), and such a match is replay **version
+  4**: version 3 plus `ladder`. A version 3 replay keeps playing the
+  difficulty's fixed profile, a client or server that knows only version 3
+  refuses version 4, and `playReplay` refuses another `ladder` version, as
+  it refuses another `BALANCE_VERSION`. A change to the skill table, the
+  bands or a rule only the ladder's profiles switch on raises
+  `LADDER_VERSION` (`golden-match.spec.ts` holds a fingerprint of a ladder
+  match); plain matches and `BALANCE_VERSION` stay.
+- **Level fixes go through the computer.** Every level setting is part of
+  a plain match, so a stall is fixed by what only the ladder's computer
+  does: a boss attacks once its colony sits at its cap (`attacksAtCap`)
+  instead of waiting for odds that never come - the leviathan on easy sat
+  at its cap until the clock ran out - and the computer pushes into the
+  enemies its cryo pulse froze (`pushesAfterCryo`): fired the old way, a
+  pulse gained the computer nothing per shot. Any other computer keeps
+  waiting at its cap: the lab found two colonies that charge each other at
+  their cap stall just as surely, since a capped colony refills its losses
+  faster than a front kills.
+- **The stand-in** (`REFERENCE_PROFILE`) plays like the hard computer but
+  slower and less exact, attacks at its cap too, and carries what a typical
+  player owns (`expected-player.ts`: the ladder in order on normal, losing
+  as often as the target curve says, a medallion between bronze and silver
+  per level, an achievement every third level; the first gene, then a toxin
+  bomb, then a level of each gene, a phage strike, and round the genes).
+- **The matrix** (`state/balance/report.ts`) plays the expected loadout on
+  every level and difficulty (most seeds on normal) and the gains - plain,
+  each gene maxed, each weapon alone, everything - on one level per chapter
+  over the first two minutes. A base-size level plays on the online grid,
+  on which a recorded match runs on the CPU (ADR 0011) - the grid the
+  medallion limits are measured on; a big map, which the game plays on the
+  GPU, on the coarse grid, which plays alike (the bots and the levels think
+  in base cells) at about 60 % of the cost. The curve is
+  measured by the stand-in's score: wins, and half of the matches still
+  undecided at the horizon (a stalled match won by annihilation alone
+  counts as undecided from the moment it stalls).
+- **The first calibration** (three rounds, baseline committed with
+  `LADDER_VERSION` 1) holds 26 of the 72 cells within 15 points of their
+  target. Two things keep it coarse: stalemates - two capped colonies on an
+  annihilation level, where neither bot breaks through, pin most early
+  levels near a score of a half - and the seeds the matrix can afford (six
+  on normal, three on easy and hard, one or two on a big map). Where the
+  skill band cannot reach the target, a per-level `STRENGTH` scales the
+  computer's budget (the Body chapter's computer gets more, the Reactor's
+  and the bosses' less), and the hard budget factor is 1.25, not 1.5: with
+  1.5 the stand-in never won on hard from the reactor on. The baseline's
+  remaining failed checks are listed in `balance-report.spec.ts`, so a new
+  baseline cannot add one unnoticed; the nightly run and
+  `tools/bacteria-game/balance/calibrate.ts` take the curve further.
+- **Medallion limits** of the base-size levels the stand-in won four times
+  or more on normal now come from the lab (online grid): silver at the
+  median win, gold at two thirds of it. Root Network and the leviathan keep
+  their silver and gold - a stand-in with everything bred wiped them out in
+  87-147 s and 22-147 s, on the coarse grid - with gold's losses at what it
+  lost (0.5 and 1 instead of 2.4 and 4).
+
 ### 4. Watching real matches (with ADR 0011/0012)
 
 - When `acceptReplay` (ADR 0011) stores a replay, it also adds to aggregated

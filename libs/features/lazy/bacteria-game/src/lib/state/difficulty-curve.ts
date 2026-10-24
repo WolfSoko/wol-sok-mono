@@ -159,29 +159,29 @@ export const SKILL: Readonly<
   Record<string, readonly [easy: number, normal: number, hard: number]>
 > = {
   'petri-dish': [0, 0, 0],
-  corridors: [0.05, 0.05, 0.05],
-  hourglass: [0.1, 0.1, 0.1],
-  'inner-ring': [0.12, 0.12, 0.12],
-  'pillar-field': [0.17, 0.17, 0.17],
-  'twin-chambers': [0.22, 0.22, 0.22],
-  serpentine: [0.27, 0.27, 0.27],
-  pistons: [0.32, 0.32, 0.32],
-  alveoli: [0.35, 0.35, 0.35],
-  mycelium: [0.4, 0.4, 0.4],
-  heartbeat: [0.45, 0.45, 0.45],
-  villi: [0.5, 0.5, 0.5],
-  'half-life': [0.52, 0.52, 0.52],
-  containment: [0.57, 0.57, 0.57],
-  'control-room': [0.62, 0.62, 0.62],
-  meltdown: [0.65, 0.65, 0.65],
-  'patient-zero': [0.62, 0.62, 0.62],
-  quarantine: [0.67, 0.67, 0.67],
-  'feeding-ground': [0.72, 0.72, 0.72],
-  expanse: [0.7, 0.7, 0.7],
-  archipelago: [0.77, 0.77, 0.77],
-  bloodstream: [0.84, 0.84, 0.84],
-  'root-network': [0.92, 0.92, 0.92],
-  leviathan: [1, 1, 1],
+  corridors: [0, 0, 0],
+  hourglass: [0.05, 0.15, 0],
+  'inner-ring': [0, 0, 0],
+  'pillar-field': [0.15, 0.25, 0.25],
+  'twin-chambers': [0, 0, 0.1],
+  serpentine: [0.3, 0.3, 0.2],
+  pistons: [0.3, 0.9, 1],
+  alveoli: [0.4, 0.7, 1],
+  mycelium: [0.85, 1, 1],
+  heartbeat: [0.55, 0.9, 1],
+  villi: [1, 1, 0.9],
+  'half-life': [1, 0.4, 0],
+  containment: [0.5, 0.35, 0],
+  'control-room': [0.6, 0, 0],
+  meltdown: [0.6, 0, 0.2],
+  'patient-zero': [0.5, 0, 0],
+  quarantine: [1, 0.9, 0.15],
+  'feeding-ground': [0.45, 0.8, 0.9],
+  expanse: [1, 0.6, 0.1],
+  archipelago: [1, 0.75, 1],
+  bloodstream: [1, 1, 0.3],
+  'root-network': [1, 0.35, 0.3],
+  leviathan: [0.35, 0.45, 0.6],
 };
 
 /**
@@ -189,7 +189,24 @@ export const SKILL: Readonly<
  * its skill alone cannot reach the target - 1 for every level not listed.
  * Calibrated with the balance lab, as {@link SKILL} is.
  */
-export const STRENGTH: Readonly<Partial<Record<string, number>>> = {};
+export const STRENGTH: Readonly<Partial<Record<string, number>>> = {
+  'inner-ring': 0.6,
+  'twin-chambers': 0.85,
+  pistons: 1.3,
+  alveoli: 1.2,
+  mycelium: 1.3,
+  heartbeat: 1.2,
+  villi: 1.4,
+  'half-life': 0.65,
+  containment: 0.55,
+  'control-room': 0.3,
+  meltdown: 0.35,
+  'patient-zero': 0.3,
+  quarantine: 1.1,
+  expanse: 0.8,
+  'root-network': 0.7,
+  leviathan: 0.5,
+};
 
 /** Times the computer's DNA budget on a level - see {@link STRENGTH}. */
 export function strengthOf(levelId: string): number {

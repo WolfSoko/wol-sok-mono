@@ -129,7 +129,7 @@ play each other.
   pass loadouts and `ladder: LADDER_VERSION` in the plan: the computer then
   plays its place on the difficulty curve (`state/difficulty-curve.ts`) and
   carries `computerLoadout` (`state/computer-opponent.ts`). Such a replay
-  is version 4. A change to `SKILL`, the bands or a rule only the ladder's
+  is version 4. A change to `SKILL`, `STRENGTH`, the bands or a rule only the ladder's
   profiles switch on (`attacksAtCap`, `pushesAfterCryo`) changes those matches:
   raise `LADDER_VERSION` and take the new fingerprint in
   `golden-match.spec.ts`. A plain match must not move (`BALANCE_VERSION`).

@@ -12,11 +12,11 @@ import { LateGameStorage } from '../testing/late-game-storage';
 
 const LIMITS = getLevel('hourglass').medal;
 
-/** A gold win: in time and clean, but with a boost. */
+/** A gold win: in time and clean, but with a boost - and a blitz, under 45 s. */
 const GOLD_WIN = aMatchRecord({
   levelId: 'hourglass',
   difficulty: 'hard',
-  durationSec: LIMITS.goldSec,
+  durationSec: Math.min(LIMITS.goldSec, 40),
   boostsFired: 1,
 });
 

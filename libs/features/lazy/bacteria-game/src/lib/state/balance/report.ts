@@ -271,8 +271,18 @@ export function summarize(
   for (const key of [...groups.keys()].sort()) {
     cells[key] = statsOf(groups.get(key) ?? []);
   }
+  // By level, in the order of the seeds - whatever order they were played in.
   const check: Record<string, number[][]> = {};
-  for (const { cell, match } of checked) {
+  const seedIndex = ({ levelId, seed }: NamedCell) => {
+    let n = 0;
+    while (labSeed(levelId, n) !== seed && n < 1000) {
+      n++;
+    }
+    return n;
+  };
+  for (const { cell, match } of [...checked].sort(
+    (a, b) => seedIndex(a.cell) - seedIndex(b.cell)
+  )) {
     (check[cell.levelId] ??= []).push([...match.shareAt]);
   }
   return {
@@ -405,32 +415,48 @@ export function findings(report: BalanceReport): Finding[] {
 }
 
 /**
- * Silver and gold inside the win times measured: gold no faster than the
- * fastest win on any difficulty, silver no slower than the slowest.
+ * A better player wins up to this much faster than the stand-in's fastest
+ * win - gold may ask for that much.
+ */
+export const GOLD_REACH = 2 / 3;
+/** Silver allowing this many times the slowest win is given to everyone. */
+export const SILVER_SLACK = 1.5;
+/** The fewest wins on a level the medallion check judges by. */
+const MEDAL_WINS = 3;
+
+/**
+ * Silver and gold inside the win times measured, over every difficulty:
+ * gold within reach of a player a third faster than the stand-in's
+ * fastest win, silver no laxer than half again its slowest - judged once
+ * the stand-in won often enough to tell.
  */
 function medalFindings(report: BalanceReport, levelId: string): Finding[] {
-  const wins = BOT_DIFFICULTIES.map(
+  const cells = BOT_DIFFICULTIES.map(
     ({ id: difficulty }) =>
       report.cells[cellKey({ levelId, difficulty, loadout: 'expected' })]
   ).filter(
     (stats): stats is CellStats =>
       stats !== undefined && stats.fastestWinSec !== null
   );
-  if (wins.length === 0) {
+  const wins = cells.reduce(
+    (sum, stats) => sum + Math.round(stats.winRate * stats.matches),
+    0
+  );
+  if (wins < MEDAL_WINS) {
     return [];
   }
   const fastest = Math.min(
-    ...wins.map((stats) => stats.fastestWinSec ?? Infinity)
+    ...cells.map((stats) => stats.fastestWinSec ?? Infinity)
   );
-  const slowest = Math.max(...wins.map((stats) => stats.slowestWinSec ?? 0));
+  const slowest = Math.max(...cells.map((stats) => stats.slowestWinSec ?? 0));
   const { medal } = getLevel(levelId);
   const found: Finding[] = [];
-  if (medal.goldSec < fastest) {
+  if (medal.goldSec < fastest * GOLD_REACH) {
     found.push(
       `${levelId}: gold asks for ${medal.goldSec} s, the fastest win took ${fastest} s`
     );
   }
-  if (medal.silverSec > slowest) {
+  if (medal.silverSec > slowest * SILVER_SLACK) {
     found.push(
       `${levelId}: silver allows ${medal.silverSec} s, the slowest win took ${slowest} s`
     );

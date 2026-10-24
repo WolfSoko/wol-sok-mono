@@ -22,7 +22,9 @@ import { getLevel, LEVELS } from './levels';
 export const BUDGET_FACTOR: Readonly<Record<BotDifficulty, number>> = {
   easy: 0.5,
   normal: 1,
-  hard: 1.5,
+  // The ADR's 1.5 left the stand-in no win on hard from the reactor on:
+  // the hard band's skill and this budget together outweighed it.
+  hard: 1.25,
 };
 
 /** How a chapter's computer spends its DNA. */

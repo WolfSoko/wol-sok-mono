@@ -18,7 +18,7 @@
  * file.jsonl` keeps each match as it is played, so a run that was cut off
  * goes on where it stopped.
  */
-import { fork } from 'node:child_process';
+import { ChildProcess, execFileSync, fork } from 'node:child_process';
 import {
   appendFileSync,
   existsSync,
@@ -140,6 +140,13 @@ function shardOf<T>(cells: readonly T[]): T[] {
   return cells.filter((_, n) => n % count === index - 1);
 }
 
+/** The workers playing - stopped with the runner, mid-match or not. */
+const workers = new Set<ChildProcess>();
+process.on('exit', () => workers.forEach((worker) => worker.kill()));
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(signal, () => process.exit(130));
+}
+
 /** Plays cells on worker processes, slowest first, in their order back. */
 export async function play(cells: readonly NamedCell[]): Promise<Played[]> {
   const results: (LabMatch | undefined)[] = new Array(cells.length);
@@ -179,6 +186,8 @@ export async function play(cells: readonly NamedCell[]): Promise<Played[]> {
               execArgv: ['--import', 'tsx'],
             }
           );
+          workers.add(worker);
+          worker.on('exit', () => workers.delete(worker));
           const feed = () => {
             const job = order[next++];
             if (job === undefined) {
@@ -288,6 +297,9 @@ function finish(config: LabConfig, raw: Raw): boolean {
       throw new Error('--update takes the full run on every level only.');
     }
     write(BASELINE, reportText(report));
+    // In the workspace's format, so the next baseline's diff shows only
+    // what moved.
+    execFileSync('npx', ['oxfmt', BASELINE], { cwd: ROOT, stdio: 'inherit' });
     console.log(`Baseline written: ${BASELINE}`);
   }
   console.log(summary(report, found, moved));
@@ -325,7 +337,7 @@ function summary(
     '## Score of the stand-in with the expected loadout - wins, undecided as half (target)',
     ...curveTable(report),
     '',
-    '## Medallion limits: the level\'s → measured (normal, expected loadout)',
+    "## Medallion limits: the level's → measured (normal, expected loadout)",
     ...medalTable(report),
     '',
     '## Gain in points of share against plain, on normal',

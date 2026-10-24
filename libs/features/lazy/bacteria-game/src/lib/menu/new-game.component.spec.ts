@@ -261,7 +261,7 @@ describe('NewGameComponent', () => {
 
     const line = host().querySelector('.enemy-evolution')?.textContent ?? '';
     expect(line).toContain('The enemy evolved:');
-    expect(line).toContain('Venom Glands 5');
+    expect(line).toContain('Venom Glands 3');
     expect(line).toContain('Cryo Pulse');
   });
 
