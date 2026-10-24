@@ -106,7 +106,9 @@ describe('evolution progress', () => {
       const second = withWeapon(first, 'toxin-bomb');
 
       expect(first.equipped).toBe('cryo-pulse');
+      expect(first.equipCount).toBe(1);
       expect(second.equipped).toBe('cryo-pulse');
+      expect(second.equipCount).toBe(1);
       expect(second.weapons).toEqual(['toxin-bomb', 'cryo-pulse']);
     });
 
@@ -160,21 +162,77 @@ describe('evolution progress', () => {
       expect(mergeEvolution(reset, old)).toBe(reset);
     });
 
-    it("takes the other's weapon carried, as long as it is held", () => {
-      const held = evolution({
-        weapons: ['toxin-bomb', 'cryo-pulse'],
-        equipped: 'toxin-bomb',
+    describe('the weapon carried', () => {
+      const weapons = ['toxin-bomb', 'cryo-pulse'] as const;
+      const both = (
+        a: EvolutionProgress,
+        b: EvolutionProgress
+      ): [EvolutionProgress, EvolutionProgress] => [
+        mergeEvolution(a, b),
+        mergeEvolution(b, a),
+      ];
+
+      it('is the one picked last, whichever way round the two come', () => {
+        const before = evolution({
+          weapons: [...weapons],
+          equipped: 'toxin-bomb',
+          equipCount: 1,
+        });
+        const picked = withEquipped(before, 'cryo-pulse');
+
+        for (const merged of both(before, picked)) {
+          expect(merged.equipped).toBe('cryo-pulse');
+          expect(merged.equipCount).toBe(2);
+        }
       });
 
-      expect(
-        mergeEvolution(held, evolution({ equipped: null })).equipped
-      ).toBeNull();
-      expect(
-        mergeEvolution(
-          held,
-          evolution({ weapons: ['cryo-pulse'], equipped: 'cryo-pulse' })
-        ).equipped
-      ).toBe('cryo-pulse');
+      it('survives a stale value that carries nothing yet', () => {
+        // Bought before the storage first answered: the stored value is
+        // still from before, without any weapon.
+        const bought = withWeapon(EMPTY_EVOLUTION, 'toxin-bomb');
+        const stale = evolution({ genes: { mitosis: 1 } });
+
+        for (const merged of both(bought, stale)) {
+          expect(merged.equipped).toBe('toxin-bomb');
+          expect(merged.genes).toEqual({ mitosis: 1 });
+        }
+      });
+
+      it('is put down when another device put it down last', () => {
+        const carried = evolution({
+          weapons: [...weapons],
+          equipped: 'toxin-bomb',
+          equipCount: 3,
+        });
+        const elsewhere = withEquipped(carried, null);
+
+        for (const merged of both(carried, elsewhere)) {
+          expect(merged.equipped).toBeNull();
+        }
+      });
+
+      it('is the same on both devices after picks made at once', () => {
+        const start = evolution({ weapons: [...weapons], equipCount: 2 });
+        const here = withEquipped(start, 'toxin-bomb');
+        const there = withEquipped(start, 'cryo-pulse');
+
+        const [one, other] = both(here, there);
+        expect(one).toEqual(other);
+        expect(one.equipped).toBe('cryo-pulse');
+        expect(both(here, withEquipped(here, null))[0].equipped).toBeNull();
+      });
+
+      it('reads a value stored before picks were counted as none counted', () => {
+        const old = parseEvolution({
+          weapons: [...weapons],
+          equipped: 'cryo-pulse',
+        });
+
+        expect(old.equipCount).toBe(0);
+        expect(
+          mergeEvolution(old, withEquipped(old, 'toxin-bomb')).equipped
+        ).toBe('toxin-bomb');
+      });
     });
 
     it("adopts a guest's purchases into the account's epoch", () => {
@@ -190,7 +248,27 @@ describe('evolution progress', () => {
         genes: { toxins: 2, mitosis: 1 },
         weapons: ['toxin-bomb'],
         equipped: 'toxin-bomb',
+        equipCount: 1,
         epoch: 1,
+      });
+    });
+
+    it('keeps the weapon an account carries when it adopts a guest', () => {
+      const account = evolution({
+        weapons: ['cryo-pulse'],
+        equipped: 'cryo-pulse',
+        equipCount: 2,
+      });
+      const guest = evolution({
+        weapons: ['toxin-bomb'],
+        equipped: 'toxin-bomb',
+        equipCount: 9,
+      });
+
+      expect(adoptEvolution(account, guest)).toMatchObject({
+        weapons: ['toxin-bomb', 'cryo-pulse'],
+        equipped: 'cryo-pulse',
+        equipCount: 2,
       });
     });
   });
@@ -201,6 +279,7 @@ describe('evolution progress', () => {
         genes: { metabolism: 4 },
         weapons: ['phage-strike'],
         equipped: 'phage-strike',
+        equipCount: 4,
         epoch: 3,
       });
       expect(parseEvolution(JSON.parse(JSON.stringify(stored)))).toEqual(
@@ -216,12 +295,14 @@ describe('evolution progress', () => {
           genes: { mitosis: 9, toxins: -1, nonsense: 3, flagella: 1.5 },
           weapons: ['toxin-bomb', 'laser', 'toxin-bomb', 4],
           equipped: 'cryo-pulse',
+          equipCount: -2,
           epoch: 'two',
         })
       ).toEqual({
         genes: { mitosis: 5 },
         weapons: ['toxin-bomb'],
         equipped: null,
+        equipCount: 0,
         epoch: 0,
       });
     });
@@ -249,5 +330,8 @@ describe('evolution progress', () => {
     expect(
       sameEvolution(evolution(), evolution({ weapons: ['toxin-bomb'] }))
     ).toBe(false);
+    expect(sameEvolution(evolution(), evolution({ equipCount: 1 }))).toBe(
+      false
+    );
   });
 });

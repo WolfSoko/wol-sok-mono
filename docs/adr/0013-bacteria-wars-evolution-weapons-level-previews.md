@@ -39,7 +39,10 @@ The shared model is `state/evolution.ts`.
   weapons owned and the weapon equipped, under its own storage key with a
   parser that keeps what it can read. Bought levels merge by taking the
   higher level per gene, so a purchase on one device is never undone by
-  another. DNA available = earned − cost of what is held; a merge that
+  another. The weapon equipped is the latest pick: each pick (putting it
+  down included) counts up `equipCount`, the higher count wins a merge, and
+  two devices that picked as often agree on the weapon later in the menus'
+  order. A value stored before the count reads as 0. DNA available = earned − cost of what is held; a merge that
   overspends shows 0 and blocks buying, it never takes anything back. A free
   reset refunds everything (an epoch counter wins over the max-merge).
 

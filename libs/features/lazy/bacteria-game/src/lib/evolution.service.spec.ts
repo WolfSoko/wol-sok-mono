@@ -49,6 +49,7 @@ describe('EvolutionService', () => {
       genes: { mitosis: 2 },
       weapons: [],
       equipped: null,
+      equipCount: 0,
       epoch: 0,
     });
   });
@@ -99,6 +100,7 @@ describe('EvolutionService', () => {
       genes: {},
       weapons: [],
       equipped: null,
+      equipCount: 0,
       epoch: 1,
     });
   });
@@ -183,6 +185,7 @@ describe('EvolutionService', () => {
         genes: { mitosis: 2, membrane: 1, toxins: 1 },
         weapons: ['toxin-bomb'],
         equipped: 'toxin-bomb',
+        equipCount: 0,
         epoch: 0,
       });
       expect(evolution.level('membrane')).toBe(1);
@@ -207,6 +210,64 @@ describe('EvolutionService', () => {
       });
     });
 
+    it('never undoes a weapon picked on another device with a purchase made before it heard', () => {
+      const evolution = createWith({
+        [PROGRESS_STORAGE_KEY]: progressWorth(2000),
+        [EVOLUTION_STORAGE_KEY]: {
+          weapons: ['toxin-bomb', 'cryo-pulse'],
+          equipped: 'cryo-pulse',
+        },
+      });
+      storage.flush();
+      // Another device puts the cryo pulse down for the toxin bomb...
+      storage.write(EVOLUTION_STORAGE_KEY, {
+        weapons: ['toxin-bomb', 'cryo-pulse'],
+        equipped: 'toxin-bomb',
+        equipCount: 1,
+      });
+      // ...while this one, still carrying the pulse, breeds a gene.
+      evolution.buyGene('toxins');
+
+      storage.flush();
+
+      expect(storage.stored(EVOLUTION_STORAGE_KEY)).toMatchObject({
+        genes: { toxins: 1 },
+        equipped: 'toxin-bomb',
+      });
+      expect(evolution.equipped()).toBe('toxin-bomb');
+    });
+
+    it('keeps a weapon picked here when a value from before the pick arrives', () => {
+      const evolution = createWith({
+        [PROGRESS_STORAGE_KEY]: progressWorth(2000),
+        [EVOLUTION_STORAGE_KEY]: {
+          weapons: ['toxin-bomb', 'cryo-pulse'],
+          equipped: 'cryo-pulse',
+        },
+      });
+      storage.flush();
+      evolution.equip('toxin-bomb');
+      // A stale value lands before the pick does: another device bred a
+      // gene, still carrying what it last heard of.
+      storage.update(EVOLUTION_STORAGE_KEY, () => ({
+        genes: { membrane: 1 },
+        weapons: ['toxin-bomb', 'cryo-pulse'],
+        equipped: 'cryo-pulse',
+      }));
+      // The stale value lands first, the pick still on its way.
+      storage.flushLast();
+
+      expect(evolution.equipped()).toBe('toxin-bomb');
+      expect(evolution.level('membrane')).toBe(1);
+
+      storage.flush();
+
+      expect(storage.stored(EVOLUTION_STORAGE_KEY)).toMatchObject({
+        genes: { membrane: 1 },
+        equipped: 'toxin-bomb',
+      });
+    });
+
     it('lets a reset win over purchases the storage still holds', () => {
       const evolution = createWith({
         [PROGRESS_STORAGE_KEY]: progressWorth(2000),
@@ -221,6 +282,7 @@ describe('EvolutionService', () => {
         genes: {},
         weapons: [],
         equipped: null,
+        equipCount: 0,
         epoch: 3,
       });
       expect(evolution.level('mitosis')).toBe(0);

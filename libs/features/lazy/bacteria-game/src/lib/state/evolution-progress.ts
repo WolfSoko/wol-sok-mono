@@ -17,9 +17,12 @@ import { isObject } from './is-object';
  * to spend is the DNA earned less the cost of what is held.
  *
  * Purchases merge in a way that can only gain: per gene the higher level,
- * the weapons of both. A reset is free and gives every strand back; it
- * counts up the epoch, and a higher epoch wins a merge outright, so a reset
- * on one device is not undone by the purchases another one still holds.
+ * the weapons of both. The weapon carried is the latest pick: every pick
+ * counts up `equipCount`, and the higher count wins a merge, so a stale value
+ * from the storage or another device never undoes a pick made since. A reset
+ * is free and gives every strand back; it counts up the epoch, and a higher
+ * epoch wins a merge outright, so a reset on one device is not undone by the
+ * purchases another one still holds.
  */
 export interface EvolutionProgress {
   /** The level bred per gene - absent for none. */
@@ -28,6 +31,11 @@ export interface EvolutionProgress {
   weapons: readonly WeaponId[];
   /** The weapon carried into a match, null for none. */
   equipped: WeaponId | null;
+  /**
+   * How often the weapon carried was picked, putting one down included -
+   * the higher one wins a merge. 0 in a value stored before it was kept.
+   */
+  equipCount: number;
   /** How often everything was reset - the higher one wins a merge. */
   epoch: number;
 }
@@ -36,6 +44,7 @@ export const EMPTY_EVOLUTION: EvolutionProgress = {
   genes: {},
   weapons: [],
   equipped: null,
+  equipCount: 0,
   epoch: 0,
 };
 
@@ -170,14 +179,18 @@ export function withWeapon(
   if (evolution.weapons.includes(weapon)) {
     return evolution;
   }
-  return {
+  const bought = {
     ...evolution,
     weapons: sortedWeapons([...evolution.weapons, weapon]),
-    equipped: evolution.equipped ?? weapon,
   };
+  return evolution.equipped === null ? withEquipped(bought, weapon) : bought;
 }
 
-/** A weapon carried into the next match - null for none, one not held is ignored. */
+/**
+ * A weapon carried into the next match - null for none, one not held is
+ * ignored. A pick counts up `equipCount`, so it wins a merge with any value
+ * from before it.
+ */
 export function withEquipped(
   evolution: EvolutionProgress,
   weapon: WeaponId | null
@@ -188,7 +201,11 @@ export function withEquipped(
   if (weapon !== null && !evolution.weapons.includes(weapon)) {
     return evolution;
   }
-  return { ...evolution, equipped: weapon };
+  return {
+    ...evolution,
+    equipped: weapon,
+    equipCount: evolution.equipCount + 1,
+  };
 }
 
 /**
@@ -205,8 +222,8 @@ export function resetEvolution(
 /**
  * Two evolutions in one: a higher epoch wins outright - it was reset after
  * the other's purchases. On the same epoch each gene keeps the higher level
- * and the weapons are those of both; the weapon carried is `other`'s, as long
- * as it is held.
+ * and the weapons are those of both; the weapon carried is the one picked
+ * last ({@link laterPick}). The same whichever way round the two come.
  */
 export function mergeEvolution(
   held: EvolutionProgress,
@@ -226,7 +243,37 @@ export function mergeEvolution(
       weapons: sortedWeapons([...merged.weapons, ...added]),
     };
   }
-  return withEquipped(merged, other.equipped);
+  const pick = laterPick(held, other);
+  if (
+    pick.equipped !== merged.equipped ||
+    pick.equipCount !== merged.equipCount
+  ) {
+    merged = {
+      ...merged,
+      equipped: pick.equipped,
+      equipCount: pick.equipCount,
+    };
+  }
+  return merged;
+}
+
+/**
+ * Of two evolutions, the one whose weapon carried was picked last: the
+ * higher `equipCount`. Two devices that picked as often, each its own
+ * weapon, agree on the one later in the menus' order - none comes first.
+ */
+function laterPick(
+  a: EvolutionProgress,
+  b: EvolutionProgress
+): EvolutionProgress {
+  if (a.equipCount !== b.equipCount) {
+    return a.equipCount > b.equipCount ? a : b;
+  }
+  return weaponRank(a.equipped) >= weaponRank(b.equipped) ? a : b;
+}
+
+function weaponRank(weapon: WeaponId | null): number {
+  return weapon === null ? -1 : WEAPONS.findIndex(({ id }) => id === weapon);
 }
 
 /**
@@ -239,12 +286,17 @@ export function adoptEvolution(
   account: EvolutionProgress,
   guest: EvolutionProgress
 ): EvolutionProgress {
-  return mergeEvolution(account, {
+  const merged = mergeEvolution(account, {
     ...guest,
     epoch: account.epoch,
-    // The account keeps the weapon it carries, if it carries one.
-    equipped: account.equipped ?? guest.equipped,
+    equipped: account.equipped,
+    equipCount: account.equipCount,
   });
+  // The account keeps the weapon it carries, if it carries one; else it
+  // takes up the guest's, as a pick of its own.
+  return account.equipped === null && guest.equipped !== null
+    ? withEquipped(merged, guest.equipped)
+    : merged;
 }
 
 /** What a player takes into a match against the computer. */
@@ -280,12 +332,17 @@ export function parseEvolution(value: unknown): EvolutionProgress {
       )
     : [];
   const equipped = value['equipped'];
+  const equipCount = value['equipCount'];
   const epoch = value['epoch'];
   return {
     genes,
     weapons,
     equipped:
       isWeaponId(equipped) && weapons.includes(equipped) ? equipped : null,
+    equipCount:
+      Number.isInteger(equipCount) && (equipCount as number) > 0
+        ? (equipCount as number)
+        : 0,
     epoch:
       Number.isInteger(epoch) && (epoch as number) > 0 ? (epoch as number) : 0,
   };
@@ -299,6 +356,7 @@ export function sameEvolution(
   return (
     a.epoch === b.epoch &&
     a.equipped === b.equipped &&
+    a.equipCount === b.equipCount &&
     a.weapons.length === b.weapons.length &&
     a.weapons.every((weapon, index) => b.weapons[index] === weapon) &&
     GENES.every(({ id }) => levelOf(a, id) === levelOf(b, id))
