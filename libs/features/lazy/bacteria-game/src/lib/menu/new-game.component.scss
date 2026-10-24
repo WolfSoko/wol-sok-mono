@@ -262,6 +262,12 @@
   min-height: 0;
 }
 
+// The online lobby before a match: no briefing, the lobby on its own.
+.start-step.lobby-only {
+  grid-template-columns: minmax(0, 32rem);
+  justify-content: center;
+}
+
 // The rule and the zones of the level, each in its colour.
 .facts {
   display: flex;

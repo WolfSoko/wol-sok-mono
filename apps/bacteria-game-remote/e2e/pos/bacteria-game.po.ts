@@ -102,6 +102,18 @@ export class BacteriaGamePo {
     await this.nextCta.click();
   }
 
+  /** A new online game: straight to the lobby, which has no level step. */
+  public async setUpOnline(): Promise<void> {
+    await this.playCta.click();
+    await this.chooseMode('Online');
+  }
+
+  /** Opens an online match from the lobby, on a level picked first. */
+  public async openMatch(level = 'Petri Dish'): Promise<void> {
+    await this.page.getByRole('button', { name: 'Open a match' }).click();
+    await this.chooseLevel(level);
+  }
+
   /** A new campaign game, started on the level the ladder offers. */
   public async startMatch(): Promise<void> {
     await this.setUp();
