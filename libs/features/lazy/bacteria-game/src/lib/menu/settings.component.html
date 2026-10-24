@@ -4,20 +4,6 @@
   (back)="back.emit()"
 />
 <div class="screen-sections">
-  <section class="screen-section" aria-labelledby="settings-colonies">
-    <h3 id="settings-colonies" class="section-title">
-      {{ "settings.colonies.title" | t }}
-    </h3>
-    <feat-lazy-bac-game-colony-colors
-      class="stacked"
-      [mode]="mode()"
-      [colors]="colors()"
-      [disabled]="locked()"
-      [locks]="colorLocks()"
-      (colorChange)="colorChange.emit($event)"
-    />
-    <p class="section-note">{{ "settings.colonies.swapNote" | t }}</p>
-  </section>
   <section class="screen-section" aria-labelledby="settings-display">
     <h3 id="settings-display" class="section-title">
       {{ "settings.display.title" | t }}
@@ -44,22 +30,6 @@
               <small class="arena-lock">- {{ level.lock | gameText }}</small>
             }
           </mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field
-      class="look-picker"
-      appearance="outline"
-      subscriptSizing="dynamic"
-    >
-      <mat-label>{{ "settings.display.look" | t }}</mat-label>
-      <mat-select
-        panelWidth=""
-        [value]="settings.look()"
-        (selectionChange)="settings.setLook($event.value)"
-      >
-        @for (option of looks; track option.id) {
-          <mat-option [value]="option.id">{{ option.label | t }}</mat-option>
         }
       </mat-select>
     </mat-form-field>

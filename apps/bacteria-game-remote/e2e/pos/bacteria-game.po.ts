@@ -24,6 +24,7 @@ export class BacteriaGamePo {
   /** The stage while it is laid over the whole viewport. */
   public readonly fullscreenStage: Locator;
   public readonly joysticks: Locator;
+  public readonly colonyCta: Locator;
   public readonly settingsCta: Locator;
   public readonly helpCta: Locator;
   public readonly backCta: Locator;
@@ -58,6 +59,7 @@ export class BacteriaGamePo {
     this.stage = page.locator('.stage');
     this.fullscreenStage = page.locator('.stage.fullscreen');
     this.joysticks = page.getByLabel(/^Joystick /);
+    this.colonyCta = page.getByRole('button', { name: 'My Colony' });
     this.settingsCta = page.getByRole('button', { name: 'Settings' });
     this.helpCta = page.getByRole('button', { name: 'How to play' });
     this.backCta = page.getByRole('button', { name: 'Menu', exact: true });

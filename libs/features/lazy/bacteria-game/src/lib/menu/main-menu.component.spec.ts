@@ -38,6 +38,15 @@ describe('MainMenuComponent', () => {
     return found;
   }
 
+  it('opens My Colony', () => {
+    const opened: string[] = [];
+    fixture.componentInstance.open.subscribe((page) => opened.push(page));
+
+    button('My Colony').click();
+
+    expect(opened).toEqual(['colony']);
+  });
+
   it('shows the campaign so far', () => {
     const card = host.querySelector('.card')?.textContent ?? '';
     expect(card).toContain('5 of 20 levels open');

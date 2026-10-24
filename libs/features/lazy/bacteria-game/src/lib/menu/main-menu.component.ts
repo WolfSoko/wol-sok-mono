@@ -31,7 +31,7 @@ import {
 } from '../support/support-dialog.component';
 
 /** The sub screens the main menu opens. */
-export type MenuPage = 'profile' | 'friends' | 'settings' | 'help';
+export type MenuPage = 'colony' | 'profile' | 'friends' | 'settings' | 'help';
 
 /**
  * The landing screen of the game: the title, a new game, the

@@ -1,0 +1,62 @@
+<feat-lazy-bac-game-screen-header
+  [title]="'colony.title' | t"
+  (back)="back.emit()"
+/>
+<p class="tagline">{{ "colony.tagline" | t }}</p>
+<div class="hero">
+  <feat-lazy-bac-game-look-preview
+    class="hero-preview"
+    [look]="settings.look()"
+    [color]="playerRgb()"
+    [size]="heroSize"
+    [animate]="true"
+    [label]="'colony.preview' | t: { skin: skinName() }"
+  />
+</div>
+<div class="screen-sections">
+  <section class="screen-section" aria-labelledby="colony-skin">
+    <h3 id="colony-skin" class="section-title">
+      {{ "colony.skin.title" | t }}
+    </h3>
+    <div class="skins" role="group" [attr.aria-label]="'colony.skin.title' | t">
+      @for (skin of skins; track skin.id) {
+        @let picked = settings.look() === skin.id;
+        <button
+          type="button"
+          class="skin"
+          [attr.aria-pressed]="picked"
+          [class.picked]="picked"
+          (click)="settings.setLook(skin.id)"
+        >
+          <feat-lazy-bac-game-look-preview
+            class="skin-preview"
+            [look]="skin.id"
+            [color]="playerRgb()"
+          />
+          <span class="skin-name">{{ skin.label | t }}</span>
+        </button>
+      }
+    </div>
+    <p class="section-note">{{ "colony.skin.note" | t }}</p>
+  </section>
+  <section class="screen-section" aria-labelledby="colony-color">
+    <h3 id="colony-color" class="section-title">
+      {{ "colony.color.title" | t }}
+    </h3>
+    <feat-lazy-bac-game-colony-colors
+      class="stacked"
+      [mode]="mode()"
+      [colors]="colors()"
+      [disabled]="locked()"
+      [locks]="colorLocks()"
+      (colorChange)="colorChange.emit($event)"
+    />
+    <p class="section-note">{{ "colony.color.swapNote" | t }}</p>
+  </section>
+  <section class="screen-section more" aria-labelledby="colony-more">
+    <h3 id="colony-more" class="section-title">
+      {{ "colony.more.title" | t }}
+    </h3>
+    <p>{{ "colony.more.note" | t }}</p>
+  </section>
+</div>

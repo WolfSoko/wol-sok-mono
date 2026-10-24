@@ -17,7 +17,6 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -40,7 +39,7 @@ import {
   ResizedEvent,
   ShowFpsComponent,
 } from '@wolsok/ui-kit';
-import { asapScheduler, defer, fromEvent, Observable, timer } from 'rxjs';
+import { asapScheduler, defer, Observable, timer } from 'rxjs';
 import { defaultIfEmpty, filter, last, map, take, tap } from 'rxjs/operators';
 import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
 import { createArenaPainter } from './arena/create-arena-painter';
@@ -67,7 +66,9 @@ import { DailyCard } from './menu/menu-cards';
 import { FriendsScreenComponent } from './menu/friends-screen.component';
 import { HelpComponent } from './menu/help.component';
 import { ProfileComponent } from './menu/profile.component';
+import { MyColonyComponent } from './menu/my-colony.component';
 import { SettingsComponent } from './menu/settings.component';
+import { prefersReducedMotion } from './reduced-motion';
 import { SwarmComponent } from './menu/swarm.component';
 import {
   getColonyColor,
@@ -184,6 +185,7 @@ interface HudGoal {
     ElemResizedDirective,
     WinnerComponent,
     SwarmComponent,
+    MyColonyComponent,
     SettingsComponent,
     HelpComponent,
     FriendsScreenComponent,
@@ -1758,6 +1760,7 @@ const ARENA_FRAME_PX = 6;
 export type MenuScreen =
   | 'menu'
   | 'new-game'
+  | 'colony'
   | 'profile'
   | 'friends'
   | 'settings'
@@ -1818,19 +1821,5 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
 function isTouchDevice(): boolean {
   return (
     typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
-  );
-}
-
-/** Whether the system asks for less motion - following it as it changes. */
-function prefersReducedMotion(): Signal<boolean> {
-  if (typeof matchMedia !== 'function') {
-    return signal(false);
-  }
-  const query = matchMedia('(prefers-reduced-motion: reduce)');
-  return toSignal(
-    fromEvent<MediaQueryListEvent>(query, 'change').pipe(
-      map((event) => event.matches)
-    ),
-    { initialValue: query.matches }
   );
 }

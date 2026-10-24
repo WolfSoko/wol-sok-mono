@@ -171,6 +171,17 @@
               (back)="show('menu')"
             />
           }
+          @case ("colony") {
+            <feat-lazy-bac-game-my-colony
+              class="screen"
+              [mode]="mode()"
+              [colors]="colors()"
+              [locked]="running()"
+              [colorLocks]="colorLocks()"
+              (colorChange)="selectColor($event)"
+              (back)="show('menu')"
+            />
+          }
           @case ("profile") {
             <feat-lazy-bac-game-profile
               class="screen"
@@ -192,20 +203,16 @@
           @case ("settings") {
             <feat-lazy-bac-game-settings
               class="screen"
-              [mode]="mode()"
-              [colors]="colors()"
               [locked]="running()"
               [arenaSize]="arena()"
               [nativeFullscreenSupported]="nativeFullscreenSupported()"
               [nativeFullscreen]="nativeFullscreen()"
               [backLabel]="settingsBackLabel()"
               [vibrationSupported]="vibrationSupported"
-              (colorChange)="selectColor($event)"
               (soundChange)="setSound($event)"
               (effectsChange)="setEffects($event)"
               (effectsVolumePreview)="sound.previewEffects()"
               (vibrationChange)="setVibration($event)"
-              [colorLocks]="colorLocks()"
               [arenaLocks]="arenaLocks()"
               [activeArena]="campaign.activeArena()"
               (nativeFullscreenChange)="setNativeFullscreen($event)"

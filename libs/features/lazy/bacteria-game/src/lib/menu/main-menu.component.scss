@@ -134,6 +134,10 @@
   mat-icon {
     color: var(--bw-soft);
 
+    &.player {
+      color: var(--bw-player);
+    }
+
     &.gold {
       color: var(--bw-gold);
     }

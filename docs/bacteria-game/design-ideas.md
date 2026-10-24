@@ -208,7 +208,9 @@ Things that exist already can become rewards:
 - **Crosshair shapes** and **boost sounds** - small, cheap variations.
 
 A locked item shows greyed out with its condition ("Gold on Hourglass"), so the
-player always knows what the next thing costs.
+player always knows what the next thing costs. The _My Colony_ screen is where
+the cosmetics live: the skin (every look, with a preview) and the colours today,
+the rest as it comes.
 
 ### 1.7 Daily level and streaks
 
