@@ -56,9 +56,9 @@ export function isBlockedName(name: string): boolean {
   if (posesAsLabel(name)) {
     return true;
   }
-  const plain = [...name.toLowerCase()]
-    .map((char) => SWAPS[char] ?? char)
-    .join('')
+  const plain = name
+    .toLowerCase()
+    .replace(/[013457@$]/g, (char) => SWAPS[char] ?? char)
     .replace(/[^a-zäöüß]/g, '');
   return BLOCKED.some((word) => plain.includes(word.replace(/ /g, '')));
 }
