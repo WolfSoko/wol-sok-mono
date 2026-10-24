@@ -43,18 +43,19 @@ import {
   medalTable,
   NamedCell,
   summarize,
+  versionDrift,
 } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/report';
 import {
-  getLevel,
+  isBigMap,
+  isLadderLevel,
   LEVELS,
-  levelSize,
 } from '../../../libs/features/lazy/bacteria-game/src/lib/state/levels';
 import type { WorkerResult } from './worker';
 
 /** The workspace, where Nx runs the targets from. */
 const ROOT = process.cwd();
 /** The committed baseline. */
-export const BASELINE = resolve(
+const BASELINE = resolve(
   ROOT,
   'libs/features/lazy/bacteria-game/src/lib/state/balance/balance-report.json'
 );
@@ -92,9 +93,7 @@ function levelIds(): string[] {
   if (asked === undefined) {
     return LEVELS.map(({ id }) => id);
   }
-  const unknown = asked.filter(
-    (id) => !LEVELS.some((level) => level.id === id)
-  );
+  const unknown = asked.filter((id) => !isLadderLevel(id));
   if (unknown.length > 0) {
     throw new Error(`Unknown levels: ${unknown.join(', ')}`);
   }
@@ -143,7 +142,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 }
 
 /** Plays cells on worker processes, slowest first, in their order back. */
-export async function play(cells: readonly NamedCell[]): Promise<Played[]> {
+async function play(cells: readonly NamedCell[]): Promise<Played[]> {
   const results: (LabMatch | undefined)[] = new Array(cells.length);
   // A journal keeps every match as it is played: a run cut off goes on
   // where it stopped.
@@ -251,7 +250,7 @@ function readJournal(path: string): Map<string, Played> {
 
 /** Roughly what a cell costs: a big map's ticks cost its area. */
 function weight(cell: NamedCell): number {
-  return cell.horizonSec * (levelSize(getLevel(cell.levelId)) > 1 ? 4 : 1);
+  return cell.horizonSec * (isBigMap(cell.levelId) ? 4 : 1);
 }
 
 function readReport(path: string): BalanceReport | null {
@@ -376,13 +375,10 @@ async function main(): Promise<void> {
       );
       const checked = await play(cells);
       const run = summarize(baseline.config, [], checked);
+      // A check run plays no cells of the full matrix: only its versions
+      // and its shares compare.
       const moved = [
-        ...(baseline.balanceVersion === run.balanceVersion
-          ? []
-          : [`BALANCE_VERSION moved: run "full --update" to re-baseline`]),
-        ...(baseline.ladderVersion === run.ladderVersion
-          ? []
-          : [`LADDER_VERSION moved: run "full --update" to re-baseline`]),
+        ...versionDrift(baseline, run),
         ...checkDrift(baseline, run),
       ];
       if (moved.length > 0) {
@@ -419,25 +415,12 @@ async function main(): Promise<void> {
       return;
     }
     case 'merge': {
-      const files = rest.filter(
-        (arg) => !arg.startsWith('--') && /\.jsonl?$/.test(arg)
-      );
-      // A journal holds matches of the full run: the short check's cells
-      // are the ones its horizon tells.
-      const raws = files.map((file): Raw => {
-        if (!file.endsWith('.jsonl')) {
-          return JSON.parse(readFileSync(resolve(ROOT, file), 'utf8')) as Raw;
-        }
-        const played = [...readJournal(resolve(ROOT, file)).values()];
-        return {
-          played: played.filter(
-            ({ cell }) => cell.horizonSec !== FULL_RUN.checkHorizonSec
-          ),
-          checked: played.filter(
-            ({ cell }) => cell.horizonSec === FULL_RUN.checkHorizonSec
-          ),
-        };
-      });
+      // The raw parts of `full --raw`.
+      const raws = rest
+        .filter((arg) => !arg.startsWith('--') && arg.endsWith('.json'))
+        .map(
+          (file) => JSON.parse(readFileSync(resolve(ROOT, file), 'utf8')) as Raw
+        );
       const raw: Raw = {
         played: raws.flatMap(({ played }) => played),
         checked: raws.flatMap(({ checked }) => checked),
@@ -455,10 +438,7 @@ async function main(): Promise<void> {
   }
 }
 
-// Run as a script, not when another script borrows `play`.
-if (require.main === module) {
-  void main().catch((error: unknown) => {
-    console.error(error);
-    process.exitCode = 1;
-  });
-}
+void main().catch((error: unknown) => {
+  console.error(error);
+  process.exitCode = 1;
+});

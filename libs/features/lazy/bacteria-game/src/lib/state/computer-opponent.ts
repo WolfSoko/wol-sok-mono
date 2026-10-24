@@ -1,7 +1,14 @@
 import { BotDifficulty } from './bot-controller';
 import { ChapterId, CHAPTERS } from './chapters';
 import { ladderPosition, strengthOf } from './difficulty-curve';
-import { GeneId, GENES, Loadout, PLAIN_LOADOUT, WeaponId } from './evolution';
+import {
+  GeneId,
+  GENES,
+  Loadout,
+  MAX_GENE_LEVEL,
+  PLAIN_LOADOUT,
+  WeaponId,
+} from './evolution';
 import { expectedDna, Purchase, spend } from './expected-player';
 import { getLevel, LEVELS } from './levels';
 
@@ -131,6 +138,8 @@ function characterOf(levelId: string): Character | null {
 function genePurchases(favourites: readonly GeneId[]): Purchase[] {
   const others = ALL_GENES.filter((gene) => !favourites.includes(gene));
   const levels = (genes: readonly GeneId[]): Purchase[] =>
-    [1, 2, 3, 4, 5].flatMap(() => genes.map((gene) => ({ gene })));
+    Array.from({ length: MAX_GENE_LEVEL }, () =>
+      genes.map((gene): Purchase => ({ gene }))
+    ).flat();
   return [...levels(favourites), ...levels(others)];
 }

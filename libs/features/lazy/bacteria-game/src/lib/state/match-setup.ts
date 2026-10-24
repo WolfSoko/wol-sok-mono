@@ -6,6 +6,7 @@ import {
 } from './evolution';
 import { BotDifficulty } from './bot-controller';
 import { getColonyColor, NEUTRAL_COLOR, toPlayerColor } from './colony-colors';
+import { computerLoadout } from './computer-opponent';
 import { computerProfile, LADDER_VERSION } from './difficulty-curve';
 import { NEUTRAL_TRAITS } from './game-balance';
 import type { GameMode } from './game-mode';
@@ -46,9 +47,10 @@ export interface MatchPlan {
    * one between two players or online. Against a ghost only the left
    * seat's counts: the ghost plays with the loadout its run recorded. With
    * them, a boss carries its weapon too, and the computer plays as its
-   * place on the ladder asks (`difficulty-curve.ts`, ADR 0016): a match
-   * without them plays as it did before there was evolution, which keeps
-   * its replays.
+   * place on the ladder asks (`difficulty-curve.ts`, ADR 0016) - and,
+   * with `ladder`, carries the ladder's loadout (`computerLoadout`),
+   * whatever the right seat's here says. A match without them plays as it
+   * did before there was evolution, which keeps its replays.
    */
   loadouts?: readonly [Loadout, Loadout];
   /**
@@ -106,16 +108,21 @@ export function planMatch(
     ? [1, 1]
     : startScales(plan.headStart);
   const [leftSpot, rightSpot] = spawnSpots(width, height);
-  const loadouts = !versusComputer
-    ? null
-    : ghost === null
-      ? (plan.loadouts ?? null)
-      : ghostLoadouts(plan, ghost);
   // The ladder's computer comes with the loadouts: its skill follows the
   // level's place on the ladder - a match of its own, plain loadouts or
   // not. A ghost race has no computer.
   const laddered =
-    loadouts !== null && ghost === null && plan.ladder === LADDER_VERSION;
+    versusComputer &&
+    ghost === null &&
+    plan.loadouts !== undefined &&
+    plan.ladder === LADDER_VERSION;
+  const loadouts = !versusComputer
+    ? null
+    : ghost !== null
+      ? ghostLoadouts(plan, ghost)
+      : laddered && plan.loadouts !== undefined
+        ? ladderLoadouts(plan, plan.loadouts[0])
+        : (plan.loadouts ?? null);
   return {
     evolved:
       loadouts !== null &&
@@ -199,6 +206,19 @@ export function planMatch(
             ]),
     },
   };
+}
+
+/**
+ * The seats' loadouts against the ladder's computer: the human's from the
+ * plan, the computer's what the ladder gives it there - never the plan's,
+ * so a replay's header cannot hand it another one: a header that names
+ * another plays another match, which misses the recorded checksum.
+ */
+function ladderLoadouts(
+  plan: MatchPlan,
+  human: Loadout
+): readonly [Loadout, Loadout] {
+  return [human, computerLoadout(plan.levelId, plan.difficulty)];
 }
 
 /**

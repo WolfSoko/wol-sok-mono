@@ -3,13 +3,12 @@ import { join } from 'node:path';
 import { BOT_DIFFICULTIES } from '../bot-controller';
 import { LADDER_VERSION, targetWinRate } from '../difficulty-curve';
 import { BALANCE_VERSION } from '../game-balance';
-import { getLevel, LEVELS, levelSize } from '../levels';
-import { CHECK_SECONDS, playLabMatch } from './lab-match';
+import { isBigMap, LEVELS } from '../levels';
+import { playLabMatch } from './lab-match';
 import {
   BalanceReport,
-  cellKey,
   checkMatrix,
-  DRIFT,
+  expectedStats,
   findings,
   FULL_RUN,
   GAIN_LEVELS,
@@ -20,7 +19,7 @@ import {
  * The balance lab's committed baseline (ADR 0016) held to the ADR's checks.
  * The lab itself plays minutes per match, so it runs as its own Nx targets
  * (`feat-lazy-bacteria-game:balance-check`, `:balance`) and nightly; here
- * the baseline is checked, and one short match shows it is still what the
+ * the baseline is checked, and a few seconds of a lab match pin what the
  * lab plays.
  */
 const REPORT = JSON.parse(
@@ -80,13 +79,10 @@ describe('the balance baseline', () => {
   it('covers every level and difficulty of the ladder', () => {
     for (const { id: levelId } of LEVELS) {
       for (const { id: difficulty } of BOT_DIFFICULTIES) {
-        expect(
-          REPORT.cells[cellKey({ levelId, difficulty, loadout: 'expected' })]
-            ?.matches
-        ).toBe(
-          (levelSize(getLevel(levelId)) > 1
-            ? FULL_RUN.bigMapSeeds
-            : FULL_RUN.curveSeeds)[difficulty]
+        expect(expectedStats(REPORT, levelId, difficulty)?.matches).toBe(
+          (isBigMap(levelId) ? FULL_RUN.bigMapSeeds : FULL_RUN.curveSeeds)[
+            difficulty
+          ]
         );
       }
       expect(REPORT.check[levelId]).toHaveLength(FULL_RUN.checkSeeds);
@@ -109,8 +105,7 @@ describe('the balance baseline', () => {
   it('holds the target curve as far as it did', () => {
     const held = LEVELS.flatMap(({ id: levelId }) =>
       BOT_DIFFICULTIES.map(({ id: difficulty }) => {
-        const stats =
-          REPORT.cells[cellKey({ levelId, difficulty, loadout: 'expected' })];
+        const stats = expectedStats(REPORT, levelId, difficulty);
         return (
           stats !== undefined &&
           Math.abs(stats.score - targetWinRate(levelId, difficulty)) <= 0.15
@@ -122,13 +117,23 @@ describe('the balance baseline', () => {
   });
 
   it('is what the lab plays today', () => {
-    // The first half minute of the short check's first match.
-    const [cell] = checkMatrix(FULL_RUN, ['hourglass']);
-    const match = playLabMatch({ ...cell, horizonSec: CHECK_SECONDS[0] });
-    const share = REPORT.check['hourglass'][0][0];
+    // Six seconds of the short check's first match, on the coarse grid: the
+    // stand-in (its profile and loadout) against the ladder's computer (its
+    // weapon and genes). A change that moves it moves the lab - take the new
+    // numbers with a new baseline.
+    const [cell] = checkMatrix(FULL_RUN, ['quarantine']);
+    const match = playLabMatch({ ...cell, horizonSec: 6, resolution: 'low' });
 
-    expect(Math.abs(match.shareAt[0] - share)).toBeLessThanOrEqual(
-      DRIFT.checkShare
-    );
+    expect(match).toEqual({
+      won: null,
+      durationSec: 6,
+      medal: null,
+      lowestSizeRatio: 0.908,
+      lostShare: 0.095,
+      stalled: false,
+      share: 0.679,
+      shareAt: [0.685, 0.685, 0.685],
+      shots: [],
+    });
   });
 });

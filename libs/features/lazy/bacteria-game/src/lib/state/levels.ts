@@ -592,6 +592,11 @@ export function levelSize(level: Level): number {
   return levelMap(level).size ?? 1;
 }
 
+/** True for the id of a level on a map bigger than the screen. */
+export function isBigMap(levelId: string): boolean {
+  return levelSize(getLevel(levelId)) > 1;
+}
+
 /**
  * True for a level an online match may be played on: not a big map, which
  * the CPU simulation both devices run cannot keep up with.

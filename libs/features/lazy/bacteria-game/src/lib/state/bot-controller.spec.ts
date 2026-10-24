@@ -32,6 +32,8 @@ function view(overrides: Partial<BotView> = {}): BotView {
     objective: null,
     routes: straightRoutes(overrides.own ?? colony(80, 70, 100)),
     weapon: null,
+    // No cap in sight.
+    capacity: Infinity,
     ...overrides,
   };
 }
@@ -407,7 +409,13 @@ describe('BotController with a weapon', () => {
     around: { own: number; enemy: number },
     ready = true
   ): BotWeaponView {
-    return { id, ready, radius: 10, around: () => around };
+    return {
+      id,
+      ready,
+      radius: 10,
+      at: { x: 240, y: 70 },
+      around: () => around,
+    };
   }
 
   it.each<BotWeaponView['id']>(['toxin-bomb', 'cryo-pulse', 'phage-strike'])(

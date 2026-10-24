@@ -15,13 +15,14 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { BalanceReport } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/report';
-import { cellKey } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/report';
+import { expectedStats } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/report';
 import { BOT_DIFFICULTIES } from '../../../libs/features/lazy/bacteria-game/src/lib/state/bot-controller';
 import {
   SKILL,
   strengthOf,
   targetWinRate,
 } from '../../../libs/features/lazy/bacteria-game/src/lib/state/difficulty-curve';
+import { clamp } from '../../../libs/features/lazy/bacteria-game/src/lib/state/geometry';
 import { LEVELS } from '../../../libs/features/lazy/bacteria-game/src/lib/state/levels';
 
 /** Skill moved per point of win rate off the target. */
@@ -42,8 +43,7 @@ for (const { id: levelId } of LEVELS) {
   let beyond = 0;
   const skills = BOT_DIFFICULTIES.map(({ id: difficulty }, column) => {
     const skill = SKILL[levelId]?.[column] ?? 0;
-    const stats =
-      report.cells[cellKey({ levelId, difficulty, loadout: 'expected' })];
+    const stats = expectedStats(report, levelId, difficulty);
     if (stats === undefined) {
       return skill;
     }
@@ -52,15 +52,12 @@ for (const { id: levelId } of LEVELS) {
     if (difficulty === 'normal') {
       beyond = wanted < 0 ? wanted : wanted > 1 ? wanted - 1 : 0;
     }
-    return round(Math.min(1, Math.max(0, wanted)));
+    return round(clamp(wanted, 0, 1));
   });
   const key = /^[a-z]+$/.test(levelId) ? levelId : `'${levelId}'`;
   lines.push(`  ${key}: [${skills.join(', ')}],`);
   const strength = round(
-    Math.min(
-      2,
-      Math.max(0.2, strengthOf(levelId) * (1 + beyond * STRENGTH_STEP))
-    )
+    clamp(strengthOf(levelId) * (1 + beyond * STRENGTH_STEP), 0.2, 2)
   );
   if (strength !== 1) {
     strengths.push(`  ${key}: ${strength},`);

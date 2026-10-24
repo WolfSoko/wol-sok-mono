@@ -4,19 +4,17 @@ import {
   BotProfile,
   REFERENCE_PROFILE,
 } from '../bot-controller';
+import { DEFAULT_COLORS } from '../colony-colors';
 import { computerLoadout } from '../computer-opponent';
-import {
-  computerProfile,
-  LADDER_VERSION,
-  profileAt,
-} from '../difficulty-curve';
+import { LADDER_VERSION } from '../difficulty-curve';
 import { Loadout } from '../evolution';
 import { TICKS_PER_SEC } from '../fixed-tick';
 import { getLevel, levelSize } from '../levels';
 import { MatchEngine } from '../match-engine';
-import { planMatch } from '../match-setup';
+import { MatchPlan, planMatch } from '../match-setup';
 import { medalFor, MedalTier } from '../medallions';
 import { clockOf, winRuleOf } from '../win-conditions';
+import { mean, round } from './stats';
 
 /**
  * One match of the balance lab (ADR 0016): the stand-in for a human - a
@@ -29,15 +27,8 @@ import { clockOf, winRuleOf } from '../win-conditions';
 export interface LabCell {
   levelId: string;
   difficulty: BotDifficulty;
-  /** What the stand-in carries. */
+  /** What the stand-in carries - the computer carries its ladder loadout. */
   standIn: Loadout;
-  /** What the computer carries - its ladder loadout when absent. */
-  computer?: Loadout;
-  /**
-   * Where the computer plays in its band, 0..1 - the curve's value for the
-   * level when absent. For calibrating the curve.
-   */
-  skill?: number;
   /** Changes to the computer's profile - for trying a rule out. */
   tweaks?: Partial<BotProfile>;
   seed: number;
@@ -107,44 +98,38 @@ export const SHOT_WINDOW_SEC = 5;
 /** The seconds the short check takes the share at. */
 export const CHECK_SECONDS: readonly number[] = [30, 60, 90];
 
-/** The colours of the two seats - they change nothing. */
-const COLORS: [string, string] = ['orange', 'blue'];
-
 /** Plays a lab cell to its end or its horizon. */
 export function playLabMatch(cell: LabCell): LabMatch {
-  const level = getLevel(cell.levelId);
   const { width, height } = arenaSize(
     cell.resolution ?? 'normal',
-    levelSize(level)
+    levelSize(getLevel(cell.levelId))
   );
-  const plan = {
+  const plan: MatchPlan = {
     levelId: cell.levelId,
-    mode: 'vs-computer' as const,
+    mode: 'vs-computer',
     difficulty: cell.difficulty,
-    colors: COLORS,
-    headStart: 0 as const,
+    // The colours change nothing.
+    colors: [...DEFAULT_COLORS],
+    headStart: 0,
     width,
     height,
     seed: cell.seed,
-    loadouts: [
-      cell.standIn,
-      cell.computer ?? computerLoadout(cell.levelId, cell.difficulty),
-    ] as const,
+    loadouts: [cell.standIn, computerLoadout(cell.levelId, cell.difficulty)],
     ladder: LADDER_VERSION,
   };
+  // The ladder's computer, as `planMatch` sets it up for the game.
   const { spawns, options } = planMatch(plan);
+  const { botProfile } = options;
+  if (botProfile === undefined) {
+    throw new Error(`No ladder computer on ${cell.levelId}`);
+  }
   const engine = new MatchEngine(
     spawns.map((spawn, seat) =>
       seat === 0 ? { ...spawn, isBot: true } : spawn
     ),
     {
       ...options,
-      botProfile: {
-        ...(cell.skill === undefined
-          ? computerProfile(cell.levelId, cell.difficulty)
-          : profileAt(cell.difficulty, cell.skill, level.boss !== undefined)),
-        ...cell.tweaks,
-      },
+      botProfile: { ...botProfile, ...cell.tweaks },
       standIns: new Map([[0, REFERENCE_PROFILE]]),
     }
   );
@@ -268,7 +253,7 @@ function measure(
     ),
     lostShare: round(lostShare),
     stalled,
-    share: round(shares.reduce((sum, value) => sum + value, 0) / shares.length),
+    share: round(mean(shares)),
     shareAt,
     shots,
   };
@@ -291,9 +276,4 @@ export function stallWatch(
     stalled ||= atCap >= STALL_SEC;
     return stalled;
   };
-}
-
-/** A value rounded to three places, as the report keeps it. */
-function round(value: number): number {
-  return Math.round(value * 1000) / 1000;
 }

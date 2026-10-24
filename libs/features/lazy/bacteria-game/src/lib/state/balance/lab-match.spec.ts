@@ -1,7 +1,9 @@
-import { PLAIN_LOADOUT } from '../evolution';
+import { computerLoadout } from '../computer-opponent';
+import { GENES, MAX_GENE_LEVEL } from '../evolution';
 import {
   CHECK_SECONDS,
   LabCell,
+  LabMatch,
   playLabMatch,
   STALL_SEC,
   stallWatch,
@@ -17,14 +19,21 @@ const CELL: LabCell = {
   resolution: 'low',
 };
 
+/** A level whose ladder computer carries a weapon: the meltdown's toxin bomb. */
+const ARMED_LEVEL = 'meltdown';
+
 describe('a lab match', () => {
+  let match: LabMatch;
+
+  beforeAll(() => {
+    match = playLabMatch(CELL);
+  });
+
   it('plays the same match from the same cell', () => {
-    expect(playLabMatch(CELL)).toEqual(playLabMatch(CELL));
+    expect(playLabMatch(CELL)).toEqual(match);
   });
 
   it('is cut off at its horizon, undecided, with every share it needs', () => {
-    const match = playLabMatch(CELL);
-
     expect(match.won).toBeNull();
     expect(match.durationSec).toBe(8);
     expect(match.medal).toBeNull();
@@ -35,28 +44,30 @@ describe('a lab match', () => {
   });
 
   it('lets the stand-in fire its weapon from the start, as a human could', () => {
+    expect(computerLoadout(ARMED_LEVEL, 'normal').weapon).not.toBeNull();
     // A weapon the computer carries starts charging: within the first
     // seconds only the stand-in can have fired - and the computer nothing.
-    const match = playLabMatch({
-      ...CELL,
-      computer: { genes: {}, weapon: 'toxin-bomb' },
-    });
+    const armed = playLabMatch({ ...CELL, levelId: ARMED_LEVEL });
 
-    expect(match.shots).toEqual([]);
+    expect(armed.shots).toEqual([]);
   });
 
   it("measures the computer's shots and what they changed", () => {
-    const match = playLabMatch({
+    // A stand-in with every gene maxed lasts until the toxin bomb has
+    // charged, about 22 s in.
+    const armed = playLabMatch({
       ...CELL,
-      levelId: 'petri-dish',
-      standIn: PLAIN_LOADOUT,
-      computer: { genes: {}, weapon: 'phage-strike' },
+      levelId: ARMED_LEVEL,
+      standIn: {
+        genes: Object.fromEntries(GENES.map(({ id }) => [id, MAX_GENE_LEVEL])),
+        weapon: null,
+      },
       tweaks: { weaponPatience: 0.01 },
-      horizonSec: 40,
+      horizonSec: 23,
     });
 
-    expect(match.shots.length).toBeGreaterThan(0);
-    for (const shot of match.shots) {
+    expect(armed.shots.length).toBeGreaterThan(0);
+    for (const shot of armed.shots) {
       expect(shot.atSec).toBeGreaterThan(20);
       expect(Number.isFinite(shot.gain)).toBe(true);
     }

@@ -9,6 +9,7 @@ import {
   weaponOf,
 } from './evolution';
 import { geneLevelCost } from './evolution-progress';
+import { clamp } from './geometry';
 import { LEVELS } from './levels';
 import { ACHIEVEMENT_XP, MEDAL_XP, matchXp } from './xp';
 
@@ -45,7 +46,7 @@ function levelXp(levelId: string): number {
  * index - fractional between two levels (a generated level by its heat).
  */
 export function expectedXp(index: number): number {
-  const at = Math.max(0, Math.min(LEVELS.length - 1, index));
+  const at = clamp(index, 0, LEVELS.length - 1);
   const whole = Math.floor(at);
   let xp = 0;
   for (let i = 0; i < whole; i++) {
@@ -82,10 +83,10 @@ const PLAYER_PURCHASES: readonly Purchase[] = [
   ...nextLevels(['mitosis', 'toxins', 'membrane']),
   { weapon: 'phage-strike' },
   ...nextLevels(['metabolism', 'flagella']),
-  // and on round all five, to the top.
-  ...[3, 4, 5].flatMap(() =>
+  // and on round all five, from the third level to the top.
+  ...Array.from({ length: MAX_GENE_LEVEL - 2 }, () =>
     nextLevels(['mitosis', 'toxins', 'membrane', 'metabolism', 'flagella'])
-  ),
+  ).flat(),
 ];
 
 /** The next level of each of the genes, in order. */

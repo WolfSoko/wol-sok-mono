@@ -11,9 +11,10 @@ import {
 } from '../evolution';
 import { expectedDna, expectedLoadout } from '../expected-player';
 import { BALANCE_VERSION } from '../game-balance';
-import { getLevel, LEVELS, levelSize } from '../levels';
+import { getLevel, isBigMap, LEVELS } from '../levels';
 import { MedalTier } from '../medallions';
 import { CHECK_SECONDS, LabCell, LabMatch, SHARE_SEC } from './lab-match';
+import { mean, round } from './stats';
 
 /**
  * The balance lab's matrix, its report and the checks on it (ADR 0016).
@@ -144,8 +145,7 @@ export function fullMatrix(
 ): NamedCell[] {
   const cells: NamedCell[] = [];
   for (const levelId of levelIds) {
-    const seeds =
-      levelSize(getLevel(levelId)) > 1 ? config.bigMapSeeds : config.curveSeeds;
+    const seeds = isBigMap(levelId) ? config.bigMapSeeds : config.curveSeeds;
     for (const { id: difficulty } of BOT_DIFFICULTIES) {
       for (let n = 0; n < seeds[difficulty]; n++) {
         cells.push(
@@ -193,10 +193,7 @@ function cellOf(
     standIn: labLoadout(loadout, levelId),
     seed: labSeed(levelId, n),
     horizonSec,
-    resolution:
-      levelSize(getLevel(levelId)) > 1
-        ? config.bigMapResolution
-        : config.resolution,
+    resolution: isBigMap(levelId) ? config.bigMapResolution : config.resolution,
   };
 }
 
@@ -243,6 +240,15 @@ export interface CellStats {
   /** The computer's weapon shots per match, and their mean gain in points. */
   shotsPerMatch: number;
   shotGain: number | null;
+}
+
+/** What the stand-in with the expected loadout came to on a level and difficulty. */
+export function expectedStats(
+  report: BalanceReport,
+  levelId: string,
+  difficulty: BotDifficulty
+): CellStats | undefined {
+  return report.cells[cellKey({ levelId, difficulty, loadout: 'expected' })];
 }
 
 /** The lab's report: what each cell came to, and the short check's shares. */
@@ -374,8 +380,7 @@ function levelsOf(report: BalanceReport): string[] {
   return LEVELS.map(({ id }) => id).filter((levelId) =>
     BOT_DIFFICULTIES.some(
       ({ id: difficulty }) =>
-        report.cells[cellKey({ levelId, difficulty, loadout: 'expected' })] !==
-        undefined
+        expectedStats(report, levelId, difficulty) !== undefined
     )
   );
 }
@@ -391,8 +396,7 @@ export function findings(report: BalanceReport): Finding[] {
   const levels = levelsOf(report);
   for (const levelId of levels) {
     for (const { id: difficulty } of BOT_DIFFICULTIES) {
-      const stats =
-        report.cells[cellKey({ levelId, difficulty, loadout: 'expected' })];
+      const stats = expectedStats(report, levelId, difficulty);
       if (stats === undefined) {
         continue;
       }
@@ -431,9 +435,8 @@ const MEDAL_WINS = 3;
  * the stand-in won often enough to tell.
  */
 function medalFindings(report: BalanceReport, levelId: string): Finding[] {
-  const cells = BOT_DIFFICULTIES.map(
-    ({ id: difficulty }) =>
-      report.cells[cellKey({ levelId, difficulty, loadout: 'expected' })]
+  const cells = BOT_DIFFICULTIES.map(({ id: difficulty }) =>
+    expectedStats(report, levelId, difficulty)
   ).filter(
     (stats): stats is CellStats =>
       stats !== undefined && stats.fastestWinSec !== null
@@ -496,10 +499,7 @@ function curveFindings(report: BalanceReport): Finding[] {
   for (const chapter of CHAPTERS) {
     let before: { levelId: string; score: number } | null = null;
     for (const levelId of chapter.levelIds) {
-      const stats =
-        report.cells[
-          cellKey({ levelId, difficulty: 'normal', loadout: 'expected' })
-        ];
+      const stats = expectedStats(report, levelId, 'normal');
       if (stats === undefined) {
         continue;
       }
@@ -526,17 +526,7 @@ export const DRIFT = {
 
 /** The cells of a run that moved from the baseline, in a line each. */
 export function drift(baseline: BalanceReport, run: BalanceReport): Finding[] {
-  const found: Finding[] = [];
-  if (baseline.balanceVersion !== run.balanceVersion) {
-    found.push(
-      `BALANCE_VERSION moved from ${baseline.balanceVersion} to ${run.balanceVersion}: re-baseline`
-    );
-  }
-  if (baseline.ladderVersion !== run.ladderVersion) {
-    found.push(
-      `LADDER_VERSION moved from ${baseline.ladderVersion} to ${run.ladderVersion}: re-baseline`
-    );
-  }
+  const found = versionDrift(baseline, run);
   for (const [key, stats] of Object.entries(run.cells)) {
     const before = baseline.cells[key];
     if (before === undefined) {
@@ -555,6 +545,28 @@ export function drift(baseline: BalanceReport, run: BalanceReport): Finding[] {
     }
   }
   found.push(...checkDrift(baseline, run));
+  return found;
+}
+
+/**
+ * The versions a run was played under that are not the baseline's - a run
+ * under another balance or ladder computer asks for a new baseline.
+ */
+export function versionDrift(
+  baseline: BalanceReport,
+  run: BalanceReport
+): Finding[] {
+  const found: Finding[] = [];
+  if (baseline.balanceVersion !== run.balanceVersion) {
+    found.push(
+      `BALANCE_VERSION moved from ${baseline.balanceVersion} to ${run.balanceVersion}: re-baseline`
+    );
+  }
+  if (baseline.ladderVersion !== run.ladderVersion) {
+    found.push(
+      `LADDER_VERSION moved from ${baseline.ladderVersion} to ${run.ladderVersion}: re-baseline`
+    );
+  }
   return found;
 }
 
@@ -595,10 +607,7 @@ export function medalTable(report: BalanceReport): string[] {
     '| --- | --- | --- | --- | --- | --- |',
   ];
   for (const { id: levelId, medal } of LEVELS) {
-    const stats =
-      report.cells[
-        cellKey({ levelId, difficulty: 'normal', loadout: 'expected' })
-      ];
+    const stats = expectedStats(report, levelId, 'normal');
     const proposal = stats === undefined ? null : measuredMedals(stats);
     const pair = (now: number, measured: number | undefined) =>
       measured === undefined ? `${now}` : `${now} → ${measured}`;
@@ -631,8 +640,7 @@ export function curveTable(report: BalanceReport): string[] {
   ];
   for (const { id: levelId } of LEVELS) {
     const cells = BOT_DIFFICULTIES.map(({ id: difficulty }) => {
-      const stats =
-        report.cells[cellKey({ levelId, difficulty, loadout: 'expected' })];
+      const stats = expectedStats(report, levelId, difficulty);
       return stats === undefined
         ? '-'
         : `${percent(stats.score)} (${percent(targetWinRate(levelId, difficulty))})`;
@@ -655,16 +663,6 @@ function median(values: readonly number[]): number | null {
   );
 }
 
-function mean(values: readonly number[]): number {
-  return values.length === 0
-    ? 0
-    : values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
 function percent(share: number): string {
   return `${Math.round(share * 100)} %`;
-}
-
-function round(value: number): number {
-  return Math.round(value * 1000) / 1000;
 }

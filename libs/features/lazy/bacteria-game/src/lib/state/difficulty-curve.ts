@@ -1,5 +1,5 @@
 import { BOT_DIFFICULTIES, BotDifficulty, BotProfile } from './bot-controller';
-import { clamp } from './geometry';
+import { clamp, lerp } from './geometry';
 import { heatOf, parseGeneratedId } from './level-generator/generate-level';
 import { getLevel, LEVELS } from './levels';
 
@@ -89,62 +89,53 @@ type SkillValues = Omit<
 >;
 
 /**
+ * The computers the bands run between, from the weakest easy one to the
+ * strongest hard one.
+ */
+const ANCHORS: readonly SkillValues[] = [
+  {
+    reactionSec: 1.5,
+    attackRatio: 1.7,
+    aimNoise: 30,
+    boostRange: 0,
+    weaponPatience: 1.8,
+  },
+  {
+    reactionSec: 0.85,
+    attackRatio: 1.3,
+    aimNoise: 16,
+    boostRange: 40,
+    weaponPatience: 1.4,
+  },
+  {
+    reactionSec: 0.4,
+    attackRatio: 1,
+    aimNoise: 5,
+    boostRange: 80,
+    weaponPatience: 1.05,
+  },
+  {
+    reactionSec: 0.2,
+    attackRatio: 0.8,
+    aimNoise: 1.5,
+    boostRange: 110,
+    weaponPatience: 0.9,
+  },
+];
+
+/**
  * Each difficulty's band, from its weakest computer (the first level) to
- * its strongest. The bands follow on from each other, so the difficulty
- * picker matters on every level: the easy computer stays easier than the
- * normal one, which stays easier than the hard one.
+ * its strongest. The bands follow on from each other - each one starts
+ * where the one below ends - so the difficulty picker matters on every
+ * level: the easy computer stays easier than the normal one, which stays
+ * easier than the hard one.
  */
 const SKILL_BANDS: Readonly<
   Record<BotDifficulty, { weak: SkillValues; strong: SkillValues }>
 > = {
-  easy: {
-    weak: {
-      reactionSec: 1.5,
-      attackRatio: 1.7,
-      aimNoise: 30,
-      boostRange: 0,
-      weaponPatience: 1.8,
-    },
-    strong: {
-      reactionSec: 0.85,
-      attackRatio: 1.3,
-      aimNoise: 16,
-      boostRange: 40,
-      weaponPatience: 1.4,
-    },
-  },
-  normal: {
-    weak: {
-      reactionSec: 0.85,
-      attackRatio: 1.3,
-      aimNoise: 16,
-      boostRange: 40,
-      weaponPatience: 1.4,
-    },
-    strong: {
-      reactionSec: 0.4,
-      attackRatio: 1,
-      aimNoise: 5,
-      boostRange: 80,
-      weaponPatience: 1.05,
-    },
-  },
-  hard: {
-    weak: {
-      reactionSec: 0.4,
-      attackRatio: 1,
-      aimNoise: 5,
-      boostRange: 80,
-      weaponPatience: 1.05,
-    },
-    strong: {
-      reactionSec: 0.2,
-      attackRatio: 0.8,
-      aimNoise: 1.5,
-      boostRange: 110,
-      weaponPatience: 0.9,
-    },
-  },
+  easy: { weak: ANCHORS[0], strong: ANCHORS[1] },
+  normal: { weak: ANCHORS[1], strong: ANCHORS[2] },
+  hard: { weak: ANCHORS[2], strong: ANCHORS[3] },
 };
 
 /** Below this range a computer does not boost at all, as the easy one. */
@@ -243,7 +234,7 @@ export function skillOf(levelId: string, difficulty: BotDifficulty): number {
   const below = Math.floor(at);
   const above = Math.min(LEVELS.length - 1, below + 1);
   const skill = (index: number) => SKILL[LEVELS[index].id]?.[column] ?? 0;
-  return skill(below) + (skill(above) - skill(below)) * (at - below);
+  return lerp(skill(below), skill(above), at - below);
 }
 
 /**
@@ -275,7 +266,7 @@ export function profileAt(
   const t = clamp(skill, 0, 1);
   const { weak, strong } = SKILL_BANDS[difficulty];
   const at = (key: keyof SkillValues) =>
-    Math.round((weak[key] + (strong[key] - weak[key]) * t) * 1000) / 1000;
+    Math.round(lerp(weak[key], strong[key], t) * 1000) / 1000;
   const boostRange = at('boostRange');
   return {
     reactionSec: at('reactionSec'),

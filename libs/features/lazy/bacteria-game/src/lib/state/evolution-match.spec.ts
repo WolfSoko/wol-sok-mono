@@ -1,4 +1,5 @@
 import { scaleOf } from './arena-size';
+import { matchChecksum } from './checksum';
 import { computerLoadout } from './computer-opponent';
 import { computerProfile, LADDER_VERSION } from './difficulty-curve';
 import {
@@ -548,13 +549,60 @@ describe('replays with evolution', () => {
     });
 
     it('take it with plain loadouts too: the computer plays the curve', () => {
+      // The Petri computer evolves nothing yet.
+      const levelId = 'petri-dish';
+      expect(computerLoadout(levelId, 'hard')).toEqual(PLAIN_LOADOUT);
       const { replay } = record(
-        { ...ladderPlan, loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT] },
+        {
+          ...ladderPlan,
+          levelId,
+          height: 140,
+          loadouts: [PLAIN_LOADOUT, computerLoadout(levelId, 'hard')],
+        },
         60
       );
 
       expect(replay.header.version).toBe(LADDER_REPLAY_VERSION);
       expect(replay.header.loadouts).toEqual([PLAIN_LOADOUT, PLAIN_LOADOUT]);
+    });
+
+    it("give the computer the ladder's loadout, whatever the plan names", () => {
+      const { spawns } = planMatch({
+        ...ladderPlan,
+        loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT],
+      });
+
+      expect(spawns).toEqual(planMatch(ladderPlan).spawns);
+    });
+
+    it('miss their checksum with a header that names another computer loadout', () => {
+      expect(computerLoadout('villi', 'hard')).not.toEqual(PLAIN_LOADOUT);
+      // A match against a plain computer that plays the curve, and the
+      // header to match it: what the header was trusted with before.
+      const { spawns, options } = planMatch(ladderPlan);
+      const engine = new MatchEngine(
+        spawns.map((spawn, seat) =>
+          seat === 1
+            ? { ...spawn, traits: evolvedTraits(PLAIN_LOADOUT), weapon: null }
+            : spawn
+        ),
+        options
+      );
+      for (let tick = 0; tick < 600 && engine.outcome() == null; tick++) {
+        engine.setSteering(0, tick < 90 ? { x: 1, y: 0.25 } : { x: 0, y: 0 });
+        engine.tick(ladderPlan.width, ladderPlan.height);
+      }
+      const tampered = replayOf(
+        { ...ladderPlan, loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT] },
+        'cpu',
+        engine.tickCount,
+        engine.recorded,
+        { checksum: matchChecksum(engine.players) }
+      );
+      engine.dispose();
+
+      expect(tampered.header.version).toBe(LADDER_REPLAY_VERSION);
+      expect(playReplay(tampered)?.checksum).not.toBe(tampered.header.checksum);
     });
 
     it('refuse to play under another version of the tables', () => {

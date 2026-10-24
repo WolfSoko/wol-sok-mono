@@ -1,5 +1,5 @@
 import { english, GameText } from '../../i18n/game-text';
-import { randomSeed, streamSeed } from '../geometry';
+import { lerp, randomSeed, streamSeed } from '../geometry';
 import { GameBalance } from '../game-balance';
 import type { Level } from '../levels';
 import { GameMap, pointSymmetric, Rect } from '../maps';
@@ -241,9 +241,4 @@ function medalLimitsFor(heat: number): MedalLimits {
     goldSec: Math.round(lerp(65, 32, heat)),
     goldLossShare: Math.round(lerp(0.5, 1.2, heat) * 100) / 100,
   };
-}
-
-/** `heat` of the way from the calm value to the frantic one. */
-export function lerp(calm: number, frantic: number, heat: number): number {
-  return calm + (frantic - calm) * heat;
 }

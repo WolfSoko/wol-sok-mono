@@ -82,7 +82,7 @@ export interface BotWeaponView {
   /** The radius it acts in round the crosshair, in arena cells. */
   radius: number;
   /** Where the crosshair stands - where it would be fired. */
-  at?: Point;
+  at: Point;
   /**
    * The bot's own bacteria and everybody else's in that circle round its
    * crosshair - worked out only when asked.
@@ -124,8 +124,8 @@ export interface BotView {
   routes: BotRoutes;
   /** The weapon it carries, null without one. */
   weapon: BotWeaponView | null;
-  /** The most bacteria its colony may grow to - unknown when absent. */
-  capacity?: number;
+  /** The most bacteria its colony may grow to. */
+  capacity: number;
 }
 
 export interface BotDecision {
@@ -324,40 +324,46 @@ export class BotController {
     this.cooldown = this.profile.reactionSec;
     // The bot thinks in cells of the base arena.
     this.unit = view.unit;
-    const { own, enemy } = view;
-    // A boss that has fallen behind goes berserk: it charges the enemy with
-    // every boost it gets - where its difficulty boosts at all.
-    const course: Course =
-      this.push !== null && own.count > 0
-        ? {
-            target: this.aim(view, this.push.at),
-            boost: this.profile.usesBoost && view.boostReady,
-          }
-        : this.boss &&
-            this.profile.usesBoost &&
-            view.boostReady &&
-            enemy != null &&
-            own.count > 0 &&
-            own.count < enemy.count
-          ? {
-              target: this.aim(view, this.attackPoint(view, enemy)),
-              boost: true,
-            }
-          : this.choose(view);
+    const course = this.override(view, view.enemy) ?? this.choose(view);
     // Without a weapon nothing more is looked at - nor drawn from the
     // random numbers: a plain bot decides as it always did.
     const { weapon } = view;
     const fires =
       weapon !== null && weapon.ready && this.wantsWeapon(view, weapon);
-    if (
-      fires &&
-      weapon.id === 'cryo-pulse' &&
-      this.profile.pushesAfterCryo &&
-      weapon.at !== undefined
-    ) {
+    if (fires && weapon.id === 'cryo-pulse' && this.profile.pushesAfterCryo) {
       this.push = { at: weapon.at, sec: weaponOf(weapon.id).durationSec };
     }
     return { ...course, weapon: fires };
+  }
+
+  /**
+   * A course that goes before the bot's own choice, null for none: the push
+   * into the enemies its cryo pulse froze, else a boss's charge.
+   */
+  private override(view: BotView, enemy: ColonyView | null): Course | null {
+    const { own } = view;
+    if (this.push !== null && own.count > 0) {
+      return {
+        target: this.aim(view, this.push.at),
+        boost: this.profile.usesBoost && view.boostReady,
+      };
+    }
+    // A boss that has fallen behind goes berserk: it charges the enemy with
+    // every boost it gets - where its difficulty boosts at all.
+    if (
+      this.boss &&
+      this.profile.usesBoost &&
+      view.boostReady &&
+      enemy != null &&
+      own.count > 0 &&
+      own.count < enemy.count
+    ) {
+      return {
+        target: this.aim(view, this.attackPoint(view, enemy)),
+        boost: true,
+      };
+    }
+    return null;
   }
 
   /**
@@ -406,9 +412,7 @@ export class BotController {
 
     const stronger =
       own.count >= enemy.count * this.profile.attackRatio ||
-      (this.profile.attacksAtCap &&
-        view.capacity !== undefined &&
-        own.count >= view.capacity * AT_CAP);
+      (this.profile.attacksAtCap && own.count >= view.capacity * AT_CAP);
 
     // Where the level is won is the place to be - stronger or not, and with
     // no retreat. Only a hungry colony eats first.
@@ -529,10 +533,10 @@ export function buildBotView(
   objective: Point | null,
   routes: (from: Point) => BotRoutes,
   unit: number,
-  prey: readonly Nutrient[] = [],
-  feeding = false,
-  weapon: BotWeaponView | null = null,
-  capacity?: number
+  prey: readonly Nutrient[],
+  feeding: boolean,
+  weapon: BotWeaponView | null,
+  capacity: number
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;
@@ -560,7 +564,7 @@ export function buildBotView(
     feeding,
     unit,
     weapon,
-    ...(capacity === undefined ? {} : { capacity }),
+    capacity,
   };
 }
 
