@@ -241,6 +241,12 @@ export class GpuSimulation implements Simulation {
   private readonly pellets: NutrientPellets;
   /** The weapons' effects - none at all in a plain match. */
   private readonly weaponEffects = new WeaponEffects();
+  /**
+   * How many effects this simulation last handed the passes, -1 before it
+   * did in this match: the programs are shared by every simulation on the
+   * context, so a match starts by handing them its count either way.
+   */
+  private uploadedEffects = -1;
   /** The part of a step each colony's flagella have made up - see `paceSteps`. */
   private readonly paces = new Float64Array(MAX_GPU_COLONIES);
   /** The pellet generations as of the report rendered last. */
@@ -376,6 +382,7 @@ export class GpuSimulation implements Simulation {
     this.recentAreas.length = 0;
     this.recentReach.length = 0;
     this.weaponEffects.clear();
+    this.uploadedEffects = -1;
     this.paces.fill(0);
     this.buildMask();
     this.pellets.reset(this.width, this.height, this.isOpenCell);
@@ -626,12 +633,17 @@ export class GpuSimulation implements Simulation {
       gl.uniform1fv(at['uDivideChance[0]'], u.divideChance);
       gl.uniform1fv(at['uDivideBudget[0]'], u.divideBudget);
     }
-    for (const program of [programs.claim, programs.apply, programs.combat]) {
-      const at = program.uniforms;
-      gl.useProgram(program.program);
-      gl.uniform4fv(at['uEffects[0]'], u.effects);
-      gl.uniform2iv(at['uEffectKinds[0]'], u.effectKinds);
-      gl.uniform1i(at['uEffectCount'], effectCount);
+    // A plain match has no effects at all: the passes keep their count of
+    // none from the last frame.
+    if (effectCount > 0 || this.uploadedEffects !== 0) {
+      for (const program of [programs.claim, programs.apply, programs.combat]) {
+        const at = program.uniforms;
+        gl.useProgram(program.program);
+        gl.uniform4fv(at['uEffects[0]'], u.effects);
+        gl.uniform2iv(at['uEffectKinds[0]'], u.effectKinds);
+        gl.uniform1i(at['uEffectCount'], effectCount);
+      }
+      this.uploadedEffects = effectCount;
     }
     for (const program of [
       programs.combat,
@@ -667,16 +679,12 @@ export class GpuSimulation implements Simulation {
       if (count >= MAX_EFFECTS || slot === null || weapon.reach === 'colony') {
         continue;
       }
-      u.effects.set(
-        [
-          effect.x,
-          effect.y,
-          effect.radius * effect.radius,
-          weapon.hostile ? 1 : 0,
-        ],
-        count * 4
-      );
-      u.effectKinds.set([WEAPON_CODE[effect.weapon], slot + 1], count * 2);
+      u.effects[count * 4] = effect.x;
+      u.effects[count * 4 + 1] = effect.y;
+      u.effects[count * 4 + 2] = effect.radius * effect.radius;
+      u.effects[count * 4 + 3] = weapon.hostile ? 1 : 0;
+      u.effectKinds[count * 2] = WEAPON_CODE[effect.weapon];
+      u.effectKinds[count * 2 + 1] = slot + 1;
       count++;
     }
     return count;
