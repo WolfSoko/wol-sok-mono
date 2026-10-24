@@ -1,4 +1,4 @@
-import { SimResolution } from '../arena-size';
+import { ONLINE_SIM_RESOLUTION, SimResolution } from '../arena-size';
 import { BOT_DIFFICULTIES, BotDifficulty } from '../bot-controller';
 import { CHAPTERS } from '../chapters';
 import { LADDER_VERSION, targetWinRate } from '../difficulty-curve';
@@ -11,7 +11,7 @@ import {
 } from '../evolution';
 import { expectedDna, expectedLoadout } from '../expected-player';
 import { BALANCE_VERSION } from '../game-balance';
-import { getLevel, LEVELS } from '../levels';
+import { getLevel, LEVELS, levelSize } from '../levels';
 import { MedalTier } from '../medallions';
 import { CHECK_SECONDS, LabCell, LabMatch, SHARE_SEC } from './lab-match';
 
@@ -37,6 +37,11 @@ export interface LabConfig {
    * the most on normal, which the target curve is set for.
    */
   curveSeeds: Readonly<Record<BotDifficulty, number>>;
+  /**
+   * The same on a map bigger than the screen, whose matches cost many
+   * times as much - the nightly run's eight jobs can afford more.
+   */
+  bigMapSeeds: Readonly<Record<BotDifficulty, number>>;
   /** Seeds per cell of the gains - every other loadout, on normal. */
   gainSeeds: number;
   /** Seconds a match still on is cut off after. */
@@ -46,22 +51,31 @@ export interface LabConfig {
   /** Seconds the short check plays. */
   checkHorizonSec: number;
   /**
-   * The grid the matches are played on: the coarse one, which plays alike
-   * (the bots and the levels think in base cells) at about 60 % of the
-   * cost - the matrix is hours of matches.
+   * The grid the matches of a base-size level are played on: the online
+   * grid, which a recorded match plays on the CPU - what most players play
+   * (ADR 0011) and what the medallion limits are measured on.
    */
   resolution: SimResolution;
+  /**
+   * The grid of a map bigger than the screen, which the game plays on the
+   * GPU, unrecorded: the coarse one, which plays alike (the bots and the
+   * levels think in base cells) at about 60 % of the cost - a big map's
+   * match costs many times a base one's.
+   */
+  bigMapResolution: SimResolution;
 }
 
 /** The full run's setup - nightly, and for a new baseline. */
 export const FULL_RUN: LabConfig = {
   curveSeeds: { easy: 3, normal: 6, hard: 3 },
+  bigMapSeeds: { easy: 1, normal: 2, hard: 1 },
   gainSeeds: 2,
   // A stalemate is a stalemate after four minutes; the longest clock is 240 s.
   horizonSec: 245,
   checkSeeds: 2,
   checkHorizonSec: 90,
-  resolution: 'low',
+  resolution: ONLINE_SIM_RESOLUTION,
+  bigMapResolution: 'low',
 };
 
 /** A cell of the matrix with its loadout's name. */
@@ -94,8 +108,9 @@ export function labLoadout(name: LoadoutName, levelId: string): Loadout {
 }
 
 /**
- * The levels the gains are measured on - one of each chapter: a gain is
- * the evolution's, not the level's, and the matrix stays affordable.
+ * The levels the gains are measured on - one of each chapter but the
+ * Expanse, whose big maps cost many times as much: a gain is the
+ * evolution's, not the level's, and the matrix stays affordable.
  */
 export const GAIN_LEVELS: readonly string[] = [
   'hourglass',
@@ -103,7 +118,6 @@ export const GAIN_LEVELS: readonly string[] = [
   'heartbeat',
   'containment',
   'quarantine',
-  'archipelago',
 ];
 
 /** The loadouts the gains are measured with: plain, each gene, each weapon, all. */
@@ -130,8 +144,10 @@ export function fullMatrix(
 ): NamedCell[] {
   const cells: NamedCell[] = [];
   for (const levelId of levelIds) {
+    const seeds =
+      levelSize(getLevel(levelId)) > 1 ? config.bigMapSeeds : config.curveSeeds;
     for (const { id: difficulty } of BOT_DIFFICULTIES) {
-      for (let n = 0; n < config.curveSeeds[difficulty]; n++) {
+      for (let n = 0; n < seeds[difficulty]; n++) {
         cells.push(
           cellOf(config, levelId, difficulty, 'expected', n, config.horizonSec)
         );
@@ -177,7 +193,10 @@ function cellOf(
     standIn: labLoadout(loadout, levelId),
     seed: labSeed(levelId, n),
     horizonSec,
-    resolution: config.resolution,
+    resolution:
+      levelSize(getLevel(levelId)) > 1
+        ? config.bigMapResolution
+        : config.resolution,
   };
 }
 

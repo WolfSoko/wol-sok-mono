@@ -13,6 +13,9 @@ export interface WorkerResult {
   match: LabMatch;
 }
 
+// A runner that was stopped takes its workers with it.
+process.on('disconnect', () => process.exit(0));
+
 process.on(
   'message',
   (message: { index: number; cell: NamedCell } | 'done') => {

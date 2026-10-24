@@ -7,7 +7,7 @@ export const evolution = {
   title: 'Evolution',
   tagline: 'Spend DNA. Breed a nastier colony.',
   plays:
-    'Evolution counts against the computer on the campaign and on generated levels, and against your ghost there, which plays with what its run had. The daily level, endless runs, couch and online matches stay plain and fair.',
+    'Evolution counts against the computer on the campaign and on generated levels, and against your ghost there, which plays with what its run had. The computer there evolves too, level by level - the briefing tells how. The daily level, endless runs, couch and online matches stay plain and fair.',
   dna: {
     label: 'DNA',
     earned: '{count} DNA earned in all',

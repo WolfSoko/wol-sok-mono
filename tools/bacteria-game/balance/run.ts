@@ -115,6 +115,14 @@ function configOf(): LabConfig {
             normal: number('curve-seeds', 0),
             hard: number('curve-seeds', 0),
           },
+    bigMapSeeds:
+      option('curve-seeds') === undefined
+        ? FULL_RUN.bigMapSeeds
+        : {
+            easy: number('curve-seeds', 0),
+            normal: number('curve-seeds', 0),
+            hard: number('curve-seeds', 0),
+          },
     gainSeeds: number('gain-seeds', FULL_RUN.gainSeeds),
     horizonSec: number('horizon', FULL_RUN.horizonSec),
     checkSeeds: number('check-seeds', FULL_RUN.checkSeeds),
@@ -138,7 +146,8 @@ export async function play(cells: readonly NamedCell[]): Promise<Played[]> {
   // where it stopped.
   const journalPath = option('journal');
   const journal = journalPath === undefined ? null : resolve(ROOT, journalPath);
-  const kept = journal === null ? new Map<string, LabMatch>() : readJournal(journal);
+  const kept =
+    journal === null ? new Map<string, LabMatch>() : readJournal(journal);
   cells.forEach((cell, index) => {
     results[index] = kept.get(JSON.stringify(cell));
   });
