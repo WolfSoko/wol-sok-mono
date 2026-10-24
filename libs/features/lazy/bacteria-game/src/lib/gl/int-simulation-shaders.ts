@@ -19,9 +19,8 @@
  *   `INT_DRAIN_MAX`).
  * The products below note what they come to.
  *
- * The weapons' circles (`effectOver`, float `uEffects`) are still the float
- * test of the shared header: they only say whether an effect covers a cell,
- * and step 4 of the rollout turns them into integers as well.
+ * The weapons' circles are integers too (`INT_WEAPONS`, step 4): centres
+ * and radii in sixteenths of a cell, see `state/gpu-int/int-effects.ts`.
  */
 
 import { PICK_OF_8_SHIFT, SALT } from '../state/gpu-int/draws';
@@ -36,9 +35,54 @@ import {
   INT_COLONIES,
   INT_PELLETS,
 } from '../state/gpu-int/int-frame-uniforms';
-import { INT_COMMON } from './int-common';
-import { COMMON, HUNT_COLONIES, WEAPONS } from './simulation-shaders';
+import { INT_MAX_EFFECTS } from '../state/gpu-int/int-effects';
 import { INT_EFFECTS } from '../state/gpu-int/int-uniforms';
+import { WEAPON_CODE } from '../state/weapon-effects';
+import { INT_COMMON } from './int-common';
+import { COMMON, HUNT_COLONIES } from './simulation-shaders';
+
+/**
+ * The weapons' effects acting this step, as integer circles with an owner -
+ * `WEAPONS` of the float passes, tested in sixteenths of a cell. The square
+ * around a circle is checked first, so each square summed is below 2^30.
+ */
+const INT_WEAPONS = `
+uniform ivec4 uEffects[${INT_MAX_EFFECTS}];     // centre x, y, radius in sixteenths, 1 when hostile
+uniform ivec2 uEffectKinds[${INT_MAX_EFFECTS}]; // the weapon's code and the owner's slot + 1
+uniform int uEffectCount;
+const int TOXIN_BOMB = ${WEAPON_CODE['toxin-bomb']};
+const int CRYO_PULSE = ${WEAPON_CODE['cryo-pulse']};
+const int PHAGE_STRIKE = ${WEAPON_CODE['phage-strike']};
+const int AGAR_BLOOM = ${WEAPON_CODE['agar-bloom']};
+
+/**
+ * The slot + 1 of the colony whose effect of that kind acts on a cell of
+ * the colony \`owner\` (slot + 1), 0 for none: a hostile one an enemy's,
+ * any other its own - as \`intEffectOver\`.
+ */
+uint effectOver(ivec2 cell, uint owner, int kind) {
+  ivec2 at = cell << ${TARGET_SHIFT};
+  for (int i = 0; i < ${INT_MAX_EFFECTS}; i++) {
+    if (i >= uEffectCount) {
+      break;
+    }
+    ivec2 info = uEffectKinds[i];
+    ivec4 circle = uEffects[i];
+    bool hostile = circle.w != 0;
+    if (info.x != kind || (uint(info.y) != owner) != hostile || circle.z == 0) {
+      continue;
+    }
+    // Both below 2^16 - and below 2^15 past the square's test.
+    ivec2 d = abs(at - circle.xy);
+    if (d.x > circle.z || d.y > circle.z) {
+      continue;
+    }
+    if (d.x * d.x + d.y * d.y <= circle.z * circle.z) {
+      return uint(info.y);
+    }
+  }
+  return 0u;
+}`;
 
 /**
  * The direction towards the enemies around a coarse cell, per colony, as a
@@ -73,7 +117,7 @@ void main() {
  * What a bacterium wants to do, in integers - shared by the claim and the
  * apply pass, so both always agree.
  */
-const INT_INTENTS = `${INT_COMMON}${WEAPONS}
+const INT_INTENTS = `${INT_COMMON}${INT_WEAPONS}
 uniform int uKind;        // 0 move, 1 escape a wall, 2 divide
 uniform int uStep;        // which movement step of the frame
 uniform int uSteps[${INT_COLONIES}];
@@ -300,7 +344,7 @@ void main() {
  * `COMBAT_FRAGMENT` in integers. Every rate is what it comes to in one step
  * (`intMatchUniforms`), so the display's frame length plays no part.
  */
-export const INT_COMBAT_FRAGMENT = `${COMMON}${INT_COMMON}${WEAPONS}
+export const INT_COMBAT_FRAGMENT = `${COMMON}${INT_COMMON}${INT_WEAPONS}
 uniform int uAttack[${INT_COLONIES}];  // Q14
 uniform int uDrain[${INT_COLONIES}];   // ${DRAIN_SHIFT} fractional bits, per step and point of pressure
 uniform ivec3 uPellets[${INT_PELLETS}]; // the cell, 1 while not eaten up

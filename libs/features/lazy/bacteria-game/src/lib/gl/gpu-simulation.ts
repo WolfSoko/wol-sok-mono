@@ -46,6 +46,10 @@ import {
   fillIntCombatUniforms,
   fillIntFrameUniforms,
 } from '../state/gpu-int/int-frame-uniforms';
+import {
+  createIntEffectUniforms,
+  setIntEffect,
+} from '../state/gpu-int/int-effects';
 import { intMatchUniforms } from '../state/gpu-int/int-uniforms';
 import {
   bindTexture,
@@ -318,6 +322,8 @@ export class GpuSimulation implements Simulation {
   };
   /** The integer passes' share of the frame uniforms - see `deterministic`. */
   private readonly intUniforms = createIntFrameUniforms();
+  /** The integer passes' circles of the weapons' effects. */
+  private readonly intEffects = createIntEffectUniforms();
   private readonly deterministic: boolean;
   private readonly matchSeed: number;
 
@@ -672,8 +678,13 @@ export class GpuSimulation implements Simulation {
       for (const program of [programs.claim, programs.apply, programs.combat]) {
         const at = program.uniforms;
         gl.useProgram(program.program);
-        gl.uniform4fv(at['uEffects[0]'], u.effects);
-        gl.uniform2iv(at['uEffectKinds[0]'], u.effectKinds);
+        if (this.deterministic) {
+          gl.uniform4iv(at['uEffects[0]'], this.intEffects.circles);
+          gl.uniform2iv(at['uEffectKinds[0]'], this.intEffects.kinds);
+        } else {
+          gl.uniform4fv(at['uEffects[0]'], u.effects);
+          gl.uniform2iv(at['uEffectKinds[0]'], u.effectKinds);
+        }
         gl.uniform1i(at['uEffectCount'], effectCount);
       }
       this.uploadedEffects = effectCount;
@@ -766,8 +777,21 @@ export class GpuSimulation implements Simulation {
       u.effects[count * 4 + 3] = weapon.hostile ? 1 : 0;
       u.effectKinds[count * 2] = WEAPON_CODE[effect.weapon];
       u.effectKinds[count * 2 + 1] = slot + 1;
+      if (this.deterministic) {
+        setIntEffect(
+          this.intEffects,
+          count,
+          effect.x,
+          effect.y,
+          effect.radius,
+          weapon.hostile,
+          WEAPON_CODE[effect.weapon],
+          slot + 1
+        );
+      }
       count++;
     }
+    this.intEffects.count = count;
     return count;
   }
 
