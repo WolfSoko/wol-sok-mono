@@ -442,19 +442,16 @@ export const ONLINE_CAPS = {
  * `rankedReason` ("Not counted: ..."). A match still `waiting` or
  * `disputed` has none: its state says it.
  */
-export const ONLINE_REASONS = [
+export type OnlineReason =
   /** The room's stub did not name both players, or had expired. */
-  'unbound',
+  | 'unbound'
   /** Shorter than `ONLINE_CAPS.minTicks`. */
-  'short',
+  | 'short'
   /** Reported faster than the room's clock allows. */
-  'too-fast',
+  | 'too-fast'
   /** The devices fell out of step. */
-  'desync',
+  | 'desync'
   /** A banned player played in it. */
-  'banned',
+  | 'banned'
   /** The pair of players reached their counted results of the day. */
-  'capped',
-] as const;
-
-export type OnlineReason = (typeof ONLINE_REASONS)[number];
+  | 'capped';

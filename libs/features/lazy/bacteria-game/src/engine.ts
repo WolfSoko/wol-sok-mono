@@ -268,7 +268,6 @@ export {
   MAX_RERUN_TICKS,
   NEXT_CANDIDATES,
   ONLINE_CAPS,
-  ONLINE_REASONS,
   onlineSort,
   PAGE_ROWS,
   parseBoardId,
@@ -306,10 +305,8 @@ export {
   canDeclare,
   COUNTDOWN_MS,
   dailyAttemptId,
-  dailyAttemptLevel,
   declaredBeforeMatch,
   endlessAttemptId,
-  endlessAttemptLevel,
   endlessRunId,
   isRankedPlan,
   nextDailyAttemptId,
@@ -339,7 +336,6 @@ export {
   isUid,
   parseAdminCommand,
   REASON_MAX,
-  REPLAY_COMMAND_TYPES,
 } from './lib/state/admin-commands';
 export type {
   AdminCommand,
@@ -351,17 +347,16 @@ export type {
   PlayerTarget,
   ReplayCommandType,
 } from './lib/state/admin-commands';
-export { AVATAR_COUNT, defaultProfile } from './lib/social/profile';
+export { AVATAR_COUNT, defaultProfile, NAME_MAX } from './lib/social/profile';
 export type { Avatar, Profile } from './lib/social/profile';
 
 // What the server reads of a player's progress (ADR 0012): the XP the rank
 // board counts, and the medal a re-run match earns.
 export { parseProgress } from './lib/state/progress';
-export type { Progress } from './lib/state/progress';
 export { xpOf } from './lib/state/xp';
 export { rankFor } from './lib/state/ranks';
 export { matchRecord, medalFor } from './lib/state/medallions';
-export type { MatchRecord, MedalTier } from './lib/state/medallions';
+export type { MedalTier } from './lib/state/medallions';
 
 // Results.
 export { judgeOutcome, winRuleOf } from './lib/state/win-conditions';

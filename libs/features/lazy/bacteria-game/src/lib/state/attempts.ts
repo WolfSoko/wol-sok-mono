@@ -1,8 +1,7 @@
 import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
 import { isUtcDay } from './boards';
 import { DEFAULT_COLORS } from './colony-colors';
-import { dailyLevelId, utcDay } from './daily';
-import { endlessLevelId } from './endless';
+import { utcDay } from './daily';
 import { isPlainLoadout } from './evolution';
 import { TICKS_PER_SEC } from './fixed-tick';
 import { getLevel, levelSize } from './levels';
@@ -199,19 +198,6 @@ export function nextRunId(
 /** When an attempt declared at `atMillis` expires (its TTL). */
 export function attemptExpireAt(atMillis: number): number {
   return atMillis + ATTEMPT_DAYS * 86_400_000;
-}
-
-/** The level a daily attempt plays: that day's daily level. */
-export function dailyAttemptLevel(attempt: DailyAttempt): string {
-  return dailyLevelId(attempt.day);
-}
-
-/**
- * The level of an endless run's match after `wins` won levels, from the
- * seed of the run's match 0.
- */
-export function endlessAttemptLevel(runSeed: number, wins: number): string {
-  return endlessLevelId({ seed: runSeed, wins, lives: 0 });
 }
 
 // --- Seed ------------------------------------------------------------------

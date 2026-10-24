@@ -5,10 +5,8 @@ import {
   attemptSeed,
   canDeclare,
   dailyAttemptId,
-  dailyAttemptLevel,
   declaredBeforeMatch,
   endlessAttemptId,
-  endlessAttemptLevel,
   endlessRunId,
   isRankedPlan,
   nextDailyAttemptId,
@@ -19,7 +17,6 @@ import {
   submissionDeadline,
 } from './attempts';
 import { dailyLevelId } from './daily';
-import { endlessLevelId } from './endless';
 import { getLevel, levelSize } from './levels';
 
 const AT = Date.UTC(2026, 9, 23, 14, 5, 0);
@@ -201,29 +198,6 @@ describe('declared attempts', () => {
       expect(declaredBeforeMatch(AT, 3_600, AT + 60_000)).toBe(true);
       expect(declaredBeforeMatch(AT, 3_600, AT - 60_000)).toBe(true);
       expect(declaredBeforeMatch(AT, 3_600, AT - 60_001)).toBe(false);
-    });
-  });
-
-  describe('levels', () => {
-    it("play the daily level of the attempt's day", () => {
-      const attempt = parseAttemptId('d_2026-10-23_2');
-      expect(attempt?.kind).toBe('daily');
-      expect(
-        attempt?.kind === 'daily' ? dailyAttemptLevel(attempt) : null
-      ).toBe(dailyLevelId('2026-10-23'));
-    });
-
-    it("play the run's level after the wins before the match", () => {
-      const seed = attemptSeed('uid', 'e_202610231_0', AT);
-      expect(endlessAttemptLevel(seed, 0)).toBe(
-        endlessLevelId({ seed, wins: 0, lives: 3 })
-      );
-      expect(endlessAttemptLevel(seed, 4)).toBe(
-        endlessLevelId({ seed, wins: 4, lives: 1 })
-      );
-      expect(endlessAttemptLevel(seed, 4)).not.toBe(
-        endlessAttemptLevel(seed, 3)
-      );
     });
   });
 });
