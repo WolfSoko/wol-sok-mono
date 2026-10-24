@@ -329,20 +329,19 @@
         [fps]="fps()"
       ></ws-shared-ui-show-fps>
       <div class="arena-frame">
-        @for (key of canvasKey(); track key) {
-          <canvas
-            #canvasElement
-            id="canvasElement"
-            class="arena-canvas"
-            [style.width.px]="canvasSize()?.width"
-            [style.height.px]="canvasSize()?.height"
-            (pointerdown)="onPointerDown($event)"
-            (pointermove)="onPointerMove($event)"
-            (pointerup)="onPointerUp($event)"
-            (pointercancel)="onPointerUp($event)"
-          >
-          </canvas>
-        }
+        <feat-lazy-bac-game-arena-view
+          canvasId="canvasElement"
+          [layout]="arenaLayout()"
+          [scene]="arenaScene"
+          [theme]="theme()"
+          [zones]="zones()"
+          [size]="canvasSize()"
+          (painterChange)="onPainterChange($event)"
+          (pointerdown)="onPointerDown($event)"
+          (pointermove)="onPointerMove($event)"
+          (pointerup)="onPointerUp($event)"
+          (pointercancel)="onPointerUp($event)"
+        ></feat-lazy-bac-game-arena-view>
         @if (showMinimap()) {
           <canvas
             #minimapElement

@@ -42,8 +42,13 @@ import {
 } from '@wolsok/ui-kit';
 import { asapScheduler, defer, fromEvent, Observable, timer } from 'rxjs';
 import { defaultIfEmpty, filter, last, map, take, tap } from 'rxjs/operators';
-import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
-import { createArenaPainter } from './arena/create-arena-painter';
+import { ArenaPainter } from './arena/arena-painter';
+import {
+  ArenaContent,
+  ArenaLayout,
+  ArenaScene,
+  ArenaViewComponent,
+} from './arena/arena-view.component';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { rgba } from './arena/canvas-math';
@@ -192,6 +197,7 @@ interface HudGoal {
     ProfileComponent,
     TranslatePipe,
     GameTextPipe,
+    ArenaViewComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -233,31 +239,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly reducedMotion = prefersReducedMotion();
 
   /**
-   * The canvas the arena is drawn on. A new resolution gets a new canvas -
-   * see {@link canvasKey} - which is when the painter is built again.
+   * The arena on its canvas. A new resolution gets a new canvas - see
+   * {@link arenaLayout} - which is when the painter is built again.
    */
-  private readonly canvasRef =
-    viewChild<ElementRef<HTMLCanvasElement>>('canvasElement');
+  private readonly arenaView = viewChild(ArenaViewComponent);
   private readonly minimapRef =
     viewChild<ElementRef<HTMLCanvasElement>>('minimapElement');
   @ViewChild('arenaStage', { static: true })
   private stageRef!: ElementRef<HTMLElement>;
   @ViewChild(WsThanosDirective, { static: true })
   private thanos!: WsThanosDirective;
-  /** Draws the arena - on the GPU where the browser can. */
+  /** Draws the arena - on the GPU where the browser can; the view builds it. */
   private painter: ArenaPainter | null = null;
   /** The camera over a map bigger than the base arena, null on any other. */
   private camera: Camera | null = null;
   /** When the camera last moved on, null before it ever did. */
   private cameraMovedAt: number | null = null;
-  /** What of the arena the last frame showed. */
-  private lastView: Rect | null = null;
   /** The whole map in a corner, while the camera shows part of it. */
   private minimap: MinimapPainter | null = null;
   /** When the minimap last took in where the colonies are. */
   private minimapUpdatedAt = Number.NEGATIVE_INFINITY;
-  /** Lay the next frame's floor down fully instead of fading into a trail. */
-  private clearNextFrame = true;
 
   /**
    * The arena in cells, as fine as the simulation resolution asks for and
@@ -286,12 +287,27 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     () => this.mapSize() > 1 && this.running() && this.humans().length === 1
   );
   /**
-   * One key per pair of resolutions: the canvas is rendered for the key, so
-   * either resolution changing hands the painter a fresh canvas and context.
+   * What the arena view lays its canvas out for: the arena at the
+   * resolutions set. Either resolution changing hands the painter a fresh
+   * canvas and context.
    */
-  protected readonly canvasKey = computed(() => [
-    `${this.simResolution()}:${this.settings.screenResolution()}:${this.mapSize()}`,
-  ]);
+  protected readonly arenaLayout = computed((): ArenaLayout => {
+    const sim = this.simResolution();
+    const screen = this.settings.screenResolution();
+    const size = this.mapSize();
+    return {
+      ...this.arena(),
+      scale: renderScale(sim, screen, size),
+      detail: detailScale(sim, screen, size),
+      unit: simScale(sim),
+    };
+  });
+  /** What the arena view paints: the match as it stands. */
+  protected readonly arenaScene: ArenaScene = {
+    content: (alpha) => this.content(alpha),
+    view: () => this.moveCamera(),
+    painted: (frame) => this.paintMinimap(frame.view, frame.dynamicWalls),
+  };
 
   stats: Signal<ColonyStats[]>;
   /** The colonies a finger may steer - one seat each in the touch layout. */
@@ -430,10 +446,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly arenaBorder: Signal<string>;
   /** The darkest floor colour of the arena, for the stage around it. */
   protected readonly arenaRim: Signal<string>;
-  /** Seconds of animation, for the wobble of the jam and the boost shimmer. */
-  private animationSec = 0;
-  /** True while a still frame waits for its animation frame. */
-  private repaintPending = false;
   /** The level that follows the selected one, null at the end of the list. */
   protected readonly upcomingLevel: Signal<Level | null>;
   /** The level of a run someone shared in a link, null without one. */
@@ -612,9 +624,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // the colonies change colour or look, so the start screen always shows
     // the map and the colonies the next match is fought with. A clear frame
     // also wipes the glow from the trail once the player asks for less
-    // motion, even while the game is paused.
+    // motion, even while the game is paused. The arena view lays another
+    // level's floor itself.
     effect(() => {
-      this.painter?.setFloor(this.theme(), this.zones());
       this.walls();
       this.colors();
       this.settings.look();
@@ -636,15 +648,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         this.minimapUpdatedAt = Number.NEGATIVE_INFINITY;
         this.draw();
       });
-    });
-
-    // A fresh canvas - the first one, or one for another resolution - gets a
-    // painter of its own.
-    effect(() => {
-      const canvas = this.canvasRef()?.nativeElement;
-      if (canvas != null) {
-        untracked(() => this.attachPainter(canvas));
-      }
     });
 
     this.running = this.store.isMatchOn;
@@ -1131,48 +1134,28 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Builds the painter for a fresh canvas, at the resolutions it was rendered
-   * for, and lets go of the one before. Resolutions only change between
-   * matches, so the colonies are simply spawned again on the new grid.
+   * Takes the painter the arena view built for a fresh canvas, at the
+   * resolutions it was rendered for - null right before it lets go of the
+   * one before. Resolutions only change between matches, so the colonies
+   * are simply spawned again on the new grid.
    */
-  private attachPainter(canvas: HTMLCanvasElement): void {
-    // The GPU simulation lives in the old context: let it go while it lasts.
-    this.playerService.useSimulation(null);
-    this.painter?.dispose();
-    this.painter = null;
+  protected onPainterChange(painter: ArenaPainter | null): void {
+    this.painter = painter;
+    if (painter == null) {
+      // The GPU simulation lives in the old context: let it go while it lasts.
+      this.playerService.useSimulation(null);
+      return;
+    }
     const { width, height } = this.arena();
-    this.painter = createArenaPainter(
-      canvas,
-      width,
-      height,
-      renderScale(
-        this.simResolution(),
-        this.settings.screenResolution(),
-        this.mapSize()
-      ),
-      detailScale(
-        this.simResolution(),
-        this.settings.screenResolution(),
-        this.mapSize()
-      ),
-      simScale(this.simResolution())
-    );
     this.camera =
       this.mapSize() > 1 ? new Camera(width, height, this.mapSize()) : null;
-    this.lastView = null;
-    if (this.painter == null) {
-      throw new Error('Could not get rendering context');
-    }
-    // Which painter runs - for the e2e tests and for anyone debugging.
-    canvas.dataset['renderer'] = this.painter.kind;
     // With a WebGL2 context the war itself runs on the GPU as well.
-    const gl = this.painter instanceof GlArenaPainter ? this.painter : null;
+    const gl = painter instanceof GlArenaPainter ? painter : null;
     this.playerService.useSimulation(
       gl == null
         ? null
         : (balance, random) => gl.createSimulation(balance, random)
     );
-    this.painter.setFloor(this.theme(), this.zones());
     this.gameStateService.setArenaSize(width, height);
     this.draw();
   }
@@ -1187,7 +1170,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.requestNativeFullscreen();
     this.sound.matchStart(levelMusic(this.level().id));
     this.haptics.matchStart();
-    this.clearNextFrame = true;
+    this.arenaView()?.clearNext();
     this.camera?.reset();
     this.cameraMovedAt = null;
     this.gameStateService.cleanup();
@@ -1257,50 +1240,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const events = this.playerService.getFrameEvents();
     this.sound.frame(events);
     this.haptics.frame(events);
-    this.paint(frame.elapsedSec, false, frame.alpha);
+    this.arenaView()?.paintFrame(frame.elapsedSec, frame.alpha);
   }
 
   /**
    * Paints the arena as it stands, on the next animation frame, without
-   * advancing the war - whenever it changes while nobody is playing. The
-   * frame is cleared: the fade alone would leave the walls of the last map
-   * as ghosts on the canvas.
+   * advancing the war - whenever it changes while nobody is playing.
    */
   private draw(): void {
-    if (this.painter == null || this.repaintPending) {
-      return;
+    if (this.painter != null) {
+      this.arenaView()?.repaint();
     }
-    this.repaintPending = true;
-    requestAnimationFrame(() => {
-      this.repaintPending = false;
-      this.paint(1 / 1000, true, 1);
-    });
-  }
-
-  /** `alpha` is how far the crosshairs are drawn along their last tick. */
-  private paint(deltaTimeSec: number, clear: boolean, alpha: number): void {
-    this.animationSec += deltaTimeSec;
-    const view = this.moveCamera();
-    // The trail of the last frame lies elsewhere in a view that moved - by
-    // half a pixel or more: the spring creeps on by less for a long while.
-    const last = this.lastView;
-    const halfPixel =
-      view.width / (2 * (this.canvasRef()?.nativeElement.width || 1));
-    const moved =
-      last == null ||
-      Math.abs(last.x - view.x) >= halfPixel ||
-      Math.abs(last.y - view.y) >= halfPixel ||
-      Math.abs(last.width - view.width) >= halfPixel;
-    this.lastView = view;
-    const frame = this.frame(
-      deltaTimeSec,
-      clear || this.clearNextFrame || moved,
-      alpha,
-      view
-    );
-    this.clearNextFrame = false;
-    this.painter?.paint(frame);
-    this.paintMinimap(view, frame.dynamicWalls);
   }
 
   /**
@@ -1407,12 +1357,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   /** What the arena shows right now, for the painter. */
-  private frame(
-    deltaTimeSec: number,
-    clear: boolean,
-    alpha: number,
-    view: Rect
-  ): ArenaFrame {
+  private content(alpha: number): ArenaContent {
     const balance = this.balance();
     const players = untracked(this.playerStore.entities);
     const drawn = players.map((player) => ({
@@ -1427,15 +1372,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const simulation = this.playerService.getSimulation();
     // Which processor runs the war - for the e2e tests and for debugging.
     // The match picks it, so it can fall back to the CPU after a GPU error.
-    const dataset = this.canvasRef()?.nativeElement.dataset;
+    const dataset = this.arenaView()?.canvas()?.dataset;
     if (dataset != null && dataset['simulation'] !== simulation.kind) {
       dataset['simulation'] = simulation.kind;
     }
     return {
-      clear,
-      deltaTimeSec,
-      timeSec: this.animationSec,
-      view,
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
       colonies: simulation.colonyLayers(boosts),
@@ -1459,8 +1400,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.endSeries();
     this.gameStateService.cleanup();
     // The GPU simulation lives in this canvas's context, which goes with it.
+    // The arena view disposes the painter.
     this.playerService.useSimulation(null);
-    this.painter?.dispose();
     this.sound.setMusic(null);
     // Leaving the page must give the screen back as well.
     exitFullscreen(document);
@@ -1681,15 +1622,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private toArenaPoint(event: PointerEvent) {
-    const canvas = this.canvasRef()?.nativeElement;
-    if (canvas == null) {
+    const view = this.arenaView();
+    const canvas = view?.canvas();
+    if (view == null || canvas == null) {
       return null;
     }
     return arenaPointFromClient(
       event.clientX,
       event.clientY,
       canvas.getBoundingClientRect(),
-      this.lastView ?? { x: 0, y: 0, ...this.arena() }
+      view.shownView() ?? { x: 0, y: 0, ...this.arena() }
     );
   }
 
