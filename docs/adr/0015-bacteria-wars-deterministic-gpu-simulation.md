@@ -173,7 +173,35 @@ sits behind a flag; step 8 switches it on.
    carries the most risk.
 6. The full TypeScript reference, the Playwright cross-check and golden
    hashes in CI.
-7. The on-device self-test and the CPU fallback.
+7. The on-device self-test and the CPU fallback. As built:
+   - `GridSimulation` (`state/grid-simulation.ts`) holds what both
+     simulations run on the CPU - walls, zones, pellets, effects, the frame's
+     uniforms and what a report means. `GpuSimulation` adds the shader
+     passes; `IntSimulation` (`state/gpu-int/int-simulation.ts`) runs
+     `intReferenceTick` and `intReport`, the report pass in TypeScript. So
+     `IntSimulation` is the `gpu-int` ruleset on the CPU, bit for bit.
+   - The self-test (`gl/gpu-self-test.ts`) plays one small whole match
+     (`SELF_TEST_SCENARIO`: 48 x 32 cells, 16 ticks, every zone, a sliding
+     wall, every weapon, pellets) through the real `GpuSimulation` and
+     compares each tick's hash of state and scoreboard with
+     `SELF_TEST_GOLDEN`. That checks the uniforms and pass order too, which
+     separate test vectors would miss. The written bounds of decision 1 stay
+     with the CI cross-check's `bound-extremes`. `GpuSelfTestService` runs it
+     once per page session and keeps the verdict in `DeviceStorage`, keyed by
+     test version, `BALANCE_VERSION`, renderer string and user agent.
+   - `chooseSimulation` (`gl/simulation-choice.ts`) takes the integer GPU
+     simulation for a GPU that passed, `IntSimulation` otherwise, and falls
+     back to `IntSimulation` when a GPU simulation fails to start. It is
+     behind `DETERMINISTIC_SIMULATION`, still false.
+   - CI plays three whole-match scenarios through `GpuSimulation` on
+     SwiftShader against `golden-gpu-sim.json`, which `sim-golden.spec.ts`
+     keeps equal to `IntSimulation`'s hashes, and runs the self-test there.
+   - Open for step 8: `IntSimulation` is far too slow for live play. It takes
+     about 70 ms per tick at 320 x 180 cells on a desktop, against 16.7 ms
+     per tick at 60 ticks a second. Until step 9 makes it fast, a device
+     without a passing GPU (or before its verdict is in) should offer only
+     the `cpu` ruleset in the handshake, as decision 5 says, and use
+     `IntSimulation` only for replays and checks.
 8. Switch it on:
    - bump `BALANCE_VERSION` and `NET_VERSION`;
    - add a replay version for `gpu-int` headers, and let the parser accept

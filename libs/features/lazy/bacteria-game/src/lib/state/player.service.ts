@@ -55,6 +55,8 @@ export class PlayerService {
 
   /** Builds each match's simulation - on the CPU unless told otherwise. */
   private simulationFactory: SimulationFactory = cpuSimulation;
+  /** Takes over when the factory's simulation fails to start. */
+  private fallbackFactory: SimulationFactory = cpuSimulation;
   private engine = new MatchEngine([], { seed: 0 });
   /** Where each player's joystick is pushed right now, absent while at rest. */
   private sticks = new Map<number, SteeringVector>();
@@ -262,10 +264,16 @@ export class PlayerService {
   /**
    * Runs the matches from now on with simulations from this factory - the
    * GPU one once the arena has a WebGL2 context, the CPU one again for null.
-   * Takes effect with the next match.
+   * Takes effect with the next match. `fallback` takes over when one of the
+   * factory's simulations fails to start - the deterministic CPU one for a
+   * deterministic match (ADR 0015).
    */
-  public useSimulation(factory: SimulationFactory | null): void {
+  public useSimulation(
+    factory: SimulationFactory | null,
+    fallback: SimulationFactory = cpuSimulation
+  ): void {
     this.simulationFactory = factory ?? cpuSimulation;
+    this.fallbackFactory = fallback;
     if (factory == null && this.engine.simulation.kind === 'gpu') {
       // It may hold a context that is going away: let it go now.
       this.engine.dispose();
@@ -291,11 +299,11 @@ export class PlayerService {
     } catch (error) {
       // Let go of the context listeners, or a restored context revives it.
       simulation?.dispose();
-      if (this.simulationFactory === cpuSimulation) {
+      if (this.simulationFactory === this.fallbackFactory) {
         throw error;
       }
       console.warn('The colony war falls back to the CPU', error);
-      this.simulationFactory = cpuSimulation;
+      this.simulationFactory = this.fallbackFactory;
       return this.createSimulation(balance, random, seed, arena);
     }
   }

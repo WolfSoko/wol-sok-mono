@@ -51,6 +51,11 @@ import {
   ArenaViewComponent,
 } from './arena/arena-view.component';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
+import { GpuSelfTestService } from './gl/gpu-self-test.service';
+import {
+  chooseSimulation,
+  DETERMINISTIC_SIMULATION,
+} from './gl/simulation-choice';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { rgba } from './arena/canvas-math';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
@@ -229,6 +234,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly language = this.i18n.language;
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
+  private readonly gpuSelfTest = inject(GpuSelfTestService);
   protected readonly progress = inject(ProgressService);
   protected readonly evolution = inject(EvolutionService);
   private readonly document = inject(DOCUMENT);
@@ -1261,14 +1267,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.mapSize() > 1 ? new Camera(width, height, this.mapSize()) : null;
     this.ambience = new DishAmbience(width, height);
     this.ambience.setTheme(this.theme());
-    // With a WebGL2 context the war itself runs on the GPU as well.
+    // With a WebGL2 context the war itself runs on the GPU as well - for a
+    // deterministic match only once the GPU passed the self-test.
     const gl = painter instanceof GlArenaPainter ? painter : null;
-    this.playerService.useSimulation(
-      gl == null
-        ? null
-        : (balance, random, seed) =>
-            gl.createSimulation(balance, random, { matchSeed: seed })
-    );
+    if (DETERMINISTIC_SIMULATION) {
+      this.gpuSelfTest.check();
+    }
+    const { factory, fallback } = chooseSimulation({
+      deterministic: DETERMINISTIC_SIMULATION,
+      gpu:
+        gl == null
+          ? null
+          : (balance, random, options) =>
+              gl.createSimulation(balance, random, options),
+      gpuTrusted: () => this.gpuSelfTest.result()?.ok === true,
+    });
+    this.playerService.useSimulation(factory, fallback);
     this.gameStateService.setArenaSize(width, height);
     this.draw();
   }

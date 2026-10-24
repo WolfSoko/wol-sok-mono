@@ -8,6 +8,9 @@ import { MatchPlan, planMatch } from './match-setup';
 import { PlayerColorArray } from './player.model';
 import { PlayerStore } from './player.store';
 import { PlayerService, PlayerSpawn } from './player.service';
+import { BacteriaSimulation } from './bacteria-simulation';
+import { IntSimulation } from './gpu-int/int-simulation';
+import { SimulationFactory } from './simulation';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -59,6 +62,33 @@ describe('PlayerService', () => {
     });
 
     expect(service.getDynamicWalls().length).toBeGreaterThan(0);
+  });
+
+  describe('simulation', () => {
+    const failing: SimulationFactory = () => {
+      throw new Error('No GPU here');
+    };
+
+    beforeEach(() => {
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    });
+
+    it('falls back to the CPU simulation when the GPU one fails', () => {
+      service.useSimulation(failing);
+      service.init(spawns(false), { arena: { width: WIDTH, height: HEIGHT } });
+
+      expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
+    });
+
+    it('falls back to the fallback it was given - the deterministic one', () => {
+      service.useSimulation(
+        failing,
+        (balance, random, seed) => new IntSimulation(balance, random, seed)
+      );
+      service.init(spawns(false), { arena: { width: WIDTH, height: HEIGHT } });
+
+      expect(service.getSimulation()).toBeInstanceOf(IntSimulation);
+    });
   });
 
   describe('online', () => {
