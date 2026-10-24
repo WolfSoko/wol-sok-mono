@@ -4,7 +4,11 @@ name: Bacteria Wars balance
 # the computer on every level, difficulty and loadout. Too slow for every Nx
 # Cloud run, so it runs here at night, split over jobs, and opens or updates
 # an issue labelled `balance` when a check fails or the results drift from
-# the committed baseline. Needs nothing but the default GITHUB_TOKEN.
+# the committed baseline, and closes it once a run is back in line. The lab
+# is deterministic: a night on which nothing it plays changed - the game lib,
+# the runner, the dependencies - since the last run that went through is
+# skipped, since it would play the same report (run it by hand to play
+# anyway). Needs nothing but the default GITHUB_TOKEN.
 on:
   schedule:
     - cron: '23 1 * * *'
@@ -22,7 +26,34 @@ env:
   SHARDS: 8
 
 jobs:
+  inputs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      key: ${{ steps.key.outputs.key }}
+      played: ${{ steps.lookup.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Key what the lab plays
+        id: key
+        run: |
+          lib=$(git rev-parse HEAD:libs/features/lazy/bacteria-game)
+          runner=$(git rev-parse HEAD:tools/bacteria-game/balance)
+          deps=$(sha256sum package-lock.json | cut -d ' ' -f 1)
+          echo "key=bacteria-balance-$lib-$runner-$deps" >> "$GITHUB_OUTPUT"
+
+      - name: Look for a green run of the same
+        id: lookup
+        uses: actions/cache/restore@v6
+        with:
+          path: dist/balance-key
+          key: ${{ steps.key.outputs.key }}
+          lookup-only: true
+
   matrix:
+    needs: inputs
+    if: github.event_name == 'workflow_dispatch' || needs.inputs.outputs.played != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 240
     strategy:
@@ -49,7 +80,7 @@ jobs:
           retention-days: 3
 
   report:
-    needs: matrix
+    needs: [inputs, matrix]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -88,7 +119,7 @@ jobs:
           open=$(gh issue list --label balance --state open --json number --jq '.[0].number // empty')
           if [ "$problems" -eq 0 ]; then
             if [ -n "$open" ]; then
-              gh issue comment "$open" --body "The nightly balance run is back in line with the baseline: $RUN_URL"
+              gh issue close "$open" --comment "The nightly balance run is back in line with the baseline: $RUN_URL"
             fi
             exit 0
           fi
@@ -103,3 +134,15 @@ jobs:
               --title "Bacteria Wars: balance drift or failed checks" \
               --body-file "$RUNNER_TEMP/body.md"
           fi
+
+      # Saved last, so only a run that went through skips the next nights
+      # on the same inputs.
+      - name: Mark the inputs as played
+        run: mkdir -p dist/balance-key && echo "$KEY" > dist/balance-key/key
+        env:
+          KEY: ${{ needs.inputs.outputs.key }}
+
+      - uses: actions/cache/save@v6
+        with:
+          path: dist/balance-key
+          key: ${{ needs.inputs.outputs.key }}
