@@ -100,6 +100,19 @@ describe('computeCaptureScale', () => {
     expect(1000 * blowingDown.width * scale).toBeLessThanOrEqual(4096);
   });
 
+  it('should keep the effect canvas within the area browsers allow', () => {
+    const scale = computeCaptureScale({
+      width: 1200,
+      height: 1000,
+      effectScale: defaultWind,
+      devicePixelRatio: 2,
+      maxCanvasSize: 16384,
+    });
+    // the capture is floored to whole pixels
+    const captured = Math.floor(1200 * scale) * Math.floor(1000 * scale);
+    expect(captured * 2 * 5).toBeLessThanOrEqual(16_777_216);
+  });
+
   it('should fall back to 1 for an unknown device pixel ratio', () => {
     expect(
       computeCaptureScale({

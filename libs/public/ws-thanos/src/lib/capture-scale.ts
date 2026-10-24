@@ -1,10 +1,14 @@
+import type { EffectScale } from './wind';
+
 const MAX_DEVICE_PIXEL_RATIO = 2;
+
+/** the largest canvas area Safari allows, the smallest limit of the common browsers */
+const MAX_CANVAS_PIXELS = 16_777_216;
 
 export interface CaptureScaleParams {
   width: number;
   height: number;
-  /** the effect canvas size in element sizes, see effectScale() */
-  effectScale: { width: number; height: number };
+  effectScale: EffectScale;
   devicePixelRatio: number;
   maxCanvasSize: number;
   /** the most pixels to capture the element with, no limit when unset */
@@ -25,9 +29,22 @@ export function capturePixelsScale(
     : Infinity;
 }
 
+/** scale that keeps the effect canvas around an element of the given css size a canvas browsers create */
+export function effectCanvasScale(
+  width: number,
+  height: number,
+  effectScale: EffectScale
+): number {
+  return capturePixelsScale(
+    width * effectScale.width,
+    height * effectScale.height,
+    MAX_CANVAS_PIXELS
+  );
+}
+
 /**
  * Scale used to capture the element: device pixels for crisp particles,
- * but small enough that the effect canvas fits the device's max canvas size
+ * but small enough that the effect canvas fits the device's max canvas size and area
  * and the element stays within maxCapturePixels, below css pixels if needed.
  */
 export function computeCaptureScale({
@@ -43,6 +60,7 @@ export function computeCaptureScale({
     pixelRatio,
     MAX_DEVICE_PIXEL_RATIO,
     capturePixelsScale(width, height, maxCapturePixels),
+    effectCanvasScale(width, height, effectScale),
     maxCanvasSize / Math.max(1, width * effectScale.width),
     maxCanvasSize / Math.max(1, height * effectScale.height)
   );

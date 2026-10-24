@@ -42,8 +42,9 @@ const validDegrees = (degrees: number): number =>
  * 0 up, 90 right, 180 down, 270 left
  */
 export function windOf(degrees = DEFAULT_WIND_DIRECTION): Wind {
-  const direction = toRadians(validDegrees(degrees));
-  const rotation = toRadians(validDegrees(degrees) - DEFAULT_WIND_DIRECTION);
+  const valid = validDegrees(degrees);
+  const direction = toRadians(valid);
+  const rotation = toRadians(valid - DEFAULT_WIND_DIRECTION);
   return {
     x: Math.sin(direction),
     y: -Math.cos(direction),
@@ -80,10 +81,12 @@ export function effectMargins(degrees = DEFAULT_WIND_DIRECTION): EffectMargins {
 }
 
 /** size of the effect canvas in element sizes */
-export function effectScale(margins: EffectMargins): {
+export interface EffectScale {
   width: number;
   height: number;
-} {
+}
+
+export function effectScale(margins: EffectMargins): EffectScale {
   return {
     width: 1 + margins.left + margins.right,
     height: 1 + margins.top + margins.bottom,

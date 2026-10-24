@@ -23,7 +23,13 @@ import { ParticleRenderer } from './particle-renderer';
 import { createParticles, Particles } from './particles';
 import { SnapSound, SnapSoundService } from './snap-sound.service';
 import { frontGeometry } from './vaporizing-front';
-import { EffectMargins, effectMargins, effectScale, windOf } from './wind';
+import {
+  EffectMargins,
+  effectMargins,
+  effectScale,
+  Wind,
+  windOf,
+} from './wind';
 import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
 import type { WsThanosOptions } from './ws-thanos.options';
 
@@ -133,7 +139,7 @@ export class WsThanosService {
       ({ renderer } = this.createRenderer(rendererChoice, capture, {
         particleAcceleration,
         crumble: 'shards',
-        windDirection,
+        wind: windOf(windDirection),
         margins: effectMargins(windDirection),
       }));
       renderer.render({
@@ -170,6 +176,7 @@ export class WsThanosService {
     );
     let effect: RunningEffect | undefined;
 
+    const wind = windOf(windDirection);
     const margins = effectMargins(windDirection);
     const capture = this.capture(elem, (width, height) =>
       rendererChoice.captureScale(width, height, effectScale(margins))
@@ -179,7 +186,7 @@ export class WsThanosService {
         const { renderer, particles } = this.createRenderer(
           rendererChoice,
           capture,
-          { particleAcceleration, crumble, windDirection, margins }
+          { particleAcceleration, crumble, wind, margins }
         );
 
         this.placeEffectCanvas(
@@ -293,12 +300,12 @@ export class WsThanosService {
     {
       particleAcceleration,
       crumble,
-      windDirection,
+      wind,
       margins,
-    }: Pick<
-      WsThanosOptions,
-      'particleAcceleration' | 'crumble' | 'windDirection'
-    > & { margins: EffectMargins }
+    }: Pick<WsThanosOptions, 'particleAcceleration' | 'crumble'> & {
+      wind: Wind;
+      margins: EffectMargins;
+    }
   ): { renderer: ParticleRenderer; particles: Particles } {
     const { width, height } = imageData;
     const offsetX = Math.round(width * margins.left);
@@ -309,7 +316,6 @@ export class WsThanosService {
       rendererChoice.maxParticleCount,
       { x: offsetX, y: offsetY }
     );
-    const wind = windOf(windDirection);
     const renderer = rendererChoice.create(particles, {
       width: offsetX + width + Math.round(width * margins.right),
       height: offsetY + height + bottom,

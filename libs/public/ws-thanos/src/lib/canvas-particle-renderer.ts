@@ -46,7 +46,12 @@ export class CanvasParticleRenderer implements ParticleRenderer {
     }
     this.context = context;
     this.image = context.createImageData(params.width, params.height);
-    this.flowField = new FlowField(params.width, params.height, params.seed);
+    this.flowField = new FlowField(
+      params.width,
+      params.height,
+      params.seed,
+      params.wind
+    );
   }
 
   public render(animationState: AnimationState): void {
@@ -92,7 +97,7 @@ export function updateParticlesOnCpu({
   // the flow field pushes as much per second at any frame rate
   const flowPerFrame = deltaTSec * FRAME_RATE;
   const flow = new Float32Array(2);
-  // forces are written for the default wind and rotated into this one
+  // the release push is written for the default wind and turned into this one
   const { cos, sin } = wind;
 
   for (let i = 0; i < count; i++) {
@@ -115,10 +120,8 @@ export function updateParticlesOnCpu({
     } else {
       // flow along the noise velocity field
       flowField.sample(particleX, particleY, flow);
-      const ax = flow[0] * flowPerFrame;
-      const ay = -flow[1] * flowPerFrame;
-      state[base + P.AX] += cos * ax - sin * ay;
-      state[base + P.AY] += sin * ax + cos * ay;
+      state[base + P.AX] += flow[0] * flowPerFrame;
+      state[base + P.AY] += flow[1] * flowPerFrame;
     }
 
     state[base + P.VX] += state[base + P.AX] * particleAcceleration * deltaTSec;

@@ -285,7 +285,7 @@ void main() {
 
 /**
  * Runs once: the noise field released particles flow along, a texel covers uCell device pixels.
- * Red and green are the x and y flow, simplex noise mapped to [0, 1] like FlowField on the CPU.
+ * Red and green are the x and y flow, simplex noise mapped to [0, 1], the same noise as FlowField on the CPU.
  */
 export const FLOW_FIELD_FRAGMENT_SHADER = /* glsl */ `#version 300 es
 precision highp float;

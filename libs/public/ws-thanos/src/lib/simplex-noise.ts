@@ -187,7 +187,7 @@ export class SimplexNoise {
   }
 }
 
-/** like dot() without allocating, raw3D runs for every particle */
+/** like dot() without allocating, raw3D runs many times in a row */
 function dot3(g: number[], x: number, y: number, z: number): number {
   return g[0] * x + g[1] * y + g[2] * z;
 }

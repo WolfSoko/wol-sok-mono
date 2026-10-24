@@ -16,13 +16,6 @@ import { windOf } from './wind';
 describe('CanvasParticleRenderer', () => {
   const effectWidth = 40;
   const effectHeight = 100;
-  const flowField = new FlowField(
-    effectWidth,
-    effectHeight,
-    42,
-    undefined,
-    new SimplexNoise({ random: seededRandom() })
-  );
 
   /** the same numbers in every run */
   function seededRandom(): () => number {
@@ -63,7 +56,14 @@ describe('CanvasParticleRenderer', () => {
         wind,
         front: frontGeometry(particles.bounds, wind, { top: 0, bottom: 0 }),
       },
-      flowField,
+      flowField: new FlowField(
+        effectWidth,
+        effectHeight,
+        42,
+        wind,
+        undefined,
+        new SimplexNoise({ random: seededRandom() })
+      ),
     });
   }
 

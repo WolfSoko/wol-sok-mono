@@ -1,7 +1,7 @@
 import {
-  CaptureScaleParams,
   capturePixelsScale,
   computeCaptureScale,
+  effectCanvasScale,
 } from './capture-scale';
 import {
   CANVAS_MAX_PARTICLE_COUNT,
@@ -10,15 +10,13 @@ import {
 import { ParticleRenderer, ParticleRendererParams } from './particle-renderer';
 import { limitParticles, Particles } from './particles';
 import { WebGlParticleRenderer } from './webgl/webgl-particle-renderer';
+import type { EffectScale } from './wind';
 
 /**
  * Browsers drop the oldest WebGL context once about 16 are alive,
  * so only this many effects run on the GPU at the same time.
  */
 const MAX_GPU_EFFECTS = 12;
-
-/** the largest canvas area Safari allows, the smallest limit of the common browsers */
-const MAX_CANVAS_PIXELS = 16_777_216;
 
 /** counts the effects that hold a WebGL context */
 export class GpuContextBudget {
@@ -52,11 +50,7 @@ export interface ParticleRendererChoice {
   /** how many particles this renderer can handle */
   readonly maxParticleCount: number;
   /** scale to capture an element of the given css size, see computeCaptureScale() */
-  captureScale(
-    width: number,
-    height: number,
-    effectScale: CaptureScaleParams['effectScale']
-  ): number;
+  captureScale(width: number, height: number, effectScale: EffectScale): number;
   create(
     particles: Particles,
     params: ParticleRendererParams
@@ -93,12 +87,7 @@ export function chooseParticleRenderer({
       Math.min(
         1,
         capturePixelsScale(width, height, maxCapturePixels),
-        // the effect canvas has to stay a canvas the browser can create
-        capturePixelsScale(
-          width * effectScale.width,
-          height * effectScale.height,
-          MAX_CANVAS_PIXELS
-        )
+        effectCanvasScale(width, height, effectScale)
       ),
     create: createCanvasRenderer,
     release: () => undefined,
