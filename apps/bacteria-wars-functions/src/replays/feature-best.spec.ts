@@ -1,5 +1,6 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import type { Account } from '../accounts';
+import type { Engine } from '../engine';
 import {
   isCandidate,
   MAX_CANDIDATES,
@@ -11,7 +12,8 @@ import type { ReplayDoc } from './model';
 
 const NOW = Date.UTC(2026, 9, 24, 3);
 const DAY = 86_400_000;
-const BALANCE = 5;
+/** Any balance: the gallery compares it with the engine's, whatever it is. */
+const BALANCE = 5 as number as Engine['BALANCE_VERSION'];
 
 function replay(id: string, doc: Partial<ReplayDoc> = {}): StoredReplay {
   return {
