@@ -264,9 +264,10 @@ test('should draw the arena on the GPU and keep it readable', async ({
 test('should run the colony war on the GPU', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'WebGL2 is checked in Chromium');
   const po = new BacteriaGamePo(page);
-  await po.goto();
-  // The deterministic integer passes run once the GPU passed its self-test
-  // (ADR 0015), which the game runs right after the first frame.
+  // CI has SwiftShader only, a software renderer the game keeps on the CPU
+  // (ADR 0015): the device override sends local matches to the integer GPU
+  // passes all the same. They pass the self-test there too.
+  await po.goto('/?sim=gpu-int');
   await expect(po.playArea).toHaveAttribute('data-gpu-self-test', 'passed');
 
   await po.startMatch();

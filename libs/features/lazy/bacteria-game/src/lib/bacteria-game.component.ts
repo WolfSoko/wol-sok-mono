@@ -58,6 +58,7 @@ import {
   chooseSimulation,
   DETERMINISTIC_SIMULATION,
 } from './gl/simulation-choice';
+import { gpuTrusted } from './gl/simulation-check';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { rgba } from './arena/canvas-math';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
@@ -1302,7 +1303,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           ? null
           : (balance, random, options) =>
               gl.createSimulation(balance, random, options),
-      gpuTrusted: () => this.gpuSelfTest.result()?.ok === true,
+      gpuTrusted: () => gpuTrusted(this.gpuSelfTest.result()),
       override: this.simulationOverride.override,
     });
     this.playerService.useSimulation(factory, fallback, { ruleset, offers });

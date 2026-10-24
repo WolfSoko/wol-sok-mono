@@ -55,6 +55,8 @@ export const settings: Translation<typeof en> = {
     forced:
       'Für dieses Gerät mit ?sim={ruleset} festgelegt; ?sim=auto hebt es auf.',
     passed: 'GPU-Selbsttest auf {renderer} bestanden.',
+    software:
+      'GPU-Selbsttest auf {renderer} bestanden, doch der zeichnet auf der CPU - zu langsam für Partien auf der GPU.',
     failedAt: 'GPU-Selbsttest auf {renderer} bei Tick {tick} durchgefallen.',
     error: 'GPU-Selbsttest konnte auf {renderer} nicht laufen: {error}',
     pending: 'GPU-Selbsttest noch nicht gelaufen.',

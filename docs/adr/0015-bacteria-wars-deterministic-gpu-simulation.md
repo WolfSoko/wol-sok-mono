@@ -230,7 +230,11 @@ sits behind a flag; step 8 switches it on.
      queue is casual (ADR 0010) and pairs any two devices, which agree on a
      ruleset in the handshake.
    - Local matches, recorded or not, play `gpu-int` where the GPU passed the
-     self-test, `cpu` else (`chooseSimulation`). A GPU simulation that fails
+     self-test, `cpu` else (`chooseSimulation`). A software renderer does
+     not count (`gpuTrusted`): SwiftShader passes the self-test but took
+     about 460 ms a tick at 320 x 180, against 4.8 ms for the CPU's
+     ruleset, so two such devices froze in an online `gpu-int` match (seen
+     in CI, which has only SwiftShader). A GPU simulation that fails
      to start leaves the device on `cpu`, offering `cpu` only.
    - The golden replay has a `gpu-int` result as well
      (`golden-replay.spec.ts`), played on `IntSimulation`.
