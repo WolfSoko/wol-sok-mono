@@ -1,23 +1,55 @@
-<mat-card class="form">
+<mat-card appearance="outlined" class="form" data-testid="live-chat">
   <mat-card-header>
-    <mat-card-title>Live Chat: </mat-card-title>
-    <mat-card-subtitle> Share your thoughts... </mat-card-subtitle>
+    <mat-card-title>Live chat</mat-card-title>
+    <mat-card-subtitle>Share your thoughts...</mat-card-subtitle>
   </mat-card-header>
-  <br />
-  <mat-card-content>
-    <rap-chat-message-form
-      [minMessageLength]="minLength()"
-      [maxMessageLength]="maxLength()"
-      (messageAdded)="addChatMessage($event)"
-    ></rap-chat-message-form>
+  <mat-card-content class="content">
+    @if (canChat()) {
+      <rap-chat-message-form
+        [minMessageLength]="minLength()"
+        [maxMessageLength]="maxLength()"
+        (messageAdded)="addChatMessage($event)"
+      ></rap-chat-message-form>
+      @if (postFailed()) {
+        <p class="error" role="alert" data-testid="chat-error">
+          Your message could not be posted. Please try again.
+        </p>
+      }
+    } @else {
+      <div class="sign-in" data-testid="chat-sign-in">
+        <p class="hint">
+          Sign in with Google to join the chat. Reading along is free.
+        </p>
+        <button
+          mat-flat-button
+          type="button"
+          [disabled]="signInAction.busy()"
+          (click)="signIn()"
+          data-testid="chat-sign-in-button"
+        >
+          <mat-icon>login</mat-icon>
+          Sign in with Google
+        </button>
+        @if (signInAction.failed()) {
+          <p class="error" role="alert" data-testid="chat-sign-in-error">
+            That did not work. Please try again.
+          </p>
+        }
+      </div>
+    }
   </mat-card-content>
 </mat-card>
-<mat-card class="notes">
+<mat-card appearance="outlined" class="notes">
   <mat-card-header>
-    <mat-card-title>Messages:</mat-card-title>
+    <mat-card-title>Messages</mat-card-title>
+    @if (chatMessages(); as messages) {
+      <mat-card-subtitle>
+        {{ messages.length }}
+        {{ messages.length === 1 ? "message" : "messages" }}
+      </mat-card-subtitle>
+    }
   </mat-card-header>
-  <br />
-  <mat-card-content>
+  <mat-card-content class="content">
     <rap-messages-list [messages]="chatMessages()"></rap-messages-list>
   </mat-card-content>
 </mat-card>

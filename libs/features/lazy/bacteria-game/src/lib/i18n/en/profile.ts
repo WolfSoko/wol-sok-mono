@@ -1,0 +1,46 @@
+/** The profile screen, the online profile's editor and the account line. */
+export const profile = {
+  title: 'Profile',
+  online: 'Online profile',
+  summary: 'Rank and totals',
+  ranks: 'Ranks',
+  figures: {
+    levelsWon: 'Levels won',
+    medallions: 'Medallions',
+    matchesWon: 'Matches won',
+    captured: 'Bacteria captured',
+    crushed: 'Crushed by walls',
+    couchMatches: 'Two-player matches',
+  },
+  tally: 'Medallions by metal',
+  achievements: {
+    title: 'Achievements',
+    earned: 'Earned {date}',
+  },
+  cabinet: {
+    title: 'Medallions',
+    level: 'Level',
+  },
+  editor: {
+    name: 'Name',
+    motto: 'Motto',
+    picture: 'Picture',
+    preset: 'Bacterium {number}',
+    googlePhoto: 'Google photo',
+    upload: 'Upload a picture',
+    shareStatus: "Friends see when I'm online",
+    save: 'Save',
+    saved: 'Saved.',
+    unreadable: 'That image could not be read - try another one.',
+  },
+  account: {
+    local: 'Kept on this device',
+    connecting: 'Connecting…',
+    guest: 'Playing as a guest',
+    signIn: 'Sign in with Google',
+    signInHint: 'Keep your progress on every device you sign in on',
+    signedInAs: 'Signed in as',
+    googleUser: 'Google user',
+    signOut: 'Sign out',
+  },
+};

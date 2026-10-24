@@ -1,0 +1,23 @@
+<section aria-labelledby="poll-share-title" data-testid="poll-share">
+  <rap-share
+    [content]="content()"
+    [highlighted]="highlighted()"
+    linkLabel="Poll link"
+  >
+    @if (highlighted()) {
+      <h2 id="poll-share-title" class="title" data-testid="poll-ready">
+        <mat-icon class="title-icon" aria-hidden="true">celebration</mat-icon>
+        Your poll is ready – share it
+      </h2>
+      <p class="hint">Send the link to your group. Votes show up live.</p>
+    } @else {
+      <h2 id="poll-share-title" class="hint">Invite others to vote</h2>
+    }
+    @if (!poll().listed) {
+      <p class="private-hint" data-testid="poll-share-private">
+        <mat-icon class="rap-icon-sm" aria-hidden="true">lock</mat-icon>
+        {{ privatePollHint }}
+      </p>
+    }
+  </rap-share>
+</section>

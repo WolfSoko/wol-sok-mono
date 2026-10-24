@@ -1,0 +1,32 @@
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--bw-gold, #e9b949);
+  border-radius: 1rem;
+}
+
+.icon {
+  color: var(--bw-gold, #e9b949);
+}
+
+.text {
+  flex: 1 1 14rem;
+
+  p {
+    margin: 0;
+    line-height: 1.4;
+  }
+}
+
+.title {
+  font-weight: 700;
+}
+
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+}

@@ -16,18 +16,38 @@ export class Repository<T extends JSONCompatible<T>> {
     this.localStorageKey = LOCAL_STORAGE_KEY_PREFIX + localStorageKey;
   }
 
-  save(data: T): void {
+  public save(data: T): void {
     if (!this.saveToLocalStorage) {
       return;
     }
-    localStorage?.setItem(this.localStorageKey, safeJsonStringify(data));
+    try {
+      localStorage?.setItem(this.localStorageKey, safeJsonStringify(data));
+    } catch {
+      // quota exceeded or site data blocked: the app keeps working unsaved
+    }
   }
 
-  load(): T | null {
+  public clear(): void {
+    if (!this.saveToLocalStorage) {
+      return;
+    }
+    try {
+      localStorage?.removeItem(this.localStorageKey);
+    } catch {
+      // site data blocked: nothing was stored either
+    }
+  }
+
+  public load(): T | null {
     if (!this.saveToLocalStorage) {
       return null;
     }
-    const data = localStorage?.getItem(this.localStorageKey);
-    return data ? (safeJsonParse(data) as T) : null;
+    try {
+      const data = localStorage?.getItem(this.localStorageKey);
+      return data ? (safeJsonParse(data) as T) : null;
+    } catch {
+      // site data blocked or not written by this app: start without it
+      return null;
+    }
   }
 }

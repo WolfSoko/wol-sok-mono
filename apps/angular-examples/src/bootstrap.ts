@@ -42,6 +42,15 @@ init({
   tracesSampleRate: 1.0,
 });
 
+/** every pixel even of large elements, but only where the device has the memory for it */
+function thanosParticleCount(): { maxParticleCount?: number } {
+  const deviceMemoryGb = (navigator as Navigator & { deviceMemory?: number })
+    .deviceMemory;
+  return deviceMemoryGb != null && deviceMemoryGb >= 8
+    ? { maxParticleCount: 6_000_000 }
+    : {};
+}
+
 bootstrapApplication(AppComponent, {
   providers: [
     provideZonelessChangeDetection(),
@@ -50,8 +59,8 @@ bootstrapApplication(AppComponent, {
     provideCore(),
     [
       provideWsThanosOptions({
-        maxParticleCount: 50000,
         animationLength: 5000,
+        ...thanosParticleCount(),
       }),
     ],
     // Only the element that fills the screen is painted, so dialogs and

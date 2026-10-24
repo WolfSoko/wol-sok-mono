@@ -1,14 +1,19 @@
 import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { ConfigEnv, defineConfig } from 'vite';
+import { ConfigEnv, defineConfig, Plugin } from 'vite';
 
 import { ViteUserConfig } from 'vitest/config';
 
 export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
+  if (mode === 'development') {
+    // the admin API (src/server/admin) uses the Auth emulator, as the browser
+    // does with environment.develop
+    process.env['FIREBASE_AUTH_EMULATOR_HOST'] ??= '127.0.0.1:9099';
+  }
   return {
     root: 'apps/rollapolla-analog',
     publicDir: 'src/public',
-    cacheDir: `../../node_modules/.vite`,
+    cacheDir: `../../node_modules/.vite/apps/rollapolla-analog`,
     build: {
       outDir: '../../dist/apps/rollapolla-analog/client',
       reportCompressedSize: true,
@@ -36,6 +41,10 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
         '@angular-devkit/schematics',
         '@schematics/angular',
       ],
+      // Scan every app source, not just the entry: routes and @defer blocks are
+      // lazy, so their dependencies were found only on first use. Vite then
+      // re-bundled them and the page ended up with two copies of Angular (NG0203).
+      entries: ['src/**/*.ts', '!src/**/*.spec.ts'],
     },
     plugins: [
       analog({
@@ -58,12 +67,19 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
         },
       }),
       nxViteTsPaths(),
+      ...(mode === 'development' ? [useDevelopEnvironment()] : []),
     ],
     test: {
       globals: true,
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
       include: ['src/**/*.spec.ts'],
+      server: {
+        deps: {
+          // @angular/fire ships extensionless ESM imports Node can't load directly
+          inline: ['@angular/fire'],
+        },
+      },
       reporters: ['default'],
       coverage: {
         reportsDirectory: '../../coverage/apps/rollapolla-analog',
@@ -76,3 +92,27 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
     },
   };
 });
+
+/**
+ * Swaps the app's `environments/environment` for `environment.develop`, so
+ * `nx serve` and the e2e tests talk to the Firestore emulator, not production.
+ */
+function useDevelopEnvironment(): Plugin {
+  const appSources = '/apps/rollapolla-analog/src/';
+  return {
+    name: 'rollapolla-develop-environment',
+    enforce: 'pre',
+    resolveId(source, importer, options) {
+      if (
+        !importer?.includes(appSources) ||
+        !source.endsWith('/environments/environment')
+      ) {
+        return null;
+      }
+      return this.resolve(`${source}.develop`, importer, {
+        ...options,
+        skipSelf: true,
+      });
+    },
+  };
+}

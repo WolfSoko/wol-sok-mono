@@ -5,6 +5,9 @@
   "sourceRoot": "apps/angular-examples/src",
   "prefix": "app",
   "tags": ["app", "type:host"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "federation"]
+  },
   "targets": {
     "generate-version": {
       "executor": "nx:run-commands",
@@ -45,6 +48,8 @@
           },
           "apps/angular-examples/src/favicon.ico",
           "apps/angular-examples/src/manifest.json",
+          "apps/angular-examples/src/robots.txt",
+          "apps/angular-examples/src/sitemap.xml",
           "apps/angular-examples/src/assets"
         ],
         "styles": ["apps/angular-examples/src/styles.scss"],
@@ -75,8 +80,8 @@
             },
             {
               "type": "anyComponentStyle",
-              "maximumWarning": "2kb",
-              "maximumError": "4kb"
+              "maximumWarning": "6kb",
+              "maximumError": "8kb"
             }
           ],
           "fileReplacements": [
@@ -99,6 +104,12 @@
     },
     "build": {
       "executor": "@angular-architects/native-federation:build",
+      "inputs": [
+        "production",
+        "sharedGlobals",
+        "^production",
+        "cdk-deployed-version"
+      ],
       "outputs": ["{workspaceRoot}/dist/apps/angular-examples"],
       "dependsOn": ["^build", "generate-version"],
       "options": {},

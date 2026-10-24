@@ -1,0 +1,15 @@
+<feat-lazy-bac-game-screen-header
+  [title]="'social.friends.title' | t"
+  (back)="back.emit()"
+/>
+<section class="friends" [attr.aria-label]="'social.friends.region' | t">
+  @if (social.available) {
+    <p class="intro">{{ "social.friends.intro" | t }}</p>
+    <feat-lazy-bac-game-friends
+      [canChallenge]="canChallenge()"
+      (challenge)="challenge.emit($event)"
+    />
+  } @else {
+    <p class="intro">{{ "social.friends.noCloud" | t }}</p>
+  }
+</section>

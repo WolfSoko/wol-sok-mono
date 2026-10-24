@@ -1,0 +1,110 @@
+<feat-lazy-bac-game-screen-header
+  [title]="'help.title' | t"
+  (back)="back.emit()"
+/>
+<ol class="steps">
+  <li class="screen-section">
+    <span class="step-number">1</span>
+    <h3 class="section-title">{{ "help.steps.steer.title" | t }}</h3>
+    <p>{{ "help.steps.steer.text" | t }}</p>
+  </li>
+  <li class="screen-section">
+    <span class="step-number">2</span>
+    <h3 class="section-title">{{ "help.steps.boost.title" | t }}</h3>
+    <p>{{ "help.steps.boost.text" | t }}</p>
+  </li>
+  <li class="screen-section">
+    <span class="step-number">3</span>
+    <h3 class="section-title">{{ "help.steps.eat.title" | t }}</h3>
+    <p>{{ "help.steps.eat.text" | t }}</p>
+    <p>{{ "help.steps.eat.neutral" | t }}</p>
+  </li>
+</ol>
+<div class="screen-sections">
+  <section class="screen-section evolution">
+    <h3 class="section-title">{{ "evolution.help.title" | t }}</h3>
+    <p>{{ "evolution.help.dna" | t }}</p>
+    <p>{{ "evolution.help.genes" | t }}</p>
+    <p>{{ "evolution.help.weapons" | t }}</p>
+    <p>{{ "evolution.help.fair" | t }}</p>
+  </section>
+  <section class="screen-section">
+    <h3 class="section-title">{{ "help.ground.title" | t }}</h3>
+    <ul class="zones">
+      @for (zone of zones(); track zone.kind) {
+        <li>
+          <span
+            class="swatch"
+            aria-hidden="true"
+            [style.color]="zone.css"
+          ></span>
+          <span
+            ><strong>{{ zone.name | t }}</strong>
+            {{ "help.ground.separator" | t }}
+            {{ zone.rule | t: zone.params }}</span
+          >
+        </li>
+      }
+    </ul>
+  </section>
+  <section class="screen-section">
+    <h3 class="section-title">{{ "help.keyboard.title" | t }}</h3>
+    <p>
+      {{ "help.keyboard.leftUses" | t: { name: names()[0] } }}
+      <kbd>W A S D</kbd> {{ "help.keyboard.and" | t }}
+      <kbd>{{ "help.keyboard.space" | t }}</kbd
+      >,
+      {{ "help.keyboard.rightUses" | t: { name: names()[1] } }}
+      <kbd>{{ "help.keyboard.arrows" | t }}</kbd>
+      {{ "help.keyboard.and" | t }}
+      <kbd>{{ "help.keyboard.enter" | t }}</kbd
+      >.
+      {{ "help.keyboard.both" | t }}
+    </p>
+    <p class="weapon-keys">
+      {{ "controls.weaponKeys.before" | t }}
+      <kbd>{{ "controls.weaponKeys.e" | t }}</kbd>
+      {{ "controls.weaponKeys.or" | t }}
+      <kbd>{{ "controls.weaponKeys.shift" | t }}</kbd>
+      {{ "controls.weaponKeys.after" | t }}
+    </p>
+    <p>
+      <kbd>P</kbd> {{ "help.keyboard.or" | t }} <kbd>Esc</kbd>
+      {{ "help.keyboard.pauses" | t }} <kbd>F</kbd>
+      {{ "help.keyboard.fullscreen" | t }}
+    </p>
+  </section>
+  <section class="screen-section">
+    <h3 class="section-title">{{ "help.touch.title" | t }}</h3>
+    <p>{{ "help.touch.controls" | t }}</p>
+    <p>{{ "help.touch.twoPlayers" | t }}</p>
+  </section>
+  <section class="screen-section">
+    <h3 class="section-title">{{ "help.privacy.title" | t }}</h3>
+    <p>
+      {{ "help.privacy.before" | t }}
+      <a [href]="privacyPolicyUrl" target="_blank" rel="noopener">{{
+        "help.privacy.link" | t
+      }}</a
+      >{{ "help.privacy.after" | t }}
+    </p>
+    @if (ads.consentAnswered()) {
+      <p>
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="ads.openConsentSettings()"
+        >
+          {{ "support.adSettings" | t }}
+        </button>
+      </p>
+    }
+  </section>
+  @if (support.available()) {
+    <section class="screen-section">
+      <h3 class="section-title">{{ "support.title" | t }}</h3>
+      <feat-lazy-bac-game-support-card />
+    </section>
+  }
+</div>
+<feat-lazy-bac-game-ad-slot />

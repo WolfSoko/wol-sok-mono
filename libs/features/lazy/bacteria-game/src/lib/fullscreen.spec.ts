@@ -4,7 +4,9 @@ import {
   fullscreenElementOf,
   isFullscreen,
   isFullscreenSupported,
-  toggleFullscreen,
+  lockLandscape,
+  requestFullscreen,
+  unlockOrientation,
 } from './fullscreen';
 
 describe('fullscreenElementOf', () => {
@@ -96,45 +98,6 @@ describe('exitFullscreen', () => {
   });
 });
 
-describe('toggleFullscreen', () => {
-  it('requests fullscreen for the element', () => {
-    const requestFullscreen = jest.fn().mockResolvedValue(undefined);
-
-    expect(
-      toggleFullscreen({ fullscreenElement: null }, { requestFullscreen })
-    ).toBe(true);
-    expect(requestFullscreen).toHaveBeenCalled();
-  });
-
-  it('exits when something already fills the screen', () => {
-    const exitFullscreen = jest.fn().mockResolvedValue(undefined);
-    const element = {} as Element;
-
-    expect(
-      toggleFullscreen({ fullscreenElement: element, exitFullscreen }, {})
-    ).toBe(true);
-    expect(exitFullscreen).toHaveBeenCalled();
-  });
-
-  it('uses the prefixed calls when they are the only ones', () => {
-    const webkitRequestFullscreen = jest.fn();
-
-    toggleFullscreen({}, { webkitRequestFullscreen });
-
-    expect(webkitRequestFullscreen).toHaveBeenCalled();
-  });
-
-  it('reports that nothing happened when the browser has no API', () => {
-    expect(toggleFullscreen({}, {})).toBe(false);
-  });
-
-  it('swallows a rejected request - a refused gesture must not break the game', () => {
-    const requestFullscreen = jest.fn().mockRejectedValue(new Error('denied'));
-
-    expect(() => toggleFullscreen({}, { requestFullscreen })).not.toThrow();
-  });
-});
-
 describe('fitInside', () => {
   it('fills the width when the box is taller than the arena', () => {
     expect(fitInside(640, 1000, 320, 140)).toEqual({ width: 640, height: 280 });
@@ -155,5 +118,73 @@ describe('fitInside', () => {
 
   it('has no size for a box that has no layout yet', () => {
     expect(fitInside(0, 0, 320, 140)).toBeNull();
+  });
+});
+
+describe('requestFullscreen', () => {
+  it('asks the browser and settles once it answered', async () => {
+    const request = jest.fn(() => Promise.resolve());
+
+    await requestFullscreen({ requestFullscreen: request });
+
+    expect(request).toHaveBeenCalled();
+  });
+
+  it('swallows a refusal', async () => {
+    await expect(
+      requestFullscreen({
+        requestFullscreen: () => Promise.reject(new TypeError('no gesture')),
+      })
+    ).resolves.toBeUndefined();
+  });
+
+  it('settles without the API', async () => {
+    await expect(requestFullscreen({})).resolves.toBeUndefined();
+    await expect(requestFullscreen(null)).resolves.toBeUndefined();
+  });
+
+  it('falls back to the webkit call, which returns nothing', async () => {
+    const webkitRequestFullscreen = jest.fn();
+
+    await expect(
+      requestFullscreen({ webkitRequestFullscreen })
+    ).resolves.toBeUndefined();
+    expect(webkitRequestFullscreen).toHaveBeenCalled();
+  });
+});
+
+describe('lockLandscape', () => {
+  it('asks for landscape', () => {
+    const lock = jest.fn().mockResolvedValue(undefined);
+
+    void lockLandscape({ orientation: { lock } });
+
+    expect(lock).toHaveBeenCalledWith('landscape');
+  });
+
+  it('swallows a refusal', async () => {
+    const lock = jest.fn().mockRejectedValue(new Error('not supported'));
+
+    await expect(
+      lockLandscape({ orientation: { lock } })
+    ).resolves.toBeUndefined();
+  });
+
+  it('does nothing without the API', () => {
+    expect(() => lockLandscape({})).not.toThrow();
+  });
+});
+
+describe('unlockOrientation', () => {
+  it('releases the lock', () => {
+    const unlock = jest.fn();
+
+    unlockOrientation({ orientation: { unlock } });
+
+    expect(unlock).toHaveBeenCalled();
+  });
+
+  it('does nothing without the API', () => {
+    expect(() => unlockOrientation({})).not.toThrow();
   });
 });

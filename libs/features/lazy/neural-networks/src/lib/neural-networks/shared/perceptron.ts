@@ -1,19 +1,12 @@
 import { TrainData } from './train-data';
-import { LabelClass } from './point';
-import { Subscription, timer } from 'rxjs';
+import { LabelClass, toLabelClass } from './point';
 
 export class Perceptron {
   weights: number[];
-  bias = 1.0;
-  isLearning = false;
+  // random like the weights, so the perceptrons of one layer start out different
+  bias = Math.random() * 2 - 1;
   lastGuess = 0;
-  lastLearnRate = 0;
   lastInput: number[] = [];
-  private learnTimeoutSub: Subscription = new Subscription();
-
-  private static outputMapping(activationLevel: number): LabelClass {
-    return activationLevel < 0.5 ? 0 : 1;
-  }
 
   private static getRandomWeights(inputConnections: number) {
     const result = [];
@@ -27,14 +20,8 @@ export class Perceptron {
     this.weights = Perceptron.getRandomWeights(inputConnections);
   }
 
-  guess(inputs: number[]): number {
-    this.lastGuess = this.guessSilent(inputs);
-    this.lastInput = inputs;
-    return this.lastGuess;
-  }
-
   guessSilent(inputs: number[]): LabelClass {
-    return Perceptron.outputMapping(this.guessSigSilent(inputs));
+    return toLabelClass(this.guessSigSilent(inputs));
   }
 
   guessSigSilent(inputs: number[]): number {
@@ -52,16 +39,10 @@ export class Perceptron {
   }
 
   train({ inputs, expected }: TrainData, learnRate: number): number {
-    this.lastLearnRate = learnRate;
-    const guess = this.guess(inputs);
+    const guess = this.guessSilent(inputs);
     const error = expected - guess;
 
     if (error !== 0.0) {
-      this.isLearning = true;
-      this.learnTimeoutSub.unsubscribe();
-      this.learnTimeoutSub.add(
-        timer(500).subscribe(() => (this.isLearning = false))
-      );
       const adjustedWeights = this.weights.map(
         (weight, index) => weight + error * inputs[index] * learnRate
       );
@@ -73,16 +54,7 @@ export class Perceptron {
   }
 
   trainWithLastInput(error: number, learnRate: number): number {
-    this.lastLearnRate = learnRate;
-
     if (error !== 0.0) {
-      this.isLearning = true;
-      if (this.learnTimeoutSub) {
-        this.learnTimeoutSub.unsubscribe();
-      }
-      this.learnTimeoutSub = timer(500).subscribe(
-        () => (this.isLearning = false)
-      );
       const adjustedWeights = this.weights.map(
         (weight, index) => weight + error * this.lastInput[index] * learnRate
       );

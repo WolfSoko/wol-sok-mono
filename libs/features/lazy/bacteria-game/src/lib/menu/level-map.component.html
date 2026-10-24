@@ -1,0 +1,101 @@
+@for (chapter of chapters(); track chapter.id) {
+  @let name = chapter.name | t;
+  <section class="chapter" [attr.aria-label]="name">
+    <header class="chapter-head">
+      <h3 class="chapter-name">{{ name }}</h3>
+      @if (laddered()) {
+        <span class="chapter-open">{{
+          "newGame.levelMap.open"
+            | t: { open: chapter.open, total: chapter.cards.length }
+        }}</span>
+      }
+      <p class="chapter-blurb">{{ chapter.blurb | t }}</p>
+    </header>
+    <ul class="levels">
+      @for (card of chapter.cards; track card.id) {
+        <li>
+          <feat-lazy-bac-game-level-card
+            [card]="card"
+            [current]="card.id === levelId()"
+            [showMedals]="showMedals()"
+            (pick)="pick.emit($event)"
+          />
+        </li>
+      }
+    </ul>
+  </section>
+}
+
+@if (generator()) {
+  <section
+    class="chapter branches"
+    [attr.aria-label]="'newGame.levelMap.generated.label' | t"
+  >
+    <header class="chapter-head">
+      <h3 class="chapter-name">
+        {{ "newGame.levelMap.generated.title" | t }}
+      </h3>
+      <p class="chapter-blurb">
+        {{ "newGame.levelMap.generated.blurb" | t }}
+      </p>
+    </header>
+    <div class="branch-row">
+      <div class="generator">
+        <span class="branch-title">{{
+          "newGame.levelMap.generated.generateTitle" | t
+        }}</span>
+        <mat-button-toggle-group
+          class="style-picker"
+          hideSingleSelectionIndicator
+          [attr.aria-label]="'newGame.levelMap.generated.style' | t"
+          [value]="style()"
+          (change)="style.set($event.value)"
+        >
+          @for (option of styles; track option.id) {
+            <mat-button-toggle [value]="option.id">{{
+              option.name | t
+            }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+        <label class="heat">
+          <span class="branch-note">{{
+            "newGame.levelMap.generated.difficulty" | t: { difficulty: heat() }
+          }}</span>
+          <mat-slider
+            discrete
+            [min]="minDifficulty"
+            [max]="maxDifficulty"
+            [step]="1"
+          >
+            <input
+              matSliderThumb
+              [attr.aria-label]="
+                'newGame.levelMap.generated.difficultyLabel' | t
+              "
+              [value]="heat()"
+              (valueChange)="heat.set($event)"
+            />
+          </mat-slider>
+        </label>
+        <button
+          mat-stroked-button
+          type="button"
+          class="generate"
+          (click)="generate()"
+        >
+          <mat-icon>casino</mat-icon>
+          {{ "newGame.levelMap.generated.generate" | t }}
+        </button>
+      </div>
+      @if (rolledCard(); as card) {
+        <!-- Rolled levels keep no medallion: there is no second go. -->
+        <feat-lazy-bac-game-level-card
+          [card]="card"
+          [current]="card.id === levelId()"
+          [showMedals]="false"
+          (pick)="pick.emit($event)"
+        />
+      }
+    </div>
+  </section>
+}

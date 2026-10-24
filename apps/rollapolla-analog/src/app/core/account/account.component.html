@@ -1,0 +1,71 @@
+@if (account()) {
+  <a
+    mat-button
+    class="my-polls-link"
+    routerLink="/my-polls"
+    aria-label="My polls"
+    title="My polls"
+    data-testid="my-polls-link"
+  >
+    <mat-icon>ballot</mat-icon>
+    <span class="label-long">My polls</span>
+  </a>
+}
+@if (isAdmin()) {
+  <a
+    mat-button
+    class="admin-link"
+    routerLink="/admin"
+    aria-label="Admin"
+    title="Admin"
+    data-testid="admin-link"
+  >
+    <mat-icon>admin_panel_settings</mat-icon>
+    <span class="label-long">Admin</span>
+  </a>
+}
+@if (googleAccount(); as account) {
+  <div class="signed-in" data-testid="account-signed-in">
+    @if (account.photoUrl) {
+      <img
+        class="avatar"
+        [src]="account.photoUrl"
+        alt=""
+        width="28"
+        height="28"
+        referrerpolicy="no-referrer"
+      />
+    }
+    <span class="name" data-testid="account-name">{{
+      account.displayName ?? "Signed in"
+    }}</span>
+    <button
+      mat-button
+      type="button"
+      [disabled]="action.busy()"
+      (click)="signOut()"
+      [title]="'Signed in as ' + (account.displayName ?? 'you')"
+      data-testid="sign-out-button"
+    >
+      Sign out
+    </button>
+  </div>
+} @else {
+  <button
+    mat-button
+    type="button"
+    [disabled]="action.busy()"
+    (click)="signIn()"
+    title="Keep your votes and polls on all your devices"
+    data-testid="sign-in-button"
+  >
+    <mat-icon>login</mat-icon>
+    <span class="label-long">Sign in with Google</span>
+    <span class="label-short">Sign in</span>
+  </button>
+}
+@if (action.failed()) {
+  <p class="error" role="alert" data-testid="account-error">
+    That did not work. Please try again.
+  </p>
+}

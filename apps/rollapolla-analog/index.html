@@ -2,26 +2,107 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>RollaPolla.com</title>
+    <title>Polls for everyone | RollaPolla.com</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="/assets/logos/favicon.ico" sizes="32x32" />
+    <meta
+      name="description"
+      content="RollaPolla – easy polling for everyone: create a poll in seconds, share it and see live what others think."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="google-adsense-account" content="ca-pub-6346271540341424" />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: light)"
+      content="#f6fbf3"
+    />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#101510"
+    />
+    <link rel="canonical" href="https://rollapolla.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RollaPolla" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="Polls for everyone | RollaPolla.com" />
+    <meta
+      property="og:description"
+      content="Easy polling for everyone: create a poll in seconds, share it and see live what others think."
+    />
+    <meta property="og:url" content="https://rollapolla.com/" />
+    <meta
+      property="og:image"
+      content="https://rollapolla.com/assets/logos/android-chrome-512x512.png"
+    />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="RollaPolla logo" />
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:image"
+      content="https://rollapolla.com/assets/logos/android-chrome-512x512.png"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://rollapolla.com/#website",
+            "name": "RollaPolla",
+            "url": "https://rollapolla.com/",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://rollapolla.com/polls?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "name": "RollaPolla",
+            "url": "https://rollapolla.com/",
+            "description": "Easy polling for everyone: create a poll in seconds, share it and see live what others think.",
+            "applicationCategory": "SocialNetworkingApplication",
+            "operatingSystem": "Any",
+            "browserRequirements": "Requires JavaScript",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "EUR"
+            },
+            "isPartOf": { "@id": "https://rollapolla.com/#website" }
+          }
+        ]
+      }
+    </script>
+    <link
+      rel="icon"
+      href="/assets/logos/favicon.ico"
+      sizes="16x16 32x32 48x48"
+    />
     <link rel="icon" href="/assets/logos/logo.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/assets/logos/apple-touch-icon.png" />
     <!-- 180×180 -->
     <link rel="manifest" href="/assets/site.webmanifest" />
     <link rel="stylesheet" href="/src/styles.scss" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6346271540341424"
+      crossorigin="anonymous"
+    ></script>
   </head>
-  <body class="mat-typography mat-app-background">
+  <body>
     <rap-root></rap-root>
     <script type="module" src="/src/main.ts"></script>
   </body>

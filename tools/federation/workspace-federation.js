@@ -67,6 +67,15 @@ function workspaceFederation(config) {
       // native `gl` addon and Node builtins. Bundled normally it picks up the
       // `browser` field (dist/gpu-browser.js) instead.
       'gpu.js',
+      // Each remote owns its feature library and nothing else imports it.
+      // Shared, it lands in the shell's import map too, and the shell's copy
+      // wins: a release that only redeploys the remote keeps showing the copy
+      // from the shell's last build. Skipped, the remote bundles its own.
+      '@wolsok/feat-fourier-analysis',
+      '@wolsok/feat-lazy-bac-game',
+      // The engine entry point (for Cloud Functions) belongs to it too.
+      '@wolsok/feat-lazy-bac-game/engine',
+      '@wolsok/feat-shader-examples',
       ...(config.skip ?? []),
     ],
 

@@ -1,93 +1,145 @@
-name: Create release
+name: Release
+
+# One pipeline per release: version bump, changelogs and tags, the GitHub
+# release, then the deploy of everything that changed since the last deploy.
+# ci-cd.yml calls it after a green run on main; run it by hand to release now.
+# A failed build, release or deploy is retried with "Re-run failed jobs": the
+# version job's output survives the rerun, the later jobs start again at the tag.
 on:
-  push:
-    # Pattern matched against refs/tags
-    # Exclude deploy-marker tags pushed by deploy.yml (e.g. v1.2.3-cdk-deployed) so
-    # they don't re-trigger this workflow and cascade into another release/deploy.
-    tags:
-      - 'v*'
-      - '!v*-cdk-deployed'
-      - '!v*-non-cdk-deployed'
-      - '!v*-npm-deployed'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  issues: write
-  contents: write
+  workflow_call:
+    outputs:
+      version:
+        description: 'The released tag (v<version>)'
+        value: ${{ jobs.version.outputs.version }}
+  workflow_dispatch:
 
 env:
-  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   HUSKY: 0
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 jobs:
-  release:
-    timeout-minutes: 30
+  version:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    # One release at a time: the version bump commits to main.
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    outputs:
+      version: ${{ steps.push.outputs.release_tag }}
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      # The commit CI just validated, not the branch tip, which may have moved on
+      # by now. The PAT pushes the release commit to the protected main branch.
+      - uses: actions/checkout@v7
+        name: 'Checkout the validated commit'
         with:
-          fetch-depth: 50
+          ref: ${{ github.sha }}
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
           filter: tree:0
 
       - name: Install Deps
-        uses: ./.github/actions/install-deps
-        with:
-          apt-packages: 'true'
-          run-scripts: 'true'
+        uses: $/.github/actions/install-deps
 
-      - name: create sentry release version
-        id: sentry-version
+      - name: Version
         run: |
-          SENTRY_VERSION="angular-examples@${{ github.ref_name }}"
-          echo "Sentry version: ${SENTRY_VERSION}"
-          echo "sentry-version=${SENTRY_VERSION}" >> $GITHUB_ENV
+          git config --local user.email "github-actions[bot]@users.no-reply.github.com"
+          git config --local user.name "github-actions[bot]"
+          npx nx release version
+          # Leave the release commit as it is: the v* tag points at it, so amending
+          # it would leave the tag on a commit that never reaches the branch, and
+          # `git describe` on the branch stops finding new release tags. No
+          # [skip ci] needed: ci-cd.yml already skips its jobs for
+          # `chore(release):` commits.
+          npx commit-and-tag-version
 
-      - name: Build
-        run: npx nx run-many -t="build" -c="production" --projects="tag:app"
-
-      - name: ZIP-files for release
-        uses: vimtor/action-zip@v1
-        with:
-          files: dist version.json
-          recursive: false
-          dest: release.zip
-
-      - uses: 'marvinpinto/action-automatic-releases@latest'
-        with:
-          repo_token: '${{ secrets.RELEASE_GH_TOKEN }}'
-          prerelease: false
-          files: release.zip
-
-      - name: Create Sentry Release
-        uses: getsentry/action-release@v3
-        with:
-          release: ${{ env.sentry-version }}
-          sourcemaps: 'dist/apps'
+      # Independent versioning tags every released project, so this run can create
+      # several tags at once; both tools create annotated tags, which
+      # `--follow-tags` pushes along with the commit. The commit and its tags land
+      # together or not at all: a tag on a commit that never reached the branch
+      # would stop `git describe` from finding newer release tags. No workflow
+      # runs on a tag push, the release is created below.
+      - name: Push the release commit and its tags
+        id: push
         env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: 'wolsok'
-          SENTRY_PROJECT: 'angular-examples'
+          BRANCH: ${{ github.ref }}
+          VALIDATED_SHA: ${{ github.sha }}
+        run: |
+          # commit-and-tag-version tags v<version.json>.
+          release_tag="v$(node -p "require('./version.json').version")"
+          echo "Release tag: $release_tag"
 
-      - name: Create Issue on Failure
-        if: failure()
-        uses: actions/github-script@v9
+          if git push --atomic --follow-tags origin "HEAD:$BRANCH"; then
+            echo "Pushed the release commit and its tags. Release: $release_tag" >> $GITHUB_STEP_SUMMARY
+            echo "release_tag=$release_tag" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Rejected because the branch moved on while CI ran: nothing is released
+          # from this run. The newer commit's run picks up these changes too, as
+          # ci-cd.yml counts the changes since the last release tag.
+          git fetch origin "$BRANCH"
+          if [[ "$(git rev-parse FETCH_HEAD)" != "$VALIDATED_SHA" ]]; then
+            echo "::notice::$BRANCH moved on since this run started, the run for its newest commit releases instead."
+            echo "No release: \`$BRANCH\` moved on since this run started, the run for its newest commit releases instead." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          exit 1
+
+  # Builds the apps at the tag and publishes the GitHub release and the Sentry
+  # release. Skipped when the version job stood down.
+  release:
+    needs: version
+    if: needs.version.outputs.version != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        name: 'Checkout the release tag'
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const issueTitle = 'bug(release): create release pipeline failed';
-            const issueBody = 'GitHub [create release workflow](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/release.yml) failed';
-            const labels = ['bug'];
-            const assignees = [context.actor];
+          ref: ${{ needs.version.outputs.version }}
+          fetch-depth: 0
+          filter: tree:0
 
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: issueTitle,
-              body: issueBody,
-              assignees: assignees,
-              labels: labels
-            });
+      - name: Install Deps
+        uses: $/.github/actions/install-deps
+
+      - name: Create release
+        uses: $/.github/actions/create-release
+        with:
+          tag: ${{ needs.version.outputs.version }}
+          sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+  # The Android deploy attaches its build to the GitHub release, so the deploy
+  # waits for it.
+  deploy:
+    needs: [version, release]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit
+    permissions:
+      contents: write
+      id-token: write
+      issues: write
+
+  issue-on-failure:
+    needs: [version, release]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Issue on Failure
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "bug(release): release pipeline failed" \
+            --body "GitHub [Release workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed" \
+            --label "bug" \
+            --assignee "${{ github.actor }}"

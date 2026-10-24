@@ -11,6 +11,7 @@ export class SprintTrainingPage {
   readonly sprintTraining: Locator;
   readonly toggleTrainingCta: Locator;
   readonly stopTrainingCta: Locator;
+  readonly zusammenfassung: Locator;
   private countdownTimer: Locator;
 
   constructor(page: Page) {
@@ -20,6 +21,7 @@ export class SprintTrainingPage {
     this.toggleTrainingCta = this.sprintTraining.getByTestId('toggle-training');
     this.stopTrainingCta = this.sprintTraining.getByTestId('stop-training');
     this.countdownTimer = this.sprintTraining.getByTestId('countdown-timer');
+    this.zusammenfassung = this.sprintTraining.getByTestId('zusammenfassung');
   }
 
   async goto(): Promise<void> {
@@ -36,6 +38,7 @@ export class SprintTrainingPage {
     await expect(
       this.sprintTraining.getByTestId('sprint-form')
     ).not.toBeVisible({ timeout: 10000 });
+    await expect(this.overview.getByText('Wiederholungen')).toBeHidden();
   }
 
   async expectSprintTrainingConfiguration(
@@ -50,14 +53,14 @@ export class SprintTrainingPage {
       this.overview.getByText(`${repetitions} Wiederholungen`)
     ).toBeVisible();
     await expect(
-      this.overview.getByText(`${this.formatTime(sprintTime)} - Sprint`)
+      this.overview.getByText(`${this.formatTime(sprintTime)} Sprint`)
     ).toBeVisible();
     await expect(
-      this.overview.getByText(`${this.formatTime(recoveryTime)} - Gehen/Stehen`)
+      this.overview.getByText(`${this.formatTime(recoveryTime)} Gehen/Stehen`)
     ).toBeVisible();
-    await expect(
-      this.overview.getByText(`Gesamtzeit: ${this.formatTime(totalTime)}`)
-    ).toBeVisible();
+    await expect(this.overview.getByTestId('total-time')).toHaveText(
+      this.formatTime(totalTime)
+    );
   }
 
   private formatTime(time: Seconds): string {
@@ -125,23 +128,66 @@ export class SprintTrainingPage {
     await expect(this.toggleTrainingCta).toContainText('Weiter');
   }
 
+  /** ends a running or paused training; the Zusammenfassung shows */
   async stopTraining(): Promise<void> {
+    await expect(this.toggleTrainingCta).toContainText(/Pausieren|Weiter/, {
+      timeout: 10000,
+    });
     await this.expectTrainingStateStoppable();
-    // Wait for any potential animations or state updates
-    await this.page.waitForTimeout(500);
+    await this.stopTrainingCta.click();
+    await expect(this.zusammenfassung).toBeVisible();
+    await expect(this.toggleTrainingCta).toContainText('Neues Training');
+  }
+
+  /** ends the training during the 5 s Vorlauf */
+  async abortVorlauf(): Promise<void> {
+    await expect(this.toggleTrainingCta).toBeDisabled();
+    // the Vorlauf lasts 5 s: the button has to be there well before it ends
+    await expect(this.stopTrainingCta).toBeVisible({ timeout: 1000 });
     await this.stopTrainingCta.click();
     await this.expectTrainingStateStartable();
+    await expect(this.zusammenfassung).toBeHidden();
+  }
+
+  async startNewTraining(): Promise<void> {
+    await this.toggleTrainingCta.click();
+    await this.expectTrainingStateStartable();
+  }
+
+  async expectZusammenfassung({
+    sprintsCompleted,
+    sprintsTotal,
+    completion,
+  }: {
+    sprintsCompleted: number;
+    sprintsTotal: number;
+    completion: string;
+  }): Promise<void> {
+    await expect(this.zusammenfassung).toContainText(
+      `${sprintsCompleted} von ${sprintsTotal} Sprints`
+    );
+    await expect(this.zusammenfassung).toContainText(completion);
+  }
+
+  async reload(): Promise<void> {
+    await this.page.reload();
+    await this.expectTitleVisible();
   }
 
   async pauseTraining(): Promise<void> {
     await this.expectTrainingStatePausable();
     await this.toggleTrainingCta.click();
     await this.expectTrainingStateResumable();
+    await expect(this.sprintTraining).toContainText('pausiert');
   }
 
   async resumeTraining(): Promise<void> {
     await this.expectTrainingStateResumable();
     await this.toggleTrainingCta.click();
+  }
+
+  async expectVorlaufAnnounced(): Promise<void> {
+    await expect(this.sprintTraining).toContainText('als Nächstes: Bereit');
   }
 
   async expectCountdownTimer(number: number): Promise<void> {

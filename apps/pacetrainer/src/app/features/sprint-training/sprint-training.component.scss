@@ -1,18 +1,105 @@
+@use '@angular/material' as mat;
+
 :host {
+  flex: 1;
+  display: flex;
+  padding: 0 16px;
+}
+
+.trainer {
+  flex: 1;
   display: flex;
   flex-flow: column;
-  gap: 1rem;
+  gap: 16px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
 }
-.ctas {
-  justify-content: center;
-  gap: 1rem;
-}
-.runner,
-.configurator,
-.overview {
-  padding: 1rem;
+
+.eyebrow {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 10px;
+  font: var(--mat-sys-label-large);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+
+  // a short bar in the phase color, like one segment of the logo ring
+  &::before {
+    content: '';
+    width: 18px;
+    height: 4px;
+    border-radius: var(--mat-sys-corner-full);
+    background: var(--pace-accent, var(--mat-sys-primary));
+  }
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  justify-content: center;
+
+  // a halo in the phase color behind the countdown ring
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(
+      closest-side at 50% 45%,
+      color-mix(in srgb, var(--pace-accent, transparent) 22%, transparent),
+      transparent
+    );
+    opacity: 0;
+    transition: opacity 600ms ease;
+  }
+}
+
+[data-tone] .stage::before {
+  opacity: 1;
+}
+
+.setup-stage {
+  justify-content: flex-start;
+  padding-top: 8px;
+}
+
+.setup {
+  display: flex;
+  flex-flow: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.paused pace-countdown-circle {
+  opacity: 0.55;
+}
+
+.actions {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  gap: 12px;
+  padding: 16px 0 max(env(safe-area-inset-bottom), 16px);
+  background: linear-gradient(transparent, var(--mat-sys-surface) 24px);
+
+  @include mat.button-overrides(
+    (
+      filled-container-height: 60px,
+      outlined-container-height: 56px,
+      filled-container-color: var(--pace-accent, var(--mat-sys-primary)),
+      filled-label-text-color: var(--pace-on-accent, var(--mat-sys-on-primary)),
+      filled-label-text-size: var(--mat-sys-title-medium-size),
+      filled-label-text-weight: 700,
+      outlined-label-text-size: var(--mat-sys-title-medium-size),
+    )
+  );
+
+  button {
+    width: 100%;
+  }
 }

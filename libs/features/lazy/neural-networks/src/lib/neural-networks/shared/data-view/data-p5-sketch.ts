@@ -1,12 +1,19 @@
-import { Point } from '../point';
+import { Point, toLabelClass } from '../point';
 import { Perceptron } from '../perceptron';
 import { BrainService } from '../brain.service';
 import P5 from 'p5';
+import { heatmapColor, setPixel } from '../heatmap';
+
+const boundaryColor = [40, 40, 40];
+// one heatmap pixel per 4x4 canvas pixels
+const heatmapScale = 4;
 
 export class DataP5Sketch {
   public points: Point[] = [];
   public perceptron?: Perceptron;
-  private separationImg?: P5.Image;
+  private heatmap?: P5.Image;
+  // the network the heatmap was computed for, to skip recomputing it while nothing learns
+  private heatmapOf?: { perceptron: Perceptron; learnedDataPoints: number };
 
   constructor(
     private p: P5,
@@ -31,38 +38,79 @@ export class DataP5Sketch {
 
   draw(): void {
     if (this.perceptron) {
-      this.separationImg = this.p.createImage(this.width / 2, this.height / 2);
-      this.separationImg.loadPixels();
-      for (let x = 0; x < this.separationImg.width; x++) {
-        for (let y = 0; y < this.separationImg.height; y++) {
-          const inp0 = this.p.map(x, 0, this.separationImg.width, 0, 1);
-          const inp1 = this.p.map(y, 0, this.separationImg.height, 0, 1);
-          const guessWithoutStep = this.brainService.guessSilent([inp0, inp1]);
-          const absGuess = Math.abs(guessWithoutStep - 0.5);
-          const colorValue = this.p.map(absGuess, 0, 0.1, 255, 128);
-          this.separationImg.set(x, y, [
-            colorValue,
-            colorValue,
-            colorValue,
-            255,
-          ]);
-        }
-      }
-      this.separationImg.updatePixels();
-      this.p.image(this.separationImg, 0, 0, this.width, this.height);
+      this.p.image(
+        this.updateHeatmap(this.perceptron),
+        0,
+        0,
+        this.width,
+        this.height
+      );
       this.p.strokeWeight(1);
       this.points.forEach((point) => point.show(this.p));
-      this.p.stroke(0, 0, 0);
-      this.p.line(0, 0, this.p.width, this.p.height);
 
       this.points.forEach((point) => {
         const result = this.brainService.guessSilent(point.data);
         point.showForResult(this.p, result);
       });
       if (this.showLinearDivider) {
+        // the true class border of the default x > y data
+        this.p.stroke(0, 0, 0);
+        this.p.line(0, 0, this.p.width, this.p.height);
         this.drawSeparationLine();
       }
     }
+  }
+
+  /**
+   * Colours every pixel by the network's output: blue for 0 (class 2), white for 0.5
+   * and yellow for 1 (class 1). Pixels where the guessed class flips are drawn dark,
+   * which traces the decision boundary the network has actually learned.
+   */
+  private updateHeatmap(perceptron: Perceptron): P5.Image {
+    const img = (this.heatmap ??= this.p.createImage(
+      this.width / heatmapScale,
+      this.height / heatmapScale
+    ));
+    const { learnedDataPoints } = this.brainService;
+    if (
+      this.heatmapOf?.perceptron === perceptron &&
+      this.heatmapOf.learnedDataPoints === learnedDataPoints
+    ) {
+      return img;
+    }
+    this.heatmapOf = { perceptron, learnedDataPoints };
+
+    const { width, height } = img;
+    const activations = new Float32Array(width * height);
+    const classes = new Uint8Array(width * height);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        // sample at the pixel centre
+        const activation = this.brainService.activationSilent([
+          (x + 0.5) / width,
+          (y + 0.5) / height,
+        ]);
+        activations[y * width + x] = activation;
+        classes[y * width + x] = toLabelClass(activation);
+      }
+    }
+
+    img.loadPixels();
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const index = y * width + x;
+        const onBoundary =
+          (x + 1 < width && classes[index + 1] !== classes[index]) ||
+          (y + 1 < height && classes[index + width] !== classes[index]);
+        if (onBoundary) {
+          setPixel(img.pixels, index, boundaryColor);
+        } else {
+          setPixel(img.pixels, index, heatmapColor(activations[index]));
+        }
+      }
+    }
+    img.updatePixels();
+    return img;
   }
 
   mouseClicked(): boolean {

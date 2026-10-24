@@ -1,34 +1,23 @@
 .perceptron-container {
   margin: 1rem;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(min-content, 1fr));
   grid-gap: 1rem;
+  align-items: start;
 }
 
-.inputLayer {
-  grid-column: 1 / span 1;
-  grid-row: 3 / span 2;
-  align-self: center;
+.data-card,
+.network-card {
+  grid-column: span 2;
 }
 
-.hiddenLayer {
-  grid-column: 2 / span 1;
-  grid-row: 3 / span 2;
-}
+@media (max-width: 599.98px) {
+  .perceptron-container {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
-.outputLayer {
-  grid-column: 3 / span 1;
-  grid-row: 3 / span 2;
-  align-self: center;
-}
-
-feat-lazy-neural-networks-data-view {
-  grid-row: 1 / 3;
-  grid-column: 1 / span 2;
-}
-
-feat-lazy-neural-networks-brain-settings {
-  align-self: start;
-  grid-column: 3 / span 2;
-  grid-row: 1 / span 2;
+  .data-card,
+  .network-card {
+    grid-column: auto;
+  }
 }

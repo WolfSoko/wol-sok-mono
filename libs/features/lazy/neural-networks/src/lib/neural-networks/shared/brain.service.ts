@@ -1,59 +1,54 @@
-import { Injectable, inject } from '@angular/core';
-import { interval, Observable, Subject } from 'rxjs';
-import {
-  distinctUntilChanged,
-  filter,
-  repeat,
-  skipUntil,
-  startWith,
-  takeUntil,
-} from 'rxjs/operators';
+import { Injectable, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { BehaviorSubject, EMPTY, interval, Observable } from 'rxjs';
+import { distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { Perceptron } from './perceptron';
-import { Point } from './point';
+import { LabelClass, Point, toLabelClass } from './point';
 import { TrainData } from './train-data';
 import { TrainDataService } from './train-data.service';
 
 const defaultLearnRate = 0.3;
+const defaultBackPropagationLearnRate = 1;
 
-@Injectable({ providedIn: 'root' })
+export type LabelDefinition = (x: number, y: number) => LabelClass;
+
+export const diagonalLabel: LabelDefinition = (x, y) => (x > y ? 1 : 0);
+
+// provided by NeuralNetworkComponent, so its state and auto learning end with the page
+@Injectable()
 export class BrainService {
   private trainDataService = inject(TrainDataService);
 
-  learnedDataPoints = 0;
+  private readonly _learnedDataPoints = signal(0);
   points: Point[] = [];
+  /** Which class the generated training points belong to. */
+  labelDefinition: LabelDefinition = diagonalLabel;
   perceptrons: Perceptron[][] = [[]];
   isSinglePerceptron = false;
 
-  private _learnRate = defaultLearnRate;
-  private autoLearningSubject = new Subject<boolean>();
-  private startAutoLearning$ = this.autoLearningSubject.pipe(
-    filter((autoLearningEnabled) => autoLearningEnabled)
-  );
-  private stopAutoLearning$ = this.autoLearningSubject.pipe(
-    filter((autoLearningEnabled) => !autoLearningEnabled)
-  );
-
-  private autoLearner$ = interval(50).pipe(
-    distinctUntilChanged(),
-    skipUntil(this.startAutoLearning$),
-    takeUntil(this.stopAutoLearning$),
-    repeat()
-  );
+  private readonly _learnRate = signal(defaultLearnRate);
+  // BehaviorSubject so a settings card created later (e.g. after a tab switch) shows the current state
+  private autoLearningSubject = new BehaviorSubject<boolean>(false);
 
   constructor() {
-    this.autoLearner$.subscribe(() => this.train());
+    this.autoLearning$
+      .pipe(
+        switchMap((enabled) => (enabled ? interval(50) : EMPTY)),
+        takeUntilDestroyed()
+      )
+      .subscribe(() => this.train());
   }
 
-  get autoLearning$(): Observable<boolean> {
-    return this.autoLearningSubject.asObservable().pipe(startWith(false));
+  public get autoLearning$(): Observable<boolean> {
+    return this.autoLearningSubject.pipe(distinctUntilChanged());
   }
 
-  get learnRate() {
-    return this._learnRate;
+  public get learnedDataPoints(): number {
+    return this._learnedDataPoints();
   }
 
-  set learnRate(learnRate: number) {
-    this._learnRate = learnRate;
+  public get learnRate(): number {
+    return this._learnRate();
   }
 
   createPerceptron(inputDimensions = 2): Perceptron {
@@ -65,9 +60,13 @@ export class BrainService {
     inputDimensions = 2,
     amountPerceptronsPerLayer: number[] = [3, 1]
   ): Perceptron[][] {
-    this.learnedDataPoints = 0;
-    this.learnRate = defaultLearnRate;
+    this._learnedDataPoints.set(0);
     this.isSinglePerceptron = amountPerceptronsPerLayer.length === 1;
+    this._learnRate.set(
+      this.isSinglePerceptron
+        ? defaultLearnRate
+        : defaultBackPropagationLearnRate
+    );
     this.perceptrons = amountPerceptronsPerLayer.map(
       (amountPerLayer, index) => {
         const layer = [];
@@ -98,10 +97,12 @@ export class BrainService {
           this.learnRate
         );
         if (error !== 0.0) {
-          this.learnedDataPoints++;
-          this._learnRate = Math.max(
-            this.learnRate * (1 - this.learnedDataPoints / 1000),
-            0.0005
+          this._learnedDataPoints.update((count) => count + 1);
+          this._learnRate.set(
+            Math.max(
+              this.learnRate * (1 - this.learnedDataPoints / 1000),
+              0.0005
+            )
           );
         }
       } else {
@@ -111,52 +112,74 @@ export class BrainService {
   }
 
   private trainWithBackPropagation(trainData: TrainData) {
-    this.guess(trainData.inputs); // set input and guess data of perceptrons;
-    const outputPerceptron = this.perceptrons[this.perceptrons.length - 1][0];
+    const output = this.feedForward(trainData.inputs);
 
-    const error =
-      outputPerceptron.lastGuess *
-      (1 - outputPerceptron.lastGuess) *
-      (trainData.expected - outputPerceptron.lastGuess);
-    if (error !== 0.0) {
-      outputPerceptron.trainWithLastInput(error, this.learnRate);
-      for (let i = this.perceptrons.length - 2; i >= 0; i--) {
-        const layer = this.perceptrons[i];
-        layer.forEach((perceptron, index) => {
-          const hiddenError =
-            outputPerceptron.lastGuess *
-            (1 - outputPerceptron.lastGuess) *
-            error *
-            outputPerceptron.weights[index];
-          perceptron.trainWithLastInput(hiddenError, this.learnRate);
-        });
-      }
-
-      this.learnedDataPoints++;
-      this._learnRate = Math.max(
-        this.learnRate * (1 - this.learnedDataPoints / 1000),
-        0.0005
-      );
+    // deltas[l][j] = error term of perceptron j in layer l. All of them are
+    // computed from the current weights before any weight is changed.
+    const deltas: number[][] = this.perceptrons.map((layer) =>
+      layer.map(() => 0)
+    );
+    const lastLayer = this.perceptrons.length - 1;
+    // cross-entropy loss: the sigmoid derivative cancels out, so a confidently
+    // wrong output still gets a large correction instead of a vanishing one
+    deltas[lastLayer][0] = trainData.expected - output;
+    for (let l = lastLayer - 1; l >= 0; l--) {
+      const nextLayer = this.perceptrons[l + 1];
+      this.perceptrons[l].forEach((perceptron, j) => {
+        const downstreamError = nextLayer.reduce(
+          (sum, next, k) => sum + deltas[l + 1][k] * next.weights[j],
+          0
+        );
+        deltas[l][j] =
+          perceptron.lastGuess * (1 - perceptron.lastGuess) * downstreamError;
+      });
     }
+
+    this.perceptrons.forEach((layer, l) =>
+      layer.forEach((perceptron, j) =>
+        perceptron.trainWithLastInput(deltas[l][j], this.learnRate)
+      )
+    );
+    this._learnedDataPoints.update((count) => count + 1);
+  }
+
+  /**
+   * Runs the inputs through all layers with sigmoid activation and, unless silent,
+   * stores each perceptron's last input and output. A multi layer net gets its
+   * inputs scaled from 0..1 to -1..1, so the hidden perceptrons start out unsaturated.
+   */
+  private feedForward(input: number[], silent = false): number {
+    const layers = this.layerOutputs(input, silent);
+    // last layer should always be only one output perceptron
+    return layers[layers.length - 1][0];
+  }
+
+  private layerOutputs(input: number[], silent: boolean): number[][] {
+    let layerResult = this.isSinglePerceptron
+      ? input
+      : input.map((value) => value * 2 - 1);
+    return this.perceptrons.map((layer) => {
+      const layerInput = layerResult;
+      layerResult = layer.map((perceptron) =>
+        silent
+          ? perceptron.guessSigSilent(layerInput)
+          : perceptron.guessSig(layerInput)
+      );
+      return layerResult;
+    });
+  }
+
+  /** The output of every perceptron, layer by layer, without changing any perceptron state. */
+  public layerActivationsSilent(data: number[]): number[][] {
+    return this.layerOutputs(data, true);
   }
 
   updateTrainingData(): Point[] {
-    this.points = this.trainDataService.createTestData(100);
+    this.points = this.trainDataService.createTestData(
+      100,
+      this.labelDefinition
+    );
     return this.points;
-  }
-
-  guess(input: number[]): number {
-    if (this.isSinglePerceptron) {
-      return this.perceptrons[0][0].guess(input);
-    }
-    let layerResult = [...input];
-    for (let i = 0; i < this.perceptrons.length - 1; i++) {
-      layerResult = this.perceptrons[i].map((perceptron) =>
-        perceptron.guessSig(layerResult)
-      );
-    }
-    // last layer should always be only one output perceptron
-    return this.perceptrons[this.perceptrons.length - 1][0].guess(layerResult);
   }
 
   toggleAutoTraining(autoTrainingEnabled: boolean) {
@@ -165,26 +188,19 @@ export class BrainService {
 
   addPoint(point: Point) {
     this.points.push(point);
-    this.guess(point.data);
   }
 
   clearPoints() {
     this.points = [];
   }
 
-  guessSilent(data: number[]) {
-    if (this.isSinglePerceptron) {
-      return this.perceptrons[0][0].guessSilent(data);
-    }
-    let layerResult = [...data];
-    for (let i = 0; i < this.perceptrons.length - 1; i++) {
-      layerResult = this.perceptrons[i].map((perceptron) =>
-        perceptron.guessSigSilent(layerResult)
-      );
-    }
-    // last layer should always be only one output perceptron
-    return this.perceptrons[this.perceptrons.length - 1][0].guessSilent(
-      layerResult
-    );
+  /** The class the network assigns to the given data point. */
+  public guessSilent(data: number[]): LabelClass {
+    return toLabelClass(this.activationSilent(data));
+  }
+
+  /** The network's sigmoid output (0..1) for the given data point, without changing any perceptron state. */
+  public activationSilent(data: number[]): number {
+    return this.feedForward(data, true);
   }
 }

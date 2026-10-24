@@ -1,0 +1,43 @@
+@use '../menu/screen';
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.rank {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rank-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.rank-label {
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.rank-name {
+  @include screen.figure;
+
+  font-size: 1.8rem;
+}
+
+.xp-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--bw-soft);
+}
+
+.bar {
+  @include screen.bar;
+}

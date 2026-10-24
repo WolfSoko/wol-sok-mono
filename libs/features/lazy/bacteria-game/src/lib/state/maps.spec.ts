@@ -1,34 +1,101 @@
-import { GAME_MAPS, getMap, pointSymmetric, Rect } from './maps';
+import { GAME_MAPS, getMap } from './game-maps';
+import {
+  coversCell,
+  gateState,
+  overlapsArena,
+  pointSymmetric,
+  Rect,
+  slideOffset,
+  stampRect,
+} from './maps';
+import { rectNearSpawn, spawnSpots } from './shapes';
+import { stampZones } from './zones';
+import { levelBalance, LEVELS } from './levels';
 
 // The production canvas size. A smaller arena pushes most layouts outside the
 // grid, which would make every test pass without a single wall cell existing.
 const WIDTH = 320;
-const HEIGHT = 140;
+const HEIGHT = 180;
 
-/** True when the cell is inside one of the rects. */
+/** True when the cell is inside one of the walls. */
 function isSolid(walls: Rect[], x: number, y: number): boolean {
-  return walls.some(
-    (rect) =>
-      x >= rect.x &&
-      x < rect.x + rect.width &&
-      y >= rect.y &&
-      y < rect.y + rect.height
+  return walls.some((rect) => coversCell(rect, x, y));
+}
+
+/**
+ * True when the wall lies inside an arena of that size. A round wall may hang
+ * over the edge - it is clipped when it is stamped - but must reach into it.
+ */
+function insideArena(wall: Rect, width: number, height: number): boolean {
+  if (wall.round) {
+    return overlapsArena(wall, width, height);
+  }
+  return (
+    wall.x >= 0 &&
+    wall.y >= 0 &&
+    wall.x + wall.width <= width &&
+    wall.y + wall.height <= height
   );
+}
+
+/** The arena grid with every cell a wall covers set to 1. */
+function solidGrid(walls: Rect[]): Uint8Array {
+  const grid = new Uint8Array(WIDTH * HEIGHT);
+  for (const wall of walls) {
+    stampRect(grid, WIDTH, HEIGHT, wall, 1);
+  }
+  return grid;
+}
+
+/**
+ * The cells that differ from their 180° rotation - the rotation of cell `i`
+ * is cell `length - 1 - i`.
+ */
+function asymmetricCells(walls: Rect[]): number[] {
+  const grid = solidGrid(walls);
+  const cells: number[] = [];
+  for (let i = 0; i < grid.length; i++) {
+    if (grid[i] !== grid[grid.length - 1 - i]) {
+      cells.push(i);
+    }
+  }
+  return cells;
+}
+
+/** True when a colony can walk from one start spot to the other. */
+function spawnsConnected(walls: Rect[]): boolean {
+  const grid = solidGrid(walls);
+  const start = (HEIGHT / 2) * WIDTH + WIDTH / 4;
+  const goal = (HEIGHT / 2) * WIDTH + (WIDTH / 4) * 3;
+  const queue = [start];
+  grid[start] = 2;
+  while (queue.length > 0) {
+    const cell = queue.pop() as number;
+    if (cell === goal) {
+      return true;
+    }
+    const x = cell % WIDTH;
+    const neighbours = [
+      x > 0 ? cell - 1 : -1,
+      x < WIDTH - 1 ? cell + 1 : -1,
+      cell - WIDTH,
+      cell + WIDTH,
+    ];
+    for (const next of neighbours) {
+      if (next >= 0 && next < grid.length && grid[next] === 0) {
+        grid[next] = 2;
+        queue.push(next);
+      }
+    }
+  }
+  return false;
 }
 
 describe('GAME_MAPS', () => {
   it.each(GAME_MAPS.map((map) => [map.name, map] as const))(
     '%s is point symmetric so neither player gets the better half',
     (_name, map) => {
-      const walls = map.createWalls(WIDTH, HEIGHT);
-
-      for (let y = 0; y < HEIGHT; y++) {
-        for (let x = 0; x < WIDTH; x++) {
-          expect(isSolid(walls, x, y)).toBe(
-            isSolid(walls, WIDTH - 1 - x, HEIGHT - 1 - y)
-          );
-        }
-      }
+      expect(asymmetricCells(map.createWalls(WIDTH, HEIGHT))).toEqual([]);
     }
   );
 
@@ -36,10 +103,7 @@ describe('GAME_MAPS', () => {
     '%s keeps every wall inside the arena',
     (_name, map) => {
       for (const wall of map.createWalls(WIDTH, HEIGHT)) {
-        expect(wall.x).toBeGreaterThanOrEqual(0);
-        expect(wall.y).toBeGreaterThanOrEqual(0);
-        expect(wall.x + wall.width).toBeLessThanOrEqual(WIDTH);
-        expect(wall.y + wall.height).toBeLessThanOrEqual(HEIGHT);
+        expect(insideArena(wall, WIDTH, HEIGHT)).toBe(true);
         expect(wall.width).toBeGreaterThan(0);
         expect(wall.height).toBeGreaterThan(0);
       }
@@ -67,6 +131,80 @@ describe('GAME_MAPS', () => {
     }
   );
 
+  it.each(GAME_MAPS.map((map) => [map.name, map] as const))(
+    '%s lets the colonies reach each other',
+    (_name, map) => {
+      const walls = map.createWalls(WIDTH, HEIGHT);
+      // A gate may seal the way for a while, but never for good.
+      const openAtSomePoint = [0, 0.4, 1.3, 2.5, 5].some((time) =>
+        spawnsConnected([
+          ...walls,
+          ...(map.createDynamicWalls?.(WIDTH, HEIGHT, time) ?? []).filter(
+            (wall) => wall.solid
+          ),
+        ])
+      );
+
+      expect(spawnsConnected(walls)).toBe(true);
+      expect(openAtSomePoint).toBe(true);
+    }
+  );
+
+  const zoned = GAME_MAPS.filter((map) => map.createZones != null).map(
+    (map) => [map.name, map] as const
+  );
+
+  it.each(zoned)('%s lays its zones out point symmetric', (_name, map) => {
+    const zones = map.createZones?.(WIDTH, HEIGHT) ?? [];
+    const grid = new Uint8Array(WIDTH * HEIGHT);
+    stampZones(grid, WIDTH, HEIGHT, zones);
+
+    expect(zones.length).toBeGreaterThan(0);
+    expect(
+      grid.filter((code, i) => code !== grid[grid.length - 1 - i])
+    ).toEqual(new Uint8Array(0));
+  });
+
+  it.each(zoned)(
+    '%s keeps the antibiotic off the start spots',
+    (_name, map) => {
+      const poison = (map.createZones?.(WIDTH, HEIGHT) ?? []).filter(
+        (zone) => zone.kind === 'antibiotic'
+      );
+
+      expect(
+        poison.filter((zone) => rectNearSpawn(zone, WIDTH, HEIGHT))
+      ).toEqual([]);
+    }
+  );
+
+  const bossMaps = LEVELS.filter((level) => level.boss !== undefined).map(
+    (level) => [level.name, getMap(level.mapId), level] as const
+  );
+
+  it.each(bossMaps)(
+    '%s leaves room round both start spots for a boss colony',
+    (_name, map, level) => {
+      const walls = map.createWalls(WIDTH, HEIGHT);
+      // The level's start blob, grown by the boss's area.
+      const radius = Math.ceil(
+        levelBalance(level).startBacteriaRadius *
+          Math.sqrt(level.boss?.startScale ?? 1)
+      );
+
+      for (const spot of spawnSpots(WIDTH, HEIGHT)) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            if (dx * dx + dy * dy > radius * radius) {
+              continue;
+            }
+            expect(isSolid(walls, spot.x + dx, spot.y + dy)).toBe(false);
+          }
+        }
+      }
+    }
+  );
+
   it('uses unique ids', () => {
     const ids = GAME_MAPS.map((map) => map.id);
 
@@ -82,8 +220,7 @@ describe('GAME_MAPS', () => {
       const walls = map.createWalls(40, 20);
 
       for (const wall of walls) {
-        expect(wall.x + wall.width).toBeLessThanOrEqual(40);
-        expect(wall.y + wall.height).toBeLessThanOrEqual(20);
+        expect(insideArena(wall, 40, 20)).toBe(true);
       }
     }
   });
@@ -96,6 +233,41 @@ describe('getMap', () => {
 
   it('falls back to the corridors layout for an unknown id', () => {
     expect(getMap('does-not-exist').id).toBe('corridors');
+  });
+});
+
+describe('round walls', () => {
+  const disc: Rect = { x: 10, y: 10, width: 8, height: 8, round: true };
+
+  it('cover the ellipse inside their rect, not its corners', () => {
+    expect(coversCell(disc, 14, 14)).toBe(true);
+    expect(coversCell(disc, 10, 14)).toBe(true);
+    expect(coversCell(disc, 10, 10)).toBe(false);
+    expect(coversCell(disc, 17, 17)).toBe(false);
+  });
+
+  it('are stamped as the cells they cover', () => {
+    const grid = new Uint8Array(30 * 30);
+    stampRect(grid, 30, 30, disc, 1);
+
+    for (let y = 0; y < 30; y++) {
+      for (let x = 0; x < 30; x++) {
+        expect(grid[y * 30 + x] === 1).toBe(coversCell(disc, x, y));
+      }
+    }
+  });
+
+  it('are kept whole by pointSymmetric when they hang over the edge', () => {
+    const walls = pointSymmetric(
+      [{ x: -4, y: 0, width: 8, height: 8, round: true }],
+      100,
+      50
+    );
+
+    expect(walls).toEqual([
+      { x: -4, y: 0, width: 8, height: 8, round: true },
+      { x: 96, y: 42, width: 8, height: 8, round: true },
+    ]);
   });
 });
 
@@ -131,5 +303,91 @@ describe('pointSymmetric', () => {
     );
 
     expect(walls).toEqual([]);
+  });
+});
+
+describe('dynamic walls', () => {
+  const dynamicMaps = GAME_MAPS.filter(
+    (map) => map.createDynamicWalls != null
+  ).map((map) => [map.name, map] as const);
+  // Every quarter second across the longest cycle any map uses.
+  const times = Array.from({ length: 81 }, (_, step) => step * 0.25);
+
+  it('exist on some maps', () => {
+    expect(dynamicMaps.length).toBeGreaterThan(0);
+  });
+
+  it.each(dynamicMaps)(
+    '%s stays point symmetric at every moment',
+    (_name, map) => {
+      for (const time of times) {
+        const solid = map.createDynamicWalls!(WIDTH, HEIGHT, time).filter(
+          (wall) => wall.solid
+        );
+        expect(asymmetricCells(solid)).toEqual([]);
+      }
+    }
+  );
+
+  it.each(dynamicMaps)(
+    '%s keeps its moving walls inside the arena and off the spawns',
+    (_name, map) => {
+      const radius = 16;
+      const blocked: string[] = [];
+      for (const time of times) {
+        const walls = map.createDynamicWalls!(WIDTH, HEIGHT, time);
+        for (const wall of walls) {
+          expect(insideArena(wall, WIDTH, HEIGHT)).toBe(true);
+        }
+        for (const centreX of [WIDTH / 4, (WIDTH / 4) * 3]) {
+          for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+              if (
+                dx * dx + dy * dy <= radius * radius &&
+                isSolid(walls, centreX + dx, HEIGHT / 2 + dy)
+              ) {
+                blocked.push(`${time}s: ${centreX + dx}:${HEIGHT / 2 + dy}`);
+              }
+            }
+          }
+        }
+      }
+      expect(blocked).toEqual([]);
+    }
+  );
+});
+
+describe('gateState', () => {
+  const timing = { periodSec: 10, closedSec: 3, warningSec: 2 };
+
+  it('is open and quiet early in the cycle', () => {
+    expect(gateState(timing, 1)).toEqual({ solid: false, warning: 0 });
+  });
+
+  it('warns more and more before it closes', () => {
+    const early = gateState(timing, 5.5);
+    const late = gateState(timing, 6.5);
+
+    expect(early.solid).toBe(false);
+    expect(early.warning).toBeGreaterThan(0);
+    expect(late.warning).toBeGreaterThan(early.warning);
+  });
+
+  it('is closed at the end of the cycle and open again after it', () => {
+    expect(gateState(timing, 8).solid).toBe(true);
+    expect(gateState(timing, 10.5).solid).toBe(false);
+  });
+
+  it('shifts the cycle by its offset', () => {
+    expect(gateState({ ...timing, offsetSec: 7 }, 1).solid).toBe(true);
+  });
+});
+
+describe('slideOffset', () => {
+  it('swings between both amplitudes in whole cells', () => {
+    expect(slideOffset(10, 4, 0)).toBe(0);
+    expect(slideOffset(10, 4, 1)).toBe(10);
+    expect(slideOffset(10, 4, 3)).toBe(-10);
+    expect(Number.isInteger(slideOffset(10, 4, 0.3))).toBe(true);
   });
 });

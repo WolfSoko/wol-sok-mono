@@ -2,6 +2,7 @@ import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import {
   Certificate,
   CertificateValidation,
+  ICertificate,
 } from 'aws-cdk-lib/aws-certificatemanager';
 import {
   AllowedMethods,
@@ -34,6 +35,73 @@ export interface SpaProps {
   buildOutputPath: string;
   bucketRemovalPolicy?: RemovalPolicy;
   extraAllowedOrigins?: string[];
+  /**
+   * The certificate of the distribution, which CloudFront only takes from
+   * us-east-1. Without it the construct creates one, so it must then sit in a
+   * us-east-1 stack. SpaStack passes one when its region is another.
+   */
+  certificate?: ICertificate;
+  /**
+   * Files that keep their names across releases, such as a service worker,
+   * its ngsw.json or an import map, as globs relative to buildOutputPath.
+   * They are served with no-cache instead of the one year max-age the hashed
+   * bundles get, and are uploaded after those bundles.
+   */
+  noCacheFiles?: string[];
+  /**
+   * Files that get their own Cache-Control, and optionally Content-Type,
+   * instead of the one year max-age, as globs relative to buildOutputPath.
+   * Like noCacheFiles, they are left out of the main deployment and uploaded
+   * after it, so each file is written once with one header. Keep the globs
+   * of different entries disjoint: a file matched twice is uploaded twice and
+   * the later header wins. Wildcards may only appear in the last segment.
+   */
+  cacheOverrides?: CacheOverride[];
+}
+
+interface DeploymentOptions {
+  /** @default one year max-age */
+  cacheControl?: CacheControl;
+  contentType?: string;
+}
+
+export interface CacheOverride {
+  /** Globs relative to buildOutputPath, e.g. `assets/manifest*.json`. */
+  files: string[];
+  cacheControl: CacheControl;
+  contentType?: string;
+}
+
+/**
+ * Exclude globs that keep only `files`. '**' also skips every folder as a
+ * whole, so the folders above a nested file are re-included first, and
+ * `<glob>/**` keeps the contents of a glob that names a folder.
+ */
+function onlyInclude(files: string[]): string[] {
+  const included = new Set<string>();
+  for (const file of files) {
+    const folders = file.split('/').slice(0, -1);
+    if (folders.some((folder) => /[*?[\]{}]/.test(folder))) {
+      // Re-including a folder wildcard such as `assets/*` would also bring
+      // back the files it matches, so they would be uploaded twice again.
+      throw new Error(
+        `Wildcards are only supported in the last segment: ${file}`
+      );
+    }
+    folders.forEach((_, i) => included.add(folders.slice(0, i + 1).join('/')));
+    included.add(file);
+    included.add(file + '/**');
+  }
+  return ['**', ...[...included].map((glob) => '!' + glob)];
+}
+
+/**
+ * The names the certificate of a SPA covers: the main domain, and the site
+ * domain as well when it is a subdomain.
+ */
+export function certificateDomainNames(domainName: string): string[] {
+  const mainDomain = domainName.split('.').slice(-2).join('.');
+  return mainDomain === domainName ? [mainDomain] : [mainDomain, domainName];
 }
 
 const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
@@ -47,6 +115,8 @@ const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
  */
 export class SpaConstruct extends Construct {
   private bucketDeployments: BucketDeployment[] = [];
+  private readonly indexDeployment: BucketDeployment;
+  private lastUpload: BucketDeployment;
   private readonly bucket: Bucket;
   private readonly distribution: Distribution;
 
@@ -58,7 +128,18 @@ export class SpaConstruct extends Construct {
     super(parent, spaName);
     const removalPolicy: RemovalPolicy =
       props.bucketRemovalPolicy ?? defaultBucketRemovalPolicy;
-    const { buildOutputPath, extraAllowedOrigins } = props;
+    const {
+      buildOutputPath,
+      extraAllowedOrigins,
+      noCacheFiles = [],
+      cacheOverrides = [],
+    } = props;
+    const overrides: CacheOverride[] = [
+      ...(noCacheFiles.length > 0
+        ? [{ files: noCacheFiles, cacheControl: CacheControl.noCache() }]
+        : []),
+      ...cacheOverrides,
+    ];
 
     const { mainDomain, siteDomain } = this.extractDomains(props.domainName);
 
@@ -69,13 +150,9 @@ export class SpaConstruct extends Construct {
 
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
 
-    let certificate: Certificate;
-
-    if (mainDomain === siteDomain) {
-      certificate = this.createCertificate(zone, mainDomain);
-    } else {
-      certificate = this.createCertificate(zone, mainDomain, siteDomain);
-    }
+    const certificate: ICertificate =
+      props.certificate ??
+      this.createCertificate(zone, ...certificateDomainNames(siteDomain));
 
     this.bucket = this.createBucket(siteDomain, removalPolicy);
 
@@ -87,63 +164,59 @@ export class SpaConstruct extends Construct {
     );
     this.createARecord(siteDomain, this.distribution, zone);
 
-    const indexAsset = Source.asset(buildOutputPath, {
-      // glob ignore all but index.html
-      exclude: ['**', '!index.html'],
-    });
-    this.bucketDeployments.push(
-      this.createBucketDeployment(
-        [indexAsset],
-        CacheControl.noCache(),
-        true,
-        this.bucket,
-        this.distribution
-      )
+    // No deployment prunes: a pruning sync of index.html alone would delete
+    // every other file, and an upload whose asset did not change is not run
+    // again to restore it. Old bundles stay for tabs still running them.
+    // The first deployment owns the handler that all of them share, so the
+    // build output comes first and index.html, which waits for the rest, second.
+    // Every deployment invalidates the distribution when its content changed,
+    // but only the last one, index.html, waits for its invalidation: one wait
+    // at the end instead of one per deployment.
+    this.lastUpload = this.createBucketDeployment([
+      Source.asset(buildOutputPath, {
+        exclude: ['index.html', ...overrides.flatMap(({ files }) => files)],
+      }),
+    ]);
+    this.bucketDeployments.push(this.lastUpload);
+
+    // index.html goes last, once every file it points at is uploaded.
+    this.indexDeployment = this.createBucketDeployment(
+      [Source.asset(buildOutputPath, { exclude: ['**', '!index.html'] })],
+      { cacheControl: CacheControl.noCache() },
+      true
     );
+    this.bucketDeployments.push(this.indexDeployment);
+    this.indexDeployment.node.addDependency(this.lastUpload);
 
-    const deploymentAssets = Source.asset(buildOutputPath, {
-      exclude: ['index.html'],
-    });
-
-    this.bucketDeployments.push(
-      this.createBucketDeployment(
-        [deploymentAssets],
-        CacheControl.maxAge(Duration.days(365)),
-        false,
-        this.bucket,
-        this.distribution
-      )
-    );
-
-    // Make sure that the index.html is deployed last, as it's needed to
-    // serve the SPA so chain the deployments
-    this.bucketDeployments[1].node.addDependency(this.bucketDeployments[0]);
+    for (const { files, cacheControl, contentType } of overrides) {
+      this.addUpload(
+        [Source.asset(buildOutputPath, { exclude: onlyInclude(files) })],
+        { cacheControl, contentType }
+      );
+    }
   }
 
   /**
-   * Add some additional assets to the bucket of the SPA
+   * Add some additional assets to the bucket of the SPA, uploaded after the
+   * build output and before index.html. Use it for files that are not in
+   * buildOutputPath; for those that are, use noCacheFiles or cacheOverrides,
+   * or they are uploaded twice.
    */
   public addExtraAssets(
     assets: ISource[],
-    cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
+    cacheControl?: CacheControl,
     contentType?: string
   ): void {
-    const extraAssetsDeployment: BucketDeployment = this.createBucketDeployment(
-      assets,
-      cacheControl,
-      false,
-      this.bucket,
-      this.distribution,
-      contentType
-    );
+    this.addUpload(assets, { cacheControl, contentType });
+  }
 
-    const latestDeployment: BucketDeployment | undefined =
-      this.bucketDeployments.at(-1);
-    if (latestDeployment) {
-      extraAssetsDeployment.node.addDependency(latestDeployment);
-    }
-
-    this.bucketDeployments.push(extraAssetsDeployment);
+  /** Adds a deployment that runs after the uploads so far and before index.html. */
+  private addUpload(sources: ISource[], options: DeploymentOptions): void {
+    const deployment = this.createBucketDeployment(sources, options);
+    deployment.node.addDependency(this.lastUpload);
+    this.lastUpload = deployment;
+    this.bucketDeployments.push(deployment);
+    this.indexDeployment.node.addDependency(deployment);
   }
 
   private createBucket(
@@ -198,7 +271,7 @@ export class SpaConstruct extends Construct {
 
   private createDistribution(
     siteDomain: string,
-    certificate: Certificate,
+    certificate: ICertificate,
     siteBucket: IBucket,
     allowedOrigins: string[] = []
   ): Distribution {
@@ -265,25 +338,25 @@ export class SpaConstruct extends Construct {
 
   private createBucketDeployment(
     sources: ISource[],
-    cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
-    prune: boolean,
-    destinationBucket: IBucket,
-    distribution: IDistribution,
-    contentType?: string
+    {
+      cacheControl = CacheControl.maxAge(Duration.days(365)),
+      contentType,
+    }: DeploymentOptions = {},
+    waitForDistributionInvalidation = false
   ): BucketDeployment {
-    // Deploy site contents to S3 spaBucket
     return new BucketDeployment(
       this,
       'DeployWithInvalidation' + (this.bucketDeployments.length + 1),
       {
         sources,
-        destinationBucket,
-        distribution,
-        prune,
-        memoryLimit: 1024,
+        destinationBucket: this.bucket,
+        distribution: this.distribution,
         distributionPaths: ['/*'],
+        waitForDistributionInvalidation,
+        prune: false,
+        memoryLimit: 1024,
         cacheControl: [cacheControl],
-        ...(contentType ? { contentType } : {}),
+        contentType,
       }
     );
   }

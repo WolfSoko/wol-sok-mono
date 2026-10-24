@@ -1,0 +1,35 @@
+:host {
+  display: block;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font: var(--mat-sys-title-large);
+  font-weight: 700;
+}
+
+.title-icon {
+  color: var(--mat-sys-primary);
+}
+
+.hint {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.title + .hint {
+  margin-top: 0.25rem;
+}
+
+.private-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.25rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}

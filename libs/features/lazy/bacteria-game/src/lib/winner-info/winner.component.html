@@ -1,17 +1,284 @@
-<mat-toolbar color="accent">
-  @if (winner(); as player) {
-    Congratulation!! The winner is Player: {{ player.id + 1 }}
-  } @else {
-    It is a draw - both colonies wiped each other out!
-  }
-</mat-toolbar>
-<p class="level-info">{{ level().name }}</p>
-<div class="actions" mat-dialog-actions>
-  <button mat-button [mat-dialog-close]="undefined">Back to start</button>
-  <button mat-raised-button [mat-dialog-close]="'again'">Play again</button>
-  @if (upcoming(); as next) {
-    <button mat-raised-button color="primary" [mat-dialog-close]="'next'">
-      Next: {{ next.name }}
+<h2 class="headline">{{ headline() }}</h2>
+<p class="level-info">{{ levelNameText(level()) | gameText }}</p>
+@if (runNote(); as note) {
+  <p class="run-note">{{ note }}</p>
+}
+@if (mission(); as mission) {
+  <div class="mission" [class.done]="mission.done">
+    <mat-icon class="mission-icon" aria-hidden="true">{{
+      mission.done ? "check_circle" : "school"
+    }}</mat-icon>
+    <div class="mission-text">
+      @if (mission.line; as line) {
+        <p class="mission-line">{{ line }}</p>
+      }
+      @if (mission.allDone) {
+        <p>{{ "training.result.allDone" | t }}</p>
+      }
+    </div>
+  </div>
+}
+
+@if (award(); as award) {
+  <div class="award" [class.earned]="award.medal !== null">
+    <feat-lazy-bac-game-medallion
+      class="award-medal"
+      [tier]="award.medal"
+      [size]="88"
+      [difficulty]="award.record.difficulty"
+    />
+    <div class="award-text">
+      <p class="award-title">{{ medalTitle() }}</p>
+      @if (award.medal !== null) {
+        <!-- Floored to the second, as the match clock shows it. -->
+        <p>
+          {{
+            "match.medal.wonIn"
+              | t
+                : {
+                    time:
+                      (award.record.durationSec * 1000
+                        | date: "m:ss" : "UTC") ?? "",
+                  }
+          }}
+        </p>
+      }
+      @if (heldMedal(); as held) {
+        <p>{{ "match.medal.held" | t: { medal: held } }}</p>
+      }
+      @if (award.hintText; as hint) {
+        <p class="award-hint">{{ hint | gameText }}</p>
+      } @else if (award.hint; as hint) {
+        <p class="award-hint">{{ hint }}</p>
+      }
+    </div>
+  </div>
+}
+
+@if (duel(); as duel) {
+  <div class="duel">
+    @if (duel.series; as series) {
+      <p class="series">
+        <span class="duel-label">{{ "common.series" | t }}</span>
+        <span class="duel-score">{{ series.score }}</span>
+        <span class="duel-note">{{ series.note }}</span>
+      </p>
+    }
+    <p class="rivalry">
+      <span class="duel-label">{{ "common.rivalry" | t }}</span>
+      <span class="duel-score">{{ duel.rivalry }}</span>
+    </p>
+  </div>
+}
+
+@if (xp(); as xp) {
+  <div class="xp">
+    <div class="xp-head">
+      <span class="xp-total">{{
+        "match.xp.total" | t: { xp: xp.gain.total }
+      }}</span>
+      <span class="xp-parts">
+        @for (part of xp.parts; track $index) {
+          <span class="xp-part">{{ part.label }} {{ part.xp }}</span>
+        }
+      </span>
+    </div>
+    @if (xp.climb; as climb) {
+      <mat-progress-bar
+        class="xp-bar"
+        mode="buffer"
+        [attr.aria-label]="
+          climb.standing.next
+            ? ('match.xp.towards'
+              | t: { rank: (rankKey(climb.standing.next.id) | t) })
+            : ('match.xp.towardsTop' | t)
+        "
+        [value]="climb.held"
+        [bufferValue]="climb.held + climb.gained"
+      />
+      <p class="xp-rank">
+        @if (climb.rankUp) {
+          <span class="rank-up">{{ "match.xp.rankUp" | t }}</span>
+        }
+        {{ rankKey(climb.standing.rank.id) | t }}
+        @if (climb.standing.next; as next) {
+          ·
+          {{
+            "match.xp.toNext"
+              | t
+                : {
+                    xp: climb.standing.toNext ?? 0,
+                    rank: (rankKey(next.id) | t),
+                  }
+          }}
+        }
+      </p>
+    }
+  </div>
+}
+
+@if (dna() !== null || canEvolve()) {
+  <div class="dna">
+    @if (dna(); as count) {
+      <p class="dna-gain">
+        <feat-lazy-bac-game-dna-helix class="dna-helix" [size]="30" />
+        <span class="dna-count">{{
+          "evolution.match.dna" | t: { count }
+        }}</span>
+      </p>
+    }
+    @if (canEvolve()) {
+      <button
+        mat-flat-button
+        type="button"
+        class="evolve"
+        (click)="action.emit('evolve')"
+      >
+        <mat-icon>auto_awesome</mat-icon>
+        {{ "evolution.match.evolve" | t }}
+      </button>
+    }
+  </div>
+}
+
+@if (earned().length > 0 || unlocked().length > 0 || cosmetics().length > 0) {
+  <ul class="news" [attr.aria-label]="'match.news.label' | t">
+    @for (achievement of earned(); track achievement.id) {
+      <li class="chip">
+        <mat-icon class="badge" aria-hidden="true">emoji_events</mat-icon>
+        <span class="chip-text">
+          <span class="chip-label">{{ "match.news.achievement" | t }}</span>
+          <span class="chip-name">{{ achievement.name | gameText }}</span>
+          <span class="chip-note">{{ achievement.condition | gameText }}</span>
+        </span>
+      </li>
+    }
+    @for (cosmetic of cosmetics(); track cosmetic) {
+      <li class="chip unlock">
+        <mat-icon class="badge" aria-hidden="true">palette</mat-icon>
+        <span class="chip-text">
+          <span class="chip-label">{{ "match.news.unlocked" | t }}</span>
+          <span class="chip-name">{{ cosmetic }}</span>
+        </span>
+      </li>
+    }
+    @for (level of unlocked(); track level.id) {
+      <li class="chip unlock">
+        <mat-icon class="badge" aria-hidden="true">lock_open</mat-icon>
+        <span class="chip-text">
+          <span class="chip-label">{{ "match.news.unlocked" | t }}</span>
+          <span class="chip-name">{{ levelNameText(level) | gameText }}</span>
+        </span>
+      </li>
+    }
+  </ul>
+}
+
+@if (friendNote(); as note) {
+  <div class="friend">
+    <span class="friend-note" role="status">{{ note | t }}</span>
+  </div>
+} @else if (newFriend(); as opponent) {
+  <div class="friend">
+    <button mat-stroked-button type="button" (click)="addFriend(opponent.uid)">
+      <mat-icon>person_add</mat-icon>
+      {{ "match.friend.add" | t: { name: opponent.card.name } }}
     </button>
+  </div>
+}
+
+<div class="actions">
+  <button mat-button type="button" (click)="action.emit('menu')">
+    <mat-icon>home</mat-icon>
+    {{ "match.actions.menu" | t }}
+  </button>
+  @if (onlineGuest()) {
+    <p class="online-wait">{{ "match.actions.guestWaits" | t }}</p>
+  } @else if (online() && !connected()) {
+    <p class="online-wait">{{ "match.actions.connectionGone" | t }}</p>
+  } @else if (endlessAction(); as label) {
+    <button mat-flat-button type="button" (click)="action.emit('endless')">
+      <mat-icon>all_inclusive</mat-icon>
+      {{ label | t }}
+    </button>
+  } @else if (mission(); as mission) {
+    @if (canChooseLevel()) {
+      <button mat-stroked-button type="button" (click)="action.emit('levels')">
+        <mat-icon>school</mat-icon>
+        {{ "training.actions.all" | t }}
+      </button>
+    }
+    <button mat-stroked-button type="button" (click)="action.emit('again')">
+      <mat-icon>replay</mat-icon>
+      {{
+        (mission.done ? "match.actions.playAgain" : "match.actions.tryAgain")
+          | t
+      }}
+    </button>
+    @if (mission.next) {
+      <button mat-flat-button type="button" (click)="action.emit('mission')">
+        <mat-icon>skip_next</mat-icon>
+        {{ "training.actions.next" | t }}
+      </button>
+    } @else if (mission.allDone) {
+      <button mat-flat-button type="button" (click)="action.emit('campaign')">
+        <mat-icon>flag</mat-icon>
+        {{ "training.actions.campaign" | t }}
+      </button>
+    }
+  } @else {
+    @if (canChooseLevel() && !online()) {
+      <button mat-stroked-button type="button" (click)="action.emit('levels')">
+        <mat-icon>grid_view</mat-icon>
+        {{ "match.actions.chooseLevel" | t }}
+      </button>
+    }
+    <button mat-stroked-button type="button" (click)="action.emit('again')">
+      <mat-icon>replay</mat-icon>
+      {{
+        (againstGhost()
+          ? "match.actions.fightAgain"
+          : "match.actions.playAgain"
+        ) | t
+      }}
+    </button>
+    @if (canFightGhost()) {
+      <button mat-stroked-button type="button" (click)="action.emit('ghost')">
+        <mat-icon>blur_on</mat-icon>
+        {{ "match.actions.fightGhost" | t }}
+      </button>
+      <button
+        mat-button
+        type="button"
+        class="share"
+        [disabled]="shareLink() === null"
+        (click)="shareRun()"
+      >
+        <mat-icon>share</mat-icon>
+        {{ "match.share.button" | t }}
+      </button>
+    }
+    @if (upcoming(); as next) {
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="upcomingLock() !== null"
+        (click)="action.emit('next')"
+      >
+        <mat-icon>{{
+          upcomingLock() === null ? "skip_next" : "lock"
+        }}</mat-icon>
+        {{
+          "match.actions.next" | t: { level: (levelNameText(next) | gameText) }
+        }}
+      </button>
+    }
   }
 </div>
+@if (shareNote(); as note) {
+  <p class="share-note" role="status">{{ note | t }}</p>
+}
+<!-- Only with a Next button for the reason to explain. -->
+@if (!online() && upcomingLockText(); as lock) {
+  <p class="lock-reason">{{ lock | gameText }}</p>
+}

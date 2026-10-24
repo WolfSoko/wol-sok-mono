@@ -5,6 +5,9 @@
   "sourceRoot": "apps/fourier-analysis-remote/src",
   "prefix": "wolsok",
   "tags": ["app", "type:remote"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "federation"]
+  },
   "targets": {
     "esbuild": {
       "dependsOn": ["^build"],
@@ -127,17 +130,15 @@
     "serve-static": {
       "executor": "@nx/web:file-server",
       "defaultConfiguration": "development",
+      "dependsOn": ["build"],
       "options": {
-        "buildTarget": "fourier-analysis-remote:build",
-        "port": 4201
+        "staticFilePath": "dist/apps/fourier-analysis-remote",
+        "port": 4201,
+        "watch": false
       },
       "configurations": {
-        "development": {
-          "buildTarget": "fourier-analysis-remote:build:development"
-        },
-        "production": {
-          "buildTarget": "fourier-analysis-remote:build:production"
-        }
+        "development": {},
+        "production": {}
       }
     }
   }

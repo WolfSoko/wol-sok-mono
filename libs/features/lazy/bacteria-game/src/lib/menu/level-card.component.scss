@@ -1,0 +1,170 @@
+@use 'screen';
+
+:host {
+  display: flex;
+  flex: 1 1 auto;
+}
+
+.level-card {
+  @include screen.panel;
+
+  // The colours of the level's arena, where it has them.
+  background: linear-gradient(
+    160deg,
+    rgb(var(--card-floor, 18 24 33) / 95%),
+    var(--bw-surface) 70%
+  );
+  border-color: rgb(var(--card-edge, 38 49 66) / 40%);
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 7.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  color: var(--bw-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--bw-line-strong);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--bw-gold);
+    outline-offset: 2px;
+  }
+
+  &.current {
+    background: var(--bw-surface-raised);
+    border: 2px solid var(--bw-player);
+
+    .number {
+      color: var(--bw-player);
+    }
+  }
+
+  &.locked {
+    background: rgb(11 15 20 / 85%);
+    border-style: dashed;
+    color: var(--bw-muted);
+    cursor: not-allowed;
+
+    .number {
+      color: var(--bw-faint);
+    }
+  }
+}
+
+// The picture of the map on top, the number and the title under it.
+.with-preview {
+  gap: 0.25rem;
+  padding: 0.55rem 0.55rem 0.7rem;
+
+  .card-top,
+  .title,
+  .card-foot {
+    padding-inline: 0.35rem;
+  }
+
+  .card-top {
+    margin-top: 0.3rem;
+  }
+
+  .number {
+    font-size: 1.3rem;
+  }
+}
+
+.preview {
+  flex: none;
+  transition: filter 160ms ease-out;
+
+  .locked & {
+    filter: grayscale(0.7) brightness(0.55);
+  }
+
+  .level-card:hover:not(:disabled) & {
+    filter: brightness(1.12);
+  }
+}
+
+// A map bigger than the screen, where there is no picture to badge.
+.size {
+  margin-left: 0.5rem;
+  margin-right: auto;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid rgb(var(--card-edge, 233 185 73) / 85%);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.number {
+  @include screen.figure;
+
+  font-size: 1.6rem;
+  color: var(--bw-gold);
+}
+
+.lock {
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 22px;
+  margin-top: auto;
+  color: var(--bw-muted);
+}
+
+.lock-reason {
+  font-size: 0.8rem;
+}
+
+// A phone held across: the cards as short as they go.
+@media (max-height: 30rem) {
+  .level-card {
+    min-height: 0;
+  }
+
+  // The picture beside the texts, so a row of cards fits the short screen.
+  .with-preview {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    column-gap: 0.4rem;
+    align-items: start;
+
+    .preview {
+      grid-row: 1 / span 3;
+      align-self: center;
+    }
+
+    .card-top,
+    .title,
+    .card-foot {
+      grid-column: 2;
+    }
+
+    .card-top {
+      margin-top: 0;
+    }
+  }
+}

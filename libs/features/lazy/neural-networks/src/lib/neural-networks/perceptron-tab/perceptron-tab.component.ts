@@ -8,9 +8,9 @@ import { MatCardModule } from '@angular/material/card';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { Observable } from 'rxjs';
 import { BrainSettingsComponent } from '../shared/brain-settings/brain-settings.component';
-import { BrainService } from '../shared/brain.service';
+import { BrainService, diagonalLabel } from '../shared/brain.service';
 import { DataViewComponent } from '../shared/data-view/data-view.component';
-import { PerceptronComponent } from '../shared/perceptron/perceptron.component';
+import { NetworkViewComponent } from '../shared/network-view/network-view.component';
 import { Point } from '../shared/point';
 
 @Component({
@@ -23,7 +23,7 @@ import { Point } from '../shared/point';
     ElevateCardDirective,
     DataViewComponent,
     BrainSettingsComponent,
-    PerceptronComponent,
+    NetworkViewComponent,
   ],
 })
 export class PerceptronTabComponent implements OnInit {
@@ -55,6 +55,7 @@ export class PerceptronTabComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.brainService.labelDefinition = diagonalLabel;
     this.brainService.createPerceptron(2);
     this.brainService.updateTrainingData();
   }

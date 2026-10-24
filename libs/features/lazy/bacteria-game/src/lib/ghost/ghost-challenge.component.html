@@ -1,0 +1,17 @@
+<mat-icon class="icon" aria-hidden="true">blur_on</mat-icon>
+<div class="text">
+  <p class="title">{{ "match.ghostChallenge.title" | t }}</p>
+  <p>
+    {{ "match.ghostChallenge.before" | t }}
+    <b>{{ levelNameText(level()) | gameText }}</b
+    >{{ "match.ghostChallenge.after" | t }}
+  </p>
+</div>
+<div class="buttons">
+  <button mat-flat-button type="button" class="fight" (click)="fight.emit()">
+    {{ "match.ghostChallenge.fight" | t }}
+  </button>
+  <button mat-button type="button" (click)="dismiss.emit()">
+    {{ "match.ghostChallenge.notNow" | t }}
+  </button>
+</div>

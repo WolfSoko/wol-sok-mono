@@ -1,7 +1,10 @@
 /* You can add global styles to this file, and also import other style files */
 @use 'normalize.css/normalize.css';
 @use 'app-loading-style';
+@use '@angular/cdk' as cdk;
 @use '@angular/material' as mat;
+
+@include cdk.a11y-visually-hidden();
 
 body,
 html {

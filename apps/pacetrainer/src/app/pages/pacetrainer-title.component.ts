@@ -1,48 +1,60 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { MatDivider } from '@angular/material/divider';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'pace-title',
-  styles: [
-    `
-      mat-toolbar {
-        align-items: baseline;
-      }
-      .title {
-        margin: 0 1em 0 0;
-      }
+  styles: `
+    :host {
+      display: block;
+      padding-top: env(safe-area-inset-top);
+      --mat-toolbar-container-background-color: transparent;
+    }
+    .bar {
+      gap: 12px;
+      max-width: 560px;
+      height: 72px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+    .home {
+      display: flex;
+      border-radius: 12px;
+      outline-offset: 3px;
+    }
+    .logo {
+      display: block;
+      width: 40px;
+      height: 40px;
+      filter: drop-shadow(0 4px 8px rgb(10 21 48 / 0.35));
+    }
+    .title {
+      font: var(--mat-sys-title-large);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      margin-left: auto;
+      font: var(--mat-sys-label-large);
+      color: var(--mat-sys-on-surface-variant);
+      white-space: nowrap;
+    }
+    @media (max-width: 599px) {
       .subtitle {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        display: none;
       }
-      @media (max-width: 599px) {
-        .subtitle {
-          display: none;
-        }
-      }
-    `,
-  ],
-  template: `
-    @defer (hydrate on interaction) {
-      <mat-toolbar color="primary">
-        <span role="heading" class="title mat-title-large">
-          <a routerLink="/"
-            ><img src="/android-chrome-192x192.png" height="32px" width="32px"
-          /></a>
-          Pace-Trainer
-        </span>
-        <span class="subtitle mat-subtitle-2">Dein digitaler Laufcoach.</span>
-      </mat-toolbar>
-      <mat-divider></mat-divider>
-    } @placeholder {
-      <mat-spinner></mat-spinner>
     }
   `,
-  imports: [MatToolbarModule, MatDivider, RouterLink, MatProgressSpinnerModule],
+  template: `
+    <mat-toolbar class="bar">
+      <a routerLink="/" class="home" aria-label="Startseite">
+        <img class="logo" src="/logo.svg" alt="" width="40" height="40" />
+      </a>
+      <h1 class="title">Pace-Trainer</h1>
+      <span class="subtitle">Dein digitaler Laufcoach.</span>
+    </mat-toolbar>
+  `,
+  imports: [MatToolbarModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PacetrainerTitleComponent {}

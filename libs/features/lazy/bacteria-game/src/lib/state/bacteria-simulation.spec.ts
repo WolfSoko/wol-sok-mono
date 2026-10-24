@@ -1,7 +1,17 @@
-import { BacteriaSimulation, Colony } from './bacteria-simulation';
+import {
+  BacteriaSimulation,
+  Colony,
+  colonyIntent,
+  maxSteps,
+  paceSteps,
+} from './bacteria-simulation';
+import { ActiveEffect, WEAPON_EFFECTS, WeaponId } from './evolution';
 import { GameBalance, gameBalance } from './game-balance';
-import { getMap } from './maps';
+import { DEFAULT_CROSSHAIR_SPEED } from './levels';
+import { getMap } from './game-maps';
+import { GameMap, gateState } from './maps';
 import { Bacteria, createPlayer, Player } from './player.model';
+import { heatedAggression, Zone, ZoneKind } from './zones';
 
 // The production canvas size. Smaller arenas push the walls outside the grid,
 // which would make every wall test pass without a single wall cell existing.
@@ -258,6 +268,26 @@ describe('BacteriaSimulation', () => {
     });
   });
 
+  describe('traits', () => {
+    it('lets a colony with a higher divide factor divide where another does not', () => {
+      // A chance of a half per step: the roll of 0.6 misses it, but not 1.5 times it.
+      const { simulation, colonies, players } = setup(
+        [[bacterium(20, 20)], [bacterium(260, 30)]],
+        { balance: { divideChancePerSec: 1 }, random: () => 0.6 }
+      );
+      colonies[1].traits = {
+        divideFactor: 1.5,
+        attackFactor: 1,
+        cooldownFactor: 1,
+      };
+
+      simulation.step(players, 0.5);
+
+      expect(colonies[0].bacterias).toHaveLength(1);
+      expect(colonies[1].bacterias).toHaveLength(2);
+    });
+  });
+
   describe('movement', () => {
     it('never moves a bacterium into a wall', () => {
       const walls = createWalls(WIDTH, HEIGHT);
@@ -318,6 +348,27 @@ describe('BacteriaSimulation', () => {
       }
     });
 
+    it('lets a colony run from the enemy it touches, boosted too', () => {
+      // The enemy a coarse cell to the right, the crosshair far to the left.
+      const runner = bacterium(39, 20);
+      const { simulation, players } = setup([[runner], ring(42, 20)], {
+        balance: { jitter: 0, divideChancePerSec: 0 },
+        targets: [
+          { x: 0, y: 20 },
+          { x: 42, y: 20 },
+        ],
+      });
+      // Boosted, it hunts hardest - and still must not be dragged back.
+      players[0] = { ...players[0], boostActiveSec: 1 };
+
+      simulation.step(players, 0.1);
+
+      const steps = Math.round(
+        DEFAULT_CROSSHAIR_SPEED * gameBalance.boostSpeedFactor * 0.1
+      );
+      expect(runner).toMatchObject({ x: 39 - steps, y: 20 });
+    });
+
     it('never puts two bacteria on the same cell', () => {
       const { simulation, colonies, players } = setup(
         [ring(10, 10), ring(50, 30)],
@@ -369,6 +420,34 @@ describe('BacteriaSimulation', () => {
       expect(simulation.getNutrients()[0].amount).toBeLessThan(
         gameBalance.nutrientEnergy
       );
+    });
+
+    it('credits a pellet eaten up to the colony that ate it', () => {
+      const simulation = new BacteriaSimulation(
+        balance({
+          nutrientCount: 1,
+          divideChancePerSec: 0,
+          nutrientDrainPerSec: 1000,
+        }),
+        () => 0
+      );
+      simulation.resize(WIDTH, HEIGHT);
+      simulation.init([
+        { playerId: 0, color: [255, 0, 0, 255], x: 0, y: 0, radius: 0 },
+        { playerId: 1, color: [0, 0, 255, 255], x: 0, y: 0, radius: 0 },
+      ]);
+      const [nutrient] = simulation.getNutrients();
+      const colonies = simulation.getColonies() as Colony[];
+      colonies[0].bacterias = [bacterium(nutrient.x, nutrient.y)];
+      colonies[1].bacterias = [];
+      const at = { x: nutrient.x, y: nutrient.y };
+
+      simulation.step(
+        [createPlayer({ id: 0, ...at }), createPlayer({ id: 1, ...at })],
+        0.5
+      );
+
+      expect(simulation.summaries().map((c) => c.pellets)).toEqual([1, 0]);
     });
 
     it('spawns nutrients in pairs that mirror each other', () => {
@@ -489,5 +568,611 @@ describe('maps', () => {
         (bac) => bac.x === blocked.x && bac.y === blocked.y
       )
     ).toBe(false);
+  });
+});
+
+describe('boost', () => {
+  const far = { x: WIDTH - 1, y: HEIGHT / 2 };
+
+  function distanceTravelled(boostActiveSec: number): number {
+    const { simulation, colonies, players } = setup([[bacterium(20, 20)]], {
+      balance: { jitter: 0, divideChancePerSec: 0 },
+      targets: [far],
+    });
+    players[0] = { ...players[0], boostActiveSec };
+    simulation.step(players, 0.1);
+    return colonies[0].bacterias[0].x - 20;
+  }
+
+  it('moves a boosted colony faster', () => {
+    expect(distanceTravelled(1)).toBeGreaterThan(distanceTravelled(0));
+  });
+
+  it('lets a boosted colony hit harder', () => {
+    function drain(boostActiveSec: number): number {
+      const defender = bacterium(20, 20);
+      const { simulation, players } = setup(
+        [[defender], [bacterium(19, 20), bacterium(21, 20)]],
+        { balance: { divideChancePerSec: 0 } }
+      );
+      players[1] = { ...players[1], boostActiveSec };
+      simulation.step(players, 0.05);
+      return gameBalance.maxEnergy - defender.energy;
+    }
+
+    expect(drain(1)).toBeGreaterThan(drain(0));
+  });
+
+  it('is over once the boost timer has run out', () => {
+    expect(distanceTravelled(0)).toBe(
+      Math.max(1, Math.round(DEFAULT_CROSSHAIR_SPEED * 0.1))
+    );
+  });
+});
+
+describe('dynamic walls', () => {
+  /** A 4x4 gate that is open for a second, then closed for a second. */
+  const gateMap: GameMap = {
+    id: 'gate',
+    name: 'Gate',
+    description: '',
+    createWalls: () => [],
+    createDynamicWalls: (_width, _height, timeSec) => [
+      {
+        x: 100,
+        y: 50,
+        width: 4,
+        height: 4,
+        ...gateState({ periodSec: 2, closedSec: 1, warningSec: 0.5 }, timeSec),
+      },
+    ],
+  };
+
+  function onGate(bacterias: Bacteria[]) {
+    const scenario = setup([bacterias], {
+      balance: { divideChancePerSec: 0 },
+      targets: [{ x: 102, y: 52 }],
+    });
+    scenario.simulation.setMap(gateMap);
+    // setMap respawns, the colony keeps its hand made bacteria.
+    return scenario;
+  }
+
+  function insideGate(bacterium: Bacteria): boolean {
+    return (
+      bacterium.x >= 100 &&
+      bacterium.x < 104 &&
+      bacterium.y >= 50 &&
+      bacterium.y < 54
+    );
+  }
+
+  it('pushes a bacterium out of a gate that closes on it', () => {
+    const { simulation, colonies, players } = onGate([bacterium(101, 51)]);
+
+    simulation.step(players, 1.2);
+
+    expect(colonies[0].bacterias).toHaveLength(1);
+    expect(insideGate(colonies[0].bacterias[0])).toBe(false);
+    expect(simulation.getEvents().crushed).toBe(0);
+  });
+
+  it('crushes the bacteria a closing gate has no room left for', () => {
+    const packed: Bacteria[] = [];
+    for (let y = 46; y < 58; y++) {
+      for (let x = 96; x < 108; x++) {
+        packed.push(bacterium(x, y));
+      }
+    }
+    const { simulation, colonies, players } = onGate(packed);
+
+    simulation.step(players, 1.2);
+
+    expect(simulation.getEvents().crushed).toBe(16);
+    expect(colonies[0].lost).toBe(16);
+    expect(colonies[0].bacterias.some(insideGate)).toBe(false);
+  });
+
+  it('reports the warning and the moment the gate slams shut', () => {
+    const { simulation, players } = onGate([bacterium(10, 10)]);
+
+    simulation.step(players, 0.6);
+    expect(simulation.getEvents()).toMatchObject({
+      gatesWarned: 1,
+      gatesClosed: 0,
+    });
+
+    simulation.step(players, 0.5);
+    expect(simulation.getEvents()).toMatchObject({
+      gatesWarned: 0,
+      gatesClosed: 1,
+    });
+    expect(simulation.getDynamicWalls()[0].solid).toBe(true);
+  });
+
+  it('reports nothing for a frame that does not advance', () => {
+    const { simulation, players } = onGate([bacterium(10, 10)]);
+    simulation.step(players, 1.1);
+    expect(simulation.getEvents().gatesClosed).toBe(1);
+
+    simulation.step(players, 0);
+
+    expect(simulation.getEvents().gatesClosed).toBe(0);
+  });
+
+  it('starts every match with the gates as they are at time zero', () => {
+    const { simulation, players } = onGate([bacterium(10, 10)]);
+    simulation.step(players, 1.2);
+
+    simulation.init([
+      { playerId: 0, color: [255, 0, 0, 255], x: 20, y: 20, radius: 1 },
+    ]);
+
+    expect(simulation.getDynamicWalls()[0].solid).toBe(false);
+  });
+});
+
+describe('zones', () => {
+  /** A map without walls and with these zones. */
+  function zoneMap(zones: Zone[]): GameMap {
+    return {
+      id: 'zone-test',
+      name: 'Zone test',
+      description: '',
+      createWalls: () => [],
+      createZones: () => zones,
+    };
+  }
+
+  /** One bacterium at (50, 50), with a zone of that kind under it or not. */
+  function lone(
+    kind: ZoneKind | null,
+    options: Parameters<typeof setup>[1] = {}
+  ) {
+    const scene = setup([[bacterium(50, 50)]], {
+      ...options,
+      balance: { divideChancePerSec: 0, ...options.balance },
+    });
+    scene.simulation.setMap(
+      zoneMap(
+        kind === null ? [] : [{ kind, x: 40, y: 40, width: 20, height: 20 }]
+      )
+    );
+    return scene;
+  }
+
+  function run(
+    { simulation, players }: ReturnType<typeof setup>,
+    seconds: number
+  ): void {
+    for (let tick = 0; tick < seconds * 60; tick++) {
+      simulation.step(players, 1 / 60);
+    }
+  }
+
+  it('lets an antibiotic kill a bacterium that stays, captured by nobody', () => {
+    const poisoned = lone('antibiotic', { targets: [{ x: 50, y: 50 }] });
+    const clean = lone(null, { targets: [{ x: 50, y: 50 }] });
+
+    run(poisoned, 3);
+    run(clean, 3);
+
+    expect(poisoned.colonies[0].bacterias).toHaveLength(0);
+    expect(poisoned.colonies[0].lost).toBe(1);
+    expect(poisoned.simulation.getEvents().captures).toBe(0);
+    expect(clean.colonies[0].bacterias).toHaveLength(1);
+  });
+
+  it('doubles the division on agar', () => {
+    // A chance of a half per step: the roll of 0.6 misses it, but not twice it.
+    const options = {
+      balance: { divideChancePerSec: 1 },
+      random: () => 0.6,
+    };
+    const onAgar = lone('agar', options);
+    const plain = lone(null, options);
+
+    onAgar.simulation.step(onAgar.players, 0.5);
+    plain.simulation.step(plain.players, 0.5);
+
+    expect(onAgar.colonies[0].bacterias).toHaveLength(2);
+    expect(plain.colonies[0].bacterias).toHaveLength(1);
+  });
+
+  it('holds a bacterium on ice back for a step now and then', () => {
+    const options = { targets: [{ x: 100, y: 50 }], random: () => 0.4 };
+    const onIce = lone('ice', options);
+    const plain = lone(null, options);
+
+    onIce.simulation.step(onIce.players, 1 / 60);
+    plain.simulation.step(plain.players, 1 / 60);
+
+    expect(onIce.colonies[0].bacterias[0].x).toBe(50);
+    expect(plain.colonies[0].bacterias[0].x).toBeGreaterThan(50);
+  });
+
+  it('makes a colony on hot ground hunt harder, never beyond the crosshair', () => {
+    expect(heatedAggression(0.45)).toBeCloseTo(0.7);
+    expect(heatedAggression(0.85)).toBe(0.95);
+    // A boost that hunts harder already keeps its own.
+    expect(heatedAggression(0.98)).toBe(0.98);
+  });
+});
+
+describe('BacteriaSimulation block counts', () => {
+  it('counts each colony into blocks as big as the GPU report', () => {
+    const { simulation } = setup([
+      [bacterium(1, 1), bacterium(7, 7), bacterium(8, 0)],
+      [bacterium(WIDTH - 1, HEIGHT - 1)],
+    ]);
+
+    const blocks = simulation.blockCounts();
+
+    const size = gameBalance.influenceCellSize;
+    expect(blocks).toMatchObject({
+      blocksX: Math.ceil(WIDTH / size),
+      blocksY: Math.ceil(HEIGHT / size),
+      cellSize: size,
+    });
+    expect(blocks.counts[0][0]).toBe(2);
+    expect(blocks.counts[0][1]).toBe(1);
+    expect(blocks.counts[1][blocks.blocksX * blocks.blocksY - 1]).toBe(1);
+    expect(blocks.counts[1].reduce((sum, n) => sum + n, 0)).toBe(1);
+  });
+});
+
+describe('BacteriaSimulation with evolution', () => {
+  /** A weapon's effect, fired by `owner`, round (40, 20). */
+  function effect(
+    weapon: WeaponId,
+    owner: number,
+    changes: Partial<ActiveEffect> = {}
+  ): ActiveEffect {
+    return {
+      weapon,
+      owner,
+      x: 40,
+      y: 20,
+      radius: 6,
+      remainingSec: 2,
+      durationSec: 2,
+      ...changes,
+    };
+  }
+  const STILL = { divideChancePerSec: 0 };
+
+  describe('evolved traits', () => {
+    function drained(toughnessFactor?: number): number {
+      const defender = bacterium(20, 20);
+      const { simulation, colonies, players } = setup(
+        [
+          [defender],
+          [
+            bacterium(19, 20),
+            bacterium(21, 20),
+            bacterium(20, 19),
+            bacterium(20, 21),
+          ],
+        ],
+        { balance: STILL }
+      );
+      colonies[0].traits = { ...colonies[0].traits, toughnessFactor };
+      simulation.step(players, 0.05);
+      return gameBalance.maxEnergy - defender.energy;
+    }
+
+    it('lets a tough colony take less of the pressure', () => {
+      expect(drained(0.5)).toBeCloseTo(drained() * 0.5, 5);
+    });
+
+    it('lets a colony with flagella travel further in a step', () => {
+      function travelled(speedFactor?: number): number {
+        const runner = bacterium(20, 20);
+        const { simulation, colonies, players } = setup([[runner]], {
+          balance: STILL,
+          targets: [{ x: 60, y: 20 }],
+        });
+        colonies[0].traits = { ...colonies[0].traits, speedFactor };
+        simulation.step(players, 0.05);
+        return runner.x - 20;
+      }
+
+      // 150 cells a second for 0.05 seconds: 8 cells, 15 at twice the speed.
+      expect(travelled()).toBe(8);
+      expect(travelled(2)).toBe(15);
+    });
+  });
+
+  describe('flagella pace', () => {
+    it('carries the part of a step they add from frame to frame', () => {
+      const paces = [0];
+      const intent = { aggression: 0.5, steps: 3, extraSteps: 0.4 };
+
+      const steps = [1, 2, 3, 4, 5].map(() => paceSteps(intent, paces, 0));
+
+      expect(steps).toEqual([3, 3, 4, 3, 4]);
+      expect(paces[0]).toBeCloseTo(0);
+    });
+
+    it('leaves a plain colony at its steps, and its pace alone', () => {
+      const paces = [0.75];
+
+      expect(
+        paceSteps({ aggression: 0.5, steps: 3, extraSteps: 0 }, paces, 0)
+      ).toBe(3);
+      expect(paces).toEqual([0.75]);
+    });
+
+    it('makes a few percent more speed show despite the rounding', () => {
+      const player = createPlayer({ x: 300, y: 70, maxSpeed: 150 });
+      const plain = colonyIntent(player, gameBalance, 1 / 60);
+      const quick = colonyIntent(player, gameBalance, 1 / 60, {
+        divideFactor: 1,
+        attackFactor: 1,
+        cooldownFactor: 1,
+        speedFactor: 1.12,
+      });
+      if (plain === null || quick === null) {
+        throw new Error('Both aim at a crosshair');
+      }
+      const paces = [0];
+      let travelled = 0;
+      for (let tick = 0; tick < 60; tick++) {
+        travelled += paceSteps(quick, paces, 0);
+      }
+
+      // 2.5 cells a tick round to 3 either way; 12 % of 2.5 is 0.3 more.
+      expect(quick.steps).toBe(plain.steps);
+      expect(travelled - 60 * plain.steps).toBeGreaterThanOrEqual(17);
+      expect(travelled - 60 * plain.steps).toBeLessThanOrEqual(18);
+    });
+
+    it('bound the cells a colony may travel in a frame, boosted', () => {
+      const player = createPlayer({ x: 300, y: 70, maxSpeed: 150 });
+      const boosted = (150 * gameBalance.boostSpeedFactor) / 60;
+      const quick = { divideFactor: 1, attackFactor: 1, cooldownFactor: 1 };
+
+      expect(maxSteps(player, gameBalance, 1 / 60)).toBe(Math.round(boosted));
+      expect(
+        maxSteps(player, gameBalance, 1 / 60, { ...quick, speedFactor: 1.12 })
+      ).toBe(Math.round(boosted) + 1);
+      expect(
+        maxSteps(player, gameBalance, 1 / 60, { ...quick, speedFactor: 0.9 })
+      ).toBe(Math.round(boosted));
+    });
+  });
+
+  describe('weapons', () => {
+    it('lists the effects that act, and drops them once they ran out', () => {
+      const { simulation, players } = setup([[bacterium(20, 20)]], {
+        balance: STILL,
+      });
+      const bloom = effect('agar-bloom', 0, {
+        remainingSec: 0.1,
+        durationSec: 0.1,
+      });
+
+      simulation.addEffect(bloom);
+      expect(simulation.getActiveEffects()).toEqual([bloom]);
+      simulation.step(players, 0.05);
+      expect(simulation.getActiveEffects()[0].remainingSec).toBeCloseTo(0.05);
+      simulation.step(players, 0.05);
+      simulation.step(players, 0.05);
+      expect(simulation.getActiveEffects()).toEqual([]);
+    });
+
+    it('drains enemy bacteria in a toxin cloud, but not its owner', () => {
+      const own = bacterium(41, 20, 0.2);
+      const enemy = bacterium(39, 24);
+      const outside = bacterium(60, 20, 0.2);
+      const { simulation, players } = setup([[own], [enemy, outside]], {
+        balance: STILL,
+      });
+      simulation.addEffect(effect('toxin-bomb', 0));
+
+      simulation.step(players, 0.5);
+
+      expect(enemy.energy).toBeCloseTo(
+        gameBalance.maxEnergy - WEAPON_EFFECTS.toxinDrainPerSec * 0.5,
+        5
+      );
+      // Its owner's bacteria and those outside the cloud recover as ever.
+      const recovered = 0.2 + gameBalance.energyRegenPerSec * 0.5;
+      expect(own.energy).toBeCloseTo(recovered, 5);
+      expect(outside.energy).toBeCloseTo(recovered, 5);
+    });
+
+    it('kills what stays in a toxin cloud, and nobody captures it', () => {
+      const { simulation, colonies, players } = setup(
+        [[bacterium(20, 20)], [bacterium(40, 20, 0.1)]],
+        { balance: STILL }
+      );
+      simulation.addEffect(effect('toxin-bomb', 0));
+
+      simulation.step(players, 0.5);
+
+      expect(colonies[1].bacterias).toEqual([]);
+      expect(colonies[1].lost).toBe(1);
+      expect(colonies[0].captured).toBe(0);
+      expect(simulation.getEvents().captures).toBe(0);
+    });
+
+    it('drains a neutral colony as any other enemy', () => {
+      const neutral = bacterium(40, 20);
+      const { simulation, players } = setup(
+        [[bacterium(20, 20)], [bacterium(260, 30)], [neutral]],
+        { balance: STILL }
+      );
+      simulation.addEffect(effect('toxin-bomb', 1));
+
+      simulation.step(players, 0.5);
+
+      expect(neutral.energy).toBeLessThan(gameBalance.maxEnergy);
+    });
+
+    it('freezes enemy bacteria in a cryo pulse', () => {
+      function moved(withPulse: boolean): number {
+        const runner = bacterium(40, 20);
+        const { simulation, players } = setup([[bacterium(20, 60)], [runner]], {
+          balance: STILL,
+          targets: [
+            { x: 20, y: 60 },
+            { x: 80, y: 20 },
+          ],
+        });
+        if (withPulse) {
+          simulation.addEffect(effect('cryo-pulse', 0));
+        }
+        simulation.step(players, 0.05);
+        return runner.x - 40;
+      }
+
+      expect(moved(false)).toBeGreaterThan(0);
+      // Every roll of 0.5 is below the chance to sit the step out.
+      expect(moved(true)).toBe(0);
+    });
+
+    it('keeps frozen bacteria from recovering', () => {
+      const frozen = bacterium(40, 20, 0.2);
+      const own = bacterium(44, 20, 0.2);
+      const { simulation, players } = setup([[own], [frozen]], {
+        balance: STILL,
+      });
+      simulation.addEffect(effect('cryo-pulse', 0));
+
+      simulation.step(players, 0.5);
+
+      expect(frozen.energy).toBeCloseTo(0.2, 5);
+      expect(own.energy).toBeCloseTo(
+        0.2 + gameBalance.energyRegenPerSec * 0.5,
+        5
+      );
+    });
+
+    it('keeps frozen bacteria from dividing as often', () => {
+      function divided(weapon: WeaponId | null, owner = 0): number {
+        // A chance of a half per step, and every roll 0.3.
+        const { simulation, colonies, players } = setup(
+          [[bacterium(20, 60)], [bacterium(40, 20)]],
+          { balance: { divideChancePerSec: 1 }, random: () => 0.3 }
+        );
+        if (weapon !== null) {
+          simulation.addEffect(effect(weapon, owner));
+        }
+        simulation.step(players, 0.5);
+        return colonies[1].bacterias.length - 1;
+      }
+
+      expect(divided(null)).toBe(1);
+      expect(divided('cryo-pulse')).toBe(0);
+      // Its own pulse does not freeze a colony.
+      expect(divided('cryo-pulse', 1)).toBe(1);
+    });
+
+    it('lets its owner divide more often on an agar bloom', () => {
+      function divided(owner: number): number[] {
+        // A chance of a half per step, and every roll 0.6.
+        const { simulation, colonies, players } = setup(
+          [[bacterium(40, 20), bacterium(20, 60)], [bacterium(42, 22)]],
+          { balance: { divideChancePerSec: 1 }, random: () => 0.6 }
+        );
+        simulation.addEffect(effect('agar-bloom', owner));
+        simulation.step(players, 0.5);
+        return colonies.map(({ bacterias }) => bacterias.length);
+      }
+
+      // The bacterium on the bloom divides, the one beside it does not -
+      // nor does the enemy on it.
+      expect(divided(0)).toEqual([3, 1]);
+      expect(divided(1)).toEqual([2, 2]);
+    });
+
+    it('turns enemy bacteria in a phage strike into its own, at once', () => {
+      const { simulation, colonies, players } = setup(
+        [
+          [bacterium(20, 60)],
+          [bacterium(40, 20), bacterium(42, 21), bacterium(80, 20)],
+        ],
+        { balance: STILL, random: () => 0.3 }
+      );
+      simulation.addEffect(
+        effect('phage-strike', 0, { remainingSec: 0, durationSec: 0 })
+      );
+
+      simulation.step(players, 0.05);
+
+      expect(colonies[0].bacterias).toHaveLength(3);
+      expect(colonies[1].bacterias).toHaveLength(1);
+      expect(colonies[0].captured).toBe(2);
+      expect(colonies[1].lost).toBe(2);
+      expect(simulation.getEvents().captures).toBe(2);
+      // Shown for a frame, then gone - it struck once.
+      expect(simulation.getActiveEffects()).toHaveLength(1);
+      simulation.step(players, 0.05);
+      expect(simulation.getActiveEffects()).toEqual([]);
+    });
+
+    it('looks the striking colony up once per strike, not per bacterium', () => {
+      const { simulation, colonies, players } = setup(
+        [
+          [bacterium(20, 60)],
+          [bacterium(40, 20), bacterium(42, 21), bacterium(41, 19)],
+        ],
+        { balance: STILL, random: () => 0.3 }
+      );
+      simulation.addEffect(
+        effect('phage-strike', 0, { remainingSec: 0, durationSec: 0 })
+      );
+      const lookups = jest.spyOn(colonies, 'findIndex');
+
+      simulation.step(players, 0.05);
+
+      expect(colonies[0].bacterias).toHaveLength(4);
+      expect(lookups).toHaveBeenCalledTimes(1);
+    });
+
+    it('turns only a share of them, by the simulation’s random numbers', () => {
+      const { simulation, colonies, players } = setup(
+        [[bacterium(20, 60)], [bacterium(40, 20), bacterium(42, 21)]],
+        { balance: STILL, random: () => 0.5 }
+      );
+      simulation.addEffect(
+        effect('phage-strike', 0, { remainingSec: 0, durationSec: 0 })
+      );
+
+      simulation.step(players, 0.05);
+
+      // A roll of 0.5 is above the share a strike turns.
+      expect(colonies[1].bacterias).toHaveLength(2);
+    });
+
+    it('shields its owner’s whole colony from the pressure', () => {
+      function drained(shielded: boolean): number {
+        const defender = bacterium(20, 20);
+        const { simulation, players } = setup(
+          [
+            [defender],
+            [
+              bacterium(19, 20),
+              bacterium(21, 20),
+              bacterium(20, 19),
+              bacterium(20, 21),
+            ],
+          ],
+          { balance: STILL }
+        );
+        if (shielded) {
+          // Far from the fight: the shield covers the colony, not a circle.
+          simulation.addEffect(effect('biofilm-shield', 0, { x: 200 }));
+        }
+        simulation.step(players, 0.05);
+        return gameBalance.maxEnergy - defender.energy;
+      }
+
+      expect(drained(true)).toBeCloseTo(
+        drained(false) * WEAPON_EFFECTS.shieldToughnessFactor,
+        5
+      );
+    });
   });
 });

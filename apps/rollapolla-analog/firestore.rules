@@ -9,20 +9,272 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // chatMessages collection: world-readable, anyone can create a message
-    // provided it passes field validation (mirrors the app's existing checks).
-    // Updates and deletes are not exposed by the app — deny them.
+    // chatMessages collection (the live chat): world-readable. Only a visitor
+    // signed in with Google may write, under their own uid; a name, if given,
+    // must be the one Google put into the sign-in token.
+    // Nobody edits a message; admins may delete any. An admin can switch the
+    // chat off (appConfig/features).
     match /chatMessages/{messageId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasAll(['message', 'createdAt', 'ttl']) &&
-        request.resource.data.keys().hasOnly(['message', 'createdAt', 'ttl']) &&
-        request.resource.data.createdAt is timestamp &&
-        request.resource.data.ttl is timestamp &&
-        request.resource.data.ttl == request.resource.data.createdAt + duration.value(7, 'd') &&
-        request.resource.data.message is string &&
-        request.resource.data.message.size() > 9 &&
-        request.resource.data.message.size() < 1001;
-      allow update, delete: if false;
+      allow create: if isSignedInWithGoogle() &&
+        isFeatureEnabled('lobbyChat') &&
+        isValidChatMessage(request.resource.data) &&
+        request.resource.data.ttl == request.resource.data.createdAt + duration.value(7, 'd');
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // The admin page lists the lobby and all poll discussions in one query.
+    match /{path=**}/chatMessages/{messageId} {
+      allow list: if isAdmin();
+    }
+
+    // Runtime configuration: everybody reads it, admins change it.
+    // appConfig/features holds one bool per feature flag; a missing
+    // document or flag means on.
+    match /appConfig/{configId} {
+      allow read: if true;
+      allow create, update: if isAdmin() &&
+        configId == 'features' &&
+        request.resource.data.keys().hasOnly(featureFlags()) &&
+        request.resource.data.values().hasOnly([true, false]);
+      allow delete: if false;
+    }
+
+    // Keep in sync with FEATURES in src/shared/app-config.ts
+    // (app-config.spec.ts checks it).
+    function featureFlags() {
+      return ['pollCreation', 'lobbyChat', 'pollChat'];
+    }
+
+    function isFeatureEnabled(flag) {
+      let features = /databases/$(database)/documents/appConfig/features;
+      return !exists(features) || get(features).data.get(flag, true) != false;
+    }
+
+    // The `admin` custom claim, set by the server (src/server/admin) or the
+    // grant-admin script. Users and admins are managed in Firebase Auth, so
+    // there is no collection for them. Keep the claim name in sync with
+    // ADMIN_CLAIM in src/shared/admin-api.ts (admin-api.spec.ts checks it).
+    function isAdmin() {
+      return isSignedInWithGoogle() &&
+        request.auth.token.get('admin', false) == true;
+    }
+
+    // Not the automatic anonymous sign-in: the token lists the linked
+    // providers, so an anonymous visitor who linked Google passes as well.
+    function isSignedInWithGoogle() {
+      return request.auth != null &&
+        'google.com' in request.auth.token.firebase.identities;
+    }
+
+    function isValidChatMessage(message) {
+      return message.keys().hasAll(['message', 'createdAt', 'ttl', 'authorUid']) &&
+        message.keys().hasOnly(['message', 'createdAt', 'ttl', 'authorUid', 'authorName']) &&
+        message.authorUid == request.auth.uid &&
+        (!('authorName' in message) || message.authorName == request.auth.token.name) &&
+        message.createdAt is timestamp &&
+        message.ttl is timestamp &&
+        message.message is string &&
+        message.message.size() > 9 &&
+        message.message.size() < 1001;
+    }
+
+    // polls collection. Anyone with the link (the id) can read a poll. Listed
+    // polls (home page, search) can be listed by anyone, the others only by
+    // their creator ("My polls").
+    // Creating and voting need a (usually anonymous) sign-in, so each uid votes
+    // at most once per poll and round: a vote is a batch that writes
+    // polls/{pollId}/votes/{uid} and raises the matching count by one.
+    // The creator may edit their open poll, which starts the next round with
+    // all counts at zero, so everybody may vote again; or delete it. Votes
+    // and chat messages of a deleted poll expire with its TTL.
+    // Admins list all polls and may delete any; they can also switch the
+    // creation of new polls off (appConfig/features).
+    match /polls/{pollId} {
+      allow get: if true;
+      // the query must filter on listed == true or on creatorUid
+      allow list: if resource.data.listed == true ||
+        (request.auth != null && resource.data.creatorUid == request.auth.uid) ||
+        isAdmin();
+      allow create: if request.auth != null && (
+        (!pollId.matches('featured-.*') && isFeatureEnabled('pollCreation') &&
+          isValidNewPoll(request.resource.data)) ||
+        isValidFeaturedPoll(pollId, request.resource.data));
+      // No votes once the poll expired: TTL deletion lags and is not atomic, so
+      // a vote document may be gone while its poll is still there.
+      allow update: if request.auth != null && request.time < resource.data.ttl && (
+        (isFirstVoteInRound(pollId, roundOf(resource.data)) &&
+          isSingleVote(request.resource.data, resource.data, voteAfter(pollId).option)) ||
+        isValidEdit(request.resource.data, resource.data));
+      allow delete: if (request.auth != null && resource.data.creatorUid == request.auth.uid) ||
+        isAdmin();
+
+      // Missing on polls (and votes) from before polls could be edited.
+      function roundOf(data) {
+        return data.get('round', 0);
+      }
+
+      function optionKeys() {
+        return ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+      }
+
+      function isValidOption(options, i) {
+        return options.size() <= i ||
+          (options[i] is string && options[i].size() > 0 && options[i].size() <= 100);
+      }
+
+      function isValidNewPoll(poll) {
+        return poll.keys().hasAll(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid']) &&
+          poll.keys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid', 'listed']) &&
+          poll.creatorUid == request.auth.uid &&
+          (!('listed' in poll) || poll.listed is bool) &&
+          hasValidContent(poll) &&
+          hasNoVotes(poll) &&
+          poll.createdAt is timestamp &&
+          poll.ttl is timestamp &&
+          poll.ttl == poll.createdAt + duration.value(30, 'd');
+      }
+
+      // The creator replaces question, answers and listing and starts the
+      // next round; creation time, TTL and creator stay.
+      // Paused with poll creation: new content is as good as a new poll.
+      function isValidEdit(newPoll, oldPoll) {
+        return oldPoll.creatorUid == request.auth.uid &&
+          isFeatureEnabled('pollCreation') &&
+          newPoll.diff(oldPoll).affectedKeys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'listed', 'round']) &&
+          newPoll.listed is bool &&
+          newPoll.round == roundOf(oldPoll) + 1 &&
+          hasValidContent(newPoll) &&
+          hasNoVotes(newPoll);
+      }
+
+      function hasValidContent(poll) {
+        return poll.question is string &&
+          poll.question.size() >= 5 &&
+          poll.question.size() <= 200 &&
+          poll.options is list &&
+          poll.options.size() >= 2 &&
+          poll.options.size() <= 10 &&
+          isValidOption(poll.options, 0) &&
+          isValidOption(poll.options, 1) &&
+          isValidOption(poll.options, 2) &&
+          isValidOption(poll.options, 3) &&
+          isValidOption(poll.options, 4) &&
+          isValidOption(poll.options, 5) &&
+          isValidOption(poll.options, 6) &&
+          isValidOption(poll.options, 7) &&
+          isValidOption(poll.options, 8) &&
+          isValidOption(poll.options, 9);
+      }
+
+      function hasNoVotes(poll) {
+        return poll.counts is map &&
+          poll.counts.size() == poll.options.size() &&
+          poll.counts.keys().hasOnly(optionKeys()[0:poll.options.size()]) &&
+          poll.counts.values().hasOnly([0]) &&
+          poll.totalVotes == 0;
+      }
+
+      // RollaPolla's own polls. Keep in sync with FEATURED_POLLS in
+      // src/shared/featured-polls.ts (featured-polls.spec.ts checks it).
+      function featuredPolls() {
+        return {
+          'featured-pineapple-pizza': {'question': 'Does pineapple belong on pizza?', 'options': ['Yes, absolutely', 'No, never', 'Only with ham']},
+          'featured-superpower': {'question': 'Which superpower would you pick?', 'options': ['Flying', 'Invisibility', 'Teleportation', 'Time travel', 'Reading minds']},
+          'featured-tabs-or-spaces': {'question': 'Tabs or spaces?', 'options': ['Tabs', 'Spaces', 'Whatever the formatter says']},
+          'featured-hot-dog-sandwich': {'question': 'Is a hot dog a sandwich?', 'options': ['Yes', 'No', 'It is a taco']},
+          'featured-morning-fuel': {'question': 'What gets you going in the morning?', 'options': ['Coffee', 'Tea', 'Mate', 'Just water', 'Nothing, I am a night owl']},
+          'featured-ai-code': {'question': 'Will AI write most of the code by 2030?', 'options': ['Yes', 'No', 'It already does']}
+        };
+      }
+
+      // Whoever votes or chats first stores a featured poll, exactly as defined
+      // above. createdAt is the server's time (serverTimestamp), so no client
+      // clock can date it; the poll runs until the next 1 January, a date
+      // every client computes alike, so concurrent first votes agree on it.
+      function isValidFeaturedPoll(pollId, poll) {
+        return pollId in featuredPolls() &&
+          poll.keys().hasAll(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid', 'listed']) &&
+          poll.keys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid', 'listed']) &&
+          poll.question == featuredPolls()[pollId].question &&
+          poll.options == featuredPolls()[pollId].options &&
+          poll.creatorUid == 'rollapolla' &&
+          poll.listed == true &&
+          hasNoVotes(poll) &&
+          poll.createdAt == request.time &&
+          poll.ttl == timestamp.date(request.time.year() + 1, 1, 1);
+      }
+
+      function votePath(pollId) {
+        return /databases/$(database)/documents/polls/$(pollId)/votes/$(request.auth.uid);
+      }
+
+      function voteAfter(pollId) {
+        return getAfter(votePath(pollId)).data;
+      }
+
+      // This very batch writes the user's vote for the current round, either
+      // their first or replacing one from an earlier round.
+      function isFirstVoteInRound(pollId, round) {
+        return (!exists(votePath(pollId)) || roundOf(get(votePath(pollId)).data) != round) &&
+          existsAfter(votePath(pollId)) &&
+          roundOf(voteAfter(pollId)) == round;
+      }
+
+      // A vote raises exactly the voted option's count and the total by one.
+      function isSingleVote(newPoll, oldPoll, option) {
+        return newPoll.diff(oldPoll).affectedKeys().hasOnly(['counts', 'totalVotes']) &&
+          newPoll.totalVotes == oldPoll.totalVotes + 1 &&
+          newPoll.counts.diff(oldPoll.counts).affectedKeys() == [string(option)].toSet() &&
+          newPoll.counts[string(option)] == oldPoll.counts[string(option)] + 1;
+      }
+
+      // One vote per user, poll and round; the poll update above checks the
+      // counts. A vote from an earlier round may be replaced.
+      match /votes/{uid} {
+        allow get: if request.auth != null && request.auth.uid == uid;
+        allow list: if false;
+        allow create: if request.auth != null && request.auth.uid == uid &&
+          isCountedVote(request.resource.data);
+        allow update: if request.auth != null && request.auth.uid == uid &&
+          roundOf(resource.data) != roundOf(pollBefore()) &&
+          isCountedVote(request.resource.data);
+        allow delete: if false;
+
+        function pollBefore() {
+          return get(/databases/$(database)/documents/polls/$(pollId)).data;
+        }
+
+        function isCountedVote(vote) {
+          return isValidVote(vote, pollBefore()) &&
+            getAfter(/databases/$(database)/documents/polls/$(pollId)).data.totalVotes ==
+              pollBefore().totalVotes + 1;
+        }
+
+        function isValidVote(vote, poll) {
+          return vote.keys().hasAll(['option', 'createdAt', 'ttl']) &&
+            vote.keys().hasOnly(['option', 'round', 'createdAt', 'ttl']) &&
+            vote.option is int &&
+            string(vote.option) in poll.counts &&
+            roundOf(vote) == roundOf(poll) &&
+            vote.createdAt is timestamp &&
+            vote.ttl == poll.ttl;
+        }
+      }
+
+      // The poll's own chat thread: like the lobby chat, but only while the
+      // poll is open, and its messages expire with the poll.
+      match /chatMessages/{messageId} {
+        allow read: if true;
+        allow create: if request.auth != null &&
+          isFeatureEnabled('pollChat') &&
+          request.time < get(/databases/$(database)/documents/polls/$(pollId)).data.ttl &&
+          isValidChatMessage(request.resource.data) &&
+          request.resource.data.ttl == get(/databases/$(database)/documents/polls/$(pollId)).data.ttl;
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
     }
 
     // Deny everything else by default (no world-open catch-all rule).

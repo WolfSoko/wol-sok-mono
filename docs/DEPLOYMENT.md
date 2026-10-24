@@ -170,7 +170,7 @@ The workflow:
 - `angular-examples-cdk` - CDK stack for angular-examples app
 - `fourier-analysis-remote-cdk` - CDK stack for fourier analysis
 - `shader-examples-remote-cdk` - CDK stack for shader examples
-- `bacteria-game-remote-cdk` - CDK stack for bacteria game
+- `bacteria-game-remote-cdk` - DNS record of bacteria-wars.wolsok.de (the game is on Firebase Hosting)
 
 ### Local Testing
 
@@ -194,12 +194,37 @@ The workflow:
 - Deploys stacks using CDK
 - Tags the deployment as `{version}-cdk-deployed`
 
+## Release Pipeline
+
+A release is one pipeline, started by the CI/CD workflow after a green run on
+`main` that affected a project with a `deploy` target or a published package:
+
+1. **`release.yml`, job `version`** - bumps the versions (`nx release version` for
+   the published packages, `commit-and-tag-version` for the workspace version in
+   `version.json` and `CHANGELOG.md`) and pushes the release commit and the tags in
+   one atomic push.
+2. **`release.yml`, job `release`** - checks out the tag, builds the apps and creates
+   the GitHub release with the changelog section as notes and the build as asset,
+   plus the Sentry release (`.github/actions/create-release`).
+3. **`deploy.yml`, called by `release.yml`** - deploys at that tag, see below.
+
+The version job works on the commit CI validated, not on the branch tip. If `main`
+moved on while CI ran, its push is rejected and the job stands down without a
+release; the run for the newer commit releases both changes, since the CI/CD
+workflow counts affected projects since the last release tag (`v<version.json>`).
+Deploys of one kind run one at a time, so a later version waits for the running
+deploy.
+
+A failed build, release or deploy is retried with "Re-run failed jobs" on the
+workflow run: the version job's output survives, the later jobs start again at the
+tag, and the GitHub release is refreshed rather than created twice. Both workflows
+can also be run by hand from the Actions UI: `release.yml` releases now,
+`deploy.yml` redeploys a version.
+
 ## Deployment Workflow
 
-The main deployment workflow is triggered by:
-
-1. **Release Creation** - When a release tag (e.g., `v4.8.7`) is pushed
-2. **Manual Trigger** - Via GitHub Actions UI with version input
+The deployment workflow runs with the release tag as input, called by `release.yml`
+or started by hand.
 
 ### Workflow Steps
 
@@ -212,11 +237,12 @@ The main deployment workflow is triggered by:
 
 ### Matrix Strategy
 
-The workflow runs three parallel jobs:
+The workflow runs four parallel jobs:
 
-1. **npm-packages** - Deploys projects with `tag:published`
-2. **non-cdk** - Deploys projects without `tag:cdk` or `tag:published`
-3. **cdk** - Deploys projects with `tag:cdk`
+1. **npm-packages** - Publishes projects with `tag:published`
+2. **non-cdk** - Deploys projects without `tag:cdk`, `tag:published` or `tag:type:android`
+3. **android** - Deploys projects with `tag:type:android`
+4. **cdk** - Deploys projects with `tag:cdk`
 
 ## Required Secrets
 
@@ -617,26 +643,32 @@ Typical CDK stack includes:
 
 ```typescript
 // apps/fourier-analysis-remote-cdk/src/main.ts
-import * as cdk from 'aws-cdk-lib';
-import { SpaCdkStack } from '@wolsok/spa-cdk-stack';
+import { SpaStack } from '@wolsok/spa-cdk-stack';
+import { App } from 'aws-cdk-lib';
 
-const app = new cdk.App();
+const app = new App();
 
-new SpaCdkStack(app, 'FourierAnalysisStack', {
-  appName: 'fourier-analysis',
-  domainName: 'fourier.example.com', // Optional custom domain
-  certificateArn: 'arn:aws:acm:...', // Optional SSL certificate
+new SpaStack(app, 'FourierAnalysis', {
+  env: { region: 'eu-central-1', account: '088632064895' },
+  buildOutputPath: 'dist/apps/fourier-analysis-remote',
+  domainName: 'fourier-analysis.wolsok.de',
 });
 ```
 
 ### Custom Domain Setup
 
-To use a custom domain:
+The domain needs a public Route53 hosted zone; `SpaStack` does the rest:
 
-1. **Create SSL Certificate** in ACM (us-east-1)
-2. **Update CDK stack** with domain and certificate
-3. **Deploy stack**
-4. **Update DNS** with CloudFront distribution URL
+1. **Certificate:** without a `certificate` prop, `SpaStack` creates one with
+   DNS validation. CloudFront only takes certificates from us-east-1, so in any
+   other region it goes into a second stack, `<name>Certificate` in us-east-1,
+   referenced across regions. To bring your own, pass an `ICertificate` from
+   us-east-1 as `certificate`.
+2. **Bootstrap** both regions once: `nx bootstrap my-app aws://<account>/eu-central-1`
+   and `nx bootstrap my-app aws://<account>/us-east-1`.
+3. **Deploy** with `cdk deploy --all` (the deploy targets set `all: true`); the
+   certificate stack goes first.
+4. **DNS:** the stack creates the Route53 alias record to the distribution.
 
 ## GitHub Pages Deployment
 
@@ -778,7 +810,7 @@ Use environment variables for sensitive configuration:
 ```bash
 # .env (not committed)
 FIREBASE_API_KEY=your_api_key
-AWS_REGION=us-east-1
+AWS_REGION=eu-central-1
 ```
 
 Access in code:

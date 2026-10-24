@@ -37,6 +37,7 @@
     },
     "serve": {
       "executor": "@angular/build:dev-server",
+      "continuous": true,
       "configurations": {
         "production": {
           "buildTarget": "ws-thanos-test-app:build:production"
