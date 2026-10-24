@@ -82,7 +82,7 @@ export const evolution = {
   reset: {
     button: 'Reset all',
     title: 'Start from scratch?',
-    text: 'Every gene and weapon goes, every strand of DNA comes back. Free, as often as you like.',
+    text: 'Every gene and weapon goes, their DNA comes back. Skins stay yours. Free, as often as you like.',
     confirm: 'Reset',
     cancel: 'Keep it',
   },
@@ -107,7 +107,7 @@ export const evolution = {
   },
   help: {
     title: 'Evolution',
-    dna: 'Every 50 XP you earn grows a strand of DNA. Spend it in the Evolution screen.',
+    dna: 'Every 50 XP you earn grows a strand of DNA. Spend it in the Evolution screen - or on a skin in My Colony.',
     genes:
       'Genes make your colony stronger, five levels each: faster division, harder bites, a tougher membrane, quicker flagella, a hotter metabolism.',
     weapons:

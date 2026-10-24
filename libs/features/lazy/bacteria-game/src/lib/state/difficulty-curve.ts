@@ -4,7 +4,7 @@ import { heatOf, parseGeneratedId } from './level-generator/generate-level';
 import { getLevel, LEVELS } from './levels';
 
 /**
- * The campaign's difficulty curve (ADR 0014): how often a player of the
+ * The campaign's difficulty curve (ADR 0016): how often a player of the
  * level's stage should beat the computer on each level of the ladder, and
  * how well the computer plays there to get close to it.
  *

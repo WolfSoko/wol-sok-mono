@@ -479,6 +479,115 @@ describe('WinnerComponent', () => {
     });
   });
 
+  describe('in the training', () => {
+    function buttons(): HTMLButtonElement[] {
+      fixture.detectChanges();
+      return Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+      );
+    }
+
+    it('tells the mission done and leads on to the next one', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You' }),
+        endedBy: 'hold',
+        matchLevel: 'training-steer',
+        earnings: earnings({
+          training: {
+            shortfall: null,
+            first: true,
+            allDone: false,
+            next: 'feed',
+          },
+        }),
+      });
+      const picked = jest.fn();
+      fixture.componentInstance.action.subscribe(picked);
+
+      expect(text()).toContain('Mission complete!');
+      expect(text()).not.toContain('Fight your ghost');
+      const labels = buttons().map((button) => button.textContent ?? '');
+      expect(labels.some((label) => label.includes('All missions'))).toBe(true);
+      buttons()
+        .find((button) => button.textContent?.includes('Next mission'))
+        ?.click();
+      expect(picked).toHaveBeenCalledWith('mission');
+    });
+
+    it('tells what the match fell short of, and offers it again', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You' }),
+        endedBy: 'harvest',
+        matchLevel: 'training-boost',
+        earnings: earnings({
+          training: {
+            shortfall: {
+              key: 'training.result.boosts',
+              params: { count: 2, fired: 1 },
+            },
+            first: false,
+            allDone: false,
+            next: null,
+          },
+        }),
+      });
+
+      expect(text()).toContain(
+        'Not yet - boost 2 times on the way, you boosted 1'
+      );
+      expect(text()).toContain('Try it again');
+      expect(text()).not.toContain('Next mission');
+    });
+
+    /** The fight won, as the result shows it once it is recorded. */
+    function fightWon(): void {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You' }),
+        endedBy: 'time',
+        matchLevel: 'training-fight',
+        earnings: earnings({
+          training: {
+            shortfall: null,
+            first: true,
+            allDone: false,
+            next: 'steer',
+          },
+        }),
+      });
+    }
+
+    it('leads on to a mission still to do after the last one, taken first', () => {
+      fightWon();
+
+      expect(text()).not.toContain('Training complete');
+      expect(text()).toContain('Next mission');
+    });
+
+    it('leads on to the campaign once every mission is done', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You' }),
+        endedBy: 'time',
+        matchLevel: 'training-fight',
+        earnings: earnings({
+          training: { shortfall: null, first: true, allDone: true, next: null },
+        }),
+      });
+      const picked = jest.fn();
+      fixture.componentInstance.action.subscribe(picked);
+
+      expect(text()).toContain('Training complete');
+      expect(text()).not.toContain('Next mission');
+      buttons()
+        .find((button) => button.textContent?.includes('To the campaign'))
+        ?.click();
+      expect(picked).toHaveBeenCalledWith('campaign');
+    });
+  });
+
   it('reports what the player picks', () => {
     store.update({ winner: null, levelId: LEVELS[0].id });
     const picked = jest.fn();

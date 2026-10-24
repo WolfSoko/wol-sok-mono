@@ -43,7 +43,7 @@ export const REPLAY_VERSION = 2;
 export const EVOLVED_REPLAY_VERSION = 3;
 
 /**
- * The format of a match against the ladder's computer (ADR 0014): version
+ * The format of a match against the ladder's computer (ADR 0016): version
  * 3 plus `ladder`, the version of the tables the computer played by - its
  * skill along the difficulty curve, its rules of play. A version 3 replay
  * played the difficulty's fixed computer, and plays it again; a client or

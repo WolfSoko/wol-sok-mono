@@ -5,6 +5,7 @@ import { PROGRESS_STORAGE_KEY, ProgressService } from './progress.service';
 import { dailyLevelId } from './state/daily';
 import { getLevel } from './state/levels';
 import { MatchRecord } from './state/medallions';
+import { MISSIONS } from './state/training';
 import { GameAccount } from './storage/game-account';
 import { DeviceStorage, GameStorage } from './storage/game-storage';
 import { FakeGameAccount } from '../testing/fake-game-account';
@@ -224,6 +225,78 @@ describe('ProgressService', () => {
     expect(stored()['medals']).toEqual({});
   });
 
+  describe('the training', () => {
+    const [steer, , boost] = MISSIONS;
+    const mission = (won: boolean, boostsFired = 2): MatchRecord => ({
+      ...GOLD_WIN,
+      levelId: boost.levelId,
+      difficulty: 'easy',
+      won,
+      boostsFired,
+    });
+
+    it('remembers a mission done, with its XP and nothing else', () => {
+      const progress = create();
+
+      expect(progress.recordTraining(mission(true), boost)).toMatchObject({
+        award: null,
+        achievements: [],
+        xp: { parts: [{ label: 'Training mission', xp: 25 }], total: 25 },
+        training: { shortfall: null, first: true, next: 'attack' },
+      });
+      expect(progress.training().boost).toBeDefined();
+      expect(progress.missionsDone()).toBe(1);
+      expect(progress.firstOpenMission()).toBe('steer');
+      expect(progress.totals().matches).toBe(0);
+      expect(progress.medals()).toEqual({});
+
+      TestBed.resetTestingModule();
+      expect(create().training().boost).toBeDefined();
+    });
+
+    it('is done once: again it is worth no XP, and stores nothing', () => {
+      const progress = create();
+      progress.recordTraining(
+        { ...mission(true), levelId: steer.levelId },
+        steer
+      );
+      const writes = jest.spyOn(TestBed.inject(GameStorage), 'update');
+
+      expect(
+        progress.recordTraining(
+          { ...mission(true), levelId: steer.levelId },
+          steer
+        )
+      ).toMatchObject({
+        xp: { total: 0 },
+        training: { shortfall: null, first: false, next: 'feed' },
+      });
+      expect(writes).not.toHaveBeenCalled();
+    });
+
+    it('tells a match what it fell short of', () => {
+      const progress = create();
+
+      expect(progress.recordTraining(mission(true, 1), boost)).toMatchObject({
+        xp: { total: 0 },
+        training: {
+          next: null,
+          shortfall: {
+            key: 'training.result.boosts',
+            params: { count: 2, fired: 1 },
+          },
+        },
+      });
+      expect(progress.recordTraining(mission(false), boost).training).toEqual({
+        shortfall: { key: 'training.missions.boost.goal' },
+        first: false,
+        allDone: false,
+        next: null,
+      });
+      expect(progress.missionsDone()).toBe(0);
+    });
+  });
+
   describe('the daily level', () => {
     const DAY = '2026-10-20';
     const daily = (won: boolean, day = DAY): MatchRecord => ({
@@ -380,6 +453,24 @@ describe('ProgressService', () => {
       expect(progress.endlessBest()).toBe(9);
       expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
         endlessBest: 9,
+      });
+    });
+
+    it('keeps the earlier day of a mission, the stored one or the new one', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: { training: { feed: '2026-01-02' } },
+      });
+      const [, feed] = MISSIONS;
+
+      progress.recordTraining(
+        { ...GOLD_WIN, levelId: feed.levelId, difficulty: 'easy' },
+        feed
+      );
+      storage.flush();
+
+      expect(progress.training()).toEqual({ feed: '2026-01-02' });
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        training: { feed: '2026-01-02' },
       });
     });
 

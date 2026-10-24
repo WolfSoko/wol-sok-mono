@@ -19,7 +19,7 @@ import { medalFor, MedalTier } from '../medallions';
 import { clockOf, winRuleOf } from '../win-conditions';
 
 /**
- * One match of the balance lab (ADR 0014): the stand-in for a human - a
+ * One match of the balance lab (ADR 0016): the stand-in for a human - a
  * bot with {@link REFERENCE_PROFILE} in the left seat - against the
  * computer as the ladder sets it up, on the CPU engine, with what it
  * measured. Deterministic: the same cell plays the same match anywhere.

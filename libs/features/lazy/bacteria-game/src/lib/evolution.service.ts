@@ -18,8 +18,10 @@ import {
 import {
   adoptEvolution,
   availableDna,
+  canBuyAnySkin,
   canBuyAnything,
   canBuyGene,
+  canBuySkin,
   canBuyWeapon,
   EMPTY_EVOLUTION,
   EvolutionProgress,
@@ -27,13 +29,16 @@ import {
   loadoutOf,
   mergeEvolution,
   nextGeneCost,
+  ownsSkin,
   parseEvolution,
   resetEvolution,
   sameEvolution,
   withEquipped,
   withGeneLevel,
+  withSkin,
   withWeapon,
 } from './state/evolution-progress';
+import { BacteriaLook } from './state/skins';
 import { GameAccount, PlayerSwitch } from './storage/game-account';
 import { DeviceStorage, GameStorage } from './storage/game-storage';
 
@@ -50,6 +55,11 @@ export const EVOLUTION_STORAGE_KEY = 'bacteria-game.evolution';
  *
  * Nothing can be bought before both this and the progress have been told by
  * the storage - the DNA left is not known before.
+ *
+ * The skins (`state/skins.ts`) are bought with the same DNA and kept here
+ * too; which one the colonies wear is the device's setting
+ * (`GameSettingsService.look`), worn only once it is owned
+ * ({@link wornSkin}).
  *
  * Like the progress it follows the player: on a sign-in or sign-out it
  * starts over from the next player's, and a guest who signs in to an account
@@ -71,6 +81,11 @@ export class EvolutionService {
   private readonly state = signal(EMPTY_EVOLUTION);
   /** True once the storage has answered for the evolution. */
   private readonly answered = signal(false);
+  /**
+   * True while the device's pick of a skin is trusted without the storage:
+   * until it answers for the first time, or another player takes over.
+   */
+  private readonly trustsPick = signal(true);
   /** True once {@link EVOLUTION_WAIT_MS} passed since the player was known. */
   private readonly waitedOut = signal(false);
   private waiting: Subscription | null = null;
@@ -97,6 +112,7 @@ export class EvolutionService {
           this.state.set(merged);
         }
         this.answered.set(true);
+        this.trustsPick.set(false);
       });
   }
 
@@ -136,6 +152,11 @@ export class EvolutionService {
   /** The weapon carried into the next match, null for none. */
   public readonly equipped = computed(() => this.state().equipped);
 
+  /** The DNA left while it buys a skin, 0 otherwise - the My Colony tile's badge. */
+  public readonly skinDna = computed(() =>
+    this.loaded() && canBuyAnySkin(this.earned(), this.state()) ? this.dna() : 0
+  );
+
   public level(gene: GeneId): number {
     return levelOf(this.state(), gene);
   }
@@ -151,6 +172,37 @@ export class EvolutionService {
 
   public owns(weapon: WeaponId): boolean {
     return this.state().weapons.includes(weapon);
+  }
+
+  /** True for a skin the player may wear: free, or bought. */
+  public ownsSkin(skin: BacteriaLook): boolean {
+    return ownsSkin(this.state(), skin);
+  }
+
+  /**
+   * The skin the colonies wear for the look picked: that look, as long as
+   * the player owns it - the slime otherwise. Until the storage has
+   * answered for the first time, the pick is trusted: it was made on this
+   * device, most likely by the player who owns it, and the dish must not
+   * flicker to the slime on every start. After another player takes over
+   * it is not: their storage says what they own. Reads signals, so a
+   * `computed` over it follows along.
+   */
+  public wornSkin(look: BacteriaLook): BacteriaLook {
+    return this.trustsPick() || ownsSkin(this.state(), look) ? look : 'slime';
+  }
+
+  public canBuySkin(skin: BacteriaLook): boolean {
+    return this.loaded() && canBuySkin(this.earned(), this.state(), skin);
+  }
+
+  /** Buys a skin, if the DNA left pays for it. Returns whether it did. */
+  public buySkin(skin: BacteriaLook): boolean {
+    if (!this.canBuySkin(skin)) {
+      return false;
+    }
+    this.apply((evolution) => withSkin(evolution, skin));
+    return true;
   }
 
   public canBuyGene(gene: GeneId): boolean {
@@ -188,7 +240,7 @@ export class EvolutionService {
     this.apply((evolution) => withEquipped(evolution, weapon));
   }
 
-  /** Gives every strand back: no gene, no weapon. Free. */
+  /** Gives every strand back: no gene, no weapon. Free. The skins stay. */
   public reset(): void {
     const held = this.state();
     this.state.set(resetEvolution(held));
@@ -228,6 +280,7 @@ export class EvolutionService {
   private switchTo({ adoptsGuest }: PlayerSwitch): void {
     const guest = this.state();
     this.answered.set(false);
+    this.trustsPick.set(false);
     this.waitForStorage();
     this.state.set(EMPTY_EVOLUTION);
     if (adoptsGuest) {

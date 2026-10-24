@@ -123,7 +123,7 @@ it breaks replays. Inputs reach the engine only on the input grid
 `BALANCE_VERSION`, so two devices with different balance tables refuse to
 play each other.
 
-## Balance: the lab and the ladder's computer (ADR 0014)
+## Balance: the lab and the ladder's computer (ADR 0016)
 
 - Against the computer on the ladder and on generated levels the menus
   pass loadouts and `ladder: LADDER_VERSION` in the plan: the computer then
@@ -140,6 +140,23 @@ play each other.
   committed `state/balance/balance-report.json`); a new baseline with
   `tsx tools/bacteria-game/balance/run.ts full --update` (hours; nightly on
   GitHub, `.github/workflows/bacteria-balance.yml`).
+
+## The deterministic simulation (ADR 0015)
+
+- `GridSimulation` (`state/grid-simulation.ts`) is what the GPU simulation
+  and its deterministic CPU twin share: walls, zones, pellets, effects, the
+  frame's uniforms and what a report means. Change the bookkeeping there,
+  once; `GpuSimulation` adds only the shader passes, `IntSimulation` their
+  TypeScript reference (`intReferenceTick`, `intReport`).
+- A change to the integer passes, the report or the uniforms has to land in
+  the shaders and in the reference alike, or the GPU cross-check fails.
+  Then regenerate the goldens: `golden-gpu-int.json`, `golden-gpu-sim.json`
+  and `SELF_TEST_GOLDEN`, bumping `GPU_SELF_TEST_VERSION`, so devices test
+  again.
+- The game picks a simulation with `chooseSimulation`
+  (`gl/simulation-choice.ts`): with `DETERMINISTIC_SIMULATION` on, the
+  integer GPU passes only on a GPU that passed `GpuSelfTestService`'s
+  self-test, `IntSimulation` otherwise. The flag stays off until step 8.
 
 ## Texts: English and German
 

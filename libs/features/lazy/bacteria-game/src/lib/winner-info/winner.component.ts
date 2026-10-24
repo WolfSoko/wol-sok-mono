@@ -59,7 +59,11 @@ export type MatchEndAction =
   // On with the endless run - or a new one, once it is over.
   | 'endless'
   // To the Evolution screen, to spend the DNA the match earned.
-  | 'evolve';
+  | 'evolve'
+  // On to the next training mission.
+  | 'mission'
+  // From the training to the campaign, once the last mission is done.
+  | 'campaign';
 
 /**
  * The screen a match ends on: who won, and what to play next. It sits in the
@@ -148,7 +152,8 @@ export class WinnerComponent {
   private endless = computed(() =>
     this.state.endlessMatch() ? this.state.endless() : null
   );
-  private endlessBest = inject(ProgressService).endlessBest;
+  private progress = inject(ProgressService);
+  private endlessBest = this.progress.endlessBest;
 
   /** Where the endless run stands after the match, in a line. */
   public endlessNote: Signal<string | null> = computed(() => {
@@ -165,6 +170,35 @@ export class WinnerComponent {
     }
     const lives = this.t('match.run.lives', { count: run.lives });
     return this.t('match.run.endless', { beaten, lives });
+  });
+
+  /**
+   * Where a training mission's match leaves the training: whether it did
+   * the mission, what it fell short of, and whether a mission or the
+   * campaign comes next - null outside the training.
+   */
+  public mission = computed(() => {
+    if (this.level().mission === undefined) {
+      return null;
+    }
+    const result = this.earnings()?.training ?? null;
+    const done = result !== null && result.shortfall === null;
+    return {
+      done,
+      line:
+        result === null
+          ? null
+          : result.shortfall === null
+            ? this.t(
+                result.first ? 'training.result.first' : 'training.result.again'
+              )
+            : this.t('training.result.notYet', {
+                goal: this.render(result.shortfall),
+              }),
+      allDone: result?.allDone === true,
+      /** True when there is a mission still to go on to. */
+      next: result?.next != null,
+    };
   });
 
   /** What the match was part of - the daily level, an endless run - in a line. */

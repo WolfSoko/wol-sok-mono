@@ -76,6 +76,24 @@ describe('MainMenuComponent', () => {
     expect(resume).toHaveBeenCalled();
   });
 
+  it('offers the training until every mission is done', () => {
+    const training = jest.fn();
+    fixture.componentInstance.training.subscribe(training);
+    fixture.componentRef.setInput('missionsDone', 2);
+    fixture.detectChanges();
+
+    // Not the New game button, whose line names the training as well.
+    expect(button('New here?').textContent).toContain(
+      'New here? 2 of 5 missions done'
+    );
+    button('New here?').click();
+    expect(training).toHaveBeenCalled();
+
+    fixture.componentRef.setInput('missionsDone', 5);
+    fixture.detectChanges();
+    expect(() => button('New here?')).toThrow();
+  });
+
   it('mutes, unmutes and toggles fullscreen', () => {
     const sound = jest.fn();
     const fullscreen = jest.fn();
@@ -92,6 +110,20 @@ describe('MainMenuComponent', () => {
 
     expect(sound).toHaveBeenCalledWith(false);
     expect(fullscreen.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it('badges My Colony while the DNA buys a skin', () => {
+    const tile = () => button('My Colony');
+    expect(tile().querySelector('.count')).toBeNull();
+
+    fixture.componentRef.setInput('colonyDna', 12);
+    fixture.detectChanges();
+
+    expect(tile().classList).toContain('ready');
+    expect(tile().querySelector('.count')?.textContent?.trim()).toBe('12');
+    expect(
+      tile().querySelector('.cdk-visually-hidden')?.textContent?.trim()
+    ).toBe('12 DNA - a new skin is within reach');
   });
 
   it('opens Evolution, with a badge while the DNA buys something', () => {

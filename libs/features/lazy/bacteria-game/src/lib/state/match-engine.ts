@@ -106,7 +106,7 @@ export interface MatchOptions {
   botProfile?: BotProfile;
   /**
    * Seats a bot plays in place of a human, with the profile each is given:
-   * the balance lab's stand-in (ADR 0014). Its seat spawns as a bot, and
+   * the balance lab's stand-in (ADR 0016). Its seat spawns as a bot, and
    * its weapon is ready from the start, as a human's is.
    */
   standIns?: ReadonlyMap<number, BotProfile>;
@@ -341,7 +341,8 @@ export class MatchEngine {
 
     this.simulation = (options.simulation ?? cpuSimulation)(
       this.balance,
-      seeded(this.seed)
+      seeded(this.seed),
+      this.seed
     );
     if (options.arena != null) {
       this.simulation.resize(options.arena.width, options.arena.height);

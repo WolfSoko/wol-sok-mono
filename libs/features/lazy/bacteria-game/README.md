@@ -89,15 +89,21 @@ CSS animation, still for players who ask for less motion):
   the player's colony as it will look in the dish, drawn by the game's own
   painter ([`look-preview.ts`](./src/lib/arena/look-preview.ts)), the skin
   it wears - a gallery of every look, each on a sample colony in the
-  player's colour - and the colonies' colours. More of the colony is to be
-  shaped here in time.
+  player's colour - and the colonies' colours. The slime and the pixels
+  are free; every other skin is bought with the DNA of the Evolution screen
+  ([`state/skins.ts`](./src/lib/state/skins.ts),
+  kept in the evolution progress, where they survive a reset) and worn from
+  the moment they are bought. More of the colony is to be shaped here in
+  time.
 - **New game** ([`new-game.component.ts`](./src/lib/menu/new-game.component.ts)) -
   a Material stepper that goes through only the steps the mode picked needs
   ([`play-modes.ts`](./src/lib/menu/play-modes.ts)):
-  - _Mode_: a card each for the **campaign** (levels open), the **daily
+  - _Mode_: a card each for the **training** (missions done), the
+    **campaign** (levels open), the **daily
     level** (attempts and streak), the **endless run** (the best one), **free
     play** and **two players** (the rivalry).
-  - _Level_ - for the campaign, free play and two players: the
+  - _Level_ - for the training its missions (see [Training](#training));
+    for the campaign, free play and two players the
     [level map](./src/lib/menu/level-map.component.ts), the ladder in
     chapters (Petri, Laboratory, Body, Reactor -
     [`state/chapters.ts`](./src/lib/state/chapters.ts)), a card per level in
@@ -403,6 +409,42 @@ levels were won. A locked level shows a lock and what opens it in the level
 list, and the result screen's _Next_ button stays locked until it is open.
 _Free play_ beside the level list opens every level, for players who know the
 game already. Two players always have every level open.
+
+## Training
+
+Five short missions teach a new player the game, one thing each
+([`state/training.ts`](./src/lib/state/training.ts)): **Steer** (hold the
+white zone for 4 seconds), **Feed** (eat 8 pellets), **Boost** (eat 12
+pellets and boost twice on the way, with a boost that recharges in 3
+seconds), **Attack** (wipe out the dummy) and **First Fight** (be bigger than
+the easy computer after a minute, or wipe it out). The main menu
+offers _Training_ under _New game_ until every mission is done, and _New
+game_ has it as a mode of its own: the missions in a list, done ones ticked,
+the next one marked, then a briefing with the goal, a tip and the opponent.
+While a mission runs, its goal stays at the top of the arena.
+
+A mission is a level of its own
+([`state/training-levels.ts`](./src/lib/state/training-levels.ts)), apart
+from the ladder, that names its `mission` and its `opponent`: it is set for
+one match like the daily level (`matchLevel`) and won by an existing win
+rule - hold, harvest, timed or annihilation - with the boosts fired checked
+on top where a mission asks for them. The first four put a _training dummy_
+across: an `opponent` of `'dummy'` gives the right seat an idle seat driver
+(`planMatch`), so the colony sits where it spawned and only fights back
+where it is attacked; the engine is unchanged and stays deterministic.
+_First Fight_ names the easy computer, which plays whatever difficulty is
+picked (`levelDifficulty`). Missions play plain - no evolution - are not
+recorded and leave no ghost to fight.
+
+A done mission is kept in the progress with the day it was done, merged as
+the earlier day like an achievement, and is worth 25 XP while it is held.
+Missions count for nothing else: no medallion, no totals, no achievements,
+and a mission played again or not done leaves the stored progress alone.
+The result screen says whether the match did the mission - or what it fell
+short of - and goes on to the next mission, or to the campaign once every
+mission is done.
+`training.spec.ts` plays every mission through with a scripted player, so a
+balance change that makes one unwinnable fails a test.
 
 ## Win conditions
 

@@ -95,6 +95,85 @@ export { replayFromHash, replayLink } from './lib/state/replay-link';
 export { GhostController } from './lib/state/ghost';
 export type { SeatDriver } from './lib/state/ghost';
 
+// The deterministic GPU simulation's integer building blocks (ADR 0015),
+// shared by the shaders and the TypeScript reference.
+export {
+  chanceThreshold,
+  mulQ14,
+  ONE_Q14,
+  Q14,
+  Q14_STATE_MAX,
+  TARGET_MAX,
+  TARGET_SHIFT,
+  toQ14,
+  toTarget,
+  toUnsignedQ14,
+} from './lib/state/gpu-int/fixed-point';
+export {
+  drawAt,
+  frameSeed,
+  pcg3d,
+  SALT,
+  SALT_SPREAD,
+  STEP_SALT_STRIDE,
+  stepSalt,
+} from './lib/state/gpu-int/draws';
+export { isqrt, unitQ14 } from './lib/state/gpu-int/int-math';
+export {
+  INT_ENERGY_MAX,
+  intMatchUniforms,
+} from './lib/state/gpu-int/int-uniforms';
+export type { IntMatchUniforms } from './lib/state/gpu-int/int-uniforms';
+export {
+  createIntFrameUniforms,
+  fillIntCombatUniforms,
+  fillIntFrameUniforms,
+  INT_ATTACK_MAX,
+  INT_COLONIES,
+  INT_PELLETS,
+} from './lib/state/gpu-int/int-frame-uniforms';
+export type {
+  FloatCombatUniforms,
+  FloatFrameUniforms,
+  IntFrameUniforms,
+} from './lib/state/gpu-int/int-frame-uniforms';
+export {
+  createIntEffectUniforms,
+  INT_EFFECT_RADIUS_MAX,
+  INT_MAX_EFFECTS,
+  setIntEffect,
+} from './lib/state/gpu-int/int-effects';
+export type {
+  IntEffect,
+  IntEffectUniforms,
+} from './lib/state/gpu-int/int-effects';
+// The TypeScript reference of the integer passes: what the shaders must
+// match bit for bit, and what a server replays a deterministic match with.
+export {
+  INT_KIND,
+  IntPassScratch,
+  intStateHash,
+} from './lib/state/gpu-int/int-reference';
+export type {
+  IntCombatUniforms,
+  IntGrid,
+  IntPassUniforms,
+} from './lib/state/gpu-int/int-reference';
+export {
+  intColonyCounts,
+  intReferenceTick,
+} from './lib/state/gpu-int/int-tick';
+export type { IntTickInputs } from './lib/state/gpu-int/int-tick';
+export {
+  DETERMINISTIC_REPORT_LAG,
+  divideBudgetOf,
+} from './lib/state/gpu-int/int-readback';
+// The whole deterministic simulation on the CPU - the fallback of a device
+// whose GPU fails the self-test, and what a server plays a match with.
+export { IntSimulation } from './lib/state/gpu-int/int-simulation';
+export { WALL_BIT, ZONE_CODE, ZONE_SHIFT } from './lib/state/zones';
+export { WEAPON_CODE } from './lib/state/weapon-effects';
+
 // Evolution: what a seat takes into a match against the computer (ADR 0013).
 export {
   evolvedTraits,
@@ -115,7 +194,7 @@ export type {
 } from './lib/state/evolution';
 
 // The ladder's computer: its skill along the curve and its evolution
-// (ADR 0014), which `planMatch` plays for a plan with `ladder`.
+// (ADR 0016), which `planMatch` plays for a plan with `ladder`.
 export { computerLoadout } from './lib/state/computer-opponent';
 export {
   computerProfile,
@@ -162,6 +241,97 @@ export {
 export type { ColonyColorId } from './lib/state/colony-colors';
 export { dailyLevelId, utcDay } from './lib/state/daily';
 export { endlessLevelId } from './lib/state/endless';
+
+// Leaderboards, declared attempts and admin commands (ADR 0012).
+export {
+  ANONYMOUS_NAME,
+  atHourOf,
+  BOARD_CUT,
+  BOARD_KINDS,
+  boardAvatar,
+  boardTag,
+  CHECKING_ROWS,
+  compareRows,
+  competitionRanks,
+  dailyBoardId,
+  dailySort,
+  DEFAULT_NAME,
+  endlessSort,
+  formatTag,
+  isBoardId,
+  isEntryId,
+  isUtcDay,
+  NEXT_CANDIDATES,
+  onlineSort,
+  PAGE_ROWS,
+  parseBoardId,
+  posesAsLabel,
+  TAG_COUNT,
+  TOP_ROWS,
+  VISIBLE_STATUSES,
+  XP_FULL_COUNT,
+  XP_FULL_COUNT_BEFORE,
+  XP_RISE_BASE,
+  XP_RISE_PER_DAY,
+  XP_RISE_PER_HOUR,
+  xpRiseCap,
+  xpSort,
+} from './lib/state/boards';
+export type {
+  BoardId,
+  BoardKind,
+  BoardRef,
+  BoardRow,
+  EntryShow,
+  EntryStatus,
+} from './lib/state/boards';
+export {
+  ARRIVAL_SLACK_MS,
+  ATTEMPT_DAYS,
+  attemptExpireAt,
+  attemptSeed,
+  canDeclare,
+  COUNTDOWN_MS,
+  dailyAttemptId,
+  declaredBeforeMatch,
+  endlessAttemptId,
+  endlessRunId,
+  isRankedPlan,
+  nextDailyAttemptId,
+  nextRunId,
+  parseAttemptId,
+  parseRunId,
+  RANKED_DAILY_ATTEMPTS,
+  RANKED_RUNS_PER_DAY,
+  rankedPlan,
+  requiredAttempt,
+  RUN_MATCHES,
+  submissionDeadline,
+  UPLOAD_WINDOW_MS,
+} from './lib/state/attempts';
+export type {
+  Attempt,
+  DailyAttempt,
+  EndlessAttempt,
+} from './lib/state/attempts';
+export {
+  ADMIN_COMMAND_TYPES,
+  BAN_REASONS,
+  DESTRUCTIVE_COMMAND_TYPES,
+  isAdminCommandType,
+  isUid,
+  parseAdminCommand,
+  REASON_MAX,
+} from './lib/state/admin-commands';
+export type {
+  AdminCommand,
+  AdminCommandType,
+  BanReason,
+  EntryTarget,
+  PlayerTarget,
+} from './lib/state/admin-commands';
+export { AVATAR_COUNT, defaultProfile } from './lib/social/profile';
+export type { Avatar, Profile } from './lib/social/profile';
 
 // Results.
 export { judgeOutcome, winRuleOf } from './lib/state/win-conditions';

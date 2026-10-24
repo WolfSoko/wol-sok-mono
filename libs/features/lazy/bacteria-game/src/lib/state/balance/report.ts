@@ -16,7 +16,7 @@ import { MedalTier } from '../medallions';
 import { CHECK_SECONDS, LabCell, LabMatch, SHARE_SEC } from './lab-match';
 
 /**
- * The balance lab's matrix, its report and the checks on it (ADR 0014).
+ * The balance lab's matrix, its report and the checks on it (ADR 0016).
  * The runner (`tools/bacteria-game/balance/`) plays the cells; this file
  * says which, sums them up and judges the sums - the same for the runner
  * and for the specs that hold the committed baseline to the checks.

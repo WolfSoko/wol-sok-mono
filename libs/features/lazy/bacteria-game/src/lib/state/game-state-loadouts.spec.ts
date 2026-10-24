@@ -83,7 +83,7 @@ describe('GameStateService loadouts', () => {
     ]);
   });
 
-  it('evolves the computer as the ladder does (ADR 0014)', () => {
+  it('evolves the computer as the ladder does (ADR 0016)', () => {
     service.setMode('vs-computer');
     service.setDifficulty('hard');
     service.setLevel('villi');

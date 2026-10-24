@@ -93,8 +93,12 @@ export interface BlockCounts {
  * passes and reports its numbers a frame late.
  */
 export interface Simulation {
-  /** Which processor runs the war. */
-  readonly kind: 'cpu' | 'gpu';
+  /**
+   * Which simulation runs the war: the float one on the CPU or the GPU, or
+   * the deterministic integer one on the CPU (`IntSimulation`, ADR 0015).
+   * Only a `cpu` match replays on `BacteriaSimulation`.
+   */
+  readonly kind: 'cpu' | 'gpu' | 'int';
   setMap(map: GameMap): void;
   resize(width: number, height: number): void;
   /** Replaces all colonies with a fresh blob per player. */
@@ -128,9 +132,11 @@ export interface Simulation {
 
 /**
  * Builds the simulation of one match, drawing every chance - the pellets
- * included - from `random`.
+ * included - from `random`. `seed` is the match's own, for a simulation that
+ * draws its chances from it directly (the deterministic GPU one, ADR 0015).
  */
 export type SimulationFactory = (
   balance: GameBalance,
-  random: () => number
+  random: () => number,
+  seed: number
 ) => Simulation;

@@ -201,16 +201,20 @@ Things that exist already can become rewards:
 
 - **Colony colours** (`COLONY_COLORS` has eight; orange and blue stay free, the
   rest unlock through medallions or achievements).
-- **Looks** (`BACTERIA_LOOKS`: slime, cells, honeycomb, crystal, neon, ink,
-  bubbles, pixels) and new ones from section 7.
+- **Looks** (`BACTERIA_LOOKS`: slime and pixels free; cells, honeycomb,
+  crystal, neon, ink, bubbles, marbles, lava, galaxy, plasma and chrome for
+  DNA - `state/skins.ts`) and new ones from section 7.
 - **Arena patterns** (`ArenaPattern`, twelve of them) usable as an override for
   any level in free play.
 - **Crosshair shapes** and **boost sounds** - small, cheap variations.
 
 A locked item shows greyed out with its condition ("Gold on Hourglass"), so the
 player always knows what the next thing costs. The _My Colony_ screen is where
-the cosmetics live: the skin (every look, with a preview) and the colours today,
-the rest as it comes.
+the cosmetics live: the skin (every look, with a preview, the premium ones
+bought with DNA and kept through every reset) and the colours today, the rest
+as it comes. The dish itself got its ambience there too: bubbles rising, mist
+drifting with the level's current, and the depth of a rim shadow and a sheen
+(`arena/ambience.ts`, a setting of the device).
 
 ### 1.7 Daily level and streaks
 

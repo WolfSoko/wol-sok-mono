@@ -1,4 +1,4 @@
-import { BacteriaLook } from '../settings.service';
+import { BacteriaLook } from '../state/skins';
 import { gameBalance } from '../state/game-balance';
 import { CellBounds } from '../state/geometry';
 import { Bacteria } from '../state/player.model';

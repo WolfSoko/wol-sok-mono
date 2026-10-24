@@ -2,7 +2,7 @@
 export const menu = {
   tagline:
     'Steer your colony, swallow theirs. {levels} dishes, a level a day, endless runs - and a friend to beat.',
-  newGameNote: 'Campaign, daily, endless, free, two players, online',
+  newGameNote: 'Training, campaign, daily, endless, free, two players, online',
   more: 'More',
   friendRequests: {
     one: '{count} friend request',

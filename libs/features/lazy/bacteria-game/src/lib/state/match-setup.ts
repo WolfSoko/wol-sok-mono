@@ -17,7 +17,7 @@ import {
   levelMap,
 } from './levels';
 import { MatchOptions, PlayerSpawn } from './match-engine';
-import { GhostController, SeatDriver, turnedOnto } from './ghost';
+import { GhostController, NO_INPUT, SeatDriver, turnedOnto } from './ghost';
 import { HeadStart, startScales } from './rivalry';
 import { spawnSpots } from './shapes';
 import type { Replay } from './replay';
@@ -46,13 +46,13 @@ export interface MatchPlan {
    * one between two players or online. Against a ghost only the left
    * seat's counts: the ghost plays with the loadout its run recorded. With
    * them, a boss carries its weapon too, and the computer plays as its
-   * place on the ladder asks (`difficulty-curve.ts`, ADR 0014): a match
+   * place on the ladder asks (`difficulty-curve.ts`, ADR 0016): a match
    * without them plays as it did before there was evolution, which keeps
    * its replays.
    */
   loadouts?: readonly [Loadout, Loadout];
   /**
-   * The version of the ladder's computer (`LADDER_VERSION`, ADR 0014) the
+   * The version of the ladder's computer (`LADDER_VERSION`, ADR 0016) the
    * computer plays as - set with the loadouts in a match against the
    * computer on the ladder or a generated level: its skill follows the
    * level's place on the ladder. Absent, it plays its difficulty's fixed
@@ -74,7 +74,9 @@ export interface OnlineSeats {
  * In `vs-computer` mode the second crosshair belongs to the bot, and the
  * names change with it so the scoreboard reads "You" and "Computer".
  * Between two players each one is called by their colour. Against a
- * `ghost` the second colony plays that recorded run instead of a bot.
+ * `ghost` the second colony plays that recorded run instead of a bot. On a
+ * level played against a dummy (`opponent`) it is the training dummy,
+ * which nobody steers.
  *
  * `online` makes it a match between two devices, played between two players
  * without a head start: the other device's seat spawns as a bot, as the
@@ -98,6 +100,7 @@ export function planMatch(
   const boss = ghost === null ? level.boss : undefined;
   const scale = gridScale(level, width);
   const versusComputer = mode === 'vs-computer';
+  const dummy = ghost === null && versusComputer && level.opponent === 'dummy';
   const [left, right] = plan.colors.map(getColonyColor);
   const [leftScale, rightScale] = versusComputer
     ? [1, 1]
@@ -135,7 +138,13 @@ export function planMatch(
         ...rightSpot,
         color: toPlayerColor(right),
         name:
-          ghost !== null ? 'Ghost' : versusComputer ? 'Computer' : right.name,
+          ghost !== null
+            ? 'Ghost'
+            : dummy
+              ? 'Dummy'
+              : versusComputer
+                ? 'Computer'
+                : right.name,
         isBot: versusComputer,
         // The boss plays from the right seat - BOSS_SEAT - whoever steers
         // it. Not a ghost: it replays a run played from the left seat.
@@ -175,7 +184,9 @@ export function planMatch(
       // The run was played from the left: the ghost plays it from the right.
       ghosts:
         ghost === null
-          ? undefined
+          ? dummy
+            ? new Map([[1, IDLE_SEAT]])
+            : undefined
           : new Map([
               [
                 1,
@@ -206,6 +217,12 @@ function ghostLoadouts(
     ? null
     : [human ?? PLAIN_LOADOUT, recorded ?? PLAIN_LOADOUT];
 }
+
+/**
+ * A seat nobody steers: a training dummy sits where it spawned - its
+ * bacteria still divide and fight back where they are attacked.
+ */
+const IDLE_SEAT: SeatDriver = { before: () => NO_INPUT };
 
 /** The players and the rules of a planned match - see {@link planMatch}. */
 export interface PlannedMatch {

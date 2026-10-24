@@ -3,6 +3,7 @@ import type { GameMode } from '../state/game.states';
 
 /** The ways to play a new game offers, each with steps of its own. */
 export type PlayKind =
+  | 'training'
   | 'campaign'
   | 'daily'
   | 'endless'
@@ -10,7 +11,10 @@ export type PlayKind =
   | 'two-players'
   | 'online';
 
-/** The steps of a new game: the mode, then the level, then the start. */
+/**
+ * The steps of a new game: the mode, then the level - the training's
+ * mission - then the start.
+ */
 export type NewGameStep = 'mode' | 'level' | 'start';
 
 /** Where a new game opens: on a mode already picked, at one of its steps. */
@@ -28,6 +32,7 @@ export interface PlayMode {
 }
 
 const ICONS: Readonly<Record<PlayKind, string>> = {
+  training: 'school',
   campaign: 'flag',
   daily: 'today',
   endless: 'all_inclusive',

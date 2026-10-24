@@ -13,7 +13,7 @@ import { LEVELS } from './levels';
 import { ACHIEVEMENT_XP, MEDAL_XP, matchXp } from './xp';
 
 /**
- * A typical player at each step of the ladder (ADR 0014): the XP they hold
+ * A typical player at each step of the ladder (ADR 0016): the XP they hold
  * there, the DNA it earned, and how they spent it. The computer's evolution
  * follows this player's DNA, not the real player's, and the balance lab's
  * stand-in carries what this player owns.

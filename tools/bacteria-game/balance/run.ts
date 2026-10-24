@@ -1,5 +1,5 @@
 /**
- * The balance lab of Bacteria Wars (ADR 0014): plays the stand-in for a
+ * The balance lab of Bacteria Wars (ADR 0016): plays the stand-in for a
  * human against the computer on every level, difficulty and loadout of the
  * matrix on the CPU engine, and writes `balance-report.json`.
  *

@@ -5,6 +5,7 @@ import { addAttempt, DailyRecord } from './daily';
 import { isInteger, isObject } from './is-object';
 import { LEVELS } from './levels';
 import { betterMedal, MatchRecord, MEDAL_TIERS, MedalTier } from './medallions';
+import { isMissionId, MissionId } from './training-levels';
 
 /** What a player has done over all their matches. */
 export interface LifetimeTotals {
@@ -43,6 +44,8 @@ export interface Progress {
   daily: DailyRecord | null;
   /** The most levels beaten in one endless run. */
   endlessBest: number;
+  /** The day each training mission was done, as an ISO date. */
+  training: Partial<Record<MissionId, string>>;
 }
 
 export const NO_TOTALS: LifetimeTotals = {
@@ -64,6 +67,7 @@ export const EMPTY_PROGRESS: Progress = {
   couchWins: {},
   daily: null,
   endlessBest: 0,
+  training: {},
 };
 
 /**
@@ -178,9 +182,9 @@ export function addDailyAttempt(progress: Progress, day: string): Progress {
 /**
  * The progress with the best of either: the better medallion per level and
  * difficulty, the higher of each total and of each colour's wins, and the
- * earlier day of each achievement. Merging can only gain, so progress from several tabs or
- * devices converges whatever order it is merged in. Without a gain it is
- * the progress given.
+ * earlier day of each achievement and training mission. Merging can only
+ * gain, so progress from several tabs or devices converges whatever order
+ * it is merged in. Without a gain it is the progress given.
  *
  * A total takes the higher of the two - a match's numbers are added to the
  * stored totals when it is written (ProgressService), so the higher one is
@@ -206,17 +210,9 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
     }
     merged = { ...merged, totals };
   }
-  const earlier = (
-    Object.entries(other.achievements) as [AchievementId, string][]
-  ).filter(([id, date]) => {
-    const held = merged.achievements[id];
-    return held == null || date < held;
-  });
-  if (earlier.length > 0) {
-    merged = {
-      ...merged,
-      achievements: { ...merged.achievements, ...Object.fromEntries(earlier) },
-    };
+  const achievements = earlierDays(merged.achievements, other.achievements);
+  if (achievements !== null) {
+    merged = { ...merged, achievements };
   }
   const moreWins = Object.entries(other.couchWins).filter(
     ([colorId, wins]) => (wins ?? 0) > (merged.couchWins[colorId] ?? 0)
@@ -226,6 +222,10 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
       ...merged,
       couchWins: { ...merged.couchWins, ...Object.fromEntries(moreWins) },
     };
+  }
+  const training = earlierDays(merged.training, other.training);
+  if (training !== null) {
+    merged = { ...merged, training };
   }
   merged = addEndlessRun(merged, other.endlessBest);
   // The later day wins, and on the same day the more attempts.
@@ -254,6 +254,25 @@ export function adoptProgress(progress: Progress, guest: Progress): Progress {
   });
 }
 
+/**
+ * Days by id with the earlier day of either for each - an achievement
+ * earned, a mission done - null when `other` has no earlier one.
+ */
+export function earlierDays<K extends string>(
+  held: Partial<Record<K, string>>,
+  other: Partial<Record<K, string>>
+): Partial<Record<K, string>> | null {
+  const earlier = (Object.entries(other) as [K, string][]).filter(
+    ([id, day]) => {
+      const kept = held[id];
+      return kept == null || day < kept;
+    }
+  );
+  return earlier.length === 0
+    ? null
+    : { ...held, ...Object.fromEntries(earlier) };
+}
+
 /** Of two daily records the later one, or the one with more attempts. */
 function laterDaily(
   held: DailyRecord | null,
@@ -280,10 +299,11 @@ export function parseProgress(value: unknown): Progress {
   return {
     medals: parseMedals(value['medals']),
     totals: parseTotals(value['totals']),
-    achievements: parseAchievements(value['achievements']),
+    achievements: parseDays(value['achievements'], isAchievementId),
     couchWins: parseCouchWins(value['couchWins']),
     daily: parseDaily(value['daily']),
     endlessBest: isInteger(value['endlessBest'], 1) ? value['endlessBest'] : 0,
+    training: parseDays(value['training'], isMissionId),
   };
 }
 
@@ -358,19 +378,19 @@ function parseCouchWins(value: unknown): Progress['couchWins'] {
 /** A day as an achievement stores it, "2026-10-19". */
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-function parseAchievements(value: unknown): Progress['achievements'] {
-  const achievements: Progress['achievements'] = {};
+/** Days by id - an achievement's, a mission's - keeping the ids `isId` knows. */
+function parseDays<K extends string>(
+  value: unknown,
+  isId: (id: string) => id is K
+): Partial<Record<K, string>> {
+  const days: Partial<Record<K, string>> = {};
   if (!isObject(value)) {
-    return achievements;
+    return days;
   }
   for (const [id, date] of Object.entries(value)) {
-    if (
-      isAchievementId(id) &&
-      typeof date === 'string' &&
-      ISO_DATE.test(date)
-    ) {
-      achievements[id] = date;
+    if (isId(id) && typeof date === 'string' && ISO_DATE.test(date)) {
+      days[id] = date;
     }
   }
-  return achievements;
+  return days;
 }

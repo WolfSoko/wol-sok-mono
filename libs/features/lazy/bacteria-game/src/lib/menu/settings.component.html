@@ -108,6 +108,13 @@
         }
       </mat-button-toggle-group>
     </div>
+    <mat-slide-toggle
+      class="ambience"
+      [checked]="settings.ambience()"
+      (change)="settings.setAmbience($event.checked)"
+    >
+      {{ "settings.display.ambience" | t }}
+    </mat-slide-toggle>
     @if (locked()) {
       <span class="resolution-hint">{{ "settings.display.locked" | t }}</span>
     }

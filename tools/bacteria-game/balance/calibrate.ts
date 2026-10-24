@@ -1,5 +1,5 @@
 /**
- * Calibrates the difficulty curve (ADR 0014) from a lab report: moves each
+ * Calibrates the difficulty curve (ADR 0016) from a lab report: moves each
  * level's skill in `SKILL` (`difficulty-curve.ts`) by how far the stand-in's
  * score sat from the target - more skill where it won too often - and
  * where the skill would leave its band on normal, the level's `STRENGTH`

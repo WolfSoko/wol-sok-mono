@@ -55,6 +55,8 @@ export class PlayerService {
 
   /** Builds each match's simulation - on the CPU unless told otherwise. */
   private simulationFactory: SimulationFactory = cpuSimulation;
+  /** Takes over when the factory's simulation fails to start. */
+  private fallbackFactory: SimulationFactory = cpuSimulation;
   private engine = new MatchEngine([], { seed: 0 });
   /** Where each player's joystick is pushed right now, absent while at rest. */
   private sticks = new Map<number, SteeringVector>();
@@ -78,7 +80,9 @@ export class PlayerService {
    * purpose, nothing may change the rules while the colonies are fighting.
    *
    * An online match runs on the CPU, the simulation both devices play
-   * alike, and its ticks wait for the `lockstep`.
+   * alike, and its ticks wait for the `lockstep`. So does a match with
+   * `recordedSeats`: only the CPU plays a recording back as it was played
+   * (ADR 0011).
    */
   public init(
     spawns: PlayerSpawn[],
@@ -96,10 +100,10 @@ export class PlayerService {
       ...rules,
       seed: options.seed ?? randomSeed(),
       // Sized in there, where the GPU may still fail and leave it to the CPU.
-      simulation: (balance, random) =>
-        lockstep === undefined
-          ? this.createSimulation(balance, random, arena)
-          : sized(cpuSimulation(balance, random), arena),
+      simulation: (balance, random, seed) =>
+        lockstep === undefined && rules.recordedSeats === undefined
+          ? this.createSimulation(balance, random, seed, arena)
+          : sized(cpuSimulation(balance, random, seed), arena),
     });
     this.localDrag = null;
     this.localBoost = false;
@@ -232,6 +236,11 @@ export class PlayerService {
     return this.engine.tickCount;
   }
 
+  /** The players as the engine has them after the last tick - for the checksum. */
+  public get players(): readonly Player[] {
+    return this.engine.players;
+  }
+
   /** What the humans did in the match, for its replay. */
   public get recorded(): ReplayInputs {
     return this.engine.recorded;
@@ -255,10 +264,16 @@ export class PlayerService {
   /**
    * Runs the matches from now on with simulations from this factory - the
    * GPU one once the arena has a WebGL2 context, the CPU one again for null.
-   * Takes effect with the next match.
+   * Takes effect with the next match. `fallback` takes over when one of the
+   * factory's simulations fails to start - the deterministic CPU one for a
+   * deterministic match (ADR 0015).
    */
-  public useSimulation(factory: SimulationFactory | null): void {
+  public useSimulation(
+    factory: SimulationFactory | null,
+    fallback: SimulationFactory = cpuSimulation
+  ): void {
     this.simulationFactory = factory ?? cpuSimulation;
+    this.fallbackFactory = fallback;
     if (factory == null && this.engine.simulation.kind === 'gpu') {
       // It may hold a context that is going away: let it go now.
       this.engine.dispose();
@@ -274,21 +289,22 @@ export class PlayerService {
   private createSimulation(
     balance: GameBalance,
     random: () => number,
+    seed: number,
     arena?: { width: number; height: number }
   ): Simulation {
     let simulation: Simulation | null = null;
     try {
-      simulation = this.simulationFactory(balance, random);
+      simulation = this.simulationFactory(balance, random, seed);
       return sized(simulation, arena);
     } catch (error) {
       // Let go of the context listeners, or a restored context revives it.
       simulation?.dispose();
-      if (this.simulationFactory === cpuSimulation) {
+      if (this.simulationFactory === this.fallbackFactory) {
         throw error;
       }
       console.warn('The colony war falls back to the CPU', error);
-      this.simulationFactory = cpuSimulation;
-      return this.createSimulation(balance, random, arena);
+      this.simulationFactory = this.fallbackFactory;
+      return this.createSimulation(balance, random, seed, arena);
     }
   }
 

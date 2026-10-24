@@ -109,7 +109,7 @@ function fingerprint(engine: MatchEngine): string {
 }
 
 /**
- * A match against the ladder's computer (ADR 0014): its skill along the
+ * A match against the ladder's computer (ADR 0016): its skill along the
  * curve and its loadout. It plays bit for bit the same under one
  * `LADDER_VERSION`, or every version 4 replay plays another match: a
  * change that moves it on purpose raises `LADDER_VERSION` and takes the

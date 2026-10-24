@@ -49,26 +49,75 @@
               </div>
             }
             @case ("level") {
-              <div class="level-step">
-                <feat-lazy-bac-game-level-map
-                  [levelId]="levelId()"
-                  [medals]="medals()"
-                  [locks]="locks()"
-                  [laddered]="kind() === 'campaign'"
-                  [showMedals]="vsComputer()"
-                  [generator]="kind() !== 'campaign'"
-                  (pick)="pickLevel($event)"
-                />
-                <button
-                  mat-flat-button
-                  type="button"
-                  class="next"
-                  (click)="next()"
+              @if (kind() === "training") {
+                <section
+                  class="missions"
+                  [attr.aria-label]="'training.title' | t"
                 >
-                  {{ "newGame.next" | t }}
-                  <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-                </button>
-              </div>
+                  <p class="missions-intro">
+                    {{ "training.pick" | t }}
+                    <span class="missions-progress">{{
+                      "training.progress"
+                        | t: { done: missionsDone(), total: missionCount }
+                    }}</span>
+                  </p>
+                  <ol class="mission-list">
+                    @for (each of missions(); track each.id) {
+                      <li>
+                        <button
+                          type="button"
+                          class="mission"
+                          [class.current]="each.id === missionId()"
+                          [class.done]="each.done"
+                          (click)="pickMission(each.id)"
+                        >
+                          <mat-icon class="mission-icon" aria-hidden="true">{{
+                            each.done ? "check_circle" : each.icon
+                          }}</mat-icon>
+                          <span class="mission-text">
+                            <span class="mission-name"
+                              >{{ each.number }} · {{ each.title | t }}</span
+                            >
+                            <span class="mission-goal">{{
+                              each.goal | t
+                            }}</span>
+                          </span>
+                          @if (each.done) {
+                            <span class="mission-badge">{{
+                              "training.done" | t
+                            }}</span>
+                          } @else if (each.upNext) {
+                            <span class="mission-badge up-next">{{
+                              "training.upNext" | t
+                            }}</span>
+                          }
+                        </button>
+                      </li>
+                    }
+                  </ol>
+                </section>
+              } @else {
+                <div class="level-step">
+                  <feat-lazy-bac-game-level-map
+                    [levelId]="levelId()"
+                    [medals]="medals()"
+                    [locks]="locks()"
+                    [laddered]="kind() === 'campaign'"
+                    [showMedals]="vsComputer()"
+                    [generator]="kind() !== 'campaign'"
+                    (pick)="pickLevel($event)"
+                  />
+                  <button
+                    mat-flat-button
+                    type="button"
+                    class="next"
+                    (click)="next()"
+                  >
+                    {{ "newGame.next" | t }}
+                    <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+                  </button>
+                </div>
+              }
             }
             @case ("start") {
               <div class="start-step">
@@ -105,6 +154,14 @@
                     @if (kind() === "daily") {
                       <p class="note">{{ dailyNote() }}</p>
                     }
+                    @if (mission(); as brief) {
+                      <dl class="mission-brief">
+                        <dt>{{ "training.goalLabel" | t }}</dt>
+                        <dd>{{ brief.goal | t }}</dd>
+                        <dt>{{ "training.tipLabel" | t }}</dt>
+                        <dd>{{ brief.tip | t }}</dd>
+                      </dl>
+                    }
                   } @else {
                     <span class="details-number">{{
                       "newGame.endless.kicker" | t
@@ -134,6 +191,12 @@
                       (join)="joinOnline.emit($event)"
                       (leave)="leaveOnline.emit()"
                     />
+                  } @else if (mission(); as brief) {
+                    <span class="best-label">{{ "newGame.opponent" | t }}</span>
+                    <p class="opponent">
+                      <mat-icon aria-hidden="true">smart_toy</mat-icon>
+                      <span>{{ brief.opponent | t }}</span>
+                    </p>
                   } @else if (vsComputer()) {
                     <span class="best-label">{{ "newGame.opponent" | t }}</span>
                     <mat-button-toggle-group

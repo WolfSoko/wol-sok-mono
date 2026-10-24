@@ -1,4 +1,4 @@
-# 14. Bacteria Wars: a balance lab, a computer that grows harder level by level, and evolution for the computer
+# 16. Bacteria Wars: a balance lab, a computer that grows harder level by level, and evolution for the computer
 
 - Status: accepted
 - Date: 2026-10-24

@@ -528,7 +528,7 @@ describe('replays with evolution', () => {
     expect(playReplay(replay)?.players).toEqual(engine.players);
   });
 
-  describe("against the ladder's computer (ADR 0014)", () => {
+  describe("against the ladder's computer (ADR 0016)", () => {
     const ladderPlan: MatchPlan = {
       ...PLAN,
       levelId: 'villi',

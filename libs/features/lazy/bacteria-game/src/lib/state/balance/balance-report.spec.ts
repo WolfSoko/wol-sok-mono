@@ -17,7 +17,7 @@ import {
 } from './report';
 
 /**
- * The balance lab's committed baseline (ADR 0014) held to the ADR's checks.
+ * The balance lab's committed baseline (ADR 0016) held to the ADR's checks.
  * The lab itself plays minutes per match, so it runs as its own Nx targets
  * (`feat-lazy-bacteria-game:balance-check`, `:balance`) and nightly; here
  * the baseline is checked, and one short match shows it is still what the

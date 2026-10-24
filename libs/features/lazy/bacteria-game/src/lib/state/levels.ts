@@ -12,6 +12,8 @@ import {
   generatedLevel,
   parseGeneratedId,
 } from './level-generator/generate-level';
+import type { BotDifficulty } from './bot-controller';
+import { MissionId, TRAINING_LEVELS } from './training-levels';
 
 /**
  * A level is a map plus the tuning that makes it play differently.
@@ -48,6 +50,14 @@ export interface Level {
    * food for whoever eats them first. Two at most, the GPU runs four.
    */
   neutrals?: readonly NeutralSpot[];
+  /** The training mission the level is played for - see `training.ts`. */
+  mission?: MissionId;
+  /**
+   * Who the level is played against, whatever the setup says: the
+   * computer at that difficulty, or a training dummy - a colony that sits
+   * where it spawned and nobody steers. The picked difficulty when absent.
+   */
+  opponent?: BotDifficulty | 'dummy';
 }
 
 /**
@@ -75,7 +85,7 @@ export interface Boss {
  * The medallion limits come from bot matches: silver near the median win,
  * gold near two thirds of it, and the gold losses near the median share
  * lost. The busy levels lose more bacteria than their colony ever held,
- * hence shares above 1. Where the balance lab (ADR 0014) saw the stand-in
+ * hence shares above 1. Where the balance lab (ADR 0016) saw the stand-in
  * win four times or more on normal, the base-size levels take its numbers,
  * measured on the online grid a recorded match runs on; the rest keep the
  * first pass, the hard computer against the normal one. The lab's summary
@@ -470,7 +480,7 @@ export const LEVELS: readonly Level[] = [
       'A cave of pillars, overgrown with fungal threads. Two grey colonies sit in hollows on golden agar, more agar lies in pockets along the way. Biggest colony after three minutes wins.',
     mapId: 'root-network',
     // As the other timed levels: silver and gold ask for a wipe-out first.
-    // Measured (ADR 0014): a stand-in with everything bred wiped the enemy
+    // Measured (ADR 0016): a stand-in with everything bred wiped the enemy
     // out in 87-147 s, losing a third to a half of its colony.
     medal: { silverSec: 120, goldSec: 80, goldLossShare: 0.5 },
     win: { kind: 'timed', limitSec: 180 },
@@ -495,7 +505,7 @@ export const LEVELS: readonly Level[] = [
       'Something four times your size lives down in the abyss - it divides faster, hits harder and boosts more often. Keep your colony alive for two and a half minutes, or wipe the leviathan out.',
     mapId: 'abyss',
     medal: {
-      // Measured (ADR 0014): a stand-in with everything bred wiped the
+      // Measured (ADR 0016): a stand-in with everything bred wiped the
       // leviathan out on easy in 22 and 147 s, losing under half of its
       // colony - the normal one it did not.
       silverSec: 120,
@@ -530,12 +540,13 @@ export function isLevelId(value: unknown): value is string {
 }
 
 /**
- * The level with that id - a generated one for a `gen:` id - falling back to
- * the first one.
+ * The level with that id - a generated one for a `gen:` id, a training
+ * mission's - falling back to the first one.
  */
 export function getLevel(id: string): Level {
   return (
     LEVELS.find((level) => level.id === id) ??
+    TRAINING_LEVELS.find((level) => level.id === id) ??
     generatedLevel(id)?.level ??
     LEVELS[0]
   );
@@ -627,8 +638,11 @@ export function isLadderLevelId(id: string): id is LadderLevelId {
  * level the name it was given.
  */
 export function levelTitleText(level: Level): GameText {
-  return isLadderLevelId(level.id)
-    ? { key: `levels.titles.${level.id}` }
+  if (isLadderLevelId(level.id)) {
+    return { key: `levels.titles.${level.id}` };
+  }
+  return level.mission !== undefined
+    ? { key: `training.missions.${level.mission}.title` }
     : // A level of neither kind is none of the game's - getLevel falls
       // back to the first one for it.
       (level.title ?? { key: 'levels.titles.petri-dish' });
@@ -653,8 +667,24 @@ export function levelDescriptionText(level: Level): GameText {
   if (isLadderLevelId(level.id)) {
     return { key: `levels.descriptions.${level.id}` };
   }
+  if (level.mission !== undefined) {
+    return { key: `training.missions.${level.mission}.description` };
+  }
   const recipe = parseGeneratedId(level.id)?.recipe ?? 'field';
   return { key: `levels.generated.styles.${recipe}.description` };
+}
+
+/**
+ * The computer's difficulty on a level: the level's own opponent where it
+ * names one, else the difficulty picked.
+ */
+export function levelDifficulty(
+  level: Level,
+  picked: BotDifficulty
+): BotDifficulty {
+  return level.opponent === undefined || level.opponent === 'dummy'
+    ? picked
+    : level.opponent;
 }
 
 /** The level before this one, or null when it is the first. */

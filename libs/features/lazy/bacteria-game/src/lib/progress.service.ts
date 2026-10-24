@@ -15,7 +15,16 @@ import { judgeMatch, MatchRecord, MedalTier } from './state/medallions';
 import { earnAchievements } from './state/achievements';
 import { MatchEarnings } from './state/earnings';
 import { arenaLocks, colorLocks, newCosmeticTexts } from './state/unlocks';
-import { COUCH_XP, matchXp, xpGain, xpOf } from './state/xp';
+import { COUCH_XP, matchXp, XpMatch, xpGain, xpOf } from './state/xp';
+import {
+  addMission,
+  firstOpenMission,
+  isMissionDone,
+  Mission,
+  missionResult,
+  missionsDone,
+  missionShortfall,
+} from './state/training';
 import {
   attemptsOn,
   DAILY_ATTEMPTS,
@@ -311,13 +320,56 @@ export class ProgressService {
             ? counted
             : addCouchWin(counted, winnerColor);
         },
-        null
+        'couch'
       ),
     };
   }
 
   /** The wins between two players, by the winning colony's colour. */
   public readonly couchWins = computed(() => this.progress().couchWins);
+
+  /**
+   * Judges a training mission's match that has ended and remembers the
+   * mission once it is done - its XP with it. It counts for nothing else:
+   * no medallion, no totals, no achievements.
+   */
+  public recordTraining(record: MatchRecord, mission: Mission): MatchEarnings {
+    const shortfall = missionShortfall(mission, record);
+    const first =
+      shortfall === null && !isMissionDone(this.training(), mission.id);
+    const day = today();
+    // Only a mission done the first time changes the progress: any other
+    // match of one leaves it - and the storage - be.
+    const earned = first
+      ? this.record(
+          (progress) => addMission(progress, mission.id, day),
+          (progress) => progress,
+          'training'
+        )
+      : {
+          achievements: [],
+          xp: { parts: [], total: 0 },
+          xpBefore: this.loaded() ? this.xp() : null,
+          unlocked: [],
+          ...this.cosmetics([]),
+        };
+    return {
+      award: null,
+      ...earned,
+      training: missionResult(mission.id, shortfall, first, this.training()),
+    };
+  }
+
+  /** The day each training mission was done. */
+  public readonly training = computed(() => this.progress().training);
+
+  /** The training missions done so far. */
+  public readonly missionsDone = computed(() => missionsDone(this.training()));
+
+  /** The first training mission still to do - where the training picks up. */
+  public readonly firstOpenMission = computed(() =>
+    firstOpenMission(this.training())
+  );
 
   /**
    * Applies a match - what it won that merges (`gain`: a medallion) and
@@ -330,10 +382,12 @@ export class ProgressService {
   private record(
     gain: (progress: Progress) => Progress,
     count: (progress: Progress) => Progress,
-    record: MatchRecord | null,
+    match: XpMatch,
     /** The count as applied here, where it differs from the stored one. */
     countHere: (progress: Progress) => Progress = count
   ): Omit<MatchEarnings, 'award'> {
+    // Only a match against the computer earns achievements of its own.
+    const record = typeof match === 'string' ? null : match;
     const before = this.progress();
     const locksBefore = this.ladderLocks();
     const cosmeticsBefore = this.cosmeticLocks();
@@ -347,7 +401,7 @@ export class ProgressService {
     this.store(progress, count);
     return {
       achievements: earned,
-      xp: xpGain(before, progress, record),
+      xp: xpGain(before, progress, match),
       xpBefore: known ? xpOf(before) : null,
       unlocked: known
         ? newlyUnlocked(locksBefore, this.ladderLocks()).filter(

@@ -1,6 +1,6 @@
 name: Bacteria Wars balance
 
-# The balance lab's full matrix (ADR 0014): the stand-in for a human against
+# The balance lab's full matrix (ADR 0016): the stand-in for a human against
 # the computer on every level, difficulty and loadout. Too slow for every Nx
 # Cloud run, so it runs here at night, split over jobs, and opens or updates
 # an issue labelled `balance` when a check fails or the results drift from
@@ -94,7 +94,7 @@ jobs:
           fi
           { cat dist/balance/summary.md; echo; echo "Run: $RUN_URL"; } > "$RUNNER_TEMP/body.md"
           gh label create balance --color FBCA04 \
-            --description "Bacteria Wars balance lab findings (ADR 0014)" 2>/dev/null || true
+            --description "Bacteria Wars balance lab findings (ADR 0016)" 2>/dev/null || true
           if [ -n "$open" ]; then
             gh issue edit "$open" --body-file "$RUNNER_TEMP/body.md"
             gh issue comment "$open" --body "Still off after tonight's run ($problems findings): $RUN_URL"

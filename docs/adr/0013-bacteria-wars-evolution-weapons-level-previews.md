@@ -47,6 +47,19 @@ The shared model is `state/evolution.ts`.
   buying, it never takes anything back. A free reset refunds everything (an
   epoch counter wins over the max-merge).
 
+### Skins for DNA (added 2026-10-24)
+
+Every special skin of the My Colony screen (`state/skins.ts`) - all but the
+slime and the pixels - is bought with the same DNA. They are cosmetics, so they do not follow the reset rule: the
+skins bought are kept in the evolution progress, merge as the union of both
+sides whatever their epochs, survive a reset and keep counting as spent -
+a reset gives back the genes' and the weapons' strands only. The colonies
+wear the look picked in the device's settings only once the player owns it
+(`EvolutionService.wornSkin`); until the storage has answered for the first
+time the pick is trusted, so the dish does not flicker to the slime on every
+start - but not after another player takes over, whose storage says what
+they own.
+
 ### Where evolution plays
 
 Only in matches against the computer on the campaign's ladder and on

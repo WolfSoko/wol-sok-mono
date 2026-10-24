@@ -16,6 +16,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { ACHIEVEMENTS } from '../state/achievements';
 import { CampaignSummary } from '../state/campaign';
+import { MISSIONS } from '../state/training';
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { Level, LEVELS } from '../state/levels';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
@@ -41,9 +42,9 @@ export type MenuPage =
   | 'evolution';
 
 /**
- * The landing screen of the game: the title, a new game, the
- * way to the other screens and a card with the campaign so far - and the
- * way straight on with it.
+ * The landing screen of the game: the title, a new game - and the training
+ * until its missions are done - the way to the other screens and a card
+ * with the campaign so far, and the way straight on with it.
  *
  * A dumb component - it shows what it is given and reports what the player
  * picks. Only the way to support the game it finds itself, as it differs
@@ -83,13 +84,19 @@ export class MainMenuComponent {
    * Evolution tile - 0 while it buys nothing.
    */
   public readonly evolveDna = input(0);
+  /** The DNA left while it buys a skin - the badge on the My Colony tile - 0 otherwise. */
+  public readonly colonyDna = input(0);
   /** True while the game fills the whole screen rather than its page. */
   public readonly fullscreen = input(false);
+  /** The training missions done - the way to the training shows until all are. */
+  public readonly missionsDone = input(0);
 
   /** A new game, to set up step by step. */
   public readonly newGame = output<void>();
   /** Straight into the furthest level the campaign has opened. */
   public readonly continueCampaign = output<void>();
+  /** To the training's missions. */
+  public readonly training = output<void>();
   public readonly open = output<MenuPage>();
   public readonly soundChange = output<boolean>();
   /** Onto the whole screen (true) or back into the page (false). */
@@ -106,6 +113,7 @@ export class MainMenuComponent {
   protected readonly totalLevels = LEVELS.length;
   protected readonly totalMedals = LEVELS.length * BOT_DIFFICULTIES.length;
   protected readonly totalAchievements = ACHIEVEMENTS.length;
+  protected readonly totalMissions = MISSIONS.length;
 
   protected readonly support = inject(GameSupport);
   protected readonly installOffer = inject(InstallOffer);

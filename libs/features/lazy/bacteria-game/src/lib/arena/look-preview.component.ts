@@ -7,7 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { prefersReducedMotion } from '../reduced-motion';
-import { BacteriaLook } from '../settings.service';
+import { BacteriaLook } from '../state/skins';
 import { LOOKS } from './colony-renderer';
 import { paintLookPreview, PreviewSize, SKIN_PREVIEW } from './look-preview';
 

@@ -6,7 +6,7 @@ import { expectedDna, Purchase, spend } from './expected-player';
 import { getLevel, LEVELS } from './levels';
 
 /**
- * The computer's evolution (ADR 0014): what it brings into a match against
+ * The computer's evolution (ADR 0016): what it brings into a match against
  * it on the ladder or a generated level. Fixed per level and difficulty,
  * never adapted to the player's DNA - copying it would cancel every
  * purchase - and deterministic, so a replay's header keeps it like the

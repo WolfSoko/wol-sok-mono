@@ -149,8 +149,25 @@ Keep `sitemap.xml` and the SEO tags in shape with every change that adds, rename
 - **Unit (Vitest)**: used in Vite-based projects (check `project.json` for the `@nx/vitest` plugin / `@nx/vitest:test` executor)
 - **E2E (Playwright)**: in `apps/<app>/e2e/`; page objects in `e2e/pos/`, fixtures in `e2e/fixtures/`
   - Start every `webServer` through an Nx target (`npx nx serve <app>`, `npx nx run <app>:<target>` for a `continuous` target) with `reuseExistingServer: true`. Only then does `@nx/playwright` make the atomized `e2e-ci--*` tasks depend on those servers and wait for them, so several spec files on one Nx Cloud worker share them. A server Playwright starts itself clashes with the next spec file on the same worker (see `rollapolla-analog`). A static server (`@nx/web:file-server`) serves `staticFilePath` and `dependsOn: ["build"]` with `watch: false`, not a `buildTarget`: with `buildTarget` it runs a nested `nx build`, which Nx refuses as a recursive task invocation inside a shared run. Exception for now: `angular-examples` (the federation shell, one spec file) still lets Playwright start its server in CI; with the inferred serve dependency its page did not render on the Nx Cloud workers, while it passed locally.
+- **GPU cross-check (Playwright, no server)**: `libs/features/lazy/bacteria-game/playwright.config.ts` runs the deterministic simulation's integer shaders on SwiftShader against the TypeScript reference, tick by tick (`gpu-crosscheck/`, ADR 0015). It is inferred as the lib's `e2e-ci--*` target, so `nx affected` runs it in CI. The goldens in `golden-gpu-int.json` are regenerated whenever the scenarios, the reference or the hash change; a change to what the passes compute also needs a `BALANCE_VERSION` bump, a scenario change does not; `golden.spec.ts` (Jest) recomputes them from the reference. The same check plays whole matches through the game's `GpuSimulation` (`SIM_SCENARIOS`) against `golden-gpu-sim.json`, which `sim-golden.spec.ts` keeps equal to `IntSimulation`, and runs the on-device self-test; its own hashes are `SELF_TEST_GOLDEN` (`state/gpu-int/self-test-golden.ts`, with `GPU_SELF_TEST_VERSION` bumped on every change), kept in step by `self-test-golden.spec.ts`
 - **Plugin E2E (Jest)**: `apps/nx-aws-cdk-v2-e2e` exercises `@wolsok/nx-aws-cdk-v2` in a generated throwaway workspace. Its target is `e2e` (not `e2e-ci`), so CI does not run it — run `npx nx e2e nx-aws-cdk-v2-e2e` by hand after changing the plugin
 - Run `npx nx affected -t test` before pushing
+
+## Performance Gates
+
+Planned and phased in [ADR 0014](docs/adr/0014-performance-gates-in-ci.md); this section says what is in place. Keep it current with each phase.
+
+- **In place now**: Angular budgets on each app's `esbuild:production` (`initial`, `anyComponentStyle`). CI's `build -c=ci` falls back to `production`, so they run on every affected build. Lazy chunks are not covered yet: the game's chunk in `bacteria-game-remote` (815 kB raw, 181 kB transferred on 2026-10-24) has no budget.
+- **Coming, in this order** (one PR each):
+  1. `anyScript` (largest single script) and `allScript` (all scripts together) budgets with a measured `baseline` (warning +5%, error +10%), and tightened `initial` budgets, for every app. Blocking.
+  2. `perf` target on `feat-lazy-bacteria-game`: a Node benchmark of `engine.ts` on fixed replays (`tools/perf/`), gated on the ratio to a calibration loop against `tools/perf/engine-baseline.json` (fails above +20%). Report-only for two weeks, then blocking.
+  3. A Playwright frame-time spec for the game, report-only.
+  4. Lighthouse CI for the public pages, report-only.
+- **Rules**:
+  - A failing gate is fixed in the code, not by raising the limit. Raise a budget or baseline only for growth you want, in its own `perf(<project>): ...` commit, with what grew, by how much and why in the PR body. Lower it when a gate reports a gain.
+  - Don't compare absolute milliseconds from CI: the Nx Cloud workers are shared and vary. Runtime gates compare against a calibration loop run in the same process.
+  - CI has no GPU. A change to the GPU simulation or the GL painters needs a manual check on a real device, noted in the PR.
+  - New engine code must stay cheap per tick: online matches, replays, ranked matches and the Cloud Functions' verification all run the CPU simulation.
 
 ## Commits & PRs
 

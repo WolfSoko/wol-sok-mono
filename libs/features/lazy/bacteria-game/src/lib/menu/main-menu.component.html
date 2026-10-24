@@ -51,12 +51,41 @@
           <span class="play-note">{{ "menu.newGameNote" | t }}</span>
         </span>
       </button>
+      @if (missionsDone() < totalMissions) {
+        <button
+          mat-stroked-button
+          type="button"
+          class="training"
+          (click)="training.emit()"
+        >
+          <mat-icon>school</mat-icon>
+          <span class="play-text">
+            <span class="play-title">{{ "training.menu.title" | t }}</span>
+            <span class="play-note">{{
+              "training.menu.note"
+                | t: { done: missionsDone(), total: totalMissions }
+            }}</span>
+          </span>
+        </button>
+      }
     </div>
 
     <nav class="tiles" [attr.aria-label]="'menu.more' | t">
-      <button type="button" class="tile" (click)="open.emit('colony')">
+      <button
+        type="button"
+        class="tile"
+        [class.ready]="colonyDna() > 0"
+        (click)="open.emit('colony')"
+      >
         <mat-icon class="player">bubble_chart</mat-icon>
         {{ "colony.title" | t }}
+        @if (colonyDna() > 0) {
+          @let skinDna = colonyDna();
+          <span class="count" aria-hidden="true">{{ skinDna }}</span>
+          <span class="cdk-visually-hidden">{{
+            "colony.menu.ready" | t: { count: skinDna }
+          }}</span>
+        }
       </button>
       <button type="button" class="tile" (click)="open.emit('profile')">
         <mat-icon class="gold">person</mat-icon>

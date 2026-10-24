@@ -221,7 +221,7 @@ export const BOT_PROFILES: Readonly<Record<BotDifficulty, BotProfile>> = {
 };
 
 /**
- * The balance lab's stand-in for a human player (ADR 0014): about as good
+ * The balance lab's stand-in for a human player (ADR 0016): about as good
  * as a player at the level's stage - between the normal and the hard
  * computer. Never the computer's.
  */

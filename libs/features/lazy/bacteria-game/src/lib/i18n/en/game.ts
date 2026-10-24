@@ -91,6 +91,7 @@ export const game = {
     computer: 'Computer',
     ghost: 'Ghost',
     neutral: 'Neutral',
+    dummy: 'Dummy',
   },
   /** The lines of what a match earned in XP. */
   xp: {
@@ -101,6 +102,10 @@ export const game = {
     achievements: {
       one: 'Achievement',
       other: '{count} achievements',
+    },
+    missions: {
+      one: 'Training mission',
+      other: '{count} training missions',
     },
   },
   /** Why a cosmetic is locked, and what a match opened. */

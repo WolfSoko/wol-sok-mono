@@ -2,6 +2,89 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.73.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.73.0...v74.73.1) (2026-10-24)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** a faster TypeScript reference for the deterministic simulation ([#2614](https://github.com/WolfSoko/wol-sok-mono/issues/2614)) ([39b3c07](https://github.com/WolfSoko/wol-sok-mono/commit/39b3c0770004628c130b032467504b0c74e0cafc))
+
+## [74.73.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.72.0...v74.73.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** GPU self-test and deterministic CPU fallback behind the flag ([#2613](https://github.com/WolfSoko/wol-sok-mono/issues/2613)) ([e843fd6](https://github.com/WolfSoko/wol-sok-mono/commit/e843fd641200f55ed99b6b06995203d011488b90))
+
+## [74.72.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.71.0...v74.72.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** GPU cross-check of the integer passes against the reference in CI ([#2611](https://github.com/WolfSoko/wol-sok-mono/issues/2611)) ([4c87d75](https://github.com/WolfSoko/wol-sok-mono/commit/4c87d75581af4a38b983696f91b27c8b3878cdd6))
+
+### Chore
+
+* **release:** publish ([577157c](https://github.com/WolfSoko/wol-sok-mono/commit/577157c1cdd77e41d81f5315b5fe84b75aa8fdc0))
+
+## [74.71.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.70.0...v74.71.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** deterministic readbacks for the integer GPU simulation ([#2610](https://github.com/WolfSoko/wol-sok-mono/issues/2610)) ([152c0ea](https://github.com/WolfSoko/wol-sok-mono/commit/152c0eab9f74c9de74c798e46f7d94a78fa94bb5))
+
+## [74.70.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.69.0...v74.70.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** integer weapon circles behind the deterministic flag ([#2608](https://github.com/WolfSoko/wol-sok-mono/issues/2608)) ([32b2b73](https://github.com/WolfSoko/wol-sok-mono/commit/32b2b734d1531b2fe6595f53ecc832558aaab477))
+* **feat-lazy-bacteria-game:** training missions for new players ([#2607](https://github.com/WolfSoko/wol-sok-mono/issues/2607)) ([64e6b4b](https://github.com/WolfSoko/wol-sok-mono/commit/64e6b4b1559e6cbbbc78f5b44c6cc5144281c96f))
+
+### Bug Fixes
+
+* **angular-examples:** fall back to setTimeout when requestIdleCallback is missing ([#2609](https://github.com/WolfSoko/wol-sok-mono/issues/2609)) ([fbf73aa](https://github.com/WolfSoko/wol-sok-mono/commit/fbf73aa2fa84d30c721b8e8f14b6e90d586a9ab3))
+
+## [74.69.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.68.0...v74.69.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** integer combat and feeding behind the deterministic flag ([#2606](https://github.com/WolfSoko/wol-sok-mono/issues/2606)) ([10cd31a](https://github.com/WolfSoko/wol-sok-mono/commit/10cd31a1131e5641712f9ffd4fbba9a5ea5b53c3))
+
+## [74.68.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.67.0...v74.68.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** integer movement, escape and division passes behind a flag ([#2604](https://github.com/WolfSoko/wol-sok-mono/issues/2604)) ([c07bdad](https://github.com/WolfSoko/wol-sok-mono/commit/c07bdada0a6ec72eeca674f803f5f113fc76dc43))
+
+## [74.67.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.66.0...v74.67.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** 💰 every special skin costs DNA ([#2605](https://github.com/WolfSoko/wol-sok-mono/issues/2605)) ([aa41022](https://github.com/WolfSoko/wol-sok-mono/commit/aa41022add4ea88650ee10f34548788323057b21))
+
+## [74.66.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.65.0...v74.66.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** integer building blocks for the deterministic GPU simulation ([#2603](https://github.com/WolfSoko/wol-sok-mono/issues/2603)) ([645149d](https://github.com/WolfSoko/wol-sok-mono/commit/645149dc424d44b0833f48632eac454b317fb8fc))
+
+### Documentation
+
+* **feat-lazy-bacteria-game:** ADR 0015 deterministic GPU simulation ([#2602](https://github.com/WolfSoko/wol-sok-mono/issues/2602)) ([28831b9](https://github.com/WolfSoko/wol-sok-mono/commit/28831b981c7d9be0c38e0a294aa491192051a8b9))
+
+## [74.65.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.64.0...v74.65.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** wave 3 of ADR 0011/0012 without the backend — contracts, ArenaView, replay recording ([#2596](https://github.com/WolfSoko/wol-sok-mono/issues/2596)) ([904e89f](https://github.com/WolfSoko/wol-sok-mono/commit/904e89fd39a1c7dbf3ec47eea302c148fd9ff652))
+
+### Chore
+
+* **release:** publish ([9a0b4e9](https://github.com/WolfSoko/wol-sok-mono/commit/9a0b4e97643a7f906710caa1cb3c68cd9d584316))
+
+## [74.64.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.63.0...v74.64.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ five premium skins for DNA, and a dish of bubbles and mist ([#2601](https://github.com/WolfSoko/wol-sok-mono/issues/2601)) ([bcd60f5](https://github.com/WolfSoko/wol-sok-mono/commit/bcd60f5fb654f86418db0ee967704fbd1f0968ae))
+
 ## [74.63.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.62.0...v74.63.0) (2026-10-24)
 
 ### Features

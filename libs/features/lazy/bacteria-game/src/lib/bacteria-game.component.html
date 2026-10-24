@@ -48,6 +48,13 @@
     </div>
   }
 
+  @if (running() && !paused() && missionGoal(); as goal) {
+    <p class="mission-goal" role="status">
+      <mat-icon aria-hidden="true">school</mat-icon>
+      {{ goal | t }}
+    </p>
+  }
+
   @if (running() && !paused() && waitingForPeer()) {
     <p class="peer-wait" role="status">
       {{ "stage.waitingForPeer" | t }}
@@ -140,6 +147,8 @@
               [sound]="settings.sound()"
               (newGame)="openNewGame()"
               (continueCampaign)="continueCampaign()"
+              [missionsDone]="progress.missionsDone()"
+              (training)="openTraining()"
               (open)="show($event)"
               (soundChange)="setSound($event)"
               [fullscreen]="fullscreen()"
@@ -148,6 +157,7 @@
               [friendsAvailable]="social.available"
               [friendRequests]="social.requests().length"
               [evolveDna]="evolution.canEvolve() ? evolution.dna() : 0"
+              [colonyDna]="evolution.skinDna()"
               (fightChallenge)="fightChallenge()"
               (dismissChallenge)="dismissChallenge()"
             />
@@ -167,6 +177,9 @@
               [rivalry]="rivalry()"
               [daily]="dailyCard()"
               [endlessBest]="progress.endlessBest()"
+              [missionId]="missionId()"
+              [training]="progress.training()"
+              (missionChange)="pickMission($event)"
               [online]="onlineLobby()"
               [onlineAvailable]="onlineAvailable"
               (hostOnline)="hostOnline()"
@@ -353,19 +366,28 @@
         [fps]="fps()"
       ></ws-shared-ui-show-fps>
       <div class="arena-frame">
-        @for (key of canvasKey(); track key) {
+        <feat-lazy-bac-game-arena-view
+          canvasId="canvasElement"
+          [layout]="arenaLayout()"
+          [scene]="arenaScene"
+          [theme]="theme()"
+          [zones]="zones()"
+          [size]="canvasSize()"
+          (painterChange)="onPainterChange($event)"
+          (pointerdown)="onPointerDown($event)"
+          (pointermove)="onPointerMove($event)"
+          (pointerup)="onPointerUp($event)"
+          (pointercancel)="onPointerUp($event)"
+        ></feat-lazy-bac-game-arena-view>
+        @if (settings.ambience()) {
+          <!-- Bubbles and mist over the arena; the pointer goes through it. -->
           <canvas
-            #canvasElement
-            id="canvasElement"
-            class="arena-canvas"
+            #ambienceElement
+            class="ambience"
+            aria-hidden="true"
             [style.width.px]="canvasSize()?.width"
             [style.height.px]="canvasSize()?.height"
-            (pointerdown)="onPointerDown($event)"
-            (pointermove)="onPointerMove($event)"
-            (pointerup)="onPointerUp($event)"
-            (pointercancel)="onPointerUp($event)"
-          >
-          </canvas>
+          ></canvas>
         }
         @if (showMinimap()) {
           <canvas

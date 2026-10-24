@@ -9,6 +9,10 @@ export const newGame: Translation<typeof en> = {
     start: 'Start',
   },
   modes: {
+    training: {
+      name: 'Training',
+      blurb: 'Fünf kurze Missionen, die dir das Spiel beibringen.',
+    },
     campaign: {
       name: 'Kampagne',
       blurb:
@@ -62,7 +66,7 @@ export const newGame: Translation<typeof en> = {
     },
   },
   opponent: 'Gegner',
-  /** What the computer evolved on this level and difficulty (ADR 0014). */
+  /** What the computer evolved on this level and difficulty (ADR 0016). */
   enemy: {
     evolved: 'Der Gegner hat sich entwickelt: {list}',
     plain: 'Der Gegner hat sich noch nicht entwickelt.',

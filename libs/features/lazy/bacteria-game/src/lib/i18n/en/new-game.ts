@@ -7,6 +7,10 @@ export const newGame = {
     start: 'Start',
   },
   modes: {
+    training: {
+      name: 'Training',
+      blurb: 'Five short missions that teach the game.',
+    },
     campaign: {
       name: 'Campaign',
       blurb: 'The ladder level by level - win one to open the next.',
@@ -61,7 +65,7 @@ export const newGame = {
     },
   },
   opponent: 'Opponent',
-  /** What the computer evolved on this level and difficulty (ADR 0014). */
+  /** What the computer evolved on this level and difficulty (ADR 0016). */
   enemy: {
     evolved: 'The enemy evolved: {list}',
     plain: 'The enemy has not evolved yet.',

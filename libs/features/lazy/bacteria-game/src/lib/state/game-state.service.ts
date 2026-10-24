@@ -1,4 +1,4 @@
-import { Injectable, inject, untracked } from '@angular/core';
+import { Injectable, Injector, inject, signal, untracked } from '@angular/core';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
 import {
   animationFrames,
@@ -34,6 +34,7 @@ import {
   getLevel,
   gridScale,
   levelBalance,
+  levelDifficulty,
   levelSize,
   LEVELS,
   playableOnline,
@@ -53,9 +54,15 @@ import { Player } from './player.model';
 import { randomSeed } from './geometry';
 import { MatchOutcome } from './win-conditions';
 import { MatchPlan, planMatch } from './match-setup';
-import { Replay, replayOf } from './replay';
+import { Replay, ReplayExtras, replayOf, replayOutcome } from './replay';
+import type { Simulation } from './simulation';
+import { matchChecksum } from './checksum';
+import { replayScore } from './replay-score';
+import type { SizeSample } from './match-engine';
+import { GameReplays } from '../storage/game-replays';
 import { dailyLevelId } from './daily';
 import { afterMatch, endlessLevelId, isRunOver, newRun } from './endless';
+import { MissionId, missionById, missionOf } from './training';
 import { replayFromHash } from './replay-link';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
@@ -91,6 +98,27 @@ export type OneMatch = Pick<
   'ghost' | 'matchLevel' | 'dailyDay' | 'endlessMatch'
 >;
 
+/** The seat a local match records: the human's - never the bot's. */
+const LOCAL_RECORDED_SEATS: ReadonlySet<number> = new Set([0]);
+
+/** A recorded match (ADR 0011), as the last match left it. */
+export interface MatchRecording {
+  /** The version 2 replay, on the CPU and the online grid. */
+  replay: Replay;
+  /** The client's `replayScore` of it, 0-100. */
+  hint: number;
+  /** The id it is kept under once handed over - null before, or if it is not. */
+  id: string | null;
+}
+
+/** What the player set about recording - see the settings. */
+export interface ReplayPrefs {
+  /** Local matches against the computer are recorded, on the CPU. */
+  recordLocal: boolean;
+  /** Recorded local matches are kept; online ones always are (ADR 0012). */
+  saveMatches: boolean;
+}
+
 const NO_ONE_MATCH: OneMatch = {
   ghost: null,
   matchLevel: null,
@@ -106,6 +134,19 @@ export class GameStateService {
   private progress = inject(ProgressService);
   private evolution = inject(EvolutionService);
   private online = inject(OnlineMatchService);
+  /**
+   * Asked for `GameReplays` only once a match is kept: asked any earlier,
+   * `GameCloud` would answer before the route named the project.
+   */
+  private injector = inject(Injector);
+  /** What the player set about recording - the settings tell. */
+  private replayPrefs: ReplayPrefs = { recordLocal: false, saveMatches: true };
+  /** Whether the match on the board is recorded, and how - null if not. */
+  private recordedAs: 'online' | 'local' | null = null;
+  /** The room and number of the online match on the board. */
+  private onlineRef: { roomCode: string; n: number } | null = null;
+  /** The colony sizes after every second of the match on the board. */
+  private samples: SizeSample[] = [];
   /** What the colonies on the board were spawned from - see `initPlayers`. */
   private plan: MatchPlan | null = null;
   /** True when evolution plays a part in that match - `planMatch` says. */
@@ -143,6 +184,13 @@ export class GameStateService {
    * the war can be advanced with {@link advance} and painted right there.
    */
   public readonly frames$: Observable<GameFrame> = this.frames.asObservable();
+
+  /**
+   * The recording of the last match (ADR 0011) - online matches and local
+   * ones against the computer on the CPU; null for any other, and for
+   * couch, ghost and GPU matches.
+   */
+  public readonly lastRecording = signal<MatchRecording | null>(null);
 
   public constructor() {
     this.online.events$.subscribe((event) => this.onOnline(event));
@@ -189,6 +237,11 @@ export class GameStateService {
     if (waiting !== this.gameStateStore.snapshot().waitingForPeer) {
       this.gameStateStore.update({ waitingForPeer: waiting });
     }
+  }
+
+  /** Takes what the player set about recording - from the settings. */
+  public setReplayPrefs(prefs: Partial<ReplayPrefs>): void {
+    this.replayPrefs = { ...this.replayPrefs, ...prefs };
   }
 
   /** Follows the online match: the lobby, the host's setup, the connection. */
@@ -339,15 +392,22 @@ export class GameStateService {
         ? afterMatch(endless, outcome.winner?.isBot === false)
         : null;
     const earnings = this.recordMatch(outcome.winner, run?.wins ?? null);
+    const recording = this.recording(outcome);
+    const training =
+      this.plan != null && getLevel(this.plan.levelId).mission !== undefined;
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
       // A ghost match is no match to play again: its opponent is no bot.
-      // Nor is one online, which leaves none: it has no bot to replay.
-      ...(online !== null
+      // One online is its recording, which has no bot to fight as a ghost.
+      // A training mission's is none to fight either: its levels are no
+      // replay's, and a dummy is no opponent to race.
+      ...(training
         ? { lastReplay: null }
-        : ghost === null
-          ? { lastReplay: this.replay() }
-          : {}),
+        : online !== null
+          ? { lastReplay: recording?.replay ?? null }
+          : ghost === null
+            ? { lastReplay: recording?.replay ?? this.replay(outcome) }
+            : {}),
       waitingForPeer: false,
       endless: run,
       currentState: GameState.END,
@@ -361,19 +421,107 @@ export class GameStateService {
     });
   }
 
-  /** The recording of the match on the board, as far as it got. */
-  private replay(): Replay | null {
+  /**
+   * The recording of the match on the board, as far as it got - with its
+   * outcome and checksum once it has one, as a version 2 replay keeps them.
+   */
+  private replay(
+    outcome: MatchOutcome | null = null,
+    extras: ReplayExtras = {}
+  ): Replay | null {
+    const end = replayOutcome(outcome);
     return this.plan == null
       ? null
       : replayOf(
           this.plan,
-          this.playerService.getSimulation().kind,
+          replaySimulation(this.playerService.getSimulation().kind),
           this.playerService.tickCount,
           this.playerService.recorded,
-          {},
+          {
+            ...extras,
+            ...(end === null
+              ? {}
+              : {
+                  outcome: end,
+                  checksum: matchChecksum(this.playerService.players),
+                }),
+          },
           this.planEvolved
         );
   }
+
+  /**
+   * The recording of a match that has just ended, handed over to be kept
+   * - online always, a local one with "Save my matches" on (ADR 0011, 0012).
+   * Null for a match that was not recorded.
+   */
+  private recording(outcome: MatchOutcome): MatchRecording | null {
+    const recordedAs = this.recordedAs;
+    this.recordedAs = null;
+    if (
+      recordedAs === null ||
+      this.playerService.getSimulation().kind !== 'cpu' ||
+      (recordedAs === 'online' && this.onlineRef === null)
+    ) {
+      this.lastRecording.set(null);
+      return null;
+    }
+    const replay = this.replay(
+      outcome,
+      recordedAs === 'online' && this.onlineRef !== null
+        ? { roomCode: this.onlineRef.roomCode, n: this.onlineRef.n }
+        : {}
+    );
+    const end = replayOutcome(outcome);
+    if (replay === null || end === null) {
+      this.lastRecording.set(null);
+      return null;
+    }
+    const { score } = replayScore({
+      samples: this.samples,
+      outcome: end,
+      ticks: replay.header.ticks,
+      online: recordedAs === 'online',
+    });
+    const recording: MatchRecording = { replay, hint: score, id: null };
+    this.lastRecording.set(recording);
+    if (recordedAs === 'online' || this.replayPrefs.saveMatches) {
+      this.injector
+        .get(GameReplays)
+        .submit({ replay, hint: score })
+        .then(
+          (id) => {
+            if (id !== null && this.lastRecording() === recording) {
+              this.lastRecording.set({ ...recording, id });
+            }
+          },
+          (error: unknown) => console.warn('The replay was not kept', error)
+        );
+    }
+    return recording;
+  }
+
+  /**
+   * Whether a local match from `plan` is recorded: against the computer,
+   * no ghost, with recording on - and on the online grid of its level, the
+   * one a stored replay is checked on.
+   */
+  private recordsLocal(plan: MatchPlan, ghost: Replay | null): boolean {
+    const level = getLevel(plan.levelId);
+    const grid = arenaSize(ONLINE_SIM_RESOLUTION, levelSize(level));
+    return (
+      this.replayPrefs.recordLocal &&
+      ghost === null &&
+      // A training mission's level is no replay's.
+      level.mission === undefined &&
+      plan.mode === 'vs-computer' &&
+      plan.width === grid.width &&
+      plan.height === grid.height
+    );
+  }
+
+  /** Takes the colony sizes once a second, for the recording's score. */
+  private readonly sample = (sizes: SizeSample) => this.samples.push(sizes);
 
   /**
    * Remembers a match that has ended - against the computer its medallion
@@ -404,6 +552,7 @@ export class GameStateService {
       }
       case 'vs-computer': {
         const level = getLevel(levelId);
+        const mission = missionOf(levelId);
         const record = matchRecord(untracked(this.playerStore.entities), {
           levelId,
           difficulty,
@@ -416,9 +565,12 @@ export class GameStateService {
             2
           ),
         });
-        return record === null
-          ? null
-          : this.progress.recordMatch(record, { dailyDay, endlessWins });
+        if (record === null) {
+          return null;
+        }
+        return mission === null
+          ? this.progress.recordMatch(record, { dailyDay, endlessWins })
+          : this.progress.recordTraining(record, mission);
       }
     }
   }
@@ -445,10 +597,12 @@ export class GameStateService {
       ghost,
       matchLevel,
     } = this.gameStateStore.snapshot();
+    const planned = matchLevel ?? levelId;
     this.plan = {
-      levelId: matchLevel ?? levelId,
+      levelId: planned,
       mode: planModeOf(mode, matchLevel),
-      difficulty,
+      // A level with an opponent of its own - a training mission's - plays it.
+      difficulty: levelDifficulty(getLevel(planned), difficulty),
       colors,
       headStart,
       width,
@@ -457,7 +611,7 @@ export class GameStateService {
     };
     // Taken as the colonies spawn: the plan keeps it for the whole match,
     // whatever the storage or the player change meanwhile. The computer
-    // evolves with the ladder (ADR 0014); a ghost race has none.
+    // evolves with the ladder (ADR 0016); a ghost race has none.
     if (this.evolves()) {
       this.plan.loadouts = [
         untracked(this.evolution.loadout),
@@ -471,14 +625,24 @@ export class GameStateService {
     }
     const { spawns, options, evolved } = planMatch(this.plan, ghost);
     this.planEvolved = evolved;
-    this.playerService.init(spawns, options);
+    const records = this.recordsLocal(this.plan, ghost);
+    this.recordedAs = records ? 'local' : null;
+    this.onlineRef = null;
+    this.samples = [];
+    this.playerService.init(spawns, {
+      ...options,
+      onSecond: this.sample,
+      // Recorded on the CPU, the simulation a replay plays back on.
+      ...(records ? { recordedSeats: LOCAL_RECORDED_SEATS } : {}),
+    });
   }
 
   /**
    * True when the next match is one the evolution plays in: against the
    * computer or a ghost on the ladder or a generated level - see
    * `evolution.ts`. The daily level and endless runs feed the leaderboards
-   * and stay plain, as do couch and online matches.
+   * and stay plain, as do couch and online matches and the training
+   * missions, which teach the colony every player starts with.
    */
   private evolves(): boolean {
     const { online, mode, matchLevel, dailyDay, endlessMatch } =
@@ -487,7 +651,8 @@ export class GameStateService {
       online === null &&
       planModeOf(mode, matchLevel) === 'vs-computer' &&
       dailyDay === null &&
-      !endlessMatch
+      !endlessMatch &&
+      (matchLevel === null || getLevel(matchLevel).mission === undefined)
     );
   }
 
@@ -519,7 +684,14 @@ export class GameStateService {
       drivers: match?.lockstep.drivers() ?? new Map(),
     });
     this.planEvolved = evolved;
-    this.playerService.init(spawns, { ...options, lockstep: match?.lockstep });
+    // Every online match is recorded - both seats, as the lockstep played.
+    this.recordedAs = match === undefined ? null : 'online';
+    this.samples = [];
+    this.playerService.init(spawns, {
+      ...options,
+      onSecond: this.sample,
+      lockstep: match?.lockstep,
+    });
   }
 
   /**
@@ -531,6 +703,18 @@ export class GameStateService {
     this.gameStateStore.update({
       matchLevel: dailyLevelId(day),
       dailyDay: day,
+    });
+  }
+
+  /**
+   * Sets the next match on a training mission's level, against the easy
+   * computer or the training dummy, leaving the setup as it is. It holds
+   * for that one match; {@link reset} ends it.
+   */
+  public playMission(id: MissionId): void {
+    this.gameStateStore.update({
+      ...NO_ONE_MATCH,
+      matchLevel: missionById(id).levelId,
     });
   }
 
@@ -800,12 +984,14 @@ export class GameStateService {
         colors: online.colors,
         seed,
       });
+      this.onlineRef = this.online.matchRef();
       return lockstep === null ? null : { seed, lockstep };
     }
     const taken = this.online.takeStart();
     if (taken === null) {
       return null;
     }
+    this.onlineRef = this.online.matchRef();
     const { levelId, colors, seed } = taken.start;
     this.gameStateStore.update({ online: { ...online, levelId, colors } });
     return { seed, lockstep: taken.lockstep };
@@ -931,4 +1117,13 @@ const SERIES_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
  */
 function planModeOf(mode: GameMode, matchLevel: string | null): GameMode {
   return matchLevel === null ? mode : 'vs-computer';
+}
+
+/**
+ * How a replay names the simulation that ran it. The deterministic integer
+ * one does not replay on `BacteriaSimulation` either, so it counts as `gpu`
+ * until replays get a value of their own for it (ADR 0015, step 8).
+ */
+function replaySimulation(kind: Simulation['kind']): 'cpu' | 'gpu' {
+  return kind === 'cpu' ? 'cpu' : 'gpu';
 }
