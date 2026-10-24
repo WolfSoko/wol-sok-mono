@@ -14,6 +14,25 @@ describe('previewColony', () => {
     expect(colony.length).toBeLessThan(cells * 0.8);
     expect(left?.energy ?? 0).toBeGreaterThan(right?.energy ?? Infinity);
   });
+
+  it('lives with the time: it moves, and stays within the arena', () => {
+    const still = previewColony(SKIN_PREVIEW);
+    const later = previewColony(SKIN_PREVIEW, 1.5);
+    const cells = SKIN_PREVIEW.width * SKIN_PREVIEW.height;
+    const key = ({ x, y }: { x: number; y: number }) => `${x}:${y}`;
+    const before = new Set(still.map(key));
+    const moved = later.filter((b) => !before.has(key(b))).length;
+
+    expect(moved).toBeGreaterThan(still.length * 0.02);
+    expect(later.length).toBeGreaterThan(cells * 0.4);
+    expect(later.length).toBeLessThan(cells * 0.8);
+    later.forEach(({ x, y }) => {
+      expect(x).toBeGreaterThanOrEqual(0);
+      expect(x).toBeLessThan(SKIN_PREVIEW.width);
+      expect(y).toBeGreaterThanOrEqual(0);
+      expect(y).toBeLessThan(SKIN_PREVIEW.height);
+    });
+  });
 });
 
 describe('renderLookLayer', () => {
@@ -35,6 +54,13 @@ describe('renderLookLayer', () => {
 
     expect(painted).toBeGreaterThan((width * height) / 4);
     expect(orange).toBeGreaterThan(painted * 0.9);
+  });
+
+  it('moves the colony with the time, in every look', () => {
+    const still = renderLookLayer('slime', ORANGE, SKIN_PREVIEW, 0).data.join();
+    const later = renderLookLayer('slime', ORANGE, SKIN_PREVIEW, 2).data.join();
+
+    expect(later).not.toBe(still);
   });
 
   it('draws every look differently', () => {

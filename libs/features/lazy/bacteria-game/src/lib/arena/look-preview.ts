@@ -26,21 +26,49 @@ export const HERO_PREVIEW: PreviewSize = { width: 160, height: 90 };
 const AGAR_CENTRE = '#10233b';
 const AGAR_EDGE = '#060e19';
 
+/** How the sample colony lives, with `timeSec`: how far it drifts, breathes and ripples. */
+const LIFE = {
+  /** The drift of its centre, as a share of the arena, and how fast. */
+  driftX: 0.025,
+  driftY: 0.04,
+  driftRate: 0.55,
+  /** How much it swells and shrinks, and how fast. */
+  breath: 0.035,
+  breathRate: 0.9,
+  /** The ripple of its edge: two waves, how deep and how fast they run. */
+  ripple: 0.08,
+  rippleRate: 1.3,
+  swell: 0.05,
+  swellRate: 0.7,
+} as const;
+
 /**
  * The sample colony of a preview: a blob with a wavy edge filling most of
  * the arena, weaker towards its right - a front - so a look shows what it
- * makes of both.
+ * makes of both. With `timeSec` it lives like a colony in the dish: it
+ * drifts a little, breathes, and its edge ripples as if the bacteria along
+ * it were on the move.
  */
-export function previewColony({ width, height }: PreviewSize): Bacteria[] {
-  const cx = width * 0.5;
-  const cy = height * 0.5;
-  const rx = width * 0.4;
-  const ry = height * 0.4;
+export function previewColony(
+  { width, height }: PreviewSize,
+  timeSec = 0
+): Bacteria[] {
+  const t = timeSec;
+  const cx = width * 0.5 + width * LIFE.driftX * Math.sin(t * LIFE.driftRate);
+  const cy =
+    height * 0.5 + height * LIFE.driftY * Math.cos(t * LIFE.driftRate * 0.8);
+  const breath = 1 + LIFE.breath * Math.sin(t * LIFE.breathRate);
+  const rx = width * 0.4 * breath;
+  const ry = height * 0.4 * breath;
   const colony: Bacteria[] = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
-      const wobble = 1 + 0.08 * Math.sin(x * 0.7) + 0.08 * Math.cos(y * 0.5);
+      const wobble =
+        1 +
+        LIFE.ripple * Math.sin(x * 0.7 + t * LIFE.rippleRate) +
+        LIFE.ripple * Math.cos(y * 0.5 - t * LIFE.rippleRate * 0.85) +
+        LIFE.swell * Math.sin((x + y) * 0.18 + t * LIFE.swellRate);
       if (d <= wobble) {
         const front = Math.max(0, (x - cx) / rx);
         colony.push({
@@ -57,7 +85,8 @@ export function previewColony({ width, height }: PreviewSize): Bacteria[] {
 /**
  * The sample colony drawn in a look, as the layer the painters make: RGBA
  * pixels, {@link SLIME_SCALE} per cell for a look drawn from the density,
- * one per cell for the pixels. `timeSec` moves a look that moves.
+ * one per cell for the pixels. `timeSec` moves the colony, and a look that
+ * moves with it.
  */
 export function renderLookLayer(
   look: BacteriaLook,
@@ -67,7 +96,7 @@ export function renderLookLayer(
 ): { data: Uint8ClampedArray<ArrayBuffer>; width: number; height: number } {
   const { width, height } = size;
   const rgba = [color[0], color[1], color[2], 255];
-  const colony = previewColony(size);
+  const colony = previewColony(size, timeSec);
   if (look === 'pixels') {
     const data = new Uint8ClampedArray(width * height * 4);
     createImageDataFromBacterias(data, width, rgba, colony);
