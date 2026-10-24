@@ -89,9 +89,10 @@ function inputs(tick: number, budget: number[]): IntTickInputs {
 
 /**
  * Plays ticks the way `GpuSimulation.step` runs them: the frame's uniforms
- * from the report in hand, the passes, then taking in the read backs due
- * and asking for the last tick's report. `lateBy` says how many ticks after
- * it was asked for the GPU finishes a read back - the device's speed.
+ * from the report in hand, the passes, then asking for the last tick's
+ * report. The read backs due are taken in at the start of a tick with a
+ * lag, at its end without one. `lateBy` says how many ticks after it was
+ * asked for the GPU finishes a read back - the device's speed.
  */
 function play(
   lateBy: (step: number) => number,
@@ -105,18 +106,7 @@ function play(
   let knownStep: number | null = null;
   let rendered: number[] | null = null;
   const hashes: number[] = [];
-  for (let tick = 1; tick <= ticks; tick++) {
-    const behind =
-      lag ?? Math.max(SLOTS, knownStep === null ? 0 : tick - knownStep);
-    const budget = known.map((count) =>
-      divideBudgetOf(CAPACITY, count, behind)
-    );
-    grid = {
-      ...grid,
-      state: intReferenceTick(grid, inputs(tick, budget), scratch),
-    };
-    hashes.push(intStateHash(grid.state));
-
+  const collect = (tick: number) => {
     const due = readbacksToTake(
       pending.map(({ step, readyAt }) => ({
         step,
@@ -129,6 +119,27 @@ function play(
     for (const report of pending.splice(0, due)) {
       known = report.counts;
       knownStep = report.step;
+    }
+  };
+  for (let tick = 1; tick <= ticks; tick++) {
+    if (lag !== null) {
+      collect(tick);
+      // Exactly the report of `lag` ticks ago, once there is one.
+      expect(knownStep === null || knownStep === tick - lag).toBe(true);
+    }
+    const behind =
+      lag ?? Math.max(SLOTS, knownStep === null ? 0 : tick - knownStep);
+    const budget = known.map((count) =>
+      divideBudgetOf(CAPACITY, count, behind)
+    );
+    grid = {
+      ...grid,
+      state: intReferenceTick(grid, inputs(tick, budget), scratch),
+    };
+    hashes.push(intStateHash(grid.state));
+
+    if (lag === null) {
+      collect(tick);
     }
     if (rendered !== null && (lag !== null || pending.length < SLOTS)) {
       pending.push({

@@ -494,6 +494,12 @@ export class GpuSimulation implements Simulation {
     const { programs } = resources;
     this.elapsedSec += deltaTimeSec;
     this.steps++;
+    // The deterministic simulation takes the reports due before anything of
+    // the tick reads them - the pellets, the bots and the divide budget - so
+    // the one in hand is exactly `DETERMINISTIC_REPORT_LAG` ticks old.
+    if (this.deterministic) {
+      this.collectReadbacks(resources);
+    }
     this.advanceDynamicWalls();
     if (this.maskDirty) {
       this.uploadMask(resources);
@@ -551,7 +557,9 @@ export class GpuSimulation implements Simulation {
 
     // 6. The report. The one read back is last frame's, which the GPU has
     // finished by now - reading this frame's would make the driver wait.
-    this.collectReadbacks(resources);
+    if (!this.deterministic) {
+      this.collectReadbacks(resources);
+    }
     this.requestReadback(resources);
     this.renderReport(resources);
     this.weaponEffects.end(deltaTimeSec);
