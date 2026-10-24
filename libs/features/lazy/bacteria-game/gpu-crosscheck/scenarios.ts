@@ -34,9 +34,11 @@ import {
   IntTickInputs,
   ONE_Q14,
   setIntEffect,
+  TARGET_SHIFT,
   toQ14,
   WALL_BIT,
   WEAPON_CODE,
+  WEAPON_EFFECTS,
   ZONE_CODE,
   ZONE_SHIFT,
 } from '../src/engine';
@@ -237,7 +239,6 @@ function zonesAndWeapons(): CrosscheckScenario {
       fire(55.5, 40.75, 9, true, weapon['cryo-pulse'], 3);
     if (tick >= 16) fire(54, 20, 7, false, weapon['agar-bloom'], 2);
     if (tick % 11 === 3) fire(28.4, 20.6, 6, true, weapon['phage-strike'], 4);
-    if (tick >= 30) fire(28, 44, 8, false, weapon['biofilm-shield'], 3);
     return {
       mask: grid.mask,
       inputs: tickInputs(0x5eed1234, tick, budget, {
@@ -247,7 +248,14 @@ function zonesAndWeapons(): CrosscheckScenario {
         aggression: [0.5, 0.2, 0.8, 1],
         divideChance: [0.02, 0.05, 0.03, 0.04],
         attack: [1, 1.6, 0.8, 2.4],
-        toughness: [1, 0.6, 1.4, 1],
+        // The biofilm shield has no circle: from tick 30 it times colony
+        // 3's toughness, as `toughnessOf` does.
+        toughness: [
+          1,
+          0.6,
+          tick >= 30 ? 1.4 * WEAPON_EFFECTS.shieldToughnessFactor : 1.4,
+          1,
+        ],
         pellets: [41.7, 20.2, 1, 28.5, 32, tick % 20 < 10 ? 1 : 0, 48, 46.9, 1],
         effects,
       }),
@@ -287,7 +295,7 @@ function movingWalls(): CrosscheckScenario {
     if (tick >= 20) {
       grid.wall(64, 26, 76, 38);
     }
-    const moved = tick === 1 || tick % 2 === 0 || tick === 20;
+    const moved = tick === 1 || tick % 2 === 0;
     return {
       mask: grid.mask,
       inputs: tickInputs(0xc0ffee, tick, budget, {
@@ -402,7 +410,7 @@ function boundExtremes(): CrosscheckScenario {
       {
         x: 48,
         y: 32,
-        radius: INT_EFFECT_RADIUS_MAX,
+        radius: INT_EFFECT_RADIUS_MAX / (1 << TARGET_SHIFT),
         hostile: true,
         kind: WEAPON_CODE['toxin-bomb'],
         owner: 1,

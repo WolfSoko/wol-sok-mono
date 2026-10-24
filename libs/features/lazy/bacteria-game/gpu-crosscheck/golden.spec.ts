@@ -8,8 +8,9 @@ import { referenceHashes, SCENARIOS } from './scenarios';
 /**
  * The golden hashes of the GPU cross-check (`gpu-int.crosscheck.ts`) are
  * the TypeScript reference's: a change to the integer passes or the balance
- * shows up here first, without a browser. Change them only together with
- * `BALANCE_VERSION`, by writing what `referenceHashes` returns.
+ * shows up here first, without a browser. Regenerate them by writing what
+ * `referenceHashes` returns; a change to what the passes compute also
+ * bumps `BALANCE_VERSION`, a change to the scenarios does not.
  */
 describe('the golden hashes of the GPU cross-check', () => {
   it('belong to this balance version', () => {

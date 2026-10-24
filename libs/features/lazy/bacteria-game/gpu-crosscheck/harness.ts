@@ -25,7 +25,11 @@ import {
   CRUSH_FRAGMENT,
   INFLUENCE_FRAGMENT,
 } from '../src/lib/gl/simulation-shaders';
-import { INT_KIND, IntTickInputs } from '../src/engine';
+import {
+  createIntEffectUniforms,
+  INT_KIND,
+  IntTickInputs,
+} from '../src/engine';
 import { CrosscheckScenario, playScenario, SCENARIOS } from './scenarios';
 
 const UNIT = {
@@ -92,6 +96,7 @@ class IntPasses {
   private readonly hunt: Target;
   private readonly huntMore: Target;
   private readonly claims: Target;
+  private readonly noEffects = createIntEffectUniforms();
   private current = 0;
   private seed = 0;
 
@@ -220,18 +225,12 @@ class IntPasses {
     this.bind(UNIT.hunt, this.hunt.texture);
     this.bind(UNIT.huntMore, this.huntMore.texture);
 
-    const effects = pass.effects;
+    const effects = pass.effects ?? this.noEffects;
     for (const { program, uniforms } of [p.claim, p.apply, p.combat]) {
       gl.useProgram(program);
-      gl.uniform4iv(
-        uniforms['uEffects[0]'],
-        effects?.circles ?? new Int32Array(16)
-      );
-      gl.uniform2iv(
-        uniforms['uEffectKinds[0]'],
-        effects?.kinds ?? new Int32Array(8)
-      );
-      gl.uniform1i(uniforms['uEffectCount'], effects?.count ?? 0);
+      gl.uniform4iv(uniforms['uEffects[0]'], effects.circles);
+      gl.uniform2iv(uniforms['uEffectKinds[0]'], effects.kinds);
+      gl.uniform1i(uniforms['uEffectCount'], effects.count);
     }
     for (const { program, uniforms } of [p.claim, p.apply]) {
       gl.useProgram(program);

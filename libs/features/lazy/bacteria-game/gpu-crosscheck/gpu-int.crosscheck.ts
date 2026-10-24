@@ -3,7 +3,7 @@ import { buildSync } from 'esbuild';
 import { join } from 'node:path';
 import { BALANCE_VERSION } from '../src/engine';
 import golden from './golden-gpu-int.json';
-import { referenceHashes, SCENARIOS } from './scenarios';
+import { SCENARIOS } from './scenarios';
 
 /**
  * The integer shaders against their TypeScript reference, tick by tick, on
@@ -52,13 +52,13 @@ for (const name of Object.keys(SCENARIOS)) {
       (scenario) => window.gpuCrosscheck.crosscheck(scenario),
       name
     );
-    const reference = referenceHashes(SCENARIOS[name]());
-    const firstMismatch = gpu.findIndex((hash, i) => hash !== reference[i]);
+    // The goldens are the reference's hashes - `golden.spec.ts` checks that.
+    const expected = golden.hashes[name as keyof typeof golden.hashes];
+    const firstMismatch = gpu.findIndex((hash, i) => hash !== expected[i]);
     expect(
       firstMismatch,
       'the first tick the GPU differs on, -1 for none'
     ).toBe(-1);
-    expect(gpu).toEqual(reference);
-    expect(gpu).toEqual(golden.hashes[name as keyof typeof golden.hashes]);
+    expect(gpu).toEqual(expected);
   });
 }

@@ -119,21 +119,16 @@ export {
 } from './lib/state/gpu-int/draws';
 export { isqrt, unitQ14 } from './lib/state/gpu-int/int-math';
 export {
-  INT_EFFECTS,
   INT_ENERGY_MAX,
   intMatchUniforms,
 } from './lib/state/gpu-int/int-uniforms';
 export type { IntMatchUniforms } from './lib/state/gpu-int/int-uniforms';
 export {
   createIntFrameUniforms,
-  DIVIDE_VARIANTS,
-  divideVariant,
-  DRAIN_SHIFT,
   fillIntCombatUniforms,
   fillIntFrameUniforms,
   INT_ATTACK_MAX,
   INT_COLONIES,
-  INT_DRAIN_MAX,
   INT_PELLETS,
 } from './lib/state/gpu-int/int-frame-uniforms';
 export type {
@@ -155,20 +150,12 @@ export type {
 // match bit for bit, and what a server replays a deterministic match with.
 export {
   INT_KIND,
-  INT_RECORD,
-  intClaimAndApply,
-  intCombat,
-  intCrush,
-  intFeed,
-  intHunt,
-  intInfluence,
   IntPassScratch,
   intStateHash,
 } from './lib/state/gpu-int/int-reference';
 export type {
   IntCombatUniforms,
   IntGrid,
-  IntKind,
   IntPassUniforms,
 } from './lib/state/gpu-int/int-reference';
 export {
@@ -179,9 +166,7 @@ export type { IntTickInputs } from './lib/state/gpu-int/int-tick';
 export {
   DETERMINISTIC_REPORT_LAG,
   divideBudgetOf,
-  readbacksToTake,
 } from './lib/state/gpu-int/int-readback';
-export type { PendingReadback } from './lib/state/gpu-int/int-readback';
 export { WALL_BIT, ZONE_CODE, ZONE_SHIFT } from './lib/state/zones';
 export { WEAPON_CODE } from './lib/state/weapon-effects';
 

@@ -66,6 +66,7 @@
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
       "!{projectRoot}/src/*test-setup.[jt]s",
       "!{projectRoot}/playwright.config.[jt]s",
+      "!{projectRoot}/gpu-crosscheck/**/*",
       "!{projectRoot}/.oxlintrc.json",
       "!{projectRoot}/eslint.config.mjs",
       "!{projectRoot}/tsconfig.spec.json"
