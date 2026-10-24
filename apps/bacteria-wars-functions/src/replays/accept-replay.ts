@@ -1,21 +1,11 @@
-import {
-  DocumentData,
-  DocumentReference,
-  FieldValue,
-  Firestore,
-  Timestamp,
-} from 'firebase-admin/firestore';
+import { FieldValue, Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions';
 import type { Attempt, Replay } from '@wolsok/feat-lazy-bac-game/engine';
 import { REPLAY_DAYS } from '../config';
 import { Engine, loadEngine } from '../engine';
-import {
-  assertActive,
-  Banned,
-  takeDailySubmission,
-  takeHourlySubmission,
-} from '../limits';
+import { isActive, takeDailySubmission, takeHourlySubmission } from '../limits';
 import { DAY_MS, HOUR_MS } from '../time';
+import { addBlob } from './blob';
 import {
   deriveKind,
   inputsHash,
@@ -117,15 +107,7 @@ async function accept(
   googleLinkBans: GoogleLinkCheck
 ): Promise<AcceptResult> {
   const { uid } = submission;
-  try {
-    await assertActive(db, uid, now);
-  } catch (error) {
-    if (error instanceof Banned) {
-      return { dropped: 'banned' };
-    }
-    throw error;
-  }
-  if (await googleLinkBans(uid)) {
+  if (!(await isActive(db, uid, now)) || (await googleLinkBans(uid))) {
     return { dropped: 'banned' };
   }
   const engine = await loadEngine();
@@ -243,29 +225,6 @@ function replayFields(
     optOut: [],
     expireAt: Timestamp.fromMillis(submission.createdAt + REPLAY_DAYS * DAY_MS),
   };
-}
-
-/** A batch or a transaction - both create documents alike. */
-interface Creator {
-  create(ref: DocumentReference, data: DocumentData): unknown;
-}
-
-/**
- * Stores a replay's bytes beside it, with the replay's `expireAt`: TTL
- * deletes no subcollection with its parent, so the blob expires itself.
- */
-function addBlob(
-  batch: Creator,
-  db: Firestore,
-  replayId: string,
-  bytes: Uint8Array,
-  expireAt: Timestamp | undefined
-): void {
-  batch.create(db.doc(`replays/${replayId}/blob/data`), {
-    bytes: Buffer.from(bytes),
-    size: bytes.length,
-    ...(expireAt === undefined ? {} : { expireAt }),
-  });
 }
 
 /**

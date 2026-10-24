@@ -1,10 +1,9 @@
 import { FieldValue, Firestore, Timestamp } from 'firebase-admin/firestore';
 import type { ReplayCommandType } from '@wolsok/feat-lazy-bac-game/engine';
 import { AccountLookup, isAdminNow } from '../accounts';
-import { AUDIT_YEARS } from '../config';
 import { Engine, loadEngine } from '../engine';
-import { assertActive, Banned } from '../limits';
-import { DAY_MS } from '../time';
+import { isActive } from '../limits';
+import { writeAudit } from '../admin/records';
 import { fixedPool, MAX_GALLERY_MINUTES, minuteTicks } from './budgets';
 import type { ReplayDoc } from './model';
 import { publishReplay, takeDown } from './publish';
@@ -113,13 +112,8 @@ async function remove(
   replayId: string,
   now: number
 ): Promise<ReplayCommandResult> {
-  try {
-    await assertActive(db, uid, now);
-  } catch (error) {
-    if (error instanceof Banned) {
-      return { ok: false, reason: 'banned' };
-    }
-    throw error;
+  if (!(await isActive(db, uid, now))) {
+    return { ok: false, reason: 'banned' };
   }
   const replayRef = db.doc(`replays/${replayId}`);
   const replay = await replayRef.get();
@@ -157,18 +151,21 @@ async function curate(
       result = await anonymise(db, replayId);
       break;
   }
-  await db.doc(`adminAudit/${commandId}`).set({
-    at: Timestamp.fromMillis(now),
-    by: uid,
-    type: `replay.${type}`,
-    target: { replayId },
-    reason: null,
-    before: { publicIds: before },
-    after: { publicIds: await publicIdsOf(db, replayId) },
-    ok: result.ok,
-    source: 'replayCommand',
-    expireAt: Timestamp.fromMillis(now + AUDIT_YEARS * 365 * DAY_MS),
-  });
+  await writeAudit(
+    db,
+    commandId,
+    {
+      by: uid,
+      type: `replay.${type}`,
+      target: { replayId },
+      reason: null,
+      before: { publicIds: before },
+      after: { publicIds: await publicIdsOf(db, replayId) },
+      ok: result.ok,
+      source: 'replayCommand',
+    },
+    now
+  );
   return result;
 }
 

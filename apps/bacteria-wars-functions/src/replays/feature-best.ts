@@ -2,6 +2,7 @@ import { Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions';
 import type { Account, AccountLookup } from '../accounts';
 import { Engine, loadEngine } from '../engine';
+import { getAllChunked } from '../firestore';
 import { DAY_MS, dayOf, dayStart } from '../time';
 import { fixedPool, MAX_GALLERY_MINUTES, minuteTicks } from './budgets';
 import type { ReplayDoc, ReplayState } from './model';
@@ -267,19 +268,15 @@ async function galleryOptOuts(
   db: Firestore,
   uids: readonly string[]
 ): Promise<Set<string>> {
-  const optedOut = new Set<string>();
-  for (let i = 0; i < uids.length; i += 100) {
-    const refs = uids.slice(i, i + 100).map((uid) => db.doc(`profiles/${uid}`));
-    if (refs.length === 0) {
-      continue;
-    }
-    for (const profile of await db.getAll(...refs)) {
-      if (profile.get('galleryOptOut') === true) {
-        optedOut.add(profile.id);
-      }
-    }
-  }
-  return optedOut;
+  const profiles = await getAllChunked(
+    db,
+    uids.map((uid) => db.doc(`profiles/${uid}`))
+  );
+  return new Set(
+    profiles
+      .filter((profile) => profile.get('galleryOptOut') === true)
+      .map((profile) => profile.id)
+  );
 }
 
 /**

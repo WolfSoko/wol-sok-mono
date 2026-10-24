@@ -1,5 +1,4 @@
-import { deleteApp, initializeApp } from 'firebase-admin/app';
-import { Firestore, getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import type { Account, AccountLookup } from '../accounts';
 import {
   DAILY_RANKED_SUBMISSIONS,
@@ -20,6 +19,7 @@ import { publishReplay, takeDown } from '../replays/publish';
 import { runReplayCommand } from '../replays/replay-command';
 import { verifyStored } from '../replays/verify';
 import { Engine, loadEngine } from '../engine';
+import { emulatorFirestore, fakeAccounts } from '../testing/emulator';
 import {
   bytesOf,
   ladderComputerPlan,
@@ -35,11 +35,9 @@ import { dayOf, hourOf } from '../time';
  * `nx run bacteria-wars-functions:test-integration`.
  */
 
-const PROJECT = 'demo-bacteria-wars';
 const NOW = Date.now();
 const DAY = 86_400_000;
-const app = initializeApp({ projectId: PROJECT }, 'integration');
-const db: Firestore = getFirestore(app);
+const db = emulatorFirestore('integration');
 
 let engine: Engine;
 /** The seed of the online plan, which names its replay. */
@@ -50,20 +48,8 @@ beforeAll(async () => {
   onlineSeed = (await onlinePlan()).seed;
 });
 
-afterAll(async () => {
-  await deleteApp(app);
-});
-
-beforeEach(async () => {
+beforeEach(() => {
   forgetBans();
-  const host = process.env['FIRESTORE_EMULATOR_HOST'];
-  const response = await fetch(
-    `http://${host}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
-  if (!response.ok) {
-    throw new Error(`Could not clear the emulator: ${response.status}`);
-  }
 });
 
 /** A submission as the client writes it. */
@@ -102,19 +88,10 @@ async function room(host = 'host', guest = 'guest', expireIn = 3_600_000) {
 
 /** Accounts as Auth would answer: linked and a month old, unless said otherwise. */
 function accounts(extra: Record<string, Partial<Account>> = {}): AccountLookup {
-  return async (uids) =>
-    new Map(
-      uids.map((uid) => [
-        uid,
-        {
-          uid,
-          anonymous: false,
-          createdAt: NOW - 30 * DAY,
-          admin: false,
-          ...extra[uid],
-        },
-      ])
-    );
+  return fakeAccounts(
+    () => ({ anonymous: false, createdAt: NOW - 30 * DAY, admin: false }),
+    extra
+  );
 }
 
 describe('acceptReplay', () => {

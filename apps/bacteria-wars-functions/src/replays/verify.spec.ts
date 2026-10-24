@@ -1,3 +1,4 @@
+import type { Replay } from '@wolsok/feat-lazy-bac-game/engine';
 import { Engine, loadEngine } from '../engine';
 import {
   bytesOf,
@@ -13,10 +14,17 @@ beforeAll(async () => {
   engine = await loadEngine();
 });
 
+/** A replay as stored and read back - packed, deflated and parsed. */
+async function stored(replay: Replay): Promise<Replay | null> {
+  return engine.replayFromBytes(new Uint8Array(await bytesOf(replay)), {
+    stored: true,
+  });
+}
+
 describe('rerunReplay', () => {
   it('verifies a replay that plays out as recorded', async () => {
     const replay = await recordedReplay(await ladderPlan());
-    const rerun = await rerunReplay(engine, await bytesOf(replay));
+    const rerun = rerunReplay(engine, await stored(replay));
     expect(rerun.state).toBe('verified');
     expect(rerun.summary).toEqual({
       sizes: expect.any(Array),
@@ -36,7 +44,7 @@ describe('rerunReplay', () => {
   it("verifies a match against the ladder's computer (replay version 4)", async () => {
     const replay = await recordedReplay(await ladderComputerPlan());
     expect(replay.header.version).toBe(engine.LADDER_REPLAY_VERSION);
-    const rerun = await rerunReplay(engine, await bytesOf(replay));
+    const rerun = rerunReplay(engine, await stored(replay));
     expect(rerun.state).toBe('verified');
     expect(rerun.summary?.ticks).toBe(replay.header.ticks);
   });
@@ -50,7 +58,7 @@ describe('rerunReplay', () => {
         outcome: { endedBy: 'forfeit' as const, winnerSeat: 0 },
       },
     };
-    const rerun = await rerunReplay(engine, await bytesOf(won));
+    const rerun = rerunReplay(engine, await stored(won));
     expect(rerun.state).toBe('verified');
     // Won in 2 s without a boost and never smaller than the computer.
     expect(rerun.medal).toBe('platinum');
@@ -62,9 +70,7 @@ describe('rerunReplay', () => {
       ...replay,
       header: { ...replay.header, checksum: (replay.header.checksum ?? 0) + 1 },
     };
-    expect((await rerunReplay(engine, await bytesOf(forged))).state).toBe(
-      'unverified'
-    );
+    expect(rerunReplay(engine, await stored(forged)).state).toBe('unverified');
   });
 
   it('calls a claimed win the simulation did not reach unverified', async () => {
@@ -76,9 +82,7 @@ describe('rerunReplay', () => {
         outcome: { endedBy: 'annihilation' as const, winnerSeat: 0 },
       },
     };
-    expect((await rerunReplay(engine, await bytesOf(forged))).state).toBe(
-      'unverified'
-    );
+    expect(rerunReplay(engine, await stored(forged)).state).toBe('unverified');
   });
 
   it('cannot play a replay of another balance', async () => {
@@ -87,13 +91,16 @@ describe('rerunReplay', () => {
       ...replay,
       header: { ...replay.header, balanceVersion: engine.BALANCE_VERSION - 1 },
     };
-    expect((await rerunReplay(engine, await bytesOf(old))).state).toBe(
+    expect(rerunReplay(engine, await stored(old)).state).toBe(
       'balance-mismatch'
     );
   });
 
   it('finds no replay in broken bytes', async () => {
-    const rerun = await rerunReplay(engine, new Uint8Array([1, 2, 3]));
+    const rerun = rerunReplay(
+      engine,
+      await engine.replayFromBytes(new Uint8Array([1, 2, 3]), { stored: true })
+    );
     expect(rerun).toEqual({ state: 'unverified', replay: null });
   });
 });

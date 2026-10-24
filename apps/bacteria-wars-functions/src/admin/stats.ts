@@ -3,7 +3,8 @@ import type { Auth } from 'firebase-admin/auth';
 import type { Engine } from '../engine';
 import type { Presence } from '../presence';
 import { minuteTicks, VERIFY_MINUTES } from '../replays/budgets';
-import { DAY_MS, dayOf, dayStart } from '../time';
+import { entriesOf } from '../boards/entries';
+import { DAY_MS, dayOf, dayStart, hourOf } from '../time';
 
 /**
  * The owner's statistics without expensive scans (ADR 0012): each figure is
@@ -60,7 +61,7 @@ export async function computeStats(
   const entries: Record<string, number> = {};
   const beingChecked: Record<string, number> = {};
   for (const boardId of boardIds) {
-    const collection = db.collection(`boards/${boardId}/entries`);
+    const collection = entriesOf(db, boardId);
     entries[boardId] = await count(
       collection.where('status', 'in', engine.VISIBLE_STATUSES)
     );
@@ -142,7 +143,7 @@ export async function writeStats(
   const stats = await computeStats(db, engine, presence, now);
   await db.doc('adminStats/now').set(stats);
   if (snapshot) {
-    const hour = new Date(now).toISOString().slice(0, 13).replace(/[-T]/g, '');
+    const hour = hourOf(now).replace(/[-T]/g, '');
     await db.doc(`adminStats/h_${hour}`).set({
       ...stats,
       expireAt: Timestamp.fromMillis(now + STATS_HOUR_DAYS * DAY_MS),

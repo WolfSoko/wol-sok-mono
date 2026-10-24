@@ -1,5 +1,6 @@
 import { randomInt } from 'node:crypto';
 import {
+  CollectionReference,
   DocumentReference,
   DocumentSnapshot,
   Firestore,
@@ -49,12 +50,35 @@ export function memberRef(db: Firestore, uid: string): DocumentReference {
   return db.doc(`boardMembers/${uid}`);
 }
 
+/** A board's entries. */
+export function entriesOf(db: Firestore, boardId: string): CollectionReference {
+  return db.collection(`boards/${boardId}/entries`);
+}
+
 export function entryRef(
   db: Firestore,
   boardId: string,
   entryId: string
 ): DocumentReference {
-  return db.doc(`boards/${boardId}/entries/${entryId}`);
+  return entriesOf(db, boardId).doc(entryId);
+}
+
+/** The player's day on the daily board, `dailyRuns/{day}_{uid}`. */
+export function dailyRunRef(
+  db: Firestore,
+  day: string,
+  uid: string
+): DocumentReference {
+  return db.doc(`dailyRuns/${day}_${uid}`);
+}
+
+/** One of the player's endless runs, `endlessRuns/{uid}_{runId}`. */
+export function endlessRunRef(
+  db: Firestore,
+  uid: string,
+  runId: string
+): DocumentReference {
+  return db.doc(`endlessRuns/${uid}_${runId}`);
 }
 
 /**
@@ -297,13 +321,10 @@ export async function refreshEntries(
         return;
       }
       const entry = snapshot.data() as EntryDoc;
-      const baseStatus =
-        entry.baseStatus ??
-        (entry.status === 'hidden' ? 'counted' : entry.status);
       const label = labelOf(
         engine,
         member.entryIds[kind],
-        baseStatus,
+        entry.baseStatus,
         hidden,
         standing.profile
       );
@@ -315,17 +336,12 @@ export async function refreshEntries(
       ) {
         tx.update(snapshot.ref, {
           ...label,
-          baseStatus,
           updatedAt: Timestamp.fromMillis(now),
         });
         changed++;
       }
     });
-    tx.set(memberRef(db, uid), {
-      ...member,
-      hiddenBy: member.hiddenBy,
-      barred: member.barred,
-    });
+    tx.set(memberRef(db, uid), member);
     return changed;
   });
 }

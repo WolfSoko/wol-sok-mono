@@ -134,9 +134,7 @@ export async function countOnline(
       return finish({ reason: 'banned' });
     }
     const earliest =
-      stubCreatedAt +
-      (summed / engine.TICKS_PER_SEC) * 1000 -
-      caps.roomClockSlackMs;
+      stubCreatedAt + engine.ticksToMs(summed) - caps.roomClockSlackMs;
     if (secondAt < earliest) {
       return finish({ reason: 'too-fast' });
     }

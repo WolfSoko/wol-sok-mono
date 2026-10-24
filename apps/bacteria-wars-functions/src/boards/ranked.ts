@@ -7,10 +7,14 @@ import {
 } from 'firebase-admin/firestore';
 import type { Attempt, RankedReason } from '@wolsok/feat-lazy-bac-game/engine';
 import type { Engine } from '../engine';
-import { assertActive, Banned } from '../limits';
+import { isActive } from '../limits';
+import { readStoredReplay } from '../replays/blob';
 import { ReplayDoc, verdictOf } from '../replays/model';
 import { DAY_MS, HOUR_MS } from '../time';
 import {
+  dailyExpireAt,
+  dailyRunRef,
+  endlessRunRef,
   entryRef,
   memberOf,
   memberRef,
@@ -83,13 +87,8 @@ export async function checkRanked(
     at: doc.attempt?.at ?? 0,
     reason,
   });
-  try {
-    await assertActive(db, uid, now);
-  } catch (error) {
-    if (error instanceof Banned) {
-      return { reason: 'banned' };
-    }
-    throw error;
+  if (!(await isActive(db, uid, now))) {
+    return { reason: 'banned' };
   }
   const stored = await db.doc(`players/${uid}/attempts/${attemptId}`).get();
   const atStamp = stored.get('at') as Timestamp | undefined;
@@ -101,13 +100,8 @@ export async function checkRanked(
   }
   const at = atStamp.toMillis();
   const checked: Checked = { uid, attemptId, attempt, at, reason: null };
-  const blob = await db.doc(`replays/${replayId}/blob/data`).get();
-  const bytes = blob.get('bytes') as Uint8Array | undefined;
-  const replay =
-    bytes === undefined
-      ? null
-      : await engine.replayFromBytes(new Uint8Array(bytes), { stored: true });
-  if (replay === null) {
+  const replay = await readStoredReplay(db, engine, replayId);
+  if (replay == null) {
     return fail('plan-mismatch');
   }
   const { header } = replay;
@@ -261,7 +255,7 @@ export async function updateDailyRun(
   change: (rows: DailyAttemptRow[], tx: Transaction) => boolean
 ): Promise<DailyAttemptRow | null> {
   const boardId = engine.dailyBoardId(day);
-  const runRef = db.doc(`dailyRuns/${day}_${uid}`);
+  const runRef = dailyRunRef(db, day, uid);
   return db.runTransaction(async (tx) => {
     const run = await tx.get(runRef);
     const member = memberOf(await tx.get(memberRef(db, uid)));
@@ -275,9 +269,7 @@ export async function updateDailyRun(
       uid,
       day,
       attempts: rows,
-      expireAt: Timestamp.fromMillis(
-        Date.parse(`${day}T00:00:00Z`) + 32 * DAY_MS
-      ),
+      expireAt: dailyExpireAt(day),
     };
     tx.set(runRef, doc);
     const best = bestRow(engine, rows);
@@ -342,7 +334,7 @@ export async function updateEndlessRun(
   incoming?: RunReplay,
   change: (run: EndlessRunDoc) => boolean = () => true
 ): Promise<RankedResult | null> {
-  const runRef = db.doc(`endlessRuns/${uid}_${runId}`);
+  const runRef = endlessRunRef(db, uid, runId);
   const prefix = `e_${runId}_`;
   return db.runTransaction(async (tx): Promise<RankedResult | null> => {
     const runSnap = await tx.get(runRef);

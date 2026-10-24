@@ -84,7 +84,7 @@ export function isBlockedName(name: string): boolean {
  * ("Anonymous #4821", "Player 0042") - null otherwise.
  */
 export function publicNameOf(
-  engine: Pick<Engine, 'posesAsLabel'>,
+  engine: Pick<Engine, 'posesAsLabel' | 'NAME_MAX'>,
   profile: Record<string, unknown> | undefined
 ): string | null {
   const name = profile?.['name'];
@@ -97,5 +97,5 @@ export function publicNameOf(
   ) {
     return null;
   }
-  return name.trim().slice(0, 24);
+  return name.trim().slice(0, engine.NAME_MAX);
 }

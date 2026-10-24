@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { checkGoogleLink, Moderation, noteGoogleChecked } from '../admin/bans';
-import { assertActive, Banned } from '../limits';
+import { isActive } from '../limits';
 import {
   entryRef,
   memberOf,
@@ -37,15 +37,10 @@ export async function rankProgress(
   if (stored === undefined) {
     return { skipped: 'deleted' };
   }
-  try {
-    await assertActive(db, uid, now);
-  } catch (error) {
-    if (error instanceof Banned) {
-      return { skipped: 'banned' };
-    }
-    throw error;
-  }
-  if (await checkGoogleLink(moderation, uid, now)) {
+  if (
+    !(await isActive(db, uid, now)) ||
+    (await checkGoogleLink(moderation, uid, now))
+  ) {
     return { skipped: 'banned' };
   }
   const engine = await moderation.engine();

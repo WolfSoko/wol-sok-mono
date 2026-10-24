@@ -37,10 +37,8 @@ describe('the exported functions', () => {
     expect(Object.keys(functions).sort()).toEqual([
       'acceptReplay',
       'adminCommand',
-      'boardProfileChanged',
       'countAccount',
-      'deletePlayerBoards',
-      'deletePlayerReplays',
+      'deletePlayer',
       'featureBest',
       'hourly',
       'profileChanged',
@@ -76,9 +74,9 @@ describe('the exported functions', () => {
     expect(functions['replayCommand'].__endpoint.eventTrigger?.eventType).toBe(
       'google.cloud.firestore.document.v1.created.withAuthContext'
     );
-    expect(
-      functions['deletePlayerReplays'].__endpoint.eventTrigger?.eventType
-    ).toBe('providers/firebase.auth/eventTypes/user.delete');
+    expect(functions['deletePlayer'].__endpoint.eventTrigger?.eventType).toBe(
+      'providers/firebase.auth/eventTypes/user.delete'
+    );
   });
 
   it('trigger on the documents of ADR 0012', () => {
@@ -90,16 +88,12 @@ describe('the exported functions', () => {
       'players/{uid}/storage/bacteria-game.progress'
     );
     expect(path('rebuildTop')).toBe('boards/{boardId}/entries/{entryId}');
-    expect(path('boardProfileChanged')).toBe('profiles/{uid}');
     expect(path('adminCommand')).toBe('adminCommands/{id}');
     expect(trigger('adminCommand')?.eventType).toBe(
       'google.cloud.firestore.document.v1.created.withAuthContext'
     );
     expect(trigger('countAccount')?.eventType).toBe(
       'providers/firebase.auth/eventTypes/user.create'
-    );
-    expect(trigger('deletePlayerBoards')?.eventType).toBe(
-      'providers/firebase.auth/eventTypes/user.delete'
     );
   });
 
@@ -115,7 +109,7 @@ describe('the exported functions', () => {
       'rankProgress',
       'adminCommand',
       'countAccount',
-      'deletePlayerBoards',
+      'deletePlayer',
       'hourly',
     ]) {
       expect([
@@ -148,7 +142,6 @@ describe('the exported functions', () => {
       'rankReplay',
       'rankProgress',
       'rebuildTop',
-      'boardProfileChanged',
     ]) {
       expect(functions[name].__endpoint.cpu).toBe('gcf_gen1');
       expect(functions[name].__endpoint.availableMemoryMb).toBe(256);

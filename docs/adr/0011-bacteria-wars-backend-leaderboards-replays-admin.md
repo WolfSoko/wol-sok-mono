@@ -314,7 +314,8 @@ install --omit dev`).
 - **Emulator**: functions on port 5401; `firebase-emulators` depends on the
   functions `build` and starts `auth,firestore,database,functions`.
 - `assertActive(uid)` in `limits.ts` is a no-op until the moderation ADR
-  adds bans. (Changed by ADR 0012: it reads `bans/{uid}`, and only
+  adds bans. (Changed by ADR 0012: it is `isActive(uid)`, reads
+  `bans/{uid}`, and only
   `acceptReplay` and `replayCommand` (for `remove`) here call it;
   `deletePlayerReplays` and `profileChanged` never do, so a banned
   player's deletion and an owner's profile reset still reach their
@@ -332,7 +333,9 @@ install --omit dev`).
 | `publicSite`          | HTTPS behind Hosting                                          | `/replays`, `/replays/{publicId}`, `/replays/index.json`, `/replays/{publicId}/replay.json`, `/sitemap.xml` (below).                                                                                                                                                                                                                                                                 |
 
 (Changed by ADR 0012: `replayCommand` also writes `adminAudit/{commandId}`
-for its admin types.)
+for its admin types. As built, `profileChanged` also runs ADR 0012's
+board relabelling, and `deletePlayerReplays` is a core of the one Auth
+onDelete function `deletePlayer`, next to ADR 0012's `deletePlayerBoards`.)
 
 **Choosing candidates, so the cost has a ceiling.** Nothing is rerun on
 submission. `featureBest` takes the previous day's replays that:
@@ -520,7 +523,8 @@ The rules and `replayCommand` require `admin == true`,
 ### Step 4 as built
 
 - `apps/bacteria-wars-functions` exports `acceptReplay`, `replayCommand`,
-  `profileChanged`, `deletePlayerReplays` and `featureBest`, with the
+  `profileChanged`, `deletePlayer` (the core `deletePlayerReplays`) and
+  `featureBest`, with the
   ADR 0012 changes to them, and `acceptReplay` adds ADR 0016's
   `levelStats` counters. `publicSite` belongs to step 6 and is not built.
   Each function is a thin trigger around a core that takes the Firestore

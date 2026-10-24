@@ -1,7 +1,7 @@
 import { Firestore, Timestamp } from 'firebase-admin/firestore';
 import type { BoardEntry, BoardRow } from '@wolsok/feat-lazy-bac-game/engine';
 import type { Engine } from '../engine';
-import { dailyExpireAt } from './entries';
+import { dailyExpireAt, entriesOf } from './entries';
 import type { EntryDoc } from './model';
 
 /** The part of a top document the relevance check reads. */
@@ -105,7 +105,7 @@ export async function rebuildTop(
     return false;
   }
   const cut = engine.BOARD_CUT[board.kind];
-  const entries = db.collection(`boards/${boardId}/entries`);
+  const entries = entriesOf(db, boardId);
   const visible = (
     await entries
       .where('status', 'in', engine.VISIBLE_STATUSES)

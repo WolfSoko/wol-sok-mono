@@ -1,4 +1,5 @@
 import { FieldValue, Firestore } from 'firebase-admin/firestore';
+import { inBatches } from '../firestore';
 import type { PublicSeat } from './model';
 
 /** Replays handled per page of the deletion. */
@@ -54,20 +55,16 @@ export async function deletePlayerReplays(
     .collection('publicReplays')
     .where('uids', 'array-contains', uid)
     .get();
-  for (let i = 0; i < published.docs.length; i += PAGE) {
-    const batch = db.batch();
-    for (const doc of published.docs.slice(i, i + PAGE)) {
-      const seats = doc.get('seatUids') as (string | null)[];
-      batch.update(doc.ref, {
-        uids: FieldValue.arrayRemove(uid),
-        seatUids: seats.map((seat) => (seat === uid ? null : seat)),
-        players: (doc.get('players') as PublicSeat[]).map((player, seat) =>
-          seats[seat] === uid ? { ...player, name: null } : player
-        ),
-      });
-    }
-    await batch.commit();
-  }
+  await inBatches(db, published.docs, (batch, doc) => {
+    const seats = doc.get('seatUids') as (string | null)[];
+    batch.update(doc.ref, {
+      uids: FieldValue.arrayRemove(uid),
+      seatUids: seats.map((seat) => (seat === uid ? null : seat)),
+      players: (doc.get('players') as PublicSeat[]).map((player, seat) =>
+        seats[seat] === uid ? { ...player, name: null } : player
+      ),
+    });
+  });
   result.unnamed = published.size;
   await db.doc(`limits/${uid}`).delete();
   return result;

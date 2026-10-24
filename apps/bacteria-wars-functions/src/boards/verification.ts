@@ -2,6 +2,7 @@ import { FieldValue, Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions';
 import type { AccountLookup } from '../accounts';
 import type { Engine } from '../engine';
+import { getAllChunked } from '../firestore';
 import {
   minuteTicks,
   Payer,
@@ -10,7 +11,8 @@ import {
 } from '../replays/budgets';
 import { ReplayDoc, verdictOf } from '../replays/model';
 import { verifyStored } from '../replays/verify';
-import { DAY_MS, dayOf, HOUR_MS } from '../time';
+import { DAY_MS, dayOf, dayStart, HOUR_MS } from '../time';
+import { dailyRunRef, endlessRunRef, entriesOf, memberRef } from './entries';
 import type {
   DailyAttemptRow,
   EndlessRunDoc,
@@ -166,14 +168,14 @@ export interface Candidate {
 /** An entry with its id. */
 type Entry = EntryDoc & { entryId: string };
 
-async function entriesOf(
+/** A board's best entries of one status. */
+async function bestEntries(
   db: Firestore,
   boardId: string,
   status: 'verified' | 'provisional',
   limit: number
 ): Promise<Entry[]> {
-  const snapshot = await db
-    .collection(`boards/${boardId}/entries`)
+  const snapshot = await entriesOf(db, boardId)
     .where('status', '==', status)
     .orderBy('sort', 'desc')
     .orderBy('atHour', 'asc')
@@ -204,9 +206,9 @@ export async function candidatesOf(
     return [];
   }
   const cut = engine.BOARD_CUT[board.kind];
-  const verified = await entriesOf(db, boardId, 'verified', cut);
+  const verified = await bestEntries(db, boardId, 'verified', cut);
   // Read a few more than the zone could hold: skipped accounts drop out.
-  const provisional = await entriesOf(
+  const provisional = await bestEntries(
     db,
     boardId,
     'provisional',
@@ -292,16 +294,11 @@ async function skipsOf(
   uids: readonly string[]
 ): Promise<Map<string, number>> {
   const skips = new Map<string, number>();
-  const unique = [...new Set(uids)];
-  for (let i = 0; i < unique.length; i += 100) {
-    const refs = unique
-      .slice(i, i + 100)
-      .map((uid) => db.doc(`moderation/${uid}`));
-    for (const doc of await db.getAll(...refs)) {
-      const until = doc.get('skipUntil') as Timestamp | undefined;
-      if (until !== undefined) {
-        skips.set(doc.id, until.toMillis());
-      }
+  const refs = [...new Set(uids)].map((uid) => db.doc(`moderation/${uid}`));
+  for (const doc of await getAllChunked(db, refs)) {
+    const until = doc.get('skipUntil') as Timestamp | undefined;
+    if (until !== undefined) {
+      skips.set(doc.id, until.toMillis());
     }
   }
   return skips;
@@ -397,7 +394,7 @@ export async function verifyDaily(
   pay: Payer,
   now: number
 ): Promise<CandidateResult> {
-  const run = await db.doc(`dailyRuns/${day}_${uid}`).get();
+  const run = await dailyRunRef(db, day, uid).get();
   const best = bestRow(
     engine,
     (run.get('attempts') as DailyAttemptRow[] | undefined) ?? []
@@ -532,9 +529,9 @@ export async function verifyRun(
     }
   }
   if (all && run.queued === true) {
-    await db
-      .doc(`endlessRuns/${uid}_${run.runId}`)
-      .update({ queued: FieldValue.delete() });
+    await endlessRunRef(db, uid, run.runId).update({
+      queued: FieldValue.delete(),
+    });
   }
   return last;
 }
@@ -639,14 +636,10 @@ async function markChecked(
   boardId: string,
   day: string
 ): Promise<void> {
-  await db
-    .doc(`boardMembers/${uid}`)
-    .set({ checks: { [boardId]: day } }, { merge: true });
+  await memberRef(db, uid).set({ checks: { [boardId]: day } }, { merge: true });
 }
 
 /** When a daily board turns final: 23:00 UTC the day after. */
 export function dailyFinalAt(engine: Engine, day: string): number {
-  return (
-    Date.parse(`${day}T00:00:00Z`) + DAY_MS + engine.DAILY_FINAL_HOUR * HOUR_MS
-  );
+  return dayStart(day) + DAY_MS + engine.DAILY_FINAL_HOUR * HOUR_MS;
 }

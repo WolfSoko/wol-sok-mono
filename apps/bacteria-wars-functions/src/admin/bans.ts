@@ -1,15 +1,15 @@
 import {
   DocumentReference,
   Firestore,
-  Query,
   QueryDocumentSnapshot,
   Timestamp,
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions';
 import type { BanReason } from '@wolsok/feat-lazy-bac-game/engine';
 import type { Account, AccountLookup } from '../accounts';
-import { refreshEntries } from '../boards/entries';
+import { memberRef, refreshEntries } from '../boards/entries';
 import type { Engine } from '../engine';
+import { deleteQuery, inBatches } from '../firestore';
 import { forgetBans, isBanned } from '../limits';
 import { MINUTE_MS } from '../time';
 import type { Presence } from '../presence';
@@ -49,9 +49,6 @@ export interface BanState {
   reason: BanReason;
 }
 
-/** Documents a ban scan deletes per page. */
-const PAGE = 300;
-
 /** The player's ban, also one that has ended but was not cleaned up yet. */
 export async function readBan(
   db: Firestore,
@@ -73,8 +70,6 @@ export async function readBan(
 export interface BanResult {
   before: BanState | null;
   after: BanState;
-  /** True when the player was banned already: only the end and reason changed. */
-  changed: boolean;
 }
 
 /**
@@ -93,6 +88,7 @@ export async function banPlayer(
 ): Promise<BanResult> {
   const { db, presence } = moderation;
   const before = await readBan(db, uid);
+  // A player banned already: only the end and the reason change.
   const changed = before !== null && isBanned(before.until, now);
   const after: BanState = {
     since: changed ? before.since : now,
@@ -117,7 +113,7 @@ export async function banPlayer(
     );
   }
   if (changed) {
-    return { before, after, changed: true };
+    return { before, after };
   }
   await clearOut(moderation, uid);
   await refreshEntries(db, await moderation.engine(), uid, now);
@@ -133,7 +129,7 @@ export async function banPlayer(
   }
   await notify(db, uid, 'banned', now, { until, reason });
   await countModeration(db, uid, 'bans');
-  return { before, after, changed: false };
+  return { before, after };
 }
 
 /**
@@ -146,28 +142,13 @@ async function clearOut(moderation: Moderation, uid: string): Promise<void> {
   await db.doc(`queue/${uid}`).delete();
   await presence.remove(`status/${uid}`);
   await presence.remove(`connections/${uid}`);
-  await deleteAll(db, db.collection('rooms').where('host', '==', uid));
-  await deleteAll(db, db.collection('invites').where('from', '==', uid));
+  await deleteQuery(db, db.collection('rooms').where('host', '==', uid));
+  await deleteQuery(db, db.collection('invites').where('from', '==', uid));
   // Challenges and requests are keyed by their sender's uid, and a
   // collection-group query cannot filter on a document id alone, so they
   // are scanned: challenges expire within the hour, requests are few.
   await deleteSentBy(db, 'challenges', uid);
   await deleteSentBy(db, 'requests', uid);
-}
-
-async function deleteAll(db: Firestore, query: Query): Promise<void> {
-  for (;;) {
-    const page = await query.limit(PAGE).get();
-    if (page.empty) {
-      return;
-    }
-    const batch = db.batch();
-    page.docs.forEach((doc) => batch.delete(doc.ref));
-    await batch.commit();
-    if (page.size < PAGE) {
-      return;
-    }
-  }
 }
 
 /**
@@ -187,11 +168,7 @@ async function deleteSentBy(
       sent.push(snapshot.ref);
     }
   }
-  for (let i = 0; i < sent.length; i += PAGE) {
-    const batch = db.batch();
-    sent.slice(i, i + PAGE).forEach((ref) => batch.delete(ref));
-    await batch.commit();
-  }
+  await inBatches(db, sent, (batch, ref) => batch.delete(ref));
 }
 
 /**
@@ -289,7 +266,7 @@ export async function checkGoogleLink(
   if (lastLook !== undefined && now - lastLook < GUEST_LOOK_MS) {
     return false;
   }
-  const member = moderation.db.doc(`boardMembers/${uid}`);
+  const member = memberRef(moderation.db, uid);
   if ((await member.get()).get('googleChecked') === true) {
     googleChecked.add(uid);
     return false;

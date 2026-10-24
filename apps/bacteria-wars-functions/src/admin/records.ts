@@ -56,6 +56,7 @@ export interface AuditTarget {
   uid?: string;
   boardId?: string;
   entryId?: string;
+  replayId?: string;
 }
 
 /** An entry of the owner's audit. */

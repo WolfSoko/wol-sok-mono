@@ -1,7 +1,6 @@
-import { deleteApp, initializeApp } from 'firebase-admin/app';
-import { Firestore, getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import type { Replay } from '@wolsok/feat-lazy-bac-game/engine';
-import type { Account, AccountLookup } from '../accounts';
+import type { Account } from '../accounts';
 import { AdminDeps, runAdminCommand } from '../admin/admin-command';
 import { countAccount, deletePlayerBoards } from '../admin/account-events';
 import {
@@ -42,6 +41,7 @@ import { fixedPool } from '../replays/budgets';
 import { acceptSubmission } from '../replays/accept-replay';
 import { levelStatsId } from '../replays/derive';
 import type { ReplayDoc } from '../replays/model';
+import { emulatorFirestore, fakeAccounts } from '../testing/emulator';
 import { MemoryPresence } from '../testing/presence';
 import { bytesOf, recordedReplay } from '../testing/replays';
 import { dayOf } from '../time';
@@ -52,57 +52,41 @@ import { dayOf } from '../time';
  * Run by `nx run bacteria-wars-functions:test-integration`.
  */
 
-const PROJECT = 'demo-bacteria-wars';
 const NOW = Date.now();
 const DAY = 86_400_000;
 const HOUR = 3_600_000;
 const TODAY = dayOf(NOW);
-const app = initializeApp({ projectId: PROJECT }, 'boards');
-const db: Firestore = getFirestore(app);
+const db = emulatorFirestore('boards');
 const KEY = tombstoneKey('a-test-secret-of-sufficient-length');
 
 let engine: Engine;
 let presence: MemoryPresence;
-let extraAccounts: Record<string, Partial<Account>> = {};
+/** What a test says of an account, on top of the defaults. */
+const extraAccounts: Record<string, Partial<Account>> = {};
 
 beforeAll(async () => {
   engine = await loadEngine();
 });
 
-afterAll(async () => {
-  await deleteApp(app);
-});
-
-beforeEach(async () => {
+beforeEach(() => {
   forgetBans();
   forgetGuestLooks();
   presence = new MemoryPresence();
-  extraAccounts = {};
-  const host = process.env['FIRESTORE_EMULATOR_HOST'];
-  const response = await fetch(
-    `http://${host}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
-  if (!response.ok) {
-    throw new Error(`Could not clear the emulator: ${response.status}`);
+  for (const uid of Object.keys(extraAccounts)) {
+    delete extraAccounts[uid];
   }
 });
 
 /** Accounts as Auth would answer: guests a month old, unless said otherwise. */
-const accounts: AccountLookup = async (uids) =>
-  new Map(
-    uids.map((uid) => [
-      uid,
-      {
-        uid,
-        anonymous: true,
-        createdAt: NOW - 30 * DAY,
-        admin: uid === 'owner',
-        googleUid: null,
-        ...extraAccounts[uid],
-      },
-    ])
-  );
+const accounts = fakeAccounts(
+  (uid) => ({
+    anonymous: true,
+    createdAt: NOW - 30 * DAY,
+    admin: uid === 'owner',
+    googleUid: null,
+  }),
+  extraAccounts
+);
 
 function moderation(): Moderation {
   return { db, engine: loadEngine, presence, accounts, tombstones: KEY };

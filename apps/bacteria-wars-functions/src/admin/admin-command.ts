@@ -12,6 +12,7 @@ import { kindOf, refreshEntries } from '../boards/entries';
 import type { EndlessRunDoc, MemberDoc } from '../boards/model';
 import {
   ADMIN_RUN_MINUTES,
+  CandidateResult,
   verifyDaily,
   verifyRun,
 } from '../boards/verification';
@@ -78,7 +79,6 @@ export async function runAdminCommand(
     try {
       done = await act(deps, command, now);
     } catch (error) {
-      done = { ok: false, error: 'failed' };
       await ref.update({
         result: { ok: false, error: 'failed', at: now },
       });
@@ -95,8 +95,8 @@ export async function runAdminCommand(
           ...(done.uid === undefined ? {} : { uid: done.uid }),
         },
         reason: command.reason === '' ? null : command.reason,
-        before: done.before ?? null,
-        after: done.after ?? null,
+        before: done.before,
+        after: done.after,
         ok: done.ok,
         source: 'adminCommand',
       },
@@ -156,19 +156,28 @@ async function act(
   if (uid === null) {
     return { ok: false, error: 'no-player' };
   }
-  const withUid = (done: Omit<Done, 'uid'>): Done => ({ ...done, uid });
+  return { ...(await actOn(deps, command, uid, now)), uid };
+}
+
+/** An action on one player, whose uid the audit adds. */
+async function actOn(
+  deps: AdminDeps,
+  command: AdminCommand,
+  uid: string,
+  now: number
+): Promise<Omit<Done, 'uid'>> {
   switch (command.type) {
     case 'profile.reset':
-      return withUid(await resetProfile(deps, uid, now));
+      return resetProfile(deps, uid, now);
     case 'profile.removeImage':
-      return withUid(await removeImage(deps, uid, now));
+      return removeImage(deps, uid, now);
     case 'board.hideEntry':
     case 'board.hidePlayer':
-      return withUid(await hide(deps, command, uid, now));
+      return hide(deps, command, uid, now);
     case 'board.restore':
-      return withUid(await restore(deps, command, uid, now));
+      return restore(deps, command, uid, now);
     case 'board.verify':
-      return withUid(await verifyNow(deps, command, uid, now));
+      return verifyNow(deps, command, uid, now);
     case 'player.ban': {
       const result = await banPlayer(
         deps,
@@ -177,15 +186,13 @@ async function act(
         command.args.reason ?? 'other',
         now
       );
-      return withUid({ ok: true, before: result.before, after: result.after });
+      return { ok: true, before: result.before, after: result.after };
     }
     case 'player.unban': {
       const before = await unbanPlayer(deps, uid, now);
-      return withUid(
-        before === null
-          ? { ok: false, error: 'not-banned' }
-          : { ok: true, before, after: null }
-      );
+      return before === null
+        ? { ok: false, error: 'not-banned' }
+        : { ok: true, before, after: null };
     }
   }
   return { ok: false, error: 'invalid' };
@@ -374,11 +381,7 @@ async function verifyNow(
   const pay = fixedPool('admin');
   if (board?.kind === 'daily') {
     const outcome = await verifyDaily(db, engine, uid, board.day, pay, now);
-    return {
-      ok: outcome === 'verified' || outcome === 'failed' || outcome === 'stale',
-      ...(outcome === 'verified' ? {} : { error: outcome }),
-      after: { outcome },
-    };
+    return checked(outcome, { outcome });
   }
   if (board?.kind !== 'endless') {
     return { ok: false, error: 'not-verifiable' };
@@ -407,9 +410,17 @@ async function verifyNow(
   if (rest && best.docs[0] !== undefined) {
     await best.docs[0].ref.update({ queued: true });
   }
+  return checked(outcome, { outcome, queued: rest });
+}
+
+/**
+ * What a check now did: ok once it came to a verdict (verified, failed or
+ * stale), with the outcome as the error unless it was verified.
+ */
+function checked(outcome: CandidateResult, after: unknown): Omit<Done, 'uid'> {
   return {
     ok: outcome === 'verified' || outcome === 'failed' || outcome === 'stale',
     ...(outcome === 'verified' ? {} : { error: outcome }),
-    after: { outcome, queued: rest },
+    after,
   };
 }

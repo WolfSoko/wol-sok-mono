@@ -1,12 +1,10 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import type { Account } from '../accounts';
 import { entryRef, kindOf, memberOf, memberRef } from '../boards/entries';
+import { deleteQuery, inBatches } from '../firestore';
 import { isBanned } from '../limits';
 import { applyTombstone, Moderation, readBan } from './bans';
 import { writeTombstone } from './tombstones';
-
-/** Documents deleted per batch. */
-const PAGE = 300;
 
 /**
  * `countAccount` (ADR 0012), on every new Auth account: `stats/accounts`
@@ -97,19 +95,7 @@ export async function deletePlayerBoards(
     await batch.commit();
   }
   for (const collection of ['dailyRuns', 'endlessRuns']) {
-    for (;;) {
-      const page = await db
-        .collection(collection)
-        .where('uid', '==', uid)
-        .limit(PAGE)
-        .get();
-      if (page.empty) {
-        break;
-      }
-      const batch = db.batch();
-      page.docs.forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
-    }
+    await deleteQuery(db, db.collection(collection).where('uid', '==', uid));
   }
   await db.recursiveDelete(db.collection(`players/${uid}/attempts`));
   await db.recursiveDelete(db.collection(`players/${uid}/notices`));
@@ -120,16 +106,12 @@ export async function deletePlayerBoards(
     .collection('adminAudit')
     .where('target.uid', '==', uid)
     .get();
-  for (let i = 0; i < audit.docs.length; i += PAGE) {
-    const batch = db.batch();
-    for (const doc of audit.docs.slice(i, i + PAGE)) {
-      batch.update(doc.ref, {
-        before: { scrubbed: true },
-        after: { scrubbed: true },
-      });
-    }
-    await batch.commit();
-  }
+  await inBatches(db, audit.docs, (batch, doc) =>
+    batch.update(doc.ref, {
+      before: { scrubbed: true },
+      after: { scrubbed: true },
+    })
+  );
   result.scrubbed = audit.size;
 
   await db.doc('stats/accounts').set(

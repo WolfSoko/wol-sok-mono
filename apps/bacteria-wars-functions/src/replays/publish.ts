@@ -7,6 +7,7 @@ import {
 import { REPLAY_DAYS } from '../config';
 import type { Engine } from '../engine';
 import { DAY_MS, dayOf } from '../time';
+import { readStoredReplay } from './blob';
 import type { PublicReplayDoc, PublicSeat, ReplayDoc } from './model';
 import { publicNameOf } from './public-name';
 
@@ -119,13 +120,8 @@ export async function publishReplay(
   if (profiles.some((profile) => profile?.['galleryOptOut'] === true)) {
     return 'opted-out';
   }
-  const blob = await db.doc(`replays/${replayId}/blob/data`).get();
-  const bytes = blob.get('bytes') as Uint8Array | undefined;
-  const replay =
-    bytes === undefined
-      ? null
-      : await engine.replayFromBytes(new Uint8Array(bytes), { stored: true });
-  if (replay === null) {
+  const replay = await readStoredReplay(db, engine, replayId);
+  if (replay == null) {
     return 'no-blob';
   }
   const publicBytes = await engine.replayToBytes(replay, { forPublic: true });

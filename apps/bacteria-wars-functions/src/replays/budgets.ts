@@ -15,11 +15,8 @@ export type VerifyPool = 'gallery' | 'admin' | 'daily' | 'endless';
  * online grid, 7.7 to 8.2 ms on the ladder's level with neutral colonies.
  * The budgets assume the worst of them, 28 CPU seconds per match minute.
  * A big map (size 2, local matches only) takes up to 37 ms a tick in a
- * contested match, so its re-run is charged {@link BIG_MAP_COST} times its
- * ticks.
+ * contested match, so its re-run is charged this many times its ticks.
  */
-export const CPU_SEC_PER_MATCH_MINUTE = 28;
-/** How many times its ticks a re-run on a big map is charged. */
 export const BIG_MAP_COST = 5;
 
 /**

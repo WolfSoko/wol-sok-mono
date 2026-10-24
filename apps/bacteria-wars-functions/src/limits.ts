@@ -1,5 +1,5 @@
 import { Firestore, Timestamp } from 'firebase-admin/firestore';
-import { dayOf, hourOf } from './time';
+import { dayOf, hourOf, MINUTE_MS } from './time';
 
 /** Submissions a player may make in an hour (ADR 0011). */
 export const HOURLY_SUBMISSIONS = 60;
@@ -15,15 +15,7 @@ export const DAILY_SUBMISSIONS = 20_000;
 export const DAILY_RANKED_SUBMISSIONS = 20_000;
 
 /** How long an instance trusts a ban it read. */
-const BAN_CACHE_MS = 60_000;
-
-/** Thrown for a banned player whose own write a function was to act on. */
-export class Banned extends Error {
-  public constructor(public readonly uid: string) {
-    super(`Player ${uid} is banned`);
-    this.name = 'Banned';
-  }
-}
+const BAN_CACHE_MS = MINUTE_MS;
 
 interface CachedBan {
   /** The ban's end in ms, null for permanent; undefined for no ban. */
@@ -34,19 +26,20 @@ interface CachedBan {
 const bans = new Map<string, CachedBan>();
 
 /**
- * Throws {@link Banned} while `bans/{uid}` holds a ban that has not ended.
- * A ban ends by itself at `until`, wherever it is checked (ADR 0012). Read
- * at most once a minute per player and instance.
+ * False while `bans/{uid}` holds a ban that has not ended. A ban ends by
+ * itself at `until`, wherever it is checked (ADR 0012). Read at most once
+ * a minute per player and instance.
  *
- * Called only where a player's own write is acted on (`acceptReplay`, a
- * player's `remove`) - never for a deletion or a profile change, so a
- * banned player's data can still be erased and reset.
+ * Asked only where a player's own write is acted on (`acceptReplay`, a
+ * player's `remove`, their ranked replays and progress) - never for a
+ * deletion or a profile change, so a banned player's data can still be
+ * erased and reset.
  */
-export async function assertActive(
+export async function isActive(
   db: Firestore,
   uid: string,
   now = Date.now()
-): Promise<void> {
+): Promise<boolean> {
   let cached = bans.get(uid);
   if (cached === undefined || now - cached.readAt > BAN_CACHE_MS) {
     const ban = await db.doc(`bans/${uid}`).get();
@@ -57,9 +50,7 @@ export async function assertActive(
     };
     bans.set(uid, cached);
   }
-  if (isBanned(cached.until, now)) {
-    throw new Banned(uid);
-  }
+  return !isBanned(cached.until, now);
 }
 
 /** True for a ban that has not ended - null is for good. */

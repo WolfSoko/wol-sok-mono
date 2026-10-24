@@ -461,7 +461,7 @@ Measured on one core of a 2.8 GHz Xeon dev VM (Node 22), not yet on a
 1 vCPU Cloud Run instance; that check is one of the owner's manual steps.
 The old figure of 3.8 ms a tick was low by up to a factor of two.
 `budgets.ts` now assumes the worst of the levels that play online,
-**28 s of CPU per match-minute** (`CPU_SEC_PER_MATCH_MINUTE`), and charges
+**28 s of CPU per match-minute** (the comment on `BIG_MAP_COST`), and charges
 a re-run on a big map 5 times its ticks (`BIG_MAP_COST`, `rerunCost`).
 It keeps the owner's 260 match-minutes:
 
@@ -478,7 +478,7 @@ It keeps the owner's 260 match-minutes:
 3,360 s; a typical day's 20 candidates of 2-3 minutes use about half.
 
 \* The light triggers (`acceptReplay`, `rankReplay`, `rankProgress`,
-`rebuildTop`, `boardProfileChanged`, `profileChanged`) run with
+`rebuildTop`, `profileChanged` with `boardProfileChanged`) run with
 `cpu: 'gcf_gen1'` (a fraction of a vCPU at 256 MiB) instead of the 2nd-gen
 default of one vCPU.
 
@@ -838,9 +838,10 @@ chose not to share their status, and the privacy page says so.
   write only when `!newData.exists()`, or there is no `bans/$uid`, or its
   value is not `0` and at most `now`, the same inclusive end as
   `notBanned()`. Going offline still works.
-- **Enforced in functions**: `assertActive(uid)` (ADR 0011's hook) now
-  reads `bans/{uid}`, cached 60 s per instance, honours `until`, and throws
-  `Banned`. It is called only where the player's own write is acted on:
+- **Enforced in functions**: ADR 0011's hook, now `isActive(uid)`, reads
+  `bans/{uid}`, cached 60 s per instance, honours `until`, and answers
+  false for a ban. It is asked only where the player's own write is acted
+  on:
   - `acceptReplay` drops the submission (`result: 'banned'`);
   - `rankReplay` and `rankProgress` ignore the player, and an agreed online
     match with a banned player counts for neither side;
@@ -940,6 +941,13 @@ chose not to share their status, and the privacy page says so.
 | `countAccount`        | `auth.user().onCreate` (v1)                                                          | `stats/accounts` + 1, `boardMembers.accountCreatedAt`, the tombstone check for Google sign-ups.                                                                                                                                                                                                  |
 | `deletePlayerBoards`  | `auth.user().onDelete` (v1)                                                          | Writes a tombstone if the player is banned and Google-linked, then deletes the player's entries, `boardMembers`, runs, attempts, notices and ban, scrubs `before`/`after` of audit entries about them to `{ scrubbed: true }`, and lowers `stats/accounts`.                                      |
 
+As built, triggers on the same event are one function each, running
+their cores side by side (`Promise.allSettled`, every failure logged, the
+first rethrown): `profileChanged` runs ADR 0011's gallery update and
+`boardProfileChanged`, and the Auth onDelete function `deletePlayer` runs
+`deletePlayerReplays` and `deletePlayerBoards`. The table names the
+cores.
+
 All run in ADR 0011's codebase and region and are idempotent: a
 transaction checks the state first, and markers are created with
 `create()`. Retries are off, except for `rankReplay`: a stored replay it
@@ -988,7 +996,7 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
 - `/curate` becomes the Replays view of `/admin` in the admin lib.
   `robots.txt` disallows `/admin` instead.
 - `replayCommand` writes `adminAudit` for its admin types.
-- `assertActive` reads bans and is called only by `acceptReplay`,
+- `isActive` (was `assertActive`) reads bans and is asked only by `acceptReplay`,
   `replayCommand`, `rankReplay` and `rankProgress`.
 - The admin claim is read by more rules, and `profiles` gets an admin
   `list`.
@@ -1097,8 +1105,8 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
    stored `at`, counts ranked submissions against their own cap and voids
    the attempt of a submission it drops; `replayCommand` checks the
    auth-context writer and writes `adminAudit`; `featureBest` takes
-   `verified` replays without re-running them; `assertActive` reads
-   `bans/{uid}`. The verification budgets live in
+   `verified` replays without re-running them; `isActive` (was
+   `assertActive`) reads `bans/{uid}`. The verification budgets live in
    `apps/bacteria-wars-functions/src/replays/budgets.ts` (not
    `boards/budgets.ts`), set by the benchmark of step 5.
 4. **Rules, indexes, RTDB rules**, including `notBanned()` (with no bans
@@ -1108,8 +1116,9 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
    `firestore.indexes.json`. Command documents take an `expireAt` up to 2
    days ahead (a client cannot write `request.time` + 1 day exactly).
 5. **Functions**: `rankReplay`, `rankProgress`, `rebuildTop`,
-   `boardProfileChanged`, `adminCommand`, `countAccount`,
-   `deletePlayerBoards`, and `hourly` with its schedule paused, after the
+   `boardProfileChanged` (inside `profileChanged`), `adminCommand`,
+   `countAccount`, `deletePlayerBoards` (inside `deletePlayer`), and
+   `hourly` with its schedule paused, after the
    CPU benchmark set the budgets. Deployed before the client that writes
    attempts. **Done** (not deployed), in `apps/bacteria-wars-functions`:
    thin triggers in `main.ts` around cores in `src/boards/` (entries and
@@ -1128,7 +1137,7 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
    - **The tombstone key** comes from Secret Manager through
      `defineSecret('BAN_TOMBSTONE_KEY')` on every function that reads or
      writes a tombstone (`acceptReplay`, `rankProgress`, `adminCommand`,
-     `countAccount`, `deletePlayerBoards`, `hourly`). A deploy fails until
+     `countAccount`, `deletePlayer`, `hourly`). A deploy fails until
      the secret exists. In the emulator without a `.secret.local` the
      functions run without tombstones.
    - **`rankProgress`** triggers on the literal path
@@ -1151,7 +1160,7 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      `hiddenBy: 'admin'` and `barred` are the owner's; `'ban'` and
      `'optout'` are worked out again from the ban and the profile.
    - **Online reasons**: an agreed match that does not count keeps
-     `rankedReason` from `ONLINE_REASONS` (`unbound`, `short`,
+     `rankedReason`, an `OnlineReason` (`unbound`, `short`,
      `too-fast`, `desync`, `banned`, `capped`) in `state/boards.ts`.
    - **Endless runs** are created by the first replay of the run, counted
      or not (a run with no win ranks nothing), and a match waiting on an

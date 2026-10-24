@@ -7,6 +7,7 @@ import type {
   SizeSample,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { Engine } from '../engine';
+import { readStoredReplay } from './blob';
 import { Payer, rerunCost, reserveVerification } from './budgets';
 import { levelStatsId } from './derive';
 import {
@@ -47,15 +48,10 @@ const MAX_TIMELINE = 360;
  * crafted against V8 pass, as does a scripted run.
  *
  * The re-run stops at the claimed end tick, so refuting a fake costs no
- * more than its claimed length.
+ * more than its claimed length. Null - stored bytes that hold no replay -
+ * is `unverified`.
  */
-export async function rerunReplay(
-  engine: Engine,
-  bytes: Uint8Array
-): Promise<Rerun> {
-  const replay = await engine.replayFromBytes(new Uint8Array(bytes), {
-    stored: true,
-  });
+export function rerunReplay(engine: Engine, replay: Replay | null): Rerun {
   if (replay === null) {
     return { state: 'unverified', replay: null };
   }
@@ -249,9 +245,8 @@ export async function verifyStored(
   if (doc.ticks > maxTicks) {
     return 'too-long';
   }
-  const blob = await db.doc(`replays/${replayId}/blob/data`).get();
-  const bytes = blob.get('bytes') as Uint8Array | undefined;
-  if (bytes === undefined) {
+  const replay = await readStoredReplay(db, engine, replayId);
+  if (replay === undefined) {
     return 'no-blob';
   }
   const cost = rerunCost(engine, doc.levelId, doc.ticks);
@@ -263,7 +258,7 @@ export async function verifyStored(
     return 'no-budget';
   }
   pay.charge(pool, cost);
-  const rerun = await rerunReplay(engine, bytes);
+  const rerun = rerunReplay(engine, replay);
   const { score, reasons } = scoreOf(engine, rerun, {
     online: doc.kind === 'online',
     feat: rerun.state === 'verified' && feat(doc, rerun),

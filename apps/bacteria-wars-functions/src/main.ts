@@ -97,6 +97,27 @@ function moderation(): Moderation {
   };
 }
 
+/**
+ * Runs the cores of one trigger side by side, each whatever the others do,
+ * and logs every failure; the first is rethrown, so the function fails.
+ */
+async function allOf(
+  name: string,
+  cores: Record<string, () => Promise<unknown>>
+): Promise<void> {
+  const entries = Object.entries(cores);
+  const results = await Promise.allSettled(entries.map(([, run]) => run()));
+  const failed = results.flatMap((result, index): [string, unknown][] =>
+    result.status === 'rejected' ? [[entries[index][0], result.reason]] : []
+  );
+  for (const [core, error] of failed) {
+    logger.error(`${name}: ${core} failed`, error);
+  }
+  if (failed.length > 0) {
+    throw failed[0][1];
+  }
+}
+
 /** Stores a submitted replay - see `acceptSubmission`. */
 export const acceptReplay = onDocumentCreated(
   {
@@ -140,26 +161,45 @@ export const replayCommand = onDocumentCreatedWithAuthContext(
   }
 );
 
-/** Re-snapshots a player's name in their public replays. */
+/**
+ * A profile change: the player's name in their public replays
+ * (`onProfileChanged`) and on every board (`boardProfileChanged`). Both run
+ * whatever the other does; a failure of either fails the function.
+ */
 export const profileChanged = onDocumentUpdated(
   { ...LIGHT, document: 'profiles/{uid}' },
   async (event) => {
-    await onProfileChanged(
-      db(),
-      event.params.uid,
-      event.data?.before.data(),
-      event.data?.after.data()
-    );
+    const uid = event.params.uid;
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    await allOf('profileChanged', {
+      gallery: () => onProfileChanged(db(), uid, before, after),
+      boards: async () =>
+        touchesBoards(before, after)
+          ? relabel(db(), await loadEngine(), uid, before, after)
+          : 0,
+    });
   }
 );
 
-/** Erases a deleted account from the replays (Auth onDelete exists in v1 only). */
-export const deletePlayerReplays = functionsV1
+/**
+ * Erases a deleted account from the replays (`deletePlayerReplays`) and the
+ * boards (`deletePlayerBoards`), both whatever the other does. Auth
+ * onDelete exists in v1 only.
+ */
+export const deletePlayer = functionsV1
   .region(REGION)
-  .runWith({ memory: '256MB', timeoutSeconds: 540 })
+  .runWith({
+    memory: '256MB',
+    timeoutSeconds: 540,
+    secrets: [BAN_TOMBSTONE_KEY],
+  })
   .auth.user()
   .onDelete(async (user) => {
-    await deleteReplaysOf(db(), user.uid);
+    await allOf('deletePlayer', {
+      replays: () => deleteReplaysOf(db(), user.uid),
+      boards: () => deleteBoardsOf(moderation(), accountOf(user)),
+    });
   });
 
 /**
@@ -259,19 +299,6 @@ export const rebuildTop = onDocumentWritten(
   }
 );
 
-/** Re-labels the player's entries on every board - see `boardProfileChanged`. */
-export const boardProfileChanged = onDocumentUpdated(
-  { ...LIGHT, document: 'profiles/{uid}' },
-  async (event) => {
-    const before = event.data?.before.data();
-    const after = event.data?.after.data();
-    if (!touchesBoards(before, after)) {
-      return;
-    }
-    await relabel(db(), await loadEngine(), event.params.uid, before, after);
-  }
-);
-
 /**
  * The owner's admin actions. `board.verify` may re-run up to 6 match
  * minutes inside the 540 s an event trigger may take: one vCPU.
@@ -302,19 +329,6 @@ export const countAccount = functionsV1
   .auth.user()
   .onCreate(async (user) => {
     await countAccountOf(moderation(), accountOf(user));
-  });
-
-/** Erases a deleted account from the boards (v1 only) - see `deletePlayerBoards`. */
-export const deletePlayerBoards = functionsV1
-  .region(REGION)
-  .runWith({
-    memory: '256MB',
-    timeoutSeconds: 540,
-    secrets: [BAN_TOMBSTONE_KEY],
-  })
-  .auth.user()
-  .onDelete(async (user) => {
-    await deleteBoardsOf(moderation(), accountOf(user));
   });
 
 /**
