@@ -231,7 +231,7 @@ test('should let the players pick their colours', async ({ page }) => {
   await po.chooseMode('Two players');
   await po.stepBackCta.click();
   await po.backCta.click();
-  await po.settingsCta.click();
+  await po.colonyCta.click();
 
   await po.chooseColor('Left player', 'Green');
   await po.chooseColor('Right player', 'Pink');
@@ -303,7 +303,7 @@ test('should keep the colours still to earn locked, saying what opens them', asy
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.settingsCta.click();
+  await po.colonyCta.click();
 
   const green = page
     .getByRole('radiogroup', { name: 'Colour of You' })
