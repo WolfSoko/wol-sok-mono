@@ -9,6 +9,10 @@ export const newGame: Translation<typeof en> = {
     start: 'Start',
   },
   modes: {
+    training: {
+      name: 'Training',
+      blurb: 'Fünf kurze Missionen, die dir das Spiel beibringen.',
+    },
     campaign: {
       name: 'Kampagne',
       blurb:

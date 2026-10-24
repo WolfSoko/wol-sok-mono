@@ -12,6 +12,8 @@ import {
   generatedLevel,
   parseGeneratedId,
 } from './level-generator/generate-level';
+import type { BotDifficulty } from './bot-controller';
+import { MissionId, TRAINING_LEVELS } from './training-levels';
 
 /**
  * A level is a map plus the tuning that makes it play differently.
@@ -48,6 +50,14 @@ export interface Level {
    * food for whoever eats them first. Two at most, the GPU runs four.
    */
   neutrals?: readonly NeutralSpot[];
+  /** The training mission the level is played for - see `training.ts`. */
+  mission?: MissionId;
+  /**
+   * Who the level is played against, whatever the setup says: the
+   * computer at that difficulty, or a training dummy - a colony that sits
+   * where it spawned and nobody steers. The picked difficulty when absent.
+   */
+  opponent?: BotDifficulty | 'dummy';
 }
 
 /**
@@ -522,12 +532,13 @@ export function isLevelId(value: unknown): value is string {
 }
 
 /**
- * The level with that id - a generated one for a `gen:` id - falling back to
- * the first one.
+ * The level with that id - a generated one for a `gen:` id, a training
+ * mission's - falling back to the first one.
  */
 export function getLevel(id: string): Level {
   return (
     LEVELS.find((level) => level.id === id) ??
+    TRAINING_LEVELS.find((level) => level.id === id) ??
     generatedLevel(id)?.level ??
     LEVELS[0]
   );
@@ -619,8 +630,11 @@ export function isLadderLevelId(id: string): id is LadderLevelId {
  * level the name it was given.
  */
 export function levelTitleText(level: Level): GameText {
-  return isLadderLevelId(level.id)
-    ? { key: `levels.titles.${level.id}` }
+  if (isLadderLevelId(level.id)) {
+    return { key: `levels.titles.${level.id}` };
+  }
+  return level.mission !== undefined
+    ? { key: `training.missions.${level.mission}.title` }
     : // A level of neither kind is none of the game's - getLevel falls
       // back to the first one for it.
       (level.title ?? { key: 'levels.titles.petri-dish' });
@@ -645,8 +659,24 @@ export function levelDescriptionText(level: Level): GameText {
   if (isLadderLevelId(level.id)) {
     return { key: `levels.descriptions.${level.id}` };
   }
+  if (level.mission !== undefined) {
+    return { key: `training.missions.${level.mission}.description` };
+  }
   const recipe = parseGeneratedId(level.id)?.recipe ?? 'field';
   return { key: `levels.generated.styles.${recipe}.description` };
+}
+
+/**
+ * The computer's difficulty on a level: the level's own opponent where it
+ * names one, else the difficulty picked.
+ */
+export function levelDifficulty(
+  level: Level,
+  picked: BotDifficulty
+): BotDifficulty {
+  return level.opponent === undefined || level.opponent === 'dummy'
+    ? picked
+    : level.opponent;
 }
 
 /** The level before this one, or null when it is the first. */

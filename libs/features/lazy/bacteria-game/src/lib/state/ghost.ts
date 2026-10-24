@@ -35,6 +35,14 @@ export function turnedOnto(
   };
 }
 
+/** An input that changes nothing. */
+export const NO_INPUT: GhostInputs = Object.freeze({
+  boost: false,
+  drag: null,
+  steer: null,
+  weapon: false,
+});
+
 /** What a ghost puts in before a tick - null where it changes nothing. */
 export interface GhostInputs {
   boost: boolean;

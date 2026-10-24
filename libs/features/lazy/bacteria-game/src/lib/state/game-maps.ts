@@ -6,6 +6,7 @@ import { mapZones } from './zones';
 import { OUTBREAK_MAPS } from './outbreak-maps';
 import { EXPANSE_MAPS } from './expanse-maps';
 import { REACTOR_MAPS } from './reactor-maps';
+import { TRAINING_MAPS } from './training-levels';
 
 /**
  * The layout on an arena of any width: laid out on the base arena and grown
@@ -75,6 +76,7 @@ export const GAME_MAPS: readonly GameMap[] = [
   ...REACTOR_MAPS,
   ...OUTBREAK_MAPS,
   ...EXPANSE_MAPS,
+  ...TRAINING_MAPS,
 ].map(scalable);
 
 const CORRIDORS = GAME_MAPS.find((map) => map.id === 'corridors') as GameMap;

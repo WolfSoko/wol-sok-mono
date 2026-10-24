@@ -82,7 +82,7 @@ describe('xpGain', () => {
   it('pays a little for a match between two players', () => {
     const after = addTotals(EMPTY_PROGRESS, { matchXp: 15, couchMatches: 1 });
 
-    expect(xpGain(EMPTY_PROGRESS, after, null)).toMatchObject({
+    expect(xpGain(EMPTY_PROGRESS, after, 'couch')).toMatchObject({
       parts: [{ label: 'Two players', xp: 15 }],
       total: 15,
     });

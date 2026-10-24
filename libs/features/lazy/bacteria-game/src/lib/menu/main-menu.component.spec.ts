@@ -76,6 +76,24 @@ describe('MainMenuComponent', () => {
     expect(resume).toHaveBeenCalled();
   });
 
+  it('offers the training until every mission is done', () => {
+    const training = jest.fn();
+    fixture.componentInstance.training.subscribe(training);
+    fixture.componentRef.setInput('missionsDone', 2);
+    fixture.detectChanges();
+
+    // Not the New game button, whose line names the training as well.
+    expect(button('New here?').textContent).toContain(
+      'New here? 2 of 5 missions done'
+    );
+    button('New here?').click();
+    expect(training).toHaveBeenCalled();
+
+    fixture.componentRef.setInput('missionsDone', 5);
+    fixture.detectChanges();
+    expect(() => button('New here?')).toThrow();
+  });
+
   it('mutes, unmutes and toggles fullscreen', () => {
     const sound = jest.fn();
     const fullscreen = jest.fn();

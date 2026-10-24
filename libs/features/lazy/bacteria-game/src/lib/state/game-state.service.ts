@@ -34,6 +34,7 @@ import {
   getLevel,
   gridScale,
   levelBalance,
+  levelDifficulty,
   levelSize,
   LEVELS,
   playableOnline,
@@ -60,6 +61,7 @@ import type { SizeSample } from './match-engine';
 import { GameReplays } from '../storage/game-replays';
 import { dailyLevelId } from './daily';
 import { afterMatch, endlessLevelId, isRunOver, newRun } from './endless';
+import { MissionId, missionById, missionOf } from './training';
 import { replayFromHash } from './replay-link';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
@@ -388,15 +390,21 @@ export class GameStateService {
         : null;
     const earnings = this.recordMatch(outcome.winner, run?.wins ?? null);
     const recording = this.recording(outcome);
+    const training =
+      this.plan != null && getLevel(this.plan.levelId).mission !== undefined;
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
       // A ghost match is no match to play again: its opponent is no bot.
       // One online is its recording, which has no bot to fight as a ghost.
-      ...(online !== null
-        ? { lastReplay: recording?.replay ?? null }
-        : ghost === null
-          ? { lastReplay: recording?.replay ?? this.replay(outcome) }
-          : {}),
+      // A training mission's is none to fight either: its levels are no
+      // replay's, and a dummy is no opponent to race.
+      ...(training
+        ? { lastReplay: null }
+        : online !== null
+          ? { lastReplay: recording?.replay ?? null }
+          : ghost === null
+            ? { lastReplay: recording?.replay ?? this.replay(outcome) }
+            : {}),
       waitingForPeer: false,
       endless: run,
       currentState: GameState.END,
@@ -496,13 +504,13 @@ export class GameStateService {
    * one a stored replay is checked on.
    */
   private recordsLocal(plan: MatchPlan, ghost: Replay | null): boolean {
-    const grid = arenaSize(
-      ONLINE_SIM_RESOLUTION,
-      levelSize(getLevel(plan.levelId))
-    );
+    const level = getLevel(plan.levelId);
+    const grid = arenaSize(ONLINE_SIM_RESOLUTION, levelSize(level));
     return (
       this.replayPrefs.recordLocal &&
       ghost === null &&
+      // A training mission's level is no replay's.
+      level.mission === undefined &&
       plan.mode === 'vs-computer' &&
       plan.width === grid.width &&
       plan.height === grid.height
@@ -541,6 +549,7 @@ export class GameStateService {
       }
       case 'vs-computer': {
         const level = getLevel(levelId);
+        const mission = missionOf(levelId);
         const record = matchRecord(untracked(this.playerStore.entities), {
           levelId,
           difficulty,
@@ -553,9 +562,12 @@ export class GameStateService {
             2
           ),
         });
-        return record === null
-          ? null
-          : this.progress.recordMatch(record, { dailyDay, endlessWins });
+        if (record === null) {
+          return null;
+        }
+        return mission === null
+          ? this.progress.recordMatch(record, { dailyDay, endlessWins })
+          : this.progress.recordTraining(record, mission);
       }
     }
   }
@@ -582,10 +594,12 @@ export class GameStateService {
       ghost,
       matchLevel,
     } = this.gameStateStore.snapshot();
+    const planned = matchLevel ?? levelId;
     this.plan = {
-      levelId: matchLevel ?? levelId,
+      levelId: planned,
       mode: planModeOf(mode, matchLevel),
-      difficulty,
+      // A level with an opponent of its own - a training mission's - plays it.
+      difficulty: levelDifficulty(getLevel(planned), difficulty),
       colors,
       headStart,
       width,
@@ -615,7 +629,8 @@ export class GameStateService {
    * True when the next match is one the evolution plays in: against the
    * computer or a ghost on the ladder or a generated level - see
    * `evolution.ts`. The daily level and endless runs feed the leaderboards
-   * and stay plain, as do couch and online matches.
+   * and stay plain, as do couch and online matches and the training
+   * missions, which teach the colony every player starts with.
    */
   private evolves(): boolean {
     const { online, mode, matchLevel, dailyDay, endlessMatch } =
@@ -624,7 +639,8 @@ export class GameStateService {
       online === null &&
       planModeOf(mode, matchLevel) === 'vs-computer' &&
       dailyDay === null &&
-      !endlessMatch
+      !endlessMatch &&
+      (matchLevel === null || getLevel(matchLevel).mission === undefined)
     );
   }
 
@@ -675,6 +691,18 @@ export class GameStateService {
     this.gameStateStore.update({
       matchLevel: dailyLevelId(day),
       dailyDay: day,
+    });
+  }
+
+  /**
+   * Sets the next match on a training mission's level, against the easy
+   * computer or the training dummy, leaving the setup as it is. It holds
+   * for that one match; {@link reset} ends it.
+   */
+  public playMission(id: MissionId): void {
+    this.gameStateStore.update({
+      ...NO_ONE_MATCH,
+      matchLevel: missionById(id).levelId,
     });
   }
 

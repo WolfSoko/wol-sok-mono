@@ -61,16 +61,60 @@ describe('NewGameComponent', () => {
   }
 
   it('opens on the modes, each with where the player stands in it', async () => {
-    await render({ openLevels: 5, endlessBest: 4 });
+    await render({
+      openLevels: 5,
+      endlessBest: 4,
+      training: { steer: '2026-10-24' },
+    });
 
     const modes = Array.from(host().querySelectorAll('.mode')).map(
       (mode) => mode.textContent ?? ''
     );
-    expect(modes).toHaveLength(6);
-    expect(modes[0]).toContain(`5 of ${LEVELS.length} levels open`);
-    expect(modes[1]).toContain('3 of 3 attempts left');
-    expect(modes[2]).toContain('best 4');
+    expect(modes).toHaveLength(7);
+    expect(modes[0]).toContain('1 of 5 missions done');
+    expect(modes[1]).toContain(`5 of ${LEVELS.length} levels open`);
+    expect(modes[2]).toContain('3 of 3 attempts left');
+    expect(modes[3]).toContain('best 4');
     expect(stepLabels()).toEqual(['Mode', 'Level', 'Start']);
+  });
+
+  it('goes from the training to its missions, then to a briefing', async () => {
+    await render({
+      training: { steer: '2026-10-24' },
+      entry: { kind: 'training', step: 'level' } satisfies NewGameEntry,
+    });
+    const missions = jest.fn();
+    const starts = jest.fn();
+    fixture.componentInstance.missionChange.subscribe((id) => {
+      missions(id);
+      fixture.componentRef.setInput('missionId', id);
+    });
+    fixture.componentInstance.start.subscribe(starts);
+
+    const rows = Array.from(host().querySelectorAll('.mission')).map(
+      (row) => row.textContent ?? ''
+    );
+    expect(rows).toHaveLength(5);
+    expect(rows[0]).toContain('Done');
+    expect(rows[1]).toContain('Up next');
+    expect(host().querySelector('feat-lazy-bac-game-level-map')).toBeNull();
+
+    button('Boost').click();
+    await settle();
+
+    expect(missions).toHaveBeenCalledWith('boost');
+    const briefing = host().querySelector('.details')?.textContent ?? '';
+    expect(briefing).toContain('Mission 3 of 5');
+    expect(briefing).toContain('Eat 12 pellets and boost twice');
+    expect(briefing).toContain('Space, or the boost pad');
+    // The training picks its opponent: no difficulty to choose.
+    expect(host().querySelector('.difficulty-picker')).toBeNull();
+    expect(host().querySelector('.setup')?.textContent).toContain(
+      'A training dummy'
+    );
+
+    button('Start Boost').click();
+    expect(starts).toHaveBeenCalledWith('training');
   });
 
   it('goes from the campaign to its levels, then to the start', async () => {
@@ -284,7 +328,7 @@ describe('NewGameComponent', () => {
   it('notes the daily streak, and that the attempts are used', async () => {
     await render({ daily: { ...DAILY, attemptsLeft: 0, streak: 4 } });
 
-    expect(host().querySelectorAll('.mode')[1].textContent).toContain(
+    expect(host().querySelectorAll('.mode')[2].textContent).toContain(
       'Attempts used - practice until 00:00 UTC · 4-day streak'
     );
   });

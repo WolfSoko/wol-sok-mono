@@ -277,6 +277,33 @@
   }
 }
 
+// The goal of a training mission, at the top of the arena while it runs.
+.mission-goal {
+  position: absolute;
+  top: 4.5rem;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: calc(100% - 2rem);
+  margin: 0;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 55%);
+  color: #fff;
+  font-size: 0.9rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+
+  mat-icon {
+    flex: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 1.1rem;
+  }
+}
+
 // Over the arena while an online match waits for the other device.
 .peer-wait {
   position: absolute;
