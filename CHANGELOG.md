@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.70.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.69.0...v74.70.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** integer weapon circles behind the deterministic flag ([#2608](https://github.com/WolfSoko/wol-sok-mono/issues/2608)) ([32b2b73](https://github.com/WolfSoko/wol-sok-mono/commit/32b2b734d1531b2fe6595f53ecc832558aaab477))
+* **feat-lazy-bacteria-game:** training missions for new players ([#2607](https://github.com/WolfSoko/wol-sok-mono/issues/2607)) ([64e6b4b](https://github.com/WolfSoko/wol-sok-mono/commit/64e6b4b1559e6cbbbc78f5b44c6cc5144281c96f))
+
+### Bug Fixes
+
+* **angular-examples:** fall back to setTimeout when requestIdleCallback is missing ([#2609](https://github.com/WolfSoko/wol-sok-mono/issues/2609)) ([fbf73aa](https://github.com/WolfSoko/wol-sok-mono/commit/fbf73aa2fa84d30c721b8e8f14b6e90d586a9ab3))
+
 ## [74.69.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.68.0...v74.69.0) (2026-10-24)
 
 ### Features
