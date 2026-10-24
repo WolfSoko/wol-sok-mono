@@ -1,8 +1,8 @@
 import { ActiveEffect, WEAPON_EFFECTS, WeaponId, WEAPONS } from './evolution';
 import { TICK_SEC } from './fixed-tick';
 import {
+  actsOn,
   covers,
-  effectsOn,
   toughnessOf,
   WEAPON_CODE,
   WeaponEffects,
@@ -122,20 +122,18 @@ describe('weapon circles', () => {
   });
 
   it('hit the enemies with the hostile weapons, the owner with the others', () => {
-    const live = [
-      effect('toxin-bomb', 0),
-      effect('agar-bloom', 0),
-      effect('phage-strike', 1, 0),
-    ];
+    const bomb = effect('toxin-bomb', 0);
+    const bloom = effect('agar-bloom', 0);
+    const strike = effect('phage-strike', 1, 0);
 
-    expect(effectsOn(live, 'toxin-bomb', 0)).toEqual([]);
-    expect(effectsOn(live, 'toxin-bomb', 1)).toHaveLength(1);
+    expect(actsOn(bomb, 0)).toBe(false);
+    expect(actsOn(bomb, 1)).toBe(true);
     // A neutral colony is everybody's enemy.
-    expect(effectsOn(live, 'toxin-bomb', 2)).toHaveLength(1);
-    expect(effectsOn(live, 'agar-bloom', 0)).toHaveLength(1);
-    expect(effectsOn(live, 'agar-bloom', 1)).toEqual([]);
-    expect(effectsOn(live, 'phage-strike', 0)).toHaveLength(1);
-    expect(effectsOn(live, 'phage-strike', 1)).toEqual([]);
+    expect(actsOn(bomb, 2)).toBe(true);
+    expect(actsOn(bloom, 0)).toBe(true);
+    expect(actsOn(bloom, 1)).toBe(false);
+    expect(actsOn(strike, 0)).toBe(true);
+    expect(actsOn(strike, 1)).toBe(false);
   });
 
   it('shield their owner, on top of its membrane', () => {

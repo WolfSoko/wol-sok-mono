@@ -111,17 +111,6 @@ export function actsOn(effect: ActiveEffect, playerId: number): boolean {
   return (effect.owner === playerId) !== weaponOf(effect.weapon).hostile;
 }
 
-/** The effects of one kind that act on a colony - see {@link actsOn}. */
-export function effectsOn(
-  effects: readonly ActiveEffect[],
-  weapon: WeaponId,
-  playerId: number
-): ActiveEffect[] {
-  return effects.filter(
-    (effect) => effect.weapon === weapon && actsOn(effect, playerId)
-  );
-}
-
 /** True when any of the effects covers the cell. */
 export function anyCovers(
   effects: readonly ActiveEffect[],
@@ -147,12 +136,17 @@ export function toughnessOf(
   playerId: number
 ): number {
   const toughness = traits.toughnessFactor ?? 1;
-  return effects.some(
-    (effect) =>
-      weaponOf(effect.weapon).reach === 'colony' && actsOn(effect, playerId)
-  )
-    ? toughness * WEAPON_EFFECTS.shieldToughnessFactor
-    : toughness;
+  // A plain loop: a step of a plain match allocates nothing here.
+  for (let i = 0; i < effects.length; i++) {
+    const effect = effects[i];
+    if (
+      weaponOf(effect.weapon).reach === 'colony' &&
+      actsOn(effect, playerId)
+    ) {
+      return toughness * WEAPON_EFFECTS.shieldToughnessFactor;
+    }
+  }
+  return toughness;
 }
 
 /** The number each weapon is known by in the shaders: its place in `WEAPONS`. */

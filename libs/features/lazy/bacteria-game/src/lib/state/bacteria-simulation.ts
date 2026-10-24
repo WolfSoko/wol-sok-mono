@@ -1,8 +1,13 @@
-import { ActiveEffect, EvolvedTraits, WEAPON_EFFECTS } from './evolution';
 import {
+  ActiveEffect,
+  EvolvedTraits,
+  WEAPON_EFFECTS,
+  WeaponId,
+} from './evolution';
+import {
+  actsOn,
   anyCovers,
   covers,
-  effectsOn,
   toughnessOf,
   WeaponEffects,
 } from './weapon-effects';
@@ -167,6 +172,21 @@ export function paceSteps(
   return Math.max(1, intent.steps + whole);
 }
 
+/**
+ * The most cells a colony may travel in a frame: boosted, and with the
+ * whole step its flagella add now and then (see {@link paceSteps}).
+ */
+export function maxSteps(
+  target: Player,
+  balance: GameBalance,
+  deltaTimeSec: number,
+  traits: EvolvedTraits = PLAIN_TRAITS
+): number {
+  const steps = target.maxSpeed * balance.boostSpeedFactor * deltaTimeSec;
+  const flagella = Math.max(0, (traits.speedFactor ?? 1) - 1);
+  return Math.max(1, Math.round(steps) + Math.ceil(steps * flagella));
+}
+
 export function noEvents(): StepEvents {
   return {
     captures: 0,
@@ -283,6 +303,8 @@ export class BacteriaSimulation implements Simulation {
   private readonly weaponEffects = new WeaponEffects();
   /** The part of a step each colony's flagella have made up - see `paceSteps`. */
   private paces: number[] = [];
+  /** Which effects act on each colony, by colony index - kept from step to step. */
+  private readonly hits: WeaponHits[] = [];
 
   constructor(
     balance: GameBalance = gameBalance,
@@ -668,8 +690,7 @@ export class BacteriaSimulation implements Simulation {
       );
     });
 
-    // Null in a plain match: no effect to look up for any bacterium.
-    const hits = effects.length > 0 ? this.weaponHits(effects) : null;
+    const hits = this.weaponHits(effects);
 
     this.buildGrid();
     this.updateNutrients(deltaTimeSec);
@@ -678,7 +699,7 @@ export class BacteriaSimulation implements Simulation {
     this.applyCaptures(captures);
     this.clearDeaths(deaths);
     this.compact([...captures, ...deaths]);
-    if (hits !== null) {
+    if (effects.length > 0) {
       this.strikePhages(hits);
     }
     // Division and movement compete for the same free cells, so whoever is
@@ -696,15 +717,40 @@ export class BacteriaSimulation implements Simulation {
     }
   }
 
-  /** Which effects act on each colony this step, by colony index. */
-  private weaponHits(effects: readonly ActiveEffect[]): WeaponHits[] {
-    return this.colonies.map(({ playerId, traits }) => ({
-      toughness: toughnessOf(traits, effects, playerId),
-      toxins: effectsOn(effects, 'toxin-bomb', playerId),
-      cryo: effectsOn(effects, 'cryo-pulse', playerId),
-      phages: effectsOn(effects, 'phage-strike', playerId),
-      blooms: effectsOn(effects, 'agar-bloom', playerId),
-    }));
+  /**
+   * Which effects act on each colony this step, by colony index, sorted in
+   * one pass into lists kept from step to step - a plain match allocates
+   * nothing here, and every list stays empty.
+   */
+  private weaponHits(effects: readonly ActiveEffect[]): readonly WeaponHits[] {
+    const hits = this.hits;
+    const count = this.colonies.length;
+    while (hits.length < count) {
+      hits.push({ toughness: 1, toxins: [], cryo: [], phages: [], blooms: [] });
+    }
+    hits.length = count;
+    for (let index = 0; index < count; index++) {
+      const { playerId, traits } = this.colonies[index];
+      const hit = hits[index];
+      hit.toughness = toughnessOf(traits, effects, playerId);
+      hit.toxins.length = 0;
+      hit.cryo.length = 0;
+      hit.phages.length = 0;
+      hit.blooms.length = 0;
+    }
+    for (let e = 0; e < effects.length; e++) {
+      const effect = effects[e];
+      const list = HIT_LISTS[effect.weapon];
+      if (list === undefined) {
+        continue;
+      }
+      for (let index = 0; index < count; index++) {
+        if (actsOn(effect, this.colonies[index].playerId)) {
+          hits[index][list].push(effect);
+        }
+      }
+    }
+    return hits;
   }
 
   /**
@@ -713,7 +759,6 @@ export class BacteriaSimulation implements Simulation {
    * the energy they have. They leave food behind as a capture does.
    */
   private strikePhages(hits: readonly WeaponHits[]): void {
-    const { feedEnergyPerCapture } = this.balance;
     hits.forEach(({ phages }, victim) => {
       if (phages.length === 0) {
         return;
@@ -733,27 +778,35 @@ export class BacteriaSimulation implements Simulation {
           kept.push(bacterium);
           continue;
         }
-        const index = bacterium.y * this.width + bacterium.x;
         this.colonies[winner].bacterias.push(bacterium);
         this.colonies[winner].captured++;
         colony.lost++;
         this.events.captures++;
-        this.owner[index] = winner;
-        this.feed[index] += feedEnergyPerCapture;
-        for (const [dx, dy] of NEIGHBOURS) {
-          const nx = bacterium.x + dx;
-          const ny = bacterium.y + dy;
-          if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) {
-            continue;
-          }
-          const neighbourIndex = ny * this.width + nx;
-          if (this.owner[neighbourIndex] === winner) {
-            this.feed[neighbourIndex] += feedEnergyPerCapture;
-          }
-        }
+        this.owner[bacterium.y * this.width + bacterium.x] = winner;
+        this.leaveFood(bacterium, winner);
       }
       colony.bacterias = kept;
     });
+  }
+
+  /**
+   * The food a kill leaves behind, which fuels a breakthrough: on its cell,
+   * and on the cells of the winning colony around it.
+   */
+  private leaveFood(bacterium: Bacteria, winner: number): void {
+    const { feedEnergyPerCapture } = this.balance;
+    this.feed[bacterium.y * this.width + bacterium.x] += feedEnergyPerCapture;
+    for (const [dx, dy] of NEIGHBOURS) {
+      const nx = bacterium.x + dx;
+      const ny = bacterium.y + dy;
+      if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) {
+        continue;
+      }
+      const neighbourIndex = ny * this.width + nx;
+      if (this.owner[neighbourIndex] === winner) {
+        this.feed[neighbourIndex] += feedEnergyPerCapture;
+      }
+    }
   }
 
   /** The colonies in random order, so no colony is always handled first. */
@@ -915,7 +968,7 @@ export class BacteriaSimulation implements Simulation {
     deltaTimeSec: number,
     attackFactor: Float32Array,
     deaths: Death[],
-    hits: readonly WeaponHits[] | null
+    hits: readonly WeaponHits[]
   ): Capture[] {
     const {
       defenceFactor,
@@ -937,12 +990,7 @@ export class BacteriaSimulation implements Simulation {
     ) {
       const bacterias = this.colonies[colonyIndex].bacterias;
       // 1 for a plain colony: the pressure times 1 is the pressure, exactly.
-      const toughness =
-        hits?.[colonyIndex].toughness ??
-        this.colonies[colonyIndex].traits.toughnessFactor ??
-        1;
-      const toxins = hits?.[colonyIndex].toxins ?? NO_EFFECTS;
-      const cryo = hits?.[colonyIndex].cryo ?? NO_EFFECTS;
+      const { toughness, toxins, cryo } = hits[colonyIndex];
       for (let i = 0; i < bacterias.length; i++) {
         const bacterium = bacterias[i];
         const { x, y } = bacterium;
@@ -1049,7 +1097,7 @@ export class BacteriaSimulation implements Simulation {
     if (captures.length === 0) {
       return;
     }
-    const { captureEnergy, feedEnergyPerCapture, consumeChance } = this.balance;
+    const { captureEnergy, consumeChance } = this.balance;
     this.events.captures += captures.length;
 
     for (const capture of captures) {
@@ -1070,19 +1118,7 @@ export class BacteriaSimulation implements Simulation {
         this.energy[index] = captureEnergy;
       }
 
-      // The kill leaves food behind, which fuels a breakthrough.
-      this.feed[index] += feedEnergyPerCapture;
-      for (const [dx, dy] of NEIGHBOURS) {
-        const nx = bacterium.x + dx;
-        const ny = bacterium.y + dy;
-        if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) {
-          continue;
-        }
-        const neighbourIndex = ny * this.width + nx;
-        if (this.owner[neighbourIndex] === capture.winner) {
-          this.feed[neighbourIndex] += feedEnergyPerCapture;
-        }
-      }
+      this.leaveFood(bacterium, capture.winner);
     }
   }
 
@@ -1122,7 +1158,7 @@ export class BacteriaSimulation implements Simulation {
   private divide(
     colonies: Colony[],
     deltaTimeSec: number,
-    hits: readonly WeaponHits[] | null
+    hits: readonly WeaponHits[]
   ): void {
     const { divideEnergyThreshold, parentEnergyShare } = this.balance;
     const capacity = colonyCapacity(this.balance, this.colonies.length);
@@ -1130,8 +1166,7 @@ export class BacteriaSimulation implements Simulation {
     for (const colony of colonies) {
       const colonyIndex = this.colonies.indexOf(colony);
       const chance = divideChanceOf(this.balance, colony.traits, deltaTimeSec);
-      const blooms = hits?.[colonyIndex].blooms ?? NO_EFFECTS;
-      const cryo = hits?.[colonyIndex].cryo ?? NO_EFFECTS;
+      const { blooms, cryo } = hits[colonyIndex];
       const bacterias = colony.bacterias;
       let count = bacterias.length;
       const parents = count;
@@ -1202,7 +1237,7 @@ export class BacteriaSimulation implements Simulation {
     colonies: Colony[],
     targets: (Player | null)[],
     deltaTimeSec: number,
-    hits: readonly WeaponHits[] | null
+    hits: readonly WeaponHits[]
   ): void {
     const { jitter, influenceCellSize: cellSize } = this.balance;
     const cells = this.influenceWidth * this.influenceHeight;
@@ -1219,7 +1254,7 @@ export class BacteriaSimulation implements Simulation {
       if (target == null || intent == null) {
         continue;
       }
-      const cryo = hits?.[colonyIndex].cryo ?? NO_EFFECTS;
+      const { cryo } = hits[colonyIndex];
       const huntOffset = colonyIndex * cells;
       const { x: targetX, y: targetY } = target;
       const { aggression } = intent;
@@ -1382,16 +1417,27 @@ interface WeaponHits {
   /** Times the pressure on its bacteria. */
   toughness: number;
   /** Enemies' toxin clouds. */
-  toxins: readonly ActiveEffect[];
+  toxins: ActiveEffect[];
   /** Enemies' cryo pulses. */
-  cryo: readonly ActiveEffect[];
-  /** Enemies' phage strikes, in their first step. */
-  phages: readonly ActiveEffect[];
+  cryo: ActiveEffect[];
+  /** Enemies' phage strikes - a strike acts in one step only. */
+  phages: ActiveEffect[];
   /** Its own agar blooms. */
-  blooms: readonly ActiveEffect[];
+  blooms: ActiveEffect[];
 }
 
-const NO_EFFECTS: readonly ActiveEffect[] = Object.freeze([]);
+/**
+ * The list of {@link WeaponHits} each weapon's effects go into - the shield
+ * goes into none: it acts through the toughness.
+ */
+const HIT_LISTS: Readonly<
+  Partial<Record<WeaponId, Exclude<keyof WeaponHits, 'toughness'>>>
+> = {
+  'toxin-bomb': 'toxins',
+  'cryo-pulse': 'cryo',
+  'phage-strike': 'phages',
+  'agar-bloom': 'blooms',
+};
 
 /** Times a bacterium's chance to divide from a bloom and a freeze. */
 function effectDivideFactor(

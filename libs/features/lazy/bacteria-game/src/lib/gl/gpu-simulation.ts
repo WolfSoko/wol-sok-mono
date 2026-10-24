@@ -15,6 +15,7 @@ import {
   ColonySpawn,
   colonyIntent,
   divideChanceOf,
+  maxSteps,
   paceSteps,
   noEvents,
   Nutrient,
@@ -602,19 +603,7 @@ export class GpuSimulation implements Simulation {
       u.targets[slot * 2 + 1] = target.y;
       this.reach[slot] = Math.min(
         MAX_MOVE_STEPS,
-        Math.max(
-          1,
-          Math.round(target.maxSpeed * b.boostSpeedFactor * deltaTimeSec) +
-            // The step flagella add now and then.
-            ((traits.speedFactor ?? 1) > 1
-              ? Math.ceil(
-                  target.maxSpeed *
-                    b.boostSpeedFactor *
-                    ((traits.speedFactor ?? 1) - 1) *
-                    deltaTimeSec
-                )
-              : 0)
-        )
+        maxSteps(target, b, deltaTimeSec, traits)
       );
     });
     const effectCount = this.fillEffectUniforms(effects);

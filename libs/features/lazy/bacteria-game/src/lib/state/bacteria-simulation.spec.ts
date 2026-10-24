@@ -2,6 +2,7 @@ import {
   BacteriaSimulation,
   Colony,
   colonyIntent,
+  maxSteps,
   paceSteps,
 } from './bacteria-simulation';
 import { ActiveEffect, WEAPON_EFFECTS, WeaponId } from './evolution';
@@ -924,6 +925,20 @@ describe('BacteriaSimulation with evolution', () => {
       expect(quick.steps).toBe(plain.steps);
       expect(travelled - 60 * plain.steps).toBeGreaterThanOrEqual(17);
       expect(travelled - 60 * plain.steps).toBeLessThanOrEqual(18);
+    });
+
+    it('bound the cells a colony may travel in a frame, boosted', () => {
+      const player = createPlayer({ x: 300, y: 70, maxSpeed: 150 });
+      const boosted = (150 * gameBalance.boostSpeedFactor) / 60;
+      const quick = { divideFactor: 1, attackFactor: 1, cooldownFactor: 1 };
+
+      expect(maxSteps(player, gameBalance, 1 / 60)).toBe(Math.round(boosted));
+      expect(
+        maxSteps(player, gameBalance, 1 / 60, { ...quick, speedFactor: 1.12 })
+      ).toBe(Math.round(boosted) + 1);
+      expect(
+        maxSteps(player, gameBalance, 1 / 60, { ...quick, speedFactor: 0.9 })
+      ).toBe(Math.round(boosted));
     });
   });
 
