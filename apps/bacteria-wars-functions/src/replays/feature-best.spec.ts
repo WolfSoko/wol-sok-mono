@@ -64,7 +64,14 @@ describe('isCandidate', () => {
     stored: StoredReplay,
     found = accounts,
     out = new Set<string>()
-  ) => isCandidate(stored, BALANCE, found, out, NOW);
+  ) =>
+    isCandidate(
+      stored,
+      { BALANCE_VERSION: BALANCE, TICKS_PER_SEC: 60 },
+      found,
+      out,
+      NOW
+    );
 
   it('takes a submitted local match and an agreed online one', () => {
     expect(candidate(replay('l_1'))).toBe(true);

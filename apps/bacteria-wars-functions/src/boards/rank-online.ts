@@ -1,4 +1,9 @@
-import { Firestore, Timestamp, Transaction } from 'firebase-admin/firestore';
+import {
+  FieldValue,
+  Firestore,
+  Timestamp,
+  Transaction,
+} from 'firebase-admin/firestore';
 import type { OnlineReason } from '@wolsok/feat-lazy-bac-game/engine';
 import type { AccountLookup } from '../accounts';
 import type { Engine } from '../engine';
@@ -237,7 +242,8 @@ export function putOnlineEntry(
  * after it was created, whose one report ended regularly - a win, the
  * clock, or a forfeit after 30 s - counts one against the player the stub
  * names who did not report. Their entry shows it, `sort` does not. Run by
- * the hourly function; the ranking marker makes it count once.
+ * the hourly function; the ranking marker makes it count once, and taking
+ * away `closeAt` keeps the hourly query from finding it again.
  */
 export async function closeWaiting(
   db: Firestore,
@@ -254,9 +260,15 @@ export async function closeWaiting(
     doc.endedBy !== 'desync' &&
     (doc.endedBy !== 'forfeit' || doc.ticks >= engine.ONLINE_CAPS.minTicks);
   return db.runTransaction(async (tx) => {
+    const replayRef = db.doc(`replays/${replayId}`);
     const markerRef = db.doc(`rankedReplays/${replayId}`);
-    const marker = await tx.get(markerRef);
-    if (marker.exists) {
+    const [current, marker] = await tx.getAll(replayRef, markerRef);
+    if (!current.exists) {
+      return null;
+    }
+    const closed = { closeAt: FieldValue.delete() };
+    if (marker.exists || current.get('state') !== 'waiting') {
+      tx.update(replayRef, closed);
       return null;
     }
     const counts =
@@ -272,6 +284,7 @@ export async function closeWaiting(
       atHour = entry.exists ? (entry.get('atHour') as number) : null;
       standing = await readStanding(tx, db, counts, now);
     }
+    tx.update(replayRef, closed);
     tx.create(markerRef, {
       at: Timestamp.fromMillis(now),
       notReported: counts !== null,

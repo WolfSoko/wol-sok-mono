@@ -29,7 +29,9 @@ import { rankReplay } from '../boards/rank-replay';
 import { rebuildTop } from '../boards/rebuild-top';
 import {
   candidatesOf,
+  fixedPool,
   recordFailure,
+  Slice,
   verifyDaily,
   verifyRun,
 } from '../boards/verification';
@@ -324,6 +326,7 @@ describe('the online board', () => {
       players: ['host'],
       state: 'waiting',
       createdAt: Timestamp.fromMillis(NOW - 3 * HOUR),
+      closeAt: Timestamp.fromMillis(NOW - HOUR),
     });
     await agreed('o_c'); // gives guest an online entry
     await countOnline(
@@ -343,6 +346,27 @@ describe('the online board', () => {
       nr: 1,
     });
     expect(doc.players).toEqual(['host']);
+  });
+
+  it('does not find a closed match again, so closed ones never fill a run', async () => {
+    for (const [id, back] of [
+      ['o_w1', 2],
+      ['o_w2', 1],
+    ] as const) {
+      await agreed(id, {
+        players: ['host'],
+        state: 'waiting',
+        createdAt: Timestamp.fromMillis(NOW - 2 * HOUR - back * HOUR),
+        closeAt: Timestamp.fromMillis(NOW - back * HOUR),
+      });
+    }
+    expect(await closeWaitingOnline(moderation(), NOW, 1)).toBe(1);
+    expect(await closeWaitingOnline(moderation(), NOW, 1)).toBe(1);
+    expect(await closeWaitingOnline(moderation(), NOW, 1)).toBe(0);
+    const closed = await db.doc('replays/o_w1').get();
+    expect(closed.get('state')).toBe('waiting');
+    expect(closed.get('closeAt')).toBeUndefined();
+    expect((await member('guest')).record?.nr).toBe(2);
   });
 });
 
@@ -445,7 +469,7 @@ describe('ranked daily and endless matches', () => {
       expect((await member('ana')).boards).toEqual([boardId]);
 
       expect(
-        await verifyDaily(db, engine, 'ana', TODAY, () => 'daily', NOW)
+        await verifyDaily(db, engine, 'ana', TODAY, fixedPool('daily'), NOW)
       ).toBe('verified');
       expect((await entry('ana', boardId, 'daily'))?.status).toBe('verified');
       expect((await member('ana')).verifiedBefore).toBe(true);
@@ -466,8 +490,22 @@ describe('ranked daily and endless matches', () => {
       );
       expect(stats?.['medals']).toBeUndefined();
       expect(
-        await verifyDaily(db, engine, 'ana', TODAY, () => 'daily', NOW)
+        await verifyDaily(db, engine, 'ana', TODAY, fixedPool('daily'), NOW)
       ).toBe('nothing');
+    });
+
+    it('charges the slice only for a re-run it reserved', async () => {
+      const at = NOW - 60_000;
+      await declare('ana', first, at);
+      await submit('ana', 's1', await ranked('ana', first, at, level()), first);
+      await db.doc('replays/l_s1/blob/data').delete();
+      const slice = new Slice({ daily: 200, endless: 0 }, NOW + HOUR);
+      expect(
+        await verifyDaily(db, engine, 'ana', TODAY, slice.payer('daily'), NOW)
+      ).toBe('nothing');
+      // Nothing spent: a second re-run of 100 ticks still fits the 200.
+      slice.spend('daily', 100);
+      expect(slice.poolFor('daily', 100)).toBe('daily');
     });
 
     it("refuses a seed, setup or level that is not the declaration's, and late uploads", async () => {
@@ -617,11 +655,84 @@ describe('ranked daily and endless matches', () => {
       });
 
       expect(
-        await verifyRun(db, engine, 'ana', () => 'endless', Infinity, NOW)
+        await verifyRun(db, engine, 'ana', fixedPool('endless'), Infinity, NOW)
       ).toBe('verified');
       expect((await entry('ana', 'endless', 'endless'))?.status).toBe(
         'verified'
       );
+    });
+
+    /** A run of two won matches, ranked as the client sends them. */
+    async function twoWins(): Promise<void> {
+      const at0 = NOW - 60_000;
+      const at1 = NOW - 30_000;
+      await declare('ana', attempt(0), at0);
+      await declare('ana', attempt(1), at1);
+      const runSeed = engine.attemptSeed('ana', attempt(0), at0);
+      for (const [i, at] of [at0, at1].entries()) {
+        await submit(
+          'ana',
+          `s${i}`,
+          await ranked(
+            'ana',
+            attempt(i),
+            at,
+            engine.endlessAttemptLevel(runSeed, i),
+            true
+          ),
+          attempt(i)
+        );
+      }
+    }
+
+    it('verifies a run whose first attempt expired, from what the run kept', async () => {
+      await twoWins();
+      await db.doc(`players/ana/attempts/${attempt(0)}`).delete();
+      expect(
+        await verifyRun(db, engine, 'ana', fixedPool('endless'), Infinity, NOW)
+      ).toBe('verified');
+      const run = (await db.doc(`endlessRuns/ana_${runId}`).get()).data();
+      expect(run).toEqual(
+        expect.objectContaining({ depth: 2, verifiedWins: 2 })
+      );
+      expect((await entry('ana', 'endless', 'endless'))?.status).toBe(
+        'verified'
+      );
+    });
+
+    it('turns a run stale once a win expired before its re-run', async () => {
+      await twoWins();
+      await db.doc(`endlessRuns/ana_${runId}`).update({ queued: true });
+      await db.doc('replays/l_s0').delete();
+      expect(
+        await verifyRun(db, engine, 'ana', fixedPool('endless'), Infinity, NOW)
+      ).toBe('stale');
+      const run = (await db.doc(`endlessRuns/ana_${runId}`).get()).data();
+      expect(run).toEqual(
+        expect.objectContaining({ depth: 2, status: 'stale' })
+      );
+      expect(run?.['queued']).toBeUndefined();
+      expect((await entry('ana', 'endless', 'endless'))?.status).toBe('stale');
+      expect(await candidatesOf(db, engine, accounts, 'endless', NOW)).toEqual(
+        []
+      );
+    });
+
+    it('tells a win too long to re-run from a spent budget, by its ticks', async () => {
+      await twoWins();
+      // 36,010 ticks: 600 s once rounded, 10 ticks over the re-run limit.
+      const ticks = engine.MAX_RERUN_TICKS + 10;
+      const ref = db.doc(`endlessRuns/ana_${runId}`);
+      const matches = (await ref.get()).get('matches') as {
+        ticks: number;
+        seconds: number;
+      }[];
+      matches[0] = { ...matches[0], ticks, seconds: 600 };
+      await ref.update({ matches });
+      await db.doc('replays/l_s0').update({ ticks });
+      expect(
+        await verifyRun(db, engine, 'ana', fixedPool('endless'), Infinity, NOW)
+      ).toBe('too-long');
     });
 
     it('takes a level that does not follow from the run as a lost life', async () => {
@@ -693,6 +804,60 @@ describe('ranked daily and endless matches', () => {
       const run = (await db.doc(`endlessRuns/ana_${runId}`).get()).data();
       expect(run?.['matches'][1].state).toBe('lost');
       expect(run?.['nextCloseAt']).toBeNull();
+    });
+
+    it('takes in a stored replay rankReplay missed before closing its match', async () => {
+      const at0 = NOW - 60_000;
+      await declare('ana', attempt(0), at0);
+      const runSeed = engine.attemptSeed('ana', attempt(0), at0);
+      await submit(
+        'ana',
+        's0',
+        await ranked(
+          'ana',
+          attempt(0),
+          at0,
+          engine.endlessAttemptLevel(runSeed, 0),
+          true
+        ),
+        attempt(0)
+      );
+      const at1 = NOW - 30_000;
+      await declare('ana', attempt(1), at1);
+      // Stored, but its rankReplay failed: never taken into the run.
+      const missed = await ranked(
+        'ana',
+        attempt(1),
+        at1,
+        engine.endlessAttemptLevel(runSeed, 1),
+        true
+      );
+      await acceptSubmission(
+        db,
+        's1',
+        {
+          uid: 'ana',
+          bytes: Buffer.from(await bytesOf(missed)),
+          hint: 50,
+          createdAt: Timestamp.fromMillis(NOW),
+          expireAt: Timestamp.fromMillis(NOW + DAY),
+          attempt: attempt(1),
+        },
+        NOW
+      );
+      await db.doc(`endlessRuns/ana_${runId}`).update({
+        nextCloseAt: Timestamp.fromMillis(NOW),
+      });
+      expect(await closeAttempts(moderation(), NOW + 3 * HOUR)).toBe(1);
+      const run = (await db.doc(`endlessRuns/ana_${runId}`).get()).data();
+      expect(run?.['matches'].map((m: { state: string }) => m.state)).toEqual([
+        'won',
+        'won',
+      ]);
+      expect(run?.['depth']).toBe(2);
+      expect(
+        (await db.doc('replays/l_s1').get()).get('rankedAt')
+      ).toBeDefined();
     });
   });
 });

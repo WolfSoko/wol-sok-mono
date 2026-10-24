@@ -15,7 +15,7 @@ import {
   takeDailySubmission,
   takeHourlySubmission,
 } from '../limits';
-import { DAY_MS } from '../time';
+import { DAY_MS, HOUR_MS } from '../time';
 import {
   deriveKind,
   inputsHash,
@@ -25,6 +25,9 @@ import {
   Submission,
 } from './derive';
 import type { ReplayDoc, ReplayKind, ReplayReport, ReplayState } from './model';
+
+/** An online replay still `waiting` this long after it was stored is closed. */
+export const WAITING_CLOSE_MS = 2 * HOUR_MS;
 
 /** Why a submission was not stored. */
 export type DropReason =
@@ -369,6 +372,7 @@ async function acceptOnline(
           createdAt: room.createdAt,
         },
         bound: room.live,
+        closeAt: Timestamp.fromMillis(submission.createdAt + WAITING_CLOSE_MS),
       };
       tx.create(replayRef, doc);
       addBlob(tx, db, id, submission.bytes);
@@ -399,6 +403,7 @@ async function acceptOnline(
       players: FieldValue.arrayUnion(uid),
       state,
       bound: existing.bound === true && room.live,
+      closeAt: FieldValue.delete(),
     });
     tx.create(db.doc(`replays/${id}/reports/${uid}`), report);
     return { stored: id, state };

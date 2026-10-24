@@ -327,7 +327,6 @@ export interface RunReplay {
 /** A run's match as kept, with what the run needs of its replay. */
 interface KeptMatch extends RunMatch {
   levelId?: string;
-  ticks?: number;
   won?: boolean;
 }
 
@@ -370,9 +369,17 @@ export async function updateEndlessRun(
     );
     const standing = await readStanding(tx, db, uid, now);
 
+    const stored = runSnap.exists
+      ? (runSnap.data() as EndlessRunDoc)
+      : undefined;
     const first = attempts.docs.find((doc) => doc.id === `${prefix}0`);
     const firstAt = (first?.get('at') as Timestamp | undefined)?.toMillis();
-    if (firstAt === undefined) {
+    const seed =
+      stored?.seed ??
+      (firstAt === undefined
+        ? undefined
+        : engine.attemptSeed(uid, `${prefix}0`, firstAt));
+    if (seed === undefined) {
       if (incoming !== undefined) {
         tx.update(db.doc(`replays/${incoming.replayId}`), {
           rankedReason: 'no-attempt',
@@ -380,9 +387,6 @@ export async function updateEndlessRun(
       }
       return { reason: 'no-attempt' };
     }
-    const stored = runSnap.exists
-      ? (runSnap.data() as EndlessRunDoc)
-      : undefined;
     const kept = new Map<number, KeptMatch>(
       (stored?.matches ?? []).map((match) => [match.index, match])
     );
@@ -435,10 +439,16 @@ export async function updateEndlessRun(
             : {}),
         };
       })
-      .filter((match): match is KeptMatch => match !== null)
-      .sort((a, b) => a.index - b.index);
+      .filter((match): match is KeptMatch => match !== null);
+    // A match whose attempt expired (TTL) keeps what the run knew of it: a
+    // run is never rebuilt from part of its attempts.
+    for (const [index, match] of kept) {
+      if (!matches.some((other) => other.index === index)) {
+        matches.push(match);
+      }
+    }
+    matches.sort((a, b) => a.index - b.index);
 
-    const seed = engine.attemptSeed(uid, `${prefix}0`, firstAt);
     const run: EndlessRunDoc = {
       uid,
       runId,
@@ -601,7 +611,10 @@ export function computeRun(
         verifiedPrefix = verifiedPrefix && match.verified === true;
         if (verifiedPrefix) {
           verifiedWins++;
-        } else if (match.balanceVersion !== engine.BALANCE_VERSION) {
+        } else if (
+          match.balanceVersion !== engine.BALANCE_VERSION ||
+          match.gone === true
+        ) {
           stale = true;
         }
       } else {

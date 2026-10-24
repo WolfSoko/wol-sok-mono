@@ -2,7 +2,12 @@ import { FieldValue, Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions';
 import type { AccountLookup } from '../accounts';
 import type { Engine } from '../engine';
-import { VERIFY_MINUTES, VerifyPool } from '../replays/budgets';
+import {
+  minuteTicks,
+  rerunCost,
+  VERIFY_MINUTES,
+  VerifyPool,
+} from '../replays/budgets';
 import type { ReplayDoc } from '../replays/model';
 import { verifyStored } from '../replays/verify';
 import { DAY_MS, dayOf, HOUR_MS } from '../time';
@@ -36,8 +41,22 @@ const SKIP_MS = 7 * DAY_MS;
 const TRUSTED_AGE_MS = 7 * DAY_MS;
 /** Account age of the second trust tier. */
 const KNOWN_AGE_MS = 3 * DAY_MS;
-/** Match ticks `board.verify` re-runs of a run at once: 6 minutes. */
-export const ADMIN_RUN_TICKS = 6 * 60 * 60;
+/** Match minutes `board.verify` re-runs of a run at once. */
+export const ADMIN_RUN_MINUTES = 6;
+
+/**
+ * Where a re-run is paid from: the pool for its cost - null when none may
+ * pay it - and the charge, once the budget is reserved.
+ */
+export interface Payer {
+  pool(cost: number): VerifyPool | null;
+  charge(pool: VerifyPool, cost: number): void;
+}
+
+/** A payer that always takes one pool, whose own budget is the limit. */
+export function fixedPool(pool: VerifyPool): Payer {
+  return { pool: () => pool, charge: () => undefined };
+}
 
 /**
  * Takes a re-run's result into the day or run of a ranked replay: verified
@@ -341,6 +360,14 @@ export class Slice {
     this.spent[pool] += ticks;
   }
 
+  /** Pays a board's re-runs from this slice. */
+  public payer(board: 'daily' | 'endless'): Payer {
+    return {
+      pool: (cost) => this.poolFor(board, cost),
+      charge: (pool, cost) => this.spend(pool as 'daily' | 'endless', cost),
+    };
+  }
+
   public timeLeft(): boolean {
     return Date.now() < this.deadline;
   }
@@ -349,13 +376,14 @@ export class Slice {
 /** The slice of this hour, from the budgets used today. */
 export async function hourSlice(
   db: Firestore,
+  engine: Pick<Engine, 'TICKS_PER_SEC'>,
   now: number,
   deadline: number
 ): Promise<Slice> {
   const counters = await db.doc(`counters/${dayOf(now)}`).get();
   const hoursLeft = 24 - new Date(now).getUTCHours();
   const left = (pool: VerifyPool) => {
-    const cap = VERIFY_MINUTES[pool] * 60 * 60;
+    const cap = minuteTicks(engine, VERIFY_MINUTES[pool]);
     const used =
       (counters.get(`verifyTicks.${pool}`) as number | undefined) ?? 0;
     return Math.max(0, Math.ceil((cap - used) / hoursLeft));
@@ -384,7 +412,7 @@ export async function verifyDaily(
   engine: Engine,
   uid: string,
   day: string,
-  pay: (ticks: number) => VerifyPool | null,
+  pay: Payer,
   now: number
 ): Promise<CandidateResult> {
   const run = await db.doc(`dailyRuns/${day}_${uid}`).get();
@@ -409,19 +437,30 @@ export async function verifyDaily(
   if (best.ticks > engine.MAX_RERUN_TICKS) {
     return 'too-long';
   }
-  return rerunAndApply(db, engine, best.replayId, pay, now);
+  const outcome = await rerunAndApply(db, engine, best.replayId, pay, now);
+  return outcome === 'gone' ? 'nothing' : outcome;
 }
 
+/**
+ * Re-runs a ranked replay and takes the result into its day or run. The
+ * payer is charged what the re-run reserved (`rerunCost`), and only once
+ * it reserved it. 'gone' when the replay or its bytes expired: it can
+ * never be re-run.
+ */
 async function rerunAndApply(
   db: Firestore,
   engine: Engine,
   replayId: string,
-  pay: (ticks: number) => VerifyPool | null,
+  pay: Payer,
   now: number
-): Promise<CandidateResult> {
+): Promise<CandidateResult | 'gone'> {
   const replay = await db.doc(`replays/${replayId}`).get();
-  const ticks = (replay.get('ticks') as number | undefined) ?? 0;
-  const pool = pay(ticks);
+  if (!replay.exists) {
+    return 'gone';
+  }
+  const stored = replay.data() as ReplayDoc;
+  const cost = rerunCost(engine, stored.levelId, stored.ticks);
+  const pool = pay.pool(cost);
   if (pool === null) {
     return 'no-budget';
   }
@@ -434,8 +473,17 @@ async function rerunAndApply(
     () => false,
     now
   );
-  if (result === 'no-budget') {
-    return 'no-budget';
+  if (
+    result === 'changed' ||
+    (typeof result !== 'string' && result.rerun !== undefined)
+  ) {
+    pay.charge(pool, cost);
+  }
+  if (result === 'no-budget' || result === 'too-long') {
+    return result;
+  }
+  if (result === 'no-replay' || result === 'no-blob') {
+    return 'gone';
   }
   if (typeof result === 'string') {
     return 'nothing';
@@ -447,13 +495,14 @@ async function rerunAndApply(
 /**
  * Re-runs the unverified wins of the player's best run in order, as far as
  * `maxTicks` and the budget allow. Stops at the first failure, which cuts
- * the run to its verified prefix.
+ * the run to its verified prefix. A win whose replay expired can never be
+ * checked: the run turns stale once, and drops out of the candidates.
  */
 export async function verifyRun(
   db: Firestore,
   engine: Engine,
   uid: string,
-  pay: (ticks: number) => VerifyPool | null,
+  pay: Payer,
   maxTicks: number,
   now: number,
   timeLeft: () => boolean = () => true
@@ -479,7 +528,7 @@ export async function verifyRun(
     if (match.balanceVersion !== engine.BALANCE_VERSION) {
       return 'stale';
     }
-    const ticks = Math.round((match.seconds ?? 0) * engine.TICKS_PER_SEC);
+    const ticks = match.ticks ?? 0;
     if (ticks > engine.MAX_RERUN_TICKS) {
       return 'too-long';
     }
@@ -487,7 +536,34 @@ export async function verifyRun(
       all = false;
       break;
     }
-    last = await rerunAndApply(db, engine, match.replayId as string, pay, now);
+    const outcome = await rerunAndApply(
+      db,
+      engine,
+      match.replayId as string,
+      pay,
+      now
+    );
+    if (outcome === 'gone') {
+      await updateEndlessRun(
+        db,
+        engine,
+        uid,
+        run.runId,
+        now,
+        undefined,
+        (current) => {
+          const gone = current.matches.find(
+            (candidate) => candidate.replayId === match.replayId
+          );
+          if (gone !== undefined) {
+            gone.gone = true;
+          }
+          delete current.queued;
+        }
+      );
+      return 'stale';
+    }
+    last = outcome;
     spent += ticks;
     if (last !== 'verified') {
       all = last === 'failed';
@@ -551,7 +627,7 @@ export async function verifyBoardsSlice(
         engine,
         candidate.uid,
         day,
-        (ticks) => payFrom(slice, 'daily', ticks),
+        slice.payer('daily'),
         now
       );
       exhausted = outcome === 'no-budget';
@@ -581,7 +657,7 @@ export async function verifyBoardsSlice(
       db,
       engine,
       uid,
-      (ticks) => payFrom(slice, 'endless', ticks),
+      slice.payer('endless'),
       Number.POSITIVE_INFINITY,
       now,
       () => slice.timeLeft()
@@ -594,18 +670,6 @@ export async function verifyBoardsSlice(
   }
   logger.info('Verification slice done', result);
   return result;
-}
-
-function payFrom(
-  slice: Slice,
-  board: 'daily' | 'endless',
-  ticks: number
-): VerifyPool | null {
-  const pool = slice.poolFor(board, ticks);
-  if (pool !== null) {
-    slice.spend(pool, ticks);
-  }
-  return pool;
 }
 
 async function markChecked(

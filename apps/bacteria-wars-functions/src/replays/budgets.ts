@@ -37,8 +37,16 @@ export const VERIFY_MINUTES: Readonly<Record<VerifyPool, number>> = {
   endless: 180,
 };
 
-/** The longest match the gallery or a featuring owner re-runs: 6 minutes. */
-export const MAX_GALLERY_TICKS = 6 * 60 * 60;
+/** The longest match the gallery or a featuring owner re-runs, in minutes. */
+export const MAX_GALLERY_MINUTES = 6;
+
+/** Match minutes in ticks of the engine's fixed step. */
+export function minuteTicks(
+  engine: Pick<Engine, 'TICKS_PER_SEC'>,
+  minutes: number
+): number {
+  return minutes * 60 * engine.TICKS_PER_SEC;
+}
 
 /** The ticks a re-run of a level is charged: more on a big map. */
 export function rerunCost(
@@ -58,12 +66,13 @@ export function rerunCost(
  */
 export async function reserveVerification(
   db: Firestore,
+  engine: Pick<Engine, 'TICKS_PER_SEC'>,
   pool: VerifyPool,
   ticks: number,
   now = Date.now()
 ): Promise<boolean> {
   const ref = db.doc(`counters/${dayOf(now)}`);
-  const cap = VERIFY_MINUTES[pool] * 60 * 60;
+  const cap = minuteTicks(engine, VERIFY_MINUTES[pool]);
   return db.runTransaction(async (tx) => {
     const doc = await tx.get(ref);
     const used = (doc.get(`verifyTicks.${pool}`) as number | undefined) ?? 0;

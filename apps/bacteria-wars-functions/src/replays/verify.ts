@@ -203,14 +203,24 @@ export function isFeat(
 }
 
 /** Why a replay could not be re-run now. */
-export type NoRerun = 'no-replay' | 'no-blob' | 'no-budget' | 'changed';
+export type NoRerun =
+  | 'no-replay'
+  | 'no-blob'
+  | 'no-budget'
+  /** Longer than the caller re-runs - however much budget is left. */
+  | 'too-long'
+  /** An online match with one report: the second decides agreed or disputed. */
+  | 'waiting'
+  | 'changed';
 
 /**
  * Re-runs `replays/{id}` from a pool's budget and stores what came of it:
  * the state and, when verified, the summary, score and reasons. Stored in a
  * transaction that first checks the state is still the one the re-run
  * started from, so two callers never overwrite each other. A replay the
- * boards or the gallery verified already is not re-run again.
+ * boards or the gallery verified already is not re-run again, and an
+ * online match still waiting for its second report is not re-run yet. The
+ * budget is reserved only once the bytes are there to re-run.
  */
 export async function verifyStored(
   db: Firestore,
@@ -235,21 +245,27 @@ export async function verifyStored(
   ) {
     return { state: doc.state, doc };
   }
+  if (doc.kind === 'online' && doc.state === 'waiting') {
+    return 'waiting';
+  }
+  if (doc.ticks > maxTicks) {
+    return 'too-long';
+  }
+  const blob = await db.doc(`replays/${replayId}/blob/data`).get();
+  const bytes = blob.get('bytes') as Uint8Array | undefined;
+  if (bytes === undefined) {
+    return 'no-blob';
+  }
   if (
-    doc.ticks > maxTicks ||
     !(await reserveVerification(
       db,
+      engine,
       pool,
       rerunCost(engine, doc.levelId, doc.ticks),
       now
     ))
   ) {
     return 'no-budget';
-  }
-  const blob = await db.doc(`replays/${replayId}/blob/data`).get();
-  const bytes = blob.get('bytes') as Uint8Array | undefined;
-  if (bytes === undefined) {
-    return 'no-blob';
   }
   const rerun = await rerunReplay(engine, bytes);
   const { score, reasons } = scoreOf(engine, rerun, {

@@ -69,6 +69,12 @@ export interface ReplayDoc {
    */
   bound?: boolean;
   /**
+   * Online only, while one report is in: when the hourly function closes
+   * it as "Not reported". Removed by the second report or the close, so
+   * the hourly query finds only the ones still to close.
+   */
+  closeAt?: Timestamp;
+  /**
    * Why it does not count on a board (ADR 0012): a `RankedReason` of a
    * declared attempt, an `OnlineReason` of an agreed online match.
    */

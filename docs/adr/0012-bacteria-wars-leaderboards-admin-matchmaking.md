@@ -230,8 +230,9 @@ firstAt, risenToday, todayDay }`.
 - **Idempotent**: a marker `rankedReplays/{replayId}` is written with
   `create()`, so a second event for the same replay changes nothing.
 - **"Not reported"**: the hourly function closes online replays still
-  `waiting` 2 hours after their creation (index `state` + `createdAt`,
-  ADR 0011). If the existing report has a regular ending (win, timeout or
+  `waiting` 2 hours after their creation (as built: by `closeAt`, which
+  the first report sets and the second report or the close removes, so a
+  closed replay is not read again). If the existing report has a regular ending (win, timeout or
   forfeit after 30 s), the stub's other uid gets `notReported + 1`. A
   network loss usually leaves both devices reporting, or the reports
   disagree (`disputed`), which counts for nobody. So the figure mostly

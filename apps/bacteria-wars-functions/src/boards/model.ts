@@ -114,7 +114,9 @@ export interface RunMatch {
   at: number;
   replayId: string | null;
   state: RunMatchState;
-  /** Won matches: their length in seconds. */
+  /** Matches with a replay: their length in ticks, the one source. */
+  ticks?: number;
+  /** Won matches: their length in seconds, rounded from `ticks` to show. */
   seconds?: number;
   /** Why the replay does not rank, if it does not. */
   reason?: string;
@@ -122,6 +124,8 @@ export interface RunMatch {
   verified?: boolean;
   /** Won matches: true once a re-run could not confirm it. */
   failed?: boolean;
+  /** Won matches: true once the replay expired before a re-run. */
+  gone?: boolean;
   balanceVersion?: number;
 }
 

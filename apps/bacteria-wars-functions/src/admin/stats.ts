@@ -2,7 +2,7 @@ import { Firestore, Query, Timestamp } from 'firebase-admin/firestore';
 import type { Auth } from 'firebase-admin/auth';
 import type { Engine } from '../engine';
 import type { Presence } from '../presence';
-import { VERIFY_MINUTES } from '../replays/budgets';
+import { minuteTicks, VERIFY_MINUTES } from '../replays/budgets';
 import { DAY_MS, dayOf, dayStart } from '../time';
 
 /**
@@ -73,7 +73,8 @@ export async function computeStats(
   const counters = await db.doc(`counters/${today}`).get();
   const minutes = (pool: string) =>
     Math.round(
-      ((counters.get(`verifyTicks.${pool}`) as number | undefined) ?? 0) / 3600
+      ((counters.get(`verifyTicks.${pool}`) as number | undefined) ?? 0) /
+        minuteTicks(engine, 1)
     );
   return {
     accounts:

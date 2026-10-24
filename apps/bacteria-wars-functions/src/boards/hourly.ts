@@ -1,12 +1,14 @@
-import { Timestamp } from 'firebase-admin/firestore';
+import { Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions';
 import { Moderation, unbanPlayer } from '../admin/bans';
 import { writeAudit } from '../admin/records';
 import { writeStats } from '../admin/stats';
 import type { ReplayDoc } from '../replays/model';
-import { DAY_MS, dayOf, HOUR_MS, MINUTE_MS } from '../time';
+import { DAY_MS, dayOf, MINUTE_MS } from '../time';
+import type { Engine } from '../engine';
+import type { EndlessRunDoc } from './model';
 import { closeWaiting } from './rank-online';
-import { updateEndlessRun } from './ranked';
+import { acceptRanked, updateEndlessRun } from './ranked';
 import {
   dailyFinalAt,
   hourSlice,
@@ -22,10 +24,6 @@ import {
 
 /** How long the verification slice may run, from the start of the hour's run. */
 export const VERIFY_UNTIL_MS = 25 * MINUTE_MS;
-/** An online replay still `waiting` this long after it was stored is closed. */
-export const WAITING_CLOSE_MS = 2 * HOUR_MS;
-/** How far back closing looks, in case an hour's run was missed. */
-const WAITING_LOOKBACK_MS = 26 * HOUR_MS;
 /** Documents one step handles per run at most. */
 const STEP_LIMIT = 500;
 
@@ -64,10 +62,15 @@ export async function expireBans(
   return ended.size;
 }
 
+/** Replays of a run `closeAttempts` looks through for missed ones. */
+const MISSED_LIMIT = 100;
+
 /**
  * Closes the declared endless matches without a replay 2 hours after
  * their declaration as lost lives (a pending submission keeps one open),
- * by recomputing the runs that have one due.
+ * by recomputing the runs that have one due - after taking in the run's
+ * stored replays `rankReplay` missed. A run that fails stays due for the
+ * next hour.
  */
 export async function closeAttempts(
   moderation: Moderation,
@@ -80,32 +83,68 @@ export async function closeAttempts(
     .limit(STEP_LIMIT)
     .get();
   for (const run of due.docs) {
-    await updateEndlessRun(
-      db,
-      engine,
-      run.get('uid') as string,
-      run.get('runId') as string,
-      now
-    );
+    const { uid, runId } = run.data() as EndlessRunDoc;
+    try {
+      await takeMissed(db, engine, run.data() as EndlessRunDoc, now);
+      await updateEndlessRun(db, engine, uid, runId, now);
+    } catch (error) {
+      logger.warn('hourly: could not close the run', { uid, runId, error });
+    }
   }
   return due.size;
 }
 
 /**
- * Closes the online replays still `waiting` 2 hours after they were stored:
- * "Not reported" for the player the stub names who did not report.
+ * Takes in the stored replays of a run that never ranked: `rankReplay`
+ * runs once, without retries, so a failed transaction left them out, and
+ * their matches would close as lost lives. Looks from the first match the
+ * run holds no replay for, or else from its last one.
+ */
+async function takeMissed(
+  db: Firestore,
+  engine: Engine,
+  run: EndlessRunDoc,
+  now: number
+): Promise<void> {
+  const from =
+    run.matches.find((match) => match.replayId === null) ?? run.matches.at(-1);
+  if (from === undefined) {
+    return;
+  }
+  const replays = await db
+    .collection('replays')
+    .where('players', 'array-contains', run.uid)
+    .where('createdAt', '>=', Timestamp.fromMillis(from.at))
+    .orderBy('createdAt', 'desc')
+    .limit(MISSED_LIMIT)
+    .get();
+  for (const replay of replays.docs) {
+    const doc = replay.data() as ReplayDoc;
+    if (
+      doc.attempt?.id.startsWith(`e_${run.runId}_`) === true &&
+      doc.rankedAt === undefined &&
+      doc.rankedReason === undefined
+    ) {
+      await acceptRanked(db, engine, replay.id, doc, now);
+    }
+  }
+}
+
+/**
+ * Closes the online replays still `waiting` 2 hours after they were stored
+ * (their `closeAt`): "Not reported" for the player the stub names who did
+ * not report.
  */
 export async function closeWaitingOnline(
   moderation: Moderation,
-  now = Date.now()
+  now = Date.now(),
+  limit = STEP_LIMIT
 ): Promise<number> {
   const { db, engine } = moderation;
   const waiting = await db
     .collection('replays')
-    .where('state', '==', 'waiting')
-    .where('createdAt', '>=', Timestamp.fromMillis(now - WAITING_LOOKBACK_MS))
-    .where('createdAt', '<=', Timestamp.fromMillis(now - WAITING_CLOSE_MS))
-    .limit(STEP_LIMIT)
+    .where('closeAt', '<=', Timestamp.fromMillis(now))
+    .limit(limit)
     .get();
   let notReported = 0;
   for (const replay of waiting.docs) {
@@ -202,7 +241,7 @@ export async function runHourly(
         db,
         engine,
         accounts,
-        await hourSlice(db, now, startedAt + VERIFY_UNTIL_MS),
+        await hourSlice(db, engine, now, startedAt + VERIFY_UNTIL_MS),
         now
       ),
     result.verification

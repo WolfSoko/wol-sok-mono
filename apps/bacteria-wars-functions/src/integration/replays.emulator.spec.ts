@@ -7,7 +7,7 @@ import {
   forgetBans,
   HOURLY_SUBMISSIONS,
 } from '../limits';
-import { acceptSubmission } from '../replays/accept-replay';
+import { acceptSubmission, WAITING_CLOSE_MS } from '../replays/accept-replay';
 import { reserveVerification, VERIFY_MINUTES } from '../replays/budgets';
 import { deletePlayerReplays } from '../replays/delete-player-replays';
 import { featureBest } from '../replays/feature-best';
@@ -312,6 +312,11 @@ describe('acceptReplay', () => {
         stored: id(),
         state: 'waiting',
       });
+      const waiting = await db.doc(`replays/${id()}`).get();
+      expect(
+        (waiting.get('closeAt') as Timestamp).toMillis() -
+          (waiting.get('createdAt') as Timestamp).toMillis()
+      ).toBe(WAITING_CLOSE_MS);
       expect(
         await acceptSubmission(db, 's2', await submission('guest', bytes), NOW)
       ).toEqual({
@@ -319,6 +324,7 @@ describe('acceptReplay', () => {
         state: 'agreed',
       });
       const stored = (await db.doc(`replays/${id()}`).get()).data();
+      expect(stored).not.toHaveProperty('closeAt');
       expect(stored).toEqual(
         expect.objectContaining({
           kind: 'online',
@@ -340,6 +346,18 @@ describe('acceptReplay', () => {
       ).toEqual({
         dropped: 'duplicate',
       });
+    });
+
+    it('does not re-run a match still waiting for its second report', async () => {
+      await room();
+      const bytes = await bytesOf(await online());
+      await acceptSubmission(db, 's1', await submission('host', bytes), NOW);
+      expect(
+        await verifyStored(db, engine, id(), 'admin', 6 * 3600, undefined, NOW)
+      ).toBe('waiting');
+      expect(
+        await acceptSubmission(db, 's2', await submission('guest', bytes), NOW)
+      ).toEqual({ stored: id(), state: 'agreed' });
     });
 
     it('marks reports that differ disputed', async () => {
@@ -440,6 +458,7 @@ describe('verification and the gallery', () => {
     expect(
       await reserveVerification(
         db,
+        engine,
         'gallery',
         VERIFY_MINUTES.gallery * 3600,
         NOW

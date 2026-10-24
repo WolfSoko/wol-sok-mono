@@ -11,11 +11,13 @@ import { isAdminNow } from '../accounts';
 import { kindOf, refreshEntries } from '../boards/entries';
 import type { EndlessRunDoc, MemberDoc } from '../boards/model';
 import {
-  ADMIN_RUN_TICKS,
+  ADMIN_RUN_MINUTES,
+  fixedPool,
   verifyDaily,
   verifyRun,
 } from '../boards/verification';
 import type { Engine } from '../engine';
+import { minuteTicks } from '../replays/budgets';
 import { banPlayer, Moderation, unbanPlayer } from './bans';
 import { countModeration, notify, writeAudit } from './records';
 import { recountAccounts, writeStats } from './stats';
@@ -363,7 +365,7 @@ async function verifyNow(
 ): Promise<Omit<Done, 'uid'>> {
   const { db, engine } = deps;
   const board = engine.parseBoardId(entryOf(command.target)?.boardId ?? '');
-  const pay = () => 'admin' as const;
+  const pay = fixedPool('admin');
   if (board?.kind === 'daily') {
     const outcome = await verifyDaily(db, engine, uid, board.day, pay, now);
     return {
@@ -375,7 +377,14 @@ async function verifyNow(
   if (board?.kind !== 'endless') {
     return { ok: false, error: 'not-verifiable' };
   }
-  const outcome = await verifyRun(db, engine, uid, pay, ADMIN_RUN_TICKS, now);
+  const outcome = await verifyRun(
+    db,
+    engine,
+    uid,
+    pay,
+    minuteTicks(engine, ADMIN_RUN_MINUTES),
+    now
+  );
   const best = await db
     .collection('endlessRuns')
     .where('uid', '==', uid)

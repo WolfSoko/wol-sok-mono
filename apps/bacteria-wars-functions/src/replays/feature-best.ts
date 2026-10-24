@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions';
 import type { Account, AccountLookup } from '../accounts';
 import { Engine, loadEngine } from '../engine';
 import { DAY_MS, dayOf, dayStart } from '../time';
-import { MAX_GALLERY_TICKS } from './budgets';
+import { MAX_GALLERY_MINUTES, minuteTicks } from './budgets';
 import type { ReplayDoc, ReplayState } from './model';
 import { publishReplay, seatUids } from './publish';
 import { isFeat, Rerun, scoreOf, verifyStored } from './verify';
@@ -47,7 +47,7 @@ const CANDIDATE_STATES: readonly ReplayState[] = [
  */
 export function isCandidate(
   { doc }: StoredReplay,
-  balanceVersion: number,
+  engine: Pick<Engine, 'BALANCE_VERSION' | 'TICKS_PER_SEC'>,
   accounts: ReadonlyMap<string, Account>,
   optedOut: ReadonlySet<string>,
   now: number
@@ -61,8 +61,8 @@ export function isCandidate(
   const humans = (seats ?? []).filter((uid): uid is string => uid !== null);
   return (
     stateFits &&
-    doc.balanceVersion === balanceVersion &&
-    doc.ticks <= MAX_GALLERY_TICKS &&
+    doc.balanceVersion === engine.BALANCE_VERSION &&
+    doc.ticks <= minuteTicks(engine, MAX_GALLERY_MINUTES) &&
     doc.optOut.length === 0 &&
     seats !== null &&
     (doc.kind !== 'online' || doc.bound === true) &&
@@ -179,9 +179,7 @@ export async function featureBest(
   const found = await accounts(uids);
   const optedOut = await galleryOptOuts(db, uids);
   const ranked = rankCandidates(
-    stored.filter((replay) =>
-      isCandidate(replay, engine.BALANCE_VERSION, found, optedOut, now)
-    )
+    stored.filter((replay) => isCandidate(replay, engine, found, optedOut, now))
   );
 
   const verified: (StoredReplay & { rerun?: Rerun })[] = [];
@@ -197,7 +195,7 @@ export async function featureBest(
       engine,
       id,
       'gallery',
-      MAX_GALLERY_TICKS,
+      minuteTicks(engine, MAX_GALLERY_MINUTES),
       (doc, rerun) => isFeat(engine, doc, rerun),
       now
     );
