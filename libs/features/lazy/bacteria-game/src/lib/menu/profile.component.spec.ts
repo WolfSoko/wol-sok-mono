@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { I18nService } from '../i18n/i18n.service';
 import { ACHIEVEMENT_IDS } from '../state/achievement-ids';
 import { LEVELS } from '../state/levels';
 import { ProfileComponent } from './profile.component';
@@ -77,6 +78,14 @@ describe('ProfileComponent', () => {
     );
   });
 
+  it('shows all the DNA the XP has grown', () => {
+    const host = render({}, { xp: 1275 });
+
+    expect(host.querySelector('.figures')?.textContent).toContain(
+      'DNA earned25'
+    );
+  });
+
   it('shows the rank and the way to the next', () => {
     const host = render(
       {},
@@ -92,5 +101,32 @@ describe('ProfileComponent', () => {
     expect(host.querySelector('.ranks .current')?.textContent?.trim()).toBe(
       'Bacillus'
     );
+  });
+
+  it('speaks German', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    const host = render(
+      { [LEVELS[0].id]: { easy: 'gold' } },
+      {
+        achievements: { blitz: '2026-10-19' },
+        totals: {
+          matches: 42,
+          wins: 27,
+          captured: 18430,
+          enemyCrushed: 212,
+          couchMatches: 7,
+          matchXp: 0,
+        },
+      }
+    );
+
+    const figures = host.querySelector('.figures')?.textContent ?? '';
+    expect(figures).toContain('Level gewonnen');
+    expect(figures).toContain('27 von 42');
+    expect(figures).toContain('18.430');
+    expect(host.querySelector('.achievements')?.textContent).toContain(
+      'Freigeschaltet am 19. Okt. 2026'
+    );
+    expect(host.querySelector('thead')?.textContent).toContain('Leicht');
   });
 });

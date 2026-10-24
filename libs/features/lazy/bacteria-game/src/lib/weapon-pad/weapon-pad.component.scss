@@ -1,0 +1,79 @@
+@use '../pad';
+
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+}
+
+.button-with-ring {
+  @include pad.button-with-ring;
+
+  border-radius: 50%;
+}
+
+.charge {
+  @include pad.charge(var(--weapon));
+}
+
+.weapon-fab {
+  @include pad.fab(64px, color-mix(in srgb, var(--weapon) 30%, #111820));
+
+  border: 2px solid var(--weapon);
+
+  mat-icon {
+    @include pad.fab-icon(1.6rem);
+
+    color: var(--weapon);
+  }
+
+  .weapon-state {
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// Ready: it breathes in the weapon's colour, asking to be fired.
+:host(.ready) .button-with-ring {
+  animation: ready 1.2s ease-in-out infinite;
+}
+
+:host(.ready) .weapon-fab {
+  --mat-fab-container-color: color-mix(in srgb, var(--weapon) 55%, #111820);
+}
+
+// The match is over: dimmed, its ring empty.
+:host(.over) {
+  opacity: 0.4;
+}
+
+// While its effect acts the icon spins.
+:host(.active) .weapon-fab mat-icon {
+  animation: spin 1.6s linear infinite;
+}
+
+@keyframes ready {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--weapon) 0%, transparent);
+  }
+
+  50% {
+    box-shadow: 0 0 22px 6px color-mix(in srgb, var(--weapon) 55%, transparent);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host(.ready) .button-with-ring,
+  :host(.active) .weapon-fab mat-icon {
+    animation: none;
+  }
+}

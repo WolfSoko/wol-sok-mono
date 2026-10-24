@@ -48,7 +48,7 @@ below lists what they changed.
   every display frame on a 60 Hz screen, every second one on a 120 Hz screen,
   so a frame is never shown twice or skipped. The simulation still receives
   the measured frame delta, not a fixed tick.
-- **A WebGL2 painter** with slime or pixel looks, per-level `ArenaTheme`
+- **A WebGL2 painter** with eight looks (slime to pixels), per-level `ArenaTheme`
   (floor, one of twelve patterns, walls, motes), round walls drawn as glossy
   blobs that melt into each other, glow for fights, meals and pushes, and a
   boost shimmer that runs as waves towards the colony's crosshair. The canvas
@@ -201,13 +201,20 @@ Things that exist already can become rewards:
 
 - **Colony colours** (`COLONY_COLORS` has eight; orange and blue stay free, the
   rest unlock through medallions or achievements).
-- **Looks** (`BACTERIA_LOOKS`: slime, pixels) and new ones from section 7.
+- **Looks** (`BACTERIA_LOOKS`: slime and pixels free; cells, honeycomb,
+  crystal, neon, ink, bubbles, marbles, lava, galaxy, plasma and chrome for
+  DNA - `state/skins.ts`) and new ones from section 7.
 - **Arena patterns** (`ArenaPattern`, twelve of them) usable as an override for
   any level in free play.
 - **Crosshair shapes** and **boost sounds** - small, cheap variations.
 
 A locked item shows greyed out with its condition ("Gold on Hourglass"), so the
-player always knows what the next thing costs.
+player always knows what the next thing costs. The _My Colony_ screen is where
+the cosmetics live: the skin (every look, with a preview, the premium ones
+bought with DNA and kept through every reset) and the colours today, the rest
+as it comes. The dish itself got its ambience there too: bubbles rising, mist
+drifting with the level's current, and the depth of a rim shadow and a sheen
+(`arena/ambience.ts`, a setting of the device).
 
 ### 1.7 Daily level and streaks
 
@@ -608,6 +615,13 @@ The cheapest multiplayer that works tonight and needs no server logic:
 
 ### 5.3 Step two: live 1 v 1, host-authoritative
 
+> Built differently: online 1 v 1 runs in **lockstep** on the CPU simulation
+> over a WebRTC data channel, with Firestore rooms for signalling
+> ([ADR 0009](../adr/0009-bacteria-wars-online-lockstep.md)) - the fixed
+> tick, the seeds and the engine's seat drivers made it cheaper than the
+> state stream below. The lib's README describes it. What follows stays as
+> the way to go should big maps or the GPU simulation be wanted online.
+
 One browser is the host, runs the simulation (GPU allowed), and sends state to
 the guest; the guest sends its crosshair and boost. Transport is WebRTC with
 two data channels, since a channel's reliability is fixed when it is created:
@@ -814,9 +828,11 @@ A small chain on the final frame, each stage toggleable:
 
 ### 7.5 Looks and accessibility
 
-- New `BacteriaLook`s: _cells_ (visible individual rounded cells with nuclei),
-  _ink_ (high-contrast monochrome with hatching, great for colour blindness),
-  _neon_ (dark floor, glowing outlines).
+- Looks in: _cells_ (glossy round cells of different sizes on a dark base,
+  as on the app icon), _honeycomb_ and _crystal_ (the colony tiled), _neon_
+  (dark body, glowing outline), _ink_ (flat, hatched in each colony's own
+  direction, so two are told apart without colour) and _bubbles_ (glassy
+  bubbles with snippets of DNA drifting inside).
 - A **pattern overlay per colony** (dots for one, stripes for the other) as a
   setting, so two colonies are distinguishable without colour.
 - Palette presets checked for deuteranopia and protanopia distance; the
@@ -938,7 +954,8 @@ the wheel or a pinch (6.2), with a minimap in a corner. The painters draw only t
 big as a base map's - the first camera scaled a canvas drawn whole with
 CSS, size² the pixels, which the Canvas 2D fallback could not keep up
 with (8 fps on Expanse, 41 now) - but without a level of detail yet.
-Expanse is the first big level. The cell passes of the GPU
+Expanse was the first big level; Archipelago, Bloodstream, Root Network and
+Leviathan (ADR 0013) followed it into the Expanse chapter. The cell passes of the GPU
 simulation run only around the colonies (6.3, 2). Split screen and fog are
 next. The CPU simulation on a big map at Ultra
 runs four times the cells of a base one, so a resolution cap on big maps
@@ -955,8 +972,8 @@ settings (for phase 7).
   simulation resolution, is the **reference simulation** for replays and
   verification; the GPU one is for playing.
 - Progress is stored **locally first**, cloud sync is opt-in and anonymous.
-- Online play is **host-authoritative over WebRTC with Firestore signalling**,
-  not lockstep, until four-player lockstep is actually wanted.
+- Online play is **lockstep over WebRTC with Firestore signalling**, on the
+  CPU simulation (ADR 0009) - not host-authoritative as first planned.
 - Generated level ids (`gen:<recipe>:<seed>:<difficulty>`) are **stable
   forever**: a change to the generator that would alter the output of an old
   seed gets a new recipe name instead.

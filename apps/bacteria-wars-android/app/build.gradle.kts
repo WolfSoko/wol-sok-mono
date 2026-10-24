@@ -2,17 +2,27 @@ import groovy.json.JsonSlurper
 
 plugins {
   id("com.android.application")
+  // Registers the app with the Firebase project of the game (app/google-services.json).
+  id("com.google.gms.google-services")
 }
 
 // The app is a Trusted Web Activity: Chrome shows the game from this host
-// (the domain of apps/bacteria-game-remote-cdk) fullscreen, once the host's
-// /.well-known/assetlinks.json names the app and the key it is signed with.
+// (Firebase Hosting of apps/bacteria-game-remote, see ADR 0008) fullscreen,
+// once the host's /.well-known/assetlinks.json names the app and the key it
+// is signed with.
 // The package name is read from that file, so the two cannot drift apart.
-val host = "bacteria-game.wolsok.de"
-val launchUrl = "https://$host/"
+val host = "bacteria-wars.wolsok.de"
+// The game tells the app from the browser by this source: the WebView
+// fallback sends no referrer (isTwaSession in the game's support folder).
+val launchUrl = "https://$host/?source=twa"
 val assetLinks = rootDir.resolve("../bacteria-game-remote/src/.well-known/assetlinks.json")
 val packageName = ((JsonSlurper().parse(assetLinks) as List<*>).single() as Map<*, *>)
   .let { it["target"] as Map<*, *> }["package_name"] as String
+
+// The Play Games Services project is the game's Cloud project, the one of the
+// Firebase app: its number is the game id the Play Games SDK asks for.
+val googleServices = JsonSlurper().parse(projectDir.resolve("google-services.json")) as Map<*, *>
+val gameServicesProjectId = (googleServices["project_info"] as Map<*, *>)["project_number"] as String
 
 // The app follows the workspace release: 74.44.1 becomes version code
 // 74044001, so every release counts up.
@@ -35,6 +45,7 @@ android {
     manifestPlaceholders["hostName"] = host
     manifestPlaceholders["launchUrl"] = launchUrl
     resValue("color", "background", "#060e19")
+    resValue("string", "game_services_project_id", gameServicesProjectId)
     // Android string resources drop bare double quotes, hence the backslashes.
     resValue(
       "string",
@@ -67,4 +78,13 @@ android {
 
 dependencies {
   implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.7.4")
+  // The Firebase app `de.wolsok.bacteriawars` of the project `bacteria-wars`: the
+  // Android OAuth client Play Games Services asks for lives there (see README.md),
+  // and Analytics counts the app's installs and opens beside the web game's.
+  implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
+  implementation("com.google.firebase:firebase-analytics")
+  // Play Games Services: signs the player in to Play Games on launch (BacteriaWarsApplication).
+  implementation("com.google.android.gms:play-services-games-v2:22.1.0")
+  // Tips through Play Billing, offered to the game by the Digital Goods API.
+  implementation("com.google.androidbrowserhelper:billing:1.2.0")
 }

@@ -1,60 +1,80 @@
-<feat-lazy-bac-game-screen-header title="Profile" (back)="back.emit()">
+<feat-lazy-bac-game-screen-header
+  [title]="'profile.title' | t"
+  (back)="back.emit()"
+>
   <feat-lazy-bac-game-account />
 </feat-lazy-bac-game-screen-header>
 
 <div class="body">
-  <section class="summary" aria-label="Rank and totals">
+  @if (social.available) {
+    <section class="online" aria-labelledby="online-title">
+      <h3 id="online-title" class="section-title">
+        {{ "profile.online" | t }}
+      </h3>
+      <feat-lazy-bac-game-profile-editor />
+    </section>
+  }
+  <section class="summary" [attr.aria-label]="'profile.summary' | t">
     <feat-lazy-bac-game-rank-standing [xp]="xp()" [badgeSize]="68" />
-    <ol class="ranks" aria-label="Ranks">
+    <ol class="ranks" [attr.aria-label]="'profile.ranks' | t">
       @let rank = standing();
-      @for (each of ranks; track each.name; let i = $index) {
+      @for (each of ranks; track each.id; let i = $index) {
         <li
           [class.reached]="i + 1 < rank.number"
           [class.current]="i + 1 === rank.number"
           [attr.aria-current]="i + 1 === rank.number ? 'step' : null"
         >
-          {{ each.name }}
+          {{ each.name | t }}
         </li>
       }
     </ol>
     <dl class="figures">
       <div class="figure">
-        <dt>Levels won</dt>
+        <dt>{{ "profile.figures.levelsWon" | t }}</dt>
         <dd>
-          {{ levelsWon() }} <span class="of">of {{ levelCount }}</span>
+          {{ levelsWon() }}
+          <span class="of">{{ "common.of" | t: { total: levelCount } }}</span>
         </dd>
       </div>
       <div class="figure">
-        <dt>Medallions</dt>
+        <dt>{{ "profile.figures.medallions" | t }}</dt>
         <dd>
-          {{ heldCount() }} <span class="of">of {{ totalCount }}</span>
+          {{ heldCount() }}
+          <span class="of">{{ "common.of" | t: { total: totalCount } }}</span>
         </dd>
       </div>
       <div class="figure">
-        <dt>Matches won</dt>
+        <dt>{{ "profile.figures.matchesWon" | t }}</dt>
         <dd>
-          {{ totals().wins }} <span class="of">of {{ totals().matches }}</span>
+          {{ totals().wins }}
+          <span class="of">{{
+            "common.of" | t: { total: totals().matches }
+          }}</span>
         </dd>
       </div>
       <div class="figure">
-        <dt>Bacteria captured</dt>
-        <dd>{{ totals().captured.toLocaleString("en") }}</dd>
+        <dt>{{ "profile.figures.captured" | t }}</dt>
+        <dd>{{ totals().captured.toLocaleString(locale()) }}</dd>
       </div>
       <div class="figure">
-        <dt>Crushed by walls</dt>
-        <dd>{{ totals().enemyCrushed.toLocaleString("en") }}</dd>
+        <dt>{{ "profile.figures.crushed" | t }}</dt>
+        <dd>{{ totals().enemyCrushed.toLocaleString(locale()) }}</dd>
       </div>
       <div class="figure">
-        <dt>Two-player matches</dt>
+        <dt>{{ "profile.figures.couchMatches" | t }}</dt>
         <dd>{{ totals().couchMatches }}</dd>
       </div>
+      <div class="figure">
+        <dt>{{ "evolution.profile.earned" | t }}</dt>
+        <dd>{{ dna().toLocaleString(locale()) }}</dd>
+      </div>
     </dl>
-    <ul class="tally" aria-label="Medallions by metal">
+    <ul class="tally" [attr.aria-label]="'profile.tally' | t">
       @for (metal of tally(); track metal.tier) {
         <li>
           <feat-lazy-bac-game-medallion [tier]="metal.tier" [size]="40" />
           <span class="tally-count">{{ metal.count }}</span
-          >{{ " " }}<span class="tally-name">{{ metal.name }}</span>
+          >{{ " " }}<span class="tally-name">{{ metal.name | t }}</span>
         </li>
       }
     </ul>
@@ -62,22 +82,26 @@
 
   <section class="achievements" aria-labelledby="achievements-title">
     <h3 id="achievements-title" class="section-title">
-      Achievements
-      <span class="of">{{ earnedCount() }} of {{ achievementCount }}</span>
+      {{ "profile.achievements.title" | t }}
+      <span class="of"
+        >{{ earnedCount() }}
+        {{ "common.of" | t: { total: achievementCount } }}</span
+      >
     </h3>
     <ul>
       @for (achievement of achievementList(); track achievement.id) {
         <li [class.earned]="achievement.earnedOn !== null">
-          <span class="badge" aria-hidden="true">{{
-            achievement.name[0]
-          }}</span>
+          @let name = achievement.name | t;
+          <span class="badge" aria-hidden="true">{{ name[0] }}</span>
           <span class="achievement-text">
-            <span class="achievement-name">{{ achievement.name }}</span>
+            <span class="achievement-name">{{ name }}</span>
             <span class="achievement-note">
               @if (achievement.earnedOn; as day) {
-                Earned {{ day | date: "d MMM y" }}
+                {{
+                  "profile.achievements.earned" | t: { date: formatDay()(day) }
+                }}
               } @else {
-                {{ achievement.condition }}
+                {{ achievement.condition | gameText }}
               }
             </span>
           </span>
@@ -87,21 +111,23 @@
   </section>
 
   <section class="cabinet" aria-labelledby="cabinet-title">
-    <h3 id="cabinet-title" class="section-title">Medallions</h3>
+    <h3 id="cabinet-title" class="section-title">
+      {{ "profile.cabinet.title" | t }}
+    </h3>
     <div class="table-box">
       <table>
         <thead>
           <tr>
-            <th scope="col">Level</th>
+            <th scope="col">{{ "profile.cabinet.level" | t }}</th>
             @for (difficulty of difficulties; track difficulty.id) {
-              <th scope="col">{{ difficulty.name }}</th>
+              <th scope="col">{{ difficulty.name | t }}</th>
             }
           </tr>
         </thead>
         <tbody>
           @for (row of cabinet(); track row.id) {
             <tr>
-              <th scope="row">{{ row.name }}</th>
+              <th scope="row">{{ row.name | gameText }}</th>
               @for (slot of row.slots; track slot.difficulty) {
                 <td>
                   <feat-lazy-bac-game-medallion
@@ -118,3 +144,4 @@
     </div>
   </section>
 </div>
+<feat-lazy-bac-game-ad-slot />

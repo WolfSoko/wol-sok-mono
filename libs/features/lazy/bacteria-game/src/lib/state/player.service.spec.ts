@@ -3,9 +3,14 @@ import { TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
 import { gameBalance } from './game-balance';
 import { GameState, GameStateStore } from './game.states';
 import { getMap } from './game-maps';
+import { Lockstep } from '../net/lockstep';
+import { MatchPlan, planMatch } from './match-setup';
 import { PlayerColorArray } from './player.model';
 import { PlayerStore } from './player.store';
 import { PlayerService, PlayerSpawn } from './player.service';
+import { BacteriaSimulation } from './bacteria-simulation';
+import { IntSimulation } from './gpu-int/int-simulation';
+import { SimulationFactory } from './simulation';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -57,6 +62,145 @@ describe('PlayerService', () => {
     });
 
     expect(service.getDynamicWalls().length).toBeGreaterThan(0);
+  });
+
+  describe('simulation', () => {
+    const failing: SimulationFactory = () => {
+      throw new Error('No GPU here');
+    };
+
+    beforeEach(() => {
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    });
+
+    it('falls back to the CPU simulation when the GPU one fails', () => {
+      service.useSimulation(failing);
+      service.init(spawns(false), { arena: { width: WIDTH, height: HEIGHT } });
+
+      expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
+    });
+
+    it('falls back to the fallback it was given - the deterministic one', () => {
+      service.useSimulation(
+        failing,
+        (balance, random, seed) => new IntSimulation(balance, random, seed)
+      );
+      service.init(spawns(false), { arena: { width: WIDTH, height: HEIGHT } });
+
+      expect(service.getSimulation()).toBeInstanceOf(IntSimulation);
+    });
+
+    it('offers the CPU ruleset only once the GPU failed', () => {
+      service.useSimulation(failing, undefined, {
+        ruleset: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+      });
+      expect(service.rulesetOffers()).toEqual(['cpu', 'gpu-int']);
+
+      service.init(spawns(false), { arena: { width: WIDTH, height: HEIGHT } });
+
+      expect(service.getSimulation().ruleset).toBe('cpu');
+      expect(service.rulesetOffers()).toEqual(['cpu']);
+    });
+  });
+
+  describe('rulesets', () => {
+    /** A deterministic GPU simulation, as far as the game can tell. */
+    const gpuInt: SimulationFactory = (balance, random, seed) => {
+      const simulation = new IntSimulation(balance, random, seed);
+      Object.defineProperty(simulation, 'kind', { value: 'gpu' });
+      return simulation;
+    };
+
+    it('plays an online match on the ruleset both devices agreed on', () => {
+      service.useSimulation(gpuInt, undefined, {
+        ruleset: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+      });
+      const lockstep = new Lockstep(0, () => undefined);
+
+      service.init(spawns(false), { lockstep, ruleset: 'gpu-int' });
+      expect(service.getSimulation().kind).toBe('gpu');
+      expect(service.getSimulation().ruleset).toBe('gpu-int');
+
+      service.init(spawns(false), { lockstep, ruleset: 'cpu' });
+      expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
+    });
+
+    it('plays the CPU ruleset online when nothing was agreed', () => {
+      service.useSimulation(gpuInt, undefined, {
+        ruleset: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+      });
+
+      service.init(spawns(false), {
+        lockstep: new Lockstep(0, () => undefined),
+      });
+
+      expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
+    });
+
+    it('records a local match on the device ruleset - the CPU one for the float GPU', () => {
+      service.useSimulation(gpuInt, undefined, {
+        ruleset: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+      });
+      service.init(spawns(true), { recordedSeats: new Set([0]) });
+      expect(service.getSimulation().ruleset).toBe('gpu-int');
+
+      service.useSimulation(gpuInt);
+      service.init(spawns(true), { recordedSeats: new Set([0]) });
+      expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
+    });
+  });
+
+  describe('online', () => {
+    // Even a plan that carries loadouts - which online never does.
+    const plan: MatchPlan = {
+      levelId: 'meltdown',
+      mode: 'vs-computer',
+      difficulty: 'normal',
+      colors: ['orange', 'blue'],
+      headStart: 0,
+      width: WIDTH,
+      height: HEIGHT,
+      seed: 7,
+      loadouts: [
+        { genes: {}, weapon: 'toxin-bomb' },
+        { genes: {}, weapon: 'cryo-pulse' },
+      ],
+    };
+
+    it('spawns every seat unarmed, whatever the plan carries', () => {
+      const lockstep = new Lockstep(0, () => undefined);
+      const { spawns } = planMatch(plan, null, {
+        seat: 0,
+        drivers: lockstep.drivers(),
+      });
+
+      service.init(spawns, { lockstep });
+
+      expect(playerStore.entities().map(({ weapon }) => weapon)).toEqual([
+        null,
+        null,
+      ]);
+    });
+
+    it('fires no weapon, even from an armed seat: the lockstep plays them all', () => {
+      const lockstep = new Lockstep(0, () => undefined);
+      service.init(
+        spawns(false).map((spawn) => ({ ...spawn, weapon: 'toxin-bomb' })),
+        {
+          arena: { width: WIDTH, height: HEIGHT },
+          ghosts: lockstep.drivers(),
+          lockstep,
+        }
+      );
+
+      service.fireWeapon(0);
+
+      expect(playerStore.entities()[0].weaponsFired).toBe(0);
+    });
   });
 
   describe('boost', () => {

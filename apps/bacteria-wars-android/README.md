@@ -2,7 +2,7 @@
 
 The Android app of the bacteria game. It is a
 [Trusted Web Activity](https://developer.chrome.com/docs/android/trusted-web-activity)
-(TWA): a thin native shell that opens https://bacteria-game.wolsok.de in
+(TWA): a thin native shell that opens https://bacteria-wars.wolsok.de in
 Chrome, fullscreen and without any browser UI. The game itself is the PWA
 `bacteria-game-remote`, so every web deploy updates the app as well; only
 changes to this folder need a new app release. Offline play, saves, sound and
@@ -14,8 +14,33 @@ What the shell adds:
   splash screen, both drawn by `tools/bacteria-game/generate-icons.ts`
   (`npx nx run bacteria-game-remote:icons`)
 - immersive mode, matching `"display": "fullscreen"` of the web manifest
-- links to bacteria-game.wolsok.de open in the app
+- links to bacteria-wars.wolsok.de open in the app
 - a WebView fallback for devices without a TWA-capable browser
+- the Firebase app `de.wolsok.bacteriawars` of the game's project
+  `bacteria-wars` (`app/google-services.json`, the `google-services` Gradle
+  plugin and Firebase Analytics): Analytics counts the app's installs and
+  opens, and the Android OAuth client Play Games Services asks for lives on
+  that app. The manifest drops the advertising id permission Analytics
+  brings along and turns its advertising id collection off: the app itself
+  serves no ads (the web game's AdSense ads run in Chrome, without the
+  Android advertising id), and the app's Play declaration says so. The file
+  holds no secret: the API key identifies the project and ships in every
+  build, so restrict it in the Cloud console rather than hide it. Download
+  it again from the Firebase console (Project settings → Your apps) after
+  adding a signing key there.
+- Google Play Billing for tips, see below
+- the Play Games Services SDK (`play-services-games-v2`), started by
+  `BacteriaWarsApplication`: on every launch it signs the player in to Play
+  Games against the project named by `com.google.android.gms.games.APP_ID`
+  in the manifest, silently, since the app's own activity has handed over to
+  Chrome before the SDK could show its welcome popup. Nothing reads that
+  sign-in yet: it puts the game into the player's Play Games library and is
+  the ground for achievements, which are still to come. The game runs in
+  Chrome, which reaches no native SDK, so earning them will take the Play
+  Games REST API with the player's Google sign-in on the web. Gradle fills
+  the id from the `project_number` of `app/google-services.json`, since the
+  game project sits on the game's Cloud project; the deploy reads the same
+  number for the achievements.
 
 ## Build
 
@@ -39,7 +64,43 @@ The `Android app` GitHub workflow builds and lints the debug APK on every
 change to this folder and keeps it as a workflow artifact, to try the app on a
 phone. Each run signs it with a fresh debug key, so uninstall the previous one
 before installing the next, and expect Chrome's URL bar on top: only keys
-listed in `assetlinks.json` get fullscreen.
+listed in `assetlinks.json` get fullscreen. The Play Games sign-in fails on
+such a build as well: only keys whose SHA-1 is on the Firebase app's Android
+OAuth client may sign in.
+
+## Tips through Play Billing
+
+Google Play allows tips to the developer only through Play Billing, so inside
+the app the game never shows its Buy Me a Coffee link. It offers consumable
+Play products instead, bought with the Digital Goods API and Payment Request
+(`libs/features/lazy/bacteria-game/src/lib/support/`). The game tells the app
+from the browser by the launch URL's `?source=twa` (set in
+`app/build.gradle.kts`; the WebView fallback sends no referrer) or, for links
+the app opens, by the referrer `android-app://<package>`, and keeps that in
+the session storage for reloads.
+
+This project adds what Chrome needs for that: the `billing` module of
+androidbrowserhelper, `DelegationService` (registers the
+`DigitalGoodsRequestHandler`), and `PaymentActivity` and `PaymentService` in
+the manifest. A tip unlocks nothing, so no server checks it: the game consumes
+the purchase right away, which also acknowledges it, and consumes leftovers on
+the next start.
+
+The tips are consumable one-time products, kept in `store/tips.json`: id,
+net EUR base price (Play adds each region's tax: 2.52 / 4.20 / 8.40 come to
+2.99 / 4.99 / 9.99 € in Germany) and a title and description for every
+listing language. The deploy creates or updates them after the bundle is on
+Play (`tools/bacteria-game/play-tips.ts`), as Play takes in-app products only
+for an app whose bundle asks for billing; bad texts fail the deploy before
+the build. The game asks Play for the ids in
+`apps/bacteria-game-remote/src/environments/game-support.ts`; products
+missing on Play are left out, and without any the app shows no tips.
+
+Two things the deploy cannot do: link a payments profile to the Play Console,
+and give the service account the permission to manage in-app products (Users
+and permissions → the service account → app permissions). Purchases can only
+be tried on a phone, with a bundle from a Play testing track and a license
+tester account.
 
 ## Fullscreen needs Digital Asset Links
 
@@ -50,7 +111,7 @@ Chrome only hides its URL bar when the site and the app vouch for each other:
 - the site names the app's package and the SHA-256 fingerprints of the keys it
   is signed with in
   `apps/bacteria-game-remote/src/.well-known/assetlinks.json`, deployed to
-  `https://bacteria-game.wolsok.de/.well-known/assetlinks.json`
+  `https://bacteria-wars.wolsok.de/.well-known/assetlinks.json`
 
 Until a fingerprint is listed there, the app still runs, but Chrome shows a
 URL bar on top of it. The Gradle build reads the package name from that file,
@@ -66,7 +127,8 @@ every release, in its own `android` leg that compares against the last
 
 1. builds the signed release APK and app bundle, with the version code of the
    release's `version.json`,
-2. uploads the bundle to the **internal testing** track on Google Play,
+2. uploads the bundle to the **closed testing** track on Google Play (`alpha`
+   in the API), so the testers of that track get it at once,
 3. attaches the APK and bundle to the GitHub release as
    `bacteria-wars-<tag>.apk` and `.aab`.
 
@@ -99,6 +161,65 @@ npx nx run bacteria-wars-android:store-assets     # in another
 
 The matches are live, so every run draws slightly different screenshots:
 commit the ones worth showing.
+
+### Play Games Services
+
+The game is a Play Games Services project in the Play Console, on the Cloud
+project `bacteria-wars` (the Firebase project of the game). Its Publish page
+(Grow users → Play Games Services → Setup and management → Publish) names what
+it still needs; `store/` holds all of it:
+
+- **Game details and graphics** (Configuration → Properties) are the store
+  listing's: the display name and description from `store/listings/<language>/`,
+  the hi-res icon (512 × 512) and feature graphic (1024 × 500) from
+  `store/graphics/`. The Publishing API has no way to them, so they go in by
+  hand, and again when the listing changes.
+- **Achievements** the game lists itself, in
+  `libs/features/lazy/bacteria-game/src/lib/state/play-games-achievements.json`
+  next to its achievements: every one of them, in the game's order, with its
+  points (a multiple of 5, 200 at most, 2000 in all) and its texts per locale.
+  The spec beside it fails when the `en-US` texts or the ids drift from the
+  game's, so the game's tests guard the file. The deploy creates and updates
+  them as drafts through the Play Games Services Publishing API
+  (`tools/bacteria-game/play-games.ts`), matched by their English name: an
+  achievement renamed in the game is a new one on Play, and the deploy never
+  deletes one, since that takes the players' progress on it. Delete the old
+  one in the console while it is a draft; once published, Play keeps it for
+  good, so rename with care. Drafts go live with the Publish button there. A
+  change to the file alone does not ship the app, and the Deploy release
+  workflow finds nothing to deploy for it: the achievements reach Play with
+  the next release that ships the app, or with
+  `npx nx run bacteria-wars-android:deploy` run locally with the secrets of
+  the README's setup (the whole Android deploy, not only the sync).
+- **Achievement icons** are `store/play-games/achievements/<id>.png`
+  (512 × 512, transparent), drawn by
+
+  ```bash
+  npx nx run bacteria-wars-android:achievement-icons
+  ```
+
+  The API's image upload is gone, so a new or changed icon goes up by hand
+  (Achievements → the achievement → Icon); the committed files show in the diff
+  which ones.
+
+The deploy takes the game's id from `app/google-services.json`. Until the
+service account may edit the game, the Publishing API answers 403: the
+deploy says so and leaves the achievements alone, without failing. Setting
+up:
+
+1. **The game project**, under Configuration: created on the existing Cloud
+   project `bacteria-wars`, with an Android credential for
+   `de.wolsok.bacteriawars`. The OAuth client it asks for comes from the
+   Firebase app once both SHA-1 fingerprints (the upload key's and the Play
+   app signing key's, next to the SHA-256s of `assetlinks.json`) are added to
+   it in the Firebase console.
+2. **Testers**: your own account, under Testers, until the game is published.
+3. **The service account**: on Play Console's API access page, the Game
+   Services Publishing API switched on and `play-publisher@...` granted access
+   to the game.
+4. **Publishing**: the OAuth consent screen of the Cloud project published,
+   then Publish in the console, at least two hours before a release that
+   relies on it.
 
 ### Promo video
 

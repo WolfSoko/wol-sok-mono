@@ -1,0 +1,35 @@
+// What the boost pad and the weapon pad share: a round button in the middle
+// of its recharge ring.
+
+// The box the button and its ring sit in, one over the other.
+@mixin button-with-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// The recharge ring, in the pad's colour.
+@mixin charge($color) {
+  --mat-progress-spinner-active-indicator-color: #{$color};
+}
+
+// The round button laid over the ring: its icon over a line of state.
+@mixin fab($size, $color) {
+  --mat-fab-container-color: #{$color};
+  --mat-fab-foreground-color: #fff;
+  --mat-fab-container-shape: 50%;
+
+  position: absolute;
+  display: inline-flex;
+  flex-direction: column;
+  width: $size;
+  height: $size;
+}
+
+// The button's icon.
+@mixin fab-icon($size) {
+  width: $size;
+  height: $size;
+  font-size: $size;
+}

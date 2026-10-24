@@ -162,6 +162,64 @@
 }
 
 // What else the match brought: achievements and levels it opened.
+// The DNA the match grew, popping up with a glow, and the way to spend it.
+.dna {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--bw-gold, currentcolor);
+  border-radius: 1rem;
+  background: rgb(233 185 73 / 8%);
+}
+
+.dna-gain {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  animation: dna-pop 0.7s 0.3s cubic-bezier(0.3, 1.6, 0.6, 1) both;
+}
+
+.dna-count {
+  font-family: var(--bw-display, inherit);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--bw-gold, inherit);
+  text-shadow: 0 0 14px rgb(233 185 73 / 60%);
+}
+
+.evolve {
+  --mat-button-filled-container-color: var(--bw-gold, #e9b949);
+  --mat-button-filled-label-text-color: #1a1408;
+
+  font-weight: 800;
+  animation: dna-pop 0.6s 0.7s cubic-bezier(0.3, 1.6, 0.6, 1) both;
+}
+
+@keyframes dna-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+    translate: 0 0.6rem;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dna-gain,
+  .evolve {
+    animation: none;
+  }
+}
+
 .news {
   display: flex;
   flex-wrap: wrap;
@@ -229,10 +287,56 @@
 }
 
 // Under the buttons: what the locked next level still needs.
+// Where a training mission's match leaves the training.
+.mission {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 1rem;
+  background: var(--bw-surface-raised, transparent);
+
+  p {
+    margin: 0.15rem 0;
+  }
+
+  &.done .mission-icon {
+    color: var(--bw-gold, inherit);
+  }
+}
+
+.mission-icon {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 2.25rem;
+}
+
+.mission-line {
+  font-family: var(--bw-display, inherit);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
 .run-note {
   margin: -0.25rem 0 0;
   color: var(--bw-gold, inherit);
   font-weight: 600;
+}
+
+.friend {
+  display: flex;
+  justify-content: center;
+}
+
+.friend-note {
+  color: var(--bw-gold, inherit);
+}
+
+.online-wait {
+  align-self: center;
+  margin: 0;
+  color: var(--bw-soft);
 }
 
 .share-note {

@@ -44,31 +44,28 @@ export class FirebaseGameAccount implements GameAccount {
   /** Set while this tab signs in to a Google account that played elsewhere. */
   private adoptingGuest = false;
 
-  public constructor(private readonly connection: Promise<FirebaseConnection>) {
-    connection.then(
-      ({ auth, authSdk }) =>
-        authSdk.onAuthStateChanged(auth, (user) => {
-          this.profileState.set(user === null ? null : profileOf(user));
-          // Nobody before the first guest is no switch: the visit has just
-          // started. Nobody after a player is - the one signed out is gone.
-          const playerId = user?.uid ?? null;
-          if (playerId !== this.playerId) {
-            this.playerId = playerId;
-            this.switches.next({ playerId, adoptsGuest: this.adoptingGuest });
-          }
-          this.adoptingGuest = false;
-          if (user === null) {
-            void this.signInAsGuest();
-          }
-        }),
-      (error: unknown) =>
-        console.error('Could not connect to the game cloud', error)
-    );
+  public constructor(private readonly connection: FirebaseConnection) {
+    const { auth, authSdk } = connection;
+    authSdk.onAuthStateChanged(auth, (user) => {
+      this.profileState.set(user === null ? null : profileOf(user));
+      // Nobody before the first guest is no switch: the visit has just
+      // started. Nobody after a player is - the one signed out is gone.
+      const playerId = user?.uid ?? null;
+      if (playerId !== this.playerId) {
+        this.playerId = playerId;
+        this.switches.next({ playerId, adoptsGuest: this.adoptingGuest });
+      }
+      this.adoptingGuest = false;
+      if (user === null) {
+        void this.signInAsGuest();
+      }
+    });
   }
 
   public async signIn(): Promise<SignInOutcome> {
-    const { auth, authSdk } = await this.connection;
+    const { auth, authSdk } = this.connection;
     const provider = new authSdk.GoogleAuthProvider();
+    // Given here, not set up with Auth: it loads Google's sign-in frame.
     const popups = authSdk.browserPopupRedirectResolver;
     const user = auth.currentUser;
     let error: unknown;
@@ -112,7 +109,7 @@ export class FirebaseGameAccount implements GameAccount {
   }
 
   public async signOut(): Promise<void> {
-    const { auth, authSdk } = await this.connection;
+    const { auth, authSdk } = this.connection;
     await authSdk.signOut(auth);
   }
 
@@ -123,7 +120,7 @@ export class FirebaseGameAccount implements GameAccount {
    * switched off - is not tried again.
    */
   private async signInAsGuest(): Promise<void> {
-    const { auth, authSdk } = await this.connection;
+    const { auth, authSdk } = this.connection;
     for (let attempt = 0; auth.currentUser === null; attempt++) {
       try {
         await authSdk.signInAnonymously(auth);
@@ -146,8 +143,10 @@ function profileOf(user: User): PlayerProfile {
   const google = user.providerData.find(
     (profile) => profile.providerId === 'google.com'
   );
+  const photoUrl = user.photoURL ?? google?.photoURL ?? null;
   return {
     guest: false,
     name: user.displayName ?? google?.displayName ?? user.email,
+    ...(photoUrl === null ? {} : { photoUrl }),
   };
 }

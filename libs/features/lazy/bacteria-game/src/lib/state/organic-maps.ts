@@ -9,16 +9,8 @@
  */
 
 import { seeded, wrap } from './geometry';
-import { blob, growThread, hexLattice } from './shapes';
+import { blob, growThread, hexLattice, movingBlob } from './shapes';
 import { DynamicWall, GameMap, pointSymmetric, Rect } from './maps';
-
-/** A round wall that is part of a living, moving layout. */
-function movingBlob(x: number, y: number, radius: number): DynamicWall {
-  const wall = blob(x, y, radius) as DynamicWall;
-  wall.solid = true;
-  wall.warning = 0;
-  return wall;
-}
 
 /**
  * Air sacs of every size, packed like the inside of a lung. The colonies

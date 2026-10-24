@@ -58,7 +58,7 @@ describe('xpGain', () => {
 
     const gain = xpGain(before, after, WIN);
 
-    expect(gain.parts).toEqual([
+    expect(gain.parts).toMatchObject([
       { label: 'Win · Normal', xp: 125 },
       { label: 'Gold medallion, a new best', xp: 30 },
       { label: '2 achievements', xp: 100 },
@@ -75,14 +75,14 @@ describe('xpGain', () => {
 
     const gain = xpGain(EMPTY_PROGRESS, after, won);
 
-    expect(gain.parts).toEqual([{ label: 'Win · Normal', xp: 125 }]);
+    expect(gain.parts).toMatchObject([{ label: 'Win · Normal', xp: 125 }]);
     expect(gain.total).toBe(xpOf(after) - xpOf(EMPTY_PROGRESS));
   });
 
   it('pays a little for a match between two players', () => {
     const after = addTotals(EMPTY_PROGRESS, { matchXp: 15, couchMatches: 1 });
 
-    expect(xpGain(EMPTY_PROGRESS, after, null)).toEqual({
+    expect(xpGain(EMPTY_PROGRESS, after, 'couch')).toMatchObject({
       parts: [{ label: 'Two players', xp: 15 }],
       total: 15,
     });

@@ -29,6 +29,21 @@ export interface Zone extends Rect {
   kind: ZoneKind;
 }
 
+/** A round zone around a point - see {@link blob}. */
+export function disc(
+  kind: ZoneKind,
+  x: number,
+  y: number,
+  radius: number
+): Zone {
+  return { ...blob(x, y, radius), kind };
+}
+
+/** The bit of a simulation mask that marks a wall - the zone sits above it. */
+export const WALL_BIT = 1;
+/** How far the zone code is shifted up in the mask, past the wall bit. */
+export const ZONE_SHIFT = 1;
+
 /** How strongly each kind of zone acts. */
 export const ZONE_EFFECTS = {
   /** Energy an antibiotic zone drains per second, regeneration stopped. */

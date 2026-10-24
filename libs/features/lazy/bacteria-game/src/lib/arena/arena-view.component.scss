@@ -1,0 +1,22 @@
+// The view is only its canvas: the box around it lays it out.
+:host {
+  display: contents;
+}
+
+// The size comes from the input, which fits the arena into the box without
+// letterboxing inside the element.
+.arena-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: pixelated;
+  // The edge of the arena is a wall too, so it is drawn like one: a frame
+  // in the level's colour with a glow around it. Outline and shadow take
+  // no room, so the pointer maths still maps the canvas rect 1:1.
+  outline: 2px solid rgb(var(--arena-border, 200 200 200));
+  box-shadow:
+    0 0 14px 2px rgb(var(--arena-border, 200 200 200) / 45%),
+    0 0 40px 8px rgb(var(--arena-border, 200 200 200) / 15%);
+  // Dragging a crosshair must not scroll or zoom the page underneath.
+  touch-action: none;
+}

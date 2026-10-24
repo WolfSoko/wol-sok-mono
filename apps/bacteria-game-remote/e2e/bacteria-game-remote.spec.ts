@@ -14,23 +14,27 @@ test('should open on the main menu with the game and its controls', async ({
   await expect(po.profileCta).toBeVisible();
   await expect(po.settingsCta).toBeVisible();
   await expect(po.helpCta).toBeVisible();
-  await expect(po.intro).toHaveCount(0);
 });
 
-test('should return to the page on request', async ({ page }) => {
+test('should look the same in the page and fullscreen', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-
-  await po.leaveFullscreenCta.click();
-
-  await expect(po.stage).toHaveCount(0);
-  await expect(po.mainTitle).toContainText('Bacteria Wars');
-  await expect(po.intro).toBeVisible();
-  await expect(po.fullscreenCta).toBeVisible();
+  // A desktop opens the stage in the page, filling the viewport.
+  await expect(po.fullscreenStage).toHaveCount(0);
+  const embedded = await po.boxOf(po.stage);
+  expect(embedded.height).toBeGreaterThan(400);
 
   await po.fullscreenCta.click();
 
-  await expect(po.stage).toBeVisible();
+  await expect(po.fullscreenStage).toBeVisible();
+  await expect(po.menuTitle).toHaveText('Bacteria Wars');
+  await expect(po.playCta).toBeVisible();
+
+  await po.exitFullscreenCta.click();
+
+  await expect(po.fullscreenStage).toHaveCount(0);
+  await expect(po.menuTitle).toHaveText('Bacteria Wars');
+  await expect(po.fullscreenCta).toBeVisible();
 });
 
 test('should let the player pick a level when starting a match', async ({
@@ -227,7 +231,7 @@ test('should let the players pick their colours', async ({ page }) => {
   await po.chooseMode('Two players');
   await po.stepBackCta.click();
   await po.backCta.click();
-  await po.settingsCta.click();
+  await po.colonyCta.click();
 
   await po.chooseColor('Left player', 'Green');
   await po.chooseColor('Right player', 'Pink');
@@ -299,7 +303,7 @@ test('should keep the colours still to earn locked, saying what opens them', asy
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.settingsCta.click();
+  await po.colonyCta.click();
 
   const green = page
     .getByRole('radiogroup', { name: 'Colour of You' })
@@ -315,12 +319,12 @@ test('should show the privacy policy on a page of its own', async ({
 }) => {
   await page.goto('/privacy#en-delete');
 
-  await expect(page).toHaveTitle('Datenschutz - Bacteria War');
+  await expect(page).toHaveTitle('Datenschutz - Bacteria Wars');
   await expect(
     page.getByRole('heading', { name: 'Datenschutzerklärung' })
   ).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: '8. Deleting your account and data' })
+    page.getByRole('heading', { name: '10. Deleting your account and data' })
   ).toBeInViewport();
   await expect(page.locator('#bacteria-game-splash')).toHaveCount(0);
 
@@ -328,5 +332,36 @@ test('should show the privacy policy on a page of its own', async ({
 
   // The click lets the game ask for native fullscreen, which WebKit may
   // refuse and so leave the game in the page: the arena is there either way.
-  await expect(new BacteriaGamePo(page).playArea).toBeVisible();
+  // The game's chunk, Firebase included, loads only now, while the service
+  // worker the policy page registered prefetches the app.
+  await expect(new BacteriaGamePo(page).playArea).toBeVisible({
+    timeout: 15_000,
+  });
+});
+
+test('should show the legal notice on a page of its own, reached from the menu', async ({
+  page,
+}) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+
+  await page
+    .locator('footer')
+    .getByRole('link', { name: 'Legal notice' })
+    .click();
+
+  await expect(page).toHaveTitle('Impressum - Bacteria Wars');
+  await expect(page.getByRole('heading', { name: 'Impressum' })).toBeVisible();
+  await expect(page.locator('address').first()).toContainText(
+    'Wolfram Sokollek'
+  );
+  await expect(page.locator('#bacteria-game-splash')).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'English' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Legal notice' })
+  ).toBeInViewport();
+
+  await page.getByRole('link', { name: /Back to the game/ }).click();
+  await expect(po.playArea).toBeVisible({ timeout: 15_000 });
 });

@@ -5,11 +5,26 @@
  * - shards: cracks split the element into shards that shift and tilt before they turn to dust
  * - chunks: whole chunks break off, jump away and then crumble to dust
  */
-export type WsThanosCrumble = 'dust' | 'cracks' | 'shards' | 'chunks';
+export const WS_THANOS_CRUMBLES = [
+  'dust',
+  'cracks',
+  'shards',
+  'chunks',
+] as const;
+
+/** one of {@link WS_THANOS_CRUMBLES} */
+export type WsThanosCrumble = (typeof WS_THANOS_CRUMBLES)[number];
 
 export interface WsThanosOptions {
   animationLength: number;
   maxParticleCount: number;
+  /**
+   * the most pixels the element is captured with, every one a particle:
+   * a big element is captured at a lower pixel ratio, below css pixels if needed.
+   * Unlike maxParticleCount, which leaves out random pixels, the particles get coarser.
+   * No limit when unset.
+   */
+  maxCapturePixels?: number;
   particleAcceleration: number;
   /** play a windy, sandy sound while vaporizing */
   sound: boolean;

@@ -61,6 +61,7 @@ describe('mergeProgress', () => {
     couchWins: { orange: 4, blue: 2 },
     daily: { day: '2026-10-19', attempts: 2, streak: 4 },
     endlessBest: 6,
+    training: { steer: '2026-10-02', feed: '2026-10-05' },
   };
   const elsewhere: Progress = {
     medals: {
@@ -72,6 +73,7 @@ describe('mergeProgress', () => {
     couchWins: { orange: 3, green: 1 },
     daily: { day: '2026-10-19', attempts: 3, streak: 4 },
     endlessBest: 4,
+    training: { feed: '2026-10-03', boost: '2026-10-06' },
   };
 
   it('keeps the better medallion, the higher total and the earlier day', () => {
@@ -90,6 +92,11 @@ describe('mergeProgress', () => {
       // The daily record of the same day: the one with more attempts.
       daily: { day: '2026-10-19', attempts: 3, streak: 4 },
       endlessBest: 6,
+      training: {
+        steer: '2026-10-02',
+        feed: '2026-10-03',
+        boost: '2026-10-06',
+      },
     });
   });
 
@@ -220,6 +227,7 @@ describe('parseProgress', () => {
       couchWins: { purple: 7 },
       daily: { day: '2026-10-20', attempts: 2, streak: 6 },
       endlessBest: 11,
+      training: { steer: '2026-10-21' },
     };
     expect(parseProgress(JSON.parse(JSON.stringify(progress)))).toEqual(
       progress
@@ -251,6 +259,7 @@ describe('parseProgress', () => {
         couchWins: { red: 2.5, mauve: 4, blue: -1 },
         daily: { day: 'yesterday', attempts: 2, streak: 1 },
         endlessBest: -3,
+        training: { steer: '2026-10-19', jump: '2026-10-19', feed: 3 },
       })
     ).toEqual({
       medals: { corridors: { normal: 'gold' } },
@@ -259,6 +268,7 @@ describe('parseProgress', () => {
       couchWins: { red: 2 },
       daily: null,
       endlessBest: 0,
+      training: { steer: '2026-10-19' },
     });
   });
 

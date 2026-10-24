@@ -1,0 +1,57 @@
+@use '@angular/material' as mat;
+
+:root {
+  color-scheme: dark;
+  --bg: #0b0f14;
+  --surface: #121821;
+  --line: #243041;
+  --text: #eef2f7;
+  --muted: #9aa8b8;
+  --accent-warm: #ff7a1a;
+  --accent-cool: #3b82f6;
+
+  @include mat.theme(
+    (
+      color: (
+        theme-type: dark,
+        primary: mat.$orange-palette,
+      ),
+      typography: system-ui,
+      density: 0,
+    )
+  );
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(
+      ellipse at 85% -10%,
+      rgb(255 122 26 / 12%),
+      transparent 45%
+    ),
+    radial-gradient(ellipse at 0% 30%, rgb(59 130 246 / 10%), transparent 40%),
+    var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--accent-warm);
+  outline-offset: 3px;
+}

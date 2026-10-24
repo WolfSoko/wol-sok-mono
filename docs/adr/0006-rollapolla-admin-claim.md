@@ -35,7 +35,8 @@ Each call sends the caller's ID token. The server verifies it and reads the
 claim from the caller's user record, not from the token. A revoked admin is
 therefore refused by the API at once.
 
-**The first admin** is granted with `scripts/grant-admin.mjs` (Application
+**The first admin** is granted with `scripts/grant-admin.mjs`, moved to
+`tools/firebase/grant-admin.mjs` by ADR 0011 (Application
 Default Credentials of a project owner, or the Auth emulator).
 
 The `admins` and `users` collections and `record-visits.ts` are gone. The

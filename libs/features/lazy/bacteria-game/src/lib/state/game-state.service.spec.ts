@@ -1,15 +1,41 @@
+import type { Ruleset } from './simulation';
 import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
 import { dailyLevelId } from './daily';
 import { TICK_MS } from './fixed-tick';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
-import { getLevel, levelCrosshairSpeed } from './levels';
+import { getLevel, LEVELS, levelCrosshairSpeed } from './levels';
 import { PlayerStore } from './player.store';
 import { ANNIHILATION, judgeOutcome } from './win-conditions';
 import { PlayerService } from './player.service';
-import { playReplay, Replay, REPLAY_VERSION, replayOf } from './replay';
+import { LADDER_VERSION } from './difficulty-curve';
+import {
+  LADDER_REPLAY_VERSION,
+  playReplay,
+  Replay,
+  replayOf,
+  REPLAY_VERSION,
+} from './replay';
 import { replayLink } from './replay-link';
+import { signal } from '@angular/core';
+import { Subject } from 'rxjs';
+import { Lockstep, INPUT_DELAY_TICKS } from '../net/lockstep';
+import type { OnlineStart } from '../net/net-message';
+import {
+  OnlineEvent,
+  OnlineLobby,
+  OnlineMatchService,
+} from '../net/online-match.service';
+import { FakeGameReplays } from '../../testing/fake-game-replays';
+import { GameReplays } from '../storage/game-replays';
+import { onlineIdOf } from '../storage/replay-records';
+import { onlineReplayId } from './replay-id';
+import { parseReplay } from './replay';
+import { matchChecksum } from './checksum';
+import { MatchEngine, cpuSimulation } from './match-engine';
+import { planMatch } from './match-setup';
+import type { NetMessage } from '../net/net-message';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -21,6 +47,9 @@ describe('GameStateService', () => {
 
   beforeEach(() => {
     TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [{ provide: GameReplays, useValue: new FakeGameReplays() }],
+    });
     service = TestBed.inject(GameStateService);
     store = TestBed.inject(GameStateStore);
     playerStore = TestBed.inject(PlayerStore);
@@ -247,9 +276,11 @@ describe('GameStateService', () => {
       }
 
       const replay = service['replay']() as Replay;
+      // Against the ladder's computer (ADR 0016): version 4.
       expect(replay.header).toEqual(
         expect.objectContaining({
-          version: REPLAY_VERSION,
+          version: LADDER_REPLAY_VERSION,
+          ladder: LADDER_VERSION,
           mode: 'vs-computer',
           difficulty: 'hard',
           simulation: 'cpu',
@@ -293,7 +324,7 @@ describe('GameStateService', () => {
       },
       'cpu',
       120,
-      { steers: [[0, 0, 1, 0]], drags: [], boosts: [] }
+      { steers: [[0, 0, 1, 0]], drags: [], boosts: [], weapons: [] }
     );
 
     async function hashOf(replay: Replay): Promise<string> {
@@ -494,6 +525,44 @@ describe('GameStateService', () => {
       });
     });
 
+    describe('a training mission', () => {
+      it('plays its level against the easy computer and keeps the mission', () => {
+        service.setMode('two-players');
+        service.setDifficulty('hard');
+        service.setLevel('corridors');
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.init(WIDTH, HEIGHT);
+
+        service.playMission('fight');
+        winMatch();
+
+        const state = store.snapshot();
+        expect(store.matchMode()).toBe('vs-computer');
+        expect(store.level().id).toBe('training-fight');
+        // The setup stays as it is, for the next match outside the training.
+        expect(state.levelId).toBe('corridors');
+        expect(state.difficulty).toBe('hard');
+        expect(state.earnings).toMatchObject({
+          award: null,
+          training: { shortfall: null, first: true, next: 'steer' },
+        });
+        // A training match leaves no run to fight as a ghost.
+        expect(state.lastReplay).toBeNull();
+        expect(TestBed.inject(ProgressService).training().fight).toBeDefined();
+      });
+
+      it('puts the training dummy across where the mission has one', () => {
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.playMission('attack');
+        service.start();
+
+        expect(playerStore.entities()[1]).toMatchObject({
+          name: 'Dummy',
+          isBot: true,
+        });
+      });
+    });
+
     describe('against the ghost', () => {
       it('plays the last run on its level, leaving the setup as it is', () => {
         winAgainst('vs-computer');
@@ -679,5 +748,416 @@ describe('GameStateService', () => {
 
       expect(store.snapshot().earnings).toBeNull();
     });
+  });
+});
+
+describe('GameStateService online', () => {
+  /** The online service, without a network: the test plays the other device. */
+  class FakeOnline {
+    public readonly events = new Subject<OnlineEvent>();
+    public readonly events$ = this.events.asObservable();
+    public readonly lobby = signal<OnlineLobby>({
+      phase: 'idle',
+      role: null,
+      code: null,
+      notice: null,
+    });
+    public readonly sent: unknown[] = [];
+    public readonly share = jest.fn();
+    public readonly offerColors = jest.fn();
+    public readonly leave = jest.fn();
+    public pending: { start: OnlineStart; lockstep: Lockstep } | null = null;
+    public startMatch = jest.fn(
+      (start: OnlineStart) =>
+        new Lockstep(0, (message) => this.sent.push({ ...start, ...message }))
+    );
+    public matchRef = jest.fn(() => ({ roomCode: 'K7QPXM', n: 1 }));
+    public agreedRuleset = jest.fn((): Ruleset => 'cpu');
+    public takeStart() {
+      const pending = this.pending;
+      this.pending = null;
+      return pending;
+    }
+    public connect(seat: 0 | 1): void {
+      this.lobby.set({
+        phase: 'connected',
+        role: seat === 0 ? 'host' : 'guest',
+        code: null,
+        notice: null,
+      });
+      this.events.next({ type: 'connected', seat });
+    }
+  }
+
+  let service: GameStateService;
+  let store: GameStateStore;
+  let playerStore: PlayerStore;
+  let online: FakeOnline;
+  let replays: FakeGameReplays;
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    online = new FakeOnline();
+    replays = new FakeGameReplays();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: OnlineMatchService, useValue: online },
+        { provide: GameReplays, useValue: replays },
+      ],
+    });
+    service = TestBed.inject(GameStateService);
+    store = TestBed.inject(GameStateStore);
+    playerStore = TestBed.inject(PlayerStore);
+    service.setArenaSize(320, 180);
+  });
+
+  it('shares the setup and starts the match as the host', () => {
+    service.setLevel('petri-dish');
+    online.connect(0);
+
+    expect(store.snapshot().online).toEqual({
+      seat: 0,
+      levelId: 'petri-dish',
+      colors: store.snapshot().colors,
+    });
+    expect(online.share).toHaveBeenCalledWith({
+      levelId: 'petri-dish',
+      colors: store.snapshot().colors,
+    });
+
+    service.setLevel('serpentine');
+    expect(online.share).toHaveBeenLastCalledWith(
+      expect.objectContaining({ levelId: 'serpentine' })
+    );
+
+    service.start();
+
+    expect(online.startMatch).toHaveBeenCalledWith(
+      expect.objectContaining({ levelId: 'serpentine' })
+    );
+    expect(store.snapshot().currentState).toBe(GameState.RUNNING);
+    const [you, opponent] = playerStore.entities();
+    expect([you.name, you.isBot]).toEqual(['You', false]);
+    expect([opponent.name, opponent.isBot]).toEqual(['Opponent', true]);
+  });
+
+  it('waits for the other device, and says so after a while', () => {
+    online.connect(0);
+    service.start();
+
+    for (let frame = 0; frame < 30; frame++) {
+      service.advance(320, 180, 1);
+    }
+
+    expect(TestBed.inject(PlayerService).tickCount).toBe(INPUT_DELAY_TICKS);
+    expect(store.snapshot().waitingForPeer).toBe(true);
+  });
+
+  it('gives the match to the player left when the other one goes', () => {
+    online.connect(1);
+    online.pending = {
+      start: { levelId: 'petri-dish', colors: ['orange', 'blue'], seed: 9 },
+      lockstep: new Lockstep(1, () => undefined),
+    };
+    service.start();
+    expect(store.snapshot().currentState).toBe(GameState.RUNNING);
+
+    online.events.next({ type: 'ended', reason: 'left' });
+
+    const state = store.snapshot();
+    expect(state.currentState).toBe(GameState.END);
+    expect(state.endedBy).toBe('forfeit');
+    expect(state.winner?.id).toBe(1);
+    expect(state.earnings).toBeNull();
+    expect(state.online).toBeNull();
+  });
+
+  it('takes no big map online', () => {
+    service.setLevel('expanse');
+
+    online.connect(0);
+
+    expect(store.snapshot().online?.levelId).toBe(LEVELS[0].id);
+  });
+
+  it('ends a match out of step even while it waits for the other device', () => {
+    online.connect(0);
+    service.start();
+    for (let frame = 0; frame < INPUT_DELAY_TICKS + 2; frame++) {
+      service.advance(320, 180, 1);
+    }
+    const lockstep = online.startMatch.mock.results[0].value as Lockstep;
+
+    lockstep.putRemoteSum(60, 1);
+    lockstep.ticked(60, playerStore.entities());
+    service.advance(320, 180, 1);
+
+    expect(store.snapshot().endedBy).toBe('desync');
+    expect(store.snapshot().winner).toBeNull();
+  });
+
+  it('starts nothing as the guest until the host started', () => {
+    online.connect(1);
+
+    service.start();
+
+    expect(store.snapshot().currentState).toBe(GameState.START);
+  });
+
+  describe('the recording', () => {
+    /** The guest's device: a plain engine and its lockstep, as in the lockstep spec. */
+    interface Guest {
+      lockstep: Lockstep;
+      engine: MatchEngine;
+      outbox: NetMessage[];
+    }
+
+    function deliver(outbox: NetMessage[], to: Lockstep): void {
+      for (const message of outbox.splice(0)) {
+        if (message.k === 'in') {
+          to.putRemote(message.t, message);
+        } else if (message.k === 'sum') {
+          to.putRemoteSum(message.t, message.h);
+        }
+      }
+    }
+
+    it('records an online match that plays back the same, with the id both devices know', async () => {
+      const hostOutbox: NetMessage[] = [];
+      let guest: Guest | null = null;
+      online.startMatch.mockImplementation((start: OnlineStart) => {
+        const outbox: NetMessage[] = [];
+        const lockstep = new Lockstep(1, (message) => outbox.push(message));
+        const { spawns, options } = planMatch(
+          {
+            levelId: start.levelId,
+            mode: 'two-players',
+            difficulty: store.snapshot().difficulty,
+            colors: start.colors,
+            headStart: 0,
+            width: 320,
+            height: 180,
+            seed: start.seed,
+          },
+          null,
+          { seat: 1, drivers: lockstep.drivers() }
+        );
+        guest = {
+          lockstep,
+          engine: new MatchEngine(spawns, {
+            ...options,
+            simulation: cpuSimulation,
+          }),
+          outbox,
+        };
+        return new Lockstep(0, (message) => hostOutbox.push(message));
+      });
+      service.setLevel('petri-dish');
+      online.connect(0);
+      service.start();
+      const host = online.startMatch.mock.results[0].value as Lockstep;
+      const seed = online.startMatch.mock.calls[0][0].seed;
+      const other = guest as unknown as Guest;
+
+      for (let frame = 0; frame < 400; frame++) {
+        store.update({ keysPressed: frame < 150 ? ['d', 's'] : ['a'] });
+        service.advance(320, 180, 1);
+        if (other.lockstep.ready(other.engine.tickCount)) {
+          other.lockstep.putLocal(
+            other.engine.tickCount,
+            { x: frame < 200 ? -1 : 1, y: 0.5 },
+            frame === 90 ? { x: 100, y: 60 } : null,
+            frame === 250
+          );
+          other.engine.tick(320, 180);
+          other.lockstep.ticked(other.engine.tickCount, other.engine.players);
+        }
+        deliver(hostOutbox, other.lockstep);
+        deliver(other.outbox, host);
+      }
+      online.events.next({ type: 'ended', reason: 'left' });
+      await Promise.resolve();
+
+      const recording = service.lastRecording();
+      expect(recording).not.toBeNull();
+      const replay = recording?.replay as Replay;
+      expect(replay.header).toEqual(
+        expect.objectContaining({
+          version: REPLAY_VERSION,
+          mode: 'two-players',
+          headStart: 0,
+          roomCode: 'K7QPXM',
+          n: 1,
+          seats: [{ isBot: false }, { isBot: false }],
+          outcome: { endedBy: 'forfeit', winnerSeat: 0 },
+        })
+      );
+      expect(parseReplay(replay, { stored: true })).toEqual(replay);
+      // Both devices name the match alike.
+      expect(onlineIdOf(replay)).toBe(onlineReplayId('K7QPXM', 1, seed));
+      expect(recording?.id).toBe(onlineReplayId('K7QPXM', 1, seed));
+      // Played again, it comes to the checksum the devices played.
+      const played = playReplay(replay);
+      expect(played?.ticks).toBe(replay.header.ticks);
+      expect(played?.checksum).toBe(replay.header.checksum);
+      expect(store.snapshot().lastReplay).toBe(replay);
+      // The guest played the same match, as far as it got.
+      expect(other.engine.tickCount).toBeGreaterThan(0);
+      const guestReplay = playReplay({
+        ...replay,
+        header: { ...replay.header, ticks: other.engine.tickCount },
+      });
+      expect(guestReplay?.checksum).toBe(matchChecksum(other.engine.players));
+    });
+
+    it('keeps an online match even with saving off', async () => {
+      service.setReplayPrefs({ saveMatches: false });
+      online.connect(0);
+      service.start();
+      online.events.next({ type: 'ended', reason: 'left' });
+      await Promise.resolve();
+
+      expect(replays.submissions).toHaveLength(1);
+      expect(replays.submissions[0].replay.header.roomCode).toBe('K7QPXM');
+    });
+  });
+});
+
+describe('GameStateService local recordings', () => {
+  let service: GameStateService;
+  let store: GameStateStore;
+  let players: PlayerService;
+  let replays: FakeGameReplays;
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    replays = new FakeGameReplays();
+    TestBed.configureTestingModule({
+      providers: [{ provide: GameReplays, useValue: replays }],
+    });
+    service = TestBed.inject(GameStateService);
+    store = TestBed.inject(GameStateStore);
+    players = TestBed.inject(PlayerService);
+    service.setLevel('petri-dish');
+    // Off by default until the CPU's medal limits are checked (ADR 0011).
+    service.setReplayPrefs({ recordLocal: true });
+  });
+
+  afterEach(() => {
+    service.cleanup();
+    localStorage.clear();
+    jest.restoreAllMocks();
+  });
+
+  /** A GPU simulation, as far as the game can tell. */
+  function useGpu(): void {
+    players.useSimulation((balance, random, seed) => {
+      const simulation = cpuSimulation(balance, random, seed);
+      Object.defineProperty(simulation, 'kind', { value: 'gpu' });
+      Object.defineProperty(simulation, 'ruleset', { value: null });
+      return simulation;
+    });
+  }
+
+  /** Plays a match of two seconds on a 320x180 arena and ends it on time. */
+  async function play(mode: 'vs-computer' | 'two-players'): Promise<void> {
+    service.setMode(mode);
+    service.setArenaSize(320, 180);
+    service.init(320, 180);
+    service.start();
+    for (let frame = 0; frame < 120; frame++) {
+      store.update({ keysPressed: frame < 60 ? ['d'] : ['w'] });
+      if (frame === 119) {
+        jest
+          .spyOn(players, 'outcome')
+          .mockReturnValue({ winner: null, reason: 'time' });
+      }
+      service.advance(320, 180, 1);
+    }
+    await Promise.resolve();
+  }
+
+  it('records a match against the computer on the CPU and keeps it', async () => {
+    useGpu();
+
+    await play('vs-computer');
+
+    const recording = service.lastRecording();
+    const replay = recording?.replay as Replay;
+    // A ladder match against the computer: its computer plays the curve.
+    expect(replay.header).toEqual(
+      expect.objectContaining({
+        version: LADDER_REPLAY_VERSION,
+        simulation: 'cpu',
+        mode: 'vs-computer',
+        width: 320,
+        height: 180,
+        ticks: 120,
+        outcome: { endedBy: 'time', winnerSeat: null },
+        checksum: matchChecksum(players.players),
+      })
+    );
+    expect(replay.header.roomCode).toBeUndefined();
+    expect(parseReplay(replay, { stored: true })).toEqual(replay);
+    expect(playReplay(replay)?.checksum).toBe(replay.header.checksum);
+    expect(recording?.hint).toBeGreaterThanOrEqual(0);
+    expect(replays.submissions).toEqual([{ replay, hint: recording?.hint }]);
+    expect(recording?.id).toBe('l_fake0');
+    expect(store.snapshot().lastReplay).toBe(replay);
+  });
+
+  it('keeps nothing with "Save my matches" off, but still records', async () => {
+    service.setReplayPrefs({ saveMatches: false });
+
+    await play('vs-computer');
+
+    expect(service.lastRecording()).not.toBeNull();
+    expect(replays.submissions).toEqual([]);
+  });
+
+  it('records nothing on the GPU with recording off', async () => {
+    useGpu();
+    service.setReplayPrefs({ recordLocal: false });
+
+    await play('vs-computer');
+
+    expect(players.getSimulation().kind).toBe('gpu');
+    expect(service.lastRecording()).toBeNull();
+    expect(replays.submissions).toEqual([]);
+    // Still a run for a ghost race.
+    expect(store.snapshot().lastReplay?.header.simulation).toBe('gpu');
+  });
+
+  it('records no couch match', async () => {
+    await play('two-players');
+
+    expect(service.lastRecording()).toBeNull();
+    expect(replays.submissions).toEqual([]);
+  });
+
+  it('records no ghost match', async () => {
+    await play('vs-computer');
+    replays.submissions.splice(0);
+    service.playGhost();
+
+    await play('vs-computer');
+
+    expect(service.lastRecording()).toBeNull();
+    expect(replays.submissions).toEqual([]);
+  });
+
+  it('records nothing off the online grid, which no server could check', async () => {
+    service.setMode('vs-computer');
+    service.setArenaSize(480, 270);
+    service.init(480, 270);
+    service.start();
+    jest
+      .spyOn(players, 'outcome')
+      .mockReturnValue({ winner: null, reason: 'time' });
+    service.advance(480, 270, 1);
+    await Promise.resolve();
+
+    expect(service.lastRecording()).toBeNull();
+    expect(replays.submissions).toEqual([]);
   });
 });

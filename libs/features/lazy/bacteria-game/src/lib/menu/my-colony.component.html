@@ -1,0 +1,103 @@
+<feat-lazy-bac-game-screen-header
+  [title]="'colony.title' | t"
+  (back)="back.emit()"
+>
+  <feat-lazy-bac-game-dna-counter
+    #counter
+    [dna]="evolution.dna()"
+    [earned]="evolution.earned()"
+    [loaded]="evolution.loaded()"
+    [ready]="evolution.skinDna() > 0"
+  />
+</feat-lazy-bac-game-screen-header>
+<p class="cdk-visually-hidden" role="status">{{ announced() }}</p>
+<p class="tagline">{{ "colony.tagline" | t }}</p>
+<div class="hero">
+  <feat-lazy-bac-game-look-preview
+    class="hero-preview"
+    [look]="worn()"
+    [color]="playerRgb()"
+    [size]="heroSize"
+    [animate]="true"
+    [label]="'colony.preview' | t: { skin: skinName() }"
+  />
+</div>
+<div class="screen-sections">
+  <section class="screen-section" aria-labelledby="colony-skin">
+    <h3 id="colony-skin" class="section-title">
+      {{ "colony.skin.title" | t }}
+    </h3>
+    <div class="skins" role="group" [attr.aria-label]="'colony.skin.title' | t">
+      @for (skin of skins(); track skin.id) {
+        @let name = skin.label | t;
+        @let picked = skin.owned && worn() === skin.id;
+        <!--
+          One tile per skin, the same element whether it is worn, owned or
+          still for sale: its preview and its name, and over them a button
+          that wears it - or, for sale, a Buy button with its price.
+        -->
+        <div
+          class="skin"
+          [attr.data-skin]="skin.id"
+          [class.picked]="picked"
+          [class.locked]="!skin.owned"
+        >
+          <feat-lazy-bac-game-look-preview
+            class="skin-preview"
+            [look]="skin.id"
+            [color]="playerRgb()"
+          />
+          <span class="skin-name">{{ name }}</span>
+          @if (skin.owned) {
+            <button
+              type="button"
+              class="wear"
+              [attr.aria-label]="name"
+              [attr.aria-pressed]="picked"
+              (click)="settings.setLook(skin.id)"
+            ></button>
+          } @else {
+            <button
+              mat-flat-button
+              type="button"
+              class="buy"
+              [disabled]="!skin.canBuy"
+              [attr.aria-label]="
+                'colony.skin.buyLabel' | t: { name, cost: skin.cost }
+              "
+              (click)="buy(skin.id)"
+            >
+              {{ "colony.skin.buy" | t }}
+              <span class="cost">
+                <feat-lazy-bac-game-dna-helix [size]="16" [animated]="false" />
+                {{ skin.cost }}
+              </span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+    <p class="section-note">{{ "colony.skin.note" | t }}</p>
+  </section>
+  <section class="screen-section" aria-labelledby="colony-color">
+    <h3 id="colony-color" class="section-title">
+      {{ "colony.color.title" | t }}
+    </h3>
+    <feat-lazy-bac-game-colony-colors
+      class="stacked"
+      [mode]="mode()"
+      [colors]="colors()"
+      [disabled]="locked()"
+      [locks]="colorLocks()"
+      (colorChange)="colorChange.emit($event)"
+    />
+    <p class="section-note">{{ "colony.color.swapNote" | t }}</p>
+  </section>
+  <section class="screen-section more" aria-labelledby="colony-more">
+    <h3 id="colony-more" class="section-title">
+      {{ "colony.more.title" | t }}
+    </h3>
+    <p>{{ "colony.more.note" | t }}</p>
+  </section>
+</div>
+<div #fx class="fx" aria-hidden="true"></div>

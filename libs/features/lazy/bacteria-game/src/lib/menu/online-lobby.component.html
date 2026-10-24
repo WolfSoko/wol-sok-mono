@@ -1,0 +1,159 @@
+@if (!available()) {
+  <p class="text">{{ "online.noCloud" | t }}</p>
+} @else {
+  @let searching = matchmaker.state() !== "idle";
+  @switch (lobby().phase) {
+    @case ("idle") {
+      @if (matchmaker.available) {
+        <mat-form-field
+          class="match-level"
+          appearance="outline"
+          subscriptSizing="dynamic"
+        >
+          <mat-label>{{ "online.level" | t }}</mat-label>
+          <mat-select
+            panelWidth=""
+            [value]="settings.matchLevel() ?? anyLevel"
+            (selectionChange)="pickLevel($event.value)"
+          >
+            <mat-option [value]="anyLevel">
+              {{ "online.anyLevel" | t }}
+            </mat-option>
+            @for (level of matchLevels; track level.id) {
+              <mat-option [value]="level.id">
+                {{ level.title | gameText }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (searching) {
+        <p class="status">
+          <mat-spinner diameter="20" />
+          {{ "online.searching" | t }}
+        </p>
+      } @else {
+        @if (matchmaker.available) {
+          <button
+            mat-flat-button
+            type="button"
+            class="host find"
+            (click)="matchmaker.find()"
+          >
+            <mat-icon>travel_explore</mat-icon>
+            {{ "online.find" | t }}
+          </button>
+        }
+
+        @if (social.available) {
+          <feat-lazy-bac-game-friends
+            (challenge)="social.challengeFriend($event)"
+          />
+        }
+
+        <span class="label">{{ "online.withCode" | t }}</span>
+        <p class="text">{{ "online.withCodeText" | t }}</p>
+        <button mat-stroked-button type="button" (click)="host.emit()">
+          <mat-icon>wifi_tethering</mat-icon>
+          {{ "online.open" | t }}
+        </button>
+        <form class="join" (submit)="submit($event)">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ "online.codeField" | t }}</mat-label>
+            <input
+              matInput
+              name="code"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              [maxLength]="codeLength + 2"
+              [value]="typed()"
+              (input)="type($event)"
+            />
+          </mat-form-field>
+          <button mat-stroked-button type="submit">
+            <mat-icon>login</mat-icon>
+            {{ "online.join" | t }}
+          </button>
+        </form>
+      }
+    }
+    @case ("opening") {
+      <p class="status">
+        <mat-spinner diameter="20" />
+        {{ (searching ? "online.found" : "online.opening") | t }}
+      </p>
+    }
+    @case ("waiting") {
+      @if (social.challenged(); as friend) {
+        <p class="status">
+          <feat-lazy-bac-game-avatar
+            [avatar]="friend.card.avatar"
+            [label]="friend.card.name"
+            [size]="32"
+          />
+          {{ "online.waitingFor" | t: { name: friend.card.name } }}
+        </p>
+      } @else if (searching) {
+        <p class="status">
+          <mat-spinner diameter="20" />
+          {{ "online.searching" | t }}
+        </p>
+      } @else {
+        <span class="label">{{ "online.sendCode" | t }}</span>
+        <p class="code" aria-live="polite">{{ lobby().code }}</p>
+        <p class="status">
+          <mat-spinner diameter="20" />
+          {{ "online.waitingToJoin" | t }}
+        </p>
+      }
+    }
+    @case ("connecting") {
+      <p class="status">
+        <mat-spinner diameter="20" />
+        {{ "online.connecting" | t }}
+      </p>
+    }
+    @case ("connected") {
+      <p class="status connected">
+        @if (social.opponent(); as opponent) {
+          <feat-lazy-bac-game-avatar
+            [avatar]="opponent.card.avatar"
+            [label]="opponent.card.name"
+            [size]="32"
+          />
+          {{
+            "online.connectedTo"
+              | t: { name: opponent.card.name, colony: ownColony() ?? "" }
+          }}
+        } @else {
+          <mat-icon aria-hidden="true">link</mat-icon>
+          {{ "online.connected" | t: { colony: ownColony() ?? "" } }}
+        }
+      </p>
+      <p class="text">
+        @if (lobby().role === "host") {
+          {{ "online.hostPicks" | t }}
+        } @else {
+          {{ "online.guestFollows" | t }}
+        }
+      </p>
+    }
+  }
+  @if (pickedLevel(); as picked) {
+    <p class="text picked-level">
+      {{ picked.key | t: { level: (picked.title | gameText) } }}
+    </p>
+  }
+  @if (lobby().notice; as notice) {
+    <p class="notice" role="status">{{ notice | gameText }}</p>
+  }
+  @if (lobby().phase !== "idle" || searching) {
+    <button mat-button type="button" class="leave" (click)="cancel()">
+      <mat-icon>close</mat-icon>
+      {{
+        (lobby().phase === "connected" ? "online.leave" : "common.cancel") | t
+      }}
+    </button>
+  }
+}

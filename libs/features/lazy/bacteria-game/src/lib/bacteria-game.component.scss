@@ -1,54 +1,8 @@
 @use 'colony';
 @use 'menu/screen';
 
-.toolbar-spacer {
-  flex: 1 1 auto;
-}
-
-.statistics {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.5rem 1.5rem;
-  margin-bottom: 0.5rem;
-
-  .colony {
-    display: grid;
-    grid-template-columns: auto;
-    gap: 0.15rem;
-    min-width: 12rem;
-  }
-
-  .colony-name {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  .boost-icon {
-    font-size: 1rem;
-    width: 1rem;
-    height: 1rem;
-    animation: colony.$pulse;
-  }
-
-  .colony-detail {
-    opacity: 0.75;
-  }
-
-  .colony-bar {
-    display: block;
-    height: 4px;
-    border-radius: 2px;
-    background: rgb(0 0 0 / 20%);
-    overflow: hidden;
-  }
-
-  .colony-bar-fill {
-    display: block;
-    height: 100%;
-    transition: width 120ms linear;
-  }
+:host {
+  display: block;
 }
 
 .colony-name {
@@ -56,8 +10,7 @@
 }
 
 .game-time,
-.colony-count,
-.colony-detail {
+.colony-count {
   font-variant-numeric: tabular-nums;
 }
 
@@ -82,9 +35,45 @@
 }
 
 .stage {
+  // The seat track must hold the boost pad's recharge ring (RECHARGE_RING_SIZE
+  // in boost-pad.component.ts, 100px) across its narrow side.
+  --seat: clamp(6.5rem, 15vw, 10rem);
+
   position: relative;
+  // Embedded in the page, the stage fills the viewport below what is above
+  // it (--stage-top, measured by the component), but never gets too low for
+  // the menu screens.
+  height: max(30rem, calc(100dvh - var(--stage-top, 0px)));
+  display: grid;
+  grid-template-columns: var(--seat) minmax(0, 1fr) var(--seat);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'stick-0 center boost-1'
+    'boost-0 center stick-1';
+  overflow: hidden;
+  color: #fff;
+  background: rgb(var(--arena-rim, 0 0 0));
+  transition: background-color 400ms ease;
+  user-select: none;
+
+  &.solo {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: 'stick-0 center boost-0';
+  }
+
+  // Fullscreen: the same stage over the whole viewport, handed to the
+  // browser's fullscreen API on top where there is one.
+  &.fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    height: auto;
+    touch-action: none;
+    overscroll-behavior: none;
+  }
 
   .center {
+    grid-area: center;
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -93,30 +82,43 @@
 
   .thanos-container {
     position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
   }
 
-  // The arena canvas and the minimap over its corner.
+  // Out of the flex flow, otherwise the badge sits next to the arena and
+  // pushes it off centre.
+  ws-shared-ui-show-fps {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.25rem;
+    font-size: 0.7rem;
+    opacity: 0.6;
+  }
+
+  // The arena canvas and the minimap over its corner. The size comes from
+  // the component, which fits the arena into the box without letterboxing
+  // inside the element - see `canvasSize`. The arena view styles its canvas.
   .arena-frame {
     position: relative;
-  }
-
-  .arena-canvas {
-    display: block;
-    width: 100%;
-    image-rendering: pixelated;
-    // The edge of the arena is a wall too, so it is drawn like one: a frame
-    // in the level's colour with a glow around it. Outline and shadow take
-    // no room, so the pointer maths still maps the canvas rect 1:1.
-    outline: 2px solid rgb(var(--arena-border, 200 200 200));
-    box-shadow:
-      0 0 14px 2px rgb(var(--arena-border, 200 200 200) / 45%),
-      0 0 40px 8px rgb(var(--arena-border, 200 200 200) / 15%);
-    // Dragging a crosshair must not scroll or zoom the page underneath.
-    touch-action: none;
+    max-width: 100%;
+    max-height: 100%;
   }
 
   // Only a glance: small, in the top right corner, and never in the way of
   // a finger.
+  // The bubbles and the mist, laid over the arena canvas, as big as it.
+  .ambience {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    pointer-events: none;
+  }
+
   .minimap {
     position: absolute;
     top: 0.5rem;
@@ -126,71 +128,6 @@
     border-radius: 4px;
     opacity: 0.85;
     pointer-events: none;
-  }
-
-  // The touch layout: the stage covers the viewport and is handed to the
-  // fullscreen API on top. The arena sits in the middle; the seating plan
-  // for the controls around it is below, after the grid.
-  &.fullscreen {
-    // The seat track must hold the boost pad's recharge ring (RECHARGE_RING_SIZE
-    // in boost-pad.component.ts, 100px) across its narrow side.
-    --seat: clamp(6.5rem, 15vw, 10rem);
-
-    position: fixed;
-    inset: 0;
-    z-index: 900;
-    display: grid;
-    grid-template-columns: var(--seat) minmax(0, 1fr) var(--seat);
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      'stick-0 center boost-1'
-      'boost-0 center stick-1';
-    color: #fff;
-    background: rgb(var(--arena-rim, 0 0 0));
-    transition: background-color 400ms ease;
-    touch-action: none;
-    overscroll-behavior: none;
-    user-select: none;
-
-    &.solo {
-      grid-template-rows: minmax(0, 1fr);
-      grid-template-areas: 'stick-0 center boost-0';
-    }
-
-    .center {
-      grid-area: center;
-    }
-
-    .thanos-container {
-      display: flex;
-      flex: 1 1 auto;
-      align-items: center;
-      justify-content: center;
-      min-height: 0;
-    }
-
-    // Out of the flex flow, otherwise the badge sits next to the arena and
-    // pushes it off centre.
-    ws-shared-ui-show-fps {
-      position: absolute;
-      right: 0.5rem;
-      bottom: 0.25rem;
-      font-size: 0.7rem;
-      opacity: 0.6;
-    }
-
-    // The size comes from the component, which fits the arena into the box
-    // without letterboxing inside the element - see `canvasSize`.
-    .arena-frame {
-      max-width: 100%;
-      max-height: 100%;
-    }
-
-    .arena-canvas {
-      width: auto;
-      max-width: 100%;
-      max-height: 100%;
-    }
   }
 }
 
@@ -205,7 +142,7 @@
 //
 // The pad's cell is a size container: a turned pad is sized with the cell's
 // width and height swapped, so that it fills the cell once it is turned.
-.stage.fullscreen {
+.stage {
   .stick,
   .seat {
     min-width: 0;
@@ -247,11 +184,43 @@
   }
 }
 
+// A colony with a weapon (ADR 0013) - only ever a single player against the
+// computer, so never turned: the weapon button right beneath the boost pad,
+// the two centred together in the tall column, or beside it in a band along
+// the bottom edge.
+.stage .seat.armed {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  // The pad is a size container, so it takes the height it is given: about
+  // as much as its contents need, less where the column is shorter.
+  feat-lazy-bac-game-boost-pad {
+    position: relative;
+    inset: auto;
+    flex: 0 1 16rem;
+    min-height: 0;
+  }
+
+  feat-lazy-bac-game-weapon-pad {
+    flex: 0 0 auto;
+  }
+
+  @media (orientation: portrait) {
+    flex-direction: row;
+
+    feat-lazy-bac-game-boost-pad {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+  }
+}
+
 // Upright phone, or a tablet held that way: the short edges are the top and
 // the bottom edge, so the seats become bands along them - seat 0 at the
 // bottom, seat 1 at the top upside down.
 @media (orientation: portrait) {
-  .stage.fullscreen {
+  .stage {
     --seat: clamp(6.5rem, 20vh, 9rem);
 
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -306,6 +275,48 @@
     align-items: center;
     margin-left: auto;
   }
+}
+
+// The goal of a training mission, at the top of the arena while it runs.
+.mission-goal {
+  position: absolute;
+  top: 4.5rem;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: calc(100% - 2rem);
+  margin: 0;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 55%);
+  color: #fff;
+  font-size: 0.9rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+
+  mat-icon {
+    flex: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 1.1rem;
+  }
+}
+
+// Over the arena while an online match waits for the other device.
+.peer-wait {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 70%);
+  color: #fff;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 // The pause menu and the match result, cards laid over the arena - and the
@@ -379,31 +390,14 @@
     position: relative;
     height: 100%;
   }
-}
 
-.page-challenge {
-  margin-bottom: 1rem;
-}
-
-.page-result {
-  margin: 0.5rem 0 1rem;
-}
-
-mat-card-actions {
-  flex-wrap: wrap;
-  gap: 0.5rem;
-
-  .actions-spacer {
-    flex: 1 1 auto;
-  }
-}
-
-.boost-button {
-  min-width: 7rem;
-  font-variant-numeric: tabular-nums;
-
-  &.boosting {
-    animation: colony.$pulse;
+  // A friend's challenge or an invitation, over whichever screen is open.
+  .social-notices {
+    position: absolute;
+    z-index: 1;
+    right: 1rem;
+    bottom: 1rem;
+    max-width: min(30rem, calc(100% - 2rem));
   }
 }
 

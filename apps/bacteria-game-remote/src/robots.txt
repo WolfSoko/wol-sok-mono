@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bacteria-wars.wolsok.de/sitemap.xml

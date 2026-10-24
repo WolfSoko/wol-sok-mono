@@ -26,6 +26,7 @@ describe('GhostController', () => {
       [3, 0, 30, 40],
     ],
     boosts: [[4, 0]],
+    weapons: [],
   };
 
   it("plays one seat's inputs, each kind's last one when it is due", () => {
@@ -35,14 +36,21 @@ describe('GhostController', () => {
       boost: false,
       drag: null,
       steer: { x: 1, y: 0 },
+      weapon: false,
     });
-    expect(ghost.before(2)).toEqual({ boost: false, drag: null, steer: null });
+    expect(ghost.before(2)).toEqual({
+      boost: false,
+      drag: null,
+      steer: null,
+      weapon: false,
+    });
     expect(ghost.before(3).drag).toEqual({ x: 30, y: 40 });
     expect(ghost.before(4).boost).toBe(true);
     expect(ghost.before(9)).toEqual({
       boost: false,
       drag: null,
       steer: { x: 0, y: 0 },
+      weapon: false,
     });
   });
 
@@ -99,7 +107,12 @@ describe('a ghost match', () => {
   });
 
   it('leaves the ghost to its run - no bot, no keys, no boost', () => {
-    const engine = ghostMatch({ steers: [], drags: [], boosts: [] });
+    const engine = ghostMatch({
+      steers: [],
+      drags: [],
+      boosts: [],
+      weapons: [],
+    });
     const start = engine.players[1];
 
     engine.setSteering(1, { x: 1, y: 0 });

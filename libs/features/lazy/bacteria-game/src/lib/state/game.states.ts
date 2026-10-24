@@ -12,7 +12,7 @@ import {
 } from '@ngrx/signals';
 import { distinctUntilChanged, Observable } from 'rxjs';
 import { BotDifficulty, DEFAULT_DIFFICULTY } from './bot-controller';
-import { DEFAULT_COLORS } from './colony-colors';
+import { DEFAULT_COLORS, seatFirst } from './colony-colors';
 import { getLevel, LEVELS } from './levels';
 import { MatchEarnings } from './earnings';
 import { HeadStart, Series, SeriesLength } from './rivalry';
@@ -20,18 +20,20 @@ import { Player } from './player.model';
 import type { Replay } from './replay';
 import type { EndlessRun } from './endless';
 import { EndReason, timeLeft, winRuleOf } from './win-conditions';
+import { DEFAULT_MODE, GameMode } from './game-mode';
 
-/** Who steers the second crosshair. */
-export type GameMode = 'two-players' | 'vs-computer';
+export { DEFAULT_MODE, isGameMode } from './game-mode';
+export type { GameMode } from './game-mode';
 
 /**
- * The mode a fresh game starts in. Against the computer, because that is what
- * a single person opening the game can play right away.
+ * An online match as this device takes part in it: its seat - 0 for the
+ * host - and the setup the host picked for the next match.
  */
-export const DEFAULT_MODE: GameMode = 'vs-computer';
-
-export function isGameMode(value: unknown): value is GameMode {
-  return value === 'vs-computer' || value === 'two-players';
+export interface OnlineSeat {
+  seat: 0 | 1;
+  levelId: string;
+  /** The colour ids of the host's (left) and the guest's (right) colony. */
+  colors: [string, string];
 }
 
 export enum GameState {
@@ -101,6 +103,10 @@ export interface GameStateState {
   endlessMatch: boolean;
   /** The endless run under way, null outside one - it outlasts a match. */
   endless: EndlessRun | null;
+  /** The online match this device is connected to, null outside one. */
+  online: OnlineSeat | null;
+  /** True while an online match waits for the other device's inputs. */
+  waitingForPeer: boolean;
 }
 
 export function createInitialState(): GameStateState {
@@ -128,6 +134,8 @@ export function createInitialState(): GameStateState {
     dailyDay: null,
     endlessMatch: false,
     endless: null,
+    online: null,
+    waitingForPeer: false,
   };
 }
 
@@ -140,8 +148,19 @@ export const GameStateStore = signalStore(
   { providedIn: 'root' },
   withState(createInitialState),
   withComputed(
-    ({ currentState, levelId, timePassed, matchLevel, mode, endedBy }) => {
-      const level = computed(() => getLevel(matchLevel() ?? levelId()));
+    ({
+      currentState,
+      levelId,
+      timePassed,
+      matchLevel,
+      mode,
+      endedBy,
+      online,
+      colors,
+    }) => {
+      const level = computed(() =>
+        getLevel(online()?.levelId ?? matchLevel() ?? levelId())
+      );
       const winRule = computed(() => winRuleOf(level()));
       const gameSeconds = computed(() => Math.floor(timePassed() / 1000));
       return {
@@ -167,6 +186,16 @@ export const GameStateStore = signalStore(
         secondsLeft: computed(() => timeLeft(winRule(), gameSeconds())),
         /** True once a match is over - also for a draw. */
         matchEnded: computed(() => endedBy() !== null),
+        /**
+         * The colours of the player at this device and of their opponent,
+         * for the menus: the setup's left and right colour, and online the
+         * pair of the match from this device's seat - the guest plays the
+         * right colony.
+         */
+        playerColors: computed((): [string, string] => {
+          const seat = online();
+          return seat === null ? colors() : seatFirst(seat.colors, seat.seat);
+        }),
       };
     }
   ),

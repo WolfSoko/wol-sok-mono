@@ -6,6 +6,7 @@ import {
   UnrecoverableStateEvent,
   VersionEvent,
 } from '@angular/service-worker';
+import { I18nService } from './remote-entry/entry.routes';
 import { Subject } from 'rxjs';
 import { providePwaUpdates, RELOAD_PAGE } from './pwa-updates';
 
@@ -53,6 +54,12 @@ describe('providePwaUpdates', () => {
 
   afterEach(() => jest.useRealTimers());
 
+  /** Waits for the game's texts, which the offer loads lazily. */
+  async function gameTexts(): Promise<void> {
+    await import('./remote-entry/entry.routes');
+    await Promise.resolve();
+  }
+
   it('offers a reload once a new version is ready', async () => {
     await setUp(true);
 
@@ -63,6 +70,7 @@ describe('providePwaUpdates', () => {
     expect(snackBar.open).not.toHaveBeenCalled();
 
     versionUpdates.next(VERSION_READY);
+    await gameTexts();
     expect(snackBar.open).toHaveBeenCalledWith(
       'A new version of the game is ready',
       'Reload'
@@ -71,6 +79,18 @@ describe('providePwaUpdates', () => {
 
     snackAction.next();
     expect(reloadPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers the reload in the language the game speaks', async () => {
+    await setUp(true);
+    TestBed.inject(I18nService).setLanguage('de');
+
+    versionUpdates.next(VERSION_READY);
+    await gameTexts();
+    expect(snackBar.open).toHaveBeenCalledWith(
+      'Eine neue Version des Spiels ist da',
+      'Neu laden'
+    );
   });
 
   it('reloads when the service worker cannot serve the app any more', async () => {

@@ -5,6 +5,9 @@ import {
 } from '@wolsok/feat-lazy-bac-game';
 import { environment } from '../../environments/environment';
 
+// For the update offer, which loads the game's texts with these routes.
+export { I18nService } from '@wolsok/feat-lazy-bac-game';
+
 export const entryRoutes: Routes = [
   {
     path: '',

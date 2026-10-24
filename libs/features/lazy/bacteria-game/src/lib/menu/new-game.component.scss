@@ -127,6 +127,131 @@
   min-width: 10rem;
 }
 
+// The training's missions, a row each, in the order they are played.
+.missions {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.25rem;
+}
+
+.missions-intro {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  line-height: 1.4;
+  color: var(--bw-soft);
+}
+
+.missions-progress {
+  color: var(--bw-gold);
+}
+
+.mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mission {
+  @include screen.panel;
+
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  padding: 0.8rem 1.1rem;
+  color: var(--bw-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--bw-line-strong);
+    background: var(--bw-surface-raised);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--bw-gold);
+    outline-offset: 2px;
+  }
+
+  &.current {
+    border-color: var(--bw-gold);
+  }
+}
+
+.mission-icon {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 1.75rem;
+  color: var(--bw-gold);
+}
+
+.mission-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.mission-name {
+  @include screen.figure;
+
+  font-size: 1.1rem;
+}
+
+.mission-goal {
+  font-size: 0.9rem;
+  color: var(--bw-soft);
+}
+
+.mission-badge {
+  flex: none;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--bw-line-strong);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+
+  &.up-next {
+    border-color: var(--bw-gold);
+    color: var(--bw-gold);
+  }
+}
+
+// A mission's goal and tip, under its briefing.
+.mission-brief {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  line-height: 1.4;
+
+  dt {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--bw-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--bw-soft);
+  }
+}
+
 // The briefing beside the setup and the way to start.
 .start-step {
   flex: 1 1 auto;
@@ -135,6 +260,12 @@
   align-items: start;
   gap: 1.25rem;
   min-height: 0;
+}
+
+// The online lobby before a match: no briefing, the lobby on its own.
+.start-step.lobby-only {
+  grid-template-columns: minmax(0, 32rem);
+  justify-content: center;
 }
 
 // The rule and the zones of the level, each in its colour.
@@ -191,6 +322,13 @@
   gap: 0.75rem;
   padding: 1.25rem;
   overflow: auto;
+}
+
+// The map of the level, as big as the briefing has room for.
+.details-preview {
+  flex: none;
+  width: 100%;
+  max-width: 30rem;
 }
 
 .details-number {
@@ -312,6 +450,7 @@
 
   .mode-blurb,
   .details-description,
+  .details-preview,
   .opponent {
     display: none;
   }

@@ -1,7 +1,10 @@
+import { english, GameText } from '../i18n/game-text';
+import type { levels as levelTexts } from '../i18n/en/levels';
 import { scaleOf } from './arena-size';
 import { ColonyTraits, GameBalance, gameBalance } from './game-balance';
+import type { WeaponId } from './evolution';
 import { getMap } from './game-maps';
-import { EXPANSE_NEUTRALS } from './expanse-maps';
+import { EXPANSE_NEUTRALS, ROOT_NETWORK_NEUTRALS } from './expanse-maps';
 import { GameMap } from './maps';
 import { MedalLimits } from './medallions';
 import { WinRule } from './win-conditions';
@@ -9,6 +12,8 @@ import {
   generatedLevel,
   parseGeneratedId,
 } from './level-generator/generate-level';
+import type { BotDifficulty } from './bot-controller';
+import { MissionId, TRAINING_LEVELS } from './training-levels';
 
 /**
  * A level is a map plus the tuning that makes it play differently.
@@ -23,6 +28,11 @@ export interface Level {
   name: string;
   /** Short briefing shown next to the level picker. */
   description: string;
+  /**
+   * The title as a text to translate - set on a generated level, whose
+   * title no dictionary lists by id; see {@link levelTitleText}.
+   */
+  title?: GameText;
   /** Id of the {@link GameMap} this level is fought on. */
   mapId: string;
   /** Tweaks applied on top of the base {@link gameBalance}. */
@@ -40,6 +50,14 @@ export interface Level {
    * food for whoever eats them first. Two at most, the GPU runs four.
    */
   neutrals?: readonly NeutralSpot[];
+  /** The training mission the level is played for - see `training.ts`. */
+  mission?: MissionId;
+  /**
+   * Who the level is played against, whatever the setup says: the
+   * computer at that difficulty, or a training dummy - a colony that sits
+   * where it spawned and nobody steers. The picked difficulty when absent.
+   */
+  opponent?: BotDifficulty | 'dummy';
 }
 
 /**
@@ -56,14 +74,22 @@ export interface NeutralSpot {
 export interface Boss {
   startScale: number;
   traits: ColonyTraits;
+  /**
+   * The weapon the boss fires at you - in a match with evolution, see
+   * `MatchPlan.loadouts` - none when absent.
+   */
+  weapon?: WeaponId;
 }
 
 /*
- * The medallion limits are a first pass from bot matches - the hard computer
- * against the normal one, four per level: silver near the median win, gold
- * near two thirds of it, and the gold losses near the median share lost. The
- * busy levels lose more bacteria than their colony ever held, hence shares
- * above 1. Tune them by playing.
+ * The medallion limits come from bot matches: silver near the median win,
+ * gold near two thirds of it, and the gold losses near the median share
+ * lost. The busy levels lose more bacteria than their colony ever held,
+ * hence shares above 1. Where the balance lab (ADR 0016) saw the stand-in
+ * win four times or more on normal, the base-size levels take its numbers,
+ * measured on the online grid a recorded match runs on; the rest keep the
+ * first pass, the hard computer against the normal one. The lab's summary
+ * lists what it measures for every level. Tune them by playing.
  */
 /** The balance the boss levels are fought with - the boss's traits on top. */
 const BOSS_BALANCE: Partial<GameBalance> = {
@@ -104,7 +130,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'One narrow waist in the centre that pinches shut now and then, and richer food. Holding the gap decides the match.',
     mapId: 'hourglass',
-    medal: { silverSec: 60, goldSec: 40, goldLossShare: 0.5 },
+    medal: { silverSec: 65, goldSec: 45, goldLossShare: 0.3 },
     balance: {
       aggression: 0.55,
       nutrientCount: 6,
@@ -133,7 +159,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Pillars everywhere and a shorter time to kill - the frontline breaks into pockets.',
     mapId: 'pillar-field',
-    medal: { silverSec: 40, goldSec: 25, goldLossShare: 0.3 },
+    medal: { silverSec: 65, goldSec: 45, goldLossShare: 0.3 },
     balance: {
       aggression: 0.7,
       combatDrainPerSec: 2,
@@ -180,7 +206,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Two sliding bars sweep the middle and shove both colonies around. Time your push between them.',
     mapId: 'pistons',
-    medal: { silverSec: 60, goldSec: 40, goldLossShare: 0.9 },
+    medal: { silverSec: 40, goldSec: 30, goldLossShare: 0.8 },
     balance: {
       aggression: 0.75,
       divideChancePerSec: 3.8,
@@ -198,7 +224,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Packed air sacs and nothing straight between them. Thread your colony through the channels before the enemy floods them.',
     mapId: 'alveoli',
-    medal: { silverSec: 100, goldSec: 60, goldLossShare: 0.6 },
+    medal: { silverSec: 50, goldSec: 35, goldLossShare: 0.3 },
     balance: {
       aggression: 0.8,
       divideChancePerSec: 4,
@@ -214,7 +240,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Fungal threads branch in from both edges - a maze nobody planned, with restless colonies in every pocket.',
     mapId: 'mycelium',
-    medal: { silverSec: 70, goldSec: 45, goldLossShare: 0.35 },
+    medal: { silverSec: 55, goldSec: 35, goldLossShare: 0.3 },
     balance: {
       aggression: 0.85,
       divideChancePerSec: 4.2,
@@ -231,7 +257,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'A heart in the middle swells with every beat and shoves both colonies away. Strike between the beats.',
     mapId: 'heartbeat',
-    medal: { silverSec: 80, goldSec: 50, goldLossShare: 1.8 },
+    medal: { silverSec: 55, goldSec: 35, goldLossShare: 0.8 },
     balance: {
       aggression: 0.9,
       divideChancePerSec: 4.4,
@@ -247,7 +273,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'The lining of a gut: soft fingers sway in from both edges and sweep everything along. The final and fiercest war.',
     mapId: 'villi',
-    medal: { silverSec: 45, goldSec: 30, goldLossShare: 3.4 },
+    medal: { silverSec: 40, goldSec: 25, goldLossShare: 1.9 },
     balance: {
       aggression: 0.95,
       divideChancePerSec: 4.6,
@@ -265,7 +291,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'The reactor shuts down after two and a half minutes - whoever holds the bigger colony then wins. Wipe the enemy out sooner for the better medallions.',
     mapId: 'reactor-core',
-    medal: { silverSec: 100, goldSec: 65, goldLossShare: 1.2 },
+    medal: { silverSec: 55, goldSec: 40, goldLossShare: 0.9 },
     win: { kind: 'timed', limitSec: 150 },
     balance: {
       aggression: 0.85,
@@ -282,7 +308,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Golden agar in the middle doubles division, violet antibiotic on the flanks kills whoever lingers. Ice slows, heat sends your colony at the enemy.',
     mapId: 'containment',
-    medal: { silverSec: 100, goldSec: 65, goldLossShare: 1.2 },
+    medal: { silverSec: 50, goldSec: 35, goldLossShare: 0.7 },
     balance: {
       aggression: 0.85,
       divideChancePerSec: 4.2,
@@ -327,6 +353,8 @@ export const LEVELS: readonly Level[] = [
     boss: {
       startScale: 2,
       traits: { divideFactor: 1.15, attackFactor: 1.05, cooldownFactor: 0.8 },
+      // The reactor's poison, thrown at your colony.
+      weapon: 'toxin-bomb',
     },
     balance: BOSS_BALANCE,
     crosshairSpeed: 210,
@@ -346,6 +374,8 @@ export const LEVELS: readonly Level[] = [
     boss: {
       startScale: 1.6,
       traits: { divideFactor: 1.1, attackFactor: 1, cooldownFactor: 0.8 },
+      // Patient zero turns your bacteria into its own.
+      weapon: 'phage-strike',
     },
     balance: BOSS_BALANCE,
     crosshairSpeed: 210,
@@ -357,7 +387,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Two grey colonies sit in isolation, between you and the enemy. Nobody steers them and they bite back only weakly - whoever eats them first has the bigger army.',
     mapId: 'quarantine',
-    medal: { silverSec: 95, goldSec: 65, goldLossShare: 0.5 },
+    medal: { silverSec: 40, goldSec: 25, goldLossShare: 0.5 },
     neutrals: [
       { x: 0.5, y: 0.2, startScale: 1.5 },
       { x: 0.5, y: 0.8, startScale: 1.5 },
@@ -403,6 +433,97 @@ export const LEVELS: readonly Level[] = [
     },
     crosshairSpeed: 220,
   },
+  // More big maps. A clock or a goal ends each: capped colonies on a map
+  // this big seldom wipe each other out.
+  {
+    id: 'archipelago',
+    name: '21 · Archipelago',
+    description:
+      'Islands in a sea of antibiotic, linked by narrow bridges. Hold the white zone on the island in the middle for forty seconds - the way there leads over the islands to the north and the south.',
+    mapId: 'archipelago',
+    // The hold takes forty seconds and the way there some ten: gold asks
+    // for a clean run at the zone.
+    medal: { silverSec: 70, goldSec: 50, goldLossShare: 2.6 },
+    win: { kind: 'hold', holdSec: 40 },
+    balance: {
+      aggression: 0.75,
+      divideChancePerSec: 3.8,
+      combatDrainPerSec: 2.2,
+      nutrientCount: 16,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 230,
+  },
+  {
+    id: 'bloodstream',
+    name: '22 · Bloodstream',
+    description:
+      'Three vessels side by side, a heart beating between you and the enemy - every beat squeezes the way past it. Valves that take turns to open and pinch shut lead out into the outer vessels, hot by the heart and icy at the far ends. Biggest colony after four minutes wins.',
+    mapId: 'bloodstream',
+    // Capped colonies on a map this big rarely wipe each other out: the
+    // clock decides, and silver and gold ask for a wipe-out first.
+    medal: { silverSec: 160, goldSec: 105, goldLossShare: 3.5 },
+    win: { kind: 'timed', limitSec: 240 },
+    balance: {
+      aggression: 0.8,
+      divideChancePerSec: 4,
+      combatDrainPerSec: 2.4,
+      nutrientCount: 16,
+      nutrientRespawnDelaySec: 1.4,
+    },
+    crosshairSpeed: 230,
+  },
+  {
+    id: 'root-network',
+    name: '23 · Root Network',
+    description:
+      'A cave of pillars, overgrown with fungal threads. Two grey colonies sit in hollows on golden agar, more agar lies in pockets along the way. Biggest colony after three minutes wins.',
+    mapId: 'root-network',
+    // As the other timed levels: silver and gold ask for a wipe-out first.
+    // Measured (ADR 0016): a stand-in with everything bred wiped the enemy
+    // out in 87-147 s, losing a third to a half of its colony.
+    medal: { silverSec: 120, goldSec: 80, goldLossShare: 0.5 },
+    win: { kind: 'timed', limitSec: 180 },
+    neutrals: ROOT_NETWORK_NEUTRALS.map((spot) => ({
+      ...spot,
+      startScale: 2.5,
+    })),
+    balance: {
+      aggression: 0.7,
+      divideChancePerSec: 3.8,
+      combatDrainPerSec: 2.2,
+      nutrientCount: 16,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 230,
+  },
+  // The finale: a boss on a big map.
+  {
+    id: 'leviathan',
+    name: '24 · Leviathan',
+    description:
+      'Something four times your size lives down in the abyss - it divides faster, hits harder and boosts more often. Keep your colony alive for two and a half minutes, or wipe the leviathan out.',
+    mapId: 'abyss',
+    medal: {
+      // Measured (ADR 0016): a stand-in with everything bred wiped the
+      // leviathan out on easy in 22 and 147 s, losing under half of its
+      // colony - the normal one it did not.
+      silverSec: 120,
+      goldSec: 85,
+      goldLossShare: 1,
+      // Four times your size at the start: a quarter of it is where you begin.
+      platinumSizeRatio: 0.2,
+    },
+    win: { kind: 'survive', limitSec: 150 },
+    boss: {
+      startScale: 4,
+      traits: { divideFactor: 1.15, attackFactor: 1.1, cooldownFactor: 0.75 },
+      // The cold of the deep, breathed over your colony.
+      weapon: 'cryo-pulse',
+    },
+    balance: BOSS_BALANCE,
+    crosshairSpeed: 230,
+  },
 ];
 
 /** True for the id of a hand-made level - one of the campaign's ladder. */
@@ -419,12 +540,13 @@ export function isLevelId(value: unknown): value is string {
 }
 
 /**
- * The level with that id - a generated one for a `gen:` id - falling back to
- * the first one.
+ * The level with that id - a generated one for a `gen:` id, a training
+ * mission's - falling back to the first one.
  */
 export function getLevel(id: string): Level {
   return (
     LEVELS.find((level) => level.id === id) ??
+    TRAINING_LEVELS.find((level) => level.id === id) ??
     generatedLevel(id)?.level ??
     LEVELS[0]
   );
@@ -470,6 +592,31 @@ export function levelSize(level: Level): number {
   return levelMap(level).size ?? 1;
 }
 
+/** True for the id of a level on a map bigger than the screen. */
+export function isBigMap(levelId: string): boolean {
+  return levelSize(getLevel(levelId)) > 1;
+}
+
+/**
+ * True for a level an online match may be played on: not a big map, which
+ * the CPU simulation both devices run cannot keep up with.
+ */
+export function playableOnline(level: Level): boolean {
+  return levelSize(level) === 1;
+}
+
+/** Why a level cannot be played online - the same for each of them. */
+export const ONLINE_LOCK_TEXT: GameText = { key: 'levels.locks.online' };
+
+/** Why a level cannot be played online, by level id. */
+export const ONLINE_LOCKS: Readonly<Record<string, string>> =
+  Object.fromEntries(
+    LEVELS.filter((level) => !playableOnline(level)).map((level) => [
+      level.id,
+      english(ONLINE_LOCK_TEXT),
+    ])
+  );
+
 /**
  * The level's arena cells per base cell on an arena that wide - the grid's
  * resolution, whatever the size of the map.
@@ -481,6 +628,68 @@ export function gridScale(level: Level, width: number): number {
 /** A level's name without its number - "Hourglass" for "3 · Hourglass". */
 export function levelTitle(level: Level): string {
   return level.name.replace(/^\d+ · /, '');
+}
+
+/** The id of a hand-made level, as the dictionaries list it. */
+export type LadderLevelId = keyof typeof levelTexts.titles;
+
+/** True for the id of a hand-made level. */
+export function isLadderLevelId(id: string): id is LadderLevelId {
+  return isLadderLevel(id);
+}
+
+/**
+ * A level's title as a text to translate - "Hourglass" - for a generated
+ * level the name it was given.
+ */
+export function levelTitleText(level: Level): GameText {
+  if (isLadderLevelId(level.id)) {
+    return { key: `levels.titles.${level.id}` };
+  }
+  return level.mission !== undefined
+    ? { key: `training.missions.${level.mission}.title` }
+    : // A level of neither kind is none of the game's - getLevel falls
+      // back to the first one for it.
+      (level.title ?? { key: 'levels.titles.petri-dish' });
+}
+
+/**
+ * A level's name as a text to translate: "3 · Hourglass" on the ladder,
+ * the title alone for a generated level.
+ */
+export function levelNameText(level: Level): GameText {
+  const index = LEVELS.findIndex(({ id }) => id === level.id);
+  return index < 0
+    ? levelTitleText(level)
+    : {
+        key: 'levels.name',
+        params: { number: index + 1, title: levelTitleText(level) },
+      };
+}
+
+/** A level's briefing as a text to translate. */
+export function levelDescriptionText(level: Level): GameText {
+  if (isLadderLevelId(level.id)) {
+    return { key: `levels.descriptions.${level.id}` };
+  }
+  if (level.mission !== undefined) {
+    return { key: `training.missions.${level.mission}.description` };
+  }
+  const recipe = parseGeneratedId(level.id)?.recipe ?? 'field';
+  return { key: `levels.generated.styles.${recipe}.description` };
+}
+
+/**
+ * The computer's difficulty on a level: the level's own opponent where it
+ * names one, else the difficulty picked.
+ */
+export function levelDifficulty(
+  level: Level,
+  picked: BotDifficulty
+): BotDifficulty {
+  return level.opponent === undefined || level.opponent === 'dummy'
+    ? picked
+    : level.opponent;
 }
 
 /** The level before this one, or null when it is the first. */

@@ -23,6 +23,21 @@
         object-fit: scale-down;
         padding: 0.5rem;
       }
+
+      // the app starts dark, body.theme-alternate switches to the light theme
+      .light-theme-logo {
+        display: none;
+      }
     }
+  }
+}
+
+:host-context(.theme-alternate) .technologyCard .tech-image {
+  .light-theme-logo {
+    display: block;
+  }
+
+  .dark-theme-logo {
+    display: none;
   }
 }

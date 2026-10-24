@@ -10,13 +10,16 @@ import { ArenaTheme } from '../arena-theme';
 import {
   cellDensity,
   ColonyLayer,
+  hatchPattern,
   jamDrops,
+  lookReach,
+  LOOKS,
   overcharge,
   StateLayer,
   strengthOf,
 } from '../colony-renderer';
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
-import { GpuSimulation } from '../../gl/gpu-simulation';
+import { GpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
 import { Motes } from '../motes';
 import {
   bindTexture,
@@ -36,14 +39,60 @@ import {
   FLOOR_FRAGMENT,
   SHAPE_FRAGMENT,
   SHAPE_VERTEX,
+  MAX_TINTS,
   ZONES_FRAGMENT,
 } from './shaders';
 import {
   pushBackground,
   pushForeground,
+  pushWeaponMarks,
   SHAPE_STRIDE,
   ShapeBatch,
 } from './shape-batch';
+import {
+  ColonyTint,
+  MarkLayer,
+  TINT_MODES,
+  tintApplies,
+  TintMode,
+  WeaponFx,
+} from '../weapon-fx';
+
+/** Each tint mode's number in the colony shader. */
+const TINT_INDEX = Object.fromEntries(
+  TINT_MODES.map((mode, index) => [mode, index])
+) as Record<TintMode, number>;
+
+/**
+ * Packs the weapons' tints that shade a colony - the one drawn in that
+ * colour - for the colony shader: centre, radius and strength in
+ * `circles`, the mode's number in `modes`. Returns how many there are, at
+ * most {@link MAX_TINTS}.
+ */
+export function packTints(
+  tints: readonly ColonyTint[],
+  colonyColor: readonly number[],
+  circles: Float32Array,
+  modes: Float32Array
+): number {
+  let count = 0;
+  for (const tint of tints) {
+    if (count >= MAX_TINTS) {
+      break;
+    }
+    if (!tintApplies(tint, colonyColor)) {
+      continue;
+    }
+    const at = count * 4;
+    circles[at] = tint.x;
+    circles[at + 1] = tint.y;
+    circles[at + 2] = tint.radius;
+    circles[at + 3] = tint.strength;
+    modes[count] = TINT_INDEX[tint.mode];
+    count++;
+  }
+  return count;
+}
 
 /**
  * Packs a colony into the cells texture, two bytes per arena cell: its
@@ -78,9 +127,12 @@ export function encodeCells(
  * 3 cells out - the blur spreads it by two, the slope of the slime reads one
  * more. Each pass reads past its own box, so the one before it has to cover
  * that too: the slime reads the vertical blur 1 cell further out, the
- * vertical blur reads the horizontal one 2 rows further out. A pass that
- * read past what was blurred this frame would pick up stale density - the
- * other colony's, where the two meet.
+ * vertical blur reads the horizontal one 2 rows further out, the horizontal
+ * blur the cells 2 columns. A pass that read past what was blurred this
+ * frame would pick up stale density - the other colony's, where the two
+ * meet. A look that reaches further past the colony, like the lattice
+ * looks with their cells and tiles, moves the whole chain out by its reach
+ * ({@link passMargins}).
  */
 const MARGIN = {
   colony: 3,
@@ -88,9 +140,23 @@ const MARGIN = {
   horizontalBlur: 6,
   /** The glow's halo reaches three cells out. */
   effects: 4,
-  /** The horizontal blur reads the cells 2 columns beyond its box. */
   cells: 8,
 } as const;
+
+/** The margins of a colony's passes for a look that reaches that far past it. */
+export function passMargins(reach: number): {
+  colony: number;
+  verticalBlur: number;
+  horizontalBlur: number;
+  cells: number;
+} {
+  return {
+    colony: MARGIN.colony + reach,
+    verticalBlur: MARGIN.verticalBlur + reach,
+    horizontalBlur: MARGIN.horizontalBlur + reach,
+    cells: MARGIN.cells + reach,
+  };
+}
 
 interface Programs {
   floor: Program;
@@ -123,8 +189,8 @@ interface Resources {
 
 /**
  * The arena drawn on the GPU with WebGL2: the floor and the fading trail,
- * the colonies in either look, the walls and gates, the jam and the
- * crosshairs. Per frame the CPU only packs each colony's cells into a small
+ * the colonies in either look, the walls and gates, the weapons' effects
+ * (see `WeaponFx`), the jam and the crosshairs. Per frame the CPU only packs each colony's cells into a small
  * texture and the shapes into one instance buffer.
  *
  * The frame is built in an offscreen texture that is kept between frames -
@@ -146,6 +212,11 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly motes: Motes;
   private readonly background = new ShapeBatch();
   private readonly foreground = new ShapeBatch();
+  /** The weapons going off and acting, and a batch per layer of them. */
+  private readonly weapons: WeaponFx;
+  private readonly weaponBatch = new ShapeBatch();
+  private readonly tintCircles = new Float32Array(MAX_TINTS * 4);
+  private readonly tintModes = new Float32Array(MAX_TINTS);
   private readonly cellBytes: Uint8Array;
   private readonly canvasWidth: number;
   private readonly canvasHeight: number;
@@ -199,6 +270,7 @@ export class GlArenaPainter implements ArenaPainter {
     this.detail = detail;
     this.view = { x: 0, y: 0, width, height };
     this.motes = new Motes(width, height);
+    this.weapons = new WeaponFx(unit);
     this.cellBytes = new Uint8Array(width * height * 2);
     this.resources = this.setup();
 
@@ -231,9 +303,10 @@ export class GlArenaPainter implements ArenaPainter {
    */
   public createSimulation(
     balance: GameBalance,
-    random: () => number
+    random: () => number,
+    options: GpuSimulationOptions = {}
   ): GpuSimulation {
-    return new GpuSimulation(this.gl, balance, random);
+    return new GpuSimulation(this.gl, balance, random, options);
   }
 
   /**
@@ -267,6 +340,7 @@ export class GlArenaPainter implements ArenaPainter {
     }
     const { programs } = resources;
     this.motes.advance(frame.deltaTimeSec);
+    this.weapons.update(frame);
     this.view = frame.view;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
@@ -301,6 +375,7 @@ export class GlArenaPainter implements ArenaPainter {
       frame.dynamicWalls
     );
     this.drawShapes(this.background);
+    this.drawWeaponLayer(this.weapons.ground, false);
 
     for (const colony of frame.colonies) {
       this.drawColony(frame, colony);
@@ -308,6 +383,11 @@ export class GlArenaPainter implements ArenaPainter {
     if (!frame.reducedMotion) {
       this.drawEffects(frame);
     }
+    // The weapons over the colonies - the clouds, the ice and the membrane,
+    // then their flashes, shockwaves and sparks as light. The crosshairs
+    // stay on top of it all.
+    this.drawWeaponLayer(this.weapons.over, false);
+    this.drawWeaponLayer(this.weapons.light, true);
 
     this.foreground.clear();
     pushForeground(
@@ -348,8 +428,8 @@ export class GlArenaPainter implements ArenaPainter {
 
   /**
    * One colony: its cells - uploaded from the CPU, or drawn straight from the
-   * GPU simulation's state - are blurred on the arena grid for the slime
-   * look, and drawn over the frame in a single pass.
+   * GPU simulation's state - are blurred on the arena grid for every look
+   * but the pixels, and drawn over the frame in a single pass.
    */
   private drawColony(frame: ArenaFrame, layer: ColonyLayer): void {
     const gl = this.gl;
@@ -363,31 +443,35 @@ export class GlArenaPainter implements ArenaPainter {
       layer.kind === 'cells'
         ? this.uploadCells(layer.bacterias, frame.balance)
         : layer.bounds;
-    if (bounds == null || !this.inView(bounds, MARGIN.colony)) {
+    // A look that reaches past the colony - the lattice looks, with their
+    // cells and tiles - is drawn that much further out, and every pass
+    // before the drawing moves out with it, or it would read stale density.
+    const margin = passMargins(lookReach(frame.look, this.unit));
+    if (bounds == null || !this.inView(bounds, margin.colony)) {
       return;
     }
     // Only the box around the colony is blurred and drawn - the rest of the
     // arena would be fragments the GPU works on to discard them.
     gl.enable(gl.SCISSOR_TEST);
     if (layer.kind === 'state') {
-      this.drawCellsFromState(layer, bounds, frame.balance);
+      this.drawCellsFromState(layer, bounds, frame.balance, margin.cells);
     }
 
-    const slime = frame.look === 'slime';
-    if (slime) {
+    const blurred = LOOKS[frame.look].fromDensity;
+    if (blurred) {
       gl.disable(gl.BLEND);
       gl.viewport(0, 0, this.width, this.height);
       this.useFullscreen(programs.blur);
-      this.scissorCells(bounds, MARGIN.horizontalBlur);
+      this.scissorCells(bounds, margin.horizontalBlur);
       this.blurPass(cells.texture, blur[0], 1, 0);
-      this.scissorCells(bounds, MARGIN.verticalBlur);
+      this.scissorCells(bounds, margin.verticalBlur);
       this.blurPass(blur[0].texture, blur[1], 0, 1);
       gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
       gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
       gl.enable(gl.BLEND);
     }
 
-    this.scissorCanvas(bounds, MARGIN.colony);
+    this.scissorCanvas(bounds, margin.colony);
     const program = programs.colony;
     this.useFullscreen(program);
     bindTexture(gl, 0, blur[1].texture, program.uniforms['uDensity']);
@@ -401,7 +485,20 @@ export class GlArenaPainter implements ArenaPainter {
       color[2] / 255
     );
     gl.uniform1f(program.uniforms['uAlpha'], (color[3] ?? 255) / 255);
-    gl.uniform1i(program.uniforms['uLook'], slime ? 0 : 1);
+    gl.uniform1i(program.uniforms['uLook'], LOOKS[frame.look].glIndex);
+    gl.uniform1f(program.uniforms['uUnit'], this.unit);
+    gl.uniform1f(
+      program.uniforms['uPixel'],
+      this.view.width / this.canvasWidth
+    );
+    gl.uniform1f(program.uniforms['uTime'], frame.timeSec);
+    const hatch = hatchPattern(color);
+    gl.uniform3f(
+      program.uniforms['uHatch'],
+      hatch.direction[0],
+      hatch.direction[1],
+      hatch.cross ? 1 : 0
+    );
     gl.uniform1f(
       program.uniforms['uShimmer'],
       boostTarget == null ? -1 : frame.timeSec
@@ -412,7 +509,17 @@ export class GlArenaPainter implements ArenaPainter {
         boostTarget.x,
         boostTarget.y
       );
-      gl.uniform1f(program.uniforms['uUnit'], this.unit);
+    }
+    const tints = packTints(
+      this.weapons.tints,
+      color,
+      this.tintCircles,
+      this.tintModes
+    );
+    gl.uniform1i(program.uniforms['uTintCount'], tints);
+    if (tints > 0) {
+      gl.uniform4fv(program.uniforms['uTints[0]'], this.tintCircles);
+      gl.uniform4fv(program.uniforms['uTintModes'], this.tintModes);
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.SCISSOR_TEST);
@@ -503,7 +610,9 @@ export class GlArenaPainter implements ArenaPainter {
   private drawCellsFromState(
     colony: StateLayer,
     bounds: CellBounds,
-    balance: GameBalance
+    balance: GameBalance,
+    /** How far past the bounds to draw - what the horizontal blur reads. */
+    margin: number
   ): void {
     const gl = this.gl;
     const resources = this.resources;
@@ -514,7 +623,7 @@ export class GlArenaPainter implements ArenaPainter {
     gl.disable(gl.BLEND);
     gl.viewport(0, 0, this.width, this.height);
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.cells.framebuffer);
-    this.scissorCells(bounds, MARGIN.cells);
+    this.scissorCells(bounds, margin);
     this.useFullscreen(program);
     bindTexture(gl, 0, colony.state, program.uniforms['uState']);
     gl.uniform1ui(program.uniforms['uOwner'], colony.owner);
@@ -566,6 +675,23 @@ export class GlArenaPainter implements ArenaPainter {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.SCISSOR_TEST);
     this.useAlphaBlend();
+  }
+
+  /** A layer of the weapons' marks - `light` adds it over the frame as light. */
+  private drawWeaponLayer(layer: MarkLayer, light: boolean): void {
+    if (layer.count === 0) {
+      return;
+    }
+    const gl = this.gl;
+    this.weaponBatch.clear();
+    pushWeaponMarks(this.weaponBatch, layer);
+    if (light) {
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ZERO, gl.ONE);
+    }
+    this.drawShapes(this.weaponBatch);
+    if (light) {
+      this.useAlphaBlend();
+    }
   }
 
   /** The blending everything but the glow is drawn with. */
@@ -732,6 +858,12 @@ export class GlArenaPainter implements ArenaPainter {
         'uShimmer',
         'uBoostTarget',
         'uUnit',
+        'uPixel',
+        'uHatch',
+        'uTime',
+        'uTintCount',
+        'uTints[0]',
+        'uTintModes',
       ]),
       shape: createProgram(gl, SHAPE_VERTEX, SHAPE_FRAGMENT, ['uView']),
       cells: createProgram(gl, FULLSCREEN_VERTEX, CELLS_FRAGMENT, [

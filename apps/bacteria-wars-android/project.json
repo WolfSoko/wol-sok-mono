@@ -43,6 +43,12 @@
         "command": "tsx ./tools/bacteria-game/generate-store-assets.ts"
       }
     },
+    "achievement-icons": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx ./tools/bacteria-game/generate-achievement-icons.ts"
+      }
+    },
     "promo-video": {
       "executor": "nx:run-commands",
       "options": {

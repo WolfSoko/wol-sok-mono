@@ -3,12 +3,15 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
 import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
+import { I18nService } from './i18n/i18n.service';
+import { MatchmakerService } from './net/matchmaker.service';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { GameSoundService } from './sound/game-sound.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
 import { levelTitle, LEVELS } from './state/levels';
+import { MATCH_LEVELS } from './state/match-level';
 import { PlayerStore } from './state/player.store';
 import { replayOf } from './state/replay';
 
@@ -37,6 +40,21 @@ function stubFullscreen(element: Element | null): jest.Mock {
 function stubActivation(isActive: boolean): void {
   Object.defineProperty(navigator, 'userActivation', {
     value: { isActive },
+    configurable: true,
+  });
+}
+
+/**
+ * Lets the page believe it runs on a touch device, which opens the game
+ * fullscreen, or on a desktop, which opens it embedded in the page.
+ */
+function stubTouch(touch: boolean): void {
+  Object.defineProperty(window, 'matchMedia', {
+    value: (query: string) => ({
+      matches: touch && query === '(pointer: coarse)',
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }),
     configurable: true,
   });
 }
@@ -76,9 +94,11 @@ describe('BacteriaGameComponent', () => {
   /**
    * Creates the component with a stage whose fullscreen request the browser
    * grants or refuses, and returns that stage. The template is not rendered,
-   * so the stage element is wired up by hand.
+   * so the stage element is wired up by hand. Unless told otherwise, the
+   * page runs on a touch device and so opens fullscreen.
    */
-  function create(granted = false) {
+  function create(granted = false, touch = true) {
+    stubTouch(touch);
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [BacteriaGameComponent, NoopAnimationsModule],
@@ -257,10 +277,32 @@ describe('BacteriaGameComponent', () => {
   });
 
   describe('entering the page', () => {
-    it('opens in the touch layout', () => {
+    it('opens fullscreen on a touch device', () => {
       create();
 
       expect(component['fullscreen']()).toBe(true);
+    });
+
+    it('opens embedded in the page on a desktop, on the main menu', () => {
+      const arena = create(false, false);
+
+      expect(component['fullscreen']()).toBe(false);
+      expect(component['panel']()).toBe('menu');
+      expect(component['screenOpen']()).toBe(true);
+
+      component.startGame();
+      expect(arena.requestFullscreen).not.toHaveBeenCalled();
+    });
+
+    it('fills the viewport below what is above the embedded stage', () => {
+      create(false, false);
+      (component as unknown as { stageRef: unknown }).stageRef = {
+        nativeElement: { getBoundingClientRect: () => ({ top: 64.4 }) },
+      };
+
+      component['measureStageTop']();
+
+      expect(component['stageTop']()).toBe(64);
     });
 
     it('does not waste the native request on a page opened without a gesture', () => {
@@ -312,8 +354,21 @@ describe('BacteriaGameComponent', () => {
     });
   });
 
+  describe('the fullscreen buttons', () => {
+    it('toggle between the page and the whole screen', () => {
+      const arena = create(false, false);
+
+      component['setFullscreen'](true);
+      expect(component['fullscreen']()).toBe(true);
+      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
+
+      component['setFullscreen'](false);
+      expect(component['fullscreen']()).toBe(false);
+    });
+  });
+
   describe('leaving fullscreen', () => {
-    it('returns to the page and gives the screen back', () => {
+    it('puts the stage back into the page and gives the screen back', () => {
       const arena = create(true);
       const exit = stubFullscreen(arena as unknown as Element);
 
@@ -398,7 +453,7 @@ describe('BacteriaGameComponent', () => {
       expect(component['panel']()).toBe('menu');
     });
 
-    it('leaves the layout on Escape from the main menu only', () => {
+    it('leaves fullscreen on Escape from the main menu only', () => {
       create();
 
       component.onKeyDown(keyEvent('Escape', document.body));
@@ -500,6 +555,21 @@ describe('BacteriaGameComponent', () => {
 
       expect(component['difficultyName']()).toBe('Hard');
     });
+
+    it('speaks German once the player picks it', () => {
+      create();
+      TestBed.inject(GameStateService).setDifficulty('hard');
+      expect(component['clockLabel']()).toBe('Game time');
+      expect(component['colonyName']('You')).toBe('You');
+
+      TestBed.inject(I18nService).setLanguage('de');
+
+      expect(component['clockLabel']()).toBe('Spielzeit');
+      expect(component['difficultyName']()).toBe('Schwer');
+      expect(component['colonyName']('You')).toBe('Du');
+      expect(component['colonyName']('Ada')).toBe('Ada');
+      expect(component['settingsBackLabel']()).toBe('Menü');
+    });
   });
 
   describe('the vaporize effect', () => {
@@ -525,8 +595,45 @@ describe('BacteriaGameComponent', () => {
 
       expect(louder()).toBeLessThan(atDefault);
       expect(louder()).toBeCloseTo(
-        TestBed.inject(GameSoundService).effectsGain() * 0.8
+        TestBed.inject(GameSoundService).effectsGain() * 0.3
       );
+    });
+
+    it('takes as long as set', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+
+      expect(component['thanosOptions']().animationLength).toBe(2500);
+      settings.setVaporizeMs(5000);
+      expect(component['thanosOptions']().animationLength).toBe(5000);
+    });
+
+    it('captures the arena within the pixel budget of the quality', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+      const pixels = () => component['thanosOptions']().maxCapturePixels;
+
+      expect(pixels()).toBe(500_000);
+      settings.setVaporize('low');
+      expect(pixels()).toBe(250_000);
+      settings.setVaporize('full');
+      expect(pixels()).toBeUndefined();
+    });
+
+    it('simply clears the arena while the effect is off', async () => {
+      create();
+      TestBed.inject(GameSettingsService).setVaporize('off');
+      const vaporize = jest.fn(() => new Subject<void>());
+      (component as unknown as { thanos: unknown }).thanos = { vaporize };
+      const done = jest.fn();
+
+      component['vaporize']().subscribe({ complete: done });
+      // Like the effect, it is over only after the caller is through.
+      expect(done).not.toHaveBeenCalled();
+      await Promise.resolve();
+
+      expect(vaporize).not.toHaveBeenCalled();
+      expect(done).toHaveBeenCalled();
     });
   });
 
@@ -654,7 +761,7 @@ describe('BacteriaGameComponent', () => {
       },
       'cpu',
       600,
-      { steers: [[0, 0, 1, 0]], drags: [], boosts: [] }
+      { steers: [[0, 0, 1, 0]], drags: [], boosts: [], weapons: [] }
     );
 
     it('starts a match against it on Fight it', () => {
@@ -677,6 +784,26 @@ describe('BacteriaGameComponent', () => {
 
       expect(store.challenge()).toBeNull();
       expect(store.ghost()).toBeNull();
+    });
+  });
+
+  describe('a match the matchmaking set up', () => {
+    it('is played on the level the matchmaking picked', () => {
+      create();
+      const levelId = MATCH_LEVELS[3].id;
+      jest
+        .spyOn(TestBed.inject(MatchmakerService), 'matchLevel')
+        .mockReturnValue({ levelId, reason: 'theirs' });
+      const start = jest
+        .spyOn(component as unknown as { startGame(): void }, 'startGame')
+        .mockImplementation(() => undefined);
+
+      (
+        component as unknown as { startMatchmadeMatch(): void }
+      ).startMatchmadeMatch();
+
+      expect(store.snapshot().levelId).toBe(levelId);
+      expect(start).toHaveBeenCalled();
     });
   });
 

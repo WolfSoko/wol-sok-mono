@@ -1,9 +1,9 @@
-import { App, Duration, RemovalPolicy } from 'aws-cdk-lib';
+import { App, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import { readdirSync } from 'fs';
 import * as path from 'path';
 import { vitest } from 'vitest';
-import { SpaStack, SpaStackProps } from './spa/spa.stack';
+import { SpaCertificateStack, SpaStack, SpaStackProps } from './spa/spa.stack';
 import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
 
 // Mock the fromLookup method
@@ -75,7 +75,12 @@ describe('SpaCdkStack', () => {
     });
   });
 
-  it('should deploy index.html last and prune nothing', () => {
+  /** Build output, index.html, a no-cache override and extra assets. */
+  function fourDeploymentsFactory(): {
+    deployments: Record<string, { Properties: Record<string, unknown> }>;
+    index: string;
+    others: string[];
+  } {
     const { template, stack } = testStackFactory({
       noCacheFiles: ['test-javascript-asset.js'],
     });
@@ -87,6 +92,11 @@ describe('SpaCdkStack', () => {
       /DeployWithInvalidation2/.test(id)
     ) as string;
     const others = Object.keys(deployments).filter((id) => id !== index);
+    return { deployments, index, others };
+  }
+
+  it('should deploy index.html last and prune nothing', () => {
+    const { deployments, index, others } = fourDeploymentsFactory();
     //then
     expect(others).toHaveLength(3);
     expect(deployments[index]['DependsOn']).toEqual(
@@ -95,6 +105,22 @@ describe('SpaCdkStack', () => {
     expect(
       Object.values(deployments).map(({ Properties }) => Properties['Prune'])
     ).toEqual([false, false, false, false]);
+  });
+
+  it('should invalidate with every deployment and wait only for the last one, index.html', () => {
+    const { deployments, index, others } = fourDeploymentsFactory();
+    //then
+    for (const { Properties } of Object.values(deployments)) {
+      expect(Properties['DistributionPaths']).toEqual(['/*']);
+    }
+    expect(
+      deployments[index].Properties['WaitForDistributionInvalidation']
+    ).toBe(true);
+    for (const id of others) {
+      expect(
+        deployments[id].Properties['WaitForDistributionInvalidation']
+      ).toBe(false);
+    }
   });
 
   it('should create an extra BucketDeployment when using addExtraAssets', () => {
@@ -223,5 +249,45 @@ describe('SpaCdkStack', () => {
         );
       }
     );
+  });
+
+  describe('certificate', () => {
+    const certificates = (template: Template) =>
+      Object.keys(
+        template.findResources('AWS::CertificateManager::Certificate')
+      );
+
+    it('should create the certificate in the stack itself in us-east-1', () => {
+      const { app, template } = testStackFactory();
+      expect(certificates(template())).toHaveLength(1);
+      expect(
+        app.node.children
+          .filter(Stack.isStack)
+          .map(({ stackName }) => stackName)
+      ).toEqual(['TestSpaStack']);
+    });
+
+    it('should create the certificate in a us-east-1 stack of its own in another region', () => {
+      const { app, stack, template } = testStackFactory({
+        env: { region: 'eu-central-1', account: '123456789' },
+      });
+      const certificateStack = app.node.findChild(
+        'TestSpaStackCertificate'
+      ) as SpaCertificateStack;
+
+      expect(certificateStack.region).toBe('us-east-1');
+      expect(certificates(template())).toHaveLength(0);
+      expect(certificates(Template.fromStack(certificateStack))).toHaveLength(
+        1
+      );
+      expect(stack.dependencies).toContain(certificateStack);
+      template().hasResourceProperties('AWS::CloudFront::Distribution', {
+        DistributionConfig: Match.objectLike({
+          ViewerCertificate: Match.objectLike({
+            AcmCertificateArn: Match.anyValue(),
+          }),
+        }),
+      });
+    });
   });
 });

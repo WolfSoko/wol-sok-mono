@@ -1,3 +1,4 @@
+import { I18nService } from '../i18n/i18n.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ColonyStats } from '../colony-stats';
@@ -20,6 +21,7 @@ const orange: ColonyStats = {
   boostKey: 'Space',
   held: 0,
   pellets: 0,
+  weapon: null,
 };
 
 describe('BoostPadComponent', () => {
@@ -94,5 +96,13 @@ describe('BoostPadComponent', () => {
     await fixture.whenStable();
 
     expect(button().disabled).toBe(true);
+  });
+
+  it('speaks German', async () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    fixture.componentRef.setInput('colony', { ...orange, name: 'Blue' });
+    await fixture.whenStable();
+
+    expect(button().getAttribute('aria-label')).toBe('Boost für Blau');
   });
 });

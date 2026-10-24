@@ -7,11 +7,14 @@ import {
   SETTINGS_STORAGE_KEY,
   StoredSettings,
 } from './settings.service';
+import { I18nService } from './i18n/i18n.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
-import { LEVELS } from './state/levels';
+import { LEVELS, playableOnline } from './state/levels';
+import { MATCH_LEVELS } from './state/match-level';
 import { DeviceStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
+import { DETERMINISTIC_SIMULATION } from './state/simulation';
 
 describe('GameSettingsService', () => {
   beforeEach(() => {
@@ -92,6 +95,33 @@ describe('GameSettingsService', () => {
     expect(stored().freePlay).toBe(true);
     TestBed.resetTestingModule();
     expect(TestBed.inject(GameSettingsService).freePlay()).toBe(true);
+  });
+
+  it('remembers the matchmaking level, any level by default', () => {
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.matchLevel()).toBeNull();
+
+    service.setMatchLevel(MATCH_LEVELS[2].id);
+    expect(stored().matchLevel).toBe(MATCH_LEVELS[2].id);
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).matchLevel()).toBe(
+      MATCH_LEVELS[2].id
+    );
+
+    TestBed.inject(GameSettingsService).setMatchLevel(null);
+    expect(stored().matchLevel).toBeUndefined();
+  });
+
+  it('takes only a level that plays online for the matchmaking', () => {
+    const offline = LEVELS.find((level) => !playableOnline(level))?.id;
+    for (const matchLevel of ['moon', offline, 42]) {
+      localStorage.setItem(
+        SETTINGS_STORAGE_KEY,
+        JSON.stringify({ matchLevel })
+      );
+      TestBed.resetTestingModule();
+      expect(TestBed.inject(GameSettingsService).matchLevel()).toBeNull();
+    }
   });
 
   it('remembers the arena, and ignores one it does not know', () => {
@@ -288,6 +318,84 @@ describe('GameSettingsService', () => {
     expect(service.screenResolution()).toBe('medium');
   });
 
+  it('vaporizes at medium quality in half the time it used to, unless told otherwise', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    expect(service.vaporize()).toBe('medium');
+    expect(service.vaporizeMs()).toBe(2500);
+  });
+
+  it('fills the dish with bubbles and mist unless told otherwise', () => {
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.ambience()).toBe(true);
+
+    service.setAmbience(false);
+
+    expect(stored()).toMatchObject({ ambience: false });
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).ambience()).toBe(false);
+  });
+
+  it('remembers how the arena vaporizes', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    service.setVaporize('off');
+    service.setVaporizeMs(5000);
+
+    expect(stored()).toMatchObject({ vaporize: 'off', vaporizeMs: 5000 });
+    TestBed.resetTestingModule();
+    const restored = TestBed.inject(GameSettingsService);
+    expect(restored.vaporize()).toBe('off');
+    expect(restored.vaporizeMs()).toBe(5000);
+  });
+
+  it('ignores vaporize settings it does not know', () => {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ vaporize: 'ultra', vaporizeMs: 1234 })
+    );
+
+    const service = TestBed.inject(GameSettingsService);
+
+    expect(service.vaporize()).toBe('medium');
+    expect(service.vaporizeMs()).toBe(2500);
+  });
+
+  it('follows the browser until the player picks a language, and remembers it', () => {
+    const service = TestBed.inject(GameSettingsService);
+    const i18n = TestBed.inject(I18nService);
+    expect(service.language()).toBeNull();
+    expect(i18n.language()).toBe('en');
+
+    service.setLanguage('de');
+
+    expect(i18n.language()).toBe('de');
+    expect(stored()).toMatchObject({ language: 'de' });
+
+    service.setLanguage(null);
+
+    expect(i18n.language()).toBe('en');
+    expect(stored()['language']).toBeUndefined();
+  });
+
+  it('restores the language, and follows the browser for one it does not know', () => {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ language: 'de' })
+    );
+    TestBed.inject(GameSettingsService);
+    expect(TestBed.inject(I18nService).language()).toBe('de');
+
+    TestBed.resetTestingModule();
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ language: 'klingon' })
+    );
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.language()).toBeNull();
+    expect(TestBed.inject(I18nService).language()).toBe('en');
+  });
+
   describe('with storage that answers late', () => {
     let storage: LateGameStorage;
 
@@ -298,6 +406,70 @@ describe('GameSettingsService', () => {
       });
       return TestBed.inject(GameSettingsService);
     }
+
+    it('keeps matches, records local ones as the rollout switch says, and hands the stored choice to the game', () => {
+      const byDefault = DETERMINISTIC_SIMULATION;
+      const service = createWith({
+        saveMatches: false,
+        recordLocal: !byDefault,
+      });
+      const prefs = jest.spyOn(
+        TestBed.inject(GameStateService),
+        'setReplayPrefs'
+      );
+      expect(service.saveMatches()).toBe(true);
+      expect(service.recordLocal()).toBe(byDefault);
+
+      storage.flush();
+
+      expect(service.saveMatches()).toBe(false);
+      expect(service.recordLocal()).toBe(!byDefault);
+      expect(prefs).toHaveBeenLastCalledWith({
+        recordLocal: !byDefault,
+        saveMatches: false,
+      });
+    });
+
+    it('keeps "Save my matches" as switched before the storage answered', () => {
+      const service = createWith({ saveMatches: true });
+      const prefs = jest.spyOn(
+        TestBed.inject(GameStateService),
+        'setReplayPrefs'
+      );
+
+      service.setSaveMatches(false);
+      expect(prefs).toHaveBeenLastCalledWith({ saveMatches: false });
+      storage.flush();
+      storage.flush();
+
+      expect(service.saveMatches()).toBe(false);
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        saveMatches: false,
+        recordLocal: DETERMINISTIC_SIMULATION,
+      });
+      expect(prefs).toHaveBeenLastCalledWith({
+        recordLocal: DETERMINISTIC_SIMULATION,
+        saveMatches: false,
+      });
+    });
+
+    it('restores the matchmaking level once the storage answers', () => {
+      const service = createWith({ matchLevel: MATCH_LEVELS[1].id });
+      expect(service.matchLevel()).toBeNull();
+
+      storage.flush();
+
+      expect(service.matchLevel()).toBe(MATCH_LEVELS[1].id);
+    });
+
+    it('keeps a matchmaking level picked before the storage answered', () => {
+      const service = createWith({ matchLevel: MATCH_LEVELS[1].id });
+
+      service.setMatchLevel(null);
+      storage.flush();
+
+      expect(service.matchLevel()).toBeNull();
+    });
 
     it('restores the settings once the storage answers', () => {
       const service = createWith({ levelId: LEVELS[2].id, sound: false });
@@ -441,6 +613,19 @@ describe('GameSettingsService', () => {
       expect(service.arena()).toBe(LEVELS[5].id);
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         arena: LEVELS[5].id,
+      });
+    });
+
+    it('keeps a language picked before the storage answered', () => {
+      const service = createWith({ language: 'en' });
+
+      service.setLanguage('de');
+      storage.flush();
+      storage.flush();
+
+      expect(service.language()).toBe('de');
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        language: 'de',
       });
     });
 

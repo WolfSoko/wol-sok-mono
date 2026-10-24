@@ -14,21 +14,40 @@ import { DatePipe, DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { TranslationKey } from '../i18n/dictionaries';
+import {
+  achievementTexts,
+  colonyColorText,
+  GameText,
+  GameTextPipe,
+  ladderLockText,
+  levelNameText,
+  medalKey,
+  playerNameText,
+  rankKey,
+  renderGameText,
+  seriesKey,
+} from '../i18n/game-texts';
+import { I18nService } from '../i18n/i18n.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { GameMode, GameStateStore } from '../state/game.states';
 import { getLevel, Level, nextLevel } from '../state/levels';
-import { MedalAward, MEDAL_NAMES, medalRank } from '../state/medallions';
+import { MedalAward, medalRank } from '../state/medallions';
 import { Player } from '../state/player.model';
-import { Achievement, getAchievement } from '../state/achievements';
+import { AchievementId } from '../state/achievement-ids';
 import { MatchEarnings } from '../state/earnings';
 import { xpClimb } from '../state/ranks';
 import { formatScore, rivalryScore, seriesWinner } from '../state/rivalry';
-import { getColonyColor } from '../state/colony-colors';
 import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
-import { BOSS_SEAT } from '../state/win-conditions';
+import { BOSS_SEAT, EndReason } from '../state/win-conditions';
+import { SocialService } from '../social/social.service';
+import { EvolutionService } from '../evolution.service';
+import { DnaHelixComponent } from '../menu/dna-helix.component';
+import { dnaEarned } from '../state/evolution';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =
@@ -38,7 +57,13 @@ export type MatchEndAction =
   | 'menu'
   | 'ghost'
   // On with the endless run - or a new one, once it is over.
-  | 'endless';
+  | 'endless'
+  // To the Evolution screen, to spend the DNA the match earned.
+  | 'evolve'
+  // On to the next training mission.
+  | 'mission'
+  // From the training to the campaign, once the last mission is done.
+  | 'campaign';
 
 /**
  * The screen a match ends on: who won, and what to play next. It sits in the
@@ -49,10 +74,13 @@ export type MatchEndAction =
   selector: 'feat-lazy-bac-game-winner',
   imports: [
     DatePipe,
+    DnaHelixComponent,
+    GameTextPipe,
     MatButtonModule,
     MatIconModule,
     MatProgressBarModule,
     MedallionComponent,
+    TranslatePipe,
   ],
   templateUrl: './winner.component.html',
   styleUrls: ['./winner.component.scss'],
@@ -62,10 +90,12 @@ export class WinnerComponent {
   private state = inject(GameStateStore);
   private document = inject(DOCUMENT);
   private clipboard = inject(Clipboard);
+  private i18n = inject(I18nService);
 
   /**
    * Why the next level is still locked on the campaign ladder, null when it
-   * is open.
+   * is open. Only whether it is counts: the reason shown is the ladder's
+   * own text for the level, in the active language.
    */
   public readonly upcomingLock = input<string | null>(null);
   /** False where there is no level choice to go to, as in the page layout. */
@@ -85,6 +115,17 @@ export class WinnerComponent {
     nextLevel(this.level().id)
   );
 
+  /** Why the next level is locked, in the active language - null when open. */
+  public upcomingLockText: Signal<GameText | null> = computed(() => {
+    const next = this.upcoming();
+    return next === null || this.upcomingLock() === null
+      ? null
+      : ladderLockText(next.id);
+  });
+
+  protected readonly levelNameText = levelNameText;
+  protected readonly rankKey = rankKey;
+
   /** How the match was played - a daily level vs the computer, say. */
   private mode: Signal<GameMode> = this.state.matchMode;
 
@@ -96,16 +137,23 @@ export class WinnerComponent {
     }
     const attempt =
       daily.attempt <= DAILY_ATTEMPTS
-        ? `attempt ${daily.attempt} of ${DAILY_ATTEMPTS}`
-        : 'practice';
-    return `Daily level · ${attempt} · ${daily.streak}-day streak`;
+        ? this.t('match.run.attempt', {
+            attempt: daily.attempt,
+            total: DAILY_ATTEMPTS,
+          })
+        : this.t('match.run.practice');
+    return this.t('match.run.daily', {
+      attempt,
+      streak: this.t('match.run.streak', { count: daily.streak }),
+    });
   });
 
   /** The endless run the match was part of, null when it was none of it. */
   private endless = computed(() =>
     this.state.endlessMatch() ? this.state.endless() : null
   );
-  private endlessBest = inject(ProgressService).endlessBest;
+  private progress = inject(ProgressService);
+  private endlessBest = this.progress.endlessBest;
 
   /** Where the endless run stands after the match, in a line. */
   public endlessNote: Signal<string | null> = computed(() => {
@@ -113,13 +161,44 @@ export class WinnerComponent {
     if (run === null) {
       return null;
     }
-    const beaten =
-      run.wins === 1 ? '1 level beaten' : `${run.wins} levels beaten`;
+    const beaten = this.t('match.run.beaten', { count: run.wins });
     if (isRunOver(run)) {
-      return `Endless run over · ${beaten} · best ${this.endlessBest()}`;
+      return this.t('match.run.endlessOver', {
+        beaten,
+        best: this.endlessBest(),
+      });
     }
-    const lives = counted(run.lives, 'life left', 'lives left');
-    return `Endless run · ${beaten} · ${lives}`;
+    const lives = this.t('match.run.lives', { count: run.lives });
+    return this.t('match.run.endless', { beaten, lives });
+  });
+
+  /**
+   * Where a training mission's match leaves the training: whether it did
+   * the mission, what it fell short of, and whether a mission or the
+   * campaign comes next - null outside the training.
+   */
+  public mission = computed(() => {
+    if (this.level().mission === undefined) {
+      return null;
+    }
+    const result = this.earnings()?.training ?? null;
+    const done = result !== null && result.shortfall === null;
+    return {
+      done,
+      line:
+        result === null
+          ? null
+          : result.shortfall === null
+            ? this.t(
+                result.first ? 'training.result.first' : 'training.result.again'
+              )
+            : this.t('training.result.notYet', {
+                goal: this.render(result.shortfall),
+              }),
+      allDone: result?.allDone === true,
+      /** True when there is a mission still to go on to. */
+      next: result?.next != null,
+    };
   });
 
   /** What the match was part of - the daily level, an endless run - in a line. */
@@ -128,16 +207,64 @@ export class WinnerComponent {
   );
 
   /** The button that takes the endless run on - null outside one. */
-  public endlessAction: Signal<string | null> = computed(() => {
+  public endlessAction: Signal<TranslationKey | null> = computed(() => {
     const run = this.endless();
     if (run === null) {
       return null;
     }
     if (isRunOver(run)) {
-      return 'New run';
+      return 'match.actions.newRun';
     }
-    return this.winner()?.isBot === false ? 'Next level' : 'Try it again';
+    return this.winner()?.isBot === false
+      ? 'match.actions.nextLevel'
+      : 'match.actions.tryAgain';
   });
+
+  /**
+   * True after a match between two devices - also once the other one left,
+   * which ended it.
+   */
+  public online: Signal<boolean> = computed(
+    () =>
+      this.state.online() !== null ||
+      this.state.endedBy() === 'forfeit' ||
+      this.state.endedBy() === 'desync'
+  );
+
+  private readonly social = inject(SocialService);
+  /** The opponent of an online match, to add as a friend - null otherwise. */
+  public readonly newFriend = computed(() => {
+    const opponent = this.social.opponent();
+    return this.online() && opponent !== null && !this.social.opponentIsFriend()
+      ? opponent
+      : null;
+  });
+  /** What adding the opponent came to - null before. */
+  public readonly friendNote = signal<TranslationKey | null>(null);
+
+  /** Asks the opponent of the online match to be friends. */
+  public async addFriend(uid: string): Promise<void> {
+    try {
+      await this.social.addFriend(uid);
+      this.friendNote.set('match.friend.sent');
+    } catch (error) {
+      console.error('Could not send the friend request', error);
+      this.friendNote.set('match.friend.failed');
+    }
+  }
+
+  /** True while the online connection holds. */
+  public connected: Signal<boolean> = computed(
+    () => this.state.online() !== null
+  );
+
+  /**
+   * True for the guest of an online match, who waits for the host to start
+   * the next one.
+   */
+  public onlineGuest: Signal<boolean> = computed(
+    () => this.state.online()?.seat === 1
+  );
 
   /** True in a match against the player's own ghost. */
   public againstGhost: Signal<boolean> = computed(
@@ -145,7 +272,7 @@ export class WinnerComponent {
   );
 
   /** What sharing the run came to, under the buttons - null before. */
-  public readonly shareNote = signal<string | null>(null);
+  public readonly shareNote = signal<TranslationKey | null>(null);
 
   /**
    * The link to the run just played, made as soon as the result shows:
@@ -167,7 +294,7 @@ export class WinnerComponent {
             this.shareLink.set(url);
           }
         },
-        () => this.shareNote.set('The link to your run could not be made.')
+        () => this.shareNote.set('match.share.linkFailed')
       );
     });
   }
@@ -186,8 +313,8 @@ export class WinnerComponent {
     if (typeof navigator.share !== 'function') {
       this.shareNote.set(
         this.clipboard.copy(url)
-          ? 'Link copied - send it to a friend to fight your ghost.'
-          : 'The link could not be copied.'
+          ? 'match.share.copied'
+          : 'match.share.copyFailed'
       );
       return;
     }
@@ -195,7 +322,9 @@ export class WinnerComponent {
     navigator
       .share({
         title: 'Bacteria Wars',
-        text: `Beat my run on ${getLevel(run.header.levelId).name}!`,
+        text: this.t('match.share.text', {
+          level: this.render(levelNameText(getLevel(run.header.levelId))),
+        }),
         url,
       })
       .then(
@@ -203,7 +332,7 @@ export class WinnerComponent {
         (error: unknown) => {
           // Closing the share sheet is no failure.
           if (!(error instanceof DOMException && error.name === 'AbortError')) {
-            this.shareNote.set('The link could not be shared.');
+            this.shareNote.set('match.share.shareFailed');
           }
         }
       )
@@ -229,14 +358,27 @@ export class WinnerComponent {
   );
 
   /** The achievements the match earned, with their names and conditions. */
-  public earned: Signal<readonly Achievement[]> = computed(() =>
-    (this.earnings()?.achievements ?? []).map(getAchievement)
+  public earned: Signal<
+    readonly { id: AchievementId; name: GameText; condition: GameText }[]
+  > = computed(() =>
+    (this.earnings()?.achievements ?? []).map((id) => ({
+      id,
+      ...achievementTexts(id),
+    }))
   );
 
-  /** The cosmetics the match opened, named. */
-  public cosmetics: Signal<readonly string[]> = computed(
-    () => this.earnings()?.cosmetics ?? []
-  );
+  /**
+   * The cosmetics the match opened, named - as texts to translate where
+   * the earnings carry them, else the English names.
+   */
+  public cosmetics: Signal<readonly string[]> = computed(() => {
+    const earnings = this.earnings();
+    return (
+      earnings?.cosmeticTexts?.map((text) => this.render(text)) ??
+      earnings?.cosmetics ??
+      []
+    );
+  });
 
   private series = this.state.series;
   private colors = this.state.colors;
@@ -252,8 +394,8 @@ export class WinnerComponent {
     }
     const colors = this.colors();
     const names: [string, string] = [
-      getColonyColor(colors[0]).name,
-      getColonyColor(colors[1]).name,
+      this.colorName(colors[0]),
+      this.colorName(colors[1]),
     ];
     const series = this.series();
     const taker = series === null ? null : seriesWinner(series);
@@ -265,8 +407,8 @@ export class WinnerComponent {
               score: formatScore(names, series.wins),
               note:
                 taker === null
-                  ? `Best of ${series.bestOf}`
-                  : `${names[taker]} takes the series!`,
+                  ? this.t(seriesKey(series.bestOf))
+                  : this.t('match.duel.takesSeries', { name: names[taker] }),
             },
       rivalry: formatScore(names, rivalryScore(this.couchWins(), colors)),
     };
@@ -288,6 +430,12 @@ export class WinnerComponent {
     }
     return {
       gain: earnings.xp,
+      // The XP lines in the active language, the English label where a
+      // line carries no text.
+      parts: earnings.xp.parts.map((part) => ({
+        label: part.text === undefined ? part.label : this.render(part.text),
+        xp: part.xp,
+      })),
       climb:
         earnings.xpBefore === null
           ? null
@@ -295,14 +443,38 @@ export class WinnerComponent {
     };
   });
 
+  private readonly evolution = inject(EvolutionService);
+
+  /**
+   * The strands of DNA the match's XP grew, null where what was held before
+   * is not known - or where it grew none.
+   */
+  public readonly dna = computed(() => {
+    const earnings = this.earnings();
+    if (earnings === null || earnings.xpBefore === null) {
+      return null;
+    }
+    const before = earnings.xpBefore;
+    const gained = dnaEarned(before + earnings.xp.total) - dnaEarned(before);
+    return gained > 0 ? gained : null;
+  });
+
+  /** True when the DNA left buys something: the way to the Evolution screen. */
+  public readonly canEvolve = computed(
+    () =>
+      this.earnings() !== null && !this.online() && this.evolution.canEvolve()
+  );
+
   /** The medallion line of the award: what was won, or that nothing was. */
   public medalTitle: Signal<string> = computed(() => {
     const award = this.award();
     if (award?.medal == null) {
-      return 'No medallion this time';
+      return this.t('match.medal.none');
     }
     const newBest = medalRank(award.medal) > medalRank(award.previousBest);
-    return `${MEDAL_NAMES[award.medal]} medallion${newBest ? ' - a new best!' : ''}`;
+    return this.t(newBest ? 'match.medal.newBest' : 'common.medal', {
+      medal: this.t(medalKey(award.medal)),
+    });
   });
 
   /**
@@ -313,7 +485,7 @@ export class WinnerComponent {
     const award = this.award();
     return award?.previousBest != null &&
       medalRank(award.previousBest) > medalRank(award.medal)
-      ? MEDAL_NAMES[award.previousBest]
+      ? this.t(medalKey(award.previousBest))
       : null;
   });
 
@@ -323,14 +495,17 @@ export class WinnerComponent {
    */
   public headline: Signal<string> = computed(() => {
     const player = this.winner();
+    if (this.online()) {
+      return this.t(onlineHeadline(player, this.state.endedBy()));
+    }
     if (this.state.endedBy() === 'time') {
-      return this.timeUp(player);
+      return this.goalReached(player, TIME_UP);
     }
     if (this.state.endedBy() === 'hold' && player != null) {
-      return this.goalReached(player, 'held the zone');
+      return this.goalReached(player, HELD);
     }
     if (this.state.endedBy() === 'harvest' && player != null) {
-      return this.goalReached(player, 'ate up enough pellets first');
+      return this.goalReached(player, HARVESTED);
     }
     if (
       this.level().boss !== undefined &&
@@ -340,79 +515,146 @@ export class WinnerComponent {
       return this.bossFight(player);
     }
     if (player == null) {
-      return 'It is a draw - both colonies wiped each other out!';
+      return this.t('match.headline.draw');
     }
     if (this.againstGhost()) {
-      return player.isBot
-        ? 'The ghost wins - its run ate your colony!'
-        : 'You beat the ghost!';
+      return this.t(
+        player.isBot ? 'match.headline.ghostWins' : 'match.headline.ghostBeaten'
+      );
     }
     if (player.isBot) {
-      return 'The computer wins - your colony was eaten!';
+      return this.t('match.headline.computerWins');
     }
     if (this.mode() === 'vs-computer') {
-      return 'You win - the computer colony is gone!';
+      return this.t('match.headline.youWin');
     }
-    return `Congratulations! ${player.name} wins the match!`;
+    return this.t('match.headline.playerWins', {
+      name: this.playerName(player),
+    });
   });
 
   /** The headline of a chapter's finale against a boss. */
   private bossFight(player: Player): string {
     const survived = this.state.endedBy() === 'survive';
+    const name = this.playerName(player);
     if (player.id === BOSS_SEAT) {
       return this.mode() === 'vs-computer'
-        ? 'The boss wins - your colony was eaten!'
-        : `${player.name} wins as the boss!`;
+        ? this.t('match.headline.boss.wins')
+        : this.t('match.headline.boss.playerIsBoss', { name });
     }
     if (this.mode() !== 'vs-computer') {
-      return survived
-        ? `${player.name} survived the boss!`
-        : `${player.name} beat the boss!`;
+      return this.t(
+        survived
+          ? 'match.headline.boss.playerSurvived'
+          : 'match.headline.boss.playerBeat',
+        { name }
+      );
     }
-    return survived
-      ? 'You survived the boss - the chapter is yours!'
-      : 'The boss is gone - the chapter is yours!';
+    return this.t(
+      survived
+        ? 'match.headline.boss.youSurvived'
+        : 'match.headline.boss.youBeat'
+    );
   }
 
   /**
    * The headline of a match a colony won by reaching the level's goal -
-   * `deed` says what it did: "held the zone", "ate up enough pellets
-   * first".
+   * holding the zone, eating up enough pellets first - or by being the
+   * bigger one when the clock ran out; `lines` has the sentences for it.
    */
-  private goalReached(player: Player, deed: string): string {
+  private goalReached(player: Player | null, lines: GoalLines): string {
+    if (player == null) {
+      return this.t('match.headline.time.draw');
+    }
     if (this.againstGhost()) {
-      return player.isBot
-        ? `The ghost ${deed}!`
-        : `You ${deed} - and beat the ghost!`;
+      return this.t(player.isBot ? lines.ghost : lines.youBeatGhost);
     }
     if (player.isBot) {
-      return `The computer ${deed} - it wins!`;
+      return this.t(lines.computer);
     }
     return this.mode() === 'vs-computer'
-      ? `You ${deed} - you win!`
-      : `${player.name} ${deed} and wins!`;
+      ? this.t(lines.you)
+      : this.t(lines.player, { name: this.playerName(player) });
   }
 
-  /** The headline of a match the clock ended: the bigger colony won. */
-  private timeUp(player: Player | null): string {
-    if (player == null) {
-      return 'Time is up - and both colonies are the same size. A draw!';
-    }
-    if (this.againstGhost()) {
-      return player.isBot
-        ? 'Time is up - the ghost has the bigger colony.'
-        : 'Time is up - you beat the ghost!';
-    }
-    if (player.isBot) {
-      return 'Time is up - the computer has the bigger colony.';
-    }
-    return this.mode() === 'vs-computer'
-      ? 'Time is up - your colony is the bigger one. You win!'
-      : `Time is up - ${player.name} has the bigger colony and wins!`;
+  /** A player's name in the active language - an online name as it is. */
+  private playerName(player: Player): string {
+    const text = playerNameText(player.name);
+    return text === null ? player.name : this.render(text);
+  }
+
+  /** A colony colour's name in the active language. */
+  private colorName(id: string): string {
+    return this.render(colonyColorText(id));
+  }
+
+  private t(key: TranslationKey, params?: Record<string, string | number>) {
+    return this.i18n.t(key, params);
+  }
+
+  private render(text: GameText): string {
+    return renderGameText(text, (key, params) => this.i18n.t(key, params));
   }
 }
 
-/** "1 level beaten", "3 levels beaten". */
-function counted(n: number, one: string, many: string): string {
-  return `${n} ${n === 1 ? one : many}`;
+/** The sentences of a won goal, by who reached it. */
+interface GoalLines {
+  ghost: TranslationKey;
+  youBeatGhost: TranslationKey;
+  computer: TranslationKey;
+  you: TranslationKey;
+  player: TranslationKey;
+}
+
+function goalLines(goal: 'hold' | 'harvest' | 'time'): GoalLines {
+  return {
+    ghost: `match.headline.${goal}.ghost`,
+    youBeatGhost: `match.headline.${goal}.youBeatGhost`,
+    computer: `match.headline.${goal}.computer`,
+    you: `match.headline.${goal}.you`,
+    player: `match.headline.${goal}.player`,
+  };
+}
+
+const HELD = goalLines('hold');
+const HARVESTED = goalLines('harvest');
+const TIME_UP = goalLines('time');
+
+/** The reasons an online match ends with a winner, each with its lines. */
+const ONLINE_DEEDS = [
+  'annihilation',
+  'time',
+  'hold',
+  'survive',
+  'harvest',
+] as const satisfies readonly EndReason[];
+type OnlineDeed = (typeof ONLINE_DEEDS)[number] | 'other';
+
+/**
+ * The headline of an online match, for the player at this device: the
+ * other device's colony is "your opponent".
+ */
+function onlineHeadline(
+  winner: Player | null,
+  reason: EndReason | null
+): TranslationKey {
+  if (reason === 'forfeit') {
+    return 'match.headline.online.forfeit';
+  }
+  if (reason === 'desync') {
+    return 'match.headline.online.desync';
+  }
+  if (winner === null) {
+    return reason === 'time'
+      ? 'match.headline.time.draw'
+      : 'match.headline.draw';
+  }
+  const deed: OnlineDeed = (ONLINE_DEEDS as readonly string[]).includes(
+    reason ?? 'annihilation'
+  )
+    ? ((reason ?? 'annihilation') as OnlineDeed)
+    : 'other';
+  return winner.isBot
+    ? `match.headline.online.opponent.${deed}`
+    : `match.headline.online.you.${deed}`;
 }

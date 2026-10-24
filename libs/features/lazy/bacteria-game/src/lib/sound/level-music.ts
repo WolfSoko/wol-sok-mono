@@ -1,13 +1,12 @@
 import {
   heatOf,
-  lerp,
   parseGeneratedId,
   tuneSeed,
 } from '../state/level-generator/generate-level';
 import { keepRecent } from '../state/recent-cache';
 import { Rng } from '../state/level-generator/rng';
 import type { RecipeId } from '../state/level-generator/recipes';
-import { seeded, streamSeed } from '../state/geometry';
+import { lerp, seeded, streamSeed } from '../state/geometry';
 import { HEART_PERIOD_SEC } from '../state/organic-maps';
 
 /**
@@ -549,6 +548,58 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
     drums: 'heart',
     echo: 0.5,
     seed: 20,
+  },
+  // Island hopping: bright, lilting, with a sea breeze of echo.
+  archipelago: {
+    root: 43,
+    scale: MIXOLYDIAN,
+    bpm: 108,
+    progression: [0, 6, 3, 4],
+    lead: 'triangle',
+    density: 0.5,
+    bass: 'walk',
+    drums: 'soft',
+    echo: 0.4,
+    seed: 21,
+  },
+  // Carried along by the pulse: in time with the heart of its map.
+  bloodstream: {
+    root: 40,
+    scale: HARMONIC_MINOR,
+    bpm: 120 / HEART_PERIOD_SEC,
+    progression: [0, 3, 5, 4],
+    lead: 'sawtooth',
+    density: 0.55,
+    bass: 'pulse',
+    drums: 'heart',
+    echo: 0.3,
+    seed: 22,
+  },
+  // Deep underground: slow, hollow and dripping with echo.
+  'root-network': {
+    root: 41,
+    scale: DORIAN,
+    bpm: 84,
+    progression: [0, 2, 6, 4],
+    lead: 'sine',
+    density: 0.4,
+    bass: 'walk',
+    drums: 'soft',
+    echo: 0.5,
+    seed: 23,
+  },
+  // The finale: a vast, slow menace that builds into a fight.
+  leviathan: {
+    root: 40,
+    scale: PHRYGIAN_DOMINANT,
+    bpm: 112,
+    progression: [0, 1, 5, 1],
+    lead: 'sawtooth',
+    density: 0.55,
+    bass: 'drone',
+    drums: 'drive',
+    echo: 0.45,
+    seed: 24,
   },
   // Where it began: slow, cold dread that builds.
   'patient-zero': {

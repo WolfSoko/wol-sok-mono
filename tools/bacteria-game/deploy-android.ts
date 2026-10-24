@@ -1,12 +1,16 @@
 /**
  * Ships a release of the Bacteria Wars Android app: builds the signed APK and
- * app bundle, uploads the bundle to the internal testing track on Google Play
+ * app bundle, uploads the bundle to the closed testing track on Google Play
  * and attaches both to the GitHub release. Promoting a build to production
  * stays a step in the Play Console. A second edit then brings the store listing in
  * line with store/: the texts in store/listings/<language>/ and the graphics
  * in store/graphics/ (see tools/bacteria-game/generate-store-assets.ts), and
  * the promo videos of store/promo-video/, uploaded to YouTube once each (see
- * tools/youtube/youtube.ts) and linked from their listing.
+ * tools/youtube/youtube.ts) and linked from their listing. Then come the tips
+ * of store/tips.json, the app's in-app products (see play-tips.ts), and last
+ * the achievements of the game's Play Games Services project, which follow
+ * the game's (see tools/bacteria-game/play-games.ts), as drafts for the
+ * Publish page.
  *
  * Runs as `npx nx run bacteria-wars-android:deploy` in the deploy workflow,
  * whenever a release affects the app. It reads from the environment:
@@ -38,11 +42,17 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { publishTips, storeTips, Tip } from './play-tips';
 import {
   publishVideos,
   VideoMeta,
   youtubeConfigured,
 } from '../youtube/youtube';
+import {
+  playGamesAchievements,
+  playGamesApplicationId,
+  syncAchievements,
+} from './play-games';
 
 const appDir = resolve('apps/bacteria-wars-android');
 const outputsDir = join(appDir, 'app/build/outputs');
@@ -51,7 +61,8 @@ const PLAY_API =
   'https://androidpublisher.googleapis.com/androidpublisher/v3/applications';
 const PLAY_UPLOAD_API =
   'https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications';
-const TRACK = 'internal';
+/** Play's closed testing track: `alpha` is its name in the API. */
+const TRACK = 'alpha';
 
 /** The store listing of one language, as the Play API takes it. */
 interface Listing {
@@ -318,18 +329,21 @@ async function promoVideoLinks(): Promise<Map<string, string>> {
 }
 
 /**
- * Uploads the bundle and rolls it out to the internal track, then updates
+ * Uploads the bundle and rolls it out to the closed testing track, then updates
  * the store listing in an edit of its own: a listing Play turns down does
  * not hold back the app, and a run again skips the bundle that is on Play.
- * Returns the error of the YouTube upload, if any, for the caller to throw
+ * Then the tips, which Play takes only once a bundle asks for billing, and
+ * last the Play Games achievements. Returns the errors of the YouTube
+ * upload, the tips and the achievements, if any, for the caller to throw
  * once the rest is out.
  */
 async function publishToPlay(
   packageName: string,
   bundle: string,
   code: number,
-  releaseName: string
-): Promise<unknown> {
+  releaseName: string,
+  tips: Tip[]
+): Promise<unknown[]> {
   const token = await accessToken(
     JSON.parse(env('PLAY_SERVICE_ACCOUNT_JSON')) as ServiceAccount
   );
@@ -346,8 +360,11 @@ async function publishToPlay(
       },
     });
     if (!response.ok) {
-      throw new Error(
-        `Play ${init.method ?? 'GET'} ${url} failed: ${response.status} ${await response.text()}`
+      throw Object.assign(
+        new Error(
+          `Play ${init.method ?? 'GET'} ${url} failed: ${response.status} ${await response.text()}`
+        ),
+        { status: response.status }
       );
     }
     const text = await response.text();
@@ -402,7 +419,19 @@ async function publishToPlay(
     videos
   );
   await call(`${app}/edits/${listingEdit.id}:commit`, { method: 'POST' });
-  return youtubeError;
+
+  const errors: unknown[] = [];
+  if (youtubeError != null) {
+    errors.push(youtubeError);
+  }
+  await publishTips(call, app, packageName, tips).catch((error: unknown) =>
+    errors.push(error)
+  );
+  // The same account, the same scope: the Publishing API takes the same calls.
+  await syncAchievements(call, playGamesApplicationId()).catch(
+    (error: unknown) => errors.push(error)
+  );
+  return errors;
 }
 
 async function main(): Promise<void> {
@@ -411,8 +440,12 @@ async function main(): Promise<void> {
   const [assetLink] = readJson<{ target: { package_name: string } }[]>(
     'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
   );
-  // Bad listing texts fail here, before the build.
-  storeListings();
+  // Bad listing or tip texts and achievements fail here, before the build.
+  const tips = storeTips(
+    storeDir,
+    storeListings().map((listing) => listing.language)
+  );
+  playGamesAchievements();
 
   build();
 
@@ -423,17 +456,18 @@ async function main(): Promise<void> {
   try {
     // Play first: the release only lists files that are on Play, and a run
     // again after a failed GitHub upload skips the Play upload.
-    const youtubeError = await publishToPlay(
+    const errors = await publishToPlay(
       assetLink.target.package_name,
       bundle,
       versionCode(version),
-      tag
+      tag,
+      tips
     );
     execFileSync('gh', ['release', 'upload', tag, apk, bundle, '--clobber'], {
       stdio: 'inherit',
     });
-    if (youtubeError != null) {
-      throw youtubeError;
+    if (errors.length > 0) {
+      throw errors.length === 1 ? errors[0] : new AggregateError(errors);
     }
   } finally {
     rmSync(apk, { force: true });

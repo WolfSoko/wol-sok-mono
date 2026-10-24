@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { GameSettingsService } from '../settings.service';
+import { WEAPONS } from '../state/evolution';
 import { GameSoundService } from './game-sound.service';
 import { levelMusic } from './level-music';
 import { MusicPlayer } from './music-player';
@@ -15,6 +16,7 @@ describe('GameSoundService', () => {
       sound.setMusic(levelMusic('heartbeat'), 3);
       sound.frame({
         boosts: [true],
+        weapons: [],
         captures: 3,
         pelletsEaten: 1,
         crushed: 2,
@@ -118,6 +120,7 @@ describe('GameSoundService', () => {
 
       sound.frame({
         boosts: [],
+        weapons: [],
         captures: 10,
         pelletsEaten: 0,
         crushed: 0,
@@ -138,6 +141,7 @@ describe('GameSoundService', () => {
       const pellet = () =>
         sound.frame({
           boosts: [],
+          weapons: [],
           captures: 0,
           pelletsEaten: 1,
           crushed: 0,
@@ -155,6 +159,74 @@ describe('GameSoundService', () => {
       context.time += 5;
       pellet();
       expect(context.frequencies[4]).toBeCloseTo(first);
+    });
+
+    describe('weapons', () => {
+      /** The loudest any effect node is steered to while `play` runs. */
+      function loudest(play: () => void): number {
+        const peaks: number[] = [];
+        const create = context.createGain.bind(context);
+        const spy = jest.spyOn(context, 'createGain').mockImplementation(() => {
+          const node = create();
+          const gain = node['gain'] as FakeParam;
+          gain.exponentialRampToValueAtTime = (value?: number) => {
+            peaks.push(value ?? 0);
+            return gain;
+          };
+          return node;
+        });
+        play();
+        spy.mockRestore();
+        return Math.max(...peaks);
+      }
+
+      it('gives every weapon a sound of its own', () => {
+        const sounds = WEAPONS.map(({ id }) => {
+          const before = context.frequencies.length;
+          const started = context.started;
+          sound.weapon(id);
+          expect(context.started).toBeGreaterThan(started);
+          return JSON.stringify(context.frequencies.slice(before));
+        });
+
+        expect(new Set(sounds).size).toBe(WEAPONS.length);
+      });
+
+      it("plays the weapons fired in a frame, the computer's quieter", () => {
+        const fired = (isBot: boolean) => () =>
+          sound.frame({
+            boosts: [],
+            weapons: [
+              {
+                playerId: 1,
+                weapon: 'phage-strike',
+                x: 10,
+                y: 10,
+                radius: 14,
+                isBot,
+              },
+            ],
+            captures: 0,
+            pelletsEaten: 0,
+            crushed: 0,
+            gatesClosed: 0,
+            gatesWarned: 0,
+          });
+
+        const human = loudest(fired(false));
+        const bot = loudest(fired(true));
+
+        expect(bot).toBeGreaterThan(0);
+        expect(bot).toBeLessThan(human);
+      });
+
+      it('stays silent with the effects off', () => {
+        settings.setEffects(false);
+        for (const { id } of WEAPONS) {
+          sound.weapon(id);
+        }
+        expect(context.started).toBe(0);
+      });
     });
   });
 });

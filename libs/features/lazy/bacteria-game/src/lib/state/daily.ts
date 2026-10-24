@@ -1,4 +1,7 @@
-import { generatedLevelId } from './level-generator/generate-level';
+import {
+  generatedLevelId,
+  parseGeneratedId,
+} from './level-generator/generate-level';
 import { RECIPE_IDS } from './level-generator/recipes';
 
 /** Attempts a day that count towards the daily level's medallion. */
@@ -41,6 +44,27 @@ export function dailyLevelId(day: string): string {
     seed: Number(day.replaceAll('-', '')),
     difficulty: WEEKDAY_DIFFICULTY[(dayNumber + 4) % 7],
   });
+}
+
+/**
+ * True for the daily level of some day - a generated level whose seed is
+ * that day, made by that day's recipe and difficulty. The id alone tells,
+ * without knowing which day it is now.
+ */
+export function isDailyLevelId(id: string): boolean {
+  const seed = parseGeneratedId(id)?.seed;
+  const digits =
+    seed === undefined ? null : /^(\d{4})(\d{2})(\d{2})$/.exec(`${seed}`);
+  if (digits === null) {
+    return false;
+  }
+  const day = `${digits[1]}-${digits[2]}-${digits[3]}`;
+  const moment = Date.parse(day);
+  return (
+    Number.isFinite(moment) &&
+    utcDay(new Date(moment)) === day &&
+    dailyLevelId(day) === id
+  );
 }
 
 /**

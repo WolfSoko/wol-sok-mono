@@ -1,0 +1,94 @@
+@if (draft(); as profile) {
+  <div class="card">
+    <feat-lazy-bac-game-avatar
+      [avatar]="profile.avatar"
+      [size]="72"
+      [label]="profile.name"
+    />
+    <div class="fields">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ "profile.editor.name" | t }}</mat-label>
+        <input
+          matInput
+          name="name"
+          autocomplete="nickname"
+          [maxLength]="nameMax"
+          [value]="profile.name"
+          (input)="setName($event)"
+        />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ "profile.editor.motto" | t }}</mat-label>
+        <input
+          matInput
+          name="motto"
+          autocomplete="off"
+          [maxLength]="mottoMax"
+          [value]="profile.motto"
+          (input)="setMotto($event)"
+        />
+      </mat-form-field>
+    </div>
+  </div>
+
+  <span class="label">{{ "profile.editor.picture" | t }}</span>
+  <div
+    class="pictures"
+    role="radiogroup"
+    [attr.aria-label]="'profile.editor.picture' | t"
+  >
+    @for (avatar of presets; track $index) {
+      <button
+        type="button"
+        class="picture"
+        role="radio"
+        [attr.aria-checked]="isPicked(avatar)"
+        [attr.aria-label]="'profile.editor.preset' | t: { number: $index + 1 }"
+        (click)="pick(avatar)"
+      >
+        <feat-lazy-bac-game-avatar [avatar]="avatar" [size]="44" />
+      </button>
+    }
+    @if (photo(); as google) {
+      <button
+        type="button"
+        class="picture"
+        role="radio"
+        [attr.aria-label]="'profile.editor.googlePhoto' | t"
+        [attr.aria-checked]="isPicked(google)"
+        (click)="pick(google)"
+      >
+        <feat-lazy-bac-game-avatar [avatar]="google" [size]="44" />
+      </button>
+    }
+    <label class="picture upload" [title]="'profile.editor.upload' | t">
+      <mat-icon aria-hidden="true">add_photo_alternate</mat-icon>
+      <span class="visually-hidden">{{ "profile.editor.upload" | t }}</span>
+      <input type="file" accept="image/*" (change)="upload($event)" />
+    </label>
+  </div>
+
+  @if (social.presenceAvailable) {
+    <mat-slide-toggle
+      [checked]="profile.shareStatus"
+      (change)="setShareStatus($event.checked)"
+    >
+      {{ "profile.editor.shareStatus" | t }}
+    </mat-slide-toggle>
+  }
+
+  <div class="actions">
+    @if (note(); as note) {
+      <span class="note" role="status">{{ note | t }}</span>
+    }
+    <button
+      mat-flat-button
+      type="button"
+      [disabled]="!changed() || busy()"
+      (click)="save()"
+    >
+      <mat-icon>save</mat-icon>
+      {{ "profile.editor.save" | t }}
+    </button>
+  </div>
+}

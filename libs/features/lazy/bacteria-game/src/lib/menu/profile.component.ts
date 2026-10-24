@@ -2,19 +2,34 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import {
+  achievementKeys,
+  achievementTexts,
+  difficultyKeys,
+  GameTextPipe,
+  levelNameText,
+  medalKey,
+  rankKey,
+} from '../i18n/game-texts';
+import { I18nService } from '../i18n/i18n.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { AccountComponent } from './account.component';
 import { ScreenHeaderComponent } from './screen-header.component';
+import { ProfileEditorComponent } from '../social/profile-editor.component';
+import { SocialService } from '../social/social.service';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { LEVELS } from '../state/levels';
-import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
+import { MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 import { ACHIEVEMENTS } from '../state/achievements';
 import { rankFor, RANKS } from '../state/ranks';
+import { dnaEarned } from '../state/evolution';
 import { RankStandingComponent } from '../rank/rank-standing.component';
+import { AdSlotComponent } from '../support/ad-slot.component';
 import {
   LifetimeTotals,
   medalTally,
@@ -31,16 +46,25 @@ import {
   selector: 'feat-lazy-bac-game-profile',
   imports: [
     AccountComponent,
-    DatePipe,
+    AdSlotComponent,
+    GameTextPipe,
     MedallionComponent,
+    ProfileEditorComponent,
     RankStandingComponent,
     ScreenHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent {
+  /** The online profile is edited here, where the game has its cloud. */
+  protected readonly social = inject(SocialService);
+  private readonly i18n = inject(I18nService);
+  /** The locale the figures are written for. */
+  protected readonly locale = this.i18n.locale;
+
   /** Every medallion held, by level id, then by difficulty. */
   public readonly medals = input<Progress['medals']>({});
   /** The day each achievement was earned. */
@@ -52,13 +76,16 @@ export class ProfileComponent {
 
   public readonly back = output<void>();
 
-  protected readonly difficulties = BOT_DIFFICULTIES;
+  protected readonly difficulties = BOT_DIFFICULTIES.map(({ id }) => ({
+    id,
+    name: difficultyKeys(id).name,
+  }));
 
   /** A row per level, a medallion or an empty slot per difficulty. */
   protected readonly cabinet = computed(() =>
     LEVELS.map((level) => ({
       id: level.id,
-      name: level.name,
+      name: levelNameText(level),
       slots: BOT_DIFFICULTIES.map(({ id }) => ({
         difficulty: id,
         tier: this.medals()[level.id]?.[id] ?? null,
@@ -71,7 +98,7 @@ export class ProfileComponent {
     const tally = medalTally(this.medals());
     return MEDAL_TIERS_RAREST_FIRST.map((tier) => ({
       tier,
-      name: MEDAL_NAMES[tier],
+      name: medalKey(tier),
       count: tally[tier],
     }));
   });
@@ -93,15 +120,34 @@ export class ProfileComponent {
 
   /** The rank the XP has reached, and the way to the next. */
   protected readonly standing = computed(() => rankFor(this.xp()));
-  protected readonly ranks = RANKS;
+  /** All the DNA the XP has grown, spent or not. */
+  protected readonly dna = computed(() => dnaEarned(this.xp()));
+  protected readonly ranks = RANKS.map(({ id }) => ({ id, name: rankKey(id) }));
 
   /** Every achievement, earned ones with their day, the rest with their condition. */
   protected readonly achievementList = computed(() =>
-    ACHIEVEMENTS.map((achievement) => ({
-      ...achievement,
-      earnedOn: this.achievements()[achievement.id] ?? null,
+    ACHIEVEMENTS.map(({ id }) => ({
+      id,
+      name: achievementKeys(id).name,
+      condition: achievementTexts(id).condition,
+      earnedOn: this.achievements()[id] ?? null,
     }))
   );
+
+  /** A day as the profile shows it - "19 Oct 2026" - for the locale. */
+  protected readonly formatDay = computed(() => {
+    const format = new Intl.DateTimeFormat(this.i18n.locale(), {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
+    // The day is kept as "2026-10-19", the player's own calendar day.
+    return (day: string): string => {
+      const [year, month, date] = day.split('-').map(Number);
+      return format.format(new Date(Date.UTC(year, month - 1, date)));
+    };
+  });
 
   protected readonly earnedCount = computed(
     () => Object.keys(this.achievements()).length

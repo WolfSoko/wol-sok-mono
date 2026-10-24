@@ -1,0 +1,28 @@
+# Nx Cloud CI configuration, read by `npx nx-cloud start-workers` (ci-cd.yml).
+# Launch templates live in .nx/workflows/workers.yml.
+# Reference: https://nx.dev/docs/reference/nx-cloud/ci-config
+dte:
+  # Workers per changeset size, all on the workspace's own launch template.
+  distribute-on:
+    small-changeset: 5 wolsokmono-linux-extra-large
+    medium-changeset: 10 wolsokmono-linux-extra-large
+    large-changeset: 20 wolsokmono-linux-extra-large
+
+lifecycle:
+  # The run is complete once every task of these targets has finished; the
+  # workers are released then. Keep this in sync with the `nx affected -t` call.
+  stop-after:
+    - lint
+    - lint-templates
+    - test
+    - build
+    - e2e-ci
+
+ai:
+  # Self-healing CI (`npx nx fix-ci`) may apply fixes for these tasks without review.
+  auto-apply-patterns:
+    - '*format*'
+    - '*lint*'
+    - '*test*'
+    - '*build*'
+    - '*e2e-ci*'

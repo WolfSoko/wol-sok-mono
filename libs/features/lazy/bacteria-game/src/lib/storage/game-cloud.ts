@@ -1,16 +1,19 @@
-import {
-  EnvironmentProviders,
-  inject,
-  Injectable,
-  provideEnvironmentInitializer,
-} from '@angular/core';
-import type { FirebaseOptions } from 'firebase/app';
+import { Injectable } from '@angular/core';
+import type { FirebaseOptions } from '@angular/fire/app';
 import { DeviceAccount } from './device-account';
 import type { GameAccount } from './game-account';
 import type { GameStorage } from './game-storage';
-import { connectFirebase } from './firebase-connection';
+import type { FirebaseConnection } from './firebase-connection';
 import { FirebaseGameAccount } from './firebase-game-account';
+import { FirestoreGameRooms } from './firestore-game-rooms';
+import { FirestoreGameSocial } from './firestore-game-social';
+import type { GamePresence, GameSocial } from './game-social';
+import { RtdbGamePresence } from './rtdb-game-presence';
 import { FirestoreGameStorage } from './firestore-game-storage';
+import { FirestoreGameReplays } from './firestore-game-replays';
+import type { GameReplays } from './game-replays';
+import { LocalGameReplays } from './local-game-replays';
+import type { GameRooms } from './game-rooms';
 import { LocalGameStorage } from './local-game-storage';
 
 /** The Firebase project the game keeps the players' progress in. */
@@ -22,50 +25,53 @@ export interface GameCloudOptions {
    * `nx run bacteria-game-remote:firebase-emulators`.
    */
   emulators?: {
-    /** The Auth emulator, "http://127.0.0.1:9099". */
+    /** The Auth emulator, "http://localhost:9399". */
     authUrl: string;
     firestoreHost: string;
     firestorePort: number;
+    /** The Realtime Database emulator, on the Firestore emulator's host. */
+    databasePort?: number;
   };
-}
-
-/**
- * Connects the game to its Firebase project: the player's progress then
- * follows their account, a guest one at first, one they can sign in to
- * with Google later. Without options - no project set up yet - everything
- * stays in the browser's local storage.
- *
- * Belongs into the providers of the route the game is loaded under, so it
- * holds inside the shell, which never sees the remote's app config, as
- * well as on the game's own page.
- */
-export function provideGameCloud(
-  options: GameCloudOptions | null
-): EnvironmentProviders {
-  return provideEnvironmentInitializer(() => inject(GameCloud).use(options));
+  /**
+   * True once the project takes recorded matches: its functions and the
+   * rules for `replaySubmissions` and `replays` are deployed (ADR 0011).
+   * Until then the replays stay on this device - nothing may write a
+   * submission the rules would refuse.
+   */
+  replays?: boolean;
 }
 
 /**
  * Where the game's services keep their data: in the Firebase project once
- * `provideGameCloud` named one, else on this device. The game's services
+ * `provideGameCloud` connected one, else on this device. The game's services
  * live in the root injector while the project is named on a route, so they
  * ask here instead of a provider on that route, which they would not see.
  */
 @Injectable({ providedIn: 'root' })
 export class GameCloud {
-  private options: GameCloudOptions | null = null;
-  private backend: { account: GameAccount; storage: GameStorage } | null = null;
-  /** Whether a service has asked already - the options come too late then. */
+  private connection: FirebaseConnection | null = null;
+  private backend: {
+    account: GameAccount;
+    storage: GameStorage;
+    rooms: GameRooms;
+    social: GameSocial;
+    presence: GamePresence | null;
+    replays: GameReplays | null;
+  } | null = null;
+  /** The replays on this device, one for all who ask. */
+  private localReplays: GameReplays | null = null;
+  /** Whether a service has asked already - a project comes too late then. */
   private asked = false;
 
-  public use(options: GameCloudOptions | null): void {
-    if (this.asked && options !== this.options) {
+  /** Uses the project connected to, none for this device only. */
+  public use(connection: FirebaseConnection | null): void {
+    if (this.asked && connection?.db !== this.connection?.db) {
       console.error(
         'The game cloud was set up after the game started - staying on this device.'
       );
       return;
     }
-    this.options = options;
+    this.connection = connection;
   }
 
   /** The storage of whoever plays. */
@@ -78,17 +84,55 @@ export class GameCloud {
     return this.connected()?.account ?? new DeviceAccount();
   }
 
+  /** Where online matches meet - null without a project, there are none then. */
+  public rooms(): GameRooms | null {
+    return this.connected()?.rooms ?? null;
+  }
+
+  /** Profiles, friends and matchmaking - null without a project. */
+  public social(): GameSocial | null {
+    return this.connected()?.social ?? null;
+  }
+
+  /** Who is online - null without a project or its Realtime Database. */
+  public presence(): GamePresence | null {
+    return this.connected()?.presence ?? null;
+  }
+
+  /**
+   * Where the recorded matches go: to the project once it takes them (see
+   * {@link GameCloudOptions.replays}), else onto this device.
+   */
+  public replays(): GameReplays {
+    const replays = this.connected()?.replays ?? null;
+    if (replays !== null) {
+      return replays;
+    }
+    this.localReplays ??= new LocalGameReplays(new LocalGameStorage());
+    return this.localReplays;
+  }
+
   private connected() {
     this.asked = true;
-    if (this.options === null) {
+    const { connection } = this;
+    if (connection === null) {
       return null;
     }
     if (this.backend === null) {
-      const connection = connectFirebase(this.options);
       const account = new FirebaseGameAccount(connection);
       this.backend = {
         account,
         storage: new FirestoreGameStorage(connection, account.playerIds),
+        rooms: new FirestoreGameRooms(connection, account.playerIds),
+        social: new FirestoreGameSocial(connection),
+        presence:
+          connection.rtdb == null
+            ? null
+            : new RtdbGamePresence(connection, connection.rtdb),
+        replays:
+          connection.replays === true
+            ? new FirestoreGameReplays(connection, account.playerIds)
+            : null,
       };
     }
     return this.backend;
