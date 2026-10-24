@@ -97,6 +97,11 @@ export class EvolutionComponent {
 
   /** Levels bought whose strands are still flying, by gene - not shown yet. */
   private readonly inFlight = signal<Partial<Record<GeneId, number>>>({});
+  /**
+   * The cards whose purchase is under way - its strands still flying. A
+   * click on one of them buys nothing more, so a double click buys once.
+   */
+  private readonly buying = new Set<GeneId | WeaponId>();
   /** True while the reset asks to be confirmed. */
   protected readonly confirmingReset = signal(false);
   private readonly announcement = signal<Announcement | null>(null);
@@ -159,9 +164,10 @@ export class EvolutionComponent {
   );
 
   protected async buyGene(id: GeneId): Promise<void> {
-    if (!this.evolution.buyGene(id)) {
+    if (this.buying.has(id) || !this.evolution.buyGene(id)) {
       return;
     }
+    this.buying.add(id);
     const level = this.evolution.level(id);
     const maxed = level >= MAX_GENE_LEVEL;
     const name = { key: geneKeys(id).name };
@@ -183,6 +189,7 @@ export class EvolutionComponent {
         await this.celebrate(pip, color, maxed);
       }
     } finally {
+      this.buying.delete(id);
       this.inFlight.update((flying) => ({
         ...flying,
         [id]: Math.max(0, (flying[id] ?? 1) - 1),
@@ -192,9 +199,10 @@ export class EvolutionComponent {
   }
 
   protected async buyWeapon(id: WeaponId): Promise<void> {
-    if (!this.evolution.buyWeapon(id)) {
+    if (this.buying.has(id) || !this.evolution.buyWeapon(id)) {
       return;
     }
+    this.buying.add(id);
     this.announcement.set({
       key: 'evolution.announce.weapon',
       params: { name: this.i18n.t(weaponKeys(id).name) },
@@ -203,8 +211,12 @@ export class EvolutionComponent {
     const card = this.host.nativeElement.querySelector(
       `[data-weapon-demo="${id}"]`
     );
-    if (card !== null) {
-      await this.celebrate(card, WEAPON_COLORS[id], false);
+    try {
+      if (card !== null) {
+        await this.celebrate(card, WEAPON_COLORS[id], false);
+      }
+    } finally {
+      this.buying.delete(id);
     }
     this.landed(WEAPON_COLORS[id], false);
   }

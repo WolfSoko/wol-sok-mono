@@ -106,6 +106,21 @@ describe('EvolutionComponent', () => {
     expect(TestBed.inject(EvolutionService).level('toxins')).toBe(2);
   });
 
+  it('buys one level for a double click, while the strands fly', async () => {
+    await open(1000);
+    const buy = gene('Venom Glands').querySelector<HTMLButtonElement>('.buy');
+
+    buy?.click();
+    buy?.click();
+    await fixture.whenStable();
+
+    expect(TestBed.inject(EvolutionService).level('toxins')).toBe(1);
+    expect(counter()).toBe(String(20 - 2));
+    // Once they landed, the next click buys again.
+    await click(gene('Venom Glands').querySelector<HTMLButtonElement>('.buy'));
+    expect(TestBed.inject(EvolutionService).level('toxins')).toBe(2);
+  });
+
   it('crowns a gene bred to the top in gold', async () => {
     await open(2000, { genes: { membrane: 4 } });
     const evolve = jest.spyOn(TestBed.inject(GameSoundService), 'evolve');
