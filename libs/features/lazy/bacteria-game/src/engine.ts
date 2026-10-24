@@ -99,7 +99,6 @@ export {
   evolvedTraits,
   GENES,
   isPlainLoadout,
-  parseLoadout,
   PLAIN_LOADOUT,
   weaponOf,
   WEAPON_EFFECTS,

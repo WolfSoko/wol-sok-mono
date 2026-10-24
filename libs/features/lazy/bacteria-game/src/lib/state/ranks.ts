@@ -1,4 +1,5 @@
 import type { game as gameTexts } from '../i18n/en/game';
+import { clamp } from './geometry';
 
 /** The id of a rank, as the dictionaries list it. */
 export type RankId = keyof typeof gameTexts.ranks;
@@ -52,9 +53,7 @@ export function rankFor(xp: number): RankStanding {
     number: Math.max(0, index) + 1,
     next,
     progress:
-      next === null
-        ? 1
-        : Math.min(1, Math.max(0, (xp - rank.xp) / (next.xp - rank.xp))),
+      next === null ? 1 : clamp((xp - rank.xp) / (next.xp - rank.xp), 0, 1),
     toNext: next === null ? null : next.xp - xp,
   };
 }

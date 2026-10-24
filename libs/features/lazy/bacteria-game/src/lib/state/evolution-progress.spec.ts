@@ -1,4 +1,10 @@
-import { dnaEarned, GENES, MAX_GENE_LEVEL, WEAPONS } from './evolution';
+import {
+  dnaEarned,
+  GENES,
+  MAX_GENE_LEVEL,
+  parseGeneLevels,
+  WEAPONS,
+} from './evolution';
 import {
   adoptEvolution,
   availableDna,
@@ -332,5 +338,32 @@ describe('evolution progress', () => {
     expect(sameEvolution(evolution(), evolution({ equipCount: 1 }))).toBe(
       false
     );
+  });
+});
+
+describe('parseGeneLevels', () => {
+  const damaged = {
+    mitosis: 2,
+    toxins: 9,
+    membrane: 1.5,
+    nose: 3,
+    flagella: 0,
+  };
+
+  it('keeps what it can read of a stored value, capped at the top', () => {
+    expect(parseGeneLevels(damaged)).toEqual({
+      mitosis: 2,
+      toxins: MAX_GENE_LEVEL,
+    });
+    expect(parseGeneLevels('mitosis')).toEqual({});
+  });
+
+  it('takes a recorded one only exactly as written', () => {
+    expect(
+      parseGeneLevels({ mitosis: 2, toxins: 5 }, { strict: true })
+    ).toEqual({ mitosis: 2, toxins: 5 });
+    expect(parseGeneLevels(damaged, { strict: true })).toBeNull();
+    expect(parseGeneLevels({ toxins: 6 }, { strict: true })).toBeNull();
+    expect(parseGeneLevels(null, { strict: true })).toBeNull();
   });
 });

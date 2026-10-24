@@ -1,6 +1,6 @@
 import { validColorPair } from '../state/colony-colors';
 import { BALANCE_VERSION } from '../state/game-balance';
-import { isObject } from '../state/is-object';
+import { isInteger, isObject } from '../state/is-object';
 import { isLevelId } from '../state/levels';
 import { TICKS_PER_SEC } from '../state/fixed-tick';
 import { parseStoredJson } from '../storage/stored-json';
@@ -159,9 +159,5 @@ function isPlayerId(value: unknown): value is string {
 
 /** An integer from 0 to `max`. */
 function isUpTo(value: unknown, max: number): value is number {
-  return (
-    Number.isInteger(value) &&
-    (value as number) >= 0 &&
-    (value as number) <= max
-  );
+  return isInteger(value, 0, max);
 }

@@ -1,15 +1,15 @@
 import {
   GENES,
   GeneId,
-  isGeneId,
   isWeaponId,
   Loadout,
   MAX_GENE_LEVEL,
+  parseGeneLevels,
   weaponOf,
   WEAPONS,
   WeaponId,
 } from './evolution';
-import { isObject } from './is-object';
+import { isInteger, isObject } from './is-object';
 
 /**
  * What a player has made of their colony - the genes bred, the weapons
@@ -291,11 +291,6 @@ export function loadoutOf(evolution: EvolutionProgress): Loadout {
   return { genes: { ...evolution.genes }, weapon: evolution.equipped };
 }
 
-/** True for a gene bred to its top level. */
-export function isMaxed(evolution: EvolutionProgress, gene: GeneId): boolean {
-  return levelOf(evolution, gene) >= MAX_GENE_LEVEL;
-}
-
 /**
  * The evolution in a stored value, keeping everything it can read and
  * dropping the rest - a damaged entry never throws, nor costs the player
@@ -305,14 +300,7 @@ export function parseEvolution(value: unknown): EvolutionProgress {
   if (!isObject(value)) {
     return EMPTY_EVOLUTION;
   }
-  const genes: Partial<Record<GeneId, number>> = {};
-  if (isObject(value['genes'])) {
-    for (const [id, level] of Object.entries(value['genes'])) {
-      if (isGeneId(id) && Number.isInteger(level) && (level as number) > 0) {
-        genes[id] = Math.min(MAX_GENE_LEVEL, level as number);
-      }
-    }
-  }
+  const genes = parseGeneLevels(value['genes']);
   const weapons = Array.isArray(value['weapons'])
     ? sortedWeapons(
         (value['weapons'] as unknown[]).filter(isWeaponId) as WeaponId[]
@@ -326,12 +314,8 @@ export function parseEvolution(value: unknown): EvolutionProgress {
     weapons,
     equipped:
       isWeaponId(equipped) && weapons.includes(equipped) ? equipped : null,
-    equipCount:
-      Number.isInteger(equipCount) && (equipCount as number) > 0
-        ? (equipCount as number)
-        : 0,
-    epoch:
-      Number.isInteger(epoch) && (epoch as number) > 0 ? (epoch as number) : 0,
+    equipCount: isInteger(equipCount, 1) ? equipCount : 0,
+    epoch: isInteger(epoch, 1) ? epoch : 0,
   };
 }
 

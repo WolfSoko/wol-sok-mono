@@ -1,4 +1,6 @@
 import { ColonyTraits, PLAIN_TRAITS } from './game-balance';
+import { clamp } from './geometry';
+import { isInteger, isObject } from './is-object';
 
 /**
  * Evolution: what a player makes of their colony between matches.
@@ -222,8 +224,7 @@ export function weaponOf(id: WeaponId): Weapon {
 
 /** A gene's level, clamped to the levels it has. */
 export function geneLevel(loadout: Loadout, id: GeneId): number {
-  const level = loadout.genes[id] ?? 0;
-  return Math.max(0, Math.min(MAX_GENE_LEVEL, Math.floor(level)));
+  return clamp(Math.floor(loadout.genes[id] ?? 0), 0, MAX_GENE_LEVEL);
 }
 
 /**
@@ -264,21 +265,40 @@ export function isWeaponId(value: unknown): value is WeaponId {
   return typeof value === 'string' && WEAPON_IDS.includes(value);
 }
 
-/** A loadout from stored or received data - plain where it is unreadable. */
-export function parseLoadout(value: unknown): Loadout {
-  if (typeof value !== 'object' || value === null) {
-    return PLAIN_LOADOUT;
+/**
+ * Genes' levels from stored or recorded data. By default it keeps what it
+ * can read - whole levels above 0, capped at the top - and drops the rest,
+ * as a stored value's parser does. `strict` takes them only exactly as
+ * written, else null: a damaged loadout in a replay could only play
+ * another match.
+ */
+export function parseGeneLevels(
+  value: unknown,
+  options: { strict: true }
+): Loadout['genes'] | null;
+export function parseGeneLevels(
+  value: unknown,
+  options?: { strict: false }
+): Loadout['genes'];
+export function parseGeneLevels(
+  value: unknown,
+  { strict = false }: { strict?: boolean } = {}
+): Loadout['genes'] | null {
+  const genes: Loadout['genes'] = {};
+  if (!isObject(value)) {
+    return strict ? null : genes;
   }
-  const { genes, weapon } = value as { genes?: unknown; weapon?: unknown };
-  const parsed: Partial<Record<GeneId, number>> = {};
-  if (typeof genes === 'object' && genes !== null) {
-    for (const [id, level] of Object.entries(genes)) {
-      if (isGeneId(id) && typeof level === 'number' && level > 0) {
-        parsed[id] = Math.min(MAX_GENE_LEVEL, Math.floor(level));
-      }
+  for (const [id, level] of Object.entries(value)) {
+    if (
+      isGeneId(id) &&
+      isInteger(level, 1, strict ? MAX_GENE_LEVEL : Infinity)
+    ) {
+      genes[id] = Math.min(MAX_GENE_LEVEL, level);
+    } else if (strict) {
+      return null;
     }
   }
-  return { genes: parsed, weapon: isWeaponId(weapon) ? weapon : null };
+  return genes;
 }
 
 /** XP per DNA strand: a won match on normal is worth a few. */

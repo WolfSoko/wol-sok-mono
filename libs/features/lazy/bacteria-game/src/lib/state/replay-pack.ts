@@ -1,4 +1,5 @@
 import { DRAG_STEPS, STEER_STEPS } from './match-engine';
+import { isObject } from './is-object';
 import { ParseOptions, parseReplay, Replay, ReplayInputs } from './replay';
 
 /**
@@ -88,21 +89,20 @@ export function unpackReplay(
   packed: unknown,
   options: ParseOptions = {}
 ): Replay | null {
-  if (typeof packed !== 'object' || packed == null) {
+  if (!isObject(packed)) {
     return null;
   }
-  const fields = packed as Record<string, unknown>;
   const inputs: Record<string, unknown[][]> = {};
   for (const kind of KIND_NAMES) {
     const { key, size, steps, optional } = KINDS[kind];
-    const flat = optional ? (fields[key] ?? []) : fields[key];
+    const flat = optional ? (packed[key] ?? []) : packed[key];
     const entries = unflatten(flat, size, steps);
     if (entries === null) {
       return null;
     }
     inputs[kind] = entries;
   }
-  return parseReplay({ header: fields['h'], inputs }, options);
+  return parseReplay({ header: packed['h'], inputs }, options);
 }
 
 /** The replay as stored: deflate-raw of its packed JSON. */

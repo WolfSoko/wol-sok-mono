@@ -2,17 +2,11 @@ import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
 import { BotDifficulty, difficultyOption } from './bot-controller';
 import { matchChecksum } from './checksum';
 import { isDailyLevelId } from './daily';
-import {
-  GENES,
-  isGeneId,
-  isWeaponId,
-  Loadout,
-  MAX_GENE_LEVEL,
-} from './evolution';
+import { isWeaponId, Loadout, parseGeneLevels } from './evolution';
 import { validColorPair } from './colony-colors';
 import { TICKS_PER_SEC } from './fixed-tick';
 import { BALANCE_VERSION } from './game-balance';
-import { isObject } from './is-object';
+import { isInteger, isObject } from './is-object';
 import { getLevel, isLevelId, levelSize } from './levels';
 import { isGameMode } from './game-mode';
 import { GhostController } from './ghost';
@@ -523,24 +517,14 @@ function parseLoadouts(
 
 /** A loadout exactly as written, null for anything else. */
 function strictLoadout(value: unknown): Loadout | null {
-  if (!isObject(value) || !isObject(value['genes'])) {
+  if (!isObject(value)) {
     return null;
   }
   const { genes, weapon } = value;
-  const levels = Object.entries(genes);
-  if (
-    levels.length > GENES.length ||
-    !levels.every(
-      ([id, level]) => isGeneId(id) && isInteger(level, 1, MAX_GENE_LEVEL)
-    ) ||
-    (weapon !== null && !isWeaponId(weapon))
-  ) {
-    return null;
-  }
-  return {
-    genes: Object.fromEntries(levels) as Loadout['genes'],
-    weapon,
-  };
+  const levels = parseGeneLevels(genes, { strict: true });
+  return levels === null || (weapon !== null && !isWeaponId(weapon))
+    ? null
+    : { genes: levels, weapon };
 }
 
 const ROOM_CODE = /^[A-Z0-9]{4,16}$/;
@@ -726,18 +710,6 @@ function strictInputs(
     lastBySeat[entry[1]] = entry[0];
   }
   return value as number[][];
-}
-
-function isInteger(
-  value: unknown,
-  min = -Infinity,
-  max = Infinity
-): value is number {
-  return (
-    Number.isInteger(value) &&
-    (value as number) >= min &&
-    (value as number) <= max
-  );
 }
 
 /**
