@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.69.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.68.0...v74.69.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** integer combat and feeding behind the deterministic flag ([#2606](https://github.com/WolfSoko/wol-sok-mono/issues/2606)) ([10cd31a](https://github.com/WolfSoko/wol-sok-mono/commit/10cd31a1131e5641712f9ffd4fbba9a5ea5b53c3))
+
 ## [74.68.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.67.0...v74.68.0) (2026-10-24)
 
 ### Features
