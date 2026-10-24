@@ -1,6 +1,12 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { map, Observable, switchMap, take } from 'rxjs';
+import {
+  computed,
+  DestroyRef,
+  inject,
+  Injectable,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map, Subscription, switchMap, take, timer } from 'rxjs';
 import { ProgressService } from './progress.service';
 import { dnaEarned, GeneId, Loadout, WeaponId } from './state/evolution';
 import {
@@ -44,6 +50,13 @@ export const EVOLUTION_STORAGE_KEY = 'bacteria-game.evolution';
  * starts over from the next player's, and a guest who signs in to an account
  * brings what they bred along.
  */
+/**
+ * How long the new game's Start waits for the storage to tell what the
+ * player evolved, in milliseconds. Offline with nothing cached it may never
+ * tell: Start opens then, and the match plays what is known.
+ */
+export const EVOLUTION_WAIT_MS = 3000;
+
 @Injectable({ providedIn: 'root' })
 export class EvolutionService {
   private readonly storage = inject(GameStorage);
@@ -53,8 +66,13 @@ export class EvolutionService {
   private readonly state = signal(EMPTY_EVOLUTION);
   /** True once the storage has answered for the evolution. */
   private readonly answered = signal(false);
+  /** True once {@link EVOLUTION_WAIT_MS} passed since the player was known. */
+  private readonly waitedOut = signal(false);
+  private waiting: Subscription | null = null;
 
   public constructor() {
+    inject(DestroyRef).onDestroy(() => this.waiting?.unsubscribe());
+    this.waitForStorage();
     this.account.players
       .pipe(
         switchMap((player, index) => {
@@ -82,8 +100,14 @@ export class EvolutionService {
     () => this.answered() && this.progress.loaded()
   );
 
-  /** {@link loaded} as it changes - what a match waits on to start. */
-  public readonly loaded$: Observable<boolean> = toObservable(this.loaded);
+  /**
+   * True once a match can start with what the player evolved: the storage
+   * has told it, or kept silent for {@link EVOLUTION_WAIT_MS}. The new
+   * game's Start waits for it, so a match started right after the app
+   * opened or a sign-in does not play plain only because the storage
+   * answered late - and the match itself never waits on storage.
+   */
+  public readonly settled = computed(() => this.loaded() || this.waitedOut());
 
   /** Everything held. */
   public readonly evolution = this.state.asReadonly();
@@ -183,6 +207,15 @@ export class EvolutionService {
     );
   }
 
+  /** Gives the storage {@link EVOLUTION_WAIT_MS} to tell, from now on. */
+  private waitForStorage(): void {
+    this.waiting?.unsubscribe();
+    this.waitedOut.set(false);
+    this.waiting = timer(EVOLUTION_WAIT_MS).subscribe(() =>
+      this.waitedOut.set(true)
+    );
+  }
+
   /**
    * Starts over for the next player - unless a guest signed in to an account
    * that has played elsewhere: then what the guest bred joins it, once.
@@ -190,6 +223,7 @@ export class EvolutionService {
   private switchTo({ adoptsGuest }: PlayerSwitch): void {
     const guest = this.state();
     this.answered.set(false);
+    this.waitForStorage();
     this.state.set(EMPTY_EVOLUTION);
     if (adoptsGuest) {
       this.adopt(guest);

@@ -55,13 +55,15 @@ leaderboards (ADR 0012), so they stay plain, as do couch matches and online
 matches. The menus pass loadouts only for those matches, always for both
 seats (the computer's plain), and `planMatch` ignores them anywhere else.
 
-The loadout is read as the match starts. A match the evolution plays in
-holds its start until the storage has told what the player evolved
-(`EvolutionService.loaded`), so a slow first answer at the start of the app
-or right after a sign-in does not send an evolved player into a plain
-match. Offline with nothing cached the storage may never answer: after
-`EVOLUTION_WAIT_MS` (3 s) the match starts with what is known. Once it runs,
-the match never waits on storage and keeps its loadouts.
+The loadout is read as the match starts, and a match starts at once. The
+new game's Start waits instead, disabled until the storage has told what
+the player evolved (`EvolutionService.settled`), so a slow first answer at
+the start of the app or right after a sign-in does not send an evolved
+player into a plain match. Offline with nothing cached the storage may
+never answer: after `EVOLUTION_WAIT_MS` (3 s) Start opens and the match
+plays what is known. A start that was held behind a pressed Start button
+read as a dead button, so the wait is shown, not hidden. Once it runs, the
+match never waits on storage and keeps its loadouts.
 
 A ghost race replays inputs recorded with whatever the run was played
 with, so its ghost plays with the loadout its replay header recorded for

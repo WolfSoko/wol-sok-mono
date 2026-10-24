@@ -28,6 +28,7 @@ import {
   seriesKey,
   zoneKey,
 } from '../i18n/game-texts';
+import { EvolutionService } from '../evolution.service';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { BASE_ARENA } from '../state/arena-size';
@@ -104,6 +105,11 @@ export class NewGameComponent {
   private readonly i18n = inject(I18nService);
   /** True where the briefing shows a picture of the level's map. */
   protected readonly previews = inject(LevelPreviewService).supported;
+  /**
+   * False for the few moments after the app opened or a sign-in, until the
+   * storage told what the player evolved - Start waits for it.
+   */
+  protected readonly startReady = inject(EvolutionService).settled;
 
   /** The mode and the step the screen opens on. */
   public readonly entry = input<NewGameEntry>({ kind: null, step: 'mode' });

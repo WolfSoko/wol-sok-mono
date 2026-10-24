@@ -1,9 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { BehaviorSubject } from 'rxjs';
 import { EvolutionService } from '../evolution.service';
 import { Loadout, PLAIN_LOADOUT } from './evolution';
-import { EVOLUTION_WAIT_MS, GameStateService } from './game-state.service';
+import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
 import { MatchPlan } from './match-setup';
 import { ReplayInputs, replayOf } from './replay';
@@ -22,18 +21,16 @@ describe('GameStateService loadouts', () => {
   let store: GameStateStore;
   const loadout = signal<Loadout>(EVOLVED);
   const loaded = signal(true);
-  let loaded$: BehaviorSubject<boolean>;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
     loadout.set(EVOLVED);
     loaded.set(true);
-    loaded$ = new BehaviorSubject(true);
     TestBed.configureTestingModule({
       providers: [
         {
           provide: EvolutionService,
-          useValue: { loadout, loaded, loaded$ },
+          useValue: { loadout, loaded },
         },
       ],
     });
@@ -53,14 +50,6 @@ describe('GameStateService loadouts', () => {
   function unanswered(): void {
     loadout.set(PLAIN_LOADOUT);
     loaded.set(false);
-    loaded$.next(false);
-  }
-
-  /** The evolution storage tells what the player evolved. */
-  function answer(evolved: Loadout): void {
-    loadout.set(evolved);
-    loaded.set(true);
-    loaded$.next(true);
   }
 
   function state(): GameState {
@@ -99,60 +88,15 @@ describe('GameStateService loadouts', () => {
     expect(plan()?.loadouts?.[0]).toEqual(EVOLVED);
   });
 
-  describe('before the evolution storage has answered', () => {
-    beforeEach(() => {
-      service.setMode('vs-computer');
-      service.setLevel('hourglass');
-      unanswered();
-    });
+  it('starts at once, with what is known, before the storage answered', () => {
+    service.setMode('vs-computer');
+    service.setLevel('hourglass');
+    unanswered();
 
-    it('holds the start until it has, then plays what the player evolved', () => {
-      service.start();
-      expect(state()).not.toBe(GameState.RUNNING);
+    service.start();
 
-      answer(EVOLVED);
-
-      expect(state()).toBe(GameState.RUNNING);
-      expect(plan()?.loadouts).toEqual([EVOLVED, PLAIN_LOADOUT]);
-    });
-
-    it('starts with what is known when the storage keeps silent', () => {
-      jest.useFakeTimers();
-      service.start();
-
-      jest.advanceTimersByTime(EVOLUTION_WAIT_MS - 1);
-      expect(state()).not.toBe(GameState.RUNNING);
-      jest.advanceTimersByTime(1);
-
-      expect(state()).toBe(GameState.RUNNING);
-      expect(plan()?.loadouts).toEqual([PLAIN_LOADOUT, PLAIN_LOADOUT]);
-    });
-
-    it('starts no match once the start is called off', () => {
-      service.start();
-
-      service.reset();
-      answer(EVOLVED);
-
-      expect(state()).toBe(GameState.START);
-    });
-
-    it('starts a match evolution has no part in at once', () => {
-      service.setMode('two-players');
-
-      service.start();
-
-      expect(state()).toBe(GameState.RUNNING);
-    });
-
-    it('starts the daily level at once', () => {
-      service.playDaily('2026-10-20');
-
-      service.start();
-
-      expect(state()).toBe(GameState.RUNNING);
-      expect(plan()?.loadouts).toBeUndefined();
-    });
+    expect(state()).toBe(GameState.RUNNING);
+    expect(plan()?.loadouts).toEqual([PLAIN_LOADOUT, PLAIN_LOADOUT]);
   });
 
   it('plays the daily level plain', () => {

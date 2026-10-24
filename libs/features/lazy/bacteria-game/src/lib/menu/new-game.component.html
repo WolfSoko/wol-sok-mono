@@ -212,6 +212,7 @@
                       mat-flat-button
                       type="button"
                       class="start"
+                      [disabled]="!startReady()"
                       (click)="startGame()"
                     >
                       <mat-icon>play_arrow</mat-icon>

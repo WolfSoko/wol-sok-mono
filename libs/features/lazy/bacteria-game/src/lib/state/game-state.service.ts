@@ -6,13 +6,10 @@ import {
   filter,
   map,
   Observable,
-  race,
   Subject,
   Subscription,
   switchMap,
-  take,
   takeUntil,
-  timer,
 } from 'rxjs';
 import { FramePacer } from './frame-pacer';
 import { GameFrame, TICK_MS, TickClock, ticksToMs } from './fixed-tick';
@@ -84,13 +81,6 @@ const MAX_FRAME_MS = 3 * TICK_MS;
 const WAIT_NOTICE_FRAMES = 20;
 
 /**
- * How long a match the evolution plays in waits for the storage to tell
- * what the player evolved, in milliseconds. Offline with nothing cached it
- * may never tell: the match then starts with what is known.
- */
-export const EVOLUTION_WAIT_MS = 3000;
-
-/**
  * What the next match is set to outside the setup: a ghost to fight, a
  * level picked for it, the daily day it counts for. It holds for one match.
  */
@@ -118,8 +108,6 @@ export class GameStateService {
   private plan: MatchPlan | null = null;
   /** Frames in a row an online match could not go on, waiting for the other device. */
   private stalledFrames = 0;
-  /** A start that waits for the evolution to be known - see {@link start}. */
-  private heldStart: Subscription | null = null;
   /**
    * The host's word of the guest's own colours, null before it came - what
    * the host makes the online pair from, with its own.
@@ -755,35 +743,12 @@ export class GameStateService {
   }
 
   /**
-   * Starts the match. One the evolution plays in waits until the storage
-   * has told what the player evolved - at most {@link EVOLUTION_WAIT_MS} -
-   * so it never starts plain only because the storage answered late, as at
-   * the start of the app or right after a sign-in. The match itself never
-   * waits on storage: once it runs, its loadouts are fixed.
+   * Starts the match, with what the player evolved as it is known now: the
+   * match never waits on storage, and once it runs its loadouts are fixed.
+   * The new game's Start waits for the evolution instead - see
+   * `EvolutionService.settled`.
    */
   start(): void {
-    this.cancelHeldStart();
-    if (this.evolves() && !untracked(this.evolution.loaded)) {
-      this.heldStart = race(
-        this.evolution.loaded$.pipe(filter(Boolean)),
-        timer(EVOLUTION_WAIT_MS)
-      )
-        .pipe(take(1))
-        .subscribe(() => {
-          this.heldStart = null;
-          this.begin();
-        });
-      return;
-    }
-    this.begin();
-  }
-
-  private cancelHeldStart(): void {
-    this.heldStart?.unsubscribe();
-    this.heldStart = null;
-  }
-
-  private begin(): void {
     const { online, dailyDay } = this.gameStateStore.snapshot();
     if (online !== null) {
       const match = this.onlineMatch(online);
@@ -856,7 +821,6 @@ export class GameStateService {
   }
 
   reset() {
-    this.cancelHeldStart();
     this.gameStateStore.update(() => ({
       currentState: GameState.END,
       timePassed: 0,
@@ -905,7 +869,6 @@ export class GameStateService {
   }
 
   cleanup(): void {
-    this.cancelHeldStart();
     this.pause();
     this.gameStateStore.update({ keysPressed: [], fps: 0 });
     this.subscriptions?.unsubscribe();

@@ -1,6 +1,10 @@
 import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { EVOLUTION_STORAGE_KEY, EvolutionService } from './evolution.service';
+import {
+  EVOLUTION_STORAGE_KEY,
+  EVOLUTION_WAIT_MS,
+  EvolutionService,
+} from './evolution.service';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameAccount } from './storage/game-account';
 import { DeviceStorage, GameStorage } from './storage/game-storage';
@@ -162,19 +166,34 @@ describe('EvolutionService', () => {
       expect(evolution.dna()).toBe(10 - 6);
     });
 
-    it('tells when it has become known, for a match waiting to start', () => {
+    it('settles once the storage has told what is held', () => {
       const evolution = createWith({
         [PROGRESS_STORAGE_KEY]: progressWorth(500),
         [EVOLUTION_STORAGE_KEY]: { genes: { mitosis: 2 } },
       });
-      const told: boolean[] = [];
-      evolution.loaded$.subscribe((loaded) => told.push(loaded));
-      TestBed.tick();
+      expect(evolution.settled()).toBe(false);
 
       storage.flush();
-      TestBed.tick();
 
-      expect(told).toEqual([false, true]);
+      expect(evolution.settled()).toBe(true);
+    });
+
+    it('settles after a while when the storage keeps silent', () => {
+      jest.useFakeTimers();
+      try {
+        const evolution = createWith({
+          [PROGRESS_STORAGE_KEY]: progressWorth(500),
+        });
+
+        jest.advanceTimersByTime(EVOLUTION_WAIT_MS - 1);
+        expect(evolution.settled()).toBe(false);
+        jest.advanceTimersByTime(1);
+
+        expect(evolution.settled()).toBe(true);
+        expect(evolution.loaded()).toBe(false);
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('builds a purchase on what the storage holds, never undoing it', () => {
