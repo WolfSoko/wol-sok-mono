@@ -242,7 +242,9 @@ sits behind a flag; step 8 switches it on.
      from hard against normal, which the engine cannot set per seat, so the
      real check is a playtest on a device that passed the self-test, and
      ranked `gpu-int` play. Revisit them before the boards open.
-   - "Record local matches" is on by default.
+   - "Record local matches" is on by default once `DETERMINISTIC_SIMULATION`
+     is: while the switch is off a recorded match still plays on the CPU, so
+     the default follows the switch.
    - `DETERMINISTIC_SIMULATION` stays off until the owner's real-device
      check passed; turning it on is a one-line change. Meanwhile a device
      opts in with `?sim=gpu-int`: it runs the self-test, plays local

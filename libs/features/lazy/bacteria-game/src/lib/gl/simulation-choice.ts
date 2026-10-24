@@ -4,14 +4,7 @@ import { cpuSimulation } from '../state/match-engine';
 import { Ruleset, Simulation, SimulationFactory } from '../state/simulation';
 import type { GpuSimulationOptions } from './gpu-simulation';
 
-/**
- * True when matches run the deterministic simulation of ADR 0015 where the
- * device can: the integer passes on a GPU that passed the self-test, the
- * CPU's ruleset else. The rollout's switch (step 8): off until the owner's
- * real-device check passed - meanwhile `?sim=gpu-int` opts one device in
- * for local play (see `chooseSimulation`).
- */
-export const DETERMINISTIC_SIMULATION = false;
+export { DETERMINISTIC_SIMULATION } from '../state/simulation';
 
 /** Builds a GPU simulation on the arena's context. */
 export type GpuFactory = (

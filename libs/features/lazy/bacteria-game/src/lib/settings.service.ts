@@ -88,6 +88,7 @@ export interface StoredSettings {
 }
 
 import { BacteriaLook, isBacteriaLook } from './state/skins';
+import { DETERMINISTIC_SIMULATION } from './state/simulation';
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
@@ -181,11 +182,13 @@ export class GameSettingsService {
   public readonly matchLevel = signal<string | null>(null);
   /**
    * True while local matches against the computer are recorded, at the
-   * online grid. On by default (ADR 0011, 0015 step 8): a recorded match
-   * plays on a ruleset, the integer GPU passes where the GPU passed the
-   * self-test, so recording no longer costs the GPU.
+   * online grid. On by default once the rollout's switch is (ADR 0011,
+   * 0015 step 8): a recorded match then plays on a ruleset, the integer GPU
+   * passes where the GPU passed the self-test, so recording no longer costs
+   * the GPU. While it is off, recording still sends a match to the CPU, so
+   * it stays off by default.
    */
-  public readonly recordLocal = signal(true);
+  public readonly recordLocal = signal(DETERMINISTIC_SIMULATION);
   /**
    * True while recorded local matches are kept, "Save my matches" - online
    * matches are kept either way (ADR 0012).
