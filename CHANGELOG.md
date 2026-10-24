@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.73.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.72.0...v74.73.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** GPU self-test and deterministic CPU fallback behind the flag ([#2613](https://github.com/WolfSoko/wol-sok-mono/issues/2613)) ([e843fd6](https://github.com/WolfSoko/wol-sok-mono/commit/e843fd641200f55ed99b6b06995203d011488b90))
+
 ## [74.72.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.71.0...v74.72.0) (2026-10-24)
 
 ### Features
