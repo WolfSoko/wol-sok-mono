@@ -54,8 +54,14 @@ import {
   MarkLayer,
   TINT_MODES,
   tintApplies,
+  TintMode,
   WeaponFx,
 } from '../weapon-fx';
+
+/** Each tint mode's number in the colony shader. */
+const TINT_INDEX = Object.fromEntries(
+  TINT_MODES.map((mode, index) => [mode, index])
+) as Record<TintMode, number>;
 
 /**
  * Packs the weapons' tints that shade a colony - the one drawn in that
@@ -82,7 +88,7 @@ export function packTints(
     circles[at + 1] = tint.y;
     circles[at + 2] = tint.radius;
     circles[at + 3] = tint.strength;
-    modes[count] = TINT_MODES.indexOf(tint.mode);
+    modes[count] = TINT_INDEX[tint.mode];
     count++;
   }
   return count;
@@ -210,7 +216,7 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly weapons: WeaponFx;
   private readonly weaponBatch = new ShapeBatch();
   private readonly tintCircles = new Float32Array(MAX_TINTS * 4);
-  private readonly tintModes = new Float32Array(4);
+  private readonly tintModes = new Float32Array(MAX_TINTS);
   private readonly cellBytes: Uint8Array;
   private readonly canvasWidth: number;
   private readonly canvasHeight: number;

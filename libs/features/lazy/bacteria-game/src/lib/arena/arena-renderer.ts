@@ -257,21 +257,11 @@ export class ArenaRenderer {
         continue;
       }
       const alpha = 0.6 * tint.strength;
-      const gradient = cx.createRadialGradient(
-        tint.x,
-        tint.y,
-        0,
-        tint.x,
-        tint.y,
-        tint.radius
-      );
-      gradient.addColorStop(0, rgba(color, alpha));
-      gradient.addColorStop(0.85, rgba(color, alpha));
-      gradient.addColorStop(1, rgba(color, 0));
-      cx.fillStyle = gradient;
-      cx.beginPath();
-      cx.arc(tint.x, tint.y, tint.radius, 0, Math.PI * 2);
-      cx.fill();
+      fillGradientCircle(cx, tint.x, tint.y, tint.radius, [
+        [0, color, alpha],
+        [0.85, color, alpha],
+        [1, color, 0],
+      ]);
     }
     cx.restore();
   }
@@ -359,24 +349,23 @@ function drawMark(cx: CanvasRenderingContext2D, mark: WeaponMark): void {
     return;
   }
   switch (mark.kind) {
-    case 'glow': {
+    case 'glow':
       if (radius < 2.5) {
         // Too small for the gradient to show - a plain dot is cheaper.
         cx.fillStyle = rgba(color, alpha * 0.55);
+        cx.beginPath();
+        cx.arc(x, y, radius, 0, Math.PI * 2);
+        cx.fill();
       } else {
-        const gradient = cx.createRadialGradient(x, y, 0, x, y, radius);
         // The falloff of the WebGL glow, (1 - r²)².
-        gradient.addColorStop(0, rgba(color, alpha));
-        gradient.addColorStop(0.5, rgba(color, alpha * 0.56));
-        gradient.addColorStop(0.75, rgba(color, alpha * 0.19));
-        gradient.addColorStop(1, rgba(color, 0));
-        cx.fillStyle = gradient;
+        fillGradientCircle(cx, x, y, radius, [
+          [0, color, alpha],
+          [0.5, color, alpha * 0.56],
+          [0.75, color, alpha * 0.19],
+          [1, color, 0],
+        ]);
       }
-      cx.beginPath();
-      cx.arc(x, y, radius, 0, Math.PI * 2);
-      cx.fill();
       break;
-    }
     case 'ring':
       cx.strokeStyle = rgba(color, alpha);
       cx.lineWidth = size;
@@ -535,10 +524,19 @@ function drawField(cx: CanvasRenderingContext2D, mark: WeaponMark): void {
       cx.strokeStyle = rgba(color2, (0.3 + 0.3 * pulse) * alpha);
       cx.lineWidth = Math.max(0.3, radius * 0.02);
       cx.beginPath();
-      for (let row = -7; row <= 7; row++) {
-        const cy = y + row * corner * 1.5;
+      // Only the cells that reach into the clipped circle, at most seven
+      // out from the centre each way.
+      const rowStep = corner * 1.5;
+      const rows = Math.min(7, Math.ceil((reach + corner) / rowStep));
+      for (let row = -rows; row <= rows; row++) {
+        const cy = y + row * rowStep;
         const shift = (row & 1) * 0.5 * width;
-        for (let column = -7; column <= 7; column++) {
+        const nearest = Math.max(0, Math.abs(row * rowStep) - corner);
+        const half =
+          Math.sqrt(Math.max(0, reach * reach - nearest * nearest)) + corner;
+        const first = Math.max(-7, Math.floor((-half - shift) / width));
+        const last = Math.min(7, Math.ceil((half - shift) / width));
+        for (let column = first; column <= last; column++) {
           const cellX = x + column * width + shift;
           for (let k = 0; k <= 6; k++) {
             const turn = Math.PI / 6 + (k * Math.PI) / 3;

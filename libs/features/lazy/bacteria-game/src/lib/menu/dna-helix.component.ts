@@ -6,7 +6,8 @@ const RUNGS = [0, 1, 2, 3, 4, 5, 6];
 /**
  * A strand of DNA, turning - the icon of the DNA counter. Its rungs swing
  * one after the other, which reads as a double helix spinning; still for
- * players who ask for less motion. Decoration only.
+ * players who ask for less motion, and where `animated` is off - the small
+ * ones on the buy buttons, many at once. Decoration only.
  */
 @Component({
   selector: 'feat-lazy-bac-game-dna-helix',
@@ -66,6 +67,11 @@ const RUNGS = [0, 1, 2, 3, 4, 5, 6];
       }
     }
 
+    /* Held mid-turn: still a helix, not a ladder. */
+    :host(.still) .twist {
+      animation-play-state: paused;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .twist {
         animation: none;
@@ -73,11 +79,13 @@ const RUNGS = [0, 1, 2, 3, 4, 5, 6];
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { 'aria-hidden': 'true' },
+  host: { 'aria-hidden': 'true', '[class.still]': '!animated()' },
 })
 export class DnaHelixComponent {
   /** Its height in CSS pixels. */
   public readonly size = input(28);
+  /** False keeps it still. */
+  public readonly animated = input(true);
 
   protected readonly rungs = RUNGS;
 }
