@@ -7,7 +7,7 @@ export const colony: Translation<typeof en> = {
   preview: 'Deine Kolonie im Skin {skin}',
   skin: {
     title: 'Skin',
-    note: 'Die ersten Skins sind frei. Die edlen kosten DNA, die deine XP wachsen lassen – und bleiben dir durch jeden Reset erhalten. Jede Kolonie in der Schale trägt deinen Skin.',
+    note: 'Schleim und Pixel sind frei. Jeder besondere Skin kostet DNA, die deine XP wachsen lassen – und bleibt dir durch jeden Reset erhalten. Jede Kolonie in der Schale trägt deinen Skin.',
     buy: 'Kaufen',
     buyLabel: 'Skin {name} für {cost} DNA kaufen',
     names: {

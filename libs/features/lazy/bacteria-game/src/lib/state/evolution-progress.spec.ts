@@ -335,15 +335,18 @@ describe('evolution progress', () => {
   });
 
   describe('skins', () => {
-    it('prices the five to buy at 102 strands together, the rest free', () => {
-      expect(PREMIUM_SKINS.reduce((sum, { cost }) => sum + cost, 0)).toBe(102);
+    it('prices the eleven to buy at 140 strands together, the slime and the pixels free', () => {
+      expect(PREMIUM_SKINS.reduce((sum, { cost }) => sum + cost, 0)).toBe(140);
       expect(
         SKINS.filter(({ cost }) => cost === 0).map(({ id }) => id)
-      ).toEqual(BACTERIA_LOOKS.slice(0, 8));
+      ).toEqual(['slime', 'pixels']);
+      expect(BACTERIA_LOOKS.slice(0, 2)).toEqual(['slime', 'pixels']);
       expect(skinCost('slime')).toBe(0);
+      expect(skinCost('cells')).toBe(3);
       expect(skinCost('chrome')).toBe(30);
       expect(isPremiumSkin('chrome')).toBe(true);
-      expect(isPremiumSkin('cells')).toBe(false);
+      expect(isPremiumSkin('cells')).toBe(true);
+      expect(isPremiumSkin('pixels')).toBe(false);
       expect(isPremiumSkin('fur')).toBe(false);
     });
 
@@ -362,8 +365,8 @@ describe('evolution progress', () => {
       expect(canBuySkin(16 + 29, bought, 'chrome')).toBe(false);
       expect(canBuySkin(16 + 30, bought, 'chrome')).toBe(true);
       expect(canBuySkin(100, bought, 'lava')).toBe(false);
-      expect(canBuyAnySkin(16 + 11, bought)).toBe(false);
-      expect(canBuyAnySkin(16 + 12, bought)).toBe(true);
+      expect(canBuyAnySkin(16 + 2, bought)).toBe(false);
+      expect(canBuyAnySkin(16 + 3, bought)).toBe(true);
       // A skin is not what the Evolution tile badges.
       expect(canBuyAnything(16 + 1, bought)).toBe(false);
     });

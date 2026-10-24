@@ -201,9 +201,9 @@ Things that exist already can become rewards:
 
 - **Colony colours** (`COLONY_COLORS` has eight; orange and blue stay free, the
   rest unlock through medallions or achievements).
-- **Looks** (`BACTERIA_LOOKS`: slime, cells, honeycomb, crystal, neon, ink,
-  bubbles, pixels free; marbles, lava, galaxy, plasma and chrome for DNA -
-  `state/skins.ts`) and new ones from section 7.
+- **Looks** (`BACTERIA_LOOKS`: slime and pixels free; cells, honeycomb,
+  crystal, neon, ink, bubbles, marbles, lava, galaxy, plasma and chrome for
+  DNA - `state/skins.ts`) and new ones from section 7.
 - **Arena patterns** (`ArenaPattern`, twelve of them) usable as an override for
   any level in free play.
 - **Crosshair shapes** and **boost sounds** - small, cheap variations.

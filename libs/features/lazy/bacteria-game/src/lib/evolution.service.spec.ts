@@ -115,9 +115,11 @@ describe('EvolutionService', () => {
     expect(evolution.buySkin('chrome')).toBe(false);
     expect(evolution.wornSkin(settings.look())).toBe('chrome');
     expect(evolution.dna()).toBe(10);
-    expect(evolution.skinDna()).toBe(0);
+    // 10 DNA still buys the cheaper skins.
+    expect(evolution.skinDna()).toBe(10);
     expect(stored()).toMatchObject({ skins: ['chrome'] });
-    expect(evolution.wornSkin('cells')).toBe('cells');
+    expect(evolution.wornSkin('pixels')).toBe('pixels');
+    expect(evolution.wornSkin('cells')).toBe('slime');
 
     // A reset keeps the skin and its strands.
     evolution.buyGene('mitosis');
