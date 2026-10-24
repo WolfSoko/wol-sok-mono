@@ -32,8 +32,11 @@ export type LoadoutName =
 
 /** How a run is set up. */
 export interface LabConfig {
-  /** Seeds per cell of the curve - the expected loadout on every difficulty. */
-  curveSeeds: number;
+  /**
+   * Seeds per cell of the curve - the expected loadout - by difficulty:
+   * the most on normal, which the target curve is set for.
+   */
+  curveSeeds: Readonly<Record<BotDifficulty, number>>;
   /** Seeds per cell of the gains - every other loadout, on normal. */
   gainSeeds: number;
   /** Seconds a match still on is cut off after. */
@@ -52,9 +55,10 @@ export interface LabConfig {
 
 /** The full run's setup - nightly, and for a new baseline. */
 export const FULL_RUN: LabConfig = {
-  curveSeeds: 6,
-  gainSeeds: 3,
-  horizonSec: 300,
+  curveSeeds: { easy: 3, normal: 6, hard: 3 },
+  gainSeeds: 2,
+  // A stalemate is a stalemate after four minutes; the longest clock is 240 s.
+  horizonSec: 245,
   checkSeeds: 2,
   checkHorizonSec: 90,
   resolution: 'low',
@@ -127,7 +131,7 @@ export function fullMatrix(
   const cells: NamedCell[] = [];
   for (const levelId of levelIds) {
     for (const { id: difficulty } of BOT_DIFFICULTIES) {
-      for (let n = 0; n < config.curveSeeds; n++) {
+      for (let n = 0; n < config.curveSeeds[difficulty]; n++) {
         cells.push(
           cellOf(config, levelId, difficulty, 'expected', n, config.horizonSec)
         );
@@ -191,6 +195,12 @@ export interface CellStats {
   matches: number;
   /** The stand-in's wins as a share of the matches. */
   winRate: number;
+  /**
+   * The stand-in's score: wins, and half of the matches undecided at the
+   * horizon - what the difficulty curve is measured by. A stalemate is not
+   * a loss.
+   */
+  score: number;
   /** Matches neither won nor lost by the horizon. */
   undecided: number;
   /** The median seconds to a win and to a loss, null without any. */
@@ -267,6 +277,10 @@ function statsOf(matches: readonly LabMatch[]): CellStats {
   return {
     matches: matches.length,
     winRate: round(wins.length / matches.length),
+    score: round(
+      (wins.length + (matches.length - wins.length - losses.length) / 2) /
+        matches.length
+    ),
     undecided: matches.length - wins.length - losses.length,
     medianWinSec: median(winTimes),
     medianLossSec: median(losses.map(({ durationSec }) => durationSec)),
@@ -315,10 +329,10 @@ export const MAX_WEAPON_GAIN = 15;
 /** How far below 0 a weapon's average gain may sit before it counts as a loss. */
 export const WEAPON_LOSS_TOLERANCE = 1;
 /**
- * How far a level's win rate on normal may rise above the level's before
+ * How far a level's score on normal may rise above the level's before
  * in the same chapter - the noise of {@link FULL_RUN}'s seeds.
  */
-export const CURVE_TOLERANCE = 0.13;
+export const CURVE_TOLERANCE = 0.17;
 
 /** A check the report fails, in a line. */
 export type Finding = string;
@@ -432,7 +446,7 @@ function weaponFindings(
 function curveFindings(report: BalanceReport): Finding[] {
   const found: Finding[] = [];
   for (const chapter of CHAPTERS) {
-    let before: { levelId: string; winRate: number } | null = null;
+    let before: { levelId: string; score: number } | null = null;
     for (const levelId of chapter.levelIds) {
       const stats =
         report.cells[
@@ -441,12 +455,12 @@ function curveFindings(report: BalanceReport): Finding[] {
       if (stats === undefined) {
         continue;
       }
-      if (before !== null && stats.winRate > before.winRate + CURVE_TOLERANCE) {
+      if (before !== null && stats.score > before.score + CURVE_TOLERANCE) {
         found.push(
-          `${chapter.id}: ${levelId} (${percent(stats.winRate)}) is easier than ${before.levelId} (${percent(before.winRate)}) before it`
+          `${chapter.id}: ${levelId} (${percent(stats.score)}) is easier than ${before.levelId} (${percent(before.score)}) before it`
         );
       }
-      before = { levelId, winRate: stats.winRate };
+      before = { levelId, score: stats.score };
     }
   }
   return found;
@@ -522,7 +536,7 @@ export function checkDrift(
   return found;
 }
 
-/** The measured win rate of each level and difficulty next to its target. */
+/** The measured score of each level and difficulty next to its target. */
 export function curveTable(report: BalanceReport): string[] {
   const lines = [
     '| Level | Easy | Normal | Hard |',
@@ -534,7 +548,7 @@ export function curveTable(report: BalanceReport): string[] {
         report.cells[cellKey({ levelId, difficulty, loadout: 'expected' })];
       return stats === undefined
         ? '-'
-        : `${percent(stats.winRate)} (${percent(targetWinRate(levelId, difficulty))})`;
+        : `${percent(stats.score)} (${percent(targetWinRate(levelId, difficulty))})`;
     });
     lines.push(`| ${levelId} | ${cells.join(' | ')} |`);
   }

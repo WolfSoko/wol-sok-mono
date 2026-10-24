@@ -1,7 +1,7 @@
 /**
  * Calibrates the difficulty curve (ADR 0014) from a lab report: moves each
  * level's skill in `SKILL` (`difficulty-curve.ts`) by how far the stand-in's
- * win rate sat from the target - more skill where it won too often - and
+ * score sat from the target - more skill where it won too often - and
  * prints the new table to paste over the old one.
  *
  *   tsx tools/bacteria-game/balance/run.ts full --gain-seeds 0
@@ -36,7 +36,7 @@ for (const { id: levelId } of LEVELS) {
     if (stats === undefined) {
       return skill;
     }
-    const off = stats.winRate - targetWinRate(levelId, difficulty);
+    const off = stats.score - targetWinRate(levelId, difficulty);
     return Math.round(Math.min(1, Math.max(0, skill + off * STEP)) * 100) / 100;
   });
   const key = /^[a-z]+$/.test(levelId) ? levelId : `'${levelId}'`;

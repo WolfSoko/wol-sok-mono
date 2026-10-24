@@ -28,9 +28,13 @@ describe('the typical player', () => {
     expect(expectedXp(4.5)).toBeLessThan(expectedXp(5));
   });
 
-  it('carries nothing on the first level, a weapon soon after', () => {
+  it('carries nothing on the first level, a gene and a weapon soon after', () => {
     expect(isPlainLoadout(expectedLoadout(expectedDna(0)))).toBe(true);
-    expect(expectedLoadout(6).weapon).toBe('toxin-bomb');
+    expect(expectedLoadout(expectedDna(1))).toEqual({
+      genes: { mitosis: 1 },
+      weapon: null,
+    });
+    expect(expectedLoadout(10).weapon).toBe('toxin-bomb');
     expect(expectedLoadout(expectedDna(LEVELS.length - 1)).weapon).toBe(
       'phage-strike'
     );

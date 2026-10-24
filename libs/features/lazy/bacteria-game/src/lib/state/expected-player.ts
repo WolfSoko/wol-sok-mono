@@ -68,14 +68,16 @@ export function expectedDna(index: number): number {
 export type Purchase = { gene: GeneId } | { weapon: WeaponId };
 
 /**
- * The order a typical player buys in: a cheap weapon first, then a level
- * of every gene, the ones that fight first, a stronger weapon, and on
- * round the genes. Of the weapons owned the last one bought is carried.
+ * The order a typical player buys in: the first gene as soon as the first
+ * win pays for it, a cheap weapon, then a level of every gene, the ones
+ * that fight first, a stronger weapon, and on round the genes. Of the
+ * weapons owned the last one bought is carried.
  */
 const PLAYER_PURCHASES: readonly Purchase[] = [
+  ...nextLevels(['mitosis', 'toxins']),
   { weapon: 'toxin-bomb' },
-  // The first level of each gene,
-  ...nextLevels(['mitosis', 'toxins', 'membrane', 'metabolism', 'flagella']),
+  // The first level of the other genes,
+  ...nextLevels(['membrane', 'metabolism', 'flagella']),
   // the second of the ones that fight,
   ...nextLevels(['mitosis', 'toxins', 'membrane']),
   { weapon: 'phage-strike' },

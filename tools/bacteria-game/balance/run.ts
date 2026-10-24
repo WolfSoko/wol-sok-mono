@@ -14,10 +14,18 @@
  *     A share of the full matrix, its matches unsummed - for the nightly
  *     workflow's jobs; `merge part-*.json` sums them up as `full` does.
  *
- * `--jobs n` plays on n processes (all cores by default).
+ * `--jobs n` plays on n processes (all cores by default); `--journal
+ * file.jsonl` keeps each match as it is played, so a run that was cut off
+ * goes on where it stopped.
  */
 import { fork } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import type { LabMatch } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/lab-match';
@@ -99,7 +107,14 @@ function configOf(): LabConfig {
   };
   return {
     ...FULL_RUN,
-    curveSeeds: number('curve-seeds', FULL_RUN.curveSeeds),
+    curveSeeds:
+      option('curve-seeds') === undefined
+        ? FULL_RUN.curveSeeds
+        : {
+            easy: number('curve-seeds', 0),
+            normal: number('curve-seeds', 0),
+            hard: number('curve-seeds', 0),
+          },
     gainSeeds: number('gain-seeds', FULL_RUN.gainSeeds),
     horizonSec: number('horizon', FULL_RUN.horizonSec),
     checkSeeds: number('check-seeds', FULL_RUN.checkSeeds),
@@ -118,15 +133,27 @@ function shardOf<T>(cells: readonly T[]): T[] {
 
 /** Plays cells on worker processes, slowest first, in their order back. */
 export async function play(cells: readonly NamedCell[]): Promise<Played[]> {
-  const jobs = Math.max(
-    1,
-    Math.min(cells.length, Number(option('jobs') ?? availableParallelism()))
-  );
   const results: (LabMatch | undefined)[] = new Array(cells.length);
+  // A journal keeps every match as it is played: a run cut off goes on
+  // where it stopped.
+  const journalPath = option('journal');
+  const journal = journalPath === undefined ? null : resolve(ROOT, journalPath);
+  const kept = journal === null ? new Map<string, LabMatch>() : readJournal(journal);
+  cells.forEach((cell, index) => {
+    results[index] = kept.get(JSON.stringify(cell));
+  });
   // The big maps take longest: start them first, so no worker idles at the end.
   const order = cells
     .map((cell, index) => ({ cell, index }))
+    .filter(({ index }) => results[index] === undefined)
     .sort((a, b) => weight(b.cell) - weight(a.cell));
+  const jobs = Math.max(
+    1,
+    Math.min(order.length, Number(option('jobs') ?? availableParallelism()))
+  );
+  if (order.length < cells.length) {
+    console.log(`  ${cells.length - order.length} matches from the journal`);
+  }
   let next = 0;
   let done = 0;
   const started = Date.now();
@@ -152,10 +179,16 @@ export async function play(cells: readonly NamedCell[]): Promise<Played[]> {
           };
           worker.on('message', ({ index, match }: WorkerResult) => {
             results[index] = match;
+            if (journal !== null) {
+              appendFileSync(
+                journal,
+                `${JSON.stringify({ cell: cells[index], match })}\n`
+              );
+            }
             done++;
-            if (done % 25 === 0 || done === cells.length) {
+            if (done % 10 === 0 || done === order.length) {
               const minutes = ((Date.now() - started) / 60000).toFixed(1);
-              console.log(`  ${done}/${cells.length} matches, ${minutes} min`);
+              console.log(`  ${done}/${order.length} matches, ${minutes} min`);
             }
             feed();
           });
@@ -176,6 +209,22 @@ export async function play(cells: readonly NamedCell[]): Promise<Played[]> {
     }
     return { cell, match };
   });
+}
+
+/** The matches a journal holds, by their cell. */
+function readJournal(path: string): Map<string, LabMatch> {
+  const kept = new Map<string, LabMatch>();
+  if (!existsSync(path)) {
+    mkdirSync(dirname(path), { recursive: true });
+    return kept;
+  }
+  for (const line of readFileSync(path, 'utf8').split('\n')) {
+    if (line.trim() !== '') {
+      const { cell, match } = JSON.parse(line) as Played;
+      kept.set(JSON.stringify(cell), match);
+    }
+  }
+  return kept;
 }
 
 /** Roughly what a cell costs: a big map's ticks cost its area. */
@@ -263,7 +312,7 @@ function summary(
     '## Drift from the baseline',
     ...list(moved),
     '',
-    '## Win rate of the stand-in with the expected loadout (target)',
+    '## Score of the stand-in with the expected loadout - wins, undecided as half (target)',
     ...curveTable(report),
     '',
     '## Gain in points of share against plain, on normal',

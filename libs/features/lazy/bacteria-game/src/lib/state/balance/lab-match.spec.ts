@@ -14,6 +14,7 @@ const CELL: LabCell = {
   standIn: { genes: { mitosis: 1 }, weapon: 'toxin-bomb' },
   seed: 42,
   horizonSec: 8,
+  resolution: 'low',
 };
 
 describe('a lab match', () => {
@@ -47,7 +48,7 @@ describe('a lab match', () => {
   it("measures the computer's shots and what they changed", () => {
     const match = playLabMatch({
       ...CELL,
-      levelId: 'pillar-field',
+      levelId: 'petri-dish',
       standIn: PLAIN_LOADOUT,
       computer: { genes: {}, weapon: 'phage-strike' },
       tweaks: { weaponPatience: 0.01 },
