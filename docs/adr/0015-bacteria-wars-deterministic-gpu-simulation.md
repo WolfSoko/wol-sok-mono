@@ -133,6 +133,13 @@ The GPU simulation becomes a deterministic ruleset of its own:
    enables `gpu-int` for ranked play, either each ruleset gets its own
    boards, or one ruleset is chosen for all ranked entries.
 
+   Decided with step 8 (the owner): one ruleset for all ranked entries,
+   `gpu-int`. A ranked attempt is only taken from a `gpu-int` replay, so
+   ranked play needs a device whose GPU passed the self-test. A device that
+   failed it, or has no WebGL2, plays the `cpu` ruleset only, and offers
+   only `cpu` online; `IntSimulation` replays and checks matches, it does
+   not play them live.
+
 ## Consequences
 
 - Recorded, ranked and online matches can run on the GPU on devices that
@@ -203,16 +210,46 @@ sits behind a flag; step 8 switches it on.
      slower, so until it is measured on one, a device without a passing GPU
      (or before its verdict is in) should still offer only the `cpu`
      ruleset in the handshake, as decision 5 says.
-8. Switch it on:
-   - bump `BALANCE_VERSION` and `NET_VERSION`;
-   - add a replay version for `gpu-int` headers, and let the parser accept
-     `gpu-int`. Old `gpu` recordings stay version 1 headers, good for a
-     ghost race only, as today;
-   - add the ruleset choice to the online handshake (decision 6);
-   - settle the ranked boards' ruleset policy (decision 6);
-   - update the golden replays;
-   - check the medal limits;
-   - turn "Record local matches" on by default.
+8. Switch it on. Done:
+   - `BALANCE_VERSION` is 6 and `NET_VERSION` `3/6` (the handshake changed
+     too). The CPU's rules did not change: the CPU goldens keep their
+     values under version 6.
+   - Every simulation names its ruleset (`Simulation.ruleset`: `cpu`,
+     `gpu-int`, or null for the float GPU one). Replay version 4
+     (`GPU_INT_REPLAY_VERSION`) holds `gpu-int` matches, plain or evolved;
+     `playReplay` plays them on `IntSimulation`. Old `gpu` recordings stay
+     version 1 or 3, good for a ghost race only.
+   - The handshake: each `hello` carries the rulesets the device offers
+     (`r`), the host's `start` the agreed one (`agreedRuleset`: `gpu-int`
+     only if both offer it), and a guest refuses a start on a ruleset both
+     did not offer. `PlayerService` plays an online match on the agreed
+     ruleset - the integer GPU passes, or `IntSimulation` should they fail
+     to start, so the ruleset holds.
+   - The ranked policy (decision 6): a stored replay with an attempt must
+     be `gpu-int`. There is no ranked queue to gate yet; the matchmaking
+     queue is casual (ADR 0010) and pairs any two devices, which agree on a
+     ruleset in the handshake.
+   - Local matches, recorded or not, play `gpu-int` where the GPU passed the
+     self-test, `cpu` else (`chooseSimulation`). A GPU simulation that fails
+     to start leaves the device on `cpu`, offering `cpu` only.
+   - The golden replay has a `gpu-int` result as well
+     (`golden-replay.spec.ts`), played on `IntSimulation`.
+   - The medal limits stay as they are for now. A first look - normal bot
+     against normal bot, three seeds, capped at 150 s, at the online grid -
+     settles nothing: on Petri Dish the `cpu` ruleset won twice (50 s,
+     106 s) and ran into the cap once, `gpu-int` ran into the cap all three
+     times; on Corridors both ran into it every time. The limits were taken
+     from hard against normal, which the engine cannot set per seat, so the
+     real check is a playtest on a device that passed the self-test, and
+     ranked `gpu-int` play. Revisit them before the boards open.
+   - "Record local matches" is on by default.
+   - `DETERMINISTIC_SIMULATION` is on. For the real-device check, a device
+     override: opening the game with `?sim=gpu-int` plays local matches on
+     the integer GPU passes whatever the self-test said, `?sim=cpu` on the
+     CPU, `?sim=auto` follows the self-test again
+     (`SimulationOverrideService`, kept in `DeviceStorage`). It never
+     changes what the device offers online. The settings show the ruleset
+     local matches play and the self-test's verdict under "Screen".
 9. Tune the CPU reference for the server. Done for a first round, bit for
    bit (every golden unchanged):
    - the passes read module-local copies of their constants and helpers,
