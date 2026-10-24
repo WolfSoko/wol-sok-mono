@@ -61,7 +61,7 @@ import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
 import { EvolutionService } from '../evolution.service';
-import { Loadout, PLAIN_LOADOUT } from './evolution';
+import { PLAIN_LOADOUT } from './evolution';
 import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
@@ -106,6 +106,8 @@ export class GameStateService {
   private online = inject(OnlineMatchService);
   /** What the colonies on the board were spawned from - see `initPlayers`. */
   private plan: MatchPlan | null = null;
+  /** True when evolution plays a part in that match - `planMatch` says. */
+  private planEvolved = false;
   /** Frames in a row an online match could not go on, waiting for the other device. */
   private stalledFrames = 0;
   /**
@@ -365,7 +367,9 @@ export class GameStateService {
           this.plan,
           this.playerService.getSimulation().kind,
           this.playerService.tickCount,
-          this.playerService.recorded
+          this.playerService.recorded,
+          {},
+          this.planEvolved
         );
   }
 
@@ -439,11 +443,9 @@ export class GameStateService {
       ghost,
       matchLevel,
     } = this.gameStateStore.snapshot();
-    const planMode: GameMode = matchLevel === null ? mode : 'vs-computer';
     this.plan = {
       levelId: matchLevel ?? levelId,
-      // A level picked for the match is fought against the computer.
-      mode: planMode,
+      mode: planModeOf(mode, matchLevel),
       difficulty,
       colors,
       headStart,
@@ -454,9 +456,10 @@ export class GameStateService {
     // Taken as the colonies spawn: the plan keeps it for the whole match,
     // whatever the storage or the player change meanwhile.
     if (this.evolves()) {
-      this.plan.loadouts = [this.playerLoadout(), PLAIN_LOADOUT];
+      this.plan.loadouts = [untracked(this.evolution.loadout), PLAIN_LOADOUT];
     }
-    const { spawns, options } = planMatch(this.plan, ghost);
+    const { spawns, options, evolved } = planMatch(this.plan, ghost);
+    this.planEvolved = evolved;
     this.playerService.init(spawns, options);
   }
 
@@ -469,22 +472,12 @@ export class GameStateService {
   private evolves(): boolean {
     const { online, mode, matchLevel, dailyDay, endlessMatch } =
       this.gameStateStore.snapshot();
-    const planMode: GameMode = matchLevel === null ? mode : 'vs-computer';
     return (
       online === null &&
-      planMode === 'vs-computer' &&
+      planModeOf(mode, matchLevel) === 'vs-computer' &&
       dailyDay === null &&
       !endlessMatch
     );
-  }
-
-  /**
-   * What the player at the screen evolved, for a match the evolution plays
-   * in ({@link evolves}). A ghost plays with what its run recorded
-   * (`planMatch`).
-   */
-  private playerLoadout(): Loadout {
-    return untracked(this.evolution.loadout);
   }
 
   /**
@@ -510,10 +503,11 @@ export class GameStateService {
       height,
       seed: match?.seed ?? 0,
     };
-    const { spawns, options } = planMatch(this.plan, null, {
+    const { spawns, options, evolved } = planMatch(this.plan, null, {
       seat: online.seat,
       drivers: match?.lockstep.drivers() ?? new Map(),
     });
+    this.planEvolved = evolved;
     this.playerService.init(spawns, { ...options, lockstep: match?.lockstep });
   }
 
@@ -919,3 +913,11 @@ const SERIES_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
   'seriesLength',
   'headStart',
 ];
+
+/**
+ * The mode a match is planned in: a level picked for the match is fought
+ * against the computer, whatever the mode set.
+ */
+function planModeOf(mode: GameMode, matchLevel: string | null): GameMode {
+  return matchLevel === null ? mode : 'vs-computer';
+}

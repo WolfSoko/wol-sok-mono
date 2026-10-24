@@ -27,7 +27,11 @@ export type {
   SizeSample,
 } from './lib/state/match-engine';
 export { planMatch } from './lib/state/match-setup';
-export type { MatchPlan, OnlineSeats } from './lib/state/match-setup';
+export type {
+  MatchPlan,
+  OnlineSeats,
+  PlannedMatch,
+} from './lib/state/match-setup';
 export { BacteriaSimulation } from './lib/state/bacteria-simulation';
 export type {
   ColonySummary,

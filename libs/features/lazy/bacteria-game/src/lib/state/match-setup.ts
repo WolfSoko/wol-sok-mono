@@ -1,4 +1,9 @@
-import { evolvedTraits, Loadout, PLAIN_LOADOUT } from './evolution';
+import {
+  evolvedTraits,
+  isPlainLoadout,
+  Loadout,
+  PLAIN_LOADOUT,
+} from './evolution';
 import { BotDifficulty } from './bot-controller';
 import { getColonyColor, NEUTRAL_COLOR, toPlayerColor } from './colony-colors';
 import { NEUTRAL_TRAITS } from './game-balance';
@@ -64,15 +69,15 @@ export interface OnlineSeats {
  * without a head start: the other device's seat spawns as a bot, as the
  * ghost does - the game treats it as nobody at this screen - and the
  * lockstep drives both seats.
+ *
+ * `evolved` says whether evolution plays a part: a seat carries a weapon or
+ * genes that change its traits - what decides the replay's version.
  */
 export function planMatch(
   plan: MatchPlan,
   ghost: Replay | null = null,
   online: OnlineSeats | null = null
-): {
-  spawns: PlayerSpawn[];
-  options: MatchOptions;
-} {
+): PlannedMatch {
   if (online !== null) {
     return planOnline(plan, online);
   }
@@ -92,6 +97,9 @@ export function planMatch(
       ? (plan.loadouts ?? null)
       : ghostLoadouts(plan, ghost);
   return {
+    evolved:
+      loadouts !== null &&
+      (!loadouts.every(isPlainLoadout) || boss?.weapon != null),
     spawns: [
       {
         ...leftSpot,
@@ -179,13 +187,18 @@ function ghostLoadouts(
     : [human ?? PLAIN_LOADOUT, recorded ?? PLAIN_LOADOUT];
 }
 
+/** The players and the rules of a planned match - see {@link planMatch}. */
+export interface PlannedMatch {
+  spawns: PlayerSpawn[];
+  options: MatchOptions;
+  /** True when a seat carries a weapon or genes that change its traits. */
+  evolved: boolean;
+}
+
 /** The seats of an online match - both players. */
 const ONLINE_SEATS: ReadonlySet<number> = new Set([0, 1]);
 
-function planOnline(
-  plan: MatchPlan,
-  online: OnlineSeats
-): ReturnType<typeof planMatch> {
+function planOnline(plan: MatchPlan, online: OnlineSeats): PlannedMatch {
   // Online plays plain: what one device evolved, the other cannot check.
   const { spawns, options } = planMatch({
     ...plan,
@@ -194,6 +207,7 @@ function planOnline(
     loadouts: undefined,
   });
   return {
+    evolved: false,
     spawns: spawns.map((spawn, seat) =>
       spawn.neutral === true
         ? spawn

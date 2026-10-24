@@ -3,6 +3,8 @@ import { TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
 import { gameBalance } from './game-balance';
 import { GameState, GameStateStore } from './game.states';
 import { getMap } from './game-maps';
+import { Lockstep } from '../net/lockstep';
+import { MatchPlan, planMatch } from './match-setup';
 import { PlayerColorArray } from './player.model';
 import { PlayerStore } from './player.store';
 import { PlayerService, PlayerSpawn } from './player.service';
@@ -57,6 +59,55 @@ describe('PlayerService', () => {
     });
 
     expect(service.getDynamicWalls().length).toBeGreaterThan(0);
+  });
+
+  describe('online', () => {
+    // Even a plan that carries loadouts - which online never does.
+    const plan: MatchPlan = {
+      levelId: 'meltdown',
+      mode: 'vs-computer',
+      difficulty: 'normal',
+      colors: ['orange', 'blue'],
+      headStart: 0,
+      width: WIDTH,
+      height: HEIGHT,
+      seed: 7,
+      loadouts: [
+        { genes: {}, weapon: 'toxin-bomb' },
+        { genes: {}, weapon: 'cryo-pulse' },
+      ],
+    };
+
+    it('spawns every seat unarmed, whatever the plan carries', () => {
+      const lockstep = new Lockstep(0, () => undefined);
+      const { spawns } = planMatch(plan, null, {
+        seat: 0,
+        drivers: lockstep.drivers(),
+      });
+
+      service.init(spawns, { lockstep });
+
+      expect(playerStore.entities().map(({ weapon }) => weapon)).toEqual([
+        null,
+        null,
+      ]);
+    });
+
+    it('fires no weapon, even from an armed seat: the lockstep plays them all', () => {
+      const lockstep = new Lockstep(0, () => undefined);
+      service.init(
+        spawns(false).map((spawn) => ({ ...spawn, weapon: 'toxin-bomb' })),
+        {
+          arena: { width: WIDTH, height: HEIGHT },
+          ghosts: lockstep.drivers(),
+          lockstep,
+        }
+      );
+
+      service.fireWeapon(0);
+
+      expect(playerStore.entities()[0].weaponsFired).toBe(0);
+    });
   });
 
   describe('boost', () => {

@@ -5,7 +5,7 @@ import { Loadout, PLAIN_LOADOUT } from './evolution';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
 import { MatchPlan } from './match-setup';
-import { ReplayInputs, replayOf } from './replay';
+import { Replay, ReplayInputs, replayOf, REPLAY_VERSION } from './replay';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -151,5 +151,37 @@ describe('GameStateService loadouts', () => {
       genes: { flagella: 2 },
       weapon: 'cryo-pulse',
     });
+  });
+
+  it('records a plain ghost race on a boss level as a plain match', () => {
+    loadout.set(PLAIN_LOADOUT);
+    service.setMode('vs-computer');
+    service.start();
+    const recorded = plan();
+    if (recorded === null) {
+      throw new Error('no plan');
+    }
+    const inputs: ReplayInputs = {
+      steers: [],
+      drags: [],
+      boosts: [],
+      weapons: [],
+    };
+    // Meltdown's boss carries a toxin bomb against the computer - but no
+    // boss joins a ghost race.
+    const run = replayOf(
+      { ...recorded, levelId: 'meltdown', loadouts: undefined },
+      'cpu',
+      0,
+      inputs
+    );
+
+    service.playGhost(run);
+    service.start();
+    const replay = (service as unknown as { replay(): Replay | null }).replay();
+
+    expect(plan()?.loadouts).toEqual([PLAIN_LOADOUT, PLAIN_LOADOUT]);
+    expect(replay?.header.version).toBe(REPLAY_VERSION);
+    expect(replay?.header.loadouts).toBeUndefined();
   });
 });

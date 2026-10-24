@@ -421,6 +421,35 @@ describe('replays with evolution', () => {
     expect(replay.header.loadouts).toBeUndefined();
   });
 
+  it('keep a plain ghost race on a boss level a version 1 ghost', () => {
+    const meltdown: MatchPlan = { ...PLAN, levelId: 'meltdown' };
+    const { replay: run } = record(meltdown, 60);
+    const race: MatchPlan = {
+      ...meltdown,
+      loadouts: [PLAIN_LOADOUT, PLAIN_LOADOUT],
+    };
+    const planned = planMatch(race, run);
+    const engine = new MatchEngine(planned.spawns, planned.options);
+    for (let tick = 0; tick < 60; tick++) {
+      engine.tick(race.width, race.height);
+    }
+
+    const replay = replayOf(
+      race,
+      'gpu',
+      engine.tickCount,
+      engine.recorded,
+      {},
+      planned.evolved
+    );
+
+    // Against the computer the same loadouts arm the boss.
+    expect(planMatch(race).evolved).toBe(true);
+    expect(planned.evolved).toBe(false);
+    expect(replay.header.version).toBe(GHOST_REPLAY_VERSION);
+    expect(replay.header.loadouts).toBeUndefined();
+  });
+
   it('are never a ranked attempt or a daily run', () => {
     const { replay } = record(plan, 60);
     const attempt = { id: 'attempt-1', at: 1 };

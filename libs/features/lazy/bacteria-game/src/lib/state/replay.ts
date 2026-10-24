@@ -5,7 +5,6 @@ import { isDailyLevelId } from './daily';
 import {
   GENES,
   isGeneId,
-  isPlainLoadout,
   isWeaponId,
   Loadout,
   MAX_GENE_LEVEL,
@@ -180,15 +179,19 @@ export interface ReplayResult {
  * evolution in it takes {@link EVOLVED_REPLAY_VERSION} on either
  * simulation; a plain one is written without loadouts, which change
  * nothing in it.
+ *
+ * Whether evolution played a part is `planMatch`'s word (`evolved`): only
+ * it knows that a ghost race has no boss to arm. Without a ghost it can be
+ * asked again from the plan alone.
  */
 export function replayOf(
   plan: MatchPlan,
   simulation: ReplayHeader['simulation'],
   ticks: number,
   inputs: ReplayInputs,
-  extras: ReplayExtras = {}
+  extras: ReplayExtras = {},
+  evolved: boolean = planMatch(plan).evolved
 ): Replay {
-  const evolved = carriesEvolution(plan, inputs);
   const { loadouts: _loadouts, ...plain } = plan;
   const base = {
     ...(evolved ? plan : plain),
@@ -230,23 +233,6 @@ export function replayOutcome(
   return outcome === null
     ? null
     : { endedBy: outcome.reason, winnerSeat: outcome.winner?.id ?? null };
-}
-
-/**
- * True when evolution plays a part in a match: a weapon was fired, or it
- * has loadouts that change it - as `planMatch` plays them, only against the
- * computer, where they evolve a seat or arm the boss.
- */
-function carriesEvolution(plan: MatchPlan, inputs: ReplayInputs): boolean {
-  if (inputs.weapons.length > 0) {
-    return true;
-  }
-  const { loadouts, mode, levelId } = plan;
-  return (
-    loadouts !== undefined &&
-    mode === 'vs-computer' &&
-    (!loadouts.every(isPlainLoadout) || getLevel(levelId).boss?.weapon != null)
-  );
 }
 
 /**

@@ -146,11 +146,11 @@ export class PlayerService {
     }
   }
 
-  /** See {@link MatchEngine.fireWeapon}. Online matches carry no weapons. */
+  /**
+   * See {@link MatchEngine.fireWeapon}. Online matches carry no weapons -
+   * and the lockstep plays every seat, so the engine fires none anyway.
+   */
   public fireWeapon(playerId: number): void {
-    if (this.lockstep !== null) {
-      return;
-    }
     if (this.engine.fireWeapon(playerId)) {
       this.mirror();
     }
