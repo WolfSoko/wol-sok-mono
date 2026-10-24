@@ -86,3 +86,13 @@ export function toTarget(cells: number): number {
 export function mulQ14(a: number, b: number): number {
   return Math.imul(a, b) >> Q14;
 }
+
+/**
+ * floor(a * b / 2^shift) for non-negative ints, exact without a 64 bit
+ * product - as `mulShr` in GLSL, which splits `a` at bit 8 so every partial
+ * product stays below 2^31. Takes `a` below 2^24, `b` up to 2^15 and a
+ * shift of at least 8.
+ */
+export function mulShr(a: number, b: number, shift: number): number {
+  return Math.floor((a * b) / 2 ** shift);
+}

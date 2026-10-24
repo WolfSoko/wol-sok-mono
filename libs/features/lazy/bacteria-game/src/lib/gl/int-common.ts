@@ -2,7 +2,7 @@ import { chanceThreshold, ONE_Q14, Q14 } from '../state/gpu-int/fixed-point';
 import { SALT_SPREAD, STEP_SALT_STRIDE } from '../state/gpu-int/draws';
 
 /**
- * The GLSL twin of `state/gpu-int/` (ADR 0015): the draws, the Q14 product,
+ * The GLSL twin of `state/gpu-int/` (ADR 0015): the draws, the Q14 products,
  * the integer square root and the unit vector, for the deterministic
  * shaders to include after their uniforms. It expects a `uint uSeed` uniform,
  * the frame seed of `frameSeed`.
@@ -48,6 +48,15 @@ bool chanceAt(ivec2 cell, uint salt, uint threshold) {
 /** a * b in Q14, rounded towards minus infinity - see mulQ14. */
 int mulQ14(int a, int b) {
   return (a * b) >> Q14;
+}
+
+/**
+ * floor(a * b / 2^shift) for a in [0, 2^24), b in [0, 2^15] and shift >= 8,
+ * exact - see mulShr. (a >> 8) * b stays below 2^31 - 2^15, the low part
+ * below 2^15.
+ */
+int mulShr(int a, int b, int shift) {
+  return ((a >> 8) * b + (((a & 255) * b) >> 8)) >> (shift - 8);
 }
 
 /** floor(sqrt(n)), bit by bit - exact. */

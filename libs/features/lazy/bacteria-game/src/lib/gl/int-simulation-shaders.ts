@@ -1,17 +1,22 @@
 /**
- * The integer passes of the deterministic GPU simulation (ADR 0015, step
- * 2): the hunt and the claim and apply pair - moving, escaping a wall and
- * dividing - with no float on the state's path, so every GPU and the
- * TypeScript reference (`state/gpu-int/int-reference.ts`) compute the same
- * bits. They take the place of `HUNT_FRAGMENT`, `CLAIM_FRAGMENT` and
- * `APPLY_FRAGMENT` when `GpuSimulation` runs deterministic; every other pass
- * stays the float one for now (combat is step 3).
+ * The integer passes of the deterministic GPU simulation (ADR 0015, steps
+ * 2 and 3): the hunt, the claim and apply pair - moving, escaping a wall
+ * and dividing - and combat and feeding, with no float on the state's path,
+ * so every GPU and the TypeScript reference
+ * (`state/gpu-int/int-reference.ts`) compute the same bits. They take the
+ * place of the float passes of the same names when `GpuSimulation` runs
+ * deterministic; the coarse counts, the crush and the report are integer
+ * already.
  *
  * Bounds, so no int product wraps (GLSL ES 3.00 has no 64 bit multiply):
  * - hunt and crosshair directions are Q14 unit vectors, each axis at most
  *   2^14;
- * - aggression, jitter and the parent's share are Q14 shares, at most 2^14;
- * - energy is the state's 16 bit green channel, below 2^16.
+ * - aggression, jitter, the parent's share and the defence factor are Q14
+ *   shares, at most 2^14;
+ * - energy is the state's 16 bit green channel; the combat never writes
+ *   more than `INT_ENERGY_MAX` (2^15), and nothing else does either;
+ * - attacks and drains are capped on the CPU (`INT_ATTACK_MAX`,
+ *   `INT_DRAIN_MAX`).
  * The products below note what they come to.
  *
  * The weapons' circles (`effectOver`, float `uEffects`) are still the float
@@ -27,7 +32,9 @@ import {
 } from '../state/gpu-int/fixed-point';
 import {
   DIVIDE_VARIANTS,
+  DRAIN_SHIFT,
   INT_COLONIES,
+  INT_PELLETS,
 } from '../state/gpu-int/int-frame-uniforms';
 import { INT_COMMON } from './int-common';
 import { COMMON, HUNT_COLONIES, WEAPONS } from './simulation-shaders';
@@ -286,4 +293,159 @@ void main() {
     }
   }
   outState = state;
+}`;
+
+/**
+ * Nutrients, combat, regeneration and captures, per bacterium, in Q14 -
+ * `COMBAT_FRAGMENT` in integers. Every rate is what it comes to in one step
+ * (`intMatchUniforms`), so the display's frame length plays no part.
+ */
+export const INT_COMBAT_FRAGMENT = `${COMMON}${INT_COMMON}${WEAPONS}
+uniform int uAttack[${INT_COLONIES}];  // Q14
+uniform int uDrain[${INT_COLONIES}];   // ${DRAIN_SHIFT} fractional bits, per step and point of pressure
+uniform ivec3 uPellets[${INT_PELLETS}]; // the cell, 1 while not eaten up
+uniform int uPelletCount;
+uniform int uPelletRadius;
+uniform int uNutrientStep;
+uniform int uDefenceFactor;            // Q14
+uniform int uFrontlinePressure;
+uniform int uRegenStep;
+uniform int uOverchargeDecayStep;
+uniform int uAntibioticStep;
+uniform int uToxinStep;
+uniform int uMaxEnergy;
+uniform int uSuperMaxEnergy;
+uniform int uCaptureEnergy;
+uniform uint uConsumeChance;
+const uint PHAGE_CONVERT = ${INT_EFFECTS.phageConvertChance}u;
+out uvec4 outState;
+
+int pelletsInReach(ivec2 cell) {
+  int count = 0;
+  for (int i = 0; i < ${INT_PELLETS}; i++) {
+    if (i >= uPelletCount) {
+      break;
+    }
+    ivec3 pellet = uPellets[i];
+    ivec2 distance = abs(cell - pellet.xy);
+    if (pellet.z > 0 && max(distance.x, distance.y) <= uPelletRadius) {
+      count++;
+    }
+  }
+  return count;
+}
+
+void main() {
+  ivec2 cell = ivec2(gl_FragCoord.xy);
+  uvec4 state = texelFetch(uState, cell, 0);
+  if (state.r == 0u) {
+    outState = state;
+    return;
+  }
+  uint owner = state.r;
+  // An enemy's phages turn a share of the bacteria in their circle, at once.
+  uint phage = uEffectCount > 0 ? effectOver(cell, owner, PHAGE_STRIKE) : 0u;
+  if (phage != 0u && chanceAt(cell, ${SALT.phageConvert}u, PHAGE_CONVERT)) {
+    outState = uvec4(phage, state.g, 0u, phage | (owner << LOSER_SHIFT));
+    return;
+  }
+  // Energies are at most 2^15: own below 2^18; a hit (attack below 2^18)
+  // below 2^19, enemy and each strength below 2^22.
+  int own = 0;
+  int enemy = 0;
+  ivec4 strength = ivec4(0);
+  for (int i = 0; i < 8; i++) {
+    uvec4 neighbour = stateAt(cell + NEIGHBOURS[i]);
+    if (neighbour.r == 0u) {
+      continue;
+    }
+    if (neighbour.r == owner) {
+      own += int(neighbour.g);
+    } else {
+      int slot = int(neighbour.r) - 1;
+      int hit = mulShr(uAttack[slot], int(neighbour.g), Q14);
+      enemy += hit;
+      strength[slot] += hit;
+    }
+  }
+
+  // Below 2^15 + 2^16 of food + 16 pellets' worth: well below 2^20.
+  int energy = int(state.g) + int(state.b) + uNutrientStep * pelletsInReach(cell);
+
+  bool antibiotic = zoneAt(cell) == ANTIBIOTIC;
+  if (antibiotic) {
+    energy -= uAntibioticStep;
+  }
+  // An enemy's toxin cloud drains like antibiotic ground, only harder.
+  bool toxic = uEffectCount > 0 && effectOver(cell, owner, TOXIN_BOMB) != 0u;
+  if (toxic) {
+    energy -= uToxinStep;
+  }
+  bool poisoned = antibiotic || toxic;
+  // Frozen by an enemy's cryo pulse, it does not recover either.
+  bool frozen = uEffectCount > 0 && effectOver(cell, owner, CRYO_PULSE) != 0u;
+  int pressure = enemy > 0
+    ? enemy + uFrontlinePressure - mulShr(own, uDefenceFactor, Q14)
+    : 0;
+  if (pressure > 0) {
+    // pressure below 2^23, the drain at most 2^15.
+    energy -= mulShr(pressure, uDrain[int(owner) - 1], ${DRAIN_SHIFT});
+  } else if (energy < uMaxEnergy && !poisoned && !frozen) {
+    energy = min(uMaxEnergy, energy + uRegenStep);
+  }
+  if (energy > uMaxEnergy) {
+    energy = min(uSuperMaxEnergy, max(uMaxEnergy, energy - uOverchargeDecayStep));
+  }
+
+  if (energy > 0) {
+    outState = uvec4(owner, uint(energy), 0u, 0u);
+    return;
+  }
+  // The strongest attacker - on a tie the first, as the CPU one does.
+  uint winner = 0u;
+  int most = 0;
+  for (int i = 0; i < ${INT_COLONIES}; i++) {
+    if (strength[i] > most) {
+      winner = uint(i + 1);
+      most = strength[i];
+    }
+  }
+  if (winner == 0u && poisoned) {
+    // The antibiotic or the toxin killed it: lost, and nobody captured it.
+    outState = uvec4(0u, 0u, 0u, (owner << LOSER_SHIFT) | POISONED);
+    return;
+  }
+  if (winner == 0u || winner == owner) {
+    // Nothing around that could take over - stay alive on fumes.
+    outState = uvec4(owner, uint(min(uMaxEnergy, uRegenStep)), 0u, 0u);
+    return;
+  }
+  uint record = winner | (owner << LOSER_SHIFT);
+  if (chanceAt(cell, ${SALT.consume}u, uConsumeChance)) {
+    // Digested completely: the cell frees up.
+    outState = uvec4(0u, 0u, 0u, record);
+  } else {
+    outState = uvec4(winner, uint(uCaptureEnergy), 0u, record);
+  }
+}`;
+
+/**
+ * A kill leaves food behind, in the captured cell and in every neighbour of
+ * the killers - `FEED_FRAGMENT` in integers. Nine feeds at the most, kept
+ * in the 16 bit food channel.
+ */
+export const INT_FEED_FRAGMENT = `${COMMON}
+uniform uint uFeed; // Q14
+out uvec4 outState;
+void main() {
+  ivec2 cell = ivec2(gl_FragCoord.xy);
+  uvec4 state = texelFetch(uState, cell, 0);
+  uint feed = capturer(state.a) != 0u ? uFeed : 0u;
+  for (int i = 0; i < 8; i++) {
+    uint winner = capturer(stateAt(cell + NEIGHBOURS[i]).a);
+    if (winner != 0u && winner == state.r) {
+      feed += uFeed;
+    }
+  }
+  outState = uvec4(state.rg, min(feed, 65535u), state.a);
 }`;
