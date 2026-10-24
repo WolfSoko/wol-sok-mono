@@ -72,8 +72,8 @@ export class BacteriaGamePo {
     this.unmuteCta = page.getByRole('button', { name: 'Unmute' });
   }
 
-  public async goto(): Promise<void> {
-    await this.page.goto('/');
+  public async goto(path = '/'): Promise<void> {
+    await this.page.goto(path);
   }
 
   /** A level's card in the level choice, by the level's title. */

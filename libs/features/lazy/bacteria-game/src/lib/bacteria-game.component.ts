@@ -51,12 +51,14 @@ import {
   ArenaViewComponent,
 } from './arena/arena-view.component';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
+import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
 import { SimulationOverrideService } from './gl/simulation-override.service';
 import {
   chooseSimulation,
   DETERMINISTIC_SIMULATION,
 } from './gl/simulation-choice';
+import { gpuTrusted } from './gl/simulation-check';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { rgba } from './arena/canvas-math';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
@@ -697,6 +699,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         untracked(() => this.gpuSelfTest.check());
       }
     });
+    // Its verdict on the canvas, beside the simulation - for the e2e tests
+    // and for debugging.
+    effect(() => {
+      const dataset = this.arenaView()?.canvas()?.dataset;
+      if (dataset != null) {
+        dataset['gpuSelfTest'] = selfTestState(this.gpuSelfTest.result());
+      }
+    });
 
     // The minimap is drawn afresh for another map, and goes with the match.
     effect(() => {
@@ -1293,7 +1303,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           ? null
           : (balance, random, options) =>
               gl.createSimulation(balance, random, options),
-      gpuTrusted: () => this.gpuSelfTest.result()?.ok === true,
+      gpuTrusted: () => gpuTrusted(this.gpuSelfTest.result()),
       override: this.simulationOverride.override,
     });
     this.playerService.useSimulation(factory, fallback, { ruleset, offers });
@@ -1967,6 +1977,17 @@ export type StagePanel = MenuScreen | 'pause' | 'over' | null;
  * not throw the page into fullscreen.
  */
 /** Where the pointer is, in client pixels. */
+/** The GPU self-test's verdict, as the canvas carries it. */
+function selfTestState(result: GpuSelfTestResult | null): string {
+  if (result == null) {
+    return 'pending';
+  }
+  if (result.error != null) {
+    return 'error';
+  }
+  return result.ok ? 'passed' : 'failed';
+}
+
 function clientPoint(event: PointerEvent): Point {
   return { x: event.clientX, y: event.clientY };
 }

@@ -182,7 +182,8 @@ firstAt, risenToday, todayDay }`.
   - **The first count allows up to 25,000 at once only for players from
     before the launch**: the progress document's server `createTime` (from
     the trigger snapshot, which clients cannot forge) is before
-    `XP_FULL_COUNT_BEFORE` in `boards.ts`, set to the release date. Every
+    `XP_FULL_COUNT_BEFORE` in `boards.ts`, 2026-10-25 00:00 UTC (the
+    owner's cut: every account of 2026-10-24 and before). Every
     other account starts at the hourly cap like any later rise.
   - XP still above the cap waits for the next progress write; every match
     writes one.
@@ -1064,12 +1065,15 @@ written.
 - Ranked daily and endless on by default (yes).
 - A banned player's cloud save is blocked too (yes, "can write
   nothing"; the game falls back to device storage).
+- On 2026-10-24: the full first count for every account there is that
+  day (`XP_FULL_COUNT_BEFORE` = 2026-10-25 00:00 UTC). The Blaze plan is
+  on, and `BAN_TOMBSTONE_KEY` is in Secret Manager.
 
 ## Owner's manual steps
 
 - Create the secret `BAN_TOMBSTONE_KEY` (32 random bytes) in Secret
   Manager on `bacteria-wars`, and grant the functions' runtime account
-  access to it.
+  access to it. Done 2026-10-24.
 - After the index deploy, check that TTL is on for every new `expireAt`
   field listed above, and that `rooms.expireAt` is indexed again.
 - Review the CPU benchmark and the budgets it sets before the functions

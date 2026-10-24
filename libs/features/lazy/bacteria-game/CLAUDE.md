@@ -159,11 +159,13 @@ play each other.
   simulation's; the float GPU one has none (null) and is never recorded.
 - The game picks a simulation with `chooseSimulation`
   (`gl/simulation-choice.ts`): with `DETERMINISTIC_SIMULATION` on (the
-  rollout's switch, off until the owner's real-device check), the integer
-  GPU passes on a GPU that passed `GpuSelfTestService`'s self-test, the
-  `cpu` ruleset otherwise. While it is off, the float GPU simulation plays
-  as before. The
-  owner's policy: a device without a passing GPU plays and offers only
+  rollout's switch, on since the owner's real-device check), the integer
+  GPU passes on a GPU that passed `GpuSelfTestService`'s self-test on
+  hardware (`gpuTrusted`, `gl/simulation-check.ts`), the `cpu` ruleset
+  otherwise. A software renderer (SwiftShader, llvmpipe) passes the test
+  but takes hundreds of ms a tick, so it plays `cpu`; CI has only
+  SwiftShader, and its GPU e2e opts in with `?sim=gpu-int`. Switched off, the float GPU simulation would
+  play as before ADR 0015. The owner's policy: a device without a passing GPU plays and offers only
   `cpu`; `IntSimulation` replays and checks `gpu-int` matches, it does not
   play them live (except as the stand-in when the GPU fails to start in an
   online `gpu-int` match).
@@ -175,8 +177,7 @@ play each other.
 - The device override for a real-device check: `?sim=gpu-int`, `?sim=cpu`
   or `?sim=auto` in the URL (`SimulationOverrideService`, kept in
   `DeviceStorage`). It changes what local matches play, never what the
-  device offers online; while the switch is off, `?sim=gpu-int` is what
-  opts a device in (and runs the self-test). The settings ("Screen") show the ruleset local
+  device offers online. The settings ("Screen") show the ruleset local
   matches play and the self-test's verdict (`gl/simulation-check.ts`).
 
 ## Texts: English and German
