@@ -43,6 +43,7 @@ import { BlockCounts, ColonySummary, Simulation } from '../state/simulation';
 import { frameSeed } from '../state/gpu-int/draws';
 import {
   createIntFrameUniforms,
+  fillIntCombatUniforms,
   fillIntFrameUniforms,
 } from '../state/gpu-int/int-frame-uniforms';
 import { intMatchUniforms } from '../state/gpu-int/int-uniforms';
@@ -84,6 +85,8 @@ import {
 import {
   INT_APPLY_FRAGMENT,
   INT_CLAIM_FRAGMENT,
+  INT_COMBAT_FRAGMENT,
+  INT_FEED_FRAGMENT,
   INT_HUNT_FRAGMENT,
 } from './int-simulation-shaders';
 
@@ -186,12 +189,12 @@ interface Resources {
 /** How a {@link GpuSimulation} runs. */
 export interface GpuSimulationOptions {
   /**
-   * Runs the hunt, the movement and the division as the integer passes of
-   * ADR 0015, which every GPU computes alike, with draws seeded from
-   * `matchSeed`. Combat and the rest stay the float passes for now, and
-   * the divide budget still follows the read backs' timing (step 5 of the
-   * rollout), so a match is not deterministic yet as a whole. Off by
-   * default.
+   * Runs the hunt, the movement, the division, combat and feeding as the
+   * integer passes of ADR 0015, which every GPU computes alike, with draws
+   * seeded from `matchSeed` and every step as long as a tick. The weapons'
+   * circles are still float (step 4), and the divide budget and the pellets
+   * still follow the read backs' timing (step 5 of the rollout), so a match
+   * is not deterministic yet as a whole. Off by default.
    */
   deterministic?: boolean;
   /** The match's seed - see `MatchPlan.seed`. */
@@ -658,23 +661,10 @@ export class GpuSimulation implements Simulation {
     });
     const pelletCount = Math.min(nutrients.length, MAX_PELLETS);
 
-    const ints = this.deterministic
-      ? fillIntFrameUniforms(this.intUniforms, u)
-      : null;
-    for (const program of [programs.claim, programs.apply]) {
-      const at = program.uniforms;
-      gl.useProgram(program.program);
-      gl.uniform1iv(at['uSteps[0]'], u.steps);
-      if (ints != null) {
-        gl.uniform2iv(at['uTarget[0]'], ints.targets);
-        gl.uniform1iv(at['uAggression[0]'], ints.aggression);
-        gl.uniform1uiv(at['uDivideChance[0]'], ints.divideChance);
-        continue;
-      }
-      gl.uniform2fv(at['uTarget[0]'], u.targets);
-      gl.uniform1fv(at['uAggression[0]'], u.aggression);
-      gl.uniform1fv(at['uDivideChance[0]'], u.divideChance);
-      gl.uniform1fv(at['uDivideBudget[0]'], u.divideBudget);
+    if (this.deterministic) {
+      this.uploadIntFrame(programs, pelletCount);
+    } else {
+      this.uploadFloatFrame(programs, deltaTimeSec, pelletCount);
     }
     // A plain match has no effects at all: the passes keep their count of
     // none from the last frame.
@@ -688,23 +678,71 @@ export class GpuSimulation implements Simulation {
       }
       this.uploadedEffects = effectCount;
     }
-    for (const program of [
-      programs.combat,
-      programs.report,
-      programs.effects,
-    ]) {
+    for (const program of [programs.report, programs.effects]) {
       gl.useProgram(program.program);
       gl.uniform3fv(program.uniforms['uPellets[0]'], u.pellets);
       gl.uniform1i(program.uniforms['uPelletCount'], pelletCount);
     }
+    return Math.max(0, ...u.steps);
+  }
 
+  /** Hands the frame's uniforms to the float claim, apply and combat passes. */
+  private uploadFloatFrame(
+    programs: Programs,
+    deltaTimeSec: number,
+    pelletCount: number
+  ): void {
+    const gl = this.gl;
+    const u = this.uniforms;
+    for (const program of [programs.claim, programs.apply]) {
+      const at = program.uniforms;
+      gl.useProgram(program.program);
+      gl.uniform1iv(at['uSteps[0]'], u.steps);
+      gl.uniform2fv(at['uTarget[0]'], u.targets);
+      gl.uniform1fv(at['uAggression[0]'], u.aggression);
+      gl.uniform1fv(at['uDivideChance[0]'], u.divideChance);
+      gl.uniform1fv(at['uDivideBudget[0]'], u.divideBudget);
+    }
     const combat = programs.combat.uniforms;
     gl.useProgram(programs.combat.program);
+    gl.uniform3fv(combat['uPellets[0]'], u.pellets);
+    gl.uniform1i(combat['uPelletCount'], pelletCount);
     gl.uniform1f(combat['uDt'], deltaTimeSec);
     gl.uniform1fv(combat['uAttack[0]'], u.attack);
     gl.uniform1fv(combat['uToughness[0]'], u.toughness);
-    gl.uniform1f(combat['uNutrientGain'], b.nutrientDrainPerSec * deltaTimeSec);
-    return Math.max(0, ...u.steps);
+    gl.uniform1f(
+      combat['uNutrientGain'],
+      this.balance.nutrientDrainPerSec * deltaTimeSec
+    );
+  }
+
+  /**
+   * Converts the frame's uniforms into the integer passes' and hands them
+   * over - the step length is a tick's, not the frame's.
+   */
+  private uploadIntFrame(programs: Programs, pelletCount: number): void {
+    const gl = this.gl;
+    const u = this.uniforms;
+    const ints = fillIntCombatUniforms(
+      fillIntFrameUniforms(this.intUniforms, u),
+      u,
+      this.balance.combatDrainPerSec,
+      pelletCount
+    );
+    for (const program of [programs.claim, programs.apply]) {
+      const at = program.uniforms;
+      gl.useProgram(program.program);
+      gl.uniform1iv(at['uSteps[0]'], u.steps);
+      gl.uniform2iv(at['uTarget[0]'], ints.targets);
+      gl.uniform1iv(at['uAggression[0]'], ints.aggression);
+      gl.uniform1uiv(at['uDivideChance[0]'], ints.divideChance);
+    }
+    const combat = programs.combat.uniforms;
+    gl.useProgram(programs.combat.program);
+    gl.uniform3iv(combat['uPellets[0]'], ints.pellets);
+    gl.uniform1i(combat['uPelletCount'], ints.pelletCount);
+    gl.uniform1iv(combat['uAttack[0]'], ints.attack);
+    gl.uniform1iv(combat['uDrain[0]'], ints.drain);
   }
 
   /**
@@ -765,12 +803,7 @@ export class GpuSimulation implements Simulation {
   private setMatchUniforms(programs: Programs): void {
     const gl = this.gl;
     const b = this.balance;
-    const set = (
-      program: Program,
-      values: Record<string, number>,
-      ints: Record<string, number> = {},
-      uints: Record<string, number> = {}
-    ) => {
+    const set: SetUniforms = (program, values, ints = {}, uints = {}) => {
       gl.useProgram(program.program);
       const at = program.uniforms;
       gl.uniform1i(at['uState'], UNIT.state);
@@ -786,68 +819,24 @@ export class GpuSimulation implements Simulation {
         gl.uniform1ui(at[name], value);
       }
     };
-    // The float passes take these as floats, the integer ones as ints and
-    // the threshold as a uint.
-    const ints = intMatchUniforms(b);
-    const [intents, intIntents, uintIntents]: Record<string, number>[] = this
-      .deterministic
-      ? [
-          {},
-          { uJitter: ints.jitter, uParentShare: ints.parentShare },
-          { uDivideThreshold: ints.divideThreshold },
-        ]
-      : [
-          {
-            uJitter: b.jitter,
-            uDivideThreshold: b.divideEnergyThreshold,
-            uParentShare: b.parentEnergyShare,
-          },
-          {},
-          {},
-        ];
     const cellSize = b.influenceCellSize;
     set(programs.influence, {}, { uCellSize: cellSize });
     set(programs.hunt, {}, { uInfluence: UNIT.influence });
-    set(
-      programs.claim,
-      intents,
-      {
-        ...intIntents,
-        uCellSize: cellSize,
-        uHunt: UNIT.hunt,
-        uHuntMore: UNIT.huntMore,
-      },
-      uintIntents
-    );
-    set(
-      programs.apply,
-      intents,
-      {
-        ...intIntents,
-        uCellSize: cellSize,
-        uHunt: UNIT.hunt,
-        uHuntMore: UNIT.huntMore,
-        uClaims: UNIT.claims,
-      },
-      uintIntents
-    );
     set(programs.crush, {});
-    set(
-      programs.combat,
-      {
-        uDefenceFactor: b.defenceFactor,
-        uFrontlinePressure: b.frontlinePressure,
-        uCombatDrain: b.combatDrainPerSec,
-        uRegen: b.energyRegenPerSec,
-        uOverchargeDecay: b.overchargeDecayPerSec,
-        uMaxEnergy: b.maxEnergy,
-        uSuperMaxEnergy: b.superChargedMaxEnergy,
-        uConsumeChance: b.consumeChance,
-        uCaptureEnergy: b.captureEnergy,
-      },
-      { uPelletRadius: b.nutrientRadius }
-    );
-    set(programs.feed, { uFeed: b.feedEnergyPerCapture });
+    const samplers = {
+      uCellSize: cellSize,
+      uHunt: UNIT.hunt,
+      uHuntMore: UNIT.huntMore,
+    };
+    set(programs.claim, {}, samplers);
+    set(programs.apply, {}, { ...samplers, uClaims: UNIT.claims });
+    set(programs.combat, {}, { uPelletRadius: b.nutrientRadius });
+    set(programs.feed, {});
+    if (this.deterministic) {
+      this.setIntMatchUniforms(programs, set);
+    } else {
+      this.setFloatMatchUniforms(programs, set);
+    }
     set(
       programs.report,
       {},
@@ -873,6 +862,60 @@ export class GpuSimulation implements Simulation {
       this.layout.blocksX,
       this.layout.blocksY
     );
+  }
+
+  /** The float claim, apply, combat and feed passes' match uniforms. */
+  private setFloatMatchUniforms(programs: Programs, set: SetUniforms): void {
+    const b = this.balance;
+    const intents = {
+      uJitter: b.jitter,
+      uDivideThreshold: b.divideEnergyThreshold,
+      uParentShare: b.parentEnergyShare,
+    };
+    set(programs.claim, intents);
+    set(programs.apply, intents);
+    set(programs.combat, {
+      uDefenceFactor: b.defenceFactor,
+      uFrontlinePressure: b.frontlinePressure,
+      uCombatDrain: b.combatDrainPerSec,
+      uRegen: b.energyRegenPerSec,
+      uOverchargeDecay: b.overchargeDecayPerSec,
+      uMaxEnergy: b.maxEnergy,
+      uSuperMaxEnergy: b.superChargedMaxEnergy,
+      uConsumeChance: b.consumeChance,
+      uCaptureEnergy: b.captureEnergy,
+    });
+    set(programs.feed, { uFeed: b.feedEnergyPerCapture });
+  }
+
+  /**
+   * The integer passes' match uniforms - every rate as what it comes to in
+   * one step of a tick, see `intMatchUniforms`.
+   */
+  private setIntMatchUniforms(programs: Programs, set: SetUniforms): void {
+    const ints = intMatchUniforms(this.balance);
+    const intents = { uJitter: ints.jitter, uParentShare: ints.parentShare };
+    const threshold = { uDivideThreshold: ints.divideThreshold };
+    set(programs.claim, {}, intents, threshold);
+    set(programs.apply, {}, intents, threshold);
+    set(
+      programs.combat,
+      {},
+      {
+        uNutrientStep: ints.nutrientStep,
+        uDefenceFactor: ints.defenceFactor,
+        uFrontlinePressure: ints.frontlinePressure,
+        uRegenStep: ints.regenStep,
+        uOverchargeDecayStep: ints.overchargeDecayStep,
+        uAntibioticStep: ints.antibioticStep,
+        uToxinStep: ints.toxinStep,
+        uMaxEnergy: ints.maxEnergy,
+        uSuperMaxEnergy: ints.superMaxEnergy,
+        uCaptureEnergy: ints.captureEnergy,
+      },
+      { uConsumeChance: ints.consumeChance }
+    );
+    set(programs.feed, {}, {}, { uFeed: ints.feed });
   }
 
   /** One claim and apply pair - a step of moving, escaping or dividing. */
@@ -1464,10 +1507,24 @@ function renderTargets(resources: Resources): Target[] {
 const PROGRAMS = new WeakMap<WebGL2RenderingContext, Programs>();
 
 /** The integer passes of each context - see `GpuSimulationOptions`. */
-const INT_PROGRAMS = new WeakMap<
-  WebGL2RenderingContext,
-  Pick<Programs, 'hunt' | 'claim' | 'apply'>
->();
+const INT_PROGRAMS = new WeakMap<WebGL2RenderingContext, IntPrograms>();
+
+/**
+ * Sets a pass's uniforms that stay for the match - floats, ints and uints by
+ * name - besides the state, mask and size every pass reads.
+ */
+type SetUniforms = (
+  program: Program,
+  floats: Record<string, number>,
+  ints?: Record<string, number>,
+  uints?: Record<string, number>
+) => void;
+
+/** The passes the deterministic simulation runs in integers. */
+type IntPrograms = Pick<
+  Programs,
+  'hunt' | 'claim' | 'apply' | 'combat' | 'feed'
+>;
 
 const COMMON_UNIFORMS = ['uState', 'uMask', 'uSize', 'uSeed'];
 const WEAPON_UNIFORMS = ['uEffects[0]', 'uEffectKinds[0]', 'uEffectCount'];
@@ -1497,9 +1554,7 @@ function programOf(gl: WebGL2RenderingContext) {
     ]);
 }
 
-function compiledIntPrograms(
-  gl: WebGL2RenderingContext
-): Pick<Programs, 'hunt' | 'claim' | 'apply'> {
+function compiledIntPrograms(gl: WebGL2RenderingContext): IntPrograms {
   const cached = INT_PROGRAMS.get(gl);
   if (cached != null) {
     return cached;
@@ -1509,6 +1564,26 @@ function compiledIntPrograms(
     hunt: program(INT_HUNT_FRAGMENT, ['uInfluence', 'uPair']),
     claim: program(INT_CLAIM_FRAGMENT, INTENT_UNIFORMS),
     apply: program(INT_APPLY_FRAGMENT, [...INTENT_UNIFORMS, 'uClaims']),
+    combat: program(INT_COMBAT_FRAGMENT, [
+      ...WEAPON_UNIFORMS,
+      'uAttack[0]',
+      'uDrain[0]',
+      'uPellets[0]',
+      'uPelletCount',
+      'uPelletRadius',
+      'uNutrientStep',
+      'uDefenceFactor',
+      'uFrontlinePressure',
+      'uRegenStep',
+      'uOverchargeDecayStep',
+      'uAntibioticStep',
+      'uToxinStep',
+      'uMaxEnergy',
+      'uSuperMaxEnergy',
+      'uCaptureEnergy',
+      'uConsumeChance',
+    ]),
+    feed: program(INT_FEED_FRAGMENT, ['uFeed']),
   };
   INT_PROGRAMS.set(gl, programs);
   return programs;

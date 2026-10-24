@@ -2,6 +2,7 @@ import { WALL_BIT, ZONE_CODE, ZONE_SHIFT } from '../zones';
 import { drawAt, PICK_OF_8_SHIFT, SALT, stepSalt } from './draws';
 import {
   mulQ14,
+  mulShr,
   ONE_Q14,
   Q14,
   Q14_DRAW_SHIFT,
@@ -10,18 +11,19 @@ import {
 import {
   DIVIDE_VARIANTS,
   divideVariant,
+  DRAIN_SHIFT,
   INT_COLONIES,
   IntFrameUniforms,
 } from './int-frame-uniforms';
 import { unitQ14 } from './int-math';
-import { INT_EFFECTS } from './int-uniforms';
+import { INT_EFFECTS, IntMatchUniforms } from './int-uniforms';
 
 /**
  * A bit-exact TypeScript port of the integer passes in
  * `gl/int-simulation-shaders.ts` (ADR 0015, decision 3): the coarse counts,
- * the hunt and the claim and apply pair for moving, escaping a wall and
- * dividing. Pure and Node-runnable; the server's verification and the CI
- * cross-check build on it.
+ * the hunt, the claim and apply pair for moving, escaping a wall and
+ * dividing, the crush, combat and feeding. Pure and Node-runnable; the
+ * server's verification and the CI cross-check build on it.
  *
  * - uint products go through `Math.imul(...) >>> 0` and the draws of
  *   `draws.ts`, which are GLSL's wrapping uint arithmetic;
@@ -63,6 +65,10 @@ export interface IntPassUniforms extends IntFrameUniforms {
 export const INT_KIND = { move: 0, escape: 1, divide: 2 } as const;
 export type IntKind = (typeof INT_KIND)[keyof typeof INT_KIND];
 
+/** The event record's layout - `RECORD_MASK` and the rest in the shaders. */
+const RECORD_MASK = 7;
+const LOSER_SHIFT = 3;
+const POISONED = 1 << 6;
 const ICE_STAY = INT_EFFECTS.iceStayChance;
 const HEAT_AGGRESSION = INT_EFFECTS.heatAggression;
 const HEAT_MAX_AGGRESSION = INT_EFFECTS.heatMaxAggression;
@@ -429,4 +435,211 @@ export function intStateHash(state: ArrayLike<number>): number {
     hash = Math.imul(hash ^ (state[i] & 0xffff), 0x01000193) >>> 0;
   }
   return hash;
+}
+
+/** The event record's layout, as the shaders' `RECORD_MASK` and the rest. */
+export const INT_RECORD = {
+  mask: RECORD_MASK,
+  loserShift: LOSER_SHIFT,
+  poisoned: POISONED,
+} as const;
+
+/** Writes one texel - every channel, so a reused buffer keeps nothing stale. */
+function texel(
+  out: Uint16Array,
+  at: number,
+  owner: number,
+  energy: number,
+  food: number,
+  record: number
+): void {
+  out[at] = owner;
+  out[at + 1] = energy;
+  out[at + 2] = food;
+  out[at + 3] = record;
+}
+
+/**
+ * Starts the frame's record and crushes the bacteria on a wall, lost to
+ * nobody - `CRUSH_FRAGMENT`, into `out`.
+ */
+export function intCrush(
+  grid: IntGrid,
+  out: Uint16Array = new Uint16Array(grid.state.length)
+): Uint16Array {
+  const { width, height, state, mask } = grid;
+  for (let cell = 0; cell < width * height; cell++) {
+    const at = cell * 4;
+    const owner = state[at];
+    if (owner !== 0 && (mask[cell] & WALL_BIT) !== 0) {
+      texel(out, at, 0, 0, 0, owner << LOSER_SHIFT);
+    } else {
+      texel(out, at, owner, state[at + 1], state[at + 2], 0);
+    }
+  }
+  return out;
+}
+
+/** What the combat pass reads besides the state. */
+export interface IntCombatUniforms {
+  /** The frame seed - see `frameSeed`. */
+  seed: number;
+  match: IntMatchUniforms;
+  /** The attacks, drains and pellets - see `fillIntCombatUniforms`. */
+  frame: Pick<IntFrameUniforms, 'attack' | 'drain' | 'pellets' | 'pelletCount'>;
+  /** Chebyshev reach of a pellet. */
+  pelletRadius: number;
+}
+
+/**
+ * Nutrients, combat, regeneration and captures per bacterium -
+ * `INT_COMBAT_FRAGMENT`, into `out`, which carries the frame's records.
+ * Every bacterium reads the state as it was, as on the GPU. No weapon acts.
+ */
+export function intCombat(
+  grid: IntGrid,
+  u: IntCombatUniforms,
+  out: Uint16Array = new Uint16Array(grid.state.length)
+): Uint16Array {
+  const { width, height, state, mask } = grid;
+  const { match, frame } = u;
+  const seed = u.seed >>> 0;
+  const strength = new Int32Array(INT_COLONIES);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const cell = y * width + x;
+      const at = cell * 4;
+      const owner = state[at];
+      if (owner === 0) {
+        texel(out, at, 0, state[at + 1], state[at + 2], state[at + 3]);
+        continue;
+      }
+      let own = 0;
+      let enemy = 0;
+      strength.fill(0);
+      for (const [dx, dy] of NEIGHBOURS) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+          continue;
+        }
+        const n = (ny * width + nx) * 4;
+        const other = state[n];
+        if (other === 0) {
+          continue;
+        }
+        if (other === owner) {
+          own += state[n + 1];
+        } else {
+          const hit = mulShr(frame.attack[other - 1], state[n + 1], Q14);
+          enemy += hit;
+          strength[other - 1] += hit;
+        }
+      }
+
+      let pellets = 0;
+      for (let i = 0; i < frame.pelletCount; i++) {
+        const p = i * 3;
+        const reach = Math.max(
+          Math.abs(x - frame.pellets[p]),
+          Math.abs(y - frame.pellets[p + 1])
+        );
+        if (frame.pellets[p + 2] > 0 && reach <= u.pelletRadius) {
+          pellets++;
+        }
+      }
+      let energy = state[at + 1] + state[at + 2] + match.nutrientStep * pellets;
+      const poisoned = mask[cell] >>> ZONE_SHIFT === ZONE_CODE.antibiotic;
+      if (poisoned) {
+        energy -= match.antibioticStep;
+      }
+      const pressure =
+        enemy > 0
+          ? enemy +
+            match.frontlinePressure -
+            mulShr(own, match.defenceFactor, Q14)
+          : 0;
+      if (pressure > 0) {
+        energy -= mulShr(pressure, frame.drain[owner - 1], DRAIN_SHIFT);
+      } else if (energy < match.maxEnergy && !poisoned) {
+        energy = Math.min(match.maxEnergy, energy + match.regenStep);
+      }
+      if (energy > match.maxEnergy) {
+        energy = Math.min(
+          match.superMaxEnergy,
+          Math.max(match.maxEnergy, energy - match.overchargeDecayStep)
+        );
+      }
+
+      if (energy > 0) {
+        texel(out, at, owner, energy, 0, 0);
+        continue;
+      }
+      // The strongest attacker - on a tie the first.
+      let winner = 0;
+      let most = 0;
+      for (let i = 0; i < INT_COLONIES; i++) {
+        if (strength[i] > most) {
+          winner = i + 1;
+          most = strength[i];
+        }
+      }
+      if (winner === 0 && poisoned) {
+        texel(out, at, 0, 0, 0, (owner << LOSER_SHIFT) | POISONED);
+      } else if (winner === 0 || winner === owner) {
+        texel(out, at, owner, Math.min(match.maxEnergy, match.regenStep), 0, 0);
+      } else if (drawAt(x, y, seed, SALT.consume) < match.consumeChance) {
+        texel(out, at, 0, 0, 0, winner | (owner << LOSER_SHIFT));
+      } else {
+        texel(
+          out,
+          at,
+          winner,
+          match.captureEnergy,
+          0,
+          winner | (owner << LOSER_SHIFT)
+        );
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * The food a kill leaves, in the captured cell and in the killers around it
+ * - `INT_FEED_FRAGMENT`, into `out`.
+ */
+export function intFeed(
+  grid: IntGrid,
+  feed: number,
+  out: Uint16Array = new Uint16Array(grid.state.length)
+): Uint16Array {
+  const { width, height, state } = grid;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const at = (y * width + x) * 4;
+      const owner = state[at];
+      let food = (state[at + 3] & RECORD_MASK) !== 0 ? feed : 0;
+      for (const [dx, dy] of NEIGHBOURS) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+          continue;
+        }
+        const winner = state[(ny * width + nx) * 4 + 3] & RECORD_MASK;
+        if (winner !== 0 && winner === owner) {
+          food += feed;
+        }
+      }
+      texel(
+        out,
+        at,
+        owner,
+        state[at + 1],
+        Math.min(food, 0xffff),
+        state[at + 3]
+      );
+    }
+  }
+  return out;
 }
