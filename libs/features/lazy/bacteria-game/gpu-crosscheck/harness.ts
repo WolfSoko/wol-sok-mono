@@ -1,9 +1,11 @@
 /**
- * The browser side of the GPU cross-check (ADR 0015, step 6): plays a
- * scenario's ticks through the integer shaders, pass for pass in the order
- * of `intReferenceTick`, and hashes the state after every tick as
- * `intStateHash` does. Bundled by esbuild and run in Chromium on
- * SwiftShader by `gpu-int.crosscheck.ts`.
+ * The browser side of the GPU cross-check (ADR 0015, steps 6 and 7): plays
+ * a scenario's ticks through the integer shaders, pass for pass in the
+ * order of `intReferenceTick`, and hashes the state after every tick as
+ * `intStateHash` does - and plays the whole-match scenarios through the
+ * game's own `GpuSimulation`, whose uniforms and pass order the first part
+ * leaves out. Bundled by esbuild and run in Chromium on SwiftShader by
+ * `gpu-int.crosscheck.ts`.
  */
 import {
   createProgram,
@@ -30,6 +32,13 @@ import {
   INT_KIND,
   IntTickInputs,
 } from '../src/engine';
+import { GpuSimulation } from '../src/lib/gl/gpu-simulation';
+import { GpuSelfTestResult, runGpuSelfTest } from '../src/lib/gl/gpu-self-test';
+import {
+  playScenario as playSimScenario,
+  scenarioRandom,
+  SIM_SCENARIOS,
+} from '../src/lib/state/gpu-int/sim-scenarios';
 import { CrosscheckScenario, playScenario, SCENARIOS } from './scenarios';
 
 const UNIT = {
@@ -321,4 +330,31 @@ export function renderer(): string {
 /** What the Playwright check calls in the page, by scenario name. */
 export function crosscheck(name: string): number[] {
   return gpuHashes(SCENARIOS[name]());
+}
+
+/** A whole-match scenario's hashes, played by the game's `GpuSimulation`. */
+export function simCrosscheck(name: string): number[] {
+  const scenario = SIM_SCENARIOS.find((candidate) => candidate.name === name);
+  const gl = document.createElement('canvas').getContext('webgl2');
+  if (scenario == null || gl == null) {
+    throw new Error(`No scenario ${name}, or no WebGL2`);
+  }
+  const simulation = new GpuSimulation(
+    gl,
+    scenario.balance,
+    scenarioRandom(scenario),
+    { deterministic: true, matchSeed: scenario.matchSeed }
+  );
+  try {
+    return playSimScenario(scenario, simulation);
+  } finally {
+    simulation.dispose();
+  }
+}
+
+/** The game's self-test as a device runs it, and how long it took. */
+export function selfTest(): GpuSelfTestResult & { ms: number } {
+  const start = performance.now();
+  const result = runGpuSelfTest();
+  return { ...result, ms: performance.now() - start };
 }

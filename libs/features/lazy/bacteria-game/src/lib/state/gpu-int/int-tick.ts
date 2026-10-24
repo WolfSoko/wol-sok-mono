@@ -30,16 +30,23 @@ export interface IntTickInputs {
   escapeSteps: number;
 }
 
+/** What a tick leaves besides its state - see {@link intReferenceTick}. */
+export interface IntTickTrace {
+  /** The state right after combat, whose record the report counts. */
+  combat: Uint16Array | null;
+}
+
 /**
  * One tick of the deterministic GPU simulation in TypeScript, in the order
  * `GpuSimulation.step` runs its passes: the hunt, escaping a wall, crushing,
  * combat, feeding, division and the steps of moving. Returns the new state;
- * the grid's is left alone.
+ * the grid's is left alone. A `trace` gets the state after combat.
  */
 export function intReferenceTick(
   grid: IntGrid,
   inputs: IntTickInputs,
-  scratch: IntPassScratch = new IntPassScratch(grid.width, grid.height)
+  scratch: IntPassScratch = new IntPassScratch(grid.width, grid.height),
+  trace?: IntTickTrace
 ): Uint16Array {
   const { pass } = inputs;
   const blocksX = Math.ceil(grid.width / pass.cellSize);
@@ -64,6 +71,9 @@ export function intReferenceTick(
     match: inputs.match,
     effects: pass.effects,
   });
+  if (trace != null) {
+    trace.combat = state;
+  }
   state = intFeed(at(state), inputs.match.feed);
   state = intClaimAndApply(at(state), pass, hunt, INT_KIND.divide, 0, scratch);
   for (let step = 0; step < inputs.moveSteps; step++) {

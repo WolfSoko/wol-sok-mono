@@ -167,6 +167,9 @@ export {
   DETERMINISTIC_REPORT_LAG,
   divideBudgetOf,
 } from './lib/state/gpu-int/int-readback';
+// The whole deterministic simulation on the CPU - the fallback of a device
+// whose GPU fails the self-test, and what a server plays a match with.
+export { IntSimulation } from './lib/state/gpu-int/int-simulation';
 export { WALL_BIT, ZONE_CODE, ZONE_SHIFT } from './lib/state/zones';
 export { WEAPON_CODE } from './lib/state/weapon-effects';
 

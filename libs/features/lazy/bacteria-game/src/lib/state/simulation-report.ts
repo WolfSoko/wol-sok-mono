@@ -5,7 +5,7 @@ import {
   MAX_PELLETS,
   REPORT_EXTRA_ROWS,
   REPORT_ROWS,
-} from './simulation-shaders';
+} from './grid-format';
 
 /** How the GPU report texture is laid out - see `REPORT_FRAGMENT`. */
 export interface ReportLayout {

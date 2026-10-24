@@ -1,4 +1,4 @@
-import { ENERGY_SCALE } from './simulation-shaders';
+import { ENERGY_SCALE } from './grid-format';
 import {
   decodeReport,
   nearestEnemyBlock,
