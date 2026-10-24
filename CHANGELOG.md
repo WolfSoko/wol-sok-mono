@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.79.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.78.0...v74.79.0) (2026-10-24)
+
+### Features
+
+* **bacteria-wars-functions:** the game's first Cloud Functions - replays in, commands, deletion ([#2622](https://github.com/WolfSoko/wol-sok-mono/issues/2622)) ([4cd632d](https://github.com/WolfSoko/wol-sok-mono/commit/4cd632d938982aaec7ef05c84cefa54c952418e9))
+
+### Chore
+
+* **release:** publish ([94ce3b5](https://github.com/WolfSoko/wol-sok-mono/commit/94ce3b5b8d636d5bdf49213ec5968679ce1421c1))
+
 ## [74.78.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.77.0...v74.78.0) (2026-10-24)
 
 ### Features
