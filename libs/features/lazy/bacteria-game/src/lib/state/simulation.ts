@@ -88,6 +88,18 @@ export interface BlockCounts {
 }
 
 /**
+ * A ruleset every device plays bit for bit alike (ADR 0015): the float CPU
+ * simulation, or the deterministic integer one, on the GPU or the CPU.
+ * Replays, online matches and ranked entries name theirs.
+ */
+export type Ruleset = 'cpu' | 'gpu-int';
+
+/** True for a ruleset this client knows. */
+export function isRuleset(value: unknown): value is Ruleset {
+  return value === 'cpu' || value === 'gpu-int';
+}
+
+/**
  * The colony war, whichever processor runs it. The CPU one is
  * `BacteriaSimulation`; the GPU one runs the same rules as WebGL2 shader
  * passes and reports its numbers a frame late.
@@ -99,6 +111,13 @@ export interface Simulation {
    * Only a `cpu` match replays on `BacteriaSimulation`.
    */
   readonly kind: 'cpu' | 'gpu' | 'int';
+  /**
+   * The ruleset its matches play by (ADR 0015): `cpu` for
+   * `BacteriaSimulation`, `gpu-int` for the deterministic integer passes on
+   * either processor - null for the float GPU one, whose matches no device
+   * plays again alike.
+   */
+  readonly ruleset: Ruleset | null;
   setMap(map: GameMap): void;
   resize(width: number, height: number): void;
   /** Replaces all colonies with a fresh blob per player. */
@@ -140,3 +159,12 @@ export type SimulationFactory = (
   random: () => number,
   seed: number
 ) => Simulation;
+
+/**
+ * True when matches run the deterministic simulation of ADR 0015 where the
+ * device can: the integer passes on a GPU that passed the self-test, the
+ * CPU's ruleset else. The rollout's switch (step 8): off until the owner's
+ * real-device check passed - meanwhile `?sim=gpu-int` opts one device in
+ * for local play (see `chooseSimulation`).
+ */
+export const DETERMINISTIC_SIMULATION = false;

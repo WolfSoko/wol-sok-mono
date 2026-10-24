@@ -1,3 +1,4 @@
+import type { Ruleset } from './simulation';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
@@ -85,6 +86,7 @@ describe('GameStateService online colours', () => {
       () => new Lockstep(0, () => undefined)
     );
     public readonly matchRef = () => ({ roomCode: 'K7QPXM', n: 1 });
+    public readonly agreedRuleset = (): Ruleset => 'cpu';
     public takeStart() {
       const pending = this.pending;
       this.pending = null;

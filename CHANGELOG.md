@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.77.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.76.0...v74.77.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** rulesets for the deterministic simulation, behind the rollout switch ([#2617](https://github.com/WolfSoko/wol-sok-mono/issues/2617)) ([d884eeb](https://github.com/WolfSoko/wol-sok-mono/commit/d884eeb2b5d4a6fd41c24b8a9b0b3f9347c97469))
+
+## [74.76.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.75.0...v74.76.0) (2026-10-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** balance lab, a difficulty curve and an evolving computer (ADR 0016) ([#2600](https://github.com/WolfSoko/wol-sok-mono/issues/2600)) ([5cbb7a0](https://github.com/WolfSoko/wol-sok-mono/commit/5cbb7a0da13abfe6ac7a1f1f4a8328997e5f0207))
+
 ## [74.75.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.74.0...v74.75.0) (2026-10-24)
 
 ### Features

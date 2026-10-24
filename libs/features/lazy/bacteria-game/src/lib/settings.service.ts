@@ -79,8 +79,8 @@ export interface StoredSettings {
   /** The level the player would like to meet opponents on, absent for any. */
   matchLevel?: string;
   /**
-   * Whether local matches against the computer are recorded - on the CPU,
-   * which a weak device may not afford (ADR 0011).
+   * Whether local matches against the computer are recorded - on the
+   * device's ruleset (ADR 0011, 0015).
    */
   recordLocal?: boolean;
   /** Whether recorded local matches are kept; online ones always are. */
@@ -88,6 +88,7 @@ export interface StoredSettings {
 }
 
 import { BacteriaLook, isBacteriaLook } from './state/skins';
+import { DETERMINISTIC_SIMULATION } from './state/simulation';
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
@@ -180,13 +181,14 @@ export class GameSettingsService {
   /** The level the matchmaking asks for, null for any level. */
   public readonly matchLevel = signal<string | null>(null);
   /**
-   * True while local matches against the computer are recorded - on the
-   * CPU, at the online grid. On by default (the owner's decision, ADR 0011);
-   * a weak device may turn it off and keep the GPU.
+   * True while local matches against the computer are recorded, at the
+   * online grid. On by default once the rollout's switch is (ADR 0011,
+   * 0015 step 8): a recorded match then plays on a ruleset, the integer GPU
+   * passes where the GPU passed the self-test, so recording no longer costs
+   * the GPU. While it is off, recording still sends a match to the CPU, so
+   * it stays off by default.
    */
-  // Off until the generated levels' medal limits are checked on the CPU
-  // simulation, which recording switches local matches to (ADR 0011).
-  public readonly recordLocal = signal(false);
+  public readonly recordLocal = signal(DETERMINISTIC_SIMULATION);
   /**
    * True while recorded local matches are kept, "Save my matches" - online
    * matches are kept either way (ADR 0012).

@@ -152,7 +152,7 @@ describe("the ladder's computer", () => {
 
 describe('plain matches', () => {
   it('play under the balance version the fingerprints were taken with', () => {
-    expect(BALANCE_VERSION).toBe(5);
+    expect(BALANCE_VERSION).toBe(6);
   });
 
   it.each(GOLDEN)(
