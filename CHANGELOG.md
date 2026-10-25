@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.106.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.105.0...v74.106.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ the leaderboards screen and the profile's public-name and opt-out switches ([#2677](https://github.com/WolfSoko/wol-sok-mono/issues/2677)) ([83d7f21](https://github.com/WolfSoko/wol-sok-mono/commit/83d7f21b09f451a7151becc90037dc6045b98f05))
+
 ## [74.105.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.104.0...v74.105.0) (2026-10-25)
 
 ### Features
