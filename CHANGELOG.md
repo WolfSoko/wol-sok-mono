@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.88.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.87.0...v74.88.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ admin commands with player.ban and player.unban ([#2646](https://github.com/WolfSoko/wol-sok-mono/issues/2646)) ([ec4fb96](https://github.com/WolfSoko/wol-sok-mono/commit/ec4fb9693f08024c1fc7e9c50f50a5dc0f6a915a))
+
 ## [74.87.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.3...v74.87.0) (2026-10-25)
 
 ### Features
