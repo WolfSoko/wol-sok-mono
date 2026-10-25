@@ -141,9 +141,9 @@ describe('declared attempts', () => {
     await assertFails(declare('ada', 'x_1', declaration()));
   });
 
-  it('refuses an expiry shorter than 30 days, which TTL would turn into another try', async () => {
+  it('refuses an expiry shorter than 28 days, which TTL would turn into another try', async () => {
     const id = `d_${today()}_1`;
-    for (const ms of [60_000, 29 * 24 * HOUR]) {
+    for (const ms of [60_000, 27 * 24 * HOUR]) {
       await assertFails(
         declare(
           'ada',
@@ -152,12 +152,15 @@ describe('declared attempts', () => {
         )
       );
     }
+    // A device whose clock runs almost 3 days slow still declares.
     await assertSucceeds(
       declare(
         'ada',
         id,
         declaration({
-          expireAt: Timestamp.fromMillis(Date.now() + 30 * 24 * HOUR + HOUR),
+          expireAt: Timestamp.fromMillis(
+            Date.now() - (3 * 24 - 1) * HOUR + 31 * 24 * HOUR
+          ),
         })
       )
     );
