@@ -174,10 +174,10 @@ the cryo pulse is weak in the computer's hands.
   evolved wins and the weapons carried. No uid, increments only. A
   generated level counts by its style and heat, the daily and endless
   levels by their heat: each roll is a level of its own. The counters at
-  acceptance are in place (`apps/bacteria-wars-functions/src/replays/
-level-stats.ts`); medallions (from verified re-runs) and quits (from
-  declared attempts never reported - a local match the player leaves
-  sends no replay) follow.
+  acceptance are in place (`level-stats.ts` in the functions), kept apart
+  by balance table and ladder version; medallions (from verified re-runs)
+  and quits (from declared attempts never reported - a local match the
+  player leaves sends no replay) follow.
 - The admin area (ADR 0012) gets a **Balance** view of those counters next to
   the lab's latest report: win rate per level against the target curve,
   attempts until the first win, where players stop on the ladder, gene and

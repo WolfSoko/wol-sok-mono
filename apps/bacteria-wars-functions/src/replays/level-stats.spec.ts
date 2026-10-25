@@ -5,7 +5,7 @@ import {
   TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { FieldValue } from 'firebase-admin/firestore';
-import { levelStatsCounts, levelStatsId } from './level-stats';
+import { levelStatsCounts, levelStatsId, statsLevel } from './level-stats';
 
 const one = FieldValue.increment(1);
 
@@ -26,10 +26,21 @@ function replay(
 }
 
 describe('levelStatsId', () => {
-  it('keeps a ladder level by its id, per difficulty', () => {
-    expect(
-      levelStatsId({ levelId: 'quarantine', difficulty: 'hard' }, 'computer')
-    ).toBe('quarantine_hard');
+  const header = (levelId: string, ladder?: number) =>
+    ({
+      levelId,
+      difficulty: 'hard',
+      balanceVersion: 12,
+      ...(ladder === undefined ? {} : { ladder }),
+    }) as ReplayHeader;
+
+  it('keeps a ladder level by its id, per difficulty and computer', () => {
+    expect(levelStatsId(header('quarantine', 1), 'computer')).toBe(
+      'quarantine_hard_b12_l1'
+    );
+    expect(levelStatsId(header('quarantine'), 'computer')).toBe(
+      'quarantine_hard_b12_l0'
+    );
   });
 
   it('takes a generated level by its style and heat, daily and endless apart', () => {
@@ -38,10 +49,9 @@ describe('levelStatsId', () => {
       seed: 42,
       difficulty: 6,
     });
-    const header = { levelId, difficulty: 'easy' };
-    expect(levelStatsId(header, 'computer')).toBe('gen-cave-6_easy');
-    expect(levelStatsId(header, 'daily')).toBe('daily-6_easy');
-    expect(levelStatsId(header, 'endless')).toBe('endless-6_easy');
+    expect(statsLevel(levelId, 'computer')).toBe('gen-cave-6');
+    expect(statsLevel(levelId, 'daily')).toBe('daily-6');
+    expect(statsLevel(levelId, 'endless')).toBe('endless-6');
   });
 });
 
@@ -69,6 +79,17 @@ describe('levelStatsCounts', () => {
         })
       )
     ).toEqual({ attempts: one, draws: one, durations: { ge10m: one } });
+  });
+
+  it("counts a plain player's win as plain, whatever the ladder's computer brings", () => {
+    const plain = { genes: {}, weapon: null } as never;
+    const computer = { genes: {}, weapon: 'lysis' } as never;
+    expect(levelStatsCounts(replay({ loadouts: [plain, computer] }))).toEqual({
+      attempts: one,
+      wins: one,
+      plainWins: one,
+      durations: { lt2m: one },
+    });
   });
 
   it('counts an evolved win and the weapon carried', () => {

@@ -720,13 +720,15 @@ describe('adminStats', () => {
 
 describe('levelStats', () => {
   it('lets the owner read it, nobody write it', async () => {
-    await seed('levelStats/quarantine_hard', { attempts: 3 });
+    await seed('levelStats/quarantine_hard_b12_l1', { attempts: 3 });
     await assertSucceeds(
       getDocs(collection(db('own', OWNER_TOKEN), 'levelStats'))
     );
-    await assertFails(getDoc(doc(db('ada'), 'levelStats/quarantine_hard')));
     await assertFails(
-      setDoc(doc(db('own', OWNER_TOKEN), 'levelStats/quarantine_hard'), {
+      getDoc(doc(db('ada'), 'levelStats/quarantine_hard_b12_l1'))
+    );
+    await assertFails(
+      setDoc(doc(db('own', OWNER_TOKEN), 'levelStats/quarantine_hard_b12_l1'), {
         attempts: 9,
       })
     );

@@ -56,7 +56,6 @@ export {
   MAX_TICKS,
   parseReplay,
   playReplay,
-  playsEvolution,
   REPLAY_VERSION,
   replayOf,
   replayOutcome,

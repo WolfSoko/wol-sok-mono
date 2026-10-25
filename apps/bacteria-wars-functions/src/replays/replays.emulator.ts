@@ -142,11 +142,13 @@ describe('acceptReplay', () => {
     const { difficulty } = golden.header;
     const stats = await db.collection('levelStats').get();
     expect(stats.docs.map((doc) => doc.id)).toEqual([
-      `quarantine_${difficulty}`,
+      `quarantine_${difficulty}_b${BALANCE_VERSION}_l0`,
     ]);
     expect(stats.docs[0].data()).toMatchObject({
-      levelId: 'quarantine',
+      level: 'quarantine',
       difficulty,
+      balanceVersion: BALANCE_VERSION,
+      ladder: 0,
       attempts: 2,
       losses: 2,
       durations: { lt1m: 2 },

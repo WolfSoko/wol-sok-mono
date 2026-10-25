@@ -238,8 +238,6 @@ async function storeLocal(
         : { submittedAt: Timestamp.fromMillis(meta.createdAt) }),
     });
     writer.create(ref.collection('blob').doc('data'), blob);
-    // Counted once: a second delivery fails on the create above.
-    countLevelStats(writer, db, replay, plan.kind);
   };
   const { attempt } = meta;
   try {
@@ -247,28 +245,36 @@ async function storeLocal(
       const batch = db.batch();
       create(batch);
       await batch.commit();
-      return 'stored';
+    } else {
+      await db.runTransaction(async (tx) => {
+        const declared = await tx.get(
+          db.doc(`players/${meta.uid}/attempts/${attempt}`)
+        );
+        create(tx);
+        // The first stored replay uses its attempt up: no drop voids it now.
+        if (
+          belongsTo(declared, meta.createdAt) &&
+          declared.get('replayId') === undefined
+        ) {
+          tx.update(declared.ref, { replayId: plan.id });
+        }
+      });
     }
-    return await db.runTransaction(async (tx) => {
-      const declared = await tx.get(
-        db.doc(`players/${meta.uid}/attempts/${attempt}`)
-      );
-      create(tx);
-      // The first stored replay uses its attempt up: no drop voids it now.
-      if (
-        belongsTo(declared, meta.createdAt) &&
-        declared.get('replayId') === undefined
-      ) {
-        tx.update(declared.ref, { replayId: plan.id });
-      }
-      return 'stored' as const;
-    });
   } catch (error) {
     if (hasGrpcCode(error, 6, 'already-exists')) {
       return 'exists';
     }
     throw error;
   }
+  // Counted once, after the replay is stored (a second delivery ends at
+  // `exists` above), and never in its way: a counter that fails - the
+  // shared document of a busy level, say - costs the statistics one match.
+  try {
+    await countLevelStats(db, replay, plan.kind);
+  } catch (error) {
+    logger.warn('Level statistics not counted', { id: plan.id, error });
+  }
+  return 'stored';
 }
 
 async function storeOnline(

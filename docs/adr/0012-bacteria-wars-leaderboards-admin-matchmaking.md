@@ -1282,16 +1282,19 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      commands at once may overrun the day by one command's share; the
      owner sends them one by one.
    - Then the level statistics of ADR 0016 §4
-     (`src/replays/level-stats.ts`): every stored local replay adds to
-     `levelStats/{level}_{difficulty}` in the batch or transaction that
-     creates it, so a second delivery counts nothing - attempts, wins,
-     losses, draws, duration buckets, evolved matches, plain and evolved
-     wins, the weapon carried. A generated level counts by its style and
-     heat (`gen-cave-6`), the daily and endless levels by their heat
-     (`daily-6`, `endless-6`). The owner reads them (`isAdmin()`), nobody
-     writes them. Still open: medallions, counted from verified re-runs,
-     and quits - a local match the player leaves sends no replay, so
-     they come from declared attempts that were never reported.
+     (`src/replays/level-stats.ts`): once a local replay is stored, it
+     adds to `levelStats/{level}_{difficulty}_b{balance}_l{ladder}` -
+     attempts, wins, losses, draws, duration buckets, plain and evolved
+     wins, and for a player who evolved `evolved` and the weapon carried.
+     A second delivery ends at `exists` before it counts; a counter that
+     fails is logged and never drops the replay. A generated level counts
+     by its style and heat (`gen-cave-6`), the daily and endless levels by
+     their heat (`daily-6`, `endless-6`); the balance table and the
+     ladder's version keep a changed computer apart. The owner reads them
+     (`isAdmin()`), nobody writes them. Still open: medallions, counted
+     from verified re-runs, and quits - a local match the player leaves
+     sends no replay, so they come from declared attempts that were never
+     reported.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].
