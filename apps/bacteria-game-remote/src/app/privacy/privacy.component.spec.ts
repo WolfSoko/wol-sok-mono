@@ -43,6 +43,44 @@ describe('PrivacyComponent', () => {
     );
   });
 
+  it('has each section on the cloud in both languages', async () => {
+    const page = await open();
+    const pairs = [
+      ['de-profil', 'en-profile'],
+      ['de-online', 'en-online'],
+      ['de-bestenliste', 'en-leaderboard'],
+      ['de-moderation', 'en-moderation'],
+      ['de-grundlage', 'en-basis'],
+    ];
+
+    for (const [de, en] of pairs) {
+      expect(page.querySelector(`article[lang="de"] #${de}`)).not.toBeNull();
+      expect(page.querySelector(`article[lang="en"] #${en}`)).not.toBeNull();
+    }
+  });
+
+  it('no longer says that only you see your name', async () => {
+    const page = await open();
+
+    expect(page.querySelector('article[lang="de"]')?.textContent).not.toContain(
+      'andere Spieler sehen ihn nicht'
+    );
+    expect(page.querySelector('article[lang="en"]')?.textContent).not.toContain(
+      'other players never see it'
+    );
+  });
+
+  it('says a Google account that played elsewhere leaves the guest behind', async () => {
+    const page = await open();
+    const de = page.querySelector('article[lang="de"]')?.textContent ?? '';
+    const en = page.querySelector('article[lang="en"]')?.textContent ?? '';
+
+    expect(de).not.toContain('Das Gastkonto wird so zu deinem Google-Konto');
+    expect(de).toContain('übernimmt das Google-Konto den Fortschritt');
+    expect(en).not.toContain('Your guest account becomes your Google account');
+    expect(en).toContain('the Google account takes over the guest');
+  });
+
   it('has its own title while open', async () => {
     await open();
 
