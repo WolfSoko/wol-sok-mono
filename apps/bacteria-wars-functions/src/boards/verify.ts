@@ -7,6 +7,7 @@ import {
   playReplay,
   type Replay,
   type ReplayResult,
+  type SizeSample,
   replayOutcome,
   TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
@@ -113,4 +114,17 @@ function medalOf({ header }: Replay, result: ReplayResult): MedalTier | null {
   return record === null
     ? null
     : medalFor(getLevel(header.levelId).medal, record);
+}
+
+/**
+ * The per-second sizes a summary's timeline keeps, seat by seat - every
+ * second of a match up to {@link TIMELINE_POINTS} seconds long.
+ */
+export function samplesOf(summary: ReplaySummary): SizeSample[] {
+  const seats = Math.max(1, summary.sizes.length);
+  const samples: SizeSample[] = [];
+  for (let i = 0; i + seats <= summary.timeline.length; i += seats) {
+    samples.push(summary.timeline.slice(i, i + seats));
+  }
+  return samples;
 }

@@ -4,13 +4,14 @@ import {
   type GalleryReplay,
   isCandidate,
   MAX_GALLERY_TICKS,
-  MIN_ACCOUNT_AGE_MS,
   pickPublished,
   rankCandidates,
   type Stored,
 } from './candidates';
 
 const NOW = Date.UTC(2026, 9, 26, 3);
+/** A week: how old a candidate's account must be. */
+const MIN_ACCOUNT_AGE_MS = 7 * 24 * 3_600_000;
 
 function replay(fields: Partial<GalleryReplay> = {}): GalleryReplay {
   return {
@@ -41,14 +42,14 @@ describe('fitsGallery', () => {
     expect(fitsGallery(replay())).toBe(true);
     expect(fitsGallery(online())).toBe(true);
     expect(
-      fitsGallery(replay({ state: 'verified', attempt: { id: 'd' } }))
+      fitsGallery(replay({ state: 'verified', attempt: { id: 'd', at: 0 } }))
     ).toBe(true);
   });
 
   it('leaves out what it cannot or must not show', () => {
     for (const doc of [
       replay({ state: 'unverified' }),
-      replay({ attempt: { id: 'd_2026-10-25_1' } }),
+      replay({ attempt: { id: 'd_2026-10-25_1', at: 0 } }),
       replay({ balanceVersion: BALANCE_VERSION - 1 }),
       replay({ ticks: MAX_GALLERY_TICKS + 1 }),
       replay({ optOut: ['ada'] }),

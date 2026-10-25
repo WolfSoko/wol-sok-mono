@@ -88,6 +88,11 @@ export function dayOf(millis: number): string {
   return new Date(millis).toISOString().slice(0, 10);
 }
 
+/** When a UTC day (`YYYY-MM-DD`) starts, in ms. */
+export function dayStart(day: string): number {
+  return Date.parse(`${day}T00:00:00Z`);
+}
+
 /** Why a submission got no slot - see {@link takeSubmissionSlot}. */
 export type SlotRefusal = 'limit' | 'cap';
 

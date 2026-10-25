@@ -10,8 +10,10 @@ import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { DAY_MS, expectedRerunMs, GALLERY_VERIFY_MS } from '../boards/budgets';
 import { storedReplay } from '../boards/declared-match';
+import { boardProfileOf } from '../boards/names';
 import {
   type ReplaySummary,
+  samplesOf,
   type Verdict,
   verifyReplay,
 } from '../boards/verify';
@@ -21,9 +23,10 @@ import {
   verdictFields,
 } from '../boards/verify-slice';
 import { hasGrpcCode } from '../grpc';
-import { dayOf } from '../limits';
+import { dayOf, dayStart, isBanned } from '../limits';
 import { countRerun } from '../replays/level-stats';
 import {
+  byHint,
   fitsGallery,
   type GalleryReplay,
   humansOf,
@@ -41,7 +44,7 @@ const CANDIDATE_STATES = ['submitted', 'agreed', 'verified'];
 const MAX_READ = 5_000;
 
 /** What one `featureBest` run did. */
-export interface FeatureBestResult {
+interface FeatureBestResult {
   day: string;
   skipped?: 'done';
   /** Candidates re-run now, not counting those verified before. */
@@ -49,10 +52,15 @@ export interface FeatureBestResult {
   published: string[];
 }
 
-/** A candidate once verified: its replay and what it scored. */
-interface Scored extends Stored {
-  header: ReplayHeader;
+/** A verified candidate, and its header where it was read already. */
+interface Verified extends Stored {
+  header?: ReplayHeader;
   doc: GalleryReplay & { summary: ReplaySummary };
+}
+
+/** A candidate once scored. */
+interface Scored extends Stored {
+  doc: GalleryReplay & { score: number; reasons: string[] };
 }
 
 /**
@@ -76,7 +84,7 @@ export async function featureBest(
   if ((await marker.get()).get('done') === true) {
     return { day, skipped: 'done', checked: 0, published: [] };
   }
-  const start = Date.parse(`${day}T00:00:00Z`);
+  const start = dayStart(day);
   const snapshot = await db
     .collection('replays')
     .where('state', 'in', CANDIDATE_STATES)
@@ -91,22 +99,15 @@ export async function featureBest(
   const fitting = snapshot.docs
     .map((doc) => ({ id: doc.id, doc: doc.data() as GalleryReplay }))
     .filter(({ doc }) => fitsGallery(doc))
-    .sort((a, b) => b.doc.hint - a.doc.hint || a.id.localeCompare(b.id));
+    .sort(byHint);
   const ranked = await pickCandidates(db, fitting, accountInfo, now);
-  // Those the boards verified need no re-run, and so no budget.
-  const scored: Scored[] = [];
+  const verified: Verified[] = [];
   const toRerun: Stored[] = [];
   for (const candidate of ranked) {
-    const { doc } = candidate;
-    if (doc.state === 'verified' && doc.summary !== undefined) {
-      const replay = await storedReplay(db, candidate.id);
-      if (replay !== null) {
-        scored.push({
-          ...candidate,
-          header: replay.header,
-          doc: { ...doc, summary: doc.summary },
-        });
-      }
+    // Those the boards verified need no re-run, and so no budget.
+    const { summary } = candidate.doc;
+    if (candidate.doc.state === 'verified' && summary !== undefined) {
+      verified.push(asVerified(candidate, summary, candidate.doc.medal));
     } else {
       toRerun.push(candidate);
     }
@@ -124,7 +125,8 @@ export async function featureBest(
       },
       clock,
       async (left, charge) => {
-        for (const { id, doc } of toRerun) {
+        for (const candidate of toRerun) {
+          const { id, doc } = candidate;
           if (expectedRerunMs(doc.ticks) > left()) {
             continue;
           }
@@ -141,25 +143,31 @@ export async function featureBest(
           }
           await countRerun(db, replay.header, doc.kind, verdict);
           if (verdict.state === 'verified' && verdict.summary !== undefined) {
-            scored.push({
-              id,
+            verified.push({
+              ...asVerified(candidate, verdict.summary, verdict.medal),
               header: replay.header,
-              doc: {
-                ...doc,
-                state: 'verified',
-                summary: verdict.summary,
-                medal: verdict.medal,
-              },
             });
           }
         }
       }
     );
   }
-  await scoreAll(db, scored);
+  const scored = await scoreAll(db, verified);
+  // One player a published replay: they never meet in two of them. A
+  // failure costs its candidate only, so the day is still marked done.
+  const results = await Promise.all(
+    pickPublished(scored).map(async (id) => ({
+      id,
+      result: await publishReplay(db, id, 'auto', now).catch(
+        (error: unknown) => {
+          logger.warn('Candidate failed to publish', { id, error });
+          return 'failed' as const;
+        }
+      ),
+    }))
+  );
   const published: string[] = [];
-  for (const id of pickPublished(scored)) {
-    const result = await publishReplay(db, id, 'auto', now);
+  for (const { id, result } of results) {
     if (typeof result === 'string') {
       logger.info('Candidate not published', { id, reason: result });
     } else {
@@ -178,12 +186,21 @@ export async function featureBest(
         replayId: id,
         kind: doc.kind,
         levelId: doc.levelId,
-        score: doc.score ?? 0,
-        reasons: doc.reasons ?? [],
+        score: doc.score,
+        reasons: doc.reasons,
         hint: doc.hint,
       })),
   });
   return { day, checked, published };
+}
+
+/** A candidate as verified, with what the re-run found. */
+function asVerified(
+  { id, doc }: Stored,
+  summary: ReplaySummary,
+  medal: GalleryReplay['medal']
+): Verified {
+  return { id, doc: { ...doc, state: 'verified', summary, medal } };
 }
 
 /** Replays whose players are looked up at once. */
@@ -191,8 +208,9 @@ const LOOKUP_CHUNK = 40;
 
 /**
  * The candidates (`rankCandidates`) among the fitting replays, best hints
- * first: their players' accounts and profiles are looked up a chunk at a
- * time, only until 20 candidates are found.
+ * first: their players' accounts, profiles and bans are looked up a chunk
+ * at a time, only until 20 candidates are found. A banned player's match
+ * takes no slot.
  */
 async function pickCandidates(
   db: Firestore,
@@ -201,47 +219,49 @@ async function pickCandidates(
   now: number
 ): Promise<Stored[]> {
   const accounts = new Map<string, AccountInfo>();
-  const optedOut = new Set<string>();
+  const excluded = new Set<string>();
   const accepted: Stored[] = [];
+  let ranked: Stored[] = [];
   for (let i = 0; i < fitting.length; i += LOOKUP_CHUNK) {
     const chunk = fitting.slice(i, i + LOOKUP_CHUNK);
     const unknown = [
       ...new Set(chunk.flatMap(({ doc }) => humansOf(doc) ?? [])),
     ].filter((uid) => !accounts.has(uid));
-    const [found, out] = await Promise.all([
+    const [found, optedOut, bans] = await Promise.all([
       Promise.all(
         unknown.map(async (uid) => [uid, await accountInfo(uid)] as const)
       ),
       galleryOptOuts(db, unknown),
+      Promise.all(unknown.map((uid) => isBanned(db, uid, now))),
     ]);
     found.forEach(([uid, info]) => accounts.set(uid, info));
-    out.forEach((uid) => optedOut.add(uid));
+    optedOut.forEach((uid) => excluded.add(uid));
+    unknown.forEach((uid, k) => bans[k] && excluded.add(uid));
     accepted.push(
-      ...chunk.filter(({ doc }) => isCandidate(doc, accounts, optedOut, now))
+      ...chunk.filter(({ doc }) => isCandidate(doc, accounts, excluded, now))
     );
-    if (rankCandidates(accepted).length >= MAX_CANDIDATES) {
+    ranked = rankCandidates(accepted);
+    if (ranked.length >= MAX_CANDIDATES) {
       break;
     }
   }
-  return rankCandidates(accepted);
+  return ranked;
 }
 
 /** The players among the uids who keep their matches out of the gallery. */
 async function galleryOptOuts(
   db: Firestore,
   uids: readonly string[]
-): Promise<Set<string>> {
+): Promise<string[]> {
   if (uids.length === 0) {
-    return new Set();
+    return [];
   }
   const profiles = await db.getAll(
     ...uids.map((uid) => db.doc(`profiles/${uid}`))
   );
-  return new Set(
-    profiles
-      .filter((profile) => profile.get('galleryOptOut') === true)
-      .map((profile) => profile.id)
-  );
+  return profiles
+    .filter((profile) => boardProfileOf(profile.data()).galleryOptOut)
+    .map((profile) => profile.id);
 }
 
 /**
@@ -267,59 +287,62 @@ async function applyVerdict(
 /**
  * Scores the verified candidates from their re-run (ADR 0011) and stores
  * it on each replay. A feat is a platinum run against a hard computer or a
- * boss, and the best verified daily-level replay of the day.
+ * boss, and the best verified daily-level replay of the day. A replay
+ * deleted meanwhile (its account went) is just not stored.
  */
-async function scoreAll(db: Firestore, scored: Scored[]): Promise<void> {
-  const bestDaily = scored
+async function scoreAll(
+  db: Firestore,
+  verified: Verified[]
+): Promise<Scored[]> {
+  const bestDaily = verified
     .filter(({ doc }) => doc.kind === 'daily')
     .sort(
       (a, b) =>
         dailySort(b.doc.winnerSeat === 0, b.doc.ticks) -
         dailySort(a.doc.winnerSeat === 0, a.doc.ticks)
     )[0];
-  const writes: Promise<unknown>[] = [];
-  for (const candidate of scored) {
-    const { doc, header } = candidate;
-    const feat =
-      candidate === bestDaily ||
-      (doc.medal === 'platinum' &&
-        (header.difficulty === 'hard' ||
-          getLevel(header.levelId).boss !== undefined));
-    const { score, reasons } = replayScore({
-      samples: samplesOf(doc.summary),
-      outcome: {
-        endedBy: doc.summary.endedBy as ReplayOutcome['endedBy'],
-        winnerSeat: doc.summary.winnerSeat,
-      },
-      ticks: doc.ticks,
-      online: doc.kind === 'online',
-      feat,
-    });
-    candidate.doc = { ...doc, score, reasons };
-    // A replay deleted meanwhile (its account went) just is not scored.
-    writes.push(
-      db
+  return Promise.all(
+    verified.map(async (candidate) => {
+      const { doc } = candidate;
+      const feat =
+        candidate === bestDaily ||
+        (doc.medal === 'platinum' &&
+          (await againstTheStrongest(db, candidate)));
+      const { score, reasons } = replayScore({
+        samples: samplesOf(doc.summary),
+        outcome: {
+          endedBy: doc.summary.endedBy as ReplayOutcome['endedBy'],
+          winnerSeat: doc.summary.winnerSeat,
+        },
+        ticks: doc.ticks,
+        online: doc.kind === 'online',
+        feat,
+      });
+      await db
         .doc(`replays/${candidate.id}`)
         .update({ score, reasons })
         .catch((error: unknown) => {
           if (!hasGrpcCode(error, 5, 'not-found')) {
             throw error;
           }
-        })
-    );
-  }
-  await Promise.all(writes);
+        });
+      return { id: candidate.id, doc: { ...doc, score, reasons } };
+    })
+  );
 }
 
 /**
- * The per-second sizes a summary's timeline keeps, seat by seat - every
- * second of a gallery match, which is 6 minutes at most.
+ * True for a match against a hard computer or a boss - the header read
+ * only for a platinum run the boards verified.
  */
-function samplesOf(summary: ReplaySummary): number[][] {
-  const seats = Math.max(1, summary.sizes.length);
-  const samples: number[][] = [];
-  for (let i = 0; i + seats <= summary.timeline.length; i += seats) {
-    samples.push(summary.timeline.slice(i, i + seats));
-  }
-  return samples;
+async function againstTheStrongest(
+  db: Firestore,
+  { id, header }: Verified
+): Promise<boolean> {
+  const played = header ?? (await storedReplay(db, id))?.header;
+  return (
+    played !== undefined &&
+    (played.difficulty === 'hard' ||
+      getLevel(played.levelId).boss !== undefined)
+  );
 }

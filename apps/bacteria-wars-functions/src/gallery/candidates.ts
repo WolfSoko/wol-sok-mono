@@ -2,9 +2,9 @@ import {
   BALANCE_VERSION,
   TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
-import { DAY_MS } from '../boards/budgets';
 import type { ReplaySummary } from '../boards/verify';
-import type { AccountInfo } from '../boards/verify-slice';
+import { type AccountInfo, trustOf } from '../boards/verify-slice';
+import type { ReplayRecord } from '../replays/accept-plan';
 
 /**
  * Which stored replays the gallery takes (ADR 0011, changed by ADR 0012),
@@ -14,28 +14,28 @@ import type { AccountInfo } from '../boards/verify-slice';
 /** Candidates `featureBest` looks at a day at most... */
 export const MAX_CANDIDATES = 20;
 /** ...at most this many per player. */
-export const MAX_PER_PLAYER = 3;
+const MAX_PER_PLAYER = 3;
 /** Replays published a day at most... */
-export const MAX_PUBLISHED = 10;
+const MAX_PUBLISHED = 10;
 /** ...scoring at least this... */
-export const MIN_SCORE = 60;
+const MIN_SCORE = 60;
 /** ...one per player and two per level. */
-export const MAX_PER_LEVEL = 2;
-/** How old an account must be for its matches to be candidates. */
-export const MIN_ACCOUNT_AGE_MS = 7 * DAY_MS;
+const MAX_PER_LEVEL = 2;
 /** The longest match the gallery shows: 6 minutes. */
 export const MAX_GALLERY_TICKS = 6 * 60 * TICKS_PER_SEC;
 
 /** The fields of `replays/{id}` the gallery reads. */
-export interface GalleryReplay {
-  kind: 'online' | 'computer' | 'daily' | 'endless';
+export interface GalleryReplay extends Pick<
+  ReplayRecord,
+  | 'kind'
+  | 'levelId'
+  | 'balanceVersion'
+  | 'ticks'
+  | 'winnerSeat'
+  | 'hint'
+  | 'attempt'
+> {
   state: string;
-  levelId: string;
-  balanceVersion: number;
-  ticks: number;
-  winnerSeat: number | null;
-  /** The client's own score, 0-100 - how candidates are ranked. */
-  hint: number;
   /** Who reported it: a local match's player, an online match's reporters. */
   players: string[];
   /** Online only: the room's host and guest, null for a deleted account. */
@@ -45,8 +45,6 @@ export interface GalleryReplay {
   galleryOut?: boolean;
   /** Online only: the room stub had expired - never public. */
   stubExpired?: boolean;
-  /** A ranked attempt: the boards verify it, not the gallery. */
-  attempt?: unknown;
   /** What the server's re-run found - set once it is verified. */
   summary?: ReplaySummary;
   score?: number;
@@ -98,8 +96,7 @@ export function fitsGallery(doc: GalleryReplay): boolean {
     stateFits &&
     doc.balanceVersion === BALANCE_VERSION &&
     doc.ticks <= MAX_GALLERY_TICKS &&
-    doc.optOut.length === 0 &&
-    doc.galleryOut !== true &&
+    !isOut(doc) &&
     doc.stubExpired !== true &&
     doc.publicId === undefined &&
     humansOf(doc) !== null
@@ -121,15 +118,26 @@ export function isCandidate(
     fitsGallery(doc) &&
     (humansOf(doc) ?? []).every((uid) => {
       const account = accounts.get(uid);
+      // The boards' most trusted accounts: Google, a week old.
       return (
         account !== undefined &&
-        account.google &&
-        account.createdAt !== null &&
-        now - account.createdAt >= MIN_ACCOUNT_AGE_MS &&
+        trustOf(account, false, now) === 0 &&
         !optedOut.has(uid)
       );
     })
   );
+}
+
+/** True once a player took the replay out of the gallery. */
+export function isOut(
+  doc: Pick<GalleryReplay, 'optOut' | 'galleryOut'>
+): boolean {
+  return doc.optOut.length > 0 || doc.galleryOut === true;
+}
+
+/** The client's best hints first, then by id. */
+export function byHint(a: Stored, b: Stored): number {
+  return b.doc.hint - a.doc.hint || a.id.localeCompare(b.id);
 }
 
 /**
@@ -139,10 +147,7 @@ export function isCandidate(
 export function rankCandidates(candidates: readonly Stored[]): Stored[] {
   const perPlayer = new Map<string, number>();
   const picked: Stored[] = [];
-  const byHint = [...candidates].sort(
-    (a, b) => b.doc.hint - a.doc.hint || a.id.localeCompare(b.id)
-  );
-  for (const candidate of byHint) {
+  for (const candidate of [...candidates].sort(byHint)) {
     const players = humansOf(candidate.doc) ?? [];
     if (players.some((uid) => (perPlayer.get(uid) ?? 0) >= MAX_PER_PLAYER)) {
       continue;

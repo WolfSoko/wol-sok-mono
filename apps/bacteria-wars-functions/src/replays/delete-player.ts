@@ -23,6 +23,8 @@ export async function deletePlayerReplays(
   db: Firestore,
   uid: string
 ): Promise<{ deleted: number; left: number; anonymised: number }> {
+  // Its public replays at the same time: they hold no private replay.
+  const anonymising = anonymisePublic(db, uid);
   const replays = db.collection('replays');
   // Each transaction reads its replay again: the queries need the ids only.
   const [played, seated] = await Promise.all([
@@ -44,7 +46,7 @@ export async function deletePlayerReplays(
       ))
     );
   }
-  const anonymised = await anonymisePublic(db, uid);
+  const anonymised = await anonymising;
   return {
     deleted: outcomes.filter((o) => o === 'only').length,
     left: outcomes.filter((o) => o === 'left').length,

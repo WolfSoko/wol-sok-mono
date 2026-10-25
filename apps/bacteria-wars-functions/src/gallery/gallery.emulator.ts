@@ -127,6 +127,12 @@ describe('featureBest', () => {
     expect(
       (await db.doc('replayCandidates/2026-10-25').get()).get('done')
     ).toBe(true);
+    // The re-run counts in the level statistics like the boards'.
+    const stats = await db.collection('levelStats').get();
+    expect(stats.docs[0]?.data()).toMatchObject({
+      rerun: 1,
+      medals: { gold: 1 },
+    });
     expect(await pick()).toMatchObject({ skipped: 'done' });
     expect((await db.collection('publicReplays').get()).size).toBe(1);
   });
@@ -141,15 +147,11 @@ describe('featureBest', () => {
     expect((await db.collection('publicReplays').get()).empty).toBe(true);
   });
 
-  it('never publishes a banned player, and counts the re-run', async () => {
+  it("spends nothing on a banned player's match", async () => {
     await db.doc('bans/ada').set({ until: null, reason: 'cheating' });
     await store('l_a', 'ada');
-    expect(await pick()).toMatchObject({ checked: 1, published: [] });
-    const stats = await db.collection('levelStats').get();
-    expect(stats.docs[0]?.data()).toMatchObject({
-      rerun: 1,
-      medals: { gold: 1 },
-    });
+    expect(await pick()).toMatchObject({ checked: 0, published: [] });
+    expect((await db.doc('replays/l_a').get()).get('state')).toBe('submitted');
   });
 
   it('publishes a match the boards verified, with no budget left to re-run', async () => {

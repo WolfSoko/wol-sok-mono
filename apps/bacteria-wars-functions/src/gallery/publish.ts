@@ -10,10 +10,10 @@ import { storedReplay } from '../boards/declared-match';
 import { boardProfileOf, entryLabel } from '../boards/names';
 import { REPLAY_TTL_MS } from '../config';
 import { dayOf, isBanned } from '../limits';
-import { type GalleryReplay, humansOf } from './candidates';
+import { type GalleryReplay, humansOf, isOut } from './candidates';
 
 /** A seat as a public replay shows it - never a uid. */
-export interface PublicSeat {
+interface PublicSeat {
   /** `computer`, or the colony's colour id for a human. */
   label: string;
   /** The player's name - only where they made it public and it passed. */
@@ -24,7 +24,7 @@ export interface PublicSeat {
 }
 
 /** Why a replay was not published. */
-export type NotPublished =
+type NotPublished =
   /** Not verified, nothing to show, or not the gallery's any more. */
   | 'not-verified'
   /** A player took it down, or keeps their matches out of the gallery. */
@@ -60,13 +60,13 @@ export async function publishReplay(
   ) {
     return 'not-verified';
   }
-  if (doc.optOut.length > 0 || doc.galleryOut === true) {
+  if (isOut(doc)) {
     return 'opted-out';
   }
-  const profiles = await Promise.all(
-    humans.map(async (uid) => (await db.doc(`profiles/${uid}`).get()).data())
-  );
-  if (profiles.some((profile) => profile?.['galleryOptOut'] === true)) {
+  const profiles = (
+    await db.getAll(...humans.map((uid) => db.doc(`profiles/${uid}`)))
+  ).map((profile) => boardProfileOf(profile.data()));
+  if (profiles.some((profile) => profile.galleryOptOut)) {
     return 'opted-out';
   }
   const banned = await Promise.all(humans.map((uid) => isBanned(db, uid, now)));
@@ -89,7 +89,7 @@ export async function publishReplay(
     }
     const label = entryLabel(
       `${publicRef.id}_${seat}`,
-      boardProfileOf(profiles[humans.indexOf(uid)]),
+      profiles[humans.indexOf(uid)],
       'verified'
     );
     return {
@@ -107,7 +107,7 @@ export async function publishReplay(
     if (current?.publicId !== undefined) {
       return 'already-public';
     }
-    if ((current?.optOut.length ?? 1) > 0 || current?.galleryOut === true) {
+    if (current === undefined || isOut(current)) {
       return 'opted-out';
     }
     tx.create(publicRef, {
