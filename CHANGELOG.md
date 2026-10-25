@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.98.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.97.0...v74.98.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ publicSite renders the public replay pages ([#2664](https://github.com/WolfSoko/wol-sok-mono/issues/2664)) ([e916c3e](https://github.com/WolfSoko/wol-sok-mono/commit/e916c3eab76597255c480d6a6448c543e51c6445))
+* **feat-lazy-bacteria-wars-admin:** moderation views for profiles, players, bans and the audit ([#2668](https://github.com/WolfSoko/wol-sok-mono/issues/2668)) ([3e18eb8](https://github.com/WolfSoko/wol-sok-mono/commit/3e18eb8e58aa468823aa2548e7b483280f6d7f28))
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** deploy the functions with the Firebase CLI itself ([#2666](https://github.com/WolfSoko/wol-sok-mono/issues/2666)) ([1cf2082](https://github.com/WolfSoko/wol-sok-mono/commit/1cf20826a534ac43afdb17c525bcb0bbd3a12a18))
+
 ## [74.97.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.96.0...v74.97.0) (2026-10-25)
 
 ### Features
