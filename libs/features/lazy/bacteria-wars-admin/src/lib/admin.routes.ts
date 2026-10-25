@@ -35,6 +35,30 @@ export function adminRoutes(options: GameCloudOptions | null): Routes {
                   (m) => m.OverviewComponent
                 ),
             },
+            {
+              path: 'profiles',
+              loadComponent: () =>
+                import('./profiles/profiles.component').then(
+                  (m) => m.ProfilesComponent
+                ),
+            },
+            {
+              path: 'player/:uid',
+              loadComponent: () =>
+                import('./player/player.component').then(
+                  (m) => m.PlayerComponent
+                ),
+            },
+            {
+              path: 'bans',
+              loadComponent: () =>
+                import('./bans/bans.component').then((m) => m.BansComponent),
+            },
+            {
+              path: 'audit',
+              loadComponent: () =>
+                import('./audit/audit.component').then((m) => m.AuditComponent),
+            },
           ],
         },
         { path: '**', component: AdminGateComponent },

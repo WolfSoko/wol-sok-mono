@@ -50,6 +50,14 @@ const GAME_QUERIES: Queries = {
       { fieldPath: 'at', order: 'DESCENDING' },
     ],
   },
+  // The admin area's uploaded pictures, newest first.
+  'profiles with an uploaded picture': {
+    group: 'profiles',
+    fields: [
+      { fieldPath: 'avatar.kind', order: 'ASCENDING' },
+      { fieldPath: 'updatedAt', order: 'DESCENDING' },
+    ],
+  },
 };
 const FUNCTION_QUERIES = read(
   '../../bacteria-wars-functions/src/firestore-queries.json'

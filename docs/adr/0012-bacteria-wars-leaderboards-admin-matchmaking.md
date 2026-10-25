@@ -1313,10 +1313,20 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      and from the exposed `Routes`, and fails when any of them holds an
      input under `libs/features/lazy/bacteria-wars-admin/`. The `initial`
      growth limit of 2 KB is left to ADR 0014's script budgets.
-   - Still to come: the moderation views (profiles, player, bans,
-     audit), the leaderboards view, the toggle page, the Balance view,
-     the curation page once ADR 0011's gallery exists, and the admin
-     link in the main menu.
+   - The moderation views: Profiles (newest, uploaded pictures with
+     "Remove picture", name prefix, or a uid), Player (profile and its
+     flags, board entries with their hide reasons, ban, counters, the
+     audit about them, and every command on them), Bans and Audit (all,
+     one type, or one player), 25 rows at a time. Every command goes
+     through one dialog that asks for the reason, a ban's end and reason,
+     and whether a hide also bars. The rules let the owner list
+     `profiles` and `bans`; the pictures list has its index
+     (`avatar.kind`, `updatedAt` desc). The dialog takes Material's slide
+     toggle, not its checkbox, which the game does not use and federation
+     would prune.
+   - Still to come: the leaderboards view, the toggle page, the Balance
+     view, the curation page once ADR 0011's gallery exists, and the
+     admin link in the main menu.
 
 ## Owner's decisions
 
