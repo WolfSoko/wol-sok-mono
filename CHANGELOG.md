@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.96.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.95.0...v74.96.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ featureBest picks and publishes the gallery's matches, switched off ([#2663](https://github.com/WolfSoko/wol-sok-mono/issues/2663)) ([250e445](https://github.com/WolfSoko/wol-sok-mono/commit/250e445c1b5bbafe602fe20361a9d2cda638f7ee))
+
 ## [74.95.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.94.0...v74.95.0) (2026-10-25)
 
 ### Features
