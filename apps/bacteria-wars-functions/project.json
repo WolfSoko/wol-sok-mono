@@ -40,6 +40,13 @@
       "options": {
         "command": "firebase emulators:exec --config apps/bacteria-wars-functions/emulator.json --project demo-bacteria-functions --only firestore \"jest -c apps/bacteria-wars-functions/jest.emulator.config.ts\""
       }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "nx run bacteria-game-remote:firebase deploy --only functions:bacteria --force --non-interactive"
+      }
     }
   }
 }

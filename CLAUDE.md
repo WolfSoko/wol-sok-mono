@@ -131,7 +131,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Handler modules import `firebase-functions/logger`, not `firebase-functions`: the root export loads the admin auth stack, which Jest on Node 22 cannot require.
 - Re-running a replay (`boards/verify.ts`) costs real CPU: `gpu-int`, the only ruleset ranked attempts take, plays at about 7 ms a tick on `IntSimulation`, so a 10-minute match takes minutes. Specs never replay whole matches: `verifyDailySlice` takes the verifier as a parameter, and `verify.spec.ts` mocks `playReplay`. Firestore holds no arrays in arrays; flatten what a function stores.
 - `hourly` (`boards/hourly.ts`) is exported only with `HOURLY_ON` in `src/config.ts`; set it to `false` to take it out of a deploy.
-- There is no `deploy` target yet: functions are deployed by hand (`firebase deploy --only functions:bacteria --config firebase.bacteria-game-remote.json`) until a `deploy` target lands (the region, `europe-west1`, the APIs and IAM are set up, ADR 0011, "Owner's manual steps"). The game's hosting deploy leaves them alone (`--only hosting,firestore,database`).
+- Its `deploy` target (`bacteria-game-remote:firebase deploy --only functions:bacteria --force`) runs in the `non-cdk` leg of `deploy.yml` whenever a release affects the app, which includes every change to the game lib (`feat-lazy-bacteria-game`), since the app imports its engine. `--force` deletes functions of the `bacteria` codebase that are gone from `main.ts`, so taking a function out of the exports takes it out of production. The game's hosting deploy leaves the functions alone (`--only hosting,firestore,database`).
 
 ## Android App
 
