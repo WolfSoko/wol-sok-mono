@@ -12,7 +12,9 @@ import {
   type Firestore,
   type Query,
   type QueryDocumentSnapshot,
+  Timestamp,
 } from 'firebase-admin/firestore';
+import { DAILY_TTL_MS } from './rank-daily';
 
 /** An entry as the top document needs it. */
 type EntryRow = Omit<BoardRow, 'pos' | 'rank'>;
@@ -100,16 +102,23 @@ export async function rebuildTop(
     avatar: doc.get('avatar'),
     show: doc.get('show'),
   });
-  await topRef.set({
-    board: boardId,
-    ...(board.kind === 'daily' ? { day: board.day } : {}),
-    cut,
-    rows: topRows(
-      visibleRows.docs.map(asRow),
-      verifiedRows?.docs.map(asRow) ?? []
-    ),
-    balanceVersion: BALANCE_VERSION,
-    updatedAt: FieldValue.serverTimestamp(),
-  });
+  // Merged, so a finished day keeps its `final`.
+  await topRef.set(
+    {
+      board: boardId,
+      ...(board.kind === 'daily' ? { day: board.day } : {}),
+      cut,
+      rows: topRows(
+        visibleRows.docs.map(asRow),
+        verifiedRows?.docs.map(asRow) ?? []
+      ),
+      balanceVersion: BALANCE_VERSION,
+      updatedAt: FieldValue.serverTimestamp(),
+      ...(board.kind === 'daily'
+        ? { expireAt: Timestamp.fromMillis(Date.now() + DAILY_TTL_MS) }
+        : {}),
+    },
+    { merge: true }
+  );
   return 'rebuilt';
 }

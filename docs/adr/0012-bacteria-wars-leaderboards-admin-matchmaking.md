@@ -1045,9 +1045,26 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      entry keeps its `baseStatus` beside `status` and `hiddenBy`, so a
      lifted hide brings the old status back. `acceptReplay` stores the
      stub's `seats` and `createdAt` on an online replay, which the online
-     board counts by. Daily and endless (the attempts), the hourly
-     function, the admin commands, `countAccount` and `deletePlayerBoards`
-     come next.
+     board counts by.
+   - Then the daily board: the rules of `players/{uid}/attempts` (ids,
+     order, today's UTC day, `at == request.time`), `rankReplay` for a
+     new daily replay with an attempt (`rankDaily`: the checks above into
+     `dailyRuns` and the entry, provisional), `verify.ts`, and `hourly`
+     (`runHourly`: "Not reported", `final` on yesterday's board at 23:00
+     UTC, the verification slice in trust order). `hourly` is not even
+     deployed yet (`HOURLY_ON` in the functions' `config.ts`) until the
+     owner has enabled Cloud Scheduler. `acceptReplay` keeps a ranked
+     submission's `createdAt` as `submittedAt`, which the deadline is
+     measured against; the TTL policies of `attempts`, `dailyRuns`, the
+     daily boards and their entries. A summary's `timeline` is one flat
+     list, seat after seat, as Firestore holds no arrays in arrays.
+   - First measurement, on a dev core in Node: a ranked daily match
+     plays again at about 7 ms a tick on `IntSimulation` (`gpu-int`,
+     about 25 s per match-minute) and 2 ms on `cpu`, close to the 20 s
+     the budgets assume. The benchmark on a Cloud Run vCPU still sets
+     them.
+   - Endless (runs, lost lives), the admin commands, `countAccount` and
+     `deletePlayerBoards` come next.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Enable the `hourly` schedule the

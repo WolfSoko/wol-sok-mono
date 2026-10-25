@@ -30,3 +30,10 @@ export const REPLAY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 /** How long a ban decision is trusted before it is read again. */
 export const BAN_CACHE_MS = 60 * 1000;
+
+/**
+ * Whether the hourly function is deployed. Off until the owner has enabled
+ * Cloud Scheduler and Pub/Sub for the project (ADR 0011, "Owner's manual
+ * steps"); daily entries stay provisional meanwhile.
+ */
+export const HOURLY_ON = false;

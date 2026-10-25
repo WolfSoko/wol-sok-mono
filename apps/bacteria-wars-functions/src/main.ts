@@ -14,15 +14,19 @@ import {
   onDocumentDeleted,
   onDocumentWritten,
 } from 'firebase-functions/v2/firestore';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
+import { runHourly } from './boards/hourly';
 import { boardProfileChanged as relabelEntries } from './boards/profile-changed';
+import { rankDaily } from './boards/rank-daily';
 import { rankOnline } from './boards/rank-online';
 import {
   PROGRESS_KEY,
   rankProgress as countProgress,
 } from './boards/rank-progress';
 import { rebuildTop as rebuildTopOf } from './boards/rebuild-top';
-import { REGION } from './config';
+import { HOURLY_ON, REGION } from './config';
+import type { AccountInfo } from './boards/verify-slice';
 import { acceptSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
 import { runReplayCommand } from './replays/command';
@@ -78,18 +82,28 @@ export const deletePlayerReplays = v1
     logger.info('Replays of a deleted account', { uid: user.uid, ...counts });
   });
 
-/** When an account was made - for the online board's new-account cap. */
-async function accountCreatedAt(uid: string): Promise<number | null> {
+/**
+ * When an account was made and whether it signs in with Google - for the
+ * online board's new-account cap and the order of verification.
+ */
+async function accountInfo(uid: string): Promise<AccountInfo> {
   // Loaded here only: the auth stack is heavy, and the other functions
   // never need it.
   const { getAuth } = await import('firebase-admin/auth');
   try {
-    const created = (await getAuth().getUser(uid)).metadata.creationTime;
-    return created ? Date.parse(created) : null;
+    const user = await getAuth().getUser(uid);
+    const created = user.metadata.creationTime;
+    return {
+      createdAt: created ? Date.parse(created) : null,
+      google: user.providerData.some((p) => p.providerId === 'google.com'),
+    };
   } catch {
-    return null;
+    return { createdAt: null, google: false };
   }
 }
+
+const accountCreatedAt = async (uid: string) =>
+  (await accountInfo(uid)).createdAt;
 
 /** The XP board, from the player's stored progress (ADR 0012). */
 export const rankProgress = onDocumentWritten(
@@ -109,27 +123,38 @@ export const rankProgress = onDocumentWritten(
   }
 );
 
-/** The online board, once an online match turns `agreed` (ADR 0012). */
+/**
+ * The online board, once an online match turns `agreed`, and the daily
+ * board, when a replay of a declared daily attempt comes (ADR 0012).
+ */
 export const rankReplay = onDocumentWritten(
   { document: 'replays/{id}', memory: '256MiB', cpu: 'gcf_gen1' },
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
-    if (
-      after === undefined ||
-      after['kind'] !== 'online' ||
-      after['state'] !== 'agreed' ||
-      before?.['state'] === 'agreed'
-    ) {
+    if (after === undefined) {
       return;
     }
-    const reason = await rankOnline(
-      db(),
-      event.params.id,
-      after,
-      accountCreatedAt
-    );
-    logger.info('Online match ranked', { id: event.params.id, reason });
+    if (
+      after['kind'] === 'online' &&
+      after['state'] === 'agreed' &&
+      before?.['state'] !== 'agreed'
+    ) {
+      const reason = await rankOnline(
+        db(),
+        event.params.id,
+        after,
+        accountCreatedAt
+      );
+      logger.info('Online match ranked', { id: event.params.id, reason });
+    } else if (
+      before === undefined &&
+      after['kind'] === 'daily' &&
+      after['attempt'] !== undefined
+    ) {
+      const reason = await rankDaily(db(), event.params.id, after);
+      logger.info('Daily attempt ranked', { id: event.params.id, reason });
+    }
   }
 );
 
@@ -170,3 +195,25 @@ export const boardProfileChanged = onDocumentWritten(
     );
   }
 );
+
+/**
+ * Every hour at minute 17 (UTC): closes unreported online matches and
+ * yesterday's daily board, then checks daily entries for 25 minutes at
+ * most (ADR 0012). Off until the owner has set up Cloud Scheduler.
+ */
+export const hourly = HOURLY_ON
+  ? onSchedule(
+      {
+        schedule: '17 * * * *',
+        timeZone: 'UTC',
+        memory: '1GiB',
+        timeoutSeconds: 1800,
+        maxInstances: 1,
+        retryCount: 0,
+      },
+      async () => {
+        const result = await runHourly(db(), Date.now(), accountInfo);
+        logger.info('Hourly run', result);
+      }
+    )
+  : undefined;
