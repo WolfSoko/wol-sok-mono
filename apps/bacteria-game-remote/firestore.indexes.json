@@ -97,8 +97,8 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "attempts",
-          "order": "DESCENDING"
+          "fieldPath": "level",
+          "order": "ASCENDING"
         }
       ]
     },

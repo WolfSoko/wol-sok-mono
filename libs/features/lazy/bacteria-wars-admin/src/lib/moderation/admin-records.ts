@@ -395,8 +395,8 @@ export interface LevelStatsRecord {
   medals: Record<string, number>;
 }
 
-/** A map of counters, the numbers only. */
-const counts = (value: unknown): Record<string, number> =>
+/** A map of counters, the finite numbers only. */
+export const counts = (value: unknown): Record<string, number> =>
   isObject(value)
     ? Object.fromEntries(
         Object.entries(value).filter(

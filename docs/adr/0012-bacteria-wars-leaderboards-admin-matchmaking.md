@@ -1338,8 +1338,10 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      asks for none. The overview's "Recount accounts" sends
      `stats.recount`, then `stats.refresh`.
    - The Balance view: the `levelStats` of one balance version (the
-     game's `BALANCE_VERSION` at first), most played first (index
-     `balanceVersion`, `attempts` desc) - win rates with and without
+     game's `BALANCE_VERSION` at first), by level (index `balanceVersion`,
+     `level`: every document has its key fields, while a re-run counted
+     without its attempt would lack `attempts` and drop out of an order
+     on it) - win rates with and without
      evolving, the evolved share and its weapons, match lengths and the
      medallions of the re-run matches.
    - Still to come: the toggle page, on the game's Remote Config reader. The admin link in

@@ -166,6 +166,14 @@ export const EN = {
   balance: {
     version: 'Balance version',
     hint: 'Counted from stored local matches against the computer; the medallions only from the matches the server re-ran.',
+    showing: 'Balance version {version}',
+    offCurve: 'computer off the curve',
+    medal: {
+      platinum: 'Platinum',
+      gold: 'Gold',
+      silver: 'Silver',
+      bronze: 'Bronze',
+    },
     level: 'Level',
     ladder: 'ladder {ladder}',
     attempts: 'Matches',

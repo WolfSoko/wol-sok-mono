@@ -215,7 +215,11 @@ export class AdminRecordsService {
     return parseStoredReplay(replayId, snapshot.data());
   }
 
-  /** The level statistics of one balance version, most played first. */
+  /**
+   * The level statistics of one balance version, by level - ordered by a
+   * field every document has (`level`, part of its key), since Firestore
+   * leaves out documents without the ordered field.
+   */
   public async levelStats(
     balanceVersion: number,
     after: unknown = null
@@ -226,7 +230,7 @@ export class AdminRecordsService {
       sdk.query(
         sdk.collection(db, 'levelStats'),
         sdk.where('balanceVersion', '==', balanceVersion),
-        sdk.orderBy('attempts', 'desc')
+        sdk.orderBy('level')
       ),
       after,
       (doc) => parseLevelStats(doc.id, doc.data())

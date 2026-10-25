@@ -58,12 +58,12 @@ const GAME_QUERIES: Queries = {
       { fieldPath: 'updatedAt', order: 'DESCENDING' },
     ],
   },
-  // The admin area's Balance view: a balance version, most played first.
+  // The admin area's Balance view: a balance version, by level.
   'level statistics of a balance version': {
     group: 'levelStats',
     fields: [
       { fieldPath: 'balanceVersion', order: 'ASCENDING' },
-      { fieldPath: 'attempts', order: 'DESCENDING' },
+      { fieldPath: 'level', order: 'ASCENDING' },
     ],
   },
 };
