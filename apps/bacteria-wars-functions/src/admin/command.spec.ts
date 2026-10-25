@@ -4,6 +4,7 @@ describe('isOwnerRecord', () => {
   const owner: OwnerRecord = {
     customClaims: { admin: true },
     emailVerified: true,
+    disabled: false,
     providerData: [{ providerId: 'google.com' }],
   };
 
@@ -16,6 +17,7 @@ describe('isOwnerRecord', () => {
     ['a claim that is not true', { customClaims: { admin: 'yes' } }],
     ['an unverified email', { emailVerified: false }],
     ['no Google provider', { providerData: [{ providerId: 'password' }] }],
+    ['a disabled account', { disabled: true }],
   ])('refuses %s', (_, change) => {
     expect(isOwnerRecord({ ...owner, ...change })).toBe(false);
   });

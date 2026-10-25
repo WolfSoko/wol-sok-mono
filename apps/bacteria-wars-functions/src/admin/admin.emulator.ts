@@ -179,6 +179,10 @@ describe('player.ban', () => {
     await db.doc('queue/ada').set({ claim: null });
     await db.doc('queue/bob').set({ claim: null });
     await db.doc('rooms/ABC234').set({ host: 'ada' });
+    // A stub: Bob's report of their match is checked against it.
+    await db
+      .doc('rooms/GHJ892')
+      .set({ host: 'ada', guest: 'bob', taken: true });
     await db.doc('rooms/DEF567').set({ host: 'bob' });
     await db.doc('invites/one').set({ from: 'ada' });
     await db.doc('invites/two').set({ from: 'bob' });
@@ -196,8 +200,10 @@ describe('player.ban', () => {
     expect(await exists('queue/ada')).toBe(false);
     expect(await exists('rooms/ABC234')).toBe(false);
     expect(await exists('invites/one')).toBe(false);
-    expect(await exists('players/bob/challenges/ada')).toBe(false);
-    expect(await exists('players/bob/requests/ada')).toBe(false);
+    expect(await exists('rooms/GHJ892')).toBe(true);
+    // Challenges expire within the hour; requests lead nowhere now.
+    expect(await exists('players/bob/challenges/ada')).toBe(true);
+    expect(await exists('players/bob/requests/ada')).toBe(true);
     // What others made stays.
     expect(await exists('queue/bob')).toBe(true);
     expect(await exists('rooms/DEF567')).toBe(true);
@@ -280,6 +286,16 @@ describe('player.ban', () => {
     });
     expect((await db.doc('bans/ada').get()).exists).toBe(false);
     expect((await db.doc('moderation/ada').get()).get('bans')).toBe(1);
+  });
+
+  it('leaves a command another delivery still runs alone', async () => {
+    // The first delivery claimed the audit and has not finished.
+    await db.doc('adminAudit/c1').set({ ok: null });
+    expect(await command('c1', ban('ada', null))).toBeNull();
+    expect((await db.doc('bans/ada').get()).exists).toBe(false);
+    expect((await db.doc('adminCommands/c1').get()).get('result')).toBe(
+      undefined
+    );
   });
 });
 

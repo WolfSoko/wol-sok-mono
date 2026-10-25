@@ -29,18 +29,22 @@ export interface AdminContext {
 export interface OwnerRecord {
   customClaims?: Record<string, unknown>;
   emailVerified: boolean;
+  disabled: boolean;
   providerData: readonly { providerId: string }[];
 }
 
 /**
  * The owner as the rules' `isAdmin()` sees them (ADR 0011, 0012): the
- * `admin` claim, a verified email and a Google provider - re-read from
- * Auth, so a revoked claim stops at once rather than when the token ends.
+ * `admin` claim, a verified email and a Google provider, on an account
+ * that is not disabled - re-read from Auth, so a revoked claim or a
+ * disabled account stops at once rather than when the token ends. (The
+ * trigger sees no token, so revoked refresh tokens alone wait for it.)
  */
 export function isOwnerRecord(user: OwnerRecord): boolean {
   return (
     user.customClaims?.['admin'] === true &&
     user.emailVerified &&
+    !user.disabled &&
     user.providerData.some((p) => p.providerId === 'google.com')
   );
 }
@@ -49,11 +53,14 @@ export function isOwnerRecord(user: OwnerRecord): boolean {
  * Runs `adminCommands/{id}` (ADR 0012), in order:
  * 1. checks the admin: the writer (`authId`, from the auth-context
  *    trigger) is the command's `uid`, and is the owner now;
- * 2. runs the action - once: the command id is the audit id, and a command
- *    already audited only answers again;
- * 3. writes `adminAudit/{commandId}` with `before` and `after`, also for
- *    an action that failed;
+ * 2. claims `adminAudit/{commandId}` with `create()` (`ok: null`), so a
+ *    second delivery of the event neither runs the action again nor
+ *    overwrites the first one's result: it answers from the audit;
+ * 3. runs the action and completes the audit with `before` and `after`,
+ *    also for an action that failed;
  * 4. writes `result: { ok, error?, at }` back on the command.
+ * A command that died between 2 and 3 stays `ok: null` in the audit; the
+ * owner sends a new one.
  * A command that is not exactly one (`parseAdminCommand`) answers
  * `malformed`; one from anybody but the owner `not-writer` or `not-admin`
  * - neither is audited. Only `player.ban` and `player.unban` run so far;
@@ -66,8 +73,8 @@ export async function runAdminCommand(
   authId: string | undefined,
   context: AdminContext,
   now: number = Date.now()
-): Promise<AdminResult> {
-  let result: AdminResult;
+): Promise<AdminResult | null> {
+  let result: AdminResult | null;
   try {
     result = await run(db, commandId, data, authId, context, now);
   } catch (error) {
@@ -76,9 +83,12 @@ export async function runAdminCommand(
     logger.error('Admin command failed', { commandId, error });
     result = { ok: false, error: 'internal' };
   }
-  await db.doc(`adminCommands/${commandId}`).update({
-    result: { ...result, at: FieldValue.serverTimestamp() },
-  });
+  // Null: another delivery runs it, and writes the result.
+  if (result !== null) {
+    await db.doc(`adminCommands/${commandId}`).update({
+      result: { ...result, at: FieldValue.serverTimestamp() },
+    });
+  }
   return result;
 }
 
@@ -97,7 +107,7 @@ async function run(
   authId: string | undefined,
   context: AdminContext,
   now: number
-): Promise<AdminResult> {
+): Promise<AdminResult | null> {
   const uid = data['uid'];
   if (typeof uid !== 'string' || authId !== uid) {
     return { ok: false, error: 'not-writer' };
@@ -109,9 +119,23 @@ async function run(
   if (command === null) {
     return { ok: false, error: 'malformed' };
   }
-  const audited = await db.doc(`adminAudit/${commandId}`).get();
-  if (audited.exists) {
-    return answer(audited.get('ok') === true, audited.get('error'));
+  const head = {
+    by: uid,
+    type: command.type,
+    target: command.target === null ? null : { ...command.target },
+    reason: command.reason,
+    source: 'adminCommand' as const,
+  };
+  const claimed = await writeAudit(
+    db,
+    commandId,
+    { ...head, before: null, after: null, ok: null },
+    now
+  );
+  if (!claimed) {
+    const audited = await db.doc(`adminAudit/${commandId}`).get();
+    const ok: unknown = audited.get('ok');
+    return ok === null ? null : answer(ok === true, audited.get('error'));
   }
   let outcome: Outcome;
   try {
@@ -128,22 +152,13 @@ async function run(
       after: null,
     };
   }
-  await writeAudit(
-    db,
-    commandId,
-    {
-      by: uid,
-      type: command.type,
-      target: outcome.target,
-      reason: command.reason,
-      before: outcome.before,
-      after: outcome.after,
-      ok: outcome.ok,
-      ...(outcome.error === undefined ? {} : { error: outcome.error }),
-      source: 'adminCommand',
-    },
-    now
-  );
+  await db.doc(`adminAudit/${commandId}`).update({
+    target: outcome.target,
+    before: outcome.before,
+    after: outcome.after,
+    ok: outcome.ok,
+    ...(outcome.error === undefined ? {} : { error: outcome.error }),
+  });
   return answer(outcome.ok, outcome.error);
 }
 

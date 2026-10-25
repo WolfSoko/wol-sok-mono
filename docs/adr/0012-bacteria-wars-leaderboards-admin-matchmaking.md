@@ -857,10 +857,14 @@ chose not to share their status, and the privacy page says so.
 
 - **When the ban is set**, `adminCommand`:
   1. deletes `queue/{uid}`, RTDB `status/{uid}` and `connections/{uid}`,
-     the rooms the player hosts, the invites they created (`invites` where
-     `from == uid`), the challenges they sent, and the friend requests they
-     left (a collection-group query on `requests` by document id, which
-     also finds requests made before an unfriend);
+     the open rooms the player hosts (a taken room's stub stays: the other
+     player's report of the match is checked against it) and the invites
+     they created (`invites` where `from == uid`). The challenges they
+     sent expire within the hour and point to their rooms, and their friend
+     requests lead nowhere while they can write nothing, so both are left
+     to TTL and the other player (a collection-group query cannot filter
+     on a bare document id, and reading the groups through grows with the
+     player base);
   2. hides their entries on every board (`hiddenBy: 'ban'`);
   3. takes their public replays down the way ADR 0011's `remove` does;
   4. writes a tombstone if the account has a Google provider (below);
@@ -1147,21 +1151,23 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      `parseAdminCommand`, the audit under the command id, `result` on the
      command) runs `player.ban` and `player.unban`; every other type
      answers `unsupported` until its wave, audited like any failed
-     command. A ban writes `bans/{uid}` and RTDB `bans/{uid}` first, then
-     clears out the queue entry, status, connection, hosted rooms,
-     invites, sent challenges and friend requests, hides the entries
-     (`hiddenBy.ban`, updated in place so a daily entry keeps its TTL),
-     takes the public replays down, and writes the notice `banned` and
-     `moderation/{uid}.bans`. Challenges and requests are read through
-     their collection groups without fields, as a collection-group query
-     cannot filter on a bare document id. A ban that holds changes only
-     `until` and `reason` (no notice, no count), and runs the clear-out,
-     hide and take-down again, which change nothing the second time, so a
-     command that failed half-way is finished by sending it again.
-     Unbanning, and `hourly` for ended bans (100 a run, oldest first, each
-     audited with `by: 'system'`), lifts the `ban` hide, writes
-     `unbanned`, and deletes the Firestore ban last, so a failed step is
-     tried again. The rules of `adminCommands` (the shape, the writer,
+     command. The command claims its audit entry with `create()`
+     (`ok: null`) before it acts, so a second delivery neither acts again
+     nor overwrites the first one's result. The owner check also refuses
+     a disabled account. A ban writes `bans/{uid}`, and for a new ban the
+     notice `banned` and `moderation/{uid}.bans`, in one transaction, then
+     RTDB `bans/{uid}`, clears out the queue entry, status, connection,
+     open hosted rooms and invites, hides the entries (`hiddenBy.ban`,
+     updated in place so a daily entry keeps its TTL) and takes the public
+     replays down (the stored replay first, the public copy's `removedAt`
+     last). A ban that holds changes only `until` and `reason` (no notice,
+     no count), and runs the other steps again, which change nothing the
+     second time, so a command that failed half-way is finished by sending
+     it again. Unbanning, and `hourly` for ended bans (25 a run, oldest
+     first, each audited with `by: 'system'`), removes the RTDB ban, lifts
+     the `ban` hide, and then deletes the Firestore ban with the notice
+     `unbanned` in one transaction, so a failed step is tried again; a ban
+     renewed meanwhile is found there and put back whole. The rules of `adminCommands` (the shape, the writer,
      `auth_time` within the hour for destructive types), `adminAudit`,
      `moderation` and `notices`; the RTDB `connections` node and the ban
      check on `status` and `connections`; the TTLs of `adminCommands`,

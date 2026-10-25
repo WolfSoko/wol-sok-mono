@@ -4,7 +4,6 @@ import {
   FieldValue,
   type Firestore,
   type Query,
-  type QueryDocumentSnapshot,
   Timestamp,
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
@@ -14,9 +13,8 @@ import {
   memberEntries,
   profileIn,
 } from '../boards/entries';
-import { clearBanCache } from '../limits';
 import type { Realtime } from './realtime';
-import { writeAudit, writeNotice } from './records';
+import { noticeData, writeAudit } from './records';
 
 /**
  * Bans (ADR 0012): `bans/{uid}` = `{ since, until, reason }`, mirrored to
@@ -36,8 +34,11 @@ export interface BanState {
 /** The documents one page of a clear-out deletes. */
 const PAGE = 300;
 
-/** The expired bans one hourly run lifts at most; the next takes the rest. */
-export const BAN_SWEEP_LIMIT = 100;
+/**
+ * The expired bans one hourly run lifts at most, before its verification
+ * slice; the next run takes the rest.
+ */
+export const BAN_SWEEP_LIMIT = 25;
 
 /** A ban as Firestore keeps it, in `bans/{uid}` and in the audit. */
 export interface StoredBan {
@@ -88,18 +89,20 @@ export interface BanChange {
 /**
  * Bans a player (`player.ban`), or changes the end and reason of a ban
  * that holds. In order (ADR 0012):
- * 1. writes both ban documents, so the rules refuse the player's writes
- *    while the rest runs;
- * 2. takes the player out of what others meet them in: their queue entry,
- *    status and connection, the rooms they host, the invites they made,
- *    the challenges they sent and the friend requests they left;
- * 3. hides their entries on every board (`hiddenBy.ban`);
- * 4. takes their public replays down the way `remove` does;
- * 5. for a new ban only, tells them (notice `banned`) and counts it
- *    (`moderation/{uid}.bans`).
- * Steps 2 to 4 change nothing the second time, so a changed ban runs them
- * again and finishes what a failed command left. Ban tombstones come with
- * a later wave.
+ * 1. in one transaction: `bans/{uid}`, and for a new ban the notice
+ *    `banned` and the count in `moderation/{uid}.bans` - so a ban sent
+ *    again after a failure is neither untold nor counted twice;
+ * 2. the Realtime Database's ban, so its rules refuse the player too;
+ * 3. takes the player out of what others meet them in: their queue entry,
+ *    status and connection, the open rooms they host and the invites they
+ *    made. A room already taken stays: its stub is what the other
+ *    player's report of the match is checked against. Challenges expire
+ *    within the hour and point to the player's rooms; friend requests
+ *    lead nowhere while the player can write nothing;
+ * 4. hides their entries on every board (`hiddenBy.ban`);
+ * 5. takes their public replays down the way `remove` does.
+ * Steps 2 to 5 change nothing the second time, so a ban sent again
+ * finishes what a failed one left. Ban tombstones come with a later wave.
  */
 export async function banPlayer(
   db: Firestore,
@@ -110,43 +113,52 @@ export async function banPlayer(
   noticeId: string,
   now: number
 ): Promise<BanChange> {
-  const before = await readBan(db, uid);
-  // A ban that holds keeps its start; one that ended counts as new.
-  const renewed = before !== null && holds(before, now);
-  const after: BanState = {
-    since: renewed ? before.since : now,
-    until,
-    reason,
-  };
-  await db.doc(`bans/${uid}`).set(stored(after));
+  const banRef = db.doc(`bans/${uid}`);
+  const { before, after } = await db.runTransaction(async (tx) => {
+    const before = banOf((await tx.get(banRef)).data());
+    // A ban that holds keeps its start; one that ended counts as new.
+    const renewed = before !== null && holds(before, now);
+    const after: BanState = {
+      since: renewed ? before.since : now,
+      until,
+      reason,
+    };
+    tx.set(banRef, stored(after));
+    if (!renewed) {
+      tx.set(
+        db.doc(`players/${uid}/notices/${noticeId}`),
+        noticeData('banned', now, { until, reason })
+      );
+      tx.set(
+        db.doc(`moderation/${uid}`),
+        { bans: FieldValue.increment(1) },
+        { merge: true }
+      );
+    }
+    return { before, after };
+  });
   await realtime.set(`bans/${uid}`, until ?? 0);
-  clearBanCache();
-  const change = {
-    before: before === null ? null : stored(before),
-    after: stored(after),
-  };
-  // Idempotent, so a ban sent again finishes what a failed one left.
   await clearOut(db, realtime, uid);
   await hideForBan(db, uid, true);
   await takeDownPublicReplays(db, uid);
-  if (!renewed) {
-    await writeNotice(db, uid, noticeId, 'banned', now, { until, reason });
-    await db
-      .doc(`moderation/${uid}`)
-      .set({ bans: FieldValue.increment(1) }, { merge: true });
-  }
-  return change;
+  return {
+    before: before === null ? null : stored(before),
+    after: stored(after),
+  };
 }
 
 /**
  * Lifts a player's ban (`player.unban`, or `expireBans` once it ended):
- * brings back the entries the ban hid - not those the owner hid or the
- * player opted out of - tells the player (notice `unbanned`) and deletes
- * both ban documents. Public replays taken down stay down. With
- * `endedOnly`, only a ban whose end has passed is lifted. The Firestore
- * ban goes last, and only while it is the ban this started from: a step
- * that fails leaves it for the next try, and a ban the owner renewed
- * meanwhile stays. Null when there was nothing to lift.
+ * removes the Realtime Database's ban, brings back the entries the ban hid
+ * - not those the owner hid or the player opted out of - and then, in one
+ * transaction, deletes `bans/{uid}` and tells the player (notice
+ * `unbanned`). The Firestore ban goes last, so a step that fails leaves it
+ * for the next try. With `endedUntil`, only an ended ban with that end is
+ * lifted; a ban the owner renewed while this ran is found by the
+ * transaction and put back whole (its Realtime Database ban and hides).
+ * Public replays taken down stay down. Null when there was nothing to
+ * lift; an unban without a ban still finishes the first two steps, which
+ * an earlier unban may have left undone.
  */
 export async function liftBan(
   db: Firestore,
@@ -154,26 +166,38 @@ export async function liftBan(
   uid: string,
   noticeId: string,
   now: number,
-  endedOnly = false
+  endedUntil?: number
 ): Promise<BanChange | null> {
   const before = await readBan(db, uid);
-  if (before === null || (endedOnly && holds(before, now))) {
+  if (
+    endedUntil !== undefined &&
+    (before === null || holds(before, now) || before.until !== endedUntil)
+  ) {
     return null;
   }
   await realtime.remove(`bans/${uid}`);
   await hideForBan(db, uid, false);
-  await writeNotice(db, uid, noticeId, 'unbanned', now);
+  if (before === null) {
+    return null;
+  }
   const ref = db.doc(`bans/${uid}`);
-  const lifted = await db.runTransaction(async (tx) => {
+  const outcome = await db.runTransaction(async (tx) => {
     const ban = banOf((await tx.get(ref)).data());
     if (ban === null || ban.until !== before.until) {
-      return false;
+      return { lifted: false, renewed: ban };
     }
     tx.delete(ref);
-    return true;
+    tx.set(
+      db.doc(`players/${uid}/notices/${noticeId}`),
+      noticeData('unbanned', now)
+    );
+    return { lifted: true, renewed: null };
   });
-  clearBanCache();
-  return lifted ? { before: stored(before), after: null } : null;
+  if (outcome.renewed !== null) {
+    await realtime.set(`bans/${uid}`, outcome.renewed.until ?? 0);
+    await hideForBan(db, uid, true);
+  }
+  return outcome.lifted ? { before: stored(before), after: null } : null;
 }
 
 /**
@@ -197,9 +221,10 @@ export async function expireBans(
   let lifted = 0;
   for (const doc of ended.docs) {
     const uid = doc.id;
-    const id = `ban-ended_${uid}_${(doc.get('until') as Timestamp).toMillis()}`;
+    const until = (doc.get('until') as Timestamp).toMillis();
+    const id = `ban-ended_${uid}_${until}`;
     try {
-      const change = await liftBan(db, realtime, uid, id, now, true);
+      const change = await liftBan(db, realtime, uid, id, now, until);
       if (change === null) {
         continue;
       }
@@ -277,13 +302,7 @@ export async function hideForBan(
   return changed;
 }
 
-/**
- * Takes a banned player out of what others meet them in. Challenges and
- * friend requests are keyed by their sender's uid, and a collection-group
- * query cannot filter on a document id alone (it needs the whole path), so
- * those two groups are read through without their fields: challenges
- * expire within the hour, and bans are rare.
- */
+/** Takes a banned player out of what others meet them in - see `banPlayer`. */
 async function clearOut(
   db: Firestore,
   realtime: Realtime,
@@ -292,10 +311,16 @@ async function clearOut(
   await db.doc(`queue/${uid}`).delete();
   await realtime.remove(`status/${uid}`);
   await realtime.remove(`connections/${uid}`);
-  await deleteAll(db, db.collection('rooms').where('host', '==', uid));
+  const rooms = await db
+    .collection('rooms')
+    .where('host', '==', uid)
+    .select('taken')
+    .get();
+  await deleteRefs(
+    db,
+    rooms.docs.filter((doc) => doc.get('taken') !== true).map((doc) => doc.ref)
+  );
   await deleteAll(db, db.collection('invites').where('from', '==', uid));
-  await deleteSentBy(db, 'challenges', uid);
-  await deleteSentBy(db, 'requests', uid);
 }
 
 async function deleteAll(db: Firestore, query: Query): Promise<void> {
@@ -309,21 +334,6 @@ async function deleteAll(db: Firestore, query: Query): Promise<void> {
       return;
     }
   }
-}
-
-async function deleteSentBy(
-  db: Firestore,
-  group: 'challenges' | 'requests',
-  uid: string
-): Promise<void> {
-  const sent: DocumentReference[] = [];
-  for await (const doc of db.collectionGroup(group).select().stream()) {
-    const snapshot = doc as unknown as QueryDocumentSnapshot;
-    if (snapshot.id === uid) {
-      sent.push(snapshot.ref);
-    }
-  }
-  await deleteRefs(db, sent);
 }
 
 async function deleteRefs(
@@ -356,17 +366,17 @@ async function takeDownPublicReplays(
     if (removedAt !== null && removedAt !== undefined) {
       continue;
     }
-    await doc.ref.update({ removedAt: FieldValue.serverTimestamp() });
+    // The stored replay first: a public copy marked removed is skipped
+    // next time, so it must be the last step.
     const replayId = doc.get('replayId');
-    if (typeof replayId !== 'string') {
-      continue;
-    }
-    const replay = db.doc(`replays/${replayId}`);
-    if ((await replay.get()).exists) {
+    const replay =
+      typeof replayId === 'string' ? db.doc(`replays/${replayId}`) : null;
+    if (replay !== null && (await replay.get()).exists) {
       await replay.update({
         optOut: FieldValue.arrayUnion(uid),
         galleryOut: true,
       });
     }
+    await doc.ref.update({ removedAt: FieldValue.serverTimestamp() });
   }
 }

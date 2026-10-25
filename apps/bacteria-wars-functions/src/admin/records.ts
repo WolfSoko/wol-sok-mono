@@ -24,7 +24,8 @@ export interface AuditEntry {
   reason: string;
   before: unknown;
   after: unknown;
-  ok: boolean;
+  /** Null while the command runs: it claimed the entry, and is not done. */
+  ok: boolean | null;
   /** Why not, for a command that failed - an id, never a text to show. */
   error?: string;
   source: AuditSource;
@@ -65,19 +66,17 @@ export type NoticeType =
   | 'unbanned';
 
 /**
- * Writes `players/{uid}/notices/{id}`, which the player reads and deletes,
- * kept 31 days. A ban's notice says until when (null for good) and why;
- * the owner's uid is never in it.
+ * A notice as `players/{uid}/notices/{id}` keeps it - the player reads and
+ * deletes it, TTL takes it after 31 days. A ban's notice says until when
+ * (null for good) and why; the owner's uid is never in it. Written in the
+ * transaction that changes the ban, so it is never lost or doubled.
  */
-export async function writeNotice(
-  db: Firestore,
-  uid: string,
-  id: string,
+export function noticeData(
   type: NoticeType,
   now: number,
   ban?: { until: number | null; reason: BanReason }
-): Promise<void> {
-  await db.doc(`players/${uid}/notices/${id}`).set({
+): Record<string, unknown> {
+  return {
     type,
     at: Timestamp.fromMillis(now),
     ...(ban === undefined
@@ -87,5 +86,5 @@ export async function writeNotice(
           reason: ban.reason,
         }),
     expireAt: Timestamp.fromMillis(now + NOTICE_TTL_MS),
-  });
+  };
 }
