@@ -1,4 +1,9 @@
-import { atHourOf, onlineSort } from '@wolsok/feat-lazy-bac-game/engine';
+import {
+  atHourOf,
+  type NOT_REPORTED,
+  type OnlineReason as StoredOnlineReason,
+  onlineSort,
+} from '@wolsok/feat-lazy-bac-game/engine';
 import {
   FieldValue,
   type Firestore,
@@ -23,15 +28,12 @@ const DAY_MS = 24 * 3_600_000;
 /** When an account was made, in ms - null when unknown. */
 export type AccountCreatedAt = (uid: string) => Promise<number | null>;
 
-/** Why an agreed online match did (not) count - on the replay as `rankedReason`. */
-export type OnlineReason =
-  | 'counted'
-  | 'desync'
-  | 'short'
-  | 'stub-expired'
-  | 'banned'
-  | 'too-fast'
-  | 'pair-cap';
+/**
+ * Why an agreed online match did (not) count - on the replay as
+ * `rankedReason`. The hourly sweep's {@link NOT_REPORTED} is the one
+ * stored reason ranking never decides.
+ */
+export type OnlineReason = Exclude<StoredOnlineReason, typeof NOT_REPORTED>;
 
 /** One player's online record, as their entry shows it. */
 interface Record4 {

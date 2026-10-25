@@ -1,3 +1,5 @@
+import type { ArrivalReason, OnlineReason } from '../../state/replay-reasons';
+
 /** Recorded matches: saving them, "My matches" and watching one again. */
 export const replay = {
   watch: 'Watch replay',
@@ -7,6 +9,8 @@ export const replay = {
     savedDevice: 'Replay kept on this device, in My matches',
     notSaved:
       'Replay not saved: "Save my matches" is off. You can watch it until the next match.',
+    unconfirmed:
+      'Could not confirm the replay was saved. Look for it in My matches later.',
   },
   matches: {
     title: 'My matches',
@@ -49,11 +53,13 @@ export const replay = {
     galleryOut: 'Not in the gallery',
     public: 'In the gallery',
   },
-  /** Why a match did not count on a board - the functions' reasons. */
+  /**
+   * Why a match did not count on a board - the functions' reasons
+   * (`state/replay-reasons.ts`) but `counted`, which shows as its own chip.
+   */
   reasons: {
     /** A declared (ranked) match: `ArrivalReason`. */
     arrival: {
-      counted: 'counted',
       ruleset: 'not played on the ruleset ranked matches take',
       seed: 'not the match its attempt was declared for',
       'plan-mismatch': 'not the ranked setup',
@@ -65,10 +71,9 @@ export const replay = {
       void: 'its attempt was voided - it costs you nothing',
       duplicate: 'another replay already used its attempt',
       unreadable: 'its attempt could not be read',
-    },
+    } satisfies Record<Exclude<ArrivalReason, 'counted'>, string>,
     /** An online match: `OnlineReason`, and the sweep's `not-reported`. */
     online: {
-      counted: 'counted',
       desync: 'the two devices fell out of step',
       short: 'shorter than 30 seconds',
       'stub-expired': 'the room had expired, or a player is gone',
@@ -76,7 +81,7 @@ export const replay = {
       'too-fast': 'reported faster than the room could play its matches',
       'pair-cap': "the day's counted matches against this opponent are used",
       'not-reported': 'only one device reported it',
-    },
+    } satisfies Record<Exclude<OnlineReason, 'counted'>, string>,
   },
   viewer: {
     title: 'Replay',
@@ -95,7 +100,6 @@ export const replay = {
     removed: 'This match has been taken down.',
     unreadable: 'This match could not be loaded.',
     offline: 'The match could not be fetched. Check the connection and reload.',
-    older: 'Recorded on an older version - it can no longer be played.',
     canvas: 'The match on {level}, played back',
     gallery: 'All featured matches',
     details: 'About this match',

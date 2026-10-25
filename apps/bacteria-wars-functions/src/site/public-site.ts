@@ -1,3 +1,4 @@
+import { PUBLIC_ID } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   type DocumentSnapshot,
   FieldPath,
@@ -26,8 +27,6 @@ export interface SiteResponse {
 const GALLERY_SIZE = 60;
 /** The replays the sitemap lists at most: a sitemap's limit. */
 const SITEMAP_SIZE = 50_000;
-/** A public replay's id: Firestore's random ids, nothing else is read. */
-const PUBLIC_ID = /^[A-Za-z0-9]{20}$/;
 
 /**
  * Hosting's CDN keeps a page two minutes and a browser one more, so a

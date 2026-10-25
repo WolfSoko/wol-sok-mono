@@ -8,7 +8,6 @@ import {
 import { EvolutionService } from '../evolution.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
-import { GameSettingsService } from '../settings.service';
 import { GameStateService } from '../state/game-state.service';
 import { ReplayViewerComponent } from './replay-viewer.component';
 
@@ -40,7 +39,6 @@ import { ReplayViewerComponent } from './replay-viewer.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReplayScreenComponent {
-  private readonly settings = inject(GameSettingsService);
   private readonly evolution = inject(EvolutionService);
 
   private readonly recording = inject(GameStateService).lastRecording;
@@ -49,7 +47,5 @@ export class ReplayScreenComponent {
 
   /** The recording of the match that ended last. */
   protected readonly replay = computed(() => this.recording()?.replay ?? null);
-  protected readonly look = computed(() =>
-    this.evolution.wornSkin(this.settings.look())
-  );
+  protected readonly look = this.evolution.worn;
 }

@@ -38,7 +38,10 @@ storage until then. Settings stay with the device either way.
 - Online matches meet through the `GameRooms` port (`storage/game-rooms.ts`,
   `FirestoreGameRooms`), asked of `GameCloud.rooms()` - null without a
   project. The match itself goes device to device (`net/`), never through
-  Firestore.
+  Firestore. Once the link opened, the host swaps the room for its stub
+  (`OpenRoom.take`, ADR 0011), which the functions bind an online replay's
+  players to: without it every online upload is refused. Only a room
+  nobody joined is deleted (`close`).
 - Profiles, friends, challenges and the matchmaking queue go through the
   `GameSocial` port (`storage/game-social.ts`, `FirestoreGameSocial`), the
   online status through `GamePresence` (`RtdbGamePresence`, the Realtime
@@ -73,16 +76,19 @@ storage until then. Settings stay with the device either way.
   and reads its own replays back (`listMine`, one query in `GAME_QUERIES`).
   `listingOf` reads the functions' fields of `replays/{id}` - the seat from
   `seats` (online, host 0), `rankedReason` (`ARRIVAL_REASONS`,
-  `ONLINE_REASONS` in `replay-records.ts`, kept equal to the functions'
-  `ArrivalReason` and `OnlineReason` plus `not-reported`), `attempt`,
+  `ONLINE_REASONS` in `state/replay-reasons.ts`, exported through
+  `engine.ts`, where the functions take their reason types from),
   `galleryOut`, `publicId` - and leaves out what it does not know. A new
-  reason needs its text in the `replay.reasons` area. In the cloud
+  reason needs its text in the `replay.reasons` area (a `satisfies` there
+  fails to compile without it). In the cloud
   `remove` keeps a match out of the gallery and deletes nothing; only the
   device's backend deletes. "My matches" (`replays/my-matches.component.ts`)
   and the match just played (`replay-screen.component.ts`) are stage
   screens; specs use `FakeGameReplays` (`cloud` and `change`).
 - The replay viewer (`replays/replay-viewer.component.ts`) plays a
-  `ReplayScene` (`replay-scene.ts`) on an `ArenaViewComponent` by itself:
+  `ReplayScene` (`replay-scene.ts`) on an `ArenaViewComponent` by itself
+  (its frames drawn by `arenaContent`, `arena/arena-content.ts`, like the
+  game's):
   its own `MatchEngine` from `replayEngine` (`state/replay.ts`, beside
   `canPlayBack` and `playReplay`, which the functions import through
   `engine.ts`: keep its signature), nothing of the game's state. Specs
@@ -93,7 +99,9 @@ storage until then. Settings stay with the device either way.
   federation like `admin-kit`. Keep that entry free of the stage, the
   storage backends and Firebase: it reaches the public replay through
   `loadPublicReplay` (`storage/public-replays.ts`, plain `fetch` of
-  `/replays/{id}/replay.json`, base64 `bytes`), nothing else.
+  `/replays/{id}/replay.json`, base64 `bytes`), nothing else. An oxlint
+  override in `.oxlintrc.json` guards the imports of the files it pulls
+  in; a new one goes into its `files`.
 - The profile's `publicName`, `boardOptOut` and `galleryOptOut` (all off
   by default) are saved by `FirestoreGameSocial.saveProfile` with
   `mergeFields`: only the fields the player changed (a first profile

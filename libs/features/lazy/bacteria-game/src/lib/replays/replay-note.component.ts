@@ -8,7 +8,15 @@ import {
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { of, switchMap } from 'rxjs';
+import {
+  catchError,
+  concatWith,
+  map,
+  Observable,
+  of,
+  scan,
+  switchMap,
+} from 'rxjs';
 import { TranslationKey } from '../i18n/dictionaries';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameSettingsService } from '../settings.service';
@@ -70,12 +78,16 @@ export class ReplayNoteComponent {
   /** The recording of the match that just ended - null for none. */
   private readonly recording = inject(GameStateService).lastRecording;
 
-  /** True once the replay is stored - false until then, or for none. */
+  /** Where saving the replay stands - `pending` for none, too. */
   private readonly saved = toSignal(
     toObservable(computed(() => this.recording()?.id ?? null)).pipe(
-      switchMap((id) => (id === null ? of(false) : this.replays.watchSaved(id)))
+      switchMap((id) =>
+        id === null
+          ? of<SaveState>('pending')
+          : saveState(this.replays.watchSaved(id))
+      )
     ),
-    { initialValue: false }
+    { initialValue: 'pending' as SaveState }
   );
 
   /**
@@ -97,13 +109,16 @@ export class ReplayNoteComponent {
     if (recording === null) {
       return null;
     }
-    if (this.saved()) {
+    const saved = this.saved();
+    if (saved === 'saved') {
       return this.replays.cloud
         ? 'replay.status.saved'
         : 'replay.status.savedDevice';
     }
     if (recording.id !== null) {
-      return 'replay.status.uploading';
+      return saved === 'unconfirmed'
+        ? 'replay.status.unconfirmed'
+        : 'replay.status.uploading';
     }
     // An online match is always handed over; a local one only with the
     // setting on.
@@ -112,4 +127,24 @@ export class ReplayNoteComponent {
       ? 'replay.status.notSaved'
       : null;
   });
+}
+
+/**
+ * Where saving a replay stands: stored, still on its way, or no longer
+ * watched - `watchSaved` gave up asking, or failed, before it was stored.
+ */
+type SaveState = 'saved' | 'pending' | 'unconfirmed';
+
+/** `watchSaved` as a {@link SaveState}: once saved, it stays saved. */
+function saveState(saved: Observable<boolean>): Observable<SaveState> {
+  return saved.pipe(
+    map((stored): SaveState => (stored ? 'saved' : 'pending')),
+    catchError(() => of<SaveState>('unconfirmed')),
+    concatWith(of<SaveState>('unconfirmed')),
+    scan(
+      (last: SaveState, next: SaveState): SaveState =>
+        last === 'saved' ? last : next,
+      'pending'
+    )
+  );
 }

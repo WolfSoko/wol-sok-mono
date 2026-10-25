@@ -203,6 +203,40 @@
       "rules": {
         "no-restricted-imports": "off"
       }
+    },
+    {
+      "files": [
+        "libs/features/lazy/bacteria-game/src/watch.ts",
+        "libs/features/lazy/bacteria-game/src/lib/replays/{watch-page.component,public-replays,replay-viewer.component,replay-scene,watch-links}.ts",
+        "libs/features/lazy/bacteria-game/src/lib/storage/public-replays.ts",
+        "libs/features/lazy/bacteria-game/src/lib/arena/arena-content.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "firebase",
+                  "firebase/*",
+                  "@angular/fire",
+                  "@angular/fire/*",
+                  "**/storage/*",
+                  "!**/storage/public-replays",
+                  "**/net/*",
+                  "**/menu/*",
+                  "**/bacteria-game.component",
+                  "**/state/game-state.service",
+                  "**/settings.service",
+                  "**/evolution.service"
+                ],
+                "message": "The watch entry (watch.ts, ADR 0011) loads without the stage, the storage backends or Firebase: it reaches a public replay through loadPublicReplay only."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

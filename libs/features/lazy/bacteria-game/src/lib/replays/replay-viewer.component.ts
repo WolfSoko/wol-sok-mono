@@ -5,7 +5,6 @@ import {
   effect,
   ElementRef,
   input,
-  output,
   signal,
   untracked,
   viewChild,
@@ -139,8 +138,6 @@ export class ReplayViewerComponent {
   public readonly look = input<BacteriaLook>('slime');
   /** What a screen reader says of the arena. */
   public readonly label = input('');
-  /** Told once each time the match played to its end. */
-  public readonly ended = output<void>();
 
   protected readonly speeds = REPLAY_SPEEDS;
   protected readonly playing = signal(true);
@@ -264,9 +261,6 @@ export class ReplayViewerComponent {
     }
     if (scene.over !== untracked(this.over)) {
       this.over.set(scene.over);
-      if (scene.over) {
-        this.ended.emit();
-      }
     }
   }
 }

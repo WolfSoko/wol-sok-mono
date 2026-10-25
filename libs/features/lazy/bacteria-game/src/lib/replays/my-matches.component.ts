@@ -21,6 +21,7 @@ import {
   Subject,
   switchMap,
   take,
+  timeout,
 } from 'rxjs';
 import { EvolutionService } from '../evolution.service';
 import { TranslationKey } from '../i18n/dictionaries';
@@ -28,7 +29,6 @@ import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
-import { GameSettingsService } from '../settings.service';
 import { clock, TICKS_PER_SEC } from '../state/fixed-tick';
 import { BALANCE_VERSION } from '../state/game-balance';
 import { getLevel, levelNameText } from '../state/levels';
@@ -38,6 +38,12 @@ import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
 import { isCounted, type ReplayListing } from '../storage/replay-records';
 import { ReplayViewerComponent } from './replay-viewer.component';
+
+/**
+ * How long "My matches" waits for the server to carry a command out before
+ * it says that did not work - the functions may have to start first.
+ */
+export const COMMAND_TIMEOUT_MS = 30_000;
 
 /** A stored replay as the list shows it. */
 interface MatchRow {
@@ -79,12 +85,9 @@ interface MatchRow {
 export class MyMatchesComponent {
   private readonly replays = inject(GameReplays);
   private readonly i18n = inject(I18nService);
-  private readonly settings = inject(GameSettingsService);
   private readonly evolution = inject(EvolutionService);
   /** The skin the colonies wear in a replay: the player's, once owned. */
-  protected readonly look = computed(() =>
-    this.evolution.wornSkin(this.settings.look())
-  );
+  protected readonly look = this.evolution.worn;
 
   public readonly back = output<void>();
 
@@ -170,7 +173,8 @@ export class MyMatchesComponent {
           : await firstValueFrom(
               this.replays.watchCommand(command).pipe(
                 filter((each) => each !== null),
-                take(1)
+                take(1),
+                timeout({ first: COMMAND_TIMEOUT_MS })
               )
             );
       if (result?.ok !== true) {
@@ -181,6 +185,10 @@ export class MyMatchesComponent {
         this.cloud ? 'replay.matches.keptOut' : 'replay.matches.removed'
       );
       this.reload.next();
+    } catch (error) {
+      // No answer in time, or the watch gave up.
+      console.warn('The replay command did not come through', error);
+      this.notice.set('replay.matches.removeFailed');
     } finally {
       this.busy.set(null);
     }

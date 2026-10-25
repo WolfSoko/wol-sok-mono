@@ -136,6 +136,13 @@ describe('PrivacyComponent', () => {
     // Kept 30 days after the match, as the functions' REPLAY_TTL_MS.
     expect(de).toContain('30 Tage nach dem Match');
     expect(en).toContain('30 days after the match');
+    // A submission expires a day after the client wrote it (COMMAND_TTL_MS).
+    expect(de.replace(/\s+/g, ' ')).toContain(
+      'nicht innerhalb eines Tages nach dem Match hochladen'
+    );
+    expect(en.replace(/\s+/g, ' ')).toContain(
+      'cannot upload within a day after the match'
+    );
   });
 
   it('has its own title while open', async () => {

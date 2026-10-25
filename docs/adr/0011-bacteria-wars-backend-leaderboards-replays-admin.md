@@ -517,13 +517,19 @@ The rules and `replayCommand` require `admin == true`,
      `computer`, as nothing in it tells it from another generated level.
 5. Client: room stub, recording settings, submission, "My matches", the
    viewer.
-   - As built: the room stub, the recording settings ("Record matches
-     against the computer", "Save my matches", both on) and the
-     submission came first, behind `GameCloudOptions.replays`; the
-     release with "My matches" and the viewer turns it on
-     (`replays: true` in the remote's production and emulator
-     environments; e2e inherits the emulator's), so online matches and,
-     with "Save my matches", local ones are uploaded from then on.
+   - As built: the recording settings ("Record matches against the
+     computer", "Save my matches", both on) and the submission came
+     first, behind `GameCloudOptions.replays`; the rules took the room
+     stub, but the client still deleted the room once the guest
+     connected, so the functions would have refused every online upload
+     (`not-in-room`). The release with "My matches" and the viewer
+     writes the stub (`OpenRoom.take`, run by the host instead of the
+     delete once the link opened: `createdAt` read back from the room,
+     `expireAt` 6 hours after it; a room nobody joined is still deleted)
+     and turns the uploads on (`replays: true` in the remote's
+     production and emulator environments; e2e inherits the
+     emulator's), so online matches and, with "Save my matches", local
+     ones are uploaded from then on.
    - "My matches" (`replays/my-matches.component.ts`) is a stage screen
      (see "The pages"), listing `listMine` (`players array-contains`,
      `createdAt` desc, at most 50) as `listingOf` reads `replays/{id}`:

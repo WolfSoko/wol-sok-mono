@@ -7,7 +7,8 @@ import { I18nService } from '../i18n/i18n.service';
 import { BALANCE_VERSION } from '../state/game-balance';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
-import { MyMatchesComponent } from './my-matches.component';
+import { NEVER, throwError } from 'rxjs';
+import { COMMAND_TIMEOUT_MS, MyMatchesComponent } from './my-matches.component';
 
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
   for (let i = 0; i < 10; i++) {
@@ -124,6 +125,47 @@ describe('MyMatchesComponent', () => {
         each.getAttribute('aria-label')?.startsWith('Keep')
       )
     ).toBe(false);
+  });
+
+  it('says it did not work when the server never answers, and lets go', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(replays, 'watchCommand').mockReturnValue(NEVER);
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+
+    jest.useFakeTimers({
+      doNotFake: [
+        'queueMicrotask',
+        'nextTick',
+        'requestAnimationFrame',
+        'cancelAnimationFrame',
+      ],
+    });
+    try {
+      button(page, 'Keep').click();
+      await jest.advanceTimersByTimeAsync(COMMAND_TIMEOUT_MS);
+    } finally {
+      jest.useRealTimers();
+    }
+    await settle(fixture);
+
+    expect(page.textContent).toContain('That did not work.');
+    expect(button(page, 'Keep').disabled).toBe(false);
+  });
+
+  it('says it did not work when watching the command fails', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest
+      .spyOn(replays, 'watchCommand')
+      .mockReturnValue(throwError(() => new Error('refused')));
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+
+    button(page, 'Keep').click();
+    await settle(fixture);
+
+    expect(page.textContent).toContain('That did not work.');
+    expect(button(page, 'Keep').disabled).toBe(false);
   });
 
   it("lists a device's matches, newest 20, and deletes one", async () => {

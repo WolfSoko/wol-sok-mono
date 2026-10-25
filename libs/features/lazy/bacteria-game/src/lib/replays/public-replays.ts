@@ -1,16 +1,17 @@
 import { Injectable } from '@angular/core';
 import { canPlayBack, type Replay } from '../state/replay';
-import { loadPublicReplay } from '../storage/public-replays';
+import {
+  loadPublicReplay,
+  type PublicReplayAnswer,
+} from '../storage/public-replays';
 
 /**
- * Why a public replay does not play: none at the address (404), taken
- * down (410), an answer without a whole replay, one recorded on another
- * balance, or no answer at all (offline, a server error).
+ * Why a public replay does not play: what {@link loadPublicReplay} found
+ * missing, one recorded on another balance, or no answer at all (offline,
+ * a server error).
  */
 export type PublicReplayError =
-  | 'not-found'
-  | 'removed'
-  | 'unreadable'
+  | Extract<PublicReplayAnswer, { missing: unknown }>['missing']
   | 'older'
   | 'offline';
 
@@ -27,7 +28,7 @@ export type PublicReplayResult =
 @Injectable({ providedIn: 'root' })
 export class PublicReplays {
   public async load(publicId: string): Promise<PublicReplayResult> {
-    let answer: Awaited<ReturnType<typeof loadPublicReplay>>;
+    let answer: PublicReplayAnswer;
     try {
       answer = await loadPublicReplay(publicId);
     } catch {

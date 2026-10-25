@@ -9,6 +9,8 @@ export const replay: Translation<typeof en> = {
     savedDevice: 'Wiederholung auf diesem Gerät behalten, in „Meine Matches“',
     notSaved:
       'Wiederholung nicht gespeichert: „Meine Matches speichern“ ist aus. Du kannst sie bis zum nächsten Match ansehen.',
+    unconfirmed:
+      'Ob die Wiederholung gespeichert wurde, ließ sich nicht bestätigen. Schau später in „Meine Matches“ nach.',
   },
   matches: {
     title: 'Meine Matches',
@@ -54,7 +56,6 @@ export const replay: Translation<typeof en> = {
   },
   reasons: {
     arrival: {
-      counted: 'gezählt',
       ruleset:
         'nicht mit dem Regelwerk gespielt, das gewertete Matches verlangen',
       seed: 'nicht das Match, für das der Versuch angemeldet war',
@@ -69,7 +70,6 @@ export const replay: Translation<typeof en> = {
       unreadable: 'der Versuch ließ sich nicht lesen',
     },
     online: {
-      counted: 'gezählt',
       desync: 'die beiden Geräte sind aus dem Takt geraten',
       short: 'kürzer als 30 Sekunden',
       'stub-expired': 'der Raum war abgelaufen, oder ein Spieler ist weg',
@@ -100,8 +100,6 @@ export const replay: Translation<typeof en> = {
     unreadable: 'Dieses Match ließ sich nicht laden.',
     offline:
       'Das Match ließ sich nicht abrufen. Prüf die Verbindung und lade neu.',
-    older:
-      'Mit einer älteren Version aufgezeichnet – es lässt sich nicht mehr abspielen.',
     canvas: 'Das Match auf {level}, noch einmal abgespielt',
     gallery: 'Alle ausgewählten Matches',
     details: 'Zu diesem Match',

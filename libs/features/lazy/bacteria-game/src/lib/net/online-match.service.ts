@@ -164,9 +164,15 @@ export class OnlineMatchService {
       this.update({ phase: 'connecting' });
       await link.accept(answer);
       await link.opened;
-      // Taken: nobody else may join it.
-      room.close();
+      // Taken: nobody else may join it, and the stub names who played -
+      // what the functions bind the room's replays to (ADR 0011). The
+      // match goes on without it; its uploads would be refused.
       this.room = null;
+      if (attempt === this.attempt) {
+        room.take().catch((error: unknown) => {
+          console.warn('The room could not be taken', error);
+        });
+      }
     } catch (error) {
       this.fail(attempt, error);
     }

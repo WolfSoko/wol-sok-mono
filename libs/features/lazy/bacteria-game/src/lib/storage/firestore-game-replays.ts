@@ -1,16 +1,25 @@
-import type { DocumentSnapshot } from 'firebase/firestore';
-import { filter, firstValueFrom, Observable } from 'rxjs';
+import type { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
+import {
+  catchError,
+  EMPTY,
+  filter,
+  firstValueFrom,
+  map,
+  Observable,
+} from 'rxjs';
 import { replayToBytes, MAX_PACKED_BYTES } from '../state/replay-pack';
 import type { EndReason } from '../state/win-conditions';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameReplays } from './game-replays';
 import {
   ARRIVAL_REASONS,
-  ArrivalReason,
+  type ArrivalReason,
+  ONLINE_REASONS,
+  type OnlineReason,
+} from '../state/replay-reasons';
+import {
   hintOf,
   MAX_REPLAY_LIST,
-  ONLINE_REASONS,
-  OnlineReason,
   onlineIdOf,
   parseCommandResult,
   ReplayCommandResult,
@@ -27,8 +36,11 @@ import { beforeRetry, errorCode } from './retry';
  * the write, and TTL removes what a failed function left behind.
  */
 export const COMMAND_TTL_MS = 24 * 60 * 60 * 1000;
-/** How often {@link FirestoreGameReplays.watchSaved} asks again before it gives up. */
-const SAVED_TRIES = 8;
+/**
+ * How often a document the rules refuse - one that does not exist yet - is
+ * asked again before the watch gives up.
+ */
+const REFUSED_TRIES = 8;
 
 const KINDS: readonly ReplayKind[] = ['online', 'computer', 'daily', 'endless'];
 const STATES: readonly ReplayState[] = [
@@ -89,39 +101,12 @@ export class FirestoreGameReplays implements GameReplays {
 
   public watchSaved(id: string): Observable<boolean> {
     const { db, dbSdk } = this.connection;
-    const ref = dbSdk.doc(db, 'replays', id);
     // Until the replay exists the rules refuse to read it - they read its
-    // players - so a refusal means "not yet" and is asked again later.
-    return new Observable<boolean>((subscriber) => {
-      let stop: (() => void) | null = null;
-      let closed = false;
-      const listen = (attempt: number) => {
-        stop = dbSdk.onSnapshot(
-          ref,
-          (snapshot) => subscriber.next(snapshot.exists()),
-          (error) => {
-            subscriber.next(false);
-            if (
-              attempt >= SAVED_TRIES ||
-              errorCode(error) !== 'permission-denied'
-            ) {
-              subscriber.complete();
-              return;
-            }
-            void beforeRetry(attempt).then(() => {
-              if (!closed) {
-                listen(attempt + 1);
-              }
-            });
-          }
-        );
-      };
-      listen(0);
-      return () => {
-        closed = true;
-        stop?.();
-      };
-    });
+    // players - so a refusal means "not yet". Given up, it completes.
+    return this.snapshotsOf(dbSdk.doc(db, 'replays', id)).pipe(
+      map((snapshot) => snapshot?.exists() ?? false),
+      catchError(() => EMPTY)
+    );
   }
 
   public async listMine(limit = MAX_REPLAY_LIST): Promise<ReplayListing[]> {
@@ -188,15 +173,55 @@ export class FirestoreGameReplays implements GameReplays {
     commandId: string
   ): Observable<ReplayCommandResult | null> {
     const { db, dbSdk } = this.connection;
-    const ref = dbSdk.doc(db, 'replayCommands', commandId);
-    return new Observable((subscriber) =>
-      dbSdk.onSnapshot(
-        ref,
-        (snapshot) =>
-          subscriber.next(parseCommandResult(snapshot.get('result'))),
-        (error) => console.error(`Could not read ${ref.path}`, error)
+    // A command still on its way to the server is refused like a replay
+    // not yet stored; a watch that gives up errors.
+    return this.snapshotsOf(dbSdk.doc(db, 'replayCommands', commandId)).pipe(
+      map((snapshot) =>
+        snapshot === null ? null : parseCommandResult(snapshot.get('result'))
       )
     );
+  }
+
+  /**
+   * The snapshots of `ref`, null for each time the rules refused it - they
+   * refuse a document that does not exist yet - after which it is listened
+   * to again, at most {@link REFUSED_TRIES} times. Then, or on any other
+   * error, it errors.
+   */
+  private snapshotsOf(
+    ref: DocumentReference
+  ): Observable<DocumentSnapshot | null> {
+    const { dbSdk } = this.connection;
+    return new Observable<DocumentSnapshot | null>((subscriber) => {
+      let stop: (() => void) | null = null;
+      let closed = false;
+      const listen = (attempt: number) => {
+        stop = dbSdk.onSnapshot(
+          ref,
+          (snapshot) => subscriber.next(snapshot),
+          (error) => {
+            subscriber.next(null);
+            if (
+              attempt >= REFUSED_TRIES ||
+              errorCode(error) !== 'permission-denied'
+            ) {
+              subscriber.error(error);
+              return;
+            }
+            void beforeRetry(attempt).then(() => {
+              if (!closed) {
+                listen(attempt + 1);
+              }
+            });
+          }
+        );
+      };
+      listen(0);
+      return () => {
+        closed = true;
+        stop?.();
+      };
+    });
   }
 
   private signedIn(): Promise<string> {
@@ -223,7 +248,7 @@ export function listingOf(
   }
   const millis = millisOf(data['createdAt']);
   const { kind, levelId, balanceVersion, replayVersion, ticks, endedBy } = data;
-  const { winnerSeat, hint, state, score, seats, simulation } = data;
+  const { winnerSeat, hint, state, score, seats } = data;
   if (
     !KINDS.includes(kind) ||
     typeof levelId !== 'string' ||
@@ -238,8 +263,6 @@ export function listingOf(
   ) {
     return null;
   }
-  const expireAt = millisOf(data['expireAt']);
-  const attempt = attemptOf(data['attempt']);
   const rankedReason = reasonOf(kind, data['rankedReason']);
   const publicId = data['publicId'];
   const optOut = data['optOut'];
@@ -263,11 +286,7 @@ export function listingOf(
     state,
     seat,
     ...(typeof score === 'number' ? { score } : {}),
-    ...(typeof simulation === 'string' ? { simulation } : {}),
-    ...(expireAt === null ? {} : { expireAt }),
-    ...(attempt === null ? {} : { attempt }),
     ...(rankedReason === null ? {} : { rankedReason }),
-    ...(data['stubExpired'] === true ? { stubExpired: true } : {}),
     ...(data['galleryOut'] === true ||
     (Array.isArray(optOut) && optOut.includes(uid))
       ? { galleryOut: true }
@@ -288,14 +307,6 @@ function millisOf(value: unknown): number | null {
     return typeof millis === 'number' ? millis : null;
   }
   return null;
-}
-
-function attemptOf(value: unknown): { id: string; at: number } | null {
-  if (typeof value !== 'object' || value === null) {
-    return null;
-  }
-  const { id, at } = value as Record<string, unknown>;
-  return typeof id === 'string' && typeof at === 'number' ? { id, at } : null;
 }
 
 /** The reason of the board the kind ranks on - null for none it knows. */

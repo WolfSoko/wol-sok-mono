@@ -1,5 +1,6 @@
 import type { Replay } from '../state/replay';
 import { onlineReplayId } from '../state/replay-id';
+import type { ArrivalReason, OnlineReason } from '../state/replay-reasons';
 import type { EndReason } from '../state/win-conditions';
 
 /** A recorded match to keep (ADR 0011). */
@@ -29,44 +30,6 @@ export type ReplayState =
 /** What kind of match a replay is - derived by the server, never claimed. */
 export type ReplayKind = 'online' | 'computer' | 'daily' | 'endless';
 
-/**
- * Why a declared (ranked) match did or did not count on its board - the
- * functions' `ArrivalReason` (`boards/declared-match.ts`), on the stored
- * replay as `rankedReason`.
- */
-export const ARRIVAL_REASONS = [
-  'counted',
-  'ruleset',
-  'seed',
-  'plan-mismatch',
-  'level',
-  'early',
-  'late',
-  'banned',
-  'no-attempt',
-  'void',
-  'duplicate',
-  'unreadable',
-] as const;
-export type ArrivalReason = (typeof ARRIVAL_REASONS)[number];
-
-/**
- * Why an online match did or did not count on the online board - the
- * functions' `OnlineReason` (`boards/rank-online.ts`), and `not-reported`,
- * which the hourly sweep writes on a match only one device reported.
- */
-export const ONLINE_REASONS = [
-  'counted',
-  'desync',
-  'short',
-  'stub-expired',
-  'banned',
-  'too-fast',
-  'pair-cap',
-  'not-reported',
-] as const;
-export type OnlineReason = (typeof ONLINE_REASONS)[number];
-
 /** A stored replay in the player's list, without its bytes. */
 export interface ReplayListing {
   id: string;
@@ -88,20 +51,12 @@ export interface ReplayListing {
   seat: number;
   /** The server's score, once it played the match again. */
   score?: number;
-  /** The ruleset it was played on (`cpu`, `gpu-int`). */
-  simulation?: string;
-  /** When the server lets it go, in ms - 30 days after the match. */
-  expireAt?: number;
-  /** The ranked attempt it was declared as (ADR 0012). */
-  attempt?: { id: string; at: number };
   /**
    * Why it did or did not count on a board - an {@link ArrivalReason} for
    * a declared match, an {@link OnlineReason} for an online one - absent
    * until the functions decided, and for a match that ranks nowhere.
    */
   rankedReason?: ArrivalReason | OnlineReason;
-  /** Online: reported after its room had expired - kept, never public. */
-  stubExpired?: boolean;
   /** True once the player kept it out of the public gallery (`remove`). */
   galleryOut?: boolean;
   /** Its public copy in the gallery, while there is one. */

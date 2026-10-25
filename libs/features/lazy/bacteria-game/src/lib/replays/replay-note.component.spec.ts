@@ -1,3 +1,4 @@
+import { of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FakeGameReplays } from '../../testing/fake-game-replays';
 import { recordedReplay } from '../../testing/recorded-replay';
@@ -49,6 +50,35 @@ describe('ReplayNoteComponent', () => {
     fixture.componentInstance.watch.subscribe(watch);
     page.querySelector('button')?.click();
     expect(watch).toHaveBeenCalled();
+  });
+
+  it.each([
+    ['gives up asking', of(false)],
+    ['fails', throwError(() => new Error('offline'))],
+  ])(
+    'says it could not confirm the save when watching it %s',
+    async (_case, watch) => {
+      jest.spyOn(replays, 'watchSaved').mockReturnValue(watch);
+      const replay = recordedReplay();
+      const id = await replays.submit({ replay, hint: 30 });
+      recording().set({ replay, hint: 30, id });
+      fixture.detectChanges();
+
+      expect(page.textContent).toContain(
+        'Could not confirm the replay was saved'
+      );
+      expect(page.textContent).not.toContain('Saving the replay');
+    }
+  );
+
+  it('stays "saved" once stored, whenever the watch ends', async () => {
+    jest.spyOn(replays, 'watchSaved').mockReturnValue(of(false, true));
+    const replay = recordedReplay();
+    const id = await replays.submit({ replay, hint: 30 });
+    recording().set({ replay, hint: 30, id });
+    fixture.detectChanges();
+
+    expect(page.textContent).toContain('Replay saved in My matches');
   });
 
   it('says a local match was not saved with "Save my matches" off', () => {

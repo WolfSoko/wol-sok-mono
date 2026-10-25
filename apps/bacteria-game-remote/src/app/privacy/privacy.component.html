@@ -93,7 +93,8 @@
       <li>
         Aufzeichnungen deiner Matches (Abschnitt 4, „Aufgezeichnete Matches“):
         eine, die noch nicht hochgeladen ist, etwa weil dein Gerät offline ist,
-        bis sie hochgeladen ist; läuft das Spiel ohne Cloud, bis zu 20 deiner
+        bis sie hochgeladen ist oder, nach mehr als einem Tag, von unserer
+        Datenbank abgewiesen wird; läuft das Spiel ohne Cloud, bis zu 20 deiner
         letzten Matches, die es dann nicht hochlädt,
       </li>
       <li>die Dateien des Spiels selbst, damit es auch offline läuft,</li>
@@ -257,6 +258,9 @@
       (Ergebnis, Prüfsumme und einen Hashwert der Eingaben), um zu prüfen, ob
       beide Geräte dasselbe Match gespielt haben. Eine hochgeladene
       Aufzeichnung, die sie nicht annehmen, löscht die Datenbank nach einem Tag.
+      Ein Match, das das Spiel nicht innerhalb eines Tages nach dem Match
+      hochladen kann, etwa weil dein Gerät so lange offline bleibt, wird nicht
+      mehr hochgeladen und nicht gespeichert.
     </p>
     <p>
       Lesen können eine gespeicherte Aufzeichnung nur die Spieler des Matches,
@@ -351,7 +355,8 @@
       Aus deinen Online-Matches entsteht ebenso ein Eintrag in der
       Online-Bestenliste: die Zahl deiner Siege, Niederlagen und Unentschieden
       und der Matches, die dein Gerät nicht gemeldet hat. Ein Match zählt nur,
-      wenn beide Geräte dasselbe Match gemeldet haben, es mindestens 30 Sekunden
+      wenn beide Geräte dasselbe Match gemeldet haben, das erste innerhalb von
+      sechs Stunden, nachdem der Raum angelegt wurde, es mindestens 30 Sekunden
       dauerte und kein gesperrter Spieler mitgespielt hat; dafür vermerken
       unsere Funktionen auch, wie viele Ergebnisse je Spielerpaar und Tag
       gezählt wurden (nach 2 Tagen gelöscht), und begrenzen, wie viele Siege am
@@ -671,8 +676,9 @@
       <li>
         recordings of your matches (section 4, “Recorded matches”): one not
         uploaded yet, for instance because your device is offline, until it is
-        uploaded; when the game runs without the cloud, up to 20 of your latest
-        matches, which it then does not upload,
+        uploaded or, after more than a day, refused by our database; when the
+        game runs without the cloud, up to 20 of your latest matches, which it
+        then does not upload,
       </li>
       <li>the game's own files, so that it runs offline too,</li>
       <li>
@@ -819,7 +825,9 @@
       works out. Of an online match they also store each device's report
       (result, checksum and a hash of the inputs), to check that both devices
       played the same match. An uploaded recording they do not accept is deleted
-      by the database after a day.
+      by the database after a day. A match the game cannot upload within a day
+      after the match, for instance because your device stays offline that long,
+      is no longer uploaded and not stored.
     </p>
     <p>
       A stored recording can be read only by the players of the match, in the
@@ -903,12 +911,13 @@
       Your online matches make an entry on the online leaderboard in the same
       way: the number of your wins, losses and draws and of the matches your
       device did not report. A match counts only if both devices reported the
-      same match, it lasted at least 30 seconds and no suspended player played
-      in it; for that our functions also note how many results were counted per
-      pair of players and day (deleted after 2 days), and they limit how many
-      wins count in a day. Whether and why a match counted is shown with it
-      under “My matches”. The leaderboards for the daily level and for endless
-      runs get no entries yet, as long as the game declares no ranked attempts.
+      same match, the first within six hours after the room was set up, it
+      lasted at least 30 seconds and no suspended player played in it; for that
+      our functions also note how many results were counted per pair of players
+      and day (deleted after 2 days), and they limit how many wins count in a
+      day. Whether and why a match counted is shown with it under “My matches”.
+      The leaderboards for the daily level and for endless runs get no entries
+      yet, as long as the game declares no ranked attempts.
     </p>
     <p>
       Every hour our functions add up, for our overview, figures such as how

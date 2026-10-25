@@ -273,6 +273,47 @@ describe('FirestoreGameReplays', () => {
     ).toEqual([{ ok: true }]);
   });
 
+  it('asks again while the rules refuse a command, then gives up with an error', async () => {
+    firestore.refused.add('replayCommands/c1');
+    jest.useFakeTimers();
+    try {
+      const seen: unknown[] = [];
+      const error = jest.fn();
+      const subscription = replays
+        .watchCommand('c1')
+        .subscribe({ next: (each) => seen.push(each), error });
+      expect(error).not.toHaveBeenCalled();
+
+      await jest.advanceTimersByTimeAsync(10 * 60_000);
+
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'permission-denied' })
+      );
+      expect(seen.every((each) => each === null)).toBe(true);
+      subscription.unsubscribe();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('completes watchSaved once it gives up', async () => {
+    firestore.refused.add('replays/l_y');
+    jest.useFakeTimers();
+    try {
+      const complete = jest.fn();
+      const subscription = replays
+        .watchSaved('l_y')
+        .subscribe({ complete, error: () => undefined });
+
+      await jest.advanceTimersByTimeAsync(10 * 60_000);
+
+      expect(complete).toHaveBeenCalled();
+      subscription.unsubscribe();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   describe('listingOf', () => {
     const at = (ms: number) => new FakeTimestamp(ms);
     const record = {
@@ -315,9 +356,7 @@ describe('FirestoreGameReplays', () => {
         levelId: 'petri-dish',
         balanceVersion: 3,
         replayVersion: 5,
-        simulation: 'gpu-int',
         createdAt: 1_000,
-        expireAt: 1_000 + 30 * 86_400_000,
         ticks: 900,
         endedBy: 'annihilation',
         winnerSeat: 1,
@@ -330,7 +369,7 @@ describe('FirestoreGameReplays', () => {
       expect(listingOf(online, 'host')?.seat).toBe(0);
     });
 
-    it('takes the hourly sweep\'s "not reported" and an expired stub', () => {
+    it('takes the hourly sweep\'s "not reported"', () => {
       const listing = listingOf(
         doc('o_2', {
           ...record,
@@ -345,12 +384,11 @@ describe('FirestoreGameReplays', () => {
 
       expect(listing).toMatchObject({
         seat: 1,
-        stubExpired: true,
         rankedReason: 'not-reported',
       });
     });
 
-    it('reads a declared match with its attempt, seat 0 against the computer', () => {
+    it('reads a declared match, seat 0 against the computer', () => {
       const listing = listingOf(
         doc('l_1', {
           ...record,
@@ -369,7 +407,6 @@ describe('FirestoreGameReplays', () => {
       expect(listing).toMatchObject({
         kind: 'daily',
         seat: 0,
-        attempt: { id: 'd_2026-10-25_1', at: 900 },
         rankedReason: 'late',
         galleryOut: true,
       });

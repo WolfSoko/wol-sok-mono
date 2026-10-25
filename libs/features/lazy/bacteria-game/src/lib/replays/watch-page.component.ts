@@ -21,6 +21,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 import { dismissSplash } from '../splash';
 import { getLevel, levelNameText } from '../state/levels';
 import { GAME_SITE_URL } from '../support/legal-links';
+import type { Replay } from '../state/replay';
 import { PublicReplayError, PublicReplays } from './public-replays';
 import { ReplayViewerComponent } from './replay-viewer.component';
 import { GALLERY_PATH, WATCH_PARAM } from './watch-links';
@@ -29,9 +30,15 @@ const ERRORS: Readonly<Record<PublicReplayError, TranslationKey>> = {
   'not-found': 'replay.watchPage.notFound',
   removed: 'replay.watchPage.removed',
   unreadable: 'replay.watchPage.unreadable',
-  older: 'replay.watchPage.older',
+  older: 'replay.matches.older',
   offline: 'replay.watchPage.offline',
 };
+
+/** What the watch page shows. */
+type WatchView =
+  | { kind: 'loading' }
+  | { kind: 'error'; key: TranslationKey }
+  | { kind: 'ready'; replay: Replay };
 
 /**
  * `/watch/{publicId}` (ADR 0011): a public replay played back in the
@@ -53,21 +60,20 @@ const ERRORS: Readonly<Record<PublicReplayError, TranslationKey>> = {
       <h1>
         {{ 'replay.watchPage.heading' | t: { level: levelText() || '…' } }}
       </h1>
-      @switch (state()) {
+      @let shown = view();
+      @switch (shown.kind) {
         @case ('loading') {
           <p>{{ 'replay.watchPage.loading' | t }}</p>
           <mat-progress-bar mode="indeterminate" />
         }
         @case ('error') {
-          <p class="notice" role="alert">{{ errorKey() | t }}</p>
+          <p class="notice" role="alert">{{ shown.key | t }}</p>
         }
         @case ('ready') {
-          @if (replay(); as replay) {
-            <feat-lazy-bac-game-replay-viewer
-              [replay]="replay"
-              [label]="'replay.watchPage.canvas' | t: { level: levelText() }"
-            />
-          }
+          <feat-lazy-bac-game-replay-viewer
+            [replay]="shown.replay"
+            [label]="'replay.watchPage.canvas' | t: { level: levelText() }"
+          />
         }
       }
       <nav class="links">
@@ -132,33 +138,28 @@ export class WatchPageComponent {
     params: () => this.publicId() ?? undefined,
     loader: ({ params }) => this.loader.load(params),
   });
-  protected readonly replay = computed(() => {
-    const result = this.loaded.value();
-    return result !== undefined && 'replay' in result ? result.replay : null;
-  });
-  protected readonly state = computed(() => {
+  /** What the page shows: the replay loading, why it does not play, or it. */
+  protected readonly view = computed((): WatchView => {
     if (this.publicId() === null) {
-      return 'error';
+      return { kind: 'error', key: ERRORS['not-found'] };
     }
     const result = this.loaded.value();
     if (result === undefined) {
-      return this.loaded.error() === undefined ? 'loading' : 'error';
+      return this.loaded.error() === undefined
+        ? { kind: 'loading' }
+        : { kind: 'error', key: ERRORS['not-found'] };
     }
-    return 'replay' in result ? 'ready' : 'error';
-  });
-  protected readonly errorKey = computed((): TranslationKey => {
-    const result = this.loaded.value();
-    return result !== undefined && 'error' in result
-      ? ERRORS[result.error]
-      : 'replay.watchPage.notFound';
+    return 'replay' in result
+      ? { kind: 'ready', replay: result.replay }
+      : { kind: 'error', key: ERRORS[result.error] };
   });
   /** The level's name in the active language - empty until it is loaded. */
   protected readonly levelText = computed(() => {
-    const replay = this.replay();
-    return replay === null
+    const view = this.view();
+    return view.kind !== 'ready'
       ? ''
       : renderGameText(
-          levelNameText(getLevel(replay.header.levelId)),
+          levelNameText(getLevel(view.replay.header.levelId)),
           (key, params) => this.i18n.t(key, params)
         );
   });

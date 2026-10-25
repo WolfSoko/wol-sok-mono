@@ -1,11 +1,8 @@
+import { arenaContent, SeatColors } from '../arena/arena-content';
 import type { ArenaContent, ArenaScene } from '../arena/arena-view.component';
-import { particleBudget } from '../arena/weapon-fx';
-import { DEFAULT_SCREEN_RESOLUTION } from '../state/arena-size';
-import type { GameBalance } from '../state/game-balance';
-import { Rect } from '../state/maps';
-import { getLevel, gridScale, levelBalance, levelMap } from '../state/levels';
+import type { Rect } from '../state/maps';
+import { getLevel, levelMap } from '../state/levels';
 import type { MatchEngine } from '../state/match-engine';
-import { isBoosted, Player } from '../state/player.model';
 import { replayEngine, type Replay } from '../state/replay';
 import type { BacteriaLook } from '../state/skins';
 
@@ -25,9 +22,8 @@ export interface ReplayLook {
  */
 export class ReplayScene implements ArenaScene {
   private engine: MatchEngine;
-  private readonly balance: GameBalance;
   private readonly walls: readonly Rect[];
-  private seatColors = new Map<number, readonly number[]>();
+  private readonly seatColors = new SeatColors();
   private ended = false;
 
   /** Builds the scene - null for a replay that does not play back here. */
@@ -43,9 +39,7 @@ export class ReplayScene implements ArenaScene {
   ) {
     this.engine = engine;
     const { levelId, width, height } = replay.header;
-    const level = getLevel(levelId);
-    this.balance = levelBalance(level, gridScale(level, width));
-    this.walls = levelMap(level).createWalls(width, height);
+    this.walls = levelMap(getLevel(levelId)).createWalls(width, height);
   }
 
   /** The ticks played so far. */
@@ -80,63 +74,24 @@ export class ReplayScene implements ArenaScene {
   }
 
   public content(alpha: number): ArenaContent {
-    const { engine, balance } = this;
+    const { engine } = this;
     const { width, height } = this.replay.header;
-    const players = engine.players;
-    const drawn = players.map((player) => ({
-      player,
-      at: engine.crosshairAt(player, alpha, width, height),
-    }));
-    const boosts = new Map(
-      drawn
-        .filter(({ player }) => isBoosted(player))
-        .map(({ player, at }) => [player.id, at])
-    );
-    const { simulation } = engine;
-    return {
+    return arenaContent({
+      players: engine.players,
+      crosshairAt: (player) => engine.crosshairAt(player, alpha, width, height),
+      simulation: engine.simulation,
       walls: this.walls,
-      dynamicWalls: simulation.getDynamicWalls(),
-      colonies: simulation.colonyLayers(boosts),
-      reducedMotion: this.look.reducedMotion,
-      nutrients: simulation.getNutrients(),
-      balance,
+      // The level's balance at the replay's scale, as `planMatch` made it.
+      balance: engine.balance,
       look: this.look.look,
-      cursors: drawn.map(({ player, at }) => ({
-        ...at,
-        color: player.color,
-        boostLeft:
-          isBoosted(player) && balance.boostDurationSec > 0
-            ? player.boostActiveSec / balance.boostDurationSec
-            : null,
-      })),
+      reducedMotion: this.look.reducedMotion,
       weaponFires: engine.takeFrameEvents().weapons,
-      weaponEffects: simulation.getActiveEffects(),
-      seatColors: this.colorsOf(players),
-      particleBudget: particleBudget(
-        DEFAULT_SCREEN_RESOLUTION,
-        this.look.reducedMotion
-      ),
-    };
+      seatColors: this.seatColors,
+    });
   }
 
   /** Lets go of the engine - the view is done with the scene. */
   public dispose(): void {
     this.engine.dispose();
-  }
-
-  /** The seats' colours - the same map until one of them changes. */
-  private colorsOf(
-    players: readonly Player[]
-  ): ReadonlyMap<number, readonly number[]> {
-    const known = this.seatColors;
-    if (
-      known.size !== players.length ||
-      players.some((player) => known.get(player.id) !== player.color)
-    ) {
-      this.seatColors = new Map(
-        players.map((player) => [player.id, player.color])
-      );
-    }
-    return this.seatColors;
   }
 }

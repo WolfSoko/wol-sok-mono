@@ -1,13 +1,9 @@
+import { fromBase64 } from '../state/base64';
 import type { Replay } from '../state/replay';
+import { PUBLIC_ID } from '../state/replay-id';
 import { replayFromBytes } from '../state/replay-pack';
 
-/**
- * What a public replay id looks like - an auto id of `publicReplays`, as
- * `publicSite` checks it too - checked before anything is fetched.
- */
-export const PUBLIC_ID = /^[A-Za-z0-9]{20}$/;
-
-/** Where and how {@link fetchPublicReplay} fetches. */
+/** Where and how {@link loadPublicReplay} fetches. */
 export interface PublicReplayOptions {
   /**
    * The site the public replays are served from, "" for this one - the
@@ -69,19 +65,6 @@ export async function loadPublicReplay(
   return replay === null ? { missing: 'unreadable' } : { replay };
 }
 
-/**
- * The public replay - null for one that is not there (404), was taken
- * down (410) or cannot be read. See {@link loadPublicReplay}, which tells
- * those apart.
- */
-export async function fetchPublicReplay(
-  publicId: string,
-  options: PublicReplayOptions = {}
-): Promise<Replay | null> {
-  const answer = await loadPublicReplay(publicId, options);
-  return 'replay' in answer ? answer.replay : null;
-}
-
 /** The decoded `bytes` of the answer - null for anything else. */
 function bytesOf(body: unknown): Uint8Array<ArrayBuffer> | null {
   if (typeof body !== 'object' || body === null) {
@@ -91,14 +74,5 @@ function bytesOf(body: unknown): Uint8Array<ArrayBuffer> | null {
   if (typeof encoded !== 'string') {
     return null;
   }
-  try {
-    const binary = atob(encoded);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-  } catch {
-    return null;
-  }
+  return fromBase64(encoded);
 }

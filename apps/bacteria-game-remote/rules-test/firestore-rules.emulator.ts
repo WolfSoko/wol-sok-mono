@@ -882,6 +882,34 @@ describe('the room stub', () => {
     await assertSucceeds(setDoc(doc(db('ada'), 'rooms/ABC234'), stub(room)));
   });
 
+  it('takes the stub as FirestoreGameRooms writes it: createdAt read back, 6 hours on', async () => {
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'rooms/GHJ234'), {
+        host: 'ada',
+        offer: 'o',
+        createdAt: serverTimestamp(),
+        expireAt: Timestamp.fromMillis(Date.now() + HOUR),
+      })
+    );
+    await assertSucceeds(
+      updateDoc(doc(db('bob'), 'rooms/GHJ234'), { guest: 'bob', answer: 'a' })
+    );
+    const room = await getDoc(doc(db('ada'), 'rooms/GHJ234'));
+    const createdAt = room.get('createdAt') as Timestamp;
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'rooms/GHJ234'), {
+        host: 'ada',
+        guest: room.get('guest'),
+        createdAt,
+        expireAt: new Timestamp(
+          createdAt.seconds + 6 * 60 * 60,
+          createdAt.nanoseconds
+        ),
+        taken: true,
+      })
+    );
+  });
+
   it('refuses the guest, a room not yet answered, a longer life or other players', async () => {
     const room = answered();
     await seed('rooms/ABC234', room);
