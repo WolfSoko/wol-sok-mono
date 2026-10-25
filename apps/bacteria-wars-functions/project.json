@@ -53,7 +53,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["build"],
       "options": {
-        "command": "nx run bacteria-game-remote:firebase deploy --only functions:bacteria --force --non-interactive"
+        "command": "firebase deploy --config=firebase.bacteria-game-remote.json --project=bacteria-game-remote --only functions:bacteria --force --non-interactive"
       }
     }
   }

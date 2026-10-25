@@ -574,6 +574,11 @@ Decided by the owner on 2026-10-23:
   with a delay, run `nx run bacteria-wars-functions:deploy` again a few
   minutes later (rerunning the release's deploy would redeploy every
   affected app).
+  Before this was fixed no release deployed the functions: the target ran a
+  nested `nx run bacteria-game-remote:firebase`, the task the hosting
+  deploy runs in the same release, and failed within a second (v74.82 to
+  v74.96, issues "Deploy release ... for non-cdk apps failed"). It calls
+  the Firebase CLI itself now.
   Artifact Registry's cleanup policy, once:
 
   ```bash
