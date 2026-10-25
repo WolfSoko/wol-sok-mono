@@ -7,7 +7,11 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
 import { endlessReplay, RUN_ID, TICKS } from '../testing/daily-replay';
-import { closeStaleMatches, rankEndless } from './rank-endless';
+import {
+  closeStaleMatches,
+  rankEndless,
+  trackDeclaredMatch,
+} from './rank-endless';
 import { type Verdict } from './verify';
 import { verifyEndlessSlice } from './verify-endless';
 
@@ -133,6 +137,17 @@ describe('rankEndless', () => {
     expect((await entry()).get('show')).toEqual({ depth: 1, seconds: 60 });
   });
 
+  it('counts a declared match lost when no replay ever comes', async () => {
+    await declare(0);
+    await trackDeclaredMatch(db, 'ada', `e_${RUN_ID}_0`, atOf(0));
+    expect(await run()).toMatchObject({ lives: 3, pendingAt: atOf(0) });
+    expect(await closeStaleMatches(db, NOW)).toBe(1);
+    expect(await run()).toMatchObject({ lives: 2, pendingAt: null });
+    expect(await trackDeclaredMatch(db, 'ada', 'd_2026-10-25_1', NOW)).toBe(
+      null
+    );
+  });
+
   it('remembers a declared match after its attempt document is gone', async () => {
     await declare(0);
     await declare(1);
@@ -206,7 +221,7 @@ describe('verifyEndlessSlice', () => {
       () => 0,
       () => ({ state: 'balance-mismatch', ms: 0 })
     );
-    expect(result.checked).toBe(0);
+    expect(result.checked).toBe(1);
     expect(await run()).toMatchObject({ verifiedWins: 0, cut: null });
     expect((await entry()).get('status')).toBe('provisional');
     expect((await db.doc('replays/l_0').get()).get('state')).toBe(

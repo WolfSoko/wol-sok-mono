@@ -1,11 +1,14 @@
 import {
+  afterMatch,
   ENDLESS_LIVES,
   endlessLevelId,
   endlessSort,
+  isRunOver,
+  newRun,
   TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import type { EntryBase } from './entries';
-import type { DailyReason } from './rank-daily';
+import type { ArrivalReason } from './declared-match';
 
 /**
  * An endless run as the functions keep it (ADR 0012), pure: computed again
@@ -20,7 +23,7 @@ export interface RunAttempt {
 }
 
 /** Why a ranked endless replay did (not) count - its `rankedReason`. */
-export type EndlessReason = DailyReason;
+export type EndlessReason = ArrivalReason;
 
 /** What a replay of one declared match brought, checked on arrival. */
 export interface AcceptedMatch {
@@ -32,6 +35,8 @@ export interface AcceptedMatch {
   reason: EndlessReason;
   /** The hour it came. */
   atHour: number;
+  /** The balance table it was played on: another one is never re-run. */
+  balanceVersion: number;
 }
 
 /** What became of a declared match. */
@@ -44,6 +49,7 @@ export interface RunMatch {
   ticks?: number;
   /** The hour its replay came. */
   atHour?: number;
+  balanceVersion?: number;
 }
 
 /** A run computed from its attempts - see {@link computeRun}. */
@@ -53,10 +59,6 @@ export interface RunState {
   lives: number;
   /** True once the last life is lost. */
   over: boolean;
-  /** Seconds the winning matches took, whole. */
-  seconds: number;
-  /** The hour the run reached its depth. */
-  atHour: number;
   /**
    * When the first match without a replay was declared, while it may still
    * come: nothing after it counts yet. Null once the run is settled.
@@ -86,13 +88,13 @@ export function computeRun(
     wins: 0,
     lives: ENDLESS_LIVES,
     over: false,
-    seconds: 0,
-    atHour: 0,
     pendingAt: null,
   };
-  let winTicks = 0;
+  // The client's own run rules (`state/endless.ts`), so a run scores here
+  // as it played there.
+  let run = newRun(runSeed);
   for (const { i, at } of [...attempts].sort((a, b) => a.i - b.i)) {
-    if (state.over) {
+    if (isRunOver(run)) {
       break;
     }
     const match = accepted[String(i)];
@@ -103,38 +105,27 @@ export function computeRun(
         break;
       }
       state.matches.push({ i, result: 'no-replay' });
-      state.lives--;
-    } else {
-      const expected = endlessLevelId({
-        seed: runSeed,
-        wins: state.wins,
-        lives: state.lives,
-      });
-      const counts = match.reason === 'counted' && match.levelId === expected;
-      const result: MatchResult = !counts
-        ? 'refused'
-        : match.won
-          ? 'won'
-          : 'lost';
-      state.matches.push({
-        i,
-        result,
-        replayId: match.replayId,
-        ticks: match.ticks,
-        atHour: match.atHour,
-      });
-      if (result === 'won') {
-        state.wins++;
-        winTicks += match.ticks;
-        state.atHour = match.atHour;
-      } else {
-        state.lives--;
-      }
+      run = afterMatch(run, false);
+      continue;
     }
-    state.over = state.lives <= 0;
+    const counts =
+      match.reason === 'counted' && match.levelId === endlessLevelId(run);
+    const result: MatchResult = !counts
+      ? 'refused'
+      : match.won
+        ? 'won'
+        : 'lost';
+    state.matches.push({
+      i,
+      result,
+      replayId: match.replayId,
+      ticks: match.ticks,
+      atHour: match.atHour,
+      balanceVersion: match.balanceVersion,
+    });
+    run = afterMatch(run, result === 'won');
   }
-  state.seconds = Math.floor(winTicks / TICKS_PER_SEC);
-  return state;
+  return { ...state, wins: run.wins, lives: run.lives, over: isRunOver(run) };
 }
 
 /** The won matches of a run, in order - what verification plays again. */
@@ -148,7 +139,7 @@ export function winsOf(state: Pick<RunState, 'matches'>): RunMatch[] {
  * a run whose every win was played again is verified.
  */
 export function endlessEntryBase(
-  state: Pick<RunState, 'matches' | 'wins' | 'seconds' | 'atHour'>,
+  state: Pick<RunState, 'matches' | 'wins'>,
   verifiedWins: number,
   cut: number | null
 ): EntryBase | null {
@@ -156,17 +147,14 @@ export function endlessEntryBase(
   if (depth <= 0) {
     return null;
   }
+  // The wins that count: all of them, or the verified prefix of a cut run.
   const kept = winsOf(state).slice(0, depth);
-  const seconds =
-    cut === null
-      ? state.seconds
-      : Math.floor(
-          kept.reduce((sum, match) => sum + (match.ticks ?? 0), 0) /
-            TICKS_PER_SEC
-        );
+  const seconds = Math.floor(
+    kept.reduce((sum, match) => sum + (match.ticks ?? 0), 0) / TICKS_PER_SEC
+  );
   return {
     sort: endlessSort(depth, seconds),
-    atHour: cut === null ? state.atHour : (kept.at(-1)?.atHour ?? state.atHour),
+    atHour: kept.at(-1)?.atHour ?? 0,
     baseStatus:
       cut !== null || verifiedWins >= depth ? 'verified' : 'provisional',
     show: { depth, seconds, ...(cut === null ? {} : { partial: true }) },

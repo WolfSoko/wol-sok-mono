@@ -4,6 +4,9 @@
  * per match-minute until the benchmark on a Cloud Run vCPU fixes them.
  */
 
+/** A day, in ms. */
+export const DAY_MS = 24 * 3_600_000;
+
 /** CPU time a UTC day may spend re-running daily attempts. */
 export const DAILY_VERIFY_MS = 1_200_000;
 

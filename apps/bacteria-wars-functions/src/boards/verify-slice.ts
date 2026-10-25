@@ -3,7 +3,6 @@ import {
   dailyBoardId,
   NEXT_CANDIDATES,
   type Replay,
-  replayFromBytes,
   utcDay,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
@@ -17,14 +16,14 @@ import {
 import { dayOf } from '../limits';
 import {
   DAILY_VERIFY_MS,
+  DAY_MS,
   FAILED_CHECKS_TO_SKIP,
   MAX_VERIFIED_TICKS,
   SLICE_MS,
 } from './budgets';
+import { storedReplay } from './declared-match';
 import { type DailyAttemptRun, writeDailyEntry } from './rank-daily';
 import { type Verdict, verifyReplay } from './verify';
-
-const DAY_MS = 24 * 3_600_000;
 
 /** What the verification needs to know of an account. */
 export interface AccountInfo {
@@ -34,10 +33,14 @@ export interface AccountInfo {
   google: boolean;
 }
 
+/** A board verification looks at. */
+export interface BoardRef {
+  boardId: string;
+}
+
 /** A provisional entry waiting to be checked, and whose it is. */
-export interface Candidate {
-  /** The board's UTC day - daily boards only. */
-  day: string;
+export interface Candidate<B extends BoardRef = BoardRef> {
+  board: B;
   entryId: string;
   sort: number;
   uid: string;
@@ -89,9 +92,13 @@ export async function verifyDailySlice(
   clock: () => number = () => performance.now(),
   verify: (replay: Replay) => Verdict = (replay) => verifyReplay(replay, clock)
 ): Promise<{ checked: number; spentMs: number }> {
-  const counterRef = db.doc(`counters/${dayOf(now)}`);
-  const spentToday = Number((await counterRef.get()).get('verifyMs') ?? 0);
-  const budget = Math.min(SLICE_MS, DAILY_VERIFY_MS - spentToday);
+  const budget = await sliceBudget(
+    db,
+    now,
+    ['verifyMs'],
+    DAILY_VERIFY_MS,
+    SLICE_MS
+  );
   if (budget <= 0) {
     return { checked: 0, spentMs: 0 };
   }
@@ -99,10 +106,15 @@ export async function verifyDailySlice(
   let checked = 0;
   const boards = openDays(now).map((day) => ({
     boardId: dailyBoardId(day),
-    kind: 'daily' as const,
     day,
   }));
-  for (const candidate of await candidates(db, now, accountInfo, boards)) {
+  for (const candidate of await candidates(
+    db,
+    now,
+    accountInfo,
+    'daily',
+    boards
+  )) {
     if (clock() - start >= budget) {
       break;
     }
@@ -111,14 +123,43 @@ export async function verifyDailySlice(
     }
   }
   const spentMs = Math.round(clock() - start);
-  await counterRef.set(
+  await recordSpent(db, now, 'verifyMs', spentMs);
+  return { checked, spentMs };
+}
+
+/**
+ * What a slice may still spend: at most `sliceMs`, and what the day's
+ * `dayBudgetMs` leaves after the time the counter `fields` hold.
+ */
+export async function sliceBudget(
+  db: Firestore,
+  now: number,
+  fields: readonly string[],
+  dayBudgetMs: number,
+  sliceMs: number
+): Promise<number> {
+  const counter = (await db.doc(`counters/${dayOf(now)}`).get()).data() ?? {};
+  const spent = fields.reduce(
+    (sum, field) => sum + Number(counter[field] ?? 0),
+    0
+  );
+  return Math.min(sliceMs, dayBudgetMs - spent);
+}
+
+/** Adds a slice's time to the day's counter `field`. */
+export async function recordSpent(
+  db: Firestore,
+  now: number,
+  field: string,
+  spentMs: number
+): Promise<void> {
+  await db.doc(`counters/${dayOf(now)}`).set(
     {
-      verifyMs: FieldValue.increment(spentMs),
+      [field]: FieldValue.increment(spentMs),
       expireAt: Timestamp.fromMillis(now + 40 * DAY_MS),
     },
     { merge: true }
   );
-  return { checked, spentMs };
 }
 
 /** At most this many provisional entries are looked at per board. */
@@ -161,50 +202,55 @@ async function provisionalCandidates(
  * The candidates of some boards of one kind, at most one per account, in
  * trust order then by score; accounts skipped after failed checks left out.
  */
-export async function candidates(
+export async function candidates<B extends BoardRef>(
   db: Firestore,
   now: number,
   accountInfo: (uid: string) => Promise<AccountInfo>,
-  boards: readonly {
-    boardId: string;
-    kind: 'daily' | 'endless';
-    day?: string;
-  }[]
-): Promise<Candidate[]> {
-  const found: Candidate[] = [];
+  kind: 'daily' | 'endless',
+  boards: readonly B[]
+): Promise<Candidate<B>[]> {
+  const lookup = async (board: B, entry: QueryDocumentSnapshot) => {
+    const member = await db
+      .collection('boardMembers')
+      .where(`entryIds.${kind}`, '==', entry.id)
+      .limit(1)
+      .get();
+    const uid = member.docs[0]?.id;
+    if (uid === undefined) {
+      return null;
+    }
+    const [moderation, info] = await Promise.all([
+      db.doc(`moderation/${uid}`).get(),
+      accountInfo(uid),
+    ]);
+    const skipUntil = moderation.get('skipUntil');
+    if (skipUntil instanceof Timestamp && skipUntil.toMillis() > now) {
+      return null;
+    }
+    return {
+      board,
+      entryId: entry.id,
+      sort: Number(entry.get('sort')),
+      uid,
+      trust: trustOf(info, moderation.get('verifiedBefore') === true, now),
+    };
+  };
+  const looked = await Promise.all(
+    boards.map(async (board) => {
+      const entries = await provisionalCandidates(
+        db,
+        board.boardId,
+        BOARD_CUT[kind]
+      );
+      return Promise.all(entries.map((entry) => lookup(board, entry)));
+    })
+  );
   const seen = new Set<string>();
-  for (const { boardId, kind, day = '' } of boards) {
-    for (const entry of await provisionalCandidates(
-      db,
-      boardId,
-      BOARD_CUT[kind]
-    )) {
-      const member = await db
-        .collection('boardMembers')
-        .where(`entryIds.${kind}`, '==', entry.id)
-        .limit(1)
-        .get();
-      const uid = member.docs[0]?.id;
-      if (uid === undefined || seen.has(uid)) {
-        continue;
-      }
-      const moderation = (await db.doc(`moderation/${uid}`).get()).data() ?? {};
-      const skipUntil = moderation['skipUntil'];
-      if (skipUntil instanceof Timestamp && skipUntil.toMillis() > now) {
-        continue;
-      }
-      seen.add(uid);
-      found.push({
-        day,
-        entryId: entry.id,
-        sort: Number(entry.get('sort')),
-        uid,
-        trust: trustOf(
-          await accountInfo(uid),
-          moderation['verifiedBefore'] === true,
-          now
-        ),
-      });
+  const found: Candidate<B>[] = [];
+  for (const candidate of looked.flat()) {
+    if (candidate !== null && !seen.has(candidate.uid)) {
+      seen.add(candidate.uid);
+      found.push(candidate);
     }
   }
   return found.sort((a, b) => a.trust - b.trust || b.sort - a.sort);
@@ -213,11 +259,11 @@ export async function candidates(
 /** Plays a candidate's best provisional attempt again - false when none. */
 async function checkCandidate(
   db: Firestore,
-  candidate: Candidate,
+  candidate: Candidate<{ boardId: string; day: string }>,
   now: number,
   verify: (replay: Replay) => Verdict
 ): Promise<boolean> {
-  const runRef = db.doc(`dailyRuns/${candidate.day}_${candidate.uid}`);
+  const runRef = db.doc(`dailyRuns/${candidate.board.day}_${candidate.uid}`);
   const attempts =
     ((await runRef.get()).get('attempts') as DailyAttemptRun[] | undefined) ??
     [];
@@ -240,7 +286,14 @@ async function checkCandidate(
     );
     const moderationRef = db.doc(`moderation/${candidate.uid}`);
     const moderation = (await tx.get(moderationRef)).data() ?? {};
-    await writeDailyEntry(tx, db, candidate.day, candidate.uid, next, now);
+    await writeDailyEntry(
+      tx,
+      db,
+      candidate.board.day,
+      candidate.uid,
+      next,
+      now
+    );
     tx.update(runRef, { attempts: next });
     tx.update(db.doc(`replays/${best.replayId}`), verdictFields(verdict));
     recordCheck(tx, moderationRef, moderation, verdict.state, now);
@@ -280,19 +333,6 @@ export function recordCheck(
       { merge: true }
     );
   }
-}
-
-/** A stored replay read back for a check - null when it is gone or damaged. */
-export async function storedReplay(
-  db: Firestore,
-  replayId: string
-): Promise<Replay | null> {
-  const bytes = (await db.doc(`replays/${replayId}/blob/data`).get()).get(
-    'bytes'
-  );
-  return bytes instanceof Uint8Array
-    ? replayFromBytes(new Uint8Array(bytes), { stored: true })
-    : null;
 }
 
 /** What a check writes on the replay it played. */

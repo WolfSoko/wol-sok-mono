@@ -166,9 +166,12 @@ export async function runHourly(
   now: number,
   accountInfo: (uid: string) => Promise<AccountInfo>
 ) {
-  const notReported = await closeNotReported(db, now);
-  const staleRuns = await closeStaleMatches(db, now);
-  const finalized = await finalizeDailyBoards(db, now);
+  // Independent sweeps, then the slices that spend the hour's budget.
+  const [notReported, staleRuns, finalized] = await Promise.all([
+    closeNotReported(db, now),
+    closeStaleMatches(db, now),
+    finalizeDailyBoards(db, now),
+  ]);
   const daily = await verifyDailySlice(db, now, accountInfo);
   const endless = await verifyEndlessSlice(
     db,

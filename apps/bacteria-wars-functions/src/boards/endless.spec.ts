@@ -1,4 +1,8 @@
-import { endlessLevelId, endlessSort } from '@wolsok/feat-lazy-bac-game/engine';
+import {
+  BALANCE_VERSION,
+  endlessLevelId,
+  endlessSort,
+} from '@wolsok/feat-lazy-bac-game/engine';
 import {
   type AcceptedMatch,
   computeRun,
@@ -25,6 +29,7 @@ const match = (
   ticks: TICKS,
   reason: 'counted',
   atHour: 100 + wins,
+  balanceVersion: BALANCE_VERSION,
   ...extra,
 });
 /** `n` matches declared an hour or more ago. */
@@ -43,9 +48,11 @@ describe('computeRun', () => {
       wins: 2,
       lives: 2,
       over: false,
-      seconds: 120,
-      atHour: 101,
       pendingAt: null,
+    });
+    expect(endlessEntryBase(run, 0, null)).toMatchObject({
+      atHour: 101,
+      show: { depth: 2, seconds: 120 },
     });
     expect(run.matches.map((m) => m.result)).toEqual(['won', 'lost', 'won']);
   });

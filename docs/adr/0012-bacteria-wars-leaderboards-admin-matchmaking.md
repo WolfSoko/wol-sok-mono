@@ -1068,8 +1068,9 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      or none 2 hours after the declaration costs a life, a match still
      within those 2 hours holds the count). The player's entry is their
      best run (index `uid` + `sort` on `endlessRuns`); the others keep a
-     31-day TTL. `hourly` sweeps runs waiting on a match whose replay
-     never came, and spends what the daily boards leave of the slice on
+     31-day TTL. A new declaration joins its run at once (`declaredMatch`,
+     on `players/{uid}/attempts`), and `hourly` sweeps runs waiting on a
+     match whose replay never came, and spends what the daily boards leave of the slice on
      the endless candidates: their wins in order, a failed one cutting the
      run to its verified prefix (`partial`). The endless budget is
      `ENDLESS_VERIFY_MS` plus what the daily boards leave of theirs.

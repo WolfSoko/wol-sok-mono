@@ -1,37 +1,32 @@
-import { type Replay } from '@wolsok/feat-lazy-bac-game/engine';
 import {
-  FieldValue,
-  type Firestore,
-  Timestamp,
-} from 'firebase-admin/firestore';
-import { dayOf } from '../limits';
+  BALANCE_VERSION,
+  type Replay,
+} from '@wolsok/feat-lazy-bac-game/engine';
+import type { Firestore } from 'firebase-admin/firestore';
 import {
   DAILY_VERIFY_MS,
   ENDLESS_VERIFY_MS,
   MAX_VERIFIED_TICKS,
 } from './budgets';
+import { storedReplay } from './declared-match';
 import { winsOf } from './endless-run';
-import { refreshRun, type StoredRun } from './rank-endless';
+import { applyVerdict, type StoredRun } from './rank-endless';
 import { type Verdict, verifyReplay } from './verify';
 import {
   type AccountInfo,
-  type Candidate,
   candidates,
-  recordCheck,
-  storedReplay,
-  verdictFields,
+  recordSpent,
+  sliceBudget,
 } from './verify-slice';
-
-const DAY_MS = 24 * 3_600_000;
 
 /**
  * Spends what is left of the hour's slice on the `endless` board (ADR
  * 0012), from the same trust-ordered candidates: each candidate's best run
  * has its wins played again one by one, in order, from the first not yet
  * confirmed. A failed win cuts the run to its verified prefix ("partly
- * confirmed"); a win longer than 10 minutes is never re-run, and the run
- * stays provisional. The day's endless budget is its own plus what the
- * daily boards left.
+ * confirmed"). A win longer than 10 minutes, or of another balance table,
+ * is never re-run, and the run stays provisional. The day's endless budget
+ * is its own plus what the daily boards left.
  */
 export async function verifyEndlessSlice(
   db: Firestore,
@@ -41,103 +36,78 @@ export async function verifyEndlessSlice(
   clock: () => number = () => performance.now(),
   verify: (replay: Replay) => Verdict = (replay) => verifyReplay(replay, clock)
 ): Promise<{ checked: number; spentMs: number }> {
-  const counterRef = db.doc(`counters/${dayOf(now)}`);
-  const counter = (await counterRef.get()).data() ?? {};
-  const spentToday =
-    Number(counter['verifyMs'] ?? 0) + Number(counter['endlessVerifyMs'] ?? 0);
-  const budget = Math.min(
-    sliceMs,
-    DAILY_VERIFY_MS + ENDLESS_VERIFY_MS - spentToday
+  const budget = await sliceBudget(
+    db,
+    now,
+    ['verifyMs', 'endlessVerifyMs'],
+    DAILY_VERIFY_MS + ENDLESS_VERIFY_MS,
+    sliceMs
   );
   if (budget <= 0) {
     return { checked: 0, spentMs: 0 };
   }
   const start = clock();
-  const spent = () => clock() - start;
   let checked = 0;
-  const board = [{ boardId: 'endless', kind: 'endless' as const }];
-  for (const candidate of await candidates(db, now, accountInfo, board)) {
-    while (spent() < budget) {
-      const result = await checkNextWin(db, candidate, now, verify);
-      if (result === 'done') {
+  const boards = [{ boardId: 'endless' }];
+  for (const candidate of await candidates(
+    db,
+    now,
+    accountInfo,
+    'endless',
+    boards
+  )) {
+    let run = await bestRunOf(db, candidate.uid);
+    while (run !== null && clock() - start < budget) {
+      const next = nextWin(run);
+      if (next === null) {
         break;
       }
+      const replay = await storedReplay(db, next);
+      const verdict: Verdict =
+        replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
       checked++;
-      if (result === 'failed') {
+      run = await applyVerdict(db, run.uid, run.runId, next, verdict, now);
+      if (verdict.state === 'balance-mismatch') {
+        // Changes nothing: the next slice would only play it again.
         break;
       }
     }
-    if (spent() >= budget) {
+    if (clock() - start >= budget) {
       break;
     }
   }
-  const spentMs = Math.round(spent());
-  await counterRef.set(
-    {
-      endlessVerifyMs: FieldValue.increment(spentMs),
-      expireAt: Timestamp.fromMillis(now + 40 * DAY_MS),
-    },
-    { merge: true }
-  );
+  const spentMs = Math.round(clock() - start);
+  await recordSpent(db, now, 'endlessVerifyMs', spentMs);
   return { checked, spentMs };
 }
 
-/**
- * Plays the first unconfirmed win of a candidate's best run again: `done`
- * when nothing is left to check (or the win is too long to re-run).
- */
-async function checkNextWin(
+/** The run a player's `endless` entry shows, null when there is none. */
+async function bestRunOf(
   db: Firestore,
-  candidate: Candidate,
-  now: number,
-  verify: (replay: Replay) => Verdict
-): Promise<'verified' | 'failed' | 'done'> {
-  const runId = (await db.doc(`boardMembers/${candidate.uid}`).get()).get(
+  uid: string
+): Promise<StoredRun | null> {
+  const runId = (await db.doc(`boardMembers/${uid}`).get()).get(
     'endless.runId'
   );
   if (typeof runId !== 'string') {
-    return 'done';
+    return null;
   }
-  const run = (
-    await db.doc(`endlessRuns/${candidate.uid}_${runId}`).get()
-  ).data() as StoredRun | undefined;
-  if (run === undefined || (run.cut ?? null) !== null) {
-    return 'done';
+  const run = (await db.doc(`endlessRuns/${uid}_${runId}`).get()).data();
+  return (run as StoredRun | undefined) ?? null;
+}
+
+/**
+ * The replay of a run's first unconfirmed win - null when every win is
+ * confirmed, the run was cut, or the win can never be re-run.
+ */
+function nextWin(run: StoredRun): string | null {
+  if ((run.cut ?? null) !== null) {
+    return null;
   }
-  const verifiedWins = run.verifiedWins ?? 0;
-  const next = winsOf(run)[verifiedWins];
-  if (
-    next?.replayId === undefined ||
-    (next.ticks ?? Infinity) > MAX_VERIFIED_TICKS
-  ) {
-    return 'done';
-  }
-  const replay = await storedReplay(db, next.replayId);
-  const verdict: Verdict =
-    replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
-  if (verdict.state === 'balance-mismatch') {
-    // Says nothing about the player: the run stays provisional, uncut.
-    await db.doc(`replays/${next.replayId}`).update(verdictFields(verdict));
-    return 'done';
-  }
-  const passed = verdict.state === 'verified';
-  const moderationRef = db.doc(`moderation/${candidate.uid}`);
-  await db.runTransaction(async (tx) => {
-    const moderation = (await tx.get(moderationRef)).data() ?? {};
-    tx.update(db.doc(`replays/${next.replayId}`), verdictFields(verdict));
-    recordCheck(tx, moderationRef, moderation, verdict.state, now);
-  });
-  const saved = await refreshRun(
-    db,
-    candidate.uid,
-    runId,
-    now,
-    passed ? { verifiedWins: verifiedWins + 1 } : { cut: verifiedWins },
-    verifiedWins
-  );
-  if (saved === null) {
-    // The run changed meanwhile: the next slice reads it afresh.
-    return 'done';
-  }
-  return passed ? 'verified' : 'failed';
+  const next = winsOf(run)[run.verifiedWins ?? 0];
+  return next?.replayId === undefined ||
+    (next.ticks ?? Infinity) > MAX_VERIFIED_TICKS ||
+    next.balanceVersion !== BALANCE_VERSION
+    ? null
+    : next.replayId;
 }

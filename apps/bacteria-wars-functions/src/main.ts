@@ -19,7 +19,7 @@ import * as v1 from 'firebase-functions/v1';
 import { runHourly } from './boards/hourly';
 import { boardProfileChanged as relabelEntries } from './boards/profile-changed';
 import { rankDaily } from './boards/rank-daily';
-import { rankEndless } from './boards/rank-endless';
+import { rankEndless, trackDeclaredMatch } from './boards/rank-endless';
 import { rankOnline } from './boards/rank-online';
 import {
   PROGRESS_KEY,
@@ -225,3 +225,20 @@ export const hourly = HOURLY_ON
       }
     )
   : undefined;
+
+/** A declared endless match joins its run at once (ADR 0012). */
+export const declaredMatch = onDocumentCreated(
+  {
+    document: 'players/{uid}/attempts/{attemptId}',
+    memory: '256MiB',
+    cpu: 'gcf_gen1',
+  },
+  async (event) => {
+    await trackDeclaredMatch(
+      db(),
+      event.params.uid,
+      event.params.attemptId,
+      Date.now()
+    );
+  }
+);

@@ -2,6 +2,8 @@ import {
   attemptSeed,
   BALANCE_VERSION,
   dailyLevelId,
+  ENDLESS_LIVES,
+  endlessAttemptId,
   endlessLevelId,
   GPU_INT_REPLAY_VERSION,
   rankedPlan,
@@ -49,7 +51,7 @@ export const RUN_ID = '202610251';
 
 /** The run's level seed: the seed of its match 0, declared at `at0`. */
 export function runSeedOf(at0: number, uid = UID, runId = RUN_ID): number {
-  return attemptSeed(uid, `e_${runId}_0`, at0);
+  return attemptSeed(uid, endlessAttemptId(runId, 0), at0);
 }
 
 /**
@@ -65,11 +67,11 @@ export function endlessReplay(
   uid = UID,
   runId = RUN_ID
 ): Replay {
-  const attempt = `e_${runId}_${i}`;
+  const attempt = endlessAttemptId(runId, i);
   const levelId = endlessLevelId({
     seed: runSeedOf(at0, uid, runId),
     wins,
-    lives: 3,
+    lives: ENDLESS_LIVES,
   });
   return {
     header: {

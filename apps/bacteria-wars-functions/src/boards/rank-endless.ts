@@ -3,7 +3,6 @@ import {
   attemptSeed,
   endlessAttemptId,
   parseAttemptId,
-  replayFromBytes,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   FieldPath,
@@ -12,7 +11,12 @@ import {
   Timestamp,
   type Transaction,
 } from 'firebase-admin/firestore';
-import { isBanned } from '../limits';
+import { DAY_MS } from './budgets';
+import {
+  checkDeclaredMatch,
+  rankedFields,
+  readDeclaredReplay,
+} from './declared-match';
 import {
   type AcceptedMatch,
   computeRun,
@@ -21,11 +25,12 @@ import {
   LOST_AFTER_MS,
   type RunAttempt,
   type RunState,
+  winsOf,
 } from './endless-run';
 import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
-import { checkDeclaredMatch } from './rank-daily';
+import { type Verdict } from './verify';
+import { recordCheck, verdictFields } from './verify-slice';
 
-const DAY_MS = 24 * 3_600_000;
 /** How long a run that is not the player's best is kept after its update. */
 export const RUN_TTL_MS = 31 * DAY_MS;
 
@@ -66,7 +71,8 @@ export async function readRun(
   uid: string,
   runId: string
 ): Promise<RunRead> {
-  const prefix = `e_${runId}_`;
+  // `e_<runId>_`: every match of the run, and nothing else.
+  const prefix = endlessAttemptId(runId, 0).slice(0, -1);
   const [run, declared] = await Promise.all([
     tx.get(db.doc(`endlessRuns/${uid}_${runId}`)),
     tx.get(
@@ -182,29 +188,56 @@ export async function saveRun(
       tx.update(rival.ref, { expireAt: FieldValue.delete() });
     }
   }
-  tx.set(
-    db.doc(`boardMembers/${uid}`),
-    {
-      entryIds: member.entryIds,
-      boards: FieldValue.arrayUnion('endless'),
-      endless: { runId: best.runId },
-    },
-    { merge: true }
-  );
-  if (bestBase === null) {
-    tx.delete(entryRef);
-  } else {
+  const boards = member.data['boards'];
+  const listed =
+    !member.fresh &&
+    Array.isArray(boards) &&
+    boards.includes('endless') &&
+    (member.data['endless'] as { runId?: unknown } | undefined)?.runId ===
+      best.runId;
+  if (!listed) {
     tx.set(
-      entryRef,
-      entryData(
-        member.entryIds.endless,
-        bestBase,
-        profile,
-        hiddenByOf(entry.get('hiddenBy'))
-      )
+      db.doc(`boardMembers/${uid}`),
+      {
+        entryIds: member.entryIds,
+        boards: FieldValue.arrayUnion('endless'),
+        endless: { runId: best.runId },
+      },
+      { merge: true }
     );
   }
+  // Every entry write wakes rebuildTop: write only what changed.
+  if (bestBase === null) {
+    if (entry.exists) {
+      tx.delete(entryRef);
+    }
+  } else {
+    const next = entryData(
+      member.entryIds.endless,
+      bestBase,
+      profile,
+      hiddenByOf(entry.get('hiddenBy'))
+    );
+    if (!entry.exists || !sameEntry(next, entry.data() ?? {})) {
+      tx.set(entryRef, next);
+    }
+  }
   return run;
+}
+
+/** True when a stored entry already shows what `next` would write. */
+function sameEntry(
+  next: Record<string, unknown>,
+  stored: Record<string, unknown>
+): boolean {
+  const shown = (entry: Record<string, unknown>) =>
+    JSON.stringify(
+      Object.keys(entry)
+        .filter((key) => key !== 'updatedAt')
+        .sort()
+        .map((key) => [key, entry[key]])
+    );
+  return shown(next) === shown(stored);
 }
 
 /**
@@ -222,52 +255,25 @@ export async function rankEndless(
   replayDoc: Record<string, unknown>,
   now: number = Date.now()
 ): Promise<EndlessReason> {
-  const uid = (replayDoc['players'] as string[] | undefined)?.[0];
-  const attemptId = (replayDoc['attempt'] as { id?: unknown } | undefined)?.id;
-  const sent = replayDoc['submittedAt'] ?? replayDoc['createdAt'];
-  const arrivedAt = sent instanceof Timestamp ? sent.toMillis() : now;
-  const attempt =
-    typeof attemptId === 'string' ? parseAttemptId(attemptId) : null;
   const replayRef = db.doc(`replays/${replayId}`);
-  const settle = async (reason: EndlessReason) => {
-    await replayRef.update({
-      rankedReason: reason,
-      rankedAt: FieldValue.serverTimestamp(),
-    });
-    return reason;
-  };
-  if (
-    typeof uid !== 'string' ||
-    typeof attemptId !== 'string' ||
-    attempt?.kind !== 'endless'
-  ) {
-    return settle('no-attempt');
-  }
-  if (await isBanned(db, uid, now)) {
-    return settle('banned');
-  }
-  const declared = (
-    await db.doc(`players/${uid}/attempts/${attemptId}`).get()
-  ).get('at');
-  if (!(declared instanceof Timestamp)) {
-    return settle('no-attempt');
-  }
-  const bytes = (await db.doc(`replays/${replayId}/blob/data`).get()).get(
-    'bytes'
+  const read = await readDeclaredReplay(
+    db,
+    replayId,
+    replayDoc,
+    'endless',
+    now
   );
-  const replay =
-    bytes instanceof Uint8Array
-      ? await replayFromBytes(new Uint8Array(bytes), { stored: true })
-      : null;
-  if (replay === null) {
-    return settle('unreadable');
+  if ('reason' in read) {
+    await replayRef.update(rankedFields(read.reason));
+    return read.reason;
   }
+  const { uid, attempt, replay } = read;
   const reason = checkDeclaredMatch(
     replay,
     uid,
-    attemptId,
-    declared.toMillis(),
-    arrivedAt
+    read.attemptId,
+    read.declaredAt,
+    read.arrivedAt
   );
   const match: AcceptedMatch = {
     replayId,
@@ -275,16 +281,14 @@ export async function rankEndless(
     won: replay.header.outcome?.winnerSeat === 0,
     ticks: replay.header.ticks,
     reason,
-    atHour: atHourOf(arrivedAt),
+    atHour: atHourOf(read.arrivedAt),
+    balanceVersion: replay.header.balanceVersion,
   };
   return db.runTransaction(async (tx) => {
-    const read = await readRun(tx, db, uid, attempt.runId);
-    const accepted = read.stored.accepted ?? {};
+    const runRead = await readRun(tx, db, uid, attempt.runId);
+    const accepted = runRead.stored.accepted ?? {};
     if (accepted[String(attempt.i)] !== undefined) {
-      tx.update(replayRef, {
-        rankedReason: 'duplicate',
-        rankedAt: FieldValue.serverTimestamp(),
-      });
+      tx.update(replayRef, rankedFields('duplicate'));
       return 'duplicate' as const;
     }
     const run = await saveRun(
@@ -292,7 +296,7 @@ export async function rankEndless(
       db,
       uid,
       attempt.runId,
-      read,
+      runRead,
       { accepted: { ...accepted, [String(attempt.i)]: match } },
       now
     );
@@ -304,39 +308,84 @@ export async function rankEndless(
         : reason === 'counted' && result === 'refused'
           ? 'level'
           : reason;
-    tx.update(replayRef, {
-      rankedReason: ranked,
-      rankedAt: FieldValue.serverTimestamp(),
-    });
+    tx.update(replayRef, rankedFields(ranked));
     return ranked;
   });
 }
 
 /**
- * Computes a run again in a transaction - the hourly sweep of matches
- * whose replay never came, and verification's changes.
+ * Computes a run again in a transaction - after a new declaration, and in
+ * the hourly sweep of matches whose replay never came.
  */
 export async function refreshRun(
   db: Firestore,
   uid: string,
   runId: string,
-  now: number,
-  change: Partial<Pick<StoredRun, 'verifiedWins' | 'cut'>> = {},
-  /** Verification's change holds only while the run is as it read it. */
-  expectedVerifiedWins?: number
+  now: number
 ): Promise<StoredRun | null> {
+  return db.runTransaction(async (tx) =>
+    saveRun(tx, db, uid, runId, await readRun(tx, db, uid, runId), {}, now)
+  );
+}
+
+/**
+ * A new declared endless match joins its run at once (ADR 0012), so the
+ * hourly sweep counts it lost when its replay never comes - not only once
+ * another replay of the run arrives.
+ */
+export async function trackDeclaredMatch(
+  db: Firestore,
+  uid: string,
+  attemptId: string,
+  now: number
+): Promise<StoredRun | null> {
+  const attempt = parseAttemptId(attemptId);
+  return attempt?.kind === 'endless'
+    ? refreshRun(db, uid, attempt.runId, now)
+    : null;
+}
+
+/**
+ * Applies a check of one win (ADR 0012): verified moves the run on by a
+ * win, unverified cuts it to its verified prefix, a balance mismatch
+ * changes nothing. It holds only while that replay is still the run's next
+ * unconfirmed win - null when the run changed meanwhile. The replay and
+ * the account's moderation counters are written in the same transaction.
+ */
+export async function applyVerdict(
+  db: Firestore,
+  uid: string,
+  runId: string,
+  replayId: string,
+  verdict: Verdict,
+  now: number
+): Promise<StoredRun | null> {
+  const moderationRef = db.doc(`moderation/${uid}`);
   return db.runTransaction(async (tx) => {
-    const read = await readRun(tx, db, uid, runId);
-    if (
-      expectedVerifiedWins !== undefined &&
-      ((read.stored.verifiedWins ?? 0) !== expectedVerifiedWins ||
-        (read.stored.cut ?? null) !== null)
-    ) {
+    const [read, moderation] = await Promise.all([
+      readRun(tx, db, uid, runId),
+      tx.get(moderationRef),
+    ]);
+    const verifiedWins = read.stored.verifiedWins ?? 0;
+    const next = winsOf({ matches: read.stored.matches ?? [] })[verifiedWins];
+    if ((read.stored.cut ?? null) !== null || next?.replayId !== replayId) {
       return null;
     }
-    return saveRun(tx, db, uid, runId, read, change, now);
+    const change =
+      verdict.state === 'verified'
+        ? { verifiedWins: verifiedWins + 1 }
+        : verdict.state === 'unverified'
+          ? { cut: verifiedWins }
+          : {};
+    const run = await saveRun(tx, db, uid, runId, read, change, now);
+    tx.update(db.doc(`replays/${replayId}`), verdictFields(verdict));
+    recordCheck(tx, moderationRef, moderation.data() ?? {}, verdict.state, now);
+    return run;
   });
 }
+
+/** Runs refreshed side by side in the hourly sweep. */
+const SWEEP_PARALLEL = 10;
 
 /**
  * The hourly sweep (ADR 0012): runs waiting on a match whose replay has not
@@ -349,10 +398,17 @@ export async function closeStaleMatches(
   const stale = await db
     .collection('endlessRuns')
     .where('pendingAt', '<=', now - LOST_AFTER_MS)
+    .select('uid', 'runId')
     .limit(200)
     .get();
-  for (const doc of stale.docs) {
-    await refreshRun(db, String(doc.get('uid')), String(doc.get('runId')), now);
+  for (let i = 0; i < stale.docs.length; i += SWEEP_PARALLEL) {
+    await Promise.all(
+      stale.docs
+        .slice(i, i + SWEEP_PARALLEL)
+        .map((doc) =>
+          refreshRun(db, String(doc.get('uid')), String(doc.get('runId')), now)
+        )
+    );
   }
   return stale.size;
 }
