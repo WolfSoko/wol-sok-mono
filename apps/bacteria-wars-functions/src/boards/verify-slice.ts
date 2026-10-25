@@ -189,7 +189,10 @@ async function candidates(
   return found.sort((a, b) => a.trust - b.trust || b.sort - a.sort);
 }
 
-/** Plays a candidate's best provisional attempt again - false when none. */
+/**
+ * Plays a candidate's best provisional attempt again - false when none, or
+ * when another slice checked it meanwhile.
+ */
 async function checkCandidate(
   db: Firestore,
   candidate: Candidate,
@@ -215,7 +218,7 @@ async function checkCandidate(
       : null;
   const verdict: Verdict =
     replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
-  await db.runTransaction(async (tx) => {
+  return db.runTransaction(async (tx) => {
     const fresh =
       ((await tx.get(runRef)).get('attempts') as
         | DailyAttemptRun[]
@@ -225,7 +228,7 @@ async function checkCandidate(
     if (
       fresh.find((a) => a.attemptId === best.attemptId)?.state !== 'provisional'
     ) {
-      return;
+      return false;
     }
     const next = fresh.map((a) =>
       a.attemptId === best.attemptId ? { ...a, state: verdict.state } : a
@@ -258,6 +261,6 @@ async function checkCandidate(
         { merge: true }
       );
     }
+    return true;
   });
-  return true;
 }

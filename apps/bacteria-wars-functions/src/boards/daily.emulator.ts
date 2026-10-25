@@ -242,7 +242,8 @@ describe('verifyDailySlice', () => {
 
   it('applies a check once when two slices run at the same time', async () => {
     await rank('l_bob', dailyReplay({}, 'bob'), 'bob');
-    await Promise.all([slice(), slice()]);
+    const runs = await Promise.all([slice(), slice()]);
+    expect(runs[0].checked + runs[1].checked).toBe(1);
     // One failed check, not two: a single failure skips nobody.
     const moderation = (await db.doc('moderation/bob').get()).data();
     expect(moderation?.['failedChecks']).toBe(1);
