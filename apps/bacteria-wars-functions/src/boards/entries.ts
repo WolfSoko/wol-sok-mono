@@ -1,4 +1,5 @@
 import {
+  BOARD_KINDS,
   type BoardKind,
   type BoardRef,
   type EntryShow,
@@ -80,11 +81,20 @@ export function hiddenFor(
   stored: unknown
 ): HiddenBy {
   const hidden = hiddenByOf(stored);
-  const barred = member['barred'];
-  if (Array.isArray(barred) && barred.includes(kind)) {
+  if (barredOf(member).includes(kind)) {
     hidden.admin = true;
   }
   return hidden;
+}
+
+/** The board kinds the owner bars a player from (`boardMembers.barred`). */
+export function barredOf(
+  member: Record<string, unknown> | undefined
+): BoardKind[] {
+  const barred = member?.['barred'];
+  return Array.isArray(barred)
+    ? BOARD_KINDS.filter((kind) => barred.includes(kind))
+    : [];
 }
 
 /**
@@ -195,7 +205,8 @@ export function memberEntries(
 
 /**
  * Adds or takes away one hide reason on each of the player's entries
- * (`boardMembers/{uid}`), or only on `only`, one transaction per entry,
+ * (`boardMembers/{uid}`) - only on `only`, or only on the entries of
+ * `kind` - one transaction per entry,
  * keeping what else hides it. With `guard`, an entry also reads that
  * document in the same round trip and stays as it is while `keeps` says so
  * of it. Updated in place, so a daily entry keeps its `expireAt`. Returns
@@ -208,9 +219,11 @@ export async function setHidden(
   hide: boolean,
   {
     only,
+    kind,
     guard,
   }: {
     only?: { boardId: string; entryId: string };
+    kind?: BoardKind;
     guard?: {
       ref: DocumentReference;
       keeps: (data: Record<string, unknown> | undefined) => boolean;
@@ -219,10 +232,11 @@ export async function setHidden(
 ): Promise<number> {
   const member = await db.doc(`boardMembers/${uid}`).get();
   let changed = 0;
-  for (const { boardId, entryId } of memberEntries(member.data())) {
+  for (const { boardId, board, entryId } of memberEntries(member.data())) {
     if (
-      only !== undefined &&
-      (only.boardId !== boardId || only.entryId !== entryId)
+      (only !== undefined &&
+        (only.boardId !== boardId || only.entryId !== entryId)) ||
+      (kind !== undefined && board.kind !== kind)
     ) {
       continue;
     }

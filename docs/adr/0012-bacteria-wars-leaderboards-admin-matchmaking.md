@@ -1210,12 +1210,16 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
    - Then the profile and board moderation (`src/admin/moderation.ts`):
      `profile.reset` and `profile.removeImage` change the profile in one
      transaction with the notice and the count (`no-image` for a drawn
-     avatar already; the audit keeps an image's SHA-256 and size), and
+     avatar already, `unchanged` for a profile reset already; the audit
+     keeps an image's SHA-256 and size), and
      `boardProfileChanged` relabels the entries. `board.hideEntry`,
      `board.hidePlayer` and `board.restore` set or lift `hiddenBy.admin`
      on one entry or all of the player's (`not-on-board` for an entry the
      player does not hold on that board). A bar adds the kinds to
-     `boardMembers.barred`, before the entries change; the rankings keep
+     `boardMembers.barred` in a transaction, before the entries change, and
+     takes every entry of the kind (all daily boards the player is on for a
+     daily entry); a hide tells and counts only once it changed something.
+     The rankings, and `hourly` for an online match not reported, keep
      counting a barred player but start their entries of those kinds
      hidden (`hiddenFor`), so tomorrow's daily entry is hidden too. A
      restore lifts the bars it covers, and an entry comes back with its

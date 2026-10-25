@@ -550,6 +550,24 @@ describe('profile moderation', () => {
     expect((await db.doc('moderation/ada').get()).get('imageRemovals')).toBe(1);
   });
 
+  it('resets a profile once, and copes with one without a motto', async () => {
+    await db
+      .doc('profiles/ada')
+      .set({ name: 'Rude', avatar: { kind: 'photo' } });
+    const reset = { type: 'profile.reset', target: { uid: 'ada' } };
+    expect(await command('c1', reset)).toEqual({ ok: true });
+    expect((await db.doc('adminAudit/c1').get()).get('before')).toEqual({
+      name: 'Rude',
+      motto: '',
+      avatar: { kind: 'photo' },
+    });
+    expect(await command('c2', reset)).toEqual({
+      ok: false,
+      error: 'unchanged',
+    });
+    expect((await db.doc('moderation/ada').get()).get('resets')).toBe(1);
+  });
+
   it('says so for a player without a profile', async () => {
     expect(
       await command('c1', { type: 'profile.reset', target: { uid: 'bob' } })
@@ -654,6 +672,50 @@ describe('board moderation', () => {
     expect(
       (await entry(`boards/${DAILY}/entries/dAda`)).get('hiddenBy')
     ).toEqual({ admin: true });
+  });
+
+  it('tells and counts a hide only once it changed something', async () => {
+    await seedAda();
+    const hide = { type: 'board.hideEntry', target: xp };
+    await command('c1', hide);
+    expect(await command('c2', hide)).toEqual({ ok: true });
+    expect((await db.doc('players/ada/notices/c2').get()).exists).toBe(false);
+    expect((await db.doc('moderation/ada').get()).get('hides')).toBe(1);
+  });
+
+  it('bars the daily boards with every daily entry the player has', async () => {
+    await seedAda();
+    const yesterday = 'daily-2026-11-02';
+    await db.doc('boardMembers/ada').update({
+      boards: ['xp', yesterday, DAILY],
+    });
+    await db.doc(`boards/${yesterday}/entries/dAda`).set({
+      sort: 400,
+      atHour: 1,
+      status: 'verified',
+      baseStatus: 'verified',
+      hiddenBy: {},
+      show: { ticks: 400, won: true },
+    });
+    await command('c1', {
+      type: 'board.hideEntry',
+      target: { boardId: DAILY, entryId: 'dAda' },
+      args: { bar: true },
+    });
+    expect(
+      (await entry(`boards/${yesterday}/entries/dAda`)).get('hiddenBy')
+    ).toEqual({ admin: true });
+    expect((await entry('boards/xp/entries/xpAda')).get('hiddenBy')).toEqual(
+      {}
+    );
+    // Lifting the bar brings them all back.
+    await command('c2', {
+      type: 'board.restore',
+      target: { boardId: DAILY, entryId: 'dAda' },
+    });
+    expect(
+      (await entry(`boards/${yesterday}/entries/dAda`)).get('status')
+    ).toBe('verified');
   });
 
   it("says so for an entry on a board the player isn't on", async () => {

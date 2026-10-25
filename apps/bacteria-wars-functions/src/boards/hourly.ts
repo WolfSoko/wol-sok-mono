@@ -12,7 +12,7 @@ import {
 import { logger } from 'firebase-functions/logger';
 import { expireBans } from '../admin/bans';
 import type { Realtime } from '../admin/realtime';
-import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
+import { entryData, hiddenFor, memberIn, profileIn } from './entries';
 import { MIN_COUNTED_TICKS } from './rank-online';
 import { DAY_MS, SLICE_MS } from './budgets';
 import { closeStaleMatches } from './rank-endless';
@@ -136,7 +136,7 @@ async function closeOne(
           show: record,
         },
         profile,
-        hiddenByOf(entry.get('hiddenBy'))
+        hiddenFor(member.data, 'online', entry.get('hiddenBy'))
       )
     );
     return true;
