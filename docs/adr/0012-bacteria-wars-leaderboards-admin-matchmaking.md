@@ -1337,7 +1337,14 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      anonymise as `replayCommands`, which keep no reason, so their dialog
      asks for none. The overview's "Recount accounts" sends
      `stats.recount`, then `stats.refresh`.
-   - Still to come: the toggle page and the Balance view. The admin link in
+   - The Balance view: the `levelStats` of one balance version (the
+     game's `BALANCE_VERSION` at first), by level (index `balanceVersion`,
+     `level`: every document has its key fields, while a re-run counted
+     without its attempt would lack `attempts` and drop out of an order
+     on it) - win rates with and without
+     evolving, the evolved share and its weapons, match lengths and the
+     medallions of the re-run matches.
+   - Still to come: the toggle page, on the game's Remote Config reader. The admin link in
      the main menu and the client's ban handling go with the game lib's
      client release.
 

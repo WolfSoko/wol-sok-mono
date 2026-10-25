@@ -1,3 +1,5 @@
+import { counts } from '../moderation/admin-records';
+
 /** `adminStats/now` and the hourly snapshots, as the overview reads them. */
 export interface AdminStats {
   accounts: number;
@@ -31,15 +33,6 @@ export type Figure = (typeof FIGURE_GROUPS)[keyof typeof FIGURE_GROUPS][number];
 
 const count = (value: unknown) =>
   typeof value === 'number' && Number.isFinite(value) ? value : 0;
-
-const counts = (value: unknown): Record<string, number> =>
-  typeof value === 'object' && value !== null
-    ? Object.fromEntries(
-        Object.entries(value).filter(
-          (entry): entry is [string, number] => typeof entry[1] === 'number'
-        )
-      )
-    : {};
 
 /**
  * Reads a stored statistics document, keeping what it can: a figure that

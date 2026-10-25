@@ -64,6 +64,13 @@ export function adminRoutes(options: GameCloudOptions | null): Routes {
                 ),
             },
             {
+              path: 'balance',
+              loadComponent: () =>
+                import('./balance/balance.component').then(
+                  (m) => m.BalanceComponent
+                ),
+            },
+            {
               path: 'bans',
               loadComponent: () =>
                 import('./bans/bans.component').then((m) => m.BansComponent),

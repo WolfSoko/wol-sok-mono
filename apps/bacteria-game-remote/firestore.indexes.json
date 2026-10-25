@@ -89,6 +89,20 @@
       ]
     },
     {
+      "collectionGroup": "levelStats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "balanceVersion",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "rooms",
       "queryScope": "COLLECTION",
       "fields": [

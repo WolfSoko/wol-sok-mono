@@ -29,6 +29,7 @@ const TABS: readonly { path: string; label: AdminTextKey }[] = [
   { path: 'profiles', label: 'nav.profiles' },
   { path: 'leaderboards', label: 'nav.leaderboards' },
   { path: 'replays', label: 'nav.replays' },
+  { path: 'balance', label: 'nav.balance' },
   { path: 'bans', label: 'nav.bans' },
   { path: 'audit', label: 'nav.audit' },
 ];
