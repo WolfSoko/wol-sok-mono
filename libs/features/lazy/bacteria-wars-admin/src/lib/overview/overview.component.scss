@@ -10,6 +10,12 @@
   justify-content: space-between;
 }
 
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .error {
   color: #ff8a80;
 }

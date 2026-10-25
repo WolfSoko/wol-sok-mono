@@ -7,14 +7,24 @@
       {{ "overview.never" | adminT }}
     }
   </p>
-  <button
-    mat-flat-button
-    type="button"
-    [disabled]="refreshing()"
-    (click)="refresh()"
-  >
-    {{ "overview.refresh" | adminT }}
-  </button>
+  <span class="buttons">
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="refreshing()"
+      (click)="recount()"
+    >
+      {{ "type.stats.recount" | adminT }}
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      [disabled]="refreshing()"
+      (click)="refresh()"
+    >
+      {{ "overview.refresh" | adminT }}
+    </button>
+  </span>
 </header>
 @if (error(); as error) {
   <p class="error" role="alert">
