@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { AdminActionsService } from '../moderation/admin-actions.service';
 import type { BoardEntryRecord } from '../moderation/admin-records';
 import { AdminRecordsService } from '../moderation/admin-records.service';
-import { LeaderboardsComponent, utcDay } from './leaderboards.component';
+import { LeaderboardsComponent } from './leaderboards.component';
 
 const row = (
   entryId: string,
@@ -15,7 +15,6 @@ const row = (
   name: null,
   sort: 1,
   tag: 42,
-  atHour: 1,
   show: { xp: 1234, rank: 'gold' },
   ...extra,
 });
@@ -71,10 +70,6 @@ function render() {
 describe('LeaderboardsComponent', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('takes the day in UTC', () => {
-    expect(utcDay(Date.UTC(2026, 9, 25, 23, 59))).toBe('2026-10-25');
-  });
-
   it('lists a board with hidden rows and each row’s player', async () => {
     const { element, boardEntries, entryOwners, settle } = render();
     await settle();
@@ -113,10 +108,10 @@ describe('LeaderboardsComponent', () => {
       subject: 'Ada',
       target: { boardId: 'xp', entryId: 'e1' },
     });
-    // The board shown reloads; its players are known already.
+    // The board shown reloads, its players with it.
     expect(boardEntries).toHaveBeenCalledTimes(2);
     expect(boardEntries).toHaveBeenLastCalledWith('xp', null);
-    expect(entryOwners).toHaveBeenCalledTimes(1);
+    expect(entryOwners).toHaveBeenCalledTimes(2);
     buttons('Restore on the boards')[0].click();
     await settle();
     expect(run).toHaveBeenLastCalledWith({

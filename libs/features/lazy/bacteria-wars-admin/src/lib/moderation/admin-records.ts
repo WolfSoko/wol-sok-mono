@@ -64,8 +64,6 @@ export interface BoardEntryRecord extends EntryRecord {
   entryId: string;
   /** The anonymous tag, `#0042`, shown where the entry has no name. */
   tag: number | null;
-  /** The hour the entry was last ranked, in hours since the epoch. */
-  atHour: number | null;
   show: EntryShow | null;
 }
 
@@ -200,12 +198,10 @@ export function parseBoardEntry(
     return null;
   }
   const tag = value['tag'];
-  const atHour = value['atHour'];
   return {
     ...entry,
     entryId,
     tag: typeof tag === 'number' ? tag : null,
-    atHour: typeof atHour === 'number' ? atHour : null,
     show: isObject(value['show']) ? (value['show'] as EntryShow) : null,
   };
 }

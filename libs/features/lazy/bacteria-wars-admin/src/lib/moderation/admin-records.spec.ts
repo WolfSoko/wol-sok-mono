@@ -90,7 +90,6 @@ describe('admin records', () => {
         name: 'Ada',
         sort: 5,
         tag: 7,
-        atHour: 490000,
         show: { depth: 3, seconds: 80 },
       })
     ).toEqual({
@@ -100,12 +99,10 @@ describe('admin records', () => {
       name: 'Ada',
       sort: 5,
       tag: 7,
-      atHour: 490000,
       show: { depth: 3, seconds: 80 },
     });
     expect(parseBoardEntry('e2', { show: 'x' })).toMatchObject({
       tag: null,
-      atHour: null,
       show: null,
     });
     expect(parseBoardEntry('e3', null)).toBeNull();

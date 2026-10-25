@@ -164,7 +164,7 @@
               <code>{{ entry.entryId }}</code>
             </td>
             <td>{{ entry.record?.status ?? "-" }}</td>
-            <td>{{ hiddenBy(entry.record?.hiddenBy ?? []) }}</td>
+            <td>{{ i18n.hideReasons(entry.record?.hiddenBy ?? []) }}</td>
             <td>
               @if (entry.record !== null) {
                 @if (hiddenByOwner(entry)) {

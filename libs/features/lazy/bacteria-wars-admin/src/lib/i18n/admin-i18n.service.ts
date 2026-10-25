@@ -7,6 +7,7 @@ import {
   translate,
   type TranslationParams,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
+import type { HideReason } from '../moderation/admin-records';
 import { DE } from './de';
 import { EN } from './en';
 
@@ -39,6 +40,11 @@ export class AdminI18n {
       timeStyle: 'short',
       ...(utc ? { timeZone: 'UTC' } : {}),
     }).format(millis);
+  }
+
+  /** Why an entry is hidden, such as "owner, ban". */
+  public hideReasons(reasons: readonly HideReason[]): string {
+    return reasons.map((reason) => this.t(`hidden.${reason}`)).join(', ');
   }
 
   public t(key: AdminTextKey, params?: TranslationParams): string {

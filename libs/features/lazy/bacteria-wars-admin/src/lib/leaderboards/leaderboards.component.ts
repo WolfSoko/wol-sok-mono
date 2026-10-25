@@ -2,10 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
   signal,
-  untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,10 +15,13 @@ import { RouterLink } from '@angular/router';
 import {
   BOARD_KINDS,
   type BoardKind,
+  competitionRanks,
   dailyBoardId,
   type EntryShow,
   formatTag,
   isUtcDay,
+  utcDay,
+  VISIBLE_STATUSES,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import {
   AdminI18n,
@@ -31,14 +32,27 @@ import {
   AdminActionsService,
   type ModerationAction,
 } from '../moderation/admin-actions.service';
-import type { BoardEntryRecord, HideReason } from '../moderation/admin-records';
-import { AdminRecordsService } from '../moderation/admin-records.service';
+import type { BoardEntryRecord } from '../moderation/admin-records';
+import {
+  AdminRecordsService,
+  type Page,
+} from '../moderation/admin-records.service';
 import { ListFooterComponent } from '../moderation/list-footer.component';
 import { PagedList } from '../moderation/paged-list';
 
-/** Today in UTC, `yyyy-mm-dd`, the daily board's day. */
-export function utcDay(now: number = Date.now()): string {
-  return new Date(now).toISOString().slice(0, 10);
+/** A board row and its player: a uid, null for nobody, undefined if unknown. */
+interface LeaderboardRow {
+  entry: BoardEntryRecord;
+  owner: string | null | undefined;
+}
+
+/** A row as the table shows it, its texts worked out once. */
+interface RowView extends LeaderboardRow {
+  /** The position players see; null for a hidden row. */
+  position: number | null;
+  label: string;
+  score: string;
+  hiddenBy: string;
 }
 
 /** The board kinds whose entries the server re-simulates (`board.verify`). */
@@ -47,7 +61,8 @@ const VERIFIABLE: readonly BoardKind[] = ['daily', 'endless'];
 /**
  * The leaderboards (ADR 0012): a board - the daily one for a day - best
  * first, hidden rows too, each with its player (looked up through
- * `boardMembers`) and the actions hide, restore, verify now and ban.
+ * `boardMembers` with its page) and the actions hide, restore, verify now
+ * and ban.
  */
 @Component({
   selector: 'feat-lazy-bac-admin-leaderboards',
@@ -97,24 +112,22 @@ const VERIFIABLE: readonly BoardKind[] = ['daily', 'endless'];
       </button>
     </form>
     <p>
-      <code>{{ boardId() }}</code>
+      <code>{{ shown().boardId }}</code>
     </p>
 
-    <table mat-table [dataSource]="list.rows()">
+    <table mat-table [dataSource]="rows()">
       <ng-container matColumnDef="pos">
         <th mat-header-cell *matHeaderCellDef>#</th>
-        <td mat-cell *matCellDef="let row">
-          {{ positions()[row.entryId] ?? '-' }}
-        </td>
+        <td mat-cell *matCellDef="let row">{{ row.position ?? '-' }}</td>
       </ng-container>
       <ng-container matColumnDef="label">
         <th mat-header-cell *matHeaderCellDef>
           {{ 'boards.label' | adminT }}
         </th>
         <td mat-cell *matCellDef="let row">
-          {{ label(row) }}
+          {{ row.label }}
           <br /><small
-            ><code>{{ row.entryId }}</code></small
+            ><code>{{ row.entry.entryId }}</code></small
           >
         </td>
       </ng-container>
@@ -122,16 +135,16 @@ const VERIFIABLE: readonly BoardKind[] = ['daily', 'endless'];
         <th mat-header-cell *matHeaderCellDef>
           {{ 'boards.score' | adminT }}
         </th>
-        <td mat-cell *matCellDef="let row">{{ score(row.show) }}</td>
+        <td mat-cell *matCellDef="let row">{{ row.score }}</td>
       </ng-container>
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef>
           {{ 'player.status' | adminT }}
         </th>
         <td mat-cell *matCellDef="let row">
-          {{ row.status ?? '-' }}
-          @if (row.hiddenBy.length > 0) {
-            <br /><small>{{ hiddenBy(row.hiddenBy) }}</small>
+          {{ row.entry.status ?? '-' }}
+          @if (row.hiddenBy) {
+            <br /><small>{{ row.hiddenBy }}</small>
           }
         </td>
       </ng-container>
@@ -140,12 +153,11 @@ const VERIFIABLE: readonly BoardKind[] = ['daily', 'endless'];
           {{ 'profiles.player' | adminT }}
         </th>
         <td mat-cell *matCellDef="let row">
-          @let uid = owners()[row.entryId];
-          @if (uid) {
-            <a [routerLink]="['../player', uid]">
-              <code>{{ uid }}</code>
+          @if (row.owner) {
+            <a [routerLink]="['../player', row.owner]">
+              <code>{{ row.owner }}</code>
             </a>
-          } @else if (uid === null) {
+          } @else if (row.owner === null) {
             {{ 'boards.noOwner' | adminT }}
           }
         </td>
@@ -155,7 +167,7 @@ const VERIFIABLE: readonly BoardKind[] = ['daily', 'endless'];
           {{ 'player.actions' | adminT }}
         </th>
         <td mat-cell *matCellDef="let row" class="actions">
-          @if (row.hiddenBy.includes('admin')) {
+          @if (row.entry.hiddenBy.includes('admin')) {
             <button mat-button type="button" (click)="restore(row)">
               {{ 'type.board.restore' | adminT }}
             </button>
@@ -169,7 +181,7 @@ const VERIFIABLE: readonly BoardKind[] = ['daily', 'endless'];
               {{ 'type.board.verify' | adminT }}
             </button>
           }
-          @if (owners()[row.entryId] !== null) {
+          @if (row.owner !== null) {
             <button mat-button type="button" (click)="ban(row)">
               {{ 'type.player.ban' | adminT }}
             </button>
@@ -214,47 +226,44 @@ export class LeaderboardsComponent {
     'player',
     'actions',
   ];
-  protected readonly list = new PagedList<BoardEntryRecord>();
-  /** The player per entry id: a uid, null for nobody, absent while looking. */
-  protected readonly owners = signal<Record<string, string | null>>({});
+  protected readonly list = new PagedList<LeaderboardRow>();
   protected readonly shown = signal<{ kind: BoardKind; boardId: string }>({
     kind: 'xp',
     boardId: 'xp',
   });
-  protected readonly boardId = computed(() => this.shown().boardId);
   protected readonly verifiable = computed(() =>
     VERIFIABLE.includes(this.shown().kind)
   );
   /** The form: the board kind and, for the daily board, its day. */
   protected readonly kind = signal<BoardKind>('xp');
-  protected readonly day = signal(utcDay());
+  protected readonly day = signal(utcDay(new Date()));
   protected readonly valid = computed(
     () => this.kind() !== 'daily' || isUtcDay(this.day())
   );
+
   /**
-   * Each visible row's position as players see it: 1 + the visible rows
-   * ranked higher. Hidden rows have none.
+   * The rows with their texts and the position players see - the
+   * competition rank among the visible rows, which come best first.
    */
-  protected readonly positions = computed(() => {
-    const visible = this.list.rows().filter((row) => row.status !== 'hidden');
-    return Object.fromEntries(
-      visible.map((row) => [
-        row.entryId,
-        1 +
-          visible.filter((other) => (other.sort ?? 0) > (row.sort ?? 0)).length,
-      ])
+  protected readonly rows = computed((): RowView[] => {
+    const rows = this.list.rows();
+    const visible = rows.filter(
+      ({ entry }) =>
+        entry.status !== null && VISIBLE_STATUSES.includes(entry.status)
     );
+    const ranks = competitionRanks(visible.map(({ entry }) => entry.sort ?? 0));
+    const positions = new Map(visible.map((row, i) => [row, ranks[i]]));
+    return rows.map((row) => ({
+      ...row,
+      position: positions.get(row) ?? null,
+      label: this.label(row.entry),
+      score: this.score(row.entry.show),
+      hiddenBy: this.i18n.hideReasons(row.entry.hiddenBy),
+    }));
   });
-  /** The entry ids whose player is looked up already, for this board. */
-  private requested = new Set<string>();
 
   public constructor() {
     this.show();
-    // Every page the list loads, "Load more" and reloads included.
-    effect(() => {
-      const rows = this.list.rows();
-      untracked(() => void this.findOwners(rows));
-    });
   }
 
   protected kindKey(kind: BoardKind): AdminTextKey {
@@ -267,25 +276,75 @@ export class LeaderboardsComponent {
     }
     const kind = this.kind();
     const boardId = kind === 'daily' ? dailyBoardId(this.day()) : kind;
-    if (boardId !== this.shown().boardId) {
-      this.shown.set({ kind, boardId });
-      this.owners.set({});
-      this.requested = new Set();
-    }
-    void this.list.load((after) => this.records.boardEntries(boardId, after));
+    this.shown.set({ kind, boardId });
+    void this.list.load((after) => this.page(kind, boardId, after));
   }
 
-  protected label(row: BoardEntryRecord): string {
-    if (row.name !== null) {
-      return row.name;
+  protected hide(row: RowView): Promise<void> {
+    return this.act(row, { type: 'board.hideEntry', bar: true });
+  }
+
+  protected restore(row: RowView): Promise<void> {
+    return this.act(row, { type: 'board.restore' });
+  }
+
+  protected verify(row: RowView): Promise<void> {
+    return this.act(row, { type: 'board.verify' });
+  }
+
+  protected ban(row: RowView): Promise<void> {
+    return this.act(row, { type: 'player.ban', ban: true });
+  }
+
+  /** Runs a command on the row's entry, then reloads the board shown. */
+  private async act(
+    row: RowView,
+    action: Pick<ModerationAction, 'type' | 'ban' | 'bar'>
+  ): Promise<void> {
+    const result = await this.actions.run({
+      ...action,
+      subject: row.label,
+      target: { boardId: this.shown().boardId, entryId: row.entry.entryId },
+    });
+    if (result?.ok) {
+      await this.list.reload();
     }
-    return row.tag === null
-      ? this.i18n.t('boards.anonymous')
-      : `${this.i18n.t('boards.anonymous')} #${formatTag(row.tag)}`;
+  }
+
+  /** A page of the board, with the player behind each of its entries. */
+  private async page(
+    kind: BoardKind,
+    boardId: string,
+    after: unknown
+  ): Promise<Page<LeaderboardRow>> {
+    const page = await this.records.boardEntries(boardId, after);
+    let owners: Record<string, string | null> = {};
+    try {
+      owners = await this.records.entryOwners(
+        kind,
+        page.rows.map((entry) => entry.entryId)
+      );
+    } catch (error) {
+      console.error('Could not find the entries’ players', error);
+    }
+    return {
+      next: page.next,
+      rows: page.rows.map((entry) => ({ entry, owner: owners[entry.entryId] })),
+    };
+  }
+
+  private label(entry: BoardEntryRecord): string {
+    if (entry.name !== null) {
+      return entry.name;
+    }
+    const anonymous = this.i18n.t('boards.anonymous');
+    return entry.tag === null
+      ? anonymous
+      : `${anonymous} #${formatTag(entry.tag)}`;
   }
 
   /** What the row ranks by, as its board shows it. */
-  protected score(show: EntryShow | null): string {
+  private score(show: EntryShow | null): string {
     if (show === null) {
       return '';
     }
@@ -310,63 +369,5 @@ export class LeaderboardsComponent {
       show.partial ? 'boards.scoreOf.endlessPartial' : 'boards.scoreOf.endless',
       { depth: n(show.depth), seconds: n(show.seconds) }
     );
-  }
-
-  protected hiddenBy(reasons: readonly HideReason[]): string {
-    return reasons.map((reason) => this.i18n.t(`hidden.${reason}`)).join(', ');
-  }
-
-  protected hide(row: BoardEntryRecord): Promise<void> {
-    return this.act(row, { type: 'board.hideEntry', bar: true });
-  }
-
-  protected restore(row: BoardEntryRecord): Promise<void> {
-    return this.act(row, { type: 'board.restore' });
-  }
-
-  protected verify(row: BoardEntryRecord): Promise<void> {
-    return this.act(row, { type: 'board.verify' });
-  }
-
-  protected ban(row: BoardEntryRecord): Promise<void> {
-    return this.act(row, { type: 'player.ban', ban: true });
-  }
-
-  /** Runs a command on the row's entry, then reloads the board shown. */
-  private async act(
-    row: BoardEntryRecord,
-    action: Pick<ModerationAction, 'type' | 'ban' | 'bar'>
-  ): Promise<void> {
-    const result = await this.actions.run({
-      ...action,
-      subject: this.label(row),
-      target: { boardId: this.boardId(), entryId: row.entryId },
-    });
-    if (result?.ok) {
-      await this.list.reload();
-    }
-  }
-
-  /** Looks up the player of each row not looked up yet. */
-  private async findOwners(rows: readonly BoardEntryRecord[]): Promise<void> {
-    const { kind } = this.shown();
-    const requested = this.requested;
-    const missing = rows
-      .map((row) => row.entryId)
-      .filter((id) => !requested.has(id));
-    if (missing.length === 0) {
-      return;
-    }
-    missing.forEach((id) => requested.add(id));
-    try {
-      const found = await this.records.entryOwners(kind, missing);
-      // Dropped when another board was shown meanwhile.
-      if (this.requested === requested) {
-        this.owners.update((owners) => ({ ...owners, ...found }));
-      }
-    } catch (error) {
-      console.error('Could not find the entries’ players', error);
-      missing.forEach((id) => requested.delete(id));
-    }
   }
 }
