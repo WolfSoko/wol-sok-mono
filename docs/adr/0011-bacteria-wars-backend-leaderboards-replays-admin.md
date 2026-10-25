@@ -543,10 +543,15 @@ Decided by the owner on 2026-10-23:
   that affects the app (owner's decision, 2026-10-25, before the Cloud
   Run benchmark). If the first deploy of the Firestore triggers fails on
   the Eventarc service agent's permissions, which a new project grants
-  with a delay, run the release's deploy again a few minutes later.
-  Artifact Registry's cleanup policy:
-  `firebase functions:artifacts:setpolicy --location europe-west1
---project bacteria-wars`.
+  with a delay, run `nx run bacteria-wars-functions:deploy` again a few
+  minutes later (rerunning the release's deploy would redeploy every
+  affected app).
+  Artifact Registry's cleanup policy, once:
+
+  ```bash
+  firebase functions:artifacts:setpolicy --location europe-west1 --project bacteria-wars
+  ```
+
 - Once: `gcloud auth application-default login`, then
   `node tools/firebase/grant-admin.mjs <email> --project bacteria-wars --prod`.
 - After the first deploy: `curl` `/replays`, `/replays/<id>`, an unknown
