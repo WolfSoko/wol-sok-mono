@@ -101,7 +101,7 @@ function context(
     realtime,
     tombstoneOf: async (uid) =>
       google.includes(uid) ? tombstoneOfUid(uid) : null,
-    countAccounts: async () => 7,
+    accountUids: async () => ['ada', 'bob', 'eve'],
   };
 }
 
@@ -568,15 +568,31 @@ describe('statistics', () => {
   });
 
   it('sets the account count from Auth on stats.recount', async () => {
-    await db.doc('stats/accounts').set({ total: 3 });
+    await db.doc('stats/accounts').set({ total: 5 });
+    await db.doc('boardMembers/ada').set({ boards: ['xp'] });
     expect(
       await command('c1', { type: 'stats.recount', target: null })
     ).toEqual({ ok: true });
-    expect((await db.doc('stats/accounts').get()).get('total')).toBe(7);
+    expect((await db.doc('stats/accounts').get()).get('total')).toBe(3);
     expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
-      before: 3,
-      after: 7,
+      before: 5,
+      after: 3,
     });
+    // Counted now: deleting one lowers the total, as for a new account.
+    expect((await db.doc('boardMembers/ada').get()).data()).toEqual({
+      boards: ['xp'],
+      accountCounted: true,
+    });
+    expect((await db.doc('boardMembers/eve').get()).get('accountCounted')).toBe(
+      true
+    );
+    await deleteAccount(
+      db,
+      'eve',
+      { tombstone: null, realtime: fakeRealtime() },
+      NOW
+    );
+    expect((await db.doc('stats/accounts').get()).get('total')).toBe(2);
   });
 });
 

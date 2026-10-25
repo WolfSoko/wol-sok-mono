@@ -32,8 +32,8 @@ export interface AdminContext {
   realtime: Realtime;
   /** The account's ban tombstone id, null without a Google provider. */
   tombstoneOf(uid: string): Promise<string | null>;
-  /** How many accounts Auth holds, for `stats.recount`. */
-  countAccounts(): Promise<number>;
+  /** The uids of every account Auth holds, for `stats.recount`. */
+  accountUids(): Promise<readonly string[]>;
 }
 
 /** The parts of an Auth user the owner check reads. */
@@ -196,7 +196,7 @@ async function act(
       };
     case 'stats.recount': {
       const { before, after } = await recountAccounts(db, () =>
-        context.countAccounts()
+        context.accountUids()
       );
       return { ok: true, target: null, before, after };
     }

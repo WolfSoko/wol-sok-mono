@@ -159,20 +159,36 @@ export async function refreshStats(
 
 /**
  * `stats.recount`: sets `stats/accounts` to the number of accounts Auth
- * holds (`countAccounts` pages through them) - once after launch, since
+ * holds (`accountUids` pages through them) - once after launch, since
  * accounts older than `countAccount` were never counted, then when in
- * doubt. Returns the old and the new total.
+ * doubt. Each account it counts is noted as `accountCounted`, like
+ * `countAccount` does, so deleting it lowers the total again and a late
+ * `countAccount` event does not count it twice. Returns the old and the
+ * new total.
  */
 export async function recountAccounts(
   db: Firestore,
-  countAccounts: () => Promise<number>
+  accountUids: () => Promise<readonly string[]>
 ): Promise<{ before: number | null; after: number }> {
   const ref = db.doc(ACCOUNTS_DOC);
-  const [stored, after] = await Promise.all([ref.get(), countAccounts()]);
-  const before: unknown = stored.get('total');
+  const [stored, uids] = await Promise.all([ref.get(), accountUids()]);
+  const writer = db.bulkWriter();
+  const marks = uids.map((uid) =>
+    writer.set(
+      db.doc(`boardMembers/${uid}`),
+      { accountCounted: true },
+      { merge: true }
+    )
+  );
+  await writer.close();
+  await Promise.all(marks);
   await ref.set(
-    { total: after, updatedAt: FieldValue.serverTimestamp() },
+    { total: uids.length, updatedAt: FieldValue.serverTimestamp() },
     { merge: true }
   );
-  return { before: typeof before === 'number' ? before : null, after };
+  const before: unknown = stored.get('total');
+  return {
+    before: typeof before === 'number' ? before : null,
+    after: uids.length,
+  };
 }

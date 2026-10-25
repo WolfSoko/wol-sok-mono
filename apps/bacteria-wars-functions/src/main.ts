@@ -249,17 +249,17 @@ async function tombstoneOf(uid: string): Promise<string | null> {
   return user === null ? null : tombstoneId(BAN_TOMBSTONE_KEY.value(), user);
 }
 
-/** How many accounts Auth holds, a thousand a page - `stats.recount`. */
-async function countAccounts(): Promise<number> {
+/** Every account's uid, a thousand a page - `stats.recount`. */
+async function accountUids(): Promise<string[]> {
   const { getAuth } = await import('firebase-admin/auth');
-  let total = 0;
+  const uids: string[] = [];
   let pageToken: string | undefined;
   do {
     const page = await getAuth().listUsers(1000, pageToken);
-    total += page.users.length;
+    uids.push(...page.users.map((user) => user.uid));
     pageToken = page.pageToken;
   } while (pageToken !== undefined);
-  return total;
+  return uids;
 }
 
 /**
@@ -296,7 +296,7 @@ export const adminCommand = onDocumentCreatedWithAuthContext(
         event.params.id,
         data,
         event.authType === 'unauthenticated' ? undefined : event.authId,
-        { isOwner, realtime, tombstoneOf, countAccounts }
+        { isOwner, realtime, tombstoneOf, accountUids }
       );
       logger.info('Admin command', { id: event.params.id, result });
     }
