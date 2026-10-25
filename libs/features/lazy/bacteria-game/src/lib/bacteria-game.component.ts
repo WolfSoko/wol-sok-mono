@@ -95,7 +95,7 @@ import {
 } from './state/colony-colors';
 import { BotDifficulty } from './state/bot-controller';
 import { GameSettingsService } from './settings.service';
-import { vaporizePixels } from './vaporize-effect';
+import { randomWindDirection, vaporizePixels } from './vaporize-effect';
 import { ProgressService } from './progress.service';
 import { EvolutionService } from './evolution.service';
 import { CampaignService } from './campaign.service';
@@ -381,7 +381,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /**
    * The vaporize effect as set: as long as chosen, within the quality's
    * pixel budget - a big desktop window is snapped with
-   * coarser particles - and its snap as loud as the game's other effects.
+   * coarser particles - its snap as loud as the game's other effects, and
+   * its dust blowing a new way each time.
    */
   protected readonly thanosOptions = computed((): Partial<WsThanosOptions> => {
     const gain = this.sound.effectsGain();
@@ -390,8 +391,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       maxCapturePixels: vaporizePixels(this.settings.vaporize()),
       sound: gain > 0,
       soundVolume: gain * SNAP_LEVEL,
+      windDirection: this.windDirection(),
     };
   });
+  /**
+   * The next snap's wind. Rolled ahead of time: the effect reads its options
+   * as it starts, before a new value could reach it through the binding.
+   */
+  private readonly windDirection = signal(randomWindDirection());
   /**
    * What a colony counts up towards on a level won by reaching a goal - the
    * seconds on the zone, the pellets eaten - null on any other level.
@@ -1338,7 +1345,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     // The effect takes its snapshot of the canvas right away.
     this.painter?.showLastFrame();
-    return this.thanos.vaporize(false).pipe(take(1));
+    const vaporized = this.thanos.vaporize(false).pipe(take(1));
+    // this snap has its wind, the next one blows another way
+    this.windDirection.set(randomWindDirection());
+    return vaporized;
   }
 
   /**
