@@ -535,6 +535,13 @@ describe('adminCommands', () => {
     await assertFails(
       send(toggles({ rankedDaily: false }, { target: { uid: 'eve' } }))
     );
+    // It changes the game for everybody: a recent sign-in too.
+    await assertFails(
+      send(toggles({ rankedDaily: false }), {
+        ...OWNER_TOKEN,
+        auth_time: Math.floor((Date.now() - 2 * HOUR) / 1000),
+      })
+    );
   });
 
   it('wants a recent sign-in for destructive types only', async () => {

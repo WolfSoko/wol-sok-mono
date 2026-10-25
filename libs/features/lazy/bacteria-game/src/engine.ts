@@ -343,8 +343,6 @@ export {
   FEATURE_TOGGLE_KEYS,
   FEATURE_TOGGLES,
   featureToggles,
-  isFeatureToggle,
-  parseToggleValues,
 } from './lib/state/feature-toggles';
 export type {
   FeatureToggle,

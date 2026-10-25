@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import {
   defaultProfile,
   FEATURE_TOGGLES,
+  type FeatureToggle,
   type FeatureToggles,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { getApps, initializeApp } from 'firebase-admin/app';
@@ -93,14 +94,19 @@ function fakeRealtime(
 
 /** Remote Config's toggles, kept in memory. */
 function fakeToggles(): RemoteToggles & { published: FeatureToggles } {
-  const fake = {
-    published: { ...FEATURE_TOGGLES },
-    read: async () => ({ ...fake.published }),
-    publish: async (values: Partial<FeatureToggles>) => {
-      Object.assign(fake.published, values);
+  const published: FeatureToggles = { ...FEATURE_TOGGLES };
+  return {
+    published,
+    update: async (values) => {
+      const before = Object.fromEntries(
+        Object.entries(values)
+          .filter(([key, on]) => published[key as FeatureToggle] !== on)
+          .map(([key]) => [key, published[key as FeatureToggle]])
+      );
+      Object.assign(published, values);
+      return before;
     },
   };
-  return fake;
 }
 
 /** The tombstone id the fake Auth gives a Google account. */
@@ -505,17 +511,29 @@ describe('toggles.set', () => {
         ctx
       )
     ).toEqual({ ok: true });
-    expect(await ctx.toggles.read()).toEqual({
+    expect((ctx.toggles as ReturnType<typeof fakeToggles>).published).toEqual({
       ...FEATURE_TOGGLES,
       rankedDaily: false,
     });
+    // Only what changed is audited.
     expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
       type: 'toggles.set',
       target: null,
-      before: { rankedDaily: true, matchmaking: true },
-      after: { rankedDaily: false, matchmaking: true },
+      before: { rankedDaily: true },
+      after: { rankedDaily: false },
       ok: true,
     });
+    expect(
+      await command(
+        'c2',
+        {
+          type: 'toggles.set',
+          target: null,
+          args: { values: { rankedDaily: false } },
+        },
+        ctx
+      )
+    ).toEqual({ ok: false, error: 'unchanged' });
   });
 });
 

@@ -302,7 +302,7 @@ service cloud.firestore {
           'player.unban', 'stats.refresh', 'stats.recount', 'toggles.set'] &&
         isAdminReason(data) &&
         (!(data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
-          'board.hidePlayer', 'player.ban']) || signedInLately()) &&
+          'board.hidePlayer', 'player.ban', 'toggles.set']) || signedInLately()) &&
         isAdminTarget(data.type, data.target) &&
         isAdminArgs(data.type, data.args);
     }

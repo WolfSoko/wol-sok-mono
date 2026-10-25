@@ -266,6 +266,7 @@ describe('admin commands', () => {
       'player.ban',
       'profile.removeImage',
       'profile.reset',
+      'toggles.set',
     ]);
   });
 });

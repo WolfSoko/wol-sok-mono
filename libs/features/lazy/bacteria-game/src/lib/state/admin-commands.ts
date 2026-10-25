@@ -31,6 +31,7 @@ export const DESTRUCTIVE_COMMAND_TYPES: readonly AdminCommandType[] = [
   'board.hideEntry',
   'board.hidePlayer',
   'player.ban',
+  'toggles.set',
 ];
 
 /** Why a player is banned - also the reason of their notice. */
@@ -97,7 +98,12 @@ export type AdminCommand =
 const SCHEMA: Readonly<
   Record<
     AdminCommandType,
-    { targets: 'uid' | 'entry' | 'either' | 'none'; args: readonly string[] }
+    {
+      targets: 'uid' | 'entry' | 'either' | 'none';
+      args: readonly string[];
+      /** True where the reason may be left out. */
+      reasonOptional?: true;
+    }
   >
 > = {
   'profile.reset': { targets: 'uid', args: [] },
@@ -108,8 +114,8 @@ const SCHEMA: Readonly<
   'board.verify': { targets: 'entry', args: [] },
   'player.ban': { targets: 'either', args: ['until', 'reason'] },
   'player.unban': { targets: 'uid', args: [] },
-  'stats.refresh': { targets: 'none', args: [] },
-  'stats.recount': { targets: 'none', args: [] },
+  'stats.refresh': { targets: 'none', args: [], reasonOptional: true },
+  'stats.recount': { targets: 'none', args: [], reasonOptional: true },
   'toggles.set': { targets: 'none', args: ['values'] },
 };
 
@@ -145,7 +151,7 @@ export function parseAdminCommand(value: unknown): AdminCommand | null {
   }
   const type = value['type'];
   const schema = SCHEMA[type];
-  const stats = type === 'stats.refresh' || type === 'stats.recount';
+  const optional = schema.reasonOptional === true;
   const keys = Object.keys(value);
   if (
     keys.some(
@@ -153,12 +159,12 @@ export function parseAdminCommand(value: unknown): AdminCommand | null {
     ) ||
     !('target' in value) ||
     !('args' in value) ||
-    (!stats && !('reason' in value)) ||
+    (!optional && !('reason' in value)) ||
     ('uid' in value && !isUid(value['uid']))
   ) {
     return null;
   }
-  const reason = parseReason(value['reason'], stats);
+  const reason = parseReason(value['reason'], optional);
   const target = parseTarget(value['target'], schema.targets, type);
   const args = parseArgs(value['args'], schema.args, type);
   if (reason === null || target === undefined || args === null) {

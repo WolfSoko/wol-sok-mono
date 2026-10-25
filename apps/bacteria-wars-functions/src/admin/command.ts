@@ -187,11 +187,10 @@ async function act(
 ): Promise<Outcome> {
   const unchanged = { before: null, after: null };
   if (command.type === 'toggles.set') {
-    return {
-      ok: true,
-      target: null,
-      ...(await setToggles(context.toggles, command.args.values)),
-    };
+    const change = await setToggles(context.toggles, command.args.values);
+    return typeof change === 'string'
+      ? { ok: false, error: change, target: null, ...unchanged }
+      : { ok: true, target: null, ...change };
   }
   // `stats.*` take no target.
   if (command.target === null || command.type === 'board.verify') {

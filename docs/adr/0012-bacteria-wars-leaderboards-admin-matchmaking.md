@@ -791,12 +791,15 @@ a release (decided 2026-10-25: Remote Config).
   `leaderboards`, `deterministicSimulation` (the rollout switch of ADR
   0015), all on by default.
 - **Setting them**: the admin command `toggles.set` (`target: null`,
-  `args.values` with one or more toggles, a reason) publishes the
-  template from `adminCommand`, a boolean default per toggle and no
+  `args.values` with one or more toggles, a reason, a sign-in within the
+  hour like the destructive types) publishes the template from
+  `adminCommand`: a boolean default per changed toggle, where the
+  parameter sits (in its group, if the owner put it in one), and no
   conditional values, so every client gets what the admin area shows. The
-  publish sends the template's ETag: a template changed meanwhile fails
-  the command, and the owner sends it again. The audit keeps what each
-  toggle was and is.
+  template is read once and published with its ETag: a template changed
+  meanwhile fails the command, and the owner sends it again. Nothing
+  changed answers `unchanged` and publishes no new version. The audit
+  keeps what each changed toggle was and is.
 - **What they gate**: the client offers or shows the feature. The
   functions do not read them: a client still on an old fetch may send a
   ranked submission after `rankedDaily` went off, and it counts as before.
