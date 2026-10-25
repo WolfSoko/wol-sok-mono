@@ -280,6 +280,28 @@ describe('verifyEndlessSlice', () => {
   });
 });
 
+describe('the queue of runs the owner had checked', () => {
+  it('plays a queued run first, even one that is no candidate', async () => {
+    await declare(0);
+    await rank('l_0', played(0, 0));
+    // Not provisional on the board, so the candidates leave it out.
+    await (await entry()).ref.update({ status: 'hidden' });
+    await db
+      .doc('moderation/ada')
+      .set({ endlessFirstUntil: Timestamp.fromMillis(NOW + HOUR) });
+    const result = await verifyEndlessSlice(
+      db,
+      NOW,
+      async () => ({ createdAt: AT0 - 30 * 24 * HOUR, google: true }),
+      25 * MINUTE,
+      () => 0,
+      () => ({ state: 'verified', ms: 0 })
+    );
+    expect(result.checked).toBe(1);
+    expect((await run())?.['verifiedWins']).toBe(1);
+  });
+});
+
 describe('verifyNow on an endless run', () => {
   it('plays what fits, and queues the rest first for the hourly slice', async () => {
     for (const i of [0, 1, 2]) {

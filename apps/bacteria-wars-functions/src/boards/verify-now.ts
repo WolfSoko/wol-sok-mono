@@ -1,14 +1,14 @@
 import type { Replay } from '@wolsok/feat-lazy-bac-game/engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { ADMIN_COMMAND_MS, ADMIN_VERIFY_MS, DAY_MS } from './budgets';
-import type { Verdict } from './verify';
+import { type Verdict, verifyReplay } from './verify';
 import { bestRunOf, nextWin, verifyRunWins } from './verify-endless';
-import {
-  chargeAsYouGo,
-  checkBestAttempt,
-  openDays,
-  sliceBudget,
-} from './verify-slice';
+import { checkBestAttempt, openDays, spendBudget } from './verify-slice';
+
+/** A board `board.verify` takes. */
+export type VerifiableBoard =
+  | { kind: 'daily'; day: string }
+  | { kind: 'endless' };
 
 /** What `board.verify` played, for the audit. */
 export interface VerifyNow {
@@ -24,8 +24,7 @@ export interface VerifyNow {
  * order, now, from the admin budget (`adminVerifyMs` in `counters/{day}`):
  * at most 10 match-minutes a command, 20 a day. What a run has left waits
  * first in line for the hourly slice for a day
- * (`moderation/{uid}.endlessFirstUntil`) - as long as the run is among the
- * candidates the slice looks at. `nothing-to-verify` for an entry with
+ * (`moderation/{uid}.endlessFirstUntil`). `nothing-to-verify` for an entry with
  * nothing provisional, `closed` for a day board no longer checked,
  * `no-budget` when the day's admin budget is spent or the next match is
  * longer than what is left of it. Each command charges what it spent, a
@@ -35,45 +34,37 @@ export interface VerifyNow {
 export async function verifyNow(
   db: Firestore,
   uid: string,
-  board: { kind: 'daily'; day: string } | { kind: 'endless' },
+  board: VerifiableBoard,
   now: number,
-  clock: () => number,
-  verify: (replay: Replay) => Verdict
+  clock: () => number = () => performance.now(),
+  verify: (replay: Replay) => Verdict = (replay) => verifyReplay(replay, clock)
 ): Promise<VerifyNow | 'nothing-to-verify' | 'closed' | 'no-budget'> {
   if (board.kind === 'daily' && !openDays(now).includes(board.day)) {
     return 'closed';
   }
-  const budget = await sliceBudget(
+  const spent = await spendBudget(
     db,
     now,
-    ['adminVerifyMs'],
-    ADMIN_VERIFY_MS,
-    ADMIN_COMMAND_MS
+    {
+      fields: ['adminVerifyMs'],
+      dayMs: ADMIN_VERIFY_MS,
+      capMs: ADMIN_COMMAND_MS,
+      field: 'adminVerifyMs',
+    },
+    clock,
+    (left, charge) => play(db, uid, board, now, verify, charge, left)
   );
-  if (budget <= 0) {
+  if (spent === null) {
     return 'no-budget';
   }
-  const start = clock();
-  const charge = chargeAsYouGo(db, now, 'adminVerifyMs', clock);
-  const result = await play(
-    db,
-    uid,
-    board,
-    now,
-    verify,
-    charge,
-    () => budget - (clock() - start)
-  );
-  await charge(true);
-  return typeof result === 'string'
-    ? result
-    : { ...result, spentMs: Math.round(clock() - start) };
+  const { result, spentMs } = spent;
+  return typeof result === 'string' ? result : { ...result, spentMs };
 }
 
 async function play(
   db: Firestore,
   uid: string,
-  board: { kind: 'daily'; day: string } | { kind: 'endless' },
+  board: VerifiableBoard,
   now: number,
   verify: (replay: Replay) => Verdict,
   charge: () => Promise<void>,

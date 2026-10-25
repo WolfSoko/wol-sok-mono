@@ -2,7 +2,7 @@ import {
   BALANCE_VERSION,
   type Replay,
 } from '@wolsok/feat-lazy-bac-game/engine';
-import type { Firestore } from 'firebase-admin/firestore';
+import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import {
   DAILY_VERIFY_MS,
   ENDLESS_VERIFY_MS,
@@ -13,19 +13,15 @@ import { storedReplay } from './declared-match';
 import { winsOf } from './endless-run';
 import { applyVerdict, type StoredRun } from './rank-endless';
 import { type Verdict, verifyReplay } from './verify';
-import {
-  type AccountInfo,
-  candidates,
-  chargeAsYouGo,
-  sliceBudget,
-} from './verify-slice';
+import { type AccountInfo, candidates, spendBudget } from './verify-slice';
 
 /**
  * Spends what is left of the hour's slice on the `endless` board (ADR
  * 0012), from the same trust-ordered candidates: each candidate's best run
  * has its wins played again one by one, in order, from the first not yet
  * confirmed. A failed win cuts the run to its verified prefix ("partly
- * confirmed"). A win longer than 10 minutes, or of another balance table,
+ * confirmed"). Runs the owner had checked (`board.verify`) go first. A
+ * win longer than 10 minutes, or of another balance table,
  * is never re-run, and the run stays provisional. The day's endless budget
  * is its own plus what the daily boards left. As on the daily boards, a
  * re-run starts only when its expected cost fits, and is charged as it
@@ -39,46 +35,53 @@ export async function verifyEndlessSlice(
   clock: () => number = () => performance.now(),
   verify: (replay: Replay) => Verdict = (replay) => verifyReplay(replay, clock)
 ): Promise<{ checked: number; spentMs: number }> {
-  const budget = await sliceBudget(
+  const spent = await spendBudget(
     db,
     now,
-    ['verifyMs', 'endlessVerifyMs'],
-    DAILY_VERIFY_MS + ENDLESS_VERIFY_MS,
-    sliceMs
+    {
+      fields: ['verifyMs', 'endlessVerifyMs'],
+      dayMs: DAILY_VERIFY_MS + ENDLESS_VERIFY_MS,
+      capMs: sliceMs,
+      field: 'endlessVerifyMs',
+    },
+    clock,
+    async (left, charge) => {
+      const [queued, found] = await Promise.all([
+        queuedUids(db, now),
+        candidates(db, now, accountInfo, 'endless', [{ boardId: 'endless' }]),
+      ]);
+      let checked = 0;
+      for (const uid of new Set([...queued, ...found.map((c) => c.uid)])) {
+        const run = await bestRunOf(db, uid);
+        if (run !== null) {
+          checked += (await verifyRunWins(db, run, left, verify, now, charge))
+            .checked;
+        }
+        if (left() <= 0) {
+          break;
+        }
+      }
+      return checked;
+    }
   );
-  if (budget <= 0) {
-    return { checked: 0, spentMs: 0 };
-  }
-  const start = clock();
-  const charge = chargeAsYouGo(db, now, 'endlessVerifyMs', clock);
-  let checked = 0;
-  const boards = [{ boardId: 'endless' }];
-  for (const candidate of await candidates(
-    db,
-    now,
-    accountInfo,
-    'endless',
-    boards
-  )) {
-    const run = await bestRunOf(db, candidate.uid);
-    if (run !== null) {
-      checked += (
-        await verifyRunWins(
-          db,
-          run,
-          () => budget - (clock() - start),
-          verify,
-          now,
-          charge
-        )
-      ).checked;
-    }
-    if (clock() - start >= budget) {
-      break;
-    }
-  }
-  await charge(true);
-  return { checked, spentMs: Math.round(clock() - start) };
+  return { checked: spent?.result ?? 0, spentMs: spent?.spentMs ?? 0 };
+}
+
+/** At most this many runs the owner had checked go first in a slice. */
+const QUEUE_SCAN = 20;
+
+/**
+ * The players whose run the owner had checked (`board.verify`) with wins
+ * left: `moderation/{uid}.endlessFirstUntil` still ahead. Their runs go
+ * first, wherever they stand on the board.
+ */
+async function queuedUids(db: Firestore, now: number): Promise<string[]> {
+  const queued = await db
+    .collection('moderation')
+    .where('endlessFirstUntil', '>', Timestamp.fromMillis(now))
+    .limit(QUEUE_SCAN)
+    .get();
+  return queued.docs.map((doc) => doc.id);
 }
 
 /**

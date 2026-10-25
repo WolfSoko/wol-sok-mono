@@ -95,52 +95,101 @@ export async function verifyDailySlice(
   clock: () => number = () => performance.now(),
   verify: (replay: Replay) => Verdict = (replay) => verifyReplay(replay, clock)
 ): Promise<{ checked: number; spentMs: number }> {
-  const budget = await sliceBudget(
+  const spent = await spendBudget(
     db,
     now,
-    ['verifyMs'],
-    DAILY_VERIFY_MS,
-    SLICE_MS
+    {
+      fields: ['verifyMs'],
+      dayMs: DAILY_VERIFY_MS,
+      capMs: SLICE_MS,
+      field: 'verifyMs',
+    },
+    clock,
+    async (left, charge) => {
+      let checked = 0;
+      const boards = openDays(now).map((day) => ({
+        boardId: dailyBoardId(day),
+        day,
+      }));
+      for (const candidate of await candidates(
+        db,
+        now,
+        accountInfo,
+        'daily',
+        boards
+      )) {
+        const leftMs = left();
+        if (leftMs <= 0) {
+          break;
+        }
+        const { uid, board } = candidate;
+        if (
+          (await checkBestAttempt(db, uid, board.day, now, verify, leftMs)) ===
+          'checked'
+        ) {
+          checked++;
+        }
+        await charge();
+      }
+      return checked;
+    }
   );
-  if (budget <= 0) {
-    return { checked: 0, spentMs: 0 };
+  return { checked: spent?.result ?? 0, spentMs: spent?.spentMs ?? 0 };
+}
+
+/** A day's verification budget, and what one slice of it may spend. */
+export interface Budget {
+  /** The counters in `counters/{day}` that spend the day's budget. */
+  fields: readonly string[];
+  dayMs: number;
+  /** At most this much a slice. */
+  capMs: number;
+  /** The counter the slice charges. */
+  field: string;
+}
+
+/**
+ * Runs `work` on what a slice may spend of `budget` (`sliceBudget`):
+ * `left()` is the time it has left, `charge()` bills it to the day as each
+ * re-run ends (`chargeAsYouGo`), and the rest is billed at the end, also
+ * when `work` throws. Null, without running `work`, when nothing is left.
+ */
+export async function spendBudget<T>(
+  db: Firestore,
+  now: number,
+  budget: Budget,
+  clock: () => number,
+  work: (left: () => number, charge: () => Promise<void>) => Promise<T>
+): Promise<{ result: T; spentMs: number } | null> {
+  const ms = await sliceBudget(
+    db,
+    now,
+    budget.fields,
+    budget.dayMs,
+    budget.capMs
+  );
+  if (ms <= 0) {
+    return null;
   }
   const start = clock();
-  const charge = chargeAsYouGo(db, now, 'verifyMs', clock);
-  let checked = 0;
-  const boards = openDays(now).map((day) => ({
-    boardId: dailyBoardId(day),
-    day,
-  }));
-  for (const candidate of await candidates(
-    db,
-    now,
-    accountInfo,
-    'daily',
-    boards
-  )) {
-    const left = budget - (clock() - start);
-    if (left <= 0) {
-      break;
-    }
-    const day = candidate.board.day;
-    if (
-      (await checkBestAttempt(db, candidate.uid, day, now, verify, left)) ===
-      'checked'
-    ) {
-      checked++;
-    }
-    await charge();
+  const charge = chargeAsYouGo(db, now, budget.field, clock);
+  let result: T;
+  try {
+    result = await work(
+      () => ms - (clock() - start),
+      () => charge()
+    );
+  } finally {
+    await charge(true);
   }
-  await charge(true);
-  return { checked, spentMs: Math.round(clock() - start) };
+  return { result, spentMs: Math.round(clock() - start) };
 }
 
 /**
  * What a slice may still spend: at most `sliceMs`, and what the day's
  * `dayBudgetMs` leaves after the time the counter `fields` hold.
  */
-export async function sliceBudget(
+async function sliceBudget(
   db: Firestore,
   now: number,
   fields: readonly string[],
@@ -165,7 +214,7 @@ const CHARGE_STEP_MS = 60_000;
  * or re-run, and the counter, which every upload's slot reads, takes a
  * write a minute at most.
  */
-export function chargeAsYouGo(
+function chargeAsYouGo(
   db: Firestore,
   now: number,
   field: string,
@@ -263,17 +312,12 @@ export async function candidates<B extends BoardRef>(
     if (skipUntil instanceof Timestamp && skipUntil.toMillis() > now) {
       return null;
     }
-    // The rest of a run the owner had checked (`board.verify`) comes first.
-    const first = kind === 'endless' && moderation.get('endlessFirstUntil');
     return {
       board,
       entryId: entry.id,
       sort: Number(entry.get('sort')),
       uid,
-      trust:
-        first instanceof Timestamp && first.toMillis() > now
-          ? -1
-          : trustOf(info, moderation.get('verifiedBefore') === true, now),
+      trust: trustOf(info, moderation.get('verifiedBefore') === true, now),
     };
   };
   const looked = await Promise.all(
@@ -299,9 +343,9 @@ export async function candidates<B extends BoardRef>(
 
 /**
  * Plays the player's best provisional attempt of a day again, and applies
- * the verdict to the run, the board and the replay - `none` without one,
- * `too-long` when its re-run would take longer than `leftMs`, `raced` when
- * another check got there first.
+ * the verdict to the run, the board and the replay - `none` without one
+ * (or when another check got there first), `too-long` when its re-run
+ * would take longer than `leftMs`.
  */
 export async function checkBestAttempt(
   db: Firestore,
@@ -310,7 +354,7 @@ export async function checkBestAttempt(
   now: number,
   verify: (replay: Replay) => Verdict,
   leftMs: number
-): Promise<'checked' | 'none' | 'too-long' | 'raced'> {
+): Promise<'checked' | 'none' | 'too-long'> {
   const runRef = db.doc(`dailyRuns/${day}_${uid}`);
   const attempts =
     ((await runRef.get()).get('attempts') as DailyAttemptRun[] | undefined) ??
@@ -337,7 +381,7 @@ export async function checkBestAttempt(
     if (
       fresh.find((a) => a.attemptId === best.attemptId)?.state !== 'provisional'
     ) {
-      return 'raced';
+      return 'none';
     }
     const next = fresh.map((a) =>
       a.attemptId === best.attemptId ? { ...a, state: verdict.state } : a

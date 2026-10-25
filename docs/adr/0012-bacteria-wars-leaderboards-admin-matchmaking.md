@@ -1274,8 +1274,8 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      day, charged to `counters/{day}.adminVerifyMs`), at most 10
      match-minutes a command (`ADMIN_COMMAND_MS`, the longest match that
      is re-run). What a run has left waits first in line for the hourly
-     slice for a day (`moderation/{uid}.endlessFirstUntil`, trust -1 in
-     the endless `candidates`), if the run is among them.
+     slice for a day (`moderation/{uid}.endlessFirstUntil`): the endless
+     slice plays those runs before its candidates, wherever they stand.
      `nothing-to-verify` for an entry with nothing provisional, `closed`
      for a day board no longer checked, `no-budget` when the day's admin
      budget is spent or the next match is longer than what is left. Two

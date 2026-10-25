@@ -4,7 +4,6 @@ import {
   parseAdminCommand,
   parseBoardId,
   type PlayerTarget,
-  type Replay,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
@@ -14,7 +13,6 @@ import {
   moderateProfile,
   type ModerationChange,
 } from './moderation';
-import { type Verdict, verifyReplay } from '../boards/verify';
 import { verifyNow } from '../boards/verify-now';
 import type { Realtime } from './realtime';
 import { type RemoteToggles, setToggles } from './toggles';
@@ -38,10 +36,6 @@ export interface AdminContext {
   tombstoneOf(uid: string): Promise<string | null>;
   /** The feature toggles in Remote Config. */
   toggles: RemoteToggles;
-  /** How `board.verify` plays a replay again - `verifyReplay` unless set. */
-  verify?: (replay: Replay) => Verdict;
-  /** Its clock, in ms - `performance.now()` unless set. */
-  clock?: () => number;
   /** The uids of every account Auth holds, for `stats.recount`. */
   accountUids(): Promise<readonly string[]>;
 }
@@ -257,16 +251,11 @@ async function act(
       if (board?.kind !== 'daily' && board?.kind !== 'endless') {
         return done('malformed');
       }
-      const clock = context.clock ?? (() => performance.now());
       const result = await verifyNow(
         db,
         uid,
-        board.kind === 'daily'
-          ? { kind: 'daily', day: board.day }
-          : { kind: 'endless' },
-        now,
-        clock,
-        context.verify ?? ((replay) => verifyReplay(replay, clock))
+        board.kind === 'daily' ? board : { kind: 'endless' },
+        now
       );
       return done(
         typeof result === 'string' ? result : { before: null, after: result }
