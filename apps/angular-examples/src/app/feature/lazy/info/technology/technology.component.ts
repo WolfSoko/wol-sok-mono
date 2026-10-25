@@ -17,6 +17,7 @@ import { AnimationState, WsThanosDirective } from '@wolsok/thanos';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { Observable, switchMap, timer } from 'rxjs';
 import { randomCrumble } from './random-crumble';
+import { randomWindDirection } from './random-wind';
 
 @Component({
   imports: [
@@ -48,9 +49,12 @@ export class TechnologyComponent implements OnInit {
 
   /** every tile snaps with a random crumble variant, and with another one the next time */
   protected readonly crumble = signal(randomCrumble());
+  /** and blows away into a random direction, a new one every time */
+  protected readonly windDirection = signal(randomWindDirection());
 
-  protected nextCrumble(): void {
+  protected nextSnap(): void {
     this.crumble.update(randomCrumble);
+    this.windDirection.set(randomWindDirection());
   }
 
   ngOnInit(): void {
