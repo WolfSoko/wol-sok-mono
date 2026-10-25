@@ -1,4 +1,3 @@
-import { GAME_SITE_URL } from '@wolsok/feat-lazy-bac-game/engine';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { REGION } from '../config';
@@ -6,8 +5,9 @@ import { CACHE, SITEMAP_CACHE } from './public-site';
 
 /**
  * Hosting sends `/replays` and `/replays/**` to `publicSite` (ADR 0011),
- * before the SPA's catch-all, with the cache the function sets; robots.txt
- * names the replays' sitemap beside the game's.
+ * before the SPA's catch-all, with the cache the function sets. (The
+ * remote's `sitemap.spec.ts` checks that robots.txt names the replays'
+ * sitemap.)
  */
 const ROOT = join(__dirname, '../../../..');
 const hosting = JSON.parse(
@@ -38,13 +38,8 @@ describe('publicSite behind Hosting', () => {
     expect(cacheOf('/replays/sitemap.xml')).toBe(SITEMAP_CACHE);
     const sources = hosting.headers.map((rule) => rule.source);
     expect(sources.indexOf('**')).toBeLessThan(sources.indexOf('/replays'));
-  });
-
-  it("lists the replays' sitemap in robots.txt", () => {
-    const robots = readFileSync(
-      join(ROOT, 'apps/bacteria-game-remote/src/robots.txt'),
-      'utf8'
+    expect(sources.indexOf('/replays/**')).toBeLessThan(
+      sources.indexOf('/replays/sitemap.xml')
     );
-    expect(robots).toContain(`Sitemap: ${GAME_SITE_URL}/replays/sitemap.xml`);
   });
 });
