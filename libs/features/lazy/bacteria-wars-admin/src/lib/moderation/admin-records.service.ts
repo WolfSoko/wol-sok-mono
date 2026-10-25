@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import {
+  type BoardKind,
   type FirebaseConnection,
   GameCloud,
   parseProfile,
@@ -8,6 +9,7 @@ import {
 import {
   type AuditRecord,
   type BanRecord,
+  type BoardEntryRecord,
   type EntryRecord,
   type MemberEntryRef,
   type MemberRecord,
@@ -16,6 +18,7 @@ import {
   type ProfileFlags,
   parseAudit,
   parseBan,
+  parseBoardEntry,
   parseEntry,
   parseMember,
   parseModeration,
@@ -103,6 +106,42 @@ export class AdminRecordsService {
           : { uid: doc.id, profile, updatedAt: millisOf(doc.get('updatedAt')) };
       }
     );
+  }
+
+  /** A board's entries, best first - hidden ones too. */
+  public async boardEntries(
+    boardId: string,
+    after: unknown = null
+  ): Promise<Page<BoardEntryRecord>> {
+    const { db, dbSdk: sdk } = this.connection();
+    return this.page(
+      sdk,
+      sdk.query(
+        sdk.collection(db, 'boards', boardId, 'entries'),
+        sdk.orderBy('sort', 'desc')
+      ),
+      after,
+      (doc) => parseBoardEntry(doc.id, doc.data())
+    );
+  }
+
+  /**
+   * The player behind an entry: entries carry no uid, `boardMembers` maps
+   * them (`entryIds.<kind>`). Null when nobody holds the id.
+   */
+  public async entryOwner(
+    kind: BoardKind,
+    entryId: string
+  ): Promise<string | null> {
+    const { db, dbSdk: sdk } = this.connection();
+    const snapshot = await sdk.getDocs(
+      sdk.query(
+        sdk.collection(db, 'boardMembers'),
+        sdk.where(`entryIds.${kind}`, '==', entryId),
+        sdk.limit(1)
+      )
+    );
+    return snapshot.docs[0]?.id ?? null;
   }
 
   /** The bans, newest first; the hourly sweep deletes the ended ones. */

@@ -36,6 +36,7 @@ export type { Avatar, Profile } from './lib/social/profile';
 export {
   BOARD_KINDS,
   dailyBoardId,
+  formatTag,
   isBoardId,
   parseBoardId,
   VISIBLE_STATUSES,

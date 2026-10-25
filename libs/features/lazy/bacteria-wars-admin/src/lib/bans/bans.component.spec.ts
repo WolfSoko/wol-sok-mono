@@ -29,13 +29,26 @@ describe('BansComponent', () => {
     expect(element.textContent).toContain('Cheating');
     expect(element.querySelector('.ended')).not.toBeNull();
 
-    (element.querySelector('td button') as HTMLButtonElement).click();
+    const button = (label: string) =>
+      [...element.querySelectorAll('td button')].find((b) =>
+        b.textContent?.includes(label)
+      ) as HTMLButtonElement;
+    button('Lift ban').click();
     await fixture.whenStable();
-    expect(run).toHaveBeenCalledWith({
+    expect(run).toHaveBeenLastCalledWith({
       type: 'player.unban',
       subject: 'ada',
       target: { uid: 'ada' },
     });
     expect(bans).toHaveBeenCalledTimes(2);
+
+    button('Change end').click();
+    await fixture.whenStable();
+    expect(run).toHaveBeenLastCalledWith({
+      type: 'player.ban',
+      ban: true,
+      subject: 'ada',
+      target: { uid: 'ada' },
+    });
   });
 });

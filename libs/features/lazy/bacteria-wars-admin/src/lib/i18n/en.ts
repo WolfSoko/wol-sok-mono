@@ -4,6 +4,7 @@ export const EN = {
   nav: {
     overview: 'Overview',
     profiles: 'Profiles',
+    leaderboards: 'Leaderboards',
     bans: 'Bans',
     audit: 'Audit',
   },
@@ -115,7 +116,30 @@ export const EN = {
     admin: 'owner',
     optout: 'player’s opt-out',
   },
+  boards: {
+    board: 'Board',
+    day: 'Day (UTC)',
+    show: 'Show',
+    label: 'Entry',
+    score: 'Score',
+    anonymous: 'Anonymous',
+    noOwner: 'No player',
+    kind: {
+      xp: 'XP',
+      online: 'Online',
+      daily: 'Daily',
+      endless: 'Endless',
+    },
+    scoreOf: {
+      xp: '{xp} XP',
+      online: '{w} won · {l} lost · {d} drawn',
+      won: 'Won in {ticks} ticks',
+      lost: 'Lost after {ticks} ticks',
+      endless: 'Depth {depth} · {seconds} s',
+    },
+  },
   bans: {
+    change: 'Change end',
     since: 'Since',
     until: 'Until',
     forGood: 'For good',

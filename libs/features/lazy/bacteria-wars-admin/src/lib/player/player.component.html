@@ -65,6 +65,9 @@
             {{ "type.player.ban" | adminT }}
           </button>
         } @else {
+          <button mat-stroked-button type="button" (click)="ban()">
+            {{ "bans.change" | adminT }}
+          </button>
           <button mat-flat-button type="button" (click)="unban()">
             {{ "type.player.unban" | adminT }}
           </button>

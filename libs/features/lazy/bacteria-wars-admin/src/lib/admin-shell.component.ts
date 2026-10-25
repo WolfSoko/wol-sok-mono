@@ -23,10 +23,11 @@ import {
   AdminTextPipe,
 } from './i18n/admin-i18n.service';
 
-/** The views' tabs; a player opens from the profiles, bans or audit. */
+/** The views' tabs; a player opens from the other lists. */
 const TABS: readonly { path: string; label: AdminTextKey }[] = [
   { path: '.', label: 'nav.overview' },
   { path: 'profiles', label: 'nav.profiles' },
+  { path: 'leaderboards', label: 'nav.leaderboards' },
   { path: 'bans', label: 'nav.bans' },
   { path: 'audit', label: 'nav.audit' },
 ];

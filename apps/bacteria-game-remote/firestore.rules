@@ -240,6 +240,9 @@ service cloud.firestore {
     // only the player and the owner read it.
     match /boardMembers/{uid} {
       allow get: if isPlayer(uid) || isAdmin();
+      // The admin's leaderboards view finds an entry's player
+      // (`entryIds.<kind> == entryId`).
+      allow list: if isAdmin();
     }
 
     // A ban (ADR 0012), written by the functions only: the player may read
