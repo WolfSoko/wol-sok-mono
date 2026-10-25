@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.86.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.1...v74.86.2) (2026-10-25)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** a ranked submission dropped on our side voids its attempt ([#2638](https://github.com/WolfSoko/wol-sok-mono/issues/2638)) ([c7b50ef](https://github.com/WolfSoko/wol-sok-mono/commit/c7b50ef1f9de050540c24b7e385f40fdea970db6))
+
 ## [74.86.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.0...v74.86.1) (2026-10-25)
 
 ### Bug Fixes
