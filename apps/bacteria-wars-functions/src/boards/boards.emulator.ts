@@ -6,8 +6,9 @@ import {
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
+import { deletePlayerReplays } from '../replays/delete-player';
 import { boardProfileChanged } from './profile-changed';
-import { rankOnline } from './rank-online';
+import { type AccountCreatedAt, rankOnline } from './rank-online';
 import { rankProgress } from './rank-progress';
 import { rebuildTop } from './rebuild-top';
 
@@ -119,9 +120,9 @@ describe('rankOnline', () => {
     winnerSeat: 0,
     ...extra,
   });
-  async function rank(id: string, data: object, ages = OLD) {
+  async function rank(id: string, data: object, ages: AccountCreatedAt = OLD) {
     await db.doc(`replays/${id}`).set(data);
-    return rankOnline(db, id, data as Record<string, unknown>, ages, NOW);
+    return rankOnline(db, id, ages, NOW);
   }
 
   it('adds the win and the loss, once', async () => {
@@ -139,7 +140,7 @@ describe('rankOnline', () => {
     expect((await db.doc('replays/r1').get()).get('rankedReason')).toBe(
       'counted'
     );
-    expect(await rankOnline(db, 'r1', replay(), OLD, NOW)).toBe('done');
+    expect(await rankOnline(db, 'r1', OLD, NOW)).toBe('done');
     expect((await entryOf('ada', 'online')).get('show')).toMatchObject({
       w: 1,
     });
@@ -163,6 +164,21 @@ describe('rankOnline', () => {
     );
     await db.doc('bans/bob').set({ until: null });
     expect(await rank('r4', replay())).toBe('banned');
+    expect((await db.doc('boardMembers/ada').get()).exists).toBe(false);
+  });
+
+  it('counts nothing without a uid in both seats, as after a deleted account', async () => {
+    const data = replay({ players: ['ada', 'bob'] });
+    await db.doc('replays/r1').set(data);
+    // A retry an hour on: Bob deleted his account meanwhile.
+    await deletePlayerReplays(db, 'bob');
+    expect(await rankOnline(db, 'r1', OLD, NOW)).toBe('stub-expired');
+    expect((await db.doc('boardMembers/bob').get()).exists).toBe(false);
+    expect((await db.doc('replays/r1').get()).get('rankedReason')).toBe(
+      'stub-expired'
+    );
+    // The same rule for a match stored without both seats.
+    expect(await rank('r2', replay({ seats: ['ada'] }))).toBe('stub-expired');
     expect((await db.doc('boardMembers/ada').get()).exists).toBe(false);
   });
 

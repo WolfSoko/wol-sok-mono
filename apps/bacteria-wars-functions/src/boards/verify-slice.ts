@@ -256,7 +256,10 @@ export async function candidates<B extends BoardRef>(
   return found.sort((a, b) => a.trust - b.trust || b.sort - a.sort);
 }
 
-/** Plays a candidate's best provisional attempt again - false when none. */
+/**
+ * Plays a candidate's best provisional attempt again - false when none, or
+ * when another slice checked it meanwhile.
+ */
 async function checkCandidate(
   db: Firestore,
   candidate: Candidate<{ boardId: string; day: string }>,
@@ -276,11 +279,18 @@ async function checkCandidate(
   const replay = await storedReplay(db, best.replayId);
   const verdict: Verdict =
     replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
-  await db.runTransaction(async (tx) => {
+  return db.runTransaction(async (tx) => {
     const fresh =
       ((await tx.get(runRef)).get('attempts') as
         | DailyAttemptRun[]
         | undefined) ?? [];
+    // Another run may have checked it meanwhile (Cloud Scheduler delivers
+    // at least once): a check applies once, or it counts a failure twice.
+    if (
+      fresh.find((a) => a.attemptId === best.attemptId)?.state !== 'provisional'
+    ) {
+      return false;
+    }
     const next = fresh.map((a) =>
       a.attemptId === best.attemptId ? { ...a, state: verdict.state } : a
     );
@@ -297,8 +307,8 @@ async function checkCandidate(
     tx.update(runRef, { attempts: next });
     tx.update(db.doc(`replays/${best.replayId}`), verdictFields(verdict));
     recordCheck(tx, moderationRef, moderation, verdict.state, now);
+    return true;
   });
-  return true;
 }
 
 /**

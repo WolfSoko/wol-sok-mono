@@ -13,7 +13,9 @@ import {
 } from 'firebase-admin/firestore';
 import { DAY_MS } from './budgets';
 import {
+  answerReplay,
   checkDeclaredMatch,
+  earlierAnswer,
   rankedFields,
   readDeclaredReplay,
 } from './declared-match';
@@ -247,14 +249,15 @@ function sameEntry(
  * replay still costs the match's life; the first replay of a match counts.
  * `rankedReason` says what was known when it came: `counted` means it
  * passed the checks, while what the match did to the run lives in the run
- * (`matches`), which may wait for an earlier match's replay.
+ * (`matches`), which may wait for an earlier match's replay. Like
+ * `rankDaily`, it leaves a replay that is gone or answered already.
  */
 export async function rankEndless(
   db: Firestore,
   replayId: string,
   replayDoc: Record<string, unknown>,
   now: number = Date.now()
-): Promise<EndlessReason> {
+): Promise<EndlessReason | 'gone'> {
   const replayRef = db.doc(`replays/${replayId}`);
   const read = await readDeclaredReplay(
     db,
@@ -264,8 +267,7 @@ export async function rankEndless(
     now
   );
   if ('reason' in read) {
-    await replayRef.update(rankedFields(read.reason));
-    return read.reason;
+    return answerReplay(db, replayId, read.reason);
   }
   const { uid, attempt, replay } = read;
   const reason = checkDeclaredMatch(
@@ -285,7 +287,14 @@ export async function rankEndless(
     balanceVersion: replay.header.balanceVersion,
   };
   return db.runTransaction(async (tx) => {
-    const runRead = await readRun(tx, db, uid, attempt.runId);
+    const [replayNow, runRead] = await Promise.all([
+      tx.get(replayRef),
+      readRun(tx, db, uid, attempt.runId),
+    ]);
+    const earlier = earlierAnswer(replayNow);
+    if (earlier !== null) {
+      return earlier;
+    }
     const accepted = runRead.stored.accepted ?? {};
     if (accepted[String(attempt.i)] !== undefined) {
       tx.update(replayRef, rankedFields('duplicate'));

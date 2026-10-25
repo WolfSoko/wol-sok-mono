@@ -15,7 +15,9 @@ import {
 import { DAY_MS } from './budgets';
 import {
   type ArrivalReason,
+  answerReplay,
   checkDeclaredMatch,
+  earlierAnswer,
   rankedFields,
   readDeclaredReplay,
 } from './declared-match';
@@ -93,15 +95,16 @@ export function dailyEntryBase(
  * (`dailyRuns/{day}_{uid}`) and their entry on `daily-{day}`, provisional
  * until the hourly function plays it again. The first replay of an
  * attempt counts; a replay that fails the checks is stored but never
- * ranks, and says why in `rankedReason`.
+ * ranks, and says why in `rankedReason`. `replayDoc` is the stored
+ * replay, read after the event; the transaction checks again that it is
+ * still there and unanswered (`gone`, or its earlier answer).
  */
 export async function rankDaily(
   db: Firestore,
   replayId: string,
   replayDoc: Record<string, unknown>,
   now: number = Date.now()
-): Promise<DailyReason> {
-  const replayRef = db.doc(`replays/${replayId}`);
+): Promise<DailyReason | 'gone'> {
   const read = await readDeclaredReplay(db, replayId, replayDoc, 'daily', now);
   const reason =
     'reason' in read
@@ -115,8 +118,7 @@ export async function rankDaily(
           dailyLevelId(read.attempt.day)
         );
   if ('reason' in read || reason !== 'counted') {
-    await replayRef.update(rankedFields(reason));
-    return reason;
+    return answerReplay(db, replayId, reason);
   }
   const { header } = read.replay;
   const won = header.outcome?.winnerSeat === 0;
@@ -132,8 +134,13 @@ export async function rankDaily(
     atHour: atHourOf(read.arrivedAt),
   };
   return db.runTransaction(async (tx) => {
+    const replayRef = db.doc(`replays/${replayId}`);
     const runRef = db.doc(`dailyRuns/${day}_${uid}`);
-    const stored = await tx.get(runRef);
+    const [replay, stored] = await tx.getAll(replayRef, runRef);
+    const earlier = earlierAnswer(replay);
+    if (earlier !== null) {
+      return earlier;
+    }
     const attempts =
       (stored.get('attempts') as DailyAttemptRun[] | undefined) ?? [];
     if (attempts.some((a) => a.attemptId === run.attemptId)) {

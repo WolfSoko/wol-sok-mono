@@ -125,6 +125,20 @@ describe('rankEndless', () => {
     expect(await rank('l_3b', played(3, 2))).toBe('duplicate');
   });
 
+  it('keeps its answer when rankReplay delivers a replay again', async () => {
+    await declare(0);
+    expect(await rank('l_0', played(0, 0))).toBe('counted');
+    const doc = (await db.doc('replays/l_0').get()).data() ?? {};
+    // A retry after the first delivery wrote everything.
+    expect(await rankEndless(db, 'l_0', doc, NOW)).toBe('counted');
+    expect((await db.doc('replays/l_0').get()).get('rankedReason')).toBe(
+      'counted'
+    );
+    await db.doc('replays/l_0').delete();
+    expect(await rankEndless(db, 'l_0', doc, NOW)).toBe('gone');
+    expect(await run()).toMatchObject({ wins: 1, lives: 3 });
+  });
+
   it('waits for a match within 2 hours, and the sweep then counts it lost', async () => {
     await declare(0);
     await declare(1);

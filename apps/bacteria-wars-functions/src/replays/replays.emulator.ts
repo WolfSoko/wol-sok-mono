@@ -9,6 +9,7 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { closeNotReported } from '../boards/hourly';
 import { clearBanCache } from '../limits';
 import { acceptSubmission } from './accept';
 import { deleteReplayChildren } from './cleanup';
@@ -230,6 +231,23 @@ describe('acceptReplay', () => {
       expect(await submit('s3', 'ada', bytes)).toBe('duplicate');
     });
 
+    it('drops a second report that comes after the hourly close', async () => {
+      const bytes = await bytesOf(online());
+      await submit('s1', 'ada', bytes);
+      // Two hours on, the match closes with Ada's report alone.
+      expect(await closeNotReported(db, NOW + 3 * HOUR)).toBe(1);
+      expect(await submit('s2', 'bob', bytes)).toBe('closed');
+      const [ref] = await db.collection('replays').listDocuments();
+      expect((await ref.get()).data()).toMatchObject({
+        players: ['ada'],
+        state: 'waiting',
+        rankedReason: 'not-reported',
+      });
+      expect(
+        (await ref.collection('reports').listDocuments()).map((r) => r.id)
+      ).toEqual(['ada']);
+    });
+
     it('marks a match reported after its stub expired', async () => {
       await db
         .doc('rooms/ABC234')
@@ -306,9 +324,11 @@ describe('deletePlayerReplays', () => {
   it('deletes what only the player played, and leaves the rest to the others', async () => {
     await db.doc('replays/mine').set({ players: ['ada'] });
     await db.doc('replays/mine/blob/data').set({ size: 1 });
-    await db
-      .doc('replays/ours')
-      .set({ players: ['ada', 'bob'], optOut: ['ada'] });
+    await db.doc('replays/ours').set({
+      players: ['ada', 'bob'],
+      optOut: ['ada'],
+      seats: ['ada', 'bob'],
+    });
     await db.doc('replays/ours/reports/ada').set({ checksum: 1 });
     expect(await deletePlayerReplays(db, 'ada')).toEqual({
       deleted: 1,
@@ -316,10 +336,41 @@ describe('deletePlayerReplays', () => {
     });
     expect((await db.doc('replays/mine').get()).exists).toBe(false);
     expect((await db.doc('replays/mine/blob/data').get()).exists).toBe(false);
+    // Bob still reads it: the room's seat forgets Ada too.
     expect((await db.doc('replays/ours').get()).data()).toEqual({
       players: ['bob'],
       optOut: [],
+      seats: [null, 'bob'],
     });
     expect((await db.doc('replays/ours/reports/ada').get()).exists).toBe(false);
+  });
+
+  it('forgets both players when both accounts go at the same time', async () => {
+    await db.doc('replays/ours').set({
+      players: ['ada', 'bob'],
+      optOut: [],
+      seats: ['ada', 'bob'],
+    });
+    await Promise.all([
+      deletePlayerReplays(db, 'ada'),
+      deletePlayerReplays(db, 'bob'),
+    ]);
+    // The second one to run found itself the only player left.
+    expect((await db.doc('replays/ours').get()).exists).toBe(false);
+  });
+
+  it('forgets the player in the seat of a match only the other one reported', async () => {
+    await db
+      .doc('replays/theirs')
+      .set({ players: ['bob'], optOut: [], seats: ['bob', 'ada'] });
+    expect(await deletePlayerReplays(db, 'ada')).toEqual({
+      deleted: 0,
+      left: 1,
+    });
+    expect((await db.doc('replays/theirs').get()).data()).toEqual({
+      players: ['bob'],
+      optOut: [],
+      seats: ['bob', null],
+    });
   });
 });

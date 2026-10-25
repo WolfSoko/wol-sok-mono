@@ -264,7 +264,8 @@ a dead end), `verified`, `unverified`, `balance-mismatch`.
   `replays/{id}.optOut`; nothing re-features it, not even the owner.
 - `profileChanged` updates a player's public replays when they rename or
   turn `publicName` off. Deleting an account (`auth.user().onDelete`)
-  removes the uid from `replays.players`, deletes replays where they were
+  removes the uid from `replays.players` and the room's `seats` (also
+  where only the other player reported), deletes replays where they were
   the only player, and replaces their name in public replays with the
   colour label.
 
@@ -297,7 +298,8 @@ install --omit dev`).
   `bacteria-wars` (confirmed by the owner before the first deploy).
   `setGlobalOptions({ region, maxInstances: 5 })`; `initializeApp()` without
   a project id. Triggers run with retries off and are idempotent (a
-  transaction checks `state` first).
+  transaction checks `state` first). (Changed by ADR 0012: `rankReplay`
+  retries for an hour, as a replay it fails to rank would never count.)
 - **Deployed with the game's config**: `functions` entry with
   `codebase: "bacteria"`, `source: "dist/apps/bacteria-wars-functions"` in
   `firebase.bacteria-game-remote.json`; its own `deploy` target

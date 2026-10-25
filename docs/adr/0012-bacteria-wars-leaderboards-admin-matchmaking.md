@@ -262,7 +262,10 @@ without limit. Three things make an attempt count:
    persistent cache:
    `players/{uid}/attempts/{attemptId}` = `{ at: request.time, expireAt }`,
    create only, no update or delete, `keys().hasOnly(['at', 'expireAt'])`,
-   `at == request.time`, and `expireAt` within 32 days of `request.time`.
+   `at == request.time`, and `expireAt` within 32 days of `request.time`
+   but at least 28 days ahead (a shorter one would let TTL delete the
+   attempt while its id could be declared again; 28 lets the device clock
+   the client takes the 31 days from run 3 days slow).
    - The rules check the id:
      - `d_YYYY-MM-DD_n`: `n` from 1 to 3, the day equals the UTC date of
        `request.time` (`timestamp.date()` against the parts of
@@ -898,7 +901,16 @@ chose not to share their status, and the privacy page says so.
 
 All run in ADR 0011's codebase and region, with retries off, and are
 idempotent: a transaction checks the state first, and markers are created
-with `create()`. There is one new Cloud Scheduler job, so the project has
+with `create()`. `rankReplay` is the exception: it retries, and drops an
+event older than an hour, since a stored replay it fails to rank would
+never count. Each delivery reads the replay afresh and leaves one that
+is gone or already answered (`rankedReason`); the steps check that again
+in their transactions (the `rankedReplays` marker, the `rankedReason` a
+daily replay keeps once answered), read the match's seats there instead
+of trusting the event's snapshot, and decide at the event's time: caps,
+the room's clock, a declaration's deadline and when a ban ends. The ban
+document itself is read at the delivery, so a ban placed after the event
+still applies. There is one new Cloud Scheduler job, so the project has
 two with `featureBest`. The three free jobs are counted per billing
 account, not per project, so other projects on the same billing account
 may already use them (a job costs $0.10 a month).

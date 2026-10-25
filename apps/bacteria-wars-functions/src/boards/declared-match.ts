@@ -9,6 +9,7 @@ import {
   submissionDeadline,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
+  type DocumentSnapshot,
   FieldValue,
   type Firestore,
   Timestamp,
@@ -92,6 +93,40 @@ export async function storedReplay(
 /** What a ranking writes on the replay. */
 export function rankedFields(reason: ArrivalReason) {
   return { rankedReason: reason, rankedAt: FieldValue.serverTimestamp() };
+}
+
+/**
+ * A replay read in a ranking transaction: null while it may still rank,
+ * else what the ranking returns - `gone` (its account was deleted) or the
+ * answer an earlier delivery stored. `rankReplay` retries, and a replay
+ * keeps its answer, even when a ban or an expired declaration would answer
+ * otherwise now.
+ */
+export function earlierAnswer(
+  replay: DocumentSnapshot
+): ArrivalReason | 'gone' | null {
+  if (!replay.exists) {
+    return 'gone';
+  }
+  const ranked = replay.get('rankedReason');
+  return typeof ranked === 'string' ? (ranked as ArrivalReason) : null;
+}
+
+/** Stores why a replay does not rank, unless {@link earlierAnswer} has one. */
+export async function answerReplay(
+  db: Firestore,
+  replayId: string,
+  reason: ArrivalReason
+): Promise<ArrivalReason | 'gone'> {
+  const replayRef = db.doc(`replays/${replayId}`);
+  return db.runTransaction(async (tx) => {
+    const earlier = earlierAnswer(await tx.get(replayRef));
+    if (earlier !== null) {
+      return earlier;
+    }
+    tx.update(replayRef, rankedFields(reason));
+    return reason;
+  });
 }
 
 /** A declared replay ready for its board's checks. */
