@@ -109,12 +109,13 @@ export async function rankDaily(
   const reason =
     'reason' in read
       ? read.reason
-      : checkDailyAttempt(
+      : checkDeclaredMatch(
           read.replay,
           read.uid,
           read.attemptId,
           read.declaredAt,
-          read.arrivedAt
+          read.arrivedAt,
+          dailyLevelId(read.attempt.day)
         );
   if ('reason' in read || reason !== 'counted') {
     return answerReplay(db, replayId, reason);
