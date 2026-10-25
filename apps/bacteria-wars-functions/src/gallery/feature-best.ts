@@ -59,7 +59,7 @@ export interface Verified extends Stored {
 }
 
 /** A candidate once scored. */
-export interface Scored extends Stored {
+interface Scored extends Stored {
   doc: GalleryReplay & { score: number; reasons: string[] };
 }
 
@@ -105,11 +105,11 @@ export async function featureBest(
   const toRerun: Stored[] = [];
   for (const candidate of ranked) {
     // Those the boards verified need no re-run, and so no budget.
-    const { summary } = candidate.doc;
-    if (candidate.doc.state === 'verified' && summary !== undefined) {
-      verified.push(asVerified(candidate, summary, candidate.doc.medal));
-    } else {
+    const done = alreadyVerified(candidate);
+    if (done === null) {
       toRerun.push(candidate);
+    } else {
+      verified.push(done);
     }
   }
   let checked = 0;
@@ -126,27 +126,18 @@ export async function featureBest(
       clock,
       async (left, charge) => {
         for (const candidate of toRerun) {
-          const { id, doc } = candidate;
-          if (expectedRerunMs(doc.ticks) > left()) {
-            continue;
+          const result = await rerunCandidate(
+            db,
+            candidate,
+            left,
+            charge,
+            verify
+          );
+          if (result !== 'no-budget' && result !== 'no-blob') {
+            checked++;
           }
-          const replay = await storedReplay(db, id);
-          if (replay === null) {
-            continue;
-          }
-          checked++;
-          const verdict = verify(replay);
-          const applied = await applyVerdict(db, id, doc.state, verdict);
-          await charge();
-          if (!applied) {
-            continue;
-          }
-          await countRerun(db, replay.header, doc.kind, verdict);
-          if (verdict.state === 'verified' && verdict.summary !== undefined) {
-            verified.push({
-              ...asVerified(candidate, verdict.summary, verdict.medal),
-              header: replay.header,
-            });
+          if (typeof result !== 'string') {
+            verified.push(result);
           }
         }
       }
@@ -195,12 +186,55 @@ export async function featureBest(
 }
 
 /** A candidate as verified, with what the re-run found. */
-export function asVerified(
+function asVerified(
   { id, doc }: Stored,
   summary: ReplaySummary,
   medal: GalleryReplay['medal']
 ): Verified {
   return { id, doc: { ...doc, state: 'verified', summary, medal } };
+}
+
+/** The candidate as verified where the boards verified it, else null. */
+export function alreadyVerified(candidate: Stored): Verified | null {
+  const { state, summary, medal } = candidate.doc;
+  return state === 'verified' && summary !== undefined
+    ? asVerified(candidate, summary, medal)
+    : null;
+}
+
+/**
+ * Re-runs a candidate if `left()` covers it, stores the verdict unless its
+ * state moved meanwhile (`changed`), charges the time and counts the
+ * re-run in the level statistics: the candidate verified, or why not.
+ */
+export async function rerunCandidate(
+  db: Firestore,
+  candidate: Stored,
+  left: () => number,
+  charge: () => Promise<void>,
+  verify: (replay: Replay) => Verdict
+): Promise<Verified | 'no-budget' | 'no-blob' | 'changed' | 'not-verified'> {
+  const { id, doc } = candidate;
+  if (expectedRerunMs(doc.ticks) > left()) {
+    return 'no-budget';
+  }
+  const replay = await storedReplay(db, id);
+  if (replay === null) {
+    return 'no-blob';
+  }
+  const verdict = verify(replay);
+  const applied = await applyVerdict(db, id, doc.state, verdict);
+  await charge();
+  if (!applied) {
+    return 'changed';
+  }
+  await countRerun(db, replay.header, doc.kind, verdict);
+  return verdict.state === 'verified' && verdict.summary !== undefined
+    ? {
+        ...asVerified(candidate, verdict.summary, verdict.medal),
+        header: replay.header,
+      }
+    : 'not-verified';
 }
 
 /** Replays whose players are looked up at once. */
@@ -268,7 +302,7 @@ async function galleryOptOuts(
  * Stores a re-run's verdict on the replay, unless its state moved meanwhile
  * - true when it did.
  */
-export async function applyVerdict(
+async function applyVerdict(
   db: Firestore,
   id: string,
   state: string,

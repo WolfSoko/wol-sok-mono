@@ -2,7 +2,7 @@ import type { Replay } from '@wolsok/feat-lazy-bac-game/engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import type { ModerationChange } from '../admin/moderation';
-import { writeAudit } from '../admin/records';
+import { runAudited } from '../admin/records';
 import type { Verdict } from '../boards/verify';
 import {
   anonymiseReplay,
@@ -50,9 +50,9 @@ const TYPES: readonly ReplayCommandType[] = [
  *   into its `optOut` - and takes down a public copy, if there is one.
  * - `feature`, `unfeature`, `anonymise`: the owner's curation
  *   (`gallery/curate.ts`), for the owner as `isOwner` reads them now, and
- *   audited like an admin command (ADR 0012, `source: 'replayCommand'`):
- *   `adminAudit/{commandId}` is claimed first, so a second delivery runs
- *   nothing and leaves the first one's result.
+ *   audited like an admin command (ADR 0012, `source: 'replayCommand'`,
+ *   `runAudited`): a second delivery runs nothing and leaves the first
+ *   one's result.
  * Null where another delivery runs it and writes the result.
  */
 export async function runReplayCommand(
@@ -127,7 +127,7 @@ async function run(
   return { ok: true };
 }
 
-/** The owner's curation, audited once per command. */
+/** The owner's curation, audited once per command (`runAudited`). */
 async function curate(
   db: Firestore,
   commandId: string,
@@ -137,7 +137,17 @@ async function curate(
   context: ReplayCommandContext,
   now: number
 ): Promise<CommandResult | null> {
-  const claimed = await writeAudit(
+  const act = async (): Promise<ModerationChange | string> => {
+    switch (type) {
+      case 'feature':
+        return featureReplay(db, replayId, now, context.clock, context.verify);
+      case 'unfeature':
+        return unfeatureReplay(db, replayId, now);
+      case 'anonymise':
+        return anonymiseReplay(db, replayId);
+    }
+  };
+  const result = await runAudited(
     db,
     commandId,
     {
@@ -145,42 +155,12 @@ async function curate(
       type: `replay.${type}`,
       target: { replayId },
       reason: '',
-      before: null,
-      after: null,
-      ok: null,
       source: 'replayCommand',
     },
+    async () => ({ change: await act() }),
     now
   );
-  const audit = db.doc(`adminAudit/${commandId}`);
-  if (!claimed) {
-    const audited = await audit.get();
-    const ok: unknown = audited.get('ok');
-    const error: unknown = audited.get('error');
-    if (ok === null) {
-      return null;
-    }
-    return ok === true || typeof error !== 'string'
-      ? { ok: ok === true }
-      : { ok: false, reason: error };
-  }
-  let change: ModerationChange | string;
-  try {
-    change =
-      type === 'feature'
-        ? await featureReplay(db, replayId, now, context.clock, context.verify)
-        : type === 'unfeature'
-          ? await unfeatureReplay(db, replayId, now)
-          : await anonymiseReplay(db, replayId);
-  } catch (error) {
-    // Audited as failed: the action may have run in part.
-    logger.error('Replay curation failed', { commandId, error });
-    change = 'internal';
-  }
-  if (typeof change === 'string') {
-    await audit.update({ ok: false, error: change });
-    return { ok: false, reason: change };
-  }
-  await audit.update({ ok: true, before: change.before, after: change.after });
-  return { ok: true };
+  return result === null || result.error === undefined
+    ? result
+    : { ok: result.ok, reason: result.error };
 }

@@ -1,7 +1,9 @@
 import type { BanReason } from '@wolsok/feat-lazy-bac-game/engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/logger';
 import { DAY_MS } from '../boards/budgets';
 import { hasGrpcCode } from '../grpc';
+import type { ModerationChange } from './moderation';
 
 /** How long an audit entry is kept (ADR 0012): 2 years, then TTL. */
 export const AUDIT_TTL_MS = 2 * 365 * DAY_MS;
@@ -59,6 +61,81 @@ export async function writeAudit(
     }
     throw error;
   }
+}
+
+/** What an audited action did, for `runAudited`. */
+export interface AuditedAction {
+  /** The target as found (with the player's uid), if not the claimed one. */
+  target?: Record<string, unknown> | null;
+  /** What it changed, or the error it answered - an id. */
+  change: ModerationChange | string;
+}
+
+/**
+ * Runs an owner's command once (ADR 0012), however often its event is
+ * delivered:
+ * 1. claims `adminAudit/{commandId}` with `head` (`ok: null`) - a second
+ *    delivery runs nothing and answers from the audit, null while the
+ *    first one still runs;
+ * 2. runs `act`, a throw answering `internal`;
+ * 3. completes the audit with `before` and `after`, also for an action
+ *    that failed, and answers.
+ * A command that died between 1 and 3 stays `ok: null`; the owner sends a
+ * new one.
+ */
+export async function runAudited(
+  db: Firestore,
+  commandId: string,
+  head: Omit<AuditEntry, 'before' | 'after' | 'ok' | 'error'>,
+  act: () => Promise<AuditedAction>,
+  now: number
+): Promise<{ ok: boolean; error?: string } | null> {
+  const audit = db.doc(`adminAudit/${commandId}`);
+  const claimed = await writeAudit(
+    db,
+    commandId,
+    { ...head, before: null, after: null, ok: null },
+    now
+  );
+  if (!claimed) {
+    const audited = await audit.get();
+    const ok: unknown = audited.get('ok');
+    const error: unknown = audited.get('error');
+    if (ok === null) {
+      return null;
+    }
+    return ok === true || typeof error !== 'string'
+      ? { ok: ok === true }
+      : { ok: false, error };
+  }
+  let action: AuditedAction;
+  try {
+    action = await act();
+  } catch (error) {
+    // Audited as failed, with what is known: the action may have run in
+    // part, and the owner sees that in the audit.
+    logger.error('Audited action failed', { commandId, error });
+    action = { change: 'internal' };
+  }
+  const { change } = action;
+  const target = action.target === undefined ? {} : { target: action.target };
+  if (typeof change === 'string') {
+    await audit.update({
+      ...target,
+      before: null,
+      after: null,
+      ok: false,
+      error: change,
+    });
+    return { ok: false, error: change };
+  }
+  await audit.update({
+    ...target,
+    before: change.before,
+    after: change.after,
+    ok: true,
+  });
+  return { ok: true };
 }
 
 /** What a player is told about the owner's action (ADR 0012). */

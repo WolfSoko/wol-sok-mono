@@ -3,7 +3,23 @@ import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { ADMIN_COMMAND_MS, ADMIN_VERIFY_MS, DAY_MS } from './budgets';
 import { type Verdict, verifyReplay } from './verify';
 import { bestRunOf, nextWin, verifyRunWins } from './verify-endless';
-import { checkBestAttempt, openDays, spendBudget } from './verify-slice';
+import {
+  type Budget,
+  checkBestAttempt,
+  openDays,
+  spendBudget,
+} from './verify-slice';
+
+/**
+ * The owner's budget (`adminVerifyMs`): 20 match-minutes a day, 10 a
+ * command - `board.verify` and the gallery's `feature` spend it.
+ */
+export const ADMIN_BUDGET: Budget = {
+  fields: ['adminVerifyMs'],
+  dayMs: ADMIN_VERIFY_MS,
+  capMs: ADMIN_COMMAND_MS,
+  field: 'adminVerifyMs',
+};
 
 /** A board `board.verify` takes. */
 export type VerifiableBoard =
@@ -45,12 +61,7 @@ export async function verifyNow(
   const spent = await spendBudget(
     db,
     now,
-    {
-      fields: ['adminVerifyMs'],
-      dayMs: ADMIN_VERIFY_MS,
-      capMs: ADMIN_COMMAND_MS,
-      field: 'adminVerifyMs',
-    },
+    ADMIN_BUDGET,
     clock,
     (left, charge) => play(db, uid, board, now, verify, charge, left)
   );

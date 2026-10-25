@@ -1,5 +1,6 @@
 import {
   BALANCE_VERSION,
+  boardAvatar,
   replayFromBytes,
   replayToBytes,
 } from '@wolsok/feat-lazy-bac-game/engine';
@@ -342,46 +343,72 @@ describe("the owner's curation", () => {
       ok: false,
       reason: 'not-public',
     });
-    // Verified now: featured again without a re-run.
+    // Verified now: featured again without a re-run, keeping the score
+    // stored (`featureBest` may have given it the best-daily feat).
+    await db.doc('replays/l_a').update({ score: 99, reasons: ['feat'] });
     expect(
       await curate('c4', 'feature', 'l_a', () => {
         throw new Error('re-ran a verified replay');
       })
     ).toEqual({ ok: true });
-    expect(await publicIdOf('l_a')).not.toBe(publicId);
+    const again = String(await publicIdOf('l_a'));
+    expect(again).not.toBe(publicId);
+    expect((await db.doc(`publicReplays/${again}`).get()).data()).toMatchObject(
+      { score: 99, reasons: ['feat'] }
+    );
   });
 
   it('anonymises by the private id, for good', async () => {
-    const profile = { name: 'Ada', publicName: true };
+    const profile = {
+      name: 'Ada',
+      publicName: true,
+      avatar: { kind: 'preset', id: 7 },
+    };
     await db.doc('profiles/ada').set(profile);
     await store('l_a', 'ada');
     await curate('c1', 'feature', 'l_a');
-    const published = db.doc(`publicReplays/${await publicIdOf('l_a')}`);
+    const publicId = String(await publicIdOf('l_a'));
+    const published = db.doc(`publicReplays/${publicId}`);
     expect((await published.get()).get('players')[0]).toMatchObject({
       name: 'Ada',
+      avatarPreset: 7,
     });
     expect(await curate('c2', 'anonymise', 'l_a')).toEqual({ ok: true });
+    // No name, and the preset of a player who keeps their name private.
+    const anonymous = {
+      name: null,
+      avatarPreset: boardAvatar(`${publicId}_0`),
+    };
     expect((await published.get()).data()).toMatchObject({
       anonymised: true,
       uids: ['ada'],
     });
-    expect((await published.get()).get('players')[0]).toMatchObject({
-      name: null,
-    });
+    expect((await published.get()).get('players')).toMatchObject([
+      anonymous,
+      { label: 'computer' },
+    ]);
     // The audit keeps no names.
     expect(
       JSON.stringify((await db.doc('adminAudit/c2').get()).data())
     ).not.toContain('Ada');
-    // A new name does not bring it back.
+    // A new name or preset does not bring them back...
     await publicProfileChanged(
       db,
       'ada',
       profile,
-      { ...profile, name: 'Adele' },
+      { ...profile, name: 'Adele', avatar: { kind: 'preset', id: 3 } },
       NOW
     );
-    expect((await published.get()).get('players')[0]).toMatchObject({
-      name: null,
-    });
+    expect((await published.get()).get('players')[0]).toMatchObject(anonymous);
+    // ...nor a new public copy.
+    await curate('c3', 'unfeature', publicId);
+    expect(await curate('c4', 'feature', 'l_a')).toEqual({ ok: true });
+    const again = String(await publicIdOf('l_a'));
+    expect((await db.doc(`publicReplays/${again}`).get()).data()).toMatchObject(
+      {
+        anonymised: true,
+        players: [{ name: null, avatarPreset: boardAvatar(`${again}_0`) }, {}],
+      }
+    );
   });
 });

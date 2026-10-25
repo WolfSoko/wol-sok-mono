@@ -1,23 +1,23 @@
 import type { Replay } from '@wolsok/feat-lazy-bac-game/engine';
 import type { DocumentSnapshot, Firestore } from 'firebase-admin/firestore';
 import type { ModerationChange } from '../admin/moderation';
-import {
-  ADMIN_COMMAND_MS,
-  ADMIN_VERIFY_MS,
-  expectedRerunMs,
-} from '../boards/budgets';
-import { storedReplay } from '../boards/declared-match';
 import { type Verdict, verifyReplay } from '../boards/verify';
+import { ADMIN_BUDGET } from '../boards/verify-now';
 import { spendBudget } from '../boards/verify-slice';
-import { countRerun } from '../replays/level-stats';
 import { fitsGallery, type GalleryReplay } from './candidates';
 import {
-  applyVerdict,
-  asVerified,
+  alreadyVerified,
+  rerunCandidate,
   storeScore,
   type Verified,
 } from './feature-best';
-import { type PublicSeat, publishReplay, takeDownPublic } from './publish';
+import {
+  anonymousSeat,
+  publicCopiesOf,
+  type PublicSeat,
+  publishReplay,
+  takeDownPublic,
+} from './publish';
 
 /**
  * The owner's curation of the gallery (ADR 0011, changed by ADR 0012):
@@ -30,7 +30,7 @@ import { type PublicSeat, publishReplay, takeDownPublic } from './publish';
  * must fit the gallery as `featureBest` sees it (`fitsGallery`), but its
  * players need no account age: guests too. One the boards have not
  * verified is re-run first, from the admin budget `board.verify` spends
- * too (`adminVerifyMs`); it is scored like the day's pick, without the
+ * too (`ADMIN_BUDGET`); it is scored like the day's pick, without the
  * best-daily feat.
  */
 export async function featureReplay(
@@ -52,14 +52,26 @@ export async function featureReplay(
   if (!fitsGallery(doc)) {
     return 'not-eligible';
   }
-  const verified =
-    doc.state === 'verified' && doc.summary !== undefined
-      ? asVerified({ id: replayId, doc }, doc.summary, doc.medal)
-      : await rerun(db, replayId, doc, now, clock, verify);
+  const stored = { id: replayId, doc };
+  let verified: Verified | string | null = alreadyVerified(stored);
+  if (verified === null) {
+    const spent = await spendBudget(
+      db,
+      now,
+      ADMIN_BUDGET,
+      clock,
+      (left, charge) => rerunCandidate(db, stored, left, charge, verify)
+    );
+    verified = spent?.result ?? 'no-budget';
+  }
   if (typeof verified === 'string') {
     return verified;
   }
-  const { score, reasons } = (await storeScore(db, verified, false)).doc;
+  // A score `featureBest` stored stays: it may carry the best-daily feat.
+  const { score, reasons } =
+    doc.score === undefined
+      ? (await storeScore(db, verified, false)).doc
+      : { score: doc.score, reasons: doc.reasons ?? [] };
   const published = await publishReplay(db, replayId, 'admin', now);
   if (typeof published === 'string') {
     return published;
@@ -68,55 +80,6 @@ export async function featureReplay(
     before: { state: doc.state },
     after: { ...published, score, reasons },
   };
-}
-
-/** Re-runs a replay to feature it, from the admin budget. */
-async function rerun(
-  db: Firestore,
-  replayId: string,
-  doc: GalleryReplay,
-  now: number,
-  clock: () => number,
-  verify: (replay: Replay) => Verdict
-): Promise<Verified | string> {
-  const spent = await spendBudget(
-    db,
-    now,
-    {
-      fields: ['adminVerifyMs'],
-      dayMs: ADMIN_VERIFY_MS,
-      capMs: ADMIN_COMMAND_MS,
-      field: 'adminVerifyMs',
-    },
-    clock,
-    async (left, charge): Promise<Verified | string> => {
-      if (expectedRerunMs(doc.ticks) > left()) {
-        return 'no-budget';
-      }
-      const replay = await storedReplay(db, replayId);
-      if (replay === null) {
-        return 'no-blob';
-      }
-      const verdict = verify(replay);
-      const applied = await applyVerdict(db, replayId, doc.state, verdict);
-      await charge();
-      if (!applied) {
-        return 'changed';
-      }
-      await countRerun(db, replay.header, doc.kind, verdict);
-      return verdict.state === 'verified' && verdict.summary !== undefined
-        ? {
-            ...asVerified(
-              { id: replayId, doc },
-              verdict.summary,
-              verdict.medal
-            ),
-            header: replay.header,
-          }
-        : 'not-verified';
-    }
-  );
-  return spent?.result ?? 'no-budget';
 }
 
 /**
@@ -129,17 +92,13 @@ async function stillPublic(
 ): Promise<DocumentSnapshot[]> {
   const [byPublicId, byReplayId] = await Promise.all([
     db.doc(`publicReplays/${id}`).get(),
-    db
-      .collection('publicReplays')
-      .where('replayId', '==', id)
-      .where('removedAt', '==', null)
-      .get(),
+    publicCopiesOf(db, id),
   ]);
   return [
     ...(byPublicId.exists && byPublicId.get('removedAt') === null
       ? [byPublicId]
       : []),
-    ...byReplayId.docs,
+    ...byReplayId,
   ];
 }
 
@@ -165,10 +124,11 @@ export async function unfeatureReplay(
 }
 
 /**
- * `anonymise`: shows every seat of a public replay by its colour label,
- * for good: `anonymised` keeps a later profile change from bringing a
- * name back. The uids stay, so an opt-out, a ban or a deleted account
- * still reaches it.
+ * `anonymise`: shows every human seat of a public replay without a name
+ * and with a preset derived from the seat (`anonymousSeat`), for good:
+ * `anonymised`, on the public copy and the stored replay, keeps a later
+ * profile change or a new public copy from bringing a name back. The uids
+ * stay, so an opt-out, a ban or a deleted account still reaches it.
  */
 export async function anonymiseReplay(
   db: Firestore,
@@ -181,14 +141,25 @@ export async function anonymiseReplay(
   await Promise.all(
     published.map((doc) =>
       db.runTransaction(async (tx) => {
+        const current = await tx.get(doc.ref);
+        const replayId: unknown = current.get('replayId');
+        const replay =
+          typeof replayId === 'string'
+            ? await tx.get(db.doc(`replays/${replayId}`))
+            : null;
         const players =
-          ((await tx.get(doc.ref)).get('players') as
-            | PublicSeat[]
-            | undefined) ?? [];
+          (current.get('players') as PublicSeat[] | undefined) ?? [];
         tx.update(doc.ref, {
           anonymised: true,
-          players: players.map((player) => ({ ...player, name: null })),
+          players: players.map((player, index) =>
+            player.label === 'computer'
+              ? player
+              : anonymousSeat(doc.id, index, player)
+          ),
         });
+        if (replay?.exists === true) {
+          tx.update(replay.ref, { anonymised: true });
+        }
       })
     )
   );
