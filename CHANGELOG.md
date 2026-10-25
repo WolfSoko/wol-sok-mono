@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.101.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.100.0...v74.101.0) (2026-10-25)
+
+### Features
+
+* **bacteria-game-remote:** ✨ Hosting sends /replays to publicSite ([#2671](https://github.com/WolfSoko/wol-sok-mono/issues/2671)) ([67d93e7](https://github.com/WolfSoko/wol-sok-mono/commit/67d93e775fa27035225a3941da7fa1acad4f6b79))
+
 ## [74.100.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.99.0...v74.100.0) (2026-10-25)
 
 ### Features
