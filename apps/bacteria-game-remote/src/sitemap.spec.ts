@@ -27,6 +27,8 @@ describe('sitemap of the game site', () => {
   it('is what robots.txt points to', () => {
     const robots = readFileSync(join(__dirname, 'robots.txt'), 'utf8');
     expect(robots).toContain(`Sitemap: ${GAME_SITE_URL}/sitemap.xml`);
+    // The public replays' own, served by the publicSite function.
+    expect(robots).toContain(`Sitemap: ${GAME_SITE_URL}/replays/sitemap.xml`);
   });
 
   it('leaves out the pages robots.txt keeps out', () => {

@@ -575,8 +575,16 @@ The rules and `replayCommand` require `admin == true`,
      audit keeps no names. Both take the public id or the private one. A
      takedown clears the stored replay's `publicId` in a transaction, only
      while it still points at that copy. The trigger runs on a whole
-     vCPU, one command at a time, up to 540 s. Still to come in this
-     step: the rewrites and the client pages.
+     vCPU, one command at a time, up to 540 s. Then the Hosting rewrites of
+     `/replays` and `/replays/**` to `publicSite`, a release after the
+     function's first deploy, with cache headers equal to the function's
+     (the catch-all `no-cache` header might win otherwise), and
+     `robots.txt` naming `/replays/sitemap.xml` and keeping out `/watch/`
+     and `/my-matches`; the PWA's service worker leaves those paths to
+     the network (`navigationUrls` in `ngsw-config.json`), or it would
+     answer them with the game's `index.html`. The privacy text for replays and the gallery comes
+     with the client, which starts recording them. Still to come in this
+     step: the client pages.
 7. Owner: grant the claim, sign out and in, check `/admin` (changed by
    ADR 0012).
 
