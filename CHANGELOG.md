@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.105.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.104.0...v74.105.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-wars-admin:** ✨ the toggle page publishes the feature toggles ([#2676](https://github.com/WolfSoko/wol-sok-mono/issues/2676)) ([ce3e005](https://github.com/WolfSoko/wol-sok-mono/commit/ce3e0054477ef721c0564f7eecfdbb5c9829cb32))
+
 ## [74.104.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.103.0...v74.104.0) (2026-10-25)
 
 ### Features
