@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.80.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.79.0...v74.80.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** the XP and online leaderboards ([#2624](https://github.com/WolfSoko/wol-sok-mono/issues/2624)) ([d960f87](https://github.com/WolfSoko/wol-sok-mono/commit/d960f8780f11d627271e46734fa8b9b4dc2d1e65))
+
 ## [74.79.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.78.0...v74.79.0) (2026-10-24)
 
 ### Features
