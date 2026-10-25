@@ -53,7 +53,7 @@ interface FeatureBestResult {
 }
 
 /** A verified candidate, and its header where it was read already. */
-interface Verified extends Stored {
+export interface Verified extends Stored {
   header?: ReplayHeader;
   doc: GalleryReplay & { summary: ReplaySummary };
 }
@@ -105,11 +105,11 @@ export async function featureBest(
   const toRerun: Stored[] = [];
   for (const candidate of ranked) {
     // Those the boards verified need no re-run, and so no budget.
-    const { summary } = candidate.doc;
-    if (candidate.doc.state === 'verified' && summary !== undefined) {
-      verified.push(asVerified(candidate, summary, candidate.doc.medal));
-    } else {
+    const done = alreadyVerified(candidate);
+    if (done === null) {
       toRerun.push(candidate);
+    } else {
+      verified.push(done);
     }
   }
   let checked = 0;
@@ -126,27 +126,18 @@ export async function featureBest(
       clock,
       async (left, charge) => {
         for (const candidate of toRerun) {
-          const { id, doc } = candidate;
-          if (expectedRerunMs(doc.ticks) > left()) {
-            continue;
+          const result = await rerunCandidate(
+            db,
+            candidate,
+            left,
+            charge,
+            verify
+          );
+          if (result !== 'no-budget' && result !== 'no-blob') {
+            checked++;
           }
-          const replay = await storedReplay(db, id);
-          if (replay === null) {
-            continue;
-          }
-          checked++;
-          const verdict = verify(replay);
-          const applied = await applyVerdict(db, id, doc.state, verdict);
-          await charge();
-          if (!applied) {
-            continue;
-          }
-          await countRerun(db, replay.header, doc.kind, verdict);
-          if (verdict.state === 'verified' && verdict.summary !== undefined) {
-            verified.push({
-              ...asVerified(candidate, verdict.summary, verdict.medal),
-              header: replay.header,
-            });
+          if (typeof result !== 'string') {
+            verified.push(result);
           }
         }
       }
@@ -201,6 +192,49 @@ function asVerified(
   medal: GalleryReplay['medal']
 ): Verified {
   return { id, doc: { ...doc, state: 'verified', summary, medal } };
+}
+
+/** The candidate as verified where the boards verified it, else null. */
+export function alreadyVerified(candidate: Stored): Verified | null {
+  const { state, summary, medal } = candidate.doc;
+  return state === 'verified' && summary !== undefined
+    ? asVerified(candidate, summary, medal)
+    : null;
+}
+
+/**
+ * Re-runs a candidate if `left()` covers it, stores the verdict unless its
+ * state moved meanwhile (`changed`), charges the time and counts the
+ * re-run in the level statistics: the candidate verified, or why not.
+ */
+export async function rerunCandidate(
+  db: Firestore,
+  candidate: Stored,
+  left: () => number,
+  charge: () => Promise<void>,
+  verify: (replay: Replay) => Verdict
+): Promise<Verified | 'no-budget' | 'no-blob' | 'changed' | 'not-verified'> {
+  const { id, doc } = candidate;
+  if (expectedRerunMs(doc.ticks) > left()) {
+    return 'no-budget';
+  }
+  const replay = await storedReplay(db, id);
+  if (replay === null) {
+    return 'no-blob';
+  }
+  const verdict = verify(replay);
+  const applied = await applyVerdict(db, id, doc.state, verdict);
+  await charge();
+  if (!applied) {
+    return 'changed';
+  }
+  await countRerun(db, replay.header, doc.kind, verdict);
+  return verdict.state === 'verified' && verdict.summary !== undefined
+    ? {
+        ...asVerified(candidate, verdict.summary, verdict.medal),
+        header: replay.header,
+      }
+    : 'not-verified';
 }
 
 /** Replays whose players are looked up at once. */
@@ -285,15 +319,10 @@ async function applyVerdict(
 }
 
 /**
- * Scores the verified candidates from their re-run (ADR 0011) and stores
- * it on each replay. A feat is a platinum run against a hard computer or a
- * boss, and the best verified daily-level replay of the day. A replay
- * deleted meanwhile (its account went) is just not stored.
+ * Scores the verified candidates (`storeScore`); the best verified
+ * daily-level replay of the day is a feat.
  */
-async function scoreAll(
-  db: Firestore,
-  verified: Verified[]
-): Promise<Scored[]> {
+function scoreAll(db: Firestore, verified: Verified[]): Promise<Scored[]> {
   const bestDaily = verified
     .filter(({ doc }) => doc.kind === 'daily')
     .sort(
@@ -302,33 +331,46 @@ async function scoreAll(
         dailySort(a.doc.winnerSeat === 0, a.doc.ticks)
     )[0];
   return Promise.all(
-    verified.map(async (candidate) => {
-      const { doc } = candidate;
-      const feat =
-        candidate === bestDaily ||
-        (doc.medal === 'platinum' &&
-          (await againstTheStrongest(db, candidate)));
-      const { score, reasons } = replayScore({
-        samples: samplesOf(doc.summary),
-        outcome: {
-          endedBy: doc.summary.endedBy as ReplayOutcome['endedBy'],
-          winnerSeat: doc.summary.winnerSeat,
-        },
-        ticks: doc.ticks,
-        online: doc.kind === 'online',
-        feat,
-      });
-      await db
-        .doc(`replays/${candidate.id}`)
-        .update({ score, reasons })
-        .catch((error: unknown) => {
-          if (!hasGrpcCode(error, 5, 'not-found')) {
-            throw error;
-          }
-        });
-      return { id: candidate.id, doc: { ...doc, score, reasons } };
-    })
+    verified.map((candidate) =>
+      storeScore(db, candidate, candidate === bestDaily)
+    )
   );
+}
+
+/**
+ * Scores a verified replay from its re-run (ADR 0011) and stores it on the
+ * replay. A feat is `bestDaily`, or a platinum run against a hard computer
+ * or a boss. A replay deleted meanwhile (its account went) is just not
+ * stored.
+ */
+export async function storeScore(
+  db: Firestore,
+  candidate: Verified,
+  bestDaily: boolean
+): Promise<Scored> {
+  const { doc } = candidate;
+  const feat =
+    bestDaily ||
+    (doc.medal === 'platinum' && (await againstTheStrongest(db, candidate)));
+  const { score, reasons } = replayScore({
+    samples: samplesOf(doc.summary),
+    outcome: {
+      endedBy: doc.summary.endedBy as ReplayOutcome['endedBy'],
+      winnerSeat: doc.summary.winnerSeat,
+    },
+    ticks: doc.ticks,
+    online: doc.kind === 'online',
+    feat,
+  });
+  await db
+    .doc(`replays/${candidate.id}`)
+    .update({ score, reasons })
+    .catch((error: unknown) => {
+      if (!hasGrpcCode(error, 5, 'not-found')) {
+        throw error;
+      }
+    });
+  return { id: candidate.id, doc: { ...doc, score, reasons } };
 }
 
 /**

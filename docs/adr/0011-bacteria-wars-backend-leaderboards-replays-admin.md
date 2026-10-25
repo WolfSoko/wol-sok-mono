@@ -554,8 +554,29 @@ The rules and `replayCommand` require `admin == true`,
      turned off or another preset relabels the player's seats, and
      `galleryOptOut` turned on takes their public replays down. The texts are a small en/de dictionary
      (`site/texts.ts`): the ladder's English titles from the engine's
-     levels, the German ones the game's, kept complete by a spec. Still to come in this step: the
-     rewrites, the gallery's admin types and the client pages.
+     levels, the German ones the game's, kept complete by a spec.
+   - Then the owner's curation in `replayCommand` (`src/gallery/curate.ts`),
+     each checked against Auth afresh (`isOwnerRecord`) and audited like
+     an admin command (`runAudited`: `adminAudit/{commandId}`, `source:
+'replayCommand'`, type `replay.feature` and so on, claimed first so
+     a second delivery runs nothing). `feature` takes a stored replay that
+     fits the gallery (`fitsGallery`; any account, guests too), re-runs it
+     first if the boards have not verified it, from the admin budget
+     `board.verify` spends too (`ADMIN_BUDGET`), keeps a score
+     `featureBest` stored or scores it without the best-daily feat, and
+     publishes it with `featuredBy: 'admin'`. `unfeature` takes a public
+     copy down like `remove` does, but leaves the replay featurable.
+     `anonymise` shows every human seat without a name and with a preset
+     derived from the seat, as a player who keeps their name private
+     shows (`anonymousSeat`, also used for a deleted account's seat), and
+     sets `anonymised` on the public copy and the stored replay, so
+     neither a later profile change nor a new public copy brings a name
+     back; the uids stay for opt-outs, bans and deleted accounts, and the
+     audit keeps no names. Both take the public id or the private one. A
+     takedown clears the stored replay's `publicId` in a transaction, only
+     while it still points at that copy. The trigger runs on a whole
+     vCPU, one command at a time, up to 540 s. Still to come in this
+     step: the rewrites and the client pages.
 7. Owner: grant the claim, sign out and in, check `/admin` (changed by
    ADR 0012).
 

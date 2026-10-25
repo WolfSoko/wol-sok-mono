@@ -1,6 +1,7 @@
-import { replayToBytes } from '@wolsok/feat-lazy-bac-game/engine';
+import { boardAvatar, replayToBytes } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   FieldValue,
+  type DocumentSnapshot,
   type Firestore,
   type QueryDocumentSnapshot,
   Timestamp,
@@ -79,6 +80,8 @@ export async function publishReplay(
   }
   const bytes = await replayToBytes(replay, { forPublic: true });
   const publicRef = db.collection('publicReplays').doc();
+  // The owner anonymised an earlier public copy: this one stays so too.
+  const anonymised = doc.anonymised === true;
   // Against the computer the right seat is the bot's; online both are human.
   const seatUid = (seat: number) =>
     doc.kind === 'online' ? humans[seat] : seat === 0 ? humans[0] : undefined;
@@ -87,11 +90,12 @@ export async function publishReplay(
     if (uid === undefined) {
       return { label: 'computer', name: null, colorId, avatarPreset: 0 };
     }
-    return {
+    const human: PublicSeat = {
       label: colorId,
       colorId,
       ...seatLabel(publicRef.id, seat, profiles[humans.indexOf(uid)]),
     };
+    return anonymised ? anonymousSeat(publicRef.id, seat, human) : human;
   });
   const createdAt = snapshot.get('createdAt');
   return db.runTransaction(async (tx) => {
@@ -121,6 +125,7 @@ export async function publishReplay(
       summary: doc.summary,
       featuredAt: Timestamp.fromMillis(now),
       featuredBy,
+      ...(anonymised ? { anonymised } : {}),
       day: dayOf(createdAt instanceof Timestamp ? createdAt.toMillis() : now),
       removedAt: null,
     });
@@ -144,27 +149,28 @@ export async function publishReplay(
  */
 export async function takeDownPublic(
   db: Firestore,
-  published: QueryDocumentSnapshot,
+  published: DocumentSnapshot,
   now: number
 ): Promise<void> {
   const replayId = published.get('replayId');
   const replayRef =
     typeof replayId === 'string' ? db.doc(`replays/${replayId}`) : null;
-  const replay = replayRef === null ? null : await replayRef.get();
-  const batch = db.batch();
-  batch.update(published.ref, { removedAt: Timestamp.fromMillis(now) });
-  batch.delete(published.ref.collection('blob').doc('data'));
-  if (replay?.exists === true && replay.get('publicId') === published.id) {
-    const createdAt = replay.get('createdAt');
-    const born = createdAt instanceof Timestamp ? createdAt.toMillis() : now;
-    batch.update(replay.ref, {
-      publicId: FieldValue.delete(),
-      expireAt: Timestamp.fromMillis(
-        Math.max(born + REPLAY_TTL_MS, now + DAY_MS)
-      ),
-    });
-  }
-  await batch.commit();
+  await db.runTransaction(async (tx) => {
+    const replay = replayRef === null ? null : await tx.get(replayRef);
+    tx.update(published.ref, { removedAt: Timestamp.fromMillis(now) });
+    tx.delete(published.ref.collection('blob').doc('data'));
+    // Only while it still points here: a copy featured meanwhile keeps it.
+    if (replay?.exists === true && replay.get('publicId') === published.id) {
+      const createdAt = replay.get('createdAt');
+      const born = createdAt instanceof Timestamp ? createdAt.toMillis() : now;
+      tx.update(replay.ref, {
+        publicId: FieldValue.delete(),
+        expireAt: Timestamp.fromMillis(
+          Math.max(born + REPLAY_TTL_MS, now + DAY_MS)
+        ),
+      });
+    }
+  });
 }
 
 /**
@@ -187,12 +193,38 @@ export async function removeFromGallery(
       galleryOut: true,
     });
   }
-  const published = await db
-    .collection('publicReplays')
-    .where('replayId', '==', replayId)
-    .where('removedAt', '==', null)
-    .get();
-  await Promise.all(published.docs.map((doc) => takeDownPublic(db, doc, now)));
+  const published = await publicCopiesOf(db, replayId);
+  await Promise.all(published.map((doc) => takeDownPublic(db, doc, now)));
+}
+
+/** The public copies of a stored replay still up. */
+export async function publicCopiesOf(
+  db: Firestore,
+  replayId: string
+): Promise<QueryDocumentSnapshot[]> {
+  return (
+    await db
+      .collection('publicReplays')
+      .where('replayId', '==', replayId)
+      .where('removedAt', '==', null)
+      .get()
+  ).docs;
+}
+
+/**
+ * A human seat without a name, and with the preset derived from the seat
+ * - as a player shows who keeps their name private (`entryLabel`).
+ */
+export function anonymousSeat(
+  publicId: string,
+  seat: number,
+  player: PublicSeat
+): PublicSeat {
+  return {
+    ...player,
+    name: null,
+    avatarPreset: boardAvatar(`${publicId}_${seat}`),
+  };
 }
 
 /** A human seat's name and preset, by the boards' rules (`entryLabel`). */
@@ -206,9 +238,11 @@ function seatLabel(
 }
 
 /**
- * Rewrites the player's seats in their public replays still up, each in
- * a transaction: `rewrite` gets the seat and its index and returns the
- * new one; `extra` adds fields to each update. The number rewritten.
+ * Rewrites the player's seats in their public replays, each in a
+ * transaction: `rewrite` gets the seat and its index and returns the new
+ * one; `extra` adds fields to each update. A replay the owner anonymised
+ * shows no name or own preset again (`anonymousSeat`), whatever `rewrite`
+ * says. The number of replays.
  */
 async function rewriteSeats(
   db: Firestore,
@@ -227,11 +261,16 @@ async function rewriteSeats(
         const seats =
           (current['seatUids'] as (string | null)[] | undefined) ?? [];
         const players = (current['players'] as PublicSeat[] | undefined) ?? [];
+        const anonymised = current['anonymised'] === true;
         tx.update(doc.ref, {
           ...extra(seats),
-          players: players.map((player, index) =>
-            seats[index] === uid ? rewrite(player, index, doc.id) : player
-          ),
+          players: players.map((player, index) => {
+            if (seats[index] !== uid) {
+              return player;
+            }
+            const seat = rewrite(player, index, doc.id);
+            return anonymised ? anonymousSeat(doc.id, index, seat) : seat;
+          }),
         });
       })
     )
@@ -241,13 +280,14 @@ async function rewriteSeats(
 
 /**
  * Takes a deleted account out of its public replays (ADR 0011): its uid
- * goes, and its seat shows the colour label instead of a name.
+ * goes, and its seat shows the colour label instead of a name, and a
+ * preset derived from the seat (`anonymousSeat`).
  */
 export function anonymisePublic(db: Firestore, uid: string): Promise<number> {
   return rewriteSeats(
     db,
     uid,
-    (player) => ({ ...player, name: null }),
+    (player, index, publicId) => anonymousSeat(publicId, index, player),
     (seats) => ({
       uids: FieldValue.arrayRemove(uid),
       seatUids: seats.map((seat) => (seat === uid ? null : seat)),

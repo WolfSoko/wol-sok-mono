@@ -43,6 +43,8 @@ export interface GalleryReplay extends Pick<
   optOut: string[];
   /** Taken out of the gallery for good. */
   galleryOut?: boolean;
+  /** The owner anonymised it: every public copy shows no names. */
+  anonymised?: boolean;
   /** Online only: the room stub had expired - never public. */
   stubExpired?: boolean;
   /** What the server's re-run found - set once it is verified. */
