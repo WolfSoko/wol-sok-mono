@@ -1033,8 +1033,8 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
    yet, nothing changes) and the TTLs, after 0011's rules [4].
 5. **Functions**: `rankReplay`, `rankProgress`, `rebuildTop`,
    `boardProfileChanged`, `adminCommand`, `countAccount`,
-   `deletePlayerBoards`, and `hourly` with its schedule paused, after the
-   CPU benchmark set the budgets. Deployed before the client that writes
+   `deletePlayerBoards`, and `hourly` (running from its first deploy, see
+   `HOURLY_ON`), after the CPU benchmark set the budgets. Deployed before the client that writes
    attempts.
    - So far: `rankProgress` (the XP board), `rankReplay` for agreed online
      matches (the online board, with the timing check, the pair, win and
@@ -1065,8 +1065,7 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      `deletePlayerBoards` come next.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
-   result lines and the privacy text. Enable the `hourly` schedule the
-   same day. Needs 0011 [5].
+   result lines and the privacy text. Needs 0011 [5].
 7. **Admin lib** with all views, including the moved curation page, with
    or after 0011 [6]. Then enable `featureBest`, sign in, and run
    `stats.recount` once.
