@@ -537,7 +537,18 @@ The rules and `replayCommand` require `admin == true`,
      deleted, and the private replay expiring again, at the earliest a
      day later. A deleted account leaves its public replays without its
      uid and with the colour label for its name (`anonymisePublic`).
-     Gallery re-runs count in the level statistics like the boards'. Still to come in this step: `publicSite` and the
+     Gallery re-runs count in the level statistics like the boards'.
+   - Then `publicSite` (`src/site/`), deployed but not yet reached: the
+     Hosting rewrites follow in the next release, once the function
+     exists. It serves `/replays` (the gallery, newest first, at most
+     60), `/replays/index.json`, `/replays/{id}`, and for the viewer
+     `/replays/{id}/replay.json` - the packed public bytes as base64, so
+     the function never loads the engine to play anything. Unlike the
+     text above, the replays' sitemap is `/replays/sitemap.xml`, listed
+     in `robots.txt` beside the game's hand-kept `/sitemap.xml`, which
+     stays the game's. The texts are a small en/de dictionary
+     (`site/texts.ts`): the ladder's English titles from the engine's
+     levels, the German ones the game's, kept complete by a spec. Still to come in this step: the
      rewrites, the gallery's admin types, `profileChanged` for public
      names, and the client pages.
 7. Owner: grant the claim, sign out and in, check `/admin` (changed by

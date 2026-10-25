@@ -58,5 +58,19 @@
         "order": "ASCENDING"
       }
     ]
+  },
+  "public replays still up, newest first": {
+    "usedBy": "publicSite: the gallery, its JSON and the replays' sitemap",
+    "group": "publicReplays",
+    "fields": [
+      {
+        "fieldPath": "removedAt",
+        "order": "ASCENDING"
+      },
+      {
+        "fieldPath": "featuredAt",
+        "order": "DESCENDING"
+      }
+    ]
   }
 }
