@@ -1207,7 +1207,21 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      written (by the
      account's Google provider, and the ids the bans noted); its other steps
      run regardless, and the audit scrub skips an entry TTL took.
-   - Still to come: the other admin types and the statistics.
+   - Then the profile and board moderation (`src/admin/moderation.ts`):
+     `profile.reset` and `profile.removeImage` change the profile in one
+     transaction with the notice and the count (`no-image` for a drawn
+     avatar already; the audit keeps an image's SHA-256 and size), and
+     `boardProfileChanged` relabels the entries. `board.hideEntry`,
+     `board.hidePlayer` and `board.restore` set or lift `hiddenBy.admin`
+     on one entry or all of the player's (`not-on-board` for an entry the
+     player does not hold on that board). A bar adds the kinds to
+     `boardMembers.barred`, before the entries change; the rankings keep
+     counting a barred player but start their entries of those kinds
+     hidden (`hiddenFor`), so tomorrow's daily entry is hidden too. A
+     restore lifts the bars it covers, and an entry comes back with its
+     previous status unless another reason still hides it.
+   - Still to come: `board.verify`, `stats.refresh`, `stats.recount` and
+     the statistics.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].

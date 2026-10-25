@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { defaultProfile } from '@wolsok/feat-lazy-bac-game/engine';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
@@ -473,8 +475,7 @@ describe('the owner check', () => {
 
 describe('the types still to come', () => {
   it.each([
-    ['profile.reset', { uid: 'ada' }, {}],
-    ['board.hideEntry', { boardId: 'xp', entryId: 'xpAda' }, { bar: true }],
+    ['board.verify', { boardId: DAILY, entryId: 'dAda' }, {}],
     ['stats.refresh', null, {}],
   ])('answer %s with unsupported, audited', async (type, target, args) => {
     expect(await command('c1', { type, target, args })).toEqual({
@@ -486,6 +487,183 @@ describe('the types still to come', () => {
       ok: false,
       error: 'unsupported',
     });
+  });
+});
+
+describe('profile moderation', () => {
+  const image = 'data:image/webp;base64,AAAA';
+  const seedProfile = (avatar: Record<string, unknown>) =>
+    db.doc('profiles/ada').set({
+      name: 'Rude',
+      motto: 'rude too',
+      avatar,
+      shareStatus: false,
+      publicName: true,
+    });
+
+  it('resets a profile, keeps what it shares, and tells the player', async () => {
+    await seedProfile({ kind: 'image', data: image });
+    expect(
+      await command('c1', { type: 'profile.reset', target: { uid: 'ada' } })
+    ).toEqual({ ok: true });
+    const fresh = defaultProfile('ada');
+    expect((await db.doc('profiles/ada').get()).data()).toMatchObject({
+      name: fresh.name,
+      motto: '',
+      avatar: fresh.avatar,
+      shareStatus: false,
+      publicName: true,
+    });
+    expect((await db.doc('players/ada/notices/c1').get()).get('type')).toBe(
+      'profile-reset'
+    );
+    expect((await db.doc('moderation/ada').get()).get('resets')).toBe(1);
+    const audit = (await db.doc('adminAudit/c1').get()).data();
+    // The image's fingerprint, never the image.
+    expect(audit?.['before']).toEqual({
+      name: 'Rude',
+      motto: 'rude too',
+      avatar: {
+        kind: 'image',
+        sha256: createHash('sha256').update(image).digest('hex'),
+        size: image.length,
+      },
+    });
+  });
+
+  it('removes a picture only, and refuses a drawn one', async () => {
+    await seedProfile({ kind: 'preset', id: 3 });
+    const remove = { type: 'profile.removeImage', target: { uid: 'ada' } };
+    expect(await command('c1', remove)).toEqual({
+      ok: false,
+      error: 'no-image',
+    });
+    await seedProfile({ kind: 'image', data: image });
+    expect(await command('c2', remove)).toEqual({ ok: true });
+    expect((await db.doc('profiles/ada').get()).data()).toMatchObject({
+      name: 'Rude',
+      avatar: defaultProfile('ada').avatar,
+    });
+    expect((await db.doc('players/ada/notices/c2').get()).get('type')).toBe(
+      'image-removed'
+    );
+    expect((await db.doc('moderation/ada').get()).get('imageRemovals')).toBe(1);
+  });
+
+  it('says so for a player without a profile', async () => {
+    expect(
+      await command('c1', { type: 'profile.reset', target: { uid: 'bob' } })
+    ).toEqual({ ok: false, error: 'not-found' });
+  });
+});
+
+describe('board moderation', () => {
+  const xp = { boardId: 'xp', entryId: 'xpAda' };
+
+  it('hides one entry and bars its board, and tells the player', async () => {
+    await seedAda();
+    expect(
+      await command('c1', {
+        type: 'board.hideEntry',
+        target: xp,
+        args: { bar: true },
+      })
+    ).toEqual({ ok: true });
+    expect((await entry('boards/xp/entries/xpAda')).data()).toMatchObject({
+      status: 'hidden',
+      hiddenBy: { admin: true },
+    });
+    expect((await db.doc('boardMembers/ada').get()).get('barred')).toEqual([
+      'xp',
+    ]);
+    expect((await db.doc('players/ada/notices/c1').get()).get('type')).toBe(
+      'board-hidden'
+    );
+    expect((await db.doc('moderation/ada').get()).get('hides')).toBe(1);
+    expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
+      target: { ...xp, uid: 'ada' },
+      before: { barred: [] },
+      after: { barred: ['xp'], entries: 1 },
+    });
+  });
+
+  it("hides all a player's entries, found by one of them", async () => {
+    await seedAda();
+    await db.doc(`boards/${DAILY}/entries/dAda`).update({
+      status: 'verified',
+      hiddenBy: {},
+    });
+    expect(
+      await command('c1', { type: 'board.hidePlayer', target: xp })
+    ).toEqual({ ok: true });
+    for (const path of [
+      'boards/xp/entries/xpAda',
+      `boards/${DAILY}/entries/dAda`,
+    ]) {
+      expect((await entry(path)).get('hiddenBy')).toEqual({ admin: true });
+    }
+    // No bar without asking.
+    expect((await db.doc('boardMembers/ada').get()).get('barred')).toBe(
+      undefined
+    );
+  });
+
+  it('restores what the owner hid and barred, not what a ban hides', async () => {
+    await seedAda();
+    await command('c1', {
+      type: 'board.hidePlayer',
+      target: { uid: 'ada' },
+      args: { bar: true },
+    });
+    await command('c2', ban('ada', null));
+    expect(
+      await command('c3', { type: 'board.restore', target: { uid: 'ada' } })
+    ).toEqual({ ok: true });
+    expect((await db.doc('boardMembers/ada').get()).get('barred')).toEqual([]);
+    expect((await entry('boards/xp/entries/xpAda')).data()).toMatchObject({
+      status: 'hidden',
+      hiddenBy: { ban: true },
+    });
+    await command('c4', unban('ada'));
+    expect((await entry('boards/xp/entries/xpAda')).data()).toMatchObject({
+      status: 'counted',
+      hiddenBy: {},
+    });
+    expect((await entry(`boards/${DAILY}/entries/dAda`)).data()).toMatchObject({
+      status: 'verified',
+      hiddenBy: {},
+    });
+  });
+
+  it('restores one entry and lifts only its bar', async () => {
+    await seedAda();
+    await command('c1', {
+      type: 'board.hidePlayer',
+      target: { uid: 'ada' },
+      args: { bar: true },
+    });
+    await command('c2', { type: 'board.restore', target: xp });
+    expect((await db.doc('boardMembers/ada').get()).get('barred')).toEqual([
+      'online',
+      'daily',
+      'endless',
+    ]);
+    expect((await entry('boards/xp/entries/xpAda')).get('hiddenBy')).toEqual(
+      {}
+    );
+    expect(
+      (await entry(`boards/${DAILY}/entries/dAda`)).get('hiddenBy')
+    ).toEqual({ admin: true });
+  });
+
+  it("says so for an entry on a board the player isn't on", async () => {
+    await seedAda();
+    expect(
+      await command('c1', {
+        type: 'board.hideEntry',
+        target: { boardId: 'daily-2026-11-02', entryId: 'dAda' },
+      })
+    ).toEqual({ ok: false, error: 'not-on-board' });
   });
 });
 

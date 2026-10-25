@@ -5,7 +5,7 @@ import {
   Timestamp,
 } from 'firebase-admin/firestore';
 import { dayOf, isBanned } from '../limits';
-import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
+import { entryData, hiddenFor, memberIn, profileIn } from './entries';
 
 /** A match shorter than this counts nothing: 30 s at 60 ticks a second. */
 export const MIN_COUNTED_TICKS = 1_800;
@@ -189,7 +189,7 @@ export async function rankOnline(
             show: record,
           },
           profiles[seat],
-          hiddenByOf(entries[seat].get('hiddenBy'))
+          hiddenFor(member.data, 'online', entries[seat].get('hiddenBy'))
         )
       );
     });

@@ -7,12 +7,7 @@ import {
   Timestamp,
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
-import {
-  entryData,
-  hiddenByOf,
-  memberEntries,
-  profileIn,
-} from '../boards/entries';
+import { setHidden } from '../boards/entries';
 import type { Realtime } from './realtime';
 import { noticeData, tombstoneData, writeAudit } from './records';
 
@@ -338,71 +333,36 @@ export async function expireBans(
 
 /**
  * Adds (`unhide` null) or takes away the `ban` reason on each of the
- * player's entries (`boardMembers/{uid}`), one transaction per entry,
- * keeping what else hides it. Taking it away is for the ban `lifted` (null:
- * none is left), so an entry stays hidden while another ban holds: a ban
- * set meanwhile keeps what it hid, whichever of the two gets to the entry
- * first. Updated in place, so a daily entry keeps its `expireAt`. Returns
- * how many entries changed.
+ * player's entries (`setHidden`). Taking it away is for the ban `lifted`
+ * (null: none is left), so an entry stays hidden while another ban holds:
+ * a ban set meanwhile keeps what it hid, whichever of the two gets to the
+ * entry first. Returns how many entries changed.
  */
-async function changeBanHide(
+function changeBanHide(
   db: Firestore,
   uid: string,
   unhide: { lifted: BanState | null; now: number } | null
 ): Promise<number> {
-  const hide = unhide === null;
-  const member = await db.doc(`boardMembers/${uid}`).get();
-  const banRef = db.doc(`bans/${uid}`);
-  let changed = 0;
-  for (const { boardId, entryId } of memberEntries(member.data())) {
-    const ref = db.doc(`boards/${boardId}/entries/${entryId}`);
-    const done = await db.runTransaction(async (tx) => {
-      // Unhiding reads the ban in the same round trip.
-      const [entry, banDoc] = hide
-        ? [await tx.get(ref), null]
-        : await tx.getAll(ref, banRef);
-      const data = entry.data();
-      if (data === undefined) {
-        return false;
-      }
-      const hiddenBy = hiddenByOf(data['hiddenBy']);
-      if ((hiddenBy.ban === true) === hide) {
-        return false;
-      }
-      if (unhide !== null) {
-        const ban = banOf(banDoc?.data());
-        if (
-          holds(ban, unhide.now) &&
-          (unhide.lifted === null || !sameBan(ban, unhide.lifted))
-        ) {
-          return false;
-        }
-      }
-      if (hide) {
-        hiddenBy.ban = true;
-      } else {
-        delete hiddenBy.ban;
-      }
-      const profile = await profileIn(tx, db, uid);
-      tx.update(
-        ref,
-        entryData(
-          entryId,
-          {
-            sort: data['sort'],
-            atHour: data['atHour'],
-            baseStatus: data['baseStatus'] ?? data['status'],
-            show: data['show'],
+  return setHidden(
+    db,
+    uid,
+    'ban',
+    unhide === null,
+    unhide === null
+      ? {}
+      : {
+          guard: {
+            ref: db.doc(`bans/${uid}`),
+            keeps: (data) => {
+              const ban = banOf(data);
+              return (
+                holds(ban, unhide.now) &&
+                (unhide.lifted === null || !sameBan(ban, unhide.lifted))
+              );
+            },
           },
-          profile,
-          hiddenBy
-        )
-      );
-      return true;
-    });
-    changed += done ? 1 : 0;
-  }
-  return changed;
+        }
+  );
 }
 
 /** Takes a banned player out of what others meet them in - see `banPlayer`. */
