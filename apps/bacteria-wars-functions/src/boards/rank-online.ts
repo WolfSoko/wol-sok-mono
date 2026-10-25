@@ -48,7 +48,11 @@ interface Record4 {
  * its room's clock allows, with nobody banned, and within the caps:
  * 3 results per pair a day, 30 counted wins a day, 5 of them against
  * accounts younger than 3 days. Losses count whenever the pair cap allows.
- * A marker per replay keeps a second event from counting it twice.
+ * A marker per replay keeps a second event from counting it twice. The
+ * seats are read again in the transaction: a retry hands in the event's
+ * snapshot, and a player whose account was deleted since (their seat
+ * nulled) counts nothing - the match is `stub-expired` like any without
+ * both seats.
  */
 export async function rankOnline(
   db: Firestore,
@@ -80,7 +84,16 @@ export async function rankOnline(
     if ((await tx.get(marker)).exists) {
       return 'done' as const;
     }
-    let decided: OnlineReason = reason;
+    const replayRef = db.doc(`replays/${replayId}`);
+    const stored = await tx.get(replayRef);
+    if (!stored.exists) {
+      return 'done' as const;
+    }
+    const seated = stored.get('seats') as unknown;
+    let decided: OnlineReason =
+      Array.isArray(seated) && seated[0] === host && seated[1] === guest
+        ? reason
+        : 'stub-expired';
     const roomRef = db.doc(`rankedRooms/${String(replay['room'])}`);
     const pairRef = db.doc(`pairs/${day}_${pair}`);
     const room = await tx.get(roomRef);
@@ -122,7 +135,7 @@ export async function rankOnline(
       at: FieldValue.serverTimestamp(),
       expireAt: Timestamp.fromMillis(now + 31 * DAY_MS),
     });
-    tx.update(db.doc(`replays/${replayId}`), {
+    tx.update(replayRef, {
       rankedReason: decided,
       rankedAt: FieldValue.serverTimestamp(),
     });

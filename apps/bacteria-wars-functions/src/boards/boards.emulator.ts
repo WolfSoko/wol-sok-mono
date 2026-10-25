@@ -6,6 +6,7 @@ import {
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
+import { deletePlayerReplays } from '../replays/delete-player';
 import { boardProfileChanged } from './profile-changed';
 import { rankOnline } from './rank-online';
 import { rankProgress } from './rank-progress';
@@ -164,6 +165,18 @@ describe('rankOnline', () => {
     await db.doc('bans/bob').set({ until: null });
     expect(await rank('r4', replay())).toBe('banned');
     expect((await db.doc('boardMembers/ada').get()).exists).toBe(false);
+  });
+
+  it('counts nothing for a player whose account went after the event', async () => {
+    const data = replay({ players: ['ada', 'bob'] });
+    await db.doc('replays/r1').set(data);
+    // A retry an hour on: Bob deleted his account meanwhile.
+    await deletePlayerReplays(db, 'bob');
+    expect(await rankOnline(db, 'r1', data, OLD, NOW)).toBe('stub-expired');
+    expect((await db.doc('boardMembers/bob').get()).exists).toBe(false);
+    expect((await db.doc('replays/r1').get()).get('rankedReason')).toBe(
+      'stub-expired'
+    );
   });
 
   it('counts no faster than the room could play', async () => {
