@@ -9,7 +9,7 @@ import {
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { trackDeclaredMatch } from '../boards/rank-endless';
-import { REPLAY_TTL_MS } from '../config';
+import { NOT_REPORTED_AFTER_MS, REPLAY_TTL_MS } from '../config';
 import { isBanned, takeSubmissionSlot } from '../limits';
 import {
   planAcceptance,
@@ -305,6 +305,8 @@ async function storeOnline(
           stub.createdAt instanceof Timestamp ? stub.createdAt : null,
         // Reported after its stub expired: kept for its players, never public.
         stubExpired: expired,
+        // When the hourly sweep closes it without a second report.
+        closeAt: Timestamp.fromMillis(now + NOT_REPORTED_AFTER_MS),
       });
       tx.create(ref.collection('blob').doc('data'), blob);
       tx.create(ref.collection('reports').doc(meta.uid), report);
@@ -339,6 +341,7 @@ async function storeOnline(
     tx.update(ref, {
       players: FieldValue.arrayUnion(meta.uid),
       state: agreed ? 'agreed' : 'disputed',
+      closeAt: FieldValue.delete(),
       ...(expired ? { stubExpired: true } : {}),
     });
     return 'reported';

@@ -231,8 +231,11 @@ firstAt, risenToday, todayDay }`.
 - **Idempotent**: a marker `rankedReplays/{replayId}` is written with
   `create()`, so a second event for the same replay changes nothing.
 - **"Not reported"**: the hourly function closes online replays still
-  `waiting` 2 hours after their creation (index `state` + `createdAt`,
-  ADR 0011). If the existing report has a regular ending (win, timeout or
+  `waiting` 2 hours after their creation. `acceptReplay` gives a waiting
+  replay `closeAt` (its first report + 2 h), and the second report or the
+  close removes it. The sweep asks for `closeAt` up to now, 500 at a time,
+  so a closed replay that stays `waiting` leaves its query, and a missed
+  run is caught up by the next. If the existing report has a regular ending (win, timeout or
   forfeit after 30 s), the stub's other uid gets `notReported + 1`. A
   network loss usually leaves both devices reporting, or the reports
   disagree (`disputed`), which counts for nobody. So the figure mostly
@@ -479,7 +482,15 @@ Together about 245,000 vCPU-s and 280,000 GiB-s a month, against Cloud
 Run's free 180,000 vCPU-s and 360,000 GiB-s: about $1-4 a month above the
 free tier, bounded by the hard cap. Unused daily budget passes to endless.
 An exhausted budget never shows a claim as verified: rows wait in "Being
-checked".
+checked". A slice starts a re-run only when its expected cost fits in
+what the slice has left (`expectedRerunMs` in `budgets.ts`: 10 ms a tick
+for `gpu-int` on the base arena, which every ranked level has, from the
+closed #2618's benchmark on a development machine until the Cloud Run one
+replaces it), so it never starts a 10-minute match at minute 24. It
+charges its time to the day in steps of at least a minute as re-runs end,
+and the rest at the end, so a slice cut short by the function's timeout
+has paid for all but its last minute or re-run, and `counters/{day}`,
+which every upload's slot reads, takes a write a minute at most.
 
 **Flooding** with fake top claims from many fresh guest accounts no longer
 starves honest entries: trust ordering puts fresh accounts last, each
@@ -535,12 +546,16 @@ All of it is written by functions only, except `attempts`,
     document one at a time, so ranking functions never contend for it. It
     returns at once unless the entry was in the top document or now beats
     its last row (`Row.sort`). Rebuilding queries the top 50 visible
-    entries and the top `cut` verified ones.
+    entries and the top `cut` verified ones. A daily board's entries and
+    its top document expire 31 days after its day, counted from the day
+    rather than the write (`dailyBoardExpiresAt`), and the deletion of an
+    entry already past its `expireAt` (TTL draining a board) rebuilds
+    nothing.
   - A screen therefore costs one read for the top 50, and at most one top
     document rewrite per relevant change.
 - **TTL** on `expireAt`:
   - 31 days: `attempts`, `notices`, the daily boards' entries and top
-    documents (`daily-{day}`), `dailyRuns`, `rankedReplays`, `endlessRuns`
+    documents (`daily-{day}`, counted from their day), `dailyRuns`, `rankedReplays`, `endlessRuns`
     that are not a best run. The all-time boards (`xp`, `online`,
     `endless`) set no `expireAt` on their top documents or entries, which
     stay until removed or the account is deleted;

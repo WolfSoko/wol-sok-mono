@@ -280,11 +280,18 @@ describe('acceptReplay', () => {
       expect(
         (await db.doc(`replays/${id}`).get()).get('stubCreatedAt').toMillis()
       ).toBe(NOW - HOUR);
+      // When the hourly sweep closes it without a second report.
+      expect(
+        (await db.doc(`replays/${id}`).get()).get('closeAt').toMillis()
+      ).toBe(NOW + 2 * HOUR);
       expect(await submit('s2', 'bob', bytes)).toBe('reported');
       expect((await db.doc(`replays/${id}`).get()).data()).toMatchObject({
         players: ['ada', 'bob'],
         state: 'agreed',
       });
+      expect(
+        (await db.doc(`replays/${id}`).get()).get('closeAt')
+      ).toBeUndefined();
       expect(
         (await db.collection(`replays/${id}/reports`).listDocuments())
           .map((ref) => ref.id)

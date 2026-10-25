@@ -17,6 +17,7 @@ import { dayOf } from '../limits';
 import {
   DAILY_VERIFY_MS,
   DAY_MS,
+  expectedRerunMs,
   FAILED_CHECKS_TO_SKIP,
   MAX_VERIFIED_TICKS,
   SLICE_MS,
@@ -83,7 +84,9 @@ export function openDays(now: number): string[] {
  * place; a failed check marks the attempt and the entry falls back to the
  * next best one. Two failed checks in 7 days skip an account for 7 days
  * and flag it for the owner (`moderation/{uid}`) - not a ban, a failure
- * may be Safari.
+ * may be Safari. A re-run starts only when its expected cost fits in what
+ * the slice has left, and each one is charged to the day as it ends, so a
+ * slice cut short by the function's timeout has paid for what it did.
  */
 export async function verifyDailySlice(
   db: Firestore,
@@ -103,6 +106,7 @@ export async function verifyDailySlice(
     return { checked: 0, spentMs: 0 };
   }
   const start = clock();
+  const charge = chargeAsYouGo(db, now, 'verifyMs', clock);
   let checked = 0;
   const boards = openDays(now).map((day) => ({
     boardId: dailyBoardId(day),
@@ -115,16 +119,17 @@ export async function verifyDailySlice(
     'daily',
     boards
   )) {
-    if (clock() - start >= budget) {
+    const left = budget - (clock() - start);
+    if (left <= 0) {
       break;
     }
-    if (await checkCandidate(db, candidate, now, verify)) {
+    if (await checkCandidate(db, candidate, now, verify, left)) {
       checked++;
     }
+    await charge();
   }
-  const spentMs = Math.round(clock() - start);
-  await recordSpent(db, now, 'verifyMs', spentMs);
-  return { checked, spentMs };
+  await charge(true);
+  return { checked, spentMs: Math.round(clock() - start) };
 }
 
 /**
@@ -146,8 +151,35 @@ export async function sliceBudget(
   return Math.min(sliceMs, dayBudgetMs - spent);
 }
 
+/** How much unbilled slice time a step charges at the least. */
+const CHARGE_STEP_MS = 60_000;
+
+/**
+ * Charges a slice's time to the day's counter `field` in steps of at least
+ * a minute, called as each re-run ends, and the rest with `final`: a slice
+ * the function's timeout cuts short has paid for all but its last minute
+ * or re-run, and the counter, which every upload's slot reads, takes a
+ * write a minute at most.
+ */
+export function chargeAsYouGo(
+  db: Firestore,
+  now: number,
+  field: string,
+  clock: () => number
+): (final?: boolean) => Promise<void> {
+  let charged = clock();
+  return async (final = false) => {
+    const at = clock();
+    const due = Math.round(at - charged);
+    if (due >= (final ? 1 : CHARGE_STEP_MS)) {
+      await recordSpent(db, now, field, due);
+      charged = at;
+    }
+  };
+}
+
 /** Adds a slice's time to the day's counter `field`. */
-export async function recordSpent(
+async function recordSpent(
   db: Firestore,
   now: number,
   field: string,
@@ -257,14 +289,16 @@ export async function candidates<B extends BoardRef>(
 }
 
 /**
- * Plays a candidate's best provisional attempt again - false when none, or
+ * Plays a candidate's best provisional attempt again - false when none,
+ * when its re-run would take longer than the `leftMs` of the slice, or
  * when another slice checked it meanwhile.
  */
 async function checkCandidate(
   db: Firestore,
   candidate: Candidate<{ boardId: string; day: string }>,
   now: number,
-  verify: (replay: Replay) => Verdict
+  verify: (replay: Replay) => Verdict,
+  leftMs: number
 ): Promise<boolean> {
   const runRef = db.doc(`dailyRuns/${candidate.board.day}_${candidate.uid}`);
   const attempts =
@@ -273,7 +307,7 @@ async function checkCandidate(
   const best = attempts
     .filter((a) => a.state === 'provisional' && a.ticks <= MAX_VERIFIED_TICKS)
     .sort((a, b) => b.sort - a.sort)[0];
-  if (best === undefined) {
+  if (best === undefined || expectedRerunMs(best.ticks) > leftMs) {
     return false;
   }
   const replay = await storedReplay(db, best.replayId);
@@ -296,14 +330,7 @@ async function checkCandidate(
     );
     const moderationRef = db.doc(`moderation/${candidate.uid}`);
     const moderation = (await tx.get(moderationRef)).data() ?? {};
-    await writeDailyEntry(
-      tx,
-      db,
-      candidate.board.day,
-      candidate.uid,
-      next,
-      now
-    );
+    await writeDailyEntry(tx, db, candidate.board.day, candidate.uid, next);
     tx.update(runRef, { attempts: next });
     tx.update(db.doc(`replays/${best.replayId}`), verdictFields(verdict));
     recordCheck(tx, moderationRef, moderation, verdict.state, now);

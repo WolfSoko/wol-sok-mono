@@ -1,12 +1,4 @@
 {
-  "replays by state and age": {
-    "usedBy": "the hourly \"Not reported\" sweep (closeNotReported)",
-    "group": "replays",
-    "fields": [
-      { "fieldPath": "state", "order": "ASCENDING" },
-      { "fieldPath": "createdAt", "order": "ASCENDING" }
-    ]
-  },
   "endless runs of a player by score": {
     "usedBy": "saveRun: a player's best endless run",
     "group": "endlessRuns",
