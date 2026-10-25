@@ -220,6 +220,13 @@ async function checkCandidate(
       ((await tx.get(runRef)).get('attempts') as
         | DailyAttemptRun[]
         | undefined) ?? [];
+    // Another run may have checked it meanwhile (Cloud Scheduler delivers
+    // at least once): a check applies once, or it counts a failure twice.
+    if (
+      fresh.find((a) => a.attemptId === best.attemptId)?.state !== 'provisional'
+    ) {
+      return;
+    }
     const next = fresh.map((a) =>
       a.attemptId === best.attemptId ? { ...a, state: verdict.state } : a
     );

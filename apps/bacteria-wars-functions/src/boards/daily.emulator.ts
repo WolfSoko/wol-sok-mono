@@ -203,6 +203,16 @@ describe('verifyDailySlice', () => {
     expect(await slice()).toMatchObject({ checked: 0 });
   });
 
+  it('applies a check once when two slices run at the same time', async () => {
+    await rank('l_bob', dailyReplay({}, 'bob'), 'bob');
+    await Promise.all([slice(), slice()]);
+    // One failed check, not two: a single failure skips nobody.
+    const moderation = (await db.doc('moderation/bob').get()).data();
+    expect(moderation?.['failedChecks']).toBe(1);
+    expect(moderation?.['failedAt']).toEqual([NOW]);
+    expect(moderation?.['skipUntil']).toBeUndefined();
+  });
+
   it('spends nothing once the day is spent', async () => {
     await rank('l_ada', dailyReplay(), 'ada');
     await db.doc(`counters/${DAY}`).set({ verifyMs: 20 * 60_000 });
