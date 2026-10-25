@@ -1,7 +1,6 @@
 import {
   isPlainLoadout,
   parseGeneratedId,
-  type Replay,
   type ReplayHeader,
   TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
@@ -11,8 +10,8 @@ import type { ReplayKind } from './accept-plan';
 /**
  * The level statistics (ADR 0016 §4): counters per level and bot
  * difficulty in `levelStats/{id}`, added to once a local replay is
- * stored - no uid, increments only, from what the replay claims. The admin area's Balance view reads
- * them; nobody else does.
+ * stored - no uid, increments only, from what the replay claims. The
+ * admin area's Balance view reads them; nobody else does.
  */
 
 /** The durations a match falls into, by the upper end in seconds. */
@@ -26,34 +25,42 @@ const DURATION_BUCKETS: readonly [number, string][] = [
 /** The bucket of a match of ten minutes or more. */
 const LONGEST_BUCKET = 'ge10m';
 
-/**
- * The level a local replay counts for: a ladder level by its id, a
- * generated one by its style and heat - every roll is a level of its own,
- * which no table would follow - with the daily and endless levels apart.
- */
-export function statsLevel(levelId: string, kind: ReplayKind): string {
-  const generated = parseGeneratedId(levelId);
-  if (generated === null) {
-    return levelId;
-  }
-  return kind === 'daily' || kind === 'endless'
-    ? `${kind}-${generated.difficulty}`
-    : `gen-${generated.recipe}-${generated.difficulty}`;
+/** What a document of level statistics counts: its id is made of it. */
+export interface LevelStatsKey {
+  /**
+   * A ladder level by its id; a generated one by its recipe and generator
+   * difficulty (`gen-cave-6`, `daily-cave-6`, `endless-cave-6`) - every
+   * roll is a level of its own, which no table would follow.
+   */
+  level: string;
+  difficulty: string;
+  /** The computer it played: the balance table... */
+  balanceVersion: number;
+  /** ...and the ladder's version, 0 for a computer off the curve. */
+  ladder: number;
 }
 
-/**
- * The document a local replay counts into: its level, the bot difficulty,
- * and the computer it played - the balance table and the ladder's version
- * (0 for a computer off the curve) - so a change to either starts counters
- * of its own instead of mixing into the old ones.
- */
-export function levelStatsId(header: ReplayHeader, kind: ReplayKind): string {
-  return [
-    statsLevel(header.levelId, kind),
-    header.difficulty,
-    `b${header.balanceVersion}`,
-    `l${header.ladder ?? 0}`,
-  ].join('_');
+/** The key of the statistics a local replay counts into. */
+export function levelStatsKey(
+  header: ReplayHeader,
+  kind: ReplayKind
+): LevelStatsKey {
+  const generated = parseGeneratedId(header.levelId);
+  const prefix = kind === 'daily' || kind === 'endless' ? kind : 'gen';
+  return {
+    level:
+      generated === null
+        ? header.levelId
+        : `${prefix}-${generated.recipe}-${generated.difficulty}`,
+    difficulty: header.difficulty,
+    balanceVersion: header.balanceVersion,
+    ladder: header.ladder ?? 0,
+  };
+}
+
+/** The document id of a key: a changed computer starts counters of its own. */
+export function levelStatsId(key: LevelStatsKey): string {
+  return `${key.level}_${key.difficulty}_b${key.balanceVersion}_l${key.ladder}`;
 }
 
 /**
@@ -63,8 +70,9 @@ export function levelStatsId(header: ReplayHeader, kind: ReplayKind): string {
  * weapon in their own loadout; the ladder's computer brings loadouts to
  * every match) - `evolved` and the weapon carried (`weapons.{id}`).
  */
-export function levelStatsCounts(replay: Replay): Record<string, unknown> {
-  const { header } = replay;
+export function levelStatsCounts(
+  header: ReplayHeader
+): Record<string, unknown> {
   const winner = header.outcome?.winnerSeat ?? null;
   const seconds = header.ticks / TICKS_PER_SEC;
   const bucket =
@@ -83,21 +91,21 @@ export function levelStatsCounts(replay: Replay): Record<string, unknown> {
   };
 }
 
-/** Adds a stored local replay to its level statistics. */
+/**
+ * Adds a stored local replay to its level statistics, with its key as
+ * fields for the Balance view to query by.
+ */
 export async function countLevelStats(
   db: Firestore,
-  replay: Replay,
+  header: ReplayHeader,
   kind: ReplayKind
 ): Promise<void> {
-  const { header } = replay;
-  await db.doc(`levelStats/${levelStatsId(header, kind)}`).set(
+  const key = levelStatsKey(header, kind);
+  await db.doc(`levelStats/${levelStatsId(key)}`).set(
     {
-      level: statsLevel(header.levelId, kind),
-      difficulty: header.difficulty,
-      balanceVersion: header.balanceVersion,
-      ladder: header.ladder ?? 0,
+      ...key,
       updatedAt: FieldValue.serverTimestamp(),
-      ...levelStatsCounts(replay),
+      ...levelStatsCounts(header),
     },
     { merge: true }
   );

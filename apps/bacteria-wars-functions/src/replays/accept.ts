@@ -1,6 +1,6 @@
 import {
-  type Replay,
   replayFromBytes,
+  type ReplayHeader,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   type DocumentSnapshot,
@@ -112,9 +112,32 @@ async function accept(
     return plan;
   }
   const blob = { bytes, size: bytes.length };
-  return plan.room === undefined
-    ? storeLocal(db, replay, plan, meta, blob, now)
-    : storeOnline(db, plan, meta, blob, now);
+  if (plan.room !== undefined) {
+    return storeOnline(db, plan, meta, blob, now);
+  }
+  const outcome = await storeLocal(db, plan, meta, blob, now);
+  if (outcome === 'stored') {
+    await countSafely(db, replay.header, plan);
+  }
+  return outcome;
+}
+
+/**
+ * Adds a stored local replay to its level statistics - once, as a second
+ * delivery ends at `exists` - and never in its way: a counter that fails
+ * (the shared document of a busy level, say) costs the statistics a match,
+ * not the player the submission.
+ */
+async function countSafely(
+  db: Firestore,
+  header: ReplayHeader,
+  plan: AcceptPlan
+): Promise<void> {
+  try {
+    await countLevelStats(db, header, plan.kind);
+  } catch (error) {
+    logger.warn('Level statistics not counted', { id: plan.id, error });
+  }
 }
 
 /**
@@ -222,7 +245,6 @@ function newReplay(plan: AcceptPlan, uid: string, state: string, now: number) {
 
 async function storeLocal(
   db: Firestore,
-  replay: Replay,
   plan: AcceptPlan,
   meta: SubmissionMeta,
   blob: { bytes: Uint8Array; size: number },
@@ -245,36 +267,28 @@ async function storeLocal(
       const batch = db.batch();
       create(batch);
       await batch.commit();
-    } else {
-      await db.runTransaction(async (tx) => {
-        const declared = await tx.get(
-          db.doc(`players/${meta.uid}/attempts/${attempt}`)
-        );
-        create(tx);
-        // The first stored replay uses its attempt up: no drop voids it now.
-        if (
-          belongsTo(declared, meta.createdAt) &&
-          declared.get('replayId') === undefined
-        ) {
-          tx.update(declared.ref, { replayId: plan.id });
-        }
-      });
+      return 'stored';
     }
+    return await db.runTransaction(async (tx) => {
+      const declared = await tx.get(
+        db.doc(`players/${meta.uid}/attempts/${attempt}`)
+      );
+      create(tx);
+      // The first stored replay uses its attempt up: no drop voids it now.
+      if (
+        belongsTo(declared, meta.createdAt) &&
+        declared.get('replayId') === undefined
+      ) {
+        tx.update(declared.ref, { replayId: plan.id });
+      }
+      return 'stored' as const;
+    });
   } catch (error) {
     if (hasGrpcCode(error, 6, 'already-exists')) {
       return 'exists';
     }
     throw error;
   }
-  // Counted once, after the replay is stored (a second delivery ends at
-  // `exists` above), and never in its way: a counter that fails - the
-  // shared document of a busy level, say - costs the statistics one match.
-  try {
-    await countLevelStats(db, replay, plan.kind);
-  } catch (error) {
-    logger.warn('Level statistics not counted', { id: plan.id, error });
-  }
-  return 'stored';
 }
 
 async function storeOnline(

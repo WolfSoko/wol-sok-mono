@@ -223,10 +223,7 @@ export {
   playableOnline,
 } from './lib/state/levels';
 export type { LadderLevelId, Level } from './lib/state/levels';
-export {
-  generatedLevelId,
-  parseGeneratedId,
-} from './lib/state/level-generator/generate-level';
+export { parseGeneratedId } from './lib/state/level-generator/generate-level';
 export { DEFAULT_MODE, isGameMode } from './lib/state/game-mode';
 export type { GameMode } from './lib/state/game-mode';
 export {
