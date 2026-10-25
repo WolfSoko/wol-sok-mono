@@ -133,6 +133,16 @@ describe('rankEndless', () => {
     expect((await entry()).get('show')).toEqual({ depth: 1, seconds: 60 });
   });
 
+  it('remembers a declared match after its attempt document is gone', async () => {
+    await declare(0);
+    await declare(1);
+    await rank('l_1', played(1, 0), atOf(0) + HOUR);
+    // TTL takes match 0's declaration before the sweep sees it lost.
+    await db.doc(`players/ada/attempts/e_${RUN_ID}_0`).delete();
+    await closeStaleMatches(db, NOW);
+    expect(await run()).toMatchObject({ wins: 1, lives: 2 });
+  });
+
   it("keeps the player's best run on the board, and a TTL on the others", async () => {
     const second = '202610252';
     await declare(0);
@@ -183,5 +193,24 @@ describe('verifyEndlessSlice', () => {
     expect((await db.doc('replays/l_0').get()).get('state')).toBe('verified');
     expect((await db.doc('replays/l_1').get()).get('state')).toBe('unverified');
     expect((await db.doc('moderation/ada').get()).get('failedChecks')).toBe(1);
+  });
+
+  it('leaves a run uncut when its replay is of another balance table', async () => {
+    await declare(0);
+    await rank('l_0', played(0, 0));
+    const result = await verifyEndlessSlice(
+      db,
+      NOW,
+      old,
+      25 * MINUTE,
+      () => 0,
+      () => ({ state: 'balance-mismatch', ms: 0 })
+    );
+    expect(result.checked).toBe(0);
+    expect(await run()).toMatchObject({ verifiedWins: 0, cut: null });
+    expect((await entry()).get('status')).toBe('provisional');
+    expect((await db.doc('replays/l_0').get()).get('state')).toBe(
+      'balance-mismatch'
+    );
   });
 });

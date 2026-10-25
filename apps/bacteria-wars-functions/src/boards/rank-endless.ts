@@ -18,6 +18,7 @@ import {
   computeRun,
   type EndlessReason,
   endlessEntryBase,
+  LOST_AFTER_MS,
   type RunAttempt,
   type RunState,
 } from './endless-run';
@@ -36,12 +37,20 @@ export interface StoredRun extends RunState {
   seed: number;
   /** The replays that came, by match index. */
   accepted: Record<string, AcceptedMatch>;
+  /**
+   * Every declared match the run has seen, by index: the server's time of
+   * each. Kept here, so an attempt TTL takes from `players/{uid}/attempts`
+   * cannot give a lost life back.
+   */
+  declared: Record<string, number>;
   /** Wins played again and confirmed, from the first. */
   verifiedWins: number;
   /** Where a failed check cut the run, null while it stands whole. */
   cut: number | null;
   /** The run's board `sort`, -1 without a win. */
   sort: number;
+  /** Set while the run is not the player's best. */
+  expireAt?: Timestamp;
 }
 
 /** What a run read in a transaction holds - see {@link readRun}. */
@@ -79,7 +88,14 @@ export async function readRun(
       attempts.push({ i: attempt.i, at: at.toMillis() });
     }
   }
-  return { stored: (run.data() ?? {}) as Partial<StoredRun>, attempts };
+  const stored = (run.data() ?? {}) as Partial<StoredRun>;
+  const seen = new Set(attempts.map((attempt) => attempt.i));
+  for (const [i, at] of Object.entries(stored.declared ?? {})) {
+    if (!seen.has(Number(i))) {
+      attempts.push({ i: Number(i), at });
+    }
+  }
+  return { stored, attempts };
 }
 
 /**
@@ -109,6 +125,9 @@ export async function saveRun(
   const base = endlessEntryBase(state, verifiedWins, cut);
   const run: StoredRun = {
     ...state,
+    declared: Object.fromEntries(
+      read.attempts.map((attempt) => [String(attempt.i), attempt.at])
+    ),
     // A cut run is over: what came after the failed win no longer counts.
     over: state.over || cut !== null,
     pendingAt: cut === null ? state.pendingAt : null,
@@ -121,21 +140,25 @@ export async function saveRun(
     sort: base?.sort ?? -1,
   };
 
-  const member = await memberIn(tx, db, uid);
-  const profile = await profileIn(tx, db, uid);
+  const [member, profile, others] = await Promise.all([
+    memberIn(tx, db, uid),
+    profileIn(tx, db, uid),
+    tx.get(
+      db
+        .collection('endlessRuns')
+        .where('uid', '==', uid)
+        .orderBy('sort', 'desc')
+        .limit(2)
+    ),
+  ]);
   const entryRef = db.doc(`boards/endless/entries/${member.entryIds.endless}`);
   const entry = await tx.get(entryRef);
-  const others = await tx.get(
-    db
-      .collection('endlessRuns')
-      .where('uid', '==', uid)
-      .orderBy('sort', 'desc')
-      .limit(2)
-  );
   const rival = others.docs.find((doc) => doc.id !== `${uid}_${runId}`);
   const rivalRun = rival?.data() as StoredRun | undefined;
   const best =
     rivalRun !== undefined && rivalRun.sort > run.sort ? rivalRun : run;
+  // Only a run on the board goes without a TTL.
+  const keep = best === run && run.sort >= 0;
   const bestBase =
     best === run
       ? base
@@ -146,18 +169,18 @@ export async function saveRun(
   tx.set(runRef, {
     ...run,
     updatedAt: FieldValue.serverTimestamp(),
-    ...(best === run
-      ? {}
-      : { expireAt: Timestamp.fromMillis(now + RUN_TTL_MS) }),
+    ...(keep ? {} : { expireAt: Timestamp.fromMillis(now + RUN_TTL_MS) }),
   });
-  if (rival !== undefined) {
-    // The other run keeps its TTL off only while it is the best.
-    tx.update(rival.ref, {
-      expireAt:
-        best === run
-          ? Timestamp.fromMillis(now + RUN_TTL_MS)
-          : FieldValue.delete(),
-    });
+  if (rival !== undefined && rivalRun !== undefined) {
+    // The other run goes without a TTL only while it is the best; one that
+    // already has one keeps it, rather than have it pushed out again.
+    if (best === run && rivalRun.expireAt === undefined) {
+      tx.update(rival.ref, {
+        expireAt: Timestamp.fromMillis(now + RUN_TTL_MS),
+      });
+    } else if (best !== run && rivalRun.expireAt !== undefined) {
+      tx.update(rival.ref, { expireAt: FieldValue.delete() });
+    }
   }
   tx.set(
     db.doc(`boardMembers/${uid}`),
@@ -189,6 +212,9 @@ export async function saveRun(
  * the arrival checks (`gpu-int`, seed, ranked plan, timing) here, the level
  * when the run is computed, as it follows from the wins before. A refused
  * replay still costs the match's life; the first replay of a match counts.
+ * `rankedReason` says what was known when it came: `counted` means it
+ * passed the checks, while what the match did to the run lives in the run
+ * (`matches`), which may wait for an earlier match's replay.
  */
 export async function rankEndless(
   db: Firestore,
@@ -295,11 +321,21 @@ export async function refreshRun(
   uid: string,
   runId: string,
   now: number,
-  change: Partial<Pick<StoredRun, 'verifiedWins' | 'cut'>> = {}
+  change: Partial<Pick<StoredRun, 'verifiedWins' | 'cut'>> = {},
+  /** Verification's change holds only while the run is as it read it. */
+  expectedVerifiedWins?: number
 ): Promise<StoredRun | null> {
-  return db.runTransaction(async (tx) =>
-    saveRun(tx, db, uid, runId, await readRun(tx, db, uid, runId), change, now)
-  );
+  return db.runTransaction(async (tx) => {
+    const read = await readRun(tx, db, uid, runId);
+    if (
+      expectedVerifiedWins !== undefined &&
+      ((read.stored.verifiedWins ?? 0) !== expectedVerifiedWins ||
+        (read.stored.cut ?? null) !== null)
+    ) {
+      return null;
+    }
+    return saveRun(tx, db, uid, runId, read, change, now);
+  });
 }
 
 /**
@@ -312,7 +348,7 @@ export async function closeStaleMatches(
 ): Promise<number> {
   const stale = await db
     .collection('endlessRuns')
-    .where('pendingAt', '<=', now - 2 * 3_600_000)
+    .where('pendingAt', '<=', now - LOST_AFTER_MS)
     .limit(200)
     .get();
   for (const doc of stale.docs) {

@@ -115,6 +115,11 @@ async function checkNextWin(
   const replay = await storedReplay(db, next.replayId);
   const verdict: Verdict =
     replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
+  if (verdict.state === 'balance-mismatch') {
+    // Says nothing about the player: the run stays provisional, uncut.
+    await db.doc(`replays/${next.replayId}`).update(verdictFields(verdict));
+    return 'done';
+  }
   const passed = verdict.state === 'verified';
   const moderationRef = db.doc(`moderation/${candidate.uid}`);
   await db.runTransaction(async (tx) => {
@@ -122,12 +127,17 @@ async function checkNextWin(
     tx.update(db.doc(`replays/${next.replayId}`), verdictFields(verdict));
     recordCheck(tx, moderationRef, moderation, verdict.state, now);
   });
-  await refreshRun(
+  const saved = await refreshRun(
     db,
     candidate.uid,
     runId,
     now,
-    passed ? { verifiedWins: verifiedWins + 1 } : { cut: verifiedWins }
+    passed ? { verifiedWins: verifiedWins + 1 } : { cut: verifiedWins },
+    verifiedWins
   );
+  if (saved === null) {
+    // The run changed meanwhile: the next slice reads it afresh.
+    return 'done';
+  }
   return passed ? 'verified' : 'failed';
 }

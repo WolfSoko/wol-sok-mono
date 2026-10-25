@@ -5,6 +5,7 @@ import {
   TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import type { EntryBase } from './entries';
+import type { DailyReason } from './rank-daily';
 
 /**
  * An endless run as the functions keep it (ADR 0012), pure: computed again
@@ -19,18 +20,7 @@ export interface RunAttempt {
 }
 
 /** Why a ranked endless replay did (not) count - its `rankedReason`. */
-export type EndlessReason =
-  | 'counted'
-  | 'banned'
-  | 'no-attempt'
-  | 'ruleset'
-  | 'seed'
-  | 'plan-mismatch'
-  | 'level'
-  | 'early'
-  | 'late'
-  | 'duplicate'
-  | 'unreadable';
+export type EndlessReason = DailyReason;
 
 /** What a replay of one declared match brought, checked on arrival. */
 export interface AcceptedMatch {

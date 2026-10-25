@@ -32,15 +32,9 @@ export const DAILY_TTL_MS = 31 * DAY_MS;
 
 /** Why a ranked daily replay did (not) rank - its `rankedReason`. */
 export type DailyReason =
-  | 'counted'
+  | DeclaredReason
   | 'banned'
   | 'no-attempt'
-  | 'ruleset'
-  | 'seed'
-  | 'plan-mismatch'
-  | 'level'
-  | 'early'
-  | 'late'
   | 'duplicate'
   | 'unreadable';
 
@@ -57,6 +51,16 @@ export interface DailyAttemptRun {
   atHour: number;
 }
 
+/** What {@link checkDeclaredMatch} finds. */
+export type DeclaredReason =
+  | 'counted'
+  | 'ruleset'
+  | 'seed'
+  | 'plan-mismatch'
+  | 'level'
+  | 'early'
+  | 'late';
+
 /**
  * The checks every declared match passes (ADR 0012), always against the
  * stored declaration, never the header's copy of `at`: the owner's
@@ -72,14 +76,7 @@ export function checkDeclaredMatch(
   declaredAt: number,
   arrivedAt: number,
   levelId?: string
-):
-  | 'counted'
-  | 'ruleset'
-  | 'seed'
-  | 'plan-mismatch'
-  | 'level'
-  | 'early'
-  | 'late' {
+): DeclaredReason {
   const { header } = replay;
   if (header.simulation !== 'gpu-int') {
     return 'ruleset';

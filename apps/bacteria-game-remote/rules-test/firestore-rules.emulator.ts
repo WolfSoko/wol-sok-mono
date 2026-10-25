@@ -125,7 +125,7 @@ describe('declared attempts', () => {
     await assertFails(declare('eve', `d_${today()}_1`));
   });
 
-  it('wants the server time, a near expiry and nothing else', async () => {
+  it('wants the server time, an expiry in 30 to 32 days and nothing else', async () => {
     const id = `d_${today()}_1`;
     await assertFails(declare('ada', id, declaration({ at: Timestamp.now() })));
     await assertFails(
@@ -135,6 +135,13 @@ describe('declared attempts', () => {
         declaration({
           expireAt: Timestamp.fromMillis(Date.now() + 33 * 24 * HOUR),
         })
+      )
+    );
+    await assertFails(
+      declare(
+        'ada',
+        id,
+        declaration({ expireAt: Timestamp.fromMillis(Date.now() + 1_000) })
       )
     );
     await assertFails(declare('ada', id, declaration({ seed: 1 })));
