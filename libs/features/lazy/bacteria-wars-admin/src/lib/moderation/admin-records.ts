@@ -365,3 +365,71 @@ export function parseStoredReplay(
     galleryOut: value['galleryOut'] === true,
   };
 }
+
+/**
+ * `levelStats/{id}` (ADR 0016): how a level went against one computer -
+ * attempts, results, durations, evolved play and weapons, and the
+ * medallions of the matches the server re-ran.
+ */
+export interface LevelStatsRecord {
+  id: string;
+  level: string;
+  difficulty: string;
+  balanceVersion: number | null;
+  /** The ladder's version, 0 for a computer off the curve. */
+  ladder: number;
+  attempts: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  /** Attempts with genes or a weapon in the player's own loadout. */
+  evolved: number;
+  plainWins: number;
+  evolvedWins: number;
+  /** Attempts per duration bucket (`lt1m` ... `ge10m`). */
+  durations: Record<string, number>;
+  /** Evolved attempts per weapon carried. */
+  weapons: Record<string, number>;
+  /** Matches the server re-ran, and the best medallion each earned. */
+  rerun: number;
+  medals: Record<string, number>;
+}
+
+/** A map of counters, the numbers only. */
+const counts = (value: unknown): Record<string, number> =>
+  isObject(value)
+    ? Object.fromEntries(
+        Object.entries(value).filter(
+          (entry): entry is [string, number] =>
+            typeof entry[1] === 'number' && Number.isFinite(entry[1])
+        )
+      )
+    : {};
+
+export function parseLevelStats(
+  id: string,
+  value: unknown
+): LevelStatsRecord | null {
+  if (!isObject(value) || typeof value['level'] !== 'string') {
+    return null;
+  }
+  const count = (key: string) => numberOrNull(value[key]) ?? 0;
+  return {
+    id,
+    level: value['level'],
+    difficulty: text(value['difficulty']) ?? '',
+    balanceVersion: numberOrNull(value['balanceVersion']),
+    ladder: count('ladder'),
+    attempts: count('attempts'),
+    wins: count('wins'),
+    losses: count('losses'),
+    draws: count('draws'),
+    evolved: count('evolved'),
+    plainWins: count('plainWins'),
+    evolvedWins: count('evolvedWins'),
+    durations: counts(value['durations']),
+    weapons: counts(value['weapons']),
+    rerun: count('rerun'),
+    medals: counts(value['medals']),
+  };
+}

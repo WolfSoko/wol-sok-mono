@@ -6,6 +6,7 @@ import {
   parseBoardEntry,
   parseCandidateDay,
   parseEntry,
+  parseLevelStats,
   parseMember,
   parseModeration,
   parseProfileFlags,
@@ -249,5 +250,40 @@ describe('admin records', () => {
       galleryOut: true,
     });
     expect(parseStoredReplay('r2', undefined)).toBeNull();
+  });
+
+  it('reads level statistics, zero for counters not there yet', () => {
+    expect(
+      parseLevelStats('l1_hard_b6_l1', {
+        level: 'l1',
+        difficulty: 'hard',
+        balanceVersion: 6,
+        ladder: 1,
+        attempts: 10,
+        wins: 6,
+        losses: 3,
+        durations: { lt2m: 4, lt5m: 6, odd: 'x' },
+        weapons: { laser: 2 },
+        medals: { gold: 1 },
+      })
+    ).toEqual({
+      id: 'l1_hard_b6_l1',
+      level: 'l1',
+      difficulty: 'hard',
+      balanceVersion: 6,
+      ladder: 1,
+      attempts: 10,
+      wins: 6,
+      losses: 3,
+      draws: 0,
+      evolved: 0,
+      plainWins: 0,
+      evolvedWins: 0,
+      durations: { lt2m: 4, lt5m: 6 },
+      weapons: { laser: 2 },
+      rerun: 0,
+      medals: { gold: 1 },
+    });
+    expect(parseLevelStats('x', { attempts: 3 })).toBeNull();
   });
 });

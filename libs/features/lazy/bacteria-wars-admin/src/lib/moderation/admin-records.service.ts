@@ -12,6 +12,7 @@ import {
   type BoardEntryRecord,
   type CandidateDayRecord,
   type EntryRecord,
+  type LevelStatsRecord,
   type MemberEntryRef,
   type MemberRecord,
   millisOf,
@@ -22,6 +23,7 @@ import {
   parseBoardEntry,
   parseCandidateDay,
   parseEntry,
+  parseLevelStats,
   parseMember,
   parseModeration,
   parseProfileFlags,
@@ -211,6 +213,24 @@ export class AdminRecordsService {
     const { db, dbSdk: sdk } = this.connection();
     const snapshot = await sdk.getDoc(sdk.doc(db, 'replays', replayId));
     return parseStoredReplay(replayId, snapshot.data());
+  }
+
+  /** The level statistics of one balance version, most played first. */
+  public async levelStats(
+    balanceVersion: number,
+    after: unknown = null
+  ): Promise<Page<LevelStatsRecord>> {
+    const { db, dbSdk: sdk } = this.connection();
+    return this.page(
+      sdk,
+      sdk.query(
+        sdk.collection(db, 'levelStats'),
+        sdk.where('balanceVersion', '==', balanceVersion),
+        sdk.orderBy('attempts', 'desc')
+      ),
+      after,
+      (doc) => parseLevelStats(doc.id, doc.data())
+    );
   }
 
   /** The bans, newest first; the hourly sweep deletes the ended ones. */

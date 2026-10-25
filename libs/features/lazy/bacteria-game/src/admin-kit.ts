@@ -45,6 +45,7 @@ export {
   VISIBLE_STATUSES,
 } from './lib/state/boards';
 export { utcDay } from './lib/state/daily';
+export { BALANCE_VERSION } from './lib/state/game-balance';
 export type {
   BoardId,
   BoardKind,

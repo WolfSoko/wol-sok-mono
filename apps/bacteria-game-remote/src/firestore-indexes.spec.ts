@@ -58,6 +58,14 @@ const GAME_QUERIES: Queries = {
       { fieldPath: 'updatedAt', order: 'DESCENDING' },
     ],
   },
+  // The admin area's Balance view: a balance version, most played first.
+  'level statistics of a balance version': {
+    group: 'levelStats',
+    fields: [
+      { fieldPath: 'balanceVersion', order: 'ASCENDING' },
+      { fieldPath: 'attempts', order: 'DESCENDING' },
+    ],
+  },
 };
 const FUNCTION_QUERIES = read(
   '../../bacteria-wars-functions/src/firestore-queries.json'
