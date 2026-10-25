@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.102.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.101.0...v74.102.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-wars-admin:** the Replays view and recounting the accounts ([#2672](https://github.com/WolfSoko/wol-sok-mono/issues/2672)) ([71edb6e](https://github.com/WolfSoko/wol-sok-mono/commit/71edb6e933877e655f32b268e64ae13b08f3fa9b))
+
 ## [74.101.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.100.0...v74.101.0) (2026-10-25)
 
 ### Features
