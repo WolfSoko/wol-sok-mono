@@ -23,14 +23,20 @@ export async function deletePlayerReplays(
   );
   let deleted = 0;
   let left = 0;
-  for (const replay of found.values()) {
-    const players = replay.get('players');
-    const seats = replay.get('seats');
-    if (Array.isArray(players) && players.every((player) => player === uid)) {
-      await db.recursiveDelete(replay.ref);
-      deleted++;
-    } else {
-      await replay.ref.update({
+  for (const { ref } of found.values()) {
+    // In a transaction: the seats are written back whole, and the other
+    // player may be deleting their account at the same time.
+    const outcome = await db.runTransaction(async (tx) => {
+      const replay = await tx.get(ref);
+      if (!replay.exists) {
+        return 'gone';
+      }
+      const players = replay.get('players');
+      if (Array.isArray(players) && players.every((player) => player === uid)) {
+        return 'only';
+      }
+      const seats = replay.get('seats');
+      tx.update(ref, {
         players: FieldValue.arrayRemove(uid),
         optOut: FieldValue.arrayRemove(uid),
         // The other player reads the replay: the seat forgets the uid too.
@@ -38,7 +44,13 @@ export async function deletePlayerReplays(
           ? { seats: seats.map((seat) => (seat === uid ? null : seat)) }
           : {}),
       });
-      await replay.ref.collection('reports').doc(uid).delete();
+      tx.delete(ref.collection('reports').doc(uid));
+      return 'left';
+    });
+    if (outcome === 'only') {
+      await db.recursiveDelete(ref);
+      deleted++;
+    } else if (outcome === 'left') {
       left++;
     }
   }

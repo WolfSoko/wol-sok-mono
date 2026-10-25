@@ -345,6 +345,20 @@ describe('deletePlayerReplays', () => {
     expect((await db.doc('replays/ours/reports/ada').get()).exists).toBe(false);
   });
 
+  it('forgets both players when both accounts go at the same time', async () => {
+    await db.doc('replays/ours').set({
+      players: ['ada', 'bob'],
+      optOut: [],
+      seats: ['ada', 'bob'],
+    });
+    await Promise.all([
+      deletePlayerReplays(db, 'ada'),
+      deletePlayerReplays(db, 'bob'),
+    ]);
+    // The second one to run found itself the only player left.
+    expect((await db.doc('replays/ours').get()).exists).toBe(false);
+  });
+
   it('forgets the player in the seat of a match only the other one reported', async () => {
     await db
       .doc('replays/theirs')
