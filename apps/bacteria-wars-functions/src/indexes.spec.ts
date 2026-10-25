@@ -35,6 +35,14 @@ const QUERIES: Record<string, { group: string; fields: Field[] }> = {
       { fieldPath: 'createdAt', order: 'ASCENDING' },
     ],
   },
+  // saveRun: a player's best endless run.
+  'endless runs of a player by score': {
+    group: 'endlessRuns',
+    fields: [
+      { fieldPath: 'uid', order: 'ASCENDING' },
+      { fieldPath: 'sort', order: 'DESCENDING' },
+    ],
+  },
   // rebuildTop, the board pages and a player's own rank (count()).
   'visible entries in board order': {
     group: 'entries',
