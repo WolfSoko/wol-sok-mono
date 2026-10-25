@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.93.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.92.0...v74.93.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ board.verify plays an entry again now ([#2655](https://github.com/WolfSoko/wol-sok-mono/issues/2655)) ([84c3568](https://github.com/WolfSoko/wol-sok-mono/commit/84c35685f2ec5df3075b303a80b68905cbc9b1ad))
+
 ## [74.92.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.91.0...v74.92.0) (2026-10-25)
 
 ### Features
