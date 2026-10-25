@@ -70,6 +70,17 @@ describe('PrivacyComponent', () => {
     );
   });
 
+  it('says a Google account that played elsewhere leaves the guest behind', async () => {
+    const page = await open();
+    const de = page.querySelector('article[lang="de"]')?.textContent ?? '';
+    const en = page.querySelector('article[lang="en"]')?.textContent ?? '';
+
+    expect(de).not.toContain('Das Gastkonto wird so zu deinem Google-Konto');
+    expect(de).toContain('übernimmt das Google-Konto den Fortschritt');
+    expect(en).not.toContain('Your guest account becomes your Google account');
+    expect(en).toContain('the Google account takes over the guest');
+  });
+
   it('has its own title while open', async () => {
     await open();
 
