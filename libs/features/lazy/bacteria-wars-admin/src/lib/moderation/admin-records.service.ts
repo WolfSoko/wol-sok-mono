@@ -10,6 +10,7 @@ import {
   type AuditRecord,
   type BanRecord,
   type BoardEntryRecord,
+  type CandidateDayRecord,
   type EntryRecord,
   type MemberEntryRef,
   type MemberRecord,
@@ -19,10 +20,15 @@ import {
   parseAudit,
   parseBan,
   parseBoardEntry,
+  parseCandidateDay,
   parseEntry,
   parseMember,
   parseModeration,
   parseProfileFlags,
+  parsePublicReplay,
+  parseStoredReplay,
+  type PublicReplayRecord,
+  type StoredReplayRecord,
 } from './admin-records';
 
 /** How many rows a list loads at a time. */
@@ -163,6 +169,48 @@ export class AdminRecordsService {
       }
     }
     return owners;
+  }
+
+  /** The gallery's daily picks, newest day first, with their runners-up. */
+  public async candidateDays(
+    after: unknown = null
+  ): Promise<Page<CandidateDayRecord>> {
+    const { db, dbSdk: sdk } = this.connection();
+    return this.page(
+      sdk,
+      sdk.query(
+        sdk.collection(db, 'replayCandidates'),
+        sdk.orderBy(sdk.documentId(), 'desc')
+      ),
+      after,
+      (doc) => parseCandidateDay(doc.id, doc.data())
+    );
+  }
+
+  /** The public replays still up, newest featured first. */
+  public async publicReplays(
+    after: unknown = null
+  ): Promise<Page<PublicReplayRecord>> {
+    const { db, dbSdk: sdk } = this.connection();
+    return this.page(
+      sdk,
+      sdk.query(
+        sdk.collection(db, 'publicReplays'),
+        sdk.where('removedAt', '==', null),
+        sdk.orderBy('featuredAt', 'desc')
+      ),
+      after,
+      (doc) => parsePublicReplay(doc.id, doc.data())
+    );
+  }
+
+  /** A stored replay, null when there is none. */
+  public async storedReplay(
+    replayId: string
+  ): Promise<StoredReplayRecord | null> {
+    const { db, dbSdk: sdk } = this.connection();
+    const snapshot = await sdk.getDoc(sdk.doc(db, 'replays', replayId));
+    return parseStoredReplay(replayId, snapshot.data());
   }
 
   /** The bans, newest first; the hourly sweep deletes the ended ones. */

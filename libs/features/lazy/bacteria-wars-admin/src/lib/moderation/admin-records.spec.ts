@@ -4,10 +4,13 @@ import {
   parseAudit,
   parseBan,
   parseBoardEntry,
+  parseCandidateDay,
   parseEntry,
   parseMember,
   parseModeration,
   parseProfileFlags,
+  parsePublicReplay,
+  parseStoredReplay,
 } from './admin-records';
 
 const at = (millis: number) => ({ toMillis: () => millis });
@@ -144,6 +147,7 @@ describe('admin records', () => {
       type: 'board.hideEntry',
       uid: 'ada',
       entry: { boardId: 'xp', entryId: 'x1' },
+      replayId: null,
       reason: 'rude name',
       ok: false,
       error: 'not-on-board',
@@ -153,6 +157,97 @@ describe('admin records', () => {
     expect(
       parseAudit('c2', { type: 'stats.refresh', target: null, ok: null })
     ).toMatchObject({ uid: null, entry: null, ok: null, reason: '' });
+    expect(
+      parseAudit('c4', {
+        type: 'replay.anonymise',
+        target: { replayId: 'p1' },
+        ok: true,
+      })
+    ).toMatchObject({ type: 'replay.anonymise', replayId: 'p1', uid: null });
     expect(parseAudit('c3', { by: 'own' })).toBeNull();
+  });
+
+  it("reads a day's pick with its runners-up", () => {
+    expect(
+      parseCandidateDay('2026-10-24', {
+        done: true,
+        checked: 3,
+        published: ['r1', 7],
+        candidates: [
+          {
+            replayId: 'r2',
+            kind: 'local',
+            levelId: 'daily-x',
+            score: 61,
+            reasons: ['close'],
+          },
+          { kind: 'local' },
+        ],
+      })
+    ).toEqual({
+      day: '2026-10-24',
+      checked: 3,
+      published: ['r1'],
+      candidates: [
+        {
+          replayId: 'r2',
+          kind: 'local',
+          levelId: 'daily-x',
+          score: 61,
+          reasons: ['close'],
+        },
+      ],
+    });
+    expect(parseCandidateDay('2026-10-24', null)).toBeNull();
+  });
+
+  it('reads a public replay with its seats as shown', () => {
+    expect(
+      parsePublicReplay('p1', {
+        replayId: 'r1',
+        kind: 'online',
+        levelId: 'arena',
+        players: [
+          { label: 'teal', name: 'Ada' },
+          { label: 'Anonymous #0042', name: null },
+        ],
+        score: 70,
+        featuredAt: at(9),
+        featuredBy: 'admin',
+        anonymised: true,
+      })
+    ).toEqual({
+      publicId: 'p1',
+      replayId: 'r1',
+      kind: 'online',
+      levelId: 'arena',
+      players: ['Ada', 'Anonymous #0042'],
+      score: 70,
+      featuredAt: 9,
+      featuredBy: 'admin',
+      anonymised: true,
+    });
+    expect(parsePublicReplay('p2', { kind: 'online' })).toBeNull();
+  });
+
+  it('reads a stored replay', () => {
+    expect(
+      parseStoredReplay('r1', {
+        state: 'verified',
+        kind: 'local',
+        levelId: 'l1',
+        publicId: 'p1',
+        galleryOut: true,
+      })
+    ).toEqual({
+      replayId: 'r1',
+      state: 'verified',
+      kind: 'local',
+      levelId: 'l1',
+      score: null,
+      publicId: 'p1',
+      galleryOut: true,
+    });
+    expect(parseStoredReplay('r2', undefined)).toBeNull();
   });
 });

@@ -118,19 +118,39 @@ export class OverviewComponent {
     });
   }
 
-  protected async refresh(): Promise<void> {
+  protected refresh(): Promise<void> {
+    return this.send(['stats.refresh']);
+  }
+
+  /**
+   * `stats.recount` sets the account total from Auth (once after launch,
+   * then when in doubt); the refresh after it shows the new total.
+   */
+  protected recount(): Promise<void> {
+    return this.send(['stats.recount', 'stats.refresh']);
+  }
+
+  /** Sends the commands in turn, stopping at the first refusal. */
+  private async send(
+    types: readonly ('stats.refresh' | 'stats.recount')[]
+  ): Promise<void> {
     this.refreshing.set(true);
     this.error.set(null);
     try {
-      const result = await this.commands.send({
-        type: 'stats.refresh',
-        target: null,
-        reason: '',
-        args: {},
-      });
-      this.error.set(result.ok ? null : (result.error ?? 'internal'));
+      for (const type of types) {
+        const result = await this.commands.send({
+          type,
+          target: null,
+          reason: '',
+          args: {},
+        });
+        if (!result.ok) {
+          this.error.set(result.error ?? 'internal');
+          return;
+        }
+      }
     } catch (error) {
-      console.error('Could not send the refresh', error);
+      console.error('Could not send the command', error);
       this.error.set('internal');
     } finally {
       this.refreshing.set(false);

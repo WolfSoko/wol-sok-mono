@@ -8,6 +8,7 @@ export const DE: Translation<typeof EN> = {
     overview: 'Übersicht',
     profiles: 'Profile',
     leaderboards: 'Bestenlisten',
+    replays: 'Wiederholungen',
     bans: 'Sperren',
     audit: 'Protokoll',
   },
@@ -41,6 +42,11 @@ export const DE: Translation<typeof EN> = {
     },
     toggles: {
       set: 'Schalter ändern',
+    },
+    replay: {
+      feature: 'In der Galerie zeigen',
+      unfeature: 'Aus der Galerie nehmen',
+      anonymise: 'Anonymisieren',
     },
   },
   dialog: {
@@ -142,6 +148,24 @@ export const DE: Translation<typeof EN> = {
       endless: 'Tiefe {depth} · {seconds} s',
       endlessPartial: 'Tiefe {depth} · {seconds} s (unvollständig)',
     },
+  },
+  replays: {
+    byId: 'Eine gespeicherte Wiederholung',
+    replayId: 'Id der Wiederholung',
+    lookUp: 'Nachsehen',
+    lookUpFailed:
+      'Die Wiederholung ließ sich nicht lesen. Versuch es noch einmal.',
+    notFound: 'Keine gespeicherte Wiederholung mit dieser Id.',
+    score: 'Wertung {score}',
+    galleryOut: 'dauerhaft nicht in der Galerie',
+    isPublic: 'Öffentlich - Seite öffnen',
+    public: 'In der Galerie',
+    replay: 'Wiederholung',
+    featured: 'Gezeigt seit',
+    byOwner: 'von dir',
+    candidates: 'Zweitplatzierte der Tagesauswahl',
+    dayStats: '{published} veröffentlicht, {checked} nachgespielt',
+    noCandidates: 'An diesem Tag keine Zweitplatzierten.',
   },
   bans: {
     change: 'Ende ändern',

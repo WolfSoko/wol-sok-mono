@@ -8,6 +8,7 @@ import {
   type AdminResult,
   AdminCommandsService,
 } from '../commands/admin-commands.service';
+import type { ReplayCommandType } from '../commands/command-types';
 import { AdminI18n } from '../i18n/admin-i18n.service';
 import {
   CommandDialogComponent,
@@ -17,6 +18,7 @@ import {
 
 /** A moderation command, before the owner said why. */
 export interface ModerationAction extends CommandDialogData {
+  type: AdminCommandInput['type'];
   target: Record<string, unknown>;
 }
 
@@ -35,27 +37,55 @@ export class AdminActionsService {
   private readonly i18n = inject(AdminI18n);
 
   public async run(action: ModerationAction): Promise<AdminResult | null> {
-    const confirmed = await firstValueFrom(
+    const confirmed = await this.confirm(action);
+    return confirmed === undefined
+      ? null
+      : this.send(() =>
+          this.commands.send({
+            type: action.type,
+            target: action.target,
+            reason: confirmed.reason,
+            args: confirmed.args,
+          })
+        );
+  }
+
+  /** The same for the gallery's curation (`replayCommands`), without a reason. */
+  public async runReplay(
+    type: ReplayCommandType,
+    replayId: string,
+    subject: string
+  ): Promise<AdminResult | null> {
+    const confirmed = await this.confirm({
+      type: `replay.${type}`,
+      subject,
+      reason: false,
+    });
+    return confirmed === undefined
+      ? null
+      : this.send(() => this.commands.sendReplay(type, replayId));
+  }
+
+  private confirm(
+    data: CommandDialogData
+  ): Promise<CommandDialogResult | undefined> {
+    return firstValueFrom(
       this.dialog
         .open<CommandDialogComponent, CommandDialogData, CommandDialogResult>(
           CommandDialogComponent,
-          { data: action }
+          { data }
         )
         .afterClosed()
     );
-    if (confirmed === undefined) {
-      return null;
-    }
-    const command: AdminCommandInput = {
-      type: action.type,
-      target: action.target,
-      reason: confirmed.reason,
-      args: confirmed.args,
-    };
+  }
+
+  private async send(
+    command: () => Promise<AdminResult>
+  ): Promise<AdminResult> {
     this.snackBar.open(this.i18n.t('command.sent'));
     let result: AdminResult;
     try {
-      result = await this.commands.send(command);
+      result = await command();
     } catch (error) {
       console.error('Could not send the command', error);
       result = { ok: false, error: 'internal' };

@@ -86,4 +86,17 @@ describe('CommandDialogComponent', () => {
       args: { bar: true },
     });
   });
+
+  it('confirms a gallery curation without a reason', async () => {
+    const { close, element, confirm } = await render({
+      type: 'replay.anonymise',
+      subject: 'online · arena',
+      reason: false,
+    });
+    expect(element.textContent).toContain('Anonymise - online · arena');
+    expect(element.querySelector('textarea')).toBeNull();
+    expect(confirm().disabled).toBe(false);
+    confirm().click();
+    expect(close).toHaveBeenCalledWith({ reason: '', args: {} });
+  });
 });

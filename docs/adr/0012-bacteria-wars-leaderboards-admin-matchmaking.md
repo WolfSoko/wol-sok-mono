@@ -1330,8 +1330,16 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      list `boardMembers`), and hide, restore, verify now (daily and
      endless only) and ban by entry. Bans and the player view also offer
      "Change end", a `player.ban` on a banned player.
-   - Still to come: the toggle page, the Balance view, the curation page
-     once ADR 0011's gallery exists, and the admin link in the main menu.
+   - The Replays view, ADR 0011's curation page: a stored replay by id
+     (the rules let the owner get one, not list them), the public replays
+     still up (the owner reads `publicReplays`, never their bytes) and each
+     day's runners-up from `replayCandidates`, with feature, unfeature and
+     anonymise as `replayCommands`, which keep no reason, so their dialog
+     asks for none. The overview's "Recount accounts" sends
+     `stats.recount`, then `stats.refresh`.
+   - Still to come: the toggle page and the Balance view. The admin link in
+     the main menu and the client's ban handling go with the game lib's
+     client release.
 
 ## Owner's decisions
 

@@ -41,7 +41,7 @@ function fakeStats(now: Record<string, unknown> | undefined) {
 
 function render(
   now: Record<string, unknown> | undefined,
-  send = jest.fn(async () => ({ ok: true }))
+  send = jest.fn(async (_command: { type: string }) => ({ ok: true }))
 ) {
   TestBed.configureTestingModule({
     providers: [
@@ -52,6 +52,15 @@ function render(
   const fixture = TestBed.createComponent(OverviewComponent);
   fixture.detectChanges();
   return { fixture, send, text: () => fixture.nativeElement.textContent };
+}
+
+function button(
+  fixture: { nativeElement: HTMLElement },
+  label: string
+): HTMLButtonElement {
+  return [...fixture.nativeElement.querySelectorAll('button')].find((b) =>
+    b.textContent?.includes(label)
+  ) as HTMLButtonElement;
 }
 
 describe('OverviewComponent', () => {
@@ -75,9 +84,7 @@ describe('OverviewComponent', () => {
     const { fixture, send, text } = render(undefined);
     expect(text()).toContain('No statistics yet');
 
-    const button: HTMLButtonElement =
-      fixture.nativeElement.querySelector('button');
-    button.click();
+    button(fixture, 'Refresh').click();
     await fixture.whenStable();
 
     expect(send).toHaveBeenCalledWith({
@@ -93,10 +100,38 @@ describe('OverviewComponent', () => {
       undefined,
       jest.fn(async () => ({ ok: false, error: 'not-admin' }))
     );
-    fixture.nativeElement.querySelector('button').click();
+    button(fixture, 'Refresh').click();
     await fixture.whenStable();
     fixture.detectChanges();
 
+    expect(text()).toContain('The server refused: not-admin');
+  });
+
+  it('recounts the accounts, then refreshes to show the total', async () => {
+    const { fixture, send } = render(undefined);
+    button(fixture, 'Recount accounts').click();
+    await fixture.whenStable();
+
+    expect(send.mock.calls.map(([command]) => command.type)).toEqual([
+      'stats.recount',
+      'stats.refresh',
+    ]);
+  });
+
+  it('does not refresh after a refused recount', async () => {
+    const send = jest.fn(async (_command: { type: string }) => ({
+      ok: false,
+      error: 'not-admin',
+    }));
+    const { fixture, text } = render(undefined, send);
+    button(fixture, 'Recount accounts').click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'stats.recount' })
+    );
     expect(text()).toContain('The server refused: not-admin');
   });
 });

@@ -2,9 +2,15 @@ import { inject, Injectable } from '@angular/core';
 import {
   type AdminCommandType,
   DESTRUCTIVE_COMMAND_TYPES,
+  type FirebaseConnection,
   GameCloud,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
+import type { DocumentReference } from 'firebase/firestore';
 import { AdminAccessService } from '../access/admin-access.service';
+import {
+  DESTRUCTIVE_REPLAY_TYPES,
+  type ReplayCommandType,
+} from './command-types';
 
 /** What the server made of a command (`adminCommands/{id}.result`). */
 export interface AdminResult {
@@ -43,31 +49,77 @@ export class AdminCommandsService {
   private readonly cloud = inject(GameCloud);
   private readonly access = inject(AdminAccessService);
 
-  public async send(
+  public send(
     command: AdminCommandInput,
     now: number = Date.now()
+  ): Promise<AdminResult> {
+    return this.write(
+      'adminCommands',
+      {
+        type: command.type,
+        target: command.target,
+        ...(command.reason === '' ? {} : { reason: command.reason }),
+        args: command.args,
+      },
+      DESTRUCTIVE_COMMAND_TYPES.includes(command.type),
+      now
+    );
+  }
+
+  /**
+   * Sends the owner's gallery curation (ADR 0011): a `replayCommands`
+   * document, which `replayCommand` runs and answers like `adminCommand`.
+   * `feature` takes a stored replay's id, `unfeature` and `anonymise` a
+   * public one's or a stored one's; those two, which cannot be taken back,
+   * want a fresh sign-in too.
+   */
+  public sendReplay(
+    type: ReplayCommandType,
+    replayId: string,
+    now: number = Date.now()
+  ): Promise<AdminResult> {
+    return this.write(
+      'replayCommands',
+      { type, replayId },
+      DESTRUCTIVE_REPLAY_TYPES.includes(type),
+      now
+    );
+  }
+
+  /** Writes a command in the owner's name and waits for its result. */
+  private async write(
+    collection: 'adminCommands' | 'replayCommands',
+    fields: Record<string, unknown>,
+    destructive: boolean,
+    now: number
   ): Promise<AdminResult> {
     const connection = this.cloud.firebase();
     const uid = this.access.uid();
     if (connection === null || uid === null) {
       return { ok: false, error: 'not-admin' };
     }
-    if (
-      DESTRUCTIVE_COMMAND_TYPES.includes(command.type) &&
-      !this.access.signedInLately(now)
-    ) {
+    if (destructive && !this.access.signedInLately(now)) {
       return { ok: false, error: 'sign-in-again' };
     }
     const { db, dbSdk } = connection;
-    const ref = await dbSdk.addDoc(dbSdk.collection(db, 'adminCommands'), {
+    const ref = await dbSdk.addDoc(dbSdk.collection(db, collection), {
       uid,
-      type: command.type,
-      target: command.target,
-      ...(command.reason === '' ? {} : { reason: command.reason }),
-      args: command.args,
+      ...fields,
       createdAt: dbSdk.serverTimestamp(),
       expireAt: dbSdk.Timestamp.fromMillis(now + COMMAND_TTL_MS),
     });
+    return this.result(connection, ref);
+  }
+
+  /**
+   * Waits for the function's `result` on a command document - `timeout`
+   * when none comes within {@link RESULT_TIMEOUT_MS}. `adminCommand` names
+   * a failure `error`, `replayCommand` `reason`.
+   */
+  private result(
+    { dbSdk }: FirebaseConnection,
+    ref: DocumentReference
+  ): Promise<AdminResult> {
     return new Promise<AdminResult>((resolve, reject) => {
       const timer = setTimeout(() => {
         stop();
@@ -80,13 +132,14 @@ export class AdminCommandsService {
           if (typeof result === 'object' && result !== null) {
             clearTimeout(timer);
             stop();
-            const { ok, error } = result as { ok?: unknown; error?: unknown };
+            const { ok, error, reason } = result as Record<string, unknown>;
+            const why = error ?? reason;
             resolve(
               ok === true
                 ? { ok: true }
                 : {
                     ok: false,
-                    error: typeof error === 'string' ? error : 'internal',
+                    error: typeof why === 'string' ? why : 'internal',
                   }
             );
           }

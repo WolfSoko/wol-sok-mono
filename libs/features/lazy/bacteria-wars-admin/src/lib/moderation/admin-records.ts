@@ -1,6 +1,4 @@
 import {
-  ADMIN_COMMAND_TYPES,
-  type AdminCommandType,
   BAN_REASONS,
   BOARD_KINDS,
   type BanReason,
@@ -88,6 +86,8 @@ export interface AuditRecord {
   uid: string | null;
   /** The entry, for entry commands. */
   entry: { boardId: string; entryId: string } | null;
+  /** The replay, for the gallery's curation. */
+  replayId: string | null;
   reason: string;
   /** Null while the command runs. */
   ok: boolean | null;
@@ -99,10 +99,14 @@ export interface AuditRecord {
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+/** A finite number, else null. */
+const numberOrNull = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
 /** Ms since the epoch from a Firestore `Timestamp` or a number. */
 export function millisOf(value: unknown): number | null {
   if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null;
+    return numberOrNull(value);
   }
   if (isObject(value) && typeof value['toMillis'] === 'function') {
     const millis: unknown = (value as { toMillis: () => unknown }).toMillis();
@@ -231,6 +235,7 @@ export function parseAudit(id: string, value: unknown): AuditRecord | null {
     type: value['type'],
     uid: text(target['uid']),
     entry: boardId === null || entryId === null ? null : { boardId, entryId },
+    replayId: text(target['replayId']),
     reason: text(value['reason']) ?? '',
     ok: typeof ok === 'boolean' ? ok : null,
     error: text(value['error']),
@@ -239,5 +244,124 @@ export function parseAudit(id: string, value: unknown): AuditRecord | null {
   };
 }
 
-/** The command types the audit can be filtered by. */
-export const AUDIT_TYPES: readonly AdminCommandType[] = ADMIN_COMMAND_TYPES;
+/** A runner-up of the gallery's daily pick (`replayCandidates/{day}`). */
+export interface CandidateRecord {
+  replayId: string;
+  kind: string;
+  levelId: string;
+  score: number | null;
+  reasons: string[];
+}
+
+/** One day of `featureBest`: what it published and the runners-up. */
+export interface CandidateDayRecord {
+  day: string;
+  checked: number;
+  published: string[];
+  candidates: CandidateRecord[];
+}
+
+/** A public replay (`publicReplays/{id}`), as the Replays view lists it. */
+export interface PublicReplayRecord {
+  publicId: string;
+  replayId: string;
+  kind: string;
+  levelId: string;
+  /** The seats as the public page shows them: a name, or the label. */
+  players: string[];
+  score: number | null;
+  featuredAt: number | null;
+  featuredBy: 'auto' | 'admin' | null;
+  anonymised: boolean;
+}
+
+/** A stored replay (`replays/{id}`), as far as curating it needs. */
+export interface StoredReplayRecord {
+  replayId: string;
+  state: string | null;
+  kind: string | null;
+  levelId: string | null;
+  score: number | null;
+  publicId: string | null;
+  galleryOut: boolean;
+}
+
+const array = (value: unknown): unknown[] =>
+  Array.isArray(value) ? value : [];
+
+const strings = (value: unknown): string[] =>
+  array(value).filter((item): item is string => typeof item === 'string');
+
+export function parseCandidateDay(
+  day: string,
+  value: unknown
+): CandidateDayRecord | null {
+  if (!isObject(value)) {
+    return null;
+  }
+  const candidates = array(value['candidates']);
+  return {
+    day,
+    checked: numberOrNull(value['checked']) ?? 0,
+    published: strings(value['published']),
+    candidates: candidates.flatMap((candidate): CandidateRecord[] => {
+      if (!isObject(candidate) || typeof candidate['replayId'] !== 'string') {
+        return [];
+      }
+      return [
+        {
+          replayId: candidate['replayId'],
+          kind: text(candidate['kind']) ?? '',
+          levelId: text(candidate['levelId']) ?? '',
+          score: numberOrNull(candidate['score']),
+          reasons: strings(candidate['reasons']),
+        },
+      ];
+    }),
+  };
+}
+
+export function parsePublicReplay(
+  publicId: string,
+  value: unknown
+): PublicReplayRecord | null {
+  if (!isObject(value) || typeof value['replayId'] !== 'string') {
+    return null;
+  }
+  const players = array(value['players']);
+  const featuredBy = value['featuredBy'];
+  return {
+    publicId,
+    replayId: value['replayId'],
+    kind: text(value['kind']) ?? '',
+    levelId: text(value['levelId']) ?? '',
+    players: players.map((player) =>
+      isObject(player)
+        ? (text(player['name']) ?? text(player['label']) ?? '?')
+        : '?'
+    ),
+    score: numberOrNull(value['score']),
+    featuredAt: millisOf(value['featuredAt']),
+    featuredBy:
+      featuredBy === 'auto' || featuredBy === 'admin' ? featuredBy : null,
+    anonymised: value['anonymised'] === true,
+  };
+}
+
+export function parseStoredReplay(
+  replayId: string,
+  value: unknown
+): StoredReplayRecord | null {
+  if (!isObject(value)) {
+    return null;
+  }
+  return {
+    replayId,
+    state: text(value['state']),
+    kind: text(value['kind']),
+    levelId: text(value['levelId']),
+    score: numberOrNull(value['score']),
+    publicId: text(value['publicId']),
+    galleryOut: value['galleryOut'] === true,
+  };
+}

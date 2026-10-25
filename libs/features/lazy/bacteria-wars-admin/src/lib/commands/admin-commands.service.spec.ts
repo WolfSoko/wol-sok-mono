@@ -17,7 +17,7 @@ function setUp({ uid = 'owner' as string | null, lately = true } = {}) {
     null;
   const stop = jest.fn();
   const dbSdk = {
-    collection: jest.fn(() => 'adminCommands'),
+    collection: jest.fn((_db: unknown, name: string) => name),
     addDoc: jest.fn(async () => ({ id: 'c1' })),
     serverTimestamp: () => 'SERVER_TIME',
     Timestamp: { fromMillis: (ms: number) => ({ ms }) },
@@ -73,6 +73,36 @@ describe('AdminCommandsService', () => {
 
     expect(await sent).toEqual({ ok: false, error: 'ended' });
     expect(stop).toHaveBeenCalled();
+  });
+
+  it('asks for a fresh sign-in before curation that cannot be taken back', async () => {
+    const { dbSdk } = setUp({ lately: false });
+    const service = TestBed.inject(AdminCommandsService);
+    expect(await service.sendReplay('anonymise', 'p1', NOW)).toEqual({
+      ok: false,
+      error: 'sign-in-again',
+    });
+    expect(dbSdk.addDoc).not.toHaveBeenCalled();
+  });
+
+  it('sends a gallery curation as a replay command, reading its reason', async () => {
+    const { dbSdk, answer } = setUp();
+    const sent = TestBed.inject(AdminCommandsService).sendReplay(
+      'unfeature',
+      'p1',
+      NOW
+    );
+    await flush();
+    expect(dbSdk.addDoc).toHaveBeenCalledWith('replayCommands', {
+      uid: 'owner',
+      type: 'unfeature',
+      replayId: 'p1',
+      createdAt: 'SERVER_TIME',
+      expireAt: { ms: NOW + 24 * 3_600_000 },
+    });
+
+    answer({ ok: false, reason: 'not-public' });
+    expect(await sent).toEqual({ ok: false, error: 'not-public' });
   });
 
   it('gives up when no result comes', async () => {

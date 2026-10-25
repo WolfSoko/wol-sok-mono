@@ -39,6 +39,7 @@ export {
   dailyBoardId,
   formatTag,
   isBoardId,
+  isEntryId,
   isUtcDay,
   parseBoardId,
   VISIBLE_STATUSES,

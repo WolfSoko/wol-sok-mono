@@ -348,6 +348,13 @@ describe('replays', () => {
     await assertFails(getDoc(doc(db('eve'), 'replays/r1/blob/data')));
   });
 
+  it('lets the owner look one up by id, not list them or read the bytes', async () => {
+    const owner = db('own', OWNER_TOKEN);
+    await assertSucceeds(getDoc(doc(owner, 'replays/r1')));
+    await assertFails(getDocs(query(collection(owner, 'replays'), limit(10))));
+    await assertFails(getDoc(doc(owner, 'replays/r1/blob/data')));
+  });
+
   it("lists a player's own, 50 at a time", async () => {
     const mine = (n: number) =>
       getDocs(
@@ -766,15 +773,26 @@ describe('levelStats', () => {
 });
 
 describe('the gallery', () => {
-  it("lets the owner read a day's runners-up, and nobody the public replays", async () => {
+  it("lets the owner read a day's runners-up and the public replays, but not their bytes", async () => {
     await seed('replayCandidates/2026-10-25', { done: true });
     await seed('publicReplays/p1', { replayId: 'l_a', removedAt: null });
-    await assertSucceeds(
-      getDoc(doc(db('own', OWNER_TOKEN), 'replayCandidates/2026-10-25'))
-    );
+    await seed('publicReplays/p1/blob/data', { size: 3 });
+    const owner = db('own', OWNER_TOKEN);
+    await assertSucceeds(getDoc(doc(owner, 'replayCandidates/2026-10-25')));
     await assertFails(getDoc(doc(db('ada'), 'replayCandidates/2026-10-25')));
-    await assertFails(getDoc(doc(db('own', OWNER_TOKEN), 'publicReplays/p1')));
+    await assertSucceeds(getDoc(doc(owner, 'publicReplays/p1')));
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(owner, 'publicReplays'),
+          where('removedAt', '==', null),
+          orderBy('featuredAt', 'desc')
+        )
+      )
+    );
+    await assertFails(getDoc(doc(owner, 'publicReplays/p1/blob/data')));
     await assertFails(getDoc(doc(db('ada'), 'publicReplays/p1')));
+    await assertFails(getDocs(collection(db('ada'), 'publicReplays')));
   });
 });
 

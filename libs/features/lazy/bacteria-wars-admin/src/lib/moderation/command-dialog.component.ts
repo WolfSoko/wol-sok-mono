@@ -17,22 +17,24 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import {
-  type AdminCommandType,
   BAN_REASONS,
   type BanReason,
   REASON_MAX,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
+import type { OwnerActionType } from '../commands/command-types';
 import { AdminTextPipe, type AdminTextKey } from '../i18n/admin-i18n.service';
 
 /** What the dialog asks for, besides the reason every command needs. */
 export interface CommandDialogData {
-  type: AdminCommandType;
+  type: OwnerActionType;
   /** Who or what it is about, shown in the title. */
   subject: string;
   /** Ask for the ban's end and reason. */
   ban?: boolean;
   /** Offer to bar the player from the boards' kind (`args.bar`). */
   bar?: boolean;
+  /** False for a command that keeps no reason (`replayCommands`). */
+  reason?: false;
 }
 
 /** What the owner confirmed: the reason, and the arguments asked for. */
@@ -101,18 +103,20 @@ type BanEnd = (typeof BAN_ENDS)[number]['key'];
           {{ 'dialog.bar' | adminT }}
         </mat-slide-toggle>
       }
-      <mat-form-field>
-        <mat-label>{{ 'dialog.reason' | adminT }}</mat-label>
-        <textarea
-          matInput
-          required
-          [maxlength]="max"
-          [ngModel]="reason()"
-          (ngModelChange)="reason.set($event)"
-          name="reason"
-        ></textarea>
-        <mat-hint align="end">{{ reason().length }} / {{ max }}</mat-hint>
-      </mat-form-field>
+      @if (asksReason) {
+        <mat-form-field>
+          <mat-label>{{ 'dialog.reason' | adminT }}</mat-label>
+          <textarea
+            matInput
+            required
+            [maxlength]="max"
+            [ngModel]="reason()"
+            (ngModelChange)="reason.set($event)"
+            name="reason"
+          ></textarea>
+          <mat-hint align="end">{{ reason().length }} / {{ max }}</mat-hint>
+        </mat-form-field>
+      }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button type="button" mat-dialog-close>
@@ -148,13 +152,16 @@ export class CommandDialogComponent {
   protected readonly ends = BAN_ENDS;
   protected readonly banReasons = BAN_REASONS;
   protected readonly reason = signal('');
+  protected readonly asksReason = this.data.reason !== false;
   protected end: BanEnd = 'week';
   protected banReason: BanReason = 'cheating';
   protected bar = false;
 
   protected readonly valid = computed(() => {
     const reason = this.reason().trim();
-    return reason.length > 0 && reason.length <= REASON_MAX;
+    return (
+      !this.asksReason || (reason.length > 0 && reason.length <= REASON_MAX)
+    );
   });
 
   protected typeKey(): AdminTextKey {
