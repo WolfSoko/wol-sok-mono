@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.94.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.93.0...v74.94.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ level statistics for every stored local replay ([#2659](https://github.com/WolfSoko/wol-sok-mono/issues/2659)) ([894fc0d](https://github.com/WolfSoko/wol-sok-mono/commit/894fc0d9e74105b73a5400888b9f99f7298af1d8))
+
 ## [74.93.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.92.0...v74.93.0) (2026-10-25)
 
 ### Features
