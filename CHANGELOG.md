@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.104.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.103.0...v74.104.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ feature toggles from Remote Config, the Matches settings, and the owner's admin link ([#2675](https://github.com/WolfSoko/wol-sok-mono/issues/2675)) ([ab129a1](https://github.com/WolfSoko/wol-sok-mono/commit/ab129a19f420083de21fb8c628843a3831e4e238))
+
 ## [74.103.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.102.0...v74.103.0) (2026-10-25)
 
 ### Features
