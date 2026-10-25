@@ -82,6 +82,11 @@ describe('WsThanosService', () => {
             height,
             data: new Uint8ClampedArray(width * height * 4).fill(255),
           }),
+          createImageData: (width: number, height: number) => ({
+            width,
+            height,
+            data: new Uint8ClampedArray(width * height * 4),
+          }),
           putImageData: () => undefined,
         } as unknown as CanvasRenderingContext2D;
       } as HTMLCanvasElement['getContext']);
