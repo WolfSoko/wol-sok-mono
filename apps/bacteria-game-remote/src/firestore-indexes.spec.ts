@@ -2,22 +2,26 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * The composite queries the functions (`bacteria-wars-functions`) and the
- * game run, against the indexes the release deploys
- * (`../firestore.indexes.json`): the emulator never asks for an index,
- * production refuses the query. The spec sits beside the file, so a change
- * to the indexes alone runs it.
+ * The composite queries the game and the functions (`bacteria-wars-functions`)
+ * run, against the indexes the release deploys (`../firestore.indexes.json`):
+ * the emulator never asks for an index, production refuses the query. The
+ * spec sits beside the file, so a change to the indexes alone runs it. The
+ * functions keep their queries in `firestore-queries.json`, read here too,
+ * and check them in a spec of their own, which a change to them runs.
  */
 interface Field {
   fieldPath: string;
   order?: 'ASCENDING' | 'DESCENDING';
   arrayConfig?: 'CONTAINS';
 }
-const { indexes } = JSON.parse(
-  readFileSync(join(__dirname, '../firestore.indexes.json'), 'utf8')
-) as { indexes: { collectionGroup: string; fields: Field[] }[] };
+type Queries = Record<string, { group: string; fields: Field[] }>;
+const read = (path: string): unknown =>
+  JSON.parse(readFileSync(join(__dirname, path), 'utf8'));
+const { indexes } = read('../firestore.indexes.json') as {
+  indexes: { collectionGroup: string; fields: Field[] }[];
+};
 
-const QUERIES: Record<string, { group: string; fields: Field[] }> = {
+const GAME_QUERIES: Queries = {
   // The game's "My matches": its own replays, newest first.
   'replays of a player': {
     group: 'replays',
@@ -26,27 +30,16 @@ const QUERIES: Record<string, { group: string; fields: Field[] }> = {
       { fieldPath: 'createdAt', order: 'DESCENDING' },
     ],
   },
-  // featureBest and the hourly "Not reported" sweep.
-  'replays by state and age': {
-    group: 'replays',
-    fields: [
-      { fieldPath: 'state', order: 'ASCENDING' },
-      { fieldPath: 'createdAt', order: 'ASCENDING' },
-    ],
-  },
-  // rebuildTop, the board pages and a player's own rank (count()).
-  'visible entries in board order': {
-    group: 'entries',
-    fields: [
-      { fieldPath: 'status', order: 'ASCENDING' },
-      { fieldPath: 'sort', order: 'DESCENDING' },
-      { fieldPath: 'atHour', order: 'ASCENDING' },
-    ],
-  },
 };
+const FUNCTION_QUERIES = read(
+  '../../bacteria-wars-functions/src/firestore-queries.json'
+) as Queries;
 
 describe('firestore.indexes.json', () => {
-  for (const [name, query] of Object.entries(QUERIES)) {
+  for (const [name, query] of Object.entries({
+    ...GAME_QUERIES,
+    ...FUNCTION_QUERIES,
+  })) {
     it(`has the index for ${name}`, () => {
       expect(indexes).toContainEqual(
         expect.objectContaining({

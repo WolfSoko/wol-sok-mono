@@ -213,6 +213,14 @@
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/apps/bacteria-game-remote"],
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.config.ts",
+        "{workspaceRoot}/.codecov.yml",
+        "{workspaceRoot}/apps/bacteria-wars-functions/src/firestore-queries.json"
+      ],
       "options": {
         "jestConfig": "apps/bacteria-game-remote/jest.config.ts",
         "codeCoverage": true,
