@@ -432,14 +432,10 @@ export const boardProfileChanged = onDocumentWritten(
     const { uid } = event.params;
     const before = event.data?.before.data();
     const after = event.data?.after.data();
-    await relabelEntries(db(), uid, before, after);
-    await publicProfileChanged(
-      db(),
-      uid,
-      before,
-      after,
-      Date.parse(event.time)
-    );
+    await Promise.all([
+      relabelEntries(db(), uid, before, after),
+      publicProfileChanged(db(), uid, before, after, Date.parse(event.time)),
+    ]);
   }
 );
 

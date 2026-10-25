@@ -15,8 +15,6 @@ import {
  */
 export type Lang = 'en' | 'de';
 
-export const LANGS: readonly Lang[] = ['en', 'de'];
-
 /** The German titles of the ladder's levels, by id. */
 export const DE_TITLES: Readonly<Record<string, string>> = {
   'petri-dish': 'Petrischale',
@@ -65,7 +63,8 @@ const WORDS = {
     older: 'Older matches',
     play: 'Play Bacteria Wars',
     back: 'All matches of the day',
-    share: 'Share',
+    notFound: 'Not found.',
+    removed: 'This match is no longer public.',
     daily: 'Daily level',
     endless: 'Endless',
     generated: 'Generated level',
@@ -91,7 +90,8 @@ const WORDS = {
     older: 'Ältere Matches',
     play: 'Bacteria Wars spielen',
     back: 'Alle Matches des Tages',
-    share: 'Teilen',
+    notFound: 'Nicht gefunden.',
+    removed: 'Dieses Match ist nicht mehr öffentlich.',
     daily: 'Tageslevel',
     endless: 'Endlos',
     generated: 'Generiertes Level',

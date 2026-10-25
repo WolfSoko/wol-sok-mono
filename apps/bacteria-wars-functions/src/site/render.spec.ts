@@ -1,14 +1,14 @@
+import { GAME_SITE_URL as SITE_URL } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   escapeHtml,
   galleryPage,
-  type PublicView,
   replayPage,
+  type ReplayView,
   scriptJson,
   sitemap,
-  SITE_URL,
 } from './render';
 
-const view = (fields: Partial<PublicView> = {}): PublicView => ({
+const view = (fields: Partial<ReplayView> = {}): ReplayView => ({
   id: 'AbCdEfGhIjKlMnOpQrSt',
   levelId: 'quarantine',
   kind: 'computer',

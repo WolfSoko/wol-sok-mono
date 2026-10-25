@@ -6,12 +6,12 @@ import {
   Timestamp,
 } from 'firebase-admin/firestore';
 import {
-  escapeHtml,
+  type CardView,
   galleryPage,
-  inLang,
-  type PublicView,
   replayPage,
+  type ReplayView,
   sitemap,
+  statusPage,
 } from './render';
 import type { Lang } from './texts';
 
@@ -90,22 +90,24 @@ export async function handleSite(
         'Content-Type': 'application/xml',
         'Cache-Control': SITEMAP_CACHE,
       },
-      body: sitemap(listed.docs.map(viewOf)),
+      body: sitemap(
+        listed.docs.map((doc) => ({ id: doc.id, featuredAt: millisOf(doc) }))
+      ),
     };
   }
   if (!PUBLIC_ID.test(id) || (file !== undefined && file !== 'replay.json')) {
     return notFound(lang);
   }
   const doc = await db.doc(`publicReplays/${id}`).get();
-  const removedAt: unknown = doc.get('removedAt');
   if (!doc.exists) {
     return notFound(lang);
   }
+  const removedAt: unknown = doc.get('removedAt');
   if (removedAt !== null && removedAt !== undefined) {
     return gone(lang, file !== undefined);
   }
   if (file === undefined) {
-    return html(200, replayPage(lang, viewOf(doc)));
+    return html(200, replayPage(lang, replayOf(doc)));
   }
   const blob = await doc.ref.collection('blob').doc('data').get();
   const bytes: unknown = blob.get('bytes');
@@ -132,7 +134,7 @@ function stillUp(db: Firestore): Query {
 async function galleryOf(
   db: Firestore,
   before: unknown
-): Promise<{ views: PublicView[]; older: string | null }> {
+): Promise<{ views: CardView[]; older: string | null }> {
   let query = stillUp(db).select(...CARD_FIELDS);
   const cursor =
     typeof before === 'string'
@@ -145,7 +147,7 @@ async function galleryOf(
     );
   }
   const snapshot = await query.limit(GALLERY_SIZE + 1).get();
-  const views = snapshot.docs.slice(0, GALLERY_SIZE).map(viewOf);
+  const views = snapshot.docs.slice(0, GALLERY_SIZE).map(cardOf);
   const last = views.at(-1);
   return {
     views,
@@ -156,26 +158,39 @@ async function galleryOf(
   };
 }
 
-/** A public replay as the pages show it. */
-function viewOf(doc: DocumentSnapshot): PublicView {
+/** When a public replay was featured, in ms. */
+function millisOf(doc: DocumentSnapshot): number {
+  const featuredAt: unknown = doc.get('featuredAt');
+  return featuredAt instanceof Timestamp ? featuredAt.toMillis() : 0;
+}
+
+/** A public replay as a gallery card shows it. */
+function cardOf(doc: DocumentSnapshot): CardView {
   const data = doc.data() ?? {};
-  const featuredAt = data['featuredAt'];
   return {
     id: doc.id,
     levelId: String(data['levelId'] ?? ''),
     kind: String(data['kind'] ?? 'computer'),
-    players: (data['players'] as PublicView['players'] | undefined) ?? [],
+    players: (data['players'] as CardView['players'] | undefined) ?? [],
     ticks: Number(data['ticks'] ?? 0),
-    endedBy: typeof data['endedBy'] === 'string' ? data['endedBy'] : null,
     winnerSeat:
       typeof data['winnerSeat'] === 'number' ? data['winnerSeat'] : null,
     score: Number(data['score'] ?? 0),
     reasons: (data['reasons'] as string[] | undefined) ?? [],
-    summary: (data['summary'] as PublicView['summary'] | undefined) ?? {
+    featuredAt: millisOf(doc),
+  };
+}
+
+/** A public replay as its own page shows it. */
+function replayOf(doc: DocumentSnapshot): ReplayView {
+  const endedBy: unknown = doc.get('endedBy');
+  return {
+    ...cardOf(doc),
+    endedBy: typeof endedBy === 'string' ? endedBy : null,
+    summary: (doc.get('summary') as ReplayView['summary'] | undefined) ?? {
       sizes: [],
       timeline: [],
     },
-    featuredAt: featuredAt instanceof Timestamp ? featuredAt.toMillis() : 0,
   };
 }
 
@@ -203,26 +218,12 @@ function json(status: number, value: unknown): SiteResponse {
   };
 }
 
-/** A short page for an answer without content, never indexed. */
-function plain(status: number, lang: Lang, text: string): SiteResponse {
-  return html(
-    status,
-    `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>${status}</title></head><body><p>${escapeHtml(text)}</p><p><a href="${escapeHtml(inLang('/replays', lang))}">Bacteria Wars</a></p></body></html>`
-  );
-}
-
 function notFound(lang: Lang): SiteResponse {
-  return plain(404, lang, lang === 'de' ? 'Nicht gefunden.' : 'Not found.');
+  return html(404, statusPage(404, lang, 'notFound'));
 }
 
 function gone(lang: Lang, asJson: boolean): SiteResponse {
   return asJson
     ? json(410, { error: 'removed' })
-    : plain(
-        410,
-        lang,
-        lang === 'de'
-          ? 'Dieses Match ist nicht mehr öffentlich.'
-          : 'This match is no longer public.'
-      );
+    : html(410, statusPage(410, lang, 'removed'));
 }

@@ -224,6 +224,7 @@ export {
 } from './lib/state/levels';
 export type { LadderLevelId, Level } from './lib/state/levels';
 export { parseGeneratedId } from './lib/state/level-generator/generate-level';
+export { GAME_SITE_URL } from './lib/support/legal-links';
 export { matchRecord, medalFor } from './lib/state/medallions';
 export type { MedalTier } from './lib/state/medallions';
 export { DEFAULT_MODE, isGameMode } from './lib/state/game-mode';
@@ -239,6 +240,7 @@ export type { HeadStart, SeriesLength } from './lib/state/rivalry';
 export {
   COLONY_COLORS,
   DEFAULT_COLORS,
+  getColonyColor,
   isColonyColorId,
   validColorPair,
 } from './lib/state/colony-colors';
