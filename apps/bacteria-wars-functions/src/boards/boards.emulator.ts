@@ -246,6 +246,16 @@ describe('boardProfileChanged', () => {
     expect((await entryOf('ada', 'xp')).get('status')).toBe('counted');
   });
 
+  it('takes the name off when the profile is deleted', async () => {
+    const profile = { name: 'Ada', publicName: true };
+    await db.doc('profiles/ada').set(profile);
+    await rankProgress(db, 'ada', progressWorth(100), BEFORE_CUT, NOW);
+    expect((await entryOf('ada', 'xp')).get('name')).toBe('Ada');
+    await db.doc('profiles/ada').delete();
+    expect(await boardProfileChanged(db, 'ada', profile, undefined)).toBe(1);
+    expect((await entryOf('ada', 'xp')).get('name')).toBeNull();
+  });
+
   it('ignores a change no row shows', async () => {
     expect(
       await boardProfileChanged(

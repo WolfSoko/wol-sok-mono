@@ -12,7 +12,6 @@ import {
   onDocumentCreated,
   onDocumentCreatedWithAuthContext,
   onDocumentDeleted,
-  onDocumentUpdated,
   onDocumentWritten,
 } from 'firebase-functions/v2/firestore';
 import * as v1 from 'firebase-functions/v1';
@@ -142,6 +141,9 @@ export const rebuildTop = onDocumentWritten(
     cpu: 'gcf_gen1',
     maxInstances: 1,
     concurrency: 1,
+    // One instance takes one event: one that finds it busy is turned away,
+    // and the retry delivers it. Safe, as a rebuild reads the board afresh.
+    retry: true,
   },
   async (event) => {
     await rebuildTopOf(
@@ -153,8 +155,11 @@ export const rebuildTop = onDocumentWritten(
   }
 );
 
-/** A player's entries follow their name, opt-ins and preset. */
-export const boardProfileChanged = onDocumentUpdated(
+/**
+ * A player's entries follow their name, opt-ins and preset - also when the
+ * profile is made or deleted (a deleted one shows no name any more).
+ */
+export const boardProfileChanged = onDocumentWritten(
   { document: 'profiles/{uid}', memory: '256MiB', cpu: 'gcf_gen1' },
   async (event) => {
     await relabelEntries(
