@@ -9,7 +9,7 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { NOT_REPORTED_AFTER_MS } from '../config';
+import { logger } from 'firebase-functions/logger';
 import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
 import { MIN_COUNTED_TICKS } from './rank-online';
 import { SLICE_MS } from './budgets';
@@ -47,8 +47,14 @@ export async function closeNotReported(
     .get();
   let closed = 0;
   for (const doc of waiting.docs) {
-    if (doc.get('kind') === 'online' && (await closeOne(db, doc.id, now))) {
-      closed++;
+    try {
+      if (doc.get('kind') === 'online' && (await closeOne(db, doc.id, now))) {
+        closed++;
+      }
+    } catch (error) {
+      // It stays first in the query: one replay must not stop the sweep
+      // or the hour's verification after it.
+      logger.error('Could not close a replay', { id: doc.id, error });
     }
   }
   return closed;

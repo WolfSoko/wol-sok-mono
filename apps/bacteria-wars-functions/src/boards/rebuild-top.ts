@@ -51,8 +51,8 @@ export function topRows(
  * when the entry was in the top document or now beats its last row, so most
  * writes cost one read. The trigger runs one at a time (`maxInstances: 1`,
  * `concurrency: 1`): writers change entries only, and nothing contends for
- * the top document. A daily board's top document expires a day after its
- * entries can, counted from its day; once TTL is taking the entries, their
+ * the top document. A daily board's entries expire 31 days after its day
+ * and its top document a day later; once TTL is taking the entries, their
  * deletions rebuild nothing.
  */
 export async function rebuildTop(

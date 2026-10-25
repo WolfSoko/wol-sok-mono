@@ -1,9 +1,3 @@
-import {
-  getLevel,
-  levelSize,
-  type Replay,
-} from '@wolsok/feat-lazy-bac-game/engine';
-
 /**
  * The verification budgets (ADR 0012) - server-only, unlike the board
  * contracts in the engine. The match-minutes ADR 0012 sets, at 20 s of CPU
@@ -32,20 +26,17 @@ export const MAX_VERIFIED_TICKS = 10 * 60 * 60;
 export const FAILED_CHECKS_TO_SKIP = 2;
 
 /**
- * What a re-run is expected to cost, in ms of CPU a tick: the `gpu-int`
- * ruleset every ranked attempt plays (ADR 0015) took 6.8 to 9.8 ms a tick
- * on `IntSimulation` on the online grid in the re-run benchmark (ADR 0012),
- * and 28.9 to 39 ms on a big map. A slice starts a re-run only when this
- * fits in what it has left, so it never runs far past its end.
+ * What a re-run is expected to cost, in ms of CPU a tick. Ranked attempts
+ * play the `gpu-int` ruleset (ADR 0015) on generated levels, all of the
+ * base arena's size, and `IntSimulation` took 6.8 to 9.8 ms a tick there
+ * in the re-run benchmark of the closed #2618, on a development machine;
+ * the Cloud Run benchmark ADR 0012 calls for still sets the final figure.
+ * A slice starts a re-run only when its expected cost fits in what it has
+ * left, so it never runs far past its end.
  */
 export const RERUN_MS_PER_TICK = 10;
-export const BIG_MAP_RERUN_MS_PER_TICK = 40;
 
-/** The CPU time a re-run of `replay` is expected to take. */
-export function expectedRerunMs({ header }: Replay): number {
-  const perTick =
-    levelSize(getLevel(header.levelId)) > 1
-      ? BIG_MAP_RERUN_MS_PER_TICK
-      : RERUN_MS_PER_TICK;
-  return header.ticks * perTick;
+/** The CPU time a re-run of a match of `ticks` is expected to take. */
+export function expectedRerunMs(ticks: number): number {
+  return ticks * RERUN_MS_PER_TICK;
 }

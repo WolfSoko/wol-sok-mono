@@ -16,7 +16,7 @@ import { type Verdict, verifyReplay } from './verify';
 import {
   type AccountInfo,
   candidates,
-  recordSpent,
+  chargeAsYouGo,
   sliceBudget,
 } from './verify-slice';
 
@@ -50,6 +50,7 @@ export async function verifyEndlessSlice(
     return { checked: 0, spentMs: 0 };
   }
   const start = clock();
+  const charge = chargeAsYouGo(db, now, 'endlessVerifyMs', clock);
   let checked = 0;
   const boards = [{ boardId: 'endless' }];
   for (const candidate of await candidates(
@@ -62,27 +63,25 @@ export async function verifyEndlessSlice(
     let run = await bestRunOf(db, candidate.uid);
     while (run !== null && clock() - start < budget) {
       const next = nextWin(run);
-      if (next === null) {
-        break;
-      }
-      const began = clock();
-      const replay = await storedReplay(db, next);
       if (
-        replay !== null &&
-        expectedRerunMs(replay) > budget - (began - start)
+        next === null ||
+        expectedRerunMs(next.ticks) > budget - (clock() - start)
       ) {
         break;
       }
+      const replay = await storedReplay(db, next.replayId);
       const verdict: Verdict =
         replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
       checked++;
-      run = await applyVerdict(db, run.uid, run.runId, next, verdict, now);
-      await recordSpent(
+      run = await applyVerdict(
         db,
-        now,
-        'endlessVerifyMs',
-        Math.round(clock() - began)
+        run.uid,
+        run.runId,
+        next.replayId,
+        verdict,
+        now
       );
+      await charge();
       if (verdict.state === 'balance-mismatch') {
         // Changes nothing: the next slice would only play it again.
         break;
@@ -92,6 +91,7 @@ export async function verifyEndlessSlice(
       break;
     }
   }
+  await charge();
   return { checked, spentMs: Math.round(clock() - start) };
 }
 
@@ -111,17 +111,18 @@ async function bestRunOf(
 }
 
 /**
- * The replay of a run's first unconfirmed win - null when every win is
- * confirmed, the run was cut, or the win can never be re-run.
+ * The replay of a run's first unconfirmed win and its length - null when
+ * every win is confirmed, the run was cut, or the win can never be re-run.
  */
-function nextWin(run: StoredRun): string | null {
+function nextWin(run: StoredRun): { replayId: string; ticks: number } | null {
   if ((run.cut ?? null) !== null) {
     return null;
   }
   const next = winsOf(run)[run.verifiedWins ?? 0];
   return next?.replayId === undefined ||
-    (next.ticks ?? Infinity) > MAX_VERIFIED_TICKS ||
+    next.ticks === undefined ||
+    next.ticks > MAX_VERIFIED_TICKS ||
     next.balanceVersion !== BALANCE_VERSION
     ? null
-    : next.replayId;
+    : { replayId: next.replayId, ticks: next.ticks };
 }

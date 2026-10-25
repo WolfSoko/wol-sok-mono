@@ -148,7 +148,7 @@ export async function rankDaily(
       return 'duplicate' as const;
     }
     const next = [...attempts, run];
-    await writeDailyEntry(tx, db, day, uid, next, now);
+    await writeDailyEntry(tx, db, day, uid, next);
     tx.set(runRef, {
       attempts: next,
       expireAt: Timestamp.fromMillis(now + DAILY_TTL_MS),
@@ -169,8 +169,7 @@ export async function writeDailyEntry(
   db: Firestore,
   day: string,
   uid: string,
-  attempts: readonly DailyAttemptRun[],
-  now: number
+  attempts: readonly DailyAttemptRun[]
 ): Promise<void> {
   const boardId = dailyBoardId(day);
   const member = await memberIn(tx, db, uid);
@@ -194,6 +193,7 @@ export async function writeDailyEntry(
       profile,
       hiddenByOf(entry.get('hiddenBy'))
     ),
-    expireAt: Timestamp.fromMillis(now + DAILY_TTL_MS),
+    // From its day, as the top document's: no entry outlives the board.
+    expireAt: Timestamp.fromMillis(Date.parse(day) + DAILY_TTL_MS),
   });
 }

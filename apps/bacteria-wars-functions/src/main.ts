@@ -220,21 +220,17 @@ export const rebuildTop = onDocumentWritten(
     maxInstances: 1,
     concurrency: 1,
     // One instance takes one event: one that finds it busy is turned away,
-    // and the retry delivers it, for an hour. Safe, as a rebuild reads the
-    // board afresh.
+    // and the retry delivers it. Safe, as a rebuild reads the board afresh,
+    // and kept up as long as it takes: a dropped event could leave a hidden
+    // entry in the top document of a board nothing writes to any more.
     retry: true,
   },
   async (event) => {
-    const now = Date.now();
-    if (givesUp('rebuildTop', event.params.entryId, event.time, now)) {
-      return;
-    }
     await rebuildTopOf(
       db(),
       event.params.boardId,
       event.params.entryId,
-      event.data?.after.data(),
-      now
+      event.data?.after.data()
     );
   }
 );

@@ -97,6 +97,10 @@ describe('rankDaily', () => {
     expect((await db.doc('boardMembers/ada').get()).get('boards')).toEqual([
       BOARD,
     ]);
+    // Counted from its day, as the board's top document is.
+    expect((await entryOf('ada')).get('expireAt').toMillis()).toBe(
+      Date.parse(DAY) + 31 * 24 * HOUR
+    );
     expect(
       (await db.doc(`dailyRuns/${DAY}_ada`).get()).get('attempts')
     ).toEqual([

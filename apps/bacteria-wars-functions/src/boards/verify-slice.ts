@@ -106,6 +106,7 @@ export async function verifyDailySlice(
     return { checked: 0, spentMs: 0 };
   }
   const start = clock();
+  const charge = chargeAsYouGo(db, now, 'verifyMs', clock);
   let checked = 0;
   const boards = openDays(now).map((day) => ({
     boardId: dailyBoardId(day),
@@ -118,16 +119,16 @@ export async function verifyDailySlice(
     'daily',
     boards
   )) {
-    const began = clock();
-    const left = budget - (began - start);
+    const left = budget - (clock() - start);
     if (left <= 0) {
       break;
     }
     if (await checkCandidate(db, candidate, now, verify, left)) {
       checked++;
+      await charge();
     }
-    await recordSpent(db, now, 'verifyMs', Math.round(clock() - began));
   }
+  await charge();
   return { checked, spentMs: Math.round(clock() - start) };
 }
 
@@ -148,6 +149,26 @@ export async function sliceBudget(
     0
   );
   return Math.min(sliceMs, dayBudgetMs - spent);
+}
+
+/**
+ * Charges a slice's time to the day's counter `field` in steps: each call
+ * adds the time since the one before (or since the slice began). Called as
+ * each re-run ends and once at the end, so a slice the function's timeout
+ * cuts short has paid for all it did but its last re-run.
+ */
+export function chargeAsYouGo(
+  db: Firestore,
+  now: number,
+  field: string,
+  clock: () => number
+): () => Promise<void> {
+  let charged = clock();
+  return async () => {
+    const at = clock();
+    await recordSpent(db, now, field, Math.round(at - charged));
+    charged = at;
+  };
 }
 
 /** Adds a slice's time to the day's counter `field`. */
@@ -279,13 +300,10 @@ async function checkCandidate(
   const best = attempts
     .filter((a) => a.state === 'provisional' && a.ticks <= MAX_VERIFIED_TICKS)
     .sort((a, b) => b.sort - a.sort)[0];
-  if (best === undefined) {
+  if (best === undefined || expectedRerunMs(best.ticks) > leftMs) {
     return false;
   }
   const replay = await storedReplay(db, best.replayId);
-  if (replay !== null && expectedRerunMs(replay) > leftMs) {
-    return false;
-  }
   const verdict: Verdict =
     replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
   return db.runTransaction(async (tx) => {
@@ -305,14 +323,7 @@ async function checkCandidate(
     );
     const moderationRef = db.doc(`moderation/${candidate.uid}`);
     const moderation = (await tx.get(moderationRef)).data() ?? {};
-    await writeDailyEntry(
-      tx,
-      db,
-      candidate.board.day,
-      candidate.uid,
-      next,
-      now
-    );
+    await writeDailyEntry(tx, db, candidate.board.day, candidate.uid, next);
     tx.update(runRef, { attempts: next });
     tx.update(db.doc(`replays/${best.replayId}`), verdictFields(verdict));
     recordCheck(tx, moderationRef, moderation, verdict.state, now);
