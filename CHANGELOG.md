@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.92.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.91.0...v74.92.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ feature toggles in Remote Config ([#2653](https://github.com/WolfSoko/wol-sok-mono/issues/2653)) ([fef661b](https://github.com/WolfSoko/wol-sok-mono/commit/fef661bfd67ef43ebe9986ae963c46d7733a23fe))
+
 ## [74.91.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.90.0...v74.91.0) (2026-10-25)
 
 ### Features
