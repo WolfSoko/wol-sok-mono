@@ -60,11 +60,16 @@
         <button mat-stroked-button type="button" (click)="restorePlayer()">
           {{ "type.board.restore" | adminT }}
         </button>
-        @if (current.ban === null) {
+        @if (banned()) {
+          <button mat-stroked-button type="button" (click)="ban()">
+            {{ "bans.change" | adminT }}
+          </button>
+        } @else {
           <button mat-flat-button type="button" (click)="ban()">
             {{ "type.player.ban" | adminT }}
           </button>
-        } @else {
+        }
+        @if (current.ban !== null) {
           <button mat-flat-button type="button" (click)="unban()">
             {{ "type.player.unban" | adminT }}
           </button>
@@ -159,7 +164,7 @@
               <code>{{ entry.entryId }}</code>
             </td>
             <td>{{ entry.record?.status ?? "-" }}</td>
-            <td>{{ hiddenBy(entry.record?.hiddenBy ?? []) }}</td>
+            <td>{{ i18n.hideReasons(entry.record?.hiddenBy ?? []) }}</td>
             <td>
               @if (entry.record !== null) {
                 @if (hiddenByOwner(entry)) {

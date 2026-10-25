@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import {
+  type BoardKind,
   type FirebaseConnection,
   GameCloud,
   parseProfile,
@@ -8,6 +9,7 @@ import {
 import {
   type AuditRecord,
   type BanRecord,
+  type BoardEntryRecord,
   type EntryRecord,
   type MemberEntryRef,
   type MemberRecord,
@@ -16,6 +18,7 @@ import {
   type ProfileFlags,
   parseAudit,
   parseBan,
+  parseBoardEntry,
   parseEntry,
   parseMember,
   parseModeration,
@@ -24,6 +27,9 @@ import {
 
 /** How many rows a list loads at a time. */
 export const PAGE_SIZE = 25;
+
+/** The most values a Firestore `in` filter takes. */
+const IN_LIMIT = 30;
 
 /** One page of a list, and where the next one starts (null at the end). */
 export interface Page<T> {
@@ -103,6 +109,60 @@ export class AdminRecordsService {
           : { uid: doc.id, profile, updatedAt: millisOf(doc.get('updatedAt')) };
       }
     );
+  }
+
+  /** A board's entries, best first - hidden ones too. */
+  public async boardEntries(
+    boardId: string,
+    after: unknown = null
+  ): Promise<Page<BoardEntryRecord>> {
+    const { db, dbSdk: sdk } = this.connection();
+    return this.page(
+      sdk,
+      sdk.query(
+        sdk.collection(db, 'boards', boardId, 'entries'),
+        sdk.orderBy('sort', 'desc')
+      ),
+      after,
+      (doc) => parseBoardEntry(doc.id, doc.data())
+    );
+  }
+
+  /**
+   * The players behind entries of a board kind: entries carry no uid,
+   * `boardMembers` maps them (`entryIds.<kind>`). One query per 30 ids
+   * (Firestore's `in` limit); null for an id nobody holds.
+   */
+  public async entryOwners(
+    kind: BoardKind,
+    entryIds: readonly string[]
+  ): Promise<Record<string, string | null>> {
+    const { db, dbSdk: sdk } = this.connection();
+    const field = `entryIds.${kind}`;
+    const owners: Record<string, string | null> = Object.fromEntries(
+      entryIds.map((id) => [id, null])
+    );
+    const chunks: string[][] = [];
+    for (let i = 0; i < entryIds.length; i += IN_LIMIT) {
+      chunks.push(entryIds.slice(i, i + IN_LIMIT));
+    }
+    const snapshots = await Promise.all(
+      chunks.map((ids) =>
+        sdk.getDocs(
+          sdk.query(
+            sdk.collection(db, 'boardMembers'),
+            sdk.where(field, 'in', ids)
+          )
+        )
+      )
+    );
+    for (const doc of snapshots.flatMap((snapshot) => snapshot.docs)) {
+      const entryId: unknown = doc.get(field);
+      if (typeof entryId === 'string' && entryId in owners) {
+        owners[entryId] = doc.id;
+      }
+    }
+    return owners;
   }
 
   /** The bans, newest first; the hourly sweep deletes the ended ones. */

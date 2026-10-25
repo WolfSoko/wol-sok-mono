@@ -5,6 +5,7 @@ import {
   BOARD_KINDS,
   type BanReason,
   type BoardKind,
+  type EntryShow,
   type EntryStatus,
   parseBoardId,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
@@ -56,6 +57,14 @@ export interface EntryRecord {
   /** The public name, null for the anonymous label. */
   name: string | null;
   sort: number | null;
+}
+
+/** A row of a board, as the leaderboards view lists it, hidden ones too. */
+export interface BoardEntryRecord extends EntryRecord {
+  entryId: string;
+  /** The anonymous tag, `#0042`, shown where the entry has no name. */
+  tag: number | null;
+  show: EntryShow | null;
 }
 
 /** `moderation/{uid}`: how often the owner acted on the player. */
@@ -177,6 +186,23 @@ export function parseEntry(value: unknown): EntryRecord | null {
     hiddenBy: HIDE_REASONS.filter((reason) => hiddenBy[reason] === true),
     name: text(value['name']),
     sort: typeof sort === 'number' ? sort : null,
+  };
+}
+
+export function parseBoardEntry(
+  entryId: string,
+  value: unknown
+): BoardEntryRecord | null {
+  const entry = parseEntry(value);
+  if (entry === null || !isObject(value)) {
+    return null;
+  }
+  const tag = value['tag'];
+  return {
+    ...entry,
+    entryId,
+    tag: typeof tag === 'number' ? tag : null,
+    show: isObject(value['show']) ? (value['show'] as EntryShow) : null,
   };
 }
 

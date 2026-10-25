@@ -35,11 +35,15 @@ export type { Avatar, Profile } from './lib/social/profile';
 // The contracts the admin views read and write.
 export {
   BOARD_KINDS,
+  competitionRanks,
   dailyBoardId,
+  formatTag,
   isBoardId,
+  isUtcDay,
   parseBoardId,
   VISIBLE_STATUSES,
 } from './lib/state/boards';
+export { utcDay } from './lib/state/daily';
 export type {
   BoardId,
   BoardKind,

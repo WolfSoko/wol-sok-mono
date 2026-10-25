@@ -1324,9 +1324,14 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      (`avatar.kind`, `updatedAt` desc). The dialog takes Material's slide
      toggle, not its checkbox, which the game does not use and federation
      would prune.
-   - Still to come: the leaderboards view, the toggle page, the Balance
-     view, the curation page once ADR 0011's gallery exists, and the
-     admin link in the main menu.
+   - The leaderboards view: a board (the daily one for a UTC day), best
+     first, hidden rows too, each with its player, found by a
+     `boardMembers` query on `entryIds.<kind>` (the rules let the owner
+     list `boardMembers`), and hide, restore, verify now (daily and
+     endless only) and ban by entry. Bans and the player view also offer
+     "Change end", a `player.ban` on a banned player.
+   - Still to come: the toggle page, the Balance view, the curation page
+     once ADR 0011's gallery exists, and the admin link in the main menu.
 
 ## Owner's decisions
 

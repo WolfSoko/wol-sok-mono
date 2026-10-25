@@ -8,14 +8,18 @@ import {
   type AdminTextKey,
   AdminTextPipe,
 } from '../i18n/admin-i18n.service';
-import { AdminActionsService } from '../moderation/admin-actions.service';
+import {
+  AdminActionsService,
+  type ModerationAction,
+} from '../moderation/admin-actions.service';
 import { type BanRecord, banHolds } from '../moderation/admin-records';
 import { AdminRecordsService } from '../moderation/admin-records.service';
 import { ListFooterComponent } from '../moderation/list-footer.component';
 import { PagedList } from '../moderation/paged-list';
 
 /**
- * The bans (ADR 0012), newest first, each with "Lift ban". Ended bans
+ * The bans (ADR 0012), newest first, each with "Change end" and "Lift
+ * ban". Ended bans
  * stay listed until the hourly sweep lifts them.
  */
 @Component({
@@ -65,6 +69,11 @@ import { PagedList } from '../moderation/paged-list';
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let row">
+          @if (holds(row)) {
+            <button mat-button type="button" (click)="changeEnd(row)">
+              {{ 'bans.change' | adminT }}
+            </button>
+          }
           <button mat-button type="button" (click)="unban(row)">
             {{ 'type.player.unban' | adminT }}
           </button>
@@ -108,9 +117,24 @@ export class BansComponent {
     return `banReason.${reason}`;
   }
 
-  protected async unban(ban: BanRecord): Promise<void> {
+  /**
+   * A ban on a banned player changes only its end and reason - offered
+   * while it holds, since the server takes a ban after an ended one as new.
+   */
+  protected changeEnd(ban: BanRecord): Promise<void> {
+    return this.act(ban, { type: 'player.ban', ban: true });
+  }
+
+  protected unban(ban: BanRecord): Promise<void> {
+    return this.act(ban, { type: 'player.unban' });
+  }
+
+  private async act(
+    ban: BanRecord,
+    action: Pick<ModerationAction, 'type' | 'ban'>
+  ): Promise<void> {
     const result = await this.actions.run({
-      type: 'player.unban',
+      ...action,
       subject: ban.uid,
       target: { uid: ban.uid },
     });

@@ -432,6 +432,21 @@ describe('the leaderboards', () => {
   });
 });
 
+describe('board memberships', () => {
+  it("are listed by the owner only, to find an entry's player", async () => {
+    await seed('boardMembers/ada', { entryIds: { xp: 'e1' } });
+    const byEntry = (uid: string, token?: object) =>
+      getDocs(
+        query(
+          collection(db(uid, token), 'boardMembers'),
+          where('entryIds.xp', '==', 'e1')
+        )
+      );
+    await assertSucceeds(byEntry('own', OWNER_TOKEN));
+    await assertFails(byEntry('ada'));
+  });
+});
+
 describe('profiles', () => {
   const profile = (extra: object = {}) => ({
     name: 'Ada',

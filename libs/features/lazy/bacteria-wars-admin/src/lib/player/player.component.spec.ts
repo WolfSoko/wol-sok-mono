@@ -127,6 +127,18 @@ describe('PlayerComponent', () => {
     expect(button('Lift ban')).toBeDefined();
     expect(element.textContent).toContain('Spam');
     expect(element.textContent).toContain('hourly sweep');
+    // An ended ban is not changed but replaced: "Ban", not "Change end".
+    expect(button('Change end')).toBeUndefined();
+    expect(button('Ban')).toBeDefined();
+  });
+
+  it('changes the end of a ban that holds', () => {
+    const { button } = render({
+      ...PLAYER,
+      ban: { uid: 'ada', since: 1, until: null, reason: 'cheating' },
+    });
+    expect(button('Change end')).toBeDefined();
+    expect(button('Lift ban')).toBeDefined();
   });
 
   it('follows another player, and stops on leaving', () => {

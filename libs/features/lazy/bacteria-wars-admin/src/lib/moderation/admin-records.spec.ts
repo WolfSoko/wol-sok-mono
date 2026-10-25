@@ -3,6 +3,7 @@ import {
   millisOf,
   parseAudit,
   parseBan,
+  parseBoardEntry,
   parseEntry,
   parseMember,
   parseModeration,
@@ -79,6 +80,32 @@ describe('admin records', () => {
       sort: null,
     });
     expect(parseEntry(undefined)).toBeNull();
+  });
+
+  it('reads a board row with its tag, hour and score', () => {
+    expect(
+      parseBoardEntry('e1', {
+        status: 'verified',
+        hiddenBy: {},
+        name: 'Ada',
+        sort: 5,
+        tag: 7,
+        show: { depth: 3, seconds: 80 },
+      })
+    ).toEqual({
+      entryId: 'e1',
+      status: 'verified',
+      hiddenBy: [],
+      name: 'Ada',
+      sort: 5,
+      tag: 7,
+      show: { depth: 3, seconds: 80 },
+    });
+    expect(parseBoardEntry('e2', { show: 'x' })).toMatchObject({
+      tag: null,
+      show: null,
+    });
+    expect(parseBoardEntry('e3', null)).toBeNull();
   });
 
   it('counts the moderation, zero for what is missing', () => {

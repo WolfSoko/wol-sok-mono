@@ -50,6 +50,13 @@ export function adminRoutes(options: GameCloudOptions | null): Routes {
                 ),
             },
             {
+              path: 'leaderboards',
+              loadComponent: () =>
+                import('./leaderboards/leaderboards.component').then(
+                  (m) => m.LeaderboardsComponent
+                ),
+            },
+            {
               path: 'bans',
               loadComponent: () =>
                 import('./bans/bans.component').then((m) => m.BansComponent),

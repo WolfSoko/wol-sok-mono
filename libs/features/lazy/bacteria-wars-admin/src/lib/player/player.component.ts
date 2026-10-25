@@ -27,7 +27,6 @@ import {
 import {
   type AuditRecord,
   banHolds,
-  type HideReason,
   MODERATION_COUNTS,
   type ModerationCount,
 } from '../moderation/admin-records';
@@ -107,10 +106,6 @@ export class PlayerComponent {
 
   protected banReasonKey(reason: BanReason): AdminTextKey {
     return `banReason.${reason}`;
-  }
-
-  protected hiddenBy(reasons: readonly HideReason[]): string {
-    return reasons.map((reason) => this.i18n.t(`hidden.${reason}`)).join(', ');
   }
 
   protected hiddenByOwner(entry: PlayerEntry): boolean {
