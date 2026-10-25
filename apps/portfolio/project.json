@@ -5,6 +5,7 @@
   "prefix": "wolsok",
   "sourceRoot": "apps/portfolio/src",
   "tags": ["app", "type:portfolio"],
+  "implicitDependencies": ["angular-examples"],
   "targets": {
     "build": {
       "executor": "@angular/build:application",

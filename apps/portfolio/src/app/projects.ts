@@ -180,6 +180,15 @@ export const EXPERIMENTS: Project[] = [
     tech: ['WebAssembly', 'AssemblyScript'],
     links: [{ label: 'Try it', url: `${EXAMPLES}/webassemblyTests` }],
   },
+  {
+    name: 'Thanos Snap Playground',
+    tagline: 'Snap a card into dust.',
+    description:
+      'Try every option of @wolsok/thanos: dissolve a card into dust, cracks, shards or chunks on the GPU and choose where the wind blows them.',
+    accent: '#a855f7',
+    tech: ['WebGL2', 'Angular'],
+    links: [{ label: 'Try it', url: `${EXAMPLES}/thanosPlayground` }],
+  },
 ];
 
 /** Packages published on npm. */
@@ -188,11 +197,12 @@ export const PACKAGES: Project[] = [
     name: '@wolsok/thanos',
     tagline: 'Snap your fingers, vaporize the DOM.',
     description:
-      'An Angular directive that dissolves any element into tiny particles, Thanos style.',
+      'An Angular directive that dissolves any element into tiny particles, Thanos style: into dust, cracks, shards or chunks, blown away by the wind, simulated on the GPU.',
     accent: '#a855f7',
-    tech: ['Angular', 'Canvas'],
+    tech: ['Angular', 'WebGL2'],
     links: [
       { label: 'npm', url: 'https://www.npmjs.com/package/@wolsok/thanos' },
+      { label: 'Playground', url: `${EXAMPLES}/thanosPlayground` },
       { label: 'Demo', url: `${EXAMPLES}/home?thanosDemo=true` },
       { label: 'Source', url: `${SOURCE}/libs/public/ws-thanos` },
     ],
