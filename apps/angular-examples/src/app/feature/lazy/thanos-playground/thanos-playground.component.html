@@ -1,0 +1,133 @@
+<mat-card appearance="raised" class="controls">
+  <mat-card-header>
+    <mat-card-title>Thanos snap playground</mat-card-title>
+    <mat-card-subtitle>
+      Try every option of
+      <a href="https://www.npmjs.com/package/@wolsok/thanos" target="_blank"
+        >&#64;wolsok/thanos</a
+      >, then snap the card away. It comes back afterwards.
+    </mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <section>
+      <h3 class="mat-subtitle-2">Crumble</h3>
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        aria-label="crumble variant"
+        data-testid="crumble"
+        [value]="crumble()"
+        (change)="crumble.set($event.value)"
+      >
+        @for (variant of crumbles; track variant) {
+          <mat-button-toggle [value]="variant">{{ variant }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </section>
+
+    <section>
+      <h3 class="mat-subtitle-2">Wind direction: {{ windDirection() }}°</h3>
+      <mat-slider min="0" max="345" step="15" discrete>
+        <input
+          matSliderThumb
+          aria-label="wind direction in degrees"
+          data-testid="wind"
+          [value]="windDirection()"
+          (valueChange)="windDirection.set($event)"
+        />
+      </mat-slider>
+    </section>
+
+    <section>
+      <h3 class="mat-subtitle-2">Duration: {{ animationLength() / 1000 }} s</h3>
+      <mat-slider min="1000" max="20000" step="500">
+        <input
+          matSliderThumb
+          aria-label="duration in milliseconds"
+          [value]="animationLength()"
+          (valueChange)="animationLength.set($event)"
+        />
+      </mat-slider>
+    </section>
+
+    <section>
+      <h3 class="mat-subtitle-2">Acceleration: {{ particleAcceleration() }}</h3>
+      <mat-slider min="5" max="200" step="5" discrete>
+        <input
+          matSliderThumb
+          aria-label="particle acceleration"
+          [value]="particleAcceleration()"
+          (valueChange)="particleAcceleration.set($event)"
+        />
+      </mat-slider>
+    </section>
+
+    <section>
+      <mat-form-field appearance="outline">
+        <mat-label>Max particles</mat-label>
+        <mat-select
+          [value]="maxParticleCount()"
+          (selectionChange)="maxParticleCount.set($event.value)"
+        >
+          @for (count of maxParticleCounts; track count) {
+            <mat-option [value]="count">{{ count / 1000 }}k</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </section>
+
+    <section class="sound">
+      <mat-slide-toggle
+        [checked]="sound()"
+        (change)="sound.set($event.checked)"
+      >
+        Sound
+      </mat-slide-toggle>
+      <mat-slider min="0" max="1" step="0.05" [disabled]="!sound()">
+        <input
+          matSliderThumb
+          aria-label="sound volume"
+          [value]="soundVolume()"
+          (valueChange)="soundVolume.set($event)"
+        />
+      </mat-slider>
+    </section>
+
+    <h3 class="mat-subtitle-2">Options</h3>
+    <pre class="options" data-testid="options">{{ options() | json }}</pre>
+  </mat-card-content>
+</mat-card>
+
+<div class="stage">
+  <div
+    class="target"
+    wsThanos
+    #thanos="thanos"
+    data-testid="target"
+    [wsThanosOptions]="options()"
+  >
+    <mat-card appearance="raised" class="target-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>blur_on</mat-icon>
+        <mat-card-title>Snap me</mat-card-title>
+        <mat-card-subtitle
+          >{{ crumble() }}, {{ windDirection() }}°</mat-card-subtitle
+        >
+      </mat-card-header>
+      <mat-card-content>
+        <p>
+          Every pixel of this card becomes a particle, simulated and drawn on
+          your graphics card with WebGL2.
+        </p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  <button
+    mat-flat-button
+    data-testid="snap"
+    [disabled]="snapping()"
+    (click)="snap(thanos)"
+  >
+    <mat-icon>auto_awesome</mat-icon>
+    Snap
+  </button>
+</div>

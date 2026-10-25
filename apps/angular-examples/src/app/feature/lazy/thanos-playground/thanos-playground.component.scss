@@ -1,0 +1,43 @@
+:host {
+  display: grid;
+  grid-template-columns: minmax(0, 28rem) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+section {
+  margin-bottom: 0.75rem;
+}
+
+mat-slider {
+  width: 100%;
+}
+
+.sound {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.options {
+  overflow-x: auto;
+  font-size: 0.8rem;
+}
+
+/* room above and to the right for the dust of the default wind */
+.stage {
+  display: grid;
+  justify-items: center;
+  gap: 1.5rem;
+  padding-top: 8rem;
+}
+
+.target-card {
+  width: min(22rem, 100%);
+  background: linear-gradient(135deg, #3f51b5, #e91e63);
+  color: white;
+}
