@@ -9,6 +9,7 @@ import {
   expectedRerunMs,
   MAX_VERIFIED_TICKS,
 } from './budgets';
+import { countRerun } from '../replays/level-stats';
 import { storedReplay } from './declared-match';
 import { winsOf } from './endless-run';
 import { applyVerdict, type StoredRun } from './rank-endless';
@@ -116,9 +117,12 @@ export async function verifyRunWins(
       run.runId,
       next.replayId,
       verdict,
-      now,
-      replay?.header
+      now
     );
+    // Null: another check applied it, and counted it.
+    if (run !== null && replay !== null) {
+      await countRerun(db, replay.header, 'endless', verdict);
+    }
     await charge();
     if (verdict.state === 'balance-mismatch') {
       break;

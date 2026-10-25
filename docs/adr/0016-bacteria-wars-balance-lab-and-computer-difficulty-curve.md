@@ -181,10 +181,12 @@ the cryo pulse is weak in the computer's hands.
   table and the ladder's version keep a changed computer apart. Evolved
   means the player's own loadout, not the ladder's computer's.
   Medallions come from the server's re-run, never the client: a verified
-  re-run of a match against the computer adds `rerun` and
-  `medals.{tier}` in the transaction that applies its verdict, so once
-  (`countRerun`). Only re-run matches carry them (daily and endless so
-  far), so the medal rate is `medals / rerun`, not `/ attempts`. Still
+  re-run of a match against the computer adds `rerun` and its best tier
+  (`medals.{tier}`), counted by the check that applied the verdict, so
+  once, and kept on the replay (`medal`). Only re-run matches carry
+  them, and they are chosen - endless re-runs play wins only, the daily
+  boards their leaders' best attempts - so `medals / rerun` tells how
+  the best runs go, not how hard a level is for everyone. Still
   open: quits (from declared attempts never reported - a local match the
   player leaves sends no replay).
 - The admin area (ADR 0012) gets a **Balance** view of those counters next to

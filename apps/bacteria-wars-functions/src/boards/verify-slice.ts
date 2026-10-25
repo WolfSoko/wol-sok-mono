@@ -372,7 +372,7 @@ export async function checkBestAttempt(
   const replay = await storedReplay(db, best.replayId);
   const verdict: Verdict =
     replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
-  return db.runTransaction(async (tx) => {
+  const result = await db.runTransaction(async (tx) => {
     const fresh =
       ((await tx.get(runRef)).get('attempts') as
         | DailyAttemptRun[]
@@ -392,12 +392,14 @@ export async function checkBestAttempt(
     await writeDailyEntry(tx, db, day, uid, next);
     tx.update(runRef, { attempts: next });
     tx.update(db.doc(`replays/${best.replayId}`), verdictFields(verdict));
-    if (replay !== null) {
-      countRerun(tx, db, replay.header, 'daily', verdict);
-    }
     recordCheck(tx, moderationRef, moderation, verdict.state, now);
-    return 'checked';
+    return 'checked' as const;
   });
+  // Only the check that applied the verdict counts it.
+  if (result === 'checked' && replay !== null) {
+    await countRerun(db, replay.header, 'daily', verdict);
+  }
+  return result;
 }
 
 /**
@@ -439,6 +441,7 @@ export function verdictFields(verdict: Verdict) {
   return {
     state: verdict.state,
     ...(verdict.summary === undefined ? {} : { summary: verdict.summary }),
+    ...(verdict.medal === undefined ? {} : { medal: verdict.medal }),
     verifiedAt: FieldValue.serverTimestamp(),
   };
 }
