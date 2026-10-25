@@ -14,7 +14,7 @@ import {
   profileIn,
 } from '../boards/entries';
 import type { Realtime } from './realtime';
-import { noticeData, writeAudit } from './records';
+import { noticeData, tombstoneData, writeAudit } from './records';
 
 /**
  * Bans (ADR 0012): `bans/{uid}` = `{ since, until, reason }`, mirrored to
@@ -116,7 +116,9 @@ export interface BanChange {
  * 4. hides their entries on every board (`hiddenBy.ban`);
  * 5. takes their public replays down the way `remove` does.
  * Steps 2 to 5 change nothing the second time, so a ban sent again
- * finishes what a failed one left. Ban tombstones come with a later wave.
+ * finishes what a failed one left. For a Google account (`tombstone`, its
+ * id), step 1 also writes the ban's tombstone, so the ban survives
+ * deleting the account.
  */
 export async function banPlayer(
   db: Firestore,
@@ -125,6 +127,7 @@ export async function banPlayer(
   until: number | null,
   reason: BanReason,
   noticeId: string,
+  tombstone: string | null,
   now: number
 ): Promise<BanChange> {
   const banRef = db.doc(`bans/${uid}`);
@@ -138,6 +141,12 @@ export async function banPlayer(
       reason,
     };
     tx.set(banRef, stored(after));
+    if (tombstone !== null) {
+      tx.set(
+        db.doc(`banTombstones/${tombstone}`),
+        tombstoneData(until, reason, now)
+      );
+    }
     if (!renewed) {
       tx.set(
         db.doc(`players/${uid}/notices/${noticeId}`),
@@ -172,7 +181,8 @@ export async function banPlayer(
  * while this runs keeps all of it: the Realtime Database value is removed
  * only when it is the lifted ban's or holds no more, each entry is
  * unhidden only while no other ban holds, and `bans/{uid}` is deleted only
- * while unchanged (`ban-changed` otherwise). Public replays taken down
+ * while unchanged (`ban-changed` otherwise), together with the Google
+ * account's tombstone (`tombstone`, its id). Public replays taken down
  * stay down. An unban without a ban (`not-banned`) still removes the
  * Realtime Database's ban and unhides the entries, the owner's way to
  * repair a mirror a failed command left behind; a ban set meanwhile keeps
@@ -184,7 +194,10 @@ export async function liftBan(
   uid: string,
   noticeId: string,
   now: number,
-  endedUntil?: number
+  {
+    endedUntil,
+    tombstone = null,
+  }: { endedUntil?: number; tombstone?: string | null } = {}
 ): Promise<BanChange | 'not-banned' | 'ban-changed'> {
   const before = await readBan(db, uid);
   if (before === null) {
@@ -218,6 +231,9 @@ export async function liftBan(
       return false;
     }
     tx.delete(ref);
+    if (tombstone !== null) {
+      tx.delete(db.doc(`banTombstones/${tombstone}`));
+    }
     tx.set(
       db.doc(`players/${uid}/notices/${noticeId}`),
       noticeData('unbanned', now)
@@ -260,7 +276,10 @@ export async function expireBans(
     const until = (doc.get('until') as Timestamp).toMillis();
     const id = `ban-ended_${uid}_${until}`;
     try {
-      const change = await liftBan(db, realtime, uid, id, now, until);
+      // Its tombstone ends with it, by TTL.
+      const change = await liftBan(db, realtime, uid, id, now, {
+        endedUntil: until,
+      });
       if (typeof change === 'string') {
         continue;
       }

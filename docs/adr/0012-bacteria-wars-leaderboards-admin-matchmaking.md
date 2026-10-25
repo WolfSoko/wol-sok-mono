@@ -1143,9 +1143,10 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      the daily boards TTL took whenever a daily entry is written, so it
      holds about 31 daily ones, and `dailyRuns` expire from their day like
      the board. A replay taken out of the gallery carries `galleryOut`,
-     which keeps it out once its player's uid has left `optOut`. The
-     tombstone, the ban, the audit scrub and `stats/accounts` follow with
-     the tombstones; until then a deleted account's ban stays behind.
+     which keeps it out once its player's uid has left `optOut`. For a
+     banned Google account it first writes the ban's tombstone; it also
+     deletes both ban documents, scrubs `before`/`after` of the audit
+     entries about the account and lowers `stats/accounts`.
    - Then the bans: `adminCommand` (the auth-context trigger, the writer
      compared with `uid`, the owner read again with `getUser()`,
      `parseAdminCommand`, the audit under the command id, `result` on the
@@ -1180,8 +1181,21 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      `moderation` and `notices`; the RTDB `connections` node and the ban
      check on `status` and `connections`; the TTLs of `adminCommands`,
      `adminAudit` and `notices`, and the two `adminAudit` indexes.
-   - Still to come: the other admin types, the tombstones, `countAccount`
-     and the statistics.
+   - Then the tombstones (`src/admin/tombstones.ts`, `BAN_TOMBSTONE_KEY`
+     through `defineSecret`, named in `secrets` by `acceptReplay`,
+     `rankProgress`, `adminCommand`, `countAccount` and
+     `deletePlayerBoards`): a ban of a Google account writes its tombstone
+     in the ban's transaction, an unban deletes it with the ban, and an
+     ended ban leaves it to TTL (`expireAt` is the ban's end, at most 2
+     years), as a match checks `until`. `countAccount` counts the account
+     in `stats/accounts`, notes `boardMembers.accountCreatedAt` and checks
+     a Google sign-up's tombstone; `acceptReplay` and `rankProgress` check
+     once after a guest links Google (`googleChecked`, set only once a
+     Google provider is there; a failed check is logged and runs again
+     with the next write). A match bans the new uid through `banPlayer`,
+     audited as `tombstone_{uid}` with `by: 'system'`, and leaves a ban
+     that already holds as it is.
+   - Still to come: the other admin types and the statistics.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].

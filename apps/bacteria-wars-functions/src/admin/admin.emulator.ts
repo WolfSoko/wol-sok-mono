@@ -1,10 +1,13 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
+import { deletePlayerBoards } from '../boards/delete-player';
 import { clearBanCache, isBanned } from '../limits';
+import { countAccount } from './accounts';
 import { expireBans } from './bans';
 import { type AdminContext, runAdminCommand } from './command';
 import type { Realtime } from './realtime';
+import { checkGoogleLink } from './tombstones';
 
 /**
  * The admin commands against the Firestore emulator (`test-emulator`):
@@ -82,11 +85,21 @@ function fakeRealtime(
   };
 }
 
+/** The tombstone id the fake Auth gives a Google account. */
+const tombstoneOfUid = (uid: string) => `t-${uid}`;
+
 function context(
   realtime: Realtime = fakeRealtime(),
-  owners: readonly string[] = ['owner']
+  owners: readonly string[] = ['owner'],
+  /** The accounts with a Google provider. */
+  google: readonly string[] = []
 ): AdminContext {
-  return { isOwner: async (uid) => owners.includes(uid), realtime };
+  return {
+    isOwner: async (uid) => owners.includes(uid),
+    realtime,
+    tombstoneOf: async (uid) =>
+      google.includes(uid) ? tombstoneOfUid(uid) : null,
+  };
 }
 
 /** Stores a command as the owner's client would, then runs it. */
@@ -563,5 +576,177 @@ describe('expireBans', () => {
     expect((await db.doc('bans/bob').get()).exists).toBe(false);
     // Left for the next run, which tries it again.
     expect((await db.doc('bans/ada').get()).exists).toBe(true);
+  });
+});
+
+describe('ban tombstones', () => {
+  const YEAR = 365 * DAY;
+  const tombstone = (uid: string) =>
+    db.doc(`banTombstones/${tombstoneOfUid(uid)}`).get();
+  const google = context(fakeRealtime(), ['owner'], ['ada']);
+
+  it('come with the ban of a Google account and go with its unban', async () => {
+    const until = NOW + 7 * DAY;
+    await command('c1', ban('ada', until), google);
+    expect((await tombstone('ada')).data()).toEqual({
+      until: Timestamp.fromMillis(until),
+      reason: 'cheating',
+      expireAt: Timestamp.fromMillis(until),
+    });
+    await command('c2', unban('ada'), google);
+    expect((await tombstone('ada')).exists).toBe(false);
+  });
+
+  it('keep a permanent ban 2 years, and follow no guest', async () => {
+    await command('c1', ban('ada', null), google);
+    expect((await tombstone('ada')).get('expireAt')).toEqual(
+      Timestamp.fromMillis(NOW + 2 * YEAR)
+    );
+    await command('c2', ban('bob', null), google);
+    expect((await db.collection('banTombstones').get()).size).toBe(1);
+  });
+
+  describe('countAccount', () => {
+    const until = NOW + 7 * DAY;
+    const seedTombstone = (end: number | null) =>
+      db.doc('banTombstones/t-new').set({
+        until: end === null ? null : Timestamp.fromMillis(end),
+        reason: 'spam',
+        expireAt: Timestamp.fromMillis(NOW + DAY),
+      });
+
+    it('counts a guest and notes when it was made', async () => {
+      await db.doc('stats/accounts').set({ total: 4 });
+      expect(
+        await countAccount(
+          db,
+          fakeRealtime(),
+          'eve',
+          { createdAt: NOW, tombstone: null },
+          NOW
+        )
+      ).toBe(false);
+      expect((await db.doc('stats/accounts').get()).get('total')).toBe(5);
+      expect((await db.doc('boardMembers/eve').get()).data()).toEqual({
+        accountCreatedAt: Timestamp.fromMillis(NOW),
+      });
+    });
+
+    it('bans a Google sign-up its tombstone names, audited by the system', async () => {
+      await seedTombstone(until);
+      const realtime = fakeRealtime();
+      expect(
+        await countAccount(
+          db,
+          realtime,
+          'eve',
+          { createdAt: NOW, tombstone: 't-new' },
+          NOW
+        )
+      ).toBe(true);
+      expect((await db.doc('bans/eve').get()).data()).toMatchObject({
+        until: Timestamp.fromMillis(until),
+        reason: 'spam',
+      });
+      expect(realtime.values.get('bans/eve')).toBe(until);
+      expect(
+        (await db.doc('adminAudit/tombstone_eve').get()).data()
+      ).toMatchObject({
+        by: 'system',
+        type: 'player.ban',
+        source: 'system',
+        ok: true,
+      });
+      expect(
+        (await db.doc('players/eve/notices/tombstone_eve').get()).get('type')
+      ).toBe('banned');
+      expect(
+        (await db.doc('boardMembers/eve').get()).get('googleChecked')
+      ).toBe(true);
+    });
+
+    it('leaves a Google sign-up alone once its tombstone ended', async () => {
+      await seedTombstone(NOW - HOUR);
+      expect(
+        await countAccount(
+          db,
+          fakeRealtime(),
+          'eve',
+          { createdAt: NOW, tombstone: 't-new' },
+          NOW
+        )
+      ).toBe(false);
+      expect((await db.doc('bans/eve').get()).exists).toBe(false);
+    });
+  });
+
+  describe('checkGoogleLink', () => {
+    it('checks once, after the guest linked Google', async () => {
+      await db.doc('banTombstones/t-eve').set({
+        until: null,
+        reason: 'cheating',
+        expireAt: Timestamp.fromMillis(NOW + DAY),
+      });
+      let linked = false;
+      let lookups = 0;
+      const tombstoneOf = async (uid: string) => {
+        lookups++;
+        return linked ? tombstoneOfUid(uid) : null;
+      };
+      const realtime = fakeRealtime();
+      const check = () =>
+        checkGoogleLink(db, realtime, 'eve', tombstoneOf, NOW);
+
+      expect(await check()).toBe(false);
+      expect((await db.doc('bans/eve').get()).exists).toBe(false);
+      linked = true;
+      expect(await check()).toBe(true);
+      expect((await db.doc('bans/eve').get()).get('until')).toBeNull();
+      // Checked: the next write looks nothing up.
+      expect(await check()).toBe(false);
+      expect(lookups).toBe(2);
+    });
+  });
+
+  describe('deletePlayerBoards', () => {
+    it("keeps a banned Google account's ban as a tombstone, and erases the rest", async () => {
+      const realtime = fakeRealtime();
+      const until = NOW + 30 * DAY;
+      // Banned while a guest: the deletion writes the tombstone.
+      await command('c1', ban('ada', until), context(realtime));
+      await db.doc('stats/accounts').set({ total: 3 });
+
+      await deletePlayerBoards(
+        db,
+        'ada',
+        { tombstone: tombstoneOfUid('ada'), realtime },
+        NOW + DAY
+      );
+
+      expect((await tombstone('ada')).data()).toMatchObject({
+        until: Timestamp.fromMillis(until),
+        reason: 'cheating',
+      });
+      expect((await db.doc('bans/ada').get()).exists).toBe(false);
+      expect(realtime.values.has('bans/ada')).toBe(false);
+      expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
+        target: { uid: 'ada' },
+        type: 'player.ban',
+        before: { scrubbed: true },
+        after: { scrubbed: true },
+      });
+      expect((await db.doc('stats/accounts').get()).get('total')).toBe(2);
+    });
+
+    it('writes no tombstone for an account whose ban ended', async () => {
+      await command('c1', ban('ada', NOW + HOUR));
+      await deletePlayerBoards(
+        db,
+        'ada',
+        { tombstone: tombstoneOfUid('ada'), realtime: fakeRealtime() },
+        NOW + DAY
+      );
+      expect((await tombstone('ada')).exists).toBe(false);
+    });
   });
 });

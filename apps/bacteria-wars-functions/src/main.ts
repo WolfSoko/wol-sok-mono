@@ -8,6 +8,7 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
+import { defineSecret } from 'firebase-functions/params';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import {
   onDocumentCreated,
@@ -17,8 +18,10 @@ import {
 } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
+import { countAccount as countAccountOf } from './admin/accounts';
 import { isOwnerRecord, runAdminCommand } from './admin/command';
 import { realtimeOf } from './admin/realtime';
+import { checkGoogleLink, tombstoneId } from './admin/tombstones';
 import { deletePlayerBoards as deleteBoardsOf } from './boards/delete-player';
 import { runHourly } from './boards/hourly';
 import { boardProfileChanged as relabelEntries } from './boards/profile-changed';
@@ -52,6 +55,12 @@ const realtime = realtimeOf(async () => {
   return getDatabaseWithUrl(RTDB_URL);
 });
 
+/**
+ * The key of the ban tombstones (ADR 0012), in Secret Manager: only the
+ * functions that name it in `secrets` can read it.
+ */
+const BAN_TOMBSTONE_KEY = defineSecret('BAN_TOMBSTONE_KEY');
+
 /** True, and logged, for a retried event too old to act on. */
 function givesUp(fn: string, id: string, time: string, now: number): boolean {
   const old = tooOldToRetry(Date.parse(time), now);
@@ -78,6 +87,7 @@ export const acceptReplay = onDocumentCreated(
     memory: '256MiB',
     cpu: 'gcf_gen1',
     retry: true,
+    secrets: [BAN_TOMBSTONE_KEY],
   },
   async (event) => {
     const data = event.data?.data();
@@ -89,6 +99,9 @@ export const acceptReplay = onDocumentCreated(
     if (givesUp('acceptReplay', id, event.time, now)) {
       await giveUpSubmission(db(), id, data, now);
       return;
+    }
+    if (typeof data['uid'] === 'string') {
+      await checkLink(data['uid'], now);
     }
     await acceptSubmission(db(), id, data, now);
   }
@@ -128,13 +141,44 @@ export const deletePlayerReplays = v1
     logger.info('Replays of a deleted account', { uid: user.uid, ...counts });
   });
 
-/** A deleted account leaves the boards - see `deletePlayerBoards`. */
+/**
+ * A deleted account leaves the boards, a banned Google account its
+ * tombstone - see `deletePlayerBoards`.
+ */
 export const deletePlayerBoards = v1
   .region(REGION)
+  .runWith({ secrets: [BAN_TOMBSTONE_KEY] })
   .auth.user()
   .onDelete(async (user) => {
-    const deleted = await deleteBoardsOf(db(), user.uid);
+    const deleted = await deleteBoardsOf(
+      db(),
+      user.uid,
+      { tombstone: tombstoneId(BAN_TOMBSTONE_KEY.value(), user), realtime },
+      Date.now()
+    );
     logger.info('Board data of a deleted account', { uid: user.uid, deleted });
+  });
+
+/** A new account is counted, a Google sign-up checked - see `countAccount`. */
+export const countAccount = v1
+  .region(REGION)
+  .runWith({ secrets: [BAN_TOMBSTONE_KEY] })
+  .auth.user()
+  .onCreate(async (user) => {
+    const created = user.metadata.creationTime;
+    const banned = await countAccountOf(
+      db(),
+      realtime,
+      user.uid,
+      {
+        createdAt: created ? Date.parse(created) : null,
+        tombstone: tombstoneId(BAN_TOMBSTONE_KEY.value(), user),
+      },
+      Date.now()
+    );
+    if (banned) {
+      logger.info('A new account met its ban tombstone', { uid: user.uid });
+    }
   });
 
 /**
@@ -173,6 +217,34 @@ async function isOwner(uid: string): Promise<boolean> {
   }
 }
 
+/**
+ * The account's ban tombstone id (ADR 0012), read afresh from Auth - null
+ * without a Google provider, or for an account that is gone.
+ */
+async function tombstoneOf(uid: string): Promise<string | null> {
+  const { getAuth } = await import('firebase-admin/auth');
+  try {
+    return tombstoneId(BAN_TOMBSTONE_KEY.value(), await getAuth().getUser(uid));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The one-time tombstone check after a guest links Google - see
+ * `checkGoogleLink`. A failure is logged, not thrown: the check runs again
+ * with the player's next write.
+ */
+async function checkLink(uid: string, now: number): Promise<void> {
+  try {
+    if (await checkGoogleLink(db(), realtime, uid, tombstoneOf, now)) {
+      logger.info('A linked Google account met its ban tombstone', { uid });
+    }
+  } catch (error) {
+    logger.error('Could not check a Google link', { uid, error });
+  }
+}
+
 /** The owner's command (ADR 0012) - see `runAdminCommand`. */
 export const adminCommand = onDocumentCreatedWithAuthContext(
   // Up to the trigger's limit: a ban walks every board entry of the
@@ -182,6 +254,7 @@ export const adminCommand = onDocumentCreatedWithAuthContext(
     memory: '256MiB',
     cpu: 'gcf_gen1',
     timeoutSeconds: 540,
+    secrets: [BAN_TOMBSTONE_KEY],
   },
   async (event) => {
     const data = event.data?.data();
@@ -191,19 +264,23 @@ export const adminCommand = onDocumentCreatedWithAuthContext(
         event.params.id,
         data,
         event.authType === 'unauthenticated' ? undefined : event.authId,
-        { isOwner, realtime }
+        { isOwner, realtime, tombstoneOf }
       );
       logger.info('Admin command', { id: event.params.id, result });
     }
   }
 );
 
-/** The XP board, from the player's stored progress (ADR 0012). */
+/**
+ * The XP board, from the player's stored progress (ADR 0012), after the
+ * one-time tombstone check of a Google link.
+ */
 export const rankProgress = onDocumentWritten(
   {
     document: 'players/{uid}/storage/{key}',
     memory: '256MiB',
     cpu: 'gcf_gen1',
+    secrets: [BAN_TOMBSTONE_KEY],
   },
   async (event) => {
     // Settings and other keys share the collection; only progress counts.
@@ -212,6 +289,7 @@ export const rankProgress = onDocumentWritten(
       return;
     }
     const createdAt = after.createTime?.toMillis() ?? Date.now();
+    await checkLink(event.params.uid, Date.now());
     await countProgress(db(), event.params.uid, after.data() ?? {}, createdAt);
   }
 );

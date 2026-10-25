@@ -23,6 +23,8 @@ export interface AdminContext {
   /** Whether the uid is the owner now, read afresh from Auth. */
   isOwner(uid: string): Promise<boolean>;
   realtime: Realtime;
+  /** The account's ban tombstone id, null without a Google provider. */
+  tombstoneOf(uid: string): Promise<string | null>;
 }
 
 /** The parts of an Auth user the owner check reads. */
@@ -188,7 +190,10 @@ async function act(
     return { ok: false, error: 'not-found', target, ...unchanged };
   }
   if (command.type === 'player.unban') {
-    const change = await liftBan(db, context.realtime, uid, commandId, now);
+    const tombstone = await context.tombstoneOf(uid);
+    const change = await liftBan(db, context.realtime, uid, commandId, now, {
+      tombstone,
+    });
     return typeof change === 'string'
       ? { ok: false, error: change, target, ...unchanged }
       : { ok: true, target, ...change };
@@ -197,6 +202,7 @@ async function act(
   if (until !== null && until <= now) {
     return { ok: false, error: 'ended', target, ...unchanged };
   }
+  const tombstone = await context.tombstoneOf(uid);
   const change = await banPlayer(
     db,
     context.realtime,
@@ -204,6 +210,7 @@ async function act(
     until,
     reason,
     commandId,
+    tombstone,
     now
   );
   return { ok: true, target, ...change };
