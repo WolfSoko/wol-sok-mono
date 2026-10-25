@@ -9,6 +9,7 @@ import { DAY_MS } from '../boards/budgets';
 import type { Verdict } from '../boards/verify';
 import { clearBanCache } from '../limits';
 import { runReplayCommand } from '../replays/command';
+import { deletePlayerReplays } from '../replays/delete-player';
 import { dailyReplay, TICKS } from '../testing/daily-replay';
 import { featureBest } from './feature-best';
 
@@ -138,6 +139,44 @@ describe('featureBest', () => {
     expect(result).toMatchObject({ checked: 1, published: [] });
     expect((await db.doc('replays/l_c').get()).get('state')).toBe('unverified');
     expect((await db.collection('publicReplays').get()).empty).toBe(true);
+  });
+
+  it('never publishes a banned player, and counts the re-run', async () => {
+    await db.doc('bans/ada').set({ until: null, reason: 'cheating' });
+    await store('l_a', 'ada');
+    expect(await pick()).toMatchObject({ checked: 1, published: [] });
+    const stats = await db.collection('levelStats').get();
+    expect(stats.docs[0]?.data()).toMatchObject({
+      rerun: 1,
+      medals: { gold: 1 },
+    });
+  });
+
+  it('publishes a match the boards verified, with no budget left to re-run', async () => {
+    await store('l_a', 'ada');
+    await db.doc('replays/l_a').update({
+      state: 'verified',
+      attempt: { id: 'd_2026-10-25_1', at: PLAYED },
+      summary: thriller().summary,
+    });
+    await db.doc('counters/2026-10-26').set({ galleryVerifyMs: 25 * 60_000 });
+    const result = await pick(() => {
+      throw new Error('re-ran a verified replay');
+    });
+    expect(result).toMatchObject({ checked: 0, published: ['l_a'] });
+  });
+
+  it("takes a deleted account's uid and name out of its public replays", async () => {
+    await db.doc('profiles/ada').set({ name: 'Ada', publicName: true });
+    await store('l_a', 'ada');
+    await pick();
+    const publicId = String(
+      (await db.doc('replays/l_a').get()).get('publicId')
+    );
+    await deletePlayerReplays(db, 'ada');
+    const published = (await db.doc(`publicReplays/${publicId}`).get()).data();
+    expect(published).toMatchObject({ uids: [], seatUids: [null, null] });
+    expect(published?.['players'][0]).toMatchObject({ name: null });
   });
 
   it('takes a public replay down on remove, and lets it expire again', async () => {

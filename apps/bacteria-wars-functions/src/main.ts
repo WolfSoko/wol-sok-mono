@@ -458,15 +458,16 @@ export const hourly = HOURLY_ON
   : undefined;
 
 /**
- * The gallery's daily pick for the UTC day before (ADR 0011): 04:00 in
- * Berlin, after the day's last hourly slice. Deployed only with
- * `FEATURE_BEST_ON`.
+ * The gallery's daily pick for the UTC day before (ADR 0011): at 23:40
+ * UTC, once the boards stopped verifying that day (`openDays` keeps it
+ * open until 23:00), so the ranked attempts they verified are candidates.
+ * Deployed only with `FEATURE_BEST_ON`.
  */
 export const featureBest = FEATURE_BEST_ON
   ? onSchedule(
       {
-        schedule: '0 4 * * *',
-        timeZone: 'Europe/Berlin',
+        schedule: '40 23 * * *',
+        timeZone: 'UTC',
         memory: '1GiB',
         timeoutSeconds: 1800,
         maxInstances: 1,

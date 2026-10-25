@@ -458,6 +458,7 @@ describe('deletePlayerReplays', () => {
     expect(await deletePlayerReplays(db, 'ada')).toEqual({
       deleted: 1,
       left: 1,
+      anonymised: 0,
     });
     expect((await db.doc('replays/mine').get()).exists).toBe(false);
     expect((await db.doc('replays/mine/blob/data').get()).exists).toBe(false);
@@ -493,6 +494,7 @@ describe('deletePlayerReplays', () => {
     expect(await deletePlayerReplays(db, 'ada')).toEqual({
       deleted: 0,
       left: 1,
+      anonymised: 0,
     });
     expect((await db.doc('replays/theirs').get()).data()).toEqual({
       players: ['bob'],

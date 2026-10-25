@@ -9,7 +9,7 @@ import { DAY_MS } from '../boards/budgets';
 import { storedReplay } from '../boards/declared-match';
 import { boardProfileOf, entryLabel } from '../boards/names';
 import { REPLAY_TTL_MS } from '../config';
-import { dayOf } from '../limits';
+import { dayOf, isBanned } from '../limits';
 import { type GalleryReplay, humansOf } from './candidates';
 
 /** A seat as a public replay shows it - never a uid. */
@@ -29,6 +29,8 @@ export type NotPublished =
   | 'not-verified'
   /** A player took it down, or keeps their matches out of the gallery. */
   | 'opted-out'
+  /** A ban holds for one of its players. */
+  | 'banned'
   | 'no-blob'
   | 'already-public';
 
@@ -66,6 +68,10 @@ export async function publishReplay(
   );
   if (profiles.some((profile) => profile?.['galleryOptOut'] === true)) {
     return 'opted-out';
+  }
+  const banned = await Promise.all(humans.map((uid) => isBanned(db, uid, now)));
+  if (banned.includes(true)) {
+    return 'banned';
   }
   const replay = await storedReplay(db, replayId);
   if (replay === null) {
@@ -107,6 +113,8 @@ export async function publishReplay(
     tx.create(publicRef, {
       replayId,
       uids: humans,
+      // Who played each seat, for anonymising a deleted account's seat.
+      seatUids: players.map((_, seat) => seatUid(seat) ?? null),
       levelId: doc.levelId,
       kind: doc.kind,
       balanceVersion: doc.balanceVersion,
@@ -163,4 +171,64 @@ export async function takeDownPublic(
     });
   }
   await batch.commit();
+}
+
+/**
+ * Takes a player's replay out of the gallery for good (`remove`, a ban -
+ * ADR 0011): the stored replay keeps the player in `optOut` with
+ * `galleryOut`, so nothing features it again, and then its public copies
+ * come down ({@link takeDownPublic}) - in that order, as a public copy
+ * marked removed is skipped next time.
+ */
+export async function removeFromGallery(
+  db: Firestore,
+  replayId: string,
+  uid: string,
+  now: number
+): Promise<void> {
+  const replayRef = db.doc(`replays/${replayId}`);
+  if ((await replayRef.get()).exists) {
+    await replayRef.update({
+      optOut: FieldValue.arrayUnion(uid),
+      galleryOut: true,
+    });
+  }
+  const published = await db
+    .collection('publicReplays')
+    .where('replayId', '==', replayId)
+    .where('removedAt', '==', null)
+    .get();
+  await Promise.all(published.docs.map((doc) => takeDownPublic(db, doc, now)));
+}
+
+/**
+ * Takes a deleted account out of its public replays (ADR 0011): its uid
+ * goes, and its seat shows the colour label instead of a name.
+ */
+export async function anonymisePublic(
+  db: Firestore,
+  uid: string
+): Promise<number> {
+  const published = await db
+    .collection('publicReplays')
+    .where('uids', 'array-contains', uid)
+    .get();
+  await Promise.all(
+    published.docs.map((doc) =>
+      db.runTransaction(async (tx) => {
+        const current = (await tx.get(doc.ref)).data() ?? {};
+        const seats =
+          (current['seatUids'] as (string | null)[] | undefined) ?? [];
+        const players = (current['players'] as PublicSeat[] | undefined) ?? [];
+        tx.update(doc.ref, {
+          uids: FieldValue.arrayRemove(uid),
+          seatUids: seats.map((seat) => (seat === uid ? null : seat)),
+          players: players.map((player, seat) =>
+            seats[seat] === uid ? { ...player, name: null } : player
+          ),
+        });
+      })
+    )
+  );
+  return published.size;
 }

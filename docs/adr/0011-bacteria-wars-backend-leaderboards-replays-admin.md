@@ -517,8 +517,10 @@ The rules and `replayCommand` require `admin == true`,
    schedule (changed by ADR 0012: only once the Replays view of `/admin`
    has shipped, so the owner can unfeature).
    - So far: `featureBest` (`src/gallery/`), deployed only with
-     `FEATURE_BEST_ON` in `src/config.ts`, off until then. It picks the
-     previous UTC day's candidates, re-runs those the boards have not
+     `FEATURE_BEST_ON` in `src/config.ts`, off until then. At 23:40 UTC,
+     not 04:00 Berlin - once the boards stopped verifying the day before,
+     whose ranked attempts they verify until 23:00 - it picks that day's
+     candidates (accounts looked up for the best hints only), re-runs those the boards have not
      verified within `GALLERY_VERIFY_MS` a day (25 minutes, charged to
      `counters/{day}.galleryVerifyMs`), scores the verified ones with
      `replayScore` on the re-run's per-second timeline (a feat: a
@@ -529,9 +531,13 @@ The rules and `replayCommand` require `admin == true`,
      candidate. A public replay's seats carry the boards' labels
      (`entryLabel`: the name only with `publicName` and when it passes
      the blocklist, the player's preset or one derived from the public
-     id). `remove` and a ban take it down with `takeDownPublic`: `removedAt`, the public bytes
+     id); a banned player's match is never published. `remove` and a ban
+     take it down (`removeFromGallery`): `optOut` and `galleryOut` on the
+     stored replay, then `removedAt` on the public copy, its bytes
      deleted, and the private replay expiring again, at the earliest a
-     day later. Still to come in this step: `publicSite` and the
+     day later. A deleted account leaves its public replays without its
+     uid and with the colour label for its name (`anonymisePublic`).
+     Gallery re-runs count in the level statistics like the boards'. Still to come in this step: `publicSite` and the
      rewrites, the gallery's admin types, `profileChanged` for public
      names, and the client pages.
 7. Owner: grant the claim, sign out and in, check `/admin` (changed by

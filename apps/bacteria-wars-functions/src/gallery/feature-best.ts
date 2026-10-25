@@ -20,12 +20,15 @@ import {
   spendBudget,
   verdictFields,
 } from '../boards/verify-slice';
+import { hasGrpcCode } from '../grpc';
 import { dayOf } from '../limits';
+import { countRerun } from '../replays/level-stats';
 import {
+  fitsGallery,
   type GalleryReplay,
   humansOf,
   isCandidate,
-  fitsGallery,
+  MAX_CANDIDATES,
   pickPublished,
   rankCandidates,
   type Stored,
@@ -81,68 +84,78 @@ export async function featureBest(
     .where('createdAt', '<', Timestamp.fromMillis(start + DAY_MS))
     .limit(MAX_READ)
     .get();
-  // What the replay alone decides first: only its players are looked up.
+  if (snapshot.size === MAX_READ) {
+    logger.warn('featureBest read its limit of replays', { day, MAX_READ });
+  }
+  // What the replay alone decides first; accounts only for the best hints.
   const fitting = snapshot.docs
     .map((doc) => ({ id: doc.id, doc: doc.data() as GalleryReplay }))
-    .filter(({ doc }) => fitsGallery(doc));
-  const uids = [...new Set(fitting.flatMap(({ doc }) => humansOf(doc) ?? []))];
-  const [accounts, optedOut] = await Promise.all([
-    lookUp(uids, accountInfo),
-    galleryOptOuts(db, uids),
-  ]);
-  const ranked = rankCandidates(
-    fitting.filter(({ doc }) => isCandidate(doc, accounts, optedOut, now))
-  );
+    .filter(({ doc }) => fitsGallery(doc))
+    .sort((a, b) => b.doc.hint - a.doc.hint || a.id.localeCompare(b.id));
+  const ranked = await pickCandidates(db, fitting, accountInfo, now);
+  // Those the boards verified need no re-run, and so no budget.
+  const scored: Scored[] = [];
+  const toRerun: Stored[] = [];
+  for (const candidate of ranked) {
+    const { doc } = candidate;
+    if (doc.state === 'verified' && doc.summary !== undefined) {
+      const replay = await storedReplay(db, candidate.id);
+      if (replay !== null) {
+        scored.push({
+          ...candidate,
+          header: replay.header,
+          doc: { ...doc, summary: doc.summary },
+        });
+      }
+    } else {
+      toRerun.push(candidate);
+    }
+  }
   let checked = 0;
-  const spent = await spendBudget(
-    db,
-    now,
-    {
-      fields: ['galleryVerifyMs'],
-      dayMs: GALLERY_VERIFY_MS,
-      capMs: GALLERY_VERIFY_MS,
-      field: 'galleryVerifyMs',
-    },
-    clock,
-    async (left, charge) => {
-      const scored: Scored[] = [];
-      for (const candidate of ranked) {
-        const replay = await storedReplay(db, candidate.id);
-        if (replay === null) {
-          continue;
-        }
-        let { doc } = candidate;
-        if (doc.state !== 'verified' || doc.summary === undefined) {
+  if (toRerun.length > 0) {
+    await spendBudget(
+      db,
+      now,
+      {
+        fields: ['galleryVerifyMs'],
+        dayMs: GALLERY_VERIFY_MS,
+        capMs: GALLERY_VERIFY_MS,
+        field: 'galleryVerifyMs',
+      },
+      clock,
+      async (left, charge) => {
+        for (const { id, doc } of toRerun) {
           if (expectedRerunMs(doc.ticks) > left()) {
+            continue;
+          }
+          const replay = await storedReplay(db, id);
+          if (replay === null) {
             continue;
           }
           checked++;
           const verdict = verify(replay);
-          await applyVerdict(db, candidate.id, doc.state, verdict);
+          const applied = await applyVerdict(db, id, doc.state, verdict);
           await charge();
-          if (verdict.state !== 'verified' || verdict.summary === undefined) {
+          if (!applied) {
             continue;
           }
-          doc = {
-            ...doc,
-            state: 'verified',
-            summary: verdict.summary,
-            medal: verdict.medal,
-          };
-        }
-        const { summary } = doc;
-        if (summary !== undefined) {
-          scored.push({
-            id: candidate.id,
-            header: replay.header,
-            doc: { ...doc, summary },
-          });
+          await countRerun(db, replay.header, doc.kind, verdict);
+          if (verdict.state === 'verified' && verdict.summary !== undefined) {
+            scored.push({
+              id,
+              header: replay.header,
+              doc: {
+                ...doc,
+                state: 'verified',
+                summary: verdict.summary,
+                medal: verdict.medal,
+              },
+            });
+          }
         }
       }
-      return scored;
-    }
-  );
-  const scored = spent?.result ?? [];
+    );
+  }
   await scoreAll(db, scored);
   const published: string[] = [];
   for (const id of pickPublished(scored)) {
@@ -173,20 +186,44 @@ export async function featureBest(
   return { day, checked, published };
 }
 
-/** The accounts behind the uids, a few at a time. */
-async function lookUp(
-  uids: readonly string[],
-  accountInfo: (uid: string) => Promise<AccountInfo>
-): Promise<Map<string, AccountInfo>> {
-  const found = new Map<string, AccountInfo>();
-  for (let i = 0; i < uids.length; i += 20) {
-    await Promise.all(
-      uids.slice(i, i + 20).map(async (uid) => {
-        found.set(uid, await accountInfo(uid));
-      })
+/** Replays whose players are looked up at once. */
+const LOOKUP_CHUNK = 40;
+
+/**
+ * The candidates (`rankCandidates`) among the fitting replays, best hints
+ * first: their players' accounts and profiles are looked up a chunk at a
+ * time, only until 20 candidates are found.
+ */
+async function pickCandidates(
+  db: Firestore,
+  fitting: readonly Stored[],
+  accountInfo: (uid: string) => Promise<AccountInfo>,
+  now: number
+): Promise<Stored[]> {
+  const accounts = new Map<string, AccountInfo>();
+  const optedOut = new Set<string>();
+  const accepted: Stored[] = [];
+  for (let i = 0; i < fitting.length; i += LOOKUP_CHUNK) {
+    const chunk = fitting.slice(i, i + LOOKUP_CHUNK);
+    const unknown = [
+      ...new Set(chunk.flatMap(({ doc }) => humansOf(doc) ?? [])),
+    ].filter((uid) => !accounts.has(uid));
+    const [found, out] = await Promise.all([
+      Promise.all(
+        unknown.map(async (uid) => [uid, await accountInfo(uid)] as const)
+      ),
+      galleryOptOuts(db, unknown),
+    ]);
+    found.forEach(([uid, info]) => accounts.set(uid, info));
+    out.forEach((uid) => optedOut.add(uid));
+    accepted.push(
+      ...chunk.filter(({ doc }) => isCandidate(doc, accounts, optedOut, now))
     );
+    if (rankCandidates(accepted).length >= MAX_CANDIDATES) {
+      break;
+    }
   }
-  return found;
+  return rankCandidates(accepted);
 }
 
 /** The players among the uids who keep their matches out of the gallery. */
@@ -207,18 +244,23 @@ async function galleryOptOuts(
   );
 }
 
-/** Stores a re-run's verdict on the replay, unless its state moved meanwhile. */
+/**
+ * Stores a re-run's verdict on the replay, unless its state moved meanwhile
+ * - true when it did.
+ */
 async function applyVerdict(
   db: Firestore,
   id: string,
   state: string,
   verdict: Verdict
-): Promise<void> {
+): Promise<boolean> {
   const ref = db.doc(`replays/${id}`);
-  await db.runTransaction(async (tx) => {
-    if ((await tx.get(ref)).get('state') === state) {
-      tx.update(ref, verdictFields(verdict));
+  return db.runTransaction(async (tx) => {
+    if ((await tx.get(ref)).get('state') !== state) {
+      return false;
     }
+    tx.update(ref, verdictFields(verdict));
+    return true;
   });
 }
 
@@ -235,7 +277,7 @@ async function scoreAll(db: Firestore, scored: Scored[]): Promise<void> {
         dailySort(b.doc.winnerSeat === 0, b.doc.ticks) -
         dailySort(a.doc.winnerSeat === 0, a.doc.ticks)
     )[0];
-  const batch = db.batch();
+  const writes: Promise<unknown>[] = [];
   for (const candidate of scored) {
     const { doc, header } = candidate;
     const feat =
@@ -254,9 +296,19 @@ async function scoreAll(db: Firestore, scored: Scored[]): Promise<void> {
       feat,
     });
     candidate.doc = { ...doc, score, reasons };
-    batch.update(db.doc(`replays/${candidate.id}`), { score, reasons });
+    // A replay deleted meanwhile (its account went) just is not scored.
+    writes.push(
+      db
+        .doc(`replays/${candidate.id}`)
+        .update({ score, reasons })
+        .catch((error: unknown) => {
+          if (!hasGrpcCode(error, 5, 'not-found')) {
+            throw error;
+          }
+        })
+    );
   }
-  await batch.commit();
+  await Promise.all(writes);
 }
 
 /**
