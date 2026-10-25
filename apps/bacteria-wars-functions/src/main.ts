@@ -20,6 +20,7 @@ import * as v1 from 'firebase-functions/v1';
 import { runHourly } from './boards/hourly';
 import { boardProfileChanged as relabelEntries } from './boards/profile-changed';
 import { rankDaily } from './boards/rank-daily';
+import { rankEndless, trackDeclaredMatch } from './boards/rank-endless';
 import { rankOnline } from './boards/rank-online';
 import {
   PROGRESS_KEY,
@@ -126,12 +127,12 @@ export const rankProgress = onDocumentWritten(
 );
 
 /**
- * The online board, once an online match turns `agreed`, and the daily
- * board, when a replay of a declared daily attempt comes (ADR 0012).
+ * The online board, once an online match turns `agreed`, and the daily and
+ * endless boards, when a replay of a declared attempt comes (ADR 0012).
  * Retried for an hour (`RETRY_FOR_MS`). A delivery reads the replay as it
  * stands and leaves one that is gone or already answered (`rankedReason`,
- * which `rankOnline` writes with its marker, and `rankDaily` too); both
- * check that again in their transactions. They decide at the event's
+ * which `rankOnline` writes with its marker, and the declared boards too);
+ * each checks that again in its transaction. They decide at the event's
  * time: caps, the room's clock, a declaration's deadline and when a ban
  * ends. The ban documents are read at the delivery, so a ban placed after
  * the event still applies.
@@ -156,9 +157,9 @@ export const rankReplay = onDocumentWritten(
       before?.['state'] !== 'agreed'
         ? 'online'
         : before === undefined &&
-            after?.['kind'] === 'daily' &&
+            (after?.['kind'] === 'daily' || after?.['kind'] === 'endless') &&
             after['attempt'] !== undefined
-          ? 'daily'
+          ? (after['kind'] as 'daily' | 'endless')
           : null;
     if (kind === null) {
       return;
@@ -173,9 +174,12 @@ export const rankReplay = onDocumentWritten(
     if (kind === 'online') {
       const reason = await rankOnline(db(), id, accountCreatedAt, at);
       logger.info('Online match ranked', { id, reason });
-    } else {
+    } else if (kind === 'daily') {
       const reason = await rankDaily(db(), id, replay, at);
       logger.info('Daily attempt ranked', { id, reason });
+    } else {
+      const reason = await rankEndless(db(), id, replay, at);
+      logger.info('Endless match ranked', { id, reason });
     }
   }
 );
@@ -239,3 +243,20 @@ export const hourly = HOURLY_ON
       }
     )
   : undefined;
+
+/** A declared endless match joins its run at once (ADR 0012). */
+export const declaredMatch = onDocumentCreated(
+  {
+    document: 'players/{uid}/attempts/{attemptId}',
+    memory: '256MiB',
+    cpu: 'gcf_gen1',
+  },
+  async (event) => {
+    await trackDeclaredMatch(
+      db(),
+      event.params.uid,
+      event.params.attemptId,
+      Date.now()
+    );
+  }
+);
