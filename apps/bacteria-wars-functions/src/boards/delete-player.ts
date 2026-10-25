@@ -6,8 +6,8 @@ import { memberEntries } from './entries';
  * board it is on (`boardMembers/{uid}.boards`), which `rebuildTop` then
  * takes off the top documents; its `dailyRuns` (one per daily board) and
  * `endlessRuns`; `boardMembers`, `limits` and `moderation`; its declared
- * attempts and notices. Runs for banned accounts too: a deletion must erase the player's data. The
- * ban and its tombstone come with the admin commands. Throws when a delete
+ * attempts and notices. Runs for banned accounts too: a deletion must erase the player's data. Its
+ * ban and audit entries stay until the ban tombstones come. Throws when a delete
  * fails, after the others ran; returns the board documents it went
  * through.
  */

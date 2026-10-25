@@ -857,10 +857,14 @@ chose not to share their status, and the privacy page says so.
 
 - **When the ban is set**, `adminCommand`:
   1. deletes `queue/{uid}`, RTDB `status/{uid}` and `connections/{uid}`,
-     the rooms the player hosts, the invites they created (`invites` where
-     `from == uid`), the challenges they sent, and the friend requests they
-     left (a collection-group query on `requests` by document id, which
-     also finds requests made before an unfriend);
+     the open rooms the player hosts (a taken room's stub stays: the other
+     player's report of the match is checked against it) and the invites
+     they created (`invites` where `from == uid`). The challenges they
+     sent expire within the hour and point to their rooms, and their friend
+     requests lead nowhere while they can write nothing, so both are left
+     to TTL and the other player (a collection-group query cannot filter
+     on a bare document id, and reading the groups through grows with the
+     player base);
   2. hides their entries on every board (`hiddenBy: 'ban'`);
   3. takes their public replays down the way ADR 0011's `remove` does;
   4. writes a tombstone if the account has a Google provider (below);
@@ -1141,8 +1145,43 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      the board. A replay taken out of the gallery carries `galleryOut`,
      which keeps it out once its player's uid has left `optOut`. The
      tombstone, the ban, the audit scrub and `stats/accounts` follow with
-     the bans.
-   - The admin commands and `countAccount` come next.
+     the tombstones; until then a deleted account's ban stays behind.
+   - Then the bans: `adminCommand` (the auth-context trigger, the writer
+     compared with `uid`, the owner read again with `getUser()`,
+     `parseAdminCommand`, the audit under the command id, `result` on the
+     command) runs `player.ban` and `player.unban`; every other type
+     answers `unsupported` until its wave, audited like any failed
+     command. The command claims its audit entry with `create()`
+     (`ok: null`) before it acts, so a second delivery neither acts again
+     nor overwrites the first one's result. The owner check also refuses
+     a disabled account. A ban writes `bans/{uid}`, and for a new ban the
+     notice `banned` and `moderation/{uid}.bans`, in one transaction, then
+     RTDB `bans/{uid}`, clears out the queue entry, status, connection,
+     open hosted rooms and invites, hides the entries (`hiddenBy.ban`,
+     updated in place so a daily entry keeps its TTL) and takes the public
+     replays down (the stored replay first, the public copy's `removedAt`
+     last). A ban that holds changes only `until` and `reason` (no notice,
+     no count), and runs the other steps again, which change nothing the
+     second time, so a command that failed half-way is finished by sending
+     it again. Unbanning, and `hourly` for ended bans (25 a run, oldest
+     first, each audited with `by: 'system'`), removes the RTDB ban, lifts
+     the `ban` hide, and then deletes the Firestore ban with the notice
+     `unbanned` in one transaction, so a failed step is tried again. Each
+     step is tied to the ban it read, so a ban set meanwhile keeps all of
+     it: the RTDB ban is removed (in a transaction) only when it is the
+     lifted ban's end or holds no more, an entry is unhidden only while no
+     other ban holds, and the Firestore ban is deleted only while unchanged
+     (`ban-changed` otherwise). An unban without a ban (`not-banned`) still
+     removes the RTDB ban and the hides, to repair what a failed command
+     left: it reads the RTDB value, then the Firestore ban, and removes
+     only the value it read while no ban holds, so a ban set meanwhile
+     keeps its RTDB ban. The rules of `adminCommands` (the shape, the writer,
+     `auth_time` within the hour for destructive types), `adminAudit`,
+     `moderation` and `notices`; the RTDB `connections` node and the ban
+     check on `status` and `connections`; the TTLs of `adminCommands`,
+     `adminAudit` and `notices`, and the two `adminAudit` indexes.
+   - Still to come: the other admin types, the tombstones, `countAccount`
+     and the statistics.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].

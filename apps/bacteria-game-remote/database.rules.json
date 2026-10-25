@@ -3,11 +3,27 @@
     "status": {
       "$uid": {
         ".read": "auth != null",
-        ".write": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && (!newData.exists() || !root.child('bans').child($uid).exists() || (root.child('bans').child($uid).val() !== 0 && root.child('bans').child($uid).val() <= now))",
         ".validate": "newData.hasChildren(['state', 'at']) && (newData.child('state').val() === 'online' || newData.child('state').val() === 'playing') && newData.child('at').isNumber()",
         "state": { ".validate": true },
         "at": { ".validate": true },
         "$other": { ".validate": false }
+      }
+    },
+    "connections": {
+      "$uid": {
+        ".read": false,
+        ".write": "auth != null && auth.uid === $uid && (!newData.exists() || !root.child('bans').child($uid).exists() || (root.child('bans').child($uid).val() !== 0 && root.child('bans').child($uid).val() <= now))",
+        ".validate": "newData.hasChildren(['state', 'at']) && (newData.child('state').val() === 'online' || newData.child('state').val() === 'playing') && newData.child('at').isNumber()",
+        "state": { ".validate": true },
+        "at": { ".validate": true },
+        "$other": { ".validate": false }
+      }
+    },
+    "bans": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
       }
     }
   }

@@ -11,6 +11,14 @@
 export const REGION = 'europe-west1';
 
 /**
+ * The project's Realtime Database (ADR 0010, 0012), where the admin
+ * commands mirror bans and drop a banned player's presence - the URL the
+ * game's `environment.prod.ts` names, rather than one the runtime guesses.
+ */
+export const RTDB_URL =
+  'https://bacteria-wars-default-rtdb.europe-west1.firebasedatabase.app';
+
+/**
  * How many replays one player may submit in an hour - unranked and ranked
  * each (ADR 0012), so unranked uploads never push out a ranked one.
  */

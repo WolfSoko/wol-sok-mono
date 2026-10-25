@@ -288,6 +288,28 @@ describe('boardProfileChanged', () => {
     expect((await entryOf('ada', 'xp')).get('status')).toBe('counted');
   });
 
+  it("keeps a daily entry's TTL when it relabels it", async () => {
+    const expireAt = Timestamp.fromMillis(NOW + 31 * DAY);
+    await db.doc('boardMembers/ada').set({
+      entryIds: { daily: 'd1' },
+      boards: ['daily-2026-10-25'],
+    });
+    await db.doc('boards/daily-2026-10-25/entries/d1').set({
+      sort: 5,
+      atHour: 1,
+      status: 'provisional',
+      show: { ticks: 3_600, won: true },
+      expireAt,
+    });
+    const after = { name: 'Ada', publicName: true };
+    expect(await boardProfileChanged(db, 'ada', { name: 'Ada' }, after)).toBe(
+      1
+    );
+    expect(
+      (await db.doc('boards/daily-2026-10-25/entries/d1').get()).get('expireAt')
+    ).toEqual(expireAt);
+  });
+
   it('takes the name off when the profile is deleted', async () => {
     const profile = { name: 'Ada', publicName: true };
     await db.doc('profiles/ada').set(profile);

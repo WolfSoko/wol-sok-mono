@@ -467,6 +467,232 @@ describe('bans', () => {
   });
 });
 
+describe('adminCommands', () => {
+  /** The owner, signed in just now - as destructive types want. */
+  const fresh = () => ({
+    ...OWNER_TOKEN,
+    auth_time: Math.floor(Date.now() / 1000),
+  });
+  const adminCommand = (extra: object = {}) => ({
+    uid: 'own',
+    type: 'player.ban',
+    target: { uid: 'eve' },
+    reason: 'cheats',
+    args: { until: null, reason: 'cheating' },
+    createdAt: serverTimestamp(),
+    expireAt: inADay(),
+    ...extra,
+  });
+  let sent = 0;
+  // A new document each time: a command is created, never rewritten.
+  const send = (data: object, token: object = fresh(), uid = 'own') =>
+    setDoc(doc(db(uid, token), `adminCommands/a${++sent}`), data);
+
+  it('takes a command from the owner, in their own name', async () => {
+    await assertSucceeds(send(adminCommand()));
+    await assertFails(send(adminCommand({ uid: 'bob' })));
+    await assertFails(
+      send(
+        adminCommand({ uid: 'eve' }),
+        { auth_time: fresh().auth_time },
+        'eve'
+      )
+    );
+  });
+
+  it('wants the claim on a verified Google account', async () => {
+    const { auth_time } = fresh();
+    await assertFails(
+      send(adminCommand(), { ...OWNER_TOKEN, auth_time, admin: false })
+    );
+    await assertFails(
+      send(adminCommand(), { ...OWNER_TOKEN, auth_time, email_verified: false })
+    );
+    await assertFails(
+      send(adminCommand(), {
+        ...OWNER_TOKEN,
+        auth_time,
+        firebase: { sign_in_provider: 'anonymous' },
+      })
+    );
+  });
+
+  it('wants a recent sign-in for destructive types only', async () => {
+    const stale = {
+      ...OWNER_TOKEN,
+      auth_time: Math.floor((Date.now() - 2 * HOUR) / 1000),
+    };
+    await assertFails(send(adminCommand(), stale));
+    await assertFails(
+      send(adminCommand({ type: 'profile.reset', args: {} }), stale)
+    );
+    await assertSucceeds(
+      send(adminCommand({ type: 'player.unban', args: {} }), stale)
+    );
+    await assertSucceeds(
+      send(
+        adminCommand({
+          type: 'stats.refresh',
+          target: null,
+          reason: '',
+          args: {},
+        }),
+        stale
+      )
+    );
+  });
+
+  it('wants the server time, a short expiry and no extra field', async () => {
+    await assertFails(send(adminCommand({ createdAt: Timestamp.now() })));
+    await assertFails(
+      send(
+        adminCommand({
+          expireAt: Timestamp.fromMillis(Date.now() + 3 * 24 * HOUR),
+        })
+      )
+    );
+    await assertFails(send(adminCommand({ result: { ok: true } })));
+    await assertFails(send(adminCommand({ type: 'player.delete' })));
+  });
+
+  it('wants a reason, but not for statistics', async () => {
+    await assertFails(send(adminCommand({ reason: '' })));
+    await assertFails(send(adminCommand({ reason: '   ' })));
+    await assertFails(send(adminCommand({ reason: 'x'.repeat(201) })));
+    const { reason: _reason, ...noReason } = adminCommand({
+      type: 'stats.recount',
+      target: null,
+      args: {},
+    });
+    await assertSucceeds(send(noReason));
+  });
+
+  it("checks each type's target", async () => {
+    const entry = { boardId: 'daily-2026-11-03', entryId: 'e_1-x' };
+    await assertSucceeds(send(adminCommand({ target: entry })));
+    await assertFails(send(adminCommand({ target: { uid: 'e/ve' } })));
+    await assertFails(
+      send(adminCommand({ target: { boardId: 'week', entryId: 'e1' } }))
+    );
+    await assertFails(send(adminCommand({ target: null })));
+    await assertFails(
+      send(adminCommand({ type: 'player.unban', target: entry, args: {} }))
+    );
+    await assertFails(
+      send(
+        adminCommand({
+          type: 'board.verify',
+          target: { boardId: 'xp', entryId: 'e1' },
+          args: {},
+        })
+      )
+    );
+    await assertSucceeds(
+      send(
+        adminCommand({
+          type: 'board.verify',
+          target: { boardId: 'endless', entryId: 'e1' },
+          args: {},
+        })
+      )
+    );
+    await assertFails(
+      send(
+        adminCommand({
+          type: 'stats.refresh',
+          target: { uid: 'eve' },
+          args: {},
+        })
+      )
+    );
+  });
+
+  it("checks each type's arguments", async () => {
+    const ban = (args: object) => send(adminCommand({ args }));
+    await assertSucceeds(
+      ban({
+        until: Timestamp.fromMillis(Date.now() + 24 * HOUR),
+        reason: 'spam',
+      })
+    );
+    await assertSucceeds(ban({ until: Date.now() + HOUR, reason: 'other' }));
+    await assertFails(ban({ until: Date.now() - HOUR, reason: 'other' }));
+    await assertFails(ban({ until: null, reason: 'rude' }));
+    await assertFails(ban({ until: null }));
+    await assertFails(ban({ until: null, reason: 'spam', extra: 1 }));
+    const hide = (args: object) =>
+      send(
+        adminCommand({
+          type: 'board.hideEntry',
+          target: { boardId: 'xp', entryId: 'e1' },
+          args,
+        })
+      );
+    await assertSucceeds(hide({ bar: true }));
+    await assertSucceeds(hide({}));
+    await assertFails(hide({ bar: 'yes' }));
+    await assertFails(
+      send(adminCommand({ type: 'player.unban', args: { bar: true } }))
+    );
+  });
+
+  it("lets the owner read their own commands, nobody else's", async () => {
+    await seed('adminCommands/a1', { uid: 'own', type: 'stats.refresh' });
+    await assertSucceeds(
+      getDoc(doc(db('own', OWNER_TOKEN), 'adminCommands/a1'))
+    );
+    await assertFails(getDoc(doc(db('ada'), 'adminCommands/a1')));
+    await assertFails(
+      updateDoc(doc(db('own', fresh()), 'adminCommands/a1'), {
+        result: { ok: true },
+      })
+    );
+  });
+});
+
+describe('adminAudit', () => {
+  it('lets the owner read it, nobody write it', async () => {
+    await seed('adminAudit/a1', { by: 'own', type: 'player.ban' });
+    await assertSucceeds(getDoc(doc(db('own', OWNER_TOKEN), 'adminAudit/a1')));
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db('own', OWNER_TOKEN), 'adminAudit'),
+          orderBy('at', 'desc'),
+          limit(25)
+        )
+      )
+    );
+    await assertFails(getDoc(doc(db('ada'), 'adminAudit/a1')));
+    await assertFails(
+      setDoc(doc(db('own', OWNER_TOKEN), 'adminAudit/a2'), { by: 'own' })
+    );
+  });
+});
+
+describe('notices and moderation', () => {
+  it("lets a player read and delete their own notices, nobody else's", async () => {
+    await seed('players/ada/notices/n1', { type: 'banned' });
+    await assertSucceeds(getDoc(doc(db('ada'), 'players/ada/notices/n1')));
+    await assertSucceeds(getDocs(collection(db('ada'), 'players/ada/notices')));
+    await assertFails(getDoc(doc(db('bob'), 'players/ada/notices/n1')));
+    await assertFails(
+      setDoc(doc(db('ada'), 'players/ada/notices/n2'), { type: 'unbanned' })
+    );
+    await assertSucceeds(
+      import('firebase/firestore').then(({ deleteDoc }) =>
+        deleteDoc(doc(db('ada'), 'players/ada/notices/n1'))
+      )
+    );
+  });
+
+  it('lets only the owner read the moderation counters', async () => {
+    await seed('moderation/ada', { bans: 1 });
+    await assertSucceeds(getDoc(doc(db('own', OWNER_TOKEN), 'moderation/ada')));
+    await assertFails(getDoc(doc(db('ada'), 'moderation/ada')));
+  });
+});
+
 describe('the room stub', () => {
   const answered = () => ({
     host: 'ada',

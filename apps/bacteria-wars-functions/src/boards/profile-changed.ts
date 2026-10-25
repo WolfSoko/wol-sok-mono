@@ -39,7 +39,8 @@ export async function boardProfileChanged(
         return false;
       }
       const data = entry.data() ?? {};
-      tx.set(
+      // Updated in place, so a daily entry keeps its `expireAt`.
+      tx.update(
         ref,
         entryData(
           entryId,

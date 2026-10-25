@@ -84,6 +84,13 @@ service cloud.firestore {
         isDeclaration(owner) && isTodaysDaily(attemptId);
     }
 
+    // What the owner's actions tell a player (ADR 0012), written by the
+    // functions only: the player reads and deletes them, and TTL takes them
+    // after 31 days.
+    match /players/{owner}/notices/{id} {
+      allow read, delete: if isPlayer(owner);
+    }
+
     // A player's friends, each side writing its own list - or the inviter's,
     // with the token of an invitation the inviter made. A player may see
     // whether someone lists them, and take themselves off a list.
@@ -238,6 +245,29 @@ service cloud.firestore {
       allow get: if isPlayer(uid) || isAdmin();
     }
 
+    // The owner's commands (ADR 0012): created by the owner only, in their
+    // own name, at the server's time, of a known type with the target and
+    // arguments it takes - what `parseAdminCommand` reads, as far as rules
+    // can check it. The destructive types also want a sign-in within the
+    // last hour, which limits what a stolen session can do. `adminCommand`
+    // runs them and writes `result`, which the owner reads back; TTL takes
+    // them after a day.
+    match /adminCommands/{id} {
+      allow read: if isAdmin() && resource.data.uid == request.auth.uid;
+      allow create: if isAdmin() && isAdminCommand(request.resource.data);
+    }
+
+    // What the owner and the functions did (ADR 0012), written by the
+    // functions only and read by the owner; TTL takes it after 2 years.
+    match /adminAudit/{id} {
+      allow read: if isAdmin();
+    }
+
+    // A player's moderation counters, written by the functions only.
+    match /moderation/{uid} {
+      allow get: if isAdmin();
+    }
+
     function signedIn() {
       return request.auth != null;
     }
@@ -257,6 +287,86 @@ service cloud.firestore {
       let ban = /databases/$(database)/documents/bans/$(request.auth.uid);
       return !exists(ban) ||
         (get(ban).data.until != null && get(ban).data.until <= request.time);
+    }
+
+    // An admin command whole: its fields, writer, time and end, its reason,
+    // then the target and arguments its type takes.
+    function isAdminCommand(data) {
+      return data.keys().hasOnly(['uid', 'type', 'target', 'reason', 'args', 'createdAt', 'expireAt']) &&
+        data.keys().hasAll(['uid', 'type', 'target', 'args', 'createdAt', 'expireAt']) &&
+        data.uid == request.auth.uid &&
+        data.createdAt == request.time &&
+        isCommandExpiry(data.expireAt) &&
+        data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
+          'board.hidePlayer', 'board.restore', 'board.verify', 'player.ban',
+          'player.unban', 'stats.refresh', 'stats.recount'] &&
+        isAdminReason(data) &&
+        (!(data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
+          'board.hidePlayer', 'player.ban']) || signedInLately()) &&
+        isAdminTarget(data.type, data.target) &&
+        isAdminArgs(data.type, data.args);
+    }
+
+    // 1 to 200 characters, not only spaces; `stats.*` may leave it out.
+    function isAdminReason(data) {
+      return data.type in ['stats.refresh', 'stats.recount']
+        ? !('reason' in data) || (data.reason is string && data.reason.size() <= 200)
+        : 'reason' in data && data.reason is string &&
+          data.reason.size() <= 200 && data.reason.trim().size() > 0;
+    }
+
+    function isAdminTarget(type, target) {
+      return type in ['profile.reset', 'profile.removeImage', 'player.unban']
+        ? isUidTarget(target)
+        : type in ['stats.refresh', 'stats.recount']
+          ? target == null
+          : type == 'board.hideEntry'
+            ? isEntryTarget(target, false)
+            : type == 'board.verify'
+              ? isEntryTarget(target, true)
+              : isUidTarget(target) || isEntryTarget(target, false);
+    }
+
+    function isUidTarget(target) {
+      return target is map &&
+        target.keys().hasOnly(['uid']) && target.keys().hasAll(['uid']) &&
+        target.uid is string && target.uid.matches('[A-Za-z0-9]{1,128}');
+    }
+
+    // A board entry; only daily and endless entries are played again.
+    function isEntryTarget(target, verifiable) {
+      return target is map &&
+        target.keys().hasOnly(['boardId', 'entryId']) &&
+        target.keys().hasAll(['boardId', 'entryId']) &&
+        target.entryId is string && target.entryId.matches('[A-Za-z0-9_-]{1,64}') &&
+        target.boardId is string &&
+        target.boardId.matches(verifiable
+          ? '(endless|daily-[0-9]{4}-[0-9]{2}-[0-9]{2})'
+          : '(xp|online|endless|daily-[0-9]{4}-[0-9]{2}-[0-9]{2})');
+    }
+
+    function isAdminArgs(type, args) {
+      return args is map && (type in ['board.hideEntry', 'board.hidePlayer']
+        ? args.keys().hasOnly(['bar']) && args.get('bar', false) is bool
+        : type == 'player.ban'
+          ? isBanArgs(args)
+          : args.keys().size() == 0);
+    }
+
+    // Until when, as a timestamp or ms (null for good), and why.
+    function isBanArgs(args) {
+      return args.keys().hasOnly(['until', 'reason']) &&
+        args.keys().hasAll(['until', 'reason']) &&
+        args.reason in ['cheating', 'offensive-profile', 'spam', 'other'] &&
+        (args.until == null ||
+          (args.until is timestamp && args.until > request.time) ||
+          (args.until is int && args.until > request.time.toMillis()));
+    }
+
+    // Signed in within the last hour: `auth_time` is in seconds.
+    function signedInLately() {
+      return request.auth.token.get('auth_time', 0) * 1000 >
+        request.time.toMillis() - 3600000;
     }
 
     // A command document's end: about a day ahead by the client's clock,
