@@ -1358,7 +1358,13 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      on it) - win rates with and without
      evolving, the evolved share and its weapons, match lengths and the
      medallions of the re-run matches.
-   - Still to come: the toggle page, on the game's Remote Config reader. The admin link in
+   - The toggle page: what Remote Config holds and each toggle's default,
+     read through the game's Remote Config connection with one fetch past
+     its hour (`readToggles`, through `admin-kit`), and switches that
+     publish only the changed toggles through `toggles.set` - a reason and
+     a fresh sign-in, like the other commands players notice. The gate
+     takes the game's `isOwnerToken`, so it and the game's admin link
+     agree. The admin link in
      the main menu and the client's ban handling go with the game lib's
      client release.
 

@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { GameCloud } from '@wolsok/feat-lazy-bac-game/admin-kit';
+import { GameCloud, isOwnerToken } from '@wolsok/feat-lazy-bac-game/admin-kit';
 
 /** Where the visitor stands with the admin area. */
 export type AdminAccess =
@@ -57,10 +57,8 @@ export class AdminAccessService {
     }
     try {
       const token = await authSdk.getIdTokenResult(user, true);
-      const owner =
-        token.claims['admin'] === true &&
-        token.claims['email_verified'] === true &&
-        token.signInProvider === 'google.com';
+      // The game's own check, so its admin link and this gate agree.
+      const owner = isOwnerToken(token);
       this.signedInAt.set(Date.parse(token.authTime));
       return this.settle(owner ? 'granted' : 'no-access');
     } catch (error) {

@@ -131,4 +131,20 @@ describe('AdminActionsService', () => {
       duration: 4000,
     });
   });
+
+  it('passes the arguments the dialog does not ask for', async () => {
+    const { service, send } = setUp({ reason: 'busy', args: {} }, { ok: true });
+    await service.run({
+      type: 'toggles.set',
+      subject: 'Leaderboards',
+      target: null,
+      args: { values: { leaderboards: false } },
+    });
+    expect(send).toHaveBeenCalledWith({
+      type: 'toggles.set',
+      target: null,
+      reason: 'busy',
+      args: { values: { leaderboards: false } },
+    });
+  });
 });

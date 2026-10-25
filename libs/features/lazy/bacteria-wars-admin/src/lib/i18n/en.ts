@@ -7,6 +7,7 @@ export const EN = {
     leaderboards: 'Leaderboards',
     replays: 'Replays',
     balance: 'Balance',
+    toggles: 'Toggles',
     bans: 'Bans',
     audit: 'Audit',
   },
@@ -191,6 +192,29 @@ export const EN = {
       lt5m: '<5 min',
       lt10m: '<10 min',
       ge10m: '≥10 min',
+    },
+  },
+  toggles: {
+    hint: 'Feature toggles in Remote Config. Players\u2019 devices fetch them at most once an hour.',
+    unavailable:
+      'Remote Config cannot be reached here (emulators); the defaults show.',
+    failed: 'Could not read the toggles.',
+    fromRemoteConfig: 'set in Remote Config',
+    default: 'default ({value})',
+    changed: 'changed',
+    on: 'on',
+    off: 'off',
+    publish: 'Publish {count} change(s)',
+    discard: 'Discard',
+    reload: 'Read again',
+    published:
+      'Published: {toggles}. Remote Config may answer with the old values for a little while.',
+    name: {
+      rankedDaily: 'Ranked daily attempts',
+      rankedEndless: 'Ranked endless runs',
+      matchmaking: 'Matchmaking queue',
+      leaderboards: 'Leaderboards',
+      deterministicSimulation: 'Deterministic simulation',
     },
   },
   bans: {

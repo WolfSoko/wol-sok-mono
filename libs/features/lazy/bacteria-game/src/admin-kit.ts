@@ -15,6 +15,7 @@ export type {
   RemoteConfigConnection,
 } from './lib/storage/firebase-connection';
 export { isOwnerToken } from './lib/storage/owner-token';
+export { readToggles } from './lib/storage/remote-config-game-toggles';
 
 // The page's loading splash, which only the game itself takes down.
 export { SPLASH_ID } from './lib/splash';
@@ -73,3 +74,11 @@ export type {
   EntryTarget,
   PlayerTarget,
 } from './lib/state/admin-commands';
+export {
+  FEATURE_TOGGLE_KEYS,
+  FEATURE_TOGGLES,
+} from './lib/state/feature-toggles';
+export type {
+  FeatureToggle,
+  FeatureToggles,
+} from './lib/state/feature-toggles';

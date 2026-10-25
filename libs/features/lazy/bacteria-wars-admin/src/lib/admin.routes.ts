@@ -71,6 +71,13 @@ export function adminRoutes(options: GameCloudOptions | null): Routes {
                 ),
             },
             {
+              path: 'toggles',
+              loadComponent: () =>
+                import('./toggles/toggles.component').then(
+                  (m) => m.TogglesComponent
+                ),
+            },
+            {
               path: 'bans',
               loadComponent: () =>
                 import('./bans/bans.component').then((m) => m.BansComponent),
