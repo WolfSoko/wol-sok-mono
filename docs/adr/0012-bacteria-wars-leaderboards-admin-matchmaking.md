@@ -1051,9 +1051,7 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      new daily replay with an attempt (`rankDaily`: the checks above into
      `dailyRuns` and the entry, provisional), `verify.ts`, and `hourly`
      (`runHourly`: "Not reported", `final` on yesterday's board at 23:00
-     UTC, the verification slice in trust order). `hourly` is not even
-     deployed yet (`HOURLY_ON` in the functions' `config.ts`) until the
-     owner has enabled Cloud Scheduler. `acceptReplay` keeps a ranked
+     UTC, the verification slice in trust order). `hourly` deploys with the functions (`HOURLY_ON` in the functions' `config.ts`), since the owner enabled Cloud Scheduler. `acceptReplay` keeps a ranked
      submission's `createdAt` as `submittedAt`, which the deadline is
      measured against; the TTL policies of `attempts`, `dailyRuns`, the
      daily boards and their entries. A summary's `timeline` is one flat
@@ -1108,9 +1106,10 @@ written.
 - Review the CPU benchmark and the budgets it sets before the functions
   deploy.
 - After the first functions deploy, check that Cloud Scheduler shows
-  `hourly` (paused) and `featureBest` (paused), and how many free jobs the
-  billing account still has. Enable `hourly` the day step 6 ships, and
-  `featureBest` after step 7.
+  `hourly` (running: before step 6 it only closes unreported online
+  matches, as no daily attempt exists to check) and `featureBest`
+  (paused), and how many free jobs the billing account still has.
+  Enable `featureBest` after step 7.
 - Sign in at `https://bacteria-wars.wolsok.de/admin` with the Google
   account that has the claim (ADR 0011's grant script). Run "Recount
   accounts" once, and check that the overview figures look plausible.

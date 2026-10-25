@@ -3,11 +3,12 @@
  */
 
 /**
- * The functions' region: the Firestore location of `bacteria-wars`, which
- * the owner confirms before the first deploy
- * (`gcloud firestore databases describe --project bacteria-wars`).
+ * The functions' region: the Firestore location of `bacteria-wars`
+ * (`gcloud firestore databases describe`, confirmed by the owner on
+ * 2026-10-25), where the Realtime Database and the secrets are too.
+ * Firestore triggers must run there.
  */
-export const REGION = 'europe-west3';
+export const REGION = 'europe-west1';
 
 /** How many replays one player may submit in an hour. */
 export const SUBMISSIONS_PER_HOUR = 60;
@@ -32,8 +33,8 @@ export const REPLAY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export const BAN_CACHE_MS = 60 * 1000;
 
 /**
- * Whether the hourly function is deployed. Off until the owner has enabled
- * Cloud Scheduler and Pub/Sub for the project (ADR 0011, "Owner's manual
- * steps"); daily entries stay provisional meanwhile.
+ * Whether the hourly function is deployed - on since the owner enabled
+ * Cloud Scheduler and Pub/Sub (2026-10-25). Off takes it out of the next
+ * deploy.
  */
-export const HOURLY_ON = false;
+export const HOURLY_ON = true;
