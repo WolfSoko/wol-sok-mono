@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.103.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.102.0...v74.103.0) (2026-10-25)
+
+### Features
+
+* **bacteria-game-remote:** ✨ the privacy policy says what the game does now ([#2673](https://github.com/WolfSoko/wol-sok-mono/issues/2673)) ([9c6fc5c](https://github.com/WolfSoko/wol-sok-mono/commit/9c6fc5cd70ac0fd1ae82b632caea5c8110367499))
+* **feat-lazy-bacteria-wars-admin:** the Balance view reads the level statistics ([#2674](https://github.com/WolfSoko/wol-sok-mono/issues/2674)) ([8577f85](https://github.com/WolfSoko/wol-sok-mono/commit/8577f8576e0383538d065fa32843d0de97f35bd3))
+
 ## [74.102.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.101.0...v74.102.0) (2026-10-25)
 
 ### Features
