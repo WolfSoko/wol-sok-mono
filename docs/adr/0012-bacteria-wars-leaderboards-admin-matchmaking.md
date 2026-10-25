@@ -1284,8 +1284,12 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      the overview on `adminStats` with "Refresh" and the last 48 hourly
      snapshots. `provideGameCloud` is idempotent (`GameCloud.firebase()`
      hands the admin the connection without starting the game's
-     backends). Federation keeps every `@angular/material` secondary and
-     skips the admin lib and `admin-kit`.
+     backends). Federation skips the admin lib and `admin-kit` in every
+     app, and Material's table, tabs and toolbar, which only the admin
+     uses, in `bacteria-game-remote` alone, so its admin chunk bundles them.
+     Keeping all of Material's secondaries in every app's import map, as
+     planned above, broke the shell's dev build (its Sass could not
+     resolve `@use '@angular/material'`); the shell never loads `/admin`.
    - `check-lazy-admin` runs at the end of the remote's production
      `build`. It reads the build's source maps instead of an esbuild
      metafile, which would have to be written into the deployed folder:

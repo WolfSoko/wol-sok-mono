@@ -43,13 +43,6 @@ function workspaceFederation(config) {
         .patch(['@angular/platform-browser'], {
           includeSecondaries: { keepAll: true },
         })
-        // The game's admin area (bacteria-game-remote's `/admin`, never
-        // exposed) is the only user of Material's table, paginator, sort and
-        // dialog, so the pruning would drop them while its chunk imports
-        // them. Kept in every app, so the shell and the remotes agree.
-        .patch(['@angular/material'], {
-          includeSecondaries: { keepAll: true },
-        })
         .get(),
       // p5 keeps global state per instance and breaks when two sketches share
       // one copy, so every federated app brings its own - the same exception
