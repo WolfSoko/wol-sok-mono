@@ -63,7 +63,11 @@ export class GameCloud {
   /** Whether a service has asked already - a project comes too late then. */
   private asked = false;
 
-  /** Uses the project connected to, none for this device only. */
+  /**
+   * Uses the project connected to, none for this device only. The same
+   * project provided again (the admin area beside the game) is the same
+   * connection: `provideFirebase` reuses its instances.
+   */
   public use(connection: FirebaseConnection | null): void {
     if (this.asked && connection?.db !== this.connection?.db) {
       console.error(
@@ -72,6 +76,15 @@ export class GameCloud {
       return;
     }
     this.connection = connection;
+  }
+
+  /**
+   * The connection to the project, null without one - for the admin area,
+   * which reads and writes the owner's collections itself. Unlike the
+   * game's services it starts no backend.
+   */
+  public firebase(): FirebaseConnection | null {
+    return this.connection;
   }
 
   /** The storage of whoever plays. */

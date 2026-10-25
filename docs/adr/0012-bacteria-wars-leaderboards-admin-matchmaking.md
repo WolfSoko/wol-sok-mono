@@ -1291,6 +1291,32 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
 7. **Admin lib** with all views, including the moved curation page, with
    or after 0011 [6]. Then enable `featureBest`, sign in, and run
    `stats.recount` once.
+   - So far: the lib `feat-lazy-bacteria-wars-admin` with the
+     `admin-kit` entry, the `/admin` route in `bacteria-game-remote`'s
+     `app.routes.ts` (`data.noindex`, disallowed in `robots.txt`, kept out
+     of the sitemap), the gate (Google sign-in, "No access") with the
+     guard, the command service (it asks for a fresh sign-in before a
+     destructive type instead of sending what the rules would refuse) and
+     the overview on `adminStats` with "Refresh" and the last 48 hourly
+     snapshots. `provideGameCloud` is idempotent (`GameCloud.firebase()`
+     hands the admin the connection without starting the game's
+     backends). Federation skips the admin lib and `admin-kit` in every
+     app, and Material's table, tabs and toolbar, which only the admin
+     uses, in `bacteria-game-remote` alone, so its admin chunk bundles them.
+     Keeping all of Material's secondaries in every app's import map, as
+     planned above, broke the shell's dev build (its Sass could not
+     resolve `@use '@angular/material'`); the shell never loads `/admin`.
+   - `check-lazy-admin` runs at the end of the remote's production
+     `build`. It reads the build's source maps instead of an esbuild
+     metafile, which would have to be written into the deployed folder:
+     it follows the static imports from the scripts `index.html` starts
+     and from the exposed `Routes`, and fails when any of them holds an
+     input under `libs/features/lazy/bacteria-wars-admin/`. The `initial`
+     growth limit of 2 KB is left to ADR 0014's script budgets.
+   - Still to come: the moderation views (profiles, player, bans,
+     audit), the leaderboards view, the toggle page, the Balance view,
+     the curation page once ADR 0011's gallery exists, and the admin
+     link in the main menu.
 
 ## Owner's decisions
 

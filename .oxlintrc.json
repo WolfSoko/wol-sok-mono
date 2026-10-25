@@ -60,6 +60,7 @@
               "utils",
               "feature",
               "feature:lazy",
+              "feature:admin",
               "api",
               "type:remote"
             ]
@@ -88,6 +89,16 @@
           {
             "sourceTag": "feature:lazy",
             "onlyDependOnLibsWithTags": [
+              "feat-shared",
+              "shared",
+              "utils",
+              "api"
+            ]
+          },
+          {
+            "sourceTag": "feature:admin",
+            "onlyDependOnLibsWithTags": [
+              "feature:lazy",
               "feat-shared",
               "shared",
               "utils",

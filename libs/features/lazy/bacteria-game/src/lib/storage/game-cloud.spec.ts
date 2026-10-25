@@ -49,6 +49,27 @@ describe('GameCloud', () => {
     expect(TestBed.inject(GameAccount)).toBeInstanceOf(DeviceAccount);
   });
 
+  it('takes the same project again, from the admin area beside the game', () => {
+    const error = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    // The test before left its calls on the same spy.
+    error.mockClear();
+    const cloud = TestBed.inject(GameCloud);
+    cloud.use(CONNECTION);
+    TestBed.inject(GameStorage);
+
+    cloud.use({ ...CONNECTION });
+
+    expect(error).not.toHaveBeenCalled();
+    expect(cloud.firebase()?.db).toBe(CONNECTION.db);
+    expect(TestBed.inject(GameAccount)).toBeInstanceOf(FirebaseGameAccount);
+  });
+
+  it('hands the admin area no connection without a project', () => {
+    expect(TestBed.inject(GameCloud).firebase()).toBeNull();
+  });
+
   describe('replays', () => {
     it('stay on this device without a project', () => {
       expect(TestBed.inject(GameReplays)).toBeInstanceOf(LocalGameReplays);

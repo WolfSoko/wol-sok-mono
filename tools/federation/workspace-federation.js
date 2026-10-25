@@ -73,8 +73,11 @@ function workspaceFederation(config) {
       // from the shell's last build. Skipped, the remote bundles its own.
       '@wolsok/feat-fourier-analysis',
       '@wolsok/feat-lazy-bac-game',
-      // The engine entry point (for Cloud Functions) belongs to it too.
+      // The engine entry point (for Cloud Functions) belongs to it too, as
+      // do the admin area and the narrow entry it takes from the game.
       '@wolsok/feat-lazy-bac-game/engine',
+      '@wolsok/feat-lazy-bac-game/admin-kit',
+      '@wolsok/feat-lazy-bac-wars-admin',
       '@wolsok/feat-shader-examples',
       ...(config.skip ?? []),
     ],
