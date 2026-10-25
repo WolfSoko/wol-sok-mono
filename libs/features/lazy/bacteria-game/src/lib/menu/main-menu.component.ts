@@ -11,6 +11,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { GameTextPipe, medalKey } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
@@ -22,10 +23,12 @@ import { Level, LEVELS } from '../state/levels';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { DnaHelixComponent } from './dna-helix.component';
 import { MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
+import { GameAccount } from '../storage/game-account';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { InstallBannerComponent } from '../support/install-banner.component';
 import { InstallOffer } from '../support/install-offer.service';
+import { ADMIN_PATH } from '../support/legal-links';
 import { SiteFooterComponent } from '../support/site-footer.component';
 import {
   SUPPORT_DIALOG_HEADING_ID,
@@ -49,7 +52,8 @@ export type MenuPage =
  * A dumb component - it shows what it is given and reports what the player
  * picks. Only the way to support the game it finds itself, as it differs
  * between the web and the Play Store app - and, on the game's own site, the
- * offer to install it and the legal lines under everything.
+ * offer to install it, the legal lines under everything and, for the
+ * owner, the way to the admin area.
  */
 @Component({
   selector: 'feat-lazy-bac-game-main-menu',
@@ -59,6 +63,7 @@ export type MenuPage =
     MatProgressBarModule,
     MatTooltipModule,
     RankStandingComponent,
+    RouterLink,
     GhostChallengeComponent,
     DnaHelixComponent,
     InstallBannerComponent,
@@ -119,6 +124,15 @@ export class MainMenuComponent {
   protected readonly installOffer = inject(InstallOffer);
   /** True on the game's own site, where the support options are provided. */
   protected readonly onSite = inject(GAME_SUPPORT) !== null;
+  private readonly account = inject(GameAccount);
+  /**
+   * True for the owner on the game's own site, the one with the admin
+   * route - the shell has none.
+   */
+  protected readonly showsAdmin = computed(
+    () => this.onSite && this.account.owner()
+  );
+  protected readonly adminPath = ADMIN_PATH;
   private readonly dialog = inject(MatDialog);
 
   /** The Play tips, in the app, where the Buy Me a Coffee page is not allowed. */

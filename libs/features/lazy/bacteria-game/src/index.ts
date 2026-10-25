@@ -1,5 +1,6 @@
 export * from './lib/routes';
 export {
+  ADMIN_PATH,
   GAME_SITE_URL,
   LEGAL_NOTICE_PATH,
   PRIVACY_POLICY_PATH,

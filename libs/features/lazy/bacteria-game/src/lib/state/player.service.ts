@@ -62,6 +62,8 @@ export class PlayerService {
   private factoryRuleset: () => Ruleset | null = () => 'cpu';
   /** The rulesets this device offers the other one of an online match. */
   private offers: () => readonly Ruleset[] = () => ['cpu'];
+  /** The integer GPU passes for an online `gpu-int` match - see `useSimulation`. */
+  private gpuIntFactory: SimulationFactory | null = null;
   private engine = new MatchEngine([], { seed: 0 });
   /** Where each player's joystick is pushed right now, absent while at rest. */
   private sticks = new Map<number, SteeringVector>();
@@ -120,10 +122,22 @@ export class PlayerService {
           return sized(cpuSimulation(balance, random, seed), arena);
         }
         // The deterministic GPU passes where they run here, the same
-        // ruleset on the CPU else: either plays the match alike.
-        return this.factoryRuleset() === 'gpu-int'
-          ? this.createSimulation(balance, random, seed, arena, intSimulation)
-          : sized(intSimulation(balance, random, seed), arena);
+        // ruleset on the CPU else: either plays the match alike. Online
+        // that follows what this device offered at the hello, not what the
+        // owner's toggle says now: `IntSimulation` plays live only where
+        // the GPU is gone or fails to start.
+        const gpu =
+          lockstep === undefined ? this.simulationFactory : this.gpuIntFactory;
+        return gpu === null
+          ? sized(intSimulation(balance, random, seed), arena)
+          : this.createSimulation(
+              balance,
+              random,
+              seed,
+              arena,
+              gpu,
+              intSimulation
+            );
       },
     });
     this.localDrag = null;
@@ -289,7 +303,8 @@ export class PlayerService {
    * factory's simulations fails to start. `ruleset` says which ruleset the
    * factory's simulations play by right now (null for the float GPU one),
    * `offers` which this device offers the other one of an online match
-   * (ADR 0015) - see `chooseSimulation`.
+   * (ADR 0015), `gpuInt` what plays an online match agreed on `gpu-int`
+   * here (null: `IntSimulation`) - see `chooseSimulation`.
    */
   public useSimulation(
     factory: SimulationFactory | null,
@@ -297,6 +312,7 @@ export class PlayerService {
     rulesets: {
       ruleset: () => Ruleset | null;
       offers: () => readonly Ruleset[];
+      gpuInt?: SimulationFactory | null;
     } = {
       ruleset: () => (factory == null ? 'cpu' : null),
       offers: () => ['cpu'],
@@ -306,6 +322,7 @@ export class PlayerService {
     this.fallbackFactory = fallback;
     this.factoryRuleset = rulesets.ruleset;
     this.offers = rulesets.offers;
+    this.gpuIntFactory = rulesets.gpuInt ?? null;
     if (factory == null && this.engine.simulation.kind === 'gpu') {
       // It may hold a context that is going away: let it go now.
       this.engine.dispose();
@@ -330,22 +347,24 @@ export class PlayerService {
     random: () => number,
     seed: number,
     arena?: { width: number; height: number },
+    factory: SimulationFactory = this.simulationFactory,
     fallback?: SimulationFactory
   ): Simulation {
     let simulation: Simulation | null = null;
     try {
-      simulation = this.simulationFactory(balance, random, seed);
+      simulation = factory(balance, random, seed);
       return sized(simulation, arena);
     } catch (error) {
       // Let go of the context listeners, or a restored context revives it.
       simulation?.dispose();
-      if (this.simulationFactory === this.fallbackFactory) {
+      if (factory === this.fallbackFactory) {
         throw error;
       }
       console.warn('The colony war falls back to the CPU', error);
       this.simulationFactory = this.fallbackFactory;
       this.factoryRuleset = () => 'cpu';
       this.offers = () => ['cpu'];
+      this.gpuIntFactory = null;
       return sized(
         (fallback ?? this.fallbackFactory)(balance, random, seed),
         arena

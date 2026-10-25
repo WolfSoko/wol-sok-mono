@@ -2,9 +2,10 @@
   <p class="text">{{ "online.noCloud" | t }}</p>
 } @else {
   @let searching = matchmaker.state() !== "idle";
+  @let matchmaking = matchmaker.available && matchmaker.enabled();
   @switch (lobby().phase) {
     @case ("idle") {
-      @if (matchmaker.available) {
+      @if (matchmaking) {
         <mat-form-field
           class="match-level"
           appearance="outline"
@@ -33,7 +34,7 @@
           {{ "online.searching" | t }}
         </p>
       } @else {
-        @if (matchmaker.available) {
+        @if (matchmaking) {
           <button
             mat-flat-button
             type="button"
@@ -43,6 +44,10 @@
             <mat-icon>travel_explore</mat-icon>
             {{ "online.find" | t }}
           </button>
+        } @else if (matchmaker.available) {
+          <p class="text matchmaking-paused" role="status">
+            {{ "online.matchmakingPaused" | t }}
+          </p>
         }
 
         @if (social.available) {

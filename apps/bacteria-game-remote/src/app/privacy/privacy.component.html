@@ -120,11 +120,11 @@
     <p>
       Damit dein Fortschritt nicht verloren geht, kann das Spiel ihn in Google
       Firebase speichern (Firebase Authentication, Cloud Firestore, Realtime
-      Database und Cloud Functions; Anbieter: Google Ireland Limited, Gordon
-      House, Barrow Street, Dublin 4, Irland). Ist das aktiv, zeigt das Profil
-      „Du spielst als Gast“ oder „Angemeldet als …“. Cloud Functions sind unsere
-      Programme auf den Servern von Firebase; sie führen die Bestenliste und
-      setzen die Moderation um (unten).
+      Database, Cloud Functions und Remote Config; Anbieter: Google Ireland
+      Limited, Gordon House, Barrow Street, Dublin 4, Irland). Ist das aktiv,
+      zeigt das Profil „Du spielst als Gast“ oder „Angemeldet als …“. Cloud
+      Functions sind unsere Programme auf den Servern von Firebase; sie führen
+      die Bestenliste und setzen die Moderation um (unten).
     </p>
     <h3>Als Gast</h3>
     <p>
@@ -170,6 +170,13 @@
       deine IP-Adresse und Angaben zum Browser, um den Dienst zu erbringen und
       Missbrauch zu verhindern. Deinen Spielstand kannst nur du selbst lesen und
       ändern. Was andere Spieler von dir sehen, steht in den folgenden Absätzen.
+    </p>
+    <p>
+      Welche Funktionen des Spiels gerade eingeschaltet sind, holt es höchstens
+      einmal pro Stunde über Firebase Remote Config ab. Dafür legt Firebase in
+      deinem Browser eine zufällige Installationskennung (Firebase
+      Installations) an; sie dient nur dem Abruf dieser Einstellungen und wird
+      nicht mit deinem Spielstand verknüpft.
     </p>
     <h3 id="de-profil">Online-Profil, Freunde und Online-Status</h3>
     <p>
@@ -573,11 +580,12 @@
     <h2 id="en-account">4. Progress in the cloud and accounts</h2>
     <p>
       So that your progress is not lost, the game can keep it in Google Firebase
-      (Firebase Authentication, Cloud Firestore, Realtime Database and Cloud
-      Functions; provider: Google Ireland Limited, Gordon House, Barrow Street,
-      Dublin 4, Ireland). When this is on, the profile says “Playing as a guest”
-      or “Signed in as …”. Cloud Functions are our programs on Firebase's
-      servers; they keep the leaderboard and carry out moderation (below).
+      (Firebase Authentication, Cloud Firestore, Realtime Database, Cloud
+      Functions and Remote Config; provider: Google Ireland Limited, Gordon
+      House, Barrow Street, Dublin 4, Ireland). When this is on, the profile
+      says “Playing as a guest” or “Signed in as …”. Cloud Functions are our
+      programs on Firebase's servers; they keep the leaderboard and carry out
+      moderation (below).
     </p>
     <h3>As a guest</h3>
     <p>
@@ -617,6 +625,12 @@
       IP address and browser details to provide the service and prevent abuse.
       Only you can read and change your progress. What other players see of you
       is in the following paragraphs.
+    </p>
+    <p>
+      The game fetches which of its features are switched on through Firebase
+      Remote Config, at most once an hour. For that, Firebase keeps a random
+      installation identifier (Firebase Installations) in your browser; it is
+      used only to fetch these settings and is not linked to your progress.
     </p>
     <h3 id="en-profile">Online profile, friends and online status</h3>
     <p>

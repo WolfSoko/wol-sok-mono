@@ -1,5 +1,13 @@
-import { effect, inject, Injectable, signal, untracked } from '@angular/core';
+import {
+  computed,
+  effect,
+  inject,
+  Injectable,
+  signal,
+  untracked,
+} from '@angular/core';
 import { Subscription } from 'rxjs';
+import { FeatureTogglesService } from '../feature-toggles.service';
 import {
   isMatchLevel,
   MatchLevelPick,
@@ -45,6 +53,7 @@ export class MatchmakerService {
   private readonly social: GameSocial | null = inject(GameCloud).social();
   private readonly players = inject(SocialService);
   private readonly online = inject(OnlineMatchService);
+  private readonly toggles = inject(FeatureTogglesService).toggles;
   private readonly stateSignal = signal<MatchmakingState>('idle');
   /** The level the player would like to play - null for any. */
   private readonly level = signal<string | null>(null);
@@ -68,8 +77,24 @@ export class MatchmakerService {
    */
   public readonly matchLevel = this.matchLevelSignal.asReadonly();
   public readonly available = this.social !== null && this.online.available;
+  /**
+   * False while the owner has paused matchmaking (the `matchmaking`
+   * toggle, ADR 0012): no new search starts, and one under way stops.
+   */
+  public readonly enabled = computed(() => this.toggles().matchmaking);
 
   public constructor() {
+    // Paused by the owner: a search under way stops. A match it found
+    // already goes on.
+    effect(() => {
+      if (!this.enabled()) {
+        untracked(() => {
+          if (this.stateSignal() === 'searching') {
+            void this.cancel();
+          }
+        });
+      }
+    });
     // Found and connected: the search is over. Found and the connection
     // failed before the match: back into the queue.
     let last = this.online.lobby().phase;
@@ -86,7 +111,11 @@ export class MatchmakerService {
           this.stateSignal.set('idle');
         } else if (phase === 'idle') {
           this.clearJoinTimeout();
-          void this.search();
+          if (this.enabled()) {
+            void this.search();
+          } else {
+            void this.cancel();
+          }
         }
       });
     });
@@ -94,7 +123,7 @@ export class MatchmakerService {
 
   /** Starts looking for an opponent. */
   public async find(): Promise<void> {
-    if (!this.available || this.stateSignal() !== 'idle') {
+    if (!this.available || !this.enabled() || this.stateSignal() !== 'idle') {
       return;
     }
     this.online.leave();

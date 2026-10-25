@@ -1,5 +1,4 @@
 import { isObject } from './is-object';
-import { DETERMINISTIC_SIMULATION } from './simulation';
 
 /**
  * The owner's feature toggles (ADR 0012): Remote Config parameters of the
@@ -17,7 +16,7 @@ export const FEATURE_TOGGLES = {
   /** The leaderboards are shown. */
   leaderboards: true,
   /** Matches run the deterministic simulation where the device can. */
-  deterministicSimulation: DETERMINISTIC_SIMULATION,
+  deterministicSimulation: true, // On since the owner's real-device check (ADR 0015).
 } as const satisfies Record<string, boolean>;
 
 export type FeatureToggle = keyof typeof FEATURE_TOGGLES;

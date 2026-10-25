@@ -3,7 +3,6 @@ import {
   featureToggles,
   parseToggleValues,
 } from './feature-toggles';
-import { DETERMINISTIC_SIMULATION } from './simulation';
 
 describe('feature toggles', () => {
   it('default to what the game does without Remote Config', () => {
@@ -12,7 +11,7 @@ describe('feature toggles', () => {
       rankedEndless: true,
       matchmaking: true,
       leaderboards: true,
-      deterministicSimulation: DETERMINISTIC_SIMULATION,
+      deterministicSimulation: true,
     });
     expect(featureToggles(() => undefined)).toEqual(FEATURE_TOGGLES);
   });

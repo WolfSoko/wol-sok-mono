@@ -10,7 +10,11 @@
 export { provideGameCloud } from './lib/storage/provide-game-cloud';
 export { GameCloud } from './lib/storage/game-cloud';
 export type { GameCloudOptions } from './lib/storage/game-cloud';
-export type { FirebaseConnection } from './lib/storage/firebase-connection';
+export type {
+  FirebaseConnection,
+  RemoteConfigConnection,
+} from './lib/storage/firebase-connection';
+export { isOwnerToken } from './lib/storage/owner-token';
 
 // The page's loading splash, which only the game itself takes down.
 export { SPLASH_ID } from './lib/splash';
