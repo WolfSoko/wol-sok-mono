@@ -1,15 +1,10 @@
 import {
   atHourOf,
-  attemptSeed,
   dailyBoardId,
   dailyLevelId,
   dailySort,
-  declaredBeforeMatch,
-  isRankedPlan,
   parseAttemptId,
   type Replay,
-  replayFromBytes,
-  submissionDeadline,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   FieldValue,
@@ -17,7 +12,13 @@ import {
   Timestamp,
   type Transaction,
 } from 'firebase-admin/firestore';
-import { isBanned } from '../limits';
+import { DAY_MS } from './budgets';
+import {
+  type ArrivalReason,
+  checkDeclaredMatch,
+  rankedFields,
+  readDeclaredReplay,
+} from './declared-match';
 import {
   type EntryBase,
   entryData,
@@ -26,23 +27,11 @@ import {
   profileIn,
 } from './entries';
 
-const DAY_MS = 24 * 3_600_000;
 /** How long daily boards, their entries and runs are kept. */
 export const DAILY_TTL_MS = 31 * DAY_MS;
 
 /** Why a ranked daily replay did (not) rank - its `rankedReason`. */
-export type DailyReason =
-  | 'counted'
-  | 'banned'
-  | 'no-attempt'
-  | 'ruleset'
-  | 'seed'
-  | 'plan-mismatch'
-  | 'level'
-  | 'early'
-  | 'late'
-  | 'duplicate'
-  | 'unreadable';
+export type DailyReason = ArrivalReason;
 
 /** One declared attempt of a player's day, as `dailyRuns` keeps it. */
 export interface DailyAttemptRun {
@@ -57,13 +46,7 @@ export interface DailyAttemptRun {
   atHour: number;
 }
 
-/**
- * Checks a daily replay against its declared attempt (ADR 0012), always
- * against the stored declaration, never the header's copy of `at`: the
- * owner's decision that ranked matches are `gpu-int` only (ADR 0015); the
- * seed from the declaration; exactly the ranked plan; that day's daily
- * level; a declaration before the match; an upload within its deadline.
- */
+/** {@link checkDeclaredMatch} for a daily attempt: that day's daily level. */
 export function checkDailyAttempt(
   replay: Replay,
   uid: string,
@@ -71,30 +54,17 @@ export function checkDailyAttempt(
   declaredAt: number,
   arrivedAt: number
 ): DailyReason {
-  const { header } = replay;
   const attempt = parseAttemptId(attemptId);
-  if (attempt?.kind !== 'daily') {
-    return 'no-attempt';
-  }
-  if (header.simulation !== 'gpu-int') {
-    return 'ruleset';
-  }
-  if (header.seed !== attemptSeed(uid, attemptId, declaredAt)) {
-    return 'seed';
-  }
-  if (!isRankedPlan(header)) {
-    return 'plan-mismatch';
-  }
-  if (header.levelId !== dailyLevelId(attempt.day)) {
-    return 'level';
-  }
-  if (!declaredBeforeMatch(declaredAt, header.ticks, arrivedAt)) {
-    return 'early';
-  }
-  if (arrivedAt > submissionDeadline(declaredAt, header.ticks)) {
-    return 'late';
-  }
-  return 'counted';
+  return attempt?.kind !== 'daily'
+    ? 'no-attempt'
+    : checkDeclaredMatch(
+        replay,
+        uid,
+        attemptId,
+        declaredAt,
+        arrivedAt,
+        dailyLevelId(attempt.day)
+      );
 }
 
 /**
@@ -131,100 +101,52 @@ export async function rankDaily(
   replayDoc: Record<string, unknown>,
   now: number = Date.now()
 ): Promise<DailyReason> {
-  const uid = (replayDoc['players'] as string[] | undefined)?.[0];
-  const attemptId = (replayDoc['attempt'] as { id?: unknown } | undefined)?.id;
-  // The submission's `createdAt` (request.time), else the replay's own.
-  const sent = replayDoc['submittedAt'] ?? replayDoc['createdAt'];
-  const createdAt = sent instanceof Timestamp ? sent.toMillis() : now;
-  const attempt =
-    typeof attemptId === 'string' ? parseAttemptId(attemptId) : null;
-  const decide = async (): Promise<
-    | { reason: DailyReason }
-    | { reason: 'counted'; run: DailyAttemptRun; day: string; uid: string }
-  > => {
-    if (
-      typeof uid !== 'string' ||
-      attempt?.kind !== 'daily' ||
-      typeof attemptId !== 'string'
-    ) {
-      return { reason: 'no-attempt' };
-    }
-    if (await isBanned(db, uid, now)) {
-      return { reason: 'banned' };
-    }
-    const declared = await db.doc(`players/${uid}/attempts/${attemptId}`).get();
-    const at = declared.get('at');
-    if (!(at instanceof Timestamp)) {
-      return { reason: 'no-attempt' };
-    }
-    const bytes = (await db.doc(`replays/${replayId}/blob/data`).get()).get(
-      'bytes'
-    );
-    const replay =
-      bytes instanceof Uint8Array
-        ? await replayFromBytes(new Uint8Array(bytes), { stored: true })
-        : null;
-    if (replay === null) {
-      return { reason: 'unreadable' };
-    }
-    const reason = checkDailyAttempt(
-      replay,
-      uid,
-      attemptId,
-      at.toMillis(),
-      createdAt
-    );
-    if (reason !== 'counted') {
-      return { reason };
-    }
-    const won = replay.header.outcome?.winnerSeat === 0;
-    return {
-      reason,
-      day: attempt.day,
-      uid,
-      run: {
-        attemptId,
-        replayId,
-        sort: dailySort(won, replay.header.ticks),
-        won,
-        ticks: replay.header.ticks,
-        state: 'provisional',
-        atHour: atHourOf(createdAt),
-      },
-    };
-  };
-  const decided = await decide();
   const replayRef = db.doc(`replays/${replayId}`);
-  if (decided.reason !== 'counted' || !('run' in decided)) {
-    await replayRef.update({
-      rankedReason: decided.reason,
-      rankedAt: FieldValue.serverTimestamp(),
-    });
-    return decided.reason;
+  const read = await readDeclaredReplay(db, replayId, replayDoc, 'daily', now);
+  const reason =
+    'reason' in read
+      ? read.reason
+      : checkDeclaredMatch(
+          read.replay,
+          read.uid,
+          read.attemptId,
+          read.declaredAt,
+          read.arrivedAt,
+          dailyLevelId(read.attempt.day)
+        );
+  if ('reason' in read || reason !== 'counted') {
+    await replayRef.update(rankedFields(reason));
+    return reason;
   }
-  const { day, run } = decided;
+  const { header } = read.replay;
+  const won = header.outcome?.winnerSeat === 0;
+  const day = read.attempt.day;
+  const { uid } = read;
+  const run: DailyAttemptRun = {
+    attemptId: read.attemptId,
+    replayId,
+    sort: dailySort(won, header.ticks),
+    won,
+    ticks: header.ticks,
+    state: 'provisional',
+    atHour: atHourOf(read.arrivedAt),
+  };
   return db.runTransaction(async (tx) => {
-    const runRef = db.doc(`dailyRuns/${day}_${decided.uid}`);
+    const runRef = db.doc(`dailyRuns/${day}_${uid}`);
     const stored = await tx.get(runRef);
     const attempts =
       (stored.get('attempts') as DailyAttemptRun[] | undefined) ?? [];
     if (attempts.some((a) => a.attemptId === run.attemptId)) {
-      tx.update(replayRef, {
-        rankedReason: 'duplicate',
-        rankedAt: FieldValue.serverTimestamp(),
-      });
+      tx.update(replayRef, rankedFields('duplicate'));
       return 'duplicate' as const;
     }
     const next = [...attempts, run];
-    await writeDailyEntry(tx, db, day, decided.uid, next, now);
+    await writeDailyEntry(tx, db, day, uid, next, now);
     tx.set(runRef, {
       attempts: next,
       expireAt: Timestamp.fromMillis(now + DAILY_TTL_MS),
     });
-    tx.update(replayRef, {
-      rankedReason: 'counted',
-      rankedAt: FieldValue.serverTimestamp(),
-    });
+    tx.update(replayRef, rankedFields('counted'));
     return 'counted' as const;
   });
 }

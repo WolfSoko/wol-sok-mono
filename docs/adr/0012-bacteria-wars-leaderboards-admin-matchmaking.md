@@ -1061,8 +1061,21 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      about 25 s per match-minute) and 2 ms on `cpu`, close to the 20 s
      the budgets assume. The benchmark on a Cloud Run vCPU still sets
      them.
-   - Endless (runs, lost lives), the admin commands, `countAccount` and
-     `deletePlayerBoards` come next.
+   - Then the endless board: `rankReplay` for a new endless replay with an
+     attempt (`rankEndless`: the arrival checks, then the run computed
+     again from all its declared matches in `endlessRuns/{uid}_{runId}`,
+     where the level check follows from the wins before; a refused replay
+     or none 2 hours after the declaration costs a life, a match still
+     within those 2 hours holds the count). The player's entry is their
+     best run (index `uid` + `sort` on `endlessRuns`); the others keep a
+     31-day TTL. A new declaration joins its run at once (`declaredMatch`,
+     on `players/{uid}/attempts`), and `hourly` sweeps runs waiting on a
+     match whose replay never came, and spends what the daily boards leave of the slice on
+     the endless candidates: their wins in order, a failed one cutting the
+     run to its verified prefix (`partial`). The endless budget is
+     `ENDLESS_VERIFY_MS` plus what the daily boards leave of theirs.
+   - The admin commands, `countAccount` and `deletePlayerBoards` come
+     next.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].
