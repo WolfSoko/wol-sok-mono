@@ -19,6 +19,7 @@ import * as v1 from 'firebase-functions/v1';
 import { runHourly } from './boards/hourly';
 import { boardProfileChanged as relabelEntries } from './boards/profile-changed';
 import { rankDaily } from './boards/rank-daily';
+import { rankEndless } from './boards/rank-endless';
 import { rankOnline } from './boards/rank-online';
 import {
   PROGRESS_KEY,
@@ -124,8 +125,8 @@ export const rankProgress = onDocumentWritten(
 );
 
 /**
- * The online board, once an online match turns `agreed`, and the daily
- * board, when a replay of a declared daily attempt comes (ADR 0012).
+ * The online board, once an online match turns `agreed`, and the daily and
+ * endless boards, when a replay of a declared attempt comes (ADR 0012).
  */
 export const rankReplay = onDocumentWritten(
   { document: 'replays/{id}', memory: '256MiB', cpu: 'gcf_gen1' },
@@ -154,6 +155,13 @@ export const rankReplay = onDocumentWritten(
     ) {
       const reason = await rankDaily(db(), event.params.id, after);
       logger.info('Daily attempt ranked', { id: event.params.id, reason });
+    } else if (
+      before === undefined &&
+      after['kind'] === 'endless' &&
+      after['attempt'] !== undefined
+    ) {
+      const reason = await rankEndless(db(), event.params.id, after);
+      logger.info('Endless match ranked', { id: event.params.id, reason });
     }
   }
 );

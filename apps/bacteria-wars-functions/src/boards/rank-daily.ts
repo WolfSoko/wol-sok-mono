@@ -58,24 +58,29 @@ export interface DailyAttemptRun {
 }
 
 /**
- * Checks a daily replay against its declared attempt (ADR 0012), always
- * against the stored declaration, never the header's copy of `at`: the
- * owner's decision that ranked matches are `gpu-int` only (ADR 0015); the
- * seed from the declaration; exactly the ranked plan; that day's daily
- * level; a declaration before the match; an upload within its deadline.
+ * The checks every declared match passes (ADR 0012), always against the
+ * stored declaration, never the header's copy of `at`: the owner's
+ * decision that ranked matches are `gpu-int` only (ADR 0015); the seed
+ * from the declaration; exactly the ranked plan; the level, when the
+ * caller knows it already; a declaration before the match; an upload
+ * within its deadline.
  */
-export function checkDailyAttempt(
+export function checkDeclaredMatch(
   replay: Replay,
   uid: string,
   attemptId: string,
   declaredAt: number,
-  arrivedAt: number
-): DailyReason {
+  arrivedAt: number,
+  levelId?: string
+):
+  | 'counted'
+  | 'ruleset'
+  | 'seed'
+  | 'plan-mismatch'
+  | 'level'
+  | 'early'
+  | 'late' {
   const { header } = replay;
-  const attempt = parseAttemptId(attemptId);
-  if (attempt?.kind !== 'daily') {
-    return 'no-attempt';
-  }
   if (header.simulation !== 'gpu-int') {
     return 'ruleset';
   }
@@ -85,7 +90,7 @@ export function checkDailyAttempt(
   if (!isRankedPlan(header)) {
     return 'plan-mismatch';
   }
-  if (header.levelId !== dailyLevelId(attempt.day)) {
+  if (levelId !== undefined && header.levelId !== levelId) {
     return 'level';
   }
   if (!declaredBeforeMatch(declaredAt, header.ticks, arrivedAt)) {
@@ -95,6 +100,27 @@ export function checkDailyAttempt(
     return 'late';
   }
   return 'counted';
+}
+
+/** {@link checkDeclaredMatch} for a daily attempt: that day's daily level. */
+export function checkDailyAttempt(
+  replay: Replay,
+  uid: string,
+  attemptId: string,
+  declaredAt: number,
+  arrivedAt: number
+): DailyReason {
+  const attempt = parseAttemptId(attemptId);
+  return attempt?.kind !== 'daily'
+    ? 'no-attempt'
+    : checkDeclaredMatch(
+        replay,
+        uid,
+        attemptId,
+        declaredAt,
+        arrivedAt,
+        dailyLevelId(attempt.day)
+      );
 }
 
 /**

@@ -2,6 +2,7 @@ import {
   attemptSeed,
   BALANCE_VERSION,
   dailyLevelId,
+  endlessLevelId,
   GPU_INT_REPLAY_VERSION,
   rankedPlan,
   type Replay,
@@ -29,6 +30,50 @@ export function dailyReplay(
   return {
     header: {
       ...plan,
+      version: GPU_INT_REPLAY_VERSION,
+      balanceVersion: BALANCE_VERSION,
+      simulation: 'gpu-int',
+      ticks: TICKS,
+      seats: [{ isBot: false }, { isBot: true }],
+      outcome: { endedBy: 'annihilation', winnerSeat: 0 },
+      checksum: 1,
+      attempt: { id: attempt, at },
+      ...header,
+    },
+    inputs: { steers: [], drags: [], boosts: [], weapons: [] },
+  };
+}
+
+/** The run of the specs' endless matches: run 1 of 2026-10-25. */
+export const RUN_ID = '202610251';
+
+/** The run's level seed: the seed of its match 0, declared at `at0`. */
+export function runSeedOf(at0: number, uid = UID, runId = RUN_ID): number {
+  return attemptSeed(uid, `e_${runId}_0`, at0);
+}
+
+/**
+ * A ranked replay of match `i` of {@link RUN_ID}, declared at `at`, on the
+ * level the run is at after `wins` wins.
+ */
+export function endlessReplay(
+  i: number,
+  at: number,
+  at0: number,
+  wins: number,
+  header: Partial<ReplayHeader> = {},
+  uid = UID,
+  runId = RUN_ID
+): Replay {
+  const attempt = `e_${runId}_${i}`;
+  const levelId = endlessLevelId({
+    seed: runSeedOf(at0, uid, runId),
+    wins,
+    lives: 3,
+  });
+  return {
+    header: {
+      ...rankedPlan(levelId, attemptSeed(uid, attempt, at)),
       version: GPU_INT_REPLAY_VERSION,
       balanceVersion: BALANCE_VERSION,
       simulation: 'gpu-int',

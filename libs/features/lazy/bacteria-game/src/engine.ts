@@ -241,7 +241,7 @@ export {
 } from './lib/state/colony-colors';
 export type { ColonyColorId } from './lib/state/colony-colors';
 export { dailyLevelId, utcDay } from './lib/state/daily';
-export { endlessLevelId } from './lib/state/endless';
+export { ENDLESS_LIVES, endlessLevelId } from './lib/state/endless';
 
 // Leaderboards, declared attempts and admin commands (ADR 0012).
 export {

@@ -7,10 +7,12 @@ import {
   utcDay,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
+  type DocumentReference,
   FieldValue,
   type Firestore,
   type QueryDocumentSnapshot,
   Timestamp,
+  type Transaction,
 } from 'firebase-admin/firestore';
 import { dayOf } from '../limits';
 import {
@@ -33,7 +35,8 @@ export interface AccountInfo {
 }
 
 /** A provisional entry waiting to be checked, and whose it is. */
-interface Candidate {
+export interface Candidate {
+  /** The board's UTC day - daily boards only. */
   day: string;
   entryId: string;
   sort: number;
@@ -94,7 +97,12 @@ export async function verifyDailySlice(
   }
   const start = clock();
   let checked = 0;
-  for (const candidate of await candidates(db, now, accountInfo)) {
+  const boards = openDays(now).map((day) => ({
+    boardId: dailyBoardId(day),
+    kind: 'daily' as const,
+    day,
+  }));
+  for (const candidate of await candidates(db, now, accountInfo, boards)) {
     if (clock() - start >= budget) {
       break;
     }
@@ -117,15 +125,16 @@ export async function verifyDailySlice(
 const CANDIDATE_SCAN = 100;
 
 /**
- * A daily board's provisional entries worth a check: those whose `sort`
- * would put them into the verified top (above its last verified entry, or
- * any while fewer are verified), and the next {@link NEXT_CANDIDATES}.
+ * A board's provisional entries worth a check: those whose `sort` would
+ * put them into the verified top (above its last verified entry, or any
+ * while fewer are verified), and the next {@link NEXT_CANDIDATES}.
  */
 async function provisionalCandidates(
   db: Firestore,
-  day: string
+  boardId: string,
+  cut: number
 ): Promise<QueryDocumentSnapshot[]> {
-  const entries = db.collection(`boards/${dailyBoardId(day)}/entries`);
+  const entries = db.collection(`boards/${boardId}/entries`);
   const ordered = (status: string, limit: number) =>
     entries
       .where('status', '==', status)
@@ -133,7 +142,6 @@ async function provisionalCandidates(
       .orderBy('atHour', 'asc')
       .limit(limit)
       .get();
-  const cut = BOARD_CUT.daily;
   const [verified, provisional] = await Promise.all([
     ordered('verified', cut),
     ordered('provisional', CANDIDATE_SCAN),
@@ -149,18 +157,31 @@ async function provisionalCandidates(
   return provisional.docs.slice(0, above + NEXT_CANDIDATES);
 }
 
-async function candidates(
+/**
+ * The candidates of some boards of one kind, at most one per account, in
+ * trust order then by score; accounts skipped after failed checks left out.
+ */
+export async function candidates(
   db: Firestore,
   now: number,
-  accountInfo: (uid: string) => Promise<AccountInfo>
+  accountInfo: (uid: string) => Promise<AccountInfo>,
+  boards: readonly {
+    boardId: string;
+    kind: 'daily' | 'endless';
+    day?: string;
+  }[]
 ): Promise<Candidate[]> {
   const found: Candidate[] = [];
   const seen = new Set<string>();
-  for (const day of openDays(now)) {
-    for (const entry of await provisionalCandidates(db, day)) {
+  for (const { boardId, kind, day = '' } of boards) {
+    for (const entry of await provisionalCandidates(
+      db,
+      boardId,
+      BOARD_CUT[kind]
+    )) {
       const member = await db
         .collection('boardMembers')
-        .where('entryIds.daily', '==', entry.id)
+        .where(`entryIds.${kind}`, '==', entry.id)
         .limit(1)
         .get();
       const uid = member.docs[0]?.id;
@@ -206,13 +227,7 @@ async function checkCandidate(
   if (best === undefined) {
     return false;
   }
-  const bytes = (await db.doc(`replays/${best.replayId}/blob/data`).get()).get(
-    'bytes'
-  );
-  const replay =
-    bytes instanceof Uint8Array
-      ? await replayFromBytes(new Uint8Array(bytes), { stored: true })
-      : null;
+  const replay = await storedReplay(db, best.replayId);
   const verdict: Verdict =
     replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
   await db.runTransaction(async (tx) => {
@@ -227,30 +242,64 @@ async function checkCandidate(
     const moderation = (await tx.get(moderationRef)).data() ?? {};
     await writeDailyEntry(tx, db, candidate.day, candidate.uid, next, now);
     tx.update(runRef, { attempts: next });
-    tx.update(db.doc(`replays/${best.replayId}`), {
-      state: verdict.state,
-      ...(verdict.summary === undefined ? {} : { summary: verdict.summary }),
-      verifiedAt: FieldValue.serverTimestamp(),
-    });
-    if (verdict.state === 'verified') {
-      tx.set(moderationRef, { verifiedBefore: true }, { merge: true });
-    } else if (verdict.state === 'unverified') {
-      const failures = (
-        (moderation['failedAt'] as number[] | undefined) ?? []
-      ).filter((at) => at > now - 7 * DAY_MS);
-      failures.push(now);
-      tx.set(
-        moderationRef,
-        {
-          failedChecks: FieldValue.increment(1),
-          failedAt: failures,
-          ...(failures.length >= FAILED_CHECKS_TO_SKIP
-            ? { skipUntil: Timestamp.fromMillis(now + 7 * DAY_MS) }
-            : {}),
-        },
-        { merge: true }
-      );
-    }
+    tx.update(db.doc(`replays/${best.replayId}`), verdictFields(verdict));
+    recordCheck(tx, moderationRef, moderation, verdict.state, now);
   });
   return true;
+}
+
+/**
+ * Notes a check on the account (`moderation/{uid}`): a verified replay
+ * moves it up the trust order; two failed ones in 7 days skip it for 7
+ * days and flag it for the owner - not a ban, a failure may be Safari.
+ * A balance mismatch says nothing about the player.
+ */
+export function recordCheck(
+  tx: Transaction,
+  moderationRef: DocumentReference,
+  moderation: Record<string, unknown>,
+  state: Verdict['state'],
+  now: number
+): void {
+  if (state === 'verified') {
+    tx.set(moderationRef, { verifiedBefore: true }, { merge: true });
+  } else if (state === 'unverified') {
+    const failures = (
+      (moderation['failedAt'] as number[] | undefined) ?? []
+    ).filter((at) => at > now - 7 * DAY_MS);
+    failures.push(now);
+    tx.set(
+      moderationRef,
+      {
+        failedChecks: FieldValue.increment(1),
+        failedAt: failures,
+        ...(failures.length >= FAILED_CHECKS_TO_SKIP
+          ? { skipUntil: Timestamp.fromMillis(now + 7 * DAY_MS) }
+          : {}),
+      },
+      { merge: true }
+    );
+  }
+}
+
+/** A stored replay read back for a check - null when it is gone or damaged. */
+export async function storedReplay(
+  db: Firestore,
+  replayId: string
+): Promise<Replay | null> {
+  const bytes = (await db.doc(`replays/${replayId}/blob/data`).get()).get(
+    'bytes'
+  );
+  return bytes instanceof Uint8Array
+    ? replayFromBytes(new Uint8Array(bytes), { stored: true })
+    : null;
+}
+
+/** What a check writes on the replay it played. */
+export function verdictFields(verdict: Verdict) {
+  return {
+    state: verdict.state,
+    ...(verdict.summary === undefined ? {} : { summary: verdict.summary }),
+    verifiedAt: FieldValue.serverTimestamp(),
+  };
 }
