@@ -5,7 +5,7 @@ import {
   type ReplayHeader,
   replayToBytes,
 } from '@wolsok/feat-lazy-bac-game/engine';
-import { initializeApp } from 'firebase-admin/app';
+import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -20,7 +20,9 @@ import { deletePlayerReplays } from './delete-player';
  * what acceptReplay, replayCommand and deletePlayerReplays leave behind.
  */
 const PROJECT = 'demo-bacteria-functions';
-initializeApp({ projectId: PROJECT });
+if (getApps().length === 0) {
+  initializeApp({ projectId: PROJECT });
+}
 const db = getFirestore();
 
 const NOW = Date.now();
@@ -181,8 +183,12 @@ describe('acceptReplay', () => {
         players: ['ada'],
         state: 'waiting',
         room: 'ABC234',
+        seats: ['ada', 'bob'],
         stubExpired: false,
       });
+      expect(
+        (await db.doc(`replays/${id}`).get()).get('stubCreatedAt').toMillis()
+      ).toBe(NOW - HOUR);
       expect(await submit('s2', 'bob', bytes)).toBe('reported');
       expect((await db.doc(`replays/${id}`).get()).data()).toMatchObject({
         players: ['ada', 'bob'],

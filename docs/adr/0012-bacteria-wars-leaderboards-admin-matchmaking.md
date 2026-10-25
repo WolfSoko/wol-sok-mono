@@ -1036,6 +1036,18 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
    `deletePlayerBoards`, and `hourly` with its schedule paused, after the
    CPU benchmark set the budgets. Deployed before the client that writes
    attempts.
+   - So far: `rankProgress` (the XP board), `rankReplay` for agreed online
+     matches (the online board, with the timing check, the pair, win and
+     new-opponent caps), `rebuildTop` and `boardProfileChanged`; the rules
+     for `boards`, their `entries` and `boardMembers`, the profile's
+     `publicName`, `galleryOptOut` and `boardOptOut`; the entries index and
+     the TTL policies of `pairs`, `rankedReplays` and `rankedRooms`. An
+     entry keeps its `baseStatus` beside `status` and `hiddenBy`, so a
+     lifted hide brings the old status back. `acceptReplay` stores the
+     stub's `seats` and `createdAt` on an online replay, which the online
+     board counts by. Daily and endless (the attempts), the hourly
+     function, the admin commands, `countAccount` and `deletePlayerBoards`
+     come next.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Enable the `hourly` schedule the

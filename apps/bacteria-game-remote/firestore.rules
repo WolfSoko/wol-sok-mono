@@ -187,6 +187,25 @@ service cloud.firestore {
       }
     }
 
+    // The leaderboards (ADR 0012), written by the functions only. Anyone
+    // signed in reads a board's top document and pages its entries - never
+    // a hidden one, which only the owner sees.
+    match /boards/{boardId} {
+      allow get: if signedIn();
+
+      match /entries/{entryId} {
+        allow get: if signedIn() && (resource.data.status != 'hidden' || isAdmin());
+        allow list: if signedIn() &&
+          (resource.data.status in ['counted', 'verified', 'provisional', 'stale'] || isAdmin());
+      }
+    }
+
+    // Which entries are a player's, and what the boards counted of them:
+    // only the player and the owner read it.
+    match /boardMembers/{uid} {
+      allow get: if isPlayer(uid) || isAdmin();
+    }
+
     // A ban (ADR 0012), written by the functions only: the player may read
     // their own, to show why and until when.
     match /bans/{uid} {
@@ -234,7 +253,10 @@ service cloud.firestore {
     }
 
     function isProfile(data) {
-      return data.keys().hasOnly(['name', 'motto', 'avatar', 'shareStatus', 'updatedAt']) &&
+      return data.keys().hasOnly(['name', 'motto', 'avatar', 'shareStatus', 'updatedAt', 'publicName', 'galleryOptOut', 'boardOptOut']) &&
+        data.get('publicName', false) is bool &&
+        data.get('galleryOptOut', false) is bool &&
+        data.get('boardOptOut', false) is bool &&
         data.name is string && data.name.size() > 0 && data.name.size() <= 24 &&
         data.motto is string && data.motto.size() <= 80 &&
         data.shareStatus is bool &&

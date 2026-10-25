@@ -31,6 +31,7 @@ export type AcceptOutcome =
 interface RoomStub {
   host?: unknown;
   guest?: unknown;
+  createdAt?: unknown;
   taken?: unknown;
   expireAt?: unknown;
 }
@@ -182,6 +183,11 @@ async function storeOnline(
       tx.create(ref, {
         ...newReplay(plan, meta.uid, 'waiting', now),
         room: room.code,
+        // Who played which seat (host 0, guest 1) and since when the room
+        // stood - what the online board counts by (ADR 0012).
+        seats: [stub.host, stub.guest],
+        stubCreatedAt:
+          stub.createdAt instanceof Timestamp ? stub.createdAt : null,
         // Reported after its stub expired: kept for its players, never public.
         stubExpired: expired,
       });
