@@ -39,9 +39,8 @@ export async function boardProfileChanged(
         return false;
       }
       const data = entry.data() ?? {};
-      tx.set(
-        ref,
-        entryData(
+      tx.set(ref, {
+        ...entryData(
           entryId,
           {
             sort: data['sort'],
@@ -51,8 +50,12 @@ export async function boardProfileChanged(
           },
           after,
           hiddenByOf(data['hiddenBy'])
-        )
-      );
+        ),
+        // A daily entry keeps its TTL.
+        ...(data['expireAt'] === undefined
+          ? {}
+          : { expireAt: data['expireAt'] }),
+      });
       return true;
     });
     relabelled += done ? 1 : 0;
