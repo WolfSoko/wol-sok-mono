@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.83.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.82.0...v74.83.0) (2026-10-25)
+
+### Features
+
+* **ws-thanos:** ✨ wind direction, vsync'd frames and a cheaper flow field ([#2623](https://github.com/WolfSoko/wol-sok-mono/issues/2623)) ([4636370](https://github.com/WolfSoko/wol-sok-mono/commit/4636370fe9e057cb58b3712935e1f16e81f5bf23))
+
+### Chore
+
+* **release:** publish ([66dee56](https://github.com/WolfSoko/wol-sok-mono/commit/66dee56c08743f9830ff972d753b5c8d51214dc7))
+
 ## [74.82.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.81.0...v74.82.0) (2026-10-25)
 
 ### Features
