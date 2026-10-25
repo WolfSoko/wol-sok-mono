@@ -316,10 +316,20 @@ describe('verifyNow on an endless run', () => {
       { kind: 'endless' },
       NOW,
       () => (t += 150_000),
-      () => ({ state: 'verified', ms: 0 })
+      () => ({ state: 'verified', medal: 'bronze', ms: 0 })
     );
     expect(result).toMatchObject({ checked: 1, queued: true });
     expect((await run())?.['verifiedWins']).toBe(1);
+    // The re-run counts in the level statistics, with its medallion.
+    const stats = await db.collection('levelStats').get();
+    expect(stats.docs.map((doc) => doc.id)).toEqual([
+      expect.stringMatching(/^endless-[a-z]+-\d+_/),
+    ]);
+    expect(stats.docs[0].data()).toMatchObject({
+      rerun: 1,
+      medals: { bronze: 1 },
+    });
+    expect((await db.doc('replays/l_0').get()).get('medal')).toBe('bronze');
     expect(
       (await db.doc('moderation/ada').get())
         .get('endlessFirstUntil')

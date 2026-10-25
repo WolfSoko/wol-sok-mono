@@ -377,6 +377,35 @@ describe('verifyNow on a daily entry', () => {
     expect(await now()).toBe('nothing-to-verify');
   });
 
+  it('counts the re-run and its medallion in the level statistics, once', async () => {
+    await rank('l_ada', dailyReplay(), 'ada');
+    let t = 0;
+    const gold = (): Verdict => ({ state: 'verified', medal: 'gold', ms: 0 });
+    await verifyNow(
+      db,
+      'ada',
+      { kind: 'daily', day: DAY },
+      NOW,
+      () => (t += 1_000),
+      gold
+    );
+    await verifyNow(
+      db,
+      'ada',
+      { kind: 'daily', day: DAY },
+      NOW,
+      () => (t += 1_000),
+      gold
+    );
+    const stats = await db.collection('levelStats').get();
+    expect(stats.size).toBe(1);
+    expect(stats.docs[0].id).toMatch(/^daily-[a-z]+-\d+_/);
+    expect(stats.docs[0].data()).toMatchObject({
+      rerun: 1,
+      medals: { gold: 1 },
+    });
+  });
+
   it("stops once the day's admin budget is spent", async () => {
     await rank('l_ada', dailyReplay(), 'ada');
     await db.doc(`counters/${DAY}`).set({ adminVerifyMs: 400_000 });

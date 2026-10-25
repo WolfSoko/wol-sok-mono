@@ -5,13 +5,16 @@ import {
   TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/logger';
+import type { Verdict } from '../boards/verify';
 import type { ReplayKind } from './accept-plan';
 
 /**
  * The level statistics (ADR 0016 §4): counters per level and bot
  * difficulty in `levelStats/{id}`, added to once a local replay is
- * stored - no uid, increments only, from what the replay claims. The
- * admin area's Balance view reads them; nobody else does.
+ * stored - no uid, increments only, from what the replay claims - and
+ * the medallions of the matches the server re-ran (`countRerun`). The admin area's
+ * Balance view reads them; nobody else does.
  */
 
 /** The durations a match falls into, by the upper end in seconds. */
@@ -92,21 +95,60 @@ export function levelStatsCounts(
 }
 
 /**
- * Adds a stored local replay to its level statistics, with its key as
- * fields for the Balance view to query by.
+ * Adds `counts` to the level statistics a replay counts into, with its key
+ * as fields for the Balance view to query by.
  */
-export async function countLevelStats(
+async function addToStats(
+  db: Firestore,
+  header: ReplayHeader,
+  kind: ReplayKind,
+  counts: Record<string, unknown>
+): Promise<void> {
+  const key = levelStatsKey(header, kind);
+  await db
+    .doc(`levelStats/${levelStatsId(key)}`)
+    .set(
+      { ...key, updatedAt: FieldValue.serverTimestamp(), ...counts },
+      { merge: true }
+    );
+}
+
+/** Adds a stored local replay to its level statistics. */
+export function countLevelStats(
   db: Firestore,
   header: ReplayHeader,
   kind: ReplayKind
 ): Promise<void> {
-  const key = levelStatsKey(header, kind);
-  await db.doc(`levelStats/${levelStatsId(key)}`).set(
-    {
-      ...key,
-      updatedAt: FieldValue.serverTimestamp(),
-      ...levelStatsCounts(header),
-    },
-    { merge: true }
-  );
+  return addToStats(db, header, kind, levelStatsCounts(header));
+}
+
+/**
+ * Adds a verified re-run of a match against the computer to its level
+ * statistics: `rerun` and the best medallion it earned (`medals.{tier}` -
+ * one tier a match, so a rate of silver or better adds the rarer tiers).
+ * Called once the verdict is applied, by the check that applied it, so
+ * once; a failure is logged and never undoes the verdict. Only re-run
+ * matches carry medallions, and they are a chosen few - endless re-runs
+ * play wins only, the daily boards their leaders' best attempts - so
+ * `medals / rerun` tells how well the best runs go, not how hard a level
+ * is for everyone.
+ */
+export async function countRerun(
+  db: Firestore,
+  header: ReplayHeader,
+  kind: ReplayKind,
+  verdict: Verdict
+): Promise<void> {
+  if (verdict.state !== 'verified' || verdict.medal === undefined) {
+    return;
+  }
+  const one = FieldValue.increment(1);
+  try {
+    await addToStats(db, header, kind, {
+      rerun: one,
+      ...(verdict.medal === null ? {} : { medals: { [verdict.medal]: one } }),
+    });
+  } catch (error) {
+    logger.warn('Re-run not counted', { level: header.levelId, error });
+  }
 }
