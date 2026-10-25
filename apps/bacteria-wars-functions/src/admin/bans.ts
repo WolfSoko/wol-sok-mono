@@ -55,6 +55,16 @@ function stored(ban: BanState): StoredBan {
   };
 }
 
+/** A ban as the Realtime Database mirrors it: its end in ms, `0` for good. */
+function realtimeBan(until: number | null): number {
+  return until ?? 0;
+}
+
+/** True when a Realtime Database ban value still holds at `now`. */
+function holdsInRealtime(value: unknown, now: number): boolean {
+  return value === 0 || (typeof value === 'number' && value > now);
+}
+
 /** The player's ban, also one that ended but is not cleaned up yet. */
 export async function readBan(
   db: Firestore,
@@ -137,9 +147,9 @@ export async function banPlayer(
     }
     return { before, after };
   });
-  await realtime.set(`bans/${uid}`, until ?? 0);
+  await realtime.set(`bans/${uid}`, realtimeBan(until));
   await clearOut(db, realtime, uid);
-  await hideForBan(db, uid, true);
+  await hideForBan(db, uid);
   await takeDownPublicReplays(db, uid);
   return {
     before: before === null ? null : stored(before),
@@ -154,12 +164,14 @@ export async function banPlayer(
  * transaction, deletes `bans/{uid}` and tells the player (notice
  * `unbanned`). The Firestore ban goes last, so a step that fails leaves it
  * for the next try. With `endedUntil`, only an ended ban with that end is
- * lifted. Every step is tied to the ban it read: a ban the owner sets while
- * this runs keeps its Realtime Database ban (removed only while it still
- * holds the lifted end), its hidden entries (each unhidden only while no
- * other ban holds) and its `bans/{uid}`. Public replays taken down stay
- * down. Null when there was nothing to lift; an unban without a ban still
- * finishes the first two steps, which an earlier unban may have left undone.
+ * lifted. Every step is tied to the ban it read, so a ban the owner sets
+ * while this runs keeps all of it: the Realtime Database value is removed
+ * only when it is the lifted ban's or holds no more, each entry is
+ * unhidden only while no other ban holds, and `bans/{uid}` is deleted only
+ * while unchanged (`ban-changed` otherwise). Public replays taken down
+ * stay down. An unban without a ban (`not-banned`) still removes the
+ * Realtime Database's ban and unhides the entries, the owner's way to
+ * repair a mirror a failed command left behind.
  */
 export async function liftBan(
   db: Firestore,
@@ -168,23 +180,27 @@ export async function liftBan(
   noticeId: string,
   now: number,
   endedUntil?: number
-): Promise<BanChange | null> {
+): Promise<BanChange | 'not-banned' | 'ban-changed'> {
   const before = await readBan(db, uid);
+  if (before === null) {
+    if (endedUntil === undefined) {
+      await realtime.remove(`bans/${uid}`);
+      await unhideForBan(db, uid, null, now);
+    }
+    return 'not-banned';
+  }
   if (
     endedUntil !== undefined &&
-    (before === null || holds(before, now) || before.until !== endedUntil)
+    (holds(before, now) || before.until !== endedUntil)
   ) {
-    return null;
+    return 'ban-changed';
   }
-  if (before === null) {
-    await realtime.remove(`bans/${uid}`);
-  } else {
-    await realtime.removeIf(`bans/${uid}`, before.until ?? 0);
-  }
-  await hideForBan(db, uid, false, { lifted: before, now });
-  if (before === null) {
-    return null;
-  }
+  const value = realtimeBan(before.until);
+  await realtime.removeIf(
+    `bans/${uid}`,
+    (current) => current === value || !holdsInRealtime(current, now)
+  );
+  await unhideForBan(db, uid, before, now);
   const ref = db.doc(`bans/${uid}`);
   const lifted = await db.runTransaction(async (tx) => {
     if (!sameBan(banOf((await tx.get(ref)).data()), before)) {
@@ -197,11 +213,13 @@ export async function liftBan(
     );
     return true;
   });
-  return lifted ? { before: stored(before), after: null } : null;
+  return lifted ? { before: stored(before), after: null } : 'ban-changed';
 }
 
 function sameBan(a: BanState | null, b: BanState | null): boolean {
-  return a?.since === b?.since && a?.until === b?.until;
+  return (
+    a?.since === b?.since && a?.until === b?.until && a?.reason === b?.reason
+  );
 }
 
 /**
@@ -229,7 +247,7 @@ export async function expireBans(
     const id = `ban-ended_${uid}_${until}`;
     try {
       const change = await liftBan(db, realtime, uid, id, now, until);
-      if (change === null) {
+      if (typeof change === 'string') {
         continue;
       }
       await writeAudit(
@@ -254,30 +272,43 @@ export async function expireBans(
   return lifted;
 }
 
+/** Hides each of the player's entries for their ban (`hiddenBy.ban`). */
+function hideForBan(db: Firestore, uid: string): Promise<number> {
+  return changeBanHide(db, uid, true, null);
+}
+
+/**
+ * Takes the `ban` reason off the player's entries once `lifted` goes
+ * (null: no ban is left). Each entry stays hidden while another ban holds,
+ * so a ban set meanwhile keeps what it hid, whichever of the two gets to
+ * the entry first.
+ */
+function unhideForBan(
+  db: Firestore,
+  uid: string,
+  lifted: BanState | null,
+  now: number
+): Promise<number> {
+  return changeBanHide(
+    db,
+    uid,
+    false,
+    (ban) => holds(ban, now) && !sameBan(ban, lifted)
+  );
+}
+
 /**
  * Adds or takes away the `ban` reason on each of the player's entries
  * (`boardMembers/{uid}`), one transaction per entry, keeping what else
- * hides it. Updated in place, so a daily entry keeps its `expireAt`.
- * Taking it away needs the ban being lifted: an entry stays hidden while
- * another ban holds, so a ban set meanwhile keeps what it hid, whichever
- * of the two gets to the entry first. Returns how many entries changed.
+ * hides it - unless `keep` says so of the ban the transaction reads.
+ * Updated in place, so a daily entry keeps its `expireAt`. Returns how
+ * many entries changed.
  */
-async function hideForBan(
-  db: Firestore,
-  uid: string,
-  hide: true
-): Promise<number>;
-async function hideForBan(
-  db: Firestore,
-  uid: string,
-  hide: false,
-  lifting: { lifted: BanState | null; now: number }
-): Promise<number>;
-async function hideForBan(
+async function changeBanHide(
   db: Firestore,
   uid: string,
   hide: boolean,
-  lifting?: { lifted: BanState | null; now: number }
+  keep: ((ban: BanState | null) => boolean) | null
 ): Promise<number> {
   const member = await db.doc(`boardMembers/${uid}`).get();
   const banRef = db.doc(`bans/${uid}`);
@@ -294,11 +325,8 @@ async function hideForBan(
       if ((hiddenBy.ban === true) === hide) {
         return false;
       }
-      if (lifting !== undefined) {
-        const ban = banOf((await tx.get(banRef)).data());
-        if (holds(ban, lifting.now) && !sameBan(ban, lifting.lifted)) {
-          return false;
-        }
+      if (keep !== null && keep(banOf((await tx.get(banRef)).data()))) {
+        return false;
       }
       if (hide) {
         hiddenBy.ban = true;

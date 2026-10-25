@@ -1168,9 +1168,12 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      the `ban` hide, and then deletes the Firestore ban with the notice
      `unbanned` in one transaction, so a failed step is tried again. Each
      step is tied to the ban it read, so a ban set meanwhile keeps all of
-     it: the RTDB ban is removed only while it still holds the lifted end
-     (a transaction), an entry is unhidden only while no other ban holds,
-     and the Firestore ban is deleted only while unchanged. The rules of `adminCommands` (the shape, the writer,
+     it: the RTDB ban is removed (in a transaction) only when it is the
+     lifted ban's end or holds no more, an entry is unhidden only while no
+     other ban holds, and the Firestore ban is deleted only while unchanged
+     (`ban-changed` otherwise). An unban without a ban (`not-banned`) still
+     removes the RTDB ban and the hides, to repair what a failed command
+     left. The rules of `adminCommands` (the shape, the writer,
      `auth_time` within the hour for destructive types), `adminAudit`,
      `moderation` and `notices`; the RTDB `connections` node and the ban
      check on `status` and `connections`; the TTLs of `adminCommands`,

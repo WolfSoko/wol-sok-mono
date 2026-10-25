@@ -189,8 +189,8 @@ async function act(
   }
   if (command.type === 'player.unban') {
     const change = await liftBan(db, context.realtime, uid, commandId, now);
-    return change === null
-      ? { ok: false, error: 'not-banned', target, ...unchanged }
+    return typeof change === 'string'
+      ? { ok: false, error: change, target, ...unchanged }
       : { ok: true, target, ...change };
   }
   const { until, reason } = command.args;

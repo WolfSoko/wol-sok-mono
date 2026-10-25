@@ -70,10 +70,10 @@ function fakeRealtime(
       calls.push(`remove ${path}`);
       values.delete(path);
     },
-    removeIf: async (path, expected) => {
+    removeIf: async (path, test) => {
       await once('beforeRemoveIf');
       fail(path);
-      if (values.get(path) === expected) {
+      if (test(values.get(path) ?? null)) {
         calls.push(`remove ${path}`);
         values.delete(path);
       }
@@ -368,10 +368,34 @@ describe('player.unban', () => {
     });
   });
 
-  it('says so for a player who is not banned', async () => {
-    expect(await command('c1', unban('ada'))).toEqual({
+  it('says so for a player who is not banned, and clears the mirror', async () => {
+    const realtime = fakeRealtime();
+    // Left behind by a ban command that failed after Firestore.
+    await realtime.set('bans/ada', 0);
+    expect(await command('c1', unban('ada'), context(realtime))).toEqual({
       ok: false,
       error: 'not-banned',
+    });
+    expect(realtime.values.has('bans/ada')).toBe(false);
+  });
+
+  it('leaves a ban that changed while it ran', async () => {
+    await seedAda();
+    const realtime = fakeRealtime(undefined, {
+      beforeRemoveIf: () =>
+        command('c2', ban('ada', NOW + DAY), context(realtime)),
+    });
+    await command('c1', ban('ada', null), context(realtime));
+    expect(await command('c3', unban('ada'), context(realtime))).toEqual({
+      ok: false,
+      error: 'ban-changed',
+    });
+    expect(realtime.values.get('bans/ada')).toBe(NOW + DAY);
+    expect((await db.doc('bans/ada').get()).get('until').toMillis()).toBe(
+      NOW + DAY
+    );
+    expect((await entry('boards/xp/entries/xpAda')).get('hiddenBy')).toEqual({
+      ban: true,
     });
   });
 });
@@ -498,6 +522,15 @@ describe('expireBans', () => {
       expect((await db.collection('adminAudit').get()).size).toBe(2);
     }
   );
+
+  it('clears a mirror out of step with the ended ban', async () => {
+    const realtime = fakeRealtime();
+    await command('c1', ban('ada', NOW + HOUR), context(realtime));
+    // An end the Realtime Database kept from before, already passed.
+    await realtime.set('bans/ada', NOW + 30 * 60_000);
+    expect(await expireBans(db, realtime, NOW + DAY)).toBe(1);
+    expect(realtime.values.has('bans/ada')).toBe(false);
+  });
 
   it('goes on past a ban it cannot lift', async () => {
     jest.spyOn(logger, 'error').mockImplementation(() => undefined);

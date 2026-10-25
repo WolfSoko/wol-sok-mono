@@ -9,8 +9,8 @@ import type { Database } from 'firebase-admin/database';
 export interface Realtime {
   set(path: string, value: number): Promise<void>;
   remove(path: string): Promise<void>;
-  /** Removes the value at `path` only while it is still `expected`. */
-  removeIf(path: string, expected: number): Promise<void>;
+  /** Removes the value at `path` only while `test` holds for it. */
+  removeIf(path: string, test: (value: unknown) => boolean): Promise<void>;
 }
 
 /** The port on the project's Realtime Database, opened on first use. */
@@ -22,16 +22,14 @@ export function realtimeOf(database: () => Promise<Database>): Realtime {
     remove: async (path) => {
       await (await database()).ref(path).remove();
     },
-    removeIf: async (path, expected) => {
-      // The first call may see null before the server's value; keeping
-      // what it sees writes nothing new, and the server retries it.
+    removeIf: async (path, test) => {
+      // The first call may see null before the server's value; what it
+      // writes then is checked against that value and run again.
       await (
         await database()
       )
         .ref(path)
-        .transaction((current: unknown) =>
-          current === expected ? null : current
-        );
+        .transaction((current: unknown) => (test(current) ? null : current));
     },
   };
 }
