@@ -8,6 +8,7 @@ import { countAccount, deleteAccount } from './accounts';
 import { expireBans } from './bans';
 import { type AdminContext, runAdminCommand } from './command';
 import type { Realtime } from './realtime';
+import { refreshStats } from './stats';
 import { checkGoogleLink } from './tombstones';
 
 /**
@@ -100,6 +101,7 @@ function context(
     realtime,
     tombstoneOf: async (uid) =>
       google.includes(uid) ? tombstoneOfUid(uid) : null,
+    accountUids: async () => ['ada', 'bob', 'eve'],
   };
 }
 
@@ -474,19 +476,123 @@ describe('the owner check', () => {
 });
 
 describe('the types still to come', () => {
-  it.each([
-    ['board.verify', { boardId: DAILY, entryId: 'dAda' }, {}],
-    ['stats.refresh', null, {}],
-  ])('answer %s with unsupported, audited', async (type, target, args) => {
-    expect(await command('c1', { type, target, args })).toEqual({
-      ok: false,
-      error: 'unsupported',
-    });
+  it.each([['board.verify', { boardId: DAILY, entryId: 'dAda' }, {}]])(
+    'answer %s with unsupported, audited',
+    async (type, target, args) => {
+      expect(await command('c1', { type, target, args })).toEqual({
+        ok: false,
+        error: 'unsupported',
+      });
+      expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
+        type,
+        ok: false,
+        error: 'unsupported',
+      });
+    }
+  );
+});
+
+describe('statistics', () => {
+  /** Two players connected, one of them in a match. */
+  const connected = (): Realtime => ({
+    ...fakeRealtime(),
+    get: async (path) =>
+      path === 'connections'
+        ? {
+            ada: { state: 'playing', at: NOW },
+            bob: { state: 'online', at: NOW },
+          }
+        : null,
+  });
+  const at = (ms: number) => Timestamp.fromMillis(ms);
+
+  async function seedFigures(): Promise<void> {
+    await seedAda();
+    await db.doc('stats/accounts').set({ total: 12 });
+    await db.doc('boardMembers/bob').set({ activeAt: at(NOW - 3 * DAY) });
+    await db.doc('boardMembers/ada').update({ activeAt: at(NOW - HOUR) });
+    await db.doc('queue/bob').set({ seen: at(NOW - 10_000) });
+    await db.doc('queue/old').set({ seen: at(NOW - 60_000) });
+    await db.doc('rooms/r1').set({ taken: true, expireAt: at(NOW + HOUR) });
+    await db.doc('rooms/r2').set({ expireAt: at(NOW + HOUR) });
+    await db.doc('rooms/gone').set({ expireAt: at(NOW - HOUR) });
+    await db.doc('replays/old').set({ createdAt: at(NOW - 2 * DAY) });
+    await db.doc('replays/new').set({ createdAt: at(NOW - HOUR) });
+    await db.doc('replaySubmissions/s1').set({ uid: 'bob' });
+    await db.doc('bans/eve').set({ until: null, reason: 'cheating' });
+    await db.doc('profiles/bob').set({ avatar: { kind: 'image' } });
+    await db.doc('counters/2026-11-03').set({ verifyMs: 4000, label: 'x' });
+  }
+
+  it('writes the overview on stats.refresh, audited', async () => {
+    await seedFigures();
+    const ctx = { ...context(), realtime: connected() };
+    expect(
+      await command('c1', { type: 'stats.refresh', target: null }, ctx)
+    ).toEqual({ ok: true });
+    const figures = {
+      accounts: 12,
+      active24h: 1,
+      active7d: 2,
+      online: 2,
+      playing: 1,
+      searching: 1,
+      roomsOpen: 1,
+      matchesRunning: 1,
+      replays: 2,
+      replaysToday: 1,
+      submissionsWaiting: 1,
+      bans: 1,
+      uploadedPictures: 1,
+      entries: { xp: 1, online: 0, endless: 0, [DAILY]: 1 },
+      today: { verifyMs: 4000 },
+    };
+    expect((await db.doc('adminStats/now').get()).data()).toMatchObject(
+      figures
+    );
     expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
-      type,
-      ok: false,
-      error: 'unsupported',
+      ok: true,
+      target: null,
+      after: figures,
     });
+  });
+
+  it('keeps an hourly snapshot 90 days', async () => {
+    await refreshStats(db, connected(), NOW + 5 * 60_000, { snapshot: true });
+    const snapshot = await db.doc('adminStats/h_2026110312').get();
+    expect(snapshot.get('online')).toBe(2);
+    expect((snapshot.get('expireAt') as Timestamp).toMillis()).toBe(
+      NOW + 5 * 60_000 + 90 * DAY
+    );
+    expect((await db.doc('adminStats/now').get()).exists).toBe(true);
+  });
+
+  it('sets the account count from Auth on stats.recount', async () => {
+    await db.doc('stats/accounts').set({ total: 5 });
+    await db.doc('boardMembers/ada').set({ boards: ['xp'] });
+    expect(
+      await command('c1', { type: 'stats.recount', target: null })
+    ).toEqual({ ok: true });
+    expect((await db.doc('stats/accounts').get()).get('total')).toBe(3);
+    expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
+      before: 5,
+      after: 3,
+    });
+    // Counted now: deleting one lowers the total, as for a new account.
+    expect((await db.doc('boardMembers/ada').get()).data()).toEqual({
+      boards: ['xp'],
+      accountCounted: true,
+    });
+    expect((await db.doc('boardMembers/eve').get()).get('accountCounted')).toBe(
+      true
+    );
+    await deleteAccount(
+      db,
+      'eve',
+      { tombstone: null, realtime: fakeRealtime() },
+      NOW
+    );
+    expect((await db.doc('stats/accounts').get()).get('total')).toBe(2);
   });
 });
 

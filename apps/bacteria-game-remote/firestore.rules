@@ -268,6 +268,13 @@ service cloud.firestore {
       allow get: if isAdmin();
     }
 
+    // The overview's statistics (ADR 0012): `now` and the hourly
+    // snapshots, written by the functions only; TTL takes a snapshot after
+    // 90 days.
+    match /adminStats/{id} {
+      allow read: if isAdmin();
+    }
+
     function signedIn() {
       return request.auth != null;
     }

@@ -670,6 +670,27 @@ describe('adminAudit', () => {
   });
 });
 
+describe('adminStats', () => {
+  it('lets the owner read it, nobody write it', async () => {
+    await seed('adminStats/now', { accounts: 3 });
+    await seed('adminStats/h_2026110312', { accounts: 3 });
+    await assertSucceeds(getDoc(doc(db('own', OWNER_TOKEN), 'adminStats/now')));
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db('own', OWNER_TOKEN), 'adminStats'),
+          orderBy('at', 'desc'),
+          limit(24)
+        )
+      )
+    );
+    await assertFails(getDoc(doc(db('ada'), 'adminStats/now')));
+    await assertFails(
+      setDoc(doc(db('own', OWNER_TOKEN), 'adminStats/now'), { accounts: 9 })
+    );
+  });
+});
+
 describe('notices and moderation', () => {
   it("lets a player read and delete their own notices, nobody else's", async () => {
     await seed('players/ada/notices/n1', { type: 'banned' });
