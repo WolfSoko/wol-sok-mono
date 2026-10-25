@@ -1102,8 +1102,9 @@ written.
   access to it. Done 2026-10-24.
 - After the index deploy, check that TTL is on for every new `expireAt`
   field listed above, and that `rooms.expireAt` is indexed again.
-- Review the CPU benchmark and the budgets it sets before the functions
-  deploy.
+- Review the CPU benchmark and the budgets it sets. The functions deploy
+  with every release since 2026-10-25 (owner's decision), so the
+  benchmark adjusts `budgets.ts` afterwards.
 - After the first functions deploy, check that Cloud Scheduler shows
   `hourly` (running: before step 6 it only closes unreported online
   matches, as no daily attempt exists to check) and `featureBest`
