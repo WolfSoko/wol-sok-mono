@@ -13,8 +13,9 @@ const PARALLEL_REPLAYS = 10;
  * another player keeps that player and loses this one - from `players`,
  * from the room's `seats` and its report. That includes an online match
  * only the other player reported, which names the account in `seats`
- * alone. Runs for banned accounts too: a deletion must erase the player's
- * data.
+ * alone. A replay the player took out of the gallery stays out
+ * (`galleryOut`). Runs for banned accounts too: a deletion must erase the
+ * player's data.
  */
 export async function deletePlayerReplays(
   db: Firestore,

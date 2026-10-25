@@ -7,6 +7,7 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
 import { deletePlayerReplays } from '../replays/delete-player';
+import { deletePlayerBoards } from './delete-player';
 import { boardProfileChanged } from './profile-changed';
 import { type AccountCreatedAt, rankOnline } from './rank-online';
 import { rankProgress } from './rank-progress';
@@ -306,5 +307,50 @@ describe('boardProfileChanged', () => {
         { name: 'A', motto: 'y' }
       )
     ).toBe(0);
+  });
+});
+
+describe('deletePlayerBoards', () => {
+  it("erases a deleted player's board data, and nobody else's", async () => {
+    const day = '2026-10-25';
+    await db.doc('boardMembers/ada').set({
+      entryIds: { xp: 'x1', online: 'o1', endless: 'e1', daily: 'd1' },
+      boards: ['xp', 'online', 'endless', `daily-${day}`],
+    });
+    const mine = [
+      'boards/xp/entries/x1',
+      'boards/online/entries/o1',
+      'boards/endless/entries/e1',
+      `boards/daily-${day}/entries/d1`,
+      `dailyRuns/${day}_ada`,
+      'endlessRuns/ada_202610251',
+      'limits/ada',
+      'moderation/ada',
+      'players/ada/attempts/d_2026-10-25_1',
+      'players/ada/notices/n1',
+    ];
+    for (const path of mine) {
+      await db.doc(path).set({ uid: 'ada' });
+    }
+    const theirs = [
+      'boards/xp/entries/x2',
+      'endlessRuns/bob_202610251',
+      'boardMembers/bob',
+      'players/ada/storage/progress',
+    ];
+    for (const path of theirs) {
+      await db.doc(path).set({ uid: 'bob' });
+    }
+    expect(await deletePlayerBoards(db, 'ada')).toBe(9);
+    for (const path of [...mine, 'boardMembers/ada']) {
+      expect([path, (await db.doc(path).get()).exists]).toEqual([path, false]);
+    }
+    for (const path of theirs) {
+      expect([path, (await db.doc(path).get()).exists]).toEqual([path, true]);
+    }
+  });
+
+  it('copes with an account that never reached a board', async () => {
+    expect(await deletePlayerBoards(db, 'ada')).toBe(3);
   });
 });

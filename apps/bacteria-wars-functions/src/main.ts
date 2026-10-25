@@ -17,6 +17,7 @@ import {
 } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
+import { deletePlayerBoards as deleteBoardsOf } from './boards/delete-player';
 import { runHourly } from './boards/hourly';
 import { boardProfileChanged as relabelEntries } from './boards/profile-changed';
 import { rankDaily } from './boards/rank-daily';
@@ -114,6 +115,15 @@ export const deletePlayerReplays = v1
   .onDelete(async (user) => {
     const counts = await deleteReplaysOf(db(), user.uid);
     logger.info('Replays of a deleted account', { uid: user.uid, ...counts });
+  });
+
+/** A deleted account leaves the boards - see `deletePlayerBoards`. */
+export const deletePlayerBoards = v1
+  .region(REGION)
+  .auth.user()
+  .onDelete(async (user) => {
+    const deleted = await deleteBoardsOf(db(), user.uid);
+    logger.info('Board data of a deleted account', { uid: user.uid, deleted });
   });
 
 /**

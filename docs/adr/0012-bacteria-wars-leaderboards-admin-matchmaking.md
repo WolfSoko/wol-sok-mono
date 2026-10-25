@@ -1132,8 +1132,17 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      the endless candidates: their wins in order, a failed one cutting the
      run to its verified prefix (`partial`). The endless budget is
      `ENDLESS_VERIFY_MS` plus what the daily boards leave of theirs.
-   - The admin commands, `countAccount` and `deletePlayerBoards` come
-     next.
+   - `deletePlayerBoards` deletes a deleted account's entries on every
+     board in `boardMembers.boards` (`rebuildTop` takes them off the
+     tops), its `dailyRuns` and `endlessRuns`, `boardMembers`, `limits`,
+     `moderation`, its attempts and notices. `boardMembers.boards` drops
+     the daily boards TTL took whenever a daily entry is written, so it
+     holds about 31 daily ones, and `dailyRuns` expire from their day like
+     the board. A replay taken out of the gallery carries `galleryOut`,
+     which keeps it out once its player's uid has left `optOut`. The
+     tombstone, the ban, the audit scrub and `stats/accounts` follow with
+     the bans.
+   - The admin commands and `countAccount` come next.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].
