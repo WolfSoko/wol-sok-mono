@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.95.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.94.0...v74.95.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ level statistics count the medallions of verified re-runs ([#2661](https://github.com/WolfSoko/wol-sok-mono/issues/2661)) ([f248e17](https://github.com/WolfSoko/wol-sok-mono/commit/f248e178ad4b3e95a84d779750f6bfe273d4b5d9))
+
 ## [74.94.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.93.0...v74.94.0) (2026-10-25)
 
 ### Features
