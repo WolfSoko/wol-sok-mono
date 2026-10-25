@@ -57,18 +57,23 @@ async function rank(
       .doc(`players/${uid}/attempts/${attempt.id}`)
       .set({ at: Timestamp.fromMillis(attempt.at) });
   }
-  const doc = {
-    kind: 'daily',
-    players: [uid],
-    state: 'submitted',
-    attempt,
-    submittedAt: Timestamp.fromMillis(arrived),
-  };
+  const doc = replayDoc(replay, uid, arrived);
   await db.doc(`replays/${replayId}`).set(doc);
   await db
     .doc(`replays/${replayId}/blob/data`)
     .set({ bytes: Buffer.from(await replayToBytes(replay)) });
   return rankDaily(db, replayId, doc, NOW);
+}
+
+/** What acceptReplay stores for a replay of a declared attempt. */
+function replayDoc(replay: Replay, uid: string, arrived = ARRIVED) {
+  return {
+    kind: 'daily',
+    players: [uid],
+    state: 'submitted',
+    attempt: replay.header.attempt,
+    submittedAt: Timestamp.fromMillis(arrived),
+  };
 }
 
 async function entryOf(uid: string) {
@@ -123,6 +128,25 @@ describe('rankDaily', () => {
     expect(await rank('l_1', dailyReplay(), 'ada')).toBe('counted');
     const doc = (await db.doc('replays/l_1').get()).data() ?? {};
     expect(await rankDaily(db, 'l_1', doc, NOW)).toBe('counted');
+    expect((await db.doc('replays/l_1').get()).get('rankedReason')).toBe(
+      'counted'
+    );
+    expect(
+      (await db.doc(`dailyRuns/${DAY}_ada`).get()).get('attempts')
+    ).toHaveLength(1);
+  });
+
+  it("keeps a counted replay's answer when its event comes again", async () => {
+    const replay = dailyReplay();
+    expect(await rank('l_1', replay, 'ada')).toBe('counted');
+    // The retry brings the event's snapshot, after the player got banned
+    // and the declaration expired.
+    await db.doc('bans/ada').set({ until: null });
+    await db.doc(`players/ada/attempts/${ATTEMPT}`).delete();
+    clearBanCache();
+    expect(await rankDaily(db, 'l_1', replayDoc(replay, 'ada'), NOW)).toBe(
+      'counted'
+    );
     expect((await db.doc('replays/l_1').get()).get('rankedReason')).toBe(
       'counted'
     );

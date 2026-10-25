@@ -193,25 +193,32 @@ export async function rankDaily(
       },
     };
   };
-  const decided = await decide();
+  // rankReplay retries with the event's snapshot, which never shows what
+  // an earlier delivery wrote: a replay that has its answer keeps it, even
+  // when a ban or an expired declaration would answer otherwise now.
   const replayRef = db.doc(`replays/${replayId}`);
-  if (decided.reason !== 'counted' || !('run' in decided)) {
-    await replayRef.update({
-      rankedReason: decided.reason,
-      rankedAt: FieldValue.serverTimestamp(),
-    });
-    return decided.reason;
+  const answered = (await replayRef.get()).get('rankedReason');
+  if (typeof answered === 'string') {
+    return answered as DailyReason;
   }
-  const { day, run } = decided;
+  const decided = await decide();
   return db.runTransaction(async (tx) => {
+    const ranked = (await tx.get(replayRef)).get('rankedReason');
+    if (typeof ranked === 'string') {
+      return ranked as DailyReason;
+    }
+    if (decided.reason !== 'counted' || !('run' in decided)) {
+      tx.update(replayRef, {
+        rankedReason: decided.reason,
+        rankedAt: FieldValue.serverTimestamp(),
+      });
+      return decided.reason;
+    }
+    const { day, run } = decided;
     const runRef = db.doc(`dailyRuns/${day}_${decided.uid}`);
     const stored = await tx.get(runRef);
     const attempts =
       (stored.get('attempts') as DailyAttemptRun[] | undefined) ?? [];
-    // This very replay, taken by an earlier delivery: rankReplay retries.
-    if (attempts.some((a) => a.replayId === replayId)) {
-      return 'counted' as const;
-    }
     if (attempts.some((a) => a.attemptId === run.attemptId)) {
       tx.update(replayRef, {
         rankedReason: 'duplicate',
