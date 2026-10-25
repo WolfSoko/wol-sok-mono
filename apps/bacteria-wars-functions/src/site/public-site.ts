@@ -32,10 +32,12 @@ const PUBLIC_ID = /^[A-Za-z0-9]{20}$/;
 /**
  * Hosting's CDN keeps a page two minutes and a browser one more, so a
  * takedown can take up to three minutes to show everywhere (ADR 0011).
+ * `firebase.bacteria-game-remote.json` sets the same for `/replays`, as
+ * its catch-all `no-cache` header may otherwise win (`hosting.spec.ts`).
  */
-const CACHE = 'public, max-age=60, s-maxage=120';
+export const CACHE = 'public, max-age=60, s-maxage=120';
 /** The sitemap changes once a day: an hour, so a miss is rare. */
-const SITEMAP_CACHE = 'public, max-age=3600, s-maxage=3600';
+export const SITEMAP_CACHE = 'public, max-age=3600, s-maxage=3600';
 /** The fields a gallery card shows - not the summary's timeline. */
 const CARD_FIELDS = [
   'levelId',
