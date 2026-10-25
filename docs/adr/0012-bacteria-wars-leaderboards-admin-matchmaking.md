@@ -1166,8 +1166,11 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      it again. Unbanning, and `hourly` for ended bans (25 a run, oldest
      first, each audited with `by: 'system'`), removes the RTDB ban, lifts
      the `ban` hide, and then deletes the Firestore ban with the notice
-     `unbanned` in one transaction, so a failed step is tried again; a ban
-     renewed meanwhile is found there and put back whole. The rules of `adminCommands` (the shape, the writer,
+     `unbanned` in one transaction, so a failed step is tried again. Each
+     step is tied to the ban it read, so a ban set meanwhile keeps all of
+     it: the RTDB ban is removed only while it still holds the lifted end
+     (a transaction), an entry is unhidden only while no other ban holds,
+     and the Firestore ban is deleted only while unchanged. The rules of `adminCommands` (the shape, the writer,
      `auth_time` within the hour for destructive types), `adminAudit`,
      `moderation` and `notices`; the RTDB `connections` node and the ban
      check on `status` and `connections`; the TTLs of `adminCommands`,

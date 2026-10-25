@@ -33,19 +33,51 @@ beforeEach(async () => {
   );
 });
 
-/** A Realtime Database that records its writes, and fails for `failFor`. */
-function fakeRealtime(failFor?: string): Realtime & { calls: string[] } {
+/**
+ * A Realtime Database that keeps its values and records its writes, and
+ * fails for `failFor`. `beforeRemoveIf` runs once, when a conditional
+ * remove starts, or `afterRemoveIf` once it is done - to let another
+ * command run in between.
+ */
+function fakeRealtime(
+  failFor?: string,
+  hooks: {
+    beforeRemoveIf?: () => Promise<unknown>;
+    afterRemoveIf?: () => Promise<unknown>;
+  } = {}
+): Realtime & { calls: string[]; values: Map<string, number> } {
   const calls: string[] = [];
+  const values = new Map<string, number>();
+  const fail = (path: string) => {
+    if (failFor !== undefined && path === `bans/${failFor}`) {
+      throw new Error('unavailable');
+    }
+  };
+  const once = async (hook: keyof typeof hooks) => {
+    const run = hooks[hook];
+    delete hooks[hook];
+    await run?.();
+  };
   return {
     calls,
+    values,
     set: async (path, value) => {
       calls.push(`set ${path} ${value}`);
+      values.set(path, value);
     },
     remove: async (path) => {
-      if (failFor !== undefined && path === `bans/${failFor}`) {
-        throw new Error('unavailable');
-      }
+      fail(path);
       calls.push(`remove ${path}`);
+      values.delete(path);
+    },
+    removeIf: async (path, expected) => {
+      await once('beforeRemoveIf');
+      fail(path);
+      if (values.get(path) === expected) {
+        calls.push(`remove ${path}`);
+        values.delete(path);
+      }
+      await once('afterRemoveIf');
     },
   };
 }
@@ -431,6 +463,41 @@ describe('expireBans', () => {
     // Nothing left to lift.
     expect(await expireBans(db, realtime, later)).toBe(0);
   });
+
+  it.each(['beforeRemoveIf', 'afterRemoveIf'] as const)(
+    'keeps a ban the owner sets while it lifts the old one (%s)',
+    async (hook) => {
+      await seedAda();
+      const later = NOW + DAY;
+      const renewed = later + 3 * DAY;
+      const realtime = fakeRealtime(undefined, {
+        [hook]: () =>
+          command('c2', ban('ada', renewed), context(realtime), 'owner', later),
+      });
+      await command('c1', ban('ada', NOW + HOUR), context(realtime));
+
+      expect(await expireBans(db, realtime, later)).toBe(0);
+
+      const stored = (await db.doc('bans/ada').get()).data();
+      expect(stored?.['until'].toMillis()).toBe(renewed);
+      expect(stored?.['since'].toMillis()).toBe(later);
+      expect(realtime.values.get('bans/ada')).toBe(renewed);
+      // Only the ended ban's value is removed, and only before the new one.
+      expect(realtime.calls.includes('remove bans/ada')).toBe(
+        hook === 'afterRemoveIf'
+      );
+      expect((await entry('boards/xp/entries/xpAda')).data()).toMatchObject({
+        status: 'hidden',
+        hiddenBy: { ban: true },
+      });
+      const notices = await db.collection('players/ada/notices').get();
+      expect(notices.docs.map((doc) => doc.get('type'))).toEqual([
+        'banned',
+        'banned',
+      ]);
+      expect((await db.collection('adminAudit').get()).size).toBe(2);
+    }
+  );
 
   it('goes on past a ban it cannot lift', async () => {
     jest.spyOn(logger, 'error').mockImplementation(() => undefined);

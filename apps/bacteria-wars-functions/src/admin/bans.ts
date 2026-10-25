@@ -154,11 +154,12 @@ export async function banPlayer(
  * transaction, deletes `bans/{uid}` and tells the player (notice
  * `unbanned`). The Firestore ban goes last, so a step that fails leaves it
  * for the next try. With `endedUntil`, only an ended ban with that end is
- * lifted; a ban the owner renewed while this ran is found by the
- * transaction and put back whole (its Realtime Database ban and hides).
- * Public replays taken down stay down. Null when there was nothing to
- * lift; an unban without a ban still finishes the first two steps, which
- * an earlier unban may have left undone.
+ * lifted. Every step is tied to the ban it read: a ban the owner sets while
+ * this runs keeps its Realtime Database ban (removed only while it still
+ * holds the lifted end), its hidden entries (each unhidden only while no
+ * other ban holds) and its `bans/{uid}`. Public replays taken down stay
+ * down. Null when there was nothing to lift; an unban without a ban still
+ * finishes the first two steps, which an earlier unban may have left undone.
  */
 export async function liftBan(
   db: Firestore,
@@ -175,29 +176,32 @@ export async function liftBan(
   ) {
     return null;
   }
-  await realtime.remove(`bans/${uid}`);
-  await hideForBan(db, uid, false);
+  if (before === null) {
+    await realtime.remove(`bans/${uid}`);
+  } else {
+    await realtime.removeIf(`bans/${uid}`, before.until ?? 0);
+  }
+  await hideForBan(db, uid, false, { lifted: before, now });
   if (before === null) {
     return null;
   }
   const ref = db.doc(`bans/${uid}`);
-  const outcome = await db.runTransaction(async (tx) => {
-    const ban = banOf((await tx.get(ref)).data());
-    if (ban === null || ban.until !== before.until) {
-      return { lifted: false, renewed: ban };
+  const lifted = await db.runTransaction(async (tx) => {
+    if (!sameBan(banOf((await tx.get(ref)).data()), before)) {
+      return false;
     }
     tx.delete(ref);
     tx.set(
       db.doc(`players/${uid}/notices/${noticeId}`),
       noticeData('unbanned', now)
     );
-    return { lifted: true, renewed: null };
+    return true;
   });
-  if (outcome.renewed !== null) {
-    await realtime.set(`bans/${uid}`, outcome.renewed.until ?? 0);
-    await hideForBan(db, uid, true);
-  }
-  return outcome.lifted ? { before: stored(before), after: null } : null;
+  return lifted ? { before: stored(before), after: null } : null;
+}
+
+function sameBan(a: BanState | null, b: BanState | null): boolean {
+  return a?.since === b?.since && a?.until === b?.until;
 }
 
 /**
@@ -254,14 +258,29 @@ export async function expireBans(
  * Adds or takes away the `ban` reason on each of the player's entries
  * (`boardMembers/{uid}`), one transaction per entry, keeping what else
  * hides it. Updated in place, so a daily entry keeps its `expireAt`.
- * Returns how many entries changed.
+ * Taking it away needs the ban being lifted: an entry stays hidden while
+ * another ban holds, so a ban set meanwhile keeps what it hid, whichever
+ * of the two gets to the entry first. Returns how many entries changed.
  */
-export async function hideForBan(
+async function hideForBan(
   db: Firestore,
   uid: string,
-  hide: boolean
+  hide: true
+): Promise<number>;
+async function hideForBan(
+  db: Firestore,
+  uid: string,
+  hide: false,
+  lifting: { lifted: BanState | null; now: number }
+): Promise<number>;
+async function hideForBan(
+  db: Firestore,
+  uid: string,
+  hide: boolean,
+  lifting?: { lifted: BanState | null; now: number }
 ): Promise<number> {
   const member = await db.doc(`boardMembers/${uid}`).get();
+  const banRef = db.doc(`bans/${uid}`);
   let changed = 0;
   for (const { boardId, entryId } of memberEntries(member.data())) {
     const ref = db.doc(`boards/${boardId}/entries/${entryId}`);
@@ -274,6 +293,12 @@ export async function hideForBan(
       const hiddenBy = hiddenByOf(data['hiddenBy']);
       if ((hiddenBy.ban === true) === hide) {
         return false;
+      }
+      if (lifting !== undefined) {
+        const ban = banOf((await tx.get(banRef)).data());
+        if (holds(ban, lifting.now) && !sameBan(ban, lifting.lifted)) {
+          return false;
+        }
       }
       if (hide) {
         hiddenBy.ban = true;
