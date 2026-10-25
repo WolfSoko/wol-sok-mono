@@ -249,6 +249,19 @@ async function tombstoneOf(uid: string): Promise<string | null> {
   return user === null ? null : tombstoneId(BAN_TOMBSTONE_KEY.value(), user);
 }
 
+/** How many accounts Auth holds, a thousand a page - `stats.recount`. */
+async function countAccounts(): Promise<number> {
+  const { getAuth } = await import('firebase-admin/auth');
+  let total = 0;
+  let pageToken: string | undefined;
+  do {
+    const page = await getAuth().listUsers(1000, pageToken);
+    total += page.users.length;
+    pageToken = page.pageToken;
+  } while (pageToken !== undefined);
+  return total;
+}
+
 /**
  * The one-time tombstone check after a guest links Google - see
  * `checkGoogleLink`. A failure is logged, not thrown: the check runs again
@@ -283,7 +296,7 @@ export const adminCommand = onDocumentCreatedWithAuthContext(
         event.params.id,
         data,
         event.authType === 'unauthenticated' ? undefined : event.authId,
-        { isOwner, realtime, tombstoneOf }
+        { isOwner, realtime, tombstoneOf, countAccounts }
       );
       logger.info('Admin command', { id: event.params.id, result });
     }
@@ -410,8 +423,9 @@ export const boardProfileChanged = onDocumentWritten(
 
 /**
  * Every hour at minute 17 (UTC): cleans up ended bans, closes unreported
- * online matches and yesterday's daily board, then checks daily entries
- * for 25 minutes at most (ADR 0012). Off with `HOURLY_ON`.
+ * online matches and yesterday's daily board, checks daily entries for 25
+ * minutes at most, then writes the statistics snapshot (ADR 0012). Off
+ * with `HOURLY_ON`.
  */
 export const hourly = HOURLY_ON
   ? onSchedule(
