@@ -1,4 +1,7 @@
-import { replayFromBytes } from '@wolsok/feat-lazy-bac-game/engine';
+import {
+  type Replay,
+  replayFromBytes,
+} from '@wolsok/feat-lazy-bac-game/engine';
 import {
   type DocumentSnapshot,
   FieldValue,
@@ -18,6 +21,7 @@ import {
   type Rejection,
   type SubmissionMeta,
 } from './accept-plan';
+import { countLevelStats } from './level-stats';
 
 /** What became of a submission - for the log and the specs. */
 export type AcceptOutcome =
@@ -49,7 +53,8 @@ interface RoomStub {
  * then tries again, and gives up with {@link giveUpSubmission}. Nothing is
  * played again here: the replay is parsed strictly, bound to its players
  * and stored.
- * - A local match is the caller's alone, `submitted`.
+ * - A local match is the caller's alone, `submitted`, and counts in its
+ *   level statistics (`level-stats.ts`, ADR 0016).
  * - An online match lists each player of its room stub once their own report
  *   arrives: `waiting` with one, `agreed` or `disputed` with both. A second
  *   report after the hourly function closed the match with one ("Not
@@ -108,7 +113,7 @@ async function accept(
   }
   const blob = { bytes, size: bytes.length };
   return plan.room === undefined
-    ? storeLocal(db, plan, meta, blob, now)
+    ? storeLocal(db, replay, plan, meta, blob, now)
     : storeOnline(db, plan, meta, blob, now);
 }
 
@@ -217,6 +222,7 @@ function newReplay(plan: AcceptPlan, uid: string, state: string, now: number) {
 
 async function storeLocal(
   db: Firestore,
+  replay: Replay,
   plan: AcceptPlan,
   meta: SubmissionMeta,
   blob: { bytes: Uint8Array; size: number },
@@ -232,6 +238,8 @@ async function storeLocal(
         : { submittedAt: Timestamp.fromMillis(meta.createdAt) }),
     });
     writer.create(ref.collection('blob').doc('data'), blob);
+    // Counted once: a second delivery fails on the create above.
+    countLevelStats(writer, db, replay, plan.kind);
   };
   const { attempt } = meta;
   try {

@@ -274,6 +274,11 @@ service cloud.firestore {
     match /adminStats/{id} {
       allow read: if isAdmin();
     }
+    // Per level and bot difficulty, no uid (ADR 0016), for the Balance
+    // view; written by the functions only.
+    match /levelStats/{id} {
+      allow read: if isAdmin();
+    }
 
     function signedIn() {
       return request.auth != null;

@@ -437,6 +437,21 @@ export function parseReplay(
 }
 
 /**
+ * True for a replay with evolution in it: loadouts in the header (the
+ * ladder's computer brings them too) or a weapon fired. Read from what it
+ * holds, whatever its version - a version 5 replay may be plain or evolved.
+ */
+export function playsEvolution({
+  header,
+  inputs,
+}: {
+  header: Pick<ReplayHeader, 'loadouts'>;
+  inputs: Pick<ReplayInputs, 'weapons'>;
+}): boolean {
+  return header.loadouts !== undefined || inputs.weapons.length > 0;
+}
+
+/**
  * True when a replay holds only what its version may:
  * - a simulation it may come from - a ruleset for one to store;
  * - for a plain version, no loadouts and no weapons fired: every client
@@ -451,7 +466,7 @@ function fitsVersion(
   rules: VersionRules,
   stored: boolean
 ): boolean {
-  const evolved = header.loadouts !== undefined || inputs.weapons.length > 0;
+  const evolved = playsEvolution({ header, inputs });
   const ranked = header.attempt !== undefined;
   return (
     rules.simulations.includes(header.simulation) &&
