@@ -7,6 +7,10 @@ import {
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import type { DocumentReference } from 'firebase/firestore';
 import { AdminAccessService } from '../access/admin-access.service';
+import {
+  DESTRUCTIVE_REPLAY_TYPES,
+  type ReplayCommandType,
+} from './command-types';
 
 /** What the server made of a command (`adminCommands/{id}.result`). */
 export interface AdminResult {
@@ -23,14 +27,6 @@ export interface AdminCommandInput {
   reason: string;
   args: Record<string, unknown>;
 }
-
-/** The owner's gallery curation, as `replayCommands` types (ADR 0011). */
-export const REPLAY_COMMAND_TYPES = [
-  'feature',
-  'unfeature',
-  'anonymise',
-] as const;
-export type ReplayCommandType = (typeof REPLAY_COMMAND_TYPES)[number];
 
 /** How long a command document lives (TTL); the rules allow up to 2 days. */
 const COMMAND_TTL_MS = 24 * 3_600_000;
@@ -53,55 +49,62 @@ export class AdminCommandsService {
   private readonly cloud = inject(GameCloud);
   private readonly access = inject(AdminAccessService);
 
-  public async send(
+  public send(
     command: AdminCommandInput,
     now: number = Date.now()
   ): Promise<AdminResult> {
-    const connection = this.cloud.firebase();
-    const uid = this.access.uid();
-    if (connection === null || uid === null) {
-      return { ok: false, error: 'not-admin' };
-    }
-    if (
-      DESTRUCTIVE_COMMAND_TYPES.includes(command.type) &&
-      !this.access.signedInLately(now)
-    ) {
-      return { ok: false, error: 'sign-in-again' };
-    }
-    const { db, dbSdk } = connection;
-    const ref = await dbSdk.addDoc(dbSdk.collection(db, 'adminCommands'), {
-      uid,
-      type: command.type,
-      target: command.target,
-      ...(command.reason === '' ? {} : { reason: command.reason }),
-      args: command.args,
-      createdAt: dbSdk.serverTimestamp(),
-      expireAt: dbSdk.Timestamp.fromMillis(now + COMMAND_TTL_MS),
-    });
-    return this.result(connection, ref);
+    return this.write(
+      'adminCommands',
+      {
+        type: command.type,
+        target: command.target,
+        ...(command.reason === '' ? {} : { reason: command.reason }),
+        args: command.args,
+      },
+      DESTRUCTIVE_COMMAND_TYPES.includes(command.type),
+      now
+    );
   }
 
   /**
    * Sends the owner's gallery curation (ADR 0011): a `replayCommands`
    * document, which `replayCommand` runs and answers like `adminCommand`.
    * `feature` takes a stored replay's id, `unfeature` and `anonymise` a
-   * public one's or a stored one's.
+   * public one's or a stored one's; those two, which cannot be taken back,
+   * want a fresh sign-in too.
    */
-  public async sendReplay(
+  public sendReplay(
     type: ReplayCommandType,
     replayId: string,
     now: number = Date.now()
+  ): Promise<AdminResult> {
+    return this.write(
+      'replayCommands',
+      { type, replayId },
+      DESTRUCTIVE_REPLAY_TYPES.includes(type),
+      now
+    );
+  }
+
+  /** Writes a command in the owner's name and waits for its result. */
+  private async write(
+    collection: 'adminCommands' | 'replayCommands',
+    fields: Record<string, unknown>,
+    destructive: boolean,
+    now: number
   ): Promise<AdminResult> {
     const connection = this.cloud.firebase();
     const uid = this.access.uid();
     if (connection === null || uid === null) {
       return { ok: false, error: 'not-admin' };
     }
+    if (destructive && !this.access.signedInLately(now)) {
+      return { ok: false, error: 'sign-in-again' };
+    }
     const { db, dbSdk } = connection;
-    const ref = await dbSdk.addDoc(dbSdk.collection(db, 'replayCommands'), {
+    const ref = await dbSdk.addDoc(dbSdk.collection(db, collection), {
       uid,
-      type,
-      replayId,
+      ...fields,
       createdAt: dbSdk.serverTimestamp(),
       expireAt: dbSdk.Timestamp.fromMillis(now + COMMAND_TTL_MS),
     });

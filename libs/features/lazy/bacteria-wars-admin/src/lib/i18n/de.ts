@@ -153,6 +153,8 @@ export const DE: Translation<typeof EN> = {
     byId: 'Eine gespeicherte Wiederholung',
     replayId: 'Id der Wiederholung',
     lookUp: 'Nachsehen',
+    lookUpFailed:
+      'Die Wiederholung ließ sich nicht lesen. Versuch es noch einmal.',
     notFound: 'Keine gespeicherte Wiederholung mit dieser Id.',
     score: 'Wertung {score}',
     galleryOut: 'dauerhaft nicht in der Galerie',

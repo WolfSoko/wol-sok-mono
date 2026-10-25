@@ -7,10 +7,7 @@ import {
 } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import {
-  ADMIN_COMMAND_TYPES,
-  type AdminCommandType,
-} from '@wolsok/feat-lazy-bac-game/admin-kit';
+import { isOwnerActionType } from '../commands/command-types';
 import { AdminI18n, AdminTextPipe } from '../i18n/admin-i18n.service';
 import type { AuditRecord } from '../moderation/admin-records';
 
@@ -46,6 +43,9 @@ import type { AuditRecord } from '../moderation/admin-records';
             <a [routerLink]="['/admin/player', row.uid]">
               <code>{{ row.uid }}</code>
             </a>
+          }
+          @if (row.replayId !== null) {
+            <small>{{ 'replays.replay' | adminT }} {{ row.replayId }}</small>
           }
           @if (row.entry !== null) {
             <br /><small
@@ -111,8 +111,6 @@ export class AuditTableComponent {
 
   /** A command type's name, the stored id for anything else. */
   protected typeName(type: string): string {
-    return (ADMIN_COMMAND_TYPES as readonly string[]).includes(type)
-      ? this.i18n.t(`type.${type as AdminCommandType}`)
-      : type;
+    return isOwnerActionType(type) ? this.i18n.t(`type.${type}`) : type;
   }
 }

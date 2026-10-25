@@ -1,6 +1,4 @@
 import {
-  ADMIN_COMMAND_TYPES,
-  type AdminCommandType,
   BAN_REASONS,
   BOARD_KINDS,
   type BanReason,
@@ -88,6 +86,8 @@ export interface AuditRecord {
   uid: string | null;
   /** The entry, for entry commands. */
   entry: { boardId: string; entryId: string } | null;
+  /** The replay, for the gallery's curation. */
+  replayId: string | null;
   reason: string;
   /** Null while the command runs. */
   ok: boolean | null;
@@ -99,10 +99,14 @@ export interface AuditRecord {
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+/** A finite number, else null. */
+const numberOrNull = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
 /** Ms since the epoch from a Firestore `Timestamp` or a number. */
 export function millisOf(value: unknown): number | null {
   if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null;
+    return numberOrNull(value);
   }
   if (isObject(value) && typeof value['toMillis'] === 'function') {
     const millis: unknown = (value as { toMillis: () => unknown }).toMillis();
@@ -231,6 +235,7 @@ export function parseAudit(id: string, value: unknown): AuditRecord | null {
     type: value['type'],
     uid: text(target['uid']),
     entry: boardId === null || entryId === null ? null : { boardId, entryId },
+    replayId: text(target['replayId']),
     reason: text(value['reason']) ?? '',
     ok: typeof ok === 'boolean' ? ok : null,
     error: text(value['error']),
@@ -238,9 +243,6 @@ export function parseAudit(id: string, value: unknown): AuditRecord | null {
     after: value['after'] ?? null,
   };
 }
-
-/** The command types the audit can be filtered by. */
-export const AUDIT_TYPES: readonly AdminCommandType[] = ADMIN_COMMAND_TYPES;
 
 /** A runner-up of the gallery's daily pick (`replayCandidates/{day}`). */
 export interface CandidateRecord {
@@ -288,9 +290,6 @@ const strings = (value: unknown): string[] =>
   Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string')
     : [];
-
-const numberOrNull = (value: unknown): number | null =>
-  typeof value === 'number' && Number.isFinite(value) ? value : null;
 
 export function parseCandidateDay(
   day: string,

@@ -147,6 +147,7 @@ describe('admin records', () => {
       type: 'board.hideEntry',
       uid: 'ada',
       entry: { boardId: 'xp', entryId: 'x1' },
+      replayId: null,
       reason: 'rude name',
       ok: false,
       error: 'not-on-board',
@@ -156,6 +157,13 @@ describe('admin records', () => {
     expect(
       parseAudit('c2', { type: 'stats.refresh', target: null, ok: null })
     ).toMatchObject({ uid: null, entry: null, ok: null, reason: '' });
+    expect(
+      parseAudit('c4', {
+        type: 'replay.anonymise',
+        target: { replayId: 'p1' },
+        ok: true,
+      })
+    ).toMatchObject({ type: 'replay.anonymise', replayId: 'p1', uid: null });
     expect(parseAudit('c3', { by: 'own' })).toBeNull();
   });
 

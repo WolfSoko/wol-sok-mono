@@ -7,8 +7,8 @@ import {
   type AdminCommandInput,
   type AdminResult,
   AdminCommandsService,
-  type ReplayCommandType,
 } from '../commands/admin-commands.service';
+import type { ReplayCommandType } from '../commands/command-types';
 import { AdminI18n } from '../i18n/admin-i18n.service';
 import {
   CommandDialogComponent,

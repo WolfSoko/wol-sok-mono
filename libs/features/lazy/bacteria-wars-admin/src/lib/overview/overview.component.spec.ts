@@ -129,6 +129,9 @@ describe('OverviewComponent', () => {
     fixture.detectChanges();
 
     expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'stats.recount' })
+    );
     expect(text()).toContain('The server refused: not-admin');
   });
 });

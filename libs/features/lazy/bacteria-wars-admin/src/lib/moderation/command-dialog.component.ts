@@ -17,25 +17,17 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import {
-  type AdminCommandType,
   BAN_REASONS,
   type BanReason,
   REASON_MAX,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
-import type { ReplayCommandType } from '../commands/admin-commands.service';
+import type { OwnerActionType } from '../commands/command-types';
 import { AdminTextPipe, type AdminTextKey } from '../i18n/admin-i18n.service';
-
-/**
- * What a dialog confirms: an admin command, or a gallery curation
- * (`replay.feature` and so on), which keeps no reason.
- */
-export type DialogCommandType =
-  | AdminCommandType
-  | `replay.${ReplayCommandType}`;
 
 /** What the dialog asks for, besides the reason every command needs. */
 export interface CommandDialogData {
-  type: DialogCommandType;
+  /** An admin command, or a curation (`replay.feature`), which keeps no reason. */
+  type: OwnerActionType;
   /** Who or what it is about, shown in the title. */
   subject: string;
   /** Ask for the ban's end and reason. */

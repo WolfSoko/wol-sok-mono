@@ -17,6 +17,7 @@ describe('AuditComponent', () => {
           type: 'player.ban',
           uid: 'ada',
           entry: null,
+          replayId: null,
           reason: 'aimbot',
           ok: true,
           error: null,
@@ -30,9 +31,24 @@ describe('AuditComponent', () => {
           type: 'board.hideEntry',
           uid: null,
           entry: { boardId: 'xp', entryId: 'x1' },
+          replayId: null,
           reason: '',
           ok: false,
           error: 'not-on-board',
+          before: null,
+          after: null,
+        },
+        {
+          id: 'c3',
+          at: null,
+          by: 'own',
+          type: 'replay.anonymise',
+          uid: null,
+          entry: null,
+          replayId: 'p7',
+          reason: '',
+          ok: true,
+          error: null,
           before: null,
           after: null,
         },
@@ -57,5 +73,7 @@ describe('AuditComponent', () => {
     expect(text).toContain('not-on-board');
     expect(text).toContain('xp / x1');
     expect(text).toContain('system');
+    expect(text).toContain('Anonymise');
+    expect(text).toContain('Replay p7');
   });
 });

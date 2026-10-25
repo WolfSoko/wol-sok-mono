@@ -75,8 +75,18 @@ describe('AdminCommandsService', () => {
     expect(stop).toHaveBeenCalled();
   });
 
+  it('asks for a fresh sign-in before curation that cannot be taken back', async () => {
+    const { dbSdk } = setUp({ lately: false });
+    const service = TestBed.inject(AdminCommandsService);
+    expect(await service.sendReplay('anonymise', 'p1', NOW)).toEqual({
+      ok: false,
+      error: 'sign-in-again',
+    });
+    expect(dbSdk.addDoc).not.toHaveBeenCalled();
+  });
+
   it('sends a gallery curation as a replay command, reading its reason', async () => {
-    const { dbSdk, answer } = setUp({ lately: false });
+    const { dbSdk, answer } = setUp();
     const sent = TestBed.inject(AdminCommandsService).sendReplay(
       'unfeature',
       'p1',

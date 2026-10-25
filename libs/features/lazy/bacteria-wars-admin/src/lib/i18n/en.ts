@@ -149,6 +149,7 @@ export const EN = {
     byId: 'A stored replay',
     replayId: 'Replay id',
     lookUp: 'Look up',
+    lookUpFailed: 'Could not read the replay. Try again.',
     notFound: 'No stored replay with this id.',
     score: 'score {score}',
     galleryOut: 'out of the gallery for good',

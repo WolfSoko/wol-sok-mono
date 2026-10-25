@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -10,11 +11,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
-import type { ReplayCommandType } from '../commands/admin-commands.service';
+import type { ReplayCommandType } from '../commands/command-types';
 import { AdminI18n, AdminTextPipe } from '../i18n/admin-i18n.service';
 import { AdminActionsService } from '../moderation/admin-actions.service';
 import type {
   CandidateDayRecord,
+  CandidateRecord,
   PublicReplayRecord,
   StoredReplayRecord,
 } from '../moderation/admin-records';
@@ -64,7 +66,9 @@ const REPLAY_ID = /^[A-Za-z0-9_-]{1,64}$/;
         {{ 'replays.lookUp' | adminT }}
       </button>
     </form>
-    @if (stored() === null) {
+    @if (lookUpFailed()) {
+      <p class="error" role="alert">{{ 'replays.lookUpFailed' | adminT }}</p>
+    } @else if (stored() === null) {
       <p>{{ 'replays.notFound' | adminT }}</p>
     } @else if (stored(); as replay) {
       <p>
@@ -82,7 +86,21 @@ const REPLAY_ID = /^[A-Za-z0-9_-]{1,64}$/;
             {{ 'replays.isPublic' | adminT }}
           </a>
         </p>
-      } @else {
+        <button
+          mat-button
+          type="button"
+          (click)="curate('unfeature', replay.replayId, replay.replayId)"
+        >
+          {{ 'type.replay.unfeature' | adminT }}
+        </button>
+        <button
+          mat-button
+          type="button"
+          (click)="curate('anonymise', replay.replayId, replay.replayId)"
+        >
+          {{ 'type.replay.anonymise' | adminT }}
+        </button>
+      } @else if (!replay.galleryOut) {
         <button
           mat-flat-button
           type="button"
@@ -157,7 +175,7 @@ const REPLAY_ID = /^[A-Za-z0-9_-]{1,64}$/;
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
-          @for (candidate of day.candidates; track candidate.replayId) {
+          @for (candidate of unpublished(day); track candidate.replayId) {
             <div class="candidate">
               <span>
                 {{ candidate.kind }} · {{ candidate.levelId }}
@@ -200,6 +218,9 @@ const REPLAY_ID = /^[A-Za-z0-9_-]{1,64}$/;
     .day {
       margin-bottom: 1rem;
     }
+    .error {
+      color: #ff8a80;
+    }
     .candidate {
       display: flex;
       justify-content: space-between;
@@ -222,6 +243,14 @@ export class ReplaysComponent {
   protected readonly stored = signal<StoredReplayRecord | null | undefined>(
     undefined
   );
+  protected readonly lookUpFailed = signal(false);
+  /** The stored replays now public, so their runners-up rows go. */
+  private readonly publicReplayIds = computed(
+    () => new Set(this.published.rows().map((row) => row.replayId))
+  );
+  /** The id last looked up, refreshed after a command. */
+  private lookedUp: string | null = null;
+  private lookUpGeneration = 0;
 
   public constructor() {
     void this.published.load((after) => this.records.publicReplays(after));
@@ -237,16 +266,37 @@ export class ReplaysComponent {
     return `/replays/${publicId}`;
   }
 
-  protected async lookUp(): Promise<void> {
+  protected lookUp(): Promise<void> {
     const id = this.replayId().trim();
-    if (!this.validId(id)) {
-      return;
-    }
+    return this.validId(id) ? this.load(id) : Promise.resolve();
+  }
+
+  /** A day's runners-up that are not public yet. */
+  protected unpublished(day: CandidateDayRecord): CandidateRecord[] {
+    const published = this.publicReplayIds();
+    return day.candidates.filter(
+      (candidate) =>
+        !published.has(candidate.replayId) &&
+        !day.published.includes(candidate.replayId)
+    );
+  }
+
+  /** Loads a stored replay; an answer for an older lookup is dropped. */
+  private async load(id: string): Promise<void> {
+    const generation = ++this.lookUpGeneration;
+    this.lookedUp = id;
+    this.lookUpFailed.set(false);
     try {
-      this.stored.set(await this.records.storedReplay(id));
+      const replay = await this.records.storedReplay(id);
+      if (generation === this.lookUpGeneration) {
+        this.stored.set(replay);
+      }
     } catch (error) {
       console.error('Could not read the replay', error);
-      this.stored.set(null);
+      if (generation === this.lookUpGeneration) {
+        this.stored.set(undefined);
+        this.lookUpFailed.set(true);
+      }
     }
   }
 
@@ -267,7 +317,7 @@ export class ReplaysComponent {
   }
 
   /** Runs a curation, then reloads what it changed. */
-  private async curate(
+  protected async curate(
     type: ReplayCommandType,
     replayId: string,
     subject: string
@@ -277,8 +327,8 @@ export class ReplaysComponent {
       return;
     }
     await this.published.reload();
-    if (this.stored() !== undefined) {
-      await this.lookUp();
+    if (this.lookedUp !== null) {
+      await this.load(this.lookedUp);
     }
   }
 }

@@ -4,11 +4,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { isUid } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import {
-  ADMIN_COMMAND_TYPES,
-  type AdminCommandType,
-  isUid,
-} from '@wolsok/feat-lazy-bac-game/admin-kit';
+  OWNER_ACTION_TYPES,
+  type OwnerActionType,
+} from '../commands/command-types';
 import { type AdminTextKey, AdminTextPipe } from '../i18n/admin-i18n.service';
 import type { AuditRecord } from '../moderation/admin-records';
 import {
@@ -84,17 +84,17 @@ import { AuditTableComponent } from './audit-table.component';
 export class AuditComponent {
   private readonly records = inject(AdminRecordsService);
 
-  protected readonly types = ADMIN_COMMAND_TYPES;
+  protected readonly types = OWNER_ACTION_TYPES;
   protected readonly list = new PagedList<AuditRecord>();
   protected by: AuditFilter['by'] = 'all';
-  protected type: AdminCommandType = 'player.ban';
+  protected type: OwnerActionType = 'player.ban';
   protected uid = '';
 
   public constructor() {
     this.load({ by: 'all' });
   }
 
-  protected typeKey(type: AdminCommandType): AdminTextKey {
+  protected typeKey(type: OwnerActionType): AdminTextKey {
     return `type.${type}`;
   }
 
