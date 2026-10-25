@@ -28,6 +28,13 @@ import type { GameSocial, PresenceState } from '../storage/game-social';
 import { GameStateStore, isMatchOn } from '../state/game.states';
 import { defaultProfile, parseProfile, PlayerCard, Profile } from './profile';
 
+/** The player's stored profile as read, unparsed. */
+interface StoredProfile {
+  uid: string;
+  value: unknown;
+  failed: boolean;
+}
+
 /** A friend as the lobby lists them. */
 export interface FriendView {
   uid: string;
@@ -79,19 +86,41 @@ export class SocialService {
   /** Who plays - null between players and without the cloud. */
   public readonly uid = toSignal(this.uid$, { initialValue: null });
 
+  /** The stored profile as read, or why it is not: it failed to read. */
   private readonly stored = toSignal(
     this.uid$.pipe(
       switchMap((uid) =>
         uid === null || this.social === null
           ? of(null)
           : this.social.watchProfile(uid).pipe(
-              map((value): { uid: string; value: unknown } => ({ uid, value })),
-              catchError(() => of({ uid, value: null }))
+              map((value): StoredProfile => ({ uid, value, failed: false })),
+              catchError(() =>
+                of<StoredProfile>({ uid, value: null, failed: true })
+              )
             )
       )
     ),
     { initialValue: null }
   );
+
+  /**
+   * True once the player's stored profile was read - or the server said
+   * there is none. Until then `profile` is made up, and saving it would
+   * write its defaults over what is stored.
+   */
+  public readonly profileLoaded = computed(() => {
+    const stored = this.stored();
+    return stored !== null && stored.uid === this.uid() && !stored.failed;
+  });
+
+  /** The profile as stored - null while none is, or it is not read yet. */
+  private readonly storedProfile = computed(() => {
+    const stored = this.stored();
+    const uid = this.uid();
+    return stored !== null && stored.uid === uid && uid !== null
+      ? parseProfile(stored.value, uid)
+      : null;
+  });
 
   /** The player's profile - the stored one, else one made from their uid. */
   public readonly profile: Signal<Profile | null> = computed(() => {
@@ -99,9 +128,10 @@ export class SocialService {
     if (uid === null || !this.available) {
       return null;
     }
-    const stored = this.stored();
-    const parsed = stored?.uid === uid ? parseProfile(stored.value, uid) : null;
-    return parsed ?? defaultProfile(uid, this.account.profile()?.name ?? null);
+    return (
+      this.storedProfile() ??
+      defaultProfile(uid, this.account.profile()?.name ?? null)
+    );
   });
 
   /** The player's friends, with whether it is mutual and who is online. */
@@ -202,7 +232,7 @@ export class SocialService {
     effect(() => {
       const presence = this.presence;
       const uid = this.uid();
-      const loaded = this.stored()?.uid === uid;
+      const loaded = this.profileLoaded();
       const profile = this.profile();
       const playing =
         this.store.online() !== null && isMatchOn(this.store.currentState());
@@ -224,11 +254,24 @@ export class SocialService {
     });
   }
 
-  public async saveProfile(profile: Profile): Promise<void> {
+  /**
+   * Saves the fields given - the ones the player changed - over the stored
+   * profile; a first profile is saved whole, from `profile`. Refused until
+   * the stored profile is read, so its flags are never written blind.
+   */
+  public async saveProfile(changes: Partial<Profile>): Promise<void> {
     const uid = this.uid();
-    if (uid !== null) {
-      await this.social?.saveProfile(uid, profile);
+    const profile = this.profile();
+    if (uid === null || profile === null || this.social === null) {
+      return;
     }
+    if (!this.profileLoaded()) {
+      throw new Error('The stored profile is not read yet');
+    }
+    await this.social.saveProfile(
+      uid,
+      this.storedProfile() === null ? { ...profile, ...changes } : changes
+    );
   }
 
   /** What others see of a player - a made-up card until theirs is read. */

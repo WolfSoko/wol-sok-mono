@@ -34,6 +34,8 @@ import { evolution as deEvolution } from './de/evolution';
 import { evolution as enEvolution } from './en/evolution';
 import { training as deTraining } from './de/training';
 import { training as enTraining } from './en/training';
+import { boards as deBoards } from './de/boards';
+import { boards as enBoards } from './en/boards';
 import type { Language } from './language';
 import type { Dictionary, EntryPath, Translation } from './translation';
 
@@ -64,6 +66,7 @@ export const EN = {
   support: enSupport,
   evolution: enEvolution,
   training: enTraining,
+  boards: enBoards,
 } satisfies Dictionary;
 
 export const DE: Translation<typeof EN> = {
@@ -85,6 +88,7 @@ export const DE: Translation<typeof EN> = {
   support: deSupport,
   evolution: deEvolution,
   training: deTraining,
+  boards: deBoards,
 };
 
 export const DICTIONARIES: Readonly<Record<Language, Dictionary>> = {

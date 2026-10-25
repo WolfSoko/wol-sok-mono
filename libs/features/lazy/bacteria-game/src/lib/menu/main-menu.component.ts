@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { FeatureTogglesService } from '../feature-toggles.service';
 import { GameTextPipe, medalKey } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
@@ -42,7 +43,8 @@ export type MenuPage =
   | 'friends'
   | 'settings'
   | 'help'
-  | 'evolution';
+  | 'evolution'
+  | 'leaderboards';
 
 /**
  * The landing screen of the game: the title, a new game - and the training
@@ -80,8 +82,11 @@ export class MainMenuComponent {
   public readonly sound = input(true);
   /** The level of a run someone shared, to fight as a ghost - null without. */
   public readonly challenge = input<Level | null>(null);
-  /** True with the game's cloud: then the friends have a tile. */
-  public readonly friendsAvailable = input(false);
+  /**
+   * True with the game's cloud: then the friends have a tile, and so do the
+   * leaderboards while the owner's toggle shows them.
+   */
+  public readonly cloudAvailable = input(false);
   /** The friend requests waiting for an answer, counted on the tile. */
   public readonly friendRequests = input(0);
   /**
@@ -119,6 +124,12 @@ export class MainMenuComponent {
   protected readonly totalMedals = LEVELS.length * BOT_DIFFICULTIES.length;
   protected readonly totalAchievements = ACHIEVEMENTS.length;
   protected readonly totalMissions = MISSIONS.length;
+
+  private readonly toggles = inject(FeatureTogglesService).toggles;
+  /** The leaderboards' tile: with the cloud, while the owner shows them. */
+  protected readonly showsBoards = computed(
+    () => this.cloudAvailable() && this.toggles().leaderboards
+  );
 
   protected readonly support = inject(GameSupport);
   protected readonly installOffer = inject(InstallOffer);

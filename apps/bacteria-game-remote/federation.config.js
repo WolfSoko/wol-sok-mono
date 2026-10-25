@@ -8,10 +8,12 @@ const {
 module.exports = workspaceFederation({
   name: 'bacteria-game-remote',
 
-  // Material's table, tabs and toolbar are used only by the admin area
-  // (`/admin` in app.routes.ts, never exposed): pruned from the shared
-  // packages, their imports would have nothing to load. Skipped, the admin
-  // chunk bundles them. Only this app skips them, which leaves the shell's
+  // Material's table and toolbar are used only by the admin area (`/admin`
+  // in app.routes.ts, never exposed): pruned from the shared packages, their
+  // imports would have nothing to load. Skipped, the admin chunk bundles
+  // them. Tabs too, which the game's leaderboards use as well: skipped, the
+  // remote bundles its own copy, which the shell, never sharing it, takes
+  // along with the game. Only this app skips them, which leaves the shell's
   // import map as it is - the shell never loads `/admin`. (Keeping all of
   // Material's secondaries instead broke the shell's dev build, whose Sass
   // then could not resolve `@use '@angular/material'`.)

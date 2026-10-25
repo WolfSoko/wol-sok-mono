@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { DeviceAccount } from './device-account';
 import { FirebaseGameAccount } from './firebase-game-account';
+import { FirestoreGameBoards } from './firestore-game-boards';
 import { FirestoreGameStorage } from './firestore-game-storage';
 import { GameAccount } from './game-account';
 import type { FirebaseConnection } from './firebase-connection';
@@ -70,6 +71,17 @@ describe('GameCloud', () => {
     expect(error).not.toHaveBeenCalled();
     expect(cloud.firebase()?.db).toBe(CONNECTION.db);
     expect(TestBed.inject(GameAccount)).toBeInstanceOf(FirebaseGameAccount);
+  });
+
+  it('reads the leaderboards from the project, none without one', () => {
+    expect(TestBed.inject(GameCloud).boards()).toBeNull();
+
+    TestBed.resetTestingModule();
+    const cloud = TestBed.inject(GameCloud);
+    cloud.use(CONNECTION);
+
+    expect(cloud.boards()).toBeInstanceOf(FirestoreGameBoards);
+    expect(cloud.boards()).toBe(cloud.boards());
   });
 
   it('hands the admin area no connection without a project', () => {

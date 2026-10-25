@@ -9,7 +9,9 @@ import {
   Bytes,
   collection,
   doc,
+  documentId,
   type Firestore,
+  getCountFromServer,
   getDoc,
   getDocs,
   limit,
@@ -18,6 +20,7 @@ import {
   serverTimestamp,
   setDoc,
   setLogLevel,
+  startAfter,
   Timestamp,
   updateDoc,
   where,
@@ -413,6 +416,42 @@ describe('the leaderboards', () => {
         )
       )
     );
+  });
+
+  it("takes the game's page and own-rank count, and reads a missing entry as not found", async () => {
+    const entries = collection(db('bob'), 'boards/xp/entries');
+    await assertSucceeds(
+      getDocs(
+        query(
+          entries,
+          where('status', 'in', visible),
+          orderBy('sort', 'desc'),
+          orderBy('atHour', 'asc'),
+          orderBy(documentId(), 'asc'),
+          startAfter(9, 0, 'e0'),
+          limit(25)
+        )
+      )
+    );
+    await assertSucceeds(
+      getCountFromServer(
+        query(
+          entries,
+          where('status', 'in', visible),
+          where('sort', '>', 1),
+          orderBy('sort', 'desc'),
+          orderBy('atHour', 'asc')
+        )
+      )
+    );
+    // A board the membership still lists whose entry the functions
+    // deleted: the game reads it as "no counted result yet", not hidden.
+    const gone = await assertSucceeds(
+      getDoc(doc(db('ada'), 'boards/xp/entries/gone'))
+    );
+    expect(gone.exists()).toBe(false);
+    // A hidden one stays refused, so a refusal always means hidden.
+    await assertFails(getDoc(doc(db('ada'), 'boards/xp/entries/e2')));
   });
 
   it('keeps hidden entries from players, not from the owner', async () => {

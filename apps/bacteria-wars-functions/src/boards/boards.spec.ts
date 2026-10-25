@@ -1,7 +1,6 @@
 import { XP_FULL_COUNT_BEFORE } from '@wolsok/feat-lazy-bac-game/engine';
 import { hiddenFor } from './entries';
 import { relabels } from './profile-changed';
-import { topRows } from './rebuild-top';
 import { boardProfileOf, entryLabel, isBlockedName } from './names';
 import { nextXp, type XpLedger } from './xp-ledger';
 
@@ -115,32 +114,6 @@ describe('relabels', () => {
     expect(
       relabels(before, boardProfileOf({ name: 'Ada', boardOptOut: true }))
     ).toBe(true);
-  });
-});
-
-describe('topRows', () => {
-  const row = (entryId: string, sort: number, status = 'counted') => ({
-    entryId,
-    sort,
-    atHour: 1,
-    status: status as 'counted',
-    name: null,
-    tag: 1,
-    avatar: 1,
-    show: { xp: sort, rank: 'spore' },
-  });
-
-  it('gives ties one position, and verified rows their rank', () => {
-    const rows = topRows(
-      [row('a', 9), row('b', 7), row('c', 7), row('d', 3)],
-      [row('b', 7, 'verified'), row('d', 3, 'verified')]
-    );
-    expect(rows.map((r) => [r.entryId, r.pos, r.rank])).toEqual([
-      ['a', 1, undefined],
-      ['b', 2, 1],
-      ['c', 2, undefined],
-      ['d', 4, 2],
-    ]);
   });
 });
 

@@ -31,6 +31,16 @@ export const profile: Translation<typeof en> = {
     googlePhoto: 'Google-Foto',
     upload: 'Bild hochladen',
     shareStatus: 'Freunde sehen, wenn ich online bin',
+    public: 'Öffentlich',
+    publicName: 'Meinen Namen öffentlich zeigen',
+    publicNameNote:
+      'In den Bestenlisten und, sobald sie öffnet, in der Match-Galerie. Standardmäßig aus: Dann sehen andere stattdessen „Anonym #1234“ und ein gezeichnetes Bakterium. Dein Name wird vor dem Zeigen geprüft.',
+    boardOptOut: 'Mich aus den Bestenlisten heraushalten',
+    boardOptOutNote:
+      'Blendet alle deine Einträge aus. Deine Ergebnisse zählen weiter, und deine Einträge kommen zurück, wenn du das ausschaltest.',
+    galleryOptOut: 'Meine Matches aus der öffentlichen Galerie heraushalten',
+    galleryOptOutNote:
+      'Keins deiner Matches wird dort gezeigt. Die Galerie ist noch nicht geöffnet.',
     save: 'Speichern',
     saved: 'Gespeichert.',
     unreadable: 'Das Bild ließ sich nicht lesen – versuch ein anderes.',

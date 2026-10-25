@@ -154,7 +154,7 @@
               [fullscreen]="fullscreen()"
               (fullscreenChange)="setFullscreen($event)"
               [challenge]="challengeLevel()"
-              [friendsAvailable]="social.available"
+              [cloudAvailable]="social.available"
               [friendRequests]="social.requests().length"
               [evolveDna]="evolution.canEvolve() ? evolution.dna() : 0"
               [colonyDna]="evolution.skinDna()"
@@ -246,6 +246,12 @@
             <feat-lazy-bac-game-evolution
               class="screen"
               [color]="colonyRgb()[0]"
+              (back)="show('menu')"
+            />
+          }
+          @case ("leaderboards") {
+            <feat-lazy-bac-game-leaderboards
+              class="screen"
               (back)="show('menu')"
             />
           }

@@ -107,7 +107,7 @@
           }}</span>
         }
       </button>
-      @if (friendsAvailable()) {
+      @if (cloudAvailable()) {
         <button type="button" class="tile" (click)="open.emit('friends')">
           <mat-icon>group</mat-icon>
           {{ "social.friends.title" | t }}
@@ -118,6 +118,12 @@
               "menu.friendRequests" | t: { count }
             }}</span>
           }
+        </button>
+      }
+      @if (showsBoards()) {
+        <button type="button" class="tile" (click)="open.emit('leaderboards')">
+          <mat-icon class="gold">leaderboard</mat-icon>
+          {{ "boards.title" | t }}
         </button>
       }
       <button type="button" class="tile" (click)="open.emit('settings')">

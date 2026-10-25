@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom, take, toArray } from 'rxjs';
+import { firstValueFrom, take, throwError, toArray } from 'rxjs';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import {
   FakeGamePresence,
@@ -54,6 +54,52 @@ describe('SocialService', () => {
     TestBed.tick();
 
     expect(players.profile()?.name).toBe('Ada');
+  });
+
+  it('knows the stored profile once the server answered, even with none', async () => {
+    social.profilesAnswer.next(false);
+    const players = service();
+    TestBed.tick();
+
+    expect(players.profileLoaded()).toBe(false);
+    await expect(players.saveProfile({ name: 'Ada' })).rejects.toThrow();
+    expect(social.get('profiles/ada')).toBeNull();
+
+    social.profilesAnswer.next(true);
+    TestBed.tick();
+
+    expect(players.profileLoaded()).toBe(true);
+    expect(players.profile()).toEqual(defaultProfile('ada'));
+  });
+
+  it('does not know the stored profile when it cannot be read', () => {
+    jest
+      .spyOn(social, 'watchProfile')
+      .mockReturnValue(throwError(() => new Error('offline')));
+    const players = service();
+    TestBed.tick();
+
+    expect(players.profileLoaded()).toBe(false);
+  });
+
+  it('saves a first profile whole, and later only the fields changed', async () => {
+    const players = service();
+    const saved = jest.spyOn(social, 'saveProfile');
+    TestBed.tick();
+
+    await players.saveProfile({ name: 'Ada' });
+    TestBed.tick();
+    expect(saved).toHaveBeenLastCalledWith('ada', {
+      ...defaultProfile('ada'),
+      name: 'Ada',
+    });
+
+    await players.saveProfile({ boardOptOut: true });
+    expect(saved).toHaveBeenLastCalledWith('ada', { boardOptOut: true });
+    expect(social.get('profiles/ada')).toMatchObject({
+      name: 'Ada',
+      boardOptOut: true,
+    });
   });
 
   it('lists friends, mutual or not, with who is online', async () => {

@@ -227,12 +227,15 @@ service cloud.firestore {
 
     // The leaderboards (ADR 0012), written by the functions only. Anyone
     // signed in reads a board's top document and pages its entries - never
-    // a hidden one, which only the owner sees.
+    // a hidden one, which only the owner sees. A missing entry reads as
+    // not found (a board the player's membership still lists whose entry
+    // the functions deleted), so a refusal always means hidden.
     match /boards/{boardId} {
       allow get: if signedIn();
 
       match /entries/{entryId} {
-        allow get: if signedIn() && (resource.data.status != 'hidden' || isAdmin());
+        allow get: if signedIn() &&
+          (resource == null || resource.data.status != 'hidden' || isAdmin());
         allow list: if signedIn() &&
           (resource.data.status in ['counted', 'verified', 'provisional', 'stale'] || isAdmin());
       }
