@@ -433,10 +433,11 @@ describe('deletePlayerReplays', () => {
     });
     expect((await db.doc('replays/mine').get()).exists).toBe(false);
     expect((await db.doc('replays/mine/blob/data').get()).exists).toBe(false);
-    // Bob still reads it: the room's seat forgets Ada too.
+    // Bob still reads it: the room's seat forgets Ada too. Ada took it out
+    // of the gallery, and it stays out without her uid.
     expect((await db.doc('replays/ours').get()).data()).toEqual({
       players: ['bob'],
-      optOut: [],
+      optOut: ['deleted'],
       seats: [null, 'bob'],
     });
     expect((await db.doc('replays/ours/reports/ada').get()).exists).toBe(false);

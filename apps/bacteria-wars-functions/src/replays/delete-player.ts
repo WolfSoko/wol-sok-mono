@@ -4,6 +4,9 @@ import {
   type Firestore,
 } from 'firebase-admin/firestore';
 
+/** What a deleted account's uid becomes in a replay's `optOut`. */
+export const DELETED_PLAYER = 'deleted';
+
 /** Replays taken out of a deleted account at once. */
 const PARALLEL_REPLAYS = 10;
 
@@ -13,8 +16,9 @@ const PARALLEL_REPLAYS = 10;
  * another player keeps that player and loses this one - from `players`,
  * from the room's `seats` and its report. That includes an online match
  * only the other player reported, which names the account in `seats`
- * alone. Runs for banned accounts too: a deletion must erase the player's
- * data.
+ * alone. A replay the player took out of the gallery stays out: their uid
+ * in `optOut` becomes {@link DELETED_PLAYER}. Runs for banned accounts
+ * too: a deletion must erase the player's data.
  */
 export async function deletePlayerReplays(
   db: Firestore,
@@ -68,9 +72,18 @@ async function leave(
       return 'only' as const;
     }
     const seats = replay.get('seats');
+    const optOut = replay.get('optOut');
     tx.update(ref, {
       players: FieldValue.arrayRemove(uid),
-      optOut: FieldValue.arrayRemove(uid),
+      ...(Array.isArray(optOut) && optOut.includes(uid)
+        ? {
+            optOut: [
+              ...new Set(
+                optOut.map((who) => (who === uid ? DELETED_PLAYER : who))
+              ),
+            ],
+          }
+        : {}),
       // The other player reads the replay: the seat forgets the uid too.
       ...(Array.isArray(seats)
         ? { seats: seats.map((seat) => (seat === uid ? null : seat)) }
