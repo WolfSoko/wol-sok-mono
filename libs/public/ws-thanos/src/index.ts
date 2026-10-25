@@ -6,5 +6,6 @@ export * from './lib/ws-thanos.directive';
 export * from './lib/ws-thanos-options.token';
 export * from './lib/ws-thanos.options';
 export * from './lib/create-ws-thanos-options';
+export { DEFAULT_WIND_DIRECTION } from './lib/wind';
 export * from './lib/simplex-noise';
 export type { AnimationState } from './lib/animation.state';

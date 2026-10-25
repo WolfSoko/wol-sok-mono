@@ -1,4 +1,3 @@
-import { JsonPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ChangeDetectionStrategy,
@@ -16,20 +15,34 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
 import {
+  DEFAULT_WIND_DIRECTION,
   WS_THANOS_CRUMBLES,
   WS_THANOS_OPTIONS_TOKEN,
-  WsThanosCrumble,
   WsThanosDirective,
   WsThanosOptions,
 } from '@wolsok/thanos';
 import { finalize } from 'rxjs';
 
-/** the dust blows to the top right unless told otherwise, like in the library */
-const DEFAULT_WIND_DIRECTION = 45;
+/** the options the playground offers, every one set */
+type PlaygroundOptions = Required<
+  Pick<
+    WsThanosOptions,
+    | 'crumble'
+    | 'windDirection'
+    | 'animationLength'
+    | 'particleAcceleration'
+    | 'maxParticleCount'
+    | 'sound'
+    | 'soundVolume'
+  >
+>;
 
 const PARTICLE_COUNTS = [
   50_000, 200_000, 500_000, 1_500_000, 3_000_000, 6_000_000,
 ];
+
+const particleLabel = (count: number): string =>
+  count >= 1_000_000 ? `${count / 1_000_000}M` : `${count / 1000}k`;
 
 /** try out every option of @wolsok/thanos on a card that comes back after each snap */
 @Component({
@@ -38,7 +51,6 @@ const PARTICLE_COUNTS = [
   styleUrls: ['./thanos-playground.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    JsonPipe,
     WsThanosDirective,
     MatButtonModule,
     MatButtonToggleModule,
@@ -55,36 +67,32 @@ export class ThanosPlaygroundComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly crumbles = WS_THANOS_CRUMBLES;
-  protected readonly maxParticleCounts = PARTICLE_COUNTS.filter(
+  protected readonly particleCounts = PARTICLE_COUNTS.filter(
     (count) => count <= this.appOptions.maxParticleCount
-  );
+  ).map((count) => ({ count, label: particleLabel(count) }));
 
-  protected readonly crumble = signal<WsThanosCrumble>(this.appOptions.crumble);
-  /** clockwise from up, 45 blows to the top right */
-  protected readonly windDirection = signal(
-    this.appOptions.windDirection ?? DEFAULT_WIND_DIRECTION
+  public readonly options = signal<PlaygroundOptions>({
+    crumble: this.appOptions.crumble,
+    windDirection: this.appOptions.windDirection ?? DEFAULT_WIND_DIRECTION,
+    animationLength: this.appOptions.animationLength,
+    particleAcceleration: this.appOptions.particleAcceleration,
+    maxParticleCount: this.appOptions.maxParticleCount,
+    sound: this.appOptions.sound,
+    soundVolume: this.appOptions.soundVolume,
+  });
+  /** shown to copy into provideWsThanosOptions or [wsThanosOptions] */
+  protected readonly optionsJson = computed(() =>
+    JSON.stringify(this.options(), null, 2)
   );
-  protected readonly animationLength = signal(this.appOptions.animationLength);
-  protected readonly particleAcceleration = signal(
-    this.appOptions.particleAcceleration
-  );
-  protected readonly maxParticleCount = signal(
-    this.appOptions.maxParticleCount
-  );
-  protected readonly sound = signal(this.appOptions.sound);
-  protected readonly soundVolume = signal(this.appOptions.soundVolume);
   /** the card is snapping, the button waits until it is back */
   protected readonly snapping = signal(false);
 
-  public readonly options = computed((): Partial<WsThanosOptions> => ({
-    crumble: this.crumble(),
-    windDirection: this.windDirection(),
-    animationLength: this.animationLength(),
-    particleAcceleration: this.particleAcceleration(),
-    maxParticleCount: this.maxParticleCount(),
-    sound: this.sound(),
-    soundVolume: this.soundVolume(),
-  }));
+  protected setOption<K extends keyof PlaygroundOptions>(
+    key: K,
+    value: PlaygroundOptions[K]
+  ): void {
+    this.options.update((options) => ({ ...options, [key]: value }));
+  }
 
   protected snap(thanos: WsThanosDirective): void {
     this.snapping.set(true);
@@ -99,10 +107,6 @@ export class ThanosPlaygroundComponent {
 
   /** the slider steps in floats, keep the copied options readable */
   protected setSoundVolume(volume: number): void {
-    this.soundVolume.set(Math.round(volume * 100) / 100);
-  }
-
-  protected particleLabel(count: number): string {
-    return count >= 1_000_000 ? `${count / 1_000_000}M` : `${count / 1000}k`;
+    this.setOption('soundVolume', Math.round(volume * 100) / 100);
   }
 }

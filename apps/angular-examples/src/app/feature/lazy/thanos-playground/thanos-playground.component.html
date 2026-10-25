@@ -15,8 +15,8 @@
         hideSingleSelectionIndicator
         aria-label="crumble variant"
         data-testid="crumble"
-        [value]="crumble()"
-        (change)="crumble.set($event.value)"
+        [value]="options().crumble"
+        (change)="setOption('crumble', $event.value)"
       >
         @for (variant of crumbles; track variant) {
           <mat-button-toggle [value]="variant">{{ variant }}</mat-button-toggle>
@@ -25,38 +25,44 @@
     </section>
 
     <section>
-      <h3 class="mat-subtitle-2">Wind direction: {{ windDirection() }}°</h3>
+      <h3 class="mat-subtitle-2">
+        Wind direction: {{ options().windDirection }}°
+      </h3>
       <mat-slider min="0" max="345" step="15" discrete>
         <input
           matSliderThumb
           aria-label="wind direction in degrees"
           data-testid="wind"
-          [value]="windDirection()"
-          (valueChange)="windDirection.set($event)"
+          [value]="options().windDirection"
+          (valueChange)="setOption('windDirection', $event)"
         />
       </mat-slider>
     </section>
 
     <section>
-      <h3 class="mat-subtitle-2">Duration: {{ animationLength() / 1000 }} s</h3>
+      <h3 class="mat-subtitle-2">
+        Duration: {{ options().animationLength / 1000 }} s
+      </h3>
       <mat-slider min="1000" max="20000" step="500">
         <input
           matSliderThumb
           aria-label="duration in milliseconds"
-          [value]="animationLength()"
-          (valueChange)="animationLength.set($event)"
+          [value]="options().animationLength"
+          (valueChange)="setOption('animationLength', $event)"
         />
       </mat-slider>
     </section>
 
     <section>
-      <h3 class="mat-subtitle-2">Acceleration: {{ particleAcceleration() }}</h3>
+      <h3 class="mat-subtitle-2">
+        Acceleration: {{ options().particleAcceleration }}
+      </h3>
       <mat-slider min="5" max="200" step="5" discrete>
         <input
           matSliderThumb
           aria-label="particle acceleration"
-          [value]="particleAcceleration()"
-          (valueChange)="particleAcceleration.set($event)"
+          [value]="options().particleAcceleration"
+          (valueChange)="setOption('particleAcceleration', $event)"
         />
       </mat-slider>
     </section>
@@ -65,11 +71,13 @@
       <mat-form-field appearance="outline">
         <mat-label>Max particles</mat-label>
         <mat-select
-          [value]="maxParticleCount()"
-          (selectionChange)="maxParticleCount.set($event.value)"
+          [value]="options().maxParticleCount"
+          (selectionChange)="setOption('maxParticleCount', $event.value)"
         >
-          @for (count of maxParticleCounts; track count) {
-            <mat-option [value]="count">{{ particleLabel(count) }}</mat-option>
+          @for (particles of particleCounts; track particles.count) {
+            <mat-option [value]="particles.count">{{
+              particles.label
+            }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -77,23 +85,23 @@
 
     <section class="sound">
       <mat-slide-toggle
-        [checked]="sound()"
-        (change)="sound.set($event.checked)"
+        [checked]="options().sound"
+        (change)="setOption('sound', $event.checked)"
       >
         Sound
       </mat-slide-toggle>
-      <mat-slider min="0" max="1" step="0.05" [disabled]="!sound()">
+      <mat-slider min="0" max="1" step="0.05" [disabled]="!options().sound">
         <input
           matSliderThumb
           aria-label="sound volume"
-          [value]="soundVolume()"
+          [value]="options().soundVolume"
           (valueChange)="setSoundVolume($event)"
         />
       </mat-slider>
     </section>
 
     <h3 class="mat-subtitle-2">Options</h3>
-    <pre class="options" data-testid="options">{{ options() | json }}</pre>
+    <pre class="options" data-testid="options">{{ optionsJson() }}</pre>
   </mat-card-content>
 </mat-card>
 
@@ -110,7 +118,8 @@
         <mat-icon mat-card-avatar>blur_on</mat-icon>
         <mat-card-title>Snap me</mat-card-title>
         <mat-card-subtitle
-          >{{ crumble() }}, {{ windDirection() }}°</mat-card-subtitle
+          >{{ options().crumble }},
+          {{ options().windDirection }}°</mat-card-subtitle
         >
       </mat-card-header>
       <mat-card-content>

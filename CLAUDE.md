@@ -148,10 +148,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 
 Keep `sitemap.xml` and the SEO tags in shape with every change that adds, renames or removes a page. A page that is public but missing from the sitemap, or listed with the wrong URL, counts as a bug.
 
-**Always, in the same PR:**
-
-- **Update the sitemaps.** Every app that gains, renames or loses a public page updates its sitemap and SEO tags (see the apps below), not in a follow-up.
-- **Keep the portfolio in sync.** `apps/portfolio/src/app/projects.ts` lists every app, every `angular-examples` page worth showing (`EXPERIMENTS`) and every published package (`PACKAGES`). A change that adds, renames, removes or noticeably changes one of them updates its entry there too: name, description, tech and links (a new page gets its link, a moved page its new URL).
+**Keep the portfolio in sync, in the same PR as the sitemap.** `apps/portfolio/src/app/projects.ts` lists every app, every `angular-examples` page worth showing (`EXPERIMENTS`) and every published package (`PACKAGES`); a change that adds, renames, removes or noticeably changes one updates its entry too (name, description, tech, links). The portfolio's `app.component.spec.ts` fails when a link points to an `angular-examples` page its sitemap doesn't list.
 
 - **rollapolla-analog**: `/sitemap.xml` is a Nitro route (`src/server/routes/sitemap.xml.ts`, URLs from `src/server/sitemap/sitemap.ts`). A new indexable page goes into `sitemapUrls`. Every page sets its tags through `usePageTags` / `useNoindexPage` in `src/app/pages/site-tags.ts`: its own title, description and canonical URL, and `noindex` for personal pages. Unknown pages and missing polls answer 404 (`injectSetNotFoundStatus`). Don't put a static `sitemap.xml` in `src/public`, because Firebase Hosting would serve it instead of the route.
 - **angular-examples**: `src/sitemap.xml` is kept by hand. It lists every route in `APP_ROUTES`, or its visible tabs when the route redirects to one, since the canonical URL is the URL after the redirect. Every main route needs a `data.description`. `seo.service.spec.ts` checks both: update it together with the sitemap.
