@@ -8,6 +8,7 @@ import {
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { setHidden } from '../boards/entries';
+import { takeDownPublic } from '../gallery/publish';
 import type { Realtime } from './realtime';
 import { noticeData, tombstoneData, writeAudit } from './records';
 
@@ -170,7 +171,7 @@ export async function banPlayer(
   await realtime.set(`bans/${uid}`, realtimeBan(until));
   await clearOut(db, realtime, uid);
   await changeBanHide(db, uid, null);
-  await takeDownPublicReplays(db, uid);
+  await takeDownPublicReplays(db, uid, now);
   return {
     before: before === null ? null : stored(before),
     after: stored(after),
@@ -412,13 +413,14 @@ async function deleteRefs(
 
 /**
  * Takes the player's public replays down the way `remove` does (ADR 0011):
- * the public copy gets `removedAt`, and the stored replay keeps the player
+ * the public copy gets `removedAt` (`takeDownPublic`), and the stored replay keeps the player
  * in `optOut` with `galleryOut`, so it never comes back. Filtered on
  * `removedAt` here, so the query needs no composite index.
  */
 async function takeDownPublicReplays(
   db: Firestore,
-  uid: string
+  uid: string,
+  now: number
 ): Promise<void> {
   const published = await db
     .collection('publicReplays')
@@ -440,6 +442,6 @@ async function takeDownPublicReplays(
         galleryOut: true,
       });
     }
-    await doc.ref.update({ removedAt: FieldValue.serverTimestamp() });
+    await takeDownPublic(db, doc, now);
   }
 }

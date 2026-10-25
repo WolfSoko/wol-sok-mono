@@ -1,5 +1,6 @@
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
+import { takeDownPublic } from '../gallery/publish';
 import { isBanned } from '../limits';
 
 /** What a command asks; all but `remove` are the owner's (ADR 0011). */
@@ -90,10 +91,6 @@ async function run(
     .where('replayId', '==', replayId)
     .where('removedAt', '==', null)
     .get();
-  await Promise.all(
-    published.docs.map((doc) =>
-      doc.ref.update({ removedAt: FieldValue.serverTimestamp() })
-    )
-  );
+  await Promise.all(published.docs.map((doc) => takeDownPublic(db, doc, now)));
   return { ok: true };
 }

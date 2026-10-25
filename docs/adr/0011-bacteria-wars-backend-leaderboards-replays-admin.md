@@ -516,6 +516,24 @@ The rules and `replayCommand` require `admin == true`,
    in `/admin` (changed by ADR 0012); then enable the `featureBest`
    schedule (changed by ADR 0012: only once the Replays view of `/admin`
    has shipped, so the owner can unfeature).
+   - So far: `featureBest` (`src/gallery/`), deployed only with
+     `FEATURE_BEST_ON` in `src/config.ts`, off until then. It picks the
+     previous UTC day's candidates, re-runs those the boards have not
+     verified within `GALLERY_VERIFY_MS` a day (25 minutes, charged to
+     `counters/{day}.galleryVerifyMs`), scores the verified ones with
+     `replayScore` on the re-run's per-second timeline (a feat: a
+     platinum run against a hard computer or a boss, or the day's best
+     daily-level replay), publishes and writes the runners-up to
+     `replayCandidates/{day}`, which the owner reads. A ranked attempt
+     waits for the boards: only once they verified it is it a
+     candidate. A public replay's seats carry the boards' labels
+     (`entryLabel`: the name only with `publicName` and when it passes
+     the blocklist, the player's preset or one derived from the public
+     id). `remove` and a ban take it down with `takeDownPublic`: `removedAt`, the public bytes
+     deleted, and the private replay expiring again, at the earliest a
+     day later. Still to come in this step: `publicSite` and the
+     rewrites, the gallery's admin types, `profileChanged` for public
+     names, and the client pages.
 7. Owner: grant the claim, sign out and in, check `/admin` (changed by
    ADR 0012).
 

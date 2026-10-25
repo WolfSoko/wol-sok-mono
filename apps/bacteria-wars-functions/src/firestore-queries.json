@@ -44,5 +44,19 @@
         "order": "ASCENDING"
       }
     ]
+  },
+  "a day's replays by state": {
+    "usedBy": "featureBest: the previous day's gallery candidates",
+    "group": "replays",
+    "fields": [
+      {
+        "fieldPath": "state",
+        "order": "ASCENDING"
+      },
+      {
+        "fieldPath": "createdAt",
+        "order": "ASCENDING"
+      }
+    ]
   }
 }

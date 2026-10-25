@@ -62,3 +62,11 @@ export const BAN_CACHE_MS = 60 * 1000;
  * deploy.
  */
 export const HOURLY_ON = true;
+
+/**
+ * Whether `featureBest`, the gallery's daily pick (ADR 0011), is deployed.
+ * Off until the client release with the gallery pages and the Replays view
+ * of `/admin` ships (ADR 0012 rollout); on adds its schedule to the next
+ * deploy.
+ */
+export const FEATURE_BEST_ON = false;

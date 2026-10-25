@@ -52,3 +52,9 @@ export const ADMIN_VERIFY_MS = 400_000;
  * own - inside the trigger's 540 s.
  */
 export const ADMIN_COMMAND_MS = expectedRerunMs(MAX_VERIFIED_TICKS);
+
+/**
+ * What `featureBest` may spend a day re-running gallery candidates the
+ * boards have not verified: 25 minutes, inside its 1800 s timeout.
+ */
+export const GALLERY_VERIFY_MS = 25 * 60_000;
