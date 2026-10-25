@@ -26,8 +26,15 @@ export interface AdminCommandInput {
 const COMMAND_TTL_MS = 24 * 3_600_000;
 
 /**
+ * How long `send` waits for the function's `result`: past the trigger's
+ * 540 s, after which no result will come.
+ */
+export const RESULT_TIMEOUT_MS = 600_000;
+
+/**
  * Sends the owner's commands (ADR 0012): writes `adminCommands/{id}` and
- * waits for the `adminCommand` function to write its `result` back.
+ * waits for the `adminCommand` function to write its `result` back -
+ * `timeout` when none comes within {@link RESULT_TIMEOUT_MS}.
  * `sign-in-again` without sending when a destructive type needs a fresher
  * sign-in than the owner's, which the rules would refuse.
  */
@@ -62,11 +69,16 @@ export class AdminCommandsService {
       expireAt: dbSdk.Timestamp.fromMillis(now + COMMAND_TTL_MS),
     });
     return new Promise<AdminResult>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        stop();
+        resolve({ ok: false, error: 'timeout' });
+      }, RESULT_TIMEOUT_MS);
       const stop = dbSdk.onSnapshot(
         ref,
         (snapshot) => {
           const result: unknown = snapshot.get('result');
           if (typeof result === 'object' && result !== null) {
+            clearTimeout(timer);
             stop();
             const { ok, error } = result as { ok?: unknown; error?: unknown };
             resolve(
@@ -80,6 +92,7 @@ export class AdminCommandsService {
           }
         },
         (error) => {
+          clearTimeout(timer);
           stop();
           reject(error);
         }

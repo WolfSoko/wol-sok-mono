@@ -4,7 +4,10 @@ import {
   GameCloud,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import { AdminAccessService } from '../access/admin-access.service';
-import { AdminCommandsService } from './admin-commands.service';
+import {
+  AdminCommandsService,
+  RESULT_TIMEOUT_MS,
+} from './admin-commands.service';
 
 const NOW = Date.UTC(2026, 9, 25, 12);
 
@@ -70,6 +73,23 @@ describe('AdminCommandsService', () => {
 
     expect(await sent).toEqual({ ok: false, error: 'ended' });
     expect(stop).toHaveBeenCalled();
+  });
+
+  it('gives up when no result comes', async () => {
+    jest.useFakeTimers();
+    try {
+      const { stop } = setUp();
+      const sent = TestBed.inject(AdminCommandsService).send(
+        { type: 'stats.refresh', target: null, reason: '', args: {} },
+        NOW
+      );
+      await jest.advanceTimersByTimeAsync(RESULT_TIMEOUT_MS);
+
+      expect(await sent).toEqual({ ok: false, error: 'timeout' });
+      expect(stop).toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('leaves out an empty reason, which only stats.* may have', async () => {

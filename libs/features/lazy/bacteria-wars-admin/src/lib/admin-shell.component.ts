@@ -9,7 +9,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Meta, Title } from '@angular/platform-browser';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { SPLASH_ID } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import { AdminAccessService } from './access/admin-access.service';
 import { AdminI18n, AdminTextPipe } from './i18n/admin-i18n.service';
@@ -36,7 +41,7 @@ import { AdminI18n, AdminTextPipe } from './i18n/admin-i18n.service';
       <h1>{{ 'title' | adminT }}</h1>
       <span class="spacer"></span>
       @if (access.access() === 'granted' || access.access() === 'no-access') {
-        <button mat-button type="button" (click)="access.signOut()">
+        <button mat-button type="button" (click)="signOut()">
           {{ 'gate.signOut' | adminT }}
         </button>
       }
@@ -87,6 +92,15 @@ import { AdminI18n, AdminTextPipe } from './i18n/admin-i18n.service';
 })
 export class AdminShellComponent {
   protected readonly access = inject(AdminAccessService);
+  private readonly router = inject(Router);
+
+  /** Signs out, then lets the guard run again, so the gate replaces the view. */
+  protected async signOut(): Promise<void> {
+    await this.access.signOut();
+    await this.router.navigateByUrl(this.router.url, {
+      onSameUrlNavigation: 'reload',
+    });
+  }
 
   public constructor() {
     inject(DOCUMENT).getElementById(SPLASH_ID)?.remove();

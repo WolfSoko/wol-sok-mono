@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Meta } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { AdminAccessService } from './access/admin-access.service';
 import { AdminShellComponent } from './admin-shell.component';
 
@@ -11,7 +11,10 @@ function render(access: string) {
       provideRouter([]),
       {
         provide: AdminAccessService,
-        useValue: { access: signal(access), signOut: jest.fn() },
+        useValue: {
+          access: signal(access),
+          signOut: jest.fn(async () => undefined),
+        },
       },
     ],
   });
@@ -42,6 +45,22 @@ describe('AdminShellComponent', () => {
     render('checking');
 
     expect(splash.isConnected).toBe(false);
+  });
+
+  it('signs out, then lets the guard run again', async () => {
+    const fixture = render('granted');
+    const navigate = jest
+      .spyOn(TestBed.inject(Router), 'navigateByUrl')
+      .mockResolvedValue(true);
+    const access = TestBed.inject(AdminAccessService);
+
+    fixture.nativeElement.querySelector('mat-toolbar button').click();
+    await fixture.whenStable();
+
+    expect(access.signOut).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith('/', {
+      onSameUrlNavigation: 'reload',
+    });
   });
 
   it('shows the views only to the owner', () => {
