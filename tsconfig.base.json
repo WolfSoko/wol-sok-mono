@@ -28,6 +28,12 @@
       "@wolsok/feat-lazy-bac-game/engine": [
         "./libs/features/lazy/bacteria-game/src/engine.ts"
       ],
+      "@wolsok/feat-lazy-bac-game/admin-kit": [
+        "./libs/features/lazy/bacteria-game/src/admin-kit.ts"
+      ],
+      "@wolsok/feat-lazy-bac-wars-admin": [
+        "./libs/features/lazy/bacteria-wars-admin/src/index.ts"
+      ],
       "@wolsok/feat-lazy-gravity-rocks": [
         "./libs/features/lazy/gravity-rocks/src/index.ts"
       ],

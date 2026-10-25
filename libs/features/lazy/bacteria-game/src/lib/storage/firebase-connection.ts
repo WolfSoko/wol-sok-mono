@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import {
   FirebaseApp,
+  getApps,
   initializeApp,
   provideFirebaseApp,
 } from '@angular/fire/app';
@@ -43,11 +44,24 @@ const TAKES_REPLAYS = new InjectionToken<boolean>('bacteria-wars replays');
 const APP_NAME = 'bacteria-wars';
 
 /**
+ * The instances started on the game's app, kept so a second route that
+ * provides the project (the admin area beside the game) reuses them: Auth
+ * and Firestore throw when initialised twice, and an emulator connection
+ * throws once an instance is in use.
+ */
+const started: {
+  auth?: authSdk.Auth;
+  db?: dbSdk.Firestore;
+  rtdb?: rtdbSdk.Database;
+} = {};
+
+/**
  * The game's Firebase app, Auth and Firestore through AngularFire, for the
  * providers of the route the game is loaded under. On that route they stand
  * in for the shell's, which belong to another project. The database keeps a
  * copy in the browser, shared by its tabs, so the progress shows offline as
- * well.
+ * well. Idempotent: another route providing the project (the admin area)
+ * gets the same app and instances, so both share one sign-in.
  */
 export function provideFirebase(
   options: GameCloudOptions
@@ -57,8 +71,15 @@ export function provideFirebase(
     makeEnvironmentProviders([
       { provide: TAKES_REPLAYS, useValue: options.replays === true },
     ]),
-    provideFirebaseApp(() => initializeApp(options.firebase, APP_NAME)),
+    provideFirebaseApp(
+      () =>
+        getApps().find((app) => app.name === APP_NAME) ??
+        initializeApp(options.firebase, APP_NAME)
+    ),
     provideAuth((injector) => {
+      if (started.auth !== undefined) {
+        return started.auth;
+      }
       // No popup resolver: getAuth's would load Google's sign-in frame on
       // phones as the game starts. It joins at the sign-in instead.
       const auth = authSdk.initializeAuth(injector.get(FirebaseApp), {
@@ -72,9 +93,13 @@ export function provideFirebase(
           disableWarnings: true,
         });
       }
+      started.auth = auth;
       return auth;
     }),
     provideFirestore((injector) => {
+      if (started.db !== undefined) {
+        return started.db;
+      }
       const db = dbSdk.initializeFirestore(injector.get(FirebaseApp), {
         localCache: dbSdk.persistentLocalCache({
           tabManager: dbSdk.persistentMultipleTabManager(),
@@ -87,6 +112,7 @@ export function provideFirebase(
           emulators.firestorePort
         );
       }
+      started.db = db;
       return db;
     }),
     // Only with a database in the config: the online status needs one,
@@ -95,6 +121,9 @@ export function provideFirebase(
       ? []
       : [
           provideDatabase((injector) => {
+            if (started.rtdb !== undefined) {
+              return started.rtdb;
+            }
             const rtdb = rtdbSdk.getDatabase(injector.get(FirebaseApp));
             if (emulators?.databasePort !== undefined) {
               rtdbSdk.connectDatabaseEmulator(
@@ -103,6 +132,7 @@ export function provideFirebase(
                 emulators.databasePort
               );
             }
+            started.rtdb = rtdb;
             return rtdb;
           }),
         ]),

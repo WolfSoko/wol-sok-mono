@@ -1,0 +1,51 @@
+/** The admin area's English texts (ADR 0012), apart from the game's. */
+export const EN = {
+  title: 'Bacteria Wars admin',
+  nav: {
+    overview: 'Overview',
+  },
+  gate: {
+    checking: 'Checking access…',
+    signedOut: 'Sign in with the owner’s Google account to continue.',
+    signIn: 'Sign in with Google',
+    noAccess: 'This account has no access to the admin area.',
+    signOut: 'Sign out',
+    failed: 'Signing in did not work. Try again.',
+    noProject: 'No Firebase project is set up for this build.',
+  },
+  command: {
+    sent: 'Sent - waiting for the server…',
+    done: 'Done.',
+    failed: 'The server refused: {error}',
+    signInAgain:
+      'This needs a sign-in within the last hour. Sign in again, then retry.',
+  },
+  overview: {
+    refresh: 'Refresh',
+    updated: 'As of {at}',
+    never: 'No statistics yet - refresh to compute them.',
+    players: 'Players',
+    matches: 'Matches',
+    replays: 'Replays',
+    moderation: 'Moderation',
+    boards: 'Board entries',
+    today: 'Today',
+    history: 'The last 48 hours',
+    hour: 'Hour (UTC)',
+    figure: {
+      accounts: 'Accounts',
+      active24h: 'Active (24 h)',
+      active7d: 'Active (7 days)',
+      online: 'Online now',
+      playing: 'In a match',
+      searching: 'Searching',
+      roomsOpen: 'Open rooms',
+      matchesRunning: 'Matches running',
+      replays: 'Stored',
+      replaysToday: 'Stored today',
+      submissionsWaiting: 'Waiting for upload',
+      bans: 'Active bans',
+      uploadedPictures: 'Uploaded pictures',
+    },
+  },
+};

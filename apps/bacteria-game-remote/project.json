@@ -112,7 +112,7 @@
       },
       "configurations": {
         "production": {
-          "command": "ngsw-config dist/apps/bacteria-game-remote apps/bacteria-game-remote/ngsw-config.json /"
+          "command": "ngsw-config dist/apps/bacteria-game-remote apps/bacteria-game-remote/ngsw-config.json / && node tools/bacteria-game/check-lazy-admin.mjs dist/apps/bacteria-game-remote"
         },
         "development": {}
       },

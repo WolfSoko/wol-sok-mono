@@ -43,6 +43,13 @@ function workspaceFederation(config) {
         .patch(['@angular/platform-browser'], {
           includeSecondaries: { keepAll: true },
         })
+        // The game's admin area (bacteria-game-remote's `/admin`, never
+        // exposed) is the only user of Material's table, paginator, sort and
+        // dialog, so the pruning would drop them while its chunk imports
+        // them. Kept in every app, so the shell and the remotes agree.
+        .patch(['@angular/material'], {
+          includeSecondaries: { keepAll: true },
+        })
         .get(),
       // p5 keeps global state per instance and breaks when two sketches share
       // one copy, so every federated app brings its own - the same exception
@@ -73,8 +80,11 @@ function workspaceFederation(config) {
       // from the shell's last build. Skipped, the remote bundles its own.
       '@wolsok/feat-fourier-analysis',
       '@wolsok/feat-lazy-bac-game',
-      // The engine entry point (for Cloud Functions) belongs to it too.
+      // The engine entry point (for Cloud Functions) belongs to it too, as
+      // do the admin area and the narrow entry it takes from the game.
       '@wolsok/feat-lazy-bac-game/engine',
+      '@wolsok/feat-lazy-bac-game/admin-kit',
+      '@wolsok/feat-lazy-bac-wars-admin',
       '@wolsok/feat-shader-examples',
       ...(config.skip ?? []),
     ],
