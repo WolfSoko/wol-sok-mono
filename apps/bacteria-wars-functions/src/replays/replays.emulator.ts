@@ -9,6 +9,7 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { closeNotReported } from '../boards/hourly';
 import { clearBanCache } from '../limits';
 import { acceptSubmission } from './accept';
 import { deleteReplayChildren } from './cleanup';
@@ -228,6 +229,23 @@ describe('acceptReplay', () => {
       expect(await submit('s1', 'eve', bytes)).toBe('not-in-room');
       await submit('s2', 'ada', bytes);
       expect(await submit('s3', 'ada', bytes)).toBe('duplicate');
+    });
+
+    it('drops a second report that comes after the hourly close', async () => {
+      const bytes = await bytesOf(online());
+      await submit('s1', 'ada', bytes);
+      // Two hours on, the match closes with Ada's report alone.
+      expect(await closeNotReported(db, NOW + 3 * HOUR)).toBe(1);
+      expect(await submit('s2', 'bob', bytes)).toBe('closed');
+      const [ref] = await db.collection('replays').listDocuments();
+      expect((await ref.get()).data()).toMatchObject({
+        players: ['ada'],
+        state: 'waiting',
+        rankedReason: 'not-reported',
+      });
+      expect(
+        (await ref.collection('reports').listDocuments()).map((r) => r.id)
+      ).toEqual(['ada']);
     });
 
     it('marks a match reported after its stub expired', async () => {

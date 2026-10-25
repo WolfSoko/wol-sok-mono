@@ -24,6 +24,7 @@ export type AcceptOutcome =
   | 'unparsable'
   | 'not-in-room'
   | 'duplicate'
+  | 'closed'
   | 'exists'
   | Rejection;
 
@@ -42,7 +43,9 @@ interface RoomStub {
  * replay is parsed strictly, bound to its players and stored.
  * - A local match is the caller's alone, `submitted`.
  * - An online match lists each player of its room stub once their own report
- *   arrives: `waiting` with one, `agreed` or `disputed` with both.
+ *   arrives: `waiting` with one, `agreed` or `disputed` with both. A second
+ *   report after the hourly function closed the match with one ("Not
+ *   reported", ADR 0012) is dropped as `closed`.
  */
 export async function acceptSubmission(
   db: Firestore,
@@ -208,6 +211,11 @@ async function storeOnline(
       existing.get('state') !== 'waiting'
     ) {
       return 'duplicate';
+    }
+    // Closed with one report (`closeNotReported`'s marker, maybe a "Not
+    // reported" for this very player): a late report changes nothing.
+    if ((await tx.get(db.doc(`rankedReplays/${plan.id}`))).exists) {
+      return 'closed';
     }
     const theirs =
       typeof other === 'string'
