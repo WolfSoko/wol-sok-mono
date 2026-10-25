@@ -7,7 +7,12 @@ import {
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
-import { banPlayer, type BanChange, liftBan } from './bans';
+import { banPlayer, liftBan } from './bans';
+import {
+  moderateBoards,
+  moderateProfile,
+  type ModerationChange,
+} from './moderation';
 import type { Realtime } from './realtime';
 import { googleProviderOf } from './tombstones';
 import { writeAudit } from './records';
@@ -66,8 +71,8 @@ export function isOwnerRecord(user: OwnerRecord): boolean {
  * owner sends a new one.
  * A command that is not exactly one (`parseAdminCommand`) answers
  * `malformed`; one from anybody but the owner `not-writer` or `not-admin`
- * - neither is audited. Only `player.ban` and `player.unban` run so far;
- * every other type answers `unsupported` until its wave.
+ * - neither is audited. `board.verify` and `stats.*` answer `unsupported`
+ * until their wave; the other types run (`bans.ts`, `moderation.ts`).
  */
 export async function runAdminCommand(
   db: Firestore,
@@ -96,7 +101,8 @@ export async function runAdminCommand(
 }
 
 /** What an action did, for the audit. */
-interface Outcome extends BanChange {
+/** What an action did; `before` and `after` are what the audit keeps. */
+interface Outcome extends ModerationChange {
   ok: boolean;
   error?: string;
   /** The target, with the player's uid once it was found. */
@@ -177,7 +183,8 @@ async function act(
   now: number
 ): Promise<Outcome> {
   const unchanged = { before: null, after: null };
-  if (command.type !== 'player.ban' && command.type !== 'player.unban') {
+  // `stats.*` take no target.
+  if (command.target === null || command.type === 'board.verify') {
     return {
       ok: false,
       error: 'unsupported',
@@ -190,31 +197,64 @@ async function act(
   if (uid === null) {
     return { ok: false, error: 'not-found', target, ...unchanged };
   }
-  if (command.type === 'player.unban') {
-    const tombstone = await context.tombstoneOf(uid);
-    const change = await liftBan(db, context.realtime, uid, commandId, now, {
-      tombstone,
-    });
-    return typeof change === 'string'
+  const done = (change: ModerationChange | string): Outcome =>
+    typeof change === 'string'
       ? { ok: false, error: change, target, ...unchanged }
       : { ok: true, target, ...change };
+  switch (command.type) {
+    case 'profile.reset':
+    case 'profile.removeImage':
+      return done(
+        await moderateProfile(
+          db,
+          uid,
+          command.type === 'profile.reset' ? 'reset' : 'removeImage',
+          commandId,
+          now
+        )
+      );
+    case 'board.hideEntry':
+    case 'board.hidePlayer':
+    case 'board.restore': {
+      const hide = command.type !== 'board.restore';
+      return done(
+        await moderateBoards(
+          db,
+          uid,
+          command.type === 'board.hidePlayer' || 'uid' in command.target
+            ? 'all'
+            : command.target,
+          { hide, bar: hide && command.args.bar === true },
+          commandId,
+          now
+        )
+      );
+    }
+    case 'player.unban':
+      return done(
+        await liftBan(db, context.realtime, uid, commandId, now, {
+          tombstone: await context.tombstoneOf(uid),
+        })
+      );
+    case 'player.ban': {
+      const { until, reason } = command.args;
+      if (until !== null && until <= now) {
+        return done('ended');
+      }
+      return done(
+        await banPlayer(
+          db,
+          context.realtime,
+          uid,
+          until,
+          reason,
+          commandId,
+          now,
+          { tombstone: await context.tombstoneOf(uid) }
+        )
+      );
+    }
   }
-  const { until, reason } = command.args;
-  if (until !== null && until <= now) {
-    return { ok: false, error: 'ended', target, ...unchanged };
-  }
-  const tombstone = await context.tombstoneOf(uid);
-  const change = await banPlayer(
-    db,
-    context.realtime,
-    uid,
-    until,
-    reason,
-    commandId,
-    now,
-    { tombstone }
-  );
-  return { ok: true, target, ...change };
 }
 
 /**

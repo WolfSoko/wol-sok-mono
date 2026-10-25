@@ -1,4 +1,5 @@
 import { XP_FULL_COUNT_BEFORE } from '@wolsok/feat-lazy-bac-game/engine';
+import { hiddenFor } from './entries';
 import { relabels } from './profile-changed';
 import { topRows } from './rebuild-top';
 import { boardProfileOf, entryLabel, isBlockedName } from './names';
@@ -140,5 +141,14 @@ describe('topRows', () => {
       ['c', 2, undefined],
       ['d', 4, 2],
     ]);
+  });
+});
+
+describe('hiddenFor', () => {
+  it("adds the owner's hide while the player is barred from the kind", () => {
+    const member = { barred: ['daily'] };
+    expect(hiddenFor(member, 'daily', undefined)).toEqual({ admin: true });
+    expect(hiddenFor(member, 'xp', { optout: true })).toEqual({ optout: true });
+    expect(hiddenFor({}, 'daily', { ban: true })).toEqual({ ban: true });
   });
 });

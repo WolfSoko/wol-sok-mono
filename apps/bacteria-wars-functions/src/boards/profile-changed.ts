@@ -1,5 +1,5 @@
 import type { Firestore } from 'firebase-admin/firestore';
-import { entryData, hiddenByOf, memberEntries } from './entries';
+import { entryRewrite, hiddenByOf, memberEntries } from './entries';
 import { type BoardProfile, boardProfileOf } from './names';
 
 /** True when the change touches how a player's entries look. */
@@ -42,17 +42,7 @@ export async function boardProfileChanged(
       // Updated in place, so a daily entry keeps its `expireAt`.
       tx.update(
         ref,
-        entryData(
-          entryId,
-          {
-            sort: data['sort'],
-            atHour: data['atHour'],
-            baseStatus: data['baseStatus'] ?? data['status'],
-            show: data['show'],
-          },
-          after,
-          hiddenByOf(data['hiddenBy'])
-        )
+        entryRewrite(entryId, data, after, hiddenByOf(data['hiddenBy']))
       );
       return true;
     });
