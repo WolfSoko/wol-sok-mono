@@ -129,11 +129,14 @@ export const rankProgress = onDocumentWritten(
  * The online board, once an online match turns `agreed`, and the daily
  * board, when a replay of a declared daily attempt comes (ADR 0012).
  * Retried for an hour (`RETRY_FOR_MS`): both steps are idempotent -
- * `rankOnline`'s marker, `rankDaily`'s run that holds the replay.
+ * `rankOnline`'s marker, the `rankedReason` `rankDaily` leaves - and
+ * decide at the event's time, so a retry judges bans, caps and the room's
+ * clock as the first delivery did.
  */
 export const rankReplay = onDocumentWritten(
   { document: 'replays/{id}', memory: '256MiB', cpu: 'gcf_gen1', retry: true },
   async (event) => {
+    const at = Date.parse(event.time);
     if (tooOldToRetry(event.time, Date.now())) {
       logger.error('rankReplay gave up on an event older than an hour', {
         id: event.params.id,
@@ -155,7 +158,8 @@ export const rankReplay = onDocumentWritten(
         db(),
         event.params.id,
         after,
-        accountCreatedAt
+        accountCreatedAt,
+        at
       );
       logger.info('Online match ranked', { id: event.params.id, reason });
     } else if (
@@ -163,7 +167,7 @@ export const rankReplay = onDocumentWritten(
       after['kind'] === 'daily' &&
       after['attempt'] !== undefined
     ) {
-      const reason = await rankDaily(db(), event.params.id, after);
+      const reason = await rankDaily(db(), event.params.id, after, at);
       logger.info('Daily attempt ranked', { id: event.params.id, reason });
     }
   }
