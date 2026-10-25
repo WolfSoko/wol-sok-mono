@@ -41,7 +41,14 @@ import {
   rankProgress as countProgress,
 } from './boards/rank-progress';
 import { rebuildTop as rebuildTopOf } from './boards/rebuild-top';
-import { HOURLY_ON, REGION, RETRY_FOR_MS, RTDB_URL } from './config';
+import {
+  FEATURE_BEST_ON,
+  HOURLY_ON,
+  REGION,
+  RETRY_FOR_MS,
+  RTDB_URL,
+} from './config';
+import { featureBest as pickBest } from './gallery/feature-best';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
@@ -446,6 +453,29 @@ export const hourly = HOURLY_ON
       async () => {
         const result = await runHourly(db(), Date.now(), accountInfo, realtime);
         logger.info('Hourly run', result);
+      }
+    )
+  : undefined;
+
+/**
+ * The gallery's daily pick for the UTC day before (ADR 0011): at 23:40
+ * UTC, once the boards stopped verifying that day (`openDays` keeps it
+ * open until 23:00), so the ranked attempts they verified are candidates.
+ * Deployed only with `FEATURE_BEST_ON`.
+ */
+export const featureBest = FEATURE_BEST_ON
+  ? onSchedule(
+      {
+        schedule: '40 23 * * *',
+        timeZone: 'UTC',
+        memory: '1GiB',
+        timeoutSeconds: 1800,
+        maxInstances: 1,
+        retryCount: 0,
+      },
+      async () => {
+        const result = await pickBest(db(), Date.now(), accountInfo);
+        logger.info('Gallery pick', result);
       }
     )
   : undefined;

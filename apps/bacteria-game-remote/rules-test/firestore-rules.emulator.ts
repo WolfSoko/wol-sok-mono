@@ -735,6 +735,19 @@ describe('levelStats', () => {
   });
 });
 
+describe('the gallery', () => {
+  it("lets the owner read a day's runners-up, and nobody the public replays", async () => {
+    await seed('replayCandidates/2026-10-25', { done: true });
+    await seed('publicReplays/p1', { replayId: 'l_a', removedAt: null });
+    await assertSucceeds(
+      getDoc(doc(db('own', OWNER_TOKEN), 'replayCandidates/2026-10-25'))
+    );
+    await assertFails(getDoc(doc(db('ada'), 'replayCandidates/2026-10-25')));
+    await assertFails(getDoc(doc(db('own', OWNER_TOKEN), 'publicReplays/p1')));
+    await assertFails(getDoc(doc(db('ada'), 'publicReplays/p1')));
+  });
+});
+
 describe('notices and moderation', () => {
   it("lets a player read and delete their own notices, nobody else's", async () => {
     await seed('players/ada/notices/n1', { type: 'banned' });

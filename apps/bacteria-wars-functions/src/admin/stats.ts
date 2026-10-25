@@ -6,7 +6,7 @@ import {
   Timestamp,
 } from 'firebase-admin/firestore';
 import { DAY_MS } from '../boards/budgets';
-import { dayOf } from '../limits';
+import { dayOf, dayStart } from '../limits';
 import { ACCOUNTS_DOC } from './accounts';
 import type { Realtime } from './realtime';
 
@@ -86,11 +86,7 @@ export async function computeStats(
         .where('expireAt', '>', at(now))
     ),
     count(db.collection('replays')),
-    count(
-      db
-        .collection('replays')
-        .where('createdAt', '>=', at(Date.parse(`${day}T00:00:00Z`)))
-    ),
+    count(db.collection('replays').where('createdAt', '>=', at(dayStart(day)))),
     count(db.collection('replaySubmissions')),
     count(db.collection('bans')),
     count(db.collection('profiles').where('avatar.kind', '==', 'image')),

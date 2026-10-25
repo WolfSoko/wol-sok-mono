@@ -1,5 +1,6 @@
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
+import { removeFromGallery } from '../gallery/publish';
 import { isBanned } from '../limits';
 
 /** What a command asks; all but `remove` are the owner's (ADR 0011). */
@@ -84,16 +85,6 @@ async function run(
     return { ok: false, reason: 'not-found' };
   }
   // `galleryOut` keeps it out once the player is gone from `optOut` too.
-  await ref.update({ optOut: FieldValue.arrayUnion(uid), galleryOut: true });
-  const published = await db
-    .collection('publicReplays')
-    .where('replayId', '==', replayId)
-    .where('removedAt', '==', null)
-    .get();
-  await Promise.all(
-    published.docs.map((doc) =>
-      doc.ref.update({ removedAt: FieldValue.serverTimestamp() })
-    )
-  );
+  await removeFromGallery(db, replayId, uid, now);
   return { ok: true };
 }

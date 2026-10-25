@@ -3,6 +3,7 @@ import {
   FieldValue,
   type Firestore,
 } from 'firebase-admin/firestore';
+import { anonymisePublic } from '../gallery/publish';
 
 /** Replays taken out of a deleted account at once. */
 const PARALLEL_REPLAYS = 10;
@@ -14,13 +15,16 @@ const PARALLEL_REPLAYS = 10;
  * from the room's `seats` and its report. That includes an online match
  * only the other player reported, which names the account in `seats`
  * alone. A replay the player took out of the gallery stays out
- * (`galleryOut`). Runs for banned accounts too: a deletion must erase the
- * player's data.
+ * (`galleryOut`). Its public replays stay, without its uid and with the
+ * colour label for its name (`anonymisePublic`). Runs for banned accounts
+ * too: a deletion must erase the player's data.
  */
 export async function deletePlayerReplays(
   db: Firestore,
   uid: string
-): Promise<{ deleted: number; left: number }> {
+): Promise<{ deleted: number; left: number; anonymised: number }> {
+  // Its public replays at the same time: they hold no private replay.
+  const anonymising = anonymisePublic(db, uid);
   const replays = db.collection('replays');
   // Each transaction reads its replay again: the queries need the ids only.
   const [played, seated] = await Promise.all([
@@ -42,9 +46,11 @@ export async function deletePlayerReplays(
       ))
     );
   }
+  const anonymised = await anonymising;
   return {
     deleted: outcomes.filter((o) => o === 'only').length,
     left: outcomes.filter((o) => o === 'left').length,
+    anonymised,
   };
 }
 

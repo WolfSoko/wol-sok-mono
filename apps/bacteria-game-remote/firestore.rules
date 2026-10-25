@@ -279,6 +279,12 @@ service cloud.firestore {
     match /levelStats/{id} {
       allow read: if isAdmin();
     }
+    // The gallery's runners-up of a day (ADR 0011), for the Replays view;
+    // written by featureBest only. publicReplays stays closed to clients:
+    // publicSite serves it.
+    match /replayCandidates/{day} {
+      allow read: if isAdmin();
+    }
 
     function signedIn() {
       return request.auth != null;
