@@ -95,6 +95,19 @@ describe('declared attempts', () => {
       expect(canDeclare('d_2026-10-24_1', AT, new Set())).toBe(false);
     });
 
+    it('gives a void daily attempt back, declared again in its place', () => {
+      const declared = new Set(['d_2026-10-23_1', 'd_2026-10-23_2']);
+      const voided = new Set(['d_2026-10-23_1']);
+      expect(nextDailyAttemptId('2026-10-23', declared, voided)).toBe(
+        'd_2026-10-23_1'
+      );
+      expect(canDeclare('d_2026-10-23_1', AT, declared, voided)).toBe(true);
+      expect(canDeclare('d_2026-10-23_2', AT, declared, voided)).toBe(false);
+      // Never an endless match: a void one counts as not played.
+      const run = new Set(['e_202610231_0']);
+      expect(canDeclare('e_202610231_0', AT, run, run)).toBe(false);
+    });
+
     it('starts at most five runs a day, each after the one before', () => {
       const declared = new Set<string>();
 

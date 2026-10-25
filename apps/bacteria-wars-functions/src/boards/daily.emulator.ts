@@ -176,6 +176,16 @@ describe('rankDaily', () => {
     expect((await db.doc('boardMembers/ada').get()).exists).toBe(false);
   });
 
+  it('never ranks a replay of a void attempt', async () => {
+    await db
+      .doc(`players/ada/attempts/${ATTEMPT}`)
+      .set({ at: Timestamp.fromMillis(AT), void: true, voidReason: 'cap' });
+    expect(await rank('l_1', dailyReplay(), 'ada', { declared: false })).toBe(
+      'void'
+    );
+    expect((await db.doc(`dailyRuns/${DAY}_ada`).get()).exists).toBe(false);
+  });
+
   it('ranks nothing for a banned player', async () => {
     await db.doc('bans/eve').set({ until: null });
     expect(await rank('l_1', dailyReplay({}, 'eve'), 'eve')).toBe('banned');

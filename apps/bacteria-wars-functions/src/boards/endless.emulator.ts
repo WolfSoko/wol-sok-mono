@@ -6,6 +6,7 @@ import {
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
+import { voidAttempt } from '../replays/accept';
 import { endlessReplay, RUN_ID, TICKS } from '../testing/daily-replay';
 import {
   closeStaleMatches,
@@ -136,6 +137,40 @@ describe('rankEndless', () => {
     );
     await db.doc('replays/l_0').delete();
     expect(await rankEndless(db, 'l_0', doc, NOW)).toBe('gone');
+    expect(await run()).toMatchObject({ wins: 1, lives: 3 });
+  });
+
+  it('counts a voided match as not played, and the run goes on', async () => {
+    await declare(0);
+    expect(await rank('l_0', played(0, 0))).toBe('counted');
+    await declare(1);
+    await trackDeclaredMatch(db, 'ada', `e_${RUN_ID}_1`, arrivalOf(1));
+    expect(await run()).toMatchObject({ pendingAt: atOf(1) });
+    // Its submission was dropped on the server's side.
+    await voidAttempt(
+      db,
+      { uid: 'ada', attempt: `e_${RUN_ID}_1`, createdAt: arrivalOf(1) },
+      'cap',
+      NOW
+    );
+    expect(await run()).toMatchObject({ wins: 1, lives: 3, pendingAt: null });
+    await declare(2);
+    expect(await rank('l_2', played(2, 1))).toBe('counted');
+    expect(await run()).toMatchObject({ wins: 2, lives: 3 });
+    expect(Object.keys((await run())?.['declared'] ?? {})).toEqual(['0', '2']);
+  });
+
+  it('keeps the seed of a run whose void match 0 TTL took', async () => {
+    await declare(0);
+    await voidAttempt(
+      db,
+      { uid: 'ada', attempt: `e_${RUN_ID}_0`, createdAt: arrivalOf(0) },
+      'error',
+      NOW
+    );
+    await db.doc(`players/ada/attempts/e_${RUN_ID}_0`).delete();
+    await declare(1);
+    expect(await rank('l_1', played(1, 0))).toBe('counted');
     expect(await run()).toMatchObject({ wins: 1, lives: 3 });
   });
 

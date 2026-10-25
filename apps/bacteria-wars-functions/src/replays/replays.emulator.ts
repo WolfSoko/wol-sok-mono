@@ -10,8 +10,9 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { closeNotReported } from '../boards/hourly';
-import { clearBanCache } from '../limits';
-import { acceptSubmission } from './accept';
+import { clearBanCache, dayOf, takeSubmissionSlot } from '../limits';
+import { dailyReplay } from '../testing/daily-replay';
+import { acceptSubmission, giveUpSubmission } from './accept';
 import { deleteReplayChildren } from './cleanup';
 import { runReplayCommand } from './command';
 import { deletePlayerReplays } from './delete-player';
@@ -153,6 +154,95 @@ describe('acceptReplay', () => {
       .set({ hour: Math.floor(NOW / HOUR) - 1, submissions: 60 });
     expect(await submit('s2', 'ada', await bytesOf())).toBe('stored');
     expect((await db.doc('limits/ada').get()).get('submissions')).toBe(1);
+  });
+
+  describe('a ranked submission', () => {
+    const attempt = `d_${dayOf(NOW)}_1`;
+    /** When Ada declared it: before she sent anything. */
+    const DECLARED_AT = NOW - 10 * 60_000;
+    /** A submission of it, as `acceptReplay` reads it. */
+    const data = { uid: 'ada', attempt, hint: 40 };
+    const attemptRef = () => db.doc(`players/ada/attempts/${attempt}`);
+    beforeEach(() =>
+      attemptRef().set({ at: Timestamp.fromMillis(DECLARED_AT) })
+    );
+
+    it("has an hour of its own, which unranked ones can't use up", async () => {
+      const hour = Math.floor(NOW / HOUR);
+      await db.doc('limits/ada').set({ hour, submissions: 60 });
+      // Past the limits, on to the checks against its replay.
+      expect(await submit('s1', 'ada', await bytesOf(), { attempt })).toBe(
+        'attempt-mismatch'
+      );
+      expect((await db.doc('limits/ada').get()).data()).toMatchObject({
+        submissions: 60,
+        rankedSubmissions: 1,
+      });
+      await db.doc('limits/ada').set({ hour, rankedSubmissions: 60 });
+      expect(await submit('s2', 'ada', await bytesOf(), { attempt })).toBe(
+        'limit'
+      );
+      // A player's own limit: the attempt is spent.
+      expect((await attemptRef().get()).get('void')).toBeUndefined();
+    });
+
+    it("voids its attempt when the day's cap for everyone drops it", async () => {
+      await db.doc(`counters/${dayOf(NOW)}`).set({ rankedSubmissions: 20_000 });
+      expect(await submit('s1', 'ada', await bytesOf(), { attempt })).toBe(
+        'cap'
+      );
+      expect((await attemptRef().get()).data()).toMatchObject({
+        void: true,
+        voidReason: 'cap',
+      });
+      expect((await db.doc('replaySubmissions/s1').get()).exists).toBe(false);
+    });
+
+    it('voids its attempt when acceptReplay gives up on it', async () => {
+      await db.doc('replaySubmissions/s1').set(data);
+      await giveUpSubmission(db, 's1', data, NOW);
+      expect((await attemptRef().get()).get('voidReason')).toBe('error');
+      expect((await db.doc('replaySubmissions/s1').get()).exists).toBe(false);
+    });
+
+    it('is used up by its first stored replay, which no later drop voids', async () => {
+      const replay = dailyReplay({}, 'ada', attempt, DECLARED_AT);
+      expect(
+        await submit('s1', 'ada', Buffer.from(await replayToBytes(replay)), {
+          attempt,
+        })
+      ).toBe('stored');
+      expect((await attemptRef().get()).get('replayId')).toBe('l_s1');
+      // Junk naming the same attempt, on a day the cap is reached.
+      await db.doc(`counters/${dayOf(NOW)}`).set({ rankedSubmissions: 20_000 });
+      expect(await submit('s2', 'ada', await bytesOf(), { attempt })).toBe(
+        'cap'
+      );
+      await giveUpSubmission(db, 's3', data, NOW);
+      expect((await attemptRef().get()).get('void')).toBeUndefined();
+    });
+
+    it('leaves the attempt declared again after it was sent', async () => {
+      // A void attempt Ada declared again once this submission was out.
+      await attemptRef().set({ at: Timestamp.fromMillis(NOW + 60_000) });
+      await giveUpSubmission(
+        db,
+        's1',
+        { ...data, createdAt: Timestamp.fromMillis(NOW) },
+        NOW
+      );
+      expect((await attemptRef().get()).get('void')).toBeUndefined();
+    });
+
+    it('takes one slot however often acceptReplay tries it', async () => {
+      await db.doc('replaySubmissions/s1').set({ uid: 'ada', attempt });
+      for (let i = 0; i < 3; i++) {
+        expect(await takeSubmissionSlot(db, 'ada', true, 's1', NOW)).toBeNull();
+      }
+      expect((await db.doc('limits/ada').get()).get('rankedSubmissions')).toBe(
+        1
+      );
+    });
   });
 
   it('drops bytes that are no replay', async () => {

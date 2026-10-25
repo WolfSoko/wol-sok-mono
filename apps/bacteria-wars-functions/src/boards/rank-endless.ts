@@ -63,10 +63,17 @@ export interface StoredRun extends RunState {
 /** What a run read in a transaction holds - see {@link readRun}. */
 export interface RunRead {
   stored: Partial<StoredRun>;
+  /** The matches that count as played: a void one is left out. */
   attempts: RunAttempt[];
+  /** The run's level seed - undefined for a run never declared. */
+  seed?: number;
 }
 
-/** The declared matches of a run and its stored state, in a transaction. */
+/**
+ * The declared matches of a run and its stored state, in a transaction. A
+ * void match (`voidAttempt`) counts as never declared; match 0 still gives
+ * the run its seed.
+ */
 export async function readRun(
   tx: Transaction,
   db: Firestore,
@@ -85,6 +92,8 @@ export async function readRun(
     ),
   ]);
   const attempts: RunAttempt[] = [];
+  const seen = new Set<number>();
+  let zeroAt: number | undefined;
   for (const doc of declared.docs) {
     const attempt = parseAttemptId(doc.id);
     const at = doc.get('at');
@@ -93,17 +102,28 @@ export async function readRun(
       attempt.runId === runId &&
       at instanceof Timestamp
     ) {
-      attempts.push({ i: attempt.i, at: at.toMillis() });
+      seen.add(attempt.i);
+      if (attempt.i === 0) {
+        zeroAt = at.toMillis();
+      }
+      if (doc.get('void') !== true) {
+        attempts.push({ i: attempt.i, at: at.toMillis() });
+      }
     }
   }
   const stored = (run.data() ?? {}) as Partial<StoredRun>;
-  const seen = new Set(attempts.map((attempt) => attempt.i));
   for (const [i, at] of Object.entries(stored.declared ?? {})) {
     if (!seen.has(Number(i))) {
       attempts.push({ i: Number(i), at });
     }
   }
-  return { stored, attempts };
+  zeroAt ??= stored.declared?.['0'];
+  const seed =
+    stored.seed ??
+    (zeroAt === undefined
+      ? undefined
+      : attemptSeed(uid, endlessAttemptId(runId, 0), zeroAt));
+  return { stored, attempts, ...(seed === undefined ? {} : { seed }) };
 }
 
 /**
@@ -121,18 +141,18 @@ export async function saveRun(
   change: Partial<Pick<StoredRun, 'accepted' | 'verifiedWins' | 'cut'>>,
   now: number
 ): Promise<StoredRun | null> {
-  const zero = read.attempts.find((attempt) => attempt.i === 0);
-  if (zero === undefined) {
+  const { seed } = read;
+  if (seed === undefined) {
     return null;
   }
   const accepted = change.accepted ?? read.stored.accepted ?? {};
   const verifiedWins = change.verifiedWins ?? read.stored.verifiedWins ?? 0;
   const cut = change.cut !== undefined ? change.cut : (read.stored.cut ?? null);
-  const seed = attemptSeed(uid, endlessAttemptId(runId, 0), zero.at);
   const state = computeRun(seed, read.attempts, accepted, now);
   const base = endlessEntryBase(state, verifiedWins, cut);
   const run: StoredRun = {
     ...state,
+    // Without the void matches: once TTL takes one, it is still not played.
     declared: Object.fromEntries(
       read.attempts.map((attempt) => [String(attempt.i), attempt.at])
     ),

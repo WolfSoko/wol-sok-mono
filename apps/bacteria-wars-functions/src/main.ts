@@ -30,7 +30,7 @@ import { rebuildTop as rebuildTopOf } from './boards/rebuild-top';
 import { HOURLY_ON, REGION, RETRY_FOR_MS } from './config';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
-import { acceptSubmission } from './replays/accept';
+import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
 import { runReplayCommand } from './replays/command';
 import { deletePlayerReplays as deleteReplaysOf } from './replays/delete-player';
@@ -40,14 +40,45 @@ setGlobalOptions({ region: REGION, maxInstances: 5 });
 
 const db = () => getFirestore();
 
-/** `replaySubmissions/{id}` into `replays/{id}` - see `acceptSubmission`. */
+/** True, and logged, for a retried event too old to act on. */
+function givesUp(fn: string, id: string, time: string, now: number): boolean {
+  const old = tooOldToRetry(Date.parse(time), now);
+  if (old) {
+    logger.error(
+      `${fn} gave up on an event older than ${RETRY_FOR_MS / 60_000} minutes`,
+      { id, time }
+    );
+  }
+  return old;
+}
+
+/**
+ * `replaySubmissions/{id}` into `replays/{id}` - see `acceptSubmission`.
+ * Retried for an hour (`RETRY_FOR_MS`); then it gives up
+ * (`giveUpSubmission`), which voids a ranked attempt rather than let a
+ * failure of ours cost it. Each try runs at its own time: the limits count
+ * by the hour they are in, and a ranked deadline by the submission's
+ * `createdAt`.
+ */
 export const acceptReplay = onDocumentCreated(
-  { document: 'replaySubmissions/{id}', memory: '256MiB', cpu: 'gcf_gen1' },
+  {
+    document: 'replaySubmissions/{id}',
+    memory: '256MiB',
+    cpu: 'gcf_gen1',
+    retry: true,
+  },
   async (event) => {
     const data = event.data?.data();
-    if (data !== undefined) {
-      await acceptSubmission(db(), event.params.id, data);
+    if (data === undefined) {
+      return;
     }
+    const id = event.params.id;
+    const now = Date.now();
+    if (givesUp('acceptReplay', id, event.time, now)) {
+      await giveUpSubmission(db(), id, data, now);
+      return;
+    }
+    await acceptSubmission(db(), id, data, now);
   }
 );
 
@@ -142,11 +173,7 @@ export const rankReplay = onDocumentWritten(
   async (event) => {
     const id = event.params.id;
     const at = Date.parse(event.time);
-    if (tooOldToRetry(at, Date.now())) {
-      logger.error(
-        `rankReplay gave up on an event older than ${RETRY_FOR_MS / 60_000} minutes`,
-        { id, time: event.time }
-      );
+    if (givesUp('rankReplay', id, event.time, Date.now())) {
       return;
     }
     const before = event.data?.before.data();
