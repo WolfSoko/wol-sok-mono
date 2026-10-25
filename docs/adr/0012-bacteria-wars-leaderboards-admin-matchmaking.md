@@ -1281,6 +1281,10 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      budget is spent or the next match is longer than what is left. Two
      commands at once may overrun the day by one command's share; the
      owner sends them one by one.
+   - Then the level statistics of ADR 0016 §4
+     (`src/replays/level-stats.ts`, see there): counted once a local
+     replay is stored, never in its way. The owner reads them
+     (`isAdmin()`), nobody writes them.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].

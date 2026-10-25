@@ -171,7 +171,18 @@ the cryo pulse is weak in the computer's hands.
   counters per level and difficulty - `levelStats/{levelId}_{difficulty}`:
   attempts, wins, losses, quits (a match declared but not finished),
   duration buckets, medallions, and, for evolved matches, plain versus
-  evolved wins and the weapons carried. No uid, increments only.
+  evolved wins and the weapons carried. No uid, increments only, from what the replay
+  claims. In place (`level-stats.ts` in the functions): counted in
+  `levelStats/{level}_{difficulty}_b{balance}_l{ladder}` once the replay
+  is stored, never in its way - a counter that fails costs a match of
+  statistics, not the submission. A generated level counts by its recipe
+  and generator difficulty (`gen-cave-6`, `daily-cave-6`,
+  `endless-cave-6`), since each roll is a level of its own; the balance
+  table and the ladder's version keep a changed computer apart. Evolved
+  means the player's own loadout, not the ladder's computer's. Still
+  open: medallions (from verified re-runs) and quits (from declared
+  attempts never reported - a local match the player leaves sends no
+  replay).
 - The admin area (ADR 0012) gets a **Balance** view of those counters next to
   the lab's latest report: win rate per level against the target curve,
   attempts until the first win, where players stop on the ladder, gene and

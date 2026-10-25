@@ -718,6 +718,23 @@ describe('adminStats', () => {
   });
 });
 
+describe('levelStats', () => {
+  it('lets the owner read it, nobody write it', async () => {
+    await seed('levelStats/quarantine_hard_b12_l1', { attempts: 3 });
+    await assertSucceeds(
+      getDocs(collection(db('own', OWNER_TOKEN), 'levelStats'))
+    );
+    await assertFails(
+      getDoc(doc(db('ada'), 'levelStats/quarantine_hard_b12_l1'))
+    );
+    await assertFails(
+      setDoc(doc(db('own', OWNER_TOKEN), 'levelStats/quarantine_hard_b12_l1'), {
+        attempts: 9,
+      })
+    );
+  });
+});
+
 describe('notices and moderation', () => {
   it("lets a player read and delete their own notices, nobody else's", async () => {
     await seed('players/ada/notices/n1', { type: 'banned' });

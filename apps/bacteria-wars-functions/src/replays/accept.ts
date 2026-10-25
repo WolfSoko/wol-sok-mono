@@ -1,4 +1,7 @@
-import { replayFromBytes } from '@wolsok/feat-lazy-bac-game/engine';
+import {
+  replayFromBytes,
+  type ReplayHeader,
+} from '@wolsok/feat-lazy-bac-game/engine';
 import {
   type DocumentSnapshot,
   FieldValue,
@@ -18,6 +21,7 @@ import {
   type Rejection,
   type SubmissionMeta,
 } from './accept-plan';
+import { countLevelStats } from './level-stats';
 
 /** What became of a submission - for the log and the specs. */
 export type AcceptOutcome =
@@ -49,7 +53,8 @@ interface RoomStub {
  * then tries again, and gives up with {@link giveUpSubmission}. Nothing is
  * played again here: the replay is parsed strictly, bound to its players
  * and stored.
- * - A local match is the caller's alone, `submitted`.
+ * - A local match is the caller's alone, `submitted`, and counts in its
+ *   level statistics (`level-stats.ts`, ADR 0016).
  * - An online match lists each player of its room stub once their own report
  *   arrives: `waiting` with one, `agreed` or `disputed` with both. A second
  *   report after the hourly function closed the match with one ("Not
@@ -107,9 +112,32 @@ async function accept(
     return plan;
   }
   const blob = { bytes, size: bytes.length };
-  return plan.room === undefined
-    ? storeLocal(db, plan, meta, blob, now)
-    : storeOnline(db, plan, meta, blob, now);
+  if (plan.room !== undefined) {
+    return storeOnline(db, plan, meta, blob, now);
+  }
+  const outcome = await storeLocal(db, plan, meta, blob, now);
+  if (outcome === 'stored') {
+    await countSafely(db, replay.header, plan);
+  }
+  return outcome;
+}
+
+/**
+ * Adds a stored local replay to its level statistics - once, as a second
+ * delivery ends at `exists` - and never in its way: a counter that fails
+ * (the shared document of a busy level, say) costs the statistics a match,
+ * not the player the submission.
+ */
+async function countSafely(
+  db: Firestore,
+  header: ReplayHeader,
+  plan: AcceptPlan
+): Promise<void> {
+  try {
+    await countLevelStats(db, header, plan.kind);
+  } catch (error) {
+    logger.warn('Level statistics not counted', { id: plan.id, error });
+  }
 }
 
 /**

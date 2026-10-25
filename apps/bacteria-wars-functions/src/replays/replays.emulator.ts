@@ -134,6 +134,30 @@ describe('acceptReplay', () => {
     expect(await submit('s1', 'ada', bytes)).toBe('exists');
   });
 
+  it('counts a stored match in its level statistics, once', async () => {
+    const bytes = await bytesOf();
+    await submit('s1', 'ada', bytes);
+    await submit('s1', 'ada', bytes);
+    await submit('s3', 'bob', await bytesOf());
+    const { difficulty } = golden.header;
+    const stats = await db.collection('levelStats').get();
+    expect(stats.docs.map((doc) => doc.id)).toEqual([
+      `quarantine_${difficulty}_b${BALANCE_VERSION}_l0`,
+    ]);
+    expect(stats.docs[0].data()).toMatchObject({
+      level: 'quarantine',
+      difficulty,
+      balanceVersion: BALANCE_VERSION,
+      ladder: 0,
+      attempts: 2,
+      losses: 2,
+      durations: { lt1m: 2 },
+    });
+    expect(stats.docs[0].get('wins')).toBeUndefined();
+    // No uid anywhere in it.
+    expect(JSON.stringify(stats.docs[0].data())).not.toMatch(/ada|bob/);
+  });
+
   it('drops what a banned player sends, while the ban holds', async () => {
     await db.doc('bans/eve').set({ until: Timestamp.fromMillis(NOW + HOUR) });
     expect(await submit('s1', 'eve', await bytesOf())).toBe('banned');
