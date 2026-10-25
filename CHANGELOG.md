@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.81.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.80.0...v74.81.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** the daily board with declared attempts ([#2626](https://github.com/WolfSoko/wol-sok-mono/issues/2626)) ([e1be6f8](https://github.com/WolfSoko/wol-sok-mono/commit/e1be6f8175da2e049b31864b01058ec714724896))
+
 ## [74.80.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.79.0...v74.80.0) (2026-10-25)
 
 ### Features
