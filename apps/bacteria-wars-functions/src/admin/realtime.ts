@@ -1,0 +1,24 @@
+import type { Database } from 'firebase-admin/database';
+
+/**
+ * What the admin commands do in the Realtime Database (ADR 0012): mirror a
+ * ban to `bans/{uid}`, and drop a banned player's `status` and
+ * `connections`. A port, so the specs run against the Firestore emulator
+ * alone.
+ */
+export interface Realtime {
+  set(path: string, value: number): Promise<void>;
+  remove(path: string): Promise<void>;
+}
+
+/** The port on the project's Realtime Database, opened on first use. */
+export function realtimeOf(database: () => Promise<Database>): Realtime {
+  return {
+    set: async (path, value) => {
+      await (await database()).ref(path).set(value);
+    },
+    remove: async (path) => {
+      await (await database()).ref(path).remove();
+    },
+  };
+}

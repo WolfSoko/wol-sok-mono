@@ -17,6 +17,8 @@ import {
 } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
+import { isOwnerRecord, runAdminCommand } from './admin/command';
+import { realtimeOf } from './admin/realtime';
 import { deletePlayerBoards as deleteBoardsOf } from './boards/delete-player';
 import { runHourly } from './boards/hourly';
 import { boardProfileChanged as relabelEntries } from './boards/profile-changed';
@@ -28,7 +30,7 @@ import {
   rankProgress as countProgress,
 } from './boards/rank-progress';
 import { rebuildTop as rebuildTopOf } from './boards/rebuild-top';
-import { HOURLY_ON, REGION, RETRY_FOR_MS } from './config';
+import { HOURLY_ON, REGION, RETRY_FOR_MS, RTDB_URL } from './config';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
@@ -40,6 +42,15 @@ initializeApp();
 setGlobalOptions({ region: REGION, maxInstances: 5 });
 
 const db = () => getFirestore();
+
+/**
+ * The Realtime Database, for bans and presence - loaded on first use, like
+ * the auth stack, which the other functions never need.
+ */
+const realtime = realtimeOf(async () => {
+  const { getDatabaseWithUrl } = await import('firebase-admin/database');
+  return getDatabaseWithUrl(RTDB_URL);
+});
 
 /** True, and logged, for a retried event too old to act on. */
 function givesUp(fn: string, id: string, time: string, now: number): boolean {
@@ -148,6 +159,44 @@ async function accountInfo(uid: string): Promise<AccountInfo> {
 
 const accountCreatedAt = async (uid: string) =>
   (await accountInfo(uid)).createdAt;
+
+/**
+ * Whether the uid is the owner now (`isOwnerRecord`), read afresh from
+ * Auth: a revoked claim stops the next command.
+ */
+async function isOwner(uid: string): Promise<boolean> {
+  const { getAuth } = await import('firebase-admin/auth');
+  try {
+    return isOwnerRecord(await getAuth().getUser(uid));
+  } catch {
+    return false;
+  }
+}
+
+/** The owner's command (ADR 0012) - see `runAdminCommand`. */
+export const adminCommand = onDocumentCreatedWithAuthContext(
+  // Up to the trigger's limit: a ban walks every board entry of the
+  // player and clears out what others meet them in.
+  {
+    document: 'adminCommands/{id}',
+    memory: '256MiB',
+    cpu: 'gcf_gen1',
+    timeoutSeconds: 540,
+  },
+  async (event) => {
+    const data = event.data?.data();
+    if (data !== undefined) {
+      const result = await runAdminCommand(
+        db(),
+        event.params.id,
+        data,
+        event.authType === 'unauthenticated' ? undefined : event.authId,
+        { isOwner, realtime }
+      );
+      logger.info('Admin command', { id: event.params.id, result });
+    }
+  }
+);
 
 /** The XP board, from the player's stored progress (ADR 0012). */
 export const rankProgress = onDocumentWritten(
@@ -263,9 +312,9 @@ export const boardProfileChanged = onDocumentWritten(
 );
 
 /**
- * Every hour at minute 17 (UTC): closes unreported online matches and
- * yesterday's daily board, then checks daily entries for 25 minutes at
- * most (ADR 0012). Off until the owner has set up Cloud Scheduler.
+ * Every hour at minute 17 (UTC): cleans up ended bans, closes unreported
+ * online matches and yesterday's daily board, then checks daily entries
+ * for 25 minutes at most (ADR 0012). Off with `HOURLY_ON`.
  */
 export const hourly = HOURLY_ON
   ? onSchedule(
@@ -278,7 +327,7 @@ export const hourly = HOURLY_ON
         retryCount: 0,
       },
       async () => {
-        const result = await runHourly(db(), Date.now(), accountInfo);
+        const result = await runHourly(db(), Date.now(), accountInfo, realtime);
         logger.info('Hourly run', result);
       }
     )

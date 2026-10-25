@@ -10,6 +10,8 @@ import {
   Timestamp,
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
+import { expireBans } from '../admin/bans';
+import type { Realtime } from '../admin/realtime';
 import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
 import { MIN_COUNTED_TICKS } from './rank-online';
 import { DAY_MS, SLICE_MS } from './budgets';
@@ -163,17 +165,26 @@ export async function finalizeDailyBoards(
 }
 
 /**
- * The hourly run (ADR 0012), in order: closes unreported online matches
- * and endless matches whose replay never came, closes yesterday's daily
- * board, then spends the hour's verification slice - the daily boards
- * first, the `endless` board with the rest. Bans and statistics join with
- * their waves.
+ * The hourly run (ADR 0012), in order: cleans up bans that ended, closes
+ * unreported online matches and endless matches whose replay never came,
+ * closes yesterday's daily board, then spends the hour's verification
+ * slice - the daily boards first, the `endless` board with the rest. The
+ * statistics join with their wave.
  */
 export async function runHourly(
   db: Firestore,
   now: number,
-  accountInfo: (uid: string) => Promise<AccountInfo>
+  accountInfo: (uid: string) => Promise<AccountInfo>,
+  realtime: Realtime
 ) {
+  // A ban has ended wherever it is checked already: a failed clean-up
+  // waits for the next run, and must not cost this one its verification.
+  const bansEnded = await expireBans(db, realtime, now).catch(
+    (error: unknown) => {
+      logger.error('Could not clean up ended bans', { error });
+      return 0;
+    }
+  );
   // Independent sweeps, then the slices that spend the hour's budget.
   const [notReported, staleRuns, finalized] = await Promise.all([
     closeNotReported(db, now),
@@ -187,5 +198,5 @@ export async function runHourly(
     accountInfo,
     SLICE_MS - daily.spentMs
   );
-  return { notReported, staleRuns, finalized, daily, endless };
+  return { bansEnded, notReported, staleRuns, finalized, daily, endless };
 }

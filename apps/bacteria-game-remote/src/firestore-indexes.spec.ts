@@ -35,6 +35,21 @@ const GAME_QUERIES: Queries = {
       { fieldPath: 'createdAt', order: 'DESCENDING' },
     ],
   },
+  // The admin area's audit (ADR 0012): a player's entries, and a type's.
+  'audit entries of a player': {
+    group: 'adminAudit',
+    fields: [
+      { fieldPath: 'target.uid', order: 'ASCENDING' },
+      { fieldPath: 'at', order: 'DESCENDING' },
+    ],
+  },
+  'audit entries of a type': {
+    group: 'adminAudit',
+    fields: [
+      { fieldPath: 'type', order: 'ASCENDING' },
+      { fieldPath: 'at', order: 'DESCENDING' },
+    ],
+  },
 };
 const FUNCTION_QUERIES = read(
   '../../bacteria-wars-functions/src/firestore-queries.json'
