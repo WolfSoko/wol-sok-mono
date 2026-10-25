@@ -1,10 +1,6 @@
-import {
-  type BoardKind,
-  type EntryStatus,
-  parseBoardId,
-} from '@wolsok/feat-lazy-bac-game/engine';
+import type { EntryStatus } from '@wolsok/feat-lazy-bac-game/engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
-import { type HiddenBy, hiddenByOf } from '../boards/entries';
+import { type HiddenBy, hiddenByOf, memberEntries } from '../boards/entries';
 
 /** Why an entry is hidden - see `HiddenBy`. */
 export type HideReason = keyof HiddenBy;
@@ -38,17 +34,7 @@ export async function setHidden(
   const memberRef = db.doc(`boardMembers/${uid}`);
   return db.runTransaction(async (tx) => {
     const member = (await tx.get(memberRef)).data() ?? {};
-    const entryIds = (member['entryIds'] ?? {}) as Partial<
-      Record<BoardKind, string>
-    >;
-    const boards = boardIds ?? (member['boards'] as string[] | undefined) ?? [];
-    const targets = boards.flatMap((boardId) => {
-      const kind = parseBoardId(boardId)?.kind;
-      const entryId = kind === undefined ? undefined : entryIds[kind];
-      return kind === undefined || entryId === undefined
-        ? []
-        : [{ boardId, kind, entryId }];
-    });
+    const targets = memberEntries(member, boardIds);
     const refs = targets.map(({ boardId, entryId }) =>
       db.doc(`boards/${boardId}/entries/${entryId}`)
     );

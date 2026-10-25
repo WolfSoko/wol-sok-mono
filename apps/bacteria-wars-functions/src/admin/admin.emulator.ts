@@ -189,9 +189,10 @@ describe('adminCommand', () => {
 
   it('refuses a hide without its board, and a ban that has ended', async () => {
     await seedAda();
+    // The engine's parser wants a board entry as the target.
     expect(await command('c1', 'board.hideEntry')).toEqual({
       ok: false,
-      error: 'no-target',
+      error: 'malformed',
     });
     expect(
       await command('c2', 'player.ban', {
@@ -290,10 +291,12 @@ describe('adminCommand', () => {
     await db.doc('rooms/DEF567').set({
       expireAt: Timestamp.fromMillis(NOW + HOUR),
     });
-    expect(await command('s1', 'stats.recount', {}, deps)).toEqual({
+    expect(
+      await command('s1', 'stats.recount', { target: null, reason: '' }, deps)
+    ).toEqual({
       ok: true,
     });
-    await command('s2', 'stats.refresh', {}, deps);
+    await command('s2', 'stats.refresh', { target: null, reason: '' }, deps);
     expect((await db.doc('adminStats/now').get()).data()).toMatchObject({
       accounts: 3,
       online: 1,

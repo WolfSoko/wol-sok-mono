@@ -18,11 +18,6 @@ export class Banned extends Error {
   }
 }
 
-/** A stored ban: until when it holds, null for good. */
-interface BanDoc {
-  until?: Timestamp | null;
-}
-
 const banCache = new Map<
   string,
   { banned: boolean; until: number | null; at: number }
@@ -52,15 +47,30 @@ export async function isBanned(
   let cached = banCache.get(uid);
   if (cached === undefined || now - cached.at > BAN_CACHE_MS) {
     const snapshot = await db.doc(`bans/${uid}`).get();
-    const until = (snapshot.data() as BanDoc | undefined)?.until;
     cached = {
       banned: snapshot.exists,
-      until: until instanceof Timestamp ? until.toMillis() : null,
+      until: banUntil(snapshot.data()),
       at: now,
     };
     banCache.set(uid, cached);
   }
-  return cached.banned && (cached.until === null || cached.until > now);
+  return cached.banned && banHolds(cached.until, now);
+}
+
+/** A stored ban's end in ms, null for good (or no ban). */
+export function banUntil(
+  ban: Record<string, unknown> | undefined
+): number | null {
+  const until = ban?.['until'];
+  return until instanceof Timestamp ? until.toMillis() : null;
+}
+
+/**
+ * Whether a ban that ends at `until` (null: never) holds at `now` - the
+ * end inclusive, like the rules' `notBanned()`.
+ */
+export function banHolds(until: number | null, now: number): boolean {
+  return until === null || until > now;
 }
 
 /** Forgets the cached ban decisions - for specs. */

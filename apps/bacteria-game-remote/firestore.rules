@@ -250,8 +250,8 @@ service cloud.firestore {
         request.resource.data.createdAt == request.time &&
         isCommandExpiry(request.resource.data.expireAt) &&
         request.resource.data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry', 'board.hidePlayer', 'board.restore', 'board.verify', 'player.ban', 'player.unban', 'stats.refresh', 'stats.recount'] &&
-        request.resource.data.get('target', {}) is map &&
-        request.resource.data.get('args', {}) is map &&
+        (request.resource.data.target == null || request.resource.data.target is map) &&
+        request.resource.data.args is map &&
         (request.resource.data.type in ['stats.refresh', 'stats.recount'] ||
           (request.resource.data.reason is string &&
            request.resource.data.reason.size() > 0 &&

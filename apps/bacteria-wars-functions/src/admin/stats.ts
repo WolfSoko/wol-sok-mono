@@ -1,15 +1,14 @@
-import { dailyBoardId, utcDay } from '@wolsok/feat-lazy-bac-game/engine';
+import { atHourOf, dailyBoardId } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   FieldValue,
   type Firestore,
   type Query,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { DAY_MS } from '../boards/budgets';
+import { DAY_MS, HOUR_MS } from '../boards/budgets';
 import { dayOf } from '../limits';
 import type { AdminDeps } from './deps';
 
-const HOUR_MS = 3_600_000;
 /** How long an hourly snapshot is kept (TTL). */
 const SNAPSHOT_TTL_MS = 90 * DAY_MS;
 /** A queue entry not seen for this long has left. */
@@ -47,7 +46,7 @@ export async function computeStats(
   now: number
 ): Promise<AdminStats> {
   const at = (ms: number) => Timestamp.fromMillis(ms);
-  const day = utcDay(new Date(now));
+  const day = dayOf(now);
   const startOfDay = Date.parse(`${day}T00:00:00Z`);
   const boards = ['xp', 'online', 'endless', dailyBoardId(day)];
   const [
@@ -88,7 +87,7 @@ export async function computeStats(
     count(db.collection('replaySubmissions')),
     count(db.collection('bans')),
     count(db.collection('profiles').where('avatar.kind', '==', 'image')),
-    db.doc(`counters/${dayOf(now)}`).get(),
+    db.doc(`counters/${day}`).get(),
     deps.rtdb.get('status'),
     ...boards.map((boardId) =>
       count(db.collection(`boards/${boardId}/entries`))
@@ -134,17 +133,20 @@ export async function refreshStats(
 ): Promise<AdminStats> {
   const stats = await computeStats(db, deps, now);
   const doc = { ...stats, at: FieldValue.serverTimestamp() };
-  await db.doc('adminStats/now').set(doc);
-  if (snapshot) {
-    const hour = new Date(Math.floor(now / HOUR_MS) * HOUR_MS)
-      .toISOString()
-      .slice(0, 13)
-      .replace(/[-T]/g, '');
-    await db.doc(`adminStats/h_${hour}`).set({
-      ...doc,
-      expireAt: Timestamp.fromMillis(now + SNAPSHOT_TTL_MS),
-    });
-  }
+  // `h_yyyymmddhh`: the hour the snapshot is of.
+  const hour = new Date(atHourOf(now) * HOUR_MS)
+    .toISOString()
+    .slice(0, 13)
+    .replace(/[-T]/g, '');
+  await Promise.all([
+    db.doc('adminStats/now').set(doc),
+    snapshot
+      ? db.doc(`adminStats/h_${hour}`).set({
+          ...doc,
+          expireAt: Timestamp.fromMillis(now + SNAPSHOT_TTL_MS),
+        })
+      : null,
+  ]);
   return stats;
 }
 

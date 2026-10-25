@@ -599,7 +599,7 @@ describe("the owner's commands", () => {
   it('takes a command of a known type from the owner', async () => {
     await assertSucceeds(send(owner(), adminCommand('profile.reset')));
     await assertSucceeds(
-      send(owner(), adminCommand('stats.refresh', { reason: '' }))
+      send(owner(), adminCommand('stats.refresh', { target: null, reason: '' }))
     );
   });
 

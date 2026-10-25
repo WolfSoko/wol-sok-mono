@@ -54,6 +54,10 @@ const googleUidOf = (user: {
   providerData: readonly { providerId: string; uid: string }[];
 }) => user.providerData.find((p) => p.providerId === 'google.com')?.uid ?? null;
 
+/** A Realtime Database path - the database loaded when first used. */
+const rtdbRef = async (path: string) =>
+  (await import('firebase-admin/database')).getDatabase().ref(path);
+
 /**
  * Auth, the Realtime Database and the tombstone key for the admin and ban
  * functions - loaded when first used: the other functions never need them.
@@ -81,18 +85,9 @@ const adminDeps: AdminDeps = {
     return { uids: page.users.map((user) => user.uid), next: page.pageToken };
   },
   rtdb: {
-    async set(path, value) {
-      const { getDatabase } = await import('firebase-admin/database');
-      await getDatabase().ref(path).set(value);
-    },
-    async remove(path) {
-      const { getDatabase } = await import('firebase-admin/database');
-      await getDatabase().ref(path).remove();
-    },
-    async get(path) {
-      const { getDatabase } = await import('firebase-admin/database');
-      return (await getDatabase().ref(path).get()).val();
-    },
+    set: async (path, value) => (await rtdbRef(path)).set(value),
+    remove: async (path) => (await rtdbRef(path)).remove(),
+    get: async (path) => (await (await rtdbRef(path)).get()).val(),
   },
   tombstoneKey: () => BAN_TOMBSTONE_KEY.value(),
 };
@@ -155,7 +150,7 @@ async function accountInfo(uid: string): Promise<AccountInfo> {
     const created = user.metadata.creationTime;
     return {
       createdAt: created ? Date.parse(created) : null,
-      google: user.providerData.some((p) => p.providerId === 'google.com'),
+      google: googleUidOf(user) !== null,
     };
   } catch {
     return { createdAt: null, google: false };
@@ -349,7 +344,7 @@ export const adminCommand = onDocumentCreatedWithAuthContext(
 
 /** A new account is counted, and a banned Google identity banned again. */
 export const countAccount = v1
-  .runWith({ secrets: ['BAN_TOMBSTONE_KEY'] })
+  .runWith({ secrets: [BAN_TOMBSTONE_KEY] })
   .region(REGION)
   .auth.user()
   .onCreate(async (user) => {
@@ -369,7 +364,7 @@ export const countAccount = v1
 
 /** A deleted account leaves the boards, its ban kept in a tombstone. */
 export const deletePlayerBoards = v1
-  .runWith({ secrets: ['BAN_TOMBSTONE_KEY'] })
+  .runWith({ secrets: [BAN_TOMBSTONE_KEY] })
   .region(REGION)
   .auth.user()
   .onDelete(async (user) => {

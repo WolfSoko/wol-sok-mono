@@ -1,6 +1,7 @@
 import { defaultProfile } from '@wolsok/feat-lazy-bac-game/engine';
 import { createHash } from 'node:crypto';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
+import { bumpModeration } from './notices';
 
 /** What the audit keeps of a profile: never an uploaded image itself. */
 export interface ProfileTrace {
@@ -53,12 +54,10 @@ export async function moderateProfile(
       ? { name: fresh.name, motto: '', avatar: fresh.avatar }
       : { avatar: fresh.avatar };
   await ref.update({ ...change, updatedAt: FieldValue.serverTimestamp() });
-  await db.doc(`moderation/${uid}`).set(
-    {
-      [action === 'reset' ? 'resets' : 'imageRemovals']:
-        FieldValue.increment(1),
-    },
-    { merge: true }
+  await bumpModeration(
+    db,
+    uid,
+    action === 'reset' ? 'resets' : 'imageRemovals'
   );
   return {
     before: profileTrace(stored),

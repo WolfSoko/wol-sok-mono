@@ -1,7 +1,8 @@
-import type {
-  BoardKind,
-  EntryShow,
-  EntryStatus,
+import {
+  type BoardKind,
+  type EntryShow,
+  type EntryStatus,
+  parseBoardId,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   FieldValue,
@@ -82,6 +83,40 @@ export function hiddenFor(
     hidden.admin = true;
   }
   return hidden;
+}
+
+/** One of a player's entries, as `boardMembers/{uid}` points to it. */
+export interface MemberEntry {
+  boardId: string;
+  kind: BoardKind;
+  entryId: string;
+}
+
+/**
+ * The entries `boardMembers/{uid}` points to: on `boardIds`, or on every
+ * board in its `boards` - each board id with the entry id of its kind.
+ */
+export function memberEntries(
+  member: Record<string, unknown>,
+  boardIds?: readonly string[]
+): MemberEntry[] {
+  const entryIds = (member['entryIds'] ?? {}) as Partial<
+    Record<BoardKind, unknown>
+  >;
+  const boards = boardIds ?? member['boards'];
+  if (!Array.isArray(boards)) {
+    return [];
+  }
+  return boards.flatMap((boardId: unknown) => {
+    const kind =
+      typeof boardId === 'string' ? parseBoardId(boardId)?.kind : undefined;
+    const entryId = kind === undefined ? undefined : entryIds[kind];
+    return typeof boardId === 'string' &&
+      kind !== undefined &&
+      typeof entryId === 'string'
+      ? [{ boardId, kind, entryId }]
+      : [];
+  });
 }
 
 /** The board ids an entry of each kind sits on, one random id per kind. */

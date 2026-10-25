@@ -1,17 +1,26 @@
 import {
-  type BoardKind,
-  parseBoardId,
-} from '@wolsok/feat-lazy-bac-game/engine';
-import {
   FieldValue,
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
+import { HOUR_MS } from '../boards/budgets';
+import { memberEntries } from '../boards/entries';
+import { banHolds, banUntil } from '../limits';
 import { applyTombstone, writeTombstone } from './bans';
 import type { AdminDeps } from './deps';
 
-const HOUR_MS = 3_600_000;
+/** Bans a uid again when its Google identity has a tombstone. */
+const recheck = async (
+  db: Firestore,
+  deps: AdminDeps,
+  uid: string,
+  googleUid: string | null,
+  now: number
+) => ({
+  rebanned:
+    googleUid !== null && (await applyTombstone(db, deps, uid, googleUid, now)),
+});
 
 /**
  * `countAccount` (ADR 0012): a new account raises `stats/accounts` and
@@ -42,11 +51,7 @@ export async function countAccount(
       { merge: true }
     ),
   ]);
-  return {
-    rebanned:
-      googleUid !== null &&
-      (await applyTombstone(db, deps, uid, googleUid, now)),
-  };
+  return recheck(db, deps, uid, googleUid, now);
 }
 
 /**
@@ -71,27 +76,23 @@ export async function checkGoogleLink(
   ) {
     return null;
   }
-  const account = await deps.account(uid);
-  const googleUid = account?.googleUid ?? null;
+  const googleUid = (await deps.account(uid))?.googleUid ?? null;
   await memberRef.set(
     googleUid === null
       ? { googleCheckedAt: Timestamp.fromMillis(now) }
       : { googleChecked: true, googleCheckedAt: FieldValue.delete() },
     { merge: true }
   );
-  return {
-    rebanned:
-      googleUid !== null &&
-      (await applyTombstone(db, deps, uid, googleUid, now)),
-  };
+  return recheck(db, deps, uid, googleUid, now);
 }
 
 /**
  * `deletePlayerBoards` (ADR 0012): a deleted account leaves the boards.
  * A banned Google account first gets its tombstone, so a new account of
  * the same identity is banned again. Then its entries, membership, runs,
- * attempts, notices and ban go, the audit entries about it keep only
- * `{ scrubbed: true }` for before and after, and `stats/accounts` drops.
+ * attempts, notices, moderation counters and ban go; the audit entries
+ * about it keep no reason and only `{ scrubbed: true }` for before and
+ * after; `stats/accounts` drops.
  */
 export async function deletePlayerBoards(
   db: Firestore,
@@ -100,48 +101,35 @@ export async function deletePlayerBoards(
   googleUid: string | null,
   now: number
 ): Promise<{ entries: number; runs: number; audit: number }> {
-  const ban = (await db.doc(`bans/${uid}`).get()).data();
-  const until =
-    ban?.['until'] instanceof Timestamp ? ban['until'].toMillis() : null;
-  if (
-    googleUid !== null &&
-    ban !== undefined &&
-    (until === null || until > now)
-  ) {
+  const [ban, member, endlessRuns, dailyRuns, audit] = await Promise.all([
+    db.doc(`bans/${uid}`).get(),
+    db.doc(`boardMembers/${uid}`).get(),
+    db.collection('endlessRuns').where('uid', '==', uid).select().get(),
+    db.collection('dailyRuns').where('uid', '==', uid).select().get(),
+    db.collection('adminAudit').where('target.uid', '==', uid).select().get(),
+  ]);
+  const until = banUntil(ban.data());
+  if (googleUid !== null && ban.exists && banHolds(until, now)) {
     await writeTombstone(
       db,
       deps,
       googleUid,
       until,
-      String(ban['reason'] ?? 'other'),
+      String(ban.get('reason') ?? 'other'),
       now
     );
   }
-  const member = (await db.doc(`boardMembers/${uid}`).get()).data() ?? {};
-  const entryIds = (member['entryIds'] ?? {}) as Partial<
-    Record<BoardKind, string>
-  >;
-  const boards = (member['boards'] as string[] | undefined) ?? [];
-  const entryRefs = boards.flatMap((boardId) => {
-    const kind = parseBoardId(boardId)?.kind;
-    const entryId = kind === undefined ? undefined : entryIds[kind];
-    return entryId === undefined
-      ? []
-      : [db.doc(`boards/${boardId}/entries/${entryId}`)];
-  });
-  const [endlessRuns, dailyRuns, audit] = await Promise.all([
-    db.collection('endlessRuns').where('uid', '==', uid).get(),
-    db.collection('dailyRuns').where('uid', '==', uid).get(),
-    db.collection('adminAudit').where('target.uid', '==', uid).get(),
-  ]);
+  const entryRefs = memberEntries(member.data() ?? {}).map(
+    ({ boardId, entryId }) => db.doc(`boards/${boardId}/entries/${entryId}`)
+  );
   const writer = db.bulkWriter();
   const writes = [
     ...[
       ...entryRefs,
       ...endlessRuns.docs.map((doc) => doc.ref),
       ...dailyRuns.docs.map((doc) => doc.ref),
-      db.doc(`boardMembers/${uid}`),
-      db.doc(`bans/${uid}`),
+      member.ref,
+      ban.ref,
       db.doc(`moderation/${uid}`),
     ].map((ref) => writer.delete(ref)),
     // The owner's reason may quote what the player wrote: it goes too.

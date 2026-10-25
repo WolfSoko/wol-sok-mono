@@ -36,27 +36,70 @@ export async function writeNotice(
   });
 }
 
-/** One audit entry (`adminAudit/{id}`) - readable by the owner only. */
-export interface AuditEntry {
+/** Who acted, on what and why - the start of an audit entry. */
+export interface AuditClaim {
+  /** The owner's uid, or `system`. */
   by: string;
   type: string;
-  target: Record<string, unknown>;
+  target: Record<string, unknown> | null;
   reason: string;
-  before: unknown;
-  after: unknown;
-  ok: boolean;
   source: 'adminCommand' | 'replayCommand' | 'system';
 }
 
-export async function writeAudit(
+/**
+ * Claims `adminAudit/{id}` before an action runs - `create()`, so a second
+ * delivery of the same command (or a second run of the same system step)
+ * finds it taken and does nothing: false then. {@link settleAudit} records
+ * how it went.
+ */
+export async function claimAudit(
   db: Firestore,
   id: string,
-  entry: AuditEntry,
+  claim: AuditClaim,
   now: number
+): Promise<boolean> {
+  try {
+    await db.doc(`adminAudit/${id}`).create({
+      ...claim,
+      ok: false,
+      before: null,
+      after: null,
+      at: FieldValue.serverTimestamp(),
+      expireAt: Timestamp.fromMillis(now + AUDIT_TTL_MS),
+    });
+    return true;
+  } catch (error) {
+    // ALREADY_EXISTS: claimed before.
+    if ((error as { code?: unknown }).code === 6) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+/** What an action changed, or why it failed - on its audit entry. */
+export async function settleAudit(
+  db: Firestore,
+  id: string,
+  outcome:
+    | { ok: true; before: unknown; after: unknown }
+    | { ok: false; error: string }
 ): Promise<void> {
-  await db.doc(`adminAudit/${id}`).set({
-    ...entry,
-    at: FieldValue.serverTimestamp(),
-    expireAt: Timestamp.fromMillis(now + AUDIT_TTL_MS),
+  await db.doc(`adminAudit/${id}`).update({
+    ...outcome,
+    ...(outcome.ok
+      ? { before: outcome.before ?? null, after: outcome.after ?? null }
+      : {}),
   });
+}
+
+/** Counts an action against a player in `moderation/{uid}`. */
+export async function bumpModeration(
+  db: Firestore,
+  uid: string,
+  counter: 'resets' | 'imageRemovals' | 'hides' | 'bans'
+): Promise<void> {
+  await db
+    .doc(`moderation/${uid}`)
+    .set({ [counter]: FieldValue.increment(1) }, { merge: true });
 }
