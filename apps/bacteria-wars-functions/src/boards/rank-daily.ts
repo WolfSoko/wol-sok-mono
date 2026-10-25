@@ -4,10 +4,10 @@ import {
   dailyLevelId,
   dailySort,
   parseAttemptId,
+  parseBoardId,
   type Replay,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
-  FieldValue,
   type Firestore,
   Timestamp,
   type Transaction,
@@ -15,7 +15,9 @@ import {
 import { DAY_MS } from './budgets';
 import {
   type ArrivalReason,
+  answerReplay,
   checkDeclaredMatch,
+  earlierAnswer,
   rankedFields,
   readDeclaredReplay,
 } from './declared-match';
@@ -29,6 +31,15 @@ import {
 
 /** How long daily boards, their entries and runs are kept. */
 export const DAILY_TTL_MS = 31 * DAY_MS;
+
+/**
+ * When a daily board's entries and its top document expire: 31 days after
+ * its day, counted from the day rather than the last write, so nothing
+ * outlives the board.
+ */
+export function dailyBoardExpiresAt(day: string): number {
+  return Date.parse(day) + DAILY_TTL_MS;
+}
 
 /** Why a ranked daily replay did (not) rank - its `rankedReason`. */
 export type DailyReason = ArrivalReason;
@@ -93,15 +104,16 @@ export function dailyEntryBase(
  * (`dailyRuns/{day}_{uid}`) and their entry on `daily-{day}`, provisional
  * until the hourly function plays it again. The first replay of an
  * attempt counts; a replay that fails the checks is stored but never
- * ranks, and says why in `rankedReason`.
+ * ranks, and says why in `rankedReason`. `replayDoc` is the stored
+ * replay, read after the event; the transaction checks again that it is
+ * still there and unanswered (`gone`, or its earlier answer).
  */
 export async function rankDaily(
   db: Firestore,
   replayId: string,
   replayDoc: Record<string, unknown>,
   now: number = Date.now()
-): Promise<DailyReason> {
-  const replayRef = db.doc(`replays/${replayId}`);
+): Promise<DailyReason | 'gone'> {
   const read = await readDeclaredReplay(db, replayId, replayDoc, 'daily', now);
   const reason =
     'reason' in read
@@ -115,8 +127,7 @@ export async function rankDaily(
           dailyLevelId(read.attempt.day)
         );
   if ('reason' in read || reason !== 'counted') {
-    await replayRef.update(rankedFields(reason));
-    return reason;
+    return answerReplay(db, replayId, reason);
   }
   const { header } = read.replay;
   const won = header.outcome?.winnerSeat === 0;
@@ -132,8 +143,13 @@ export async function rankDaily(
     atHour: atHourOf(read.arrivedAt),
   };
   return db.runTransaction(async (tx) => {
+    const replayRef = db.doc(`replays/${replayId}`);
     const runRef = db.doc(`dailyRuns/${day}_${uid}`);
-    const stored = await tx.get(runRef);
+    const [replay, stored] = await tx.getAll(replayRef, runRef);
+    const earlier = earlierAnswer(replay);
+    if (earlier !== null) {
+      return earlier;
+    }
     const attempts =
       (stored.get('attempts') as DailyAttemptRun[] | undefined) ?? [];
     if (attempts.some((a) => a.attemptId === run.attemptId)) {
@@ -141,12 +157,12 @@ export async function rankDaily(
       return 'duplicate' as const;
     }
     const next = [...attempts, run];
-    await writeDailyEntry(tx, db, day, uid, next, now);
+    await writeDailyEntry(tx, db, day, uid, next);
     tx.set(runRef, {
       // Whose day it is, for deletePlayerBoards.
       uid,
       attempts: next,
-      expireAt: Timestamp.fromMillis(now + DAILY_TTL_MS),
+      expireAt: Timestamp.fromMillis(dailyBoardExpiresAt(day)),
     });
     tx.update(replayRef, rankedFields('counted'));
     return 'counted' as const;
@@ -156,16 +172,17 @@ export async function rankDaily(
 /**
  * Writes a player's entry on `daily-{day}` from their attempts - and takes
  * it off the board when no attempt is left that has not failed a check.
- * Reads before it writes, as a transaction must: call it before the
- * caller's own writes.
+ * The player's `boardMembers.boards` drops the daily boards TTL has taken
+ * by then, so it holds the all-time boards and about 31 daily ones. Reads
+ * before it writes, as a transaction must: call it before the caller's own
+ * writes.
  */
 export async function writeDailyEntry(
   tx: Transaction,
   db: Firestore,
   day: string,
   uid: string,
-  attempts: readonly DailyAttemptRun[],
-  now: number
+  attempts: readonly DailyAttemptRun[]
 ): Promise<void> {
   const boardId = dailyBoardId(day);
   const member = await memberIn(tx, db, uid);
@@ -173,9 +190,19 @@ export async function writeDailyEntry(
   const entryRef = db.doc(`boards/${boardId}/entries/${member.entryIds.daily}`);
   const entry = await tx.get(entryRef);
   const base = dailyEntryBase(attempts);
+  const listed = member.data['boards'];
+  const boards = (Array.isArray(listed) ? listed : []).filter((id) => {
+    const board = typeof id === 'string' ? parseBoardId(id) : null;
+    return (
+      board !== null &&
+      id !== boardId &&
+      (board.kind !== 'daily' ||
+        dailyBoardExpiresAt(board.day) > Date.parse(day))
+    );
+  });
   tx.set(
     db.doc(`boardMembers/${uid}`),
-    { entryIds: member.entryIds, boards: FieldValue.arrayUnion(boardId) },
+    { entryIds: member.entryIds, boards: [...boards, boardId] },
     { merge: true }
   );
   if (base === null) {
@@ -189,6 +216,6 @@ export async function writeDailyEntry(
       profile,
       hiddenFor(member, 'daily', entry.get('hiddenBy'))
     ),
-    expireAt: Timestamp.fromMillis(now + DAILY_TTL_MS),
+    expireAt: Timestamp.fromMillis(dailyBoardExpiresAt(day)),
   });
 }

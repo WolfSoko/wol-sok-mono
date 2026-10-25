@@ -9,8 +9,10 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { clearBanCache } from '../limits';
-import { acceptSubmission } from './accept';
+import { closeNotReported } from '../boards/hourly';
+import { clearBanCache, dayOf, takeSubmissionSlot } from '../limits';
+import { dailyReplay } from '../testing/daily-replay';
+import { acceptSubmission, giveUpSubmission } from './accept';
 import { deleteReplayChildren } from './cleanup';
 import { runReplayCommand } from './command';
 import { deletePlayerReplays } from './delete-player';
@@ -154,6 +156,95 @@ describe('acceptReplay', () => {
     expect((await db.doc('limits/ada').get()).get('submissions')).toBe(1);
   });
 
+  describe('a ranked submission', () => {
+    const attempt = `d_${dayOf(NOW)}_1`;
+    /** When Ada declared it: before she sent anything. */
+    const DECLARED_AT = NOW - 10 * 60_000;
+    /** A submission of it, as `acceptReplay` reads it. */
+    const data = { uid: 'ada', attempt, hint: 40 };
+    const attemptRef = () => db.doc(`players/ada/attempts/${attempt}`);
+    beforeEach(() =>
+      attemptRef().set({ at: Timestamp.fromMillis(DECLARED_AT) })
+    );
+
+    it("has an hour of its own, which unranked ones can't use up", async () => {
+      const hour = Math.floor(NOW / HOUR);
+      await db.doc('limits/ada').set({ hour, submissions: 60 });
+      // Past the limits, on to the checks against its replay.
+      expect(await submit('s1', 'ada', await bytesOf(), { attempt })).toBe(
+        'attempt-mismatch'
+      );
+      expect((await db.doc('limits/ada').get()).data()).toMatchObject({
+        submissions: 60,
+        rankedSubmissions: 1,
+      });
+      await db.doc('limits/ada').set({ hour, rankedSubmissions: 60 });
+      expect(await submit('s2', 'ada', await bytesOf(), { attempt })).toBe(
+        'limit'
+      );
+      // A player's own limit: the attempt is spent.
+      expect((await attemptRef().get()).get('void')).toBeUndefined();
+    });
+
+    it("voids its attempt when the day's cap for everyone drops it", async () => {
+      await db.doc(`counters/${dayOf(NOW)}`).set({ rankedSubmissions: 20_000 });
+      expect(await submit('s1', 'ada', await bytesOf(), { attempt })).toBe(
+        'cap'
+      );
+      expect((await attemptRef().get()).data()).toMatchObject({
+        void: true,
+        voidReason: 'cap',
+      });
+      expect((await db.doc('replaySubmissions/s1').get()).exists).toBe(false);
+    });
+
+    it('voids its attempt when acceptReplay gives up on it', async () => {
+      await db.doc('replaySubmissions/s1').set(data);
+      await giveUpSubmission(db, 's1', data, NOW);
+      expect((await attemptRef().get()).get('voidReason')).toBe('error');
+      expect((await db.doc('replaySubmissions/s1').get()).exists).toBe(false);
+    });
+
+    it('is used up by its first stored replay, which no later drop voids', async () => {
+      const replay = dailyReplay({}, 'ada', attempt, DECLARED_AT);
+      expect(
+        await submit('s1', 'ada', Buffer.from(await replayToBytes(replay)), {
+          attempt,
+        })
+      ).toBe('stored');
+      expect((await attemptRef().get()).get('replayId')).toBe('l_s1');
+      // Junk naming the same attempt, on a day the cap is reached.
+      await db.doc(`counters/${dayOf(NOW)}`).set({ rankedSubmissions: 20_000 });
+      expect(await submit('s2', 'ada', await bytesOf(), { attempt })).toBe(
+        'cap'
+      );
+      await giveUpSubmission(db, 's3', data, NOW);
+      expect((await attemptRef().get()).get('void')).toBeUndefined();
+    });
+
+    it('leaves the attempt declared again after it was sent', async () => {
+      // A void attempt Ada declared again once this submission was out.
+      await attemptRef().set({ at: Timestamp.fromMillis(NOW + 60_000) });
+      await giveUpSubmission(
+        db,
+        's1',
+        { ...data, createdAt: Timestamp.fromMillis(NOW) },
+        NOW
+      );
+      expect((await attemptRef().get()).get('void')).toBeUndefined();
+    });
+
+    it('takes one slot however often acceptReplay tries it', async () => {
+      await db.doc('replaySubmissions/s1').set({ uid: 'ada', attempt });
+      for (let i = 0; i < 3; i++) {
+        expect(await takeSubmissionSlot(db, 'ada', true, 's1', NOW)).toBeNull();
+      }
+      expect((await db.doc('limits/ada').get()).get('rankedSubmissions')).toBe(
+        1
+      );
+    });
+  });
+
   it('drops bytes that are no replay', async () => {
     expect(await submit('s1', 'ada', Buffer.from([1, 2, 3]))).toBe(
       'unparsable'
@@ -189,11 +280,18 @@ describe('acceptReplay', () => {
       expect(
         (await db.doc(`replays/${id}`).get()).get('stubCreatedAt').toMillis()
       ).toBe(NOW - HOUR);
+      // When the hourly sweep closes it without a second report.
+      expect(
+        (await db.doc(`replays/${id}`).get()).get('closeAt').toMillis()
+      ).toBe(NOW + 2 * HOUR);
       expect(await submit('s2', 'bob', bytes)).toBe('reported');
       expect((await db.doc(`replays/${id}`).get()).data()).toMatchObject({
         players: ['ada', 'bob'],
         state: 'agreed',
       });
+      expect(
+        (await db.doc(`replays/${id}`).get()).get('closeAt')
+      ).toBeUndefined();
       expect(
         (await db.collection(`replays/${id}/reports`).listDocuments())
           .map((ref) => ref.id)
@@ -230,6 +328,23 @@ describe('acceptReplay', () => {
       expect(await submit('s3', 'ada', bytes)).toBe('duplicate');
     });
 
+    it('drops a second report that comes after the hourly close', async () => {
+      const bytes = await bytesOf(online());
+      await submit('s1', 'ada', bytes);
+      // Two hours on, the match closes with Ada's report alone.
+      expect(await closeNotReported(db, NOW + 3 * HOUR)).toBe(1);
+      expect(await submit('s2', 'bob', bytes)).toBe('closed');
+      const [ref] = await db.collection('replays').listDocuments();
+      expect((await ref.get()).data()).toMatchObject({
+        players: ['ada'],
+        state: 'waiting',
+        rankedReason: 'not-reported',
+      });
+      expect(
+        (await ref.collection('reports').listDocuments()).map((r) => r.id)
+      ).toEqual(['ada']);
+    });
+
     it('marks a match reported after its stub expired', async () => {
       await db
         .doc('rooms/ABC234')
@@ -261,7 +376,10 @@ describe('replayCommand', () => {
       'ada'
     );
     expect(result).toEqual({ ok: true });
-    expect((await db.doc('replays/r1').get()).get('optOut')).toEqual(['ada']);
+    expect((await db.doc('replays/r1').get()).data()).toMatchObject({
+      optOut: ['ada'],
+      galleryOut: true,
+    });
     expect(
       (await db.doc('publicReplays/p1').get()).get('removedAt')
     ).not.toBeNull();
@@ -306,9 +424,12 @@ describe('deletePlayerReplays', () => {
   it('deletes what only the player played, and leaves the rest to the others', async () => {
     await db.doc('replays/mine').set({ players: ['ada'] });
     await db.doc('replays/mine/blob/data').set({ size: 1 });
-    await db
-      .doc('replays/ours')
-      .set({ players: ['ada', 'bob'], optOut: ['ada'] });
+    await db.doc('replays/ours').set({
+      players: ['ada', 'bob'],
+      optOut: ['ada'],
+      galleryOut: true,
+      seats: ['ada', 'bob'],
+    });
     await db.doc('replays/ours/reports/ada').set({ checksum: 1 });
     expect(await deletePlayerReplays(db, 'ada')).toEqual({
       deleted: 1,
@@ -316,10 +437,43 @@ describe('deletePlayerReplays', () => {
     });
     expect((await db.doc('replays/mine').get()).exists).toBe(false);
     expect((await db.doc('replays/mine/blob/data').get()).exists).toBe(false);
+    // Bob still reads it: the room's seat forgets Ada too. Ada took it out
+    // of the gallery, and it stays out without her uid.
     expect((await db.doc('replays/ours').get()).data()).toEqual({
       players: ['bob'],
       optOut: [],
+      galleryOut: true,
+      seats: [null, 'bob'],
     });
     expect((await db.doc('replays/ours/reports/ada').get()).exists).toBe(false);
+  });
+
+  it('forgets both players when both accounts go at the same time', async () => {
+    await db.doc('replays/ours').set({
+      players: ['ada', 'bob'],
+      optOut: [],
+      seats: ['ada', 'bob'],
+    });
+    await Promise.all([
+      deletePlayerReplays(db, 'ada'),
+      deletePlayerReplays(db, 'bob'),
+    ]);
+    // The second one to run found itself the only player left.
+    expect((await db.doc('replays/ours').get()).exists).toBe(false);
+  });
+
+  it('forgets the player in the seat of a match only the other one reported', async () => {
+    await db
+      .doc('replays/theirs')
+      .set({ players: ['bob'], optOut: [], seats: ['bob', 'ada'] });
+    expect(await deletePlayerReplays(db, 'ada')).toEqual({
+      deleted: 0,
+      left: 1,
+    });
+    expect((await db.doc('replays/theirs').get()).data()).toEqual({
+      players: ['bob'],
+      optOut: [],
+      seats: ['bob', null],
+    });
   });
 });

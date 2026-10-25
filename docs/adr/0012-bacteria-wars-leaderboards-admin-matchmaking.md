@@ -231,8 +231,11 @@ firstAt, risenToday, todayDay }`.
 - **Idempotent**: a marker `rankedReplays/{replayId}` is written with
   `create()`, so a second event for the same replay changes nothing.
 - **"Not reported"**: the hourly function closes online replays still
-  `waiting` 2 hours after their creation (index `state` + `createdAt`,
-  ADR 0011). If the existing report has a regular ending (win, timeout or
+  `waiting` 2 hours after their creation. `acceptReplay` gives a waiting
+  replay `closeAt` (its first report + 2 h), and the second report or the
+  close removes it. The sweep asks for `closeAt` up to now, 500 at a time,
+  so a closed replay that stays `waiting` leaves its query, and a missed
+  run is caught up by the next. If the existing report has a regular ending (win, timeout or
   forfeit after 30 s), the stub's other uid gets `notReported + 1`. A
   network loss usually leaves both devices reporting, or the reports
   disagree (`disputed`), which counts for nobody. So the figure mostly
@@ -262,7 +265,10 @@ without limit. Three things make an attempt count:
    persistent cache:
    `players/{uid}/attempts/{attemptId}` = `{ at: request.time, expireAt }`,
    create only, no update or delete, `keys().hasOnly(['at', 'expireAt'])`,
-   `at == request.time`, and `expireAt` within 32 days of `request.time`.
+   `at == request.time`, and `expireAt` within 32 days of `request.time`
+   but at least 28 days ahead (a shorter one would let TTL delete the
+   attempt while its id could be declared again; 28 lets the device clock
+   the client takes the 31 days from run 3 days slow).
    - The rules check the id:
      - `d_YYYY-MM-DD_n`: `n` from 1 to 3, the day equals the UTC date of
        `request.time` (`timestamp.date()` against the parts of
@@ -322,12 +328,41 @@ attempt do not count against ADR 0011's global daily cap, which unranked
 replays could otherwise use up. They have a global daily cap of their own
 instead, 20,000 ranked submissions a day in `counters/{day}`, since the
 attempt rules bound them per account only (three a day, one per endless
-match, five runs a day) and guest accounts are free; the per-uid hourly
-limit still applies. A ranked submission over that cap is dropped and its
-attempt marked `void`. Closing attempts skips any attempt
-with a submission still pending, and an attempt whose submission the
-server dropped (functions down, parse failure on our side) is marked
-`void`, not lost.
+match, five runs a day) and guest accounts are free. The per-uid hourly
+limit still applies, counted apart for ranked and unranked submissions
+(60 each in `limits/{uid}`), so a player cannot push their own ranked
+replay out with unranked uploads and have it voided. A ranked submission
+over the day's cap is dropped and its attempt marked `void` (it still
+counts against the player's hour, which bounds what such drops cost); one
+over the player's own hourly limit is not voided, as the player chose to
+send that many.
+`acceptReplay` retries a submission it fails on for an hour, then gives
+up: it deletes the submission and marks the attempt `void`. Nothing a
+client sends makes acceptance throw (the parser answers null), so only a
+failure of ours voids. Taking a submission's slot deletes the
+submission, so a retry, working from its event's copy, finds none and
+counts it no second time. The first stored replay of an attempt uses it
+up: `acceptReplay` writes its id into the attempt (`replayId`) with the
+replay, and an attempt that has one is never voided, whatever a later
+submission naming it brings. Both marks go only on the declaration a
+submission can be of: one declared again after the submission was sent
+is left alone.
+
+A `void` attempt (`void`, `voidReason`, `voidedAt`, written by the
+functions only) never ranks: a replay of it gets `rankedReason: 'void'`.
+It costs nothing:
+
+- A void daily attempt may be declared again in its place, on its day:
+  the rules let its player replace the document with a new declaration,
+  `at` and `expireAt` only, so the attempt gets a new seed.
+- A void endless match counts as not played, neither a win nor a lost
+  life, and the run goes on with the next match. The run's `declared`
+  leaves it out; match 0 still gives the run its seed. A match after it is
+  checked against the level the run is at without it, so a player who won
+  the void match and played on at the next level loses a life to the level
+  check. On a give-up an hour after the match the player has usually
+  played on, so in that case the drop still costs a life, unless the void
+  match was lost. This rule is open for the owner to change.
 
 **Without a declaration a match is simply unranked**: offline, or ranked
 play switched off.
@@ -447,7 +482,15 @@ Together about 245,000 vCPU-s and 280,000 GiB-s a month, against Cloud
 Run's free 180,000 vCPU-s and 360,000 GiB-s: about $1-4 a month above the
 free tier, bounded by the hard cap. Unused daily budget passes to endless.
 An exhausted budget never shows a claim as verified: rows wait in "Being
-checked".
+checked". A slice starts a re-run only when its expected cost fits in
+what the slice has left (`expectedRerunMs` in `budgets.ts`: 10 ms a tick
+for `gpu-int` on the base arena, which every ranked level has, from the
+closed #2618's benchmark on a development machine until the Cloud Run one
+replaces it), so it never starts a 10-minute match at minute 24. It
+charges its time to the day in steps of at least a minute as re-runs end,
+and the rest at the end, so a slice cut short by the function's timeout
+has paid for all but its last minute or re-run, and `counters/{day}`,
+which every upload's slot reads, takes a write a minute at most.
 
 **Flooding** with fake top claims from many fresh guest accounts no longer
 starves honest entries: trust ordering puts fresh accounts last, each
@@ -503,12 +546,16 @@ All of it is written by functions only, except `attempts`,
     document one at a time, so ranking functions never contend for it. It
     returns at once unless the entry was in the top document or now beats
     its last row (`Row.sort`). Rebuilding queries the top 50 visible
-    entries and the top `cut` verified ones.
+    entries and the top `cut` verified ones. A daily board's entries and
+    its top document expire 31 days after its day, counted from the day
+    rather than the write (`dailyBoardExpiresAt`), and the deletion of an
+    entry already past its `expireAt` (TTL draining a board) rebuilds
+    nothing.
   - A screen therefore costs one read for the top 50, and at most one top
     document rewrite per relevant change.
 - **TTL** on `expireAt`:
   - 31 days: `attempts`, `notices`, the daily boards' entries and top
-    documents (`daily-{day}`), `dailyRuns`, `rankedReplays`, `endlessRuns`
+    documents (`daily-{day}`, counted from their day), `dailyRuns`, `rankedReplays`, `endlessRuns`
     that are not a best run. The all-time boards (`xp`, `online`,
     `endless`) set no `expireAt` on their top documents or entries, which
     stay until removed or the account is deleted;
@@ -898,7 +945,18 @@ chose not to share their status, and the privacy page says so.
 
 All run in ADR 0011's codebase and region, with retries off, and are
 idempotent: a transaction checks the state first, and markers are created
-with `create()`. There is one new Cloud Scheduler job, so the project has
+with `create()`. `rankReplay` and `acceptReplay` are the exceptions: they
+retry, and drop an event older than an hour, since a stored replay
+`rankReplay` fails to rank would never count, and a submission
+`acceptReplay` fails on would be lost with its attempt (it voids the
+attempt when it gives up, see above). Each delivery reads the replay afresh and leaves one that
+is gone or already answered (`rankedReason`); the steps check that again
+in their transactions (the `rankedReplays` marker, the `rankedReason` a
+daily replay keeps once answered), read the match's seats there instead
+of trusting the event's snapshot, and decide at the event's time: caps,
+the room's clock, a declaration's deadline and when a ban ends. The ban
+document itself is read at the delivery, so a ban placed after the event
+still applies. There is one new Cloud Scheduler job, so the project has
 two with `featureBest`. The three free jobs are counted per billing
 account, not per project, so other projects on the same billing account
 may already use them (a job costs $0.10 a month).
@@ -1074,14 +1132,26 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      the endless candidates: their wins in order, a failed one cutting the
      run to its verified prefix (`partial`). The endless budget is
      `ENDLESS_VERIFY_MS` plus what the daily boards leave of theirs.
+   - `deletePlayerBoards` deletes a deleted account's entries on every
+     board in `boardMembers.boards` (`rebuildTop` takes them off the
+     tops), its `dailyRuns` and `endlessRuns`, `boardMembers`, `limits`,
+     `moderation`, its attempts and notices. `boardMembers.boards` drops
+     the daily boards TTL took whenever a daily entry is written, so it
+     holds about 31 daily ones, and `dailyRuns` expire from their day like
+     the board. A replay taken out of the gallery carries `galleryOut`,
+     which keeps it out once its player's uid has left `optOut`. The
+     tombstone, the ban, the audit scrub and `stats/accounts` follow with
+     the bans.
+   - The admin commands and `countAccount` come next.
    - Then the owner's side, server only: `adminCommand` (checked again in
      Auth, run, audited in `adminAudit/{commandId}`, its result written
      back) for `profile.reset`, `profile.removeImage`, `board.hideEntry`,
      `board.hidePlayer`, `board.restore`, `player.ban`, `player.unban`,
      `stats.refresh` and `stats.recount`; bans with the RTDB mirror, the
      RTDB rule on `status`, the side effects and tombstones (keyed by
-     HMAC with `BAN_TOMBSTONE_KEY`); `countAccount`, `deletePlayerBoards`
-     and the tombstone check after a guest links Google (in
+     HMAC with `BAN_TOMBSTONE_KEY`); `countAccount`; `deletePlayerBoards`
+     also writes the tombstone of a banned Google account, deletes the ban,
+     scrubs the audit and lowers `stats/accounts`; the tombstone check after a guest links Google (in
      `rankProgress`, at most once an hour per guest); `hourly` lifts ended
      bans and writes the statistics snapshot. The rules for
      `adminCommands`, `adminAudit`, `adminStats`, `moderation`, notices and

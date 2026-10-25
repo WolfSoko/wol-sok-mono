@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.87.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.3...v74.87.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** a deleted account leaves the boards ([#2643](https://github.com/WolfSoko/wol-sok-mono/issues/2643)) ([ec106b6](https://github.com/WolfSoko/wol-sok-mono/commit/ec106b6d54f86c90d923b7524aeb3f5dd3b5b2f4))
+
+## [74.86.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.2...v74.86.3) (2026-10-25)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** hourly hygiene - "Not reported" by closeAt, re-runs that fit, daily boards that expire from their day ([#2640](https://github.com/WolfSoko/wol-sok-mono/issues/2640)) ([e070acd](https://github.com/WolfSoko/wol-sok-mono/commit/e070acd3ea5c50e8641b9651497ca42073339cc1))
+
+## [74.86.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.1...v74.86.2) (2026-10-25)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** a ranked submission dropped on our side voids its attempt ([#2638](https://github.com/WolfSoko/wol-sok-mono/issues/2638)) ([c7b50ef](https://github.com/WolfSoko/wol-sok-mono/commit/c7b50ef1f9de050540c24b7e385f40fdea970db6))
+
+## [74.86.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.0...v74.86.1) (2026-10-25)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** six defects from the parallel backend's review, on main's functions ([#2635](https://github.com/WolfSoko/wol-sok-mono/issues/2635)) ([39cde17](https://github.com/WolfSoko/wol-sok-mono/commit/39cde17349d482c6c5600bec71c8b9e05e157662))
+
+## [74.86.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.85.0...v74.86.0) (2026-10-25)
+
+### Features
+
+* **angular-examples:** ✨ thanos snap playground page ([#2633](https://github.com/WolfSoko/wol-sok-mono/issues/2633)) ([e0b6633](https://github.com/WolfSoko/wol-sok-mono/commit/e0b66339f76d9e636b869d0abb0e9c7417d18c06))
+
+### Chore
+
+* **release:** publish ([11be59b](https://github.com/WolfSoko/wol-sok-mono/commit/11be59b6587b6173e9fc8caa8018591c965864e5))
+
+## [74.85.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.84.0...v74.85.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** the endless board with declared runs ([#2630](https://github.com/WolfSoko/wol-sok-mono/issues/2630)) ([e31ccf8](https://github.com/WolfSoko/wol-sok-mono/commit/e31ccf8fbce65a34bf39e5e59c2bae69e3c734f0))
+
 ## [74.84.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.83.0...v74.84.0) (2026-10-25)
 
 ### Features

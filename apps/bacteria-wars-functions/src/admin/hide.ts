@@ -67,7 +67,7 @@ export async function setHidden(
         after,
       });
     });
-    const kinds = [...new Set(targets.map((target) => target.kind))];
+    const kinds = [...new Set(targets.map((target) => target.board.kind))];
     // A bar is the owner's: a ban's restore leaves it alone.
     if (kinds.length > 0 && reason === 'admin' && (bar || !hide)) {
       tx.set(

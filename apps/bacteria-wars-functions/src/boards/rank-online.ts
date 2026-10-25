@@ -48,43 +48,58 @@ interface Record4 {
  * its room's clock allows, with nobody banned, and within the caps:
  * 3 results per pair a day, 30 counted wins a day, 5 of them against
  * accounts younger than 3 days. Losses count whenever the pair cap allows.
- * A marker per replay keeps a second event from counting it twice.
+ * A marker per replay keeps a second event from counting it twice. The
+ * match is read in the transaction, never taken from an event: a match
+ * without a uid in both seats - its shape is off, or a player deleted
+ * their account since (their seat nulled) - counts nothing, as
+ * `stub-expired`.
  */
 export async function rankOnline(
   db: Firestore,
   replayId: string,
-  replay: Record<string, unknown>,
   accountCreatedAt: AccountCreatedAt,
   now: number = Date.now()
 ): Promise<OnlineReason | 'done'> {
-  const seats = replay['seats'];
-  if (
-    !Array.isArray(seats) ||
-    seats.length !== 2 ||
-    !seats.every((uid) => typeof uid === 'string')
-  ) {
-    return 'stub-expired';
-  }
-  const [host, guest] = seats as [string, string];
-  const ticks = Number(replay['ticks']);
-  const winnerSeat = replay['winnerSeat'];
-  const reason = await precheck(db, replay, host, guest, ticks, now);
-  const [hostAge, guestAge] = await Promise.all([
-    accountCreatedAt(host),
-    accountCreatedAt(guest),
-  ]);
   const day = dayOf(now);
-  const pair = [host, guest].sort().join('_');
-  const outcome = await db.runTransaction(async (tx) => {
-    const marker = db.doc(`rankedReplays/${replayId}`);
-    if ((await tx.get(marker)).exists) {
+  const marker = db.doc(`rankedReplays/${replayId}`);
+  const replayRef = db.doc(`replays/${replayId}`);
+  return db.runTransaction(async (tx) => {
+    const [ranked, stored] = await tx.getAll(marker, replayRef);
+    if (ranked.exists || !stored.exists) {
       return 'done' as const;
     }
-    let decided: OnlineReason = reason;
+    /** Marks the match answered - after the transaction's last read. */
+    const answer = <R extends OnlineReason>(decided: R): R => {
+      tx.create(marker, {
+        at: FieldValue.serverTimestamp(),
+        expireAt: Timestamp.fromMillis(now + 31 * DAY_MS),
+      });
+      tx.update(replayRef, {
+        rankedReason: decided,
+        rankedAt: FieldValue.serverTimestamp(),
+      });
+      return decided;
+    };
+    const replay = stored.data() ?? {};
+    const seats = replay['seats'];
+    if (
+      !Array.isArray(seats) ||
+      seats.length !== 2 ||
+      !seats.every((uid) => typeof uid === 'string')
+    ) {
+      return answer('stub-expired');
+    }
+    const uids = seats as [string, string];
+    const [host, guest] = uids;
+    const ticks = Number(replay['ticks']);
+    const winnerSeat = replay['winnerSeat'];
+    const reason = await precheck(db, replay, host, guest, ticks, now);
+    if (reason !== 'counted') {
+      return answer(reason);
+    }
     const roomRef = db.doc(`rankedRooms/${String(replay['room'])}`);
-    const pairRef = db.doc(`pairs/${day}_${pair}`);
-    const room = await tx.get(roomRef);
-    const pairDoc = await tx.get(pairRef);
+    const pairRef = db.doc(`pairs/${day}_${[host, guest].sort().join('_')}`);
+    const [room, pairDoc] = await tx.getAll(roomRef, pairRef);
     const members = [
       await memberIn(tx, db, host),
       await memberIn(tx, db, guest),
@@ -106,39 +121,29 @@ export async function rankOnline(
     const sameRoom = room.exists && room.get('stubCreatedAt') === stubCreatedAt;
     const roomTicks = (sameRoom ? Number(room.get('ticks') ?? 0) : 0) + ticks;
     if (
-      decided === 'counted' &&
-      (stubCreatedAt === null ||
-        now < stubCreatedAt + (roomTicks / 60) * 1000 - ROOM_SLACK_MS)
+      stubCreatedAt === null ||
+      now < stubCreatedAt + (roomTicks / 60) * 1000 - ROOM_SLACK_MS
     ) {
-      decided = 'too-fast';
+      return answer('too-fast');
     }
-    if (
-      decided === 'counted' &&
-      Number(pairDoc.get('count') ?? 0) >= PAIR_RESULTS_PER_DAY
-    ) {
-      decided = 'pair-cap';
+    if (Number(pairDoc.get('count') ?? 0) >= PAIR_RESULTS_PER_DAY) {
+      return answer('pair-cap');
     }
-    tx.create(marker, {
-      at: FieldValue.serverTimestamp(),
-      expireAt: Timestamp.fromMillis(now + 31 * DAY_MS),
-    });
-    tx.update(db.doc(`replays/${replayId}`), {
-      rankedReason: decided,
-      rankedAt: FieldValue.serverTimestamp(),
-    });
-    if (decided !== 'counted') {
-      return decided;
-    }
+    // Only the winner's count asks how old the other account is.
+    const loserAge =
+      winnerSeat === 0 || winnerSeat === 1
+        ? await accountCreatedAt(uids[1 - winnerSeat])
+        : null;
+    answer('counted');
     tx.set(roomRef, {
       stubCreatedAt,
       ticks: roomTicks,
-      expireAt: Timestamp.fromMillis((stubCreatedAt ?? now) + 12 * 3_600_000),
+      expireAt: Timestamp.fromMillis(stubCreatedAt + 12 * 3_600_000),
     });
     tx.set(pairRef, {
       count: Number(pairDoc.get('count') ?? 0) + 1,
       expireAt: Timestamp.fromMillis(now + 2 * DAY_MS),
     });
-    const ages = [hostAge, guestAge];
     [0, 1].forEach((seat) => {
       const member = members[seat];
       const other = 1 - seat;
@@ -147,7 +152,7 @@ export async function rankOnline(
       let counts = daily;
       if (winnerSeat === seat) {
         const newOpponent =
-          ages[other] !== null && now - (ages[other] ?? 0) < NEW_ACCOUNT_MS;
+          loserAge !== null && now - loserAge < NEW_ACCOUNT_MS;
         if (
           daily.wins < WINS_PER_DAY &&
           (!newOpponent || daily.newOpponentWins < NEW_OPPONENT_WINS_PER_DAY)
@@ -165,7 +170,7 @@ export async function rankOnline(
         record.d++;
       }
       tx.set(
-        db.doc(`boardMembers/${seat === 0 ? host : guest}`),
+        db.doc(`boardMembers/${uids[seat]}`),
         {
           entryIds: member.entryIds,
           boards: FieldValue.arrayUnion('online'),
@@ -190,7 +195,6 @@ export async function rankOnline(
     });
     return 'counted' as const;
   });
-  return outcome;
 }
 
 /** What rules a match out before any count: its end, its length, a ban. */

@@ -9,23 +9,19 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { entryData, hiddenFor, memberIn, profileIn } from './entries';
-import { MIN_COUNTED_TICKS } from './rank-online';
+import { logger } from 'firebase-functions/logger';
 import { expireBans } from '../admin/bans';
 import type { AdminDeps } from '../admin/deps';
 import { refreshStats } from '../admin/stats';
-import { SLICE_MS } from './budgets';
+import { entryData, hiddenFor, memberIn, profileIn } from './entries';
+import { MIN_COUNTED_TICKS } from './rank-online';
+import { DAY_MS, SLICE_MS } from './budgets';
 import { closeStaleMatches } from './rank-endless';
 import { verifyEndlessSlice } from './verify-endless';
 import { type AccountInfo, verifyDailySlice } from './verify-slice';
 
 const HOUR_MS = 3_600_000;
-const DAY_MS = 24 * HOUR_MS;
-/** An online replay still `waiting` this long after it came is closed. */
-export const NOT_REPORTED_AFTER_MS = 2 * HOUR_MS;
-/** How far back the sweep looks: one missed run is caught up, no more. */
-const SWEEP_WINDOW_MS = 26 * HOUR_MS;
-/** The replays one sweep closes at most. */
+/** The replays one sweep closes at most; the next one takes the rest. */
 const SWEEP_LIMIT = 500;
 /** Endings a device reports only after a real match. */
 const REGULAR_ENDINGS = ['annihilation', 'time', 'forfeit'];
@@ -35,7 +31,11 @@ const REGULAR_ENDINGS = ['annihilation', 'time', 'forfeit'];
  * "Not reported"): with only one report, the match never counts. When that
  * report has a regular ending after at least 30 s, the stub's other player
  * gets `nr + 1` on their online entry - shown, never part of `sort`. The
- * `rankedReplays` marker keeps a late second report from counting it.
+ * replay's `rankedReason` makes `acceptReplay` drop a late second report
+ * (`closed`), and the `rankedReplays` marker keeps it from counting.
+ * `acceptReplay` gives a waiting replay its `closeAt`, which the second
+ * report or the close removes: a closed replay leaves the sweep's query,
+ * however many there are, and a missed run is caught up by the next.
  */
 export async function closeNotReported(
   db: Firestore,
@@ -43,16 +43,23 @@ export async function closeNotReported(
 ): Promise<number> {
   const waiting = await db
     .collection('replays')
-    .where('state', '==', 'waiting')
-    .where('createdAt', '>=', Timestamp.fromMillis(now - SWEEP_WINDOW_MS))
-    .where('createdAt', '<=', Timestamp.fromMillis(now - NOT_REPORTED_AFTER_MS))
-    .orderBy('createdAt', 'asc')
+    .where('closeAt', '<=', Timestamp.fromMillis(now))
+    .orderBy('closeAt', 'asc')
     .limit(SWEEP_LIMIT)
     .get();
   let closed = 0;
   for (const doc of waiting.docs) {
-    if (doc.get('kind') === 'online' && (await closeOne(db, doc.id, now))) {
-      closed++;
+    try {
+      if (await closeOne(db, doc.id, now)) {
+        closed++;
+      }
+    } catch (error) {
+      // Tried again in an hour, rather than first in every run's query:
+      // one replay must not stop the sweep or the hour's verification.
+      logger.error('Could not close a replay', { id: doc.id, error });
+      await doc.ref
+        .update({ closeAt: Timestamp.fromMillis(now + HOUR_MS) })
+        .catch(() => undefined);
     }
   }
   return closed;
@@ -95,6 +102,7 @@ async function closeOne(
     tx.update(replayRef, {
       rankedReason: 'not-reported',
       rankedAt: FieldValue.serverTimestamp(),
+      closeAt: FieldValue.delete(),
     });
     if (
       member === null ||

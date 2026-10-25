@@ -1,5 +1,6 @@
 import {
   type BoardKind,
+  type BoardRef,
   type EntryShow,
   type EntryStatus,
   parseBoardId,
@@ -88,33 +89,33 @@ export function hiddenFor(
 /** One of a player's entries, as `boardMembers/{uid}` points to it. */
 export interface MemberEntry {
   boardId: string;
-  kind: BoardKind;
+  board: BoardRef;
   entryId: string;
 }
 
 /**
  * The entries `boardMembers/{uid}` points to: on `boardIds`, or on every
  * board in its `boards` - each board id with the entry id of its kind.
+ * What relabelling, hiding and account deletion go through.
  */
 export function memberEntries(
-  member: Record<string, unknown>,
+  member: Record<string, unknown> | undefined,
   boardIds?: readonly string[]
 ): MemberEntry[] {
-  const entryIds = (member['entryIds'] ?? {}) as Partial<
+  const entryIds = (member?.['entryIds'] ?? {}) as Partial<
     Record<BoardKind, unknown>
   >;
-  const boards = boardIds ?? member['boards'];
+  const boards = boardIds ?? member?.['boards'];
   if (!Array.isArray(boards)) {
     return [];
   }
   return boards.flatMap((boardId: unknown) => {
-    const kind =
-      typeof boardId === 'string' ? parseBoardId(boardId)?.kind : undefined;
-    const entryId = kind === undefined ? undefined : entryIds[kind];
+    const board = typeof boardId === 'string' ? parseBoardId(boardId) : null;
+    const entryId = board === null ? undefined : entryIds[board.kind];
     return typeof boardId === 'string' &&
-      kind !== undefined &&
+      board !== null &&
       typeof entryId === 'string'
-      ? [{ boardId, kind, entryId }]
+      ? [{ boardId, board, entryId }]
       : [];
   });
 }

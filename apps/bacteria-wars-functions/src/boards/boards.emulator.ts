@@ -6,8 +6,10 @@ import {
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
+import { deletePlayerReplays } from '../replays/delete-player';
+import { deletePlayerBoards } from './delete-player';
 import { boardProfileChanged } from './profile-changed';
-import { rankOnline } from './rank-online';
+import { type AccountCreatedAt, rankOnline } from './rank-online';
 import { rankProgress } from './rank-progress';
 import { rebuildTop } from './rebuild-top';
 
@@ -119,9 +121,9 @@ describe('rankOnline', () => {
     winnerSeat: 0,
     ...extra,
   });
-  async function rank(id: string, data: object, ages = OLD) {
+  async function rank(id: string, data: object, ages: AccountCreatedAt = OLD) {
     await db.doc(`replays/${id}`).set(data);
-    return rankOnline(db, id, data as Record<string, unknown>, ages, NOW);
+    return rankOnline(db, id, ages, NOW);
   }
 
   it('adds the win and the loss, once', async () => {
@@ -139,7 +141,7 @@ describe('rankOnline', () => {
     expect((await db.doc('replays/r1').get()).get('rankedReason')).toBe(
       'counted'
     );
-    expect(await rankOnline(db, 'r1', replay(), OLD, NOW)).toBe('done');
+    expect(await rankOnline(db, 'r1', OLD, NOW)).toBe('done');
     expect((await entryOf('ada', 'online')).get('show')).toMatchObject({
       w: 1,
     });
@@ -163,6 +165,21 @@ describe('rankOnline', () => {
     );
     await db.doc('bans/bob').set({ until: null });
     expect(await rank('r4', replay())).toBe('banned');
+    expect((await db.doc('boardMembers/ada').get()).exists).toBe(false);
+  });
+
+  it('counts nothing without a uid in both seats, as after a deleted account', async () => {
+    const data = replay({ players: ['ada', 'bob'] });
+    await db.doc('replays/r1').set(data);
+    // A retry an hour on: Bob deleted his account meanwhile.
+    await deletePlayerReplays(db, 'bob');
+    expect(await rankOnline(db, 'r1', OLD, NOW)).toBe('stub-expired');
+    expect((await db.doc('boardMembers/bob').get()).exists).toBe(false);
+    expect((await db.doc('replays/r1').get()).get('rankedReason')).toBe(
+      'stub-expired'
+    );
+    // The same rule for a match stored without both seats.
+    expect(await rank('r2', replay({ seats: ['ada'] }))).toBe('stub-expired');
     expect((await db.doc('boardMembers/ada').get()).exists).toBe(false);
   });
 
@@ -229,6 +246,31 @@ describe('rebuildTop', () => {
     expect(await rebuildTop(db, 'xp', 'z', entry(5))).toBe('skipped');
     expect(await rebuildTop(db, 'bogus', 'z', entry(500))).toBe('skipped');
   });
+
+  it("lets a daily board's top expire with its day, and leaves it while TTL drains it", async () => {
+    const day = Date.UTC(2026, 9, 25);
+    const board = 'daily-2026-10-25';
+    const expiring = {
+      ...entry(5, 'provisional'),
+      expireAt: Timestamp.fromMillis(day + 31 * DAY),
+    };
+    await db.doc(`boards/${board}/entries/a`).set(expiring);
+    // Rebuilt days later: the expiry stays where the day put it.
+    expect(
+      await rebuildTop(db, board, 'a', expiring, undefined, day + 5 * DAY)
+    ).toBe('rebuilt');
+    expect(
+      (await db.doc(`boards/${board}`).get()).get('expireAt').toMillis()
+    ).toBe(day + 31 * DAY);
+    // TTL taking the entry rebuilds nothing; the owner hiding it does.
+    expect(
+      await rebuildTop(db, board, 'a', undefined, expiring, day + 32 * DAY)
+    ).toBe('skipped');
+    const hidden = { ...expiring, status: 'hidden' };
+    expect(
+      await rebuildTop(db, board, 'a', hidden, expiring, day + 32 * DAY)
+    ).toBe('rebuilt');
+  });
 });
 
 describe('boardProfileChanged', () => {
@@ -265,5 +307,50 @@ describe('boardProfileChanged', () => {
         { name: 'A', motto: 'y' }
       )
     ).toBe(0);
+  });
+});
+
+describe('deletePlayerBoards', () => {
+  it("erases a deleted player's board data, and nobody else's", async () => {
+    const day = '2026-10-25';
+    await db.doc('boardMembers/ada').set({
+      entryIds: { xp: 'x1', online: 'o1', endless: 'e1', daily: 'd1' },
+      boards: ['xp', 'online', 'endless', `daily-${day}`],
+    });
+    const mine = [
+      'boards/xp/entries/x1',
+      'boards/online/entries/o1',
+      'boards/endless/entries/e1',
+      `boards/daily-${day}/entries/d1`,
+      `dailyRuns/${day}_ada`,
+      'endlessRuns/ada_202610251',
+      'limits/ada',
+      'moderation/ada',
+      'players/ada/attempts/d_2026-10-25_1',
+      'players/ada/notices/n1',
+    ];
+    for (const path of mine) {
+      await db.doc(path).set({ uid: 'ada' });
+    }
+    const theirs = [
+      'boards/xp/entries/x2',
+      'endlessRuns/bob_202610251',
+      'boardMembers/bob',
+      'players/ada/storage/progress',
+    ];
+    for (const path of theirs) {
+      await db.doc(path).set({ uid: 'bob' });
+    }
+    expect(await deletePlayerBoards(db, 'ada')).toBe(9);
+    for (const path of [...mine, 'boardMembers/ada']) {
+      expect([path, (await db.doc(path).get()).exists]).toEqual([path, false]);
+    }
+    for (const path of theirs) {
+      expect([path, (await db.doc(path).get()).exists]).toEqual([path, true]);
+    }
+  });
+
+  it('copes with an account that never reached a board', async () => {
+    expect(await deletePlayerBoards(db, 'ada')).toBe(3);
   });
 });

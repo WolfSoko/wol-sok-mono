@@ -6,6 +6,7 @@ import {
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
+import { deletePlayerReplays } from '../replays/delete-player';
 import { AT, ATTEMPT, dailyReplay, TICKS } from '../testing/daily-replay';
 import { closeNotReported, finalizeDailyBoards } from './hourly';
 import { rankDaily } from './rank-daily';
@@ -57,18 +58,23 @@ async function rank(
       .doc(`players/${uid}/attempts/${attempt.id}`)
       .set({ at: Timestamp.fromMillis(attempt.at) });
   }
-  const doc = {
-    kind: 'daily',
-    players: [uid],
-    state: 'submitted',
-    attempt,
-    submittedAt: Timestamp.fromMillis(arrived),
-  };
+  const doc = replayDoc(replay, uid, arrived);
   await db.doc(`replays/${replayId}`).set(doc);
   await db
     .doc(`replays/${replayId}/blob/data`)
     .set({ bytes: Buffer.from(await replayToBytes(replay)) });
   return rankDaily(db, replayId, doc, NOW);
+}
+
+/** What acceptReplay stores for a replay of a declared attempt. */
+function replayDoc(replay: Replay, uid: string, arrived = ARRIVED) {
+  return {
+    kind: 'daily',
+    players: [uid],
+    state: 'submitted',
+    attempt: replay.header.attempt,
+    submittedAt: Timestamp.fromMillis(arrived),
+  };
 }
 
 async function entryOf(uid: string) {
@@ -91,6 +97,10 @@ describe('rankDaily', () => {
     expect((await db.doc('boardMembers/ada').get()).get('boards')).toEqual([
       BOARD,
     ]);
+    // Counted from its day, as the board's top document is.
+    expect((await entryOf('ada')).get('expireAt').toMillis()).toBe(
+      Date.parse(DAY) + 31 * 24 * HOUR
+    );
     expect(
       (await db.doc(`dailyRuns/${DAY}_ada`).get()).get('attempts')
     ).toEqual([
@@ -105,6 +115,18 @@ describe('rankDaily', () => {
     );
   });
 
+  it("drops the daily boards TTL took from the player's list", async () => {
+    await db.doc('boardMembers/ada').set({
+      boards: ['xp', 'daily-2026-09-01', 'daily-2026-10-24'],
+    });
+    expect(await rank('l_1', dailyReplay(), 'ada')).toBe('counted');
+    expect((await db.doc('boardMembers/ada').get()).get('boards')).toEqual([
+      'xp',
+      'daily-2026-10-24',
+      BOARD,
+    ]);
+  });
+
   it("keeps the player's best attempt, and counts each attempt once", async () => {
     const second = 'd_2026-10-25_2';
     await rank('l_1', dailyReplay(lost()), 'ada');
@@ -116,6 +138,42 @@ describe('rankDaily', () => {
     expect(
       (await db.doc(`dailyRuns/${DAY}_ada`).get()).get('attempts')
     ).toHaveLength(2);
+  });
+
+  it("keeps a counted replay's answer when its event comes again", async () => {
+    const replay = dailyReplay();
+    expect(await rank('l_1', replay, 'ada')).toBe('counted');
+    // The retry brings the event's snapshot, after the player got banned
+    // and the declaration expired.
+    await db.doc('bans/ada').set({ until: null });
+    await db.doc(`players/ada/attempts/${ATTEMPT}`).delete();
+    clearBanCache();
+    expect(await rankDaily(db, 'l_1', replayDoc(replay, 'ada'), NOW)).toBe(
+      'counted'
+    );
+    expect((await db.doc('replays/l_1').get()).get('rankedReason')).toBe(
+      'counted'
+    );
+    expect(
+      (await db.doc(`dailyRuns/${DAY}_ada`).get()).get('attempts')
+    ).toHaveLength(1);
+  });
+
+  it('leaves a replay its account deletion took first, without a throw', async () => {
+    const replay = dailyReplay();
+    const doc = replayDoc(replay, 'ada');
+    await db
+      .doc(`players/ada/attempts/${ATTEMPT}`)
+      .set({ at: Timestamp.fromMillis(AT) });
+    await db.doc('replays/l_1').set(doc);
+    await db
+      .doc('replays/l_1/blob/data')
+      .set({ bytes: Buffer.from(await replayToBytes(replay)) });
+    // Ada deletes her account before the event is handled.
+    await deletePlayerReplays(db, 'ada');
+    expect(await rankDaily(db, 'l_1', doc, NOW)).toBe('gone');
+    expect((await db.doc('replays/l_1').get()).exists).toBe(false);
+    expect((await db.doc(`dailyRuns/${DAY}_ada`).get()).exists).toBe(false);
   });
 
   it('stores but never ranks an undeclared, late or forged replay', async () => {
@@ -132,6 +190,16 @@ describe('rankDaily', () => {
       'late'
     );
     expect((await db.doc('boardMembers/ada').get()).exists).toBe(false);
+  });
+
+  it('never ranks a replay of a void attempt', async () => {
+    await db
+      .doc(`players/ada/attempts/${ATTEMPT}`)
+      .set({ at: Timestamp.fromMillis(AT), void: true, voidReason: 'cap' });
+    expect(await rank('l_1', dailyReplay(), 'ada', { declared: false })).toBe(
+      'void'
+    );
+    expect((await db.doc(`dailyRuns/${DAY}_ada`).get()).exists).toBe(false);
   });
 
   it('ranks nothing for a banned player', async () => {
@@ -203,6 +271,25 @@ describe('verifyDailySlice', () => {
     expect(await slice()).toMatchObject({ checked: 0 });
   });
 
+  it('applies a check once when two slices run at the same time', async () => {
+    await rank('l_bob', dailyReplay({}, 'bob'), 'bob');
+    const runs = await Promise.all([slice(), slice()]);
+    expect(runs[0].checked + runs[1].checked).toBe(1);
+    // One failed check, not two: a single failure skips nobody.
+    const moderation = (await db.doc('moderation/bob').get()).data();
+    expect(moderation?.['failedChecks']).toBe(1);
+    expect(moderation?.['failedAt']).toEqual([NOW]);
+    expect(moderation?.['skipUntil']).toBeUndefined();
+  });
+
+  it('starts no re-run the slice has no time left for', async () => {
+    await rank('l_ada', dailyReplay(), 'ada');
+    // 30 s left of the day, a minute of play takes about 36 s.
+    await db.doc(`counters/${DAY}`).set({ verifyMs: 20 * 60_000 - 30_000 });
+    expect(await slice()).toMatchObject({ checked: 0 });
+    expect((await entryOf('ada')).get('status')).toBe('provisional');
+  });
+
   it('spends nothing once the day is spent', async () => {
     await rank('l_ada', dailyReplay(), 'ada');
     await db.doc(`counters/${DAY}`).set({ verifyMs: 20 * 60_000 });
@@ -212,6 +299,7 @@ describe('verifyDailySlice', () => {
 });
 
 describe('closeNotReported', () => {
+  /** A first report as `acceptReplay` stores it, closing 2 hours later. */
   const waiting = (createdAt: number, extra: object = {}) => ({
     kind: 'online',
     state: 'waiting',
@@ -220,6 +308,7 @@ describe('closeNotReported', () => {
     endedBy: 'annihilation',
     ticks: 3_600,
     createdAt: Timestamp.fromMillis(createdAt),
+    closeAt: Timestamp.fromMillis(createdAt + 2 * HOUR),
     ...extra,
   });
   const onlineEntry = async (uid: string) => {
@@ -236,9 +325,12 @@ describe('closeNotReported', () => {
       d: 0,
       nr: 1,
     });
-    expect((await db.doc('replays/r1').get()).get('rankedReason')).toBe(
-      'not-reported'
-    );
+    expect((await db.doc('replays/r1').get()).data()).toMatchObject({
+      rankedReason: 'not-reported',
+      state: 'waiting',
+    });
+    // Out of the sweep's query, however long it stays `waiting`.
+    expect((await db.doc('replays/r1').get()).get('closeAt')).toBeUndefined();
     expect(await closeNotReported(db, NOW)).toBe(0);
   });
 

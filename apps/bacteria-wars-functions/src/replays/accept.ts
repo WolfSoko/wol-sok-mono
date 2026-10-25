@@ -1,11 +1,15 @@
 import { replayFromBytes } from '@wolsok/feat-lazy-bac-game/engine';
 import {
+  type DocumentSnapshot,
   FieldValue,
   type Firestore,
   Timestamp,
+  type Transaction,
+  type WriteBatch,
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
-import { REPLAY_TTL_MS } from '../config';
+import { trackDeclaredMatch } from '../boards/rank-endless';
+import { NOT_REPORTED_AFTER_MS, REPLAY_TTL_MS } from '../config';
 import { isBanned, takeSubmissionSlot } from '../limits';
 import {
   planAcceptance,
@@ -21,9 +25,11 @@ export type AcceptOutcome =
   | 'malformed'
   | 'banned'
   | 'limit'
+  | 'cap'
   | 'unparsable'
   | 'not-in-room'
   | 'duplicate'
+  | 'closed'
   | 'exists'
   | Rejection;
 
@@ -38,11 +44,17 @@ interface RoomStub {
 
 /**
  * Turns `replaySubmissions/{id}` into `replays/{id}` (ADR 0011) and deletes
- * the submission, whatever came of it. Nothing is played again here: the
- * replay is parsed strictly, bound to its players and stored.
+ * the submission, whatever came of it - unless it throws: `acceptReplay`
+ * then tries again, and gives up with {@link giveUpSubmission}. Nothing is
+ * played again here: the replay is parsed strictly, bound to its players
+ * and stored.
  * - A local match is the caller's alone, `submitted`.
  * - An online match lists each player of its room stub once their own report
- *   arrives: `waiting` with one, `agreed` or `disputed` with both.
+ *   arrives: `waiting` with one, `agreed` or `disputed` with both. A second
+ *   report after the hourly function closed the match with one ("Not
+ *   reported", ADR 0012) is dropped as `closed`.
+ * - A ranked submission over the day's cap for everyone (`cap`) voids its
+ *   attempt: a drop on the server's side never costs one (ADR 0012).
  */
 export async function acceptSubmission(
   db: Firestore,
@@ -72,10 +84,18 @@ async function accept(
   if (await isBanned(db, meta.uid, now)) {
     return 'banned';
   }
-  if (
-    !(await takeSubmissionSlot(db, meta.uid, meta.attempt !== undefined, now))
-  ) {
-    return 'limit';
+  const refused = await takeSubmissionSlot(
+    db,
+    meta.uid,
+    meta.attempt !== undefined,
+    submissionId,
+    now
+  );
+  if (refused === 'cap' && meta.attempt !== undefined) {
+    await voidAttempt(db, { ...meta, attempt: meta.attempt }, refused, now);
+  }
+  if (refused !== null) {
+    return refused;
   }
   const replay = await replayFromBytes(new Uint8Array(bytes), { stored: true });
   if (replay === null) {
@@ -89,6 +109,75 @@ async function accept(
   return plan.room === undefined
     ? storeLocal(db, plan, meta, blob, now)
     : storeOnline(db, plan, meta, blob, now);
+}
+
+/**
+ * Ends a submission `acceptReplay` failed on for an hour: deletes it, and
+ * voids its attempt - the failure was the server's, so it must not cost
+ * the player the attempt. (`voidAttempt` leaves one whose replay got
+ * stored after all.)
+ */
+export async function giveUpSubmission(
+  db: Firestore,
+  submissionId: string,
+  data: Record<string, unknown>,
+  now: number
+): Promise<void> {
+  const meta = submissionMeta(submissionId, data, now);
+  if (meta?.attempt !== undefined) {
+    await voidAttempt(db, { ...meta, attempt: meta.attempt }, 'error', now);
+  }
+  await db.doc(`replaySubmissions/${submissionId}`).delete();
+}
+
+/**
+ * Marks a declared attempt the server dropped `void` (ADR 0012): its replay
+ * never ranks, and it costs nothing - a daily attempt may be declared again
+ * in its place (`firestore.rules`), an endless match counts as not played,
+ * so its run is computed again. Only the functions write it. An attempt
+ * that already has a stored replay (`replayId`) is used, and stays so,
+ * whatever else names it later; one declared again after the submission
+ * was sent is another declaration, left alone (`belongsTo`).
+ */
+export async function voidAttempt(
+  db: Firestore,
+  submission: Pick<SubmissionMeta, 'uid' | 'createdAt'> & { attempt: string },
+  reason: 'cap' | 'error',
+  now: number
+): Promise<void> {
+  const { uid, attempt: attemptId } = submission;
+  const ref = db.doc(`players/${uid}/attempts/${attemptId}`);
+  const isVoid = await db.runTransaction(async (tx) => {
+    const attempt = await tx.get(ref);
+    if (
+      !belongsTo(attempt, submission.createdAt) ||
+      attempt.get('replayId') !== undefined
+    ) {
+      return false;
+    }
+    if (attempt.get('void') !== true) {
+      tx.update(ref, {
+        void: true,
+        voidReason: reason,
+        voidedAt: FieldValue.serverTimestamp(),
+      });
+      logger.warn('Ranked attempt voided', { uid, attemptId, reason });
+    }
+    return true;
+  });
+  // Also when an earlier try voided it: its refresh may have failed.
+  if (isVoid) {
+    await trackDeclaredMatch(db, uid, attemptId, now);
+  }
+}
+
+/**
+ * True when a submission sent at `sentAt` can be of this declaration: one
+ * declared again later (a void daily attempt, `firestore.rules`) is not.
+ */
+function belongsTo(attempt: DocumentSnapshot, sentAt: number): boolean {
+  const at = attempt.get('at');
+  return at instanceof Timestamp && at.toMillis() <= sentAt;
 }
 
 function submissionMeta(
@@ -133,18 +222,38 @@ async function storeLocal(
   now: number
 ): Promise<AcceptOutcome> {
   const ref = db.doc(`replays/${plan.id}`);
-  try {
-    const batch = db.batch();
-    batch.create(ref, {
+  const create = (writer: Transaction | WriteBatch) => {
+    writer.create(ref, {
       ...newReplay(plan, meta.uid, 'submitted', now),
       // When the player sent it - a ranked replay's deadline (ADR 0012).
       ...(meta.attempt === undefined
         ? {}
         : { submittedAt: Timestamp.fromMillis(meta.createdAt) }),
     });
-    batch.create(ref.collection('blob').doc('data'), blob);
-    await batch.commit();
-    return 'stored';
+    writer.create(ref.collection('blob').doc('data'), blob);
+  };
+  const { attempt } = meta;
+  try {
+    if (attempt === undefined) {
+      const batch = db.batch();
+      create(batch);
+      await batch.commit();
+      return 'stored';
+    }
+    return await db.runTransaction(async (tx) => {
+      const declared = await tx.get(
+        db.doc(`players/${meta.uid}/attempts/${attempt}`)
+      );
+      create(tx);
+      // The first stored replay uses its attempt up: no drop voids it now.
+      if (
+        belongsTo(declared, meta.createdAt) &&
+        declared.get('replayId') === undefined
+      ) {
+        tx.update(declared.ref, { replayId: plan.id });
+      }
+      return 'stored' as const;
+    });
   } catch (error) {
     if (isAlreadyExists(error)) {
       return 'exists';
@@ -196,6 +305,8 @@ async function storeOnline(
           stub.createdAt instanceof Timestamp ? stub.createdAt : null,
         // Reported after its stub expired: kept for its players, never public.
         stubExpired: expired,
+        // When the hourly sweep closes it without a second report.
+        closeAt: Timestamp.fromMillis(now + NOT_REPORTED_AFTER_MS),
       });
       tx.create(ref.collection('blob').doc('data'), blob);
       tx.create(ref.collection('reports').doc(meta.uid), report);
@@ -208,6 +319,13 @@ async function storeOnline(
       existing.get('state') !== 'waiting'
     ) {
       return 'duplicate';
+    }
+    // Closed with one report (`closeNotReported`'s answer, maybe a "Not
+    // reported" for this very player): a late report changes nothing.
+    // Whoever writes the `rankedReplays` marker answers the replay in the
+    // same transaction, and the marker never outlives the replay.
+    if (existing.get('rankedReason') !== undefined) {
+      return 'closed';
     }
     const theirs =
       typeof other === 'string'
@@ -223,6 +341,7 @@ async function storeOnline(
     tx.update(ref, {
       players: FieldValue.arrayUnion(meta.uid),
       state: agreed ? 'agreed' : 'disputed',
+      closeAt: FieldValue.delete(),
       ...(expired ? { stubExpired: true } : {}),
     });
     return 'reported';

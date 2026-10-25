@@ -374,6 +374,9 @@ describe('the account functions', () => {
     await db.doc('bans/ada').set({ until: null, reason: 'cheating' });
     await db.doc('endlessRuns/ada_202610251').set({ uid: 'ada' });
     await db.doc('dailyRuns/2026-10-25_ada').set({ uid: 'ada' });
+    await db
+      .doc('boardMembers/ada')
+      .update({ boards: ['xp', 'online', 'daily-2026-10-25'] });
     await db.doc('players/ada/attempts/d_2026-10-25_1').set({ at: 1 });
     await db.doc('players/ada/notices/n1').set({ type: 'banned' });
     await db.doc('moderation/ada').set({ resets: 2 });
@@ -383,9 +386,9 @@ describe('the account functions', () => {
       before: { name: 'Rude Name' },
       after: {},
     });
+    // Three entries, two runs, boardMembers, limits and moderation.
     expect(await deletePlayerBoards(db, deps, 'ada', 'g-ada', NOW)).toEqual({
-      entries: 2,
-      runs: 2,
+      deleted: 8,
       audit: 1,
     });
     for (const path of [

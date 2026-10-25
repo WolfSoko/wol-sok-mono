@@ -29,9 +29,9 @@ export async function boardProfileChanged(
   if (!relabels(boardProfileOf(beforeData), after)) {
     return 0;
   }
-  const member = (await db.doc(`boardMembers/${uid}`).get()).data() ?? {};
+  const member = await db.doc(`boardMembers/${uid}`).get();
   let relabelled = 0;
-  for (const { boardId, entryId } of memberEntries(member)) {
+  for (const { boardId, entryId } of memberEntries(member.data())) {
     const ref = db.doc(`boards/${boardId}/entries/${entryId}`);
     const done = await db.runTransaction(async (tx) => {
       const entry = await tx.get(ref);

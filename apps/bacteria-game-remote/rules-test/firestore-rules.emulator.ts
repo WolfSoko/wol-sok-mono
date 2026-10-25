@@ -131,7 +131,7 @@ describe('declared attempts', () => {
     await assertFails(declare('eve', `d_${today()}_1`));
   });
 
-  it('wants the server time, an expiry in 30 to 32 days and nothing else', async () => {
+  it('wants the server time, an expiry in 28 to 32 days and nothing else', async () => {
     const id = `d_${today()}_1`;
     await assertFails(declare('ada', id, declaration({ at: Timestamp.now() })));
     await assertFails(
@@ -152,6 +152,31 @@ describe('declared attempts', () => {
     );
     await assertFails(declare('ada', id, declaration({ seed: 1 })));
     await assertFails(declare('ada', 'x_1', declaration()));
+  });
+
+  it('refuses an expiry shorter than 28 days, which TTL would turn into another try', async () => {
+    const id = `d_${today()}_1`;
+    for (const ms of [60_000, 27 * 24 * HOUR]) {
+      await assertFails(
+        declare(
+          'ada',
+          id,
+          declaration({ expireAt: Timestamp.fromMillis(Date.now() + ms) })
+        )
+      );
+    }
+    // A device whose clock runs almost 3 days slow still declares.
+    await assertSucceeds(
+      declare(
+        'ada',
+        id,
+        declaration({
+          expireAt: Timestamp.fromMillis(
+            Date.now() - (3 * 24 - 1) * HOUR + 31 * 24 * HOUR
+          ),
+        })
+      )
+    );
   });
 
   it("takes an endless run's matches in order, from today's runs", async () => {
@@ -182,6 +207,31 @@ describe('declared attempts', () => {
         at: serverTimestamp(),
       })
     );
+  });
+  it('lets a player declare a void daily attempt again, nothing else', async () => {
+    const day = today();
+    const voided = { at: Timestamp.now(), void: true, voidReason: 'cap' };
+    await seed(`players/ada/attempts/d_${day}_1`, voided);
+    // A whole new declaration in its place: the void marker goes.
+    await assertFails(
+      updateDoc(doc(db('ada'), `players/ada/attempts/d_${day}_1`), {
+        at: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      setDoc(doc(db('bob'), `players/ada/attempts/d_${day}_1`), declaration())
+    );
+    await assertSucceeds(declare('ada', `d_${day}_1`));
+    await assertFails(declare('ada', `d_${day}_1`));
+    // Only on its day, and never an endless match.
+    await seed(`players/ada/attempts/d_${yesterday()}_1`, voided);
+    await assertFails(declare('ada', `d_${yesterday()}_1`));
+    const run = `${compact(day)}1`;
+    await seed(`players/ada/attempts/e_${run}_0`, voided);
+    await assertFails(declare('ada', `e_${run}_0`));
+    await seed('bans/eve', { until: null });
+    await seed(`players/eve/attempts/d_${day}_1`, voided);
+    await assertFails(declare('eve', `d_${day}_1`));
   });
 });
 

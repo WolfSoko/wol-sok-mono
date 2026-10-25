@@ -1,0 +1,48 @@
+{
+  "endless runs of a player by score": {
+    "usedBy": "saveRun: a player's best endless run",
+    "group": "endlessRuns",
+    "fields": [
+      {
+        "fieldPath": "uid",
+        "order": "ASCENDING"
+      },
+      {
+        "fieldPath": "sort",
+        "order": "DESCENDING"
+      }
+    ]
+  },
+  "visible entries in board order": {
+    "usedBy": "rebuildTop and the verification's candidates - and the game's board pages and a player's own rank (count())",
+    "group": "entries",
+    "fields": [
+      {
+        "fieldPath": "status",
+        "order": "ASCENDING"
+      },
+      {
+        "fieldPath": "sort",
+        "order": "DESCENDING"
+      },
+      {
+        "fieldPath": "atHour",
+        "order": "ASCENDING"
+      }
+    ]
+  },
+  "taken rooms still open": {
+    "usedBy": "computeStats: the matches running (count())",
+    "group": "rooms",
+    "fields": [
+      {
+        "fieldPath": "taken",
+        "order": "ASCENDING"
+      },
+      {
+        "fieldPath": "expireAt",
+        "order": "ASCENDING"
+      }
+    ]
+  }
+}

@@ -9,6 +9,7 @@ import {
   submissionDeadline,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
+  type DocumentSnapshot,
   FieldValue,
   type Firestore,
   Timestamp,
@@ -36,6 +37,7 @@ export type ArrivalReason =
   | DeclaredReason
   | 'banned'
   | 'no-attempt'
+  | 'void'
   | 'duplicate'
   | 'unreadable';
 
@@ -94,6 +96,40 @@ export function rankedFields(reason: ArrivalReason) {
   return { rankedReason: reason, rankedAt: FieldValue.serverTimestamp() };
 }
 
+/**
+ * A replay read in a ranking transaction: null while it may still rank,
+ * else what the ranking returns - `gone` (its account was deleted) or the
+ * answer an earlier delivery stored. `rankReplay` retries, and a replay
+ * keeps its answer, even when a ban or an expired declaration would answer
+ * otherwise now.
+ */
+export function earlierAnswer(
+  replay: DocumentSnapshot
+): ArrivalReason | 'gone' | null {
+  if (!replay.exists) {
+    return 'gone';
+  }
+  const ranked = replay.get('rankedReason');
+  return typeof ranked === 'string' ? (ranked as ArrivalReason) : null;
+}
+
+/** Stores why a replay does not rank, unless {@link earlierAnswer} has one. */
+export async function answerReplay(
+  db: Firestore,
+  replayId: string,
+  reason: ArrivalReason
+): Promise<ArrivalReason | 'gone'> {
+  const replayRef = db.doc(`replays/${replayId}`);
+  return db.runTransaction(async (tx) => {
+    const earlier = earlierAnswer(await tx.get(replayRef));
+    if (earlier !== null) {
+      return earlier;
+    }
+    tx.update(replayRef, rankedFields(reason));
+    return reason;
+  });
+}
+
 /** A declared replay ready for its board's checks. */
 export interface DeclaredReplay<A extends Attempt> {
   uid: string;
@@ -109,7 +145,9 @@ export interface DeclaredReplay<A extends Attempt> {
 /**
  * Reads what a new replay of a declared `kind` attempt needs: its player,
  * the stored declaration and the replay itself - or why it cannot rank
- * (`no-attempt`, `banned`, `unreadable`).
+ * (`no-attempt`, `void`, `banned`, `unreadable`). A `void` declaration is
+ * one whose submission the server dropped (`voidAttempt`): it never ranks,
+ * a daily one may be declared again instead.
  */
 export async function readDeclaredReplay<K extends Attempt['kind']>(
   db: Firestore,
@@ -142,6 +180,9 @@ export async function readDeclaredReplay<K extends Attempt['kind']>(
   }
   if (!(at instanceof Timestamp)) {
     return { reason: 'no-attempt' };
+  }
+  if (declaration.get('void') === true) {
+    return { reason: 'void' };
   }
   if (replay === null) {
     return { reason: 'unreadable' };

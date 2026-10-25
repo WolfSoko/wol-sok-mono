@@ -10,7 +10,10 @@
  */
 export const REGION = 'europe-west1';
 
-/** How many replays one player may submit in an hour. */
+/**
+ * How many replays one player may submit in an hour - unranked and ranked
+ * each (ADR 0012), so unranked uploads never push out a ranked one.
+ */
 export const SUBMISSIONS_PER_HOUR = 60;
 
 /**
@@ -26,8 +29,21 @@ export const DAILY_SUBMISSIONS = 5_000;
  */
 export const DAILY_RANKED_SUBMISSIONS = 20_000;
 
+/**
+ * An online replay still waiting for its second report this long after
+ * the first is closed as "Not reported" (ADR 0012) - its `closeAt`.
+ */
+export const NOT_REPORTED_AFTER_MS = 2 * 60 * 60 * 1000;
+
 /** How long a private replay is kept: 30 days after the match. */
 export const REPLAY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * How long `rankReplay` keeps retrying an event (ADR 0012). Its steps are
+ * idempotent, so a retry ranks a stored replay late instead of never; an
+ * older event is dropped, so a poison event cannot retry for days.
+ */
+export const RETRY_FOR_MS = 60 * 60 * 1000;
 
 /** How long a ban decision is trusted before it is read again. */
 export const BAN_CACHE_MS = 60 * 1000;

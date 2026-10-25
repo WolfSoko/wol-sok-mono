@@ -6,6 +6,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import {
   DAILY_VERIFY_MS,
   ENDLESS_VERIFY_MS,
+  expectedRerunMs,
   MAX_VERIFIED_TICKS,
 } from './budgets';
 import { storedReplay } from './declared-match';
@@ -15,7 +16,7 @@ import { type Verdict, verifyReplay } from './verify';
 import {
   type AccountInfo,
   candidates,
-  recordSpent,
+  chargeAsYouGo,
   sliceBudget,
 } from './verify-slice';
 
@@ -26,7 +27,9 @@ import {
  * confirmed. A failed win cuts the run to its verified prefix ("partly
  * confirmed"). A win longer than 10 minutes, or of another balance table,
  * is never re-run, and the run stays provisional. The day's endless budget
- * is its own plus what the daily boards left.
+ * is its own plus what the daily boards left. As on the daily boards, a
+ * re-run starts only when its expected cost fits, and is charged as it
+ * ends.
  */
 export async function verifyEndlessSlice(
   db: Firestore,
@@ -47,6 +50,7 @@ export async function verifyEndlessSlice(
     return { checked: 0, spentMs: 0 };
   }
   const start = clock();
+  const charge = chargeAsYouGo(db, now, 'endlessVerifyMs', clock);
   let checked = 0;
   const boards = [{ boardId: 'endless' }];
   for (const candidate of await candidates(
@@ -57,16 +61,25 @@ export async function verifyEndlessSlice(
     boards
   )) {
     let run = await bestRunOf(db, candidate.uid);
-    while (run !== null && clock() - start < budget) {
+    while (run !== null) {
       const next = nextWin(run);
-      if (next === null) {
+      const left = budget - (clock() - start);
+      if (next === null || expectedRerunMs(next.ticks) > left) {
         break;
       }
-      const replay = await storedReplay(db, next);
+      const replay = await storedReplay(db, next.replayId);
       const verdict: Verdict =
         replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
       checked++;
-      run = await applyVerdict(db, run.uid, run.runId, next, verdict, now);
+      run = await applyVerdict(
+        db,
+        run.uid,
+        run.runId,
+        next.replayId,
+        verdict,
+        now
+      );
+      await charge();
       if (verdict.state === 'balance-mismatch') {
         // Changes nothing: the next slice would only play it again.
         break;
@@ -76,9 +89,8 @@ export async function verifyEndlessSlice(
       break;
     }
   }
-  const spentMs = Math.round(clock() - start);
-  await recordSpent(db, now, 'endlessVerifyMs', spentMs);
-  return { checked, spentMs };
+  await charge(true);
+  return { checked, spentMs: Math.round(clock() - start) };
 }
 
 /** The run a player's `endless` entry shows, null when there is none. */
@@ -97,17 +109,18 @@ async function bestRunOf(
 }
 
 /**
- * The replay of a run's first unconfirmed win - null when every win is
- * confirmed, the run was cut, or the win can never be re-run.
+ * The replay of a run's first unconfirmed win and its length - null when
+ * every win is confirmed, the run was cut, or the win can never be re-run.
  */
-function nextWin(run: StoredRun): string | null {
+function nextWin(run: StoredRun): { replayId: string; ticks: number } | null {
   if ((run.cut ?? null) !== null) {
     return null;
   }
   const next = winsOf(run)[run.verifiedWins ?? 0];
   return next?.replayId === undefined ||
-    (next.ticks ?? Infinity) > MAX_VERIFIED_TICKS ||
+    next.ticks === undefined ||
+    next.ticks > MAX_VERIFIED_TICKS ||
     next.balanceVersion !== BALANCE_VERSION
     ? null
-    : next.replayId;
+    : { replayId: next.replayId, ticks: next.ticks };
 }
