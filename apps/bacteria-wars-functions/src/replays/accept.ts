@@ -212,9 +212,11 @@ async function storeOnline(
     ) {
       return 'duplicate';
     }
-    // Closed with one report (`closeNotReported`'s marker, maybe a "Not
+    // Closed with one report (`closeNotReported`'s answer, maybe a "Not
     // reported" for this very player): a late report changes nothing.
-    if ((await tx.get(db.doc(`rankedReplays/${plan.id}`))).exists) {
+    // Whoever writes the `rankedReplays` marker answers the replay in the
+    // same transaction, and the marker never outlives the replay.
+    if (existing.get('rankedReason') !== undefined) {
       return 'closed';
     }
     const theirs =

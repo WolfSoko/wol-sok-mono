@@ -6,6 +6,7 @@ import {
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
+import { deletePlayerReplays } from '../replays/delete-player';
 import { AT, ATTEMPT, dailyReplay, TICKS } from '../testing/daily-replay';
 import { closeNotReported, finalizeDailyBoards } from './hourly';
 import { rankDaily } from './rank-daily';
@@ -123,19 +124,6 @@ describe('rankDaily', () => {
     ).toHaveLength(2);
   });
 
-  it('takes the same replay delivered again as done, not as a duplicate', async () => {
-    // rankReplay retries: a second delivery after the first one committed.
-    expect(await rank('l_1', dailyReplay(), 'ada')).toBe('counted');
-    const doc = (await db.doc('replays/l_1').get()).data() ?? {};
-    expect(await rankDaily(db, 'l_1', doc, NOW)).toBe('counted');
-    expect((await db.doc('replays/l_1').get()).get('rankedReason')).toBe(
-      'counted'
-    );
-    expect(
-      (await db.doc(`dailyRuns/${DAY}_ada`).get()).get('attempts')
-    ).toHaveLength(1);
-  });
-
   it("keeps a counted replay's answer when its event comes again", async () => {
     const replay = dailyReplay();
     expect(await rank('l_1', replay, 'ada')).toBe('counted');
@@ -153,6 +141,23 @@ describe('rankDaily', () => {
     expect(
       (await db.doc(`dailyRuns/${DAY}_ada`).get()).get('attempts')
     ).toHaveLength(1);
+  });
+
+  it('leaves a replay its account deletion took first, without a throw', async () => {
+    const replay = dailyReplay();
+    const doc = replayDoc(replay, 'ada');
+    await db
+      .doc(`players/ada/attempts/${ATTEMPT}`)
+      .set({ at: Timestamp.fromMillis(AT) });
+    await db.doc('replays/l_1').set(doc);
+    await db
+      .doc('replays/l_1/blob/data')
+      .set({ bytes: Buffer.from(await replayToBytes(replay)) });
+    // Ada deletes her account before the event is handled.
+    await deletePlayerReplays(db, 'ada');
+    expect(await rankDaily(db, 'l_1', doc, NOW)).toBe('gone');
+    expect((await db.doc('replays/l_1').get()).exists).toBe(false);
+    expect((await db.doc(`dailyRuns/${DAY}_ada`).get()).exists).toBe(false);
   });
 
   it('stores but never ranks an undeclared, late or forged replay', async () => {

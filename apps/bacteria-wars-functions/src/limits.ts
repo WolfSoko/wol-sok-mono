@@ -31,8 +31,8 @@ const banCache = new Map<
 
 /**
  * Throws {@link Banned} while `bans/{uid}` holds (ADR 0012). A ban ends by
- * itself at `until`, inclusive like the rules' `notBanned()`. The answer is
- * kept a minute per instance.
+ * itself at `until`, inclusive like the rules' `notBanned()`. The ban
+ * document is kept a minute per instance.
  */
 export async function assertActive(
   db: Firestore,
@@ -44,20 +44,26 @@ export async function assertActive(
   }
 }
 
-/** Whether `bans/{uid}` holds at `now` - see {@link assertActive}. */
+/**
+ * Whether `bans/{uid}` holds at `now` - see {@link assertActive}. The ban
+ * document is read as it stands (or as cached up to a minute ago, by the
+ * clock), and only its `until` is judged at `now`, which may lie in the
+ * past for a retried event.
+ */
 export async function isBanned(
   db: Firestore,
   uid: string,
   now: number = Date.now()
 ): Promise<boolean> {
+  const readAt = Date.now();
   let cached = banCache.get(uid);
-  if (cached === undefined || now - cached.at > BAN_CACHE_MS) {
+  if (cached === undefined || readAt - cached.at > BAN_CACHE_MS) {
     const snapshot = await db.doc(`bans/${uid}`).get();
     const until = (snapshot.data() as BanDoc | undefined)?.until;
     cached = {
       banned: snapshot.exists,
       until: until instanceof Timestamp ? until.toMillis() : null,
-      at: now,
+      at: readAt,
     };
     banCache.set(uid, cached);
   }
@@ -69,9 +75,12 @@ export function clearBanCache(): void {
   banCache.clear();
 }
 
-/** True for a retried event too old to act on - see {@link RETRY_FOR_MS}. */
-export function tooOldToRetry(eventTime: string, now: number): boolean {
-  return now - Date.parse(eventTime) > RETRY_FOR_MS;
+/**
+ * True for a retried event, written at `at` (ms), too old to act on - see
+ * {@link RETRY_FOR_MS}.
+ */
+export function tooOldToRetry(at: number, now: number): boolean {
+  return now - at > RETRY_FOR_MS;
 }
 
 /** The UTC day of a moment, `YYYY-MM-DD`. */

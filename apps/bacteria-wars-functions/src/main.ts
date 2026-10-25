@@ -26,7 +26,7 @@ import {
   rankProgress as countProgress,
 } from './boards/rank-progress';
 import { rebuildTop as rebuildTopOf } from './boards/rebuild-top';
-import { HOURLY_ON, REGION } from './config';
+import { HOURLY_ON, REGION, RETRY_FOR_MS } from './config';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
 import { acceptSubmission } from './replays/accept';
@@ -128,47 +128,54 @@ export const rankProgress = onDocumentWritten(
 /**
  * The online board, once an online match turns `agreed`, and the daily
  * board, when a replay of a declared daily attempt comes (ADR 0012).
- * Retried for an hour (`RETRY_FOR_MS`): both steps are idempotent -
- * `rankOnline`'s marker, the `rankedReason` `rankDaily` leaves - and
- * decide at the event's time, so a retry judges bans, caps and the room's
- * clock as the first delivery did.
+ * Retried for an hour (`RETRY_FOR_MS`). A delivery reads the replay as it
+ * stands and leaves one that is gone or already answered (`rankedReason`,
+ * which `rankOnline` writes with its marker, and `rankDaily` too); both
+ * check that again in their transactions. They decide at the event's
+ * time: caps, the room's clock, a declaration's deadline and when a ban
+ * ends. The ban documents are read at the delivery, so a ban placed after
+ * the event still applies.
  */
 export const rankReplay = onDocumentWritten(
   { document: 'replays/{id}', memory: '256MiB', cpu: 'gcf_gen1', retry: true },
   async (event) => {
+    const id = event.params.id;
     const at = Date.parse(event.time);
-    if (tooOldToRetry(event.time, Date.now())) {
-      logger.error('rankReplay gave up on an event older than an hour', {
-        id: event.params.id,
-        time: event.time,
-      });
+    if (tooOldToRetry(at, Date.now())) {
+      logger.error(
+        `rankReplay gave up on an event older than ${RETRY_FOR_MS / 60_000} minutes`,
+        { id, time: event.time }
+      );
       return;
     }
     const before = event.data?.before.data();
     const after = event.data?.after.data();
-    if (after === undefined) {
-      return;
-    }
-    if (
-      after['kind'] === 'online' &&
+    const kind =
+      after?.['kind'] === 'online' &&
       after['state'] === 'agreed' &&
       before?.['state'] !== 'agreed'
-    ) {
-      const reason = await rankOnline(
-        db(),
-        event.params.id,
-        after,
-        accountCreatedAt,
-        at
-      );
-      logger.info('Online match ranked', { id: event.params.id, reason });
-    } else if (
-      before === undefined &&
-      after['kind'] === 'daily' &&
-      after['attempt'] !== undefined
-    ) {
-      const reason = await rankDaily(db(), event.params.id, after, at);
-      logger.info('Daily attempt ranked', { id: event.params.id, reason });
+        ? 'online'
+        : before === undefined &&
+            after?.['kind'] === 'daily' &&
+            after['attempt'] !== undefined
+          ? 'daily'
+          : null;
+    if (kind === null) {
+      return;
+    }
+    // The event's snapshot never shows what an earlier delivery wrote.
+    const stored = await db().doc(`replays/${id}`).get();
+    const replay = stored.data();
+    if (replay === undefined || replay['rankedReason'] !== undefined) {
+      logger.info('Replay gone or ranked already', { id, kind });
+      return;
+    }
+    if (kind === 'online') {
+      const reason = await rankOnline(db(), id, accountCreatedAt, at);
+      logger.info('Online match ranked', { id, reason });
+    } else {
+      const reason = await rankDaily(db(), id, replay, at);
+      logger.info('Daily attempt ranked', { id, reason });
     }
   }
 );

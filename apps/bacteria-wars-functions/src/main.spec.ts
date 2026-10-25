@@ -9,6 +9,14 @@ jest.mock('./boards/rank-online', () => ({
   ...jest.requireActual('./boards/rank-online'),
   rankOnline: jest.fn(async () => 'counted'),
 }));
+/** The replay as `rankReplay` reads it afresh - undefined when gone. */
+let mockStoredReplay: Record<string, unknown> | undefined;
+jest.mock('firebase-admin/firestore', () => ({
+  ...jest.requireActual('firebase-admin/firestore'),
+  getFirestore: () => ({
+    doc: () => ({ get: async () => ({ data: () => mockStoredReplay }) }),
+  }),
+}));
 
 /** The part of a function's manifest entry the specs read. */
 interface Endpoint {
@@ -66,29 +74,59 @@ describe('the exported functions', () => {
       data: { before: { data: () => before }, after: { data: () => after } },
     });
 
+    beforeEach(() => jest.clearAllMocks());
+
     it('ranks an online match at the time of the event', async () => {
       const after = { kind: 'online', state: 'agreed' };
+      mockStoredReplay = after;
       await functions['rankReplay']?.run(
         event({ kind: 'online', state: 'waiting' }, after)
       );
       expect(rankOnline).toHaveBeenCalledWith(
         expect.anything(),
         'r1',
-        after,
         expect.any(Function),
         written
       );
     });
 
-    it('ranks a daily attempt at the time of the event', async () => {
+    it('ranks a daily attempt as stored, at the time of the event', async () => {
       const after = { kind: 'daily', attempt: { id: 'd_2026-10-25_1' } };
+      mockStoredReplay = { ...after, players: ['ada'] };
       await functions['rankReplay']?.run(event(undefined, after));
       expect(rankDaily).toHaveBeenCalledWith(
         expect.anything(),
         'r1',
-        after,
+        mockStoredReplay,
         written
       );
+    });
+
+    it('leaves a replay that is gone or answered by an earlier delivery', async () => {
+      const daily = { kind: 'daily', attempt: { id: 'd_2026-10-25_1' } };
+      const online = { kind: 'online', state: 'agreed' };
+      for (const stored of [
+        undefined,
+        { ...daily, rankedReason: 'counted' },
+        { ...online, rankedReason: 'pair-cap' },
+      ]) {
+        mockStoredReplay = stored;
+        await functions['rankReplay']?.run(event(undefined, daily));
+        await functions['rankReplay']?.run(
+          event({ ...online, state: 'waiting' }, online)
+        );
+      }
+      expect(rankDaily).not.toHaveBeenCalled();
+      expect(rankOnline).not.toHaveBeenCalled();
+    });
+
+    it('drops an event older than an hour', async () => {
+      mockStoredReplay = { kind: 'daily', attempt: { id: 'd_2026-10-25_1' } };
+      await functions['rankReplay']?.run({
+        ...event(undefined, mockStoredReplay),
+        time: new Date(Date.now() - 61 * 60_000).toISOString(),
+      });
+      expect(rankDaily).not.toHaveBeenCalled();
     });
   });
 });

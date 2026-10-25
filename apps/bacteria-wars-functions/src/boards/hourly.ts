@@ -29,8 +29,8 @@ const REGULAR_ENDINGS = ['annihilation', 'time', 'forfeit'];
  * "Not reported"): with only one report, the match never counts. When that
  * report has a regular ending after at least 30 s, the stub's other player
  * gets `nr + 1` on their online entry - shown, never part of `sort`. The
- * `rankedReplays` marker keeps a late second report from counting it, and
- * `acceptReplay` drops such a report (`closed`).
+ * replay's `rankedReason` makes `acceptReplay` drop a late second report
+ * (`closed`), and the `rankedReplays` marker keeps it from counting.
  */
 export async function closeNotReported(
   db: Firestore,
