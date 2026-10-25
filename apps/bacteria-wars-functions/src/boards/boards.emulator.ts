@@ -249,17 +249,26 @@ describe('rebuildTop', () => {
   it("lets a daily board's top expire with its day, and leaves it while TTL drains it", async () => {
     const day = Date.UTC(2026, 9, 25);
     const board = 'daily-2026-10-25';
-    await db.doc(`boards/${board}/entries/a`).set(entry(5, 'provisional'));
+    const expiring = {
+      ...entry(5, 'provisional'),
+      expireAt: Timestamp.fromMillis(day + 31 * DAY),
+    };
+    await db.doc(`boards/${board}/entries/a`).set(expiring);
     // Rebuilt days later: the expiry stays where the day put it.
     expect(
-      await rebuildTop(db, board, 'a', entry(5, 'provisional'), day + 5 * DAY)
+      await rebuildTop(db, board, 'a', expiring, undefined, day + 5 * DAY)
     ).toBe('rebuilt');
     expect(
       (await db.doc(`boards/${board}`).get()).get('expireAt').toMillis()
-    ).toBe(day + 32 * DAY);
-    expect(await rebuildTop(db, board, 'a', undefined, day + 31 * DAY)).toBe(
-      'skipped'
-    );
+    ).toBe(day + 31 * DAY);
+    // TTL taking the entry rebuilds nothing; the owner hiding it does.
+    expect(
+      await rebuildTop(db, board, 'a', undefined, expiring, day + 32 * DAY)
+    ).toBe('skipped');
+    const hidden = { ...expiring, status: 'hidden' };
+    expect(
+      await rebuildTop(db, board, 'a', hidden, expiring, day + 32 * DAY)
+    ).toBe('rebuilt');
   });
 });
 

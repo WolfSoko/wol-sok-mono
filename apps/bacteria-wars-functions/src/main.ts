@@ -230,7 +230,8 @@ export const rebuildTop = onDocumentWritten(
       db(),
       event.params.boardId,
       event.params.entryId,
-      event.data?.after.data()
+      event.data?.after.data(),
+      event.data?.before.data()
     );
   }
 );

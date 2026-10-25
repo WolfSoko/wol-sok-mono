@@ -322,14 +322,6 @@ describe('closeNotReported', () => {
     expect(await closeNotReported(db, NOW)).toBe(0);
   });
 
-  it('takes an answered replay out of the sweep without a mark', async () => {
-    await db.doc('replays/r1').set(waiting(NOW - 3 * HOUR));
-    await db.doc('rankedReplays/r1').set({ at: Timestamp.fromMillis(NOW) });
-    expect(await closeNotReported(db, NOW)).toBe(0);
-    expect((await db.doc('replays/r1').get()).get('closeAt')).toBeUndefined();
-    expect((await db.doc('boardMembers/bob').get()).exists).toBe(false);
-  });
-
   it('closes a short match without a mark, and leaves a fresh one', async () => {
     await db.doc('replays/r1').set(waiting(NOW - 3 * HOUR, { ticks: 100 }));
     await db.doc('replays/r2').set(waiting(NOW - HOUR));

@@ -12,13 +12,12 @@ import {
 import { logger } from 'firebase-functions/logger';
 import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
 import { MIN_COUNTED_TICKS } from './rank-online';
-import { SLICE_MS } from './budgets';
+import { DAY_MS, SLICE_MS } from './budgets';
 import { closeStaleMatches } from './rank-endless';
 import { verifyEndlessSlice } from './verify-endless';
 import { type AccountInfo, verifyDailySlice } from './verify-slice';
 
 const HOUR_MS = 3_600_000;
-const DAY_MS = 24 * HOUR_MS;
 /** The replays one sweep closes at most; the next one takes the rest. */
 const SWEEP_LIMIT = 500;
 /** Endings a device reports only after a real match. */
@@ -48,13 +47,16 @@ export async function closeNotReported(
   let closed = 0;
   for (const doc of waiting.docs) {
     try {
-      if (doc.get('kind') === 'online' && (await closeOne(db, doc.id, now))) {
+      if (await closeOne(db, doc.id, now)) {
         closed++;
       }
     } catch (error) {
-      // It stays first in the query: one replay must not stop the sweep
-      // or the hour's verification after it.
+      // Tried again in an hour, rather than first in every run's query:
+      // one replay must not stop the sweep or the hour's verification.
       logger.error('Could not close a replay', { id: doc.id, error });
+      await doc.ref
+        .update({ closeAt: Timestamp.fromMillis(now + HOUR_MS) })
+        .catch(() => undefined);
     }
   }
   return closed;
@@ -70,10 +72,6 @@ async function closeOne(
     const marker = db.doc(`rankedReplays/${replayId}`);
     const replay = await tx.get(replayRef);
     if (replay.get('state') !== 'waiting' || (await tx.get(marker)).exists) {
-      // Answered meanwhile: out of the sweep's query all the same.
-      if (replay.exists) {
-        tx.update(replayRef, { closeAt: FieldValue.delete() });
-      }
       return false;
     }
     const reporter = (replay.get('players') as string[] | undefined)?.[0];

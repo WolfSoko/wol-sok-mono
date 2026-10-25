@@ -1,7 +1,9 @@
 /**
  * The verification budgets (ADR 0012) - server-only, unlike the board
- * contracts in the engine. The match-minutes ADR 0012 sets, at 20 s of CPU
- * per match-minute until the benchmark on a Cloud Run vCPU fixes them.
+ * contracts in the engine. The day budgets are CPU ms, from the
+ * match-minutes ADR 0012 sets at 20 s of CPU per match-minute; what one
+ * re-run is expected to take is `expectedRerunMs`, at the rate measured
+ * since for `gpu-int`. The benchmark on a Cloud Run vCPU fixes both.
  */
 
 /** A day, in ms. */
@@ -34,7 +36,7 @@ export const FAILED_CHECKS_TO_SKIP = 2;
  * A slice starts a re-run only when its expected cost fits in what it has
  * left, so it never runs far past its end.
  */
-export const RERUN_MS_PER_TICK = 10;
+const RERUN_MS_PER_TICK = 10;
 
 /** The CPU time a re-run of a match of `ticks` is expected to take. */
 export function expectedRerunMs(ticks: number): number {

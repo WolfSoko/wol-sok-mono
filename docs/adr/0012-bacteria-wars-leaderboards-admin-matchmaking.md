@@ -487,8 +487,10 @@ what the slice has left (`expectedRerunMs` in `budgets.ts`: 10 ms a tick
 for `gpu-int` on the base arena, which every ranked level has, from the
 closed #2618's benchmark on a development machine until the Cloud Run one
 replaces it), so it never starts a 10-minute match at minute 24. It
-charges its time to the day as each re-run ends, so a slice cut short by
-the function's timeout has paid for all but its last re-run.
+charges its time to the day in steps of at least a minute as re-runs end,
+and the rest at the end, so a slice cut short by the function's timeout
+has paid for all but its last minute or re-run, and `counters/{day}`,
+which every upload's slot reads, takes a write a minute at most.
 
 **Flooding** with fake top claims from many fresh guest accounts no longer
 starves honest entries: trust ordering puts fresh accounts last, each
@@ -544,16 +546,16 @@ All of it is written by functions only, except `attempts`,
     document one at a time, so ranking functions never contend for it. It
     returns at once unless the entry was in the top document or now beats
     its last row (`Row.sort`). Rebuilding queries the top 50 visible
-    entries and the top `cut` verified ones. A daily board's entries expire
-    31 days after its day and its top document a day later, counted from
-    the day rather than the write, and from 31 days on, while TTL takes the
-    entries, their deletions rebuild nothing.
+    entries and the top `cut` verified ones. A daily board's entries and
+    its top document expire 31 days after its day, counted from the day
+    rather than the write (`dailyBoardExpiresAt`), and the deletion of an
+    entry already past its `expireAt` (TTL draining a board) rebuilds
+    nothing.
   - A screen therefore costs one read for the top 50, and at most one top
     document rewrite per relevant change.
 - **TTL** on `expireAt`:
-  - 31 days: `attempts`, `notices`, the daily boards' entries (counted
-    from their day; the top documents `daily-{day}` a day later),
-    `dailyRuns`, `rankedReplays`, `endlessRuns`
+  - 31 days: `attempts`, `notices`, the daily boards' entries and top
+    documents (`daily-{day}`, counted from their day), `dailyRuns`, `rankedReplays`, `endlessRuns`
     that are not a best run. The all-time boards (`xp`, `online`,
     `endless`) set no `expireAt` on their top documents or entries, which
     stay until removed or the account is deleted;

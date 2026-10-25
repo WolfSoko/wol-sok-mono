@@ -14,8 +14,7 @@ import {
   type QueryDocumentSnapshot,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { DAY_MS } from './budgets';
-import { DAILY_TTL_MS } from './rank-daily';
+import { dailyBoardExpiresAt } from './rank-daily';
 
 /** An entry as the top document needs it. */
 type EntryRow = Omit<BoardRow, 'pos' | 'rank'>;
@@ -51,20 +50,26 @@ export function topRows(
  * when the entry was in the top document or now beats its last row, so most
  * writes cost one read. The trigger runs one at a time (`maxInstances: 1`,
  * `concurrency: 1`): writers change entries only, and nothing contends for
- * the top document. A daily board's entries expire 31 days after its day
- * and its top document a day later; once TTL is taking the entries, their
- * deletions rebuild nothing.
+ * the top document. A daily board's top document expires with its entries
+ * (`dailyBoardExpiresAt`); a deletion of an entry already past its
+ * `expireAt` - TTL draining the board - rebuilds nothing.
  */
 export async function rebuildTop(
   db: Firestore,
   boardId: string,
   entryId: string,
   after: Record<string, unknown> | undefined,
+  before?: Record<string, unknown>,
   now: number = Date.now()
 ): Promise<'rebuilt' | 'skipped'> {
   const board = parseBoardId(boardId);
-  const dayStart = board?.kind === 'daily' ? Date.parse(board.day) : null;
-  if (board === null || (dayStart !== null && now >= dayStart + DAILY_TTL_MS)) {
+  const expiredAt = before?.['expireAt'];
+  if (
+    board === null ||
+    (after === undefined &&
+      expiredAt instanceof Timestamp &&
+      expiredAt.toMillis() <= now)
+  ) {
     return 'skipped';
   }
   const topRef = db.doc(`boards/${boardId}`);
@@ -119,9 +124,9 @@ export async function rebuildTop(
       ),
       balanceVersion: BALANCE_VERSION,
       updatedAt: FieldValue.serverTimestamp(),
-      ...(dayStart === null
-        ? {}
-        : { expireAt: Timestamp.fromMillis(dayStart + DAILY_TTL_MS + DAY_MS) }),
+      ...(board.kind === 'daily'
+        ? { expireAt: Timestamp.fromMillis(dailyBoardExpiresAt(board.day)) }
+        : {}),
     },
     { merge: true }
   );

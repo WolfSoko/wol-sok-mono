@@ -125,10 +125,10 @@ export async function verifyDailySlice(
     }
     if (await checkCandidate(db, candidate, now, verify, left)) {
       checked++;
-      await charge();
     }
+    await charge();
   }
-  await charge();
+  await charge(true);
   return { checked, spentMs: Math.round(clock() - start) };
 }
 
@@ -151,28 +151,35 @@ export async function sliceBudget(
   return Math.min(sliceMs, dayBudgetMs - spent);
 }
 
+/** How much unbilled slice time a step charges at the least. */
+const CHARGE_STEP_MS = 60_000;
+
 /**
- * Charges a slice's time to the day's counter `field` in steps: each call
- * adds the time since the one before (or since the slice began). Called as
- * each re-run ends and once at the end, so a slice the function's timeout
- * cuts short has paid for all it did but its last re-run.
+ * Charges a slice's time to the day's counter `field` in steps of at least
+ * a minute, called as each re-run ends, and the rest with `final`: a slice
+ * the function's timeout cuts short has paid for all but its last minute
+ * or re-run, and the counter, which every upload's slot reads, takes a
+ * write a minute at most.
  */
 export function chargeAsYouGo(
   db: Firestore,
   now: number,
   field: string,
   clock: () => number
-): () => Promise<void> {
+): (final?: boolean) => Promise<void> {
   let charged = clock();
-  return async () => {
+  return async (final = false) => {
     const at = clock();
-    await recordSpent(db, now, field, Math.round(at - charged));
-    charged = at;
+    const due = Math.round(at - charged);
+    if (due >= (final ? 1 : CHARGE_STEP_MS)) {
+      await recordSpent(db, now, field, due);
+      charged = at;
+    }
   };
 }
 
 /** Adds a slice's time to the day's counter `field`. */
-export async function recordSpent(
+async function recordSpent(
   db: Firestore,
   now: number,
   field: string,

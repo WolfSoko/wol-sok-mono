@@ -61,12 +61,10 @@ export async function verifyEndlessSlice(
     boards
   )) {
     let run = await bestRunOf(db, candidate.uid);
-    while (run !== null && clock() - start < budget) {
+    while (run !== null) {
       const next = nextWin(run);
-      if (
-        next === null ||
-        expectedRerunMs(next.ticks) > budget - (clock() - start)
-      ) {
+      const left = budget - (clock() - start);
+      if (next === null || expectedRerunMs(next.ticks) > left) {
         break;
       }
       const replay = await storedReplay(db, next.replayId);
@@ -91,7 +89,7 @@ export async function verifyEndlessSlice(
       break;
     }
   }
-  await charge();
+  await charge(true);
   return { checked, spentMs: Math.round(clock() - start) };
 }
 
