@@ -40,6 +40,18 @@ setGlobalOptions({ region: REGION, maxInstances: 5 });
 
 const db = () => getFirestore();
 
+/** True, and logged, for a retried event too old to act on. */
+function givesUp(fn: string, id: string, time: string, now: number): boolean {
+  const old = tooOldToRetry(Date.parse(time), now);
+  if (old) {
+    logger.error(
+      `${fn} gave up on an event older than ${RETRY_FOR_MS / 60_000} minutes`,
+      { id, time }
+    );
+  }
+  return old;
+}
+
 /**
  * `replaySubmissions/{id}` into `replays/{id}` - see `acceptSubmission`.
  * Retried for an hour (`RETRY_FOR_MS`); then it gives up
@@ -61,16 +73,12 @@ export const acceptReplay = onDocumentCreated(
       return;
     }
     const id = event.params.id;
-    const at = Date.parse(event.time);
-    if (tooOldToRetry(at, Date.now())) {
-      logger.error(
-        `acceptReplay gave up on a submission older than ${RETRY_FOR_MS / 60_000} minutes`,
-        { id, time: event.time }
-      );
-      await giveUpSubmission(db(), id, data, Date.now());
+    const now = Date.now();
+    if (givesUp('acceptReplay', id, event.time, now)) {
+      await giveUpSubmission(db(), id, data, now);
       return;
     }
-    await acceptSubmission(db(), id, data);
+    await acceptSubmission(db(), id, data, now);
   }
 );
 
@@ -165,11 +173,7 @@ export const rankReplay = onDocumentWritten(
   async (event) => {
     const id = event.params.id;
     const at = Date.parse(event.time);
-    if (tooOldToRetry(at, Date.now())) {
-      logger.error(
-        `rankReplay gave up on an event older than ${RETRY_FOR_MS / 60_000} minutes`,
-        { id, time: event.time }
-      );
+    if (givesUp('rankReplay', id, event.time, Date.now())) {
       return;
     }
     const before = event.data?.before.data();

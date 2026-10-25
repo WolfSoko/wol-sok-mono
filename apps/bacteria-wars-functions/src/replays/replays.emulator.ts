@@ -158,9 +158,13 @@ describe('acceptReplay', () => {
 
   describe('a ranked submission', () => {
     const attempt = `d_${dayOf(NOW)}_1`;
+    /** When Ada declared it: before she sent anything. */
+    const DECLARED_AT = NOW - 10 * 60_000;
+    /** A submission of it, as `acceptReplay` reads it. */
+    const data = { uid: 'ada', attempt, hint: 40 };
     const attemptRef = () => db.doc(`players/ada/attempts/${attempt}`);
     beforeEach(() =>
-      attemptRef().set({ at: Timestamp.fromMillis(NOW - 10 * 60_000) })
+      attemptRef().set({ at: Timestamp.fromMillis(DECLARED_AT) })
     );
 
     it("has an hour of its own, which unranked ones can't use up", async () => {
@@ -195,7 +199,6 @@ describe('acceptReplay', () => {
     });
 
     it('voids its attempt when acceptReplay gives up on it', async () => {
-      const data = { uid: 'ada', attempt, hint: 40 };
       await db.doc('replaySubmissions/s1').set(data);
       await giveUpSubmission(db, 's1', data, NOW);
       expect((await attemptRef().get()).get('voidReason')).toBe('error');
@@ -203,8 +206,7 @@ describe('acceptReplay', () => {
     });
 
     it('is used up by its first stored replay, which no later drop voids', async () => {
-      const at = NOW - 10 * 60_000;
-      const replay = dailyReplay({}, 'ada', attempt, at);
+      const replay = dailyReplay({}, 'ada', attempt, DECLARED_AT);
       expect(
         await submit('s1', 'ada', Buffer.from(await replayToBytes(replay)), {
           attempt,
@@ -216,8 +218,19 @@ describe('acceptReplay', () => {
       expect(await submit('s2', 'ada', await bytesOf(), { attempt })).toBe(
         'cap'
       );
-      const data = { uid: 'ada', attempt, hint: 40 };
       await giveUpSubmission(db, 's3', data, NOW);
+      expect((await attemptRef().get()).get('void')).toBeUndefined();
+    });
+
+    it('leaves the attempt declared again after it was sent', async () => {
+      // A void attempt Ada declared again once this submission was out.
+      await attemptRef().set({ at: Timestamp.fromMillis(NOW + 60_000) });
+      await giveUpSubmission(
+        db,
+        's1',
+        { ...data, createdAt: Timestamp.fromMillis(NOW) },
+        NOW
+      );
       expect((await attemptRef().get()).get('void')).toBeUndefined();
     });
 

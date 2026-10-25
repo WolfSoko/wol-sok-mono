@@ -147,7 +147,12 @@ describe('rankEndless', () => {
     await trackDeclaredMatch(db, 'ada', `e_${RUN_ID}_1`, arrivalOf(1));
     expect(await run()).toMatchObject({ pendingAt: atOf(1) });
     // Its submission was dropped on the server's side.
-    await voidAttempt(db, 'ada', `e_${RUN_ID}_1`, 'cap', NOW);
+    await voidAttempt(
+      db,
+      { uid: 'ada', attempt: `e_${RUN_ID}_1`, createdAt: arrivalOf(1) },
+      'cap',
+      NOW
+    );
     expect(await run()).toMatchObject({ wins: 1, lives: 3, pendingAt: null });
     await declare(2);
     expect(await rank('l_2', played(2, 1))).toBe('counted');
@@ -157,7 +162,12 @@ describe('rankEndless', () => {
 
   it('keeps the seed of a run whose void match 0 TTL took', async () => {
     await declare(0);
-    await voidAttempt(db, 'ada', `e_${RUN_ID}_0`, 'error', NOW);
+    await voidAttempt(
+      db,
+      { uid: 'ada', attempt: `e_${RUN_ID}_0`, createdAt: arrivalOf(0) },
+      'error',
+      NOW
+    );
     await db.doc(`players/ada/attempts/e_${RUN_ID}_0`).delete();
     await declare(1);
     expect(await rank('l_1', played(1, 0))).toBe('counted');

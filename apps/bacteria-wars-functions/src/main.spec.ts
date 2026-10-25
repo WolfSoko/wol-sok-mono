@@ -94,7 +94,8 @@ describe('the exported functions', () => {
       expect(acceptSubmission).toHaveBeenCalledWith(
         expect.anything(),
         's1',
-        submission
+        submission,
+        expect.any(Number)
       );
       expect(giveUpSubmission).not.toHaveBeenCalled();
     });

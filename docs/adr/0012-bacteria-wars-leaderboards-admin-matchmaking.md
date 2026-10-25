@@ -329,16 +329,21 @@ match, five runs a day) and guest accounts are free. The per-uid hourly
 limit still applies, counted apart for ranked and unranked submissions
 (60 each in `limits/{uid}`), so a player cannot push their own ranked
 replay out with unranked uploads and have it voided. A ranked submission
-over the day's cap is dropped and its attempt marked `void`; one over the
-player's own hourly limit is not, as the player chose to send that many.
+over the day's cap is dropped and its attempt marked `void` (it still
+counts against the player's hour, which bounds what such drops cost); one
+over the player's own hourly limit is not voided, as the player chose to
+send that many.
 `acceptReplay` retries a submission it fails on for an hour, then gives
 up: it deletes the submission and marks the attempt `void`. Nothing a
 client sends makes acceptance throw (the parser answers null), so only a
-failure of ours voids. A submission keeps that it got its slot
-(`slotTaken`), so the retries count it once. The first stored replay of
-an attempt uses it up: `acceptReplay` writes its id into the attempt
-(`replayId`) with the replay, and an attempt that has one is never
-voided, whatever a later submission naming it brings.
+failure of ours voids. Taking a submission's slot deletes the
+submission, so a retry, working from its event's copy, finds none and
+counts it no second time. The first stored replay of an attempt uses it
+up: `acceptReplay` writes its id into the attempt (`replayId`) with the
+replay, and an attempt that has one is never voided, whatever a later
+submission naming it brings. Both marks go only on the declaration a
+submission can be of: one declared again after the submission was sent
+is left alone.
 
 A `void` attempt (`void`, `voidReason`, `voidedAt`, written by the
 functions only) never ranks: a replay of it gets `rankedReason: 'void'`.
@@ -349,10 +354,12 @@ It costs nothing:
   `at` and `expireAt` only, so the attempt gets a new seed.
 - A void endless match counts as not played, neither a win nor a lost
   life, and the run goes on with the next match. The run's `declared`
-  leaves it out. A match after it is checked against the level the run is
-  at without it, so a player who won the void match and played on at the
-  next level loses a life to the level check. That takes a drop on our
-  side in the middle of a run, and is accepted as rare.
+  leaves it out; match 0 still gives the run its seed. A match after it is
+  checked against the level the run is at without it, so a player who won
+  the void match and played on at the next level loses a life to the level
+  check. On a give-up an hour after the match the player has usually
+  played on, so in that case the drop still costs a life, unless the void
+  match was lost. This rule is open for the owner to change.
 
 **Without a declaration a match is simply unranked**: offline, or ranked
 play switched off.

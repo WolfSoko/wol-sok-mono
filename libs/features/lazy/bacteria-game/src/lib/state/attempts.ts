@@ -124,15 +124,21 @@ export function requiredAttempt(attempt: Attempt): string | null {
  * True when `id` may be declared at `atMillis` (the server's time) by a
  * player holding the attempts `declared` - what the Firestore rules check.
  * A daily attempt and the first match of a run belong to the UTC day of
- * the declaration; a run's later matches may go on past midnight.
+ * the declaration; a run's later matches may go on past midnight. A daily
+ * attempt the server marked void (`voided`, its submission dropped on the
+ * server's side, ADR 0012) may be declared again in its place.
  */
 export function canDeclare(
   id: string,
   atMillis: number,
-  declared: ReadonlySet<string>
+  declared: ReadonlySet<string>,
+  voided: ReadonlySet<string> = new Set()
 ): boolean {
   const attempt = parseAttemptId(id);
-  if (attempt === null || declared.has(id)) {
+  if (
+    attempt === null ||
+    (declared.has(id) && !(attempt.kind === 'daily' && voided.has(id)))
+  ) {
     return false;
   }
   const today = utcDay(new Date(atMillis));
@@ -143,14 +149,18 @@ export function canDeclare(
   return required === null || declared.has(required);
 }
 
-/** The next ranked daily attempt on `day`, null once all three are used. */
+/**
+ * The next ranked daily attempt on `day`, null once all three are used - a
+ * `voided` one first, which is declared again in its place.
+ */
 export function nextDailyAttemptId(
   day: string,
-  declared: ReadonlySet<string>
+  declared: ReadonlySet<string>,
+  voided: ReadonlySet<string> = new Set()
 ): string | null {
   for (let n = 1; n <= RANKED_DAILY_ATTEMPTS; n++) {
     const id = dailyAttemptId(day, n);
-    if (!declared.has(id)) {
+    if (!declared.has(id) || voided.has(id)) {
       return id;
     }
   }

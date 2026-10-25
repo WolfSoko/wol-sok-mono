@@ -1,8 +1,11 @@
 import { replayFromBytes } from '@wolsok/feat-lazy-bac-game/engine';
 import {
+  type DocumentSnapshot,
   FieldValue,
   type Firestore,
   Timestamp,
+  type Transaction,
+  type WriteBatch,
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { trackDeclaredMatch } from '../boards/rank-endless';
@@ -89,7 +92,7 @@ async function accept(
     now
   );
   if (refused === 'cap' && meta.attempt !== undefined) {
-    await voidAttempt(db, meta.uid, meta.attempt, refused, now);
+    await voidAttempt(db, { ...meta, attempt: meta.attempt }, refused, now);
   }
   if (refused !== null) {
     return refused;
@@ -122,7 +125,7 @@ export async function giveUpSubmission(
 ): Promise<void> {
   const meta = submissionMeta(submissionId, data, now);
   if (meta?.attempt !== undefined) {
-    await voidAttempt(db, meta.uid, meta.attempt, 'error', now);
+    await voidAttempt(db, { ...meta, attempt: meta.attempt }, 'error', now);
   }
   await db.doc(`replaySubmissions/${submissionId}`).delete();
 }
@@ -133,36 +136,48 @@ export async function giveUpSubmission(
  * in its place (`firestore.rules`), an endless match counts as not played,
  * so its run is computed again. Only the functions write it. An attempt
  * that already has a stored replay (`replayId`) is used, and stays so,
- * whatever else names it later.
+ * whatever else names it later; one declared again after the submission
+ * was sent is another declaration, left alone (`belongsTo`).
  */
 export async function voidAttempt(
   db: Firestore,
-  uid: string,
-  attemptId: string,
+  submission: Pick<SubmissionMeta, 'uid' | 'createdAt'> & { attempt: string },
   reason: 'cap' | 'error',
   now: number
 ): Promise<void> {
+  const { uid, attempt: attemptId } = submission;
   const ref = db.doc(`players/${uid}/attempts/${attemptId}`);
-  const state = await db.runTransaction(async (tx) => {
+  const isVoid = await db.runTransaction(async (tx) => {
     const attempt = await tx.get(ref);
-    if (!attempt.exists || attempt.get('replayId') !== undefined) {
-      return 'used' as const;
+    if (
+      !belongsTo(attempt, submission.createdAt) ||
+      attempt.get('replayId') !== undefined
+    ) {
+      return false;
     }
-    if (attempt.get('void') === true) {
-      return 'void' as const;
+    if (attempt.get('void') !== true) {
+      tx.update(ref, {
+        void: true,
+        voidReason: reason,
+        voidedAt: FieldValue.serverTimestamp(),
+      });
+      logger.warn('Ranked attempt voided', { uid, attemptId, reason });
     }
-    tx.update(ref, {
-      void: true,
-      voidReason: reason,
-      voidedAt: FieldValue.serverTimestamp(),
-    });
-    logger.warn('Ranked attempt voided', { uid, attemptId, reason });
-    return 'void' as const;
+    return true;
   });
   // Also when an earlier try voided it: its refresh may have failed.
-  if (state === 'void') {
+  if (isVoid) {
     await trackDeclaredMatch(db, uid, attemptId, now);
   }
+}
+
+/**
+ * True when a submission sent at `sentAt` can be of this declaration: one
+ * declared again later (a void daily attempt, `firestore.rules`) is not.
+ */
+function belongsTo(attempt: DocumentSnapshot, sentAt: number): boolean {
+  const at = attempt.get('at');
+  return at instanceof Timestamp && at.toMillis() <= sentAt;
 }
 
 function submissionMeta(
@@ -207,29 +222,35 @@ async function storeLocal(
   now: number
 ): Promise<AcceptOutcome> {
   const ref = db.doc(`replays/${plan.id}`);
-  const attemptRef =
-    meta.attempt === undefined
-      ? undefined
-      : db.doc(`players/${meta.uid}/attempts/${meta.attempt}`);
+  const create = (writer: Transaction | WriteBatch) => {
+    writer.create(ref, {
+      ...newReplay(plan, meta.uid, 'submitted', now),
+      // When the player sent it - a ranked replay's deadline (ADR 0012).
+      ...(meta.attempt === undefined
+        ? {}
+        : { submittedAt: Timestamp.fromMillis(meta.createdAt) }),
+    });
+    writer.create(ref.collection('blob').doc('data'), blob);
+  };
+  const { attempt } = meta;
   try {
+    if (attempt === undefined) {
+      const batch = db.batch();
+      create(batch);
+      await batch.commit();
+      return 'stored';
+    }
     return await db.runTransaction(async (tx) => {
-      const attempt =
-        attemptRef === undefined ? undefined : await tx.get(attemptRef);
-      tx.create(ref, {
-        ...newReplay(plan, meta.uid, 'submitted', now),
-        // When the player sent it - a ranked replay's deadline (ADR 0012).
-        ...(meta.attempt === undefined
-          ? {}
-          : { submittedAt: Timestamp.fromMillis(meta.createdAt) }),
-      });
-      tx.create(ref.collection('blob').doc('data'), blob);
+      const declared = await tx.get(
+        db.doc(`players/${meta.uid}/attempts/${attempt}`)
+      );
+      create(tx);
       // The first stored replay uses its attempt up: no drop voids it now.
       if (
-        attemptRef !== undefined &&
-        attempt?.exists === true &&
-        attempt.get('replayId') === undefined
+        belongsTo(declared, meta.createdAt) &&
+        declared.get('replayId') === undefined
       ) {
-        tx.update(attemptRef, { replayId: plan.id });
+        tx.update(declared.ref, { replayId: plan.id });
       }
       return 'stored' as const;
     });
