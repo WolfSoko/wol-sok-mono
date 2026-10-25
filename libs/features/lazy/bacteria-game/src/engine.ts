@@ -225,7 +225,7 @@ export {
 export type { LadderLevelId, Level } from './lib/state/levels';
 export { parseGeneratedId } from './lib/state/level-generator/generate-level';
 export { matchRecord, medalFor } from './lib/state/medallions';
-export type { MatchRecord, MedalTier } from './lib/state/medallions';
+export type { MedalTier } from './lib/state/medallions';
 export { DEFAULT_MODE, isGameMode } from './lib/state/game-mode';
 export type { GameMode } from './lib/state/game-mode';
 export {

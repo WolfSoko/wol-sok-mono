@@ -119,7 +119,7 @@ export async function verifyRunWins(
       verdict,
       now
     );
-    // Null: another check applied it, and counted it.
+    // Null: another check applied it (and counted it), or the run was cut.
     if (run !== null && replay !== null) {
       await countRerun(db, replay.header, 'endless', verdict);
     }
