@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.86.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.85.0...v74.86.0) (2026-10-25)
+
+### Features
+
+* **angular-examples:** ✨ thanos snap playground page ([#2633](https://github.com/WolfSoko/wol-sok-mono/issues/2633)) ([e0b6633](https://github.com/WolfSoko/wol-sok-mono/commit/e0b66339f76d9e636b869d0abb0e9c7417d18c06))
+
+### Chore
+
+* **release:** publish ([11be59b](https://github.com/WolfSoko/wol-sok-mono/commit/11be59b6587b6173e9fc8caa8018591c965864e5))
+
 ## [74.85.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.84.0...v74.85.0) (2026-10-25)
 
 ### Features
