@@ -45,7 +45,7 @@ import { AdminTogglesService, type ToggleState } from './admin-toggles.service';
           <li>
             <mat-slide-toggle
               [checked]="draft()[key]"
-              [disabled]="!state.available || saving()"
+              [disabled]="!state.available || busy()"
               (change)="setDraft(key, $event.checked)"
             >
               {{ nameKey(key) | adminT }}
@@ -69,7 +69,7 @@ import { AdminTogglesService, type ToggleState } from './admin-toggles.service';
         <button
           mat-flat-button
           type="button"
-          [disabled]="changes().length === 0 || saving()"
+          [disabled]="changes().length === 0 || busy()"
           (click)="publish()"
         >
           {{ 'toggles.publish' | adminT: { count: changes().length } }}
@@ -77,7 +77,7 @@ import { AdminTogglesService, type ToggleState } from './admin-toggles.service';
         <button
           mat-button
           type="button"
-          [disabled]="changes().length === 0 || saving()"
+          [disabled]="changes().length === 0 || busy()"
           (click)="draft.set(state.values)"
         >
           {{ 'toggles.discard' | adminT }}
@@ -85,7 +85,7 @@ import { AdminTogglesService, type ToggleState } from './admin-toggles.service';
         <button
           mat-button
           type="button"
-          [disabled]="saving()"
+          [disabled]="busy()"
           (click)="load(true)"
         >
           {{ 'toggles.reload' | adminT }}
@@ -134,6 +134,9 @@ export class TogglesComponent {
   protected readonly state = signal<ToggleState | null>(null);
   protected readonly failed = signal(false);
   protected readonly saving = signal(false);
+  protected readonly loading = signal(false);
+  /** While a read or a publish runs, the draft and its buttons are locked. */
+  protected readonly busy = computed(() => this.saving() || this.loading());
   /** The switches as the owner set them, before publishing. */
   protected readonly draft = signal<FeatureToggles>({ ...FEATURE_TOGGLES });
   /** The names of the toggles last published, for the note under them. */
@@ -162,7 +165,12 @@ export class TogglesComponent {
     this.draft.update((draft) => ({ ...draft, [key]: on }));
   }
 
+  /** Reads the toggles and resets the draft to them; one read at a time. */
   protected async load(fresh: boolean): Promise<void> {
+    if (this.loading()) {
+      return;
+    }
+    this.loading.set(true);
     this.failed.set(false);
     try {
       const state = await this.toggles.read(fresh);
@@ -171,6 +179,8 @@ export class TogglesComponent {
     } catch (error) {
       console.error('Could not read the toggles', error);
       this.failed.set(true);
+    } finally {
+      this.loading.set(false);
     }
   }
 

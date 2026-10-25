@@ -72,6 +72,28 @@ describe('TogglesComponent', () => {
     expect(element.textContent).toContain('Published: Leaderboards: off');
   });
 
+  it('locks the draft while it reads the toggles again', async () => {
+    const { read, settle, button, toggle } = render();
+    await settle();
+    toggle('Leaderboards').click();
+    await settle();
+    let answer: (state: ToggleState) => void = () => undefined;
+    read.mockImplementationOnce(
+      () => new Promise<ToggleState>((resolve) => (answer = resolve))
+    );
+    button('Read again').click();
+    await settle();
+    expect(button('Read again').disabled).toBe(true);
+    expect(button('Publish').disabled).toBe(true);
+    expect(button('Discard').disabled).toBe(true);
+    expect(toggle('Leaderboards').disabled).toBe(true);
+    answer(STATE);
+    await settle();
+    expect(read).toHaveBeenCalledTimes(2);
+    expect(button('Read again').disabled).toBe(false);
+    expect(toggle('Leaderboards').disabled).toBe(false);
+  });
+
   it('switches nothing where Remote Config cannot be reached', async () => {
     const { element, settle } = render({
       available: false,
