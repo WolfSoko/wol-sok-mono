@@ -163,8 +163,8 @@ export type SimulationFactory = (
 /**
  * True when matches run the deterministic simulation of ADR 0015 where the
  * device can: the integer passes on a GPU that passed the self-test, the
- * CPU's ruleset else. The rollout's switch (step 8): off until the owner's
- * real-device check passed - meanwhile `?sim=gpu-int` opts one device in
- * for local play (see `chooseSimulation`).
+ * CPU's ruleset else. The rollout's switch (step 8), on since the owner's
+ * real-device check passed; `?sim=` still overrides local play on one
+ * device (see `chooseSimulation`).
  */
-export const DETERMINISTIC_SIMULATION = false;
+export const DETERMINISTIC_SIMULATION = true;

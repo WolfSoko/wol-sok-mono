@@ -51,6 +51,7 @@ export {
 export {
   EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
+  GPU_INT_REPLAY_VERSION,
   LADDER_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
@@ -331,6 +332,12 @@ export type {
   PlayerTarget,
 } from './lib/state/admin-commands';
 export { AVATAR_COUNT, defaultProfile } from './lib/social/profile';
+
+// The player's progress and the XP it is worth - what the XP board counts.
+export { parseProgress } from './lib/state/progress';
+export type { Progress } from './lib/state/progress';
+export { xpOf } from './lib/state/xp';
+export { rankFor } from './lib/state/ranks';
 export type { Avatar, Profile } from './lib/social/profile';
 
 // Results.

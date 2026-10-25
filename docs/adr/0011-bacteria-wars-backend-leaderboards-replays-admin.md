@@ -497,6 +497,15 @@ The rules and `replayCommand` require `admin == true`,
 4. Functions app, rules, indexes, emulator; deploy the functions **before**
    the hosting rewrites merge (a release whose rewrites name a function
    that does not exist fails).
+   - So far: the app with `acceptReplay`, `replayCommand` (`remove`; the
+     gallery's types answer `unsupported` until step 6) and
+     `deletePlayerReplays`; the rules for submissions, commands, `replays`,
+     `bans` and the room stub, with ADR 0012's `notBanned()` on every
+     client write; the indexes and TTL policies; rules and handler specs
+     against the emulator. In the code, unlike the text above: a command's
+     `expireAt` is checked to lie within two days ahead, since the client
+     sets it by its own clock; and an unranked endless match is stored as
+     `computer`, as nothing in it tells it from another generated level.
 5. Client: room stub, recording settings, submission, "My matches", the
    viewer.
 6. `publicSite`, `robots.txt`, privacy text, `/watch`, the curation view
@@ -516,10 +525,18 @@ Decided by the owner on 2026-10-23:
 
 ## Owner's manual steps
 
-- Blaze plan and the APIs above on `bacteria-wars`.
+- Blaze plan and the APIs above on `bacteria-wars`. Done 2026-10-25
+  (Cloud Functions, Cloud Build, Artifact Registry, Cloud Run, Eventarc,
+  Cloud Scheduler, Pub/Sub).
 - `gcloud firestore databases describe --project bacteria-wars`: the
-  location becomes the functions region.
+  location becomes the functions region. Done 2026-10-25: `europe-west1`,
+  with the Realtime Database and `BAN_TOMBSTONE_KEY`.
 - IAM roles for the deploying account; Artifact Registry cleanup policy.
+  Roles done 2026-10-25: the CI token's account is Owner; the cloud
+  environment's service account has Cloud Functions Admin, Service
+  Account User and Artifact Registry Writer beside Editor and Firebase
+  Admin; the build accounts keep their defaults. The cleanup policy is
+  still open.
 - Turn on TTL for the new `expireAt` fields if the index deploy does not.
 - First functions deploy by hand (or let CI do it) before the rewrites PR.
 - Once: `gcloud auth application-default login`, then
