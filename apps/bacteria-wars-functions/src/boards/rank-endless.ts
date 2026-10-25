@@ -3,6 +3,7 @@ import {
   attemptSeed,
   endlessAttemptId,
   parseAttemptId,
+  type ReplayHeader,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   FieldPath,
@@ -11,6 +12,7 @@ import {
   Timestamp,
   type Transaction,
 } from 'firebase-admin/firestore';
+import { countRerun } from '../replays/level-stats';
 import { DAY_MS } from './budgets';
 import {
   answerReplay,
@@ -387,7 +389,9 @@ export async function applyVerdict(
   runId: string,
   replayId: string,
   verdict: Verdict,
-  now: number
+  now: number,
+  /** The replay played, for the level statistics; absent without one. */
+  header?: ReplayHeader
 ): Promise<StoredRun | null> {
   const moderationRef = db.doc(`moderation/${uid}`);
   return db.runTransaction(async (tx) => {
@@ -408,6 +412,9 @@ export async function applyVerdict(
           : {};
     const run = await saveRun(tx, db, uid, runId, read, change, now);
     tx.update(db.doc(`replays/${replayId}`), verdictFields(verdict));
+    if (header !== undefined) {
+      countRerun(tx, db, header, 'endless', verdict);
+    }
     recordCheck(tx, moderationRef, moderation.data() ?? {}, verdict.state, now);
     return run;
   });

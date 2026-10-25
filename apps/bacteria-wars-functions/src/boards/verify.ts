@@ -1,8 +1,14 @@
 import {
   BALANCE_VERSION,
+  getLevel,
+  matchRecord,
+  medalFor,
+  type MedalTier,
   playReplay,
   type Replay,
+  type ReplayResult,
   replayOutcome,
+  TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
 
 /** What playing a replay again found (ADR 0011, 0012). */
@@ -26,6 +32,12 @@ export interface ReplaySummary {
 export interface Verdict {
   state: VerifiedState;
   summary?: ReplaySummary;
+  /**
+   * A verified match against the computer: the medallion the human's run
+   * earned in the re-run, null for none - never what the client claimed.
+   * The level statistics count it (ADR 0016 §4).
+   */
+  medal?: MedalTier | null;
   /** How long the re-run took, for the budget. */
   ms: number;
 }
@@ -81,6 +93,24 @@ export function verifyReplay(
         .filter((_, i) => i % step === 0)
         .flatMap((sizes) => [...sizes]),
     },
+    ...(header.mode === 'vs-computer'
+      ? { medal: medalOf(replay, result) }
+      : {}),
     ms,
   };
+}
+
+/** The medallion of a re-run match, judged as the result screen judges it. */
+function medalOf({ header }: Replay, result: ReplayResult): MedalTier | null {
+  const record = matchRecord(result.players, {
+    levelId: header.levelId,
+    difficulty: header.difficulty,
+    durationSec: Math.floor(result.ticks / TICKS_PER_SEC),
+    winner: result.outcome?.winner ?? null,
+    // Only the peak share reads it, which no medallion asks for.
+    capacity: 0,
+  });
+  return record === null
+    ? null
+    : medalFor(getLevel(header.levelId).medal, record);
 }

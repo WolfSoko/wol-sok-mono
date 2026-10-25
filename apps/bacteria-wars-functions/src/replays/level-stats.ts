@@ -4,14 +4,20 @@ import {
   type ReplayHeader,
   TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
-import { FieldValue, type Firestore } from 'firebase-admin/firestore';
+import {
+  FieldValue,
+  type Firestore,
+  type Transaction,
+} from 'firebase-admin/firestore';
+import type { Verdict } from '../boards/verify';
 import type { ReplayKind } from './accept-plan';
 
 /**
  * The level statistics (ADR 0016 §4): counters per level and bot
  * difficulty in `levelStats/{id}`, added to once a local replay is
- * stored - no uid, increments only, from what the replay claims. The
- * admin area's Balance view reads them; nobody else does.
+ * stored - no uid, increments only, from what the replay claims - and
+ * the medallions of the matches re-run (`countRerun`). The admin area's
+ * Balance view reads them; nobody else does.
  */
 
 /** The durations a match falls into, by the upper end in seconds. */
@@ -106,6 +112,36 @@ export async function countLevelStats(
       ...key,
       updatedAt: FieldValue.serverTimestamp(),
       ...levelStatsCounts(header),
+    },
+    { merge: true }
+  );
+}
+
+/**
+ * Adds a verified re-run of a match against the computer to its level
+ * statistics, in the transaction that applies the verdict - so once, with
+ * the state change: `rerun` and the medallion it earned (`medals.{tier}`).
+ * Only re-run matches carry them (daily and endless so far), so the medal
+ * rate is `medals / rerun`, not `/ attempts`.
+ */
+export function countRerun(
+  tx: Transaction,
+  db: Firestore,
+  header: ReplayHeader,
+  kind: ReplayKind,
+  verdict: Verdict
+): void {
+  if (verdict.state !== 'verified' || verdict.medal === undefined) {
+    return;
+  }
+  const key = levelStatsKey(header, kind);
+  const one = FieldValue.increment(1);
+  tx.set(
+    db.doc(`levelStats/${levelStatsId(key)}`),
+    {
+      ...key,
+      rerun: one,
+      ...(verdict.medal === null ? {} : { medals: { [verdict.medal]: one } }),
     },
     { merge: true }
   );

@@ -22,6 +22,7 @@ import {
   MAX_VERIFIED_TICKS,
   SLICE_MS,
 } from './budgets';
+import { countRerun } from '../replays/level-stats';
 import { storedReplay } from './declared-match';
 import { type DailyAttemptRun, writeDailyEntry } from './rank-daily';
 import { type Verdict, verifyReplay } from './verify';
@@ -391,6 +392,9 @@ export async function checkBestAttempt(
     await writeDailyEntry(tx, db, day, uid, next);
     tx.update(runRef, { attempts: next });
     tx.update(db.doc(`replays/${best.replayId}`), verdictFields(verdict));
+    if (replay !== null) {
+      countRerun(tx, db, replay.header, 'daily', verdict);
+    }
     recordCheck(tx, moderationRef, moderation, verdict.state, now);
     return 'checked';
   });

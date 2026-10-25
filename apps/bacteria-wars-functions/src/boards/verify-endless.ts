@@ -116,7 +116,8 @@ export async function verifyRunWins(
       run.runId,
       next.replayId,
       verdict,
-      now
+      now,
+      replay?.header
     );
     await charge();
     if (verdict.state === 'balance-mismatch') {
