@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.99.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.98.0...v74.99.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ the owner's gallery curation in replayCommand ([#2669](https://github.com/WolfSoko/wol-sok-mono/issues/2669)) ([c02b07f](https://github.com/WolfSoko/wol-sok-mono/commit/c02b07f1359c9b05f7b71f492b455647837e761a))
+
 ## [74.98.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.97.0...v74.98.0) (2026-10-25)
 
 ### Features
