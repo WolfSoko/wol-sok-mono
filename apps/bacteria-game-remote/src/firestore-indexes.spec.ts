@@ -2,9 +2,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * The composite queries the functions and the game run, against the indexes
- * the release deploys (`apps/bacteria-game-remote/firestore.indexes.json`):
- * the emulator never asks for an index, production refuses the query.
+ * The composite queries the functions (`bacteria-wars-functions`) and the
+ * game run, against the indexes the release deploys
+ * (`../firestore.indexes.json`): the emulator never asks for an index,
+ * production refuses the query. The spec sits beside the file, so a change
+ * to the indexes alone runs it.
  */
 interface Field {
   fieldPath: string;
@@ -12,10 +14,7 @@ interface Field {
   arrayConfig?: 'CONTAINS';
 }
 const { indexes } = JSON.parse(
-  readFileSync(
-    join(__dirname, '../../bacteria-game-remote/firestore.indexes.json'),
-    'utf8'
-  )
+  readFileSync(join(__dirname, '../firestore.indexes.json'), 'utf8')
 ) as { indexes: { collectionGroup: string; fields: Field[] }[] };
 
 const QUERIES: Record<string, { group: string; fields: Field[] }> = {
