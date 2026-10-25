@@ -202,6 +202,31 @@ describe('declared attempts', () => {
       })
     );
   });
+  it('lets a player declare a void daily attempt again, nothing else', async () => {
+    const day = today();
+    const voided = { at: Timestamp.now(), void: true, voidReason: 'cap' };
+    await seed(`players/ada/attempts/d_${day}_1`, voided);
+    // A whole new declaration in its place: the void marker goes.
+    await assertFails(
+      updateDoc(doc(db('ada'), `players/ada/attempts/d_${day}_1`), {
+        at: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      setDoc(doc(db('bob'), `players/ada/attempts/d_${day}_1`), declaration())
+    );
+    await assertSucceeds(declare('ada', `d_${day}_1`));
+    await assertFails(declare('ada', `d_${day}_1`));
+    // Only on its day, and never an endless match.
+    await seed(`players/ada/attempts/d_${yesterday()}_1`, voided);
+    await assertFails(declare('ada', `d_${yesterday()}_1`));
+    const run = `${compact(day)}1`;
+    await seed(`players/ada/attempts/e_${run}_0`, voided);
+    await assertFails(declare('ada', `e_${run}_0`));
+    await seed('bans/eve', { until: null });
+    await seed(`players/eve/attempts/d_${day}_1`, voided);
+    await assertFails(declare('eve', `d_${day}_1`));
+  });
 });
 
 describe('replaySubmissions', () => {

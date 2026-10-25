@@ -88,6 +88,23 @@ describe('computeRun', () => {
     expect(waiting.matches).toEqual([{ i: 0, result: 'pending' }]);
   });
 
+  it('skips a void match: neither a win nor a lost life', () => {
+    const attempts = [
+      ...declared(1),
+      { i: 1, at: NOW - 9 * HOUR, void: true as const },
+      { i: 2, at: NOW - 8 * HOUR },
+    ];
+    // Match 2 plays the level after match 0's win, as if 1 never was.
+    const run = computeRun(
+      SEED,
+      attempts,
+      { 0: match(0, true), 2: match(1, true) },
+      NOW
+    );
+    expect(run).toMatchObject({ wins: 2, lives: 3, pendingAt: null });
+    expect(run.matches.map((m) => m.i)).toEqual([0, 2]);
+  });
+
   it('ends after the third lost life and counts nothing after it', () => {
     const run = computeRun(
       SEED,

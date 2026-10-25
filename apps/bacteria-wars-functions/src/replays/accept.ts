@@ -5,6 +5,7 @@ import {
   Timestamp,
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
+import { trackDeclaredMatch } from '../boards/rank-endless';
 import { REPLAY_TTL_MS } from '../config';
 import { isBanned, takeSubmissionSlot } from '../limits';
 import {
@@ -21,6 +22,7 @@ export type AcceptOutcome =
   | 'malformed'
   | 'banned'
   | 'limit'
+  | 'cap'
   | 'unparsable'
   | 'not-in-room'
   | 'duplicate'
@@ -39,13 +41,17 @@ interface RoomStub {
 
 /**
  * Turns `replaySubmissions/{id}` into `replays/{id}` (ADR 0011) and deletes
- * the submission, whatever came of it. Nothing is played again here: the
- * replay is parsed strictly, bound to its players and stored.
+ * the submission, whatever came of it - unless it throws: `acceptReplay`
+ * then tries again, and gives up with {@link giveUpSubmission}. Nothing is
+ * played again here: the replay is parsed strictly, bound to its players
+ * and stored.
  * - A local match is the caller's alone, `submitted`.
  * - An online match lists each player of its room stub once their own report
  *   arrives: `waiting` with one, `agreed` or `disputed` with both. A second
  *   report after the hourly function closed the match with one ("Not
  *   reported", ADR 0012) is dropped as `closed`.
+ * - A ranked submission over the day's cap for everyone (`cap`) voids its
+ *   attempt: a drop on the server's side never costs one (ADR 0012).
  */
 export async function acceptSubmission(
   db: Firestore,
@@ -75,10 +81,17 @@ async function accept(
   if (await isBanned(db, meta.uid, now)) {
     return 'banned';
   }
-  if (
-    !(await takeSubmissionSlot(db, meta.uid, meta.attempt !== undefined, now))
-  ) {
-    return 'limit';
+  const refused = await takeSubmissionSlot(
+    db,
+    meta.uid,
+    meta.attempt !== undefined,
+    now
+  );
+  if (refused === 'cap' && meta.attempt !== undefined) {
+    await voidAttempt(db, meta.uid, meta.attempt, refused, now);
+  }
+  if (refused !== null) {
+    return refused;
   }
   const replay = await replayFromBytes(new Uint8Array(bytes), { stored: true });
   if (replay === null) {
@@ -92,6 +105,60 @@ async function accept(
   return plan.room === undefined
     ? storeLocal(db, plan, meta, blob, now)
     : storeOnline(db, plan, meta, blob, now);
+}
+
+/**
+ * Ends a submission `acceptReplay` failed on for an hour: deletes it, and
+ * voids its attempt unless its replay got stored after all - the failure
+ * was the server's, so it must not cost the player the attempt.
+ */
+export async function giveUpSubmission(
+  db: Firestore,
+  submissionId: string,
+  data: Record<string, unknown>,
+  now: number
+): Promise<void> {
+  const meta = submissionMeta(submissionId, data, now);
+  if (
+    meta?.attempt !== undefined &&
+    // A ranked replay is local: `l_` and the submission's id.
+    !(await db.doc(`replays/l_${submissionId}`).get()).exists
+  ) {
+    await voidAttempt(db, meta.uid, meta.attempt, 'error', now);
+  }
+  await db.doc(`replaySubmissions/${submissionId}`).delete();
+}
+
+/**
+ * Marks a declared attempt the server dropped `void` (ADR 0012): its replay
+ * never ranks, and it costs nothing - a daily attempt may be declared again
+ * in its place (`firestore.rules`), an endless match counts as not played,
+ * so its run is computed again. Only the functions write it.
+ */
+export async function voidAttempt(
+  db: Firestore,
+  uid: string,
+  attemptId: string,
+  reason: 'cap' | 'error',
+  now: number
+): Promise<void> {
+  const ref = db.doc(`players/${uid}/attempts/${attemptId}`);
+  const voided = await db.runTransaction(async (tx) => {
+    const attempt = await tx.get(ref);
+    if (!attempt.exists || attempt.get('void') === true) {
+      return false;
+    }
+    tx.update(ref, {
+      void: true,
+      voidReason: reason,
+      voidedAt: FieldValue.serverTimestamp(),
+    });
+    return true;
+  });
+  if (voided) {
+    logger.warn('Ranked attempt voided', { uid, attemptId, reason });
+    await trackDeclaredMatch(db, uid, attemptId, now);
+  }
 }
 
 function submissionMeta(

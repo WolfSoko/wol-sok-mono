@@ -37,6 +37,7 @@ export type ArrivalReason =
   | DeclaredReason
   | 'banned'
   | 'no-attempt'
+  | 'void'
   | 'duplicate'
   | 'unreadable';
 
@@ -144,7 +145,9 @@ export interface DeclaredReplay<A extends Attempt> {
 /**
  * Reads what a new replay of a declared `kind` attempt needs: its player,
  * the stored declaration and the replay itself - or why it cannot rank
- * (`no-attempt`, `banned`, `unreadable`).
+ * (`no-attempt`, `void`, `banned`, `unreadable`). A `void` declaration is
+ * one whose submission the server dropped (`voidAttempt`): it never ranks,
+ * a daily one may be declared again instead.
  */
 export async function readDeclaredReplay<K extends Attempt['kind']>(
   db: Firestore,
@@ -177,6 +180,9 @@ export async function readDeclaredReplay<K extends Attempt['kind']>(
   }
   if (!(at instanceof Timestamp)) {
     return { reason: 'no-attempt' };
+  }
+  if (declaration.get('void') === true) {
+    return { reason: 'void' };
   }
   if (replay === null) {
     return { reason: 'unreadable' };

@@ -93,7 +93,11 @@ export async function readRun(
       attempt.runId === runId &&
       at instanceof Timestamp
     ) {
-      attempts.push({ i: attempt.i, at: at.toMillis() });
+      attempts.push({
+        i: attempt.i,
+        at: at.toMillis(),
+        ...(doc.get('void') === true ? { void: true as const } : {}),
+      });
     }
   }
   const stored = (run.data() ?? {}) as Partial<StoredRun>;
@@ -133,8 +137,11 @@ export async function saveRun(
   const base = endlessEntryBase(state, verifiedWins, cut);
   const run: StoredRun = {
     ...state,
+    // Without the void matches: once TTL takes one, it is still not played.
     declared: Object.fromEntries(
-      read.attempts.map((attempt) => [String(attempt.i), attempt.at])
+      read.attempts
+        .filter((attempt) => attempt.void !== true)
+        .map((attempt) => [String(attempt.i), attempt.at])
     ),
     // A cut run is over: what came after the failed win no longer counts.
     over: state.over || cut !== null,

@@ -20,6 +20,11 @@ import type { ArrivalReason } from './declared-match';
 export interface RunAttempt {
   i: number;
   at: number;
+  /**
+   * The server dropped its submission (`voidAttempt`): the match counts as
+   * not played, neither a win nor a lost life.
+   */
+  void?: true;
 }
 
 /** Why a ranked endless replay did (not) count - its `rankedReason`. */
@@ -75,7 +80,7 @@ export const LOST_AFTER_MS = 2 * 3_600_000;
  * played the level the run was at, `endlessLevelId({ seed, wins })`, with
  * the wins before it; a refused replay or none 2 hours after the
  * declaration costs a life. A match still within those 2 hours stops the
- * count: what comes after depends on it.
+ * count: what comes after depends on it. A void match is skipped.
  */
 export function computeRun(
   runSeed: number,
@@ -93,7 +98,8 @@ export function computeRun(
   // The client's own run rules (`state/endless.ts`), so a run scores here
   // as it played there.
   let run = newRun(runSeed);
-  for (const { i, at } of [...attempts].sort((a, b) => a.i - b.i)) {
+  const played = attempts.filter((attempt) => attempt.void !== true);
+  for (const { i, at } of played.sort((a, b) => a.i - b.i)) {
     if (isRunOver(run)) {
       break;
     }

@@ -1,5 +1,6 @@
 import { rankDaily } from './boards/rank-daily';
 import { rankOnline } from './boards/rank-online';
+import { acceptSubmission, giveUpSubmission } from './replays/accept';
 
 jest.mock('./boards/rank-daily', () => ({
   ...jest.requireActual('./boards/rank-daily'),
@@ -8,6 +9,10 @@ jest.mock('./boards/rank-daily', () => ({
 jest.mock('./boards/rank-online', () => ({
   ...jest.requireActual('./boards/rank-online'),
   rankOnline: jest.fn(async () => 'counted'),
+}));
+jest.mock('./replays/accept', () => ({
+  acceptSubmission: jest.fn(async () => 'stored'),
+  giveUpSubmission: jest.fn(async () => undefined),
 }));
 /** The replay as `rankReplay` reads it afresh - undefined when gone. */
 let mockStoredReplay: Record<string, unknown> | undefined;
@@ -24,6 +29,13 @@ interface Endpoint {
   scheduleTrigger?: { retryConfig?: { retryCount?: number } };
 }
 
+/** The part of a created document's event `acceptReplay` reads. */
+interface CreatedEvent {
+  time: string;
+  params: { id: string };
+  data: { data: () => Record<string, unknown> | undefined };
+}
+
 /** The part of a written document's event `rankReplay` reads. */
 interface WrittenEvent {
   time: string;
@@ -37,7 +49,11 @@ interface WrittenEvent {
 describe('the exported functions', () => {
   let functions: Record<
     string,
-    { __endpoint: Endpoint; run: (event: WrittenEvent) => unknown } | undefined
+    | {
+        __endpoint: Endpoint;
+        run: (event: WrittenEvent | CreatedEvent) => unknown;
+      }
+    | undefined
   >;
 
   beforeAll(async () => {
@@ -51,15 +67,51 @@ describe('the exported functions', () => {
       .filter(([, fn]) => fn?.__endpoint.eventTrigger?.retry === true)
       .map(([name]) => name)
       .sort();
+    // acceptReplay: a failure of ours would lose a replay, and an attempt.
     // rankReplay: a stored replay it fails to rank would never count.
     // rebuildTop: a busy instance turns events away, and a rebuild is safe.
-    expect(retrying).toEqual(['rankReplay', 'rebuildTop']);
+    expect(retrying).toEqual(['acceptReplay', 'rankReplay', 'rebuildTop']);
   });
 
   it('never retry the hourly run', () => {
     expect(
       functions['hourly']?.__endpoint.scheduleTrigger?.retryConfig?.retryCount
     ).toBe(0);
+  });
+
+  describe('acceptReplay', () => {
+    const submission = { uid: 'ada', attempt: 'd_2026-10-25_1' };
+    const created = (minutesAgo: number): CreatedEvent => ({
+      time: new Date(Date.now() - minutesAgo * 60_000).toISOString(),
+      params: { id: 's1' },
+      data: { data: () => submission },
+    });
+
+    beforeEach(() => jest.clearAllMocks());
+
+    it('accepts a submission at the time of the event, for an hour', async () => {
+      const event = created(40);
+      await functions['acceptReplay']?.run(event);
+      expect(acceptSubmission).toHaveBeenCalledWith(
+        expect.anything(),
+        's1',
+        submission,
+        Date.parse(event.time)
+      );
+      expect(giveUpSubmission).not.toHaveBeenCalled();
+    });
+
+    it('then gives up, which voids its attempt', async () => {
+      const event = created(61);
+      await functions['acceptReplay']?.run(event);
+      expect(giveUpSubmission).toHaveBeenCalledWith(
+        expect.anything(),
+        's1',
+        submission,
+        Date.parse(event.time)
+      );
+      expect(acceptSubmission).not.toHaveBeenCalled();
+    });
   });
 
   describe('rankReplay', () => {

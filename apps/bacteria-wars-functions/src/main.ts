@@ -30,7 +30,7 @@ import { rebuildTop as rebuildTopOf } from './boards/rebuild-top';
 import { HOURLY_ON, REGION, RETRY_FOR_MS } from './config';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
-import { acceptSubmission } from './replays/accept';
+import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
 import { runReplayCommand } from './replays/command';
 import { deletePlayerReplays as deleteReplaysOf } from './replays/delete-player';
@@ -40,14 +40,35 @@ setGlobalOptions({ region: REGION, maxInstances: 5 });
 
 const db = () => getFirestore();
 
-/** `replaySubmissions/{id}` into `replays/{id}` - see `acceptSubmission`. */
+/**
+ * `replaySubmissions/{id}` into `replays/{id}` - see `acceptSubmission`.
+ * Retried for an hour (`RETRY_FOR_MS`), at the event's time; then it gives
+ * up (`giveUpSubmission`), which voids a ranked attempt rather than let a
+ * failure of ours cost it.
+ */
 export const acceptReplay = onDocumentCreated(
-  { document: 'replaySubmissions/{id}', memory: '256MiB', cpu: 'gcf_gen1' },
+  {
+    document: 'replaySubmissions/{id}',
+    memory: '256MiB',
+    cpu: 'gcf_gen1',
+    retry: true,
+  },
   async (event) => {
     const data = event.data?.data();
-    if (data !== undefined) {
-      await acceptSubmission(db(), event.params.id, data);
+    if (data === undefined) {
+      return;
     }
+    const id = event.params.id;
+    const at = Date.parse(event.time);
+    if (tooOldToRetry(at, Date.now())) {
+      logger.error(
+        `acceptReplay gave up on a submission older than ${RETRY_FOR_MS / 60_000} minutes`,
+        { id, time: event.time }
+      );
+      await giveUpSubmission(db(), id, data, at);
+      return;
+    }
+    await acceptSubmission(db(), id, data, at);
   }
 );
 

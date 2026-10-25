@@ -10,7 +10,10 @@
  */
 export const REGION = 'europe-west1';
 
-/** How many replays one player may submit in an hour. */
+/**
+ * How many replays one player may submit in an hour - unranked and ranked
+ * each (ADR 0012), so unranked uploads never push out a ranked one.
+ */
 export const SUBMISSIONS_PER_HOUR = 60;
 
 /**

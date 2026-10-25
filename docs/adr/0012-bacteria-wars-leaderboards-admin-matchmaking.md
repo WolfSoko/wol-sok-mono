@@ -325,12 +325,30 @@ attempt do not count against ADR 0011's global daily cap, which unranked
 replays could otherwise use up. They have a global daily cap of their own
 instead, 20,000 ranked submissions a day in `counters/{day}`, since the
 attempt rules bound them per account only (three a day, one per endless
-match, five runs a day) and guest accounts are free; the per-uid hourly
-limit still applies. A ranked submission over that cap is dropped and its
-attempt marked `void`. Closing attempts skips any attempt
-with a submission still pending, and an attempt whose submission the
-server dropped (functions down, parse failure on our side) is marked
-`void`, not lost.
+match, five runs a day) and guest accounts are free. The per-uid hourly
+limit still applies, counted apart for ranked and unranked submissions
+(60 each in `limits/{uid}`), so a player cannot push their own ranked
+replay out with unranked uploads and have it voided. A ranked submission
+over the day's cap is dropped and its attempt marked `void`; one over the
+player's own hourly limit is not, as the player chose to send that many.
+`acceptReplay` retries a submission it fails on for an hour, then gives
+up: it deletes the submission and marks the attempt `void`, unless its
+replay was stored after all. Nothing a client sends makes acceptance
+throw (the parser answers null), so only a failure of ours voids.
+
+A `void` attempt (`void`, `voidReason`, `voidedAt`, written by the
+functions only) never ranks: a replay of it gets `rankedReason: 'void'`.
+It costs nothing:
+
+- A void daily attempt may be declared again in its place, on its day:
+  the rules let its player replace the document with a new declaration,
+  `at` and `expireAt` only, so the attempt gets a new seed.
+- A void endless match counts as not played, neither a win nor a lost
+  life, and the run goes on with the next match. The run's `declared`
+  leaves it out. A match after it is checked against the level the run is
+  at without it, so a player who won the void match and played on at the
+  next level loses a life to the level check. That takes a drop on our
+  side in the middle of a run, and is accepted as rare.
 
 **Without a declaration a match is simply unranked**: offline, or ranked
 play switched off.
@@ -901,9 +919,11 @@ chose not to share their status, and the privacy page says so.
 
 All run in ADR 0011's codebase and region, with retries off, and are
 idempotent: a transaction checks the state first, and markers are created
-with `create()`. `rankReplay` is the exception: it retries, and drops an
-event older than an hour, since a stored replay it fails to rank would
-never count. Each delivery reads the replay afresh and leaves one that
+with `create()`. `rankReplay` and `acceptReplay` are the exceptions: they
+retry, and drop an event older than an hour, since a stored replay
+`rankReplay` fails to rank would never count, and a submission
+`acceptReplay` fails on would be lost with its attempt (it voids the
+attempt when it gives up, see above). Each delivery reads the replay afresh and leaves one that
 is gone or already answered (`rankedReason`); the steps check that again
 in their transactions (the `rankedReplays` marker, the `rankedReason` a
 daily replay keeps once answered), read the match's seats there instead

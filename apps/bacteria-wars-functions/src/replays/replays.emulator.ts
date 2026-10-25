@@ -10,8 +10,8 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { closeNotReported } from '../boards/hourly';
-import { clearBanCache } from '../limits';
-import { acceptSubmission } from './accept';
+import { clearBanCache, dayOf } from '../limits';
+import { acceptSubmission, giveUpSubmission } from './accept';
 import { deleteReplayChildren } from './cleanup';
 import { runReplayCommand } from './command';
 import { deletePlayerReplays } from './delete-player';
@@ -153,6 +153,60 @@ describe('acceptReplay', () => {
       .set({ hour: Math.floor(NOW / HOUR) - 1, submissions: 60 });
     expect(await submit('s2', 'ada', await bytesOf())).toBe('stored');
     expect((await db.doc('limits/ada').get()).get('submissions')).toBe(1);
+  });
+
+  describe('a ranked submission', () => {
+    const attempt = `d_${dayOf(NOW)}_1`;
+    const attemptRef = () => db.doc(`players/ada/attempts/${attempt}`);
+    beforeEach(() =>
+      attemptRef().set({ at: Timestamp.fromMillis(NOW - 10 * 60_000) })
+    );
+
+    it("has an hour of its own, which unranked ones can't use up", async () => {
+      const hour = Math.floor(NOW / HOUR);
+      await db.doc('limits/ada').set({ hour, submissions: 60 });
+      // Past the limits, on to the checks against its replay.
+      expect(await submit('s1', 'ada', await bytesOf(), { attempt })).toBe(
+        'attempt-mismatch'
+      );
+      expect((await db.doc('limits/ada').get()).data()).toMatchObject({
+        submissions: 60,
+        rankedSubmissions: 1,
+      });
+      await db.doc('limits/ada').set({ hour, rankedSubmissions: 60 });
+      expect(await submit('s2', 'ada', await bytesOf(), { attempt })).toBe(
+        'limit'
+      );
+      // A player's own limit: the attempt is spent.
+      expect((await attemptRef().get()).get('void')).toBeUndefined();
+    });
+
+    it("voids its attempt when the day's cap for everyone drops it", async () => {
+      await db.doc(`counters/${dayOf(NOW)}`).set({ rankedSubmissions: 20_000 });
+      expect(await submit('s1', 'ada', await bytesOf(), { attempt })).toBe(
+        'cap'
+      );
+      expect((await attemptRef().get()).data()).toMatchObject({
+        void: true,
+        voidReason: 'cap',
+      });
+      expect((await db.doc('replaySubmissions/s1').get()).exists).toBe(false);
+    });
+
+    it('voids its attempt when acceptReplay gives up on it', async () => {
+      const data = { uid: 'ada', attempt, hint: 40 };
+      await db.doc('replaySubmissions/s1').set(data);
+      await giveUpSubmission(db, 's1', data, NOW);
+      expect((await attemptRef().get()).get('voidReason')).toBe('error');
+      expect((await db.doc('replaySubmissions/s1').get()).exists).toBe(false);
+    });
+
+    it('keeps its attempt when its replay got stored before the failure', async () => {
+      const data = { uid: 'ada', attempt, hint: 40 };
+      await db.doc('replays/l_s1').set({ kind: 'daily', players: ['ada'] });
+      await giveUpSubmission(db, 's1', data, NOW);
+      expect((await attemptRef().get()).get('void')).toBeUndefined();
+    });
   });
 
   it('drops bytes that are no replay', async () => {
