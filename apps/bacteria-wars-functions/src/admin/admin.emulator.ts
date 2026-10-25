@@ -1,6 +1,7 @@
 import { defaultProfile } from '@wolsok/feat-lazy-bac-game/engine';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { rankProgress } from '../boards/rank-progress';
 import { clearBanCache, isBanned } from '../limits';
 import { checkGoogleLink, countAccount, deletePlayerBoards } from './accounts';
 import { expireBans, tombstoneId } from './bans';
@@ -172,6 +173,52 @@ describe('adminCommand', () => {
     expect((await db.doc('boardMembers/ada').get()).get('barred')).toEqual([]);
   });
 
+  it('keeps a barred player hidden on entries made later', async () => {
+    await seedAda();
+    await command('c1', 'board.hidePlayer', { args: { bar: true } });
+    await db.doc('boards/xp/entries/ex').delete();
+    await rankProgress(
+      db,
+      'ada',
+      { json: JSON.stringify({ totals: { matchXp: 100 } }) },
+      0,
+      NOW
+    );
+    expect(await status('xp', 'ex')).toBe('hidden');
+  });
+
+  it('refuses a hide without its board, and a ban that has ended', async () => {
+    await seedAda();
+    expect(await command('c1', 'board.hideEntry')).toEqual({
+      ok: false,
+      error: 'no-target',
+    });
+    expect(
+      await command('c2', 'player.ban', {
+        args: { until: Timestamp.fromMillis(NOW - HOUR), reason: 'spam' },
+      })
+    ).toEqual({ ok: false, error: 'ended' });
+    expect((await db.doc('players/ada/notices/c1').get()).exists).toBe(false);
+  });
+
+  it('bans again in full when the earlier ban has ended', async () => {
+    await seedAda();
+    await db.doc('bans/ada').set({
+      since: Timestamp.fromMillis(NOW - 9 * DAY),
+      until: Timestamp.fromMillis(NOW - HOUR),
+      reason: 'spam',
+    });
+    await db.doc('queue/ada').set({ since: Timestamp.now() });
+    await command('b1', 'player.ban', {
+      args: { until: null, reason: 'cheating' },
+    });
+    expect((await db.doc('queue/ada').get()).exists).toBe(false);
+    expect(await status('xp', 'ex')).toBe('hidden');
+    expect(
+      ((await db.doc('bans/ada').get()).get('since') as Timestamp).toMillis()
+    ).toBe(NOW);
+  });
+
   it('hides one entry found by its board', async () => {
     await seedAda();
     await command('c1', 'board.hideEntry', {
@@ -326,8 +373,10 @@ describe('the account functions', () => {
     await db.doc('dailyRuns/2026-10-25_ada').set({ uid: 'ada' });
     await db.doc('players/ada/attempts/d_2026-10-25_1').set({ at: 1 });
     await db.doc('players/ada/notices/n1').set({ type: 'banned' });
+    await db.doc('moderation/ada').set({ resets: 2 });
     await db.doc('adminAudit/a1').set({
       target: { uid: 'ada' },
+      reason: "name 'Rude Name'",
       before: { name: 'Rude Name' },
       after: {},
     });
@@ -344,11 +393,13 @@ describe('the account functions', () => {
       'dailyRuns/2026-10-25_ada',
       'players/ada/attempts/d_2026-10-25_1',
       'players/ada/notices/n1',
+      'moderation/ada',
     ]) {
       expect((await db.doc(path).get()).exists).toBe(false);
     }
-    expect((await db.doc('adminAudit/a1').get()).get('before')).toEqual({
-      scrubbed: true,
+    expect((await db.doc('adminAudit/a1').get()).data()).toMatchObject({
+      reason: '',
+      before: { scrubbed: true },
     });
     expect(
       (await db.doc(`banTombstones/${tombstoneId('g-ada', KEY)}`).get()).exists

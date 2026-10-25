@@ -180,9 +180,22 @@ export const rankProgress = onDocumentWritten(
       return;
     }
     const createdAt = after.createTime?.toMillis() ?? Date.now();
-    await countProgress(db(), event.params.uid, after.data() ?? {}, createdAt);
+    const outcome = await countProgress(
+      db(),
+      event.params.uid,
+      after.data() ?? {},
+      createdAt
+    );
     // A guest who linked Google is checked against the ban tombstones.
-    await checkGoogleLink(db(), adminDeps, event.params.uid, Date.now());
+    if (typeof outcome === 'object') {
+      await checkGoogleLink(
+        db(),
+        adminDeps,
+        event.params.uid,
+        Date.now(),
+        outcome.member
+      );
+    }
   }
 );
 

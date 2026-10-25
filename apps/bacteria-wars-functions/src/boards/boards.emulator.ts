@@ -54,7 +54,7 @@ describe('rankProgress', () => {
       AFTER_CUT,
       NOW
     );
-    expect(result).toEqual({ counted: 2_000, claimed: 40_000 });
+    expect(result).toMatchObject({ counted: 2_000, claimed: 40_000 });
     const entry = await entryOf('ada', 'xp');
     expect(entry.data()).toMatchObject({
       sort: xpSort(2_000),

@@ -27,7 +27,7 @@ import {
   type RunState,
   winsOf,
 } from './endless-run';
-import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
+import { entryData, hiddenFor, memberIn, profileIn } from './entries';
 import { type Verdict } from './verify';
 import { recordCheck, verdictFields } from './verify-slice';
 
@@ -216,7 +216,7 @@ export async function saveRun(
       member.entryIds.endless,
       bestBase,
       profile,
-      hiddenByOf(entry.get('hiddenBy'))
+      hiddenFor(member, 'endless', entry.get('hiddenBy'))
     );
     if (!entry.exists || !sameEntry(next, entry.data() ?? {})) {
       tx.set(entryRef, next);

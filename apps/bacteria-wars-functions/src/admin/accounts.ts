@@ -7,7 +7,7 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { isBanned } from '../limits';
+import { logger } from 'firebase-functions/logger';
 import { applyTombstone, writeTombstone } from './bans';
 import type { AdminDeps } from './deps';
 
@@ -58,10 +58,12 @@ export async function checkGoogleLink(
   db: Firestore,
   deps: AdminDeps,
   uid: string,
-  now: number
+  now: number,
+  /** `boardMembers/{uid}` when the caller has read it already. */
+  known?: Record<string, unknown>
 ): Promise<{ rebanned: boolean } | null> {
   const memberRef = db.doc(`boardMembers/${uid}`);
-  const member = (await memberRef.get()).data() ?? {};
+  const member = known ?? (await memberRef.get()).data() ?? {};
   const checkedAt = member['googleCheckedAt'];
   if (
     member['googleChecked'] === true ||
@@ -99,17 +101,18 @@ export async function deletePlayerBoards(
   now: number
 ): Promise<{ entries: number; runs: number; audit: number }> {
   const ban = (await db.doc(`bans/${uid}`).get()).data();
+  const until =
+    ban?.['until'] instanceof Timestamp ? ban['until'].toMillis() : null;
   if (
     googleUid !== null &&
     ban !== undefined &&
-    (await isBanned(db, uid, now))
+    (until === null || until > now)
   ) {
-    const until = ban['until'];
     await writeTombstone(
       db,
       deps,
       googleUid,
-      until instanceof Timestamp ? until.toMillis() : null,
+      until,
       String(ban['reason'] ?? 'other'),
       now
     );
@@ -132,30 +135,43 @@ export async function deletePlayerBoards(
     db.collection('adminAudit').where('target.uid', '==', uid).get(),
   ]);
   const writer = db.bulkWriter();
-  for (const ref of [
-    ...entryRefs,
-    ...endlessRuns.docs.map((doc) => doc.ref),
-    ...dailyRuns.docs.map((doc) => doc.ref),
-    db.doc(`boardMembers/${uid}`),
-    db.doc(`bans/${uid}`),
-  ]) {
-    void writer.delete(ref);
-  }
-  for (const doc of audit.docs) {
-    void writer.update(doc.ref, {
-      before: { scrubbed: true },
-      after: { scrubbed: true },
+  const writes = [
+    ...[
+      ...entryRefs,
+      ...endlessRuns.docs.map((doc) => doc.ref),
+      ...dailyRuns.docs.map((doc) => doc.ref),
+      db.doc(`boardMembers/${uid}`),
+      db.doc(`bans/${uid}`),
+      db.doc(`moderation/${uid}`),
+    ].map((ref) => writer.delete(ref)),
+    // The owner's reason may quote what the player wrote: it goes too.
+    ...audit.docs.map((doc) =>
+      writer.update(doc.ref, {
+        reason: '',
+        before: { scrubbed: true },
+        after: { scrubbed: true },
+      })
+    ),
+    writer.set(
+      db.doc('stats/accounts'),
+      {
+        total: FieldValue.increment(-1),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    ),
+  ];
+  await writer.close();
+  // An audit entry the TTL took meanwhile is no loss; others are logged.
+  const failed = (await Promise.allSettled(writes)).filter(
+    (result) => result.status === 'rejected'
+  );
+  if (failed.length > 0) {
+    logger.warn('Some writes of a deleted account failed', {
+      uid,
+      failed: failed.length,
     });
   }
-  void writer.set(
-    db.doc('stats/accounts'),
-    {
-      total: FieldValue.increment(-1),
-      updatedAt: FieldValue.serverTimestamp(),
-    },
-    { merge: true }
-  );
-  await writer.close();
   await Promise.all([
     db.recursiveDelete(db.collection(`players/${uid}/attempts`)),
     db.recursiveDelete(db.collection(`players/${uid}/notices`)),

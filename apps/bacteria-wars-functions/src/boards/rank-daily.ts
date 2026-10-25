@@ -22,7 +22,7 @@ import {
 import {
   type EntryBase,
   entryData,
-  hiddenByOf,
+  hiddenFor,
   memberIn,
   profileIn,
 } from './entries';
@@ -187,7 +187,7 @@ export async function writeDailyEntry(
       member.entryIds.daily,
       base,
       profile,
-      hiddenByOf(entry.get('hiddenBy'))
+      hiddenFor(member, 'daily', entry.get('hiddenBy'))
     ),
     expireAt: Timestamp.fromMillis(now + DAILY_TTL_MS),
   });

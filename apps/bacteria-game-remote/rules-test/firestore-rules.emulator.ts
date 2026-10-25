@@ -22,6 +22,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { setLogLevel as setSdkLogLevel } from 'firebase/app';
 import { type Database, get, ref, remove, set } from 'firebase/database';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -43,6 +44,7 @@ const OWNER_TOKEN = {
 beforeAll(async () => {
   // Every refused write would log its denial - the refusals are expected.
   setLogLevel('silent');
+  setSdkLogLevel('silent');
   env = await initializeTestEnvironment({
     projectId: 'demo-bacteria-rules',
     firestore: {

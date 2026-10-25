@@ -151,6 +151,13 @@ async function act(
     case 'board.hideEntry':
     case 'board.hidePlayer':
     case 'board.restore': {
+      if (
+        type === 'board.hideEntry' &&
+        (typeof target['boardId'] !== 'string' ||
+          parseBoardId(target['boardId']) === null)
+      ) {
+        return refuse('no-target');
+      }
       const uid = await targetUid(db, target);
       const one =
         type === 'board.hideEntry' ||
@@ -184,6 +191,9 @@ async function act(
         !BAN_REASONS.includes(banReason as BanReason)
       ) {
         return refuse('malformed');
+      }
+      if (until !== null && until.toMillis() <= now) {
+        return refuse('ended');
       }
       const change = await banPlayer(
         db,

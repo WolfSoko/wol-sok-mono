@@ -7,7 +7,7 @@ import {
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { isBanned } from '../limits';
-import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
+import { entryData, hiddenFor, memberIn, profileIn } from './entries';
 import { nextXp, parseLedger } from './xp-ledger';
 
 /** The storage key the XP board follows. */
@@ -15,7 +15,12 @@ export const PROGRESS_KEY = 'bacteria-game.progress';
 
 /** What became of a progress write - for the log and the specs. */
 export type ProgressOutcome =
-  | { counted: number; claimed: number }
+  | {
+      counted: number;
+      claimed: number;
+      /** `boardMembers/{uid}` as the count read it. */
+      member: Record<string, unknown>;
+    }
   | 'banned'
   | 'unreadable';
 
@@ -77,10 +82,10 @@ export async function rankProgress(
           show: { xp: ledger.counted, rank: rankFor(ledger.counted).rank.id },
         },
         profile,
-        hiddenByOf(entry.get('hiddenBy'))
+        hiddenFor(member, 'xp', entry.get('hiddenBy'))
       )
     );
-    return { counted: ledger.counted, claimed };
+    return { counted: ledger.counted, claimed, member: member.data };
   });
 }
 

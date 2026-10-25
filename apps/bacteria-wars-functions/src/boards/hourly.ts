@@ -9,7 +9,7 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
+import { entryData, hiddenFor, memberIn, profileIn } from './entries';
 import { MIN_COUNTED_TICKS } from './rank-online';
 import { expireBans } from '../admin/bans';
 import type { AdminDeps } from '../admin/deps';
@@ -129,7 +129,7 @@ async function closeOne(
           show: record,
         },
         profile,
-        hiddenByOf(entry.get('hiddenBy'))
+        hiddenFor(member, 'online', entry.get('hiddenBy'))
       )
     );
     return true;

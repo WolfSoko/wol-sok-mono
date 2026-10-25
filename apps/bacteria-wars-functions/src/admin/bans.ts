@@ -39,7 +39,8 @@ export interface BanResult {
 
 /**
  * Bans a player (ADR 0012), or changes the end and reason of a ban that
- * holds. On a new ban it also takes the player out of what others see:
+ * holds. On a new ban (or one whose end has passed) it also takes the
+ * player out of what others see:
  * their queue entry, online status, hosted rooms and invites, and their
  * entries on every board (`hiddenBy: 'ban'`). A Google account gets a
  * tombstone, so a deleted and recreated account is banned again. The
@@ -67,8 +68,12 @@ export async function banPlayer(
               : null,
           reason: String(stored['reason']),
         };
+  // A ban whose end has passed no longer holds, though the hourly
+  // function has not lifted it yet: banning again is a new ban.
+  const holds =
+    before !== null && (before.until === null || before.until > now);
   await banRef.set({
-    since: stored?.['since'] ?? Timestamp.fromMillis(now),
+    since: holds ? stored?.['since'] : Timestamp.fromMillis(now),
     until: until === null ? null : Timestamp.fromMillis(until),
     reason,
   });
@@ -78,7 +83,7 @@ export async function banPlayer(
   if (account?.googleUid) {
     await writeTombstone(db, deps, account.googleUid, until, reason, now);
   }
-  if (before === null) {
+  if (!holds) {
     await Promise.all([
       db.doc(`queue/${uid}`).delete(),
       deps.rtdb.remove(`status/${uid}`),

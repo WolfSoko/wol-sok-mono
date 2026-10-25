@@ -65,6 +65,25 @@ export function hiddenByOf(value: unknown): HiddenBy {
   return hidden;
 }
 
+/**
+ * The hide reasons an entry of `kind` keeps when a ranking rewrites it:
+ * its stored ones, plus the owner's when the player is barred from that
+ * kind (`boardMembers.barred`) - so a bar reaches new entries too, such as
+ * the next day's daily board.
+ */
+export function hiddenFor(
+  member: MemberRead,
+  kind: BoardKind,
+  stored: unknown
+): HiddenBy {
+  const hidden = hiddenByOf(stored);
+  const barred = member.data['barred'];
+  if (Array.isArray(barred) && barred.includes(kind)) {
+    hidden.admin = true;
+  }
+  return hidden;
+}
+
 /** The board ids an entry of each kind sits on, one random id per kind. */
 export type EntryIds = Record<BoardKind, string>;
 
