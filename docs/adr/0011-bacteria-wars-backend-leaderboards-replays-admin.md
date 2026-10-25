@@ -264,7 +264,8 @@ a dead end), `verified`, `unverified`, `balance-mismatch`.
   `replays/{id}.optOut`; nothing re-features it, not even the owner.
 - `profileChanged` updates a player's public replays when they rename or
   turn `publicName` off. Deleting an account (`auth.user().onDelete`)
-  removes the uid from `replays.players`, deletes replays where they were
+  removes the uid from `replays.players` and the room's `seats` (also
+  where only the other player reported), deletes replays where they were
   the only player, and replaces their name in public replays with the
   colour label.
 

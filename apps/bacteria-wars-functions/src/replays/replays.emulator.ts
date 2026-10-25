@@ -324,9 +324,11 @@ describe('deletePlayerReplays', () => {
   it('deletes what only the player played, and leaves the rest to the others', async () => {
     await db.doc('replays/mine').set({ players: ['ada'] });
     await db.doc('replays/mine/blob/data').set({ size: 1 });
-    await db
-      .doc('replays/ours')
-      .set({ players: ['ada', 'bob'], optOut: ['ada'] });
+    await db.doc('replays/ours').set({
+      players: ['ada', 'bob'],
+      optOut: ['ada'],
+      seats: ['ada', 'bob'],
+    });
     await db.doc('replays/ours/reports/ada').set({ checksum: 1 });
     expect(await deletePlayerReplays(db, 'ada')).toEqual({
       deleted: 1,
@@ -334,10 +336,27 @@ describe('deletePlayerReplays', () => {
     });
     expect((await db.doc('replays/mine').get()).exists).toBe(false);
     expect((await db.doc('replays/mine/blob/data').get()).exists).toBe(false);
+    // Bob still reads it: the room's seat forgets Ada too.
     expect((await db.doc('replays/ours').get()).data()).toEqual({
       players: ['bob'],
       optOut: [],
+      seats: [null, 'bob'],
     });
     expect((await db.doc('replays/ours/reports/ada').get()).exists).toBe(false);
+  });
+
+  it('forgets the player in the seat of a match only the other one reported', async () => {
+    await db
+      .doc('replays/theirs')
+      .set({ players: ['bob'], optOut: [], seats: ['bob', 'ada'] });
+    expect(await deletePlayerReplays(db, 'ada')).toEqual({
+      deleted: 0,
+      left: 1,
+    });
+    expect((await db.doc('replays/theirs').get()).data()).toEqual({
+      players: ['bob'],
+      optOut: [],
+      seats: ['bob', null],
+    });
   });
 });
