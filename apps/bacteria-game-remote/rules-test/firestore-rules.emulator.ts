@@ -88,6 +88,90 @@ function command(uid: string, type: string, extra: object = {}) {
   };
 }
 
+describe('declared attempts', () => {
+  // The rules compare with the server's UTC day, as the client declares.
+  const today = () => new Date().toISOString().slice(0, 10);
+  const yesterday = () =>
+    new Date(Date.now() - 24 * HOUR).toISOString().slice(0, 10);
+  const compact = (day: string) => day.replaceAll('-', '');
+  const declaration = (extra: object = {}) => ({
+    at: serverTimestamp(),
+    expireAt: Timestamp.fromMillis(Date.now() + 31 * 24 * HOUR),
+    ...extra,
+  });
+  const declare = (uid: string, id: string, data: object = declaration()) =>
+    setDoc(doc(db(uid), `players/${uid}/attempts/${id}`), data);
+
+  it("takes today's daily attempts in order, three at most", async () => {
+    const day = today();
+    await assertFails(declare('ada', `d_${day}_2`));
+    await assertSucceeds(declare('ada', `d_${day}_1`));
+    await assertSucceeds(declare('ada', `d_${day}_2`));
+    await assertSucceeds(declare('ada', `d_${day}_3`));
+    await assertFails(declare('ada', `d_${day}_4`));
+  });
+
+  it('refuses another day, a second write and somebody else', async () => {
+    await assertFails(declare('ada', `d_${yesterday()}_1`));
+    await assertSucceeds(declare('ada', `d_${today()}_1`));
+    await assertFails(declare('ada', `d_${today()}_1`));
+    await assertFails(
+      setDoc(
+        doc(db('bob'), `players/ada/attempts/d_${today()}_2`),
+        declaration()
+      )
+    );
+    await seed('bans/eve', { until: null });
+    await assertFails(declare('eve', `d_${today()}_1`));
+  });
+
+  it('wants the server time, a near expiry and nothing else', async () => {
+    const id = `d_${today()}_1`;
+    await assertFails(declare('ada', id, declaration({ at: Timestamp.now() })));
+    await assertFails(
+      declare(
+        'ada',
+        id,
+        declaration({
+          expireAt: Timestamp.fromMillis(Date.now() + 33 * 24 * HOUR),
+        })
+      )
+    );
+    await assertFails(declare('ada', id, declaration({ seed: 1 })));
+    await assertFails(declare('ada', 'x_1', declaration()));
+  });
+
+  it("takes an endless run's matches in order, from today's runs", async () => {
+    const run1 = `${compact(today())}1`;
+    const run2 = `${compact(today())}2`;
+    await assertFails(declare('ada', `e_${run1}_1`));
+    await assertFails(declare('ada', `e_${run2}_0`));
+    await assertSucceeds(declare('ada', `e_${run1}_0`));
+    await assertSucceeds(declare('ada', `e_${run1}_1`));
+    await assertSucceeds(declare('ada', `e_${run2}_0`));
+    await assertFails(declare('ada', `e_${compact(yesterday())}1_0`));
+    await assertFails(declare('ada', `e_${compact(today())}6_0`));
+  });
+
+  it('lets a run go on past midnight', async () => {
+    const run = `${compact(yesterday())}1`;
+    await seed(`players/ada/attempts/e_${run}_0`, { at: Timestamp.now() });
+    await assertSucceeds(declare('ada', `e_${run}_1`));
+  });
+
+  it('lets only the player read them, and nobody change them', async () => {
+    const id = `d_${today()}_1`;
+    await assertSucceeds(declare('ada', id));
+    await assertSucceeds(getDoc(doc(db('ada'), `players/ada/attempts/${id}`)));
+    await assertFails(getDoc(doc(db('bob'), `players/ada/attempts/${id}`)));
+    await assertFails(
+      updateDoc(doc(db('ada'), `players/ada/attempts/${id}`), {
+        at: serverTimestamp(),
+      })
+    );
+  });
+});
+
 describe('replaySubmissions', () => {
   const add = (writer: string, data: object) =>
     setDoc(doc(collection(db(writer), 'replaySubmissions')), data);

@@ -1033,8 +1033,8 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
    yet, nothing changes) and the TTLs, after 0011's rules [4].
 5. **Functions**: `rankReplay`, `rankProgress`, `rebuildTop`,
    `boardProfileChanged`, `adminCommand`, `countAccount`,
-   `deletePlayerBoards`, and `hourly` with its schedule paused, after the
-   CPU benchmark set the budgets. Deployed before the client that writes
+   `deletePlayerBoards`, and `hourly` (running from its first deploy, see
+   `HOURLY_ON`), after the CPU benchmark set the budgets. Deployed before the client that writes
    attempts.
    - So far: `rankProgress` (the XP board), `rankReplay` for agreed online
      matches (the online board, with the timing check, the pair, win and
@@ -1045,13 +1045,27 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      entry keeps its `baseStatus` beside `status` and `hiddenBy`, so a
      lifted hide brings the old status back. `acceptReplay` stores the
      stub's `seats` and `createdAt` on an online replay, which the online
-     board counts by. Daily and endless (the attempts), the hourly
-     function, the admin commands, `countAccount` and `deletePlayerBoards`
-     come next.
+     board counts by.
+   - Then the daily board: the rules of `players/{uid}/attempts` (ids,
+     order, today's UTC day, `at == request.time`), `rankReplay` for a
+     new daily replay with an attempt (`rankDaily`: the checks above into
+     `dailyRuns` and the entry, provisional), `verify.ts`, and `hourly`
+     (`runHourly`: "Not reported", `final` on yesterday's board at 23:00
+     UTC, the verification slice in trust order). `hourly` deploys with the functions (`HOURLY_ON` in the functions' `config.ts`), since the owner enabled Cloud Scheduler. `acceptReplay` keeps a ranked
+     submission's `createdAt` as `submittedAt`, which the deadline is
+     measured against; the TTL policies of `attempts`, `dailyRuns`, the
+     daily boards and their entries. A summary's `timeline` is one flat
+     list, seat after seat, as Firestore holds no arrays in arrays.
+   - First measurement, on a dev core in Node: a ranked daily match
+     plays again at about 7 ms a tick on `IntSimulation` (`gpu-int`,
+     about 25 s per match-minute) and 2 ms on `cpu`, close to the 20 s
+     the budgets assume. The benchmark on a Cloud Run vCPU still sets
+     them.
+   - Endless (runs, lost lives), the admin commands, `countAccount` and
+     `deletePlayerBoards` come next.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
-   result lines and the privacy text. Enable the `hourly` schedule the
-   same day. Needs 0011 [5].
+   result lines and the privacy text. Needs 0011 [5].
 7. **Admin lib** with all views, including the moved curation page, with
    or after 0011 [6]. Then enable `featureBest`, sign in, and run
    `stats.recount` once.
@@ -1091,9 +1105,10 @@ written.
 - Review the CPU benchmark and the budgets it sets before the functions
   deploy.
 - After the first functions deploy, check that Cloud Scheduler shows
-  `hourly` (paused) and `featureBest` (paused), and how many free jobs the
-  billing account still has. Enable `hourly` the day step 6 ships, and
-  `featureBest` after step 7.
+  `hourly` (running: before step 6 it only closes unreported online
+  matches, as no daily attempt exists to check) and `featureBest`
+  (paused), and how many free jobs the billing account still has.
+  Enable `featureBest` after step 7.
 - Sign in at `https://bacteria-wars.wolsok.de/admin` with the Google
   account that has the claim (ADR 0011's grant script). Run "Recount
   accounts" once, and check that the overview figures look plausible.

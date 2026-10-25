@@ -135,7 +135,13 @@ async function storeLocal(
   const ref = db.doc(`replays/${plan.id}`);
   try {
     const batch = db.batch();
-    batch.create(ref, newReplay(plan, meta.uid, 'submitted', now));
+    batch.create(ref, {
+      ...newReplay(plan, meta.uid, 'submitted', now),
+      // When the player sent it - a ranked replay's deadline (ADR 0012).
+      ...(meta.attempt === undefined
+        ? {}
+        : { submittedAt: Timestamp.fromMillis(meta.createdAt) }),
+    });
     batch.create(ref.collection('blob').doc('data'), blob);
     await batch.commit();
     return 'stored';
