@@ -1,21 +1,9 @@
-import {
-  BOARD_CUT,
-  BoardKind,
-  BoardRow,
-  CHECKING_ROWS,
-  EntryShow,
-} from '../state/boards';
-import { TICKS_PER_SEC } from '../state/fixed-tick';
+import { BoardRow, CHECKING_ROWS } from '../state/boards';
 
 /** The past daily boards the screen offers, today among them. */
 export const DAILY_DAYS_SHOWN = 7;
 /** Counted matches before the online row shows a win rate. */
 export const WIN_RATE_AFTER = 10;
-
-/** The places at the top of a board that show only verified entries. */
-export function boardCut(kind: BoardKind): number {
-  return BOARD_CUT[kind];
-}
 
 /** A board's rows in the screen's sections (ADR 0012, "Leaderboards screen"). */
 export interface BoardSections {
@@ -55,35 +43,5 @@ export function boardSections(
     verified,
     beingChecked,
     others: rows.filter((row) => !shown.has(row)),
-  };
-}
-
-/** What a row shows besides its label, by board - see `EntryShow`. */
-export type ShowLine =
-  | { kind: 'xp'; xp: number; rank: string }
-  | { kind: 'online'; w: number; l: number; d: number; nr: number }
-  | { kind: 'daily'; won: boolean; seconds: number }
-  | { kind: 'endless'; depth: number; seconds: number; partial: boolean };
-
-/** Tells apart what an entry shows. */
-export function showLine(show: EntryShow): ShowLine {
-  if ('xp' in show) {
-    return { kind: 'xp', xp: show.xp, rank: show.rank };
-  }
-  if ('w' in show) {
-    return { kind: 'online', ...show };
-  }
-  if ('won' in show) {
-    return {
-      kind: 'daily',
-      won: show.won,
-      seconds: Math.floor(show.ticks / TICKS_PER_SEC),
-    };
-  }
-  return {
-    kind: 'endless',
-    depth: show.depth,
-    seconds: show.seconds,
-    partial: show.partial === true,
   };
 }

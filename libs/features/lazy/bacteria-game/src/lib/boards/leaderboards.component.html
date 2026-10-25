@@ -15,7 +15,7 @@
                 <mat-form-field appearance="outline" subscriptSizing="dynamic">
                   <mat-label>{{ "boards.day" | t }}</mat-label>
                   <mat-select
-                    [value]="day() ?? today()"
+                    [value]="shownDay()"
                     (selectionChange)="day.set($event.value)"
                   >
                     @for (option of days(); track option.day) {
@@ -28,7 +28,7 @@
                 <span class="next">{{ nextBoard() }}</span>
               </div>
             }
-            <feat-lazy-bac-game-board-view [board]="boards()[kind]" />
+            <feat-lazy-bac-game-board-view [board]="boardOf(kind)" />
           </ng-template>
         </mat-tab>
       }

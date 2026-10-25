@@ -79,8 +79,8 @@ export class FirestoreGameBoards implements GameBoards {
           ? { state: 'hidden' }
           : { state: 'shown', entry };
     } catch (error) {
-      // A hidden entry is not the player's to read - and the rules, which
-      // look at the entry's status, refuse a missing one too.
+      // A hidden entry is not the player's to read; a missing one the
+      // rules let through as not found, so a refusal means hidden.
       if (errorCode(error) === 'permission-denied') {
         return { state: 'hidden' };
       }

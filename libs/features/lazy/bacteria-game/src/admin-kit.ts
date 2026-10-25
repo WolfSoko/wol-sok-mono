@@ -41,6 +41,7 @@ export {
   BOARD_KINDS,
   competitionRanks,
   dailyBoardId,
+  ENTRY_STATUSES,
   formatTag,
   isBoardId,
   isEntryId,

@@ -22,6 +22,13 @@ import { BoardsService } from './boards.service';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** The all-time boards, one object each, so a tab never reads them anew. */
+const ALL_TIME: Readonly<Record<Exclude<BoardKind, 'daily'>, BoardRef>> = {
+  xp: { kind: 'xp' },
+  online: { kind: 'online' },
+  endless: { kind: 'endless' },
+};
+
 /**
  * The leaderboards (ADR 0012): a tab per board - rank, online, the daily
  * level and endless - each with what it can promise, its rows and the
@@ -52,7 +59,7 @@ export class LeaderboardsComponent {
   /** Now, looked at again every minute - the daily board turns over. */
   private readonly now = signal(Date.now());
   protected readonly today = computed(() => utcDay(new Date(this.now())));
-  /** The day the daily tab shows - today unless picked. */
+  /** The day the player picked on the daily tab - null for today. */
   protected readonly day = signal<string | null>(null);
 
   /** The last seven days, today first, with their names. */
@@ -72,6 +79,17 @@ export class LeaderboardsComponent {
     });
   });
 
+  /**
+   * The day the daily tab shows: the one picked while it is among the
+   * days offered, else today.
+   */
+  protected readonly shownDay = computed(() => {
+    const picked = this.day();
+    return picked !== null && this.days().some(({ day }) => day === picked)
+      ? picked
+      : this.today();
+  });
+
   /** "New board in 5 h 12 min", to 00:00 UTC. */
   protected readonly nextBoard = computed(() => {
     const now = this.now();
@@ -87,13 +105,16 @@ export class LeaderboardsComponent {
     inject(DestroyRef).onDestroy(() => clearInterval(clock));
   }
 
-  /** Each tab's board - the same objects until the day changes. */
-  protected readonly boards = computed((): Record<BoardKind, BoardRef> => ({
-    xp: { kind: 'xp' },
-    online: { kind: 'online' },
-    daily: { kind: 'daily', day: this.day() ?? this.today() },
-    endless: { kind: 'endless' },
+  /** The daily tab's board - the same object until its day changes. */
+  private readonly daily = computed((): BoardRef => ({
+    kind: 'daily',
+    day: this.shownDay(),
   }));
+
+  /** Each tab's board: the all-time ones never change. */
+  protected boardOf(kind: BoardKind): BoardRef {
+    return kind === 'daily' ? this.daily() : ALL_TIME[kind];
+  }
 
   protected tabKey(kind: BoardKind): TranslationKey {
     return `boards.tabs.${kind}`;

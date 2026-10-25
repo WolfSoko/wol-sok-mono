@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   signal,
   untracked,
 } from '@angular/core';
@@ -25,23 +26,23 @@ import {
   type BoardRef,
   type BoardRow,
   formatTag,
+  PAGE_ROWS,
   showsName,
   TOP_ROWS,
 } from '../state/boards';
-import { clock } from '../state/fixed-tick';
+import { clock, TICKS_PER_SEC } from '../state/fixed-tick';
 import { rankFor } from '../state/ranks';
 import type { BoardTop } from '../storage/game-boards';
+import { boardSections, WIN_RATE_AFTER } from './board-rows';
 import {
-  boardCut,
-  boardSections,
-  showLine,
-  WIN_RATE_AFTER,
-} from './board-rows';
-import { BoardsService, type OwnStanding } from './boards.service';
+  BoardsService,
+  idOfBoard,
+  type OwnStanding,
+  ownPlace,
+} from './boards.service';
 
 /** A row as the board shows it. */
 interface RowView {
-  entryId: string;
   /** "#4", empty in the "Being checked" strip. */
   place: string;
   label: string;
@@ -61,6 +62,14 @@ interface TopRead {
   board: BoardRef;
   top: BoardTop | null;
   failed: boolean;
+}
+
+/** The own row as read, for the board and opt-out it was read with. */
+interface OwnRead {
+  query: string;
+  standing: OwnStanding;
+  /** Whether the own entry was among the top rows when it was read. */
+  inTop: boolean | null;
 }
 
 /**
@@ -104,13 +113,6 @@ export class BoardViewComponent {
       )
     )
   );
-  /** The rows loaded past the top document. */
-  private readonly more = signal<BoardRow[]>([]);
-  protected readonly loadingMore = signal(false);
-  /** False once a page came back empty: there is no more. */
-  protected readonly hasMore = signal(true);
-  protected readonly pageFailed = signal(false);
-  private readonly own = signal<OwnStanding | null>(null);
 
   protected readonly loaded = computed(() => this.top() !== undefined);
   protected readonly failed = computed(() => this.top()?.failed === true);
@@ -124,12 +126,62 @@ export class BoardViewComponent {
   protected readonly empty = computed(() => this.topRows().length === 0);
   protected readonly full = computed(() => this.topRows().length >= TOP_ROWS);
 
+  /**
+   * Where the pages go on from: the board and the top's last row. The
+   * pages start over when it changes, not on every change to the top.
+   */
+  private readonly pageStart = computed(() => {
+    const read = this.top();
+    const last = read?.top?.rows.at(-1);
+    return read === undefined
+      ? ''
+      : [idOfBoard(read.board), last?.entryId, last?.sort, last?.atHour].join(
+          '|'
+        );
+  });
+  /** The rows loaded past the top document. */
+  private readonly more = linkedSignal<string, BoardRow[]>({
+    source: this.pageStart,
+    computation: () => [],
+  });
+  /** False once a page came back short: there is no more. */
+  protected readonly hasMore = linkedSignal({
+    source: this.pageStart,
+    computation: () => true,
+  });
+  protected readonly pageFailed = linkedSignal({
+    source: this.pageStart,
+    computation: () => false,
+  });
+  protected readonly loadingMore = signal(false);
+
+  /** The board and opt-out the own row is read for. */
+  private readonly ownQuery = computed(() => {
+    const read = this.top();
+    return read === undefined
+      ? null
+      : `${idOfBoard(read.board)}|${this.boards.optedOut()}`;
+  });
+  private readonly own = signal<OwnRead | null>(null);
+  private ownRequest = 0;
+  /** The own row read for the board shown - null until it is. */
+  private readonly ownStanding = computed(() => {
+    const own = this.own();
+    return own !== null && own.query === this.ownQuery() ? own.standing : null;
+  });
+  /** Whether the own entry is among the top rows now - null when off. */
+  private readonly ownInTop = computed(() => {
+    const own = this.ownStanding();
+    return own?.on === true
+      ? this.topRows().some((row) => row.entryId === own.entryId)
+      : null;
+  });
+
   /** The board's lines, section by section. */
   protected readonly lines = computed((): BoardLine[] => {
-    const top = this.top()?.top ?? null;
     const { verified, beingChecked, others } = boardSections(
       this.topRows(),
-      top?.cut ?? boardCut(this.board().kind)
+      this.top()?.top?.cut ?? 0
     );
     const rows = (list: BoardRow[], place: (row: BoardRow) => string) =>
       list.map((row) => ({ row: this.view(row, place(row)), id: row.entryId }));
@@ -148,7 +200,7 @@ export class BoardViewComponent {
   });
 
   protected readonly ownLine = computed((): string | null => {
-    const own = this.own();
+    const own = this.ownStanding();
     if (own === null) {
       return null;
     }
@@ -159,7 +211,7 @@ export class BoardViewComponent {
             reason: this.i18n.t(`boards.you.reasons.${own.reason}`),
           });
     }
-    const { entry, pos, rank } = own;
+    const { entry, pos, rank } = ownPlace(own, this.topRows());
     if (rank !== null) {
       return this.i18n.t('boards.you.pos', { pos: rank });
     }
@@ -170,60 +222,81 @@ export class BoardViewComponent {
   });
 
   public constructor() {
-    // The own row once the top is in, again when it or the opt-out
-    // changes. A changed top starts the pages over: they follow its rows.
+    // The own row once the top is in, again when the board or the opt-out
+    // changes or the own entry enters or leaves the top rows - its place
+    // follows the live top meanwhile.
     effect(() => {
-      const top = this.top();
-      this.boards.optedOut();
-      if (top === undefined) {
+      const query = this.ownQuery();
+      const inTop = this.ownInTop();
+      if (query === null) {
         return;
       }
       untracked(() => {
-        this.more.set([]);
-        this.hasMore.set(true);
-        this.pageFailed.set(false);
-        void this.boards.ownStanding(top.board, top.top).then(
-          (own) => {
-            if (this.top() === top) {
-              this.own.set(own);
-            }
-          },
-          (error: unknown) => {
-            console.error('Could not read your own entry', error);
-            this.own.set(null);
-          }
-        );
+        const own = this.own();
+        if (own?.query !== query || own.inTop !== inTop) {
+          this.readOwn(query);
+        }
       });
     });
   }
 
   /** Loads the next page of the board. */
   protected async loadMore(): Promise<void> {
-    const top = this.top();
-    const shown = [...(top?.top?.rows ?? []), ...this.more()];
+    const read = this.top();
+    const start = this.pageStart();
+    const shown = [...this.topRows(), ...this.more()];
     const last = shown.at(-1);
-    if (top === undefined || last === undefined || this.loadingMore()) {
+    if (read === undefined || last === undefined || this.loadingMore()) {
       return;
     }
     this.loadingMore.set(true);
     this.pageFailed.set(false);
     try {
-      const page = await this.boards.page(top.board, last, shown.length);
-      if (this.top() === top) {
+      const page = await this.boards.page(read.board, last, shown.length);
+      if (this.pageStart() === start) {
         this.more.update((more) => [...more, ...page]);
-        this.hasMore.set(page.length > 0);
+        this.hasMore.set(page.length === PAGE_ROWS);
       }
     } catch (error) {
       console.error('Could not load more of the board', error);
-      this.pageFailed.set(true);
+      if (this.pageStart() === start) {
+        this.pageFailed.set(true);
+      }
     } finally {
       this.loadingMore.set(false);
     }
   }
 
+  /** Reads the own row; only the latest read counts. */
+  private readOwn(query: string): void {
+    const read = this.top();
+    if (read === undefined) {
+      return;
+    }
+    const request = ++this.ownRequest;
+    this.boards.ownStanding(read.board, read.top).then(
+      (standing) => {
+        if (request === this.ownRequest) {
+          this.own.set({
+            query,
+            standing,
+            inTop: standing.on
+              ? this.topRows().some((row) => row.entryId === standing.entryId)
+              : null,
+          });
+        }
+      },
+      (error: unknown) => {
+        console.error('Could not read your own entry', error);
+        if (request === this.ownRequest) {
+          this.own.set(null);
+        }
+      }
+    );
+  }
+
   private view(row: BoardRow, place: string): RowView {
     return {
-      entryId: row.entryId,
       place,
       label: this.label(row),
       avatar: { kind: 'preset', id: row.avatar },
@@ -240,45 +313,44 @@ export class BoardViewComponent {
         this.i18n.t('boards.anonymous', { tag: formatTag(entry.tag) });
   }
 
-  private detail(entry: BoardEntry): string {
-    const line = showLine(entry.show);
+  /** What a row shows besides its label, by board - see `EntryShow`. */
+  private detail({ show }: BoardEntry): string {
     const locale = this.i18n.locale();
-    switch (line.kind) {
-      case 'xp':
-        return [
-          this.i18n.t('boards.show.xp', {
-            xp: new Intl.NumberFormat(locale).format(line.xp),
-          }),
-          this.i18n.t(rankKey(rankFor(line.xp).rank.id)),
-        ].join(' · ');
-      case 'online': {
-        const played = line.w + line.l + line.d;
-        return [
-          this.i18n.t('boards.show.record', line),
-          played >= WIN_RATE_AFTER
-            ? this.i18n.t('boards.show.winRate', {
-                rate: new Intl.NumberFormat(locale, {
-                  style: 'percent',
-                }).format(line.w / played),
-              })
-            : null,
-          line.nr > 0
-            ? this.i18n.t('boards.show.notReported', { count: line.nr })
-            : null,
-        ]
-          .filter((part) => part !== null)
-          .join(' · ');
-      }
-      case 'daily':
-        return this.i18n.t(line.won ? 'boards.show.won' : 'boards.show.held', {
-          time: clock(line.seconds),
-        });
-      case 'endless':
-        return this.i18n.t('boards.show.depth', {
-          count: line.depth,
-          time: clock(line.seconds),
-        });
+    if ('xp' in show) {
+      return [
+        this.i18n.t('boards.show.xp', {
+          xp: new Intl.NumberFormat(locale).format(show.xp),
+        }),
+        this.i18n.t(rankKey(rankFor(show.xp).rank.id)),
+      ].join(' · ');
     }
+    if ('w' in show) {
+      const played = show.w + show.l + show.d;
+      return [
+        this.i18n.t('boards.show.record', show),
+        played >= WIN_RATE_AFTER
+          ? this.i18n.t('boards.show.winRate', {
+              rate: new Intl.NumberFormat(locale, {
+                style: 'percent',
+              }).format(show.w / played),
+            })
+          : null,
+        show.nr > 0
+          ? this.i18n.t('boards.show.notReported', { count: show.nr })
+          : null,
+      ]
+        .filter((part) => part !== null)
+        .join(' · ');
+    }
+    if ('won' in show) {
+      return this.i18n.t(show.won ? 'boards.show.won' : 'boards.show.held', {
+        time: clock(Math.floor(show.ticks / TICKS_PER_SEC)),
+      });
+    }
+    return this.i18n.t('boards.show.depth', {
+      count: show.depth,
+      time: clock(show.seconds),
+    });
   }
 }
 

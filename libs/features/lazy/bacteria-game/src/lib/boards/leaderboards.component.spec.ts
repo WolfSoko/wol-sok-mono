@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { throwError } from 'rxjs';
 import { FakeGameAccount } from '../../testing/fake-game-account';
-import { FakeGameBoards, topRows } from '../../testing/fake-game-boards';
+import { FakeGameBoards, topRowsOf } from '../../testing/fake-game-boards';
 import {
   FakeGamePresence,
   FakeGameSocial,
@@ -13,6 +13,7 @@ import { GameAccount } from '../storage/game-account';
 import type { PagedEntry } from '../storage/game-boards';
 import { GameCloud } from '../storage/game-cloud';
 import { BoardViewComponent } from './board-view.component';
+import { BoardsService } from './boards.service';
 import { LeaderboardsComponent } from './leaderboards.component';
 
 const DAY = '2026-10-24';
@@ -97,11 +98,8 @@ describe('Leaderboards', () => {
   function setDaily(entries: PagedEntry[], final = false): void {
     boards.setEntries(`daily-${DAY}`, entries);
     boards.setTop(`daily-${DAY}`, {
-      board: `daily-${DAY}`,
-      day: DAY,
       cut: 10,
-      rows: topRows(entries, 10),
-      balanceVersion: 1,
+      rows: topRowsOf(entries, 10),
       final,
     });
   }
@@ -109,10 +107,8 @@ describe('Leaderboards', () => {
   function setXp(entries: PagedEntry[]): void {
     boards.setEntries('xp', entries);
     boards.setTop('xp', {
-      board: 'xp',
       cut: 0,
-      rows: topRows(entries, 0),
-      balanceVersion: 1,
+      rows: topRowsOf(entries, 0),
     });
   }
 
@@ -249,6 +245,45 @@ describe('Leaderboards', () => {
     expect(host.textContent).not.toContain('Show more');
   });
 
+  it('keeps the pages and the own row while the top changes, not its end', async () => {
+    const entries = Array.from({ length: 60 }, (_, i) =>
+      anXpEntry(`e${i}`, 10_000 - i)
+    );
+    setXp(entries);
+    boards.setMember('ada', { entryIds: { xp: 'e57' } });
+    const standing = jest.spyOn(TestBed.inject(BoardsService), 'ownStanding');
+    const { host, fixture } = await renderBoard({ kind: 'xp' });
+    const items = () => host.querySelectorAll('mat-list-item').length;
+    (
+      Array.from(host.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Show more')
+      ) as HTMLButtonElement
+    ).click();
+    await settle(fixture);
+    expect(items()).toBe(60);
+
+    // A row inside the top changes; its last row stays.
+    setXp([{ ...entries[0], name: 'Ada' }, ...entries.slice(1)]);
+    await settle(fixture);
+
+    expect(host.textContent).toContain('Ada');
+    expect(items()).toBe(60);
+    expect(standing).toHaveBeenCalledTimes(1);
+    expect(host.textContent).toContain('You: #58');
+
+    // The own entry climbs into the top: read again, the pages start over.
+    setXp(
+      entries.map((entry) =>
+        entry.entryId === 'e57' ? anXpEntry('e57', 20_000) : entry
+      )
+    );
+    await settle(fixture);
+
+    expect(standing).toHaveBeenCalledTimes(2);
+    expect(items()).toBe(50);
+    expect(host.textContent).toContain('You: #1');
+  });
+
   it('shows the online record and the win rate after ten matches', async () => {
     const entries = [
       anEntry('a', 1, {
@@ -258,10 +293,8 @@ describe('Leaderboards', () => {
     ];
     boards.setEntries('online', entries);
     boards.setTop('online', {
-      board: 'online',
       cut: 0,
-      rows: topRows(entries, 0),
-      balanceVersion: 1,
+      rows: topRowsOf(entries, 0),
     });
 
     expect(await textOf({ kind: 'online' })).toContain(

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { FakeGameAccount } from '../../testing/fake-game-account';
-import { FakeGameBoards, topRows } from '../../testing/fake-game-boards';
+import { FakeGameBoards, topRowsOf } from '../../testing/fake-game-boards';
 import {
   FakeGamePresence,
   FakeGameSocial,
@@ -11,7 +11,7 @@ import type { BoardEntry } from '../state/boards';
 import { GameAccount } from '../storage/game-account';
 import type { BoardTop, PagedEntry } from '../storage/game-boards';
 import { GameCloud } from '../storage/game-cloud';
-import { BoardsService, idOfBoard } from './boards.service';
+import { BoardsService, idOfBoard, ownPlace } from './boards.service';
 
 function anEntry(
   entryId: string,
@@ -33,10 +33,8 @@ function anEntry(
 
 function xpTop(entries: PagedEntry[]): BoardTop {
   return {
-    board: 'xp',
     cut: 0,
-    rows: topRows(entries, 0),
-    balanceVersion: 1,
+    rows: topRowsOf(entries, 0),
     final: false,
   };
 }
@@ -100,7 +98,7 @@ describe('BoardsService', () => {
       anEntry('e', 20),
     ];
     boards.setEntries('xp', entries);
-    const [first, second] = topRows(entries.slice(0, 2), 0);
+    const [first, second] = topRowsOf(entries.slice(0, 2), 0);
 
     const page = await service().page({ kind: 'xp' }, second, 2);
 
@@ -116,15 +114,21 @@ describe('BoardsService', () => {
     const entries = [anEntry('a', 50), anEntry('mine', 40)];
     boards.setEntries('xp', entries);
     boards.setMember('ada', { entryIds: { xp: 'mine' } });
+    const top = xpTop(entries);
 
-    expect(await service().ownStanding({ kind: 'xp' }, xpTop(entries))).toEqual(
-      {
-        on: true,
-        entry: expect.objectContaining({ sort: 40 }),
-        pos: 2,
-        rank: null,
-      }
-    );
+    const own = await service().ownStanding({ kind: 'xp' }, top);
+
+    expect(own).toEqual({
+      on: true,
+      entryId: 'mine',
+      entry: expect.objectContaining({ sort: 40 }),
+      above: null,
+    });
+    expect(own.on && ownPlace(own, top.rows)).toEqual({
+      entry: expect.objectContaining({ sort: 40 }),
+      pos: 2,
+      rank: null,
+    });
     expect(boards.counts).toEqual([]);
   });
 
@@ -135,11 +139,56 @@ describe('BoardsService', () => {
     ];
     boards.setEntries('xp', entries);
     boards.setMember('ada', { entryIds: { xp: 'mine' } });
+    const top = xpTop(entries);
 
-    const own = await service().ownStanding({ kind: 'xp' }, xpTop(entries));
+    const own = await service().ownStanding({ kind: 'xp' }, top);
 
-    expect(own.on && own.pos).toBe(61);
+    expect(own.on && ownPlace(own, top.rows).pos).toBe(61);
     expect(boards.counts).toEqual([['xp', 10]]);
+  });
+
+  it('places the own row by the live top once it is among its rows', () => {
+    const entries = [anEntry('a', 50), anEntry('mine', 60)];
+    const own = {
+      on: true as const,
+      entryId: 'mine',
+      entry: entries[1],
+      above: 70,
+    };
+
+    expect(ownPlace(own, xpTop(entries).rows).pos).toBe(1);
+    expect(ownPlace(own, xpTop([entries[0]]).rows).pos).toBe(71);
+    expect(
+      ownPlace({ ...own, above: null }, xpTop([entries[0]]).rows).pos
+    ).toBe(1);
+  });
+
+  it('waits for the guest to sign in before it reads a board', async () => {
+    TestBed.overrideProvider(GameAccount, {
+      useValue: new FakeGameAccount(null),
+    });
+    const account = TestBed.inject(GameAccount) as FakeGameAccount;
+    const watched = jest.spyOn(boards, 'watchTop');
+    const paged = jest.spyOn(boards, 'page');
+    const tops: (BoardTop | null)[] = [];
+    const entries = [anEntry('a', 50), anEntry('b', 40)];
+    boards.setEntries('xp', entries);
+    boards.setTop('xp', xpTop(entries));
+
+    const subscription = service()
+      .watchTop({ kind: 'xp' })
+      .subscribe((top) => tops.push(top));
+    const page = service().page({ kind: 'xp' }, xpTop(entries).rows[0], 1);
+    await Promise.resolve();
+
+    expect(watched).not.toHaveBeenCalled();
+    expect(paged).not.toHaveBeenCalled();
+
+    account.switchTo('ada');
+
+    expect(tops).toHaveLength(1);
+    expect((await page).map((row) => row.entryId)).toEqual(['b']);
+    subscription.unsubscribe();
   });
 
   it('is not on a board without a result there', async () => {
@@ -157,6 +206,17 @@ describe('BoardsService', () => {
     expect(
       await service().ownStanding({ kind: 'daily', day: '2026-10-24' }, null)
     ).toEqual({ on: false, reason: 'none' });
+  });
+
+  it('is not on a board whose entry the functions deleted', async () => {
+    // Listed in the membership, but the entry is gone: the rules read a
+    // missing entry as not found, and it has no counted result.
+    boards.setMember('ada', { entryIds: { endless: 'gone' } });
+
+    expect(await service().ownStanding({ kind: 'endless' }, null)).toEqual({
+      on: false,
+      reason: 'none',
+    });
   });
 
   it('says the own entry is hidden, by the owner or the rules', async () => {

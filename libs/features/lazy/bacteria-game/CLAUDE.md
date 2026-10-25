@@ -56,16 +56,21 @@ storage until then. Settings stay with the device either way.
   `GAME_QUERIES` in `apps/bacteria-game-remote/src/firestore-indexes.spec.ts`),
   and the player's own row from `boardMembers/{uid}`: `boards` says which
   boards they are on (the entry ids exist for every kind at once), a
-  refused `get` of their entry reads as hidden (the rules refuse a missing
-  one too), and a position below the top 50 is one `count()`. An own row
+  refused `get` of their entry reads as hidden, a missing one (the rules
+  let it through as not found) as no counted result yet, and a position
+  below the top 50 is one `count()`. An own row
   the owner hides says it is hidden, never that it does not count (ADR
   0012, owner's decision of 2026-10-25). Specs use `FakeGameBoards` and
-  its `topRows` (`src/testing/`). The main menu shows the screen with the
+  its `topRowsOf` (`src/testing/`). The main menu shows the screen with the
   cloud while the `leaderboards` toggle is on.
 - The profile's `publicName`, `boardOptOut` and `galleryOptOut` (all off
   by default) are saved by `FirestoreGameSocial.saveProfile` with
-  `mergeFields`: every field the client knows, each whole (an avatar must
-  not merge into the last one), and nothing else touched.
+  `mergeFields`: only the fields the player changed (a first profile
+  whole), each whole (an avatar must not merge into the last one), and
+  nothing else touched. The editor's switches and save wait for
+  `SocialService.profileLoaded`: the stored profile read, or the server's
+  word that there is none (`watchProfile` holds back a miss only the cache
+  tells), so the defaults shown meanwhile never overwrite stored flags.
 - The owner's feature toggles (ADR 0012) come through the `GameToggles`
   port (`storage/game-toggles.ts`): `RemoteConfigGameToggles` with a
   project, `NoGameToggles` (`{}`, the defaults) without, asked of

@@ -16,6 +16,14 @@ describe('inviteToken', () => {
 class FakeFirestore {
   public readonly docs = new Map<string, Record<string, unknown>>();
   public readonly updates: [string, Record<string, unknown>][] = [];
+  /** True while the snapshots come from the device's cache alone. */
+  public fromCache = false;
+  private readonly listeners: (() => void)[] = [];
+
+  /** Tells every listener again, as a change of the metadata does. */
+  public tell(): void {
+    this.listeners.forEach((listener) => listener());
+  }
 
   public readonly sdk = {
     doc: (_db: unknown, path: string) => ({ path }),
@@ -46,11 +54,12 @@ class FakeFirestore {
     },
     updateDoc: async (ref: { path: string }, data: Record<string, unknown>) =>
       this.update(ref.path, data),
-    onSnapshot: (
-      ref: { path: string },
-      next: (snapshot: unknown) => void
-    ): (() => void) => {
-      next(this.snapshot(ref.path));
+    onSnapshot: (ref: { path: string }, ...args: unknown[]): (() => void) => {
+      const next = args.find(
+        (arg): arg is (snapshot: unknown) => void => typeof arg === 'function'
+      );
+      this.listeners.push(() => next?.(this.snapshot(ref.path)));
+      next?.(this.snapshot(ref.path));
       return () => undefined;
     },
     runTransaction: async <T>(
@@ -80,12 +89,49 @@ class FakeFirestore {
     const doc = this.docs.get(path);
     return {
       exists: () => doc !== undefined,
+      data: () => doc,
       get: (field: string) => doc?.[field],
+      metadata: { fromCache: this.fromCache },
     };
   }
 }
 
 describe('FirestoreGameSocial profile', () => {
+  it('tells no profile until the server says there is none', () => {
+    const firestore = new FakeFirestore();
+    firestore.fromCache = true;
+    const seen: unknown[] = [];
+    firestore
+      .social()
+      .watchProfile('ada')
+      .subscribe((value) => seen.push(value));
+
+    expect(seen).toEqual([]);
+
+    firestore.fromCache = false;
+    firestore.tell();
+    expect(seen).toEqual([null]);
+
+    firestore.docs.set('profiles/ada', { name: 'Ada' });
+    firestore.fromCache = true;
+    firestore.tell();
+    expect(seen).toEqual([null, { name: 'Ada' }]);
+  });
+
+  it('writes only the fields given', async () => {
+    const firestore = new FakeFirestore();
+    firestore.docs.set('profiles/ada', { name: 'Ada', boardOptOut: true });
+
+    await firestore.social().saveProfile('ada', { motto: 'Hi' });
+
+    expect(firestore.docs.get('profiles/ada')).toEqual({
+      name: 'Ada',
+      boardOptOut: true,
+      motto: 'Hi',
+      updatedAt: 'now',
+    });
+  });
+
   it('saves the public-name and opt-out flags with the profile', async () => {
     const firestore = new FakeFirestore();
 

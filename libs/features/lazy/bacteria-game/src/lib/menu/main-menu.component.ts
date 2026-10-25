@@ -86,7 +86,7 @@ export class MainMenuComponent {
    * True with the game's cloud: then the friends have a tile, and so do the
    * leaderboards while the owner's toggle shows them.
    */
-  public readonly friendsAvailable = input(false);
+  public readonly cloudAvailable = input(false);
   /** The friend requests waiting for an answer, counted on the tile. */
   public readonly friendRequests = input(0);
   /**
@@ -128,7 +128,7 @@ export class MainMenuComponent {
   private readonly toggles = inject(FeatureTogglesService).toggles;
   /** The leaderboards' tile: with the cloud, while the owner shows them. */
   protected readonly showsBoards = computed(
-    () => this.friendsAvailable() && this.toggles().leaderboards
+    () => this.cloudAvailable() && this.toggles().leaderboards
   );
 
   protected readonly support = inject(GameSupport);

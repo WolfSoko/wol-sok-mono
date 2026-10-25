@@ -4,8 +4,8 @@ import {
   type BoardEntry,
   type BoardKind,
   type BoardRow,
+  ENTRY_STATUSES,
   type EntryShow,
-  type EntryStatus,
 } from '../state/boards';
 import { isObject } from '../state/is-object';
 
@@ -15,13 +15,9 @@ import { isObject } from '../state/is-object';
  * the verified ranks (ADR 0012).
  */
 export interface BoardTop {
-  board: string;
-  /** The UTC day of a daily board. */
-  day?: string;
   /** The places that show only verified entries - 0 where none verify. */
   cut: number;
   rows: BoardRow[];
-  balanceVersion: number;
   /** True once a daily board's day is over and checked: it changes no more. */
   final: boolean;
 }
@@ -72,21 +68,14 @@ export interface GameBoards {
   /** The player's membership - null before their first entry. */
   member(uid: string): Promise<BoardMember | null>;
   /**
-   * An entry of the player's: a hidden one is not theirs to read, and the
-   * rules refuse a missing one alike, so a refusal reads as hidden.
+   * An entry of the player's: a hidden one is not theirs to read, so a
+   * refusal reads as hidden; a missing one (deleted, or never written)
+   * reads as missing.
    */
   entry(boardId: string, entryId: string): Promise<OwnEntry>;
   /** How many visible entries score more than `sort`. */
   countAbove(boardId: string, sort: number): Promise<number>;
 }
-
-const STATUSES: readonly EntryStatus[] = [
-  'counted',
-  'verified',
-  'provisional',
-  'stale',
-  'hidden',
-];
 
 /**
  * An entry as stored - null for anything that is not one. The functions'
@@ -97,7 +86,7 @@ export function parseBoardEntry(value: unknown): BoardEntry | null {
     return null;
   }
   const { sort, atHour, tag, avatar, name } = value;
-  const status = STATUSES.find((known) => known === value['status']);
+  const status = ENTRY_STATUSES.find((known) => known === value['status']);
   const show = parseShow(value['show']);
   if (
     typeof sort !== 'number' ||
@@ -143,14 +132,9 @@ export function parseBoardTop(value: unknown): BoardTop | null {
       },
     ];
   });
-  const day = value['day'];
   return {
-    board: typeof value['board'] === 'string' ? value['board'] : '',
-    ...(typeof day === 'string' ? { day } : {}),
     cut: typeof value['cut'] === 'number' ? value['cut'] : 0,
     rows,
-    balanceVersion:
-      typeof value['balanceVersion'] === 'number' ? value['balanceVersion'] : 0,
     final: value['final'] === true,
   };
 }

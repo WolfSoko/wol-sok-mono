@@ -70,6 +70,7 @@
 
   @if (social.presenceAvailable) {
     <mat-slide-toggle
+      [disabled]="!loaded()"
       [checked]="profile.shareStatus"
       (change)="setShareStatus($event.checked)"
     >
@@ -84,6 +85,7 @@
   >
     <span class="label">{{ "profile.editor.public" | t }}</span>
     <mat-slide-toggle
+      [disabled]="!loaded()"
       [checked]="profile.publicName"
       (change)="setPublicName($event.checked)"
     >
@@ -91,6 +93,7 @@
     </mat-slide-toggle>
     <span class="explain">{{ "profile.editor.publicNameNote" | t }}</span>
     <mat-slide-toggle
+      [disabled]="!loaded()"
       [checked]="profile.boardOptOut"
       (change)="setBoardOptOut($event.checked)"
     >
@@ -98,6 +101,7 @@
     </mat-slide-toggle>
     <span class="explain">{{ "profile.editor.boardOptOutNote" | t }}</span>
     <mat-slide-toggle
+      [disabled]="!loaded()"
       [checked]="profile.galleryOptOut"
       (change)="setGalleryOptOut($event.checked)"
     >
@@ -113,7 +117,7 @@
     <button
       mat-flat-button
       type="button"
-      [disabled]="!changed() || busy()"
+      [disabled]="!loaded() || !changed() || busy()"
       (click)="save()"
     >
       <mat-icon>save</mat-icon>

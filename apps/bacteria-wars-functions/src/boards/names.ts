@@ -2,7 +2,9 @@ import {
   AVATAR_COUNT,
   boardAvatar,
   boardTag,
+  type EntryStatus,
   posesAsLabel,
+  showsName,
 } from '@wolsok/feat-lazy-bac-game/engine';
 
 /**
@@ -117,11 +119,11 @@ export interface EntryLabel {
 export function entryLabel(
   entryId: string,
   profile: BoardProfile,
-  status: string
+  status: EntryStatus
 ): EntryLabel {
   const named =
     profile.publicName &&
-    (status === 'counted' || status === 'verified') &&
+    showsName(status) &&
     profile.name.trim() !== '' &&
     !isBlockedName(profile.name);
   return {

@@ -1,5 +1,5 @@
 import { BoardRow, EntryStatus } from '../state/boards';
-import { boardSections, showLine } from './board-rows';
+import { boardSections } from './board-rows';
 
 function aRow(
   entryId: string,
@@ -67,23 +67,5 @@ describe('board sections', () => {
 
     expect(beingChecked).toHaveLength(5);
     expect(others).toHaveLength(2);
-  });
-});
-
-describe('showLine', () => {
-  it('tells what each board shows', () => {
-    expect(showLine({ xp: 300, rank: 'coccus' }).kind).toBe('xp');
-    expect(showLine({ w: 1, l: 2, d: 0, nr: 0 }).kind).toBe('online');
-    expect(showLine({ ticks: 600, won: false })).toEqual({
-      kind: 'daily',
-      won: false,
-      seconds: 10,
-    });
-    expect(showLine({ depth: 3, seconds: 90 })).toEqual({
-      kind: 'endless',
-      depth: 3,
-      seconds: 90,
-      partial: false,
-    });
   });
 });

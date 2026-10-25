@@ -2,9 +2,9 @@ import { BehaviorSubject, map, Observable } from 'rxjs';
 import {
   type BoardRow,
   compareRows,
-  competitionRanks,
   isVisible,
   TOP_ROWS,
+  topRows,
 } from '../lib/state/boards';
 import type {
   BoardCursor,
@@ -18,7 +18,8 @@ import type {
 /**
  * The boards in memory, for specs: a spec sets the top documents, the
  * entries and the players' memberships as the functions would. Like the
- * rules, it hands a player no hidden entry - nor a missing one.
+ * rules, it hands a player no hidden entry, and a missing one reads as
+ * missing.
  */
 export class FakeGameBoards implements GameBoards {
   private readonly tops = new BehaviorSubject<ReadonlyMap<string, BoardTop>>(
@@ -51,7 +52,10 @@ export class FakeGameBoards implements GameBoards {
     const found = (this.entries.get(boardId) ?? []).find(
       (each) => each.entryId === entryId
     );
-    if (found === undefined || !isVisible(found.status)) {
+    if (found === undefined) {
+      return { state: 'missing' };
+    }
+    if (!isVisible(found.status)) {
       return { state: 'hidden' };
     }
     const { entryId: _id, ...entry } = found;
@@ -104,32 +108,18 @@ export class FakeGameBoards implements GameBoards {
 
 /**
  * A top document's rows from a board's entries, as `rebuildTop` makes them:
- * the visible ones in board order, at most 50, each with its `pos` (ties
- * share it) and, for the best `cut` verified ones, their verified `rank`.
+ * the visible ones in board order, at most 50, through `topRows`, with the
+ * best `cut` verified ones ranked.
  */
-export function topRows(
+export function topRowsOf(
   entries: readonly PagedEntry[],
   cut: number
 ): BoardRow[] {
   const visible = entries
     .filter((entry) => isVisible(entry.status))
     .sort(compareRows);
-  const positions = competitionRanks(visible.map((entry) => entry.sort));
-  const verified = visible
-    .filter((entry) => entry.status === 'verified')
-    .slice(0, cut);
-  const ranks = new Map(
-    competitionRanks(verified.map((entry) => entry.sort)).map((rank, i) => [
-      verified[i].entryId,
-      rank,
-    ])
+  return topRows(
+    visible.slice(0, TOP_ROWS),
+    visible.filter((entry) => entry.status === 'verified').slice(0, cut)
   );
-  return visible.slice(0, TOP_ROWS).map((entry, i) => {
-    const rank = ranks.get(entry.entryId);
-    return {
-      ...entry,
-      pos: positions[i],
-      ...(rank === undefined ? {} : { rank }),
-    };
-  });
 }

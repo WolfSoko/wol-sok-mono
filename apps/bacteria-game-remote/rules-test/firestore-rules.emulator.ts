@@ -418,7 +418,7 @@ describe('the leaderboards', () => {
     );
   });
 
-  it("takes the game's page and own-rank count, and refuses a missing entry", async () => {
+  it("takes the game's page and own-rank count, and reads a missing entry as not found", async () => {
     const entries = collection(db('bob'), 'boards/xp/entries');
     await assertSucceeds(
       getDocs(
@@ -444,9 +444,14 @@ describe('the leaderboards', () => {
         )
       )
     );
-    // Why the game reads a refused own entry as hidden, never as missing:
-    // the rules look at its status, which a missing one has not.
-    await assertFails(getDoc(doc(db('ada'), 'boards/xp/entries/gone')));
+    // A board the membership still lists whose entry the functions
+    // deleted: the game reads it as "no counted result yet", not hidden.
+    const gone = await assertSucceeds(
+      getDoc(doc(db('ada'), 'boards/xp/entries/gone'))
+    );
+    expect(gone.exists()).toBe(false);
+    // A hidden one stays refused, so a refusal always means hidden.
+    await assertFails(getDoc(doc(db('ada'), 'boards/xp/entries/e2')));
   });
 
   it('keeps hidden entries from players, not from the owner', async () => {

@@ -71,16 +71,13 @@ describe('stored boards', () => {
       ['e2', 1, undefined],
     ]);
     expect(top?.cut).toBe(10);
-    expect(top?.day).toBe('2026-10-24');
     expect(top?.final).toBe(true);
   });
 
   it('reads a board that is not final yet', () => {
     expect(parseBoardTop({ board: 'xp', cut: 0, rows: [] })).toEqual({
-      board: 'xp',
       cut: 0,
       rows: [],
-      balanceVersion: 0,
       final: false,
     });
     expect(parseBoardTop({ board: 'xp' })).toBeNull();

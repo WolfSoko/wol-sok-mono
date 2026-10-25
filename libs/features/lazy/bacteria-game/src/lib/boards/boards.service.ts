@@ -1,5 +1,14 @@
 import { computed, inject, Injectable } from '@angular/core';
-import { filter, firstValueFrom, map, Observable, of } from 'rxjs';
+import {
+  distinctUntilChanged,
+  EMPTY,
+  filter,
+  firstValueFrom,
+  map,
+  Observable,
+  of,
+  switchMap,
+} from 'rxjs';
 import { SocialService } from '../social/social.service';
 import {
   type BoardEntry,
@@ -20,10 +29,36 @@ export type OwnStanding =
    */
   | { on: false; reason: 'none' | 'optedOut' | 'hidden' }
   /**
-   * On it: the entry, its visible position - ties share it - and, inside
-   * the verified places, its verified rank.
+   * On it: the entry as read and, when it was below the top document, the
+   * visible entries above it, counted - else null.
    */
-  | { on: true; entry: BoardEntry; pos: number; rank: number | null };
+  | { on: true; entryId: string; entry: BoardEntry; above: number | null };
+
+/** The own row's place: its entry, its position - ties share it - and rank. */
+export interface OwnPlace {
+  entry: BoardEntry;
+  pos: number;
+  /** The verified rank, inside the cut only. */
+  rank: number | null;
+}
+
+/**
+ * Where the own entry stands on the board's live top rows: as its row
+ * there says, else by the count taken when it was read, else among the
+ * rows it ties with or beats.
+ */
+export function ownPlace(
+  own: Extract<OwnStanding, { on: true }>,
+  rows: readonly BoardRow[]
+): OwnPlace {
+  const row = rows.find((each) => each.entryId === own.entryId);
+  if (row !== undefined) {
+    return { entry: row, pos: row.pos, rank: row.rank ?? null };
+  }
+  const above =
+    own.above ?? rows.filter((each) => each.sort > own.entry.sort).length;
+  return { entry: own.entry, pos: 1 + above, rank: null };
+}
 
 /** The id of a board by its reference. */
 export function idOfBoard(ref: BoardRef): string {
@@ -33,15 +68,20 @@ export function idOfBoard(ref: BoardRef): string {
 /**
  * Reads the leaderboards for the screen (ADR 0012, "Reading a board"): the
  * top 50 live from the board's top document, further pages 25 at a time,
- * and the player's own row from their membership - its rank from the top
- * document, else one `count()`, never a scan. Without the game's cloud
- * there are none.
+ * and the player's own row from their membership - its place from the top
+ * document, else one `count()`, never a scan. Everything waits for a
+ * signed-in player (the guest signs in on the visit), as the rules want.
+ * Without the game's cloud there are none.
  */
 @Injectable({ providedIn: 'root' })
 export class BoardsService {
   private readonly boards = inject(GameCloud).boards();
   private readonly account = inject(GameAccount);
   private readonly social = inject(SocialService);
+  private readonly playerId$ = this.account.players.pipe(
+    map(({ playerId }) => playerId),
+    distinctUntilChanged()
+  );
 
   /** False without the game's cloud: boards need the online game. */
   public readonly available = this.boards !== null;
@@ -51,11 +91,19 @@ export class BoardsService {
     () => this.social.profile()?.boardOptOut === true
   );
 
-  /** A board's top 50, live - null while it has none. */
+  /**
+   * A board's top 50, live - null while it has none. Listens only while a
+   * player is signed in, as the rules want, and again for the next one.
+   */
   public watchTop(ref: BoardRef): Observable<BoardTop | null> {
-    return this.boards === null
+    const boards = this.boards;
+    return boards === null
       ? of(null)
-      : this.boards.watchTop(idOfBoard(ref));
+      : this.playerId$.pipe(
+          switchMap((playerId) =>
+            playerId === null ? EMPTY : boards.watchTop(idOfBoard(ref))
+          )
+        );
   }
 
   /**
@@ -67,10 +115,12 @@ export class BoardsService {
     last: BoardRow,
     shown: number
   ): Promise<BoardRow[]> {
-    if (this.boards === null) {
+    const boards = this.boards;
+    if (boards === null) {
       return [];
     }
-    const entries = await this.boards.page(
+    await this.signedIn();
+    const entries = await boards.page(
       idOfBoard(ref),
       { sort: last.sort, atHour: last.atHour, entryId: last.entryId },
       PAGE_ROWS
@@ -86,7 +136,10 @@ export class BoardsService {
     return rows;
   }
 
-  /** The player's own row on a board, with its rank, given its top 50. */
+  /**
+   * The player's own entry on a board, given its top 50: counts the
+   * entries above it only when it is below them.
+   */
   public async ownStanding(
     ref: BoardRef,
     top: BoardTop | null
@@ -98,12 +151,7 @@ export class BoardsService {
     if (this.optedOut()) {
       return { on: false, reason: 'optedOut' };
     }
-    const uid = await firstValueFrom(
-      this.account.players.pipe(
-        map(({ playerId }) => playerId),
-        filter((playerId): playerId is string => playerId !== null)
-      )
-    );
+    const uid = await this.signedIn();
     const board = idOfBoard(ref);
     const member = await boards.member(uid);
     const entryId = member?.entryIds[ref.kind];
@@ -119,20 +167,30 @@ export class BoardsService {
       return { on: false, reason: 'hidden' };
     }
     const own = await boards.entry(board, entryId);
+    // A missing entry: the functions deleted it, or never wrote it.
     if (own.state !== 'shown') {
       return { on: false, reason: own.state === 'hidden' ? 'hidden' : 'none' };
     }
     const { entry } = own;
-    const row = top?.rows.find((each) => each.entryId === entryId);
-    if (row !== undefined) {
-      return { on: true, entry, pos: row.pos, rank: row.rank ?? null };
-    }
     const rows = top?.rows ?? [];
-    const lastRow = rows.at(-1);
-    const pos =
-      lastRow !== undefined && entry.sort >= lastRow.sort
-        ? 1 + rows.filter((each) => each.sort > entry.sort).length
-        : 1 + (await boards.countAbove(board, entry.sort));
-    return { on: true, entry, pos, rank: null };
+    const last = rows.at(-1);
+    const below =
+      !rows.some((each) => each.entryId === entryId) &&
+      (last === undefined || entry.sort < last.sort);
+    return {
+      on: true,
+      entryId,
+      entry,
+      above: below ? await boards.countAbove(board, entry.sort) : null,
+    };
+  }
+
+  /** The player's uid, once there is one: a guest signs in on the visit. */
+  private signedIn(): Promise<string> {
+    return firstValueFrom(
+      this.playerId$.pipe(
+        filter((playerId): playerId is string => playerId !== null)
+      )
+    );
   }
 }

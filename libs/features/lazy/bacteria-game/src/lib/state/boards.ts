@@ -76,6 +76,12 @@ export const VISIBLE_STATUSES: readonly EntryStatus[] = [
   'stale',
 ];
 
+/** Every status an entry may have, the hidden one last. */
+export const ENTRY_STATUSES: readonly EntryStatus[] = [
+  ...VISIBLE_STATUSES,
+  'hidden',
+];
+
 /** What a row shows besides its rank, per board kind. */
 export type EntryShow =
   | { xp: number; rank: string }
@@ -205,6 +211,33 @@ export function competitionRanks(sorts: readonly number[]): number[] {
     ranks.push(i > 0 && sorts[i - 1] === sort ? ranks[i - 1] : i + 1)
   );
   return ranks;
+}
+
+/**
+ * The rows of a top document, from the visible entries in board order
+ * (at most `TOP_ROWS`) and the board's best verified ones (at most its
+ * cut): `pos` is 1 + the visible entries above (ties share it), `rank`
+ * the verified rank inside the cut.
+ */
+export function topRows(
+  visible: readonly Omit<BoardRow, 'pos' | 'rank'>[],
+  verified: readonly Pick<BoardRow, 'entryId' | 'sort'>[]
+): BoardRow[] {
+  const positions = competitionRanks(visible.map((row) => row.sort));
+  const ranks = new Map(
+    competitionRanks(verified.map((row) => row.sort)).map((rank, i) => [
+      verified[i].entryId,
+      rank,
+    ])
+  );
+  return visible.map((row, i) => {
+    const rank = ranks.get(row.entryId);
+    return {
+      ...row,
+      pos: positions[i],
+      ...(rank === undefined ? {} : { rank }),
+    };
+  });
 }
 
 function count(value: number, what: string): number {

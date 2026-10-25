@@ -68,19 +68,26 @@ export class ProfileEditorComponent {
       : { kind: 'photo', url };
   });
 
-  protected readonly changed = signal(false);
+  /** The fields the player changed since the last save. */
+  private readonly touched = signal<ReadonlySet<keyof Profile>>(new Set());
+  protected readonly changed = computed(() => this.touched().size > 0);
   protected readonly busy = signal(false);
   protected readonly note = signal<TranslationKey | null>(null);
   /**
-   * The profile as edited - the saved one until the player changes it. One
-   * that arrives later does not undo what the player typed.
+   * False until the stored profile is read: the switches and the save wait
+   * for it, so its flags are never saved as the defaults shown meanwhile.
+   */
+  protected readonly loaded = this.social.profileLoaded;
+  /**
+   * The profile as edited - the saved one, with the fields the player
+   * changed. One that arrives later does not undo what the player typed.
    */
   protected readonly draft = linkedSignal<Profile | null, Profile | null>({
     source: this.social.profile,
     computation: (saved, previous) =>
-      previous !== undefined && untracked(this.changed)
-        ? previous.value
-        : saved,
+      saved === null || previous === undefined || previous.value === null
+        ? saved
+        : { ...saved, ...pick(previous.value, untracked(this.touched)) },
   });
 
   protected setName(event: Event): void {
@@ -135,19 +142,26 @@ export class ProfileEditorComponent {
 
   protected async save(): Promise<void> {
     const draft = this.draft();
-    if (draft === null) {
+    if (draft === null || !this.loaded()) {
       return;
     }
-    const profile: Profile = {
-      ...draft,
-      name: cleanName(draft.name) ?? this.social.profile()?.name ?? 'Player',
-      motto: cleanMotto(draft.motto),
-    };
+    const touched = this.touched();
+    const changes = pick(
+      {
+        ...draft,
+        name: cleanName(draft.name) ?? this.social.profile()?.name ?? 'Player',
+        motto: cleanMotto(draft.motto),
+      },
+      touched
+    );
     this.busy.set(true);
     this.note.set(null);
     try {
-      await this.social.saveProfile(profile);
-      this.changed.set(false);
+      await this.social.saveProfile(changes);
+      // What the player changed meanwhile stays to be saved.
+      this.touched.update(
+        (now) => new Set([...now].filter((field) => !touched.has(field)))
+      );
       this.note.set('profile.editor.saved');
     } catch (error) {
       console.error('Could not save the profile', error);
@@ -161,8 +175,21 @@ export class ProfileEditorComponent {
     const draft = this.draft();
     if (draft !== null) {
       this.draft.set({ ...draft, ...change });
-      this.changed.set(true);
+      this.touched.update(
+        (touched) =>
+          new Set([...touched, ...(Object.keys(change) as (keyof Profile)[])])
+      );
       this.note.set(null);
     }
   }
+}
+
+/** The fields of a profile named. */
+function pick(
+  profile: Profile,
+  fields: ReadonlySet<keyof Profile>
+): Partial<Profile> {
+  return Object.fromEntries(
+    [...fields].map((field) => [field, profile[field]])
+  ) as Partial<Profile>;
 }

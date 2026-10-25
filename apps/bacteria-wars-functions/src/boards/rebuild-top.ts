@@ -2,9 +2,10 @@ import {
   BALANCE_VERSION,
   BOARD_CUT,
   type BoardRow,
-  competitionRanks,
+  isVisible,
   parseBoardId,
   TOP_ROWS,
+  topRows,
   VISIBLE_STATUSES,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
@@ -18,32 +19,6 @@ import { dailyBoardExpiresAt } from './rank-daily';
 
 /** An entry as the top document needs it. */
 type EntryRow = Omit<BoardRow, 'pos' | 'rank'>;
-
-/**
- * The rows of a top document (ADR 0012), from the visible entries in board
- * order and the board's best verified ones: `pos` is 1 + the visible
- * entries above (ties share it), `rank` the verified rank inside the cut.
- */
-export function topRows(
-  visible: readonly EntryRow[],
-  verified: readonly EntryRow[]
-): BoardRow[] {
-  const positions = competitionRanks(visible.map((row) => row.sort));
-  const ranks = new Map(
-    competitionRanks(verified.map((row) => row.sort)).map((rank, i) => [
-      verified[i].entryId,
-      rank,
-    ])
-  );
-  return visible.map((row, i) => {
-    const rank = ranks.get(row.entryId);
-    return {
-      ...row,
-      pos: positions[i],
-      ...(rank === undefined ? {} : { rank }),
-    };
-  });
-}
 
 /**
  * Rebuilds `boards/{boardId}` after a write to one of its entries - only
@@ -77,8 +52,7 @@ export async function rebuildTop(
   const rows = (top.get('rows') as BoardRow[] | undefined) ?? [];
   const last = rows.at(-1);
   const visible =
-    after !== undefined &&
-    VISIBLE_STATUSES.includes(after['status'] as BoardRow['status']);
+    after !== undefined && isVisible(after['status'] as BoardRow['status']);
   const relevant =
     rows.some((row) => row.entryId === entryId) ||
     (visible &&

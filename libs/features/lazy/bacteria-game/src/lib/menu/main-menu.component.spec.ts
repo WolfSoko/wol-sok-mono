@@ -158,7 +158,7 @@ describe('MainMenuComponent', () => {
       );
     expect(tile()).toBeUndefined();
 
-    fixture.componentRef.setInput('friendsAvailable', true);
+    fixture.componentRef.setInput('cloudAvailable', true);
     fixture.detectChanges();
     expect(tile()?.querySelector('.count')).toBeNull();
 
@@ -198,7 +198,7 @@ describe('MainMenuComponent', () => {
         | undefined;
     expect(tile()).toBeUndefined();
 
-    menu.componentRef.setInput('friendsAvailable', true);
+    menu.componentRef.setInput('cloudAvailable', true);
     menu.detectChanges();
     const open = jest.fn();
     menu.componentInstance.open.subscribe(open);

@@ -107,7 +107,7 @@
           }}</span>
         }
       </button>
-      @if (friendsAvailable()) {
+      @if (cloudAvailable()) {
         <button type="button" class="tile" (click)="open.emit('friends')">
           <mat-icon>group</mat-icon>
           {{ "social.friends.title" | t }}
