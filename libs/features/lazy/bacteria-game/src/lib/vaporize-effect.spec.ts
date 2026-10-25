@@ -1,6 +1,7 @@
 import {
   isVaporizeMs,
   isVaporizeQuality,
+  randomWindDirection,
   vaporizePixels,
 } from './vaporize-effect';
 
@@ -19,5 +20,11 @@ describe('the vaporize settings', () => {
     expect(isVaporizeQuality('ultra')).toBe(false);
     expect(isVaporizeMs(2500)).toBe(true);
     expect(isVaporizeMs(1234)).toBe(false);
+  });
+
+  it('blows the dust any way round the compass, in whole degrees', () => {
+    expect(randomWindDirection(() => 0)).toBe(0);
+    expect(randomWindDirection(() => 0.25)).toBe(90);
+    expect(randomWindDirection(() => 0.999_999)).toBe(359);
   });
 });
