@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.100.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.99.0...v74.100.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-wars-admin:** leaderboards view and changing a ban's end ([#2670](https://github.com/WolfSoko/wol-sok-mono/issues/2670)) ([c046682](https://github.com/WolfSoko/wol-sok-mono/commit/c046682cda5d919efd0a259689f59e1242433eb0))
+
 ## [74.99.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.98.0...v74.99.0) (2026-10-25)
 
 ### Features
