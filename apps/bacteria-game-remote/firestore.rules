@@ -299,7 +299,7 @@ service cloud.firestore {
         isCommandExpiry(data.expireAt) &&
         data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
           'board.hidePlayer', 'board.restore', 'board.verify', 'player.ban',
-          'player.unban', 'stats.refresh', 'stats.recount'] &&
+          'player.unban', 'stats.refresh', 'stats.recount', 'toggles.set'] &&
         isAdminReason(data) &&
         (!(data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
           'board.hidePlayer', 'player.ban']) || signedInLately()) &&
@@ -318,7 +318,7 @@ service cloud.firestore {
     function isAdminTarget(type, target) {
       return type in ['profile.reset', 'profile.removeImage', 'player.unban']
         ? isUidTarget(target)
-        : type in ['stats.refresh', 'stats.recount']
+        : type in ['stats.refresh', 'stats.recount', 'toggles.set']
           ? target == null
           : type == 'board.hideEntry'
             ? isEntryTarget(target, false)
@@ -350,7 +350,23 @@ service cloud.firestore {
         ? args.keys().hasOnly(['bar']) && args.get('bar', false) is bool
         : type == 'player.ban'
           ? isBanArgs(args)
-          : args.keys().size() == 0);
+          : type == 'toggles.set'
+            ? isToggleArgs(args)
+            : args.keys().size() == 0);
+    }
+
+    // One or more of the game's feature toggles (`FEATURE_TOGGLES`), each
+    // a boolean.
+    function isToggleArgs(args) {
+      return args.keys().hasOnly(['values']) && args.values is map &&
+        args.values.size() > 0 &&
+        args.values.keys().hasOnly(['rankedDaily', 'rankedEndless',
+          'matchmaking', 'leaderboards', 'deterministicSimulation']) &&
+        args.values.get('rankedDaily', true) is bool &&
+        args.values.get('rankedEndless', true) is bool &&
+        args.values.get('matchmaking', true) is bool &&
+        args.values.get('leaderboards', true) is bool &&
+        args.values.get('deterministicSimulation', true) is bool;
     }
 
     // Until when, as a timestamp or ms (null for good), and why.

@@ -14,6 +14,7 @@ import {
   type ModerationChange,
 } from './moderation';
 import type { Realtime } from './realtime';
+import { type RemoteToggles, setToggles } from './toggles';
 import { googleProviderOf } from './tombstones';
 import { writeAudit } from './records';
 
@@ -31,6 +32,8 @@ export interface AdminContext {
   realtime: Realtime;
   /** The account's ban tombstone id, null without a Google provider. */
   tombstoneOf(uid: string): Promise<string | null>;
+  /** The feature toggles in Remote Config. */
+  toggles: RemoteToggles;
 }
 
 /** The parts of an Auth user the owner check reads. */
@@ -183,6 +186,13 @@ async function act(
   now: number
 ): Promise<Outcome> {
   const unchanged = { before: null, after: null };
+  if (command.type === 'toggles.set') {
+    return {
+      ok: true,
+      target: null,
+      ...(await setToggles(context.toggles, command.args.values)),
+    };
+  }
   // `stats.*` take no target.
   if (command.target === null || command.type === 'board.verify') {
     return {

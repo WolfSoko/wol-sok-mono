@@ -1,4 +1,5 @@
 import { isEntryId, parseBoardId } from './boards';
+import { type FeatureToggles, parseToggleValues } from './feature-toggles';
 import { isObject } from './is-object';
 
 /**
@@ -18,6 +19,7 @@ export const ADMIN_COMMAND_TYPES = [
   'player.unban',
   'stats.refresh',
   'stats.recount',
+  'toggles.set',
 ] as const;
 
 export type AdminCommandType = (typeof ADMIN_COMMAND_TYPES)[number];
@@ -81,7 +83,15 @@ export type AdminCommand =
       }
     >
   | Command<'player.unban', PlayerTarget, NoArgs>
-  | Command<'stats.refresh' | 'stats.recount', null, NoArgs>;
+  | Command<'stats.refresh' | 'stats.recount', null, NoArgs>
+  | Command<
+      'toggles.set',
+      null,
+      {
+        /** The toggles to change, at least one. */
+        values: Partial<FeatureToggles>;
+      }
+    >;
 
 /** What a type takes: its targets and the arguments it allows. */
 const SCHEMA: Readonly<
@@ -100,6 +110,7 @@ const SCHEMA: Readonly<
   'player.unban': { targets: 'uid', args: [] },
   'stats.refresh': { targets: 'none', args: [] },
   'stats.recount': { targets: 'none', args: [] },
+  'toggles.set': { targets: 'none', args: ['values'] },
 };
 
 /** The fields of the command itself. */
@@ -134,7 +145,7 @@ export function parseAdminCommand(value: unknown): AdminCommand | null {
   }
   const type = value['type'];
   const schema = SCHEMA[type];
-  const stats = schema.targets === 'none';
+  const stats = type === 'stats.refresh' || type === 'stats.recount';
   const keys = Object.keys(value);
   if (
     keys.some(
@@ -231,6 +242,10 @@ function parseArgs(
       return null;
     }
     return { until, reason: reason as BanReason };
+  }
+  if (type === 'toggles.set') {
+    const values = parseToggleValues(value['values']);
+    return values === null ? null : { values };
   }
   if ('bar' in value) {
     return typeof value['bar'] === 'boolean' ? { bar: value['bar'] } : null;

@@ -64,6 +64,12 @@ describe('admin commands', () => {
       },
       { type: 'stats.refresh', target: null, args: {} },
       { type: 'stats.recount', target: null, reason: '', args: {} },
+      {
+        type: 'toggles.set',
+        target: null,
+        reason: 'Ranked servers overloaded',
+        args: { values: { rankedDaily: false } },
+      },
     ];
 
     for (const command of valid) {
@@ -193,6 +199,29 @@ describe('admin commands', () => {
         reason: 'x'.repeat(201),
         args: {},
       })
+    ).toBeNull();
+  });
+
+  it('reads toggles to set, and refuses unknown or empty ones', () => {
+    const toggles = (values: unknown, more: object = {}) =>
+      parseAdminCommand({
+        type: 'toggles.set',
+        target: null,
+        reason: 'Rollout',
+        args: { values },
+        ...more,
+      });
+    expect(toggles({ matchmaking: false, leaderboards: true })?.args).toEqual({
+      values: { matchmaking: false, leaderboards: true },
+    });
+    expect(toggles({})).toBeNull();
+    expect(toggles({ gallery: true })).toBeNull();
+    expect(toggles({ rankedDaily: 'off' })).toBeNull();
+    expect(toggles(null)).toBeNull();
+    // It changes the game for everybody: a reason is a must.
+    expect(toggles({ rankedDaily: false }, { reason: '' })).toBeNull();
+    expect(
+      toggles({ rankedDaily: false }, { target: { uid: UID } })
     ).toBeNull();
   });
 

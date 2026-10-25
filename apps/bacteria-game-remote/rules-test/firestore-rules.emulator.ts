@@ -517,6 +517,26 @@ describe('adminCommands', () => {
     );
   });
 
+  it('takes feature toggles as booleans, with a reason', async () => {
+    const toggles = (values: unknown, extra: object = {}) =>
+      adminCommand({
+        type: 'toggles.set',
+        target: null,
+        args: { values },
+        ...extra,
+      });
+    await assertSucceeds(
+      send(toggles({ rankedDaily: false, matchmaking: true }))
+    );
+    await assertFails(send(toggles({})));
+    await assertFails(send(toggles({ gallery: true })));
+    await assertFails(send(toggles({ leaderboards: 'off' })));
+    await assertFails(send(toggles({ rankedDaily: false }, { reason: '' })));
+    await assertFails(
+      send(toggles({ rankedDaily: false }, { target: { uid: 'eve' } }))
+    );
+  });
+
   it('wants a recent sign-in for destructive types only', async () => {
     const stale = {
       ...OWNER_TOKEN,

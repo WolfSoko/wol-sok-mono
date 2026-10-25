@@ -362,7 +362,7 @@ It costs nothing:
   the void match and played on at the next level loses a life to the level
   check. On a give-up an hour after the match the player has usually
   played on, so in that case the drop still costs a life, unless the void
-  match was lost. This rule is open for the owner to change.
+  match was lost. The owner keeps this rule (2026-10-25).
 
 **Without a declaration a match is simply unranked**: offline, or ranked
 play switched off.
@@ -776,6 +776,31 @@ admin text lands in the game chunk.
   feature, unfeature, anonymise), moved here from `/curate` (this changes
   ADR 0011).
 - **Audit**: the newest first, filtered by type or uid.
+
+### Feature toggles
+
+The owner switches whole features on and off from the admin area, without
+a release (decided 2026-10-25: Remote Config).
+
+- **Where they live**: Remote Config of the game's project, one boolean
+  parameter per toggle. Clients fetch them with the Remote Config SDK; the
+  defaults are `FEATURE_TOGGLES` in the game lib (`state/feature-toggles.ts`),
+  what the game does without Remote Config, so a client that cannot fetch
+  them plays as before.
+- **The toggles**: `rankedDaily`, `rankedEndless`, `matchmaking`,
+  `leaderboards`, `deterministicSimulation` (the rollout switch of ADR
+  0015), all on by default.
+- **Setting them**: the admin command `toggles.set` (`target: null`,
+  `args.values` with one or more toggles, a reason) publishes the
+  template from `adminCommand`, a boolean default per toggle and no
+  conditional values, so every client gets what the admin area shows. The
+  publish sends the template's ETag: a template changed meanwhile fails
+  the command, and the owner sends it again. The audit keeps what each
+  toggle was and is.
+- **What they gate**: the client offers or shows the feature. The
+  functions do not read them: a client still on an old fetch may send a
+  ranked submission after `rankedDaily` went off, and it counts as before.
+  A toggle is a switch for what players see, not a security boundary.
 
 ### Statistics without expensive scans
 
@@ -1224,6 +1249,12 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      hidden (`hiddenFor`), so tomorrow's daily entry is hidden too. A
      restore lifts the bars it covers, and an entry comes back with its
      previous status unless another reason still hides it.
+   - Then the feature toggles: `FEATURE_TOGGLES` and `parseToggleValues`
+     in the game lib, `toggles.set` in the rules (`isToggleArgs`, checked
+     against the lib by `toggles.spec.ts`) and in `adminCommand`
+     (`src/admin/toggles.ts`, Remote Config behind the `RemoteToggles`
+     port). The client reads them, and the admin area sets them, with the
+     client release.
    - Still to come: `board.verify`, `stats.refresh`, `stats.recount` and
      the statistics.
 6. **One client release** carries attempts and ranked matches, the
@@ -1258,7 +1289,16 @@ written.
   day (`XP_FULL_COUNT_BEFORE` = 2026-10-25 00:00 UTC). The Blaze plan is
   on, and `BAN_TOMBSTONE_KEY` is in Secret Manager.
 
+- On 2026-10-25: feature toggles in Remote Config (not Firestore); a
+  bar from a board hides the player's entries of that kind while their
+  results still count (an online opponent keeps the win); a won endless
+  match voided after its result keeps costing the life it cost.
+
 ## Owner's manual steps
+
+- Grant the functions' runtime service account the role "Firebase Remote
+  Config Admin" (`roles/cloudconfig.admin`) on `bacteria-wars`, so
+  `toggles.set` can publish the template.
 
 - Create the secret `BAN_TOMBSTONE_KEY` (32 random bytes) in Secret
   Manager on `bacteria-wars`, and grant the functions' runtime account
