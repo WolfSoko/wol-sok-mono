@@ -601,9 +601,22 @@ describe('ban tombstones', () => {
     // The fake Auth now finds no Google provider.
     await command('c2', unban('ada'));
     expect((await tombstone('ada')).exists).toBe(false);
-    expect((await db.doc('moderation/ada').get()).get('tombstone')).toBe(
+    expect((await db.doc('moderation/ada').get()).get('tombstones')).toBe(
       undefined
     );
+  });
+
+  it('go with the unban for every Google account the ban followed', async () => {
+    await command('c1', ban('ada', null), google);
+    // Ada swaps Google accounts, and the owner changes the ban.
+    const swapped: AdminContext = {
+      ...context(),
+      tombstoneOf: async () => 't-ada-2',
+    };
+    await command('c2', ban('ada', null, { reason: 'spam' }), swapped);
+    expect((await db.collection('banTombstones').get()).size).toBe(2);
+    await command('c3', unban('ada'));
+    expect((await db.collection('banTombstones').get()).size).toBe(0);
   });
 
   it('keep a permanent ban 2 years, and follow no guest', async () => {

@@ -1185,9 +1185,10 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      through `defineSecret`, named in `secrets` by `acceptReplay`,
      `rankProgress`, `adminCommand`, `countAccount` and
      `deletePlayerBoards`): a ban of a Google account writes its tombstone
-     in the ban's transaction and notes its id in
-     `moderation/{uid}.tombstone`, so an unban deletes it with the ban even
-     once the player unlinked Google, and so does the hourly expiry; TTL
+     in the ban's transaction and adds its id to
+     `moderation/{uid}.tombstones`, so an unban deletes every tombstone the
+     ban wrote with the ban, also once the player unlinked or swapped
+     Google, and so does the hourly expiry; TTL
      takes the rest (`expireAt` is the ban's end, at most 2 years), and a
      match checks `until`. An Auth failure while looking the account up fails the
      command rather than ban without a tombstone. `countAccount` counts the
@@ -1204,7 +1205,7 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      trigger (`deleteAccount`, which runs the board clean-up beside the
      account steps) deletes both ban documents only after the tombstone is
      written (by the
-     account's Google provider, or the id the ban noted); its other steps
+     account's Google provider, and the ids the bans noted); its other steps
      run regardless, and the audit scrub skips an entry TTL took.
    - Still to come: the other admin types and the statistics.
 6. **One client release** carries attempts and ranked matches, the

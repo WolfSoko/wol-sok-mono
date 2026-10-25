@@ -156,14 +156,16 @@ export async function banPlayer(
         noticeData('banned', now, { until, reason })
       );
     }
-    // The count, and the tombstone's id for the unban, which then finds it
-    // even once the player unlinked Google.
+    // The count, and every tombstone id the ban wrote, for the unban: it
+    // finds them even once the player unlinked or swapped Google.
     if (!renewed || tombstone !== null) {
       tx.set(
         db.doc(`moderation/${uid}`),
         {
           ...(renewed ? {} : { bans: FieldValue.increment(1) }),
-          ...(tombstone === null ? {} : { tombstone }),
+          ...(tombstone === null
+            ? {}
+            : { tombstones: FieldValue.arrayUnion(tombstone) }),
         },
         { merge: true }
       );
@@ -192,8 +194,8 @@ export async function banPlayer(
  * only when it is the lifted ban's or holds no more, each entry is
  * unhidden only while no other ban holds, and `bans/{uid}` is deleted only
  * while unchanged (`ban-changed` otherwise), together with the Google
- * account's tombstone (`tombstone`, its id, and the one the ban noted in
- * `moderation/{uid}.tombstone`). Public replays taken down
+ * account's tombstone (`tombstone`, its id, and those the ban noted in
+ * `moderation/{uid}.tombstones`). Public replays taken down
  * stay down. An unban without a ban (`not-banned`) still removes the
  * Realtime Database's ban and unhides the entries, the owner's way to
  * repair a mirror a failed command left behind; a ban set meanwhile keeps
@@ -244,14 +246,14 @@ export async function liftBan(
       return false;
     }
     tx.delete(ref);
-    const noted: unknown = counts?.get('tombstone');
-    for (const id of new Set([tombstone, noted])) {
-      if (typeof id === 'string') {
+    const noted = notedTombstones(counts?.data());
+    for (const id of new Set([...noted, tombstone])) {
+      if (id !== null) {
         tx.delete(db.doc(`banTombstones/${id}`));
       }
     }
-    if (typeof noted === 'string') {
-      tx.update(moderation, { tombstone: FieldValue.delete() });
+    if (noted.length > 0) {
+      tx.update(moderation, { tombstones: FieldValue.delete() });
     }
     tx.set(
       db.doc(`players/${uid}/notices/${noticeId}`),
@@ -260,6 +262,16 @@ export async function liftBan(
     return true;
   });
   return lifted ? { before: stored(before), after: null } : 'ban-changed';
+}
+
+/** The tombstone ids a player's bans noted in `moderation/{uid}`. */
+export function notedTombstones(
+  moderation: Record<string, unknown> | undefined
+): string[] {
+  const ids: unknown = moderation?.['tombstones'];
+  return Array.isArray(ids)
+    ? ids.filter((id): id is string => typeof id === 'string')
+    : [];
 }
 
 function sameBan(a: BanState | null, b: BanState): boolean {
@@ -295,7 +307,7 @@ export async function expireBans(
     const until = (doc.get('until') as Timestamp).toMillis();
     const id = `ban-ended_${uid}_${until}`;
     try {
-      // Its tombstone goes by the id the ban noted, else by TTL.
+      // Its tombstones go by the ids the ban noted, else by TTL.
       const change = await liftBan(db, realtime, uid, id, now, {
         endedUntil: until,
       });
