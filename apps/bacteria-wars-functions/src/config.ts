@@ -29,6 +29,12 @@ export const DAILY_SUBMISSIONS = 5_000;
  */
 export const DAILY_RANKED_SUBMISSIONS = 20_000;
 
+/**
+ * An online replay still waiting for its second report this long after
+ * the first is closed as "Not reported" (ADR 0012) - its `closeAt`.
+ */
+export const NOT_REPORTED_AFTER_MS = 2 * 60 * 60 * 1000;
+
 /** How long a private replay is kept: 30 days after the match. */
 export const REPLAY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 

@@ -17,6 +17,7 @@ import { dayOf } from '../limits';
 import {
   DAILY_VERIFY_MS,
   DAY_MS,
+  expectedRerunMs,
   FAILED_CHECKS_TO_SKIP,
   MAX_VERIFIED_TICKS,
   SLICE_MS,
@@ -83,7 +84,9 @@ export function openDays(now: number): string[] {
  * place; a failed check marks the attempt and the entry falls back to the
  * next best one. Two failed checks in 7 days skip an account for 7 days
  * and flag it for the owner (`moderation/{uid}`) - not a ban, a failure
- * may be Safari.
+ * may be Safari. A re-run starts only when its expected cost fits in what
+ * the slice has left, and each one is charged to the day as it ends, so a
+ * slice cut short by the function's timeout has paid for what it did.
  */
 export async function verifyDailySlice(
   db: Firestore,
@@ -115,16 +118,17 @@ export async function verifyDailySlice(
     'daily',
     boards
   )) {
-    if (clock() - start >= budget) {
+    const began = clock();
+    const left = budget - (began - start);
+    if (left <= 0) {
       break;
     }
-    if (await checkCandidate(db, candidate, now, verify)) {
+    if (await checkCandidate(db, candidate, now, verify, left)) {
       checked++;
     }
+    await recordSpent(db, now, 'verifyMs', Math.round(clock() - began));
   }
-  const spentMs = Math.round(clock() - start);
-  await recordSpent(db, now, 'verifyMs', spentMs);
-  return { checked, spentMs };
+  return { checked, spentMs: Math.round(clock() - start) };
 }
 
 /**
@@ -257,14 +261,16 @@ export async function candidates<B extends BoardRef>(
 }
 
 /**
- * Plays a candidate's best provisional attempt again - false when none, or
+ * Plays a candidate's best provisional attempt again - false when none,
+ * when its re-run would take longer than the `leftMs` of the slice, or
  * when another slice checked it meanwhile.
  */
 async function checkCandidate(
   db: Firestore,
   candidate: Candidate<{ boardId: string; day: string }>,
   now: number,
-  verify: (replay: Replay) => Verdict
+  verify: (replay: Replay) => Verdict,
+  leftMs: number
 ): Promise<boolean> {
   const runRef = db.doc(`dailyRuns/${candidate.board.day}_${candidate.uid}`);
   const attempts =
@@ -277,6 +283,9 @@ async function checkCandidate(
     return false;
   }
   const replay = await storedReplay(db, best.replayId);
+  if (replay !== null && expectedRerunMs(replay) > leftMs) {
+    return false;
+  }
   const verdict: Verdict =
     replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
   return db.runTransaction(async (tx) => {

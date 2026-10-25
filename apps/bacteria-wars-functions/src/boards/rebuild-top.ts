@@ -14,6 +14,7 @@ import {
   type QueryDocumentSnapshot,
   Timestamp,
 } from 'firebase-admin/firestore';
+import { DAY_MS } from './budgets';
 import { DAILY_TTL_MS } from './rank-daily';
 
 /** An entry as the top document needs it. */
@@ -50,16 +51,20 @@ export function topRows(
  * when the entry was in the top document or now beats its last row, so most
  * writes cost one read. The trigger runs one at a time (`maxInstances: 1`,
  * `concurrency: 1`): writers change entries only, and nothing contends for
- * the top document.
+ * the top document. A daily board's top document expires a day after its
+ * entries can, counted from its day; once TTL is taking the entries, their
+ * deletions rebuild nothing.
  */
 export async function rebuildTop(
   db: Firestore,
   boardId: string,
   entryId: string,
-  after: Record<string, unknown> | undefined
+  after: Record<string, unknown> | undefined,
+  now: number = Date.now()
 ): Promise<'rebuilt' | 'skipped'> {
   const board = parseBoardId(boardId);
-  if (board === null) {
+  const dayStart = board?.kind === 'daily' ? Date.parse(board.day) : null;
+  if (board === null || (dayStart !== null && now >= dayStart + DAILY_TTL_MS)) {
     return 'skipped';
   }
   const topRef = db.doc(`boards/${boardId}`);
@@ -114,9 +119,9 @@ export async function rebuildTop(
       ),
       balanceVersion: BALANCE_VERSION,
       updatedAt: FieldValue.serverTimestamp(),
-      ...(board.kind === 'daily'
-        ? { expireAt: Timestamp.fromMillis(Date.now() + DAILY_TTL_MS) }
-        : {}),
+      ...(dayStart === null
+        ? {}
+        : { expireAt: Timestamp.fromMillis(dayStart + DAILY_TTL_MS + DAY_MS) }),
     },
     { merge: true }
   );

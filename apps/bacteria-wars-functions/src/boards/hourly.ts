@@ -9,6 +9,7 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
+import { NOT_REPORTED_AFTER_MS } from '../config';
 import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
 import { MIN_COUNTED_TICKS } from './rank-online';
 import { SLICE_MS } from './budgets';
@@ -18,11 +19,7 @@ import { type AccountInfo, verifyDailySlice } from './verify-slice';
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
-/** An online replay still `waiting` this long after it came is closed. */
-export const NOT_REPORTED_AFTER_MS = 2 * HOUR_MS;
-/** How far back the sweep looks: one missed run is caught up, no more. */
-const SWEEP_WINDOW_MS = 26 * HOUR_MS;
-/** The replays one sweep closes at most. */
+/** The replays one sweep closes at most; the next one takes the rest. */
 const SWEEP_LIMIT = 500;
 /** Endings a device reports only after a real match. */
 const REGULAR_ENDINGS = ['annihilation', 'time', 'forfeit'];
@@ -34,6 +31,9 @@ const REGULAR_ENDINGS = ['annihilation', 'time', 'forfeit'];
  * gets `nr + 1` on their online entry - shown, never part of `sort`. The
  * replay's `rankedReason` makes `acceptReplay` drop a late second report
  * (`closed`), and the `rankedReplays` marker keeps it from counting.
+ * `acceptReplay` gives a waiting replay its `closeAt`, which the second
+ * report or the close removes: a closed replay leaves the sweep's query,
+ * however many there are, and a missed run is caught up by the next.
  */
 export async function closeNotReported(
   db: Firestore,
@@ -41,10 +41,8 @@ export async function closeNotReported(
 ): Promise<number> {
   const waiting = await db
     .collection('replays')
-    .where('state', '==', 'waiting')
-    .where('createdAt', '>=', Timestamp.fromMillis(now - SWEEP_WINDOW_MS))
-    .where('createdAt', '<=', Timestamp.fromMillis(now - NOT_REPORTED_AFTER_MS))
-    .orderBy('createdAt', 'asc')
+    .where('closeAt', '<=', Timestamp.fromMillis(now))
+    .orderBy('closeAt', 'asc')
     .limit(SWEEP_LIMIT)
     .get();
   let closed = 0;
@@ -66,6 +64,10 @@ async function closeOne(
     const marker = db.doc(`rankedReplays/${replayId}`);
     const replay = await tx.get(replayRef);
     if (replay.get('state') !== 'waiting' || (await tx.get(marker)).exists) {
+      // Answered meanwhile: out of the sweep's query all the same.
+      if (replay.exists) {
+        tx.update(replayRef, { closeAt: FieldValue.delete() });
+      }
       return false;
     }
     const reporter = (replay.get('players') as string[] | undefined)?.[0];
@@ -93,6 +95,7 @@ async function closeOne(
     tx.update(replayRef, {
       rankedReason: 'not-reported',
       rankedAt: FieldValue.serverTimestamp(),
+      closeAt: FieldValue.delete(),
     });
     if (
       member === null ||

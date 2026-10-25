@@ -245,6 +245,22 @@ describe('rebuildTop', () => {
     expect(await rebuildTop(db, 'xp', 'z', entry(5))).toBe('skipped');
     expect(await rebuildTop(db, 'bogus', 'z', entry(500))).toBe('skipped');
   });
+
+  it("lets a daily board's top expire with its day, and leaves it while TTL drains it", async () => {
+    const day = Date.UTC(2026, 9, 25);
+    const board = 'daily-2026-10-25';
+    await db.doc(`boards/${board}/entries/a`).set(entry(5, 'provisional'));
+    // Rebuilt days later: the expiry stays where the day put it.
+    expect(
+      await rebuildTop(db, board, 'a', entry(5, 'provisional'), day + 5 * DAY)
+    ).toBe('rebuilt');
+    expect(
+      (await db.doc(`boards/${board}`).get()).get('expireAt').toMillis()
+    ).toBe(day + 32 * DAY);
+    expect(await rebuildTop(db, board, 'a', undefined, day + 31 * DAY)).toBe(
+      'skipped'
+    );
+  });
 });
 
 describe('boardProfileChanged', () => {

@@ -6,6 +6,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import {
   DAILY_VERIFY_MS,
   ENDLESS_VERIFY_MS,
+  expectedRerunMs,
   MAX_VERIFIED_TICKS,
 } from './budgets';
 import { storedReplay } from './declared-match';
@@ -26,7 +27,9 @@ import {
  * confirmed. A failed win cuts the run to its verified prefix ("partly
  * confirmed"). A win longer than 10 minutes, or of another balance table,
  * is never re-run, and the run stays provisional. The day's endless budget
- * is its own plus what the daily boards left.
+ * is its own plus what the daily boards left. As on the daily boards, a
+ * re-run starts only when its expected cost fits, and is charged as it
+ * ends.
  */
 export async function verifyEndlessSlice(
   db: Firestore,
@@ -62,11 +65,24 @@ export async function verifyEndlessSlice(
       if (next === null) {
         break;
       }
+      const began = clock();
       const replay = await storedReplay(db, next);
+      if (
+        replay !== null &&
+        expectedRerunMs(replay) > budget - (began - start)
+      ) {
+        break;
+      }
       const verdict: Verdict =
         replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
       checked++;
       run = await applyVerdict(db, run.uid, run.runId, next, verdict, now);
+      await recordSpent(
+        db,
+        now,
+        'endlessVerifyMs',
+        Math.round(clock() - began)
+      );
       if (verdict.state === 'balance-mismatch') {
         // Changes nothing: the next slice would only play it again.
         break;
@@ -76,9 +92,7 @@ export async function verifyEndlessSlice(
       break;
     }
   }
-  const spentMs = Math.round(clock() - start);
-  await recordSpent(db, now, 'endlessVerifyMs', spentMs);
-  return { checked, spentMs };
+  return { checked, spentMs: Math.round(clock() - start) };
 }
 
 /** The run a player's `endless` entry shows, null when there is none. */

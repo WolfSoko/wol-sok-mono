@@ -266,6 +266,14 @@ describe('verifyDailySlice', () => {
     expect(moderation?.['skipUntil']).toBeUndefined();
   });
 
+  it('starts no re-run the slice has no time left for', async () => {
+    await rank('l_ada', dailyReplay(), 'ada');
+    // 30 s left of the day, a minute of play takes about 36 s.
+    await db.doc(`counters/${DAY}`).set({ verifyMs: 20 * 60_000 - 30_000 });
+    expect(await slice()).toMatchObject({ checked: 0 });
+    expect((await entryOf('ada')).get('status')).toBe('provisional');
+  });
+
   it('spends nothing once the day is spent', async () => {
     await rank('l_ada', dailyReplay(), 'ada');
     await db.doc(`counters/${DAY}`).set({ verifyMs: 20 * 60_000 });
@@ -275,6 +283,7 @@ describe('verifyDailySlice', () => {
 });
 
 describe('closeNotReported', () => {
+  /** A first report as `acceptReplay` stores it, closing 2 hours later. */
   const waiting = (createdAt: number, extra: object = {}) => ({
     kind: 'online',
     state: 'waiting',
@@ -283,6 +292,7 @@ describe('closeNotReported', () => {
     endedBy: 'annihilation',
     ticks: 3_600,
     createdAt: Timestamp.fromMillis(createdAt),
+    closeAt: Timestamp.fromMillis(createdAt + 2 * HOUR),
     ...extra,
   });
   const onlineEntry = async (uid: string) => {
@@ -299,10 +309,21 @@ describe('closeNotReported', () => {
       d: 0,
       nr: 1,
     });
-    expect((await db.doc('replays/r1').get()).get('rankedReason')).toBe(
-      'not-reported'
-    );
+    expect((await db.doc('replays/r1').get()).data()).toMatchObject({
+      rankedReason: 'not-reported',
+      state: 'waiting',
+    });
+    // Out of the sweep's query, however long it stays `waiting`.
+    expect((await db.doc('replays/r1').get()).get('closeAt')).toBeUndefined();
     expect(await closeNotReported(db, NOW)).toBe(0);
+  });
+
+  it('takes an answered replay out of the sweep without a mark', async () => {
+    await db.doc('replays/r1').set(waiting(NOW - 3 * HOUR));
+    await db.doc('rankedReplays/r1').set({ at: Timestamp.fromMillis(NOW) });
+    expect(await closeNotReported(db, NOW)).toBe(0);
+    expect((await db.doc('replays/r1').get()).get('closeAt')).toBeUndefined();
+    expect((await db.doc('boardMembers/bob').get()).exists).toBe(false);
   });
 
   it('closes a short match without a mark, and leaves a fresh one', async () => {
