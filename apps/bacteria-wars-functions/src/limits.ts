@@ -7,6 +7,7 @@ import {
   BAN_CACHE_MS,
   DAILY_RANKED_SUBMISSIONS,
   DAILY_SUBMISSIONS,
+  RETRY_FOR_MS,
   SUBMISSIONS_PER_HOUR,
 } from './config';
 
@@ -66,6 +67,11 @@ export async function isBanned(
 /** Forgets the cached ban decisions - for specs. */
 export function clearBanCache(): void {
   banCache.clear();
+}
+
+/** True for a retried event too old to act on - see {@link RETRY_FOR_MS}. */
+export function tooOldToRetry(eventTime: string, now: number): boolean {
+  return now - Date.parse(eventTime) > RETRY_FOR_MS;
 }
 
 /** The UTC day of a moment, `YYYY-MM-DD`. */

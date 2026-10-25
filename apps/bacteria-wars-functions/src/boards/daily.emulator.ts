@@ -118,6 +118,19 @@ describe('rankDaily', () => {
     ).toHaveLength(2);
   });
 
+  it('takes the same replay delivered again as done, not as a duplicate', async () => {
+    // rankReplay retries: a second delivery after the first one committed.
+    expect(await rank('l_1', dailyReplay(), 'ada')).toBe('counted');
+    const doc = (await db.doc('replays/l_1').get()).data() ?? {};
+    expect(await rankDaily(db, 'l_1', doc, NOW)).toBe('counted');
+    expect((await db.doc('replays/l_1').get()).get('rankedReason')).toBe(
+      'counted'
+    );
+    expect(
+      (await db.doc(`dailyRuns/${DAY}_ada`).get()).get('attempts')
+    ).toHaveLength(1);
+  });
+
   it('stores but never ranks an undeclared, late or forged replay', async () => {
     expect(await rank('l_1', dailyReplay(), 'ada', { declared: false })).toBe(
       'no-attempt'

@@ -208,6 +208,10 @@ export async function rankDaily(
     const stored = await tx.get(runRef);
     const attempts =
       (stored.get('attempts') as DailyAttemptRun[] | undefined) ?? [];
+    // This very replay, taken by an earlier delivery: rankReplay retries.
+    if (attempts.some((a) => a.replayId === replayId)) {
+      return 'counted' as const;
+    }
     if (attempts.some((a) => a.attemptId === run.attemptId)) {
       tx.update(replayRef, {
         rankedReason: 'duplicate',

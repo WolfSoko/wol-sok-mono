@@ -29,6 +29,13 @@ export const DAILY_RANKED_SUBMISSIONS = 20_000;
 /** How long a private replay is kept: 30 days after the match. */
 export const REPLAY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
+/**
+ * How long `rankReplay` keeps retrying an event (ADR 0012). Its steps are
+ * idempotent, so a retry ranks a stored replay late instead of never; an
+ * older event is dropped, so a poison event cannot retry for days.
+ */
+export const RETRY_FOR_MS = 60 * 60 * 1000;
+
 /** How long a ban decision is trusted before it is read again. */
 export const BAN_CACHE_MS = 60 * 1000;
 
