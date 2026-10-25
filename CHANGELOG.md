@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.86.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.2...v74.86.3) (2026-10-25)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** hourly hygiene - "Not reported" by closeAt, re-runs that fit, daily boards that expire from their day ([#2640](https://github.com/WolfSoko/wol-sok-mono/issues/2640)) ([e070acd](https://github.com/WolfSoko/wol-sok-mono/commit/e070acd3ea5c50e8641b9651497ca42073339cc1))
+
 ## [74.86.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.1...v74.86.2) (2026-10-25)
 
 ### Bug Fixes
