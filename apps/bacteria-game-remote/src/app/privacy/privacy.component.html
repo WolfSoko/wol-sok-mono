@@ -24,7 +24,7 @@
 
   <article id="de" lang="de">
     <h1>Datenschutzerklärung</h1>
-    <p class="stand">Stand: 23. Oktober 2026</p>
+    <p class="stand">Stand: 25. Oktober 2026</p>
     <p>
       Diese Erklärung gilt für das Spiel Bacteria Wars unter
       <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
@@ -33,10 +33,12 @@
       Analysedienste; die Android-App zählt nur ihre Installationen und Starts
       und meldet dich bei Google Play Spiele an (Abschnitt 6). Das Spiel
       verkauft keine Daten. Es speichert, was es braucht, um deinen Spielstand
-      zu behalten. Es zeigt Werbung von Google, personalisiert nur mit deiner
-      Einwilligung (Abschnitt 7), und bittet um ein freiwilliges Trinkgeld
-      (Abschnitt 8). Spielst du das Spiel eingebettet in einer anderen Seite,
-      etwa
+      zu behalten. In der Cloud hast du ein Online-Profil für Freunde und
+      Online-Matches, und aus deinem Fortschritt entsteht ein anonymer Eintrag
+      in einer Bestenliste (Abschnitt 4). Das Spiel lädt das Werbeskript von
+      Google mit seinem Einwilligungsfenster, zeigt aber keine Anzeigen
+      (Abschnitt 7), und bittet um ein freiwilliges Trinkgeld (Abschnitt 8).
+      Spielst du das Spiel eingebettet in einer anderen Seite, etwa
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       zeigt es dort weder Werbung noch Trinkgeld, und diese Erklärung gilt nicht
       für jene Seite und ihre Dienste.
@@ -71,13 +73,24 @@
     </p>
     <ul>
       <li>
-        deine Einstellungen (Spielmodus, Level, Farben, Grafik, Ton, Lautstärke,
-        Vibration) und ob du den Hinweis auf die App ausgeblendet hast,
+        deine Einstellungen (Sprache, Spielmodus, Level, Farben, Grafik, Ton,
+        Lautstärke, Vibration, das Level, das du dir für Online-Matches
+        wünschst), ob du den Hinweis auf die App ausgeblendet hast und ob die
+        Grafikkarte deines Geräts den Selbsttest des Spiels bestanden hat,
       </li>
       <li>
         deinen Spielfortschritt (Medaillen, Erfolge mit Datum, Statistiken,
-        Tageslevel, bester Endlos-Lauf), solange du ohne Cloud-Konto spielst,
-        sonst eine Kopie davon für das Spielen ohne Verbindung,
+        Trainingsmissionen, Tageslevel, bester Endlos-Lauf, die Evolution deiner
+        Kolonie), solange du ohne Cloud-Konto spielst, sonst eine Kopie davon
+        für das Spielen ohne Verbindung und deine Anmeldung bei Firebase,
+      </li>
+      <li>
+        bis zu 20 deiner letzten Matches als Aufzeichnung: Online-Matches und
+        Matches gegen den Computer (nicht das Training und keine Rennen gegen
+        einen Geist), jeweils mit den Einstellungen des Matches, den
+        Steuereingaben und dem Ergebnis, bei Online-Matches auch mit dem
+        Raumcode. Eine Aufzeichnung enthält keinen Namen und keine
+        Konto-Kennung. Das Spiel lädt sie nicht hoch,
       </li>
       <li>die Dateien des Spiels selbst, damit es auch offline läuft,</li>
       <li>
@@ -100,19 +113,22 @@
     <h2 id="de-konto">4. Spielstand in der Cloud und Konto</h2>
     <p>
       Damit dein Fortschritt nicht verloren geht, kann das Spiel ihn in Google
-      Firebase speichern (Firebase Authentication und Cloud Firestore; Anbieter:
-      Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland).
-      Ist das aktiv, zeigt das Profil „Playing as a guest“ oder „Signed in as
-      …“.
+      Firebase speichern (Firebase Authentication, Cloud Firestore, Realtime
+      Database und Cloud Functions; Anbieter: Google Ireland Limited, Gordon
+      House, Barrow Street, Dublin 4, Irland). Ist das aktiv, zeigt das Profil
+      „Du spielst als Gast“ oder „Angemeldet als …“. Cloud Functions sind unsere
+      Programme auf den Servern von Firebase; sie führen die Bestenliste und
+      setzen die Moderation um (unten).
     </p>
     <h3>Als Gast</h3>
     <p>
       Beim ersten Start legt das Spiel automatisch ein anonymes Gastkonto an.
       Firebase vergibt dafür eine zufällige Kennung (User-ID). Unter dieser
       Kennung speichern wir deinen Spielfortschritt (Medaillen, Erfolge mit
-      Datum, Statistiken, Tageslevel, bester Endlos-Lauf) und den Zeitpunkt der
-      letzten Änderung. Name, E-Mail-Adresse oder andere Angaben zu deiner
-      Person brauchen wir dafür nicht.
+      Datum, Statistiken, Trainingsmissionen, Tageslevel, bester Endlos-Lauf,
+      die Evolution deiner Kolonie) und den Zeitpunkt der letzten Änderung.
+      Name, E-Mail-Adresse oder andere Angaben zu deiner Person brauchen wir
+      dafür nicht.
     </p>
     <h3>Mit Google anmelden (freiwillig)</h3>
     <p>
@@ -120,31 +136,157 @@
       deine E-Mail-Adresse, dein Profilbild (Adresse des Bildes) und deine
       Google-Kennung. Das Gastkonto wird so zu deinem Google-Konto, und dein
       Fortschritt steht dir auf jedem Gerät zur Verfügung, auf dem du dich
-      anmeldest. Dein Name wird nur dir im Spiel angezeigt; andere Spieler sehen
-      ihn nicht. Für die Anmeldung öffnet das Spiel das Anmeldefenster von
-      Google (accounts.google.com, apis.google.com und die Anmeldeseite des
+      anmeldest. Deinen Namen schlägt das Spiel für dein Online-Profil vor;
+      andere sehen ihn erst, wenn du das Profil speicherst (unten). Für die
+      Anmeldung öffnet das Spiel das Anmeldefenster von Google
+      (accounts.google.com, apis.google.com und die Anmeldeseite des
       Firebase-Projekts auf firebaseapp.com); dabei erhält Google deine
       IP-Adresse und Angaben zum Browser. Für die Anmeldung selbst gilt die
       <a href="https://policies.google.com/privacy?hl=de"
         >Datenschutzerklärung von Google</a
-      >.
+      >. Meldest du dich zum ersten Mal mit einem Google-Konto an, prüfen unsere
+      Funktionen einmal, ob für dieses Google-Konto eine Sperre gilt (unten,
+      „Moderation und Sperren“).
     </p>
     <p>
       Bei jeder Verbindung verarbeitet Firebase außerdem technische Daten wie
       deine IP-Adresse und Angaben zum Browser, um den Dienst zu erbringen und
-      Missbrauch zu verhindern. Nur du selbst kannst deinen Spielstand lesen und
-      ändern.
+      Missbrauch zu verhindern. Deinen Spielstand kannst nur du selbst lesen und
+      ändern. Was andere Spieler von dir sehen, steht in den folgenden Absätzen.
+    </p>
+    <h3 id="de-profil">Online-Profil, Freunde und Online-Status</h3>
+    <p>
+      Für Freunde und Online-Matches hat jedes Konto ein Online-Profil: Name,
+      Motto und Bild. Als Bild wählst du ein gezeichnetes Bakterium, dein
+      Google-Profilbild oder ein eigenes Bild, das das Spiel auf 96 × 96 Pixel
+      verkleinert und im Profil speichert. Solange du dein Profil nicht
+      speicherst, sehen andere statt deines Namens „Player“ mit einer Nummer und
+      ein gezeichnetes Bakterium. Ein gespeichertes Profil können alle
+      angemeldeten Spieler lesen, Gäste eingeschlossen. Zeigst du dein
+      Google-Profilbild, laden die Geräte der anderen es von Google
+      (googleusercontent.com).
     </p>
     <p>
-      Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Bereitstellung des Spiels,
-      das du nutzt). Google ist als Auftragsverarbeiter für uns tätig. Google
+      Freundeslisten, Freundschaftsanfragen und Herausforderungen zu einem Match
+      sehen nur die Beteiligten. Eine Herausforderung gilt 10 Minuten. Ein
+      Einladungslink gilt eine Woche; wer ihn öffnet, sieht dein Profil und kann
+      dein Freund werden. Suchst du einen zufälligen Gegner, steht dein Eintrag
+      mit dem Level, das du dir wünschst, in der Warteschlange. Angemeldete
+      Spieler können ihn lesen, bis du die Suche beendest oder 10 Minuten lang
+      kein Lebenszeichen von deinem Gerät kommt. Abgelaufene Herausforderungen,
+      Einladungen und Einträge in der Warteschlange löscht die Datenbank danach
+      automatisch.
+    </p>
+    <p>
+      Ist „Freunde sehen, wenn ich online bin“ im Online-Profil an (Standard),
+      speichert das Spiel in der Realtime Database, ob du online bist oder
+      gerade ein Online-Match spielst. Das Spiel zeigt das Freunden, die du
+      ebenfalls als Freund führst. Technisch lesen kann den Eintrag jeder
+      angemeldete Spieler, der deine Kennung kennt. Er verschwindet, sobald die
+      Verbindung endet oder du die Einstellung ausschaltest.
+    </p>
+    <h3 id="de-online">Online-Matches</h3>
+    <p>
+      Ein Online-Match läuft direkt zwischen den beiden Geräten (WebRTC); dabei
+      erfährt das Gerät deines Gegners deine IP-Adresse. Um die Verbindung
+      aufzubauen, legt das gastgebende Gerät unter einem sechsstelligen Code
+      einen Raum in Cloud Firestore an. Darüber tauschen die Geräte die
+      Kennungen beider Konten und ihre Verbindungsdaten aus, darunter ihre
+      IP-Adressen. Lesen kann den Raum jeder angemeldete Spieler, der den Code
+      kennt. Beim Aufbau helfen die STUN-Server von Google (stun.l.google.com),
+      die dazu deine IP-Adresse erhalten. Sobald die Geräte verbunden sind oder
+      der Gastgeber den Raum verlässt, löscht das Spiel den Raum; sonst löscht
+      ihn die Datenbank nach einer Stunde. Im Match sehen beide Spieler das
+      Online-Profil des anderen. Das Match selbst läuft nicht über unsere
+      Server.
+    </p>
+    <h3 id="de-bestenliste">Bestenliste und Statistik</h3>
+    <p>
+      Aus dem Spielfortschritt, den ein Konto in der Cloud speichert, berechnen
+      unsere Funktionen seine Erfahrungspunkte (XP) und tragen sie mit dem Rang
+      in eine Bestenliste ein. Das gilt für jedes Konto, Gäste eingeschlossen.
+      Dabei begrenzen sie, wie schnell die Punkte steigen. Ein Eintrag zeigt die
+      Punkte, den Rang, die Stunde der letzten Änderung, statt eines Namens eine
+      Nummer (etwa „Anonym #1234“) und ein gezeichnetes Bakterium. Deinen Namen,
+      dein Motto oder dein Bild zeigt er nicht. Einträge tragen keine Kennung.
+      Welcher Eintrag deiner ist, vermerken unsere Funktionen getrennt davon,
+      lesbar nur für dich und uns; dort vermerken sie auch, wann dein Konto
+      angelegt wurde und wann du zuletzt Fortschritt gespeichert hast. Die
+      Bestenliste kann jeder angemeldete Spieler lesen, Gäste eingeschlossen.
+      Dein Eintrag bleibt, bis dein Konto gelöscht wird. Willst du nicht in der
+      Bestenliste stehen, schreib uns (Abschnitt 1): Wir blenden deinen Eintrag
+      dann aus, sodass nur noch wir ihn sehen. Das Spiel lädt keine Matches
+      hoch; Bestenlisten für Online-Siege, das Tageslevel oder Endlos-Läufe
+      erhalten deshalb keine Einträge von dir.
+    </p>
+    <p>
+      Jede Stunde zählen unsere Funktionen für unsere Übersicht zusammen, wie
+      viele Konten es gibt, wie viele Spieler am Tag und in der Woche aktiv
+      waren, wie viele Profile ein eigenes Bild haben, wie viele Spieler einen
+      Gegner suchen und wie viele Räume offen sind. Das sind nur Summen, ohne
+      Kennung; wir behalten sie 90 Tage.
+    </p>
+    <p>
+      Rechtsgrundlage für Bestenliste und Statistik ist unser berechtigtes
+      Interesse, eine Bestenliste zu führen und den Betrieb des Spiels zu
+      überblicken (Art. 6 Abs. 1 lit. f DSGVO).
+    </p>
+    <h3 id="de-moderation">Moderation und Sperren</h3>
+    <p>
+      Als Betreiber können wir Profile ansehen, sie zurücksetzen (Name „Player“
+      mit Nummer, leeres Motto, gezeichnetes Bakterium), hochgeladene Bilder
+      entfernen, Einträge in der Bestenliste ausblenden und Konten sperren, etwa
+      bei Schummeln, anstößigen Profilen oder Spam. Zu jeder solchen Maßnahme
+      legen unsere Funktionen unter deinem Konto einen Hinweis ab (Art und
+      Datum, bei einer Sperre auch Ende und Grund), den die Datenbank nach 31
+      Tagen löscht. Außerdem zählen sie je Konto, wie oft wir eingeschritten
+      sind.
+    </p>
+    <p>
+      Eine Sperre speichern wir mit Beginn, Ende (oder „unbefristet“) und Grund;
+      dein Konto kann sie lesen. Solange sie gilt, lehnt die Datenbank
+      Änderungen von deinem Konto ab; löschen kannst du weiterhin. Mit der
+      Sperre nehmen wir dich aus der Warteschlange, löschen deinen
+      Online-Status, deine offenen Räume und deine Einladungslinks und blenden
+      deinen Eintrag in der Bestenliste aus. Endet die Sperre, löschen wir sie
+      und blenden den Eintrag wieder ein.
+    </p>
+    <p>
+      Über jede Maßnahme führen wir ein Protokoll mit Art, Grund, Datum und dem,
+      was sich geändert hat, etwa dem ersetzten Namen und Motto. Von einem
+      entfernten Bild behalten wir nur eine Prüfsumme und seine Größe, nicht das
+      Bild. Die Datenbank löscht das Protokoll nach 2 Jahren. Wird dein Konto
+      vorher gelöscht, entfernen wir daraus, was sich geändert hat; Kennung,
+      Art, Grund und Datum bleiben.
+    </p>
+    <p>
+      Ist ein gesperrtes Konto mit Google verbunden, speichern wir mit der
+      Sperre einen Hashwert seiner Google-Kennung, gebildet mit einem geheimen
+      Schlüssel (HMAC-SHA256), dazu Ende und Grund der Sperre. Aus dem Hashwert
+      lässt sich die Google-Kennung nicht zurückgewinnen. Er bleibt bis zum Ende
+      der Sperre, höchstens 2 Jahre, auch wenn das Konto gelöscht wird. Legt
+      jemand mit diesem Google-Konto ein neues Konto an oder verbindet ein
+      Gastkonto damit, gilt die Sperre wieder. Dafür bilden unsere Funktionen in
+      diesem Moment einmal den Hashwert des Google-Kontos und vergleichen ihn;
+      gespeichert wird er nur bei einer Sperre.
+    </p>
+    <p>
+      Rechtsgrundlage ist unser berechtigtes Interesse an einem fairen Spiel
+      ohne Missbrauch (Art. 6 Abs. 1 lit. f DSGVO).
+    </p>
+    <h3 id="de-grundlage">Rechtsgrundlage, Speicherort und Dauer</h3>
+    <p>
+      Soweit oben nichts anderes steht, ist Rechtsgrundlage Art. 6 Abs. 1 lit. b
+      DSGVO (Bereitstellung des Spiels, das du nutzt). Google ist als
+      Auftragsverarbeiter für uns tätig. Cloud Firestore, Realtime Database und
+      Cloud Functions laufen in Googles Region europe-west1 (Belgien). Google
       LLC ist unter dem EU-US Data Privacy Framework zertifiziert; soweit Daten
       in die USA gelangen, stützt sich die Übermittlung auf den
       Angemessenheitsbeschluss der EU-Kommission (Art. 45 DSGVO).
     </p>
     <p>
-      Wir speichern diese Daten, solange dein Konto besteht. Wie du sie löschen
-      lässt, steht in Abschnitt 10.
+      Wir speichern diese Daten, solange dein Konto besteht, soweit oben keine
+      kürzere Frist steht. Wie du sie löschen lässt, steht in Abschnitt 10.
     </p>
 
     <h2 id="de-schriften">5. Schriftarten von Google Fonts</h2>
@@ -184,17 +326,16 @@
 
     <h2 id="de-werbung">7. Werbung (Google AdSense)</h2>
     <p>
-      Auf bacteria-wars.wolsok.de und in der Android-App zeigt das Spiel auf den
-      Menüseiten „How to play“ und „Profile“ Werbung von Google AdSense
-      (Anbieter: Google Ireland Limited, Anschrift wie in Abschnitt 4), nie
-      während einer Partie. Dafür lädt es beim Start ein Skript von Google
-      (pagead2.googlesyndication.com); dabei erhält Google deine IP-Adresse und
-      Angaben zu Browser und Gerät.
+      Auf bacteria-wars.wolsok.de und in der Android-App lädt das Spiel beim
+      Start ein Skript von Google AdSense (pagead2.googlesyndication.com;
+      Anbieter: Google Ireland Limited, Anschrift wie in Abschnitt 4); dabei
+      erhält Google deine IP-Adresse und Angaben zu Browser und Gerät.
+      Werbeflächen hat das Spiel derzeit nicht eingeschaltet: Es zeigt keine
+      Anzeigen.
     </p>
     <p>
-      Das Skript zeigt zuerst ein Einwilligungsfenster von Google („Privacy
-      &amp; Messaging“, nach dem IAB Transparency &amp; Consent Framework 2.2).
-      Erst wenn du dort eine Wahl getroffen hast, fragt das Spiel Werbung ab:
+      Das Skript zeigt ein Einwilligungsfenster von Google („Privacy &amp;
+      Messaging“, nach dem IAB Transparency &amp; Consent Framework 2.2):
     </p>
     <ul>
       <li>
@@ -204,17 +345,16 @@
         Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG).
       </li>
       <li>
-        Lehnst du ab, bekommst du keine personalisierte Werbung. Google liefert
-        dann, je nach deiner Wahl, nicht personalisierte oder eingeschränkte
-        Werbung aus und verarbeitet Daten nur, soweit es dafür nötig ist, etwa
-        zur Betrugsabwehr (Art. 6 Abs. 1 lit. f DSGVO).
+        Lehnst du ab, verarbeitet Google Daten nur, soweit es ohne Einwilligung
+        zulässig ist, etwa zur Betrugsabwehr (Art. 6 Abs. 1 lit. f DSGVO).
       </li>
     </ul>
     <p>
-      Deine Wahl speichert das Einwilligungsfenster auf deinem Gerät. Du kannst
-      sie jederzeit unter „How to play“ → „Ad privacy settings“ ändern oder
-      widerrufen. Zur Übermittlung in die USA siehe Abschnitt 4. Mehr dazu, wie
-      Google diese Daten nutzt:
+      Deine Wahl speichert das Einwilligungsfenster auf deinem Gerät. Um sie zu
+      ändern oder zu widerrufen, lösche die gespeicherten Daten der Seite wie in
+      Abschnitt 3 beschrieben; beim nächsten Start fragt das Fenster wieder. Zur
+      Übermittlung in die USA siehe Abschnitt 4. Mehr dazu, wie Google diese
+      Daten nutzt:
       <a href="https://policies.google.com/technologies/partner-sites?hl=de"
         >Datennutzung durch Google bei Websites und Apps von Partnern</a
       >.
@@ -222,7 +362,7 @@
 
     <h2 id="de-trinkgeld">8. Trinkgeld</h2>
     <p>
-      Im Browser führt der Button „Buy me a coffee“ zur Seite
+      Im Browser führt der Button „Spendier mir einen Kaffee“ zur Seite
       <a href="https://buymeacoffee.com/wolf">buymeacoffee.com/wolf</a> des
       Dienstes Buy Me a Coffee. Das Spiel lädt nichts von dort, solange du den
       Link nicht öffnest. Für die Seite und eine Zahlung dort gilt die
@@ -240,7 +380,7 @@
 
     <h2 id="de-geister">9. Geister-Links</h2>
     <p>
-      Teilst du einen Lauf als Link („Ghost“), steckt der Lauf (deine
+      Teilst du einen Lauf als Link („Lauf teilen“), steckt der Lauf (deine
       Steuereingaben) im Teil des Links nach dem „#“. Dieser Teil wird nicht an
       unseren Server übertragen. Wem du den Link schickst, entscheidest du.
     </p>
@@ -262,8 +402,14 @@
       dich zuerst im Profil mit Google an: Der Gast wird so zu deinem
       Google-Konto, und wir können es finden. Wir löschen das Konto und alle
       zugehörigen Spieldaten innerhalb von 30 Tagen und bestätigen dir die
-      Löschung. Daten auf deinem Gerät löschst du wie in Abschnitt 3
-      beschrieben. Abmelden allein löscht nichts.
+      Löschung: deinen Spielstand, dein Online-Profil, deine Freundschaften,
+      Anfragen, Herausforderungen und Einladungslinks, deinen Eintrag in der
+      Bestenliste und was unsere Funktionen zu deinem Konto vermerken. Aus dem
+      Protokoll der Moderation entfernen wir, was sich geändert hat; war dein
+      Konto gesperrt, bleibt der Hashwert deiner Google-Kennung bis zum Ende der
+      Sperre, höchstens 2 Jahre (Abschnitt 4, „Moderation und Sperren“). Daten
+      auf deinem Gerät löschst du wie in Abschnitt 3 beschrieben. Abmelden
+      allein löscht nichts.
     </p>
 
     <h2 id="de-rechte">11. Deine Rechte</h2>
@@ -279,7 +425,7 @@
       </li>
       <li>
         Widerruf einer Einwilligung mit Wirkung für die Zukunft (Art. 7 Abs. 3),
-        für die Werbung unter „Ad privacy settings“.
+        für die Werbung wie in Abschnitt 7 beschrieben.
       </li>
     </ul>
     <p>
@@ -289,8 +435,9 @@
 
     <h2 id="de-kinder">12. Kinder</h2>
     <p>
-      Das Spiel ist ohne Konto und ohne Angaben zur Person spielbar. Für die
-      Anmeldung mit Google gelten die Altersregeln von Google.
+      Das Spiel ist ohne Angaben zur Person spielbar; Name, Motto und Bild im
+      Online-Profil sind freiwillig. Für die Anmeldung mit Google gelten die
+      Altersregeln von Google.
     </p>
 
     <h2 id="de-aenderungen">13. Änderungen</h2>
@@ -302,7 +449,7 @@
 
   <article id="en" lang="en">
     <h1>Privacy policy</h1>
-    <p class="stand">Last updated: 23 October 2026</p>
+    <p class="stand">Last updated: 25 October 2026</p>
     <p>
       This policy covers the game Bacteria Wars at
       <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
@@ -310,9 +457,12 @@
       (de.wolsok.bacteriawars). In short: the game in the browser uses no
       analytics; the Android app only counts its installs and launches and signs
       you in to Google Play Games (section 6). The game sells no data. It stores
-      what it needs to keep your progress. It shows ads from Google,
-      personalised only with your consent (section 7), and asks for a voluntary
-      tip (section 8). When you play the game embedded in another site, such as
+      what it needs to keep your progress. In the cloud you have an online
+      profile for friends and online matches, and your progress makes an
+      anonymous entry on a leaderboard (section 4). The game loads Google's ad
+      script with its consent window, but shows no ads (section 7), and asks for
+      a voluntary tip (section 8). When you play the game embedded in another
+      site, such as
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       it shows neither ads nor the tip there, and this policy does not cover
       that site and its services. The German version above is the binding one.
@@ -346,13 +496,23 @@
     </p>
     <ul>
       <li>
-        your settings (game mode, level, colours, graphics, sound, volume,
-        vibration) and whether you dismissed the offer to install the app,
+        your settings (language, game mode, level, colours, graphics, sound,
+        volume, vibration, the level you would like for online matches), whether
+        you dismissed the offer to install the app and whether your device's
+        graphics card passed the game's self-test,
       </li>
       <li>
         your progress (medallions, achievements with their dates, statistics,
-        daily level, best endless run) while you play without a cloud account,
-        otherwise a copy of it for playing offline,
+        training missions, daily level, best endless run, your colony's
+        evolution) while you play without a cloud account, otherwise a copy of
+        it for playing offline and your sign-in to Firebase,
+      </li>
+      <li>
+        up to 20 of your latest matches as recordings: online matches and
+        matches against the computer (not the training and no races against a
+        ghost), each with the match's setup, the steering inputs and the result,
+        for online matches also the room code. A recording holds no name and no
+        account identifier. The game does not upload them,
       </li>
       <li>the game's own files, so that it runs offline too,</li>
       <li>
@@ -373,45 +533,164 @@
     <h2 id="en-account">4. Progress in the cloud and accounts</h2>
     <p>
       So that your progress is not lost, the game can keep it in Google Firebase
-      (Firebase Authentication and Cloud Firestore; provider: Google Ireland
-      Limited, Gordon House, Barrow Street, Dublin 4, Ireland). When this is on,
-      the profile says “Playing as a guest” or “Signed in as …”.
+      (Firebase Authentication, Cloud Firestore, Realtime Database and Cloud
+      Functions; provider: Google Ireland Limited, Gordon House, Barrow Street,
+      Dublin 4, Ireland). When this is on, the profile says “Playing as a guest”
+      or “Signed in as …”. Cloud Functions are our programs on Firebase's
+      servers; they keep the leaderboard and carry out moderation (below).
     </p>
     <h3>As a guest</h3>
     <p>
       On first start the game creates an anonymous guest account. Firebase gives
       it a random identifier (user ID). Under that identifier we store your
-      progress (medallions, achievements with their dates, statistics, daily
-      level, best endless run) and when it last changed. We need no name, email
-      address or other personal details for that.
+      progress (medallions, achievements with their dates, statistics, training
+      missions, daily level, best endless run, your colony's evolution) and when
+      it last changed. We need no name, email address or other personal details
+      for that.
     </p>
     <h3>Signing in with Google (optional)</h3>
     <p>
       If you sign in with Google, Google passes us your name, email address,
       profile picture (its address) and Google ID. Your guest account becomes
       your Google account, and your progress is available on every device you
-      sign in on. Your name is shown only to you in the game; other players
-      never see it. To sign in, the game opens Google's sign-in window
-      (accounts.google.com, apis.google.com and the Firebase project's sign-in
-      page on firebaseapp.com), which gives Google your IP address and browser
-      details. Google's
+      sign in on. The game suggests your name for your online profile; others
+      see it only once you save the profile (below). To sign in, the game opens
+      Google's sign-in window (accounts.google.com, apis.google.com and the
+      Firebase project's sign-in page on firebaseapp.com), which gives Google
+      your IP address and browser details. Google's
       <a href="https://policies.google.com/privacy?hl=en">privacy policy</a>
-      applies to the sign-in itself.
+      applies to the sign-in itself. The first time you sign in with a Google
+      account, our functions check once whether a suspension holds for that
+      Google account (below, “Moderation and suspensions”).
     </p>
     <p>
       With every connection Firebase also processes technical data such as your
       IP address and browser details to provide the service and prevent abuse.
-      Only you can read and change your progress.
+      Only you can read and change your progress. What other players see of you
+      is in the following paragraphs.
+    </p>
+    <h3 id="en-profile">Online profile, friends and online status</h3>
+    <p>
+      For friends and online matches every account has an online profile: a
+      name, a motto and a picture. For the picture you choose a drawn bacterium,
+      your Google profile picture or an image of your own, which the game scales
+      down to 96 × 96 pixels and stores in the profile. Until you save your
+      profile, others see “Player” with a number instead of your name, and a
+      drawn bacterium. Every signed-in player, guests included, can read a saved
+      profile. If you show your Google profile picture, the other players'
+      devices load it from Google (googleusercontent.com).
     </p>
     <p>
-      Legal basis: Art. 6(1)(b) GDPR (providing the game you use). Google
-      processes the data on our behalf. Google LLC is certified under the EU-US
+      Friend lists, friend requests and challenges to a match are seen only by
+      those involved. A challenge stands for 10 minutes. An invitation link
+      works for a week; whoever opens it sees your profile and can become your
+      friend. While you look for a random opponent, your entry, with the level
+      you would like, is in the queue. Signed-in players can read it until you
+      stop looking or 10 minutes pass without a sign of life from your device.
+      The database then deletes expired challenges, invitations and queue
+      entries by itself.
+    </p>
+    <p>
+      With “Friends see when I'm online” on in the online profile (the default),
+      the game stores in the Realtime Database whether you are online or playing
+      an online match. The game shows that to friends you list as a friend too.
+      Technically, any signed-in player who knows your identifier can read the
+      entry. It goes as soon as the connection ends or you turn the setting off.
+    </p>
+    <h3 id="en-online">Online matches</h3>
+    <p>
+      An online match runs directly between the two devices (WebRTC), so your
+      opponent's device learns your IP address. To connect, the hosting device
+      opens a room in Cloud Firestore under a six-character code. Through it the
+      devices exchange both accounts' identifiers and their connection details,
+      including their IP addresses. Any signed-in player who knows the code can
+      read the room. Google's STUN servers (stun.l.google.com) help to connect
+      and receive your IP address for that. Once the devices are connected, or
+      the host leaves the room, the game deletes the room; otherwise the
+      database deletes it after an hour. During the match both players see each
+      other's online profile. The match itself does not go through our servers.
+    </p>
+    <h3 id="en-leaderboard">Leaderboard and statistics</h3>
+    <p>
+      From the progress an account stores in the cloud, our functions work out
+      its experience points (XP) and enter them, with the rank, on a
+      leaderboard. That goes for every account, guests included. They limit how
+      fast the points rise. An entry shows the points, the rank, the hour of the
+      last change, a number instead of a name (such as “Anonymous #1234”) and a
+      drawn bacterium. It does not show your name, motto or picture. Entries
+      carry no identifier. Which entry is yours our functions note separately,
+      readable only by you and us; there they also note when your account was
+      created and when you last stored progress. Every signed-in player, guests
+      included, can read the leaderboard. Your entry stays until your account is
+      deleted. If you do not want to be on the leaderboard, write to us (section
+      1): we then hide your entry, so that only we see it. The game uploads no
+      matches, so leaderboards for online wins, the daily level or endless runs
+      get no entries from you.
+    </p>
+    <p>
+      Every hour our functions add up, for our overview, how many accounts there
+      are, how many players were active in the last day and week, how many
+      profiles have an image of their own, how many players are looking for an
+      opponent and how many rooms are open. These are totals only, without
+      identifiers; we keep them for 90 days.
+    </p>
+    <p>
+      Legal basis for the leaderboard and the statistics: our legitimate
+      interest in keeping a leaderboard and an overview of how the game runs
+      (Art. 6(1)(f) GDPR).
+    </p>
+    <h3 id="en-moderation">Moderation and suspensions</h3>
+    <p>
+      As the operator we can view profiles, reset them (the name “Player” with a
+      number, an empty motto, a drawn bacterium), remove uploaded pictures, hide
+      leaderboard entries and suspend accounts, for example for cheating,
+      offensive profiles or spam. For each such measure our functions leave a
+      notice under your account (its type and date, for a suspension also its
+      end and reason), which the database deletes after 31 days. They also count
+      per account how often we stepped in.
+    </p>
+    <p>
+      We store a suspension with its start, its end (or “indefinite”) and its
+      reason; your account can read it. While it lasts, the database refuses
+      changes from your account; you can still delete. With the suspension we
+      take you out of the queue, delete your online status, your open rooms and
+      your invitation links, and hide your leaderboard entry. When the
+      suspension ends, we delete it and show the entry again.
+    </p>
+    <p>
+      We keep a record of every measure with its type, reason, date and what it
+      changed, such as the replaced name and motto. Of a removed picture we keep
+      only a checksum and its size, not the picture. The database deletes the
+      record after 2 years. If your account is deleted before, we erase from it
+      what was changed; the identifier, type, reason and date remain.
+    </p>
+    <p>
+      For a suspended account linked to Google we store, with the suspension, a
+      hash of its Google identifier made with a secret key (HMAC-SHA256),
+      together with the suspension's end and reason. The Google identifier
+      cannot be recovered from the hash. It stays until the suspension ends, for
+      2 years at most, even if the account is deleted. If someone creates a new
+      account with that Google account or links a guest account to it, the
+      suspension holds again. For that our functions work out the Google
+      account's hash once at that moment and compare it; it is stored only for a
+      suspension.
+    </p>
+    <p>
+      Legal basis: our legitimate interest in a fair game free of abuse (Art.
+      6(1)(f) GDPR).
+    </p>
+    <h3 id="en-basis">Legal basis, location and retention</h3>
+    <p>
+      Unless stated otherwise above, the legal basis is Art. 6(1)(b) GDPR
+      (providing the game you use). Google processes the data on our behalf.
+      Cloud Firestore, the Realtime Database and Cloud Functions run in Google's
+      region europe-west1 (Belgium). Google LLC is certified under the EU-US
       Data Privacy Framework; any transfer to the USA relies on the European
       Commission's adequacy decision (Art. 45 GDPR).
     </p>
     <p>
-      We keep this data for as long as your account exists. Section 10 explains
-      how to have it deleted.
+      We keep this data for as long as your account exists, unless a shorter
+      period is given above. Section 10 explains how to have it deleted.
     </p>
 
     <h2 id="en-fonts">5. Google Fonts</h2>
@@ -449,17 +728,15 @@
 
     <h2 id="en-ads">7. Ads (Google AdSense)</h2>
     <p>
-      At bacteria-wars.wolsok.de and in the Android app the game shows ads from
-      Google AdSense (provider: Google Ireland Limited, address as in section 4)
-      on the menu screens “How to play” and “Profile”, never during a match. For
-      that it loads a script from Google (pagead2.googlesyndication.com) on
-      start, which gives Google your IP address and details of your browser and
-      device.
+      At bacteria-wars.wolsok.de and in the Android app the game loads a script
+      from Google AdSense (pagead2.googlesyndication.com; provider: Google
+      Ireland Limited, address as in section 4) on start, which gives Google
+      your IP address and details of your browser and device. The game has no ad
+      slots switched on at present: it shows no ads.
     </p>
     <p>
-      The script first shows a consent window from Google (“Privacy &amp;
-      Messaging”, under the IAB Transparency &amp; Consent Framework 2.2). The
-      game asks for ads only once you have made a choice there:
+      The script shows a consent window from Google (“Privacy &amp; Messaging”,
+      under the IAB Transparency &amp; Consent Framework 2.2):
     </p>
     <ul>
       <li>
@@ -469,15 +746,15 @@
         TDDDG).
       </li>
       <li>
-        If you decline, you get no personalised ads. Google then serves, as your
-        choice allows, non-personalised or limited ads and processes data only
-        as far as needed for that, such as to prevent fraud (Art. 6(1)(f) GDPR).
+        If you decline, Google processes data only as far as it may without
+        consent, such as to prevent fraud (Art. 6(1)(f) GDPR).
       </li>
     </ul>
     <p>
-      The consent window stores your choice on your device. You can change or
-      withdraw it at any time under “How to play” → “Ad privacy settings”. For
-      transfers to the USA see section 4. More on how Google uses this data:
+      The consent window stores your choice on your device. To change or
+      withdraw it, clear the site's stored data as described in section 3; the
+      window asks again on the next start. For transfers to the USA see section
+      4. More on how Google uses this data:
       <a href="https://policies.google.com/technologies/partner-sites?hl=en"
         >How Google uses information from sites or apps that use its services</a
       >.
@@ -504,9 +781,9 @@
 
     <h2 id="en-ghosts">9. Ghost links</h2>
     <p>
-      When you share a run as a link (“ghost”), the run (your steering inputs)
-      is in the part of the link after the “#”. That part is never sent to our
-      server. You decide whom you send the link to.
+      When you share a run as a link (“Share your run”), the run (your steering
+      inputs) is in the part of the link after the “#”. That part is never sent
+      to our server. You decide whom you send the link to.
     </p>
 
     <h2 id="en-delete">10. Deleting your account and data</h2>
@@ -524,8 +801,13 @@
       a guest's progress deleted, first sign in with Google in the profile: the
       guest becomes your Google account, and we can find it. We delete the
       account and all its game data within 30 days and confirm the deletion to
-      you. Delete the data on your device as described in section 3. Signing out
-      alone deletes nothing.
+      you: your progress, your online profile, your friendships, requests,
+      challenges and invitation links, your leaderboard entry and what our
+      functions note about your account. From the moderation record we erase
+      what was changed; if your account was suspended, the hash of your Google
+      identifier stays until the suspension ends, for 2 years at most (section
+      4, “Moderation and suspensions”). Delete the data on your device as
+      described in section 3. Signing out alone deletes nothing.
     </p>
 
     <h2 id="en-rights">11. Your rights</h2>
@@ -537,8 +819,8 @@
       <li>data portability (Art. 20),</li>
       <li>object to processing based on Art. 6(1)(f) GDPR (Art. 21),</li>
       <li>
-        withdraw a consent for the future (Art. 7(3)), for the ads under “Ad
-        privacy settings”.
+        withdraw a consent for the future (Art. 7(3)), for the ads as described
+        in section 7.
       </li>
     </ul>
     <p>
@@ -548,8 +830,9 @@
 
     <h2 id="en-children">12. Children</h2>
     <p>
-      The game can be played without an account and without giving any personal
-      details. Google's age rules apply to signing in with Google.
+      The game can be played without giving any personal details; the name,
+      motto and picture of the online profile are optional. Google's age rules
+      apply to signing in with Google.
     </p>
 
     <h2 id="en-changes">13. Changes</h2>
