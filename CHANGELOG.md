@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.87.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.3...v74.87.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** a deleted account leaves the boards ([#2643](https://github.com/WolfSoko/wol-sok-mono/issues/2643)) ([ec106b6](https://github.com/WolfSoko/wol-sok-mono/commit/ec106b6d54f86c90d923b7524aeb3f5dd3b5b2f4))
+
 ## [74.86.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.2...v74.86.3) (2026-10-25)
 
 ### Bug Fixes
