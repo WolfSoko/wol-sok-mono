@@ -7,6 +7,8 @@ import type { Database } from 'firebase-admin/database';
  * alone.
  */
 export interface Realtime {
+  /** The value at `path`, null when there is none. */
+  get(path: string): Promise<unknown>;
   set(path: string, value: number): Promise<void>;
   remove(path: string): Promise<void>;
   /** Removes the value at `path` only while `test` holds for it. */
@@ -16,6 +18,7 @@ export interface Realtime {
 /** The port on the project's Realtime Database, opened on first use. */
 export function realtimeOf(database: () => Promise<Database>): Realtime {
   return {
+    get: async (path) => (await (await database()).ref(path).get()).val(),
     set: async (path, value) => {
       await (await database()).ref(path).set(value);
     },

@@ -175,8 +175,8 @@ export async function banPlayer(
  * while unchanged (`ban-changed` otherwise). Public replays taken down
  * stay down. An unban without a ban (`not-banned`) still removes the
  * Realtime Database's ban and unhides the entries, the owner's way to
- * repair a mirror a failed command left behind; a ban set meanwhile ends
- * up with its mirror and hides all the same.
+ * repair a mirror a failed command left behind; a ban set meanwhile keeps
+ * its mirror and hides all the same.
  */
 export async function liftBan(
   db: Firestore,
@@ -189,12 +189,12 @@ export async function liftBan(
   const before = await readBan(db, uid);
   if (before === null) {
     if (endedUntil === undefined) {
-      // Clears the mirror, then puts back a ban set meanwhile: that ban was
-      // committed before its own mirror was written, so it is read here.
-      await realtime.remove(`bans/${uid}`);
-      const current = await readBan(db, uid);
-      if (current !== null && holds(current, now)) {
-        await realtime.set(`bans/${uid}`, realtimeBan(current.until));
+      // Removes only the value it saw, and only while Firestore holds no
+      // ban: a ban set meanwhile is committed before its mirror is written,
+      // so either it is read here or its mirror is not the value seen.
+      const mirrored = await realtime.get(`bans/${uid}`);
+      if (mirrored !== null && !holds(await readBan(db, uid), now)) {
+        await realtime.removeIf(`bans/${uid}`, (value) => value === mirrored);
       }
       await changeBanHide(db, uid, { lifted: null, now });
     }
