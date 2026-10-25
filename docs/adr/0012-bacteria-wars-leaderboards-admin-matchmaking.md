@@ -1185,16 +1185,25 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      through `defineSecret`, named in `secrets` by `acceptReplay`,
      `rankProgress`, `adminCommand`, `countAccount` and
      `deletePlayerBoards`): a ban of a Google account writes its tombstone
-     in the ban's transaction, an unban deletes it with the ban, and an
-     ended ban leaves it to TTL (`expireAt` is the ban's end, at most 2
-     years), as a match checks `until`. `countAccount` counts the account
-     in `stats/accounts`, notes `boardMembers.accountCreatedAt` and checks
-     a Google sign-up's tombstone; `acceptReplay` and `rankProgress` check
-     once after a guest links Google (`googleChecked`, set only once a
-     Google provider is there; a failed check is logged and runs again
-     with the next write). A match bans the new uid through `banPlayer`,
-     audited as `tombstone_{uid}` with `by: 'system'`, and leaves a ban
-     that already holds as it is.
+     in the ban's transaction and notes its id in
+     `moderation/{uid}.tombstone`, so an unban deletes it with the ban even
+     once the player unlinked Google; an ended ban leaves it to TTL
+     (`expireAt` is the ban's end, at most 2 years), as a match checks
+     `until`. An Auth failure while looking the account up fails the
+     command rather than ban without a tombstone. `countAccount` counts the
+     account in `stats/accounts` in a transaction that notes
+     `boardMembers.accountCounted` (an event delivered twice counts once,
+     and only a counted account is counted down on deletion), notes
+     `accountCreatedAt`, checks a Google sign-up's tombstone, and leaves an
+     account Auth no longer has. `acceptReplay` and `rankProgress` check
+     once after a guest links Google (`googleChecked`; a guest is looked
+     up once an hour at most, `googleLookedAt`; a failed check is logged
+     and runs again with a later write). A match bans the new uid through
+     `banPlayer`, audited as `tombstone_{uid}` with `by: 'system'`, and
+     leaves a ban that already holds as it is. `deletePlayerBoards` deletes
+     both ban documents only after the tombstone is written (by the
+     account's Google provider, or the id the ban noted); its other steps
+     run regardless, and the audit scrub skips an entry TTL took.
    - Still to come: the other admin types and the statistics.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the

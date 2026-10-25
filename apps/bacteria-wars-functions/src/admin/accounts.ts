@@ -14,11 +14,15 @@ export interface NewAccount {
   tombstone: string | null;
 }
 
+/** The accounts counter (ADR 0012): `{ total, updatedAt }`. */
+export const ACCOUNTS_DOC = 'stats/accounts';
+
 /**
- * A new account (ADR 0012, `countAccount`): `stats/accounts` + 1,
- * `boardMembers/{uid}.accountCreatedAt`, and for a Google sign-up the
- * tombstone check, noted as `googleChecked`. True when the tombstone
- * banned it.
+ * A new account (ADR 0012, `countAccount`): `stats/accounts` + 1 and
+ * `boardMembers/{uid}.accountCreatedAt`, in one transaction that notes
+ * `accountCounted`, so an event delivered twice counts once; and for a
+ * Google sign-up the tombstone check, noted as `googleChecked`. True when
+ * the tombstone banned it.
  */
 export async function countAccount(
   db: Firestore,
@@ -28,15 +32,22 @@ export async function countAccount(
   now: number
 ): Promise<boolean> {
   const member = db.doc(`boardMembers/${uid}`);
-  await Promise.all([
-    changeAccounts(db, 1, now),
-    account.createdAt === null
-      ? undefined
-      : member.set(
-          { accountCreatedAt: Timestamp.fromMillis(account.createdAt) },
-          { merge: true }
-        ),
-  ]);
+  await db.runTransaction(async (tx) => {
+    if ((await tx.get(member)).get('accountCounted') === true) {
+      return;
+    }
+    tx.set(
+      member,
+      {
+        accountCounted: true,
+        ...(account.createdAt === null
+          ? {}
+          : { accountCreatedAt: Timestamp.fromMillis(account.createdAt) }),
+      },
+      { merge: true }
+    );
+    tx.set(db.doc(ACCOUNTS_DOC), accountsChange(1, now), { merge: true });
+  });
   if (account.tombstone === null) {
     return false;
   }
@@ -52,18 +63,16 @@ export async function countAccount(
 }
 
 /**
- * Counts accounts in `stats/accounts` up or down: +1 in `countAccount`, -1
- * in `deletePlayerBoards`. `stats.recount` sets it exactly.
+ * How `stats/accounts` changes: +1 in `countAccount`, -1 in
+ * `deletePlayerBoards` for an account `countAccount` counted.
+ * `stats.recount` sets it exactly.
  */
-export async function changeAccounts(
-  db: Firestore,
+export function accountsChange(
   by: 1 | -1,
   now: number
-): Promise<void> {
-  await db
-    .doc('stats/accounts')
-    .set(
-      { total: FieldValue.increment(by), updatedAt: Timestamp.fromMillis(now) },
-      { merge: true }
-    );
+): Record<string, unknown> {
+  return {
+    total: FieldValue.increment(by),
+    updatedAt: Timestamp.fromMillis(now),
+  };
 }

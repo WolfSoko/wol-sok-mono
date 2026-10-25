@@ -86,12 +86,16 @@ export async function applyTombstone(
   return true;
 }
 
+/** How often a guest's account is looked up for a Google link. */
+export const GOOGLE_LINK_CHECK_MS = 60 * 60_000;
+
 /**
  * The one-time tombstone check after a guest links Google (ADR 0012), for
  * `rankProgress` and `acceptReplay`: until `boardMembers/{uid}` notes
  * `googleChecked`, looks the account up (`tombstoneOf`, null while it has
- * no Google provider) and applies its tombstone, then notes the check.
- * True when it banned.
+ * no Google provider) and applies its tombstone, then notes the check. A
+ * guest is looked up once an hour at most (`googleLookedAt`), not on every
+ * write. True when it banned.
  */
 export async function checkGoogleLink(
   db: Firestore,
@@ -101,11 +105,21 @@ export async function checkGoogleLink(
   now: number
 ): Promise<boolean> {
   const member = db.doc(`boardMembers/${uid}`);
-  if ((await member.get()).get('googleChecked') === true) {
+  const data = (await member.get()).data();
+  const lookedAt: unknown = data?.['googleLookedAt'];
+  if (
+    data?.['googleChecked'] === true ||
+    (lookedAt instanceof Timestamp &&
+      now - lookedAt.toMillis() < GOOGLE_LINK_CHECK_MS)
+  ) {
     return false;
   }
   const id = await tombstoneOf(uid);
   if (id === null) {
+    await member.set(
+      { googleLookedAt: Timestamp.fromMillis(now) },
+      { merge: true }
+    );
     return false;
   }
   const banned = await applyTombstone(db, realtime, uid, id, now);

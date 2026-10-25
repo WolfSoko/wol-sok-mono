@@ -121,12 +121,18 @@ export async function scrubAudit(db: Firestore, uid: string): Promise<number> {
     .select()
     .get();
   const scrubbed = { scrubbed: true };
-  for (let i = 0; i < entries.size; i += 500) {
-    const batch = db.batch();
-    for (const doc of entries.docs.slice(i, i + 500)) {
-      batch.update(doc.ref, { before: scrubbed, after: scrubbed });
-    }
-    await batch.commit();
-  }
+  const writer = db.bulkWriter();
+  const updates = entries.docs.map((doc) =>
+    writer
+      .update(doc.ref, { before: scrubbed, after: scrubbed })
+      .catch((error: unknown) => {
+        // gRPC's NOT_FOUND: TTL took the entry meanwhile.
+        if ((error as { code?: unknown } | null)?.code !== 5) {
+          throw error;
+        }
+      })
+  );
+  await writer.close();
+  await Promise.all(updates);
   return entries.size;
 }

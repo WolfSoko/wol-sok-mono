@@ -18,6 +18,7 @@ import {
 } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
+import type { UserRecord } from 'firebase-admin/auth';
 import { countAccount as countAccountOf } from './admin/accounts';
 import { isOwnerRecord, runAdminCommand } from './admin/command';
 import { realtimeOf } from './admin/realtime';
@@ -159,12 +160,19 @@ export const deletePlayerBoards = v1
     logger.info('Board data of a deleted account', { uid: user.uid, deleted });
   });
 
-/** A new account is counted, a Google sign-up checked - see `countAccount`. */
+/**
+ * A new account is counted, a Google sign-up checked - see `countAccount`.
+ * An account already gone is left alone: its deletion may have run first,
+ * and counting it would bring its board document back.
+ */
 export const countAccount = v1
   .region(REGION)
   .runWith({ secrets: [BAN_TOMBSTONE_KEY] })
   .auth.user()
   .onCreate(async (user) => {
+    if ((await userRecord(user.uid)) === null) {
+      return;
+    }
     const created = user.metadata.creationTime;
     const banned = await countAccountOf(
       db(),
@@ -182,23 +190,35 @@ export const countAccount = v1
   });
 
 /**
- * When an account was made and whether it signs in with Google - for the
- * online board's new-account cap and the order of verification.
+ * The Auth user, read afresh - null for one that does not exist; other
+ * failures throw.
  */
-async function accountInfo(uid: string): Promise<AccountInfo> {
+async function userRecord(uid: string): Promise<UserRecord | null> {
   // Loaded here only: the auth stack is heavy, and the other functions
   // never need it.
   const { getAuth } = await import('firebase-admin/auth');
   try {
-    const user = await getAuth().getUser(uid);
-    const created = user.metadata.creationTime;
-    return {
-      createdAt: created ? Date.parse(created) : null,
-      google: user.providerData.some((p) => p.providerId === 'google.com'),
-    };
-  } catch {
-    return { createdAt: null, google: false };
+    return await getAuth().getUser(uid);
+  } catch (error) {
+    if ((error as { code?: unknown } | null)?.code === 'auth/user-not-found') {
+      return null;
+    }
+    throw error;
   }
+}
+
+/**
+ * When an account was made and whether it signs in with Google - for the
+ * online board's new-account cap and the order of verification.
+ */
+async function accountInfo(uid: string): Promise<AccountInfo> {
+  const user = await userRecord(uid).catch(() => null);
+  const created = user?.metadata.creationTime;
+  return {
+    createdAt: created ? Date.parse(created) : null,
+    google:
+      user?.providerData.some((p) => p.providerId === 'google.com') ?? false,
+  };
 }
 
 const accountCreatedAt = async (uid: string) =>
@@ -209,25 +229,19 @@ const accountCreatedAt = async (uid: string) =>
  * Auth: a revoked claim stops the next command.
  */
 async function isOwner(uid: string): Promise<boolean> {
-  const { getAuth } = await import('firebase-admin/auth');
-  try {
-    return isOwnerRecord(await getAuth().getUser(uid));
-  } catch {
-    return false;
-  }
+  const user = await userRecord(uid).catch(() => null);
+  return user !== null && isOwnerRecord(user);
 }
 
 /**
  * The account's ban tombstone id (ADR 0012), read afresh from Auth - null
- * without a Google provider, or for an account that is gone.
+ * without a Google provider, or for an account that is gone. Any other
+ * failure throws, so a ban never goes without its tombstone: the command
+ * fails, and the owner sends it again.
  */
 async function tombstoneOf(uid: string): Promise<string | null> {
-  const { getAuth } = await import('firebase-admin/auth');
-  try {
-    return tombstoneId(BAN_TOMBSTONE_KEY.value(), await getAuth().getUser(uid));
-  } catch {
-    return null;
-  }
+  const user = await userRecord(uid);
+  return user === null ? null : tombstoneId(BAN_TOMBSTONE_KEY.value(), user);
 }
 
 /**

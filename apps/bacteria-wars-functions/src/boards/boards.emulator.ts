@@ -375,7 +375,7 @@ describe('deletePlayerBoards', () => {
     for (const path of theirs) {
       await db.doc(path).set({ uid: 'bob' });
     }
-    expect(await deletePlayerBoards(db, 'ada', deleting, NOW)).toBe(10);
+    expect(await deletePlayerBoards(db, 'ada', deleting, NOW)).toBe(9);
     for (const path of [...mine, 'boardMembers/ada']) {
       expect([path, (await db.doc(path).get()).exists]).toEqual([path, false]);
     }
@@ -385,6 +385,6 @@ describe('deletePlayerBoards', () => {
   });
 
   it('copes with an account that never reached a board', async () => {
-    expect(await deletePlayerBoards(db, 'ada', deleting, NOW)).toBe(4);
+    expect(await deletePlayerBoards(db, 'ada', deleting, NOW)).toBe(3);
   });
 });

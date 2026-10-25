@@ -152,9 +152,16 @@ export async function banPlayer(
         db.doc(`players/${uid}/notices/${noticeId}`),
         noticeData('banned', now, { until, reason })
       );
+    }
+    // The count, and the tombstone's id for the unban, which then finds it
+    // even once the player unlinked Google.
+    if (!renewed || tombstone !== null) {
       tx.set(
         db.doc(`moderation/${uid}`),
-        { bans: FieldValue.increment(1) },
+        {
+          ...(renewed ? {} : { bans: FieldValue.increment(1) }),
+          ...(tombstone === null ? {} : { tombstone }),
+        },
         { merge: true }
       );
     }
@@ -182,7 +189,8 @@ export async function banPlayer(
  * only when it is the lifted ban's or holds no more, each entry is
  * unhidden only while no other ban holds, and `bans/{uid}` is deleted only
  * while unchanged (`ban-changed` otherwise), together with the Google
- * account's tombstone (`tombstone`, its id). Public replays taken down
+ * account's tombstone (`tombstone`, its id, and the one the ban noted in
+ * `moderation/{uid}.tombstone`). Public replays taken down
  * stay down. An unban without a ban (`not-banned`) still removes the
  * Realtime Database's ban and unhides the entries, the owner's way to
  * repair a mirror a failed command left behind; a ban set meanwhile keeps
@@ -226,13 +234,21 @@ export async function liftBan(
   );
   await changeBanHide(db, uid, { lifted: before, now });
   const ref = db.doc(`bans/${uid}`);
+  const moderation = db.doc(`moderation/${uid}`);
   const lifted = await db.runTransaction(async (tx) => {
-    if (!sameBan(banOf((await tx.get(ref)).data()), before)) {
+    const [ban, counts] = await tx.getAll(ref, moderation);
+    if (!sameBan(banOf(ban?.data()), before)) {
       return false;
     }
     tx.delete(ref);
-    if (tombstone !== null) {
-      tx.delete(db.doc(`banTombstones/${tombstone}`));
+    const noted: unknown = counts?.get('tombstone');
+    for (const id of new Set([tombstone, noted])) {
+      if (typeof id === 'string') {
+        tx.delete(db.doc(`banTombstones/${id}`));
+      }
+    }
+    if (typeof noted === 'string') {
+      tx.update(moderation, { tombstone: FieldValue.delete() });
     }
     tx.set(
       db.doc(`players/${uid}/notices/${noticeId}`),
