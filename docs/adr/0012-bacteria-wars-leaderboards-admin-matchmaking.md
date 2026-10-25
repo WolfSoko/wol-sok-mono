@@ -262,7 +262,9 @@ without limit. Three things make an attempt count:
    persistent cache:
    `players/{uid}/attempts/{attemptId}` = `{ at: request.time, expireAt }`,
    create only, no update or delete, `keys().hasOnly(['at', 'expireAt'])`,
-   `at == request.time`, and `expireAt` within 32 days of `request.time`.
+   `at == request.time`, and `expireAt` within 32 days of `request.time`
+   but at least 30 days ahead (a shorter one would let TTL delete the
+   attempt, and its id could be declared again).
    - The rules check the id:
      - `d_YYYY-MM-DD_n`: `n` from 1 to 3, the day equals the UTC date of
        `request.time` (`timestamp.date()` against the parts of

@@ -141,6 +141,28 @@ describe('declared attempts', () => {
     await assertFails(declare('ada', 'x_1', declaration()));
   });
 
+  it('refuses an expiry shorter than 30 days, which TTL would turn into another try', async () => {
+    const id = `d_${today()}_1`;
+    for (const ms of [60_000, 29 * 24 * HOUR]) {
+      await assertFails(
+        declare(
+          'ada',
+          id,
+          declaration({ expireAt: Timestamp.fromMillis(Date.now() + ms) })
+        )
+      );
+    }
+    await assertSucceeds(
+      declare(
+        'ada',
+        id,
+        declaration({
+          expireAt: Timestamp.fromMillis(Date.now() + 30 * 24 * HOUR + HOUR),
+        })
+      )
+    );
+  });
+
   it("takes an endless run's matches in order, from today's runs", async () => {
     const run1 = `${compact(today())}1`;
     const run2 = `${compact(today())}2`;
