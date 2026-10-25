@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.89.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.88.0...v74.89.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ ban tombstones and countAccount ([#2647](https://github.com/WolfSoko/wol-sok-mono/issues/2647)) ([001bfff](https://github.com/WolfSoko/wol-sok-mono/commit/001bfff4acdb7ff0b689df792bfbc7cc4cab204b))
+
 ## [74.88.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.87.0...v74.88.0) (2026-10-25)
 
 ### Features
