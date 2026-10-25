@@ -1,9 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import {
-  FEATURE_TOGGLE_KEYS,
-  FEATURE_TOGGLES,
-} from '@wolsok/feat-lazy-bac-game/engine';
+import { FEATURE_TOGGLES } from '@wolsok/feat-lazy-bac-game/engine';
 import type { RemoteConfigTemplate } from 'firebase-admin/remote-config';
 import { togglesOf, withToggles } from './toggles';
 
@@ -67,18 +62,5 @@ describe('the toggles in a Remote Config template', () => {
     expect(
       set.parameterGroups['game']?.parameters['matchmaking']?.defaultValue
     ).toEqual({ value: 'true' });
-  });
-
-  it('are the ones the rules let a command set', () => {
-    const rules = readFileSync(
-      join(__dirname, '../../../bacteria-game-remote/firestore.rules'),
-      'utf8'
-    );
-    const body = rules.slice(rules.indexOf('args.values.keys().hasOnly(['));
-    const listed = body
-      .slice(0, body.indexOf('])'))
-      .match(/'[A-Za-z]+'/g)
-      ?.map((key) => key.slice(1, -1));
-    expect(listed).toEqual(FEATURE_TOGGLE_KEYS);
   });
 });

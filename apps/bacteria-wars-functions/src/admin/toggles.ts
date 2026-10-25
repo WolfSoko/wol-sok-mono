@@ -1,5 +1,4 @@
 import {
-  FEATURE_TOGGLE_KEYS,
   type FeatureToggle,
   type FeatureToggles,
   featureToggles,
@@ -18,11 +17,12 @@ import type { ModerationChange } from './moderation';
  */
 export interface RemoteToggles {
   /**
-   * Publishes the values that differ from the template, read once, and
-   * returns what those toggles were - empty when none differed and nothing
-   * was published.
+   * Reads the toggles once, publishes what `decide` makes of them -
+   * nothing when it returns no toggle - and returns them as read.
    */
-  update(values: Partial<FeatureToggles>): Promise<Partial<FeatureToggles>>;
+  update(
+    decide: (now: FeatureToggles) => Partial<FeatureToggles>
+  ): Promise<FeatureToggles>;
 }
 
 /**
@@ -33,14 +33,22 @@ export async function setToggles(
   remote: RemoteToggles,
   values: Partial<FeatureToggles>
 ): Promise<ModerationChange | 'unchanged'> {
-  const before = await remote.update(values);
-  const changed = Object.keys(before) as FeatureToggle[];
+  let after: Partial<FeatureToggles> = {};
+  const now = await remote.update((current) => {
+    after = Object.fromEntries(
+      Object.entries(values).filter(
+        ([key, on]) => current[key as FeatureToggle] !== on
+      )
+    );
+    return after;
+  });
+  const changed = Object.keys(after) as FeatureToggle[];
   if (changed.length === 0) {
     return 'unchanged';
   }
   return {
-    before,
-    after: Object.fromEntries(changed.map((key) => [key, values[key]])),
+    before: Object.fromEntries(changed.map((key) => [key, now[key]])),
+    after,
   };
 }
 
@@ -65,7 +73,10 @@ export function togglesOf(template: RemoteConfigTemplate): FeatureToggles {
       return undefined;
     }
     const text = value.value.trim().toLowerCase();
-    return text === 'true' ? true : text === 'false' ? false : undefined;
+    if (text !== 'true' && text !== 'false') {
+      return undefined;
+    }
+    return text === 'true';
   });
 }
 
@@ -79,16 +90,13 @@ export function withToggles(
   values: Partial<FeatureToggles>
 ): RemoteConfigTemplate {
   const copy = structuredClone(template);
-  for (const key of FEATURE_TOGGLE_KEYS) {
-    const value = values[key];
-    if (value !== undefined) {
-      holderOf(copy, key)[key] = {
-        defaultValue: { value: String(value) },
-        valueType: 'BOOLEAN',
-        description:
-          'Bacteria Wars feature toggle (ADR 0012), set from the admin area.',
-      };
-    }
+  for (const [key, value] of Object.entries(values)) {
+    holderOf(copy, key)[key] = {
+      defaultValue: { value: String(value) },
+      valueType: 'BOOLEAN',
+      description:
+        'Bacteria Wars feature toggle (ADR 0012), set from the admin area.',
+    };
   }
   return copy;
 }
@@ -102,25 +110,15 @@ export function remoteTogglesOf(
   remoteConfig: () => Promise<RemoteConfig>
 ): RemoteToggles {
   return {
-    update: async (values) => {
+    update: async (decide) => {
       const config = await remoteConfig();
       const template = await config.getTemplate();
       const now = togglesOf(template);
-      const before = Object.fromEntries(
-        FEATURE_TOGGLE_KEYS.filter(
-          (key) => values[key] !== undefined && values[key] !== now[key]
-        ).map((key) => [key, now[key]])
-      ) as Partial<FeatureToggles>;
-      const changed = Object.keys(before) as FeatureToggle[];
-      if (changed.length > 0) {
-        await config.publishTemplate(
-          withToggles(
-            template,
-            Object.fromEntries(changed.map((key) => [key, values[key]]))
-          )
-        );
+      const values = decide(now);
+      if (Object.keys(values).length > 0) {
+        await config.publishTemplate(withToggles(template, values));
       }
-      return before;
+      return now;
     },
   };
 }

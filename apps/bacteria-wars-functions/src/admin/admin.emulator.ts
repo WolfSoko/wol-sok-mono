@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto';
 import {
   defaultProfile,
   FEATURE_TOGGLES,
-  type FeatureToggle,
   type FeatureToggles,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { getApps, initializeApp } from 'firebase-admin/app';
@@ -97,14 +96,10 @@ function fakeToggles(): RemoteToggles & { published: FeatureToggles } {
   const published: FeatureToggles = { ...FEATURE_TOGGLES };
   return {
     published,
-    update: async (values) => {
-      const before = Object.fromEntries(
-        Object.entries(values)
-          .filter(([key, on]) => published[key as FeatureToggle] !== on)
-          .map(([key]) => [key, published[key as FeatureToggle]])
-      );
-      Object.assign(published, values);
-      return before;
+    update: async (decide) => {
+      const now = { ...published };
+      Object.assign(published, decide(now));
+      return now;
     },
   };
 }

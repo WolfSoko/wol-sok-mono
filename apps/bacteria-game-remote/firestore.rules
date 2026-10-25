@@ -355,18 +355,15 @@ service cloud.firestore {
             : args.keys().size() == 0);
     }
 
-    // One or more of the game's feature toggles (`FEATURE_TOGGLES`), each
-    // a boolean.
+    // One or more of the game's feature toggles (`FEATURE_TOGGLES`, which
+    // `firestore-rules-toggles.spec.ts` keeps this list equal to), each a
+    // boolean.
     function isToggleArgs(args) {
       return args.keys().hasOnly(['values']) && args.values is map &&
         args.values.size() > 0 &&
         args.values.keys().hasOnly(['rankedDaily', 'rankedEndless',
           'matchmaking', 'leaderboards', 'deterministicSimulation']) &&
-        args.values.get('rankedDaily', true) is bool &&
-        args.values.get('rankedEndless', true) is bool &&
-        args.values.get('matchmaking', true) is bool &&
-        args.values.get('leaderboards', true) is bool &&
-        args.values.get('deterministicSimulation', true) is bool;
+        args.values.values().hasOnly([true, false]);
     }
 
     // Until when, as a timestamp or ms (null for good), and why.

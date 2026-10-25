@@ -187,10 +187,10 @@ async function act(
 ): Promise<Outcome> {
   const unchanged = { before: null, after: null };
   if (command.type === 'toggles.set') {
-    const change = await setToggles(context.toggles, command.args.values);
-    return typeof change === 'string'
-      ? { ok: false, error: change, target: null, ...unchanged }
-      : { ok: true, target: null, ...change };
+    return outcomeOf(
+      null,
+      await setToggles(context.toggles, command.args.values)
+    );
   }
   // `stats.*` take no target.
   if (command.target === null || command.type === 'board.verify') {
@@ -206,10 +206,7 @@ async function act(
   if (uid === null) {
     return { ok: false, error: 'not-found', target, ...unchanged };
   }
-  const done = (change: ModerationChange | string): Outcome =>
-    typeof change === 'string'
-      ? { ok: false, error: change, target, ...unchanged }
-      : { ok: true, target, ...change };
+  const done = (change: ModerationChange | string) => outcomeOf(target, change);
   switch (command.type) {
     case 'profile.reset':
     case 'profile.removeImage':
@@ -264,6 +261,16 @@ async function act(
       );
     }
   }
+}
+
+/** An action's outcome: what it changed, or the error it answered. */
+function outcomeOf(
+  target: Record<string, unknown> | null,
+  change: ModerationChange | string
+): Outcome {
+  return typeof change === 'string'
+    ? { ok: false, error: change, target, before: null, after: null }
+    : { ok: true, target, ...change };
 }
 
 /**

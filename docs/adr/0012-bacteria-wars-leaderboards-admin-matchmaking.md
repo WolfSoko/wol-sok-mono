@@ -1254,7 +1254,7 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      previous status unless another reason still hides it.
    - Then the feature toggles: `FEATURE_TOGGLES` and `parseToggleValues`
      in the game lib, `toggles.set` in the rules (`isToggleArgs`, checked
-     against the lib by `toggles.spec.ts`) and in `adminCommand`
+     against the lib by `firestore-rules-toggles.spec.ts`) and in `adminCommand`
      (`src/admin/toggles.ts`, Remote Config behind the `RemoteToggles`
      port). The client reads them, and the admin area sets them, with the
      client release.
