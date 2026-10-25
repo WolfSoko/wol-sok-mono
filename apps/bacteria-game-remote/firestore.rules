@@ -306,10 +306,10 @@ service cloud.firestore {
         isCommandExpiry(data.expireAt) &&
         data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
           'board.hidePlayer', 'board.restore', 'board.verify', 'player.ban',
-          'player.unban', 'stats.refresh', 'stats.recount'] &&
+          'player.unban', 'stats.refresh', 'stats.recount', 'toggles.set'] &&
         isAdminReason(data) &&
         (!(data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
-          'board.hidePlayer', 'player.ban']) || signedInLately()) &&
+          'board.hidePlayer', 'player.ban', 'toggles.set']) || signedInLately()) &&
         isAdminTarget(data.type, data.target) &&
         isAdminArgs(data.type, data.args);
     }
@@ -325,7 +325,7 @@ service cloud.firestore {
     function isAdminTarget(type, target) {
       return type in ['profile.reset', 'profile.removeImage', 'player.unban']
         ? isUidTarget(target)
-        : type in ['stats.refresh', 'stats.recount']
+        : type in ['stats.refresh', 'stats.recount', 'toggles.set']
           ? target == null
           : type == 'board.hideEntry'
             ? isEntryTarget(target, false)
@@ -357,7 +357,20 @@ service cloud.firestore {
         ? args.keys().hasOnly(['bar']) && args.get('bar', false) is bool
         : type == 'player.ban'
           ? isBanArgs(args)
-          : args.keys().size() == 0);
+          : type == 'toggles.set'
+            ? isToggleArgs(args)
+            : args.keys().size() == 0);
+    }
+
+    // One or more of the game's feature toggles (`FEATURE_TOGGLES`, which
+    // `firestore-rules-toggles.spec.ts` keeps this list equal to), each a
+    // boolean.
+    function isToggleArgs(args) {
+      return args.keys().hasOnly(['values']) && args.values is map &&
+        args.values.size() > 0 &&
+        args.values.keys().hasOnly(['rankedDaily', 'rankedEndless',
+          'matchmaking', 'leaderboards', 'deterministicSimulation']) &&
+        args.values.values().hasOnly([true, false]);
     }
 
     // Until when, as a timestamp or ms (null for good), and why.

@@ -1,4 +1,5 @@
 import { isEntryId, parseBoardId } from './boards';
+import { type FeatureToggles, parseToggleValues } from './feature-toggles';
 import { isObject } from './is-object';
 
 /**
@@ -18,6 +19,7 @@ export const ADMIN_COMMAND_TYPES = [
   'player.unban',
   'stats.refresh',
   'stats.recount',
+  'toggles.set',
 ] as const;
 
 export type AdminCommandType = (typeof ADMIN_COMMAND_TYPES)[number];
@@ -29,6 +31,7 @@ export const DESTRUCTIVE_COMMAND_TYPES: readonly AdminCommandType[] = [
   'board.hideEntry',
   'board.hidePlayer',
   'player.ban',
+  'toggles.set',
 ];
 
 /** Why a player is banned - also the reason of their notice. */
@@ -81,13 +84,26 @@ export type AdminCommand =
       }
     >
   | Command<'player.unban', PlayerTarget, NoArgs>
-  | Command<'stats.refresh' | 'stats.recount', null, NoArgs>;
+  | Command<'stats.refresh' | 'stats.recount', null, NoArgs>
+  | Command<
+      'toggles.set',
+      null,
+      {
+        /** The toggles to change, at least one. */
+        values: Partial<FeatureToggles>;
+      }
+    >;
 
 /** What a type takes: its targets and the arguments it allows. */
 const SCHEMA: Readonly<
   Record<
     AdminCommandType,
-    { targets: 'uid' | 'entry' | 'either' | 'none'; args: readonly string[] }
+    {
+      targets: 'uid' | 'entry' | 'either' | 'none';
+      args: readonly string[];
+      /** True where the reason may be left out. */
+      reasonOptional?: true;
+    }
   >
 > = {
   'profile.reset': { targets: 'uid', args: [] },
@@ -98,8 +114,9 @@ const SCHEMA: Readonly<
   'board.verify': { targets: 'entry', args: [] },
   'player.ban': { targets: 'either', args: ['until', 'reason'] },
   'player.unban': { targets: 'uid', args: [] },
-  'stats.refresh': { targets: 'none', args: [] },
-  'stats.recount': { targets: 'none', args: [] },
+  'stats.refresh': { targets: 'none', args: [], reasonOptional: true },
+  'stats.recount': { targets: 'none', args: [], reasonOptional: true },
+  'toggles.set': { targets: 'none', args: ['values'] },
 };
 
 /** The fields of the command itself. */
@@ -134,7 +151,7 @@ export function parseAdminCommand(value: unknown): AdminCommand | null {
   }
   const type = value['type'];
   const schema = SCHEMA[type];
-  const stats = schema.targets === 'none';
+  const optional = schema.reasonOptional === true;
   const keys = Object.keys(value);
   if (
     keys.some(
@@ -142,12 +159,12 @@ export function parseAdminCommand(value: unknown): AdminCommand | null {
     ) ||
     !('target' in value) ||
     !('args' in value) ||
-    (!stats && !('reason' in value)) ||
+    (!optional && !('reason' in value)) ||
     ('uid' in value && !isUid(value['uid']))
   ) {
     return null;
   }
-  const reason = parseReason(value['reason'], stats);
+  const reason = parseReason(value['reason'], optional);
   const target = parseTarget(value['target'], schema.targets, type);
   const args = parseArgs(value['args'], schema.args, type);
   if (reason === null || target === undefined || args === null) {
@@ -231,6 +248,10 @@ function parseArgs(
       return null;
     }
     return { until, reason: reason as BanReason };
+  }
+  if (type === 'toggles.set') {
+    const values = parseToggleValues(value['values']);
+    return values === null ? null : { values };
   }
   if ('bar' in value) {
     return typeof value['bar'] === 'boolean' ? { bar: value['bar'] } : null;

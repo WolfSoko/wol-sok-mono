@@ -339,6 +339,15 @@ export type {
   PlayerTarget,
 } from './lib/state/admin-commands';
 export { AVATAR_COUNT, defaultProfile } from './lib/social/profile';
+export {
+  FEATURE_TOGGLE_KEYS,
+  FEATURE_TOGGLES,
+  featureToggles,
+} from './lib/state/feature-toggles';
+export type {
+  FeatureToggle,
+  FeatureToggles,
+} from './lib/state/feature-toggles';
 
 // The player's progress and the XP it is worth - what the XP board counts.
 export { parseProgress } from './lib/state/progress';

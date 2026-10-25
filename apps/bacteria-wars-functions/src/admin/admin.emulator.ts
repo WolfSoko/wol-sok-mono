@@ -1,5 +1,9 @@
 import { createHash } from 'node:crypto';
-import { defaultProfile } from '@wolsok/feat-lazy-bac-game/engine';
+import {
+  defaultProfile,
+  FEATURE_TOGGLES,
+  type FeatureToggles,
+} from '@wolsok/feat-lazy-bac-game/engine';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
@@ -8,6 +12,7 @@ import { countAccount, deleteAccount } from './accounts';
 import { expireBans } from './bans';
 import { type AdminContext, runAdminCommand } from './command';
 import type { Realtime } from './realtime';
+import type { RemoteToggles } from './toggles';
 import { refreshStats } from './stats';
 import { checkGoogleLink } from './tombstones';
 
@@ -87,6 +92,19 @@ function fakeRealtime(
   };
 }
 
+/** Remote Config's toggles, kept in memory. */
+function fakeToggles(): RemoteToggles & { published: FeatureToggles } {
+  const published: FeatureToggles = { ...FEATURE_TOGGLES };
+  return {
+    published,
+    update: async (decide) => {
+      const now = { ...published };
+      Object.assign(published, decide(now));
+      return now;
+    },
+  };
+}
+
 /** The tombstone id the fake Auth gives a Google account. */
 const tombstoneOfUid = (uid: string) => `t-${uid}`;
 
@@ -101,6 +119,7 @@ function context(
     realtime,
     tombstoneOf: async (uid) =>
       google.includes(uid) ? tombstoneOfUid(uid) : null,
+    toggles: fakeToggles(),
     accountUids: async () => ['ada', 'bob', 'eve'],
   };
 }
@@ -472,6 +491,46 @@ describe('the owner check', () => {
       ok: false,
       error: 'malformed',
     });
+  });
+});
+
+describe('toggles.set', () => {
+  it('publishes the toggles, audited with what they were', async () => {
+    const ctx = context();
+    expect(
+      await command(
+        'c1',
+        {
+          type: 'toggles.set',
+          target: null,
+          args: { values: { rankedDaily: false, matchmaking: true } },
+        },
+        ctx
+      )
+    ).toEqual({ ok: true });
+    expect((ctx.toggles as ReturnType<typeof fakeToggles>).published).toEqual({
+      ...FEATURE_TOGGLES,
+      rankedDaily: false,
+    });
+    // Only what changed is audited.
+    expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
+      type: 'toggles.set',
+      target: null,
+      before: { rankedDaily: true },
+      after: { rankedDaily: false },
+      ok: true,
+    });
+    expect(
+      await command(
+        'c2',
+        {
+          type: 'toggles.set',
+          target: null,
+          args: { values: { rankedDaily: false } },
+        },
+        ctx
+      )
+    ).toEqual({ ok: false, error: 'unchanged' });
   });
 });
 

@@ -25,6 +25,7 @@ import {
 } from './admin/accounts';
 import { isOwnerRecord, runAdminCommand } from './admin/command';
 import { realtimeOf } from './admin/realtime';
+import { remoteTogglesOf } from './admin/toggles';
 import {
   checkGoogleLink,
   googleProviderOf,
@@ -67,6 +68,11 @@ const realtime = realtimeOf(async () => {
  * functions that name it in `secrets` can read it.
  */
 const BAN_TOMBSTONE_KEY = defineSecret('BAN_TOMBSTONE_KEY');
+
+/** The feature toggles in Remote Config, loaded on first use. */
+const toggles = remoteTogglesOf(async () =>
+  (await import('firebase-admin/remote-config')).getRemoteConfig()
+);
 
 /** True, and logged, for a retried event too old to act on. */
 function givesUp(fn: string, id: string, time: string, now: number): boolean {
@@ -296,7 +302,7 @@ export const adminCommand = onDocumentCreatedWithAuthContext(
         event.params.id,
         data,
         event.authType === 'unauthenticated' ? undefined : event.authId,
-        { isOwner, realtime, tombstoneOf, accountUids }
+        { isOwner, realtime, tombstoneOf, accountUids, toggles }
       );
       logger.info('Admin command', { id: event.params.id, result });
     }

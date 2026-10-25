@@ -14,6 +14,7 @@ import {
   type ModerationChange,
 } from './moderation';
 import type { Realtime } from './realtime';
+import { type RemoteToggles, setToggles } from './toggles';
 import { recountAccounts, refreshStats } from './stats';
 import { googleProviderOf } from './tombstones';
 import { writeAudit } from './records';
@@ -32,6 +33,8 @@ export interface AdminContext {
   realtime: Realtime;
   /** The account's ban tombstone id, null without a Google provider. */
   tombstoneOf(uid: string): Promise<string | null>;
+  /** The feature toggles in Remote Config. */
+  toggles: RemoteToggles;
   /** The uids of every account Auth holds, for `stats.recount`. */
   accountUids(): Promise<readonly string[]>;
 }
@@ -201,6 +204,12 @@ async function act(
       return { ok: true, target: null, before, after };
     }
   }
+  if (command.type === 'toggles.set') {
+    return outcomeOf(
+      null,
+      await setToggles(context.toggles, command.args.values)
+    );
+  }
   if (command.target === null || command.type === 'board.verify') {
     return {
       ok: false,
@@ -214,10 +223,7 @@ async function act(
   if (uid === null) {
     return { ok: false, error: 'not-found', target, ...unchanged };
   }
-  const done = (change: ModerationChange | string): Outcome =>
-    typeof change === 'string'
-      ? { ok: false, error: change, target, ...unchanged }
-      : { ok: true, target, ...change };
+  const done = (change: ModerationChange | string) => outcomeOf(target, change);
   switch (command.type) {
     case 'profile.reset':
     case 'profile.removeImage':
@@ -272,6 +278,16 @@ async function act(
       );
     }
   }
+}
+
+/** An action's outcome: what it changed, or the error it answered. */
+function outcomeOf(
+  target: Record<string, unknown> | null,
+  change: ModerationChange | string
+): Outcome {
+  return typeof change === 'string'
+    ? { ok: false, error: change, target, before: null, after: null }
+    : { ok: true, target, ...change };
 }
 
 /**
