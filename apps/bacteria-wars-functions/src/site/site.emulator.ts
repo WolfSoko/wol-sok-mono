@@ -82,6 +82,39 @@ describe('publicSite', () => {
     expect(xml.body).not.toContain(DOWN);
   });
 
+  it('pages back through matches published together, every one linked once', async () => {
+    const at = Timestamp.fromMillis(Date.UTC(2026, 9, 24));
+    const batch = db.batch();
+    for (let i = 0; i < 60; i++) {
+      batch.set(db.doc(`publicReplays/Batch${String(i).padStart(15, '0')}`), {
+        levelId: 'quarantine',
+        kind: 'computer',
+        players: [],
+        ticks: 60,
+        winnerSeat: null,
+        score: 60,
+        reasons: [],
+        featuredAt: at,
+        removedAt: null,
+      });
+    }
+    await batch.commit();
+    const first = JSON.parse((await get('/replays/index.json')).body);
+    expect(first.replays).toHaveLength(60);
+    expect(first.older).toMatch(/^\d+_[A-Za-z0-9]{20}$/);
+    const second = JSON.parse(
+      (await get('/replays/index.json', { before: first.older })).body
+    );
+    expect(second.older).toBeUndefined();
+    const ids = [...first.replays, ...second.replays].map(
+      (r: { id: string }) => r.id
+    );
+    expect(new Set(ids).size).toBe(61);
+    expect((await get('/replays')).body).toContain(
+      `/replays?before=${first.older}`
+    );
+  });
+
   it('answers 410 for a removed replay, 404 for anything it does not serve', async () => {
     expect((await get(`/replays/${DOWN}`)).status).toBe(410);
     expect((await get(`/replays/${DOWN}/replay.json`)).status).toBe(410);
@@ -89,6 +122,7 @@ describe('publicSite', () => {
       '/replays/l_private',
       '/replays/NotARealIdButLong20x',
       `/replays/${UP}/other.json`,
+      `/replays/${UP}/replay.json/more`,
       '/watch',
     ]) {
       expect((await get(path)).status).toBe(404);

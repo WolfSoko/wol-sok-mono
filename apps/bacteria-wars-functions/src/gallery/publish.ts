@@ -13,7 +13,7 @@ import { dayOf, isBanned } from '../limits';
 import { type GalleryReplay, humansOf, isOut } from './candidates';
 
 /** A seat as a public replay shows it - never a uid. */
-interface PublicSeat {
+export interface PublicSeat {
   /** `computer`, or the colony's colour id for a human. */
   label: string;
   /** The player's name - only where they made it public and it passed. */
@@ -231,4 +231,56 @@ export async function anonymisePublic(
     )
   );
   return published.size;
+}
+
+/**
+ * Carries a profile change to the player's public replays (ADR 0011): a
+ * new name, `publicName` turned off or another preset relabels their
+ * seats with the boards' rules; `galleryOptOut` turned on takes them all
+ * down (`removeFromGallery`). Called by the profile trigger.
+ */
+export async function publicProfileChanged(
+  db: Firestore,
+  uid: string,
+  beforeData: unknown,
+  afterData: unknown,
+  now: number
+): Promise<number> {
+  const before = boardProfileOf(beforeData);
+  const after = boardProfileOf(afterData);
+  const optsOut = after.galleryOptOut && !before.galleryOptOut;
+  const relabels =
+    before.name !== after.name ||
+    before.publicName !== after.publicName ||
+    before.preset !== after.preset;
+  if (!optsOut && !relabels) {
+    return 0;
+  }
+  const published = (
+    await db
+      .collection('publicReplays')
+      .where('uids', 'array-contains', uid)
+      .get()
+  ).docs.filter((doc) => doc.get('removedAt') === null);
+  for (const doc of published) {
+    const replayId = doc.get('replayId');
+    if (optsOut) {
+      await (typeof replayId === 'string'
+        ? removeFromGallery(db, replayId, uid, now)
+        : takeDownPublic(db, doc, now));
+      continue;
+    }
+    const seats = (doc.get('seatUids') as (string | null)[] | undefined) ?? [];
+    const players = (doc.get('players') as PublicSeat[] | undefined) ?? [];
+    await doc.ref.update({
+      players: players.map((player, seat) => {
+        if (seats[seat] !== uid) {
+          return player;
+        }
+        const label = entryLabel(`${doc.id}_${seat}`, after, 'verified');
+        return { ...player, name: label.name, avatarPreset: label.avatar };
+      }),
+    });
+  }
+  return published.length;
 }

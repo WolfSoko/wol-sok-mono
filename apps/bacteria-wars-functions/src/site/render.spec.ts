@@ -13,8 +13,13 @@ const view = (fields: Partial<PublicView> = {}): PublicView => ({
   levelId: 'quarantine',
   kind: 'computer',
   players: [
-    { label: 'orange', name: '<Ada & "Co">', colorId: 'orange' },
-    { label: 'computer', name: null, colorId: 'blue' },
+    {
+      label: 'orange',
+      name: '<Ada & "Co">',
+      colorId: 'orange',
+      avatarPreset: 1,
+    },
+    { label: 'computer', name: null, colorId: 'blue', avatarPreset: 0 },
   ],
   ticks: 90 * 60,
   endedBy: 'annihilation',
@@ -53,7 +58,7 @@ describe('replayPage', () => {
     expect(body).not.toContain('<Ada');
   });
 
-  it('sets the canonical URL, the language alternates and the viewer link', () => {
+  it('sets the canonical URL and the language alternates', () => {
     const page = replayPage('de', view());
     expect(page).toContain('<html lang="de">');
     expect(page).toContain(
@@ -63,7 +68,6 @@ describe('replayPage', () => {
       `hreflang="en" href="${SITE_URL}/replays/AbCdEfGhIjKlMnOpQrSt"`
     );
     expect(page).toContain('hreflang="x-default"');
-    expect(page).toContain('href="/watch/AbCdEfGhIjKlMnOpQrSt"');
     expect(page).toContain('Match des Tages: Quarantäne');
     expect(page).toContain('<polyline');
   });
@@ -81,6 +85,13 @@ describe('galleryPage', () => {
       'href="/replays/AbCdEfGhIjKlMnOpQrSt?lang=de"'
     );
     expect(galleryPage('en', [])).toContain('No match has been picked yet.');
+  });
+
+  it('links the older matches where there are more', () => {
+    expect(galleryPage('de', [view()], '123_AbCdEfGhIjKlMnOpQrSt')).toContain(
+      'href="/replays?before=123_AbCdEfGhIjKlMnOpQrSt&amp;lang=de">Ältere Matches'
+    );
+    expect(galleryPage('en', [view()])).not.toContain('Older matches');
   });
 });
 

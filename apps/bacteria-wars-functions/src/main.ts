@@ -50,6 +50,7 @@ import {
   RTDB_URL,
 } from './config';
 import { featureBest as pickBest } from './gallery/feature-best';
+import { publicProfileChanged } from './gallery/publish';
 import { handleSite } from './site/public-site';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
@@ -421,17 +422,23 @@ export const rebuildTop = onDocumentWritten(
 );
 
 /**
- * A player's entries follow their name, opt-ins and preset - also when the
- * profile is made or deleted (a deleted one shows no name any more).
+ * A player's entries and public replays follow their name, opt-ins and
+ * preset - also when the profile is made or deleted (a deleted one shows
+ * no name any more).
  */
 export const boardProfileChanged = onDocumentWritten(
   { document: 'profiles/{uid}', memory: '256MiB', cpu: 'gcf_gen1' },
   async (event) => {
-    await relabelEntries(
+    const { uid } = event.params;
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    await relabelEntries(db(), uid, before, after);
+    await publicProfileChanged(
       db(),
-      event.params.uid,
-      event.data?.before.data(),
-      event.data?.after.data()
+      uid,
+      before,
+      after,
+      Date.parse(event.time)
     );
   }
 );
@@ -494,10 +501,8 @@ export const publicSite = onRequest(
   async (req, res) => {
     try {
       const page = await handleSite(db(), req.method, req.path, req.query);
-      res
-        .status(page.status)
-        .set(page.headers)
-        .send(req.method === 'HEAD' ? '' : page.body);
+      // Express leaves the body out for HEAD itself, with GET's headers.
+      res.status(page.status).set(page.headers).send(page.body);
     } catch (error) {
       logger.error('publicSite failed', { path: req.path, error });
       res.status(500).set('Cache-Control', 'no-store').send('');

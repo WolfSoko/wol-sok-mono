@@ -1,7 +1,9 @@
 import {
+  type EndReason,
   getLevel,
   isLadderLevel,
   parseGeneratedId,
+  type ReplayReason,
 } from '@wolsok/feat-lazy-bac-game/engine';
 
 /**
@@ -60,7 +62,7 @@ const WORDS = {
     length: 'Length',
     ending: 'Ended by',
     score: 'Score',
-    watch: 'Watch the replay',
+    older: 'Older matches',
     play: 'Play Bacteria Wars',
     back: 'All matches of the day',
     share: 'Share',
@@ -86,7 +88,7 @@ const WORDS = {
     length: 'Dauer',
     ending: 'Beendet durch',
     score: 'Wertung',
-    watch: 'Replay ansehen',
+    older: 'Ältere Matches',
     play: 'Bacteria Wars spielen',
     back: 'Alle Matches des Tages',
     share: 'Teilen',
@@ -142,7 +144,8 @@ export function colorName(lang: Lang, colorId: string): string {
 /** The colour ids the dictionary names - for its spec. */
 export const COLOR_IDS = Object.keys(COLORS.en);
 
-const ENDINGS: Record<Lang, Record<string, string>> = {
+// Typed by the engine's lists, so a new ending or reason needs its words.
+const ENDINGS: Record<Lang, Record<EndReason, string>> = {
   en: {
     annihilation: 'annihilation',
     time: 'time',
@@ -165,10 +168,10 @@ const ENDINGS: Record<Lang, Record<string, string>> = {
 
 /** How a match ended, in words. */
 export function endingName(lang: Lang, endedBy: string): string {
-  return ENDINGS[lang][endedBy] ?? endedBy;
+  return ENDINGS[lang][endedBy as EndReason] ?? endedBy;
 }
 
-const REASONS: Record<Lang, Record<string, string>> = {
+const REASONS: Record<Lang, Record<ReplayReason, string>> = {
   en: {
     close: 'Close',
     comeback: 'Comeback',
@@ -189,7 +192,7 @@ const REASONS: Record<Lang, Record<string, string>> = {
 
 /** A score reason's badge text. */
 export function reasonName(lang: Lang, reason: string): string {
-  return REASONS[lang][reason] ?? reason;
+  return REASONS[lang][reason as ReplayReason] ?? reason;
 }
 
 /**

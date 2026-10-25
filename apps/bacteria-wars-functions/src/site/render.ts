@@ -10,6 +10,7 @@ import {
   reasonName,
   t,
 } from './texts';
+import type { PublicSeat } from '../gallery/publish';
 
 /**
  * The public replay pages (ADR 0011): small server-rendered HTML with its
@@ -21,13 +22,6 @@ import {
 
 /** Where the pages live. */
 export const SITE_URL = 'https://bacteria-wars.wolsok.de';
-
-/** A seat of a public replay. */
-export interface PublicSeat {
-  label: string;
-  name: string | null;
-  colorId: string;
-}
 
 /** A public replay as the pages show it. */
 export interface PublicView {
@@ -61,9 +55,20 @@ export function scriptJson(value: unknown): string {
   return JSON.stringify(value).replace(/</g, '\\u003c');
 }
 
-/** A page's path in a language: English plain, German with `?lang=de`. */
-export function inLang(path: string, lang: Lang): string {
-  return lang === 'de' ? `${path}?lang=de` : path;
+/**
+ * A page's path in a language - English plain, German with `?lang=de` -
+ * and further query parameters.
+ */
+export function inLang(
+  path: string,
+  lang: Lang,
+  params: Readonly<Record<string, string>> = {}
+): string {
+  const query = new URLSearchParams({
+    ...params,
+    ...(lang === 'de' ? { lang } : {}),
+  }).toString();
+  return query === '' ? path : `${path}?${query}`;
 }
 
 /** A seat's label without its name: the computer, or the colony's colour. */
@@ -171,8 +176,15 @@ function badges(lang: Lang, reasons: readonly string[]): string {
     .join('');
 }
 
-/** `/replays`: the matches of the day, newest first. */
-export function galleryPage(lang: Lang, views: readonly PublicView[]): string {
+/**
+ * `/replays`: the matches of the day, newest first, and a link to the
+ * older ones (`older`, the next page's cursor) where there are more.
+ */
+export function galleryPage(
+  lang: Lang,
+  views: readonly PublicView[],
+  older: string | null = null
+): string {
   const cards =
     views.length === 0
       ? `<p>${escapeHtml(t(lang, 'empty'))}</p>`
@@ -190,7 +202,11 @@ export function galleryPage(lang: Lang, views: readonly PublicView[]): string {
       path: '/replays',
       type: 'website',
     },
-    `<h1>${escapeHtml(t(lang, 'gallery'))}</h1>\n<p>${escapeHtml(t(lang, 'galleryIntro'))}</p>\n${cards}`
+    `<h1>${escapeHtml(t(lang, 'gallery'))}</h1>\n<p>${escapeHtml(t(lang, 'galleryIntro'))}</p>\n${cards}${
+      older === null
+        ? ''
+        : `\n<p><a href="${escapeHtml(inLang('/replays', lang, { before: older }))}">${escapeHtml(t(lang, 'older'))}</a></p>`
+    }`
   );
 }
 
@@ -247,7 +263,7 @@ export function replayPage(lang: Lang, view: PublicView): string {
         : `<dt>${escapeHtml(t(lang, 'ending'))}</dt><dd>${escapeHtml(endingName(lang, view.endedBy))}</dd>`
     }<dt>${escapeHtml(t(lang, 'score'))}</dt><dd>${view.score} ${badges(lang, view.reasons)}</dd></dl>
 ${timeline(lang, view)}
-<p><a class="button" href="${escapeHtml(`/watch/${view.id}`)}">${escapeHtml(t(lang, 'watch'))}</a><a class="button" href="${escapeHtml(`${SITE_URL}${inLang(path, lang)}`)}">${escapeHtml(t(lang, 'share'))}</a></p>
+<p><a class="button" href="${escapeHtml(`${SITE_URL}${inLang(path, lang)}`)}">${escapeHtml(t(lang, 'share'))}</a></p>
 <p><a href="${escapeHtml(inLang('/replays', lang))}">${escapeHtml(t(lang, 'back'))}</a></p>`
   );
 }
