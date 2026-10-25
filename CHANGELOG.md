@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.84.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.83.0...v74.84.0) (2026-10-25)
+
+### Features
+
+* **angular-examples:** ✨ blow the tech tiles away in a random wind direction ([#2629](https://github.com/WolfSoko/wol-sok-mono/issues/2629)) ([1de4878](https://github.com/WolfSoko/wol-sok-mono/commit/1de4878e537341ee75214d64836cd3b9ebc09527))
+
 ## [74.83.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.82.0...v74.83.0) (2026-10-25)
 
 ### Features
