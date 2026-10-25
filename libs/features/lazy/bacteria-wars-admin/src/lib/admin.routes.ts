@@ -57,6 +57,13 @@ export function adminRoutes(options: GameCloudOptions | null): Routes {
                 ),
             },
             {
+              path: 'replays',
+              loadComponent: () =>
+                import('./replays/replays.component').then(
+                  (m) => m.ReplaysComponent
+                ),
+            },
+            {
               path: 'bans',
               loadComponent: () =>
                 import('./bans/bans.component').then((m) => m.BansComponent),

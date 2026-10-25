@@ -2,8 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import {
   type AdminCommandType,
   DESTRUCTIVE_COMMAND_TYPES,
+  type FirebaseConnection,
   GameCloud,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
+import type { DocumentReference } from 'firebase/firestore';
 import { AdminAccessService } from '../access/admin-access.service';
 
 /** What the server made of a command (`adminCommands/{id}.result`). */
@@ -21,6 +23,14 @@ export interface AdminCommandInput {
   reason: string;
   args: Record<string, unknown>;
 }
+
+/** The owner's gallery curation, as `replayCommands` types (ADR 0011). */
+export const REPLAY_COMMAND_TYPES = [
+  'feature',
+  'unfeature',
+  'anonymise',
+] as const;
+export type ReplayCommandType = (typeof REPLAY_COMMAND_TYPES)[number];
 
 /** How long a command document lives (TTL); the rules allow up to 2 days. */
 const COMMAND_TTL_MS = 24 * 3_600_000;
@@ -68,6 +78,45 @@ export class AdminCommandsService {
       createdAt: dbSdk.serverTimestamp(),
       expireAt: dbSdk.Timestamp.fromMillis(now + COMMAND_TTL_MS),
     });
+    return this.result(connection, ref);
+  }
+
+  /**
+   * Sends the owner's gallery curation (ADR 0011): a `replayCommands`
+   * document, which `replayCommand` runs and answers like `adminCommand`.
+   * `feature` takes a stored replay's id, `unfeature` and `anonymise` a
+   * public one's or a stored one's.
+   */
+  public async sendReplay(
+    type: ReplayCommandType,
+    replayId: string,
+    now: number = Date.now()
+  ): Promise<AdminResult> {
+    const connection = this.cloud.firebase();
+    const uid = this.access.uid();
+    if (connection === null || uid === null) {
+      return { ok: false, error: 'not-admin' };
+    }
+    const { db, dbSdk } = connection;
+    const ref = await dbSdk.addDoc(dbSdk.collection(db, 'replayCommands'), {
+      uid,
+      type,
+      replayId,
+      createdAt: dbSdk.serverTimestamp(),
+      expireAt: dbSdk.Timestamp.fromMillis(now + COMMAND_TTL_MS),
+    });
+    return this.result(connection, ref);
+  }
+
+  /**
+   * Waits for the function's `result` on a command document - `timeout`
+   * when none comes within {@link RESULT_TIMEOUT_MS}. `adminCommand` names
+   * a failure `error`, `replayCommand` `reason`.
+   */
+  private result(
+    { dbSdk }: FirebaseConnection,
+    ref: DocumentReference
+  ): Promise<AdminResult> {
     return new Promise<AdminResult>((resolve, reject) => {
       const timer = setTimeout(() => {
         stop();
@@ -80,13 +129,14 @@ export class AdminCommandsService {
           if (typeof result === 'object' && result !== null) {
             clearTimeout(timer);
             stop();
-            const { ok, error } = result as { ok?: unknown; error?: unknown };
+            const { ok, error, reason } = result as Record<string, unknown>;
+            const why = error ?? reason;
             resolve(
               ok === true
                 ? { ok: true }
                 : {
                     ok: false,
-                    error: typeof error === 'string' ? error : 'internal',
+                    error: typeof why === 'string' ? why : 'internal',
                   }
             );
           }

@@ -213,7 +213,9 @@ service cloud.firestore {
     // Stored replays, written by the functions only: a player reads those
     // they played, a page of 50 at most, and the bytes one at a time.
     match /replays/{id} {
-      allow get: if signedIn() && request.auth.uid in resource.data.players;
+      // The owner looks one up by id to curate it (ADR 0011, 0012).
+      allow get: if (signedIn() && request.auth.uid in resource.data.players) ||
+        isAdmin();
       allow list: if signedIn() && request.auth.uid in resource.data.players &&
         request.query.limit <= 50;
 
@@ -287,9 +289,14 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
     // The gallery's runners-up of a day (ADR 0011), for the Replays view;
-    // written by featureBest only. publicReplays stays closed to clients:
-    // publicSite serves it.
+    // written by featureBest only. publicReplays stays closed to players -
+    // publicSite serves it - and its bytes to everyone; the owner reads the
+    // documents to curate them.
     match /replayCandidates/{day} {
+      allow read: if isAdmin();
+    }
+
+    match /publicReplays/{id} {
       allow read: if isAdmin();
     }
 

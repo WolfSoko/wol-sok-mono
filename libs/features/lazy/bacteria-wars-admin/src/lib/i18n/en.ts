@@ -5,6 +5,7 @@ export const EN = {
     overview: 'Overview',
     profiles: 'Profiles',
     leaderboards: 'Leaderboards',
+    replays: 'Replays',
     bans: 'Bans',
     audit: 'Audit',
   },
@@ -38,6 +39,11 @@ export const EN = {
     },
     toggles: {
       set: 'Change toggles',
+    },
+    replay: {
+      feature: 'Feature in the gallery',
+      unfeature: 'Take down from the gallery',
+      anonymise: 'Anonymise',
     },
   },
   dialog: {
@@ -138,6 +144,22 @@ export const EN = {
       endless: 'Depth {depth} · {seconds} s',
       endlessPartial: 'Depth {depth} · {seconds} s (unfinished)',
     },
+  },
+  replays: {
+    byId: 'A stored replay',
+    replayId: 'Replay id',
+    lookUp: 'Look up',
+    notFound: 'No stored replay with this id.',
+    score: 'score {score}',
+    galleryOut: 'out of the gallery for good',
+    isPublic: 'Public - open its page',
+    public: 'In the gallery',
+    replay: 'Replay',
+    featured: 'Featured',
+    byOwner: 'by you',
+    candidates: 'Runners-up of the daily pick',
+    dayStats: '{published} published, {checked} re-run',
+    noCandidates: 'No runners-up that day.',
   },
   bans: {
     change: 'Change end',

@@ -20,6 +20,7 @@ function setUp(confirmed: unknown, result: AdminResult | Error) {
     }
     return result;
   });
+  const sendReplay = jest.fn(async () => result as AdminResult);
   const signIn = jest.fn(async () => true);
   TestBed.configureTestingModule({
     providers: [
@@ -28,7 +29,7 @@ function setUp(confirmed: unknown, result: AdminResult | Error) {
         useValue: { open: () => ({ afterClosed: () => of(confirmed) }) },
       },
       { provide: MatSnackBar, useValue: snackBar },
-      { provide: AdminCommandsService, useValue: { send } },
+      { provide: AdminCommandsService, useValue: { send, sendReplay } },
       { provide: AdminAccessService, useValue: { signIn } },
     ],
   });
@@ -36,6 +37,7 @@ function setUp(confirmed: unknown, result: AdminResult | Error) {
     service: TestBed.inject(AdminActionsService),
     snackBar,
     send,
+    sendReplay,
     signIn,
     action,
   };
@@ -113,5 +115,20 @@ describe('AdminActionsService', () => {
       error: 'internal',
     });
     error.mockRestore();
+  });
+
+  it('runs a gallery curation through the same dialog and snack bar', async () => {
+    const { service, send, sendReplay, snackBar } = setUp(
+      { reason: '', args: {} },
+      { ok: true }
+    );
+    expect(await service.runReplay('feature', 'r1', 'r1')).toEqual({
+      ok: true,
+    });
+    expect(sendReplay).toHaveBeenCalledWith('feature', 'r1');
+    expect(send).not.toHaveBeenCalled();
+    expect(snackBar.open).toHaveBeenLastCalledWith('Done.', undefined, {
+      duration: 4000,
+    });
   });
 });

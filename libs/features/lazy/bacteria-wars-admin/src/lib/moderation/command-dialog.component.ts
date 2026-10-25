@@ -22,11 +22,20 @@ import {
   type BanReason,
   REASON_MAX,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
+import type { ReplayCommandType } from '../commands/admin-commands.service';
 import { AdminTextPipe, type AdminTextKey } from '../i18n/admin-i18n.service';
+
+/**
+ * What a dialog confirms: an admin command, or a gallery curation
+ * (`replay.feature` and so on), which keeps no reason.
+ */
+export type DialogCommandType =
+  | AdminCommandType
+  | `replay.${ReplayCommandType}`;
 
 /** What the dialog asks for, besides the reason every command needs. */
 export interface CommandDialogData {
-  type: AdminCommandType;
+  type: DialogCommandType;
   /** Who or what it is about, shown in the title. */
   subject: string;
   /** Ask for the ban's end and reason. */
@@ -101,18 +110,20 @@ type BanEnd = (typeof BAN_ENDS)[number]['key'];
           {{ 'dialog.bar' | adminT }}
         </mat-slide-toggle>
       }
-      <mat-form-field>
-        <mat-label>{{ 'dialog.reason' | adminT }}</mat-label>
-        <textarea
-          matInput
-          required
-          [maxlength]="max"
-          [ngModel]="reason()"
-          (ngModelChange)="reason.set($event)"
-          name="reason"
-        ></textarea>
-        <mat-hint align="end">{{ reason().length }} / {{ max }}</mat-hint>
-      </mat-form-field>
+      @if (asksReason) {
+        <mat-form-field>
+          <mat-label>{{ 'dialog.reason' | adminT }}</mat-label>
+          <textarea
+            matInput
+            required
+            [maxlength]="max"
+            [ngModel]="reason()"
+            (ngModelChange)="reason.set($event)"
+            name="reason"
+          ></textarea>
+          <mat-hint align="end">{{ reason().length }} / {{ max }}</mat-hint>
+        </mat-form-field>
+      }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button type="button" mat-dialog-close>
@@ -148,13 +159,17 @@ export class CommandDialogComponent {
   protected readonly ends = BAN_ENDS;
   protected readonly banReasons = BAN_REASONS;
   protected readonly reason = signal('');
+  /** Gallery curation keeps no reason (`replayCommands` take none). */
+  protected readonly asksReason = !this.data.type.startsWith('replay.');
   protected end: BanEnd = 'week';
   protected banReason: BanReason = 'cheating';
   protected bar = false;
 
   protected readonly valid = computed(() => {
     const reason = this.reason().trim();
-    return reason.length > 0 && reason.length <= REASON_MAX;
+    return (
+      !this.asksReason || (reason.length > 0 && reason.length <= REASON_MAX)
+    );
   });
 
   protected typeKey(): AdminTextKey {
