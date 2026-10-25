@@ -12,6 +12,7 @@ import { runReplayCommand } from '../replays/command';
 import { deletePlayerReplays } from '../replays/delete-player';
 import { dailyReplay, TICKS } from '../testing/daily-replay';
 import { featureBest } from './feature-best';
+import { publicProfileChanged } from './publish';
 
 /**
  * The gallery against the Firestore emulator (`test-emulator`):
@@ -166,6 +167,31 @@ describe('featureBest', () => {
       throw new Error('re-ran a verified replay');
     });
     expect(result).toMatchObject({ checked: 0, published: ['l_a'] });
+  });
+
+  it("follows the player's profile: a hidden name, then opting out", async () => {
+    const profile = { name: 'Ada', publicName: true };
+    await db.doc('profiles/ada').set(profile);
+    await store('l_a', 'ada');
+    await pick();
+    const publicId = String(
+      (await db.doc('replays/l_a').get()).get('publicId')
+    );
+    const hidden = { ...profile, publicName: false };
+    await publicProfileChanged(db, 'ada', profile, hidden, NOW);
+    const published = db.doc(`publicReplays/${publicId}`);
+    expect((await published.get()).get('players')[0]).toMatchObject({
+      name: null,
+    });
+    await publicProfileChanged(
+      db,
+      'ada',
+      hidden,
+      { ...hidden, galleryOptOut: true },
+      NOW
+    );
+    expect((await published.get()).get('removedAt')).not.toBeNull();
+    expect((await db.doc('replays/l_a').get()).get('galleryOut')).toBe(true);
   });
 
   it("takes a deleted account's uid and name out of its public replays", async () => {

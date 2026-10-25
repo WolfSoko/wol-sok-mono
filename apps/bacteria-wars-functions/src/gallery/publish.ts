@@ -7,13 +7,13 @@ import {
 } from 'firebase-admin/firestore';
 import { DAY_MS } from '../boards/budgets';
 import { storedReplay } from '../boards/declared-match';
-import { boardProfileOf, entryLabel } from '../boards/names';
+import { type BoardProfile, boardProfileOf, entryLabel } from '../boards/names';
 import { REPLAY_TTL_MS } from '../config';
 import { dayOf, isBanned } from '../limits';
 import { type GalleryReplay, humansOf, isOut } from './candidates';
 
 /** A seat as a public replay shows it - never a uid. */
-interface PublicSeat {
+export interface PublicSeat {
   /** `computer`, or the colony's colour id for a human. */
   label: string;
   /** The player's name - only where they made it public and it passed. */
@@ -87,16 +87,10 @@ export async function publishReplay(
     if (uid === undefined) {
       return { label: 'computer', name: null, colorId, avatarPreset: 0 };
     }
-    const label = entryLabel(
-      `${publicRef.id}_${seat}`,
-      profiles[humans.indexOf(uid)],
-      'verified'
-    );
     return {
       label: colorId,
-      name: label.name,
       colorId,
-      avatarPreset: label.avatar,
+      ...seatLabel(publicRef.id, seat, profiles[humans.indexOf(uid)]),
     };
   });
   const createdAt = snapshot.get('createdAt');
@@ -201,13 +195,26 @@ export async function removeFromGallery(
   await Promise.all(published.docs.map((doc) => takeDownPublic(db, doc, now)));
 }
 
+/** A human seat's name and preset, by the boards' rules (`entryLabel`). */
+function seatLabel(
+  publicId: string,
+  seat: number,
+  profile: BoardProfile
+): Pick<PublicSeat, 'name' | 'avatarPreset'> {
+  const label = entryLabel(`${publicId}_${seat}`, profile, 'verified');
+  return { name: label.name, avatarPreset: label.avatar };
+}
+
 /**
- * Takes a deleted account out of its public replays (ADR 0011): its uid
- * goes, and its seat shows the colour label instead of a name.
+ * Rewrites the player's seats in their public replays still up, each in
+ * a transaction: `rewrite` gets the seat and its index and returns the
+ * new one; `extra` adds fields to each update. The number rewritten.
  */
-export async function anonymisePublic(
+async function rewriteSeats(
   db: Firestore,
-  uid: string
+  uid: string,
+  rewrite: (seat: PublicSeat, index: number, publicId: string) => PublicSeat,
+  extra: (seats: (string | null)[]) => Record<string, unknown> = () => ({})
 ): Promise<number> {
   const published = await db
     .collection('publicReplays')
@@ -221,14 +228,73 @@ export async function anonymisePublic(
           (current['seatUids'] as (string | null)[] | undefined) ?? [];
         const players = (current['players'] as PublicSeat[] | undefined) ?? [];
         tx.update(doc.ref, {
-          uids: FieldValue.arrayRemove(uid),
-          seatUids: seats.map((seat) => (seat === uid ? null : seat)),
-          players: players.map((player, seat) =>
-            seats[seat] === uid ? { ...player, name: null } : player
+          ...extra(seats),
+          players: players.map((player, index) =>
+            seats[index] === uid ? rewrite(player, index, doc.id) : player
           ),
         });
       })
     )
   );
   return published.size;
+}
+
+/**
+ * Takes a deleted account out of its public replays (ADR 0011): its uid
+ * goes, and its seat shows the colour label instead of a name.
+ */
+export function anonymisePublic(db: Firestore, uid: string): Promise<number> {
+  return rewriteSeats(
+    db,
+    uid,
+    (player) => ({ ...player, name: null }),
+    (seats) => ({
+      uids: FieldValue.arrayRemove(uid),
+      seatUids: seats.map((seat) => (seat === uid ? null : seat)),
+    })
+  );
+}
+
+/**
+ * Carries a profile change to the player's public replays (ADR 0011): a
+ * new name, `publicName` turned off or another preset relabels their
+ * seats with the boards' rules; `galleryOptOut` turned on takes them all
+ * down (`removeFromGallery`). Called by the profile trigger.
+ */
+export async function publicProfileChanged(
+  db: Firestore,
+  uid: string,
+  beforeData: unknown,
+  afterData: unknown,
+  now: number
+): Promise<number> {
+  const before = boardProfileOf(beforeData);
+  const after = boardProfileOf(afterData);
+  if (after.galleryOptOut && !before.galleryOptOut) {
+    const published = (
+      await db
+        .collection('publicReplays')
+        .where('uids', 'array-contains', uid)
+        .get()
+    ).docs.filter((doc) => doc.get('removedAt') === null);
+    await Promise.all(
+      published.map((doc) => {
+        const replayId = doc.get('replayId');
+        return typeof replayId === 'string'
+          ? removeFromGallery(db, replayId, uid, now)
+          : takeDownPublic(db, doc, now);
+      })
+    );
+    return published.length;
+  }
+  const relabels =
+    before.name !== after.name ||
+    before.publicName !== after.publicName ||
+    before.preset !== after.preset;
+  return relabels
+    ? rewriteSeats(db, uid, (player, index, publicId) => ({
+        ...player,
+        ...seatLabel(publicId, index, after),
+      }))
+    : 0;
 }

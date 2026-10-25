@@ -16,6 +16,7 @@ import {
   onDocumentDeleted,
   onDocumentWritten,
 } from 'firebase-functions/v2/firestore';
+import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
 import type { UserRecord } from 'firebase-admin/auth';
@@ -49,6 +50,8 @@ import {
   RTDB_URL,
 } from './config';
 import { featureBest as pickBest } from './gallery/feature-best';
+import { publicProfileChanged } from './gallery/publish';
+import { handleSite } from './site/public-site';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
@@ -419,18 +422,20 @@ export const rebuildTop = onDocumentWritten(
 );
 
 /**
- * A player's entries follow their name, opt-ins and preset - also when the
- * profile is made or deleted (a deleted one shows no name any more).
+ * A player's entries and public replays follow their name, opt-ins and
+ * preset - also when the profile is made or deleted (a deleted one shows
+ * no name any more).
  */
 export const boardProfileChanged = onDocumentWritten(
   { document: 'profiles/{uid}', memory: '256MiB', cpu: 'gcf_gen1' },
   async (event) => {
-    await relabelEntries(
-      db(),
-      event.params.uid,
-      event.data?.before.data(),
-      event.data?.after.data()
-    );
+    const { uid } = event.params;
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    await Promise.all([
+      relabelEntries(db(), uid, before, after),
+      publicProfileChanged(db(), uid, before, after, Date.parse(event.time)),
+    ]);
   }
 );
 
@@ -479,6 +484,27 @@ export const featureBest = FEATURE_BEST_ON
       }
     )
   : undefined;
+
+/**
+ * The public replay pages (ADR 0011): `/replays`, `/replays/{id}`, their
+ * JSON and the replays' sitemap, server-rendered and cached by Hosting.
+ * Reads `publicReplays` only. Hosting's rewrites to it come in a release
+ * after this function is deployed - a rewrite to a function that does not
+ * exist fails the hosting deploy.
+ */
+export const publicSite = onRequest(
+  { memory: '256MiB', maxInstances: 10 },
+  async (req, res) => {
+    try {
+      const page = await handleSite(db(), req.method, req.path, req.query);
+      // Express leaves the body out for HEAD itself, with GET's headers.
+      res.status(page.status).set(page.headers).send(page.body);
+    } catch (error) {
+      logger.error('publicSite failed', { path: req.path, error });
+      res.status(500).set('Cache-Control', 'no-store').send('');
+    }
+  }
+);
 
 /** A declared endless match joins its run at once (ADR 0012). */
 export const declaredMatch = onDocumentCreated(

@@ -101,6 +101,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "publicReplays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "removedAt",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "featuredAt",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
