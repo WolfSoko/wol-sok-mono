@@ -1268,7 +1268,16 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      (`src/admin/toggles.ts`, Remote Config behind the `RemoteToggles`
      port). The client reads them, and the admin area sets them, with the
      client release.
-   - Still to come: `board.verify`.
+   - Then `board.verify` (`src/boards/verify-now.ts`): the hourly slice's
+     own steps (`checkBestAttempt` for a daily entry, `verifyRunWins` for
+     a run), from the admin budget (`ADMIN_VERIFY_MS`, 20 match-minutes a
+     day, charged to `counters/{day}.adminVerifyMs`), at most 6
+     match-minutes a command (`ADMIN_COMMAND_MS`). What a run has left
+     waits first in line for the hourly slice for a day
+     (`moderation/{uid}.verifyFirstUntil`, trust -1 in `candidates`).
+     `nothing-to-verify` for an entry with nothing provisional,
+     `no-budget` when the day's admin budget is spent or the attempt is
+     longer than what is left.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].

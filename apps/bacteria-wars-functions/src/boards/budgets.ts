@@ -42,3 +42,12 @@ const RERUN_MS_PER_TICK = 10;
 export function expectedRerunMs(ticks: number): number {
   return ticks * RERUN_MS_PER_TICK;
 }
+
+/** The admin's "verify now" budget a day: 20 match-minutes (ADR 0012). */
+export const ADMIN_VERIFY_MS = 400_000;
+
+/**
+ * What one `board.verify` spends at most: 6 match-minutes, well inside the
+ * trigger's 540 s.
+ */
+export const ADMIN_COMMAND_MS = expectedRerunMs(6 * 60 * 60);

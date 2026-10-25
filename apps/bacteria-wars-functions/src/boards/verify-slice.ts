@@ -259,12 +259,17 @@ export async function candidates<B extends BoardRef>(
     if (skipUntil instanceof Timestamp && skipUntil.toMillis() > now) {
       return null;
     }
+    // The rest of a run the owner had checked (`board.verify`) comes first.
+    const first = moderation.get('verifyFirstUntil');
     return {
       board,
       entryId: entry.id,
       sort: Number(entry.get('sort')),
       uid,
-      trust: trustOf(info, moderation.get('verifiedBefore') === true, now),
+      trust:
+        first instanceof Timestamp && first.toMillis() > now
+          ? -1
+          : trustOf(info, moderation.get('verifiedBefore') === true, now),
     };
   };
   const looked = await Promise.all(
@@ -300,15 +305,44 @@ async function checkCandidate(
   verify: (replay: Replay) => Verdict,
   leftMs: number
 ): Promise<boolean> {
-  const runRef = db.doc(`dailyRuns/${candidate.board.day}_${candidate.uid}`);
+  return (
+    (await checkBestAttempt(
+      db,
+      candidate.uid,
+      candidate.board.day,
+      now,
+      verify,
+      leftMs
+    )) === 'checked'
+  );
+}
+
+/**
+ * Plays the player's best provisional attempt of a day again, and applies
+ * the verdict to the run, the board and the replay - `none` without one,
+ * `too-long` when its re-run would take longer than `leftMs`, `raced` when
+ * another check got there first.
+ */
+export async function checkBestAttempt(
+  db: Firestore,
+  uid: string,
+  day: string,
+  now: number,
+  verify: (replay: Replay) => Verdict,
+  leftMs: number
+): Promise<'checked' | 'none' | 'too-long' | 'raced'> {
+  const runRef = db.doc(`dailyRuns/${day}_${uid}`);
   const attempts =
     ((await runRef.get()).get('attempts') as DailyAttemptRun[] | undefined) ??
     [];
   const best = attempts
     .filter((a) => a.state === 'provisional' && a.ticks <= MAX_VERIFIED_TICKS)
     .sort((a, b) => b.sort - a.sort)[0];
-  if (best === undefined || expectedRerunMs(best.ticks) > leftMs) {
-    return false;
+  if (best === undefined) {
+    return 'none';
+  }
+  if (expectedRerunMs(best.ticks) > leftMs) {
+    return 'too-long';
   }
   const replay = await storedReplay(db, best.replayId);
   const verdict: Verdict =
@@ -323,18 +357,18 @@ async function checkCandidate(
     if (
       fresh.find((a) => a.attemptId === best.attemptId)?.state !== 'provisional'
     ) {
-      return false;
+      return 'raced';
     }
     const next = fresh.map((a) =>
       a.attemptId === best.attemptId ? { ...a, state: verdict.state } : a
     );
-    const moderationRef = db.doc(`moderation/${candidate.uid}`);
+    const moderationRef = db.doc(`moderation/${uid}`);
     const moderation = (await tx.get(moderationRef)).data() ?? {};
-    await writeDailyEntry(tx, db, candidate.board.day, candidate.uid, next);
+    await writeDailyEntry(tx, db, day, uid, next);
     tx.update(runRef, { attempts: next });
     tx.update(db.doc(`replays/${best.replayId}`), verdictFields(verdict));
     recordCheck(tx, moderationRef, moderation, verdict.state, now);
-    return true;
+    return 'checked';
   });
 }
 

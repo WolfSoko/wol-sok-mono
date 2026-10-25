@@ -4,6 +4,7 @@ import {
   parseAdminCommand,
   parseBoardId,
   type PlayerTarget,
+  type Replay,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
@@ -13,6 +14,8 @@ import {
   moderateProfile,
   type ModerationChange,
 } from './moderation';
+import { type Verdict, verifyReplay } from '../boards/verify';
+import { verifyNow } from '../boards/verify-now';
 import type { Realtime } from './realtime';
 import { type RemoteToggles, setToggles } from './toggles';
 import { recountAccounts, refreshStats } from './stats';
@@ -35,6 +38,10 @@ export interface AdminContext {
   tombstoneOf(uid: string): Promise<string | null>;
   /** The feature toggles in Remote Config. */
   toggles: RemoteToggles;
+  /** How `board.verify` plays a replay again - `verifyReplay` unless set. */
+  verify?: (replay: Replay) => Verdict;
+  /** Its clock, in ms - `performance.now()` unless set. */
+  clock?: () => number;
   /** The uids of every account Auth holds, for `stats.recount`. */
   accountUids(): Promise<readonly string[]>;
 }
@@ -77,8 +84,8 @@ export function isOwnerRecord(user: OwnerRecord): boolean {
  * owner sends a new one.
  * A command that is not exactly one (`parseAdminCommand`) answers
  * `malformed`; one from anybody but the owner `not-writer` or `not-admin`
- * - neither is audited. `board.verify` answers `unsupported` until its
- * wave; the other types run (`bans.ts`, `moderation.ts`, `stats.ts`).
+ * - neither is audited. Every type runs: `bans.ts`, `moderation.ts`,
+ * `stats.ts`, `toggles.ts` and the boards' `verify-now.ts`.
  */
 export async function runAdminCommand(
   db: Firestore,
@@ -210,14 +217,6 @@ async function act(
       await setToggles(context.toggles, command.args.values)
     );
   }
-  if (command.target === null || command.type === 'board.verify') {
-    return {
-      ok: false,
-      error: 'unsupported',
-      target: command.target === null ? null : { ...command.target },
-      ...unchanged,
-    };
-  }
   const uid = await targetUid(db, command.target);
   const target = { ...command.target, ...(uid === null ? {} : { uid }) };
   if (uid === null) {
@@ -251,6 +250,24 @@ async function act(
           commandId,
           now
         )
+      );
+    }
+    case 'board.verify': {
+      // The parser let only daily and endless boards through.
+      const board = parseBoardId(command.target.boardId);
+      const clock = context.clock ?? (() => performance.now());
+      const result = await verifyNow(
+        db,
+        uid,
+        board?.kind === 'daily'
+          ? { kind: 'daily', day: board.day }
+          : { kind: 'endless' },
+        now,
+        clock,
+        context.verify ?? ((replay) => verifyReplay(replay, clock))
+      );
+      return done(
+        typeof result === 'string' ? result : { before: null, after: result }
       );
     }
     case 'player.unban':

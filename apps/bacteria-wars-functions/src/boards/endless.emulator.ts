@@ -15,6 +15,7 @@ import {
 } from './rank-endless';
 import { type Verdict } from './verify';
 import { verifyEndlessSlice } from './verify-endless';
+import { verifyNow } from './verify-now';
 
 /**
  * The endless board against the Firestore emulator (`test-emulator`):
@@ -276,5 +277,42 @@ describe('verifyEndlessSlice', () => {
     expect((await db.doc('replays/l_0').get()).get('state')).toBe(
       'balance-mismatch'
     );
+  });
+});
+
+describe('verifyNow on an endless run', () => {
+  it('plays what fits, and queues the rest first for the hourly slice', async () => {
+    for (const i of [0, 1, 2]) {
+      await declare(i);
+      await rank(`l_${i}`, played(i, i));
+    }
+    // The clock runs fast: one win fits in the command's 6 match-minutes.
+    let t = 0;
+    const result = await verifyNow(
+      db,
+      'ada',
+      { kind: 'endless' },
+      NOW,
+      () => (t += 50_000),
+      () => ({ state: 'verified', ms: 0 })
+    );
+    expect(result).toMatchObject({ checked: 1, queued: true });
+    expect((await run())?.['verifiedWins']).toBe(1);
+    expect(
+      (await db.doc('moderation/ada').get()).get('verifyFirstUntil')?.toMillis()
+    ).toBe(NOW + 24 * HOUR);
+  });
+
+  it('says so for a player without a run', async () => {
+    expect(
+      await verifyNow(
+        db,
+        'bob',
+        { kind: 'endless' },
+        NOW,
+        () => 0,
+        () => ({ state: 'verified', ms: 0 })
+      )
+    ).toBe('nothing-to-verify');
   });
 });

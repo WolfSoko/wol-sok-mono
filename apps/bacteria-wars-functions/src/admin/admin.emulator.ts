@@ -534,21 +534,22 @@ describe('toggles.set', () => {
   });
 });
 
-describe('the types still to come', () => {
-  it.each([['board.verify', { boardId: DAILY, entryId: 'dAda' }, {}]])(
-    'answer %s with unsupported, audited',
-    async (type, target, args) => {
-      expect(await command('c1', { type, target, args })).toEqual({
-        ok: false,
-        error: 'unsupported',
-      });
-      expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
-        type,
-        ok: false,
-        error: 'unsupported',
-      });
-    }
-  );
+describe('board.verify', () => {
+  it('answers for an entry with nothing to play again, audited', async () => {
+    await seedAda();
+    expect(
+      await command('c1', {
+        type: 'board.verify',
+        target: { boardId: DAILY, entryId: 'dAda' },
+      })
+    ).toEqual({ ok: false, error: 'nothing-to-verify' });
+    expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
+      type: 'board.verify',
+      target: { boardId: DAILY, entryId: 'dAda', uid: 'ada' },
+      ok: false,
+      error: 'nothing-to-verify',
+    });
+  });
 });
 
 describe('statistics', () => {

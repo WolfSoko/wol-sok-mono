@@ -60,30 +60,18 @@ export async function verifyEndlessSlice(
     'endless',
     boards
   )) {
-    let run = await bestRunOf(db, candidate.uid);
-    while (run !== null) {
-      const next = nextWin(run);
-      const left = budget - (clock() - start);
-      if (next === null || expectedRerunMs(next.ticks) > left) {
-        break;
-      }
-      const replay = await storedReplay(db, next.replayId);
-      const verdict: Verdict =
-        replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
-      checked++;
-      run = await applyVerdict(
-        db,
-        run.uid,
-        run.runId,
-        next.replayId,
-        verdict,
-        now
-      );
-      await charge();
-      if (verdict.state === 'balance-mismatch') {
-        // Changes nothing: the next slice would only play it again.
-        break;
-      }
+    const run = await bestRunOf(db, candidate.uid);
+    if (run !== null) {
+      checked += (
+        await verifyRunWins(
+          db,
+          run,
+          () => budget - (clock() - start),
+          verify,
+          now,
+          charge
+        )
+      ).checked;
     }
     if (clock() - start >= budget) {
       break;
@@ -93,8 +81,50 @@ export async function verifyEndlessSlice(
   return { checked, spentMs: Math.round(clock() - start) };
 }
 
+/**
+ * Plays a run's wins again one by one, in order, from the first not yet
+ * confirmed, while the next one's expected cost fits in `left()`: a failed
+ * win cuts the run to its verified prefix, a balance mismatch stops (it
+ * changes nothing, and would only be played again). Returns how many it
+ * played and the run as they left it.
+ */
+export async function verifyRunWins(
+  db: Firestore,
+  start: StoredRun,
+  left: () => number,
+  verify: (replay: Replay) => Verdict,
+  now: number,
+  charge: () => Promise<void>
+): Promise<{ checked: number; run: StoredRun | null }> {
+  let run: StoredRun | null = start;
+  let checked = 0;
+  while (run !== null) {
+    const next = nextWin(run);
+    if (next === null || expectedRerunMs(next.ticks) > left()) {
+      break;
+    }
+    const replay = await storedReplay(db, next.replayId);
+    const verdict: Verdict =
+      replay === null ? { state: 'unverified', ms: 0 } : verify(replay);
+    checked++;
+    run = await applyVerdict(
+      db,
+      run.uid,
+      run.runId,
+      next.replayId,
+      verdict,
+      now
+    );
+    await charge();
+    if (verdict.state === 'balance-mismatch') {
+      break;
+    }
+  }
+  return { checked, run };
+}
+
 /** The run a player's `endless` entry shows, null when there is none. */
-async function bestRunOf(
+export async function bestRunOf(
   db: Firestore,
   uid: string
 ): Promise<StoredRun | null> {
@@ -112,7 +142,9 @@ async function bestRunOf(
  * The replay of a run's first unconfirmed win and its length - null when
  * every win is confirmed, the run was cut, or the win can never be re-run.
  */
-function nextWin(run: StoredRun): { replayId: string; ticks: number } | null {
+export function nextWin(
+  run: StoredRun
+): { replayId: string; ticks: number } | null {
   if ((run.cut ?? null) !== null) {
     return null;
   }
