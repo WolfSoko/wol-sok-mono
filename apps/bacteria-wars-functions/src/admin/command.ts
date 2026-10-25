@@ -15,6 +15,7 @@ import {
 } from './moderation';
 import type { Realtime } from './realtime';
 import { type RemoteToggles, setToggles } from './toggles';
+import { recountAccounts, refreshStats } from './stats';
 import { googleProviderOf } from './tombstones';
 import { writeAudit } from './records';
 
@@ -34,6 +35,8 @@ export interface AdminContext {
   tombstoneOf(uid: string): Promise<string | null>;
   /** The feature toggles in Remote Config. */
   toggles: RemoteToggles;
+  /** The uids of every account Auth holds, for `stats.recount`. */
+  accountUids(): Promise<readonly string[]>;
 }
 
 /** The parts of an Auth user the owner check reads. */
@@ -74,8 +77,8 @@ export function isOwnerRecord(user: OwnerRecord): boolean {
  * owner sends a new one.
  * A command that is not exactly one (`parseAdminCommand`) answers
  * `malformed`; one from anybody but the owner `not-writer` or `not-admin`
- * - neither is audited. `board.verify` and `stats.*` answer `unsupported`
- * until their wave; the other types run (`bans.ts`, `moderation.ts`).
+ * - neither is audited. `board.verify` answers `unsupported` until its
+ * wave; the other types run (`bans.ts`, `moderation.ts`, `stats.ts`).
  */
 export async function runAdminCommand(
   db: Firestore,
@@ -186,13 +189,27 @@ async function act(
   now: number
 ): Promise<Outcome> {
   const unchanged = { before: null, after: null };
+  switch (command.type) {
+    case 'stats.refresh':
+      return {
+        ok: true,
+        target: null,
+        before: null,
+        after: await refreshStats(db, context.realtime, now),
+      };
+    case 'stats.recount': {
+      const { before, after } = await recountAccounts(db, () =>
+        context.accountUids()
+      );
+      return { ok: true, target: null, before, after };
+    }
+  }
   if (command.type === 'toggles.set') {
     return outcomeOf(
       null,
       await setToggles(context.toggles, command.args.values)
     );
   }
-  // `stats.*` take no target.
   if (command.target === null || command.type === 'board.verify') {
     return {
       ok: false,

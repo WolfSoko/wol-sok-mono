@@ -1252,14 +1252,23 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      hidden (`hiddenFor`), so tomorrow's daily entry is hidden too. A
      restore lifts the bars it covers, and an entry comes back with its
      previous status unless another reason still hides it.
+   - Then the statistics: `stats.refresh` writes `adminStats/now` from
+     the figures above (about fifteen `count()`s, the RTDB `connections`
+     read once, `stats/accounts` and today's counters), and `hourly`
+     writes the hour's snapshot `adminStats/h_{yyyymmddhh}` after the
+     verification slice (90-day TTL); a failed snapshot is logged and
+     costs nothing else. `stats.recount` sets `stats/accounts` to the
+     accounts Auth lists, the audit keeping the old and new total. The
+     owner reads `adminStats`; the index `rooms (taken, expireAt)` and the
+     single-field `rooms.expireAt` index (its TTL override had dropped it)
+     serve the room counts.
    - Then the feature toggles: `FEATURE_TOGGLES` and `parseToggleValues`
      in the game lib, `toggles.set` in the rules (`isToggleArgs`, checked
      against the lib by `firestore-rules-toggles.spec.ts`) and in `adminCommand`
      (`src/admin/toggles.ts`, Remote Config behind the `RemoteToggles`
      port). The client reads them, and the admin area sets them, with the
      client release.
-   - Still to come: `board.verify`, `stats.refresh`, `stats.recount` and
-     the statistics.
+   - Still to come: `board.verify`.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].

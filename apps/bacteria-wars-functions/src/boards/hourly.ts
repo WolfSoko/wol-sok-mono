@@ -12,6 +12,7 @@ import {
 import { logger } from 'firebase-functions/logger';
 import { expireBans } from '../admin/bans';
 import type { Realtime } from '../admin/realtime';
+import { refreshStats } from '../admin/stats';
 import { entryData, hiddenFor, memberIn, profileIn } from './entries';
 import { MIN_COUNTED_TICKS } from './rank-online';
 import { DAY_MS, SLICE_MS } from './budgets';
@@ -168,8 +169,8 @@ export async function finalizeDailyBoards(
  * The hourly run (ADR 0012), in order: cleans up bans that ended, closes
  * unreported online matches and endless matches whose replay never came,
  * closes yesterday's daily board, then spends the hour's verification
- * slice - the daily boards first, the `endless` board with the rest. The
- * statistics join with their wave.
+ * slice - the daily boards first, the `endless` board with the rest - and
+ * writes the hour's statistics snapshot.
  */
 export async function runHourly(
   db: Firestore,
@@ -198,5 +199,23 @@ export async function runHourly(
     accountInfo,
     SLICE_MS - daily.spentMs
   );
-  return { bansEnded, notReported, staleRuns, finalized, daily, endless };
+  // The overview's snapshot of the hour; a failure costs only that.
+  const statsWritten = await refreshStats(db, realtime, now, {
+    snapshot: true,
+  }).then(
+    () => true,
+    (error: unknown) => {
+      logger.error('Could not write the statistics', { error });
+      return false;
+    }
+  );
+  return {
+    bansEnded,
+    notReported,
+    staleRuns,
+    finalized,
+    daily,
+    endless,
+    statsWritten,
+  };
 }
