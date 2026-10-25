@@ -19,7 +19,10 @@ import {
 /** A moderation command, before the owner said why. */
 export interface ModerationAction extends CommandDialogData {
   type: AdminCommandInput['type'];
-  target: Record<string, unknown>;
+  /** Null for a command with no target (`toggles.set`). */
+  target: Record<string, unknown> | null;
+  /** Arguments the dialog does not ask for, such as `toggles.set`'s values. */
+  args?: Record<string, unknown>;
 }
 
 /**
@@ -45,7 +48,7 @@ export class AdminActionsService {
             type: action.type,
             target: action.target,
             reason: confirmed.reason,
-            args: confirmed.args,
+            args: { ...action.args, ...confirmed.args },
           })
         );
   }

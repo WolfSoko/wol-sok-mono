@@ -10,6 +10,7 @@ export const DE: Translation<typeof EN> = {
     leaderboards: 'Bestenlisten',
     replays: 'Wiederholungen',
     balance: 'Balance',
+    toggles: 'Schalter',
     bans: 'Sperren',
     audit: 'Protokoll',
   },
@@ -196,6 +197,29 @@ export const DE: Translation<typeof EN> = {
       lt5m: '<5 Min.',
       lt10m: '<10 Min.',
       ge10m: '≥10 Min.',
+    },
+  },
+  toggles: {
+    hint: 'Feature-Schalter in Remote Config. Geräte der Spieler holen sie höchstens einmal pro Stunde.',
+    unavailable:
+      'Remote Config ist hier nicht erreichbar (Emulatoren); die Standardwerte werden gezeigt.',
+    failed: 'Die Schalter ließen sich nicht lesen.',
+    fromRemoteConfig: 'in Remote Config gesetzt',
+    default: 'Standard ({value})',
+    changed: 'geändert',
+    on: 'an',
+    off: 'aus',
+    publish: '{count} Änderung(en) veröffentlichen',
+    discard: 'Verwerfen',
+    reload: 'Neu lesen',
+    published:
+      'Veröffentlicht: {toggles}. Remote Config kann noch kurz die alten Werte liefern.',
+    name: {
+      rankedDaily: 'Gewertete Tagesversuche',
+      rankedEndless: 'Gewertete Endlos-Läufe',
+      matchmaking: 'Warteschlange für Gegner',
+      leaderboards: 'Bestenlisten',
+      deterministicSimulation: 'Deterministische Simulation',
     },
   },
   bans: {
