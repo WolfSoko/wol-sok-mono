@@ -393,7 +393,12 @@ through.
 - **In the game** (under the route with `provideGameCloud`):
   - "Watch replay" on the result screen;
   - "My matches" at `/my-matches` and `/my-matches/{id}`: the last 30 days,
-    newest first, `noindex`;
+    newest first, `noindex`; (changed as built: a screen of the game's
+    stage, `'my-matches'` beside the leaderboards, with a tile in the main
+    menu, not a route: the game's screens are no routes, the stage keeps
+    its arena and state while it shows, and it works in the shell the same
+    way. Without a project it lists this device's replays, the newest 20.
+    `robots.txt` still disallows `/my-matches`, which nothing serves.)
   - the owner's curation page: the runners-up, the public replays, and
     feature / unfeature / anonymise. (Changed by ADR 0012: it is the
     Replays view of `/admin`, in the admin lib `bacteria-wars-admin`, not
@@ -512,10 +517,49 @@ The rules and `replayCommand` require `admin == true`,
      `computer`, as nothing in it tells it from another generated level.
 5. Client: room stub, recording settings, submission, "My matches", the
    viewer.
+   - As built: the room stub, the recording settings ("Record matches
+     against the computer", "Save my matches", both on) and the
+     submission came first, behind `GameCloudOptions.replays`; the
+     release with "My matches" and the viewer turns it on
+     (`replays: true` in the remote's production and emulator
+     environments; e2e inherits the emulator's), so online matches and,
+     with "Save my matches", local ones are uploaded from then on.
+   - "My matches" (`replays/my-matches.component.ts`) is a stage screen
+     (see "The pages"), listing `listMine` (`players array-contains`,
+     `createdAt` desc, at most 50) as `listingOf` reads `replays/{id}`:
+     the player's seat (online `seats.indexOf(uid)`, the host's 0; local
+     0), the state, the board's `rankedReason` (counted, or why not, in
+     the game's words) and whether it is public or kept out of the
+     gallery. No difficulty is stored; nothing shows one. As the data model
+     says, `remove` deletes nothing: the server keeps the player out of
+     the gallery (`optOut`, `galleryOut`) and takes a public copy down,
+     and the replay stays listed until it expires. So the screen offers
+     "Keep out of the public gallery" in the cloud, and "Delete" only for
+     this device's replays, which `LocalGameReplays` does delete.
+   - The viewer (`replays/replay-viewer.component.ts`) plays a
+     `ReplayScene` on the arena's `ArenaViewComponent` by itself: its own
+     `MatchEngine` from `replayEngine` (split out of `playReplay` with
+     `canPlayBack`, which the functions' `playReplay` keeps using), play
+     and pause, 1x/2x/4x, start over, a progress bar; no seeking. The
+     result screen offers "Watch replay" for `lastRecording` (not in the
+     middle of an endless run) and says "saved" once `watchSaved` does.
 6. `publicSite`, `robots.txt`, privacy text, `/watch`, the curation view
    in `/admin` (changed by ADR 0012); then enable the `featureBest`
    schedule (changed by ADR 0012: only once the Replays view of `/admin`
    has shipped, so the owner can unfeature).
+   - As built in the client release (the last part of this step): the
+     privacy text's "Recorded matches" and "Public gallery" sections, and
+     `/watch/{publicId}` in the remote's `app.routes.ts`, outside the entry
+     route with `provideGameCloud`, `noindex` (route data and meta tag)
+     with its canonical on `/replays/{publicId}`. It loads the page from
+     the narrow entry `@wolsok/feat-lazy-bac-game/watch`, skipped by
+     federation like `admin-kit`, so its chunk holds the viewer and the
+     engine but no stage and no Firebase. It fetches
+     `/replays/{publicId}/replay.json` (`loadPublicReplay`: base64
+     `bytes`, read by `replayFromBytes`; the id checked against
+     `publicSite`'s pattern first) and says "not found" for a 404 and
+     "taken down" for a 410. `featureBest` stays off; the owner features
+     by hand from `/admin`.
    - So far: `featureBest` (`src/gallery/`), deployed only with
      `FEATURE_BEST_ON` in `src/config.ts`, off until then. At 23:40 UTC,
      not 04:00 Berlin - once the boards stopped verifying the day before,
@@ -583,8 +627,8 @@ The rules and `replayCommand` require `admin == true`,
      and `/my-matches`; the PWA's service worker leaves those paths to
      the network (`navigationUrls` in `ngsw-config.json`), or it would
      answer them with the game's `index.html`. The privacy text for replays and the gallery comes
-     with the client, which starts recording them. Still to come in this
-     step: the client pages.
+     with the client, which starts recording them. The client pages
+     came last (the first item of this step).
 7. Owner: grant the claim, sign out and in, check `/admin` (changed by
    ADR 0012).
 

@@ -63,6 +63,37 @@ storage until then. Settings stay with the device either way.
   0012, owner's decision of 2026-10-25). Specs use `FakeGameBoards` and
   its `topRowsOf` (`src/testing/`). The main menu shows the screen with the
   cloud while the `leaderboards` toggle is on.
+- Recorded matches (ADR 0011) go through the `GameReplays` port
+  (`storage/game-replays.ts`), asked of `GameCloud.replays()`:
+  `FirestoreGameReplays` once the project takes them
+  (`GameCloudOptions.replays`, on in the remote's production and emulator
+  environments), else `LocalGameReplays` on this device (the newest 20);
+  `cloud` tells which. The client never writes `replays`: it writes
+  `replaySubmissions` and `replayCommands`, which the functions carry out,
+  and reads its own replays back (`listMine`, one query in `GAME_QUERIES`).
+  `listingOf` reads the functions' fields of `replays/{id}` - the seat from
+  `seats` (online, host 0), `rankedReason` (`ARRIVAL_REASONS`,
+  `ONLINE_REASONS` in `replay-records.ts`, kept equal to the functions'
+  `ArrivalReason` and `OnlineReason` plus `not-reported`), `attempt`,
+  `galleryOut`, `publicId` - and leaves out what it does not know. A new
+  reason needs its text in the `replay.reasons` area. In the cloud
+  `remove` keeps a match out of the gallery and deletes nothing; only the
+  device's backend deletes. "My matches" (`replays/my-matches.component.ts`)
+  and the match just played (`replay-screen.component.ts`) are stage
+  screens; specs use `FakeGameReplays` (`cloud` and `change`).
+- The replay viewer (`replays/replay-viewer.component.ts`) plays a
+  `ReplayScene` (`replay-scene.ts`) on an `ArenaViewComponent` by itself:
+  its own `MatchEngine` from `replayEngine` (`state/replay.ts`, beside
+  `canPlayBack` and `playReplay`, which the functions import through
+  `engine.ts`: keep its signature), nothing of the game's state. Specs
+  draw with `recordingPainters` and play `recordedReplay` (`src/testing/`).
+- `/watch/{publicId}` (the remote's `app.routes.ts`, outside the entry
+  route with the cloud) loads `WatchPageComponent` from the narrow entry
+  `@wolsok/feat-lazy-bac-game/watch` (`src/watch.ts`), skipped by
+  federation like `admin-kit`. Keep that entry free of the stage, the
+  storage backends and Firebase: it reaches the public replay through
+  `loadPublicReplay` (`storage/public-replays.ts`, plain `fetch` of
+  `/replays/{id}/replay.json`, base64 `bytes`), nothing else.
 - The profile's `publicName`, `boardOptOut` and `galleryOptOut` (all off
   by default) are saved by `FirestoreGameSocial.saveProfile` with
   `mergeFields`: only the fields the player changed (a first profile

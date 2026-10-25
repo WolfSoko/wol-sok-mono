@@ -31,6 +31,9 @@
       "@wolsok/feat-lazy-bac-game/admin-kit": [
         "./libs/features/lazy/bacteria-game/src/admin-kit.ts"
       ],
+      "@wolsok/feat-lazy-bac-game/watch": [
+        "./libs/features/lazy/bacteria-game/src/watch.ts"
+      ],
       "@wolsok/feat-lazy-bac-wars-admin": [
         "./libs/features/lazy/bacteria-wars-admin/src/index.ts"
       ],

@@ -38,6 +38,7 @@ export interface LocalReplay extends ReplayListing {
  * project. Nothing checks them; they are `submitted` for good.
  */
 export class LocalGameReplays implements GameReplays {
+  public readonly cloud = false;
   private readonly commands = new Map<string, ReplayCommandResult>();
   private nextId = 0;
 
@@ -67,6 +68,10 @@ export class LocalGameReplays implements GameReplays {
       winnerSeat: header.outcome?.winnerSeat ?? null,
       hint: hintOf(hint),
       state: 'submitted',
+      // The device keeps no seat: without a project there are no online
+      // matches, and against the computer the player is seat 0.
+      seat: 0,
+      simulation: header.simulation,
       bytes: toBase64(bytes),
     };
     this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
@@ -148,7 +153,10 @@ export function parseLocalReplays(stored: unknown): LocalReplay[] {
   if (!Array.isArray(stored)) {
     return [];
   }
-  return stored.filter(isLocalReplay).sort((a, b) => b.createdAt - a.createdAt);
+  return stored
+    .filter(isLocalReplay)
+    .map((replay) => ({ ...replay, seat: 0 }))
+    .sort((a, b) => b.createdAt - a.createdAt);
 }
 
 function isLocalReplay(value: unknown): value is LocalReplay {

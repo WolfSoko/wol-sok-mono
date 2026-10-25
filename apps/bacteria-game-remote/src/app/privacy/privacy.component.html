@@ -36,10 +36,13 @@
       zu behalten. In der Cloud kannst du ein Online-Profil für Freunde und
       Online-Matches anlegen, und aus deinem Fortschritt entsteht ein Eintrag in
       einer Bestenliste, mit deinem Namen nur, wenn du ihn öffentlich zeigst
-      (Abschnitt 4). Das Spiel lädt das Werbeskript von Google mit seinem
-      Einwilligungsfenster, zeigt aber keine Anzeigen (Abschnitt 7), und bittet
-      um ein freiwilliges Trinkgeld (Abschnitt 8). Spielst du das Spiel
-      eingebettet in einer anderen Seite, etwa
+      (Abschnitt 4). Deine Matches zeichnet das Spiel auf und speichert sie 30
+      Tage in der Cloud, lesbar nur für die Spieler des Matches; öffentlich wird
+      ein Match nur, wenn wir es in der Galerie zeigen (Abschnitt 4). Das Spiel
+      lädt das Werbeskript von Google mit seinem Einwilligungsfenster, zeigt
+      aber keine Anzeigen (Abschnitt 7), und bittet um ein freiwilliges
+      Trinkgeld (Abschnitt 8). Spielst du das Spiel eingebettet in einer anderen
+      Seite, etwa
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       zeigt es dort weder Werbung noch Trinkgeld, und diese Erklärung gilt nicht
       für jene Seite und ihre Dienste.
@@ -88,12 +91,10 @@
         bei Firebase,
       </li>
       <li>
-        bis zu 20 deiner letzten Matches als Aufzeichnung: Online-Matches und
-        Matches gegen den Computer (nicht das Training und keine Rennen gegen
-        einen Geist), jeweils mit den Einstellungen des Matches, den
-        Steuereingaben und dem Ergebnis, bei Online-Matches auch mit dem
-        Raumcode. Eine Aufzeichnung enthält keinen Namen und keine
-        Konto-Kennung. Das Spiel lädt sie nicht hoch,
+        Aufzeichnungen deiner Matches (Abschnitt 4, „Aufgezeichnete Matches“):
+        eine, die noch nicht hochgeladen ist, etwa weil dein Gerät offline ist,
+        bis sie hochgeladen ist; läuft das Spiel ohne Cloud, bis zu 20 deiner
+        letzten Matches, die es dann nicht hochlädt,
       </li>
       <li>die Dateien des Spiels selbst, damit es auch offline läuft,</li>
       <li>
@@ -123,8 +124,9 @@
       Database, Cloud Functions und Remote Config; Anbieter: Google Ireland
       Limited, Gordon House, Barrow Street, Dublin 4, Irland). Ist das aktiv,
       zeigt das Profil „Du spielst als Gast“ oder „Angemeldet als …“. Cloud
-      Functions sind unsere Programme auf den Servern von Firebase; sie führen
-      die Bestenliste und setzen die Moderation um (unten).
+      Functions sind unsere Programme auf den Servern von Firebase; sie nehmen
+      deine aufgezeichneten Matches an, führen die Bestenlisten und setzen die
+      Moderation um (unten).
     </p>
     <h3>Als Gast</h3>
     <p>
@@ -230,6 +232,98 @@
       eines Tages danach. Im Match sehen beide Spieler das Online-Profil des
       anderen. Das Match selbst läuft nicht über unsere Server.
     </p>
+    <h3 id="de-matches">Aufgezeichnete Matches</h3>
+    <p>
+      Das Spiel zeichnet deine Online-Matches und deine Matches gegen den
+      Computer auf (nicht das Training und keine Rennen gegen einen Geist). Eine
+      Aufzeichnung enthält die Einstellungen des Matches (Level, Schwierigkeit,
+      Farben, Startwert des Zufalls, Spielfeld, Version der Spielregeln), die
+      Steuereingaben, welche Seite ein Mensch und welche der Computer gespielt
+      hat, die Dauer, das Ergebnis und die Version des Spiels; bei
+      Online-Matches auch den Raumcode und die Nummer des Matches im Raum. Namen
+      oder Konto-Kennungen enthält sie nicht.
+    </p>
+    <p>
+      Online-Matches lädt das Spiel immer hoch. Matches gegen den Computer lädt
+      es hoch, wenn in den Einstellungen „Matches gegen den Computer
+      aufzeichnen“ und „Meine Matches speichern“ an sind (beides Standard).
+      Unsere Funktionen speichern eine Aufzeichnung unter der Kennung des
+      Kontos, das sie hochgeladen hat, ein Online-Match unter den Kennungen
+      beider Spieler des Raums, mit dem Raumcode, der Seite, die jeder gespielt
+      hat, und dem Zeitpunkt, zu dem der Raum angelegt wurde. Dazu speichern sie
+      Level, Art des Matches, Dauer, Ergebnis, eine Prüfsumme und eine Bewertung
+      von 0 bis 100, wie sehenswert das Match ist, die dein Gerät berechnet. Von
+      einem Online-Match speichern sie außerdem die Meldung jedes Geräts
+      (Ergebnis, Prüfsumme und einen Hashwert der Eingaben), um zu prüfen, ob
+      beide Geräte dasselbe Match gespielt haben. Eine hochgeladene
+      Aufzeichnung, die sie nicht annehmen, löscht die Datenbank nach einem Tag.
+    </p>
+    <p>
+      Lesen können eine gespeicherte Aufzeichnung nur die Spieler des Matches,
+      im Spiel unter „Meine Matches“, und wir. Dort kannst du ein Match noch
+      einmal ansehen und es aus der öffentlichen Galerie heraushalten (unten).
+      Eine Aufzeichnung läuft 30 Tage nach dem Match ab, und die Datenbank
+      löscht sie, in der Regel innerhalb eines Tages danach; ein öffentliches
+      Match erst, nachdem es aus der Galerie genommen ist (unten). Wird dein
+      Konto gelöscht, löschen sie die Aufzeichnungen, deren einziger Spieler du
+      warst; aus einem Online-Match, das auch dein Gegner gespeichert hat,
+      entfernen sie deine Kennung.
+    </p>
+    <p>
+      Aus jeder gespeicherten Aufzeichnung eines Matches gegen den Computer
+      zählen unsere Funktionen für unsere Übersicht der Levels Summen, ohne
+      Kennung: wie oft ein Level mit welcher Schwierigkeit gespielt, gewonnen,
+      verloren oder unentschieden beendet wurde, wie lange die Matches dauerten
+      und ob mit einer entwickelten Kolonie gespielt wurde.
+    </p>
+    <h3 id="de-galerie">Öffentliche Galerie</h3>
+    <p>
+      Als Betreiber können wir einzelne gespeicherte Matches von Hand in einer
+      öffentlichen Galerie zeigen, unter
+      <a href="https://bacteria-wars.wolsok.de/replays"
+        >bacteria-wars.wolsok.de/replays</a
+      >; eine automatische Auswahl der besten Matches ist noch nicht
+      eingeschaltet. Infrage kommt nur ein Match mit der aktuellen Version der
+      Spielregeln, ein Online-Match nur, wenn beide Geräte es gleich gemeldet
+      haben, und keines, das ein Spieler aus der Galerie heraushält. Unsere
+      Funktionen spielen es vorher noch einmal nach und legen unter einer neuen,
+      zufälligen Kennung eine öffentliche Kopie an: die Aufzeichnung ohne
+      Raumcode, Nummer des Matches und Version des Spiels, dazu Level, Dauer,
+      Ergebnis, die Bewertung und den Verlauf der Koloniegrößen. Die Spieler
+      zeigt sie mit ihrer Farbe und einem gezeichneten Bakterium, deinen Namen
+      nur, wenn du „Meinen Namen öffentlich zeigen“ eingeschaltet hast und er
+      unsere Liste gesperrter Wörter passiert, und nie im Titel, in der
+      Beschreibung oder in anderen Angaben für Suchmaschinen und
+      Link-Vorschauen. Jeder kann die Galerie ohne Anmeldung ansehen und ein
+      Match abspielen, auch unter bacteria-wars.wolsok.de/watch/…; Suchmaschinen
+      finden die Seiten der Galerie. Die öffentlichen Seiten enthalten keine
+      Konto-Kennung; wessen Match es ist, vermerken unsere Funktionen nur für
+      uns lesbar.
+    </p>
+    <p>
+      Hältst du ein Match unter „Meine Matches“ aus der Galerie heraus oder
+      schaltest du „Meine Matches aus der öffentlichen Galerie heraushalten“
+      ein, nehmen unsere Funktionen deine öffentlichen Matches herunter und
+      zeigen sie nicht wieder. Ebenso nehmen wir ein Match herunter, wenn wir es
+      nicht mehr zeigen wollen oder ein Spieler gesperrt wird. Die Seite eines
+      heruntergenommenen Matches sagt dann, dass es entfernt wurde; die
+      Aufzeichnung der öffentlichen Kopie wird gelöscht. Zwischenspeicher von
+      Firebase Hosting können eine Seite noch bis zu zwei Minuten ausliefern,
+      die Übersicht für Suchmaschinen bis zu einer Stunde. Wir können die
+      Spieler eines öffentlichen Matches auch ohne Namen zeigen. Wird dein Konto
+      gelöscht, bleibt ein öffentliches Match ohne deine Kennung und mit deiner
+      Farbe statt deines Namens. Solange ein Match öffentlich ist, behalten
+      unsere Funktionen auch seine gespeicherte Aufzeichnung; nachdem es
+      heruntergenommen ist, löschen sie diese 30 Tage nach dem Match, frühestens
+      aber einen Tag danach.
+    </p>
+    <p>
+      Rechtsgrundlage für die Aufzeichnungen ist Art. 6 Abs. 1 lit. b DSGVO
+      (Bereitstellung von „Meine Matches“ und der Wertung von Online-Matches),
+      für die Summen über die Levels und die Galerie unser berechtigtes
+      Interesse, das Spiel auszubalancieren und sehenswerte Matches zu zeigen
+      (Art. 6 Abs. 1 lit. f DSGVO).
+    </p>
     <h3 id="de-bestenliste">Bestenliste und Statistik</h3>
     <p>
       Aus dem Spielfortschritt, den ein Konto in der Cloud speichert, berechnen
@@ -251,12 +345,20 @@
       gelöscht wird. Schaltest du im Online-Profil „Mich aus den Bestenlisten
       heraushalten“ ein, blenden unsere Funktionen alle deine Einträge aus,
       sodass nur noch wir sie sehen. Sie zählen im Hintergrund weiter; schaltest
-      du den Schalter wieder aus, erscheinen sie wieder. Das Spiel lädt keine
-      Matches hoch; Bestenlisten für Online-Siege, das Tageslevel oder
-      Endlos-Läufe erhalten deshalb keine Einträge von dir. Den Schalter „Meine
-      Matches aus der öffentlichen Galerie heraushalten“ gibt es schon,
-      öffentlich ist aber noch kein Match, solange das Spiel keine Matches
-      hochlädt.
+      du den Schalter wieder aus, erscheinen sie wieder.
+    </p>
+    <p>
+      Aus deinen Online-Matches entsteht ebenso ein Eintrag in der
+      Online-Bestenliste: die Zahl deiner Siege, Niederlagen und Unentschieden
+      und der Matches, die dein Gerät nicht gemeldet hat. Ein Match zählt nur,
+      wenn beide Geräte dasselbe Match gemeldet haben, es mindestens 30 Sekunden
+      dauerte und kein gesperrter Spieler mitgespielt hat; dafür vermerken
+      unsere Funktionen auch, wie viele Ergebnisse je Spielerpaar und Tag
+      gezählt wurden (nach 2 Tagen gelöscht), und begrenzen, wie viele Siege am
+      Tag zählen. Ob und warum ein Match gezählt wurde, steht bei ihm unter
+      „Meine Matches“. Die Bestenlisten für das Tageslevel und für Endlos-Läufe
+      erhalten noch keine Einträge, solange das Spiel keine gewerteten Versuche
+      anmeldet.
     </p>
     <p>
       Jede Stunde zählen unsere Funktionen für unsere Übersicht zusammen, etwa
@@ -457,8 +559,9 @@
       wir dir dann nicht zuordnen (Abschnitt 4). Wir löschen das Konto und alle
       zugehörigen Spieldaten innerhalb von 30 Tagen und bestätigen dir die
       Löschung: deinen Spielstand, dein Online-Profil, deine Freundschaften,
-      Anfragen, Herausforderungen und Einladungslinks, deinen Eintrag in der
-      Bestenliste und was unsere Funktionen zu deinem Konto vermerken. Aus dem
+      Anfragen, Herausforderungen und Einladungslinks, deine Einträge in den
+      Bestenlisten, deine aufgezeichneten Matches (Abschnitt 4, „Aufgezeichnete
+      Matches“) und was unsere Funktionen zu deinem Konto vermerken. Aus dem
       Protokoll der Moderation entfernen wir, was sich geändert hat. Gilt bei
       der Löschung noch eine Sperre deines Kontos, bleibt der Hashwert deiner
       Google-Kennung bis zu ihrem Ende, höchstens 2 Jahre ab der Löschung
@@ -514,9 +617,12 @@
       what it needs to keep your progress. In the cloud you can set up an online
       profile for friends and online matches, and your progress makes an entry
       on a leaderboard, with your name only if you show it in public (section
-      4). The game loads Google's ad script with its consent window, but shows
-      no ads (section 7), and asks for a voluntary tip (section 8). When you
-      play the game embedded in another site, such as
+      4). The game records your matches and keeps them in the cloud for 30 days,
+      readable only by the players of the match; a match becomes public only if
+      we show it in the gallery (section 4). The game loads Google's ad script
+      with its consent window, but shows no ads (section 7), and asks for a
+      voluntary tip (section 8). When you play the game embedded in another
+      site, such as
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       it shows neither ads nor the tip there, and this policy does not cover
       that site and its services. The German version above is the binding one.
@@ -563,11 +669,10 @@
         profiles) for playing offline, and your sign-in to Firebase,
       </li>
       <li>
-        up to 20 of your latest matches as recordings: online matches and
-        matches against the computer (not the training and no races against a
-        ghost), each with the match's setup, the steering inputs and the result,
-        for online matches also the room code. A recording holds no name and no
-        account identifier. The game does not upload them,
+        recordings of your matches (section 4, “Recorded matches”): one not
+        uploaded yet, for instance because your device is offline, until it is
+        uploaded; when the game runs without the cloud, up to 20 of your latest
+        matches, which it then does not upload,
       </li>
       <li>the game's own files, so that it runs offline too,</li>
       <li>
@@ -595,8 +700,8 @@
       Functions and Remote Config; provider: Google Ireland Limited, Gordon
       House, Barrow Street, Dublin 4, Ireland). When this is on, the profile
       says “Playing as a guest” or “Signed in as …”. Cloud Functions are our
-      programs on Firebase's servers; they keep the leaderboard and carry out
-      moderation (below).
+      programs on Firebase's servers; they take your recorded matches in, keep
+      the leaderboards and carry out moderation (below).
     </p>
     <h3>As a guest</h3>
     <p>
@@ -692,6 +797,87 @@
       that. During the match both players see each other's online profile. The
       match itself does not go through our servers.
     </p>
+    <h3 id="en-matches">Recorded matches</h3>
+    <p>
+      The game records your online matches and your matches against the computer
+      (not the training and no races against a ghost). A recording holds the
+      match's setup (level, difficulty, colours, random seed, arena, version of
+      the game rules), the steering inputs, which side a human and which the
+      computer played, the length, the result and the version of the game; for
+      online matches also the room code and the number of the match in the room.
+      It holds no names and no account identifiers.
+    </p>
+    <p>
+      The game always uploads online matches. It uploads matches against the
+      computer when “Record matches against the computer” and “Save my matches”
+      are on in the settings (both are by default). Our functions store a
+      recording under the identifier of the account that uploaded it, an online
+      match under the identifiers of both players of the room, with the room
+      code, the side each played and the time the room was set up. With it they
+      store the level, the kind of match, its length, the result, a checksum and
+      a score from 0 to 100 of how watchable the match is, which your device
+      works out. Of an online match they also store each device's report
+      (result, checksum and a hash of the inputs), to check that both devices
+      played the same match. An uploaded recording they do not accept is deleted
+      by the database after a day.
+    </p>
+    <p>
+      A stored recording can be read only by the players of the match, in the
+      game under “My matches”, and by us. There you can watch a match again and
+      keep it out of the public gallery (below). A recording expires 30 days
+      after the match and the database deletes it, usually within a day after
+      that; a public match only after it has been taken out of the gallery
+      (below). If your account is deleted, they delete the recordings you were
+      the only player of; from an online match your opponent stored too they
+      remove your identifier.
+    </p>
+    <p>
+      From every stored recording of a match against the computer our functions
+      count totals for our overview of the levels, without identifiers: how
+      often a level was played at which difficulty, won, lost or drawn, how long
+      the matches lasted and whether an evolved colony played.
+    </p>
+    <h3 id="en-gallery">Public gallery</h3>
+    <p>
+      As the operator we can show single stored matches by hand in a public
+      gallery at
+      <a href="https://bacteria-wars.wolsok.de/replays"
+        >bacteria-wars.wolsok.de/replays</a
+      >; an automatic pick of the best matches is not switched on yet. Only a
+      match on the current version of the game rules qualifies, an online match
+      only if both devices reported it alike, and none a player keeps out of the
+      gallery. Our functions play it again first and make a public copy under a
+      new, random identifier: the recording without the room code, the number of
+      the match and the version of the game, with the level, length, result, the
+      score and how the colonies grew. It shows the players by their colour and
+      a drawn bacterium, your name only if you switched on “Show my name in
+      public” and it passes our list of blocked words, and never in the title,
+      the description or other details for search engines and link previews.
+      Anyone can view the gallery and play a match without signing in, also at
+      bacteria-wars.wolsok.de/watch/…; search engines find the gallery's pages.
+      The public pages hold no account identifier; whose match it is our
+      functions note readable only by us.
+    </p>
+    <p>
+      If you keep a match out of the gallery under “My matches” or switch on
+      “Keep my matches out of the public gallery”, our functions take your
+      public matches down and do not show them again. We also take a match down
+      when we no longer want to show it or when a player is suspended. The page
+      of a match taken down then says it was removed; the public copy's
+      recording is deleted. Firebase Hosting's caches may serve a page for up to
+      two minutes more, the overview for search engines for up to an hour. We
+      can also show the players of a public match without their names. If your
+      account is deleted, a public match stays without your identifier and with
+      your colour instead of your name. While a match is public our functions
+      keep its stored recording too; after it is taken down they delete it 30
+      days after the match, but no sooner than a day later.
+    </p>
+    <p>
+      The legal basis for the recordings is Art. 6(1)(b) GDPR (providing “My
+      matches” and the counting of online matches), for the totals over the
+      levels and the gallery our legitimate interest in balancing the game and
+      showing watchable matches (Art. 6(1)(f) GDPR).
+    </p>
     <h3 id="en-leaderboard">Leaderboard and statistics</h3>
     <p>
       From the progress an account stores in the cloud, our functions work out
@@ -711,11 +897,18 @@
       stays until your account is deleted. If you switch on “Keep me off the
       leaderboards” in your online profile, our functions hide all your entries,
       so that only we see them. They keep counting in the background; when you
-      switch it off again, your entries come back. The game uploads no matches,
-      so leaderboards for online wins, the daily level or endless runs get no
-      entries from you. The switch “Keep my matches out of the public gallery”
-      is already there, but no match is public as long as the game uploads no
-      matches.
+      switch it off again, your entries come back.
+    </p>
+    <p>
+      Your online matches make an entry on the online leaderboard in the same
+      way: the number of your wins, losses and draws and of the matches your
+      device did not report. A match counts only if both devices reported the
+      same match, it lasted at least 30 seconds and no suspended player played
+      in it; for that our functions also note how many results were counted per
+      pair of players and day (deleted after 2 days), and they limit how many
+      wins count in a day. Whether and why a match counted is shown with it
+      under “My matches”. The leaderboards for the daily level and for endless
+      runs get no entries yet, as long as the game declares no ranked attempts.
     </p>
     <p>
       Every hour our functions add up, for our overview, figures such as how
@@ -907,12 +1100,13 @@
       guest account itself to you (section 4). We delete the account and all its
       game data within 30 days and confirm the deletion to you: your progress,
       your online profile, your friendships, requests, challenges and invitation
-      links, your leaderboard entry and what our functions note about your
-      account. From the moderation record we erase what was changed. If a
-      suspension of your account still holds at the deletion, the hash of your
-      Google identifier stays until it ends, for 2 years from the deletion at
-      most (section 4, “Moderation and suspensions”). Delete the data on your
-      device as described in section 3. Signing out alone deletes nothing.
+      links, your leaderboard entries, your recorded matches (section 4,
+      “Recorded matches”) and what our functions note about your account. From
+      the moderation record we erase what was changed. If a suspension of your
+      account still holds at the deletion, the hash of your Google identifier
+      stays until it ends, for 2 years from the deletion at most (section 4,
+      “Moderation and suspensions”). Delete the data on your device as described
+      in section 3. Signing out alone deletes nothing.
     </p>
 
     <h2 id="en-rights">11. Your rights</h2>

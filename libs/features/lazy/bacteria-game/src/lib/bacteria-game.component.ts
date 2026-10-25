@@ -79,6 +79,8 @@ import { MainMenuComponent } from './menu/main-menu.component';
 import { DailyCard } from './menu/menu-cards';
 import { FriendsScreenComponent } from './menu/friends-screen.component';
 import { LeaderboardsComponent } from './boards/leaderboards.component';
+import { MyMatchesComponent } from './replays/my-matches.component';
+import { ReplayScreenComponent } from './replays/replay-screen.component';
 import { HelpComponent } from './menu/help.component';
 import { EvolutionComponent } from './menu/evolution.component';
 import { ProfileComponent } from './menu/profile.component';
@@ -212,6 +214,8 @@ interface HudGoal {
     HelpComponent,
     FriendsScreenComponent,
     LeaderboardsComponent,
+    MyMatchesComponent,
+    ReplayScreenComponent,
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
@@ -975,9 +979,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         ? 'new-game'
         : action === 'evolve'
           ? 'evolution'
-          : 'menu'
+          : action === 'watch'
+            ? 'replay'
+            : 'menu'
     );
-    if (action === 'menu' || action === 'evolve') {
+    if (action === 'menu' || action === 'evolve' || action === 'watch') {
       this.gameStateService.endSeries();
       this.gameStateService.leaveOnline();
     }
@@ -1973,7 +1979,10 @@ export type MenuScreen =
   | 'settings'
   | 'help'
   | 'evolution'
-  | 'leaderboards';
+  | 'leaderboards'
+  | 'my-matches'
+  // The match just played, watched again from its result.
+  | 'replay';
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;

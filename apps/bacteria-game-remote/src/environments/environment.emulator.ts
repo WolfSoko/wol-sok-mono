@@ -26,6 +26,7 @@ export const environment: Environment = {
       firestorePort: 8380,
       databasePort: 9410,
     },
+    replays: true,
   },
   support: SUPPORT_DEFAULTS,
 };

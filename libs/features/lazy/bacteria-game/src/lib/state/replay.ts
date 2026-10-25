@@ -341,25 +341,39 @@ export function replayOutcome(
 }
 
 /**
- * Plays a recorded match again on its ruleset's simulation, without anyone
- * watching: `BacteriaSimulation` for `cpu`, `IntSimulation` for `gpu-int`.
- * Null for a replay that would not play out as it was played: another
- * format (versions 2 to 5 play), another balance table, another ladder
- * computer, or a match the float GPU ran.
+ * True when a replay plays out again as it was played: a format that
+ * plays (versions 2 to 5), this balance table, this ladder computer and a
+ * ruleset - never a match the float GPU ran. A balance change retires
+ * every replay before it (ADR 0011).
  */
-export function playReplay(replay: Replay): ReplayResult | null {
-  const { header, inputs } = replay;
+export function canPlayBack(replay: Replay): boolean {
+  const { header } = replay;
   const rules = VERSIONS.get(header.version);
-  if (
-    rules?.playable !== true ||
-    !rules.simulations.includes(header.simulation) ||
-    header.balanceVersion !== BALANCE_VERSION ||
-    (header.ladder !== undefined && header.ladder !== LADDER_VERSION) ||
-    header.simulation === 'gpu'
-  ) {
+  return (
+    rules?.playable === true &&
+    rules.simulations.includes(header.simulation) &&
+    header.balanceVersion === BALANCE_VERSION &&
+    (header.ladder === undefined || header.ladder === LADDER_VERSION) &&
+    header.simulation !== 'gpu'
+  );
+}
+
+/**
+ * The engine a recorded match plays again on: its plan, every human
+ * played back from the recording as they were, the bot and the neutral
+ * colonies simulated again from the seed, on its ruleset's simulation -
+ * `BacteriaSimulation` for `cpu`, `IntSimulation` for `gpu-int`. Null for
+ * a replay that would not play out as it was played ({@link canPlayBack}).
+ * The caller disposes of it.
+ */
+export function replayEngine(
+  replay: Replay,
+  onSecond?: (sizes: SizeSample) => void
+): MatchEngine | null {
+  if (!canPlayBack(replay)) {
     return null;
   }
-  const samples: SizeSample[] = [];
+  const { header, inputs } = replay;
   const { spawns, options } = planMatch(header);
   // Every human is played back from the recording, as they were.
   const ghosts = new Map<number, GhostController>();
@@ -369,12 +383,26 @@ export function playReplay(replay: Replay): ReplayResult | null {
       ghosts.set(seat, new GhostController(inputs, seat));
     }
   });
-  const engine = new MatchEngine(spawns, {
+  return new MatchEngine(spawns, {
     ...options,
     ...(header.simulation === 'gpu-int' ? { simulation: intSimulation } : {}),
     ghosts,
-    onSecond: (sizes) => samples.push(sizes),
+    ...(onSecond === undefined ? {} : { onSecond }),
   });
+}
+
+/**
+ * Plays a recorded match again on its ruleset's simulation, without anyone
+ * watching - see {@link replayEngine}. Null for a replay that would not
+ * play out as it was played.
+ */
+export function playReplay(replay: Replay): ReplayResult | null {
+  const samples: SizeSample[] = [];
+  const engine = replayEngine(replay, (sizes) => samples.push(sizes));
+  if (engine === null) {
+    return null;
+  }
+  const { header } = replay;
   try {
     let outcome = engine.outcome();
     while (outcome == null && engine.tickCount < header.ticks) {

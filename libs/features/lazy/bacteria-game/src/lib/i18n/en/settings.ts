@@ -51,7 +51,7 @@ export const settings = {
     title: 'Matches',
     recordLocal: 'Record matches against the computer',
     recordLocalNote:
-      'With "Save my matches" they are kept: on this device, in the cloud once it takes them.',
+      'With "Save my matches" they are kept in My matches: in the cloud for 30 days, or on this device without it.',
     saveMatches: 'Save my matches',
     saveMatchesNote: 'Online matches are always kept.',
   },

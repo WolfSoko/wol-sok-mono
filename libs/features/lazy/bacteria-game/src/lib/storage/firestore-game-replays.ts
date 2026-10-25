@@ -5,8 +5,12 @@ import type { EndReason } from '../state/win-conditions';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameReplays } from './game-replays';
 import {
+  ARRIVAL_REASONS,
+  ArrivalReason,
   hintOf,
   MAX_REPLAY_LIST,
+  ONLINE_REASONS,
+  OnlineReason,
   onlineIdOf,
   parseCommandResult,
   ReplayCommandResult,
@@ -44,6 +48,8 @@ const STATES: readonly ReplayState[] = [
  * into `replays/{id}` and delete, and reads its own `replays` back.
  */
 export class FirestoreGameReplays implements GameReplays {
+  public readonly cloud = true;
+
   public constructor(
     private readonly connection: FirebaseConnection,
     /** Whoever plays, null while nobody does. */
@@ -131,7 +137,7 @@ export class FirestoreGameReplays implements GameReplays {
         )
       );
       return snapshot.docs
-        .map((doc) => listingOf(doc))
+        .map((doc) => listingOf(doc, uid))
         .filter((listing) => listing !== null);
     } catch (error) {
       console.warn('Could not list the replays', error);
@@ -200,28 +206,30 @@ export class FirestoreGameReplays implements GameReplays {
   }
 }
 
-/** A `replays` document as a listing - null for one it cannot read. */
-function listingOf(doc: DocumentSnapshot): ReplayListing | null {
+/**
+ * A `replays/{id}` document as the player `uid` sees it in their list -
+ * null for one it cannot read. The fields are the functions' (ADR 0011,
+ * 0012): `acceptReplay`'s record and state, online the room's `seats`
+ * (host, guest) and its stub, and the boards' `rankedReason` once they
+ * decided. Anything it does not know is left out rather than guessed.
+ */
+export function listingOf(
+  doc: Pick<DocumentSnapshot, 'id' | 'data'>,
+  uid: string
+): ReplayListing | null {
   const data = doc.data();
   if (data === undefined) {
     return null;
   }
-  const createdAt: unknown = data['createdAt'];
-  const millis =
-    typeof createdAt === 'object' &&
-    createdAt !== null &&
-    'toMillis' in createdAt &&
-    typeof createdAt.toMillis === 'function'
-      ? (createdAt.toMillis() as unknown)
-      : null;
+  const millis = millisOf(data['createdAt']);
   const { kind, levelId, balanceVersion, replayVersion, ticks, endedBy } = data;
-  const { winnerSeat, hint, state, score } = data;
+  const { winnerSeat, hint, state, score, seats, simulation } = data;
   if (
     !KINDS.includes(kind) ||
     typeof levelId !== 'string' ||
     typeof balanceVersion !== 'number' ||
     typeof replayVersion !== 'number' ||
-    typeof millis !== 'number' ||
+    millis === null ||
     typeof ticks !== 'number' ||
     typeof endedBy !== 'string' ||
     (winnerSeat !== null && typeof winnerSeat !== 'number') ||
@@ -230,6 +238,17 @@ function listingOf(doc: DocumentSnapshot): ReplayListing | null {
   ) {
     return null;
   }
+  const expireAt = millisOf(data['expireAt']);
+  const attempt = attemptOf(data['attempt']);
+  const rankedReason = reasonOf(kind, data['rankedReason']);
+  const publicId = data['publicId'];
+  const optOut = data['optOut'];
+  // Online the host played seat 0 and the guest seat 1; a seat the player
+  // is not in (a deleted account's, say) reads as theirs being the first.
+  const seat =
+    kind === 'online' && Array.isArray(seats) && seats.indexOf(uid) > 0
+      ? seats.indexOf(uid)
+      : 0;
   return {
     id: doc.id,
     kind,
@@ -242,6 +261,51 @@ function listingOf(doc: DocumentSnapshot): ReplayListing | null {
     winnerSeat,
     hint,
     state,
+    seat,
     ...(typeof score === 'number' ? { score } : {}),
+    ...(typeof simulation === 'string' ? { simulation } : {}),
+    ...(expireAt === null ? {} : { expireAt }),
+    ...(attempt === null ? {} : { attempt }),
+    ...(rankedReason === null ? {} : { rankedReason }),
+    ...(data['stubExpired'] === true ? { stubExpired: true } : {}),
+    ...(data['galleryOut'] === true ||
+    (Array.isArray(optOut) && optOut.includes(uid))
+      ? { galleryOut: true }
+      : {}),
+    ...(typeof publicId === 'string' ? { publicId } : {}),
   };
+}
+
+/** A Firestore timestamp in ms - null for anything else. */
+function millisOf(value: unknown): number | null {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'toMillis' in value &&
+    typeof value.toMillis === 'function'
+  ) {
+    const millis: unknown = value.toMillis();
+    return typeof millis === 'number' ? millis : null;
+  }
+  return null;
+}
+
+function attemptOf(value: unknown): { id: string; at: number } | null {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const { id, at } = value as Record<string, unknown>;
+  return typeof id === 'string' && typeof at === 'number' ? { id, at } : null;
+}
+
+/** The reason of the board the kind ranks on - null for none it knows. */
+function reasonOf(
+  kind: ReplayKind,
+  value: unknown
+): ArrivalReason | OnlineReason | null {
+  const known: readonly string[] =
+    kind === 'online' ? ONLINE_REASONS : ARRIVAL_REASONS;
+  return typeof value === 'string' && known.includes(value)
+    ? (value as ArrivalReason | OnlineReason)
+    : null;
 }

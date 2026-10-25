@@ -6,12 +6,14 @@ import { BALANCE_VERSION } from './game-balance';
 import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import {
+  canPlayBack,
   GHOST_REPLAY_VERSION,
   GPU_INT_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
   playReplay,
   Replay,
+  replayEngine,
   replayOf,
   replayOutcome,
   REPLAY_VERSION,
@@ -120,6 +122,49 @@ describe('replay', () => {
         header: { ...replay.header, balanceVersion: BALANCE_VERSION + 1 },
       })
     ).toBeNull();
+  });
+
+  describe('canPlayBack and replayEngine', () => {
+    it('tell what plays back, as playReplay does', () => {
+      const { replay } = record(PLAN, 10);
+      const refused = [
+        { ...replay.header, simulation: 'gpu' as const },
+        { ...replay.header, version: GHOST_REPLAY_VERSION },
+        { ...replay.header, balanceVersion: BALANCE_VERSION + 1 },
+        { ...replay.header, ladder: -1 },
+      ].map((header) => ({ ...replay, header }));
+
+      expect(canPlayBack(replay)).toBe(true);
+      for (const other of refused) {
+        expect(canPlayBack(other)).toBe(false);
+        expect(replayEngine(other)).toBeNull();
+        expect(playReplay(other)).toBeNull();
+      }
+    });
+
+    it('give an engine that plays the match tick by tick as recorded', () => {
+      const { engine, replay } = record(PLAN, 400);
+      const seconds: unknown[] = [];
+
+      const played = replayEngine(replay, (sizes) => seconds.push(sizes));
+      expect(played).not.toBeNull();
+      try {
+        while (
+          played !== null &&
+          played.outcome() == null &&
+          played.tickCount < replay.header.ticks
+        ) {
+          played.tick(PLAN.width, PLAN.height);
+        }
+        expect(played?.tickCount).toBe(engine.tickCount);
+        expect(matchChecksum(played?.players ?? [])).toBe(
+          matchChecksum(engine.players)
+        );
+        expect(seconds).toHaveLength(Math.floor(400 / TICKS_PER_SEC));
+      } finally {
+        played?.dispose();
+      }
+    });
   });
 
   describe('parseReplay', () => {
