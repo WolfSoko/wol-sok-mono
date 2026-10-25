@@ -11,6 +11,7 @@ import { AT, ATTEMPT, dailyReplay, TICKS } from '../testing/daily-replay';
 import { closeNotReported, finalizeDailyBoards } from './hourly';
 import { rankDaily } from './rank-daily';
 import { type Verdict } from './verify';
+import { verifyNow } from './verify-now';
 import { verifyDailySlice } from './verify-slice';
 
 /**
@@ -355,5 +356,37 @@ describe('finalizeDailyBoards', () => {
     expect((await db.doc('boards/daily-2026-10-24').get()).get('final')).toBe(
       true
     );
+  });
+});
+
+describe('verifyNow on a daily entry', () => {
+  const verified = (): Verdict => ({ state: 'verified', ms: 0 });
+  const now = (board = { kind: 'daily' as const, day: DAY }) => {
+    let t = 0;
+    return verifyNow(db, 'ada', board, NOW, () => (t += 1_000), verified);
+  };
+
+  it("plays the best attempt again from the owner's budget", async () => {
+    await rank('l_ada', dailyReplay(), 'ada');
+    expect(await now()).toMatchObject({ checked: 1, queued: false });
+    expect((await entryOf('ada')).get('status')).toBe('verified');
+    const counter = (await db.doc(`counters/${DAY}`).get()).data();
+    expect(counter?.['adminVerifyMs']).toBeGreaterThan(0);
+    expect(counter?.['verifyMs']).toBeUndefined();
+    // Nothing provisional is left.
+    expect(await now()).toBe('nothing-to-verify');
+  });
+
+  it("stops once the day's admin budget is spent", async () => {
+    await rank('l_ada', dailyReplay(), 'ada');
+    await db.doc(`counters/${DAY}`).set({ adminVerifyMs: 400_000 });
+    expect(await now()).toBe('no-budget');
+    expect((await entryOf('ada')).get('status')).toBe('provisional');
+  });
+
+  it('leaves a day board alone once it is closed', async () => {
+    await rank('l_ada', dailyReplay(), 'ada');
+    expect(await now({ kind: 'daily', day: '2026-10-23' })).toBe('closed');
+    expect((await entryOf('ada')).get('status')).toBe('provisional');
   });
 });

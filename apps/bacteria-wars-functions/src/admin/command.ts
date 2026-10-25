@@ -13,6 +13,7 @@ import {
   moderateProfile,
   type ModerationChange,
 } from './moderation';
+import { verifyNow } from '../boards/verify-now';
 import type { Realtime } from './realtime';
 import { type RemoteToggles, setToggles } from './toggles';
 import { recountAccounts, refreshStats } from './stats';
@@ -77,8 +78,8 @@ export function isOwnerRecord(user: OwnerRecord): boolean {
  * owner sends a new one.
  * A command that is not exactly one (`parseAdminCommand`) answers
  * `malformed`; one from anybody but the owner `not-writer` or `not-admin`
- * - neither is audited. `board.verify` answers `unsupported` until its
- * wave; the other types run (`bans.ts`, `moderation.ts`, `stats.ts`).
+ * - neither is audited. Every type runs: `bans.ts`, `moderation.ts`,
+ * `stats.ts`, `toggles.ts` and the boards' `verify-now.ts`.
  */
 export async function runAdminCommand(
   db: Firestore,
@@ -106,7 +107,6 @@ export async function runAdminCommand(
   return result;
 }
 
-/** What an action did, for the audit. */
 /** What an action did; `before` and `after` are what the audit keeps. */
 interface Outcome extends ModerationChange {
   ok: boolean;
@@ -210,14 +210,6 @@ async function act(
       await setToggles(context.toggles, command.args.values)
     );
   }
-  if (command.target === null || command.type === 'board.verify') {
-    return {
-      ok: false,
-      error: 'unsupported',
-      target: command.target === null ? null : { ...command.target },
-      ...unchanged,
-    };
-  }
   const uid = await targetUid(db, command.target);
   const target = { ...command.target, ...(uid === null ? {} : { uid }) };
   if (uid === null) {
@@ -251,6 +243,22 @@ async function act(
           commandId,
           now
         )
+      );
+    }
+    case 'board.verify': {
+      const board = parseBoardId(command.target.boardId);
+      // The parser lets only daily and endless boards through.
+      if (board?.kind !== 'daily' && board?.kind !== 'endless') {
+        return done('malformed');
+      }
+      const result = await verifyNow(
+        db,
+        uid,
+        board.kind === 'daily' ? board : { kind: 'endless' },
+        now
+      );
+      return done(
+        typeof result === 'string' ? result : { before: null, after: result }
       );
     }
     case 'player.unban':
