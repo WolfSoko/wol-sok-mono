@@ -8,8 +8,8 @@ import { GameCloud } from './game-cloud';
  * Remote Config (`RemoteConfigGameToggles`), nothing without a project
  * (`NoGameToggles`). Asked of `GameCloud.toggles()`; the game reads them
  * through `FeatureTogglesService`, which fills in the defaults
- * (`FEATURE_TOGGLES`). A spec provides another class:
- * `{ provide: GameToggles, useValue: { watch: () => toggles } }`.
+ * (`FEATURE_TOGGLES`). A spec provides its own with `provideGameToggles`
+ * (`src/testing/fake-game-toggles.ts`).
  */
 @Injectable({
   providedIn: 'root',

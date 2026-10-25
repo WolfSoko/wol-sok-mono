@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import type { User, UserCredential } from 'firebase/auth';
 import { map, Observable, ReplaySubject } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
+import { isOwnerToken } from './owner-token';
 import { beforeRetry, errorCode } from './retry';
 import type {
   GameAccount,
@@ -131,11 +132,9 @@ export class FirebaseGameAccount implements GameAccount {
     }
     let owner = false;
     try {
-      const result = await this.connection.authSdk.getIdTokenResult(user);
-      owner =
-        result.claims['admin'] === true &&
-        result.claims['email_verified'] === true &&
-        result.signInProvider === 'google.com';
+      owner = isOwnerToken(
+        await this.connection.authSdk.getIdTokenResult(user)
+      );
     } catch (error) {
       console.warn('Could not read the sign-in token', error);
     }

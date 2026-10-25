@@ -2,9 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { MatButtonToggleHarness } from '@angular/material/button-toggle/testing';
 import { MatSlideToggleHarness } from '@angular/material/slide-toggle/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { of } from 'rxjs';
 import { I18nService } from '../i18n/i18n.service';
-import { GameToggles } from '../storage/game-toggles';
+import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { GameSettingsService, SETTINGS_STORAGE_KEY } from '../settings.service';
 import { SettingsComponent } from './settings.component';
 
@@ -81,12 +80,7 @@ describe('SettingsComponent', () => {
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [
-        {
-          provide: GameToggles,
-          useValue: { watch: () => of({ deterministicSimulation: false }) },
-        },
-      ],
+      providers: [provideGameToggles({ deterministicSimulation: false })],
     });
     expect(check((await render()).fixture.nativeElement)).toBeNull();
   });

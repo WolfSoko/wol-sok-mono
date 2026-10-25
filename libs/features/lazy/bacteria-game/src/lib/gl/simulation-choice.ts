@@ -33,6 +33,15 @@ export interface SimulationChoice {
    * override plays locally - and `cpu` always.
    */
   offers: () => readonly Ruleset[];
+  /**
+   * The integer GPU passes on this device's GPU, null without WebGL2: for
+   * an online match agreed on `gpu-int`. This device offered that ruleset
+   * at the match's `hello` only once its GPU passed the self-test, so the
+   * match plays it on the GPU whatever the owner's toggle or the device
+   * override say by the time it starts. `IntSimulation` only stands in
+   * should the GPU fail to start.
+   */
+  gpuInt: SimulationFactory | null;
 }
 
 /**
@@ -55,15 +64,12 @@ export interface SimulationChoice {
  * this device plays locally, never what it offers online.
  */
 export function chooseSimulation(options: {
-  deterministic: boolean | (() => boolean);
+  deterministic: () => boolean;
   gpu: GpuFactory | null;
   gpuTrusted: () => boolean;
   override?: () => Ruleset | null;
 }): SimulationChoice {
-  const { deterministic } = options;
-  if (typeof deterministic === 'boolean') {
-    return fixedChoice({ ...options, deterministic });
-  }
+  const { deterministic, gpu } = options;
   const on = fixedChoice({ ...options, deterministic: true });
   const off = fixedChoice({ ...options, deterministic: false });
   const now = () => (deterministic() ? on : off);
@@ -73,6 +79,11 @@ export function chooseSimulation(options: {
     fallback: cpuSimulation,
     ruleset: () => now().ruleset(),
     offers: () => now().offers(),
+    gpuInt:
+      gpu == null
+        ? null
+        : (balance, random, seed) =>
+            gpu(balance, random, { deterministic: true, matchSeed: seed }),
   };
 }
 
@@ -82,7 +93,7 @@ function fixedChoice(options: {
   gpu: GpuFactory | null;
   gpuTrusted: () => boolean;
   override?: () => Ruleset | null;
-}): SimulationChoice {
+}): Omit<SimulationChoice, 'gpuInt'> {
   const { gpu, gpuTrusted } = options;
   const override = options.override ?? (() => null);
   if (!options.deterministic && gpu != null) {

@@ -1,4 +1,4 @@
-import { defer, Observable, shareReplay } from 'rxjs';
+import { defer, map, Observable } from 'rxjs';
 import {
   FEATURE_TOGGLE_KEYS,
   type FeatureToggles,
@@ -9,29 +9,20 @@ import type { GameToggles } from './game-toggles';
 /**
  * The feature toggles from the project's Remote Config: one boolean
  * parameter per toggle, under the toggle's name, which the admin command
- * `toggles.set` publishes (ADR 0012). Fetched once, on the first `watch`,
- * and shared by every later one; the Remote Config SDK loads only then.
+ * `toggles.set` publishes (ADR 0012). Asks on each `watch`, not before; the
+ * connection loads the SDK and fetches once for every caller, and never
+ * rejects.
  */
 export class RemoteConfigGameToggles implements GameToggles {
-  private readonly toggles: Observable<Partial<FeatureToggles>>;
-
   /** `remoteConfig` is `FirebaseConnection.remoteConfig`. */
   public constructor(
-    remoteConfig: () => Promise<RemoteConfigConnection | null>
-  ) {
-    this.toggles = defer(async () => {
-      try {
-        const connection = await remoteConfig();
-        return connection === null ? {} : readToggles(connection);
-      } catch (error) {
-        console.warn('Could not read the feature toggles', error);
-        return {};
-      }
-    }).pipe(shareReplay({ bufferSize: 1, refCount: false }));
-  }
+    private readonly remoteConfig: () => Promise<RemoteConfigConnection | null>
+  ) {}
 
   public watch(): Observable<Partial<FeatureToggles>> {
-    return this.toggles;
+    return defer(() => this.remoteConfig()).pipe(
+      map((connection) => (connection === null ? {} : readToggles(connection)))
+    );
   }
 }
 

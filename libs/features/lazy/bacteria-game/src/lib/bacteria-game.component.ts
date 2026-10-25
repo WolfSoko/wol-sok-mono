@@ -237,7 +237,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly haptics = inject(GameHapticsService);
   private readonly gpuSelfTest = inject(GpuSelfTestService);
   private readonly simulationOverride = inject(SimulationOverrideService);
-  private readonly featureToggles = inject(FeatureTogglesService).toggles;
+  private readonly featureTogglesService = inject(FeatureTogglesService);
+  private readonly featureToggles = this.featureTogglesService.toggles;
   protected readonly progress = inject(ProgressService);
   protected readonly evolution = inject(EvolutionService);
   private readonly document = inject(DOCUMENT);
@@ -1252,6 +1253,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     dismissSplash(document);
+    // The owner's toggles once the game is up: Remote Config stays off the
+    // start, and the defaults hold until it answered.
+    this.featureTogglesService.start();
     this.nativeFullscreenSupported.set(
       isFullscreenSupported(document, this.stageRef?.nativeElement)
     );
@@ -1295,7 +1299,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // With a WebGL2 context the war itself runs on the GPU as well - for a
     // deterministic match only once the GPU passed the self-test.
     const gl = painter instanceof GlArenaPainter ? painter : null;
-    const { factory, fallback, ruleset, offers } = chooseSimulation({
+    const choice = chooseSimulation({
       // The owner's toggle, read as each match starts: Remote Config may
       // answer after the arena is up, and a match keeps its simulation.
       deterministic: () =>
@@ -1308,7 +1312,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       gpuTrusted: () => gpuTrusted(this.gpuSelfTest.result()),
       override: this.simulationOverride.override,
     });
-    this.playerService.useSimulation(factory, fallback, { ruleset, offers });
+    this.playerService.useSimulation(choice.factory, choice.fallback, choice);
     this.gameStateService.setArenaSize(width, height);
     this.draw();
   }

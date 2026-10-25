@@ -17,7 +17,7 @@ import { GameSettingsService } from '../settings.service';
 import { MATCH_LEVELS } from '../state/match-level';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
-import { GameToggles } from '../storage/game-toggles';
+import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { LocalGameStorage } from '../storage/local-game-storage';
 import { OnlineLobbyComponent } from './online-lobby.component';
 
@@ -228,9 +228,7 @@ describe('OnlineLobbyComponent', () => {
       localStorage.clear();
       toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
       TestBed.configureTestingModule({
-        providers: [
-          { provide: GameToggles, useValue: { watch: () => toggles } },
-        ],
+        providers: [provideGameToggles(toggles)],
       });
       matchmaker = TestBed.inject(MatchmakerService);
       // A build with the cloud: the matchmaking itself would run.

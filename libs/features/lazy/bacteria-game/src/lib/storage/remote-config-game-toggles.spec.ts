@@ -54,19 +54,15 @@ describe('readToggles', () => {
 });
 
 describe('RemoteConfigGameToggles', () => {
-  it('fetches once, on the first watch, for every watcher', async () => {
+  it('asks Remote Config only once watched', async () => {
     const fetch = jest.fn(async () =>
       remoteConfig({ matchmaking: ['false', 'remote'] })
     );
     const toggles = new RemoteConfigGameToggles(fetch);
+    const watched = toggles.watch();
     expect(fetch).not.toHaveBeenCalled();
 
-    expect(await firstValueFrom(toggles.watch())).toEqual({
-      matchmaking: false,
-    });
-    expect(await firstValueFrom(toggles.watch())).toEqual({
-      matchmaking: false,
-    });
+    expect(await firstValueFrom(watched)).toEqual({ matchmaking: false });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
@@ -74,17 +70,5 @@ describe('RemoteConfigGameToggles', () => {
     const toggles = new RemoteConfigGameToggles(async () => null);
 
     expect(await firstValueFrom(toggles.watch())).toEqual({});
-  });
-
-  it('tells nothing, and never errors, when Remote Config fails', async () => {
-    const warn = jest
-      .spyOn(console, 'warn')
-      .mockImplementation(() => undefined);
-    const toggles = new RemoteConfigGameToggles(() =>
-      Promise.reject(new Error('blocked'))
-    );
-
-    expect(await firstValueFrom(toggles.watch())).toEqual({});
-    expect(warn).toHaveBeenCalled();
   });
 });

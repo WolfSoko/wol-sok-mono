@@ -7,7 +7,7 @@ import { FakeGameSocial } from '../../testing/fake-game-social';
 import { MATCH_LEVELS } from '../state/match-level';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
-import { GameToggles } from '../storage/game-toggles';
+import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { claimable, MatchmakerService } from './matchmaker.service';
 import {
   IDLE_LOBBY,
@@ -52,7 +52,7 @@ describe('MatchmakerService', () => {
           },
         },
         { provide: OnlineMatchService, useValue: online },
-        { provide: GameToggles, useValue: { watch: () => toggles } },
+        provideGameToggles(toggles),
       ],
     });
     return TestBed.inject(MatchmakerService);

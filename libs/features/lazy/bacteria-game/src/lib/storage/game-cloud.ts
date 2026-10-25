@@ -63,8 +63,6 @@ export class GameCloud {
   } | null = null;
   /** The replays on this device, one for all who ask. */
   private localReplays: GameReplays | null = null;
-  /** The feature toggles, one source for all who ask. */
-  private toggleSource: GameToggles | null = null;
   /** Whether a service has asked already - a project comes too late then. */
   private asked = false;
 
@@ -133,16 +131,15 @@ export class GameCloud {
   /**
    * The owner's feature toggles: the project's Remote Config, the defaults
    * without a project. Starts none of the other backends - no sign-in -
-   * and fetches nothing until watched.
+   * and fetches nothing until watched. Keeps nothing itself: the
+   * connection fetches Remote Config once, whoever asks.
    */
   public toggles(): GameToggles {
     this.asked = true;
     const { connection } = this;
-    this.toggleSource ??=
-      connection === null
-        ? new NoGameToggles()
-        : new RemoteConfigGameToggles(() => connection.remoteConfig());
-    return this.toggleSource;
+    return connection === null
+      ? new NoGameToggles()
+      : new RemoteConfigGameToggles(() => connection.remoteConfig());
   }
 
   private connected() {

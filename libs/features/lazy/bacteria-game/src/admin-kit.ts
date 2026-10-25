@@ -14,6 +14,7 @@ export type {
   FirebaseConnection,
   RemoteConfigConnection,
 } from './lib/storage/firebase-connection';
+export { isOwnerToken } from './lib/storage/owner-token';
 
 // The page's loading splash, which only the game itself takes down.
 export { SPLASH_ID } from './lib/splash';

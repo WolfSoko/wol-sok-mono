@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
+import { provideGameToggles } from '../testing/fake-game-toggles';
 import { FeatureTogglesService } from './feature-toggles.service';
 import { FEATURE_TOGGLES, type FeatureToggles } from './state/feature-toggles';
 import { GameCloud } from './storage/game-cloud';
 import { GameToggles } from './storage/game-toggles';
-import { RemoteConfigGameToggles } from './storage/remote-config-game-toggles';
 import type { FirebaseConnection } from './storage/firebase-connection';
 
 describe('FeatureTogglesService', () => {
@@ -12,9 +12,7 @@ describe('FeatureTogglesService', () => {
 
   function withToggles(): FeatureTogglesService {
     set = new Subject();
-    TestBed.configureTestingModule({
-      providers: [{ provide: GameToggles, useValue: { watch: () => set } }],
-    });
+    TestBed.configureTestingModule({ providers: [provideGameToggles(set)] });
     return TestBed.inject(FeatureTogglesService);
   }
 
@@ -36,47 +34,25 @@ describe('FeatureTogglesService', () => {
     });
   });
 
-  it('keeps the same value while nothing changes', () => {
-    const service = withToggles();
-    const before = service.toggles();
-
-    set.next({});
-
-    expect(service.toggles()).toBe(before);
-  });
-
-  it('keeps the defaults when the toggles fail', () => {
-    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const service = withToggles();
-
-    set.error(new Error('offline'));
-
-    expect(service.toggles()).toEqual(FEATURE_TOGGLES);
-  });
-
-  it('keeps the defaults when the fetch fails', async () => {
-    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  it('asks the port only once started, and once however often started', () => {
+    const watch = jest.fn(() => new Subject<Partial<FeatureToggles>>());
     TestBed.configureTestingModule({
-      providers: [
-        {
-          provide: GameToggles,
-          useValue: new RemoteConfigGameToggles(() =>
-            Promise.reject(new Error('fetch failed'))
-          ),
-        },
-      ],
+      providers: [{ provide: GameToggles, useValue: { watch } }],
     });
     const service = TestBed.inject(FeatureTogglesService);
-    await Promise.resolve();
-    await Promise.resolve();
+    expect(watch).not.toHaveBeenCalled();
 
-    expect(service.toggles()).toEqual(FEATURE_TOGGLES);
+    service.start();
+    service.start();
+
+    expect(watch).toHaveBeenCalledTimes(1);
   });
 
   it('has the defaults without a project', () => {
-    expect(TestBed.inject(FeatureTogglesService).toggles()).toEqual(
-      FEATURE_TOGGLES
-    );
+    const service = TestBed.inject(FeatureTogglesService);
+    service.start();
+
+    expect(service.toggles()).toEqual(FEATURE_TOGGLES);
   });
 
   it("has what the project's Remote Config says", async () => {
@@ -92,6 +68,7 @@ describe('FeatureTogglesService', () => {
       }),
     } as unknown as FirebaseConnection);
     const service = TestBed.inject(FeatureTogglesService);
+    service.start();
     for (let i = 0; i < 5; i++) {
       await Promise.resolve();
     }

@@ -199,7 +199,8 @@ sits behind a flag; step 8 switches it on.
    - `chooseSimulation` (`gl/simulation-choice.ts`) takes the integer GPU
      simulation for a GPU that passed, `IntSimulation` otherwise, and falls
      back to `IntSimulation` when a GPU simulation fails to start. It is
-     behind `DETERMINISTIC_SIMULATION`, on since step 8.
+     behind the switch `DETERMINISTIC_SIMULATION`, on since step 8 (now the
+     owner's toggle `deterministicSimulation`, ADR 0012, default on).
    - CI plays three whole-match scenarios through `GpuSimulation` on
      SwiftShader against `golden-gpu-sim.json`, which `sim-golden.spec.ts`
      keeps equal to `IntSimulation`'s hashes, and runs the self-test there.
@@ -246,10 +247,10 @@ sits behind a flag; step 8 switches it on.
      from hard against normal, which the engine cannot set per seat, so the
      real check is a playtest on a device that passed the self-test, and
      ranked `gpu-int` play. Revisit them before the boards open.
-   - "Record local matches" is on by default, as is the switch: the
-     default follows `DETERMINISTIC_SIMULATION`.
-   - `DETERMINISTIC_SIMULATION` is on since the owner's real-device check
-     passed (2026-10-24). Before, while it was off, a device opted in with
+   - "Record local matches" is on by default, as is the switch.
+   - The switch is on since the owner's real-device check passed
+     (2026-10-24); the constant has since given way to the toggle's
+     default (`FEATURE_TOGGLES.deterministicSimulation`). Before, while it was off, a device opted in with
      `?sim=gpu-int`. The override stays for later checks: `?sim=gpu-int`
      plays local matches on the integer GPU passes whatever the self-test
      said, `?sim=cpu` forces the CPU, `?sim=auto` clears it

@@ -51,14 +51,18 @@ storage until then. Settings stay with the device either way.
   project, `NoGameToggles` (`{}`, the defaults) without, asked of
   `GameCloud.toggles()`, which starts no other backend. The game reads them
   from `FeatureTogglesService.toggles` only: `FEATURE_TOGGLES` at first,
-  merged with what Remote Config says once it answered. A feature that must
-  not change midway reads its toggle as it starts (the simulation per match).
-  Specs provide `{ provide: GameToggles, useValue: { watch: () => ... } }`.
+  merged with what Remote Config says once it answered. The game asks
+  (`FeatureTogglesService.start()`) after its first render, so Remote
+  Config stays off the start. A feature that must not change midway reads
+  its toggle as it starts (the simulation per match). Specs use
+  `provideGameToggles` (`src/testing/fake-game-toggles.ts`).
 - Remote Config is reached only through `FirebaseConnection.remoteConfig()`
   in `firebase-connection.ts`: the SDK is imported on demand there (off the
   start), set up once on the game's named app, fetched at most hourly and
   activated; null against the emulators or where it is unsupported, and it
-  never rejects. A parameter whose source is `static` counts as unset.
+  never rejects: it is the one place that catches Remote Config's errors
+  and keeps its answer, so the callers neither catch nor cache. A parameter
+  whose source is `static` counts as unset.
 - Only `firebase-connection.ts` imports Firebase at runtime, and only
   `provide-game-cloud.ts` imports that file; the rest takes types only, so
   the specs never load the SDK.
@@ -174,9 +178,9 @@ play each other.
   simulation's; the float GPU one has none (null) and is never recorded.
 - The game picks a simulation with `chooseSimulation`
   (`gl/simulation-choice.ts`): with the owner's toggle
-  `deterministicSimulation` on (default `DETERMINISTIC_SIMULATION`, the
-  rollout's switch, on since the owner's real-device check; read as each
-  match starts and in each online `hello`), the integer
+  `deterministicSimulation` on (default on since the owner's real-device
+  check, `FEATURE_TOGGLES`; read as each match starts and in each online
+  `hello`), the integer
   GPU passes on a GPU that passed `GpuSelfTestService`'s self-test on
   hardware (`gpuTrusted`, `gl/simulation-check.ts`), the `cpu` ruleset
   otherwise. A software renderer (SwiftShader, llvmpipe) passes the test
@@ -188,7 +192,9 @@ play each other.
   online `gpu-int` match).
 - Online, each `hello` names the rulesets the device offers
   (`PlayerService.rulesetOffers`) and the host's `start` the agreed one
-  (`agreedRuleset`): `gpu-int` only if both offer it. Ranked attempts are
+  (`agreedRuleset`): `gpu-int` only if both offer it. An agreed `gpu-int`
+  match plays on the GPU (`SimulationChoice.gpuInt`) whatever the toggle
+  says by the time it starts. Ranked attempts are
   `gpu-int` only: a stored replay with an attempt must be one (replay
   version 5, `GPU_INT_REPLAY_VERSION`; it may carry the ladder too).
 - The device override for a real-device check: `?sim=gpu-int`, `?sim=cpu`
