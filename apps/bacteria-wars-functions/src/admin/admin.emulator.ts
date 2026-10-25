@@ -35,9 +35,9 @@ beforeEach(async () => {
 
 /**
  * A Realtime Database that keeps its values and records its writes, and
- * fails for `failFor`. `beforeRemoveIf` runs once, when a conditional
- * remove starts, or `afterRemoveIf` once it is done - to let another
- * command run in between.
+ * fails for `failFor`. `beforeRemoveIf` runs when a conditional remove
+ * starts, `afterRemoveIf` once it is done - to let another command run in
+ * between.
  */
 function fakeRealtime(
   failFor?: string,
@@ -53,11 +53,6 @@ function fakeRealtime(
       throw new Error('unavailable');
     }
   };
-  const once = async (hook: keyof typeof hooks) => {
-    const run = hooks[hook];
-    delete hooks[hook];
-    await run?.();
-  };
   return {
     calls,
     values,
@@ -71,13 +66,13 @@ function fakeRealtime(
       values.delete(path);
     },
     removeIf: async (path, test) => {
-      await once('beforeRemoveIf');
+      await hooks.beforeRemoveIf?.();
       fail(path);
       if (test(values.get(path) ?? null)) {
         calls.push(`remove ${path}`);
         values.delete(path);
       }
-      await once('afterRemoveIf');
+      await hooks.afterRemoveIf?.();
     },
   };
 }
