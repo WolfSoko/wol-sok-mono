@@ -56,7 +56,11 @@ export class AdminActionsService {
     replayId: string,
     subject: string
   ): Promise<AdminResult | null> {
-    const confirmed = await this.confirm({ type: `replay.${type}`, subject });
+    const confirmed = await this.confirm({
+      type: `replay.${type}`,
+      subject,
+      reason: false,
+    });
     return confirmed === undefined
       ? null
       : this.send(() => this.commands.sendReplay(type, replayId));

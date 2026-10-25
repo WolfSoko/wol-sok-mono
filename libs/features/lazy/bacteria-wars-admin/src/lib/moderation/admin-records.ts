@@ -286,10 +286,11 @@ export interface StoredReplayRecord {
   galleryOut: boolean;
 }
 
+const array = (value: unknown): unknown[] =>
+  Array.isArray(value) ? value : [];
+
 const strings = (value: unknown): string[] =>
-  Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : [];
+  array(value).filter((item): item is string => typeof item === 'string');
 
 export function parseCandidateDay(
   day: string,
@@ -298,9 +299,7 @@ export function parseCandidateDay(
   if (!isObject(value)) {
     return null;
   }
-  const candidates = Array.isArray(value['candidates'])
-    ? value['candidates']
-    : [];
+  const candidates = array(value['candidates']);
   return {
     day,
     checked: numberOrNull(value['checked']) ?? 0,
@@ -329,7 +328,7 @@ export function parsePublicReplay(
   if (!isObject(value) || typeof value['replayId'] !== 'string') {
     return null;
   }
-  const players = Array.isArray(value['players']) ? value['players'] : [];
+  const players = array(value['players']);
   const featuredBy = value['featuredBy'];
   return {
     publicId,

@@ -26,7 +26,6 @@ import { AdminTextPipe, type AdminTextKey } from '../i18n/admin-i18n.service';
 
 /** What the dialog asks for, besides the reason every command needs. */
 export interface CommandDialogData {
-  /** An admin command, or a curation (`replay.feature`), which keeps no reason. */
   type: OwnerActionType;
   /** Who or what it is about, shown in the title. */
   subject: string;
@@ -34,6 +33,8 @@ export interface CommandDialogData {
   ban?: boolean;
   /** Offer to bar the player from the boards' kind (`args.bar`). */
   bar?: boolean;
+  /** False for a command that keeps no reason (`replayCommands`). */
+  reason?: false;
 }
 
 /** What the owner confirmed: the reason, and the arguments asked for. */
@@ -151,8 +152,7 @@ export class CommandDialogComponent {
   protected readonly ends = BAN_ENDS;
   protected readonly banReasons = BAN_REASONS;
   protected readonly reason = signal('');
-  /** Gallery curation keeps no reason (`replayCommands` take none). */
-  protected readonly asksReason = !this.data.type.startsWith('replay.');
+  protected readonly asksReason = this.data.reason !== false;
   protected end: BanEnd = 'week';
   protected banReason: BanReason = 'cheating';
   protected bar = false;

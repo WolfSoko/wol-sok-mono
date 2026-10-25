@@ -91,6 +91,7 @@ describe('CommandDialogComponent', () => {
     const { close, element, confirm } = await render({
       type: 'replay.anonymise',
       subject: 'online · arena',
+      reason: false,
     });
     expect(element.textContent).toContain('Anonymise - online · arena');
     expect(element.querySelector('textarea')).toBeNull();

@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
+import { isEntryId } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import type { ReplayCommandType } from '../commands/command-types';
 import { AdminI18n, AdminTextPipe } from '../i18n/admin-i18n.service';
 import { AdminActionsService } from '../moderation/admin-actions.service';
@@ -23,9 +24,6 @@ import type {
 import { AdminRecordsService } from '../moderation/admin-records.service';
 import { ListFooterComponent } from '../moderation/list-footer.component';
 import { PagedList } from '../moderation/paged-list';
-
-/** A replay id as the rules accept it in a `replayCommands` document. */
-const REPLAY_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 /**
  * The gallery's curation (ADR 0011, moved here by ADR 0012): a stored
@@ -146,11 +144,19 @@ const REPLAY_ID = /^[A-Za-z0-9_-]{1,64}$/;
           {{ 'player.actions' | adminT }}
         </th>
         <td mat-cell *matCellDef="let row" class="actions">
-          <button mat-button type="button" (click)="unfeature(row)">
+          <button
+            mat-button
+            type="button"
+            (click)="curate('unfeature', row.publicId, subject(row))"
+          >
             {{ 'type.replay.unfeature' | adminT }}
           </button>
           @if (!row.anonymised) {
-            <button mat-button type="button" (click)="anonymise(row)">
+            <button
+              mat-button
+              type="button"
+              (click)="curate('anonymise', row.publicId, subject(row))"
+            >
               {{ 'type.replay.anonymise' | adminT }}
             </button>
           }
@@ -175,7 +181,10 @@ const REPLAY_ID = /^[A-Za-z0-9_-]{1,64}$/;
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
-          @for (candidate of unpublished(day); track candidate.replayId) {
+          @for (
+            candidate of unpublished().get(day.day) ?? [];
+            track candidate.replayId
+          ) {
             <div class="candidate">
               <span>
                 {{ candidate.kind }} · {{ candidate.levelId }}
@@ -244,10 +253,21 @@ export class ReplaysComponent {
     undefined
   );
   protected readonly lookUpFailed = signal(false);
-  /** The stored replays now public, so their runners-up rows go. */
-  private readonly publicReplayIds = computed(
-    () => new Set(this.published.rows().map((row) => row.replayId))
-  );
+  /** Each day's runners-up that are not public yet. */
+  protected readonly unpublished = computed(() => {
+    const published = new Set(this.published.rows().map((row) => row.replayId));
+    return new Map(
+      this.days
+        .rows()
+        .map((day): [string, CandidateRecord[]] => [
+          day.day,
+          day.candidates.filter(
+            ({ replayId }) =>
+              !published.has(replayId) && !day.published.includes(replayId)
+          ),
+        ])
+    );
+  });
   /** The id last looked up, refreshed after a command. */
   private lookedUp: string | null = null;
   private lookUpGeneration = 0;
@@ -258,7 +278,8 @@ export class ReplaysComponent {
   }
 
   protected validId(id: string): boolean {
-    return REPLAY_ID.test(id.trim());
+    // A Firestore id as the rules take it in a `replayCommands` document.
+    return isEntryId(id.trim());
   }
 
   /** The public page, on the game's own site. */
@@ -269,16 +290,6 @@ export class ReplaysComponent {
   protected lookUp(): Promise<void> {
     const id = this.replayId().trim();
     return this.validId(id) ? this.load(id) : Promise.resolve();
-  }
-
-  /** A day's runners-up that are not public yet. */
-  protected unpublished(day: CandidateDayRecord): CandidateRecord[] {
-    const published = this.publicReplayIds();
-    return day.candidates.filter(
-      (candidate) =>
-        !published.has(candidate.replayId) &&
-        !day.published.includes(candidate.replayId)
-    );
   }
 
   /** Loads a stored replay; an answer for an older lookup is dropped. */
@@ -304,15 +315,7 @@ export class ReplaysComponent {
     return this.curate('feature', replayId, replayId);
   }
 
-  protected unfeature(row: PublicReplayRecord): Promise<void> {
-    return this.curate('unfeature', row.publicId, this.subject(row));
-  }
-
-  protected anonymise(row: PublicReplayRecord): Promise<void> {
-    return this.curate('anonymise', row.publicId, this.subject(row));
-  }
-
-  private subject(row: PublicReplayRecord): string {
+  protected subject(row: PublicReplayRecord): string {
     return `${row.kind} · ${row.levelId}`;
   }
 
@@ -326,9 +329,9 @@ export class ReplaysComponent {
     if (!result?.ok) {
       return;
     }
-    await this.published.reload();
-    if (this.lookedUp !== null) {
-      await this.load(this.lookedUp);
-    }
+    await Promise.all([
+      this.published.reload(),
+      this.lookedUp === null ? null : this.load(this.lookedUp),
+    ]);
   }
 }
