@@ -1,6 +1,7 @@
 import type { BanReason } from '@wolsok/feat-lazy-bac-game/engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { DAY_MS } from '../boards/budgets';
+import { hasGrpcCode } from '../grpc';
 
 /** How long an audit entry is kept (ADR 0012): 2 years, then TTL. */
 export const AUDIT_TTL_MS = 2 * 365 * DAY_MS;
@@ -52,8 +53,8 @@ export async function writeAudit(
     });
     return true;
   } catch (error) {
-    // gRPC's ALREADY_EXISTS: audited before.
-    if ((error as { code?: unknown } | null)?.code === 6) {
+    // Audited before.
+    if (hasGrpcCode(error, 6, 'already-exists')) {
       return false;
     }
     throw error;
@@ -126,8 +127,8 @@ export async function scrubAudit(db: Firestore, uid: string): Promise<number> {
     writer
       .update(doc.ref, { before: scrubbed, after: scrubbed })
       .catch((error: unknown) => {
-        // gRPC's NOT_FOUND: TTL took the entry meanwhile.
-        if ((error as { code?: unknown } | null)?.code !== 5) {
+        // TTL took the entry meanwhile.
+        if (!hasGrpcCode(error, 5, 'not-found')) {
           throw error;
         }
       })

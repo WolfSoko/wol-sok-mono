@@ -19,11 +19,17 @@ import {
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
 import type { UserRecord } from 'firebase-admin/auth';
-import { countAccount as countAccountOf } from './admin/accounts';
+import {
+  countAccount as countAccountOf,
+  deleteAccount,
+} from './admin/accounts';
 import { isOwnerRecord, runAdminCommand } from './admin/command';
 import { realtimeOf } from './admin/realtime';
-import { checkGoogleLink, tombstoneId } from './admin/tombstones';
-import { deletePlayerBoards as deleteBoardsOf } from './boards/delete-player';
+import {
+  checkGoogleLink,
+  googleProviderOf,
+  tombstoneId,
+} from './admin/tombstones';
 import { runHourly } from './boards/hourly';
 import { boardProfileChanged as relabelEntries } from './boards/profile-changed';
 import { rankDaily } from './boards/rank-daily';
@@ -151,7 +157,7 @@ export const deletePlayerBoards = v1
   .runWith({ secrets: [BAN_TOMBSTONE_KEY] })
   .auth.user()
   .onDelete(async (user) => {
-    const deleted = await deleteBoardsOf(
+    const deleted = await deleteAccount(
       db(),
       user.uid,
       { tombstone: tombstoneId(BAN_TOMBSTONE_KEY.value(), user), realtime },
@@ -216,8 +222,7 @@ async function accountInfo(uid: string): Promise<AccountInfo> {
   const created = user?.metadata.creationTime;
   return {
     createdAt: created ? Date.parse(created) : null,
-    google:
-      user?.providerData.some((p) => p.providerId === 'google.com') ?? false,
+    google: user !== null && googleProviderOf(user) !== undefined,
   };
 }
 

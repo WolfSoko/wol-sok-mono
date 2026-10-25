@@ -1,9 +1,8 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
-import { deletePlayerBoards } from '../boards/delete-player';
 import { clearBanCache, isBanned } from '../limits';
-import { countAccount } from './accounts';
+import { countAccount, deleteAccount } from './accounts';
 import { expireBans } from './bans';
 import { type AdminContext, runAdminCommand } from './command';
 import type { Realtime } from './realtime';
@@ -724,7 +723,7 @@ describe('ban tombstones', () => {
     });
   });
 
-  describe('deletePlayerBoards', () => {
+  describe('deleteAccount', () => {
     it("keeps a banned Google account's ban as a tombstone, and erases the rest", async () => {
       const realtime = fakeRealtime();
       const until = NOW + 30 * DAY;
@@ -733,7 +732,7 @@ describe('ban tombstones', () => {
       await db.doc('stats/accounts').set({ total: 3 });
       await db.doc('boardMembers/ada').set({ accountCounted: true });
 
-      await deletePlayerBoards(
+      await deleteAccount(
         db,
         'ada',
         { tombstone: tombstoneOfUid('ada'), realtime },
@@ -764,12 +763,7 @@ describe('ban tombstones', () => {
       );
       // Gone meanwhile, as if never written.
       await db.doc(`banTombstones/${tombstoneOfUid('ada')}`).delete();
-      await deletePlayerBoards(
-        db,
-        'ada',
-        { tombstone: null, realtime },
-        NOW + DAY
-      );
+      await deleteAccount(db, 'ada', { tombstone: null, realtime }, NOW + DAY);
       expect((await tombstone('ada')).get('reason')).toBe('cheating');
       expect((await db.doc('bans/ada').get()).exists).toBe(false);
     });
@@ -777,7 +771,7 @@ describe('ban tombstones', () => {
     it('lowers the count only for an account countAccount counted', async () => {
       await db.doc('stats/accounts').set({ total: 3 });
       await db.doc('boardMembers/ada').set({ entryIds: {} });
-      await deletePlayerBoards(
+      await deleteAccount(
         db,
         'ada',
         { tombstone: null, realtime: fakeRealtime() },
@@ -788,7 +782,7 @@ describe('ban tombstones', () => {
 
     it('writes no tombstone for an account whose ban ended', async () => {
       await command('c1', ban('ada', NOW + HOUR));
-      await deletePlayerBoards(
+      await deleteAccount(
         db,
         'ada',
         { tombstone: tombstoneOfUid('ada'), realtime: fakeRealtime() },

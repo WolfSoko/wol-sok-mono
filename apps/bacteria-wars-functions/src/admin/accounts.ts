@@ -3,7 +3,10 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
+import { deletePlayerBoards } from '../boards/delete-player';
+import { holds, readBan } from './bans';
 import type { Realtime } from './realtime';
+import { scrubAudit, tombstoneData } from './records';
 import { applyTombstone } from './tombstones';
 
 /** What `countAccount` reads from the new Auth user. */
@@ -48,18 +51,9 @@ export async function countAccount(
     );
     tx.set(db.doc(ACCOUNTS_DOC), accountsChange(1, now), { merge: true });
   });
-  if (account.tombstone === null) {
-    return false;
-  }
-  const banned = await applyTombstone(
-    db,
-    realtime,
-    uid,
-    account.tombstone,
-    now
-  );
-  await member.set({ googleChecked: true }, { merge: true });
-  return banned;
+  return account.tombstone === null
+    ? false
+    : applyTombstone(db, realtime, uid, account.tombstone, now);
 }
 
 /**
@@ -75,4 +69,62 @@ export function accountsChange(
     total: FieldValue.increment(by),
     updatedAt: Timestamp.fromMillis(now),
   };
+}
+
+/**
+ * A deleted account (ADR 0012, the `deletePlayerBoards` trigger): erases
+ * its board data (`deletePlayerBoards`), scrubs the audit entries about it
+ * and lowers `stats/accounts` if `countAccount` counted it. Both ban
+ * documents go once a banned account's tombstone is written - by the id
+ * of its Google provider (`tombstone`), or the one its ban noted - so the
+ * ban survives the deletion. Runs for banned accounts too: a deletion must
+ * erase the player's data. Throws when a step fails, after the others
+ * ran; returns the board documents it went through.
+ */
+export async function deleteAccount(
+  db: Firestore,
+  uid: string,
+  { tombstone, realtime }: { tombstone: string | null; realtime: Realtime },
+  now: number
+): Promise<number> {
+  const [member, moderation] = await Promise.all([
+    db.doc(`boardMembers/${uid}`).get(),
+    db.doc(`moderation/${uid}`).get(),
+  ]);
+  const noted: unknown = moderation.get('tombstone');
+  const id = tombstone ?? (typeof noted === 'string' ? noted : null);
+  const [boards, ...rest] = await Promise.allSettled([
+    deletePlayerBoards(db, uid),
+    scrubAudit(db, uid),
+    member.get('accountCounted') === true
+      ? db.doc(ACCOUNTS_DOC).set(accountsChange(-1, now), { merge: true })
+      : undefined,
+    keepAsTombstone(db, uid, id, now).then(() =>
+      Promise.all([
+        db.doc(`bans/${uid}`).delete(),
+        realtime.remove(`bans/${uid}`),
+      ])
+    ),
+  ]);
+  for (const result of [boards, ...rest]) {
+    if (result.status === 'rejected') {
+      throw result.reason;
+    }
+  }
+  return boards.status === 'fulfilled' ? boards.value : 0;
+}
+
+/** Writes a banned account's tombstone (by `id`) while its ban holds. */
+async function keepAsTombstone(
+  db: Firestore,
+  uid: string,
+  id: string | null,
+  now: number
+): Promise<void> {
+  const ban = await readBan(db, uid);
+  if (id !== null && ban !== null && holds(ban, now)) {
+    await db
+      .doc(`banTombstones/${id}`)
+      .set(tombstoneData(ban.until, ban.reason, now));
+  }
 }

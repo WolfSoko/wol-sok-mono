@@ -10,6 +10,7 @@ import {
 import { logger } from 'firebase-functions/logger';
 import { trackDeclaredMatch } from '../boards/rank-endless';
 import { NOT_REPORTED_AFTER_MS, REPLAY_TTL_MS } from '../config';
+import { hasGrpcCode } from '../grpc';
 import { isBanned, takeSubmissionSlot } from '../limits';
 import {
   planAcceptance,
@@ -255,7 +256,7 @@ async function storeLocal(
       return 'stored' as const;
     });
   } catch (error) {
-    if (isAlreadyExists(error)) {
+    if (hasGrpcCode(error, 6, 'already-exists')) {
       return 'exists';
     }
     throw error;
@@ -346,14 +347,4 @@ async function storeOnline(
     });
     return 'reported';
   });
-}
-
-function isAlreadyExists(error: unknown): boolean {
-  // gRPC's ALREADY_EXISTS.
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error.code === 6 || error.code === 'already-exists')
-  );
 }

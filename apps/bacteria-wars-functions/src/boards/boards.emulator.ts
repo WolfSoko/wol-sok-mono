@@ -333,17 +333,6 @@ describe('boardProfileChanged', () => {
 });
 
 describe('deletePlayerBoards', () => {
-  // A guest's deletion; the ban steps are the admin specs'.
-  const deleting = {
-    tombstone: null,
-    realtime: {
-      get: async () => null,
-      set: async () => undefined,
-      remove: async () => undefined,
-      removeIf: async () => undefined,
-    },
-  };
-
   it("erases a deleted player's board data, and nobody else's", async () => {
     const day = '2026-10-25';
     await db.doc('boardMembers/ada').set({
@@ -359,7 +348,6 @@ describe('deletePlayerBoards', () => {
       'endlessRuns/ada_202610251',
       'limits/ada',
       'moderation/ada',
-      'bans/ada',
       'players/ada/attempts/d_2026-10-25_1',
       'players/ada/notices/n1',
     ];
@@ -375,7 +363,7 @@ describe('deletePlayerBoards', () => {
     for (const path of theirs) {
       await db.doc(path).set({ uid: 'bob' });
     }
-    expect(await deletePlayerBoards(db, 'ada', deleting, NOW)).toBe(9);
+    expect(await deletePlayerBoards(db, 'ada')).toBe(9);
     for (const path of [...mine, 'boardMembers/ada']) {
       expect([path, (await db.doc(path).get()).exists]).toEqual([path, false]);
     }
@@ -385,6 +373,6 @@ describe('deletePlayerBoards', () => {
   });
 
   it('copes with an account that never reached a board', async () => {
-    expect(await deletePlayerBoards(db, 'ada', deleting, NOW)).toBe(3);
+    expect(await deletePlayerBoards(db, 'ada')).toBe(3);
   });
 });

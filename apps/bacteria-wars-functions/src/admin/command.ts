@@ -9,6 +9,7 @@ import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { banPlayer, type BanChange, liftBan } from './bans';
 import type { Realtime } from './realtime';
+import { googleProviderOf } from './tombstones';
 import { writeAudit } from './records';
 
 /** What the server made of a command, written back on it as `result`. */
@@ -47,7 +48,7 @@ export function isOwnerRecord(user: OwnerRecord): boolean {
     user.customClaims?.['admin'] === true &&
     user.emailVerified &&
     !user.disabled &&
-    user.providerData.some((p) => p.providerId === 'google.com')
+    googleProviderOf(user) !== undefined
   );
 }
 
@@ -210,8 +211,8 @@ async function act(
     until,
     reason,
     commandId,
-    tombstone,
-    now
+    now,
+    { tombstone }
   );
   return { ok: true, target, ...change };
 }

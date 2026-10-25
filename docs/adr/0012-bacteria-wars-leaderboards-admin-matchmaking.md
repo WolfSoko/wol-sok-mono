@@ -1187,9 +1187,9 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      `deletePlayerBoards`): a ban of a Google account writes its tombstone
      in the ban's transaction and notes its id in
      `moderation/{uid}.tombstone`, so an unban deletes it with the ban even
-     once the player unlinked Google; an ended ban leaves it to TTL
-     (`expireAt` is the ban's end, at most 2 years), as a match checks
-     `until`. An Auth failure while looking the account up fails the
+     once the player unlinked Google, and so does the hourly expiry; TTL
+     takes the rest (`expireAt` is the ban's end, at most 2 years), and a
+     match checks `until`. An Auth failure while looking the account up fails the
      command rather than ban without a tombstone. `countAccount` counts the
      account in `stats/accounts` in a transaction that notes
      `boardMembers.accountCounted` (an event delivered twice counts once,
@@ -1200,8 +1200,10 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      up once an hour at most, `googleLookedAt`; a failed check is logged
      and runs again with a later write). A match bans the new uid through
      `banPlayer`, audited as `tombstone_{uid}` with `by: 'system'`, and
-     leaves a ban that already holds as it is. `deletePlayerBoards` deletes
-     both ban documents only after the tombstone is written (by the
+     leaves a ban that already holds as it is. The `deletePlayerBoards`
+     trigger (`deleteAccount`, which runs the board clean-up beside the
+     account steps) deletes both ban documents only after the tombstone is
+     written (by the
      account's Google provider, or the id the ban noted); its other steps
      run regardless, and the audit scrub skips an entry TTL took.
    - Still to come: the other admin types and the statistics.

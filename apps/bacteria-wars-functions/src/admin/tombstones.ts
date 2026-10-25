@@ -1,8 +1,7 @@
 import { createHmac } from 'node:crypto';
-import type { BanReason } from '@wolsok/feat-lazy-bac-game/engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
-import { banPlayer, holds, readBan } from './bans';
+import { banOf, banPlayer, holds, readBan } from './bans';
 import type { Realtime } from './realtime';
 import { writeAudit } from './records';
 
@@ -21,12 +20,19 @@ export interface ProviderInfo {
   providerData: readonly { providerId: string; uid: string }[];
 }
 
+/** An account's Google provider, undefined for one without. */
+export function googleProviderOf<P extends { providerId: string }>(user: {
+  providerData: readonly P[];
+}): P | undefined {
+  return user.providerData.find((p) => p.providerId === 'google.com');
+}
+
 /**
  * The tombstone id of an account - null for one without a Google
  * provider, which no tombstone can follow.
  */
 export function tombstoneId(key: string, user: ProviderInfo): string | null {
-  const google = user.providerData.find((p) => p.providerId === 'google.com');
+  const google = googleProviderOf(user);
   return google === undefined
     ? null
     : createHmac('sha256', key).update(google.uid).digest('hex');
@@ -35,7 +41,8 @@ export function tombstoneId(key: string, user: ProviderInfo): string | null {
 /**
  * Bans the account behind `uid` again when its Google identity's tombstone
  * (`id`) holds, audited with `by: 'system'` - unless a ban holds for it
- * already, which stays as it is. True when it banned.
+ * already, which stays as it is - and notes the check
+ * (`boardMembers/{uid}.googleChecked`). True when it banned.
  */
 export async function applyTombstone(
   db: Firestore,
@@ -44,18 +51,29 @@ export async function applyTombstone(
   id: string,
   now: number
 ): Promise<boolean> {
-  const tombstone = (await db.doc(`banTombstones/${id}`).get()).data();
-  if (tombstone === undefined) {
+  const banned = await banByTombstone(db, realtime, uid, id, now);
+  await db
+    .doc(`boardMembers/${uid}`)
+    .set({ googleChecked: true }, { merge: true });
+  return banned;
+}
+
+async function banByTombstone(
+  db: Firestore,
+  realtime: Realtime,
+  uid: string,
+  id: string,
+  now: number
+): Promise<boolean> {
+  const tombstone = banOf((await db.doc(`banTombstones/${id}`).get()).data());
+  if (
+    tombstone === null ||
+    !holds(tombstone, now) ||
+    holds(await readBan(db, uid), now)
+  ) {
     return false;
   }
-  const until =
-    tombstone['until'] instanceof Timestamp
-      ? tombstone['until'].toMillis()
-      : null;
-  const reason = tombstone['reason'] as BanReason;
-  if ((until !== null && until <= now) || holds(await readBan(db, uid), now)) {
-    return false;
-  }
+  const { until, reason } = tombstone;
   const commandId = `tombstone_${uid}`;
   const change = await banPlayer(
     db,
@@ -64,8 +82,8 @@ export async function applyTombstone(
     until,
     reason,
     commandId,
-    id,
-    now
+    now,
+    { tombstone: id }
   );
   await writeAudit(
     db,
@@ -122,7 +140,5 @@ export async function checkGoogleLink(
     );
     return false;
   }
-  const banned = await applyTombstone(db, realtime, uid, id, now);
-  await member.set({ googleChecked: true }, { merge: true });
-  return banned;
+  return applyTombstone(db, realtime, uid, id, now);
 }

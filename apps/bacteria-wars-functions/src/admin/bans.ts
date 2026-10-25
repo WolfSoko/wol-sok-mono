@@ -73,7 +73,10 @@ export async function readBan(
   return banOf((await db.doc(`bans/${uid}`).get()).data());
 }
 
-function banOf(data: Record<string, unknown> | undefined): BanState | null {
+/** A ban (or a tombstone, which keeps its end and reason) as stored. */
+export function banOf(
+  data: Record<string, unknown> | undefined
+): BanState | null {
   if (data === undefined) {
     return null;
   }
@@ -127,8 +130,8 @@ export async function banPlayer(
   until: number | null,
   reason: BanReason,
   noticeId: string,
-  tombstone: string | null,
-  now: number
+  now: number,
+  { tombstone = null }: { tombstone?: string | null } = {}
 ): Promise<BanChange> {
   const banRef = db.doc(`bans/${uid}`);
   const { before, after } = await db.runTransaction(async (tx) => {
@@ -292,7 +295,7 @@ export async function expireBans(
     const until = (doc.get('until') as Timestamp).toMillis();
     const id = `ban-ended_${uid}_${until}`;
     try {
-      // Its tombstone ends with it, by TTL.
+      // Its tombstone goes by the id the ban noted, else by TTL.
       const change = await liftBan(db, realtime, uid, id, now, {
         endedUntil: until,
       });
