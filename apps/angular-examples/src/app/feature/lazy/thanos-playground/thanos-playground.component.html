@@ -69,7 +69,7 @@
           (selectionChange)="maxParticleCount.set($event.value)"
         >
           @for (count of maxParticleCounts; track count) {
-            <mat-option [value]="count">{{ count / 1000 }}k</mat-option>
+            <mat-option [value]="count">{{ particleLabel(count) }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -87,7 +87,7 @@
           matSliderThumb
           aria-label="sound volume"
           [value]="soundVolume()"
-          (valueChange)="soundVolume.set($event)"
+          (valueChange)="setSoundVolume($event)"
         />
       </mat-slider>
     </section>

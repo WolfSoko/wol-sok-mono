@@ -180,6 +180,15 @@ export const EXPERIMENTS: Project[] = [
     tech: ['WebAssembly', 'AssemblyScript'],
     links: [{ label: 'Try it', url: `${EXAMPLES}/webassemblyTests` }],
   },
+  {
+    name: 'Thanos Snap Playground',
+    tagline: 'Snap a card into dust.',
+    description:
+      'Try every option of @wolsok/thanos: dissolve a card into dust, cracks, shards or chunks on the GPU and choose where the wind blows them.',
+    accent: '#a855f7',
+    tech: ['WebGL2', 'Angular'],
+    links: [{ label: 'Try it', url: `${EXAMPLES}/thanosPlayground` }],
+  },
 ];
 
 /** Packages published on npm. */
