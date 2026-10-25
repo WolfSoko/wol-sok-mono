@@ -72,6 +72,16 @@ describe('replayPage', () => {
     expect(page).toContain('<polyline');
   });
 
+  it('links the match to the watch page, which plays it back', () => {
+    expect(parts(replayPage('en', view())).body).toContain(
+      '<a class="button" href="/watch/AbCdEfGhIjKlMnOpQrSt">Watch the match</a>'
+    );
+    // The watch page follows the browser's language, not `?lang`.
+    expect(parts(replayPage('de', view())).body).toContain(
+      '<a class="button" href="/watch/AbCdEfGhIjKlMnOpQrSt">Match ansehen</a>'
+    );
+  });
+
   it('calls a draw a draw', () => {
     expect(parts(replayPage('en', view({ winnerSeat: null }))).head).toContain(
       'Draw'
