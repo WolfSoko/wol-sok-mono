@@ -101,10 +101,8 @@ export async function runAdminCommand(
 }
 
 /** What an action did, for the audit. */
-interface Outcome {
-  /** What the action changed, as the audit keeps it. */
-  before: unknown;
-  after: unknown;
+/** What an action did; `before` and `after` are what the audit keeps. */
+interface Outcome extends ModerationChange {
   ok: boolean;
   error?: string;
   /** The target, with the player's uid once it was found. */
@@ -217,7 +215,8 @@ async function act(
       );
     case 'board.hideEntry':
     case 'board.hidePlayer':
-    case 'board.restore':
+    case 'board.restore': {
+      const hide = command.type !== 'board.restore';
       return done(
         await moderateBoards(
           db,
@@ -225,40 +224,37 @@ async function act(
           command.type === 'board.hidePlayer' || 'uid' in command.target
             ? 'all'
             : command.target,
-          {
-            hide: command.type !== 'board.restore',
-            bar: command.type !== 'board.restore' && command.args.bar === true,
-          },
+          { hide, bar: hide && command.args.bar === true },
           commandId,
           now
         )
       );
+    }
+    case 'player.unban':
+      return done(
+        await liftBan(db, context.realtime, uid, commandId, now, {
+          tombstone: await context.tombstoneOf(uid),
+        })
+      );
+    case 'player.ban': {
+      const { until, reason } = command.args;
+      if (until !== null && until <= now) {
+        return done('ended');
+      }
+      return done(
+        await banPlayer(
+          db,
+          context.realtime,
+          uid,
+          until,
+          reason,
+          commandId,
+          now,
+          { tombstone: await context.tombstoneOf(uid) }
+        )
+      );
+    }
   }
-  if (command.type === 'player.unban') {
-    const tombstone = await context.tombstoneOf(uid);
-    const change = await liftBan(db, context.realtime, uid, commandId, now, {
-      tombstone,
-    });
-    return typeof change === 'string'
-      ? { ok: false, error: change, target, ...unchanged }
-      : { ok: true, target, ...change };
-  }
-  const { until, reason } = command.args;
-  if (until !== null && until <= now) {
-    return { ok: false, error: 'ended', target, ...unchanged };
-  }
-  const tombstone = await context.tombstoneOf(uid);
-  const change = await banPlayer(
-    db,
-    context.realtime,
-    uid,
-    until,
-    reason,
-    commandId,
-    now,
-    { tombstone }
-  );
-  return { ok: true, target, ...change };
 }
 
 /**

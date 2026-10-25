@@ -1,16 +1,17 @@
 import { createHash } from 'node:crypto';
-import {
-  BOARD_KINDS,
-  defaultProfile,
-  parseBoardId,
-} from '@wolsok/feat-lazy-bac-game/engine';
+import { BOARD_KINDS, defaultProfile } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   type DocumentReference,
   FieldValue,
   type Firestore,
   type SetOptions,
 } from 'firebase-admin/firestore';
-import { barredOf, memberEntries, setHidden } from '../boards/entries';
+import {
+  barredOf,
+  type MemberEntry,
+  memberEntries,
+  setHidden,
+} from '../boards/entries';
 import { noticeData, type NoticeType } from './records';
 
 /**
@@ -131,47 +132,45 @@ export async function moderateBoards(
   now: number
 ): Promise<ModerationChange | 'not-on-board'> {
   const memberRef = db.doc(`boardMembers/${uid}`);
-  const kind =
-    scope === 'all' ? null : (parseBoardId(scope.boardId)?.kind ?? null);
-  const kinds = kind === null ? BOARD_KINDS : [kind];
+  const isScope = (entry: MemberEntry) =>
+    scope !== 'all' &&
+    entry.boardId === scope.boardId &&
+    entry.entryId === scope.entryId;
   // The bar first, so an entry ranked meanwhile starts hidden; a restore
   // lifts it first too, and the entries keep their hide until changed.
   const barred = await db.runTransaction(async (tx) => {
     const member = (await tx.get(memberRef)).data();
-    const held =
-      scope === 'all' ||
-      memberEntries(member).some(
-        (entry) =>
-          entry.boardId === scope.boardId && entry.entryId === scope.entryId
-      );
-    if (!held) {
+    const held = memberEntries(member).find(isScope);
+    if (scope !== 'all' && held === undefined) {
       return null;
     }
+    const kinds = held === undefined ? BOARD_KINDS : [held.board.kind];
     const before = barredOf(member);
-    const after = hide
-      ? bar
-        ? BOARD_KINDS.filter((k) => before.includes(k) || kinds.includes(k))
-        : before
-      : before.filter((k) => !kinds.includes(k));
+    let after = before;
+    if (!hide) {
+      after = before.filter((k) => !kinds.includes(k));
+    } else if (bar) {
+      after = BOARD_KINDS.filter(
+        (k) => before.includes(k) || kinds.includes(k)
+      );
+    }
     if (after.length !== before.length) {
       tx.set(memberRef, { barred: after }, { merge: true });
     }
-    return { before, after };
+    // A bar, or lifting one, takes all the entries of its kind.
+    const wide =
+      held === undefined || after.length !== before.length || (hide && bar);
+    return { before, after, kind: held?.board.kind, wide };
   });
   if (barred === null) {
     return 'not-on-board';
   }
-  // A bar, or lifting one, takes all the entries of its kind.
-  const wide =
-    scope === 'all' ||
-    (hide ? bar : barred.before.some((k) => kinds.includes(k)));
-  const entries = await setHidden(
-    db,
-    uid,
-    'admin',
-    hide,
-    wide ? (kind === null ? {} : { kind }) : { only: scope }
-  );
+  const { kind, wide } = barred;
+  const entries = await setHidden(db, uid, 'admin', hide, {
+    match: wide
+      ? (entry) => kind === undefined || entry.board.kind === kind
+      : isScope,
+  });
   if (hide && (entries > 0 || barred.after.length > barred.before.length)) {
     const batch = db.batch();
     tell(batch, db, uid, noticeId, 'board-hidden', now, {
@@ -204,7 +203,7 @@ function tell(
   writer.set(
     db.doc(`players/${uid}/notices/${noticeId}`),
     noticeData(type, now),
-    {}
+    { merge: true }
   );
   writer.set(db.doc(`moderation/${uid}`), counts, { merge: true });
 }

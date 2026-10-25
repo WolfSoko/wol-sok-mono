@@ -205,8 +205,8 @@ export function memberEntries(
 
 /**
  * Adds or takes away one hide reason on each of the player's entries
- * (`boardMembers/{uid}`) - only on `only`, or only on the entries of
- * `kind` - one transaction per entry,
+ * (`boardMembers/{uid}`), or on those `match` takes, one transaction per
+ * entry,
  * keeping what else hides it. With `guard`, an entry also reads that
  * document in the same round trip and stays as it is while `keeps` says so
  * of it. Updated in place, so a daily entry keeps its `expireAt`. Returns
@@ -218,12 +218,10 @@ export async function setHidden(
   reason: 'ban' | 'admin',
   hide: boolean,
   {
-    only,
-    kind,
+    match,
     guard,
   }: {
-    only?: { boardId: string; entryId: string };
-    kind?: BoardKind;
+    match?: (entry: MemberEntry) => boolean;
     guard?: {
       ref: DocumentReference;
       keeps: (data: Record<string, unknown> | undefined) => boolean;
@@ -232,14 +230,11 @@ export async function setHidden(
 ): Promise<number> {
   const member = await db.doc(`boardMembers/${uid}`).get();
   let changed = 0;
-  for (const { boardId, board, entryId } of memberEntries(member.data())) {
-    if (
-      (only !== undefined &&
-        (only.boardId !== boardId || only.entryId !== entryId)) ||
-      (kind !== undefined && board.kind !== kind)
-    ) {
+  for (const held of memberEntries(member.data())) {
+    if (match !== undefined && !match(held)) {
       continue;
     }
+    const { boardId, entryId } = held;
     const ref = db.doc(`boards/${boardId}/entries/${entryId}`);
     const done = await db.runTransaction(async (tx) => {
       const [entry, guarded] =
