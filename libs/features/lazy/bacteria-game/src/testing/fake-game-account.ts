@@ -23,6 +23,8 @@ const NOBODY = 'nobody';
 export class FakeGameAccount implements GameAccount {
   public readonly cloud = true;
   public readonly profile = signal<PlayerProfile | null>(null);
+  /** Set it to play as the owner. */
+  public readonly owner = signal(false);
   private readonly switches: BehaviorSubject<PlayerSwitch>;
   public readonly players;
   private readonly storages = new Map<string, LateGameStorage>();

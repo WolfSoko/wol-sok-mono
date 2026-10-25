@@ -18,7 +18,9 @@ storage until then. Settings stay with the device either way.
     settings (`GameSettingsService`) live there, so sound, controls and
     graphics stay per device whoever signs in.
   - `GameAccount` says who plays (`FirebaseGameAccount`, or `DeviceAccount`
-    without a project) and signs in and out.
+    without a project) and signs in and out. Its `owner` (the admin claim,
+    a verified email and a Google sign-in in the current token) only shows
+    the main menu's way to `/admin` on the game's own site.
 - The project is named with `provideGameCloud(environment.gameCloud)` in the
   providers of the remote's entry route, not in its app config: inside the
   shell only the entry routes are loaded. The game's services sit in the root
@@ -44,6 +46,19 @@ storage until then. Settings stay with the device either way.
   project or its database. `SocialService` is the one place the game reads
   them from; specs use `FakeGameSocial` and `FakeGamePresence`
   (`src/testing/`).
+- The owner's feature toggles (ADR 0012) come through the `GameToggles`
+  port (`storage/game-toggles.ts`): `RemoteConfigGameToggles` with a
+  project, `NoGameToggles` (`{}`, the defaults) without, asked of
+  `GameCloud.toggles()`, which starts no other backend. The game reads them
+  from `FeatureTogglesService.toggles` only: `FEATURE_TOGGLES` at first,
+  merged with what Remote Config says once it answered. A feature that must
+  not change midway reads its toggle as it starts (the simulation per match).
+  Specs provide `{ provide: GameToggles, useValue: { watch: () => ... } }`.
+- Remote Config is reached only through `FirebaseConnection.remoteConfig()`
+  in `firebase-connection.ts`: the SDK is imported on demand there (off the
+  start), set up once on the game's named app, fetched at most hourly and
+  activated; null against the emulators or where it is unsupported, and it
+  never rejects. A parameter whose source is `static` counts as unset.
 - Only `firebase-connection.ts` imports Firebase at runtime, and only
   `provide-game-cloud.ts` imports that file; the rest takes types only, so
   the specs never load the SDK.
@@ -158,8 +173,10 @@ play each other.
   with `deterministic`, or `IntSimulation`). `Simulation.ruleset` names a
   simulation's; the float GPU one has none (null) and is never recorded.
 - The game picks a simulation with `chooseSimulation`
-  (`gl/simulation-choice.ts`): with `DETERMINISTIC_SIMULATION` on (the
-  rollout's switch, on since the owner's real-device check), the integer
+  (`gl/simulation-choice.ts`): with the owner's toggle
+  `deterministicSimulation` on (default `DETERMINISTIC_SIMULATION`, the
+  rollout's switch, on since the owner's real-device check; read as each
+  match starts and in each online `hello`), the integer
   GPU passes on a GPU that passed `GpuSelfTestService`'s self-test on
   hardware (`gpuTrusted`, `gl/simulation-check.ts`), the `cpu` ruleset
   otherwise. A software renderer (SwiftShader, llvmpipe) passes the test

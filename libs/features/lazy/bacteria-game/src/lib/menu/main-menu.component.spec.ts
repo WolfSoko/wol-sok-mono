@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
+import { FakeGameAccount } from '../../testing/fake-game-account';
 import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
+import { GameAccount } from '../storage/game-account';
+import { ADMIN_PATH } from '../support/legal-links';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
@@ -269,5 +272,75 @@ describe('MainMenuComponent support tile', () => {
       SupportDialogComponent,
       expect.anything()
     );
+  });
+});
+
+describe('MainMenuComponent admin tile', () => {
+  function render(options: { onSite: boolean; account?: FakeGameAccount }): {
+    host: HTMLElement;
+    fixture: ComponentFixture<MainMenuComponent>;
+  } {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        ...(options.onSite
+          ? [{ provide: GAME_SUPPORT, useValue: GAME_SUPPORT_OPTIONS }]
+          : []),
+        ...(options.account === undefined
+          ? []
+          : [{ provide: GameAccount, useValue: options.account }]),
+      ],
+    });
+    const fixture = TestBed.createComponent(MainMenuComponent);
+    fixture.componentRef.setInput('campaign', CAMPAIGN);
+    fixture.detectChanges();
+    return { host: fixture.nativeElement, fixture };
+  }
+
+  const tile = (host: HTMLElement) =>
+    host.querySelector<HTMLAnchorElement>('a.tile.admin');
+
+  function owner(): FakeGameAccount {
+    const account = new FakeGameAccount('wolf');
+    account.owner.set(true);
+    return account;
+  }
+
+  it('is not there for a game without a project', () => {
+    expect(tile(render({ onSite: true }).host)).toBeNull();
+  });
+
+  it('is not there for a guest or a player who is not the owner', () => {
+    const account = new FakeGameAccount('ada');
+    const { host, fixture } = render({ onSite: true, account });
+    expect(tile(host)).toBeNull();
+
+    // Signed in with Google, without the claim.
+    account.profile.set({ guest: false, name: 'Ada' });
+    fixture.detectChanges();
+    expect(tile(host)).toBeNull();
+  });
+
+  it('is not there inside the shell, which has no admin route', () => {
+    expect(tile(render({ onSite: false, account: owner() }).host)).toBeNull();
+  });
+
+  it("leads the owner to the admin area on the game's own site", () => {
+    const { host } = render({ onSite: true, account: owner() });
+
+    expect(tile(host)?.textContent).toContain('Admin');
+    expect(tile(host)?.getAttribute('href')).toBe(`/${ADMIN_PATH}`);
+  });
+
+  it('shows once the owner is known, and in German', () => {
+    const account = new FakeGameAccount('wolf');
+    const { host, fixture } = render({ onSite: true, account });
+    expect(tile(host)).toBeNull();
+
+    account.owner.set(true);
+    TestBed.inject(I18nService).setLanguage('de');
+    fixture.detectChanges();
+
+    expect(tile(host)?.textContent).toContain('Verwaltung');
   });
 });

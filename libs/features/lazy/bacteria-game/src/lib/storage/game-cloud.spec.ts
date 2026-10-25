@@ -11,12 +11,18 @@ import { LocalGameStorage } from './local-game-storage';
 import { GameReplays } from './game-replays';
 import { LocalGameReplays } from './local-game-replays';
 import { FirestoreGameReplays } from './firestore-game-replays';
+import { GameToggles } from './game-toggles';
+import { NoGameToggles } from './no-game-toggles';
+import { RemoteConfigGameToggles } from './remote-config-game-toggles';
 
 /** A project nobody signs in to - just enough to set the backend up. */
 const CONNECTION = {
   auth: {},
   db: {},
-  authSdk: { onAuthStateChanged: () => () => undefined },
+  authSdk: {
+    onAuthStateChanged: () => () => undefined,
+    onIdTokenChanged: () => () => undefined,
+  },
 } as unknown as FirebaseConnection;
 
 describe('GameCloud', () => {
@@ -85,6 +91,33 @@ describe('GameCloud', () => {
       TestBed.inject(GameCloud).use({ ...CONNECTION, replays: true });
 
       expect(TestBed.inject(GameReplays)).toBeInstanceOf(FirestoreGameReplays);
+    });
+  });
+
+  describe('toggles', () => {
+    it('are the defaults without a project', async () => {
+      const toggles = TestBed.inject(GameToggles);
+
+      expect(toggles).toBeInstanceOf(NoGameToggles);
+      expect(await firstValueFrom(toggles.watch())).toEqual({});
+    });
+
+    it("come from the project's Remote Config, fetched once watched, without signing anyone in", async () => {
+      const remoteConfig = jest.fn(async () => null);
+      const onAuthStateChanged = jest.fn(() => () => undefined);
+      TestBed.inject(GameCloud).use({
+        ...CONNECTION,
+        authSdk: { ...CONNECTION.authSdk, onAuthStateChanged },
+        remoteConfig,
+      } as unknown as FirebaseConnection);
+
+      const toggles = TestBed.inject(GameToggles);
+      expect(toggles).toBeInstanceOf(RemoteConfigGameToggles);
+      expect(remoteConfig).not.toHaveBeenCalled();
+
+      expect(await firstValueFrom(toggles.watch())).toEqual({});
+      expect(remoteConfig).toHaveBeenCalledTimes(1);
+      expect(onAuthStateChanged).not.toHaveBeenCalled();
     });
   });
 });

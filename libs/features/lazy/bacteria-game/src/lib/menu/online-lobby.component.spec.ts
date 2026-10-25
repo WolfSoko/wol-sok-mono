@@ -3,6 +3,8 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { TestBed } from '@angular/core/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { BehaviorSubject, of } from 'rxjs';
+import type { FeatureToggles } from '../state/feature-toggles';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { I18nService } from '../i18n/i18n.service';
 import {
@@ -15,6 +17,7 @@ import { GameSettingsService } from '../settings.service';
 import { MATCH_LEVELS } from '../state/match-level';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
+import { GameToggles } from '../storage/game-toggles';
 import { LocalGameStorage } from '../storage/local-game-storage';
 import { OnlineLobbyComponent } from './online-lobby.component';
 
@@ -31,6 +34,7 @@ describe('OnlineLobbyComponent', () => {
             presence: () => null,
             rooms: () => null,
             storage: () => new LocalGameStorage(),
+            toggles: () => ({ watch: () => of({}) }),
           },
         },
       ],
@@ -95,6 +99,7 @@ describe('OnlineLobbyComponent', () => {
   describe('the level the matchmaking asks for', () => {
     let matchmaker: {
       available: boolean;
+      enabled: ReturnType<typeof signal<boolean>>;
       state: ReturnType<typeof signal<MatchmakingState>>;
       matchLevel: ReturnType<typeof signal<MatchLevel | null>>;
       setLevel: jest.Mock;
@@ -107,6 +112,7 @@ describe('OnlineLobbyComponent', () => {
       localStorage.clear();
       matchmaker = {
         available: true,
+        enabled: signal(true),
         state: signal<MatchmakingState>('idle'),
         matchLevel: signal<MatchLevel | null>(null),
         setLevel: jest.fn(),
@@ -211,6 +217,63 @@ describe('OnlineLobbyComponent', () => {
         auto: true,
       });
       expect(text(matched)).toContain('Level: Sanduhr (Wahl deines Gegners)');
+    });
+  });
+
+  describe('while the owner has paused matchmaking', () => {
+    let toggles: BehaviorSubject<Partial<FeatureToggles>>;
+    let matchmaker: MatchmakerService;
+
+    beforeEach(() => {
+      localStorage.clear();
+      toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: GameToggles, useValue: { watch: () => toggles } },
+        ],
+      });
+      matchmaker = TestBed.inject(MatchmakerService);
+      // A build with the cloud: the matchmaking itself would run.
+      Object.defineProperty(matchmaker, 'available', { value: true });
+    });
+
+    const find = (host: HTMLElement) => host.querySelector('button.find');
+
+    it('offers "Find an opponent" while it runs', () => {
+      const host = render({});
+
+      expect(find(host)?.textContent).toContain('Find an opponent');
+      expect(host.querySelector('.match-level')).not.toBeNull();
+      expect(host.querySelector('.matchmaking-paused')).toBeNull();
+    });
+
+    it('says random matches are paused and points to a code instead', () => {
+      toggles.next({ matchmaking: false });
+      const host = render({});
+
+      expect(find(host)).toBeNull();
+      expect(host.querySelector('.match-level')).toBeNull();
+      expect(text(host)).toContain(
+        'Random matches are paused for now. Play a friend with a code instead.'
+      );
+      expect(text(host)).toContain('Open a match');
+    });
+
+    it('takes the pause back when switched on again, in German too', () => {
+      toggles.next({ matchmaking: false });
+      TestBed.inject(GameSettingsService);
+      TestBed.inject(I18nService).setLanguage('de');
+      const fixture = TestBed.createComponent(OnlineLobbyComponent);
+      fixture.componentRef.setInput('lobby', IDLE_LOBBY);
+      fixture.detectChanges();
+      const host: HTMLElement = fixture.nativeElement;
+      expect(text(host)).toContain('Zufällige Matches sind gerade pausiert.');
+
+      toggles.next({ matchmaking: true });
+      fixture.detectChanges();
+
+      expect(find(host)?.textContent).toContain('Gegner finden');
+      expect(matchmaker.enabled()).toBe(true);
     });
   });
 });

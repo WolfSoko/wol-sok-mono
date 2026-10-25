@@ -128,4 +128,43 @@ describe('chooseSimulation', () => {
       expect(offers()).toEqual(['cpu']);
     });
   });
+
+  describe("following the owner's toggle", () => {
+    it('reads it as each match starts, and in what it offers', () => {
+      let toggle = true;
+      const { factory, ruleset, offers } = chooseSimulation({
+        deterministic: () => toggle,
+        gpu,
+        gpuTrusted: () => true,
+      });
+      expect(factory?.(gameBalance, random, 7)).toBe(gpuSim);
+      expect(asked.at(-1)).toEqual({ deterministic: true, matchSeed: 7 });
+      expect(ruleset()).toBe('gpu-int');
+      expect(offers()).toEqual(['cpu', 'gpu-int']);
+
+      toggle = false;
+      expect(factory?.(gameBalance, random, 8)).toBe(gpuSim);
+      expect(asked.at(-1)).toEqual({ matchSeed: 8 });
+      expect(ruleset()).toBeNull();
+      expect(offers()).toEqual(['cpu']);
+    });
+
+    it('leaves a device without WebGL2 to the CPU either way', () => {
+      let toggle = false;
+      const { factory, ruleset } = chooseSimulation({
+        deterministic: () => toggle,
+        gpu: null,
+        gpuTrusted: () => true,
+      });
+      expect(factory?.(gameBalance, random, 7)).toBeInstanceOf(
+        BacteriaSimulation
+      );
+      expect(ruleset()).toBe('cpu');
+      toggle = true;
+      expect(factory?.(gameBalance, random, 7)).toBeInstanceOf(
+        BacteriaSimulation
+      );
+      expect(ruleset()).toBe('cpu');
+    });
+  });
 });

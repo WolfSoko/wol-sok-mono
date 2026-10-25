@@ -1,5 +1,6 @@
 import { Route } from '@angular/router';
 import {
+  ADMIN_PATH,
   LEGAL_NOTICE_PATH,
   PRIVACY_POLICY_PATH,
 } from '@wolsok/feat-lazy-bac-game';
@@ -22,9 +23,10 @@ export const appRoutes: Route[] = [
   },
   // The owner's admin area (ADR 0012): its own lazy chunk, which names
   // the game's project itself. Not in the entry routes, so the shell never
-  // sees it; `noindex`, and disallowed in robots.txt.
+  // sees it; `noindex`, and disallowed in robots.txt. The main menu links
+  // to it for the owner.
   {
-    path: 'admin',
+    path: ADMIN_PATH,
     data: { noindex: true },
     loadChildren: () =>
       import('@wolsok/feat-lazy-bac-wars-admin').then((m) =>

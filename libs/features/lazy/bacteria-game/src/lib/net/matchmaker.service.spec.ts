@@ -1,10 +1,13 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { BehaviorSubject } from 'rxjs';
+import type { FeatureToggles } from '../state/feature-toggles';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameSocial } from '../../testing/fake-game-social';
 import { MATCH_LEVELS } from '../state/match-level';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
+import { GameToggles } from '../storage/game-toggles';
 import { claimable, MatchmakerService } from './matchmaker.service';
 import {
   IDLE_LOBBY,
@@ -33,6 +36,7 @@ class FakeOnline {
 describe('MatchmakerService', () => {
   let social: FakeGameSocial;
   let online: FakeOnline;
+  let toggles: BehaviorSubject<Partial<FeatureToggles>>;
 
   function matchmaker(uid: string): MatchmakerService {
     TestBed.resetTestingModule();
@@ -48,6 +52,7 @@ describe('MatchmakerService', () => {
           },
         },
         { provide: OnlineMatchService, useValue: online },
+        { provide: GameToggles, useValue: { watch: () => toggles } },
       ],
     });
     return TestBed.inject(MatchmakerService);
@@ -57,6 +62,7 @@ describe('MatchmakerService', () => {
     jest.useFakeTimers();
     social = new FakeGameSocial();
     online = new FakeOnline();
+    toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
   });
 
   afterEach(() => jest.useRealTimers());
@@ -243,6 +249,43 @@ describe('MatchmakerService', () => {
 
     expect(first.state()).toBe('idle');
     expect(social.get('queue/ada')).toBeNull();
+  });
+
+  describe('paused by the owner', () => {
+    it('starts no search', async () => {
+      toggles.next({ matchmaking: false });
+      const first = matchmaker('ada');
+
+      await first.find();
+
+      expect(first.enabled()).toBe(false);
+      expect(first.state()).toBe('idle');
+      expect(social.get('queue/ada')).toBeNull();
+    });
+
+    it('stops a search under way, and leaves the queue', async () => {
+      const first = matchmaker('ada');
+      await first.find();
+      expect(first.state()).toBe('searching');
+
+      toggles.next({ matchmaking: false });
+      TestBed.tick();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(first.state()).toBe('idle');
+      expect(social.get('queue/ada')).toBeNull();
+    });
+
+    it('lets a search start again once switched back on', async () => {
+      toggles.next({ matchmaking: false });
+      const first = matchmaker('ada');
+      toggles.next({ matchmaking: true });
+      TestBed.tick();
+
+      await first.find();
+
+      expect(first.state()).toBe('searching');
+    });
   });
 });
 

@@ -1268,6 +1268,20 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      (`src/admin/toggles.ts`, Remote Config behind the `RemoteToggles`
      port). The client reads them, and the admin area sets them, with the
      client release.
+   - As built in the client: the `GameToggles` port
+     (`RemoteConfigGameToggles`, reached through
+     `FirebaseConnection.remoteConfig()`: SDK loaded on demand, fetched at
+     most hourly, none against the emulators) behind
+     `FeatureTogglesService`, which starts at `FEATURE_TOGGLES`. Gating
+     so far: `matchmaking` replaces "Find an opponent" with a notice and
+     stops a search under way; `deterministicSimulation` replaces the
+     constant, read as each match starts and in each `hello`.
+     `rankedDaily`, `rankedEndless` and `leaderboards` are read but gate
+     nothing until their features ship. The same release adds the
+     settings' "Matches" section ("Record matches against the computer",
+     on by default; "Save my matches") and, for the owner on the game's
+     own site, the main menu's way to `/admin` (`GameAccount.owner`, from
+     the current token's claims).
    - Then `board.verify` (`src/boards/verify-now.ts`): the hourly slice's
      own steps (`checkBestAttempt` for a daily entry, `verifyRunWins` for
      a run), from the admin budget (`ADMIN_VERIFY_MS`, 20 match-minutes a

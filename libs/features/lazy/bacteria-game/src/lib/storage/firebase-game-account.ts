@@ -29,6 +29,10 @@ export class FirebaseGameAccount implements GameAccount {
   public readonly cloud = true;
   private readonly profileState = signal<PlayerProfile | null>(null);
   public readonly profile = this.profileState.asReadonly();
+  private readonly ownerState = signal(false);
+  public readonly owner = this.ownerState.asReadonly();
+  /** Counts the tokens seen, so a late answer for an older one is dropped. */
+  private tokens = 0;
   private readonly switches = new ReplaySubject<PlayerSwitch>(1);
   private playerId: string | null = null;
   public readonly players: Observable<PlayerSwitch> =
@@ -60,6 +64,7 @@ export class FirebaseGameAccount implements GameAccount {
         void this.signInAsGuest();
       }
     });
+    authSdk.onIdTokenChanged(auth, (user) => void this.checkOwner(user));
   }
 
   public async signIn(): Promise<SignInOutcome> {
@@ -111,6 +116,32 @@ export class FirebaseGameAccount implements GameAccount {
   public async signOut(): Promise<void> {
     const { auth, authSdk } = this.connection;
     await authSdk.signOut(auth);
+  }
+
+  /**
+   * Whether `user` is the owner, from the token they hold - not refreshed:
+   * a claim granted meanwhile shows with the next token, within the hour or
+   * after signing in again.
+   */
+  private async checkOwner(user: User | null): Promise<void> {
+    const token = ++this.tokens;
+    if (user === null || user.isAnonymous) {
+      this.ownerState.set(false);
+      return;
+    }
+    let owner = false;
+    try {
+      const result = await this.connection.authSdk.getIdTokenResult(user);
+      owner =
+        result.claims['admin'] === true &&
+        result.claims['email_verified'] === true &&
+        result.signInProvider === 'google.com';
+    } catch (error) {
+      console.warn('Could not read the sign-in token', error);
+    }
+    if (token === this.tokens) {
+      this.ownerState.set(owner);
+    }
   }
 
   /**

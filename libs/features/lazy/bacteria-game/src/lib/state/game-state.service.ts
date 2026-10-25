@@ -55,7 +55,7 @@ import { randomSeed } from './geometry';
 import { MatchOutcome } from './win-conditions';
 import { MatchPlan, planMatch } from './match-setup';
 import { Replay, ReplayExtras, replayOf, replayOutcome } from './replay';
-import { DETERMINISTIC_SIMULATION, type Ruleset } from './simulation';
+import type { Ruleset } from './simulation';
 import { matchChecksum } from './checksum';
 import { replayScore } from './replay-score';
 import type { SizeSample } from './match-engine';
@@ -139,9 +139,9 @@ export class GameStateService {
    * `GameCloud` would answer before the route named the project.
    */
   private injector = inject(Injector);
-  /** What the player set about recording - the settings tell. */
+  /** What the player set about recording - the settings tell, these until then. */
   private replayPrefs: ReplayPrefs = {
-    recordLocal: DETERMINISTIC_SIMULATION,
+    recordLocal: true,
     saveMatches: true,
   };
   /** Whether the match on the board is recorded, and how - null if not. */

@@ -54,10 +54,8 @@ import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
 import { SimulationOverrideService } from './gl/simulation-override.service';
-import {
-  chooseSimulation,
-  DETERMINISTIC_SIMULATION,
-} from './gl/simulation-choice';
+import { chooseSimulation } from './gl/simulation-choice';
+import { FeatureTogglesService } from './feature-toggles.service';
 import { gpuTrusted } from './gl/simulation-check';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { rgba } from './arena/canvas-math';
@@ -239,6 +237,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly haptics = inject(GameHapticsService);
   private readonly gpuSelfTest = inject(GpuSelfTestService);
   private readonly simulationOverride = inject(SimulationOverrideService);
+  private readonly featureToggles = inject(FeatureTogglesService).toggles;
   protected readonly progress = inject(ProgressService);
   protected readonly evolution = inject(EvolutionService);
   private readonly document = inject(DOCUMENT);
@@ -687,13 +686,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     });
 
     // The GPU self-test runs once this device plays the deterministic
-    // simulation: always with the rollout's switch on, else once the device
+    // simulation: always with the owner's toggle on, else once the device
     // override opts it in (`?sim=gpu-int`) - from the URL at once, from the
     // storage maybe later than the arena.
     this.simulationOverride.start();
     effect(() => {
       if (
-        DETERMINISTIC_SIMULATION ||
+        this.featureToggles().deterministicSimulation ||
         this.simulationOverride.override() === 'gpu-int'
       ) {
         untracked(() => this.gpuSelfTest.check());
@@ -1297,7 +1296,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // deterministic match only once the GPU passed the self-test.
     const gl = painter instanceof GlArenaPainter ? painter : null;
     const { factory, fallback, ruleset, offers } = chooseSimulation({
-      deterministic: DETERMINISTIC_SIMULATION,
+      // The owner's toggle, read as each match starts: Remote Config may
+      // answer after the arena is up, and a match keeps its simulation.
+      deterministic: () =>
+        untracked(() => this.featureToggles().deterministicSimulation),
       gpu:
         gl == null
           ? null

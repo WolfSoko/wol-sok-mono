@@ -4,8 +4,6 @@ import { cpuSimulation } from '../state/match-engine';
 import { Ruleset, Simulation, SimulationFactory } from '../state/simulation';
 import type { GpuSimulationOptions } from './gpu-simulation';
 
-export { DETERMINISTIC_SIMULATION } from '../state/simulation';
-
 /** Builds a GPU simulation on the arena's context. */
 export type GpuFactory = (
   balance: GameBalance,
@@ -46,12 +44,40 @@ export interface SimulationChoice {
  *   not tested yet, or failed, plays the `cpu` ruleset (the owner's
  *   decision: `IntSimulation` replays and checks, it does not play live).
  *
+ * `deterministic` is the owner's toggle (`deterministicSimulation`, ADR
+ * 0012), read afresh by the factory as each match starts and by `offers`
+ * as each online match does - a match keeps the simulation it started
+ * with, as it keeps its balance.
+ *
  * `override` is the device override for a real-device check
  * (`SimulationOverrideService`): `gpu-int` plays the integer GPU passes
  * whatever the self-test said, `cpu` the CPU's ruleset. It changes what
  * this device plays locally, never what it offers online.
  */
 export function chooseSimulation(options: {
+  deterministic: boolean | (() => boolean);
+  gpu: GpuFactory | null;
+  gpuTrusted: () => boolean;
+  override?: () => Ruleset | null;
+}): SimulationChoice {
+  const { deterministic } = options;
+  if (typeof deterministic === 'boolean') {
+    return fixedChoice({ ...options, deterministic });
+  }
+  const on = fixedChoice({ ...options, deterministic: true });
+  const off = fixedChoice({ ...options, deterministic: false });
+  const now = () => (deterministic() ? on : off);
+  return {
+    factory: (balance, random, seed) =>
+      (now().factory ?? cpuSimulation)(balance, random, seed),
+    fallback: cpuSimulation,
+    ruleset: () => now().ruleset(),
+    offers: () => now().offers(),
+  };
+}
+
+/** The choice while the deterministic simulation is switched on or off. */
+function fixedChoice(options: {
   deterministic: boolean;
   gpu: GpuFactory | null;
   gpuTrusted: () => boolean;

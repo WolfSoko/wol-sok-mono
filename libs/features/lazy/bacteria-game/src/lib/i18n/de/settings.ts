@@ -49,6 +49,14 @@ export const settings: Translation<typeof en> = {
     showFps: 'Bildrate anzeigen',
     fullscreen: 'Browser-Vollbild',
   },
+  matches: {
+    title: 'Matches',
+    recordLocal: 'Matches gegen den Computer aufzeichnen',
+    recordLocalNote:
+      'Mit „Meine Matches speichern“ werden sie aufbewahrt: auf diesem Gerät, in der Cloud, sobald sie sie annimmt.',
+    saveMatches: 'Meine Matches speichern',
+    saveMatchesNote: 'Online-Matches werden immer aufbewahrt.',
+  },
   simulation: {
     gpuInt: 'Partien laufen auf der GPU, auf jedem Gerät gleich.',
     cpu: 'Partien laufen auf der CPU.',

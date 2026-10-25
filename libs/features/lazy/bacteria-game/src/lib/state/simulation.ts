@@ -164,7 +164,9 @@ export type SimulationFactory = (
  * True when matches run the deterministic simulation of ADR 0015 where the
  * device can: the integer passes on a GPU that passed the self-test, the
  * CPU's ruleset else. The rollout's switch (step 8), on since the owner's
- * real-device check passed; `?sim=` still overrides local play on one
- * device (see `chooseSimulation`).
+ * real-device check passed. Now the default of the owner's toggle
+ * `deterministicSimulation` (`FEATURE_TOGGLES`, ADR 0012), which the game
+ * reads instead; `?sim=` still overrides local play on one device (see
+ * `chooseSimulation`).
  */
 export const DETERMINISTIC_SIMULATION = true;

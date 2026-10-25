@@ -48,6 +48,14 @@ export abstract class GameAccount {
   public abstract readonly profile: Signal<PlayerProfile | null>;
 
   /**
+   * True while the owner plays: the `admin` claim, a verified email and a
+   * Google sign-in in the current token, the facts the rules' `isAdmin()`
+   * checks (ADR 0012). It only shows the way to the admin area, which
+   * checks again with a fresh token; the rules are the lock.
+   */
+  public abstract readonly owner: Signal<boolean>;
+
+  /**
    * Who plays, and again on every switch. The first player is the one the
    * visit started with; the storage answers for them from then on.
    */

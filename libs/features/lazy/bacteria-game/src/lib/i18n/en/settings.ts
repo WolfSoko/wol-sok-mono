@@ -47,6 +47,14 @@ export const settings = {
     showFps: 'Show the frame rate',
     fullscreen: 'Browser fullscreen',
   },
+  matches: {
+    title: 'Matches',
+    recordLocal: 'Record matches against the computer',
+    recordLocalNote:
+      'With "Save my matches" they are kept: on this device, in the cloud once it takes them.',
+    saveMatches: 'Save my matches',
+    saveMatchesNote: 'Online matches are always kept.',
+  },
   simulation: {
     gpuInt: 'Matches run on the GPU, alike on every device.',
     cpu: 'Matches run on the CPU.',

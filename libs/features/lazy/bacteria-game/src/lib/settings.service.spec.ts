@@ -14,7 +14,6 @@ import { LEVELS, playableOnline } from './state/levels';
 import { MATCH_LEVELS } from './state/match-level';
 import { DeviceStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
-import { DETERMINISTIC_SIMULATION } from './state/simulation';
 
 describe('GameSettingsService', () => {
   beforeEach(() => {
@@ -407,25 +406,24 @@ describe('GameSettingsService', () => {
       return TestBed.inject(GameSettingsService);
     }
 
-    it('keeps matches, records local ones as the rollout switch says, and hands the stored choice to the game', () => {
-      const byDefault = DETERMINISTIC_SIMULATION;
+    it('keeps and records matches by default, and hands the stored choice to the game', () => {
       const service = createWith({
         saveMatches: false,
-        recordLocal: !byDefault,
+        recordLocal: false,
       });
       const prefs = jest.spyOn(
         TestBed.inject(GameStateService),
         'setReplayPrefs'
       );
       expect(service.saveMatches()).toBe(true);
-      expect(service.recordLocal()).toBe(byDefault);
+      expect(service.recordLocal()).toBe(true);
 
       storage.flush();
 
       expect(service.saveMatches()).toBe(false);
-      expect(service.recordLocal()).toBe(!byDefault);
+      expect(service.recordLocal()).toBe(false);
       expect(prefs).toHaveBeenLastCalledWith({
-        recordLocal: !byDefault,
+        recordLocal: false,
         saveMatches: false,
       });
     });
@@ -445,10 +443,10 @@ describe('GameSettingsService', () => {
       expect(service.saveMatches()).toBe(false);
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         saveMatches: false,
-        recordLocal: DETERMINISTIC_SIMULATION,
+        recordLocal: true,
       });
       expect(prefs).toHaveBeenLastCalledWith({
-        recordLocal: DETERMINISTIC_SIMULATION,
+        recordLocal: true,
         saveMatches: false,
       });
     });

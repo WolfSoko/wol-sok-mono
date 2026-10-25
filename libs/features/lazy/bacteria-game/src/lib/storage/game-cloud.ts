@@ -14,7 +14,10 @@ import { FirestoreGameReplays } from './firestore-game-replays';
 import type { GameReplays } from './game-replays';
 import { LocalGameReplays } from './local-game-replays';
 import type { GameRooms } from './game-rooms';
+import type { GameToggles } from './game-toggles';
+import { NoGameToggles } from './no-game-toggles';
 import { LocalGameStorage } from './local-game-storage';
+import { RemoteConfigGameToggles } from './remote-config-game-toggles';
 
 /** The Firebase project the game keeps the players' progress in. */
 export interface GameCloudOptions {
@@ -60,6 +63,8 @@ export class GameCloud {
   } | null = null;
   /** The replays on this device, one for all who ask. */
   private localReplays: GameReplays | null = null;
+  /** The feature toggles, one source for all who ask. */
+  private toggleSource: GameToggles | null = null;
   /** Whether a service has asked already - a project comes too late then. */
   private asked = false;
 
@@ -123,6 +128,21 @@ export class GameCloud {
     }
     this.localReplays ??= new LocalGameReplays(new LocalGameStorage());
     return this.localReplays;
+  }
+
+  /**
+   * The owner's feature toggles: the project's Remote Config, the defaults
+   * without a project. Starts none of the other backends - no sign-in -
+   * and fetches nothing until watched.
+   */
+  public toggles(): GameToggles {
+    this.asked = true;
+    const { connection } = this;
+    this.toggleSource ??=
+      connection === null
+        ? new NoGameToggles()
+        : new RemoteConfigGameToggles(() => connection.remoteConfig());
+    return this.toggleSource;
   }
 
   private connected() {

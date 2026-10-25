@@ -139,6 +139,12 @@
           {{ "support.tile" | t }}
         </button>
       }
+      @if (showsAdmin()) {
+        <a class="tile admin" [routerLink]="['/', adminPath]">
+          <mat-icon>admin_panel_settings</mat-icon>
+          {{ "menu.admin" | t }}
+        </a>
+      }
     </nav>
   </section>
 
