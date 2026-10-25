@@ -54,6 +54,7 @@ service cloud.firestore {
     // a profile, only its owner writes it.
     match /profiles/{uid} {
       allow get: if signedIn();
+      allow list: if isAdmin();
       allow create, update: if isPlayer(uid) && notBanned() && isProfile(request.resource.data);
       allow delete: if isPlayer(uid);
     }
@@ -222,12 +223,52 @@ service cloud.firestore {
     // only the player and the owner read it.
     match /boardMembers/{uid} {
       allow get: if isPlayer(uid) || isAdmin();
+      allow list: if isAdmin();
     }
 
     // A ban (ADR 0012), written by the functions only: the player may read
     // their own, to show why and until when.
     match /bans/{uid} {
       allow get: if isPlayer(uid) || isAdmin();
+      allow list: if isAdmin();
+    }
+
+    // What the owner did to a player (ADR 0012), for them to read and
+    // dismiss; written by adminCommand, kept 31 days.
+    match /players/{owner}/notices/{id} {
+      allow read, delete: if isPlayer(owner);
+    }
+
+    // The owner's commands (ADR 0012): adminCommand checks the writer
+    // again in Auth, runs it, audits it and writes its result back.
+    // Destructive types need a sign-in within the last hour.
+    match /adminCommands/{id} {
+      allow read: if isAdmin() && resource.data.uid == request.auth.uid;
+      allow create: if isAdmin() &&
+        request.resource.data.keys().hasOnly(['uid', 'type', 'target', 'reason', 'args', 'createdAt', 'expireAt']) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.createdAt == request.time &&
+        isCommandExpiry(request.resource.data.expireAt) &&
+        request.resource.data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry', 'board.hidePlayer', 'board.restore', 'board.verify', 'player.ban', 'player.unban', 'stats.refresh', 'stats.recount'] &&
+        request.resource.data.get('target', {}) is map &&
+        request.resource.data.get('args', {}) is map &&
+        (request.resource.data.type in ['stats.refresh', 'stats.recount'] ||
+          (request.resource.data.reason is string &&
+           request.resource.data.reason.size() > 0 &&
+           request.resource.data.reason.size() <= 200)) &&
+        (!(request.resource.data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry', 'board.hidePlayer', 'player.ban']) ||
+          request.auth.token.auth_time * 1000 > request.time.toMillis() - 3600000);
+    }
+
+    // The owner's records (ADR 0012), written by the functions only.
+    match /adminAudit/{id} {
+      allow read: if isAdmin();
+    }
+    match /adminStats/{id} {
+      allow read: if isAdmin();
+    }
+    match /moderation/{uid} {
+      allow read: if isAdmin();
     }
 
     function signedIn() {

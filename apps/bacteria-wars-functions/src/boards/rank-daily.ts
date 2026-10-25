@@ -143,6 +143,8 @@ export async function rankDaily(
     const next = [...attempts, run];
     await writeDailyEntry(tx, db, day, uid, next, now);
     tx.set(runRef, {
+      // Whose day it is, for deletePlayerBoards.
+      uid,
       attempts: next,
       expireAt: Timestamp.fromMillis(now + DAILY_TTL_MS),
     });

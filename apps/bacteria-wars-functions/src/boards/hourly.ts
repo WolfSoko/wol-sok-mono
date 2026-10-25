@@ -11,6 +11,9 @@ import {
 } from 'firebase-admin/firestore';
 import { entryData, hiddenByOf, memberIn, profileIn } from './entries';
 import { MIN_COUNTED_TICKS } from './rank-online';
+import { expireBans } from '../admin/bans';
+import type { AdminDeps } from '../admin/deps';
+import { refreshStats } from '../admin/stats';
 import { SLICE_MS } from './budgets';
 import { closeStaleMatches } from './rank-endless';
 import { verifyEndlessSlice } from './verify-endless';
@@ -155,19 +158,21 @@ export async function finalizeDailyBoards(
 }
 
 /**
- * The hourly run (ADR 0012), in order: closes unreported online matches
- * and endless matches whose replay never came, closes yesterday's daily
- * board, then spends the hour's verification slice - the daily boards
- * first, the `endless` board with the rest. Bans and statistics join with
- * their waves.
+ * The hourly run (ADR 0012): lifts ended bans, closes unreported online
+ * matches and endless matches whose replay never came, closes yesterday's
+ * daily board, then spends the hour's verification slice - the daily
+ * boards first, the `endless` board with the rest - and writes the hour's
+ * statistics snapshot.
  */
 export async function runHourly(
   db: Firestore,
   now: number,
-  accountInfo: (uid: string) => Promise<AccountInfo>
+  accountInfo: (uid: string) => Promise<AccountInfo>,
+  deps: AdminDeps
 ) {
   // Independent sweeps, then the slices that spend the hour's budget.
-  const [notReported, staleRuns, finalized] = await Promise.all([
+  const [bansLifted, notReported, staleRuns, finalized] = await Promise.all([
+    expireBans(db, deps, now),
     closeNotReported(db, now),
     closeStaleMatches(db, now),
     finalizeDailyBoards(db, now),
@@ -179,5 +184,6 @@ export async function runHourly(
     accountInfo,
     SLICE_MS - daily.spentMs
   );
-  return { notReported, staleRuns, finalized, daily, endless };
+  await refreshStats(db, deps, now, { snapshot: true });
+  return { bansLifted, notReported, staleRuns, finalized, daily, endless };
 }

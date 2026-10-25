@@ -14,8 +14,16 @@ import {
   onDocumentDeleted,
   onDocumentWritten,
 } from 'firebase-functions/v2/firestore';
+import { defineSecret } from 'firebase-functions/params';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
+import {
+  checkGoogleLink,
+  countAccount as countNewAccount,
+  deletePlayerBoards as deleteBoardsOf,
+} from './admin/accounts';
+import { runAdminCommand } from './admin/command';
+import type { AdminDeps } from './admin/deps';
 import { runHourly } from './boards/hourly';
 import { boardProfileChanged as relabelEntries } from './boards/profile-changed';
 import { rankDaily } from './boards/rank-daily';
@@ -37,6 +45,57 @@ initializeApp();
 setGlobalOptions({ region: REGION, maxInstances: 5 });
 
 const db = () => getFirestore();
+
+/** The HMAC key of ban tombstones (ADR 0012), in Secret Manager. */
+const BAN_TOMBSTONE_KEY = defineSecret('BAN_TOMBSTONE_KEY');
+
+/** The `google.com` provider uid of an Auth user, null without Google. */
+const googleUidOf = (user: {
+  providerData: readonly { providerId: string; uid: string }[];
+}) => user.providerData.find((p) => p.providerId === 'google.com')?.uid ?? null;
+
+/**
+ * Auth, the Realtime Database and the tombstone key for the admin and ban
+ * functions - loaded when first used: the other functions never need them.
+ */
+const adminDeps: AdminDeps = {
+  async account(uid) {
+    const { getAuth } = await import('firebase-admin/auth');
+    try {
+      const user = await getAuth().getUser(uid);
+      const googleUid = googleUidOf(user);
+      return {
+        googleUid,
+        admin:
+          user.customClaims?.['admin'] === true &&
+          user.emailVerified &&
+          googleUid !== null,
+      };
+    } catch {
+      return null;
+    }
+  },
+  async listUids(pageToken) {
+    const { getAuth } = await import('firebase-admin/auth');
+    const page = await getAuth().listUsers(1000, pageToken);
+    return { uids: page.users.map((user) => user.uid), next: page.pageToken };
+  },
+  rtdb: {
+    async set(path, value) {
+      const { getDatabase } = await import('firebase-admin/database');
+      await getDatabase().ref(path).set(value);
+    },
+    async remove(path) {
+      const { getDatabase } = await import('firebase-admin/database');
+      await getDatabase().ref(path).remove();
+    },
+    async get(path) {
+      const { getDatabase } = await import('firebase-admin/database');
+      return (await getDatabase().ref(path).get()).val();
+    },
+  },
+  tombstoneKey: () => BAN_TOMBSTONE_KEY.value(),
+};
 
 /** `replaySubmissions/{id}` into `replays/{id}` - see `acceptSubmission`. */
 export const acceptReplay = onDocumentCreated(
@@ -112,6 +171,7 @@ export const rankProgress = onDocumentWritten(
     document: 'players/{uid}/storage/{key}',
     memory: '256MiB',
     cpu: 'gcf_gen1',
+    secrets: [BAN_TOMBSTONE_KEY],
   },
   async (event) => {
     // Settings and other keys share the collection; only progress counts.
@@ -121,6 +181,8 @@ export const rankProgress = onDocumentWritten(
     }
     const createdAt = after.createTime?.toMillis() ?? Date.now();
     await countProgress(db(), event.params.uid, after.data() ?? {}, createdAt);
+    // A guest who linked Google is checked against the ban tombstones.
+    await checkGoogleLink(db(), adminDeps, event.params.uid, Date.now());
   }
 );
 
@@ -218,9 +280,15 @@ export const hourly = HOURLY_ON
         timeoutSeconds: 1800,
         maxInstances: 1,
         retryCount: 0,
+        secrets: [BAN_TOMBSTONE_KEY],
       },
       async () => {
-        const result = await runHourly(db(), Date.now(), accountInfo);
+        const result = await runHourly(
+          db(),
+          Date.now(),
+          accountInfo,
+          adminDeps
+        );
         logger.info('Hourly run', result);
       }
     )
@@ -242,3 +310,62 @@ export const declaredMatch = onDocumentCreated(
     );
   }
 );
+
+/** The owner's commands (ADR 0012): checked, run, audited. */
+export const adminCommand = onDocumentCreatedWithAuthContext(
+  {
+    document: 'adminCommands/{id}',
+    memory: '512MiB',
+    timeoutSeconds: 540,
+    secrets: [BAN_TOMBSTONE_KEY],
+  },
+  async (event) => {
+    const data = event.data?.data();
+    if (data !== undefined) {
+      const result = await runAdminCommand(
+        db(),
+        adminDeps,
+        event.params.id,
+        data,
+        event.authType === 'unauthenticated' ? undefined : event.authId
+      );
+      logger.info('Admin command', { id: event.params.id, result });
+    }
+  }
+);
+
+/** A new account is counted, and a banned Google identity banned again. */
+export const countAccount = v1
+  .runWith({ secrets: ['BAN_TOMBSTONE_KEY'] })
+  .region(REGION)
+  .auth.user()
+  .onCreate(async (user) => {
+    const created = Date.parse(user.metadata.creationTime);
+    const result = await countNewAccount(
+      db(),
+      adminDeps,
+      user.uid,
+      googleUidOf(user),
+      Number.isNaN(created) ? Date.now() : created,
+      Date.now()
+    );
+    if (result.rebanned) {
+      logger.info('A banned identity came back', { uid: user.uid });
+    }
+  });
+
+/** A deleted account leaves the boards, its ban kept in a tombstone. */
+export const deletePlayerBoards = v1
+  .runWith({ secrets: ['BAN_TOMBSTONE_KEY'] })
+  .region(REGION)
+  .auth.user()
+  .onDelete(async (user) => {
+    const counts = await deleteBoardsOf(
+      db(),
+      adminDeps,
+      user.uid,
+      googleUidOf(user),
+      Date.now()
+    );
+    logger.info('Boards of a deleted account', { uid: user.uid, ...counts });
+  });

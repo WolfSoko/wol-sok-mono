@@ -43,6 +43,14 @@ const QUERIES: Record<string, { group: string; fields: Field[] }> = {
       { fieldPath: 'sort', order: 'DESCENDING' },
     ],
   },
+  // The overview's matches running (count()).
+  'taken rooms still open': {
+    group: 'rooms',
+    fields: [
+      { fieldPath: 'taken', order: 'ASCENDING' },
+      { fieldPath: 'expireAt', order: 'ASCENDING' },
+    ],
+  },
   // rebuildTop, the board pages and a player's own rank (count()).
   'visible entries in board order': {
     group: 'entries',

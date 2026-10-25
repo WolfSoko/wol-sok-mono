@@ -1074,8 +1074,35 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      the endless candidates: their wins in order, a failed one cutting the
      run to its verified prefix (`partial`). The endless budget is
      `ENDLESS_VERIFY_MS` plus what the daily boards leave of theirs.
-   - The admin commands, `countAccount` and `deletePlayerBoards` come
-     next.
+   - Then the owner's side, server only: `adminCommand` (checked again in
+     Auth, run, audited in `adminAudit/{commandId}`, its result written
+     back) for `profile.reset`, `profile.removeImage`, `board.hideEntry`,
+     `board.hidePlayer`, `board.restore`, `player.ban`, `player.unban`,
+     `stats.refresh` and `stats.recount`; bans with the RTDB mirror, the
+     RTDB rule on `status`, the side effects and tombstones (keyed by
+     HMAC with `BAN_TOMBSTONE_KEY`); `countAccount`, `deletePlayerBoards`
+     and the tombstone check after a guest links Google (in
+     `rankProgress`, at most once an hour per guest); `hourly` lifts ended
+     bans and writes the statistics snapshot. The rules for
+     `adminCommands`, `adminAudit`, `adminStats`, `moderation`, notices and
+     the owner's lists; the TTL policies and the `rooms` indexes the
+     statistics count with. Where it differs from the text above:
+     - `board.verify` answers `unsupported` until the admin's leaderboard
+       view comes; the hourly slices verify meanwhile.
+     - A bar keeps the player's entries hidden through every new result
+       (the ranking functions keep `hiddenBy`) and is recorded in
+       `boardMembers.barred`; the ranking still counts underneath, so a
+       restore shows the current score.
+     - A ban cannot delete the friend requests and challenges the player
+       left: their documents are keyed by the sender and carry no field a
+       query could find them by. Challenges expire within an hour; the
+       requests stay, and the rules refuse anything the banned player
+       writes.
+     - There are no public replays to take down yet (the gallery comes
+       later), and no RTDB `connections` yet: the overview counts online
+       players from `status`.
+   - The admin area's views (the admin lib) and the client's ban handling
+     come next.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].

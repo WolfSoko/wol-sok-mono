@@ -22,6 +22,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { type Database, get, ref, remove, set } from 'firebase/database';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -47,12 +48,15 @@ beforeAll(async () => {
     firestore: {
       rules: readFileSync(join(__dirname, '../firestore.rules'), 'utf8'),
     },
+    database: {
+      rules: readFileSync(join(__dirname, '../database.rules.json'), 'utf8'),
+    },
   });
 });
 
 afterAll(() => env.cleanup());
 
-beforeEach(() => env.clearFirestore());
+beforeEach(() => Promise.all([env.clearFirestore(), env.clearDatabase()]));
 
 const db = (uid: string, token: object = {}): Firestore =>
   env.authenticatedContext(uid, token).firestore() as unknown as Firestore;
@@ -567,5 +571,99 @@ describe('a ban', () => {
         deleteDoc(doc(db('eve'), 'profiles/eve'))
       )
     );
+  });
+});
+
+describe("the owner's commands", () => {
+  /** The owner, signed in `minutesAgo` minutes ago. */
+  const owner = (minutesAgo = 5) =>
+    db('own', {
+      ...OWNER_TOKEN,
+      auth_time: Math.floor((Date.now() - minutesAgo * 60_000) / 1000),
+    });
+  const adminCommand = (type: string, extra: object = {}) => ({
+    uid: 'own',
+    type,
+    target: { uid: 'ada' },
+    reason: 'offensive name',
+    args: {},
+    createdAt: serverTimestamp(),
+    expireAt: inADay(),
+    ...extra,
+  });
+  const send = (store: Firestore, data: object) =>
+    setDoc(doc(collection(store, 'adminCommands')), data);
+
+  it('takes a command of a known type from the owner', async () => {
+    await assertSucceeds(send(owner(), adminCommand('profile.reset')));
+    await assertSucceeds(
+      send(owner(), adminCommand('stats.refresh', { reason: '' }))
+    );
+  });
+
+  it('refuses anyone else, an unknown type and extra keys', async () => {
+    await assertFails(send(db('ada'), adminCommand('profile.reset')));
+    await assertFails(send(owner(), adminCommand('player.delete')));
+    await assertFails(
+      send(owner(), adminCommand('profile.reset', { by: 'x' }))
+    );
+    await assertFails(
+      send(owner(), adminCommand('profile.reset', { uid: 'bob' }))
+    );
+  });
+
+  it('wants a reason, and a recent sign-in for what destroys', async () => {
+    await assertFails(
+      send(owner(), adminCommand('profile.reset', { reason: '' }))
+    );
+    await assertFails(send(owner(90), adminCommand('player.ban')));
+    await assertSucceeds(send(owner(90), adminCommand('player.unban')));
+  });
+
+  it("keeps the owner's records to the owner", async () => {
+    await seed('adminAudit/a1', { type: 'profile.reset' });
+    await seed('moderation/ada', { resets: 1 });
+    await assertSucceeds(getDoc(doc(owner(), 'adminAudit/a1')));
+    await assertFails(getDoc(doc(db('ada'), 'adminAudit/a1')));
+    await assertFails(getDoc(doc(db('ada'), 'moderation/ada')));
+    await assertSucceeds(getDocs(collection(owner(), 'profiles')));
+    await assertFails(getDocs(collection(db('ada'), 'profiles')));
+  });
+
+  it('lets a player read and dismiss their notices', async () => {
+    await seed('players/ada/notices/n1', { type: 'banned' });
+    await assertSucceeds(getDoc(doc(db('ada'), 'players/ada/notices/n1')));
+    await assertFails(getDoc(doc(db('bob'), 'players/ada/notices/n1')));
+    await assertSucceeds(
+      import('firebase/firestore').then(({ deleteDoc }) =>
+        deleteDoc(doc(db('ada'), 'players/ada/notices/n1'))
+      )
+    );
+  });
+});
+
+describe('the online status', () => {
+  const rtdb = (uid: string) =>
+    env.authenticatedContext(uid).database() as unknown as Database;
+  const status = { state: 'online', at: Date.now() };
+  const ban = (until: number) =>
+    env.withSecurityRulesDisabled((context: RulesTestContext) =>
+      set(ref(context.database() as unknown as Database, 'bans/eve'), until)
+    );
+
+  it('takes no status from a banned player, and lets them go offline', async () => {
+    await assertSucceeds(set(ref(rtdb('eve'), 'status/eve'), status));
+    await ban(0);
+    await assertFails(set(ref(rtdb('eve'), 'status/eve'), status));
+    await assertSucceeds(remove(ref(rtdb('eve'), 'status/eve')));
+    await ban(Date.now() - 1_000);
+    await assertSucceeds(set(ref(rtdb('eve'), 'status/eve'), status));
+  });
+
+  it('shows a ban to its player only', async () => {
+    await ban(0);
+    await assertSucceeds(get(ref(rtdb('eve'), 'bans/eve')));
+    await assertFails(get(ref(rtdb('ada'), 'bans/eve')));
+    await assertFails(set(ref(rtdb('eve'), 'bans/eve'), null));
   });
 });
