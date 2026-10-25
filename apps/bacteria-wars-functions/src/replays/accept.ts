@@ -85,6 +85,7 @@ async function accept(
     db,
     meta.uid,
     meta.attempt !== undefined,
+    submissionId,
     now
   );
   if (refused === 'cap' && meta.attempt !== undefined) {
@@ -109,8 +110,9 @@ async function accept(
 
 /**
  * Ends a submission `acceptReplay` failed on for an hour: deletes it, and
- * voids its attempt unless its replay got stored after all - the failure
- * was the server's, so it must not cost the player the attempt.
+ * voids its attempt - the failure was the server's, so it must not cost
+ * the player the attempt. (`voidAttempt` leaves one whose replay got
+ * stored after all.)
  */
 export async function giveUpSubmission(
   db: Firestore,
@@ -119,11 +121,7 @@ export async function giveUpSubmission(
   now: number
 ): Promise<void> {
   const meta = submissionMeta(submissionId, data, now);
-  if (
-    meta?.attempt !== undefined &&
-    // A ranked replay is local: `l_` and the submission's id.
-    !(await db.doc(`replays/l_${submissionId}`).get()).exists
-  ) {
+  if (meta?.attempt !== undefined) {
     await voidAttempt(db, meta.uid, meta.attempt, 'error', now);
   }
   await db.doc(`replaySubmissions/${submissionId}`).delete();
@@ -133,7 +131,9 @@ export async function giveUpSubmission(
  * Marks a declared attempt the server dropped `void` (ADR 0012): its replay
  * never ranks, and it costs nothing - a daily attempt may be declared again
  * in its place (`firestore.rules`), an endless match counts as not played,
- * so its run is computed again. Only the functions write it.
+ * so its run is computed again. Only the functions write it. An attempt
+ * that already has a stored replay (`replayId`) is used, and stays so,
+ * whatever else names it later.
  */
 export async function voidAttempt(
   db: Firestore,
@@ -143,20 +143,24 @@ export async function voidAttempt(
   now: number
 ): Promise<void> {
   const ref = db.doc(`players/${uid}/attempts/${attemptId}`);
-  const voided = await db.runTransaction(async (tx) => {
+  const state = await db.runTransaction(async (tx) => {
     const attempt = await tx.get(ref);
-    if (!attempt.exists || attempt.get('void') === true) {
-      return false;
+    if (!attempt.exists || attempt.get('replayId') !== undefined) {
+      return 'used' as const;
+    }
+    if (attempt.get('void') === true) {
+      return 'void' as const;
     }
     tx.update(ref, {
       void: true,
       voidReason: reason,
       voidedAt: FieldValue.serverTimestamp(),
     });
-    return true;
-  });
-  if (voided) {
     logger.warn('Ranked attempt voided', { uid, attemptId, reason });
+    return 'void' as const;
+  });
+  // Also when an earlier try voided it: its refresh may have failed.
+  if (state === 'void') {
     await trackDeclaredMatch(db, uid, attemptId, now);
   }
 }
@@ -203,18 +207,32 @@ async function storeLocal(
   now: number
 ): Promise<AcceptOutcome> {
   const ref = db.doc(`replays/${plan.id}`);
+  const attemptRef =
+    meta.attempt === undefined
+      ? undefined
+      : db.doc(`players/${meta.uid}/attempts/${meta.attempt}`);
   try {
-    const batch = db.batch();
-    batch.create(ref, {
-      ...newReplay(plan, meta.uid, 'submitted', now),
-      // When the player sent it - a ranked replay's deadline (ADR 0012).
-      ...(meta.attempt === undefined
-        ? {}
-        : { submittedAt: Timestamp.fromMillis(meta.createdAt) }),
+    return await db.runTransaction(async (tx) => {
+      const attempt =
+        attemptRef === undefined ? undefined : await tx.get(attemptRef);
+      tx.create(ref, {
+        ...newReplay(plan, meta.uid, 'submitted', now),
+        // When the player sent it - a ranked replay's deadline (ADR 0012).
+        ...(meta.attempt === undefined
+          ? {}
+          : { submittedAt: Timestamp.fromMillis(meta.createdAt) }),
+      });
+      tx.create(ref.collection('blob').doc('data'), blob);
+      // The first stored replay uses its attempt up: no drop voids it now.
+      if (
+        attemptRef !== undefined &&
+        attempt?.exists === true &&
+        attempt.get('replayId') === undefined
+      ) {
+        tx.update(attemptRef, { replayId: plan.id });
+      }
+      return 'stored' as const;
     });
-    batch.create(ref.collection('blob').doc('data'), blob);
-    await batch.commit();
-    return 'stored';
   } catch (error) {
     if (isAlreadyExists(error)) {
       return 'exists';

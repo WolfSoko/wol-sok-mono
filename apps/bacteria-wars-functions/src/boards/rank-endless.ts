@@ -126,13 +126,17 @@ export async function saveRun(
   now: number
 ): Promise<StoredRun | null> {
   const zero = read.attempts.find((attempt) => attempt.i === 0);
-  if (zero === undefined) {
+  // The stored seed once TTL took a void match 0, which `declared` leaves out.
+  const seed =
+    zero === undefined
+      ? read.stored.seed
+      : attemptSeed(uid, endlessAttemptId(runId, 0), zero.at);
+  if (seed === undefined) {
     return null;
   }
   const accepted = change.accepted ?? read.stored.accepted ?? {};
   const verifiedWins = change.verifiedWins ?? read.stored.verifiedWins ?? 0;
   const cut = change.cut !== undefined ? change.cut : (read.stored.cut ?? null);
-  const seed = attemptSeed(uid, endlessAttemptId(runId, 0), zero.at);
   const state = computeRun(seed, read.attempts, accepted, now);
   const base = endlessEntryBase(state, verifiedWins, cut);
   const run: StoredRun = {

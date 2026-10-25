@@ -10,7 +10,8 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { closeNotReported } from '../boards/hourly';
-import { clearBanCache, dayOf } from '../limits';
+import { clearBanCache, dayOf, takeSubmissionSlot } from '../limits';
+import { dailyReplay } from '../testing/daily-replay';
 import { acceptSubmission, giveUpSubmission } from './accept';
 import { deleteReplayChildren } from './cleanup';
 import { runReplayCommand } from './command';
@@ -201,11 +202,33 @@ describe('acceptReplay', () => {
       expect((await db.doc('replaySubmissions/s1').get()).exists).toBe(false);
     });
 
-    it('keeps its attempt when its replay got stored before the failure', async () => {
+    it('is used up by its first stored replay, which no later drop voids', async () => {
+      const at = NOW - 10 * 60_000;
+      const replay = dailyReplay({}, 'ada', attempt, at);
+      expect(
+        await submit('s1', 'ada', Buffer.from(await replayToBytes(replay)), {
+          attempt,
+        })
+      ).toBe('stored');
+      expect((await attemptRef().get()).get('replayId')).toBe('l_s1');
+      // Junk naming the same attempt, on a day the cap is reached.
+      await db.doc(`counters/${dayOf(NOW)}`).set({ rankedSubmissions: 20_000 });
+      expect(await submit('s2', 'ada', await bytesOf(), { attempt })).toBe(
+        'cap'
+      );
       const data = { uid: 'ada', attempt, hint: 40 };
-      await db.doc('replays/l_s1').set({ kind: 'daily', players: ['ada'] });
-      await giveUpSubmission(db, 's1', data, NOW);
+      await giveUpSubmission(db, 's3', data, NOW);
       expect((await attemptRef().get()).get('void')).toBeUndefined();
+    });
+
+    it('takes one slot however often acceptReplay tries it', async () => {
+      await db.doc('replaySubmissions/s1').set({ uid: 'ada', attempt });
+      for (let i = 0; i < 3; i++) {
+        expect(await takeSubmissionSlot(db, 'ada', true, 's1', NOW)).toBeNull();
+      }
+      expect((await db.doc('limits/ada').get()).get('rankedSubmissions')).toBe(
+        1
+      );
     });
   });
 

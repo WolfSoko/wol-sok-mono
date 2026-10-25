@@ -95,22 +95,33 @@ export type SlotRefusal = 'limit' | 'cap';
  * Takes one of the player's submissions for this hour, and one of the
  * day's for everyone, in one transaction - ranked and unranked apart, each
  * with its own count (ADR 0012). Null when it got one; else what was used
- * up: `limit`, the player's hour, or `cap`, the day's for everyone.
+ * up: `limit`, the player's hour, or `cap`, the day's for everyone. The
+ * submission keeps that it got its slot (`slotTaken`), so `acceptReplay`
+ * retrying it takes none again.
  */
 export async function takeSubmissionSlot(
   db: Firestore,
   uid: string,
   ranked: boolean,
+  submissionId: string,
   now: number = Date.now()
 ): Promise<SlotRefusal | null> {
   const hour = Math.floor(now / 3_600_000);
   const day = dayOf(now);
   const limitRef = db.doc(`limits/${uid}`);
   const counterRef = db.doc(`counters/${day}`);
+  const submissionRef = db.doc(`replaySubmissions/${submissionId}`);
   const field = ranked ? 'rankedSubmissions' : 'submissions';
   const cap = ranked ? DAILY_RANKED_SUBMISSIONS : DAILY_SUBMISSIONS;
   return db.runTransaction(async (tx) => {
-    const [limit, counter] = await tx.getAll(limitRef, counterRef);
+    const [limit, counter, submission] = await tx.getAll(
+      limitRef,
+      counterRef,
+      submissionRef
+    );
+    if (submission.get('slotTaken') === true) {
+      return null;
+    }
     const sameHour = limit.get('hour') === hour;
     const used = sameHour ? Number(limit.get(field) ?? 0) : 0;
     if (used >= SUBMISSIONS_PER_HOUR) {
@@ -134,6 +145,9 @@ export async function takeSubmissionSlot(
       },
       { merge: true }
     );
+    if (submission.exists) {
+      tx.update(submissionRef, { slotTaken: true });
+    }
     return null;
   });
 }

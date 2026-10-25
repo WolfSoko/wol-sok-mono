@@ -89,26 +89,23 @@ describe('the exported functions', () => {
 
     beforeEach(() => jest.clearAllMocks());
 
-    it('accepts a submission at the time of the event, for an hour', async () => {
-      const event = created(40);
-      await functions['acceptReplay']?.run(event);
+    it('accepts a submission for an hour', async () => {
+      await functions['acceptReplay']?.run(created(40));
       expect(acceptSubmission).toHaveBeenCalledWith(
         expect.anything(),
         's1',
-        submission,
-        Date.parse(event.time)
+        submission
       );
       expect(giveUpSubmission).not.toHaveBeenCalled();
     });
 
     it('then gives up, which voids its attempt', async () => {
-      const event = created(61);
-      await functions['acceptReplay']?.run(event);
+      await functions['acceptReplay']?.run(created(61));
       expect(giveUpSubmission).toHaveBeenCalledWith(
         expect.anything(),
         's1',
         submission,
-        Date.parse(event.time)
+        expect.any(Number)
       );
       expect(acceptSubmission).not.toHaveBeenCalled();
     });

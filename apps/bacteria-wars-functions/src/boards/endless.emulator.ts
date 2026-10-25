@@ -155,6 +155,15 @@ describe('rankEndless', () => {
     expect(Object.keys((await run())?.['declared'] ?? {})).toEqual(['0', '2']);
   });
 
+  it('keeps the seed of a run whose void match 0 TTL took', async () => {
+    await declare(0);
+    await voidAttempt(db, 'ada', `e_${RUN_ID}_0`, 'error', NOW);
+    await db.doc(`players/ada/attempts/e_${RUN_ID}_0`).delete();
+    await declare(1);
+    expect(await rank('l_1', played(1, 0))).toBe('counted');
+    expect(await run()).toMatchObject({ wins: 1, lives: 3 });
+  });
+
   it('waits for a match within 2 hours, and the sweep then counts it lost', async () => {
     await declare(0);
     await declare(1);

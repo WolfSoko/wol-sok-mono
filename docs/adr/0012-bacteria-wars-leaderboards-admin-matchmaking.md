@@ -332,9 +332,13 @@ replay out with unranked uploads and have it voided. A ranked submission
 over the day's cap is dropped and its attempt marked `void`; one over the
 player's own hourly limit is not, as the player chose to send that many.
 `acceptReplay` retries a submission it fails on for an hour, then gives
-up: it deletes the submission and marks the attempt `void`, unless its
-replay was stored after all. Nothing a client sends makes acceptance
-throw (the parser answers null), so only a failure of ours voids.
+up: it deletes the submission and marks the attempt `void`. Nothing a
+client sends makes acceptance throw (the parser answers null), so only a
+failure of ours voids. A submission keeps that it got its slot
+(`slotTaken`), so the retries count it once. The first stored replay of
+an attempt uses it up: `acceptReplay` writes its id into the attempt
+(`replayId`) with the replay, and an attempt that has one is never
+voided, whatever a later submission naming it brings.
 
 A `void` attempt (`void`, `voidReason`, `voidedAt`, written by the
 functions only) never ranks: a replay of it gets `rankedReason: 'void'`.

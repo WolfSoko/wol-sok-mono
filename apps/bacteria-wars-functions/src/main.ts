@@ -42,9 +42,11 @@ const db = () => getFirestore();
 
 /**
  * `replaySubmissions/{id}` into `replays/{id}` - see `acceptSubmission`.
- * Retried for an hour (`RETRY_FOR_MS`), at the event's time; then it gives
- * up (`giveUpSubmission`), which voids a ranked attempt rather than let a
- * failure of ours cost it.
+ * Retried for an hour (`RETRY_FOR_MS`); then it gives up
+ * (`giveUpSubmission`), which voids a ranked attempt rather than let a
+ * failure of ours cost it. Each try runs at its own time: the limits count
+ * by the hour they are in, and a ranked deadline by the submission's
+ * `createdAt`.
  */
 export const acceptReplay = onDocumentCreated(
   {
@@ -65,10 +67,10 @@ export const acceptReplay = onDocumentCreated(
         `acceptReplay gave up on a submission older than ${RETRY_FOR_MS / 60_000} minutes`,
         { id, time: event.time }
       );
-      await giveUpSubmission(db(), id, data, at);
+      await giveUpSubmission(db(), id, data, Date.now());
       return;
     }
-    await acceptSubmission(db(), id, data, at);
+    await acceptSubmission(db(), id, data);
   }
 );
 
