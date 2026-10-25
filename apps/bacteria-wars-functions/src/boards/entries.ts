@@ -1,7 +1,9 @@
-import type {
-  BoardKind,
-  EntryShow,
-  EntryStatus,
+import {
+  type BoardKind,
+  type BoardRef,
+  type EntryShow,
+  type EntryStatus,
+  parseBoardId,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   FieldValue,
@@ -117,4 +119,34 @@ export async function profileIn(
   uid: string
 ): Promise<BoardProfile> {
   return boardProfileOf((await tx.get(db.doc(`profiles/${uid}`))).data());
+}
+
+/** One of a player's entries, as `boardMembers/{uid}` lists it. */
+export interface MemberEntry {
+  boardId: string;
+  board: BoardRef;
+  entryId: string;
+}
+
+/**
+ * The entries a `boardMembers/{uid}` document points to: one per board in
+ * its `boards` with an id in its `entryIds` - what relabelling and account
+ * deletion go through.
+ */
+export function memberEntries(
+  member: Record<string, unknown> | undefined
+): MemberEntry[] {
+  const boards = member?.['boards'];
+  const entryIds = (member?.['entryIds'] ?? {}) as Partial<
+    Record<BoardKind, string>
+  >;
+  const entries: MemberEntry[] = [];
+  for (const boardId of Array.isArray(boards) ? boards : []) {
+    const board = typeof boardId === 'string' ? parseBoardId(boardId) : null;
+    const entryId = board === null ? undefined : entryIds[board.kind];
+    if (board !== null && entryId !== undefined) {
+      entries.push({ boardId, board, entryId });
+    }
+  }
+  return entries;
 }

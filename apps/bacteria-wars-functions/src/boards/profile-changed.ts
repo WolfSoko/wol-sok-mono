@@ -1,9 +1,5 @@
-import {
-  type BoardKind,
-  parseBoardId,
-} from '@wolsok/feat-lazy-bac-game/engine';
 import type { Firestore } from 'firebase-admin/firestore';
-import { entryData, hiddenByOf } from './entries';
+import { entryData, hiddenByOf, memberEntries } from './entries';
 import { type BoardProfile, boardProfileOf } from './names';
 
 /** True when the change touches how a player's entries look. */
@@ -34,21 +30,8 @@ export async function boardProfileChanged(
     return 0;
   }
   const member = await db.doc(`boardMembers/${uid}`).get();
-  const boards = member.get('boards');
-  const entryIds = member.get('entryIds') as
-    | Partial<Record<BoardKind, string>>
-    | undefined;
-  if (!Array.isArray(boards) || entryIds === undefined) {
-    return 0;
-  }
   let relabelled = 0;
-  for (const boardId of boards) {
-    const kind =
-      typeof boardId === 'string' ? parseBoardId(boardId)?.kind : null;
-    const entryId = kind == null ? undefined : entryIds[kind];
-    if (entryId === undefined) {
-      continue;
-    }
+  for (const { boardId, entryId } of memberEntries(member.data())) {
     const ref = db.doc(`boards/${boardId}/entries/${entryId}`);
     const done = await db.runTransaction(async (tx) => {
       const entry = await tx.get(ref);
