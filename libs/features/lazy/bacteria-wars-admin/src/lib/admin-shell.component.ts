@@ -17,7 +17,19 @@ import {
 } from '@angular/router';
 import { SPLASH_ID } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import { AdminAccessService } from './access/admin-access.service';
-import { AdminI18n, AdminTextPipe } from './i18n/admin-i18n.service';
+import {
+  AdminI18n,
+  type AdminTextKey,
+  AdminTextPipe,
+} from './i18n/admin-i18n.service';
+
+/** The views' tabs; a player opens from the profiles, bans or audit. */
+const TABS: readonly { path: string; label: AdminTextKey }[] = [
+  { path: '.', label: 'nav.overview' },
+  { path: 'profiles', label: 'nav.profiles' },
+  { path: 'bans', label: 'nav.bans' },
+  { path: 'audit', label: 'nav.audit' },
+];
 
 /**
  * The admin area's frame: the title, its views' tabs once the owner is in,
@@ -48,16 +60,18 @@ import { AdminI18n, AdminTextPipe } from './i18n/admin-i18n.service';
     </mat-toolbar>
     @if (access.access() === 'granted') {
       <nav mat-tab-nav-bar [tabPanel]="panel">
-        <a
-          mat-tab-link
-          routerLink="."
-          routerLinkActive
-          #overview="routerLinkActive"
-          [routerLinkActiveOptions]="{ exact: true }"
-          [active]="overview.isActive"
-        >
-          {{ 'nav.overview' | adminT }}
-        </a>
+        @for (tab of tabs; track tab.path) {
+          <a
+            mat-tab-link
+            [routerLink]="tab.path"
+            routerLinkActive
+            #active="routerLinkActive"
+            [routerLinkActiveOptions]="{ exact: tab.path === '.' }"
+            [active]="active.isActive"
+          >
+            {{ tab.label | adminT }}
+          </a>
+        }
       </nav>
     }
     <mat-tab-nav-panel #panel>
@@ -92,6 +106,7 @@ import { AdminI18n, AdminTextPipe } from './i18n/admin-i18n.service';
 })
 export class AdminShellComponent {
   protected readonly access = inject(AdminAccessService);
+  protected readonly tabs = TABS;
   private readonly router = inject(Router);
 
   /** Signs out, then lets the guard run again, so the gate replaces the view. */

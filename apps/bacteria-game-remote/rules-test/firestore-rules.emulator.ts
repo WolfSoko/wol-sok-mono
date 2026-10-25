@@ -456,6 +456,15 @@ describe('profiles', () => {
       setDoc(doc(db('ada'), 'profiles/ada'), profile({ admin: true }))
     );
   });
+
+  it('are listed by the owner only', async () => {
+    await seed('profiles/ada', { name: 'Ada' });
+    await assertSucceeds(
+      getDocs(collection(db('own', OWNER_TOKEN), 'profiles'))
+    );
+    await assertFails(getDocs(collection(db('ada'), 'profiles')));
+    await assertSucceeds(getDoc(doc(db('bob'), 'profiles/ada')));
+  });
 });
 
 describe('bans', () => {
@@ -464,6 +473,12 @@ describe('bans', () => {
     await assertSucceeds(getDoc(doc(db('ada'), 'bans/ada')));
     await assertFails(getDoc(doc(db('bob'), 'bans/ada')));
     await assertSucceeds(getDoc(doc(db('own', OWNER_TOKEN), 'bans/ada')));
+  });
+
+  it('are listed by the owner only', async () => {
+    await seed('bans/ada', { until: null });
+    await assertSucceeds(getDocs(collection(db('own', OWNER_TOKEN), 'bans')));
+    await assertFails(getDocs(collection(db('ada'), 'bans')));
   });
 });
 

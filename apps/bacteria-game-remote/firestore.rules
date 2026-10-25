@@ -54,6 +54,9 @@ service cloud.firestore {
     // a profile, only its owner writes it.
     match /profiles/{uid} {
       allow get: if signedIn();
+      // The owner's profile lists (ADR 0012): newest, uploaded pictures,
+      // by name.
+      allow list: if isAdmin();
       allow create, update: if isPlayer(uid) && notBanned() && isProfile(request.resource.data);
       allow delete: if isPlayer(uid);
     }
@@ -243,6 +246,7 @@ service cloud.firestore {
     // their own, to show why and until when.
     match /bans/{uid} {
       allow get: if isPlayer(uid) || isAdmin();
+      allow list: if isAdmin();
     }
 
     // The owner's commands (ADR 0012): created by the owner only, in their

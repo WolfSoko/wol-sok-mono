@@ -1,0 +1,189 @@
+@let current = player();
+<a mat-button routerLink="../../profiles">← {{ "player.back" | adminT }}</a>
+
+<header class="head">
+  @if (current?.profile; as profile) {
+    <feat-lazy-bac-game-avatar [avatar]="profile.avatar" [size]="64" />
+    <div>
+      <h2>{{ profile.name }}</h2>
+      @if (profile.motto) {
+        <p>{{ "player.motto" | adminT }}: {{ profile.motto }}</p>
+      }
+      <p>
+        @if (current?.flags.publicName) {
+          {{ "player.public" | adminT: { name: profile.name } }}
+        } @else {
+          {{ "player.anonymous" | adminT }}
+        }
+        @if (current?.flags.boardOptOut) {
+          · {{ "player.boardOptOut" | adminT }}
+        }
+        @if (current?.flags.galleryOptOut) {
+          · {{ "player.galleryOptOut" | adminT }}
+        }
+        @if (profile.shareStatus) {
+          · {{ "player.shareStatus" | adminT }}
+        }
+      </p>
+    </div>
+  } @else {
+    <div>
+      <h2>{{ uid() }}</h2>
+      @if (current) {
+        <p>{{ "player.noProfile" | adminT }}</p>
+      }
+    </div>
+  }
+</header>
+<p>
+  <code>{{ uid() }}</code>
+</p>
+
+@if (current; as current) {
+  <section class="cards">
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>{{ "player.actions" | adminT }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="actions">
+        <button mat-stroked-button type="button" (click)="resetProfile()">
+          {{ "type.profile.reset" | adminT }}
+        </button>
+        @if (current.profile?.avatar?.kind === "image") {
+          <button mat-stroked-button type="button" (click)="removeImage()">
+            {{ "type.profile.removeImage" | adminT }}
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="hidePlayer()">
+          {{ "type.board.hidePlayer" | adminT }}
+        </button>
+        <button mat-stroked-button type="button" (click)="restorePlayer()">
+          {{ "type.board.restore" | adminT }}
+        </button>
+        @if (current.ban === null) {
+          <button mat-flat-button type="button" (click)="ban()">
+            {{ "type.player.ban" | adminT }}
+          </button>
+        } @else {
+          <button mat-flat-button type="button" (click)="unban()">
+            {{ "type.player.unban" | adminT }}
+          </button>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>{{ "player.ban" | adminT }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (current.ban; as ban) {
+          <p>
+            @if (ban.until === null) {
+              {{
+                "player.bannedForGood"
+                  | adminT
+                    : {
+                        since: i18n.dateTime(ban.since),
+                        reason: banReasonKey(ban.reason) | adminT,
+                      }
+              }}
+            } @else {
+              {{
+                "player.bannedUntil"
+                  | adminT
+                    : {
+                        since: i18n.dateTime(ban.since),
+                        until: i18n.dateTime(ban.until),
+                        reason: banReasonKey(ban.reason) | adminT,
+                      }
+              }}
+            }
+          </p>
+          @if (!banned()) {
+            <p>{{ "player.banEnded" | adminT }}</p>
+          }
+        } @else {
+          <p>{{ "player.notBanned" | adminT }}</p>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>{{ "player.counts" | adminT }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <dl>
+          @for (count of counts; track count) {
+            <dt>{{ countKey(count) | adminT }}</dt>
+            <dd>{{ i18n.number(current.moderation[count]) }}</dd>
+          }
+        </dl>
+      </mat-card-content>
+    </mat-card>
+  </section>
+
+  <h3>{{ "player.boards" | adminT }}</h3>
+  <p>
+    @if (current.member.activeAt; as activeAt) {
+      {{ "player.activeAt" | adminT: { at: i18n.dateTime(activeAt) } }}
+    } @else {
+      {{ "player.never" | adminT }}
+    }
+    @if (current.member.barred.length > 0) {
+      ·
+      {{
+        "player.barred" | adminT: { kinds: current.member.barred.join(", ") }
+      }}
+    }
+  </p>
+  @if (current.entries.length === 0) {
+    <p>{{ "player.noEntries" | adminT }}</p>
+  } @else {
+    <table class="entries">
+      <thead>
+        <tr>
+          <th>{{ "player.board" | adminT }}</th>
+          <th>{{ "player.entry" | adminT }}</th>
+          <th>{{ "player.status" | adminT }}</th>
+          <th>{{ "player.hiddenBy" | adminT }}</th>
+          <th>{{ "player.actions" | adminT }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (entry of current.entries; track entry.boardId) {
+          <tr>
+            <td>{{ entry.boardId }}</td>
+            <td>
+              <code>{{ entry.entryId }}</code>
+            </td>
+            <td>{{ entry.record?.status ?? "-" }}</td>
+            <td>{{ hiddenBy(entry.record?.hiddenBy ?? []) }}</td>
+            <td>
+              @if (entry.record !== null) {
+                @if (hiddenByOwner(entry)) {
+                  <button
+                    mat-button
+                    type="button"
+                    (click)="restoreEntry(entry)"
+                  >
+                    {{ "type.board.restore" | adminT }}
+                  </button>
+                } @else {
+                  <button mat-button type="button" (click)="hideEntry(entry)">
+                    {{ "type.board.hideEntry" | adminT }}
+                  </button>
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  <h3>{{ "player.audit" | adminT }}</h3>
+  <feat-lazy-bac-admin-audit-table [rows]="audit.rows()" />
+  <feat-lazy-bac-admin-list-footer [list]="audit" />
+}

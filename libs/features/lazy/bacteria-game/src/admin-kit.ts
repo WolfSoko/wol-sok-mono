@@ -29,7 +29,7 @@ export type { Language } from './lib/i18n/language';
 
 // Players.
 export { AvatarComponent } from './lib/social/avatar.component';
-export { defaultProfile } from './lib/social/profile';
+export { defaultProfile, parseProfile } from './lib/social/profile';
 export type { Avatar, Profile } from './lib/social/profile';
 
 // The contracts the admin views read and write.
