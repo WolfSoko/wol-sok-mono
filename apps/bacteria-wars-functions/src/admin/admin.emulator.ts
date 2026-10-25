@@ -36,14 +36,15 @@ beforeEach(async () => {
 /**
  * A Realtime Database that keeps its values and records its writes, and
  * fails for `failFor`. `beforeRemoveIf` runs when a conditional remove
- * starts, `afterRemoveIf` once it is done - to let another command run in
- * between.
+ * starts, `afterRemoveIf` once it is done, `beforeRemove` before a plain
+ * remove of a ban - to let another command run in between.
  */
 function fakeRealtime(
   failFor?: string,
   hooks: {
     beforeRemoveIf?: () => Promise<unknown>;
     afterRemoveIf?: () => Promise<unknown>;
+    beforeRemove?: () => Promise<unknown>;
   } = {}
 ): Realtime & { calls: string[]; values: Map<string, number> } {
   const calls: string[] = [];
@@ -61,6 +62,9 @@ function fakeRealtime(
       values.set(path, value);
     },
     remove: async (path) => {
+      if (path.startsWith('bans/')) {
+        await hooks.beforeRemove?.();
+      }
       fail(path);
       calls.push(`remove ${path}`);
       values.delete(path);
@@ -372,6 +376,22 @@ describe('player.unban', () => {
       error: 'not-banned',
     });
     expect(realtime.values.has('bans/ada')).toBe(false);
+  });
+
+  it('keeps the mirror of a ban set while it clears one', async () => {
+    await seedAda();
+    const until = NOW + DAY;
+    const realtime = fakeRealtime(undefined, {
+      beforeRemove: () => command('c2', ban('ada', until), context(realtime)),
+    });
+    expect(await command('c1', unban('ada'), context(realtime))).toEqual({
+      ok: false,
+      error: 'not-banned',
+    });
+    expect(realtime.values.get('bans/ada')).toBe(until);
+    expect((await entry('boards/xp/entries/xpAda')).get('hiddenBy')).toEqual({
+      ban: true,
+    });
   });
 
   it('leaves a ban that changed while it ran', async () => {
