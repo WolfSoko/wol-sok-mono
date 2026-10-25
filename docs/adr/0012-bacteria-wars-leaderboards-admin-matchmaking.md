@@ -1143,9 +1143,10 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      the daily boards TTL took whenever a daily entry is written, so it
      holds about 31 daily ones, and `dailyRuns` expire from their day like
      the board. A replay taken out of the gallery carries `galleryOut`,
-     which keeps it out once its player's uid has left `optOut`. The
-     tombstone, the ban, the audit scrub and `stats/accounts` follow with
-     the tombstones; until then a deleted account's ban stays behind.
+     which keeps it out once its player's uid has left `optOut`. For a
+     banned Google account it first writes the ban's tombstone; it also
+     deletes both ban documents, scrubs `before`/`after` of the audit
+     entries about the account and lowers `stats/accounts`.
    - Then the bans: `adminCommand` (the auth-context trigger, the writer
      compared with `uid`, the owner read again with `getUser()`,
      `parseAdminCommand`, the audit under the command id, `result` on the
@@ -1180,8 +1181,33 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      `moderation` and `notices`; the RTDB `connections` node and the ban
      check on `status` and `connections`; the TTLs of `adminCommands`,
      `adminAudit` and `notices`, and the two `adminAudit` indexes.
-   - Still to come: the other admin types, the tombstones, `countAccount`
-     and the statistics.
+   - Then the tombstones (`src/admin/tombstones.ts`, `BAN_TOMBSTONE_KEY`
+     through `defineSecret`, named in `secrets` by `acceptReplay`,
+     `rankProgress`, `adminCommand`, `countAccount` and
+     `deletePlayerBoards`): a ban of a Google account writes its tombstone
+     in the ban's transaction and adds its id to
+     `moderation/{uid}.tombstones`, so an unban deletes every tombstone the
+     ban wrote with the ban, also once the player unlinked or swapped
+     Google, and so does the hourly expiry; TTL
+     takes the rest (`expireAt` is the ban's end, at most 2 years), and a
+     match checks `until`. An Auth failure while looking the account up fails the
+     command rather than ban without a tombstone. `countAccount` counts the
+     account in `stats/accounts` in a transaction that notes
+     `boardMembers.accountCounted` (an event delivered twice counts once,
+     and only a counted account is counted down on deletion), notes
+     `accountCreatedAt`, checks a Google sign-up's tombstone, and leaves an
+     account Auth no longer has. `acceptReplay` and `rankProgress` check
+     once after a guest links Google (`googleChecked`; a guest is looked
+     up once an hour at most, `googleLookedAt`; a failed check is logged
+     and runs again with a later write). A match bans the new uid through
+     `banPlayer`, audited as `tombstone_{uid}` with `by: 'system'`, and
+     leaves a ban that already holds as it is. The `deletePlayerBoards`
+     trigger (`deleteAccount`, which runs the board clean-up beside the
+     account steps) deletes both ban documents only after the tombstone is
+     written (by the
+     account's Google provider, and the ids the bans noted); its other steps
+     run regardless, and the audit scrub skips an entry TTL took.
+   - Still to come: the other admin types and the statistics.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].

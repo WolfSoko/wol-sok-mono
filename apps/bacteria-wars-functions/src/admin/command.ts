@@ -9,6 +9,7 @@ import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { banPlayer, type BanChange, liftBan } from './bans';
 import type { Realtime } from './realtime';
+import { googleProviderOf } from './tombstones';
 import { writeAudit } from './records';
 
 /** What the server made of a command, written back on it as `result`. */
@@ -23,6 +24,8 @@ export interface AdminContext {
   /** Whether the uid is the owner now, read afresh from Auth. */
   isOwner(uid: string): Promise<boolean>;
   realtime: Realtime;
+  /** The account's ban tombstone id, null without a Google provider. */
+  tombstoneOf(uid: string): Promise<string | null>;
 }
 
 /** The parts of an Auth user the owner check reads. */
@@ -45,7 +48,7 @@ export function isOwnerRecord(user: OwnerRecord): boolean {
     user.customClaims?.['admin'] === true &&
     user.emailVerified &&
     !user.disabled &&
-    user.providerData.some((p) => p.providerId === 'google.com')
+    googleProviderOf(user) !== undefined
   );
 }
 
@@ -188,7 +191,10 @@ async function act(
     return { ok: false, error: 'not-found', target, ...unchanged };
   }
   if (command.type === 'player.unban') {
-    const change = await liftBan(db, context.realtime, uid, commandId, now);
+    const tombstone = await context.tombstoneOf(uid);
+    const change = await liftBan(db, context.realtime, uid, commandId, now, {
+      tombstone,
+    });
     return typeof change === 'string'
       ? { ok: false, error: change, target, ...unchanged }
       : { ok: true, target, ...change };
@@ -197,6 +203,7 @@ async function act(
   if (until !== null && until <= now) {
     return { ok: false, error: 'ended', target, ...unchanged };
   }
+  const tombstone = await context.tombstoneOf(uid);
   const change = await banPlayer(
     db,
     context.realtime,
@@ -204,7 +211,8 @@ async function act(
     until,
     reason,
     commandId,
-    now
+    now,
+    { tombstone }
   );
   return { ok: true, target, ...change };
 }

@@ -1,9 +1,13 @@
 import type { BanReason } from '@wolsok/feat-lazy-bac-game/engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { DAY_MS } from '../boards/budgets';
+import { hasGrpcCode } from '../grpc';
 
 /** How long an audit entry is kept (ADR 0012): 2 years, then TTL. */
 export const AUDIT_TTL_MS = 2 * 365 * DAY_MS;
+
+/** How long a ban tombstone is kept at most: 2 years, then TTL. */
+export const TOMBSTONE_TTL_MS = 2 * 365 * DAY_MS;
 
 /** How long a player's notice is kept: 31 days, then TTL. */
 export const NOTICE_TTL_MS = 31 * DAY_MS;
@@ -49,8 +53,8 @@ export async function writeAudit(
     });
     return true;
   } catch (error) {
-    // gRPC's ALREADY_EXISTS: audited before.
-    if ((error as { code?: unknown } | null)?.code === 6) {
+    // Audited before.
+    if (hasGrpcCode(error, 6, 'already-exists')) {
       return false;
     }
     throw error;
@@ -87,4 +91,49 @@ export function noticeData(
         }),
     expireAt: Timestamp.fromMillis(now + NOTICE_TTL_MS),
   };
+}
+
+/** A tombstone's document: the ban's end and reason, kept until it ends. */
+export function tombstoneData(
+  until: number | null,
+  reason: BanReason,
+  now: number
+): Record<string, unknown> {
+  const longest = now + TOMBSTONE_TTL_MS;
+  return {
+    until: until === null ? null : Timestamp.fromMillis(until),
+    reason,
+    expireAt: Timestamp.fromMillis(
+      until === null ? longest : Math.min(until, longest)
+    ),
+  };
+}
+
+/**
+ * Scrubs the audit entries about a deleted account (ADR 0012): their
+ * `before` and `after`, which may hold the replaced name and motto, become
+ * `{ scrubbed: true }`; the uid, type, reason and date stay. Returns how
+ * many entries it scrubbed.
+ */
+export async function scrubAudit(db: Firestore, uid: string): Promise<number> {
+  const entries = await db
+    .collection('adminAudit')
+    .where('target.uid', '==', uid)
+    .select()
+    .get();
+  const scrubbed = { scrubbed: true };
+  const writer = db.bulkWriter();
+  const updates = entries.docs.map((doc) =>
+    writer
+      .update(doc.ref, { before: scrubbed, after: scrubbed })
+      .catch((error: unknown) => {
+        // TTL took the entry meanwhile.
+        if (!hasGrpcCode(error, 5, 'not-found')) {
+          throw error;
+        }
+      })
+  );
+  await writer.close();
+  await Promise.all(updates);
+  return entries.size;
 }

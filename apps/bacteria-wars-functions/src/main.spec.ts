@@ -1,6 +1,7 @@
 import { rankDaily } from './boards/rank-daily';
 import { rankOnline } from './boards/rank-online';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
+import { checkGoogleLink } from './admin/tombstones';
 
 jest.mock('./boards/rank-daily', () => ({
   ...jest.requireActual('./boards/rank-daily'),
@@ -9,6 +10,10 @@ jest.mock('./boards/rank-daily', () => ({
 jest.mock('./boards/rank-online', () => ({
   ...jest.requireActual('./boards/rank-online'),
   rankOnline: jest.fn(async () => 'counted'),
+}));
+jest.mock('./admin/tombstones', () => ({
+  ...jest.requireActual('./admin/tombstones'),
+  checkGoogleLink: jest.fn(async () => false),
 }));
 jest.mock('./replays/accept', () => ({
   acceptSubmission: jest.fn(async () => 'stored'),
@@ -91,6 +96,14 @@ describe('the exported functions', () => {
 
     it('accepts a submission for an hour', async () => {
       await functions['acceptReplay']?.run(created(40));
+      // After the one-time check of a Google link.
+      expect(checkGoogleLink).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        'ada',
+        expect.any(Function),
+        expect.any(Number)
+      );
       expect(acceptSubmission).toHaveBeenCalledWith(
         expect.anything(),
         's1',
