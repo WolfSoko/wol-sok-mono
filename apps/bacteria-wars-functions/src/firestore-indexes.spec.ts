@@ -14,14 +14,18 @@ interface Field {
   order?: 'ASCENDING' | 'DESCENDING';
   arrayConfig?: 'CONTAINS';
 }
+/** A collection group query needs an index of that scope. */
+type Scope = 'COLLECTION' | 'COLLECTION_GROUP';
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(join(__dirname, path), 'utf8'));
 const { indexes } = read(
   '../../bacteria-game-remote/firestore.indexes.json'
-) as { indexes: { collectionGroup: string; fields: Field[] }[] };
+) as {
+  indexes: { collectionGroup: string; queryScope: Scope; fields: Field[] }[];
+};
 const queries = read('firestore-queries.json') as Record<
   string,
-  { group: string; fields: Field[] }
+  { group: string; scope?: Scope; fields: Field[] }
 >;
 
 describe("the functions' composite queries", () => {
@@ -30,6 +34,7 @@ describe("the functions' composite queries", () => {
       expect(indexes).toContainEqual(
         expect.objectContaining({
           collectionGroup: query.group,
+          queryScope: query.scope ?? 'COLLECTION',
           fields: query.fields,
         })
       );

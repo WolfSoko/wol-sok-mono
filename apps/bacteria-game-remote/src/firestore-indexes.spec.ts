@@ -14,11 +14,16 @@ interface Field {
   order?: 'ASCENDING' | 'DESCENDING';
   arrayConfig?: 'CONTAINS';
 }
-type Queries = Record<string, { group: string; fields: Field[] }>;
+/** A collection group query needs an index of that scope. */
+type Scope = 'COLLECTION' | 'COLLECTION_GROUP';
+type Queries = Record<
+  string,
+  { group: string; scope?: Scope; fields: Field[] }
+>;
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(join(__dirname, path), 'utf8'));
 const { indexes } = read('../firestore.indexes.json') as {
-  indexes: { collectionGroup: string; fields: Field[] }[];
+  indexes: { collectionGroup: string; queryScope: Scope; fields: Field[] }[];
 };
 
 const GAME_QUERIES: Queries = {
@@ -44,6 +49,7 @@ describe('firestore.indexes.json', () => {
       expect(indexes).toContainEqual(
         expect.objectContaining({
           collectionGroup: query.group,
+          queryScope: query.scope ?? 'COLLECTION',
           fields: query.fields,
         })
       );
