@@ -20,6 +20,7 @@ import {
   dailyBoardId,
   type EntryShow,
   formatTag,
+  isUtcDay,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import {
   AdminI18n,
@@ -66,7 +67,11 @@ const VERIFIABLE: readonly BoardKind[] = ['daily', 'endless'];
     <form class="filters" (ngSubmit)="show()">
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ 'boards.board' | adminT }}</mat-label>
-        <mat-select [(ngModel)]="kind" name="kind">
+        <mat-select
+          [ngModel]="kind()"
+          (ngModelChange)="kind.set($event)"
+          name="kind"
+        >
           @for (option of kinds; track option) {
             <mat-option [value]="option">
               {{ kindKey(option) | adminT }}
@@ -74,13 +79,20 @@ const VERIFIABLE: readonly BoardKind[] = ['daily', 'endless'];
           }
         </mat-select>
       </mat-form-field>
-      @if (kind === 'daily') {
+      @if (kind() === 'daily') {
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'boards.day' | adminT }}</mat-label>
-          <input matInput type="date" name="day" required [(ngModel)]="day" />
+          <input
+            matInput
+            type="date"
+            name="day"
+            required
+            [ngModel]="day()"
+            (ngModelChange)="day.set($event)"
+          />
         </mat-form-field>
       }
-      <button mat-stroked-button type="submit">
+      <button mat-stroked-button type="submit" [disabled]="!valid()">
         {{ 'boards.show' | adminT }}
       </button>
     </form>
@@ -91,7 +103,9 @@ const VERIFIABLE: readonly BoardKind[] = ['daily', 'endless'];
     <table mat-table [dataSource]="list.rows()">
       <ng-container matColumnDef="pos">
         <th mat-header-cell *matHeaderCellDef>#</th>
-        <td mat-cell *matCellDef="let row; let i = index">{{ i + 1 }}</td>
+        <td mat-cell *matCellDef="let row">
+          {{ positions()[row.entryId] ?? '-' }}
+        </td>
       </ng-container>
       <ng-container matColumnDef="label">
         <th mat-header-cell *matHeaderCellDef>
@@ -155,9 +169,11 @@ const VERIFIABLE: readonly BoardKind[] = ['daily', 'endless'];
               {{ 'type.board.verify' | adminT }}
             </button>
           }
-          <button mat-button type="button" (click)="ban(row)">
-            {{ 'type.player.ban' | adminT }}
-          </button>
+          @if (owners()[row.entryId] !== null) {
+            <button mat-button type="button" (click)="ban(row)">
+              {{ 'type.player.ban' | adminT }}
+            </button>
+          }
         </td>
       </ng-container>
       <tr mat-header-row *matHeaderRowDef="columns"></tr>
@@ -209,14 +225,32 @@ export class LeaderboardsComponent {
   protected readonly verifiable = computed(() =>
     VERIFIABLE.includes(this.shown().kind)
   );
-  protected kind: BoardKind = 'xp';
-  protected day = utcDay();
+  /** The form: the board kind and, for the daily board, its day. */
+  protected readonly kind = signal<BoardKind>('xp');
+  protected readonly day = signal(utcDay());
+  protected readonly valid = computed(
+    () => this.kind() !== 'daily' || isUtcDay(this.day())
+  );
+  /**
+   * Each visible row's position as players see it: 1 + the visible rows
+   * ranked higher. Hidden rows have none.
+   */
+  protected readonly positions = computed(() => {
+    const visible = this.list.rows().filter((row) => row.status !== 'hidden');
+    return Object.fromEntries(
+      visible.map((row) => [
+        row.entryId,
+        1 +
+          visible.filter((other) => (other.sort ?? 0) > (row.sort ?? 0)).length,
+      ])
+    );
+  });
   /** The entry ids whose player is looked up already, for this board. */
   private requested = new Set<string>();
 
   public constructor() {
     this.show();
-    // Every page the list loads, "Load more" included.
+    // Every page the list loads, "Load more" and reloads included.
     effect(() => {
       const rows = this.list.rows();
       untracked(() => void this.findOwners(rows));
@@ -228,11 +262,16 @@ export class LeaderboardsComponent {
   }
 
   protected show(): void {
-    const kind = this.kind;
-    const boardId = kind === 'daily' ? dailyBoardId(this.day) : kind;
-    this.shown.set({ kind, boardId });
-    this.owners.set({});
-    this.requested = new Set();
+    if (!this.valid()) {
+      return;
+    }
+    const kind = this.kind();
+    const boardId = kind === 'daily' ? dailyBoardId(this.day()) : kind;
+    if (boardId !== this.shown().boardId) {
+      this.shown.set({ kind, boardId });
+      this.owners.set({});
+      this.requested = new Set();
+    }
     void this.list.load((after) => this.records.boardEntries(boardId, after));
   }
 
@@ -267,10 +306,10 @@ export class LeaderboardsComponent {
         { ticks: n(show.ticks) }
       );
     }
-    return this.i18n.t('boards.scoreOf.endless', {
-      depth: n(show.depth),
-      seconds: n(show.seconds),
-    });
+    return this.i18n.t(
+      show.partial ? 'boards.scoreOf.endlessPartial' : 'boards.scoreOf.endless',
+      { depth: n(show.depth), seconds: n(show.seconds) }
+    );
   }
 
   protected hiddenBy(reasons: readonly HideReason[]): string {
@@ -293,7 +332,7 @@ export class LeaderboardsComponent {
     return this.act(row, { type: 'player.ban', ban: true });
   }
 
-  /** Runs a command on the row's entry, then reloads the board. */
+  /** Runs a command on the row's entry, then reloads the board shown. */
   private async act(
     row: BoardEntryRecord,
     action: Pick<ModerationAction, 'type' | 'ban' | 'bar'>
@@ -304,7 +343,7 @@ export class LeaderboardsComponent {
       target: { boardId: this.boardId(), entryId: row.entryId },
     });
     if (result?.ok) {
-      this.show();
+      await this.list.reload();
     }
   }
 
@@ -312,21 +351,22 @@ export class LeaderboardsComponent {
   private async findOwners(rows: readonly BoardEntryRecord[]): Promise<void> {
     const { kind } = this.shown();
     const requested = this.requested;
-    const missing = rows.filter((row) => !requested.has(row.entryId));
-    missing.forEach((row) => requested.add(row.entryId));
-    await Promise.all(
-      missing.map(async (row) => {
-        let uid: string | null = null;
-        try {
-          uid = await this.records.entryOwner(kind, row.entryId);
-        } catch (error) {
-          console.error('Could not find the entry’s player', error);
-        }
-        // Dropped when the board was loaded again meanwhile.
-        if (this.requested === requested) {
-          this.owners.update((owners) => ({ ...owners, [row.entryId]: uid }));
-        }
-      })
-    );
+    const missing = rows
+      .map((row) => row.entryId)
+      .filter((id) => !requested.has(id));
+    if (missing.length === 0) {
+      return;
+    }
+    missing.forEach((id) => requested.add(id));
+    try {
+      const found = await this.records.entryOwners(kind, missing);
+      // Dropped when another board was shown meanwhile.
+      if (this.requested === requested) {
+        this.owners.update((owners) => ({ ...owners, ...found }));
+      }
+    } catch (error) {
+      console.error('Could not find the entries’ players', error);
+      missing.forEach((id) => requested.delete(id));
+    }
   }
 }

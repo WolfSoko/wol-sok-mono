@@ -25,20 +25,28 @@ function render() {
     rows:
       boardId === 'xp'
         ? [
-            row('e1', { name: 'Ada' }),
-            row('e2', { status: 'hidden', hiddenBy: ['admin', 'ban'] }),
+            row('e2', {
+              status: 'hidden',
+              hiddenBy: ['admin', 'ban'],
+              sort: 9,
+            }),
+            row('e1', { name: 'Ada', sort: 5 }),
+            row('e3', { sort: 5 }),
           ]
-        : [row('d1', { show: { ticks: 900, won: true } })],
+        : [
+            row('d1', { show: { ticks: 900, won: true } }),
+            row('d2', { show: { depth: 4, seconds: 60, partial: true } }),
+          ],
     next: null,
   }));
-  const entryOwner = jest.fn(async (_kind: string, entryId: string) =>
-    entryId === 'e1' ? 'ada' : null
+  const entryOwners = jest.fn(async (_kind: string, ids: string[]) =>
+    Object.fromEntries(ids.map((id) => [id, id === 'e1' ? 'ada' : null]))
   );
   const run = jest.fn(async () => ({ ok: true }));
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
-      { provide: AdminRecordsService, useValue: { boardEntries, entryOwner } },
+      { provide: AdminRecordsService, useValue: { boardEntries, entryOwners } },
       { provide: AdminActionsService, useValue: { run } },
     ],
   });
@@ -57,7 +65,7 @@ function render() {
     [...element.querySelectorAll('td button')].filter((b) =>
       b.textContent?.includes(label)
     ) as HTMLButtonElement[];
-  return { fixture, element, boardEntries, entryOwner, run, settle, buttons };
+  return { fixture, element, boardEntries, entryOwners, run, settle, buttons };
 }
 
 describe('LeaderboardsComponent', () => {
@@ -68,11 +76,16 @@ describe('LeaderboardsComponent', () => {
   });
 
   it('lists a board with hidden rows and each row’s player', async () => {
-    const { element, boardEntries, entryOwner, settle } = render();
+    const { element, boardEntries, entryOwners, settle } = render();
     await settle();
     expect(boardEntries).toHaveBeenCalledWith('xp', null);
-    expect(entryOwner).toHaveBeenCalledWith('xp', 'e1');
-    expect(entryOwner).toHaveBeenCalledWith('xp', 'e2');
+    expect(entryOwners).toHaveBeenCalledTimes(1);
+    expect(entryOwners).toHaveBeenCalledWith('xp', ['e2', 'e1', 'e3']);
+    // Positions as players see them: the hidden row has none, ties share.
+    const positions = [...element.querySelectorAll('tbody tr')].map((tr) =>
+      tr.querySelector('td')?.textContent?.trim()
+    );
+    expect(positions).toEqual(['-', '1', '1']);
     const text = element.textContent ?? '';
     expect(text).toContain('Ada');
     expect(text).toContain('Anonymous #0042');
@@ -85,9 +98,12 @@ describe('LeaderboardsComponent', () => {
   });
 
   it('hides, restores and bans by entry, and offers verify on daily boards only', async () => {
-    const { fixture, run, settle, buttons, boardEntries } = render();
+    const { fixture, run, settle, buttons, boardEntries, entryOwners } =
+      render();
     await settle();
     expect(buttons('Verify entry')).toHaveLength(0);
+    // No ban for an entry nobody holds: only Ada's row offers it.
+    expect(buttons('Ban')).toHaveLength(1);
 
     buttons('Hide entry')[0].click();
     await settle();
@@ -97,6 +113,10 @@ describe('LeaderboardsComponent', () => {
       subject: 'Ada',
       target: { boardId: 'xp', entryId: 'e1' },
     });
+    // The board shown reloads; its players are known already.
+    expect(boardEntries).toHaveBeenCalledTimes(2);
+    expect(boardEntries).toHaveBeenLastCalledWith('xp', null);
+    expect(entryOwners).toHaveBeenCalledTimes(1);
     buttons('Restore on the boards')[0].click();
     await settle();
     expect(run).toHaveBeenLastCalledWith({
@@ -114,16 +134,26 @@ describe('LeaderboardsComponent', () => {
     });
 
     const component = fixture.componentInstance as unknown as {
-      kind: string;
-      day: string;
+      kind: { set: (kind: string) => void };
+      day: { set: (day: string) => void };
       show: () => void;
     };
-    component.kind = 'daily';
-    component.day = '2026-10-24';
+    component.kind.set('daily');
+    component.day.set('');
+    await settle();
+    component.show();
+    expect(boardEntries).not.toHaveBeenLastCalledWith(
+      expect.stringMatching(/^daily/),
+      null
+    );
+    component.day.set('2026-10-24');
     component.show();
     await settle();
     expect(boardEntries).toHaveBeenLastCalledWith('daily-2026-10-24', null);
     expect(fixture.nativeElement.textContent).toContain('Won in 900 ticks');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Depth 4 · 60 s (unfinished)'
+    );
     buttons('Verify entry')[0].click();
     await settle();
     expect(run).toHaveBeenLastCalledWith({

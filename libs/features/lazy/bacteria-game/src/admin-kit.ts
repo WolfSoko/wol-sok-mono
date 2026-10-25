@@ -38,6 +38,7 @@ export {
   dailyBoardId,
   formatTag,
   isBoardId,
+  isUtcDay,
   parseBoardId,
   VISIBLE_STATUSES,
 } from './lib/state/boards';

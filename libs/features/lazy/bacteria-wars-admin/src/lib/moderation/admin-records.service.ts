@@ -28,6 +28,9 @@ import {
 /** How many rows a list loads at a time. */
 export const PAGE_SIZE = 25;
 
+/** The most values a Firestore `in` filter takes. */
+const IN_LIMIT = 30;
+
 /** One page of a list, and where the next one starts (null at the end). */
 export interface Page<T> {
   rows: T[];
@@ -126,22 +129,40 @@ export class AdminRecordsService {
   }
 
   /**
-   * The player behind an entry: entries carry no uid, `boardMembers` maps
-   * them (`entryIds.<kind>`). Null when nobody holds the id.
+   * The players behind entries of a board kind: entries carry no uid,
+   * `boardMembers` maps them (`entryIds.<kind>`). One query per 30 ids
+   * (Firestore's `in` limit); null for an id nobody holds.
    */
-  public async entryOwner(
+  public async entryOwners(
     kind: BoardKind,
-    entryId: string
-  ): Promise<string | null> {
+    entryIds: readonly string[]
+  ): Promise<Record<string, string | null>> {
     const { db, dbSdk: sdk } = this.connection();
-    const snapshot = await sdk.getDocs(
-      sdk.query(
-        sdk.collection(db, 'boardMembers'),
-        sdk.where(`entryIds.${kind}`, '==', entryId),
-        sdk.limit(1)
+    const field = `entryIds.${kind}`;
+    const owners: Record<string, string | null> = Object.fromEntries(
+      entryIds.map((id) => [id, null])
+    );
+    const chunks: string[][] = [];
+    for (let i = 0; i < entryIds.length; i += IN_LIMIT) {
+      chunks.push(entryIds.slice(i, i + IN_LIMIT));
+    }
+    const snapshots = await Promise.all(
+      chunks.map((ids) =>
+        sdk.getDocs(
+          sdk.query(
+            sdk.collection(db, 'boardMembers'),
+            sdk.where(field, 'in', ids)
+          )
+        )
       )
     );
-    return snapshot.docs[0]?.id ?? null;
+    for (const doc of snapshots.flatMap((snapshot) => snapshot.docs)) {
+      const entryId: unknown = doc.get(field);
+      if (typeof entryId === 'string' && entryId in owners) {
+        owners[entryId] = doc.id;
+      }
+    }
+    return owners;
   }
 
   /** The bans, newest first; the hourly sweep deletes the ended ones. */

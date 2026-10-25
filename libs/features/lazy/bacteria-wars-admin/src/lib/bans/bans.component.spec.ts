@@ -28,6 +28,12 @@ describe('BansComponent', () => {
     expect(element.textContent).toContain('For good');
     expect(element.textContent).toContain('Cheating');
     expect(element.querySelector('.ended')).not.toBeNull();
+    // Only the ban that holds can have its end changed.
+    expect(
+      [...element.querySelectorAll('td button')].filter((b) =>
+        b.textContent?.includes('Change end')
+      )
+    ).toHaveLength(1);
 
     const button = (label: string) =>
       [...element.querySelectorAll('td button')].find((b) =>

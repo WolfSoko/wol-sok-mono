@@ -140,6 +140,7 @@ export const DE: Translation<typeof EN> = {
       won: 'Gewonnen in {ticks} Ticks',
       lost: 'Verloren nach {ticks} Ticks',
       endless: 'Tiefe {depth} · {seconds} s',
+      endlessPartial: 'Tiefe {depth} · {seconds} s (unvollständig)',
     },
   },
   bans: {

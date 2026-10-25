@@ -136,6 +136,7 @@ export const EN = {
       won: 'Won in {ticks} ticks',
       lost: 'Lost after {ticks} ticks',
       endless: 'Depth {depth} · {seconds} s',
+      endlessPartial: 'Depth {depth} · {seconds} s (unfinished)',
     },
   },
   bans: {

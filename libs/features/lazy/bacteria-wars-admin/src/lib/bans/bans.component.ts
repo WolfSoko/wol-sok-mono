@@ -69,9 +69,11 @@ import { PagedList } from '../moderation/paged-list';
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let row">
-          <button mat-button type="button" (click)="changeEnd(row)">
-            {{ 'bans.change' | adminT }}
-          </button>
+          @if (holds(row)) {
+            <button mat-button type="button" (click)="changeEnd(row)">
+              {{ 'bans.change' | adminT }}
+            </button>
+          }
           <button mat-button type="button" (click)="unban(row)">
             {{ 'type.player.unban' | adminT }}
           </button>
@@ -115,7 +117,10 @@ export class BansComponent {
     return `banReason.${reason}`;
   }
 
-  /** A ban on a banned player changes only its end and reason. */
+  /**
+   * A ban on a banned player changes only its end and reason - offered
+   * while it holds, since the server takes a ban after an ended one as new.
+   */
   protected changeEnd(ban: BanRecord): Promise<void> {
     return this.act(ban, { type: 'player.ban', ban: true });
   }

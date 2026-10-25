@@ -60,14 +60,16 @@
         <button mat-stroked-button type="button" (click)="restorePlayer()">
           {{ "type.board.restore" | adminT }}
         </button>
-        @if (current.ban === null) {
-          <button mat-flat-button type="button" (click)="ban()">
-            {{ "type.player.ban" | adminT }}
-          </button>
-        } @else {
+        @if (banned()) {
           <button mat-stroked-button type="button" (click)="ban()">
             {{ "bans.change" | adminT }}
           </button>
+        } @else {
+          <button mat-flat-button type="button" (click)="ban()">
+            {{ "type.player.ban" | adminT }}
+          </button>
+        }
+        @if (current.ban !== null) {
           <button mat-flat-button type="button" (click)="unban()">
             {{ "type.player.unban" | adminT }}
           </button>
