@@ -100,6 +100,23 @@ export interface BoardRow {
   show: EntryShow;
 }
 
+/** An entry document's shown fields: a row without its id and place. */
+export type BoardEntry = Omit<BoardRow, 'entryId' | 'pos' | 'rank'>;
+
+/** True for a status a board shows. */
+export function isVisible(status: EntryStatus): boolean {
+  return VISIBLE_STATUSES.includes(status);
+}
+
+/**
+ * True when an entry may show its player's name: counted and verified
+ * ones. A provisional or stale claim never does, so it is never a
+ * billboard - the functions leave its name out already.
+ */
+export function showsName(status: EntryStatus): boolean {
+  return status === 'counted' || status === 'verified';
+}
+
 /** A Firestore document id as entry ids are made: no slashes, short. */
 const ENTRY_ID = /^[A-Za-z0-9_-]{1,64}$/;
 

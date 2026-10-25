@@ -34,12 +34,12 @@
       und meldet dich bei Google Play Spiele an (Abschnitt 6). Das Spiel
       verkauft keine Daten. Es speichert, was es braucht, um deinen Spielstand
       zu behalten. In der Cloud kannst du ein Online-Profil für Freunde und
-      Online-Matches anlegen, und aus deinem Fortschritt entsteht ein Eintrag
-      ohne deinen Namen in einer Bestenliste (Abschnitt 4). Das Spiel lädt das
-      Werbeskript von Google mit seinem Einwilligungsfenster, zeigt aber keine
-      Anzeigen (Abschnitt 7), und bittet um ein freiwilliges Trinkgeld
-      (Abschnitt 8). Spielst du das Spiel eingebettet in einer anderen Seite,
-      etwa
+      Online-Matches anlegen, und aus deinem Fortschritt entsteht ein Eintrag in
+      einer Bestenliste, mit deinem Namen nur, wenn du ihn öffentlich zeigst
+      (Abschnitt 4). Das Spiel lädt das Werbeskript von Google mit seinem
+      Einwilligungsfenster, zeigt aber keine Anzeigen (Abschnitt 7), und bittet
+      um ein freiwilliges Trinkgeld (Abschnitt 8). Spielst du das Spiel
+      eingebettet in einer anderen Seite, etwa
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       zeigt es dort weder Werbung noch Trinkgeld, und diese Erklärung gilt nicht
       für jene Seite und ihre Dienste.
@@ -188,7 +188,12 @@
       ein gezeichnetes Bakterium. Ein gespeichertes Profil können alle
       angemeldeten Spieler lesen, Gäste eingeschlossen. Zeigst du dein
       Google-Profilbild, laden die Geräte der anderen es von Google
-      (googleusercontent.com).
+      (googleusercontent.com). Im Online-Profil stehen außerdem drei Schalter,
+      alle standardmäßig aus: „Meinen Namen öffentlich zeigen“, „Mich aus den
+      Bestenlisten heraushalten“ und „Meine Matches aus der öffentlichen Galerie
+      heraushalten“. Was sie bewirken, steht unter „Bestenliste und Statistik“.
+      Sie werden mit dem Profil gespeichert, und wie das Profil können
+      angemeldete Spieler sie lesen.
     </p>
     <p>
       Freundeslisten, Freundschaftsanfragen und Herausforderungen zu einem Match
@@ -230,22 +235,28 @@
       Aus dem Spielfortschritt, den ein Konto in der Cloud speichert, berechnen
       unsere Funktionen seine Erfahrungspunkte (XP) und tragen sie mit dem Rang
       in eine Bestenliste ein. Das gilt für jedes Konto, Gäste eingeschlossen.
-      Dabei begrenzen sie, wie schnell die Punkte steigen. Ein Eintrag zeigt die
-      Punkte, den Rang, die Stunde der letzten Änderung, statt eines Namens eine
-      Nummer (etwa „Anonym #1234“) und ein gezeichnetes Bakterium. Deinen Namen,
-      dein Motto oder dein Bild zeigt er nicht. Einträge tragen keine Kennung.
-      Welcher Eintrag deiner ist, vermerken unsere Funktionen getrennt davon,
-      lesbar nur für dich und uns; dort vermerken sie unter anderem, wann dein
-      Konto angelegt wurde und wann du zuletzt Fortschritt gespeichert hast. Das
-      Spiel zeigt die Bestenliste noch nicht an; technisch lesen kann sie jeder
-      angemeldete Spieler, Gäste eingeschlossen. Dein Eintrag bleibt, bis dein
-      Konto gelöscht wird. Willst du nicht in der Bestenliste stehen, schreib
-      uns (Abschnitt 1): Wir blenden deinen Eintrag dann aus, sodass nur noch
-      wir ihn sehen, und halten das fest wie eine Maßnahme der Moderation
-      (unten), mit einem Hinweis unter deinem Konto und einem Eintrag im
-      Protokoll. Das Spiel lädt keine Matches hoch; Bestenlisten für
-      Online-Siege, das Tageslevel oder Endlos-Läufe erhalten deshalb keine
-      Einträge von dir.
+      Dabei begrenzen sie, wie schnell die Punkte steigen. Das Spiel zeigt die
+      Bestenlisten im Hauptmenü („Bestenlisten“); lesen kann sie jeder
+      angemeldete Spieler, Gäste eingeschlossen. Ein Eintrag zeigt die Punkte,
+      den Rang, die Stunde der letzten Änderung, statt eines Namens eine Nummer
+      (etwa „Anonym #1234“) und ein gezeichnetes Bakterium. Deinen Namen zeigt
+      er nur, wenn du im Online-Profil „Meinen Namen öffentlich zeigen“
+      einschaltest und der Name unsere Liste gesperrter Wörter passiert; dann
+      zeigt er auch das gezeichnete Bakterium, das du als Bild gewählt hast.
+      Dein Motto, dein Google-Profilbild oder ein eigenes Bild zeigt er nie.
+      Einträge tragen keine Kennung. Welcher Eintrag deiner ist, vermerken
+      unsere Funktionen getrennt davon, lesbar nur für dich und uns; dort
+      vermerken sie unter anderem, wann dein Konto angelegt wurde und wann du
+      zuletzt Fortschritt gespeichert hast. Dein Eintrag bleibt, bis dein Konto
+      gelöscht wird. Schaltest du im Online-Profil „Mich aus den Bestenlisten
+      heraushalten“ ein, blenden unsere Funktionen alle deine Einträge aus,
+      sodass nur noch wir sie sehen. Sie zählen im Hintergrund weiter; schaltest
+      du den Schalter wieder aus, erscheinen sie wieder. Das Spiel lädt keine
+      Matches hoch; Bestenlisten für Online-Siege, das Tageslevel oder
+      Endlos-Läufe erhalten deshalb keine Einträge von dir. Den Schalter „Meine
+      Matches aus der öffentlichen Galerie heraushalten“ gibt es schon,
+      öffentlich ist aber noch kein Match, solange das Spiel keine Matches
+      hochlädt.
     </p>
     <p>
       Jede Stunde zählen unsere Funktionen für unsere Übersicht zusammen, etwa
@@ -502,10 +513,10 @@
       you in to Google Play Games (section 6). The game sells no data. It stores
       what it needs to keep your progress. In the cloud you can set up an online
       profile for friends and online matches, and your progress makes an entry
-      without your name on a leaderboard (section 4). The game loads Google's ad
-      script with its consent window, but shows no ads (section 7), and asks for
-      a voluntary tip (section 8). When you play the game embedded in another
-      site, such as
+      on a leaderboard, with your name only if you show it in public (section
+      4). The game loads Google's ad script with its consent window, but shows
+      no ads (section 7), and asks for a voluntary tip (section 8). When you
+      play the game embedded in another site, such as
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       it shows neither ads nor the tip there, and this policy does not cover
       that site and its services. The German version above is the binding one.
@@ -641,7 +652,12 @@
       profile, others see “Player” with a number instead of your name, and a
       drawn bacterium. Every signed-in player, guests included, can read a saved
       profile. If you show your Google profile picture, the other players'
-      devices load it from Google (googleusercontent.com).
+      devices load it from Google (googleusercontent.com). The online profile
+      also has three switches, all off by default: “Show my name in public”,
+      “Keep me off the leaderboards” and “Keep my matches out of the public
+      gallery”. What they do is described under “Leaderboard and statistics”.
+      They are stored with the profile, and like the profile, signed-in players
+      can read them.
     </p>
     <p>
       Friend lists, friend requests and challenges to a match are seen only by
@@ -681,19 +697,25 @@
       From the progress an account stores in the cloud, our functions work out
       its experience points (XP) and enter them, with the rank, on a
       leaderboard. That goes for every account, guests included. They limit how
-      fast the points rise. An entry shows the points, the rank, the hour of the
-      last change, a number instead of a name (such as “Anonymous #1234”) and a
-      drawn bacterium. It does not show your name, motto or picture. Entries
-      carry no identifier. Which entry is yours our functions note separately,
+      fast the points rise. The game shows the leaderboards in its main menu
+      (“Leaderboards”); every signed-in player, guests included, can read them.
+      An entry shows the points, the rank, the hour of the last change, a number
+      instead of a name (such as “Anonymous #1234”) and a drawn bacterium. It
+      shows your name only if you switch on “Show my name in public” in your
+      online profile and the name passes our list of blocked words; it then also
+      shows the drawn bacterium you picked as your picture. It never shows your
+      motto, your Google profile picture or an image of your own. Entries carry
+      no identifier. Which entry is yours our functions note separately,
       readable only by you and us; there they note, among other things, when
-      your account was created and when you last stored progress. The game does
-      not show the leaderboard yet; technically, every signed-in player, guests
-      included, can read it. Your entry stays until your account is deleted. If
-      you do not want to be on the leaderboard, write to us (section 1): we then
-      hide your entry, so that only we see it, and record that like a moderation
-      measure (below), with a notice under your account and an entry in the
-      record. The game uploads no matches, so leaderboards for online wins, the
-      daily level or endless runs get no entries from you.
+      your account was created and when you last stored progress. Your entry
+      stays until your account is deleted. If you switch on “Keep me off the
+      leaderboards” in your online profile, our functions hide all your entries,
+      so that only we see them. They keep counting in the background; when you
+      switch it off again, your entries come back. The game uploads no matches,
+      so leaderboards for online wins, the daily level or endless runs get no
+      entries from you. The switch “Keep my matches out of the public gallery”
+      is already there, but no match is public as long as the game uploads no
+      matches.
     </p>
     <p>
       Every hour our functions add up, for our overview, figures such as how

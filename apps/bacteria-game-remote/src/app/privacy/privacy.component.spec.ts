@@ -59,6 +59,32 @@ describe('PrivacyComponent', () => {
     }
   });
 
+  it("names the profile's leaderboard switches by their labels", async () => {
+    const page = await open();
+    const de = page.querySelector('article[lang="de"]')?.textContent ?? '';
+    const en = page.querySelector('article[lang="en"]')?.textContent ?? '';
+
+    for (const label of [
+      'Meinen Namen öffentlich zeigen',
+      'Mich aus den Bestenlisten heraushalten',
+      'Meine Matches aus der öffentlichen Galerie heraushalten',
+    ]) {
+      expect(de).toContain(label);
+    }
+    for (const label of [
+      'Show my name in public',
+      'Keep me off the leaderboards',
+      'Keep my matches out of the public gallery',
+    ]) {
+      expect(en).toContain(label);
+    }
+    // The switch replaced writing to us, and the game shows the boards now.
+    expect(de).not.toContain('Willst du nicht in der Bestenliste stehen');
+    expect(en).not.toContain('If you do not want to be on the leaderboard');
+    expect(de).not.toContain('zeigt die Bestenliste noch nicht');
+    expect(en).not.toContain('does not show the leaderboard yet');
+  });
+
   it('no longer says that only you see your name', async () => {
     const page = await open();
 

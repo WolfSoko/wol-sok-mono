@@ -1,0 +1,64 @@
+<div class="head">
+  <p class="info">{{ infoKey() | t }}</p>
+  @if (final()) {
+    <mat-chip-set class="chips">
+      <mat-chip class="final" disableRipple>{{ "boards.final" | t }}</mat-chip>
+    </mat-chip-set>
+  }
+</div>
+
+@if (!loaded()) {
+  <mat-progress-bar mode="indeterminate" />
+} @else if (failed()) {
+  <p class="info" role="alert">{{ "boards.failed" | t }}</p>
+} @else {
+  @if (empty()) {
+    <p class="info empty">{{ "boards.empty" | t }}</p>
+  } @else {
+    <mat-list class="rows">
+      @for (line of lines(); track line.id) {
+        @if ("heading" in line) {
+          <div mat-subheader class="heading">{{ line.heading | t }}</div>
+        } @else {
+          @let row = line.row;
+          <mat-list-item>
+            <feat-lazy-bac-game-avatar
+              matListItemAvatar
+              [avatar]="row.avatar"
+              [size]="36"
+              [label]="row.label"
+            />
+            <span matListItemTitle
+              ><span class="place">{{ row.place }}</span> {{ row.label }}</span
+            >
+            <span matListItemLine class="detail">
+              {{ row.detail }}
+              @if (row.status; as status) {
+                <mat-chip-set class="chips">
+                  <mat-chip disableRipple>{{ status | t }}</mat-chip>
+                </mat-chip-set>
+              }
+            </span>
+          </mat-list-item>
+        }
+      }
+    </mat-list>
+  }
+  @if (full() && hasMore()) {
+    <button
+      mat-stroked-button
+      type="button"
+      class="more"
+      [disabled]="loadingMore()"
+      (click)="loadMore()"
+    >
+      {{ "boards.more" | t }}
+    </button>
+  }
+  @if (pageFailed()) {
+    <p class="info" role="alert">{{ "boards.failed" | t }}</p>
+  }
+  @if (ownLine(); as own) {
+    <p class="own" role="status">{{ own }}</p>
+  }
+}

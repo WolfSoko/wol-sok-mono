@@ -31,7 +31,9 @@ import { SocialService } from './social.service';
 
 /**
  * What other players see of the player - their name, picture and motto -
- * and whether friends see them online, edited and saved in one go.
+ * whether friends see them online, and what the public sees of them: the
+ * name on the leaderboards, their entries, their matches in the gallery
+ * (ADR 0011, 0012). Edited and saved in one go.
  */
 @Component({
   selector: 'feat-lazy-bac-game-profile-editor',
@@ -95,6 +97,18 @@ export class ProfileEditorComponent {
 
   protected setShareStatus(shareStatus: boolean): void {
     this.edit({ shareStatus });
+  }
+
+  protected setPublicName(publicName: boolean): void {
+    this.edit({ publicName });
+  }
+
+  protected setBoardOptOut(boardOptOut: boolean): void {
+    this.edit({ boardOptOut });
+  }
+
+  protected setGalleryOptOut(galleryOptOut: boolean): void {
+    this.edit({ galleryOptOut });
   }
 
   protected isPicked(avatar: Avatar): boolean {

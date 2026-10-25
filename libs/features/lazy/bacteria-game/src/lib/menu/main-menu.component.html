@@ -120,6 +120,12 @@
           }
         </button>
       }
+      @if (showsBoards()) {
+        <button type="button" class="tile" (click)="open.emit('leaderboards')">
+          <mat-icon class="gold">leaderboard</mat-icon>
+          {{ "boards.title" | t }}
+        </button>
+      }
       <button type="button" class="tile" (click)="open.emit('settings')">
         <mat-icon>tune</mat-icon>
         {{ "settings.title" | t }}

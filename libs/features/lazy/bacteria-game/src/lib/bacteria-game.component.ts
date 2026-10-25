@@ -78,6 +78,7 @@ import { NewGameEntry, opponentOf, PlayKind, stepsOf } from './menu/play-modes';
 import { MainMenuComponent } from './menu/main-menu.component';
 import { DailyCard } from './menu/menu-cards';
 import { FriendsScreenComponent } from './menu/friends-screen.component';
+import { LeaderboardsComponent } from './boards/leaderboards.component';
 import { HelpComponent } from './menu/help.component';
 import { EvolutionComponent } from './menu/evolution.component';
 import { ProfileComponent } from './menu/profile.component';
@@ -210,6 +211,7 @@ interface HudGoal {
     SettingsComponent,
     HelpComponent,
     FriendsScreenComponent,
+    LeaderboardsComponent,
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
@@ -1970,7 +1972,8 @@ export type MenuScreen =
   | 'friends'
   | 'settings'
   | 'help'
-  | 'evolution';
+  | 'evolution'
+  | 'leaderboards';
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;

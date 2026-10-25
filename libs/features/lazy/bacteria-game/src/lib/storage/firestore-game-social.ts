@@ -36,14 +36,25 @@ export class FirestoreGameSocial implements GameSocial {
     );
   }
 
+  /**
+   * Writes every field the profile has, each whole - an avatar replaces the
+   * last one rather than merging into it, which the rules would refuse -
+   * and leaves any other field of the document as it is.
+   */
   public async saveProfile(uid: string, profile: Profile): Promise<void> {
     const { dbSdk } = this.connection;
-    await dbSdk.setDoc(this.doc('profiles', uid), {
+    const data = {
       name: profile.name,
       motto: profile.motto,
       avatar: { ...profile.avatar },
       shareStatus: profile.shareStatus,
+      publicName: profile.publicName,
+      boardOptOut: profile.boardOptOut,
+      galleryOptOut: profile.galleryOptOut,
       updatedAt: dbSdk.serverTimestamp(),
+    };
+    await dbSdk.setDoc(this.doc('profiles', uid), data, {
+      mergeFields: Object.keys(data),
     });
   }
 

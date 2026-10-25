@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
 import { GameAccount } from '../storage/game-account';
+import { provideGameToggles } from '../../testing/fake-game-toggles';
+import type { FeatureToggles } from '../state/feature-toggles';
 import { ADMIN_PATH } from '../support/legal-links';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
@@ -176,6 +179,35 @@ describe('MainMenuComponent', () => {
     fixture.componentInstance.open.subscribe(open);
     button('Friends').click();
     expect(open).toHaveBeenCalledWith('friends');
+  });
+
+  it('shows the leaderboards only with the cloud, while the toggle is on', () => {
+    const toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [provideGameToggles(toggles)],
+    });
+    const menu = TestBed.createComponent(MainMenuComponent);
+    menu.componentRef.setInput('campaign', CAMPAIGN);
+    menu.detectChanges();
+    const tile = () =>
+      Array.from(
+        (menu.nativeElement as HTMLElement).querySelectorAll('.tiles button')
+      ).find((b) => b.textContent?.includes('Leaderboards')) as
+        | HTMLButtonElement
+        | undefined;
+    expect(tile()).toBeUndefined();
+
+    menu.componentRef.setInput('friendsAvailable', true);
+    menu.detectChanges();
+    const open = jest.fn();
+    menu.componentInstance.open.subscribe(open);
+    tile()?.click();
+    expect(open).toHaveBeenCalledWith('leaderboards');
+
+    toggles.next({ leaderboards: false });
+    menu.detectChanges();
+    expect(tile()).toBeUndefined();
   });
 
   it('speaks German, the campaign line included', () => {

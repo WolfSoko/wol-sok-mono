@@ -5,6 +5,7 @@ import type { GameAccount } from './game-account';
 import type { GameStorage } from './game-storage';
 import type { FirebaseConnection } from './firebase-connection';
 import { FirebaseGameAccount } from './firebase-game-account';
+import { FirestoreGameBoards } from './firestore-game-boards';
 import { FirestoreGameRooms } from './firestore-game-rooms';
 import { FirestoreGameSocial } from './firestore-game-social';
 import type { GamePresence, GameSocial } from './game-social';
@@ -13,6 +14,7 @@ import { FirestoreGameStorage } from './firestore-game-storage';
 import { FirestoreGameReplays } from './firestore-game-replays';
 import type { GameReplays } from './game-replays';
 import { LocalGameReplays } from './local-game-replays';
+import type { GameBoards } from './game-boards';
 import type { GameRooms } from './game-rooms';
 import type { GameToggles } from './game-toggles';
 import { NoGameToggles } from './no-game-toggles';
@@ -60,6 +62,7 @@ export class GameCloud {
     social: GameSocial;
     presence: GamePresence | null;
     replays: GameReplays | null;
+    boards: GameBoards;
   } | null = null;
   /** The replays on this device, one for all who ask. */
   private localReplays: GameReplays | null = null;
@@ -115,6 +118,11 @@ export class GameCloud {
     return this.connected()?.presence ?? null;
   }
 
+  /** The leaderboards (ADR 0012) - null without a project. */
+  public boards(): GameBoards | null {
+    return this.connected()?.boards ?? null;
+  }
+
   /**
    * Where the recorded matches go: to the project once it takes them (see
    * {@link GameCloudOptions.replays}), else onto this device.
@@ -163,6 +171,7 @@ export class GameCloud {
           connection.replays === true
             ? new FirestoreGameReplays(connection, account.playerIds)
             : null,
+        boards: new FirestoreGameBoards(connection),
       };
     }
     return this.backend;

@@ -35,6 +35,27 @@ const GAME_QUERIES: Queries = {
       { fieldPath: 'createdAt', order: 'DESCENDING' },
     ],
   },
+  // The game's leaderboards (ADR 0012): a page below the top 50, status in
+  // the visible ones, `startAfter` the last row (the document id follows
+  // `atHour` in the index's direction) ...
+  'board page': {
+    group: 'entries',
+    fields: [
+      { fieldPath: 'status', order: 'ASCENDING' },
+      { fieldPath: 'sort', order: 'DESCENDING' },
+      { fieldPath: 'atHour', order: 'ASCENDING' },
+    ],
+  },
+  // ... and the player's own position: count() of the visible entries
+  // with a higher sort, ordered alike so the same index serves it.
+  'own rank count': {
+    group: 'entries',
+    fields: [
+      { fieldPath: 'status', order: 'ASCENDING' },
+      { fieldPath: 'sort', order: 'DESCENDING' },
+      { fieldPath: 'atHour', order: 'ASCENDING' },
+    ],
+  },
   // The admin area's audit (ADR 0012): a player's entries, and a type's.
   'audit entries of a player': {
     group: 'adminAudit',

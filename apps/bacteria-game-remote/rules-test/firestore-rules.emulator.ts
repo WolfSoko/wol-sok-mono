@@ -9,7 +9,9 @@ import {
   Bytes,
   collection,
   doc,
+  documentId,
   type Firestore,
+  getCountFromServer,
   getDoc,
   getDocs,
   limit,
@@ -18,6 +20,7 @@ import {
   serverTimestamp,
   setDoc,
   setLogLevel,
+  startAfter,
   Timestamp,
   updateDoc,
   where,
@@ -413,6 +416,37 @@ describe('the leaderboards', () => {
         )
       )
     );
+  });
+
+  it("takes the game's page and own-rank count, and refuses a missing entry", async () => {
+    const entries = collection(db('bob'), 'boards/xp/entries');
+    await assertSucceeds(
+      getDocs(
+        query(
+          entries,
+          where('status', 'in', visible),
+          orderBy('sort', 'desc'),
+          orderBy('atHour', 'asc'),
+          orderBy(documentId(), 'asc'),
+          startAfter(9, 0, 'e0'),
+          limit(25)
+        )
+      )
+    );
+    await assertSucceeds(
+      getCountFromServer(
+        query(
+          entries,
+          where('status', 'in', visible),
+          where('sort', '>', 1),
+          orderBy('sort', 'desc'),
+          orderBy('atHour', 'asc')
+        )
+      )
+    );
+    // Why the game reads a refused own entry as hidden, never as missing:
+    // the rules look at its status, which a missing one has not.
+    await assertFails(getDoc(doc(db('ada'), 'boards/xp/entries/gone')));
   });
 
   it('keeps hidden entries from players, not from the owner', async () => {

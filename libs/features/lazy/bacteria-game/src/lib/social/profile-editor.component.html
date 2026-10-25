@@ -77,6 +77,35 @@
     </mat-slide-toggle>
   }
 
+  <div
+    class="public"
+    role="group"
+    [attr.aria-label]="'profile.editor.public' | t"
+  >
+    <span class="label">{{ "profile.editor.public" | t }}</span>
+    <mat-slide-toggle
+      [checked]="profile.publicName"
+      (change)="setPublicName($event.checked)"
+    >
+      {{ "profile.editor.publicName" | t }}
+    </mat-slide-toggle>
+    <span class="explain">{{ "profile.editor.publicNameNote" | t }}</span>
+    <mat-slide-toggle
+      [checked]="profile.boardOptOut"
+      (change)="setBoardOptOut($event.checked)"
+    >
+      {{ "profile.editor.boardOptOut" | t }}
+    </mat-slide-toggle>
+    <span class="explain">{{ "profile.editor.boardOptOutNote" | t }}</span>
+    <mat-slide-toggle
+      [checked]="profile.galleryOptOut"
+      (change)="setGalleryOptOut($event.checked)"
+    >
+      {{ "profile.editor.galleryOptOut" | t }}
+    </mat-slide-toggle>
+    <span class="explain">{{ "profile.editor.galleryOptOutNote" | t }}</span>
+  </div>
+
   <div class="actions">
     @if (note(); as note) {
       <span class="note" role="status">{{ note | t }}</span>

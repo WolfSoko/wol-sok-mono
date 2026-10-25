@@ -1276,12 +1276,30 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      so far: `matchmaking` replaces "Find an opponent" with a notice and
      stops a search under way; `deterministicSimulation` replaces the
      constant, read as each match starts and in each `hello`.
-     `rankedDaily`, `rankedEndless` and `leaderboards` are read but gate
-     nothing until their features ship. The same release adds the
+     `rankedDaily` and `rankedEndless` are read but gate nothing until
+     their features ship; `leaderboards` shows the menu's Leaderboards
+     tile (below). The same release adds the
      settings' "Matches" section ("Record matches against the computer",
      on by default; "Save my matches") and, for the owner on the game's
      own site, the main menu's way to `/admin` (`GameAccount.owner`, from
      the current token's claims).
+   - As built in the client, ahead of the ranked client: the Leaderboards
+     screen (main menu, with the cloud while the `leaderboards` toggle is
+     on) with its four tabs, behind the `GameBoards` port
+     (`FirestoreGameBoards`, read by `BoardsService`): the top document
+     live, with a "Final" chip once `final`; "Show more" pages `entries`
+     past the top 50 (`startAfter(sort, atHour, entryId)`, 25 at a time);
+     the own row from `boardMembers/{uid}` (`boards` for whether the player
+     is on the board, `barred` or a refused `get` for "Your entry on this
+     board is hidden", `boardOptOut` for "you keep off the leaderboards"),
+     its position from the top document or one `count()` ordered like the
+     page, so the entries index serves both. No `banned` or ranked-play
+     reasons yet. Only the XP board has entries so far; the others say
+     they are empty. The profile editor gains "Show my name in public",
+     "Keep me off the leaderboards" and "Keep my matches out of the public
+     gallery", saved with `mergeFields` (before, `saveProfile` replaced
+     the document and would have dropped them), and the privacy page
+     replaces "write to us" with the switch.
    - Then `board.verify` (`src/boards/verify-now.ts`): the hourly slice's
      own steps (`checkBestAttempt` for a daily entry, `verifyRunWins` for
      a run), from the admin budget (`ADMIN_VERIFY_MS`, 20 match-minutes a
