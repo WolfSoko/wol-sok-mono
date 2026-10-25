@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.97.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.96.0...v74.97.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-wars-admin:** the admin area's lib, gate and overview ([#2658](https://github.com/WolfSoko/wol-sok-mono/issues/2658)) ([64429c9](https://github.com/WolfSoko/wol-sok-mono/commit/64429c93fbbcdb186007086d8456849dd5795f35))
+
+### Chore
+
+* **release:** publish ([a445732](https://github.com/WolfSoko/wol-sok-mono/commit/a445732a2ef542587d435700c9c8dfbb6bec3e94))
+
 ## [74.96.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.95.0...v74.96.0) (2026-10-25)
 
 ### Features
