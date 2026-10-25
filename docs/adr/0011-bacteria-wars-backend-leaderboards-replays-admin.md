@@ -580,7 +580,9 @@ The rules and `replayCommand` require `admin == true`,
      function's first deploy, with cache headers equal to the function's
      (the catch-all `no-cache` header might win otherwise), and
      `robots.txt` naming `/replays/sitemap.xml` and keeping out `/watch/`
-     and `/my-matches`. The privacy text for replays and the gallery comes
+     and `/my-matches`; the PWA's service worker leaves those paths to
+     the network (`navigationUrls` in `ngsw-config.json`), or it would
+     answer them with the game's `index.html`. The privacy text for replays and the gallery comes
      with the client, which starts recording them. Still to come in this
      step: the client pages.
 7. Owner: grant the claim, sign out and in, check `/admin` (changed by
