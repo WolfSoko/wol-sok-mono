@@ -113,7 +113,6 @@ export async function runAdminCommand(
   return result;
 }
 
-/** What an action did, for the audit. */
 /** What an action did; `before` and `after` are what the audit keeps. */
 interface Outcome extends ModerationChange {
   ok: boolean;
@@ -253,13 +252,16 @@ async function act(
       );
     }
     case 'board.verify': {
-      // The parser let only daily and endless boards through.
       const board = parseBoardId(command.target.boardId);
+      // The parser lets only daily and endless boards through.
+      if (board?.kind !== 'daily' && board?.kind !== 'endless') {
+        return done('malformed');
+      }
       const clock = context.clock ?? (() => performance.now());
       const result = await verifyNow(
         db,
         uid,
-        board?.kind === 'daily'
+        board.kind === 'daily'
           ? { kind: 'daily', day: board.day }
           : { kind: 'endless' },
         now,

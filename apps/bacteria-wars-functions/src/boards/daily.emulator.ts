@@ -383,4 +383,10 @@ describe('verifyNow on a daily entry', () => {
     expect(await now()).toBe('no-budget');
     expect((await entryOf('ada')).get('status')).toBe('provisional');
   });
+
+  it('leaves a day board alone once it is closed', async () => {
+    await rank('l_ada', dailyReplay(), 'ada');
+    expect(await now({ kind: 'daily', day: '2026-10-23' })).toBe('closed');
+    expect((await entryOf('ada')).get('status')).toBe('provisional');
+  });
 });

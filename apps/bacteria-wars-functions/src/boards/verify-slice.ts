@@ -123,7 +123,11 @@ export async function verifyDailySlice(
     if (left <= 0) {
       break;
     }
-    if (await checkCandidate(db, candidate, now, verify, left)) {
+    const day = candidate.board.day;
+    if (
+      (await checkBestAttempt(db, candidate.uid, day, now, verify, left)) ===
+      'checked'
+    ) {
       checked++;
     }
     await charge();
@@ -260,7 +264,7 @@ export async function candidates<B extends BoardRef>(
       return null;
     }
     // The rest of a run the owner had checked (`board.verify`) comes first.
-    const first = moderation.get('verifyFirstUntil');
+    const first = kind === 'endless' && moderation.get('endlessFirstUntil');
     return {
       board,
       entryId: entry.id,
@@ -291,30 +295,6 @@ export async function candidates<B extends BoardRef>(
     }
   }
   return found.sort((a, b) => a.trust - b.trust || b.sort - a.sort);
-}
-
-/**
- * Plays a candidate's best provisional attempt again - false when none,
- * when its re-run would take longer than the `leftMs` of the slice, or
- * when another slice checked it meanwhile.
- */
-async function checkCandidate(
-  db: Firestore,
-  candidate: Candidate<{ boardId: string; day: string }>,
-  now: number,
-  verify: (replay: Replay) => Verdict,
-  leftMs: number
-): Promise<boolean> {
-  return (
-    (await checkBestAttempt(
-      db,
-      candidate.uid,
-      candidate.board.day,
-      now,
-      verify,
-      leftMs
-    )) === 'checked'
-  );
 }
 
 /**

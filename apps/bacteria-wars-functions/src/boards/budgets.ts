@@ -47,7 +47,8 @@ export function expectedRerunMs(ticks: number): number {
 export const ADMIN_VERIFY_MS = 400_000;
 
 /**
- * What one `board.verify` spends at most: 6 match-minutes, well inside the
- * trigger's 540 s.
+ * What one `board.verify` spends at most: the longest match that is re-run
+ * at all (10 match-minutes, 360 s), so any attempt fits a command of its
+ * own - inside the trigger's 540 s.
  */
-export const ADMIN_COMMAND_MS = expectedRerunMs(6 * 60 * 60);
+export const ADMIN_COMMAND_MS = expectedRerunMs(MAX_VERIFIED_TICKS);

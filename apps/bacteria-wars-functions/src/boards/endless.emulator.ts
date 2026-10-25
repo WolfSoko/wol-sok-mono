@@ -286,21 +286,41 @@ describe('verifyNow on an endless run', () => {
       await declare(i);
       await rank(`l_${i}`, played(i, i));
     }
-    // The clock runs fast: one win fits in the command's 6 match-minutes.
+    // The clock runs fast: one win fits in the command's 10 match-minutes.
     let t = 0;
     const result = await verifyNow(
       db,
       'ada',
       { kind: 'endless' },
       NOW,
-      () => (t += 50_000),
+      () => (t += 150_000),
       () => ({ state: 'verified', ms: 0 })
     );
     expect(result).toMatchObject({ checked: 1, queued: true });
     expect((await run())?.['verifiedWins']).toBe(1);
     expect(
-      (await db.doc('moderation/ada').get()).get('verifyFirstUntil')?.toMillis()
+      (await db.doc('moderation/ada').get())
+        .get('endlessFirstUntil')
+        ?.toMillis()
     ).toBe(NOW + 24 * HOUR);
+  });
+
+  it('answers no-budget, and queues nothing, when no win fits', async () => {
+    await declare(0);
+    await rank('l_0', played(0, 0));
+    await db.doc('counters/2026-10-25').set({ adminVerifyMs: 399_000 });
+    expect(
+      await verifyNow(
+        db,
+        'ada',
+        { kind: 'endless' },
+        NOW,
+        () => 0,
+        () => ({ state: 'verified', ms: 0 })
+      )
+    ).toBe('no-budget');
+    expect((await run())?.['verifiedWins'] ?? 0).toBe(0);
+    expect((await db.doc('moderation/ada').get()).exists).toBe(false);
   });
 
   it('says so for a player without a run', async () => {
