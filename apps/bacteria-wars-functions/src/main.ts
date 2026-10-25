@@ -130,9 +130,18 @@ export const acceptReplay = onDocumentCreated(
   }
 );
 
-/** A player's (and later the owner's) command on a replay. */
+/** A player's or the owner's command on a replay - see `runReplayCommand`. */
 export const replayCommand = onDocumentCreatedWithAuthContext(
-  { document: 'replayCommands/{id}', memory: '256MiB', cpu: 'gcf_gen1' },
+  // Up to the trigger's limit, on a whole vCPU and one command at a time:
+  // `feature` may re-run up to six minutes of match first, which holds the
+  // event loop.
+  {
+    document: 'replayCommands/{id}',
+    memory: '512MiB',
+    cpu: 1,
+    concurrency: 1,
+    timeoutSeconds: 540,
+  },
   async (event) => {
     const data = event.data?.data();
     if (data !== undefined) {
@@ -140,9 +149,10 @@ export const replayCommand = onDocumentCreatedWithAuthContext(
         db(),
         event.params.id,
         data,
-        event.authType === 'unauthenticated' ? undefined : event.authId
+        event.authType === 'unauthenticated' ? undefined : event.authId,
+        { isOwner }
       );
-      if (!result.ok) {
+      if (result !== null && !result.ok) {
         logger.info('Replay command refused', { id: event.params.id, result });
       }
     }

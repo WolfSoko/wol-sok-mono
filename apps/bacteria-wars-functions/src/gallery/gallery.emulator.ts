@@ -17,7 +17,8 @@ import { publicProfileChanged } from './publish';
 /**
  * The gallery against the Firestore emulator (`test-emulator`):
  * `featureBest` picks, re-runs, scores and publishes a day's best match,
- * once, and `remove` takes it down again.
+ * once, and `remove` takes it down again; the owner's `feature`,
+ * `unfeature` and `anonymise` curate it by hand.
  */
 const PROJECT = 'demo-bacteria-functions';
 if (getApps().length === 0) {
@@ -216,7 +217,14 @@ describe('featureBest', () => {
     const command = { uid: 'ada', type: 'remove', replayId: 'l_a' };
     await db.doc('replayCommands/c1').set(command);
     expect(
-      await runReplayCommand(db, 'c1', command, 'ada', NOW + HOUR)
+      await runReplayCommand(
+        db,
+        'c1',
+        command,
+        'ada',
+        { isOwner: async () => false },
+        NOW + HOUR
+      )
     ).toEqual({ ok: true });
     const published = await db.doc(`publicReplays/${publicId}`).get();
     expect(published.get('removedAt')).not.toBeNull();
@@ -226,5 +234,154 @@ describe('featureBest', () => {
     const replay = await db.doc('replays/l_a').get();
     expect(replay.get('publicId')).toBeUndefined();
     expect(replay.get('expireAt')?.toMillis()).toBe(PLAYED + 30 * DAY_MS);
+  });
+});
+
+describe("the owner's curation", () => {
+  /** Runs the owner's replay command `id`, re-running with `verify`. */
+  async function curate(
+    id: string,
+    type: string,
+    replayId: string,
+    verify: () => Verdict = thriller
+  ) {
+    const command = { uid: 'own', type, replayId };
+    await db.doc(`replayCommands/${id}`).set(command);
+    let t = 0;
+    return runReplayCommand(
+      db,
+      id,
+      command,
+      'own',
+      {
+        isOwner: async (uid) => uid === 'own',
+        clock: () => (t += 1_000),
+        verify,
+      },
+      NOW
+    );
+  }
+
+  const publicIdOf = async (replayId: string) =>
+    (await db.doc(`replays/${replayId}`).get()).get('publicId') as
+      | string
+      | undefined;
+
+  it("features a guest's match by hand, re-run first, and audits it", async () => {
+    await store('l_a', 'guest');
+    expect(await curate('c1', 'feature', 'l_a')).toEqual({ ok: true });
+    const publicId = String(await publicIdOf('l_a'));
+    expect(
+      (await db.doc(`publicReplays/${publicId}`).get()).data()
+    ).toMatchObject({ replayId: 'l_a', featuredBy: 'admin', removedAt: null });
+    expect((await db.doc('replays/l_a').get()).data()).toMatchObject({
+      state: 'verified',
+      medal: 'gold',
+    });
+    expect(
+      (await db.doc('counters/2026-10-26').get()).get('adminVerifyMs')
+    ).toBeGreaterThan(0);
+    expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
+      by: 'own',
+      type: 'replay.feature',
+      target: { replayId: 'l_a' },
+      source: 'replayCommand',
+      ok: true,
+      before: { state: 'submitted' },
+      after: { publicId },
+    });
+    // A second delivery answers from the audit and runs nothing.
+    expect(await curate('c1', 'feature', 'l_a')).toEqual({ ok: true });
+    expect((await db.collection('publicReplays').get()).size).toBe(1);
+    expect(await curate('c2', 'feature', 'l_a')).toEqual({
+      ok: false,
+      reason: 'already-public',
+    });
+  });
+
+  it("refuses what a player took down, what fails its re-run, and what the budget can't pay", async () => {
+    await store('l_a', 'ada');
+    await db.doc('replays/l_a').update({ optOut: ['ada'], galleryOut: true });
+    expect(await curate('c1', 'feature', 'l_a')).toEqual({
+      ok: false,
+      reason: 'not-eligible',
+    });
+    expect((await db.doc('adminAudit/c1').get()).get('error')).toBe(
+      'not-eligible'
+    );
+    await store('l_b', 'bob');
+    expect(
+      await curate('c2', 'feature', 'l_b', () => ({
+        state: 'unverified',
+        ms: 0,
+      }))
+    ).toEqual({ ok: false, reason: 'not-verified' });
+    expect((await db.doc('replays/l_b').get()).get('state')).toBe('unverified');
+    await store('l_c', 'cid');
+    await db.doc('counters/2026-10-26').set({ adminVerifyMs: 400_000 });
+    expect(await curate('c3', 'feature', 'l_c')).toEqual({
+      ok: false,
+      reason: 'no-budget',
+    });
+    expect(await curate('c4', 'feature', 'nope')).toEqual({
+      ok: false,
+      reason: 'not-found',
+    });
+  });
+
+  it('unfeatures by the public id, and may feature it again', async () => {
+    await store('l_a', 'ada');
+    await curate('c1', 'feature', 'l_a');
+    const publicId = String(await publicIdOf('l_a'));
+    expect(await curate('c2', 'unfeature', publicId)).toEqual({ ok: true });
+    expect(
+      (await db.doc(`publicReplays/${publicId}`).get()).get('removedAt')
+    ).not.toBeNull();
+    expect(await publicIdOf('l_a')).toBeUndefined();
+    expect(await curate('c3', 'unfeature', publicId)).toEqual({
+      ok: false,
+      reason: 'not-public',
+    });
+    // Verified now: featured again without a re-run.
+    expect(
+      await curate('c4', 'feature', 'l_a', () => {
+        throw new Error('re-ran a verified replay');
+      })
+    ).toEqual({ ok: true });
+    expect(await publicIdOf('l_a')).not.toBe(publicId);
+  });
+
+  it('anonymises by the private id, for good', async () => {
+    const profile = { name: 'Ada', publicName: true };
+    await db.doc('profiles/ada').set(profile);
+    await store('l_a', 'ada');
+    await curate('c1', 'feature', 'l_a');
+    const published = db.doc(`publicReplays/${await publicIdOf('l_a')}`);
+    expect((await published.get()).get('players')[0]).toMatchObject({
+      name: 'Ada',
+    });
+    expect(await curate('c2', 'anonymise', 'l_a')).toEqual({ ok: true });
+    expect((await published.get()).data()).toMatchObject({
+      anonymised: true,
+      uids: ['ada'],
+    });
+    expect((await published.get()).get('players')[0]).toMatchObject({
+      name: null,
+    });
+    // The audit keeps no names.
+    expect(
+      JSON.stringify((await db.doc('adminAudit/c2').get()).data())
+    ).not.toContain('Ada');
+    // A new name does not bring it back.
+    await publicProfileChanged(
+      db,
+      'ada',
+      profile,
+      { ...profile, name: 'Adele' },
+      NOW
+    );
+    expect((await published.get()).get('players')[0]).toMatchObject({
+      name: null,
+    });
   });
 });

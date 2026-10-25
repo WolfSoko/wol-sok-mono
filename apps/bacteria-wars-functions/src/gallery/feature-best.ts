@@ -53,13 +53,13 @@ interface FeatureBestResult {
 }
 
 /** A verified candidate, and its header where it was read already. */
-interface Verified extends Stored {
+export interface Verified extends Stored {
   header?: ReplayHeader;
   doc: GalleryReplay & { summary: ReplaySummary };
 }
 
 /** A candidate once scored. */
-interface Scored extends Stored {
+export interface Scored extends Stored {
   doc: GalleryReplay & { score: number; reasons: string[] };
 }
 
@@ -195,7 +195,7 @@ export async function featureBest(
 }
 
 /** A candidate as verified, with what the re-run found. */
-function asVerified(
+export function asVerified(
   { id, doc }: Stored,
   summary: ReplaySummary,
   medal: GalleryReplay['medal']
@@ -268,7 +268,7 @@ async function galleryOptOuts(
  * Stores a re-run's verdict on the replay, unless its state moved meanwhile
  * - true when it did.
  */
-async function applyVerdict(
+export async function applyVerdict(
   db: Firestore,
   id: string,
   state: string,
@@ -285,15 +285,10 @@ async function applyVerdict(
 }
 
 /**
- * Scores the verified candidates from their re-run (ADR 0011) and stores
- * it on each replay. A feat is a platinum run against a hard computer or a
- * boss, and the best verified daily-level replay of the day. A replay
- * deleted meanwhile (its account went) is just not stored.
+ * Scores the verified candidates (`storeScore`); the best verified
+ * daily-level replay of the day is a feat.
  */
-async function scoreAll(
-  db: Firestore,
-  verified: Verified[]
-): Promise<Scored[]> {
+function scoreAll(db: Firestore, verified: Verified[]): Promise<Scored[]> {
   const bestDaily = verified
     .filter(({ doc }) => doc.kind === 'daily')
     .sort(
@@ -302,33 +297,46 @@ async function scoreAll(
         dailySort(a.doc.winnerSeat === 0, a.doc.ticks)
     )[0];
   return Promise.all(
-    verified.map(async (candidate) => {
-      const { doc } = candidate;
-      const feat =
-        candidate === bestDaily ||
-        (doc.medal === 'platinum' &&
-          (await againstTheStrongest(db, candidate)));
-      const { score, reasons } = replayScore({
-        samples: samplesOf(doc.summary),
-        outcome: {
-          endedBy: doc.summary.endedBy as ReplayOutcome['endedBy'],
-          winnerSeat: doc.summary.winnerSeat,
-        },
-        ticks: doc.ticks,
-        online: doc.kind === 'online',
-        feat,
-      });
-      await db
-        .doc(`replays/${candidate.id}`)
-        .update({ score, reasons })
-        .catch((error: unknown) => {
-          if (!hasGrpcCode(error, 5, 'not-found')) {
-            throw error;
-          }
-        });
-      return { id: candidate.id, doc: { ...doc, score, reasons } };
-    })
+    verified.map((candidate) =>
+      storeScore(db, candidate, candidate === bestDaily)
+    )
   );
+}
+
+/**
+ * Scores a verified replay from its re-run (ADR 0011) and stores it on the
+ * replay. A feat is `bestDaily`, or a platinum run against a hard computer
+ * or a boss. A replay deleted meanwhile (its account went) is just not
+ * stored.
+ */
+export async function storeScore(
+  db: Firestore,
+  candidate: Verified,
+  bestDaily: boolean
+): Promise<Scored> {
+  const { doc } = candidate;
+  const feat =
+    bestDaily ||
+    (doc.medal === 'platinum' && (await againstTheStrongest(db, candidate)));
+  const { score, reasons } = replayScore({
+    samples: samplesOf(doc.summary),
+    outcome: {
+      endedBy: doc.summary.endedBy as ReplayOutcome['endedBy'],
+      winnerSeat: doc.summary.winnerSeat,
+    },
+    ticks: doc.ticks,
+    online: doc.kind === 'online',
+    feat,
+  });
+  await db
+    .doc(`replays/${candidate.id}`)
+    .update({ score, reasons })
+    .catch((error: unknown) => {
+      if (!hasGrpcCode(error, 5, 'not-found')) {
+        throw error;
+      }
+    });
+  return { id: candidate.id, doc: { ...doc, score, reasons } };
 }
 
 /**

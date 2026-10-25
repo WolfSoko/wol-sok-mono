@@ -391,7 +391,14 @@ describe('replayCommand', () => {
       .doc('replayCommands/c1')
       .set(data)
       .then(() =>
-        runReplayCommand(db, 'c1', data as Record<string, unknown>, authId, NOW)
+        runReplayCommand(
+          db,
+          'c1',
+          data as Record<string, unknown>,
+          authId,
+          { isOwner: async (uid) => uid === 'own' },
+          NOW
+        )
       );
 
   it("takes a player's match out of the gallery for good", async () => {
@@ -423,14 +430,15 @@ describe('replayCommand', () => {
     ).toEqual({ ok: false, reason: 'not-found' });
   });
 
-  it('refuses a banned player, and the types still to come', async () => {
+  it("refuses a banned player, and the owner's types to anybody else", async () => {
     await db.doc('bans/ada').set({ until: null });
     expect(
       await run({ uid: 'ada', type: 'remove', replayId: 'r1' }, 'ada')
     ).toEqual({ ok: false, reason: 'banned' });
     expect(
-      await run({ uid: 'own', type: 'feature', replayId: 'r1' }, 'own')
-    ).toEqual({ ok: false, reason: 'unsupported' });
+      await run({ uid: 'bob', type: 'unfeature', replayId: 'r1' }, 'bob')
+    ).toEqual({ ok: false, reason: 'not-admin' });
+    expect((await db.doc('adminAudit/c1').get()).exists).toBe(false);
   });
 });
 

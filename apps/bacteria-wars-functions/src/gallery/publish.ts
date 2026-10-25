@@ -2,7 +2,7 @@ import { replayToBytes } from '@wolsok/feat-lazy-bac-game/engine';
 import {
   FieldValue,
   type Firestore,
-  type QueryDocumentSnapshot,
+  type DocumentSnapshot,
   Timestamp,
 } from 'firebase-admin/firestore';
 import { DAY_MS } from '../boards/budgets';
@@ -144,7 +144,7 @@ export async function publishReplay(
  */
 export async function takeDownPublic(
   db: Firestore,
-  published: QueryDocumentSnapshot,
+  published: DocumentSnapshot,
   now: number
 ): Promise<void> {
   const replayId = published.get('replayId');
@@ -206,15 +206,23 @@ function seatLabel(
 }
 
 /**
- * Rewrites the player's seats in their public replays still up, each in
- * a transaction: `rewrite` gets the seat and its index and returns the
- * new one; `extra` adds fields to each update. The number rewritten.
+ * Rewrites the player's seats in their public replays, each in a
+ * transaction: `rewrite` gets the seat and its index and returns the new
+ * one; `extra` adds fields to each update; `skipAnonymised` leaves out
+ * those the owner anonymised, which show no name again. The number of
+ * replays.
  */
 async function rewriteSeats(
   db: Firestore,
   uid: string,
   rewrite: (seat: PublicSeat, index: number, publicId: string) => PublicSeat,
-  extra: (seats: (string | null)[]) => Record<string, unknown> = () => ({})
+  {
+    extra = () => ({}),
+    skipAnonymised = false,
+  }: {
+    extra?: (seats: (string | null)[]) => Record<string, unknown>;
+    skipAnonymised?: boolean;
+  } = {}
 ): Promise<number> {
   const published = await db
     .collection('publicReplays')
@@ -224,6 +232,9 @@ async function rewriteSeats(
     published.docs.map((doc) =>
       db.runTransaction(async (tx) => {
         const current = (await tx.get(doc.ref)).data() ?? {};
+        if (skipAnonymised && current['anonymised'] === true) {
+          return;
+        }
         const seats =
           (current['seatUids'] as (string | null)[] | undefined) ?? [];
         const players = (current['players'] as PublicSeat[] | undefined) ?? [];
@@ -244,15 +255,12 @@ async function rewriteSeats(
  * goes, and its seat shows the colour label instead of a name.
  */
 export function anonymisePublic(db: Firestore, uid: string): Promise<number> {
-  return rewriteSeats(
-    db,
-    uid,
-    (player) => ({ ...player, name: null }),
-    (seats) => ({
+  return rewriteSeats(db, uid, (player) => ({ ...player, name: null }), {
+    extra: (seats) => ({
       uids: FieldValue.arrayRemove(uid),
       seatUids: seats.map((seat) => (seat === uid ? null : seat)),
-    })
-  );
+    }),
+  });
 }
 
 /**
@@ -292,9 +300,14 @@ export async function publicProfileChanged(
     before.publicName !== after.publicName ||
     before.preset !== after.preset;
   return relabels
-    ? rewriteSeats(db, uid, (player, index, publicId) => ({
-        ...player,
-        ...seatLabel(publicId, index, after),
-      }))
+    ? rewriteSeats(
+        db,
+        uid,
+        (player, index, publicId) => ({
+          ...player,
+          ...seatLabel(publicId, index, after),
+        }),
+        { skipAnonymised: true }
+      )
     : 0;
 }
