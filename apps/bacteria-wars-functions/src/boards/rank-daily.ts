@@ -4,10 +4,10 @@ import {
   dailyLevelId,
   dailySort,
   parseAttemptId,
+  parseBoardId,
   type Replay,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
-  FieldValue,
   type Firestore,
   Timestamp,
   type Transaction,
@@ -160,7 +160,7 @@ export async function rankDaily(
     await writeDailyEntry(tx, db, day, uid, next);
     tx.set(runRef, {
       attempts: next,
-      expireAt: Timestamp.fromMillis(now + DAILY_TTL_MS),
+      expireAt: Timestamp.fromMillis(dailyBoardExpiresAt(day)),
     });
     tx.update(replayRef, rankedFields('counted'));
     return 'counted' as const;
@@ -170,8 +170,10 @@ export async function rankDaily(
 /**
  * Writes a player's entry on `daily-{day}` from their attempts - and takes
  * it off the board when no attempt is left that has not failed a check.
- * Reads before it writes, as a transaction must: call it before the
- * caller's own writes.
+ * The player's `boardMembers.boards` drops the daily boards TTL has taken
+ * by then, so it holds the all-time boards and about 31 daily ones. Reads
+ * before it writes, as a transaction must: call it before the caller's own
+ * writes.
  */
 export async function writeDailyEntry(
   tx: Transaction,
@@ -186,9 +188,19 @@ export async function writeDailyEntry(
   const entryRef = db.doc(`boards/${boardId}/entries/${member.entryIds.daily}`);
   const entry = await tx.get(entryRef);
   const base = dailyEntryBase(attempts);
+  const listed = member.data['boards'];
+  const boards = (Array.isArray(listed) ? listed : []).filter((id) => {
+    const board = typeof id === 'string' ? parseBoardId(id) : null;
+    return (
+      board !== null &&
+      id !== boardId &&
+      (board.kind !== 'daily' ||
+        dailyBoardExpiresAt(board.day) > Date.parse(day))
+    );
+  });
   tx.set(
     db.doc(`boardMembers/${uid}`),
-    { entryIds: member.entryIds, boards: FieldValue.arrayUnion(boardId) },
+    { entryIds: member.entryIds, boards: [...boards, boardId] },
     { merge: true }
   );
   if (base === null) {

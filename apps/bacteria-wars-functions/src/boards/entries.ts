@@ -137,14 +137,12 @@ export function memberEntries(
   member: Record<string, unknown> | undefined
 ): MemberEntry[] {
   const boards = member?.['boards'];
-  const entryIds = (member?.['entryIds'] ?? {}) as Partial<
-    Record<BoardKind, string>
-  >;
+  const entryIds = (member?.['entryIds'] ?? {}) as Partial<EntryIds>;
   const entries: MemberEntry[] = [];
   for (const boardId of Array.isArray(boards) ? boards : []) {
     const board = typeof boardId === 'string' ? parseBoardId(boardId) : null;
     const entryId = board === null ? undefined : entryIds[board.kind];
-    if (board !== null && entryId !== undefined) {
+    if (entryId !== undefined && board !== null) {
       entries.push({ boardId, board, entryId });
     }
   }

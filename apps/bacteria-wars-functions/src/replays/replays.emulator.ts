@@ -376,7 +376,10 @@ describe('replayCommand', () => {
       'ada'
     );
     expect(result).toEqual({ ok: true });
-    expect((await db.doc('replays/r1').get()).get('optOut')).toEqual(['ada']);
+    expect((await db.doc('replays/r1').get()).data()).toMatchObject({
+      optOut: ['ada'],
+      galleryOut: true,
+    });
     expect(
       (await db.doc('publicReplays/p1').get()).get('removedAt')
     ).not.toBeNull();
@@ -424,6 +427,7 @@ describe('deletePlayerReplays', () => {
     await db.doc('replays/ours').set({
       players: ['ada', 'bob'],
       optOut: ['ada'],
+      galleryOut: true,
       seats: ['ada', 'bob'],
     });
     await db.doc('replays/ours/reports/ada').set({ checksum: 1 });
@@ -437,7 +441,8 @@ describe('deletePlayerReplays', () => {
     // of the gallery, and it stays out without her uid.
     expect((await db.doc('replays/ours').get()).data()).toEqual({
       players: ['bob'],
-      optOut: ['deleted'],
+      optOut: [],
+      galleryOut: true,
       seats: [null, 'bob'],
     });
     expect((await db.doc('replays/ours/reports/ada').get()).exists).toBe(false);

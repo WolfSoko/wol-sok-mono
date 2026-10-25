@@ -315,8 +315,7 @@ describe('deletePlayerBoards', () => {
     const day = '2026-10-25';
     await db.doc('boardMembers/ada').set({
       entryIds: { xp: 'x1', online: 'o1', endless: 'e1', daily: 'd1' },
-      // A daily board TTL already took is not visited again.
-      boards: ['xp', 'online', 'endless', `daily-${day}`, 'daily-2026-09-01'],
+      boards: ['xp', 'online', 'endless', `daily-${day}`],
     });
     const mine = [
       'boards/xp/entries/x1',
@@ -342,7 +341,7 @@ describe('deletePlayerBoards', () => {
     for (const path of theirs) {
       await db.doc(path).set({ uid: 'bob' });
     }
-    expect(await deletePlayerBoards(db, 'ada', Date.UTC(2026, 9, 25))).toBe(9);
+    expect(await deletePlayerBoards(db, 'ada')).toBe(9);
     for (const path of [...mine, 'boardMembers/ada']) {
       expect([path, (await db.doc(path).get()).exists]).toEqual([path, false]);
     }
@@ -352,6 +351,6 @@ describe('deletePlayerBoards', () => {
   });
 
   it('copes with an account that never reached a board', async () => {
-    expect(await deletePlayerBoards(db, 'ada', Date.UTC(2026, 9, 25))).toBe(3);
+    expect(await deletePlayerBoards(db, 'ada')).toBe(3);
   });
 });

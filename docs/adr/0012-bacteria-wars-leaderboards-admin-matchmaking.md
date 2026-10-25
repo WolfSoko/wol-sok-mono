@@ -1135,10 +1135,13 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
    - `deletePlayerBoards` deletes a deleted account's entries on every
      board in `boardMembers.boards` (`rebuildTop` takes them off the
      tops), its `dailyRuns` and `endlessRuns`, `boardMembers`, `limits`,
-     `moderation`, its attempts and notices. `deletePlayerReplays` turns
-     the account's uid in a kept replay's `optOut` into `'deleted'`, so a
-     match it took out of the gallery stays out. The tombstone, the ban,
-     the audit scrub and `stats/accounts` follow with the bans.
+     `moderation`, its attempts and notices. `boardMembers.boards` drops
+     the daily boards TTL took whenever a daily entry is written, so it
+     holds about 31 daily ones, and `dailyRuns` expire from their day like
+     the board. A replay taken out of the gallery carries `galleryOut`,
+     which keeps it out once its player's uid has left `optOut`. The
+     tombstone, the ban, the audit scrub and `stats/accounts` follow with
+     the bans.
    - The admin commands and `countAccount` come next.
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the

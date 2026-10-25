@@ -1,22 +1,19 @@
 import type { DocumentReference, Firestore } from 'firebase-admin/firestore';
 import { memberEntries } from './entries';
-import { dailyBoardExpiresAt } from './rank-daily';
 
 /**
  * Erases a deleted account's board data (ADR 0012): its entry on every
  * board it is on (`boardMembers/{uid}.boards`), which `rebuildTop` then
  * takes off the top documents; its `dailyRuns` (one per daily board) and
  * `endlessRuns`; `boardMembers`, `limits` and `moderation`; its declared
- * attempts and notices. Daily boards TTL already took are skipped. Runs
- * for banned accounts too: a deletion must erase the player's data. The
+ * attempts and notices. Runs for banned accounts too: a deletion must erase the player's data. The
  * ban and its tombstone come with the admin commands. Throws when a delete
  * fails, after the others ran; returns the board documents it went
  * through.
  */
 export async function deletePlayerBoards(
   db: Firestore,
-  uid: string,
-  now: number = Date.now()
+  uid: string
 ): Promise<number> {
   const memberRef = db.doc(`boardMembers/${uid}`);
   const [member, runs] = await Promise.all([
@@ -31,9 +28,6 @@ export async function deletePlayerBoards(
   ];
   for (const { boardId, board, entryId } of memberEntries(member.data())) {
     if (board.kind === 'daily') {
-      if (dailyBoardExpiresAt(board.day) <= now) {
-        continue;
-      }
       refs.push(db.doc(`dailyRuns/${board.day}_${uid}`));
     }
     refs.push(db.doc(`boards/${boardId}/entries/${entryId}`));

@@ -83,7 +83,8 @@ async function run(
   if (!replay.exists || !Array.isArray(players) || !players.includes(uid)) {
     return { ok: false, reason: 'not-found' };
   }
-  await ref.update({ optOut: FieldValue.arrayUnion(uid) });
+  // `galleryOut` keeps it out once the player is gone from `optOut` too.
+  await ref.update({ optOut: FieldValue.arrayUnion(uid), galleryOut: true });
   const published = await db
     .collection('publicReplays')
     .where('replayId', '==', replayId)

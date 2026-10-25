@@ -115,6 +115,18 @@ describe('rankDaily', () => {
     );
   });
 
+  it("drops the daily boards TTL took from the player's list", async () => {
+    await db.doc('boardMembers/ada').set({
+      boards: ['xp', 'daily-2026-09-01', 'daily-2026-10-24'],
+    });
+    expect(await rank('l_1', dailyReplay(), 'ada')).toBe('counted');
+    expect((await db.doc('boardMembers/ada').get()).get('boards')).toEqual([
+      'xp',
+      'daily-2026-10-24',
+      BOARD,
+    ]);
+  });
+
   it("keeps the player's best attempt, and counts each attempt once", async () => {
     const second = 'd_2026-10-25_2';
     await rank('l_1', dailyReplay(lost()), 'ada');
