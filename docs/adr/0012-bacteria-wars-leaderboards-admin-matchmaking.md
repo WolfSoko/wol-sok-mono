@@ -1201,9 +1201,8 @@ As built in the client and on the privacy page (2026-10-26):
   guest account stays until it is deleted: the 90-day deletion is told
   with the release that turns `guestCleanup` on.
 - **The friends-only rule** (its own change, after the backfill):
-  `status/$uid/.read` is `auth != null && (auth.uid === $uid ||
-root.child('statusReaders').child($uid).child(auth.uid).exists())`,
-  checked by `database-rules.spec.ts`. The same change sets
+  `status/$uid/.read` lets only the player and the readers in
+  `statusReaders/$uid` read, checked by `database-rules.spec.ts`. The same change sets
   `GUEST_CLEANUP_ON` to `true`, and the privacy page says that only
   players the owner lists as a friend can read the entry and that guest
   accounts unused for 90 days are deleted (a returning guest starts
