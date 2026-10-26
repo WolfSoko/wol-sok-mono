@@ -33,11 +33,14 @@ const TCF_POLL_MAX_TRIES = 150;
  * the consent banner (Google Privacy & Messaging, a TCF v2.2 CMP), so it
  * loads with the app; the ad slots stay empty until the player has made a
  * choice. Whether the ads may be personalised AdSense reads from that
- * choice itself.
+ * choice itself. Without an ad unit the game adds no script, but still
+ * listens to the one the page loads (the remote's `index.html`), so the
+ * way back into the banner (`openConsentSettings`) shows all the same.
  */
 @Injectable({ providedIn: 'root' })
 export class GameAds {
-  private readonly options = inject(GAME_SUPPORT)?.ads ?? null;
+  private readonly support = inject(GAME_SUPPORT);
+  private readonly options = this.support?.ads ?? null;
   private readonly document = inject(DOCUMENT);
   private readonly window = this.document.defaultView as AdsWindow | null;
 
@@ -54,10 +57,13 @@ export class GameAds {
   public readonly consentAnswered = this.answered.asReadonly();
 
   public start(): void {
-    if (!this.ad || !this.window || this.started) return;
+    if (!this.support || !this.window || this.started) return;
+    const loaded = this.document.getElementById(AD_SCRIPT_ID) !== null;
+    // Neither an ad unit nor the page's script: no banner to wait for.
+    if (!this.ad && !loaded) return;
     this.started = true;
     let blocked = false;
-    if (!this.document.getElementById(AD_SCRIPT_ID)) {
+    if (this.ad && !loaded) {
       const script = this.document.createElement('script');
       script.id = AD_SCRIPT_ID;
       script.async = true;

@@ -15,6 +15,7 @@ export {
 export { provideGameCloud } from './lib/storage/provide-game-cloud';
 export type { GameCloudOptions } from './lib/storage/game-cloud';
 export { provideGameSupport } from './lib/support/provide-game-support';
+export { GameAds } from './lib/support/game-ads.service';
 export type {
   GameAdsOptions,
   GameSupportOptions,

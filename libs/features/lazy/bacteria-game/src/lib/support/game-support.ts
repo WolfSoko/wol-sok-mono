@@ -22,7 +22,11 @@ export interface GameSupportOptions {
   readonly androidPackage: string;
   /** Who runs the site, for the footer's copyright line. */
   readonly siteOwner: string;
-  /** Null for no ads, and no consent banner either. */
+  /**
+   * Null for no ad slots. The consent banner then comes only from a script
+   * the page loads itself (the remote's `index.html`), which `GameAds`
+   * listens to all the same.
+   */
   readonly ads: GameAdsOptions | null;
 }
 
