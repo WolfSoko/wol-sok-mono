@@ -73,9 +73,18 @@ export function forgetChanges(
       : { seats: seats.map((seat) => (seat === uid ? null : seat)) }),
     ...((replay.expireAt === undefined || replay.expireAt === null) &&
     typeof replay.publicId !== 'string'
-      ? { expireAt: Math.max(born + REPLAY_TTL_MS, now + DAY_MS) }
+      ? { expireAt: anonymisedExpireAt(born, now) }
       : {}),
   };
+}
+
+/**
+ * When a replay no longer public, or forgotten by a player, expires, in
+ * ms: 30 days after the match (`born`), but at the earliest a day from
+ * `now`.
+ */
+export function anonymisedExpireAt(born: number, now: number): number {
+  return Math.max(born + REPLAY_TTL_MS, now + DAY_MS);
 }
 
 /**

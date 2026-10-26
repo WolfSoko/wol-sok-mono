@@ -85,25 +85,29 @@ export function rankedFields(reason: ArrivalReason) {
 
 /**
  * A replay read in a ranking transaction: null while it may still rank,
- * else what the ranking returns - `gone` (deleted, or with `uid`: it no
- * longer names that player, whose account was deleted or who forgot it -
- * ADR 0012, 2026-10-26) or the answer an earlier delivery stored.
- * `rankReplay` retries, and a replay keeps its answer, even when a ban or
- * an expired declaration would answer otherwise now.
+ * else what the ranking returns - `gone` (its account was deleted) or the
+ * answer an earlier delivery stored. `rankReplay` retries, and a replay
+ * keeps its answer, even when a ban or an expired declaration would answer
+ * otherwise now.
  */
 export function earlierAnswer(
-  replay: DocumentSnapshot,
-  uid?: string
+  replay: DocumentSnapshot
 ): ArrivalReason | 'gone' | null {
-  const players: unknown = replay.get('players');
-  if (
-    !replay.exists ||
-    (uid !== undefined && !(Array.isArray(players) && players.includes(uid)))
-  ) {
+  if (!replay.exists) {
     return 'gone';
   }
   const ranked = replay.get('rankedReason');
   return typeof ranked === 'string' ? (ranked as ArrivalReason) : null;
+}
+
+/**
+ * True while the replay still names `uid` in `players`. A declared
+ * board's ranking checks it first and answers `gone` when not: the player
+ * deleted their account or forgot the match since (ADR 0012, 2026-10-26).
+ */
+export function namesPlayer(replay: DocumentSnapshot, uid: string): boolean {
+  const players: unknown = replay.get('players');
+  return replay.exists && Array.isArray(players) && players.includes(uid);
 }
 
 /** Stores why a replay does not rank, unless {@link earlierAnswer} has one. */

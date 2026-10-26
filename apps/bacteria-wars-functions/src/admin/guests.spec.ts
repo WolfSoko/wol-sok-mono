@@ -113,12 +113,10 @@ describe('sweepGuests', () => {
       pauses,
       order,
       uncounts,
-      listUsers: async (token) => {
-        const i = token === undefined ? 0 : Number(token);
-        return {
-          users: pages[i] ?? [],
-          ...(i + 1 < pages.length ? { pageToken: String(i + 1) } : {}),
-        };
+      users: async function* () {
+        for (const page of pages) {
+          yield* page;
+        }
       },
       erase: async (uid, uncounted) => {
         // Counted, its decrement claimed - also when the rest then fails.

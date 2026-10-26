@@ -1,5 +1,6 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import { forgetPlayerReplays } from '../replays/forget';
+import { settleAll } from '../settle';
 import { deletePlayerSocial } from '../social/delete-player';
 import { type DeletedAccount, deleteAccount } from './accounts';
 import type { Realtime } from './realtime';
@@ -24,13 +25,9 @@ export async function erasePlayer(
   now: number,
   { uncounted }: Pick<DeletedAccount, 'uncounted'> = {}
 ): Promise<void> {
-  const settled = await Promise.allSettled([
+  await settleAll([
     deleteAccount(db, uid, { tombstone, realtime, uncounted }, now),
     forgetPlayerReplays(db, uid, now),
     deletePlayerSocial(db, realtime, uid),
   ]);
-  const failed = settled.find((result) => result.status === 'rejected');
-  if (failed !== undefined) {
-    throw failed.reason;
-  }
 }

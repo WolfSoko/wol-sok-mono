@@ -18,6 +18,7 @@ import {
   answerReplay,
   checkDeclaredMatch,
   earlierAnswer,
+  namesPlayer,
   rankedFields,
   readDeclaredReplay,
 } from './declared-match';
@@ -146,7 +147,10 @@ export async function rankDaily(
     const replayRef = db.doc(`replays/${replayId}`);
     const runRef = db.doc(`dailyRuns/${day}_${uid}`);
     const [replay, stored] = await tx.getAll(replayRef, runRef);
-    const earlier = earlierAnswer(replay, uid);
+    if (!namesPlayer(replay, uid)) {
+      return 'gone';
+    }
+    const earlier = earlierAnswer(replay);
     if (earlier !== null) {
       return earlier;
     }

@@ -91,7 +91,13 @@ function fakeRealtime(
     },
     update: async (changes) => {
       for (const [path, value] of Object.entries(changes)) {
-        calls.push(`update ${path} ${value}`);
+        if (value === null) {
+          fail(path);
+          calls.push(`remove ${path}`);
+          values.delete(path);
+        } else {
+          calls.push(`update ${path} ${value}`);
+        }
       }
     },
   };

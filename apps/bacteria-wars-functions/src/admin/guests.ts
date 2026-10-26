@@ -69,9 +69,8 @@ export function isIdleGuest(user: GuestRecord, now: number): boolean {
 
 /** What `sweepGuests` needs of Auth and of the account clean-up. */
 export interface GuestSweepPorts {
-  listUsers(
-    pageToken?: string
-  ): Promise<{ users: readonly GuestRecord[]; pageToken?: string }>;
+  /** Every account, page after page as Auth lists them. */
+  users(): AsyncIterable<GuestRecord>;
   deleteUsers(
     uids: readonly string[]
   ): Promise<{ successCount: number; failureCount: number }>;
@@ -102,7 +101,7 @@ export interface GuestSweep {
 }
 
 /**
- * The daily clean-up of idle guests: pages through every account, picks
+ * The daily clean-up of idle guests: goes through every account, picks
  * the idle guests ({@link isIdleGuest}, {@link GUEST_SWEEP_LIMIT} at most),
  * erases each one's data first (`erase`, a few at a time) and then deletes
  * the accounts whose data went, {@link DELETE_BATCH} a call and a call at
@@ -120,17 +119,15 @@ export async function sweepGuests(
 ): Promise<GuestSweep> {
   const idle: string[] = [];
   let listed = 0;
-  let pageToken: string | undefined;
-  do {
-    const page = await ports.listUsers(pageToken);
-    listed += page.users.length;
-    for (const user of page.users) {
-      if (idle.length < GUEST_SWEEP_LIMIT && isIdleGuest(user, now)) {
-        idle.push(user.uid);
+  for await (const user of ports.users()) {
+    listed++;
+    if (isIdleGuest(user, now)) {
+      idle.push(user.uid);
+      if (idle.length === GUEST_SWEEP_LIMIT) {
+        break;
       }
     }
-    pageToken = page.pageToken;
-  } while (pageToken !== undefined && idle.length < GUEST_SWEEP_LIMIT);
+  }
   const sweep: GuestSweep = {
     listed,
     idle: idle.length,
@@ -139,30 +136,11 @@ export async function sweepGuests(
     uncounted: 0,
   };
   for (let i = 0; i < idle.length; i += DELETE_BATCH) {
-    const erased: string[] = [];
-    const batch = idle.slice(i, i + DELETE_BATCH);
-    let uncounted = 0;
-    for (let j = 0; j < batch.length; j += PARALLEL_ERASES) {
-      const uids = batch.slice(j, j + PARALLEL_ERASES);
-      const settled = await Promise.allSettled(
-        uids.map((uid) =>
-          ports.erase(uid, () => {
-            uncounted++;
-          })
-        )
-      );
-      settled.forEach((result, k) => {
-        if (result.status === 'fulfilled') {
-          erased.push(uids[k]);
-        } else {
-          sweep.failed++;
-          logger.error('Could not erase an idle guest', {
-            uid: uids[k],
-            error: result.reason,
-          });
-        }
-      });
-    }
+    const { erased, uncounted } = await eraseBatch(
+      ports,
+      idle.slice(i, i + DELETE_BATCH)
+    );
+    sweep.failed += Math.min(DELETE_BATCH, idle.length - i) - erased.length;
     if (uncounted > 0) {
       try {
         await ports.uncount(uncounted);
@@ -189,4 +167,37 @@ export async function sweepGuests(
     }
   }
   return sweep;
+}
+
+/**
+ * Erases the guests' data, {@link PARALLEL_ERASES} at a time: the uids
+ * whose data went, and how many account decrements the erases claimed.
+ */
+async function eraseBatch(
+  ports: GuestSweepPorts,
+  uids: readonly string[]
+): Promise<{ erased: string[]; uncounted: number }> {
+  const erased: string[] = [];
+  let uncounted = 0;
+  for (let i = 0; i < uids.length; i += PARALLEL_ERASES) {
+    const group = uids.slice(i, i + PARALLEL_ERASES);
+    const settled = await Promise.allSettled(
+      group.map((uid) =>
+        ports.erase(uid, () => {
+          uncounted++;
+        })
+      )
+    );
+    settled.forEach((result, k) => {
+      if (result.status === 'fulfilled') {
+        erased.push(group[k]);
+      } else {
+        logger.error('Could not erase an idle guest', {
+          uid: group[k],
+          error: result.reason,
+        });
+      }
+    });
+  }
+  return { erased, uncounted };
 }

@@ -4,7 +4,14 @@ import {
   Timestamp,
 } from 'firebase-admin/firestore';
 import { deleteAll } from '../deletes';
-import { anonymisePublic, takeDownPublic } from '../gallery/publish';
+import {
+  anonymiseCopies,
+  anonymisePublic,
+  isUp,
+  publicCopiesNaming,
+  takeDownPublic,
+} from '../gallery/publish';
+import type { CommandResult } from './command';
 import {
   type ForgettableReplay,
   forgetChanges,
@@ -97,7 +104,7 @@ export async function forgetForPlayer(
   uid: string,
   replayId: string,
   now: number
-): Promise<{ ok: boolean; reason?: string } | null> {
+): Promise<CommandResult | null> {
   const outcome = await forgetReplay(db, replayId, uid, now, {
     command: db.doc(`replayCommands/${commandId}`),
   });
@@ -107,20 +114,11 @@ export async function forgetForPlayer(
   if (outcome === 'ranking') {
     return { ok: false, reason: 'ranking' };
   }
-  const copies = (
-    await db
-      .collection('publicReplays')
-      .where('uids', 'array-contains', uid)
-      .get()
-  ).docs.filter((doc) => doc.get('replayId') === replayId);
-  for (const copy of copies) {
-    if (copy.get('removedAt') === null) {
-      await takeDownPublic(db, copy, now);
-    }
-  }
-  if (copies.length > 0) {
-    await anonymisePublic(db, uid, replayId);
-  }
+  const copies = await publicCopiesNaming(db, uid, replayId);
+  await Promise.all(
+    copies.filter(isUp).map((copy) => takeDownPublic(db, copy, now))
+  );
+  await anonymiseCopies(db, uid, copies);
   return outcome === 'forgotten' || copies.length > 0
     ? { ok: true }
     : { ok: false, reason: 'not-found' };

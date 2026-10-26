@@ -4,6 +4,7 @@ import {
   Timestamp,
 } from 'firebase-admin/firestore';
 import { deletePlayerBoards } from '../boards/delete-player';
+import { settleAll } from '../settle';
 import { holds, notedTombstones, readBan } from './bans';
 import type { Realtime } from './realtime';
 import { scrubAudit, tombstoneData } from './records';
@@ -109,7 +110,7 @@ export async function deleteAccount(
   if (tombstone !== null) {
     ids.add(tombstone);
   }
-  const [boards, ...rest] = await Promise.allSettled([
+  const [boards] = await settleAll([
     deletePlayerBoards(db, uid),
     scrubAudit(db, uid),
     !counted
@@ -124,12 +125,7 @@ export async function deleteAccount(
       ])
     ),
   ]);
-  for (const result of [boards, ...rest]) {
-    if (result.status === 'rejected') {
-      throw result.reason;
-    }
-  }
-  return boards.status === 'fulfilled' ? boards.value : 0;
+  return boards;
 }
 
 /**

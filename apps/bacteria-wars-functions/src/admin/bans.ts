@@ -1,14 +1,17 @@
 import type { BanReason } from '@wolsok/feat-lazy-bac-game/engine';
 import {
-  type DocumentReference,
   FieldValue,
   type Firestore,
-  type Query,
   Timestamp,
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { setHidden } from '../boards/entries';
-import { removeFromGallery, takeDownPublic } from '../gallery/publish';
+import { deleteAll, deleteRefs, openRoomsOf } from '../deletes';
+import {
+  livePublicCopiesOf,
+  removeFromGallery,
+  takeDownPublic,
+} from '../gallery/publish';
 import type { Realtime } from './realtime';
 import { noticeData, tombstoneData, writeAudit } from './records';
 
@@ -26,9 +29,6 @@ export interface BanState {
   until: number | null;
   reason: BanReason;
 }
-
-/** The documents one page of a clear-out deletes. */
-const PAGE = 300;
 
 /**
  * The expired bans one hourly run lifts at most, before its verification
@@ -373,63 +373,24 @@ async function clearOut(
   uid: string
 ): Promise<void> {
   await db.doc(`queue/${uid}`).delete();
-  await realtime.remove(`status/${uid}`);
-  await realtime.remove(`connections/${uid}`);
-  const rooms = await db
-    .collection('rooms')
-    .where('host', '==', uid)
-    .select('taken')
-    .get();
-  await deleteRefs(
-    db,
-    rooms.docs.filter((doc) => doc.get('taken') !== true).map((doc) => doc.ref)
-  );
+  await realtime.update({
+    [`status/${uid}`]: null,
+    [`connections/${uid}`]: null,
+  });
+  await deleteRefs(db, await openRoomsOf(db, uid, ['host']));
   await deleteAll(db, db.collection('invites').where('from', '==', uid));
-}
-
-async function deleteAll(db: Firestore, query: Query): Promise<void> {
-  for (;;) {
-    const page = await query.select().limit(PAGE).get();
-    await deleteRefs(
-      db,
-      page.docs.map((doc) => doc.ref)
-    );
-    if (page.size < PAGE) {
-      return;
-    }
-  }
-}
-
-async function deleteRefs(
-  db: Firestore,
-  refs: readonly DocumentReference[]
-): Promise<void> {
-  for (let i = 0; i < refs.length; i += PAGE) {
-    const batch = db.batch();
-    refs.slice(i, i + PAGE).forEach((ref) => batch.delete(ref));
-    await batch.commit();
-  }
 }
 
 /**
  * Takes the player's public replays down the way `remove` does (ADR 0011,
- * `removeFromGallery`). Filtered on `removedAt` here, so the query needs no
- * composite index.
+ * `removeFromGallery`).
  */
 async function takeDownPublicReplays(
   db: Firestore,
   uid: string,
   now: number
 ): Promise<void> {
-  const published = await db
-    .collection('publicReplays')
-    .where('uids', 'array-contains', uid)
-    .get();
-  for (const doc of published.docs) {
-    const removedAt: unknown = doc.get('removedAt');
-    if (removedAt !== null && removedAt !== undefined) {
-      continue;
-    }
+  for (const doc of await livePublicCopiesOf(db, uid)) {
     const replayId = doc.get('replayId');
     await (typeof replayId === 'string'
       ? removeFromGallery(db, replayId, uid, now)

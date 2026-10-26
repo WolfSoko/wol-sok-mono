@@ -20,7 +20,7 @@ import {
 import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
-import type { UserRecord } from 'firebase-admin/auth';
+import type { Auth, UserRecord } from 'firebase-admin/auth';
 import {
   ACCOUNTS_DOC,
   accountsChange,
@@ -251,15 +251,31 @@ export const countAccount = v1
   });
 
 /**
+ * Auth, loaded on first use only: the auth stack is heavy, and most
+ * functions never need it.
+ */
+async function auth(): Promise<Auth> {
+  return (await import('firebase-admin/auth')).getAuth();
+}
+
+/** Every Auth user, a thousand a page. */
+async function* authUsers(): AsyncGenerator<UserRecord> {
+  const users = await auth();
+  let pageToken: string | undefined;
+  do {
+    const page = await users.listUsers(1000, pageToken);
+    yield* page.users;
+    pageToken = page.pageToken;
+  } while (pageToken !== undefined);
+}
+
+/**
  * The Auth user, read afresh - null for one that does not exist; other
  * failures throw.
  */
 async function userRecord(uid: string): Promise<UserRecord | null> {
-  // Loaded here only: the auth stack is heavy, and the other functions
-  // never need it.
-  const { getAuth } = await import('firebase-admin/auth');
   try {
-    return await getAuth().getUser(uid);
+    return await (await auth()).getUser(uid);
   } catch (error) {
     if ((error as { code?: unknown } | null)?.code === 'auth/user-not-found') {
       return null;
@@ -304,16 +320,12 @@ async function tombstoneOf(uid: string): Promise<string | null> {
   return user === null ? null : tombstoneId(BAN_TOMBSTONE_KEY.value(), user);
 }
 
-/** Every account's uid, a thousand a page - `stats.recount`. */
+/** Every account's uid - `stats.recount`. */
 async function accountUids(): Promise<string[]> {
-  const { getAuth } = await import('firebase-admin/auth');
   const uids: string[] = [];
-  let pageToken: string | undefined;
-  do {
-    const page = await getAuth().listUsers(1000, pageToken);
-    uids.push(...page.users.map((user) => user.uid));
-    pageToken = page.pageToken;
-  } while (pageToken !== undefined);
+  for await (const user of authUsers()) {
+    uids.push(user.uid);
+  }
   return uids;
 }
 
@@ -598,13 +610,11 @@ export const guestCleanup = GUEST_CLEANUP_ON
         retryCount: 0,
       },
       async () => {
-        const { getAuth } = await import('firebase-admin/auth');
-        const auth = getAuth();
         const now = Date.now();
         const result = await sweepGuests(
           {
-            listUsers: (pageToken) => auth.listUsers(1000, pageToken),
-            deleteUsers: (uids) => auth.deleteUsers([...uids]),
+            users: authUsers,
+            deleteUsers: async (uids) => (await auth()).deleteUsers([...uids]),
             // A guest has no Google provider, so no ban tombstone.
             erase: (uid, uncounted) =>
               erasePlayer(db(), realtime, uid, null, now, { uncounted }),

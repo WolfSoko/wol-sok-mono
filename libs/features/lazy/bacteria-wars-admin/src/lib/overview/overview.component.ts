@@ -8,7 +8,10 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
-import { GameCloud } from '@wolsok/feat-lazy-bac-game/admin-kit';
+import {
+  type AdminCommand,
+  GameCloud,
+} from '@wolsok/feat-lazy-bac-game/admin-kit';
 import { AdminCommandsService } from '../commands/admin-commands.service';
 import {
   AdminI18n,
@@ -28,6 +31,12 @@ interface HourRow {
   hour: number;
   stats: AdminStats;
 }
+
+/** The commands the overview sends: no target, no arguments. */
+type OverviewCommandType = Extract<
+  AdminCommand,
+  { target: null; args: Record<string, never> }
+>['type'];
 
 /** How many hourly snapshots the history shows. */
 const HISTORY_HOURS = 48;
@@ -140,9 +149,7 @@ export class OverviewComponent {
   }
 
   /** Sends the commands in turn, stopping at the first refusal. */
-  private async send(
-    types: readonly ('stats.refresh' | 'stats.recount' | 'presence.backfill')[]
-  ): Promise<void> {
+  private async send(types: readonly OverviewCommandType[]): Promise<void> {
     this.refreshing.set(true);
     this.error.set(null);
     try {

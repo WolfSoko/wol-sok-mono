@@ -1078,7 +1078,7 @@ privacy page follow in the next releases):
   back when the copy comes down (`takeDownPublic`). Public copies stay up
   without the uid and with the colour label (`anonymisePublic`), as
   before. A ranking that reads the replay later finds the player gone
-  (`earlierAnswer`) and ranks nothing. Board entries are personal rankings:
+  (`namesPlayer`) and ranks nothing. Board entries are personal rankings:
   they still go. `levelStats` hold no ids. The player's pending
   `replaySubmissions` and `replayCommands` (queried by `uid`, on the
   automatic single-field index) are deleted before the replays are looked

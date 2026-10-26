@@ -3,6 +3,7 @@ import type {
   Firestore,
   Query,
 } from 'firebase-admin/firestore';
+import { settleAll } from './settle';
 
 /** Documents a query deletes per page. */
 const PAGE = 300;
@@ -20,12 +21,7 @@ export async function deleteRefs(
     return 0;
   }
   const writer = db.bulkWriter();
-  const deletes = Promise.allSettled(refs.map((ref) => writer.delete(ref)));
-  await writer.close();
-  const failed = (await deletes).find((result) => result.status === 'rejected');
-  if (failed !== undefined) {
-    throw failed.reason;
-  }
+  await settleAll([...refs.map((ref) => writer.delete(ref)), writer.close()]);
   return refs.length;
 }
 
@@ -42,4 +38,29 @@ export async function deleteAll(db: Firestore, query: Query): Promise<number> {
       return deleted;
     }
   }
+}
+
+/**
+ * The rooms nobody took yet in which the player has one of `roles` -
+ * `host`, `guest`. A taken room's stub stays: the other player's report
+ * of the match is checked against it.
+ */
+export async function openRoomsOf(
+  db: Firestore,
+  uid: string,
+  roles: readonly ('host' | 'guest')[]
+): Promise<DocumentReference[]> {
+  const found = await Promise.all(
+    roles.map((role) =>
+      db.collection('rooms').where(role, '==', uid).select('taken').get()
+    )
+  );
+  return [
+    ...new Map(
+      found
+        .flatMap((rooms) => rooms.docs)
+        .filter((doc) => doc.get('taken') !== true)
+        .map((doc) => [doc.id, doc.ref])
+    ).values(),
+  ];
 }

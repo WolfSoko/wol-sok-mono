@@ -1,10 +1,8 @@
-import type {
-  DocumentReference,
-  Firestore,
-  Query,
-} from 'firebase-admin/firestore';
+import type { DocumentReference, Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { isRealtimeKey, type Realtime } from '../admin/realtime';
+import { deleteAll, deleteRefs, openRoomsOf } from '../deletes';
+import { settleAll } from '../settle';
 
 /** What `deletePlayerSocial` went through - for the log and the specs. */
 export interface SocialErased {
@@ -16,9 +14,6 @@ export interface SocialErased {
 
 /** The lists of `players/{owner}` that may name another player by id. */
 const LISTS = ['friends', 'requests', 'challenges'] as const;
-
-/** Documents a query deletes per page. */
-const PAGE = 300;
 
 /**
  * Erases what a deleted account leaves of its social and personal data
@@ -81,67 +76,16 @@ export async function deletePlayerSocial(
     mirrors[`statusReaders/${other}/${uid}`] = null;
     mirrors[`listedBy/${other}/${uid}`] = null;
   }
-  const settled = await Promise.allSettled([
+  const [, , invites, rooms] = await settleAll([
     deleteRefs(db, refs),
     db.recursiveDelete(player),
     deleteAll(db, db.collection('invites').where('from', '==', uid)),
-    openRoomsOf(db, uid).then((rooms) => deleteRefs(db, rooms)),
+    openRoomsOf(db, uid, ['host', 'guest']).then((open) =>
+      deleteRefs(db, open)
+    ),
     realtime.update(mirrors),
   ]);
-  const failed = settled.find((result) => result.status === 'rejected');
-  if (failed !== undefined) {
-    throw failed.reason;
-  }
-  const [, , invites, rooms] = settled as PromiseFulfilledResult<number>[];
-  return {
-    others: others.size,
-    deleted: refs.length + invites.value + rooms.value,
-  };
-}
-
-/** The rooms nobody took yet that the player hosts or answered. */
-async function openRoomsOf(
-  db: Firestore,
-  uid: string
-): Promise<DocumentReference[]> {
-  const rooms = db.collection('rooms');
-  const [hosted, answered] = await Promise.all([
-    rooms.where('host', '==', uid).select('taken').get(),
-    rooms.where('guest', '==', uid).select('taken').get(),
-  ]);
-  return [
-    ...new Map(
-      [...hosted.docs, ...answered.docs]
-        .filter((doc) => doc.get('taken') !== true)
-        .map((doc) => [doc.id, doc.ref])
-    ).values(),
-  ];
-}
-
-async function deleteAll(db: Firestore, query: Query): Promise<number> {
-  let deleted = 0;
-  for (;;) {
-    const page = await query.select().limit(PAGE).get();
-    deleted += await deleteRefs(
-      db,
-      page.docs.map((doc) => doc.ref)
-    );
-    if (page.size < PAGE) {
-      return deleted;
-    }
-  }
-}
-
-async function deleteRefs(
-  db: Firestore,
-  refs: readonly DocumentReference[]
-): Promise<number> {
-  for (let i = 0; i < refs.length; i += PAGE) {
-    const batch = db.batch();
-    refs.slice(i, i + PAGE).forEach((ref) => batch.delete(ref));
-    await batch.commit();
-  }
-  return refs.length;
+  return { others: others.size, deleted: refs.length + invites + rooms };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
