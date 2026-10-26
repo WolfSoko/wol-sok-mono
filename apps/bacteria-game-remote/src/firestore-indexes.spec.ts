@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
@@ -92,7 +92,32 @@ const FUNCTION_QUERIES = read(
   '../../bacteria-wars-functions/src/firestore-queries.json'
 ) as Queries;
 
+/** The client code that queries Firestore: the game and the admin area. */
+const CLIENT_SOURCES = [
+  '../../../libs/features/lazy/bacteria-game/src',
+  '../../../libs/features/lazy/bacteria-wars-admin/src',
+];
+/**
+ * An order on the document id alone, descending: production wants an
+ * index on `__name__` for it, which `firestore.indexes.json` does not
+ * hold and the release does not create, while the emulator answers it.
+ */
+const ID_DESCENDING = /orderBy\(\s*\w+\.documentId\(\),\s*'desc'\s*\)/;
+
+function sourcesIn(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true, recursive: true })
+    .filter((entry) => entry.isFile() && /(?<!\.spec)\.ts$/.test(entry.name))
+    .map((entry) => join(entry.parentPath, entry.name));
+}
+
 describe('firestore.indexes.json', () => {
+  it('serves no client query ordered by the document id, descending', () => {
+    const offenders = CLIENT_SOURCES.flatMap((dir) =>
+      sourcesIn(join(__dirname, dir))
+    ).filter((file) => ID_DESCENDING.test(readFileSync(file, 'utf8')));
+    expect(offenders).toEqual([]);
+  });
+
   for (const [name, query] of Object.entries({
     ...GAME_QUERIES,
     ...FUNCTION_QUERIES,

@@ -102,22 +102,25 @@ export class OverviewComponent {
       (error) => console.error('Could not read the statistics', error)
     );
     const stopHistory = dbSdk.onSnapshot(
+      // Newest first by `at`, which `now` carries too (dropped below): a
+      // descending order on the document id needs an index the release
+      // cannot deploy, one on a field has its index by default.
       dbSdk.query(
         stats,
-        dbSdk.where(dbSdk.documentId(), '>=', 'h_'),
-        dbSdk.where(dbSdk.documentId(), '<', 'h`'),
-        dbSdk.orderBy(dbSdk.documentId(), 'desc'),
-        dbSdk.limit(HISTORY_HOURS)
+        dbSdk.orderBy('at', 'desc'),
+        dbSdk.limit(HISTORY_HOURS + 1)
       ),
       (snapshot) =>
         this.history.set(
-          snapshot.docs.flatMap((doc) => {
-            const hour = snapshotHour(doc.id);
-            const parsed = parseAdminStats(doc.data());
-            return hour === null || parsed === null
-              ? []
-              : [{ hour, stats: parsed }];
-          })
+          snapshot.docs
+            .flatMap((doc) => {
+              const hour = snapshotHour(doc.id);
+              const parsed = parseAdminStats(doc.data());
+              return hour === null || parsed === null
+                ? []
+                : [{ hour, stats: parsed }];
+            })
+            .slice(0, HISTORY_HOURS)
         ),
       (error) => console.error('Could not read the snapshots', error)
     );

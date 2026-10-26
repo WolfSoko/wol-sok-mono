@@ -173,7 +173,11 @@ export class AdminRecordsService {
     return owners;
   }
 
-  /** The gallery's daily picks, newest day first, with their runners-up. */
+  /**
+   * The gallery's daily picks, newest day first, with their runners-up -
+   * ordered by `day` (the document id, as a field), whose index Firestore
+   * keeps by default, unlike one on the id in descending order.
+   */
   public async candidateDays(
     after: unknown = null
   ): Promise<Page<CandidateDayRecord>> {
@@ -182,7 +186,7 @@ export class AdminRecordsService {
       sdk,
       sdk.query(
         sdk.collection(db, 'replayCandidates'),
-        sdk.orderBy(sdk.documentId(), 'desc')
+        sdk.orderBy('day', 'desc')
       ),
       after,
       (doc) => parseCandidateDay(doc.id, doc.data())
