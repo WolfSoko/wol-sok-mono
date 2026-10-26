@@ -3,7 +3,8 @@ import { take } from 'rxjs';
 import { BALANCE_VERSION } from '../state/game-balance';
 import { GPU_SELF_TEST_VERSION } from '../state/gpu-int/self-test-golden';
 import { DeviceStorage } from '../storage/game-storage';
-import { GpuSelfTestResult, rendererOf, runGpuSelfTest } from './gpu-self-test';
+import { GpuSelfTestResult, runGpuSelfTest } from './gpu-self-test';
+import { rendererOf } from './renderer';
 
 /** Where this device keeps the self-test's last result. */
 export const GPU_SELF_TEST_STORAGE_KEY = 'bacteria-game.gpu-self-test';
@@ -79,25 +80,40 @@ export function storedResultHolds(
   );
 }
 
+/** How long the check waits for the browser to idle, at most. */
+export const SELF_TEST_IDLE_TIMEOUT_MS = 2_000;
+
 /**
  * Whether this device's GPU computes the deterministic simulation as every
  * other device does (ADR 0015, step 7) - see `runGpuSelfTest`. It is asked
  * once per page session and remembered per device in `DeviceStorage`, so
  * the test only runs again for another GPU, browser, balance or test.
  *
- * The answer comes late - the test runs in a task of its own, after the
- * arena's first frame: until it does, `result` is null and a deterministic
- * match plays on the CPU. A test that could not run to the end (`error`)
- * fails for this page session only and is not stored.
+ * The answer comes late, off the game's start: the check waits for the
+ * browser to idle, and so does the test where it has to run. Until then
+ * `result` is null and a deterministic match plays on the CPU. The GPU's
+ * name comes from the arena's context once the arena told it
+ * (`sawRenderer`), else from a throwaway one. A test that could not run to
+ * the end (`error`) fails for this page session only and is not stored.
  */
 @Injectable({ providedIn: 'root' })
 export class GpuSelfTestService {
   private readonly storage = inject(DeviceStorage);
   private readonly verdict = signal<GpuSelfTestResult | null>(null);
   private started = false;
+  /** The GPU the arena's WebGL2 context renders with, once it said. */
+  private arenaRenderer: string | null = null;
 
   /** The verdict, null until there is one. */
   public readonly result = this.verdict.asReadonly();
+
+  /**
+   * Tells the GPU the arena's WebGL2 context renders with, so the check
+   * needs no context of its own to learn it.
+   */
+  public sawRenderer(renderer: string): void {
+    this.arenaRenderer = renderer;
+  }
 
   /**
    * Starts finding out, once per page session: from what this device
@@ -105,15 +121,24 @@ export class GpuSelfTestService {
    */
   public check(
     run: () => GpuSelfTestResult = runGpuSelfTest,
-    device: () => SelfTestDevice = thisDevice,
-    schedule: (task: () => void) => void = (task) => setTimeout(task),
+    device: () => SelfTestDevice = () => thisDevice(this.arenaRenderer),
+    schedule: (task: () => void) => void = whenIdle,
     now: () => number = Date.now
   ): void {
     if (this.started) {
       return;
     }
     this.started = true;
-    const here = device();
+    schedule(() => this.lookUp(run, device(), schedule, now));
+  }
+
+  /** Takes what this device stored for it, or runs the test. */
+  private lookUp(
+    run: () => GpuSelfTestResult,
+    here: SelfTestDevice,
+    schedule: (task: () => void) => void,
+    now: () => number
+  ): void {
     this.storage
       .watch(GPU_SELF_TEST_STORAGE_KEY)
       .pipe(take(1))
@@ -165,9 +190,24 @@ export class GpuSelfTestService {
   }
 }
 
-/** This device's GPU, from a throwaway context, and its browser. */
-function thisDevice(): SelfTestDevice {
+/** Runs the task once the browser idles, or after the timeout. */
+function whenIdle(task: () => void): void {
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(() => task(), { timeout: SELF_TEST_IDLE_TIMEOUT_MS });
+  } else {
+    setTimeout(task);
+  }
+}
+
+/**
+ * This device's GPU and its browser: the arena's GPU when it is known, else
+ * the one a throwaway context renders with.
+ */
+function thisDevice(arenaRenderer: string | null): SelfTestDevice {
   const browser = typeof navigator === 'undefined' ? '' : navigator.userAgent;
+  if (arenaRenderer != null) {
+    return { renderer: arenaRenderer, browser };
+  }
   const gl = document.createElement('canvas').getContext('webgl2');
   if (gl == null) {
     return { renderer: 'none', browser };

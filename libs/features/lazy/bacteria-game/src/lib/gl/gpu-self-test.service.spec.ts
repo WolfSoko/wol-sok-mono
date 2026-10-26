@@ -135,20 +135,40 @@ describe('GpuSelfTestService', () => {
     expect(storage.stored(GPU_SELF_TEST_STORAGE_KEY)).toBeNull();
   });
 
-  it('runs the test in a task of its own, not while the arena starts', () => {
+  it('looks the device up and runs the test in idle tasks, off the start', () => {
     const service = setUp();
     const tasks: (() => void)[] = [];
+    let lookUps = 0;
+    const later = () => tasks.splice(0).forEach((task) => task());
     service.check(
       run,
-      () => DEVICE,
+      () => {
+        lookUps++;
+        return DEVICE;
+      },
       (task) => tasks.push(task),
       now
     );
     storage.flush();
+    expect(lookUps).toBe(0);
+    later();
+    expect(lookUps).toBe(1);
+    storage.flush();
     expect(runs).toBe(0);
-    tasks.forEach((task) => task());
+    later();
     expect(runs).toBe(1);
     expect(service.result()).toEqual(outcome);
+  });
+
+  it("takes the arena's GPU instead of opening a context of its own", () => {
+    const service = setUp({
+      [GPU_SELF_TEST_STORAGE_KEY]: stored({ browser: navigator.userAgent }),
+    });
+    service.sawRenderer(DEVICE.renderer);
+    service.check(run, undefined, atOnce, now);
+    storage.flush();
+    expect(runs).toBe(0);
+    expect(service.result()).toEqual({ ok: true, renderer: DEVICE.renderer });
   });
 
   it('asks only once per page session', () => {

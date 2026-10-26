@@ -1496,6 +1496,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // With a WebGL2 context the war itself runs on the GPU as well - for a
     // deterministic match only once the GPU passed the self-test.
     const gl = painter instanceof GlArenaPainter ? painter : null;
+    if (gl != null) {
+      this.gpuSelfTest.sawRenderer(gl.renderer());
+    }
     const choice = chooseSimulation({
       // The owner's toggle, read as each match starts: Remote Config may
       // answer after the arena is up, and a match keeps its simulation.
