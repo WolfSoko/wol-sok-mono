@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.111.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.110.0...v74.111.0) (2026-10-26)
+
+### Features
+
+* **bacteria-wars-functions:** erase personal data, delete idle guests, mirror friend lists, forget a replay ([#2686](https://github.com/WolfSoko/wol-sok-mono/issues/2686)) ([bbda1b9](https://github.com/WolfSoko/wol-sok-mono/commit/bbda1b9a3a6b3334a1836823d987e0b70a0865cf))
+
 ## [74.110.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.109.1...v74.110.0) (2026-10-26)
 
 ### Features
