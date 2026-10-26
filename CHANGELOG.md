@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.113.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.112.0...v74.113.0) (2026-10-26)
+
+### Features
+
+* **bacteria-game-remote:** only friends read the online status, idle guests are deleted after 90 days ([#2688](https://github.com/WolfSoko/wol-sok-mono/issues/2688)) ([613d383](https://github.com/WolfSoko/wol-sok-mono/commit/613d38358f6d950597f4bc03f1a0e26cff29f57d))
+
 ## [74.112.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.111.0...v74.112.0) (2026-10-26)
 
 ### Features
