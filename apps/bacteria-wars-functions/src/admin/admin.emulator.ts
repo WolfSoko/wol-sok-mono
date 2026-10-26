@@ -89,6 +89,11 @@ function fakeRealtime(
       }
       await hooks.afterRemoveIf?.();
     },
+    update: async (changes) => {
+      for (const [path, value] of Object.entries(changes)) {
+        calls.push(`update ${path} ${value}`);
+      }
+    },
   };
 }
 

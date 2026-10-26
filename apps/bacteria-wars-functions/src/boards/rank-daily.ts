@@ -146,7 +146,7 @@ export async function rankDaily(
     const replayRef = db.doc(`replays/${replayId}`);
     const runRef = db.doc(`dailyRuns/${day}_${uid}`);
     const [replay, stored] = await tx.getAll(replayRef, runRef);
-    const earlier = earlierAnswer(replay);
+    const earlier = earlierAnswer(replay, uid);
     if (earlier !== null) {
       return earlier;
     }

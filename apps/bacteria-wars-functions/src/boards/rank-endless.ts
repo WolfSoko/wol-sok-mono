@@ -311,7 +311,7 @@ export async function rankEndless(
       tx.get(replayRef),
       readRun(tx, db, uid, attempt.runId),
     ]);
-    const earlier = earlierAnswer(replayNow);
+    const earlier = earlierAnswer(replayNow, uid);
     if (earlier !== null) {
       return earlier;
     }

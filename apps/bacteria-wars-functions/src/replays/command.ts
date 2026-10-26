@@ -11,13 +11,21 @@ import {
 } from '../gallery/curate';
 import { removeFromGallery } from '../gallery/publish';
 import { isBanned } from '../limits';
+import { forgetForPlayer } from './forget';
 
-/** What a command asks; all but `remove` are the owner's (ADR 0011). */
+/**
+ * What a command asks: `remove` and `forget` are the player's, the rest
+ * the owner's (ADR 0011, 0012).
+ */
 export type ReplayCommandType =
   | 'remove'
+  | 'forget'
   | 'feature'
   | 'unfeature'
   | 'anonymise';
+
+/** The player's own types; the others are the owner's curation. */
+type PlayerType = 'remove' | 'forget';
 
 /** What the server made of a command, written back on it. */
 export interface CommandResult {
@@ -37,6 +45,7 @@ export interface ReplayCommandContext {
 
 const TYPES: readonly ReplayCommandType[] = [
   'remove',
+  'forget',
   'feature',
   'unfeature',
   'anonymise',
@@ -48,6 +57,11 @@ const TYPES: readonly ReplayCommandType[] = [
  * so nobody acts in another player's name.
  * - `remove`: keeps the replay out of the gallery for good - the player goes
  *   into its `optOut` - and takes down a public copy, if there is one.
+ * - `forget` (ADR 0012, owner's decision of 2026-10-26): takes the player
+ *   out of the replay and its public copies (`forgetForPlayer`); the
+ *   replay stays anonymised for the statistics. Also for a banned player, like
+ *   every deletion: it is how they delete a match in the cloud. Claimed in
+ *   its transaction, so a second delivery runs nothing.
  * - `feature`, `unfeature`, `anonymise`: the owner's curation
  *   (`gallery/curate.ts`), for the owner as `isOwner` reads them now, and
  *   audited like an admin command (ADR 0012, `source: 'replayCommand'`,
@@ -99,6 +113,9 @@ async function run(
   if (authId !== uid) {
     return { ok: false, reason: 'not-writer' };
   }
+  if (type === 'forget') {
+    return forgetForPlayer(db, commandId, uid, replayId, now);
+  }
   if (type !== 'remove') {
     if (!(await context.isOwner(uid))) {
       return { ok: false, reason: 'not-admin' };
@@ -107,7 +124,7 @@ async function run(
       db,
       commandId,
       uid,
-      type as Exclude<ReplayCommandType, 'remove'>,
+      type as Exclude<ReplayCommandType, PlayerType>,
       replayId,
       context,
       now
@@ -132,7 +149,7 @@ async function curate(
   db: Firestore,
   commandId: string,
   uid: string,
-  type: Exclude<ReplayCommandType, 'remove'>,
+  type: Exclude<ReplayCommandType, PlayerType>,
   replayId: string,
   context: ReplayCommandContext,
   now: number

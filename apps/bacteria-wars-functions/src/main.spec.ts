@@ -78,10 +78,13 @@ describe('the exported functions', () => {
     expect(retrying).toEqual(['acceptReplay', 'rankReplay', 'rebuildTop']);
   });
 
-  it('never retry the hourly run', () => {
-    expect(
-      functions['hourly']?.__endpoint.scheduleTrigger?.retryConfig?.retryCount
-    ).toBe(0);
+  it('never retry the hourly run or the guest clean-up', () => {
+    for (const name of ['hourly', 'guestCleanup']) {
+      expect([
+        name,
+        functions[name]?.__endpoint.scheduleTrigger?.retryConfig?.retryCount,
+      ]).toEqual([name, 0]);
+    }
   });
 
   describe('acceptReplay', () => {

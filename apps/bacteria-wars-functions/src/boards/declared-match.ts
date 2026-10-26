@@ -85,15 +85,21 @@ export function rankedFields(reason: ArrivalReason) {
 
 /**
  * A replay read in a ranking transaction: null while it may still rank,
- * else what the ranking returns - `gone` (its account was deleted) or the
- * answer an earlier delivery stored. `rankReplay` retries, and a replay
- * keeps its answer, even when a ban or an expired declaration would answer
- * otherwise now.
+ * else what the ranking returns - `gone` (deleted, or with `uid`: it no
+ * longer names that player, whose account was deleted or who forgot it -
+ * ADR 0012, 2026-10-26) or the answer an earlier delivery stored.
+ * `rankReplay` retries, and a replay keeps its answer, even when a ban or
+ * an expired declaration would answer otherwise now.
  */
 export function earlierAnswer(
-  replay: DocumentSnapshot
+  replay: DocumentSnapshot,
+  uid?: string
 ): ArrivalReason | 'gone' | null {
-  if (!replay.exists) {
+  const players: unknown = replay.get('players');
+  if (
+    !replay.exists ||
+    (uid !== undefined && !(Array.isArray(players) && players.includes(uid)))
+  ) {
     return 'gone';
   }
   const ranked = replay.get('rankedReason');

@@ -10,7 +10,7 @@ import { DAY_MS } from '../boards/budgets';
 import type { Verdict } from '../boards/verify';
 import { clearBanCache } from '../limits';
 import { runReplayCommand } from '../replays/command';
-import { deletePlayerReplays } from '../replays/delete-player';
+import { forgetPlayerReplays } from '../replays/forget';
 import { dailyReplay, TICKS } from '../testing/daily-replay';
 import { featureBest } from './feature-best';
 import { publicProfileChanged } from './publish';
@@ -203,7 +203,7 @@ describe('featureBest', () => {
     const publicId = String(
       (await db.doc('replays/l_a').get()).get('publicId')
     );
-    await deletePlayerReplays(db, 'ada');
+    await forgetPlayerReplays(db, 'ada', NOW);
     const published = (await db.doc(`publicReplays/${publicId}`).get()).data();
     expect(published).toMatchObject({ uids: [], seatUids: [null, null] });
     expect(published?.['players'][0]).toMatchObject({ name: null });

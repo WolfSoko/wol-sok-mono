@@ -17,6 +17,7 @@ import { verifyNow } from '../boards/verify-now';
 import type { Realtime } from './realtime';
 import { type RemoteToggles, setToggles } from './toggles';
 import { recountAccounts, refreshStats } from './stats';
+import { backfillMirrors } from '../social/mirror';
 import { googleProviderOf } from './tombstones';
 import { type AuditedAction, runAudited } from './records';
 
@@ -75,7 +76,8 @@ export function isOwnerRecord(user: OwnerRecord): boolean {
  * A command that is not exactly one (`parseAdminCommand`) answers
  * `malformed`; one from anybody but the owner `not-writer` or `not-admin`
  * - neither is audited. Every type runs: `bans.ts`, `moderation.ts`,
- * `stats.ts`, `toggles.ts` and the boards' `verify-now.ts`.
+ * `stats.ts`, `toggles.ts`, the boards' `verify-now.ts` and the friend
+ * lists' mirror (`social/mirror.ts`, `presence.backfill`).
  */
 export async function runAdminCommand(
   db: Firestore,
@@ -159,6 +161,14 @@ async function act(
       );
       return { target: null, change: { before, after } };
     }
+    case 'presence.backfill':
+      return {
+        target: null,
+        change: {
+          before: null,
+          after: await backfillMirrors(db, context.realtime),
+        },
+      };
   }
   if (command.type === 'toggles.set') {
     return {

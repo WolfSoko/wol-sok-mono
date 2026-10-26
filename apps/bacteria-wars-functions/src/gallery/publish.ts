@@ -238,24 +238,29 @@ function seatLabel(
 }
 
 /**
- * Rewrites the player's seats in their public replays, each in a
- * transaction: `rewrite` gets the seat and its index and returns the new
- * one; `extra` adds fields to each update. A replay the owner anonymised
- * shows no name or own preset again (`anonymousSeat`), whatever `rewrite`
- * says. The number of replays.
+ * Rewrites the player's seats in their public replays - only the copies of
+ * `replayId` when it is given - each in a transaction: `rewrite` gets the
+ * seat and its index and returns the new one; `extra` adds fields to each
+ * update. A replay the owner anonymised shows no name or own preset again
+ * (`anonymousSeat`), whatever `rewrite` says. The number of replays.
  */
 async function rewriteSeats(
   db: Firestore,
   uid: string,
   rewrite: (seat: PublicSeat, index: number, publicId: string) => PublicSeat,
-  extra: (seats: (string | null)[]) => Record<string, unknown> = () => ({})
+  extra: (seats: (string | null)[]) => Record<string, unknown> = () => ({}),
+  replayId?: string
 ): Promise<number> {
-  const published = await db
-    .collection('publicReplays')
-    .where('uids', 'array-contains', uid)
-    .get();
+  const published = (
+    await db
+      .collection('publicReplays')
+      .where('uids', 'array-contains', uid)
+      .get()
+  ).docs.filter(
+    (doc) => replayId === undefined || doc.get('replayId') === replayId
+  );
   await Promise.all(
-    published.docs.map((doc) =>
+    published.map((doc) =>
       db.runTransaction(async (tx) => {
         const current = (await tx.get(doc.ref)).data() ?? {};
         const seats =
@@ -275,15 +280,21 @@ async function rewriteSeats(
       })
     )
   );
-  return published.size;
+  return published.length;
 }
 
 /**
- * Takes a deleted account out of its public replays (ADR 0011): its uid
- * goes, and its seat shows the colour label instead of a name, and a
- * preset derived from the seat (`anonymousSeat`).
+ * Takes a deleted account - or, with `replayId`, a player who forgot that
+ * match - out of its public replays (ADR 0011, 0012): its uid goes, and
+ * its seat shows the colour label instead of a name, and a preset derived
+ * from the seat (`anonymousSeat`). Also for copies already taken down,
+ * which keep their seats.
  */
-export function anonymisePublic(db: Firestore, uid: string): Promise<number> {
+export function anonymisePublic(
+  db: Firestore,
+  uid: string,
+  replayId?: string
+): Promise<number> {
   return rewriteSeats(
     db,
     uid,
@@ -291,7 +302,8 @@ export function anonymisePublic(db: Firestore, uid: string): Promise<number> {
     (seats) => ({
       uids: FieldValue.arrayRemove(uid),
       seatUids: seats.map((seat) => (seat === uid ? null : seat)),
-    })
+    }),
+    replayId
   );
 }
 

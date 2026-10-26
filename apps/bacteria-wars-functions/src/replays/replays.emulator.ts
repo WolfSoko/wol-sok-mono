@@ -15,11 +15,12 @@ import { dailyReplay } from '../testing/daily-replay';
 import { acceptSubmission, giveUpSubmission } from './accept';
 import { deleteReplayChildren } from './cleanup';
 import { runReplayCommand } from './command';
-import { deletePlayerReplays } from './delete-player';
+import { forgetPlayerReplays } from './forget';
 
 /**
  * The replay functions against the Firestore emulator (`test-emulator`):
- * what acceptReplay, replayCommand and deletePlayerReplays leave behind.
+ * what acceptReplay, replayCommand and deletePlayerReplays leave behind -
+ * a deleted account's replays forgetting it (ADR 0012, 2026-10-26).
  */
 const PROJECT = 'demo-bacteria-functions';
 if (getApps().length === 0) {
@@ -453,32 +454,49 @@ describe('cleanReplay', () => {
 });
 
 describe('deletePlayerReplays', () => {
-  it('deletes what only the player played, and leaves the rest to the others', async () => {
-    await db.doc('replays/mine').set({ players: ['ada'] });
+  const DAY = 24 * HOUR;
+  const born = Timestamp.fromMillis(NOW - DAY);
+
+  it('keeps every replay without the player, for the statistics', async () => {
+    const expireAt = Timestamp.fromMillis(NOW + 29 * DAY);
+    await db
+      .doc('replays/mine')
+      .set({ players: ['ada'], optOut: [], createdAt: born, expireAt });
     await db.doc('replays/mine/blob/data').set({ size: 1 });
     await db.doc('replays/ours').set({
       players: ['ada', 'bob'],
       optOut: ['ada'],
       galleryOut: true,
       seats: ['ada', 'bob'],
+      createdAt: born,
+      expireAt,
     });
     await db.doc('replays/ours/reports/ada').set({ checksum: 1 });
-    expect(await deletePlayerReplays(db, 'ada')).toEqual({
-      deleted: 1,
-      left: 1,
-      anonymised: 0,
+    await db.doc('replays/ours/reports/bob').set({ checksum: 1 });
+    expect(await forgetPlayerReplays(db, 'ada', NOW)).toEqual({
+      anonymised: 2,
+      public: 0,
     });
-    expect((await db.doc('replays/mine').get()).exists).toBe(false);
-    expect((await db.doc('replays/mine/blob/data').get()).exists).toBe(false);
-    // Bob still reads it: the room's seat forgets Ada too. Ada took it out
-    // of the gallery, and it stays out without her uid.
+    // Nobody reads hers any more; it expires as it would have.
+    expect((await db.doc('replays/mine').get()).data()).toEqual({
+      players: [],
+      optOut: [],
+      createdAt: born,
+      expireAt,
+    });
+    expect((await db.doc('replays/mine/blob/data').get()).exists).toBe(true);
+    // Bob still reads theirs: the room's seat forgets Ada too. Ada took it
+    // out of the gallery, and it stays out without her uid.
     expect((await db.doc('replays/ours').get()).data()).toEqual({
       players: ['bob'],
       optOut: [],
       galleryOut: true,
       seats: [null, 'bob'],
+      createdAt: born,
+      expireAt,
     });
     expect((await db.doc('replays/ours/reports/ada').get()).exists).toBe(false);
+    expect((await db.doc('replays/ours/reports/bob').get()).exists).toBe(true);
   });
 
   it('forgets both players when both accounts go at the same time', async () => {
@@ -486,28 +504,196 @@ describe('deletePlayerReplays', () => {
       players: ['ada', 'bob'],
       optOut: [],
       seats: ['ada', 'bob'],
+      createdAt: born,
     });
     await Promise.all([
-      deletePlayerReplays(db, 'ada'),
-      deletePlayerReplays(db, 'bob'),
+      forgetPlayerReplays(db, 'ada', NOW),
+      forgetPlayerReplays(db, 'bob', NOW),
     ]);
-    // The second one to run found itself the only player left.
-    expect((await db.doc('replays/ours').get()).exists).toBe(false);
+    // Kept 30 days after the match, though it had no expireAt (public).
+    expect((await db.doc('replays/ours').get()).data()).toEqual({
+      players: [],
+      optOut: [],
+      seats: [null, null],
+      createdAt: born,
+      expireAt: Timestamp.fromMillis(NOW + 29 * DAY),
+    });
   });
 
   it('forgets the player in the seat of a match only the other one reported', async () => {
-    await db
-      .doc('replays/theirs')
-      .set({ players: ['bob'], optOut: [], seats: ['bob', 'ada'] });
-    expect(await deletePlayerReplays(db, 'ada')).toEqual({
-      deleted: 0,
-      left: 1,
-      anonymised: 0,
+    await db.doc('replays/theirs').set({
+      players: ['bob'],
+      optOut: [],
+      seats: ['bob', 'ada'],
+      createdAt: born,
+      expireAt: born,
+    });
+    expect(await forgetPlayerReplays(db, 'ada', NOW)).toEqual({
+      anonymised: 1,
+      public: 0,
     });
     expect((await db.doc('replays/theirs').get()).data()).toEqual({
       players: ['bob'],
       optOut: [],
       seats: ['bob', null],
+      createdAt: born,
+      expireAt: born,
     });
+  });
+});
+
+describe('forget', () => {
+  const DAY = 24 * HOUR;
+  const born = Timestamp.fromMillis(NOW - DAY);
+  let sent = 0;
+
+  const forget = async (uid: string, replayId: string, authId = uid) => {
+    const id = `f${++sent}`;
+    const data = { uid, type: 'forget', replayId };
+    await db.doc(`replayCommands/${id}`).set(data);
+    const result = await runReplayCommand(
+      db,
+      id,
+      data,
+      authId,
+      { isOwner: async () => false },
+      NOW
+    );
+    return { id, result };
+  };
+
+  it('takes the player out of their match, which leaves their list', async () => {
+    await db.doc('replays/mine').set({
+      kind: 'computer',
+      players: ['ada'],
+      optOut: [],
+      createdAt: born,
+      expireAt: Timestamp.fromMillis(NOW + 29 * DAY),
+    });
+    const { id, result } = await forget('ada', 'mine');
+    expect(result).toEqual({ ok: true });
+    expect((await db.doc('replays/mine').get()).data()).toMatchObject({
+      players: [],
+      galleryOut: true,
+    });
+    // `listMine`: the replays whose players hold the uid.
+    const mine = await db
+      .collection('replays')
+      .where('players', 'array-contains', 'ada')
+      .get();
+    expect(mine.empty).toBe(true);
+    expect(
+      (await db.doc(`replayCommands/${id}`).get()).get('result')
+    ).toMatchObject({ ok: true });
+  });
+
+  it("keeps the other player's seat of an online match they saved", async () => {
+    await db.doc('replays/ours').set({
+      kind: 'online',
+      state: 'agreed',
+      rankedReason: 'counted',
+      players: ['ada', 'bob'],
+      optOut: [],
+      seats: ['ada', 'bob'],
+      createdAt: born,
+    });
+    await db.doc('replays/ours/reports/ada').set({ checksum: 1 });
+    expect((await forget('ada', 'ours')).result).toEqual({ ok: true });
+    expect((await db.doc('replays/ours').get()).data()).toMatchObject({
+      players: ['bob'],
+      seats: [null, 'bob'],
+    });
+    expect((await db.doc('replays/ours/reports/ada').get()).exists).toBe(false);
+  });
+
+  it('takes down and anonymises a public copy that shows the player', async () => {
+    await db.doc('replays/mine').set({
+      kind: 'computer',
+      players: ['ada'],
+      optOut: [],
+      createdAt: born,
+      publicId: 'p1',
+    });
+    await db.doc('publicReplays/p1').set({
+      replayId: 'mine',
+      uids: ['ada'],
+      seatUids: ['ada', null],
+      players: [
+        { label: 'red', name: 'Ada', colorId: 'red', avatarPreset: 3 },
+        { label: 'computer', name: null, colorId: 'blue', avatarPreset: 0 },
+      ],
+      removedAt: null,
+    });
+    await db.doc('publicReplays/p1/blob/data').set({ size: 1 });
+    expect((await forget('ada', 'mine')).result).toEqual({ ok: true });
+    const published = (await db.doc('publicReplays/p1').get()).data();
+    expect(published).toMatchObject({ uids: [], seatUids: [null, null] });
+    expect(published?.['removedAt']).not.toBeNull();
+    expect(published?.['players'][0]).toMatchObject({ name: null });
+    expect((await db.doc('publicReplays/p1/blob/data').get()).exists).toBe(
+      false
+    );
+    // No longer public, it expires 30 days after the match again.
+    const replay = await db.doc('replays/mine').get();
+    expect(replay.get('publicId')).toBeUndefined();
+    expect(replay.get('expireAt')).toEqual(
+      Timestamp.fromMillis(NOW + 29 * DAY)
+    );
+  });
+
+  it('runs a command once, and refuses a stranger or another writer', async () => {
+    await db
+      .doc('replays/mine')
+      .set({ players: ['ada'], optOut: [], createdAt: born });
+    const { id, result } = await forget('ada', 'mine');
+    expect(result).toEqual({ ok: true });
+    // A second delivery of the same event.
+    const data = (await db.doc(`replayCommands/${id}`).get()).data() ?? {};
+    expect(
+      await runReplayCommand(
+        db,
+        id,
+        data,
+        'ada',
+        { isOwner: async () => false },
+        NOW
+      )
+    ).toBeNull();
+    expect((await forget('ada', 'mine')).result).toEqual({
+      ok: false,
+      reason: 'not-found',
+    });
+    expect((await forget('eve', 'mine')).result).toEqual({
+      ok: false,
+      reason: 'not-found',
+    });
+    expect((await forget('ada', 'mine', 'eve')).result).toEqual({
+      ok: false,
+      reason: 'not-writer',
+    });
+  });
+
+  it('waits while the boards may still rank the match', async () => {
+    await db.doc('replays/ranked').set({
+      kind: 'daily',
+      attempt: { id: 'd_2026-10-26_1', at: NOW - HOUR },
+      players: ['ada'],
+      optOut: [],
+      createdAt: Timestamp.fromMillis(NOW - HOUR),
+    });
+    expect((await forget('ada', 'ranked')).result).toEqual({
+      ok: false,
+      reason: 'ranking',
+    });
+    await db.doc('replays/ranked').update({ rankedReason: 'counted' });
+    expect((await forget('ada', 'ranked')).result).toEqual({ ok: true });
+  });
+
+  it('lets a banned player forget their match', async () => {
+    await db.doc('bans/ada').set({ until: null });
+    await db
+      .doc('replays/mine')
+      .set({ players: ['ada'], optOut: [], createdAt: born });
+    expect((await forget('ada', 'mine')).result).toEqual({ ok: true });
   });
 });
