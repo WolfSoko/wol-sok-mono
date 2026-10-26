@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.113.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.113.0...v74.113.1) (2026-10-26)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** record local matches on every simulation resolution ([#2689](https://github.com/WolfSoko/wol-sok-mono/issues/2689)) ([2fc089e](https://github.com/WolfSoko/wol-sok-mono/commit/2fc089e8b856480752bb85b4e2ee7448332dda43))
+
 ## [74.113.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.112.0...v74.113.0) (2026-10-26)
 
 ### Features
