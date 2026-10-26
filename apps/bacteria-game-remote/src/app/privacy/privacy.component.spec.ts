@@ -342,6 +342,44 @@ describe('PrivacyComponent', () => {
     expect(en).toContain('where to turn off saving your matches');
   });
 
+  it('names Sentry and what an error report holds, in both languages', async () => {
+    const page = await open();
+    expect(page.querySelector('article[lang="de"] #de-fehler')).not.toBeNull();
+    expect(page.querySelector('article[lang="en"] #en-errors')).not.toBeNull();
+    const { de, en } = texts(page);
+    const provider =
+      'Functional Software, Inc., 45 Fremont Street, 8th Floor, San Francisco, CA 94105, USA';
+
+    expect(de).toContain(provider);
+    expect(en).toContain(provider);
+    expect(de).toContain('ohne den Teil nach „?“ und „#“');
+    expect(en).toContain('without the part after “?” and “#”');
+    expect(de).toContain('Konto-Kennungen enthält ein Bericht nicht');
+    expect(en).toContain(
+      'A report holds no name, email address or account identifier'
+    );
+    expect(de).toContain('Interesse ist ein Spiel, das funktioniert');
+    expect(en).toContain('our legitimate interest in a game that works');
+    expect(de).toContain('löscht sie nach 90 Tagen');
+    expect(en).toContain('deletes them after 90 days');
+  });
+
+  it('numbers its sections alike in both languages, and refers to them so', async () => {
+    const page = await open();
+    const numbers = (lang: string) =>
+      [...page.querySelectorAll(`article[lang="${lang}"] h2`)].map(
+        (h2) => h2.textContent?.split('.')[0]
+      );
+    const expected = Array.from({ length: 14 }, (_, i) => `${i + 1}`);
+
+    expect(numbers('de')).toEqual(expected);
+    expect(numbers('en')).toEqual(expected);
+    const { de, en } = texts(page);
+    // Deleting the account is section 11 now.
+    expect(de).toContain('wie in Abschnitt 11');
+    expect(en).toContain('in section 11');
+  });
+
   it('has its own title while open', async () => {
     await open();
 

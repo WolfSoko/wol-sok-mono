@@ -31,18 +31,19 @@
       (bisher bacteria-game.wolsok.de) und für die Android-App „Bacteria Wars“
       (de.wolsok.bacteriawars). Kurz gesagt: Das Spiel im Browser nutzt keine
       Analysedienste; die Android-App zählt nur ihre Installationen und Starts
-      und meldet dich bei Google Play Spiele an (Abschnitt 6). Das Spiel
-      verkauft keine Daten. Es speichert, was es braucht, um deinen Spielstand
-      zu behalten. In der Cloud kannst du ein Online-Profil für Freunde und
-      Online-Matches anlegen, und aus deinem Fortschritt entsteht ein Eintrag in
-      einer Bestenliste, mit deinem Namen nur, wenn du ihn öffentlich zeigst
-      (Abschnitt 4). Deine Matches zeichnet das Spiel auf und speichert sie 30
-      Tage in der Cloud, lesbar nur für die Spieler des Matches; öffentlich wird
-      ein Match nur, wenn wir es in der Galerie zeigen (Abschnitt 4). Das Spiel
-      lädt das Werbeskript von Google mit seinem Einwilligungsfenster, zeigt
-      aber keine Anzeigen (Abschnitt 7), und bittet um ein freiwilliges
-      Trinkgeld (Abschnitt 8). Spielst du das Spiel eingebettet in einer anderen
-      Seite, etwa
+      und meldet dich bei Google Play Spiele an (Abschnitt 6). Programmfehler
+      meldet das Spiel ohne Angaben zu deiner Person an Sentry (Abschnitt 10).
+      Das Spiel verkauft keine Daten. Es speichert, was es braucht, um deinen
+      Spielstand zu behalten. In der Cloud kannst du ein Online-Profil für
+      Freunde und Online-Matches anlegen, und aus deinem Fortschritt entsteht
+      ein Eintrag in einer Bestenliste, mit deinem Namen nur, wenn du ihn
+      öffentlich zeigst (Abschnitt 4). Deine Matches zeichnet das Spiel auf und
+      speichert sie 30 Tage in der Cloud, lesbar nur für die Spieler des
+      Matches; öffentlich wird ein Match nur, wenn wir es in der Galerie zeigen
+      (Abschnitt 4). Das Spiel lädt das Werbeskript von Google mit seinem
+      Einwilligungsfenster, zeigt aber keine Anzeigen (Abschnitt 7), und bittet
+      um ein freiwilliges Trinkgeld (Abschnitt 8). Spielst du das Spiel
+      eingebettet in einer anderen Seite, etwa
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       zeigt es dort weder Werbung noch Trinkgeld, und diese Erklärung gilt nicht
       für jene Seite und ihre Dienste.
@@ -144,7 +145,7 @@
       Funktionen automatisch, gerechnet ab seiner letzten Nutzung (der letzten
       Anmeldung oder Erneuerung der Anmeldung, die das Spiel beim Spielen von
       selbst vornimmt); sie prüfen das einmal am Tag. Dabei löschen sie seine
-      Daten wie bei der Löschung eines Kontos (Abschnitt 10). Das betrifft vor
+      Daten wie bei der Löschung eines Kontos (Abschnitt 11). Das betrifft vor
       allem Gastkonten, die nicht mehr genutzt werden, etwa weil du die Daten
       deines Browsers gelöscht hast oder ein Google-Konto ihren Fortschritt
       übernommen hat (unten). Öffnest du das Spiel nach so langer Pause auf
@@ -296,7 +297,7 @@
       30 Tage nach dem Speichern ab, und die Datenbank löscht sie, in der Regel
       innerhalb eines Tages danach; ein öffentliches Match erst, nachdem es aus
       der Galerie genommen ist (unten). Wird dein Konto gelöscht, nehmen sie
-      deine Kennung ebenso aus allen deinen Aufzeichnungen (Abschnitt 10).
+      deine Kennung ebenso aus allen deinen Aufzeichnungen (Abschnitt 11).
     </p>
     <p>
       Aus jeder gespeicherten Aufzeichnung eines Matches gegen den Computer
@@ -456,7 +457,7 @@
       zeigt das Spiel im Menü; schließt du einen, löscht es ihn. Was das Spiel
       dich zurücknehmen lässt (Freunde entfernen, Anfragen ablehnen, eine Suche
       beenden, ein Match unter „Meine Matches“ löschen), geht weiterhin, und
-      dein Konto löschen lassen kannst du wie in Abschnitt 10. Mit der Sperre
+      dein Konto löschen lassen kannst du wie in Abschnitt 11. Mit der Sperre
       nehmen wir dich aus der Warteschlange, löschen deinen Online-Status, deine
       offenen Räume und deine Einladungslinks und blenden deinen Eintrag in der
       Bestenliste aus. Endet die Sperre, löschen wir sie und blenden den Eintrag
@@ -502,7 +503,7 @@
       Wir speichern diese Daten, solange dein Konto besteht, ein Gastkonto, bis
       unsere Funktionen es nach 90 Tagen ohne Nutzung bei ihrer täglichen
       Prüfung löschen (Abschnitt 4), soweit oben keine kürzere Frist steht. Wie
-      du sie löschen lässt, steht in Abschnitt 10.
+      du sie löschen lässt, steht in Abschnitt 11.
     </p>
 
     <h2 id="de-schriften">5. Schriftarten von Google Fonts</h2>
@@ -623,7 +624,40 @@
       unseren Server übertragen. Wem du den Link schickst, entscheidest du.
     </p>
 
-    <h2 id="de-loeschen">10. Konto und Daten löschen</h2>
+    <h2 id="de-fehler">10. Fehlerberichte (Sentry)</h2>
+    <p>
+      Auf bacteria-wars.wolsok.de und in der Android-App meldet das Spiel
+      Programmfehler, etwa einen Absturz, an den Dienst Sentry (Anbieter:
+      Functional Software, Inc., 45 Fremont Street, 8th Floor, San Francisco, CA
+      94105, USA), damit wir sie finden und beheben können; ebenso melden unsere
+      Funktionen (Abschnitt 4) ihre eigenen Fehler. Ein Fehlerbericht enthält
+      die Fehlermeldung, den Stacktrace (wo im Programm der Fehler auftrat), Art
+      und Version von Browser, Betriebssystem und Gerät, die Version des Spiels
+      und den Pfad der Seite ohne den Teil nach „?“ und „#“, in dem etwa
+      Einladungslinks und Geister-Links stecken. Dazu kommen die letzten
+      Schritte vor dem Fehler, etwa Klicks, Seitenwechsel und Anfragen an
+      Server, ebenfalls ohne diesen Teil, aber keine Ausgaben der Konsole.
+      Namen, E-Mail-Adresse oder Konto-Kennungen enthält ein Bericht nicht:
+      Kennungen, die in einer Fehlermeldung stehen, ersetzen Spiel und
+      Funktionen vor dem Senden. Deine IP-Adresse erhält Sentry beim Empfang
+      technisch bedingt, speichert sie aber nicht. Leistungsmessung,
+      Sitzungsaufzeichnung (Session Replay) und Nutzungsstatistik schaltet das
+      Spiel bei Sentry nicht ein. Spielst du das Spiel eingebettet in einer
+      anderen Seite, schickt es selbst keine Fehlerberichte.
+    </p>
+    <p>
+      Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO: Unser berechtigtes
+      Interesse ist ein Spiel, das funktioniert. Sentry verarbeitet die Berichte
+      als Auftragsverarbeiter für uns, in den USA, und löscht sie nach 90 Tagen.
+      Functional Software, Inc. ist unter dem EU-US Data Privacy Framework
+      zertifiziert; die Übermittlung in die USA stützt sich auf den
+      Angemessenheitsbeschluss der EU-Kommission (Art. 45 DSGVO) und zusätzlich
+      auf Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO). Mehr dazu in
+      der
+      <a href="https://sentry.io/privacy/">Datenschutzerklärung von Sentry</a>.
+    </p>
+
+    <h2 id="de-loeschen">11. Konto und Daten löschen</h2>
     <p>
       Um dein Konto und deinen Spielstand in der Cloud löschen zu lassen,
       schreib eine E-Mail an
@@ -680,7 +714,7 @@
       in Abschnitt 3 beschrieben. Abmelden allein löscht nichts.
     </p>
 
-    <h2 id="de-rechte">11. Deine Rechte</h2>
+    <h2 id="de-rechte">12. Deine Rechte</h2>
     <p>Du hast nach der DSGVO das Recht auf</p>
     <ul>
       <li>Auskunft über deine Daten (Art. 15),</li>
@@ -701,14 +735,14 @@
       etwa bei der Behörde deines Wohnorts (Art. 77 DSGVO).
     </p>
 
-    <h2 id="de-kinder">12. Kinder</h2>
+    <h2 id="de-kinder">13. Kinder</h2>
     <p>
       Das Spiel ist ohne Angaben zur Person spielbar; Name, Motto und Bild im
       Online-Profil sind freiwillig. Für die Anmeldung mit Google gelten die
       Altersregeln von Google.
     </p>
 
-    <h2 id="de-aenderungen">13. Änderungen</h2>
+    <h2 id="de-aenderungen">14. Änderungen</h2>
     <p>
       Ändert sich das Spiel so, dass es andere Daten verarbeitet, passen wir
       diese Erklärung an. Es gilt die Fassung auf dieser Seite.
@@ -724,15 +758,16 @@
       (formerly bacteria-game.wolsok.de) and the Android app “Bacteria Wars”
       (de.wolsok.bacteriawars). In short: the game in the browser uses no
       analytics; the Android app only counts its installs and launches and signs
-      you in to Google Play Games (section 6). The game sells no data. It stores
-      what it needs to keep your progress. In the cloud you can set up an online
-      profile for friends and online matches, and your progress makes an entry
-      on a leaderboard, with your name only if you show it in public (section
-      4). The game records your matches and keeps them in the cloud for 30 days,
-      readable only by the players of the match; a match becomes public only if
-      we show it in the gallery (section 4). The game loads Google's ad script
-      with its consent window, but shows no ads (section 7), and asks for a
-      voluntary tip (section 8). When you play the game embedded in another
+      you in to Google Play Games (section 6). The game reports program errors
+      to Sentry without personal details (section 10). The game sells no data.
+      It stores what it needs to keep your progress. In the cloud you can set up
+      an online profile for friends and online matches, and your progress makes
+      an entry on a leaderboard, with your name only if you show it in public
+      (section 4). The game records your matches and keeps them in the cloud for
+      30 days, readable only by the players of the match; a match becomes public
+      only if we show it in the gallery (section 4). The game loads Google's ad
+      script with its consent window, but shows no ads (section 7), and asks for
+      a voluntary tip (section 8). When you play the game embedded in another
       site, such as
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       it shows neither ads nor the tip there, and this policy does not cover
@@ -827,7 +862,7 @@
       Our functions delete a guest account unused for 90 days by themselves,
       counted from its last use (its last sign-in, or the renewal of the sign-in
       the game makes by itself while you play); they check once a day. They
-      erase its data as when an account is deleted (section 10). That mostly
+      erase its data as when an account is deleted (section 11). That mostly
       concerns guest accounts no longer in use, for example because you cleared
       your browser's data or a Google account took over their progress (below).
       If you open the game after so long a break on a device still signed in as
@@ -965,7 +1000,7 @@
       A recording expires 30 days after it was saved and the database deletes
       it, usually within a day after that; a public match only after it has been
       taken out of the gallery (below). If your account is deleted, they take
-      your identifier out of all your recordings in the same way (section 10).
+      your identifier out of all your recordings in the same way (section 11).
     </p>
     <p>
       From every stored recording of a match against the computer our functions
@@ -1110,7 +1145,7 @@
       in the menu; dismissing one deletes it. What the game lets you take back
       (removing friends, declining requests, ending a search, deleting a match
       under “My matches”) still works, and you can have your account deleted as
-      in section 10. With the suspension we take you out of the queue, delete
+      in section 11. With the suspension we take you out of the queue, delete
       your online status, your open rooms and your invitation links, and hide
       your leaderboard entry. When the suspension ends, we delete it and show
       the entry again.
@@ -1270,7 +1305,37 @@
       to our server. You decide whom you send the link to.
     </p>
 
-    <h2 id="en-delete">10. Deleting your account and data</h2>
+    <h2 id="en-errors">10. Error reports (Sentry)</h2>
+    <p>
+      At bacteria-wars.wolsok.de and in the Android app the game reports program
+      errors, such as a crash, to the service Sentry (provider: Functional
+      Software, Inc., 45 Fremont Street, 8th Floor, San Francisco, CA 94105,
+      USA), so that we can find and fix them; our functions (section 4) report
+      their own errors in the same way. An error report holds the error message,
+      the stack trace (where in the program the error happened), the type and
+      version of the browser, operating system and device, the version of the
+      game and the path of the page without the part after “?” and “#”, which
+      holds invitation links and ghost links, for instance. With it come the
+      last steps before the error, such as clicks, page changes and requests to
+      servers, also without that part, but no console output. A report holds no
+      name, email address or account identifier: the game and the functions
+      replace identifiers that appear in an error message before sending it.
+      Sentry receives your IP address, as it technically must, but does not
+      store it. The game switches on no performance monitoring, session
+      recording (Session Replay) or usage statistics at Sentry. When you play
+      the game embedded in another site, it sends no error reports itself.
+    </p>
+    <p>
+      Legal basis: Art. 6(1)(f) GDPR, our legitimate interest in a game that
+      works. Sentry processes the reports on our behalf, in the USA, and deletes
+      them after 90 days. Functional Software, Inc. is certified under the EU-US
+      Data Privacy Framework; the transfer to the USA relies on the European
+      Commission's adequacy decision (Art. 45 GDPR) and, in addition, on
+      standard contractual clauses (Art. 46(2)(c) GDPR). See
+      <a href="https://sentry.io/privacy/">Sentry's privacy policy</a>.
+    </p>
+
+    <h2 id="en-delete">11. Deleting your account and data</h2>
     <p>
       To have your account and your progress in the cloud deleted, email
       <a
@@ -1321,7 +1386,7 @@
       described in section 3. Signing out alone deletes nothing.
     </p>
 
-    <h2 id="en-rights">11. Your rights</h2>
+    <h2 id="en-rights">12. Your rights</h2>
     <p>Under the GDPR you have the right to</p>
     <ul>
       <li>access your data (Art. 15),</li>
@@ -1339,14 +1404,14 @@
       example the one where you live (Art. 77 GDPR).
     </p>
 
-    <h2 id="en-children">12. Children</h2>
+    <h2 id="en-children">13. Children</h2>
     <p>
       The game can be played without giving any personal details; the name,
       motto and picture of the online profile are optional. Google's age rules
       apply to signing in with Google.
     </p>
 
-    <h2 id="en-changes">13. Changes</h2>
+    <h2 id="en-changes">14. Changes</h2>
     <p>
       If the game changes to process other data, we update this policy. The
       version on this page applies.

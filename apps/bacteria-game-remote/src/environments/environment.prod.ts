@@ -1,3 +1,7 @@
+// The workspace's version, which names the release tag: a root file, not a
+// project's code (and no edge in the project graph).
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import { version } from '../../../../version.json';
 import { Environment } from './environment.type';
 import { SUPPORT_DEFAULTS } from './game-support';
 
@@ -27,4 +31,12 @@ export const environment: Environment = {
   // screens, add the display ad unit from AdSense:
   // ads: { client: 'ca-pub-6346271540341424', slot: '<ad unit id>' }
   support: SUPPORT_DEFAULTS,
+  // Error reports to the Sentry project `bacteria-wars` (owner's decision
+  // of 2026-10-26). A DSN is public by design. The release is the one the
+  // release workflow creates: the tag `v<version.json>` it builds from.
+  sentry: {
+    dsn: 'https://1624d373f20e21df253a680b693b99f9@o1384048.ingest.us.sentry.io/4512322908520448',
+    environment: 'production',
+    release: `bacteria-wars@v${version}`,
+  },
 };

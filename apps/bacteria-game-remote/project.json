@@ -105,6 +105,12 @@
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/dist/apps/bacteria-game-remote/ngsw.json"],
+      "inputs": [
+        "sharedGlobals",
+        "production",
+        "^production",
+        "{workspaceRoot}/version.json"
+      ],
       "dependsOn": ["build-federation"],
       "options": {
         "command": "echo No service worker in development builds.",
@@ -121,7 +127,12 @@
     "build-federation": {
       "executor": "@angular-architects/native-federation:build",
       "outputs": ["{workspaceRoot}/dist/apps/bacteria-game-remote"],
-      "inputs": ["sharedGlobals", "production", "^production"],
+      "inputs": [
+        "sharedGlobals",
+        "production",
+        "^production",
+        "{workspaceRoot}/version.json"
+      ],
       "dependsOn": ["^build"],
       "cache": true,
       "options": {},
