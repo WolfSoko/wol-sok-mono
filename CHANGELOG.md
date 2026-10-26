@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.114.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.113.1...v74.114.0) (2026-10-26)
+
+### Features
+
+* **bacteria-game-remote:** report errors to Sentry, without personal data ([#2690](https://github.com/WolfSoko/wol-sok-mono/issues/2690)) ([a07fc6e](https://github.com/WolfSoko/wol-sok-mono/commit/a07fc6eb5b03ff5f51d4580faa891099dace2745))
+
+### Chore
+
+* **release:** publish ([270d08d](https://github.com/WolfSoko/wol-sok-mono/commit/270d08d7f445e5c8f87263e4e8e6745b947ac2ae))
+
 ## [74.113.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.113.0...v74.113.1) (2026-10-26)
 
 ### Bug Fixes
