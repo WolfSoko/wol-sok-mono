@@ -1063,11 +1063,18 @@ describe('GameStateService local recordings', () => {
     });
   }
 
-  /** Plays a match of two seconds on a 320x180 arena and ends it on time. */
-  async function play(mode: 'vs-computer' | 'two-players'): Promise<void> {
+  /**
+   * Plays a match of two seconds on an arena of that size - 320x180, the
+   * online grid of a base level, when absent - and ends it on time.
+   */
+  async function play(
+    mode: 'vs-computer' | 'two-players',
+    width = 320,
+    height = 180
+  ): Promise<void> {
     service.setMode(mode);
-    service.setArenaSize(320, 180);
-    service.init(320, 180);
+    service.setArenaSize(width, height);
+    service.init(width, height);
     service.start();
     for (let frame = 0; frame < 120; frame++) {
       store.update({ keysPressed: frame < 60 ? ['d'] : ['w'] });
@@ -1076,7 +1083,7 @@ describe('GameStateService local recordings', () => {
           .spyOn(players, 'outcome')
           .mockReturnValue({ winner: null, reason: 'time' });
       }
-      service.advance(320, 180, 1);
+      service.advance(width, height, 1);
     }
     await Promise.resolve();
   }
@@ -1150,19 +1157,41 @@ describe('GameStateService local recordings', () => {
     expect(replays.submissions).toEqual([]);
   });
 
-  it('records nothing off the online grid, which no server could check', async () => {
-    service.setMode('vs-computer');
-    service.setArenaSize(480, 270);
-    service.init(480, 270);
-    service.start();
-    jest
-      .spyOn(players, 'outcome')
-      .mockReturnValue({ winner: null, reason: 'time' });
-    service.advance(480, 270, 1);
-    await Promise.resolve();
+  it('records a match off the online grid to watch again, but keeps none, which no server could check', async () => {
+    // "High": 1.5 cells per base cell.
+    await play('vs-computer', 480, 270);
 
+    const recording = service.lastRecording();
+    const replay = recording?.replay as Replay;
+    expect(replay.header).toEqual(
+      expect.objectContaining({
+        simulation: 'cpu',
+        width: 480,
+        height: 270,
+        ticks: 120,
+      })
+    );
+    expect(playReplay(replay)?.checksum).toBe(replay.header.checksum);
+    expect(parseReplay(replay, { stored: true })).toBeNull();
+    expect(replays.submissions).toEqual([]);
+    expect(recording?.id).toBeNull();
+  });
+
+  it('keeps the float GPU off the online grid, and records nothing on it', async () => {
+    useGpu();
+    const init = jest.spyOn(players, 'init');
+
+    await play('vs-computer', 480, 270);
+
+    // Recording moves no match off the simulation the device picks.
+    expect(init).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.not.objectContaining({ recordedSeats: expect.anything() })
+    );
+    expect(players.getSimulation().kind).toBe('gpu');
     expect(service.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
+    expect(store.snapshot().lastReplay?.header.simulation).toBe('gpu');
   });
 });
 

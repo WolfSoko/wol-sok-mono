@@ -349,6 +349,21 @@ export function savedRegardless(header: ReplayHeader): boolean {
 }
 
 /**
+ * True for a match on the online grid of its level - the one grid a
+ * replay is stored and checked on (ADR 0011). A local match on another
+ * grid is recorded too, to watch again on this device, but never kept.
+ */
+export function onOnlineGrid(
+  plan: Pick<MatchPlan, 'levelId' | 'width' | 'height'>
+): boolean {
+  const grid = arenaSize(
+    ONLINE_SIM_RESOLUTION,
+    levelSize(getLevel(plan.levelId))
+  );
+  return plan.width === grid.width && plan.height === grid.height;
+}
+
+/**
  * True when a replay plays out again as it was played: a format that
  * plays (versions 2 to 5), this balance table, this ladder computer and a
  * ruleset - never a match the float GPU ran. A balance change retires
@@ -734,13 +749,8 @@ function parseHeaderV2(
     header.attempt = { id: attempt['id'], at: attempt['at'] };
   }
   if (stored) {
-    const grid = arenaSize(
-      ONLINE_SIM_RESOLUTION,
-      levelSize(getLevel(plan.levelId))
-    );
     if (
-      plan.width !== grid.width ||
-      plan.height !== grid.height ||
+      !onOnlineGrid(plan) ||
       header.outcome === undefined ||
       header.checksum === undefined
     ) {
