@@ -985,7 +985,9 @@ chose not to share their status, and the privacy page says so.
 
 All run in ADR 0011's codebase and region, with retries off, and are
 idempotent: a transaction checks the state first, and markers are created
-with `create()`. `rankReplay` and `acceptReplay` are the exceptions: they
+with `create()`. `mirrorFriend` and `mirrorRequest` retry as well (they
+re-read the entry, so a repeat writes the same mirror; see "Privacy"
+below). `rankReplay` and `acceptReplay` are the exceptions: they
 retry, and drop an event older than an hour, since a stored replay
 `rankReplay` fails to rank would never count, and a submission
 `acceptReplay` fails on would be lost with its attempt (it voids the
@@ -1104,7 +1106,7 @@ privacy page follow in the next releases):
       whose player deleted their account before `rankReplay` ran counts
       nothing (`stub-expired`), as before.
 - **Guest accounts unused for 90 days are deleted.** `guestCleanup`
-  (daily at 03:41 UTC, `GUEST_CLEANUP_ON`, `GUEST_IDLE_DAYS = 90`) pages
+  (daily at 03:41 UTC, `GUEST_CLEANUP_ON` - off until the backfill ran -, `GUEST_IDLE_DAYS = 90`) pages
   through Auth, picks accounts without a sign-in provider and without the
   admin claim whose last use - the latest of last token refresh, last
   sign-in and creation - is over 90 days ago - at most 2,000 a run -
@@ -1625,9 +1627,12 @@ written.
   functions and the database rules (the mirror triggers, `guestCleanup`,
   `deletePlayerData`); then run "Mirror friend lists" once in the overview
   of `/admin` (`presence.backfill`); only then ship the release whose
-  database rules let only `statusReaders` read `status/{uid}`, and the
-  client's "Delete" (`forget`) with the privacy page. Check that Cloud
-  Scheduler shows `guestCleanup`, and that the functions' runtime account
+  database rules let only `statusReaders` read `status/{uid}` and that
+  sets `GUEST_CLEANUP_ON` to `true` (before the backfill, a deleted
+  guest's entries in other players' lists have no `listedBy` to be found
+  by), and the client's "Delete" (`forget`) with the privacy page. Check
+  that Cloud Scheduler then shows `guestCleanup`, and that the functions'
+  runtime account
   may list and delete Auth users (it lists them for `stats.recount`
   already; deleting needs `firebaseauth.users.delete`).
 

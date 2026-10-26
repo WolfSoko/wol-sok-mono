@@ -2,6 +2,7 @@ import { rankDaily } from './boards/rank-daily';
 import { rankOnline } from './boards/rank-online';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { checkGoogleLink } from './admin/tombstones';
+import { GUEST_CLEANUP_ON } from './config';
 
 jest.mock('./boards/rank-daily', () => ({
   ...jest.requireActual('./boards/rank-daily'),
@@ -87,7 +88,10 @@ describe('the exported functions', () => {
   });
 
   it('never retry the hourly run or the guest clean-up', () => {
-    for (const name of ['hourly', 'guestCleanup']) {
+    const scheduled = GUEST_CLEANUP_ON
+      ? ['hourly', 'guestCleanup']
+      : ['hourly'];
+    for (const name of scheduled) {
       expect([
         name,
         functions[name]?.__endpoint.scheduleTrigger?.retryConfig?.retryCount,

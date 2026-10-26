@@ -308,12 +308,14 @@ describe('replayCommands', () => {
 
   it('takes `forget` from a banned player too, as a deletion', async () => {
     await seed('bans/eve', { until: null });
-    await assertSucceeds(add('eve', command('eve', 'forget')));
+    // The refusals first: once `add` created its document, a second write
+    // to it is an update, which the rules refuse whatever it holds.
     await assertFails(add('eve', command('eve', 'remove')));
     await assertFails(
       add('eve', command('eve', 'forget', { createdAt: Timestamp.now() }))
     );
     await assertFails(add('eve', command('eve', 'forget', { extra: 1 })));
+    await assertSucceeds(add('eve', command('eve', 'forget')));
   });
 
   it("takes the gallery's types only from the owner", async () => {

@@ -4,6 +4,7 @@ import {
   Timestamp,
 } from 'firebase-admin/firestore';
 import { deleteAll } from '../deletes';
+import { settleAll } from '../settle';
 import {
   anonymiseCopies,
   anonymisePublic,
@@ -144,7 +145,21 @@ export async function forgetPlayerReplays(
   // looked for: `acceptReplay` stores none whose submission is gone.
   const pending = await withdrawPending(db, uid);
   // Its public replays at the same time: they hold no private replay.
-  const anonymising = anonymisePublic(db, uid);
+  // Both settle before the first failure is told, so neither is left
+  // running without a handler.
+  const [publicCount, anonymised] = await settleAll([
+    anonymisePublic(db, uid),
+    forgetAll(db, uid, now),
+  ]);
+  return { anonymised, public: publicCount, pending };
+}
+
+/** Takes the player out of every private replay they are in. */
+async function forgetAll(
+  db: Firestore,
+  uid: string,
+  now: number
+): Promise<number> {
   const replays = db.collection('replays');
   // Each transaction reads its replay again: the queries need the ids only.
   const [played, seated] = await Promise.all([
@@ -166,11 +181,7 @@ export async function forgetPlayerReplays(
       ))
     );
   }
-  return {
-    anonymised: outcomes.filter((outcome) => outcome === 'forgotten').length,
-    public: await anonymising,
-    pending,
-  };
+  return outcomes.filter((outcome) => outcome === 'forgotten').length;
 }
 
 /**
