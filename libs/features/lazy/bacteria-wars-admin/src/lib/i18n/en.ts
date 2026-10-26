@@ -1,6 +1,7 @@
 /** The admin area's English texts (ADR 0012), apart from the game's. */
 export const EN = {
   title: 'Bacteria Wars admin',
+  toGame: 'Back to the game',
   nav: {
     overview: 'Overview',
     profiles: 'Profiles',

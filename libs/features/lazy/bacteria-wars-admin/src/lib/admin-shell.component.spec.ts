@@ -63,6 +63,13 @@ describe('AdminShellComponent', () => {
     });
   });
 
+  it('links back to the game for everybody', () => {
+    const link =
+      render('signed-out').nativeElement.querySelector('mat-toolbar a');
+    expect(link?.getAttribute('href')).toBe('/');
+    expect(link?.textContent).toContain('Back to the game');
+  });
+
   it('shows the views only to the owner', () => {
     expect(render('signed-out').nativeElement.querySelector('nav')).toBeNull();
     TestBed.resetTestingModule();

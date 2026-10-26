@@ -4,6 +4,7 @@ import type { EN } from './en';
 /** The admin area's German texts - the same keys as {@link EN}. */
 export const DE: Translation<typeof EN> = {
   title: 'Bacteria Wars Verwaltung',
+  toGame: 'Zurück zum Spiel',
   nav: {
     overview: 'Übersicht',
     profiles: 'Profile',
