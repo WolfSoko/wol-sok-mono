@@ -11,6 +11,8 @@ import { defaultProfile } from '../social/profile';
 import type { BoardEntry, BoardRef } from '../state/boards';
 import { GameAccount } from '../storage/game-account';
 import type { PagedEntry } from '../storage/game-boards';
+import { LateGameStorage } from '../../testing/late-game-storage';
+import { GameStorage } from '../storage/game-storage';
 import { GameCloud } from '../storage/game-cloud';
 import { BoardViewComponent } from './board-view.component';
 import { BoardsService } from './boards.service';
@@ -61,6 +63,8 @@ describe('Leaderboards', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: new FakeGameAccount('ada') },
+        // The guest's sign-in line waits for the progress.
+        { provide: GameStorage, useValue: new LateGameStorage() },
         {
           provide: GameCloud,
           useValue: {
