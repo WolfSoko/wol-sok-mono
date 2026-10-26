@@ -68,9 +68,15 @@ export function isCounted(listing: Pick<ReplayListing, 'rankedReason'>) {
   return listing.rankedReason === 'counted';
 }
 
-/** What a player may ask of a replay; all but `remove` only the owner. */
+/**
+ * What a player may ask of a replay: `remove` keeps it out of the public
+ * gallery, `forget` deletes it from their matches - in the cloud it takes
+ * them out of the replay, which stays anonymised for the statistics (ADR
+ * 0012, owner's decision of 2026-10-26). The rest only the owner.
+ */
 export type ReplayCommandType =
   | 'remove'
+  | 'forget'
   | 'feature'
   | 'unfeature'
   | 'anonymise';

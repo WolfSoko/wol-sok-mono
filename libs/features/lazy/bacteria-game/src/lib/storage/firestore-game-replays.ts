@@ -156,7 +156,9 @@ export class FirestoreGameReplays implements GameReplays {
   ): Promise<string | null> {
     const { db, dbSdk } = this.connection;
     const uid = await this.signedIn();
-    if (await firstValueFrom(this.banned)) {
+    // Deleting a match is the player's deletion: the rules take it while
+    // a ban holds (ADR 0012).
+    if (type !== 'forget' && (await firstValueFrom(this.banned))) {
       return null;
     }
     const ref = dbSdk.doc(dbSdk.collection(db, 'replayCommands'));

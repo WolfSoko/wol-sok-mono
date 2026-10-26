@@ -7,7 +7,7 @@ import { I18nService } from '../i18n/i18n.service';
 import { BALANCE_VERSION } from '../state/game-balance';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
-import { NEVER, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { COMMAND_TIMEOUT_MS, MyMatchesComponent } from './my-matches.component';
 
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
@@ -125,6 +125,57 @@ describe('MyMatchesComponent', () => {
         each.getAttribute('aria-label')?.startsWith('Keep')
       )
     ).toBe(false);
+  });
+
+  it('deletes a cloud match by forget, which takes it off the list', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+
+    expect(page.textContent).toContain('kept only without your account');
+    button(page, 'Delete').click();
+    await settle(fixture);
+
+    expect(replays.commands).toEqual([{ type: 'forget', replayId: 'l_fake0' }]);
+    expect(page.textContent).toContain('Match deleted.');
+    expect(page.textContent).toContain('No recorded matches yet.');
+  });
+
+  it('offers Delete for a match already kept out of the gallery', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    replays.change('l_fake0', { galleryOut: true });
+    const { page } = await render();
+
+    expect(button(page, 'Delete')).toBeTruthy();
+    expect(() => button(page, 'Keep')).toThrow();
+  });
+
+  it('says a match the boards may still rank can be deleted later', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    replays.forgetAnswer = { ok: false, reason: 'ranking' };
+    const { fixture, page } = await render();
+
+    button(page, 'Delete').click();
+    await settle(fixture);
+
+    expect(page.textContent).toContain(
+      'This match can be deleted once the leaderboard has counted it.'
+    );
+    expect(page.textContent).toContain('Vs computer');
+    expect(button(page, 'Delete').disabled).toBe(false);
+  });
+
+  it('takes a match that no longer names the player as deleted', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+    jest.spyOn(replays, 'sendCommand').mockImplementation(async () => 'c_gone');
+    jest
+      .spyOn(replays, 'watchCommand')
+      .mockReturnValue(of({ ok: false, reason: 'not-found' }));
+
+    button(page, 'Delete').click();
+    await settle(fixture);
+
+    expect(page.textContent).toContain('Match deleted.');
   });
 
   it('says it did not work when the server never answers, and lets go', async () => {

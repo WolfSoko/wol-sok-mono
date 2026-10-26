@@ -16,7 +16,7 @@ export const replay = {
     title: 'My matches',
     region: 'Your recorded matches',
     intro:
-      'Your recorded matches of the last 30 days, newest first. Only the players of a match can watch it.',
+      'Your recorded matches of the last 30 days, newest first. Only the players of a match can watch it. If you delete one, it leaves your list and is kept only without your account, for the statistics, until its 30 days are up.',
     device:
       'Your recorded matches stay on this device - only the newest 20 are kept. Nothing is checked or ranked without the online game.',
     none: 'No recorded matches yet. Play one - it shows up here once it is saved.',
@@ -29,6 +29,8 @@ export const replay = {
     removed: 'Match deleted.',
     keptOut: 'This match stays out of the public gallery.',
     removeFailed: 'That did not work. Try again later.',
+    stillRanking:
+      'This match can be deleted once the leaderboard has counted it. Try again later.',
     list: 'Back to the list',
     result: {
       won: 'Won',

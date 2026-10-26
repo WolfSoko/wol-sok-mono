@@ -193,6 +193,20 @@ describe('FirestoreGameReplays', () => {
     expect(await replays.submit({ replay: LOCAL, hint: 50 })).not.toBeNull();
   });
 
+  it('still sends "Delete" (forget) while a ban holds, as the rules take it', async () => {
+    replays = firestore.replays('ada', new BehaviorSubject(true));
+
+    const id = await replays.sendCommand('forget', 'l_x');
+
+    expect(firestore.docs.get(`replayCommands/${id}`)).toEqual({
+      uid: 'ada',
+      type: 'forget',
+      replayId: 'l_x',
+      createdAt: 'now',
+      expireAt: expect.any(FakeTimestamp),
+    });
+  });
+
   it('says saved once the replay exists, and "not yet" while the rules refuse it', async () => {
     firestore.refused.add('replays/l_x');
     jest.useFakeTimers();
