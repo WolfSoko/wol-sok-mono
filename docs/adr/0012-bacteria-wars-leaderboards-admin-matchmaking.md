@@ -1042,8 +1042,8 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
 
 ### Privacy: erasure, idle guests, a friends-only status (2026-10-26)
 
-The owner's decisions of 2026-10-26, server side (the client and the
-privacy page follow in the next releases):
+The owner's decisions of 2026-10-26, server side first; the client and
+the privacy page as built are at the end of this section:
 
 - **Account deletion erases every piece of personal data automatically.**
   Beside `deletePlayerBoards`, a third `onDelete` trigger,
@@ -1164,6 +1164,40 @@ privacy page follow in the next releases):
   late report into a dispute and dodge a counted loss, and a player who
   did not report would dodge their "Not reported" - and `not-found` for a
   replay that no longer names the player. Not audited, like `remove`.
+
+As built in the client and on the privacy page (2026-10-26):
+
+- **"Delete" in "My matches"** sends `forget` in the cloud
+  (`FirestoreGameReplays`, also while a ban holds; on the device's
+  backend it deletes like `remove`). On `ok` the list reloads without the
+  match; `not-found` reads as deleted too, since the match no longer
+  names the player; `ranking` shows "can be deleted once the leaderboard
+  has counted it". "Keep out of the gallery" (`remove`) stays beside it
+  for a match not yet kept out.
+- **The online status** is read only for a mutual friend
+  (`SocialService.friends` switches the watch on `watchListedBy`), and
+  `RtdbGamePresence.watch` listens again after a refusal, 5 times, 5 s
+  more each time, for the seconds until `mirrorFriend` wrote
+  `statusReaders`. Nothing else in the client reads another player's
+  status. The rule itself ships after the backfill, as its own change.
+- **Recording matches against the computer** stays on by default. After
+  the first one the cloud saved (not online, not ranked: the settings do
+  not stop those), the result screen's replay note says once per device
+  that such matches are saved and that Settings -> Matches turns it off
+  (the device setting `recordingHintShown`).
+- **The ad consent**: `GameAds` listens to the page's own AdSense script
+  even without an ad unit (before, it returned at once without one, so
+  the "Ad privacy settings" button never showed on the live site). The
+  privacy page names that button as the way to change or withdraw the
+  consent and shows it in its ads section once the consent window
+  answered; clearing the site's data stays the fallback.
+- **The privacy page** says what an account deletion erases, that
+  recorded matches stay without the player's identifier and name until
+  they expire, and what "Delete" in "My matches" does. Until the
+  friends-only rule ships it keeps saying that any signed-in player who
+  knows the identifier can read the online status, and that an unused
+  guest account stays until it is deleted: the 90-day deletion is told
+  with the release that turns `guestCleanup` on.
 
 ## Consequences
 
@@ -1630,9 +1664,11 @@ written.
   database rules let only `statusReaders` read `status/{uid}` and that
   sets `GUEST_CLEANUP_ON` to `true` (before the backfill, a deleted
   guest's entries in other players' lists have no `listedBy` to be found
-  by), and the client's "Delete" (`forget`) with the privacy page. Check
-  that Cloud Scheduler then shows `guestCleanup`, and that the functions'
-  runtime account
+  by), with the privacy page's friends-only sentence and its 90-day guest
+  deletion. The client's "Delete" (`forget`), its mutual-only status reads
+  and the rest of the privacy page need only the functions deployed, and
+  may ship before. Check that Cloud Scheduler then shows `guestCleanup`,
+  and that the functions' runtime account
   may list and delete Auth users (it lists them for `stats.recount`
   already; deleting needs `firebaseauth.users.delete`).
 

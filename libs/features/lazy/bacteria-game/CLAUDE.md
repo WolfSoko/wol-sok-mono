@@ -48,7 +48,12 @@ storage until then. Settings stay with the device either way.
   Database) - `GameCloud.social()` and `.presence()`, null without a
   project or its database. `SocialService` is the one place the game reads
   them from; specs use `FakeGameSocial` and `FakeGamePresence`
-  (`src/testing/`).
+  (`src/testing/`). It watches a friend's status only while the
+  friendship is mutual: the status becomes readable by friends only (ADR
+  0012, owner's decision of 2026-10-26), a refused read ends the Realtime
+  Database listener, so `RtdbGamePresence.watch` listens again a few
+  times (the functions write the reader mirror a few seconds late). A new
+  status read follows the same rule.
 - The leaderboards (ADR 0012) are read through the `GameBoards` port
   (`storage/game-boards.ts`, `FirestoreGameBoards`), asked of
   `GameCloud.boards()` - null without a project - and only by
@@ -81,16 +86,27 @@ storage until then. Settings stay with the device either way.
   `galleryOut`, `publicId` - and leaves out what it does not know. A new
   reason needs its text in the `replay.reasons` area (a `satisfies` there
   fails to compile without it). In the cloud
-  `remove` keeps a match out of the gallery and deletes nothing; only the
-  device's backend deletes. The functions and rules also take `forget`
-  (ADR 0012, owner's decision of 2026-10-26; the client's "Delete" in the
-  cloud comes with a later release): it takes the player out of the
+  `remove` ("Keep out of the gallery") keeps a match out of the gallery
+  and deletes nothing; "Delete" sends `forget` (ADR 0012, owner's
+  decision of 2026-10-26): the functions take the player out of the
   replay (`players`, seats) and its public copies, so it leaves
-  `listMine`, while the replay stays anonymised for the statistics. It is
-  allowed while a ban holds, and answers `ranking` while the boards may
-  still rank the match, `not-found` for one that no longer names them. "My matches" (`replays/my-matches.component.ts`)
+  `listMine`, while the replay stays anonymised for the statistics.
+  `FirestoreGameReplays` sends it while a ban holds, as the rules allow;
+  it answers `ranking` while the boards may still rank the match (the
+  screen says it can be deleted later) and `not-found` for one that no
+  longer names the player (read as deleted). On this device both delete
+  for real. The privacy page (`apps/bacteria-game-remote/src/app/privacy`)
+  says what each does: keep it in step. "My matches" (`replays/my-matches.component.ts`)
   and the match just played (`replay-screen.component.ts`) are stage
-  screens; specs use `FakeGameReplays` (`cloud` and `change`).
+  screens; specs use `FakeGameReplays` (`cloud`, `change` and
+  `forgetAnswer`).
+- The result screen's replay note (`replays/replay-note.component.ts`)
+  says once per device, after the first match against the computer the
+  cloud saved (not online, not ranked), that such matches are saved and
+  that Settings -> Matches turns it off (owner's decision of 2026-10-26:
+  recording stays on by default). The device setting
+  `recordingHintShown` keeps it shown; the note decides only once
+  `GameSettingsService.loaded` says the stored settings are read.
 - Ranked daily attempts and endless runs (ADR 0012) are declared through
   the `GameRanked` port (`storage/game-ranked.ts`, `FirestoreGameRanked`),
   asked of `GameCloud.ranked()` - null without a project - and only by
