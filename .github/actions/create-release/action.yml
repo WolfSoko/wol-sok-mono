@@ -1,5 +1,5 @@
 name: 'Create release'
-description: 'Builds the apps at the checked-out release tag, publishes the GitHub release with the build as asset and creates the Sentry release'
+description: 'Builds the apps at the checked-out release tag, publishes the GitHub release with the build as asset and creates the Sentry releases'
 inputs:
   tag:
     description: 'The release tag (v<version>), checked out already'
@@ -80,3 +80,21 @@ runs:
         SENTRY_AUTH_TOKEN: ${{ inputs.sentry-auth-token }}
         SENTRY_ORG: 'wolsok'
         SENTRY_PROJECT: 'angular-examples'
+
+    # Bacteria Wars reports to two projects of its own, the game on its own
+    # site and its Cloud Functions, both as `bacteria-wars@<tag>` (the game's
+    # environment.prod.ts and the functions' error-reports.ts build the same
+    # name from version.json). The game's source maps are served with it
+    # already (`hidden: false`), so uploading them shows nothing new; the
+    # functions' bundle has none and is not minified.
+    - name: Create Sentry Release for Bacteria Wars
+      uses: getsentry/action-release@v3
+      with:
+        release: bacteria-wars@${{ inputs.tag }}
+        projects: 'bacteria-wars bacteria-wars-functions'
+        sourcemaps: 'dist/apps/bacteria-game-remote'
+        # The first release of the two projects has no previous one.
+        ignore_missing: true
+      env:
+        SENTRY_AUTH_TOKEN: ${{ inputs.sentry-auth-token }}
+        SENTRY_ORG: 'wolsok'
