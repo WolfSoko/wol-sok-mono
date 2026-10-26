@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.116.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.115.0...v74.116.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-wars-admin:** link back to the game from the admin toolbar ([#2694](https://github.com/WolfSoko/wol-sok-mono/issues/2694)) ([048d874](https://github.com/WolfSoko/wol-sok-mono/commit/048d8740d9249073459d9d9e77a5dd53ec1f959f))
+
+### Chore
+
+* **tools:** set up Claude Code cloud sessions ([#2619](https://github.com/WolfSoko/wol-sok-mono/issues/2619)) ([71ce9e8](https://github.com/WolfSoko/wol-sok-mono/commit/71ce9e8c0becc28cce0cdec45e43bbc47bee894a))
+
 ## [74.115.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.114.0...v74.115.0) (2026-10-26)
 
 ### Features
