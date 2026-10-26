@@ -65,6 +65,7 @@ import {
   ArenaLayout,
   ArenaScene,
   ArenaViewComponent,
+  layoutKey,
 } from './arena/arena-view.component';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import type { GpuSelfTestResult } from './gl/gpu-self-test';
@@ -388,11 +389,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   });
   /**
    * True once the arena view built its painter for the layout the arena
-   * has now - or before it built any.
+   * has now (one with the same canvas key: the layout is recomputed, a
+   * new object, on every level) - or before it built any.
    */
   private readonly arenaReady = computed(() => {
     const painted = this.painterLayout();
-    return painted === null || painted === this.arenaLayout();
+    return (
+      painted === null || layoutKey(painted) === layoutKey(this.arenaLayout())
+    );
   });
   private readonly arenaReady$ = toObservable(this.arenaReady);
   /** What the arena view paints: the match as it stands. */
@@ -982,9 +986,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     this.gameStateService.leaveOnline();
     if (this.ranked.wants('endless', this.settings.ranked())) {
-      this.gameStateService.startEndless(
-        await this.whileDeclaring(() => this.ranked.startRun())
-      );
+      const start = await this.whileDeclaring(() => this.ranked.startRun());
+      if (this.startedMeanwhile()) {
+        return;
+      }
+      this.gameStateService.startEndless(start);
     } else {
       this.gameStateService.startEndless();
     }
@@ -1005,10 +1011,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // A ranked attempt plays its own day's level, past midnight too.
     const day = this.progress.daily().day;
     if (this.ranked.wants('daily', this.settings.ranked())) {
-      this.gameStateService.playDaily(
-        day,
-        await this.whileDeclaring(() => this.ranked.declareDaily())
+      const attempt = await this.whileDeclaring(() =>
+        this.ranked.declareDaily()
       );
+      if (this.startedMeanwhile()) {
+        return;
+      }
+      this.gameStateService.playDaily(day, attempt);
     } else {
       this.gameStateService.playDaily(day);
     }
@@ -1026,14 +1035,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       await this.playEndless();
       return;
     }
-    this.gameStateService.continueEndless(
+    const next =
       endlessRanked === null
         ? null
         : await this.whileDeclaring(() =>
             this.ranked.declareRunMatch(endlessRanked)
-          )
-    );
+          );
+    if (this.startedMeanwhile()) {
+      return;
+    }
+    this.gameStateService.continueEndless(next);
     await this.startWhenArenaReady();
+  }
+
+  /**
+   * True when another match started (or the last one is still being
+   * reset) while a declaration was under way: the declared start is void
+   * then, rather than ending that match.
+   */
+  private startedMeanwhile(): boolean {
+    return this.running() || this.resetting();
   }
 
   /** What `declare` comes to, with the declaring note up meanwhile. */

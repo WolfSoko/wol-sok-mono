@@ -17,6 +17,8 @@ class FakeBackend {
   /** Every path listened to, in order. */
   public readonly listened: string[] = [];
   public readonly deleted: string[] = [];
+  /** Documents whose first snapshot waits for a `set`, as from the server. */
+  public readonly pending = new Set<string>();
 
   public readonly dbSdk = {
     doc: (_db: unknown, ...segments: string[]) => ({
@@ -36,7 +38,9 @@ class FakeBackend {
           ref.collection ? this.collectionOf(ref.path) : this.docOf(ref.path)
         );
       this.on(this.listeners, ref.path, emit);
-      emit();
+      if (!this.pending.has(ref.path)) {
+        emit();
+      }
       return () => this.listeners.get(ref.path)?.delete(emit);
     },
     deleteDoc: async (ref: { path: string }) => {
@@ -189,6 +193,23 @@ describe('FirestoreGameModeration', () => {
     playerIds.next('bob');
 
     expect(bans).toEqual([null, { since: 1, until: null, reason: 'other' }]);
+  });
+
+  it("never hands a late subscriber the last player's ban", () => {
+    playerIds.next('ada');
+    const moderation = backend.moderation(playerIds);
+    const kept = moderation.ban().subscribe();
+    backend.pending.add('bans/bob');
+
+    playerIds.next('bob');
+    const late: (PlayerBan | null)[] = [];
+    moderation.ban().subscribe((ban) => late.push(ban));
+
+    // Not ada's "no ban": nothing until bob's is read.
+    expect(late).toEqual([]);
+    backend.set('bans/bob', { since: at(1), until: null, reason: 'spam' });
+    expect(late).toEqual([{ since: 1, until: null, reason: 'spam' }]);
+    kept.unsubscribe();
   });
 
   it('lists the notices oldest first, and deletes one dismissed', async () => {

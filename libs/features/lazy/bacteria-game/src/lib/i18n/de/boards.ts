@@ -74,7 +74,7 @@ export const boards: Translation<typeof en> = {
       daily:
         'Die drei gewerteten Versuche von heute sind verbraucht. Neue gibt es um 00:00 UTC.',
       endless:
-        'Die fünf gewerteten Läufe von heute sind begonnen. Neue gibt es um 00:00 UTC.',
+        'Die fünf gewerteten Läufe von heute sind schon gestartet. Neue gibt es um 00:00 UTC.',
     },
     blocked: {
       device:
@@ -89,7 +89,7 @@ export const boards: Translation<typeof en> = {
       offline: 'Nicht gewertet: offline, als das Match begann',
       used: 'Nicht gewertet: die drei Versuche von heute sind verbraucht',
       'runs-used':
-        'Nicht gewertet: die fünf gewerteten Läufe von heute sind begonnen',
+        'Nicht gewertet: die fünf gewerteten Läufe von heute sind schon gestartet',
       'run-dropped': 'Dieser Lauf wird nicht mehr gewertet',
     },
   },

@@ -38,6 +38,15 @@ export interface ArenaLayout {
   unit: number;
 }
 
+/**
+ * What a canvas is rendered for: layouts with the same key share the
+ * canvas and its painter.
+ */
+export function layoutKey(layout: ArenaLayout): string {
+  const { width, height, scale, detail, unit } = layout;
+  return `${width}x${height}@${scale}:${detail}:${unit}`;
+}
+
 /** What a frame shows of the war - the view adds the rest. */
 export type ArenaContent = Omit<
   ArenaFrame,
@@ -153,10 +162,7 @@ export class ArenaViewComponent implements OnDestroy {
    * One key per layout: the canvas is rendered for the key, so another
    * layout hands the painter a fresh canvas and context.
    */
-  protected readonly canvasKey = computed(() => {
-    const { width, height, scale, detail, unit } = this.layout();
-    return [`${width}x${height}@${scale}:${detail}:${unit}`];
-  });
+  protected readonly canvasKey = computed(() => [layoutKey(this.layout())]);
 
   /** What of the arena the last frame showed. */
   private lastView: Rect | null = null;

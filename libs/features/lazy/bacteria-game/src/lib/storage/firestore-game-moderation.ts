@@ -31,22 +31,35 @@ import {
  */
 export class FirestoreGameModeration implements GameModeration {
   private readonly bans: Observable<PlayerBan | null>;
+  /**
+   * Each player's ban, shared: one listener each for the storage, the
+   * replays and the game, and no replayed value that outlives its player.
+   */
+  private readonly bansOf = new Map<string, Observable<PlayerBan | null>>();
 
   public constructor(
     private readonly connection: FirebaseConnection,
     /** Whoever plays, null while nobody does. */
     private readonly playerIds: Observable<string | null>
   ) {
+    // Shared per player, not across them: a buffer over the switch would
+    // hand a late subscriber the last player's ban until the next one's is
+    // read - a write let through for a banned player who just signed in.
     this.bans = playerIds.pipe(
       distinctUntilChanged(),
-      switchMap((uid) =>
-        uid === null
-          ? EMPTY
-          : holdingBans(this.storedBan(uid), this.mirroredBan(uid))
-      ),
-      // One listener each for the storage, the replays and the game.
-      shareReplay({ bufferSize: 1, refCount: true })
+      switchMap((uid) => (uid === null ? EMPTY : this.banOf(uid)))
     );
+  }
+
+  private banOf(uid: string): Observable<PlayerBan | null> {
+    let ban = this.bansOf.get(uid);
+    if (ban === undefined) {
+      ban = holdingBans(this.storedBan(uid), this.mirroredBan(uid)).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+      this.bansOf.set(uid, ban);
+    }
+    return ban;
   }
 
   public ban(): Observable<PlayerBan | null> {

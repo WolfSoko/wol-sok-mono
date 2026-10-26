@@ -491,6 +491,16 @@ describe('NewGameComponent ranked play', () => {
   const text = (element: HTMLElement) =>
     element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
 
+  it('shows the medallion of the normal difficulty a ranked attempt plays', async () => {
+    const element = await render('daily', {
+      rankedOffers: { daily: RANKED },
+      medals: { 'gen:corridor:42:5': { normal: 'silver', hard: 'gold' } },
+    });
+
+    expect(text(element)).toContain('Silver medallion');
+    expect(text(element)).not.toContain('Gold medallion');
+  });
+
   it('shows no switch where ranked play is not offered', async () => {
     const element = await render('daily', { rankedOffers: { daily: null } });
 

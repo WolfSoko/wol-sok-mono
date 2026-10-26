@@ -370,7 +370,7 @@ export class NewGameComponent {
     if (!isLadderLevel(level.id) && this.kind() !== 'daily') {
       return null;
     }
-    const best = this.medals()[level.id]?.[this.difficulty()] ?? null;
+    const best = this.medals()[level.id]?.[this.playedDifficulty()] ?? null;
     return {
       best,
       bestName: this.text(
@@ -431,13 +431,16 @@ export class NewGameComponent {
   );
 
   /**
-   * The keys of the name and the briefing of the difficulty the computer
-   * plays: the one selected, the normal one in a ranked match.
+   * The difficulty the computer plays, and the medallion counts for: the
+   * one selected, the normal one in a ranked match.
    */
+  protected readonly playedDifficulty = computed((): BotDifficulty =>
+    this.rankedOffer()?.on === true ? 'normal' : this.difficulty()
+  );
+
+  /** The keys of the name and the briefing of the played difficulty. */
   protected readonly difficultyTexts = computed(() =>
-    difficultyKeys(
-      this.rankedOffer()?.on === true ? 'normal' : this.difficulty()
-    )
+    difficultyKeys(this.playedDifficulty())
   );
 
   /** The head starts on offer, named after the colony that gets it. */

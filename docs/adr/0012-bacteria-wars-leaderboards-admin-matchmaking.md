@@ -283,7 +283,7 @@ without limit. Three things make an attempt count:
      `getDocFromServer` and uses `at` in whole milliseconds, floored as the
      Admin SDK's `toMillis()` gives it (the browser SDK's keeps the
      microseconds as a fraction). That is about 300 ms before the
-     countdown. The countdown waits up to 3 seconds in all; past that the
+     countdown. The declaration waits up to 3 seconds in all; past that the
      client reads the document from the server once more and plays ranked
      if the declaration committed after all.
 2. **The match seed comes from the declaration**:
