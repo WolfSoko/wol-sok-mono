@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.112.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.111.0...v74.112.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-game:** delete a match, the ad privacy button, a hint on saved matches, the privacy decisions on the privacy page ([#2687](https://github.com/WolfSoko/wol-sok-mono/issues/2687)) ([1fa833c](https://github.com/WolfSoko/wol-sok-mono/commit/1fa833c617623de16500cb384bea8c9e376717bd))
+
 ## [74.111.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.110.0...v74.111.0) (2026-10-26)
 
 ### Features
