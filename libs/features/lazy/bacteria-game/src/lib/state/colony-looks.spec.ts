@@ -1,15 +1,11 @@
-import {
-  BOSS_LOOK,
-  computerLook,
-  matchLooks,
-  NEUTRAL_LOOK,
-  seatLooks,
-} from './colony-looks';
+import { computerLook, NEUTRAL_LOOK, seatLooks } from './colony-looks';
 import { generatedLevelId } from './level-generator/generate-level';
-import { LEVELS } from './levels';
+import { getLevel, LEVELS } from './levels';
+import { MatchEngine } from './match-engine';
+import { planMatch } from './match-setup';
 import { createPlayer } from './player.model';
-import { BACTERIA_LOOKS, PREMIUM_SKINS, SKINS } from './skins';
-import { BOSS_SEAT } from './win-conditions';
+import { BOSS_LOOK, PREMIUM_SKINS, SKINS } from './skins';
+import { recordedReplay } from '../../testing/recorded-replay';
 
 describe('computerLook', () => {
   it('wears the plain slime on the first level and the dearest skin on the last', () => {
@@ -50,77 +46,87 @@ describe('computerLook', () => {
   });
 });
 
-describe('matchLooks', () => {
-  const bossLevel = LEVELS.find(({ boss }) => boss !== undefined)?.id ?? '';
-  const plainLevel = LEVELS.find(({ boss }) => boss === undefined)?.id ?? '';
+describe('seatLooks', () => {
+  const human = createPlayer({ id: 0 });
+  const computer = createPlayer({ id: 1, isBot: true, computer: true });
+  const boss = createPlayer({ id: 1, isBot: true, computer: true, boss: true });
+  const recording = createPlayer({ id: 1, isBot: true });
 
-  it('arms the boss on its level, where the computer plays', () => {
-    expect(matchLooks(bossLevel, 'chrome', true).boss).toBe(true);
-    expect(matchLooks(bossLevel, 'chrome', false).boss).toBe(false);
-    expect(matchLooks(plainLevel, 'chrome', true).boss).toBe(false);
-    expect(matchLooks('no-such-level', 'chrome', true).boss).toBe(false);
+  it('dresses the humans in the skin, the computer in its level’s look', () => {
+    expect(seatLooks([human, computer], 'ink', 'lava')).toEqual([
+      'ink',
+      'lava',
+    ]);
+    expect(seatLooks([human, createPlayer({ id: 1 })], 'ink', 'lava')).toEqual([
+      'ink',
+      'ink',
+    ]);
   });
 
-  it('keeps the skin and the level’s look for the computer', () => {
-    expect(matchLooks(plainLevel, 'neon', true)).toEqual({
-      skin: 'neon',
-      computer: computerLook(plainLevel),
-      boss: false,
-    });
+  it('dresses a seat a recording drives for a human in the skin', () => {
+    expect(seatLooks([human, recording], 'ink', 'lava')).toEqual([
+      'ink',
+      'ink',
+    ]);
   });
 
-  it('dresses no computer where none plays - a ghost race, online', () => {
-    expect(matchLooks(bossLevel, 'neon', false)).toEqual({
-      skin: 'neon',
-      computer: null,
-      boss: false,
-    });
+  it('dresses the boss in its own look', () => {
+    expect(seatLooks([human, boss], 'ink', 'lava')).toEqual(['ink', BOSS_LOOK]);
+  });
+
+  it('leaves the neutral colonies plain', () => {
+    expect(NEUTRAL_LOOK).toBe('slime');
   });
 });
 
-describe('seatLooks', () => {
-  const human = createPlayer({ id: 0, isBot: false });
-  const computer = createPlayer({ id: BOSS_SEAT, isBot: true });
+describe('the seats a match plans', () => {
+  const bossLevel = LEVELS.find(({ boss }) => boss !== undefined)?.id ?? '';
+  const plainLevel = LEVELS.find(({ boss }) => boss === undefined)?.id ?? '';
+  const plan = (levelId: string, mode: 'vs-computer' | 'two-players') => ({
+    levelId,
+    mode,
+    difficulty: 'normal' as const,
+    colors: ['orange', 'blue'] as [string, string],
+    headStart: 0 as const,
+    width: 120,
+    height: 80,
+    seed: 1,
+  });
+  const seats = (planned: ReturnType<typeof planMatch>) =>
+    new MatchEngine(planned.spawns, planned.options).players.map(
+      ({ computer, boss }) => ({ computer, boss })
+    );
 
-  it('dresses the humans in the skin and the computer in its level’s look', () => {
-    expect(
-      seatLooks([human, computer], {
-        skin: 'ink',
-        computer: 'lava',
-        boss: false,
-      })
-    ).toEqual(['ink', 'lava']);
-    expect(
-      seatLooks([human, createPlayer({ id: 1, isBot: false })], {
-        skin: 'ink',
-        computer: 'lava',
-        boss: false,
-      })
-    ).toEqual(['ink', 'ink']);
+  it('marks the computer’s seat, and the boss on its level', () => {
+    expect(seats(planMatch(plan(plainLevel, 'vs-computer')))).toEqual([
+      { computer: false, boss: false },
+      { computer: true, boss: false },
+    ]);
+    expect(seats(planMatch(plan(bossLevel, 'vs-computer')))).toEqual([
+      { computer: false, boss: false },
+      { computer: true, boss: true },
+    ]);
   });
 
-  it('dresses a seat a bot holds in a human’s stead in the skin', () => {
-    const looks = { skin: 'ink', computer: null, boss: false } as const;
-
-    expect(seatLooks([human, computer], looks)).toEqual(['ink', 'ink']);
+  it('marks no computer between two players - the boss, whoever steers it', () => {
+    expect(seats(planMatch(plan(bossLevel, 'two-players')))).toEqual([
+      { computer: false, boss: false },
+      { computer: false, boss: true },
+    ]);
   });
 
-  it('dresses the boss in its own look, in its seat only', () => {
-    const standIn = createPlayer({ id: 0, isBot: true });
-    const looks = { skin: 'ink', computer: 'lava', boss: true } as const;
-
-    expect(seatLooks([human, computer], looks)).toEqual(['ink', BOSS_LOOK]);
-    expect(seatLooks([standIn, computer], looks)).toEqual(['lava', BOSS_LOOK]);
+  it('marks neither against a ghost, which is no boss', () => {
+    const ghost = recordedReplay(bossLevel, 10);
+    expect(seats(planMatch(plan(bossLevel, 'vs-computer'), ghost))).toEqual([
+      { computer: false, boss: false },
+      { computer: false, boss: false },
+    ]);
+    expect(getLevel(bossLevel).boss).toBeDefined();
   });
 });
 
 describe('the boss look', () => {
   it('is no skin: never shown, bought or picked', () => {
     expect(SKINS.some(({ id }) => id === (BOSS_LOOK as string))).toBe(false);
-    expect(BACTERIA_LOOKS).not.toContain(BOSS_LOOK);
-  });
-
-  it('leaves the neutral colonies plain', () => {
-    expect(NEUTRAL_LOOK).toBe('slime');
   });
 });

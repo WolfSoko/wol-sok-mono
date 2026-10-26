@@ -1,6 +1,6 @@
 import { arenaContent, SeatColors } from '../arena/arena-content';
 import type { ArenaContent, ArenaScene } from '../arena/arena-view.component';
-import { type MatchLooks, matchLooks, seatLooks } from '../state/colony-looks';
+import { computerLook, seatLooks } from '../state/colony-looks';
 import type { Rect } from '../state/maps';
 import { getLevel, levelMap } from '../state/levels';
 import type { MatchEngine } from '../state/match-engine';
@@ -24,12 +24,8 @@ export interface ReplayLook {
 export class ReplayScene implements ArenaScene {
   private engine: MatchEngine;
   private readonly walls: readonly Rect[];
-  /**
-   * What the colonies wear: the computer plays in a match against it - a
-   * recording is never a ghost race, and an online match is recorded as
-   * one of two players.
-   */
-  private readonly looks: MatchLooks;
+  /** The look the computer wears on the replay's level. */
+  private readonly computer: BacteriaLook;
   private readonly seatColors = new SeatColors();
   private ended = false;
 
@@ -47,11 +43,7 @@ export class ReplayScene implements ArenaScene {
     this.engine = engine;
     const { levelId, width, height } = replay.header;
     this.walls = levelMap(getLevel(levelId)).createWalls(width, height);
-    this.looks = matchLooks(
-      levelId,
-      look.look,
-      replay.header.mode === 'vs-computer'
-    );
+    this.computer = computerLook(levelId);
   }
 
   /** The ticks played so far. */
@@ -95,7 +87,7 @@ export class ReplayScene implements ArenaScene {
       walls: this.walls,
       // The level's balance at the replay's scale, as `planMatch` made it.
       balance: engine.balance,
-      looks: seatLooks(engine.players, this.looks),
+      looks: seatLooks(engine.players, this.look.look, this.computer),
       reducedMotion: this.look.reducedMotion,
       weaponFires: engine.takeFrameEvents().weapons,
       seatColors: this.seatColors,

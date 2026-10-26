@@ -571,7 +571,6 @@ export const LOOK_TUNING = {
   ECLIPSE_VEIN_GLOW: 0.7,
   ECLIPSE_PULSE: 2.5,
   ECLIPSE_BODY: 0.1,
-  ECLIPSE_LIGHT: 0.55,
   ECLIPSE_RIM: 1,
   ECLIPSE_LIMB: 0.6,
   ECLIPSE_LIMB_END: 0.5,
@@ -729,7 +728,6 @@ const {
   ECLIPSE_VEIN_GLOW,
   ECLIPSE_PULSE,
   ECLIPSE_BODY,
-  ECLIPSE_LIGHT,
   ECLIPSE_RIM,
   ECLIPSE_LIMB,
   ECLIPSE_LIMB_END,
@@ -2249,8 +2247,7 @@ export const paintEclipse: LookPainter = (
   _latticeRegion,
   timeSec
 ) => {
-  const { rgb } = lookPalette(color);
-  const hot = mix(rgb, WHITE, ECLIPSE_LIGHT);
+  const { rgb, light: hot } = lookPalette(color);
   const scale = 1 / (ECLIPSE_SCALE * unit);
   const flareScale = 1 / (ECLIPSE_FLARE_SCALE * unit);
   const flow = timeSec * ECLIPSE_FLOW;
@@ -2271,11 +2268,16 @@ export const paintEclipse: LookPainter = (
         (1 - smoothstep(SLIME_EDGE_END, ECLIPSE_LIMB_END, d)) *
         coverage *
         ECLIPSE_LIMB;
-      const tongue = smoothstep(
-        ECLIPSE_FLARE_FROM,
-        ECLIPSE_FLARE_TO,
-        fbm(x * flareScale + roll, y * flareScale - roll * 0.7, 61)
-      );
+      // The flares only outside the body, the veins only inside: each
+      // noise is left out where it would not show.
+      const tongue =
+        coverage < 1
+          ? smoothstep(
+              ECLIPSE_FLARE_FROM,
+              ECLIPSE_FLARE_TO,
+              fbm(x * flareScale + roll, y * flareScale - roll * 0.7, 61)
+            )
+          : 0;
       const flare =
         smoothstep(0, SLIME_EDGE_START, d) *
         (1 - coverage) *
@@ -2286,13 +2288,16 @@ export const paintEclipse: LookPainter = (
         return 0;
       }
       const corona = Math.min(1, rim * ECLIPSE_RIM + limb + flare);
-      const n = fbm(x * scale + flow, y * scale - flow * 0.5, 59);
-      const pulse = 0.5 + 0.5 * Math.sin(timeSec * ECLIPSE_PULSE + n * 6);
-      const veins =
-        crack(n, 0.5, ECLIPSE_VEIN) *
-        coverage *
-        ECLIPSE_VEIN_GLOW *
-        (0.35 + 0.65 * pulse);
+      let veins = 0;
+      if (coverage > 0) {
+        const n = fbm(x * scale + flow, y * scale - flow * 0.5, 59);
+        const pulse = 0.5 + 0.5 * Math.sin(timeSec * ECLIPSE_PULSE + n * 6);
+        veins =
+          crack(n, 0.5, ECLIPSE_VEIN) *
+          coverage *
+          ECLIPSE_VEIN_GLOW *
+          (0.35 + 0.65 * pulse);
+      }
       for (let c = 0; c < 3; c++) {
         out[c] = Math.min(
           255,
@@ -2458,50 +2463,55 @@ export interface ColonyImage {
 
 /** An offscreen layer of the arena, made the first time it is drawn on. */
 class ColonyBuffer {
-  private canvas: HTMLCanvasElement | null = null;
-  private context: CanvasRenderingContext2D | null = null;
-  private image: ImageData | null = null;
+  private layer: {
+    canvas: HTMLCanvasElement;
+    context: CanvasRenderingContext2D;
+    image: ImageData;
+  } | null = null;
+  /** True once a frame drew on the layer since it was last committed. */
+  private drawn = false;
 
   public constructor(
     private readonly width: number,
     private readonly height: number,
     /** Pixels per arena cell. */
-    private readonly scale: number
+    private readonly scale: number,
+    /** Scale the layer up smoothly - see {@link ColonyImage}. */
+    private readonly smooth: boolean
   ) {}
 
   /** The layer's pixels, cleared for a frame - null where there is no canvas. */
   public clear(): Uint8ClampedArray | null {
-    if (this.image == null) {
-      this.prepare();
-    }
-    if (this.image == null) {
+    this.layer ??= this.prepare();
+    if (this.layer == null) {
       return null;
     }
-    this.image.data.fill(0);
-    return this.image.data;
+    this.layer.image.data.fill(0);
+    this.drawn = true;
+    return this.layer.image.data;
   }
 
-  /** The canvas with what was drawn since {@link clear}. */
-  public commit(): HTMLCanvasElement | null {
-    if (this.canvas == null || this.context == null || this.image == null) {
+  /** The layer with what was drawn since {@link clear} - null without. */
+  public commit(): ColonyImage | null {
+    if (this.layer == null || !this.drawn) {
       return null;
     }
-    this.context.putImageData(this.image, 0, 0);
-    return this.canvas;
+    this.drawn = false;
+    this.layer.context.putImageData(this.layer.image, 0, 0);
+    return { canvas: this.layer.canvas, smooth: this.smooth };
   }
 
-  private prepare(): void {
+  private prepare(): ColonyBuffer['layer'] {
     const canvas = createCanvas(
       this.width * this.scale,
       this.height * this.scale
     );
     const context = canvas?.getContext?.('2d') ?? null;
     if (canvas == null || context == null) {
-      return;
+      return null;
     }
-    this.canvas = canvas;
-    this.context = context;
-    this.image = context.createImageData(canvas.width, canvas.height);
+    const image = context.createImageData(canvas.width, canvas.height);
+    return { canvas, context, image };
   }
 }
 
@@ -2527,8 +2537,8 @@ export class ColonyRenderer {
     private readonly unit: number
   ) {
     const cells = width * height;
-    this.crisp = new ColonyBuffer(width, height, 1);
-    this.smooth = new ColonyBuffer(width, height, SLIME_SCALE);
+    this.crisp = new ColonyBuffer(width, height, 1, false);
+    this.smooth = new ColonyBuffer(width, height, SLIME_SCALE, true);
     this.density = new Float32Array(cells);
     this.heat = new Float32Array(cells);
     this.scratch = new Float32Array(cells);
@@ -2613,16 +2623,7 @@ export class ColonyRenderer {
         timeSec
       );
     }
-    const layers: ColonyImage[] = [];
-    const crispCanvas = crisp == null ? null : this.crisp.commit();
-    if (crispCanvas != null) {
-      layers.push({ canvas: crispCanvas, smooth: false });
-    }
-    const smoothCanvas = smooth == null ? null : this.smooth.commit();
-    if (smoothCanvas != null) {
-      layers.push({ canvas: smoothCanvas, smooth: true });
-    }
-    return layers;
+    return [this.crisp, this.smooth].flatMap((buffer) => buffer.commit() ?? []);
   }
 }
 

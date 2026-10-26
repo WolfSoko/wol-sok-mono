@@ -708,10 +708,15 @@ vec4 eclipseLook(vec2 p, float d) {
   float coverage = smoothstep(EDGE_START, EDGE_END, d);
   float rim = coverage * (1.0 - coverage) * 4.0;
   float limb = (1.0 - smoothstep(EDGE_END, ECLIPSE_LIMB_END, d)) * coverage * ECLIPSE_LIMB;
-  float flareScale = 1.0 / (ECLIPSE_FLARE_SCALE * uUnit);
-  float roll = uTime * ECLIPSE_FLARE_SPEED;
-  float tongue = smoothstep(ECLIPSE_FLARE_FROM, ECLIPSE_FLARE_TO,
-    fbm(p * flareScale + vec2(roll, -roll * 0.7) + 61.0));
+  // The flares only outside the body, the veins only inside: each noise
+  // is left out where it would not show.
+  float tongue = 0.0;
+  if (coverage < 1.0) {
+    float flareScale = 1.0 / (ECLIPSE_FLARE_SCALE * uUnit);
+    float roll = uTime * ECLIPSE_FLARE_SPEED;
+    tongue = smoothstep(ECLIPSE_FLARE_FROM, ECLIPSE_FLARE_TO,
+      fbm(p * flareScale + vec2(roll, -roll * 0.7) + 61.0));
+  }
   float flare = smoothstep(0.0, EDGE_START, d) * (1.0 - coverage)
     * (ECLIPSE_FLARE_BASE + (1.0 - ECLIPSE_FLARE_BASE) * tongue) * ECLIPSE_FLARE;
   float alpha = max(coverage * ECLIPSE_ALPHA, flare);
@@ -719,12 +724,15 @@ vec4 eclipseLook(vec2 p, float d) {
     return vec4(0.0);
   }
   float corona = min(1.0, rim * ECLIPSE_RIM + limb + flare);
-  float scale = 1.0 / (ECLIPSE_SCALE * uUnit);
-  float flow = uTime * ECLIPSE_FLOW;
-  float n = fbm(p * scale + vec2(flow, -flow * 0.5) + 59.0);
-  float pulse = 0.5 + 0.5 * sin(uTime * ECLIPSE_PULSE + n * 6.0);
-  float veins = crack(n, 0.5, ECLIPSE_VEIN) * coverage * ECLIPSE_VEIN_GLOW * (0.35 + 0.65 * pulse);
-  vec3 hot = mix(uColor, vec3(1.0), ECLIPSE_LIGHT);
+  float veins = 0.0;
+  if (coverage > 0.0) {
+    float scale = 1.0 / (ECLIPSE_SCALE * uUnit);
+    float flow = uTime * ECLIPSE_FLOW;
+    float n = fbm(p * scale + vec2(flow, -flow * 0.5) + 59.0);
+    float pulse = 0.5 + 0.5 * sin(uTime * ECLIPSE_PULSE + n * 6.0);
+    veins = crack(n, 0.5, ECLIPSE_VEIN) * coverage * ECLIPSE_VEIN_GLOW * (0.35 + 0.65 * pulse);
+  }
+  vec3 hot = lightColor();
   vec3 rgb = min(vec3(1.0), uColor * ECLIPSE_BODY * coverage + hot * corona + uColor * veins);
   return vec4(rgb, alpha);
 }

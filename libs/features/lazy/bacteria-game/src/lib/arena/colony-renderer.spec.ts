@@ -1,8 +1,7 @@
 import { gameBalance } from '../state/game-balance';
 import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
-import { BOSS_LOOK } from '../state/colony-looks';
-import { BACTERIA_LOOKS, BacteriaLook, ColonyLook } from '../state/skins';
+import { BACTERIA_LOOKS, BOSS_LOOK, ColonyLook } from '../state/skins';
 import { COLONY_COLORS } from '../state/colony-colors';
 
 import {
@@ -196,13 +195,10 @@ describe('paintCells', () => {
  * Every look drawn from the density - the skins, the slime with its own
  * tests above, and the boss's.
  */
-const DENSITY_LOOKS: readonly Exclude<ColonyLook, 'pixels' | 'slime'>[] = [
-  ...BACTERIA_LOOKS.filter(
-    (look): look is Exclude<BacteriaLook, 'pixels' | 'slime'> =>
-      look !== 'pixels' && look !== 'slime'
-  ),
-  BOSS_LOOK,
-];
+const DENSITY_LOOKS = [...BACTERIA_LOOKS, BOSS_LOOK].filter(
+  (look): look is Exclude<ColonyLook, 'pixels' | 'slime'> =>
+    look !== 'pixels' && look !== 'slime'
+);
 
 describe.each(DENSITY_LOOKS)('the %s look', (look) => {
   it('covers a colony in its colour and leaves the floor around it clear', () => {

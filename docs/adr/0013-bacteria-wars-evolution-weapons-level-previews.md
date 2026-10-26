@@ -62,14 +62,18 @@ they own.
 
 Only the humans' colonies wear the skin (added 2026-10-26). Each colony of
 a frame carries its own look (`PaintedColony`, chosen by seat in
-`state/colony-looks.ts`): the computer's dresses by its level - the plain
+`state/colony-looks.ts` from what the match made of the seat - `Player.computer`
+and `Player.boss`, set from the spawns `planMatch` makes, so a replay dresses
+its seats as the match did): the computer's dresses by its level - the plain
 slime on the first, then the skins to buy in the gallery's order at the
 level's `ladderPosition`, the same place that sets its skill, so a
 generated level dresses it by its heat - and a boss wears the eclipse, a
-look no skin offers, so it cannot be bought or picked (`BossLook`, outside
-`SKINS`). A ghost race has no boss, and a replay never is one. Neutral
-colonies stay slime. The Canvas painter draws the pixel colonies on a crisp
-layer of their own under the density looks' smooth one.
+look no skin offers, so it cannot be bought or picked (`BOSS_LOOK`, outside
+`SKINS`) - whoever steers it, a second player too. A seat a recording
+drives for a human - a ghost's, the other device's online - wears the skin;
+neutral colonies stay slime. The Canvas
+painter draws the pixel colonies on a crisp layer of their own under the
+density looks' smooth one.
 
 ### Where evolution plays
 

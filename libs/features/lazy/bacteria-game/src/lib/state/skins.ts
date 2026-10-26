@@ -44,10 +44,10 @@ export type BacteriaLook =
  * corona blazing in the colony's colour along its rim, with flares licking
  * out. Not in {@link SKINS}, so it is never shown, bought or picked.
  */
-export type BossLook = 'eclipse';
+export const BOSS_LOOK = 'eclipse' as const;
 
 /** Every look the painters draw: the skins and the boss's. */
-export type ColonyLook = BacteriaLook | BossLook;
+export type ColonyLook = BacteriaLook | typeof BOSS_LOOK;
 
 /** A skin as the My Colony screen offers it. */
 export interface Skin {
