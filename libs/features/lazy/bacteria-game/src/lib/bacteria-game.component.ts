@@ -309,10 +309,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly skin = this.evolution.worn;
   /**
    * What the colonies of the match wear: the humans the skin, the computer
-   * the look of its level, the boss its own - not a ghost, which is no boss.
+   * the look of its level and the boss its own - where the computer plays:
+   * not against a ghost or online, whose seats are humans' however they
+   * spawn.
    */
   private readonly looks = computed(() =>
-    matchLooks(this.level().id, this.skin(), this.store.ghost() !== null)
+    matchLooks(
+      this.level().id,
+      this.skin(),
+      this.mode() === 'vs-computer' &&
+        this.store.ghost() === null &&
+        this.store.online() === null
+    )
   );
 
   /**

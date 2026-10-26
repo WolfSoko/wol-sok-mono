@@ -23,9 +23,12 @@ import {
   valueNoise,
 } from './canvas-math';
 
-import type { PaintedColony } from './arena-painter';
+import type { ColonyLayer } from '../state/simulation';
 
 export type { CellsLayer, ColonyLayer, StateLayer } from '../state/simulation';
+
+/** A colony as it is painted: its layer, in the look it wears. */
+export type PaintedColony = ColonyLayer & { look: ColonyLook };
 
 /** The shimmer of a boosted colony at one moment. */
 export interface BoostShimmer {

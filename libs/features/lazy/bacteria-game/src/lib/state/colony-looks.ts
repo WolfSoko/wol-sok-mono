@@ -41,27 +41,31 @@ export function computerLook(levelId: string): BacteriaLook {
 export interface MatchLooks {
   /** The skin the humans wear: the device's. */
   skin: BacteriaLook;
-  /** The look the computer wears on the match's level. */
-  computer: BacteriaLook;
+  /**
+   * The look the computer wears on the match's level - null where no
+   * computer plays, and every seat is a human's.
+   */
+  computer: BacteriaLook | null;
   /** True when the level's boss plays: it wears {@link BOSS_LOOK}. */
   boss: boolean;
 }
 
 /**
- * The looks of a match on a level: the humans in `skin`, the computer as
- * its level dresses it, and the level's boss - not in a ghost race, which
- * has no boss - in its own.
+ * The looks of a match on a level: the humans in `skin`, and, where the
+ * computer plays (`computer`: a match against it - not a ghost race, not
+ * online, where the other seat spawns as a bot in a human's stead), the
+ * computer as its level dresses it and the level's boss in its own.
  */
 export function matchLooks(
   levelId: string,
   skin: BacteriaLook,
-  ghost = false
+  computer: boolean
 ): MatchLooks {
   const level = getLevel(levelId);
   return {
     skin,
-    computer: computerLook(levelId),
-    boss: !ghost && level.id === levelId && level.boss !== undefined,
+    computer: computer ? computerLook(levelId) : null,
+    boss: computer && level.id === levelId && level.boss !== undefined,
   };
 }
 
@@ -75,7 +79,7 @@ export function seatLooks(
   looks: MatchLooks
 ): ColonyLook[] {
   return players.map((player) =>
-    !player.isBot
+    !player.isBot || looks.computer === null
       ? looks.skin
       : looks.boss && player.id === BOSS_SEAT
         ? BOSS_LOOK

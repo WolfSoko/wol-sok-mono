@@ -4,11 +4,9 @@ import { GameBalance } from '../state/game-balance';
 import { DynamicWall, Rect } from '../state/maps';
 import { Zone } from '../state/zones';
 import { ArenaTheme } from './arena-theme';
-import { ColonyLayer } from './colony-renderer';
-import type { ColonyLook } from '../state/skins';
+import type { PaintedColony } from './colony-renderer';
 
-/** A colony as it is painted: its layer, in the look it wears. */
-export type PaintedColony = ColonyLayer & { look: ColonyLook };
+export type { PaintedColony } from './colony-renderer';
 
 /** A player's crosshair as it is drawn. */
 export interface CursorShape {

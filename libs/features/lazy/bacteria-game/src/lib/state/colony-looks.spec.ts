@@ -54,17 +54,25 @@ describe('matchLooks', () => {
   const bossLevel = LEVELS.find(({ boss }) => boss !== undefined)?.id ?? '';
   const plainLevel = LEVELS.find(({ boss }) => boss === undefined)?.id ?? '';
 
-  it('arms the boss on its level, but not in a ghost race', () => {
-    expect(matchLooks(bossLevel, 'chrome').boss).toBe(true);
-    expect(matchLooks(bossLevel, 'chrome', true).boss).toBe(false);
-    expect(matchLooks(plainLevel, 'chrome').boss).toBe(false);
-    expect(matchLooks('no-such-level', 'chrome').boss).toBe(false);
+  it('arms the boss on its level, where the computer plays', () => {
+    expect(matchLooks(bossLevel, 'chrome', true).boss).toBe(true);
+    expect(matchLooks(bossLevel, 'chrome', false).boss).toBe(false);
+    expect(matchLooks(plainLevel, 'chrome', true).boss).toBe(false);
+    expect(matchLooks('no-such-level', 'chrome', true).boss).toBe(false);
   });
 
   it('keeps the skin and the level’s look for the computer', () => {
-    expect(matchLooks(plainLevel, 'neon')).toEqual({
+    expect(matchLooks(plainLevel, 'neon', true)).toEqual({
       skin: 'neon',
       computer: computerLook(plainLevel),
+      boss: false,
+    });
+  });
+
+  it('dresses no computer where none plays - a ghost race, online', () => {
+    expect(matchLooks(bossLevel, 'neon', false)).toEqual({
+      skin: 'neon',
+      computer: null,
       boss: false,
     });
   });
@@ -89,6 +97,12 @@ describe('seatLooks', () => {
         boss: false,
       })
     ).toEqual(['ink', 'ink']);
+  });
+
+  it('dresses a seat a bot holds in a human’s stead in the skin', () => {
+    const looks = { skin: 'ink', computer: null, boss: false } as const;
+
+    expect(seatLooks([human, computer], looks)).toEqual(['ink', 'ink']);
   });
 
   it('dresses the boss in its own look, in its seat only', () => {

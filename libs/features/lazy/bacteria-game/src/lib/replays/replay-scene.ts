@@ -24,7 +24,11 @@ export interface ReplayLook {
 export class ReplayScene implements ArenaScene {
   private engine: MatchEngine;
   private readonly walls: readonly Rect[];
-  /** What the colonies wear - a recorded match is never a ghost race. */
+  /**
+   * What the colonies wear: the computer plays in a match against it - a
+   * recording is never a ghost race, and an online match is recorded as
+   * one of two players.
+   */
   private readonly looks: MatchLooks;
   private readonly seatColors = new SeatColors();
   private ended = false;
@@ -43,7 +47,11 @@ export class ReplayScene implements ArenaScene {
     this.engine = engine;
     const { levelId, width, height } = replay.header;
     this.walls = levelMap(getLevel(levelId)).createWalls(width, height);
-    this.looks = matchLooks(levelId, look.look);
+    this.looks = matchLooks(
+      levelId,
+      look.look,
+      replay.header.mode === 'vs-computer'
+    );
   }
 
   /** The ticks played so far. */
