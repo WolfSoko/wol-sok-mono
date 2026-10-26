@@ -115,9 +115,12 @@ describe('SocialService', () => {
       expect.objectContaining({ uid: 'bob', mutual: false, status: null }),
     ]);
     expect(social.get('players/bob/requests/ada')).not.toBeNull();
+    // Only a friend who lists the player may let them read the status.
+    presence.set('bob', 'online');
+    TestBed.tick();
+    expect(presence.watched).toEqual([]);
 
     await social.acceptRequest('bob', 'ada');
-    presence.set('bob', 'online');
     TestBed.tick();
 
     expect(players.friends()).toEqual([
@@ -128,6 +131,7 @@ describe('SocialService', () => {
         status: 'online',
       },
     ]);
+    expect([...new Set(presence.watched)]).toEqual(['bob']);
   });
 
   it('answers requests and challenges', async () => {

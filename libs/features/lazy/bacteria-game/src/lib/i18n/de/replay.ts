@@ -11,12 +11,14 @@ export const replay: Translation<typeof en> = {
       'Wiederholung nicht gespeichert: „Meine Matches speichern“ ist aus. Du kannst sie bis zum nächsten Match ansehen.',
     unconfirmed:
       'Ob die Wiederholung gespeichert wurde, ließ sich nicht bestätigen. Schau später in „Meine Matches“ nach.',
+    recordingHint:
+      'Matches gegen den Computer werden so gespeichert. Ausschalten kannst du das unter Einstellungen → Matches.',
   },
   matches: {
     title: 'Meine Matches',
     region: 'Deine aufgezeichneten Matches',
     intro:
-      'Deine aufgezeichneten Matches der letzten 30 Tage, die neuesten zuerst. Ansehen können sie nur die Spieler des Matches.',
+      'Deine aufgezeichneten Matches der letzten 30 Tage, die neuesten zuerst. Ansehen können sie nur die Spieler des Matches. Löschst du eines, verschwindet es aus deiner Liste und bleibt nur ohne dein Konto für die Statistik, bis seine 30 Tage um sind.',
     device:
       'Deine aufgezeichneten Matches bleiben auf diesem Gerät – nur die neuesten 20 werden behalten. Ohne das Online-Spiel wird nichts geprüft oder gewertet.',
     none: 'Noch keine aufgezeichneten Matches. Spiel eins – es erscheint hier, sobald es gespeichert ist.',
@@ -26,10 +28,13 @@ export const replay: Translation<typeof en> = {
     unreadable: 'Diese Wiederholung konnte nicht geladen werden.',
     watch: '{level} ansehen',
     remove: '{level} löschen',
+    confirmRemove: 'Zum Löschen noch einmal tippen',
     keepOut: '{level} aus der öffentlichen Galerie heraushalten',
     removed: 'Match gelöscht.',
     keptOut: 'Dieses Match bleibt aus der öffentlichen Galerie heraus.',
     removeFailed: 'Das hat nicht geklappt. Versuch es später noch einmal.',
+    stillRanking:
+      'Dieses Match lässt sich löschen, sobald die Bestenliste es gezählt hat. Versuch es später noch einmal.',
     list: 'Zurück zur Liste',
     result: {
       won: 'Gewonnen',

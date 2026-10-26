@@ -2,8 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   output,
+  signal,
+  untracked,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,14 +26,17 @@ import { GameSettingsService } from '../settings.service';
 import { isRunOver } from '../state/endless';
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
-import { canPlayBack } from '../state/replay';
+import { canPlayBack, savedRegardless } from '../state/replay';
 import { GameReplays } from '../storage/game-replays';
 
 /**
  * The line under a match's result about its recording (ADR 0011): whether
  * the replay was saved - "saved" only once it is stored - and the way to
  * watch it again ("Watch replay"), which opens the stage's replay screen
- * on `GameStateService.lastRecording`.
+ * on `GameStateService.lastRecording`. After the first match against the
+ * computer saved in the cloud it also says, once per device, that such
+ * matches are saved and where to turn that off (the device setting
+ * `recordingHintShown`).
  */
 @Component({
   selector: 'feat-lazy-bac-game-replay-note',
@@ -38,6 +44,9 @@ import { GameReplays } from '../storage/game-replays';
   template: `
     @if (status(); as status) {
       <p class="note" role="status">{{ status | t }}</p>
+    }
+    @if (hint()) {
+      <p class="note">{{ 'replay.status.recordingHint' | t }}</p>
     }
     @if (watchable()) {
       <button mat-stroked-button type="button" (click)="watch.emit()">
@@ -78,17 +87,38 @@ export class ReplayNoteComponent {
   /** The recording of the match that just ended - null for none. */
   private readonly recording = inject(GameStateService).lastRecording;
 
-  /** Where saving the replay stands - `pending` for none, too. */
-  private readonly saved = toSignal(
+  /**
+   * Where saving the replay under `id` stands - `pending` for none, too.
+   * It names the id, as it follows the recording a little late.
+   */
+  private readonly saving = toSignal(
     toObservable(computed(() => this.recording()?.id ?? null)).pipe(
       switchMap((id) =>
-        id === null
+        (id === null
           ? of<SaveState>('pending')
           : saveState(this.replays.watchSaved(id))
+        ).pipe(map((state) => ({ id, state })))
       )
     ),
-    { initialValue: 'pending' as SaveState }
+    { initialValue: { id: null, state: 'pending' as SaveState } }
   );
+
+  /** Where saving the replay of the match just played stands. */
+  private readonly saved = computed((): SaveState => {
+    const saving = this.saving();
+    return saving.id === (this.recording()?.id ?? null)
+      ? saving.state
+      : 'pending';
+  });
+
+  /** The saved match the one-time hint is shown for - null for none. */
+  private readonly hintFor = signal<string | null>(null);
+
+  /** True while the hint on saved matches against the computer shows. */
+  protected readonly hint = computed(() => {
+    const id = this.recording()?.id ?? null;
+    return id !== null && id === this.hintFor();
+  });
 
   /**
    * True when the match just played can be watched again - not in the
@@ -103,6 +133,30 @@ export class ReplayNoteComponent {
       (run === null || !this.store.endlessMatch() || isRunOver(run))
     );
   });
+
+  public constructor() {
+    // The first match against the computer the cloud keeps - not online,
+    // not ranked, which are saved whatever the settings say - brings the
+    // hint, once the stored settings tell it was not shown yet.
+    effect(() => {
+      const recording = this.recording();
+      if (
+        recording?.id == null ||
+        !this.replays.cloud ||
+        this.saved() !== 'saved' ||
+        !this.settings.loaded() ||
+        this.settings.recordingHintShown() ||
+        savedRegardless(recording.replay.header)
+      ) {
+        return;
+      }
+      const id = recording.id;
+      untracked(() => {
+        this.hintFor.set(id);
+        this.settings.markRecordingHintShown();
+      });
+    });
+  }
 
   protected readonly status = computed((): TranslationKey | null => {
     const recording = this.recording();
@@ -120,9 +174,9 @@ export class ReplayNoteComponent {
         ? 'replay.status.unconfirmed'
         : 'replay.status.uploading';
     }
-    // An online match is always handed over; a local one only with the
-    // setting on.
-    return recording.replay.header.roomCode === undefined &&
+    // An online or ranked match is always handed over; another one only
+    // with the setting on.
+    return !savedRegardless(recording.replay.header) &&
       !this.settings.saveMatches()
       ? 'replay.status.notSaved'
       : null;

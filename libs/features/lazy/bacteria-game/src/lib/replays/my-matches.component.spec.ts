@@ -3,11 +3,12 @@ import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameReplays } from '../../testing/fake-game-replays';
 import { recordedReplay } from '../../testing/recorded-replay';
 import { recordingPainters } from '../../testing/recording-painter';
+import { ARMED_MS } from '../armed-tap';
 import { I18nService } from '../i18n/i18n.service';
 import { BALANCE_VERSION } from '../state/game-balance';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
-import { NEVER, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { COMMAND_TIMEOUT_MS, MyMatchesComponent } from './my-matches.component';
 
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
@@ -50,6 +51,17 @@ describe('MyMatchesComponent', () => {
       throw new Error(`No button "${label}"`);
     }
     return found;
+  }
+
+  /** "Delete" takes two taps: the first arms it, the second deletes. */
+  async function deleteByTwoTaps(
+    page: HTMLElement,
+    fixture: ComponentFixture<unknown>
+  ): Promise<void> {
+    button(page, 'Delete').click();
+    await settle(fixture);
+    button(page, 'Tap again to delete').click();
+    await settle(fixture);
   }
 
   it('says so while there are no matches', async () => {
@@ -127,6 +139,148 @@ describe('MyMatchesComponent', () => {
     ).toBe(false);
   });
 
+  it('deletes a cloud match by forget, which takes it off the list', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+
+    expect(page.textContent).toContain('kept only without your account');
+    await deleteByTwoTaps(page, fixture);
+
+    expect(replays.commands).toEqual([{ type: 'forget', replayId: 'l_fake0' }]);
+    expect(page.textContent).toContain('Match deleted.');
+    expect(page.textContent).toContain('No recorded matches yet.');
+  });
+
+  it('arms Delete on the first tap and deletes nothing yet', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+
+    button(page, 'Delete').click();
+    await settle(fixture);
+
+    expect(replays.commands).toEqual([]);
+    const armed = button(page, 'Tap again to delete');
+    expect(armed.textContent).toContain('Tap again to delete');
+    expect(page.textContent).toContain('Vs computer');
+  });
+
+  it('arms the same button, so keyboard focus stays on it', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+    const remove = button(page, 'Delete');
+    remove.focus();
+
+    remove.click();
+    await settle(fixture);
+
+    expect(button(page, 'Tap again to delete')).toBe(remove);
+    expect(document.activeElement).toBe(remove);
+  });
+
+  it('arms the Delete of the match tapped last only', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    await replays.submit({ replay: recordedReplay(), hint: 50 });
+    const { fixture, page } = await render();
+    const deletes = () =>
+      [...page.querySelectorAll('button')].filter((each) =>
+        each.getAttribute('aria-label')?.startsWith('Delete')
+      );
+    const armed = () =>
+      [...page.querySelectorAll('button')].filter(
+        (each) => each.getAttribute('aria-label') === 'Tap again to delete'
+      );
+
+    deletes()[0].click();
+    await settle(fixture);
+    expect(armed()).toHaveLength(1);
+    expect(deletes()).toHaveLength(1);
+
+    // The other match's Delete arms that one instead.
+    deletes()[0].click();
+    await settle(fixture);
+    expect(armed()).toHaveLength(1);
+    expect(deletes()).toHaveLength(1);
+    expect(replays.commands).toEqual([]);
+
+    armed()[0].click();
+    await settle(fixture);
+    expect(replays.commands).toEqual([{ type: 'forget', replayId: 'l_fake0' }]);
+  });
+
+  it('disarms Delete by itself after a while', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+    const timers = jest.spyOn(globalThis, 'setTimeout');
+
+    button(page, 'Delete').click();
+    const call = timers.mock.calls.find(([, ms]) => ms === ARMED_MS);
+    timers.mockRestore();
+    expect(ARMED_MS).toBe(3_000);
+    const disarm: unknown = call?.[0];
+    if (typeof disarm !== 'function') {
+      throw new Error('Delete armed no timer');
+    }
+    disarm();
+    await settle(fixture);
+
+    expect(() => button(page, 'Tap again to delete')).toThrow();
+    button(page, 'Delete').click();
+    await settle(fixture);
+    expect(replays.commands).toEqual([]);
+  });
+
+  it('clears the Delete timer when the screen goes', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+    const timers = jest.spyOn(globalThis, 'setTimeout');
+    const cleared = jest.spyOn(globalThis, 'clearTimeout');
+
+    button(page, 'Delete').click();
+    const index = timers.mock.calls.findIndex(([, ms]) => ms === ARMED_MS);
+    const timer = timers.mock.results[index]?.value;
+    timers.mockRestore();
+    fixture.destroy();
+
+    expect(cleared).toHaveBeenCalledWith(timer);
+    cleared.mockRestore();
+  });
+
+  it('offers Delete for a match already kept out of the gallery', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    replays.change('l_fake0', { galleryOut: true });
+    const { page } = await render();
+
+    expect(button(page, 'Delete')).toBeTruthy();
+    expect(() => button(page, 'Keep')).toThrow();
+  });
+
+  it('says a match the boards may still rank can be deleted later', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    replays.forgetAnswer = { ok: false, reason: 'ranking' };
+    const { fixture, page } = await render();
+
+    await deleteByTwoTaps(page, fixture);
+
+    expect(page.textContent).toContain(
+      'This match can be deleted once the leaderboard has counted it.'
+    );
+    expect(page.textContent).toContain('Vs computer');
+    expect(button(page, 'Delete').disabled).toBe(false);
+  });
+
+  it('takes a match that no longer names the player as deleted', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+    jest.spyOn(replays, 'sendCommand').mockImplementation(async () => 'c_gone');
+    jest
+      .spyOn(replays, 'watchCommand')
+      .mockReturnValue(of({ ok: false, reason: 'not-found' }));
+
+    await deleteByTwoTaps(page, fixture);
+
+    expect(page.textContent).toContain('Match deleted.');
+  });
+
   it('says it did not work when the server never answers, and lets go', async () => {
     jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     jest.spyOn(replays, 'watchCommand').mockReturnValue(NEVER);
@@ -174,8 +328,7 @@ describe('MyMatchesComponent', () => {
     const { fixture, page } = await render();
 
     expect(page.textContent).toContain('only the newest 20 are kept');
-    button(page, 'Delete').click();
-    await settle(fixture);
+    await deleteByTwoTaps(page, fixture);
 
     expect(replays.commands).toEqual([{ type: 'remove', replayId: 'l_fake0' }]);
     expect(page.textContent).toContain('Match deleted.');

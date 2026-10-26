@@ -37,6 +37,7 @@ import { replayFromBytes } from '../state/replay-pack';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
 import { isCounted, type ReplayListing } from '../storage/replay-records';
+import { armedTap } from '../armed-tap';
 import { ReplayViewerComponent } from './replay-viewer.component';
 
 /**
@@ -62,8 +63,13 @@ interface MatchRow {
  * can read it - the way to watch one again, and what the server made of
  * it. A replay from an older balance no longer plays. In the cloud a
  * match can be kept out of the public gallery (`remove`, which the server
- * carries out; the replay itself stays until it expires); on this device,
- * without the cloud, the newest 20 are kept and a match can be deleted.
+ * carries out; the replay itself stays until it expires) and deleted
+ * (`forget`: the server takes the player out of it, so it leaves the
+ * list, and keeps it anonymised for the statistics until it expires - not
+ * while the boards may still rank it, ADR 0012); on this device, without
+ * the cloud, the newest 20 are kept and a match can be deleted for real.
+ * Either way "Delete" takes two taps (`armedTap`): the first arms that
+ * match's button, the second deletes.
  */
 @Component({
   selector: 'feat-lazy-bac-game-my-matches',
@@ -127,6 +133,10 @@ export class MyMatchesComponent {
   protected readonly notice = signal<TranslationKey | null>(null);
   /** The replay being watched, null for the list. */
   protected readonly watching = signal<Replay | null>(null);
+  /** "Delete" in two taps, armed by the replay's id. */
+  private readonly deleteTap = armedTap<string>();
+  /** The replay whose "Delete" waits for its second tap - null for none. */
+  protected readonly deleteArmed = this.deleteTap.armed;
 
   /** Loads a stored replay and plays it back. */
   protected async open(row: MatchRow): Promise<void> {
@@ -156,17 +166,37 @@ export class MyMatchesComponent {
   }
 
   /**
-   * `remove`, by a command the server carries out: in the cloud it keeps
-   * the match out of the public gallery, on this device it deletes it.
+   * "Keep out of the gallery": `remove` in the cloud, which keeps the
+   * match out of the public gallery and leaves it listed.
    */
-  protected async remove(row: MatchRow): Promise<void> {
+  protected keepOut(row: MatchRow): Promise<void> {
+    return this.command(row, 'remove');
+  }
+
+  /**
+   * "Delete", in two taps (`armedTap`): the first arms the match's button
+   * (another match's tap arms that one instead),
+   * the second deletes - in the cloud by `forget`, which takes the player
+   * out of the match, so it leaves the list; on this device by `remove`.
+   */
+  protected delete(row: MatchRow): void {
+    if (this.deleteTap.tap(row.replay.id)) {
+      void this.command(row, this.cloud ? 'forget' : 'remove');
+    }
+  }
+
+  /** Sends a command the server (or this device) carries out, and says what came of it. */
+  private async command(
+    row: MatchRow,
+    type: 'remove' | 'forget'
+  ): Promise<void> {
     if (this.busy() !== null) {
       return;
     }
     this.notice.set(null);
     this.busy.set(row.replay.id);
     try {
-      const command = await this.replays.sendCommand('remove', row.replay.id);
+      const command = await this.replays.sendCommand(type, row.replay.id);
       const result =
         command === null
           ? null
@@ -177,12 +207,23 @@ export class MyMatchesComponent {
                 timeout({ first: COMMAND_TIMEOUT_MS })
               )
             );
-      if (result?.ok !== true) {
-        this.notice.set('replay.matches.removeFailed');
+      // A match that no longer names the player is out of their matches
+      // already - the same as deleted.
+      const deleted =
+        result?.ok === true ||
+        (type === 'forget' && result?.reason === 'not-found');
+      if (!deleted) {
+        this.notice.set(
+          type === 'forget' && result?.reason === 'ranking'
+            ? 'replay.matches.stillRanking'
+            : 'replay.matches.removeFailed'
+        );
         return;
       }
       this.notice.set(
-        this.cloud ? 'replay.matches.keptOut' : 'replay.matches.removed'
+        type === 'remove' && this.cloud
+          ? 'replay.matches.keptOut'
+          : 'replay.matches.removed'
       );
       this.reload.next();
     } catch (error) {

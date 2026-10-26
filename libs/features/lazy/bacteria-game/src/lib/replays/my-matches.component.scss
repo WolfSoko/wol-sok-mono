@@ -44,3 +44,16 @@
   display: flex;
   gap: 0.25rem;
 }
+
+.delete {
+  white-space: nowrap;
+
+  &:not(.delete-armed) {
+    min-width: 40px;
+    padding: 0 8px;
+
+    mat-icon {
+      margin: 0;
+    }
+  }
+}

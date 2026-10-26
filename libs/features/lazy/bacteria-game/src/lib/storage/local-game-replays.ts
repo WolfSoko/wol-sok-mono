@@ -117,7 +117,8 @@ export class LocalGameReplays implements GameReplays {
     replayId: string
   ): Promise<string | null> {
     const id = `c_${this.nextId++}`;
-    if (type === 'remove') {
+    // Nothing here reaches a gallery: both delete the match.
+    if (type === 'remove' || type === 'forget') {
       this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
         parseLocalReplays(stored).filter((kept) => kept.id !== replayId)
       );

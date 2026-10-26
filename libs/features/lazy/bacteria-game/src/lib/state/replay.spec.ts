@@ -17,6 +17,7 @@ import {
   replayOf,
   replayOutcome,
   REPLAY_VERSION,
+  savedRegardless,
 } from './replay';
 import { onlineReplayId } from './replay-id';
 
@@ -122,6 +123,23 @@ describe('replay', () => {
         header: { ...replay.header, balanceVersion: BALANCE_VERSION + 1 },
       })
     ).toBeNull();
+  });
+
+  it('saves online and ranked matches whatever the settings say', () => {
+    const header = replayOf(PLAN, 'cpu', 10, {
+      steers: [],
+      drags: [],
+      boosts: [],
+      weapons: [],
+    }).header;
+    expect(savedRegardless(header)).toBe(false);
+    expect(savedRegardless({ ...header, roomCode: 'ABCD', n: 1 })).toBe(true);
+    expect(
+      savedRegardless({
+        ...header,
+        attempt: { id: 'd_2026-10-26_1', at: 0 },
+      })
+    ).toBe(true);
   });
 
   describe('canPlayBack and replayEngine', () => {

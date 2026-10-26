@@ -147,14 +147,25 @@ export class SocialService {
                 uids.map((uid) =>
                   combineLatest([
                     this.card(uid),
-                    social.watchListedBy(uid, me).pipe(startWith(false)),
-                    this.statusOf(uid),
+                    // The status only of a friend who lists the player too:
+                    // only they may read it (ADR 0012).
+                    social.watchListedBy(uid, me).pipe(
+                      startWith(false),
+                      distinctUntilChanged(),
+                      switchMap((mutual) =>
+                        mutual
+                          ? this.statusOf(uid).pipe(
+                              map((status) => ({ mutual, status }))
+                            )
+                          : of({ mutual, status: null })
+                      )
+                    ),
                   ]).pipe(
-                    map(([card, mutual, status]): FriendView => ({
+                    map(([card, { mutual, status }]): FriendView => ({
                       uid,
                       card,
                       mutual,
-                      status: mutual ? status : null,
+                      status,
                     }))
                   )
                 )

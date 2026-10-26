@@ -341,6 +341,14 @@ export function replayOutcome(
 }
 
 /**
+ * True for a match saved whatever "Save my matches" says (ADR 0012):
+ * online, by its room, and ranked, by its attempt.
+ */
+export function savedRegardless(header: ReplayHeader): boolean {
+  return header.roomCode !== undefined || header.attempt !== undefined;
+}
+
+/**
  * True when a replay plays out again as it was played: a format that
  * plays (versions 2 to 5), this balance table, this ladder computer and a
  * ruleset - never a match the float GPU ran. A balance change retires

@@ -29,6 +29,12 @@ export class FakeGameReplays implements GameReplays {
   private readonly results = new Map<string, ReplayCommandResult>();
   private readonly changes = new Map<string, Partial<ReplayListing>>();
   private next = 0;
+  /**
+   * What the server answers a `forget` of a stored replay - `ranking`
+   * while the boards may still rank it. One it does not keep is
+   * `not-found`.
+   */
+  public forgetAnswer: ReplayCommandResult = { ok: true };
 
   public constructor(
     private readonly autoAccept = false,
@@ -110,6 +116,18 @@ export class FakeGameReplays implements GameReplays {
     this.commands.push({ type, replayId });
     const id = `c_fake${this.next++}`;
     const saved = new Map(this.saved.value);
+    if (type === 'forget') {
+      const result: ReplayCommandResult = saved.has(replayId)
+        ? this.forgetAnswer
+        : { ok: false, reason: 'not-found' };
+      if (result.ok) {
+        // In the cloud the player leaves the replay, so it leaves the list.
+        saved.delete(replayId);
+      }
+      this.saved.next(saved);
+      this.results.set(id, result);
+      return id;
+    }
     const ok = type === 'remove' && saved.has(replayId);
     if (ok && this.cloud) {
       // The server keeps the replay out of the gallery; it stays listed.

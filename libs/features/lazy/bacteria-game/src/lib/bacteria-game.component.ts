@@ -67,6 +67,7 @@ import {
   ArenaViewComponent,
   layoutKey,
 } from './arena/arena-view.component';
+import { armedTap } from './armed-tap';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
@@ -638,9 +639,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly canPause = computed(
     () => this.store.rankedMatch() === null
   );
+  /** "Give up" in two taps. */
+  private readonly giveUpTap = armedTap<true>();
   /** True while the first tap on "Give up" waits for the second. */
-  protected readonly giveUpArmed = signal(false);
-  private giveUpTimer: ReturnType<typeof setTimeout> | undefined;
+  protected readonly giveUpArmed = computed(
+    () => this.giveUpTap.armed() !== null
+  );
   /** The crosshairs a finger or a key may steer - never the computer's. */
   private readonly humans: Signal<Player[]>;
 
@@ -1419,17 +1423,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * attempt then counts as played.
    */
   protected giveUp(): void {
-    clearTimeout(this.giveUpTimer);
-    if (!this.giveUpArmed()) {
-      this.giveUpArmed.set(true);
-      this.giveUpTimer = setTimeout(
-        () => this.giveUpArmed.set(false),
-        GIVE_UP_ARMED_MS
-      );
-      return;
+    if (this.giveUpTap.tap(true)) {
+      this.quitToMenu();
     }
-    this.giveUpArmed.set(false);
-    this.quitToMenu();
   }
 
   /** Gives the match up and returns to the main menu. */
@@ -1805,7 +1801,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    clearTimeout(this.giveUpTimer);
     this.gameStateService.leaveOnline();
     this.gameStateService.endSeries();
     this.gameStateService.cleanup();
@@ -2130,8 +2125,6 @@ const ARENA_FRAME_PX = 6;
 
 /** How long a match waits at most for the arena laid out for it. */
 const ARENA_READY_MS = 2_000;
-/** How long the first tap on "Give up" waits for the second. */
-const GIVE_UP_ARMED_MS = 3_000;
 
 /** The screens of the menu that is shown while no match is on. */
 export type MenuScreen =
