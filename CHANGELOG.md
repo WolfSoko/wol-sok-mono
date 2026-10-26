@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.109.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.109.0...v74.109.1) (2026-10-26)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ the GPU self-test check waits for idle and asks the arena for the GPU ([#2684](https://github.com/WolfSoko/wol-sok-mono/issues/2684)) ([bab44c9](https://github.com/WolfSoko/wol-sok-mono/commit/bab44c906b9d5bb24aa3e12f153650519cd2030d))
+
 ## [74.109.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.108.0...v74.109.0) (2026-10-26)
 
 ### Features
