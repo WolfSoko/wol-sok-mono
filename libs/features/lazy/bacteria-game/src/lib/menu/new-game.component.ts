@@ -69,6 +69,7 @@ import {
   missionsDone,
 } from '../state/training';
 import { LevelMapComponent } from './level-map.component';
+import { MissionListComponent, MissionRow } from './mission-list.component';
 import { LevelPreviewComponent } from './level-preview.component';
 import { LevelPreviewService } from './level-preview.service';
 import { OnlineLobbyComponent } from './online-lobby.component';
@@ -111,6 +112,7 @@ import type { TranslationKey } from '../i18n/dictionaries';
     MatSlideToggleModule,
     MatStepperModule,
     MedallionComponent,
+    MissionListComponent,
     OnlineLobbyComponent,
     ScreenHeaderComponent,
     TranslatePipe,
@@ -264,7 +266,7 @@ export class NewGameComponent {
    * The training's missions, each with whether it is done - and the one to
    * play next marked, the first still to do.
    */
-  protected readonly missions = computed(() => {
+  protected readonly missions = computed((): MissionRow[] => {
     const days = this.training();
     const upNext = firstOpenMission(days);
     return MISSIONS.map((mission, index) => ({

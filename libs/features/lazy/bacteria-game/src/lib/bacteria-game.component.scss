@@ -1,37 +1,7 @@
-@use 'colony';
 @use 'menu/screen';
 
 :host {
   display: block;
-}
-
-.colony-name {
-  font-weight: 600;
-}
-
-.game-time,
-.colony-count {
-  font-variant-numeric: tabular-nums;
-}
-
-.colony-held {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.15em;
-  margin-left: 0.4em;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.85;
-
-  mat-icon {
-    width: 1em;
-    height: 1em;
-    font-size: 1em;
-  }
-}
-
-.game-time.running-out {
-  color: var(--mat-sys-error);
-  font-weight: 700;
 }
 
 .stage {
@@ -243,44 +213,6 @@
   }
 }
 
-.stage-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 0.75rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.85rem;
-  background: rgb(255 255 255 / 6%);
-
-  .hud-level {
-    font-weight: 600;
-  }
-
-  .hud-colonies {
-    display: inline-flex;
-    gap: 0.75rem;
-  }
-
-  .hud-colony {
-    display: inline-flex;
-    gap: 0.3rem;
-
-    &.boosting {
-      animation: colony.$pulse;
-    }
-  }
-
-  .hud-actions {
-    display: inline-flex;
-    align-items: center;
-    margin-left: auto;
-  }
-
-  .give-up-armed {
-    color: var(--mat-sys-error);
-  }
-}
-
 // The goal of a training mission, at the top of the arena while it runs.
 .mission-goal {
   position: absolute;
@@ -416,5 +348,3 @@
     color: var(--bw-text);
   }
 }
-
-@include colony.pulse-keyframes;

@@ -291,115 +291,25 @@
 
   <div class="center" [attr.inert]="screenOpen() ? '' : null">
     @if (!screenOpen()) {
-      <div class="stage-bar">
-        <span class="hud-level">{{ levelName() | gameText }}</span>
-        <span class="game-time" [class.running-out]="timeRunningOut()"
-          ><span class="cdk-visually-hidden">{{ clockLabel() }}: </span
-          >{{ clockText() }}</span
-        >
-        <span class="hud-colonies">
-          @for (colony of stats(); track colony.id) {
-            <span class="hud-colony" [class.boosting]="colony.boosting">
-              <span class="colony-name" [style.color]="colony.css">{{
-                colonyName(colony.name)
-              }}</span>
-              <span class="colony-count">{{ colony.bacterias }}</span>
-              @if (goal(); as goal) {
-                <span class="colony-held"
-                  ><mat-icon aria-hidden="true">{{ goal.icon }}</mat-icon
-                  >{{ colony[goal.of] }}/{{ goal.target
-                  }}<span class="cdk-visually-hidden">
-                    {{ goal.label | t }}</span
-                  ></span
-                >
-              }
-            </span>
-          }
-          @let neutral = neutralCount();
-          @if (neutral !== null) {
-            <span class="hud-colony neutral">
-              <span class="colony-name" [style.color]="neutralCss">{{
-                "game.players.neutral" | t
-              }}</span>
-              <span class="colony-count">{{ neutral }}</span>
-            </span>
-          }
-        </span>
-        <span class="hud-actions">
-          <button
-            mat-icon-button
-            type="button"
-            [attr.aria-label]="
-              (settings.sound() ? 'common.mute' : 'common.unmute') | t
-            "
-            [matTooltip]="
-              (settings.sound() ? 'common.mute' : 'common.unmute') | t
-            "
-            (click)="setSound(!settings.sound())"
-          >
-            <mat-icon>{{
-              settings.sound() ? "volume_up" : "volume_off"
-            }}</mat-icon>
-          </button>
-          @if (running() && !paused() && canPause()) {
-            <button
-              mat-icon-button
-              type="button"
-              [attr.aria-label]="'stage.hud.pause' | t"
-              [matTooltip]="
-                'common.withKey'
-                  | t: { label: ('stage.hud.pause' | t), key: 'P' }
-              "
-              (click)="togglePause()"
-            >
-              <mat-icon>pause</mat-icon>
-            </button>
-          }
-          @if (running() && !canPause()) {
-            <!-- A ranked match has no pause menu: its way out, in two taps. -->
-            <button
-              mat-icon-button
-              type="button"
-              [class.give-up-armed]="giveUpArmed()"
-              [attr.aria-label]="
-                (giveUpArmed() ? 'stage.hud.giveUpAgain' : 'stage.hud.giveUp')
-                  | t
-              "
-              [matTooltip]="
-                (giveUpArmed() ? 'stage.hud.giveUpAgain' : 'stage.hud.giveUp')
-                  | t
-              "
-              (click)="giveUp()"
-            >
-              <mat-icon>flag</mat-icon>
-            </button>
-          }
-          <button
-            mat-icon-button
-            type="button"
-            [attr.aria-label]="
-              (fullscreen() ? 'common.exitFullscreen' : 'common.fullscreen') | t
-            "
-            [matTooltip]="
-              'common.withKey'
-                | t
-                  : {
-                      label:
-                        ((fullscreen()
-                          ? 'common.exitFullscreen'
-                          : 'common.fullscreen'
-                        ) | t),
-                      key: 'F',
-                    }
-            "
-            (click)="setFullscreen(!fullscreen())"
-          >
-            <mat-icon>{{
-              fullscreen() ? "fullscreen_exit" : "fullscreen"
-            }}</mat-icon>
-          </button>
-        </span>
-      </div>
+      <feat-lazy-bac-game-hud-bar
+        [levelName]="levelName()"
+        [clockLabel]="clockLabel()"
+        [clockText]="clockText()"
+        [timeRunningOut]="timeRunningOut()"
+        [colonies]="stats()"
+        [goal]="goal()"
+        [neutral]="neutralCount()"
+        [neutralCss]="neutralCss"
+        [sound]="settings.sound()"
+        [showPause]="running() && !paused() && canPause()"
+        [showGiveUp]="running() && !canPause()"
+        [giveUpArmed]="giveUpArmed()"
+        [fullscreen]="fullscreen()"
+        (soundChange)="setSound($event)"
+        (pause)="togglePause()"
+        (giveUp)="giveUp()"
+        (fullscreenChange)="setFullscreen($event)"
+      />
     }
     <div
       wsThanos

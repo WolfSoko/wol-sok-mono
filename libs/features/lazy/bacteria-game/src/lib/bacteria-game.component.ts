@@ -22,19 +22,11 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
 import { TranslationKey } from './i18n/dictionaries';
 import { I18nService } from './i18n/i18n.service';
-import {
-  difficultyKeys,
-  GameTextPipe,
-  levelNameText,
-  missionKeys,
-  playerNameText,
-  renderGameText,
-} from './i18n/game-texts';
+import { difficultyKeys, levelNameText, missionKeys } from './i18n/game-texts';
 import { TranslatePipe } from './i18n/translate.pipe';
 import {
   ElemResizedDirective,
@@ -163,6 +155,7 @@ import {
   sameColonyStats,
   toColonyStats,
 } from './colony-stats';
+import { HudBarComponent, HudGoal } from './hud-bar.component';
 import { GameBalance } from './state/game-balance';
 import { clock, GameFrame } from './state/fixed-tick';
 import { Point, SteeringVector } from './state/geometry';
@@ -206,24 +199,16 @@ const RUNNING_OUT_SEC = 10;
 const MINIMAP_UPDATE_MS = 100;
 
 /** A goal the HUD counts each colony up towards. */
-interface HudGoal {
-  icon: string;
-  /** What is counted, for a screen reader. */
-  label: TranslationKey;
-  target: number;
-  /** The colony's number that counts up. */
-  of: 'held' | 'pellets';
-}
 
 @UntilDestroy()
 @Component({
   imports: [
+    HudBarComponent,
     MatCardModule,
     WsThanosDirective,
     MatButtonModule,
     ShowFpsComponent,
     MatIconModule,
-    MatTooltipModule,
     SocialNoticesComponent,
     ModerationNoticesComponent,
     JoystickComponent,
@@ -244,7 +229,6 @@ interface HudGoal {
     ProfileComponent,
     EvolutionComponent,
     TranslatePipe,
-    GameTextPipe,
     ArenaViewComponent,
   ],
   templateUrl: './bacteria-game.component.html',
@@ -1272,17 +1256,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     } else {
       this.haptics.stop();
     }
-  }
-
-  /**
-   * A colony's name in the active language: "You", "Computer" and the
-   * colours are translated, an online opponent's name stays as it is.
-   */
-  protected colonyName(name: string): string {
-    const text = playerNameText(name);
-    return text === null
-      ? name
-      : renderGameText(text, (key, params) => this.i18n.t(key, params));
   }
 
   /** The settings' way back: to the pause menu during a match. */

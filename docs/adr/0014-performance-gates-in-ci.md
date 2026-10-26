@@ -173,8 +173,16 @@ is decided after a month, like gate 3.
      largest script is 622 kB (the game's chunk, split since), all its
      scripts 1,768 kB (the admin area, the replay viewer and the error
      reports came since), initial 227 kB. The stylesheet warnings are three
-     by now (`new-game`, `bacteria-game`, `evolution`); they move to a PR of
+     by now (`new-game`, `bacteria-game`, `evolution`); they moved to a PR of
      their own, since trimming them needs a look at the screens.
+   - The stylesheet warnings, fixed: `evolution` and `new-game` group the
+     rules they repeated (panels, display-face titles, the card buttons, the
+     panes that fill and scroll); the training's mission list
+     (`MissionListComponent`) and the HUD bar above the arena
+     (`HudBarComponent`) became components of their own, their styles with
+     them. `new-game` 7.37 → about 5.4 kB, `bacteria-game` 6.68 → about
+     5.7 kB, `evolution` 6.09 → about 5.9 kB; the screens compared pixel for
+     pixel before and after.
 2. **Phase 2, engine benchmark**: `tools/perf/engine-bench.mjs`, the heavy
    fixture, `engine-baseline.json`, the `perf` target and the CI wiring;
    report-only for two weeks, then blocking.

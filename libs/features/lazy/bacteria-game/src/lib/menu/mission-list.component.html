@@ -1,0 +1,34 @@
+<p class="missions-intro">
+  {{ "training.pick" | t }}
+  <span class="missions-progress">{{
+    "training.progress" | t: { done: done(), total: total() }
+  }}</span>
+</p>
+<ol class="mission-list">
+  @for (each of missions(); track each.id) {
+    <li>
+      <button
+        type="button"
+        class="mission"
+        [class.current]="each.id === current()"
+        [class.done]="each.done"
+        (click)="pick.emit(each.id)"
+      >
+        <mat-icon class="mission-icon" aria-hidden="true">{{
+          each.done ? "check_circle" : each.icon
+        }}</mat-icon>
+        <span class="mission-text">
+          <span class="mission-name"
+            >{{ each.number }} · {{ each.title | t }}</span
+          >
+          <span class="mission-goal">{{ each.goal | t }}</span>
+        </span>
+        @if (each.done) {
+          <span class="mission-badge">{{ "training.done" | t }}</span>
+        } @else if (each.upNext) {
+          <span class="mission-badge up-next">{{ "training.upNext" | t }}</span>
+        }
+      </button>
+    </li>
+  }
+</ol>
