@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.116.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.2...v74.116.3) (2026-10-26)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ no component stylesheet over its budget ([#2700](https://github.com/WolfSoko/wol-sok-mono/issues/2700)) ([af3784c](https://github.com/WolfSoko/wol-sok-mono/commit/af3784caec63733040a8ce8550227d69e709c9eb))
+
 ## [74.116.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.1...v74.116.2) (2026-10-26)
 
 ### Bug Fixes
