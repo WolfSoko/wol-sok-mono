@@ -355,6 +355,25 @@
               <mat-icon>pause</mat-icon>
             </button>
           }
+          @if (running() && !canPause()) {
+            <!-- A ranked match has no pause menu: its way out, in two taps. -->
+            <button
+              mat-icon-button
+              type="button"
+              [class.give-up-armed]="giveUpArmed()"
+              [attr.aria-label]="
+                (giveUpArmed() ? 'stage.hud.giveUpAgain' : 'stage.hud.giveUp')
+                  | t
+              "
+              [matTooltip]="
+                (giveUpArmed() ? 'stage.hud.giveUpAgain' : 'stage.hud.giveUp')
+                  | t
+              "
+              (click)="giveUp()"
+            >
+              <mat-icon>flag</mat-icon>
+            </button>
+          }
           <button
             mat-icon-button
             type="button"

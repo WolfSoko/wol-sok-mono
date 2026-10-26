@@ -21,10 +21,19 @@ function dailyCard(page: Page) {
  * Starts the daily level and quits it - an attempt counts as the match
  * starts - and is back on the main menu.
  */
-async function useDailyAttempt(po: BacteriaGamePo): Promise<void> {
+async function useDailyAttempt(po: BacteriaGamePo, page: Page): Promise<void> {
   await po.playCta.click();
   // The daily level picks its level itself: straight on to the start.
   await po.chooseMode('Daily level');
+  // A ranked match has no pause menu and needs a GPU that passed the
+  // self-test: play the practice match, an attempt of the menu all the same.
+  const ranked = page.getByRole('switch', { name: 'Ranked attempt' });
+  if ((await ranked.count()) > 0 && (await ranked.isEnabled())) {
+    if ((await ranked.getAttribute('aria-checked')) === 'true') {
+      await ranked.click();
+      await expect(ranked).toHaveAttribute('aria-checked', 'false');
+    }
+  }
   await po.startCta.click();
   await po.pauseCta.click();
   await po.quitCta.click();
@@ -58,7 +67,7 @@ test.describe('cloud save', () => {
     const account = await openProfile(page);
     await expect(account.account).toContainText('Playing as a guest');
     await po.backCta.click();
-    await useDailyAttempt(po);
+    await useDailyAttempt(po, page);
     await expectAttemptsLeft(po, page, 2);
 
     await page.reload();
@@ -73,7 +82,7 @@ test.describe('cloud save', () => {
     const email = uniqueEmail('ada');
     const first = new BacteriaGamePo(page);
     await first.goto();
-    await useDailyAttempt(first);
+    await useDailyAttempt(first, page);
     // The guest becomes the Google account, progress and all.
     await (await openProfile(page)).signIn(email);
 

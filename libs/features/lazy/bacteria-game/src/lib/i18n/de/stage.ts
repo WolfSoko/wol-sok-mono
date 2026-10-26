@@ -8,6 +8,9 @@ export const stage: Translation<typeof en> = {
     secondsHeld: 'Sekunden gehalten',
     pelletsEaten: 'Pellets gefressen',
     pause: 'Pause',
+    giveUp: 'Aufgeben',
+    giveUpAgain:
+      'Zum Aufgeben noch einmal tippen: der gewertete Versuch zählt als gespielt',
   },
   waitingForPeer: 'Warte auf deinen Gegner …',
   pause: {

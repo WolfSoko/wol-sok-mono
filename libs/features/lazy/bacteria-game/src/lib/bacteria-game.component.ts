@@ -635,6 +635,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly canPause = computed(
     () => this.store.rankedMatch() === null
   );
+  /** True while the first tap on "Give up" waits for the second. */
+  protected readonly giveUpArmed = signal(false);
+  private giveUpTimer: ReturnType<typeof setTimeout> | undefined;
   /** The crosshairs a finger or a key may steer - never the computer's. */
   private readonly humans: Signal<Player[]>;
 
@@ -1407,6 +1410,25 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.startGame();
   }
 
+  /**
+   * The ranked match's way out, which has no pause menu: the first tap
+   * arms it for a few seconds, the second gives the match up - its
+   * attempt then counts as played.
+   */
+  protected giveUp(): void {
+    clearTimeout(this.giveUpTimer);
+    if (!this.giveUpArmed()) {
+      this.giveUpArmed.set(true);
+      this.giveUpTimer = setTimeout(
+        () => this.giveUpArmed.set(false),
+        GIVE_UP_ARMED_MS
+      );
+      return;
+    }
+    this.giveUpArmed.set(false);
+    this.quitToMenu();
+  }
+
   /** Gives the match up and returns to the main menu. */
   protected quitToMenu(): void {
     this.screen.set('menu');
@@ -1776,6 +1798,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    clearTimeout(this.giveUpTimer);
     this.gameStateService.leaveOnline();
     this.gameStateService.endSeries();
     this.gameStateService.cleanup();
@@ -2100,6 +2123,8 @@ const ARENA_FRAME_PX = 6;
 
 /** How long a match waits at most for the arena laid out for it. */
 const ARENA_READY_MS = 2_000;
+/** How long the first tap on "Give up" waits for the second. */
+const GIVE_UP_ARMED_MS = 3_000;
 
 /** The screens of the menu that is shown while no match is on. */
 export type MenuScreen =

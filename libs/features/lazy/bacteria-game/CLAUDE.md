@@ -97,7 +97,8 @@ serverTimestamp(), expireAt }` and nothing else - what the rules'
   (`millisOf`, `storage/firestore-values.ts`) as the server reads it; the
   seed is `attemptSeed(uid, id, at)`, the match `rankedPlan` on the online
   grid, on the level of the attempt's own day, `gpu-int`, no restart and
-  no pause (the deadline runs from the declaration), uploaded whatever the
+  no pause (the deadline runs from the declaration; the HUD's "Give up",
+  two taps, is its way out), uploaded whatever the
   recording settings say, with the attempt in the header and the
   submission. Ranked play is offered by
   the owner's toggles (`rankedDaily`, `rankedEndless`: off hides the

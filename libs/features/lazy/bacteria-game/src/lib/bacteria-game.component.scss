@@ -275,6 +275,10 @@
     align-items: center;
     margin-left: auto;
   }
+
+  .give-up-armed {
+    color: var(--mat-sys-error);
+  }
 }
 
 // The goal of a training mission, at the top of the arena while it runs.
