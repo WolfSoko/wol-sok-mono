@@ -28,6 +28,8 @@ async function useDailyAttempt(po: BacteriaGamePo, page: Page): Promise<void> {
   // A ranked match has no pause menu and needs a GPU that passed the
   // self-test: play the practice match, an attempt of the menu all the same.
   const ranked = page.getByRole('switch', { name: 'Ranked attempt' });
+  // The offer is read asynchronously: give the switch time to appear.
+  await ranked.waitFor({ timeout: 15_000 }).catch(() => undefined);
   if ((await ranked.count()) > 0 && (await ranked.isEnabled())) {
     if ((await ranked.getAttribute('aria-checked')) === 'true') {
       await ranked.click();
