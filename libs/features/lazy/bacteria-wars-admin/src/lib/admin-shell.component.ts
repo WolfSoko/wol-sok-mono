@@ -36,8 +36,8 @@ const TABS: readonly { path: string; label: AdminTextKey }[] = [
 ];
 
 /**
- * The admin area's frame: the title, its views' tabs once the owner is in,
- * and sign-out. Keeps search engines out of every admin view, and takes
+ * The admin area's frame: the title, a link back to the game, its views'
+ * tabs once the owner is in, and sign-out. Keeps search engines out of every admin view, and takes
  * down the page's loading splash, which only the game would.
  */
 @Component({
@@ -56,6 +56,7 @@ const TABS: readonly { path: string; label: AdminTextKey }[] = [
     <mat-toolbar>
       <h1>{{ 'title' | adminT }}</h1>
       <span class="spacer"></span>
+      <a mat-button routerLink="/">{{ 'toGame' | adminT }}</a>
       @if (access.access() === 'granted' || access.access() === 'no-access') {
         <button mat-button type="button" (click)="signOut()">
           {{ 'gate.signOut' | adminT }}
