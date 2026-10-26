@@ -69,32 +69,27 @@
                     <mat-icon>visibility_off</mat-icon>
                   </button>
                 }
-                @if (deleteArmed() === row.replay.id) {
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    class="confirm-delete"
-                    [disabled]="busy() !== null"
-                    [attr.aria-label]="'replay.matches.confirmRemove' | t"
-                    (click)="delete(row)"
-                  >
-                    <mat-icon>delete_forever</mat-icon>
+                @let armed = deleteArmed() === row.replay.id;
+                <!-- One button that only changes its look, so focus stays on it. -->
+                <button
+                  [matButton]="armed ? 'outlined' : 'text'"
+                  type="button"
+                  class="delete"
+                  [class.delete-armed]="armed"
+                  [disabled]="busy() !== null"
+                  [attr.aria-label]="
+                    armed
+                      ? ('replay.matches.confirmRemove' | t)
+                      : ('replay.matches.remove'
+                        | t: { level: (row.level | gameText) })
+                  "
+                  (click)="delete(row)"
+                >
+                  <mat-icon>{{ armed ? "delete_forever" : "delete" }}</mat-icon>
+                  @if (armed) {
                     {{ "replay.matches.confirmRemove" | t }}
-                  </button>
-                } @else {
-                  <button
-                    mat-icon-button
-                    type="button"
-                    [disabled]="busy() !== null"
-                    [attr.aria-label]="
-                      'replay.matches.remove'
-                        | t: { level: (row.level | gameText) }
-                    "
-                    (click)="delete(row)"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                }
+                  }
+                </button>
               </span>
             </mat-list-item>
             @if (busy() === row.replay.id) {

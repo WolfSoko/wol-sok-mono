@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   output,
   signal,
@@ -38,6 +37,7 @@ import { replayFromBytes } from '../state/replay-pack';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
 import { isCounted, type ReplayListing } from '../storage/replay-records';
+import { armedTap } from '../armed-tap';
 import { ReplayViewerComponent } from './replay-viewer.component';
 
 /**
@@ -45,12 +45,6 @@ import { ReplayViewerComponent } from './replay-viewer.component';
  * it says that did not work - the functions may have to start first.
  */
 export const COMMAND_TIMEOUT_MS = 30_000;
-
-/**
- * How long a first tap on "Delete" waits for the second one that deletes,
- * like the HUD's "Give up".
- */
-export const DELETE_ARMED_MS = 3_000;
 
 /** A stored replay as the list shows it. */
 interface MatchRow {
@@ -74,8 +68,8 @@ interface MatchRow {
  * list, and keeps it anonymised for the statistics until it expires - not
  * while the boards may still rank it, ADR 0012); on this device, without
  * the cloud, the newest 20 are kept and a match can be deleted for real.
- * Either way "Delete" takes two taps: the first arms that match's button
- * for {@link DELETE_ARMED_MS}, the second deletes.
+ * Either way "Delete" takes two taps (`armedTap`): the first arms that
+ * match's button, the second deletes.
  */
 @Component({
   selector: 'feat-lazy-bac-game-my-matches',
@@ -139,13 +133,10 @@ export class MyMatchesComponent {
   protected readonly notice = signal<TranslationKey | null>(null);
   /** The replay being watched, null for the list. */
   protected readonly watching = signal<Replay | null>(null);
+  /** "Delete" in two taps, armed by the replay's id. */
+  private readonly deleteTap = armedTap<string>();
   /** The replay whose "Delete" waits for its second tap - null for none. */
-  protected readonly deleteArmed = signal<string | null>(null);
-  private deleteTimer: ReturnType<typeof setTimeout> | undefined;
-
-  public constructor() {
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.deleteTimer));
-  }
+  protected readonly deleteArmed = this.deleteTap.armed;
 
   /** Loads a stored replay and plays it back. */
   protected async open(row: MatchRow): Promise<void> {
@@ -183,23 +174,15 @@ export class MyMatchesComponent {
   }
 
   /**
-   * "Delete", in two taps: the first arms the match's button for
-   * {@link DELETE_ARMED_MS} (another match's tap arms that one instead),
+   * "Delete", in two taps (`armedTap`): the first arms the match's button
+   * (another match's tap arms that one instead),
    * the second deletes - in the cloud by `forget`, which takes the player
    * out of the match, so it leaves the list; on this device by `remove`.
    */
   protected delete(row: MatchRow): void {
-    clearTimeout(this.deleteTimer);
-    if (this.deleteArmed() !== row.replay.id) {
-      this.deleteArmed.set(row.replay.id);
-      this.deleteTimer = setTimeout(
-        () => this.deleteArmed.set(null),
-        DELETE_ARMED_MS
-      );
-      return;
+    if (this.deleteTap.tap(row.replay.id)) {
+      void this.command(row, this.cloud ? 'forget' : 'remove');
     }
-    this.deleteArmed.set(null);
-    void this.command(row, this.cloud ? 'forget' : 'remove');
   }
 
   /** Sends a command the server (or this device) carries out, and says what came of it. */

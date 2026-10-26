@@ -3,16 +3,13 @@ import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameReplays } from '../../testing/fake-game-replays';
 import { recordedReplay } from '../../testing/recorded-replay';
 import { recordingPainters } from '../../testing/recording-painter';
+import { ARMED_MS } from '../armed-tap';
 import { I18nService } from '../i18n/i18n.service';
 import { BALANCE_VERSION } from '../state/game-balance';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
 import { NEVER, of, throwError } from 'rxjs';
-import {
-  COMMAND_TIMEOUT_MS,
-  DELETE_ARMED_MS,
-  MyMatchesComponent,
-} from './my-matches.component';
+import { COMMAND_TIMEOUT_MS, MyMatchesComponent } from './my-matches.component';
 
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
   for (let i = 0; i < 10; i++) {
@@ -167,6 +164,19 @@ describe('MyMatchesComponent', () => {
     expect(page.textContent).toContain('Vs computer');
   });
 
+  it('arms the same button, so keyboard focus stays on it', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { fixture, page } = await render();
+    const remove = button(page, 'Delete');
+    remove.focus();
+
+    remove.click();
+    await settle(fixture);
+
+    expect(button(page, 'Tap again to delete')).toBe(remove);
+    expect(document.activeElement).toBe(remove);
+  });
+
   it('arms the Delete of the match tapped last only', async () => {
     await replays.submit({ replay: recordedReplay(), hint: 40 });
     await replays.submit({ replay: recordedReplay(), hint: 50 });
@@ -203,9 +213,9 @@ describe('MyMatchesComponent', () => {
     const timers = jest.spyOn(globalThis, 'setTimeout');
 
     button(page, 'Delete').click();
-    const call = timers.mock.calls.find(([, ms]) => ms === DELETE_ARMED_MS);
+    const call = timers.mock.calls.find(([, ms]) => ms === ARMED_MS);
     timers.mockRestore();
-    expect(DELETE_ARMED_MS).toBe(3_000);
+    expect(ARMED_MS).toBe(3_000);
     const disarm: unknown = call?.[0];
     if (typeof disarm !== 'function') {
       throw new Error('Delete armed no timer');
@@ -226,9 +236,7 @@ describe('MyMatchesComponent', () => {
     const cleared = jest.spyOn(globalThis, 'clearTimeout');
 
     button(page, 'Delete').click();
-    const index = timers.mock.calls.findIndex(
-      ([, ms]) => ms === DELETE_ARMED_MS
-    );
+    const index = timers.mock.calls.findIndex(([, ms]) => ms === ARMED_MS);
     const timer = timers.mock.results[index]?.value;
     timers.mockRestore();
     fixture.destroy();
