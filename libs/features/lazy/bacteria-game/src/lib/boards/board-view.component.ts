@@ -76,8 +76,9 @@ interface OwnRead {
  * One leaderboard (ADR 0012, "Leaderboards screen"): what it can and cannot
  * promise, its top rows - on daily and endless the verified places, then
  * "Being checked", then everyone else - further pages, and the player's
- * own row pinned under them. An empty board says so: the daily, endless
- * and online boards fill only once ranked play ships.
+ * own row pinned under them. An empty board says so: the daily and
+ * endless boards fill from ranked matches (`RankedService`), the online one
+ * from agreed online matches.
  */
 @Component({
   selector: 'feat-lazy-bac-game-board-view',

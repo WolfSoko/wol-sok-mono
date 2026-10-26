@@ -44,6 +44,7 @@ import { replayLink } from '../state/replay-link';
 import { ReplayNoteComponent } from '../replays/replay-note.component';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
+import { RANKED_DAILY_ATTEMPTS } from '../state/attempts';
 import { BOSS_SEAT, EndReason } from '../state/win-conditions';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
@@ -203,6 +204,28 @@ export class WinnerComponent {
       /** True when there is a mission still to go on to. */
       next: result?.next != null,
     };
+  });
+
+  /**
+   * What the daily or endless match came to on the leaderboards (ADR
+   * 0012): "Ranked attempt 2 of 3", or why it was not ranked - null for
+   * any other match, and for one played as practice.
+   */
+  public rankedNote: Signal<string | null> = computed(() => {
+    const note = this.state.ranked()?.note;
+    switch (note?.kind) {
+      case 'daily':
+        return this.t('boards.ranked.result.daily', {
+          n: note.n,
+          total: RANKED_DAILY_ATTEMPTS,
+        });
+      case 'endless':
+        return this.t('boards.ranked.result.endless', { match: note.match });
+      case 'unranked':
+        return this.t(`boards.ranked.result.${note.reason}`);
+      default:
+        return null;
+    }
   });
 
   /** What the match was part of - the daily level, an endless run - in a line. */

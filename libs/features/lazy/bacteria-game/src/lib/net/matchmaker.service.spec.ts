@@ -4,6 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 import type { FeatureToggles } from '../state/feature-toggles';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameSocial } from '../../testing/fake-game-social';
+import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { MATCH_LEVELS } from '../state/match-level';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
@@ -37,6 +38,7 @@ describe('MatchmakerService', () => {
   let social: FakeGameSocial;
   let online: FakeOnline;
   let toggles: BehaviorSubject<Partial<FeatureToggles>>;
+  let moderation: FakeGameModeration;
 
   function matchmaker(uid: string): MatchmakerService {
     TestBed.resetTestingModule();
@@ -49,6 +51,7 @@ describe('MatchmakerService', () => {
             social: () => social,
             presence: () => null,
             rooms: () => null,
+            moderation: () => moderation,
           },
         },
         { provide: OnlineMatchService, useValue: online },
@@ -63,6 +66,7 @@ describe('MatchmakerService', () => {
     social = new FakeGameSocial();
     online = new FakeOnline();
     toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
+    moderation = new FakeGameModeration();
   });
 
   afterEach(() => jest.useRealTimers());
@@ -272,6 +276,19 @@ describe('MatchmakerService', () => {
       TestBed.tick();
       await jest.advanceTimersByTimeAsync(0);
 
+      expect(first.state()).toBe('idle');
+      expect(social.get('queue/ada')).toBeNull();
+    });
+
+    it('stops a search under way once a ban holds, which refuses the queue', async () => {
+      const first = matchmaker('ada');
+      await first.find();
+
+      moderation.banFor(null);
+      TestBed.tick();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(first.enabled()).toBe(false);
       expect(first.state()).toBe('idle');
       expect(social.get('queue/ada')).toBeNull();
     });

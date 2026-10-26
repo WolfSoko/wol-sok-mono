@@ -113,10 +113,14 @@ class FakeFirestore {
     }),
   };
 
-  public replays(uid: string | null = 'ada'): FirestoreGameReplays {
+  public replays(
+    uid: string | null = 'ada',
+    banned = new BehaviorSubject(false)
+  ): FirestoreGameReplays {
     return new FirestoreGameReplays(
       { db: {}, dbSdk: this.sdk } as unknown as FirebaseConnection,
-      new BehaviorSubject(uid)
+      new BehaviorSubject(uid),
+      banned
     );
   }
 
@@ -175,6 +179,18 @@ describe('FirestoreGameReplays', () => {
       hint: 100,
       attempt: 'att1',
     });
+  });
+
+  it('sends neither submissions nor commands while a ban holds', async () => {
+    const banned = new BehaviorSubject(true);
+    replays = firestore.replays('ada', banned);
+
+    expect(await replays.submit({ replay: LOCAL, hint: 50 })).toBeNull();
+    expect(await replays.sendCommand('remove', 'l_x')).toBeNull();
+    expect(firestore.docs.size).toBe(0);
+
+    banned.next(false);
+    expect(await replays.submit({ replay: LOCAL, hint: 50 })).not.toBeNull();
   });
 
   it('says saved once the replay exists, and "not yet" while the rules refuse it', async () => {

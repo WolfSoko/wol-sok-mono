@@ -1,16 +1,10 @@
 import type { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
-import {
-  catchError,
-  EMPTY,
-  filter,
-  firstValueFrom,
-  map,
-  Observable,
-} from 'rxjs';
+import { catchError, EMPTY, firstValueFrom, map, Observable, of } from 'rxjs';
 import { replayToBytes, MAX_PACKED_BYTES } from '../state/replay-pack';
 import type { EndReason } from '../state/win-conditions';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameReplays } from './game-replays';
+import { millisOf, signedIn } from './firestore-values';
 import {
   ARRIVAL_REASONS,
   type ArrivalReason,
@@ -65,7 +59,12 @@ export class FirestoreGameReplays implements GameReplays {
   public constructor(
     private readonly connection: FirebaseConnection,
     /** Whoever plays, null while nobody does. */
-    private readonly playerIds: Observable<string | null>
+    private readonly playerIds: Observable<string | null>,
+    /**
+     * True while a ban holds the player (ADR 0012): the rules refuse their
+     * submissions and commands, so none is sent.
+     */
+    private readonly banned: Observable<boolean> = of(false)
   ) {}
 
   public async submit({
@@ -79,6 +78,9 @@ export class FirestoreGameReplays implements GameReplays {
       return null;
     }
     const uid = await this.signedIn();
+    if (await firstValueFrom(this.banned)) {
+      return null;
+    }
     const ref = dbSdk.doc(dbSdk.collection(db, 'replaySubmissions'));
     // Not awaited: offline, the write waits for the network, and the
     // match is long over by then. `watchSaved` tells once it landed.
@@ -154,6 +156,9 @@ export class FirestoreGameReplays implements GameReplays {
   ): Promise<string | null> {
     const { db, dbSdk } = this.connection;
     const uid = await this.signedIn();
+    if (await firstValueFrom(this.banned)) {
+      return null;
+    }
     const ref = dbSdk.doc(dbSdk.collection(db, 'replayCommands'));
     dbSdk
       .setDoc(ref, {
@@ -225,9 +230,7 @@ export class FirestoreGameReplays implements GameReplays {
   }
 
   private signedIn(): Promise<string> {
-    return firstValueFrom(
-      this.playerIds.pipe(filter((uid): uid is string => uid !== null))
-    );
+    return signedIn(this.playerIds);
   }
 }
 
@@ -293,20 +296,6 @@ export function listingOf(
       : {}),
     ...(typeof publicId === 'string' ? { publicId } : {}),
   };
-}
-
-/** A Firestore timestamp in ms - null for anything else. */
-function millisOf(value: unknown): number | null {
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    'toMillis' in value &&
-    typeof value.toMillis === 'function'
-  ) {
-    const millis: unknown = value.toMillis();
-    return typeof millis === 'number' ? millis : null;
-  }
-  return null;
 }
 
 /** The reason of the board the kind ranks on - null for none it knows. */

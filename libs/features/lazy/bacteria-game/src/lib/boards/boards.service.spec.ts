@@ -55,6 +55,7 @@ describe('BoardsService', () => {
             social: () => (withBoards ? social : null),
             presence: () => new FakeGamePresence(),
             rooms: () => null,
+            moderation: () => null,
           },
         },
       ],

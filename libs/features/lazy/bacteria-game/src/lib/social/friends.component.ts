@@ -13,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslationKey } from '../i18n/dictionaries';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { ModerationService } from '../moderation/moderation.service';
 import { AvatarComponent } from './avatar.component';
 import { FriendView, SocialService } from './social.service';
 
@@ -29,6 +30,8 @@ import { FriendView, SocialService } from './social.service';
 })
 export class FriendsComponent {
   protected readonly social = inject(SocialService);
+  /** A ban takes adding friends and challenges away (ADR 0012). */
+  protected readonly moderation = inject(ModerationService);
   private readonly clipboard = inject(Clipboard);
   private readonly document = inject(DOCUMENT);
   private readonly i18n = inject(I18nService);

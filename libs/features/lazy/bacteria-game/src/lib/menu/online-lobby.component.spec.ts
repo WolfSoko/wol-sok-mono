@@ -6,6 +6,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject, of } from 'rxjs';
 import type { FeatureToggles } from '../state/feature-toggles';
 import { FakeGameAccount } from '../../testing/fake-game-account';
+import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { I18nService } from '../i18n/i18n.service';
 import {
   MatchLevel,
@@ -22,8 +23,11 @@ import { LocalGameStorage } from '../storage/local-game-storage';
 import { OnlineLobbyComponent } from './online-lobby.component';
 
 describe('OnlineLobbyComponent', () => {
+  let moderation: FakeGameModeration;
+
   beforeEach(() => {
     TestBed.resetTestingModule();
+    moderation = new FakeGameModeration();
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: new FakeGameAccount('ada') },
@@ -33,6 +37,7 @@ describe('OnlineLobbyComponent', () => {
             social: () => null,
             presence: () => null,
             rooms: () => null,
+            moderation: () => moderation,
             storage: () => new LocalGameStorage(),
             toggles: () => ({ watch: () => of({}) }),
           },
@@ -60,6 +65,16 @@ describe('OnlineLobbyComponent', () => {
 
     expect(text(host)).toContain('Play with a code');
     expect(text(host)).toContain('Open a match');
+  });
+
+  it('offers no online play while a ban holds, and says so', () => {
+    moderation.banFor(null);
+    const host = render({});
+
+    expect(text(host)).toContain(
+      'Online play is not available while your account is suspended.'
+    );
+    expect(text(host)).not.toContain('Open a match');
   });
 
   it('names the colony the player steers, and the notice', () => {

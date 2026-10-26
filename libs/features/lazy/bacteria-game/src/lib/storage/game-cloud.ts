@@ -17,6 +17,10 @@ import { LocalGameReplays } from './local-game-replays';
 import type { GameBoards } from './game-boards';
 import type { GameRooms } from './game-rooms';
 import type { GameToggles } from './game-toggles';
+import { banned, type GameModeration } from './game-moderation';
+import { FirestoreGameModeration } from './firestore-game-moderation';
+import type { GameRanked } from './game-ranked';
+import { FirestoreGameRanked } from './firestore-game-ranked';
 import { NoGameToggles } from './no-game-toggles';
 import { LocalGameStorage } from './local-game-storage';
 import { RemoteConfigGameToggles } from './remote-config-game-toggles';
@@ -63,6 +67,8 @@ export class GameCloud {
     presence: GamePresence | null;
     replays: GameReplays | null;
     boards: GameBoards;
+    moderation: GameModeration;
+    ranked: GameRanked;
   } | null = null;
   /** The replays on this device, one for all who ask. */
   private localReplays: GameReplays | null = null;
@@ -124,6 +130,22 @@ export class GameCloud {
   }
 
   /**
+   * The player's own ban and the owner's notices (ADR 0012) - null without
+   * a project, where nobody is banned.
+   */
+  public moderation(): GameModeration | null {
+    return this.connected()?.moderation ?? null;
+  }
+
+  /**
+   * The declared attempts of ranked daily and endless matches (ADR 0012) -
+   * null without a project, where nothing is ranked.
+   */
+  public ranked(): GameRanked | null {
+    return this.connected()?.ranked ?? null;
+  }
+
+  /**
    * Where the recorded matches go: to the project once it takes them (see
    * {@link GameCloudOptions.replays}), else onto this device.
    */
@@ -158,9 +180,20 @@ export class GameCloud {
     }
     if (this.backend === null) {
       const account = new FirebaseGameAccount(connection);
+      const moderation = new FirestoreGameModeration(
+        connection,
+        account.playerIds
+      );
+      // A ban refuses every write of the player's (ADR 0012): the storage
+      // holds them until it ends, the replays send none meanwhile.
+      const isBanned = banned(moderation.ban());
       this.backend = {
         account,
-        storage: new FirestoreGameStorage(connection, account.playerIds),
+        storage: new FirestoreGameStorage(
+          connection,
+          account.playerIds,
+          isBanned
+        ),
         rooms: new FirestoreGameRooms(connection, account.playerIds),
         social: new FirestoreGameSocial(connection),
         presence:
@@ -169,9 +202,11 @@ export class GameCloud {
             : new RtdbGamePresence(connection, connection.rtdb),
         replays:
           connection.replays === true
-            ? new FirestoreGameReplays(connection, account.playerIds)
+            ? new FirestoreGameReplays(connection, account.playerIds, isBanned)
             : null,
         boards: new FirestoreGameBoards(connection),
+        moderation,
+        ranked: new FirestoreGameRanked(connection, account.playerIds),
       };
     }
     return this.backend;

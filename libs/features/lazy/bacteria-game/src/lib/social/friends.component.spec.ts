@@ -27,6 +27,7 @@ describe('FriendsComponent', () => {
             social: () => social,
             presence: () => presence,
             rooms: () => null,
+            moderation: () => null,
           },
         },
       ],

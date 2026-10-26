@@ -85,6 +85,42 @@ storage until then. Settings stay with the device either way.
   device's backend deletes. "My matches" (`replays/my-matches.component.ts`)
   and the match just played (`replay-screen.component.ts`) are stage
   screens; specs use `FakeGameReplays` (`cloud` and `change`).
+- Ranked daily attempts and endless runs (ADR 0012) are declared through
+  the `GameRanked` port (`storage/game-ranked.ts`, `FirestoreGameRanked`),
+  asked of `GameCloud.ranked()` - null without a project - and only by
+  `RankedService` (`ranked/`). A declaration is a transaction (it fails
+  offline instead of waiting in the cache) that writes `{ at:
+serverTimestamp(), expireAt }` and nothing else - what the rules'
+  `isDeclaration` wants - then reads `at` back with `getDocFromServer`,
+  3 s in all (`DECLARE_TIMEOUT_MS`; past it one more read from the server
+  takes a declaration that committed late), `at` floored to whole ms
+  (`millisOf`, `storage/firestore-values.ts`) as the server reads it; the
+  seed is `attemptSeed(uid, id, at)`, the match `rankedPlan` on the online
+  grid, on the level of the attempt's own day, `gpu-int`, no restart and
+  no pause (the deadline runs from the declaration; the HUD's "Give up",
+  two taps, is its way out), uploaded whatever the
+  recording settings say, with the attempt in the header and the
+  submission. Ranked play is offered by
+  the owner's toggles (`rankedDaily`, `rankedEndless`: off hides the
+  switch) on a device whose GPU passed the self-test and has the integer
+  passes (`deviceReady`), to a signed-in player no ban holds; the
+  player's choice is the device setting `ranked`. The store's `ranked`
+  holds the start's outcome: the declared match (`rankedMatch`) and what
+  the result screen says of it (`note`, ids, texts in `boards.ranked`).
+  Specs use `FakeGameRanked`.
+- The owner's moderation reaches the player through the `GameModeration`
+  port (`storage/game-moderation.ts`, `FirestoreGameModeration`), asked
+  of `GameCloud.moderation()` and read by `ModerationService`
+  (`moderation/`): `bans/{uid}` live with its Realtime Database mirror
+  (either holding is a ban, ended by itself at `until`) and
+  `players/{uid}/notices`, deleted when dismissed. A ban takes away what
+  the rules' `notBanned()` refuses: `FirestoreGameStorage` holds the
+  player's writes until it ends (as offline), `FirestoreGameReplays`
+  sends nothing, `SocialService` writes nothing and takes the status
+  back, matchmaking stops, the lobby, profile editor and friends shut,
+  ranked play is refused. A new client write path follows the ban too.
+  Specs use `FakeGameModeration`; a spec that mocks `GameCloud` gives it
+  `moderation: () => null` (or a fake) where `SocialService` is in play.
 - The replay viewer (`replays/replay-viewer.component.ts`) plays a
   `ReplayScene` (`replay-scene.ts`) on an `ArenaViewComponent` by itself
   (its frames drawn by `arenaContent`, `arena/arena-content.ts`, like the
@@ -260,7 +296,10 @@ play each other.
   match plays on the GPU (`SimulationChoice.gpuInt`) whatever the toggle
   says by the time it starts. Ranked attempts are
   `gpu-int` only: a stored replay with an attempt must be one (replay
-  version 5, `GPU_INT_REPLAY_VERSION`; it may carry the ladder too).
+  version 5, `GPU_INT_REPLAY_VERSION`; it may carry the ladder too). A
+  ranked match plays the integer GPU passes whatever the toggle says
+  (`PlayerService.init` with `ruleset: 'gpu-int'`, no lockstep), so it is
+  offered only where the GPU is trusted (`RankedService.deviceReady`).
 - The device override for a real-device check: `?sim=gpu-int`, `?sim=cpu`
   or `?sim=auto` in the URL (`SimulationOverrideService`, kept in
   `DeviceStorage`). It changes what local matches play, never what the

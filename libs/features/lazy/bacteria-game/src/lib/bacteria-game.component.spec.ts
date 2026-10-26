@@ -807,6 +807,42 @@ describe('BacteriaGameComponent', () => {
     });
   });
 
+  describe('giving a ranked match up', () => {
+    function armed() {
+      create();
+      return jest
+        .spyOn(component as never, 'quitToMenu')
+        .mockImplementation(() => undefined);
+    }
+
+    it('quits on the second tap only, while the first is armed', () => {
+      const quit = armed();
+
+      component['giveUp']();
+      expect(component['giveUpArmed']()).toBe(true);
+      expect(quit).not.toHaveBeenCalled();
+
+      component['giveUp']();
+      expect(quit).toHaveBeenCalledTimes(1);
+      expect(component['giveUpArmed']()).toBe(false);
+    });
+
+    it('disarms by itself after a while', () => {
+      const quit = armed();
+      const timers = jest.spyOn(globalThis, 'setTimeout');
+
+      component['giveUp']();
+      const [disarm, ms] = timers.mock.calls.at(-1) ?? [];
+      expect(ms).toBe(3_000);
+      (disarm as () => void)();
+      expect(component['giveUpArmed']()).toBe(false);
+
+      component['giveUp']();
+      expect(quit).not.toHaveBeenCalled();
+      timers.mockRestore();
+    });
+  });
+
   describe('the joysticks', () => {
     it('steer the crosshair of their player', () => {
       create();

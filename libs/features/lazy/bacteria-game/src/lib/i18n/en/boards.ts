@@ -56,4 +56,40 @@ export const boards = {
     held: 'Held {time}',
     depth: { one: '{count} level · {time}', other: '{count} levels · {time}' },
   },
+  /** Ranked daily attempts and endless runs (ADR 0012). */
+  ranked: {
+    daily: 'Ranked attempt',
+    endless: 'Ranked run',
+    left: {
+      daily: 'Ranked attempts left today: {left} of {total}.',
+      endless: 'Ranked runs left today: {left} of {total}.',
+    },
+    setup:
+      'A ranked match plays the ranked setup - the normal computer, no head start - and goes onto the leaderboard.',
+    noPause: "A ranked match can't be paused: it must be finished in one go.",
+    runLives:
+      'Leaving a match of a ranked run ends the run here, and the leaderboard counts it as a lost life.',
+    practice: 'Practice: your own setup, not on the leaderboards.',
+    used: {
+      daily:
+        'The three ranked attempts of today are used. New ones at 00:00 UTC.',
+      endless:
+        'The five ranked runs of today are started. New ones at 00:00 UTC.',
+    },
+    blocked: {
+      device:
+        "Ranked play needs a graphics chip that passed the game's check (Settings, Screen).",
+      banned: 'Ranked play is not available while your account is suspended.',
+      signedOut: 'Ranked play needs you signed in.',
+    },
+    declaring: 'Declaring your ranked attempt…',
+    result: {
+      daily: 'Ranked attempt {n} of {total} · ranked setup',
+      endless: 'Ranked run · match {match} · ranked setup',
+      offline: 'Not ranked: offline when the match started',
+      used: 'Not ranked: the three attempts of today are used',
+      'runs-used': 'Not ranked: the five ranked runs of today are started',
+      'run-dropped': 'This run is no longer ranked',
+    },
+  },
 };

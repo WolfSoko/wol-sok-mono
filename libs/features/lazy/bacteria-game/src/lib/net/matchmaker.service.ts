@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { FeatureTogglesService } from '../feature-toggles.service';
+import { ModerationService } from '../moderation/moderation.service';
 import {
   isMatchLevel,
   MatchLevelPick,
@@ -54,6 +55,7 @@ export class MatchmakerService {
   private readonly players = inject(SocialService);
   private readonly online = inject(OnlineMatchService);
   private readonly toggles = inject(FeatureTogglesService).toggles;
+  private readonly moderation = inject(ModerationService);
   private readonly stateSignal = signal<MatchmakingState>('idle');
   /** The level the player would like to play - null for any. */
   private readonly level = signal<string | null>(null);
@@ -79,9 +81,12 @@ export class MatchmakerService {
   public readonly available = this.social !== null && this.online.available;
   /**
    * False while the owner has paused matchmaking (the `matchmaking`
-   * toggle, ADR 0012): no new search starts, and one under way stops.
+   * toggle, ADR 0012), or a ban holds the player, whose queue entry the
+   * rules refuse: no new search starts, and one under way stops.
    */
-  public readonly enabled = computed(() => this.toggles().matchmaking);
+  public readonly enabled = computed(
+    () => this.toggles().matchmaking && !this.moderation.banned()
+  );
 
   public constructor() {
     // Paused by the owner: a search under way stops. A match it found
