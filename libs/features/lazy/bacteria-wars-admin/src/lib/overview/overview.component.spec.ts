@@ -118,6 +118,16 @@ describe('OverviewComponent', () => {
     ]);
   });
 
+  it('mirrors the friend lists for the online status', async () => {
+    const { fixture, send } = render(undefined);
+    button(fixture, 'Mirror friend lists').click();
+    await fixture.whenStable();
+
+    expect(send.mock.calls.map(([command]) => command.type)).toEqual([
+      'presence.backfill',
+    ]);
+  });
+
   it('does not refresh after a refused recount', async () => {
     const send = jest.fn(async (_command: { type: string }) => ({
       ok: false,

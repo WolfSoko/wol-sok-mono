@@ -45,6 +45,9 @@ export const DE: Translation<typeof EN> = {
     toggles: {
       set: 'Schalter ändern',
     },
+    presence: {
+      backfill: 'Freundeslisten spiegeln',
+    },
     replay: {
       feature: 'In der Galerie zeigen',
       unfeature: 'Aus der Galerie nehmen',

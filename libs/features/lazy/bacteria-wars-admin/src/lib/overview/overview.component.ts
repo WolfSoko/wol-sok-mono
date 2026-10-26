@@ -130,9 +130,18 @@ export class OverviewComponent {
     return this.send(['stats.recount', 'stats.refresh']);
   }
 
+  /**
+   * `presence.backfill` mirrors every friend list into the Realtime
+   * Database (ADR 0012, 2026-10-26): once after the functions that keep
+   * the mirror are deployed, before the status rule reads it.
+   */
+  protected backfill(): Promise<void> {
+    return this.send(['presence.backfill']);
+  }
+
   /** Sends the commands in turn, stopping at the first refusal. */
   private async send(
-    types: readonly ('stats.refresh' | 'stats.recount')[]
+    types: readonly ('stats.refresh' | 'stats.recount' | 'presence.backfill')[]
   ): Promise<void> {
     this.refreshing.set(true);
     this.error.set(null);
