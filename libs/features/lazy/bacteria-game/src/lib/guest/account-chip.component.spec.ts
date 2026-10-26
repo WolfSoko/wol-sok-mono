@@ -39,6 +39,9 @@ describe('AccountChipComponent', () => {
     expect(button(fixture.nativeElement)?.textContent?.trim()).toContain(
       'Sign in'
     );
+    expect(button(fixture.nativeElement)?.getAttribute('aria-label')).toBe(
+      'You play as a guest: sign in with Google'
+    );
     button(fixture.nativeElement)?.click();
 
     expect(signIn).toHaveBeenCalled();

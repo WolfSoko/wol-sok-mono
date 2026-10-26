@@ -28,11 +28,12 @@ import { SignIn } from './sign-in.service';
             type="button"
             class="sign-in"
             [disabled]="!signIn.ready()"
+            [attr.aria-label]="'profile.guest.chipHint' | t"
             [matTooltip]="'profile.guest.chipHint' | t"
             (click)="signIn.signIn()"
           >
             <mat-icon>login</mat-icon>
-            {{ 'profile.guest.chip' | t }}
+            <span class="label">{{ 'profile.guest.chip' | t }}</span>
           </button>
         } @else {
           @let label =
@@ -68,6 +69,22 @@ import { SignIn } from './sign-in.service';
 
     .sign-in {
       --mat-button-outlined-label-text-color: var(--bw-text);
+    }
+
+    /* On a phone the icon alone, beside the title. */
+    @media (max-width: 40rem) {
+      .sign-in {
+        min-width: 0;
+        padding: 0 0.75rem;
+      }
+
+      .sign-in .mat-icon {
+        margin: 0;
+      }
+
+      .label {
+        display: none;
+      }
     }
 
     .photo {
