@@ -24,7 +24,7 @@
 
   <article id="de" lang="de">
     <h1>Datenschutzerklärung</h1>
-    <p class="stand">Stand: 25. Oktober 2026</p>
+    <p class="stand">Stand: 26. Oktober 2026</p>
     <p>
       Diese Erklärung gilt für das Spiel Bacteria Wars unter
       <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
@@ -248,19 +248,23 @@
       Online-Matches lädt das Spiel immer hoch. Matches gegen den Computer lädt
       es hoch, wenn in den Einstellungen „Matches gegen den Computer
       aufzeichnen“ und „Meine Matches speichern“ an sind (beides Standard).
-      Unsere Funktionen speichern eine Aufzeichnung unter der Kennung des
-      Kontos, das sie hochgeladen hat, ein Online-Match unter den Kennungen
-      beider Spieler des Raums, mit dem Raumcode, der Seite, die jeder gespielt
-      hat, und dem Zeitpunkt, zu dem der Raum angelegt wurde. Dazu speichern sie
-      Level, Art des Matches, Dauer, Ergebnis, eine Prüfsumme und eine Bewertung
-      von 0 bis 100, wie sehenswert das Match ist, die dein Gerät berechnet. Von
-      einem Online-Match speichern sie außerdem die Meldung jedes Geräts
-      (Ergebnis, Prüfsumme und einen Hashwert der Eingaben), um zu prüfen, ob
-      beide Geräte dasselbe Match gespielt haben. Eine hochgeladene
-      Aufzeichnung, die sie nicht annehmen, löscht die Datenbank nach einem Tag.
-      Ein Match, das das Spiel nicht innerhalb eines Tages nach dem Match
-      hochladen kann, etwa weil dein Gerät so lange offline bleibt, wird nicht
-      mehr hochgeladen und nicht gespeichert.
+      Gewertete Matches auf dem Tageslevel und in Endlos-Läufen lädt es immer
+      hoch, auch wenn diese Schalter aus sind, mit der Kennung des angemeldeten
+      Versuchs (unten, „Bestenliste und Statistik“): Ohne die Aufzeichnung kann
+      ein gewertetes Match nicht zählen. Unsere Funktionen speichern eine
+      Aufzeichnung unter der Kennung des Kontos, das sie hochgeladen hat, ein
+      Online-Match unter den Kennungen beider Spieler des Raums, mit dem
+      Raumcode, der Seite, die jeder gespielt hat, und dem Zeitpunkt, zu dem der
+      Raum angelegt wurde. Dazu speichern sie Level, Art des Matches, Dauer,
+      Ergebnis, eine Prüfsumme und eine Bewertung von 0 bis 100, wie sehenswert
+      das Match ist, die dein Gerät berechnet. Von einem Online-Match speichern
+      sie außerdem die Meldung jedes Geräts (Ergebnis, Prüfsumme und einen
+      Hashwert der Eingaben), um zu prüfen, ob beide Geräte dasselbe Match
+      gespielt haben. Eine hochgeladene Aufzeichnung, die sie nicht annehmen,
+      löscht die Datenbank nach einem Tag. Ein Match, das das Spiel nicht
+      innerhalb eines Tages nach dem Match hochladen kann, etwa weil dein Gerät
+      so lange offline bleibt, wird nicht mehr hochgeladen und nicht
+      gespeichert.
     </p>
     <p>
       Lesen können eine gespeicherte Aufzeichnung nur die Spieler des Matches,
@@ -361,9 +365,39 @@
       unsere Funktionen auch, wie viele Ergebnisse je Spielerpaar und Tag
       gezählt wurden (nach 2 Tagen gelöscht), und begrenzen, wie viele Siege am
       Tag zählen. Ob und warum ein Match gezählt wurde, steht bei ihm unter
-      „Meine Matches“. Die Bestenlisten für das Tageslevel und für Endlos-Läufe
-      erhalten noch keine Einträge, solange das Spiel keine gewerteten Versuche
-      anmeldet.
+      „Meine Matches“.
+    </p>
+    <p>
+      In die Bestenlisten des Tageslevels und der Endlos-Läufe kommen gewertete
+      Matches. Ob du gewertet oder zur Übung spielst, wählst du in „Neues Spiel“
+      mit dem Schalter „Gewerteter Versuch“ beziehungsweise „Gewerteter Lauf“
+      (Standard an); gewertet spielst du drei Versuche am Tag auf dem Tageslevel
+      und beginnst bis zu fünf Endlos-Läufe am Tag. Vor jedem gewerteten Match
+      meldet das Spiel unter deinem Konto einen Versuch an: seine Kennung (Tag
+      und Nummer, oder Lauf und Match), den Zeitpunkt der Anmeldung nach der Uhr
+      unseres Servers und ein Ablaufdatum. Aus deiner Konto-Kennung, dem Versuch
+      und diesem Zeitpunkt berechnet das Spiel den Startwert des Zufalls des
+      Matches. Unsere Funktionen vermerken darin außerdem, welche Aufzeichnung
+      den Versuch verbraucht hat, oder dass er wegen eines Fehlers auf unserer
+      Seite nicht zählt; einen solchen Versuch auf dem Tageslevel darfst du
+      wiederholen. Lesen können einen Versuch nur dein Konto und wir. Er läuft
+      nach 31 Tagen ab, und die Datenbank löscht ihn, in der Regel innerhalb
+      eines Tages danach.
+    </p>
+    <p>
+      Die Aufzeichnung eines gewerteten Matches prüfen unsere Funktionen gegen
+      den Versuch (Startwert, Einstellungen, Level und ob sie bis 5 Minuten nach
+      dem Match hochgeladen wurde) und tragen das Ergebnis mit der Stunde, in
+      der es ankam, in die Bestenliste des Tages oder der Endlos-Läufe ein, wie
+      oben ohne Kennung und nur mit „Meinen Namen öffentlich zeigen“ mit deinem
+      Namen. Die besten Ergebnisse spielen sie auf unserem Server nach, um sie
+      zu bestätigen. Dafür vermerken sie je Tag deine Versuche und je
+      Endlos-Lauf seine Matches (Kennung der Aufzeichnung, Ergebnis, Dauer und
+      Stand der Prüfung), lesbar nur für unseren Server. Die Vermerke eines
+      Tages und eine Tagesbestenliste mit ihren Einträgen laufen 31 Tage nach
+      dem Tag ab, ein Endlos-Lauf 31 Tage nach seiner letzten Änderung; dein
+      bester Endlos-Lauf und dein Eintrag in der Bestenliste der Endlos-Läufe
+      bleiben, bis ein besserer Lauf sie ablöst oder dein Konto gelöscht wird.
     </p>
     <p>
       Jede Stunde zählen unsere Funktionen für unsere Übersicht zusammen, etwa
@@ -390,15 +424,21 @@
       Außerdem zählen sie je Konto, wie oft wir eingeschritten sind.
     </p>
     <p>
-      Eine Sperre speichern wir mit Beginn, Ende (oder „unbefristet“) und Grund;
-      dein Konto kann sie lesen. Solange sie gilt, lehnt die Datenbank
-      Änderungen von deinem Konto ab. Was das Spiel dich zurücknehmen lässt
-      (Freunde entfernen, Anfragen ablehnen, eine Suche beenden), geht
-      weiterhin, und dein Konto löschen lassen kannst du wie in Abschnitt 10.
-      Mit der Sperre nehmen wir dich aus der Warteschlange, löschen deinen
-      Online-Status, deine offenen Räume und deine Einladungslinks und blenden
-      deinen Eintrag in der Bestenliste aus. Endet die Sperre, löschen wir sie
-      und blenden den Eintrag wieder ein.
+      Eine Sperre speichern wir mit Beginn, Ende (oder „unbefristet“) und Grund,
+      dazu ihr Ende in der Realtime Database; lesen können beides nur dein Konto
+      und wir. Solange sie gilt, lehnt die Datenbank Änderungen von deinem Konto
+      ab. Das Spiel liest deine Sperre, zeigt sie mit Ende und Grund im Menü an
+      und lässt weg, was die Datenbank ablehnen würde: Online spielen, Profil,
+      Freunde, gewertete Matches und das Hochladen von Matches. Was du in der
+      Zeit an Fortschritt speicherst, hält es zurück und speichert es, wenn die
+      Sperre endet; schließt du das Spiel vorher, geht es verloren. Die Hinweise
+      zeigt das Spiel im Menü; schließt du einen, löscht es ihn. Was das Spiel
+      dich zurücknehmen lässt (Freunde entfernen, Anfragen ablehnen, eine Suche
+      beenden), geht weiterhin, und dein Konto löschen lassen kannst du wie in
+      Abschnitt 10. Mit der Sperre nehmen wir dich aus der Warteschlange,
+      löschen deinen Online-Status, deine offenen Räume und deine
+      Einladungslinks und blenden deinen Eintrag in der Bestenliste aus. Endet
+      die Sperre, löschen wir sie und blenden den Eintrag wieder ein.
     </p>
     <p>
       Über jede Maßnahme führen wir ein Protokoll mit Art, Grund, Datum und dem,
@@ -565,13 +605,14 @@
       zugehörigen Spieldaten innerhalb von 30 Tagen und bestätigen dir die
       Löschung: deinen Spielstand, dein Online-Profil, deine Freundschaften,
       Anfragen, Herausforderungen und Einladungslinks, deine Einträge in den
-      Bestenlisten, deine aufgezeichneten Matches (Abschnitt 4, „Aufgezeichnete
-      Matches“) und was unsere Funktionen zu deinem Konto vermerken. Aus dem
-      Protokoll der Moderation entfernen wir, was sich geändert hat. Gilt bei
-      der Löschung noch eine Sperre deines Kontos, bleibt der Hashwert deiner
-      Google-Kennung bis zu ihrem Ende, höchstens 2 Jahre ab der Löschung
-      (Abschnitt 4, „Moderation und Sperren“). Daten auf deinem Gerät löschst du
-      wie in Abschnitt 3 beschrieben. Abmelden allein löscht nichts.
+      Bestenlisten, deine angemeldeten Versuche, deine aufgezeichneten Matches
+      (Abschnitt 4, „Aufgezeichnete Matches“) und was unsere Funktionen zu
+      deinem Konto vermerken. Aus dem Protokoll der Moderation entfernen wir,
+      was sich geändert hat. Gilt bei der Löschung noch eine Sperre deines
+      Kontos, bleibt der Hashwert deiner Google-Kennung bis zu ihrem Ende,
+      höchstens 2 Jahre ab der Löschung (Abschnitt 4, „Moderation und Sperren“).
+      Daten auf deinem Gerät löschst du wie in Abschnitt 3 beschrieben. Abmelden
+      allein löscht nichts.
     </p>
 
     <h2 id="de-rechte">11. Deine Rechte</h2>
@@ -611,7 +652,7 @@
 
   <article id="en" lang="en">
     <h1>Privacy policy</h1>
-    <p class="stand">Last updated: 25 October 2026</p>
+    <p class="stand">Last updated: 26 October 2026</p>
     <p>
       This policy covers the game Bacteria Wars at
       <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
@@ -816,18 +857,21 @@
     <p>
       The game always uploads online matches. It uploads matches against the
       computer when “Record matches against the computer” and “Save my matches”
-      are on in the settings (both are by default). Our functions store a
-      recording under the identifier of the account that uploaded it, an online
-      match under the identifiers of both players of the room, with the room
-      code, the side each played and the time the room was set up. With it they
-      store the level, the kind of match, its length, the result, a checksum and
-      a score from 0 to 100 of how watchable the match is, which your device
-      works out. Of an online match they also store each device's report
-      (result, checksum and a hash of the inputs), to check that both devices
-      played the same match. An uploaded recording they do not accept is deleted
-      by the database after a day. A match the game cannot upload within a day
-      after the match, for instance because your device stays offline that long,
-      is no longer uploaded and not stored.
+      are on in the settings (both are by default). It always uploads ranked
+      matches on the daily level and in endless runs, even with those switches
+      off, with the identifier of the declared attempt (below, “Leaderboard and
+      statistics”): without the recording a ranked match cannot count. Our
+      functions store a recording under the identifier of the account that
+      uploaded it, an online match under the identifiers of both players of the
+      room, with the room code, the side each played and the time the room was
+      set up. With it they store the level, the kind of match, its length, the
+      result, a checksum and a score from 0 to 100 of how watchable the match
+      is, which your device works out. Of an online match they also store each
+      device's report (result, checksum and a hash of the inputs), to check that
+      both devices played the same match. An uploaded recording they do not
+      accept is deleted by the database after a day. A match the game cannot
+      upload within a day after the match, for instance because your device
+      stays offline that long, is no longer uploaded and not stored.
     </p>
     <p>
       A stored recording can be read only by the players of the match, in the
@@ -916,8 +960,35 @@
       our functions also note how many results were counted per pair of players
       and day (deleted after 2 days), and they limit how many wins count in a
       day. Whether and why a match counted is shown with it under “My matches”.
-      The leaderboards for the daily level and for endless runs get no entries
-      yet, as long as the game declares no ranked attempts.
+    </p>
+    <p>
+      The leaderboards for the daily level and for endless runs take ranked
+      matches. Whether you play ranked or for practice you choose in “New game”
+      with the switch “Ranked attempt” or “Ranked run” (on by default); ranked,
+      you play three attempts a day on the daily level and start up to five
+      endless runs a day. Before each ranked match the game declares an attempt
+      under your account: its identifier (the day and number, or the run and
+      match), the time of the declaration by our server's clock and an expiry
+      date. From your account identifier, the attempt and that time the game
+      works out the match's random seed. Our functions also note in it which
+      recording used the attempt up, or that it does not count because of a
+      fault on our side; such an attempt on the daily level you may play again.
+      Only your account and we can read an attempt. It expires after 31 days and
+      the database deletes it, usually within a day after that.
+    </p>
+    <p>
+      Our functions check the recording of a ranked match against its attempt
+      (seed, setup, level and whether it was uploaded within 5 minutes after the
+      match) and enter the result, with the hour it arrived, on the leaderboard
+      of the day or of the endless runs - as above without an identifier, and
+      with your name only with “Show my name in public”. They play the best
+      results again on our server to confirm them. For that they note your
+      attempts per day and the matches of each endless run (the recording's
+      identifier, the result, the length and the state of the check), readable
+      only by our server. A day's notes and a daily leaderboard with its entries
+      expire 31 days after the day, an endless run 31 days after its last
+      change; your best endless run and your entry on the endless leaderboard
+      stay until a better run replaces them or your account is deleted.
     </p>
     <p>
       Every hour our functions add up, for our overview, figures such as how
@@ -945,13 +1016,19 @@
     </p>
     <p>
       We store a suspension with its start, its end (or “indefinite”) and its
-      reason; your account can read it. While it lasts, the database refuses
-      changes from your account. What the game lets you take back (removing
-      friends, declining requests, ending a search) still works, and you can
-      have your account deleted as in section 10. With the suspension we take
-      you out of the queue, delete your online status, your open rooms and your
-      invitation links, and hide your leaderboard entry. When the suspension
-      ends, we delete it and show the entry again.
+      reason, and its end in the Realtime Database as well; only your account
+      and we can read either. While it lasts, the database refuses changes from
+      your account. The game reads your suspension, shows it in the menu with
+      its end and reason, and leaves out what the database would refuse: playing
+      online, the profile, friends, ranked matches and uploading matches.
+      Progress you save meanwhile it holds back and saves once the suspension
+      ends; if you close the game before, it is lost. The game shows the notices
+      in the menu; dismissing one deletes it. What the game lets you take back
+      (removing friends, declining requests, ending a search) still works, and
+      you can have your account deleted as in section 10. With the suspension we
+      take you out of the queue, delete your online status, your open rooms and
+      your invitation links, and hide your leaderboard entry. When the
+      suspension ends, we delete it and show the entry again.
     </p>
     <p>
       We keep a record of every measure with its type, reason, date and what it
@@ -1109,13 +1186,13 @@
       guest account itself to you (section 4). We delete the account and all its
       game data within 30 days and confirm the deletion to you: your progress,
       your online profile, your friendships, requests, challenges and invitation
-      links, your leaderboard entries, your recorded matches (section 4,
-      “Recorded matches”) and what our functions note about your account. From
-      the moderation record we erase what was changed. If a suspension of your
-      account still holds at the deletion, the hash of your Google identifier
-      stays until it ends, for 2 years from the deletion at most (section 4,
-      “Moderation and suspensions”). Delete the data on your device as described
-      in section 3. Signing out alone deletes nothing.
+      links, your leaderboard entries, your declared attempts, your recorded
+      matches (section 4, “Recorded matches”) and what our functions note about
+      your account. From the moderation record we erase what was changed. If a
+      suspension of your account still holds at the deletion, the hash of your
+      Google identifier stays until it ends, for 2 years from the deletion at
+      most (section 4, “Moderation and suspensions”). Delete the data on your
+      device as described in section 3. Signing out alone deletes nothing.
     </p>
 
     <h2 id="en-rights">11. Your rights</h2>

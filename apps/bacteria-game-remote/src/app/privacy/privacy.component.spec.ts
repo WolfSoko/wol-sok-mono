@@ -145,6 +145,55 @@ describe('PrivacyComponent', () => {
     );
   });
 
+  it("says what a ranked attempt stores, by the switches' labels", async () => {
+    const page = await open();
+    const de = (
+      page.querySelector('article[lang="de"]')?.textContent ?? ''
+    ).replace(/\s+/g, ' ');
+    const en = (
+      page.querySelector('article[lang="en"]')?.textContent ?? ''
+    ).replace(/\s+/g, ' ');
+
+    // The game declares ranked attempts now (ADR 0012).
+    expect(de).not.toContain('solange das Spiel keine gewerteten Versuche');
+    expect(en).not.toContain('as long as the game declares no ranked attempts');
+    for (const label of ['Gewerteter Versuch', 'Gewerteter Lauf']) {
+      expect(de).toContain(label);
+    }
+    for (const label of ['Ranked attempt', 'Ranked run']) {
+      expect(en).toContain(label);
+    }
+    // Kept 31 days, as ATTEMPT_DAYS; uploaded within 5 minutes.
+    expect(de).toContain('Er läuft nach 31 Tagen ab');
+    expect(en).toContain('It expires after 31 days');
+    expect(de).toContain('bis 5 Minuten nach dem Match');
+    expect(en).toContain('within 5 minutes after the match');
+    // Ranked matches are uploaded whatever the settings say.
+    expect(de).toContain(
+      'Gewertete Matches auf dem Tageslevel und in Endlos-Läufen lädt es immer hoch'
+    );
+    expect(en).toContain('It always uploads ranked matches');
+  });
+
+  it('says how the game follows a suspension, and what dismissing a notice does', async () => {
+    const page = await open();
+    const de = (
+      page.querySelector('article[lang="de"]')?.textContent ?? ''
+    ).replace(/\s+/g, ' ');
+    const en = (
+      page.querySelector('article[lang="en"]')?.textContent ?? ''
+    ).replace(/\s+/g, ' ');
+
+    expect(de).toContain('ihr Ende in der Realtime Database');
+    expect(en).toContain('its end in the Realtime Database');
+    expect(de).toContain(
+      'hält es zurück und speichert es, wenn die Sperre endet'
+    );
+    expect(en).toContain('holds back and saves once the suspension ends');
+    expect(de).toContain('schließt du einen, löscht es ihn');
+    expect(en).toContain('dismissing one deletes it');
+  });
+
   it('has its own title while open', async () => {
     await open();
 
