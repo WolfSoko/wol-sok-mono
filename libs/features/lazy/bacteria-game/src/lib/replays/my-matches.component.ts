@@ -39,6 +39,7 @@ import { GameReplays } from '../storage/game-replays';
 import { isCounted, type ReplayListing } from '../storage/replay-records';
 import { armedTap } from '../armed-tap';
 import { ReplayViewerComponent } from './replay-viewer.component';
+import { GuestSignInComponent } from '../guest/guest-sign-in.component';
 
 /**
  * How long "My matches" waits for the server to carry a command out before
@@ -75,6 +76,7 @@ interface MatchRow {
   selector: 'feat-lazy-bac-game-my-matches',
   imports: [
     GameTextPipe,
+    GuestSignInComponent,
     MatButtonModule,
     MatChipsModule,
     MatIconModule,

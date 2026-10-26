@@ -19,6 +19,7 @@ import { DAILY_DAYS_SHOWN } from './board-rows';
 import { utcDay } from '../state/daily';
 import { BoardViewComponent } from './board-view.component';
 import { BoardsService } from './boards.service';
+import { GuestSignInComponent } from '../guest/guest-sign-in.component';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -39,6 +40,7 @@ const ALL_TIME: Readonly<Record<Exclude<BoardKind, 'daily'>, BoardRef>> = {
   selector: 'feat-lazy-bac-game-leaderboards',
   imports: [
     BoardViewComponent,
+    GuestSignInComponent,
     MatFormFieldModule,
     MatSelectModule,
     MatTabsModule,

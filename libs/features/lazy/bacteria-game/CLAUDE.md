@@ -244,6 +244,18 @@ serverTimestamp(), expireAt }` and nothing else - what the rules'
   (`adoptProgress`). Any other switch (signing out starts a new guest) resets
   the service to the next player's progress. A service that keeps the
   player's data has to do the same: listen to `players` and start over.
+- Guests are offered the Google sign-in in `guest/` (owner's decision of
+  2026-10-26). `SignIn` is the one way every button signs in and out; it
+  waits for `ProgressService.loaded`. The main menu has
+  `AccountChipComponent` (sign in, or the player's picture to the profile)
+  and `GuestBannerComponent`; `GuestSignInComponent` is the line on Friends,
+  Leaderboards, My matches and, once per device after a success, the
+  result screen. `GuestNotice` counts the days the game was opened on the
+  device (`GUEST_NOTICE_KEY` in `DeviceStorage`) and shows the banner, which
+  says an unused guest account goes after `GUEST_IDLE_DAYS` (keep it equal
+  to the functions' constant), from the third day or at once after a pause
+  of more than 30 days; "Later" puts it away for two weeks, and the install
+  offer waits behind it. The privacy page names what the device keeps.
 - `playerIds` follows `players` from the same replaying subject, which keeps
   a switch before it tells anyone: a service that stores right as it hears of
   a switch stores for the next player. Between a sign-out and the next guest

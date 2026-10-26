@@ -190,6 +190,13 @@
   </div>
 }
 
+@if (offersSignIn()) {
+  <feat-lazy-bac-game-guest-sign-in
+    class="sign-in"
+    [note]="'profile.guest.success'"
+  />
+}
+
 <feat-lazy-bac-game-replay-note (watch)="action.emit('watch')" />
 
 <div class="actions">

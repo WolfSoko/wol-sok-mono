@@ -6,6 +6,7 @@
   @if (!available) {
     <p class="intro">{{ "boards.noCloud" | t }}</p>
   } @else {
+    <feat-lazy-bac-game-guest-sign-in [note]="'profile.guest.boards'" />
     <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
       @for (kind of kinds; track kind) {
         <mat-tab [label]="tabKey(kind) | t">

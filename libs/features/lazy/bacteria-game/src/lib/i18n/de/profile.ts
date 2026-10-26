@@ -55,5 +55,24 @@ export const profile: Translation<typeof en> = {
     signedInAs: 'Angemeldet als',
     googleUser: 'Google-Nutzer',
     signOut: 'Abmelden',
+    deletion:
+      'Ein Gastkonto wird gelöscht, wenn das Spiel {days} Tage lang nicht geöffnet wurde.',
+  },
+  guest: {
+    title: 'Behalte deinen Fortschritt',
+    welcomeBack: 'Schön, dass du wieder da bist!',
+    note: 'Du spielst als Gast. Öffnest du das Spiel {days} Tage lang nicht, wird dein Gastkonto gelöscht – und mit ihm dein Fortschritt, deine Freunde und deine Plätze in den Ranglisten. Melde dich mit Google an, dann bleibt alles, auf jedem Gerät.',
+    later: 'Später',
+    chip: 'Anmelden',
+    chipHint: 'Du spielst als Gast: mit Google anmelden',
+    profile: 'Dein Profil: {name}',
+    friends:
+      'Deine Freunde gehören zu deinem Gastkonto. Melde dich mit Google an, damit sie bleiben.',
+    boards:
+      'Deine Plätze in den Ranglisten gehören zu deinem Gastkonto. Melde dich mit Google an, damit sie bleiben.',
+    matches:
+      'Deine gespeicherten Matches gehören zu deinem Gastkonto. Melde dich mit Google an, damit sie bleiben.',
+    success:
+      'Gut gespielt! Melde dich mit Google an, damit du behältst, was du dir verdient hast – auf jedem Gerät.',
   },
 };

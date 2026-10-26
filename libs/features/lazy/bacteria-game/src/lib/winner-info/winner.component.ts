@@ -8,6 +8,7 @@ import {
   inject,
   input,
   output,
+  untracked,
 } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { DatePipe, DOCUMENT } from '@angular/common';
@@ -42,6 +43,8 @@ import { formatScore, rivalryScore, seriesWinner } from '../state/rivalry';
 import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
 import { ReplayNoteComponent } from '../replays/replay-note.component';
+import { GuestNotice } from '../guest/guest-notice.service';
+import { GuestSignInComponent } from '../guest/guest-sign-in.component';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
 import { RANKED_DAILY_ATTEMPTS } from '../state/attempts';
@@ -80,6 +83,7 @@ export type MatchEndAction =
     DatePipe,
     DnaHelixComponent,
     GameTextPipe,
+    GuestSignInComponent,
     MatButtonModule,
     MatIconModule,
     MatProgressBarModule,
@@ -308,7 +312,38 @@ export class WinnerComponent {
   public readonly shareLink = signal<string | null>(null);
   private sharing = false;
 
+  private readonly guestNotice = inject(GuestNotice);
+
+  /**
+   * True when the match just played earned something worth keeping: a new
+   * best medallion, an achievement or a new rank.
+   */
+  private readonly succeeded = computed(() => {
+    const award = this.award();
+    return (
+      (award?.medal != null &&
+        medalRank(award.medal) > medalRank(award.previousBest)) ||
+      this.earned().length > 0 ||
+      this.xp()?.climb?.rankUp === true
+    );
+  });
+
+  /**
+   * True when the result offers a guest to sign in and keep what they
+   * earned: after the first success, once per device.
+   */
+  protected readonly offersSignIn = signal(false);
+
   public constructor() {
+    effect(() => {
+      if (!this.succeeded() || !this.guestNotice.successHintDue()) {
+        return;
+      }
+      untracked(() => {
+        this.offersSignIn.set(true);
+        this.guestNotice.markSuccessHintShown();
+      });
+    });
     effect(() => {
       const run = this.canFightGhost() ? this.state.lastReplay() : null;
       this.shareLink.set(null);
