@@ -564,10 +564,11 @@ The rules and `replayCommand` require `admin == true`,
      `/replays/{publicId}/replay.json` (`loadPublicReplay`: base64
      `bytes`, read by `replayFromBytes`; the id checked against
      `publicSite`'s pattern first) and says "not found" for a 404 and
-     "taken down" for a 410. `featureBest` stays off; the owner features
-     by hand from `/admin`.
+     "taken down" for a 410. `featureBest` stayed off until the Replays
+     view of `/admin` shipped too; `FEATURE_BEST_ON` is on since
+     2026-10-26, and the owner unfeatures a pick there.
    - So far: `featureBest` (`src/gallery/`), deployed only with
-     `FEATURE_BEST_ON` in `src/config.ts`, off until then. At 23:40 UTC,
+     `FEATURE_BEST_ON` in `src/config.ts` (on since 2026-10-26). At 23:40 UTC,
      not 04:00 Berlin - once the boards stopped verifying the day before,
      whose ranked attempts they verify until 23:00 - it picks that day's
      candidates (accounts looked up for the best hints only), re-runs those the boards have not
