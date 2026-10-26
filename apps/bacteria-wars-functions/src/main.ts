@@ -55,6 +55,7 @@ import {
   RETRY_FOR_MS,
   RTDB_URL,
 } from './config';
+import { initErrorReports, reportError, withSentry } from './error-reports';
 import { featureBest as pickBest } from './gallery/feature-best';
 import { publicProfileChanged } from './gallery/publish';
 import { handleSite } from './site/public-site';
@@ -67,6 +68,9 @@ import { forgetPlayerReplays } from './replays/forget';
 import { deletePlayerSocial } from './social/delete-player';
 import { type MirroredList, mirrorListing } from './social/mirror';
 
+// Only in a deployed function. Every handler below is wrapped in
+// `withSentry`, which reports what it throws and waits for the report.
+initErrorReports();
 initializeApp();
 setGlobalOptions({ region: REGION, maxInstances: 5 });
 
@@ -120,7 +124,7 @@ export const acceptReplay = onDocumentCreated(
     retry: true,
     secrets: [BAN_TOMBSTONE_KEY],
   },
-  async (event) => {
+  withSentry(async (event) => {
     const data = event.data?.data();
     if (data === undefined) {
       return;
@@ -135,7 +139,7 @@ export const acceptReplay = onDocumentCreated(
       await checkLink(data['uid'], now);
     }
     await acceptSubmission(db(), id, data, now);
-  }
+  })
 );
 
 /** A player's or the owner's command on a replay - see `runReplayCommand`. */
@@ -150,7 +154,7 @@ export const replayCommand = onDocumentCreatedWithAuthContext(
     concurrency: 1,
     timeoutSeconds: 540,
   },
-  async (event) => {
+  withSentry(async (event) => {
     const data = event.data?.data();
     if (data !== undefined) {
       const result = await runReplayCommand(
@@ -164,13 +168,13 @@ export const replayCommand = onDocumentCreatedWithAuthContext(
         logger.info('Replay command refused', { id: event.params.id, result });
       }
     }
-  }
+  })
 );
 
 /** An expired or deleted replay takes its blob and reports along. */
 export const cleanReplay = onDocumentDeleted(
   { document: 'replays/{id}', memory: '256MiB', cpu: 'gcf_gen1' },
-  (event) => deleteReplayChildren(db(), event.params.id)
+  withSentry((event) => deleteReplayChildren(db(), event.params.id))
 );
 
 /**
@@ -182,10 +186,12 @@ export const cleanReplay = onDocumentDeleted(
 export const deletePlayerReplays = v1
   .region(REGION)
   .auth.user()
-  .onDelete(async (user) => {
-    const counts = await forgetPlayerReplays(db(), user.uid, Date.now());
-    logger.info('Replays of a deleted account', { uid: user.uid, ...counts });
-  });
+  .onDelete(
+    withSentry(async (user) => {
+      const counts = await forgetPlayerReplays(db(), user.uid, Date.now());
+      logger.info('Replays of a deleted account', { uid: user.uid, ...counts });
+    })
+  );
 
 /**
  * A deleted account leaves its profile, progress, friends and the other
@@ -195,13 +201,15 @@ export const deletePlayerReplays = v1
 export const deletePlayerData = v1
   .region(REGION)
   .auth.user()
-  .onDelete(async (user) => {
-    const erased = await deletePlayerSocial(db(), realtime, user.uid);
-    logger.info('Personal data of a deleted account', {
-      uid: user.uid,
-      ...erased,
-    });
-  });
+  .onDelete(
+    withSentry(async (user) => {
+      const erased = await deletePlayerSocial(db(), realtime, user.uid);
+      logger.info('Personal data of a deleted account', {
+        uid: user.uid,
+        ...erased,
+      });
+    })
+  );
 
 /**
  * A deleted account leaves the boards, a banned Google account its
@@ -211,15 +219,20 @@ export const deletePlayerBoards = v1
   .region(REGION)
   .runWith({ secrets: [BAN_TOMBSTONE_KEY] })
   .auth.user()
-  .onDelete(async (user) => {
-    const deleted = await deleteAccount(
-      db(),
-      user.uid,
-      { tombstone: tombstoneId(BAN_TOMBSTONE_KEY.value(), user), realtime },
-      Date.now()
-    );
-    logger.info('Board data of a deleted account', { uid: user.uid, deleted });
-  });
+  .onDelete(
+    withSentry(async (user) => {
+      const deleted = await deleteAccount(
+        db(),
+        user.uid,
+        { tombstone: tombstoneId(BAN_TOMBSTONE_KEY.value(), user), realtime },
+        Date.now()
+      );
+      logger.info('Board data of a deleted account', {
+        uid: user.uid,
+        deleted,
+      });
+    })
+  );
 
 /**
  * A new account is counted, a Google sign-up checked - see `countAccount`.
@@ -230,25 +243,27 @@ export const countAccount = v1
   .region(REGION)
   .runWith({ secrets: [BAN_TOMBSTONE_KEY] })
   .auth.user()
-  .onCreate(async (user) => {
-    if ((await userRecord(user.uid)) === null) {
-      return;
-    }
-    const created = user.metadata.creationTime;
-    const banned = await countAccountOf(
-      db(),
-      realtime,
-      user.uid,
-      {
-        createdAt: created ? Date.parse(created) : null,
-        tombstone: tombstoneId(BAN_TOMBSTONE_KEY.value(), user),
-      },
-      Date.now()
-    );
-    if (banned) {
-      logger.info('A new account met its ban tombstone', { uid: user.uid });
-    }
-  });
+  .onCreate(
+    withSentry(async (user) => {
+      if ((await userRecord(user.uid)) === null) {
+        return;
+      }
+      const created = user.metadata.creationTime;
+      const banned = await countAccountOf(
+        db(),
+        realtime,
+        user.uid,
+        {
+          createdAt: created ? Date.parse(created) : null,
+          tombstone: tombstoneId(BAN_TOMBSTONE_KEY.value(), user),
+        },
+        Date.now()
+      );
+      if (banned) {
+        logger.info('A new account met its ban tombstone', { uid: user.uid });
+      }
+    })
+  );
 
 /**
  * Auth, loaded on first use only: the auth stack is heavy, and most
@@ -355,7 +370,7 @@ export const adminCommand = onDocumentCreatedWithAuthContext(
     timeoutSeconds: 540,
     secrets: [BAN_TOMBSTONE_KEY],
   },
-  async (event) => {
+  withSentry(async (event) => {
     const data = event.data?.data();
     if (data !== undefined) {
       const result = await runAdminCommand(
@@ -367,7 +382,7 @@ export const adminCommand = onDocumentCreatedWithAuthContext(
       );
       logger.info('Admin command', { id: event.params.id, result });
     }
-  }
+  })
 );
 
 /**
@@ -381,7 +396,7 @@ export const rankProgress = onDocumentWritten(
     cpu: 'gcf_gen1',
     secrets: [BAN_TOMBSTONE_KEY],
   },
-  async (event) => {
+  withSentry(async (event) => {
     // Settings and other keys share the collection; only progress counts.
     const after = event.data?.after;
     if (event.params.key !== PROGRESS_KEY || after?.exists !== true) {
@@ -390,7 +405,7 @@ export const rankProgress = onDocumentWritten(
     const createdAt = after.createTime?.toMillis() ?? Date.now();
     await checkLink(event.params.uid, Date.now());
     await countProgress(db(), event.params.uid, after.data() ?? {}, createdAt);
-  }
+  })
 );
 
 /**
@@ -406,7 +421,7 @@ export const rankProgress = onDocumentWritten(
  */
 export const rankReplay = onDocumentWritten(
   { document: 'replays/{id}', memory: '256MiB', cpu: 'gcf_gen1', retry: true },
-  async (event) => {
+  withSentry(async (event) => {
     const id = event.params.id;
     const at = Date.parse(event.time);
     if (givesUp('rankReplay', id, event.time, Date.now())) {
@@ -444,7 +459,7 @@ export const rankReplay = onDocumentWritten(
       const reason = await rankEndless(db(), id, replay, at);
       logger.info('Endless match ranked', { id, reason });
     }
-  }
+  })
 );
 
 /** A board's top document, one rebuild at a time. */
@@ -461,7 +476,7 @@ export const rebuildTop = onDocumentWritten(
     // entry in the top document of a board nothing writes to any more.
     retry: true,
   },
-  async (event) => {
+  withSentry(async (event) => {
     await rebuildTopOf(
       db(),
       event.params.boardId,
@@ -469,7 +484,7 @@ export const rebuildTop = onDocumentWritten(
       event.data?.after.data(),
       event.data?.before.data()
     );
-  }
+  })
 );
 
 /**
@@ -479,7 +494,7 @@ export const rebuildTop = onDocumentWritten(
  */
 export const boardProfileChanged = onDocumentWritten(
   { document: 'profiles/{uid}', memory: '256MiB', cpu: 'gcf_gen1' },
-  async (event) => {
+  withSentry(async (event) => {
     const { uid } = event.params;
     const before = event.data?.before.data();
     const after = event.data?.after.data();
@@ -487,7 +502,7 @@ export const boardProfileChanged = onDocumentWritten(
       relabelEntries(db(), uid, before, after),
       publicProfileChanged(db(), uid, before, after, Date.parse(event.time)),
     ]);
-  }
+  })
 );
 
 /**
@@ -506,10 +521,10 @@ export const hourly = HOURLY_ON
         maxInstances: 1,
         retryCount: 0,
       },
-      async () => {
+      withSentry(async () => {
         const result = await runHourly(db(), Date.now(), accountInfo, realtime);
         logger.info('Hourly run', result);
-      }
+      })
     )
   : undefined;
 
@@ -529,10 +544,10 @@ export const featureBest = FEATURE_BEST_ON
         maxInstances: 1,
         retryCount: 0,
       },
-      async () => {
+      withSentry(async () => {
         const result = await pickBest(db(), Date.now(), accountInfo);
         logger.info('Gallery pick', result);
-      }
+      })
     )
   : undefined;
 
@@ -552,6 +567,8 @@ export const publicSite = onRequest(
       res.status(page.status).set(page.headers).send(page.body);
     } catch (error) {
       logger.error('publicSite failed', { path: req.path, error });
+      // Before the answer: the instance may be frozen once it is sent.
+      await reportError(error);
       res.status(500).set('Cache-Control', 'no-store').send('');
     }
   }
@@ -572,7 +589,7 @@ function mirrorOf(list: MirroredList) {
       cpu: 'gcf_gen1',
       retry: true,
     },
-    async (event) => {
+    withSentry(async (event) => {
       const path = `players/${event.params.owner}/${list}/${event.params.other}`;
       if (givesUp('mirrorListing', path, event.time, Date.now())) {
         return;
@@ -584,7 +601,7 @@ function mirrorOf(list: MirroredList) {
         event.params.owner,
         event.params.other
       );
-    }
+    })
   );
 }
 
@@ -609,7 +626,7 @@ export const guestCleanup = GUEST_CLEANUP_ON
         maxInstances: 1,
         retryCount: 0,
       },
-      async () => {
+      withSentry(async () => {
         const now = Date.now();
         const result = await sweepGuests(
           {
@@ -628,7 +645,7 @@ export const guestCleanup = GUEST_CLEANUP_ON
           now
         );
         logger.info('Idle guests deleted', result);
-      }
+      })
     )
   : undefined;
 
@@ -639,12 +656,12 @@ export const declaredMatch = onDocumentCreated(
     memory: '256MiB',
     cpu: 'gcf_gen1',
   },
-  async (event) => {
+  withSentry(async (event) => {
     await trackDeclaredMatch(
       db(),
       event.params.uid,
       event.params.attemptId,
       Date.now()
     );
-  }
+  })
 );

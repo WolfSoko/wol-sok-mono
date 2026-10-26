@@ -83,3 +83,12 @@ export const GUEST_CLEANUP_ON = true;
 
 /** How many days a guest account may go unused before it is deleted. */
 export const GUEST_IDLE_DAYS = 90;
+
+/**
+ * Where the functions' error reports go: the Sentry project
+ * `bacteria-wars-functions` (owner's decision of 2026-10-26). A DSN is
+ * public client config, not a secret; `error-reports.ts` uses it only in a
+ * deployed function.
+ */
+export const SENTRY_DSN =
+  'https://9d093973267967ca62b97a4c25aeb276@o1384048.ingest.us.sentry.io/4512322908651520';

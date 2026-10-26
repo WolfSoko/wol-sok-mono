@@ -10,11 +10,12 @@ const read = (path: string) =>
 describe('the deployed package.json', () => {
   // Cloud Build installs these for the deploy (`npm install --omit dev`):
   // the bundle takes them as they are in the workspace, and nothing else.
-  it('names the Firebase packages at the versions the workspace builds with', () => {
+  it('names the Firebase packages and Sentry at the versions the workspace builds with', () => {
     const own = read('../package.json').dependencies ?? {};
     const root = read('../../../package.json');
     const workspace = { ...root.dependencies, ...root.devDependencies };
     expect(Object.keys(own).sort()).toEqual([
+      '@sentry/node',
       'firebase-admin',
       'firebase-functions',
     ]);
