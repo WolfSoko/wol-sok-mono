@@ -20,6 +20,7 @@ import {
 } from '../colony-renderer';
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
 import { GpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
+import { rendererOf } from '../../gl/renderer';
 import { Motes } from '../motes';
 import {
   bindTexture,
@@ -307,6 +308,11 @@ export class GlArenaPainter implements ArenaPainter {
     options: GpuSimulationOptions = {}
   ): GpuSimulation {
     return new GpuSimulation(this.gl, balance, random, options);
+  }
+
+  /** The GPU and driver this painter's context renders with. */
+  public renderer(): string {
+    return rendererOf(this.gl);
   }
 
   /**
