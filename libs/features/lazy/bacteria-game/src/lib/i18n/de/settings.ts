@@ -53,7 +53,7 @@ export const settings: Translation<typeof en> = {
     title: 'Matches',
     recordLocal: 'Matches gegen den Computer aufzeichnen',
     recordLocalNote:
-      'Mit „Meine Matches speichern“ werden sie in „Meine Matches“ aufbewahrt: 30 Tage in der Cloud, ohne sie auf diesem Gerät.',
+      'Mit „Meine Matches speichern“ werden sie in „Meine Matches“ aufbewahrt: 30 Tage in der Cloud oder, ohne Cloud, auf diesem Gerät.',
     saveMatches: 'Meine Matches speichern',
     saveMatchesNote: 'Online-Matches werden immer aufbewahrt.',
   },
