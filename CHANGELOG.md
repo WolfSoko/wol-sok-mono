@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.107.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.106.0...v74.107.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-game:** my matches, the replay viewer, /watch and cloud replays ([#2678](https://github.com/WolfSoko/wol-sok-mono/issues/2678)) ([de5c1fd](https://github.com/WolfSoko/wol-sok-mono/commit/de5c1fdbc33ef4b0127de89d45f1793d916de993))
+
+### Chore
+
+* **release:** publish ([5be5670](https://github.com/WolfSoko/wol-sok-mono/commit/5be56708ded3a30662f9f3b7b88045155a55f7ce))
+
 ## [74.106.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.105.0...v74.106.0) (2026-10-25)
 
 ### Features
