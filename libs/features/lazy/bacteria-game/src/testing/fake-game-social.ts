@@ -228,7 +228,11 @@ export class FakeGamePresence implements GamePresence {
     ReadonlyMap<string, PresenceState>
   >(new Map());
 
+  /** Every player whose status was asked for, in order. */
+  public readonly watched: string[] = [];
+
   public watch(uid: string): Observable<PresenceState | null> {
+    this.watched.push(uid);
     return this.states.pipe(map((states) => states.get(uid) ?? null));
   }
 
