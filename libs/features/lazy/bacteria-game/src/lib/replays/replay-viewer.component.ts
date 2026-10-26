@@ -24,8 +24,8 @@ import { prefersReducedMotion } from '../reduced-motion';
 import {
   DEFAULT_SCREEN_RESOLUTION,
   detailScale,
-  ONLINE_SIM_RESOLUTION,
   renderScale,
+  simResolutionOf,
   simScale,
 } from '../state/arena-size';
 import { getLevel, levelMap, levelSize } from '../state/levels';
@@ -177,23 +177,17 @@ export class ReplayViewerComponent {
         };
   });
 
+  /** The arena laid out on the replay's own grid, as it was played. */
   protected readonly layout = computed((): ArenaLayout => {
     const { width, height, levelId } = this.replay().header;
     const size = levelSize(getLevel(levelId));
+    const sim = simResolutionOf(width, size);
     return {
       width,
       height,
-      scale: renderScale(
-        ONLINE_SIM_RESOLUTION,
-        DEFAULT_SCREEN_RESOLUTION,
-        size
-      ),
-      detail: detailScale(
-        ONLINE_SIM_RESOLUTION,
-        DEFAULT_SCREEN_RESOLUTION,
-        size
-      ),
-      unit: simScale(ONLINE_SIM_RESOLUTION),
+      scale: renderScale(sim, DEFAULT_SCREEN_RESOLUTION, size),
+      detail: detailScale(sim, DEFAULT_SCREEN_RESOLUTION, size),
+      unit: simScale(sim),
     };
   });
   protected readonly theme = computed(() =>

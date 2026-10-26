@@ -72,6 +72,11 @@ function calls, and server-verified match results.
   (Changed by ADR 0012: daily-level and endless matches started as ranked
   attempts always run on the CPU and are recorded and uploaded, whatever
   this setting says.)
+  (Changed by the owner's decision of 2026-10-26: a local match is
+  recorded on every simulation resolution, to watch it again on the
+  device. Off the online grid it keeps the simulation the device picks -
+  a float GPU match is not recorded - and it is never uploaded; only a
+  replay on the online grid is stored and checked.)
 - **"Save my matches" (on by default)** decides whether recorded matches
   are uploaded. Off, a replay stays on the device until the next match.
   (Changed by ADR 0012: it governs local matches only. Online matches are

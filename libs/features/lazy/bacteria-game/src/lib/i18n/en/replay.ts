@@ -9,6 +9,8 @@ export const replay = {
     savedDevice: 'Replay kept on this device, in My matches',
     notSaved:
       'Replay not saved: "Save my matches" is off. You can watch it until the next match.',
+    notSavedGrid:
+      'Replay not saved: matches are saved only at simulation resolution "Normal". You can watch it until the next match.',
     unconfirmed:
       'Could not confirm the replay was saved. Look for it in My matches later.',
     /** Once, after the first saved match against the computer. */

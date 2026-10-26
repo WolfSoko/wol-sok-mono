@@ -55,6 +55,7 @@ import { randomSeed } from './geometry';
 import { MatchOutcome } from './win-conditions';
 import { MatchPlan, planMatch } from './match-setup';
 import {
+  onOnlineGrid,
   Replay,
   ReplayExtras,
   replayOf,
@@ -115,7 +116,10 @@ const LOCAL_RECORDED_SEATS: ReadonlySet<number> = new Set([0]);
 
 /** A recorded match (ADR 0011), as the last match left it. */
 export interface MatchRecording {
-  /** The replay - version 2 to 4, on a ruleset and the online grid. */
+  /**
+   * The replay - version 2 to 5, on a ruleset. Only one on the online grid
+   * is handed over to be kept; another one is for watching again.
+   */
   replay: Replay;
   /** The client's `replayScore` of it, 0-100. */
   hint: number;
@@ -473,8 +477,8 @@ export class GameStateService {
   /**
    * The recording of a match that has just ended, handed over to be kept
    * - online and ranked always, a local one with "Save my matches" on (ADR
-   * 0011, 0012).
-   * Null for a match that was not recorded.
+   * 0011, 0012), and only on the online grid, the one a stored replay is
+   * checked on. Null for a match that was not recorded.
    */
   private recording(outcome: MatchOutcome): MatchRecording | null {
     const recordedAs = this.recordedAs;
@@ -518,7 +522,10 @@ export class GameStateService {
     this.lastRecording.set(recording);
     // An online or ranked match is uploaded whatever the settings say.
     const attempt = ranked?.attempt.id;
-    if (savedRegardless(replay.header) || this.replayPrefs.saveMatches) {
+    if (
+      onOnlineGrid(replay.header) &&
+      (savedRegardless(replay.header) || this.replayPrefs.saveMatches)
+    ) {
       this.injector
         .get(GameReplays)
         .submit({
@@ -540,20 +547,16 @@ export class GameStateService {
 
   /**
    * Whether a local match from `plan` is recorded: against the computer,
-   * no ghost, with recording on - and on the online grid of its level, the
-   * one a stored replay is checked on.
+   * no ghost, with recording on - on any grid, though only one on the
+   * online grid is kept.
    */
   private recordsLocal(plan: MatchPlan, ghost: Replay | null): boolean {
-    const level = getLevel(plan.levelId);
-    const grid = arenaSize(ONLINE_SIM_RESOLUTION, levelSize(level));
     return (
       this.replayPrefs.recordLocal &&
       ghost === null &&
       // A training mission's level is no replay's.
-      level.mission === undefined &&
-      plan.mode === 'vs-computer' &&
-      plan.width === grid.width &&
-      plan.height === grid.height
+      getLevel(plan.levelId).mission === undefined &&
+      plan.mode === 'vs-computer'
     );
   }
 
@@ -675,8 +678,13 @@ export class GameStateService {
     this.playerService.init(spawns, {
       ...options,
       onSecond: this.sample,
-      // Recorded on a ruleset, a simulation a replay plays back on.
-      ...(records ? { recordedSeats: LOCAL_RECORDED_SEATS } : {}),
+      // On the online grid recorded on a ruleset, a simulation a replay
+      // plays back on, whatever the device picks. On another grid the
+      // device picks as it would unrecorded: a match the float GPU plays,
+      // which has no ruleset, leaves no recording (see `recording`).
+      ...(records && onOnlineGrid(this.plan)
+        ? { recordedSeats: LOCAL_RECORDED_SEATS }
+        : {}),
     });
   }
 

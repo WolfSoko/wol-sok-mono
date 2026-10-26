@@ -9,6 +9,8 @@ export const replay: Translation<typeof en> = {
     savedDevice: 'Wiederholung auf diesem Gerät behalten, in „Meine Matches“',
     notSaved:
       'Wiederholung nicht gespeichert: „Meine Matches speichern“ ist aus. Du kannst sie bis zum nächsten Match ansehen.',
+    notSavedGrid:
+      'Wiederholung nicht gespeichert: Gespeichert werden nur Matches mit Simulationsauflösung „Normal“. Du kannst sie bis zum nächsten Match ansehen.',
     unconfirmed:
       'Ob die Wiederholung gespeichert wurde, ließ sich nicht bestätigen. Schau später in „Meine Matches“ nach.',
     recordingHint:

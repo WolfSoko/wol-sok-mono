@@ -162,6 +162,21 @@ describe('ReplayNoteComponent', () => {
     expect(page.querySelector('button')).not.toBeNull();
   });
 
+  it('says a match off the online grid was not saved, and why, and offers to watch it', () => {
+    const replay = recordedReplay('petri-dish', 90, 7, 'high');
+    recording().set({ replay, hint: 30, id: null });
+    fixture.detectChanges();
+
+    expect(page.textContent).toContain(
+      'matches are saved only at simulation resolution "Normal"'
+    );
+    expect(page.querySelector('button')).not.toBeNull();
+
+    TestBed.inject(I18nService).setLanguage('de');
+    fixture.detectChanges();
+    expect(page.textContent).toContain('Simulationsauflösung „Normal“');
+  });
+
   it('offers no replay that would not play back', () => {
     const replay = recordedReplay();
     recording().set({

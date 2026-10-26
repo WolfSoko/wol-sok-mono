@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { ArenaViewComponent } from '../arena/arena-view.component';
 import { recordedReplay } from '../../testing/recorded-replay';
 import {
   RecordingPainter,
@@ -72,6 +74,17 @@ describe('ReplayViewerComponent', () => {
 
     expect(button.textContent).toContain('Play');
     expect(page.textContent).toContain('4×');
+  });
+
+  it('lays out a replay on its own grid, not the online one', () => {
+    const { fixture } = view(recordedReplay('petri-dish', 60, 7, 'high'));
+
+    const arena = fixture.debugElement.query(By.directive(ArenaViewComponent))
+      .componentInstance as ArenaViewComponent;
+    // "High": 1.5 cells per base cell, on the canvas of the online grid.
+    expect(arena.layout()).toEqual(
+      expect.objectContaining({ width: 480, height: 270, unit: 1.5, scale: 2 })
+    );
   });
 
   it('says so for a replay it cannot play', () => {
