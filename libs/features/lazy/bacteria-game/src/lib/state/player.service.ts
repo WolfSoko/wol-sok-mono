@@ -1,5 +1,5 @@
 import type { ActiveEffect } from './evolution';
-import { Injectable, inject, signal, untracked } from '@angular/core';
+import { Injectable, computed, inject, signal, untracked } from '@angular/core';
 import { Nutrient } from './bacteria-simulation';
 import { Ruleset, Simulation, SimulationFactory } from './simulation';
 import { intSimulation } from './gpu-int/int-simulation';
@@ -63,9 +63,7 @@ export class PlayerService {
   /** The rulesets this device offers the other one of an online match. */
   private offers: () => readonly Ruleset[] = () => ['cpu'];
   /** The integer GPU passes for an online `gpu-int` match - see `useSimulation`. */
-  private gpuIntFactory: SimulationFactory | null = null;
-  /** True while the integer GPU passes can run here - see {@link gpuIntReady}. */
-  private readonly gpuIntState = signal(false);
+  private readonly gpuIntFactory = signal<SimulationFactory | null>(null);
 
   /**
    * True while this device has the integer GPU passes to play a `gpu-int`
@@ -73,7 +71,7 @@ export class PlayerService {
    * ranked match plays them (ADR 0012, 0015); whether the GPU is trusted
    * is the self-test's word, not this.
    */
-  public readonly gpuIntReady = this.gpuIntState.asReadonly();
+  public readonly gpuIntReady = computed(() => this.gpuIntFactory() !== null);
   private engine = new MatchEngine([], { seed: 0 });
   /** Where each player's joystick is pushed right now, absent while at rest. */
   private sticks = new Map<number, SteeringVector>();
@@ -142,7 +140,9 @@ export class PlayerService {
         // that follows what this device offered at the hello, not what the
         // owner's toggle says now: `IntSimulation` plays live only where
         // the GPU is gone or fails to start. A ranked match likewise.
-        const gpu = devicePicks ? this.simulationFactory : this.gpuIntFactory;
+        const gpu = devicePicks
+          ? this.simulationFactory
+          : untracked(this.gpuIntFactory);
         return gpu === null
           ? sized(intSimulation(balance, random, seed), arena)
           : this.createSimulation(
@@ -337,8 +337,7 @@ export class PlayerService {
     this.fallbackFactory = fallback;
     this.factoryRuleset = rulesets.ruleset;
     this.offers = rulesets.offers;
-    this.gpuIntFactory = rulesets.gpuInt ?? null;
-    this.gpuIntState.set(this.gpuIntFactory !== null);
+    this.gpuIntFactory.set(rulesets.gpuInt ?? null);
     if (factory == null && this.engine.simulation.kind === 'gpu') {
       // It may hold a context that is going away: let it go now.
       this.engine.dispose();
@@ -380,8 +379,7 @@ export class PlayerService {
       this.simulationFactory = this.fallbackFactory;
       this.factoryRuleset = () => 'cpu';
       this.offers = () => ['cpu'];
-      this.gpuIntFactory = null;
-      this.gpuIntState.set(false);
+      this.gpuIntFactory.set(null);
       return sized(
         (fallback ?? this.fallbackFactory)(balance, random, seed),
         arena

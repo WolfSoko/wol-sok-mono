@@ -276,9 +276,7 @@ export class SocialService {
     if (!this.profileLoaded()) {
       throw new Error('The stored profile is not read yet');
     }
-    if (this.moderation.banned()) {
-      throw new Error('The account is suspended');
-    }
+    this.assertNotBanned();
     await this.social.saveProfile(
       uid,
       this.storedProfile() === null ? { ...profile, ...changes } : changes
@@ -428,10 +426,15 @@ export class SocialService {
   private async withWriter<T>(
     task: (social: GameSocial, me: string) => Promise<T>
   ): Promise<T | null> {
+    this.assertNotBanned();
+    return this.withPlayer(task);
+  }
+
+  /** Throws while a ban holds: the rules refuse the player's writes then. */
+  private assertNotBanned(): void {
     if (this.moderation.banned()) {
       throw new Error('The account is suspended');
     }
-    return this.withPlayer(task);
   }
 
   private async withPlayer<T>(

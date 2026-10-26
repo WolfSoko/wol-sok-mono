@@ -2,8 +2,6 @@ import {
   catchError,
   distinctUntilChanged,
   EMPTY,
-  filter,
-  firstValueFrom,
   Observable,
   of,
   shareReplay,
@@ -11,6 +9,7 @@ import {
   switchMap,
 } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
+import { signedIn } from './firestore-values';
 import {
   type GameModeration,
   holdingBans,
@@ -83,9 +82,7 @@ export class FirestoreGameModeration implements GameModeration {
 
   public async dismiss(id: string): Promise<void> {
     const { db, dbSdk } = this.connection;
-    const uid = await firstValueFrom(
-      this.playerIds.pipe(filter((each): each is string => each !== null))
-    );
+    const uid = await signedIn(this.playerIds);
     try {
       await dbSdk.deleteDoc(dbSdk.doc(db, 'players', uid, 'notices', id));
     } catch (error) {

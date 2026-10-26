@@ -1,17 +1,10 @@
 import type { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
-import {
-  catchError,
-  EMPTY,
-  filter,
-  firstValueFrom,
-  map,
-  Observable,
-  of,
-} from 'rxjs';
+import { catchError, EMPTY, firstValueFrom, map, Observable, of } from 'rxjs';
 import { replayToBytes, MAX_PACKED_BYTES } from '../state/replay-pack';
 import type { EndReason } from '../state/win-conditions';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameReplays } from './game-replays';
+import { millisOf, signedIn } from './firestore-values';
 import {
   ARRIVAL_REASONS,
   type ArrivalReason,
@@ -237,9 +230,7 @@ export class FirestoreGameReplays implements GameReplays {
   }
 
   private signedIn(): Promise<string> {
-    return firstValueFrom(
-      this.playerIds.pipe(filter((uid): uid is string => uid !== null))
-    );
+    return signedIn(this.playerIds);
   }
 }
 
@@ -305,20 +296,6 @@ export function listingOf(
       : {}),
     ...(typeof publicId === 'string' ? { publicId } : {}),
   };
-}
-
-/** A Firestore timestamp in ms - null for anything else. */
-function millisOf(value: unknown): number | null {
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    'toMillis' in value &&
-    typeof value.toMillis === 'function'
-  ) {
-    const millis: unknown = value.toMillis();
-    return typeof millis === 'number' ? millis : null;
-  }
-  return null;
 }
 
 /** The reason of the board the kind ranks on - null for none it knows. */

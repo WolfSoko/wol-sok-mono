@@ -11,6 +11,7 @@ import {
 } from 'rxjs';
 import { BAN_REASONS, type BanReason } from '../state/admin-commands';
 import { isObject } from '../state/is-object';
+import { millisOf } from './firestore-values';
 
 /**
  * A ban holding a player (ADR 0012), as they may read it: since when, until
@@ -74,12 +75,12 @@ export function parseBan(value: unknown): PlayerBan | null {
   if (!isObject(value)) {
     return null;
   }
-  const until = value['until'] === null ? null : millisOf(value['until']);
+  const until = value['until'] === null ? null : timeOf(value['until']);
   if (until === undefined) {
     return null;
   }
   return {
-    since: millisOf(value['since']) ?? null,
+    since: timeOf(value['since']) ?? null,
     until,
     reason: banReasonOf(value['reason']),
   };
@@ -126,14 +127,14 @@ export function parseNotice(id: string, value: unknown): PlayerNotice | null {
     return null;
   }
   const type = NOTICE_TYPES.find((known) => known === value['type']);
-  const at = millisOf(value['at']);
+  const at = timeOf(value['at']);
   if (type === undefined || at === undefined) {
     return null;
   }
   if (type !== 'banned') {
     return { id, type, at };
   }
-  const until = value['until'] === null ? null : millisOf(value['until']);
+  const until = value['until'] === null ? null : timeOf(value['until']);
   const reason = banReasonOf(value['reason']);
   return {
     id,
@@ -206,18 +207,6 @@ function banReasonOf(value: unknown): BanReason | null {
 }
 
 /** A Firestore timestamp (or ms) in ms - undefined for anything else. */
-function millisOf(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    'toMillis' in value &&
-    typeof value.toMillis === 'function'
-  ) {
-    const millis: unknown = value.toMillis();
-    return typeof millis === 'number' ? millis : undefined;
-  }
-  return undefined;
+function timeOf(value: unknown): number | undefined {
+  return millisOf(value, { numbers: true }) ?? undefined;
 }
