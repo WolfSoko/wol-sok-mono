@@ -95,7 +95,9 @@ storage until then. Settings stay with the device either way.
   it answers `ranking` while the boards may still rank the match (the
   screen says it can be deleted later) and `not-found` for one that no
   longer names the player (read as deleted). On this device both delete
-  for real. The privacy page (`apps/bacteria-game-remote/src/app/privacy`)
+  for real. "Delete" takes two taps, like the HUD's "Give up": the first
+  arms that match's button for `DELETE_ARMED_MS` (3 s), the second
+  deletes. The privacy page (`apps/bacteria-game-remote/src/app/privacy`)
   says what each does: keep it in step. "My matches" (`replays/my-matches.component.ts`)
   and the match just played (`replay-screen.component.ts`) are stage
   screens; specs use `FakeGameReplays` (`cloud`, `change` and

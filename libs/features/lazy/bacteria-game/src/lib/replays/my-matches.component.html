@@ -69,18 +69,32 @@
                     <mat-icon>visibility_off</mat-icon>
                   </button>
                 }
-                <button
-                  mat-icon-button
-                  type="button"
-                  [disabled]="busy() !== null"
-                  [attr.aria-label]="
-                    'replay.matches.remove'
-                      | t: { level: (row.level | gameText) }
-                  "
-                  (click)="delete(row)"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
+                @if (deleteArmed() === row.replay.id) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    class="confirm-delete"
+                    [disabled]="busy() !== null"
+                    [attr.aria-label]="'replay.matches.confirmRemove' | t"
+                    (click)="delete(row)"
+                  >
+                    <mat-icon>delete_forever</mat-icon>
+                    {{ "replay.matches.confirmRemove" | t }}
+                  </button>
+                } @else {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [disabled]="busy() !== null"
+                    [attr.aria-label]="
+                      'replay.matches.remove'
+                        | t: { level: (row.level | gameText) }
+                    "
+                    (click)="delete(row)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
               </span>
             </mat-list-item>
             @if (busy() === row.replay.id) {

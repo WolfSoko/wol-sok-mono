@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   output,
   signal,
@@ -45,6 +46,12 @@ import { ReplayViewerComponent } from './replay-viewer.component';
  */
 export const COMMAND_TIMEOUT_MS = 30_000;
 
+/**
+ * How long a first tap on "Delete" waits for the second one that deletes,
+ * like the HUD's "Give up".
+ */
+export const DELETE_ARMED_MS = 3_000;
+
 /** A stored replay as the list shows it. */
 interface MatchRow {
   replay: ReplayListing;
@@ -67,6 +74,8 @@ interface MatchRow {
  * list, and keeps it anonymised for the statistics until it expires - not
  * while the boards may still rank it, ADR 0012); on this device, without
  * the cloud, the newest 20 are kept and a match can be deleted for real.
+ * Either way "Delete" takes two taps: the first arms that match's button
+ * for {@link DELETE_ARMED_MS}, the second deletes.
  */
 @Component({
   selector: 'feat-lazy-bac-game-my-matches',
@@ -130,6 +139,13 @@ export class MyMatchesComponent {
   protected readonly notice = signal<TranslationKey | null>(null);
   /** The replay being watched, null for the list. */
   protected readonly watching = signal<Replay | null>(null);
+  /** The replay whose "Delete" waits for its second tap - null for none. */
+  protected readonly deleteArmed = signal<string | null>(null);
+  private deleteTimer: ReturnType<typeof setTimeout> | undefined;
+
+  public constructor() {
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.deleteTimer));
+  }
 
   /** Loads a stored replay and plays it back. */
   protected async open(row: MatchRow): Promise<void> {
@@ -167,11 +183,23 @@ export class MyMatchesComponent {
   }
 
   /**
-   * "Delete": in the cloud `forget`, which takes the player out of the
-   * match, so it leaves the list; on this device `remove`, which deletes it.
+   * "Delete", in two taps: the first arms the match's button for
+   * {@link DELETE_ARMED_MS} (another match's tap arms that one instead),
+   * the second deletes - in the cloud by `forget`, which takes the player
+   * out of the match, so it leaves the list; on this device by `remove`.
    */
-  protected delete(row: MatchRow): Promise<void> {
-    return this.command(row, this.cloud ? 'forget' : 'remove');
+  protected delete(row: MatchRow): void {
+    clearTimeout(this.deleteTimer);
+    if (this.deleteArmed() !== row.replay.id) {
+      this.deleteArmed.set(row.replay.id);
+      this.deleteTimer = setTimeout(
+        () => this.deleteArmed.set(null),
+        DELETE_ARMED_MS
+      );
+      return;
+    }
+    this.deleteArmed.set(null);
+    void this.command(row, this.cloud ? 'forget' : 'remove');
   }
 
   /** Sends a command the server (or this device) carries out, and says what came of it. */

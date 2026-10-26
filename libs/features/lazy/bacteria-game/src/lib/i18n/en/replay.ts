@@ -28,6 +28,8 @@ export const replay = {
     unreadable: 'This replay could not be loaded.',
     watch: 'Watch {level}',
     remove: 'Delete {level}',
+    /** The armed "Delete", waiting for its second tap. */
+    confirmRemove: 'Tap again to delete',
     keepOut: 'Keep {level} out of the public gallery',
     removed: 'Match deleted.',
     keptOut: 'This match stays out of the public gallery.',

@@ -28,6 +28,7 @@ export const replay: Translation<typeof en> = {
     unreadable: 'Diese Wiederholung konnte nicht geladen werden.',
     watch: '{level} ansehen',
     remove: '{level} löschen',
+    confirmRemove: 'Zum Löschen noch einmal tippen',
     keepOut: '{level} aus der öffentlichen Galerie heraushalten',
     removed: 'Match gelöscht.',
     keptOut: 'Dieses Match bleibt aus der öffentlichen Galerie heraus.',

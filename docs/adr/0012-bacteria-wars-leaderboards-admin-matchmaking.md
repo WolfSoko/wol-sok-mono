@@ -1173,7 +1173,9 @@ As built in the client and on the privacy page (2026-10-26):
   match; `not-found` reads as deleted too, since the match no longer
   names the player; `ranking` shows "can be deleted once the leaderboard
   has counted it". "Keep out of the gallery" (`remove`) stays beside it
-  for a match not yet kept out.
+  for a match not yet kept out. "Delete" takes two taps (owner's
+  decision), in the cloud and on the device alike: the first arms that
+  match's button for 3 s ("Tap again to delete"), the second deletes.
 - **The online status** is read only for a mutual friend
   (`SocialService.friends` switches the watch on `watchListedBy`), and
   `RtdbGamePresence.watch` listens again after a refusal, 5 times, 5 s
