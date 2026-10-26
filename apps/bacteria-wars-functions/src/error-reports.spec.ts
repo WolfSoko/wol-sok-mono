@@ -6,6 +6,7 @@ import {
   RELEASE,
   runsDeployed,
   scrubEvent,
+  scrubIds,
   withSentry,
 } from './error-reports';
 import { SENTRY_DSN } from './config';
@@ -99,6 +100,23 @@ describe('error reports', () => {
       });
       await expect(handler()).rejects.toThrow('sync');
       expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('scrubIds', () => {
+    it('replaces a uid or an auto-id without a digit too, not numbers or long names', () => {
+      expect(
+        scrubIds(
+          'players/AbcdefGhijkLmnopQrstuVwxyzAb/friends/abcdefGhijkLmnopQrst'
+        )
+      ).toBe('players/<id>/friends/<id>');
+      expect(
+        scrubIds(
+          '12345678901234567890 ExpressionChangedAfterItHasBeenCheckedError'
+        )
+      ).toBe(
+        '12345678901234567890 ExpressionChangedAfterItHasBeenCheckedError'
+      );
     });
   });
 

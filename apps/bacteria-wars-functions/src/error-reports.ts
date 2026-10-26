@@ -53,10 +53,12 @@ export function runsDeployed(env: NodeJS.ProcessEnv): boolean {
 
 /**
  * Account and document ids, as Firestore errors name them in a path
- * (`players/<uid>/…`): 20 or more letters and digits, with at least one of
- * each.
+ * (`players/<uid>/…`): 20 or more letters and digits with at least one of
+ * each, or exactly a uid's 28 or an auto-id's 20 of them, which may hold no
+ * digit.
  */
-const ID = /\b(?=[A-Za-z0-9]*\d)(?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]{20,}\b/g;
+const ID =
+  /\b(?=[A-Za-z0-9]*[A-Za-z])(?:(?=[A-Za-z0-9]*\d)[A-Za-z0-9]{20,}|[A-Za-z0-9]{28}|[A-Za-z0-9]{20})\b/g;
 
 /** The text with every id-like token replaced by `<id>`. */
 export function scrubIds(text: string): string {

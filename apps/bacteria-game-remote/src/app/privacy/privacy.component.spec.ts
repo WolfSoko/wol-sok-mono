@@ -378,6 +378,12 @@ describe('PrivacyComponent', () => {
     // Deleting the account is section 11 now.
     expect(de).toContain('wie in Abschnitt 11');
     expect(en).toContain('in section 11');
+    // Every reference to section 10 means the error reports, its only
+    // content; one that says how to delete data points to 11.
+    for (const text of [de, en]) {
+      expect(text).not.toMatch(/(Abschnitt|section) 10\s+(explains|steht)/i);
+    }
+    expect(en).toContain('Section 11 explains how to have it deleted');
   });
 
   it('has its own title while open', async () => {
