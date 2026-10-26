@@ -27,6 +27,9 @@ import { MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 import { GameAccount } from '../storage/game-account';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
+import { AccountChipComponent } from '../guest/account-chip.component';
+import { GuestBannerComponent } from '../guest/guest-banner.component';
+import { GuestNotice } from '../guest/guest-notice.service';
 import { InstallBannerComponent } from '../support/install-banner.component';
 import { InstallOffer } from '../support/install-offer.service';
 import { ADMIN_PATH } from '../support/legal-links';
@@ -54,9 +57,11 @@ export type MenuPage =
  *
  * A dumb component - it shows what it is given and reports what the player
  * picks. Only the way to support the game it finds itself, as it differs
- * between the web and the Play Store app - and, on the game's own site, the
- * offer to install it, the legal lines under everything and, for the
- * owner, the way to the admin area.
+ * between the web and the Play Store app; who plays, with a guest's way to
+ * sign in and, from the third day, the notice that an unused guest account
+ * is deleted; and, on the game's own site, the offer to install it, the
+ * legal lines under everything and, for the owner, the way to the admin
+ * area.
  */
 @Component({
   selector: 'feat-lazy-bac-game-main-menu',
@@ -70,6 +75,8 @@ export type MenuPage =
     GhostChallengeComponent,
     DnaHelixComponent,
     InstallBannerComponent,
+    AccountChipComponent,
+    GuestBannerComponent,
     SiteFooterComponent,
     TranslatePipe,
     GameTextPipe,
@@ -134,6 +141,8 @@ export class MainMenuComponent {
 
   protected readonly support = inject(GameSupport);
   protected readonly installOffer = inject(InstallOffer);
+  /** The guest's notice, which the install offer waits behind. */
+  protected readonly guestNotice = inject(GuestNotice);
   /** True on the game's own site, where the support options are provided. */
   protected readonly onSite = inject(GAME_SUPPORT) !== null;
   private readonly account = inject(GameAccount);

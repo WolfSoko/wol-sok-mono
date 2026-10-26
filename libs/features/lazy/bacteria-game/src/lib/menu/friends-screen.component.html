@@ -5,6 +5,7 @@
 <section class="friends" [attr.aria-label]="'social.friends.region' | t">
   @if (social.available) {
     <p class="intro">{{ "social.friends.intro" | t }}</p>
+    <feat-lazy-bac-game-guest-sign-in [note]="'profile.guest.friends'" />
     <feat-lazy-bac-game-friends
       [canChallenge]="canChallenge()"
       (challenge)="challenge.emit($event)"

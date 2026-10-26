@@ -55,7 +55,7 @@ async function expectAttemptsLeft(
 }
 
 async function openProfile(page: Page): Promise<AccountPo> {
-  await page.getByRole('button', { name: 'Profile' }).click();
+  await page.getByRole('button', { name: 'Profile', exact: true }).click();
   const account = new AccountPo(page);
   await expect(account.account).toBeVisible();
   return account;

@@ -8,6 +8,8 @@ import { I18nService } from '../i18n/i18n.service';
 import { defaultProfile } from '../social/profile';
 import { FriendView } from '../social/social.service';
 import { GameAccount } from '../storage/game-account';
+import { LateGameStorage } from '../../testing/late-game-storage';
+import { GameStorage } from '../storage/game-storage';
 import { GameCloud } from '../storage/game-cloud';
 import { FriendsScreenComponent } from './friends-screen.component';
 
@@ -22,6 +24,8 @@ describe('FriendsScreenComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: new FakeGameAccount('ada') },
+        // The guest's sign-in line waits for the progress.
+        { provide: GameStorage, useValue: new LateGameStorage() },
         {
           provide: GameCloud,
           useValue: {

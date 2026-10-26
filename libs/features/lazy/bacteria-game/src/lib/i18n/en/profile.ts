@@ -52,5 +52,24 @@ export const profile = {
     signedInAs: 'Signed in as',
     googleUser: 'Google user',
     signOut: 'Sign out',
+    deletion:
+      'A guest account is deleted when the game was not opened for {days} days.',
+  },
+  guest: {
+    title: 'Keep your progress',
+    welcomeBack: 'Welcome back!',
+    note: 'You play as a guest. If you do not open the game for {days} days, your guest account goes, and with it your progress, your friends and your places on the leaderboards. Sign in with Google and all of it stays, on every device.',
+    later: 'Later',
+    chip: 'Sign in',
+    chipHint: 'You play as a guest: sign in with Google',
+    profile: 'Your profile: {name}',
+    friends:
+      'Your friends belong to your guest account. Sign in with Google to keep them.',
+    boards:
+      'Your places on the leaderboards belong to your guest account. Sign in with Google to keep them.',
+    matches:
+      'Your saved matches belong to your guest account. Sign in with Google to keep them.',
+    success:
+      'Well played! Sign in with Google to keep what you earned, on every device.',
   },
 };
