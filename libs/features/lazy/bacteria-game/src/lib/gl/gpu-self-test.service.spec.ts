@@ -171,6 +171,21 @@ describe('GpuSelfTestService', () => {
     expect(service.result()).toEqual({ ok: true, renderer: DEVICE.renderer });
   });
 
+  it("gives no verdict for another GPU than the arena's", () => {
+    const service = setUp();
+    service.sawRenderer('Intel UHD 620');
+    check(service);
+    storage.flush();
+    // The test ran on the Adreno: it says nothing about the arena's GPU.
+    expect(runs).toBe(1);
+    expect(service.result()).toBeNull();
+    service.sawRenderer(DEVICE.renderer);
+    expect(service.result()).toEqual(outcome);
+    // A fresh canvas on another GPU leaves the verdict behind.
+    service.sawRenderer('Intel UHD 620');
+    expect(service.result()).toBeNull();
+  });
+
   it('asks only once per page session', () => {
     const service = setUp();
     check(service);

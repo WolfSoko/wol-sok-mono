@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { take } from 'rxjs';
 import { BALANCE_VERSION } from '../state/game-balance';
 import { GPU_SELF_TEST_VERSION } from '../state/gpu-int/self-test-golden';
@@ -102,17 +102,27 @@ export class GpuSelfTestService {
   private readonly verdict = signal<GpuSelfTestResult | null>(null);
   private started = false;
   /** The GPU the arena's WebGL2 context renders with, once it said. */
-  private arenaRenderer: string | null = null;
+  private readonly arenaRenderer = signal<string | null>(null);
 
-  /** The verdict, null until there is one. */
-  public readonly result = this.verdict.asReadonly();
+  /**
+   * The verdict, null until there is one - and null while it speaks for
+   * another GPU than the arena's (a context on another GPU, or the arena
+   * moved to one), since only the GPU it ran on earned it.
+   */
+  public readonly result = computed(() => {
+    const verdict = this.verdict();
+    const arena = this.arenaRenderer();
+    return verdict != null && arena != null && verdict.renderer !== arena
+      ? null
+      : verdict;
+  });
 
   /**
    * Tells the GPU the arena's WebGL2 context renders with, so the check
    * needs no context of its own to learn it.
    */
   public sawRenderer(renderer: string): void {
-    this.arenaRenderer = renderer;
+    this.arenaRenderer.set(renderer);
   }
 
   /**
@@ -121,7 +131,7 @@ export class GpuSelfTestService {
    */
   public check(
     run: () => GpuSelfTestResult = runGpuSelfTest,
-    device: () => SelfTestDevice = () => thisDevice(this.arenaRenderer),
+    device: () => SelfTestDevice = () => thisDevice(this.arenaRenderer()),
     schedule: (task: () => void) => void = whenIdle,
     now: () => number = Date.now
   ): void {
