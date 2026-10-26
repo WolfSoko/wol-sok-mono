@@ -297,9 +297,23 @@ describe('replayCommands', () => {
   const add = (writer: string, data: object, token: object = {}) =>
     setDoc(doc(db(writer, token), 'replayCommands/c1'), data);
 
-  it('takes `remove` from any player, in their own name', async () => {
-    await assertSucceeds(add('ada', command('ada', 'remove')));
-    await assertFails(add('ada', command('bob', 'remove')));
+  it('takes `remove` and `forget` from any player, in their own name', async () => {
+    for (const type of ['remove', 'forget']) {
+      // A new document each: a command is created, never rewritten.
+      const ref = doc(db('ada'), `replayCommands/c-${type}`);
+      await assertFails(setDoc(ref, command('bob', type)));
+      await assertSucceeds(setDoc(ref, command('ada', type)));
+    }
+  });
+
+  it('takes `forget` from a banned player too, as a deletion', async () => {
+    await seed('bans/eve', { until: null });
+    await assertSucceeds(add('eve', command('eve', 'forget')));
+    await assertFails(add('eve', command('eve', 'remove')));
+    await assertFails(
+      add('eve', command('eve', 'forget', { createdAt: Timestamp.now() }))
+    );
+    await assertFails(add('eve', command('eve', 'forget', { extra: 1 })));
   });
 
   it("takes the gallery's types only from the owner", async () => {
@@ -736,6 +750,25 @@ describe('adminCommands', () => {
     await assertFails(hide({ bar: 'yes' }));
     await assertFails(
       send(adminCommand({ type: 'player.unban', args: { bar: true } }))
+    );
+  });
+
+  it('takes the presence backfill without a target, a reason or arguments', async () => {
+    const backfill = (extra: object = {}) => {
+      const { reason: _reason, ...data } = adminCommand({
+        type: 'presence.backfill',
+        target: null,
+        args: {},
+      });
+      return { ...data, ...extra };
+    };
+    // Not destructive: no fresh sign-in needed.
+    await assertSucceeds(send(backfill(), OWNER_TOKEN));
+    await assertSucceeds(send(backfill({ reason: 'after the deploy' })));
+    await assertFails(send(backfill({ target: { uid: 'eve' } })));
+    await assertFails(send(backfill({ args: { all: true } })));
+    await assertFails(
+      send(backfill(), { auth_time: fresh().auth_time }, 'eve')
     );
   });
 

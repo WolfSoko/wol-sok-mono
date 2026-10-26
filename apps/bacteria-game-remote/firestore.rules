@@ -194,19 +194,23 @@ service cloud.firestore {
            exists(/databases/$(database)/documents/players/$(request.auth.uid)/attempts/$(request.resource.data.attempt))));
     }
 
-    // A command on a stored replay: `remove` by any player, the gallery's
-    // types only by the owner. The writer reads it back for the result the
+    // A command on a stored replay: `remove` and `forget` by any player,
+    // the gallery's types only by the owner. `forget` (ADR 0012, owner's
+    // decision of 2026-10-26) takes the player out of the replay, the way
+    // they delete a match in the cloud - so, like every deletion, also
+    // while a ban holds. The writer reads it back for the result the
     // function writes on it.
     match /replayCommands/{id} {
       allow get: if signedIn() && resource.data.uid == request.auth.uid;
-      allow create: if signedIn() && notBanned() &&
+      allow create: if signedIn() &&
+        (notBanned() || request.resource.data.type == 'forget') &&
         request.resource.data.keys().hasOnly(['uid', 'type', 'replayId', 'createdAt', 'expireAt']) &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.replayId is string &&
         request.resource.data.replayId.matches('[A-Za-z0-9_-]{1,64}') &&
         request.resource.data.createdAt == request.time &&
         isCommandExpiry(request.resource.data.expireAt) &&
-        (request.resource.data.type == 'remove' ||
+        (request.resource.data.type in ['remove', 'forget'] ||
           (request.resource.data.type in ['feature', 'unfeature', 'anonymise'] && isAdmin()));
     }
 
@@ -334,7 +338,8 @@ service cloud.firestore {
         isCommandExpiry(data.expireAt) &&
         data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
           'board.hidePlayer', 'board.restore', 'board.verify', 'player.ban',
-          'player.unban', 'stats.refresh', 'stats.recount', 'toggles.set'] &&
+          'player.unban', 'stats.refresh', 'stats.recount', 'toggles.set',
+          'presence.backfill'] &&
         isAdminReason(data) &&
         (!(data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
           'board.hidePlayer', 'player.ban', 'toggles.set']) || signedInLately()) &&
@@ -342,9 +347,10 @@ service cloud.firestore {
         isAdminArgs(data.type, data.args);
     }
 
-    // 1 to 200 characters, not only spaces; `stats.*` may leave it out.
+    // 1 to 200 characters, not only spaces; `stats.*` and the presence
+    // backfill may leave it out.
     function isAdminReason(data) {
-      return data.type in ['stats.refresh', 'stats.recount']
+      return data.type in ['stats.refresh', 'stats.recount', 'presence.backfill']
         ? !('reason' in data) || (data.reason is string && data.reason.size() <= 200)
         : 'reason' in data && data.reason is string &&
           data.reason.size() <= 200 && data.reason.trim().size() > 0;
@@ -353,7 +359,7 @@ service cloud.firestore {
     function isAdminTarget(type, target) {
       return type in ['profile.reset', 'profile.removeImage', 'player.unban']
         ? isUidTarget(target)
-        : type in ['stats.refresh', 'stats.recount', 'toggles.set']
+        : type in ['stats.refresh', 'stats.recount', 'toggles.set', 'presence.backfill']
           ? target == null
           : type == 'board.hideEntry'
             ? isEntryTarget(target, false)
