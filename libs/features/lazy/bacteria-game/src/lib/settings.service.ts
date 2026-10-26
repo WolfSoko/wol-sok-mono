@@ -1,4 +1,10 @@
-import { Injectable, inject, signal, untracked } from '@angular/core';
+import {
+  Injectable,
+  inject,
+  type Signal,
+  signal,
+  untracked,
+} from '@angular/core';
 import { filter, pairwise, take } from 'rxjs';
 import {
   DEFAULT_SCREEN_RESOLUTION,
@@ -142,7 +148,6 @@ export class GameSettingsService {
   private readonly store = inject(GameStateStore);
   private readonly storage = inject(DeviceStorage);
   private readonly i18n = inject(I18nService);
-  private restored = false;
   /** The settings the player changed - what restoring must keep. */
   private readonly touched = new Set<keyof StoredSettings>();
   /** A stored match setup that arrived during a match, for the next one. */
@@ -218,9 +223,11 @@ export class GameSettingsService {
    * True once the stored settings are read: before that a setting holds
    * its default, not what an earlier visit stored.
    */
-  public readonly loaded = signal(false);
+  public readonly loaded: Signal<boolean>;
+  private readonly restored = signal(false);
 
   constructor() {
+    this.loaded = this.restored.asReadonly();
     // Synchronous, so a change is told apart from a restored setup.
     this.store
       .select$(() => this.currentMatchSetup(), sameMatchSetup)
@@ -237,8 +244,7 @@ export class GameSettingsService {
       .pipe(take(1))
       .subscribe((stored) => {
         this.restore(isObject(stored) ? (stored as StoredSettings) : {});
-        this.restored = true;
-        this.loaded.set(true);
+        this.restored.set(true);
         this.persist();
       });
     this.store
@@ -378,7 +384,7 @@ export class GameSettingsService {
    */
   private changed(...keys: (keyof StoredSettings)[]): void {
     keys.forEach((key) => this.touched.add(key));
-    if (this.restored) {
+    if (this.restored()) {
       this.persist();
     }
   }

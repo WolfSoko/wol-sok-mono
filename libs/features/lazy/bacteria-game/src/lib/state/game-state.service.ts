@@ -54,7 +54,13 @@ import { Player } from './player.model';
 import { randomSeed } from './geometry';
 import { MatchOutcome } from './win-conditions';
 import { MatchPlan, planMatch } from './match-setup';
-import { Replay, ReplayExtras, replayOf, replayOutcome } from './replay';
+import {
+  Replay,
+  ReplayExtras,
+  replayOf,
+  replayOutcome,
+  savedRegardless,
+} from './replay';
 import type { Ruleset } from './simulation';
 import { matchChecksum } from './checksum';
 import { replayScore } from './replay-score';
@@ -510,13 +516,9 @@ export class GameStateService {
     });
     const recording: MatchRecording = { replay, hint: score, id: null };
     this.lastRecording.set(recording);
-    // A ranked match is uploaded whatever the settings say.
+    // An online or ranked match is uploaded whatever the settings say.
     const attempt = ranked?.attempt.id;
-    if (
-      recordedAs === 'online' ||
-      attempt !== undefined ||
-      this.replayPrefs.saveMatches
-    ) {
+    if (savedRegardless(replay.header) || this.replayPrefs.saveMatches) {
       this.injector
         .get(GameReplays)
         .submit({

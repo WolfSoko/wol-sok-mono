@@ -26,7 +26,7 @@ import { GameSettingsService } from '../settings.service';
 import { isRunOver } from '../state/endless';
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
-import { canPlayBack } from '../state/replay';
+import { canPlayBack, savedRegardless } from '../state/replay';
 import { GameReplays } from '../storage/game-replays';
 
 /**
@@ -146,8 +146,7 @@ export class ReplayNoteComponent {
         this.saved() !== 'saved' ||
         !this.settings.loaded() ||
         this.settings.recordingHintShown() ||
-        recording.replay.header.roomCode !== undefined ||
-        recording.replay.header.attempt !== undefined
+        savedRegardless(recording.replay.header)
       ) {
         return;
       }
@@ -175,9 +174,9 @@ export class ReplayNoteComponent {
         ? 'replay.status.unconfirmed'
         : 'replay.status.uploading';
     }
-    // An online match is always handed over; a local one only with the
-    // setting on.
-    return recording.replay.header.roomCode === undefined &&
+    // An online or ranked match is always handed over; another one only
+    // with the setting on.
+    return !savedRegardless(recording.replay.header) &&
       !this.settings.saveMatches()
       ? 'replay.status.notSaved'
       : null;
