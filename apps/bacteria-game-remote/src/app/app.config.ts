@@ -15,6 +15,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { provideGameSupport } from '@wolsok/feat-lazy-bac-game';
 import { environment } from '../environments/environment';
 import { appRoutes } from './app.routes';
+import { provideErrorReports } from './error-reports/error-reports';
 import { providePwaUpdates } from './pwa-updates';
 
 // Only used when the game runs on its own: inside the shell the remote's
@@ -23,6 +24,9 @@ import { providePwaUpdates } from './pwa-updates';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
+    // Angular's errors to Sentry, on the live site only (bootstrap.ts
+    // starts it); the shell reports to its own project.
+    provideErrorReports(environment.sentry),
     provideAnimations(),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
     provideServiceWorker('ngsw-worker.js', {

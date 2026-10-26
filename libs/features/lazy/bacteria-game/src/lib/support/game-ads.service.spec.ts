@@ -73,6 +73,33 @@ describe('GameAds', () => {
     expect(ads.ad).toBeNull();
   });
 
+  it("listens to the page's own script without ad slots, so the banner can open again", () => {
+    // The remote's index.html loads AdSense with the consent banner.
+    const script = document.createElement('script');
+    script.id = AD_SCRIPT_ID;
+    document.head.appendChild(script);
+    installCmp();
+    const ads = setUp({ ...OPTIONS, ads: null });
+
+    ads.start();
+    report({ eventStatus: 'tcloaded' });
+
+    expect(document.querySelectorAll(`#${AD_SCRIPT_ID}`)).toHaveLength(1);
+    expect(listeners).toHaveLength(1);
+    expect(ads.consentAnswered()).toBe(true);
+    expect(ads.ad).toBeNull();
+  });
+
+  it('waits for no banner without ad slots or a script of the page', () => {
+    installCmp();
+    const ads = setUp({ ...OPTIONS, ads: null });
+
+    ads.start();
+
+    expect(listeners).toHaveLength(0);
+    expect(ads.consentAnswered()).toBe(false);
+  });
+
   it('stops waiting for the consent banner when the script is blocked', () => {
     const ads = setUp();
     ads.start();

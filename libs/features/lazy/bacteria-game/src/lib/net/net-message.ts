@@ -3,6 +3,7 @@ import { BALANCE_VERSION } from '../state/game-balance';
 import { isInteger, isObject } from '../state/is-object';
 import { isLevelId } from '../state/levels';
 import { TICKS_PER_SEC } from '../state/fixed-tick';
+import { isRuleset, Ruleset } from '../state/simulation';
 import { parseStoredJson } from '../storage/stored-json';
 
 /**
@@ -10,7 +11,7 @@ import { parseStoredJson } from '../storage/stored-json';
  * change an older game could not follow. Both sides also need the same
  * balance table, or the same inputs play another match.
  */
-export const NET_VERSION = `2/${BALANCE_VERSION}`;
+export const NET_VERSION = `3/${BALANCE_VERSION}`;
 
 /** What one seat puts in before one tick, on the engine's input grid. */
 export interface TickInput {
@@ -32,6 +33,22 @@ export interface OnlineSetup {
 /** What starts an online match on both devices. */
 export interface OnlineStart extends OnlineSetup {
   seed: number;
+  /** The ruleset both devices offered - see `agreedRuleset`. */
+  ruleset: Ruleset;
+}
+
+/**
+ * The ruleset of a match between two devices (ADR 0015, decision 6):
+ * `gpu-int` when both offer it, `cpu` else - every device can run that, so
+ * a match never fails over the ruleset.
+ */
+export function agreedRuleset(
+  own: readonly Ruleset[],
+  theirs: readonly Ruleset[]
+): Ruleset {
+  return own.includes('gpu-int') && theirs.includes('gpu-int')
+    ? 'gpu-int'
+    : 'cpu';
 }
 
 /**
@@ -41,10 +58,10 @@ export interface OnlineStart extends OnlineSetup {
  */
 export type NetMessage =
   /**
-   * The first word each side says: which version of the game it runs, and
-   * who plays it - their uid, for their profile.
+   * The first word each side says: which version of the game it runs, who
+   * plays it - their uid, for their profile - and the rulesets it offers.
    */
-  | { k: 'hello'; v: string; id: string | null }
+  | { k: 'hello'; v: string; id: string | null; r: Ruleset[] }
   /** The host changed the setup of the next match. */
   | ({ k: 'setup' } & OnlineSetup)
   /**
@@ -52,7 +69,7 @@ export type NetMessage =
    * match's pair from (see `onlineColors`).
    */
   | { k: 'colors'; colors: [string, string] }
-  /** The host starts a match. */
+  /** The host starts a match, on the ruleset both offered. */
   | ({ k: 'start'; n: number } & OnlineStart)
   /** A seat's input for tick `t`. */
   | ({ k: 'in'; n: number; t: number } & TickInput)
@@ -78,11 +95,20 @@ export function parseNetMessage(data: unknown): NetMessage | null {
   }
   switch (value['k']) {
     case 'hello': {
-      const { v, id } = value;
+      const { v, id, r } = value;
       if (typeof v !== 'string') {
         return null;
       }
-      return { k: 'hello', v, id: isPlayerId(id) ? id : null };
+      // Whatever else it offers, every device runs the CPU's ruleset.
+      const offers: Ruleset[] = Array.isArray(r)
+        ? r.filter(isRuleset).filter((ruleset) => ruleset !== 'cpu')
+        : [];
+      return {
+        k: 'hello',
+        v,
+        id: isPlayerId(id) ? id : null,
+        r: ['cpu', ...new Set(offers)],
+      };
     }
     case 'setup': {
       const setup = parseSetup(value);
@@ -94,12 +120,13 @@ export function parseNetMessage(data: unknown): NetMessage | null {
     }
     case 'start': {
       const setup = parseSetup(value);
-      const { seed, n } = value;
+      const { seed, n, ruleset } = value;
       return setup === null ||
         !isUpTo(seed, MAX_UINT32) ||
-        !isUpTo(n, MAX_UINT32)
+        !isUpTo(n, MAX_UINT32) ||
+        !isRuleset(ruleset)
         ? null
-        : { k: 'start', n, ...setup, seed };
+        : { k: 'start', n, ...setup, seed, ruleset };
     }
     case 'in': {
       const { t, n } = value;

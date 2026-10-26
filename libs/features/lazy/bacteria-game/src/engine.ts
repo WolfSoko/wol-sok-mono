@@ -51,6 +51,7 @@ export {
 export {
   EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
+  GPU_INT_REPLAY_VERSION,
   LADDER_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
@@ -89,7 +90,18 @@ export type {
   ReplayScore,
   ReplayScoreInput,
 } from './lib/state/replay-score';
-export { onlineReplayId } from './lib/state/replay-id';
+export { onlineReplayId, PUBLIC_ID } from './lib/state/replay-id';
+export {
+  ARRIVAL_REASONS,
+  DECLARED_REASONS,
+  NOT_REPORTED,
+  ONLINE_REASONS,
+} from './lib/state/replay-reasons';
+export type {
+  ArrivalReason,
+  DeclaredReason,
+  OnlineReason,
+} from './lib/state/replay-reasons';
 export { matchChecksum } from './lib/state/checksum';
 export { replayFromHash, replayLink } from './lib/state/replay-link';
 export { GhostController } from './lib/state/ghost';
@@ -222,6 +234,10 @@ export {
   playableOnline,
 } from './lib/state/levels';
 export type { LadderLevelId, Level } from './lib/state/levels';
+export { parseGeneratedId } from './lib/state/level-generator/generate-level';
+export { GAME_SITE_URL } from './lib/support/legal-links';
+export { matchRecord, medalFor } from './lib/state/medallions';
+export type { MedalTier } from './lib/state/medallions';
 export { DEFAULT_MODE, isGameMode } from './lib/state/game-mode';
 export type { GameMode } from './lib/state/game-mode';
 export {
@@ -235,12 +251,20 @@ export type { HeadStart, SeriesLength } from './lib/state/rivalry';
 export {
   COLONY_COLORS,
   DEFAULT_COLORS,
+  getColonyColor,
   isColonyColorId,
   validColorPair,
 } from './lib/state/colony-colors';
 export type { ColonyColorId } from './lib/state/colony-colors';
 export { dailyLevelId, utcDay } from './lib/state/daily';
-export { endlessLevelId } from './lib/state/endless';
+export {
+  afterMatch,
+  ENDLESS_LIVES,
+  endlessLevelId,
+  isRunOver,
+  newRun,
+} from './lib/state/endless';
+export type { EndlessRun } from './lib/state/endless';
 
 // Leaderboards, declared attempts and admin commands (ADR 0012).
 export {
@@ -257,17 +281,21 @@ export {
   dailySort,
   DEFAULT_NAME,
   endlessSort,
+  ENTRY_STATUSES,
   formatTag,
   isBoardId,
   isEntryId,
   isUtcDay,
+  isVisible,
   NEXT_CANDIDATES,
   onlineSort,
   PAGE_ROWS,
   parseBoardId,
   posesAsLabel,
+  showsName,
   TAG_COUNT,
   TOP_ROWS,
+  topRows,
   VISIBLE_STATUSES,
   XP_FULL_COUNT,
   XP_FULL_COUNT_BEFORE,
@@ -331,6 +359,21 @@ export type {
   PlayerTarget,
 } from './lib/state/admin-commands';
 export { AVATAR_COUNT, defaultProfile } from './lib/social/profile';
+export {
+  FEATURE_TOGGLE_KEYS,
+  FEATURE_TOGGLES,
+  featureToggles,
+} from './lib/state/feature-toggles';
+export type {
+  FeatureToggle,
+  FeatureToggles,
+} from './lib/state/feature-toggles';
+
+// The player's progress and the XP it is worth - what the XP board counts.
+export { parseProgress } from './lib/state/progress';
+export type { Progress } from './lib/state/progress';
+export { xpOf } from './lib/state/xp';
+export { rankFor } from './lib/state/ranks';
 export type { Avatar, Profile } from './lib/social/profile';
 
 // Results.

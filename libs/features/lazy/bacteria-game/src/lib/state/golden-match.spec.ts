@@ -92,7 +92,10 @@ function fingerprint(engine: MatchEngine): string {
   const simulation = engine.simulation as BacteriaSimulation;
   const text = JSON.stringify({
     ticks: engine.tickCount,
-    players: engine.players,
+    // Without what only the painter dresses a seat by - no part of the play.
+    players: engine.players.map(
+      ({ computer: _computer, boss: _boss, ...played }) => played
+    ),
     colonies: simulation.getColonies().map((colony) => ({
       captured: colony.captured,
       lost: colony.lost,
@@ -152,7 +155,7 @@ describe("the ladder's computer", () => {
 
 describe('plain matches', () => {
   it('play under the balance version the fingerprints were taken with', () => {
-    expect(BALANCE_VERSION).toBe(5);
+    expect(BALANCE_VERSION).toBe(6);
   });
 
   it.each(GOLDEN)(

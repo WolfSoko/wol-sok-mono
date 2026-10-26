@@ -1,0 +1,111 @@
+@let current = stats();
+<header class="head">
+  <p class="updated">
+    @if (current?.at; as at) {
+      {{ "overview.updated" | adminT: { at: i18n.dateTime(at) } }}
+    } @else {
+      {{ "overview.never" | adminT }}
+    }
+  </p>
+  <span class="buttons">
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="refreshing()"
+      (click)="backfill()"
+    >
+      {{ "type.presence.backfill" | adminT }}
+    </button>
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="refreshing()"
+      (click)="recount()"
+    >
+      {{ "type.stats.recount" | adminT }}
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      [disabled]="refreshing()"
+      (click)="refresh()"
+    >
+      {{ "overview.refresh" | adminT }}
+    </button>
+  </span>
+</header>
+@if (error(); as error) {
+  <p class="error" role="alert">
+    {{ "command.failed" | adminT: { error } }}
+  </p>
+}
+
+@if (current; as current) {
+  <section class="groups">
+    @for (group of groups; track group[0]) {
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>{{ groupKey(group[0]) | adminT }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <dl>
+            @for (figure of group[1]; track figure) {
+              <dt>{{ figureKey(figure) | adminT }}</dt>
+              <dd>{{ i18n.number(current[figure]) }}</dd>
+            }
+          </dl>
+        </mat-card-content>
+      </mat-card>
+    }
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>{{ "overview.boards" | adminT }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <dl>
+          @for (board of sorted(current.entries); track board[0]) {
+            <dt>{{ board[0] }}</dt>
+            <dd>{{ i18n.number(board[1]) }}</dd>
+          }
+        </dl>
+      </mat-card-content>
+    </mat-card>
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>{{ "overview.today" | adminT }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <dl>
+          @for (counter of sorted(current.today); track counter[0]) {
+            <dt>{{ counter[0] }}</dt>
+            <dd>{{ i18n.number(counter[1]) }}</dd>
+          }
+        </dl>
+      </mat-card-content>
+    </mat-card>
+  </section>
+}
+
+@if (history().length > 0) {
+  <h2>{{ "overview.history" | adminT }}</h2>
+  <table mat-table [dataSource]="history()" class="history">
+    <ng-container matColumnDef="hour">
+      <th mat-header-cell *matHeaderCellDef>{{ "overview.hour" | adminT }}</th>
+      <td mat-cell *matCellDef="let row">
+        {{ i18n.dateTime(row.hour, { utc: true }) }}
+      </td>
+    </ng-container>
+    @for (column of historyFigures; track column) {
+      <ng-container [matColumnDef]="column">
+        <th mat-header-cell *matHeaderCellDef>
+          {{ figureKey(column) | adminT }}
+        </th>
+        <td mat-cell *matCellDef="let row">
+          {{ i18n.number(row.stats[column]) }}
+        </td>
+      </ng-container>
+    }
+    <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: historyColumns"></tr>
+  </table>
+}

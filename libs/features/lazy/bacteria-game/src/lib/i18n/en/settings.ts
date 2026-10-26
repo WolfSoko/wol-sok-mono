@@ -47,6 +47,25 @@ export const settings = {
     showFps: 'Show the frame rate',
     fullscreen: 'Browser fullscreen',
   },
+  matches: {
+    title: 'Matches',
+    recordLocal: 'Record matches against the computer',
+    recordLocalNote:
+      'With "Save my matches" they are kept in My matches: in the cloud for 30 days, or on this device without it.',
+    saveMatches: 'Save my matches',
+    saveMatchesNote: 'Online matches are always kept.',
+  },
+  simulation: {
+    gpuInt: 'Matches run on the GPU, alike on every device.',
+    cpu: 'Matches run on the CPU.',
+    forced: 'Set for this device by ?sim={ruleset}; ?sim=auto undoes it.',
+    passed: 'GPU self-test passed on {renderer}.',
+    software:
+      'GPU self-test passed on {renderer}, which draws on the CPU - too slow for matches on the GPU.',
+    failedAt: 'GPU self-test failed at tick {tick} on {renderer}.',
+    error: 'GPU self-test could not run on {renderer}: {error}',
+    pending: 'GPU self-test not run yet.',
+  },
   language: {
     title: 'Language',
     automatic: 'Automatic',

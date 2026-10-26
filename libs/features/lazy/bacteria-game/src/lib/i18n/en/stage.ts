@@ -6,6 +6,8 @@ export const stage = {
     secondsHeld: 'seconds held',
     pelletsEaten: 'pellets eaten',
     pause: 'Pause',
+    giveUp: 'Give up',
+    giveUpAgain: 'Tap again to give up: the ranked attempt counts as played',
   },
   waitingForPeer: 'Waiting for your opponent…',
   pause: {

@@ -406,22 +406,48 @@ describe('GameSettingsService', () => {
       return TestBed.inject(GameSettingsService);
     }
 
-    it('keeps matches but records no local ones by default, and hands the stored choice to the game', () => {
-      const service = createWith({ saveMatches: false, recordLocal: true });
+    it('keeps and records matches by default, and hands the stored choice to the game', () => {
+      const service = createWith({
+        saveMatches: false,
+        recordLocal: false,
+      });
       const prefs = jest.spyOn(
         TestBed.inject(GameStateService),
         'setReplayPrefs'
       );
       expect(service.saveMatches()).toBe(true);
-      expect(service.recordLocal()).toBe(false);
+      expect(service.recordLocal()).toBe(true);
 
       storage.flush();
 
       expect(service.saveMatches()).toBe(false);
-      expect(service.recordLocal()).toBe(true);
+      expect(service.recordLocal()).toBe(false);
       expect(prefs).toHaveBeenLastCalledWith({
-        recordLocal: true,
+        recordLocal: false,
         saveMatches: false,
+      });
+    });
+
+    it('says when the stored settings are read, and restores the hint on saved matches', () => {
+      const service = createWith({ recordingHintShown: true });
+      expect(service.loaded()).toBe(false);
+      expect(service.recordingHintShown()).toBe(false);
+
+      storage.flush();
+
+      expect(service.loaded()).toBe(true);
+      expect(service.recordingHintShown()).toBe(true);
+    });
+
+    it('remembers that the hint on saved matches was shown', () => {
+      const service = createWith({});
+      storage.flush();
+
+      service.markRecordingHintShown();
+      storage.flush();
+
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        recordingHintShown: true,
       });
     });
 
@@ -440,10 +466,10 @@ describe('GameSettingsService', () => {
       expect(service.saveMatches()).toBe(false);
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         saveMatches: false,
-        recordLocal: false,
+        recordLocal: true,
       });
       expect(prefs).toHaveBeenLastCalledWith({
-        recordLocal: false,
+        recordLocal: true,
         saveMatches: false,
       });
     });

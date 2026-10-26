@@ -1,7 +1,8 @@
 import type { ActiveEffect } from './evolution';
-import { Injectable, inject, untracked } from '@angular/core';
+import { Injectable, computed, inject, signal, untracked } from '@angular/core';
 import { Nutrient } from './bacteria-simulation';
-import { Simulation, SimulationFactory } from './simulation';
+import { Ruleset, Simulation, SimulationFactory } from './simulation';
+import { intSimulation } from './gpu-int/int-simulation';
 import { GameBalance } from './game-balance';
 import { isSteering, Point, randomSeed, SteeringVector } from './geometry';
 import { DynamicWall } from './maps';
@@ -57,6 +58,20 @@ export class PlayerService {
   private simulationFactory: SimulationFactory = cpuSimulation;
   /** Takes over when the factory's simulation fails to start. */
   private fallbackFactory: SimulationFactory = cpuSimulation;
+  /** The ruleset the factory's simulations play by - see `useSimulation`. */
+  private factoryRuleset: () => Ruleset | null = () => 'cpu';
+  /** The rulesets this device offers the other one of an online match. */
+  private offers: () => readonly Ruleset[] = () => ['cpu'];
+  /** The integer GPU passes for an online `gpu-int` match - see `useSimulation`. */
+  private readonly gpuIntFactory = signal<SimulationFactory | null>(null);
+
+  /**
+   * True while this device has the integer GPU passes to play a `gpu-int`
+   * match on - a WebGL2 arena whose GPU has not failed to start them. A
+   * ranked match plays them (ADR 0012, 0015); whether the GPU is trusted
+   * is the self-test's word, not this.
+   */
+  public readonly gpuIntReady = computed(() => this.gpuIntFactory() !== null);
   private engine = new MatchEngine([], { seed: 0 });
   /** Where each player's joystick is pushed right now, absent while at rest. */
   private sticks = new Map<number, SteeringVector>();
@@ -79,10 +94,14 @@ export class PlayerService {
    * rebuilt with them - its balance is fixed for the lifetime of a match on
    * purpose, nothing may change the rules while the colonies are fighting.
    *
-   * An online match runs on the CPU, the simulation both devices play
-   * alike, and its ticks wait for the `lockstep`. So does a match with
-   * `recordedSeats`: only the CPU plays a recording back as it was played
-   * (ADR 0011).
+   * An online match runs on the `ruleset` both devices agreed on, a
+   * simulation they play alike, and its ticks wait for the `lockstep`. A
+   * local match given a `ruleset` - a ranked one, `gpu-int` - plays it the
+   * same way: on the integer GPU passes, `IntSimulation` standing in only
+   * should the GPU fail to start. A
+   * match with `recordedSeats` runs on a ruleset too, one a recording plays
+   * back on as it was played (ADR 0011, 0015): the factory's, where that is
+   * one, the CPU's else.
    */
   public init(
     spawns: PlayerSpawn[],
@@ -91,19 +110,50 @@ export class PlayerService {
       seed?: number;
       /** The lockstep with the other device of an online match. */
       lockstep?: Lockstep;
+      /**
+       * The ruleset both devices of an online match agreed on - `cpu` when
+       * absent - or the one a local match must play: a ranked match's.
+       */
+      ruleset?: Ruleset;
     } = {}
   ): void {
-    const { arena, lockstep, ...rules } = options;
+    const { arena, lockstep, ruleset, ...rules } = options;
     this.engine.dispose();
     this.lockstep = lockstep ?? null;
     this.engine = new MatchEngine(spawns, {
       ...rules,
       seed: options.seed ?? randomSeed(),
       // Sized in there, where the GPU may still fail and leave it to the CPU.
-      simulation: (balance, random, seed) =>
-        lockstep === undefined && rules.recordedSeats === undefined
-          ? this.createSimulation(balance, random, seed, arena)
-          : sized(cpuSimulation(balance, random, seed), arena),
+      simulation: (balance, random, seed) => {
+        const devicePicks = lockstep === undefined && ruleset === undefined;
+        if (devicePicks && rules.recordedSeats === undefined) {
+          return this.createSimulation(balance, random, seed, arena);
+        }
+        const wanted = devicePicks
+          ? (this.factoryRuleset() ?? 'cpu')
+          : (ruleset ?? 'cpu');
+        if (wanted === 'cpu') {
+          return sized(cpuSimulation(balance, random, seed), arena);
+        }
+        // The deterministic GPU passes where they run here, the same
+        // ruleset on the CPU else: either plays the match alike. Online
+        // that follows what this device offered at the hello, not what the
+        // owner's toggle says now: `IntSimulation` plays live only where
+        // the GPU is gone or fails to start. A ranked match likewise.
+        const gpu = devicePicks
+          ? this.simulationFactory
+          : untracked(this.gpuIntFactory);
+        return gpu === null
+          ? sized(intSimulation(balance, random, seed), arena)
+          : this.createSimulation(
+              balance,
+              random,
+              seed,
+              arena,
+              gpu,
+              intSimulation
+            );
+      },
     });
     this.localDrag = null;
     this.localBoost = false;
@@ -265,15 +315,29 @@ export class PlayerService {
    * Runs the matches from now on with simulations from this factory - the
    * GPU one once the arena has a WebGL2 context, the CPU one again for null.
    * Takes effect with the next match. `fallback` takes over when one of the
-   * factory's simulations fails to start - the deterministic CPU one for a
-   * deterministic match (ADR 0015).
+   * factory's simulations fails to start. `ruleset` says which ruleset the
+   * factory's simulations play by right now (null for the float GPU one),
+   * `offers` which this device offers the other one of an online match
+   * (ADR 0015), `gpuInt` what plays an online match agreed on `gpu-int`
+   * here (null: `IntSimulation`) - see `chooseSimulation`.
    */
   public useSimulation(
     factory: SimulationFactory | null,
-    fallback: SimulationFactory = cpuSimulation
+    fallback: SimulationFactory = cpuSimulation,
+    rulesets: {
+      ruleset: () => Ruleset | null;
+      offers: () => readonly Ruleset[];
+      gpuInt?: SimulationFactory | null;
+    } = {
+      ruleset: () => (factory == null ? 'cpu' : null),
+      offers: () => ['cpu'],
+    }
   ): void {
     this.simulationFactory = factory ?? cpuSimulation;
     this.fallbackFactory = fallback;
+    this.factoryRuleset = rulesets.ruleset;
+    this.offers = rulesets.offers;
+    this.gpuIntFactory.set(rulesets.gpuInt ?? null);
     if (factory == null && this.engine.simulation.kind === 'gpu') {
       // It may hold a context that is going away: let it go now.
       this.engine.dispose();
@@ -281,30 +345,45 @@ export class PlayerService {
     }
   }
 
+  /** The rulesets this device can play an online match on, `cpu` always. */
+  public rulesetOffers(): readonly Ruleset[] {
+    return this.offers();
+  }
+
   /**
    * A simulation from the factory, sized to the arena. Should the GPU turn
    * out not to run it - a shader its driver rejects, a format it cannot
-   * render into - the CPU takes over, for this match and the next ones.
+   * render into - the fallback takes over, for this match and the next ones,
+   * and the device offers the CPU's ruleset only. `fallback` stands in for
+   * this match where it has to keep its ruleset - an online one.
    */
   private createSimulation(
     balance: GameBalance,
     random: () => number,
     seed: number,
-    arena?: { width: number; height: number }
+    arena?: { width: number; height: number },
+    factory: SimulationFactory = this.simulationFactory,
+    fallback?: SimulationFactory
   ): Simulation {
     let simulation: Simulation | null = null;
     try {
-      simulation = this.simulationFactory(balance, random, seed);
+      simulation = factory(balance, random, seed);
       return sized(simulation, arena);
     } catch (error) {
       // Let go of the context listeners, or a restored context revives it.
       simulation?.dispose();
-      if (this.simulationFactory === this.fallbackFactory) {
+      if (factory === this.fallbackFactory) {
         throw error;
       }
       console.warn('The colony war falls back to the CPU', error);
       this.simulationFactory = this.fallbackFactory;
-      return this.createSimulation(balance, random, seed, arena);
+      this.factoryRuleset = () => 'cpu';
+      this.offers = () => ['cpu'];
+      this.gpuIntFactory.set(null);
+      return sized(
+        (fallback ?? this.fallbackFactory)(balance, random, seed),
+        arena
+      );
     }
   }
 

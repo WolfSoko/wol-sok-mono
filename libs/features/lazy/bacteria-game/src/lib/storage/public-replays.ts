@@ -1,10 +1,9 @@
+import { fromBase64 } from '../state/base64';
 import type { Replay } from '../state/replay';
-import { unpackReplay } from '../state/replay-pack';
+import { PUBLIC_ID } from '../state/replay-id';
+import { replayFromBytes } from '../state/replay-pack';
 
-/** What a public replay id looks like - checked before anything is fetched. */
-const PUBLIC_ID = /^[A-Za-z0-9_-]{6,40}$/;
-
-/** Where and how {@link fetchPublicReplay} fetches. */
+/** Where and how {@link loadPublicReplay} fetches. */
 export interface PublicReplayOptions {
   /**
    * The site the public replays are served from, "" for this one - the
@@ -15,36 +14,65 @@ export interface PublicReplayOptions {
 }
 
 /**
- * A public replay, as `publicSite` serves it at
- * `/replays/{publicId}/replay.json` (ADR 0011): the packed replay, without
- * room, match number or app version. No Firebase and no account - the
- * viewer under `/watch` reads it like anyone could.
- *
- * Null for a replay that is not there (404), was taken down (410) or cannot
- * be read. Any other failure - offline, a server error - rejects, so the
- * viewer can offer to try again.
+ * A public replay as {@link loadPublicReplay} found it: the replay, or why
+ * there is none - `not-found` for an id that names none (404, or one that
+ * cannot be an id), `removed` for one taken down (410), `unreadable` for an
+ * answer that holds no whole replay.
  */
-export async function fetchPublicReplay(
+export type PublicReplayAnswer =
+  | { replay: Replay }
+  | { missing: 'not-found' | 'removed' | 'unreadable' };
+
+/**
+ * A public replay, as `publicSite` serves it at
+ * `/replays/{publicId}/replay.json` (ADR 0011): `{ bytes }`, the packed
+ * public replay (without room, match number or app version) as base64,
+ * which `replayFromBytes` reads like a stored one. No Firebase and no
+ * account - the viewer under `/watch` reads it like anyone could.
+ *
+ * Any other failure - offline, a server error - rejects, so the viewer can
+ * offer to try again.
+ */
+export async function loadPublicReplay(
   publicId: string,
   options: PublicReplayOptions = {}
-): Promise<Replay | null> {
+): Promise<PublicReplayAnswer> {
   if (!PUBLIC_ID.test(publicId)) {
-    return null;
+    return { missing: 'not-found' };
   }
   const fetchJson = options.fetch ?? globalThis.fetch.bind(globalThis);
   const response = await fetchJson(
     `${options.base ?? ''}/replays/${publicId}/replay.json`,
     { headers: { accept: 'application/json' } }
   );
-  if (response.status === 404 || response.status === 410) {
-    return null;
+  if (response.status === 404) {
+    return { missing: 'not-found' };
+  }
+  if (response.status === 410) {
+    return { missing: 'removed' };
   }
   if (!response.ok) {
     throw new Error(`The replay ${publicId} answered ${response.status}`);
   }
+  let body: unknown;
   try {
-    return unpackReplay(await response.json());
+    body = await response.json();
   } catch {
+    return { missing: 'unreadable' };
+  }
+  const bytes = bytesOf(body);
+  const replay = bytes === null ? null : await replayFromBytes(bytes);
+  return replay === null ? { missing: 'unreadable' } : { replay };
+}
+
+/** The decoded `bytes` of the answer - null for anything else. */
+function bytesOf(body: unknown): Uint8Array<ArrayBuffer> | null {
+  if (typeof body !== 'object' || body === null) {
     return null;
   }
+  const encoded = (body as Record<string, unknown>)['bytes'];
+  if (typeof encoded !== 'string') {
+    return null;
+  }
+  return fromBase64(encoded);
 }

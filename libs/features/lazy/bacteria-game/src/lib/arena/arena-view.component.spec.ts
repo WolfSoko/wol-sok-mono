@@ -95,11 +95,12 @@ function engineScene(engine: MatchEngine): ArenaScene & { ticks: number } {
     content: (alpha: number) => ({
       walls: [],
       dynamicWalls: engine.simulation.getDynamicWalls(),
-      colonies: engine.simulation.colonyLayers(new Map()),
+      colonies: engine.simulation
+        .colonyLayers(new Map())
+        .map((layer) => ({ ...layer, look: 'slime' as const })),
       reducedMotion: false,
       nutrients: engine.simulation.getNutrients(),
       balance: engine.balance,
-      look: 'slime' as const,
       cursors: engine.players.map((player) => ({
         ...engine.crosshairAt(player, alpha, width, height),
         color: player.color,

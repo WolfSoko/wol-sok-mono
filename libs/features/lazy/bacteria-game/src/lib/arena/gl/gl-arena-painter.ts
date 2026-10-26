@@ -2,14 +2,13 @@ import { GameBalance } from '../../state/game-balance';
 import { Bacteria } from '../../state/player.model';
 import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
 import { Rect } from '../../state/maps';
-import { ArenaFrame, ArenaPainter } from '../arena-painter';
+import { ArenaFrame, ArenaPainter, PaintedColony } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
 import { paintZoneLayer } from '../zone-decal';
 import { Zone } from '../../state/zones';
 import { ArenaTheme } from '../arena-theme';
 import {
   cellDensity,
-  ColonyLayer,
   hatchPattern,
   jamDrops,
   lookReach,
@@ -20,6 +19,7 @@ import {
 } from '../colony-renderer';
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
 import { GpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
+import { rendererOf } from '../../gl/renderer';
 import { Motes } from '../motes';
 import {
   bindTexture,
@@ -309,6 +309,11 @@ export class GlArenaPainter implements ArenaPainter {
     return new GpuSimulation(this.gl, balance, random, options);
   }
 
+  /** The GPU and driver this painter's context renders with. */
+  public renderer(): string {
+    return rendererOf(this.gl);
+  }
+
   /**
    * Hands the context back to the browser right away rather than once the
    * canvas is collected - a page may only hold a few WebGL contexts.
@@ -431,14 +436,14 @@ export class GlArenaPainter implements ArenaPainter {
    * GPU simulation's state - are blurred on the arena grid for every look
    * but the pixels, and drawn over the frame in a single pass.
    */
-  private drawColony(frame: ArenaFrame, layer: ColonyLayer): void {
+  private drawColony(frame: ArenaFrame, layer: PaintedColony): void {
     const gl = this.gl;
     const resources = this.resources;
     if (resources == null) {
       return;
     }
     const { programs, blur, cells } = resources;
-    const { color, boostTarget } = layer;
+    const { color, boostTarget, look } = layer;
     const bounds =
       layer.kind === 'cells'
         ? this.uploadCells(layer.bacterias, frame.balance)
@@ -446,7 +451,7 @@ export class GlArenaPainter implements ArenaPainter {
     // A look that reaches past the colony - the lattice looks, with their
     // cells and tiles - is drawn that much further out, and every pass
     // before the drawing moves out with it, or it would read stale density.
-    const margin = passMargins(lookReach(frame.look, this.unit));
+    const margin = passMargins(lookReach(look, this.unit));
     if (bounds == null || !this.inView(bounds, margin.colony)) {
       return;
     }
@@ -457,7 +462,7 @@ export class GlArenaPainter implements ArenaPainter {
       this.drawCellsFromState(layer, bounds, frame.balance, margin.cells);
     }
 
-    const blurred = LOOKS[frame.look].fromDensity;
+    const blurred = LOOKS[look].fromDensity;
     if (blurred) {
       gl.disable(gl.BLEND);
       gl.viewport(0, 0, this.width, this.height);
@@ -485,7 +490,7 @@ export class GlArenaPainter implements ArenaPainter {
       color[2] / 255
     );
     gl.uniform1f(program.uniforms['uAlpha'], (color[3] ?? 255) / 255);
-    gl.uniform1i(program.uniforms['uLook'], LOOKS[frame.look].glIndex);
+    gl.uniform1i(program.uniforms['uLook'], LOOKS[look].glIndex);
     gl.uniform1f(program.uniforms['uUnit'], this.unit);
     gl.uniform1f(
       program.uniforms['uPixel'],

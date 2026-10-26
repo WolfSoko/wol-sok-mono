@@ -71,6 +71,18 @@ export function arenaSize(
   };
 }
 
+/**
+ * The grid an arena that wide runs on, for a map `size` times the base
+ * arena - a replay's, from its header. The online grid for a width no grid
+ * has.
+ */
+export function simResolutionOf(width: number, size = 1): SimResolution {
+  return (
+    SIM_RESOLUTIONS.find(({ id }) => arenaSize(id, size).width === width)?.id ??
+    ONLINE_SIM_RESOLUTION
+  );
+}
+
 /** The widest a layer painted once - the zones - is, in pixels. */
 const MAX_LAYER_WIDTH = 4096;
 

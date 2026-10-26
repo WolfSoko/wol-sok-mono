@@ -6,14 +6,18 @@ import { BALANCE_VERSION } from './game-balance';
 import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import {
+  canPlayBack,
   GHOST_REPLAY_VERSION,
+  GPU_INT_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
   playReplay,
   Replay,
+  replayEngine,
   replayOf,
   replayOutcome,
   REPLAY_VERSION,
+  savedRegardless,
 } from './replay';
 import { onlineReplayId } from './replay-id';
 
@@ -121,6 +125,66 @@ describe('replay', () => {
     ).toBeNull();
   });
 
+  it('saves online and ranked matches whatever the settings say', () => {
+    const header = replayOf(PLAN, 'cpu', 10, {
+      steers: [],
+      drags: [],
+      boosts: [],
+      weapons: [],
+    }).header;
+    expect(savedRegardless(header)).toBe(false);
+    expect(savedRegardless({ ...header, roomCode: 'ABCD', n: 1 })).toBe(true);
+    expect(
+      savedRegardless({
+        ...header,
+        attempt: { id: 'd_2026-10-26_1', at: 0 },
+      })
+    ).toBe(true);
+  });
+
+  describe('canPlayBack and replayEngine', () => {
+    it('tell what plays back, as playReplay does', () => {
+      const { replay } = record(PLAN, 10);
+      const refused = [
+        { ...replay.header, simulation: 'gpu' as const },
+        { ...replay.header, version: GHOST_REPLAY_VERSION },
+        { ...replay.header, balanceVersion: BALANCE_VERSION + 1 },
+        { ...replay.header, ladder: -1 },
+      ].map((header) => ({ ...replay, header }));
+
+      expect(canPlayBack(replay)).toBe(true);
+      for (const other of refused) {
+        expect(canPlayBack(other)).toBe(false);
+        expect(replayEngine(other)).toBeNull();
+        expect(playReplay(other)).toBeNull();
+      }
+    });
+
+    it('give an engine that plays the match tick by tick as recorded', () => {
+      const { engine, replay } = record(PLAN, 400);
+      const seconds: unknown[] = [];
+
+      const played = replayEngine(replay, (sizes) => seconds.push(sizes));
+      expect(played).not.toBeNull();
+      try {
+        while (
+          played !== null &&
+          played.outcome() == null &&
+          played.tickCount < replay.header.ticks
+        ) {
+          played.tick(PLAN.width, PLAN.height);
+        }
+        expect(played?.tickCount).toBe(engine.tickCount);
+        expect(matchChecksum(played?.players ?? [])).toBe(
+          matchChecksum(engine.players)
+        );
+        expect(seconds).toHaveLength(Math.floor(400 / TICKS_PER_SEC));
+      } finally {
+        played?.dispose();
+      }
+    });
+  });
+
   describe('parseReplay', () => {
     it('reads back what was stored', () => {
       const { replay } = record(PLAN, 120);
@@ -188,11 +252,11 @@ describe('replay', () => {
       expect(playReplay(replay)).toBeNull();
     });
 
-    it('reads back the whole header, the attempt with it', () => {
+    it('reads back the whole header of a gpu-int match, the attempt with it', () => {
       const { engine } = record({ ...ONLINE, headStart: 0 }, 120);
       const replay = replayOf(
         ONLINE,
-        'cpu',
+        'gpu-int',
         engine.tickCount,
         engine.recorded,
         {
@@ -214,6 +278,35 @@ describe('replay', () => {
         id: 'd_2026-10-23_2',
         at: 1_761_220_000_000,
       });
+    });
+
+    it('takes a ranked attempt on the gpu-int ruleset only', () => {
+      const { engine } = record({ ...ONLINE, headStart: 0 }, 60);
+      const extras = {
+        outcome: { endedBy: 'forfeit' as const, winnerSeat: 1 },
+        checksum: matchChecksum(engine.players),
+        attempt: { id: 'd_2026-10-23_2', at: 1_761_220_000_000 },
+      };
+      const of = (simulation: 'cpu' | 'gpu-int') =>
+        JSON.parse(
+          JSON.stringify(
+            replayOf(
+              ONLINE,
+              simulation,
+              engine.tickCount,
+              engine.recorded,
+              extras
+            )
+          )
+        ) as unknown;
+
+      expect(parseReplay(of('cpu'), { stored: true })).toBeNull();
+      expect(parseReplay(of('gpu-int'), { stored: true })?.header).toEqual(
+        expect.objectContaining({
+          version: GPU_INT_REPLAY_VERSION,
+          simulation: 'gpu-int',
+        })
+      );
     });
 
     it('still reads version 1 replays, as ghosts', () => {

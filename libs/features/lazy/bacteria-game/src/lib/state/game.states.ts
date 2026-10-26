@@ -19,6 +19,7 @@ import { HeadStart, Series, SeriesLength } from './rivalry';
 import { Player } from './player.model';
 import type { Replay } from './replay';
 import type { EndlessRun } from './endless';
+import type { RankedOutcome, RankedRun } from './ranked-match';
 import { EndReason, timeLeft, winRuleOf } from './win-conditions';
 import { DEFAULT_MODE, GameMode } from './game-mode';
 
@@ -103,6 +104,16 @@ export interface GameStateState {
   endlessMatch: boolean;
   /** The endless run under way, null outside one - it outlasts a match. */
   endless: EndlessRun | null;
+  /**
+   * What the ranked start of the next daily or endless match came to (ADR
+   * 0012): the attempt it was declared as - null when it plays unranked -
+   * and what the result screen says of it. Null for any other match, and
+   * for one played as practice. It holds for that one match; a reset ends
+   * it.
+   */
+  ranked: RankedOutcome | null;
+  /** The ranked endless run under way - null for an unranked one. */
+  endlessRanked: RankedRun | null;
   /** The online match this device is connected to, null outside one. */
   online: OnlineSeat | null;
   /** True while an online match waits for the other device's inputs. */
@@ -134,6 +145,8 @@ export function createInitialState(): GameStateState {
     dailyDay: null,
     endlessMatch: false,
     endless: null,
+    ranked: null,
+    endlessRanked: null,
     online: null,
     waitingForPeer: false,
   };
@@ -157,6 +170,7 @@ export const GameStateStore = signalStore(
       endedBy,
       online,
       colors,
+      ranked,
     }) => {
       const level = computed(() =>
         getLevel(online()?.levelId ?? matchLevel() ?? levelId())
@@ -176,6 +190,11 @@ export const GameStateStore = signalStore(
         isMatchOn: computed(() => isMatchOn(currentState())),
         /** True while the match is paused. */
         isPaused: computed(() => currentState() === GameState.PAUSED),
+        /**
+         * The ranked attempt the next match was declared as - null for an
+         * unranked one. A ranked match plays through: no pause, no restart.
+         */
+        rankedMatch: computed(() => ranked()?.match ?? null),
         /** Whole seconds of the match played, as the match clock shows them. */
         gameSeconds,
         /**

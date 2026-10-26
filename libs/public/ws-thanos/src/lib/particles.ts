@@ -16,28 +16,34 @@ export enum ParticleStateIndex {
 
 export const PARTICLE_STATE_LENGTH = 8;
 
+/** box around the visible particles in effect canvas pixels, edges included */
+export interface ParticleBounds {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
 export interface Particles {
   count: number;
   /** position, velocity, acceleration, alpha (0-255) and release time per particle */
   state: Float32Array;
   /** rgba (0-255) per particle */
   colors: Uint8Array;
-  /** right most particle x of the captured image, the vaporizing front starts here */
-  maxParticleX: number;
-  /** top most particle y of the captured image */
-  minParticleY: number;
+  /** where the particles are at the start, the vaporizing front sweeps through this box */
+  bounds: ParticleBounds;
   /** true when only a random sample of the visible pixels became particles */
   sampled: boolean;
 }
 
 /**
  * Creates one particle per visible pixel, randomly sampled down to maxParticleCount.
- * Particles are placed at the bottom of an effect canvas of the given height.
+ * The element's top left corner sits at offset in the effect canvas.
  */
 export function createParticles(
   imageData: ImageData,
   maxParticleCount: number,
-  effectHeight: number
+  offset: { x: number; y: number }
 ): Particles {
   const { width, height, data } = imageData;
 
@@ -63,27 +69,37 @@ export function createParticles(
 
   const state = new Float32Array(count * PARTICLE_STATE_LENGTH);
   const colors = new Uint8Array(count * 4);
-  const offsetY = effectHeight - height;
 
-  let maxParticleX = 0;
-  let minParticleY = effectHeight;
+  let left = width;
+  let top = height;
+  let right = 0;
+  let bottom = 0;
   for (let i = 0; i < count; i++) {
     const pixel = candidates[i];
     const x = pixel % width;
     const y = ~~(pixel / width);
-    maxParticleX = Math.max(maxParticleX, x);
-    minParticleY = Math.min(minParticleY, y);
+    left = Math.min(left, x);
+    top = Math.min(top, y);
+    right = Math.max(right, x);
+    bottom = Math.max(bottom, y);
 
     const base = i * PARTICLE_STATE_LENGTH;
-    state[base + ParticleStateIndex.X] = x;
-    state[base + ParticleStateIndex.Y] = y + offsetY;
+    state[base + ParticleStateIndex.X] = x + offset.x;
+    state[base + ParticleStateIndex.Y] = y + offset.y;
     state[base + ParticleStateIndex.ALPHA] = data[pixel * 4 + 3];
     colors[i * 4] = data[pixel * 4];
     colors[i * 4 + 1] = data[pixel * 4 + 1];
     colors[i * 4 + 2] = data[pixel * 4 + 2];
     colors[i * 4 + 3] = data[pixel * 4 + 3];
   }
-  return { count, state, colors, maxParticleX, minParticleY, sampled };
+  // without particles left > right and top > bottom, there is nothing to sweep
+  const bounds = {
+    left: left + offset.x,
+    top: top + offset.y,
+    right: right + offset.x,
+    bottom: bottom + offset.y,
+  };
+  return { count, state, colors, bounds, sampled };
 }
 
 /** a random sample of at most maxCount particles, e.g. when the CPU takes over from the GPU */

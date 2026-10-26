@@ -1,0 +1,59 @@
+@use '../menu/screen';
+
+:host {
+  @include screen.screen;
+}
+
+.matches {
+  @include screen.panel;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 40rem;
+  padding: 1.25rem;
+
+  --mat-list-list-item-label-text-color: var(--bw-text);
+  --mat-list-list-item-supporting-text-color: var(--bw-soft);
+  --mat-list-list-item-leading-icon-color: var(--bw-gold);
+}
+
+.intro,
+.notice {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--bw-soft);
+}
+
+.notice {
+  color: var(--bw-gold);
+}
+
+.when {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chips {
+  --mat-chip-container-height: 1.4rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.delete {
+  white-space: nowrap;
+
+  &:not(.delete-armed) {
+    min-width: 40px;
+    padding: 0 8px;
+
+    mat-icon {
+      margin: 0;
+    }
+  }
+}

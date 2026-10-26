@@ -3,11 +3,13 @@ import {
   DestroyRef,
   inject,
   Injectable,
+  Injector,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, Subscription, switchMap, take, timer } from 'rxjs';
 import { ProgressService } from './progress.service';
+import { GameSettingsService } from './settings.service';
 import {
   dnaEarned,
   GeneId,
@@ -75,6 +77,7 @@ export const EVOLUTION_WAIT_MS = 3000;
 @Injectable({ providedIn: 'root' })
 export class EvolutionService {
   private readonly storage = inject(GameStorage);
+  private readonly injector = inject(Injector);
   private readonly account = inject(GameAccount);
   private readonly device = inject(DeviceStorage);
   private readonly progress = inject(ProgressService);
@@ -191,6 +194,15 @@ export class EvolutionService {
   public wornSkin(look: BacteriaLook): BacteriaLook {
     return this.trustsPick() || ownsSkin(this.state(), look) ? look : 'slime';
   }
+
+  /**
+   * The skin the colonies wear for the device's look ({@link wornSkin} of
+   * `GameSettingsService.look`). The settings are asked on first read:
+   * they need the game's state, which needs this service.
+   */
+  public readonly worn = computed(() =>
+    this.wornSkin(this.injector.get(GameSettingsService).look())
+  );
 
   public canBuySkin(skin: BacteriaLook): boolean {
     return this.loaded() && canBuySkin(this.earned(), this.state(), skin);

@@ -19,6 +19,8 @@ import {
 } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { Player } from './player.model';
+import { intSimulation } from './gpu-int/int-simulation';
+import { isRuleset, Ruleset } from './simulation';
 import { isHeadStart } from './rivalry';
 import { EndReason, MatchOutcome } from './win-conditions';
 
@@ -53,6 +55,17 @@ export const EVOLVED_REPLAY_VERSION = 3;
 export const LADDER_REPLAY_VERSION = 4;
 
 /**
+ * The format of a replay of the deterministic integer simulation (ADR
+ * 0015, `gpu-int`): version 2's header with `simulation: 'gpu-int'`,
+ * version 3's loadouts and weapons fired where evolution played a part,
+ * and version 4's `ladder` for a match against the ladder's computer. It
+ * plays again on `IntSimulation`, bit for bit as on the GPU that ran it, so
+ * it is stored and checked like version 2 - and it is the only format a
+ * ranked attempt takes (the owner's ruleset policy for the boards).
+ */
+export const GPU_INT_REPLAY_VERSION = 5;
+
+/**
  * The first format, still read for the ghost links in the wild - and still
  * written for a plain match the GPU ran, which version 2 does not take but
  * a ghost race can still play against. Always plain.
@@ -63,13 +76,16 @@ export const GHOST_REPLAY_VERSION = 1;
 interface VersionRules {
   /** True when it may carry loadouts and weapons fired. */
   evolved: boolean;
-  /** True when it is a match against the ladder's computer - and only then. */
-  ladder: boolean;
+  /**
+   * True when it is a match against the ladder's computer - and only then;
+   * `optional` when it may be one or not (the `gpu-int` format).
+   */
+  ladder: boolean | 'optional';
   /** The simulations it may come from. */
   simulations: readonly ReplayHeader['simulation'][];
-  /** True when `playReplay` plays it again - from the CPU only. */
+  /** True when `playReplay` plays it again - never one the float GPU ran. */
   playable: boolean;
-  /** True when the stored parse takes it - from the CPU only. */
+  /** True when the stored parse takes it - never one the float GPU ran. */
   storable: boolean;
 }
 
@@ -111,6 +127,16 @@ const VERSIONS: ReadonlyMap<unknown, VersionRules> = new Map([
       evolved: true,
       ladder: true,
       simulations: ['cpu', 'gpu'],
+      playable: true,
+      storable: true,
+    },
+  ],
+  [
+    GPU_INT_REPLAY_VERSION,
+    {
+      evolved: true,
+      ladder: 'optional',
+      simulations: ['gpu-int'],
       playable: true,
       storable: true,
     },
@@ -188,10 +214,11 @@ export interface ReplayHeader extends MatchPlan {
   /** The balance table the match was played with - see `BALANCE_VERSION`. */
   balanceVersion: number;
   /**
-   * Which simulation ran it. Only a match on the CPU one plays again the
-   * same; the GPU one does not even agree with itself across devices.
+   * Which simulation ran it: a ruleset (`cpu`, `gpu-int`), whose matches
+   * play again the same, or the float GPU one (`gpu`), which does not even
+   * agree with itself across devices.
    */
-  simulation: 'cpu' | 'gpu';
+  simulation: Ruleset | 'gpu';
   /** How many ticks the match lasted. */
   ticks: number;
   /** Version 2: who played each seat, the left one first. */
@@ -263,14 +290,10 @@ export function replayOf(
     ticks,
   };
   const header: ReplayHeader =
-    simulation === 'cpu' || evolved
+    simulation !== 'gpu' || evolved
       ? {
           ...base,
-          version: !evolved
-            ? REPLAY_VERSION
-            : plan.ladder === undefined
-              ? EVOLVED_REPLAY_VERSION
-              : LADDER_REPLAY_VERSION,
+          version: versionOf(simulation, evolved, plan.ladder !== undefined),
           seats: extras.seats ?? seatsOf(plan.mode),
           ...definedOnly({
             roomCode: extras.roomCode,
@@ -293,6 +316,21 @@ export function replayOf(
   };
 }
 
+/** The format a ruleset's replay, or an evolved float GPU one, takes. */
+function versionOf(
+  simulation: ReplayHeader['simulation'],
+  evolved: boolean,
+  ladder: boolean
+): number {
+  if (simulation === 'gpu-int') {
+    return GPU_INT_REPLAY_VERSION;
+  }
+  if (!evolved) {
+    return REPLAY_VERSION;
+  }
+  return ladder ? LADDER_REPLAY_VERSION : EVOLVED_REPLAY_VERSION;
+}
+
 /** A match's outcome as a replay header keeps it. */
 export function replayOutcome(
   outcome: MatchOutcome | null
@@ -303,22 +341,62 @@ export function replayOutcome(
 }
 
 /**
- * Plays a recorded match again on the CPU simulation, without anyone
- * watching. Null for a replay that would not play out as it was played:
- * another format (versions 2 to 4 play), another balance table, another
- * ladder computer, or a match the GPU ran.
+ * True for a match saved whatever "Save my matches" says (ADR 0012):
+ * online, by its room, and ranked, by its attempt.
  */
-export function playReplay(replay: Replay): ReplayResult | null {
-  const { header, inputs } = replay;
-  if (
-    VERSIONS.get(header.version)?.playable !== true ||
-    header.balanceVersion !== BALANCE_VERSION ||
-    (header.ladder !== undefined && header.ladder !== LADDER_VERSION) ||
-    header.simulation !== 'cpu'
-  ) {
+export function savedRegardless(header: ReplayHeader): boolean {
+  return header.roomCode !== undefined || header.attempt !== undefined;
+}
+
+/**
+ * True for a match on the online grid of its level - the one grid a
+ * replay is stored and checked on (ADR 0011). A local match on another
+ * grid is recorded too, to watch again on this device, but never kept.
+ */
+export function onOnlineGrid(
+  plan: Pick<MatchPlan, 'levelId' | 'width' | 'height'>
+): boolean {
+  const grid = arenaSize(
+    ONLINE_SIM_RESOLUTION,
+    levelSize(getLevel(plan.levelId))
+  );
+  return plan.width === grid.width && plan.height === grid.height;
+}
+
+/**
+ * True when a replay plays out again as it was played: a format that
+ * plays (versions 2 to 5), this balance table, this ladder computer and a
+ * ruleset - never a match the float GPU ran. A balance change retires
+ * every replay before it (ADR 0011).
+ */
+export function canPlayBack(replay: Replay): boolean {
+  const { header } = replay;
+  const rules = VERSIONS.get(header.version);
+  return (
+    rules?.playable === true &&
+    rules.simulations.includes(header.simulation) &&
+    header.balanceVersion === BALANCE_VERSION &&
+    (header.ladder === undefined || header.ladder === LADDER_VERSION) &&
+    header.simulation !== 'gpu'
+  );
+}
+
+/**
+ * The engine a recorded match plays again on: its plan, every human
+ * played back from the recording as they were, the bot and the neutral
+ * colonies simulated again from the seed, on its ruleset's simulation -
+ * `BacteriaSimulation` for `cpu`, `IntSimulation` for `gpu-int`. Null for
+ * a replay that would not play out as it was played ({@link canPlayBack}).
+ * The caller disposes of it.
+ */
+export function replayEngine(
+  replay: Replay,
+  onSecond?: (sizes: SizeSample) => void
+): MatchEngine | null {
+  if (!canPlayBack(replay)) {
     return null;
   }
-  const samples: SizeSample[] = [];
+  const { header, inputs } = replay;
   const { spawns, options } = planMatch(header);
   // Every human is played back from the recording, as they were.
   const ghosts = new Map<number, GhostController>();
@@ -328,11 +406,26 @@ export function playReplay(replay: Replay): ReplayResult | null {
       ghosts.set(seat, new GhostController(inputs, seat));
     }
   });
-  const engine = new MatchEngine(spawns, {
+  return new MatchEngine(spawns, {
     ...options,
+    ...(header.simulation === 'gpu-int' ? { simulation: intSimulation } : {}),
     ghosts,
-    onSecond: (sizes) => samples.push(sizes),
+    ...(onSecond === undefined ? {} : { onSecond }),
   });
+}
+
+/**
+ * Plays a recorded match again on its ruleset's simulation, without anyone
+ * watching - see {@link replayEngine}. Null for a replay that would not
+ * play out as it was played.
+ */
+export function playReplay(replay: Replay): ReplayResult | null {
+  const samples: SizeSample[] = [];
+  const engine = replayEngine(replay, (sizes) => samples.push(sizes));
+  if (engine === null) {
+    return null;
+  }
+  const { header } = replay;
   try {
     let outcome = engine.outcome();
     while (outcome == null && engine.tickCount < header.ticks) {
@@ -395,29 +488,37 @@ export function parseReplay(
 }
 
 /**
- * True when a replay holds only what its version may: a simulation it may
- * come from - the CPU for one to store - and, for a plain version, no
- * loadouts and no weapons fired: every client before evolution would drop
- * them and play another match. An evolved one never belongs to a ranked
- * attempt or the daily level, which the leaderboards keep plain (ADR 0013).
+ * True when a replay holds only what its version may:
+ * - a simulation it may come from - a ruleset for one to store;
+ * - for a plain version, no loadouts and no weapons fired: every client
+ *   before evolution would drop them and play another match;
+ * - evolution never in a ranked attempt or at the daily level, which the
+ *   leaderboards keep plain (ADR 0013);
+ * - a ranked attempt only on `gpu-int`, the ruleset the boards take
+ *   (ADR 0015).
  */
 function fitsVersion(
   { header, inputs }: Replay,
   rules: VersionRules,
   stored: boolean
 ): boolean {
+  const evolved = header.loadouts !== undefined || inputs.weapons.length > 0;
+  const ranked = header.attempt !== undefined;
   return (
     rules.simulations.includes(header.simulation) &&
-    (!stored || header.simulation === 'cpu') &&
-    (rules.evolved
-      ? header.attempt === undefined && !isDailyLevelId(header.levelId)
-      : header.loadouts === undefined && inputs.weapons.length === 0) &&
+    (!stored || header.simulation !== 'gpu') &&
+    (!ranked || header.simulation === 'gpu-int') &&
+    (header.simulation === 'gpu-int'
+      ? !evolved || (!ranked && !isDailyLevelId(header.levelId))
+      : rules.evolved
+        ? !ranked && !isDailyLevelId(header.levelId)
+        : !evolved) &&
     // The ladder's computer plays where loadouts do: against the computer.
-    (rules.ladder
-      ? header.ladder !== undefined &&
+    (header.ladder === undefined
+      ? rules.ladder !== true
+      : rules.ladder !== false &&
         header.loadouts !== undefined &&
-        header.mode === 'vs-computer'
-      : header.ladder === undefined)
+        header.mode === 'vs-computer')
   );
 }
 
@@ -515,7 +616,7 @@ function parsePlan(raw: Record<string, unknown>): ReplayHeader | null {
     difficultyOption(difficulty as BotDifficulty) == null ||
     colors == null ||
     !isHeadStart(headStart) ||
-    (simulation !== 'cpu' && simulation !== 'gpu')
+    (!isRuleset(simulation) && simulation !== 'gpu')
   ) {
     return null;
   }
@@ -648,13 +749,8 @@ function parseHeaderV2(
     header.attempt = { id: attempt['id'], at: attempt['at'] };
   }
   if (stored) {
-    const grid = arenaSize(
-      ONLINE_SIM_RESOLUTION,
-      levelSize(getLevel(plan.levelId))
-    );
     if (
-      plan.width !== grid.width ||
-      plan.height !== grid.height ||
+      !onOnlineGrid(plan) ||
       header.outcome === undefined ||
       header.checksum === undefined
     ) {

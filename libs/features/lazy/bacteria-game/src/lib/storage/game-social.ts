@@ -39,9 +39,17 @@ export interface Waiting extends QueueEntry {
  * and nothing while the value cannot be read.
  */
 export interface GameSocial {
-  /** A player's stored profile, unparsed - null while they have none. */
+  /**
+   * A player's stored profile, unparsed - null once the server says they
+   * have none. A miss only the device's cache tells is not emitted, so a
+   * null is never a profile the cache has not seen yet.
+   */
   watchProfile(uid: string): Observable<unknown>;
-  saveProfile(uid: string, profile: Profile): Promise<void>;
+  /**
+   * Writes the fields given, each whole, and leaves the rest of the stored
+   * profile as it is. A first profile needs its card and `shareStatus`.
+   */
+  saveProfile(uid: string, profile: Partial<Profile>): Promise<void>;
 
   /** The uids on a player's friend list. */
   watchFriends(uid: string): Observable<string[]>;

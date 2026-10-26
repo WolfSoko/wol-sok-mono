@@ -49,6 +49,26 @@ export const settings: Translation<typeof en> = {
     showFps: 'Bildrate anzeigen',
     fullscreen: 'Browser-Vollbild',
   },
+  matches: {
+    title: 'Matches',
+    recordLocal: 'Matches gegen den Computer aufzeichnen',
+    recordLocalNote:
+      'Mit „Meine Matches speichern“ werden sie in „Meine Matches“ aufbewahrt: 30 Tage in der Cloud oder, ohne Cloud, auf diesem Gerät.',
+    saveMatches: 'Meine Matches speichern',
+    saveMatchesNote: 'Online-Matches werden immer aufbewahrt.',
+  },
+  simulation: {
+    gpuInt: 'Partien laufen auf der GPU, auf jedem Gerät gleich.',
+    cpu: 'Partien laufen auf der CPU.',
+    forced:
+      'Für dieses Gerät mit ?sim={ruleset} festgelegt; ?sim=auto hebt es auf.',
+    passed: 'GPU-Selbsttest auf {renderer} bestanden.',
+    software:
+      'GPU-Selbsttest auf {renderer} bestanden, doch der zeichnet auf der CPU - zu langsam für Partien auf der GPU.',
+    failedAt: 'GPU-Selbsttest auf {renderer} bei Tick {tick} durchgefallen.',
+    error: 'GPU-Selbsttest konnte auf {renderer} nicht laufen: {error}',
+    pending: 'GPU-Selbsttest noch nicht gelaufen.',
+  },
   language: {
     title: 'Sprache',
     automatic: 'Automatisch',

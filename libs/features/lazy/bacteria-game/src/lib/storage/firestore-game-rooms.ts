@@ -5,14 +5,21 @@ import { errorCode } from './retry';
 
 /** How long a room lasts: Firestore's TTL policy on `expireAt` deletes it. */
 const ROOM_TTL_MS = 60 * 60 * 1000;
+/**
+ * How long a room's stub lasts after the room was opened - the most the
+ * rules allow. A match reported later is kept for its players only.
+ */
+export const STUB_TTL_SECONDS = 6 * 60 * 60;
 /** Codes tried before giving up - one taken already is tried again. */
 const CODE_ATTEMPTS = 4;
 
 /**
  * The rooms in Firestore, a document per code - `rooms/{code}` = `{ host,
  * offer, createdAt, expireAt }`, to which the guest adds `guest` and
- * `answer`. The rules let anyone signed in read a room by its code, never
- * list them, and only one guest answer it.
+ * `answer`. Once connected, the host replaces it with its stub `{ host,
+ * guest, createdAt, expireAt, taken: true }`. The rules let anyone signed
+ * in read a room by its code, never list them, only one guest answer it
+ * and only its host swap it for the stub.
  */
 export class FirestoreGameRooms implements GameRooms {
   public constructor(
@@ -71,6 +78,31 @@ export class FirestoreGameRooms implements GameRooms {
           stop();
           // A room nobody joined is no use to anyone; the TTL takes the rest.
           dbSdk.deleteDoc(ref).catch(() => undefined);
+        },
+        take: async () => {
+          stop();
+          // From the server: the rules want the stored `createdAt` back
+          // unchanged, and the guest as it answered.
+          const room = await dbSdk.getDocFromServer(ref);
+          const createdAt: unknown = room.get('createdAt');
+          const guest: unknown = room.get('guest');
+          if (
+            !(createdAt instanceof dbSdk.Timestamp) ||
+            typeof guest !== 'string'
+          ) {
+            throw new Error('The room has no guest to take it.');
+          }
+          // A whole new document: the offer and answer must go.
+          await dbSdk.setDoc(ref, {
+            host,
+            guest,
+            createdAt,
+            expireAt: new dbSdk.Timestamp(
+              createdAt.seconds + STUB_TTL_SECONDS,
+              createdAt.nanoseconds
+            ),
+            taken: true,
+          });
         },
       };
     }

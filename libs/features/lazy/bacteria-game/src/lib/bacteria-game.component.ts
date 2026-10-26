@@ -18,6 +18,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,8 +41,23 @@ import {
   ResizedEvent,
   ShowFpsComponent,
 } from '@wolsok/ui-kit';
-import { asapScheduler, defer, Observable, timer } from 'rxjs';
-import { defaultIfEmpty, filter, last, map, take, tap } from 'rxjs/operators';
+import {
+  asapScheduler,
+  defer,
+  firstValueFrom,
+  Observable,
+  of,
+  timer,
+} from 'rxjs';
+import {
+  defaultIfEmpty,
+  filter,
+  last,
+  map,
+  take,
+  tap,
+  timeout,
+} from 'rxjs/operators';
 import { DishAmbience } from './arena/ambience';
 import { ArenaPainter } from './arena/arena-painter';
 import {
@@ -49,13 +65,16 @@ import {
   ArenaLayout,
   ArenaScene,
   ArenaViewComponent,
+  layoutKey,
 } from './arena/arena-view.component';
+import { armedTap } from './armed-tap';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
+import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
-import {
-  chooseSimulation,
-  DETERMINISTIC_SIMULATION,
-} from './gl/simulation-choice';
+import { SimulationOverrideService } from './gl/simulation-override.service';
+import { chooseSimulation } from './gl/simulation-choice';
+import { FeatureTogglesService } from './feature-toggles.service';
+import { gpuTrusted } from './gl/simulation-check';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { rgba } from './arena/canvas-math';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
@@ -77,6 +96,12 @@ import { NewGameEntry, opponentOf, PlayKind, stepsOf } from './menu/play-modes';
 import { MainMenuComponent } from './menu/main-menu.component';
 import { DailyCard } from './menu/menu-cards';
 import { FriendsScreenComponent } from './menu/friends-screen.component';
+import { LeaderboardsComponent } from './boards/leaderboards.component';
+import { ModerationNoticesComponent } from './moderation/moderation-notices.component';
+import { ModerationService } from './moderation/moderation.service';
+import { RankedService } from './ranked/ranked.service';
+import { MyMatchesComponent } from './replays/my-matches.component';
+import { ReplayScreenComponent } from './replays/replay-screen.component';
 import { HelpComponent } from './menu/help.component';
 import { EvolutionComponent } from './menu/evolution.component';
 import { ProfileComponent } from './menu/profile.component';
@@ -118,9 +143,10 @@ import {
   FriendView,
   SocialService,
 } from './social/social.service';
+import { arenaContent, SeatColors } from './arena/arena-content';
+import { computerLook, seatLooks } from './state/colony-looks';
 import { Camera, CameraShake } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
-import { particleBudget } from './arena/weapon-fx';
 import type { WeaponFire } from './state/evolution';
 import { GameHapticsService } from './haptics.service';
 import { GameSoundService, Soundtrack } from './sound/game-sound.service';
@@ -154,11 +180,12 @@ import {
   nextLevel,
 } from './state/levels';
 import { pickMatchLevel } from './state/match-level';
+import { isRunOver } from './state/endless';
 import { DynamicWall, Rect } from './state/maps';
 import { harvestTarget, holdTarget } from './state/win-conditions';
 import { MissionId } from './state/training';
 import { mapZones, Zone } from './state/zones';
-import { isBoosted, Player } from './state/player.model';
+import { Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
 import { PlayerService } from './state/player.service';
 import {
@@ -199,6 +226,7 @@ interface HudGoal {
     MatIconModule,
     MatTooltipModule,
     SocialNoticesComponent,
+    ModerationNoticesComponent,
     JoystickComponent,
     BoostPadComponent,
     WeaponPadComponent,
@@ -209,6 +237,9 @@ interface HudGoal {
     SettingsComponent,
     HelpComponent,
     FriendsScreenComponent,
+    LeaderboardsComponent,
+    MyMatchesComponent,
+    ReplayScreenComponent,
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
@@ -235,6 +266,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   private readonly gpuSelfTest = inject(GpuSelfTestService);
+  private readonly simulationOverride = inject(SimulationOverrideService);
+  private readonly featureTogglesService = inject(FeatureTogglesService);
+  private readonly featureToggles = this.featureTogglesService.toggles;
   protected readonly progress = inject(ProgressService);
   protected readonly evolution = inject(EvolutionService);
   private readonly document = inject(DOCUMENT);
@@ -251,6 +285,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** True while an online match waits for the other device. */
   protected readonly waitingForPeer = this.store.waitingForPeer;
   protected readonly social = inject(SocialService);
+  /** The ban holding the player, and the owner's notices (ADR 0012). */
+  protected readonly moderation = inject(ModerationService);
+  /** Ranked daily attempts and endless runs (ADR 0012). */
+  private readonly ranked = inject(RankedService);
+  /** True while a ranked attempt is being declared. */
+  protected readonly declaring = signal(false);
+  /** Ranked play as the new game offers it, by mode. */
+  protected readonly rankedOffers = computed(() => ({
+    daily: this.ranked.offer('daily', this.settings.ranked()),
+    endless: this.ranked.offer('endless', this.settings.ranked()),
+  }));
   /** An invitation link opened on this visit, until it is answered. */
   protected readonly inviteOffer = signal<InviteOffer | null>(null);
   /** A match the host started while this device still cleared the last one. */
@@ -261,10 +306,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private ambience: DishAmbience | null = null;
   /** The view the ambience was last drawn still for - nothing to redraw while it holds. */
   private stillAmbience: Rect | null = null;
-  /** The skin the colonies wear: the look picked, once the player owns it. */
-  private readonly skin = computed(() =>
-    this.evolution.wornSkin(this.settings.look())
-  );
+  /** The skin the player's colony wears: the look picked, once owned. */
+  private readonly skin = this.evolution.worn;
+  /** The look the computer wears on the level - see `seatLooks`. */
+  private readonly computerLook = computed(() => computerLook(this.level().id));
 
   /**
    * The arena on its canvas. A new resolution gets a new canvas - see
@@ -281,6 +326,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private thanos!: WsThanosDirective;
   /** Draws the arena - on the GPU where the browser can; the view builds it. */
   private painter: ArenaPainter | null = null;
+  /** The layout the last painter was built for - null before the first. */
+  private readonly painterLayout = signal<ArenaLayout | null>(null);
   /** The camera over a map bigger than the base arena, null on any other. */
   private camera: Camera | null = null;
   /** When the camera last moved on, null before it ever did. */
@@ -288,7 +335,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** The shake of the view as a weapon goes off - on every map. */
   private readonly shake = new CameraShake();
   /** Each seat's colony colour - built anew only when a match's colours do. */
-  private seatColors = new Map<number, readonly number[]>();
+  private readonly seatColors = new SeatColors();
   /** The weapons fired since the frame before, for the next frame's content. */
   private pendingFires: readonly WeaponFire[] = [];
   /** Where the camera stands without the shake - what the minimap frames. */
@@ -308,10 +355,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /**
    * The grid the war runs on: the setting, but online the one grid both
    * devices run - also under the result of a match the other device left,
-   * which a new grid would wipe off the board.
+   * which a new grid would wipe off the board - and the online grid too
+   * for a ranked match (`rankedPlan`), from its declaration on.
    */
   private readonly simResolution = computed((): SimResolution =>
-    this.store.online() === null && this.store.endedBy() !== 'forfeit'
+    this.store.online() === null &&
+    this.store.endedBy() !== 'forfeit' &&
+    this.store.rankedMatch() === null &&
+    !this.declaring()
       ? this.settings.simResolution()
       : ONLINE_SIM_RESOLUTION
   );
@@ -340,6 +391,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       unit: simScale(sim),
     };
   });
+  /**
+   * True once the arena view built its painter for the layout the arena
+   * has now (one with the same canvas key: the layout is recomputed, a
+   * new object, on every level) - or before it built any.
+   */
+  private readonly arenaReady = computed(() => {
+    const painted = this.painterLayout();
+    return (
+      painted === null || layoutKey(painted) === layoutKey(this.arenaLayout())
+    );
+  });
+  private readonly arenaReady$ = toObservable(this.arenaReady);
   /** What the arena view paints: the match as it stands. */
   protected readonly arenaScene: ArenaScene = {
     content: (alpha) => this.content(alpha),
@@ -559,9 +622,28 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.store.online() === null ? this.lockedLevels() : ONLINE_LOCKS;
     return upcoming === null ? null : (locks[upcoming.id] ?? null);
   });
-  /** True where Restart may start the match again - online, the host only. */
+  /**
+   * True where Restart may start the match again - online, the host only;
+   * never a ranked match, whose declared seed plays once.
+   */
   protected readonly canRestart = computed(
-    () => !this.inEndlessRun() && this.onlineSeat() !== 1
+    () =>
+      !this.inEndlessRun() &&
+      this.store.rankedMatch() === null &&
+      this.onlineSeat() !== 1
+  );
+  /**
+   * True where the match may be paused: never a ranked one, whose attempt
+   * has a deadline from its declaration on (ADR 0012).
+   */
+  protected readonly canPause = computed(
+    () => this.store.rankedMatch() === null
+  );
+  /** "Give up" in two taps. */
+  private readonly giveUpTap = armedTap<true>();
+  /** True while the first tap on "Give up" waits for the second. */
+  protected readonly giveUpArmed = computed(
+    () => this.giveUpTap.armed() !== null
   );
   /** The crosshairs a finger or a key may steer - never the computer's. */
   private readonly humans: Signal<Player[]>;
@@ -680,6 +762,32 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.settings.ambience();
       this.reducedMotion();
       this.draw();
+    });
+
+    // The GPU self-test runs once this device plays the deterministic
+    // simulation: always with the owner's toggle on, else once the device
+    // override opts it in (`?sim=gpu-int`) - from the URL at once, from the
+    // storage maybe later than the arena.
+    this.simulationOverride.start();
+    // Ranked play needs its verdict as well: ranked matches play gpu-int.
+    effect(() => {
+      const toggles = this.featureToggles();
+      if (
+        toggles.deterministicSimulation ||
+        toggles.rankedDaily ||
+        toggles.rankedEndless ||
+        this.simulationOverride.override() === 'gpu-int'
+      ) {
+        untracked(() => this.gpuSelfTest.check());
+      }
+    });
+    // Its verdict on the canvas, beside the simulation - for the e2e tests
+    // and for debugging.
+    effect(() => {
+      const dataset = this.arenaView()?.canvas()?.dataset;
+      if (dataset != null) {
+        dataset['gpuSelfTest'] = selfTestState(this.gpuSelfTest.result());
+      }
     });
 
     // The minimap is drawn afresh for another map, and goes with the match.
@@ -878,24 +986,111 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** True in a match of an endless run - no restart, it would cost no life. */
   protected readonly inEndlessRun = this.store.endlessMatch;
 
-  /** Starts a new endless run, on its first level. */
-  protected playEndless(): void {
-    if (this.resetting()) {
+  /**
+   * Starts a new endless run, on its first level - a ranked one (ADR 0012)
+   * where ranked play is offered and wanted: its match 0 declared first.
+   */
+  protected async playEndless(): Promise<void> {
+    if (this.resetting() || this.declaring()) {
       return;
     }
     this.gameStateService.leaveOnline();
-    this.gameStateService.startEndless();
-    this.startGame();
+    if (this.ranked.wants('endless', this.settings.ranked())) {
+      const start = await this.whileDeclaring(() => this.ranked.startRun());
+      if (this.startedMeanwhile()) {
+        return;
+      }
+      this.gameStateService.startEndless(start);
+    } else {
+      this.gameStateService.startEndless();
+    }
+    await this.startWhenArenaReady();
   }
 
-  /** Starts a match on today's daily level, against the computer. */
-  protected playDaily(): void {
+  /**
+   * Starts a match on today's daily level, against the computer - a ranked
+   * attempt (ADR 0012) where ranked play is offered and wanted, declared
+   * first: it then plays the ranked setup from the declared seed.
+   */
+  protected async playDaily(): Promise<void> {
     // Not while the last match still turns to dust - the reset would end it.
-    if (this.resetting()) {
+    if (this.resetting() || this.declaring()) {
       return;
     }
     this.gameStateService.leaveOnline();
-    this.gameStateService.playDaily(this.progress.daily().day);
+    // A ranked attempt plays its own day's level, past midnight too.
+    const day = this.progress.daily().day;
+    if (this.ranked.wants('daily', this.settings.ranked())) {
+      const attempt = await this.whileDeclaring(() =>
+        this.ranked.declareDaily()
+      );
+      if (this.startedMeanwhile()) {
+        return;
+      }
+      this.gameStateService.playDaily(day, attempt);
+    } else {
+      this.gameStateService.playDaily(day);
+    }
+    await this.startWhenArenaReady();
+  }
+
+  /**
+   * On with the endless run after a match: the next match of a ranked run
+   * declared first - should that fail, the rest of the run plays unranked.
+   * A run that is over starts anew.
+   */
+  private async continueRun(): Promise<void> {
+    const { endless, endlessRanked } = this.store.snapshot();
+    if (endless === null || isRunOver(endless)) {
+      await this.playEndless();
+      return;
+    }
+    const next =
+      endlessRanked === null
+        ? null
+        : await this.whileDeclaring(() =>
+            this.ranked.declareRunMatch(endlessRanked)
+          );
+    if (this.startedMeanwhile()) {
+      return;
+    }
+    this.gameStateService.continueEndless(next);
+    await this.startWhenArenaReady();
+  }
+
+  /**
+   * True when another match started (or the last one is still being
+   * reset) while a declaration was under way: the declared start is void
+   * then, rather than ending that match.
+   */
+  private startedMeanwhile(): boolean {
+    return this.running() || this.resetting();
+  }
+
+  /** What `declare` comes to, with the declaring note up meanwhile. */
+  private async whileDeclaring<T>(declare: () => Promise<T>): Promise<T> {
+    this.declaring.set(true);
+    try {
+      return await declare();
+    } finally {
+      this.declaring.set(false);
+    }
+  }
+
+  /**
+   * Starts the match once the arena is laid out for it: a ranked match
+   * plays the online grid, whose canvas the arena view builds a moment
+   * after the grid changed. Waits a little at most.
+   */
+  private async startWhenArenaReady(): Promise<void> {
+    if (!untracked(this.arenaReady)) {
+      await firstValueFrom(
+        this.arenaReady$.pipe(
+          filter(Boolean),
+          timeout({ first: ARENA_READY_MS, with: () => of(true) })
+        )
+      );
+    }
     this.startGame();
   }
 
@@ -947,9 +1142,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         ? 'new-game'
         : action === 'evolve'
           ? 'evolution'
-          : 'menu'
+          : action === 'watch'
+            ? 'replay'
+            : 'menu'
     );
-    if (action === 'menu' || action === 'evolve') {
+    if (action === 'menu' || action === 'evolve' || action === 'watch') {
       this.gameStateService.endSeries();
       this.gameStateService.leaveOnline();
     }
@@ -967,7 +1164,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
             this.gameStateService.replayOneMatch(rematch);
           }
           if (action === 'endless') {
-            this.gameStateService.advanceEndless();
+            void this.continueRun();
+            return;
+          }
+          if (rematch?.dailyDay != null) {
+            // Again on the daily level: ranked again where it may be.
+            void this.playDaily();
+            return;
           }
           if (mission !== null) {
             this.pickedMission.set(mission);
@@ -979,7 +1182,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
             action === 'again' ||
             action === 'next' ||
             action === 'ghost' ||
-            action === 'endless' ||
             mission !== null
           ) {
             this.startGame();
@@ -1159,6 +1361,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected openNewGame(): void {
     this.newGameEntry.set({ kind: this.playKind(), step: 'mode' });
     this.show('new-game');
+    // Today's ranked attempts and runs left, for the daily and endless -
+    // read once each visit, which picking a mode then takes from.
+    void this.ranked.refresh();
   }
 
   /**
@@ -1179,6 +1384,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (kind === 'campaign' || kind === 'free') {
       this.settings.setFreePlay(kind === 'free');
     }
+    if (kind === 'daily' || kind === 'endless') {
+      void this.ranked.refresh(false);
+    }
   }
 
   /**
@@ -1188,10 +1396,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected startNewGame(kind: PlayKind): void {
     switch (kind) {
       case 'daily':
-        this.playDaily();
+        void this.playDaily();
         return;
       case 'endless':
-        this.playEndless();
+        void this.playEndless();
         return;
       case 'training':
         this.playMission(this.missionId());
@@ -1207,6 +1415,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.selectMode('vs-computer');
     this.gameStateService.setLevel(this.campaign.furthestLevel());
     this.startGame();
+  }
+
+  /**
+   * The ranked match's way out, which has no pause menu: the first tap
+   * arms it for a few seconds, the second gives the match up - its
+   * attempt then counts as played.
+   */
+  protected giveUp(): void {
+    if (this.giveUpTap.tap(true)) {
+      this.quitToMenu();
+    }
   }
 
   /** Gives the match up and returns to the main menu. */
@@ -1227,6 +1446,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     dismissSplash(document);
+    // The owner's toggles once the game is up: Remote Config stays off the
+    // start, and the defaults hold until it answered.
+    this.featureTogglesService.start();
     this.nativeFullscreenSupported.set(
       isFullscreenSupported(document, this.stageRef?.nativeElement)
     );
@@ -1257,6 +1479,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   protected onPainterChange(painter: ArenaPainter | null): void {
     this.painter = painter;
+    if (painter != null) {
+      this.painterLayout.set(untracked(this.arenaLayout));
+    }
     if (painter == null) {
       // The GPU simulation lives in the old context: let it go while it lasts.
       this.playerService.useSimulation(null);
@@ -1270,19 +1495,23 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // With a WebGL2 context the war itself runs on the GPU as well - for a
     // deterministic match only once the GPU passed the self-test.
     const gl = painter instanceof GlArenaPainter ? painter : null;
-    if (DETERMINISTIC_SIMULATION) {
-      this.gpuSelfTest.check();
+    if (gl != null) {
+      this.gpuSelfTest.sawRenderer(gl.renderer());
     }
-    const { factory, fallback } = chooseSimulation({
-      deterministic: DETERMINISTIC_SIMULATION,
+    const choice = chooseSimulation({
+      // The owner's toggle, read as each match starts: Remote Config may
+      // answer after the arena is up, and a match keeps its simulation.
+      deterministic: () =>
+        untracked(() => this.featureToggles().deterministicSimulation),
       gpu:
         gl == null
           ? null
           : (balance, random, options) =>
               gl.createSimulation(balance, random, options),
-      gpuTrusted: () => this.gpuSelfTest.result()?.ok === true,
+      gpuTrusted: () => gpuTrusted(this.gpuSelfTest.result()),
+      override: this.simulationOverride.override,
     });
-    this.playerService.useSimulation(factory, fallback);
+    this.playerService.useSimulation(choice.factory, choice.fallback, choice);
     this.gameStateService.setArenaSize(width, height);
     this.draw();
   }
@@ -1532,17 +1761,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** What the arena shows right now, for the painter. */
   private content(alpha: number): ArenaContent {
-    const balance = this.balance();
-    const players = untracked(this.playerStore.entities);
-    const drawn = players.map((player) => ({
-      player,
-      at: this.playerService.crosshairAt(player, alpha),
-    }));
-    const boosts = new Map(
-      drawn
-        .filter(({ player }) => isBoosted(player))
-        .map(({ player, at }) => [player.id, at])
-    );
     const simulation = this.playerService.getSimulation();
     // Which processor runs the war - for the e2e tests and for debugging.
     // The match picks it, so it can fall back to the CPU after a GPU error.
@@ -1550,30 +1768,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (dataset != null && dataset['simulation'] !== simulation.kind) {
       dataset['simulation'] = simulation.kind;
     }
-    return {
+    const players = untracked(this.playerStore.entities);
+    return arenaContent({
+      players,
+      crosshairAt: (player) => this.playerService.crosshairAt(player, alpha),
+      simulation,
       walls: this.walls(),
-      dynamicWalls: this.playerService.getDynamicWalls(),
-      colonies: simulation.colonyLayers(boosts),
+      balance: this.balance(),
+      looks: seatLooks(players, this.skin(), this.computerLook()),
       reducedMotion: this.reducedMotion(),
-      nutrients: this.playerService.getNutrients(),
-      balance,
-      look: this.skin(),
-      cursors: drawn.map(({ player, at }) => ({
-        ...at,
-        color: player.color,
-        boostLeft:
-          isBoosted(player) && balance.boostDurationSec > 0
-            ? player.boostActiveSec / balance.boostDurationSec
-            : null,
-      })),
       weaponFires: this.takeFires(),
-      weaponEffects: this.playerService.getActiveEffects(),
-      seatColors: this.seatColorsOf(players),
-      particleBudget: particleBudget(
-        this.settings.screenResolution(),
-        this.reducedMotion()
-      ),
-    };
+      seatColors: this.seatColors,
+      screenResolution: this.settings.screenResolution(),
+    });
   }
 
   /** The weapons fired since the frame before - each goes into one frame. */
@@ -1593,25 +1800,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       : camera;
   }
 
-  /**
-   * The seats' colours for the painter: a match keeps its colours, so the
-   * map of the frame before is handed on until one of them is another.
-   */
-  private seatColorsOf(
-    players: readonly Player[]
-  ): ReadonlyMap<number, readonly number[]> {
-    const known = this.seatColors;
-    if (
-      known.size !== players.length ||
-      players.some((player) => known.get(player.id) !== player.color)
-    ) {
-      this.seatColors = new Map(
-        players.map((player) => [player.id, player.color])
-      );
-    }
-    return this.seatColors;
-  }
-
   ngOnDestroy(): void {
     this.gameStateService.leaveOnline();
     this.gameStateService.endSeries();
@@ -1627,6 +1815,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Toggles pause - the touch equivalent of the P key. */
   togglePause() {
+    // A ranked match plays through: the music too.
+    if (!this.paused() && !this.canPause()) {
+      return;
+    }
     this.requestNativeFullscreen();
     if (this.paused()) {
       this.sound.resume();
@@ -1931,6 +2123,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 /** Room kept free around the arena for its frame, in CSS pixels. */
 const ARENA_FRAME_PX = 6;
 
+/** How long a match waits at most for the arena laid out for it. */
+const ARENA_READY_MS = 2_000;
+
 /** The screens of the menu that is shown while no match is on. */
 export type MenuScreen =
   | 'menu'
@@ -1940,7 +2135,11 @@ export type MenuScreen =
   | 'friends'
   | 'settings'
   | 'help'
-  | 'evolution';
+  | 'evolution'
+  | 'leaderboards'
+  | 'my-matches'
+  // The match just played, watched again from its result.
+  | 'replay';
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;
@@ -1953,6 +2152,17 @@ export type StagePanel = MenuScreen | 'pause' | 'over' | null;
  * not throw the page into fullscreen.
  */
 /** Where the pointer is, in client pixels. */
+/** The GPU self-test's verdict, as the canvas carries it. */
+function selfTestState(result: GpuSelfTestResult | null): string {
+  if (result == null) {
+    return 'pending';
+  }
+  if (result.error != null) {
+    return 'error';
+  }
+  return result.ok ? 'passed' : 'failed';
+}
+
 function clientPoint(event: PointerEvent): Point {
   return { x: event.clientX, y: event.clientY };
 }

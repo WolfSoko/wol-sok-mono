@@ -3,7 +3,7 @@ import { GameBalance } from '../game-balance';
 import { Point } from '../geometry';
 import { ENERGY_SCALE } from '../grid-format';
 import { Bacteria } from '../player.model';
-import { CellsLayer } from '../simulation';
+import { CellsLayer, SimulationFactory } from '../simulation';
 import { decodeReport } from '../simulation-report';
 import { GridSimulation } from '../grid-simulation';
 import { frameSeed } from './draws';
@@ -278,3 +278,7 @@ export class IntSimulation extends GridSimulation {
     };
   }
 }
+
+/** The deterministic simulation on the CPU - see {@link IntSimulation}. */
+export const intSimulation: SimulationFactory = (balance, random, seed) =>
+  new IntSimulation(balance, random, seed);

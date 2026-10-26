@@ -87,9 +87,9 @@ export interface GameBalance {
  * The version of the balance table and of the rules the simulation applies
  * with it. Raise it with every change that plays a recorded match out
  * differently: a replay only plays again under the version it was recorded
- * with.
+ * with. Version 6 brings the `gpu-int` ruleset into play (ADR 0015, step 8).
  */
-export const BALANCE_VERSION = 5;
+export const BALANCE_VERSION = 6;
 
 export const gameBalance: GameBalance = {
   startBacteriaRadius: 14,

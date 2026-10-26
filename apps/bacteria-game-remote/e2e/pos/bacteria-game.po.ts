@@ -40,7 +40,10 @@ export class BacteriaGamePo {
     this.playArea = page.locator('.stage .arena-canvas');
     this.playCta = page.getByRole('button', { name: /New game/ });
     this.startCta = page.getByRole('button', { name: /^Start / });
-    this.profileCta = page.getByRole('button', { name: 'Profile' });
+    this.profileCta = page.getByRole('button', {
+      name: 'Profile',
+      exact: true,
+    });
     // The tile's name goes on with the friend requests waiting.
     this.friendsCta = page.getByRole('button', { name: /^Friends/ });
     this.startStep = page.locator('feat-lazy-bac-game-new-game .start-step');
@@ -72,8 +75,8 @@ export class BacteriaGamePo {
     this.unmuteCta = page.getByRole('button', { name: 'Unmute' });
   }
 
-  public async goto(): Promise<void> {
-    await this.page.goto('/');
+  public async goto(path = '/'): Promise<void> {
+    await this.page.goto(path);
   }
 
   /** A level's card in the level choice, by the level's title. */

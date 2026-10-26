@@ -1,3 +1,4 @@
+import type { Ruleset } from './simulation';
 import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
 import { dailyLevelId } from './daily';
@@ -35,6 +36,10 @@ import { matchChecksum } from './checksum';
 import { MatchEngine, cpuSimulation } from './match-engine';
 import { planMatch } from './match-setup';
 import type { NetMessage } from '../net/net-message';
+import { attemptSeed, isRankedPlan, rankedPlan } from './attempts';
+import { endlessLevelId } from './endless';
+import { GPU_INT_REPLAY_VERSION } from './replay';
+import type { RankedMatch } from './ranked-match';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -771,6 +776,7 @@ describe('GameStateService online', () => {
         new Lockstep(0, (message) => this.sent.push({ ...start, ...message }))
     );
     public matchRef = jest.fn(() => ({ roomCode: 'K7QPXM', n: 1 }));
+    public agreedRuleset = jest.fn((): Ruleset => 'cpu');
     public takeStart() {
       const pending = this.pending;
       this.pending = null;
@@ -1052,15 +1058,23 @@ describe('GameStateService local recordings', () => {
     players.useSimulation((balance, random, seed) => {
       const simulation = cpuSimulation(balance, random, seed);
       Object.defineProperty(simulation, 'kind', { value: 'gpu' });
+      Object.defineProperty(simulation, 'ruleset', { value: null });
       return simulation;
     });
   }
 
-  /** Plays a match of two seconds on a 320x180 arena and ends it on time. */
-  async function play(mode: 'vs-computer' | 'two-players'): Promise<void> {
+  /**
+   * Plays a match of two seconds on an arena of that size - 320x180, the
+   * online grid of a base level, when absent - and ends it on time.
+   */
+  async function play(
+    mode: 'vs-computer' | 'two-players',
+    width = 320,
+    height = 180
+  ): Promise<void> {
     service.setMode(mode);
-    service.setArenaSize(320, 180);
-    service.init(320, 180);
+    service.setArenaSize(width, height);
+    service.init(width, height);
     service.start();
     for (let frame = 0; frame < 120; frame++) {
       store.update({ keysPressed: frame < 60 ? ['d'] : ['w'] });
@@ -1069,7 +1083,7 @@ describe('GameStateService local recordings', () => {
           .spyOn(players, 'outcome')
           .mockReturnValue({ winner: null, reason: 'time' });
       }
-      service.advance(320, 180, 1);
+      service.advance(width, height, 1);
     }
     await Promise.resolve();
   }
@@ -1143,18 +1157,258 @@ describe('GameStateService local recordings', () => {
     expect(replays.submissions).toEqual([]);
   });
 
-  it('records nothing off the online grid, which no server could check', async () => {
-    service.setMode('vs-computer');
-    service.setArenaSize(480, 270);
-    service.init(480, 270);
+  it('records a match off the online grid to watch again, but keeps none, which no server could check', async () => {
+    // "High": 1.5 cells per base cell.
+    await play('vs-computer', 480, 270);
+
+    const recording = service.lastRecording();
+    const replay = recording?.replay as Replay;
+    expect(replay.header).toEqual(
+      expect.objectContaining({
+        simulation: 'cpu',
+        width: 480,
+        height: 270,
+        ticks: 120,
+      })
+    );
+    expect(playReplay(replay)?.checksum).toBe(replay.header.checksum);
+    expect(parseReplay(replay, { stored: true })).toBeNull();
+    expect(replays.submissions).toEqual([]);
+    expect(recording?.id).toBeNull();
+  });
+
+  it('keeps the float GPU off the online grid, and records nothing on it', async () => {
+    useGpu();
+    const init = jest.spyOn(players, 'init');
+
+    await play('vs-computer', 480, 270);
+
+    // Recording moves no match off the simulation the device picks.
+    expect(init).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.not.objectContaining({ recordedSeats: expect.anything() })
+    );
+    expect(players.getSimulation().kind).toBe('gpu');
+    expect(service.lastRecording()).toBeNull();
+    expect(replays.submissions).toEqual([]);
+    expect(store.snapshot().lastReplay?.header.simulation).toBe('gpu');
+  });
+});
+
+describe('GameStateService ranked matches', () => {
+  const DAY = '2026-10-26';
+  const AT = Date.UTC(2026, 9, 26, 12);
+  let service: GameStateService;
+  let store: GameStateStore;
+  let players: PlayerService;
+  let replays: FakeGameReplays;
+
+  function declared(id: string, uid = 'ada'): RankedMatch {
+    return { attempt: { id, at: AT }, seed: attemptSeed(uid, id, AT) };
+  }
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    replays = new FakeGameReplays();
+    TestBed.configureTestingModule({
+      providers: [{ provide: GameReplays, useValue: replays }],
+    });
+    service = TestBed.inject(GameStateService);
+    store = TestBed.inject(GameStateStore);
+    players = TestBed.inject(PlayerService);
+    // A player who records nothing and keeps nothing - and set up harder.
+    service.setReplayPrefs({ recordLocal: false, saveMatches: false });
+    service.setDifficulty('hard');
+    service.setHeadStart(2);
+  });
+
+  afterEach(() => {
+    service.cleanup();
+    localStorage.clear();
+    jest.restoreAllMocks();
+  });
+
+  /** Plays a few ticks on the arena the game lays out for it and ends on time. */
+  async function play(): Promise<void> {
+    const { width, height } = rankedPlan(
+      store.snapshot().matchLevel ?? 'petri-dish',
+      0
+    );
+    service.setArenaSize(width, height);
+    service.init(width, height);
     service.start();
-    jest
-      .spyOn(players, 'outcome')
-      .mockReturnValue({ winner: null, reason: 'time' });
-    service.advance(480, 270, 1);
+    for (let frame = 0; frame < 10; frame++) {
+      if (frame === 9) {
+        jest
+          .spyOn(players, 'outcome')
+          .mockReturnValue({ winner: null, reason: 'time' });
+      }
+      service.advance(width, height, 1);
+    }
     await Promise.resolve();
+  }
+
+  it('plays a ranked daily attempt on the ranked plan, gpu-int, and uploads it with its attempt', async () => {
+    const match = declared(`d_${DAY}_1`);
+    service.playDaily(DAY, { match, note: { kind: 'daily', n: 1 } });
+
+    await play();
+
+    const replay = service.lastRecording()?.replay as Replay;
+    const { width, height } = rankedPlan(dailyLevelId(DAY), match.seed);
+    expect(replay.header).toEqual(
+      expect.objectContaining({
+        version: GPU_INT_REPLAY_VERSION,
+        simulation: 'gpu-int',
+        levelId: dailyLevelId(DAY),
+        mode: 'vs-computer',
+        difficulty: 'normal',
+        headStart: 0,
+        width,
+        height,
+        seed: match.seed,
+        attempt: match.attempt,
+      })
+    );
+    expect(isRankedPlan(replay.header)).toBe(true);
+    expect(parseReplay(replay, { stored: true })).toEqual(replay);
+    expect(replays.submissions).toEqual([
+      { replay, hint: expect.any(Number), attempt: `d_${DAY}_1` },
+    ]);
+    expect(store.snapshot().ranked?.note).toEqual({ kind: 'daily', n: 1 });
+  });
+
+  it("plays a ranked attempt on its own day's level, past midnight too", () => {
+    // The menu still says yesterday; the attempt was declared after 00:00.
+    service.playDaily('2026-10-25', {
+      match: declared(`d_${DAY}_1`),
+      note: { kind: 'daily', n: 1 },
+    });
+
+    expect(store.snapshot().matchLevel).toBe(dailyLevelId(DAY));
+    expect(store.snapshot().dailyDay).toBe(DAY);
+  });
+
+  it('never pauses a ranked match, which has to be played in one go', async () => {
+    service.playDaily(DAY, {
+      match: declared(`d_${DAY}_1`),
+      note: { kind: 'daily', n: 1 },
+    });
+    const { width, height } = rankedPlan(dailyLevelId(DAY), 0);
+    service.setArenaSize(width, height);
+    service.init(width, height);
+    service.start();
+
+    service.togglePause();
+    expect(store.snapshot().currentState).toBe(GameState.RUNNING);
+    service.addKeyPress('p');
+    expect(store.snapshot().currentState).toBe(GameState.RUNNING);
+  });
+
+  it('still pauses an unranked daily match', () => {
+    service.playDaily(DAY, {
+      match: null,
+      note: { kind: 'unranked', reason: 'offline' },
+    });
+    const { width, height } = rankedPlan(dailyLevelId(DAY), 0);
+    service.setArenaSize(width, height);
+    service.init(width, height);
+    service.start();
+
+    service.togglePause();
+
+    expect(store.snapshot().currentState).toBe(GameState.PAUSED);
+  });
+
+  it('forgets the declaration with the reset: a rematch never plays it again', async () => {
+    service.playDaily(DAY, {
+      match: declared(`d_${DAY}_1`),
+      note: { kind: 'daily', n: 1 },
+    });
+    await play();
+    const rematch = service.oneMatch();
+
+    service.reset();
+    service.replayOneMatch(rematch);
+
+    expect(store.snapshot().ranked).toBeNull();
+    expect(store.snapshot().dailyDay).toBe(DAY);
+  });
+
+  it('plays an unranked daily match on the setup, and says why', async () => {
+    service.playDaily(DAY, {
+      match: null,
+      note: { kind: 'unranked', reason: 'offline' },
+    });
+
+    await play();
 
     expect(service.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
+    expect(store.snapshot().ranked).toEqual({
+      match: null,
+      note: { kind: 'unranked', reason: 'offline' },
+    });
+  });
+
+  it("takes a ranked run's levels from the seed of its match 0", async () => {
+    const match = declared('e_202610261_0');
+    service.startEndless({
+      match,
+      note: { kind: 'endless', match: 1 },
+      run: { runId: '202610261', next: 1 },
+    });
+
+    expect(store.snapshot().endless?.seed).toBe(match.seed);
+    expect(store.snapshot().matchLevel).toBe(
+      endlessLevelId({ seed: match.seed, wins: 0, lives: 3 })
+    );
+    await play();
+
+    expect(replays.submissions[0]?.attempt).toBe('e_202610261_0');
+    expect(store.snapshot().endlessRanked).toEqual({
+      runId: '202610261',
+      next: 1,
+    });
+  });
+
+  it('goes on with the next declared match, and drops the run once it plays unranked', async () => {
+    service.startEndless({
+      match: declared('e_202610261_0'),
+      note: { kind: 'endless', match: 1 },
+      run: { runId: '202610261', next: 1 },
+    });
+    await play();
+    service.reset();
+
+    service.continueEndless({
+      match: null,
+      note: { kind: 'unranked', reason: 'run-dropped' },
+      run: null,
+    });
+
+    expect(store.snapshot().endlessRanked).toBeNull();
+    expect(store.rankedMatch()).toBeNull();
+    expect(store.snapshot().ranked?.note).toEqual({
+      kind: 'unranked',
+      reason: 'run-dropped',
+    });
+    expect(store.snapshot().endless).not.toBeNull();
+  });
+
+  it('leaves the ranked run with any other match', async () => {
+    service.startEndless({
+      match: declared('e_202610261_0'),
+      note: { kind: 'endless', match: 1 },
+      run: { runId: '202610261', next: 1 },
+    });
+    await play();
+    service.reset();
+    service.setLevel('petri-dish');
+
+    await play();
+
+    expect(store.snapshot().endless).toBeNull();
+    expect(store.snapshot().endlessRanked).toBeNull();
   });
 });

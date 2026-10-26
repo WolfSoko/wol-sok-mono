@@ -1,4 +1,11 @@
 /**
+ * What a public replay's id looks like: an auto id of `publicReplays`
+ * (Firestore's random ids). `publicSite` reads nothing else, and the watch
+ * page checks it before it fetches anything.
+ */
+export const PUBLIC_ID = /^[A-Za-z0-9]{20}$/;
+
+/**
  * The id of an online match's replay, which both devices and the server
  * work out alike without a word between them (ADR 0011): `o_` and a 64-bit
  * hash of the room code, the match number and the seed of its `start`.
