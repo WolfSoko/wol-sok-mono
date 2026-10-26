@@ -1,3 +1,4 @@
+import { take } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
 import type { PresenceState } from './game-social';
 import {
@@ -118,5 +119,15 @@ describe('RtdbGamePresence', () => {
     jest.advanceTimersByTime(REFUSED_RETRY_MS * 100);
 
     expect(listensTo('status/bob')).toBe(1);
+  });
+
+  it('asks no more once the refusal let the subscriber go', () => {
+    rtdb.refused.add('status/bob');
+    // The second null comes from a retry, after the first listen.
+    rtdb.presence().watch('bob').pipe(take(2)).subscribe();
+
+    jest.advanceTimersByTime(REFUSED_RETRY_MS * 100);
+
+    expect(listensTo('status/bob')).toBe(2);
   });
 });

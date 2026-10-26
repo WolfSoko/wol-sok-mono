@@ -61,7 +61,8 @@ export class RtdbGamePresence implements GamePresence {
           },
           () => {
             subscriber.next(null);
-            if (++refused <= REFUSED_TRIES) {
+            // Not for a subscriber that let go on that null.
+            if (!subscriber.closed && ++refused <= REFUSED_TRIES) {
               retry = setTimeout(listen, refused * REFUSED_RETRY_MS);
             }
           }
