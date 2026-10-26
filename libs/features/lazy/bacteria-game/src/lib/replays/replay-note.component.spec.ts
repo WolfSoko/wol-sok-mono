@@ -177,6 +177,18 @@ describe('ReplayNoteComponent', () => {
     expect(page.textContent).toContain('Simulationsauflösung „Normal“');
   });
 
+  it('names the grid, not the setting, for a match off the online grid with saving off', () => {
+    TestBed.inject(GameSettingsService).saveMatches.set(false);
+    const replay = recordedReplay('petri-dish', 90, 7, 'high');
+    recording().set({ replay, hint: 30, id: null });
+    fixture.detectChanges();
+
+    expect(page.textContent).toContain(
+      'matches are saved only at simulation resolution "Normal"'
+    );
+    expect(page.textContent).not.toContain('"Save my matches" is off');
+  });
+
   it('offers no replay that would not play back', () => {
     const replay = recordedReplay();
     recording().set({

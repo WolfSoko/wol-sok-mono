@@ -176,15 +176,16 @@ export class ReplayNoteComponent {
         : 'replay.status.uploading';
     }
     // An online or ranked match is always handed over; another one only
-    // with the setting on, and only on the online grid.
+    // on the online grid - the reason the setting cannot change comes
+    // first - and with the setting on.
     const { header } = recording.replay;
     if (savedRegardless(header)) {
       return null;
     }
-    if (!this.settings.saveMatches()) {
-      return 'replay.status.notSaved';
+    if (!onOnlineGrid(header)) {
+      return 'replay.status.notSavedGrid';
     }
-    return onOnlineGrid(header) ? null : 'replay.status.notSavedGrid';
+    return this.settings.saveMatches() ? null : 'replay.status.notSaved';
   });
 }
 
