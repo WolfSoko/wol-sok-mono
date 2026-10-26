@@ -79,8 +79,10 @@
       <li>
         deine Einstellungen (Sprache, Spielmodus, Level, Farben, Grafik, Ton,
         Lautstärke, Vibration, das Level, das du dir für Online-Matches
-        wünschst), ob du den Hinweis auf die App ausgeblendet hast und ob die
-        Grafikkarte deines Geräts den Selbsttest des Spiels bestanden hat,
+        wünschst), ob du den Hinweis auf die App ausgeblendet hast, ob das Spiel
+        dir schon gesagt hat, wo du das Speichern deiner Matches ausschaltest,
+        und ob die Grafikkarte deines Geräts den Selbsttest des Spiels bestanden
+        hat,
       </li>
       <li>
         deinen Spielfortschritt (Medaillen, Erfolge mit Datum, Statistiken,
@@ -209,6 +211,9 @@
       hast, läuft er ab, und die Datenbank löscht ihn, in der Regel innerhalb
       eines Tages danach; bis dahin bleibt er lesbar. Abgelaufene
       Herausforderungen und Einladungen löscht die Datenbank ebenso automatisch.
+      Freundeslisten und Freundschaftsanfragen spiegeln unsere Funktionen in die
+      Realtime Database, lesbar nur für unsere Server: So finden sie bei der
+      Löschung eines Kontos dessen Einträge in den Listen anderer Spieler.
     </p>
     <p>
       Ist „Freunde sehen, wenn ich online bin“ im Online-Profil an (Standard),
@@ -269,13 +274,22 @@
     <p>
       Lesen können eine gespeicherte Aufzeichnung nur die Spieler des Matches,
       im Spiel unter „Meine Matches“, und wir. Dort kannst du ein Match noch
-      einmal ansehen und es aus der öffentlichen Galerie heraushalten (unten).
-      Eine Aufzeichnung läuft 30 Tage nach dem Speichern ab, und die Datenbank
-      löscht sie, in der Regel innerhalb eines Tages danach; ein öffentliches
-      Match erst, nachdem es aus der Galerie genommen ist (unten). Wird dein
-      Konto gelöscht, löschen sie die Aufzeichnungen, deren einziger Spieler du
-      warst; aus einem Online-Match, das auch dein Gegner gespeichert hat,
-      entfernen sie deine Kennung.
+      einmal ansehen, es aus der öffentlichen Galerie heraushalten (unten) und
+      es löschen. Löschst du ein Match, nehmen unsere Funktionen deine Kennung
+      aus der gespeicherten Aufzeichnung und löschen die Meldung deines Geräts:
+      Das Match verschwindet aus deinen „Meine Matches“, kommt nicht mehr in die
+      Galerie und bleibt nur ohne deine Kennung für die Summen über die Levels
+      gespeichert, bis es abläuft; die Aufzeichnung selbst enthält keine Namen
+      oder Kennungen. Ist es öffentlich, nehmen sie es herunter und entfernen
+      deine Kennung auch aus der öffentlichen Kopie (unten). In einem
+      Online-Match behält dein Gegner seine Seite, und das Match bleibt in
+      seinen „Meine Matches“. Solange die Bestenlisten ein Match noch werten
+      können, in der Regel bis zu 3 Stunden nach dem Speichern, lässt es sich
+      noch nicht löschen; das sagt dir dann das Spiel. Eine Aufzeichnung läuft
+      30 Tage nach dem Speichern ab, und die Datenbank löscht sie, in der Regel
+      innerhalb eines Tages danach; ein öffentliches Match erst, nachdem es aus
+      der Galerie genommen ist (unten). Wird dein Konto gelöscht, nehmen sie
+      deine Kennung ebenso aus allen deinen Aufzeichnungen (Abschnitt 10).
     </p>
     <p>
       Aus jeder gespeicherten Aufzeichnung eines Matches gegen den Computer
@@ -309,21 +323,21 @@
       uns lesbar.
     </p>
     <p>
-      Hältst du ein Match unter „Meine Matches“ aus der Galerie heraus oder
-      schaltest du „Meine Matches aus der öffentlichen Galerie heraushalten“
-      ein, nehmen unsere Funktionen deine öffentlichen Matches herunter und
-      zeigen sie nicht wieder. Ebenso nehmen wir ein Match herunter, wenn wir es
-      nicht mehr zeigen wollen oder ein Spieler gesperrt wird. Die Seite eines
-      heruntergenommenen Matches sagt dann, dass es entfernt wurde; die
-      Aufzeichnung der öffentlichen Kopie wird gelöscht. Zwischenspeicher von
-      Firebase Hosting können eine Seite noch bis zu zwei Minuten ausliefern,
-      die Übersicht für Suchmaschinen bis zu einer Stunde. Wir können die
-      Spieler eines öffentlichen Matches auch ohne Namen zeigen. Wird dein Konto
-      gelöscht, bleibt ein öffentliches Match ohne deine Kennung und mit deiner
-      Farbe statt deines Namens. Solange ein Match öffentlich ist, behalten
-      unsere Funktionen auch seine gespeicherte Aufzeichnung; nachdem es
-      heruntergenommen ist, löschen sie diese 30 Tage nach dem Speichern,
-      frühestens aber einen Tag danach.
+      Hältst du ein Match unter „Meine Matches“ aus der Galerie heraus, löschst
+      du es dort oder schaltest du „Meine Matches aus der öffentlichen Galerie
+      heraushalten“ ein, nehmen unsere Funktionen deine öffentlichen Matches
+      herunter und zeigen sie nicht wieder. Ebenso nehmen wir ein Match
+      herunter, wenn wir es nicht mehr zeigen wollen oder ein Spieler gesperrt
+      wird. Die Seite eines heruntergenommenen Matches sagt dann, dass es
+      entfernt wurde; die Aufzeichnung der öffentlichen Kopie wird gelöscht.
+      Zwischenspeicher von Firebase Hosting können eine Seite noch bis zu zwei
+      Minuten ausliefern, die Übersicht für Suchmaschinen bis zu einer Stunde.
+      Wir können die Spieler eines öffentlichen Matches auch ohne Namen zeigen.
+      Wird dein Konto gelöscht, bleibt ein öffentliches Match ohne deine Kennung
+      und mit deiner Farbe statt deines Namens. Solange ein Match öffentlich
+      ist, behalten unsere Funktionen auch seine gespeicherte Aufzeichnung;
+      nachdem es heruntergenommen ist, löschen sie diese 30 Tage nach dem
+      Speichern, frühestens aber einen Tag danach.
     </p>
     <p>
       Rechtsgrundlage für die Aufzeichnungen ist Art. 6 Abs. 1 lit. b DSGVO
@@ -434,11 +448,12 @@
       Sperre endet; schließt du das Spiel vorher, geht es verloren. Die Hinweise
       zeigt das Spiel im Menü; schließt du einen, löscht es ihn. Was das Spiel
       dich zurücknehmen lässt (Freunde entfernen, Anfragen ablehnen, eine Suche
-      beenden), geht weiterhin, und dein Konto löschen lassen kannst du wie in
-      Abschnitt 10. Mit der Sperre nehmen wir dich aus der Warteschlange,
-      löschen deinen Online-Status, deine offenen Räume und deine
-      Einladungslinks und blenden deinen Eintrag in der Bestenliste aus. Endet
-      die Sperre, löschen wir sie und blenden den Eintrag wieder ein.
+      beenden, ein Match unter „Meine Matches“ löschen), geht weiterhin, und
+      dein Konto löschen lassen kannst du wie in Abschnitt 10. Mit der Sperre
+      nehmen wir dich aus der Warteschlange, löschen deinen Online-Status, deine
+      offenen Räume und deine Einladungslinks und blenden deinen Eintrag in der
+      Bestenliste aus. Endet die Sperre, löschen wir sie und blenden den Eintrag
+      wieder ein.
     </p>
     <p>
       Über jede Maßnahme führen wir ein Protokoll mit Art, Grund, Datum und dem,
@@ -545,18 +560,34 @@
       </li>
     </ul>
     <p>
-      Deine Wahl speichert das Einwilligungsfenster auf deinem Gerät. Um sie zu
-      ändern oder zu widerrufen, lösche die gespeicherten Daten der Seite wie in
-      Abschnitt 3 beschrieben, in der Android-App also in Chrome unter Chrome →
-      Einstellungen → Website-Einstellungen → Alle Websites →
-      bacteria-wars.wolsok.de → „Löschen“ (nur in der WebView der App über die
-      Android-Einstellungen); beim nächsten Start fragt das Fenster wieder. Zur
-      Übermittlung in die USA siehe Abschnitt 4. Mehr dazu, wie Google diese
-      Daten nutzt:
+      Deine Wahl speichert das Einwilligungsfenster auf deinem Gerät. Ändern
+      oder widerrufen kannst du sie jederzeit mit dem Button
+      „Datenschutz-Einstellungen für Anzeigen“, der das Fenster wieder öffnet:
+      Er steht hier, unter dem Hauptmenü des Spiels und in der Hilfe, sobald das
+      Fenster deine Wahl kennt. Erscheint er nicht, etwa weil ein Werbeblocker
+      das Skript aufhält oder das Fenster nicht geladen ist, lösche die
+      gespeicherten Daten der Seite wie in Abschnitt 3 beschrieben, in der
+      Android-App also in Chrome unter Chrome → Einstellungen →
+      Website-Einstellungen → Alle Websites → bacteria-wars.wolsok.de →
+      „Löschen“ (nur in der WebView der App über die Android-Einstellungen);
+      beim nächsten Start fragt das Fenster wieder. Zur Übermittlung in die USA
+      siehe Abschnitt 4. Mehr dazu, wie Google diese Daten nutzt:
       <a href="https://policies.google.com/technologies/partner-sites?hl=de"
         >Datennutzung durch Google bei Websites und Apps von Partnern</a
       >.
     </p>
+    @if (ads.consentAnswered()) {
+      <p>
+        <button
+          mat-stroked-button
+          type="button"
+          class="ad-settings"
+          (click)="ads.openConsentSettings()"
+        >
+          Datenschutz-Einstellungen für Anzeigen
+        </button>
+      </p>
+    }
 
     <h2 id="de-trinkgeld">8. Trinkgeld</h2>
     <p>
@@ -601,18 +632,41 @@
       Spiel angemeldet warst: Der Gast wird so zu diesem Google-Konto, und wir
       können es finden. Mit einem Google-Konto, das schon gespielt hat,
       übernimmt es nur den Fortschritt des Gastes; das Gastkonto selbst können
-      wir dir dann nicht zuordnen (Abschnitt 4). Wir löschen das Konto und alle
-      zugehörigen Spieldaten innerhalb von 30 Tagen und bestätigen dir die
-      Löschung: deinen Spielstand, dein Online-Profil, deine Freundschaften,
-      Anfragen, Herausforderungen und Einladungslinks, deine Einträge in den
-      Bestenlisten, deine angemeldeten Versuche, deine aufgezeichneten Matches
-      (Abschnitt 4, „Aufgezeichnete Matches“) und was unsere Funktionen zu
-      deinem Konto vermerken. Aus dem Protokoll der Moderation entfernen wir,
-      was sich geändert hat. Gilt bei der Löschung noch eine Sperre deines
-      Kontos, bleibt der Hashwert deiner Google-Kennung bis zu ihrem Ende,
-      höchstens 2 Jahre ab der Löschung (Abschnitt 4, „Moderation und Sperren“).
-      Daten auf deinem Gerät löschst du wie in Abschnitt 3 beschrieben. Abmelden
-      allein löscht nichts.
+      wir dir dann nicht zuordnen (Abschnitt 4). Wir löschen das Konto innerhalb
+      von 30 Tagen und bestätigen dir die Löschung.
+    </p>
+    <p>
+      Mit dem Konto löschen unsere Funktionen automatisch alle personenbezogenen
+      Daten dazu: deinen Spielstand und deine Einstellungen in der Cloud, dein
+      Online-Profil, deine Freundschaften auf beiden Seiten (auch deinen Eintrag
+      in den Freundeslisten anderer Spieler), Freundschaftsanfragen,
+      Herausforderungen und Einladungslinks, deinen Eintrag in der
+      Warteschlange, deine offenen Räume, deinen Online-Status, deine
+      angemeldeten Versuche, die Hinweise der Moderation, deine Einträge in den
+      Bestenlisten, die noch nicht verarbeiteten Uploads und Befehle zu deinen
+      Matches und was unsere Funktionen sonst zu deinem Konto vermerken. Deine
+      aufgezeichneten Matches bleiben für die Statistik, aber ohne deine Kennung
+      und ohne deinen Namen: Unsere Funktionen nehmen deine Kennung aus jeder
+      Aufzeichnung und löschen die Meldung deines Geräts; die Aufzeichnung läuft
+      wie sonst 30 Tage nach dem Speichern ab (Abschnitt 4, „Aufgezeichnete
+      Matches“). Ein öffentliches Match bleibt ohne deine Kennung und mit deiner
+      Farbe statt deines Namens in der Galerie, bis es heruntergenommen wird.
+      Aus dem Protokoll der Moderation entfernen wir, was sich geändert hat.
+      Gilt bei der Löschung noch eine Sperre deines Kontos, bleibt der Hashwert
+      deiner Google-Kennung bis zu ihrem Ende, höchstens 2 Jahre ab der Löschung
+      (Abschnitt 4, „Moderation und Sperren“).
+    </p>
+    <p>
+      Kurz nach der Löschung nennen deine Kennung noch: der Rest eines Raums, in
+      dem du ein Online-Match gespielt hast (höchstens 6 Stunden), eine
+      Herausforderung an einen Freund, der dich schon entfernt hatte, und ein
+      Platz in der Warteschlange, die gerade abgelaufen sind (in der Regel
+      innerhalb einer Stunde gelöscht), und die Vermerke, wie viele
+      Online-Matches gezählt wurden (bis zu 2 Tage). Eine Anmeldung bleibt nach
+      der Löschung des Kontos noch bis zu einer Stunde gültig; was ein Gerät in
+      dieser Zeit damit noch speichert, löschen unsere Funktionen nicht erneut,
+      es läuft mit seinen Fristen oben ab. Daten auf deinem Gerät löschst du wie
+      in Abschnitt 3 beschrieben. Abmelden allein löscht nichts.
     </p>
 
     <h2 id="de-rechte">11. Deine Rechte</h2>
@@ -704,7 +758,8 @@
       <li>
         your settings (language, game mode, level, colours, graphics, sound,
         volume, vibration, the level you would like for online matches), whether
-        you dismissed the offer to install the app and whether your device's
+        you dismissed the offer to install the app, whether the game told you
+        already where to turn off saving your matches, and whether your device's
         graphics card passed the game's self-test,
       </li>
       <li>
@@ -821,7 +876,10 @@
       device, for example because you closed the game, it expires and the
       database deletes it, usually within a day after that; until then it stays
       readable. The database deletes expired challenges and invitations by
-      itself in the same way.
+      itself in the same way. Our functions mirror friend lists and friend
+      requests into the Realtime Database, readable only by our servers: that is
+      how they find an account's entries in other players' lists when it is
+      deleted.
     </p>
     <p>
       With “Friends see when I'm online” on in the online profile (the default),
@@ -875,13 +933,21 @@
     </p>
     <p>
       A stored recording can be read only by the players of the match, in the
-      game under “My matches”, and by us. There you can watch a match again and
-      keep it out of the public gallery (below). A recording expires 30 days
-      after it was saved and the database deletes it, usually within a day after
-      that; a public match only after it has been taken out of the gallery
-      (below). If your account is deleted, they delete the recordings you were
-      the only player of; from an online match your opponent stored too they
-      remove your identifier.
+      game under “My matches”, and by us. There you can watch a match again,
+      keep it out of the public gallery (below) and delete it. If you delete a
+      match, our functions take your identifier out of the stored recording and
+      delete your device's report: the match leaves your “My matches”, never
+      goes into the gallery, and stays stored only without your identifier, for
+      the totals over the levels, until it expires; the recording itself holds
+      no names or identifiers. If it is public, they take it down and remove
+      your identifier from the public copy too (below). In an online match your
+      opponent keeps their side, and the match stays in their “My matches”.
+      While the leaderboards may still count a match, usually for up to 3 hours
+      after it was saved, it cannot be deleted yet; the game tells you so then.
+      A recording expires 30 days after it was saved and the database deletes
+      it, usually within a day after that; a public match only after it has been
+      taken out of the gallery (below). If your account is deleted, they take
+      your identifier out of all your recordings in the same way (section 10).
     </p>
     <p>
       From every stored recording of a match against the computer our functions
@@ -911,18 +977,18 @@
       functions note readable only by us.
     </p>
     <p>
-      If you keep a match out of the gallery under “My matches” or switch on
-      “Keep my matches out of the public gallery”, our functions take your
-      public matches down and do not show them again. We also take a match down
-      when we no longer want to show it or when a player is suspended. The page
-      of a match taken down then says it was removed; the public copy's
-      recording is deleted. Firebase Hosting's caches may serve a page for up to
-      two minutes more, the overview for search engines for up to an hour. We
-      can also show the players of a public match without their names. If your
-      account is deleted, a public match stays without your identifier and with
-      your colour instead of your name. While a match is public our functions
-      keep its stored recording too; after it is taken down they delete it 30
-      days after it was saved, but no sooner than a day later.
+      If you keep a match out of the gallery under “My matches”, delete it there
+      or switch on “Keep my matches out of the public gallery”, our functions
+      take your public matches down and do not show them again. We also take a
+      match down when we no longer want to show it or when a player is
+      suspended. The page of a match taken down then says it was removed; the
+      public copy's recording is deleted. Firebase Hosting's caches may serve a
+      page for up to two minutes more, the overview for search engines for up to
+      an hour. We can also show the players of a public match without their
+      names. If your account is deleted, a public match stays without your
+      identifier and with your colour instead of your name. While a match is
+      public our functions keep its stored recording too; after it is taken down
+      they delete it 30 days after it was saved, but no sooner than a day later.
     </p>
     <p>
       The legal basis for the recordings is Art. 6(1)(b) GDPR (providing “My
@@ -1024,11 +1090,12 @@
       Progress you save meanwhile it holds back and saves once the suspension
       ends; if you close the game before, it is lost. The game shows the notices
       in the menu; dismissing one deletes it. What the game lets you take back
-      (removing friends, declining requests, ending a search) still works, and
-      you can have your account deleted as in section 10. With the suspension we
-      take you out of the queue, delete your online status, your open rooms and
-      your invitation links, and hide your leaderboard entry. When the
-      suspension ends, we delete it and show the entry again.
+      (removing friends, declining requests, ending a search, deleting a match
+      under “My matches”) still works, and you can have your account deleted as
+      in section 10. With the suspension we take you out of the queue, delete
+      your online status, your open rooms and your invitation links, and hide
+      your leaderboard entry. When the suspension ends, we delete it and show
+      the entry again.
     </p>
     <p>
       We keep a record of every measure with its type, reason, date and what it
@@ -1130,16 +1197,32 @@
       </li>
     </ul>
     <p>
-      The consent window stores your choice on your device. To change or
-      withdraw it, clear the site's stored data as described in section 3, so
-      for the Android app in Chrome under Chrome → Settings → Site settings →
-      All sites → bacteria-wars.wolsok.de → “Clear” (only in the app's WebView
-      through Android's settings); the window asks again on the next start. For
+      The consent window stores your choice on your device. You can change or
+      withdraw it at any time with the button “Ad privacy settings”, which opens
+      the window again: it is here, under the game's main menu and in the Help,
+      once the window knows your choice. If it does not show, for instance
+      because an ad blocker holds the script back or the window has not loaded,
+      clear the site's stored data as described in section 3, so for the Android
+      app in Chrome under Chrome → Settings → Site settings → All sites →
+      bacteria-wars.wolsok.de → “Clear” (only in the app's WebView through
+      Android's settings); the window asks again on the next start. For
       transfers to the USA see section 4. More on how Google uses this data:
       <a href="https://policies.google.com/technologies/partner-sites?hl=en"
         >How Google uses information from sites or apps that use its services</a
       >.
     </p>
+    @if (ads.consentAnswered()) {
+      <p>
+        <button
+          mat-stroked-button
+          type="button"
+          class="ad-settings"
+          (click)="ads.openConsentSettings()"
+        >
+          Ad privacy settings
+        </button>
+      </p>
+    }
 
     <h2 id="en-tips">8. Tips</h2>
     <p>
@@ -1183,16 +1266,37 @@
       account you have never signed in to the game with: the guest becomes that
       Google account, and we can find it. With a Google account that has played
       already, it only takes over the guest's progress, and we cannot link the
-      guest account itself to you (section 4). We delete the account and all its
-      game data within 30 days and confirm the deletion to you: your progress,
-      your online profile, your friendships, requests, challenges and invitation
-      links, your leaderboard entries, your declared attempts, your recorded
-      matches (section 4, “Recorded matches”) and what our functions note about
-      your account. From the moderation record we erase what was changed. If a
-      suspension of your account still holds at the deletion, the hash of your
-      Google identifier stays until it ends, for 2 years from the deletion at
-      most (section 4, “Moderation and suspensions”). Delete the data on your
-      device as described in section 3. Signing out alone deletes nothing.
+      guest account itself to you (section 4). We delete the account within 30
+      days and confirm the deletion to you.
+    </p>
+    <p>
+      With the account our functions delete all personal data about it by
+      themselves: your progress and settings in the cloud, your online profile,
+      your friendships on both sides (your entry in other players' friend lists
+      too), friend requests, challenges and invitation links, your entry in the
+      queue, your open rooms, your online status, your declared attempts, the
+      moderation notices, your leaderboard entries, the uploads and commands for
+      your matches not handled yet, and whatever else our functions note about
+      your account. Your recorded matches stay for the statistics, but without
+      your identifier and your name: our functions take your identifier out of
+      every recording and delete your device's report; the recording expires 30
+      days after it was saved as usual (section 4, “Recorded matches”). A public
+      match stays in the gallery without your identifier and with your colour
+      instead of your name until it is taken down. From the moderation record we
+      erase what was changed. If a suspension of your account still holds at the
+      deletion, the hash of your Google identifier stays until it ends, for 2
+      years from the deletion at most (section 4, “Moderation and suspensions”).
+    </p>
+    <p>
+      For a short while after the deletion your identifier is still named by:
+      what remains of a room you played an online match in (6 hours at most), a
+      challenge to a friend who had removed you already and a place in the
+      queue, both just expired (usually deleted within an hour), and the notes
+      of how many online matches were counted (up to 2 days). A sign-in stays
+      valid for up to an hour after the account is deleted; what a device still
+      stores with it in that time our functions do not delete again, and it
+      expires with the periods given above. Delete the data on your device as
+      described in section 3. Signing out alone deletes nothing.
     </p>
 
     <h2 id="en-rights">11. Your rights</h2>
