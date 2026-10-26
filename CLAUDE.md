@@ -179,12 +179,15 @@ Keep `sitemap.xml` and the SEO tags in shape with every change that adds, rename
 
 Planned and phased in [ADR 0014](docs/adr/0014-performance-gates-in-ci.md); this section says what is in place. Keep it current with each phase.
 
-- **In place now**: Angular budgets on each app's `esbuild:production` (`initial`, `anyComponentStyle`). CI's `build -c=ci` falls back to `production`, so they run on every affected build. Lazy chunks are not covered yet: the game's chunk in `bacteria-game-remote` (815 kB raw, 181 kB transferred on 2026-10-24) has no budget.
+- **In place now** (phase 1): Angular budgets on the `production` configuration of each Angular app's `esbuild` target (`portfolio`: `build`), measured through the federation build as CI runs it. CI's `build -c=ci` falls back to `production`, so they run on every affected build and block it. Each holds a `baseline` (measured on 2026-10-26, 1 kB = 1000 bytes as Angular counts):
+  - `anyScript` (the largest single script, the game's chunk in `bacteria-game-remote`) and `allScript` (all scripts, initial and lazy): warning +5%, error +10%.
+  - `initial`: warning +10%, error +20%.
+  - `anyComponentStyle` as before (warning 6 kB, error 8 kB in the game's apps). Three of the game's stylesheets warn (`new-game`, `bacteria-game`, `evolution`); they are trimmed in a PR of their own, with a look at the screens.
+  - pacetrainer and rollapolla-analog build with Vite (Analog) and have no Angular budgets.
 - **Coming, in this order** (one PR each):
-  1. `anyScript` (largest single script) and `allScript` (all scripts together) budgets with a measured `baseline` (warning +5%, error +10%), and tightened `initial` budgets, for every app. Blocking.
-  2. `perf` target on `feat-lazy-bacteria-game`: a Node benchmark of `engine.ts` on fixed replays (`tools/perf/`), gated on the ratio to a calibration loop against `tools/perf/engine-baseline.json` (fails above +20%). Report-only for two weeks, then blocking.
-  3. A Playwright frame-time spec for the game, report-only.
-  4. Lighthouse CI for the public pages, report-only.
+  1. `perf` target on `feat-lazy-bacteria-game`: a Node benchmark of `engine.ts` on fixed replays (`tools/perf/`), gated on the ratio to a calibration loop against `tools/perf/engine-baseline.json` (fails above +20%). Report-only for two weeks, then blocking.
+  2. A Playwright frame-time spec for the game, report-only.
+  3. Lighthouse CI for the public pages, report-only.
 - **Rules**:
   - A failing gate is fixed in the code, not by raising the limit. Raise a budget or baseline only for growth you want, in its own `perf(<project>): ...` commit, with what grew, by how much and why in the PR body. Lower it when a gate reports a gain.
   - Don't compare absolute milliseconds from CI: the Nx Cloud workers are shared and vary. Runtime gates compare against a calibration loop run in the same process.
