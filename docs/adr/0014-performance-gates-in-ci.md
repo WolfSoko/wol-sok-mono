@@ -167,6 +167,14 @@ is decided after a month, like gate 3.
 
 1. **Phase 1, budgets**: `anyScript` and tightened `initial` budgets for
    every app, the `evolution.component.scss` warning fixed. Blocking at once.
+   - As built (2026-10-26): `initial`, `anyScript` and `allScript` with a
+     `baseline` on all five Angular apps, measured through the federation
+     build. The numbers had moved since this ADR: `bacteria-game-remote`'s
+     largest script is 622 kB (the game's chunk, split since), all its
+     scripts 1,768 kB (the admin area, the replay viewer and the error
+     reports came since), initial 227 kB. The stylesheet warnings are three
+     by now (`new-game`, `bacteria-game`, `evolution`); they move to a PR of
+     their own, since trimming them needs a look at the screens.
 2. **Phase 2, engine benchmark**: `tools/perf/engine-bench.mjs`, the heavy
    fixture, `engine-baseline.json`, the `perf` target and the CI wiring;
    report-only for two weeks, then blocking.
