@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.116.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.1...v74.116.2) (2026-10-26)
+
+### Bug Fixes
+
+* **bacteria-game-remote:** self-host fonts and icons instead of loading Google Fonts ([#2699](https://github.com/WolfSoko/wol-sok-mono/issues/2699)) ([d88584c](https://github.com/WolfSoko/wol-sok-mono/commit/d88584c052e2440b3757b271bb8b93c6aed27c32))
+
+### Chore
+
+* **release:** publish ([5bdf015](https://github.com/WolfSoko/wol-sok-mono/commit/5bdf0151812d8f8a7a0f2883d7285884af531229))
+
+### Performance
+
+* **nx:** ⚡ anyScript, allScript and tightened initial budgets for every Angular app ([#2698](https://github.com/WolfSoko/wol-sok-mono/issues/2698)) ([289b3f7](https://github.com/WolfSoko/wol-sok-mono/commit/289b3f778cd5bb2a190fb0c1f035c32cbdf6b78c))
+
 ## [74.116.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.0...v74.116.1) (2026-10-26)
 
 ### Bug Fixes
