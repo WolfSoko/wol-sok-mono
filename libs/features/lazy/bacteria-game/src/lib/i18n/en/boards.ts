@@ -66,6 +66,7 @@ export const boards = {
     },
     setup:
       'A ranked match plays the ranked setup - the normal computer, no head start - and goes onto the leaderboard.',
+    noPause: "A ranked match can't be paused: it must be finished in one go.",
     runLives:
       'Leaving a match of a ranked run ends the run here, and the leaderboard counts it as a lost life.',
     practice: 'Practice: your own setup, not on the leaderboards.',
@@ -87,8 +88,8 @@ export const boards = {
       endless: 'Ranked run · match {match} · ranked setup',
       offline: 'Not ranked: offline when the match started',
       used: 'Not ranked: the three attempts of today are used',
-      runsUsed: 'Not ranked: the five ranked runs of today are started',
-      runDropped: 'This run is no longer ranked',
+      'runs-used': 'Not ranked: the five ranked runs of today are started',
+      'run-dropped': 'This run is no longer ranked',
     },
   },
 };

@@ -97,7 +97,7 @@ import { FriendsScreenComponent } from './menu/friends-screen.component';
 import { LeaderboardsComponent } from './boards/leaderboards.component';
 import { ModerationNoticesComponent } from './moderation/moderation-notices.component';
 import { ModerationService } from './moderation/moderation.service';
-import { RankedKind, RankedService } from './ranked/ranked.service';
+import { RankedService } from './ranked/ranked.service';
 import { MyMatchesComponent } from './replays/my-matches.component';
 import { ReplayScreenComponent } from './replays/replay-screen.component';
 import { HelpComponent } from './menu/help.component';
@@ -286,8 +286,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly moderation = inject(ModerationService);
   /** Ranked daily attempts and endless runs (ADR 0012). */
   private readonly ranked = inject(RankedService);
-  /** The ranked mode whose attempt is being declared - null while none is. */
-  protected readonly declaring = signal<RankedKind | null>(null);
+  /** True while a ranked attempt is being declared. */
+  protected readonly declaring = signal(false);
   /** Ranked play as the new game offers it, by mode. */
   protected readonly rankedOffers = computed(() => ({
     daily: this.ranked.offer('daily', this.settings.ranked()),
@@ -356,8 +356,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly simResolution = computed((): SimResolution =>
     this.store.online() === null &&
     this.store.endedBy() !== 'forfeit' &&
-    this.store.ranked() === null &&
-    this.declaring() === null
+    this.store.rankedMatch() === null &&
+    !this.declaring()
       ? this.settings.simResolution()
       : ONLINE_SIM_RESOLUTION
   );
@@ -386,6 +386,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       unit: simScale(sim),
     };
   });
+  /**
+   * True once the arena view built its painter for the layout the arena
+   * has now - or before it built any.
+   */
+  private readonly arenaReady = computed(() => {
+    const painted = this.painterLayout();
+    return painted === null || painted === this.arenaLayout();
+  });
+  private readonly arenaReady$ = toObservable(this.arenaReady);
   /** What the arena view paints: the match as it stands. */
   protected readonly arenaScene: ArenaScene = {
     content: (alpha) => this.content(alpha),
@@ -612,8 +621,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly canRestart = computed(
     () =>
       !this.inEndlessRun() &&
-      this.store.ranked() === null &&
+      this.store.rankedMatch() === null &&
       this.onlineSeat() !== 1
+  );
+  /**
+   * True where the match may be paused: never a ranked one, whose attempt
+   * has a deadline from its declaration on (ADR 0012).
+   */
+  protected readonly canPause = computed(
+    () => this.store.rankedMatch() === null
   );
   /** The crosshairs a finger or a key may steer - never the computer's. */
   private readonly humans: Signal<Player[]>;
@@ -961,15 +977,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * where ranked play is offered and wanted: its match 0 declared first.
    */
   protected async playEndless(): Promise<void> {
-    if (this.resetting() || this.declaring() !== null) {
+    if (this.resetting() || this.declaring()) {
       return;
     }
     this.gameStateService.leaveOnline();
     if (this.ranked.wants('endless', this.settings.ranked())) {
-      this.declaring.set('endless');
-      const start = await this.ranked.startRun();
-      this.gameStateService.startEndless({ outcome: start, run: start.run });
-      this.declaring.set(null);
+      this.gameStateService.startEndless(
+        await this.whileDeclaring(() => this.ranked.startRun())
+      );
     } else {
       this.gameStateService.startEndless();
     }
@@ -983,15 +998,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   protected async playDaily(): Promise<void> {
     // Not while the last match still turns to dust - the reset would end it.
-    if (this.resetting() || this.declaring() !== null) {
+    if (this.resetting() || this.declaring()) {
       return;
     }
     this.gameStateService.leaveOnline();
+    // A ranked attempt plays its own day's level, past midnight too.
     const day = this.progress.daily().day;
     if (this.ranked.wants('daily', this.settings.ranked())) {
-      this.declaring.set('daily');
-      this.gameStateService.playDaily(day, await this.ranked.declareDaily());
-      this.declaring.set(null);
+      this.gameStateService.playDaily(
+        day,
+        await this.whileDeclaring(() => this.ranked.declareDaily())
+      );
     } else {
       this.gameStateService.playDaily(day);
     }
@@ -1009,15 +1026,24 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       await this.playEndless();
       return;
     }
-    if (endlessRanked === null) {
-      this.gameStateService.continueEndless();
-    } else {
-      this.declaring.set('endless');
-      const next = await this.ranked.declareRunMatch(endlessRanked);
-      this.gameStateService.continueEndless({ outcome: next, run: next.run });
-      this.declaring.set(null);
-    }
+    this.gameStateService.continueEndless(
+      endlessRanked === null
+        ? null
+        : await this.whileDeclaring(() =>
+            this.ranked.declareRunMatch(endlessRanked)
+          )
+    );
     await this.startWhenArenaReady();
+  }
+
+  /** What `declare` comes to, with the declaring note up meanwhile. */
+  private async whileDeclaring<T>(declare: () => Promise<T>): Promise<T> {
+    this.declaring.set(true);
+    try {
+      return await declare();
+    } finally {
+      this.declaring.set(false);
+    }
   }
 
   /**
@@ -1026,14 +1052,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * after the grid changed. Waits a little at most.
    */
   private async startWhenArenaReady(): Promise<void> {
-    const ready = computed(() => {
-      const painted = this.painterLayout();
-      return painted === null || painted === this.arenaLayout();
-    });
-    if (!untracked(ready)) {
+    if (!untracked(this.arenaReady)) {
       await firstValueFrom(
-        toObservable(ready, { injector: this.injector }).pipe(
-          filter((isReady) => isReady),
+        this.arenaReady$.pipe(
+          filter(Boolean),
           timeout({ first: ARENA_READY_MS, with: () => of(true) })
         )
       );
@@ -1308,7 +1330,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected openNewGame(): void {
     this.newGameEntry.set({ kind: this.playKind(), step: 'mode' });
     this.show('new-game');
-    // Today's ranked attempts and runs left, for the daily and endless.
+    // Today's ranked attempts and runs left, for the daily and endless -
+    // read once each visit, which picking a mode then takes from.
     void this.ranked.refresh();
   }
 
@@ -1331,7 +1354,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.settings.setFreePlay(kind === 'free');
     }
     if (kind === 'daily' || kind === 'endless') {
-      void this.ranked.refresh();
+      void this.ranked.refresh(false);
     }
   }
 
@@ -1746,6 +1769,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Toggles pause - the touch equivalent of the P key. */
   togglePause() {
+    // A ranked match plays through: the music too.
+    if (!this.paused() && !this.canPause()) {
+      return;
+    }
     this.requestNativeFullscreen();
     if (this.paused()) {
       this.sound.resume();

@@ -65,6 +65,8 @@ export const boards: Translation<typeof en> = {
     },
     setup:
       'Ein gewertetes Match spielt die Wertungseinstellung - der normale Computer, kein Vorsprung - und kommt in die Bestenliste.',
+    noPause:
+      'Ein gewertetes Match lässt sich nicht pausieren: es muss in einem Zug zu Ende gespielt werden.',
     runLives:
       'Wer ein Match eines gewerteten Laufs verlässt, beendet den Lauf hier, und die Bestenliste zählt es als verlorenes Leben.',
     practice: 'Übung: deine eigenen Einstellungen, nicht in den Bestenlisten.',
@@ -86,9 +88,9 @@ export const boards: Translation<typeof en> = {
       endless: 'Gewerteter Lauf · Match {match} · Wertungseinstellung',
       offline: 'Nicht gewertet: offline, als das Match begann',
       used: 'Nicht gewertet: die drei Versuche von heute sind verbraucht',
-      runsUsed:
+      'runs-used':
         'Nicht gewertet: die fünf gewerteten Läufe von heute sind begonnen',
-      runDropped: 'Dieser Lauf wird nicht mehr gewertet',
+      'run-dropped': 'Dieser Lauf wird nicht mehr gewertet',
     },
   },
 };

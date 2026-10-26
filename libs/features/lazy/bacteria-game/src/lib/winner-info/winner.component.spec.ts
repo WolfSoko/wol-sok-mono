@@ -45,7 +45,7 @@ describe('WinnerComponent', () => {
       mode: 'vs-computer',
       winner: createPlayer({ id: 0, name: 'You' }),
       levelId: LEVELS[0].id,
-      rankedNote: { kind: 'daily', n: 2 },
+      ranked: { match: null, note: { kind: 'daily', n: 2 } },
     });
 
     expect(text()).toContain('Ranked attempt 2 of 3 · ranked setup');
@@ -56,15 +56,22 @@ describe('WinnerComponent', () => {
       mode: 'vs-computer',
       winner: createPlayer({ id: 0, name: 'You' }),
       levelId: LEVELS[0].id,
-      rankedNote: { kind: 'endless', match: 4 },
+      ranked: { match: null, note: { kind: 'endless', match: 4 } },
     });
     expect(text()).toContain('Ranked run · match 4');
 
-    store.update({ rankedNote: { kind: 'unranked', reason: 'offline' } });
+    store.update({
+      ranked: { match: null, note: { kind: 'unranked', reason: 'offline' } },
+    });
     expect(text()).toContain('Not ranked: offline when the match started');
 
     TestBed.inject(I18nService).setLanguage('de');
-    store.update({ rankedNote: { kind: 'unranked', reason: 'run-dropped' } });
+    store.update({
+      ranked: {
+        match: null,
+        note: { kind: 'unranked', reason: 'run-dropped' },
+      },
+    });
     expect(text()).toContain('Dieser Lauf wird nicht mehr gewertet');
     TestBed.inject(I18nService).setLanguage('en');
   });

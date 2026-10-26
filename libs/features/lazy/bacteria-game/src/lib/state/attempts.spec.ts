@@ -3,8 +3,11 @@ import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
 import {
   attemptExpireAt,
   attemptSeed,
+  attemptTaken,
   canDeclare,
   dailyAttemptId,
+  dailyAttemptsLeft,
+  dayAttemptIds,
   declaredBeforeMatch,
   endlessAttemptId,
   endlessRunId,
@@ -14,6 +17,7 @@ import {
   parseAttemptId,
   rankedPlan,
   requiredAttempt,
+  runsLeft,
   submissionDeadline,
 } from './attempts';
 import { dailyLevelId } from './daily';
@@ -131,6 +135,51 @@ describe('declared attempts', () => {
       expect(canDeclare('e_202610231_3', nextDay, declared)).toBe(false);
     });
 
+    it('takes a declared attempt, unless a void daily one', () => {
+      expect(attemptTaken('d_2026-10-23_1', false, false)).toBe(false);
+      expect(attemptTaken('d_2026-10-23_1', true, false)).toBe(true);
+      expect(attemptTaken('d_2026-10-23_1', true, true)).toBe(false);
+      expect(attemptTaken('e_202610231_0', true, true)).toBe(true);
+      expect(attemptTaken('e_202610231_0', false, false)).toBe(false);
+    });
+
+    it('counts the daily attempts left, a void one among them', () => {
+      const declared = new Set(['d_2026-10-23_1', 'd_2026-10-23_2']);
+
+      expect(dailyAttemptsLeft('2026-10-23', new Set())).toBe(3);
+      expect(dailyAttemptsLeft('2026-10-23', declared)).toBe(1);
+      expect(
+        dailyAttemptsLeft('2026-10-23', declared, new Set(['d_2026-10-23_1']))
+      ).toBe(2);
+      // Another day's attempts take nothing from this one.
+      expect(dailyAttemptsLeft('2026-10-24', declared)).toBe(3);
+    });
+
+    it('counts the runs left to start by their match 0', () => {
+      const declared = new Set([
+        'e_202610231_0',
+        'e_202610231_1',
+        'e_202610232_0',
+        'e_202610241_0',
+      ]);
+
+      expect(runsLeft('2026-10-23', new Set())).toBe(5);
+      expect(runsLeft('2026-10-23', declared)).toBe(3);
+    });
+
+    it("names the attempts that say what is left of a day: its dailies and each run's match 0", () => {
+      expect(dayAttemptIds('2026-10-23')).toEqual([
+        'd_2026-10-23_1',
+        'd_2026-10-23_2',
+        'd_2026-10-23_3',
+        'e_202610231_0',
+        'e_202610232_0',
+        'e_202610233_0',
+        'e_202610234_0',
+        'e_202610235_0',
+      ]);
+    });
+
     it('expires an attempt after 31 days', () => {
       expect(attemptExpireAt(AT) - AT).toBe(31 * 86_400_000);
     });
@@ -144,6 +193,16 @@ describe('declared attempts', () => {
       expect(attemptSeed('uid1', 'd_2026-10-23_2', AT)).toBe(3119868246);
       expect(attemptSeed('uid1', 'd_2026-10-23_1', AT + 1)).toBe(525773083);
       expect(attemptSeed('uid1', 'e_202610231_0', AT)).toBe(526311313);
+    });
+
+    it('counts whole milliseconds: a fraction of the browser SDK is floored', () => {
+      // 123456000 ns past the second: `toMillis()` in a browser says 123.456.
+      expect(attemptSeed('uid1', 'd_2026-10-23_1', AT + 123.456)).toBe(
+        attemptSeed('uid1', 'd_2026-10-23_1', AT + 123)
+      );
+      expect(attemptSeed('uid1', 'd_2026-10-23_1', AT + 0.999)).toBe(
+        2500658748
+      );
     });
 
     it('is a 32-bit unsigned integer', () => {

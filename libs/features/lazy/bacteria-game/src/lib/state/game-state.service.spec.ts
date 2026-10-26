@@ -1246,7 +1246,49 @@ describe('GameStateService ranked matches', () => {
     expect(replays.submissions).toEqual([
       { replay, hint: expect.any(Number), attempt: `d_${DAY}_1` },
     ]);
-    expect(store.snapshot().rankedNote).toEqual({ kind: 'daily', n: 1 });
+    expect(store.snapshot().ranked?.note).toEqual({ kind: 'daily', n: 1 });
+  });
+
+  it("plays a ranked attempt on its own day's level, past midnight too", () => {
+    // The menu still says yesterday; the attempt was declared after 00:00.
+    service.playDaily('2026-10-25', {
+      match: declared(`d_${DAY}_1`),
+      note: { kind: 'daily', n: 1 },
+    });
+
+    expect(store.snapshot().matchLevel).toBe(dailyLevelId(DAY));
+    expect(store.snapshot().dailyDay).toBe(DAY);
+  });
+
+  it('never pauses a ranked match, which has to be played in one go', async () => {
+    service.playDaily(DAY, {
+      match: declared(`d_${DAY}_1`),
+      note: { kind: 'daily', n: 1 },
+    });
+    const { width, height } = rankedPlan(dailyLevelId(DAY), 0);
+    service.setArenaSize(width, height);
+    service.init(width, height);
+    service.start();
+
+    service.togglePause();
+    expect(store.snapshot().currentState).toBe(GameState.RUNNING);
+    service.addKeyPress('p');
+    expect(store.snapshot().currentState).toBe(GameState.RUNNING);
+  });
+
+  it('still pauses an unranked daily match', () => {
+    service.playDaily(DAY, {
+      match: null,
+      note: { kind: 'unranked', reason: 'offline' },
+    });
+    const { width, height } = rankedPlan(dailyLevelId(DAY), 0);
+    service.setArenaSize(width, height);
+    service.init(width, height);
+    service.start();
+
+    service.togglePause();
+
+    expect(store.snapshot().currentState).toBe(GameState.PAUSED);
   });
 
   it('forgets the declaration with the reset: a rematch never plays it again', async () => {
@@ -1261,7 +1303,6 @@ describe('GameStateService ranked matches', () => {
     service.replayOneMatch(rematch);
 
     expect(store.snapshot().ranked).toBeNull();
-    expect(store.snapshot().rankedNote).toBeNull();
     expect(store.snapshot().dailyDay).toBe(DAY);
   });
 
@@ -1275,16 +1316,17 @@ describe('GameStateService ranked matches', () => {
 
     expect(service.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
-    expect(store.snapshot().rankedNote).toEqual({
-      kind: 'unranked',
-      reason: 'offline',
+    expect(store.snapshot().ranked).toEqual({
+      match: null,
+      note: { kind: 'unranked', reason: 'offline' },
     });
   });
 
   it("takes a ranked run's levels from the seed of its match 0", async () => {
     const match = declared('e_202610261_0');
     service.startEndless({
-      outcome: { match, note: { kind: 'endless', match: 1 } },
+      match,
+      note: { kind: 'endless', match: 1 },
       run: { runId: '202610261', next: 1 },
     });
 
@@ -1303,34 +1345,32 @@ describe('GameStateService ranked matches', () => {
 
   it('goes on with the next declared match, and drops the run once it plays unranked', async () => {
     service.startEndless({
-      outcome: {
-        match: declared('e_202610261_0'),
-        note: { kind: 'endless', match: 1 },
-      },
+      match: declared('e_202610261_0'),
+      note: { kind: 'endless', match: 1 },
       run: { runId: '202610261', next: 1 },
     });
     await play();
     service.reset();
 
     service.continueEndless({
-      outcome: {
-        match: null,
-        note: { kind: 'unranked', reason: 'run-dropped' },
-      },
+      match: null,
+      note: { kind: 'unranked', reason: 'run-dropped' },
       run: null,
     });
 
     expect(store.snapshot().endlessRanked).toBeNull();
-    expect(store.snapshot().ranked).toBeNull();
+    expect(store.rankedMatch()).toBeNull();
+    expect(store.snapshot().ranked?.note).toEqual({
+      kind: 'unranked',
+      reason: 'run-dropped',
+    });
     expect(store.snapshot().endless).not.toBeNull();
   });
 
   it('leaves the ranked run with any other match', async () => {
     service.startEndless({
-      outcome: {
-        match: declared('e_202610261_0'),
-        note: { kind: 'endless', match: 1 },
-      },
+      match: declared('e_202610261_0'),
+      note: { kind: 'endless', match: 1 },
       run: { runId: '202610261', next: 1 },
     });
     await play();

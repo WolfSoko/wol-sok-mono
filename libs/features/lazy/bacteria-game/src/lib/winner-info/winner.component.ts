@@ -45,20 +45,11 @@ import { ReplayNoteComponent } from '../replays/replay-note.component';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
 import { RANKED_DAILY_ATTEMPTS } from '../state/attempts';
-import type { UnrankedReason } from '../state/ranked-match';
 import { BOSS_SEAT, EndReason } from '../state/win-conditions';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
 import { DnaHelixComponent } from '../menu/dna-helix.component';
 import { dnaEarned } from '../state/evolution';
-
-/** The result screen's line for a match that was not ranked, by why. */
-const UNRANKED_KEYS: Readonly<Record<UnrankedReason, TranslationKey>> = {
-  offline: 'boards.ranked.result.offline',
-  used: 'boards.ranked.result.used',
-  'runs-used': 'boards.ranked.result.runsUsed',
-  'run-dropped': 'boards.ranked.result.runDropped',
-};
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =
@@ -221,7 +212,7 @@ export class WinnerComponent {
    * any other match, and for one played as practice.
    */
   public rankedNote: Signal<string | null> = computed(() => {
-    const note = this.state.rankedNote();
+    const note = this.state.ranked()?.note;
     switch (note?.kind) {
       case 'daily':
         return this.t('boards.ranked.result.daily', {
@@ -231,7 +222,7 @@ export class WinnerComponent {
       case 'endless':
         return this.t('boards.ranked.result.endless', { match: note.match });
       case 'unranked':
-        return this.t(UNRANKED_KEYS[note.reason]);
+        return this.t(`boards.ranked.result.${note.reason}`);
       default:
         return null;
     }

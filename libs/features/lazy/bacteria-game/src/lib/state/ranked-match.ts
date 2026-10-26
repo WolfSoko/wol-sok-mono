@@ -42,5 +42,14 @@ export type RankedNote =
 export interface RankedOutcome {
   /** The declared match - null when it plays unranked. */
   match: RankedMatch | null;
-  note: RankedNote | null;
+  note: RankedNote;
+}
+
+/**
+ * A ranked endless run started or gone on with, or why it plays unranked:
+ * the outcome of its match, and the run to declare the next one of - null
+ * once it plays unranked.
+ */
+export interface RankedRunOutcome extends RankedOutcome {
+  run: RankedRun | null;
 }

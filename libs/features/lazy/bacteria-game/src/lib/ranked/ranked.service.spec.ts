@@ -23,6 +23,14 @@ function runOf(start: { run: RankedRun | null }): RankedRun {
   return start.run;
 }
 
+/** The line of the attempts or runs left today. */
+function left(kind: 'daily' | 'endless', count: number) {
+  return {
+    key: `boards.ranked.left.${kind}`,
+    params: { left: count, total: kind === 'daily' ? 3 : 5 },
+  };
+}
+
 const NOW = Date.UTC(2026, 9, 26, 12);
 const TODAY = '2026-10-26';
 const TRUSTED: GpuSelfTestResult = {
@@ -90,6 +98,7 @@ describe('RankedService', () => {
         lines: [
           { key: 'boards.ranked.left.daily', params: { left: 3, total: 3 } },
           { key: 'boards.ranked.setup' },
+          { key: 'boards.ranked.noPause' },
         ],
       });
       expect(service.offer('endless', true)?.lines[0]).toEqual({
@@ -121,7 +130,6 @@ describe('RankedService', () => {
       } as GpuSelfTestResult);
       const service = configure();
 
-      expect(service.blocked()).toBe('device');
       expect(service.offer('daily', true)).toEqual({
         on: false,
         open: false,
@@ -130,7 +138,9 @@ describe('RankedService', () => {
     });
 
     it('shuts it on a device without the integer GPU passes', () => {
-      expect(configure({ gpu: false }).blocked()).toBe('device');
+      expect(configure({ gpu: false }).offer('daily', true)?.lines).toEqual([
+        { key: 'boards.ranked.blocked.device' },
+      ]);
     });
 
     it('shuts it while a ban holds', () => {
@@ -149,7 +159,6 @@ describe('RankedService', () => {
       const service = configure();
       await service.refresh();
 
-      expect(service.dailyLeft()).toBe(0);
       expect(service.offer('daily', true)).toEqual({
         on: false,
         open: false,
@@ -163,7 +172,73 @@ describe('RankedService', () => {
       const service = configure();
       await service.refresh();
 
-      expect(service.dailyLeft()).toBe(2);
+      expect(service.offer('daily', true)?.lines[0]).toEqual(left('daily', 2));
+    });
+  });
+
+  describe('a new UTC day', () => {
+    const MIDNIGHT = Date.UTC(2026, 9, 27);
+
+    it("offers the new day's attempts after 00:00, not the old day's count", async () => {
+      for (const n of [1, 2, 3]) {
+        ranked.seed(`d_${TODAY}_${n}`);
+      }
+      const service = configure();
+      await service.refresh();
+      expect(service.wants('daily', true)).toBe(false);
+
+      jest.setSystemTime(MIDNIGHT + 60_000);
+
+      expect(service.wants('daily', true)).toBe(true);
+      const outcome = await service.declareDaily();
+      expect(ranked.declarations).toEqual(['d_2026-10-27_1']);
+      expect(outcome.note).toEqual({ kind: 'daily', n: 1 });
+    });
+
+    it("starts the new day's first run after 00:00", async () => {
+      for (const r of [1, 2, 3, 4, 5]) {
+        ranked.seed(`e_20261026${r}_0`);
+      }
+      const service = configure();
+      await service.refresh();
+      expect(service.wants('endless', true)).toBe(false);
+
+      jest.setSystemTime(MIDNIGHT + 60_000);
+
+      expect(service.wants('endless', true)).toBe(true);
+      expect((await service.startRun()).run).toEqual({
+        runId: '202610271',
+        next: 1,
+      });
+    });
+  });
+
+  describe('reading the attempts', () => {
+    it('reads once for a fresh look, then from what it read', async () => {
+      const service = configure();
+      const declared = jest.spyOn(ranked, 'declared');
+
+      await service.refresh();
+      await service.refresh(false);
+      expect(declared).toHaveBeenCalledTimes(1);
+
+      await service.refresh();
+      expect(declared).toHaveBeenCalledTimes(2);
+    });
+
+    it('offers no count while the attempts cannot be read - not none left', async () => {
+      ranked.offline = true;
+      const service = configure();
+      await service.refresh();
+
+      expect(service.offer('daily', true)).toEqual({
+        on: true,
+        open: true,
+        lines: [
+          { key: 'boards.ranked.setup' },
+          { key: 'boards.ranked.noPause' },
+        ],
+      });
     });
   });
 
@@ -177,7 +252,7 @@ describe('RankedService', () => {
         match: { attempt: { id, at: NOW }, seed: attemptSeed('ada', id, NOW) },
         note: { kind: 'daily', n: 1 },
       });
-      expect(service.dailyLeft()).toBe(2);
+      expect(service.offer('daily', true)?.lines[0]).toEqual(left('daily', 2));
     });
 
     it('declares a void attempt again first', async () => {
@@ -233,7 +308,17 @@ describe('RankedService', () => {
         note: { kind: 'endless', match: 1 },
         run: { runId: '202610262', next: 1 },
       });
-      expect(service.runsLeft()).toBe(3);
+      expect(service.offer('endless', true)?.lines[0]).toEqual(
+        left('endless', 3)
+      );
+    });
+
+    it('keeps a void daily attempt as left when a run starts', async () => {
+      ranked.seed(`d_${TODAY}_1`, NOW, true);
+      const service = configure();
+      await service.startRun();
+
+      expect(service.offer('daily', true)?.lines[0]).toEqual(left('daily', 3));
     });
 
     it('declares the run match by match', async () => {

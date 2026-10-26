@@ -134,7 +134,7 @@
         <feat-lazy-bac-game-swarm [colors]="colonyRgb()" />
         <div class="social-notices">
           <feat-lazy-bac-game-moderation-notices />
-          @if (declaring() !== null) {
+          @if (declaring()) {
             <p class="declaring" role="status">
               {{ "boards.ranked.declaring" | t }}
             </p>
@@ -190,7 +190,7 @@
               [online]="onlineLobby()"
               [onlineAvailable]="onlineAvailable"
               [rankedOffers]="rankedOffers()"
-              [declaring]="declaring() !== null"
+              [declaring]="declaring()"
               (rankedChange)="settings.setRanked($event)"
               (hostOnline)="hostOnline()"
               (joinOnline)="joinOnline($event)"
@@ -341,7 +341,7 @@
               settings.sound() ? "volume_up" : "volume_off"
             }}</mat-icon>
           </button>
-          @if (running() && !paused()) {
+          @if (running() && !paused() && canPause()) {
             <button
               mat-icon-button
               type="button"

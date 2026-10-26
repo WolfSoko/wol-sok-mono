@@ -1,4 +1,4 @@
-import { parseAttemptId } from '../lib/state/attempts';
+import { attemptTaken } from '../lib/state/attempts';
 import type {
   DeclaredAttempt,
   Declaration,
@@ -43,10 +43,7 @@ export class FakeGameRanked implements GameRanked {
       return 'failed';
     }
     const before = this.stored.get(attemptId);
-    if (
-      before !== undefined &&
-      !(before.void && parseAttemptId(attemptId)?.kind === 'daily')
-    ) {
+    if (attemptTaken(attemptId, before !== undefined, before?.void === true)) {
       return 'taken';
     }
     const at = this.now();

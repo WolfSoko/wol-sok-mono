@@ -38,7 +38,8 @@ export type DeclarationMiss =
 export interface GameRanked {
   /**
    * The attempts among `ids` the player has declared - null when they
-   * could not be read, as offline, where ranked play cannot start anyway.
+   * could not be read within `LOAD_TIMEOUT_MS`, as offline, where ranked
+   * play cannot start anyway.
    */
   declared(ids: readonly string[]): Promise<DeclaredAttempt[] | null>;
   /**
@@ -46,10 +47,15 @@ export interface GameRanked {
    * of waiting in the cache, created - or, for a void daily attempt,
    * declared again in its place - with the server's time and an `expireAt`
    * 31 days ahead; then read back from the server for `at`. Gives up after
-   * `DECLARE_TIMEOUT_MS` in all.
+   * `DECLARE_TIMEOUT_MS` in all - unless one more read from the server
+   * then finds the attempt declared: the transaction may have committed
+   * just too late, and the attempt counts as used either way.
    */
   declare(attemptId: string): Promise<Declaration | DeclarationMiss>;
 }
 
 /** How long a declaration may take, the transaction and the read-back. */
 export const DECLARE_TIMEOUT_MS = 3_000;
+
+/** How long reading the declared attempts may take. */
+export const LOAD_TIMEOUT_MS = 5_000;

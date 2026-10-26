@@ -92,15 +92,20 @@ storage until then. Settings stay with the device either way.
   offline instead of waiting in the cache) that writes `{ at:
 serverTimestamp(), expireAt }` and nothing else - what the rules'
   `isDeclaration` wants - then reads `at` back with `getDocFromServer`,
-  3 s in all (`DECLARE_TIMEOUT_MS`); the seed is `attemptSeed(uid, id,
-at)`, the match `rankedPlan` on the online grid, `gpu-int`, no
-  restart, uploaded whatever the recording settings say, with the
-  attempt in the header and the submission. Ranked play is offered by
+  3 s in all (`DECLARE_TIMEOUT_MS`; past it one more read from the server
+  takes a declaration that committed late), `at` floored to whole ms
+  (`millisOf`, `storage/firestore-values.ts`) as the server reads it; the
+  seed is `attemptSeed(uid, id, at)`, the match `rankedPlan` on the online
+  grid, on the level of the attempt's own day, `gpu-int`, no restart and
+  no pause (the deadline runs from the declaration), uploaded whatever the
+  recording settings say, with the attempt in the header and the
+  submission. Ranked play is offered by
   the owner's toggles (`rankedDaily`, `rankedEndless`: off hides the
   switch) on a device whose GPU passed the self-test and has the integer
   passes (`deviceReady`), to a signed-in player no ban holds; the
-  player's choice is the device setting `ranked`. What the result screen
-  says of it is the store's `rankedNote` (ids, texts in `boards.ranked`).
+  player's choice is the device setting `ranked`. The store's `ranked`
+  holds the start's outcome: the declared match (`rankedMatch`) and what
+  the result screen says of it (`note`, ids, texts in `boards.ranked`).
   Specs use `FakeGameRanked`.
 - The owner's moderation reaches the player through the `GameModeration`
   port (`storage/game-moderation.ts`, `FirestoreGameModeration`), asked

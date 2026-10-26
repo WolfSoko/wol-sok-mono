@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, map } from 'rxjs';
 import { FeatureTogglesService } from '../feature-toggles.service';
@@ -8,14 +8,15 @@ import type { GameText } from '../i18n/game-texts';
 import { ModerationService } from '../moderation/moderation.service';
 import {
   attemptSeed,
-  dailyAttemptId,
+  dailyAttemptsLeft,
+  dayAttemptIds,
   endlessAttemptId,
-  endlessRunId,
   nextDailyAttemptId,
   nextRunId,
   parseAttemptId,
   RANKED_DAILY_ATTEMPTS,
   RANKED_RUNS_PER_DAY,
+  runsLeft,
 } from '../state/attempts';
 import { utcDay } from '../state/daily';
 import { PlayerService } from '../state/player.service';
@@ -23,6 +24,8 @@ import type {
   RankedMatch,
   RankedOutcome,
   RankedRun,
+  RankedRunOutcome,
+  UnrankedReason,
 } from '../state/ranked-match';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
@@ -41,12 +44,6 @@ export interface RankedOffer {
   open: boolean;
   /** What the switch's lines say. */
   lines: GameText[];
-}
-
-/** A ranked run started, or why it plays unranked. */
-export interface RankedRunOutcome extends RankedOutcome {
-  /** The run to declare the next matches of - null when unranked. */
-  run: RankedRun | null;
 }
 
 /** The attempts of a UTC day the player has declared, as last read. */
@@ -86,16 +83,30 @@ export class RankedService {
   );
   /** The day's declared attempts, as last read - null before. */
   private readonly attempts = signal<DayAttempts | null>(null);
+  /**
+   * The UTC day as last looked at - again before each start and each
+   * read (`currentDay`), so a new day's attempts are offered after 00:00.
+   */
+  private readonly today = signal(utcDay(new Date()));
+  /** The attempts read for today and this player - null for another day. */
+  private readonly known = computed((): DayAttempts | null => {
+    const known = this.attempts();
+    return known !== null &&
+      known.uid === this.uid() &&
+      known.day === this.today()
+      ? known
+      : null;
+  });
 
   /** False without the game's cloud: nothing is ranked then. */
-  public readonly available = this.ranked !== null;
+  private readonly available = this.ranked !== null;
 
   /** True while ranked daily attempts are offered: the cloud and the toggle. */
-  public readonly dailyOffered = computed(
+  private readonly dailyOffered = computed(
     () => this.available && this.toggles().rankedDaily
   );
   /** True while ranked endless runs are offered. */
-  public readonly endlessOffered = computed(
+  private readonly endlessOffered = computed(
     () => this.available && this.toggles().rankedEndless
   );
 
@@ -104,12 +115,12 @@ export class RankedService {
    * on a GPU the self-test trusts (ADR 0015) - the owner's policy keeps
    * `IntSimulation` from playing live.
    */
-  public readonly deviceReady = computed(
+  private readonly deviceReady = computed(
     () => this.players.gpuIntReady() && gpuTrusted(this.selfTest.result())
   );
 
   /** Why ranked play cannot start now - null while it can. */
-  public readonly blocked = computed((): RankedBlock | null => {
+  private readonly blocked = computed((): RankedBlock | null => {
     if (this.moderation.banned()) {
       return 'banned';
     }
@@ -120,40 +131,18 @@ export class RankedService {
   });
 
   /** Ranked daily attempts left today - null until read. */
-  public readonly dailyLeft = computed(() => {
-    const known = this.today();
-    if (known === null) {
-      return null;
-    }
-    let left = 0;
-    for (let n = 1; n <= RANKED_DAILY_ATTEMPTS; n++) {
-      const id = dailyAttemptId(known.day, n);
-      if (!known.declared.has(id) || known.voided.has(id)) {
-        left++;
-      }
-    }
-    return left;
+  private readonly dailyLeft = computed(() => {
+    const known = this.known();
+    return known === null
+      ? null
+      : dailyAttemptsLeft(known.day, known.declared, known.voided);
   });
 
   /** Ranked endless runs left to start today - null until read. */
-  public readonly runsLeft = computed(() => {
-    const known = this.today();
-    if (known === null) {
-      return null;
-    }
-    let started = 0;
-    for (let r = 1; r <= RANKED_RUNS_PER_DAY; r++) {
-      if (known.declared.has(endlessAttemptId(endlessRunId(known.day, r), 0))) {
-        started++;
-      }
-    }
-    return RANKED_RUNS_PER_DAY - started;
+  private readonly runsLeft = computed(() => {
+    const known = this.known();
+    return known === null ? null : runsLeft(known.day, known.declared);
   });
-
-  /** True when a mode offers ranked play at all. */
-  public offered(kind: RankedKind): boolean {
-    return kind === 'daily' ? this.dailyOffered() : this.endlessOffered();
-  }
 
   /**
    * What the new game shows of ranked play in a mode, with the player's
@@ -161,7 +150,7 @@ export class RankedService {
    * the owner's toggle off hides it.
    */
   public offer(kind: RankedKind, wanted: boolean): RankedOffer | null {
-    if (!this.offered(kind)) {
+    if (!(kind === 'daily' ? this.dailyOffered() : this.endlessOffered())) {
       return null;
     }
     const blocked = this.blocked();
@@ -202,6 +191,7 @@ export class RankedService {
               },
             ]),
         { key: 'boards.ranked.setup' },
+        { key: 'boards.ranked.noPause' },
         ...(kind === 'endless'
           ? [{ key: 'boards.ranked.runLives' as const }]
           : []),
@@ -209,20 +199,26 @@ export class RankedService {
     };
   }
 
-  /** True when the next match of a mode is declared ranked, as offered. */
+  /**
+   * True when the next match of a mode is declared ranked, as offered -
+   * on the UTC day of now: past midnight a new day's attempts are offered,
+   * not the old day's counts.
+   */
   public wants(kind: RankedKind, wanted: boolean): boolean {
+    this.currentDay();
     return this.offer(kind, wanted)?.on === true;
   }
 
   /**
    * Reads which of today's ranked attempts and runs the player declared -
-   * for the counts the new game shows; again on a new day or player.
+   * for the counts the new game shows: again from the storage (`fresh`),
+   * or as read before for this player and day.
    */
-  public async refresh(): Promise<void> {
+  public async refresh(fresh = true): Promise<void> {
     if (this.ranked === null || this.uid() === null) {
       return;
     }
-    await this.load(utcDay(new Date()), true);
+    await this.load(this.currentDay(), fresh);
   }
 
   /**
@@ -231,33 +227,18 @@ export class RankedService {
    * or when the declaration fails.
    */
   public async declareDaily(): Promise<RankedOutcome> {
-    const day = utcDay(new Date());
-    const known = await this.load(day);
-    if (known === null) {
-      return unranked('offline');
+    const match = await this.declareNext(
+      RANKED_DAILY_ATTEMPTS,
+      nextDailyAttemptId
+    );
+    if (typeof match === 'string') {
+      return unranked(match);
     }
-    const declared = new Set(known.declared);
-    const voided = new Set(known.voided);
-    // One try per attempt: an attempt taken already moves on to the next.
-    for (let tries = 0; tries < RANKED_DAILY_ATTEMPTS; tries++) {
-      const id = nextDailyAttemptId(day, declared, voided);
-      if (id === null) {
-        return unranked('used');
-      }
-      const match = await this.declare(id, known, declared, voided);
-      if (match === 'taken') {
-        continue;
-      }
-      if (match === null) {
-        return unranked('offline');
-      }
-      const attempt = parseAttemptId(id);
-      return {
-        match,
-        note: { kind: 'daily', n: attempt?.kind === 'daily' ? attempt.n : 1 },
-      };
-    }
-    return unranked('used');
+    const attempt = parseAttemptId(match.attempt.id);
+    return {
+      match,
+      note: { kind: 'daily', n: attempt?.kind === 'daily' ? attempt.n : 1 },
+    };
   }
 
   /**
@@ -266,36 +247,26 @@ export class RankedService {
    * five runs of the day are started, or when the declaration fails.
    */
   public async startRun(): Promise<RankedRunOutcome> {
-    const day = utcDay(new Date());
-    const known = await this.load(day);
-    if (known === null) {
-      return { ...unranked('offline'), run: null };
-    }
-    const declared = new Set(known.declared);
-    for (let tries = 0; tries < RANKED_RUNS_PER_DAY; tries++) {
-      const runId = nextRunId(day, declared);
-      if (runId === null) {
-        return { ...unranked('runs-used'), run: null };
+    const match = await this.declareNext(
+      RANKED_RUNS_PER_DAY,
+      (day, declared) => {
+        const runId = nextRunId(day, declared);
+        return runId === null ? null : endlessAttemptId(runId, 0);
       }
-      const match = await this.declare(
-        endlessAttemptId(runId, 0),
-        known,
-        declared,
-        new Set()
-      );
-      if (match === 'taken') {
-        continue;
-      }
-      if (match === null) {
-        return { ...unranked('offline'), run: null };
-      }
+    );
+    const attempt =
+      typeof match === 'string' ? null : parseAttemptId(match.attempt.id);
+    if (typeof match === 'string' || attempt?.kind !== 'endless') {
       return {
-        match,
-        note: { kind: 'endless', match: 1 },
-        run: { runId, next: 1 },
+        ...unranked(match === 'used' ? 'runs-used' : 'offline'),
+        run: null,
       };
     }
-    return { ...unranked('runs-used'), run: null };
+    return {
+      match,
+      note: { kind: 'endless', match: 1 },
+      run: { runId: attempt.runId, next: 1 },
+    };
   }
 
   /**
@@ -304,14 +275,12 @@ export class RankedService {
    * declarations would fail the level check (ADR 0012).
    */
   public async declareRunMatch(run: RankedRun): Promise<RankedRunOutcome> {
+    const id = endlessAttemptId(run.runId, run.next);
     const result =
-      this.ranked === null
-        ? 'failed'
-        : await this.ranked.declare(endlessAttemptId(run.runId, run.next));
+      this.ranked === null ? 'failed' : await this.ranked.declare(id);
     if (typeof result === 'string') {
       return { ...unranked('run-dropped'), run: null };
     }
-    const id = endlessAttemptId(run.runId, run.next);
     return {
       match: matchOf(result.uid, id, result.at),
       note: { kind: 'endless', match: run.next + 1 },
@@ -320,28 +289,47 @@ export class RankedService {
   }
 
   /**
-   * Declares one attempt and notes it as declared: the match - `taken`
-   * when it was declared already, null when the declaration failed.
+   * Declares the next attempt of today that `next` picks from the declared
+   * ones, noting each as declared: one taken already moves on to the next
+   * (`tries` at most). The declared match - `used` once `next` picks none,
+   * `offline` when the attempts cannot be read or a declaration fails.
    */
-  private async declare(
-    id: string,
-    known: DayAttempts,
-    declared: Set<string>,
-    voided: Set<string>
-  ): Promise<RankedMatch | 'taken' | null> {
-    const result =
-      this.ranked === null ? 'failed' : await this.ranked.declare(id);
-    if (result === 'failed') {
-      return null;
+  private async declareNext(
+    tries: number,
+    next: (
+      day: string,
+      declared: ReadonlySet<string>,
+      voided: ReadonlySet<string>
+    ) => string | null
+  ): Promise<RankedMatch | 'used' | 'offline'> {
+    const day = this.currentDay();
+    const known = await this.load(day);
+    if (known === null || this.ranked === null) {
+      return 'offline';
     }
-    declared.add(id);
-    voided.delete(id);
-    this.attempts.set({
-      ...known,
-      declared: new Set(declared),
-      voided: new Set(voided),
-    });
-    return result === 'taken' ? 'taken' : matchOf(result.uid, id, result.at);
+    const declared = new Set(known.declared);
+    const voided = new Set(known.voided);
+    for (let tried = 0; tried < tries; tried++) {
+      const id = next(day, declared, voided);
+      if (id === null) {
+        return 'used';
+      }
+      const result = await this.ranked.declare(id);
+      if (result === 'failed') {
+        return 'offline';
+      }
+      declared.add(id);
+      voided.delete(id);
+      this.attempts.set({
+        ...known,
+        declared: new Set(declared),
+        voided: new Set(voided),
+      });
+      if (result !== 'taken') {
+        return matchOf(result.uid, id, result.at);
+      }
+    }
+    return 'used';
   }
 
   /**
@@ -357,15 +345,7 @@ export class RankedService {
     if (!fresh && known !== null && known.uid === uid && known.day === day) {
       return known;
     }
-    const ids = [
-      ...Array.from({ length: RANKED_DAILY_ATTEMPTS }, (_, i) =>
-        dailyAttemptId(day, i + 1)
-      ),
-      ...Array.from({ length: RANKED_RUNS_PER_DAY }, (_, i) =>
-        endlessAttemptId(endlessRunId(day, i + 1), 0)
-      ),
-    ];
-    const read = await this.ranked.declared(ids);
+    const read = await this.ranked.declared(dayAttemptIds(day));
     if (read === null || this.uid() !== uid) {
       return null;
     }
@@ -381,14 +361,13 @@ export class RankedService {
     return loaded;
   }
 
-  /** The attempts read for today and this player - null for another day. */
-  private today(): DayAttempts | null {
-    const known = this.attempts();
-    return known !== null &&
-      known.uid === this.uid() &&
-      known.day === utcDay(new Date())
-      ? known
-      : null;
+  /** The UTC day of now, which `today` then holds as well. */
+  private currentDay(): string {
+    const day = utcDay(new Date());
+    if (day !== untracked(this.today)) {
+      this.today.set(day);
+    }
+    return day;
   }
 }
 
@@ -397,8 +376,6 @@ function matchOf(uid: string, id: string, at: number): RankedMatch {
   return { attempt: { id, at }, seed: attemptSeed(uid, id, at) };
 }
 
-function unranked(
-  reason: 'offline' | 'used' | 'runs-used' | 'run-dropped'
-): RankedOutcome {
+function unranked(reason: UnrankedReason): RankedOutcome {
   return { match: null, note: { kind: 'unranked', reason } };
 }

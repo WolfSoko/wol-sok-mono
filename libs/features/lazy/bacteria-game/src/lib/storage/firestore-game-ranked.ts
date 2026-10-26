@@ -1,12 +1,14 @@
-import { filter, firstValueFrom, type Observable } from 'rxjs';
-import { attemptExpireAt, parseAttemptId } from '../state/attempts';
+import type { Observable } from 'rxjs';
+import { attemptExpireAt, attemptTaken } from '../state/attempts';
 import type { FirebaseConnection } from './firebase-connection';
+import { millisOf, signedIn } from './firestore-values';
 import {
   DECLARE_TIMEOUT_MS,
   type DeclaredAttempt,
   type Declaration,
   type DeclarationMiss,
   type GameRanked,
+  LOAD_TIMEOUT_MS,
 } from './game-ranked';
 
 /** Thrown inside the transaction for an attempt declared already. */
@@ -32,14 +34,12 @@ export class FirestoreGameRanked implements GameRanked {
   public async declared(
     ids: readonly string[]
   ): Promise<DeclaredAttempt[] | null> {
-    const { db, dbSdk } = this.connection;
-    try {
-      const uid = await this.signedIn();
+    const { dbSdk } = this.connection;
+    const read = async (): Promise<DeclaredAttempt[]> => {
+      const uid = await signedIn(this.playerIds);
       // A get each: a list would read every match of a deep run.
       const snapshots = await Promise.all(
-        ids.map((id) =>
-          dbSdk.getDoc(dbSdk.doc(db, 'players', uid, 'attempts', id))
-        )
+        ids.map((id) => dbSdk.getDoc(this.attempt(uid, id)))
       );
       return snapshots.flatMap((snapshot) => {
         const at = millisOf(snapshot.get('at'));
@@ -47,6 +47,10 @@ export class FirestoreGameRanked implements GameRanked {
           ? [{ id: snapshot.id, at, void: snapshot.get('void') === true }]
           : [];
       });
+    };
+    try {
+      // Offline a get may wait long: unknown then, not none declared.
+      return await withDeadline(read(), LOAD_TIMEOUT_MS);
     } catch (error) {
       console.warn('Could not read the ranked attempts', error);
       return null;
@@ -57,67 +61,86 @@ export class FirestoreGameRanked implements GameRanked {
     attemptId: string
   ): Promise<Declaration | DeclarationMiss> {
     const { db, dbSdk } = this.connection;
-    // Only a void daily attempt is declared again; a void endless match
-    // counts as not played, and its run goes on with the next one.
-    const redeclarable = parseAttemptId(attemptId)?.kind === 'daily';
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-    const timedOut = new Promise<never>((_, reject) => {
-      timeout = setTimeout(() => reject(new TimedOut()), DECLARE_TIMEOUT_MS);
-    });
-    try {
-      const uid = await Promise.race([this.signedIn(), timedOut]);
-      const ref = dbSdk.doc(db, 'players', uid, 'attempts', attemptId);
-      await Promise.race([
-        dbSdk.runTransaction(db, async (transaction) => {
-          const before = await transaction.get(ref);
-          if (
-            before.exists() &&
-            !(redeclarable && before.get('void') === true)
-          ) {
-            throw new Taken();
-          }
-          // Whole, so a declaration again drops the void marks.
-          transaction.set(ref, {
-            at: dbSdk.serverTimestamp(),
-            expireAt: dbSdk.Timestamp.fromMillis(attemptExpireAt(Date.now())),
-          });
-        }),
-        timedOut,
-      ]);
-      const snapshot = await Promise.race([
-        dbSdk.getDocFromServer(ref),
-        timedOut,
-      ]);
-      const at = millisOf(snapshot.get('at'));
+    // Whose it is, once known - for the read after the deadline.
+    const declaring: { uid?: string } = {};
+    const declareNow = async (): Promise<Declaration | 'failed'> => {
+      const uid = await signedIn(this.playerIds);
+      declaring.uid = uid;
+      const ref = this.attempt(uid, attemptId);
+      await dbSdk.runTransaction(db, async (transaction) => {
+        const before = await transaction.get(ref);
+        if (
+          before.exists() &&
+          attemptTaken(attemptId, true, before.get('void') === true)
+        ) {
+          throw new Taken();
+        }
+        // Whole, so a declaration again drops the void marks.
+        transaction.set(ref, {
+          at: dbSdk.serverTimestamp(),
+          expireAt: dbSdk.Timestamp.fromMillis(attemptExpireAt(Date.now())),
+        });
+      });
+      const at = millisOf((await dbSdk.getDocFromServer(ref)).get('at'));
       return at === null ? 'failed' : { uid, at };
+    };
+    try {
+      return await withDeadline(declareNow(), DECLARE_TIMEOUT_MS);
     } catch (error) {
       if (error instanceof Taken) {
         return 'taken';
       }
+      if (error instanceof TimedOut && declaring.uid !== undefined) {
+        const late = await this.readBack(declaring.uid, attemptId);
+        if (late !== null) {
+          return late;
+        }
+      }
       console.warn(`Could not declare the ranked attempt ${attemptId}`, error);
       return 'failed';
-    } finally {
-      clearTimeout(timeout);
     }
   }
 
-  private signedIn(): Promise<string> {
-    return firstValueFrom(
-      this.playerIds.pipe(filter((uid): uid is string => uid !== null))
-    );
+  /**
+   * Once more from the server, after the deadline: the declaration, should
+   * the transaction have committed - the attempt there with its `at`, and
+   * not void (a declaration again drops that) - null else.
+   */
+  private async readBack(
+    uid: string,
+    attemptId: string
+  ): Promise<Declaration | null> {
+    try {
+      const snapshot = await withDeadline(
+        this.connection.dbSdk.getDocFromServer(this.attempt(uid, attemptId)),
+        DECLARE_TIMEOUT_MS
+      );
+      const at = millisOf(snapshot.get('at'));
+      return snapshot.exists() && at !== null && snapshot.get('void') !== true
+        ? { uid, at }
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private attempt(uid: string, attemptId: string) {
+    const { db, dbSdk } = this.connection;
+    return dbSdk.doc(db, 'players', uid, 'attempts', attemptId);
   }
 }
 
-/** A Firestore timestamp in ms - null for anything else. */
-function millisOf(value: unknown): number | null {
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    'toMillis' in value &&
-    typeof value.toMillis === 'function'
-  ) {
-    const millis: unknown = value.toMillis();
-    return typeof millis === 'number' ? millis : null;
+/** What `task` comes to - or a `TimedOut` rejection after `ms`. */
+async function withDeadline<T>(task: Promise<T>, ms: number): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      task,
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => reject(new TimedOut()), ms);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timeout);
   }
-  return null;
 }

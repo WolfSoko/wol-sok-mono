@@ -1,9 +1,10 @@
 import { BehaviorSubject } from 'rxjs';
-import { ATTEMPT_DAYS } from '../state/attempts';
+import { ATTEMPT_DAYS, attemptSeed } from '../state/attempts';
 import type { FirebaseConnection } from './firebase-connection';
 import { FirestoreGameRanked } from './firestore-game-ranked';
-import { DECLARE_TIMEOUT_MS } from './game-ranked';
+import { DECLARE_TIMEOUT_MS, LOAD_TIMEOUT_MS } from './game-ranked';
 
+/** A timestamp whose `toMillis()` keeps a fraction, as the browser SDK's does. */
 class FakeTimestamp {
   public constructor(public readonly ms: number) {}
   public static fromMillis(ms: number): FakeTimestamp {
@@ -27,6 +28,12 @@ class FakeFirestore {
   public failing = false;
   /** Set to make a transaction never answer. */
   public hanging = false;
+  /** Set to make a transaction commit, but its answer never arrive. */
+  public lateCommit = false;
+  /** Set to make a get never answer. */
+  public readsHanging = false;
+  /** The server's time a write takes - with microseconds, as in production. */
+  public serverTime = SERVER_TIME;
 
   public readonly sdk = {
     Timestamp: FakeTimestamp,
@@ -35,7 +42,10 @@ class FakeFirestore {
       path: segments.join('/'),
       id: segments[segments.length - 1],
     }),
-    getDoc: async (ref: { path: string; id: string }) => this.snapshot(ref),
+    getDoc: async (ref: { path: string; id: string }) =>
+      this.readsHanging
+        ? new Promise<never>(() => undefined)
+        : this.snapshot(ref),
     getDocFromServer: async (ref: { path: string; id: string }) =>
       this.snapshot(ref),
     runTransaction: async (
@@ -61,9 +71,12 @@ class FakeFirestore {
           ...data,
           at:
             data['at'] === 'server-time'
-              ? new FakeTimestamp(SERVER_TIME)
+              ? new FakeTimestamp(this.serverTime)
               : data['at'],
         });
+      }
+      if (this.lateCommit) {
+        return new Promise<void>(() => undefined);
       }
     },
   };
@@ -156,6 +169,63 @@ describe('FirestoreGameRanked', () => {
     await jest.advanceTimersByTimeAsync(DECLARE_TIMEOUT_MS);
 
     expect(await declared).toBe('failed');
+    jest.useRealTimers();
+  });
+
+  it('reads the server time back in whole milliseconds, as the server does', async () => {
+    // 123456000 ns past the second: the browser's `toMillis()` says .456.
+    firestore.serverTime = SERVER_TIME + 123.456;
+
+    const declared = await firestore.ranked().declare('d_2026-10-26_1');
+
+    expect(declared).toEqual({ uid: 'ada', at: SERVER_TIME + 123 });
+    const at = typeof declared === 'string' ? NaN : declared.at;
+    expect(Number.isInteger(at)).toBe(true);
+    expect(attemptSeed('ada', 'd_2026-10-26_1', at)).toBe(
+      attemptSeed('ada', 'd_2026-10-26_1', SERVER_TIME + 123)
+    );
+    firestore.docs.set('players/ada/attempts/d_2026-10-26_2', {
+      at: new FakeTimestamp(SERVER_TIME + 0.5),
+    });
+    expect(
+      await firestore.ranked().declared(['d_2026-10-26_1', 'd_2026-10-26_2'])
+    ).toEqual([
+      { id: 'd_2026-10-26_1', at: SERVER_TIME + 123, void: false },
+      { id: 'd_2026-10-26_2', at: SERVER_TIME, void: false },
+    ]);
+  });
+
+  it('takes a declaration that committed just past the deadline, read once more from the server', async () => {
+    jest.useFakeTimers();
+    firestore.lateCommit = true;
+    const declared = firestore.ranked().declare('d_2026-10-26_1');
+    await jest.advanceTimersByTimeAsync(DECLARE_TIMEOUT_MS);
+
+    expect(await declared).toEqual({ uid: 'ada', at: SERVER_TIME });
+    jest.useRealTimers();
+  });
+
+  it('fails past the deadline when the server holds the attempt still void', async () => {
+    jest.useFakeTimers();
+    firestore.hanging = true;
+    firestore.docs.set('players/ada/attempts/d_2026-10-26_1', {
+      at: new FakeTimestamp(1),
+      void: true,
+    });
+    const declared = firestore.ranked().declare('d_2026-10-26_1');
+    await jest.advanceTimersByTimeAsync(DECLARE_TIMEOUT_MS);
+
+    expect(await declared).toBe('failed');
+    jest.useRealTimers();
+  });
+
+  it('gives up reading the declared attempts after a while: unknown, not none', async () => {
+    jest.useFakeTimers();
+    firestore.readsHanging = true;
+    const declared = firestore.ranked().declared(['d_2026-10-26_1']);
+    await jest.advanceTimersByTimeAsync(LOAD_TIMEOUT_MS);
+
+    expect(await declared).toBeNull();
     jest.useRealTimers();
   });
 

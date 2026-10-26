@@ -75,8 +75,12 @@ import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
 import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
-import { rankedPlan } from './attempts';
-import type { RankedMatch, RankedOutcome, RankedRun } from './ranked-match';
+import { parseAttemptId, rankedPlan } from './attempts';
+import type {
+  RankedMatch,
+  RankedOutcome,
+  RankedRunOutcome,
+} from './ranked-match';
 
 /**
  * The most time one frame may take the war forward, in milliseconds. A
@@ -99,16 +103,6 @@ export type OneMatch = Pick<
   GameStateState,
   'ghost' | 'matchLevel' | 'dailyDay' | 'endlessMatch'
 >;
-
-/**
- * A ranked start of an endless run or one of its matches (ADR 0012): the
- * declaration's outcome, and the run to declare the next match of - null
- * once it plays unranked.
- */
-export interface RankedRunStart {
-  outcome: RankedOutcome;
-  run: RankedRun | null;
-}
 
 /** The seat a local match records: the human's - never the bot's. */
 const LOCAL_RECORDED_SEATS: ReadonlySet<number> = new Set([0]);
@@ -138,12 +132,6 @@ const NO_ONE_MATCH: OneMatch = {
   endlessMatch: false,
 };
 
-/** No ranked attempt for the next match, and nothing to say of one. */
-const UNRANKED: Pick<GameStateState, 'ranked' | 'rankedNote'> = {
-  ranked: null,
-  rankedNote: null,
-};
-
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
   private gameStateStore = inject(GameStateStore);
@@ -163,8 +151,11 @@ export class GameStateService {
     saveMatches: true,
   };
   /** Whether the match on the board is recorded, and how - null if not. */
-  private recordedAs: 'online' | 'local' | 'ranked' | null = null;
-  /** The ranked attempt the match on the board was declared as, if any. */
+  private recordedAs: 'online' | 'local' | null = null;
+  /**
+   * The ranked attempt the match on the board was declared as - null for
+   * an unranked one. Such a match is recorded locally, and uploaded.
+   */
   private rankedMatch: RankedMatch | null = null;
   /** The room and number of the online match on the board. */
   private onlineRef: { roomCode: string; n: number } | null = null;
@@ -481,7 +472,9 @@ export class GameStateService {
    */
   private recording(outcome: MatchOutcome): MatchRecording | null {
     const recordedAs = this.recordedAs;
+    const rankedMatch = this.rankedMatch;
     this.recordedAs = null;
+    this.rankedMatch = null;
     if (
       recordedAs === null ||
       this.playerService.getSimulation().ruleset === null ||
@@ -493,9 +486,8 @@ export class GameStateService {
     // A ranked match carries its attempt - on the one ruleset the boards
     // take (ADR 0012, 0015), which it always plays.
     const ranked =
-      recordedAs === 'ranked' &&
       this.playerService.getSimulation().ruleset === 'gpu-int'
-        ? this.rankedMatch
+        ? rankedMatch
         : null;
     const replay = this.replay(
       outcome,
@@ -642,8 +634,8 @@ export class GameStateService {
       ranked,
     } = this.gameStateStore.snapshot();
     const planned = matchLevel ?? levelId;
-    if (ranked !== null && matchLevel !== null && ghost === null) {
-      this.initRanked(matchLevel, ranked);
+    if (ranked?.match != null && matchLevel !== null && ghost === null) {
+      this.initRanked(matchLevel, ranked.match);
       return;
     }
     this.rankedMatch = null;
@@ -698,7 +690,7 @@ export class GameStateService {
     const { spawns, options, evolved } = planMatch(this.plan, null);
     this.planEvolved = evolved;
     this.rankedMatch = ranked;
-    this.recordedAs = 'ranked';
+    this.recordedAs = 'local';
     this.onlineRef = null;
     this.samples = [];
     this.playerService.init(spawns, {
@@ -755,6 +747,7 @@ export class GameStateService {
     this.planEvolved = evolved;
     // Every online match is recorded - both seats, as the lockstep played.
     this.recordedAs = match === undefined ? null : 'online';
+    this.rankedMatch = null;
     this.samples = [];
     this.playerService.init(spawns, {
       ...options,
@@ -767,15 +760,18 @@ export class GameStateService {
   /**
    * Sets the next match on the daily level of that UTC day, against the
    * computer, leaving the setup as it is - or, declared as a ranked attempt
-   * (`ranked.match`), on the ranked setup. It holds for that one match;
-   * {@link reset} ends it.
+   * (`ranked.match`), on the ranked setup and on the level of the attempt's
+   * day, which past midnight may be another than `day`. It holds for that
+   * one match; {@link reset} ends it.
    */
   public playDaily(day: string, ranked: RankedOutcome | null = null): void {
+    const attempt =
+      ranked?.match == null ? null : parseAttemptId(ranked.match.attempt.id);
+    const played = attempt?.kind === 'daily' ? attempt.day : day;
     this.gameStateStore.update({
-      matchLevel: dailyLevelId(day),
-      dailyDay: day,
-      ranked: ranked?.match ?? null,
-      rankedNote: ranked?.note ?? null,
+      matchLevel: dailyLevelId(played),
+      dailyDay: played,
+      ranked,
     });
   }
 
@@ -787,7 +783,7 @@ export class GameStateService {
   public playMission(id: MissionId): void {
     this.gameStateStore.update({
       ...NO_ONE_MATCH,
-      ...UNRANKED,
+      ranked: null,
       matchLevel: missionById(id).levelId,
     });
   }
@@ -797,8 +793,8 @@ export class GameStateService {
    * (`ranked.run`) takes its levels from the seed of its declared match 0,
    * which that match plays as well (ADR 0012).
    */
-  public startEndless(ranked: RankedRunStart | null = null): void {
-    const match = ranked?.run == null ? null : ranked.outcome.match;
+  public startEndless(ranked: RankedRunOutcome | null = null): void {
+    const match = ranked?.run == null ? null : ranked.match;
     this.gameStateStore.update({
       endless: newRun(match?.seed ?? randomSeed()),
       endlessRanked: null,
@@ -812,27 +808,17 @@ export class GameStateService {
    * A ranked run's match comes declared (`ranked`); without one the run
    * stays as ranked as it was.
    */
-  public continueEndless(ranked: RankedRunStart | null = null): void {
+  public continueEndless(ranked: RankedRunOutcome | null = null): void {
     const { endless, endlessRanked } = this.gameStateStore.snapshot();
     if (endless !== null && !isRunOver(endless)) {
       this.gameStateStore.update({
         ...NO_ONE_MATCH,
         matchLevel: endlessLevelId(endless),
         endlessMatch: true,
-        ranked: ranked?.outcome.match ?? null,
-        rankedNote: ranked?.outcome.note ?? null,
+        ranked:
+          ranked === null ? null : { match: ranked.match, note: ranked.note },
         endlessRanked: ranked === null ? endlessRanked : ranked.run,
       });
-    }
-  }
-
-  /** On with the endless run after a match - or a new one, once it is over. */
-  public advanceEndless(): void {
-    const { endless } = this.gameStateStore.snapshot();
-    if (endless === null || isRunOver(endless)) {
-      this.startEndless();
-    } else {
-      this.continueEndless();
     }
   }
 
@@ -1104,7 +1090,7 @@ export class GameStateService {
       currentState: GameState.END,
       timePassed: 0,
       ...NO_ONE_MATCH,
-      ...UNRANKED,
+      ranked: null,
     }));
     this.initPlayers();
     this.gameStateStore.update(() => ({
@@ -1116,10 +1102,17 @@ export class GameStateService {
     }));
   }
 
-  /** Switches between RUNNING and PAUSED - bound to the P key and the button. */
+  /**
+   * Switches between RUNNING and PAUSED - bound to the P key and the
+   * button. Never pauses a ranked match: its attempt has a deadline from
+   * the declaration on (ADR 0012), which a pause would quietly miss.
+   */
   togglePause(): void {
     this.gameStateStore.update((state) => {
-      if (state.currentState === GameState.RUNNING) {
+      if (
+        state.currentState === GameState.RUNNING &&
+        state.ranked?.match == null
+      ) {
         return { currentState: GameState.PAUSED };
       }
       if (state.currentState === GameState.PAUSED) {
