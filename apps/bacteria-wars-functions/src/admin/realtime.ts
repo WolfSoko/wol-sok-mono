@@ -21,6 +21,31 @@ export interface Realtime {
   update(values: Readonly<Record<string, true | null>>): Promise<void>;
 }
 
+/**
+ * True for an id the Realtime Database takes as a key: up to 768 bytes,
+ * without `.`, `#`, `$`, `[`, `]`, `/` or a control character. A Firestore
+ * id may hold all of them but `/`; one written into a multi-path update
+ * would fail the whole update, so whoever mirrors ids checks them first.
+ */
+export function isRealtimeKey(id: string): boolean {
+  return (
+    id.length > 0 &&
+    Buffer.byteLength(id, 'utf8') <= 768 &&
+    !/[.#$[\]/]/.test(id) &&
+    !hasControlCharacter(id)
+  );
+}
+
+function hasControlCharacter(id: string): boolean {
+  for (let i = 0; i < id.length; i++) {
+    const code = id.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** The port on the project's Realtime Database, opened on first use. */
 export function realtimeOf(database: () => Promise<Database>): Realtime {
   return {

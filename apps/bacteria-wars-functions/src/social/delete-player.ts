@@ -3,7 +3,8 @@ import type {
   Firestore,
   Query,
 } from 'firebase-admin/firestore';
-import type { Realtime } from '../admin/realtime';
+import { logger } from 'firebase-functions/logger';
+import { isRealtimeKey, type Realtime } from '../admin/realtime';
 
 /** What `deletePlayerSocial` went through - for the log and the specs. */
 export interface SocialErased {
@@ -68,6 +69,15 @@ export async function deletePlayerSocial(
     [`listedBy/${uid}`]: null,
   };
   for (const other of others) {
+    // An id that cannot be a key has no mirror entry, and would fail the
+    // whole update - an erase that never succeeds.
+    if (!isRealtimeKey(other)) {
+      logger.warn('No Realtime Database key: its mirror entries skipped', {
+        uid,
+        other,
+      });
+      continue;
+    }
     mirrors[`statusReaders/${other}/${uid}`] = null;
     mirrors[`listedBy/${other}/${uid}`] = null;
   }

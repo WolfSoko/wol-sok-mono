@@ -10,6 +10,7 @@ import {
   unfeatureReplay,
 } from '../gallery/curate';
 import { removeFromGallery } from '../gallery/publish';
+import { hasGrpcCode } from '../grpc';
 import { isBanned } from '../limits';
 import { forgetForPlayer } from './forget';
 
@@ -87,9 +88,16 @@ export async function runReplayCommand(
     result = { ok: false, reason: 'internal' };
   }
   if (result !== null) {
-    await db.doc(`replayCommands/${commandId}`).update({
-      result: { ...result, at: FieldValue.serverTimestamp() },
-    });
+    await db
+      .doc(`replayCommands/${commandId}`)
+      .update({ result: { ...result, at: FieldValue.serverTimestamp() } })
+      .catch((error: unknown) => {
+        // Its player's account deletion took the command meanwhile
+        // (ADR 0012): nobody is left to read the result.
+        if (!hasGrpcCode(error, 5, 'not-found')) {
+          throw error;
+        }
+      });
   }
   return result;
 }

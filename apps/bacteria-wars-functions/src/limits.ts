@@ -101,9 +101,11 @@ export type SlotRefusal = 'limit' | 'cap';
  * day's for everyone, in one transaction - ranked and unranked apart, each
  * with its own count (ADR 0012). Null when it got one; else what was used
  * up: `limit`, the player's hour, or `cap`, the day's for everyone (which
- * still counts against the player's hour). Taking the slot deletes the
- * submission, so when `acceptReplay` retries it finds none and takes no
- * slot again; the retry works from its event's copy.
+ * still counts against the player's hour). Taking the slot marks the
+ * submission (`slotTaken`), so when `acceptReplay` retries it takes no
+ * slot again. A submission that is gone was `withdrawn` by its player's
+ * account deletion (ADR 0012, 2026-10-26) - or handled to the end by an
+ * earlier delivery, which `acceptSubmission` deletes it after.
  */
 export async function takeSubmissionSlot(
   db: Firestore,
@@ -111,7 +113,7 @@ export async function takeSubmissionSlot(
   ranked: boolean,
   submissionId: string,
   now: number = Date.now()
-): Promise<SlotRefusal | null> {
+): Promise<SlotRefusal | 'withdrawn' | null> {
   const hour = Math.floor(now / 3_600_000);
   const day = dayOf(now);
   const limitRef = db.doc(`limits/${uid}`);
@@ -126,6 +128,9 @@ export async function takeSubmissionSlot(
       submissionRef
     );
     if (!submission.exists) {
+      return 'withdrawn';
+    }
+    if (submission.get('slotTaken') === true) {
       return null;
     }
     const sameHour = limit.get('hour') === hour;
@@ -151,7 +156,7 @@ export async function takeSubmissionSlot(
       },
       { merge: true }
     );
-    tx.delete(submissionRef);
+    tx.update(submissionRef, { slotTaken: true });
     return null;
   });
 }

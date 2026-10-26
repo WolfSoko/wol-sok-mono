@@ -75,7 +75,15 @@ describe('the exported functions', () => {
     // acceptReplay: a failure of ours would lose a replay, and an attempt.
     // rankReplay: a stored replay it fails to rank would never count.
     // rebuildTop: a busy instance turns events away, and a rebuild is safe.
-    expect(retrying).toEqual(['acceptReplay', 'rankReplay', 'rebuildTop']);
+    // mirrorFriend, mirrorRequest: a lost event leaves the mirror wrong, and
+    // the handler reads the list entry afresh.
+    expect(retrying).toEqual([
+      'acceptReplay',
+      'mirrorFriend',
+      'mirrorRequest',
+      'rankReplay',
+      'rebuildTop',
+    ]);
   });
 
   it('never retry the hourly run or the guest clean-up', () => {

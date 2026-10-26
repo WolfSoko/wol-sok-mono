@@ -58,11 +58,12 @@ export async function countAccount(
 
 /**
  * How `stats/accounts` changes: +1 in `countAccount`, -1 in
- * `deletePlayerBoards` for an account `countAccount` counted.
- * `stats.recount` sets it exactly.
+ * `deletePlayerBoards` for an account `countAccount` counted, and minus
+ * the guests a `guestCleanup` batch erased, at once. `stats.recount` sets
+ * it exactly.
  */
 export function accountsChange(
-  by: 1 | -1,
+  by: number,
   now: number
 ): Record<string, unknown> {
   return {
@@ -71,24 +72,37 @@ export function accountsChange(
   };
 }
 
+/** How `deleteAccount` goes about the account. */
+export interface DeletedAccount {
+  /** Its ban tombstone id, null without a Google provider. */
+  tombstone: string | null;
+  realtime: Realtime;
+  /**
+   * Told instead of lowering `stats/accounts`, when the caller sums the
+   * accounts it erased and lowers the count once (`guestCleanup`).
+   */
+  uncounted?: () => void;
+}
+
 /**
  * A deleted account (ADR 0012, the `deletePlayerBoards` trigger): erases
  * its board data (`deletePlayerBoards`), scrubs the audit entries about it
- * and lowers `stats/accounts` if `countAccount` counted it. Both ban
- * documents go once a banned account's tombstone is written - by the id
- * of its Google provider (`tombstone`), and those its bans noted - so the
- * ban survives the deletion. Runs for banned accounts too: a deletion must
- * erase the player's data. Throws when a step fails, after the others
- * ran; returns the board documents it went through.
+ * and lowers `stats/accounts` if `countAccount` counted it - once, as
+ * `uncount` claims that first, so a retried or doubled erase lowers it no
+ * further. Both ban documents go once a banned account's tombstone is
+ * written - by the id of its Google provider (`tombstone`), and those its
+ * bans noted - so the ban survives the deletion. Runs for banned accounts
+ * too: a deletion must erase the player's data. Throws when a step fails,
+ * after the others ran; returns the board documents it went through.
  */
 export async function deleteAccount(
   db: Firestore,
   uid: string,
-  { tombstone, realtime }: { tombstone: string | null; realtime: Realtime },
+  { tombstone, realtime, uncounted }: DeletedAccount,
   now: number
 ): Promise<number> {
-  const [member, moderation] = await Promise.all([
-    db.doc(`boardMembers/${uid}`).get(),
+  const [counted, moderation] = await Promise.all([
+    uncount(db, uid),
     db.doc(`moderation/${uid}`).get(),
   ]);
   const ids = new Set(notedTombstones(moderation.data()));
@@ -98,9 +112,11 @@ export async function deleteAccount(
   const [boards, ...rest] = await Promise.allSettled([
     deletePlayerBoards(db, uid),
     scrubAudit(db, uid),
-    member.get('accountCounted') === true
-      ? db.doc(ACCOUNTS_DOC).set(accountsChange(-1, now), { merge: true })
-      : undefined,
+    !counted
+      ? undefined
+      : uncounted === undefined
+        ? db.doc(ACCOUNTS_DOC).set(accountsChange(-1, now), { merge: true })
+        : uncounted(),
     keepAsTombstones(db, uid, [...ids], now).then(() =>
       Promise.all([
         db.doc(`bans/${uid}`).delete(),
@@ -114,6 +130,24 @@ export async function deleteAccount(
     }
   }
   return boards.status === 'fulfilled' ? boards.value : 0;
+}
+
+/**
+ * Claims the account's decrement of `stats/accounts`: clears
+ * `accountCounted` on `boardMembers/{uid}` in a transaction, and is true
+ * when it was set. Whoever claims it lowers the count; one that fails to
+ * after the claim leaves the count one too high, which `stats.recount`
+ * mends.
+ */
+async function uncount(db: Firestore, uid: string): Promise<boolean> {
+  const member = db.doc(`boardMembers/${uid}`);
+  return db.runTransaction(async (tx) => {
+    if ((await tx.get(member)).get('accountCounted') !== true) {
+      return false;
+    }
+    tx.update(member, { accountCounted: FieldValue.delete() });
+    return true;
+  });
 }
 
 /** Writes a banned account's tombstones (by `ids`) while its ban holds. */

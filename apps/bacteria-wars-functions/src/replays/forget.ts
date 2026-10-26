@@ -3,6 +3,7 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
+import { deleteAll } from '../deletes';
 import { anonymisePublic, takeDownPublic } from '../gallery/publish';
 import {
   type ForgettableReplay,
@@ -132,14 +133,18 @@ export async function forgetForPlayer(
  * the seats - forgets it (`forgetReplay`) and stays, anonymised, for the
  * statistics until its `expireAt`; none is deleted. Its public replays stay
  * up without its uid and with the colour label for its name
- * (`anonymisePublic`). Runs for banned accounts too: a deletion must erase
+ * (`anonymisePublic`). Its pending submissions and commands go first
+ * (`withdrawPending`). Runs for banned accounts too: a deletion must erase
  * the player's data.
  */
 export async function forgetPlayerReplays(
   db: Firestore,
   uid: string,
   now: number
-): Promise<{ anonymised: number; public: number }> {
+): Promise<{ anonymised: number; public: number; pending: number }> {
+  // Its submissions and commands not handled yet, before the replays are
+  // looked for: `acceptReplay` stores none whose submission is gone.
+  const pending = await withdrawPending(db, uid);
   // Its public replays at the same time: they hold no private replay.
   const anonymising = anonymisePublic(db, uid);
   const replays = db.collection('replays');
@@ -166,5 +171,22 @@ export async function forgetPlayerReplays(
   return {
     anonymised: outcomes.filter((outcome) => outcome === 'forgotten').length,
     public: await anonymising,
+    pending,
   };
+}
+
+/**
+ * Deletes the player's `replaySubmissions` and `replayCommands` that no
+ * trigger has handled yet. A submission whose `acceptReplay` runs later
+ * finds itself gone and stores nothing (`withdrawn`); a command still runs
+ * on its event's copy, finds the player in no replay, and has no document
+ * to write its result on. The number of documents.
+ */
+async function withdrawPending(db: Firestore, uid: string): Promise<number> {
+  const [submissions, commands] = await Promise.all(
+    ['replaySubmissions', 'replayCommands'].map((name) =>
+      deleteAll(db, db.collection(name).where('uid', '==', uid))
+    )
+  );
+  return submissions + commands;
 }

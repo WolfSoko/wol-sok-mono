@@ -1,15 +1,24 @@
-import type { Realtime } from '../admin/realtime';
+import { isRealtimeKey, type Realtime } from '../admin/realtime';
 
 /**
  * A Realtime Database in memory for the specs, a tree like the real one:
  * `get` of a path returns the subtree, a node left without children goes,
- * and `update` writes several paths at once. `tree` is the whole database.
+ * `update` writes several paths at once - all or none - and a path with a
+ * key the real one refuses (`isRealtimeKey`) throws, as it does there.
+ * `tree` is the whole database.
  */
 export function fakeRealtime(
   initial: Record<string, unknown> = {}
 ): Realtime & { tree: Record<string, unknown> } {
   const tree: Record<string, unknown> = structuredClone(initial);
-  const parts = (path: string) => path.split('/').filter((p) => p !== '');
+  const parts = (path: string) => {
+    const keys = path.split('/').filter((p) => p !== '');
+    const bad = keys.find((key) => !isRealtimeKey(key));
+    if (bad !== undefined) {
+      throw new Error(`Invalid key in ${path}: ${bad}`);
+    }
+    return keys;
+  };
   const read = (path: string): unknown => {
     let node: unknown = tree;
     for (const key of parts(path)) {
@@ -63,6 +72,8 @@ export function fakeRealtime(
       }
     },
     update: async (values) => {
+      // Checked first: one bad path fails the whole update.
+      Object.keys(values).forEach(parts);
       for (const [path, value] of Object.entries(values)) {
         write(path, value);
       }

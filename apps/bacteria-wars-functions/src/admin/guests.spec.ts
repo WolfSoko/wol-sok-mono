@@ -63,6 +63,19 @@ describe('guest accounts unused for 90 days', () => {
     expect(isIdleGuest(unknown, NOW)).toBe(false);
   });
 
+  it('count the latest of refresh, sign-in and creation', () => {
+    // Signed in again lately, but its last refresh is old.
+    const back = guest('a', 0, {
+      metadata: {
+        creationTime: time(NOW - 300 * DAY),
+        lastSignInTime: time(NOW - 5 * DAY),
+        lastRefreshTime: time(NOW - 200 * DAY),
+      },
+    });
+    expect(lastActiveAt(back)).toBe(Date.parse(time(NOW - 5 * DAY)));
+    expect(isIdleGuest(back, NOW)).toBe(false);
+  });
+
   it('never are accounts with a provider or the admin claim', () => {
     expect(
       isIdleGuest(
@@ -87,7 +100,9 @@ describe('sweepGuests', () => {
     deleted: string[][];
     pauses: number[];
     order: string[];
+    uncounts: number[];
   } {
+    const uncounts: number[] = [];
     const erased: string[] = [];
     const deleted: string[][] = [];
     const pauses: number[] = [];
@@ -97,6 +112,7 @@ describe('sweepGuests', () => {
       deleted,
       pauses,
       order,
+      uncounts,
       listUsers: async (token) => {
         const i = token === undefined ? 0 : Number(token);
         return {
@@ -104,7 +120,9 @@ describe('sweepGuests', () => {
           ...(i + 1 < pages.length ? { pageToken: String(i + 1) } : {}),
         };
       },
-      erase: async (uid) => {
+      erase: async (uid, uncounted) => {
+        // Counted, its decrement claimed - also when the rest then fails.
+        uncounted();
         if (failErase.includes(uid)) {
           throw new Error('unavailable');
         }
@@ -119,6 +137,10 @@ describe('sweepGuests', () => {
       pause: async (ms) => {
         pauses.push(ms);
       },
+      uncount: async (by) => {
+        uncounts.push(by);
+        order.push(`uncount ${by}`);
+      },
     };
   }
 
@@ -132,11 +154,34 @@ describe('sweepGuests', () => {
       idle: 3,
       failed: 0,
       deleted: 3,
+      uncounted: 3,
     });
     expect(p.erased).toEqual(['a', 'c', 'd']);
     expect(p.deleted).toEqual([['a', 'c', 'd']]);
     // The data first: a bulk deletion fires no onDelete trigger.
     expect(p.order.at(-1)).toBe('delete 3');
+  });
+
+  it('lowers the account count once a batch, by the guests it erased', async () => {
+    const many = Array.from({ length: DELETE_BATCH + 2 }, (_, i) =>
+      guest(`g${i}`, 100)
+    );
+    const p = ports([many]);
+    await sweepGuests(p, NOW);
+    // Not once per guest: `stats/accounts` is a single document.
+    expect(p.uncounts).toEqual([DELETE_BATCH, 2]);
+    expect(p.order.filter((step) => !step.startsWith('erase'))).toEqual([
+      `uncount ${DELETE_BATCH}`,
+      `delete ${DELETE_BATCH}`,
+      'uncount 2',
+      'delete 2',
+    ]);
+  });
+
+  it('lowers the count for a claimed decrement whose erase then failed', async () => {
+    const p = ports([[guest('a', 100), guest('b', 100)]], ['a']);
+    expect(await sweepGuests(p, NOW)).toMatchObject({ uncounted: 2 });
+    expect(p.uncounts).toEqual([2]);
   });
 
   it('keeps an account whose data could not be erased, for the next run', async () => {
@@ -169,7 +214,9 @@ describe('sweepGuests', () => {
       idle: 0,
       failed: 0,
       deleted: 0,
+      uncounted: 0,
     });
     expect(p.deleted).toEqual([]);
+    expect(p.uncounts).toEqual([]);
   });
 });

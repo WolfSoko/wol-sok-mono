@@ -2,8 +2,9 @@
  * The Cloud Functions of Bacteria Wars (ADR 0011, 0012), codebase
  * `bacteria` in `firebase.bacteria-game-remote.json`. Triggers are
  * idempotent - a transaction or a `create()` checks the state first - and
- * run with retries off, but `rankReplay` (a stored replay it fails to rank
- * would never count) and `rebuildTop`.
+ * run with retries off, but `acceptReplay`, `rankReplay` (a stored replay
+ * it fails to rank would never count), `rebuildTop` and the friend lists'
+ * mirrors.
  */
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -21,6 +22,8 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
 import type { UserRecord } from 'firebase-admin/auth';
 import {
+  ACCOUNTS_DOC,
+  accountsChange,
   countAccount as countAccountOf,
   deleteAccount,
 } from './admin/accounts';
@@ -545,6 +548,9 @@ export const publicSite = onRequest(
 /**
  * Mirrors a player's friend list, and the friend requests, into the
  * Realtime Database (`statusReaders`, `listedBy` - see `mirrorListing`).
+ * Retried for an hour (`RETRY_FOR_MS`): a lost event would leave the
+ * mirror wrong until the next backfill, and the handler reads the entry
+ * afresh, so a retry is safe.
  */
 function mirrorOf(list: MirroredList) {
   return onDocumentWritten(
@@ -552,8 +558,13 @@ function mirrorOf(list: MirroredList) {
       document: `players/{owner}/${list}/{other}`,
       memory: '256MiB',
       cpu: 'gcf_gen1',
+      retry: true,
     },
     async (event) => {
+      const path = `players/${event.params.owner}/${list}/${event.params.other}`;
+      if (givesUp('mirrorListing', path, event.time, Date.now())) {
+        return;
+      }
       await mirrorListing(
         db(),
         realtime,
@@ -595,7 +606,13 @@ export const guestCleanup = GUEST_CLEANUP_ON
             listUsers: (pageToken) => auth.listUsers(1000, pageToken),
             deleteUsers: (uids) => auth.deleteUsers([...uids]),
             // A guest has no Google provider, so no ban tombstone.
-            erase: (uid) => erasePlayer(db(), realtime, uid, null, now),
+            erase: (uid, uncounted) =>
+              erasePlayer(db(), realtime, uid, null, now, { uncounted }),
+            uncount: async (by) => {
+              await db()
+                .doc(ACCOUNTS_DOC)
+                .set(accountsChange(-by, Date.now()), { merge: true });
+            },
             pause: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
           },
           now

@@ -207,6 +207,11 @@ describe('featureBest', () => {
     const published = (await db.doc(`publicReplays/${publicId}`).get()).data();
     expect(published).toMatchObject({ uids: [], seatUids: [null, null] });
     expect(published?.['players'][0]).toMatchObject({ name: null });
+    // Still public, the private replay keeps no expiry: TTL must not take
+    // it from under its public copy, whose take-down gives it one back.
+    const replay = await db.doc('replays/l_a').get();
+    expect(replay.get('players')).toEqual([]);
+    expect(replay.get('expireAt')).toBeUndefined();
   });
 
   it('takes a public replay down on remove, and lets it expire again', async () => {

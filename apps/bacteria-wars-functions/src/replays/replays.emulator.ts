@@ -270,6 +270,23 @@ describe('acceptReplay', () => {
     });
   });
 
+  it("drops a submission the player's account deletion withdrew", async () => {
+    const ref = db.doc('replaySubmissions/s1');
+    await ref.set({
+      uid: 'ada',
+      bytes: await bytesOf(),
+      hint: 40,
+      createdAt: Timestamp.fromMillis(NOW),
+      expireAt: Timestamp.fromMillis(NOW + 24 * HOUR),
+    });
+    const data = (await ref.get()).data() ?? {};
+    // Ada deletes her account before acceptReplay runs.
+    await forgetPlayerReplays(db, 'ada', NOW);
+    expect((await ref.get()).exists).toBe(false);
+    expect(await acceptSubmission(db, 's1', data, NOW)).toBe('withdrawn');
+    expect((await db.collection('replays').get()).empty).toBe(true);
+  });
+
   it('drops bytes that are no replay', async () => {
     expect(await submit('s1', 'ada', Buffer.from([1, 2, 3]))).toBe(
       'unparsable'
@@ -368,6 +385,27 @@ describe('acceptReplay', () => {
       expect(
         (await ref.collection('reports').listDocuments()).map((r) => r.id)
       ).toEqual(['ada']);
+    });
+
+    it('reads the report of a player who deleted their account since as none', async () => {
+      const bytes = await bytesOf(online());
+      await submit('s1', 'ada', bytes);
+      // Ada deletes her account before Bob's report comes.
+      await forgetPlayerReplays(db, 'ada', NOW);
+      expect(await submit('s2', 'bob', bytes)).toBe('reported');
+      const [ref] = await db.collection('replays').listDocuments();
+      // Bob's report is the only one: no dispute, the hourly close ends it,
+      // and charges nobody - Ada has no seat to charge (ADR 0012).
+      expect((await ref.get()).data()).toMatchObject({
+        players: ['bob'],
+        state: 'waiting',
+        seats: [null, 'bob'],
+      });
+      expect((await ref.get()).get('closeAt').toMillis()).toBe(NOW + 2 * HOUR);
+      expect(await closeNotReported(db, NOW + 3 * HOUR)).toBe(1);
+      expect((await ref.get()).get('rankedReason')).toBe('not-reported');
+      expect((await db.doc('boardMembers/ada').get()).exists).toBe(false);
+      expect((await db.doc('boardMembers/bob').get()).exists).toBe(false);
     });
 
     it('marks a match reported after its stub expired', async () => {
@@ -476,6 +514,7 @@ describe('deletePlayerReplays', () => {
     expect(await forgetPlayerReplays(db, 'ada', NOW)).toEqual({
       anonymised: 2,
       public: 0,
+      pending: 0,
     });
     // Nobody reads hers any more; it expires as it would have.
     expect((await db.doc('replays/mine').get()).data()).toEqual({
@@ -531,6 +570,7 @@ describe('deletePlayerReplays', () => {
     expect(await forgetPlayerReplays(db, 'ada', NOW)).toEqual({
       anonymised: 1,
       public: 0,
+      pending: 0,
     });
     expect((await db.doc('replays/theirs').get()).data()).toEqual({
       players: ['bob'],
@@ -539,6 +579,34 @@ describe('deletePlayerReplays', () => {
       createdAt: born,
       expireAt: born,
     });
+  });
+});
+
+describe('the pending documents of a deleted account', () => {
+  it('go with its replays', async () => {
+    await db.doc('replaySubmissions/s1').set({ uid: 'ada', hint: 1 });
+    await db.doc('replaySubmissions/s2').set({ uid: 'bob', hint: 1 });
+    await db
+      .doc('replayCommands/c1')
+      .set({ uid: 'ada', type: 'forget', replayId: 'x' });
+    await forgetPlayerReplays(db, 'ada', NOW);
+    expect((await db.doc('replaySubmissions/s1').get()).exists).toBe(false);
+    expect((await db.doc('replayCommands/c1').get()).exists).toBe(false);
+    expect((await db.doc('replaySubmissions/s2').get()).exists).toBe(true);
+  });
+
+  it('leave a command run after them without a result to write', async () => {
+    const data = { uid: 'ada', type: 'forget', replayId: 'gone' };
+    expect(
+      await runReplayCommand(
+        db,
+        'never-stored',
+        data,
+        'ada',
+        { isOwner: async () => false },
+        NOW
+      )
+    ).toEqual({ ok: false, reason: 'not-found' });
   });
 });
 
@@ -687,6 +755,27 @@ describe('forget', () => {
     });
     await db.doc('replays/ranked').update({ rankedReason: 'counted' });
     expect((await forget('ada', 'ranked')).result).toEqual({ ok: true });
+  });
+
+  it('waits while an online match waits for its second report', async () => {
+    await db.doc('replays/waiting').set({
+      kind: 'online',
+      state: 'waiting',
+      players: ['ada'],
+      optOut: [],
+      seats: ['ada', 'bob'],
+      createdAt: born,
+      closeAt: Timestamp.fromMillis(NOW - HOUR),
+    });
+    // Neither the lone reporter nor the player who did not report.
+    for (const uid of ['ada', 'bob']) {
+      expect((await forget(uid, 'waiting')).result).toEqual({
+        ok: false,
+        reason: 'ranking',
+      });
+    }
+    await closeNotReported(db, NOW);
+    expect((await forget('bob', 'waiting')).result).toEqual({ ok: true });
   });
 
   it('lets a banned player forget their match', async () => {

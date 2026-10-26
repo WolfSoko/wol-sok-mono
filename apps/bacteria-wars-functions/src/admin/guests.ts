@@ -40,19 +40,16 @@ export interface GuestRecord {
 }
 
 /**
- * When the account was last used, in ms: its last token refresh (a guest
- * signs in once and then only refreshes), else its last sign-in, else its
- * creation - null when Auth says none of them.
+ * When the account was last used, in ms: the latest of its last token
+ * refresh (a guest signs in once and then only refreshes), its last
+ * sign-in and its creation - null when Auth says none of them.
  */
 export function lastActiveAt(user: GuestRecord): number | null {
   const { lastRefreshTime, lastSignInTime, creationTime } = user.metadata;
-  for (const time of [lastRefreshTime, lastSignInTime, creationTime]) {
-    const at = typeof time === 'string' ? Date.parse(time) : NaN;
-    if (Number.isFinite(at)) {
-      return at;
-    }
-  }
-  return null;
+  const times = [lastRefreshTime, lastSignInTime, creationTime]
+    .map((time) => (typeof time === 'string' ? Date.parse(time) : NaN))
+    .filter((at) => Number.isFinite(at));
+  return times.length === 0 ? null : Math.max(...times);
 }
 
 /**
@@ -78,8 +75,14 @@ export interface GuestSweepPorts {
   deleteUsers(
     uids: readonly string[]
   ): Promise<{ successCount: number; failureCount: number }>;
-  /** Erases the account's data, as its deletion does (`erasePlayer`). */
-  erase(uid: string): Promise<void>;
+  /**
+   * Erases the account's data, as its deletion does (`erasePlayer`), and
+   * calls `uncounted` when it claimed the account's decrement of
+   * `stats/accounts`, which it leaves to {@link GuestSweepPorts.uncount}.
+   */
+  erase(uid: string, uncounted: () => void): Promise<void>;
+  /** Lowers `stats/accounts` by `by` at once. */
+  uncount(by: number): Promise<void>;
   /** Waits between two `deleteUsers` calls. */
   pause(ms: number): Promise<void>;
 }
@@ -94,6 +97,8 @@ export interface GuestSweep {
   failed: number;
   /** Accounts Auth deleted. */
   deleted: number;
+  /** By how much `stats/accounts` went down. */
+  uncounted: number;
 }
 
 /**
@@ -104,7 +109,10 @@ export interface GuestSweep {
  * most every {@link DELETE_PAUSE_MS}. Erasing first, because Auth's bulk
  * deletion fires no `onDelete` trigger; the clean-up is idempotent, so
  * one that fires all the same changes nothing. An account whose erasing
- * failed stays, and the next run tries it again.
+ * failed stays, and the next run tries it again. The account count goes
+ * down once a batch, by the decrements its erases claimed - a single
+ * document takes about one write a second - and one that fails is logged
+ * and left to `stats.recount`.
  */
 export async function sweepGuests(
   ports: GuestSweepPorts,
@@ -128,14 +136,20 @@ export async function sweepGuests(
     idle: idle.length,
     failed: 0,
     deleted: 0,
+    uncounted: 0,
   };
   for (let i = 0; i < idle.length; i += DELETE_BATCH) {
     const erased: string[] = [];
     const batch = idle.slice(i, i + DELETE_BATCH);
+    let uncounted = 0;
     for (let j = 0; j < batch.length; j += PARALLEL_ERASES) {
       const uids = batch.slice(j, j + PARALLEL_ERASES);
       const settled = await Promise.allSettled(
-        uids.map((uid) => ports.erase(uid))
+        uids.map((uid) =>
+          ports.erase(uid, () => {
+            uncounted++;
+          })
+        )
       );
       settled.forEach((result, k) => {
         if (result.status === 'fulfilled') {
@@ -148,6 +162,17 @@ export async function sweepGuests(
           });
         }
       });
+    }
+    if (uncounted > 0) {
+      try {
+        await ports.uncount(uncounted);
+        sweep.uncounted += uncounted;
+      } catch (error) {
+        logger.error('Could not lower the account count', {
+          by: uncounted,
+          error,
+        });
+      }
     }
     if (erased.length === 0) {
       continue;

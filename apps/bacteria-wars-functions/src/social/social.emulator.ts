@@ -67,7 +67,12 @@ describe('the friend lists mirror', () => {
     // Not a player's list.
     await db.doc('other/x/friends/y').set({ since });
     const counts = await backfillMirrors(db, realtime);
-    expect(counts).toEqual({ friends: 2, requests: 1 });
+    expect(counts).toEqual({
+      friends: 2,
+      requests: 1,
+      removed: 0,
+      skipped: 0,
+    });
     expect(await backfillMirrors(db, realtime)).toEqual(counts);
     expect(realtime.tree).toEqual({
       statusReaders: { ada: { bob: true }, bob: { ada: true } },
@@ -76,6 +81,75 @@ describe('the friend lists mirror', () => {
         ada: { bob: { friends: true }, cy: { requests: true } },
       },
     });
+  });
+
+  it('ends on the entry as it is when it changes during the write', async () => {
+    await db.doc('players/ada/friends/bob').set({ since });
+    const base = fakeRealtime();
+    let writes = 0;
+    // The create's handler writes late: the delete's ran in between.
+    const realtime = {
+      ...base,
+      update: async (values: Readonly<Record<string, true | null>>) => {
+        await base.update(values);
+        if (++writes === 1) {
+          await db.doc('players/ada/friends/bob').delete();
+        }
+      },
+    };
+    expect(await mirrorListing(db, realtime, 'friends', 'ada', 'bob')).toBe(
+      false
+    );
+    expect(base.tree).toEqual({});
+  });
+
+  it('skips an id the Realtime Database takes as no key', async () => {
+    const realtime = fakeRealtime();
+    await db.doc('players/ada/friends/b.b').set({ since });
+    expect(await mirrorListing(db, realtime, 'friends', 'ada', 'b.b')).toBe(
+      false
+    );
+    expect(realtime.tree).toEqual({});
+  });
+
+  it('removes in a backfill what no list entry stands behind', async () => {
+    const realtime = fakeRealtime({
+      statusReaders: { ada: { bob: true, zed: true } },
+      listedBy: {
+        bob: { ada: { friends: true } },
+        zed: { ada: { friends: true, requests: true } },
+        cy: { ada: { invites: true } },
+      },
+    });
+    await db.doc('players/ada/friends/bob').set({ since });
+    await db.doc('players/ada/friends/b$b').set({ since });
+    expect(await backfillMirrors(db, realtime)).toEqual({
+      friends: 1,
+      requests: 0,
+      removed: 4,
+      skipped: 1,
+    });
+    expect(realtime.tree).toEqual({
+      statusReaders: { ada: { bob: true } },
+      listedBy: { bob: { ada: { friends: true } } },
+    });
+  });
+
+  it('keeps in a backfill an entry whose list entry came meanwhile', async () => {
+    const base = fakeRealtime({ statusReaders: { ada: { bob: true } } });
+    // Bob is listed after the backfill read the lists, before it removes.
+    let reads = 0;
+    const realtime = {
+      ...base,
+      update: async (values: Readonly<Record<string, true | null>>) => {
+        if (++reads === 2) {
+          await db.doc('players/ada/friends/bob').set({ since });
+        }
+        await base.update(values);
+      },
+    };
+    await backfillMirrors(db, realtime);
+    expect(base.tree['statusReaders']).toEqual({ ada: { bob: true } });
   });
 
   it('is backfilled by the owner, audited', async () => {
@@ -206,6 +280,18 @@ describe('deletePlayerSocial', () => {
     });
   });
 
+  it('skips the mirror of an id the Realtime Database takes as no key', async () => {
+    await db.doc('players/ada/friends/b.b').set({ since });
+    await db.doc('players/b.b/friends/ada').set({ since });
+    const realtime = fakeRealtime({ status: { ada: { state: 'online' } } });
+    expect(await deletePlayerSocial(db, realtime, 'ada')).toMatchObject({
+      others: 1,
+    });
+    expect(await exists('players/ada/friends/b.b')).toBe(false);
+    expect(await exists('players/b.b/friends/ada')).toBe(false);
+    expect(realtime.tree).toEqual({});
+  });
+
   it('changes nothing the second time', async () => {
     await seedAda();
     const realtime = realtimeOfAda();
@@ -236,5 +322,32 @@ describe('erasePlayer', () => {
     expect((await db.doc('stats/accounts').get()).get('total')).toBe(1);
     expect((await db.doc('replays/mine').get()).get('players')).toEqual([]);
     expect(realtime.tree).toEqual({});
+  });
+
+  it('lowers the account count once, however often an erase runs', async () => {
+    await Promise.all([
+      db.doc('boardMembers/ada').set({ accountCounted: true }),
+      db.doc('stats/accounts').set({ total: 2 }),
+    ]);
+    // The sweep's erase and a trigger at the same time, then a retry.
+    await Promise.all([
+      erasePlayer(db, fakeRealtime(), 'ada', null, NOW),
+      erasePlayer(db, fakeRealtime(), 'ada', null, NOW),
+    ]);
+    await erasePlayer(db, fakeRealtime(), 'ada', null, NOW);
+    expect((await db.doc('stats/accounts').get()).get('total')).toBe(1);
+  });
+
+  it('leaves the count to a caller that sums the decrements', async () => {
+    await Promise.all([
+      db.doc('boardMembers/ada').set({ accountCounted: true }),
+      db.doc('stats/accounts').set({ total: 2 }),
+    ]);
+    let uncounted = 0;
+    await erasePlayer(db, fakeRealtime(), 'ada', null, NOW, {
+      uncounted: () => uncounted++,
+    });
+    expect(uncounted).toBe(1);
+    expect((await db.doc('stats/accounts').get()).get('total')).toBe(2);
   });
 });

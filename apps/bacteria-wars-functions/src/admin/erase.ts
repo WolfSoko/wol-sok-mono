@@ -1,7 +1,7 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import { forgetPlayerReplays } from '../replays/forget';
 import { deletePlayerSocial } from '../social/delete-player';
-import { deleteAccount } from './accounts';
+import { type DeletedAccount, deleteAccount } from './accounts';
 import type { Realtime } from './realtime';
 
 /**
@@ -12,18 +12,20 @@ import type { Realtime } from './realtime';
  * `deletePlayerData`: profile, progress, friends, queue, rooms, invites,
  * presence), for `guestCleanup`, whose bulk deletion fires no trigger.
  * `tombstone` is the account's ban tombstone id, null without a Google
- * provider - always null for a guest. Every part runs, then the first
- * failure is thrown.
+ * provider - always null for a guest. With `uncounted`, the caller lowers
+ * `stats/accounts` itself (`deleteAccount`). Every part runs, then the
+ * first failure is thrown.
  */
 export async function erasePlayer(
   db: Firestore,
   realtime: Realtime,
   uid: string,
   tombstone: string | null,
-  now: number
+  now: number,
+  { uncounted }: Pick<DeletedAccount, 'uncounted'> = {}
 ): Promise<void> {
   const settled = await Promise.allSettled([
-    deleteAccount(db, uid, { tombstone, realtime }, now),
+    deleteAccount(db, uid, { tombstone, realtime, uncounted }, now),
     forgetPlayerReplays(db, uid, now),
     deletePlayerSocial(db, realtime, uid),
   ]);

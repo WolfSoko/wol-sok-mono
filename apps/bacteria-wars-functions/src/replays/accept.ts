@@ -3,12 +3,12 @@ import {
   type ReplayHeader,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
+  type DocumentReference,
   type DocumentSnapshot,
   FieldValue,
   type Firestore,
   Timestamp,
   type Transaction,
-  type WriteBatch,
 } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { trackDeclaredMatch } from '../boards/rank-endless';
@@ -36,6 +36,8 @@ export type AcceptOutcome =
   | 'duplicate'
   | 'closed'
   | 'exists'
+  /** Gone before it was stored: its player's account deletion took it. */
+  | 'withdrawn'
   | Rejection;
 
 /** A room stub (ADR 0011): who played, and how long it counts. */
@@ -61,6 +63,11 @@ interface RoomStub {
  *   reported", ADR 0012) is dropped as `closed`.
  * - A ranked submission over the day's cap for everyone (`cap`) voids its
  *   attempt: a drop on the server's side never costs one (ADR 0012).
+ * - A submission that is gone when its slot is taken or its replay would
+ *   be stored was taken by its player's account deletion
+ *   (`forgetPlayerReplays`), and is dropped (`withdrawn`): the store reads
+ *   it in its transaction, so either the replay is stored before the
+ *   deletion looks for it, or not at all.
  */
 export async function acceptSubmission(
   db: Firestore,
@@ -97,6 +104,9 @@ async function accept(
     submissionId,
     now
   );
+  if (refused === 'withdrawn') {
+    return refused;
+  }
   if (refused === 'cap' && meta.attempt !== undefined) {
     await voidAttempt(db, { ...meta, attempt: meta.attempt }, refused, now);
   }
@@ -112,10 +122,11 @@ async function accept(
     return plan;
   }
   const blob = { bytes, size: bytes.length };
+  const submission = db.doc(`replaySubmissions/${submissionId}`);
   if (plan.room !== undefined) {
-    return storeOnline(db, plan, meta, blob, now);
+    return storeOnline(db, submission, plan, meta, blob, now);
   }
-  const outcome = await storeLocal(db, plan, meta, blob, now);
+  const outcome = await storeLocal(db, submission, plan, meta, blob, now);
   if (outcome === 'stored') {
     await countSafely(db, replay.header, plan);
   }
@@ -243,39 +254,44 @@ function newReplay(plan: AcceptPlan, uid: string, state: string, now: number) {
   };
 }
 
+/** The submission as a store's transaction checks it is still there. */
+function readSubmission(tx: Transaction, submission: DocumentReference) {
+  // Without its bytes: whether it exists is all the store asks.
+  return tx.getAll(submission, { fieldMask: ['uid'] });
+}
+
 async function storeLocal(
   db: Firestore,
+  submission: DocumentReference,
   plan: AcceptPlan,
   meta: SubmissionMeta,
   blob: { bytes: Uint8Array; size: number },
   now: number
 ): Promise<AcceptOutcome> {
   const ref = db.doc(`replays/${plan.id}`);
-  const create = (writer: Transaction | WriteBatch) => {
-    writer.create(ref, {
-      ...newReplay(plan, meta.uid, 'submitted', now),
-      // When the player sent it - a ranked replay's deadline (ADR 0012).
-      ...(meta.attempt === undefined
-        ? {}
-        : { submittedAt: Timestamp.fromMillis(meta.createdAt) }),
-    });
-    writer.create(ref.collection('blob').doc('data'), blob);
-  };
   const { attempt } = meta;
   try {
-    if (attempt === undefined) {
-      const batch = db.batch();
-      create(batch);
-      await batch.commit();
-      return 'stored';
-    }
     return await db.runTransaction(async (tx) => {
-      const declared = await tx.get(
-        db.doc(`players/${meta.uid}/attempts/${attempt}`)
-      );
-      create(tx);
+      const [[sent], declared] = await Promise.all([
+        readSubmission(tx, submission),
+        attempt === undefined
+          ? null
+          : tx.get(db.doc(`players/${meta.uid}/attempts/${attempt}`)),
+      ]);
+      if (!sent.exists) {
+        return 'withdrawn' as const;
+      }
+      tx.create(ref, {
+        ...newReplay(plan, meta.uid, 'submitted', now),
+        // When the player sent it - a ranked replay's deadline (ADR 0012).
+        ...(attempt === undefined
+          ? {}
+          : { submittedAt: Timestamp.fromMillis(meta.createdAt) }),
+      });
+      tx.create(ref.collection('blob').doc('data'), blob);
       // The first stored replay uses its attempt up: no drop voids it now.
       if (
+        declared !== null &&
         belongsTo(declared, meta.createdAt) &&
         declared.get('replayId') === undefined
       ) {
@@ -293,6 +309,7 @@ async function storeLocal(
 
 async function storeOnline(
   db: Firestore,
+  submission: DocumentReference,
   plan: AcceptPlan,
   meta: SubmissionMeta,
   blob: { bytes: Uint8Array; size: number },
@@ -322,7 +339,13 @@ async function storeOnline(
     at: FieldValue.serverTimestamp(),
   };
   return db.runTransaction(async (tx) => {
-    const existing = await tx.get(ref);
+    const [existing, [sent]] = await Promise.all([
+      tx.get(ref),
+      readSubmission(tx, submission),
+    ]);
+    if (!sent.exists) {
+      return 'withdrawn';
+    }
     if (!existing.exists) {
       tx.create(ref, {
         ...newReplay(plan, meta.uid, 'waiting', now),
@@ -355,6 +378,23 @@ async function storeOnline(
     // same transaction, and the marker never outlives the replay.
     if (existing.get('rankedReason') !== undefined) {
       return 'closed';
+    }
+    // The other player deleted their account since (ADR 0012): their seat
+    // is null and their report gone. This one is then the match's only
+    // report, not a dispute - it waits for the hourly close like any lone
+    // report, which charges nobody, as the deleted seat has no entry.
+    const storedSeats: unknown = existing.get('seats');
+    if (
+      typeof other === 'string' &&
+      Array.isArray(storedSeats) &&
+      !storedSeats.includes(other)
+    ) {
+      tx.create(ref.collection('reports').doc(meta.uid), report);
+      tx.update(ref, {
+        players: FieldValue.arrayUnion(meta.uid),
+        ...(expired ? { stubExpired: true } : {}),
+      });
+      return 'reported';
     }
     const theirs =
       typeof other === 'string'
