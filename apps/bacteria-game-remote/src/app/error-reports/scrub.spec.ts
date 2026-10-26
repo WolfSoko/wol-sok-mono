@@ -24,6 +24,17 @@ describe('scrubIds', () => {
       scrubIds('Missing or insufficient permissions 12345678901234567890')
     ).toBe('Missing or insufficient permissions 12345678901234567890');
   });
+
+  it('replaces a uid or an auto-id without a digit too, not long error names', () => {
+    const uid = 'AbcdefGhijkLmnopQrstuVwxyzAb';
+    const autoId = 'abcdefGhijkLmnopQrst';
+    expect(scrubIds(`players/${uid}/friends/${autoId}`)).toBe(
+      'players/<id>/friends/<id>'
+    );
+    expect(scrubIds('ExpressionChangedAfterItHasBeenCheckedError')).toBe(
+      'ExpressionChangedAfterItHasBeenCheckedError'
+    );
+  });
 });
 
 describe('scrubEvent', () => {
@@ -32,7 +43,7 @@ describe('scrubEvent', () => {
       type: undefined,
       user: { id: UID, ip_address: '{{auto}}' },
       request: {
-        url: 'https://bacteria-wars.wolsok.de/?ref=mail#friend=AB12CD',
+        url: `https://bacteria-wars.wolsok.de/watch/${UID}?ref=mail#friend=AB12CD`,
         cookies: { session: 'secret' },
         query_string: 'ref=mail',
         headers: {
@@ -49,7 +60,7 @@ describe('scrubEvent', () => {
 
     expect(scrubbed.user).toBeUndefined();
     expect(scrubbed.request).toEqual({
-      url: 'https://bacteria-wars.wolsok.de/',
+      url: 'https://bacteria-wars.wolsok.de/watch/<id>',
       headers: { 'User-Agent': 'Mozilla/5.0' },
     });
     expect(scrubbed.exception?.values?.[0]?.value).toBe('players/<id> is gone');
@@ -92,6 +103,19 @@ describe('scrubBreadcrumb', () => {
         url: 'https://firestore.googleapis.com/v1/players/<id>',
         status_code: 403,
       },
+    });
+  });
+
+  it("keeps a click's element path but not its attributes, which name players", () => {
+    expect(
+      scrubBreadcrumb({
+        category: 'ui.click',
+        message:
+          'feat-lazy-bac-game-board-view > svg[role="img"][aria-label="Alice"] > img[alt="Bob"]',
+      })
+    ).toEqual({
+      category: 'ui.click',
+      message: 'feat-lazy-bac-game-board-view > svg > img',
     });
   });
 });

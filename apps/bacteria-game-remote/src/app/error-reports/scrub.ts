@@ -17,10 +17,12 @@ export function stripUrl(url: string): string {
 
 /**
  * Account and document ids, as Firebase errors name them in a path
- * (`players/<uid>/…`): 20 or more letters and digits, with at least one of
- * each, so ordinary words and numbers stay.
+ * (`players/<uid>/…`): 20 or more letters and digits with at least one of
+ * each, or exactly a uid's 28 or an auto-id's 20 of them, which may hold no
+ * digit - so ordinary words, numbers and error names stay.
  */
-const ID = /\b(?=[A-Za-z0-9]*\d)(?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]{20,}\b/g;
+const ID =
+  /\b(?=[A-Za-z0-9]*[A-Za-z])(?:(?=[A-Za-z0-9]*\d)[A-Za-z0-9]{20,}|[A-Za-z0-9]{28}|[A-Za-z0-9]{20})\b/g;
 
 /** The text with every id-like token replaced by `<id>`. */
 export function scrubIds(text: string): string {
@@ -34,7 +36,7 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
     delete event.request.cookies;
     delete event.request.query_string;
     if (event.request.url) {
-      event.request.url = stripUrl(event.request.url);
+      event.request.url = scrubIds(stripUrl(event.request.url));
     }
     if (event.request.headers) {
       // The page that linked here, query and all.
@@ -51,6 +53,15 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
     }
   }
   return event;
+}
+
+/**
+ * A click's element path without its attributes: the SDK writes the
+ * clicked element's `aria-label`, `alt`, `title` and `name` into it, and
+ * the game's avatars and friend buttons name players there.
+ */
+function withoutAttributes(path: string): string {
+  return path.replace(/\[[^\]]*\]/g, '');
 }
 
 /** The URL fields the browser SDK's breadcrumbs carry. */
@@ -74,7 +85,11 @@ export function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb | null {
     }
   }
   if (breadcrumb.message) {
-    breadcrumb.message = scrubIds(breadcrumb.message);
+    breadcrumb.message = scrubIds(
+      breadcrumb.category?.startsWith('ui.')
+        ? withoutAttributes(breadcrumb.message)
+        : breadcrumb.message
+    );
   }
   return breadcrumb;
 }
