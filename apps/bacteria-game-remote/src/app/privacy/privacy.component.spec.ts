@@ -293,6 +293,21 @@ describe('PrivacyComponent', () => {
     expect(en).not.toContain('you were the only player of');
   });
 
+  it('says idle guest accounts go after 90 days', async () => {
+    const { de, en } = texts(await open());
+
+    expect(de).toContain(
+      'Ein Gastkonto, das 90 Tage lang nicht genutzt wurde, löschen unsere Funktionen automatisch'
+    );
+    expect(en).toContain(
+      'Our functions delete a guest account unused for 90 days by themselves'
+    );
+    expect(de).toContain('beginnst du als neuer Gast');
+    expect(en).toContain('you start as a new guest');
+    expect(de).not.toContain('bis wir es löschen');
+    expect(en).not.toContain('until we delete it');
+  });
+
   it('says what deleting a match in My matches does', async () => {
     const { de, en } = texts(await open());
 
@@ -304,6 +319,20 @@ describe('PrivacyComponent', () => {
     );
     expect(de).toContain('bleibt nur ohne deine Kennung');
     expect(en).toContain('stays stored only without your identifier');
+  });
+
+  it('says only friends can read the online status', async () => {
+    const { de, en } = texts(await open());
+
+    expect(de).toContain(
+      'Lesen können den Eintrag nur Spieler, die du als Freund führst'
+    );
+    expect(en).toContain(
+      'Only players you list as a friend can read the entry'
+    );
+    // The rule lets only `statusReaders` read `status/{uid}` now.
+    expect(de).not.toContain('Technisch lesen kann den Eintrag jeder');
+    expect(en).not.toContain('any signed-in player who knows your identifier');
   });
 
   it('names the hint on saved matches among what the device keeps', async () => {

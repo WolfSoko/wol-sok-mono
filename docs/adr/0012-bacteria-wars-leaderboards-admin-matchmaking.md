@@ -1106,7 +1106,7 @@ the privacy page as built are at the end of this section:
       whose player deleted their account before `rankReplay` ran counts
       nothing (`stub-expired`), as before.
 - **Guest accounts unused for 90 days are deleted.** `guestCleanup`
-  (daily at 03:41 UTC, `GUEST_CLEANUP_ON` - off until the backfill ran -, `GUEST_IDLE_DAYS = 90`) pages
+  (daily at 03:41 UTC, `GUEST_CLEANUP_ON` - on since the release after the backfill -, `GUEST_IDLE_DAYS = 90`) pages
   through Auth, picks accounts without a sign-in provider and without the
   admin claim whose last use - the latest of last token refresh, last
   sign-in and creation - is over 90 days ago - at most 2,000 a run -
@@ -1200,6 +1200,13 @@ As built in the client and on the privacy page (2026-10-26):
   knows the identifier can read the online status, and that an unused
   guest account stays until it is deleted: the 90-day deletion is told
   with the release that turns `guestCleanup` on.
+- **The friends-only rule** (its own change, after the backfill):
+  `status/$uid/.read` lets only the player and the readers in
+  `statusReaders/$uid` read, checked by `database-rules.spec.ts`. The same change sets
+  `GUEST_CLEANUP_ON` to `true`, and the privacy page says that only
+  players the owner lists as a friend can read the entry and that guest
+  accounts unused for 90 days are deleted (a returning guest starts
+  fresh).
 
 ## Consequences
 

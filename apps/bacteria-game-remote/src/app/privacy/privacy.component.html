@@ -140,10 +140,16 @@
       die Evolution deiner Kolonie) und den Zeitpunkt der letzten Änderung.
       Name, E-Mail-Adresse oder andere Angaben zu deiner Person brauchen wir
       dafür nicht. Meldest du dich mit Google ab, spielst du danach als neuer
-      Gast. Ein Gastkonto, das nicht mehr genutzt wird, etwa weil du die Daten
-      deines Browsers gelöscht hast oder ein Google-Konto seinen Fortschritt
-      übernommen hat (unten), bleibt mit seinem Spielstand und seinem Eintrag in
-      der Bestenliste gespeichert, bis wir es löschen.
+      Gast. Ein Gastkonto, das 90 Tage lang nicht genutzt wurde, löschen unsere
+      Funktionen automatisch, gerechnet ab seiner letzten Nutzung (der letzten
+      Anmeldung oder Erneuerung der Anmeldung, die das Spiel beim Spielen von
+      selbst vornimmt); sie prüfen das einmal am Tag. Dabei löschen sie seine
+      Daten wie bei der Löschung eines Kontos (Abschnitt 10). Das betrifft vor
+      allem Gastkonten, die nicht mehr genutzt werden, etwa weil du die Daten
+      deines Browsers gelöscht hast oder ein Google-Konto ihren Fortschritt
+      übernommen hat (unten). Öffnest du das Spiel nach so langer Pause auf
+      einem Gerät, das noch als dieser Gast angemeldet war, beginnst du als
+      neuer Gast ohne den bisherigen Spielstand in der Cloud.
     </p>
     <h3>Mit Google anmelden (freiwillig)</h3>
     <p>
@@ -154,14 +160,14 @@
       schon, etwa auf einem anderen Gerät, übernimmt das Google-Konto den
       Fortschritt des Gastes; das bisherige Gastkonto bleibt dann mit seinem
       Spielstand und seinem Eintrag in der Bestenliste gespeichert, ohne dass
-      wir es dir zuordnen können. In beiden Fällen steht dir dein Fortschritt
-      auf jedem Gerät zur Verfügung, auf dem du dich anmeldest. Deinen Namen
-      schlägt das Spiel für dein Online-Profil vor; andere sehen ihn erst, wenn
-      du das Profil speicherst (unten). Für die Anmeldung öffnet das Spiel das
-      Anmeldefenster von Google (accounts.google.com, apis.google.com und die
-      Anmeldeseite des Firebase-Projekts auf firebaseapp.com); dabei erhält
-      Google deine IP-Adresse und Angaben zum Browser. Für die Anmeldung selbst
-      gilt die
+      wir es dir zuordnen können, bis es nach 90 Tagen ohne Nutzung gelöscht
+      wird (oben). In beiden Fällen steht dir dein Fortschritt auf jedem Gerät
+      zur Verfügung, auf dem du dich anmeldest. Deinen Namen schlägt das Spiel
+      für dein Online-Profil vor; andere sehen ihn erst, wenn du das Profil
+      speicherst (unten). Für die Anmeldung öffnet das Spiel das Anmeldefenster
+      von Google (accounts.google.com, apis.google.com und die Anmeldeseite des
+      Firebase-Projekts auf firebaseapp.com); dabei erhält Google deine
+      IP-Adresse und Angaben zum Browser. Für die Anmeldung selbst gilt die
       <a href="https://policies.google.com/privacy?hl=de"
         >Datenschutzerklärung von Google</a
       >. Meldest du dich zum ersten Mal mit einem Google-Konto an, prüfen unsere
@@ -213,15 +219,16 @@
       Herausforderungen und Einladungen löscht die Datenbank ebenso automatisch.
       Freundeslisten und Freundschaftsanfragen spiegeln unsere Funktionen in die
       Realtime Database, lesbar nur für unsere Server: So finden sie bei der
-      Löschung eines Kontos dessen Einträge in den Listen anderer Spieler.
+      Löschung eines Kontos dessen Einträge in den Listen anderer Spieler, und
+      so wissen sie, wer deinen Online-Status lesen darf.
     </p>
     <p>
       Ist „Freunde sehen, wenn ich online bin“ im Online-Profil an (Standard),
       speichert das Spiel in der Realtime Database, ob du online bist oder
-      gerade ein Online-Match spielst. Das Spiel zeigt das Freunden, die du
-      ebenfalls als Freund führst. Technisch lesen kann den Eintrag jeder
-      angemeldete Spieler, der deine Kennung kennt. Er verschwindet, sobald die
-      Verbindung endet oder du die Einstellung ausschaltest.
+      gerade ein Online-Match spielst. Lesen können den Eintrag nur Spieler, die
+      du als Freund führst; das Spiel zeigt ihn denen von ihnen, die auch dich
+      als Freund führen. Er verschwindet, sobald die Verbindung endet oder du
+      die Einstellung ausschaltest.
     </p>
     <h3 id="de-online">Online-Matches</h3>
     <p>
@@ -492,8 +499,10 @@
       Angemessenheitsbeschluss der EU-Kommission (Art. 45 DSGVO).
     </p>
     <p>
-      Wir speichern diese Daten, solange dein Konto besteht, soweit oben keine
-      kürzere Frist steht. Wie du sie löschen lässt, steht in Abschnitt 10.
+      Wir speichern diese Daten, solange dein Konto besteht, ein Gastkonto, bis
+      unsere Funktionen es nach 90 Tagen ohne Nutzung bei ihrer täglichen
+      Prüfung löschen (Abschnitt 4), soweit oben keine kürzere Frist steht. Wie
+      du sie löschen lässt, steht in Abschnitt 10.
     </p>
 
     <h2 id="de-schriften">5. Schriftarten von Google Fonts</h2>
@@ -632,30 +641,31 @@
       Spiel angemeldet warst: Der Gast wird so zu diesem Google-Konto, und wir
       können es finden. Mit einem Google-Konto, das schon gespielt hat,
       übernimmt es nur den Fortschritt des Gastes; das Gastkonto selbst können
-      wir dir dann nicht zuordnen (Abschnitt 4). Wir löschen das Konto innerhalb
-      von 30 Tagen und bestätigen dir die Löschung.
+      wir dir dann nicht zuordnen (Abschnitt 4). Ein Gastkonto, das du nicht
+      mehr nutzt, löschen unsere Funktionen ohnehin nach 90 Tagen ohne Nutzung
+      (Abschnitt 4, „Als Gast“). Wir löschen das Konto innerhalb von 30 Tagen
+      und bestätigen dir die Löschung.
     </p>
     <p>
       Mit dem Konto löschen unsere Funktionen automatisch alle personenbezogenen
       Daten dazu: deinen Spielstand und deine Einstellungen in der Cloud, dein
       Online-Profil, deine Freundschaften auf beiden Seiten (auch deinen Eintrag
-      in den Freundeslisten anderer Spieler, wenn ihr euch gegenseitig in der
-      Liste habt oder der Eintrag seit dem 26. Oktober 2026 entstanden ist),
-      Freundschaftsanfragen, Herausforderungen und Einladungslinks, deinen
-      Eintrag in der Warteschlange, deine offenen Räume, deinen Online-Status,
-      deine angemeldeten Versuche, die Hinweise der Moderation, deine Einträge
-      in den Bestenlisten, die noch nicht verarbeiteten Uploads und Befehle zu
-      deinen Matches und was unsere Funktionen sonst zu deinem Konto vermerken.
-      Deine aufgezeichneten Matches bleiben für die Statistik, aber ohne deine
-      Kennung und ohne deinen Namen: Unsere Funktionen nehmen deine Kennung aus
-      jeder Aufzeichnung und löschen die Meldung deines Geräts; die Aufzeichnung
-      läuft wie sonst 30 Tage nach dem Speichern ab (Abschnitt 4,
-      „Aufgezeichnete Matches“). Ein öffentliches Match bleibt ohne deine
-      Kennung und mit deiner Farbe statt deines Namens in der Galerie, bis es
-      heruntergenommen wird. Aus dem Protokoll der Moderation entfernen wir, was
-      sich geändert hat. Gilt bei der Löschung noch eine Sperre deines Kontos,
-      bleibt der Hashwert deiner Google-Kennung bis zu ihrem Ende, höchstens 2
-      Jahre ab der Löschung (Abschnitt 4, „Moderation und Sperren“).
+      in den Freundeslisten anderer Spieler), Freundschaftsanfragen,
+      Herausforderungen und Einladungslinks, deinen Eintrag in der
+      Warteschlange, deine offenen Räume, deinen Online-Status, deine
+      angemeldeten Versuche, die Hinweise der Moderation, deine Einträge in den
+      Bestenlisten, die noch nicht verarbeiteten Uploads und Befehle zu deinen
+      Matches und was unsere Funktionen sonst zu deinem Konto vermerken. Deine
+      aufgezeichneten Matches bleiben für die Statistik, aber ohne deine Kennung
+      und ohne deinen Namen: Unsere Funktionen nehmen deine Kennung aus jeder
+      Aufzeichnung und löschen die Meldung deines Geräts; die Aufzeichnung läuft
+      wie sonst 30 Tage nach dem Speichern ab (Abschnitt 4, „Aufgezeichnete
+      Matches“). Ein öffentliches Match bleibt ohne deine Kennung und mit deiner
+      Farbe statt deines Namens in der Galerie, bis es heruntergenommen wird.
+      Aus dem Protokoll der Moderation entfernen wir, was sich geändert hat.
+      Gilt bei der Löschung noch eine Sperre deines Kontos, bleibt der Hashwert
+      deiner Google-Kennung bis zu ihrem Ende, höchstens 2 Jahre ab der Löschung
+      (Abschnitt 4, „Moderation und Sperren“).
     </p>
     <p>
       Kurz nach der Löschung nennen deine Kennung noch: der Rest eines Raums, in
@@ -814,9 +824,15 @@
       missions, daily level, best endless run, your colony's evolution) and when
       it last changed. We need no name, email address or other personal details
       for that. When you sign out of Google, you play as a new guest afterwards.
-      A guest account no longer in use, for example because you cleared your
-      browser's data or a Google account took over its progress (below), stays
-      stored with its progress and its leaderboard entry until we delete it.
+      Our functions delete a guest account unused for 90 days by themselves,
+      counted from its last use (its last sign-in, or the renewal of the sign-in
+      the game makes by itself while you play); they check once a day. They
+      erase its data as when an account is deleted (section 10). That mostly
+      concerns guest accounts no longer in use, for example because you cleared
+      your browser's data or a Google account took over their progress (below).
+      If you open the game after so long a break on a device still signed in as
+      that guest, you start as a new guest, without the former progress in the
+      cloud.
     </p>
     <h3>Signing in with Google (optional)</h3>
     <p>
@@ -826,12 +842,13 @@
       Google account. If you have, for example on another device, the Google
       account takes over the guest's progress; the former guest account then
       stays stored with its progress and its leaderboard entry, and we cannot
-      link it to you. Either way your progress is available on every device you
-      sign in on. The game suggests your name for your online profile; others
-      see it only once you save the profile (below). To sign in, the game opens
-      Google's sign-in window (accounts.google.com, apis.google.com and the
-      Firebase project's sign-in page on firebaseapp.com), which gives Google
-      your IP address and browser details. Google's
+      link it to you, until it is deleted after 90 days without use (above).
+      Either way your progress is available on every device you sign in on. The
+      game suggests your name for your online profile; others see it only once
+      you save the profile (below). To sign in, the game opens Google's sign-in
+      window (accounts.google.com, apis.google.com and the Firebase project's
+      sign-in page on firebaseapp.com), which gives Google your IP address and
+      browser details. Google's
       <a href="https://policies.google.com/privacy?hl=en">privacy policy</a>
       applies to the sign-in itself. The first time you sign in with a Google
       account, our functions check once whether a suspension holds for that
@@ -880,14 +897,14 @@
       itself in the same way. Our functions mirror friend lists and friend
       requests into the Realtime Database, readable only by our servers: that is
       how they find an account's entries in other players' lists when it is
-      deleted.
+      deleted, and know who may read your online status.
     </p>
     <p>
       With “Friends see when I'm online” on in the online profile (the default),
       the game stores in the Realtime Database whether you are online or playing
-      an online match. The game shows that to friends you list as a friend too.
-      Technically, any signed-in player who knows your identifier can read the
-      entry. It goes as soon as the connection ends or you turn the setting off.
+      an online match. Only players you list as a friend can read the entry; the
+      game shows it to those of them who list you as a friend too. It goes as
+      soon as the connection ends or you turn the setting off.
     </p>
     <h3 id="en-online">Online matches</h3>
     <p>
@@ -1133,8 +1150,10 @@
       Commission's adequacy decision (Art. 45 GDPR).
     </p>
     <p>
-      We keep this data for as long as your account exists, unless a shorter
-      period is given above. Section 10 explains how to have it deleted.
+      We keep this data for as long as your account exists, a guest account
+      until our functions delete it in their daily check after 90 days without
+      use (section 4), unless a shorter period is given above. Section 10
+      explains how to have it deleted.
     </p>
 
     <h2 id="en-fonts">5. Google Fonts</h2>
@@ -1267,28 +1286,28 @@
       account you have never signed in to the game with: the guest becomes that
       Google account, and we can find it. With a Google account that has played
       already, it only takes over the guest's progress, and we cannot link the
-      guest account itself to you (section 4). We delete the account within 30
-      days and confirm the deletion to you.
+      guest account itself to you (section 4). Our functions delete a guest
+      account you no longer use anyway after 90 days without use (section 4, “As
+      a guest”). We delete the account within 30 days and confirm the deletion
+      to you.
     </p>
     <p>
       With the account our functions delete all personal data about it by
       themselves: your progress and settings in the cloud, your online profile,
       your friendships on both sides (your entry in other players' friend lists
-      too, where you list each other or the entry was made on or after 26
-      October 2026), friend requests, challenges and invitation links, your
-      entry in the queue, your open rooms, your online status, your declared
-      attempts, the moderation notices, your leaderboard entries, the uploads
-      and commands for your matches not handled yet, and whatever else our
-      functions note about your account. Your recorded matches stay for the
-      statistics, but without your identifier and your name: our functions take
-      your identifier out of every recording and delete your device's report;
-      the recording expires 30 days after it was saved as usual (section 4,
-      “Recorded matches”). A public match stays in the gallery without your
-      identifier and with your colour instead of your name until it is taken
-      down. From the moderation record we erase what was changed. If a
-      suspension of your account still holds at the deletion, the hash of your
-      Google identifier stays until it ends, for 2 years from the deletion at
-      most (section 4, “Moderation and suspensions”).
+      too), friend requests, challenges and invitation links, your entry in the
+      queue, your open rooms, your online status, your declared attempts, the
+      moderation notices, your leaderboard entries, the uploads and commands for
+      your matches not handled yet, and whatever else our functions note about
+      your account. Your recorded matches stay for the statistics, but without
+      your identifier and your name: our functions take your identifier out of
+      every recording and delete your device's report; the recording expires 30
+      days after it was saved as usual (section 4, “Recorded matches”). A public
+      match stays in the gallery without your identifier and with your colour
+      instead of your name until it is taken down. From the moderation record we
+      erase what was changed. If a suspension of your account still holds at the
+      deletion, the hash of your Google identifier stays until it ends, for 2
+      years from the deletion at most (section 4, “Moderation and suspensions”).
     </p>
     <p>
       For a short while after the deletion your identifier is still named by:
