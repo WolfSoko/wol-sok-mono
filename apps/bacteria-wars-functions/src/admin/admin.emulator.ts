@@ -89,6 +89,17 @@ function fakeRealtime(
       }
       await hooks.afterRemoveIf?.();
     },
+    update: async (changes) => {
+      for (const [path, value] of Object.entries(changes)) {
+        if (value === null) {
+          fail(path);
+          calls.push(`remove ${path}`);
+          values.delete(path);
+        } else {
+          calls.push(`update ${path} ${value}`);
+        }
+      }
+    },
   };
 }
 
@@ -1125,6 +1136,7 @@ describe('ban tombstones', () => {
         return linked ? tombstoneOfUid(uid) : null;
       };
       const realtime = fakeRealtime();
+      await db.doc('boardMembers/eve').set({ accountCounted: true });
       const check = (at: number) =>
         checkGoogleLink(db, realtime, 'eve', tombstoneOf, at);
 
@@ -1139,6 +1151,14 @@ describe('ban tombstones', () => {
       // Checked: the next write looks nothing up.
       expect(await check(NOW + 2 * HOUR)).toBe(false);
       expect(lookups).toBe(2);
+    });
+
+    it("leaves a deleted account's membership gone", async () => {
+      // A late submission's check, after the deletion erased everything.
+      expect(
+        await checkGoogleLink(db, fakeRealtime(), 'ada', async () => null, NOW)
+      ).toBe(false);
+      expect((await db.doc('boardMembers/ada').get()).exists).toBe(false);
     });
   });
 

@@ -6,7 +6,7 @@ import {
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
-import { deletePlayerReplays } from '../replays/delete-player';
+import { forgetPlayerReplays } from '../replays/forget';
 import { deletePlayerBoards } from './delete-player';
 import { boardProfileChanged } from './profile-changed';
 import { type AccountCreatedAt, rankOnline } from './rank-online';
@@ -172,7 +172,7 @@ describe('rankOnline', () => {
     const data = replay({ players: ['ada', 'bob'] });
     await db.doc('replays/r1').set(data);
     // A retry an hour on: Bob deleted his account meanwhile.
-    await deletePlayerReplays(db, 'bob');
+    await forgetPlayerReplays(db, 'bob', NOW);
     expect(await rankOnline(db, 'r1', OLD, NOW)).toBe('stub-expired');
     expect((await db.doc('boardMembers/bob').get()).exists).toBe(false);
     expect((await db.doc('replays/r1').get()).get('rankedReason')).toBe(

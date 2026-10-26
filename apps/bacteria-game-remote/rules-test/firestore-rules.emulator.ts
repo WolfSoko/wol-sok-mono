@@ -297,9 +297,25 @@ describe('replayCommands', () => {
   const add = (writer: string, data: object, token: object = {}) =>
     setDoc(doc(db(writer, token), 'replayCommands/c1'), data);
 
-  it('takes `remove` from any player, in their own name', async () => {
-    await assertSucceeds(add('ada', command('ada', 'remove')));
-    await assertFails(add('ada', command('bob', 'remove')));
+  it('takes `remove` and `forget` from any player, in their own name', async () => {
+    for (const type of ['remove', 'forget']) {
+      // A new document each: a command is created, never rewritten.
+      const ref = doc(db('ada'), `replayCommands/c-${type}`);
+      await assertFails(setDoc(ref, command('bob', type)));
+      await assertSucceeds(setDoc(ref, command('ada', type)));
+    }
+  });
+
+  it('takes `forget` from a banned player too, as a deletion', async () => {
+    await seed('bans/eve', { until: null });
+    // The refusals first: once `add` created its document, a second write
+    // to it is an update, which the rules refuse whatever it holds.
+    await assertFails(add('eve', command('eve', 'remove')));
+    await assertFails(
+      add('eve', command('eve', 'forget', { createdAt: Timestamp.now() }))
+    );
+    await assertFails(add('eve', command('eve', 'forget', { extra: 1 })));
+    await assertSucceeds(add('eve', command('eve', 'forget')));
   });
 
   it("takes the gallery's types only from the owner", async () => {
@@ -739,6 +755,25 @@ describe('adminCommands', () => {
     );
   });
 
+  it('takes the presence backfill without a target, a reason or arguments', async () => {
+    const backfill = (extra: object = {}) => {
+      const { reason: _reason, ...data } = adminCommand({
+        type: 'presence.backfill',
+        target: null,
+        args: {},
+      });
+      return { ...data, ...extra };
+    };
+    // Not destructive: no fresh sign-in needed.
+    await assertSucceeds(send(backfill(), OWNER_TOKEN));
+    await assertSucceeds(send(backfill({ reason: 'after the deploy' })));
+    await assertFails(send(backfill({ target: { uid: 'eve' } })));
+    await assertFails(send(backfill({ args: { all: true } })));
+    await assertFails(
+      send(backfill(), { auth_time: fresh().auth_time }, 'eve')
+    );
+  });
+
   it("lets the owner read their own commands, nobody else's", async () => {
     await seed('adminCommands/a1', { uid: 'own', type: 'stats.refresh' });
     await assertSucceeds(
@@ -948,6 +983,47 @@ describe('the room stub', () => {
     await assertSucceeds(
       updateDoc(doc(db('bob'), 'rooms/ABC234'), { guest: 'bob', answer: 'a' })
     );
+  });
+});
+
+describe('the friend lists', () => {
+  const at = () => ({ at: serverTimestamp() });
+  const since = () => ({ since: serverTimestamp() });
+
+  it('take a friend, a request and a challenge keyed by uids', async () => {
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'players/ada/friends/bob'), since())
+    );
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'players/bob/requests/ada'), at())
+    );
+    await seed('players/bob/friends/ada', { since: Timestamp.now() });
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'players/bob/challenges/ada'), {
+        code: 'ABC234',
+        at: serverTimestamp(),
+        expireAt: Timestamp.fromMillis(Date.now() + HOUR / 2),
+      })
+    );
+  });
+
+  it('refuse an id the Realtime Database mirror cannot take as a key', async () => {
+    for (const bad of ['b.b', 'b#b', 'b$b', 'b[b', 'b]b', 'b-b']) {
+      await assertFails(
+        setDoc(doc(db('ada'), `players/ada/friends/${bad}`), since())
+      );
+      await assertFails(
+        setDoc(doc(db('ada'), `players/${bad}/requests/ada`), at())
+      );
+      await seed(`players/${bad}/friends/ada`, { since: Timestamp.now() });
+      await assertFails(
+        setDoc(doc(db('ada'), `players/${bad}/challenges/ada`), {
+          code: 'ABC234',
+          at: serverTimestamp(),
+          expireAt: Timestamp.fromMillis(Date.now() + HOUR / 2),
+        })
+      );
+    }
   });
 });
 

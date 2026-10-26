@@ -25,6 +25,14 @@
         ".read": "auth != null && auth.uid === $uid",
         ".write": false
       }
+    },
+    "statusReaders": {
+      ".read": false,
+      ".write": false
+    },
+    "listedBy": {
+      ".read": false,
+      ".write": false
     }
   }
 }

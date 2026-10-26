@@ -70,3 +70,15 @@ export const HOURLY_ON = true;
  * next deploy.
  */
 export const FEATURE_BEST_ON = true;
+
+/**
+ * Whether `guestCleanup`, the daily deletion of guest accounts unused for
+ * {@link GUEST_IDLE_DAYS} days (ADR 0012, owner's decision of 2026-10-26),
+ * is deployed. Off takes it out of the next deploy. Off until "Mirror
+ * friend lists" (`presence.backfill`) has run once: before, a deleted
+ * guest's entries in other players' lists have no `listedBy` to be found by.
+ */
+export const GUEST_CLEANUP_ON = false;
+
+/** How many days a guest account may go unused before it is deleted. */
+export const GUEST_IDLE_DAYS = 90;

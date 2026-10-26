@@ -6,11 +6,10 @@ import {
   type QueryDocumentSnapshot,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { DAY_MS } from '../boards/budgets';
 import { storedReplay } from '../boards/declared-match';
 import { type BoardProfile, boardProfileOf, entryLabel } from '../boards/names';
-import { REPLAY_TTL_MS } from '../config';
 import { dayOf, isBanned } from '../limits';
+import { anonymisedExpireAt } from '../replays/forget-plan';
 import { type GalleryReplay, humansOf, isOut } from './candidates';
 
 /** A seat as a public replay shows it - never a uid. */
@@ -165,9 +164,7 @@ export async function takeDownPublic(
       const born = createdAt instanceof Timestamp ? createdAt.toMillis() : now;
       tx.update(replay.ref, {
         publicId: FieldValue.delete(),
-        expireAt: Timestamp.fromMillis(
-          Math.max(born + REPLAY_TTL_MS, now + DAY_MS)
-        ),
+        expireAt: Timestamp.fromMillis(anonymisedExpireAt(born, now)),
       });
     }
   });
@@ -195,6 +192,46 @@ export async function removeFromGallery(
   }
   const published = await publicCopiesOf(db, replayId);
   await Promise.all(published.map((doc) => takeDownPublic(db, doc, now)));
+}
+
+/**
+ * The public copies that name the player in `uids` - only those of
+ * `replayId`, found by it, when it is given - taken down or not.
+ */
+export async function publicCopiesNaming(
+  db: Firestore,
+  uid: string,
+  replayId?: string
+): Promise<QueryDocumentSnapshot[]> {
+  const copies = db.collection('publicReplays');
+  if (replayId === undefined) {
+    return (await copies.where('uids', 'array-contains', uid).get()).docs;
+  }
+  return (await copies.where('replayId', '==', replayId).get()).docs.filter(
+    (doc) => {
+      const uids: unknown = doc.get('uids');
+      return Array.isArray(uids) && uids.includes(uid);
+    }
+  );
+}
+
+/** True while a public copy is up: not taken down (`removedAt`). */
+export function isUp(copy: DocumentSnapshot): boolean {
+  const removedAt: unknown = copy.get('removedAt');
+  return removedAt === null || removedAt === undefined;
+}
+
+/**
+ * The public copies that name the player and are still up
+ * ({@link publicCopiesNaming}, {@link isUp}) - filtered here, so the
+ * query needs no composite index.
+ */
+export async function livePublicCopiesOf(
+  db: Firestore,
+  uid: string,
+  replayId?: string
+): Promise<QueryDocumentSnapshot[]> {
+  return (await publicCopiesNaming(db, uid, replayId)).filter(isUp);
 }
 
 /** The public copies of a stored replay still up. */
@@ -238,24 +275,21 @@ function seatLabel(
 }
 
 /**
- * Rewrites the player's seats in their public replays, each in a
+ * Rewrites the player's seats in the public copies `published`, each in a
  * transaction: `rewrite` gets the seat and its index and returns the new
  * one; `extra` adds fields to each update. A replay the owner anonymised
  * shows no name or own preset again (`anonymousSeat`), whatever `rewrite`
- * says. The number of replays.
+ * says. The number of copies.
  */
-async function rewriteSeats(
+async function rewriteSeatsIn(
   db: Firestore,
+  published: readonly DocumentSnapshot[],
   uid: string,
   rewrite: (seat: PublicSeat, index: number, publicId: string) => PublicSeat,
   extra: (seats: (string | null)[]) => Record<string, unknown> = () => ({})
 ): Promise<number> {
-  const published = await db
-    .collection('publicReplays')
-    .where('uids', 'array-contains', uid)
-    .get();
   await Promise.all(
-    published.docs.map((doc) =>
+    published.map((doc) =>
       db.runTransaction(async (tx) => {
         const current = (await tx.get(doc.ref)).data() ?? {};
         const seats =
@@ -275,17 +309,23 @@ async function rewriteSeats(
       })
     )
   );
-  return published.size;
+  return published.length;
 }
 
 /**
- * Takes a deleted account out of its public replays (ADR 0011): its uid
- * goes, and its seat shows the colour label instead of a name, and a
- * preset derived from the seat (`anonymousSeat`).
+ * Takes the player out of the public copies `published` (ADR 0011, 0012):
+ * their uid goes, and their seat shows the colour label instead of a
+ * name, and a preset derived from the seat (`anonymousSeat`). Also for
+ * copies already taken down, which keep their seats. The number of copies.
  */
-export function anonymisePublic(db: Firestore, uid: string): Promise<number> {
-  return rewriteSeats(
+export function anonymiseCopies(
+  db: Firestore,
+  uid: string,
+  published: readonly DocumentSnapshot[]
+): Promise<number> {
+  return rewriteSeatsIn(
     db,
+    published,
     uid,
     (player, index, publicId) => anonymousSeat(publicId, index, player),
     (seats) => ({
@@ -293,6 +333,14 @@ export function anonymisePublic(db: Firestore, uid: string): Promise<number> {
       seatUids: seats.map((seat) => (seat === uid ? null : seat)),
     })
   );
+}
+
+/** Takes a deleted account out of all its public replays (`anonymiseCopies`). */
+export async function anonymisePublic(
+  db: Firestore,
+  uid: string
+): Promise<number> {
+  return anonymiseCopies(db, uid, await publicCopiesNaming(db, uid));
 }
 
 /**
@@ -311,12 +359,7 @@ export async function publicProfileChanged(
   const before = boardProfileOf(beforeData);
   const after = boardProfileOf(afterData);
   if (after.galleryOptOut && !before.galleryOptOut) {
-    const published = (
-      await db
-        .collection('publicReplays')
-        .where('uids', 'array-contains', uid)
-        .get()
-    ).docs.filter((doc) => doc.get('removedAt') === null);
+    const published = await livePublicCopiesOf(db, uid);
     await Promise.all(
       published.map((doc) => {
         const replayId = doc.get('replayId');
@@ -332,9 +375,14 @@ export async function publicProfileChanged(
     before.publicName !== after.publicName ||
     before.preset !== after.preset;
   return relabels
-    ? rewriteSeats(db, uid, (player, index, publicId) => ({
-        ...player,
-        ...seatLabel(publicId, index, after),
-      }))
+    ? rewriteSeatsIn(
+        db,
+        await publicCopiesNaming(db, uid),
+        uid,
+        (player, index, publicId) => ({
+          ...player,
+          ...seatLabel(publicId, index, after),
+        })
+      )
     : 0;
 }

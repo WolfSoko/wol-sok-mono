@@ -2,8 +2,9 @@
  * The Cloud Functions of Bacteria Wars (ADR 0011, 0012), codebase
  * `bacteria` in `firebase.bacteria-game-remote.json`. Triggers are
  * idempotent - a transaction or a `create()` checks the state first - and
- * run with retries off, but `rankReplay` (a stored replay it fails to rank
- * would never count) and `rebuildTop`.
+ * run with retries off, but `acceptReplay`, `rankReplay` (a stored replay
+ * it fails to rank would never count), `rebuildTop` and the friend lists'
+ * mirrors.
  */
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -19,12 +20,16 @@ import {
 import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
-import type { UserRecord } from 'firebase-admin/auth';
+import type { Auth, UserRecord } from 'firebase-admin/auth';
 import {
+  ACCOUNTS_DOC,
+  accountsChange,
   countAccount as countAccountOf,
   deleteAccount,
 } from './admin/accounts';
 import { isOwnerRecord, runAdminCommand } from './admin/command';
+import { erasePlayer } from './admin/erase';
+import { sweepGuests } from './admin/guests';
 import { realtimeOf } from './admin/realtime';
 import { remoteTogglesOf } from './admin/toggles';
 import {
@@ -44,6 +49,7 @@ import {
 import { rebuildTop as rebuildTopOf } from './boards/rebuild-top';
 import {
   FEATURE_BEST_ON,
+  GUEST_CLEANUP_ON,
   HOURLY_ON,
   REGION,
   RETRY_FOR_MS,
@@ -57,7 +63,9 @@ import { tooOldToRetry } from './limits';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
 import { runReplayCommand } from './replays/command';
-import { deletePlayerReplays as deleteReplaysOf } from './replays/delete-player';
+import { forgetPlayerReplays } from './replays/forget';
+import { deletePlayerSocial } from './social/delete-player';
+import { type MirroredList, mirrorListing } from './social/mirror';
 
 initializeApp();
 setGlobalOptions({ region: REGION, maxInstances: 5 });
@@ -165,13 +173,34 @@ export const cleanReplay = onDocumentDeleted(
   (event) => deleteReplayChildren(db(), event.params.id)
 );
 
-/** A deleted account leaves its replays. */
+/**
+ * A deleted account's replays forget it and stay, anonymised, for the
+ * statistics until they expire (ADR 0012, owner's decision of 2026-10-26) -
+ * see `forgetPlayerReplays`. The function keeps its old name, as a renamed
+ * one would be deleted and deployed anew.
+ */
 export const deletePlayerReplays = v1
   .region(REGION)
   .auth.user()
   .onDelete(async (user) => {
-    const counts = await deleteReplaysOf(db(), user.uid);
+    const counts = await forgetPlayerReplays(db(), user.uid, Date.now());
     logger.info('Replays of a deleted account', { uid: user.uid, ...counts });
+  });
+
+/**
+ * A deleted account leaves its profile, progress, friends and the other
+ * players' lists, the queue, its rooms and invites, and its presence (ADR
+ * 0012, owner's decision of 2026-10-26) - see `deletePlayerSocial`.
+ */
+export const deletePlayerData = v1
+  .region(REGION)
+  .auth.user()
+  .onDelete(async (user) => {
+    const erased = await deletePlayerSocial(db(), realtime, user.uid);
+    logger.info('Personal data of a deleted account', {
+      uid: user.uid,
+      ...erased,
+    });
   });
 
 /**
@@ -222,15 +251,31 @@ export const countAccount = v1
   });
 
 /**
+ * Auth, loaded on first use only: the auth stack is heavy, and most
+ * functions never need it.
+ */
+async function auth(): Promise<Auth> {
+  return (await import('firebase-admin/auth')).getAuth();
+}
+
+/** Every Auth user, a thousand a page. */
+async function* authUsers(): AsyncGenerator<UserRecord> {
+  const users = await auth();
+  let pageToken: string | undefined;
+  do {
+    const page = await users.listUsers(1000, pageToken);
+    yield* page.users;
+    pageToken = page.pageToken;
+  } while (pageToken !== undefined);
+}
+
+/**
  * The Auth user, read afresh - null for one that does not exist; other
  * failures throw.
  */
 async function userRecord(uid: string): Promise<UserRecord | null> {
-  // Loaded here only: the auth stack is heavy, and the other functions
-  // never need it.
-  const { getAuth } = await import('firebase-admin/auth');
   try {
-    return await getAuth().getUser(uid);
+    return await (await auth()).getUser(uid);
   } catch (error) {
     if ((error as { code?: unknown } | null)?.code === 'auth/user-not-found') {
       return null;
@@ -275,16 +320,12 @@ async function tombstoneOf(uid: string): Promise<string | null> {
   return user === null ? null : tombstoneId(BAN_TOMBSTONE_KEY.value(), user);
 }
 
-/** Every account's uid, a thousand a page - `stats.recount`. */
+/** Every account's uid - `stats.recount`. */
 async function accountUids(): Promise<string[]> {
-  const { getAuth } = await import('firebase-admin/auth');
   const uids: string[] = [];
-  let pageToken: string | undefined;
-  do {
-    const page = await getAuth().listUsers(1000, pageToken);
-    uids.push(...page.users.map((user) => user.uid));
-    pageToken = page.pageToken;
-  } while (pageToken !== undefined);
+  for await (const user of authUsers()) {
+    uids.push(user.uid);
+  }
   return uids;
 }
 
@@ -515,6 +556,81 @@ export const publicSite = onRequest(
     }
   }
 );
+
+/**
+ * Mirrors a player's friend list, and the friend requests, into the
+ * Realtime Database (`statusReaders`, `listedBy` - see `mirrorListing`).
+ * Retried for an hour (`RETRY_FOR_MS`): a lost event would leave the
+ * mirror wrong until the next backfill, and the handler reads the entry
+ * afresh, so a retry is safe.
+ */
+function mirrorOf(list: MirroredList) {
+  return onDocumentWritten(
+    {
+      document: `players/{owner}/${list}/{other}`,
+      memory: '256MiB',
+      cpu: 'gcf_gen1',
+      retry: true,
+    },
+    async (event) => {
+      const path = `players/${event.params.owner}/${list}/${event.params.other}`;
+      if (givesUp('mirrorListing', path, event.time, Date.now())) {
+        return;
+      }
+      await mirrorListing(
+        db(),
+        realtime,
+        list,
+        event.params.owner,
+        event.params.other
+      );
+    }
+  );
+}
+
+/** `players/{owner}/friends/{friend}` into `statusReaders` and `listedBy`. */
+export const mirrorFriend = mirrorOf('friends');
+
+/** `players/{owner}/requests/{from}` into `listedBy`. */
+export const mirrorRequest = mirrorOf('requests');
+
+/**
+ * Every day at 03:41 UTC: deletes guest accounts unused for 90 days (ADR
+ * 0012, owner's decision of 2026-10-26), their data first - see
+ * `sweepGuests`. Off with `GUEST_CLEANUP_ON`.
+ */
+export const guestCleanup = GUEST_CLEANUP_ON
+  ? onSchedule(
+      {
+        schedule: '41 3 * * *',
+        timeZone: 'UTC',
+        memory: '512MiB',
+        timeoutSeconds: 1800,
+        maxInstances: 1,
+        retryCount: 0,
+      },
+      async () => {
+        const now = Date.now();
+        const result = await sweepGuests(
+          {
+            users: authUsers,
+            deleteUsers: async (uids) => (await auth()).deleteUsers([...uids]),
+            // A guest has no Google provider, so no ban tombstone.
+            erase: (uid, uncounted) =>
+              erasePlayer(db(), realtime, uid, null, now, { uncounted }),
+            uncount: async (by) => {
+              await db()
+                .doc(ACCOUNTS_DOC)
+                .set(accountsChange(-by, Date.now()), { merge: true });
+            },
+            pause: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+          },
+          now
+        );
+        logger.info('Idle guests deleted', result);
+      }
+    )
+  : undefined;
 
 /** A declared endless match joins its run at once (ADR 0012). */
 export const declaredMatch = onDocumentCreated(

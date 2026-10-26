@@ -96,12 +96,16 @@ service cloud.firestore {
 
     // A player's friends, each side writing its own list - or the inviter's,
     // with the token of an invitation the inviter made. A player may see
-    // whether someone lists them, and take themselves off a list.
+    // whether someone lists them, and take themselves off a list. The
+    // lists name players by uid only (`isUidKey`): the functions mirror
+    // them into the Realtime Database, which takes no `.`, `#`, `$`, `[`
+    // or `]` in a key (ADR 0012, 2026-10-26).
     match /players/{owner}/friends/{friend} {
       allow get: if isPlayer(owner) || isPlayer(friend);
       allow list: if isPlayer(owner);
       // Update too: asking or accepting again rewrites an existing entry.
       allow create, update: if owner != friend && notBanned() &&
+        isUidKey(owner) && isUidKey(friend) &&
         request.resource.data.since == request.time &&
         ((isPlayer(owner) && request.resource.data.keys().hasOnly(['since'])) ||
          (isPlayer(friend) &&
@@ -116,6 +120,7 @@ service cloud.firestore {
       allow get: if isPlayer(owner) || isPlayer(from);
       allow list: if isPlayer(owner);
       allow create, update: if isPlayer(from) && from != owner && notBanned() &&
+        isUidKey(owner) && isUidKey(from) &&
         request.resource.data.keys().hasOnly(['at']) &&
         request.resource.data.at == request.time;
       allow delete: if isPlayer(owner) || isPlayer(from);
@@ -127,6 +132,7 @@ service cloud.firestore {
       allow get: if isPlayer(owner) || isPlayer(from);
       allow list: if isPlayer(owner);
       allow create, update: if isPlayer(from) && notBanned() &&
+        isUidKey(owner) && isUidKey(from) &&
         exists(/databases/$(database)/documents/players/$(owner)/friends/$(from)) &&
         request.resource.data.keys().hasOnly(['code', 'at', 'expireAt']) &&
         isRoomCode(request.resource.data.code) &&
@@ -194,19 +200,23 @@ service cloud.firestore {
            exists(/databases/$(database)/documents/players/$(request.auth.uid)/attempts/$(request.resource.data.attempt))));
     }
 
-    // A command on a stored replay: `remove` by any player, the gallery's
-    // types only by the owner. The writer reads it back for the result the
+    // A command on a stored replay: `remove` and `forget` by any player,
+    // the gallery's types only by the owner. `forget` (ADR 0012, owner's
+    // decision of 2026-10-26) takes the player out of the replay, the way
+    // they delete a match in the cloud - so, like every deletion, also
+    // while a ban holds. The writer reads it back for the result the
     // function writes on it.
     match /replayCommands/{id} {
       allow get: if signedIn() && resource.data.uid == request.auth.uid;
-      allow create: if signedIn() && notBanned() &&
+      allow create: if signedIn() &&
+        (notBanned() || request.resource.data.type == 'forget') &&
         request.resource.data.keys().hasOnly(['uid', 'type', 'replayId', 'createdAt', 'expireAt']) &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.replayId is string &&
         request.resource.data.replayId.matches('[A-Za-z0-9_-]{1,64}') &&
         request.resource.data.createdAt == request.time &&
         isCommandExpiry(request.resource.data.expireAt) &&
-        (request.resource.data.type == 'remove' ||
+        (request.resource.data.type in ['remove', 'forget'] ||
           (request.resource.data.type in ['feature', 'unfeature', 'anonymise'] && isAdmin()));
     }
 
@@ -334,7 +344,8 @@ service cloud.firestore {
         isCommandExpiry(data.expireAt) &&
         data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
           'board.hidePlayer', 'board.restore', 'board.verify', 'player.ban',
-          'player.unban', 'stats.refresh', 'stats.recount', 'toggles.set'] &&
+          'player.unban', 'stats.refresh', 'stats.recount', 'toggles.set',
+          'presence.backfill'] &&
         isAdminReason(data) &&
         (!(data.type in ['profile.reset', 'profile.removeImage', 'board.hideEntry',
           'board.hidePlayer', 'player.ban', 'toggles.set']) || signedInLately()) &&
@@ -342,9 +353,10 @@ service cloud.firestore {
         isAdminArgs(data.type, data.args);
     }
 
-    // 1 to 200 characters, not only spaces; `stats.*` may leave it out.
+    // 1 to 200 characters, not only spaces; `stats.*` and the presence
+    // backfill may leave it out.
     function isAdminReason(data) {
-      return data.type in ['stats.refresh', 'stats.recount']
+      return data.type in ['stats.refresh', 'stats.recount', 'presence.backfill']
         ? !('reason' in data) || (data.reason is string && data.reason.size() <= 200)
         : 'reason' in data && data.reason is string &&
           data.reason.size() <= 200 && data.reason.trim().size() > 0;
@@ -353,7 +365,7 @@ service cloud.firestore {
     function isAdminTarget(type, target) {
       return type in ['profile.reset', 'profile.removeImage', 'player.unban']
         ? isUidTarget(target)
-        : type in ['stats.refresh', 'stats.recount', 'toggles.set']
+        : type in ['stats.refresh', 'stats.recount', 'toggles.set', 'presence.backfill']
           ? target == null
           : type == 'board.hideEntry'
             ? isEntryTarget(target, false)
@@ -519,6 +531,11 @@ service cloud.firestore {
 
     function isPlayer(playerId) {
       return request.auth != null && request.auth.uid == playerId;
+    }
+
+    // An id shaped like a Firebase uid, as the friend lists key players.
+    function isUidKey(id) {
+      return id.matches('[A-Za-z0-9]{1,128}');
     }
 
     // The value as JSON, kept well below the document limit of 1 MiB.

@@ -42,6 +42,9 @@ export const EN = {
     toggles: {
       set: 'Change toggles',
     },
+    presence: {
+      backfill: 'Mirror friend lists',
+    },
     replay: {
       feature: 'Feature in the gallery',
       unfeature: 'Take down from the gallery',

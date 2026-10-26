@@ -6,7 +6,7 @@ import {
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
-import { deletePlayerReplays } from '../replays/delete-player';
+import { forgetPlayerReplays } from '../replays/forget';
 import { AT, ATTEMPT, dailyReplay, TICKS } from '../testing/daily-replay';
 import { closeNotReported, finalizeDailyBoards } from './hourly';
 import { rankDaily } from './rank-daily';
@@ -160,7 +160,7 @@ describe('rankDaily', () => {
     ).toHaveLength(1);
   });
 
-  it('leaves a replay its account deletion took first, without a throw', async () => {
+  it('leaves a replay its account deletion forgot first, without a throw', async () => {
     const replay = dailyReplay();
     const doc = replayDoc(replay, 'ada');
     await db
@@ -171,9 +171,10 @@ describe('rankDaily', () => {
       .doc('replays/l_1/blob/data')
       .set({ bytes: Buffer.from(await replayToBytes(replay)) });
     // Ada deletes her account before the event is handled.
-    await deletePlayerReplays(db, 'ada');
+    await forgetPlayerReplays(db, 'ada', NOW);
     expect(await rankDaily(db, 'l_1', doc, NOW)).toBe('gone');
-    expect((await db.doc('replays/l_1').get()).exists).toBe(false);
+    // Kept for the statistics, without her (ADR 0012, 2026-10-26).
+    expect((await db.doc('replays/l_1').get()).get('players')).toEqual([]);
     expect((await db.doc(`dailyRuns/${DAY}_ada`).get()).exists).toBe(false);
   });
 

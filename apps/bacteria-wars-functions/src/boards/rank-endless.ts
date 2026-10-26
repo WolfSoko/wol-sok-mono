@@ -16,6 +16,7 @@ import {
   answerReplay,
   checkDeclaredMatch,
   earlierAnswer,
+  namesPlayer,
   rankedFields,
   readDeclaredReplay,
 } from './declared-match';
@@ -311,6 +312,9 @@ export async function rankEndless(
       tx.get(replayRef),
       readRun(tx, db, uid, attempt.runId),
     ]);
+    if (!namesPlayer(replayNow, uid)) {
+      return 'gone';
+    }
     const earlier = earlierAnswer(replayNow);
     if (earlier !== null) {
       return earlier;

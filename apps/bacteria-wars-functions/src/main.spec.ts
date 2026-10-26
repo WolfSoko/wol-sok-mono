@@ -2,6 +2,7 @@ import { rankDaily } from './boards/rank-daily';
 import { rankOnline } from './boards/rank-online';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { checkGoogleLink } from './admin/tombstones';
+import { GUEST_CLEANUP_ON } from './config';
 
 jest.mock('./boards/rank-daily', () => ({
   ...jest.requireActual('./boards/rank-daily'),
@@ -75,13 +76,27 @@ describe('the exported functions', () => {
     // acceptReplay: a failure of ours would lose a replay, and an attempt.
     // rankReplay: a stored replay it fails to rank would never count.
     // rebuildTop: a busy instance turns events away, and a rebuild is safe.
-    expect(retrying).toEqual(['acceptReplay', 'rankReplay', 'rebuildTop']);
+    // mirrorFriend, mirrorRequest: a lost event leaves the mirror wrong, and
+    // the handler reads the list entry afresh.
+    expect(retrying).toEqual([
+      'acceptReplay',
+      'mirrorFriend',
+      'mirrorRequest',
+      'rankReplay',
+      'rebuildTop',
+    ]);
   });
 
-  it('never retry the hourly run', () => {
-    expect(
-      functions['hourly']?.__endpoint.scheduleTrigger?.retryConfig?.retryCount
-    ).toBe(0);
+  it('never retry the hourly run or the guest clean-up', () => {
+    const scheduled = GUEST_CLEANUP_ON
+      ? ['hourly', 'guestCleanup']
+      : ['hourly'];
+    for (const name of scheduled) {
+      expect([
+        name,
+        functions[name]?.__endpoint.scheduleTrigger?.retryConfig?.retryCount,
+      ]).toEqual([name, 0]);
+    }
   });
 
   describe('acceptReplay', () => {

@@ -113,7 +113,9 @@ export const GOOGLE_LINK_CHECK_MS = 60 * 60_000;
  * `googleChecked`, looks the account up (`tombstoneOf`, null while it has
  * no Google provider) and applies its tombstone, then notes the check. A
  * guest is looked up once an hour at most (`googleLookedAt`), not on every
- * write. True when it banned.
+ * write - noted only on a membership that exists: every account has one
+ * (`countAccount`, `stats.recount`), and a write that comes after its
+ * account's deletion must not bring it back. True when it banned.
  */
 export async function checkGoogleLink(
   db: Firestore,
@@ -134,10 +136,9 @@ export async function checkGoogleLink(
   }
   const id = await tombstoneOf(uid);
   if (id === null) {
-    await member.set(
-      { googleLookedAt: Timestamp.fromMillis(now) },
-      { merge: true }
-    );
+    if (data !== undefined) {
+      await member.update({ googleLookedAt: Timestamp.fromMillis(now) });
+    }
     return false;
   }
   return applyTombstone(db, realtime, uid, id, now);

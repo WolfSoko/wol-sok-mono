@@ -82,7 +82,13 @@ storage until then. Settings stay with the device either way.
   reason needs its text in the `replay.reasons` area (a `satisfies` there
   fails to compile without it). In the cloud
   `remove` keeps a match out of the gallery and deletes nothing; only the
-  device's backend deletes. "My matches" (`replays/my-matches.component.ts`)
+  device's backend deletes. The functions and rules also take `forget`
+  (ADR 0012, owner's decision of 2026-10-26; the client's "Delete" in the
+  cloud comes with a later release): it takes the player out of the
+  replay (`players`, seats) and its public copies, so it leaves
+  `listMine`, while the replay stays anonymised for the statistics. It is
+  allowed while a ban holds, and answers `ranking` while the boards may
+  still rank the match, `not-found` for one that no longer names them. "My matches" (`replays/my-matches.component.ts`)
   and the match just played (`replay-screen.component.ts`) are stage
   screens; specs use `FakeGameReplays` (`cloud` and `change`).
 - Ranked daily attempts and endless runs (ADR 0012) are declared through

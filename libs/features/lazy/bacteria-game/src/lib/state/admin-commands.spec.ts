@@ -70,6 +70,7 @@ describe('admin commands', () => {
         reason: 'Ranked servers overloaded',
         args: { values: { rankedDaily: false } },
       },
+      { type: 'presence.backfill', target: null, args: {} },
     ];
 
     for (const command of valid) {
@@ -200,6 +201,19 @@ describe('admin commands', () => {
         args: {},
       })
     ).toBeNull();
+  });
+
+  it('reads the presence backfill without a target or arguments', () => {
+    const backfill = (more: object) =>
+      parseAdminCommand({ type: 'presence.backfill', ...more });
+    expect(backfill({ target: null, args: {} })).toEqual({
+      type: 'presence.backfill',
+      target: null,
+      reason: '',
+      args: {},
+    });
+    expect(backfill({ target: { uid: UID }, args: {} })).toBeNull();
+    expect(backfill({ target: null, args: { all: true } })).toBeNull();
   });
 
   it('reads toggles to set, and refuses unknown or empty ones', () => {

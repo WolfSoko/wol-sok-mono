@@ -968,20 +968,26 @@ chose not to share their status, and the privacy page says so.
 
 ### Functions added
 
-| Function              | Kind                                                                                 | What it does                                                                                                                                                                                                                                                                                     |
-| --------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `rankReplay`          | Firestore `onDocumentWritten` on `replays/{id}`, `gcf_gen1`                          | Returns unless `state` or `players` changed. Online: counts an `agreed` match. Daily and endless: checks the attempt and takes the replay into its run, closing stale endless attempts lazily. On `verified`, `unverified` or `balance-mismatch`, updates the entry. 256 MiB.                    |
-| `rankProgress`        | Firestore `onDocumentWritten` on `players/{uid}/storage/bacteria-game.progress`      | The XP board, `activeAt`, the one-time tombstone check after a Google link.                                                                                                                                                                                                                      |
-| `rebuildTop`          | Firestore `onDocumentWritten` on `boards/{boardId}/entries/{entryId}`, `gcf_gen1`    | Rebuilds the board's top document when the entry is relevant. `maxInstances: 1`, `concurrency: 1`.                                                                                                                                                                                               |
-| `boardProfileChanged` | Firestore `onDocumentUpdated` on `profiles/{uid}`, `gcf_gen1`                        | Re-labels the player's entries on every board in `boardMembers.boards` when `name`, `publicName`, `boardOptOut` or a preset avatar changes.                                                                                                                                                      |
-| `adminCommand`        | Firestore `onDocumentCreatedWithAuthContext` on `adminCommands/{id}`                 | As above.                                                                                                                                                                                                                                                                                        |
-| `hourly`              | scheduled at minute 17 of every hour (UTC), 1 GiB, 1 vCPU, 1800 s, `maxInstances: 1` | In order: cleans up expired bans, closes attempts without replays (lost lives, skipping pending submissions), closes online replays `waiting` for 2 h ("Not reported"), finalises daily boards, writes the statistics snapshot, then spends the hour's verification slice until 25 minutes pass. |
-| `countAccount`        | `auth.user().onCreate` (v1)                                                          | `stats/accounts` + 1, `boardMembers.accountCreatedAt`, the tombstone check for Google sign-ups.                                                                                                                                                                                                  |
-| `deletePlayerBoards`  | `auth.user().onDelete` (v1)                                                          | Writes a tombstone if the player is banned and Google-linked, then deletes the player's entries, `boardMembers`, runs, attempts, notices and ban, scrubs `before`/`after` of audit entries about them to `{ scrubbed: true }`, and lowers `stats/accounts`.                                      |
+| Function              | Kind                                                                                  | What it does                                                                                                                                                                                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `rankReplay`          | Firestore `onDocumentWritten` on `replays/{id}`, `gcf_gen1`                           | Returns unless `state` or `players` changed. Online: counts an `agreed` match. Daily and endless: checks the attempt and takes the replay into its run, closing stale endless attempts lazily. On `verified`, `unverified` or `balance-mismatch`, updates the entry. 256 MiB.                    |
+| `rankProgress`        | Firestore `onDocumentWritten` on `players/{uid}/storage/bacteria-game.progress`       | The XP board, `activeAt`, the one-time tombstone check after a Google link.                                                                                                                                                                                                                      |
+| `rebuildTop`          | Firestore `onDocumentWritten` on `boards/{boardId}/entries/{entryId}`, `gcf_gen1`     | Rebuilds the board's top document when the entry is relevant. `maxInstances: 1`, `concurrency: 1`.                                                                                                                                                                                               |
+| `boardProfileChanged` | Firestore `onDocumentUpdated` on `profiles/{uid}`, `gcf_gen1`                         | Re-labels the player's entries on every board in `boardMembers.boards` when `name`, `publicName`, `boardOptOut` or a preset avatar changes.                                                                                                                                                      |
+| `adminCommand`        | Firestore `onDocumentCreatedWithAuthContext` on `adminCommands/{id}`                  | As above.                                                                                                                                                                                                                                                                                        |
+| `hourly`              | scheduled at minute 17 of every hour (UTC), 1 GiB, 1 vCPU, 1800 s, `maxInstances: 1`  | In order: cleans up expired bans, closes attempts without replays (lost lives, skipping pending submissions), closes online replays `waiting` for 2 h ("Not reported"), finalises daily boards, writes the statistics snapshot, then spends the hour's verification slice until 25 minutes pass. |
+| `countAccount`        | `auth.user().onCreate` (v1)                                                           | `stats/accounts` + 1, `boardMembers.accountCreatedAt`, the tombstone check for Google sign-ups.                                                                                                                                                                                                  |
+| `deletePlayerBoards`  | `auth.user().onDelete` (v1)                                                           | Writes a tombstone if the player is banned and Google-linked, then deletes the player's entries, `boardMembers`, runs, attempts, notices and ban, scrubs `before`/`after` of audit entries about them to `{ scrubbed: true }`, and lowers `stats/accounts`.                                      |
+| `deletePlayerData`    | `auth.user().onDelete` (v1), added 2026-10-26                                         | Erases `players/{uid}/**`, `profiles/{uid}`, the player in other players' lists, `queue/{uid}`, open rooms, invites, presence and both mirrors - see "Privacy" below.                                                                                                                            |
+| `mirrorFriend`        | Firestore `onDocumentWritten` on `players/{owner}/friends/{friend}`, added 2026-10-26 | Mirrors the entry as it stands into `statusReaders` and `listedBy`.                                                                                                                                                                                                                              |
+| `mirrorRequest`       | Firestore `onDocumentWritten` on `players/{owner}/requests/{from}`, added 2026-10-26  | Mirrors the entry as it stands into `listedBy`.                                                                                                                                                                                                                                                  |
+| `guestCleanup`        | scheduled daily at 03:41 UTC, 512 MiB, 1800 s, `maxInstances: 1`, added 2026-10-26    | Deletes guest accounts unused for 90 days, their data first (`GUEST_CLEANUP_ON`).                                                                                                                                                                                                                |
 
 All run in ADR 0011's codebase and region, with retries off, and are
 idempotent: a transaction checks the state first, and markers are created
-with `create()`. `rankReplay` and `acceptReplay` are the exceptions: they
+with `create()`. `mirrorFriend` and `mirrorRequest` retry as well (they
+re-read the entry, so a repeat writes the same mirror; see "Privacy"
+below). `rankReplay` and `acceptReplay` are the exceptions: they
 retry, and drop an event older than an hour, since a stored replay
 `rankReplay` fails to rank would never count, and a submission
 `acceptReplay` fails on would be lost with its attempt (it voids the
@@ -1033,6 +1039,131 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
   `replayCommand`, `rankReplay` and `rankProgress`.
 - The admin claim is read by more rules, and `profiles` gets an admin
   `list`.
+
+### Privacy: erasure, idle guests, a friends-only status (2026-10-26)
+
+The owner's decisions of 2026-10-26, server side (the client and the
+privacy page follow in the next releases):
+
+- **Account deletion erases every piece of personal data automatically.**
+  Beside `deletePlayerBoards`, a third `onDelete` trigger,
+  `deletePlayerData` (`social/delete-player.ts`), deletes
+  `players/{uid}/**` (stored progress and settings, friends, requests,
+  challenges, attempts, notices), `profiles/{uid}`, `queue/{uid}`, the
+  invites the player made, the rooms nobody took that they host or
+  answered, the Realtime Database's `status/{uid}` and `connections/{uid}`,
+  and the player's entries in other players' lists
+  (`players/{other}/friends|requests|challenges/{uid}`). A collection-group
+  query cannot find those by a bare document id (see "Bans"), so the
+  others come from the player's own lists and from the `listedBy` mirror
+  below. What still names the uid after a deletion, each for a short
+  while: a taken room's stub (at most 6 hours; the other player's report
+  is checked against it), a challenge of a friend who removed the player
+  since (TTL within the hour), a queue claim (TTL within the hour), the
+  online caps' `pairs` (2 days) and `rankedRooms` (12 hours), and the
+  audit's uid, type, reason and date (2 years, legitimate interest, as
+  before). A client's ID token stays valid for up to an hour after its
+  account is deleted: what the device still writes with it in that hour
+  (a submission, a command, its own lists) is not erased again, and a
+  stored replay keeps the uid until its `expireAt`. A list entry another
+  player writes after the deletion that names the deleted uid (a request
+  to it, their own friend entry) is that player's data, mirrored like any
+  other, and goes with their account.
+- **Recorded matches stay, anonymised, for the statistics.** This replaces
+  ADR 0011's "deletes replays where they were the only player":
+  `deletePlayerReplays` (`replays/forget.ts`) takes the uid out of every
+  replay that names it - `players`, the online seats (null, so the other
+  player keeps theirs), `optOut` - and deletes its report
+  (`reports/{uid}`); nothing else in a replay or its blob names a player.
+  The replay stays until its `expireAt`; one still public keeps none, so
+  TTL does not take it from under its public copy, and gets its 30 days
+  back when the copy comes down (`takeDownPublic`). Public copies stay up
+  without the uid and with the colour label (`anonymisePublic`), as
+  before. A ranking that reads the replay later finds the player gone
+  (`namesPlayer`) and ranks nothing. Board entries are personal rankings:
+  they still go. `levelStats` hold no ids. The player's pending
+  `replaySubmissions` and `replayCommands` (queried by `uid`, on the
+  automatic single-field index) are deleted before the replays are looked
+  for; `acceptReplay` reads its submission in the transaction that takes
+  its slot and in the one that stores the replay, and drops one that is
+  gone (`withdrawn`) - so a replay is either stored before the deletion
+  looks for it, and forgotten, or not at all. Taking the slot therefore
+  marks the submission (`slotTaken`) instead of deleting it. A command the
+  deletion took still runs on its event's copy, finds the player in no
+  replay, and writes no result. `acceptReplay`'s Google-link check notes
+  its hourly look-up only on a `boardMembers/{uid}` that exists, so a
+  late submission does not bring a deleted account's membership back.
+  - **Deletion and the online board.** An account deletion does not wait
+    for a ranking, unlike `forget` below: its board entries go anyway, so
+    it keeps no better record. The other player's late report on a match
+    whose lone reporter deleted their account is that match's only report,
+    not a dispute: it stays `waiting`, and the hourly close charges nobody
+    - the deleted seat (null) has no entry to give `nr`, and the reporter
+      gets what a lone report always gets, nothing, since one unconfirmed
+      report never counts as a win; crediting it after a deletion would let
+      a throwaway account hand out wins past the caps. A non-reporter who
+      deleted their account is likewise charged nothing. An `agreed` match
+      whose player deleted their account before `rankReplay` ran counts
+      nothing (`stub-expired`), as before.
+- **Guest accounts unused for 90 days are deleted.** `guestCleanup`
+  (daily at 03:41 UTC, `GUEST_CLEANUP_ON` - off until the backfill ran -, `GUEST_IDLE_DAYS = 90`) pages
+  through Auth, picks accounts without a sign-in provider and without the
+  admin claim whose last use - the latest of last token refresh, last
+  sign-in and creation - is over 90 days ago - at most 2,000 a run -
+  erases each one's data the way a deletion does (`erasePlayer`: the
+  three triggers' parts at once) and then deletes the accounts whose data
+  went, 1,000 a `deleteUsers` call, a call every 1.5 s. The data goes
+  first because Auth's bulk deletion fires no `onDelete`; the parts are
+  idempotent, so a trigger that fires all the same changes nothing. A
+  guest has no Google provider, so no ban tombstone; a banned guest's ban
+  goes with its uid. `stats/accounts` goes down once a batch, by the
+  decrements its erases claimed, not once a guest - a single document
+  takes about one write a second. Every erase, the triggers' too, claims
+  the decrement by clearing `accountCounted` in a transaction, so a
+  retried or doubled erase lowers the count once; one lost after its
+  claim leaves the count too high, which `stats.recount` mends.
+- **The online status will be readable by friends only.** In preparation,
+  `mirrorFriend` and `mirrorRequest` mirror the lists into the Realtime
+  Database. They are retried for an hour; each reads the entry afresh,
+  writes, reads it again and writes again when it changed meanwhile - the
+  handler that writes last checks last - so late, repeated or reordered
+  events, and a write that lands after an account deletion took the
+  entry, all end on the entry as it is:
+  - `statusReaders/{owner}/{reader}: true` while
+    `players/{owner}/friends/{reader}` exists - the owner chose whom to
+    list, and the rule of `status/{owner}` will let exactly those read;
+  - `listedBy/{uid}/{owner}/{friends|requests}: true` while
+    `players/{owner}/friends|requests/{uid}` exists - the account
+    deletion's way to the player's entries in others' lists.
+    Both are closed to clients in `database.rules.json`. The owner's
+    `presence.backfill` (an admin command, from the overview of `/admin`)
+    mirrors what existed before the triggers' first deploy and repairs
+    drift: it adds what is missing and removes entries no list entry
+    stands behind, each checked against Firestore once more right before
+    it goes; idempotent. `status`'s `.read` stays `auth != null` until the
+    mirror is deployed and backfilled.
+  - A Firestore id may hold `.`, `#`, `$`, `[` and `]`, which the Realtime
+    Database takes in no key; one such id in a multi-path update would
+    fail the whole update, and a guest's erase with it for good. The
+    triggers, the backfill and the deletion skip such ids and log them,
+    and the rules take only uid-shaped ids (`[A-Za-z0-9]{1,128}`) as the
+    owner and the entry of `friends`, `requests` and `challenges`.
+- **"Delete" in "My matches" anonymises the match for the player.** The
+  replay command `forget` (`replayCommands` with `type: 'forget'`, the
+  same fields as `remove`) takes the player out of the replay as a
+  deletion does, so it leaves their `listMine`, sets `galleryOut`, and
+  takes down and anonymises every public copy of it with them in it. The
+  other player of an online match keeps their seat. It is the player's
+  deletion, so the rules allow it while a ban holds. It is claimed in its
+  transaction (`claimed` on the command), so a second delivery runs
+  nothing, and it answers `ranking` while the boards may still rank the
+  match - an attempt, or an online match `agreed` (or `verified` by the
+  gallery) without `rankedReason`, for up to 3 hours; and an online match
+  still `waiting` for its second report until the hourly close answers
+  it, however late: a lone reporter who forgot it would turn the other's
+  late report into a dispute and dodge a counted loss, and a player who
+  did not report would dodge their "Not reported" - and `not-found` for a
+  replay that no longer names the player. Not audited, like `remove`.
 
 ## Consequences
 
@@ -1482,8 +1613,28 @@ written.
   match voided after its result keeps costing the life it cost.
 - For the ranked client: a voided or abandoned endless match keeps its
   lost life ("keep it") - the client does not give it back.
+- On 2026-10-26 (see "Privacy: erasure, idle guests, a friends-only
+  status"): account deletion erases all personal data automatically;
+  a deleted account's replays no longer go but stay anonymised until they
+  expire (this changes the decision that they are deleted); guest
+  accounts unused for 90 days are deleted; the online status becomes
+  readable by friends only; "Delete" in "My matches" anonymises the match
+  for the player.
 
 ## Owner's manual steps
+
+- For the privacy changes of 2026-10-26, in this order: deploy the
+  functions and the database rules (the mirror triggers, `guestCleanup`,
+  `deletePlayerData`); then run "Mirror friend lists" once in the overview
+  of `/admin` (`presence.backfill`); only then ship the release whose
+  database rules let only `statusReaders` read `status/{uid}` and that
+  sets `GUEST_CLEANUP_ON` to `true` (before the backfill, a deleted
+  guest's entries in other players' lists have no `listedBy` to be found
+  by), and the client's "Delete" (`forget`) with the privacy page. Check
+  that Cloud Scheduler then shows `guestCleanup`, and that the functions'
+  runtime account
+  may list and delete Auth users (it lists them for `stats.recount`
+  already; deleting needs `firebaseauth.users.delete`).
 
 - Grant the functions' runtime service account the role "Firebase Remote
   Config Admin" (`roles/cloudconfig.admin`) on `bacteria-wars`, so

@@ -20,6 +20,7 @@ export const ADMIN_COMMAND_TYPES = [
   'stats.refresh',
   'stats.recount',
   'toggles.set',
+  'presence.backfill',
 ] as const;
 
 export type AdminCommandType = (typeof ADMIN_COMMAND_TYPES)[number];
@@ -61,7 +62,7 @@ export const REASON_MAX = 200;
 interface Command<T extends AdminCommandType, Target, Args> {
   type: T;
   target: Target;
-  /** Why, 1 to 200 characters; optional for `stats.*`. */
+  /** Why, 1 to 200 characters; optional for `stats.*` and the backfill. */
   reason: string;
   args: Args;
 }
@@ -85,6 +86,8 @@ export type AdminCommand =
     >
   | Command<'player.unban', PlayerTarget, NoArgs>
   | Command<'stats.refresh' | 'stats.recount', null, NoArgs>
+  /** Mirrors every friend list into the Realtime Database (ADR 0012). */
+  | Command<'presence.backfill', null, NoArgs>
   | Command<
       'toggles.set',
       null,
@@ -117,6 +120,7 @@ const SCHEMA: Readonly<
   'stats.refresh': { targets: 'none', args: [], reasonOptional: true },
   'stats.recount': { targets: 'none', args: [], reasonOptional: true },
   'toggles.set': { targets: 'none', args: ['values'] },
+  'presence.backfill': { targets: 'none', args: [], reasonOptional: true },
 };
 
 /** The fields of the command itself. */

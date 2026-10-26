@@ -269,7 +269,9 @@ a dead end), `verified`, `unverified`, `balance-mismatch`.
   removes the uid from `replays.players` and the room's `seats` (also
   where only the other player reported), deletes replays where they were
   the only player, and replaces their name in public replays with the
-  colour label.
+  colour label. (Changed by ADR 0012, owner's decision of 2026-10-26: no
+  replay is deleted any more; each one forgets the account and stays,
+  anonymised, until its `expireAt`.)
 
 ### The functions codebase
 

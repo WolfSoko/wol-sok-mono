@@ -12,6 +12,14 @@
       mat-stroked-button
       type="button"
       [disabled]="refreshing()"
+      (click)="backfill()"
+    >
+      {{ "type.presence.backfill" | adminT }}
+    </button>
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="refreshing()"
       (click)="recount()"
     >
       {{ "type.stats.recount" | adminT }}

@@ -1,4 +1,6 @@
 import type { DocumentReference, Firestore } from 'firebase-admin/firestore';
+import { deleteRefs } from '../deletes';
+import { settleAll } from '../settle';
 import { memberEntries } from './entries';
 
 /**
@@ -32,18 +34,11 @@ export async function deletePlayerBoards(
     }
     refs.push(db.doc(`boards/${boardId}/entries/${entryId}`));
   }
-  const writer = db.bulkWriter();
-  const deletes = refs.map((ref) => writer.delete(ref));
   // Every delete runs, then the first failure is told.
-  const settled = await Promise.allSettled([
-    ...deletes,
-    writer.close(),
+  await settleAll([
+    deleteRefs(db, refs),
     db.recursiveDelete(db.collection(`players/${uid}/attempts`)),
     db.recursiveDelete(db.collection(`players/${uid}/notices`)),
   ]);
-  const failed = settled.find((result) => result.status === 'rejected');
-  if (failed !== undefined) {
-    throw failed.reason;
-  }
   return refs.length;
 }

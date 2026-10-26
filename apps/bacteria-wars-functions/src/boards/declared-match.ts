@@ -100,6 +100,16 @@ export function earlierAnswer(
   return typeof ranked === 'string' ? (ranked as ArrivalReason) : null;
 }
 
+/**
+ * True while the replay still names `uid` in `players`. A declared
+ * board's ranking checks it first and answers `gone` when not: the player
+ * deleted their account or forgot the match since (ADR 0012, 2026-10-26).
+ */
+export function namesPlayer(replay: DocumentSnapshot, uid: string): boolean {
+  const players: unknown = replay.get('players');
+  return replay.exists && Array.isArray(players) && players.includes(uid);
+}
+
 /** Stores why a replay does not rank, unless {@link earlierAnswer} has one. */
 export async function answerReplay(
   db: Firestore,
