@@ -182,7 +182,7 @@ Planned and phased in [ADR 0014](docs/adr/0014-performance-gates-in-ci.md); this
 - **In place now** (phase 1): Angular budgets on the `production` configuration of each Angular app's `esbuild` target (`portfolio`: `build`), measured through the federation build as CI runs it. CI's `build -c=ci` falls back to `production`, so they run on every affected build and block it. Each holds a `baseline` (measured on 2026-10-26, 1 kB = 1000 bytes as Angular counts):
   - `anyScript` (the largest single script, the game's chunk in `bacteria-game-remote`) and `allScript` (all scripts, initial and lazy): warning +5%, error +10%.
   - `initial`: warning +10%, error +20%.
-  - `anyComponentStyle` as before (warning 6 kB, error 8 kB in the game's apps). Three of the game's stylesheets warn (`new-game`, `bacteria-game`, `evolution`); they are trimmed in a PR of their own, with a look at the screens.
+  - `anyComponentStyle` as before (warning 6 kB, error 8 kB in the game's apps), with no warning left: a stylesheet near the limit gives a part of its component a component of its own (the HUD bar `hud-bar.component.ts`, the training's `menu/mission-list.component.ts`) or groups rules it repeats, rather than raising the limit.
   - pacetrainer and rollapolla-analog build with Vite (Analog) and have no Angular budgets.
 - **Coming, in this order** (one PR each):
   1. `perf` target on `feat-lazy-bacteria-game`: a Node benchmark of `engine.ts` on fixed replays (`tools/perf/`), gated on the ratio to a calibration loop against `tools/perf/engine-baseline.json` (fails above +20%). Report-only for two weeks, then blocking.

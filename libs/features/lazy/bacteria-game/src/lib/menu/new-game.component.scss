@@ -24,30 +24,25 @@
   --mat-stepper-header-focus-state-layer-color: transparent;
   --mat-stepper-header-height: 56px;
 
+  // The steps' contents take the room the header leaves, and scroll on
+  // their own.
+  ::ng-deep .mat-horizontal-content-container {
+    padding: 0.75rem 0 0;
+  }
+}
+
+// The panes that take the room left to them, as columns that scroll on
+// their own: the stepper, its steps and the level step.
+.stepper,
+.stepper ::ng-deep .mat-horizontal-content-container,
+.stepper
+  ::ng-deep
+  .mat-horizontal-stepper-content:not(.mat-horizontal-stepper-content-inactive),
+.level-step {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
-
-  // The steps' contents take the room the header leaves, and scroll on
-  // their own.
-  ::ng-deep .mat-horizontal-content-container {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    padding: 0.75rem 0 0;
-  }
-
-  ::ng-deep
-    .mat-horizontal-stepper-content:not(
-      .mat-horizontal-stepper-content-inactive
-    ) {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
 }
 
 // The modes, a card each.
@@ -58,9 +53,14 @@
   padding: 0.25rem;
 }
 
-.mode {
+// The panels: the mode cards, the setup and the briefing.
+.mode,
+.setup,
+.details {
   @include screen.panel;
+}
 
+.mode {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -93,9 +93,12 @@
   }
 }
 
-.mode-name {
+.mode-name,
+.rivalry-score {
   @include screen.figure;
+}
 
+.mode-name {
   font-size: 1.25rem;
 }
 
@@ -112,122 +115,19 @@
 
 // The level map, with the way on below it.
 .level-step {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
   gap: 0.75rem;
-  min-height: 0;
+}
+
+// The way forward: on from the map, and the start.
+.next,
+.start {
+  @include screen.primary;
 }
 
 .next {
-  @include screen.primary;
-
   flex: none;
   align-self: flex-end;
   min-width: 10rem;
-}
-
-// The training's missions, a row each, in the order they are played.
-.missions {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-height: 0;
-  overflow: auto;
-  padding: 0.25rem;
-}
-
-.missions-intro {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.25rem 1rem;
-  margin: 0;
-  line-height: 1.4;
-  color: var(--bw-soft);
-}
-
-.missions-progress {
-  color: var(--bw-gold);
-}
-
-.mission-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.mission {
-  @include screen.panel;
-
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  width: 100%;
-  padding: 0.8rem 1.1rem;
-  color: var(--bw-text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-
-  &:hover {
-    border-color: var(--bw-line-strong);
-    background: var(--bw-surface-raised);
-  }
-
-  &:focus-visible {
-    outline: 3px solid var(--bw-gold);
-    outline-offset: 2px;
-  }
-
-  &.current {
-    border-color: var(--bw-gold);
-  }
-}
-
-.mission-icon {
-  flex: none;
-  width: 1.75rem;
-  height: 1.75rem;
-  font-size: 1.75rem;
-  color: var(--bw-gold);
-}
-
-.mission-text {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.mission-name {
-  @include screen.figure;
-
-  font-size: 1.1rem;
-}
-
-.mission-goal {
-  font-size: 0.9rem;
-  color: var(--bw-soft);
-}
-
-.mission-badge {
-  flex: none;
-  padding: 0.15rem 0.6rem;
-  border: 1px solid var(--bw-line-strong);
-  border-radius: 999px;
-  font-size: 0.8rem;
-  color: var(--bw-muted);
-
-  &.up-next {
-    border-color: var(--bw-gold);
-    color: var(--bw-gold);
-  }
 }
 
 // A mission's goal and tip, under its briefing.
@@ -290,8 +190,6 @@
 }
 
 .setup {
-  @include screen.panel;
-
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -305,8 +203,6 @@
 }
 
 .details {
-  @include screen.panel;
-
   // In the colours of the level's arena: its floor, its frame.
   border-color: rgb(var(--level-edge, 38 49 66) / 70%);
   background:
@@ -411,14 +307,10 @@
 }
 
 .rivalry-score {
-  @include screen.figure;
-
   font-size: 1.3rem;
 }
 
 .start {
-  @include screen.primary;
-
   // Always in reach, however far the setup scrolls.
   position: sticky;
   bottom: 0;

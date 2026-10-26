@@ -560,14 +560,11 @@ describe('BacteriaGameComponent', () => {
       create();
       TestBed.inject(GameStateService).setDifficulty('hard');
       expect(component['clockLabel']()).toBe('Game time');
-      expect(component['colonyName']('You')).toBe('You');
 
       TestBed.inject(I18nService).setLanguage('de');
 
       expect(component['clockLabel']()).toBe('Spielzeit');
       expect(component['difficultyName']()).toBe('Schwer');
-      expect(component['colonyName']('You')).toBe('Du');
-      expect(component['colonyName']('Ada')).toBe('Ada');
       expect(component['settingsBackLabel']()).toBe('Menü');
     });
   });

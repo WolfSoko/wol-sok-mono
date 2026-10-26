@@ -24,10 +24,24 @@
   gap: 0.9rem;
 }
 
+// The panels: the dish, the reset's confirmation and the shop's cards.
+.dish,
+.confirm,
+.gene,
+.weapon {
+  @include screen.panel;
+}
+
+// Titles and labels in the display face.
+.tagline,
+.confirm-title,
+.card-title,
+.maxed-label {
+  @include screen.figure;
+}
+
 // The colony on its petri dish.
 .dish {
-  @include screen.panel;
-
   position: relative;
   padding: 0.75rem;
   border-radius: 50%;
@@ -72,8 +86,6 @@
 }
 
 .tagline {
-  @include screen.figure;
-
   margin: 0.5rem 0 0;
   font-size: 1.2rem;
 }
@@ -90,8 +102,6 @@
 }
 
 .confirm {
-  @include screen.panel;
-
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -106,8 +116,6 @@
 }
 
 .confirm-title {
-  @include screen.figure;
-
   margin: 0;
   font-size: 1.1rem;
 }
@@ -153,8 +161,6 @@
 
 .gene,
 .weapon {
-  @include screen.panel;
-
   position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -167,8 +173,6 @@
 }
 
 .card-title {
-  @include screen.figure;
-
   margin: 0;
   font-size: 1.05rem;
 }
@@ -260,8 +264,6 @@
   gap: 0.35rem;
   height: 2.6rem;
   color: var(--bw-gold);
-  font-family: var(--bw-display);
-  font-weight: 800;
   letter-spacing: 0.04em;
 }
 

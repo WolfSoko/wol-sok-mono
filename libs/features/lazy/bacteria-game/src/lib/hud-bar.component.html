@@ -1,0 +1,92 @@
+<span class="hud-level">{{ levelName() | gameText }}</span>
+<span class="game-time" [class.running-out]="timeRunningOut()"
+  ><span class="cdk-visually-hidden">{{ clockLabel() }}: </span
+  >{{ clockText() }}</span
+>
+<span class="hud-colonies">
+  @for (colony of colonies(); track colony.id) {
+    <span class="hud-colony" [class.boosting]="colony.boosting">
+      <span class="colony-name" [style.color]="colony.css">{{
+        colonyName(colony.name)
+      }}</span>
+      <span class="colony-count">{{ colony.bacterias }}</span>
+      @if (goal(); as goal) {
+        <span class="colony-held"
+          ><mat-icon aria-hidden="true">{{ goal.icon }}</mat-icon
+          >{{ colony[goal.of] }}/{{ goal.target
+          }}<span class="cdk-visually-hidden"> {{ goal.label | t }}</span></span
+        >
+      }
+    </span>
+  }
+  @let neutralCount = neutral();
+  @if (neutralCount !== null) {
+    <span class="hud-colony neutral">
+      <span class="colony-name" [style.color]="neutralCss()">{{
+        "game.players.neutral" | t
+      }}</span>
+      <span class="colony-count">{{ neutralCount }}</span>
+    </span>
+  }
+</span>
+<span class="hud-actions">
+  <button
+    mat-icon-button
+    type="button"
+    [attr.aria-label]="(sound() ? 'common.mute' : 'common.unmute') | t"
+    [matTooltip]="(sound() ? 'common.mute' : 'common.unmute') | t"
+    (click)="soundChange.emit(!sound())"
+  >
+    <mat-icon>{{ sound() ? "volume_up" : "volume_off" }}</mat-icon>
+  </button>
+  @if (showPause()) {
+    <button
+      mat-icon-button
+      type="button"
+      [attr.aria-label]="'stage.hud.pause' | t"
+      [matTooltip]="
+        'common.withKey' | t: { label: ('stage.hud.pause' | t), key: 'P' }
+      "
+      (click)="pause.emit()"
+    >
+      <mat-icon>pause</mat-icon>
+    </button>
+  }
+  @if (showGiveUp()) {
+    <!-- A ranked match has no pause menu: its way out, in two taps. -->
+    <button
+      mat-icon-button
+      type="button"
+      [class.give-up-armed]="giveUpArmed()"
+      [attr.aria-label]="
+        (giveUpArmed() ? 'stage.hud.giveUpAgain' : 'stage.hud.giveUp') | t
+      "
+      [matTooltip]="
+        (giveUpArmed() ? 'stage.hud.giveUpAgain' : 'stage.hud.giveUp') | t
+      "
+      (click)="giveUp.emit()"
+    >
+      <mat-icon>flag</mat-icon>
+    </button>
+  }
+  <button
+    mat-icon-button
+    type="button"
+    [attr.aria-label]="
+      (fullscreen() ? 'common.exitFullscreen' : 'common.fullscreen') | t
+    "
+    [matTooltip]="
+      'common.withKey'
+        | t
+          : {
+              label:
+                ((fullscreen() ? 'common.exitFullscreen' : 'common.fullscreen')
+                | t),
+              key: 'F',
+            }
+    "
+    (click)="fullscreenChange.emit(!fullscreen())"
+  >
+    <mat-icon>{{ fullscreen() ? "fullscreen_exit" : "fullscreen" }}</mat-icon>
+  </button>
+</span>
