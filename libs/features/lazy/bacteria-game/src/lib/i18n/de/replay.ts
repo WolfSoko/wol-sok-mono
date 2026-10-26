@@ -11,6 +11,8 @@ export const replay: Translation<typeof en> = {
       'Wiederholung nicht gespeichert: „Meine Matches speichern“ ist aus. Du kannst sie bis zum nächsten Match ansehen.',
     unconfirmed:
       'Ob die Wiederholung gespeichert wurde, ließ sich nicht bestätigen. Schau später in „Meine Matches“ nach.',
+    recordingHint:
+      'Matches gegen den Computer werden so gespeichert. Ausschalten kannst du das unter Einstellungen → Matches.',
   },
   matches: {
     title: 'Meine Matches',

@@ -11,6 +11,9 @@ export const replay = {
       'Replay not saved: "Save my matches" is off. You can watch it until the next match.',
     unconfirmed:
       'Could not confirm the replay was saved. Look for it in My matches later.',
+    /** Once, after the first saved match against the computer. */
+    recordingHint:
+      'Matches against the computer are saved like this one. You can turn that off in Settings → Matches.',
   },
   matches: {
     title: 'My matches',

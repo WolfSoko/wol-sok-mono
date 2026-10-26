@@ -428,6 +428,29 @@ describe('GameSettingsService', () => {
       });
     });
 
+    it('says when the stored settings are read, and restores the hint on saved matches', () => {
+      const service = createWith({ recordingHintShown: true });
+      expect(service.loaded()).toBe(false);
+      expect(service.recordingHintShown()).toBe(false);
+
+      storage.flush();
+
+      expect(service.loaded()).toBe(true);
+      expect(service.recordingHintShown()).toBe(true);
+    });
+
+    it('remembers that the hint on saved matches was shown', () => {
+      const service = createWith({});
+      storage.flush();
+
+      service.markRecordingHintShown();
+      storage.flush();
+
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        recordingHintShown: true,
+      });
+    });
+
     it('keeps "Save my matches" as switched before the storage answered', () => {
       const service = createWith({ saveMatches: true });
       const prefs = jest.spyOn(
