@@ -19,7 +19,9 @@ export DEBIAN_FRONTEND=noninteractive
   libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev xserver-xorg-dev \
   libgtk-4-1 libgraphene-1.0-dev; } || echo "apt install failed, gl will not build" >&2
 
-/opt/node24/bin/npm install -g firebase-tools || echo "firebase-tools install failed" >&2
+# npm starts through `env node`, which has to find Node 24, not the image's
+export PATH="/opt/node24/bin:$PATH"
+npm install -g firebase-tools || echo "firebase-tools install failed" >&2
 
-curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-cli-linux-x86_64.tar.gz \
+curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz \
   | tar -xz -C /opt || echo "gcloud install failed" >&2
