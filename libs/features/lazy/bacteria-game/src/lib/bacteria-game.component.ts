@@ -123,7 +123,6 @@ import { EvolutionService } from './evolution.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
 import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
-import { loadFonts } from './fonts';
 import {
   arenaSize,
   detailScale,
@@ -694,7 +693,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly pinch = new Pinch();
 
   constructor() {
-    loadFonts(document);
     this.gameStateService.reset();
     // A series lasts for a visit of the page: one left unfinished last time
     // does not carry over.
