@@ -2,7 +2,7 @@
   "rules": {
     "status": {
       "$uid": {
-        ".read": "auth != null",
+        ".read": "auth != null && (auth.uid === $uid || root.child('statusReaders').child($uid).child(auth.uid).exists())",
         ".write": "auth != null && auth.uid === $uid && (!newData.exists() || !root.child('bans').child($uid).exists() || (root.child('bans').child($uid).val() !== 0 && root.child('bans').child($uid).val() <= now))",
         ".validate": "newData.hasChildren(['state', 'at']) && (newData.child('state').val() === 'online' || newData.child('state').val() === 'playing') && newData.child('at').isNumber()",
         "state": { ".validate": true },
