@@ -8,6 +8,12 @@
     "build": {
       "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
+      "inputs": [
+        "sharedGlobals",
+        "production",
+        "^production",
+        "{workspaceRoot}/version.json"
+      ],
       "options": {
         "main": "apps/bacteria-wars-functions/src/main.ts",
         "outputPath": "dist/apps/bacteria-wars-functions",

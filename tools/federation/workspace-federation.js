@@ -67,6 +67,13 @@ function workspaceFederation(config) {
       // native `gl` addon and Node builtins. Bundled normally it picks up the
       // `browser` field (dist/gpu-browser.js) instead.
       'gpu.js',
+      // Sentry is started by an app's own bootstrap only - the shell
+      // (angular-examples) and the game on its own site, each with its own
+      // project - never by an exposed module, so each bundles its own copy.
+      // Shared, a remote that imports it only from its standalone bootstrap
+      // would lose it from the import map to `ignoreUnusedDeps` while its
+      // import stayed external.
+      '@sentry/angular',
       // Each remote owns its feature library and nothing else imports it.
       // Shared, it lands in the shell's import map too, and the shell's copy
       // wins: a release that only redeploys the remote keeps showing the copy
