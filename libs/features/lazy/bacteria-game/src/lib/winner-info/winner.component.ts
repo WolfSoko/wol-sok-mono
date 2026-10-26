@@ -41,6 +41,7 @@ import { xpClimb } from '../state/ranks';
 import { formatScore, rivalryScore, seriesWinner } from '../state/rivalry';
 import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
+import { ReplayNoteComponent } from '../replays/replay-note.component';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
 import { BOSS_SEAT, EndReason } from '../state/win-conditions';
@@ -63,7 +64,9 @@ export type MatchEndAction =
   // On to the next training mission.
   | 'mission'
   // From the training to the campaign, once the last mission is done.
-  | 'campaign';
+  | 'campaign'
+  // Watch the match just played again.
+  | 'watch';
 
 /**
  * The screen a match ends on: who won, and what to play next. It sits in the
@@ -80,6 +83,7 @@ export type MatchEndAction =
     MatIconModule,
     MatProgressBarModule,
     MedallionComponent,
+    ReplayNoteComponent,
     TranslatePipe,
   ],
   templateUrl: './winner.component.html',

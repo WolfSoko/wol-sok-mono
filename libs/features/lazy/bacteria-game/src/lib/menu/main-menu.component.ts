@@ -44,7 +44,8 @@ export type MenuPage =
   | 'settings'
   | 'help'
   | 'evolution'
-  | 'leaderboards';
+  | 'leaderboards'
+  | 'my-matches';
 
 /**
  * The landing screen of the game: the title, a new game - and the training

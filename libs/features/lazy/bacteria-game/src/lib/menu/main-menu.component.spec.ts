@@ -210,6 +210,15 @@ describe('MainMenuComponent', () => {
     expect(tile()).toBeUndefined();
   });
 
+  it('always offers My matches, with or without the cloud', () => {
+    const open = jest.fn();
+    fixture.componentInstance.open.subscribe(open);
+
+    button('My matches').click();
+
+    expect(open).toHaveBeenCalledWith('my-matches');
+  });
+
   it('speaks German, the campaign line included', () => {
     TestBed.inject(I18nService).setLanguage('de');
     fixture.componentRef.setInput('campaign', {

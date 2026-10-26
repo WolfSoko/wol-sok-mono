@@ -1,6 +1,7 @@
 import {
   atHourOf,
   dailyBoardId,
+  NOT_REPORTED,
   onlineSort,
   utcDay,
 } from '@wolsok/feat-lazy-bac-game/engine';
@@ -100,7 +101,7 @@ async function closeOne(
       expireAt: Timestamp.fromMillis(now + 31 * DAY_MS),
     });
     tx.update(replayRef, {
-      rankedReason: 'not-reported',
+      rankedReason: NOT_REPORTED,
       rankedAt: FieldValue.serverTimestamp(),
       closeAt: FieldValue.delete(),
     });

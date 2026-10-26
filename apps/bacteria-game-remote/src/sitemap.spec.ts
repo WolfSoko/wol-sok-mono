@@ -36,10 +36,19 @@ describe('sitemap of the game site', () => {
     const hidden = appRoutes.filter(
       (route) => route.data?.['noindex'] === true
     );
-    expect(hidden.map((route) => route.path)).toEqual(['admin']);
+    expect(hidden.map((route) => route.path)).toEqual([
+      'watch/:publicId',
+      'admin',
+    ]);
     for (const route of hidden) {
-      expect(robots).toContain(`Disallow: /${route.path}`);
-      expect(listed).not.toContain(`${GAME_SITE_URL}/${route.path}`);
+      // A route with a parameter is kept out by its prefix: `/watch/`.
+      const path = route.path ?? '';
+      const cut = path.indexOf('/:');
+      const prefix = cut === -1 ? path : path.slice(0, cut + 1);
+      expect(robots).toContain(`Disallow: /${prefix}`);
+      expect(
+        listed.some((url) => url.startsWith(`${GAME_SITE_URL}/${prefix}`))
+      ).toBe(false);
     }
   });
 });

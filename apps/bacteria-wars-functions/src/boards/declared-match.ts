@@ -1,6 +1,8 @@
 import {
+  type ArrivalReason,
   type Attempt,
   attemptSeed,
+  type DeclaredReason,
   declaredBeforeMatch,
   isRankedPlan,
   parseAttemptId,
@@ -22,24 +24,9 @@ import { isBanned } from '../limits';
  * against it, and the `rankedReason` the replay carries.
  */
 
-/** What {@link checkDeclaredMatch} finds. */
-export type DeclaredReason =
-  | 'counted'
-  | 'ruleset'
-  | 'seed'
-  | 'plan-mismatch'
-  | 'level'
-  | 'early'
-  | 'late';
-
-/** Why a ranked replay did (not) count - its `rankedReason`. */
-export type ArrivalReason =
-  | DeclaredReason
-  | 'banned'
-  | 'no-attempt'
-  | 'void'
-  | 'duplicate'
-  | 'unreadable';
+// What `checkDeclaredMatch` finds, and why a ranked replay did (not) count
+// - its `rankedReason`: the game's lists, which its texts follow.
+export type { ArrivalReason, DeclaredReason };
 
 /**
  * The checks every declared match passes, always against the stored

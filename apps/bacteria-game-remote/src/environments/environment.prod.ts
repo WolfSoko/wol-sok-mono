@@ -18,6 +18,10 @@ export const environment: Environment = {
       databaseURL:
         'https://bacteria-wars-default-rtdb.europe-west1.firebasedatabase.app',
     },
+    // The functions and the rules for recorded matches are deployed (ADR
+    // 0011): online matches, and local ones with "Save my matches", are
+    // uploaded and listed in "My matches".
+    replays: true,
   },
   // index.html loads AdSense and its consent banner. For ads on the menu
   // screens, add the display ad unit from AdSense:

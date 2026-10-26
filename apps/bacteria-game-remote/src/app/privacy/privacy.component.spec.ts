@@ -48,6 +48,8 @@ describe('PrivacyComponent', () => {
     const pairs = [
       ['de-profil', 'en-profile'],
       ['de-online', 'en-online'],
+      ['de-matches', 'en-matches'],
+      ['de-galerie', 'en-gallery'],
       ['de-bestenliste', 'en-leaderboard'],
       ['de-moderation', 'en-moderation'],
       ['de-grundlage', 'en-basis'],
@@ -105,6 +107,42 @@ describe('PrivacyComponent', () => {
     expect(de).toContain('übernimmt das Google-Konto den Fortschritt');
     expect(en).not.toContain('Your guest account becomes your Google account');
     expect(en).toContain('the Google account takes over the guest');
+  });
+
+  it("says the game records and uploads matches now, by the settings' labels", async () => {
+    const page = await open();
+    const de = page.querySelector('article[lang="de"]')?.textContent ?? '';
+    const en = page.querySelector('article[lang="en"]')?.textContent ?? '';
+
+    // The uploads started with cloud replays (ADR 0011).
+    expect(de).not.toContain('Das Spiel lädt sie nicht hoch');
+    expect(de).not.toContain('Das Spiel lädt keine Matches hoch');
+    expect(en).not.toContain('The game does not upload them');
+    expect(en).not.toContain('The game uploads no matches');
+    for (const label of [
+      'Matches gegen den Computer aufzeichnen',
+      'Meine Matches speichern',
+      'Meine Matches',
+    ]) {
+      expect(de).toContain(label);
+    }
+    for (const label of [
+      'Record matches against the computer',
+      'Save my matches',
+      'My matches',
+    ]) {
+      expect(en).toContain(label);
+    }
+    // Kept 30 days after saving, as the functions' REPLAY_TTL_MS.
+    expect(de).toContain('30 Tage nach dem Speichern');
+    expect(en).toContain('30 days after it was saved');
+    // A submission expires a day after the client wrote it (COMMAND_TTL_MS).
+    expect(de.replace(/\s+/g, ' ')).toContain(
+      'nicht innerhalb eines Tages nach dem Match hochladen'
+    );
+    expect(en.replace(/\s+/g, ' ')).toContain(
+      'cannot upload within a day after the match'
+    );
   });
 
   it('has its own title while open', async () => {

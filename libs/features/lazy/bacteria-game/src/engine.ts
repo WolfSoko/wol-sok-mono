@@ -90,7 +90,18 @@ export type {
   ReplayScore,
   ReplayScoreInput,
 } from './lib/state/replay-score';
-export { onlineReplayId } from './lib/state/replay-id';
+export { onlineReplayId, PUBLIC_ID } from './lib/state/replay-id';
+export {
+  ARRIVAL_REASONS,
+  DECLARED_REASONS,
+  NOT_REPORTED,
+  ONLINE_REASONS,
+} from './lib/state/replay-reasons';
+export type {
+  ArrivalReason,
+  DeclaredReason,
+  OnlineReason,
+} from './lib/state/replay-reasons';
 export { matchChecksum } from './lib/state/checksum';
 export { replayFromHash, replayLink } from './lib/state/replay-link';
 export { GhostController } from './lib/state/ghost';

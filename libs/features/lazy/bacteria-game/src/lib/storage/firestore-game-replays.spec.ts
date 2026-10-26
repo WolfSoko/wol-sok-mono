@@ -4,7 +4,11 @@ import { replayFromBytes } from '../state/replay-pack';
 import { onlineReplayId } from '../state/replay-id';
 import type { MatchPlan } from '../state/match-setup';
 import type { FirebaseConnection } from './firebase-connection';
-import { COMMAND_TTL_MS, FirestoreGameReplays } from './firestore-game-replays';
+import {
+  COMMAND_TTL_MS,
+  FirestoreGameReplays,
+  listingOf,
+} from './firestore-game-replays';
 
 const PLAN: MatchPlan = {
   levelId: 'petri-dish',
@@ -233,6 +237,7 @@ describe('FirestoreGameReplays', () => {
         winnerSeat: 0,
         hint: 40,
         state: 'submitted',
+        seat: 0,
       },
     ]);
   });
@@ -266,5 +271,178 @@ describe('FirestoreGameReplays', () => {
         replays.watchCommand(id as string).pipe(take(1), toArray())
       )
     ).toEqual([{ ok: true }]);
+  });
+
+  it('asks again while the rules refuse a command, then gives up with an error', async () => {
+    firestore.refused.add('replayCommands/c1');
+    jest.useFakeTimers();
+    try {
+      const seen: unknown[] = [];
+      const error = jest.fn();
+      const subscription = replays
+        .watchCommand('c1')
+        .subscribe({ next: (each) => seen.push(each), error });
+      expect(error).not.toHaveBeenCalled();
+
+      await jest.advanceTimersByTimeAsync(10 * 60_000);
+
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'permission-denied' })
+      );
+      expect(seen.every((each) => each === null)).toBe(true);
+      subscription.unsubscribe();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('completes watchSaved once it gives up', async () => {
+    firestore.refused.add('replays/l_y');
+    jest.useFakeTimers();
+    try {
+      const complete = jest.fn();
+      const subscription = replays
+        .watchSaved('l_y')
+        .subscribe({ complete, error: () => undefined });
+
+      await jest.advanceTimersByTimeAsync(10 * 60_000);
+
+      expect(complete).toHaveBeenCalled();
+      subscription.unsubscribe();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  describe('listingOf', () => {
+    const at = (ms: number) => new FakeTimestamp(ms);
+    const record = {
+      levelId: 'petri-dish',
+      balanceVersion: 3,
+      replayVersion: 5,
+      simulation: 'gpu-int',
+      ticks: 900,
+      endedBy: 'annihilation',
+      winnerSeat: 1,
+      checksum: 77,
+      hint: 55,
+      createdAt: at(1_000),
+      expireAt: at(1_000 + 30 * 86_400_000),
+      optOut: [],
+    };
+    const doc = (id: string, data: Record<string, unknown>) => ({
+      id,
+      data: () => data,
+    });
+
+    it("reads an online match with the player's seat and the board's word", () => {
+      const online = doc('o_1', {
+        ...record,
+        kind: 'online',
+        state: 'agreed',
+        players: ['host', 'guest'],
+        seats: ['host', 'guest'],
+        room: 'K7QPXM',
+        stubCreatedAt: at(900),
+        stubExpired: false,
+        rankedReason: 'counted',
+        rankedAt: at(2_000),
+        publicId: 'AbCdEfGhIjKlMnOpQrSt',
+      });
+
+      expect(listingOf(online, 'guest')).toEqual({
+        id: 'o_1',
+        kind: 'online',
+        levelId: 'petri-dish',
+        balanceVersion: 3,
+        replayVersion: 5,
+        createdAt: 1_000,
+        ticks: 900,
+        endedBy: 'annihilation',
+        winnerSeat: 1,
+        hint: 55,
+        state: 'agreed',
+        seat: 1,
+        rankedReason: 'counted',
+        publicId: 'AbCdEfGhIjKlMnOpQrSt',
+      });
+      expect(listingOf(online, 'host')?.seat).toBe(0);
+    });
+
+    it('takes the hourly sweep\'s "not reported"', () => {
+      const listing = listingOf(
+        doc('o_2', {
+          ...record,
+          kind: 'online',
+          state: 'waiting',
+          seats: [null, 'guest'],
+          stubExpired: true,
+          rankedReason: 'not-reported',
+        }),
+        'guest'
+      );
+
+      expect(listing).toMatchObject({
+        seat: 1,
+        rankedReason: 'not-reported',
+      });
+    });
+
+    it('reads a declared match, seat 0 against the computer', () => {
+      const listing = listingOf(
+        doc('l_1', {
+          ...record,
+          kind: 'daily',
+          state: 'submitted',
+          players: ['ada'],
+          attempt: { id: 'd_2026-10-25_1', at: 900 },
+          rankedReason: 'late',
+          submittedAt: at(1_100),
+          optOut: ['ada'],
+          galleryOut: true,
+        }),
+        'ada'
+      );
+
+      expect(listing).toMatchObject({
+        kind: 'daily',
+        seat: 0,
+        rankedReason: 'late',
+        galleryOut: true,
+      });
+    });
+
+    it('leaves out a reason of another board, and one it does not know', () => {
+      expect(
+        listingOf(
+          doc('l_2', {
+            ...record,
+            kind: 'computer',
+            state: 'submitted',
+            rankedReason: 'pair-cap',
+          }),
+          'ada'
+        )
+      ).not.toHaveProperty('rankedReason');
+      expect(
+        listingOf(
+          doc('o_3', {
+            ...record,
+            kind: 'online',
+            state: 'agreed',
+            seats: ['ada', 'bo'],
+            rankedReason: 'whatever',
+          }),
+          'ada'
+        )
+      ).not.toHaveProperty('rankedReason');
+    });
+
+    it('is null for a document it cannot read', () => {
+      expect(listingOf(doc('x', { ...record, kind: 'online' }), 'ada')).toBe(
+        null
+      );
+      expect(listingOf({ id: 'y', data: () => undefined }, 'ada')).toBeNull();
+    });
   });
 });

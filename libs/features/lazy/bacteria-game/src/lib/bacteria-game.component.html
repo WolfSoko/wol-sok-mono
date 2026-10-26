@@ -255,6 +255,18 @@
               (back)="show('menu')"
             />
           }
+          @case ("my-matches") {
+            <feat-lazy-bac-game-my-matches
+              class="screen"
+              (back)="show('menu')"
+            />
+          }
+          @case ("replay") {
+            <feat-lazy-bac-game-replay-screen
+              class="screen"
+              (back)="show('menu')"
+            />
+          }
           @case ("help") {
             <feat-lazy-bac-game-help
               class="screen"

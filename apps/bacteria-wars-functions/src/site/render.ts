@@ -278,6 +278,7 @@ export function replayPage(lang: Lang, view: ReplayView): string {
     `<h1>${text(lang, 'matchOfTheDay')}: ${escapeHtml(level)}</h1>
 <p>${playersLine(lang, view)}</p>
 <p><strong>${escapeHtml(result(lang, view, true))}</strong></p>
+<p><a class="button" href="${escapeHtml(`/watch/${view.id}`)}">${text(lang, 'watch')}</a></p>
 <dl><dt>${text(lang, 'length')}</dt><dd>${length(view.ticks)}</dd>${ending}<dt>${text(lang, 'score')}</dt><dd>${view.score} ${badges(lang, view.reasons)}</dd></dl>
 ${timeline(lang, view)}
 <p><a href="${href('/replays', lang)}">${text(lang, 'back')}</a></p>`

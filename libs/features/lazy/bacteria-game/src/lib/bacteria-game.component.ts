@@ -79,6 +79,8 @@ import { MainMenuComponent } from './menu/main-menu.component';
 import { DailyCard } from './menu/menu-cards';
 import { FriendsScreenComponent } from './menu/friends-screen.component';
 import { LeaderboardsComponent } from './boards/leaderboards.component';
+import { MyMatchesComponent } from './replays/my-matches.component';
+import { ReplayScreenComponent } from './replays/replay-screen.component';
 import { HelpComponent } from './menu/help.component';
 import { EvolutionComponent } from './menu/evolution.component';
 import { ProfileComponent } from './menu/profile.component';
@@ -120,9 +122,9 @@ import {
   FriendView,
   SocialService,
 } from './social/social.service';
+import { arenaContent, SeatColors } from './arena/arena-content';
 import { Camera, CameraShake } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
-import { particleBudget } from './arena/weapon-fx';
 import type { WeaponFire } from './state/evolution';
 import { GameHapticsService } from './haptics.service';
 import { GameSoundService, Soundtrack } from './sound/game-sound.service';
@@ -160,7 +162,7 @@ import { DynamicWall, Rect } from './state/maps';
 import { harvestTarget, holdTarget } from './state/win-conditions';
 import { MissionId } from './state/training';
 import { mapZones, Zone } from './state/zones';
-import { isBoosted, Player } from './state/player.model';
+import { Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
 import { PlayerService } from './state/player.service';
 import {
@@ -212,6 +214,8 @@ interface HudGoal {
     HelpComponent,
     FriendsScreenComponent,
     LeaderboardsComponent,
+    MyMatchesComponent,
+    ReplayScreenComponent,
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
@@ -268,9 +272,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** The view the ambience was last drawn still for - nothing to redraw while it holds. */
   private stillAmbience: Rect | null = null;
   /** The skin the colonies wear: the look picked, once the player owns it. */
-  private readonly skin = computed(() =>
-    this.evolution.wornSkin(this.settings.look())
-  );
+  private readonly skin = this.evolution.worn;
 
   /**
    * The arena on its canvas. A new resolution gets a new canvas - see
@@ -294,7 +296,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** The shake of the view as a weapon goes off - on every map. */
   private readonly shake = new CameraShake();
   /** Each seat's colony colour - built anew only when a match's colours do. */
-  private seatColors = new Map<number, readonly number[]>();
+  private readonly seatColors = new SeatColors();
   /** The weapons fired since the frame before, for the next frame's content. */
   private pendingFires: readonly WeaponFire[] = [];
   /** Where the camera stands without the shake - what the minimap frames. */
@@ -975,9 +977,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         ? 'new-game'
         : action === 'evolve'
           ? 'evolution'
-          : 'menu'
+          : action === 'watch'
+            ? 'replay'
+            : 'menu'
     );
-    if (action === 'menu' || action === 'evolve') {
+    if (action === 'menu' || action === 'evolve' || action === 'watch') {
       this.gameStateService.endSeries();
       this.gameStateService.leaveOnline();
     }
@@ -1564,17 +1568,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** What the arena shows right now, for the painter. */
   private content(alpha: number): ArenaContent {
-    const balance = this.balance();
-    const players = untracked(this.playerStore.entities);
-    const drawn = players.map((player) => ({
-      player,
-      at: this.playerService.crosshairAt(player, alpha),
-    }));
-    const boosts = new Map(
-      drawn
-        .filter(({ player }) => isBoosted(player))
-        .map(({ player, at }) => [player.id, at])
-    );
     const simulation = this.playerService.getSimulation();
     // Which processor runs the war - for the e2e tests and for debugging.
     // The match picks it, so it can fall back to the CPU after a GPU error.
@@ -1582,30 +1575,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (dataset != null && dataset['simulation'] !== simulation.kind) {
       dataset['simulation'] = simulation.kind;
     }
-    return {
+    return arenaContent({
+      players: untracked(this.playerStore.entities),
+      crosshairAt: (player) => this.playerService.crosshairAt(player, alpha),
+      simulation,
       walls: this.walls(),
-      dynamicWalls: this.playerService.getDynamicWalls(),
-      colonies: simulation.colonyLayers(boosts),
-      reducedMotion: this.reducedMotion(),
-      nutrients: this.playerService.getNutrients(),
-      balance,
+      balance: this.balance(),
       look: this.skin(),
-      cursors: drawn.map(({ player, at }) => ({
-        ...at,
-        color: player.color,
-        boostLeft:
-          isBoosted(player) && balance.boostDurationSec > 0
-            ? player.boostActiveSec / balance.boostDurationSec
-            : null,
-      })),
+      reducedMotion: this.reducedMotion(),
       weaponFires: this.takeFires(),
-      weaponEffects: this.playerService.getActiveEffects(),
-      seatColors: this.seatColorsOf(players),
-      particleBudget: particleBudget(
-        this.settings.screenResolution(),
-        this.reducedMotion()
-      ),
-    };
+      seatColors: this.seatColors,
+      screenResolution: this.settings.screenResolution(),
+    });
   }
 
   /** The weapons fired since the frame before - each goes into one frame. */
@@ -1623,25 +1604,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return this.matchPaints()
       ? this.shake.shake(camera, width, height)
       : camera;
-  }
-
-  /**
-   * The seats' colours for the painter: a match keeps its colours, so the
-   * map of the frame before is handed on until one of them is another.
-   */
-  private seatColorsOf(
-    players: readonly Player[]
-  ): ReadonlyMap<number, readonly number[]> {
-    const known = this.seatColors;
-    if (
-      known.size !== players.length ||
-      players.some((player) => known.get(player.id) !== player.color)
-    ) {
-      this.seatColors = new Map(
-        players.map((player) => [player.id, player.color])
-      );
-    }
-    return this.seatColors;
   }
 
   ngOnDestroy(): void {
@@ -1973,7 +1935,10 @@ export type MenuScreen =
   | 'settings'
   | 'help'
   | 'evolution'
-  | 'leaderboards';
+  | 'leaderboards'
+  | 'my-matches'
+  // The match just played, watched again from its result.
+  | 'replay';
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;

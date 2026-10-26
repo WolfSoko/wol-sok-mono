@@ -126,6 +126,10 @@
           {{ "boards.title" | t }}
         </button>
       }
+      <button type="button" class="tile" (click)="open.emit('my-matches')">
+        <mat-icon>smart_display</mat-icon>
+        {{ "replay.matches.title" | t }}
+      </button>
       <button type="button" class="tile" (click)="open.emit('settings')">
         <mat-icon>tune</mat-icon>
         {{ "settings.title" | t }}

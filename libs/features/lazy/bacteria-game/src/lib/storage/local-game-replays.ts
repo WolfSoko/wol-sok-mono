@@ -1,6 +1,7 @@
 import { map, Observable, of } from 'rxjs';
 import { dailyLevelId, utcDay } from '../state/daily';
 import { isObject } from '../state/is-object';
+import { fromBase64, toBase64 } from '../state/base64';
 import { MAX_PACKED_BYTES, replayToBytes } from '../state/replay-pack';
 import type { GameReplays } from './game-replays';
 import type { GameStorage } from './game-storage';
@@ -25,10 +26,17 @@ export const MAX_LOCAL_REPLAYS = 20;
  */
 export const MAX_LOCAL_REPLAY_CHARS = 1_000_000;
 
-/** A replay this device keeps: its listing and its bytes, base64. */
-export interface LocalReplay extends ReplayListing {
+/**
+ * A replay this device keeps: its listing and its bytes, base64. It keeps
+ * no seat: without a project there are no online matches, and against the
+ * computer the player is seat 0, which {@link parseLocalReplays} adds.
+ */
+export interface LocalReplay extends Omit<ReplayListing, 'seat'> {
   bytes: string;
 }
+
+/** A kept replay as read back, with its seat. */
+export type KeptReplay = LocalReplay & Pick<ReplayListing, 'seat'>;
 
 /**
  * The player's recorded matches without a project, or while the project
@@ -38,6 +46,7 @@ export interface LocalReplay extends ReplayListing {
  * project. Nothing checks them; they are `submitted` for good.
  */
 export class LocalGameReplays implements GameReplays {
+  public readonly cloud = false;
   private readonly commands = new Map<string, ReplayCommandResult>();
   private nextId = 0;
 
@@ -127,7 +136,7 @@ export class LocalGameReplays implements GameReplays {
   }
 
   /** The kept replays, once the storage answered. */
-  private read(): Promise<LocalReplay[]> {
+  private read(): Promise<KeptReplay[]> {
     return new Promise((resolve) => {
       const subscription = this.storage
         .watch(LOCAL_REPLAYS_KEY)
@@ -144,11 +153,14 @@ export class LocalGameReplays implements GameReplays {
  * The kept replays as stored, newest first - the entries it can read, the
  * rest dropped.
  */
-export function parseLocalReplays(stored: unknown): LocalReplay[] {
+export function parseLocalReplays(stored: unknown): KeptReplay[] {
   if (!Array.isArray(stored)) {
     return [];
   }
-  return stored.filter(isLocalReplay).sort((a, b) => b.createdAt - a.createdAt);
+  return stored
+    .filter(isLocalReplay)
+    .map((replay) => ({ ...replay, seat: 0 }))
+    .sort((a, b) => b.createdAt - a.createdAt);
 }
 
 function isLocalReplay(value: unknown): value is LocalReplay {
@@ -192,25 +204,4 @@ function kindOf(levelId: string, online: boolean, at: number): ReplayKind {
     return 'online';
   }
   return levelId === dailyLevelId(utcDay(new Date(at))) ? 'daily' : 'computer';
-}
-
-function toBase64(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  }
-  return btoa(binary);
-}
-
-function fromBase64(text: string): Uint8Array<ArrayBuffer> | null {
-  try {
-    const binary = atob(text);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-  } catch {
-    return null;
-  }
 }
