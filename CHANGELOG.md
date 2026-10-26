@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.115.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.114.0...v74.115.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-game:** offer guests the sign-in and tell them of the 90-day deletion ([#2692](https://github.com/WolfSoko/wol-sok-mono/issues/2692)) ([22fcab9](https://github.com/WolfSoko/wol-sok-mono/commit/22fcab9b5c7e0408c49513376421c097c737523e))
+
 ## [74.114.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.113.1...v74.114.0) (2026-10-26)
 
 ### Features
