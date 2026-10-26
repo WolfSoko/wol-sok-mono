@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.116.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.0...v74.116.1) (2026-10-26)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-wars-admin:** 🐛 the curation and the overview's history order by a field, not the document id ([#2695](https://github.com/WolfSoko/wol-sok-mono/issues/2695)) ([78a01f7](https://github.com/WolfSoko/wol-sok-mono/commit/78a01f78fb2609f4cdb994e961fc98dbd5fd9a46))
+
 ## [74.116.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.115.0...v74.116.0) (2026-10-26)
 
 ### Features
