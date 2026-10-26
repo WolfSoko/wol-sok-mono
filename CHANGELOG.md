@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.108.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.107.0...v74.108.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ranked daily attempts, ranked endless runs and the ban banner ([#2680](https://github.com/WolfSoko/wol-sok-mono/issues/2680)) ([c14ba3b](https://github.com/WolfSoko/wol-sok-mono/commit/c14ba3b0842e43895e0173de5a4684d52a442aa8))
+
 ## [74.107.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.106.0...v74.107.0) (2026-10-26)
 
 ### Features
