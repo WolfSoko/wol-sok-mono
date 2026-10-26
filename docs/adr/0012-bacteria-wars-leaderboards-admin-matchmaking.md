@@ -1447,6 +1447,9 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      agree. The admin link in
      the main menu and the client's ban handling go with the game lib's
      client release.
+   - With every view shipped, `featureBest` is on (`FEATURE_BEST_ON`,
+     2026-10-26). Signing in and running `stats.recount` once are the
+     owner's.
 
 ## Owner's decisions
 
