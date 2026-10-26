@@ -12,6 +12,12 @@ describe('GuestNotice', () => {
   let account: FakeGameAccount;
   let device: LateGameStorage;
 
+  /** Noon, so the day before is a calendar day before, clock changes or not. */
+  const NOW = new Date(2026, 9, 26, 12).getTime();
+
+  beforeEach(() => jest.spyOn(Date, 'now').mockReturnValue(NOW));
+  afterEach(() => jest.restoreAllMocks());
+
   function start(stored?: Partial<GuestVisits>): GuestNotice {
     TestBed.resetTestingModule();
     account = new FakeGameAccount();
@@ -39,17 +45,17 @@ describe('GuestNotice', () => {
     return value;
   }
 
-  const yesterday = () => ({
-    lastDay: localDay(Date.now() - DAY_MS),
-    lastAt: Date.now() - DAY_MS,
-  });
+  const yesterday = () => {
+    const at = new Date(2026, 9, 25, 12).getTime();
+    return { lastDay: localDay(at), lastAt: at };
+  };
 
   it('counts the day the game was opened', () => {
     start();
 
     expect(storedVisits()).toMatchObject({
       days: 1,
-      lastDay: localDay(Date.now()),
+      lastDay: '2026-10-26',
     });
   });
 
@@ -88,8 +94,8 @@ describe('GuestNotice', () => {
     const notice = start({
       days: 1,
       lastDay: '2026-01-01',
-      lastAt: Date.now() - 40 * DAY_MS,
-      dismissedAt: Date.now() - 40 * DAY_MS,
+      lastAt: NOW - 40 * DAY_MS,
+      dismissedAt: NOW - 40 * DAY_MS,
     });
 
     expect(notice.cameBack()).toBe(true);

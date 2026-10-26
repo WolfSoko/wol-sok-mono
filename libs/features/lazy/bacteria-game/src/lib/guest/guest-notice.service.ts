@@ -62,12 +62,15 @@ export class GuestNotice {
           return;
         }
         counted = true;
-        const { visits, cameBack } = withVisit(stored, Date.now());
+        const now = Date.now();
+        const { visits, cameBack } = withVisit(stored, now);
         this.cameBack.set(cameBack);
-        if (visits === stored) {
-          this.visits.set(stored);
-        } else {
-          this.save(visits);
+        this.visits.set(visits);
+        if (visits !== stored) {
+          this.storage.update(
+            GUEST_NOTICE_KEY,
+            (latest) => withVisit(parseGuestVisits(latest), now).visits
+          );
         }
       });
   }
@@ -82,19 +85,17 @@ export class GuestNotice {
     this.change({ successHintShown: true });
   }
 
-  private change(part: Partial<GuestVisits>): void {
-    const visits = this.visits();
-    if (visits !== undefined) {
-      this.save({ ...visits, ...part });
-    }
-  }
-
   /**
-   * Keeps the visits here as well, since the local storage tells only
-   * other tabs of a write.
+   * Changes the visits here as well, since the local storage tells only
+   * other tabs of a change - and in the storage on what it holds by then,
+   * so another tab's change stays.
    */
-  private save(visits: GuestVisits): void {
-    this.visits.set(visits);
-    this.storage.write(GUEST_NOTICE_KEY, visits);
+  private change(part: Partial<GuestVisits>): void {
+    if (this.visits() === undefined) return;
+    this.visits.update((visits) => visits && { ...visits, ...part });
+    this.storage.update(GUEST_NOTICE_KEY, (latest) => ({
+      ...parseGuestVisits(latest),
+      ...part,
+    }));
   }
 }
