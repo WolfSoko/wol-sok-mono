@@ -984,6 +984,47 @@ describe('the room stub', () => {
   });
 });
 
+describe('the friend lists', () => {
+  const at = () => ({ at: serverTimestamp() });
+  const since = () => ({ since: serverTimestamp() });
+
+  it('take a friend, a request and a challenge keyed by uids', async () => {
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'players/ada/friends/bob'), since())
+    );
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'players/bob/requests/ada'), at())
+    );
+    await seed('players/bob/friends/ada', { since: Timestamp.now() });
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'players/bob/challenges/ada'), {
+        code: 'ABC234',
+        at: serverTimestamp(),
+        expireAt: Timestamp.fromMillis(Date.now() + HOUR / 2),
+      })
+    );
+  });
+
+  it('refuse an id the Realtime Database mirror cannot take as a key', async () => {
+    for (const bad of ['b.b', 'b#b', 'b$b', 'b[b', 'b]b', 'b-b']) {
+      await assertFails(
+        setDoc(doc(db('ada'), `players/ada/friends/${bad}`), since())
+      );
+      await assertFails(
+        setDoc(doc(db('ada'), `players/${bad}/requests/ada`), at())
+      );
+      await seed(`players/${bad}/friends/ada`, { since: Timestamp.now() });
+      await assertFails(
+        setDoc(doc(db('ada'), `players/${bad}/challenges/ada`), {
+          code: 'ABC234',
+          at: serverTimestamp(),
+          expireAt: Timestamp.fromMillis(Date.now() + HOUR / 2),
+        })
+      );
+    }
+  });
+});
+
 describe('a ban', () => {
   /** A write each client path allows, by `uid`. */
   const writes: Record<string, (uid: string) => Promise<void>> = {
