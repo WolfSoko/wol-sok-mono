@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.110.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.109.1...v74.110.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-game:** dress the computer by its level, the boss in an eclipse ([#2685](https://github.com/WolfSoko/wol-sok-mono/issues/2685)) ([6ae3004](https://github.com/WolfSoko/wol-sok-mono/commit/6ae300429fbb6e826f1ec186e46ff02c7c090f0f))
+
 ## [74.109.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.109.0...v74.109.1) (2026-10-26)
 
 ### Performance
