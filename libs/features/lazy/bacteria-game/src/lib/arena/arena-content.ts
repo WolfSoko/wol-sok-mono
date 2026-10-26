@@ -8,7 +8,8 @@ import type { Point } from '../state/geometry';
 import type { Rect } from '../state/maps';
 import { isBoosted, type Player } from '../state/player.model';
 import type { Simulation } from '../state/simulation';
-import type { BacteriaLook } from '../state/skins';
+import { NEUTRAL_LOOK } from '../state/colony-looks';
+import type { ColonyLook } from '../state/skins';
 import type { ArenaContent } from './arena-view.component';
 import { particleBudget } from './weapon-fx';
 
@@ -20,7 +21,11 @@ export interface ArenaSource {
   simulation: Simulation;
   walls: readonly Rect[];
   balance: GameBalance;
-  look: BacteriaLook;
+  /**
+   * The look of each seat's colony, in seat order (`seatLooks`). The
+   * colonies behind the seats are the neutral ones, in {@link NEUTRAL_LOOK}.
+   */
+  looks: readonly ColonyLook[];
   reducedMotion: boolean;
   /** The weapons fired since the frame before. */
   weaponFires: readonly WeaponFire[];
@@ -44,11 +49,13 @@ export function arenaContent(source: ArenaSource): ArenaContent {
   return {
     walls: source.walls,
     dynamicWalls: simulation.getDynamicWalls(),
-    colonies: simulation.colonyLayers(boosts),
+    colonies: simulation.colonyLayers(boosts).map((layer, seat) => ({
+      ...layer,
+      look: source.looks[seat] ?? NEUTRAL_LOOK,
+    })),
     reducedMotion,
     nutrients: simulation.getNutrients(),
     balance,
-    look: source.look,
     cursors: drawn.map(({ player, at }) => ({
       ...at,
       color: player.color,

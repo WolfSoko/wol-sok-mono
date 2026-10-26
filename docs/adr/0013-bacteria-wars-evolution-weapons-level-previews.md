@@ -60,6 +60,17 @@ time the pick is trusted, so the dish does not flicker to the slime on every
 start - but not after another player takes over, whose storage says what
 they own.
 
+Only the humans' colonies wear the skin (added 2026-10-26). Each colony of
+a frame carries its own look (`PaintedColony`, chosen by seat in
+`state/colony-looks.ts`): the computer's dresses by its level - the plain
+slime on the first, then the skins to buy in the gallery's order at the
+level's `ladderPosition`, the same place that sets its skill, so a
+generated level dresses it by its heat - and a boss wears the eclipse, a
+look no skin offers, so it cannot be bought or picked (`BossLook`, outside
+`SKINS`). A ghost race has no boss, and a replay never is one. Neutral
+colonies stay slime. The Canvas painter draws the pixel colonies on a crisp
+layer of their own under the density looks' smooth one.
+
 ### Where evolution plays
 
 Only in matches against the computer on the campaign's ladder and on

@@ -1,7 +1,8 @@
 import { gameBalance } from '../state/game-balance';
 import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
-import { BACTERIA_LOOKS, BacteriaLook } from '../state/skins';
+import { BOSS_LOOK } from '../state/colony-looks';
+import { BACTERIA_LOOKS, BacteriaLook, ColonyLook } from '../state/skins';
 import { COLONY_COLORS } from '../state/colony-colors';
 
 import {
@@ -44,7 +45,7 @@ function slime(
   bacterias: Bacteria[],
   shimmerTimeSec: number | null = null,
   view: Rect = WHOLE,
-  look: Exclude<BacteriaLook, 'pixels'> = 'slime',
+  look: Exclude<ColonyLook, 'pixels'> = 'slime',
   timeSec = 0
 ) {
   const target: Point = { x: 30, y: 10 };
@@ -88,7 +89,7 @@ function slime(
 }
 
 /** Every look's pixels inside and outside a colony. */
-function withLook(look: Exclude<BacteriaLook, 'pixels'>) {
+function withLook(look: Exclude<ColonyLook, 'pixels'>) {
   const data = slime(blob(20, 10, 6), null, WHOLE, look);
   return { data, inside: pixelsWithin(data, 20, 10, 4) };
 }
@@ -191,11 +192,17 @@ describe('paintCells', () => {
   });
 });
 
-/** Every look drawn from the density, the slime with its own tests above. */
-const DENSITY_LOOKS = BACTERIA_LOOKS.filter(
-  (look): look is Exclude<BacteriaLook, 'pixels' | 'slime'> =>
-    look !== 'pixels' && look !== 'slime'
-);
+/**
+ * Every look drawn from the density - the skins, the slime with its own
+ * tests above, and the boss's.
+ */
+const DENSITY_LOOKS: readonly Exclude<ColonyLook, 'pixels' | 'slime'>[] = [
+  ...BACTERIA_LOOKS.filter(
+    (look): look is Exclude<BacteriaLook, 'pixels' | 'slime'> =>
+      look !== 'pixels' && look !== 'slime'
+  ),
+  BOSS_LOOK,
+];
 
 describe.each(DENSITY_LOOKS)('the %s look', (look) => {
   it('covers a colony in its colour and leaves the floor around it clear', () => {

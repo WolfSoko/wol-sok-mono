@@ -143,6 +143,7 @@ import {
   SocialService,
 } from './social/social.service';
 import { arenaContent, SeatColors } from './arena/arena-content';
+import { matchLooks, seatLooks } from './state/colony-looks';
 import { Camera, CameraShake } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
 import type { WeaponFire } from './state/evolution';
@@ -304,8 +305,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private ambience: DishAmbience | null = null;
   /** The view the ambience was last drawn still for - nothing to redraw while it holds. */
   private stillAmbience: Rect | null = null;
-  /** The skin the colonies wear: the look picked, once the player owns it. */
+  /** The skin the player's colony wears: the look picked, once owned. */
   private readonly skin = this.evolution.worn;
+  /**
+   * What the colonies of the match wear: the humans the skin, the computer
+   * the look of its level, the boss its own - not a ghost, which is no boss.
+   */
+  private readonly looks = computed(() =>
+    matchLooks(this.level().id, this.skin(), this.store.ghost() !== null)
+  );
 
   /**
    * The arena on its canvas. A new resolution gets a new canvas - see
@@ -1766,13 +1774,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (dataset != null && dataset['simulation'] !== simulation.kind) {
       dataset['simulation'] = simulation.kind;
     }
+    const players = untracked(this.playerStore.entities);
     return arenaContent({
-      players: untracked(this.playerStore.entities),
+      players,
       crosshairAt: (player) => this.playerService.crosshairAt(player, alpha),
       simulation,
       walls: this.walls(),
       balance: this.balance(),
-      look: this.skin(),
+      looks: seatLooks(players, this.looks()),
       reducedMotion: this.reducedMotion(),
       weaponFires: this.takeFires(),
       seatColors: this.seatColors,

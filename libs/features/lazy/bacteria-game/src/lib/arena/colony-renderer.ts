@@ -1,4 +1,4 @@
-import { BacteriaLook } from '../state/skins';
+import type { ColonyLook } from '../state/skins';
 import { Nutrient } from '../state/bacteria-simulation';
 import { GameBalance, gameBalance } from '../state/game-balance';
 import {
@@ -23,7 +23,7 @@ import {
   valueNoise,
 } from './canvas-math';
 
-import type { ColonyLayer } from '../state/simulation';
+import type { PaintedColony } from './arena-painter';
 
 export type { CellsLayer, ColonyLayer, StateLayer } from '../state/simulation';
 
@@ -388,6 +388,14 @@ export interface LookDescription {
  * (`CHROME_RELIEF` per cell of density) and ripples inside, and mirrors a
  * sky: bright above the horizon, the colony's colour at it, dark below,
  * with the highlight and a bright fresnel rim.
+ *
+ * Eclipse, the boss's: a black body in `ECLIPSE_BODY` of the colour that
+ * swallows the light, veined where a slowly flowing noise `ECLIPSE_SCALE`
+ * base cells wide crosses its middle, the veins glowing with a heartbeat
+ * of `ECLIPSE_PULSE`; a corona blazing along the rim, its limb fading in
+ * over `ECLIPSE_LIMB_END` of density, and flares licking out past the
+ * edge where a noise rolling around the colony runs above
+ * `ECLIPSE_FLARE_FROM`.
  */
 export const LOOK_TUNING = {
   LIGHT_X,
@@ -554,6 +562,23 @@ export const LOOK_TUNING = {
   DNA_ORBIT_VARY: 0.4,
   DNA_DRIFT: 0.2,
   DNA_SPIN: 0.4,
+  ECLIPSE_SCALE: 7,
+  ECLIPSE_FLOW: 0.15,
+  ECLIPSE_VEIN: 0.045,
+  ECLIPSE_VEIN_GLOW: 0.7,
+  ECLIPSE_PULSE: 2.5,
+  ECLIPSE_BODY: 0.1,
+  ECLIPSE_LIGHT: 0.55,
+  ECLIPSE_RIM: 1,
+  ECLIPSE_LIMB: 0.6,
+  ECLIPSE_LIMB_END: 0.5,
+  ECLIPSE_FLARE_SCALE: 3,
+  ECLIPSE_FLARE_SPEED: 0.6,
+  ECLIPSE_FLARE_FROM: 0.45,
+  ECLIPSE_FLARE_TO: 0.8,
+  ECLIPSE_FLARE_BASE: 0.35,
+  ECLIPSE_FLARE: 1,
+  ECLIPSE_ALPHA: 0.97,
 } as const;
 
 const {
@@ -695,6 +720,23 @@ const {
   CHROME_SHINE_STRENGTH,
   CHROME_FRESNEL,
   CHROME_ALPHA,
+  ECLIPSE_SCALE,
+  ECLIPSE_FLOW,
+  ECLIPSE_VEIN,
+  ECLIPSE_VEIN_GLOW,
+  ECLIPSE_PULSE,
+  ECLIPSE_BODY,
+  ECLIPSE_LIGHT,
+  ECLIPSE_RIM,
+  ECLIPSE_LIMB,
+  ECLIPSE_LIMB_END,
+  ECLIPSE_FLARE_SCALE,
+  ECLIPSE_FLARE_SPEED,
+  ECLIPSE_FLARE_FROM,
+  ECLIPSE_FLARE_TO,
+  ECLIPSE_FLARE_BASE,
+  ECLIPSE_FLARE,
+  ECLIPSE_ALPHA,
 } = LOOK_TUNING;
 
 /**
@@ -745,7 +787,7 @@ function cellsReach({ spacing, radius, min, vary }: LatticeCells): number {
 /** A facet strayed from its lattice point and filled to the next centre. */
 const TILES_REACH = latticeReach(TILE_SPACING * (0.5 + CRYSTAL_JITTER));
 
-export const LOOKS: Readonly<Record<BacteriaLook, LookDescription>> = {
+export const LOOKS: Readonly<Record<ColonyLook, LookDescription>> = {
   slime: { fromDensity: true, reach: 0, glIndex: 0 },
   pixels: { fromDensity: false, reach: 0, glIndex: 1 },
   cells: {
@@ -779,10 +821,11 @@ export const LOOKS: Readonly<Record<BacteriaLook, LookDescription>> = {
   galaxy: { fromDensity: true, reach: 0, glIndex: 10 },
   plasma: { fromDensity: true, reach: 0, glIndex: 11 },
   chrome: { fromDensity: true, reach: 0, glIndex: 12 },
+  eclipse: { fromDensity: true, reach: 0, glIndex: 13 },
 };
 
 /** How many cells past the colony a look reaches on a grid of that unit. */
-export function lookReach(look: BacteriaLook, unit: number): number {
+export function lookReach(look: ColonyLook, unit: number): number {
   return Math.ceil(LOOKS[look].reach * unit);
 }
 
@@ -2183,9 +2226,84 @@ const paintSlimeLook: LookPainter = (
   region
 ) => paintSlime(data8, density, heat, width, height, color, shimmer, region);
 
+/**
+ * The eclipse look, the boss's: a black body that swallows the light, with
+ * veins pulsing faintly in the colony's colour where a slowly flowing noise
+ * crosses its middle, and a corona blazing along the rim - the limb fading
+ * in from it, and flares licking out past the edge where a noise rolling
+ * around the colony runs high.
+ */
+export const paintEclipse: LookPainter = (
+  data8,
+  density,
+  heat,
+  width,
+  height,
+  color,
+  shimmer,
+  unit,
+  region,
+  _latticeRegion,
+  timeSec
+) => {
+  const { rgb } = lookPalette(color);
+  const hot = mix(rgb, WHITE, ECLIPSE_LIGHT);
+  const scale = 1 / (ECLIPSE_SCALE * unit);
+  const flareScale = 1 / (ECLIPSE_FLARE_SCALE * unit);
+  const flow = timeSec * ECLIPSE_FLOW;
+  const roll = timeSec * ECLIPSE_FLARE_SPEED;
+  paintLook(
+    data8,
+    density,
+    heat,
+    width,
+    height,
+    shimmer,
+    region,
+    0.005,
+    (x, y, d, out) => {
+      const coverage = smoothstep(SLIME_EDGE_START, SLIME_EDGE_END, d);
+      const rim = coverage * (1 - coverage) * 4;
+      const limb =
+        (1 - smoothstep(SLIME_EDGE_END, ECLIPSE_LIMB_END, d)) *
+        coverage *
+        ECLIPSE_LIMB;
+      const tongue = smoothstep(
+        ECLIPSE_FLARE_FROM,
+        ECLIPSE_FLARE_TO,
+        fbm(x * flareScale + roll, y * flareScale - roll * 0.7, 61)
+      );
+      const flare =
+        smoothstep(0, SLIME_EDGE_START, d) *
+        (1 - coverage) *
+        (ECLIPSE_FLARE_BASE + (1 - ECLIPSE_FLARE_BASE) * tongue) *
+        ECLIPSE_FLARE;
+      const alpha = Math.max(coverage * ECLIPSE_ALPHA, flare);
+      if (alpha <= 0) {
+        return 0;
+      }
+      const corona = Math.min(1, rim * ECLIPSE_RIM + limb + flare);
+      const n = fbm(x * scale + flow, y * scale - flow * 0.5, 59);
+      const pulse = 0.5 + 0.5 * Math.sin(timeSec * ECLIPSE_PULSE + n * 6);
+      const veins =
+        crack(n, 0.5, ECLIPSE_VEIN) *
+        coverage *
+        ECLIPSE_VEIN_GLOW *
+        (0.35 + 0.65 * pulse);
+      for (let c = 0; c < 3; c++) {
+        out[c] = Math.min(
+          255,
+          rgb[c] * ECLIPSE_BODY * coverage + hot[c] * corona + rgb[c] * veins
+        );
+      }
+      return alpha;
+    }
+  );
+};
+
 /** The painter of every look drawn from the density. */
 const DENSITY_PAINTERS: Readonly<
-  Record<Exclude<BacteriaLook, 'pixels'>, LookPainter>
+  Record<Exclude<ColonyLook, 'pixels'>, LookPainter>
 > = {
   slime: paintSlimeLook,
   cells: paintCells,
@@ -2199,11 +2317,12 @@ const DENSITY_PAINTERS: Readonly<
   galaxy: paintGalaxy,
   plasma: paintPlasma,
   chrome: paintChrome,
+  eclipse: paintEclipse,
 };
 
 /** Paints a colony in a look drawn from its density - see {@link LookPainter}. */
 export const paintColony = (
-  look: Exclude<BacteriaLook, 'pixels'>,
+  look: Exclude<ColonyLook, 'pixels'>,
   ...args: Parameters<LookPainter>
 ): void => DENSITY_PAINTERS[look](...args);
 
@@ -2324,16 +2443,76 @@ export function drawJam(
 }
 
 /**
- * Draws the colonies into an offscreen layer and hands it back, ready to be
- * drawn over the floor: one pixel per bacterium for the pixel look, and
- * every other look from the colony's density - smooth slime, cells, tiles,
- * neon or ink. The buffers are kept between frames.
+ * A layer of colonies for the canvas, ready to be drawn over the floor:
+ * the looks drawn from the density at {@link SLIME_SCALE} pixels per
+ * cell, scaled up smoothly, or the crisp pixels, one per cell.
  */
-export class ColonyRenderer {
+export interface ColonyImage {
+  canvas: HTMLCanvasElement;
+  /** True for the layer drawn from the density - scale it up smoothly. */
+  smooth: boolean;
+}
+
+/** An offscreen layer of the arena, made the first time it is drawn on. */
+class ColonyBuffer {
   private canvas: HTMLCanvasElement | null = null;
   private context: CanvasRenderingContext2D | null = null;
   private image: ImageData | null = null;
-  private scale = 0;
+
+  public constructor(
+    private readonly width: number,
+    private readonly height: number,
+    /** Pixels per arena cell. */
+    private readonly scale: number
+  ) {}
+
+  /** The layer's pixels, cleared for a frame - null where there is no canvas. */
+  public clear(): Uint8ClampedArray | null {
+    if (this.image == null) {
+      this.prepare();
+    }
+    if (this.image == null) {
+      return null;
+    }
+    this.image.data.fill(0);
+    return this.image.data;
+  }
+
+  /** The canvas with what was drawn since {@link clear}. */
+  public commit(): HTMLCanvasElement | null {
+    if (this.canvas == null || this.context == null || this.image == null) {
+      return null;
+    }
+    this.context.putImageData(this.image, 0, 0);
+    return this.canvas;
+  }
+
+  private prepare(): void {
+    const canvas = createCanvas(
+      this.width * this.scale,
+      this.height * this.scale
+    );
+    const context = canvas?.getContext?.('2d') ?? null;
+    if (canvas == null || context == null) {
+      return;
+    }
+    this.canvas = canvas;
+    this.context = context;
+    this.image = context.createImageData(canvas.width, canvas.height);
+  }
+}
+
+/**
+ * Draws the colonies into offscreen layers and hands them back, ready to
+ * be drawn over the floor: one pixel per bacterium for the pixel look, and
+ * every other look from the colony's density - smooth slime, cells, tiles,
+ * neon or ink. Each colony is drawn in its own look, the pixel colonies on
+ * one layer and the density looks on another. The buffers are kept between
+ * frames.
+ */
+export class ColonyRenderer {
+  private readonly crisp: ColonyBuffer;
+  private readonly smooth: ColonyBuffer;
   private readonly density: Float32Array;
   private readonly heat: Float32Array;
   private readonly scratch: Float32Array;
@@ -2345,111 +2524,102 @@ export class ColonyRenderer {
     private readonly unit: number
   ) {
     const cells = width * height;
+    this.crisp = new ColonyBuffer(width, height, 1);
+    this.smooth = new ColonyBuffer(width, height, SLIME_SCALE);
     this.density = new Float32Array(cells);
     this.heat = new Float32Array(cells);
     this.scratch = new Float32Array(cells);
   }
 
   /**
-   * The layer with every colony on it, or null where there is no canvas.
-   * The slime is only worked out for what the canvas shows of the arena,
-   * `view`.
+   * The layers with every colony on them, in the order to draw them - the
+   * crisp pixels under the density looks, whose halos reach out over them.
+   * Empty where there is no canvas. The slime is only worked out for what
+   * the canvas shows of the arena, `view`.
    */
   public render(
-    colonies: readonly ColonyLayer[],
+    colonies: readonly PaintedColony[],
     balance: GameBalance,
-    look: BacteriaLook,
     timeSec: number,
     view: Rect
-  ): HTMLCanvasElement | null {
-    const { fromDensity } = LOOKS[look];
-    const scale = fromDensity ? SLIME_SCALE : 1;
-    if (!this.prepare(scale) || this.image == null || this.context == null) {
-      return null;
-    }
-    const data = this.image.data;
-    data.fill(0);
+  ): ColonyImage[] {
+    let crisp: Uint8ClampedArray | null = null;
+    let smooth: Uint8ClampedArray | null = null;
     for (const colony of colonies) {
       if (colony.kind !== 'cells') {
         continue;
       }
+      const { look } = colony;
       const shimmer =
         colony.boostTarget == null
           ? null
           : { timeSec, target: colony.boostTarget, unit: this.unit };
-      if (fromDensity && look !== 'pixels') {
-        const { width, height, unit } = this;
-        const region = slimeRegion(colony.bacterias, view, width, height);
-        if (region == null) {
-          continue;
+      if (look === 'pixels') {
+        crisp ??= this.crisp.clear();
+        if (crisp != null) {
+          createImageDataFromBacterias(
+            crisp,
+            this.width,
+            colony.color,
+            colony.bacterias,
+            balance,
+            shimmer
+          );
         }
-        // A look that reaches past the view reads the density there, but
-        // paints only what the view can show.
-        const reach = lookReach(look, unit);
-        const wide =
-          reach > 0
-            ? (slimeRegion(colony.bacterias, view, width, height, reach) ??
-              region)
-            : region;
-        const hot = colonyDensity(
-          this.density,
-          this.heat,
-          this.scratch,
-          width,
-          height,
-          colony.bacterias,
-          balance,
-          wide
-        );
-        paintColony(
-          look,
-          data,
-          this.density,
-          hot ? this.heat : null,
-          width,
-          height,
-          colony.color,
-          shimmer,
-          unit,
-          region,
-          wide,
-          timeSec
-        );
-      } else {
-        createImageDataFromBacterias(
-          data,
-          this.width,
-          colony.color,
-          colony.bacterias,
-          balance,
-          shimmer
-        );
+        continue;
       }
+      smooth ??= this.smooth.clear();
+      if (smooth == null) {
+        continue;
+      }
+      const { width, height, unit } = this;
+      const region = slimeRegion(colony.bacterias, view, width, height);
+      if (region == null) {
+        continue;
+      }
+      // A look that reaches past the view reads the density there, but
+      // paints only what the view can show.
+      const reach = lookReach(look, unit);
+      const wide =
+        reach > 0
+          ? (slimeRegion(colony.bacterias, view, width, height, reach) ??
+            region)
+          : region;
+      const hot = colonyDensity(
+        this.density,
+        this.heat,
+        this.scratch,
+        width,
+        height,
+        colony.bacterias,
+        balance,
+        wide
+      );
+      paintColony(
+        look,
+        smooth,
+        this.density,
+        hot ? this.heat : null,
+        width,
+        height,
+        colony.color,
+        shimmer,
+        unit,
+        region,
+        wide,
+        timeSec
+      );
     }
-    this.context.putImageData(this.image, 0, 0);
-    return this.canvas;
-  }
-
-  /** Makes sure the layer has the size the look needs. */
-  private prepare(scale: number): boolean {
-    if (this.scale === scale && this.canvas != null) {
-      return true;
+    const layers: ColonyImage[] = [];
+    const crispCanvas = crisp == null ? null : this.crisp.commit();
+    if (crispCanvas != null) {
+      layers.push({ canvas: crispCanvas, smooth: false });
     }
-    const canvas = this.canvas ?? createCanvas(0, 0);
-    if (canvas == null) {
-      return false;
+    const smoothCanvas = smooth == null ? null : this.smooth.commit();
+    if (smoothCanvas != null) {
+      layers.push({ canvas: smoothCanvas, smooth: true });
     }
-    canvas.width = this.width * scale;
-    canvas.height = this.height * scale;
-    const context = canvas.getContext?.('2d') ?? null;
-    if (context == null) {
-      return false;
-    }
-    this.canvas = canvas;
-    this.context = context;
-    this.image = context.createImageData(canvas.width, canvas.height);
-    this.scale = scale;
-    return true;
+    return layers;
   }
 }
 
