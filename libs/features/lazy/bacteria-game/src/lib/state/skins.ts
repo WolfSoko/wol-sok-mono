@@ -38,6 +38,17 @@ export type BacteriaLook =
   | 'plasma'
   | 'chrome';
 
+/**
+ * The look no skin offers: the eclipse a boss wears (`colony-looks.ts`) -
+ * a black body that swallows the light, dark veins pulsing in it, and a
+ * corona blazing in the colony's colour along its rim, with flares licking
+ * out. Not in {@link SKINS}, so it is never shown, bought or picked.
+ */
+export const BOSS_LOOK = 'eclipse' as const;
+
+/** Every look the painters draw: the skins and the boss's. */
+export type ColonyLook = BacteriaLook | typeof BOSS_LOOK;
+
 /** A skin as the My Colony screen offers it. */
 export interface Skin {
   id: BacteriaLook;

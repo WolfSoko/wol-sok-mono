@@ -209,6 +209,10 @@ void main() {
  * the front - and a ripple of noise inside, mirroring a sky in the colony's
  * colour, with the highlight and a fresnel rim - `paintChrome`.
  *
+ * Eclipse, the boss's: a black body with veins of a slowly flowing noise
+ * pulsing in the colour, a corona blazing along the rim and flares licking
+ * out past it where a rolling noise runs high - `paintEclipse`.
+ *
  * Pixels: one crisp cell per bacterium from the raw cells, weak ones faded
  * and hot ones burning white.
  *
@@ -699,6 +703,40 @@ vec4 chromeLook(vec2 p, float d) {
   return vec4(metal + (1.0 - metal) * shine, coverage * CHROME_ALPHA);
 }
 
+// The eclipse look at p, the boss's - see paintEclipse.
+vec4 eclipseLook(vec2 p, float d) {
+  float coverage = smoothstep(EDGE_START, EDGE_END, d);
+  float rim = coverage * (1.0 - coverage) * 4.0;
+  float limb = (1.0 - smoothstep(EDGE_END, ECLIPSE_LIMB_END, d)) * coverage * ECLIPSE_LIMB;
+  // The flares only outside the body, the veins only inside: each noise
+  // is left out where it would not show.
+  float tongue = 0.0;
+  if (coverage < 1.0) {
+    float flareScale = 1.0 / (ECLIPSE_FLARE_SCALE * uUnit);
+    float roll = uTime * ECLIPSE_FLARE_SPEED;
+    tongue = smoothstep(ECLIPSE_FLARE_FROM, ECLIPSE_FLARE_TO,
+      fbm(p * flareScale + vec2(roll, -roll * 0.7) + 61.0));
+  }
+  float flare = smoothstep(0.0, EDGE_START, d) * (1.0 - coverage)
+    * (ECLIPSE_FLARE_BASE + (1.0 - ECLIPSE_FLARE_BASE) * tongue) * ECLIPSE_FLARE;
+  float alpha = max(coverage * ECLIPSE_ALPHA, flare);
+  if (alpha <= 0.0) {
+    return vec4(0.0);
+  }
+  float corona = min(1.0, rim * ECLIPSE_RIM + limb + flare);
+  float veins = 0.0;
+  if (coverage > 0.0) {
+    float scale = 1.0 / (ECLIPSE_SCALE * uUnit);
+    float flow = uTime * ECLIPSE_FLOW;
+    float n = fbm(p * scale + vec2(flow, -flow * 0.5) + 59.0);
+    float pulse = 0.5 + 0.5 * sin(uTime * ECLIPSE_PULSE + n * 6.0);
+    veins = crack(n, 0.5, ECLIPSE_VEIN) * coverage * ECLIPSE_VEIN_GLOW * (0.35 + 0.65 * pulse);
+  }
+  vec3 hot = lightColor();
+  vec3 rgb = min(vec3(1.0), uColor * ECLIPSE_BODY * coverage + hot * corona + uColor * veins);
+  return vec4(rgb, alpha);
+}
+
 // The neon look at p - see paintNeon.
 vec4 neonLook(float d) {
   float coverage = smoothstep(EDGE_START, EDGE_END, d);
@@ -819,6 +857,7 @@ void main() {
       : uLook == LOOK_LAVA ? lavaLook(p, density)
       : uLook == LOOK_GALAXY ? galaxyLook(p, density)
       : uLook == LOOK_PLASMA ? plasmaLook(p, density)
+      : uLook == LOOK_ECLIPSE ? eclipseLook(p, density)
       : chromeLook(p, density);
     if (look.a <= 0.0) {
       discard;

@@ -143,6 +143,7 @@ import {
   SocialService,
 } from './social/social.service';
 import { arenaContent, SeatColors } from './arena/arena-content';
+import { computerLook, seatLooks } from './state/colony-looks';
 import { Camera, CameraShake } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
 import type { WeaponFire } from './state/evolution';
@@ -304,8 +305,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private ambience: DishAmbience | null = null;
   /** The view the ambience was last drawn still for - nothing to redraw while it holds. */
   private stillAmbience: Rect | null = null;
-  /** The skin the colonies wear: the look picked, once the player owns it. */
+  /** The skin the player's colony wears: the look picked, once owned. */
   private readonly skin = this.evolution.worn;
+  /** The look the computer wears on the level - see `seatLooks`. */
+  private readonly computerLook = computed(() => computerLook(this.level().id));
 
   /**
    * The arena on its canvas. A new resolution gets a new canvas - see
@@ -1769,13 +1772,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (dataset != null && dataset['simulation'] !== simulation.kind) {
       dataset['simulation'] = simulation.kind;
     }
+    const players = untracked(this.playerStore.entities);
     return arenaContent({
-      players: untracked(this.playerStore.entities),
+      players,
       crosshairAt: (player) => this.playerService.crosshairAt(player, alpha),
       simulation,
       walls: this.walls(),
       balance: this.balance(),
-      look: this.skin(),
+      looks: seatLooks(players, this.skin(), this.computerLook()),
       reducedMotion: this.reducedMotion(),
       weaponFires: this.takeFires(),
       seatColors: this.seatColors,

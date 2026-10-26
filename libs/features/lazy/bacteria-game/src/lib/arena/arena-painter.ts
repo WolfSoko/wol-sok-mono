@@ -1,11 +1,12 @@
-import { BacteriaLook } from '../state/skins';
 import { Nutrient } from '../state/bacteria-simulation';
 import type { ActiveEffect, WeaponFire } from '../state/evolution';
 import { GameBalance } from '../state/game-balance';
 import { DynamicWall, Rect } from '../state/maps';
 import { Zone } from '../state/zones';
 import { ArenaTheme } from './arena-theme';
-import { ColonyLayer } from './colony-renderer';
+import type { PaintedColony } from './colony-renderer';
+
+export type { PaintedColony } from './colony-renderer';
 
 /** A player's crosshair as it is drawn. */
 export interface CursorShape {
@@ -32,12 +33,11 @@ export interface ArenaFrame {
   view: Rect;
   walls: readonly Rect[];
   dynamicWalls: readonly DynamicWall[];
-  colonies: readonly ColonyLayer[];
+  colonies: readonly PaintedColony[];
   /** Leave out what flickers - the player asked their system for less motion. */
   reducedMotion: boolean;
   nutrients: readonly Nutrient[];
   balance: GameBalance;
-  look: BacteriaLook;
   cursors: readonly CursorShape[];
   /** The weapons fired since the last frame - each bursts out now. */
   weaponFires: readonly WeaponFire[];

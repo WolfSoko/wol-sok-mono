@@ -1,4 +1,4 @@
-import { BacteriaLook } from '../state/skins';
+import { ColonyLook } from '../state/skins';
 import { gameBalance } from '../state/game-balance';
 import { CellBounds } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
@@ -89,7 +89,7 @@ export function previewColony(
  * moves with it.
  */
 export function renderLookLayer(
-  look: BacteriaLook,
+  look: ColonyLook,
   color: readonly number[],
   size: PreviewSize,
   timeSec = 0
@@ -147,7 +147,7 @@ export function renderLookLayer(
  */
 export function paintLookPreview(
   cx: CanvasRenderingContext2D,
-  look: BacteriaLook,
+  look: ColonyLook,
   color: readonly number[],
   size: PreviewSize,
   timeSec = 0

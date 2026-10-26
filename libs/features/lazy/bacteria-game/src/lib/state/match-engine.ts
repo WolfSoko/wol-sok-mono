@@ -82,6 +82,12 @@ export interface PlayerSpawn {
   /** True for a boss - a boss bot charges with every boost once behind. */
   boss?: boolean;
   /**
+   * True when the computer plays the seat: in a match against it, not a
+   * recording driving it as a ghost or the other device online. The
+   * painter dresses the colony by it; the engine steers by `isBot` alone.
+   */
+  computer?: boolean;
+  /**
    * True for a neutral colony: it has no crosshair and no player, and counts
    * for no side. Neutral spawns come after every player's.
    */
@@ -332,6 +338,8 @@ export class MatchEngine {
         color: spawn.color,
         name: spawn.name,
         isBot: spawn.isBot,
+        computer: spawn.computer === true,
+        boss: spawn.boss === true,
         maxSpeed: options.crosshairSpeed ?? DEFAULT_CROSSHAIR_SPEED,
         weapon: spawn.weapon ?? null,
         weaponCooldownSec: charging,

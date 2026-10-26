@@ -14,6 +14,15 @@ export interface Player {
   name: string;
   /** True when the computer steers this crosshair. */
   isBot: boolean;
+  /**
+   * True when the computer plays this colony - a seat it steers on its
+   * level, which dresses it (`colony-looks.ts`). False for a seat a
+   * recording drives in a human's stead: a ghost's, the other device's
+   * online.
+   */
+  computer: boolean;
+  /** True for the level's boss - see `Boss` in `levels.ts`. */
+  boss: boolean;
   x: number;
   y: number;
   color: PlayerColorArray;
@@ -88,6 +97,8 @@ export function createPlayer(params: Partial<Player>): Player {
     id: playerId++,
     name: '',
     isBot: false,
+    computer: false,
+    boss: false,
     maxSpeed: 150,
     boostActiveSec: 0,
     boostCooldownSec: 0,
