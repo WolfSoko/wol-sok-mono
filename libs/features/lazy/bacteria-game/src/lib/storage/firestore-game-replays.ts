@@ -6,6 +6,7 @@ import {
   firstValueFrom,
   map,
   Observable,
+  of,
 } from 'rxjs';
 import { replayToBytes, MAX_PACKED_BYTES } from '../state/replay-pack';
 import type { EndReason } from '../state/win-conditions';
@@ -65,7 +66,12 @@ export class FirestoreGameReplays implements GameReplays {
   public constructor(
     private readonly connection: FirebaseConnection,
     /** Whoever plays, null while nobody does. */
-    private readonly playerIds: Observable<string | null>
+    private readonly playerIds: Observable<string | null>,
+    /**
+     * True while a ban holds the player (ADR 0012): the rules refuse their
+     * submissions and commands, so none is sent.
+     */
+    private readonly banned: Observable<boolean> = of(false)
   ) {}
 
   public async submit({
@@ -79,6 +85,9 @@ export class FirestoreGameReplays implements GameReplays {
       return null;
     }
     const uid = await this.signedIn();
+    if (await firstValueFrom(this.banned)) {
+      return null;
+    }
     const ref = dbSdk.doc(dbSdk.collection(db, 'replaySubmissions'));
     // Not awaited: offline, the write waits for the network, and the
     // match is long over by then. `watchSaved` tells once it landed.
@@ -154,6 +163,9 @@ export class FirestoreGameReplays implements GameReplays {
   ): Promise<string | null> {
     const { db, dbSdk } = this.connection;
     const uid = await this.signedIn();
+    if (await firstValueFrom(this.banned)) {
+      return null;
+    }
     const ref = dbSdk.doc(dbSdk.collection(db, 'replayCommands'));
     dbSdk
       .setDoc(ref, {

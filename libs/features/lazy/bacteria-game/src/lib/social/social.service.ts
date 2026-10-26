@@ -21,6 +21,7 @@ import {
   startWith,
   switchMap,
 } from 'rxjs';
+import { ModerationService } from '../moderation/moderation.service';
 import { OnlineMatchService } from '../net/online-match.service';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
@@ -68,6 +69,7 @@ export class SocialService {
   private readonly account = inject(GameAccount);
   private readonly store = inject(GameStateStore);
   private readonly online = inject(OnlineMatchService);
+  private readonly moderation = inject(ModerationService);
   private readonly social = this.cloud.social();
   private readonly presence = this.cloud.presence();
   /** Cards already watched, by uid - each is read once, however often shown. */
@@ -227,13 +229,15 @@ export class SocialService {
     // The player shows up as online while they share it - playing while an
     // online match is on. Nothing is told before their stored profile is
     // read, which may say they do not share it, and the status goes with
-    // the player who signs out.
+    // the player who signs out - and with a ban, under which the database
+    // refuses it (ADR 0012).
     let shown: string | null = null;
     effect(() => {
       const presence = this.presence;
       const uid = this.uid();
       const loaded = this.profileLoaded();
       const profile = this.profile();
+      const banned = this.moderation.banned();
       const playing =
         this.store.online() !== null && isMatchOn(this.store.currentState());
       if (presence === null) {
@@ -249,7 +253,11 @@ export class SocialService {
       shown = uid;
       presence.set(
         uid,
-        profile?.shareStatus === true ? (playing ? 'playing' : 'online') : null
+        profile?.shareStatus === true && !banned
+          ? playing
+            ? 'playing'
+            : 'online'
+          : null
       );
     });
   }
@@ -267,6 +275,9 @@ export class SocialService {
     }
     if (!this.profileLoaded()) {
       throw new Error('The stored profile is not read yet');
+    }
+    if (this.moderation.banned()) {
+      throw new Error('The account is suspended');
     }
     await this.social.saveProfile(
       uid,
@@ -295,13 +306,13 @@ export class SocialService {
 
   /** Asks a player - the opponent of a match - to be friends. */
   public async addFriend(uid: string): Promise<void> {
-    await this.withPlayer((social, me) =>
+    await this.withWriter((social, me) =>
       me === uid ? Promise.resolve() : social.sendRequest(me, uid)
     );
   }
 
   public async acceptRequest(uid: string): Promise<void> {
-    await this.withPlayer((social, me) => social.acceptRequest(me, uid));
+    await this.withWriter((social, me) => social.acceptRequest(me, uid));
   }
 
   public async declineRequest(uid: string): Promise<void> {
@@ -314,7 +325,7 @@ export class SocialService {
 
   /** A link that makes whoever opens it the player's friend, for a week. */
   public async inviteLink(base: string): Promise<string | null> {
-    const token = await this.withPlayer((social, me) =>
+    const token = await this.withWriter((social, me) =>
       social.createInvite(me)
     );
     return token === null ? null : `${base.split('#')[0]}#friend=${token}`;
@@ -337,12 +348,12 @@ export class SocialService {
   }
 
   public async acceptInvite(token: string, from: string): Promise<void> {
-    await this.withPlayer((social, me) => social.acceptInvite(me, token, from));
+    await this.withWriter((social, me) => social.acceptInvite(me, token, from));
   }
 
   /** Challenges a friend to the match in room `code`. */
   public async challenge(friend: string, code: string): Promise<void> {
-    await this.withPlayer((social, me) => social.challenge(me, friend, code));
+    await this.withWriter((social, me) => social.challenge(me, friend, code));
   }
 
   /**
@@ -408,6 +419,19 @@ export class SocialService {
           : watch(social, me).pipe(catchError(() => of([])))
       )
     );
+  }
+
+  /**
+   * What `task` writes for the player - nothing while a ban holds, under
+   * which the rules refuse it (ADR 0012); taking things back stays open.
+   */
+  private async withWriter<T>(
+    task: (social: GameSocial, me: string) => Promise<T>
+  ): Promise<T | null> {
+    if (this.moderation.banned()) {
+      throw new Error('The account is suspended');
+    }
+    return this.withPlayer(task);
   }
 
   private async withPlayer<T>(

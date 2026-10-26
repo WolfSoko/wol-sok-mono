@@ -132,13 +132,20 @@
         [style.--bw-on-player]="onPlayerColor()"
       >
         <feat-lazy-bac-game-swarm [colors]="colonyRgb()" />
-        <feat-lazy-bac-game-social-notices
-          class="social-notices"
-          [invite]="inviteOffer()"
-          [canPlay]="onlineLobby().phase === 'idle'"
-          (play)="playChallenge($event)"
-          (inviteDone)="inviteOffer.set(null)"
-        />
+        <div class="social-notices">
+          <feat-lazy-bac-game-moderation-notices />
+          @if (declaring() !== null) {
+            <p class="declaring" role="status">
+              {{ "boards.ranked.declaring" | t }}
+            </p>
+          }
+          <feat-lazy-bac-game-social-notices
+            [invite]="moderation.banned() ? null : inviteOffer()"
+            [canPlay]="onlineLobby().phase === 'idle' && !moderation.banned()"
+            (play)="playChallenge($event)"
+            (inviteDone)="inviteOffer.set(null)"
+          />
+        </div>
         @switch (open) {
           @case ("menu") {
             <feat-lazy-bac-game-main-menu
@@ -182,6 +189,9 @@
               (missionChange)="pickMission($event)"
               [online]="onlineLobby()"
               [onlineAvailable]="onlineAvailable"
+              [rankedOffers]="rankedOffers()"
+              [declaring]="declaring() !== null"
+              (rankedChange)="settings.setRanked($event)"
               (hostOnline)="hostOnline()"
               (joinOnline)="joinOnline($event)"
               (leaveOnline)="leaveOnline()"

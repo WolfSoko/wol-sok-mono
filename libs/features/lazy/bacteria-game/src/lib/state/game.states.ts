@@ -19,6 +19,7 @@ import { HeadStart, Series, SeriesLength } from './rivalry';
 import { Player } from './player.model';
 import type { Replay } from './replay';
 import type { EndlessRun } from './endless';
+import type { RankedMatch, RankedNote, RankedRun } from './ranked-match';
 import { EndReason, timeLeft, winRuleOf } from './win-conditions';
 import { DEFAULT_MODE, GameMode } from './game-mode';
 
@@ -103,6 +104,18 @@ export interface GameStateState {
   endlessMatch: boolean;
   /** The endless run under way, null outside one - it outlasts a match. */
   endless: EndlessRun | null;
+  /**
+   * The ranked attempt the next match was declared as (ADR 0012) - null for
+   * an unranked one. It holds for that one match; a reset ends it.
+   */
+  ranked: RankedMatch | null;
+  /**
+   * What the result screen says of the daily or endless match and the
+   * leaderboards - ranked, or why not - null for any other. One match.
+   */
+  rankedNote: RankedNote | null;
+  /** The ranked endless run under way - null for an unranked one. */
+  endlessRanked: RankedRun | null;
   /** The online match this device is connected to, null outside one. */
   online: OnlineSeat | null;
   /** True while an online match waits for the other device's inputs. */
@@ -134,6 +147,9 @@ export function createInitialState(): GameStateState {
     dailyDay: null,
     endlessMatch: false,
     endless: null,
+    ranked: null,
+    rankedNote: null,
+    endlessRanked: null,
     online: null,
     waitingForPeer: false,
   };

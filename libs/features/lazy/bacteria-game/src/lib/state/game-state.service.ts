@@ -75,6 +75,8 @@ import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
 import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
+import { rankedPlan } from './attempts';
+import type { RankedMatch, RankedOutcome, RankedRun } from './ranked-match';
 
 /**
  * The most time one frame may take the war forward, in milliseconds. A
@@ -97,6 +99,16 @@ export type OneMatch = Pick<
   GameStateState,
   'ghost' | 'matchLevel' | 'dailyDay' | 'endlessMatch'
 >;
+
+/**
+ * A ranked start of an endless run or one of its matches (ADR 0012): the
+ * declaration's outcome, and the run to declare the next match of - null
+ * once it plays unranked.
+ */
+export interface RankedRunStart {
+  outcome: RankedOutcome;
+  run: RankedRun | null;
+}
 
 /** The seat a local match records: the human's - never the bot's. */
 const LOCAL_RECORDED_SEATS: ReadonlySet<number> = new Set([0]);
@@ -126,6 +138,12 @@ const NO_ONE_MATCH: OneMatch = {
   endlessMatch: false,
 };
 
+/** No ranked attempt for the next match, and nothing to say of one. */
+const UNRANKED: Pick<GameStateState, 'ranked' | 'rankedNote'> = {
+  ranked: null,
+  rankedNote: null,
+};
+
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
   private gameStateStore = inject(GameStateStore);
@@ -145,7 +163,9 @@ export class GameStateService {
     saveMatches: true,
   };
   /** Whether the match on the board is recorded, and how - null if not. */
-  private recordedAs: 'online' | 'local' | null = null;
+  private recordedAs: 'online' | 'local' | 'ranked' | null = null;
+  /** The ranked attempt the match on the board was declared as, if any. */
+  private rankedMatch: RankedMatch | null = null;
   /** The room and number of the online match on the board. */
   private onlineRef: { roomCode: string; n: number } | null = null;
   /** The colony sizes after every second of the match on the board. */
@@ -455,7 +475,8 @@ export class GameStateService {
 
   /**
    * The recording of a match that has just ended, handed over to be kept
-   * - online always, a local one with "Save my matches" on (ADR 0011, 0012).
+   * - online and ranked always, a local one with "Save my matches" on (ADR
+   * 0011, 0012).
    * Null for a match that was not recorded.
    */
   private recording(outcome: MatchOutcome): MatchRecording | null {
@@ -469,11 +490,20 @@ export class GameStateService {
       this.lastRecording.set(null);
       return null;
     }
+    // A ranked match carries its attempt - on the one ruleset the boards
+    // take (ADR 0012, 0015), which it always plays.
+    const ranked =
+      recordedAs === 'ranked' &&
+      this.playerService.getSimulation().ruleset === 'gpu-int'
+        ? this.rankedMatch
+        : null;
     const replay = this.replay(
       outcome,
       recordedAs === 'online' && this.onlineRef !== null
         ? { roomCode: this.onlineRef.roomCode, n: this.onlineRef.n }
-        : {}
+        : ranked !== null
+          ? { attempt: ranked.attempt }
+          : {}
     );
     const end = replayOutcome(outcome);
     if (replay === null || end === null) {
@@ -488,10 +518,20 @@ export class GameStateService {
     });
     const recording: MatchRecording = { replay, hint: score, id: null };
     this.lastRecording.set(recording);
-    if (recordedAs === 'online' || this.replayPrefs.saveMatches) {
+    // A ranked match is uploaded whatever the settings say.
+    const attempt = ranked?.attempt.id;
+    if (
+      recordedAs === 'online' ||
+      attempt !== undefined ||
+      this.replayPrefs.saveMatches
+    ) {
       this.injector
         .get(GameReplays)
-        .submit({ replay, hint: score })
+        .submit({
+          replay,
+          hint: score,
+          ...(attempt === undefined ? {} : { attempt }),
+        })
         .then(
           (id) => {
             if (id !== null && this.lastRecording() === recording) {
@@ -599,8 +639,14 @@ export class GameStateService {
       headStart,
       ghost,
       matchLevel,
+      ranked,
     } = this.gameStateStore.snapshot();
     const planned = matchLevel ?? levelId;
+    if (ranked !== null && matchLevel !== null && ghost === null) {
+      this.initRanked(matchLevel, ranked);
+      return;
+    }
+    this.rankedMatch = null;
     this.plan = {
       levelId: planned,
       mode: planModeOf(mode, matchLevel),
@@ -637,6 +683,29 @@ export class GameStateService {
       onSecond: this.sample,
       // Recorded on a ruleset, a simulation a replay plays back on.
       ...(records ? { recordedSeats: LOCAL_RECORDED_SEATS } : {}),
+    });
+  }
+
+  /**
+   * Spawns the colonies of a ranked match (ADR 0012): the ranked plan of
+   * its level and declared seed, whatever the setup says - the normal
+   * computer, no head start, the default colours, the online grid -
+   * played on `gpu-int` and always recorded. The game lays the arena out
+   * on the online grid for it.
+   */
+  private initRanked(levelId: string, ranked: RankedMatch): void {
+    this.plan = rankedPlan(levelId, ranked.seed);
+    const { spawns, options, evolved } = planMatch(this.plan, null);
+    this.planEvolved = evolved;
+    this.rankedMatch = ranked;
+    this.recordedAs = 'ranked';
+    this.onlineRef = null;
+    this.samples = [];
+    this.playerService.init(spawns, {
+      ...options,
+      onSecond: this.sample,
+      recordedSeats: LOCAL_RECORDED_SEATS,
+      ruleset: 'gpu-int',
     });
   }
 
@@ -697,13 +766,16 @@ export class GameStateService {
 
   /**
    * Sets the next match on the daily level of that UTC day, against the
-   * computer, leaving the setup as it is. It holds for that one match;
+   * computer, leaving the setup as it is - or, declared as a ranked attempt
+   * (`ranked.match`), on the ranked setup. It holds for that one match;
    * {@link reset} ends it.
    */
-  public playDaily(day: string): void {
+  public playDaily(day: string, ranked: RankedOutcome | null = null): void {
     this.gameStateStore.update({
       matchLevel: dailyLevelId(day),
       dailyDay: day,
+      ranked: ranked?.match ?? null,
+      rankedNote: ranked?.note ?? null,
     });
   }
 
@@ -715,27 +787,41 @@ export class GameStateService {
   public playMission(id: MissionId): void {
     this.gameStateStore.update({
       ...NO_ONE_MATCH,
+      ...UNRANKED,
       matchLevel: missionById(id).levelId,
     });
   }
 
-  /** Starts a new endless run, set up for its first match. */
-  public startEndless(): void {
-    this.gameStateStore.update({ endless: newRun(randomSeed()) });
-    this.continueEndless();
+  /**
+   * Starts a new endless run, set up for its first match. A ranked run
+   * (`ranked.run`) takes its levels from the seed of its declared match 0,
+   * which that match plays as well (ADR 0012).
+   */
+  public startEndless(ranked: RankedRunStart | null = null): void {
+    const match = ranked?.run == null ? null : ranked.outcome.match;
+    this.gameStateStore.update({
+      endless: newRun(match?.seed ?? randomSeed()),
+      endlessRanked: null,
+    });
+    this.continueEndless(ranked);
   }
 
   /**
    * Sets the next match on the level the endless run is at - the next one
    * after a win, the same again after a defeat. Nothing once it is over.
+   * A ranked run's match comes declared (`ranked`); without one the run
+   * stays as ranked as it was.
    */
-  public continueEndless(): void {
-    const { endless } = this.gameStateStore.snapshot();
+  public continueEndless(ranked: RankedRunStart | null = null): void {
+    const { endless, endlessRanked } = this.gameStateStore.snapshot();
     if (endless !== null && !isRunOver(endless)) {
       this.gameStateStore.update({
         ...NO_ONE_MATCH,
         matchLevel: endlessLevelId(endless),
         endlessMatch: true,
+        ranked: ranked?.outcome.match ?? null,
+        rankedNote: ranked?.outcome.note ?? null,
+        endlessRanked: ranked === null ? endlessRanked : ranked.run,
       });
     }
   }
@@ -962,6 +1048,7 @@ export class GameStateService {
         state.matchLevel === null && online === null ? nextSeries(state) : null,
       // Any match but the run's leaves the endless run.
       endless: state.endlessMatch ? state.endless : null,
+      endlessRanked: state.endlessMatch ? state.endlessRanked : null,
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,
@@ -1017,6 +1104,7 @@ export class GameStateService {
       currentState: GameState.END,
       timePassed: 0,
       ...NO_ONE_MATCH,
+      ...UNRANKED,
     }));
     this.initPlayers();
     this.gameStateStore.update(() => ({

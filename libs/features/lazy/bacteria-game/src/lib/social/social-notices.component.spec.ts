@@ -26,6 +26,7 @@ describe('SocialNoticesComponent', () => {
             social: () => social,
             presence: () => new FakeGamePresence(),
             rooms: () => null,
+            moderation: () => null,
           },
         },
       ],

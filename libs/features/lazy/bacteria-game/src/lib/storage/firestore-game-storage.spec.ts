@@ -207,4 +207,19 @@ describe('FirestoreGameStorage', () => {
     expect(firestore.value('guest')).toEqual({ count: 1 });
     expect(firestore.value('alice')).toBeNull();
   });
+
+  it('holds the writes while a ban holds, and makes them once it ends', async () => {
+    const banned = new BehaviorSubject(true);
+    storage = new FirestoreGameStorage(firestore.connection(), players, banned);
+    storage.update(KEY, addOne);
+    storage.write('bacteria-game.settings', { sound: true });
+    await settle();
+    expect(firestore.writes).toBe(0);
+
+    banned.next(false);
+    await settle();
+
+    expect(firestore.value('alice')).toEqual({ count: 1 });
+    expect(firestore.writes).toBe(2);
+  });
 });

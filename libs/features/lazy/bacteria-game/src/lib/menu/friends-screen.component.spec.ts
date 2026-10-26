@@ -28,6 +28,7 @@ describe('FriendsScreenComponent', () => {
             social: () => (withCloud ? social : null),
             presence: () => (withCloud ? presence : null),
             rooms: () => null,
+            moderation: () => null,
           },
         },
       ],

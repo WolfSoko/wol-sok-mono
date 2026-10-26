@@ -3,6 +3,9 @@
 @if (runNote(); as note) {
   <p class="run-note">{{ note }}</p>
 }
+@if (rankedNote(); as note) {
+  <p class="run-note ranked-note">{{ note }}</p>
+}
 @if (mission(); as mission) {
   <div class="mission" [class.done]="mission.done">
     <mat-icon class="mission-icon" aria-hidden="true">{{

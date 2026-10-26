@@ -36,6 +36,10 @@ import { matchChecksum } from './checksum';
 import { MatchEngine, cpuSimulation } from './match-engine';
 import { planMatch } from './match-setup';
 import type { NetMessage } from '../net/net-message';
+import { attemptSeed, isRankedPlan, rankedPlan } from './attempts';
+import { endlessLevelId } from './endless';
+import { GPU_INT_REPLAY_VERSION } from './replay';
+import type { RankedMatch } from './ranked-match';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -1159,5 +1163,183 @@ describe('GameStateService local recordings', () => {
 
     expect(service.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
+  });
+});
+
+describe('GameStateService ranked matches', () => {
+  const DAY = '2026-10-26';
+  const AT = Date.UTC(2026, 9, 26, 12);
+  let service: GameStateService;
+  let store: GameStateStore;
+  let players: PlayerService;
+  let replays: FakeGameReplays;
+
+  function declared(id: string, uid = 'ada'): RankedMatch {
+    return { attempt: { id, at: AT }, seed: attemptSeed(uid, id, AT) };
+  }
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    replays = new FakeGameReplays();
+    TestBed.configureTestingModule({
+      providers: [{ provide: GameReplays, useValue: replays }],
+    });
+    service = TestBed.inject(GameStateService);
+    store = TestBed.inject(GameStateStore);
+    players = TestBed.inject(PlayerService);
+    // A player who records nothing and keeps nothing - and set up harder.
+    service.setReplayPrefs({ recordLocal: false, saveMatches: false });
+    service.setDifficulty('hard');
+    service.setHeadStart(2);
+  });
+
+  afterEach(() => {
+    service.cleanup();
+    localStorage.clear();
+    jest.restoreAllMocks();
+  });
+
+  /** Plays a few ticks on the arena the game lays out for it and ends on time. */
+  async function play(): Promise<void> {
+    const { width, height } = rankedPlan(
+      store.snapshot().matchLevel ?? 'petri-dish',
+      0
+    );
+    service.setArenaSize(width, height);
+    service.init(width, height);
+    service.start();
+    for (let frame = 0; frame < 10; frame++) {
+      if (frame === 9) {
+        jest
+          .spyOn(players, 'outcome')
+          .mockReturnValue({ winner: null, reason: 'time' });
+      }
+      service.advance(width, height, 1);
+    }
+    await Promise.resolve();
+  }
+
+  it('plays a ranked daily attempt on the ranked plan, gpu-int, and uploads it with its attempt', async () => {
+    const match = declared(`d_${DAY}_1`);
+    service.playDaily(DAY, { match, note: { kind: 'daily', n: 1 } });
+
+    await play();
+
+    const replay = service.lastRecording()?.replay as Replay;
+    const { width, height } = rankedPlan(dailyLevelId(DAY), match.seed);
+    expect(replay.header).toEqual(
+      expect.objectContaining({
+        version: GPU_INT_REPLAY_VERSION,
+        simulation: 'gpu-int',
+        levelId: dailyLevelId(DAY),
+        mode: 'vs-computer',
+        difficulty: 'normal',
+        headStart: 0,
+        width,
+        height,
+        seed: match.seed,
+        attempt: match.attempt,
+      })
+    );
+    expect(isRankedPlan(replay.header)).toBe(true);
+    expect(parseReplay(replay, { stored: true })).toEqual(replay);
+    expect(replays.submissions).toEqual([
+      { replay, hint: expect.any(Number), attempt: `d_${DAY}_1` },
+    ]);
+    expect(store.snapshot().rankedNote).toEqual({ kind: 'daily', n: 1 });
+  });
+
+  it('forgets the declaration with the reset: a rematch never plays it again', async () => {
+    service.playDaily(DAY, {
+      match: declared(`d_${DAY}_1`),
+      note: { kind: 'daily', n: 1 },
+    });
+    await play();
+    const rematch = service.oneMatch();
+
+    service.reset();
+    service.replayOneMatch(rematch);
+
+    expect(store.snapshot().ranked).toBeNull();
+    expect(store.snapshot().rankedNote).toBeNull();
+    expect(store.snapshot().dailyDay).toBe(DAY);
+  });
+
+  it('plays an unranked daily match on the setup, and says why', async () => {
+    service.playDaily(DAY, {
+      match: null,
+      note: { kind: 'unranked', reason: 'offline' },
+    });
+
+    await play();
+
+    expect(service.lastRecording()).toBeNull();
+    expect(replays.submissions).toEqual([]);
+    expect(store.snapshot().rankedNote).toEqual({
+      kind: 'unranked',
+      reason: 'offline',
+    });
+  });
+
+  it("takes a ranked run's levels from the seed of its match 0", async () => {
+    const match = declared('e_202610261_0');
+    service.startEndless({
+      outcome: { match, note: { kind: 'endless', match: 1 } },
+      run: { runId: '202610261', next: 1 },
+    });
+
+    expect(store.snapshot().endless?.seed).toBe(match.seed);
+    expect(store.snapshot().matchLevel).toBe(
+      endlessLevelId({ seed: match.seed, wins: 0, lives: 3 })
+    );
+    await play();
+
+    expect(replays.submissions[0]?.attempt).toBe('e_202610261_0');
+    expect(store.snapshot().endlessRanked).toEqual({
+      runId: '202610261',
+      next: 1,
+    });
+  });
+
+  it('goes on with the next declared match, and drops the run once it plays unranked', async () => {
+    service.startEndless({
+      outcome: {
+        match: declared('e_202610261_0'),
+        note: { kind: 'endless', match: 1 },
+      },
+      run: { runId: '202610261', next: 1 },
+    });
+    await play();
+    service.reset();
+
+    service.continueEndless({
+      outcome: {
+        match: null,
+        note: { kind: 'unranked', reason: 'run-dropped' },
+      },
+      run: null,
+    });
+
+    expect(store.snapshot().endlessRanked).toBeNull();
+    expect(store.snapshot().ranked).toBeNull();
+    expect(store.snapshot().endless).not.toBeNull();
+  });
+
+  it('leaves the ranked run with any other match', async () => {
+    service.startEndless({
+      outcome: {
+        match: declared('e_202610261_0'),
+        note: { kind: 'endless', match: 1 },
+      },
+      run: { runId: '202610261', next: 1 },
+    });
+    await play();
+    service.reset();
+    service.setLevel('petri-dish');
+
+    await play();
+
+    expect(store.snapshot().endless).toBeNull();
+    expect(store.snapshot().endlessRanked).toBeNull();
   });
 });

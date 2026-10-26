@@ -56,4 +56,39 @@ export const boards: Translation<typeof en> = {
     held: 'Gehalten {time}',
     depth: { one: '{count} Level · {time}', other: '{count} Level · {time}' },
   },
+  ranked: {
+    daily: 'Gewerteter Versuch',
+    endless: 'Gewerteter Lauf',
+    left: {
+      daily: 'Gewertete Versuche heute übrig: {left} von {total}.',
+      endless: 'Gewertete Läufe heute übrig: {left} von {total}.',
+    },
+    setup:
+      'Ein gewertetes Match spielt die Wertungseinstellung - der normale Computer, kein Vorsprung - und kommt in die Bestenliste.',
+    runLives:
+      'Wer ein Match eines gewerteten Laufs verlässt, beendet den Lauf hier, und die Bestenliste zählt es als verlorenes Leben.',
+    practice: 'Übung: deine eigenen Einstellungen, nicht in den Bestenlisten.',
+    used: {
+      daily:
+        'Die drei gewerteten Versuche von heute sind verbraucht. Neue gibt es um 00:00 UTC.',
+      endless:
+        'Die fünf gewerteten Läufe von heute sind begonnen. Neue gibt es um 00:00 UTC.',
+    },
+    blocked: {
+      device:
+        'Gewertet spielen braucht einen Grafikchip, der die Prüfung des Spiels bestanden hat (Einstellungen, Bildschirm).',
+      banned: 'Gewertet spielen geht nicht, solange dein Konto gesperrt ist.',
+      signedOut: 'Gewertet spielen geht nur angemeldet.',
+    },
+    declaring: 'Dein gewerteter Versuch wird angemeldet…',
+    result: {
+      daily: 'Gewerteter Versuch {n} von {total} · Wertungseinstellung',
+      endless: 'Gewerteter Lauf · Match {match} · Wertungseinstellung',
+      offline: 'Nicht gewertet: offline, als das Match begann',
+      used: 'Nicht gewertet: die drei Versuche von heute sind verbraucht',
+      runsUsed:
+        'Nicht gewertet: die fünf gewerteten Läufe von heute sind begonnen',
+      runDropped: 'Dieser Lauf wird nicht mehr gewertet',
+    },
+  },
 };

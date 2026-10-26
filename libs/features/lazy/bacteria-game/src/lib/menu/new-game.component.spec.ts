@@ -10,6 +10,7 @@ import {
 } from '../../testing/fake-preview-renderer';
 import { NewGameComponent } from './new-game.component';
 import { NewGameEntry } from './play-modes';
+import type { RankedOffer } from '../ranked/ranked.service';
 
 describe('NewGameComponent', () => {
   let fixture: ComponentFixture<NewGameComponent>;
@@ -448,5 +449,106 @@ describe('NewGameComponent', () => {
       `Map of ${host().querySelector('.details-title')?.textContent?.trim()}`
     );
     expect(preview?.querySelector('.size')?.textContent).toBe('2× map');
+  });
+});
+
+describe('NewGameComponent ranked play', () => {
+  let fixture: ComponentFixture<NewGameComponent>;
+  const RANKED: RankedOffer = {
+    on: true,
+    open: true,
+    lines: [
+      { key: 'boards.ranked.left.daily', params: { left: 2, total: 3 } },
+      { key: 'boards.ranked.setup' },
+    ],
+  };
+
+  async function render(
+    kind: 'daily' | 'endless',
+    inputs: Record<string, unknown>
+  ): Promise<HTMLElement> {
+    fixture = TestBed.createComponent(NewGameComponent);
+    fixture.componentRef.setInput('difficulty', 'hard');
+    fixture.componentRef.setInput('levelId', LEVELS[0].id);
+    fixture.componentRef.setInput('daily', {
+      levelId: 'gen:corridor:42:5',
+      attemptsLeft: 3,
+      streak: 0,
+    });
+    fixture.componentRef.setInput('entry', {
+      kind,
+      step: 'start',
+    } satisfies NewGameEntry);
+    for (const [name, value] of Object.entries(inputs)) {
+      fixture.componentRef.setInput(name, value);
+    }
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture.nativeElement;
+  }
+
+  const text = (element: HTMLElement) =>
+    element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+
+  it('shows no switch where ranked play is not offered', async () => {
+    const element = await render('daily', { rankedOffers: { daily: null } });
+
+    expect(element.querySelector('mat-slide-toggle')).toBeNull();
+    expect(element.querySelector('.difficulty-picker')).not.toBeNull();
+  });
+
+  it('offers a ranked attempt with what is left, on the ranked setup', async () => {
+    const element = await render('daily', { rankedOffers: { daily: RANKED } });
+
+    expect(text(element)).toContain('Ranked attempt');
+    expect(text(element)).toContain('Ranked attempts left today: 2 of 3.');
+    // The ranked setup plays the normal computer, whatever is set.
+    expect(element.querySelector('.difficulty-picker')).toBeNull();
+    expect(text(element)).toContain(
+      TestBed.inject(I18nService).t('game.difficulties.normal.description')
+    );
+  });
+
+  it('tells the choice, and holds Start while the attempt is declared', async () => {
+    const element = await render('endless', {
+      rankedOffers: { endless: { ...RANKED, lines: [] } },
+      declaring: true,
+    });
+    const choices: boolean[] = [];
+    fixture.componentInstance.rankedChange.subscribe((on) => choices.push(on));
+
+    expect(text(element)).toContain('Ranked run');
+    const start = element.querySelector<HTMLButtonElement>('button.start');
+    expect(start?.disabled).toBe(true);
+    expect(start?.textContent).toContain('Declaring your ranked attempt');
+
+    fixture.componentRef.setInput('declaring', false);
+    fixture.detectChanges();
+    element
+      .querySelector<HTMLButtonElement>('mat-slide-toggle button')
+      ?.click();
+
+    expect(choices).toEqual([false]);
+  });
+
+  it('shows a closed switch with the reason', async () => {
+    const element = await render('daily', {
+      rankedOffers: {
+        daily: {
+          on: false,
+          open: false,
+          lines: [{ key: 'boards.ranked.used.daily' }],
+        },
+      },
+    });
+
+    expect(
+      element.querySelector<HTMLButtonElement>('mat-slide-toggle button')
+        ?.disabled
+    ).toBe(true);
+    expect(text(element)).toContain(
+      'The three ranked attempts of today are used.'
+    );
   });
 });

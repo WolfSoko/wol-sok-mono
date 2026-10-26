@@ -1276,8 +1276,8 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
      so far: `matchmaking` replaces "Find an opponent" with a notice and
      stops a search under way; `deterministicSimulation` replaces the
      constant, read as each match starts and in each `hello`.
-     `rankedDaily` and `rankedEndless` are read but gate nothing until
-     their features ship; `leaderboards` shows the menu's Leaderboards
+     `rankedDaily` and `rankedEndless` hide the new game's ranked switch
+     of their mode (step 6 below); `leaderboards` shows the menu's Leaderboards
      tile (below). The same release adds the
      settings' "Matches" section ("Record matches against the computer",
      on by default; "Save my matches") and, for the owner on the game's
@@ -1320,6 +1320,64 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
 6. **One client release** carries attempts and ranked matches, the
    connections presence, the ban handling, the Leaderboards screen, the
    result lines and the privacy text. Needs 0011 [5].
+   - As built in the client, the ranked matches: `RankedService`
+     (`ranked/`) behind the `GameRanked` port (`FirestoreGameRanked`,
+     `GameCloud.ranked()`). The new game's start step shows a switch,
+     "Ranked attempt" on the daily level and "Ranked run" in endless (the
+     device setting `ranked`, on by default; off is practice on the
+     player's own setup), with the attempts or runs left today, read as
+     one `get` per possible id (the day's three daily ids and five run
+     zeros: a list would read every match of a deep run). The owner's
+     toggles hide it (`rankedDaily`, `rankedEndless`); a ban, no player or
+     a device that cannot rank shows it shut with the reason, the day's
+     attempts or runs used too. Start declares the attempt
+     (`nextDailyAttemptId`, a void daily attempt again first; `nextRunId`
+     and then `e_<runId>_<i>` match by match): a transaction that reads
+     the document and sets `{ at: serverTimestamp(), expireAt }` (this
+     device's clock + 31 days) - a create, or for a void daily attempt
+     the update the rules allow, whole, so the void marks go - then
+     `getDocFromServer` for `at`, 3 s in all. The match then plays
+     `rankedPlan(level, attemptSeed(uid, id, at))` on the online grid
+     (the arena is laid out for it before it starts), with no restart,
+     and its replay is uploaded whatever the recording settings say, with
+     the header's `attempt` and the submission's `attempt` id. A
+     declaration that fails or times out plays unranked and the result
+     screen says why (offline, attempts used, runs used); one taken
+     already moves on to the next id. In a ranked run a failed later
+     declaration leaves the rest of the run unranked ("This run is no
+     longer ranked"). A run lives in memory: a match left, or a page
+     closed, ends the run on the device, and on the server it is a
+     declared match without a replay, a lost life (the owner's decision:
+     a voided or abandoned endless match keeps its lost life, below). The
+     client gives no life back for a match the server voids later. The
+     result screen says "Ranked attempt 2 of
+     3 · ranked setup" or "Ranked run · match 3"; the board position
+     ("provisional #4 today") is not shown yet.
+   - Where the server and this ADR part, the server wins: ranked matches
+     are `gpu-int` only (`checkDeclaredMatch` answers `ruleset` for any
+     other, ADR 0015), not the CPU simulation the text above names. So
+     ranked play is offered only on a device whose GPU passed the
+     self-test and that has the integer GPU passes
+     (`RankedService.deviceReady`); `IntSimulation` stands in only should
+     the GPU fail to start in the match. The countdown the deadline
+     allows for does not exist in the game: the match starts once the
+     declaration is read back, inside the deadline's slack.
+   - As built in the client, the bans and notices: `ModerationService`
+     (`moderation/`) behind the `GameModeration` port
+     (`FirestoreGameModeration`, `GameCloud.moderation()`): the player's
+     `bans/{uid}` live and its Realtime Database mirror, either holding
+     being a ban, ended by itself at `until`, and the notices, oldest
+     first, deleted when dismissed. The menus show the banner (until when,
+     why, what it takes away) and the notices above the friends'
+     challenges. A ban hides online play in the lobby, stops a search
+     (`MatchmakerService.enabled`), takes the online status back, shuts
+     the profile editor and the friends' add, accept, invite and
+     challenge, refuses ranked play, and the backends send no replay
+     submission or command. Instead of switching the storage to the
+     device, `FirestoreGameStorage` holds the player's writes while the
+     ban holds, as it does offline, and runs them once it ends, if the
+     page is still open. The connections presence (RTDB `connections`)
+     is not written by the client yet.
 7. **Admin lib** with all views, including the moved curation page, with
    or after 0011 [6]. Then enable `featureBest`, sign in, and run
    `stats.recount` once.
@@ -1415,6 +1473,8 @@ written.
   bar from a board hides the player's entries of that kind while their
   results still count (an online opponent keeps the win); a won endless
   match voided after its result keeps costing the life it cost.
+- For the ranked client: a voided or abandoned endless match keeps its
+  lost life ("keep it") - the client does not give it back.
 
 ## Owner's manual steps
 

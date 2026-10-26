@@ -1,5 +1,7 @@
 @if (!available()) {
   <p class="text">{{ "online.noCloud" | t }}</p>
+} @else if (moderation.banned() && lobby().phase === "idle") {
+  <p class="text banned" role="status">{{ "moderation.online" | t }}</p>
 } @else {
   @let searching = matchmaker.state() !== "idle";
   @let matchmaking = matchmaker.available && matchmaker.enabled();

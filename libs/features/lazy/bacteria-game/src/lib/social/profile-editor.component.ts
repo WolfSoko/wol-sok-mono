@@ -14,6 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TranslationKey } from '../i18n/dictionaries';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { ModerationService } from '../moderation/moderation.service';
 import { GameAccount } from '../storage/game-account';
 import { AvatarComponent } from './avatar.component';
 import {
@@ -52,6 +53,7 @@ import { SocialService } from './social.service';
 })
 export class ProfileEditorComponent {
   protected readonly social = inject(SocialService);
+  protected readonly moderation = inject(ModerationService);
   private readonly account = inject(GameAccount);
 
   protected readonly nameMax = NAME_MAX;
@@ -77,7 +79,13 @@ export class ProfileEditorComponent {
    * False until the stored profile is read: the switches and the save wait
    * for it, so its flags are never saved as the defaults shown meanwhile.
    */
-  protected readonly loaded = this.social.profileLoaded;
+  /**
+   * True once the stored profile was read and no ban holds - under one the
+   * rules refuse every save (ADR 0012), so the editor stays shut.
+   */
+  protected readonly loaded = computed(
+    () => this.social.profileLoaded() && !this.moderation.banned()
+  );
   /**
    * The profile as edited - the saved one, with the fields the player
    * changed. One that arrives later does not undo what the player typed.

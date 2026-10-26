@@ -111,6 +111,9 @@
   </div>
 
   <div class="actions">
+    @if (moderation.banned()) {
+      <span class="note" role="status">{{ "moderation.profile" | t }}</span>
+    }
     @if (note(); as note) {
       <span class="note" role="status">{{ note | t }}</span>
     }

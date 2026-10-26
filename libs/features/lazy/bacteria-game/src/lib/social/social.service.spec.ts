@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, take, throwError, toArray } from 'rxjs';
 import { FakeGameAccount } from '../../testing/fake-game-account';
+import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import {
   FakeGamePresence,
   FakeGameSocial,
@@ -21,6 +22,7 @@ describe('SocialService', () => {
   let social: FakeGameSocial;
   let presence: FakeGamePresence;
   let account: FakeGameAccount;
+  let moderation: FakeGameModeration;
 
   function service(): SocialService {
     return TestBed.inject(SocialService);
@@ -31,6 +33,7 @@ describe('SocialService', () => {
     social = new FakeGameSocial();
     presence = new FakeGamePresence();
     account = new FakeGameAccount('ada');
+    moderation = new FakeGameModeration();
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: account },
@@ -40,6 +43,7 @@ describe('SocialService', () => {
             social: () => social,
             presence: () => presence,
             rooms: () => null,
+            moderation: () => moderation,
           },
         },
       ],
@@ -174,6 +178,26 @@ describe('SocialService', () => {
     await players.saveProfile({ ...defaultProfile('ada'), shareStatus: false });
     TestBed.tick();
     expect(presence.stateOf('ada')).toBeNull();
+  });
+
+  it('takes the status back, and writes nothing, while a ban holds', async () => {
+    const players = service();
+    TestBed.tick();
+    expect(presence.stateOf('ada')).toBe('online');
+
+    moderation.banFor(null, 'spam');
+    TestBed.tick();
+
+    expect(presence.stateOf('ada')).toBeNull();
+    await expect(players.addFriend('bob')).rejects.toThrow('suspended');
+    await expect(players.saveProfile({ name: 'Ada' })).rejects.toThrow(
+      'suspended'
+    );
+    expect(social.get('profiles/ada')).toBeNull();
+
+    moderation.lift();
+    TestBed.tick();
+    expect(presence.stateOf('ada')).toBe('online');
   });
 
   it('shows nothing before the stored profile says whether to share', async () => {

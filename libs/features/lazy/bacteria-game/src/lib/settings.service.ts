@@ -85,6 +85,11 @@ export interface StoredSettings {
   recordLocal?: boolean;
   /** Whether recorded local matches are kept; online ones always are. */
   saveMatches?: boolean;
+  /**
+   * Whether daily matches and endless runs are declared as ranked ones
+   * where ranked play is offered (ADR 0012) - else practice.
+   */
+  ranked?: boolean;
 }
 
 import { BacteriaLook, isBacteriaLook } from './state/skins';
@@ -192,6 +197,12 @@ export class GameSettingsService {
    * matches are kept either way (ADR 0012).
    */
   public readonly saveMatches = signal(true);
+  /**
+   * True while daily matches and endless runs are played ranked where
+   * ranked play is offered (ADR 0012, on by default) - false for practice,
+   * with the player's own setup.
+   */
+  public readonly ranked = signal(true);
 
   constructor() {
     // Synchronous, so a change is told apart from a restored setup.
@@ -326,6 +337,12 @@ export class GameSettingsService {
     this.changed('saveMatches');
   }
 
+  /** Plays daily matches and endless runs ranked from now on - or practice. */
+  public setRanked(on: boolean): void {
+    this.ranked.set(on);
+    this.changed('ranked');
+  }
+
   /** Speaks a language from now on, or follows the browser for null. */
   public setLanguage(language: Language | null): void {
     this.i18n.setLanguage(language);
@@ -415,6 +432,9 @@ export class GameSettingsService {
     if (restores('saveMatches') && typeof stored.saveMatches === 'boolean') {
       this.saveMatches.set(stored.saveMatches);
     }
+    if (restores('ranked') && typeof stored.ranked === 'boolean') {
+      this.ranked.set(stored.ranked);
+    }
     this.gameState.setReplayPrefs({
       recordLocal: this.recordLocal(),
       saveMatches: this.saveMatches(),
@@ -494,6 +514,7 @@ export class GameSettingsService {
       matchLevel: this.matchLevel() ?? undefined,
       recordLocal: this.recordLocal(),
       saveMatches: this.saveMatches(),
+      ranked: this.ranked(),
     };
     this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }

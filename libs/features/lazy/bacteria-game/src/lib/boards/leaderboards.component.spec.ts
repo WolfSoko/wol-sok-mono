@@ -68,6 +68,7 @@ describe('Leaderboards', () => {
             social: () => (withCloud ? social : null),
             presence: () => new FakeGamePresence(),
             rooms: () => null,
+            moderation: () => null,
           },
         },
       ],

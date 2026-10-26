@@ -10,12 +10,14 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatStepperModule } from '@angular/material/stepper';
 import { rgba } from '../arena/canvas-math';
 import { ZONE_COLORS } from '../arena/zone-look';
 import {
   difficultyKeys,
   GameText,
+  GameTextPipe,
   levelDescriptionText,
   levelNameText,
   levelTitleText,
@@ -86,6 +88,8 @@ import {
   stepsOf,
 } from './play-modes';
 import { ScreenHeaderComponent } from './screen-header.component';
+import type { RankedKind, RankedOffer } from '../ranked/ranked.service';
+import type { TranslationKey } from '../i18n/dictionaries';
 
 /**
  * A new game, step by step: first the mode - the training, the campaign,
@@ -104,11 +108,13 @@ import { ScreenHeaderComponent } from './screen-header.component';
     MatButtonModule,
     MatButtonToggleModule,
     MatIconModule,
+    MatSlideToggleModule,
     MatStepperModule,
     MedallionComponent,
     OnlineLobbyComponent,
     ScreenHeaderComponent,
     TranslatePipe,
+    GameTextPipe,
   ],
   templateUrl: './new-game.component.html',
   styleUrl: './new-game.component.scss',
@@ -158,6 +164,15 @@ export class NewGameComponent {
   public readonly online = input<OnlineLobby>(IDLE_LOBBY);
   /** False where online matches cannot be played. */
   public readonly onlineAvailable = input(false);
+  /**
+   * Ranked play on the daily level and in endless runs (ADR 0012), as
+   * offered - a mode left out, or null, offers none.
+   */
+  public readonly rankedOffers = input<
+    Partial<Record<RankedKind, RankedOffer | null>>
+  >({});
+  /** True while a ranked attempt is being declared: Start waits. */
+  public readonly declaring = input(false);
 
   /** A mode was picked - the host sets the game up for it. */
   public readonly kindChange = output<PlayKind>();
@@ -166,6 +181,8 @@ export class NewGameComponent {
   public readonly difficultyChange = output<BotDifficulty>();
   public readonly seriesLengthChange = output<SeriesLength>();
   public readonly headStartChange = output<HeadStart>();
+  /** Ranked or practice for daily matches and endless runs - the setting. */
+  public readonly rankedChange = output<boolean>();
   /** Start the match - or the run - of the mode picked. */
   public readonly start = output<PlayKind>();
   public readonly hostOnline = output<void>();
@@ -400,9 +417,27 @@ export class NewGameComponent {
     return this.i18n.t('newGame.enemy.evolved', { list: parts.join(', ') });
   });
 
-  /** The keys of the name and the briefing of the selected difficulty. */
+  /** Ranked play in the mode picked - null where it offers none. */
+  protected readonly rankedOffer = computed(() => {
+    const kind = this.kind();
+    return kind === 'daily' || kind === 'endless'
+      ? (this.rankedOffers()[kind] ?? null)
+      : null;
+  });
+
+  /** The ranked switch's label: an attempt, or a run. */
+  protected readonly rankedLabel = computed((): TranslationKey =>
+    this.kind() === 'endless' ? 'boards.ranked.endless' : 'boards.ranked.daily'
+  );
+
+  /**
+   * The keys of the name and the briefing of the difficulty the computer
+   * plays: the one selected, the normal one in a ranked match.
+   */
   protected readonly difficultyTexts = computed(() =>
-    difficultyKeys(this.difficulty())
+    difficultyKeys(
+      this.rankedOffer()?.on === true ? 'normal' : this.difficulty()
+    )
   );
 
   /** The head starts on offer, named after the colony that gets it. */
