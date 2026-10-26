@@ -102,7 +102,7 @@ const CLIENT_SOURCES = [
  * index on `__name__` for it, which `firestore.indexes.json` does not
  * hold and the release does not create, while the emulator answers it.
  */
-const ID_DESCENDING = /orderBy\(\s*\w+\.documentId\(\),\s*'desc'\s*\)/;
+const ID_DESCENDING = /orderBy\(\s*(?:\w+\.)?documentId\(\),\s*'desc'\s*\)/;
 
 function sourcesIn(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true, recursive: true })
