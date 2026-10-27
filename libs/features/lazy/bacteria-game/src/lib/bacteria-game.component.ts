@@ -28,11 +28,7 @@ import { TranslationKey } from './i18n/dictionaries';
 import { I18nService } from './i18n/i18n.service';
 import { difficultyKeys, levelNameText, missionKeys } from './i18n/game-texts';
 import { TranslatePipe } from './i18n/translate.pipe';
-import {
-  ElemResizedDirective,
-  ResizedEvent,
-  ShowFpsComponent,
-} from '@wolsok/ui-kit';
+import { ElemResizedDirective, ResizedEvent } from '@wolsok/ui-kit';
 import {
   asapScheduler,
   defer,
@@ -207,7 +203,6 @@ const MINIMAP_UPDATE_MS = 100;
     MatCardModule,
     WsThanosDirective,
     MatButtonModule,
-    ShowFpsComponent,
     MatIconModule,
     SocialNoticesComponent,
     ModerationNoticesComponent,
@@ -407,7 +402,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     NEUTRAL_COLOR[1],
     NEUTRAL_COLOR[2],
   ])})`;
-  protected readonly fps = this.store.fps;
+  /**
+   * The frame rate in the HUD, in whole frames - null while the settings
+   * hide it, so the HUD renders again only when the number it shows changes.
+   */
+  protected readonly hudFps = computed(() =>
+    this.settings.showFps() ? Math.round(this.store.fps()) : null
+  );
   /** True while a match is on, paused or not. */
   protected readonly running: Signal<boolean>;
   protected readonly paused: Signal<boolean>;

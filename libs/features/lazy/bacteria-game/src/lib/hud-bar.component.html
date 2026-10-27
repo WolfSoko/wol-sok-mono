@@ -10,6 +10,11 @@
         colonyName(colony.name)
       }}</span>
       <span class="colony-count">{{ colony.bacterias }}</span>
+      <span class="colony-energy"
+        >⚡{{ colony.energy }}%<span class="cdk-visually-hidden">
+          {{ "stage.hud.energy" | t }}</span
+        ></span
+      >
       @if (goal(); as goal) {
         <span class="colony-held"
           ><mat-icon aria-hidden="true">{{ goal.icon }}</mat-icon
@@ -29,6 +34,10 @@
     </span>
   }
 </span>
+@let rate = fps();
+@if (rate !== null) {
+  <span class="hud-fps">{{ "stage.hud.fps" | t: { fps: rate } }}</span>
+}
 <span class="hud-actions">
   <button
     mat-icon-button

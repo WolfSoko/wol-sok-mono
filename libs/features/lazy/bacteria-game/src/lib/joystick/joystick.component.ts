@@ -12,6 +12,7 @@ import {
 import { playerNameText, renderGameText } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import {
+  add,
   clampLength,
   delta,
   NO_STEERING,
@@ -26,11 +27,13 @@ export const JOYSTICK_RADIUS = 44;
 /**
  * A floating on-screen joystick for one player.
  *
- * The whole element is the touch zone: wherever the finger lands becomes the
- * centre of the stick, so nobody has to aim for a small base first. Dragging
- * from there reports a {@link SteeringVector}, releasing reports the zero
- * vector. Only one pointer is tracked at a time - the other player's finger
- * belongs to their own stick.
+ * The whole element is the touch zone, laid over the arena: wherever the
+ * finger lands becomes the centre of the stick, so nobody has to aim for a
+ * small base first. Dragging from there reports a {@link SteeringVector},
+ * releasing reports the zero vector. A finger pulled past the rim drags the
+ * base along behind it, so the stick stays under the thumb and turning back
+ * takes no long way across the screen. Only one pointer is tracked at a
+ * time - the other player's finger belongs to their own stick.
  *
  * Directions are reported in screen space. A player who sits at another edge
  * of the phone sees the arena turned, and so is their push: "away from me"
@@ -90,6 +93,16 @@ export class JoystickComponent implements OnDestroy {
   protected readonly origin = signal<Point | null>(null);
   /** The knob's offset from the centre in element pixels. */
   protected readonly knob = signal<Point>({ x: 0, y: 0 });
+  /**
+   * Puts the base under the finger - a transform, so a base that trails the
+   * finger costs no layout on every move.
+   */
+  protected readonly baseTransform = computed(() => {
+    const origin = this.origin();
+    return origin === null
+      ? null
+      : `translate(${origin.x}px, ${origin.y}px) translate(-50%, -50%)`;
+  });
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private pointerId: number | null = null;
@@ -120,13 +133,18 @@ export class JoystickComponent implements OnDestroy {
     if (event.pointerId !== this.pointerId) {
       return;
     }
-    const push = delta(this.originClient, {
-      x: event.clientX,
-      y: event.clientY,
-    });
-    // The knob follows the finger, but never beyond the rim of the base.
-    this.knob.set(clampLength(push, this.radius));
-    this.steer.emit(steeringVector(push, this.radius));
+    const finger = { x: event.clientX, y: event.clientY };
+    const push = delta(this.originClient, finger);
+    const knob = clampLength(push, this.radius);
+    // Past the rim the base follows the finger, which keeps the knob on the
+    // rim: still pushed all the way, in the finger's direction.
+    const trail = delta(knob, push);
+    if (trail.x !== 0 || trail.y !== 0) {
+      this.originClient = add(this.originClient, trail);
+      this.origin.update((origin) => origin && add(origin, trail));
+    }
+    this.knob.set(knob);
+    this.steer.emit(steeringVector(knob, this.radius));
     event.preventDefault();
   }
 

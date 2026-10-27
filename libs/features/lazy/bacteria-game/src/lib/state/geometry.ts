@@ -61,6 +61,11 @@ export function delta(from: Point, to: Point): Point {
   return { x: to.x - from.x, y: to.y - from.y };
 }
 
+/** The point moved by the vector. */
+export function add(point: Point, vector: Point): Point {
+  return { x: point.x + vector.x, y: point.y + vector.y };
+}
+
 /** The vector scaled to the given length; the zero vector stays zero. */
 export function scaleTo(vector: Point, to: number): Point {
   const current = length(vector);

@@ -7,6 +7,8 @@ export const stage: Translation<typeof en> = {
     timeLeft: 'Restzeit',
     secondsHeld: 'Sekunden gehalten',
     pelletsEaten: 'Pellets gefressen',
+    energy: 'Energie',
+    fps: '{fps} FPS',
     pause: 'Pause',
     giveUp: 'Aufgeben',
     giveUpAgain:

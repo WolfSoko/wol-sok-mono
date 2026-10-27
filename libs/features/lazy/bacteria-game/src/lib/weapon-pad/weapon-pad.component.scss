@@ -9,8 +9,6 @@
 
 .button-with-ring {
   @include pad.button-with-ring;
-
-  border-radius: 50%;
 }
 
 .charge {

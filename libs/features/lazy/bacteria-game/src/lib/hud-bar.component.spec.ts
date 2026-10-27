@@ -13,7 +13,6 @@ function colony(overrides: Partial<ColonyStats>): ColonyStats {
     captured: 0,
     lost: 0,
     energy: 100,
-    share: 50,
     boosting: false,
     boostReady: true,
     boostCooldown: 0,
@@ -64,6 +63,26 @@ describe('HudBarComponent', () => {
       '12',
     ]);
     expect(host.querySelectorAll('.hud-colony.boosting')).toHaveLength(1);
+  });
+
+  it("shows each colony's energy and, where asked for, the frame rate", () => {
+    const { fixture, host } = render({ fps: 58 });
+
+    const energies = [...host.querySelectorAll('.colony-energy')];
+    expect(energies.map((energy) => energy.textContent?.trim())).toEqual([
+      '⚡100% energy',
+      '⚡100% energy',
+    ]);
+    expect(host.querySelector('.hud-fps')?.textContent).toContain('58 FPS');
+
+    fixture.componentRef.setInput('fps', 0);
+    fixture.detectChanges();
+    expect(host.querySelector('.hud-fps')?.textContent).toContain('0 FPS');
+
+    fixture.componentRef.setInput('fps', null);
+    fixture.detectChanges();
+
+    expect(host.querySelector('.hud-fps')).toBeNull();
   });
 
   it('names the colonies in the active language, a player as they are', () => {
