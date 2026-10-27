@@ -40,6 +40,11 @@ import {
   shouldDraw,
 } from './render-pacing';
 
+/** A full-screen quad has no edges to smooth. */
+const CONTEXT_ATTRIBUTES: WebGLContextAttributes & { antialias: boolean } = {
+  antialias: false,
+};
+
 @Component({
   selector: 'ws-shared-ui-render-shader',
   templateUrl: './render-shader.component.html',
@@ -139,8 +144,7 @@ export class RenderShaderComponent
 
   ngAfterViewInit() {
     const renderParams = {
-      // A full-screen quad has no edges to smooth.
-      antialias: false,
+      ...CONTEXT_ATTRIBUTES,
       canvas: this.webGLCanvas.nativeElement,
     };
     if (!this.isWebGL2Available()) {
@@ -173,7 +177,6 @@ export class RenderShaderComponent
     this.scene.add(this.mesh);
     this.still = this.stillOnSlowRenderer && this.slowOrStill();
     if (this.startWhenIdle) {
-      this.waiting.set(true);
       this.cancelStart = whenIdle(() => this.start());
     } else {
       this.start();
@@ -223,15 +226,12 @@ export class RenderShaderComponent
       this.renderer &&
       this.uniforms
     ) {
-      const width = bufferSize(this.canvasWidth, this.resolutionScale);
-      const height = bufferSize(this.canvasHeight, this.resolutionScale);
+      const { width, height } = this.updateBufferSize();
       // Set at once, not only through the template: a still frame is drawn
       // before the next change detection.
       const canvas = this.webGLCanvas.nativeElement;
       canvas.width = width;
       canvas.height = height;
-      this.bufferWidth.set(width);
-      this.bufferHeight.set(height);
       this.renderer.setSize(width, height);
       this.uniforms.resolution.value = [width, height];
       // A still frame is drawn again at the new size.
@@ -242,6 +242,14 @@ export class RenderShaderComponent
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    // The template's values are known before its first check, so the
+    // lifecycle hooks after it only write what is already there.
+    if (changes['startWhenIdle']?.isFirstChange()) {
+      this.waiting.set(this.startWhenIdle);
+    }
+    if (this.canvasWidth && this.canvasHeight) {
+      this.updateBufferSize();
+    }
     if (
       changes['runAnimation'] &&
       !changes['runAnimation'].isFirstChange() &&
@@ -262,6 +270,13 @@ export class RenderShaderComponent
     }
 
     if (changes['canvasHeight'] && !changes['canvasHeight'].isFirstChange()) {
+      this.onResize();
+    }
+
+    if (
+      changes['resolutionScale'] &&
+      !changes['resolutionScale'].isFirstChange()
+    ) {
       this.onResize();
     }
   }
@@ -317,19 +332,35 @@ export class RenderShaderComponent
     }
   }
 
+  /** The drawing buffer for the current inputs, into the template's signals. */
+  private updateBufferSize(): { width: number; height: number } {
+    const width = bufferSize(this.canvasWidth, this.resolutionScale);
+    const height = bufferSize(this.canvasHeight, this.resolutionScale);
+    this.bufferWidth.set(width);
+    this.bufferHeight.set(height);
+    return { width, height };
+  }
+
   /** A software renderer, or a visitor who asked for reduced motion. */
   private slowOrStill(): boolean {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       return true;
     }
-    const gl = this.webGLCanvas.nativeElement.getContext('webgl2');
+    const gl = this.webGLCanvas.nativeElement.getContext(
+      'webgl2',
+      CONTEXT_ATTRIBUTES
+    );
     return gl !== null && isSoftwareRenderer(rendererName(gl));
   }
 
   private isWebGL2Available() {
     try {
       const canvas = this.webGLCanvas.nativeElement;
-      return !!(window.WebGL2RenderingContext && canvas.getContext('webgl2'));
+      // The first getContext fixes the context's attributes for the canvas.
+      return !!(
+        window.WebGL2RenderingContext &&
+        canvas.getContext('webgl2', CONTEXT_ATTRIBUTES)
+      );
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_e) {
       return false;
