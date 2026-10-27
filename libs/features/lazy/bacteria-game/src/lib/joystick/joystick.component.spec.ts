@@ -178,6 +178,34 @@ describe('JoystickComponent', () => {
     expect(component['origin']()).toEqual({ x: 40, y: 60 });
   });
 
+  it('takes a lifted finger of a pinch back when another lands', () => {
+    const zoomed: number[] = [];
+    component.zoom.subscribe((factor) => zoomed.push(factor));
+    fixture.componentRef.setInput('zooms', true);
+    down(1, 40, 60);
+    down(2, 140, 60);
+
+    up(2);
+    down(3, 240, 60);
+    move(3, 440, 60);
+
+    expect(component['origin']()).toBeNull();
+    expect(zoomed).toEqual([2]);
+  });
+
+  it('stops zooming once the camera no longer zooms', () => {
+    const zoomed: number[] = [];
+    component.zoom.subscribe((factor) => zoomed.push(factor));
+    fixture.componentRef.setInput('zooms', true);
+    down(1, 40, 60);
+    down(2, 140, 60);
+
+    fixture.componentRef.setInput('zooms', false);
+    move(2, 240, 60);
+
+    expect(zoomed).toEqual([]);
+  });
+
   it('keeps the stick for the finger that lifts elsewhere', () => {
     down(1, 40, 60);
 

@@ -19,7 +19,7 @@ import {
   Point,
   SteeringVector,
 } from '../state/geometry';
-import { Pinch, steeringVector } from '../touch-controls';
+import { clientPoint, Pinch, steeringVector } from '../touch-controls';
 
 /** Finger distance from the centre, in CSS pixels, that counts as full push. */
 export const JOYSTICK_RADIUS = 44;
@@ -37,7 +37,8 @@ export const JOYSTICK_RADIUS = 44;
  *
  * Where the camera can zoom, a second finger in the zone pinches it with
  * the one on the stick, as two fingers on the arena do: the stick lets go,
- * and the gesture zooms until both fingers are lifted.
+ * and the gesture zooms until both fingers are lifted. A finger that lands
+ * while one of the two is still down takes the lifted one's place.
  *
  * Directions are reported in screen space. A player who sits at another edge
  * of the phone sees the arena turned, and so is their push: "away from me"
@@ -126,17 +127,16 @@ export class JoystickComponent implements OnDestroy {
       return;
     }
     const finger = clientPoint(event);
-    if (this.pointerId != null) {
-      // A second finger pinches with the one on the stick, which lets go.
+    // A second finger pinches with the one on the stick, which lets go - or
+    // with the one left of a pinch. Without zoom it is ignored.
+    if (this.pointerId != null || this.fingers.active()) {
       if (this.zooms() && this.fingers.start(event.pointerId, finger)) {
-        this.release();
+        if (this.pointerId != null) {
+          this.release();
+        }
         this.host.nativeElement.setPointerCapture?.(event.pointerId);
         event.preventDefault();
       }
-      return;
-    }
-    // A finger left over from a pinch does not take the stick.
-    if (this.fingers.active()) {
       return;
     }
     this.pointerId = event.pointerId;
@@ -158,7 +158,8 @@ export class JoystickComponent implements OnDestroy {
     const finger = clientPoint(event);
     const factor = this.fingers.move(event.pointerId, finger);
     if (this.fingers.pinches(event.pointerId)) {
-      if (factor !== 1) {
+      // The match may have ended mid-pinch: the whole map stays in view.
+      if (factor !== 1 && this.zooms()) {
         this.zoom.emit(factor);
       }
       event.preventDefault();
@@ -219,8 +220,4 @@ export class JoystickComponent implements OnDestroy {
     this.knob.set({ x: 0, y: 0 });
     this.steer.emit(NO_STEERING);
   }
-}
-
-function clientPoint(event: PointerEvent): Point {
-  return { x: event.clientX, y: event.clientY };
 }

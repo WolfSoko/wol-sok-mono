@@ -33,6 +33,11 @@ export interface CrosshairPosition {
   y: number;
 }
 
+/** Where a pointer is, in client (CSS pixel) coordinates. */
+export function clientPoint(event: PointerEvent): Point {
+  return { x: event.clientX, y: event.clientY };
+}
+
 /**
  * Converts a pointer position in client (CSS pixel) coordinates into arena
  * coordinates.
