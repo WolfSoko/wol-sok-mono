@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.118.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.118.0...v74.118.1) (2026-10-27)
+
+### Performance
+
+* **tools:** add Lighthouse CI for the public pages, report-only ([#2707](https://github.com/WolfSoko/wol-sok-mono/issues/2707)) ([9fe10e5](https://github.com/WolfSoko/wol-sok-mono/commit/9fe10e5cca297e6267dbccb5dc799e177f97c343))
+
 ## [74.118.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.117.0...v74.118.0) (2026-10-27)
 
 ### Features
