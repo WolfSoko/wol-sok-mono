@@ -338,8 +338,8 @@ play each other.
   comes from, that report's own tick included, and the cells of the last
   `AREA_HISTORY` ticks. A change to how far a bacterium gets in a tick (a
   new pass that moves one, a longer escape) grows `recentReach` with it;
-  the cross-check's `roomy` scenario catches an area far too small, not
-  one a tick short.
+  the self-test and the cross-check's `roomy` scenario play on the area
+  and catch one far too small, not one a tick short.
 - Two rulesets (`Ruleset`, `state/simulation.ts`): `cpu`
   (`BacteriaSimulation`) and `gpu-int` (the integer passes: `GpuSimulation`
   with `deterministic`, or `IntSimulation`). `Simulation.ruleset` names a

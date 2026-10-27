@@ -294,8 +294,10 @@ sits behind a flag; step 8 switches it on.
 
     So the passes would write empty over empty outside the area, and
     leaving it out changes no bit; the TypeScript reference still runs the
-    whole arena. The cross-check's `roomy` scenario plays whole matches
-    with room to spare and no sliding wall, where the area is in use; the
+    whole arena. The device's self-test plays its last ticks on the area
+    (`SELF_TEST_SCENARIO`, `GPU_SELF_TEST_VERSION` 2, so every device
+    tests again), and the cross-check's `roomy` scenario plays a whole
+    match with room to spare and a bar that stands still; the
     report's boxes grown by no reach fail it (from tick 6). The cell of
     spare reach per tick and the report's 8-cell blocks hide an area one
     tick short, so the proof above, not the check, keeps the reach right.
