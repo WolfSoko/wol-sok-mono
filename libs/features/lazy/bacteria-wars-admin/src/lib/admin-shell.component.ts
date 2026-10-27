@@ -37,8 +37,9 @@ const TABS: readonly { path: string; label: AdminTextKey }[] = [
 
 /**
  * The admin area's frame: the title, a link back to the game, its views'
- * tabs once the owner is in, and sign-out. Keeps search engines out of every admin view, and takes
- * down the page's loading splash, which only the game would.
+ * tabs once the owner is in, and sign-out. Keeps search engines out of every
+ * admin view, and takes down the page's loading splash, which only the game
+ * would.
  */
 @Component({
   selector: 'feat-lazy-bac-admin-shell',
