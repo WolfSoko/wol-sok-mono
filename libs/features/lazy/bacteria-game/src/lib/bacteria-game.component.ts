@@ -1090,6 +1090,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.startOnTap(() => {
+      // A reset may have begun in the frame the spinner took.
+      if (this.resetting()) {
+        return;
+      }
       this.dismissChallenge();
       this.gameStateService.leaveOnline();
       this.gameStateService.playGhost(run);
@@ -1103,6 +1107,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * up behind the busy spinner (`StageBusy`), until it runs.
    */
   private startOnTap(start: () => void | Promise<void>): void {
+    // A tap while busy is dropped, and takes no screen either.
+    if (this.busy.active()) {
+      return;
+    }
     this.requestNativeFullscreen();
     this.busy.run(start);
   }
@@ -1178,7 +1186,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
             this.gameStateService.playMission(mission);
           }
           if (action === 'campaign') {
-            this.continueCampaign();
+            this.playFurthestLevel();
           } else if (
             action === 'again' ||
             action === 'next' ||
@@ -1384,6 +1392,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * training mission.
    */
   protected startNewGame(kind: PlayKind): void {
+    // The host's online start stays in step with the lockstep's own starts.
+    if (kind === 'online') {
+      this.startGame();
+      return;
+    }
     this.startOnTap(() => {
       switch (kind) {
         case 'daily':
@@ -1400,12 +1413,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Starts a match on the furthest level the campaign ladder has opened. */
   protected continueCampaign(): void {
-    this.startOnTap(() => {
-      this.gameStateService.leaveOnline();
-      this.selectMode('vs-computer');
-      this.gameStateService.setLevel(this.campaign.furthestLevel());
-      this.startGame();
-    });
+    this.startOnTap(() => this.playFurthestLevel());
+  }
+
+  private playFurthestLevel(): void {
+    this.gameStateService.leaveOnline();
+    this.selectMode('vs-computer');
+    this.gameStateService.setLevel(this.campaign.furthestLevel());
+    this.startGame();
   }
 
   /**

@@ -828,6 +828,32 @@ describe('BacteriaGameComponent', () => {
       expect(start).toHaveBeenCalledTimes(1);
     });
 
+    it('starts an online match on the tap, in step with the other device', () => {
+      create();
+      const held = holdBusyWork();
+      const start = jest
+        .spyOn(component, 'startGame')
+        .mockImplementation(() => undefined);
+
+      component['startNewGame']('online');
+
+      expect(start).toHaveBeenCalledTimes(1);
+      expect(held).toEqual([]);
+    });
+
+    it('starts the next campaign match from the result screen at once', () => {
+      create();
+      const held = holdBusyWork();
+      const start = jest
+        .spyOn(component, 'startGame')
+        .mockImplementation(() => undefined);
+
+      component['playFurthestLevel']();
+
+      expect(start).toHaveBeenCalledTimes(1);
+      expect(held).toEqual([]);
+    });
+
     it('stays busy until a daily match is under way', async () => {
       create();
       const held = holdBusyWork();
