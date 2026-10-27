@@ -164,6 +164,20 @@ function wholeArena(width: number, height: number): CellBounds {
  */
 const SLIME_REACH = 3;
 
+/** The cells a colony covers, null for a colony without bacteria. */
+export function colonyBounds(
+  bacterias: readonly Bacteria[]
+): CellBounds | null {
+  if (bacterias.length === 0) {
+    return null;
+  }
+  const bounds = emptyBounds();
+  for (const { x, y } of bacterias) {
+    growBounds(bounds, x, y);
+  }
+  return bounds;
+}
+
 /**
  * The cells the slime of a colony is worked out on: its bacteria and
  * {@link SLIME_REACH} around them, cut to what the canvas shows - null when
@@ -180,12 +194,9 @@ export function slimeRegion(
   /** How many cells past the view a look still reads - the lattice looks'. */
   beyondView = 0
 ): CellBounds | null {
-  if (bacterias.length === 0) {
+  const bounds = colonyBounds(bacterias);
+  if (bounds === null) {
     return null;
-  }
-  const bounds = emptyBounds();
-  for (const { x, y } of bacterias) {
-    growBounds(bounds, x, y);
   }
   // The cells the view touches, one more for a pixel half in it.
   const reach = SLIME_REACH + 1 + beyondView;

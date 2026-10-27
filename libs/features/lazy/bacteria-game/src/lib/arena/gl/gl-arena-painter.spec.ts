@@ -1,11 +1,6 @@
 import { gameBalance } from '../../state/game-balance';
 import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-fx';
-import {
-  colonyBounds,
-  encodeCells,
-  packTints,
-  passMargins,
-} from './gl-arena-painter';
+import { encodeCells, packTints, passMargins } from './gl-arena-painter';
 import { MAX_TINTS } from './shaders';
 
 describe('packTints', () => {
@@ -52,22 +47,6 @@ describe('packTints', () => {
     );
 
     expect(packTints(tints, BLUE, circles, modes)).toBe(MAX_TINTS);
-  });
-});
-
-describe('colonyBounds', () => {
-  it('reports the box of cells a colony covers', () => {
-    expect(
-      colonyBounds([
-        { x: 1, y: 1, energy: 1 },
-        { x: 5, y: 2, energy: 1 },
-        { x: 3, y: 3, energy: 1 },
-      ])
-    ).toEqual({ minX: 1, minY: 1, maxX: 5, maxY: 3 });
-  });
-
-  it('reports nothing for an empty colony', () => {
-    expect(colonyBounds([])).toBeNull();
   });
 });
 

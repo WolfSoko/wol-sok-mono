@@ -9,6 +9,7 @@ import { Zone } from '../../state/zones';
 import { ArenaTheme } from '../arena-theme';
 import {
   cellDensity,
+  colonyBounds,
   hatchPattern,
   jamDrops,
   lookReach,
@@ -96,20 +97,6 @@ export function packTints(
 
 /** A box of arena cells, `[x0, y0, x1, y1]` - x1 and y1 just past it. */
 export type CellBox = readonly [number, number, number, number];
-
-/** The cells a colony covers, null for a colony without bacteria. */
-export function colonyBounds(
-  bacterias: readonly Bacteria[]
-): CellBounds | null {
-  if (bacterias.length === 0) {
-    return null;
-  }
-  const bounds = emptyBounds();
-  for (const { x, y } of bacterias) {
-    growBounds(bounds, x, y);
-  }
-  return bounds;
-}
 
 /**
  * Packs a colony into the cells texture, two bytes per arena cell: its
@@ -556,7 +543,7 @@ export class GlArenaPainter implements ArenaPainter {
   }
 
   /** The colony's cells grown by a margin, clamped to the arena. */
-  private box(bounds: CellBounds, margin: number): number[] {
+  private box(bounds: CellBounds, margin: number): CellBox {
     return [
       Math.max(0, bounds.minX - margin),
       Math.max(0, bounds.minY - margin),
