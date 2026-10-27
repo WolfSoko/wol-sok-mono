@@ -38,28 +38,26 @@ const KNOWN_FINDINGS: readonly string[] = [
   'hourglass on hard: the stand-in never wins with the expected loadout',
   'inner-ring on normal: the stand-in never wins with the expected loadout',
   'inner-ring on hard: the stand-in never wins with the expected loadout',
-  'twin-chambers on easy: the stand-in never wins with the expected loadout',
   'twin-chambers on hard: the stand-in never wins with the expected loadout',
   'serpentine on normal: the stand-in never wins with the expected loadout',
   'alveoli on hard: the stand-in never wins with the expected loadout',
   'half-life on hard: the stand-in never wins with the expected loadout',
   'containment on hard: the stand-in never wins with the expected loadout',
   'control-room on hard: the stand-in never wins with the expected loadout',
-  'control-room: silver allows 75 s, the slowest win took 33.3 s',
-  'meltdown on hard: the stand-in never wins with the expected loadout',
   'meltdown: gold asks for 35 s, the fastest win took 60 s',
   'patient-zero on hard: the stand-in never wins with the expected loadout',
-  'expanse on hard: the stand-in never wins with the expected loadout',
-  'archipelago on normal: the stand-in never wins with the expected loadout',
-  'bloodstream on hard: the stand-in never wins with the expected loadout',
-  'root-network on hard: the stand-in never wins with the expected loadout',
+  'expanse on normal: the stand-in never wins with the expected loadout',
+  'archipelago on hard: the stand-in never wins with the expected loadout',
+  'bloodstream on normal: the stand-in never wins with the expected loadout',
+  'leviathan on easy: the stand-in never wins with the expected loadout',
   'leviathan on normal: the stand-in never wins with the expected loadout',
   'leviathan on hard: the stand-in never wins with the expected loadout',
+  'cryo-pulse: loses 1.6 points of share on average',
   'petri: corridors (75 %) is easier than petri-dish (50 %) before it',
   'laboratory: pillar-field (83 %) is easier than inner-ring (50 %) before it',
-  'laboratory: pistons (92 %) is easier than serpentine (50 %) before it',
-  'outbreak: quarantine (92 %) is easier than patient-zero (50 %) before it',
-  'expanse: bloodstream (50 %) is easier than archipelago (0 %) before it',
+  'laboratory: pistons (100 %) is easier than serpentine (50 %) before it',
+  'expanse: archipelago (50 %) is easier than expanse (0 %) before it',
+  'expanse: root-network (50 %) is easier than bloodstream (25 %) before it',
 ];
 
 /**
@@ -67,7 +65,7 @@ const KNOWN_FINDINGS: readonly string[] = [
  * seeds are few (most on normal, one or two on a big map) and stalemates
  * pin the early levels near half: a new baseline may not hold fewer.
  */
-const CURVE_HELD = 26;
+const CURVE_HELD = 25;
 
 describe('the balance baseline', () => {
   it('was played under the balance and the ladder of today', () => {

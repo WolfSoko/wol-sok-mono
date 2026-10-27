@@ -121,7 +121,11 @@ the cryo pulse is weak in the computer's hands.
   what the computer buys - its budget, a character, the gene or weapon
   costs it spends along (`golden-match.spec.ts` pins every ladder
   level's loadouts): version 2 came with the genes' exponential costs
-  (ADR 0013).
+  (ADR 0013). Its baseline holds 25 of the 72 cells within 15 points of
+  their target (26 before) and fails 25 checks besides stalls (27
+  before; the leviathan on easy and cryo-pulse's share among the new
+  ones): the owner took it as it is (2026-10-27), without a calibration
+  round.
 - **Level fixes go through the computer.** Every level setting is part of
   a plain match, so a stall is fixed by what only the ladder's computer
   does: a boss attacks once its colony sits at its cap (`attacksAtCap`)

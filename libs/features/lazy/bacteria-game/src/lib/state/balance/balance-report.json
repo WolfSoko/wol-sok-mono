@@ -1,6 +1,6 @@
 {
   "balanceVersion": 6,
-  "ladderVersion": 1,
+  "ladderVersion": 2,
   "config": {
     "curveSeeds": {
       "easy": 3,
@@ -22,21 +22,20 @@
   "cells": {
     "alveoli/easy/expected": {
       "matches": 3,
-      "winRate": 0.667,
-      "score": 0.833,
-      "undecided": 1,
-      "medianWinSec": 41.2,
+      "winRate": 0.333,
+      "score": 0.667,
+      "undecided": 2,
+      "medianWinSec": 34.9,
       "medianLossSec": null,
-      "fastestWinSec": 6.65,
-      "slowestWinSec": 75.75,
-      "closeness": 0.968,
-      "lostShare": 0.217,
-      "winLostShare": 0.119,
-      "stallRate": 0.333,
-      "share": 0.836,
+      "fastestWinSec": 34.9,
+      "slowestWinSec": 34.9,
+      "closeness": 0.952,
+      "lostShare": 0.237,
+      "winLostShare": 0.099,
+      "stallRate": 0.667,
+      "share": 0.743,
       "medals": {
-        "gold": 1,
-        "silver": 1
+        "gold": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -74,8 +73,8 @@
       "stallRate": 0.333,
       "share": 0.806,
       "medals": {
-        "gold": 3,
-        "silver": 1
+        "bronze": 2,
+        "silver": 2
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -85,58 +84,58 @@
       "winRate": 1,
       "score": 1,
       "undecided": 0,
-      "medianWinSec": 83.1,
+      "medianWinSec": 85.3,
       "medianLossSec": null,
-      "fastestWinSec": 83.1,
-      "slowestWinSec": 83.1,
-      "closeness": 0.833,
-      "lostShare": 4.256,
-      "winLostShare": 4.256,
+      "fastestWinSec": 85.3,
+      "slowestWinSec": 85.3,
+      "closeness": 0.84,
+      "lostShare": 4.728,
+      "winLostShare": 4.728,
       "stallRate": 0,
-      "share": 0.652,
+      "share": 0.644,
       "medals": {
         "bronze": 1
       },
-      "shotsPerMatch": 1,
-      "shotGain": 0.057
+      "shotsPerMatch": 2,
+      "shotGain": 2.58
     },
     "archipelago/hard/expected": {
       "matches": 1,
-      "winRate": 1,
-      "score": 1,
-      "undecided": 0,
-      "medianWinSec": 85.317,
-      "medianLossSec": null,
-      "fastestWinSec": 85.317,
-      "slowestWinSec": 85.317,
-      "closeness": 0.732,
-      "lostShare": 4.027,
-      "winLostShare": 4.027,
-      "stallRate": 0,
-      "share": 0.646,
-      "medals": {
-        "bronze": 1
-      },
-      "shotsPerMatch": 1,
-      "shotGain": -0.03
-    },
-    "archipelago/normal/expected": {
-      "matches": 2,
       "winRate": 0,
       "score": 0,
       "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 84.867,
+      "medianLossSec": 90.567,
       "fastestWinSec": null,
       "slowestWinSec": null,
-      "closeness": 0.8,
-      "lostShare": 4.669,
+      "closeness": 0.727,
+      "lostShare": 5.831,
       "winLostShare": null,
-      "stallRate": 0.5,
-      "share": 0.358,
+      "stallRate": 0,
+      "share": 0.365,
       "medals": {},
+      "shotsPerMatch": 1,
+      "shotGain": 3.841
+    },
+    "archipelago/normal/expected": {
+      "matches": 2,
+      "winRate": 0.5,
+      "score": 0.5,
+      "undecided": 0,
+      "medianWinSec": 82.133,
+      "medianLossSec": 78.9,
+      "fastestWinSec": 82.133,
+      "slowestWinSec": 82.133,
+      "closeness": 0.672,
+      "lostShare": 4.579,
+      "winLostShare": 3.735,
+      "stallRate": 0.5,
+      "share": 0.485,
+      "medals": {
+        "bronze": 1
+      },
       "shotsPerMatch": 0.5,
-      "shotGain": 3.491
+      "shotGain": 3.263
     },
     "bloodstream/easy/expected": {
       "matches": 1,
@@ -147,71 +146,72 @@
       "medianLossSec": null,
       "fastestWinSec": 240,
       "slowestWinSec": 240,
-      "closeness": 0.863,
-      "lostShare": 7.292,
-      "winLostShare": 7.292,
-      "stallRate": 0,
-      "share": 0.504,
+      "closeness": 0.756,
+      "lostShare": 4.965,
+      "winLostShare": 4.965,
+      "stallRate": 1,
+      "share": 0.528,
       "medals": {
         "bronze": 1
       },
-      "shotsPerMatch": 0,
-      "shotGain": null
+      "shotsPerMatch": 3,
+      "shotGain": 0.965
     },
     "bloodstream/hard/expected": {
       "matches": 1,
-      "winRate": 0,
-      "score": 0,
+      "winRate": 1,
+      "score": 1,
       "undecided": 0,
+      "medianWinSec": 240,
+      "medianLossSec": null,
+      "fastestWinSec": 240,
+      "slowestWinSec": 240,
+      "closeness": 0.87,
+      "lostShare": 7.477,
+      "winLostShare": 7.477,
+      "stallRate": 0,
+      "share": 0.501,
+      "medals": {
+        "bronze": 1
+      },
+      "shotsPerMatch": 2,
+      "shotGain": 0.005
+    },
+    "bloodstream/normal/expected": {
+      "matches": 2,
+      "winRate": 0,
+      "score": 0.25,
+      "undecided": 1,
       "medianWinSec": null,
       "medianLossSec": 240,
       "fastestWinSec": null,
       "slowestWinSec": null,
-      "closeness": 0.894,
-      "lostShare": 8.562,
+      "closeness": 0.788,
+      "lostShare": 7.792,
       "winLostShare": null,
-      "stallRate": 1,
-      "share": 0.5,
-      "medals": {},
-      "shotsPerMatch": 3,
-      "shotGain": 0.291
-    },
-    "bloodstream/normal/expected": {
-      "matches": 2,
-      "winRate": 0.5,
-      "score": 0.5,
-      "undecided": 0,
-      "medianWinSec": 240,
-      "medianLossSec": 240,
-      "fastestWinSec": 240,
-      "slowestWinSec": 240,
-      "closeness": 0.808,
-      "lostShare": 6.818,
-      "winLostShare": 7.631,
       "stallRate": 0.5,
-      "share": 0.502,
-      "medals": {
-        "bronze": 1
-      },
-      "shotsPerMatch": 1.5,
-      "shotGain": 0.124
+      "share": 0.497,
+      "medals": {},
+      "shotsPerMatch": 4,
+      "shotGain": 0.181
     },
     "containment/easy/expected": {
       "matches": 3,
       "winRate": 0.667,
       "score": 0.833,
       "undecided": 1,
-      "medianWinSec": 24.675,
+      "medianWinSec": 29.367,
       "medianLossSec": null,
-      "fastestWinSec": 15.417,
-      "slowestWinSec": 33.933,
-      "closeness": 0.988,
-      "lostShare": 0.327,
-      "winLostShare": 0.265,
+      "fastestWinSec": 19.1,
+      "slowestWinSec": 39.633,
+      "closeness": 0.989,
+      "lostShare": 0.35,
+      "winLostShare": 0.272,
       "stallRate": 0.333,
-      "share": 0.86,
+      "share": 0.846,
       "medals": {
-        "gold": 2
+        "silver": 1,
+        "gold": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -222,14 +222,14 @@
       "score": 0,
       "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 34.883,
+      "medianLossSec": 22.3,
       "fastestWinSec": null,
       "slowestWinSec": null,
       "closeness": 0,
-      "lostShare": 3.573,
+      "lostShare": 3.122,
       "winLostShare": null,
       "stallRate": 0,
-      "share": 0.118,
+      "share": 0.108,
       "medals": {},
       "shotsPerMatch": 0,
       "shotGain": null
@@ -256,22 +256,20 @@
     },
     "containment/normal/expected": {
       "matches": 6,
-      "winRate": 0.833,
-      "score": 0.917,
-      "undecided": 1,
-      "medianWinSec": 50.8,
+      "winRate": 0.333,
+      "score": 0.667,
+      "undecided": 4,
+      "medianWinSec": 29.575,
       "medianLossSec": null,
-      "fastestWinSec": 34.65,
-      "slowestWinSec": 100.2,
-      "closeness": 0.94,
-      "lostShare": 0.696,
-      "winLostShare": 0.686,
-      "stallRate": 0.167,
-      "share": 0.787,
+      "fastestWinSec": 27.867,
+      "slowestWinSec": 31.283,
+      "closeness": 0.923,
+      "lostShare": 0.551,
+      "winLostShare": 0.282,
+      "stallRate": 0.667,
+      "share": 0.687,
       "medals": {
-        "gold": 3,
-        "silver": 1,
-        "bronze": 1
+        "gold": 2
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -291,7 +289,7 @@
       "stallRate": 0,
       "share": 0.505,
       "medals": {
-        "gold": 1
+        "silver": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -405,7 +403,7 @@
       "stallRate": 0.5,
       "share": 0.711,
       "medals": {
-        "gold": 1
+        "silver": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -484,20 +482,20 @@
     },
     "control-room/easy/expected": {
       "matches": 3,
-      "winRate": 0.667,
-      "score": 0.667,
+      "winRate": 0.333,
+      "score": 0.333,
       "undecided": 0,
-      "medianWinSec": 33.292,
-      "medianLossSec": 33.5,
-      "fastestWinSec": 33.283,
-      "slowestWinSec": 33.3,
-      "closeness": 0.766,
-      "lostShare": 0.405,
-      "winLostShare": 0.394,
+      "medianWinSec": 32.983,
+      "medianLossSec": 32.567,
+      "fastestWinSec": 32.983,
+      "slowestWinSec": 32.983,
+      "closeness": 0.76,
+      "lostShare": 1.251,
+      "winLostShare": 0.381,
       "stallRate": 0,
-      "share": 0.635,
+      "share": 0.385,
       "medals": {
-        "platinum": 2
+        "platinum": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -508,14 +506,14 @@
       "score": 0,
       "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 32.917,
+      "medianLossSec": 32.517,
       "fastestWinSec": null,
       "slowestWinSec": null,
-      "closeness": 0.857,
-      "lostShare": 1.39,
+      "closeness": 0.805,
+      "lostShare": 1.6,
       "winLostShare": null,
       "stallRate": 0,
-      "share": 0.129,
+      "share": 0.128,
       "medals": {},
       "shotsPerMatch": 0,
       "shotGain": null
@@ -525,15 +523,15 @@
       "winRate": 0.167,
       "score": 0.167,
       "undecided": 0,
-      "medianWinSec": 32.367,
+      "medianWinSec": 32.333,
       "medianLossSec": 32.733,
-      "fastestWinSec": 32.367,
-      "slowestWinSec": 32.367,
-      "closeness": 0.762,
-      "lostShare": 1.294,
-      "winLostShare": 0.274,
+      "fastestWinSec": 32.333,
+      "slowestWinSec": 32.333,
+      "closeness": 0.749,
+      "lostShare": 1.533,
+      "winLostShare": 0.465,
       "stallRate": 0,
-      "share": 0.258,
+      "share": 0.255,
       "medals": {
         "platinum": 1
       },
@@ -621,78 +619,77 @@
     },
     "expanse/hard/expected": {
       "matches": 1,
+      "winRate": 1,
+      "score": 1,
+      "undecided": 0,
+      "medianWinSec": 68.033,
+      "medianLossSec": null,
+      "fastestWinSec": 68.033,
+      "slowestWinSec": 68.033,
+      "closeness": 0.643,
+      "lostShare": 0.872,
+      "winLostShare": 0.872,
+      "stallRate": 0,
+      "share": 0.821,
+      "medals": {
+        "gold": 1
+      },
+      "shotsPerMatch": 2,
+      "shotGain": -1.056
+    },
+    "expanse/normal/expected": {
+      "matches": 2,
       "winRate": 0,
       "score": 0,
       "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 83.05,
+      "medianLossSec": 240,
       "fastestWinSec": null,
       "slowestWinSec": null,
-      "closeness": 0,
-      "lostShare": 6.797,
+      "closeness": 0.217,
+      "lostShare": 10.735,
       "winLostShare": null,
-      "stallRate": 0,
-      "share": 0.257,
-      "medals": {},
-      "shotsPerMatch": 3,
-      "shotGain": 2.548
-    },
-    "expanse/normal/expected": {
-      "matches": 2,
-      "winRate": 0.5,
-      "score": 0.5,
-      "undecided": 0,
-      "medianWinSec": 240,
-      "medianLossSec": 124.017,
-      "fastestWinSec": 240,
-      "slowestWinSec": 240,
-      "closeness": 0.324,
-      "lostShare": 5.87,
-      "winLostShare": 5.161,
       "stallRate": 1,
-      "share": 0.468,
-      "medals": {
-        "bronze": 1
-      },
-      "shotsPerMatch": 4.5,
-      "shotGain": 10.082
+      "share": 0.493,
+      "medals": {},
+      "shotsPerMatch": 9,
+      "shotGain": 5.751
     },
     "feeding-ground/easy/expected": {
       "matches": 3,
       "winRate": 0.333,
       "score": 0.333,
       "undecided": 0,
-      "medianWinSec": 89.533,
-      "medianLossSec": 97.6,
-      "fastestWinSec": 89.533,
-      "slowestWinSec": 89.533,
+      "medianWinSec": 114.133,
+      "medianLossSec": 97.95,
+      "fastestWinSec": 114.133,
+      "slowestWinSec": 114.133,
       "closeness": 0.92,
-      "lostShare": 0.018,
-      "winLostShare": 0.007,
+      "lostShare": 0.061,
+      "winLostShare": 0.061,
       "stallRate": 1,
-      "share": 0.476,
+      "share": 0.447,
       "medals": {
         "bronze": 1
       },
       "shotsPerMatch": 0.333,
-      "shotGain": 0.587
+      "shotGain": 0.495
     },
     "feeding-ground/hard/expected": {
       "matches": 3,
-      "winRate": 0.667,
-      "score": 0.667,
+      "winRate": 0.333,
+      "score": 0.333,
       "undecided": 0,
-      "medianWinSec": 46.358,
-      "medianLossSec": 56.417,
-      "fastestWinSec": 34.683,
-      "slowestWinSec": 58.033,
+      "medianWinSec": 44.7,
+      "medianLossSec": 58.35,
+      "fastestWinSec": 44.7,
+      "slowestWinSec": 44.7,
       "closeness": 0.931,
       "lostShare": 0.003,
-      "winLostShare": 0.018,
+      "winLostShare": 0.003,
       "stallRate": 1,
-      "share": 0.616,
+      "share": 0.433,
       "medals": {
-        "silver": 1,
         "platinum": 1
       },
       "shotsPerMatch": 0,
@@ -700,42 +697,42 @@
     },
     "feeding-ground/normal/expected": {
       "matches": 6,
-      "winRate": 0.5,
-      "score": 0.5,
+      "winRate": 0.833,
+      "score": 0.833,
       "undecided": 0,
-      "medianWinSec": 78.15,
-      "medianLossSec": 45.433,
-      "fastestWinSec": 48.55,
-      "slowestWinSec": 82.5,
-      "closeness": 0.937,
-      "lostShare": 0.008,
-      "winLostShare": 0.015,
+      "medianWinSec": 53.817,
+      "medianLossSec": 46.667,
+      "fastestWinSec": 39.35,
+      "slowestWinSec": 74.9,
+      "closeness": 0.853,
+      "lostShare": 0.036,
+      "winLostShare": 0.067,
       "stallRate": 1,
-      "share": 0.474,
+      "share": 0.676,
       "medals": {
-        "bronze": 2,
-        "platinum": 1
+        "silver": 2,
+        "platinum": 2,
+        "bronze": 1
       },
-      "shotsPerMatch": 0.167,
-      "shotGain": 1.582
+      "shotsPerMatch": 0.333,
+      "shotGain": 3.406
     },
     "half-life/easy/expected": {
       "matches": 3,
       "winRate": 1,
       "score": 1,
       "undecided": 0,
-      "medianWinSec": 78.483,
+      "medianWinSec": 71.867,
       "medianLossSec": null,
-      "fastestWinSec": 35.55,
-      "slowestWinSec": 150,
+      "fastestWinSec": 35.65,
+      "slowestWinSec": 74.467,
       "closeness": 0.958,
-      "lostShare": 0.4,
-      "winLostShare": 0.4,
-      "stallRate": 0.333,
-      "share": 0.814,
+      "lostShare": 0.441,
+      "winLostShare": 0.441,
+      "stallRate": 0,
+      "share": 0.842,
       "medals": {
-        "bronze": 1,
-        "silver": 1,
+        "bronze": 2,
         "gold": 1
       },
       "shotsPerMatch": 0,
@@ -747,35 +744,35 @@
       "score": 0,
       "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 120.283,
+      "medianLossSec": 84.867,
       "fastestWinSec": null,
       "slowestWinSec": null,
       "closeness": 0,
-      "lostShare": 10.462,
+      "lostShare": 9.402,
       "winLostShare": null,
       "stallRate": 0.333,
-      "share": 0.318,
+      "share": 0.267,
       "medals": {},
       "shotsPerMatch": 0,
       "shotGain": null
     },
     "half-life/normal/expected": {
       "matches": 6,
-      "winRate": 1,
-      "score": 1,
+      "winRate": 0.833,
+      "score": 0.833,
       "undecided": 0,
-      "medianWinSec": 56.459,
-      "medianLossSec": null,
-      "fastestWinSec": 43.367,
+      "medianWinSec": 150,
+      "medianLossSec": 63.733,
+      "fastestWinSec": 53.667,
       "slowestWinSec": 150,
-      "closeness": 0.878,
-      "lostShare": 0.85,
-      "winLostShare": 0.85,
-      "stallRate": 0.333,
-      "share": 0.743,
+      "closeness": 0.828,
+      "lostShare": 2.596,
+      "winLostShare": 2.221,
+      "stallRate": 0.833,
+      "share": 0.59,
       "medals": {
-        "gold": 4,
-        "bronze": 2
+        "bronze": 4,
+        "silver": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -785,17 +782,17 @@
       "winRate": 0.333,
       "score": 0.667,
       "undecided": 2,
-      "medianWinSec": 48.467,
+      "medianWinSec": 15.833,
       "medianLossSec": null,
-      "fastestWinSec": 48.467,
-      "slowestWinSec": 48.467,
-      "closeness": 0.974,
-      "lostShare": 0.79,
-      "winLostShare": 0.79,
+      "fastestWinSec": 15.833,
+      "slowestWinSec": 15.833,
+      "closeness": 0.958,
+      "lostShare": 1.112,
+      "winLostShare": 1.112,
       "stallRate": 0.667,
-      "share": 0.664,
+      "share": 0.698,
       "medals": {
-        "gold": 1
+        "silver": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -815,8 +812,7 @@
       "stallRate": 0.333,
       "share": 0.729,
       "medals": {
-        "gold": 1,
-        "silver": 1
+        "silver": 2
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -836,7 +832,7 @@
       "stallRate": 0,
       "share": 0.906,
       "medals": {
-        "gold": 2
+        "silver": 2
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -857,8 +853,7 @@
       "share": 0.732,
       "medals": {
         "gold": 2,
-        "bronze": 2,
-        "silver": 1
+        "bronze": 3
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -896,7 +891,7 @@
       "stallRate": 0.5,
       "share": 0.621,
       "medals": {
-        "silver": 1
+        "bronze": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -952,8 +947,7 @@
       "stallRate": 0,
       "share": 0.73,
       "medals": {
-        "bronze": 1,
-        "silver": 1
+        "bronze": 2
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -1027,7 +1021,7 @@
       "stallRate": 0,
       "share": 0.645,
       "medals": {
-        "silver": 1
+        "bronze": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -1047,7 +1041,7 @@
       "stallRate": 0.5,
       "share": 0.683,
       "medals": {
-        "gold": 1
+        "silver": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -1166,8 +1160,7 @@
       "stallRate": 0,
       "share": 0.84,
       "medals": {
-        "silver": 1,
-        "bronze": 1
+        "silver": 2
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -1421,23 +1414,21 @@
     },
     "leviathan/easy/expected": {
       "matches": 1,
-      "winRate": 1,
-      "score": 1,
+      "winRate": 0,
+      "score": 0,
       "undecided": 0,
-      "medianWinSec": 150,
-      "medianLossSec": null,
-      "fastestWinSec": 150,
-      "slowestWinSec": 150,
-      "closeness": 0.248,
-      "lostShare": 1.008,
-      "winLostShare": 1.008,
-      "stallRate": 1,
-      "share": 0.656,
-      "medals": {
-        "bronze": 1
-      },
-      "shotsPerMatch": 6,
-      "shotGain": -1.59
+      "medianWinSec": null,
+      "medianLossSec": 110.6,
+      "fastestWinSec": null,
+      "slowestWinSec": null,
+      "closeness": 0,
+      "lostShare": 9.323,
+      "winLostShare": null,
+      "stallRate": 0,
+      "share": 0.252,
+      "medals": {},
+      "shotsPerMatch": 4,
+      "shotGain": 3.448
     },
     "leviathan/hard/expected": {
       "matches": 1,
@@ -1445,14 +1436,14 @@
       "score": 0,
       "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 14.267,
+      "medianLossSec": 15.2,
       "fastestWinSec": null,
       "slowestWinSec": null,
       "closeness": 0,
-      "lostShare": 2.273,
+      "lostShare": 2.259,
       "winLostShare": null,
       "stallRate": 0,
-      "share": 0.02,
+      "share": 0.023,
       "medals": {},
       "shotsPerMatch": 0,
       "shotGain": null
@@ -1463,17 +1454,17 @@
       "score": 0,
       "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 40.258,
+      "medianLossSec": 59.384,
       "fastestWinSec": null,
       "slowestWinSec": null,
       "closeness": 0,
-      "lostShare": 3.262,
+      "lostShare": 4.321,
       "winLostShare": null,
       "stallRate": 0,
-      "share": 0.077,
+      "share": 0.109,
       "medals": {},
-      "shotsPerMatch": 1,
-      "shotGain": 11.904
+      "shotsPerMatch": 2,
+      "shotGain": 10.321
     },
     "meltdown/easy/expected": {
       "matches": 3,
@@ -1481,37 +1472,39 @@
       "score": 0.667,
       "undecided": 0,
       "medianWinSec": 60,
-      "medianLossSec": 27.233,
+      "medianLossSec": 32.283,
       "fastestWinSec": 60,
       "slowestWinSec": 60,
-      "closeness": 0.465,
-      "lostShare": 1.715,
-      "winLostShare": 1.515,
+      "closeness": 0.47,
+      "lostShare": 1.73,
+      "winLostShare": 1.543,
       "stallRate": 0,
-      "share": 0.563,
+      "share": 0.568,
       "medals": {
         "bronze": 2
       },
-      "shotsPerMatch": 1.333,
-      "shotGain": 3.058
+      "shotsPerMatch": 1.667,
+      "shotGain": 8.457
     },
     "meltdown/hard/expected": {
       "matches": 3,
-      "winRate": 0,
-      "score": 0,
+      "winRate": 0.333,
+      "score": 0.333,
       "undecided": 0,
-      "medianWinSec": null,
-      "medianLossSec": 24.05,
-      "fastestWinSec": null,
-      "slowestWinSec": null,
+      "medianWinSec": 60,
+      "medianLossSec": 21.133,
+      "fastestWinSec": 60,
+      "slowestWinSec": 60,
       "closeness": 0,
-      "lostShare": 3.18,
-      "winLostShare": null,
+      "lostShare": 3.385,
+      "winLostShare": 6.75,
       "stallRate": 0,
-      "share": 0.069,
-      "medals": {},
-      "shotsPerMatch": 0.333,
-      "shotGain": 15.667
+      "share": 0.258,
+      "medals": {
+        "bronze": 1
+      },
+      "shotsPerMatch": 1,
+      "shotGain": 3.017
     },
     "meltdown/normal/expected": {
       "matches": 6,
@@ -1519,36 +1512,37 @@
       "score": 0.333,
       "undecided": 0,
       "medianWinSec": 60,
-      "medianLossSec": 36.242,
+      "medianLossSec": 25.617,
       "fastestWinSec": 60,
       "slowestWinSec": 60,
       "closeness": 0,
-      "lostShare": 4.452,
-      "winLostShare": 4.71,
+      "lostShare": 3.978,
+      "winLostShare": 7.203,
       "stallRate": 0,
-      "share": 0.317,
+      "share": 0.279,
       "medals": {
         "bronze": 2
       },
-      "shotsPerMatch": 1.167,
-      "shotGain": 4.864
+      "shotsPerMatch": 1,
+      "shotGain": 14.898
     },
     "mycelium/easy/expected": {
       "matches": 3,
       "winRate": 1,
       "score": 1,
       "undecided": 0,
-      "medianWinSec": 52.467,
+      "medianWinSec": 39.983,
       "medianLossSec": null,
-      "fastestWinSec": 19.75,
-      "slowestWinSec": 61.983,
-      "closeness": 0.899,
-      "lostShare": 0.113,
-      "winLostShare": 0.113,
+      "fastestWinSec": 18.417,
+      "slowestWinSec": 84.217,
+      "closeness": 0.894,
+      "lostShare": 0.083,
+      "winLostShare": 0.083,
       "stallRate": 0,
-      "share": 0.911,
+      "share": 0.922,
       "medals": {
-        "silver": 2,
+        "bronze": 1,
+        "silver": 1,
         "gold": 1
       },
       "shotsPerMatch": 0,
@@ -1589,32 +1583,33 @@
       "stallRate": 0.333,
       "share": 0.796,
       "medals": {
-        "gold": 2,
         "silver": 1,
-        "bronze": 1
+        "gold": 1,
+        "bronze": 2
       },
       "shotsPerMatch": 0,
       "shotGain": null
     },
     "patient-zero/easy/expected": {
       "matches": 3,
-      "winRate": 0.333,
-      "score": 0.667,
-      "undecided": 2,
-      "medianWinSec": 129.983,
+      "winRate": 0.667,
+      "score": 0.833,
+      "undecided": 1,
+      "medianWinSec": 77.242,
       "medianLossSec": null,
-      "fastestWinSec": 129.983,
-      "slowestWinSec": 129.983,
-      "closeness": 0.586,
-      "lostShare": 0.805,
-      "winLostShare": 1.128,
-      "stallRate": 0.667,
-      "share": 0.595,
+      "fastestWinSec": 55.533,
+      "slowestWinSec": 98.95,
+      "closeness": 0.601,
+      "lostShare": 0.835,
+      "winLostShare": 0.787,
+      "stallRate": 0.333,
+      "share": 0.69,
       "medals": {
-        "bronze": 1
+        "gold": 1,
+        "silver": 1
       },
       "shotsPerMatch": 2,
-      "shotGain": -3.256
+      "shotGain": -5.011
     },
     "patient-zero/hard/expected": {
       "matches": 3,
@@ -1622,37 +1617,39 @@
       "score": 0.333,
       "undecided": 2,
       "medianWinSec": null,
-      "medianLossSec": 50.917,
+      "medianLossSec": 33.2,
       "fastestWinSec": null,
       "slowestWinSec": null,
-      "closeness": 0.24,
-      "lostShare": 3.994,
+      "closeness": 0.224,
+      "lostShare": 4.38,
       "winLostShare": null,
       "stallRate": 0.667,
-      "share": 0.317,
+      "share": 0.321,
       "medals": {},
-      "shotsPerMatch": 0.667,
-      "shotGain": -2.381
+      "shotsPerMatch": 1.333,
+      "shotGain": 2.95
     },
     "patient-zero/normal/expected": {
       "matches": 6,
-      "winRate": 0.167,
-      "score": 0.5,
-      "undecided": 4,
-      "medianWinSec": 134.683,
-      "medianLossSec": 32.7,
-      "fastestWinSec": 134.683,
-      "slowestWinSec": 134.683,
-      "closeness": 0.532,
-      "lostShare": 1.599,
-      "winLostShare": 1.637,
-      "stallRate": 0.667,
-      "share": 0.485,
+      "winRate": 0.5,
+      "score": 0.75,
+      "undecided": 3,
+      "medianWinSec": 101.35,
+      "medianLossSec": null,
+      "fastestWinSec": 72.083,
+      "slowestWinSec": 179.567,
+      "closeness": 0.533,
+      "lostShare": 1.39,
+      "winLostShare": 1.575,
+      "stallRate": 0.5,
+      "share": 0.594,
       "medals": {
-        "bronze": 1
+        "bronze": 1,
+        "gold": 1,
+        "silver": 1
       },
-      "shotsPerMatch": 1.667,
-      "shotGain": -3.516
+      "shotsPerMatch": 2.5,
+      "shotGain": -3.946
     },
     "petri-dish/easy/expected": {
       "matches": 3,
@@ -1714,40 +1711,39 @@
     },
     "pillar-field/easy/expected": {
       "matches": 3,
-      "winRate": 0.333,
-      "score": 0.667,
-      "undecided": 2,
-      "medianWinSec": 61.433,
+      "winRate": 0.667,
+      "score": 0.833,
+      "undecided": 1,
+      "medianWinSec": 34.642,
       "medianLossSec": null,
-      "fastestWinSec": 61.433,
-      "slowestWinSec": 61.433,
-      "closeness": 0.991,
-      "lostShare": 0.244,
-      "winLostShare": 0.23,
-      "stallRate": 0.667,
-      "share": 0.743,
+      "fastestWinSec": 32.917,
+      "slowestWinSec": 36.367,
+      "closeness": 0.984,
+      "lostShare": 0.181,
+      "winLostShare": 0.174,
+      "stallRate": 0.333,
+      "share": 0.832,
       "medals": {
-        "bronze": 1
+        "gold": 2
       },
       "shotsPerMatch": 0,
       "shotGain": null
     },
     "pillar-field/hard/expected": {
       "matches": 3,
-      "winRate": 0.667,
-      "score": 0.833,
-      "undecided": 1,
-      "medianWinSec": 40.817,
+      "winRate": 0.333,
+      "score": 0.667,
+      "undecided": 2,
+      "medianWinSec": 49.5,
       "medianLossSec": null,
-      "fastestWinSec": 33.417,
-      "slowestWinSec": 48.217,
-      "closeness": 0.976,
-      "lostShare": 0.327,
-      "winLostShare": 0.224,
-      "stallRate": 0.333,
-      "share": 0.794,
+      "fastestWinSec": 49.5,
+      "slowestWinSec": 49.5,
+      "closeness": 0.987,
+      "lostShare": 0.19,
+      "winLostShare": 0.167,
+      "stallRate": 0.667,
+      "share": 0.681,
       "medals": {
-        "bronze": 1,
         "silver": 1
       },
       "shotsPerMatch": 0,
@@ -1768,26 +1764,30 @@
       "stallRate": 0.333,
       "share": 0.747,
       "medals": {
-        "bronze": 4
+        "silver": 1,
+        "gold": 1,
+        "bronze": 2
       },
       "shotsPerMatch": 0,
       "shotGain": null
     },
     "pistons/easy/expected": {
       "matches": 3,
-      "winRate": 0.333,
-      "score": 0.667,
-      "undecided": 2,
-      "medianWinSec": 7.65,
+      "winRate": 1,
+      "score": 1,
+      "undecided": 0,
+      "medianWinSec": 31.833,
       "medianLossSec": null,
-      "fastestWinSec": 7.65,
-      "slowestWinSec": 7.65,
-      "closeness": 0.999,
-      "lostShare": 0.65,
-      "winLostShare": 0.146,
-      "stallRate": 0.667,
-      "share": 0.682,
+      "fastestWinSec": 16.483,
+      "slowestWinSec": 51.4,
+      "closeness": 0.995,
+      "lostShare": 0.234,
+      "winLostShare": 0.234,
+      "stallRate": 0,
+      "share": 0.907,
       "medals": {
+        "silver": 1,
+        "bronze": 1,
         "gold": 1
       },
       "shotsPerMatch": 0,
@@ -1798,15 +1798,15 @@
       "winRate": 1,
       "score": 1,
       "undecided": 0,
-      "medianWinSec": 86.2,
+      "medianWinSec": 77.033,
       "medianLossSec": null,
-      "fastestWinSec": 65.45,
-      "slowestWinSec": 102.4,
+      "fastestWinSec": 59.267,
+      "slowestWinSec": 86.45,
       "closeness": 0.839,
-      "lostShare": 2.706,
-      "winLostShare": 2.706,
+      "lostShare": 1.673,
+      "winLostShare": 1.673,
       "stallRate": 0,
-      "share": 0.704,
+      "share": 0.745,
       "medals": {
         "bronze": 3
       },
@@ -1815,21 +1815,22 @@
     },
     "pistons/normal/expected": {
       "matches": 6,
-      "winRate": 0.833,
-      "score": 0.917,
-      "undecided": 1,
-      "medianWinSec": 41.667,
+      "winRate": 1,
+      "score": 1,
+      "undecided": 0,
+      "medianWinSec": 41.308,
       "medianLossSec": null,
-      "fastestWinSec": 29.35,
-      "slowestWinSec": 47.467,
-      "closeness": 0.917,
-      "lostShare": 0.839,
-      "winLostShare": 0.837,
-      "stallRate": 0.167,
-      "share": 0.824,
+      "fastestWinSec": 23.55,
+      "slowestWinSec": 74.6,
+      "closeness": 0.847,
+      "lostShare": 0.807,
+      "winLostShare": 0.807,
+      "stallRate": 0,
+      "share": 0.859,
       "medals": {
-        "silver": 3,
-        "gold": 2
+        "bronze": 3,
+        "gold": 2,
+        "silver": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -1839,81 +1840,84 @@
       "winRate": 1,
       "score": 1,
       "undecided": 0,
-      "medianWinSec": 33.583,
+      "medianWinSec": 37.9,
       "medianLossSec": null,
-      "fastestWinSec": 29.483,
-      "slowestWinSec": 47.833,
+      "fastestWinSec": 14.967,
+      "slowestWinSec": 44.933,
       "closeness": 0.968,
-      "lostShare": 0.154,
-      "winLostShare": 0.154,
+      "lostShare": 0.176,
+      "winLostShare": 0.176,
       "stallRate": 0,
-      "share": 0.94,
+      "share": 0.946,
       "medals": {
-        "gold": 3
+        "silver": 1,
+        "bronze": 1,
+        "gold": 1
       },
-      "shotsPerMatch": 1,
-      "shotGain": -0.588
+      "shotsPerMatch": 0.667,
+      "shotGain": 0.155
     },
     "quarantine/hard/expected": {
       "matches": 3,
       "winRate": 0.333,
       "score": 0.333,
       "undecided": 0,
-      "medianWinSec": 8.483,
-      "medianLossSec": 17.358,
-      "fastestWinSec": 8.483,
-      "slowestWinSec": 8.483,
+      "medianWinSec": 9.7,
+      "medianLossSec": 23.025,
+      "fastestWinSec": 9.7,
+      "slowestWinSec": 9.7,
       "closeness": 0,
-      "lostShare": 3.414,
-      "winLostShare": 0.037,
+      "lostShare": 3.433,
+      "winLostShare": 0.049,
       "stallRate": 0,
-      "share": 0.363,
+      "share": 0.37,
       "medals": {
         "gold": 1
       },
-      "shotsPerMatch": 0,
-      "shotGain": null
+      "shotsPerMatch": 0.333,
+      "shotGain": 6.791
     },
     "quarantine/normal/everything": {
       "matches": 2,
       "winRate": 1,
       "score": 1,
       "undecided": 0,
-      "medianWinSec": 19.334,
+      "medianWinSec": 28.275,
       "medianLossSec": null,
-      "fastestWinSec": 5.2,
-      "slowestWinSec": 33.467,
-      "closeness": 0.989,
-      "lostShare": 0.039,
-      "winLostShare": 0.039,
+      "fastestWinSec": 5.317,
+      "slowestWinSec": 51.233,
+      "closeness": 0.988,
+      "lostShare": 0.066,
+      "winLostShare": 0.066,
       "stallRate": 0,
-      "share": 0.974,
+      "share": 0.966,
       "medals": {
-        "gold": 2
+        "bronze": 1,
+        "gold": 1
       },
-      "shotsPerMatch": 0.5,
-      "shotGain": -4.185
+      "shotsPerMatch": 1,
+      "shotGain": 0.891
     },
     "quarantine/normal/expected": {
       "matches": 6,
       "winRate": 0.833,
       "score": 0.917,
       "undecided": 1,
-      "medianWinSec": 38.067,
+      "medianWinSec": 45.817,
       "medianLossSec": null,
-      "fastestWinSec": 18.683,
-      "slowestWinSec": 57.517,
-      "closeness": 0.865,
-      "lostShare": 0.546,
-      "winLostShare": 0.526,
+      "fastestWinSec": 16.817,
+      "slowestWinSec": 48.233,
+      "closeness": 0.876,
+      "lostShare": 0.288,
+      "winLostShare": 0.212,
       "stallRate": 0.167,
-      "share": 0.87,
+      "share": 0.886,
       "medals": {
         "gold": 2,
-        "silver": 3
+        "bronze": 3
       },
-      "shotsPerMatch": 1,
-      "shotGain": -0.384
+      "shotsPerMatch": 0.667,
+      "shotGain": -1.96
     },
     "quarantine/normal/gene:flagella": {
       "matches": 2,
@@ -1921,17 +1925,17 @@
       "score": 0,
       "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 38.433,
+      "medianLossSec": 30.925,
       "fastestWinSec": null,
       "slowestWinSec": null,
       "closeness": 0,
-      "lostShare": 2.871,
+      "lostShare": 3.231,
       "winLostShare": null,
       "stallRate": 0,
-      "share": 0.146,
+      "share": 0.102,
       "medals": {},
-      "shotsPerMatch": 0.5,
-      "shotGain": 1.142
+      "shotsPerMatch": 1,
+      "shotGain": 19.346
     },
     "quarantine/normal/gene:membrane": {
       "matches": 2,
@@ -1939,35 +1943,35 @@
       "score": 0.25,
       "undecided": 1,
       "medianWinSec": null,
-      "medianLossSec": 25.683,
+      "medianLossSec": 24.55,
       "fastestWinSec": null,
       "slowestWinSec": null,
-      "closeness": 0.493,
-      "lostShare": 2.03,
+      "closeness": 0.494,
+      "lostShare": 2.237,
       "winLostShare": null,
       "stallRate": 0.5,
-      "share": 0.384,
+      "share": 0.404,
       "medals": {},
-      "shotsPerMatch": 1,
-      "shotGain": -1.059
+      "shotsPerMatch": 2,
+      "shotGain": 7.472
     },
     "quarantine/normal/gene:metabolism": {
       "matches": 2,
       "winRate": 0,
-      "score": 0.25,
-      "undecided": 1,
+      "score": 0,
+      "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 51.25,
+      "medianLossSec": 36.534,
       "fastestWinSec": null,
       "slowestWinSec": null,
-      "closeness": 0.493,
-      "lostShare": 3.913,
+      "closeness": 0,
+      "lostShare": 4.233,
       "winLostShare": null,
-      "stallRate": 0.5,
-      "share": 0.341,
+      "stallRate": 0,
+      "share": 0.09,
       "medals": {},
       "shotsPerMatch": 1,
-      "shotGain": 1.93
+      "shotGain": 17.002
     },
     "quarantine/normal/gene:mitosis": {
       "matches": 2,
@@ -1975,37 +1979,38 @@
       "score": 0.25,
       "undecided": 1,
       "medianWinSec": null,
-      "medianLossSec": 56,
+      "medianLossSec": 43.883,
       "fastestWinSec": null,
       "slowestWinSec": null,
-      "closeness": 0.345,
-      "lostShare": 2.291,
+      "closeness": 0.5,
+      "lostShare": 2.839,
       "winLostShare": null,
       "stallRate": 0.5,
-      "share": 0.332,
+      "share": 0.375,
       "medals": {},
-      "shotsPerMatch": 1.5,
-      "shotGain": 15.676
+      "shotsPerMatch": 1,
+      "shotGain": 6.524
     },
     "quarantine/normal/gene:toxins": {
       "matches": 2,
-      "winRate": 0.5,
-      "score": 0.75,
-      "undecided": 1,
-      "medianWinSec": 44.817,
+      "winRate": 1,
+      "score": 1,
+      "undecided": 0,
+      "medianWinSec": 64.417,
       "medianLossSec": null,
-      "fastestWinSec": 44.817,
-      "slowestWinSec": 44.817,
-      "closeness": 0.967,
-      "lostShare": 0.67,
-      "winLostShare": 0.349,
-      "stallRate": 0.5,
-      "share": 0.814,
+      "fastestWinSec": 19.65,
+      "slowestWinSec": 109.183,
+      "closeness": 0.695,
+      "lostShare": 1.728,
+      "winLostShare": 1.728,
+      "stallRate": 0,
+      "share": 0.781,
       "medals": {
+        "bronze": 1,
         "gold": 1
       },
       "shotsPerMatch": 1.5,
-      "shotGain": 4.129
+      "shotGain": 6.517
     },
     "quarantine/normal/plain": {
       "matches": 2,
@@ -2013,17 +2018,17 @@
       "score": 0,
       "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 49.259,
+      "medianLossSec": 32.35,
       "fastestWinSec": null,
       "slowestWinSec": null,
       "closeness": 0,
-      "lostShare": 4.8,
+      "lostShare": 3.846,
       "winLostShare": null,
       "stallRate": 0,
-      "share": 0.121,
+      "share": 0.074,
       "medals": {},
       "shotsPerMatch": 1,
-      "shotGain": 6.259
+      "shotGain": 13.292
     },
     "quarantine/normal/weapon:agar-bloom": {
       "matches": 2,
@@ -2031,35 +2036,35 @@
       "score": 0.25,
       "undecided": 1,
       "medianWinSec": null,
-      "medianLossSec": 26.233,
+      "medianLossSec": 43.783,
       "fastestWinSec": null,
       "slowestWinSec": null,
-      "closeness": 0.294,
-      "lostShare": 2.353,
+      "closeness": 0.5,
+      "lostShare": 1.961,
       "winLostShare": null,
       "stallRate": 0.5,
-      "share": 0.244,
+      "share": 0.334,
       "medals": {},
-      "shotsPerMatch": 0,
-      "shotGain": null
+      "shotsPerMatch": 1,
+      "shotGain": 8.343
     },
     "quarantine/normal/weapon:biofilm-shield": {
       "matches": 2,
       "winRate": 0,
-      "score": 0.25,
-      "undecided": 1,
+      "score": 0,
+      "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 23.65,
+      "medianLossSec": 40.075,
       "fastestWinSec": null,
       "slowestWinSec": null,
-      "closeness": 0.314,
-      "lostShare": 1.724,
+      "closeness": 0.001,
+      "lostShare": 2.39,
       "winLostShare": null,
-      "stallRate": 0.5,
-      "share": 0.258,
+      "stallRate": 0,
+      "share": 0.164,
       "medals": {},
-      "shotsPerMatch": 0.5,
-      "shotGain": 2.601
+      "shotsPerMatch": 1.5,
+      "shotGain": 9.573
     },
     "quarantine/normal/weapon:cryo-pulse": {
       "matches": 2,
@@ -2067,57 +2072,77 @@
       "score": 0,
       "undecided": 0,
       "medianWinSec": null,
-      "medianLossSec": 45.542,
+      "medianLossSec": 23.867,
       "fastestWinSec": null,
       "slowestWinSec": null,
       "closeness": 0,
-      "lostShare": 2.125,
+      "lostShare": 1.959,
       "winLostShare": null,
       "stallRate": 0,
-      "share": 0.18,
+      "share": 0.083,
       "medals": {},
-      "shotsPerMatch": 1.5,
-      "shotGain": 20.155
+      "shotsPerMatch": 0.5,
+      "shotGain": 10.556
     },
     "quarantine/normal/weapon:phage-strike": {
+      "matches": 2,
+      "winRate": 0,
+      "score": 0.25,
+      "undecided": 1,
+      "medianWinSec": null,
+      "medianLossSec": 63.85,
+      "fastestWinSec": null,
+      "slowestWinSec": null,
+      "closeness": 0.494,
+      "lostShare": 2.249,
+      "winLostShare": null,
+      "stallRate": 0.5,
+      "share": 0.415,
+      "medals": {},
+      "shotsPerMatch": 1.5,
+      "shotGain": 6.561
+    },
+    "quarantine/normal/weapon:toxin-bomb": {
       "matches": 2,
       "winRate": 0.5,
       "score": 0.5,
       "undecided": 0,
-      "medianWinSec": 18.85,
-      "medianLossSec": 49.633,
-      "fastestWinSec": 18.85,
-      "slowestWinSec": 18.85,
-      "closeness": 0.493,
-      "lostShare": 1.267,
-      "winLostShare": 0.127,
+      "medianWinSec": 28.717,
+      "medianLossSec": 24.65,
+      "fastestWinSec": 28.717,
+      "slowestWinSec": 28.717,
+      "closeness": 0.494,
+      "lostShare": 2.053,
+      "winLostShare": 0.425,
       "stallRate": 0,
-      "share": 0.591,
+      "share": 0.509,
+      "medals": {
+        "silver": 1
+      },
+      "shotsPerMatch": 1,
+      "shotGain": 0.684
+    },
+    "root-network/easy/expected": {
+      "matches": 1,
+      "winRate": 1,
+      "score": 1,
+      "undecided": 0,
+      "medianWinSec": 31.967,
+      "medianLossSec": null,
+      "fastestWinSec": 31.967,
+      "slowestWinSec": 31.967,
+      "closeness": 0.859,
+      "lostShare": 0.236,
+      "winLostShare": 0.236,
+      "stallRate": 0,
+      "share": 0.915,
       "medals": {
         "gold": 1
       },
-      "shotsPerMatch": 0.5,
-      "shotGain": 5.709
-    },
-    "quarantine/normal/weapon:toxin-bomb": {
-      "matches": 2,
-      "winRate": 0,
-      "score": 0,
-      "undecided": 0,
-      "medianWinSec": null,
-      "medianLossSec": 36.383,
-      "fastestWinSec": null,
-      "slowestWinSec": null,
-      "closeness": 0,
-      "lostShare": 2.112,
-      "winLostShare": null,
-      "stallRate": 0,
-      "share": 0.143,
-      "medals": {},
       "shotsPerMatch": 1,
-      "shotGain": 16.2
+      "shotGain": -5.996
     },
-    "root-network/easy/expected": {
+    "root-network/hard/expected": {
       "matches": 1,
       "winRate": 1,
       "score": 1,
@@ -2126,34 +2151,16 @@
       "medianLossSec": null,
       "fastestWinSec": 180,
       "slowestWinSec": 180,
-      "closeness": 0.779,
-      "lostShare": 0.774,
-      "winLostShare": 0.774,
+      "closeness": 0.636,
+      "lostShare": 3.93,
+      "winLostShare": 3.93,
       "stallRate": 1,
-      "share": 0.691,
+      "share": 0.583,
       "medals": {
         "bronze": 1
       },
-      "shotsPerMatch": 2,
-      "shotGain": 0.09
-    },
-    "root-network/hard/expected": {
-      "matches": 1,
-      "winRate": 0,
-      "score": 0,
-      "undecided": 0,
-      "medianWinSec": null,
-      "medianLossSec": 180,
-      "fastestWinSec": null,
-      "slowestWinSec": null,
-      "closeness": 0.41,
-      "lostShare": 8.488,
-      "winLostShare": null,
-      "stallRate": 1,
-      "share": 0.328,
-      "medals": {},
-      "shotsPerMatch": 1,
-      "shotGain": 5.031
+      "shotsPerMatch": 6,
+      "shotGain": 7.261
     },
     "root-network/normal/expected": {
       "matches": 2,
@@ -2161,19 +2168,19 @@
       "score": 0.5,
       "undecided": 0,
       "medianWinSec": 180,
-      "medianLossSec": 180,
+      "medianLossSec": 150.767,
       "fastestWinSec": 180,
       "slowestWinSec": 180,
-      "closeness": 0.661,
-      "lostShare": 2.566,
-      "winLostShare": 2.739,
+      "closeness": 0.385,
+      "lostShare": 2.989,
+      "winLostShare": 1.571,
       "stallRate": 1,
-      "share": 0.591,
+      "share": 0.521,
       "medals": {
         "bronze": 1
       },
-      "shotsPerMatch": 4,
-      "shotGain": 6.042
+      "shotsPerMatch": 6,
+      "shotGain": 2.746
     },
     "serpentine/easy/expected": {
       "matches": 3,
@@ -2468,19 +2475,21 @@
     },
     "twin-chambers/easy/expected": {
       "matches": 3,
-      "winRate": 0,
-      "score": 0.5,
-      "undecided": 3,
-      "medianWinSec": null,
+      "winRate": 0.333,
+      "score": 0.667,
+      "undecided": 2,
+      "medianWinSec": 32.883,
       "medianLossSec": null,
-      "fastestWinSec": null,
-      "slowestWinSec": null,
-      "closeness": 0.995,
-      "lostShare": 0.24,
-      "winLostShare": null,
-      "stallRate": 1,
-      "share": 0.658,
-      "medals": {},
+      "fastestWinSec": 32.883,
+      "slowestWinSec": 32.883,
+      "closeness": 0.991,
+      "lostShare": 0.214,
+      "winLostShare": 0.123,
+      "stallRate": 0.667,
+      "share": 0.747,
+      "medals": {
+        "silver": 1
+      },
       "shotsPerMatch": 0,
       "shotGain": null
     },
@@ -2530,16 +2539,16 @@
       "undecided": 0,
       "medianWinSec": 22.833,
       "medianLossSec": null,
-      "fastestWinSec": 22.483,
-      "slowestWinSec": 40.15,
+      "fastestWinSec": 14.25,
+      "slowestWinSec": 28.533,
       "closeness": 0.959,
-      "lostShare": 0.639,
-      "winLostShare": 0.639,
+      "lostShare": 0.567,
+      "winLostShare": 0.567,
       "stallRate": 0,
-      "share": 0.934,
+      "share": 0.95,
       "medals": {
-        "silver": 1,
-        "gold": 2
+        "gold": 2,
+        "silver": 1
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -2549,15 +2558,15 @@
       "winRate": 1,
       "score": 1,
       "undecided": 0,
-      "medianWinSec": 51.333,
+      "medianWinSec": 54.267,
       "medianLossSec": null,
-      "fastestWinSec": 45.067,
-      "slowestWinSec": 52.633,
+      "fastestWinSec": 42.333,
+      "slowestWinSec": 61.167,
       "closeness": 0.565,
-      "lostShare": 1.912,
-      "winLostShare": 1.912,
+      "lostShare": 2.271,
+      "winLostShare": 2.271,
       "stallRate": 0,
-      "share": 0.841,
+      "share": 0.825,
       "medals": {
         "bronze": 3
       },
@@ -2566,21 +2575,21 @@
     },
     "villi/normal/expected": {
       "matches": 6,
-      "winRate": 1,
-      "score": 1,
+      "winRate": 0.833,
+      "score": 0.833,
       "undecided": 0,
-      "medianWinSec": 39.858,
-      "medianLossSec": null,
-      "fastestWinSec": 31.867,
-      "slowestWinSec": 51.3,
+      "medianWinSec": 38.05,
+      "medianLossSec": 34.567,
+      "fastestWinSec": 30.517,
+      "slowestWinSec": 49.5,
       "closeness": 0.642,
-      "lostShare": 1.936,
-      "winLostShare": 1.936,
+      "lostShare": 1.651,
+      "winLostShare": 1.532,
       "stallRate": 0,
-      "share": 0.869,
+      "share": 0.74,
       "medals": {
-        "silver": 5,
-        "bronze": 1
+        "silver": 3,
+        "bronze": 2
       },
       "shotsPerMatch": 0,
       "shotGain": null
@@ -2616,8 +2625,8 @@
       [0.616, 0.623, 0.623]
     ],
     "pistons": [
-      [0.667, 1, 1],
-      [0.541, 1, 1]
+      [0.604, 1, 1],
+      [1, 1, 1]
     ],
     "alveoli": [
       [0.658, 1, 1],
@@ -2632,56 +2641,56 @@
       [0.5, 0.5, 0.5]
     ],
     "villi": [
-      [0.924, 1, 1],
-      [0.914, 1, 1]
+      [0.982, 1, 1],
+      [0.556, 1, 1]
     ],
     "half-life": [
-      [0.66, 1, 1],
-      [0.559, 1, 1]
+      [0.522, 0.562, 0.543],
+      [0.556, 1, 1]
     ],
     "containment": [
-      [0.576, 1, 1],
-      [0.778, 0.762, 1]
+      [0.501, 0.819, 0.624],
+      [0.977, 1, 1]
     ],
     "control-room": [
-      [0.442, 0, 0],
-      [0.467, 0, 0]
+      [0.46, 0, 0],
+      [0.417, 0, 0]
     ],
     "meltdown": [
-      [0.5, 0, 0],
-      [0, 0, 0]
+      [0, 0, 0],
+      [0.03, 0, 0]
     ],
     "patient-zero": [
-      [0.5, 0.501, 0.521],
-      [0.048, 0, 0]
+      [0.499, 0.463, 0.589],
+      [0.381, 0.5, 0.5]
     ],
     "quarantine": [
       [1, 1, 1],
-      [0.818, 1, 1]
+      [1, 1, 1]
     ],
     "feeding-ground": [
-      [0.5, 0, 0],
-      [0.5, 0.5, 1]
+      [0.5, 1, 1],
+      [0.463, 0.446, 1]
     ],
     "expanse": [
-      [0.524, 0.564, 0.362],
-      [0.475, 0.567, 0.583]
+      [0.42, 0.458, 0.434],
+      [0.459, 0.48, 0.529]
     ],
     "archipelago": [
-      [0.5, 0.454, 0.481],
-      [0.542, 0.5, 0]
+      [0.5, 0.5, 1],
+      [0.524, 0.473, 0]
     ],
     "bloodstream": [
-      [0.499, 0.5, 0.5],
-      [0.5, 0.5, 0.5]
+      [0.488, 0.462, 0.493],
+      [0.5, 0.5, 0.513]
     ],
     "root-network": [
-      [0.644, 0.528, 0.421],
-      [0.738, 0.716, 0.691]
+      [0.549, 0.542, 0.036],
+      [0.624, 0.648, 0.652]
     ],
     "leviathan": [
-      [0, 0, 0],
-      [0.324, 0, 0]
+      [0.322, 0.02, 0],
+      [0.199, 0, 0]
     ]
   }
 }
