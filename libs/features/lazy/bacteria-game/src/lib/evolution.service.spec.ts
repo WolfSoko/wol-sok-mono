@@ -38,7 +38,7 @@ describe('EvolutionService', () => {
     expect(evolution.buyGene('mitosis')).toBe(true);
     expect(evolution.buyGene('mitosis')).toBe(true);
     expect(evolution.level('mitosis')).toBe(2);
-    expect(evolution.dna()).toBe(20 - 2 - 4);
+    expect(evolution.dna()).toBe(20 - 2 - 3);
     expect(stored()).toEqual({
       genes: { mitosis: 2 },
       weapons: [],
@@ -182,7 +182,7 @@ describe('EvolutionService', () => {
 
       expect(evolution.loaded()).toBe(true);
       expect(evolution.level('mitosis')).toBe(2);
-      expect(evolution.dna()).toBe(10 - 6);
+      expect(evolution.dna()).toBe(10 - 5);
     });
 
     it('settles once the storage has told what is held', () => {

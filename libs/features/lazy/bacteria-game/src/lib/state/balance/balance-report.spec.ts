@@ -128,11 +128,11 @@ describe('the balance baseline', () => {
       won: null,
       durationSec: 6,
       medal: null,
-      lowestSizeRatio: 0.908,
-      lostShare: 0.095,
+      lowestSizeRatio: 0.892,
+      lostShare: 0.085,
       stalled: false,
-      share: 0.679,
-      shareAt: [0.685, 0.685, 0.685],
+      share: 0.807,
+      shareAt: [0.818, 0.818, 0.818],
       shots: [],
     });
   });

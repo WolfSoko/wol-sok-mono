@@ -58,13 +58,21 @@ export const EMPTY_EVOLUTION: EvolutionProgress = {
   skins: [],
 };
 
+/** The DNA the first level of a gene costs. */
+export const GENE_BASE_COST = 2;
+
+/** Times the cost of the level before that each further level costs. */
+export const GENE_COST_GROWTH = 1.6;
+
 /**
- * The DNA the next level of a gene costs - level `n` costs `2n`. The first
- * level is affordable after the first match won; all five levels of all
- * five genes cost 150 strands, 7,500 XP.
+ * The DNA the next level of a gene costs: it grows exponentially, each
+ * level {@link GENE_COST_GROWTH} times the one before, rounded to whole
+ * strands - 2, 3, 5, 8, 13. The first level is affordable after the first
+ * match won, the top one costs as much as the first four together; all
+ * five levels of all five genes cost 155 strands, 7,750 XP.
  */
 export function geneLevelCost(level: number): number {
-  return 2 * level;
+  return Math.round(GENE_BASE_COST * GENE_COST_GROWTH ** (level - 1));
 }
 
 /** The level bred of a gene. */
