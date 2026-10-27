@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.116.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.3...v74.116.4) (2026-10-27)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** add the engine benchmark gate, report-only ([#2701](https://github.com/WolfSoko/wol-sok-mono/issues/2701)) ([bd12576](https://github.com/WolfSoko/wol-sok-mono/commit/bd12576065cc9327d4edabfd234a19a9d9d7f95e))
+
 ## [74.116.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.2...v74.116.3) (2026-10-26)
 
 ### Performance
