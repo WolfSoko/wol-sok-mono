@@ -5,6 +5,7 @@ import { GPU_SELF_TEST_VERSION } from '../state/gpu-int/self-test-golden';
 import { DeviceStorage } from '../storage/game-storage';
 import { GpuSelfTestResult, runGpuSelfTest } from './gpu-self-test';
 import { rendererOf } from './renderer';
+import { gpuTrusted } from './simulation-check';
 
 /** Where this device keeps the self-test's last result. */
 export const GPU_SELF_TEST_STORAGE_KEY = 'bacteria-game.gpu-self-test';
@@ -115,6 +116,15 @@ export class GpuSelfTestService {
     return verdict != null && arena != null && verdict.renderer !== arena
       ? null
       : verdict;
+  });
+
+  /**
+   * The renderer of a GPU trusted with the integer passes (`gpuTrusted`),
+   * null while none is: a replay of them plays on that GPU.
+   */
+  public readonly trustedRenderer = computed(() => {
+    const verdict = this.result();
+    return verdict !== null && gpuTrusted(verdict) ? verdict.renderer : null;
   });
 
   /**

@@ -163,8 +163,19 @@ serverTimestamp(), expireAt }` and nothing else - what the rules'
   game's):
   its own `MatchEngine` from `replayEngine` (`state/replay.ts`, beside
   `canPlayBack` and `playReplay`, which the functions import through
-  `engine.ts`: keep its signature), nothing of the game's state. Specs
-  draw with `recordingPainters` and play `recordedReplay` (`src/testing/`).
+  `engine.ts`: keep its signature), nothing of the game's state. A
+  `gpu-int` replay plays on the viewer's own GL painter (the third
+  argument of `replayEngine`) where its renderer is the host's `gpu`
+  (`GpuSelfTestService.trustedRenderer`: "My matches" and the match just
+  played; `/watch` runs no self-test and stays on `IntSimulation`).
+  `ReplayScene.useGpu` moves the war between the GPU and the CPU where it
+  was: onto the painter once it is there, off it before its context goes;
+  a GPU that fails to set up falls back to `IntSimulation` and is not
+  asked again.
+  The timeline and the 10 s buttons seek (`ReplayScene.seek`): the war only
+  plays forwards, so back restarts it, and the frames after a seek play on
+  to its tick within `SEEK_FRAME_MS` each, the view running while paused.
+  Specs draw with `recordingPainters` and play `recordedReplay` (`src/testing/`).
 - `/watch/{publicId}` (the remote's `app.routes.ts`, outside the entry
   route with the cloud) loads `WatchPageComponent` from the narrow entry
   `@wolsok/feat-lazy-bac-game/watch` (`src/watch.ts`), skipped by

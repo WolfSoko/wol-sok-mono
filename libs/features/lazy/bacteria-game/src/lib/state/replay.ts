@@ -20,7 +20,7 @@ import {
 import { MatchPlan, planMatch } from './match-setup';
 import { Player } from './player.model';
 import { intSimulation } from './gpu-int/int-simulation';
-import { isRuleset, Ruleset } from './simulation';
+import { isRuleset, Ruleset, SimulationFactory } from './simulation';
 import { isHeadStart } from './rivalry';
 import { EndReason, MatchOutcome } from './win-conditions';
 
@@ -387,11 +387,14 @@ export function canPlayBack(replay: Replay): boolean {
  * colonies simulated again from the seed, on its ruleset's simulation -
  * `BacteriaSimulation` for `cpu`, `IntSimulation` for `gpu-int`. Null for
  * a replay that would not play out as it was played ({@link canPlayBack}).
- * The caller disposes of it.
+ * The caller disposes of it. A viewer with a trusted GPU hands in
+ * `gpuInt`, the integer passes on its GPU, which play a `gpu-int` replay
+ * alike (ADR 0015) and much faster.
  */
 export function replayEngine(
   replay: Replay,
-  onSecond?: (sizes: SizeSample) => void
+  onSecond?: (sizes: SizeSample) => void,
+  gpuInt?: SimulationFactory
 ): MatchEngine | null {
   if (!canPlayBack(replay)) {
     return null;
@@ -408,7 +411,9 @@ export function replayEngine(
   });
   return new MatchEngine(spawns, {
     ...options,
-    ...(header.simulation === 'gpu-int' ? { simulation: intSimulation } : {}),
+    ...(header.simulation === 'gpu-int'
+      ? { simulation: gpuInt ?? intSimulation }
+      : {}),
     ghosts,
     ...(onSecond === undefined ? {} : { onSecond }),
   });
