@@ -17,6 +17,7 @@ lifecycle:
     - test
     - build
     - e2e-ci
+    - perf
 
 ai:
   # Self-healing CI (`npx nx fix-ci`) may apply fixes for these tasks without review.

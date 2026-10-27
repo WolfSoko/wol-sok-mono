@@ -56,6 +56,19 @@
       "options": {
         "command": "tsx ./tools/bacteria-game/balance/run.ts full"
       }
+    },
+    "perf": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "parallelism": false,
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/tools/perf/**/*"
+      ],
+      "options": {
+        "command": "node --expose-gc tools/perf/engine-bench.mjs --report-only"
+      }
     }
   }
 }
