@@ -1,6 +1,11 @@
 import { gameBalance } from '../../state/game-balance';
 import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-fx';
-import { encodeCells, packTints, passMargins } from './gl-arena-painter';
+import {
+  colonyBounds,
+  encodeCells,
+  packTints,
+  passMargins,
+} from './gl-arena-painter';
 import { MAX_TINTS } from './shaders';
 
 describe('packTints', () => {
@@ -50,14 +55,31 @@ describe('packTints', () => {
   });
 });
 
+describe('colonyBounds', () => {
+  it('reports the box of cells a colony covers', () => {
+    expect(
+      colonyBounds([
+        { x: 1, y: 1, energy: 1 },
+        { x: 5, y: 2, energy: 1 },
+        { x: 3, y: 3, energy: 1 },
+      ])
+    ).toEqual({ minX: 1, minY: 1, maxX: 5, maxY: 3 });
+  });
+
+  it('reports nothing for an empty colony', () => {
+    expect(colonyBounds([])).toBeNull();
+  });
+});
+
 describe('encodeCells', () => {
   const width = 8;
   const height = 4;
+  const whole = [0, 0, width, height] as const;
 
-  it('packs density and overcharge per cell and reports the covered box', () => {
+  it('packs density and overcharge per cell', () => {
     const out = new Uint8Array(width * height * 2);
 
-    const bounds = encodeCells(
+    encodeCells(
       out,
       width,
       [
@@ -65,10 +87,10 @@ describe('encodeCells', () => {
         { x: 5, y: 2, energy: gameBalance.superChargedMaxEnergy },
         { x: 3, y: 3, energy: 0 },
       ],
-      gameBalance
+      gameBalance,
+      whole
     );
 
-    expect(bounds).toEqual({ minX: 1, minY: 1, maxX: 5, maxY: 3 });
     // Full strength, not overcharged.
     expect([out[(1 * width + 1) * 2], out[(1 * width + 1) * 2 + 1]]).toEqual([
       255, 0,
@@ -83,11 +105,25 @@ describe('encodeCells', () => {
     expect(out[0]).toBe(0);
   });
 
-  it('clears the last frame and reports nothing for an empty colony', () => {
+  it('clears the last frame inside the box and leaves the rest alone', () => {
     const out = new Uint8Array(width * height * 2).fill(9);
 
-    expect(encodeCells(out, width, [], gameBalance)).toBeNull();
-    expect(out.every((byte) => byte === 0)).toBe(true);
+    encodeCells(
+      out,
+      width,
+      [
+        { x: 2, y: 1, energy: gameBalance.maxEnergy },
+        { x: 6, y: 1, energy: gameBalance.maxEnergy },
+      ],
+      gameBalance,
+      [1, 1, 4, 3]
+    );
+
+    const byteAt = (x: number, y: number) => out[(y * width + x) * 2];
+    expect(byteAt(2, 1)).toBe(255);
+    expect([byteAt(1, 1), byteAt(3, 2)]).toEqual([0, 0]);
+    // Outside the box: neither cleared nor packed.
+    expect([byteAt(6, 1), byteAt(0, 0), byteAt(4, 1)]).toEqual([9, 9, 9]);
   });
 });
 
