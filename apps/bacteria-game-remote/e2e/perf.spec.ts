@@ -83,6 +83,9 @@ test('should report the frame time of a match on the CPU simulation', async ({
       [];
   });
   await page.waitForTimeout(MATCH_SEC * 1000);
+  // A match over sooner would leave the frames measured past its end and
+  // the ticks short of them: the numbers would not compare.
+  await expect(po.winner).toHaveCount(0);
 
   const numbers = await page.evaluate((): PageNumbers => {
     const scope = window as unknown as Record<string, unknown>;
