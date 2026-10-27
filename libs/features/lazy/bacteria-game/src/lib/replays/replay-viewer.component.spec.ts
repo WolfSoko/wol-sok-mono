@@ -128,28 +128,62 @@ describe('ReplayScene', () => {
     scene?.dispose();
   });
 
-  it('falls back to the CPU when the GPU does not set up', () => {
+  it('falls back to the CPU when the GPU does not set up, and asks it no more', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const broken = new IntSimulation({} as never, () => 0.5, 1);
     const dispose = jest.spyOn(broken, 'dispose');
     jest.spyOn(broken, 'resize').mockImplementation(() => {
       throw new Error('Incomplete render target');
     });
-    const factory = gpuIntReplaySimulation(
-      { createSimulation: () => broken as never },
-      320,
-      180
-    );
+    const createSimulation = jest.fn(() => broken as never);
+    const factory = gpuIntReplaySimulation({ createSimulation }, 320, 180);
 
     const scene = ReplayScene.of(gpuIntReplay(), look, factory);
 
     expect(dispose).toHaveBeenCalled();
-    expect(warn).toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(1);
     expect(scene?.onGpu).toBe(false);
     scene?.advance(5);
     expect(scene?.tick).toBe(5);
+    scene?.restart();
+    expect(createSimulation).toHaveBeenCalledTimes(1);
     scene?.dispose();
     warn.mockRestore();
+  });
+
+  it('falls back when the engine fails to set the GPU up, letting go of it', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const made: IntSimulation[] = [];
+    const failing: SimulationFactory = (balance, random, seed) => {
+      const simulation = new IntSimulation(balance, random, seed);
+      jest.spyOn(simulation, 'init').mockImplementation(() => {
+        throw new Error('Texture upload refused');
+      });
+      made.push(simulation);
+      return simulation;
+    };
+
+    const scene = ReplayScene.of(gpuIntReplay(), look, failing);
+
+    expect(scene?.onGpu).toBe(false);
+    expect(made).toHaveLength(1);
+    scene?.advance(3);
+    expect(scene?.tick).toBe(3);
+    scene?.dispose();
+    warn.mockRestore();
+  });
+
+  it('does nothing more once disposed', () => {
+    const gpu = jest.fn(fakeGpuInt);
+    const scene = ReplayScene.of(gpuIntReplay(), look, gpu);
+
+    scene?.dispose();
+    scene?.restart();
+    scene?.seek(0);
+    scene?.advance(5);
+
+    expect(gpu).toHaveBeenCalledTimes(1);
+    expect(scene?.tick).toBe(0);
   });
 
   it('plays no replay of another balance', () => {

@@ -8,7 +8,7 @@
       [replay]="replay"
       [look]="look()"
       [label]="'replay.viewer.title' | t"
-      [gpu]="gpuTrusted()"
+      [gpu]="trustedGpu()"
     />
     <button mat-button type="button" (click)="watching.set(null)">
       <mat-icon>arrow_back</mat-icon>

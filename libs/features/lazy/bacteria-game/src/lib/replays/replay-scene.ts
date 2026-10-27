@@ -2,7 +2,6 @@ import { arenaContent, SeatColors } from '../arena/arena-content';
 import type { GlArenaPainter } from '../arena/gl/gl-arena-painter';
 import type { ArenaContent, ArenaScene } from '../arena/arena-view.component';
 import { computerLook, seatLooks } from '../state/colony-looks';
-import { intSimulation } from '../state/gpu-int/int-simulation';
 import type { Rect } from '../state/maps';
 import { getLevel, levelMap } from '../state/levels';
 import type { MatchEngine } from '../state/match-engine';
@@ -18,10 +17,9 @@ export const SEEK_FRAME_MS = 30;
 
 /**
  * The integer passes on a GL painter's GPU for a `gpu-int` replay of that
- * size (ADR 0015): the same war as `IntSimulation`, much faster. Should the
- * GPU fail to set up, the replay plays on `IntSimulation` after all, as a
- * live match does (`PlayerService`) - which is why it is sized here, where
- * a failing setup can still be caught, not first in `MatchEngine`.
+ * size (ADR 0015): the same war as `IntSimulation`, much faster. It is
+ * sized here, so that a GPU failing to set up throws with nothing left
+ * behind; {@link ReplayScene} then plays on `IntSimulation`.
  */
 export function gpuIntReplaySimulation(
   painter: Pick<GlArenaPainter, 'createSimulation'>,
@@ -29,20 +27,46 @@ export function gpuIntReplaySimulation(
   height: number
 ): SimulationFactory {
   return (balance, random, seed) => {
-    let simulation: Simulation | undefined;
+    const simulation = painter.createSimulation(balance, random, {
+      deterministic: true,
+      matchSeed: seed,
+    });
     try {
-      simulation = painter.createSimulation(balance, random, {
-        deterministic: true,
-        matchSeed: seed,
-      });
       simulation.resize(width, height);
       return simulation;
     } catch (error) {
-      simulation?.dispose();
-      console.warn('The replay falls back to the CPU', error);
-      return intSimulation(balance, random, seed);
+      simulation.dispose();
+      throw error;
     }
   };
+}
+
+/**
+ * The replay's engine, a `gpu-int` replay on `gpuInt` where that sets up.
+ * One that fails - in the factory, or later in the engine's own setup - is
+ * let go of, and the replay plays on `IntSimulation` as a live match falls
+ * back (`PlayerService`); `onGpu` tells which it got.
+ */
+function engineOf(
+  replay: Replay,
+  gpuInt: SimulationFactory | undefined
+): { engine: MatchEngine | null; onGpu: boolean } {
+  if (gpuInt === undefined || replay.header.simulation !== 'gpu-int') {
+    return { engine: replayEngine(replay), onGpu: false };
+  }
+  const made: Simulation[] = [];
+  try {
+    const engine = replayEngine(replay, undefined, (balance, random, seed) => {
+      const simulation = gpuInt(balance, random, seed);
+      made.push(simulation);
+      return simulation;
+    });
+    return { engine, onGpu: true };
+  } catch (error) {
+    made.forEach((simulation) => simulation.dispose());
+    console.warn('The replay falls back to the CPU', error);
+    return { engine: replayEngine(replay), onGpu: false };
+  }
 }
 
 /** How a replay is drawn: the device's look and its wish for less motion. */
@@ -79,17 +103,21 @@ export class ReplayScene implements ArenaScene {
     look: ReplayLook,
     gpuInt?: SimulationFactory
   ): ReplayScene | null {
-    const engine = replayEngine(replay, undefined, gpuInt);
+    const { engine, onGpu } = engineOf(replay, gpuInt);
     return engine === null
       ? null
-      : new ReplayScene(replay, look, engine, gpuInt);
+      : new ReplayScene(replay, look, engine, onGpu ? gpuInt : undefined);
   }
 
+  /**
+   * `gpuInt` only while it sets up: a GPU that failed once is not asked
+   * again on a restart.
+   */
   private constructor(
     public readonly replay: Replay,
     private readonly look: ReplayLook,
     engine: MatchEngine,
-    private readonly gpuInt: SimulationFactory | undefined
+    private gpuInt: SimulationFactory | undefined
   ) {
     this.engine = engine;
     const { levelId, width, height } = replay.header;
@@ -109,7 +137,7 @@ export class ReplayScene implements ArenaScene {
 
   /** True while the war runs on the GPU, in the GL painter's context. */
   public get onGpu(): boolean {
-    return this.engine.simulation.kind === 'gpu';
+    return this.gpuInt !== undefined;
   }
 
   /** True while a seek plays on towards its tick. */
@@ -123,6 +151,9 @@ export class ReplayScene implements ArenaScene {
    * {@link SEEK_FRAME_MS} allows.
    */
   public advance(ticks: number): void {
+    if (this.disposed) {
+      return;
+    }
     if (this.target !== null) {
       this.playTowardsTarget();
       return;
@@ -149,13 +180,17 @@ export class ReplayScene implements ArenaScene {
     this.target = target;
   }
 
-  /** The match from its first tick again. */
+  /** The match from its first tick again - none once disposed. */
   public restart(): void {
-    const engine = replayEngine(this.replay, undefined, this.gpuInt);
-    if (engine === null) {
+    if (this.disposed) {
       return;
     }
     this.engine.dispose();
+    const { engine, onGpu } = engineOf(this.replay, this.gpuInt);
+    if (engine === null) {
+      return;
+    }
+    this.gpuInt = onGpu ? this.gpuInt : undefined;
     this.engine = engine;
     this.ended = false;
     this.target = null;

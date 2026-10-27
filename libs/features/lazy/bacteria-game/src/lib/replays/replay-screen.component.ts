@@ -31,7 +31,7 @@ import { ReplayViewerComponent } from './replay-viewer.component';
           [replay]="replay"
           [look]="look()"
           [label]="'replay.viewer.title' | t"
-          [gpu]="gpuTrusted()"
+          [gpu]="trustedGpu()"
         />
       } @else {
         <p>{{ 'replay.matches.unreadable' | t }}</p>
@@ -44,10 +44,11 @@ import { ReplayViewerComponent } from './replay-viewer.component';
 export class ReplayScreenComponent {
   private readonly evolution = inject(EvolutionService);
   private readonly gpuSelfTest = inject(GpuSelfTestService);
-  /** True where the GPU passed the self-test: GPU replays play on it. */
-  protected readonly gpuTrusted = computed(() =>
-    gpuTrusted(this.gpuSelfTest.result())
-  );
+  /** The GPU that passed the self-test, which GPU replays play on. */
+  protected readonly trustedGpu = computed(() => {
+    const verdict = this.gpuSelfTest.result();
+    return verdict !== null && gpuTrusted(verdict) ? verdict.renderer : null;
+  });
 
   private readonly recording = inject(GameStateService).lastRecording;
 

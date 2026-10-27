@@ -97,10 +97,11 @@ export class MyMatchesComponent {
   private readonly i18n = inject(I18nService);
   private readonly evolution = inject(EvolutionService);
   private readonly gpuSelfTest = inject(GpuSelfTestService);
-  /** True where the GPU passed the self-test: GPU replays play on it. */
-  protected readonly gpuTrusted = computed(() =>
-    gpuTrusted(this.gpuSelfTest.result())
-  );
+  /** The GPU that passed the self-test, which GPU replays play on. */
+  protected readonly trustedGpu = computed(() => {
+    const verdict = this.gpuSelfTest.result();
+    return verdict !== null && gpuTrusted(verdict) ? verdict.renderer : null;
+  });
   /** The skin the colonies wear in a replay: the player's, once owned. */
   protected readonly look = this.evolution.worn;
 

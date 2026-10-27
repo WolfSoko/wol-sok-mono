@@ -206,10 +206,11 @@ export class ReplayViewerComponent {
   /** What a screen reader says of the arena. */
   public readonly label = input('');
   /**
-   * True where the device's GPU passed the game's self-test: a `gpu-int`
-   * replay then plays on it. `/watch` runs no self-test and leaves it off.
+   * The renderer of the GPU that passed the game's self-test, null where
+   * none did: a `gpu-int` replay plays on the view's GPU when it is that
+   * one. `/watch` runs no self-test and leaves it null.
    */
-  public readonly gpu = input(false);
+  public readonly gpu = input<string | null>(null);
 
   protected readonly speeds = REPLAY_SPEEDS;
   protected readonly skip = REPLAY_SKIP_SECONDS;
@@ -242,12 +243,12 @@ export class ReplayViewerComponent {
   private readonly played = computed(() => {
     const replay = this.replay();
     const { simulation, width, height } = replay.header;
-    const painter =
-      this.gpu() && simulation === 'gpu-int' ? this.glPainter() : null;
+    const trusted = simulation === 'gpu-int' ? this.gpu() : null;
+    const painter = trusted === null ? null : this.glPainter();
     return ReplayScene.of(
       replay,
       { look: this.look(), reducedMotion: untracked(this.reducedMotion) },
-      painter === null
+      painter === null || painter.renderer() !== trusted
         ? undefined
         : gpuIntReplaySimulation(painter, width, height)
     );
@@ -296,14 +297,27 @@ export class ReplayViewerComponent {
   });
 
   public constructor() {
-    // A scene goes with its replay.
+    // A scene goes with its replay. The same replay on another simulation
+    // - the GPU came or went - goes on where it was, as it was.
+    let shown: { replay: Replay; tick: number } | null = null;
     effect((onCleanup) => {
       const played = this.played();
       untracked(() => {
-        this.second.set(0);
-        this.over.set(false);
-        this.seeking.set(false);
-        this.playing.set(true);
+        if (played !== null && played.replay === shown?.replay) {
+          if (shown.tick > 0) {
+            played.seek(shown.tick);
+            this.seeking.set(true);
+          }
+        } else {
+          this.second.set(0);
+          this.over.set(false);
+          this.seeking.set(false);
+          this.playing.set(true);
+        }
+      });
+      onCleanup(() => {
+        shown =
+          played === null ? null : { replay: played.replay, tick: played.tick };
       });
       // On to another replay, or the viewer goes: the engine goes too.
       onCleanup(() => played?.dispose());
@@ -376,7 +390,10 @@ export class ReplayViewerComponent {
    */
   private tell(scene: ReplayScene): void {
     if (!scene.seeking) {
-      const second = Math.floor(scene.tick / TICKS_PER_SEC);
+      // The end reads as the length, which counts a last part second.
+      const second = scene.over
+        ? untracked(this.length)
+        : Math.floor(scene.tick / TICKS_PER_SEC);
       if (second !== untracked(this.second)) {
         this.second.set(second);
       }
