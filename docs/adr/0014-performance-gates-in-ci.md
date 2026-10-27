@@ -200,17 +200,21 @@ is decided after a month, like gate 3.
    - The calibration loop proved the noisy half: its first runs were at
      times twice as slow, so it warms up 10 times and takes the median of
      15 runs before and 15 after; esbuild's service is stopped before the
-     timing starts. On one machine the ratios still spread by about ±10%
-     between runs of the same code, more than the ±7% this ADR allows;
-     the two weeks of reports decide whether the thresholds widen.
+     timing starts. On a developer's machine the ratios still spread by
+     about ±10% between runs of the same code; on the Nx Cloud workers two
+     runs agreed within 1.3%. The ratios do not carry over between machines
+     or Node versions (CI's were 40-50% below a developer's), so the
+     baseline holds CI's. The two weeks of reports decide whether the ±7%
+     this ADR allows holds there.
    - The heap figure is the heap a play keeps once it is over (averaged
      over 3 plays), not growth per 1,000 ticks: the replays are a few
      hundred ticks long, and V8's own few hundred KiB either way looked like
      a leak when scaled up.
    - A baseline counts only on the Node major it was measured on (the
      baseline names it): CI runs `.nvmrc`'s Node 24, whose V8 optimises
-     otherwise than a developer's Node 22. The baseline holds CI's ratios,
-     taken from the target's output on this PR's CI run. A fixture that no
+     otherwise than a developer's Node 22. The baseline holds CI's ratios, the
+     mean of two runs' output on this PR (`--update` on a developer's
+     machine would write that machine's). A fixture that no
      longer parses or plays back is a failed row, so `--report-only` still
      reports it.
    - The target runs `--report-only` (it never fails) and takes about 1.5

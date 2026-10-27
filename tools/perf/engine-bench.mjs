@@ -294,8 +294,8 @@ const failing = rows.filter((row) => !PASSING.includes(row.verdict));
 if (failing.length > 0) {
   console.log(
     `${failing.map((row) => `${row.name}: ${row.verdict}`).join('; ')}.` +
-      ' A change to what a tick does takes a new baseline' +
-      ' (node tools/perf/engine-bench.mjs --update), in a commit of its own.'
+      ' A change to what a tick does takes a new baseline, in a commit of' +
+      " its own, with the ratios of CI's run (--update writes this machine's)."
   );
   if (!reportOnly) {
     process.exit(1);
