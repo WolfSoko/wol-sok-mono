@@ -376,3 +376,19 @@ play each other.
   texts, colour names and the like are looked up by their id in the
   components, never translated by the engine. The engine stays
   language-free like it stays deterministic.
+
+## Busy indicator
+
+- A tap that sets heavy work off runs it through `StageBusy.run`
+  (`busy/stage-busy.ts`): the stage shows its spinner
+  (`StageBusyComponent`), the browser paints it, and only then the work
+  runs; a tap meanwhile is dropped, a key ignored (`onKeyDown`). The menus
+  wrap their steps (New game, the training, a mode, a mission, a level,
+  Next); a match is started by the stage through `startOnTap`, which asks
+  for the fullscreen on the tap itself first (WebKit takes it nowhere
+  else) and keeps the spinner up until the match runs, a ranked
+  declaration included. Back, the stepper's header, taps during a match,
+  the host's online start (lockstep) and the result screen's ways on
+  stay immediate. Specs await `fixture.whenStable()` after such a
+  tap; the stage's specs, which leave its template out, hold the work
+  with a spy on `run` instead.

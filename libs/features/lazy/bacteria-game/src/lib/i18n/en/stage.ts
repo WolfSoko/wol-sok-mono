@@ -12,6 +12,8 @@ export const stage = {
     giveUpAgain: 'Tap again to give up: the ranked attempt counts as played',
   },
   waitingForPeer: 'Waiting for your opponent…',
+  /** The spinner while a tap's work is under way. */
+  busy: 'Loading…',
   pause: {
     title: 'Paused',
     resume: 'Resume',

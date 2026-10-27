@@ -348,6 +348,8 @@
       (fullscreenChange)="setFullscreen($event)"
     />
   }
+  <!-- Over everything while a tap's work is under way: a spinner. -->
+  <feat-lazy-bac-game-stage-busy [style.--bw-player]="colonyCss()[0]" />
   <!-- Only a glance: small, in the top right corner below the HUD. -->
   @if (cameraFollows()) {
     <canvas

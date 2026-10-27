@@ -56,6 +56,8 @@ import {
   layoutKey,
 } from './arena/arena-view.component';
 import { armedTap } from './armed-tap';
+import { StageBusyComponent } from './busy/stage-busy.component';
+import { StageBusy } from './busy/stage-busy';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
@@ -226,6 +228,7 @@ const MINIMAP_UPDATE_MS = 100;
     EvolutionComponent,
     TranslatePipe,
     ArenaViewComponent,
+    StageBusyComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -236,6 +239,7 @@ const MINIMAP_UPDATE_MS = 100;
 export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private store = inject(GameStateStore);
   private gameStateService = inject(GameStateService);
+  private readonly busy = inject(StageBusy);
   private playerService = inject(PlayerService);
   private playerStore = inject(PlayerStore);
   protected readonly settings = inject(GameSettingsService);
@@ -1085,10 +1089,30 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (run === null || this.resetting()) {
       return;
     }
-    this.dismissChallenge();
-    this.gameStateService.leaveOnline();
-    this.gameStateService.playGhost(run);
-    this.startGame();
+    this.startOnTap(() => {
+      // A reset may have begun in the frame the spinner took.
+      if (this.resetting()) {
+        return;
+      }
+      this.dismissChallenge();
+      this.gameStateService.leaveOnline();
+      this.gameStateService.playGhost(run);
+      this.startGame();
+    });
+  }
+
+  /**
+   * Starts a match from a tap: the stage takes the screen on the tap
+   * itself, the one moment every browser allows it, and the match is set
+   * up behind the busy spinner (`StageBusy`), until it runs.
+   */
+  private startOnTap(start: () => void | Promise<void>): void {
+    // A tap while busy is dropped, and takes no screen either.
+    if (this.busy.active()) {
+      return;
+    }
+    this.requestNativeFullscreen();
+    this.busy.run(start);
   }
 
   protected dismissChallenge(): void {
@@ -1162,7 +1186,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
             this.gameStateService.playMission(mission);
           }
           if (action === 'campaign') {
-            this.continueCampaign();
+            this.playFurthestLevel();
           } else if (
             action === 'again' ||
             action === 'next' ||
@@ -1368,23 +1392,31 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * training mission.
    */
   protected startNewGame(kind: PlayKind): void {
-    switch (kind) {
-      case 'daily':
-        void this.playDaily();
-        return;
-      case 'endless':
-        void this.playEndless();
-        return;
-      case 'training':
-        this.playMission(this.missionId());
-        return;
-      default:
-        this.startGame();
+    // The host's online start stays in step with the lockstep's own starts.
+    if (kind === 'online') {
+      this.startGame();
+      return;
     }
+    this.startOnTap(() => {
+      switch (kind) {
+        case 'daily':
+          return this.playDaily();
+        case 'endless':
+          return this.playEndless();
+        case 'training':
+          return this.playMission(this.missionId());
+        default:
+          return this.startGame();
+      }
+    });
   }
 
   /** Starts a match on the furthest level the campaign ladder has opened. */
   protected continueCampaign(): void {
+    this.startOnTap(() => this.playFurthestLevel());
+  }
+
+  private playFurthestLevel(): void {
     this.gameStateService.leaveOnline();
     this.selectMode('vs-computer');
     this.gameStateService.setLevel(this.campaign.furthestLevel());
@@ -2025,7 +2057,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown($event: KeyboardEvent) {
-    if (isTypingTarget($event.target)) {
+    // Nor while a tap's work waits to run: Escape would back out of the
+    // screen it belongs to, as the busy veil keeps a tap from doing.
+    if (isTypingTarget($event.target) || this.busy.active()) {
       return;
     }
     // F is handled here rather than in the store: the fullscreen request has
