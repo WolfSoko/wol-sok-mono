@@ -117,7 +117,7 @@ export interface Weapon {
 
 /**
  * The weapons, in the order the menus offer them - 70 strands of DNA for
- * all five. Genes and weapons together come to 220 strands, 11,000 XP: a
+ * all five. Genes and weapons together come to 225 strands, 11,250 XP: a
  * player has bred everything about when they reach the top rank (Superbug
  * at 12,000 XP).
  *

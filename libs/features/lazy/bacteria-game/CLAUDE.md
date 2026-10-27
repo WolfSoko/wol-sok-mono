@@ -308,9 +308,10 @@ play each other.
   plays its place on the difficulty curve (`state/difficulty-curve.ts`) and
   carries `computerLoadout` (`state/computer-opponent.ts`). Such a replay
   is version 4. A change to `SKILL`, `STRENGTH`, the bands or a rule only the ladder's
-  profiles switch on (`attacksAtCap`, `pushesAfterCryo`) changes those matches:
-  raise `LADDER_VERSION` and take the new fingerprint in
-  `golden-match.spec.ts`. A plain match must not move (`BALANCE_VERSION`).
+  profiles switch on (`attacksAtCap`, `pushesAfterCryo`) changes those matches,
+  as does one to what the computer buys (its budget, a character, the gene
+  or weapon costs it spends along): raise `LADDER_VERSION` and take the new
+  fingerprints in `golden-match.spec.ts`. A plain match must not move (`BALANCE_VERSION`).
 - The balance lab (`state/balance/`, runner `tools/bacteria-game/balance/`)
   plays the stand-in (`REFERENCE_PROFILE`) against that computer. A change
   to the balance, the levels, the bots or the curve re-checks it:
