@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.118.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.118.2...v74.118.3) (2026-10-27)
+
+### Performance
+
+* **angular-examples:** pace the title's shader ([#2709](https://github.com/WolfSoko/wol-sok-mono/issues/2709)) ([2ce08de](https://github.com/WolfSoko/wol-sok-mono/commit/2ce08de60b953ad6fc21bdfa3af8be52a150bff0))
+
 ## [74.118.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.118.1...v74.118.2) (2026-10-27)
 
 ### Bug Fixes
