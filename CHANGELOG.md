@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.116.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.4...v74.116.5) (2026-10-27)
+
+### Performance
+
+* **bacteria-game-remote:** add the frame-time spec, report-only ([#2704](https://github.com/WolfSoko/wol-sok-mono/issues/2704)) ([ef308f4](https://github.com/WolfSoko/wol-sok-mono/commit/ef308f4b2707e94aec135eb47b7c01ede53f60c3))
+
 ## [74.116.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.3...v74.116.4) (2026-10-27)
 
 ### Performance
