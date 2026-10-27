@@ -205,11 +205,14 @@ export class FloodCache {
     const key = cellOf(grid, from);
     let field = this.fields.get(key);
     if (field === undefined) {
-      if (this.fields.size >= CACHED_FLOODS) {
-        this.fields.clear();
-      }
       field = flood(grid, from);
-      this.fields.set(key, field);
+    } else {
+      // Kept as the newest: the one asked for longest ago goes first.
+      this.fields.delete(key);
+    }
+    this.fields.set(key, field);
+    if (this.fields.size > CACHED_FLOODS) {
+      this.fields.delete(this.fields.keys().next().value as number);
     }
     return field;
   }
