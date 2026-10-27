@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.120.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.119.0...v74.120.0) (2026-10-27)
+
+### Features
+
+* **feat-lazy-bacteria-game:** show a spinner while a tap's work is under way ([#2711](https://github.com/WolfSoko/wol-sok-mono/issues/2711)) ([e8c18e3](https://github.com/WolfSoko/wol-sok-mono/commit/e8c18e3e7ae2b5902c335b41fbda3921346d02fc))
+
 ## [74.119.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.118.3...v74.119.0) (2026-10-27)
 
 ### Features
