@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.120.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.120.0...v74.120.1) (2026-10-27)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** ♻️ tidy the big-map speed-ups ([50cf0a3](https://github.com/WolfSoko/wol-sok-mono/commit/50cf0a3283bc450543d901aa859ab1329cfbe7c4))
+
+### Chore
+
+* **feat-lazy-bacteria-game:** 🔧 drop a local Playwright config committed by mistake ([51e0c0f](https://github.com/WolfSoko/wol-sok-mono/commit/51e0c0f26eed1bf26ecc20ce60a8cacc72676b7a))
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡️ let the GPU self-test play on the active area ([c11ad2d](https://github.com/WolfSoko/wol-sok-mono/commit/c11ad2d10b0a71e7cb0ae2cb979802314a17225a))
+* **feat-lazy-bacteria-game:** ⚡️ pack, upload and blur only the colony in view ([207c9e8](https://github.com/WolfSoko/wol-sok-mono/commit/207c9e8cf9170620c97dd41e13ce424f8065f27f))
+* **feat-lazy-bacteria-game:** ⚡️ run the deterministic GPU passes on the active area ([b604b3d](https://github.com/WolfSoko/wol-sok-mono/commit/b604b3db31d0d5067b44ebe3038d64da5688ec7b))
+* **feat-lazy-bacteria-game:** ⚡️ speed up the CPU simulation's tick, bit for bit ([3fd90d8](https://github.com/WolfSoko/wol-sok-mono/commit/3fd90d80725213ccc7b7b5ab078ed09c55f4761f))
+
 ## [74.120.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.119.0...v74.120.0) (2026-10-27)
 
 ### Features
