@@ -153,7 +153,7 @@ function replayOf(fixture) {
   const raw = JSON.parse(readFileSync(join(ROOT, fixture.file), 'utf8'));
   const replay = parseReplay(raw);
   if (replay === null) {
-    throw new Error(`${fixture.name}: ${fixture.file} does not parse`);
+    return null;
   }
   // Played on the current balance, whatever the fixture says - as the
   // golden replay's spec plays it.
@@ -171,11 +171,16 @@ function replayOf(fixture) {
 
 const calibrationBefore = calibration();
 const measured = FIXTURES.map((fixture) => {
+  // A fixture the engine no longer reads is a failed row, not a crash, so
+  // `--report-only` still reports it.
   const replay = replayOf(fixture);
+  if (replay === null) {
+    return { name: fixture.name, broken: 'does not parse' };
+  }
   const play = () => playReplay(replay);
   const result = play();
   if (result === null) {
-    throw new Error(`${fixture.name}: the replay does not play back`);
+    return { name: fixture.name, broken: 'does not play back' };
   }
   return {
     name: fixture.name,
@@ -191,10 +196,23 @@ const measured = FIXTURES.map((fixture) => {
 const calibrationMs = median([...calibrationBefore, ...calibration()]);
 
 const baseline = JSON.parse(readFileSync(BASELINE, 'utf8'));
+const major = (version) => version.split('.')[0];
+// Another Node runs other V8 optimisations: its ratios are not comparable.
+const sameNode = major(baseline.node) === major(process.version);
 const rows = measured.map((entry) => {
+  if (entry.broken !== undefined) {
+    return {
+      ...entry,
+      ms: null,
+      ratio: null,
+      change: null,
+      heap: null,
+      verdict: entry.broken,
+    };
+  }
   const ratio = entry.ms / calibrationMs;
   const base =
-    baseline.balanceVersion === BALANCE_VERSION
+    baseline.balanceVersion === BALANCE_VERSION && sameNode
       ? baseline.fixtures[entry.name]
       : undefined;
   const sameResult =
@@ -205,7 +223,9 @@ const rows = measured.map((entry) => {
   const change = base === undefined ? null : ratio / base.ratio - 1;
   const verdict =
     base === undefined
-      ? 'no baseline'
+      ? sameNode
+        ? 'no baseline'
+        : `no baseline for Node ${major(process.version)}`
       : !sameResult
         ? 'played differently'
         : change > FAIL_ABOVE
@@ -227,7 +247,7 @@ const table = [
   '| --- | ---: | ---: | ---: | ---: | --- |',
   ...rows.map(
     (row) =>
-      `| ${row.name} | ${row.ms.toFixed(1)} | ${row.ratio.toFixed(3)} | ${percent(row.change)} | ${
+      `| ${row.name} | ${row.ms?.toFixed(1) ?? '–'} | ${row.ratio?.toFixed(3) ?? '–'} | ${percent(row.change)} | ${
         row.heap === null ? '–' : `${row.heap.toFixed(0)} KiB`
       } | ${row.verdict} |`
   ),
@@ -240,6 +260,13 @@ if (process.env.GITHUB_STEP_SUMMARY) {
   );
 }
 
+const broken = rows.filter((row) => row.broken !== undefined);
+if (update && broken.length > 0) {
+  console.log(
+    `No baseline written: ${broken.map((row) => `${row.name} ${row.broken}`).join('; ')}.`
+  );
+  process.exit(1);
+}
 if (update) {
   writeFileSync(
     BASELINE,
@@ -262,9 +289,8 @@ if (update) {
   process.exit(0);
 }
 
-const failing = rows.filter((row) =>
-  ['slower: fails', 'played differently', 'no baseline'].includes(row.verdict)
-);
+const PASSING = ['ok', 'slower: warns', 'faster: lower the baseline'];
+const failing = rows.filter((row) => !PASSING.includes(row.verdict));
 if (failing.length > 0) {
   console.log(
     `${failing.map((row) => `${row.name}: ${row.verdict}`).join('; ')}.` +

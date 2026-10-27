@@ -207,6 +207,12 @@ is decided after a month, like gate 3.
      over 3 plays), not growth per 1,000 ticks: the replays are a few
      hundred ticks long, and V8's own few hundred KiB either way looked like
      a leak when scaled up.
+   - A baseline counts only on the Node major it was measured on (the
+     baseline names it): CI runs `.nvmrc`'s Node 24, whose V8 optimises
+     otherwise than a developer's Node 22. The baseline holds CI's ratios,
+     taken from the target's output on this PR's CI run. A fixture that no
+     longer parses or plays back is a failed row, so `--report-only` still
+     reports it.
    - The target runs `--report-only` (it never fails) and takes about 1.5
      minutes. To block, drop that flag from the `perf` target.
 3. **Phase 3, browser frame time**: `perf.spec.ts` and the debug hook,
