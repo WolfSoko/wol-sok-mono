@@ -59,10 +59,10 @@ export const EMPTY_EVOLUTION: EvolutionProgress = {
 };
 
 /** The DNA the first level of a gene costs. */
-export const GENE_BASE_COST = 2;
+const GENE_BASE_COST = 2;
 
 /** Times the cost of the level before that each further level costs. */
-export const GENE_COST_GROWTH = 1.6;
+const GENE_COST_GROWTH = 1.6;
 
 /**
  * The DNA the next level of a gene costs: it grows exponentially, each

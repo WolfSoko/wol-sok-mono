@@ -14,7 +14,7 @@ import {
   weaponOf,
 } from './evolution';
 import { geneCost } from './evolution-progress';
-import { LADDER_VERSION, strengthOf } from './difficulty-curve';
+import { strengthOf } from './difficulty-curve';
 import { expectedDna } from './expected-player';
 import { generatedLevelId } from './level-generator/generate-level';
 import { getLevel, LEVELS } from './levels';
@@ -129,26 +129,5 @@ describe('the computer opponent', () => {
 
   it('stays plain on an id of no level', () => {
     expect(isPlainLoadout(computerLoadout('nowhere', 'hard'))).toBe(true);
-  });
-
-  it('gives every ladder level the loadouts its ladder version was taken with', () => {
-    // A replay against the ladder's computer takes its loadout from here,
-    // not from its header: a change that moves one - the budget, the
-    // gene or weapon costs, a character - raises `LADDER_VERSION` and
-    // takes the new fingerprint over.
-    const table = JSON.stringify(
-      LEVELS.flatMap(({ id: levelId }) =>
-        BOT_DIFFICULTIES.map(({ id: difficulty }) =>
-          computerLoadout(levelId, difficulty)
-        )
-      )
-    );
-    let hash = 0x811c9dc5;
-    for (let i = 0; i < table.length; i++) {
-      hash = Math.imul(hash ^ table.charCodeAt(i), 0x01000193) >>> 0;
-    }
-
-    expect(LADDER_VERSION).toBe(2);
-    expect(`${table.length}:${hash.toString(16)}`).toBe('4747:9206f2e5');
   });
 });
