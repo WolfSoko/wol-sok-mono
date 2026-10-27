@@ -258,10 +258,12 @@ is decided after a month, like gate 3.
      public replay pages are left out for now: they are a Cloud Function
      behind Hosting and need the functions emulator.
    - First local numbers (mobile, headless, no GPU): `angular-examples` `/`
-     LCP about 12 s and a total blocking time of about 139 s, a main thread
-     that never goes idle (the title's shader on software WebGL, by the
-     look of it); `rollapolla-analog` `/` LCP 8-15 s, TBT about 300 ms,
-     2.1 MB, `/polls` LCP 13-15 s. The portfolio's prerender does not run
+     LCP about 12 s; its total blocking time was about 139 s while Chrome
+     drew the title's shader on software WebGL, and about 4.4 s once
+     `--disable-gpu` took WebGL away (the CI workers' containers need it,
+     with `--disable-dev-shm-usage`, or the tab crashes).
+     `rollapolla-analog` `/` LCP 8-15 s, TBT about 300 ms, 2.1 MB, `/polls`
+     LCP 13-15 s. The portfolio's prerender does not run
      in the development container; CI measures it.
 
 Each phase is its own PR. CLAUDE.md's "Performance gates" section says what

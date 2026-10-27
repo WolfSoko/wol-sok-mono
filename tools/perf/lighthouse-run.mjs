@@ -36,7 +36,12 @@ const config = {
   ci: {
     collect: {
       numberOfRuns: 3,
-      settings: { chromeFlags: '--no-sandbox --headless=new' },
+      settings: {
+        // The CI workers are containers with a small /dev/shm, where the
+        // tab crashed (TARGET_CRASHED), and no GPU.
+        chromeFlags:
+          '--no-sandbox --headless=new --disable-dev-shm-usage --disable-gpu',
+      },
       ...collect,
     },
     assert: { assertions: ASSERTIONS },
