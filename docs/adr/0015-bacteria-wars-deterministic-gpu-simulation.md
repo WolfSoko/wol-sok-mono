@@ -275,6 +275,31 @@ sits behind a flag; step 8 switches it on.
    21-28 ms to 7-9 ms. A phone and the server's runtime still need a
    measurement of their own.
 
+10. Run the active area in deterministic matches too (2026-10-27): on the
+    big maps (640 x 360) the passes ran over four times the cells of a
+    base arena, though the colonies hold about a tenth of them, and a
+    Galaxy S8+ played them at 15 frames a second. Decision 2's proof that
+    the area covers everything that can change:
+    - an empty cell with no bacterium around is a fixed point of every
+      pass: all four channels stay 0 (the crush clears the record, the
+      feeding recomputes the food);
+    - the area (`GpuSimulation.updateArea`) holds the report's colony
+      boxes grown by the reach of every tick since the report, its own
+      tick included, since the report counts the bacteria after its combat
+      and before they divided and moved (`reachSinceReport`), and the
+      areas of the last `AREA_HISTORY` ticks, in which all three state
+      textures are written empty again where the colonies left;
+    - the whole arena runs for the first ticks of a match, whose textures
+      hold the last match, and on every tick a wall shoves bacteria.
+
+    So the passes would write empty over empty outside the area, and
+    leaving it out changes no bit; the TypeScript reference still runs the
+    whole arena. The cross-check's `roomy` scenario plays whole matches
+    with room to spare and no sliding wall, where the area is in use; the
+    report's boxes grown by no reach fail it (from tick 6). The cell of
+    spare reach per tick and the report's 8-cell blocks hide an area one
+    tick short, so the proof above, not the check, keeps the reach right.
+
 The spike's code (integer movement shaders, the TypeScript reference, the
 cross-check across SwiftShader, llvmpipe and Firefox) is not part of this
 ADR. Steps 1–2 bring it into the repository, from `gl/spike/` on the spike

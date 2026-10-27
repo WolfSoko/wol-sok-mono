@@ -332,6 +332,14 @@ play each other.
   Then regenerate the goldens: `golden-gpu-int.json`, `golden-gpu-sim.json`
   and `SELF_TEST_GOLDEN`, bumping `GPU_SELF_TEST_VERSION`, so devices test
   again.
+- `GpuSimulation` runs its cell passes on the active area
+  (`updateArea`) in deterministic matches too (ADR 0015, step 10): it
+  must hold every cell a bacterium can reach since the report the area
+  comes from, that report's own tick included, and the cells of the last
+  `AREA_HISTORY` ticks. A change to how far a bacterium gets in a tick (a
+  new pass that moves one, a longer escape) grows `recentReach` with it;
+  the cross-check's `roomy` scenario catches an area far too small, not
+  one a tick short.
 - Two rulesets (`Ruleset`, `state/simulation.ts`): `cpu`
   (`BacteriaSimulation`) and `gpu-int` (the integer passes: `GpuSimulation`
   with `deterministic`, or `IntSimulation`). `Simulation.ruleset` names a

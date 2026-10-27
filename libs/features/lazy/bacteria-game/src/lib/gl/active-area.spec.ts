@@ -1,4 +1,4 @@
-import { activeRects } from './active-area';
+import { activeRects, reachSinceReport } from './active-area';
 
 const WIDTH = 640;
 const HEIGHT = 360;
@@ -81,5 +81,16 @@ describe('activeRects', () => {
       { x: 8, y: 8, width: 22, height: 14 },
       { x: 300, y: 300, width: 5, height: 5 },
     ]);
+  });
+});
+
+describe('reachSinceReport', () => {
+  it('adds up the reach of the ticks since the report and of its own tick', () => {
+    // Newest first: this tick, then the three before - the report's.
+    expect(reachSinceReport([4, 3, 5, 6, 9], 3)).toBe(4 + 3 + 5 + 6);
+  });
+
+  it('knows no reach once a tick that counts is no longer kept', () => {
+    expect(reachSinceReport([4, 3, 5], 3)).toBeNull();
   });
 });
