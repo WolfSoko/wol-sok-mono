@@ -572,7 +572,7 @@ export class NewGameComponent {
   protected startGame(): void {
     const kind = this.kind();
     if (kind !== null && this.canStart()) {
-      this.busy.run(() => this.start.emit(kind));
+      this.start.emit(kind);
     }
   }
 

@@ -772,11 +772,13 @@ describe('BacteriaGameComponent', () => {
       { steers: [[0, 0, 1, 0]], drags: [], boosts: [], weapons: [] }
     );
 
-    it('starts a match against it on Fight it', () => {
+    it('starts a match against it on Fight it', async () => {
       create();
       store.update({ challenge: run });
 
+      const held = holdBusyWork();
       component['fightChallenge']();
+      await held[0]();
 
       expect(store.ghost()).toEqual(run);
       expect(store.challenge()).toBeNull();
@@ -792,6 +794,59 @@ describe('BacteriaGameComponent', () => {
 
       expect(store.challenge()).toBeNull();
       expect(store.ghost()).toBeNull();
+    });
+  });
+
+  /**
+   * Holds the work a tap sets off behind the spinner, rather than waiting
+   * out the frame (which would render the template these specs leave out).
+   */
+  function holdBusyWork(): Array<() => void | Promise<unknown>> {
+    const held: Array<() => void | Promise<unknown>> = [];
+    jest
+      .spyOn(TestBed.inject(StageBusy), 'run')
+      .mockImplementation((work) => held.push(work));
+    return held;
+  }
+
+  describe('a match started from a tap', () => {
+    it('takes the screen on the tap, and sets the match up behind the spinner', async () => {
+      create();
+      const held = holdBusyWork();
+      const fullscreen = jest
+        .spyOn(component as never, 'requestNativeFullscreen')
+        .mockImplementation(() => undefined);
+      const start = jest
+        .spyOn(component, 'startGame')
+        .mockImplementation(() => undefined);
+
+      component['startNewGame']('campaign');
+
+      expect(fullscreen).toHaveBeenCalled();
+      expect(start).not.toHaveBeenCalled();
+      await held[0]();
+      expect(start).toHaveBeenCalledTimes(1);
+    });
+
+    it('stays busy until a daily match is under way', async () => {
+      create();
+      const held = holdBusyWork();
+      let started = (): void => undefined;
+      jest
+        .spyOn(component as never, 'playDaily')
+        .mockImplementation(
+          (() => new Promise<void>((resolve) => (started = resolve))) as never
+        );
+
+      component['startNewGame']('daily');
+      let done = false;
+      const work = Promise.resolve(held[0]()).then(() => (done = true));
+      await Promise.resolve();
+
+      expect(done).toBe(false);
+      started();
+      await work;
+      expect(done).toBe(true);
     });
   });
 

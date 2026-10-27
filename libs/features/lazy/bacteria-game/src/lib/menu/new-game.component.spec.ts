@@ -115,7 +115,6 @@ describe('NewGameComponent', () => {
     );
 
     button('Start Boost').click();
-    await settle();
     expect(starts).toHaveBeenCalledWith('training');
   });
 
@@ -173,7 +172,6 @@ describe('NewGameComponent', () => {
       getLevel(DAILY.levelId).description
     );
     button('Start the daily level').click();
-    await settle();
     expect(started).toHaveBeenCalledWith('daily');
   });
 
@@ -189,7 +187,6 @@ describe('NewGameComponent', () => {
       'As deep as you can'
     );
     button('Start the run').click();
-    await settle();
     expect(started).toHaveBeenCalledWith('endless');
   });
 
@@ -288,7 +285,6 @@ describe('NewGameComponent', () => {
     });
     await settle();
     button('Start').click();
-    await settle();
     expect(started).toHaveBeenCalledWith('online');
   });
 

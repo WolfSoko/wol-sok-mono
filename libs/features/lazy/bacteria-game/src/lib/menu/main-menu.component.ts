@@ -127,8 +127,9 @@ export class MainMenuComponent {
   private readonly busy = inject(StageBusy);
 
   /**
-   * Emits a way into play behind the stage's spinner: the screen or the
-   * match it opens takes a moment to set up.
+   * Emits a way into a new game behind the stage's spinner: the screen it
+   * opens takes a moment to lay out. A match is started behind it by the
+   * stage, which takes the screen on the tap first.
    */
   protected busyEmit(output: OutputEmitterRef<void>): void {
     this.busy.run(() => output.emit());

@@ -1089,10 +1089,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (run === null || this.resetting()) {
       return;
     }
-    this.dismissChallenge();
-    this.gameStateService.leaveOnline();
-    this.gameStateService.playGhost(run);
-    this.startGame();
+    this.startOnTap(() => {
+      this.dismissChallenge();
+      this.gameStateService.leaveOnline();
+      this.gameStateService.playGhost(run);
+      this.startGame();
+    });
+  }
+
+  /**
+   * Starts a match from a tap: the stage takes the screen on the tap
+   * itself, the one moment every browser allows it, and the match is set
+   * up behind the busy spinner (`StageBusy`), until it runs.
+   */
+  private startOnTap(start: () => void | Promise<void>): void {
+    this.requestNativeFullscreen();
+    this.busy.run(start);
   }
 
   protected dismissChallenge(): void {
@@ -1372,27 +1384,28 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * training mission.
    */
   protected startNewGame(kind: PlayKind): void {
-    switch (kind) {
-      case 'daily':
-        void this.playDaily();
-        return;
-      case 'endless':
-        void this.playEndless();
-        return;
-      case 'training':
-        this.playMission(this.missionId());
-        return;
-      default:
-        this.startGame();
-    }
+    this.startOnTap(() => {
+      switch (kind) {
+        case 'daily':
+          return this.playDaily();
+        case 'endless':
+          return this.playEndless();
+        case 'training':
+          return this.playMission(this.missionId());
+        default:
+          return this.startGame();
+      }
+    });
   }
 
   /** Starts a match on the furthest level the campaign ladder has opened. */
   protected continueCampaign(): void {
-    this.gameStateService.leaveOnline();
-    this.selectMode('vs-computer');
-    this.gameStateService.setLevel(this.campaign.furthestLevel());
-    this.startGame();
+    this.startOnTap(() => {
+      this.gameStateService.leaveOnline();
+      this.selectMode('vs-computer');
+      this.gameStateService.setLevel(this.campaign.furthestLevel());
+      this.startGame();
+    });
   }
 
   /**
