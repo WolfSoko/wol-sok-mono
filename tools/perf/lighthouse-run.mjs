@@ -3,11 +3,11 @@
 // The app's `lighthouse.json` says what to serve and which pages; the rest
 // is set here, and the two go to `lhci autorun` as one config. The
 // assertions only warn, so the run fails only when nothing could be
-// measured. Chrome is Playwright's, which the CI workers have for the e2e
-// tasks; lhci's health check finds it only through CHROME_PATH, set here
-// unless it is set already.
+// measured. Chrome is Playwright's, installed here on a worker that has
+// none yet (one that ran no e2e task); lhci's health check finds it only
+// through CHROME_PATH, set here unless it is set already.
 import { spawnSync } from 'node:child_process';
-import { readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -47,10 +47,19 @@ const config = {
       : { target: 'filesystem', outputDir: '.lighthouseci' },
   },
 };
+const { chromium } = createRequire(import.meta.url)('playwright');
+if (!process.env['CHROME_PATH'] && !existsSync(chromium.executablePath())) {
+  const install = spawnSync('npx', ['playwright', 'install', 'chromium'], {
+    stdio: 'inherit',
+  });
+  if (install.status !== 0) {
+    console.error("Could not install Playwright's Chromium.");
+    process.exit(install.status ?? 1);
+  }
+}
 const configFile = join(tmpdir(), `lighthouserc-${app}-${process.pid}.json`);
 writeFileSync(configFile, JSON.stringify(config));
 
-const { chromium } = createRequire(import.meta.url)('playwright');
 const { status } = spawnSync(
   'npx',
   ['lhci', 'autorun', `--config=${configFile}`],
