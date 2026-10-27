@@ -95,6 +95,10 @@ export const replay: Translation<typeof en> = {
     over: 'Ende der Wiederholung',
     play: 'Abspielen',
     pause: 'Pause',
+    seek: 'Zeit im Match',
+    back: '{seconds} Sekunden zurück',
+    forward: '{seconds} Sekunden vor',
+    seeking: 'Spult zu dieser Stelle …',
   },
   watchPage: {
     title: 'Ansehen: {level} - Bacteria Wars',

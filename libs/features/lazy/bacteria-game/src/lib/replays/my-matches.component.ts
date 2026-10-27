@@ -24,6 +24,8 @@ import {
   timeout,
 } from 'rxjs';
 import { EvolutionService } from '../evolution.service';
+import { GpuSelfTestService } from '../gl/gpu-self-test.service';
+import { gpuTrusted } from '../gl/simulation-check';
 import { TranslationKey } from '../i18n/dictionaries';
 import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
@@ -94,6 +96,11 @@ export class MyMatchesComponent {
   private readonly replays = inject(GameReplays);
   private readonly i18n = inject(I18nService);
   private readonly evolution = inject(EvolutionService);
+  private readonly gpuSelfTest = inject(GpuSelfTestService);
+  /** True where the GPU passed the self-test: GPU replays play on it. */
+  protected readonly gpuTrusted = computed(() =>
+    gpuTrusted(this.gpuSelfTest.result())
+  );
   /** The skin the colonies wear in a replay: the player's, once owned. */
   protected readonly look = this.evolution.worn;
 

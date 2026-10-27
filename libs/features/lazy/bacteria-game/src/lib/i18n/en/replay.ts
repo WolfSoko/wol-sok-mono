@@ -98,6 +98,10 @@ export const replay = {
     over: 'End of the replay',
     play: 'Play',
     pause: 'Pause',
+    seek: 'Time in the match',
+    back: '{seconds} seconds back',
+    forward: '{seconds} seconds forward',
+    seeking: 'Winding to that time…',
   },
   watchPage: {
     title: 'Watch: {level} - Bacteria Wars',
