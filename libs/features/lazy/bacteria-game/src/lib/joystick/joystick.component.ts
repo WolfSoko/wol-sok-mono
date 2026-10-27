@@ -19,7 +19,7 @@ import {
   Point,
   SteeringVector,
 } from '../state/geometry';
-import { steeringVector } from '../touch-controls';
+import { clientPoint, Pinch, steeringVector } from '../touch-controls';
 
 /** Finger distance from the centre, in CSS pixels, that counts as full push. */
 export const JOYSTICK_RADIUS = 44;
@@ -32,8 +32,13 @@ export const JOYSTICK_RADIUS = 44;
  * small base first. Dragging from there reports a {@link SteeringVector},
  * releasing reports the zero vector. A finger pulled past the rim drags the
  * base along behind it, so the stick stays under the thumb and turning back
- * takes no long way across the screen. Only one pointer is tracked at a
- * time - the other player's finger belongs to their own stick.
+ * takes no long way across the screen. Only one pointer steers at a time -
+ * the other player's finger belongs to their own stick.
+ *
+ * Where the camera can zoom, a second finger in the zone pinches it with
+ * the one on the stick, as two fingers on the arena do: the stick lets go,
+ * and the gesture zooms until both fingers are lifted. A finger that lands
+ * while one of the two is still down takes the lifted one's place.
  *
  * Directions are reported in screen space. A player who sits at another edge
  * of the phone sees the arena turned, and so is their push: "away from me"
@@ -71,9 +76,13 @@ export class JoystickComponent implements OnDestroy {
   public readonly label = input('');
   /** True while nobody is playing - the stick then ignores every touch. */
   public readonly disabled = input(false);
+  /** True while the camera can zoom: two fingers in the zone pinch it. */
+  public readonly zooms = input(false);
 
   /** Where the stick is pushed; the zero vector once it is released. */
   public readonly steer = output<SteeringVector>();
+  /** How much a pinch zooms the camera: above 1 in, below 1 out. */
+  public readonly zoom = output<number>();
 
   private readonly i18n = inject(I18nService);
 
@@ -106,17 +115,33 @@ export class JoystickComponent implements OnDestroy {
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private pointerId: number | null = null;
+  /** The fingers in the zone, two of which may pinch the camera. */
+  private readonly fingers = new Pinch();
   /** Where the finger landed in client pixels - every move is relative to it. */
   private originClient: Point = { x: 0, y: 0 };
 
   protected onPointerDown(event: PointerEvent): void {
     // A right or middle mouse button would open a menu that swallows the
     // matching pointerup, and the stick would never be let go of.
-    if (this.disabled() || this.pointerId != null || event.button !== 0) {
+    if (this.disabled() || event.button !== 0) {
+      return;
+    }
+    const finger = clientPoint(event);
+    // A second finger pinches with the one on the stick, which lets go - or
+    // with the one left of a pinch. Without zoom it is ignored.
+    if (this.pointerId != null || this.fingers.active()) {
+      if (this.zooms() && this.fingers.start(event.pointerId, finger)) {
+        if (this.pointerId != null) {
+          this.release();
+        }
+        this.host.nativeElement.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+      }
       return;
     }
     this.pointerId = event.pointerId;
-    this.originClient = { x: event.clientX, y: event.clientY };
+    this.fingers.down(event.pointerId, finger);
+    this.originClient = finger;
     // The only layout read of a drag: moves are measured from the client
     // position of the touch-down, not from the element's box.
     const bounds = this.host.nativeElement.getBoundingClientRect();
@@ -130,10 +155,19 @@ export class JoystickComponent implements OnDestroy {
   }
 
   protected onPointerMove(event: PointerEvent): void {
+    const finger = clientPoint(event);
+    const factor = this.fingers.move(event.pointerId, finger);
+    if (this.fingers.pinches(event.pointerId)) {
+      // The match may have ended mid-pinch: the whole map stays in view.
+      if (factor !== 1 && this.zooms()) {
+        this.zoom.emit(factor);
+      }
+      event.preventDefault();
+      return;
+    }
     if (event.pointerId !== this.pointerId) {
       return;
     }
-    const finger = { x: event.clientX, y: event.clientY };
     const push = delta(this.originClient, finger);
     const knob = clampLength(push, this.radius);
     // Past the rim the base follows the finger, which keeps the knob on the
@@ -149,10 +183,10 @@ export class JoystickComponent implements OnDestroy {
   }
 
   protected onPointerUp(event: PointerEvent): void {
-    if (event.pointerId !== this.pointerId) {
-      return;
+    this.fingers.up(event.pointerId);
+    if (event.pointerId === this.pointerId) {
+      this.release();
     }
-    this.release();
   }
 
   /**

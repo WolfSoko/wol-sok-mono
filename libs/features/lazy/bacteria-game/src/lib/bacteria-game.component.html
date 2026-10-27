@@ -23,7 +23,10 @@
       [color]="colony.css"
       [label]="colony.name"
       [disabled]="!running()"
+      [zooms]="cameraFollows()"
       (steer)="steer(colony.id, $event)"
+      (zoom)="zoomBy($event)"
+      (wheel)="onWheel($event)"
     />
     <div
       class="seat"
@@ -346,7 +349,7 @@
     />
   }
   <!-- Only a glance: small, in the top right corner below the HUD. -->
-  @if (showMinimap()) {
+  @if (cameraFollows()) {
     <canvas
       #minimapElement
       class="minimap"

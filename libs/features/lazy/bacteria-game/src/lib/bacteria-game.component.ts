@@ -141,6 +141,7 @@ import { MatchResult } from './state/match-engine';
 import { levelMusic } from './sound/level-music';
 import {
   arenaPointFromClient,
+  clientPoint,
   nearestFreeCrosshair,
   Pinch,
 } from './touch-controls';
@@ -348,9 +349,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly mapSize = computed(() => levelSize(this.store.level()));
   /**
    * True while the camera shows part of a big map: in a match of one human -
-   * with two, it shows the whole map.
+   * with two, it shows the whole map. The minimap shows then, and the
+   * camera zooms.
    */
-  protected readonly showMinimap = computed(
+  protected readonly cameraFollows = computed(
     () => this.mapSize() > 1 && this.running() && this.humans().length === 1
   );
   /**
@@ -1721,7 +1723,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return this.camera != null && this.cameraTarget() != null;
   }
 
-  private zoomBy(factor: number): void {
+  protected zoomBy(factor: number): void {
     if (factor === 1) {
       return;
     }
@@ -2133,10 +2135,6 @@ function selfTestState(result: GpuSelfTestResult | null): string {
     return 'error';
   }
   return result.ok ? 'passed' : 'failed';
-}
-
-function clientPoint(event: PointerEvent): Point {
-  return { x: event.clientX, y: event.clientY };
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
