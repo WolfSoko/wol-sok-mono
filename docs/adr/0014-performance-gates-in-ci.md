@@ -262,6 +262,13 @@ is decided after a month, like gate 3.
      drew the title's shader on software WebGL, and about 4.4 s once
      `--disable-gpu` took WebGL away (the CI workers' containers need it,
      with `--disable-dev-shm-usage`, or the tab crashes).
+     The title's shader then got paced (`RenderShaderComponent`'s
+     `resolutionScale`, `maxFps`, `startWhenIdle`, `stillOnSlowRenderer`):
+     half the resolution, 20 fps, started once the page is idle, and one
+     still frame on a software renderer or with reduced motion. Measured
+     with WebGL on SwiftShader, TBT went from about 141 s to 7.5-13 s; what
+     is left is the app's own start (polyfills, the main chunks), not the
+     shader.
      `rollapolla-analog` `/` LCP 8-15 s, TBT about 300 ms, 2.1 MB, `/polls`
      LCP 13-15 s. The portfolio's prerender does not run
      in the development container; CI measures it.

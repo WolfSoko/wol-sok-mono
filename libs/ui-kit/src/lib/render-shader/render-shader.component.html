@@ -6,8 +6,11 @@
 <div #canvasContainer class="canvas-container">
   <canvas
     #webGLCanvas
-    [width]="canvasWidth"
-    [height]="canvasHeight"
+    [width]="bufferWidth()"
+    [height]="bufferHeight()"
+    [style.width.px]="canvasWidth"
+    [style.height.px]="canvasHeight"
+    [class.waiting]="waiting()"
     (touchmove)="onTouchMove($event)"
     (mousemove)="onMouseMove($event)"
   >
