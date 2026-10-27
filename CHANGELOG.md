@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.118.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.117.0...v74.118.0) (2026-10-27)
+
+### Features
+
+* **feat-lazy-bacteria-game:** lay the touch controls over a full-screen arena ([#2706](https://github.com/WolfSoko/wol-sok-mono/issues/2706)) ([c7bffb7](https://github.com/WolfSoko/wol-sok-mono/commit/c7bffb71afe7cd2fb3e517df0d52837072991757))
+
 ## [74.117.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.5...v74.117.0) (2026-10-27)
 
 ### Features
