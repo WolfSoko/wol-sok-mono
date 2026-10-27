@@ -23,7 +23,10 @@
       [color]="colony.css"
       [label]="colony.name"
       [disabled]="!running()"
+      [zooms]="zooms()"
       (steer)="steer(colony.id, $event)"
+      (zoom)="zoomBy($event)"
+      (wheel)="onWheel($event)"
     />
     <div
       class="seat"

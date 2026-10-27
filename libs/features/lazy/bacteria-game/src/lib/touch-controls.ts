@@ -147,6 +147,11 @@ export class Pinch {
     return true;
   }
 
+  /** True from a pinch's start until both its fingers are lifted. */
+  public active(): boolean {
+    return this.pair != null;
+  }
+
   public pinches(pointerId: number): boolean {
     return this.pair?.includes(pointerId) ?? false;
   }

@@ -1717,11 +1717,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * True while the camera may zoom: over a big map, in a match it follows
    * the one human through - with two, it shows the whole map.
    */
-  private zooms(): boolean {
+  protected zooms(): boolean {
     return this.camera != null && this.cameraTarget() != null;
   }
 
-  private zoomBy(factor: number): void {
+  protected zoomBy(factor: number): void {
     if (factor === 1) {
       return;
     }
