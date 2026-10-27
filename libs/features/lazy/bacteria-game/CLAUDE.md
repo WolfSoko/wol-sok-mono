@@ -376,3 +376,13 @@ play each other.
   texts, colour names and the like are looked up by their id in the
   components, never translated by the engine. The engine stays
   language-free like it stays deterministic.
+
+## Busy indicator
+
+- A tap that sets heavy work off (a way into play in the main menu, a
+  step of "New game", Start) runs it through `StageBusy.run`
+  (`busy/stage-busy.ts`): the stage shows its spinner
+  (`StageBusyComponent`), the browser paints it, and only then the work
+  runs; a tap meanwhile is dropped. Specs await `fixture.whenStable()`
+  after such a tap: the work keeps the app unstable until it is done.
+  Back, the stepper's header and taps during a match stay immediate.

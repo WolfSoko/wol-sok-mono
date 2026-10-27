@@ -15,6 +15,7 @@ export const stage: Translation<typeof en> = {
       'Zum Aufgeben noch einmal tippen: der gewertete Versuch zählt als gespielt',
   },
   waitingForPeer: 'Warte auf deinen Gegner …',
+  busy: 'Wird geladen …',
   pause: {
     title: 'Pause',
     resume: 'Weiter',

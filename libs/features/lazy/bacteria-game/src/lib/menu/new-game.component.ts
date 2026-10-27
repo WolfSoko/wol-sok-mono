@@ -12,6 +12,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatStepperModule } from '@angular/material/stepper';
+import { StageBusy } from '../busy/stage-busy';
 import { rgba } from '../arena/canvas-math';
 import { ZONE_COLORS } from '../arena/zone-look';
 import {
@@ -124,6 +125,8 @@ import type { TranslationKey } from '../i18n/dictionaries';
 })
 export class NewGameComponent {
   private readonly i18n = inject(I18nService);
+  /** The steps ahead take a moment to lay out: a spinner meanwhile. */
+  private readonly busy = inject(StageBusy);
   /** True where the briefing shows a picture of the level's map. */
   protected readonly previews = inject(LevelPreviewService).supported;
   /**
@@ -489,15 +492,19 @@ export class NewGameComponent {
 
   /** Picks a mode and goes on to its next step. */
   protected pickKind(kind: PlayKind): void {
-    this.kind.set(kind);
-    this.kindChange.emit(kind);
-    this.step.set(stepsOf(kind)[1]);
+    this.busy.run(() => {
+      this.kind.set(kind);
+      this.kindChange.emit(kind);
+      this.step.set(stepsOf(kind)[1]);
+    });
   }
 
   /** Picks a training mission and goes on to its start. */
   protected pickMission(id: MissionId): void {
-    this.missionChange.emit(id);
-    this.step.set('start');
+    this.busy.run(() => {
+      this.missionChange.emit(id);
+      this.step.set('start');
+    });
   }
 
   /**
@@ -505,9 +512,11 @@ export class NewGameComponent {
    * created, it opens the match on that level too.
    */
   protected pickLevel(id: string): void {
-    this.levelChange.emit(id);
-    this.openCreatedMatch();
-    this.step.set('start');
+    this.busy.run(() => {
+      this.levelChange.emit(id);
+      this.openCreatedMatch();
+      this.step.set('start');
+    });
   }
 
   /**
@@ -543,7 +552,9 @@ export class NewGameComponent {
   }
 
   protected next(): void {
-    this.goTo(Math.min(this.index() + 1, this.steps().length - 1));
+    this.busy.run(() =>
+      this.goTo(Math.min(this.index() + 1, this.steps().length - 1))
+    );
   }
 
   protected goBack(): void {
@@ -561,7 +572,7 @@ export class NewGameComponent {
   protected startGame(): void {
     const kind = this.kind();
     if (kind !== null && this.canStart()) {
-      this.start.emit(kind);
+      this.busy.run(() => this.start.emit(kind));
     }
   }
 

@@ -56,6 +56,7 @@ import {
   layoutKey,
 } from './arena/arena-view.component';
 import { armedTap } from './armed-tap';
+import { StageBusyComponent } from './busy/stage-busy.component';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
@@ -226,6 +227,7 @@ const MINIMAP_UPDATE_MS = 100;
     EvolutionComponent,
     TranslatePipe,
     ArenaViewComponent,
+    StageBusyComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],

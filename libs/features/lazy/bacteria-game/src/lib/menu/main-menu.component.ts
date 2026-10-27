@@ -5,6 +5,7 @@ import {
   inject,
   input,
   output,
+  OutputEmitterRef,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { StageBusy } from '../busy/stage-busy';
 import { FeatureTogglesService } from '../feature-toggles.service';
 import { GameTextPipe, medalKey } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -121,6 +123,16 @@ export class MainMenuComponent {
   public readonly fullscreenChange = output<boolean>();
   public readonly fightChallenge = output<void>();
   public readonly dismissChallenge = output<void>();
+
+  private readonly busy = inject(StageBusy);
+
+  /**
+   * Emits a way into play behind the stage's spinner: the screen or the
+   * match it opens takes a moment to set up.
+   */
+  protected busyEmit(output: OutputEmitterRef<void>): void {
+    this.busy.run(() => output.emit());
+  }
 
   protected readonly medalCount = computed(() =>
     Object.values(this.campaign().medals).reduce((sum, n) => sum + n, 0)

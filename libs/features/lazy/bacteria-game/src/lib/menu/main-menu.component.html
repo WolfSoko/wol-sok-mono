@@ -37,7 +37,7 @@
     @if (challenge(); as level) {
       <feat-lazy-bac-game-ghost-challenge
         [level]="level"
-        (fight)="fightChallenge.emit()"
+        (fight)="busyEmit(fightChallenge)"
         (dismiss)="dismissChallenge.emit()"
       />
     }
@@ -46,7 +46,7 @@
         mat-flat-button
         type="button"
         class="play"
-        (click)="newGame.emit()"
+        (click)="busyEmit(newGame)"
       >
         <mat-icon>play_arrow</mat-icon>
         <span class="play-text">
@@ -59,7 +59,7 @@
           mat-stroked-button
           type="button"
           class="training"
-          (click)="training.emit()"
+          (click)="busyEmit(training)"
         >
           <mat-icon>school</mat-icon>
           <span class="play-text">
@@ -212,7 +212,7 @@
       mat-stroked-button
       type="button"
       class="continue"
-      (click)="continueCampaign.emit()"
+      (click)="busyEmit(continueCampaign)"
     >
       <mat-icon>arrow_forward</mat-icon>
       <span class="continue-text">
