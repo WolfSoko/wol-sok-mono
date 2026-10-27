@@ -183,6 +183,38 @@ export interface NavField {
   previous: Int32Array;
 }
 
+/** How many floods a {@link FloodCache} keeps at most. */
+const CACHED_FLOODS = 8;
+
+/**
+ * The floods on one grid, by the grid cell they start from. A flood depends
+ * on nothing else, so a colony still in the cell it was in takes the flood
+ * it had - the same to the last bit - rather than another one over the
+ * whole grid. The neutral colonies ask for theirs on every tick they move.
+ * A new grid starts afresh.
+ */
+export class FloodCache {
+  private grid: NavGrid | null = null;
+  private readonly fields = new Map<number, NavField>();
+
+  public flood(grid: NavGrid, from: Point): NavField {
+    if (grid !== this.grid) {
+      this.grid = grid;
+      this.fields.clear();
+    }
+    const key = cellOf(grid, from);
+    let field = this.fields.get(key);
+    if (field === undefined) {
+      if (this.fields.size >= CACHED_FLOODS) {
+        this.fields.clear();
+      }
+      field = flood(grid, from);
+      this.fields.set(key, field);
+    }
+    return field;
+  }
+}
+
 /**
  * The cheapest travel from a spot to every cell of the grid - Dijkstra over
  * eight neighbours, a diagonal not cutting the corner of a wall.
@@ -199,34 +231,37 @@ export function flood(grid: NavGrid, from: Point): NavField {
     return field;
   }
   distance[start] = 0;
+  const { columns, rows, cost } = grid;
   const queue = new MinQueue();
   queue.push(start, 0);
   while (queue.size > 0) {
-    const [index, travelled] = queue.pop();
+    const travelled = queue.topCost;
+    const index = queue.pop();
     if (travelled > distance[index]) {
       continue;
     }
-    const column = index % grid.columns;
-    const row = Math.floor(index / grid.columns);
-    for (const [dx, dy, length] of STEPS) {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    for (let step = 0; step < STEPS.length; step++) {
+      const [dx, dy, length] = STEPS[step];
       const toColumn = column + dx;
       const toRow = row + dy;
-      if (!inGrid(grid, toColumn, toRow)) {
+      if (toColumn < 0 || toRow < 0 || toColumn >= columns || toRow >= rows) {
         continue;
       }
-      const to = toRow * grid.columns + toColumn;
-      if (grid.cost[to] === BLOCKED) {
+      const to = toRow * columns + toColumn;
+      if (cost[to] === BLOCKED) {
         continue;
       }
       if (
         dx !== 0 &&
         dy !== 0 &&
-        (grid.cost[row * grid.columns + toColumn] === BLOCKED ||
-          grid.cost[toRow * grid.columns + column] === BLOCKED)
+        (cost[row * columns + toColumn] === BLOCKED ||
+          cost[toRow * columns + column] === BLOCKED)
       ) {
         continue;
       }
-      const reached = travelled + length * grid.cost[to] * grid.cell;
+      const reached = travelled + length * cost[to] * grid.cell;
       if (reached < distance[to]) {
         distance[to] = reached;
         previous[to] = index;
@@ -355,10 +390,6 @@ function closestReached(field: NavField, to: Point): number {
   return best;
 }
 
-function inGrid(grid: NavGrid, column: number, row: number): boolean {
-  return column >= 0 && row >= 0 && column < grid.columns && row < grid.rows;
-}
-
 function cellOf(grid: NavGrid, point: Point): number {
   return cellAt(grid, point.x, point.y);
 }
@@ -430,8 +461,14 @@ class MinQueue {
     this.costs[i] = cost;
   }
 
-  public pop(): [number, number] {
-    const top: [number, number] = [this.cells[0], this.costs[0]];
+  /** The cost of the cell {@link pop} takes next. */
+  public get topCost(): number {
+    return this.costs[0];
+  }
+
+  /** Takes the cheapest cell. */
+  public pop(): number {
+    const top = this.cells[0];
     const lastCell = this.cells.pop() as number;
     const lastCost = this.costs.pop() as number;
     const size = this.cells.length;

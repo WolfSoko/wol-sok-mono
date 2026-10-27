@@ -55,7 +55,7 @@ import {
 import { mapZones } from './zones';
 import { NeutralBrain } from './neutral-brain';
 import {
-  flood,
+  FloodCache,
   lineOf,
   NavField,
   NavGrid,
@@ -278,6 +278,12 @@ export class MatchEngine {
   private heldUpTo = 0;
   /** The bots' grid of the static walls and the zones, by arena size. */
   private nav: { width: number; height: number; grid: NavGrid } | null = null;
+  /**
+   * That grid with the moving walls that block now, by where they stand -
+   * the same grid as long as they stand still, so its floods are kept.
+   */
+  private navWalls: { key: string; grid: NavGrid } | null = null;
+  private readonly floods = new FloodCache();
   /** True when the match has neutral colonies - see {@link neutralCount}. */
   private readonly hasNeutral: boolean;
   /** The neutral colonies' bacteria, all together. */
@@ -849,7 +855,7 @@ export class MatchEngine {
     let grid: NavGrid | null = null;
     let field: NavField | null = null;
     const grid$ = () => (grid ??= this.navGridAt(width, height));
-    const field$ = () => (field ??= flood(grid$(), from));
+    const field$ = () => (field ??= this.floods.flood(grid$(), from));
     // A clear straight line needs no flood - most decisions on open ground.
     const clear = (to: Point) => lineOf(grid$(), from, to) === 'clear';
     return {
@@ -878,13 +884,21 @@ export class MatchEngine {
           this.unitAt(width)
         ),
       };
+      this.navWalls = null;
     }
-    return withWalls(
-      this.nav.grid,
-      this.simulation
-        .getDynamicWalls()
-        .filter((wall) => wall.solid || wall.warning > 0)
-    );
+    const walls = this.simulation
+      .getDynamicWalls()
+      .filter((wall) => wall.solid || wall.warning > 0);
+    const key = walls
+      .map(
+        ({ x, y, width, height, round }) =>
+          `${x},${y},${width},${height},${round === true}`
+      )
+      .join(';');
+    if (this.navWalls?.key !== key) {
+      this.navWalls = { key, grid: withWalls(this.nav.grid, walls) };
+    }
+    return this.navWalls.grid;
   }
 
   /**
