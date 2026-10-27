@@ -1,0 +1,6 @@
+{
+  "$comment": "Lighthouse CI (ADR 0014, gate 4): the SSR build served as Firebase Hosting serves it. Run by tools/perf/lighthouse-run.mjs.",
+  "startServerCommand": "node tools/perf/serve-firebase-function.mjs dist/apps/rollapolla-analog/analog/server/index.mjs dist/apps/rollapolla-analog/analog/public 4310",
+  "startServerReadyPattern": "Listening",
+  "url": ["http://localhost:4310/", "http://localhost:4310/polls"]
+}
