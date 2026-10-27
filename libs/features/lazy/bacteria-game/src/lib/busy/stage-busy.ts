@@ -1,12 +1,4 @@
-import {
-  afterNextRender,
-  ErrorHandler,
-  inject,
-  Injectable,
-  Injector,
-  PendingTasks,
-  signal,
-} from '@angular/core';
+import { inject, Injectable, PendingTasks, signal } from '@angular/core';
 
 /**
  * The stage's busy indicator, for the taps that set heavy work off: a mode
@@ -21,9 +13,7 @@ import {
  */
 @Injectable({ providedIn: 'root' })
 export class StageBusy {
-  private readonly injector = inject(Injector);
   private readonly pendingTasks = inject(PendingTasks);
-  private readonly errorHandler = inject(ErrorHandler);
   private readonly working = signal(false);
 
   /** True from the tap until the work it set off is done. */
@@ -38,28 +28,26 @@ export class StageBusy {
     if (this.working()) {
       return;
     }
+    // The set schedules the render that puts the indicator up, ahead of
+    // the frame waited for. The pending task keeps the app unstable until
+    // the work is through, so tests wait for it; a failure goes to the
+    // app's error handler.
     this.working.set(true);
-    // Keeps the app unstable meanwhile, so tests wait for the work.
-    const done = this.pendingTasks.add();
-    afterNextRender(
-      () =>
-        afterPaint(async () => {
-          try {
-            await work();
-          } catch (error) {
-            this.errorHandler.handleError(error);
-          } finally {
-            this.working.set(false);
-            done();
-          }
-        }),
-      { injector: this.injector }
-    );
+    this.pendingTasks.run(async () => {
+      try {
+        await nextPaint();
+        await work();
+      } finally {
+        this.working.set(false);
+      }
+    });
   }
 }
 
-/** Calls `next` once the browser painted its coming frame. */
-function afterPaint(next: () => void): void {
+/** Resolves once the browser painted its coming frame. */
+function nextPaint(): Promise<void> {
   // A frame's callbacks run before its paint, a task they queue after it.
-  requestAnimationFrame(() => setTimeout(next));
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => setTimeout(resolve))
+  );
 }

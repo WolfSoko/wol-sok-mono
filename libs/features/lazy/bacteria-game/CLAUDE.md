@@ -383,6 +383,6 @@ play each other.
   step of "New game", Start) runs it through `StageBusy.run`
   (`busy/stage-busy.ts`): the stage shows its spinner
   (`StageBusyComponent`), the browser paints it, and only then the work
-  runs; a tap meanwhile is dropped. Specs await `fixture.whenStable()`
+  runs; a tap meanwhile is dropped, a key ignored (`onKeyDown`). Specs await `fixture.whenStable()`
   after such a tap: the work keeps the app unstable until it is done.
   Back, the stepper's header and taps during a match stay immediate.

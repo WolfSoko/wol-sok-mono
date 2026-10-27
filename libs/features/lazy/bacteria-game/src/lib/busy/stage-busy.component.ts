@@ -47,9 +47,9 @@ import { StageBusy } from './stage-busy';
       --mat-progress-spinner-active-indicator-color: var(--bw-player, #fff);
 
       padding: 0.875rem;
-      border: 1px solid #3a4659;
+      border: 1px solid var(--bw-line-strong, #3a4659);
       border-radius: 50%;
-      background: #19212c;
+      background: var(--bw-surface-raised, #19212c);
       box-shadow: 0 0.25rem 1.5rem rgb(0 0 0 / 50%);
     }
 

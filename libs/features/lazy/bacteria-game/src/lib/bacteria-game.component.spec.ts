@@ -454,7 +454,7 @@ describe('BacteriaGameComponent', () => {
       expect(component['panel']()).toBe('menu');
     });
 
-    it('stays on the screen on Escape while the work of a tap waits to run', () => {
+    it('takes no key while the work of a tap waits to run', () => {
       create();
       component['show']('new-game');
 

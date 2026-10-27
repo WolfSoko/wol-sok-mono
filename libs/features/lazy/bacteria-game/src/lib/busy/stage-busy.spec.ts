@@ -60,6 +60,10 @@ describe('StageBusy', () => {
   });
 
   it('reports work that fails, and is no longer busy', async () => {
+    // As in the app: the failure goes to the error handler, not to the test.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ rethrowApplicationErrors: false });
+    busy = TestBed.inject(StageBusy);
     const handleError = jest.spyOn(TestBed.inject(ErrorHandler), 'handleError');
     handleError.mockImplementation(() => undefined);
     const error = new Error('broken');

@@ -2029,7 +2029,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown($event: KeyboardEvent) {
-    if (isTypingTarget($event.target)) {
+    // Nor while a tap's work waits to run: Escape would back out of the
+    // screen it belongs to, as the busy veil keeps a tap from doing.
+    if (isTypingTarget($event.target) || this.busy.active()) {
       return;
     }
     // F is handled here rather than in the store: the fullscreen request has
@@ -2083,9 +2085,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private onEscape(): void {
-    // Not while a tap's work waits to run: it would back out of the screen
-    // that work belongs to, as the busy veil keeps a tap from doing.
-    if (this.matchOver() || this.resetting() || this.busy.active()) {
+    if (this.matchOver() || this.resetting()) {
       return;
     }
     if (this.running() && !this.paused()) {
