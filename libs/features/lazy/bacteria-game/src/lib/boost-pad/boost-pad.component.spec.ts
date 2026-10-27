@@ -13,7 +13,6 @@ const orange: ColonyStats = {
   captured: 3,
   lost: 1,
   energy: 92,
-  share: 55,
   boosting: false,
   boostReady: true,
   boostCooldown: 0,

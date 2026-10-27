@@ -1,9 +1,10 @@
 <!--
   The stage, embedded in the page or laid over the whole viewport while
-  fullscreen - the same either way. The arena takes all of it; laid over it
-  are the HUD along the top edge and, per human player, a joystick zone over
-  that player's side and a boost pad pinned to their corner, turned towards
-  them - the stylesheet has the seating plan.
+  fullscreen - the same either way. Its children are placed on a grid whose
+  cells overlap: the arena takes all of it, and laid over it are the HUD in
+  the top row and, per human player, a joystick zone over that player's side
+  and a boost pad pinned to their corner, turned towards them - the
+  stylesheet has the seating plan.
 -->
 <div
   #arenaStage
@@ -13,7 +14,6 @@
   [class.solo]="humanStats().length < 2"
   [style.--arena-border]="arenaBorder()"
   [style.--arena-rim]="arenaRim()"
-  [style.--hud-space.px]="hudHeight()"
 >
   @for (colony of humanStats(); track colony.id; let seat = $index) {
     <feat-lazy-bac-game-joystick
@@ -288,29 +288,6 @@
   }
 
   <div class="center" [attr.inert]="screenOpen() ? '' : null">
-    @if (!screenOpen()) {
-      <feat-lazy-bac-game-hud-bar
-        (wsSharedUiElemResized)="hudHeight.set($event.newHeight)"
-        [levelName]="levelName()"
-        [clockLabel]="clockLabel()"
-        [clockText]="clockText()"
-        [timeRunningOut]="timeRunningOut()"
-        [colonies]="stats()"
-        [goal]="goal()"
-        [neutral]="neutralCount()"
-        [neutralCss]="neutralCss"
-        [fps]="settings.showFps() ? fps() : null"
-        [sound]="settings.sound()"
-        [showPause]="running() && !paused() && canPause()"
-        [showGiveUp]="running() && !canPause()"
-        [giveUpArmed]="giveUpArmed()"
-        [fullscreen]="fullscreen()"
-        (soundChange)="setSound($event)"
-        (pause)="togglePause()"
-        (giveUp)="giveUp()"
-        (fullscreenChange)="setFullscreen($event)"
-      />
-    }
     <div
       wsThanos
       class="thanos-container"
@@ -342,15 +319,39 @@
             [style.height.px]="canvasSize()?.height"
           ></canvas>
         }
-        @if (showMinimap()) {
-          <canvas
-            #minimapElement
-            class="minimap"
-            width="240"
-            aria-hidden="true"
-          ></canvas>
-        }
       </div>
     </div>
   </div>
+
+  @if (!screenOpen()) {
+    <feat-lazy-bac-game-hud-bar
+      [levelName]="levelName()"
+      [clockLabel]="clockLabel()"
+      [clockText]="clockText()"
+      [timeRunningOut]="timeRunningOut()"
+      [colonies]="stats()"
+      [goal]="goal()"
+      [neutral]="neutralCount()"
+      [neutralCss]="neutralCss"
+      [fps]="hudFps()"
+      [sound]="settings.sound()"
+      [showPause]="running() && !paused() && canPause()"
+      [showGiveUp]="running() && !canPause()"
+      [giveUpArmed]="giveUpArmed()"
+      [fullscreen]="fullscreen()"
+      (soundChange)="setSound($event)"
+      (pause)="togglePause()"
+      (giveUp)="giveUp()"
+      (fullscreenChange)="setFullscreen($event)"
+    />
+  }
+  <!-- Only a glance: small, in the top right corner below the HUD. -->
+  @if (showMinimap()) {
+    <canvas
+      #minimapElement
+      class="minimap"
+      width="240"
+      aria-hidden="true"
+    ></canvas>
+  }
 </div>

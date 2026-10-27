@@ -12,6 +12,7 @@ import {
 import { playerNameText, renderGameText } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import {
+  add,
   clampLength,
   delta,
   NO_STEERING,
@@ -92,6 +93,16 @@ export class JoystickComponent implements OnDestroy {
   protected readonly origin = signal<Point | null>(null);
   /** The knob's offset from the centre in element pixels. */
   protected readonly knob = signal<Point>({ x: 0, y: 0 });
+  /**
+   * Puts the base under the finger - a transform, so a base that trails the
+   * finger costs no layout on every move.
+   */
+  protected readonly baseTransform = computed(() => {
+    const origin = this.origin();
+    return origin === null
+      ? null
+      : `translate(${origin.x}px, ${origin.y}px) translate(-50%, -50%)`;
+  });
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private pointerId: number | null = null;
@@ -129,15 +140,8 @@ export class JoystickComponent implements OnDestroy {
     // rim: still pushed all the way, in the finger's direction.
     const trail = delta(knob, push);
     if (trail.x !== 0 || trail.y !== 0) {
-      this.originClient = {
-        x: this.originClient.x + trail.x,
-        y: this.originClient.y + trail.y,
-      };
-      this.origin.update((origin) =>
-        origin == null
-          ? origin
-          : { x: origin.x + trail.x, y: origin.y + trail.y }
-      );
+      this.originClient = add(this.originClient, trail);
+      this.origin.update((origin) => origin && add(origin, trail));
     }
     this.knob.set(knob);
     this.steer.emit(steeringVector(knob, this.radius));

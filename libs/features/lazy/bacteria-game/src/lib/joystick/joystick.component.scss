@@ -30,6 +30,8 @@
 // the rim - and where the stage puts it as a hint while it is at rest.
 .base {
   position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -37,12 +39,10 @@
     color-mix(in srgb, var(--joystick-color, #fff) 70%, transparent);
   border-radius: 50%;
   background: rgb(255 255 255 / 8%);
-  transform: translate(-50%, -50%);
   pointer-events: none;
 
   &.idle {
     position: static;
-    transform: none;
     opacity: 0.35;
   }
 }

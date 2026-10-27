@@ -402,7 +402,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     NEUTRAL_COLOR[1],
     NEUTRAL_COLOR[2],
   ])})`;
-  protected readonly fps = this.store.fps;
+  /**
+   * The frame rate in the HUD, in whole frames - null while the settings
+   * hide it, so the HUD renders again only when the number it shows changes.
+   */
+  protected readonly hudFps = computed(() =>
+    this.settings.showFps() ? Math.round(this.store.fps()) : null
+  );
   /** True while a match is on, paused or not. */
   protected readonly running: Signal<boolean>;
   protected readonly paused: Signal<boolean>;
@@ -642,12 +648,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * pixels: it fills the viewport from there - see {@link measureStageTop}.
    */
   protected readonly stageTop = signal(0);
-  /**
-   * How tall the HUD laid over the top of the arena is, in CSS pixels: the
-   * pads and the minimap keep below it. Null before its first layout, when
-   * the stylesheet's guess stands.
-   */
-  protected readonly hudHeight = signal<number | null>(null);
   /** The box around the canvas in CSS pixels, null before its first layout. */
   private readonly arenaBoxSize = signal<Size | null>(null);
   /**

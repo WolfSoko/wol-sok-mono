@@ -153,24 +153,15 @@ test('should seat two players at opposite edges', async ({ page }) => {
       po.boxOf(po.joystick(1)),
       po.boxOf(po.boostOf(1)),
     ]);
-  const centre = (box: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  }) => ({
-    x: box.x + box.width / 2,
-    y: box.y + box.height / 2,
-  });
   // The stylesheet seats by the viewport's orientation, not the stage's.
   const viewport = page.viewportSize();
   if (viewport == null || viewport.width > viewport.height) {
-    expect(centre(leftStick).x).toBeLessThan(centre(rightStick).x);
-    expect(centre(leftBoost).x).toBeLessThan(centre(rightBoost).x);
+    expect(po.centreOf(leftStick).x).toBeLessThan(po.centreOf(rightStick).x);
+    expect(po.centreOf(leftBoost).x).toBeLessThan(po.centreOf(rightBoost).x);
     expect(leftBoost.y).toBeGreaterThan(rightBoost.y);
   } else {
-    expect(centre(leftStick).y).toBeGreaterThan(centre(rightStick).y);
-    expect(centre(leftBoost).y).toBeGreaterThan(centre(rightBoost).y);
+    expect(po.centreOf(leftStick).y).toBeGreaterThan(po.centreOf(rightStick).y);
+    expect(po.centreOf(leftBoost).y).toBeGreaterThan(po.centreOf(rightBoost).y);
     expect(leftBoost.x).toBeGreaterThan(rightBoost.x);
   }
   // The arena takes the whole stage, under the controls.

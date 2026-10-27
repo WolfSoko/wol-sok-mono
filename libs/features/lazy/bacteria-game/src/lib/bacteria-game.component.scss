@@ -4,12 +4,13 @@
   display: block;
 }
 
+// The stage is a grid whose cells overlap: the arena spans all of it, and
+// the HUD, the joystick zones, the pads and the minimap lie over it in its
+// cells. Upright, the short edges are the top and the bottom edge, so a
+// player's side is the half at their end; lying across it is the half at
+// the left or the right edge. The HUD takes the row along the top.
 .stage {
-  // The band along the top edge the HUD takes: no pad and no minimap there.
-  // The component sets the HUD's measured height; this is the guess until
-  // it is laid out.
-  --hud-space: 3rem;
-  // How far a pad keeps from the edges of the screen.
+  // How far a pad keeps from the edges of its cell.
   --pad-inset: 0.75rem;
 
   position: relative;
@@ -17,11 +18,26 @@
   // it (--stage-top, measured by the component), but never gets too low for
   // the menu screens.
   height: max(30rem, calc(100dvh - var(--stage-top, 0px)));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'hud'
+    'side-1'
+    'side-0';
   overflow: hidden;
   color: #fff;
   background: rgb(var(--arena-rim, 0 0 0));
   transition: background-color 400ms ease;
   user-select: none;
+
+  @media (orientation: landscape) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'hud hud'
+      'side-0 side-1';
+  }
 
   // Fullscreen: the same stage over the whole viewport, handed to the
   // browser's fullscreen API on top where there is one.
@@ -34,20 +50,17 @@
     overscroll-behavior: none;
   }
 
-  // The arena takes the whole stage; the HUD and the controls lie over it.
-  // No z-index here, so theirs stack with the controls'.
+  // The arena, under everything else.
   .center {
-    position: absolute;
-    inset: 0;
+    grid-area: 1 / 1 / -1 / -1;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    min-height: 0;
   }
 
   feat-lazy-bac-game-hud-bar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
+    grid-area: hud;
     z-index: 2;
   }
 
@@ -60,9 +73,9 @@
     min-height: 0;
   }
 
-  // The arena canvas and the minimap over its corner. The size comes from
-  // the component, which fits the arena into the box without letterboxing
-  // inside the element - see `canvasSize`. The arena view styles its canvas.
+  // The arena canvas. The size comes from the component, which fits the
+  // arena into the box without letterboxing inside the element - see
+  // `canvasSize`. The arena view styles its canvas.
   .arena-frame {
     position: relative;
     max-width: 100%;
@@ -81,10 +94,13 @@
   // Only a glance: small, in the top right corner below the HUD, and never
   // in the way of a finger.
   .minimap {
-    position: absolute;
-    top: calc(var(--hud-space) + 0.25rem);
-    right: 0.5rem;
+    grid-row: 2;
+    grid-column: 1 / -1;
+    align-self: start;
+    justify-self: end;
+    z-index: 1;
     width: clamp(6rem, 22%, 14rem);
+    margin: 0.25rem 0.5rem;
     border: 1px solid rgb(255 255 255 / 35%);
     border-radius: 4px;
     opacity: 0.85;
@@ -92,167 +108,116 @@
   }
 }
 
-// The seating plan. The controls lie over the arena, so it can take the whole
-// screen: each human player's joystick zone covers their side of it - the
-// stick appears wherever the finger lands there and follows it - and their
-// boost pad (with the weapon, if they carry one) stays pinned to the corner
-// under their right hand, see-through enough to show the match below. The
-// other side is left to dragging the crosshair and pinching the camera -
-// alone, that is: two players' sides make up the whole arena.
+// The seating plan. Each human player's joystick zone covers their side of
+// the arena - the stick appears wherever the finger lands there and follows
+// it - and their boost pad (with the weapon, if they carry one) stays pinned
+// to the corner under their right hand, see-through enough to show the match
+// below. A single player's other side is left to dragging the crosshair and
+// pinching the camera; two players' sides make up the whole arena.
 //
 // Two players sit at the short edges of the phone, one at each end, turned
 // towards them - the pad as a whole, the stick only by its label, since a
-// stick looks the same from every side. With the phone lying across, seat 0
-// sits at the left edge (turned a quarter clockwise, so its left hand is at
-// the top of the screen) and seat 1 at the right one (turned the other way).
-// A single player sits at the bottom edge: the stick on the left, the pad in
-// the bottom right corner, neither turned.
+// stick looks the same from every side. Seat 0 sits at the bottom edge (the
+// left one with the phone lying across, turned a quarter clockwise, so its
+// left hand is at the top of the screen), seat 1 at the opposite one. A
+// single player sits at the bottom edge, never turned, the pad in the
+// bottom right corner of the screen.
+//
+// Each seat names its side (--side) and where in it its stick rests and its
+// pad sits (--stick-*, --pad-*: start or end, vertically and horizontally).
 .stage {
-  // The player's side of the screen: the half at their end.
-  --zone-width: 50%;
-  --zone-height: 100%;
+  [data-seat='0'] {
+    --side: side-0;
+    --stick-v: end;
+    --stick-h: start;
+    --pad-v: end;
+    --pad-h: end;
+  }
+
+  [data-seat='1'] {
+    --side: side-1;
+    --stick-v: start;
+    --stick-h: end;
+    --pad-v: start;
+    --pad-h: start;
+    --seat-turn: 180deg;
+  }
+
+  @media (orientation: landscape) {
+    &.solo .seat {
+      --side: side-1;
+    }
+
+    &:not(.solo) {
+      [data-seat='0'] {
+        --stick-v: start;
+        --pad-h: start;
+        --seat-turn: 90deg;
+      }
+
+      [data-seat='1'] {
+        --stick-v: end;
+        --pad-h: end;
+        --seat-turn: 270deg;
+      }
+    }
+  }
 
   .stick {
-    position: absolute;
+    grid-area: var(--side);
     z-index: 1;
     box-sizing: border-box;
-    width: var(--zone-width);
-    height: var(--zone-height);
-    // At rest the stick waits by the player's left thumb, clear of the HUD.
-    padding: var(--hud-space) 1.5rem 1.5rem;
+    width: 100%;
+    height: 100%;
+    align-self: var(--stick-v);
+    justify-self: var(--stick-h);
+    // At rest the stick waits by the player's left thumb.
+    justify-content: var(--stick-v);
+    align-items: var(--stick-h);
+    padding: 1.5rem;
   }
 
   .seat {
-    position: absolute;
+    grid-area: var(--side);
     z-index: 1;
     display: flex;
     flex-direction: row-reverse;
     align-items: flex-start;
     gap: 0.25rem;
+    align-self: var(--pad-v);
+    justify-self: var(--pad-h);
+    margin: var(--pad-inset);
     opacity: 0.65;
     transform: rotate(var(--seat-turn, 0deg));
-  }
-
-  &.solo {
-    .stick {
-      bottom: 0;
-      left: 0;
-      justify-content: flex-end;
-      align-items: flex-start;
-    }
-
-    .seat {
-      right: var(--pad-inset);
-      bottom: var(--pad-inset);
-    }
-  }
-
-  // The phone lying across: seat 0 at the left edge, seat 1 at the right.
-  &:not(.solo) {
-    .stick[data-seat='0'] {
-      top: 0;
-      left: 0;
-      justify-content: flex-start;
-      align-items: flex-start;
-    }
-
-    .seat[data-seat='0'] {
-      bottom: var(--pad-inset);
-      left: var(--pad-inset);
-    }
-
-    .stick[data-seat='1'] {
-      right: 0;
-      bottom: 0;
-      justify-content: flex-end;
-      align-items: flex-end;
-    }
-
-    .seat[data-seat='1'] {
-      top: calc(var(--hud-space) + var(--pad-inset));
-      right: var(--pad-inset);
-    }
-
-    [data-seat='0'] {
-      --seat-turn: 90deg;
-    }
-
-    [data-seat='1'] {
-      --seat-turn: 270deg;
-    }
-  }
-}
-
-// Upright phone, or a tablet held that way: the short edges are the top and
-// the bottom edge, so a player's side is the half at their end - seat 0 at
-// the bottom, seat 1 at the top upside down.
-@media (orientation: portrait) {
-  .stage {
-    // The HUD takes two lines on a narrow screen - until it is measured.
-    --hud-space: 5rem;
-    --zone-width: 100%;
-    --zone-height: 50%;
-
-    &:not(.solo) {
-      .stick[data-seat='0'] {
-        top: auto;
-        bottom: 0;
-        justify-content: flex-end;
-      }
-
-      .seat[data-seat='0'] {
-        right: var(--pad-inset);
-        left: auto;
-      }
-
-      .stick[data-seat='1'] {
-        top: 0;
-        bottom: auto;
-        justify-content: flex-start;
-      }
-
-      .seat[data-seat='1'] {
-        right: auto;
-        left: var(--pad-inset);
-      }
-
-      [data-seat='0'] {
-        --seat-turn: 0deg;
-      }
-
-      [data-seat='1'] {
-        --seat-turn: 180deg;
-      }
-    }
   }
 }
 
 // With a mouse the arena is steered by dragging the crosshair, so a stick
-// zone keeps to a corner at its player's end and leaves the rest to it.
+// zone keeps to a corner of its player's side and leaves the rest to it.
 @media (hover: hover) and (pointer: fine) {
   .stage .stick {
-    width: min(var(--zone-width), 16rem);
-    height: min(var(--zone-height), 16rem);
+    width: min(100%, 16rem);
+    height: min(100%, 16rem);
   }
 }
 
 // The goal of a training mission, at the top of the arena while it runs.
 .mission-goal {
-  position: absolute;
-  top: calc(var(--hud-space) + 1rem);
-  left: 50%;
+  grid-row: 2;
+  grid-column: 1 / -1;
+  align-self: start;
+  justify-self: center;
   z-index: 2;
   display: flex;
   align-items: center;
   gap: 0.4rem;
   max-width: calc(100% - 2rem);
-  margin: 0;
+  margin: 1rem 0 0;
   padding: 0.35rem 0.9rem;
   border-radius: 999px;
   background: rgb(0 0 0 / 55%);
   color: #fff;
   font-size: 0.9rem;
-  transform: translateX(-50%);
   pointer-events: none;
 
   mat-icon {

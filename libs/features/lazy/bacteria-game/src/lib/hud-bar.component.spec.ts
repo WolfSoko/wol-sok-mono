@@ -13,7 +13,6 @@ function colony(overrides: Partial<ColonyStats>): ColonyStats {
     captured: 0,
     lost: 0,
     energy: 100,
-    share: 50,
     boosting: false,
     boostReady: true,
     boostCooldown: 0,

@@ -15,8 +15,8 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 
 /** The boost button in CSS pixels; the recharge ring runs just outside it. */
-export const BOOST_BUTTON_SIZE = 88;
-export const RECHARGE_RING_SIZE = BOOST_BUTTON_SIZE + 12;
+const BOOST_BUTTON_SIZE = 88;
+const RECHARGE_RING_SIZE = BOOST_BUTTON_SIZE + 12;
 
 /**
  * One player's boost pad in the touch layout: the boost button, ringed by
@@ -72,7 +72,6 @@ export class BoostPadComponent {
           seconds: colony.boostCooldown,
         });
   });
-  protected readonly buttonSize = BOOST_BUTTON_SIZE;
   protected readonly ringSize = RECHARGE_RING_SIZE;
 
   /**
