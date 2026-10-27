@@ -1049,7 +1049,7 @@ export class BacteriaSimulation implements Simulation {
         let own = 0;
         // Away from the edges every neighbour is in the arena.
         const inner = x > 0 && y > 0 && x < width - 1 && y < height - 1;
-        for (let k = 0; k < 8; k++) {
+        for (let k = 0; k < NEIGHBOURS.length; k++) {
           let neighbourIndex: number;
           if (inner) {
             neighbourIndex = index + neighbourOffsets[k];
@@ -1187,19 +1187,20 @@ export class BacteriaSimulation implements Simulation {
   }
 
   /** Removes the bacteria that were killed this frame from their old colony. */
-  private compact(...lists: (readonly Death[])[]): void {
+  private compact(captures: readonly Death[], deaths: readonly Death[]): void {
     // A mark per bacterium of each colony that lost any, by its index.
     const removed: (Uint8Array | undefined)[] = [];
-    for (const list of lists) {
+    for (const list of [captures, deaths]) {
       for (const { victim, victimIndex } of list) {
         (removed[victim] ??= new Uint8Array(
           this.colonies[victim].bacterias.length
         ))[victimIndex] = 1;
       }
     }
-    removed.forEach((marks, colonyIndex) => {
+    for (let colonyIndex = 0; colonyIndex < removed.length; colonyIndex++) {
+      const marks = removed[colonyIndex];
       if (marks === undefined) {
-        return;
+        continue;
       }
       const colony = this.colonies[colonyIndex];
       const kept: Bacteria[] = [];
@@ -1210,7 +1211,7 @@ export class BacteriaSimulation implements Simulation {
         }
       }
       colony.bacterias = kept;
-    });
+    }
   }
 
   /**

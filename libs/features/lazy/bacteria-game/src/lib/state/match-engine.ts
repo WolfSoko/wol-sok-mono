@@ -277,12 +277,16 @@ export class MatchEngine {
   private heldFrom: readonly ColonySummary[] | null = null;
   private heldUpTo = 0;
   /** The bots' grid of the static walls and the zones, by arena size. */
-  private nav: { width: number; height: number; grid: NavGrid } | null = null;
-  /**
-   * That grid with the moving walls that block now, by where they stand -
-   * the same grid as long as they stand still, so its floods are kept.
-   */
-  private navWalls: { key: string; grid: NavGrid } | null = null;
+  private nav: {
+    width: number;
+    height: number;
+    grid: NavGrid;
+    /**
+     * That grid with the moving walls that block now, by where they stand -
+     * the same grid as long as they stand still, so its floods are kept.
+     */
+    walls: { key: string; grid: NavGrid } | null;
+  } | null = null;
   private readonly floods = new FloodCache();
   /** True when the match has neutral colonies - see {@link neutralCount}. */
   private readonly hasNeutral: boolean;
@@ -883,8 +887,8 @@ export class MatchEngine {
           mapZones(this.map, width, height),
           this.unitAt(width)
         ),
+        walls: null,
       };
-      this.navWalls = null;
     }
     const walls = this.simulation
       .getDynamicWalls()
@@ -895,10 +899,10 @@ export class MatchEngine {
           `${x},${y},${width},${height},${round === true}`
       )
       .join(';');
-    if (this.navWalls?.key !== key) {
-      this.navWalls = { key, grid: withWalls(this.nav.grid, walls) };
+    if (this.nav.walls?.key !== key) {
+      this.nav.walls = { key, grid: withWalls(this.nav.grid, walls) };
     }
-    return this.navWalls.grid;
+    return this.nav.walls.grid;
   }
 
   /**

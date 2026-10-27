@@ -17,6 +17,7 @@ import {
   ZONE_EFFECTS,
   ZoneKind,
 } from './zones';
+import { keepRecent } from './recent-cache';
 
 /** Cells of the base arena per side of a grid cell. */
 export const NAV_CELL = 4;
@@ -210,11 +211,7 @@ export class FloodCache {
       // Kept as the newest: the one asked for longest ago goes first.
       this.fields.delete(key);
     }
-    this.fields.set(key, field);
-    if (this.fields.size > CACHED_FLOODS) {
-      this.fields.delete(this.fields.keys().next().value as number);
-    }
-    return field;
+    return keepRecent(this.fields, key, field, CACHED_FLOODS);
   }
 }
 
@@ -245,8 +242,7 @@ export function flood(grid: NavGrid, from: Point): NavField {
     }
     const column = index % columns;
     const row = Math.floor(index / columns);
-    for (let step = 0; step < STEPS.length; step++) {
-      const [dx, dy, length] = STEPS[step];
+    for (const [dx, dy, length] of STEPS) {
       const toColumn = column + dx;
       const toRow = row + dy;
       if (toColumn < 0 || toRow < 0 || toColumn >= columns || toRow >= rows) {

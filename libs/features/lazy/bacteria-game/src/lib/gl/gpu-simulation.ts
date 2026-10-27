@@ -787,15 +787,16 @@ export class GpuSimulation extends GridSimulation {
     );
     reach.length = Math.min(reach.length, REACH_HISTORY);
     const whole = [{ x: 0, y: 0, width: this.width, height: this.height }];
+    const report = this.report;
     const margin =
-      this.report == null || this.escapePending || this.steps <= AREA_HISTORY
+      report == null || this.escapePending || this.steps <= AREA_HISTORY
         ? null
         : reachSinceReport(reach, this.steps - this.reportStep);
     const own =
-      this.report == null || margin === null
+      report == null || margin === null
         ? whole
         : activeRects(
-            this.report.colonies.map((colony) => colony.bounds),
+            report.colonies.map((colony) => colony.bounds),
             margin,
             this.width,
             this.height

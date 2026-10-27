@@ -179,8 +179,11 @@ export function skirmish(
 ): SimScenario {
   const w = width;
   const h = height;
-  const { balance = gameBalance, map = testMap() } = options;
-  const radius = options.radius ?? Math.max(3, Math.floor(Math.min(w, h) / 8));
+  const {
+    balance = gameBalance,
+    map = testMap(),
+    radius = Math.max(3, Math.floor(Math.min(w, h) / 8)),
+  } = options;
   const spawns: ColonySpawn[] = [
     { x: w * 0.25, y: h * 0.3, radius },
     { x: w * 0.75, y: h * 0.3, radius },

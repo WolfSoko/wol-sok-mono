@@ -7,6 +7,7 @@ import { COLONY_COLORS } from '../state/colony-colors';
 import {
   cellBubble,
   CELLS,
+  colonyBounds,
   colonyDensity,
   createImageDataFromBacterias,
   hatchPattern,
@@ -411,5 +412,21 @@ describe('shimmerAt', () => {
     const fine = { timeSec: 0.4, target: { x: 100, y: 60 }, unit: 2 };
 
     expect(shimmerAt(170, 60, fine)).toBeCloseTo(shimmerAt(85, 30, base));
+  });
+});
+
+describe('colonyBounds', () => {
+  it('reports the box of cells a colony covers', () => {
+    expect(
+      colonyBounds([
+        { x: 1, y: 1, energy: 1 },
+        { x: 5, y: 2, energy: 1 },
+        { x: 3, y: 3, energy: 1 },
+      ])
+    ).toEqual({ minX: 1, minY: 1, maxX: 5, maxY: 3 });
+  });
+
+  it('reports nothing for an empty colony', () => {
+    expect(colonyBounds([])).toBeNull();
   });
 });
