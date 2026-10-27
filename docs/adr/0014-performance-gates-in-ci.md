@@ -89,8 +89,8 @@ the server all run.
     both, and the ratio stays roughly stable.
   - It also checks the result: the checksum and outcome must match the
     fixture's, so a "faster" engine that plays differently fails.
-  - Optionally (`--expose-gc`) it reports heap growth per 1,000 ticks, as a
-    sign of allocation in the hot loop; reported, not gated.
+  - Optionally (`--expose-gc`) it reports the heap a play keeps once it is
+    over, as a sign of a leak; reported, not gated.
 - **The baseline** is a committed file, `tools/perf/engine-baseline.json`,
   holding the ratio per fixture. The gate:
   - fails when a ratio is more than **20%** above its baseline;
@@ -186,6 +186,44 @@ is decided after a month, like gate 3.
 2. **Phase 2, engine benchmark**: `tools/perf/engine-bench.mjs`, the heavy
    fixture, `engine-baseline.json`, the `perf` target and the CI wiring;
    report-only for two weeks, then blocking.
+   - As built (2026-10-27): the heavy fixture
+     (`tools/perf/fixtures/expanse-heavy.json`) differs from the plan.
+     Generated levels are always the small map and have no neutral
+     colonies, so it plays `expanse` (the large map, with neutrals) against
+     the hard computer on the online grid (640×360), with steers, drags and
+     a boost from the human seat. It plays 10 s, not 60: the cost grows
+     with the bacteria, and 60 s took about 58 s per run, 8 runs per
+     fixture. The golden replay is timed twice, on `cpu` and on `gpu-int`
+     (`IntSimulation`), since ranked matches and the server's verification
+     take `gpu-int`. Each fixture is played on the current
+     `BALANCE_VERSION`, as `golden-replay.spec.ts` plays it.
+   - The calibration loop proved the noisy half: its first runs were at
+     times twice as slow, so it warms up 10 times and takes the median of
+     15 runs before and 15 after; esbuild's service is stopped before the
+     timing starts. On a developer's machine the ratios still spread by
+     about ±10% between runs of the same code; on the Nx Cloud workers two
+     runs agreed within 1.3%, but a third measured 40-50% higher ratios
+     (the calibration loop faster, the engine slower): the workers are not
+     all alike, and the loop does not even out every CPU. The report names
+     the CPU it ran on; before the gate blocks, the two weeks of reports
+     show whether baselines are needed per CPU model or the calibration
+     loop must change. The ratios do not carry over between machines
+     or Node versions (CI's were 40-50% below a developer's), so the
+     baseline holds CI's. The two weeks of reports decide whether the ±7%
+     this ADR allows holds there.
+   - The heap figure is the heap a play keeps once it is over (averaged
+     over 3 plays), not growth per 1,000 ticks: the replays are a few
+     hundred ticks long, and V8's own few hundred KiB either way looked like
+     a leak when scaled up.
+   - A baseline counts only on the Node major it was measured on (the
+     baseline names it): CI runs `.nvmrc`'s Node 24, whose V8 optimises
+     otherwise than a developer's Node 22. The baseline holds CI's ratios, the
+     mean of two runs' output on this PR (`--update` on a developer's
+     machine would write that machine's). A fixture that no
+     longer parses or plays back is a failed row, so `--report-only` still
+     reports it.
+   - The target runs `--report-only` (it never fails) and takes about 1.5
+     minutes. To block, drop that flag from the `perf` target.
 3. **Phase 3, browser frame time**: `perf.spec.ts` and the debug hook,
    report-only.
 4. **Phase 4, Lighthouse**: report-only.

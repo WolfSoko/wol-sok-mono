@@ -79,7 +79,7 @@ jobs:
 
       - name: run-checks in parallel on nx cloud workers
         run: |
-          npx nx affected -t="lint,lint-templates,test,test-emulator,build,e2e-ci" -c=ci
+          npx nx affected -t="lint,lint-templates,test,test-emulator,build,e2e-ci,perf" -c=ci
 
       - name: Auto Fix CI
         if: always()
