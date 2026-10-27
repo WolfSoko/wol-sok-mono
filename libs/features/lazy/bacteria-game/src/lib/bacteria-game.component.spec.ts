@@ -1,3 +1,4 @@
+import { StageBusy } from './busy/stage-busy';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
@@ -451,6 +452,16 @@ describe('BacteriaGameComponent', () => {
 
       component.onKeyDown(keyEvent('Escape', document.body));
       expect(component['panel']()).toBe('menu');
+    });
+
+    it('stays on the screen on Escape while the work of a tap waits to run', () => {
+      create();
+      component['show']('new-game');
+
+      TestBed.inject(StageBusy).run(() => undefined);
+      component.onKeyDown(keyEvent('Escape', document.body));
+
+      expect(component['panel']()).toBe('new-game');
     });
 
     it('leaves fullscreen on Escape from the main menu only', () => {

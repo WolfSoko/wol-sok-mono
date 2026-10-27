@@ -57,6 +57,7 @@ import {
 } from './arena/arena-view.component';
 import { armedTap } from './armed-tap';
 import { StageBusyComponent } from './busy/stage-busy.component';
+import { StageBusy } from './busy/stage-busy';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
@@ -238,6 +239,7 @@ const MINIMAP_UPDATE_MS = 100;
 export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private store = inject(GameStateStore);
   private gameStateService = inject(GameStateService);
+  private readonly busy = inject(StageBusy);
   private playerService = inject(PlayerService);
   private playerStore = inject(PlayerStore);
   protected readonly settings = inject(GameSettingsService);
@@ -2081,7 +2083,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private onEscape(): void {
-    if (this.matchOver() || this.resetting()) {
+    // Not while a tap's work waits to run: it would back out of the screen
+    // that work belongs to, as the busy veil keeps a tap from doing.
+    if (this.matchOver() || this.resetting() || this.busy.active()) {
       return;
     }
     if (this.running() && !this.paused()) {
