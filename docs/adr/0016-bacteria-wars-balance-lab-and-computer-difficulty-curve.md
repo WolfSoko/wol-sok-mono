@@ -117,7 +117,11 @@ the cryo pulse is weak in the computer's hands.
   it refuses another `BALANCE_VERSION`. A change to the skill table, the
   bands or a rule only the ladder's profiles switch on raises
   `LADDER_VERSION` (`golden-match.spec.ts` holds a fingerprint of a ladder
-  match); plain matches and `BALANCE_VERSION` stay.
+  match); plain matches and `BALANCE_VERSION` stay. So does a change to
+  what the computer buys - its budget, a character, the gene or weapon
+  costs it spends along (`computer-opponent.spec.ts` pins every ladder
+  level's loadouts): version 2 came with the genes' exponential costs
+  (ADR 0013).
 - **Level fixes go through the computer.** Every level setting is part of
   a plain match, so a stall is fixed by what only the ladder's computer
   does: a boss attacks once its colony sits at its cap (`attacksAtCap`)

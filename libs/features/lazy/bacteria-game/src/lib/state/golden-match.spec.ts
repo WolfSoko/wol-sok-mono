@@ -133,7 +133,7 @@ const LADDER_FINGERPRINT = '96657:a086f6df';
 
 describe("the ladder's computer", () => {
   it('plays under the ladder version the fingerprint was taken with', () => {
-    expect(LADDER_VERSION).toBe(1);
+    expect(LADDER_VERSION).toBe(2);
   });
 
   it('plays a match bit for bit as before', () => {

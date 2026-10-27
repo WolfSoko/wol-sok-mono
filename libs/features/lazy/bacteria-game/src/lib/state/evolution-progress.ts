@@ -67,9 +67,10 @@ export const GENE_COST_GROWTH = 1.6;
 /**
  * The DNA the next level of a gene costs: it grows exponentially, each
  * level {@link GENE_COST_GROWTH} times the one before, rounded to whole
- * strands - 2, 3, 5, 8, 13. The first level is affordable after the first
- * match won, the top one costs as much as the first four together; all
- * five levels of all five genes cost 155 strands, 7,750 XP.
+ * strands - 2, 3, 5, 8, 13, each about the two before it together. The
+ * first level is affordable after the first match won; all five levels of
+ * all five genes cost 155 strands, 7,750 XP. The computer spends along the
+ * same curve, so a change to it raises `LADDER_VERSION`.
  */
 export function geneLevelCost(level: number): number {
   return Math.round(GENE_BASE_COST * GENE_COST_GROWTH ** (level - 1));
