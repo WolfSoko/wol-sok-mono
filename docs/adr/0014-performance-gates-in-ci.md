@@ -226,6 +226,21 @@ is decided after a month, like gate 3.
      minutes. To block, drop that flag from the `perf` target.
 3. **Phase 3, browser frame time**: `perf.spec.ts` and the debug hook,
    report-only.
+   - As built (2026-10-27): the fixed seed comes from the spec, not the
+     game: an init script pins `Math.random` to a seeded generator before
+     the page loads, which fixes the match's seed and every other draw. The
+     debug hook is `state/perf-probe.ts`: the spec puts
+     `window.__bacteriaPerfProbe` on the page, and `GameStateService`
+     times each tick only when it finds one (one null check per tick in
+     play). The match is the campaign's first against the computer, the
+     player idle, on `?sim=cpu`. The numbers go to the log and the
+     attachment `frame-time.json`; the job summary only where
+     `GITHUB_STEP_SUMMARY` is set, which the Nx Cloud workers that run the
+     e2e tasks don't have. Two local runs on SwiftShader: frame interval
+     p50 66.7 / 66.6 ms, p95 83.4 ms both, tick p50 2.7 / 2.4 ms, 898 / 937
+     ticks in 20 s (the game slows its clock when frames run long), about
+     260 long tasks: the painting on a software renderer, not the engine,
+     sets the pace there.
 4. **Phase 4, Lighthouse**: report-only.
 
 Each phase is its own PR. CLAUDE.md's "Performance gates" section says what

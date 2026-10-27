@@ -52,6 +52,7 @@ import {
 import { matchRecord } from './medallions';
 import { Player } from './player.model';
 import { randomSeed } from './geometry';
+import { perfProbeOf } from './perf-probe';
 import { MatchOutcome } from './win-conditions';
 import { MatchPlan, planMatch } from './match-setup';
 import {
@@ -202,6 +203,8 @@ export class GameStateService {
   private readonly frames = new Subject<GameFrame>();
   private subscriptions?: Subscription;
   private measureFps = new MeasureFps();
+  /** The frame-time spec's probe (ADR 0014, gate 3) - null in play. */
+  private readonly perfProbe = perfProbeOf(globalThis);
 
   /**
    * Emits every frame of a running match - inside the animation frame, so
@@ -237,7 +240,13 @@ export class GameStateService {
       this.gameStateStore.update((state) => ({
         timePassed: ticksToMs(Math.round(state.timePassed / TICK_MS) + 1),
       }));
-      this.playerService.tick(width, height);
+      if (this.perfProbe === null) {
+        this.playerService.tick(width, height);
+      } else {
+        const start = performance.now();
+        this.playerService.tick(width, height);
+        this.perfProbe.tickMs.push(performance.now() - start);
+      }
       const outcome = this.playerService.outcome();
       if (outcome != null) {
         this.endMatch(outcome);
