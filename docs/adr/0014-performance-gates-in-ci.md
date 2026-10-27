@@ -242,6 +242,27 @@ is decided after a month, like gate 3.
      260 long tasks: the painting on a software renderer, not the engine,
      sets the pace there.
 4. **Phase 4, Lighthouse**: report-only.
+   - As built (2026-10-27): a `lighthouse` target on `portfolio`,
+     `angular-examples` and `rollapolla-analog`, depending on `build`, in
+     `nx affected` and `stop-after` like `perf`. Each app's
+     `lighthouse.json` names what to serve and which pages, and
+     `tools/perf/lighthouse-run.mjs` adds the shared settings (a relative
+     import from an app into `tools/` breaks the module boundaries). They
+     warn only, so the run fails only when
+     nothing could be measured; Chrome is Playwright's, which the workers
+     install for the e2e tasks. The ADR's assertions are on LCP, TBT, CLS
+     and total byte weight at Lighthouse's own "good" marks. rollapolla's
+     SSR build (Nitro's `firebase` preset) exports a function and listens
+     nowhere, so `tools/perf/serve-firebase-function.mjs` serves it the way
+     Hosting does: the public folder first, the function for the rest. The
+     public replay pages are left out for now: they are a Cloud Function
+     behind Hosting and need the functions emulator.
+   - First local numbers (mobile, headless, no GPU): `angular-examples` `/`
+     LCP about 12 s and a total blocking time of about 139 s, a main thread
+     that never goes idle (the title's shader on software WebGL, by the
+     look of it); `rollapolla-analog` `/` LCP 8-15 s, TBT about 300 ms,
+     2.1 MB, `/polls` LCP 13-15 s. The portfolio's prerender does not run
+     in the development container; CI measures it.
 
 Each phase is its own PR. CLAUDE.md's "Performance gates" section says what
 is in place; it is updated with each phase.
