@@ -11,7 +11,7 @@
 // over, a sign of a leak in the engine (reported, not gated).
 import { build, stop } from 'esbuild';
 import { appendFileSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpus, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -241,6 +241,9 @@ const rows = measured.map((entry) => {
 const percent = (value) =>
   value === null ? '–' : `${value > 0 ? '+' : ''}${(value * 100).toFixed(1)}%`;
 const table = [
+  // The CI workers are not all alike, and the calibration loop does not
+  // even out every CPU: the report names the one it ran on.
+  `Machine: ${cpus()[0]?.model ?? 'unknown CPU'} (${cpus().length} cores), Node ${process.version}`,
   `Calibration loop: ${calibrationMs.toFixed(1)} ms (median of ${CALIBRATION_RUNS} runs before and ${CALIBRATION_RUNS} after)`,
   '',
   '| Fixture | ms | ratio | vs baseline | heap kept/play | verdict |',

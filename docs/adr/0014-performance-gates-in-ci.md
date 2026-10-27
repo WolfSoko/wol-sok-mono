@@ -202,7 +202,12 @@ is decided after a month, like gate 3.
      15 runs before and 15 after; esbuild's service is stopped before the
      timing starts. On a developer's machine the ratios still spread by
      about ±10% between runs of the same code; on the Nx Cloud workers two
-     runs agreed within 1.3%. The ratios do not carry over between machines
+     runs agreed within 1.3%, but a third measured 40-50% higher ratios
+     (the calibration loop faster, the engine slower): the workers are not
+     all alike, and the loop does not even out every CPU. The report names
+     the CPU it ran on; before the gate blocks, the two weeks of reports
+     show whether baselines are needed per CPU model or the calibration
+     loop must change. The ratios do not carry over between machines
      or Node versions (CI's were 40-50% below a developer's), so the
      baseline holds CI's. The two weeks of reports decide whether the ±7%
      this ADR allows holds there.
