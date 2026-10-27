@@ -162,7 +162,9 @@ test('should seat two players at opposite edges', async ({ page }) => {
     x: box.x + box.width / 2,
     y: box.y + box.height / 2,
   });
-  if (stage.width > stage.height) {
+  // The stylesheet seats by the viewport's orientation, not the stage's.
+  const viewport = page.viewportSize();
+  if (viewport == null || viewport.width > viewport.height) {
     expect(centre(leftStick).x).toBeLessThan(centre(rightStick).x);
     expect(centre(leftBoost).x).toBeLessThan(centre(rightBoost).x);
     expect(leftBoost.y).toBeGreaterThan(rightBoost.y);

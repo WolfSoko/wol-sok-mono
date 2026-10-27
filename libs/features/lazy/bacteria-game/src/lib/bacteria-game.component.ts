@@ -642,6 +642,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * pixels: it fills the viewport from there - see {@link measureStageTop}.
    */
   protected readonly stageTop = signal(0);
+  /**
+   * How tall the HUD laid over the top of the arena is, in CSS pixels: the
+   * pads and the minimap keep below it. Null before its first layout, when
+   * the stylesheet's guess stands.
+   */
+  protected readonly hudHeight = signal<number | null>(null);
   /** The box around the canvas in CSS pixels, null before its first layout. */
   private readonly arenaBoxSize = signal<Size | null>(null);
   /**

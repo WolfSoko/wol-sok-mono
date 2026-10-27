@@ -13,6 +13,7 @@
   [class.solo]="humanStats().length < 2"
   [style.--arena-border]="arenaBorder()"
   [style.--arena-rim]="arenaRim()"
+  [style.--hud-space.px]="hudHeight()"
 >
   @for (colony of humanStats(); track colony.id; let seat = $index) {
     <feat-lazy-bac-game-joystick
@@ -26,7 +27,6 @@
     />
     <div
       class="seat"
-      [class.armed]="colony.weapon !== null"
       [attr.inert]="screenOpen() ? '' : null"
       [attr.data-seat]="seat"
     >
@@ -290,6 +290,7 @@
   <div class="center" [attr.inert]="screenOpen() ? '' : null">
     @if (!screenOpen()) {
       <feat-lazy-bac-game-hud-bar
+        (wsSharedUiElemResized)="hudHeight.set($event.newHeight)"
         [levelName]="levelName()"
         [clockLabel]="clockLabel()"
         [clockText]="clockText()"

@@ -76,6 +76,10 @@ describe('HudBarComponent', () => {
     ]);
     expect(host.querySelector('.hud-fps')?.textContent).toContain('58 FPS');
 
+    fixture.componentRef.setInput('fps', 0);
+    fixture.detectChanges();
+    expect(host.querySelector('.hud-fps')?.textContent).toContain('0 FPS');
+
     fixture.componentRef.setInput('fps', null);
     fixture.detectChanges();
 

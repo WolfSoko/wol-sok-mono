@@ -34,8 +34,9 @@
     </span>
   }
 </span>
-@if (fps(); as fps) {
-  <span class="hud-fps">{{ "stage.hud.fps" | t: { fps } }}</span>
+@let rate = fps();
+@if (rate !== null) {
+  <span class="hud-fps">{{ "stage.hud.fps" | t: { fps: rate } }}</span>
 }
 <span class="hud-actions">
   <button

@@ -6,6 +6,8 @@
 
 .stage {
   // The band along the top edge the HUD takes: no pad and no minimap there.
+  // The component sets the HUD's measured height; this is the guess until
+  // it is laid out.
   --hud-space: 3rem;
   // How far a pad keeps from the edges of the screen.
   --pad-inset: 0.75rem;
@@ -80,7 +82,7 @@
   // in the way of a finger.
   .minimap {
     position: absolute;
-    top: var(--hud-space);
+    top: calc(var(--hud-space) + 0.25rem);
     right: 0.5rem;
     width: clamp(6rem, 22%, 14rem);
     border: 1px solid rgb(255 255 255 / 35%);
@@ -95,7 +97,8 @@
 // stick appears wherever the finger lands there and follows it - and their
 // boost pad (with the weapon, if they carry one) stays pinned to the corner
 // under their right hand, see-through enough to show the match below. The
-// other side is left to dragging the crosshair and pinching the camera.
+// other side is left to dragging the crosshair and pinching the camera -
+// alone, that is: two players' sides make up the whole arena.
 //
 // Two players sit at the short edges of the phone, one at each end, turned
 // towards them - the pad as a whole, the stick only by its label, since a
@@ -166,7 +169,7 @@
     }
 
     .seat[data-seat='1'] {
-      top: var(--hud-space);
+      top: calc(var(--hud-space) + var(--pad-inset));
       right: var(--pad-inset);
     }
 
@@ -185,7 +188,7 @@
 // the bottom, seat 1 at the top upside down.
 @media (orientation: portrait) {
   .stage {
-    // The HUD takes two lines on a narrow screen.
+    // The HUD takes two lines on a narrow screen - until it is measured.
     --hud-space: 5rem;
     --zone-width: 100%;
     --zone-height: 50%;
@@ -236,7 +239,7 @@
 // The goal of a training mission, at the top of the arena while it runs.
 .mission-goal {
   position: absolute;
-  top: 4.5rem;
+  top: calc(var(--hud-space) + 1rem);
   left: 50%;
   z-index: 2;
   display: flex;
