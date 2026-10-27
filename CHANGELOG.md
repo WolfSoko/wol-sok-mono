@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.118.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.118.1...v74.118.2) (2026-10-27)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** pinch the camera inside a joystick zone ([#2708](https://github.com/WolfSoko/wol-sok-mono/issues/2708)) ([f8986bd](https://github.com/WolfSoko/wol-sok-mono/commit/f8986bd0186eba57685933294555aa2c6346dd2d))
+
 ## [74.118.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.118.0...v74.118.1) (2026-10-27)
 
 ### Performance
