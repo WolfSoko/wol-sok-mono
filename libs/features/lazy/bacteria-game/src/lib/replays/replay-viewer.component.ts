@@ -30,24 +30,18 @@ import {
   simResolutionOf,
   simScale,
 } from '../state/arena-size';
-import { TICKS_PER_SEC } from '../state/fixed-tick';
+import { clock, TICKS_PER_SEC } from '../state/fixed-tick';
 import { getLevel, levelMap, levelSize } from '../state/levels';
 import type { Replay } from '../state/replay';
 import type { BacteriaLook } from '../state/skins';
 import { mapZones } from '../state/zones';
-import { gpuIntReplaySimulation, ReplayScene } from './replay-scene';
+import { ReplayScene, type ReplayLook } from './replay-scene';
 
 /** The speeds the viewer offers. */
 export const REPLAY_SPEEDS = [1, 2, 4] as const;
 
 /** How far the skip buttons jump, in seconds. */
 export const REPLAY_SKIP_SECONDS = 10;
-
-/** A time in the match as minutes and seconds, `1:05`. */
-export function matchTime(seconds: number): string {
-  const whole = Math.max(0, Math.floor(seconds));
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
-}
 
 /**
  * A recorded match played back (ADR 0011) on an `ArenaView` that plays by
@@ -214,7 +208,7 @@ export class ReplayViewerComponent {
 
   protected readonly speeds = REPLAY_SPEEDS;
   protected readonly skip = REPLAY_SKIP_SECONDS;
-  protected readonly time = matchTime;
+  protected readonly time = clock;
   protected readonly playing = signal(true);
   protected readonly speed = signal<number>(1);
   /** The second of the match the view shows. */
@@ -222,37 +216,39 @@ export class ReplayViewerComponent {
   protected readonly over = signal(false);
   /** True while a seek plays on fast to its time. */
   protected readonly seeking = signal(false);
-  /** The match's length in whole seconds. */
+  /** The match's length in whole seconds, as "My matches" gives it. */
   protected readonly length = computed(() =>
-    Math.ceil(this.replay().header.ticks / TICKS_PER_SEC)
+    Math.floor(this.replay().header.ticks / TICKS_PER_SEC)
   );
-  /** True once the view runs, so that seeking has frames to play in. */
-  protected readonly seekable = signal(false);
 
   private readonly reducedMotion = prefersReducedMotion();
   private readonly box = viewChild<ElementRef<HTMLElement>>('box');
   private readonly boxWidth = signal(0);
-  /** The view's GL painter, whose context a GPU replay runs on. */
-  private readonly glPainter = signal<GlArenaPainter | null>(null);
+  /** The view's painter, null until the view runs and once it goes. */
+  private readonly painter = signal<ArenaPainter | null>(null);
+  /** True once the view runs, so that seeking has frames to play in. */
+  protected readonly seekable = computed(() => this.painter() !== null);
+  /** The view's GL painter where its GPU is the trusted one, else null. */
+  private readonly gpuPainter = computed(() => {
+    const painter = this.painter();
+    return painter instanceof GlArenaPainter &&
+      painter.renderer() === this.gpu()
+      ? painter
+      : null;
+  });
 
   /**
    * The match played back - null for a replay that does not play here. A
-   * `gpu-int` replay on a trusted GPU waits for the view's GL painter: it
-   * starts on the CPU and moves over before its first tick.
+   * `gpu-int` replay moves onto the trusted GPU once the view's painter is
+   * there (`ReplayScene.useGpu`), and back off before its context goes.
    */
-  private readonly played = computed(() => {
-    const replay = this.replay();
-    const { simulation, width, height } = replay.header;
-    const trusted = simulation === 'gpu-int' ? this.gpu() : null;
-    const painter = trusted === null ? null : this.glPainter();
-    return ReplayScene.of(
-      replay,
-      { look: this.look(), reducedMotion: untracked(this.reducedMotion) },
-      painter === null || painter.renderer() !== trusted
-        ? undefined
-        : gpuIntReplaySimulation(painter, width, height)
-    );
-  });
+  private readonly played = computed(() =>
+    ReplayScene.of(
+      this.replay(),
+      untracked(() => this.lookOf(this.look())),
+      untracked(this.gpuPainter)
+    )
+  );
   /** What the view plays: the match, telling on how far it got. */
   protected readonly scene = computed((): ArenaScene | null => {
     const played = this.played();
@@ -260,11 +256,10 @@ export class ReplayViewerComponent {
       ? null
       : {
           content: (alpha) => played.content(alpha),
+          // Paused, the view runs only for a seek, which plays on by itself.
           advance: (ticks) => {
-            if (!played.over || played.seeking) {
-              played.advance(ticks);
-              this.tell(played);
-            }
+            played.advance(untracked(this.playing) ? ticks : 0);
+            this.tell(played);
           },
         };
   });
@@ -297,30 +292,28 @@ export class ReplayViewerComponent {
   });
 
   public constructor() {
-    // A scene goes with its replay. The same replay on another simulation
-    // - the GPU came or went - goes on where it was, as it was.
-    let shown: { replay: Replay; tick: number } | null = null;
     effect((onCleanup) => {
       const played = this.played();
       untracked(() => {
-        if (played !== null && played.replay === shown?.replay) {
-          if (shown.tick > 0) {
-            played.seek(shown.tick);
-            this.seeking.set(true);
-          }
-        } else {
-          this.second.set(0);
-          this.over.set(false);
-          this.seeking.set(false);
-          this.playing.set(true);
-        }
-      });
-      onCleanup(() => {
-        shown =
-          played === null ? null : { replay: played.replay, tick: played.tick };
+        this.second.set(0);
+        this.over.set(false);
+        this.seeking.set(false);
+        this.playing.set(true);
       });
       // On to another replay, or the viewer goes: the engine goes too.
       onCleanup(() => played?.dispose());
+    });
+    effect(() => {
+      const played = this.played();
+      const gpu = this.gpuPainter();
+      untracked(() => played?.useGpu(gpu));
+    });
+    effect(() => {
+      const played = this.played();
+      const look = this.lookOf(this.look());
+      if (played !== null) {
+        played.look = look;
+      }
     });
     effect((onCleanup) => {
       const box = this.box()?.nativeElement;
@@ -359,8 +352,7 @@ export class ReplayViewerComponent {
       return;
     }
     played.seek(second * TICKS_PER_SEC);
-    this.second.set(Math.min(second, this.length()));
-    this.seeking.set(true);
+    this.tell(played);
   }
 
   /**
@@ -373,30 +365,27 @@ export class ReplayViewerComponent {
 
   /**
    * The view's painter came or goes. A GPU replay lives in its context, so
-   * one going is let go of right away, before the context is.
+   * it moves to the CPU right away, before the context goes.
    */
   protected painterChanged(painter: ArenaPainter | null): void {
-    this.seekable.set(painter !== null);
-    const played = untracked(this.played);
-    if (painter === null && played?.onGpu === true) {
-      played.dispose();
+    if (painter === null) {
+      untracked(this.played)?.useGpu(null);
     }
-    this.glPainter.set(painter instanceof GlArenaPainter ? painter : null);
+    this.painter.set(painter);
+  }
+
+  private lookOf(look: BacteriaLook): ReplayLook {
+    return { look, reducedMotion: untracked(this.reducedMotion) };
   }
 
   /**
-   * Tells what the scene got to. The view plays it outside change
-   * detection, so the time is told in whole seconds, the end once.
+   * Tells what the scene got to - or is seeking to. The view plays it
+   * outside change detection, so the time is told in whole seconds.
    */
   private tell(scene: ReplayScene): void {
-    if (!scene.seeking) {
-      // The end reads as the length, which counts a last part second.
-      const second = scene.over
-        ? untracked(this.length)
-        : Math.floor(scene.tick / TICKS_PER_SEC);
-      if (second !== untracked(this.second)) {
-        this.second.set(second);
-      }
+    const second = Math.floor(scene.shownTick / TICKS_PER_SEC);
+    if (second !== untracked(this.second)) {
+      this.second.set(second);
     }
     if (scene.seeking !== untracked(this.seeking)) {
       this.seeking.set(scene.seeking);

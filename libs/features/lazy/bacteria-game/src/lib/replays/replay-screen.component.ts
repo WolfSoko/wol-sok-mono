@@ -7,7 +7,6 @@ import {
 } from '@angular/core';
 import { EvolutionService } from '../evolution.service';
 import { GpuSelfTestService } from '../gl/gpu-self-test.service';
-import { gpuTrusted } from '../gl/simulation-check';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
 import { GameStateService } from '../state/game-state.service';
@@ -43,12 +42,8 @@ import { ReplayViewerComponent } from './replay-viewer.component';
 })
 export class ReplayScreenComponent {
   private readonly evolution = inject(EvolutionService);
-  private readonly gpuSelfTest = inject(GpuSelfTestService);
   /** The GPU that passed the self-test, which GPU replays play on. */
-  protected readonly trustedGpu = computed(() => {
-    const verdict = this.gpuSelfTest.result();
-    return verdict !== null && gpuTrusted(verdict) ? verdict.renderer : null;
-  });
+  protected readonly trustedGpu = inject(GpuSelfTestService).trustedRenderer;
 
   private readonly recording = inject(GameStateService).lastRecording;
 

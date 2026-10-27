@@ -11,9 +11,8 @@ import { BALANCE_VERSION } from '../state/game-balance';
 import { IntSimulation } from '../state/gpu-int/int-simulation';
 import type { MatchEngine } from '../state/match-engine';
 import { GPU_INT_REPLAY_VERSION, type Replay } from '../state/replay';
-import type { SimulationFactory } from '../state/simulation';
-import { gpuIntReplaySimulation, ReplayScene } from './replay-scene';
-import { matchTime, ReplayViewerComponent } from './replay-viewer.component';
+import { type GpuIntPainter, ReplayScene } from './replay-scene';
+import { ReplayViewerComponent } from './replay-viewer.component';
 
 /** The colony sizes the scene's war got to. */
 const sizes = (scene: ReplayScene) =>
@@ -41,12 +40,19 @@ function gpuIntReplay(): Replay {
   };
 }
 
-/** The GPU's integer passes, stood in for by their CPU twin. */
-const fakeGpuInt: SimulationFactory = (balance, random, seed) => {
-  const simulation = new IntSimulation(balance, random, seed);
-  Object.defineProperty(simulation, 'kind', { value: 'gpu' });
-  return simulation;
-};
+/** A GL painter whose integer passes are stood in for by their CPU twin. */
+function fakeGpu(
+  made: (simulation: IntSimulation) => void = () => undefined
+): GpuIntPainter & { createSimulation: jest.Mock } {
+  return {
+    createSimulation: jest.fn((balance, random, options) => {
+      const simulation = new IntSimulation(balance, random, options.matchSeed);
+      Object.defineProperty(simulation, 'kind', { value: 'gpu' });
+      made(simulation);
+      return simulation as never;
+    }),
+  };
+}
 
 describe('ReplayScene', () => {
   const look = { look: 'slime' as const, reducedMotion: false };
@@ -108,24 +114,55 @@ describe('ReplayScene', () => {
   });
 
   it('plays a gpu-int replay on the GPU handed in, from the start again too', () => {
-    const gpu = jest.fn(fakeGpuInt);
+    const gpu = fakeGpu();
     const scene = ReplayScene.of(gpuIntReplay(), look, gpu);
 
     expect(scene?.onGpu).toBe(true);
     scene?.advance(5);
     scene?.restart();
 
-    expect(gpu).toHaveBeenCalledTimes(2);
+    expect(gpu.createSimulation).toHaveBeenCalledTimes(2);
     expect(scene?.onGpu).toBe(true);
     scene?.dispose();
     scene?.dispose();
   });
 
-  it('plays a gpu-int replay on the CPU without a GPU', () => {
-    const scene = ReplayScene.of(gpuIntReplay(), look);
+  it('plays a gpu-int replay on the CPU without a GPU, and a cpu one on a GPU', () => {
+    const gpu = fakeGpu();
+    const scenes = [
+      ReplayScene.of(gpuIntReplay(), look),
+      ReplayScene.of(recordedReplay('petri-dish', 30), look, gpu),
+    ];
 
-    expect(scene?.onGpu).toBe(false);
-    scene?.dispose();
+    expect(scenes.map((scene) => scene?.onGpu)).toEqual([false, false]);
+    expect(gpu.createSimulation).not.toHaveBeenCalled();
+    scenes.forEach((scene) => scene?.dispose());
+  });
+
+  it('moves between the GPU and the CPU where it was', () => {
+    const replay = gpuIntReplay();
+    const gpu = fakeGpu();
+    const scene = ReplayScene.of(replay, look);
+    const straight = ReplayScene.of(replay, look);
+    if (scene === null || straight === null) {
+      throw new Error('The replay did not play');
+    }
+    scene.advance(12);
+
+    scene.useGpu(gpu);
+    expect(scene.onGpu).toBe(true);
+    expect(scene.shownTick).toBe(12);
+    finishSeek(scene);
+    scene.useGpu(gpu);
+    scene.useGpu(null);
+    finishSeek(scene);
+    straight.advance(12);
+
+    expect(gpu.createSimulation).toHaveBeenCalledTimes(1);
+    expect(scene.onGpu).toBe(false);
+    expect(scene.tick).toBe(12);
+    expect(sizes(scene)).toEqual(sizes(straight));
+    [scene, straight].forEach((each) => each.dispose());
   });
 
   it('falls back to the CPU when the GPU does not set up, and asks it no more', () => {
@@ -136,9 +173,9 @@ describe('ReplayScene', () => {
       throw new Error('Incomplete render target');
     });
     const createSimulation = jest.fn(() => broken as never);
-    const factory = gpuIntReplaySimulation({ createSimulation }, 320, 180);
+    const gpu = { createSimulation };
 
-    const scene = ReplayScene.of(gpuIntReplay(), look, factory);
+    const scene = ReplayScene.of(gpuIntReplay(), look, gpu);
 
     expect(dispose).toHaveBeenCalled();
     expect(warn).toHaveBeenCalledTimes(1);
@@ -146,6 +183,7 @@ describe('ReplayScene', () => {
     scene?.advance(5);
     expect(scene?.tick).toBe(5);
     scene?.restart();
+    scene?.useGpu(gpu);
     expect(createSimulation).toHaveBeenCalledTimes(1);
     scene?.dispose();
     warn.mockRestore();
@@ -154,19 +192,19 @@ describe('ReplayScene', () => {
   it('falls back when the engine fails to set the GPU up, letting go of it', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const made: IntSimulation[] = [];
-    const failing: SimulationFactory = (balance, random, seed) => {
-      const simulation = new IntSimulation(balance, random, seed);
+    const failing = fakeGpu((simulation) => {
       jest.spyOn(simulation, 'init').mockImplementation(() => {
         throw new Error('Texture upload refused');
       });
+      jest.spyOn(simulation, 'dispose');
       made.push(simulation);
-      return simulation;
-    };
+    });
 
     const scene = ReplayScene.of(gpuIntReplay(), look, failing);
 
     expect(scene?.onGpu).toBe(false);
     expect(made).toHaveLength(1);
+    expect(made[0].dispose).toHaveBeenCalled();
     scene?.advance(3);
     expect(scene?.tick).toBe(3);
     scene?.dispose();
@@ -174,15 +212,16 @@ describe('ReplayScene', () => {
   });
 
   it('does nothing more once disposed', () => {
-    const gpu = jest.fn(fakeGpuInt);
+    const gpu = fakeGpu();
     const scene = ReplayScene.of(gpuIntReplay(), look, gpu);
 
     scene?.dispose();
     scene?.restart();
+    scene?.useGpu(null);
     scene?.seek(0);
     scene?.advance(5);
 
-    expect(gpu).toHaveBeenCalledTimes(1);
+    expect(gpu.createSimulation).toHaveBeenCalledTimes(1);
     expect(scene?.tick).toBe(0);
   });
 
@@ -242,7 +281,7 @@ describe('ReplayViewerComponent', () => {
         time.textContent?.trim()
       );
 
-    expect(times()).toEqual(['0:00', '0:02']);
+    expect(times()).toEqual(['0:00', '0:01']);
     (page.querySelector('[data-testid="play-pause"]') as HTMLElement).click();
     fixture.detectChanges();
     expect(arena.paused()).toBe(true);
@@ -251,7 +290,7 @@ describe('ReplayViewerComponent', () => {
     fixture.detectChanges();
 
     expect(page.textContent).toContain('Winding to that time…');
-    expect(times()[0]).toBe('0:02');
+    expect(times()[0]).toBe('0:01');
     // Paused, the view still runs the frames the seek plays in.
     expect(arena.paused()).toBe(false);
   });
@@ -286,13 +325,5 @@ describe('ReplayViewerComponent', () => {
     fixture.destroy();
 
     expect(painters[0].disposed).toBe(true);
-  });
-});
-
-describe('matchTime', () => {
-  it('reads minutes and seconds', () => {
-    expect(matchTime(0)).toBe('0:00');
-    expect(matchTime(65.9)).toBe('1:05');
-    expect(matchTime(600)).toBe('10:00');
   });
 });
