@@ -79,6 +79,27 @@ describe('JoystickComponent', () => {
     expect(component['knob']()).toEqual({ x: RIM, y: 0 });
   });
 
+  it('drags the base along behind a finger pulled past the rim', () => {
+    down(1, 40, 60);
+
+    move(1, 40 + RIM + 30, 60);
+
+    expect(component['origin']()).toEqual({ x: 70, y: 60 });
+    expect(component['knob']()).toEqual({ x: RIM, y: 0 });
+    expect(steered).toEqual([{ x: 1, y: 0 }]);
+  });
+
+  it('turns at once once the base followed the finger', () => {
+    down(1, 40, 60);
+    move(1, 40 + RIM + 30, 60);
+
+    // Back by one radius: the knob sits in the middle of the moved base.
+    move(1, 40 + 30, 60);
+
+    expect(component['knob']()).toEqual({ x: 0, y: 0 });
+    expect(steered.at(-1)).toEqual({ x: 0, y: 0 });
+  });
+
   it('ignores a mouse button that would open a menu', () => {
     component['onPointerDown'](pointer(1, 40, 60, 2));
 

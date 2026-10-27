@@ -87,10 +87,6 @@ describe('BoostPadComponent', () => {
     expect(progress('.charge')).toBe('25');
   });
 
-  it('shows the colony share', () => {
-    expect(progress('.share')).toBe('55');
-  });
-
   it('is down while no match is on', async () => {
     fixture.componentRef.setInput('disabled', true);
     await fixture.whenStable();

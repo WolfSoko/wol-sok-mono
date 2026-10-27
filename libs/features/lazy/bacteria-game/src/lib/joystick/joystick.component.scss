@@ -5,7 +5,6 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  overflow: hidden;
   // The zone must not scroll, zoom or select anything - it only steers.
   touch-action: none;
   user-select: none;
@@ -23,27 +22,28 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--joystick-color, #fff);
-  opacity: 0.8;
+  opacity: 0.6;
   pointer-events: none;
 }
 
-// Under the finger while the stick is held, in the middle of the zone as a
-// hint while it is at rest.
+// Under the finger while the stick is held - it follows a finger pulled past
+// the rim - and where the stage puts it as a hint while it is at rest.
 .base {
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--joystick-color, #fff);
+  border: 2px solid
+    color-mix(in srgb, var(--joystick-color, #fff) 70%, transparent);
   border-radius: 50%;
-  background: rgb(255 255 255 / 10%);
+  background: rgb(255 255 255 / 8%);
   transform: translate(-50%, -50%);
   pointer-events: none;
 
   &.idle {
     position: static;
     transform: none;
-    opacity: 0.4;
+    opacity: 0.35;
   }
 }
 
@@ -51,6 +51,6 @@
   width: 45%;
   height: 45%;
   border-radius: 50%;
-  background: var(--joystick-color, #fff);
-  box-shadow: 0 0 12px rgb(0 0 0 / 50%);
+  background: color-mix(in srgb, var(--joystick-color, #fff) 65%, transparent);
+  box-shadow: 0 0 12px rgb(0 0 0 / 35%);
 }

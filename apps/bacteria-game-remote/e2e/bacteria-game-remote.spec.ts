@@ -140,19 +140,42 @@ test('should seat two players at opposite edges', async ({ page }) => {
   await expect(po.boostCta).toHaveCount(2);
   await expect(po.joysticks).toHaveCount(2);
 
-  // Seat 0 is the left column, seat 1 the right one, each turned towards
-  // its player: the stick sits in their left hand and the boost pad in their
-  // right, so the pad is below the stick for the left player and above it
-  // for the right one.
-  const [leftStick, leftBoost, rightStick, rightBoost] = await Promise.all([
-    po.boxOf(po.joystick(0)),
-    po.boxOf(po.boostOf(0)),
-    po.boxOf(po.joystick(1)),
-    po.boxOf(po.boostOf(1)),
-  ]);
-  expect(leftStick.x).toBeLessThan(rightStick.x);
-  expect(leftBoost.y).toBeGreaterThan(leftStick.y);
-  expect(rightBoost.y).toBeLessThan(rightStick.y);
+  // Each player's controls lie over the arena at their end of the screen,
+  // turned towards them: seat 0 at the left edge (the bottom one on an
+  // upright screen), seat 1 at the opposite one. The boost pad sits in the
+  // corner under the player's right hand, so the two pads are in opposite
+  // corners.
+  const [stage, leftStick, leftBoost, rightStick, rightBoost] =
+    await Promise.all([
+      po.boxOf(po.stage),
+      po.boxOf(po.joystick(0)),
+      po.boxOf(po.boostOf(0)),
+      po.boxOf(po.joystick(1)),
+      po.boxOf(po.boostOf(1)),
+    ]);
+  const centre = (box: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }) => ({
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+  });
+  if (stage.width > stage.height) {
+    expect(centre(leftStick).x).toBeLessThan(centre(rightStick).x);
+    expect(centre(leftBoost).x).toBeLessThan(centre(rightBoost).x);
+    expect(leftBoost.y).toBeGreaterThan(rightBoost.y);
+  } else {
+    expect(centre(leftStick).y).toBeGreaterThan(centre(rightStick).y);
+    expect(centre(leftBoost).y).toBeGreaterThan(centre(rightBoost).y);
+    expect(leftBoost.x).toBeGreaterThan(rightBoost.x);
+  }
+  // The arena takes the whole stage, under the controls.
+  const arena = await po.boxOf(po.playArea);
+  expect(
+    Math.max(arena.width / stage.width, arena.height / stage.height)
+  ).toBeGreaterThan(0.95);
 });
 
 test('should arm the boost once the match runs', async ({ page }) => {

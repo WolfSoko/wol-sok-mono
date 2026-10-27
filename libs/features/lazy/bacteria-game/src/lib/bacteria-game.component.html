@@ -1,9 +1,9 @@
 <!--
   The stage, embedded in the page or laid over the whole viewport while
-  fullscreen - the same either way. Its children are placed on a grid: the
-  arena in the middle and, per human player, a joystick zone and a boost pad
-  at that player's edge, turned towards them - the stylesheet has the seating
-  plan.
+  fullscreen - the same either way. The arena takes all of it; laid over it
+  are the HUD along the top edge and, per human player, a joystick zone over
+  that player's side and a boost pad pinned to their corner, turned towards
+  them - the stylesheet has the seating plan.
 -->
 <div
   #arenaStage
@@ -18,7 +18,6 @@
     <feat-lazy-bac-game-joystick
       class="stick"
       [attr.inert]="screenOpen() ? '' : null"
-      [style.grid-area]="'stick-' + seat"
       [attr.data-seat]="seat"
       [color]="colony.css"
       [label]="colony.name"
@@ -29,7 +28,6 @@
       class="seat"
       [class.armed]="colony.weapon !== null"
       [attr.inert]="screenOpen() ? '' : null"
-      [style.grid-area]="'boost-' + seat"
       [attr.data-seat]="seat"
     >
       <feat-lazy-bac-game-boost-pad
@@ -300,6 +298,7 @@
         [goal]="goal()"
         [neutral]="neutralCount()"
         [neutralCss]="neutralCss"
+        [fps]="settings.showFps() ? fps() : null"
         [sound]="settings.sound()"
         [showPause]="running() && !paused() && canPause()"
         [showGiveUp]="running() && !canPause()"
@@ -318,10 +317,6 @@
       (wsSharedUiElemResized)="onArenaBoxResized($event)"
       (wheel)="onWheel($event)"
     >
-      <ws-shared-ui-show-fps
-        [show]="settings.showFps()"
-        [fps]="fps()"
-      ></ws-shared-ui-show-fps>
       <div class="arena-frame">
         <feat-lazy-bac-game-arena-view
           canvasId="canvasElement"

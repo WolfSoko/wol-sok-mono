@@ -33,9 +33,10 @@ export interface HudGoal {
 }
 
 /**
- * The bar above the arena while a match is on: the level, the clock, each
- * colony's count and the match's buttons - sound, pause (or giving up a
- * ranked match, in two taps) and fullscreen.
+ * The bar along the top of the screen while a match is on, laid over the
+ * arena: the level, the clock, each colony's count and energy, the frame
+ * rate where the settings show it, and the match's buttons - sound, pause
+ * (or giving up a ranked match, in two taps) and fullscreen.
  */
 @Component({
   selector: 'feat-lazy-bac-game-hud-bar',
@@ -63,6 +64,8 @@ export class HudBarComponent {
   /** The neutral colonies' count, null on a level without them. */
   public readonly neutral = input<number | null>(null);
   public readonly neutralCss = input.required<string>();
+  /** Frames a second, null while the settings hide them. */
+  public readonly fps = input<number | null>(null);
   public readonly sound = input.required<boolean>();
   /** True where the match can be paused right now. */
   public readonly showPause = input(false);

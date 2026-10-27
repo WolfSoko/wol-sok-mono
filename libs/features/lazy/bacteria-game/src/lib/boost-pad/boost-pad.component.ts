@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ColonyStats } from '../colony-stats';
 import { playerNameText, renderGameText } from '../i18n/game-texts';
@@ -17,25 +16,20 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 
 /** The boost button in CSS pixels; the recharge ring runs just outside it. */
 export const BOOST_BUTTON_SIZE = 88;
-// The stage's seat track (--seat in bacteria-game.component.scss) must hold it.
 export const RECHARGE_RING_SIZE = BOOST_BUTTON_SIZE + 12;
 
 /**
  * One player's boost pad in the touch layout: the boost button, ringed by
- * its recharge, and the colony's own numbers. Together with the joystick
- * zone it makes up the player's seat.
- *
- * In a column beside the arena the numbers sit below the button. In a band
- * along the player's edge there is no room for that, so a pad that is wider
- * than tall puts them beside the button instead. Where the pad sits on the
- * screen and which way it is turned is the stage's business.
+ * its recharge. Together with the joystick zone it makes up the player's
+ * seat. It stays in one place over the arena - which corner and which way
+ * it is turned is the stage's business; the colony's numbers are in the
+ * HUD.
  */
 @Component({
   selector: 'feat-lazy-bac-game-boost-pad',
   imports: [
     MatButtonModule,
     MatIconModule,
-    MatProgressBarModule,
     MatProgressSpinnerModule,
     TranslatePipe,
   ],

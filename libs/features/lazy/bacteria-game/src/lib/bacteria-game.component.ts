@@ -28,11 +28,7 @@ import { TranslationKey } from './i18n/dictionaries';
 import { I18nService } from './i18n/i18n.service';
 import { difficultyKeys, levelNameText, missionKeys } from './i18n/game-texts';
 import { TranslatePipe } from './i18n/translate.pipe';
-import {
-  ElemResizedDirective,
-  ResizedEvent,
-  ShowFpsComponent,
-} from '@wolsok/ui-kit';
+import { ElemResizedDirective, ResizedEvent } from '@wolsok/ui-kit';
 import {
   asapScheduler,
   defer,
@@ -207,7 +203,6 @@ const MINIMAP_UPDATE_MS = 100;
     MatCardModule,
     WsThanosDirective,
     MatButtonModule,
-    ShowFpsComponent,
     MatIconModule,
     SocialNoticesComponent,
     ModerationNoticesComponent,

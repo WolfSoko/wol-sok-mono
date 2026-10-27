@@ -1,57 +1,16 @@
 @use '../colony';
 @use '../pad';
 
-// The pad fills whatever box the stage gives it and lays itself out by the
-// shape of that box - see the container query below.
+// Just the button in its ring: the stage pins it to a corner over the arena,
+// the colony's numbers are in the HUD.
 :host {
   display: block;
-  container-type: size;
-}
-
-.pad,
-.pad-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.pad {
-  box-sizing: border-box;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  padding: 0.5rem;
-  text-align: center;
-}
-
-// As wide as the pad, so the share bar does not follow the text's width.
-.pad-info {
-  align-self: stretch;
-  min-width: 0;
-}
-
-// A band along the player's edge, wider than tall: the ring takes the whole
-// height, so the numbers sit beside the button.
-@container (min-aspect-ratio: 1/1) {
-  .pad {
-    flex-direction: row;
-    gap: 0.75rem;
-    padding: 0 0.5rem;
-    text-align: left;
-  }
-
-  .pad-info {
-    align-items: flex-start;
-  }
-
-  .pad-stats {
-    justify-content: flex-start;
-  }
 }
 
 .button-with-ring {
   @include pad.button-with-ring;
+
+  border-radius: 50%;
 }
 
 .charge {
@@ -74,32 +33,6 @@
 
 :host(.boosting) .boost-fab {
   animation: colony.$pulse;
-}
-
-.pad-name {
-  font-weight: 600;
-  color: var(--seat-color);
-}
-
-// Count and energy side by side where there is room, else one below the other.
-.pad-stats {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  column-gap: 0.35rem;
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.8;
-}
-
-.share {
-  --mat-progress-bar-active-indicator-color: var(--seat-color);
-  --mat-progress-bar-track-color: rgb(255 255 255 / 25%);
-  --mat-progress-bar-track-height: 4px;
-  --mat-progress-bar-active-indicator-height: 4px;
-
-  width: 100%;
-  max-width: 6rem;
 }
 
 @include colony.pulse-keyframes;
