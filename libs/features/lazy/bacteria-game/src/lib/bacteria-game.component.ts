@@ -830,6 +830,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         untracked(() => this.draw());
       }
     });
+    // The breakdown of a frame starts over with each match, and whenever
+    // the frame rate is shown again - no frames of before in its average.
+    effect(() => {
+      this.settings.showFps();
+      this.running();
+      untracked(() => {
+        this.framePerf.reset();
+        this.hudPerf.set(null);
+      });
+    });
     // A resumed match picks its music up where the match clock stands, so
     // it stays in step with a map that moves to it.
     effect(() => {

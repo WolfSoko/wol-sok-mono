@@ -57,7 +57,14 @@ export class GpuTimer {
   /** Hands over each timing the GPU has answered, oldest first, in ms. */
   public poll(take: (slot: GpuSlot, ms: number) => void): void {
     const gl = this.gl;
-    const disjoint = gl.getParameter(this.ext.GPU_DISJOINT_EXT) === true;
+    // A disjoint GPU spoils every timing in flight, finished or not.
+    if (gl.getParameter(this.ext.GPU_DISJOINT_EXT) === true) {
+      for (const { query } of this.pending) {
+        this.free.push(query);
+      }
+      this.pending.length = 0;
+      return;
+    }
     while (this.pending.length > 0) {
       const { query, slot } = this.pending[0];
       if (gl.getQueryParameter(query, gl.QUERY_RESULT_AVAILABLE) !== true) {
@@ -66,9 +73,7 @@ export class GpuTimer {
       const ns: number = gl.getQueryParameter(query, gl.QUERY_RESULT);
       this.pending.shift();
       this.free.push(query);
-      if (!disjoint) {
-        take(slot, ns / 1e6);
-      }
+      take(slot, ns / 1e6);
     }
   }
 
