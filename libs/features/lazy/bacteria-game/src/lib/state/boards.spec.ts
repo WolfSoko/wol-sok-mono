@@ -9,11 +9,13 @@ import {
   dailyBoardId,
   dailySort,
   endlessSort,
+  type EntryStatus,
   formatTag,
   isBoardId,
   onlineSort,
   parseBoardId,
   posesAsLabel,
+  topRows,
   XP_FULL_COUNT_BEFORE,
   xpRiseCap,
   xpSort,
@@ -210,5 +212,35 @@ describe('boards', () => {
         /T00:00:00\.000Z$/
       );
     });
+  });
+});
+
+describe('topRows', () => {
+  const row = (
+    entryId: string,
+    sort: number,
+    status: EntryStatus = 'counted'
+  ) => ({
+    entryId,
+    sort,
+    atHour: 1,
+    status,
+    name: null,
+    tag: 1,
+    avatar: 1,
+    show: { xp: sort, rank: 'spore' },
+  });
+
+  it('gives ties one position, and verified rows their rank', () => {
+    const rows = topRows(
+      [row('a', 9), row('b', 7), row('c', 7), row('d', 3)],
+      [row('b', 7, 'verified'), row('d', 3, 'verified')]
+    );
+    expect(rows.map((r) => [r.entryId, r.pos, r.rank])).toEqual([
+      ['a', 1, undefined],
+      ['b', 2, 1],
+      ['c', 2, undefined],
+      ['d', 4, 2],
+    ]);
   });
 });

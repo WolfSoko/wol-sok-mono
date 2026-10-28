@@ -27,9 +27,19 @@ export class FakeGameReplays implements GameReplays {
   >(new Map());
   private readonly pending: [string, ReplaySubmission][] = [];
   private readonly results = new Map<string, ReplayCommandResult>();
+  private readonly changes = new Map<string, Partial<ReplayListing>>();
   private next = 0;
+  /**
+   * What the server answers a `forget` of a stored replay - `ranking`
+   * while the boards may still rank it. One it does not keep is
+   * `not-found`.
+   */
+  public forgetAnswer: ReplayCommandResult = { ok: true };
 
-  public constructor(private readonly autoAccept = false) {}
+  public constructor(
+    private readonly autoAccept = false,
+    public readonly cloud = true
+  ) {}
 
   public async submit(submission: ReplaySubmission): Promise<string | null> {
     this.submissions.push(submission);
@@ -58,19 +68,38 @@ export class FakeGameReplays implements GameReplays {
     return [...this.saved.value.entries()]
       .reverse()
       .slice(0, limit)
-      .map(([id, { replay, hint }]) => ({
-        id,
-        kind: replay.header.roomCode === undefined ? 'computer' : 'online',
-        levelId: replay.header.levelId,
-        balanceVersion: replay.header.balanceVersion,
-        replayVersion: replay.header.version,
-        createdAt: 0,
-        ticks: replay.header.ticks,
-        endedBy: replay.header.outcome?.endedBy ?? 'annihilation',
-        winnerSeat: replay.header.outcome?.winnerSeat ?? null,
-        hint: hintOf(hint),
-        state: replay.header.roomCode === undefined ? 'submitted' : 'waiting',
-      }));
+      .map(([id, submission]) => this.listing(id, submission));
+  }
+
+  /**
+   * Changes what the server says of a stored replay - as the functions
+   * would once they ranked it or found why not.
+   */
+  public change(id: string, change: Partial<ReplayListing>): void {
+    this.changes.set(id, { ...this.changes.get(id), ...change });
+    this.saved.next(new Map(this.saved.value));
+  }
+
+  private listing(
+    id: string,
+    { replay, hint }: ReplaySubmission
+  ): ReplayListing {
+    const online = replay.header.roomCode !== undefined;
+    return {
+      id,
+      kind: online ? 'online' : 'computer',
+      levelId: replay.header.levelId,
+      balanceVersion: replay.header.balanceVersion,
+      replayVersion: replay.header.version,
+      createdAt: 0,
+      ticks: replay.header.ticks,
+      endedBy: replay.header.outcome?.endedBy ?? 'annihilation',
+      winnerSeat: replay.header.outcome?.winnerSeat ?? null,
+      hint: hintOf(hint),
+      state: online ? 'waiting' : 'submitted',
+      seat: 0,
+      ...this.changes.get(id),
+    };
   }
 
   public async replayBytes(
@@ -87,7 +116,29 @@ export class FakeGameReplays implements GameReplays {
     this.commands.push({ type, replayId });
     const id = `c_fake${this.next++}`;
     const saved = new Map(this.saved.value);
-    const ok = type === 'remove' && saved.delete(replayId);
+    if (type === 'forget') {
+      const result: ReplayCommandResult = saved.has(replayId)
+        ? this.forgetAnswer
+        : { ok: false, reason: 'not-found' };
+      if (result.ok) {
+        // In the cloud the player leaves the replay, so it leaves the list.
+        saved.delete(replayId);
+      }
+      this.saved.next(saved);
+      this.results.set(id, result);
+      return id;
+    }
+    const ok = type === 'remove' && saved.has(replayId);
+    if (ok && this.cloud) {
+      // The server keeps the replay out of the gallery; it stays listed.
+      this.changes.set(replayId, {
+        ...this.changes.get(replayId),
+        galleryOut: true,
+      });
+    } else if (ok) {
+      // This device lets it go.
+      saved.delete(replayId);
+    }
     this.saved.next(saved);
     this.results.set(id, ok ? { ok } : { ok, reason: 'refused' });
     return id;

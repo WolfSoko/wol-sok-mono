@@ -199,7 +199,8 @@ sits behind a flag; step 8 switches it on.
    - `chooseSimulation` (`gl/simulation-choice.ts`) takes the integer GPU
      simulation for a GPU that passed, `IntSimulation` otherwise, and falls
      back to `IntSimulation` when a GPU simulation fails to start. It is
-     behind `DETERMINISTIC_SIMULATION`, still false.
+     behind the switch `DETERMINISTIC_SIMULATION`, on since step 8 (now the
+     owner's toggle `deterministicSimulation`, ADR 0012, default on).
    - CI plays three whole-match scenarios through `GpuSimulation` on
      SwiftShader against `golden-gpu-sim.json`, which `sim-golden.spec.ts`
      keeps equal to `IntSimulation`'s hashes, and runs the self-test there.
@@ -230,7 +231,11 @@ sits behind a flag; step 8 switches it on.
      queue is casual (ADR 0010) and pairs any two devices, which agree on a
      ruleset in the handshake.
    - Local matches, recorded or not, play `gpu-int` where the GPU passed the
-     self-test, `cpu` else (`chooseSimulation`). A GPU simulation that fails
+     self-test, `cpu` else (`chooseSimulation`). A software renderer does
+     not count (`gpuTrusted`): SwiftShader passes the self-test but took
+     about 460 ms a tick at 320 x 180, against 4.8 ms for the CPU's
+     ruleset, so two such devices froze in an online `gpu-int` match (seen
+     in CI, which has only SwiftShader). A GPU simulation that fails
      to start leaves the device on `cpu`, offering `cpu` only.
    - The golden replay has a `gpu-int` result as well
      (`golden-replay.spec.ts`), played on `IntSimulation`.
@@ -242,18 +247,16 @@ sits behind a flag; step 8 switches it on.
      from hard against normal, which the engine cannot set per seat, so the
      real check is a playtest on a device that passed the self-test, and
      ranked `gpu-int` play. Revisit them before the boards open.
-   - "Record local matches" is on by default once `DETERMINISTIC_SIMULATION`
-     is: while the switch is off a recorded match still plays on the CPU, so
-     the default follows the switch.
-   - `DETERMINISTIC_SIMULATION` stays off until the owner's real-device
-     check passed; turning it on is a one-line change. Meanwhile a device
-     opts in with `?sim=gpu-int`: it runs the self-test, plays local
-     matches on the integer GPU passes whatever the self-test said and
-     shows the ruleset and the self-test's verdict in the settings under
-     "Screen". `?sim=cpu` forces the CPU, `?sim=auto` clears the override
-     (`SimulationOverrideService`, kept in `DeviceStorage`). While the
-     switch is off a device offers only `cpu` online, opted in or not; once
-     it is on, the override still changes local play only.
+   - "Record local matches" is on by default, as is the switch.
+   - The switch is on since the owner's real-device check passed
+     (2026-10-24); the constant has since given way to the toggle's
+     default (`FEATURE_TOGGLES.deterministicSimulation`). Before, while it was off, a device opted in with
+     `?sim=gpu-int`. The override stays for later checks: `?sim=gpu-int`
+     plays local matches on the integer GPU passes whatever the self-test
+     said, `?sim=cpu` forces the CPU, `?sim=auto` clears it
+     (`SimulationOverrideService`, kept in `DeviceStorage`); it changes
+     local play only, never what a device offers online. The settings
+     show the ruleset and the self-test's verdict under "Screen".
 9. Tune the CPU reference for the server. Done for a first round, bit for
    bit (every golden unchanged):
    - the passes read module-local copies of their constants and helpers,
@@ -271,6 +274,33 @@ sits behind a flag; step 8 switches it on.
    on a desktop 96 x 64 went from 3.5-4.7 ms to about 2 ms, 320 x 180 from
    21-28 ms to 7-9 ms. A phone and the server's runtime still need a
    measurement of their own.
+
+10. Run the active area in deterministic matches too (2026-10-27): on the
+    big maps (640 x 360) the passes ran over four times the cells of a
+    base arena, though the colonies hold about a tenth of them, and a
+    Galaxy S8+ played them at 15 frames a second. Decision 2's proof that
+    the area covers everything that can change:
+    - an empty cell with no bacterium around is a fixed point of every
+      pass: all four channels stay 0 (the crush clears the record, the
+      feeding recomputes the food);
+    - the area (`GpuSimulation.updateArea`) holds the report's colony
+      boxes grown by the reach of every tick since the report, its own
+      tick included, since the report counts the bacteria after its combat
+      and before they divided and moved (`reachSinceReport`), and the
+      areas of the last `AREA_HISTORY` ticks, in which all three state
+      textures are written empty again where the colonies left;
+    - the whole arena runs for the first ticks of a match, whose textures
+      hold the last match, and on every tick a wall shoves bacteria.
+
+    So the passes would write empty over empty outside the area, and
+    leaving it out changes no bit; the TypeScript reference still runs the
+    whole arena. The device's self-test plays its last ticks on the area
+    (`SELF_TEST_SCENARIO`, `GPU_SELF_TEST_VERSION` 2, so every device
+    tests again), and the cross-check's `roomy` scenario plays a whole
+    match with room to spare and a bar that stands still; the
+    report's boxes grown by no reach fail it (from tick 6). The cell of
+    spare reach per tick and the report's 8-cell blocks hide an area one
+    tick short, so the proof above, not the check, keeps the reach right.
 
 The spike's code (integer movement shaders, the TypeScript reference, the
 cross-check across SwiftShader, llvmpipe and Firefox) is not part of this

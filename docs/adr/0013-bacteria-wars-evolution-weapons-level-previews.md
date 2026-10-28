@@ -27,7 +27,9 @@ The shared model is `state/evolution.ts`.
 - **DNA is derived, not stored**: `dnaEarned(xpOf(progress))`, one strand
   per 50 XP. It merges as cleanly as XP does and can never be lost.
 - **Genes** (`mitosis`, `toxins`, `membrane`, `flagella`, `metabolism`),
-  five levels each, multiply a colony trait per level. They extend the
+  five levels each, multiply a colony trait per level. Each level costs
+  exponentially more than the one before (`geneLevelCost`: 2 strands
+  times 1.6 per level, rounded - 2, 3, 5, 8, 13). They extend the
   boss's `ColonyTraits` with `toughnessFactor`, `speedFactor` and
   `weaponCooldownFactor`; absent traits are 1.
 - **Weapons** (`toxin-bomb`, `cryo-pulse`, `phage-strike`, `agar-bloom`,
@@ -59,6 +61,21 @@ wear the look picked in the device's settings only once the player owns it
 time the pick is trusted, so the dish does not flicker to the slime on every
 start - but not after another player takes over, whose storage says what
 they own.
+
+Only the humans' colonies wear the skin (added 2026-10-26). Each colony of
+a frame carries its own look (`PaintedColony`, chosen by seat in
+`state/colony-looks.ts` from what the match made of the seat - `Player.computer`
+and `Player.boss`, set from the spawns `planMatch` makes, so a replay dresses
+its seats as the match did): the computer's dresses by its level - the plain
+slime on the first, then the skins to buy in the gallery's order at the
+level's `ladderPosition`, the same place that sets its skill, so a
+generated level dresses it by its heat - and a boss wears the eclipse, a
+look no skin offers, so it cannot be bought or picked (`BOSS_LOOK`, outside
+`SKINS`) - whoever steers it, a second player too. A seat a recording
+drives for a human - a ghost's, the other device's online - wears the skin;
+neutral colonies stay slime. The Canvas
+painter draws the pixel colonies on a crisp layer of their own under the
+density looks' smooth one.
 
 ### Where evolution plays
 

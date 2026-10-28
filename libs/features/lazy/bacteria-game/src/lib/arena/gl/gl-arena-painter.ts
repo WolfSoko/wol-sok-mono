@@ -2,14 +2,14 @@ import { GameBalance } from '../../state/game-balance';
 import { Bacteria } from '../../state/player.model';
 import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
 import { Rect } from '../../state/maps';
-import { ArenaFrame, ArenaPainter } from '../arena-painter';
+import { ArenaFrame, ArenaPainter, PaintedColony } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
 import { paintZoneLayer } from '../zone-decal';
 import { Zone } from '../../state/zones';
 import { ArenaTheme } from '../arena-theme';
 import {
   cellDensity,
-  ColonyLayer,
+  colonyBounds,
   hatchPattern,
   jamDrops,
   lookReach,
@@ -20,6 +20,7 @@ import {
 } from '../colony-renderer';
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
 import { GpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
+import { rendererOf } from '../../gl/renderer';
 import { Motes } from '../motes';
 import {
   bindTexture,
@@ -94,32 +95,37 @@ export function packTints(
   return count;
 }
 
+/** A box of arena cells, `[x0, y0, x1, y1]` - x1 and y1 just past it. */
+export type CellBox = readonly [number, number, number, number];
+
 /**
  * Packs a colony into the cells texture, two bytes per arena cell: its
  * density - 0 for an empty cell, from 0.55 up for a bacterium, by its
  * strength - and its overcharge. This is all the CPU does for a colony; the
  * blur, the outline, the gloss and the shimmer run on the GPU.
  *
- * Returns the cells the colony covers, null for a colony without bacteria.
+ * Only the cells in `box` are packed, the rest of `out` is left as it was:
+ * what is uploaded and read this frame is no more than that box.
  */
 export function encodeCells(
   out: Uint8Array,
   width: number,
   bacterias: readonly Bacteria[],
-  balance: GameBalance
-): CellBounds | null {
-  out.fill(0);
-  if (bacterias.length === 0) {
-    return null;
+  balance: GameBalance,
+  box: CellBox
+): void {
+  const [x0, y0, x1, y1] = box;
+  for (let y = y0; y < y1; y++) {
+    out.fill(0, (y * width + x0) * 2, (y * width + x1) * 2);
   }
-  const bounds = emptyBounds();
   for (const { x, y, energy } of bacterias) {
+    if (x < x0 || x >= x1 || y < y0 || y >= y1) {
+      continue;
+    }
     const index = (y * width + x) * 2;
     out[index] = Math.round(255 * cellDensity(strengthOf(energy, balance)));
     out[index + 1] = Math.round(255 * overcharge(energy, balance));
-    growBounds(bounds, x, y);
   }
-  return bounds;
 }
 
 /**
@@ -309,6 +315,11 @@ export class GlArenaPainter implements ArenaPainter {
     return new GpuSimulation(this.gl, balance, random, options);
   }
 
+  /** The GPU and driver this painter's context renders with. */
+  public renderer(): string {
+    return rendererOf(this.gl);
+  }
+
   /**
    * Hands the context back to the browser right away rather than once the
    * canvas is collected - a page may only hold a few WebGL contexts.
@@ -431,33 +442,39 @@ export class GlArenaPainter implements ArenaPainter {
    * GPU simulation's state - are blurred on the arena grid for every look
    * but the pixels, and drawn over the frame in a single pass.
    */
-  private drawColony(frame: ArenaFrame, layer: ColonyLayer): void {
+  private drawColony(frame: ArenaFrame, layer: PaintedColony): void {
     const gl = this.gl;
     const resources = this.resources;
     if (resources == null) {
       return;
     }
     const { programs, blur, cells } = resources;
-    const { color, boostTarget } = layer;
+    const { color, boostTarget, look } = layer;
     const bounds =
-      layer.kind === 'cells'
-        ? this.uploadCells(layer.bacterias, frame.balance)
-        : layer.bounds;
+      layer.kind === 'cells' ? colonyBounds(layer.bacterias) : layer.bounds;
     // A look that reaches past the colony - the lattice looks, with their
     // cells and tiles - is drawn that much further out, and every pass
     // before the drawing moves out with it, or it would read stale density.
-    const margin = passMargins(lookReach(frame.look, this.unit));
+    const margin = passMargins(lookReach(look, this.unit));
     if (bounds == null || !this.inView(bounds, margin.colony)) {
       return;
     }
-    // Only the box around the colony is blurred and drawn - the rest of the
-    // arena would be fragments the GPU works on to discard them.
+    // Only the box around the colony, as far as it is in view, is packed,
+    // blurred and drawn - the rest of the arena would be bytes to upload
+    // and fragments the GPU works on to discard them.
+    if (layer.kind === 'cells') {
+      this.uploadCells(
+        layer.bacterias,
+        frame.balance,
+        this.passBox(bounds, margin.cells)
+      );
+    }
     gl.enable(gl.SCISSOR_TEST);
     if (layer.kind === 'state') {
       this.drawCellsFromState(layer, bounds, frame.balance, margin.cells);
     }
 
-    const blurred = LOOKS[frame.look].fromDensity;
+    const blurred = LOOKS[look].fromDensity;
     if (blurred) {
       gl.disable(gl.BLEND);
       gl.viewport(0, 0, this.width, this.height);
@@ -485,7 +502,7 @@ export class GlArenaPainter implements ArenaPainter {
       color[2] / 255
     );
     gl.uniform1f(program.uniforms['uAlpha'], (color[3] ?? 255) / 255);
-    gl.uniform1i(program.uniforms['uLook'], LOOKS[frame.look].glIndex);
+    gl.uniform1i(program.uniforms['uLook'], LOOKS[look].glIndex);
     gl.uniform1f(program.uniforms['uUnit'], this.unit);
     gl.uniform1f(
       program.uniforms['uPixel'],
@@ -526,7 +543,7 @@ export class GlArenaPainter implements ArenaPainter {
   }
 
   /** The colony's cells grown by a margin, clamped to the arena. */
-  private box(bounds: CellBounds, margin: number): number[] {
+  private box(bounds: CellBounds, margin: number): CellBox {
     return [
       Math.max(0, bounds.minX - margin),
       Math.max(0, bounds.minY - margin),
@@ -568,37 +585,61 @@ export class GlArenaPainter implements ArenaPainter {
     return x0 < x + width && x1 > x && y0 < y + height && y1 > y;
   }
 
+  /**
+   * The colony's box grown by a margin, cut to the view grown by the same
+   * margin: a pass on the arena grid only has to cover what the passes
+   * after it read of the cells in view. The margins grow from one pass to
+   * the one before it, so each still covers what the next one reads.
+   */
+  private passBox(bounds: CellBounds, margin: number): CellBox {
+    const [x0, y0, x1, y1] = this.box(bounds, margin);
+    const { x, y, width, height } = this.view;
+    const left = Math.max(x0, Math.floor(x) - margin);
+    const top = Math.max(y0, Math.floor(y) - margin);
+    return [
+      left,
+      top,
+      Math.max(left, Math.min(x1, Math.ceil(x + width) + margin)),
+      Math.max(top, Math.min(y1, Math.ceil(y + height) + margin)),
+    ];
+  }
+
   /** Scissors a pass on the arena grid - its row y is arena row y. */
   private scissorCells(bounds: CellBounds, margin: number): void {
-    const [x0, y0, x1, y1] = this.box(bounds, margin);
+    const [x0, y0, x1, y1] = this.passBox(bounds, margin);
     this.gl.scissor(x0, y0, x1 - x0, y1 - y0);
   }
 
-  /** Packs a CPU colony into the cells texture and uploads it. */
+  /** Packs the box of a CPU colony into the cells texture and uploads it. */
   private uploadCells(
     bacterias: readonly Bacteria[],
-    balance: GameBalance
-  ): CellBounds | null {
+    balance: GameBalance,
+    box: CellBox
+  ): void {
     const gl = this.gl;
     const cells = this.resources?.cells;
-    const bounds = encodeCells(this.cellBytes, this.width, bacterias, balance);
-    if (cells == null || bounds == null) {
-      return bounds;
+    const [x0, y0, x1, y1] = box;
+    encodeCells(this.cellBytes, this.width, bacterias, balance, box);
+    if (cells == null || x1 <= x0 || y1 <= y0) {
+      return;
     }
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, cells.texture);
+    // The box's rows, out of the arena's.
+    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, this.width);
     gl.texSubImage2D(
       gl.TEXTURE_2D,
       0,
-      0,
-      0,
-      this.width,
-      this.height,
+      x0,
+      y0,
+      x1 - x0,
+      y1 - y0,
       gl.RG,
       gl.UNSIGNED_BYTE,
-      this.cellBytes
+      this.cellBytes,
+      (y0 * this.width + x0) * 2
     );
-    return bounds;
+    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, 0);
   }
 
   /**

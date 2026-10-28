@@ -1,5 +1,5 @@
 import type { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
-import { EMPTY, filter, firstValueFrom, Observable, switchMap } from 'rxjs';
+import { EMPTY, filter, firstValueFrom, Observable, of, switchMap } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameStorage } from './game-storage';
 import { beforeRetry, errorCode } from './retry';
@@ -23,7 +23,9 @@ const FINAL_ERRORS = new Set(['permission-denied', 'invalid-argument']);
  * waits to be online and runs then; one queued as a player signs out is
  * refused by the rules and dropped. The queue lives as long as the page:
  * a change made offline is lost when the page closes before it is online
- * again.
+ * again. While a ban holds (ADR 0012), whose writes the rules refuse, the
+ * queue waits as it does offline - rather than have the cache roll every
+ * save back - and runs once the ban ends, if the page is still open.
  */
 export class FirestoreGameStorage implements GameStorage {
   /** The JSON last seen under each document, to skip writes that change nothing. */
@@ -33,7 +35,9 @@ export class FirestoreGameStorage implements GameStorage {
   public constructor(
     private readonly connection: FirebaseConnection,
     /** Whoever plays, null while nobody does. */
-    private readonly playerIds: Observable<string | null>
+    private readonly playerIds: Observable<string | null>,
+    /** True while a ban holds the player - their writes wait meanwhile. */
+    private readonly held: Observable<boolean> = of(false)
   ) {}
 
   public watch(key: string): Observable<unknown> {
@@ -97,7 +101,11 @@ export class FirestoreGameStorage implements GameStorage {
       this.playerIds.pipe(filter((uid): uid is string => uid !== null))
     );
     const queued = (this.queues.get(key) ?? Promise.resolve())
-      .then(async () => task(this.document(await player, key)))
+      .then(async () => {
+        const uid = await player;
+        await firstValueFrom(this.held.pipe(filter((held) => !held)));
+        await task(this.document(uid, key));
+      })
       .catch((error: unknown) =>
         console.error(`Could not store ${key}`, error)
       );

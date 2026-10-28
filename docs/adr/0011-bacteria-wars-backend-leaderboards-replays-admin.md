@@ -72,6 +72,11 @@ function calls, and server-verified match results.
   (Changed by ADR 0012: daily-level and endless matches started as ranked
   attempts always run on the CPU and are recorded and uploaded, whatever
   this setting says.)
+  (Changed by the owner's decision of 2026-10-26: a local match is
+  recorded on every simulation resolution, to watch it again on the
+  device. Off the online grid it keeps the simulation the device picks -
+  a float GPU match is not recorded - and it is never uploaded; only a
+  replay on the online grid is stored and checked.)
 - **"Save my matches" (on by default)** decides whether recorded matches
   are uploaded. Off, a replay stays on the device until the next match.
   (Changed by ADR 0012: it governs local matches only. Online matches are
@@ -196,18 +201,18 @@ writes **command documents** the functions process:
 
 ### Data model
 
-| Path                                 | Shape                                                                                                                                                                                                                    | Written by                          | Read by                                                                |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- | ---------------------------------------------------------------------- |
-| `replaySubmissions/{auto}`           | see above                                                                                                                                                                                                                | the player (create only)            | nobody (functions)                                                     |
-| `replayCommands/{auto}`              | see above, plus `result`                                                                                                                                                                                                 | the player (create only); functions | its writer                                                             |
-| `replays/{id}`                       | `{ players: uid[], kind: 'online' \| 'computer' \| 'daily' \| 'endless', levelId, balanceVersion, replayVersion, createdAt, ticks, endedBy, winnerSeat, hint, state, score?, reasons?, optOut: uid[], expireAt }`        | functions                           | its players                                                            |
-| `replays/{id}/blob/data`             | `{ bytes, size }`                                                                                                                                                                                                        | functions                           | its players (`get` only)                                               |
-| `replays/{id}/reports/{uid}`         | `{ checksum, inputsHash, winnerSeat, endedBy, at }` (online, one per device)                                                                                                                                             | functions                           | nobody                                                                 |
-| `publicReplays/{publicId}`           | `{ replayId, uids, levelId, kind, balanceVersion, players: [{ label, name?, colorId, avatarPreset }], ticks, endedBy, winnerSeat, score, reasons, summary, featuredAt, featuredBy: 'auto' \| 'admin', day, removedAt? }` | functions                           | nobody (served by `publicSite`)                                        |
-| `publicReplays/{publicId}/blob/data` | `{ bytes, size }` (`forPublic`)                                                                                                                                                                                          | functions                           | nobody (served by `publicSite`)                                        |
-| `replayCandidates/{day}`             | the day's verified runners-up                                                                                                                                                                                            | functions                           | admin                                                                  |
-| `limits/{uid}` and `counters/{day}`  | rate limits, daily budget                                                                                                                                                                                                | functions                           | nobody                                                                 |
-| `profiles/{uid}`                     | adds `publicName?: boolean` and `galleryOptOut?: boolean`, missing = false                                                                                                                                               | owner                               | signed in (unchanged; ADR 0012 adds `boardOptOut` and an admin `list`) |
+| Path                                 | Shape                                                                                                                                                                                                                          | Written by                          | Read by                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- | ---------------------------------------------------------------------- |
+| `replaySubmissions/{auto}`           | see above                                                                                                                                                                                                                      | the player (create only)            | nobody (functions)                                                     |
+| `replayCommands/{auto}`              | see above, plus `result`                                                                                                                                                                                                       | the player (create only); functions | its writer                                                             |
+| `replays/{id}`                       | `{ players: uid[], kind: 'online' \| 'computer' \| 'daily' \| 'endless', levelId, balanceVersion, replayVersion, createdAt, ticks, endedBy, winnerSeat, hint, state, score?, reasons?, optOut: uid[], galleryOut?, expireAt }` | functions                           | its players                                                            |
+| `replays/{id}/blob/data`             | `{ bytes, size }`                                                                                                                                                                                                              | functions                           | its players (`get` only)                                               |
+| `replays/{id}/reports/{uid}`         | `{ checksum, inputsHash, winnerSeat, endedBy, at }` (online, one per device)                                                                                                                                                   | functions                           | nobody                                                                 |
+| `publicReplays/{publicId}`           | `{ replayId, uids, levelId, kind, balanceVersion, players: [{ label, name?, colorId, avatarPreset }], ticks, endedBy, winnerSeat, score, reasons, summary, featuredAt, featuredBy: 'auto' \| 'admin', day, removedAt? }`       | functions                           | nobody (served by `publicSite`)                                        |
+| `publicReplays/{publicId}/blob/data` | `{ bytes, size }` (`forPublic`)                                                                                                                                                                                                | functions                           | nobody (served by `publicSite`)                                        |
+| `replayCandidates/{day}`             | the day's verified runners-up                                                                                                                                                                                                  | functions                           | admin                                                                  |
+| `limits/{uid}` and `counters/{day}`  | rate limits, daily budget                                                                                                                                                                                                      | functions                           | nobody                                                                 |
+| `profiles/{uid}`                     | adds `publicName?: boolean` and `galleryOptOut?: boolean`, missing = false                                                                                                                                                     | owner                               | signed in (unchanged; ADR 0012 adds `boardOptOut` and an admin `list`) |
 
 `state` is one of `submitted` (local), `waiting` (online, one report),
 `agreed` (online, both reports match), `disputed` (online, reports differ;
@@ -260,13 +265,18 @@ a dead end), `verified`, `unverified`, `balance-mismatch`.
   only in the page body. Link previews and search snippets therefore carry
   no names.
 - `galleryOptOut: true` keeps all of a player's matches out of the gallery.
-  `remove` takes one public replay down and records the player in
-  `replays/{id}.optOut`; nothing re-features it, not even the owner.
+  `remove` takes one public replay down, records the player in
+  `replays/{id}.optOut` and sets `galleryOut`; nothing re-features it, not
+  even the owner, and `galleryOut` stays when a deleted account leaves
+  `optOut`.
 - `profileChanged` updates a player's public replays when they rename or
   turn `publicName` off. Deleting an account (`auth.user().onDelete`)
-  removes the uid from `replays.players`, deletes replays where they were
+  removes the uid from `replays.players` and the room's `seats` (also
+  where only the other player reported), deletes replays where they were
   the only player, and replaces their name in public replays with the
-  colour label.
+  colour label. (Changed by ADR 0012, owner's decision of 2026-10-26: no
+  replay is deleted any more; each one forgets the account and stays,
+  anonymised, until its `expireAt`.)
 
 ### The functions codebase
 
@@ -297,7 +307,8 @@ install --omit dev`).
   `bacteria-wars` (confirmed by the owner before the first deploy).
   `setGlobalOptions({ region, maxInstances: 5 })`; `initializeApp()` without
   a project id. Triggers run with retries off and are idempotent (a
-  transaction checks `state` first).
+  transaction checks `state` first). (Changed by ADR 0012: `rankReplay`
+  retries for an hour, as a replay it fails to rank would never count.)
 - **Deployed with the game's config**: `functions` entry with
   `codebase: "bacteria"`, `source: "dist/apps/bacteria-wars-functions"` in
   `firebase.bacteria-game-remote.json`; its own `deploy` target
@@ -389,7 +400,12 @@ through.
 - **In the game** (under the route with `provideGameCloud`):
   - "Watch replay" on the result screen;
   - "My matches" at `/my-matches` and `/my-matches/{id}`: the last 30 days,
-    newest first, `noindex`;
+    newest first, `noindex`; (changed as built: a screen of the game's
+    stage, `'my-matches'` beside the leaderboards, with a tile in the main
+    menu, not a route: the game's screens are no routes, the stage keeps
+    its arena and state while it shows, and it works in the shell the same
+    way. Without a project it lists this device's replays, the newest 20.
+    `robots.txt` still disallows `/my-matches`, which nothing serves.)
   - the owner's curation page: the runners-up, the public replays, and
     feature / unfeature / anonymise. (Changed by ADR 0012: it is the
     Replays view of `/admin`, in the admin lib `bacteria-wars-admin`, not
@@ -497,12 +513,136 @@ The rules and `replayCommand` require `admin == true`,
 4. Functions app, rules, indexes, emulator; deploy the functions **before**
    the hosting rewrites merge (a release whose rewrites name a function
    that does not exist fails).
+   - So far: the app with `acceptReplay`, `replayCommand` (`remove`; the
+     gallery's types answer `unsupported` until step 6) and
+     `deletePlayerReplays`; the rules for submissions, commands, `replays`,
+     `bans` and the room stub, with ADR 0012's `notBanned()` on every
+     client write; the indexes and TTL policies; rules and handler specs
+     against the emulator. In the code, unlike the text above: a command's
+     `expireAt` is checked to lie within two days ahead, since the client
+     sets it by its own clock; and an unranked endless match is stored as
+     `computer`, as nothing in it tells it from another generated level.
 5. Client: room stub, recording settings, submission, "My matches", the
    viewer.
+   - As built: the recording settings ("Record matches against the
+     computer", "Save my matches", both on) and the submission came
+     first, behind `GameCloudOptions.replays`; the rules took the room
+     stub, but the client still deleted the room once the guest
+     connected, so the functions would have refused every online upload
+     (`not-in-room`). The release with "My matches" and the viewer
+     writes the stub (`OpenRoom.take`, run by the host instead of the
+     delete once the link opened: `createdAt` read back from the room,
+     `expireAt` 6 hours after it; a room nobody joined is still deleted)
+     and turns the uploads on (`replays: true` in the remote's
+     production and emulator environments; e2e inherits the
+     emulator's), so online matches and, with "Save my matches", local
+     ones are uploaded from then on.
+   - "My matches" (`replays/my-matches.component.ts`) is a stage screen
+     (see "The pages"), listing `listMine` (`players array-contains`,
+     `createdAt` desc, at most 50) as `listingOf` reads `replays/{id}`:
+     the player's seat (online `seats.indexOf(uid)`, the host's 0; local
+     0), the state, the board's `rankedReason` (counted, or why not, in
+     the game's words) and whether it is public or kept out of the
+     gallery. No difficulty is stored; nothing shows one. As the data model
+     says, `remove` deletes nothing: the server keeps the player out of
+     the gallery (`optOut`, `galleryOut`) and takes a public copy down,
+     and the replay stays listed until it expires. So the screen offers
+     "Keep out of the public gallery" in the cloud, and "Delete" only for
+     this device's replays, which `LocalGameReplays` does delete.
+   - The viewer (`replays/replay-viewer.component.ts`) plays a
+     `ReplayScene` on the arena's `ArenaViewComponent` by itself: its own
+     `MatchEngine` from `replayEngine` (split out of `playReplay` with
+     `canPlayBack`, which the functions' `playReplay` keeps using), play
+     and pause, 1x/2x/4x, start over, a progress bar; no seeking. The
+     result screen offers "Watch replay" for `lastRecording` (not in the
+     middle of an endless run) and says "saved" once `watchSaved` does.
 6. `publicSite`, `robots.txt`, privacy text, `/watch`, the curation view
    in `/admin` (changed by ADR 0012); then enable the `featureBest`
    schedule (changed by ADR 0012: only once the Replays view of `/admin`
    has shipped, so the owner can unfeature).
+   - As built in the client release (the last part of this step): the
+     privacy text's "Recorded matches" and "Public gallery" sections, and
+     `/watch/{publicId}` in the remote's `app.routes.ts`, outside the entry
+     route with `provideGameCloud`, `noindex` (route data and meta tag)
+     with its canonical on `/replays/{publicId}`. It loads the page from
+     the narrow entry `@wolsok/feat-lazy-bac-game/watch`, skipped by
+     federation like `admin-kit`, so its chunk holds the viewer and the
+     engine but no stage and no Firebase. It fetches
+     `/replays/{publicId}/replay.json` (`loadPublicReplay`: base64
+     `bytes`, read by `replayFromBytes`; the id checked against
+     `publicSite`'s pattern first) and says "not found" for a 404 and
+     "taken down" for a 410. `featureBest` stayed off until the Replays
+     view of `/admin` shipped too; `FEATURE_BEST_ON` is on since
+     2026-10-26, and the owner unfeatures a pick there.
+   - So far: `featureBest` (`src/gallery/`), deployed only with
+     `FEATURE_BEST_ON` in `src/config.ts` (on since 2026-10-26). At 23:40 UTC,
+     not 04:00 Berlin - once the boards stopped verifying the day before,
+     whose ranked attempts they verify until 23:00 - it picks that day's
+     candidates (accounts looked up for the best hints only), re-runs those the boards have not
+     verified within `GALLERY_VERIFY_MS` a day (25 minutes, charged to
+     `counters/{day}.galleryVerifyMs`), scores the verified ones with
+     `replayScore` on the re-run's per-second timeline (a feat: a
+     platinum run against a hard computer or a boss, or the day's best
+     daily-level replay), publishes and writes the runners-up to
+     `replayCandidates/{day}`, which the owner reads. A ranked attempt
+     waits for the boards: only once they verified it is it a
+     candidate. A public replay's seats carry the boards' labels
+     (`entryLabel`: the name only with `publicName` and when it passes
+     the blocklist, the player's preset or one derived from the public
+     id); a banned player's match is never published. `remove` and a ban
+     take it down (`removeFromGallery`): `optOut` and `galleryOut` on the
+     stored replay, then `removedAt` on the public copy, its bytes
+     deleted, and the private replay expiring again, at the earliest a
+     day later. A deleted account leaves its public replays without its
+     uid and with the colour label for its name (`anonymisePublic`).
+     Gallery re-runs count in the level statistics like the boards'.
+   - Then `publicSite` (`src/site/`), deployed but not yet reached: the
+     Hosting rewrites follow in the next release, once the function
+     exists. It serves `/replays` (the gallery, newest first, 60 a page,
+     paged back with `?before={ms}_{id}` so every replay still up is
+     linked), `/replays/index.json`, `/replays/{id}`, and for the viewer
+     `/replays/{id}/replay.json` - the packed public bytes as base64, so
+     the function never loads the engine to play anything. Unlike the
+     text above, the replays' sitemap is `/replays/sitemap.xml`, listed
+     in `robots.txt` beside the game's hand-kept `/sitemap.xml`, which
+     stays the game's; it lists every replay still up and is cached an
+     hour. The page has no "Watch" button until the viewer's `/watch`
+     route ships with the client. `profileChanged` reaches public
+     replays too (`publicProfileChanged`): a new name, `publicName`
+     turned off or another preset relabels the player's seats, and
+     `galleryOptOut` turned on takes their public replays down. The texts are a small en/de dictionary
+     (`site/texts.ts`): the ladder's English titles from the engine's
+     levels, the German ones the game's, kept complete by a spec.
+   - Then the owner's curation in `replayCommand` (`src/gallery/curate.ts`),
+     each checked against Auth afresh (`isOwnerRecord`) and audited like
+     an admin command (`runAudited`: `adminAudit/{commandId}`, `source:
+'replayCommand'`, type `replay.feature` and so on, claimed first so
+     a second delivery runs nothing). `feature` takes a stored replay that
+     fits the gallery (`fitsGallery`; any account, guests too), re-runs it
+     first if the boards have not verified it, from the admin budget
+     `board.verify` spends too (`ADMIN_BUDGET`), keeps a score
+     `featureBest` stored or scores it without the best-daily feat, and
+     publishes it with `featuredBy: 'admin'`. `unfeature` takes a public
+     copy down like `remove` does, but leaves the replay featurable.
+     `anonymise` shows every human seat without a name and with a preset
+     derived from the seat, as a player who keeps their name private
+     shows (`anonymousSeat`, also used for a deleted account's seat), and
+     sets `anonymised` on the public copy and the stored replay, so
+     neither a later profile change nor a new public copy brings a name
+     back; the uids stay for opt-outs, bans and deleted accounts, and the
+     audit keeps no names. Both take the public id or the private one. A
+     takedown clears the stored replay's `publicId` in a transaction, only
+     while it still points at that copy. The trigger runs on a whole
+     vCPU, one command at a time, up to 540 s. Then the Hosting rewrites of
+     `/replays` and `/replays/**` to `publicSite`, a release after the
+     function's first deploy, with cache headers equal to the function's
+     (the catch-all `no-cache` header might win otherwise), and
+     `robots.txt` naming `/replays/sitemap.xml` and keeping out `/watch/`
+     and `/my-matches`; the PWA's service worker leaves those paths to
+     the network (`navigationUrls` in `ngsw-config.json`), or it would
+     answer them with the game's `index.html`. The privacy text for replays and the gallery comes
+     with the client, which starts recording them. The client pages
+     came last (the first item of this step).
 7. Owner: grant the claim, sign out and in, check `/admin` (changed by
    ADR 0012).
 
@@ -516,12 +656,38 @@ Decided by the owner on 2026-10-23:
 
 ## Owner's manual steps
 
-- Blaze plan and the APIs above on `bacteria-wars`.
+- Blaze plan and the APIs above on `bacteria-wars`. Done 2026-10-25
+  (Cloud Functions, Cloud Build, Artifact Registry, Cloud Run, Eventarc,
+  Cloud Scheduler, Pub/Sub).
 - `gcloud firestore databases describe --project bacteria-wars`: the
-  location becomes the functions region.
+  location becomes the functions region. Done 2026-10-25: `europe-west1`,
+  with the Realtime Database and `BAN_TOMBSTONE_KEY`.
 - IAM roles for the deploying account; Artifact Registry cleanup policy.
+  Roles done 2026-10-25: the CI token's account is Owner; the cloud
+  environment's service account has Cloud Functions Admin, Service
+  Account User and Artifact Registry Writer beside Editor and Firebase
+  Admin; the build accounts keep their defaults. The cleanup policy is
+  still open (below).
 - Turn on TTL for the new `expireAt` fields if the index deploy does not.
 - First functions deploy by hand (or let CI do it) before the rewrites PR.
+  CI does it: `bacteria-wars-functions:deploy` runs with every release
+  that affects the app (owner's decision, 2026-10-25, before the Cloud
+  Run benchmark). If the first deploy of the Firestore triggers fails on
+  the Eventarc service agent's permissions, which a new project grants
+  with a delay, run `nx run bacteria-wars-functions:deploy` again a few
+  minutes later (rerunning the release's deploy would redeploy every
+  affected app).
+  Before this was fixed no release deployed the functions: the target ran a
+  nested `nx run bacteria-game-remote:firebase`, the task the hosting
+  deploy runs in the same release, and failed within a second (v74.82 to
+  v74.96, issues "Deploy release ... for non-cdk apps failed"). It calls
+  the Firebase CLI itself now.
+  Artifact Registry's cleanup policy, once:
+
+  ```bash
+  firebase functions:artifacts:setpolicy --location europe-west1 --project bacteria-wars
+  ```
+
 - Once: `gcloud auth application-default login`, then
   `node tools/firebase/grant-admin.mjs <email> --project bacteria-wars --prod`.
 - After the first deploy: `curl` `/replays`, `/replays/<id>`, an unknown

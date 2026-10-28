@@ -3,6 +3,9 @@
 @if (runNote(); as note) {
   <p class="run-note">{{ note }}</p>
 }
+@if (rankedNote(); as note) {
+  <p class="run-note ranked-note">{{ note }}</p>
+}
 @if (mission(); as mission) {
   <div class="mission" [class.done]="mission.done">
     <mat-icon class="mission-icon" aria-hidden="true">{{
@@ -186,6 +189,15 @@
     </button>
   </div>
 }
+
+@if (offersSignIn()) {
+  <feat-lazy-bac-game-guest-sign-in
+    class="sign-in"
+    [note]="'profile.guest.success'"
+  />
+}
+
+<feat-lazy-bac-game-replay-note (watch)="action.emit('watch')" />
 
 <div class="actions">
   <button mat-button type="button" (click)="action.emit('menu')">

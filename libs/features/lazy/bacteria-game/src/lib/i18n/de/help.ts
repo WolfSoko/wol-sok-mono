@@ -49,7 +49,7 @@ export const help: Translation<typeof en> = {
   touch: {
     title: 'Touch',
     controls:
-      'Schieb die Joystick-Zone an deinem Rand und tipp auf den Boost-Taste – oder zieh dein Fadenkreuz über die Arena.',
+      'Berühr deine Seite der Arena und schieb den Joystick: Er sitzt, wo dein Finger landet, und folgt ihm. Die Boost-Taste wartet in deiner Ecke. Allein kannst du auch dein Fadenkreuz auf der anderen Seite der Arena ziehen.',
     twoPlayers:
       'Zu zweit legt ihr das Handy flach zwischen euch, jeder an ein Ende – die Steuerung ist jeweils zu euch gedreht.',
   },

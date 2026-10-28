@@ -1,4 +1,10 @@
-import { Injectable, inject, signal, untracked } from '@angular/core';
+import {
+  Injectable,
+  inject,
+  type Signal,
+  signal,
+  untracked,
+} from '@angular/core';
 import { filter, pairwise, take } from 'rxjs';
 import {
   DEFAULT_SCREEN_RESOLUTION,
@@ -85,10 +91,19 @@ export interface StoredSettings {
   recordLocal?: boolean;
   /** Whether recorded local matches are kept; online ones always are. */
   saveMatches?: boolean;
+  /**
+   * Whether daily matches and endless runs are declared as ranked ones
+   * where ranked play is offered (ADR 0012) - else practice.
+   */
+  ranked?: boolean;
+  /**
+   * Whether the result screen told, once, that matches against the
+   * computer are saved and where to turn that off.
+   */
+  recordingHintShown?: boolean;
 }
 
 import { BacteriaLook, isBacteriaLook } from './state/skins';
-import { DETERMINISTIC_SIMULATION } from './state/simulation';
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
@@ -133,7 +148,6 @@ export class GameSettingsService {
   private readonly store = inject(GameStateStore);
   private readonly storage = inject(DeviceStorage);
   private readonly i18n = inject(I18nService);
-  private restored = false;
   /** The settings the player changed - what restoring must keep. */
   private readonly touched = new Set<keyof StoredSettings>();
   /** A stored match setup that arrived during a match, for the next one. */
@@ -182,20 +196,38 @@ export class GameSettingsService {
   public readonly matchLevel = signal<string | null>(null);
   /**
    * True while local matches against the computer are recorded, at the
-   * online grid. On by default once the rollout's switch is (ADR 0011,
-   * 0015 step 8): a recorded match then plays on a ruleset, the integer GPU
-   * passes where the GPU passed the self-test, so recording no longer costs
-   * the GPU. While it is off, recording still sends a match to the CPU, so
-   * it stays off by default.
+   * online grid (ADR 0011). On by default (the owner's decision of
+   * 2026-10-23). A recorded match plays on a ruleset: the integer GPU
+   * passes where the GPU passed the self-test and the deterministic
+   * simulation is on, the CPU's else.
    */
-  public readonly recordLocal = signal(DETERMINISTIC_SIMULATION);
+  public readonly recordLocal = signal(true);
   /**
    * True while recorded local matches are kept, "Save my matches" - online
    * matches are kept either way (ADR 0012).
    */
   public readonly saveMatches = signal(true);
+  /**
+   * True while daily matches and endless runs are played ranked where
+   * ranked play is offered (ADR 0012, on by default) - false for practice,
+   * with the player's own setup.
+   */
+  public readonly ranked = signal(true);
+  /**
+   * True once the result screen told that matches against the computer
+   * are saved in My matches, and where to turn it off - it says so once
+   * per device.
+   */
+  public readonly recordingHintShown = signal(false);
+  /**
+   * True once the stored settings are read: before that a setting holds
+   * its default, not what an earlier visit stored.
+   */
+  public readonly loaded: Signal<boolean>;
+  private readonly restored = signal(false);
 
   constructor() {
+    this.loaded = this.restored.asReadonly();
     // Synchronous, so a change is told apart from a restored setup.
     this.store
       .select$(() => this.currentMatchSetup(), sameMatchSetup)
@@ -212,7 +244,7 @@ export class GameSettingsService {
       .pipe(take(1))
       .subscribe((stored) => {
         this.restore(isObject(stored) ? (stored as StoredSettings) : {});
-        this.restored = true;
+        this.restored.set(true);
         this.persist();
       });
     this.store
@@ -328,6 +360,18 @@ export class GameSettingsService {
     this.changed('saveMatches');
   }
 
+  /** Plays daily matches and endless runs ranked from now on - or practice. */
+  public setRanked(on: boolean): void {
+    this.ranked.set(on);
+    this.changed('ranked');
+  }
+
+  /** Notes that the hint on saved matches was shown on this device. */
+  public markRecordingHintShown(): void {
+    this.recordingHintShown.set(true);
+    this.changed('recordingHintShown');
+  }
+
   /** Speaks a language from now on, or follows the browser for null. */
   public setLanguage(language: Language | null): void {
     this.i18n.setLanguage(language);
@@ -340,7 +384,7 @@ export class GameSettingsService {
    */
   private changed(...keys: (keyof StoredSettings)[]): void {
     keys.forEach((key) => this.touched.add(key));
-    if (this.restored) {
+    if (this.restored()) {
       this.persist();
     }
   }
@@ -416,6 +460,15 @@ export class GameSettingsService {
     }
     if (restores('saveMatches') && typeof stored.saveMatches === 'boolean') {
       this.saveMatches.set(stored.saveMatches);
+    }
+    if (restores('ranked') && typeof stored.ranked === 'boolean') {
+      this.ranked.set(stored.ranked);
+    }
+    if (
+      restores('recordingHintShown') &&
+      typeof stored.recordingHintShown === 'boolean'
+    ) {
+      this.recordingHintShown.set(stored.recordingHintShown);
     }
     this.gameState.setReplayPrefs({
       recordLocal: this.recordLocal(),
@@ -496,6 +549,8 @@ export class GameSettingsService {
       matchLevel: this.matchLevel() ?? undefined,
       recordLocal: this.recordLocal(),
       saveMatches: this.saveMatches(),
+      ranked: this.ranked(),
+      recordingHintShown: this.recordingHintShown(),
     };
     this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }

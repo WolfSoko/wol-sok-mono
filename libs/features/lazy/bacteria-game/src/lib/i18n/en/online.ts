@@ -4,6 +4,9 @@ export const online = {
     "Online matches need the game's cloud, which this build of the game does not connect to.",
   searching: 'Looking for an opponent…',
   find: 'Find an opponent',
+  /** In place of "Find an opponent" while the owner has paused it. */
+  matchmakingPaused:
+    'Random matches are paused for now. Play a friend with a code instead.',
   /** The level the matchmaking asks for. */
   level: 'Level',
   anyLevel: 'Any level',

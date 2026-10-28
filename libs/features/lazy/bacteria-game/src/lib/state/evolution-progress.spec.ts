@@ -16,6 +16,7 @@ import {
   EMPTY_EVOLUTION,
   EvolutionProgress,
   geneCost,
+  geneLevelCost,
   loadoutOf,
   mergeEvolution,
   nextGeneCost,
@@ -62,14 +63,17 @@ describe('evolution progress', () => {
       const top = RANKS[RANKS.length - 1].xp;
 
       expect(spentDna(all)).toBe(5 * geneCost(5) + 70);
-      expect(spentDna(all)).toBe(220);
+      expect(spentDna(all)).toBe(225);
       expect(dnaEarned(top)).toBeGreaterThanOrEqual(spentDna(all));
       expect(dnaEarned(RANKS[RANKS.length - 2].xp)).toBeLessThan(spentDna(all));
     });
 
-    it('charges 2n for gene level n, and nothing past the top', () => {
+    it('charges each gene level exponentially more, and nothing past the top', () => {
+      expect([1, 2, 3, 4, 5].map((level) => geneLevelCost(level))).toEqual([
+        2, 3, 5, 8, 13,
+      ]);
       expect([1, 2, 3, 4, 5].map((level) => geneCost(level))).toEqual([
-        2, 6, 12, 20, 30,
+        2, 5, 10, 18, 31,
       ]);
       expect(
         nextGeneCost(evolution({ genes: { toxins: 5 } }), 'toxins')
@@ -84,7 +88,7 @@ describe('evolution progress', () => {
         genes: { mitosis: 2 },
         weapons: ['toxin-bomb'],
       });
-      expect(availableDna(20, held)).toBe(20 - 6 - 6);
+      expect(availableDna(20, held)).toBe(20 - 5 - 6);
     });
 
     it('never drops below 0 after a merge spent more, and blocks buying', () => {

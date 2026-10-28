@@ -1,9 +1,10 @@
 <!--
   The stage, embedded in the page or laid over the whole viewport while
-  fullscreen - the same either way. Its children are placed on a grid: the
-  arena in the middle and, per human player, a joystick zone and a boost pad
-  at that player's edge, turned towards them - the stylesheet has the seating
-  plan.
+  fullscreen - the same either way. Its children are placed on a grid whose
+  cells overlap: the arena takes all of it, and laid over it are the HUD in
+  the top row and, per human player, a joystick zone over that player's side
+  and a boost pad pinned to their corner, turned towards them - the
+  stylesheet has the seating plan.
 -->
 <div
   #arenaStage
@@ -18,18 +19,18 @@
     <feat-lazy-bac-game-joystick
       class="stick"
       [attr.inert]="screenOpen() ? '' : null"
-      [style.grid-area]="'stick-' + seat"
       [attr.data-seat]="seat"
       [color]="colony.css"
       [label]="colony.name"
       [disabled]="!running()"
+      [zooms]="cameraFollows()"
       (steer)="steer(colony.id, $event)"
+      (zoom)="zoomBy($event)"
+      (wheel)="onWheel($event)"
     />
     <div
       class="seat"
-      [class.armed]="colony.weapon !== null"
       [attr.inert]="screenOpen() ? '' : null"
-      [style.grid-area]="'boost-' + seat"
       [attr.data-seat]="seat"
     >
       <feat-lazy-bac-game-boost-pad
@@ -132,13 +133,20 @@
         [style.--bw-on-player]="onPlayerColor()"
       >
         <feat-lazy-bac-game-swarm [colors]="colonyRgb()" />
-        <feat-lazy-bac-game-social-notices
-          class="social-notices"
-          [invite]="inviteOffer()"
-          [canPlay]="onlineLobby().phase === 'idle'"
-          (play)="playChallenge($event)"
-          (inviteDone)="inviteOffer.set(null)"
-        />
+        <div class="social-notices">
+          <feat-lazy-bac-game-moderation-notices />
+          @if (declaring()) {
+            <p class="declaring" role="status">
+              {{ "boards.ranked.declaring" | t }}
+            </p>
+          }
+          <feat-lazy-bac-game-social-notices
+            [invite]="moderation.banned() ? null : inviteOffer()"
+            [canPlay]="onlineLobby().phase === 'idle' && !moderation.banned()"
+            (play)="playChallenge($event)"
+            (inviteDone)="inviteOffer.set(null)"
+          />
+        </div>
         @switch (open) {
           @case ("menu") {
             <feat-lazy-bac-game-main-menu
@@ -154,7 +162,7 @@
               [fullscreen]="fullscreen()"
               (fullscreenChange)="setFullscreen($event)"
               [challenge]="challengeLevel()"
-              [friendsAvailable]="social.available"
+              [cloudAvailable]="social.available"
               [friendRequests]="social.requests().length"
               [evolveDna]="evolution.canEvolve() ? evolution.dna() : 0"
               [colonyDna]="evolution.skinDna()"
@@ -182,6 +190,9 @@
               (missionChange)="pickMission($event)"
               [online]="onlineLobby()"
               [onlineAvailable]="onlineAvailable"
+              [rankedOffers]="rankedOffers()"
+              [declaring]="declaring()"
+              (rankedChange)="settings.setRanked($event)"
               (hostOnline)="hostOnline()"
               (joinOnline)="joinOnline($event)"
               (leaveOnline)="leaveOnline()"
@@ -249,6 +260,24 @@
               (back)="show('menu')"
             />
           }
+          @case ("leaderboards") {
+            <feat-lazy-bac-game-leaderboards
+              class="screen"
+              (back)="show('menu')"
+            />
+          }
+          @case ("my-matches") {
+            <feat-lazy-bac-game-my-matches
+              class="screen"
+              (back)="show('menu')"
+            />
+          }
+          @case ("replay") {
+            <feat-lazy-bac-game-replay-screen
+              class="screen"
+              (back)="show('menu')"
+            />
+          }
           @case ("help") {
             <feat-lazy-bac-game-help
               class="screen"
@@ -262,98 +291,6 @@
   }
 
   <div class="center" [attr.inert]="screenOpen() ? '' : null">
-    @if (!screenOpen()) {
-      <div class="stage-bar">
-        <span class="hud-level">{{ levelName() | gameText }}</span>
-        <span class="game-time" [class.running-out]="timeRunningOut()"
-          ><span class="cdk-visually-hidden">{{ clockLabel() }}: </span
-          >{{ clockText() }}</span
-        >
-        <span class="hud-colonies">
-          @for (colony of stats(); track colony.id) {
-            <span class="hud-colony" [class.boosting]="colony.boosting">
-              <span class="colony-name" [style.color]="colony.css">{{
-                colonyName(colony.name)
-              }}</span>
-              <span class="colony-count">{{ colony.bacterias }}</span>
-              @if (goal(); as goal) {
-                <span class="colony-held"
-                  ><mat-icon aria-hidden="true">{{ goal.icon }}</mat-icon
-                  >{{ colony[goal.of] }}/{{ goal.target
-                  }}<span class="cdk-visually-hidden">
-                    {{ goal.label | t }}</span
-                  ></span
-                >
-              }
-            </span>
-          }
-          @let neutral = neutralCount();
-          @if (neutral !== null) {
-            <span class="hud-colony neutral">
-              <span class="colony-name" [style.color]="neutralCss">{{
-                "game.players.neutral" | t
-              }}</span>
-              <span class="colony-count">{{ neutral }}</span>
-            </span>
-          }
-        </span>
-        <span class="hud-actions">
-          <button
-            mat-icon-button
-            type="button"
-            [attr.aria-label]="
-              (settings.sound() ? 'common.mute' : 'common.unmute') | t
-            "
-            [matTooltip]="
-              (settings.sound() ? 'common.mute' : 'common.unmute') | t
-            "
-            (click)="setSound(!settings.sound())"
-          >
-            <mat-icon>{{
-              settings.sound() ? "volume_up" : "volume_off"
-            }}</mat-icon>
-          </button>
-          @if (running() && !paused()) {
-            <button
-              mat-icon-button
-              type="button"
-              [attr.aria-label]="'stage.hud.pause' | t"
-              [matTooltip]="
-                'common.withKey'
-                  | t: { label: ('stage.hud.pause' | t), key: 'P' }
-              "
-              (click)="togglePause()"
-            >
-              <mat-icon>pause</mat-icon>
-            </button>
-          }
-          <button
-            mat-icon-button
-            type="button"
-            [attr.aria-label]="
-              (fullscreen() ? 'common.exitFullscreen' : 'common.fullscreen') | t
-            "
-            [matTooltip]="
-              'common.withKey'
-                | t
-                  : {
-                      label:
-                        ((fullscreen()
-                          ? 'common.exitFullscreen'
-                          : 'common.fullscreen'
-                        ) | t),
-                      key: 'F',
-                    }
-            "
-            (click)="setFullscreen(!fullscreen())"
-          >
-            <mat-icon>{{
-              fullscreen() ? "fullscreen_exit" : "fullscreen"
-            }}</mat-icon>
-          </button>
-        </span>
-      </div>
-    }
     <div
       wsThanos
       class="thanos-container"
@@ -361,10 +298,6 @@
       (wsSharedUiElemResized)="onArenaBoxResized($event)"
       (wheel)="onWheel($event)"
     >
-      <ws-shared-ui-show-fps
-        [show]="settings.showFps()"
-        [fps]="fps()"
-      ></ws-shared-ui-show-fps>
       <div class="arena-frame">
         <feat-lazy-bac-game-arena-view
           canvasId="canvasElement"
@@ -389,15 +322,41 @@
             [style.height.px]="canvasSize()?.height"
           ></canvas>
         }
-        @if (showMinimap()) {
-          <canvas
-            #minimapElement
-            class="minimap"
-            width="240"
-            aria-hidden="true"
-          ></canvas>
-        }
       </div>
     </div>
   </div>
+
+  @if (!screenOpen()) {
+    <feat-lazy-bac-game-hud-bar
+      [levelName]="levelName()"
+      [clockLabel]="clockLabel()"
+      [clockText]="clockText()"
+      [timeRunningOut]="timeRunningOut()"
+      [colonies]="stats()"
+      [goal]="goal()"
+      [neutral]="neutralCount()"
+      [neutralCss]="neutralCss"
+      [fps]="hudFps()"
+      [sound]="settings.sound()"
+      [showPause]="running() && !paused() && canPause()"
+      [showGiveUp]="running() && !canPause()"
+      [giveUpArmed]="giveUpArmed()"
+      [fullscreen]="fullscreen()"
+      (soundChange)="setSound($event)"
+      (pause)="togglePause()"
+      (giveUp)="giveUp()"
+      (fullscreenChange)="setFullscreen($event)"
+    />
+  }
+  <!-- Over everything while a tap's work is under way: a spinner. -->
+  <feat-lazy-bac-game-stage-busy [style.--bw-player]="colonyCss()[0]" />
+  <!-- Only a glance: small, in the top right corner below the HUD. -->
+  @if (cameraFollows()) {
+    <canvas
+      #minimapElement
+      class="minimap"
+      width="240"
+      aria-hidden="true"
+    ></canvas>
+  }
 </div>

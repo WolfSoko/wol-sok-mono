@@ -76,6 +76,12 @@ export const VISIBLE_STATUSES: readonly EntryStatus[] = [
   'stale',
 ];
 
+/** Every status an entry may have, the hidden one last. */
+export const ENTRY_STATUSES: readonly EntryStatus[] = [
+  ...VISIBLE_STATUSES,
+  'hidden',
+];
+
 /** What a row shows besides its rank, per board kind. */
 export type EntryShow =
   | { xp: number; rank: string }
@@ -98,6 +104,23 @@ export interface BoardRow {
   tag: number;
   avatar: number;
   show: EntryShow;
+}
+
+/** An entry document's shown fields: a row without its id and place. */
+export type BoardEntry = Omit<BoardRow, 'entryId' | 'pos' | 'rank'>;
+
+/** True for a status a board shows. */
+export function isVisible(status: EntryStatus): boolean {
+  return VISIBLE_STATUSES.includes(status);
+}
+
+/**
+ * True when an entry may show its player's name: counted and verified
+ * ones. A provisional or stale claim never does, so it is never a
+ * billboard - the functions leave its name out already.
+ */
+export function showsName(status: EntryStatus): boolean {
+  return status === 'counted' || status === 'verified';
 }
 
 /** A Firestore document id as entry ids are made: no slashes, short. */
@@ -190,6 +213,33 @@ export function competitionRanks(sorts: readonly number[]): number[] {
   return ranks;
 }
 
+/**
+ * The rows of a top document, from the visible entries in board order
+ * (at most `TOP_ROWS`) and the board's best verified ones (at most its
+ * cut): `pos` is 1 + the visible entries above (ties share it), `rank`
+ * the verified rank inside the cut.
+ */
+export function topRows(
+  visible: readonly Omit<BoardRow, 'pos' | 'rank'>[],
+  verified: readonly Pick<BoardRow, 'entryId' | 'sort'>[]
+): BoardRow[] {
+  const positions = competitionRanks(visible.map((row) => row.sort));
+  const ranks = new Map(
+    competitionRanks(verified.map((row) => row.sort)).map((rank, i) => [
+      verified[i].entryId,
+      rank,
+    ])
+  );
+  return visible.map((row, i) => {
+    const rank = ranks.get(row.entryId);
+    return {
+      ...row,
+      pos: positions[i],
+      ...(rank === undefined ? {} : { rank }),
+    };
+  });
+}
+
 function count(value: number, what: string): number {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new RangeError(`${what} must be a whole number >= 0: ${value}`);
@@ -277,10 +327,11 @@ export const XP_RISE_PER_DAY = 20_000;
 export const XP_FULL_COUNT = 25_000;
 /**
  * Progress documents created before this moment (their server
- * `createTime`) get the full first count; the release of the boards.
- * Move it to the actual release date before that client ships.
+ * `createTime`) get the full first count. The owner's cut (2026-10-24):
+ * every account there is today counts in full, every later one starts at
+ * the hourly cap.
  */
-export const XP_FULL_COUNT_BEFORE = Date.UTC(2026, 10, 1);
+export const XP_FULL_COUNT_BEFORE = Date.UTC(2026, 9, 25);
 
 /**
  * How far board XP may rise now: `min(2,000 + 3,000 × hours since the last

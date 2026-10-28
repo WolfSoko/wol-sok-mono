@@ -22,7 +22,7 @@ import { getLevel, LEVELS } from './levels';
  * changes a match against it raises it, as `BALANCE_VERSION` for a plain
  * match (`golden-match.spec.ts` holds a fingerprint of one).
  */
-export const LADDER_VERSION = 1;
+export const LADDER_VERSION = 2;
 
 /**
  * The stand-in's target win rate against the normal computer, by ladder

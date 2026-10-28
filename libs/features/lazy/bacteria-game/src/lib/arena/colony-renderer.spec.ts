@@ -1,12 +1,13 @@
 import { gameBalance } from '../state/game-balance';
 import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
-import { BACTERIA_LOOKS, BacteriaLook } from '../state/skins';
+import { BACTERIA_LOOKS, BOSS_LOOK, ColonyLook } from '../state/skins';
 import { COLONY_COLORS } from '../state/colony-colors';
 
 import {
   cellBubble,
   CELLS,
+  colonyBounds,
   colonyDensity,
   createImageDataFromBacterias,
   hatchPattern,
@@ -44,7 +45,7 @@ function slime(
   bacterias: Bacteria[],
   shimmerTimeSec: number | null = null,
   view: Rect = WHOLE,
-  look: Exclude<BacteriaLook, 'pixels'> = 'slime',
+  look: Exclude<ColonyLook, 'pixels'> = 'slime',
   timeSec = 0
 ) {
   const target: Point = { x: 30, y: 10 };
@@ -88,7 +89,7 @@ function slime(
 }
 
 /** Every look's pixels inside and outside a colony. */
-function withLook(look: Exclude<BacteriaLook, 'pixels'>) {
+function withLook(look: Exclude<ColonyLook, 'pixels'>) {
   const data = slime(blob(20, 10, 6), null, WHOLE, look);
   return { data, inside: pixelsWithin(data, 20, 10, 4) };
 }
@@ -191,9 +192,12 @@ describe('paintCells', () => {
   });
 });
 
-/** Every look drawn from the density, the slime with its own tests above. */
-const DENSITY_LOOKS = BACTERIA_LOOKS.filter(
-  (look): look is Exclude<BacteriaLook, 'pixels' | 'slime'> =>
+/**
+ * Every look drawn from the density - the skins, the slime with its own
+ * tests above, and the boss's.
+ */
+const DENSITY_LOOKS = [...BACTERIA_LOOKS, BOSS_LOOK].filter(
+  (look): look is Exclude<ColonyLook, 'pixels' | 'slime'> =>
     look !== 'pixels' && look !== 'slime'
 );
 
@@ -408,5 +412,21 @@ describe('shimmerAt', () => {
     const fine = { timeSec: 0.4, target: { x: 100, y: 60 }, unit: 2 };
 
     expect(shimmerAt(170, 60, fine)).toBeCloseTo(shimmerAt(85, 30, base));
+  });
+});
+
+describe('colonyBounds', () => {
+  it('reports the box of cells a colony covers', () => {
+    expect(
+      colonyBounds([
+        { x: 1, y: 1, energy: 1 },
+        { x: 5, y: 2, energy: 1 },
+        { x: 3, y: 3, energy: 1 },
+      ])
+    ).toEqual({ minX: 1, minY: 1, maxX: 5, maxY: 3 });
+  });
+
+  it('reports nothing for an empty colony', () => {
+    expect(colonyBounds([])).toBeNull();
   });
 });

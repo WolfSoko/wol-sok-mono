@@ -140,19 +140,35 @@ test('should seat two players at opposite edges', async ({ page }) => {
   await expect(po.boostCta).toHaveCount(2);
   await expect(po.joysticks).toHaveCount(2);
 
-  // Seat 0 is the left column, seat 1 the right one, each turned towards
-  // its player: the stick sits in their left hand and the boost pad in their
-  // right, so the pad is below the stick for the left player and above it
-  // for the right one.
-  const [leftStick, leftBoost, rightStick, rightBoost] = await Promise.all([
-    po.boxOf(po.joystick(0)),
-    po.boxOf(po.boostOf(0)),
-    po.boxOf(po.joystick(1)),
-    po.boxOf(po.boostOf(1)),
-  ]);
-  expect(leftStick.x).toBeLessThan(rightStick.x);
-  expect(leftBoost.y).toBeGreaterThan(leftStick.y);
-  expect(rightBoost.y).toBeLessThan(rightStick.y);
+  // Each player's controls lie over the arena at their end of the screen,
+  // turned towards them: seat 0 at the left edge (the bottom one on an
+  // upright screen), seat 1 at the opposite one. The boost pad sits in the
+  // corner under the player's right hand, so the two pads are in opposite
+  // corners.
+  const [stage, leftStick, leftBoost, rightStick, rightBoost] =
+    await Promise.all([
+      po.boxOf(po.stage),
+      po.boxOf(po.joystick(0)),
+      po.boxOf(po.boostOf(0)),
+      po.boxOf(po.joystick(1)),
+      po.boxOf(po.boostOf(1)),
+    ]);
+  // The stylesheet seats by the viewport's orientation, not the stage's.
+  const viewport = page.viewportSize();
+  if (viewport == null || viewport.width > viewport.height) {
+    expect(po.centreOf(leftStick).x).toBeLessThan(po.centreOf(rightStick).x);
+    expect(po.centreOf(leftBoost).x).toBeLessThan(po.centreOf(rightBoost).x);
+    expect(leftBoost.y).toBeGreaterThan(rightBoost.y);
+  } else {
+    expect(po.centreOf(leftStick).y).toBeGreaterThan(po.centreOf(rightStick).y);
+    expect(po.centreOf(leftBoost).y).toBeGreaterThan(po.centreOf(rightBoost).y);
+    expect(leftBoost.x).toBeGreaterThan(rightBoost.x);
+  }
+  // The arena takes the whole stage, under the controls.
+  const arena = await po.boxOf(po.playArea);
+  expect(
+    Math.max(arena.width / stage.width, arena.height / stage.height)
+  ).toBeGreaterThan(0.95);
 });
 
 test('should arm the boost once the match runs', async ({ page }) => {
@@ -264,10 +280,14 @@ test('should draw the arena on the GPU and keep it readable', async ({
 test('should run the colony war on the GPU', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'WebGL2 is checked in Chromium');
   const po = new BacteriaGamePo(page);
-  await po.goto();
-  await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
+  // CI has SwiftShader only, a software renderer the game keeps on the CPU
+  // (ADR 0015): the device override sends local matches to the integer GPU
+  // passes all the same. They pass the self-test there too.
+  await po.goto('/?sim=gpu-int');
+  await expect(po.playArea).toHaveAttribute('data-gpu-self-test', 'passed');
 
   await po.startMatch();
+  await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
   const start = await po.colonyCount(0);
 
   // The colonies divide - the GPU steps the war and the numbers come back.
@@ -324,7 +344,7 @@ test('should show the privacy policy on a page of its own', async ({
     page.getByRole('heading', { name: 'Datenschutzerklärung' })
   ).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: '10. Deleting your account and data' })
+    page.getByRole('heading', { name: '11. Deleting your account and data' })
   ).toBeInViewport();
   await expect(page.locator('#bacteria-game-splash')).toHaveCount(0);
 

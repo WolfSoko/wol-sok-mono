@@ -5,7 +5,7 @@ export const colony = {
   preview: 'Your colony in the {skin} skin',
   skin: {
     title: 'Skin',
-    note: 'The slime and the pixels are free. Every special skin costs DNA, which your XP grows - and stays yours through every reset. Every colony in the dish wears your skin.',
+    note: 'The slime and the pixels are free. Every special skin costs DNA, which your XP grows - and stays yours through every reset. Your colony wears it; the computer dresses by its level, and a boss in a look of its own.',
     buy: 'Buy',
     buyLabel: 'Buy the {name} skin for {cost} DNA',
     names: {

@@ -53,3 +53,28 @@ describe('sitemap.xml', () => {
     expect(listed.sort()).toEqual(routed.sort());
   });
 });
+
+describe('projects.ts', () => {
+  it('links only to pages angular-examples has', () => {
+    const sitemap = readFileSync(
+      join(__dirname, '../../../angular-examples/src/sitemap.xml'),
+      'utf8'
+    );
+    const pages = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+      ([, loc]) => new URL(loc).pathname
+    );
+    const examplesLinks = [...APPS, ...EXPERIMENTS, ...PACKAGES]
+      .flatMap((project) => project.links)
+      .map((link) => new URL(link.url))
+      .filter((url) => url.host === 'angularexamples.wolsok.de')
+      .map((url) => url.pathname.replace(/\/$/, ''));
+
+    // a link may point to a page or to a section that redirects to one of its tabs
+    const missing = examplesLinks.filter(
+      (path) =>
+        path !== '' &&
+        !pages.some((page) => page === path || page.startsWith(`${path}/`))
+    );
+    expect(missing).toEqual([]);
+  });
+});

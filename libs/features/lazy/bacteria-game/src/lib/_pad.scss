@@ -4,6 +4,7 @@
 // The box the button and its ring sit in, one over the other.
 @mixin button-with-ring {
   position: relative;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;

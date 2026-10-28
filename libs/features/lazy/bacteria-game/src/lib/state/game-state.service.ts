@@ -52,10 +52,18 @@ import {
 import { matchRecord } from './medallions';
 import { Player } from './player.model';
 import { randomSeed } from './geometry';
+import { perfProbeOf } from './perf-probe';
 import { MatchOutcome } from './win-conditions';
 import { MatchPlan, planMatch } from './match-setup';
-import { Replay, ReplayExtras, replayOf, replayOutcome } from './replay';
-import { DETERMINISTIC_SIMULATION, type Ruleset } from './simulation';
+import {
+  onOnlineGrid,
+  Replay,
+  ReplayExtras,
+  replayOf,
+  replayOutcome,
+  savedRegardless,
+} from './replay';
+import type { Ruleset } from './simulation';
 import { matchChecksum } from './checksum';
 import { replayScore } from './replay-score';
 import type { SizeSample } from './match-engine';
@@ -75,6 +83,12 @@ import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
 import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
+import { parseAttemptId, rankedPlan } from './attempts';
+import type {
+  RankedMatch,
+  RankedOutcome,
+  RankedRunOutcome,
+} from './ranked-match';
 
 /**
  * The most time one frame may take the war forward, in milliseconds. A
@@ -103,7 +117,10 @@ const LOCAL_RECORDED_SEATS: ReadonlySet<number> = new Set([0]);
 
 /** A recorded match (ADR 0011), as the last match left it. */
 export interface MatchRecording {
-  /** The replay - version 2 to 4, on a ruleset and the online grid. */
+  /**
+   * The replay - version 2 to 5, on a ruleset. Only one on the online grid
+   * is handed over to be kept; another one is for watching again.
+   */
   replay: Replay;
   /** The client's `replayScore` of it, 0-100. */
   hint: number;
@@ -139,13 +156,18 @@ export class GameStateService {
    * `GameCloud` would answer before the route named the project.
    */
   private injector = inject(Injector);
-  /** What the player set about recording - the settings tell. */
+  /** What the player set about recording - the settings tell, these until then. */
   private replayPrefs: ReplayPrefs = {
-    recordLocal: DETERMINISTIC_SIMULATION,
+    recordLocal: true,
     saveMatches: true,
   };
   /** Whether the match on the board is recorded, and how - null if not. */
   private recordedAs: 'online' | 'local' | null = null;
+  /**
+   * The ranked attempt the match on the board was declared as - null for
+   * an unranked one. Such a match is recorded locally, and uploaded.
+   */
+  private rankedMatch: RankedMatch | null = null;
   /** The room and number of the online match on the board. */
   private onlineRef: { roomCode: string; n: number } | null = null;
   /** The colony sizes after every second of the match on the board. */
@@ -181,6 +203,8 @@ export class GameStateService {
   private readonly frames = new Subject<GameFrame>();
   private subscriptions?: Subscription;
   private measureFps = new MeasureFps();
+  /** The frame-time spec's probe (ADR 0014, gate 3) - null in play. */
+  private readonly perfProbe = perfProbeOf(globalThis);
 
   /**
    * Emits every frame of a running match - inside the animation frame, so
@@ -216,7 +240,13 @@ export class GameStateService {
       this.gameStateStore.update((state) => ({
         timePassed: ticksToMs(Math.round(state.timePassed / TICK_MS) + 1),
       }));
-      this.playerService.tick(width, height);
+      if (this.perfProbe === null) {
+        this.playerService.tick(width, height);
+      } else {
+        const start = performance.now();
+        this.playerService.tick(width, height);
+        this.perfProbe.tickMs.push(performance.now() - start);
+      }
       const outcome = this.playerService.outcome();
       if (outcome != null) {
         this.endMatch(outcome);
@@ -455,12 +485,15 @@ export class GameStateService {
 
   /**
    * The recording of a match that has just ended, handed over to be kept
-   * - online always, a local one with "Save my matches" on (ADR 0011, 0012).
-   * Null for a match that was not recorded.
+   * - online and ranked always, a local one with "Save my matches" on (ADR
+   * 0011, 0012), and only on the online grid, the one a stored replay is
+   * checked on. Null for a match that was not recorded.
    */
   private recording(outcome: MatchOutcome): MatchRecording | null {
     const recordedAs = this.recordedAs;
+    const rankedMatch = this.rankedMatch;
     this.recordedAs = null;
+    this.rankedMatch = null;
     if (
       recordedAs === null ||
       this.playerService.getSimulation().ruleset === null ||
@@ -469,11 +502,19 @@ export class GameStateService {
       this.lastRecording.set(null);
       return null;
     }
+    // A ranked match carries its attempt - on the one ruleset the boards
+    // take (ADR 0012, 0015), which it always plays.
+    const ranked =
+      this.playerService.getSimulation().ruleset === 'gpu-int'
+        ? rankedMatch
+        : null;
     const replay = this.replay(
       outcome,
       recordedAs === 'online' && this.onlineRef !== null
         ? { roomCode: this.onlineRef.roomCode, n: this.onlineRef.n }
-        : {}
+        : ranked !== null
+          ? { attempt: ranked.attempt }
+          : {}
     );
     const end = replayOutcome(outcome);
     if (replay === null || end === null) {
@@ -488,10 +529,19 @@ export class GameStateService {
     });
     const recording: MatchRecording = { replay, hint: score, id: null };
     this.lastRecording.set(recording);
-    if (recordedAs === 'online' || this.replayPrefs.saveMatches) {
+    // An online or ranked match is uploaded whatever the settings say.
+    const attempt = ranked?.attempt.id;
+    if (
+      onOnlineGrid(replay.header) &&
+      (savedRegardless(replay.header) || this.replayPrefs.saveMatches)
+    ) {
       this.injector
         .get(GameReplays)
-        .submit({ replay, hint: score })
+        .submit({
+          replay,
+          hint: score,
+          ...(attempt === undefined ? {} : { attempt }),
+        })
         .then(
           (id) => {
             if (id !== null && this.lastRecording() === recording) {
@@ -506,20 +556,16 @@ export class GameStateService {
 
   /**
    * Whether a local match from `plan` is recorded: against the computer,
-   * no ghost, with recording on - and on the online grid of its level, the
-   * one a stored replay is checked on.
+   * no ghost, with recording on - on any grid, though only one on the
+   * online grid is kept.
    */
   private recordsLocal(plan: MatchPlan, ghost: Replay | null): boolean {
-    const level = getLevel(plan.levelId);
-    const grid = arenaSize(ONLINE_SIM_RESOLUTION, levelSize(level));
     return (
       this.replayPrefs.recordLocal &&
       ghost === null &&
       // A training mission's level is no replay's.
-      level.mission === undefined &&
-      plan.mode === 'vs-computer' &&
-      plan.width === grid.width &&
-      plan.height === grid.height
+      getLevel(plan.levelId).mission === undefined &&
+      plan.mode === 'vs-computer'
     );
   }
 
@@ -599,8 +645,14 @@ export class GameStateService {
       headStart,
       ghost,
       matchLevel,
+      ranked,
     } = this.gameStateStore.snapshot();
     const planned = matchLevel ?? levelId;
+    if (ranked?.match != null && matchLevel !== null && ghost === null) {
+      this.initRanked(matchLevel, ranked.match);
+      return;
+    }
+    this.rankedMatch = null;
     this.plan = {
       levelId: planned,
       mode: planModeOf(mode, matchLevel),
@@ -635,8 +687,36 @@ export class GameStateService {
     this.playerService.init(spawns, {
       ...options,
       onSecond: this.sample,
-      // Recorded on a ruleset, a simulation a replay plays back on.
-      ...(records ? { recordedSeats: LOCAL_RECORDED_SEATS } : {}),
+      // On the online grid recorded on a ruleset, a simulation a replay
+      // plays back on, whatever the device picks. On another grid the
+      // device picks as it would unrecorded: a match the float GPU plays,
+      // which has no ruleset, leaves no recording (see `recording`).
+      ...(records && onOnlineGrid(this.plan)
+        ? { recordedSeats: LOCAL_RECORDED_SEATS }
+        : {}),
+    });
+  }
+
+  /**
+   * Spawns the colonies of a ranked match (ADR 0012): the ranked plan of
+   * its level and declared seed, whatever the setup says - the normal
+   * computer, no head start, the default colours, the online grid -
+   * played on `gpu-int` and always recorded. The game lays the arena out
+   * on the online grid for it.
+   */
+  private initRanked(levelId: string, ranked: RankedMatch): void {
+    this.plan = rankedPlan(levelId, ranked.seed);
+    const { spawns, options, evolved } = planMatch(this.plan, null);
+    this.planEvolved = evolved;
+    this.rankedMatch = ranked;
+    this.recordedAs = 'local';
+    this.onlineRef = null;
+    this.samples = [];
+    this.playerService.init(spawns, {
+      ...options,
+      onSecond: this.sample,
+      recordedSeats: LOCAL_RECORDED_SEATS,
+      ruleset: 'gpu-int',
     });
   }
 
@@ -686,6 +766,7 @@ export class GameStateService {
     this.planEvolved = evolved;
     // Every online match is recorded - both seats, as the lockstep played.
     this.recordedAs = match === undefined ? null : 'online';
+    this.rankedMatch = null;
     this.samples = [];
     this.playerService.init(spawns, {
       ...options,
@@ -697,13 +778,19 @@ export class GameStateService {
 
   /**
    * Sets the next match on the daily level of that UTC day, against the
-   * computer, leaving the setup as it is. It holds for that one match;
-   * {@link reset} ends it.
+   * computer, leaving the setup as it is - or, declared as a ranked attempt
+   * (`ranked.match`), on the ranked setup and on the level of the attempt's
+   * day, which past midnight may be another than `day`. It holds for that
+   * one match; {@link reset} ends it.
    */
-  public playDaily(day: string): void {
+  public playDaily(day: string, ranked: RankedOutcome | null = null): void {
+    const attempt =
+      ranked?.match == null ? null : parseAttemptId(ranked.match.attempt.id);
+    const played = attempt?.kind === 'daily' ? attempt.day : day;
     this.gameStateStore.update({
-      matchLevel: dailyLevelId(day),
-      dailyDay: day,
+      matchLevel: dailyLevelId(played),
+      dailyDay: played,
+      ranked,
     });
   }
 
@@ -715,38 +802,42 @@ export class GameStateService {
   public playMission(id: MissionId): void {
     this.gameStateStore.update({
       ...NO_ONE_MATCH,
+      ranked: null,
       matchLevel: missionById(id).levelId,
     });
   }
 
-  /** Starts a new endless run, set up for its first match. */
-  public startEndless(): void {
-    this.gameStateStore.update({ endless: newRun(randomSeed()) });
-    this.continueEndless();
+  /**
+   * Starts a new endless run, set up for its first match. A ranked run
+   * (`ranked.run`) takes its levels from the seed of its declared match 0,
+   * which that match plays as well (ADR 0012).
+   */
+  public startEndless(ranked: RankedRunOutcome | null = null): void {
+    const match = ranked?.run == null ? null : ranked.match;
+    this.gameStateStore.update({
+      endless: newRun(match?.seed ?? randomSeed()),
+      endlessRanked: null,
+    });
+    this.continueEndless(ranked);
   }
 
   /**
    * Sets the next match on the level the endless run is at - the next one
    * after a win, the same again after a defeat. Nothing once it is over.
+   * A ranked run's match comes declared (`ranked`); without one the run
+   * stays as ranked as it was.
    */
-  public continueEndless(): void {
-    const { endless } = this.gameStateStore.snapshot();
+  public continueEndless(ranked: RankedRunOutcome | null = null): void {
+    const { endless, endlessRanked } = this.gameStateStore.snapshot();
     if (endless !== null && !isRunOver(endless)) {
       this.gameStateStore.update({
         ...NO_ONE_MATCH,
         matchLevel: endlessLevelId(endless),
         endlessMatch: true,
+        ranked:
+          ranked === null ? null : { match: ranked.match, note: ranked.note },
+        endlessRanked: ranked === null ? endlessRanked : ranked.run,
       });
-    }
-  }
-
-  /** On with the endless run after a match - or a new one, once it is over. */
-  public advanceEndless(): void {
-    const { endless } = this.gameStateStore.snapshot();
-    if (endless === null || isRunOver(endless)) {
-      this.startEndless();
-    } else {
-      this.continueEndless();
     }
   }
 
@@ -962,6 +1053,7 @@ export class GameStateService {
         state.matchLevel === null && online === null ? nextSeries(state) : null,
       // Any match but the run's leaves the endless run.
       endless: state.endlessMatch ? state.endless : null,
+      endlessRanked: state.endlessMatch ? state.endlessRanked : null,
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,
@@ -1017,6 +1109,7 @@ export class GameStateService {
       currentState: GameState.END,
       timePassed: 0,
       ...NO_ONE_MATCH,
+      ranked: null,
     }));
     this.initPlayers();
     this.gameStateStore.update(() => ({
@@ -1028,10 +1121,17 @@ export class GameStateService {
     }));
   }
 
-  /** Switches between RUNNING and PAUSED - bound to the P key and the button. */
+  /**
+   * Switches between RUNNING and PAUSED - bound to the P key and the
+   * button. Never pauses a ranked match: its attempt has a deadline from
+   * the declaration on (ADR 0012), which a pause would quietly miss.
+   */
   togglePause(): void {
     this.gameStateStore.update((state) => {
-      if (state.currentState === GameState.RUNNING) {
+      if (
+        state.currentState === GameState.RUNNING &&
+        state.ranked?.match == null
+      ) {
         return { currentState: GameState.PAUSED };
       }
       if (state.currentState === GameState.PAUSED) {

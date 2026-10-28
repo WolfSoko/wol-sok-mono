@@ -1,0 +1,85 @@
+@use '@angular/cdk';
+@use 'colony';
+
+// The clock's and the goal's labels for a screen reader.
+@include cdk.a11y-visually-hidden;
+
+// A band along the top edge of the screen, laid over the arena by the stage:
+// see-through, and only its buttons take a touch - the rest of a drag goes
+// to the arena below.
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  background: linear-gradient(rgb(0 0 0 / 45%), rgb(0 0 0 / 15%));
+  text-shadow: 0 1px 2px rgb(0 0 0 / 70%);
+  pointer-events: none;
+}
+
+.hud-level,
+.colony-name {
+  font-weight: 600;
+}
+
+.game-time,
+.colony-count,
+.colony-energy,
+.hud-fps {
+  font-variant-numeric: tabular-nums;
+}
+
+.game-time.running-out {
+  color: var(--mat-sys-error);
+  font-weight: 700;
+}
+
+.hud-colonies {
+  display: inline-flex;
+  gap: 0.75rem;
+}
+
+.hud-colony {
+  display: inline-flex;
+  gap: 0.3rem;
+
+  &.boosting {
+    animation: colony.$pulse;
+  }
+}
+
+.colony-held {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+  margin-left: 0.4em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+
+  mat-icon {
+    width: 1em;
+    height: 1em;
+    font-size: 1em;
+  }
+}
+
+.colony-energy,
+.hud-fps {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.hud-actions {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  pointer-events: auto;
+}
+
+.give-up-armed {
+  color: var(--mat-sys-error);
+}
+
+@include colony.pulse-keyframes;

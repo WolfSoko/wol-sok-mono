@@ -25,6 +25,10 @@ const selectorPrefixes = {
   'apps/rollapolla-analog': ['rap', 'rap'],
   'libs/features/api/auth': ['ftApiAuth', 'ft-api-auth'],
   'libs/features/lazy/bacteria-game': ['featLazyBacGame', 'feat-lazy-bac-game'],
+  'libs/features/lazy/bacteria-wars-admin': [
+    'featLazyBacAdmin',
+    'feat-lazy-bac-admin',
+  ],
   'libs/features/lazy/fourier-analysis': ['lazyFeatFanal', 'lazy-feat-fanal'],
   'libs/features/lazy/gravity-rocks': ['featLazyGravity', 'feat-lazy-gravity'],
   'libs/features/lazy/neural-networks': [

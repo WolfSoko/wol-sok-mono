@@ -1,8 +1,13 @@
 /* You can add global styles to this file, and also import other style files */
 /* You can add global styles to this file, and also import other style files */
 @import 'normalize.css/normalize.css';
-@import 'https://fonts.googleapis.com/icon?family=Material+Icons';
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+// Fonts and icons come from npm (Fontsource, material-icons) and are served
+// from this site: no request goes to Google Fonts, and the build fetches
+// nothing. A browser downloads a face only once text uses it.
+@import '@fontsource/roboto/latin-300.css';
+@import '@fontsource/roboto/latin-400.css';
+@import '@fontsource/roboto/latin-500.css';
+@import 'material-icons/iconfont/filled.css';
 
 body,
 html {

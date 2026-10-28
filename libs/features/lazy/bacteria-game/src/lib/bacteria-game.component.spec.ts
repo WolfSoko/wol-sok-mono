@@ -1,3 +1,4 @@
+import { StageBusy } from './busy/stage-busy';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
@@ -453,6 +454,16 @@ describe('BacteriaGameComponent', () => {
       expect(component['panel']()).toBe('menu');
     });
 
+    it('takes no key while the work of a tap waits to run', () => {
+      create();
+      component['show']('new-game');
+
+      TestBed.inject(StageBusy).run(() => undefined);
+      component.onKeyDown(keyEvent('Escape', document.body));
+
+      expect(component['panel']()).toBe('new-game');
+    });
+
     it('leaves fullscreen on Escape from the main menu only', () => {
       create();
 
@@ -560,14 +571,11 @@ describe('BacteriaGameComponent', () => {
       create();
       TestBed.inject(GameStateService).setDifficulty('hard');
       expect(component['clockLabel']()).toBe('Game time');
-      expect(component['colonyName']('You')).toBe('You');
 
       TestBed.inject(I18nService).setLanguage('de');
 
       expect(component['clockLabel']()).toBe('Spielzeit');
       expect(component['difficultyName']()).toBe('Schwer');
-      expect(component['colonyName']('You')).toBe('Du');
-      expect(component['colonyName']('Ada')).toBe('Ada');
       expect(component['settingsBackLabel']()).toBe('Menü');
     });
   });
@@ -764,11 +772,13 @@ describe('BacteriaGameComponent', () => {
       { steers: [[0, 0, 1, 0]], drags: [], boosts: [], weapons: [] }
     );
 
-    it('starts a match against it on Fight it', () => {
+    it('starts a match against it on Fight it', async () => {
       create();
       store.update({ challenge: run });
 
+      const held = holdBusyWork();
       component['fightChallenge']();
+      await held[0]();
 
       expect(store.ghost()).toEqual(run);
       expect(store.challenge()).toBeNull();
@@ -784,6 +794,85 @@ describe('BacteriaGameComponent', () => {
 
       expect(store.challenge()).toBeNull();
       expect(store.ghost()).toBeNull();
+    });
+  });
+
+  /**
+   * Holds the work a tap sets off behind the spinner, rather than waiting
+   * out the frame (which would render the template these specs leave out).
+   */
+  function holdBusyWork(): Array<() => void | Promise<unknown>> {
+    const held: Array<() => void | Promise<unknown>> = [];
+    jest
+      .spyOn(TestBed.inject(StageBusy), 'run')
+      .mockImplementation((work) => held.push(work));
+    return held;
+  }
+
+  describe('a match started from a tap', () => {
+    it('takes the screen on the tap, and sets the match up behind the spinner', async () => {
+      create();
+      const held = holdBusyWork();
+      const fullscreen = jest
+        .spyOn(component as never, 'requestNativeFullscreen')
+        .mockImplementation(() => undefined);
+      const start = jest
+        .spyOn(component, 'startGame')
+        .mockImplementation(() => undefined);
+
+      component['startNewGame']('campaign');
+
+      expect(fullscreen).toHaveBeenCalled();
+      expect(start).not.toHaveBeenCalled();
+      await held[0]();
+      expect(start).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts an online match on the tap, in step with the other device', () => {
+      create();
+      const held = holdBusyWork();
+      const start = jest
+        .spyOn(component, 'startGame')
+        .mockImplementation(() => undefined);
+
+      component['startNewGame']('online');
+
+      expect(start).toHaveBeenCalledTimes(1);
+      expect(held).toEqual([]);
+    });
+
+    it('starts the next campaign match from the result screen at once', () => {
+      create();
+      const held = holdBusyWork();
+      const start = jest
+        .spyOn(component, 'startGame')
+        .mockImplementation(() => undefined);
+
+      component['playFurthestLevel']();
+
+      expect(start).toHaveBeenCalledTimes(1);
+      expect(held).toEqual([]);
+    });
+
+    it('stays busy until a daily match is under way', async () => {
+      create();
+      const held = holdBusyWork();
+      let started = (): void => undefined;
+      jest
+        .spyOn(component as never, 'playDaily')
+        .mockImplementation(
+          (() => new Promise<void>((resolve) => (started = resolve))) as never
+        );
+
+      component['startNewGame']('daily');
+      let done = false;
+      const work = Promise.resolve(held[0]()).then(() => (done = true));
+      await Promise.resolve();
+
+      expect(done).toBe(false);
+      started();
+      await work;
+      expect(done).toBe(true);
     });
   });
 
@@ -804,6 +893,42 @@ describe('BacteriaGameComponent', () => {
 
       expect(store.snapshot().levelId).toBe(levelId);
       expect(start).toHaveBeenCalled();
+    });
+  });
+
+  describe('giving a ranked match up', () => {
+    function armed() {
+      create();
+      return jest
+        .spyOn(component as never, 'quitToMenu')
+        .mockImplementation(() => undefined);
+    }
+
+    it('quits on the second tap only, while the first is armed', () => {
+      const quit = armed();
+
+      component['giveUp']();
+      expect(component['giveUpArmed']()).toBe(true);
+      expect(quit).not.toHaveBeenCalled();
+
+      component['giveUp']();
+      expect(quit).toHaveBeenCalledTimes(1);
+      expect(component['giveUpArmed']()).toBe(false);
+    });
+
+    it('disarms by itself after a while', () => {
+      const quit = armed();
+      const timers = jest.spyOn(globalThis, 'setTimeout');
+
+      component['giveUp']();
+      const [disarm, ms] = timers.mock.calls.at(-1) ?? [];
+      expect(ms).toBe(3_000);
+      (disarm as () => void)();
+      expect(component['giveUpArmed']()).toBe(false);
+
+      component['giveUp']();
+      expect(quit).not.toHaveBeenCalled();
+      timers.mockRestore();
     });
   });
 

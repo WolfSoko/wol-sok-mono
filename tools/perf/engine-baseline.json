@@ -1,0 +1,24 @@
+{
+  "balanceVersion": 6,
+  "node": "v24.21.0",
+  "fixtures": {
+    "golden-cpu": {
+      "ratio": 17.892,
+      "checksum": 196095863,
+      "ticks": 360,
+      "outcome": null
+    },
+    "golden-gpu-int": {
+      "ratio": 61.086,
+      "checksum": 3330364408,
+      "ticks": 360,
+      "outcome": null
+    },
+    "heavy-cpu": {
+      "ratio": 56.6985,
+      "checksum": 3175078415,
+      "ticks": 600,
+      "outcome": null
+    }
+  }
+}

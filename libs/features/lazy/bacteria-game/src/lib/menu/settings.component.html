@@ -223,6 +223,28 @@
       </mat-slide-toggle>
     }
   </section>
+  <section class="screen-section switches" aria-labelledby="settings-matches">
+    <h3 id="settings-matches" class="section-title">
+      {{ "settings.matches.title" | t }}
+    </h3>
+    <mat-slide-toggle
+      class="record-local"
+      [checked]="settings.recordLocal()"
+      (change)="settings.setRecordLocal($event.checked)"
+    >
+      {{ "settings.matches.recordLocal" | t }}
+    </mat-slide-toggle>
+    <p class="section-note">{{ "settings.matches.recordLocalNote" | t }}</p>
+    <mat-slide-toggle
+      class="save-matches"
+      [checked]="settings.saveMatches()"
+      [disabled]="!settings.recordLocal()"
+      (change)="settings.setSaveMatches($event.checked)"
+    >
+      {{ "settings.matches.saveMatches" | t }}
+    </mat-slide-toggle>
+    <p class="section-note">{{ "settings.matches.saveMatchesNote" | t }}</p>
+  </section>
   <section class="screen-section" aria-labelledby="settings-language">
     <h3 id="settings-language" class="section-title">
       {{ "settings.language.title" | t }}

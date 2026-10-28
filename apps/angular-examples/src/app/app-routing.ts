@@ -168,6 +168,18 @@ export const APP_ROUTES: MainNavRoutes = [
     },
   },
   {
+    path: 'thanosPlayground',
+    loadChildren: () =>
+      import('./feature/lazy/thanos-playground/thanos-playground.routes').then(
+        (m) => m.routes
+      ),
+    data: {
+      linkText: 'Thanos snap playground (@wolsok/thanos)',
+      description:
+        'Try the @wolsok/thanos Angular directive live: vaporize a card into dust, cracks, shards or chunks on the GPU and set the wind direction, duration and particle count.',
+    },
+  },
+  {
     path: 'webassemblyTests',
     loadChildren: () => import('@wolsok/feat-wasm-test').then((m) => m.routes),
     data: {

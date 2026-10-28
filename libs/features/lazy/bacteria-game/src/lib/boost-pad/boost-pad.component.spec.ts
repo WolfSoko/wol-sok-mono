@@ -13,7 +13,6 @@ const orange: ColonyStats = {
   captured: 3,
   lost: 1,
   energy: 92,
-  share: 55,
   boosting: false,
   boostReady: true,
   boostCooldown: 0,
@@ -85,10 +84,6 @@ describe('BoostPadComponent', () => {
     expect(button().disabled).toBe(true);
     expect(button().textContent).toContain('3s');
     expect(progress('.charge')).toBe('25');
-  });
-
-  it('shows the colony share', () => {
-    expect(progress('.share')).toBe('55');
   });
 
   it('is down while no match is on', async () => {

@@ -89,8 +89,8 @@ the server all run.
     both, and the ratio stays roughly stable.
   - It also checks the result: the checksum and outcome must match the
     fixture's, so a "faster" engine that plays differently fails.
-  - Optionally (`--expose-gc`) it reports heap growth per 1,000 ticks, as a
-    sign of allocation in the hot loop; reported, not gated.
+  - Optionally (`--expose-gc`) it reports the heap a play keeps once it is
+    over, as a sign of a leak; reported, not gated.
 - **The baseline** is a committed file, `tools/perf/engine-baseline.json`,
   holding the ratio per fixture. The gate:
   - fails when a ratio is more than **20%** above its baseline;
@@ -167,12 +167,111 @@ is decided after a month, like gate 3.
 
 1. **Phase 1, budgets**: `anyScript` and tightened `initial` budgets for
    every app, the `evolution.component.scss` warning fixed. Blocking at once.
+   - As built (2026-10-26): `initial`, `anyScript` and `allScript` with a
+     `baseline` on all five Angular apps, measured through the federation
+     build. The numbers had moved since this ADR: `bacteria-game-remote`'s
+     largest script is 622 kB (the game's chunk, split since), all its
+     scripts 1,768 kB (the admin area, the replay viewer and the error
+     reports came since), initial 227 kB. The stylesheet warnings are three
+     by now (`new-game`, `bacteria-game`, `evolution`); they moved to a PR of
+     their own, since trimming them needs a look at the screens.
+   - The stylesheet warnings, fixed: `evolution` and `new-game` group the
+     rules they repeated (panels, display-face titles, the card buttons, the
+     panes that fill and scroll); the training's mission list
+     (`MissionListComponent`) and the HUD bar above the arena
+     (`HudBarComponent`) became components of their own, their styles with
+     them. `new-game` 7.37 → about 5.4 kB, `bacteria-game` 6.68 → about
+     5.7 kB, `evolution` 6.09 → about 5.9 kB; the screens compared pixel for
+     pixel before and after.
 2. **Phase 2, engine benchmark**: `tools/perf/engine-bench.mjs`, the heavy
    fixture, `engine-baseline.json`, the `perf` target and the CI wiring;
    report-only for two weeks, then blocking.
+   - As built (2026-10-27): the heavy fixture
+     (`tools/perf/fixtures/expanse-heavy.json`) differs from the plan.
+     Generated levels are always the small map and have no neutral
+     colonies, so it plays `expanse` (the large map, with neutrals) against
+     the hard computer on the online grid (640×360), with steers, drags and
+     a boost from the human seat. It plays 10 s, not 60: the cost grows
+     with the bacteria, and 60 s took about 58 s per run, 8 runs per
+     fixture. The golden replay is timed twice, on `cpu` and on `gpu-int`
+     (`IntSimulation`), since ranked matches and the server's verification
+     take `gpu-int`. Each fixture is played on the current
+     `BALANCE_VERSION`, as `golden-replay.spec.ts` plays it.
+   - The calibration loop proved the noisy half: its first runs were at
+     times twice as slow, so it warms up 10 times and takes the median of
+     15 runs before and 15 after; esbuild's service is stopped before the
+     timing starts. On a developer's machine the ratios still spread by
+     about ±10% between runs of the same code; on the Nx Cloud workers two
+     runs agreed within 1.3%, but a third measured 40-50% higher ratios
+     (the calibration loop faster, the engine slower): the workers are not
+     all alike, and the loop does not even out every CPU. The report names
+     the CPU it ran on; before the gate blocks, the two weeks of reports
+     show whether baselines are needed per CPU model or the calibration
+     loop must change. The ratios do not carry over between machines
+     or Node versions (CI's were 40-50% below a developer's), so the
+     baseline holds CI's. The two weeks of reports decide whether the ±7%
+     this ADR allows holds there.
+   - The heap figure is the heap a play keeps once it is over (averaged
+     over 3 plays), not growth per 1,000 ticks: the replays are a few
+     hundred ticks long, and V8's own few hundred KiB either way looked like
+     a leak when scaled up.
+   - A baseline counts only on the Node major it was measured on (the
+     baseline names it): CI runs `.nvmrc`'s Node 24, whose V8 optimises
+     otherwise than a developer's Node 22. The baseline holds CI's ratios, the
+     mean of two runs' output on this PR (`--update` on a developer's
+     machine would write that machine's). A fixture that no
+     longer parses or plays back is a failed row, so `--report-only` still
+     reports it.
+   - The target runs `--report-only` (it never fails) and takes about 1.5
+     minutes. To block, drop that flag from the `perf` target.
 3. **Phase 3, browser frame time**: `perf.spec.ts` and the debug hook,
    report-only.
+   - As built (2026-10-27): the fixed seed comes from the spec, not the
+     game: an init script pins `Math.random` to a seeded generator before
+     the page loads, which fixes the match's seed and every other draw. The
+     debug hook is `state/perf-probe.ts`: the spec puts
+     `window.__bacteriaPerfProbe` on the page, and `GameStateService`
+     times each tick only when it finds one (one null check per tick in
+     play). The match is the campaign's first against the computer, the
+     player idle, on `?sim=cpu`. The numbers go to the log and the
+     attachment `frame-time.json`; the job summary only where
+     `GITHUB_STEP_SUMMARY` is set, which the Nx Cloud workers that run the
+     e2e tasks don't have. Two local runs on SwiftShader: frame interval
+     p50 66.7 / 66.6 ms, p95 83.4 ms both, tick p50 2.7 / 2.4 ms, 898 / 937
+     ticks in 20 s (the game slows its clock when frames run long), about
+     260 long tasks: the painting on a software renderer, not the engine,
+     sets the pace there.
 4. **Phase 4, Lighthouse**: report-only.
+   - As built (2026-10-27): a `lighthouse` target on `portfolio`,
+     `angular-examples` and `rollapolla-analog`, depending on `build`, in
+     `nx affected` and `stop-after` like `perf`. Each app's
+     `lighthouse.json` names what to serve and which pages, and
+     `tools/perf/lighthouse-run.mjs` adds the shared settings (a relative
+     import from an app into `tools/` breaks the module boundaries). They
+     warn only, so the run fails only when
+     nothing could be measured; Chrome is Playwright's, which the workers
+     install for the e2e tasks. The ADR's assertions are on LCP, TBT, CLS
+     and total byte weight at Lighthouse's own "good" marks. rollapolla's
+     SSR build (Nitro's `firebase` preset) exports a function and listens
+     nowhere, so `tools/perf/serve-firebase-function.mjs` serves it the way
+     Hosting does: the public folder first, the function for the rest. The
+     public replay pages are left out for now: they are a Cloud Function
+     behind Hosting and need the functions emulator.
+   - First local numbers (mobile, headless, no GPU): `angular-examples` `/`
+     LCP about 12 s; its total blocking time was about 139 s while Chrome
+     drew the title's shader on software WebGL, and about 4.4 s once
+     `--disable-gpu` took WebGL away (the CI workers' containers need it,
+     with `--disable-dev-shm-usage`, or the tab crashes).
+     The title's shader then got paced (`RenderShaderComponent`'s
+     `resolutionScale`, `maxFps`, `startWhenIdle`, `stillOnSlowRenderer`):
+     half the resolution, 20 fps, started once the page is idle, and one
+     still frame on a software renderer or with reduced motion. Measured
+     with WebGL on SwiftShader, TBT went from about 141 s to 7.5-13 s; what
+     is left is the app's own start (polyfills, the main chunks), not the
+     shader.
+     `rollapolla-analog` `/` LCP 8-15 s, TBT about 300 ms, 2.1 MB, `/polls`
+     LCP 13-15 s. The portfolio's prerender does not run
+     in the development container; CI measures it.
 
 Each phase is its own PR. CLAUDE.md's "Performance gates" section says what
 is in place; it is updated with each phase.

@@ -23,6 +23,14 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.config.ts",
+        "{workspaceRoot}/.codecov.yml",
+        "{workspaceRoot}/apps/bacteria-wars-functions/src/config.ts"
+      ],
       "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/bacteria-game"],
       "options": {
         "jestConfig": "libs/features/lazy/bacteria-game/jest.config.ts",
@@ -47,6 +55,19 @@
       "outputs": ["{workspaceRoot}/dist/balance"],
       "options": {
         "command": "tsx ./tools/bacteria-game/balance/run.ts full"
+      }
+    },
+    "perf": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "parallelism": false,
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/tools/perf/**/*"
+      ],
+      "options": {
+        "command": "node --expose-gc tools/perf/engine-bench.mjs --report-only"
       }
     }
   }

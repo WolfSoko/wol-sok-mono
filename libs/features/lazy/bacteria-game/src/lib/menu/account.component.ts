@@ -1,13 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { ProgressService } from '../progress.service';
+import { GUEST_IDLE_DAYS } from '../guest/guest-visits';
+import { SignIn } from '../guest/sign-in.service';
 import { GameAccount } from '../storage/game-account';
 
 /**
@@ -29,13 +25,16 @@ import { GameAccount } from '../storage/game-account';
         <button
           mat-stroked-button
           type="button"
-          [disabled]="busy() || !progress.loaded()"
-          (click)="signIn()"
+          [disabled]="!signIn.ready()"
+          (click)="signIn.signIn()"
           [title]="'profile.account.signInHint' | t"
         >
           <mat-icon>login</mat-icon>
           {{ 'profile.account.signIn' | t }}
         </button>
+        <span class="deletion">
+          {{ 'profile.account.deletion' | t: { days: idleDays } }}
+        </span>
       } @else {
         <span class="note">
           {{ 'profile.account.signedInAs' | t }}
@@ -46,14 +45,14 @@ import { GameAccount } from '../storage/game-account';
         <button
           mat-stroked-button
           type="button"
-          [disabled]="busy()"
-          (click)="signOut()"
+          [disabled]="signIn.busy()"
+          (click)="signIn.signOut()"
         >
           <mat-icon>logout</mat-icon>
           {{ 'profile.account.signOut' | t }}
         </button>
       }
-      @if (failed()) {
+      @if (signIn.failed()) {
         <span class="failed" role="status">{{ 'social.failed' | t }}</span>
       }
     }
@@ -77,10 +76,18 @@ import { GameAccount } from '../storage/game-account';
       }
     }
 
+    .deletion,
     .failed {
       flex-basis: 100%;
       text-align: right;
       font-size: 0.85rem;
+    }
+
+    .deletion {
+      color: var(--bw-muted);
+    }
+
+    .failed {
       color: var(--bw-gold);
     }
   `,
@@ -88,35 +95,6 @@ import { GameAccount } from '../storage/game-account';
 })
 export class AccountComponent {
   protected readonly account = inject(GameAccount);
-  /**
-   * The guest's progress has to be here before a sign-in: an account that
-   * played elsewhere adopts what the guest has, and the guest's stored
-   * progress is out of reach once the account has taken over.
-   */
-  protected readonly progress = inject(ProgressService);
-  protected readonly busy = signal(false);
-  protected readonly failed = signal(false);
-
-  protected async signIn(): Promise<void> {
-    await this.whileBusy(async () => {
-      this.failed.set((await this.account.signIn()) === 'failed');
-    });
-  }
-
-  protected async signOut(): Promise<void> {
-    await this.whileBusy(() => this.account.signOut());
-  }
-
-  private async whileBusy(task: () => Promise<void>): Promise<void> {
-    this.busy.set(true);
-    this.failed.set(false);
-    try {
-      await task();
-    } catch (error) {
-      console.error(error);
-      this.failed.set(true);
-    } finally {
-      this.busy.set(false);
-    }
-  }
+  protected readonly signIn = inject(SignIn);
+  protected readonly idleDays = GUEST_IDLE_DAYS;
 }

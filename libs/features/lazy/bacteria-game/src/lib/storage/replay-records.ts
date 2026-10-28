@@ -1,5 +1,6 @@
 import type { Replay } from '../state/replay';
 import { onlineReplayId } from '../state/replay-id';
+import type { ArrivalReason, OnlineReason } from '../state/replay-reasons';
 import type { EndReason } from '../state/win-conditions';
 
 /** A recorded match to keep (ADR 0011). */
@@ -43,13 +44,39 @@ export interface ReplayListing {
   winnerSeat: number | null;
   hint: number;
   state: ReplayState;
+  /**
+   * The seat the player played: online the host's is 0 and the guest's 1
+   * (the stored `seats`), against the computer always 0.
+   */
+  seat: number;
   /** The server's score, once it played the match again. */
   score?: number;
+  /**
+   * Why it did or did not count on a board - an {@link ArrivalReason} for
+   * a declared match, an {@link OnlineReason} for an online one - absent
+   * until the functions decided, and for a match that ranks nowhere.
+   */
+  rankedReason?: ArrivalReason | OnlineReason;
+  /** True once the player kept it out of the public gallery (`remove`). */
+  galleryOut?: boolean;
+  /** Its public copy in the gallery, while there is one. */
+  publicId?: string;
 }
 
-/** What a player may ask of a replay; all but `remove` only the owner. */
+/** True when a stored replay counted on its board. */
+export function isCounted(listing: Pick<ReplayListing, 'rankedReason'>) {
+  return listing.rankedReason === 'counted';
+}
+
+/**
+ * What a player may ask of a replay: `remove` keeps it out of the public
+ * gallery, `forget` deletes it from their matches - in the cloud it takes
+ * them out of the replay, which stays anonymised for the statistics (ADR
+ * 0012, owner's decision of 2026-10-26). The rest only the owner.
+ */
 export type ReplayCommandType =
   | 'remove'
+  | 'forget'
   | 'feature'
   | 'unfeature'
   | 'anonymise';

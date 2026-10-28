@@ -21,12 +21,20 @@ import {
   startWith,
   switchMap,
 } from 'rxjs';
+import { ModerationService } from '../moderation/moderation.service';
 import { OnlineMatchService } from '../net/online-match.service';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import type { GameSocial, PresenceState } from '../storage/game-social';
 import { GameStateStore, isMatchOn } from '../state/game.states';
 import { defaultProfile, parseProfile, PlayerCard, Profile } from './profile';
+
+/** The player's stored profile as read, unparsed. */
+interface StoredProfile {
+  uid: string;
+  value: unknown;
+  failed: boolean;
+}
 
 /** A friend as the lobby lists them. */
 export interface FriendView {
@@ -61,6 +69,7 @@ export class SocialService {
   private readonly account = inject(GameAccount);
   private readonly store = inject(GameStateStore);
   private readonly online = inject(OnlineMatchService);
+  private readonly moderation = inject(ModerationService);
   private readonly social = this.cloud.social();
   private readonly presence = this.cloud.presence();
   /** Cards already watched, by uid - each is read once, however often shown. */
@@ -79,19 +88,41 @@ export class SocialService {
   /** Who plays - null between players and without the cloud. */
   public readonly uid = toSignal(this.uid$, { initialValue: null });
 
+  /** The stored profile as read, or why it is not: it failed to read. */
   private readonly stored = toSignal(
     this.uid$.pipe(
       switchMap((uid) =>
         uid === null || this.social === null
           ? of(null)
           : this.social.watchProfile(uid).pipe(
-              map((value): { uid: string; value: unknown } => ({ uid, value })),
-              catchError(() => of({ uid, value: null }))
+              map((value): StoredProfile => ({ uid, value, failed: false })),
+              catchError(() =>
+                of<StoredProfile>({ uid, value: null, failed: true })
+              )
             )
       )
     ),
     { initialValue: null }
   );
+
+  /**
+   * True once the player's stored profile was read - or the server said
+   * there is none. Until then `profile` is made up, and saving it would
+   * write its defaults over what is stored.
+   */
+  public readonly profileLoaded = computed(() => {
+    const stored = this.stored();
+    return stored !== null && stored.uid === this.uid() && !stored.failed;
+  });
+
+  /** The profile as stored - null while none is, or it is not read yet. */
+  private readonly storedProfile = computed(() => {
+    const stored = this.stored();
+    const uid = this.uid();
+    return stored !== null && stored.uid === uid && uid !== null
+      ? parseProfile(stored.value, uid)
+      : null;
+  });
 
   /** The player's profile - the stored one, else one made from their uid. */
   public readonly profile: Signal<Profile | null> = computed(() => {
@@ -99,9 +130,10 @@ export class SocialService {
     if (uid === null || !this.available) {
       return null;
     }
-    const stored = this.stored();
-    const parsed = stored?.uid === uid ? parseProfile(stored.value, uid) : null;
-    return parsed ?? defaultProfile(uid, this.account.profile()?.name ?? null);
+    return (
+      this.storedProfile() ??
+      defaultProfile(uid, this.account.profile()?.name ?? null)
+    );
   });
 
   /** The player's friends, with whether it is mutual and who is online. */
@@ -115,14 +147,25 @@ export class SocialService {
                 uids.map((uid) =>
                   combineLatest([
                     this.card(uid),
-                    social.watchListedBy(uid, me).pipe(startWith(false)),
-                    this.statusOf(uid),
+                    // The status only of a friend who lists the player too:
+                    // only they may read it (ADR 0012).
+                    social.watchListedBy(uid, me).pipe(
+                      startWith(false),
+                      distinctUntilChanged(),
+                      switchMap((mutual) =>
+                        mutual
+                          ? this.statusOf(uid).pipe(
+                              map((status) => ({ mutual, status }))
+                            )
+                          : of({ mutual, status: null })
+                      )
+                    ),
                   ]).pipe(
-                    map(([card, mutual, status]): FriendView => ({
+                    map(([card, { mutual, status }]): FriendView => ({
                       uid,
                       card,
                       mutual,
-                      status: mutual ? status : null,
+                      status,
                     }))
                   )
                 )
@@ -197,13 +240,15 @@ export class SocialService {
     // The player shows up as online while they share it - playing while an
     // online match is on. Nothing is told before their stored profile is
     // read, which may say they do not share it, and the status goes with
-    // the player who signs out.
+    // the player who signs out - and with a ban, under which the database
+    // refuses it (ADR 0012).
     let shown: string | null = null;
     effect(() => {
       const presence = this.presence;
       const uid = this.uid();
-      const loaded = this.stored()?.uid === uid;
+      const loaded = this.profileLoaded();
       const profile = this.profile();
+      const banned = this.moderation.banned();
       const playing =
         this.store.online() !== null && isMatchOn(this.store.currentState());
       if (presence === null) {
@@ -219,16 +264,34 @@ export class SocialService {
       shown = uid;
       presence.set(
         uid,
-        profile?.shareStatus === true ? (playing ? 'playing' : 'online') : null
+        profile?.shareStatus === true && !banned
+          ? playing
+            ? 'playing'
+            : 'online'
+          : null
       );
     });
   }
 
-  public async saveProfile(profile: Profile): Promise<void> {
+  /**
+   * Saves the fields given - the ones the player changed - over the stored
+   * profile; a first profile is saved whole, from `profile`. Refused until
+   * the stored profile is read, so its flags are never written blind.
+   */
+  public async saveProfile(changes: Partial<Profile>): Promise<void> {
     const uid = this.uid();
-    if (uid !== null) {
-      await this.social?.saveProfile(uid, profile);
+    const profile = this.profile();
+    if (uid === null || profile === null || this.social === null) {
+      return;
     }
+    if (!this.profileLoaded()) {
+      throw new Error('The stored profile is not read yet');
+    }
+    this.assertNotBanned();
+    await this.social.saveProfile(
+      uid,
+      this.storedProfile() === null ? { ...profile, ...changes } : changes
+    );
   }
 
   /** What others see of a player - a made-up card until theirs is read. */
@@ -252,13 +315,13 @@ export class SocialService {
 
   /** Asks a player - the opponent of a match - to be friends. */
   public async addFriend(uid: string): Promise<void> {
-    await this.withPlayer((social, me) =>
+    await this.withWriter((social, me) =>
       me === uid ? Promise.resolve() : social.sendRequest(me, uid)
     );
   }
 
   public async acceptRequest(uid: string): Promise<void> {
-    await this.withPlayer((social, me) => social.acceptRequest(me, uid));
+    await this.withWriter((social, me) => social.acceptRequest(me, uid));
   }
 
   public async declineRequest(uid: string): Promise<void> {
@@ -271,7 +334,7 @@ export class SocialService {
 
   /** A link that makes whoever opens it the player's friend, for a week. */
   public async inviteLink(base: string): Promise<string | null> {
-    const token = await this.withPlayer((social, me) =>
+    const token = await this.withWriter((social, me) =>
       social.createInvite(me)
     );
     return token === null ? null : `${base.split('#')[0]}#friend=${token}`;
@@ -294,12 +357,12 @@ export class SocialService {
   }
 
   public async acceptInvite(token: string, from: string): Promise<void> {
-    await this.withPlayer((social, me) => social.acceptInvite(me, token, from));
+    await this.withWriter((social, me) => social.acceptInvite(me, token, from));
   }
 
   /** Challenges a friend to the match in room `code`. */
   public async challenge(friend: string, code: string): Promise<void> {
-    await this.withPlayer((social, me) => social.challenge(me, friend, code));
+    await this.withWriter((social, me) => social.challenge(me, friend, code));
   }
 
   /**
@@ -365,6 +428,24 @@ export class SocialService {
           : watch(social, me).pipe(catchError(() => of([])))
       )
     );
+  }
+
+  /**
+   * What `task` writes for the player - nothing while a ban holds, under
+   * which the rules refuse it (ADR 0012); taking things back stays open.
+   */
+  private async withWriter<T>(
+    task: (social: GameSocial, me: string) => Promise<T>
+  ): Promise<T | null> {
+    this.assertNotBanned();
+    return this.withPlayer(task);
+  }
+
+  /** Throws while a ban holds: the rules refuse the player's writes then. */
+  private assertNotBanned(): void {
+    if (this.moderation.banned()) {
+      throw new Error('The account is suspended');
+    }
   }
 
   private async withPlayer<T>(

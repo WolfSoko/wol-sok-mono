@@ -1,4 +1,5 @@
 <header class="top">
+  <feat-lazy-bac-game-account-chip (profile)="open.emit('profile')" />
   @let soundLabel = (sound() ? "common.mute" : "common.unmute") | t;
   <button
     mat-icon-button
@@ -27,7 +28,9 @@
     <h1 class="title">Bacteria <span class="war">Wars</span></h1>
     <p class="tagline">{{ "menu.tagline" | t: { levels: totalLevels } }}</p>
 
-    @if (installOffer.visible()) {
+    @if (guestNotice.visible()) {
+      <feat-lazy-bac-game-guest-banner />
+    } @else if (installOffer.visible()) {
       <feat-lazy-bac-game-install-banner />
     }
 
@@ -43,7 +46,7 @@
         mat-flat-button
         type="button"
         class="play"
-        (click)="newGame.emit()"
+        (click)="busyEmit(newGame)"
       >
         <mat-icon>play_arrow</mat-icon>
         <span class="play-text">
@@ -56,7 +59,7 @@
           mat-stroked-button
           type="button"
           class="training"
-          (click)="training.emit()"
+          (click)="busyEmit(training)"
         >
           <mat-icon>school</mat-icon>
           <span class="play-text">
@@ -107,7 +110,7 @@
           }}</span>
         }
       </button>
-      @if (friendsAvailable()) {
+      @if (cloudAvailable()) {
         <button type="button" class="tile" (click)="open.emit('friends')">
           <mat-icon>group</mat-icon>
           {{ "social.friends.title" | t }}
@@ -120,6 +123,16 @@
           }
         </button>
       }
+      @if (showsBoards()) {
+        <button type="button" class="tile" (click)="open.emit('leaderboards')">
+          <mat-icon class="gold">leaderboard</mat-icon>
+          {{ "boards.title" | t }}
+        </button>
+      }
+      <button type="button" class="tile" (click)="open.emit('my-matches')">
+        <mat-icon>smart_display</mat-icon>
+        {{ "replay.matches.title" | t }}
+      </button>
       <button type="button" class="tile" (click)="open.emit('settings')">
         <mat-icon>tune</mat-icon>
         {{ "settings.title" | t }}
@@ -138,6 +151,12 @@
           <mat-icon class="gold">local_cafe</mat-icon>
           {{ "support.tile" | t }}
         </button>
+      }
+      @if (showsAdmin()) {
+        <a class="tile admin" [routerLink]="['/', adminPath]">
+          <mat-icon>admin_panel_settings</mat-icon>
+          {{ "menu.admin" | t }}
+        </a>
       }
     </nav>
   </section>

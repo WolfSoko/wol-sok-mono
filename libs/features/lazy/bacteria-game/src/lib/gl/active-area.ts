@@ -85,3 +85,24 @@ function union(a: CellBounds, b: CellBounds): CellBounds {
     maxY: Math.max(a.maxY, b.maxY),
   };
 }
+
+/**
+ * How far a bacterium may have got from where a report `behind` ticks old
+ * saw it, by the end of this tick - from the reach of each of the last
+ * ticks, newest first. The report counts the bacteria of its tick after
+ * the combat, before they divided and moved, so its own tick counts as
+ * well. Null when the reach of a tick that counts is no longer kept.
+ */
+export function reachSinceReport(
+  recentReach: readonly number[],
+  behind: number
+): number | null {
+  if (behind + 1 > recentReach.length) {
+    return null;
+  }
+  let reach = 0;
+  for (let tick = 0; tick <= behind; tick++) {
+    reach += recentReach[tick];
+  }
+  return reach;
+}

@@ -73,9 +73,10 @@ function zone(
 
 /**
  * A walled arena with all five zones, a bar that slides one cell every
- * twentieth of a second and a gate that shuts after half a second.
+ * twentieth of a second for `slidingSec` and then stands still, and a gate
+ * that shuts after half a second.
  */
-function testMap(): GameMap {
+function testMap(slidingSec = Infinity): GameMap {
   const middle = (w: number) => Math.floor(w / 2);
   return {
     id: 'deterministic-test',
@@ -120,7 +121,7 @@ function testMap(): GameMap {
       ),
     ],
     createDynamicWalls: (w, h, timeSec): DynamicWall[] => {
-      const slide = Math.floor(timeSec * 20);
+      const slide = Math.floor(Math.min(timeSec, slidingSec) * 20);
       return [
         {
           x: 4 + (slide % Math.floor(w / 3)),
@@ -169,11 +170,20 @@ export function skirmish(
   height: number,
   ticks: number,
   matchSeed: number,
-  balance: GameBalance = gameBalance
+  options: {
+    balance?: GameBalance;
+    map?: GameMap;
+    /** The colonies' radius at the start - an eighth of the shorter side by default. */
+    radius?: number;
+  } = {}
 ): SimScenario {
   const w = width;
   const h = height;
-  const radius = Math.max(3, Math.floor(Math.min(w, h) / 8));
+  const {
+    balance = gameBalance,
+    map = testMap(),
+    radius = Math.max(3, Math.floor(Math.min(w, h) / 8)),
+  } = options;
   const spawns: ColonySpawn[] = [
     { x: w * 0.25, y: h * 0.3, radius },
     { x: w * 0.75, y: h * 0.3, radius },
@@ -192,7 +202,7 @@ export function skirmish(
     ticks,
     balance,
     matchSeed,
-    map: testMap(),
+    map,
     spawns,
     // Each colony chases the one across; the fourth only now and then.
     crosshairs: (t) => [
@@ -231,28 +241,37 @@ export function skirmish(
  * The scenario the game plays on a device's GPU before it trusts it with a
  * deterministic match: small, so it takes a few milliseconds of GPU time,
  * and long enough for the first reports to come back into the divide
- * budget and the pellets.
+ * budget and the pellets. Its bar slides once, early, a shove that runs
+ * the whole arena; then it stands still, and the small colonies leave
+ * room enough for the cell passes to run on the active area (see
+ * `GpuSimulation.updateArea`) for the last eight ticks.
  */
 export const SELF_TEST_SCENARIO: SimScenario = skirmish(
   'self-test',
-  48,
-  32,
-  16,
-  0x5e1f7e57
+  96,
+  54,
+  20,
+  0x5e1f7e57,
+  { map: testMap(0.05), radius: 2 }
 );
 
 /**
- * What CI plays on SwiftShader: the self-test, a longer match, and one with
- * so little room that the divide budget caps every colony.
+ * What CI plays on SwiftShader: the self-test, a longer match, one with
+ * so little room that the divide budget caps every colony, and a longer
+ * one with room to spare whose bar never slides - every shove runs the
+ * whole arena - so the cell passes run on the active area most of it.
  */
 export const SIM_SCENARIOS: readonly SimScenario[] = [
   SELF_TEST_SCENARIO,
   skirmish('skirmish', 96, 64, 60, 0xb1f1e5),
   skirmish('crowded', 64, 40, 40, 0xc20d, {
-    ...gameBalance,
-    maxBacteriaPerPlayer: 120,
-    maxTotalBacteria: 400,
+    balance: {
+      ...gameBalance,
+      maxBacteriaPerPlayer: 120,
+      maxTotalBacteria: 400,
+    },
   }),
+  skirmish('roomy', 240, 136, 90, 0x5a7ce, { map: testMap(0) }),
 ];
 
 /** The pellets' random numbers of a scenario - the same for every run. */

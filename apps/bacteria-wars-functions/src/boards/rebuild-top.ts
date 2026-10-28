@@ -1,0 +1,108 @@
+import {
+  BALANCE_VERSION,
+  BOARD_CUT,
+  type BoardRow,
+  isVisible,
+  parseBoardId,
+  TOP_ROWS,
+  topRows,
+  VISIBLE_STATUSES,
+} from '@wolsok/feat-lazy-bac-game/engine';
+import {
+  FieldValue,
+  type Firestore,
+  type Query,
+  type QueryDocumentSnapshot,
+  Timestamp,
+} from 'firebase-admin/firestore';
+import { dailyBoardExpiresAt } from './rank-daily';
+
+/** An entry as the top document needs it. */
+type EntryRow = Omit<BoardRow, 'pos' | 'rank'>;
+
+/**
+ * Rebuilds `boards/{boardId}` after a write to one of its entries - only
+ * when the entry was in the top document or now beats its last row, so most
+ * writes cost one read. The trigger runs one at a time (`maxInstances: 1`,
+ * `concurrency: 1`): writers change entries only, and nothing contends for
+ * the top document. A daily board's top document expires with its entries
+ * (`dailyBoardExpiresAt`); a deletion of an entry already past its
+ * `expireAt` - TTL draining the board - rebuilds nothing.
+ */
+export async function rebuildTop(
+  db: Firestore,
+  boardId: string,
+  entryId: string,
+  after: Record<string, unknown> | undefined,
+  before?: Record<string, unknown>,
+  now: number = Date.now()
+): Promise<'rebuilt' | 'skipped'> {
+  const board = parseBoardId(boardId);
+  const expiredAt = before?.['expireAt'];
+  if (
+    board === null ||
+    (after === undefined &&
+      expiredAt instanceof Timestamp &&
+      expiredAt.toMillis() <= now)
+  ) {
+    return 'skipped';
+  }
+  const topRef = db.doc(`boards/${boardId}`);
+  const top = await topRef.get();
+  const rows = (top.get('rows') as BoardRow[] | undefined) ?? [];
+  const last = rows.at(-1);
+  const visible =
+    after !== undefined && isVisible(after['status'] as BoardRow['status']);
+  const relevant =
+    rows.some((row) => row.entryId === entryId) ||
+    (visible &&
+      (rows.length < TOP_ROWS ||
+        last === undefined ||
+        Number(after?.['sort']) >= last.sort));
+  if (!relevant) {
+    return 'skipped';
+  }
+  const entries = db.collection(`boards/${boardId}/entries`);
+  const ordered = (query: Query) =>
+    query.orderBy('sort', 'desc').orderBy('atHour', 'asc');
+  const cut = BOARD_CUT[board.kind];
+  const [visibleRows, verifiedRows] = await Promise.all([
+    ordered(entries.where('status', 'in', [...VISIBLE_STATUSES]))
+      .limit(TOP_ROWS)
+      .get(),
+    cut > 0
+      ? ordered(entries.where('status', '==', 'verified'))
+          .limit(cut)
+          .get()
+      : null,
+  ]);
+  const asRow = (doc: QueryDocumentSnapshot): EntryRow => ({
+    entryId: doc.id,
+    sort: doc.get('sort'),
+    atHour: doc.get('atHour'),
+    status: doc.get('status'),
+    name: doc.get('name') ?? null,
+    tag: doc.get('tag'),
+    avatar: doc.get('avatar'),
+    show: doc.get('show'),
+  });
+  // Merged, so a finished day keeps its `final`.
+  await topRef.set(
+    {
+      board: boardId,
+      ...(board.kind === 'daily' ? { day: board.day } : {}),
+      cut,
+      rows: topRows(
+        visibleRows.docs.map(asRow),
+        verifiedRows?.docs.map(asRow) ?? []
+      ),
+      balanceVersion: BALANCE_VERSION,
+      updatedAt: FieldValue.serverTimestamp(),
+      ...(board.kind === 'daily'
+        ? { expireAt: Timestamp.fromMillis(dailyBoardExpiresAt(board.day)) }
+        : {}),
+    },
+    { merge: true }
+  );
+  return 'rebuilt';
+}

@@ -50,52 +50,14 @@
             }
             @case ("level") {
               @if (kind() === "training") {
-                <section
-                  class="missions"
+                <feat-lazy-bac-game-mission-list
                   [attr.aria-label]="'training.title' | t"
-                >
-                  <p class="missions-intro">
-                    {{ "training.pick" | t }}
-                    <span class="missions-progress">{{
-                      "training.progress"
-                        | t: { done: missionsDone(), total: missionCount }
-                    }}</span>
-                  </p>
-                  <ol class="mission-list">
-                    @for (each of missions(); track each.id) {
-                      <li>
-                        <button
-                          type="button"
-                          class="mission"
-                          [class.current]="each.id === missionId()"
-                          [class.done]="each.done"
-                          (click)="pickMission(each.id)"
-                        >
-                          <mat-icon class="mission-icon" aria-hidden="true">{{
-                            each.done ? "check_circle" : each.icon
-                          }}</mat-icon>
-                          <span class="mission-text">
-                            <span class="mission-name"
-                              >{{ each.number }} · {{ each.title | t }}</span
-                            >
-                            <span class="mission-goal">{{
-                              each.goal | t
-                            }}</span>
-                          </span>
-                          @if (each.done) {
-                            <span class="mission-badge">{{
-                              "training.done" | t
-                            }}</span>
-                          } @else if (each.upNext) {
-                            <span class="mission-badge up-next">{{
-                              "training.upNext" | t
-                            }}</span>
-                          }
-                        </button>
-                      </li>
-                    }
-                  </ol>
-                </section>
+                  [missions]="missions()"
+                  [current]="missionId()"
+                  [done]="missionsDone()"
+                  [total]="missionCount"
+                  (pick)="pickMission($event)"
+                />
               } @else {
                 <div class="level-step">
                   <feat-lazy-bac-game-level-map
@@ -201,20 +163,35 @@
                       <span>{{ brief.opponent | t }}</span>
                     </p>
                   } @else if (vsComputer()) {
+                    @if (rankedOffer(); as offer) {
+                      <div class="ranked">
+                        <mat-slide-toggle
+                          [checked]="offer.on"
+                          [disabled]="!offer.open || declaring()"
+                          (change)="rankedChange.emit($event.checked)"
+                          >{{ rankedLabel() | t }}</mat-slide-toggle
+                        >
+                        @for (line of offer.lines; track $index) {
+                          <p class="goal ranked-line">{{ line | gameText }}</p>
+                        }
+                      </div>
+                    }
                     <span class="best-label">{{ "newGame.opponent" | t }}</span>
-                    <mat-button-toggle-group
-                      class="difficulty-picker"
-                      [attr.aria-label]="'newGame.difficulty' | t"
-                      hideSingleSelectionIndicator
-                      [value]="difficulty()"
-                      (change)="difficultyChange.emit($event.value)"
-                    >
-                      @for (option of difficulties; track option.id) {
-                        <mat-button-toggle [value]="option.id">{{
-                          option.name | t
-                        }}</mat-button-toggle>
-                      }
-                    </mat-button-toggle-group>
+                    @if (rankedOffer()?.on !== true) {
+                      <mat-button-toggle-group
+                        class="difficulty-picker"
+                        [attr.aria-label]="'newGame.difficulty' | t"
+                        hideSingleSelectionIndicator
+                        [value]="difficulty()"
+                        (change)="difficultyChange.emit($event.value)"
+                      >
+                        @for (option of difficulties; track option.id) {
+                          <mat-button-toggle [value]="option.id">{{
+                            option.name | t
+                          }}</mat-button-toggle>
+                        }
+                      </mat-button-toggle-group>
+                    }
                     <p class="opponent">
                       <mat-icon aria-hidden="true">smart_toy</mat-icon>
                       <span>{{ difficultyTexts().description | t }}</span>
@@ -230,7 +207,7 @@
                         <feat-lazy-bac-game-medallion
                           [tier]="held.best"
                           [size]="56"
-                          [difficulty]="difficulty()"
+                          [difficulty]="playedDifficulty()"
                         />
                         <div class="best-text">
                           <span class="best-label">{{
@@ -284,11 +261,15 @@
                       mat-flat-button
                       type="button"
                       class="start"
-                      [disabled]="!startReady()"
+                      [disabled]="!startReady() || declaring()"
                       (click)="startGame()"
                     >
                       <mat-icon>play_arrow</mat-icon>
-                      {{ startLabel() }}
+                      {{
+                        declaring()
+                          ? ("boards.ranked.declaring" | t)
+                          : startLabel()
+                      }}
                     </button>
                   }
                 </section>

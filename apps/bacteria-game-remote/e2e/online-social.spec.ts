@@ -1,4 +1,11 @@
-import { expect as baseExpect, Browser, Page, test } from '@playwright/test';
+import {
+  expect as baseExpect,
+  Browser,
+  Locator,
+  Page,
+  test,
+} from '@playwright/test';
+import { mirrorFriendLists } from './fixtures/friend-mirror';
 import { BacteriaGamePo } from './pos/bacteria-game.po';
 
 // Two browser contexts are two players, guests of the emulators (Auth,
@@ -14,6 +21,24 @@ test.use({
 });
 
 const expect = baseExpect.configure({ timeout: 30_000 });
+
+/**
+ * Waits until `person` shows the friend online. Only friends read a status
+ * (`database.rules.json`), by the mirror the functions keep, which the
+ * emulators do not run: the test writes it (`mirrorFriendLists`), again on
+ * each poll, as the friendship's documents may still be on their way.
+ */
+async function expectOnline(person: Locator): Promise<void> {
+  await expect
+    .poll(
+      async () => {
+        await mirrorFriendLists();
+        return person.textContent();
+      },
+      { timeout: 60_000 }
+    )
+    .toContain('Online');
+}
 
 interface Player {
   page: Page;
@@ -100,7 +125,7 @@ test('players meet by matchmaking, become friends and challenge each other', asy
   const friend = ada.page
     .locator('feat-lazy-bac-game-friends .person')
     .filter({ hasText: `Bob ${run}` });
-  await expect(friend).toContainText('Online');
+  await expectOnline(friend);
   await friend.getByRole('button', { name: 'Challenge' }).click();
   await expect(
     ada.page.getByText(`Waiting for Bob ${run} to accept…`)
@@ -142,14 +167,14 @@ test('an invitation link makes two players friends', async ({ browser }) => {
   await expect(offer).toHaveCount(0);
 
   await dee.po.friendsCta.click();
-  await expect(
+  await expectOnline(
     dee.page
       .locator('feat-lazy-bac-game-friends .person')
       .filter({ hasText: `Cyd ${run}` })
-  ).toContainText('Online');
-  await expect(
+  );
+  await expectOnline(
     cyd.page
       .locator('feat-lazy-bac-game-friends .person')
       .filter({ hasText: `Dee ${run}` })
-  ).toContainText('Online');
+  );
 });

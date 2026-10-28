@@ -53,8 +53,21 @@
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "500kb",
-              "maximumError": "1mb"
+              "baseline": "227kb",
+              "maximumWarning": "10%",
+              "maximumError": "20%"
+            },
+            {
+              "type": "anyScript",
+              "baseline": "622kb",
+              "maximumWarning": "5%",
+              "maximumError": "10%"
+            },
+            {
+              "type": "allScript",
+              "baseline": "1768kb",
+              "maximumWarning": "5%",
+              "maximumError": "10%"
             },
             {
               "type": "anyComponentStyle",
@@ -105,6 +118,12 @@
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/dist/apps/bacteria-game-remote/ngsw.json"],
+      "inputs": [
+        "sharedGlobals",
+        "production",
+        "^production",
+        "{workspaceRoot}/version.json"
+      ],
       "dependsOn": ["build-federation"],
       "options": {
         "command": "echo No service worker in development builds.",
@@ -112,7 +131,7 @@
       },
       "configurations": {
         "production": {
-          "command": "ngsw-config dist/apps/bacteria-game-remote apps/bacteria-game-remote/ngsw-config.json /"
+          "command": "ngsw-config dist/apps/bacteria-game-remote apps/bacteria-game-remote/ngsw-config.json / && node tools/bacteria-game/check-lazy-admin.mjs dist/apps/bacteria-game-remote"
         },
         "development": {}
       },
@@ -121,7 +140,12 @@
     "build-federation": {
       "executor": "@angular-architects/native-federation:build",
       "outputs": ["{workspaceRoot}/dist/apps/bacteria-game-remote"],
-      "inputs": ["sharedGlobals", "production", "^production"],
+      "inputs": [
+        "sharedGlobals",
+        "production",
+        "^production",
+        "{workspaceRoot}/version.json"
+      ],
       "dependsOn": ["^build"],
       "cache": true,
       "options": {},
@@ -213,6 +237,14 @@
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/apps/bacteria-game-remote"],
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.config.ts",
+        "{workspaceRoot}/.codecov.yml",
+        "{workspaceRoot}/apps/bacteria-wars-functions/src/firestore-queries.json"
+      ],
       "options": {
         "jestConfig": "apps/bacteria-game-remote/jest.config.ts",
         "codeCoverage": true,
@@ -263,6 +295,12 @@
         "port": 4222,
         "spa": true,
         "watch": false
+      }
+    },
+    "test-emulator": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "firebase emulators:exec --config apps/bacteria-game-remote/rules-test/firebase.json --project demo-bacteria-rules --only firestore \"jest -c apps/bacteria-game-remote/rules-test/jest.config.ts\""
       }
     }
   }

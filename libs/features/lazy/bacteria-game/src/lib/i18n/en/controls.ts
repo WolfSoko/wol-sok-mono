@@ -10,7 +10,6 @@ export const controls = {
     cooldown: '{seconds}s',
     button: 'Boost {name}',
     recharge: 'Boost recharge',
-    share: 'Share of all bacteria',
   },
   /*
    * The keys that fire a weapon. Only a match against the computer arms

@@ -1,7 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
+import { FakeGameAccount } from '../../testing/fake-game-account';
 import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
+import { GameAccount } from '../storage/game-account';
+import { provideGameToggles } from '../../testing/fake-game-toggles';
+import type { FeatureToggles } from '../state/feature-toggles';
+import { ADMIN_PATH } from '../support/legal-links';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
@@ -57,7 +63,7 @@ describe('MainMenuComponent', () => {
     expect(card).toContain('5 · Pillar Field · Normal');
   });
 
-  it('reports what the player picks', () => {
+  it('reports what the player picks', async () => {
     const newGame = jest.fn();
     const open = jest.fn();
     const resume = jest.fn();
@@ -65,18 +71,22 @@ describe('MainMenuComponent', () => {
     fixture.componentInstance.open.subscribe(open);
     fixture.componentInstance.continueCampaign.subscribe(resume);
 
+    // The ways into play wait for the stage's spinner to show.
     button('New game').click();
+    expect(newGame).not.toHaveBeenCalled();
+    await fixture.whenStable();
     button('Profile').click();
     button('Settings').click();
     button('How to play').click();
     button('Continue the campaign').click();
+    await fixture.whenStable();
 
     expect(newGame).toHaveBeenCalledTimes(1);
     expect(open.mock.calls).toEqual([['profile'], ['settings'], ['help']]);
     expect(resume).toHaveBeenCalled();
   });
 
-  it('offers the training until every mission is done', () => {
+  it('offers the training until every mission is done', async () => {
     const training = jest.fn();
     fixture.componentInstance.training.subscribe(training);
     fixture.componentRef.setInput('missionsDone', 2);
@@ -87,6 +97,7 @@ describe('MainMenuComponent', () => {
       'New here? 2 of 5 missions done'
     );
     button('New here?').click();
+    await fixture.whenStable();
     expect(training).toHaveBeenCalled();
 
     fixture.componentRef.setInput('missionsDone', 5);
@@ -152,7 +163,7 @@ describe('MainMenuComponent', () => {
       );
     expect(tile()).toBeUndefined();
 
-    fixture.componentRef.setInput('friendsAvailable', true);
+    fixture.componentRef.setInput('cloudAvailable', true);
     fixture.detectChanges();
     expect(tile()?.querySelector('.count')).toBeNull();
 
@@ -173,6 +184,44 @@ describe('MainMenuComponent', () => {
     fixture.componentInstance.open.subscribe(open);
     button('Friends').click();
     expect(open).toHaveBeenCalledWith('friends');
+  });
+
+  it('shows the leaderboards only with the cloud, while the toggle is on', () => {
+    const toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [provideGameToggles(toggles)],
+    });
+    const menu = TestBed.createComponent(MainMenuComponent);
+    menu.componentRef.setInput('campaign', CAMPAIGN);
+    menu.detectChanges();
+    const tile = () =>
+      Array.from(
+        (menu.nativeElement as HTMLElement).querySelectorAll('.tiles button')
+      ).find((b) => b.textContent?.includes('Leaderboards')) as
+        | HTMLButtonElement
+        | undefined;
+    expect(tile()).toBeUndefined();
+
+    menu.componentRef.setInput('cloudAvailable', true);
+    menu.detectChanges();
+    const open = jest.fn();
+    menu.componentInstance.open.subscribe(open);
+    tile()?.click();
+    expect(open).toHaveBeenCalledWith('leaderboards');
+
+    toggles.next({ leaderboards: false });
+    menu.detectChanges();
+    expect(tile()).toBeUndefined();
+  });
+
+  it('always offers My matches, with or without the cloud', () => {
+    const open = jest.fn();
+    fixture.componentInstance.open.subscribe(open);
+
+    button('My matches').click();
+
+    expect(open).toHaveBeenCalledWith('my-matches');
   });
 
   it('speaks German, the campaign line included', () => {
@@ -269,5 +318,75 @@ describe('MainMenuComponent support tile', () => {
       SupportDialogComponent,
       expect.anything()
     );
+  });
+});
+
+describe('MainMenuComponent admin tile', () => {
+  function render(options: { onSite: boolean; account?: FakeGameAccount }): {
+    host: HTMLElement;
+    fixture: ComponentFixture<MainMenuComponent>;
+  } {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        ...(options.onSite
+          ? [{ provide: GAME_SUPPORT, useValue: GAME_SUPPORT_OPTIONS }]
+          : []),
+        ...(options.account === undefined
+          ? []
+          : [{ provide: GameAccount, useValue: options.account }]),
+      ],
+    });
+    const fixture = TestBed.createComponent(MainMenuComponent);
+    fixture.componentRef.setInput('campaign', CAMPAIGN);
+    fixture.detectChanges();
+    return { host: fixture.nativeElement, fixture };
+  }
+
+  const tile = (host: HTMLElement) =>
+    host.querySelector<HTMLAnchorElement>('a.tile.admin');
+
+  function owner(): FakeGameAccount {
+    const account = new FakeGameAccount('wolf');
+    account.owner.set(true);
+    return account;
+  }
+
+  it('is not there for a game without a project', () => {
+    expect(tile(render({ onSite: true }).host)).toBeNull();
+  });
+
+  it('is not there for a guest or a player who is not the owner', () => {
+    const account = new FakeGameAccount('ada');
+    const { host, fixture } = render({ onSite: true, account });
+    expect(tile(host)).toBeNull();
+
+    // Signed in with Google, without the claim.
+    account.profile.set({ guest: false, name: 'Ada' });
+    fixture.detectChanges();
+    expect(tile(host)).toBeNull();
+  });
+
+  it('is not there inside the shell, which has no admin route', () => {
+    expect(tile(render({ onSite: false, account: owner() }).host)).toBeNull();
+  });
+
+  it("leads the owner to the admin area on the game's own site", () => {
+    const { host } = render({ onSite: true, account: owner() });
+
+    expect(tile(host)?.textContent).toContain('Admin');
+    expect(tile(host)?.getAttribute('href')).toBe(`/${ADMIN_PATH}`);
+  });
+
+  it('shows once the owner is known, and in German', () => {
+    const account = new FakeGameAccount('wolf');
+    const { host, fixture } = render({ onSite: true, account });
+    expect(tile(host)).toBeNull();
+
+    account.owner.set(true);
+    TestBed.inject(I18nService).setLanguage('de');
+    fixture.detectChanges();
+
+    expect(tile(host)?.textContent).toContain('Verwaltung');
   });
 });

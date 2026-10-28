@@ -1,8 +1,9 @@
 import type { MatchPlan } from '../state/match-setup';
 import { replayOf } from '../state/replay';
-import { packReplay } from '../state/replay-pack';
-import { fetchPublicReplay } from './public-replays';
+import { replayToBytes } from '../state/replay-pack';
+import { loadPublicReplay } from './public-replays';
 
+const ID = 'AbCdEfGhIjKlMnOpQrSt';
 const PLAN: MatchPlan = {
   levelId: 'petri-dish',
   mode: 'vs-computer',
@@ -32,44 +33,57 @@ function answering(status: number, body: unknown = null) {
   );
 }
 
-describe('fetchPublicReplay', () => {
-  it('fetches the packed replay from the public site', async () => {
-    const fetch = answering(200, packReplay(REPLAY, { forPublic: true }));
+/** The bytes as `publicSite` sends them: base64 of the packed replay. */
+async function served(): Promise<{ bytes: string }> {
+  const bytes = await replayToBytes(REPLAY, { forPublic: true });
+  return { bytes: Buffer.from(bytes).toString('base64') };
+}
 
-    const replay = await fetchPublicReplay('abc123XYZ', {
+describe('loadPublicReplay', () => {
+  it('fetches the packed bytes from the public site and reads them', async () => {
+    const fetch = answering(200, await served());
+
+    const answer = await loadPublicReplay(ID, {
       base: 'https://bacteria-wars.wolsok.de',
       fetch,
     });
 
     expect(fetch).toHaveBeenCalledWith(
-      'https://bacteria-wars.wolsok.de/replays/abc123XYZ/replay.json',
+      `https://bacteria-wars.wolsok.de/replays/${ID}/replay.json`,
       expect.anything()
     );
-    expect(replay).toEqual(REPLAY);
+    expect(answer).toEqual({ replay: REPLAY });
   });
 
-  it('is null for a replay that is not there or was taken down', async () => {
-    expect(
-      await fetchPublicReplay('abc123', { fetch: answering(404) })
-    ).toBeNull();
-    expect(
-      await fetchPublicReplay('abc123', { fetch: answering(410) })
-    ).toBeNull();
-    expect(
-      await fetchPublicReplay('abc123', { fetch: answering(200, { h: 1 }) })
-    ).toBeNull();
+  it('tells a missing, a removed and a broken replay apart', async () => {
+    expect(await loadPublicReplay(ID, { fetch: answering(404) })).toEqual({
+      missing: 'not-found',
+    });
+    expect(await loadPublicReplay(ID, { fetch: answering(410) })).toEqual({
+      missing: 'removed',
+    });
+    for (const body of [{ bytes: 7 }, { bytes: 'AAAA' }, { h: 1 }]) {
+      expect(
+        await loadPublicReplay(ID, { fetch: answering(200, body) })
+      ).toEqual({ missing: 'unreadable' });
+    }
   });
 
-  it('fetches nothing for an id that cannot be one', async () => {
+  it('fetches nothing for an id that cannot be a public one', async () => {
     const fetch = answering(200);
 
-    expect(await fetchPublicReplay('../admin', { fetch })).toBeNull();
+    for (const id of ['../admin', 'l_AbCdEfGhIjKlMnOpQr', 'abc123']) {
+      // A private replay's id is no public one either.
+      expect(await loadPublicReplay(id, { fetch })).toEqual({
+        missing: 'not-found',
+      });
+    }
     expect(fetch).not.toHaveBeenCalled();
   });
 
   it('fails on a server error, for the viewer to try again', async () => {
     await expect(
-      fetchPublicReplay('abc123', { fetch: answering(503) })
+      loadPublicReplay(ID, { fetch: answering(503) })
     ).rejects.toThrow('503');
   });
 });

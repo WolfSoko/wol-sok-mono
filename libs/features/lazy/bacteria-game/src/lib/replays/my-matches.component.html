@@ -1,0 +1,115 @@
+<feat-lazy-bac-game-screen-header
+  [title]="'replay.matches.title' | t"
+  (back)="back.emit()"
+/>
+<section class="matches" [attr.aria-label]="'replay.matches.region' | t">
+  @if (watching(); as replay) {
+    <feat-lazy-bac-game-replay-viewer
+      [replay]="replay"
+      [look]="look()"
+      [label]="'replay.viewer.title' | t"
+      [gpu]="trustedGpu()"
+    />
+    <button mat-button type="button" (click)="watching.set(null)">
+      <mat-icon>arrow_back</mat-icon>
+      {{ "replay.matches.list" | t }}
+    </button>
+  } @else {
+    <p class="intro">
+      {{ (cloud ? "replay.matches.intro" : "replay.matches.device") | t }}
+    </p>
+    @if (cloud) {
+      <feat-lazy-bac-game-guest-sign-in [note]="'profile.guest.matches'" />
+    }
+    @if (notice(); as notice) {
+      <p class="notice" role="status">{{ notice | t }}</p>
+    }
+    @if (rows(); as rows) {
+      @if (rows.length === 0) {
+        <p class="intro">{{ "replay.matches.none" | t }}</p>
+      } @else {
+        <mat-list>
+          @for (row of rows; track row.replay.id) {
+            <mat-list-item>
+              <mat-icon matListItemIcon>{{
+                row.playable ? "smart_display" : "history"
+              }}</mat-icon>
+              <span matListItemTitle>{{ row.level | gameText }}</span>
+              <span matListItemLine>{{ row.line }}</span>
+              <span matListItemLine class="when">
+                {{ row.when }}
+                @if (row.chips.length > 0) {
+                  <mat-chip-set class="chips">
+                    @for (chip of row.chips; track chip) {
+                      <mat-chip disableRipple>{{ chip }}</mat-chip>
+                    }
+                  </mat-chip-set>
+                }
+              </span>
+              <span matListItemMeta class="actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [disabled]="busy() !== null"
+                  [attr.aria-label]="
+                    'replay.matches.watch'
+                      | t: { level: (row.level | gameText) }
+                  "
+                  (click)="open(row)"
+                >
+                  <mat-icon>play_arrow</mat-icon>
+                </button>
+                @if (cloud && row.replay.galleryOut !== true) {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [disabled]="busy() !== null"
+                    [attr.aria-label]="
+                      'replay.matches.keepOut'
+                        | t: { level: (row.level | gameText) }
+                    "
+                    (click)="keepOut(row)"
+                  >
+                    <mat-icon>visibility_off</mat-icon>
+                  </button>
+                }
+                @let armed = deleteArmed() === row.replay.id;
+                <!-- One button that only changes its look, so focus stays on it. -->
+                <button
+                  [matButton]="armed ? 'outlined' : 'text'"
+                  type="button"
+                  class="delete"
+                  [class.delete-armed]="armed"
+                  [disabled]="busy() !== null"
+                  [attr.aria-label]="
+                    armed
+                      ? ('replay.matches.confirmRemove' | t)
+                      : ('replay.matches.remove'
+                        | t: { level: (row.level | gameText) })
+                  "
+                  (click)="delete(row)"
+                >
+                  <mat-icon>{{ armed ? "delete_forever" : "delete" }}</mat-icon>
+                  @if (armed) {
+                    {{ "replay.matches.confirmRemove" | t }}
+                  }
+                </button>
+              </span>
+            </mat-list-item>
+            @if (busy() === row.replay.id) {
+              <mat-progress-bar
+                mode="indeterminate"
+                [attr.aria-label]="'replay.matches.loading' | t"
+              />
+            }
+          }
+        </mat-list>
+      }
+    } @else {
+      <mat-progress-bar
+        mode="indeterminate"
+        [attr.aria-label]="'replay.matches.loading' | t"
+      />
+    }
+  }
+</section>
