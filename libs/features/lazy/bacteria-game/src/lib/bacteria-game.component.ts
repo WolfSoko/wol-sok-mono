@@ -1695,21 +1695,21 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * depth is drawn, and only once per view and canvas size.
    */
   private paintAmbience(view: Rect, deltaTimeSec: number): void {
+    const ambience = this.ambience;
+    if (ambience == null || !this.settings.ambience()) {
+      return;
+    }
+    const moving = !this.reducedMotion() && this.matchPaints();
     if (untracked(this.painterAmbience)) {
       // The painter draws it with the arena: here it only moves on.
-      if (
-        this.settings.ambience() &&
-        !this.reducedMotion() &&
-        this.matchPaints()
-      ) {
-        this.ambience?.advance(deltaTimeSec);
+      if (moving) {
+        ambience.advance(deltaTimeSec);
       }
       return;
     }
     const canvas = this.ambienceRef()?.nativeElement;
     const arena = this.arenaView()?.canvas();
-    const ambience = this.ambience;
-    if (canvas == null || arena == null || ambience == null) {
+    if (canvas == null || arena == null) {
       return;
     }
     const { width, height } = arena;
@@ -1718,7 +1718,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       canvas.width = width;
       canvas.height = height;
     }
-    const moving = !this.reducedMotion() && this.matchPaints();
     const still = this.stillAmbience;
     if (
       !moving &&

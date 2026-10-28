@@ -4,7 +4,7 @@ import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
 import { Rect } from '../../state/maps';
 import { ArenaFrame, ArenaPainter, PaintedColony } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
-import { paintZoneLayer } from '../zone-decal';
+import { layerScale, paintZoneLayer } from '../zone-decal';
 import { Zone } from '../../state/zones';
 import { ArenaTheme } from '../arena-theme';
 import {
@@ -254,14 +254,16 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly ambienceBatch = new ShapeBatch();
   /** What the walls' layer was laid for - laid again when either changes. */
   private wallsFor: { walls: readonly Rect[]; theme: ArenaTheme } | null = null;
-  /** True while the ambience is on: the frame is copied with the dish's depth. */
-  private depth = false;
-  /** The wisps of mist the frame is copied with, four numbers each. */
+  /**
+   * The dish's ambience while it is on - the frame is copied with its depth
+   * then, and with its mist and bubbles while it moves too.
+   */
+  private ambience: DishAmbience | null = null;
+  private ambienceMoves = false;
+  /** The wisps of mist in view the frame is copied with, four numbers each. */
   private readonly wisps = new Float32Array(AMBIENCE.wisps * 4);
   private wispCount = 0;
   private readonly mist = new Float32Array(3);
-  /** The ambience whose bubbles go over the frame on the canvas - null for none. */
-  private bubbles: DishAmbience | null = null;
   private readonly tintCircles = new Float32Array(MAX_TINTS * 4);
   private readonly tintModes = new Float32Array(MAX_TINTS);
   private readonly cellBytes: Uint8Array;
@@ -468,9 +470,9 @@ export class GlArenaPainter implements ArenaPainter {
       this.unit
     );
     this.drawShapes(this.foreground);
-    this.depth = frame.ambience != null;
-    this.packWisps(frame.ambience, frame.reducedMotion, theme);
-    this.bubbles = frame.reducedMotion ? null : (frame.ambience ?? null);
+    this.ambience = frame.ambience ?? null;
+    this.ambienceMoves = this.ambience != null && !frame.reducedMotion;
+    this.packWisps(theme);
     this.showLastFrame();
   }
 
@@ -488,13 +490,14 @@ export class GlArenaPainter implements ArenaPainter {
     const blit = programs.blit;
     this.useFullscreen(blit);
     bindTexture(gl, 0, resources.trail.texture, blit.uniforms['uImage']);
-    gl.uniform1i(blit.uniforms['uDepth'], this.depth ? 1 : 0);
+    const ambience = this.ambience;
+    gl.uniform1i(blit.uniforms['uDepth'], ambience == null ? 0 : 1);
     gl.uniform1i(blit.uniforms['uWispCount'], this.wispCount);
     if (this.wispCount > 0) {
       gl.uniform4fv(blit.uniforms['uWisps[0]'], this.wisps);
       gl.uniform3fv(blit.uniforms['uMist'], this.mist);
     }
-    if (this.depth || this.wispCount > 0) {
+    if (ambience != null) {
       this.setView(blit);
       gl.uniform2f(blit.uniforms['uArena'], this.width, this.height);
       gl.uniform1f(
@@ -508,8 +511,8 @@ export class GlArenaPainter implements ArenaPainter {
       );
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    if (this.bubbles != null) {
-      this.drawAmbience(this.bubbles);
+    if (ambience != null && this.ambienceMoves) {
+      this.drawAmbience(ambience);
     }
   }
 
@@ -517,26 +520,14 @@ export class GlArenaPainter implements ArenaPainter {
    * Takes the frame's wisps of mist in view - none without the ambience's
    * motion.
    */
-  private packWisps(
-    ambience: DishAmbience | null | undefined,
-    reducedMotion: boolean,
-    theme: ArenaTheme
-  ): void {
+  private packWisps(theme: ArenaTheme): void {
     this.wispCount = 0;
-    if (ambience == null || reducedMotion) {
+    const ambience = this.ambience;
+    if (ambience == null || !this.ambienceMoves) {
       return;
     }
     const wisps = this.wisps;
-    const view = this.view;
-    ambience.forEachWisp((x, y, radius, alpha) => {
-      if (
-        x + radius <= view.x ||
-        y + radius <= view.y ||
-        x - radius >= view.x + view.width ||
-        y - radius >= view.y + view.height
-      ) {
-        return;
-      }
+    ambience.forEachWisp(this.view, (x, y, radius, alpha) => {
       const at = this.wispCount++ * 4;
       wisps[at] = x;
       wisps[at + 1] = y;
@@ -582,8 +573,9 @@ export class GlArenaPainter implements ArenaPainter {
       return;
     }
     const gl = this.gl;
-    const width = Math.max(1, Math.round(this.width * this.detail));
-    const height = Math.max(1, Math.round(this.height * this.detail));
+    const scale = layerScale(this.detail);
+    const width = this.width * scale;
+    const height = this.height * scale;
     resources.walls ??= createTarget(gl, gl.RGBA8, width, height, gl.LINEAR);
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.walls.framebuffer);
     gl.viewport(0, 0, width, height);
@@ -595,6 +587,7 @@ export class GlArenaPainter implements ArenaPainter {
     this.background.clear();
     pushWalls(this.background, theme, walls);
     // All of the arena, row 0 of the layer at its top - as the zones' is.
+    const view = this.view;
     this.view = {
       x: 0,
       y: this.height,
@@ -602,6 +595,7 @@ export class GlArenaPainter implements ArenaPainter {
       height: -this.height,
     };
     this.drawShapes(this.background);
+    this.view = view;
   }
 
   /** The walls' layer over the floor and its specks. */
@@ -633,6 +627,10 @@ export class GlArenaPainter implements ArenaPainter {
   ): PreparedColony[] {
     const gl = this.gl;
     const prepared: PreparedColony[] = [];
+    // Every pass here draws on the arena grid, unblended and scissored.
+    gl.disable(gl.BLEND);
+    gl.viewport(0, 0, this.width, this.height);
+    gl.enable(gl.SCISSOR_TEST);
     frame.colonies.forEach((layer, index) => {
       const bounds =
         layer.kind === 'cells' ? colonyBounds(layer.bacterias) : layer.bounds;
@@ -656,9 +654,6 @@ export class GlArenaPainter implements ArenaPainter {
           targets.cells
         );
       }
-      gl.disable(gl.BLEND);
-      gl.viewport(0, 0, this.width, this.height);
-      gl.enable(gl.SCISSOR_TEST);
       if (layer.kind === 'state') {
         this.drawCellsFromState(
           layer,
@@ -675,9 +670,9 @@ export class GlArenaPainter implements ArenaPainter {
         this.scissorCells(bounds, margin.verticalBlur);
         this.blurPass(resources.blur.texture, targets.density, 0, 1);
       }
-      gl.disable(gl.SCISSOR_TEST);
       prepared.push({ layer, bounds, margin, targets });
     });
+    gl.disable(gl.SCISSOR_TEST);
     return prepared;
   }
 

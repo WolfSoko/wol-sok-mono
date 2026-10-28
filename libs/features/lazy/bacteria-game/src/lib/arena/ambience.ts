@@ -41,12 +41,39 @@ export const AMBIENCE = {
   wispRadiusVary: 22,
   wispAlpha: 0.045,
   wispDrift: 1.2,
+  /** A wisp's opacity half way out, as a share of its centre's. */
+  wispMid: 0.35,
+  /**
+   * A bubble: the opacities of its film, rim and spot of light, the rim's
+   * width in cells, and the spot's size and place as shares of the radius.
+   */
+  bubbleFilm: 0.07,
+  bubbleRim: 0.28,
+  bubbleRimWidth: 0.18,
+  bubbleSpot: 0.55,
+  spotSize: 0.28,
+  spotX: 0.38,
+  spotY: 0.4,
   /** The shadow of the dish's rim: how dark, and how far in, as a share of the shorter side. */
   rimShade: 0.35,
   rimWidth: 0.08,
-  /** The sheen of the glass over the dish, from the top left. */
+  /**
+   * The sheen of the glass over the dish, from the top left - gone that
+   * share of the way along the canvas's diagonal.
+   */
   sheen: 0.07,
+  sheenReach: 0.45,
 } as const;
+
+/** True where a circle reaches into the view, all in arena cells. */
+function inView(x: number, y: number, radius: number, view: Rect): boolean {
+  return (
+    x + radius > view.x &&
+    y + radius > view.y &&
+    x - radius < view.x + view.width &&
+    y - radius < view.y + view.height
+  );
+}
 
 /** The size of the sprite a wisp is drawn with. */
 const WISP_SPRITE = 128;
@@ -178,23 +205,21 @@ export class DishAmbience {
     for (const bubble of this.bubbles) {
       const x = bubble.x + Math.sin(bubble.phase) * bubble.sway;
       const { y, radius } = bubble;
-      if (
-        x + radius > view.x &&
-        y + radius > view.y &&
-        x - radius < view.x + view.width &&
-        y - radius < view.y + view.height
-      ) {
+      if (inView(x, y, radius, view)) {
         visit(x, y, radius);
       }
     }
   }
 
-  /** Each wisp, in arena cells: its centre, radius and opacity. */
+  /** Each wisp in view, in arena cells: its centre, radius and opacity. */
   public forEachWisp(
+    view: Rect,
     visit: (x: number, y: number, radius: number, alpha: number) => void
   ): void {
     for (const wisp of this.wisps) {
-      visit(wisp.x, wisp.y, wisp.radius, wisp.alpha);
+      if (inView(wisp.x, wisp.y, wisp.radius, view)) {
+        visit(wisp.x, wisp.y, wisp.radius, wisp.alpha);
+      }
     }
   }
 
@@ -233,23 +258,23 @@ export class DishAmbience {
     }
     // The film of every bubble in one go, then every rim, then every spot
     // of light - three strokes of the brush, not three per bubble.
-    cx.fillStyle = 'rgba(255, 255, 255, 0.07)';
+    cx.fillStyle = `rgba(255, 255, 255, ${AMBIENCE.bubbleFilm})`;
     cx.beginPath();
     for (let i = 0; i < count; i += 3) {
       cx.moveTo(seen[i] + seen[i + 2], seen[i + 1]);
       cx.arc(seen[i], seen[i + 1], seen[i + 2], 0, Math.PI * 2);
     }
     cx.fill();
-    cx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
-    cx.lineWidth = Math.max(1, scale * 0.18);
+    cx.strokeStyle = `rgba(255, 255, 255, ${AMBIENCE.bubbleRim})`;
+    cx.lineWidth = Math.max(1, scale * AMBIENCE.bubbleRimWidth);
     cx.stroke();
-    cx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    cx.fillStyle = `rgba(255, 255, 255, ${AMBIENCE.bubbleSpot})`;
     cx.beginPath();
     for (let i = 0; i < count; i += 3) {
       const r = seen[i + 2];
-      const spot = r * 0.28;
-      const sx = seen[i] - r * 0.38;
-      const sy = seen[i + 1] - r * 0.4;
+      const spot = r * AMBIENCE.spotSize;
+      const sx = seen[i] - r * AMBIENCE.spotX;
+      const sy = seen[i + 1] - r * AMBIENCE.spotY;
       cx.moveTo(sx + spot, sy);
       cx.arc(sx, sy, spot, 0, Math.PI * 2);
     }
@@ -341,7 +366,7 @@ export class DishAmbience {
     };
     const sheen = cx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
     sheen.addColorStop(0, `rgba(255, 255, 255, ${AMBIENCE.sheen})`);
-    sheen.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
+    sheen.addColorStop(AMBIENCE.sheenReach, 'rgba(255, 255, 255, 0)');
     this.depth = {
       scale,
       canvasWidth,
@@ -366,7 +391,7 @@ export class DishAmbience {
     const half = WISP_SPRITE / 2;
     const gradient = cx.createRadialGradient(half, half, 0, half, half, half);
     gradient.addColorStop(0, rgba(mist, 1));
-    gradient.addColorStop(0.5, rgba(mist, 0.35));
+    gradient.addColorStop(0.5, rgba(mist, AMBIENCE.wispMid));
     gradient.addColorStop(1, rgba(mist, 0));
     cx.fillStyle = gradient;
     cx.fillRect(0, 0, WISP_SPRITE, WISP_SPRITE);

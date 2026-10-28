@@ -15,7 +15,7 @@ import { darker, JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
 import { WEAPON_CODE } from '../../state/weapon-effects';
 import { MarkLayer } from '../weapon-fx';
-import type { DishAmbience } from '../ambience';
+import { AMBIENCE, DishAmbience } from '../ambience';
 
 /**
  * What the shape shader draws for one instance. Every shape is a rect in
@@ -192,22 +192,16 @@ export function pushDynamicWalls(
   }
 }
 
-/** The ambience's bubbles, as the Canvas 2D one paints them. */
-const BUBBLE = {
-  film: 0.07,
-  rim: 0.28,
-  /** The rim's width in arena cells, never thinner than a pixel. */
-  rimWidth: 0.18,
-  spot: 0.55,
-} as const;
-
 const WHITE: Rgb = [255, 255, 255];
 
+/** The bubbles in view, three numbers each - grown as needed. */
+let bubbles = new Float32Array(0);
+
 /**
- * The dish's bubbles over the finished frame (see `DishAmbience`): the
- * film of every bubble, every rim and every spot of light - the mist goes
- * with the copy onto the canvas. `pixel` is a canvas pixel's width in
- * arena cells.
+ * The dish's bubbles over the finished frame, as `DishAmbience` paints
+ * them: the film of every bubble, every rim and every spot of light - the
+ * mist goes with the copy onto the canvas. `pixel` is a canvas pixel's
+ * width in arena cells.
  */
 export function pushAmbience(
   batch: ShapeBatch,
@@ -215,49 +209,57 @@ export function pushAmbience(
   view: Rect,
   pixel: number
 ): void {
+  let count = 0;
+  ambience.forEachBubble(view, (x, y, radius) => {
+    if (count + 3 > bubbles.length) {
+      const grown = new Float32Array(Math.max(48, bubbles.length * 2));
+      grown.set(bubbles);
+      bubbles = grown;
+    }
+    bubbles[count++] = x;
+    bubbles[count++] = y;
+    bubbles[count++] = radius;
+  });
+  const { bubbleFilm, bubbleRim, bubbleSpot, spotSize, spotX, spotY } =
+    AMBIENCE;
   // In three rounds, as the Canvas 2D one strokes them: films, rims, spots.
-  ambience.forEachBubble(view, (x, y, radius) =>
+  for (let i = 0; i < count; i += 3) {
     batch.push(
       SHAPE.disc,
-      { x: x - radius, y: y - radius, width: radius * 2, height: radius * 2 },
+      square(bubbles[i], bubbles[i + 1], bubbles[i + 2]),
       WHITE,
-      BUBBLE.film
-    )
-  );
-  const rimWidth = Math.max(pixel, BUBBLE.rimWidth);
+      bubbleFilm
+    );
+  }
+  const rimWidth = Math.max(pixel, AMBIENCE.bubbleRimWidth);
   // The ring's rect reaches past the circle by half the line and a pixel.
   const outer = rimWidth / 2 + pixel;
-  ambience.forEachBubble(view, (x, y, radius) =>
+  for (let i = 0; i < count; i += 3) {
+    const radius = bubbles[i + 2];
     batch.push(
       SHAPE.ring,
-      {
-        x: x - radius - outer,
-        y: y - radius - outer,
-        width: (radius + outer) * 2,
-        height: (radius + outer) * 2,
-      },
+      square(bubbles[i], bubbles[i + 1], radius + outer),
       WHITE,
-      BUBBLE.rim,
+      bubbleRim,
       WHITE,
-      BUBBLE.rim,
+      bubbleRim,
       radius,
       rimWidth
-    )
-  );
-  ambience.forEachBubble(view, (x, y, radius) => {
-    const spot = radius * 0.28;
+    );
+  }
+  for (let i = 0; i < count; i += 3) {
+    const radius = bubbles[i + 2];
     batch.push(
       SHAPE.disc,
-      {
-        x: x - radius * 0.38 - spot,
-        y: y - radius * 0.4 - spot,
-        width: spot * 2,
-        height: spot * 2,
-      },
+      square(
+        bubbles[i] - radius * spotX,
+        bubbles[i + 1] - radius * spotY,
+        radius * spotSize
+      ),
       WHITE,
-      BUBBLE.spot
+      bubbleSpot
     );
-  });
+  }
 }
 
 /** Scratch for one blob's ellipse - `push` copies it straight away. */

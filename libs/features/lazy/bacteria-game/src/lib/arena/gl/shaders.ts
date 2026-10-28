@@ -149,6 +149,8 @@ out vec4 outColor;
 ${ARENA_POSITION}
 const float RIM_SHADE = ${glslFloat(AMBIENCE.rimShade)};
 const float SHEEN = ${glslFloat(AMBIENCE.sheen)};
+const float SHEEN_REACH = ${glslFloat(AMBIENCE.sheenReach)};
+const float WISP_MID = ${glslFloat(AMBIENCE.wispMid)};
 
 // How dark the rim's shadow is that far in from an edge.
 float rim(float inside) {
@@ -161,25 +163,29 @@ void main() {
   vec3 color = texture(uImage, (vNdc + 1.0) * 0.5).rgb;
   vec2 p = arenaPosition(vNdc);
   // Each wisp as the ambience's sprite: opaque at the centre,
-  // a third at half the radius, gone at the rim.
+  // WISP_MID at half the radius, gone at the rim.
   for (int i = 0; i < ${AMBIENCE.wisps}; i++) {
     if (i >= uWispCount) {
       break;
     }
     vec4 wisp = uWisps[i];
-    float r = length(p - wisp.xy) / wisp.z;
-    if (r < 1.0) {
-      float a = wisp.w * (r < 0.5 ? mix(1.0, 0.35, r / 0.5) : mix(0.35, 0.0, (r - 0.5) / 0.5));
+    vec2 d = p - wisp.xy;
+    // The square root only where the wisp reaches.
+    if (dot(d, d) < wisp.z * wisp.z) {
+      float r = length(d) / wisp.z;
+      float a = wisp.w * (r < 0.5
+        ? mix(1.0, WISP_MID, r / 0.5)
+        : mix(WISP_MID, 0.0, (r - 0.5) / 0.5));
       color = mix(color, uMist, a);
     }
   }
   if (uDepth) {
     color *= (1.0 - rim(p.x)) * (1.0 - rim(uArena.x - p.x))
       * (1.0 - rim(p.y)) * (1.0 - rim(uArena.y - p.y));
-    // The sheen's gradient runs along the canvas's diagonal, gone at 45%.
+    // The sheen's gradient runs along the canvas's diagonal.
     vec2 uv = vec2(vNdc.x + 1.0, 1.0 - vNdc.y) * 0.5;
     float along = dot(uv, uCanvas * uCanvas) / dot(uCanvas, uCanvas);
-    float sheen = SHEEN * max(0.0, 1.0 - along / 0.45);
+    float sheen = SHEEN * max(0.0, 1.0 - along / SHEEN_REACH);
     color = color * (1.0 - sheen) + sheen;
   }
   outColor = vec4(color, 1.0);
