@@ -29,6 +29,13 @@ export class CareerHeroComponent {
   protected readonly t = this.i18n.texts;
   protected readonly year = new Date().getFullYear();
 
+  /** The year as a string, so it is not formatted as a number ("2,008"). */
+  protected readonly eyebrow = computed(() =>
+    this.i18n.fill(this.t().career.eyebrow, {
+      since: String(this.career().profile.since),
+    })
+  );
+
   protected readonly stats = computed<Stat[]>(() => {
     const { profile, projects } = this.career();
     const t = this.t().career;
@@ -42,8 +49,4 @@ export class CareerHeroComponent {
       { value: countClients(projects), label: t.statsClients },
     ];
   });
-
-  protected readonly mailto = computed(
-    () => `mailto:${this.career().profile.email}`
-  );
 }

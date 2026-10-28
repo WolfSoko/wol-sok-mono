@@ -1,9 +1,9 @@
-import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  DOCUMENT,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { I18nService } from '../i18n/i18n.service';
@@ -34,13 +34,15 @@ export class CareerComponent {
   protected readonly career = CAREER;
   protected readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.texts;
-  protected readonly mailto = `mailto:${CAREER.profile.email}`;
 
-  protected readonly profileDate = computed(() =>
-    new Date(this.career.source.profileDate).toLocaleDateString(
-      this.i18n.locale(),
-      { dateStyle: 'long' }
-    )
+  /** The source line, with the profile's date in the active language. */
+  protected readonly source = computed(() =>
+    this.i18n.fill(this.t().career.source, {
+      date: new Date(this.career.source.profileDate).toLocaleDateString(
+        this.i18n.locale(),
+        { dateStyle: 'long', timeZone: 'UTC' }
+      ),
+    })
   );
 
   public constructor() {

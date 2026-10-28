@@ -16,7 +16,10 @@
 
 <wolsok-career-timeline [projects]="career.projects" />
 
-<wolsok-career-skills [profile]="career.profile" [projects]="career.projects" />
+<wolsok-career-skills
+  [skills]="career.profile.skills"
+  [projects]="career.projects"
+/>
 
 <section id="industries" aria-labelledby="industries-title" wolsokReveal>
   <h2 id="industries-title">{{ t().career.industries }}</h2>
@@ -29,7 +32,7 @@
 </section>
 
 <section class="about" aria-labelledby="about-title">
-  <h2 id="about-title" class="sr-only">{{ t().career.facts }}</h2>
+  <h2 id="about-title" class="cdk-visually-hidden">{{ t().career.facts }}</h2>
   <div class="about-grid">
     <div class="panel" [wolsokReveal]="0">
       <h3>{{ t().career.education }}</h3>
@@ -58,7 +61,9 @@
         <dt>{{ t().career.languages }}</dt>
         <dd>{{ i18n.pick(career.profile.languages).join(" · ") }}</dd>
         <dt>{{ t().career.location }}</dt>
-        <dd>{{ i18n.pick(career.profile.location) }}</dd>
+        <dd>
+          {{ career.profile.city }}, {{ i18n.pick(career.profile.country) }}
+        </dd>
         <dt>{{ t().career.born }}</dt>
         <dd>{{ career.profile.born }}</dd>
         <dt>{{ t().career.nationality }}</dt>
@@ -71,16 +76,17 @@
 <section class="contact" aria-labelledby="contact-title" wolsokReveal>
   <div class="contact-card">
     <h2 id="contact-title">{{ t().career.contactTitle }}</h2>
-    <p>{{ t().career.contactLead }}</p>
+    <p>
+      {{ i18n.fill(t().career.contactLead, { city: career.profile.city }) }}
+    </p>
     <div class="actions">
-      <a matButton="filled" [href]="mailto">{{ t().career.contactMail }}</a>
+      <a matButton="filled" [href]="'mailto:' + career.profile.email">{{
+        t().career.contactMail
+      }}</a>
       <a matButton="outlined" [href]="career.profile.github">{{
         t().career.github
       }}</a>
     </div>
   </div>
-  <p class="source">
-    {{ t().career.sourceBefore }} {{ profileDate() }}
-    {{ t().career.sourceAfter }}
-  </p>
+  <p class="source">{{ source() }}</p>
 </section>

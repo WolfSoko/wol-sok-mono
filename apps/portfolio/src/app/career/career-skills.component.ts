@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { I18nService } from '../i18n/i18n.service';
 import { RevealDirective } from '../reveal.directive';
-import { CareerProfile, CareerProject } from './career.model';
+import { CareerProject, SkillGroup } from './career.model';
 
 /** The toolbox: a ticker of what the projects used, and the groups. */
 @Component({
@@ -18,7 +18,7 @@ import { CareerProfile, CareerProject } from './career.model';
   styleUrl: './career-skills.component.scss',
 })
 export class CareerSkillsComponent {
-  public readonly profile = input.required<CareerProfile>();
+  public readonly skills = input.required<readonly SkillGroup[]>();
   public readonly projects = input.required<readonly CareerProject[]>();
 
   protected readonly i18n = inject(I18nService);

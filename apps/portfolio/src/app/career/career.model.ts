@@ -43,7 +43,8 @@ export interface CareerProfile {
   title: Localized;
   born: number;
   nationality: Localized;
-  location: Localized;
+  city: string;
+  country: Localized;
   /** First year as a software engineer. */
   since: number;
   /** First year with Angular (AngularJS then). */

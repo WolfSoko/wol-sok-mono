@@ -6,13 +6,16 @@
 export const en = {
   nav: {
     home: 'wolsok.de home',
+    site: 'Site',
+    sections: 'Sections',
     career: 'Career',
     github: 'GitHub',
     language: 'Language',
-    theme: 'Theme',
-    themeSystem: 'Theme: follow the system',
-    themeLight: 'Theme: light',
-    themeDark: 'Theme: dark',
+    theme: {
+      system: 'Theme: follow the system',
+      light: 'Theme: light',
+      dark: 'Theme: dark',
+    },
   },
   footer: {
     privacy: 'Privacy',
@@ -39,12 +42,12 @@ export const en = {
     openSourceIntroAfter: 'Two pieces of it are published on npm.',
     careerTitle: 'Behind the code',
     careerLead:
-      'Freelance full-stack engineer since 2008, Angular since its first day. Eighteen years of projects for Otto, freenet, About You, Fielmann and more.',
+      'Freelance full-stack engineer since 2008, Angular since its first day. {years} years of projects for Otto, freenet, About You, Fielmann and more.',
     careerLink: 'See the career',
     builtWith: 'Built with',
   },
   career: {
-    eyebrow: 'Freelance since 2008',
+    eyebrow: 'Freelance since {since}',
     title: 'Full-stack software engineer,',
     titleAccent: 'Angular to the core.',
     lead: 'Requirements, architecture, code, tests, pipelines and cloud: I take web products from the idea to production and coach the teams that run them.',
@@ -58,7 +61,7 @@ export const en = {
     focusIntro: 'The work I am asked for again and again.',
     timeline: 'Projects',
     timelineIntro:
-      'Every engagement since 2008, newest first. Open one for the details.',
+      'Every engagement since {since}, newest first. Open one for the details.',
     skills: 'Toolbox',
     skillsIntro: 'What I work with, grouped by what it is for.',
     industries: 'Industries',
@@ -70,23 +73,19 @@ export const en = {
     born: 'Born',
     nationality: 'Nationality',
     location: 'Based in',
-    client: 'Client',
-    role: 'Role',
     duration: 'Duration',
     team: 'Team',
     workplace: 'Workplace',
     projectLanguage: 'Project language',
     technologies: 'Technologies',
     methods: 'Methods',
-    showDetails: 'Details',
     months: '{count} months',
     people: '{count} people',
-    present: 'today',
-    sourceBefore: 'Taken from my qualification profile of',
-    sourceAfter: 'and updated every month.',
+    source:
+      'Taken from my qualification profile of {date} and updated every month.',
     contactTitle: 'Have a project in mind?',
     contactLead:
-      'I work remote from Hamburg, on site where it helps, in German or English. Say hello and tell me what you are building.',
+      'I work remote from {city}, on site where it helps, in German or English. Say hello and tell me what you are building.',
     contactMail: 'Write me',
   },
 };

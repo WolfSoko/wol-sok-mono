@@ -30,7 +30,7 @@ describe('I18nService', () => {
 
   it('ignores a stored value that is no language', () => {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, 'fr');
-    expect(create().choice()).toBeNull();
+    expect(create().language()).toBe('en');
   });
 
   it('stores a choice and sets the document language', () => {
@@ -40,10 +40,6 @@ describe('I18nService', () => {
     expect(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('de');
     expect(document.documentElement.lang).toBe('de');
     expect(i18n.pick({ en: 'cat', de: 'Katze' })).toBe('Katze');
-
-    i18n.setLanguage(null);
-    expect(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBeNull();
-    expect(i18n.choice()).toBeNull();
   });
 
   it('fills placeholders formatted for the locale', () => {

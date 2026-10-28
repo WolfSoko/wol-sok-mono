@@ -2,33 +2,35 @@
   <a routerLink="/" class="logo" [attr.aria-label]="t().nav.home">
     wol<span>sok</span>
   </a>
-  <nav class="tools">
+  <nav class="tools" [attr.aria-label]="t().nav.site">
     <a routerLink="/career" routerLinkActive="active" class="career">{{
       t().nav.career
     }}</a>
     <a href="https://github.com/WolfSoko" class="github">{{
       t().nav.github
     }}</a>
-    <div class="switch" role="group" [attr.aria-label]="t().nav.language">
+    <mat-button-toggle-group
+      class="switch"
+      hideSingleSelectionIndicator
+      [attr.aria-label]="t().nav.language"
+      [value]="i18n.language()"
+      (change)="i18n.setLanguage($event.value)"
+    >
       @for (language of languages; track language.id) {
-        <button
-          type="button"
-          [class.on]="i18n.language() === language.id"
-          [attr.aria-pressed]="i18n.language() === language.id"
+        <mat-button-toggle
+          [value]="language.id"
           [attr.lang]="language.id"
-          [title]="language.name"
-          (click)="i18n.setLanguage(language.id)"
+          [attr.title]="language.name"
+          >{{ language.id.toUpperCase() }}</mat-button-toggle
         >
-          {{ language.id.toUpperCase() }}
-        </button>
       }
-    </div>
+    </mat-button-toggle-group>
     <button
       type="button"
       matIconButton
       class="theme"
-      [attr.aria-label]="themeLabel()"
-      [title]="themeLabel()"
+      [attr.aria-label]="t().nav.theme[theme.choice()]"
+      [title]="t().nav.theme[theme.choice()]"
       (click)="theme.cycle()"
     >
       @switch (theme.choice()) {

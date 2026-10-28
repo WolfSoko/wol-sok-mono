@@ -1,8 +1,3 @@
-/** The texts of an area, nested by screen and topic. */
-export interface Dictionary {
-  readonly [key: string]: string | Dictionary;
-}
-
 /**
  * The shape another language owes the English texts of an area: the same
  * keys, each a string where the English one is. A missing or an extra key

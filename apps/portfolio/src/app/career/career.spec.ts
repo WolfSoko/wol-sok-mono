@@ -30,13 +30,15 @@ describe('career data', () => {
     expect(yearsSince(2008, 2026)).toBe(18);
   });
 
-  it('counts clients without the thesis', () => {
-    expect(countClients(CAREER_PROJECTS)).toBe(
-      new Set(
-        CAREER_PROJECTS.filter((p) => p.kind !== 'thesis').map((p) => p.client)
-      ).size
-    );
-    expect(countClients(CAREER_PROJECTS)).toBeLessThan(CAREER_PROJECTS.length);
+  it('counts each client once and the thesis not at all', () => {
+    const [a, b] = CAREER_PROJECTS;
+    expect(
+      countClients([
+        { ...a, client: 'Same' },
+        { ...b, client: 'Same' },
+        { ...b, client: 'University', kind: 'thesis' },
+      ])
+    ).toBe(1);
   });
 
   it('names the profile it was taken from, by date', () => {
@@ -62,9 +64,9 @@ describe('career data', () => {
     const data = JSON.parse(personJsonLd(CAREER, 'https://wolsok.de/career'));
     expect(data['@type']).toBe('Person');
     expect(data.name).toBe('Wolfram Sokollek');
-    expect(data.worksFor.map((o: { name: string }) => o.name)).not.toContain(
-      'HAW Hamburg'
-    );
+    expect(data.alumniOf.name).toBe('HAW Hamburg');
+    expect(data.address.addressLocality).toBe(CAREER.profile.city);
+    expect(data.worksFor).toBeUndefined();
   });
 });
 
@@ -86,6 +88,8 @@ describe('career page', () => {
       expect(element.textContent).toContain(project.client);
     }
     expect(element.textContent).toContain('Full-stack software engineer');
+    expect(element.textContent).toContain('Freelance since 2008');
+    expect(element.textContent).not.toContain('2,008');
     expect(document.getElementById('career-json-ld')?.textContent).toContain(
       '"@type":"Person"'
     );

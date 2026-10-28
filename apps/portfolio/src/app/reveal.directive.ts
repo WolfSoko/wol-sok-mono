@@ -42,12 +42,7 @@ export class RevealDirective implements OnDestroy {
 
   private observe(): void {
     const element = this.element.nativeElement;
-    if (
-      typeof IntersectionObserver === 'undefined' ||
-      element.ownerDocument.defaultView?.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches
-    ) {
+    if (typeof IntersectionObserver === 'undefined') {
       return;
     }
     element.classList.add('reveal');

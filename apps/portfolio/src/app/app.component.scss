@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 :host {
   display: flex;
   flex-direction: column;
@@ -56,32 +58,16 @@ header {
 }
 
 .switch {
-  display: inline-flex;
-  padding: 0.15rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-
-  button {
-    padding: 0.25rem 0.6rem;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: var(--muted);
-    font: inherit;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    transition:
-      background-color 0.2s,
-      color 0.2s;
-
-    &.on {
-      background: var(--accent-warm);
-      color: #fff;
-    }
-  }
+  @include mat.button-toggle-overrides(
+    (
+      shape: 999px,
+      height: 1.9rem,
+      label-text-size: 0.75rem,
+      label-text-weight: 700,
+      label-text-tracking: 0.05em,
+      divider-color: var(--line),
+    )
+  );
 }
 
 .theme {

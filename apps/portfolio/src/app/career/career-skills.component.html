@@ -12,7 +12,7 @@
     </div>
   </div>
   <div class="groups">
-    @for (group of profile().skills; track group.items[0]; let i = $index) {
+    @for (group of skills(); track group.items[0]; let i = $index) {
       <div class="group" [wolsokReveal]="(i % 3) * 0.1">
         <h3>{{ i18n.pick(group.name) }}</h3>
         <ul>

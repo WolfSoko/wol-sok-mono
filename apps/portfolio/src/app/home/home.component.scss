@@ -2,22 +2,9 @@
   display: block;
 }
 
-section {
-  padding: 3rem 0;
-}
-
 .hero {
   position: relative;
   padding: 5rem 0 3rem;
-}
-
-.eyebrow {
-  margin: 0 0 1rem;
-  color: var(--accent-warm);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.85rem;
 }
 
 h1 {
@@ -33,14 +20,6 @@ h1 {
     background-clip: text;
     color: transparent;
   }
-}
-
-.lead {
-  max-width: 60ch;
-  margin: 1.5rem 0 0;
-  font-size: 1.15rem;
-  line-height: 1.6;
-  color: var(--muted);
 }
 
 .jump {
@@ -119,20 +98,6 @@ h1 {
 @media (prefers-reduced-motion: reduce) {
   .dish span {
     animation: none;
-  }
-}
-
-h2 {
-  margin: 0;
-  font-size: 2rem;
-}
-
-.intro {
-  margin: 0.5rem 0 1.75rem;
-  color: var(--muted);
-
-  a {
-    color: var(--text);
   }
 }
 

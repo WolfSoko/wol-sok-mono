@@ -1,4 +1,5 @@
 @use '@angular/material' as mat;
+@use '@angular/cdk' as cdk;
 @import '@fontsource/bricolage-grotesque/latin-800.css';
 
 // The theme follows the system through `color-scheme: light dark` and
@@ -41,6 +42,8 @@
 
 html {
   scroll-behavior: smooth;
+  // Decorations may drift past the right edge; the page never scrolls sideways.
+  overflow-x: clip;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -70,6 +73,45 @@ body {
 h1,
 h2 {
   font-family: var(--font-display);
+}
+
+@include cdk.a11y-visually-hidden();
+
+// The chrome every page section shares: the heading, its intro line, and
+// the hero's eyebrow and lead.
+main section {
+  padding: 3rem 0;
+}
+
+main h2 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.intro {
+  margin: 0.5rem 0 1.75rem;
+  color: var(--muted);
+
+  a {
+    color: var(--text);
+  }
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  color: var(--accent-warm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.lead {
+  max-width: 60ch;
+  margin: 1.5rem 0 0;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--muted);
 }
 
 a:focus-visible,

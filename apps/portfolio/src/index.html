@@ -10,7 +10,16 @@
       content="Portfolio of Wolfram Sokollek: Bacteria Wars, Movepath, Pacetrainer, RollaPolla and interactive Angular experiments with WebGL, shaders, TensorFlow.js and WebAssembly."
     />
     <meta name="author" content="Wolfram Sokollek" />
-    <meta name="theme-color" content="#0b0f14" />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: light)"
+      content="#f6f8fb"
+    />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#0b0f14"
+    />
     <meta name="google-adsense-account" content="ca-pub-6346271540341424" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="wolsok.de" />
@@ -32,14 +41,13 @@
         var t = localStorage.getItem("wolsok.theme");
         if (t === "light" || t === "dark") {
           document.documentElement.setAttribute("data-theme", t);
-        } else {
-          t = matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light";
+          var c = t === "dark" ? "#0b0f14" : "#f6f8fb";
+          document
+            .querySelectorAll('meta[name="theme-color"]')
+            .forEach(function (m) {
+              m.content = c;
+            });
         }
-        document
-          .querySelector('meta[name="theme-color"]')
-          .setAttribute("content", t === "dark" ? "#0b0f14" : "#f6f8fb");
       } catch (e) {}
     </script>
     <script

@@ -4,7 +4,8 @@
   </div>
   <p class="eyebrow">
     <span class="pulse" aria-hidden="true"></span>
-    {{ t().career.eyebrow }} · {{ i18n.pick(career().profile.location) }}
+    {{ eyebrow() }}
+    · {{ career().profile.city }}, {{ i18n.pick(career().profile.country) }}
   </p>
   <h1 id="career-heading">
     <span class="name">{{ career().profile.name }}</span>
@@ -12,7 +13,9 @@
   </h1>
   <p class="lead">{{ t().career.lead }}</p>
   <div class="actions">
-    <a matButton="filled" [href]="mailto()">{{ t().career.hire }}</a>
+    <a matButton="filled" [href]="'mailto:' + career().profile.email">{{
+      t().career.hire
+    }}</a>
     <a matButton="outlined" [href]="career().profile.github">{{
       t().career.github
     }}</a>
@@ -22,7 +25,7 @@
       <div class="stat" [style.--i]="i" [style.--num]="stat.value">
         <dt>{{ stat.label }}</dt>
         <dd>
-          <span class="sr-only">{{ stat.value }}</span>
+          <span class="cdk-visually-hidden">{{ stat.value }}</span>
           <span class="count" aria-hidden="true"></span>
           <span class="plus" aria-hidden="true">+</span>
         </dd>

@@ -4,13 +4,16 @@ import type { Translation } from './translation';
 export const de: Translation<typeof en> = {
   nav: {
     home: 'wolsok.de Startseite',
+    site: 'Seite',
+    sections: 'Abschnitte',
     career: 'Werdegang',
     github: 'GitHub',
     language: 'Sprache',
-    theme: 'Design',
-    themeSystem: 'Design: wie das System',
-    themeLight: 'Design: hell',
-    themeDark: 'Design: dunkel',
+    theme: {
+      system: 'Design: wie das System',
+      light: 'Design: hell',
+      dark: 'Design: dunkel',
+    },
   },
   footer: {
     privacy: 'Datenschutz',
@@ -37,12 +40,12 @@ export const de: Translation<typeof en> = {
     openSourceIntroAfter: 'Zwei Teile davon sind auf npm veröffentlicht.',
     careerTitle: 'Hinter dem Code',
     careerLead:
-      'Freiberuflicher Fullstack-Engineer seit 2008, Angular seit dem ersten Tag. Achtzehn Jahre Projekte für Otto, freenet, About You, Fielmann und mehr.',
+      'Freiberuflicher Fullstack-Engineer seit 2008, Angular seit dem ersten Tag. {years} Jahre Projekte für Otto, freenet, About You, Fielmann und mehr.',
     careerLink: 'Zum Werdegang',
     builtWith: 'Gebaut mit',
   },
   career: {
-    eyebrow: 'Freiberuflich seit 2008',
+    eyebrow: 'Freiberuflich seit {since}',
     title: 'Fullstack Software Engineer,',
     titleAccent: 'Angular bis in den Kern.',
     lead: 'Anforderungen, Architektur, Code, Tests, Pipelines und Cloud: Ich bringe Webprodukte von der Idee bis in die Produktion und coache die Teams, die sie betreiben.',
@@ -56,7 +59,7 @@ export const de: Translation<typeof en> = {
     focusIntro: 'Die Arbeit, für die ich immer wieder gefragt werde.',
     timeline: 'Projekte',
     timelineIntro:
-      'Jeder Einsatz seit 2008, der neueste zuerst. Zum Aufklappen tippen.',
+      'Jeder Einsatz seit {since}, der neueste zuerst. Zum Aufklappen tippen.',
     skills: 'Werkzeugkasten',
     skillsIntro: 'Womit ich arbeite, gruppiert nach dem Wofür.',
     industries: 'Branchen',
@@ -68,23 +71,19 @@ export const de: Translation<typeof en> = {
     born: 'Jahrgang',
     nationality: 'Staatsangehörigkeit',
     location: 'Standort',
-    client: 'Kunde',
-    role: 'Rolle',
     duration: 'Dauer',
     team: 'Team',
     workplace: 'Arbeitsort',
     projectLanguage: 'Projektsprache',
     technologies: 'Technologien',
     methods: 'Methoden',
-    showDetails: 'Details',
     months: '{count} Monate',
     people: '{count} Personen',
-    present: 'heute',
-    sourceBefore: 'Aus meinem Qualifikationsprofil vom',
-    sourceAfter: 'und monatlich aktualisiert.',
+    source:
+      'Aus meinem Qualifikationsprofil vom {date} und monatlich aktualisiert.',
     contactTitle: 'Ein Projekt im Kopf?',
     contactLead:
-      'Ich arbeite remote aus Hamburg, vor Ort wo es hilft, auf Deutsch oder Englisch. Sag Hallo und erzähl mir, was du baust.',
+      'Ich arbeite remote aus {city}, vor Ort wo es hilft, auf Deutsch oder Englisch. Sag Hallo und erzähl mir, was du baust.',
     contactMail: 'Schreib mir',
   },
 };

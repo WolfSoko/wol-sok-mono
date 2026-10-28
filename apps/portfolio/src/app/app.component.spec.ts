@@ -11,10 +11,6 @@ import { SeoService } from './seo.service';
 
 describe('AppComponent', () => {
   beforeEach(() => {
-    Object.defineProperty(window, 'matchMedia', {
-      configurable: true,
-      value: () => ({ matches: false }),
-    });
     TestBed.configureTestingModule({
       imports: [AppComponent],
       providers: [provideRouter(appRoutes)],
@@ -60,7 +56,9 @@ describe('AppComponent', () => {
       'Career'
     );
 
-    root.querySelector<HTMLButtonElement>('.switch button[lang="de"]')?.click();
+    root
+      .querySelector<HTMLButtonElement>('.switch [lang="de"] button')
+      ?.click();
     await fixture.whenStable();
     expect(root.querySelector('header .career')?.textContent).toContain(
       'Werdegang'
@@ -88,6 +86,16 @@ describe('sitemap.xml', () => {
       .filter((route) => route.path !== '**')
       .map((route) => `https://wolsok.de/${route.path}`);
     expect(listed.sort()).toEqual(routed.sort());
+  });
+
+  it('names the same pages as the Lighthouse run', () => {
+    const { url } = JSON.parse(
+      readFileSync(join(__dirname, '../../lighthouse.json'), 'utf8')
+    ) as { url: string[] };
+    const routed = appRoutes
+      .filter((route) => route.path !== '**')
+      .map((route) => `/${route.path}`);
+    expect(url.sort()).toEqual(routed.sort());
   });
 });
 

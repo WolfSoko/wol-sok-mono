@@ -1,4 +1,5 @@
 import { Route } from '@angular/router';
+import { ANGULAR_SINCE, CAREER_SINCE } from './career/career-since';
 import { HomeComponent } from './home/home.component';
 import { Localized } from './i18n/language';
 import { PrivacyComponent } from './privacy/privacy.component';
@@ -34,8 +35,8 @@ export const appRoutes: Route[] = [
         de: 'Werdegang – Wolfram Sokollek, freiberuflicher Fullstack-Engineer',
       },
       description: {
-        en: 'Freelance full-stack software engineer since 2008, Angular since 2014: projects for Otto, freenet, About You, Fielmann and more, skills, industries and how to get in touch.',
-        de: 'Freiberuflicher Fullstack Software Engineer seit 2008, Angular seit 2014: Projekte für Otto, freenet, About You, Fielmann und mehr, Kenntnisse, Branchen und Kontakt.',
+        en: `Freelance full-stack software engineer since ${CAREER_SINCE}, Angular since ${ANGULAR_SINCE}: projects for Otto, freenet, About You, Fielmann and more, skills, industries and how to get in touch.`,
+        de: `Freiberuflicher Fullstack Software Engineer seit ${CAREER_SINCE}, Angular seit ${ANGULAR_SINCE}: Projekte für Otto, freenet, About You, Fielmann und mehr, Kenntnisse, Branchen und Kontakt.`,
       },
     } satisfies PageData,
   },

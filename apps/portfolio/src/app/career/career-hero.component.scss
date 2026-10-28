@@ -5,7 +5,6 @@
 .hero {
   position: relative;
   padding: 4rem 0 3rem;
-  overflow: visible;
 }
 
 .aurora {
@@ -16,13 +15,15 @@
   pointer-events: none;
   z-index: -1;
   opacity: 0.5;
-  filter: blur(60px);
 
+  // Blurred one by one: a filter on the animated element is rasterised
+  // once and then only transformed, one on the group would refilter per frame.
   span {
     position: absolute;
     border-radius: 50%;
     width: 55%;
     aspect-ratio: 1;
+    filter: blur(60px);
     animation: aurora 16s ease-in-out infinite alternate;
   }
   span:nth-child(1) {
@@ -55,26 +56,31 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin: 0 0 1rem;
-  color: var(--accent-warm);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.85rem;
 }
 
 .pulse {
+  position: relative;
   width: 0.6rem;
   height: 0.6rem;
   border-radius: 50%;
   background: var(--accent-warm);
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-warm) 60%, transparent);
-  animation: pulse 2.2s ease-out infinite;
+
+  // The ring grows by transform and fades, which the compositor does alone.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--accent-warm);
+    opacity: 0.6;
+    animation: pulse 2.2s ease-out infinite;
+  }
 }
 
 @keyframes pulse {
   to {
-    box-shadow: 0 0 0 0.8rem transparent;
+    transform: scale(3.5);
+    opacity: 0;
   }
 }
 
@@ -105,7 +111,8 @@ h1 {
     background-size: 300% 100%;
     background-clip: text;
     color: transparent;
-    animation: shimmer 8s linear infinite;
+    // Finite: a text-clipped gradient repaints on every frame it moves.
+    animation: shimmer 8s linear 3;
   }
 }
 
@@ -113,14 +120,6 @@ h1 {
   to {
     background-position: 300% 0;
   }
-}
-
-.lead {
-  max-width: 60ch;
-  margin: 1.5rem 0 0;
-  font-size: 1.15rem;
-  line-height: 1.6;
-  color: var(--muted);
 }
 
 .actions {
@@ -138,6 +137,8 @@ h1 {
 }
 
 .stat {
+  display: flex;
+  flex-direction: column;
   padding: 1.25rem 1.25rem 1rem;
   border-radius: 1.25rem;
   border: 1px solid var(--line);
@@ -191,18 +192,9 @@ h1 {
   color: var(--accent-warm);
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .aurora span,
-  .pulse,
+  .pulse::after,
   h1 em,
   .stat,
   .count {

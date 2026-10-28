@@ -7,7 +7,7 @@
     {{ t().home.title }} <em>{{ t().home.titleAccent }}</em>
   </h1>
   <p class="lead">{{ t().home.lead }}</p>
-  <nav class="jump">
+  <nav class="jump" [attr.aria-label]="t().nav.sections">
     <a href="#apps">{{ t().home.jumpApps }}</a>
     <a href="#experiments">{{ t().home.jumpExperiments }}</a>
     <a href="#open-source">{{ t().home.jumpOpenSource }}</a>
@@ -63,7 +63,7 @@
   <div class="career-card">
     <div>
       <h2 id="career-title">{{ t().home.careerTitle }}</h2>
-      <p class="intro">{{ t().home.careerLead }}</p>
+      <p class="intro">{{ careerLead() }}</p>
     </div>
     <a matButton="filled" routerLink="/career">{{ t().home.careerLink }}</a>
   </div>

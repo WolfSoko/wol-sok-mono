@@ -47,9 +47,11 @@ can also be run by hand in any session that has Drive access.
      in the same register as the rest. Drop bullets the profile repeats.
    - Set `CAREER_SOURCE` to the new file (id, name, date) and `checkedAt`
      to today.
-4. Does the home page's teaser (`texts.en.ts` / `texts.de.ts`,
-   `home.careerLead`) or the career route's description (`app.routes.ts`)
-   name a client or a number the change makes stale? Update them.
+4. The years come from `career-since.ts` and the profile, so only the
+   client names in the home page's teaser (`home.careerLead` in
+   `texts.en.ts` / `texts.de.ts`) and in the career route's description
+   (`app.routes.ts`) are typed by hand: update them when a new client
+   belongs there.
 5. Run `npx nx format:write`, `npx nx run-many -t lint,lint-templates,test
 -p portfolio` and `npx nx build portfolio`. A budget that fails because
    the data grew is raised in its own `perf(portfolio): ...` commit, as

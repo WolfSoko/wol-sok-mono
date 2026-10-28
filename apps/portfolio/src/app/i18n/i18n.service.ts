@@ -1,6 +1,7 @@
-import { DOCUMENT } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import {
   computed,
+  DOCUMENT,
   effect,
   inject,
   Injectable,
@@ -8,7 +9,7 @@ import {
   Signal,
   signal,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { readStored, writeStored } from '../stored-choice';
 import {
   detectLanguage,
   isLanguage,
@@ -35,19 +36,16 @@ export const LANGUAGE_STORAGE_KEY = 'wolsok.language';
  * right after hydration.
  *
  * Templates read {@link texts} (`t().home.title`), so a switch re-renders
- * every text, and {@link language} picks the entry of a {@link Localized}.
+ * every text, and {@link pick} takes the entry of a {@link Localized}.
  */
 @Injectable({ providedIn: 'root' })
 export class I18nService {
   private readonly document = inject(DOCUMENT);
-  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly chosen = signal<Language | null>(this.stored());
-  private readonly detected: Language = this.browser
+  private readonly detected: Language = isPlatformBrowser(inject(PLATFORM_ID))
     ? detectLanguage(this.document.defaultView?.navigator.languages ?? [])
     : 'en';
 
-  /** The visitor's choice, null to follow the browser. */
-  public readonly choice: Signal<Language | null> = this.chosen.asReadonly();
   /** The language the site speaks. */
   public readonly language: Signal<Language> = computed(
     () => this.chosen() ?? this.detected
@@ -65,26 +63,10 @@ export class I18nService {
     });
   }
 
-  /** Speaks a language from now on, or follows the browser again for null. */
-  public setLanguage(language: Language | null): void {
+  /** Speaks a language from now on, on this device. */
+  public setLanguage(language: Language): void {
     this.chosen.set(language);
-    if (!this.browser) {
-      return;
-    }
-    try {
-      if (language) {
-        this.document.defaultView?.localStorage.setItem(
-          LANGUAGE_STORAGE_KEY,
-          language
-        );
-      } else {
-        this.document.defaultView?.localStorage.removeItem(
-          LANGUAGE_STORAGE_KEY
-        );
-      }
-    } catch {
-      // private mode or storage blocked: the choice holds for this visit
-    }
+    writeStored(LANGUAGE_STORAGE_KEY, language);
   }
 
   /** The entry of a localized value in the active language. */
@@ -98,15 +80,7 @@ export class I18nService {
   }
 
   private stored(): Language | null {
-    if (!this.browser) {
-      return null;
-    }
-    try {
-      const value =
-        this.document.defaultView?.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-      return isLanguage(value) ? value : null;
-    } catch {
-      return null;
-    }
+    const value = readStored(LANGUAGE_STORAGE_KEY);
+    return isLanguage(value) ? value : null;
   }
 }

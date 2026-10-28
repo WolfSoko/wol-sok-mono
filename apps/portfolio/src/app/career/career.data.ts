@@ -1,3 +1,4 @@
+import { ANGULAR_SINCE, CAREER_SINCE } from './career-since';
 import {
   Career,
   CareerProfile,
@@ -18,12 +19,6 @@ export const CAREER_SOURCE: CareerSource = {
   checkedAt: '2026-10-28',
 };
 
-/**
- * The mailbox the contact button writes to: the one the site names in its
- * privacy policy. Put the business address here when there is one.
- */
-export const CONTACT_EMAIL = 'privacy@wolsok.de';
-
 export const CAREER_PROFILE: CareerProfile = {
   name: 'Wolfram Sokollek',
   title: {
@@ -32,9 +27,10 @@ export const CAREER_PROFILE: CareerProfile = {
   },
   born: 1982,
   nationality: { en: 'German', de: 'Deutsch' },
-  location: { en: 'Hamburg, Germany', de: 'Hamburg' },
-  since: 2008,
-  angularSince: 2014,
+  city: 'Hamburg',
+  country: { en: 'Germany', de: 'Deutschland' },
+  since: CAREER_SINCE,
+  angularSince: ANGULAR_SINCE,
   education: {
     en: [
       'Computer science, software engineering, HAW Hamburg: Bachelor of Science 2010',
@@ -220,7 +216,7 @@ export const CAREER_PROFILE: CareerProfile = {
     },
   ],
   github: 'https://github.com/WolfSoko',
-  email: CONTACT_EMAIL,
+  email: 'portfolio@wolsok.de',
 };
 
 /** Every engagement, newest first. */
