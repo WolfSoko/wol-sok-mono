@@ -76,10 +76,8 @@ export function createImageDataFromBacterias(
   shimmer: BoostShimmer | null = null
 ): Uint8ClampedArray {
   const [r, g, b, alpha] = color;
-  const xs = bacterias.x;
-  const ys = bacterias.y;
-  const energies = bacterias.energy;
-  for (let i = 0; i < bacterias.length; i++) {
+  const { x: xs, y: ys, energy: energies, length } = bacterias;
+  for (let i = 0; i < length; i++) {
     const x = xs[i];
     const y = ys[i];
     const energy = energies[i];

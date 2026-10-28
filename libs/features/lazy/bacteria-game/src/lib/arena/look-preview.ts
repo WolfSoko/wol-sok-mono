@@ -2,7 +2,6 @@ import { ColonyLook } from '../state/skins';
 import { gameBalance } from '../state/game-balance';
 import { CellBounds } from '../state/geometry';
 import { Cells } from '../state/cells';
-import { Bacteria } from '../state/player.model';
 import { createCanvas } from './canvas-math';
 import {
   colonyDensity,
@@ -53,7 +52,7 @@ const LIFE = {
 export function previewColony(
   { width, height }: PreviewSize,
   timeSec = 0
-): Bacteria[] {
+): Cells {
   const t = timeSec;
   const cx = width * 0.5 + width * LIFE.driftX * Math.sin(t * LIFE.driftRate);
   const cy =
@@ -61,7 +60,7 @@ export function previewColony(
   const breath = 1 + LIFE.breath * Math.sin(t * LIFE.breathRate);
   const rx = width * 0.4 * breath;
   const ry = height * 0.4 * breath;
-  const colony: Bacteria[] = [];
+  const colony = new Cells();
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
@@ -72,11 +71,7 @@ export function previewColony(
         LIFE.swell * Math.sin((x + y) * 0.18 + t * LIFE.swellRate);
       if (d <= wobble) {
         const front = Math.max(0, (x - cx) / rx);
-        colony.push({
-          x,
-          y,
-          energy: gameBalance.maxEnergy * (0.35 + 0.65 * (1 - front)),
-        });
+        colony.push(x, y, gameBalance.maxEnergy * (0.35 + 0.65 * (1 - front)));
       }
     }
   }
@@ -97,7 +92,7 @@ export function renderLookLayer(
 ): { data: Uint8ClampedArray<ArrayBuffer>; width: number; height: number } {
   const { width, height } = size;
   const rgba = [color[0], color[1], color[2], 255];
-  const colony = Cells.of(previewColony(size, timeSec));
+  const colony = previewColony(size, timeSec);
   if (look === 'pixels') {
     const data = new Uint8ClampedArray(width * height * 4);
     createImageDataFromBacterias(data, width, rgba, colony);

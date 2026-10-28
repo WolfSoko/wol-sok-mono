@@ -188,11 +188,8 @@ export class IntSimulation extends GridSimulation {
   private collectBacterias(): void {
     const slots = this.spawns.length;
     const lists = this.bacterias;
-    while (lists.length < slots) {
-      lists.push(new Cells());
-    }
     for (let slot = 0; slot < slots; slot++) {
-      lists[slot].length = 0;
+      (lists[slot] ??= new Cells()).length = 0;
     }
     const state = this.state;
     const width = this.width;
