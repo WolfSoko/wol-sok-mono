@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.122.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.122.0...v74.122.1) (2026-10-28)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ lay the walls once, draw the ambience in GL, prepare colonies before the frame ([#2717](https://github.com/WolfSoko/wol-sok-mono/issues/2717)) ([71846fe](https://github.com/WolfSoko/wol-sok-mono/commit/71846fe177a8c024ca7be0fe3557b46a7d47eae2))
+
 ## [74.122.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.121.0...v74.122.0) (2026-10-28)
 
 ### Features
