@@ -15,6 +15,7 @@ import { darker, JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
 import { WEAPON_CODE } from '../../state/weapon-effects';
 import { MarkLayer } from '../weapon-fx';
+import { AMBIENCE, DishAmbience } from '../ambience';
 
 /**
  * What the shape shader draws for one instance. Every shape is a rect in
@@ -113,21 +114,26 @@ export class ShapeBatch {
   }
 }
 
-/**
- * Everything drawn between the floor and the colonies: the drifting specks,
- * the walls with their lit edge, and the gates and sliding walls - striped
- * when closed, a blinking outline while open.
- */
-export function pushBackground(
+/** The drifting specks over the floor, one cell each. */
+export function pushMotes(
   batch: ShapeBatch,
   theme: ArenaTheme,
-  motes: Motes,
-  walls: readonly Rect[],
-  dynamicWalls: readonly DynamicWall[]
+  motes: Motes
 ): void {
   motes.forEach((x, y, alpha) =>
     batch.push(SHAPE.rect, { x, y, width: 1, height: 1 }, theme.motes, alpha)
   );
+}
+
+/**
+ * The level's walls with their lit edge - they never move, so the GL
+ * painter lays them once into a layer of their own.
+ */
+export function pushWalls(
+  batch: ShapeBatch,
+  theme: ArenaTheme,
+  walls: readonly Rect[]
+): void {
   pushBlobs(batch, walls, darker(theme.wall), theme);
   for (const wall of walls) {
     if (wall.round) {
@@ -145,6 +151,18 @@ export function pushBackground(
       theme.wallEdge
     );
   }
+}
+
+/**
+ * The gates and sliding walls as they stand - striped when closed, a
+ * blinking outline while open.
+ */
+export function pushDynamicWalls(
+  batch: ShapeBatch,
+  theme: ArenaTheme,
+  motes: Motes,
+  dynamicWalls: readonly DynamicWall[]
+): void {
   // Living tissue rather than machinery: rimmed in the frame colour.
   pushBlobs(batch, dynamicWalls, theme.border, theme);
   for (const wall of dynamicWalls) {
@@ -171,6 +189,76 @@ export function pushBackground(
       openGateFill(wall.warning, blink)
     );
     batch.push(SHAPE.outline, wall, theme.border, openGateOutline(blink));
+  }
+}
+
+const WHITE: Rgb = [255, 255, 255];
+
+/** The bubbles in view, three numbers each - grown as needed. */
+let bubbles = new Float32Array(0);
+
+/**
+ * The dish's bubbles over the finished frame, as `DishAmbience` paints
+ * them: the film of every bubble, every rim and every spot of light - the
+ * mist goes with the copy onto the canvas. `pixel` is a canvas pixel's
+ * width in arena cells.
+ */
+export function pushAmbience(
+  batch: ShapeBatch,
+  ambience: DishAmbience,
+  view: Rect,
+  pixel: number
+): void {
+  let count = 0;
+  ambience.forEachBubble(view, (x, y, radius) => {
+    if (count + 3 > bubbles.length) {
+      const grown = new Float32Array(Math.max(48, bubbles.length * 2));
+      grown.set(bubbles);
+      bubbles = grown;
+    }
+    bubbles[count++] = x;
+    bubbles[count++] = y;
+    bubbles[count++] = radius;
+  });
+  const { bubbleFilm, bubbleRim, bubbleSpot, spotSize, spotX, spotY } =
+    AMBIENCE;
+  // In three rounds, as the Canvas 2D one strokes them: films, rims, spots.
+  for (let i = 0; i < count; i += 3) {
+    batch.push(
+      SHAPE.disc,
+      square(bubbles[i], bubbles[i + 1], bubbles[i + 2]),
+      WHITE,
+      bubbleFilm
+    );
+  }
+  const rimWidth = Math.max(pixel, AMBIENCE.bubbleRimWidth);
+  // The ring's rect reaches past the circle by half the line and a pixel.
+  const outer = rimWidth / 2 + pixel;
+  for (let i = 0; i < count; i += 3) {
+    const radius = bubbles[i + 2];
+    batch.push(
+      SHAPE.ring,
+      square(bubbles[i], bubbles[i + 1], radius + outer),
+      WHITE,
+      bubbleRim,
+      WHITE,
+      bubbleRim,
+      radius,
+      rimWidth
+    );
+  }
+  for (let i = 0; i < count; i += 3) {
+    const radius = bubbles[i + 2];
+    batch.push(
+      SHAPE.disc,
+      square(
+        bubbles[i] - radius * spotX,
+        bubbles[i + 1] - radius * spotY,
+        radius * spotSize
+      ),
+      WHITE,
+      bubbleSpot
+    );
   }
 }
 

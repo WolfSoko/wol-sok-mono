@@ -330,6 +330,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private minimap: MinimapPainter | null = null;
   /** When the minimap last took in where the colonies are. */
   private minimapUpdatedAt = Number.NEGATIVE_INFINITY;
+  /**
+   * True while the painter draws the ambience with the arena - the stage
+   * then lays no canvas of its own over it.
+   */
+  protected readonly painterAmbience = signal(false);
   /** Where the frames spend their time, while the HUD shows it. */
   private readonly framePerf = new FramePerf();
   /**
@@ -1505,6 +1510,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   protected onPainterChange(painter: ArenaPainter | null): void {
     this.painter = painter;
+    this.painterAmbience.set(painter?.paintsAmbience === true);
     if (painter != null) {
       this.painterLayout.set(untracked(this.arenaLayout));
     }
@@ -1689,10 +1695,21 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * depth is drawn, and only once per view and canvas size.
    */
   private paintAmbience(view: Rect, deltaTimeSec: number): void {
+    const ambience = this.ambience;
+    if (ambience == null || !this.settings.ambience()) {
+      return;
+    }
+    const moving = !this.reducedMotion() && this.matchPaints();
+    if (untracked(this.painterAmbience)) {
+      // The painter draws it with the arena: here it only moves on.
+      if (moving) {
+        ambience.advance(deltaTimeSec);
+      }
+      return;
+    }
     const canvas = this.ambienceRef()?.nativeElement;
     const arena = this.arenaView()?.canvas();
-    const ambience = this.ambience;
-    if (canvas == null || arena == null || ambience == null) {
+    if (canvas == null || arena == null) {
       return;
     }
     const { width, height } = arena;
@@ -1701,7 +1718,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       canvas.width = width;
       canvas.height = height;
     }
-    const moving = !this.reducedMotion() && this.matchPaints();
     const still = this.stillAmbience;
     if (
       !moving &&
@@ -1837,18 +1853,24 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       dataset['simulation'] = simulation.kind;
     }
     const players = untracked(this.playerStore.entities);
-    return arenaContent({
-      players,
-      crosshairAt: (player) => this.playerService.crosshairAt(player, alpha),
-      simulation,
-      walls: this.walls(),
-      balance: this.balance(),
-      looks: seatLooks(players, this.skin(), this.computerLook()),
-      reducedMotion: this.reducedMotion(),
-      weaponFires: this.takeFires(),
-      seatColors: this.seatColors,
-      screenResolution: this.settings.screenResolution(),
-    });
+    return {
+      ...arenaContent({
+        players,
+        crosshairAt: (player) => this.playerService.crosshairAt(player, alpha),
+        simulation,
+        walls: this.walls(),
+        balance: this.balance(),
+        looks: seatLooks(players, this.skin(), this.computerLook()),
+        reducedMotion: this.reducedMotion(),
+        weaponFires: this.takeFires(),
+        seatColors: this.seatColors,
+        screenResolution: this.settings.screenResolution(),
+      }),
+      ambience:
+        this.painterAmbience() && this.settings.ambience()
+          ? this.ambience
+          : null,
+    };
   }
 
   /** The weapons fired since the frame before - each goes into one frame. */

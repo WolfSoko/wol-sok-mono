@@ -108,3 +108,31 @@ describe('DishAmbience', () => {
     expect(AMBIENCE.rimWidth).toBeGreaterThan(0);
   });
 });
+
+describe('DishAmbience shapes', () => {
+  it('hands over each wisp and the bubbles in view, in arena cells', () => {
+    const ambience = new DishAmbience(320, 180, () => 0.5);
+    const wisps: number[][] = [];
+    ambience.forEachWisp({ x: 0, y: 0, width: 320, height: 180 }, (...wisp) =>
+      wisps.push(wisp)
+    );
+    const all: number[][] = [];
+    ambience.forEachBubble({ x: 0, y: 0, width: 320, height: 180 }, (...b) =>
+      all.push(b)
+    );
+
+    expect(wisps).toHaveLength(AMBIENCE.wisps);
+    expect(all.length).toBeGreaterThan(0);
+    // A view that only grazes a bubble's rim holds it, one past it does not.
+    const [x, , radius] = all[0];
+    const seen = (from: number) => {
+      const bubbles: number[][] = [];
+      ambience.forEachBubble({ x: from, y: 0, width: 1, height: 180 }, (...b) =>
+        bubbles.push(b)
+      );
+      return bubbles.some(([bx]) => bx === x);
+    };
+    expect(seen(x + radius - 0.1)).toBe(true);
+    expect(seen(x + radius + 0.1)).toBe(false);
+  });
+});

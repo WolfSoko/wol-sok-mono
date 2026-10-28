@@ -4,8 +4,12 @@ import { arenaTheme } from '../arena-theme';
 import { JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
 import { MarkLayer } from '../weapon-fx';
+import { DishAmbience } from '../ambience';
 import {
-  pushBackground,
+  pushAmbience,
+  pushDynamicWalls,
+  pushMotes,
+  pushWalls,
   pushForeground,
   pushWeaponMarks,
   SHAPE,
@@ -75,42 +79,77 @@ describe('ShapeBatch', () => {
   });
 });
 
-describe('pushBackground', () => {
+describe('pushWalls', () => {
   const theme = arenaTheme('pistons');
 
-  it('draws a wall with its two lit edges, a closed gate striped and an open one outlined', () => {
+  it('draws a wall with its two lit edges', () => {
     const batch = new ShapeBatch();
-    const motes = new Motes(320, 140);
 
-    pushBackground(
-      batch,
-      theme,
-      motes,
-      [{ x: 0, y: 0, width: 8, height: 20 }],
-      [
-        { x: 10, y: 10, width: 8, height: 20, solid: true, warning: 0 },
-        { x: 30, y: 10, width: 8, height: 20, solid: false, warning: 0.5 },
-      ]
-    );
+    pushWalls(batch, theme, [{ x: 0, y: 0, width: 8, height: 20 }]);
 
-    expect(kinds(batch)).toEqual([
-      SHAPE.rect,
-      SHAPE.rect,
-      SHAPE.rect,
-      SHAPE.hazard,
-      SHAPE.rect,
-      SHAPE.outline,
-    ]);
+    expect(kinds(batch)).toEqual([SHAPE.rect, SHAPE.rect, SHAPE.rect]);
   });
+});
+
+describe('pushDynamicWalls', () => {
+  const theme = arenaTheme('pistons');
+
+  it('draws a closed gate striped and an open one outlined', () => {
+    const batch = new ShapeBatch();
+
+    pushDynamicWalls(batch, theme, new Motes(320, 140), [
+      { x: 10, y: 10, width: 8, height: 20, solid: true, warning: 0 },
+      { x: 30, y: 10, width: 8, height: 20, solid: false, warning: 0.5 },
+    ]);
+
+    expect(kinds(batch)).toEqual([SHAPE.hazard, SHAPE.rect, SHAPE.outline]);
+  });
+});
+
+describe('pushMotes', () => {
+  const theme = arenaTheme('pistons');
 
   it('draws one cell per drifting speck', () => {
     const batch = new ShapeBatch();
     const motes = new Motes(320, 140);
     motes.reset(theme);
 
-    pushBackground(batch, theme, motes, [], []);
+    pushMotes(batch, theme, motes);
 
     expect(batch.count).toBe(theme.moteCount);
+  });
+});
+
+describe('pushAmbience', () => {
+  it('draws every bubble in view as film, rim and spot, in three rounds', () => {
+    const batch = new ShapeBatch();
+    const ambience = new DishAmbience(320, 180, () => 0.5);
+    const view = { x: 0, y: 0, width: 320, height: 180 };
+    let bubbles = 0;
+    ambience.forEachBubble(view, () => bubbles++);
+
+    pushAmbience(batch, ambience, view, 1 / 3);
+
+    expect(bubbles).toBeGreaterThan(0);
+    expect(kinds(batch)).toEqual([
+      ...Array<number>(bubbles).fill(SHAPE.disc),
+      ...Array<number>(bubbles).fill(SHAPE.ring),
+      ...Array<number>(bubbles).fill(SHAPE.disc),
+    ]);
+  });
+
+  it('draws no bubble out of view', () => {
+    const batch = new ShapeBatch();
+    const ambience = new DishAmbience(320, 180, () => 0.5);
+
+    pushAmbience(
+      batch,
+      ambience,
+      { x: 1000, y: 1000, width: 10, height: 10 },
+      1 / 3
+    );
+
+    expect(batch.count).toBe(0);
   });
 });
 
