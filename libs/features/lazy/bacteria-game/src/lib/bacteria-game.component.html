@@ -337,6 +337,7 @@
       [neutral]="neutralCount()"
       [neutralCss]="neutralCss"
       [fps]="hudFps()"
+      [perf]="settings.showFps() ? hudPerf() : null"
       [sound]="settings.sound()"
       [showPause]="running() && !paused() && canPause()"
       [showGiveUp]="running() && !canPause()"

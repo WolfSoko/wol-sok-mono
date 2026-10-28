@@ -179,6 +179,9 @@ import { mapZones, Zone } from './state/zones';
 import { Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
 import { PlayerService } from './state/player.service';
+import { FramePerf } from './arena/frame-perf';
+import type { GpuTimer } from './gl/gpu-timer';
+import { HudPerf, simulationLabel } from './hud-perf';
 import {
   MatchEndAction,
   WinnerComponent,
@@ -327,6 +330,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private minimap: MinimapPainter | null = null;
   /** When the minimap last took in where the colonies are. */
   private minimapUpdatedAt = Number.NEGATIVE_INFINITY;
+  /** Where the frames spend their time, while the HUD shows it. */
+  private readonly framePerf = new FramePerf();
+  /**
+   * The breakdown of a frame beside the frame rate - null while the
+   * settings hide the frame rate, or before a window of frames is over.
+   */
+  protected readonly hudPerf = signal<HudPerf | null>(null);
 
   /**
    * The arena in cells, as fine as the simulation resolution asks for and
@@ -819,6 +829,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       if (!this.running() || this.paused()) {
         untracked(() => this.draw());
       }
+    });
+    // The breakdown of a frame starts over with each match, and whenever
+    // the frame rate is shown again - no frames of before in its average.
+    effect(() => {
+      this.settings.showFps();
+      this.running();
+      untracked(() => {
+        this.framePerf.reset();
+        this.hudPerf.set(null);
+      });
     });
     // A resumed match picks its music up where the match clock stands, so
     // it stays in step with a map that moves to it.
@@ -1599,7 +1619,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const { width, height } = this.arena();
+    // Timed only while the HUD shows the frame rate.
+    const perf = untracked(this.settings.showFps) ? this.framePerf : null;
+    const timer = perf === null ? null : (this.painter.gpuTimer?.() ?? null);
+    // The ticks' GPU time where the war runs on the GPU.
+    const simTimer =
+      timer !== null && this.playerService.getSimulation().kind === 'gpu'
+        ? timer
+        : null;
+    const start = perf === null ? 0 : performance.now();
+    simTimer?.begin('sim');
     this.gameStateService.advance(width, height, frame.ticks);
+    simTimer?.end();
+    const ticked = perf === null ? 0 : performance.now();
     const events = this.playerService.getFrameEvents();
     this.sound.frame(events);
     this.haptics.frame(events);
@@ -1607,7 +1639,37 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // The shake goes with the match's frames: a pause holds the view still.
     this.shake.advance(frame.elapsedSec);
     this.pendingFires = events.weapons;
+    const painting = perf === null ? 0 : performance.now();
+    timer?.begin('draw');
     this.arenaView()?.paintFrame(frame.elapsedSec, frame.alpha);
+    timer?.end();
+    if (perf !== null) {
+      this.notePerf(perf, timer, frame.ticks, start, ticked, painting);
+    }
+  }
+
+  /** Takes a frame's timings, and shows the averages once a window is over. */
+  private notePerf(
+    perf: FramePerf,
+    timer: GpuTimer | null,
+    ticks: number,
+    start: number,
+    ticked: number,
+    painting: number
+  ): void {
+    const end = performance.now();
+    timer?.poll((slot, ms) => perf.recordGpu(slot, ms));
+    const report = perf.record(end, ticked - start, end - painting, ticks);
+    if (report === null) {
+      return;
+    }
+    const simulation = this.playerService.getSimulation();
+    const { width, height } = this.arena();
+    this.hudPerf.set({
+      ...report,
+      simulation: simulationLabel(simulation.kind, simulation.ruleset),
+      cells: `${width}×${height}`,
+    });
   }
 
   /**

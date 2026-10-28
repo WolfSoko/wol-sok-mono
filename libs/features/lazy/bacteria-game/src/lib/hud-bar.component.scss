@@ -66,9 +66,17 @@
 }
 
 .colony-energy,
-.hud-fps {
+.hud-fps,
+.hud-perf {
   font-size: 0.75rem;
   opacity: 0.8;
+}
+
+// The breakdown's lines under each other, at the end of the first row.
+.hud-perf {
+  display: inline-flex;
+  flex-direction: column;
+  font-variant-numeric: tabular-nums;
 }
 
 .hud-actions {

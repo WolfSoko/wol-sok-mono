@@ -21,6 +21,7 @@ import {
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
 import { GpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
 import { rendererOf } from '../../gl/renderer';
+import { GpuTimer } from '../../gl/gpu-timer';
 import { Motes } from '../motes';
 import {
   bindTexture,
@@ -293,6 +294,8 @@ export class GlArenaPainter implements ArenaPainter {
         return;
       }
       this.resources = this.setup();
+      // The old context's queries went with it.
+      this.timer = undefined;
       if (this.theme != null) {
         this.uploadFloor(this.theme);
       }
@@ -315,6 +318,14 @@ export class GlArenaPainter implements ArenaPainter {
     return new GpuSimulation(this.gl, balance, random, options);
   }
 
+  /** The timer of the HUD's breakdown, once asked for. */
+  private timer: GpuTimer | null | undefined;
+
+  public gpuTimer(): GpuTimer | null {
+    this.timer ??= GpuTimer.create(this.gl);
+    return this.timer;
+  }
+
   /** The GPU and driver this painter's context renders with. */
   public renderer(): string {
     return rendererOf(this.gl);
@@ -327,6 +338,7 @@ export class GlArenaPainter implements ArenaPainter {
   public dispose(): void {
     this.disposed = true;
     this.resources = null;
+    this.timer?.dispose();
     this.gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
 

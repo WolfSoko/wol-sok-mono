@@ -9,6 +9,8 @@ export const stage: Translation<typeof en> = {
     pelletsEaten: 'Pellets gefressen',
     energy: 'Energie',
     fps: '{fps} FPS',
+    perf: '{simulation} {cells} · Ticks {sim} ms · Zeichnen {draw} ms · {ticks} Ticks pro Bild',
+    perfGpu: 'GPU: Ticks {sim} ms · Zeichnen {draw} ms',
     pause: 'Pause',
     giveUp: 'Aufgeben',
     giveUpAgain:
