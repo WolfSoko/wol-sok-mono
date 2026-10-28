@@ -1,4 +1,4 @@
-import { cellListOf } from '../state/cells';
+import { Cells } from '../state/cells';
 import { gameBalance } from '../state/game-balance';
 import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
@@ -50,7 +50,7 @@ function slime(
   timeSec = 0
 ) {
   const target: Point = { x: 30, y: 10 };
-  const region = slimeRegion(cellListOf(bacterias), view, WIDTH, HEIGHT);
+  const region = slimeRegion(Cells.of(bacterias), view, WIDTH, HEIGHT);
   const cells = WIDTH * HEIGHT;
   const density = new Float32Array(cells);
   const heat = new Float32Array(cells);
@@ -60,7 +60,7 @@ function slime(
     new Float32Array(cells),
     WIDTH,
     HEIGHT,
-    cellListOf(bacterias),
+    Cells.of(bacterias),
     gameBalance,
     region ?? undefined
   );
@@ -162,7 +162,7 @@ describe('paintSlime', () => {
     const view: Rect = { x: 20, y: 0, width: 20, height: 20 };
 
     expect(
-      slimeRegion(cellListOf(blob(5, 10, 3)), view, WIDTH, HEIGHT)
+      slimeRegion(Cells.of(blob(5, 10, 3)), view, WIDTH, HEIGHT)
     ).toBeNull();
   });
 
@@ -334,8 +334,8 @@ describe('slimeRegion', () => {
     const view: Rect = { x: 10, y: 0, width: 10, height: HEIGHT };
     const bacterias = blob(20, 10, 8);
 
-    const slime = slimeRegion(cellListOf(bacterias), view, WIDTH, HEIGHT);
-    const lattice = slimeRegion(cellListOf(bacterias), view, WIDTH, HEIGHT, 3);
+    const slime = slimeRegion(Cells.of(bacterias), view, WIDTH, HEIGHT);
+    const lattice = slimeRegion(Cells.of(bacterias), view, WIDTH, HEIGHT, 3);
 
     expect(slime).not.toBeNull();
     // Past the view's right edge, where the colony goes on.
@@ -383,7 +383,7 @@ describe('createImageDataFromBacterias', () => {
       data,
       WIDTH,
       ORANGE,
-      cellListOf([{ x: 3, y: 2, energy: gameBalance.maxEnergy }])
+      Cells.of([{ x: 3, y: 2, energy: gameBalance.maxEnergy }])
     );
 
     const index = (2 * WIDTH + 3) * 4;
@@ -425,7 +425,7 @@ describe('colonyBounds', () => {
   it('reports the box of cells a colony covers', () => {
     expect(
       colonyBounds(
-        cellListOf([
+        Cells.of([
           { x: 1, y: 1, energy: 1 },
           { x: 5, y: 2, energy: 1 },
           { x: 3, y: 3, energy: 1 },
@@ -435,6 +435,6 @@ describe('colonyBounds', () => {
   });
 
   it('reports nothing for an empty colony', () => {
-    expect(colonyBounds(cellListOf([]))).toBeNull();
+    expect(colonyBounds(Cells.of([]))).toBeNull();
   });
 });

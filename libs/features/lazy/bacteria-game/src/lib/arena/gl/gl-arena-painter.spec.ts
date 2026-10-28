@@ -1,4 +1,4 @@
-import { cellListOf } from '../../state/cells';
+import { Cells } from '../../state/cells';
 import { gameBalance } from '../../state/game-balance';
 import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-fx';
 import { encodeCells, packTints, passMargins } from './gl-arena-painter';
@@ -62,7 +62,7 @@ describe('encodeCells', () => {
     encodeCells(
       out,
       width,
-      cellListOf([
+      Cells.of([
         { x: 1, y: 1, energy: gameBalance.maxEnergy },
         { x: 5, y: 2, energy: gameBalance.superChargedMaxEnergy },
         { x: 3, y: 3, energy: 0 },
@@ -91,7 +91,7 @@ describe('encodeCells', () => {
     encodeCells(
       out,
       width,
-      cellListOf([
+      Cells.of([
         { x: 2, y: 1, energy: gameBalance.maxEnergy },
         { x: 6, y: 1, energy: gameBalance.maxEnergy },
       ]),

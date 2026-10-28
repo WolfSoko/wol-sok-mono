@@ -61,11 +61,6 @@ export interface Colony {
   color: PlayerColorArray;
   /** Its bacteria, in columns - what the simulation walks. */
   cells: Cells;
-  /**
-   * Its bacteria as objects: a copy when read, the colony's bacteria from
-   * then on when set - for specs and tools.
-   */
-  bacterias: Bacteria[];
   /** Enemy bacteria eaten since the game started. */
   captured: number;
   /** Own bacteria lost since the game started. */
@@ -1559,12 +1554,6 @@ function colonyOf(spawn: ColonySpawn, bacterias: readonly Bacteria[]): Colony {
     playerId: spawn.playerId,
     color: spawn.color,
     cells: Cells.of(bacterias),
-    get bacterias(): Bacteria[] {
-      return this.cells.toBacteria();
-    },
-    set bacterias(list: Bacteria[]) {
-      this.cells = Cells.of(list);
-    },
     captured: 0,
     lost: 0,
     totalEnergy: 0,

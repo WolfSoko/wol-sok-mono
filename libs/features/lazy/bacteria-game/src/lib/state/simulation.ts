@@ -29,7 +29,10 @@ interface ColonyLayerBase {
 /** A colony of the CPU simulation: its bacteria. */
 export interface CellsLayer extends ColonyLayerBase {
   kind: 'cells';
-  /** Its bacteria, as they stand after the last tick. */
+  /**
+   * Its bacteria as they stand after the last tick - the simulation's own
+   * columns, which change with the next: copy what has to outlast it.
+   */
   cells: CellList;
 }
 

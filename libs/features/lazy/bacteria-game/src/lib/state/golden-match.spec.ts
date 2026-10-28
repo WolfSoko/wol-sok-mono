@@ -102,7 +102,9 @@ function fingerprint(engine: MatchEngine): string {
       captured: colony.captured,
       lost: colony.lost,
       pellets: colony.pellets,
-      bacterias: colony.bacterias.map(({ x, y, energy }) => [x, y, energy]),
+      bacterias: colony.cells
+        .toBacteria()
+        .map(({ x, y, energy }) => [x, y, energy]),
     })),
     nutrients: simulation.getNutrients(),
   });

@@ -10,8 +10,19 @@ import { GameBalance, gameBalance } from './game-balance';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
 import { getMap } from './game-maps';
 import { GameMap, gateState } from './maps';
+import { Cells } from './cells';
 import { Bacteria, createPlayer, Player } from './player.model';
 import { heatedAggression, Zone, ZoneKind } from './zones';
+
+/** A colony's bacteria as objects - a copy. */
+function bacteriaOf(colony: Colony): Bacteria[] {
+  return colony.cells.toBacteria();
+}
+
+/** Puts these bacteria in the colony, in place of its own. */
+function setBacteria(colony: Colony, bacterias: readonly Bacteria[]): void {
+  colony.cells = Cells.of(bacterias);
+}
 
 // The production canvas size. Smaller arenas push the walls outside the grid,
 // which would make every wall test pass without a single wall cell existing.
@@ -75,7 +86,7 @@ function setup(
   );
   const colonies = simulation.getColonies() as Colony[];
   bacteriasPerPlayer.forEach((bacterias, index) => {
-    colonies[index].bacterias = bacterias;
+    setBacteria(colonies[index], bacterias);
   });
   const players: Player[] = bacteriasPerPlayer.map((_, index) =>
     createPlayer({
@@ -103,7 +114,7 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.05);
 
-      const [defender] = colonies[0].bacterias;
+      const [defender] = bacteriaOf(colonies[0]);
       expect(defender.energy).toBeLessThan(gameBalance.maxEnergy);
     });
 
@@ -115,9 +126,9 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 1);
 
-      expect(colonies[0].bacterias).toHaveLength(0);
+      expect(bacteriaOf(colonies[0])).toHaveLength(0);
       expect(colonies[0].lost).toBe(1);
-      expect(colonies[1].bacterias).toHaveLength(9);
+      expect(bacteriaOf(colonies[1])).toHaveLength(9);
       expect(colonies[1].captured).toBe(1);
     });
 
@@ -130,7 +141,7 @@ describe('BacteriaSimulation', () => {
       simulation.step(players, 1);
 
       expect(
-        colonies[1].bacterias.some(
+        bacteriaOf(colonies[1]).some(
           (bac) => bac.energy === gameBalance.captureEnergy
         )
       ).toBe(true);
@@ -144,8 +155,8 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 1);
 
-      expect(colonies[0].bacterias).toHaveLength(0);
-      expect(colonies[1].bacterias).toHaveLength(8);
+      expect(bacteriaOf(colonies[0])).toHaveLength(0);
+      expect(bacteriaOf(colonies[1])).toHaveLength(8);
       expect(colonies[1].captured).toBe(1);
     });
 
@@ -157,7 +168,7 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.5);
 
-      const [lonely] = colonies[0].bacterias;
+      const [lonely] = bacteriaOf(colonies[0]);
       expect(lonely.energy).toBeCloseTo(
         0.2 + gameBalance.energyRegenPerSec * 0.5,
         5
@@ -186,7 +197,7 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.5);
 
-      expect(colonies[0].bacterias).toHaveLength(2);
+      expect(bacteriaOf(colonies[0])).toHaveLength(2);
     });
 
     it('splits the energy between parent and child', () => {
@@ -200,7 +211,7 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.5);
 
-      const total = colonies[0].bacterias.reduce(
+      const total = bacteriaOf(colonies[0]).reduce(
         (sum, bac) => sum + bac.energy,
         0
       );
@@ -216,7 +227,7 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.001);
 
-      expect(colonies[0].bacterias).toHaveLength(1);
+      expect(bacteriaOf(colonies[0])).toHaveLength(1);
     });
 
     it('stops dividing once a colony has used up its share of the arena', () => {
@@ -231,8 +242,8 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.5);
 
-      expect(colonies[0].bacterias).toHaveLength(2);
-      expect(colonies[1].bacterias).toHaveLength(2);
+      expect(bacteriaOf(colonies[0])).toHaveLength(2);
+      expect(bacteriaOf(colonies[1])).toHaveLength(2);
     });
 
     it('still lets a small colony grow while the other one is at its limit', () => {
@@ -250,8 +261,8 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.5);
 
-      expect(colonies[0].bacterias).toHaveLength(6);
-      expect(colonies[1].bacterias.length).toBeGreaterThan(1);
+      expect(bacteriaOf(colonies[0])).toHaveLength(6);
+      expect(bacteriaOf(colonies[1]).length).toBeGreaterThan(1);
     });
 
     it('respects the per player cap', () => {
@@ -265,7 +276,7 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.5);
 
-      expect(colonies[0].bacterias).toHaveLength(3);
+      expect(bacteriaOf(colonies[0])).toHaveLength(3);
     });
   });
 
@@ -284,8 +295,8 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.5);
 
-      expect(colonies[0].bacterias).toHaveLength(1);
-      expect(colonies[1].bacterias).toHaveLength(2);
+      expect(bacteriaOf(colonies[0])).toHaveLength(1);
+      expect(bacteriaOf(colonies[1])).toHaveLength(2);
     });
   });
 
@@ -305,7 +316,7 @@ describe('BacteriaSimulation', () => {
         simulation.step(players, 1 / 60);
       }
 
-      const isInWall = colonies[0].bacterias.some((bac) =>
+      const isInWall = bacteriaOf(colonies[0]).some((bac) =>
         walls.some(
           (rect) =>
             bac.x >= rect.x &&
@@ -341,7 +352,7 @@ describe('BacteriaSimulation', () => {
         simulation.step(players, 1 / 60);
       }
 
-      for (const bac of colonies[0].bacterias) {
+      for (const bac of bacteriaOf(colonies[0])) {
         expect(bac.x).toBeGreaterThanOrEqual(0);
         expect(bac.y).toBeGreaterThanOrEqual(0);
         expect(bac.x).toBeLessThan(WIDTH);
@@ -369,7 +380,10 @@ describe('BacteriaSimulation', () => {
       const steps = Math.round(
         DEFAULT_CROSSHAIR_SPEED * gameBalance.boostSpeedFactor * 0.1
       );
-      expect(colonies[0].bacterias[0]).toMatchObject({ x: 39 - steps, y: 20 });
+      expect(bacteriaOf(colonies[0])[0]).toMatchObject({
+        x: 39 - steps,
+        y: 20,
+      });
     });
 
     it('never puts two bacteria on the same cell', () => {
@@ -388,7 +402,7 @@ describe('BacteriaSimulation', () => {
       }
 
       const cells = colonies
-        .flatMap((colony) => colony.bacterias)
+        .flatMap((colony) => bacteriaOf(colony))
         .map((bac) => `${bac.x}/${bac.y}`);
       expect(new Set(cells).size).toBe(cells.length);
     });
@@ -405,9 +419,9 @@ describe('BacteriaSimulation', () => {
         { playerId: 0, color: [255, 0, 0, 255], x: 0, y: 0, radius: 0 },
       ]);
       const [nutrient] = simulation.getNutrients();
-      (simulation.getColonies() as Colony[])[0].bacterias = [
+      setBacteria((simulation.getColonies() as Colony[])[0], [
         bacterium(nutrient.x, nutrient.y),
-      ];
+      ]);
       const players = [
         createPlayer({
           id: 0,
@@ -419,7 +433,7 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.5);
 
-      const [fed] = simulation.getColonies()[0].bacterias;
+      const [fed] = bacteriaOf(simulation.getColonies()[0]);
       expect(fed.energy).toBeGreaterThan(gameBalance.maxEnergy);
       expect(fed.energy).toBeLessThanOrEqual(gameBalance.superChargedMaxEnergy);
       expect(simulation.getNutrients()[0].amount).toBeLessThan(
@@ -443,8 +457,8 @@ describe('BacteriaSimulation', () => {
       ]);
       const [nutrient] = simulation.getNutrients();
       const colonies = simulation.getColonies() as Colony[];
-      colonies[0].bacterias = [bacterium(nutrient.x, nutrient.y)];
-      colonies[1].bacterias = [];
+      setBacteria(colonies[0], [bacterium(nutrient.x, nutrient.y)]);
+      setBacteria(colonies[1], []);
       const at = { x: nutrient.x, y: nutrient.y };
 
       simulation.step(
@@ -517,7 +531,7 @@ describe('BacteriaSimulation', () => {
     simulation.step(players, 0.001);
 
     expect(colonies[0].totalEnergy).toBeCloseTo(
-      colonies[0].bacterias.reduce((sum, bac) => sum + bac.energy, 0),
+      bacteriaOf(colonies[0]).reduce((sum, bac) => sum + bac.energy, 0),
       5
     );
   });
@@ -531,9 +545,9 @@ describe('BacteriaSimulation', () => {
 
     const [colony] = simulation.getColonies();
     expect(colony.playerId).toBe(7);
-    expect(colony.bacterias.length).toBeGreaterThan(50);
+    expect(bacteriaOf(colony).length).toBeGreaterThan(50);
     expect(
-      colony.bacterias.every((bac) => bac.energy === gameBalance.maxEnergy)
+      bacteriaOf(colony).every((bac) => bac.energy === gameBalance.maxEnergy)
     ).toBe(true);
   });
 });
@@ -556,7 +570,7 @@ describe('maps', () => {
       },
     ]);
     const colonies = simulation.getColonies() as Colony[];
-    colonies[0].bacterias = [bacterium(wall.x - 2, wall.y + 1)];
+    setBacteria(colonies[0], [bacterium(wall.x - 2, wall.y + 1)]);
     const player = createPlayer({
       id: 0,
       x: WIDTH,
@@ -569,7 +583,7 @@ describe('maps', () => {
     }
 
     expect(
-      colonies[0].bacterias.some(
+      bacteriaOf(colonies[0]).some(
         (bac) => bac.x === blocked.x && bac.y === blocked.y
       )
     ).toBe(false);
@@ -586,7 +600,7 @@ describe('boost', () => {
     });
     players[0] = { ...players[0], boostActiveSec };
     simulation.step(players, 0.1);
-    return colonies[0].bacterias[0].x - 20;
+    return bacteriaOf(colonies[0])[0].x - 20;
   }
 
   it('moves a boosted colony faster', () => {
@@ -601,7 +615,7 @@ describe('boost', () => {
       );
       players[1] = { ...players[1], boostActiveSec };
       simulation.step(players, 0.05);
-      return gameBalance.maxEnergy - colonies[0].bacterias[0].energy;
+      return gameBalance.maxEnergy - bacteriaOf(colonies[0])[0].energy;
     }
 
     expect(drain(1)).toBeGreaterThan(drain(0));
@@ -656,8 +670,8 @@ describe('dynamic walls', () => {
 
     simulation.step(players, 1.2);
 
-    expect(colonies[0].bacterias).toHaveLength(1);
-    expect(insideGate(colonies[0].bacterias[0])).toBe(false);
+    expect(bacteriaOf(colonies[0])).toHaveLength(1);
+    expect(insideGate(bacteriaOf(colonies[0])[0])).toBe(false);
     expect(simulation.getEvents().crushed).toBe(0);
   });
 
@@ -674,7 +688,7 @@ describe('dynamic walls', () => {
 
     expect(simulation.getEvents().crushed).toBe(16);
     expect(colonies[0].lost).toBe(16);
-    expect(colonies[0].bacterias.some(insideGate)).toBe(false);
+    expect(bacteriaOf(colonies[0]).some(insideGate)).toBe(false);
   });
 
   it('reports the warning and the moment the gate slams shut', () => {
@@ -761,10 +775,10 @@ describe('zones', () => {
     run(poisoned, 3);
     run(clean, 3);
 
-    expect(poisoned.colonies[0].bacterias).toHaveLength(0);
+    expect(bacteriaOf(poisoned.colonies[0])).toHaveLength(0);
     expect(poisoned.colonies[0].lost).toBe(1);
     expect(poisoned.simulation.getEvents().captures).toBe(0);
-    expect(clean.colonies[0].bacterias).toHaveLength(1);
+    expect(bacteriaOf(clean.colonies[0])).toHaveLength(1);
   });
 
   it('doubles the division on agar', () => {
@@ -779,8 +793,8 @@ describe('zones', () => {
     onAgar.simulation.step(onAgar.players, 0.5);
     plain.simulation.step(plain.players, 0.5);
 
-    expect(onAgar.colonies[0].bacterias).toHaveLength(2);
-    expect(plain.colonies[0].bacterias).toHaveLength(1);
+    expect(bacteriaOf(onAgar.colonies[0])).toHaveLength(2);
+    expect(bacteriaOf(plain.colonies[0])).toHaveLength(1);
   });
 
   it('holds a bacterium on ice back for a step now and then', () => {
@@ -791,8 +805,8 @@ describe('zones', () => {
     onIce.simulation.step(onIce.players, 1 / 60);
     plain.simulation.step(plain.players, 1 / 60);
 
-    expect(onIce.colonies[0].bacterias[0].x).toBe(50);
-    expect(plain.colonies[0].bacterias[0].x).toBeGreaterThan(50);
+    expect(bacteriaOf(onIce.colonies[0])[0].x).toBe(50);
+    expect(bacteriaOf(plain.colonies[0])[0].x).toBeGreaterThan(50);
   });
 
   it('makes a colony on hot ground hunt harder, never beyond the crosshair', () => {
@@ -877,7 +891,7 @@ describe('BacteriaSimulation with evolution', () => {
         });
         colonies[0].traits = { ...colonies[0].traits, speedFactor };
         simulation.step(players, 0.05);
-        return colonies[0].bacterias[0].x - 20;
+        return bacteriaOf(colonies[0])[0].x - 20;
       }
 
       // 150 cells a second for 0.05 seconds: 8 cells, 15 at twice the speed.
@@ -973,8 +987,8 @@ describe('BacteriaSimulation with evolution', () => {
 
       simulation.step(players, 0.5);
 
-      const [own] = colonies[0].bacterias;
-      const [enemy, outside] = colonies[1].bacterias;
+      const [own] = bacteriaOf(colonies[0]);
+      const [enemy, outside] = bacteriaOf(colonies[1]);
       expect(enemy.energy).toBeCloseTo(
         gameBalance.maxEnergy - WEAPON_EFFECTS.toxinDrainPerSec * 0.5,
         5
@@ -994,7 +1008,7 @@ describe('BacteriaSimulation with evolution', () => {
 
       simulation.step(players, 0.5);
 
-      expect(colonies[1].bacterias).toEqual([]);
+      expect(bacteriaOf(colonies[1])).toEqual([]);
       expect(colonies[1].lost).toBe(1);
       expect(colonies[0].captured).toBe(0);
       expect(simulation.getEvents().captures).toBe(0);
@@ -1009,7 +1023,7 @@ describe('BacteriaSimulation with evolution', () => {
 
       simulation.step(players, 0.5);
 
-      expect(colonies[2].bacterias[0].energy).toBeLessThan(
+      expect(bacteriaOf(colonies[2])[0].energy).toBeLessThan(
         gameBalance.maxEnergy
       );
     });
@@ -1030,7 +1044,7 @@ describe('BacteriaSimulation with evolution', () => {
           simulation.addEffect(effect('cryo-pulse', 0));
         }
         simulation.step(players, 0.05);
-        return colonies[1].bacterias[0].x - 40;
+        return bacteriaOf(colonies[1])[0].x - 40;
       }
 
       expect(moved(false)).toBeGreaterThan(0);
@@ -1047,8 +1061,8 @@ describe('BacteriaSimulation with evolution', () => {
 
       simulation.step(players, 0.5);
 
-      const [own] = colonies[0].bacterias;
-      const [frozen] = colonies[1].bacterias;
+      const [own] = bacteriaOf(colonies[0]);
+      const [frozen] = bacteriaOf(colonies[1]);
       expect(frozen.energy).toBeCloseTo(0.2, 5);
       expect(own.energy).toBeCloseTo(
         0.2 + gameBalance.energyRegenPerSec * 0.5,
@@ -1067,7 +1081,7 @@ describe('BacteriaSimulation with evolution', () => {
           simulation.addEffect(effect(weapon, owner));
         }
         simulation.step(players, 0.5);
-        return colonies[1].bacterias.length - 1;
+        return bacteriaOf(colonies[1]).length - 1;
       }
 
       expect(divided(null)).toBe(1);
@@ -1085,7 +1099,7 @@ describe('BacteriaSimulation with evolution', () => {
         );
         simulation.addEffect(effect('agar-bloom', owner));
         simulation.step(players, 0.5);
-        return colonies.map(({ bacterias }) => bacterias.length);
+        return colonies.map(({ cells }) => cells.length);
       }
 
       // The bacterium on the bloom divides, the one beside it does not -
@@ -1108,8 +1122,8 @@ describe('BacteriaSimulation with evolution', () => {
 
       simulation.step(players, 0.05);
 
-      expect(colonies[0].bacterias).toHaveLength(3);
-      expect(colonies[1].bacterias).toHaveLength(1);
+      expect(bacteriaOf(colonies[0])).toHaveLength(3);
+      expect(bacteriaOf(colonies[1])).toHaveLength(1);
       expect(colonies[0].captured).toBe(2);
       expect(colonies[1].lost).toBe(2);
       expect(simulation.getEvents().captures).toBe(2);
@@ -1134,7 +1148,7 @@ describe('BacteriaSimulation with evolution', () => {
 
       simulation.step(players, 0.05);
 
-      expect(colonies[0].bacterias).toHaveLength(4);
+      expect(bacteriaOf(colonies[0])).toHaveLength(4);
       expect(lookups).toHaveBeenCalledTimes(1);
     });
 
@@ -1150,7 +1164,7 @@ describe('BacteriaSimulation with evolution', () => {
       simulation.step(players, 0.05);
 
       // A roll of 0.5 is above the share a strike turns.
-      expect(colonies[1].bacterias).toHaveLength(2);
+      expect(bacteriaOf(colonies[1])).toHaveLength(2);
     });
 
     it('shields its owner’s whole colony from the pressure', () => {

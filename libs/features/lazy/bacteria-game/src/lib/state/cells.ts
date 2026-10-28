@@ -26,11 +26,14 @@ export class Cells implements CellList {
   public y = new Int32Array(START_CAPACITY);
   public energy = new Float64Array(START_CAPACITY);
 
-  /** Columns holding these bacteria, in their order. */
+  /**
+   * Columns holding these bacteria, in their order - each on the cell its
+   * position rounds to, as the simulation places one.
+   */
   public static of(bacterias: readonly Bacteria[]): Cells {
     const cells = new Cells();
     for (const { x, y, energy } of bacterias) {
-      cells.push(x, y, energy);
+      cells.push(Math.round(x), Math.round(y), energy);
     }
     return cells;
   }
@@ -49,12 +52,15 @@ export class Cells implements CellList {
     this.energy[at] = energy;
   }
 
-  /** Keeps the bacteria whose mark is 0, in their order. */
+  /**
+   * Keeps the bacteria whose mark is 0, in their order - and those past
+   * the marks, added after they were made.
+   */
   public keep(marks: Uint8Array): void {
     const { x, y, energy } = this;
     let kept = 0;
     for (let i = 0; i < this.length; i++) {
-      if (marks[i] !== 0) {
+      if (i < marks.length && marks[i] !== 0) {
         continue;
       }
       x[kept] = x[i];
@@ -86,9 +92,4 @@ export class Cells implements CellList {
     this.y = y;
     this.energy = energy;
   }
-}
-
-/** A list of bacteria as objects, read as a {@link CellList}. */
-export function cellListOf(bacterias: readonly Bacteria[]): CellList {
-  return Cells.of(bacterias);
 }

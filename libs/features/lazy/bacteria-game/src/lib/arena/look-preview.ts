@@ -1,7 +1,7 @@
 import { ColonyLook } from '../state/skins';
 import { gameBalance } from '../state/game-balance';
 import { CellBounds } from '../state/geometry';
-import { cellListOf } from '../state/cells';
+import { Cells } from '../state/cells';
 import { Bacteria } from '../state/player.model';
 import { createCanvas } from './canvas-math';
 import {
@@ -97,7 +97,7 @@ export function renderLookLayer(
 ): { data: Uint8ClampedArray<ArrayBuffer>; width: number; height: number } {
   const { width, height } = size;
   const rgba = [color[0], color[1], color[2], 255];
-  const colony = cellListOf(previewColony(size, timeSec));
+  const colony = Cells.of(previewColony(size, timeSec));
   if (look === 'pixels') {
     const data = new Uint8ClampedArray(width * height * 4);
     createImageDataFromBacterias(data, width, rgba, colony);
