@@ -85,7 +85,7 @@ describe('IntSimulation', () => {
       counts = intColonyCounts(simulation.readState() ?? [], 4);
       drawn = simulation
         .colonyLayers(new Map())
-        .map((layer) => (layer.kind === 'cells' ? layer.bacterias.length : -1));
+        .map((layer) => (layer.kind === 'cells' ? layer.cells.length : -1));
     });
     expect(drawn).toEqual(counts);
   });
