@@ -38,6 +38,15 @@
 @if (rate !== null) {
   <span class="hud-fps">{{ "stage.hud.fps" | t: { fps: rate } }}</span>
 }
+@let breakdown = perfParams();
+@if (breakdown !== null) {
+  <span class="hud-perf">
+    <span>{{ "stage.hud.perf" | t: breakdown.frame }}</span>
+    @if (breakdown.gpu !== null) {
+      <span>{{ "stage.hud.perfGpu" | t: breakdown.gpu }}</span>
+    }
+  </span>
+}
 <span class="hud-actions">
   <button
     mat-icon-button

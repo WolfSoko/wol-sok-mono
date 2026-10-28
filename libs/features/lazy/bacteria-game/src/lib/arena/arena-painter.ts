@@ -1,3 +1,4 @@
+import type { GpuTimer } from '../gl/gpu-timer';
 import { Nutrient } from '../state/bacteria-simulation';
 import type { ActiveEffect, WeaponFire } from '../state/evolution';
 import { GameBalance } from '../state/game-balance';
@@ -67,6 +68,11 @@ export interface ArenaPainter {
    * right after this call, in the same task, sees the arena.
    */
   showLastFrame(): void;
+  /**
+   * Times the GPU's work for the HUD's breakdown of a frame - made on the
+   * first call; null where the painter has no GPU or it cannot be timed.
+   */
+  gpuTimer?(): GpuTimer | null;
   /** Lets go of what the painter holds on the canvas - it is done drawing. */
   dispose(): void;
 }

@@ -85,6 +85,41 @@ describe('HudBarComponent', () => {
     expect(host.querySelector('.hud-fps')).toBeNull();
   });
 
+  it("breaks a frame's time down where asked for, the GPU's where timed", () => {
+    const { fixture, host } = render();
+    expect(host.querySelector('.hud-perf')).toBeNull();
+
+    fixture.componentRef.setInput('perf', {
+      simMs: 6.25,
+      drawMs: 3.04,
+      ticks: 1.5,
+      gpuSimMs: null,
+      gpuDrawMs: null,
+      simulation: 'GPU int',
+      cells: '640×360',
+    });
+    fixture.detectChanges();
+    const lines = () =>
+      [...host.querySelectorAll('.hud-perf > span')].map((line) =>
+        line.textContent?.trim()
+      );
+    expect(lines()).toEqual([
+      'GPU int 640×360 · ticks 6.3 ms · drawing 3.0 ms · 1.5 ticks a frame',
+    ]);
+
+    fixture.componentRef.setInput('perf', {
+      simMs: 1,
+      drawMs: 2,
+      ticks: 1,
+      gpuSimMs: 4.44,
+      gpuDrawMs: null,
+      simulation: 'CPU',
+      cells: '320×180',
+    });
+    fixture.detectChanges();
+    expect(lines()[1]).toBe('GPU: ticks 4.4 ms · drawing – ms');
+  });
+
   it('names the colonies in the active language, a player as they are', () => {
     const { fixture, host } = render();
     const names = () =>
