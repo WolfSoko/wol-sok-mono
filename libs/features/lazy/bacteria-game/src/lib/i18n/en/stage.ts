@@ -8,7 +8,7 @@ export const stage = {
     energy: 'energy',
     fps: '{fps} FPS',
     /** Where a frame's time goes - on the main thread, per frame. */
-    perf: '{simulation} {cells} · ticks {sim} ms · drawing {draw} ms · {ticks} ticks a frame',
+    perf: '{simulation} {cells} · {pixels} % pixels · ticks {sim} ms · drawing {draw} ms · {ticks} ticks a frame',
     /** And on the GPU, where the browser can time it. */
     perfGpu: 'GPU: ticks {sim} ms · drawing {draw} ms',
     pause: 'Pause',

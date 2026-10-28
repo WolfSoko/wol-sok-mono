@@ -29,6 +29,9 @@ export const settings: Translation<typeof en> = {
       long: 'Lang',
     },
     ambience: 'Blasen und Nebel in der Schale',
+    adaptiveQuality: 'Schärfe ans Gerät anpassen',
+    adaptiveQualityNote:
+      'Kommen die Bilder zu langsam, wird die Arena mit weniger Pixeln gezeichnet.',
     screenResolution: 'Bildschirmauflösung',
     locked:
       'Farben und Auflösungen wählst du vor einem Match – solange eines läuft, bleiben sie, wie sie sind.',

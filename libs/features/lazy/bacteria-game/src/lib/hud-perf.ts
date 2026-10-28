@@ -7,6 +7,8 @@ export interface HudPerf extends FramePerfReport {
   simulation: string;
   /** The arena's cells, "640×360". */
   cells: string;
+  /** The fraction of the canvas's pixels the frames are built with. */
+  pixels: number;
 }
 
 /**

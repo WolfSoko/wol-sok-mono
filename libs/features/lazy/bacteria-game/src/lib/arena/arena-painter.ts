@@ -70,6 +70,12 @@ export interface ArenaPainter {
    */
   readonly paintsAmbience?: boolean;
   /**
+   * Builds the frames with that fraction of the canvas's pixels, scaled up
+   * onto it - fewer for a device too slow for every one. Absent where a
+   * painter has every pixel to paint.
+   */
+  setRenderScale?(scale: number): void;
+  /**
    * Lays another level's floor: its look, and its zones painted into it -
    * they never move, so they are not drawn again every frame.
    */

@@ -335,6 +335,17 @@ describe('GameSettingsService', () => {
     expect(TestBed.inject(GameSettingsService).ambience()).toBe(false);
   });
 
+  it('paints with fewer pixels where the device is slow, unless told otherwise', () => {
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.adaptiveQuality()).toBe(true);
+
+    service.setAdaptiveQuality(false);
+
+    expect(stored()).toMatchObject({ adaptiveQuality: false });
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).adaptiveQuality()).toBe(false);
+  });
+
   it('remembers how the arena vaporizes', () => {
     const service = TestBed.inject(GameSettingsService);
 

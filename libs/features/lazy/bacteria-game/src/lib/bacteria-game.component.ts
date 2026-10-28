@@ -180,6 +180,7 @@ import { Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
 import { PlayerService } from './state/player.service';
 import { FramePerf } from './arena/frame-perf';
+import { AdaptiveQuality } from './arena/adaptive-quality';
 import type { GpuTimer } from './gl/gpu-timer';
 import { HudPerf, simulationLabel } from './hud-perf';
 import {
@@ -337,6 +338,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly painterAmbience = signal(false);
   /** Where the frames spend their time, while the HUD shows it. */
   private readonly framePerf = new FramePerf();
+  /** How many of the canvas's pixels the frames of a match are built with. */
+  private readonly quality = new AdaptiveQuality();
+  /** Where the last match on each arena size left it - for the next one. */
+  private readonly qualityByArena = new Map<string, number>();
+  /** The fraction of the canvas's pixels the painter builds frames with. */
+  private renderScale = 1;
   /**
    * The breakdown of a frame beside the frame rate - null while the
    * settings hide the frame rate, or before a window of frames is over.
@@ -843,6 +850,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       untracked(() => {
         this.framePerf.reset();
         this.hudPerf.set(null);
+      });
+    });
+    // A match starts at the sharpness the last one on its arena ended with;
+    // between matches, and with the setting off, every pixel is painted.
+    effect(() => {
+      const adapts = this.running() && this.settings.adaptiveQuality();
+      untracked(() => {
+        if (adapts) {
+          this.quality.start(this.qualityByArena.get(this.arenaKey()) ?? 1);
+        }
+        this.setRenderScale(adapts ? this.quality.scale : 1);
       });
     });
     // A resumed match picks its music up where the match clock stands, so
@@ -1511,6 +1529,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected onPainterChange(painter: ArenaPainter | null): void {
     this.painter = painter;
     this.painterAmbience.set(painter?.paintsAmbience === true);
+    painter?.setRenderScale?.(this.renderScale);
     if (painter != null) {
       this.painterLayout.set(untracked(this.arenaLayout));
     }
@@ -1633,7 +1652,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       timer !== null && this.playerService.getSimulation().kind === 'gpu'
         ? timer
         : null;
-    const start = perf === null ? 0 : performance.now();
+    const start = performance.now();
     simTimer?.begin('sim');
     this.gameStateService.advance(width, height, frame.ticks);
     simTimer?.end();
@@ -1649,9 +1668,40 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     timer?.begin('draw');
     this.arenaView()?.paintFrame(frame.elapsedSec, frame.alpha);
     timer?.end();
+    this.adaptQuality(performance.now() - start);
     if (perf !== null) {
       this.notePerf(perf, timer, frame.ticks, start, ticked, painting);
     }
+  }
+
+  /**
+   * Builds the next frames with fewer pixels, or more, as they come - from
+   * how long this one kept the main thread busy with its ticks and painting.
+   */
+  private adaptQuality(busyMs: number): void {
+    if (
+      this.painter?.setRenderScale == null ||
+      !untracked(this.running) ||
+      !untracked(this.settings.adaptiveQuality)
+    ) {
+      return;
+    }
+    const scale = this.quality.frame(performance.now(), busyMs);
+    if (scale !== null) {
+      this.qualityByArena.set(this.arenaKey(), scale);
+      this.setRenderScale(scale);
+    }
+  }
+
+  private setRenderScale(scale: number): void {
+    this.renderScale = scale;
+    this.painter?.setRenderScale?.(scale);
+  }
+
+  /** The arena's size, which the sharpness a device manages goes by. */
+  private arenaKey(): string {
+    const { width, height } = untracked(this.arena);
+    return `${width}×${height}`;
   }
 
   /** Takes a frame's timings, and shows the averages once a window is over. */
@@ -1675,6 +1725,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       ...report,
       simulation: simulationLabel(simulation.kind, simulation.ruleset),
       cells: `${width}×${height}`,
+      pixels: this.renderScale,
     });
   }
 

@@ -80,6 +80,8 @@ export interface StoredSettings {
   vaporizeMs?: number;
   /** Whether bubbles rise and mist drifts through the dish. */
   ambience?: boolean;
+  /** Whether a slow device paints the arena with fewer pixels. */
+  adaptiveQuality?: boolean;
   /** The language the player picked, absent to follow the browser. */
   language?: Language;
   /** The level the player would like to meet opponents on, absent for any. */
@@ -189,6 +191,11 @@ export class GameSettingsService {
   public readonly vaporizeMs = signal(DEFAULT_VAPORIZE_MS);
   /** True while bubbles rise and mist drifts through the dish. */
   public readonly ambience = signal(true);
+  /**
+   * True while a device too slow for every pixel of the arena paints it
+   * with fewer, scaled up - steady frames before sharp ones.
+   */
+  public readonly adaptiveQuality = signal(true);
 
   /** The language the player picked, null to follow the browser. */
   public readonly language = this.i18n.choice;
@@ -340,6 +347,11 @@ export class GameSettingsService {
     this.changed('ambience');
   }
 
+  public setAdaptiveQuality(on: boolean): void {
+    this.adaptiveQuality.set(on);
+    this.changed('adaptiveQuality');
+  }
+
   /** Asks the matchmaking for a level that plays online, or any for null. */
   public setMatchLevel(levelId: string | null): void {
     this.matchLevel.set(isMatchLevel(levelId) ? levelId : null);
@@ -424,6 +436,12 @@ export class GameSettingsService {
     }
     if (restores('ambience') && typeof stored.ambience === 'boolean') {
       this.ambience.set(stored.ambience);
+    }
+    if (
+      restores('adaptiveQuality') &&
+      typeof stored.adaptiveQuality === 'boolean'
+    ) {
+      this.adaptiveQuality.set(stored.adaptiveQuality);
     }
     if (restores('showFps') && typeof stored.showFps === 'boolean') {
       this.showFps.set(stored.showFps);
@@ -536,6 +554,7 @@ export class GameSettingsService {
       vaporize: this.vaporize(),
       vaporizeMs: this.vaporizeMs(),
       ambience: this.ambience(),
+      adaptiveQuality: this.adaptiveQuality(),
       showFps: this.showFps(),
       freePlay: this.freePlay(),
       arena: this.arena() ?? undefined,
