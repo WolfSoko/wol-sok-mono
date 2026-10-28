@@ -269,6 +269,14 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly cellBytes: Uint8Array;
   private readonly canvasWidth: number;
   private readonly canvasHeight: number;
+  /**
+   * The size of the frame's own target: the canvas's, or less on a device
+   * too slow for every pixel - the copy onto the canvas scales it up.
+   */
+  private renderWidth: number;
+  private renderHeight: number;
+  /** True while the frame's target holds no frame yet to leave a trail. */
+  private freshTrail = false;
   /** Cells per base cell - the jam and the crosshairs are as big on every grid. */
   private readonly unit: number;
   /** Pixels per cell the zones are painted with. */
@@ -315,6 +323,8 @@ export class GlArenaPainter implements ArenaPainter {
     // Sized by `createArenaPainter`.
     this.canvasWidth = canvas.width;
     this.canvasHeight = canvas.height;
+    this.renderWidth = canvas.width;
+    this.renderHeight = canvas.height;
     this.unit = unit;
     this.detail = detail;
     this.view = { x: 0, y: 0, width, height };
@@ -385,6 +395,46 @@ export class GlArenaPainter implements ArenaPainter {
     this.gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
 
+  public setRenderScale(scale: number): void {
+    const width = Math.max(1, Math.round(this.canvasWidth * scale));
+    const height = Math.max(1, Math.round(this.canvasHeight * scale));
+    if (width === this.renderWidth && height === this.renderHeight) {
+      return;
+    }
+    const from = { width: this.renderWidth, height: this.renderHeight };
+    this.renderWidth = width;
+    this.renderHeight = height;
+    const resources = this.resources;
+    // Without a context, the restored one builds it at that size.
+    if (resources == null) {
+      return;
+    }
+    // The last frame goes along, scaled: the trail goes on from it, and a
+    // snapshot before the next frame shows it rather than black.
+    const gl = this.gl;
+    const old = resources.trail;
+    const trail = this.target(width, height, gl.LINEAR);
+    gl.disable(gl.SCISSOR_TEST);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, old.framebuffer);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, trail.framebuffer);
+    gl.blitFramebuffer(
+      0,
+      0,
+      from.width,
+      from.height,
+      0,
+      0,
+      width,
+      height,
+      gl.COLOR_BUFFER_BIT,
+      gl.LINEAR
+    );
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.deleteFramebuffer(old.framebuffer);
+    gl.deleteTexture(old.texture);
+    resources.trail = trail;
+  }
+
   public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {
     if (this.zones !== zones) {
       this.zones = zones;
@@ -415,7 +465,7 @@ export class GlArenaPainter implements ArenaPainter {
     const colonies = this.prepareColonies(resources, frame);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
-    gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
+    gl.viewport(0, 0, this.renderWidth, this.renderHeight);
     gl.enable(gl.BLEND);
     this.useAlphaBlend();
 
@@ -424,7 +474,11 @@ export class GlArenaPainter implements ArenaPainter {
     bindTexture(gl, 0, resources.floor, programs.floor.uniforms['uFloor']);
     this.setView(programs.floor);
     gl.uniform2f(programs.floor.uniforms['uArena'], this.width, this.height);
-    gl.uniform1f(programs.floor.uniforms['uAlpha'], frame.clear ? 1 : 0.7);
+    // A target without a frame yet takes the floor whole, or it would show
+    // the black it was cleared to through it.
+    const floorAlpha = frame.clear || this.freshTrail ? 1 : 0.7;
+    this.freshTrail = false;
+    gl.uniform1f(programs.floor.uniforms['uAlpha'], floorAlpha);
     gl.uniform1i(
       programs.floor.uniforms['uHasZones'],
       resources.zones == null ? 0 : 1
@@ -718,7 +772,7 @@ export class GlArenaPainter implements ArenaPainter {
     gl.uniform1f(program.uniforms['uUnit'], this.unit);
     gl.uniform1f(
       program.uniforms['uPixel'],
-      this.view.width / this.canvasWidth
+      this.view.width / this.renderWidth
     );
     gl.uniform1f(program.uniforms['uTime'], frame.timeSec);
     const hatch = hatchPattern(color);
@@ -765,22 +819,22 @@ export class GlArenaPainter implements ArenaPainter {
   }
 
   /**
-   * Scissors a pass on the canvas, whose row 0 is the bottom of the view -
-   * cut to the canvas, which a box out of view misses altogether.
+   * Scissors a pass on the frame's target, whose row 0 is the bottom of the
+   * view - cut to the target, which a box out of view misses altogether.
    */
   private scissorCanvas(bounds: CellBounds, margin: number): void {
     const [x0, y0, x1, y1] = this.box(bounds, margin);
     const view = this.view;
-    const scale = this.canvasWidth / view.width;
-    const clampX = (x: number) => Math.min(Math.max(x, 0), this.canvasWidth);
-    const clampY = (y: number) => Math.min(Math.max(y, 0), this.canvasHeight);
+    const width = this.renderWidth;
+    const height = this.renderHeight;
+    const scale = width / view.width;
+    const clampX = (x: number) => Math.min(Math.max(x, 0), width);
+    const clampY = (y: number) => Math.min(Math.max(y, 0), height);
     // Out to whole pixels - at a scale like 7.5 a cell edge falls inside one.
     const left = clampX(Math.floor((x0 - view.x) * scale));
     const right = clampX(Math.ceil((x1 - view.x) * scale));
-    const bottom = clampY(
-      Math.floor(this.canvasHeight - (y1 - view.y) * scale)
-    );
-    const top = clampY(Math.ceil(this.canvasHeight - (y0 - view.y) * scale));
+    const bottom = clampY(Math.floor(height - (y1 - view.y) * scale));
+    const top = clampY(Math.ceil(height - (y0 - view.y) * scale));
     this.gl.scissor(left, bottom, right - left, top - bottom);
   }
 
@@ -1174,7 +1228,9 @@ export class GlArenaPainter implements ArenaPainter {
       gl.NEAREST
     );
     const blur = this.target(this.width, this.height, gl.LINEAR);
-    const trail = this.target(this.canvasWidth, this.canvasHeight, gl.NEAREST);
+    // Sampled smoothly: scaled up to the canvas when it is the smaller.
+    const trail = this.target(this.renderWidth, this.renderHeight, gl.LINEAR);
+    this.freshTrail = true;
 
     return {
       programs,

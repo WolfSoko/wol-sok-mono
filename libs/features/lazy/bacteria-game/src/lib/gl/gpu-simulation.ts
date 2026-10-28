@@ -176,6 +176,8 @@ export interface GpuSimulationOptions extends GridSimulationOptions {
  * {@link GridSimulation}: they are a handful of rects and points.
  */
 export class GpuSimulation extends GridSimulation {
+  /** Milliseconds the main thread waited for reports - see `takeGpuWaitMs`. */
+  private gpuWaitMs = 0;
   public readonly kind = 'gpu';
   private resources: Resources | null = null;
   /** The state the next pass reads. */
@@ -931,6 +933,8 @@ export class GpuSimulation extends GridSimulation {
     );
     for (let taken = 0; taken < due; taken++) {
       const readback = pending[0];
+      // One the GPU has not finished keeps the main thread waiting for it.
+      const forced = readback.sync != null && !this.isFinished(readback.sync);
       if (readback.sync != null) {
         gl.deleteSync(readback.sync);
         readback.sync = null;
@@ -940,15 +944,25 @@ export class GpuSimulation extends GridSimulation {
       if (readback.stale) {
         continue;
       }
+      const waitFrom = forced ? performance.now() : 0;
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, readback.buffer);
       gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, data);
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+      if (forced) {
+        this.gpuWaitMs += performance.now() - waitFrom;
+      }
       this.reportStep = readback.step;
       this.takeReport(
         decodeReport(data, this.layout, this.spawns.length),
         readback.generation
       );
     }
+  }
+
+  public takeGpuWaitMs(): number {
+    const waited = this.gpuWaitMs;
+    this.gpuWaitMs = 0;
+    return waited;
   }
 
   private isFinished(sync: WebGLSync): boolean {

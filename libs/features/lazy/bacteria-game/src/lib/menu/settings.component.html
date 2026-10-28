@@ -115,6 +115,16 @@
     >
       {{ "settings.display.ambience" | t }}
     </mat-slide-toggle>
+    <mat-slide-toggle
+      class="adaptive-quality"
+      [checked]="settings.adaptiveQuality()"
+      (change)="settings.setAdaptiveQuality($event.checked)"
+    >
+      {{ "settings.display.adaptiveQuality" | t }}
+    </mat-slide-toggle>
+    <p class="section-note">
+      {{ "settings.display.adaptiveQualityNote" | t }}
+    </p>
     @if (locked()) {
       <span class="resolution-hint">{{ "settings.display.locked" | t }}</span>
     }

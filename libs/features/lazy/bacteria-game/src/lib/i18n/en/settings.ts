@@ -27,6 +27,9 @@ export const settings = {
       long: 'Long',
     },
     ambience: 'Bubbles and mist in the dish',
+    adaptiveQuality: 'Adapt the sharpness to the device',
+    adaptiveQualityNote:
+      'Where the frames come too slowly, the arena is drawn with fewer pixels.',
     screenResolution: 'Screen resolution',
     locked:
       'Pick the colours and resolutions before a match - they stay as they are while one is on.',

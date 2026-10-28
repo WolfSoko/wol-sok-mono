@@ -180,6 +180,7 @@ import { Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
 import { PlayerService } from './state/player.service';
 import { FramePerf } from './arena/frame-perf';
+import { AdaptiveQuality } from './arena/adaptive-quality';
 import type { GpuTimer } from './gl/gpu-timer';
 import { HudPerf, simulationLabel } from './hud-perf';
 import {
@@ -337,6 +338,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly painterAmbience = signal(false);
   /** Where the frames spend their time, while the HUD shows it. */
   private readonly framePerf = new FramePerf();
+  /** How many of the canvas's pixels the frames of a match are built with. */
+  private readonly quality = new AdaptiveQuality();
+  /** Where the last match on each arena size left it - for the next one. */
+  private readonly qualityByArena = new Map<string, number>();
+  /** True while a match on, with the setting, adapts the sharpness. */
+  private readonly adapts = computed(
+    () => this.running() && this.settings.adaptiveQuality()
+  );
   /**
    * The breakdown of a frame beside the frame rate - null while the
    * settings hide the frame rate, or before a window of frames is over.
@@ -843,6 +852,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       untracked(() => {
         this.framePerf.reset();
         this.hudPerf.set(null);
+      });
+    });
+    // A match starts at the sharpness the last one on its arena ended with;
+    // between matches, and with the setting off, every pixel is painted.
+    effect(() => {
+      const adapts = this.adapts();
+      untracked(() => {
+        const { width, height } = this.arena();
+        const remembered = this.qualityByArena.get(arenaKey(width, height));
+        this.quality.start(adapts ? (remembered ?? 1) : 1);
+        this.painter?.setRenderScale?.(this.quality.scale);
       });
     });
     // A resumed match picks its music up where the match clock stands, so
@@ -1511,6 +1531,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected onPainterChange(painter: ArenaPainter | null): void {
     this.painter = painter;
     this.painterAmbience.set(painter?.paintsAmbience === true);
+    painter?.setRenderScale?.(this.quality.scale);
     if (painter != null) {
       this.painterLayout.set(untracked(this.arenaLayout));
     }
@@ -1629,15 +1650,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const perf = untracked(this.settings.showFps) ? this.framePerf : null;
     const timer = perf === null ? null : (this.painter.gpuTimer?.() ?? null);
     // The ticks' GPU time where the war runs on the GPU.
-    const simTimer =
-      timer !== null && this.playerService.getSimulation().kind === 'gpu'
-        ? timer
-        : null;
-    const start = perf === null ? 0 : performance.now();
+    const simulation = this.playerService.getSimulation();
+    const simTimer = timer !== null && simulation.kind === 'gpu' ? timer : null;
+    const adapting =
+      this.painter.setRenderScale != null && untracked(this.adapts);
+    // The main thread's time is taken where the HUD or the sharpness asks.
+    const timed = perf !== null || adapting;
+    const start = timed ? performance.now() : 0;
     simTimer?.begin('sim');
     this.gameStateService.advance(width, height, frame.ticks);
     simTimer?.end();
-    const ticked = perf === null ? 0 : performance.now();
+    const ticked = timed ? performance.now() : 0;
     const events = this.playerService.getFrameEvents();
     this.sound.frame(events);
     this.haptics.frame(events);
@@ -1649,8 +1672,21 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     timer?.begin('draw');
     this.arenaView()?.paintFrame(frame.elapsedSec, frame.alpha);
     timer?.end();
+    const end = timed ? performance.now() : 0;
+    // A simulation's wait for the GPU is the GPU's time, not the main
+    // thread's own.
+    const gpuWait = simulation.takeGpuWaitMs?.() ?? 0;
+    if (adapting) {
+      // The sharpness goes by how long the main thread was busy with this
+      // frame's ticks and painting.
+      const scale = this.quality.frame(end, end - start - gpuWait);
+      if (scale !== null) {
+        this.qualityByArena.set(arenaKey(width, height), scale);
+        this.painter.setRenderScale?.(scale);
+      }
+    }
     if (perf !== null) {
-      this.notePerf(perf, timer, frame.ticks, start, ticked, painting);
+      this.notePerf(perf, timer, frame.ticks, start, ticked, painting, end);
     }
   }
 
@@ -1661,9 +1697,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     ticks: number,
     start: number,
     ticked: number,
-    painting: number
+    painting: number,
+    end: number
   ): void {
-    const end = performance.now();
     timer?.poll((slot, ms) => perf.recordGpu(slot, ms));
     const report = perf.record(end, ticked - start, end - painting, ticks);
     if (report === null) {
@@ -1674,7 +1710,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.hudPerf.set({
       ...report,
       simulation: simulationLabel(simulation.kind, simulation.ruleset),
-      cells: `${width}×${height}`,
+      cells: arenaKey(width, height),
+      // The Canvas 2D painter paints every pixel, whatever the scale says.
+      // A share of the pixels: the scale goes for the width and the height.
+      pixels:
+        this.painter?.setRenderScale == null ? 1 : this.quality.scale ** 2,
     });
   }
 
@@ -2296,4 +2336,9 @@ function isTouchDevice(): boolean {
   return (
     typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
   );
+}
+
+/** An arena's size, "640×360" - the sharpness a device manages goes by it. */
+function arenaKey(width: number, height: number): string {
+  return `${width}×${height}`;
 }

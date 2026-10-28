@@ -94,6 +94,7 @@ export class HudBarComponent {
         frame: {
           simulation: perf.simulation,
           cells: perf.cells,
+          pixels: Math.round(perf.pixels * 100),
           sim: perfMs(perf.simMs),
           draw: perfMs(perf.drawMs),
           ticks: perf.ticks.toFixed(1),

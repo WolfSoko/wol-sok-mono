@@ -97,6 +97,7 @@ describe('HudBarComponent', () => {
       gpuDrawMs: null,
       simulation: 'GPU int',
       cells: '640×360',
+      pixels: 0.85,
     });
     fixture.detectChanges();
     const lines = () =>
@@ -104,7 +105,7 @@ describe('HudBarComponent', () => {
         line.textContent?.trim()
       );
     expect(lines()).toEqual([
-      'GPU int 640×360 · ticks 6.3 ms · drawing 3.0 ms · 1.5 ticks a frame',
+      'GPU int 640×360 · 85 % pixels · ticks 6.3 ms · drawing 3.0 ms · 1.5 ticks a frame',
     ]);
 
     fixture.componentRef.setInput('perf', {
@@ -115,6 +116,7 @@ describe('HudBarComponent', () => {
       gpuDrawMs: null,
       simulation: 'CPU',
       cells: '320×180',
+      pixels: 1,
     });
     fixture.detectChanges();
     expect(lines()[1]).toBe('GPU: ticks 4.4 ms · drawing – ms');

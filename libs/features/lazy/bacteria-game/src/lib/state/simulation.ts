@@ -147,6 +147,11 @@ export interface Simulation {
   nearestEnemy(playerId: number, from: Point): Point | null;
   /** Frees whatever the simulation holds outside the JavaScript heap. */
   dispose(): void;
+  /**
+   * Milliseconds the main thread waited for the GPU since the last call,
+   * counting afresh - absent where nothing waits for the GPU.
+   */
+  takeGpuWaitMs?(): number;
 }
 
 /**
