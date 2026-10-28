@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.125.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.125.1...v74.125.2) (2026-10-28)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ lower the CPU fixtures' engine baseline after the columns ([#2722](https://github.com/WolfSoko/wol-sok-mono/issues/2722)) ([27a69e1](https://github.com/WolfSoko/wol-sok-mono/commit/27a69e1e2fc21243aed15a786717ff831d15ff06)), references [#2721](https://github.com/WolfSoko/wol-sok-mono/issues/2721) [#2721](https://github.com/WolfSoko/wol-sok-mono/issues/2721)
+
 ## [74.125.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.125.0...v74.125.1) (2026-10-28)
 
 ### Performance
