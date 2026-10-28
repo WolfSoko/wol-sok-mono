@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.121.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.120.1...v74.121.0) (2026-10-28)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ break a frame's time down beside the frame rate ([#2715](https://github.com/WolfSoko/wol-sok-mono/issues/2715)) ([e1cf500](https://github.com/WolfSoko/wol-sok-mono/commit/e1cf5002e16bfb87f683d0145256967001dfa051))
+
+### Documentation
+
+* note NX_NO_CLOUD fix for sandboxed nx affected/run-many ([#2413](https://github.com/WolfSoko/wol-sok-mono/issues/2413)) ([9e5f2f7](https://github.com/WolfSoko/wol-sok-mono/commit/9e5f2f7f17639a014e5307fdba6b0dce321a8777))
+
 ## [74.120.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.120.0...v74.120.1) (2026-10-27)
 
 ### Refactorings
