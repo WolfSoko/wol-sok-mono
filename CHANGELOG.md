@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.125.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.125.0...v74.125.1) (2026-10-28)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ keep the CPU simulation's bacteria in columns ([#2721](https://github.com/WolfSoko/wol-sok-mono/issues/2721)) ([93c742c](https://github.com/WolfSoko/wol-sok-mono/commit/93c742c247c37139c150dd96c5004814188b5b99))
+
 ## [74.125.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.124.0...v74.125.0) (2026-10-28)
 
 ### Features
