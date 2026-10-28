@@ -108,3 +108,25 @@ describe('DishAmbience', () => {
     expect(AMBIENCE.rimWidth).toBeGreaterThan(0);
   });
 });
+
+describe('DishAmbience shapes', () => {
+  it('hands over each wisp and the bubbles in view, in arena cells', () => {
+    const ambience = new DishAmbience(320, 180, () => 0.5);
+    const wisps: number[][] = [];
+    ambience.forEachWisp((...wisp) => wisps.push(wisp));
+    const all: number[][] = [];
+    ambience.forEachBubble({ x: 0, y: 0, width: 320, height: 180 }, (...b) =>
+      all.push(b)
+    );
+    const left: number[][] = [];
+    ambience.forEachBubble({ x: 0, y: 0, width: 100, height: 180 }, (...b) =>
+      left.push(b)
+    );
+
+    expect(wisps).toHaveLength(AMBIENCE.wisps);
+    expect(all.length).toBeGreaterThan(0);
+    for (const [x, , radius] of left) {
+      expect(x - radius).toBeLessThan(100);
+    }
+  });
+});

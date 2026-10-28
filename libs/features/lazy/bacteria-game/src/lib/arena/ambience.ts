@@ -167,6 +167,37 @@ export class DishAmbience {
     this.paintDepth(cx, view, scale, canvasWidth, canvasHeight);
   }
 
+  /**
+   * Each bubble in view, in arena cells: its centre as it sways, and its
+   * radius.
+   */
+  public forEachBubble(
+    view: Rect,
+    visit: (x: number, y: number, radius: number) => void
+  ): void {
+    for (const bubble of this.bubbles) {
+      const x = bubble.x + Math.sin(bubble.phase) * bubble.sway;
+      const { y, radius } = bubble;
+      if (
+        x + radius > view.x &&
+        y + radius > view.y &&
+        x - radius < view.x + view.width &&
+        y - radius < view.y + view.height
+      ) {
+        visit(x, y, radius);
+      }
+    }
+  }
+
+  /** Each wisp, in arena cells: its centre, radius and opacity. */
+  public forEachWisp(
+    visit: (x: number, y: number, radius: number, alpha: number) => void
+  ): void {
+    for (const wisp of this.wisps) {
+      visit(wisp.x, wisp.y, wisp.radius, wisp.alpha);
+    }
+  }
+
   private spawnBubble(y: number): Bubble {
     const radius =
       AMBIENCE.bubbleRadiusMin + this.random() * AMBIENCE.bubbleRadiusVary;
@@ -192,19 +223,11 @@ export class DishAmbience {
     // The bubbles in view, as canvas pixels: x, y and radius each.
     const seen = this.seen;
     let count = 0;
-    const right = view.width * scale;
-    const bottom = view.height * scale;
-    for (const bubble of this.bubbles) {
-      const x =
-        (bubble.x + Math.sin(bubble.phase) * bubble.sway - view.x) * scale;
-      const y = (bubble.y - view.y) * scale;
-      const r = bubble.radius * scale;
-      if (x + r > 0 && y + r > 0 && x - r < right && y - r < bottom) {
-        seen[count++] = x;
-        seen[count++] = y;
-        seen[count++] = r;
-      }
-    }
+    this.forEachBubble(view, (x, y, radius) => {
+      seen[count++] = (x - view.x) * scale;
+      seen[count++] = (y - view.y) * scale;
+      seen[count++] = radius * scale;
+    });
     if (count === 0) {
       return;
     }

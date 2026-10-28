@@ -312,7 +312,7 @@
           (pointerup)="onPointerUp($event)"
           (pointercancel)="onPointerUp($event)"
         ></feat-lazy-bac-game-arena-view>
-        @if (settings.ambience()) {
+        @if (settings.ambience() && !painterAmbience()) {
           <!-- Bubbles and mist over the arena; the pointer goes through it. -->
           <canvas
             #ambienceElement

@@ -1,4 +1,5 @@
 import type { GpuTimer } from '../gl/gpu-timer';
+import type { DishAmbience } from './ambience';
 import { Nutrient } from '../state/bacteria-simulation';
 import type { ActiveEffect, WeaponFire } from '../state/evolution';
 import { GameBalance } from '../state/game-balance';
@@ -48,6 +49,12 @@ export interface ArenaFrame {
   seatColors: ReadonlyMap<number, readonly number[]>;
   /** How many particles the weapons' effects may fly at once. */
   particleBudget: number;
+  /**
+   * The dish's bubbles, mist and depth, for a painter that draws them with
+   * the arena ({@link ArenaPainter.paintsAmbience}) - null or absent where
+   * they are off.
+   */
+  ambience?: DishAmbience | null;
 }
 
 /**
@@ -56,6 +63,12 @@ export interface ArenaFrame {
  */
 export interface ArenaPainter {
   readonly kind: 'webgl' | 'canvas';
+  /**
+   * True for a painter that draws the frame's ambience itself, over the
+   * arena - the WebGL one. For any other, the stage lays it on a canvas of
+   * its own.
+   */
+  readonly paintsAmbience?: boolean;
   /**
    * Lays another level's floor: its look, and its zones painted into it -
    * they never move, so they are not drawn again every frame.

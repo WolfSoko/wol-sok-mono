@@ -12,6 +12,7 @@ import {
   RECORD_MASK,
 } from '../../gl/simulation-shaders';
 import { LOOK_TUNING, LOOKS } from '../colony-renderer';
+import { AMBIENCE } from '../ambience';
 
 /** The looks' tuning and their `uLook` values, as GLSL constants. */
 const LOOK_CONSTANTS = [
@@ -118,14 +119,62 @@ void main() {
   outColor = vec4(texelFetch(uFloor, cell, 0).rgb, uAlpha);
 }`;
 
-/** Copies the finished frame onto the canvas. */
+/**
+ * Copies the finished frame onto the canvas - and, with the ambience on,
+ * lays the dish's depth over it as `DishAmbience` paints it: the shadow
+ * the rim throws along each edge of the arena, fading over `uReach`
+ * cells, and the sheen of the glass from the canvas's top left.
+ */
 export const BLIT_FRAGMENT = `#version 300 es
 precision highp float;
 in vec2 vNdc;
 uniform sampler2D uImage;
+uniform bool uDepth;
+uniform vec2 uArena;
+uniform float uReach;
+uniform vec2 uCanvas;
+// The wisps of mist under the depth: centre and radius in cells, opacity.
+uniform int uWispCount;
+uniform vec4 uWisps[${AMBIENCE.wisps}];
+uniform vec3 uMist;
 out vec4 outColor;
+${ARENA_POSITION}
+const float RIM_SHADE = ${glslFloat(AMBIENCE.rimShade)};
+const float SHEEN = ${glslFloat(AMBIENCE.sheen)};
+
+// How dark the rim's shadow is that far in from an edge.
+float rim(float inside) {
+  return inside >= 0.0 && inside <= uReach
+    ? RIM_SHADE * (1.0 - inside / uReach)
+    : 0.0;
+}
+
 void main() {
-  outColor = vec4(texture(uImage, (vNdc + 1.0) * 0.5).rgb, 1.0);
+  vec3 color = texture(uImage, (vNdc + 1.0) * 0.5).rgb;
+  vec2 p = arenaPosition(vNdc);
+  // Each wisp as the ambience's sprite: opaque at the centre,
+  // a third at half the radius, gone at the rim.
+  for (int i = 0; i < ${AMBIENCE.wisps}; i++) {
+    if (i >= uWispCount) {
+      break;
+    }
+    vec4 wisp = uWisps[i];
+    float r = length(p - wisp.xy) / wisp.z;
+    if (r < 1.0) {
+      float a = wisp.w * (r < 0.5 ? mix(1.0, 0.35, r / 0.5) : mix(0.35, 0.0, (r - 0.5) / 0.5));
+      color = mix(color, uMist, a);
+    }
+  }
+  if (uDepth) {
+    color *= (1.0 - rim(p.x)) * (1.0 - rim(uArena.x - p.x))
+      * (1.0 - rim(p.y)) * (1.0 - rim(uArena.y - p.y));
+    // The sheen's gradient runs along the canvas's diagonal, gone at 45%.
+    vec2 uv = vec2(vNdc.x + 1.0, 1.0 - vNdc.y) * 0.5;
+    float along = dot(uv, uCanvas * uCanvas) / dot(uCanvas, uCanvas);
+    float sheen = SHEEN * max(0.0, 1.0 - along / 0.45);
+    color = color * (1.0 - sheen) + sheen;
+  }
+  outColor = vec4(color, 1.0);
 }`;
 
 /**
@@ -969,20 +1018,25 @@ void main() {
 }`;
 
 /**
- * The zones' layer over the floor - finer than the cells, and sampled
- * smoothly, so their edges are soft.
+ * The layers that never move, laid over the floor in one pass: the zones,
+ * faded with the floor (`uAlpha`), and the walls over them, which are
+ * not. Both are premultiplied, as fine as the canvas shows them.
  */
-export const ZONES_FRAGMENT = `#version 300 es
+export const OVERLAY_FRAGMENT = `#version 300 es
 precision highp float;
 in vec2 vNdc;
 uniform sampler2D uZones;
+uniform sampler2D uWalls;
+uniform bool uHasZones;
 uniform vec2 uArena;
 uniform float uAlpha;
 out vec4 outColor;
 ${ARENA_POSITION}
 void main() {
-  // Premultiplied: the colour fades with the alpha.
-  outColor = texture(uZones, arenaPosition(vNdc) / uArena) * uAlpha;
+  vec2 uv = arenaPosition(vNdc) / uArena;
+  vec4 zones = uHasZones ? texture(uZones, uv) * uAlpha : vec4(0.0);
+  vec4 walls = texture(uWalls, uv);
+  outColor = walls + (1.0 - walls.a) * zones;
 }`;
 
 /** One instance per shape, its rect in arena cells - see `SHAPE`. */
