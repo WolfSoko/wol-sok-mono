@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.125.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.124.0...v74.125.0) (2026-10-28)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ paint the arena with fewer pixels where the device is slow ([#2720](https://github.com/WolfSoko/wol-sok-mono/issues/2720)) ([f667071](https://github.com/WolfSoko/wol-sok-mono/commit/f667071d28def7248c7fc7ebccbb0ffca830929a))
+
 ## [74.124.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.123.0...v74.124.0) (2026-10-28)
 
 ### Features
