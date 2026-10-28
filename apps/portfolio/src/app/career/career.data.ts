@@ -255,7 +255,7 @@ export const CAREER_PROJECTS: readonly CareerProject[] = [
     id: 'freenet-css',
     from: 2026,
     to: 2026,
-    client: 'freenet',
+    client: 'freenet DLS GmbH',
     role: {
       en: 'Senior full-stack developer, focused on AI-driven development',
       de: 'Senior Full Stack Developer mit Schwerpunkt KI-getriebene Entwicklung',
