@@ -7,9 +7,9 @@ export const RENDER_SCALES = [1, 0.85, 0.7, 0.55] as const;
 /** How long a measurement runs, in milliseconds. */
 export const QUALITY_WINDOW_MS = 1000;
 /** Below this many frames a second a measurement counts as slow. */
-export const SLOW_FPS = 48;
+const SLOW_FPS = 48;
 /** At or above this many frames a second a measurement counts as smooth. */
-export const SMOOTH_FPS = 57;
+const SMOOTH_FPS = 57;
 /**
  * The share of a slow frame the main thread must spend waiting - on the
  * GPU, the compositor or the display - for fewer pixels to be worth it: a
@@ -17,7 +17,7 @@ export const SMOOTH_FPS = 57;
  * frames a second (a phone saving power) looks the same as a busy GPU, and
  * gets fewer pixels too - which cost little there and save power.
  */
-export const WAIT_SHARE = 0.3;
+const WAIT_SHARE = 0.3;
 /** How many slow measurements in a row take the scale down a step. */
 export const SLOW_WINDOWS = 2;
 /** How many smooth measurements in a row take it up a step again. */
@@ -84,11 +84,8 @@ export class AdaptiveQuality {
     this.lastFrame = now;
     if (last === null || now - last > GAP_MS) {
       // A pause: what came before it does not count with what comes after.
-      this.windowStart = now;
-      this.frames = 0;
-      this.waited = 0;
-      this.slow = 0;
-      this.smooth = 0;
+      this.forget();
+      this.lastFrame = now;
       return null;
     }
     this.windowStart ??= last;

@@ -276,7 +276,7 @@ export class GlArenaPainter implements ArenaPainter {
   private renderWidth: number;
   private renderHeight: number;
   /** True while the frame's target holds no frame yet to leave a trail. */
-  private freshTrail = true;
+  private freshTrail = false;
   /** Cells per base cell - the jam and the crosshairs are as big on every grid. */
   private readonly unit: number;
   /** Pixels per cell the zones are painted with. */
@@ -349,7 +349,6 @@ export class GlArenaPainter implements ArenaPainter {
       // The old context's queries and layers went with it.
       this.timer = undefined;
       this.wallsFor = null;
-      this.freshTrail = true;
       if (this.theme != null) {
         this.uploadFloor(this.theme);
       }
@@ -1231,6 +1230,7 @@ export class GlArenaPainter implements ArenaPainter {
     const blur = this.target(this.width, this.height, gl.LINEAR);
     // Sampled smoothly: scaled up to the canvas when it is the smaller.
     const trail = this.target(this.renderWidth, this.renderHeight, gl.LINEAR);
+    this.freshTrail = true;
 
     return {
       programs,
