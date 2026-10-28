@@ -65,7 +65,7 @@ export const settings: Translation<typeof en> = {
     gpuInt: 'Partien laufen auf der GPU, auf jedem Gerät gleich.',
     cpu: 'Partien laufen auf der CPU.',
     forced:
-      'Für dieses Gerät gewählt – Automatisch folgt wieder dem GPU-Selbsttest.',
+      'Für dieses Gerät gewählt – Automatisch lässt wieder das Spiel entscheiden.',
     passed: 'GPU-Selbsttest auf {renderer} bestanden.',
     software:
       'GPU-Selbsttest auf {renderer} bestanden, doch der zeichnet auf der CPU - zu langsam für Partien auf der GPU.',

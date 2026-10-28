@@ -14,6 +14,19 @@ export function parseSimulationOverride(value: unknown): Ruleset | null {
   return isRuleset(value) ? value : null;
 }
 
+/** Takes `?sim=` out of the page's address, everything else as it was. */
+function dropOverrideQuery(): void {
+  if (typeof location === 'undefined' || typeof history === 'undefined') {
+    return;
+  }
+  const url = new URL(location.href);
+  if (!url.searchParams.has(SIMULATION_OVERRIDE_PARAM)) {
+    return;
+  }
+  url.searchParams.delete(SIMULATION_OVERRIDE_PARAM);
+  history.replaceState(history.state, '', url);
+}
+
 /**
  * What a URL query asks of the override: a ruleset, `auto` (null) to clear
  * it, or undefined when it says nothing about it.
@@ -72,10 +85,14 @@ export class SimulationOverrideService {
       });
   }
 
-  /** The player's choice in the settings: a ruleset, or null for Auto. */
+  /**
+   * The player's choice in the settings: a ruleset, or null for Auto. It
+   * takes `?sim=` out of the address, or a reload would undo it.
+   */
   public choose(ruleset: Ruleset | null): void {
     this.chosen = true;
     this.forced.set(ruleset);
     this.storage.write(SIMULATION_OVERRIDE_STORAGE_KEY, ruleset);
+    dropOverrideQuery();
   }
 }

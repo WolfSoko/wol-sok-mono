@@ -62,7 +62,7 @@ export const settings = {
     cpuChoice: 'CPU',
     gpuInt: 'Matches run on the GPU, alike on every device.',
     cpu: 'Matches run on the CPU.',
-    forced: 'Chosen for this device - Auto follows the GPU self-test again.',
+    forced: 'Chosen for this device - Auto lets the game decide again.',
     passed: 'GPU self-test passed on {renderer}.',
     software:
       'GPU self-test passed on {renderer}, which draws on the CPU - too slow for matches on the GPU.',
