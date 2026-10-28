@@ -82,11 +82,18 @@ describe('MyMatchesComponent', () => {
     expect(
       page.querySelector('feat-lazy-bac-game-replay-viewer')
     ).not.toBeNull();
-    [...page.querySelectorAll('button')]
-      .find((each) => each.textContent?.includes('Back to the list'))
-      ?.click();
+    // The viewer is the screen: the list, the intro and the header step aside.
+    expect(page.textContent).not.toContain('Vs computer');
+    expect(fixture.nativeElement.classList.contains('watching')).toBe(true);
+    (
+      page.querySelector(
+        'button[aria-label="Back to the list"]'
+      ) as HTMLButtonElement
+    ).click();
     await settle(fixture);
     expect(page.querySelector('feat-lazy-bac-game-replay-viewer')).toBeNull();
+    expect(page.textContent).toContain('Vs computer');
+    expect(fixture.nativeElement.classList.contains('watching')).toBe(false);
   });
 
   it('plays no match of an older balance', async () => {

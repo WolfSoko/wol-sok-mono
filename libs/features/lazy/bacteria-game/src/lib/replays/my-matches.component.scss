@@ -4,6 +4,18 @@
   @include screen.screen;
 }
 
+// Watching a match, the viewer is the screen: no padding, nothing to scroll.
+:host.watching {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.player {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .matches {
   @include screen.panel;
 

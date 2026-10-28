@@ -87,6 +87,7 @@ interface MatchRow {
     ScreenHeaderComponent,
     TranslatePipe,
   ],
+  host: { '[class.watching]': 'watching() !== null' },
   templateUrl: './my-matches.component.html',
   styleUrl: './my-matches.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -138,6 +139,13 @@ export class MyMatchesComponent {
   protected readonly notice = signal<TranslationKey | null>(null);
   /** The replay being watched, null for the list. */
   protected readonly watching = signal<Replay | null>(null);
+  /** The level's name over the replay being watched. */
+  protected readonly watchingTitle = computed(() => {
+    const replay = this.watching();
+    return replay === null
+      ? null
+      : levelNameText(getLevel(replay.header.levelId));
+  });
   /** "Delete" in two taps, armed by the replay's id. */
   private readonly deleteTap = armedTap<string>();
   /** The replay whose "Delete" waits for its second tap - null for none. */

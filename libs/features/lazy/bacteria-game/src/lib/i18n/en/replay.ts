@@ -102,6 +102,7 @@ export const replay = {
     back: '{seconds} seconds back',
     forward: '{seconds} seconds forward',
     seeking: 'Winding to that time…',
+    controls: 'Playback controls',
   },
   watchPage: {
     title: 'Watch: {level} - Bacteria Wars',

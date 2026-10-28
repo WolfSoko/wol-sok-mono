@@ -14,30 +14,37 @@ import { ReplayViewerComponent } from './replay-viewer.component';
 
 /**
  * The match just played, watched again from its result (ADR 0011): the
- * replay viewer on the recording the match left, then back to the menu.
+ * replay viewer filling the stage on the recording the match left, its way
+ * back to the menu in the viewer's own chrome; the screen's header only
+ * where there is nothing to play.
  */
 @Component({
   selector: 'feat-lazy-bac-game-replay-screen',
   imports: [ReplayViewerComponent, ScreenHeaderComponent, TranslatePipe],
+  host: { '[class.playing]': 'replay() !== null' },
   template: `
-    <feat-lazy-bac-game-screen-header
-      [title]="'replay.viewer.title' | t"
-      (back)="back.emit()"
-    />
-    <section class="matches" [attr.aria-label]="'replay.viewer.title' | t">
-      @if (replay(); as replay) {
-        <feat-lazy-bac-game-replay-viewer
-          [replay]="replay"
-          [look]="look()"
-          [label]="'replay.viewer.title' | t"
-          [gpu]="trustedGpu()"
-        />
-      } @else {
+    @if (replay(); as replay) {
+      <feat-lazy-bac-game-replay-viewer
+        class="player"
+        [replay]="replay"
+        [look]="look()"
+        [label]="'replay.viewer.title' | t"
+        [gpu]="trustedGpu()"
+        [title]="'replay.viewer.title' | t"
+        [closeLabel]="'common.menu' | t"
+        (close)="back.emit()"
+      />
+    } @else {
+      <feat-lazy-bac-game-screen-header
+        [title]="'replay.viewer.title' | t"
+        (back)="back.emit()"
+      />
+      <section class="matches" [attr.aria-label]="'replay.viewer.title' | t">
         <p>{{ 'replay.matches.unreadable' | t }}</p>
-      }
-    </section>
+      </section>
+    }
   `,
-  styleUrl: './my-matches.component.scss',
+  styleUrl: './replay-screen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReplayScreenComponent {

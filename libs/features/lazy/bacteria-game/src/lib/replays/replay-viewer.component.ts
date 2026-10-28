@@ -1,10 +1,14 @@
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
+  inject,
   input,
+  output,
   signal,
   untracked,
   viewChild,
@@ -21,6 +25,13 @@ import {
   ArenaViewComponent,
 } from '../arena/arena-view.component';
 import { GlArenaPainter } from '../arena/gl/gl-arena-painter';
+import {
+  exitFullscreen,
+  fitInside,
+  fullscreenElementOf,
+  isFullscreenSupported,
+  requestFullscreen,
+} from '../fullscreen';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { prefersReducedMotion } from '../reduced-motion';
 import {
@@ -43,16 +54,23 @@ export const REPLAY_SPEEDS = [1, 2, 4] as const;
 /** How far the skip buttons jump, in seconds. */
 export const REPLAY_SKIP_SECONDS = 10;
 
+/** How long the controls stay after the last touch while the replay plays. */
+export const CHROME_HIDE_MS = 3000;
+
 /**
- * A recorded match played back (ADR 0011) on an `ArenaView` that plays by
- * itself: play and pause, 1x / 2x / 4x, start over, and a timeline to seek
- * on, with 10 s back and forward. Seeking plays on fast to the time asked
- * for - back from the start, as a deterministic war only plays forwards.
- * Where the host says the GPU is trusted (`gpu`), a `gpu-int` replay plays
- * on the view's GL context, as fast as the match itself was; else on
- * `IntSimulation`, the CPU twin. The game shows it for "My matches" and the
- * match just played; `/watch` for a public replay. It needs no game state,
- * account or Firebase.
+ * A recorded match played back (ADR 0011) like a video: the arena fills
+ * the box the viewer is given, at its own aspect, and the controls lie over
+ * it - play and pause, 1x / 2x / 4x, start over, a timeline to seek on with
+ * 10 s back and forward, and the fullscreen where the browser has it. They
+ * fade out a few seconds into playback and come back on a touch, a move of
+ * the pointer or a key; a click on the arena plays and pauses, Space or K,
+ * J / L and the arrows, Home and F work from the keyboard. Seeking plays on
+ * fast to the time asked for - back from the start, as a deterministic war
+ * only plays forwards. Where the host says the GPU is trusted (`gpu`), a
+ * `gpu-int` replay plays on the view's GL context, as fast as the match
+ * itself was; else on `IntSimulation`, the CPU twin. The game shows it for
+ * "My matches" and the match just played; `/watch` for a public replay. It
+ * needs no game state, account or Firebase.
  */
 @Component({
   selector: 'feat-lazy-bac-game-replay-viewer',
@@ -64,9 +82,26 @@ export const REPLAY_SKIP_SECONDS = 10;
     MatSliderModule,
     TranslatePipe,
   ],
+  host: {
+    tabindex: '0',
+    '[class.chrome-hidden]': '!chromeShown()',
+    '[class.cursor-hidden]': '!chromeShown() && playing()',
+    '(keydown)': 'onKeyDown($event)',
+    '(pointermove)': 'wake()',
+    '(pointerdown)': 'wake()',
+    '(focusin)': 'wake()',
+    '(document:fullscreenchange)': 'onFullscreenChange()',
+    '(document:webkitfullscreenchange)': 'onFullscreenChange()',
+  },
   template: `
     @if (scene(); as scene) {
-      <div class="arena" #box [attr.aria-label]="label()" role="img">
+      <div
+        class="arena"
+        #box
+        [attr.aria-label]="label()"
+        role="img"
+        (click)="togglePlay()"
+      >
         <feat-lazy-bac-game-arena-view
           [layout]="layout()"
           [scene]="scene"
@@ -79,8 +114,44 @@ export const REPLAY_SKIP_SECONDS = 10;
           (painterChange)="painterChanged($event)"
         />
       </div>
-      <div class="timeline">
-        <span class="time">{{ time(second()) }}</span>
+      @if (seeking()) {
+        <p class="notice" role="status">{{ 'replay.viewer.seeking' | t }}</p>
+      } @else if (over()) {
+        <p class="notice" role="status">{{ 'replay.viewer.over' | t }}</p>
+      }
+      @if (closeLabel() || title()) {
+        <div
+          class="chrome top"
+          (pointerenter)="hovering.set(true)"
+          (pointerleave)="hovering.set(false)"
+          (focusin)="focused.set(true)"
+          (focusout)="focused.set(false)"
+        >
+          @if (closeLabel(); as closeLabel) {
+            <button
+              mat-icon-button
+              type="button"
+              data-testid="close"
+              [attr.aria-label]="closeLabel"
+              (click)="close.emit()"
+            >
+              <mat-icon>arrow_back</mat-icon>
+            </button>
+          }
+          @if (title(); as title) {
+            <span class="title">{{ title }}</span>
+          }
+        </div>
+      }
+      <div
+        class="chrome bottom"
+        role="group"
+        [attr.aria-label]="'replay.viewer.controls' | t"
+        (pointerenter)="hovering.set(true)"
+        (pointerleave)="hovering.set(false)"
+        (focusin)="focused.set(true)"
+        (focusout)="focused.set(false)"
+      >
         <mat-slider
           class="seek"
           [min]="0"
@@ -98,96 +169,188 @@ export const REPLAY_SKIP_SECONDS = 10;
             [attr.aria-valuetext]="time(second())"
           />
         </mat-slider>
-        <span class="time">{{ time(length()) }}</span>
-      </div>
-      <div class="controls">
-        <button
-          mat-icon-button
-          type="button"
-          data-testid="back"
-          [disabled]="!seekable()"
-          [attr.aria-label]="'replay.viewer.back' | t: { seconds: skip }"
-          (click)="skipBy(-skip)"
-        >
-          <mat-icon>replay_10</mat-icon>
-        </button>
-        <button
-          mat-flat-button
-          type="button"
-          data-testid="play-pause"
-          (click)="togglePlay()"
-        >
-          <mat-icon>{{ playing() ? 'pause' : 'play_arrow' }}</mat-icon>
-          {{ (playing() ? 'replay.viewer.pause' : 'replay.viewer.play') | t }}
-        </button>
-        <button
-          mat-icon-button
-          type="button"
-          data-testid="forward"
-          [disabled]="!seekable()"
-          [attr.aria-label]="'replay.viewer.forward' | t: { seconds: skip }"
-          (click)="skipBy(skip)"
-        >
-          <mat-icon>forward_10</mat-icon>
-        </button>
-        <mat-button-toggle-group
-          hideSingleSelectionIndicator
-          [value]="speed()"
-          (change)="speed.set($event.value)"
-          [attr.aria-label]="'replay.viewer.speed' | t: { speed: speed() }"
-        >
-          @for (option of speeds; track option) {
-            <mat-button-toggle [value]="option"
-              >{{ option }}×</mat-button-toggle
+        <div class="buttons">
+          <button
+            mat-icon-button
+            type="button"
+            data-testid="play-pause"
+            [attr.aria-label]="
+              (showsPause() ? 'replay.viewer.pause' : 'replay.viewer.play') | t
+            "
+            (click)="togglePlay()"
+          >
+            <mat-icon>{{ showsPause() ? 'pause' : 'play_arrow' }}</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            data-testid="back"
+            [disabled]="!seekable()"
+            [attr.aria-label]="'replay.viewer.back' | t: { seconds: skip }"
+            (click)="skipBy(-skip)"
+          >
+            <mat-icon>replay_10</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            data-testid="forward"
+            [disabled]="!seekable()"
+            [attr.aria-label]="'replay.viewer.forward' | t: { seconds: skip }"
+            (click)="skipBy(skip)"
+          >
+            <mat-icon>forward_10</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            data-testid="start-over"
+            [attr.aria-label]="'replay.viewer.startOver' | t"
+            (click)="startOver()"
+          >
+            <mat-icon>replay</mat-icon>
+          </button>
+          <span class="time">{{ time(second()) }} / {{ time(length()) }}</span>
+          <span class="spacer"></span>
+          <mat-button-toggle-group
+            hideSingleSelectionIndicator
+            [value]="speed()"
+            (change)="speed.set($event.value)"
+            [attr.aria-label]="'replay.viewer.speed' | t: { speed: speed() }"
+          >
+            @for (option of speeds; track option) {
+              <mat-button-toggle [value]="option"
+                >{{ option }}×</mat-button-toggle
+              >
+            }
+          </mat-button-toggle-group>
+          @if (fullscreenSupported()) {
+            <button
+              mat-icon-button
+              type="button"
+              data-testid="fullscreen"
+              [attr.aria-label]="
+                (fullscreen() ? 'common.exitFullscreen' : 'common.fullscreen')
+                  | t
+              "
+              (click)="toggleFullscreen()"
             >
+              <mat-icon>{{
+                fullscreen() ? 'fullscreen_exit' : 'fullscreen'
+              }}</mat-icon>
+            </button>
           }
-        </mat-button-toggle-group>
-        <button mat-button type="button" (click)="startOver()">
-          <mat-icon>replay</mat-icon>
-          {{ 'replay.viewer.startOver' | t }}
-        </button>
+        </div>
       </div>
-      @if (seeking()) {
-        <p class="notice" role="status">{{ 'replay.viewer.seeking' | t }}</p>
-      } @else if (over()) {
-        <p class="notice" role="status">{{ 'replay.viewer.over' | t }}</p>
-      }
     } @else {
-      <p class="notice" role="alert">{{ 'replay.matches.older' | t }}</p>
+      <p class="alert" role="alert">{{ 'replay.matches.older' | t }}</p>
     }
   `,
   styles: `
     :host {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
       min-width: 0;
+      width: 100%;
+      background: #000;
+      overflow: hidden;
+      outline: none;
+      color: #fff;
+      --mat-icon-button-icon-color: #fff;
+      --mat-icon-button-disabled-icon-color: rgb(255 255 255 / 40%);
+      --mat-slider-active-track-color: var(--bw-gold, #e9b949);
+      --mat-slider-handle-color: var(--bw-gold, #e9b949);
+      --mat-slider-focus-handle-color: var(--bw-gold, #e9b949);
+      --mat-slider-hover-handle-color: var(--bw-gold, #e9b949);
+      --mat-slider-inactive-track-color: rgb(255 255 255 / 40%);
+      --mat-button-toggle-height: 2rem;
+      --mat-button-toggle-text-color: #fff;
+      --mat-button-toggle-selected-state-text-color: #fff;
+      --mat-button-toggle-background-color: transparent;
+      --mat-button-toggle-selected-state-background-color: rgb(
+        255 255 255 / 25%
+      );
+      --mat-button-toggle-divider-color: rgb(255 255 255 / 30%);
+    }
+    :host:focus-visible {
+      box-shadow: inset 0 0 0 3px var(--bw-gold, #e9b949);
+    }
+    :host.cursor-hidden {
+      cursor: none;
     }
     .arena {
-      display: flex;
-      justify-content: center;
-      width: 100%;
-    }
-    .timeline {
+      flex: 1 1 auto;
+      min-height: 0;
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      justify-content: center;
+    }
+    .chrome {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      transition: opacity 300ms;
+    }
+    .top {
+      top: 0;
+      background: linear-gradient(rgb(0 0 0 / 80%), transparent);
+    }
+    .bottom {
+      bottom: 0;
+      flex-direction: column;
+      align-items: stretch;
+      background: linear-gradient(transparent, rgb(0 0 0 / 80%));
+    }
+    :host.chrome-hidden .chrome {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .title {
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .seek {
-      flex: 1 1 auto;
-      min-width: 0;
+      width: 100%;
+      margin: 0;
     }
-    .time {
-      font-variant-numeric: tabular-nums;
-    }
-    .controls {
+    .buttons {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.25rem;
+    }
+    .time {
+      font-variant-numeric: tabular-nums;
+      padding: 0 0.5rem;
+      white-space: nowrap;
+    }
+    .spacer {
+      flex: 1 1 auto;
     }
     .notice {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       margin: 0;
+      padding: 0.5rem 1rem;
+      border-radius: 1rem;
+      background: rgb(0 0 0 / 70%);
+      pointer-events: none;
+    }
+    .alert {
+      margin: auto;
+      padding: 1rem;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -205,6 +368,13 @@ export class ReplayViewerComponent {
    * one. `/watch` runs no self-test and leaves it null.
    */
   public readonly gpu = input<string | null>(null);
+  /** A title over the arena, none without it. */
+  public readonly title = input<string | null>(null);
+  /** The label of a way out over the arena, which emits `close`; none without it. */
+  public readonly closeLabel = input<string | null>(null);
+
+  /** The way out over the arena was taken. */
+  public readonly close = output<void>();
 
   protected readonly speeds = REPLAY_SPEEDS;
   protected readonly skip = REPLAY_SKIP_SECONDS;
@@ -220,10 +390,39 @@ export class ReplayViewerComponent {
   protected readonly length = computed(() =>
     Math.floor(this.replay().header.ticks / TICKS_PER_SEC)
   );
+  /** The button shows "Pause" while the match plays and is not over. */
+  protected readonly showsPause = computed(
+    () => this.playing() && !this.over()
+  );
 
+  /** True while the pointer is over the controls. */
+  protected readonly hovering = signal(false);
+  /** True while the focus is within the controls. */
+  protected readonly focused = signal(false);
+  /** True for a while after the last touch, move or key. */
+  private readonly awake = signal(false);
+  /** The controls are seen: paused, seeking, over, used, or touched lately. */
+  protected readonly chromeShown = computed(
+    () =>
+      !this.playing() ||
+      this.seeking() ||
+      this.over() ||
+      this.hovering() ||
+      this.focused() ||
+      this.awake()
+  );
+  private hideTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** True while the viewer itself fills the screen. */
+  protected readonly fullscreen = signal(false);
+
+  private readonly document = inject(DOCUMENT);
+  private readonly host =
+    inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly reducedMotion = prefersReducedMotion();
   private readonly box = viewChild<ElementRef<HTMLElement>>('box');
-  private readonly boxWidth = signal(0);
+  /** The arena box's size in CSS pixels, zero until it is measured. */
+  private readonly boxSize = signal({ width: 0, height: 0 });
   /** The view's painter, null until the view runs and once it goes. */
   private readonly painter = signal<ArenaPainter | null>(null);
   /** True once the view runs, so that seeking has frames to play in. */
@@ -284,11 +483,19 @@ export class ReplayViewerComponent {
     const { levelId, width, height } = this.replay().header;
     return mapZones(levelMap(getLevel(levelId)), width, height);
   });
-  /** The canvas fitted into the width it has, at the arena's aspect. */
+  /**
+   * The canvas fitted into the box it has, at the arena's aspect, as large
+   * as the box lets it - its own size while the box is not measured yet.
+   */
   protected readonly size = computed(() => {
     const { width, height, scale } = this.layout();
-    const fitted = Math.min(this.boxWidth() || width * scale, width * scale);
-    return { width: fitted, height: (fitted * height) / width };
+    const box = this.boxSize();
+    return (
+      fitInside(box.width, box.height, width, height) ?? {
+        width: width * scale,
+        height: height * scale,
+      }
+    );
   });
 
   public constructor() {
@@ -320,12 +527,20 @@ export class ReplayViewerComponent {
       if (box === undefined || typeof ResizeObserver === 'undefined') {
         return;
       }
-      const observer = new ResizeObserver(([entry]) =>
-        this.boxWidth.set(entry.contentRect.width)
-      );
+      const observer = new ResizeObserver(([entry]) => {
+        const { width, height } = entry.contentRect;
+        this.boxSize.set({ width, height });
+      });
       observer.observe(box);
       onCleanup(() => observer.disconnect());
     });
+    // Playing on, the controls stay a moment longer and then go.
+    effect(() => {
+      if (this.playing()) {
+        untracked(() => this.wake());
+      }
+    });
+    inject(DestroyRef).onDestroy(() => this.clearHideTimer());
   }
 
   protected togglePlay(): void {
@@ -372,6 +587,87 @@ export class ReplayViewerComponent {
       untracked(this.played)?.useGpu(null);
     }
     this.painter.set(painter);
+  }
+
+  /** Shows the controls, for `CHROME_HIDE_MS` from now. */
+  protected wake(): void {
+    this.awake.set(true);
+    this.clearHideTimer();
+    this.hideTimer = setTimeout(() => {
+      this.hideTimer = null;
+      this.awake.set(false);
+    }, CHROME_HIDE_MS);
+  }
+
+  /**
+   * The player's keys, as a video player has them. Keys on the controls
+   * themselves are theirs: the slider's arrows, the buttons' Space. A
+   * handled key goes no further, so the stage's own F stays out of it.
+   */
+  protected onKeyDown(event: KeyboardEvent): void {
+    if (
+      event.target instanceof Element &&
+      event.target.closest('.chrome') !== null
+    ) {
+      return;
+    }
+    switch (event.key) {
+      case ' ':
+      case 'k':
+      case 'K':
+        this.togglePlay();
+        break;
+      case 'ArrowLeft':
+      case 'j':
+      case 'J':
+        this.skipBy(-this.skip);
+        break;
+      case 'ArrowRight':
+      case 'l':
+      case 'L':
+        this.skipBy(this.skip);
+        break;
+      case 'Home':
+        this.startOver();
+        break;
+      case 'f':
+      case 'F':
+        if (!this.fullscreenSupported()) {
+          return;
+        }
+        this.toggleFullscreen();
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.wake();
+  }
+
+  /** True where the browser lets the viewer fill the screen. */
+  protected fullscreenSupported(): boolean {
+    return isFullscreenSupported(this.document, this.host);
+  }
+
+  protected toggleFullscreen(): void {
+    if (this.fullscreen()) {
+      exitFullscreen(this.document);
+    } else {
+      void requestFullscreen(this.host);
+    }
+  }
+
+  /** The browser put the viewer on the screen, or took it off. */
+  protected onFullscreenChange(): void {
+    this.fullscreen.set(fullscreenElementOf(this.document) === this.host);
+  }
+
+  private clearHideTimer(): void {
+    if (this.hideTimer !== null) {
+      clearTimeout(this.hideTimer);
+      this.hideTimer = null;
+    }
   }
 
   private lookOf(look: BacteriaLook): ReplayLook {

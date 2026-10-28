@@ -91,22 +91,28 @@ type WatchView =
   `,
   styles: `
     :host {
-      display: block;
-      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
       background: #0d1117;
       color: #e6edf3;
     }
     .page {
-      max-width: 60rem;
-      margin: 0 auto;
-      padding: 1rem;
+      flex: 1 1 auto;
+      min-height: 0;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      max-width: none;
     }
     h1 {
-      font-size: 1.4rem;
-      margin: 0.25rem 0;
+      font-size: 1.2rem;
+      margin: 0;
+    }
+    feat-lazy-bac-game-replay-viewer {
+      flex: 1 1 auto;
+      min-height: 0;
     }
     .links {
       display: flex;
