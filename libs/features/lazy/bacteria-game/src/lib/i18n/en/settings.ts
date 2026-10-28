@@ -56,9 +56,13 @@ export const settings = {
     saveMatchesNote: 'Online matches are always kept.',
   },
   simulation: {
+    choice: 'Simulation',
+    auto: 'Auto',
+    gpu: 'GPU',
+    cpuChoice: 'CPU',
     gpuInt: 'Matches run on the GPU, alike on every device.',
     cpu: 'Matches run on the CPU.',
-    forced: 'Set for this device by ?sim={ruleset}; ?sim=auto undoes it.',
+    forced: 'Chosen for this device - Auto lets the game decide again.',
     passed: 'GPU self-test passed on {renderer}.',
     software:
       'GPU self-test passed on {renderer}, which draws on the CPU - too slow for matches on the GPU.',

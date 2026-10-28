@@ -97,16 +97,25 @@ function fixedChoice(options: {
   const { gpu, gpuTrusted } = options;
   const override = options.override ?? (() => null);
   if (!options.deterministic && gpu != null) {
-    // Switched off: the float GPU simulation - unless the device override
-    // opts this device in for a real-device check, locally only.
-    const optedIn = () => override() === 'gpu-int';
+    // Switched off: the float GPU simulation - unless the device's choice
+    // opts this device in for a real-device check, or out to the CPU,
+    // locally only.
     return {
-      factory: (balance, random, seed) =>
-        optedIn()
-          ? gpu(balance, random, { deterministic: true, matchSeed: seed })
-          : gpu(balance, random, { matchSeed: seed }),
+      factory: (balance, random, seed) => {
+        switch (override()) {
+          case 'gpu-int':
+            return gpu(balance, random, {
+              deterministic: true,
+              matchSeed: seed,
+            });
+          case 'cpu':
+            return cpuSimulation(balance, random, seed);
+          default:
+            return gpu(balance, random, { matchSeed: seed });
+        }
+      },
       fallback: cpuSimulation,
-      ruleset: () => (optedIn() ? 'gpu-int' : null),
+      ruleset: () => override(),
       offers: () => ['cpu'],
     };
   }

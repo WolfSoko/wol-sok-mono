@@ -16,6 +16,7 @@ import { Size } from '../fullscreen';
 import { GpuSelfTestService } from '../gl/gpu-self-test.service';
 import { simulationCheckLines } from '../gl/simulation-check';
 import { SimulationOverrideService } from '../gl/simulation-override.service';
+import type { Ruleset } from '../state/simulation';
 import { TranslationKey } from '../i18n/dictionaries';
 import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
@@ -134,6 +135,20 @@ export class SettingsComponent {
         )
       : null
   );
+
+  /** The simulation the player picked: Auto, or a ruleset. */
+  protected readonly simulationPick = computed(
+    () => this.simulationOverride.override() ?? 'auto'
+  );
+  protected readonly simulationOptions = [
+    { value: 'auto', label: 'settings.simulation.auto' },
+    { value: 'gpu-int', label: 'settings.simulation.gpu' },
+    { value: 'cpu', label: 'settings.simulation.cpuChoice' },
+  ] as const;
+
+  protected pickSimulation(value: Ruleset | 'auto'): void {
+    this.simulationOverride.choose(value === 'auto' ? null : value);
+  }
 
   protected pickLanguage(value: Language | 'auto'): void {
     this.settings.setLanguage(value === this.automatic ? null : value);

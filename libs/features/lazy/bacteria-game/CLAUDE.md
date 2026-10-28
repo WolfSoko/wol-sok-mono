@@ -368,11 +368,13 @@ play each other.
   ranked match plays the integer GPU passes whatever the toggle says
   (`PlayerService.init` with `ruleset: 'gpu-int'`, no lockstep), so it is
   offered only where the GPU is trusted (`RankedService.deviceReady`).
-- The device override for a real-device check: `?sim=gpu-int`, `?sim=cpu`
-  or `?sim=auto` in the URL (`SimulationOverrideService`, kept in
-  `DeviceStorage`). It changes what local matches play, never what the
-  device offers online. The settings ("Screen") show the ruleset local
-  matches play and the self-test's verdict (`gl/simulation-check.ts`).
+- The device's choice of simulation: "Simulation" (Auto, GPU, CPU) in
+  the settings ("Screen"), or `?sim=gpu-int`, `?sim=cpu` or `?sim=auto`
+  in the URL (`SimulationOverrideService`, kept in `DeviceStorage`). It
+  changes what local matches play, also with the owner's
+  `deterministicSimulation` off, never what the device offers online.
+  The settings show the ruleset local matches play and the self-test's
+  verdict (`gl/simulation-check.ts`).
 
 ## Texts: English and German
 
