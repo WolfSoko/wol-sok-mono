@@ -1,5 +1,5 @@
 import { GameBalance } from '../../state/game-balance';
-import { Bacteria } from '../../state/player.model';
+import type { CellList } from '../../state/cells';
 import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
 import { Rect } from '../../state/maps';
 import { ArenaFrame, ArenaPainter, PaintedColony } from '../arena-painter';
@@ -115,7 +115,7 @@ export type CellBox = readonly [number, number, number, number];
 export function encodeCells(
   out: Uint8Array,
   width: number,
-  bacterias: readonly Bacteria[],
+  bacterias: CellList,
   balance: GameBalance,
   box: CellBox
 ): void {
@@ -123,7 +123,11 @@ export function encodeCells(
   for (let y = y0; y < y1; y++) {
     out.fill(0, (y * width + x0) * 2, (y * width + x1) * 2);
   }
-  for (const { x, y, energy } of bacterias) {
+  const { x: xs, y: ys, energy: energies, length } = bacterias;
+  for (let i = 0; i < length; i++) {
+    const x = xs[i];
+    const y = ys[i];
+    const energy = energies[i];
     if (x < x0 || x >= x1 || y < y0 || y >= y1) {
       continue;
     }
@@ -687,7 +691,7 @@ export class GlArenaPainter implements ArenaPainter {
     gl.enable(gl.SCISSOR_TEST);
     frame.colonies.forEach((layer, index) => {
       const bounds =
-        layer.kind === 'cells' ? colonyBounds(layer.bacterias) : layer.bounds;
+        layer.kind === 'cells' ? colonyBounds(layer.cells) : layer.bounds;
       // A look that reaches past the colony - the lattice looks, with
       // their cells and tiles - is drawn that much further out, and every
       // pass before the drawing moves out with it, or it would read stale
@@ -702,7 +706,7 @@ export class GlArenaPainter implements ArenaPainter {
       // upload and fragments the GPU works on to discard them.
       if (layer.kind === 'cells') {
         this.uploadCells(
-          layer.bacterias,
+          layer.cells,
           frame.balance,
           this.passBox(bounds, margin.cells),
           targets.cells
@@ -878,7 +882,7 @@ export class GlArenaPainter implements ArenaPainter {
 
   /** Packs the box of a CPU colony into its cells texture and uploads it. */
   private uploadCells(
-    bacterias: readonly Bacteria[],
+    bacterias: CellList,
     balance: GameBalance,
     box: CellBox,
     cells: Target

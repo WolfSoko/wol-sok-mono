@@ -91,9 +91,8 @@ function setup(
 describe('BacteriaSimulation', () => {
   describe('combat', () => {
     it('drains a bacterium that is attacked from the four orthogonal sides', () => {
-      const defender = bacterium(20, 20);
-      const { simulation, players } = setup([
-        [defender],
+      const { simulation, colonies, players } = setup([
+        [bacterium(20, 20)],
         [
           bacterium(19, 20),
           bacterium(21, 20),
@@ -104,6 +103,7 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.05);
 
+      const [defender] = colonies[0].bacterias;
       expect(defender.energy).toBeLessThan(gameBalance.maxEnergy);
     });
 
@@ -150,13 +150,14 @@ describe('BacteriaSimulation', () => {
     });
 
     it('lets a bacterium regenerate while nobody attacks it', () => {
-      const lonely = bacterium(20, 20, 0.2);
-      const { simulation, players } = setup([[lonely], [bacterium(50, 5)]], {
-        balance: { divideChancePerSec: 0 },
-      });
+      const { simulation, colonies, players } = setup(
+        [[bacterium(20, 20, 0.2)], [bacterium(50, 5)]],
+        { balance: { divideChancePerSec: 0 } }
+      );
 
       simulation.step(players, 0.5);
 
+      const [lonely] = colonies[0].bacterias;
       expect(lonely.energy).toBeCloseTo(
         0.2 + gameBalance.energyRegenPerSec * 0.5,
         5
@@ -350,14 +351,16 @@ describe('BacteriaSimulation', () => {
 
     it('lets a colony run from the enemy it touches, boosted too', () => {
       // The enemy a coarse cell to the right, the crosshair far to the left.
-      const runner = bacterium(39, 20);
-      const { simulation, players } = setup([[runner], ring(42, 20)], {
-        balance: { jitter: 0, divideChancePerSec: 0 },
-        targets: [
-          { x: 0, y: 20 },
-          { x: 42, y: 20 },
-        ],
-      });
+      const { simulation, colonies, players } = setup(
+        [[bacterium(39, 20)], ring(42, 20)],
+        {
+          balance: { jitter: 0, divideChancePerSec: 0 },
+          targets: [
+            { x: 0, y: 20 },
+            { x: 42, y: 20 },
+          ],
+        }
+      );
       // Boosted, it hunts hardest - and still must not be dragged back.
       players[0] = { ...players[0], boostActiveSec: 1 };
 
@@ -366,7 +369,7 @@ describe('BacteriaSimulation', () => {
       const steps = Math.round(
         DEFAULT_CROSSHAIR_SPEED * gameBalance.boostSpeedFactor * 0.1
       );
-      expect(runner).toMatchObject({ x: 39 - steps, y: 20 });
+      expect(colonies[0].bacterias[0]).toMatchObject({ x: 39 - steps, y: 20 });
     });
 
     it('never puts two bacteria on the same cell', () => {
@@ -402,8 +405,9 @@ describe('BacteriaSimulation', () => {
         { playerId: 0, color: [255, 0, 0, 255], x: 0, y: 0, radius: 0 },
       ]);
       const [nutrient] = simulation.getNutrients();
-      const fed = bacterium(nutrient.x, nutrient.y);
-      (simulation.getColonies() as Colony[])[0].bacterias = [fed];
+      (simulation.getColonies() as Colony[])[0].bacterias = [
+        bacterium(nutrient.x, nutrient.y),
+      ];
       const players = [
         createPlayer({
           id: 0,
@@ -415,6 +419,7 @@ describe('BacteriaSimulation', () => {
 
       simulation.step(players, 0.5);
 
+      const [fed] = simulation.getColonies()[0].bacterias;
       expect(fed.energy).toBeGreaterThan(gameBalance.maxEnergy);
       expect(fed.energy).toBeLessThanOrEqual(gameBalance.superChargedMaxEnergy);
       expect(simulation.getNutrients()[0].amount).toBeLessThan(
@@ -590,14 +595,13 @@ describe('boost', () => {
 
   it('lets a boosted colony hit harder', () => {
     function drain(boostActiveSec: number): number {
-      const defender = bacterium(20, 20);
-      const { simulation, players } = setup(
-        [[defender], [bacterium(19, 20), bacterium(21, 20)]],
+      const { simulation, colonies, players } = setup(
+        [[bacterium(20, 20)], [bacterium(19, 20), bacterium(21, 20)]],
         { balance: { divideChancePerSec: 0 } }
       );
       players[1] = { ...players[1], boostActiveSec };
       simulation.step(players, 0.05);
-      return gameBalance.maxEnergy - defender.energy;
+      return gameBalance.maxEnergy - colonies[0].bacterias[0].energy;
     }
 
     expect(drain(1)).toBeGreaterThan(drain(0));
@@ -867,14 +871,13 @@ describe('BacteriaSimulation with evolution', () => {
 
     it('lets a colony with flagella travel further in a step', () => {
       function travelled(speedFactor?: number): number {
-        const runner = bacterium(20, 20);
-        const { simulation, colonies, players } = setup([[runner]], {
+        const { simulation, colonies, players } = setup([[bacterium(20, 20)]], {
           balance: STILL,
           targets: [{ x: 60, y: 20 }],
         });
         colonies[0].traits = { ...colonies[0].traits, speedFactor };
         simulation.step(players, 0.05);
-        return runner.x - 20;
+        return colonies[0].bacterias[0].x - 20;
       }
 
       // 150 cells a second for 0.05 seconds: 8 cells, 15 at twice the speed.
@@ -962,16 +965,16 @@ describe('BacteriaSimulation with evolution', () => {
     });
 
     it('drains enemy bacteria in a toxin cloud, but not its owner', () => {
-      const own = bacterium(41, 20, 0.2);
-      const enemy = bacterium(39, 24);
-      const outside = bacterium(60, 20, 0.2);
-      const { simulation, players } = setup([[own], [enemy, outside]], {
-        balance: STILL,
-      });
+      const { simulation, colonies, players } = setup(
+        [[bacterium(41, 20, 0.2)], [bacterium(39, 24), bacterium(60, 20, 0.2)]],
+        { balance: STILL }
+      );
       simulation.addEffect(effect('toxin-bomb', 0));
 
       simulation.step(players, 0.5);
 
+      const [own] = colonies[0].bacterias;
+      const [enemy, outside] = colonies[1].bacterias;
       expect(enemy.energy).toBeCloseTo(
         gameBalance.maxEnergy - WEAPON_EFFECTS.toxinDrainPerSec * 0.5,
         5
@@ -998,33 +1001,36 @@ describe('BacteriaSimulation with evolution', () => {
     });
 
     it('drains a neutral colony as any other enemy', () => {
-      const neutral = bacterium(40, 20);
-      const { simulation, players } = setup(
-        [[bacterium(20, 20)], [bacterium(260, 30)], [neutral]],
+      const { simulation, colonies, players } = setup(
+        [[bacterium(20, 20)], [bacterium(260, 30)], [bacterium(40, 20)]],
         { balance: STILL }
       );
       simulation.addEffect(effect('toxin-bomb', 1));
 
       simulation.step(players, 0.5);
 
-      expect(neutral.energy).toBeLessThan(gameBalance.maxEnergy);
+      expect(colonies[2].bacterias[0].energy).toBeLessThan(
+        gameBalance.maxEnergy
+      );
     });
 
     it('freezes enemy bacteria in a cryo pulse', () => {
       function moved(withPulse: boolean): number {
-        const runner = bacterium(40, 20);
-        const { simulation, players } = setup([[bacterium(20, 60)], [runner]], {
-          balance: STILL,
-          targets: [
-            { x: 20, y: 60 },
-            { x: 80, y: 20 },
-          ],
-        });
+        const { simulation, colonies, players } = setup(
+          [[bacterium(20, 60)], [bacterium(40, 20)]],
+          {
+            balance: STILL,
+            targets: [
+              { x: 20, y: 60 },
+              { x: 80, y: 20 },
+            ],
+          }
+        );
         if (withPulse) {
           simulation.addEffect(effect('cryo-pulse', 0));
         }
         simulation.step(players, 0.05);
-        return runner.x - 40;
+        return colonies[1].bacterias[0].x - 40;
       }
 
       expect(moved(false)).toBeGreaterThan(0);
@@ -1033,15 +1039,16 @@ describe('BacteriaSimulation with evolution', () => {
     });
 
     it('keeps frozen bacteria from recovering', () => {
-      const frozen = bacterium(40, 20, 0.2);
-      const own = bacterium(44, 20, 0.2);
-      const { simulation, players } = setup([[own], [frozen]], {
-        balance: STILL,
-      });
+      const { simulation, colonies, players } = setup(
+        [[bacterium(44, 20, 0.2)], [bacterium(40, 20, 0.2)]],
+        { balance: STILL }
+      );
       simulation.addEffect(effect('cryo-pulse', 0));
 
       simulation.step(players, 0.5);
 
+      const [own] = colonies[0].bacterias;
+      const [frozen] = colonies[1].bacterias;
       expect(frozen.energy).toBeCloseTo(0.2, 5);
       expect(own.energy).toBeCloseTo(
         0.2 + gameBalance.energyRegenPerSec * 0.5,

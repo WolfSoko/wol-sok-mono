@@ -1,3 +1,4 @@
+import { cellListOf } from '../state/cells';
 import { gameBalance } from '../state/game-balance';
 import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
@@ -49,7 +50,7 @@ function slime(
   timeSec = 0
 ) {
   const target: Point = { x: 30, y: 10 };
-  const region = slimeRegion(bacterias, view, WIDTH, HEIGHT);
+  const region = slimeRegion(cellListOf(bacterias), view, WIDTH, HEIGHT);
   const cells = WIDTH * HEIGHT;
   const density = new Float32Array(cells);
   const heat = new Float32Array(cells);
@@ -59,7 +60,7 @@ function slime(
     new Float32Array(cells),
     WIDTH,
     HEIGHT,
-    bacterias,
+    cellListOf(bacterias),
     gameBalance,
     region ?? undefined
   );
@@ -160,7 +161,9 @@ describe('paintSlime', () => {
   it('paints nothing of a colony out of view', () => {
     const view: Rect = { x: 20, y: 0, width: 20, height: 20 };
 
-    expect(slimeRegion(blob(5, 10, 3), view, WIDTH, HEIGHT)).toBeNull();
+    expect(
+      slimeRegion(cellListOf(blob(5, 10, 3)), view, WIDTH, HEIGHT)
+    ).toBeNull();
   });
 
   it('lights a boosted colony up', () => {
@@ -331,8 +334,8 @@ describe('slimeRegion', () => {
     const view: Rect = { x: 10, y: 0, width: 10, height: HEIGHT };
     const bacterias = blob(20, 10, 8);
 
-    const slime = slimeRegion(bacterias, view, WIDTH, HEIGHT);
-    const lattice = slimeRegion(bacterias, view, WIDTH, HEIGHT, 3);
+    const slime = slimeRegion(cellListOf(bacterias), view, WIDTH, HEIGHT);
+    const lattice = slimeRegion(cellListOf(bacterias), view, WIDTH, HEIGHT, 3);
 
     expect(slime).not.toBeNull();
     // Past the view's right edge, where the colony goes on.
@@ -376,9 +379,12 @@ describe('createImageDataFromBacterias', () => {
   it('draws one pixel per bacterium in the colour of the colony', () => {
     const data = new Uint8ClampedArray(WIDTH * HEIGHT * 4);
 
-    createImageDataFromBacterias(data, WIDTH, ORANGE, [
-      { x: 3, y: 2, energy: gameBalance.maxEnergy },
-    ]);
+    createImageDataFromBacterias(
+      data,
+      WIDTH,
+      ORANGE,
+      cellListOf([{ x: 3, y: 2, energy: gameBalance.maxEnergy }])
+    );
 
     const index = (2 * WIDTH + 3) * 4;
     expect(Array.from(data.slice(index, index + 4))).toEqual(ORANGE);
@@ -418,15 +424,17 @@ describe('shimmerAt', () => {
 describe('colonyBounds', () => {
   it('reports the box of cells a colony covers', () => {
     expect(
-      colonyBounds([
-        { x: 1, y: 1, energy: 1 },
-        { x: 5, y: 2, energy: 1 },
-        { x: 3, y: 3, energy: 1 },
-      ])
+      colonyBounds(
+        cellListOf([
+          { x: 1, y: 1, energy: 1 },
+          { x: 5, y: 2, energy: 1 },
+          { x: 3, y: 3, energy: 1 },
+        ])
+      )
     ).toEqual({ minX: 1, minY: 1, maxX: 5, maxY: 3 });
   });
 
   it('reports nothing for an empty colony', () => {
-    expect(colonyBounds([])).toBeNull();
+    expect(colonyBounds(cellListOf([]))).toBeNull();
   });
 });

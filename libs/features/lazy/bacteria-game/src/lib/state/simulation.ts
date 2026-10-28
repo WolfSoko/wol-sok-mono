@@ -3,7 +3,8 @@ import { ColonySpawn, Nutrient, StepEvents } from './bacteria-simulation';
 import { GameBalance } from './game-balance';
 import { CellBounds, Point } from './geometry';
 import { DynamicWall, GameMap } from './maps';
-import { Bacteria, Player, PlayerColorArray } from './player.model';
+import type { CellList } from './cells';
+import { Player, PlayerColorArray } from './player.model';
 
 /**
  * A texture of the GPU simulation (a `WebGLTexture`), typed without the DOM
@@ -28,7 +29,8 @@ interface ColonyLayerBase {
 /** A colony of the CPU simulation: its bacteria. */
 export interface CellsLayer extends ColonyLayerBase {
   kind: 'cells';
-  bacterias: readonly Bacteria[];
+  /** Its bacteria, as they stand after the last tick. */
+  cells: CellList;
 }
 
 /**

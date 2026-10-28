@@ -10,7 +10,7 @@ import {
   wrap,
 } from '../state/geometry';
 import { Rect } from '../state/maps';
-import { Bacteria } from '../state/player.model';
+import type { CellList } from '../state/cells';
 import { Rgb } from './arena-theme';
 import {
   createCanvas,
@@ -71,13 +71,18 @@ export function createImageDataFromBacterias(
   data8: Uint8ClampedArray,
   width: number,
   color: readonly number[],
-  bacterias: readonly Bacteria[],
+  bacterias: CellList,
   balance: GameBalance = gameBalance,
   shimmer: BoostShimmer | null = null
 ): Uint8ClampedArray {
   const [r, g, b, alpha] = color;
+  const xs = bacterias.x;
+  const ys = bacterias.y;
+  const energies = bacterias.energy;
   for (let i = 0; i < bacterias.length; i++) {
-    const { x, y, energy } = bacterias[i];
+    const x = xs[i];
+    const y = ys[i];
+    const energy = energies[i];
     const data8index = (y * width + x) * 4;
 
     let heat = overcharge(energy, balance);
@@ -122,14 +127,18 @@ export function colonyDensity(
   scratch: Float32Array,
   width: number,
   height: number,
-  bacterias: readonly Bacteria[],
+  bacterias: CellList,
   balance: GameBalance = gameBalance,
   region: CellBounds = wholeArena(width, height)
 ): boolean {
   density.fill(0);
   let hot = false;
   const { minX, minY, maxX, maxY } = region;
-  for (const { x, y, energy } of bacterias) {
+  const { x: xs, y: ys, energy: energies, length } = bacterias;
+  for (let i = 0; i < length; i++) {
+    const x = xs[i];
+    const y = ys[i];
+    const energy = energies[i];
     if (x < minX || x > maxX || y < minY || y > maxY) {
       continue;
     }
@@ -165,15 +174,14 @@ function wholeArena(width: number, height: number): CellBounds {
 const SLIME_REACH = 3;
 
 /** The cells a colony covers, null for a colony without bacteria. */
-export function colonyBounds(
-  bacterias: readonly Bacteria[]
-): CellBounds | null {
+export function colonyBounds(bacterias: CellList): CellBounds | null {
   if (bacterias.length === 0) {
     return null;
   }
   const bounds = emptyBounds();
-  for (const { x, y } of bacterias) {
-    growBounds(bounds, x, y);
+  const { x, y, length } = bacterias;
+  for (let i = 0; i < length; i++) {
+    growBounds(bounds, x[i], y[i]);
   }
   return bounds;
 }
@@ -187,7 +195,7 @@ export function colonyBounds(
  * around the bacteria the density is zero anyway.
  */
 export function slimeRegion(
-  bacterias: readonly Bacteria[],
+  bacterias: CellList,
   view: Rect,
   width: number,
   height: number,
@@ -2585,7 +2593,7 @@ export class ColonyRenderer {
             crisp,
             this.width,
             colony.color,
-            colony.bacterias,
+            colony.cells,
             balance,
             shimmer
           );
@@ -2597,7 +2605,7 @@ export class ColonyRenderer {
         continue;
       }
       const { width, height, unit } = this;
-      const region = slimeRegion(colony.bacterias, view, width, height);
+      const region = slimeRegion(colony.cells, view, width, height);
       if (region == null) {
         continue;
       }
@@ -2606,8 +2614,7 @@ export class ColonyRenderer {
       const reach = lookReach(look, unit);
       const wide =
         reach > 0
-          ? (slimeRegion(colony.bacterias, view, width, height, reach) ??
-            region)
+          ? (slimeRegion(colony.cells, view, width, height, reach) ?? region)
           : region;
       const hot = colonyDensity(
         this.density,
@@ -2615,7 +2622,7 @@ export class ColonyRenderer {
         this.scratch,
         width,
         height,
-        colony.bacterias,
+        colony.cells,
         balance,
         wide
       );

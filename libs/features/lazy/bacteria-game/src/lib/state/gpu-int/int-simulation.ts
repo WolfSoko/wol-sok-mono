@@ -2,7 +2,7 @@ import { escapeReach } from '../arena-size';
 import { GameBalance } from '../game-balance';
 import { Point } from '../geometry';
 import { ENERGY_SCALE } from '../grid-format';
-import { Bacteria } from '../player.model';
+import { Cells } from '../cells';
 import { CellsLayer, SimulationFactory } from '../simulation';
 import { decodeReport } from '../simulation-report';
 import { GridSimulation } from '../grid-simulation';
@@ -51,8 +51,7 @@ export class IntSimulation extends GridSimulation {
   /** The reports' buffers - see `takeReportBuffer`. */
   private reportBuffers: Uint32Array[] = [];
   /** What the painter gets - see `collectBacterias`. */
-  private readonly bacterias: Bacteria[][] = [];
-  private bacteriaCounts = new Int32Array(0);
+  private readonly bacterias: Cells[] = [];
   private drawnState: Uint16Array | null = null;
   private drawnStep = -1;
   private readonly match: IntMatchUniforms;
@@ -84,7 +83,7 @@ export class IntSimulation extends GridSimulation {
       kind: 'cells',
       color: spawn.color,
       boostTarget: boosts.get(spawn.playerId) ?? null,
-      bacterias: this.bacterias[slot],
+      cells: this.bacterias[slot],
     }));
   }
 
@@ -181,8 +180,8 @@ export class IntSimulation extends GridSimulation {
 
   /**
    * The bacteria of each colony as the painter takes them, once per tick
-   * whatever the frame rate: the objects are kept and refilled, as
-   * `BacteriaSimulation` keeps its own, so drawing allocates nothing. A
+   * whatever the frame rate: the columns are kept and refilled, so
+   * drawing allocates nothing once they are big enough. A
    * layer `colonyLayers` returned changes with the next tick - copy what
    * has to outlast it.
    */
@@ -190,12 +189,11 @@ export class IntSimulation extends GridSimulation {
     const slots = this.spawns.length;
     const lists = this.bacterias;
     while (lists.length < slots) {
-      lists.push([]);
+      lists.push(new Cells());
     }
-    if (this.bacteriaCounts.length !== slots) {
-      this.bacteriaCounts = new Int32Array(slots);
+    for (let slot = 0; slot < slots; slot++) {
+      lists[slot].length = 0;
     }
-    const counts = this.bacteriaCounts.fill(0);
     const state = this.state;
     const width = this.width;
     for (let cell = 0; cell < width * this.height; cell++) {
@@ -203,21 +201,9 @@ export class IntSimulation extends GridSimulation {
       if (owner === 0 || owner > slots) {
         continue;
       }
-      const list = lists[owner - 1];
       const x = cell % width;
       const y = (cell - x) / width;
-      const energy = state[cell * 4 + 1] / ENERGY_SCALE;
-      const bacteria = list[counts[owner - 1]++];
-      if (bacteria == null) {
-        list.push({ x, y, energy });
-      } else {
-        bacteria.x = x;
-        bacteria.y = y;
-        bacteria.energy = energy;
-      }
-    }
-    for (let slot = 0; slot < slots; slot++) {
-      lists[slot].length = counts[slot];
+      lists[owner - 1].push(x, y, state[cell * 4 + 1] / ENERGY_SCALE);
     }
     this.drawnState = this.state;
     this.drawnStep = this.steps;
