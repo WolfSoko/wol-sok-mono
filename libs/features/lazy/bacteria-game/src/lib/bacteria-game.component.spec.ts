@@ -1,7 +1,12 @@
 import { StageBusy } from './busy/stage-busy';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  ComponentFixtureAutoDetect,
+  TestBed,
+} from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
+import type { ArenaFrame } from './arena/arena-painter';
 import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { I18nService } from './i18n/i18n.service';
@@ -10,7 +15,7 @@ import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { GameSoundService } from './sound/game-sound.service';
 import { GameStateService } from './state/game-state.service';
-import { GameStateStore } from './state/game.states';
+import { GameState, GameStateStore } from './state/game.states';
 import { levelTitle, LEVELS } from './state/levels';
 import { MATCH_LEVELS } from './state/match-level';
 import { PlayerStore } from './state/player.store';
@@ -55,6 +60,10 @@ function stubTouch(touch: boolean): void {
       matches: touch && query === '(pointer: coarse)',
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
+      // The CDK's breakpoint observer (behind Material's high-contrast
+      // detection) still listens the old way.
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
     }),
     configurable: true,
   });
@@ -96,13 +105,18 @@ describe('BacteriaGameComponent', () => {
    * Creates the component with a stage whose fullscreen request the browser
    * grants or refuses, and returns that stage. The template is not rendered,
    * so the stage element is wired up by hand. Unless told otherwise, the
-   * page runs on a touch device and so opens fullscreen.
+   * page runs on a touch device and so opens fullscreen. A test that lets
+   * timers run passes `autoDetect: false`: the change detection a timer
+   * would run renders the template, with the canvas jsdom cannot draw on.
    */
-  function create(granted = false, touch = true) {
+  function create(granted = false, touch = true, autoDetect = true) {
     stubTouch(touch);
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [BacteriaGameComponent, NoopAnimationsModule],
+      providers: [
+        { provide: ComponentFixtureAutoDetect, useValue: autoDetect },
+      ],
     });
     store = TestBed.inject(GameStateStore);
     fixture = TestBed.createComponent(BacteriaGameComponent);
@@ -558,6 +572,76 @@ describe('BacteriaGameComponent', () => {
       component.resetGame();
 
       expect(calls).toEqual(['show', 'snapshot']);
+    });
+
+    it('goes on without the effect when it never ends', () => {
+      jest.useFakeTimers();
+      try {
+        create(false, true, false);
+        startMatch('vs-computer');
+        const settings = TestBed.inject(GameSettingsService);
+        (component as unknown as { thanos: unknown }).thanos = {
+          vaporize: () => new Subject<void>(),
+        };
+
+        component.resetGame();
+        expect(component['resetting']()).toBe(true);
+
+        jest.advanceTimersByTime(settings.vaporizeMs() + 5_000 + 1);
+
+        expect(component['resetting']()).toBe(false);
+        expect(store.snapshot().currentState).toBe(GameState.START);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('frees the stage even when clearing the arena fails', () => {
+      create();
+      startMatch('vs-computer');
+      jest
+        .spyOn(TestBed.inject(GameStateService), 'reset')
+        .mockImplementation(() => {
+          throw new Error('no GPU');
+        });
+      const vaporized = new Subject<void>();
+      (component as unknown as { thanos: unknown }).thanos = {
+        vaporize: () => vaporized,
+      };
+      const error = jest.fn();
+
+      component['resetGame$']().subscribe({ error });
+      vaporized.complete();
+
+      expect(component['resetting']()).toBe(false);
+      expect(error).toHaveBeenCalledWith(expect.any(Error));
+    });
+
+    it('keeps the arena out of sight from the end of the effect until the next frame is painted', () => {
+      create();
+      startMatch('vs-computer');
+      const div = document.createElement('div');
+      (component as unknown as { arenaFrame: () => unknown }).arenaFrame =
+        () => ({ nativeElement: div });
+      const vaporized = new Subject<void>();
+      (component as unknown as { thanos: unknown }).thanos = {
+        vaporize: () => vaporized,
+      };
+
+      component.resetGame();
+      expect(div.style.visibility).toBe('');
+
+      vaporized.complete();
+      expect(div.style.visibility).toBe('hidden');
+
+      const frame = {
+        view: { x: 0, y: 0, width: 320, height: 140 },
+        dynamicWalls: [],
+        deltaTimeSec: 0,
+      } as unknown as ArenaFrame;
+      component['arenaScene'].painted?.(frame);
+
+      expect(div.style.visibility).toBe('');
     });
 
     it('names the difficulty next to the level', () => {

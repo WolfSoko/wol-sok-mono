@@ -201,6 +201,13 @@ const RUNNING_OUT_SEC = 10;
 /** How often the minimap takes in where the colonies are. */
 const MINIMAP_UPDATE_MS = 100;
 
+/**
+ * How much longer than the set length the vaporize effect - its capture
+ * of the canvas included - may take before the stage goes on without it:
+ * a snapshot that never completes must not leave the stage without a menu.
+ */
+const VAPORIZE_SLACK_MS = 5_000;
+
 /** A goal the HUD counts each colony up towards. */
 
 @UntilDestroy()
@@ -311,6 +318,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private stageRef!: ElementRef<HTMLElement>;
   @ViewChild(WsThanosDirective, { static: true })
   private thanos!: WsThanosDirective;
+  /**
+   * The frame around the arena canvas, inside the vaporized container -
+   * hidden between the end of the effect and the next painted frame, see
+   * {@link hideArenaUntilPainted}. Missing where the template is not
+   * rendered, as in the specs.
+   */
+  private readonly arenaFrame =
+    viewChild<ElementRef<HTMLElement>>('arenaFrame');
+  /** True while the arena frame is hidden until the next frame is painted. */
+  private arenaHidden = false;
   /** Draws the arena - on the GPU where the browser can; the view builds it. */
   private painter: ArenaPainter | null = null;
   /** The layout the last painter was built for - null before the first. */
@@ -416,6 +433,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     content: (alpha) => this.content(alpha),
     view: () => this.shakenView(),
     painted: (frame) => {
+      // Inside the animation frame, right after the paint and before the
+      // browser shows it: what shows next is what was just painted.
+      this.revealArena();
       this.paintAmbience(frame.view, frame.deltaTimeSec);
       this.paintMinimap(this.lastCamera ?? frame.view, frame.dynamicWalls);
     },
@@ -1589,6 +1609,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private vaporize(): Observable<void> {
+    // Never a snapshot of a hidden arena.
+    this.revealArena();
     // Switched off, the arena simply clears - still after the caller is
     // through, as it would after the effect.
     if (this.settings.vaporize() === 'off') {
@@ -1596,7 +1618,51 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     // The effect takes its snapshot of the canvas right away.
     this.painter?.showLastFrame();
-    return this.thanos.vaporize(false).pipe(take(1));
+    // Should the capture or the effect never end, the stage goes on
+    // without them rather than staying without a menu.
+    return this.thanos.vaporize(false).pipe(
+      take(1),
+      timeout({
+        first: this.settings.vaporizeMs() + VAPORIZE_SLACK_MS,
+        with: () => of(undefined),
+      })
+    );
+  }
+
+  /**
+   * Takes the arena frame out of sight until the stage painted what comes
+   * next - the reset arena under the menu screen, or the next match's
+   * first frame - see {@link revealArena}.
+   *
+   * The vaporize directive fades its container back in by itself at the end
+   * of the effect, before the reset ran and before the menu screen is
+   * rendered, which on a slow device takes a while: the old level would
+   * show between the dust and the menu. Hidden here, synchronously as the
+   * effect ends, the frame shows nothing until the next painted frame.
+   */
+  private hideArenaUntilPainted(): void {
+    const frame = this.arenaFrame()?.nativeElement;
+    if (frame == null) {
+      return;
+    }
+    frame.style.visibility = 'hidden';
+    this.arenaHidden = true;
+  }
+
+  /**
+   * Shows the arena frame again, once the next frame is on its canvas -
+   * called from the scene's `painted`, inside the animation frame, so the
+   * frame is shown and the fresh paint displayed together.
+   */
+  private revealArena(): void {
+    if (!this.arenaHidden) {
+      return;
+    }
+    this.arenaHidden = false;
+    const frame = this.arenaFrame()?.nativeElement;
+    if (frame != null) {
+      frame.style.visibility = '';
+    }
   }
 
   /**
@@ -1623,9 +1689,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         defaultIfEmpty(undefined),
         last(),
         tap(() => {
-          this.gameStateService.reset();
-          this.draw();
-          this.resetting.set(false);
+          // Out of sight before the reset arena is on the canvas - the
+          // effect has just faded the container back in.
+          this.hideArenaUntilPainted();
+          try {
+            this.gameStateService.reset();
+          } finally {
+            // Whatever the reset came to (a GPU simulation may fail to set
+            // up again), the stage gets its menu back; the error goes on.
+            // The signal first, so the change detection it schedules is
+            // registered before the repaint's animation frame.
+            this.resetting.set(false);
+            this.draw();
+          }
           if (this.onlineStartPending) {
             this.onlineStartPending = false;
             this.startOnlineMatch();
