@@ -34,7 +34,7 @@
           "budgets": [
             {
               "type": "initial",
-              "baseline": "341kb",
+              "baseline": "417kb",
               "maximumWarning": "10%",
               "maximumError": "20%"
             },
@@ -46,7 +46,7 @@
             },
             {
               "type": "allScript",
-              "baseline": "334kb",
+              "baseline": "465kb",
               "maximumWarning": "5%",
               "maximumError": "10%"
             },

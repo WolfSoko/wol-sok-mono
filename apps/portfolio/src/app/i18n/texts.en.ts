@@ -1,0 +1,91 @@
+/**
+ * The site's own texts in English, the language every other one owes the
+ * same keys to (`Translation<typeof en>`). The projects and the career
+ * carry their texts themselves, per language.
+ */
+export const en = {
+  nav: {
+    home: 'wolsok.de home',
+    site: 'Site',
+    sections: 'Sections',
+    career: 'Career',
+    github: 'GitHub',
+    language: 'Language',
+    theme: {
+      system: 'Theme: follow the system',
+      light: 'Theme: light',
+      dark: 'Theme: dark',
+    },
+  },
+  footer: {
+    privacy: 'Privacy',
+    source: 'Source',
+  },
+  home: {
+    eyebrow: 'Wolfram Sokollek · wolsok.de',
+    title: 'Games, apps and wild experiments,',
+    titleAccent: 'built for the web.',
+    lead: 'I build things in Angular that run fast in the browser: a GPU-powered strategy game, fitness and running apps, polls, shaders, neural networks and fractals. Everything here is live, and most of it is open source.',
+    jumpApps: 'Apps',
+    jumpExperiments: 'Experiments',
+    jumpOpenSource: 'Open source',
+    jumpCareer: 'Career',
+    apps: 'Apps',
+    appsIntro: 'Each one on its own domain, ready to use.',
+    experiments: 'Experiments',
+    experimentsIntroBefore: 'Interactive demos in the',
+    experimentsLab: 'Angular Examples',
+    experimentsIntroAfter:
+      'lab: graphics, simulations and machine learning, all in the browser.',
+    openSource: 'Open source',
+    openSourceIntroBefore: 'Everything above lives in one Nx monorepo:',
+    openSourceIntroAfter: 'Two pieces of it are published on npm.',
+    careerTitle: 'Behind the code',
+    careerLead:
+      'Freelance full-stack engineer since 2008, Angular since its first day. {years} years of projects for Otto, freenet, About You, Fielmann and more.',
+    careerLink: 'See the career',
+    builtWith: 'Built with',
+  },
+  career: {
+    eyebrow: 'Freelance since {since}',
+    title: 'Full-stack software engineer,',
+    titleAccent: 'Angular to the core.',
+    lead: 'Requirements, architecture, code, tests, pipelines and cloud: I take web products from the idea to production and coach the teams that run them.',
+    hire: 'Get in touch',
+    github: 'GitHub profile',
+    statsYears: 'years of experience',
+    statsAngular: 'years of Angular',
+    statsProjects: 'projects',
+    statsClients: 'clients',
+    focus: 'What I do',
+    focusIntro: 'The work I am asked for again and again.',
+    timeline: 'Projects',
+    timelineIntro:
+      'Every engagement since {since}, newest first. Open one for the details.',
+    skills: 'Toolbox',
+    skillsIntro: 'What I work with, grouped by what it is for.',
+    industries: 'Industries',
+    industriesIntro: 'Domains I have shipped software for.',
+    education: 'Education and certificates',
+    softSkills: 'How I work',
+    languages: 'Languages',
+    facts: 'Facts',
+    born: 'Born',
+    nationality: 'Nationality',
+    location: 'Based in',
+    duration: 'Duration',
+    team: 'Team',
+    workplace: 'Workplace',
+    projectLanguage: 'Project language',
+    technologies: 'Technologies',
+    methods: 'Methods',
+    months: '{count} months',
+    people: '{count} people',
+    source:
+      'Taken from my qualification profile of {date} and updated every month.',
+    contactTitle: 'Have a project in mind?',
+    contactLead:
+      'I work remote from {city}, on site where it helps, in German or English. Say hello and tell me what you are building.',
+    contactMail: 'Write me',
+  },
+};

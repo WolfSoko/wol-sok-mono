@@ -1,0 +1,92 @@
+<wolsok-career-hero [career]="career" />
+
+<section id="focus" aria-labelledby="focus-title">
+  <h2 id="focus-title">{{ t().career.focus }}</h2>
+  <p class="intro">{{ t().career.focusIntro }}</p>
+  <div class="focus">
+    @for (item of career.profile.focus; track item.name.en; let i = $index) {
+      <article class="focus-card" [wolsokReveal]="(i % 3) * 0.1">
+        <span class="index" aria-hidden="true">0{{ i + 1 }}</span>
+        <h3>{{ i18n.pick(item.name) }}</h3>
+        <p>{{ i18n.pick(item.detail) }}</p>
+      </article>
+    }
+  </div>
+</section>
+
+<wolsok-career-timeline [projects]="career.projects" />
+
+<wolsok-career-skills
+  [skills]="career.profile.skills"
+  [projects]="career.projects"
+/>
+
+<section id="industries" aria-labelledby="industries-title" wolsokReveal>
+  <h2 id="industries-title">{{ t().career.industries }}</h2>
+  <p class="intro">{{ t().career.industriesIntro }}</p>
+  <ul class="industries">
+    @for (industry of i18n.pick(career.profile.industries); track $index) {
+      <li>{{ industry }}</li>
+    }
+  </ul>
+</section>
+
+<section class="about" aria-labelledby="about-title">
+  <h2 id="about-title" class="cdk-visually-hidden">{{ t().career.facts }}</h2>
+  <div class="about-grid">
+    <div class="panel" [wolsokReveal]="0">
+      <h3>{{ t().career.education }}</h3>
+      <ul>
+        @for (item of i18n.pick(career.profile.education); track $index) {
+          <li>{{ item }}</li>
+        }
+        @for (cert of career.profile.certifications; track cert.name) {
+          <li>
+            <strong>{{ cert.year }}</strong> {{ cert.name }}
+          </li>
+        }
+      </ul>
+    </div>
+    <div class="panel" [wolsokReveal]="0.1">
+      <h3>{{ t().career.softSkills }}</h3>
+      <ul>
+        @for (item of i18n.pick(career.profile.softSkills); track $index) {
+          <li>{{ item }}</li>
+        }
+      </ul>
+    </div>
+    <div class="panel" [wolsokReveal]="0.2">
+      <h3>{{ t().career.facts }}</h3>
+      <dl>
+        <dt>{{ t().career.languages }}</dt>
+        <dd>{{ i18n.pick(career.profile.languages).join(" · ") }}</dd>
+        <dt>{{ t().career.location }}</dt>
+        <dd>
+          {{ career.profile.city }}, {{ i18n.pick(career.profile.country) }}
+        </dd>
+        <dt>{{ t().career.born }}</dt>
+        <dd>{{ career.profile.born }}</dd>
+        <dt>{{ t().career.nationality }}</dt>
+        <dd>{{ i18n.pick(career.profile.nationality) }}</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="contact" aria-labelledby="contact-title" wolsokReveal>
+  <div class="contact-card">
+    <h2 id="contact-title">{{ t().career.contactTitle }}</h2>
+    <p>
+      {{ i18n.fill(t().career.contactLead, { city: career.profile.city }) }}
+    </p>
+    <div class="actions">
+      <a matButton="filled" [href]="'mailto:' + career.profile.email">{{
+        t().career.contactMail
+      }}</a>
+      <a matButton="outlined" [href]="career.profile.github">{{
+        t().career.github
+      }}</a>
+    </div>
+  </div>
+  <p class="source">{{ source() }}</p>
+</section>

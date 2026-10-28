@@ -1,0 +1,83 @@
+:host {
+  display: block;
+}
+
+.timeline {
+  position: relative;
+  display: grid;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0 0 0 2.25rem;
+  list-style: none;
+}
+
+// The line: grey, with the coloured one growing down it as the page scrolls.
+.line {
+  position: absolute;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  left: 0.55rem;
+  width: 2px;
+  background: var(--line);
+  border-radius: 2px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(var(--accent-warm), var(--accent-cool));
+    transform-origin: top;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .line::after {
+    animation: draw linear both;
+    animation-timeline: view();
+    animation-range: entry 0% exit 100%;
+  }
+}
+
+@keyframes draw {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.entry {
+  position: relative;
+}
+
+.dot {
+  position: absolute;
+  top: 1.4rem;
+  left: -2.25rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--accent-warm);
+  box-shadow: 0 0 0 0.3rem
+    color-mix(in srgb, var(--accent-warm) 20%, transparent);
+  transform: translateX(0.17rem);
+}
+
+.year {
+  position: absolute;
+  top: -0.2rem;
+  left: -2.25rem;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--muted);
+  transform: translateX(-100%) translateX(-0.6rem);
+}
+
+@media (max-width: 60rem) {
+  .year {
+    display: none;
+  }
+}
