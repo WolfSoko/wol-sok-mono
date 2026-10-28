@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.123.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.122.1...v74.123.0) (2026-10-28)
+
+### Features
+
+* **portfolio:** ✨ update the career from the profile of 2026-10-28 ([#2718](https://github.com/WolfSoko/wol-sok-mono/issues/2718)) ([676e013](https://github.com/WolfSoko/wol-sok-mono/commit/676e013430d1db07f271337935be87b27ebcc00a))
+
 ## [74.122.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.122.0...v74.122.1) (2026-10-28)
 
 ### Performance
