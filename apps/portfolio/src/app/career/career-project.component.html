@@ -1,0 +1,63 @@
+<details class="card" [open]="open()">
+  <summary>
+    <span class="period">{{ period() }}</span>
+    <span class="head">
+      <span class="client">
+        {{ project().client }}
+        @if (project().via) {
+          <span class="via">· {{ project().via }}</span>
+        }
+      </span>
+      <span class="role">{{ i18n.pick(project().role) }}</span>
+      <span class="summary">{{ i18n.pick(project().summary) }}</span>
+    </span>
+    <span class="chevron" aria-hidden="true"></span>
+  </summary>
+  <div class="body">
+    <dl class="facts">
+      @if (duration(); as duration) {
+        <div>
+          <dt>{{ t().career.duration }}</dt>
+          <dd>{{ duration }}</dd>
+        </div>
+      }
+      @if (project().teamSize; as teamSize) {
+        <div>
+          <dt>{{ t().career.team }}</dt>
+          <dd>{{ i18n.fill(t().career.people, { count: teamSize }) }}</dd>
+        </div>
+      }
+      @if (project().workplace; as workplace) {
+        <div>
+          <dt>{{ t().career.workplace }}</dt>
+          <dd>{{ i18n.pick(workplace) }}</dd>
+        </div>
+      }
+      @if (project().projectLanguage; as language) {
+        <div>
+          <dt>{{ t().career.projectLanguage }}</dt>
+          <dd>{{ i18n.pick(language) }}</dd>
+        </div>
+      }
+    </dl>
+    <ul class="highlights">
+      @for (highlight of i18n.pick(project().highlights); track $index) {
+        <li>{{ highlight }}</li>
+      }
+    </ul>
+    <h4>{{ t().career.technologies }}</h4>
+    <ul class="chips">
+      @for (tech of project().technologies; track tech) {
+        <li>{{ tech }}</li>
+      }
+    </ul>
+    @if (project().methods; as methods) {
+      <h4>{{ t().career.methods }}</h4>
+      <ul class="chips">
+        @for (method of methods; track method) {
+          <li>{{ method }}</li>
+        }
+      </ul>
+    }
+  </div>
+</details>

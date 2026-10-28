@@ -1,27 +1,41 @@
-import { DOCUMENT, inject, Injectable } from '@angular/core';
-import { Meta } from '@angular/platform-browser';
+import { DOCUMENT } from '@angular/common';
+import { effect, inject, Injectable, signal } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { PageData } from './app.routes';
+import { I18nService } from './i18n/i18n.service';
 
 export const SITE_URL = 'https://wolsok.de';
 
 /**
- * Keeps the description, canonical URL and Open Graph tags in step with the
- * route, so every prerendered page carries its own. The title comes from the
- * route's `title`.
+ * Keeps the title, description, canonical URL and Open Graph tags in step
+ * with the route and the language, so every prerendered page carries its
+ * own (in English, the language the pages are prerendered in) and a switch
+ * of the language renames the tab.
  */
 @Injectable({ providedIn: 'root' })
 export class SeoService {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly meta = inject(Meta);
+  private readonly title = inject(Title);
   private readonly document = inject(DOCUMENT);
+  private readonly i18n = inject(I18nService);
+  private readonly navigated = signal(0);
+
+  public constructor() {
+    effect(() => {
+      if (this.navigated() > 0) {
+        this.update();
+      }
+    });
+  }
 
   public init(): void {
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe(() => this.update());
+      .subscribe(() => this.navigated.update((count) => count + 1));
   }
 
   private update(): void {
@@ -29,16 +43,19 @@ export class SeoService {
     while (route.firstChild) {
       route = route.firstChild;
     }
-    const { description } = route.data as Partial<PageData>;
+    const { title, description } = route.data as Partial<PageData>;
     const path = this.router.url.split(/[?#]/)[0];
     const url = SITE_URL + path;
     if (description) {
-      this.meta.updateTag({ name: 'description', content: description });
-      this.meta.updateTag({ property: 'og:description', content: description });
+      const text = this.i18n.pick(description);
+      this.meta.updateTag({ name: 'description', content: text });
+      this.meta.updateTag({ property: 'og:description', content: text });
     }
     this.meta.updateTag({ property: 'og:url', content: url });
-    if (route.title) {
-      this.meta.updateTag({ property: 'og:title', content: route.title });
+    if (title) {
+      const text = this.i18n.pick(title);
+      this.title.setTitle(text);
+      this.meta.updateTag({ property: 'og:title', content: text });
     }
 
     let canonical = this.document.head.querySelector<HTMLLinkElement>(

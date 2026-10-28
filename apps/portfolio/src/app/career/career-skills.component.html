@@ -1,0 +1,26 @@
+<section id="skills" aria-labelledby="skills-title">
+  <h2 id="skills-title">{{ t().career.skills }}</h2>
+  <p class="intro">{{ t().career.skillsIntro }}</p>
+  <div class="ticker" aria-hidden="true">
+    <div class="track">
+      @for (tech of ticker(); track tech) {
+        <span>{{ tech }}</span>
+      }
+      @for (tech of ticker(); track tech) {
+        <span>{{ tech }}</span>
+      }
+    </div>
+  </div>
+  <div class="groups">
+    @for (group of profile().skills; track group.items[0]; let i = $index) {
+      <div class="group" [wolsokReveal]="(i % 3) * 0.1">
+        <h3>{{ i18n.pick(group.name) }}</h3>
+        <ul>
+          @for (item of group.items; track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+</section>

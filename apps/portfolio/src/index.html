@@ -26,6 +26,22 @@
     <meta name="twitter:card" content="summary" />
     <link rel="canonical" href="https://wolsok.de/" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!-- The stored theme, before the first paint (ThemeService keeps it). -->
+    <script>
+      try {
+        var t = localStorage.getItem("wolsok.theme");
+        if (t === "light" || t === "dark") {
+          document.documentElement.setAttribute("data-theme", t);
+        } else {
+          t = matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute("content", t === "dark" ? "#0b0f14" : "#f6f8fb");
+      } catch (e) {}
+    </script>
     <script
       async
       src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6346271540341424"

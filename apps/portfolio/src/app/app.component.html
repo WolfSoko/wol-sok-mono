@@ -1,0 +1,65 @@
+<header>
+  <a routerLink="/" class="logo" [attr.aria-label]="t().nav.home">
+    wol<span>sok</span>
+  </a>
+  <nav class="tools">
+    <a routerLink="/career" routerLinkActive="active" class="career">{{
+      t().nav.career
+    }}</a>
+    <a href="https://github.com/WolfSoko" class="github">{{
+      t().nav.github
+    }}</a>
+    <div class="switch" role="group" [attr.aria-label]="t().nav.language">
+      @for (language of languages; track language.id) {
+        <button
+          type="button"
+          [class.on]="i18n.language() === language.id"
+          [attr.aria-pressed]="i18n.language() === language.id"
+          [attr.lang]="language.id"
+          [title]="language.name"
+          (click)="i18n.setLanguage(language.id)"
+        >
+          {{ language.id.toUpperCase() }}
+        </button>
+      }
+    </div>
+    <button
+      type="button"
+      matIconButton
+      class="theme"
+      [attr.aria-label]="themeLabel()"
+      [title]="themeLabel()"
+      (click)="theme.cycle()"
+    >
+      @switch (theme.choice()) {
+        @case ("light") {
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5" />
+            <path
+              d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"
+            />
+          </svg>
+        }
+        @case ("dark") {
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
+          </svg>
+        }
+        @default {
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M12 3.5v17A8.5 8.5 0 0 0 12 3.5Z" fill="currentColor" />
+          </svg>
+        }
+      }
+    </button>
+  </nav>
+</header>
+<main>
+  <router-outlet />
+</main>
+<footer>
+  <span>© {{ year }} Wolfram Sokollek</span>
+  <a routerLink="/privacy">{{ t().footer.privacy }}</a>
+  <a href="https://github.com/WolfSoko/wol-sok-mono">{{ t().footer.source }}</a>
+</footer>

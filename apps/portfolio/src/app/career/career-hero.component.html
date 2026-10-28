@@ -1,0 +1,32 @@
+<section class="hero" aria-labelledby="career-heading">
+  <div class="aurora" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+  <p class="eyebrow">
+    <span class="pulse" aria-hidden="true"></span>
+    {{ t().career.eyebrow }} · {{ i18n.pick(career().profile.location) }}
+  </p>
+  <h1 id="career-heading">
+    <span class="name">{{ career().profile.name }}</span>
+    {{ t().career.title }} <em>{{ t().career.titleAccent }}</em>
+  </h1>
+  <p class="lead">{{ t().career.lead }}</p>
+  <div class="actions">
+    <a matButton="filled" [href]="mailto()">{{ t().career.hire }}</a>
+    <a matButton="outlined" [href]="career().profile.github">{{
+      t().career.github
+    }}</a>
+  </div>
+  <dl class="stats">
+    @for (stat of stats(); track stat.label; let i = $index) {
+      <div class="stat" [style.--i]="i" [style.--num]="stat.value">
+        <dt>{{ stat.label }}</dt>
+        <dd>
+          <span class="sr-only">{{ stat.value }}</span>
+          <span class="count" aria-hidden="true"></span>
+          <span class="plus" aria-hidden="true">+</span>
+        </dd>
+      </div>
+    }
+  </dl>
+</section>

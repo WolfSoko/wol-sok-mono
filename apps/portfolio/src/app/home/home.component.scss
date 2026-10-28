@@ -145,3 +145,27 @@ h2 {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
   }
 }
+
+.career-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--accent-cool) 14%, transparent),
+      transparent 50%,
+      color-mix(in srgb, var(--accent-warm) 16%, transparent)
+    ),
+    var(--surface);
+
+  .intro {
+    margin-bottom: 0;
+    max-width: 60ch;
+  }
+}
