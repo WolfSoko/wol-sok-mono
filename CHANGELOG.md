@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.122.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.121.0...v74.122.0) (2026-10-28)
+
+### Features
+
+* **portfolio:** ✨ career page, two languages and a light theme ([#2716](https://github.com/WolfSoko/wol-sok-mono/issues/2716)) ([5994950](https://github.com/WolfSoko/wol-sok-mono/commit/5994950de0e491c1ec54c16215da085032212cc9))
+
 ## [74.121.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.120.1...v74.121.0) (2026-10-28)
 
 ### Features
