@@ -1656,7 +1656,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     simTimer?.begin('sim');
     this.gameStateService.advance(width, height, frame.ticks);
     simTimer?.end();
-    const ticked = perf === null ? 0 : performance.now();
+    const ticked = performance.now();
     const events = this.playerService.getFrameEvents();
     this.sound.frame(events);
     this.haptics.frame(events);
@@ -1668,7 +1668,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     timer?.begin('draw');
     this.arenaView()?.paintFrame(frame.elapsedSec, frame.alpha);
     timer?.end();
-    this.adaptQuality(performance.now() - start);
+    // A war on the GPU keeps the main thread waiting for its reports: that
+    // is time the GPU takes, not the main thread's own.
+    const gpuTicks =
+      this.playerService.getSimulation().kind === 'gpu' ? ticked - start : 0;
+    this.adaptQuality(performance.now() - start - gpuTicks);
     if (perf !== null) {
       this.notePerf(perf, timer, frame.ticks, start, ticked, painting);
     }
@@ -1725,7 +1729,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       ...report,
       simulation: simulationLabel(simulation.kind, simulation.ruleset),
       cells: `${width}×${height}`,
-      pixels: this.renderScale,
+      // The Canvas 2D painter paints every pixel, whatever the scale says.
+      pixels: this.painter?.setRenderScale == null ? 1 : this.renderScale,
     });
   }
 

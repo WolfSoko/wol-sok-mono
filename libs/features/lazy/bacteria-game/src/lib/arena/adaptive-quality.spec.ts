@@ -95,6 +95,12 @@ describe('AdaptiveQuality', () => {
     ]);
   });
 
+  it('counts no slow second from before a pause', () => {
+    play(quality, clock, 30, windows(SLOW_WINDOWS - 1));
+    clock.now += 3000;
+    expect(play(quality, clock, 30, windows(SLOW_WINDOWS - 1))).toEqual([]);
+  });
+
   it('takes a long frame for a pause, not a slow second', () => {
     play(quality, clock, 60, 0.5);
     // A pause of 3 s, then smooth frames again.

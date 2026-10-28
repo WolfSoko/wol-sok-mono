@@ -402,17 +402,38 @@ export class GlArenaPainter implements ArenaPainter {
     if (width === this.renderWidth && height === this.renderHeight) {
       return;
     }
+    const from = { width: this.renderWidth, height: this.renderHeight };
     this.renderWidth = width;
     this.renderHeight = height;
     const resources = this.resources;
     // Without a context, the restored one builds it at that size.
-    if (resources != null) {
-      const gl = this.gl;
-      gl.deleteFramebuffer(resources.trail.framebuffer);
-      gl.deleteTexture(resources.trail.texture);
-      resources.trail = this.target(width, height, gl.LINEAR);
-      this.freshTrail = true;
+    if (resources == null) {
+      return;
     }
+    // The last frame goes along, scaled: the trail goes on from it, and a
+    // snapshot before the next frame shows it rather than black.
+    const gl = this.gl;
+    const old = resources.trail;
+    const trail = this.target(width, height, gl.LINEAR);
+    gl.disable(gl.SCISSOR_TEST);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, old.framebuffer);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, trail.framebuffer);
+    gl.blitFramebuffer(
+      0,
+      0,
+      from.width,
+      from.height,
+      0,
+      0,
+      width,
+      height,
+      gl.COLOR_BUFFER_BIT,
+      gl.LINEAR
+    );
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.deleteFramebuffer(old.framebuffer);
+    gl.deleteTexture(old.texture);
+    resources.trail = trail;
   }
 
   public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {

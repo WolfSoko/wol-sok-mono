@@ -83,9 +83,12 @@ export class AdaptiveQuality {
     const last = this.lastFrame;
     this.lastFrame = now;
     if (last === null || now - last > GAP_MS) {
+      // A pause: what came before it does not count with what comes after.
       this.windowStart = now;
       this.frames = 0;
       this.waited = 0;
+      this.slow = 0;
+      this.smooth = 0;
       return null;
     }
     this.windowStart ??= last;
