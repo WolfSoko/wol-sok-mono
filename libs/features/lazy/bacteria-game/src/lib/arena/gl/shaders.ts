@@ -106,17 +106,25 @@ export const FLOOR_FRAGMENT = `#version 300 es
 precision highp float;
 in vec2 vNdc;
 uniform sampler2D uFloor;
+// The zones' layer over the floor - finer than the cells, and sampled
+// smoothly, so their edges are soft. Premultiplied.
+uniform sampler2D uZones;
+uniform bool uHasZones;
 uniform vec2 uArena;
 uniform float uAlpha;
 out vec4 outColor;
 ${ARENA_POSITION}
 void main() {
-  ivec2 cell = clamp(
-    ivec2(floor(arenaPosition(vNdc))),
-    ivec2(0),
-    ivec2(uArena) - 1
+  vec2 p = arenaPosition(vNdc);
+  ivec2 cell = clamp(ivec2(floor(p)), ivec2(0), ivec2(uArena) - 1);
+  vec3 floorColor = texelFetch(uFloor, cell, 0).rgb;
+  vec4 zones = uHasZones ? texture(uZones, p / uArena) * uAlpha : vec4(0.0);
+  // Premultiplied: the floor faded by uAlpha, then the zones over it faded
+  // alike - as two passes one over the other would lay them.
+  outColor = vec4(
+    zones.rgb + (1.0 - zones.a) * floorColor * uAlpha,
+    1.0 - (1.0 - zones.a) * (1.0 - uAlpha)
   );
-  outColor = vec4(texelFetch(uFloor, cell, 0).rgb, uAlpha);
 }`;
 
 /**
@@ -1018,25 +1026,18 @@ void main() {
 }`;
 
 /**
- * The layers that never move, laid over the floor in one pass: the zones,
- * faded with the floor (`uAlpha`), and the walls over them, which are
- * not. Both are premultiplied, as fine as the canvas shows them.
+ * The level's walls, laid once into a layer as fine as the zones' -
+ * premultiplied, and sampled smoothly.
  */
-export const OVERLAY_FRAGMENT = `#version 300 es
+export const WALLS_FRAGMENT = `#version 300 es
 precision highp float;
 in vec2 vNdc;
-uniform sampler2D uZones;
 uniform sampler2D uWalls;
-uniform bool uHasZones;
 uniform vec2 uArena;
-uniform float uAlpha;
 out vec4 outColor;
 ${ARENA_POSITION}
 void main() {
-  vec2 uv = arenaPosition(vNdc) / uArena;
-  vec4 zones = uHasZones ? texture(uZones, uv) * uAlpha : vec4(0.0);
-  vec4 walls = texture(uWalls, uv);
-  outColor = walls + (1.0 - walls.a) * zones;
+  outColor = texture(uWalls, arenaPosition(vNdc) / uArena);
 }`;
 
 /** One instance per shape, its rect in arena cells - see `SHAPE`. */

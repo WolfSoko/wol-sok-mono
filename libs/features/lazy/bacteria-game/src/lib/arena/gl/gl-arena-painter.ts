@@ -42,7 +42,7 @@ import {
   SHAPE_FRAGMENT,
   SHAPE_VERTEX,
   MAX_TINTS,
-  OVERLAY_FRAGMENT,
+  WALLS_FRAGMENT,
 } from './shaders';
 import { AMBIENCE, DishAmbience } from '../ambience';
 import {
@@ -171,8 +171,8 @@ export function passMargins(reach: number): {
 
 interface Programs {
   floor: Program;
-  /** The zones and the walls, laid once and drawn in one pass. */
-  overlay: Program;
+  /** The walls, laid once into their layer. */
+  walls: Program;
   blit: Program;
   blur: Program;
   colony: Program;
@@ -260,6 +260,8 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly wisps = new Float32Array(AMBIENCE.wisps * 4);
   private wispCount = 0;
   private readonly mist = new Float32Array(3);
+  /** The ambience whose bubbles go over the frame on the canvas - null for none. */
+  private bubbles: DishAmbience | null = null;
   private readonly tintCircles = new Float32Array(MAX_TINTS * 4);
   private readonly tintModes = new Float32Array(MAX_TINTS);
   private readonly cellBytes: Uint8Array;
@@ -421,12 +423,21 @@ export class GlArenaPainter implements ArenaPainter {
     this.setView(programs.floor);
     gl.uniform2f(programs.floor.uniforms['uArena'], this.width, this.height);
     gl.uniform1f(programs.floor.uniforms['uAlpha'], frame.clear ? 1 : 0.7);
+    gl.uniform1i(
+      programs.floor.uniforms['uHasZones'],
+      resources.zones == null ? 0 : 1
+    );
+    if (resources.zones != null) {
+      bindTexture(gl, 1, resources.zones, programs.floor.uniforms['uZones']);
+    }
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    this.useAlphaBlend();
 
     this.background.clear();
     pushMotes(this.background, theme, this.motes);
     this.drawShapes(this.background);
-    this.drawOverlay(resources, frame.clear ? 1 : 0.7);
+    this.drawWalls(resources);
     this.background.clear();
     pushDynamicWalls(this.background, theme, this.motes, frame.dynamicWalls);
     this.drawShapes(this.background);
@@ -459,10 +470,8 @@ export class GlArenaPainter implements ArenaPainter {
     this.drawShapes(this.foreground);
     this.depth = frame.ambience != null;
     this.packWisps(frame.ambience, frame.reducedMotion, theme);
+    this.bubbles = frame.reducedMotion ? null : (frame.ambience ?? null);
     this.showLastFrame();
-    if (frame.ambience != null && !frame.reducedMotion) {
-      this.drawAmbience(frame.ambience);
-    }
   }
 
   /** Copies the frame, kept in the trail, onto the canvas. */
@@ -499,9 +508,15 @@ export class GlArenaPainter implements ArenaPainter {
       );
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (this.bubbles != null) {
+      this.drawAmbience(this.bubbles);
+    }
   }
 
-  /** Takes the frame's wisps of mist - none without the ambience's motion. */
+  /**
+   * Takes the frame's wisps of mist in view - none without the ambience's
+   * motion.
+   */
   private packWisps(
     ambience: DishAmbience | null | undefined,
     reducedMotion: boolean,
@@ -512,7 +527,16 @@ export class GlArenaPainter implements ArenaPainter {
       return;
     }
     const wisps = this.wisps;
+    const view = this.view;
     ambience.forEachWisp((x, y, radius, alpha) => {
+      if (
+        x + radius <= view.x ||
+        y + radius <= view.y ||
+        x - radius >= view.x + view.width ||
+        y - radius >= view.y + view.height
+      ) {
+        return;
+      }
       const at = this.wispCount++ * 4;
       wisps[at] = x;
       wisps[at + 1] = y;
@@ -549,11 +573,12 @@ export class GlArenaPainter implements ArenaPainter {
     walls: readonly Rect[],
     theme: ArenaTheme
   ): void {
-    if (
-      resources.walls != null &&
-      this.wallsFor?.walls === walls &&
-      this.wallsFor.theme === theme
-    ) {
+    if (this.wallsFor?.walls === walls && this.wallsFor.theme === theme) {
+      return;
+    }
+    this.wallsFor = { walls, theme };
+    // A level without walls has no layer to lay - nor to draw.
+    if (walls.length === 0) {
       return;
     }
     const gl = this.gl;
@@ -577,33 +602,20 @@ export class GlArenaPainter implements ArenaPainter {
       height: -this.height,
     };
     this.drawShapes(this.background);
-    this.wallsFor = { walls, theme };
   }
 
-  /** The zones, faded with the floor by `alpha`, and the walls over them. */
-  private drawOverlay(resources: Resources, alpha: number): void {
+  /** The walls' layer over the floor and its specks. */
+  private drawWalls(resources: Resources): void {
     const walls = resources.walls;
-    // A level without walls or zones has nothing to lay over its floor.
-    if (
-      walls == null ||
-      (this.wallsFor?.walls.length === 0 && resources.zones == null)
-    ) {
+    if (walls == null || this.wallsFor?.walls.length === 0) {
       return;
     }
     const gl = this.gl;
-    const program = resources.programs.overlay;
+    const program = resources.programs.walls;
     this.useFullscreen(program);
     bindTexture(gl, 0, walls.texture, program.uniforms['uWalls']);
-    gl.uniform1i(
-      program.uniforms['uHasZones'],
-      resources.zones == null ? 0 : 1
-    );
-    if (resources.zones != null) {
-      bindTexture(gl, 1, resources.zones, program.uniforms['uZones']);
-    }
     this.setView(program);
     gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
-    gl.uniform1f(program.uniforms['uAlpha'], alpha);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     this.useAlphaBlend();
@@ -1074,17 +1086,16 @@ export class GlArenaPainter implements ArenaPainter {
     const programs: Programs = {
       floor: createProgram(gl, FULLSCREEN_VERTEX, FLOOR_FRAGMENT, [
         'uFloor',
-        'uView',
-        'uArena',
-        'uAlpha',
-      ]),
-      overlay: createProgram(gl, FULLSCREEN_VERTEX, OVERLAY_FRAGMENT, [
         'uZones',
-        'uWalls',
         'uHasZones',
         'uView',
         'uArena',
         'uAlpha',
+      ]),
+      walls: createProgram(gl, FULLSCREEN_VERTEX, WALLS_FRAGMENT, [
+        'uWalls',
+        'uView',
+        'uArena',
       ]),
       blit: createProgram(gl, FULLSCREEN_VERTEX, BLIT_FRAGMENT, [
         'uImage',

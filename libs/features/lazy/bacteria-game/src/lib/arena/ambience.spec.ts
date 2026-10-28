@@ -118,15 +118,19 @@ describe('DishAmbience shapes', () => {
     ambience.forEachBubble({ x: 0, y: 0, width: 320, height: 180 }, (...b) =>
       all.push(b)
     );
-    const left: number[][] = [];
-    ambience.forEachBubble({ x: 0, y: 0, width: 100, height: 180 }, (...b) =>
-      left.push(b)
-    );
 
     expect(wisps).toHaveLength(AMBIENCE.wisps);
     expect(all.length).toBeGreaterThan(0);
-    for (const [x, , radius] of left) {
-      expect(x - radius).toBeLessThan(100);
-    }
+    // A view that only grazes a bubble's rim holds it, one past it does not.
+    const [x, , radius] = all[0];
+    const seen = (from: number) => {
+      const bubbles: number[][] = [];
+      ambience.forEachBubble({ x: from, y: 0, width: 1, height: 180 }, (...b) =>
+        bubbles.push(b)
+      );
+      return bubbles.some(([bx]) => bx === x);
+    };
+    expect(seen(x + radius - 0.1)).toBe(true);
+    expect(seen(x + radius + 0.1)).toBe(false);
   });
 });

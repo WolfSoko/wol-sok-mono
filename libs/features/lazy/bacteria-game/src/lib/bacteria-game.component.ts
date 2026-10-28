@@ -1697,7 +1697,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private paintAmbience(view: Rect, deltaTimeSec: number): void {
     if (untracked(this.painterAmbience)) {
       // The painter draws it with the arena: here it only moves on.
-      if (!this.reducedMotion() && this.matchPaints()) {
+      if (
+        this.settings.ambience() &&
+        !this.reducedMotion() &&
+        this.matchPaints()
+      ) {
         this.ambience?.advance(deltaTimeSec);
       }
       return;
