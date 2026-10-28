@@ -52,7 +52,6 @@ export const en = {
     titleAccent: 'Angular to the core.',
     lead: 'Requirements, architecture, code, tests, pipelines and cloud: I take web products from the idea to production and coach the teams that run them.',
     hire: 'Get in touch',
-    github: 'GitHub profile',
     statsYears: 'years of experience',
     statsAngular: 'years of Angular',
     statsProjects: 'projects',

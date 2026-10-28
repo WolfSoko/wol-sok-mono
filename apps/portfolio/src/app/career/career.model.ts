@@ -33,6 +33,13 @@ export interface SkillGroup {
   items: readonly string[];
 }
 
+/** A public profile of the person: GitHub, LinkedIn, Xing. */
+export interface ProfileLink {
+  /** The network's name, as the button shows it. */
+  name: string;
+  url: string;
+}
+
 export interface Certification {
   year: number;
   name: string;
@@ -57,7 +64,8 @@ export interface CareerProfile {
   industries: Localized<readonly string[]>;
   softSkills: Localized<readonly string[]>;
   skills: readonly SkillGroup[];
-  github: string;
+  /** Where to find the person elsewhere, GitHub first. */
+  profiles: readonly ProfileLink[];
   email: string;
 }
 

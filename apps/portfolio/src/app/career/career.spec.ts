@@ -41,6 +41,12 @@ describe('career data', () => {
     ).toBe(1);
   });
 
+  it('links to real profiles', () => {
+    for (const link of CAREER.profile.profiles) {
+      expect(link.url).toMatch(/^https:\/\//);
+    }
+  });
+
   it('names the profile it was taken from, by date', () => {
     expect(CAREER_SOURCE.profileDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(CAREER_SOURCE.checkedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -67,6 +73,7 @@ describe('career data', () => {
     expect(data.alumniOf.name).toBe('HAW Hamburg');
     expect(data.address.addressLocality).toBe(CAREER.profile.city);
     expect(data.worksFor).toBeUndefined();
+    expect(data.sameAs).toEqual(CAREER.profile.profiles.map((p) => p.url));
   });
 });
 

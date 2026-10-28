@@ -83,9 +83,9 @@
       <a matButton="filled" [href]="'mailto:' + career.profile.email">{{
         t().career.contactMail
       }}</a>
-      <a matButton="outlined" [href]="career.profile.github">{{
-        t().career.github
-      }}</a>
+      @for (link of career.profile.profiles; track link.url) {
+        <a matButton="outlined" [href]="link.url" rel="me">{{ link.name }}</a>
+      }
     </div>
   </div>
   <p class="source">{{ source() }}</p>

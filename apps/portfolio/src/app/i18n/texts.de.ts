@@ -50,7 +50,6 @@ export const de: Translation<typeof en> = {
     titleAccent: 'Angular bis in den Kern.',
     lead: 'Anforderungen, Architektur, Code, Tests, Pipelines und Cloud: Ich bringe Webprodukte von der Idee bis in die Produktion und coache die Teams, die sie betreiben.',
     hire: 'Kontakt aufnehmen',
-    github: 'GitHub-Profil',
     statsYears: 'Jahre Erfahrung',
     statsAngular: 'Jahre Angular',
     statsProjects: 'Projekte',

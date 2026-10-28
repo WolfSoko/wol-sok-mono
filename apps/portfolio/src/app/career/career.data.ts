@@ -245,7 +245,14 @@ export const CAREER_PROFILE: CareerProfile = {
       ],
     },
   ],
-  github: 'https://github.com/WolfSoko',
+  profiles: [
+    { name: 'GitHub', url: 'https://github.com/WolfSoko' },
+    {
+      name: 'LinkedIn',
+      url: 'https://www.linkedin.com/in/wolfram-sokollek-35b74b188/',
+    },
+    { name: 'Xing', url: 'https://www.xing.com/profile/Wolfram_Sokollek' },
+  ],
   email: 'portfolio@wolsok.de',
 };
 
