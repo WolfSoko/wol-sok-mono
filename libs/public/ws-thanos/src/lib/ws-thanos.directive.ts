@@ -7,7 +7,7 @@ import {
   input,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize, Observable, Subject, take, tap } from 'rxjs';
+import { finalize, Observable, ReplaySubject, Subject, tap } from 'rxjs';
 import { AnimationState } from './animation.state';
 import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
 import type { WsThanosOptions } from './ws-thanos.options';
@@ -82,10 +82,23 @@ export class WsThanosDirective {
   /**
    * Vaporize the dom element of this directive
    * @param removeElem remove the vaporized dom element or blend back in after a while
-   *
+   * @returns an observable that emits once and completes when the effect is
+   * over: after it finished, after it failed (the error is logged and
+   * reported as an unhandled RxJS error, as with `vaporize$`) and when the
+   * directive was destroyed meanwhile. It replays, so a caller that
+   * subscribes after a synchronous failure still gets the completion.
    */
   public vaporize(removeElem = true): Observable<void> {
-    this.vaporize$(removeElem).pipe(this.untilDestroyed).subscribe();
-    return this.wsThanosComplete.pipe(take(1));
+    const done = new ReplaySubject<void>(1);
+    this.vaporize$(removeElem)
+      .pipe(
+        finalize(() => {
+          done.next();
+          done.complete();
+        }),
+        this.untilDestroyed
+      )
+      .subscribe();
+    return done.asObservable();
   }
 }
