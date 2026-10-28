@@ -1,6 +1,7 @@
 /**
- * The fractions of the canvas's pixels a frame may be painted with, finest
- * first - the copy onto the canvas scales the frame up to it.
+ * The fractions of the canvas's width and height a frame may be painted
+ * with, finest first - the copy onto the canvas scales the frame up to it.
+ * The pixels go with their squares: 100, 72, 49 and 30 %.
  */
 export const RENDER_SCALES = [1, 0.85, 0.7, 0.55] as const;
 
@@ -51,7 +52,7 @@ export class AdaptiveQuality {
   private slow = 0;
   private smooth = 0;
 
-  /** The fraction of the canvas's pixels to paint the arena with. */
+  /** The fraction of the canvas's width and height to paint the arena with. */
   public get scale(): number {
     return RENDER_SCALES[this.step];
   }

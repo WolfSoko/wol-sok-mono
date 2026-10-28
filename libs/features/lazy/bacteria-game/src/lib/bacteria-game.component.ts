@@ -1712,7 +1712,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       simulation: simulationLabel(simulation.kind, simulation.ruleset),
       cells: arenaKey(width, height),
       // The Canvas 2D painter paints every pixel, whatever the scale says.
-      pixels: this.painter?.setRenderScale == null ? 1 : this.quality.scale,
+      // A share of the pixels: the scale goes for the width and the height.
+      pixels:
+        this.painter?.setRenderScale == null ? 1 : this.quality.scale ** 2,
     });
   }
 
