@@ -46,6 +46,20 @@ describe('SimulationOverrideService', () => {
     expect(service.override()).toBe('gpu-int');
   });
 
+  it("keeps the player's choice, over a stored one that answers late", () => {
+    const service = setUp({ [SIMULATION_OVERRIDE_STORAGE_KEY]: 'gpu-int' });
+    service.start('');
+    service.choose('cpu');
+    storage.flush();
+    expect(service.override()).toBe('cpu');
+    expect(storage.stored(SIMULATION_OVERRIDE_STORAGE_KEY)).toBe('cpu');
+
+    service.choose(null);
+    storage.flush();
+    expect(service.override()).toBeNull();
+    expect(storage.stored(SIMULATION_OVERRIDE_STORAGE_KEY)).toBeNull();
+  });
+
   it('goes back to the self-test for ?sim=auto', () => {
     const service = setUp({ [SIMULATION_OVERRIDE_STORAGE_KEY]: 'cpu' });
     service.start('?level=1&sim=auto');

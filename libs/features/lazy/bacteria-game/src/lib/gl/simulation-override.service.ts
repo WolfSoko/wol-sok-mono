@@ -27,10 +27,10 @@ export function overrideFromQuery(search: string): Ruleset | null | undefined {
 }
 
 /**
- * The device override for a real-device check of the deterministic
- * simulation (ADR 0015, step 8): opening the game with `?sim=gpu-int`
- * plays local matches on the integer GPU passes whatever the self-test
- * said, `?sim=cpu` on the CPU's ruleset, and `?sim=auto` goes back to the
+ * The device's choice of simulation (ADR 0015, step 8), in the settings
+ * ("Simulation": Auto, GPU, CPU) or the URL: `?sim=gpu-int` plays local
+ * matches on the integer GPU passes whatever the self-test said,
+ * `?sim=cpu` on the CPU's ruleset, and `?sim=auto` goes back to the
  * self-test's choice. It stays with the device (`DeviceStorage`) until
  * changed, and never changes what the device offers in an online match.
  */
@@ -39,6 +39,8 @@ export class SimulationOverrideService {
   private readonly storage = inject(DeviceStorage);
   private readonly forced = signal<Ruleset | null>(null);
   private started = false;
+  /** True once the player chose: a late stored value must not undo it. */
+  private chosen = false;
 
   /** The ruleset local matches are forced to - null to follow the self-test. */
   public readonly override = this.forced.asReadonly();
@@ -63,6 +65,17 @@ export class SimulationOverrideService {
     this.storage
       .watch(SIMULATION_OVERRIDE_STORAGE_KEY)
       .pipe(take(1))
-      .subscribe((value) => this.forced.set(parseSimulationOverride(value)));
+      .subscribe((value) => {
+        if (!this.chosen) {
+          this.forced.set(parseSimulationOverride(value));
+        }
+      });
+  }
+
+  /** The player's choice in the settings: a ruleset, or null for Auto. */
+  public choose(ruleset: Ruleset | null): void {
+    this.chosen = true;
+    this.forced.set(ruleset);
+    this.storage.write(SIMULATION_OVERRIDE_STORAGE_KEY, ruleset);
   }
 }

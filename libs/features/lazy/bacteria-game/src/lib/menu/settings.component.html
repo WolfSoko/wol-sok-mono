@@ -207,6 +207,21 @@
     >
       {{ "settings.screen.showFps" | t }}
     </mat-slide-toggle>
+    <div class="option-picker">
+      <span class="option-label">{{ "settings.simulation.choice" | t }}</span>
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        [attr.aria-label]="'settings.simulation.choice' | t"
+        [value]="simulationPick()"
+        (change)="pickSimulation($event.value)"
+      >
+        @for (option of simulationOptions; track option.value) {
+          <mat-button-toggle [value]="option.value">
+            {{ option.label | t }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </div>
     @if (simulationCheck(); as check) {
       <p class="simulation-check" data-testid="simulation-check">
         @for (line of check; track $index) {
