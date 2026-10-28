@@ -14,7 +14,7 @@ export function personJsonLd(career: Career, url: string): string {
     name: profile.name,
     jobTitle: profile.title.en,
     url,
-    sameAs: [profile.github],
+    sameAs: profile.profiles.map((link) => link.url),
     nationality: profile.nationality.en,
     address: {
       '@type': 'PostalAddress',

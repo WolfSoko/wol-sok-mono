@@ -16,9 +16,9 @@
     <a matButton="filled" [href]="'mailto:' + career().profile.email">{{
       t().career.hire
     }}</a>
-    <a matButton="outlined" [href]="career().profile.github">{{
-      t().career.github
-    }}</a>
+    @for (link of career().profile.profiles; track link.url) {
+      <a matButton="outlined" [href]="link.url" rel="me">{{ link.name }}</a>
+    }
   </div>
   <dl class="stats">
     @for (stat of stats(); track stat.label; let i = $index) {
