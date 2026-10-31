@@ -486,8 +486,8 @@ export class GameStateService {
   /**
    * The recording of a match that has just ended, handed over to be kept
    * - online and ranked always, a local one with "Save my matches" on (ADR
-   * 0011, 0012), and only on the online grid, the one a stored replay is
-   * checked on. Null for a match that was not recorded.
+   * 0011, 0012), on whatever simulation resolution it was played. Null for
+   * a match that was not recorded.
    */
   private recording(outcome: MatchOutcome): MatchRecording | null {
     const recordedAs = this.recordedAs;
@@ -531,10 +531,7 @@ export class GameStateService {
     this.lastRecording.set(recording);
     // An online or ranked match is uploaded whatever the settings say.
     const attempt = ranked?.attempt.id;
-    if (
-      onOnlineGrid(replay.header) &&
-      (savedRegardless(replay.header) || this.replayPrefs.saveMatches)
-    ) {
+    if (savedRegardless(replay.header) || this.replayPrefs.saveMatches) {
       this.injector
         .get(GameReplays)
         .submit({
@@ -556,8 +553,7 @@ export class GameStateService {
 
   /**
    * Whether a local match from `plan` is recorded: against the computer,
-   * no ghost, with recording on - on any grid, though only one on the
-   * online grid is kept.
+   * no ghost, with recording on - on any grid.
    */
   private recordsLocal(plan: MatchPlan, ghost: Replay | null): boolean {
     return (

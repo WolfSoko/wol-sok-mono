@@ -111,16 +111,17 @@ storage until then. Settings stay with the device either way.
   `recordingHintShown` keeps it shown; the note decides only once
   `GameSettingsService.loaded` says the stored settings are read.
 - A local match against the computer is recorded on every simulation
-  resolution (owner's decision of 2026-10-26), but only one on the online
-  grid (`onOnlineGrid`, `state/replay.ts`) goes to `GameReplays`: the
-  stored parse and the functions take no other. On the online grid a
-  recorded match plays a ruleset (`recordedSeats` in `PlayerService.init`:
-  `cpu` where the device would pick the float GPU); on another grid it
-  plays what the device picks unrecorded, and a float GPU match leaves no
-  recording - recording never moves a match off the GPU there. Such a
-  recording stays in `lastRecording` for "Watch replay", the note says it
-  is not saved and why (`replay.status.notSavedGrid`), and the viewer lays
-  a replay out on its own grid (`simResolutionOf`, `state/arena-size.ts`).
+  resolution (owner's decision of 2026-10-26) and goes to `GameReplays` on
+  every one of them too (owner's decision of 2026-10-31): the stored parse
+  takes any grid of the level (`simGridOf`, `state/replay.ts`), an online
+  or ranked match only the online grid. On the online grid a recorded
+  match plays a ruleset (`recordedSeats` in `PlayerService.init`: `cpu`
+  where the device would pick the float GPU); on another grid it plays
+  what the device picks unrecorded, and a float GPU match leaves no
+  recording - recording never moves a match off the GPU there. The viewer
+  lays a replay out on its own grid (`simResolutionOf`,
+  `state/arena-size.ts`); the functions scale a re-run's expected cost by
+  the arena's cells (`expectedRerunMs`).
 - Ranked daily attempts and endless runs (ADR 0012) are declared through
   the `GameRanked` port (`storage/game-ranked.ts`, `FirestoreGameRanked`),
   asked of `GameCloud.ranked()` - null without a project - and only by

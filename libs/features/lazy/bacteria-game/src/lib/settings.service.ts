@@ -202,9 +202,9 @@ export class GameSettingsService {
   /** The level the matchmaking asks for, null for any level. */
   public readonly matchLevel = signal<string | null>(null);
   /**
-   * True while local matches against the computer are recorded, at the
-   * online grid (ADR 0011). On by default (the owner's decision of
-   * 2026-10-23). A recorded match plays on a ruleset: the integer GPU
+   * True while local matches against the computer are recorded, on every
+   * simulation resolution (ADR 0011). On by default (the owner's decision
+   * of 2026-10-23). A recorded match plays on a ruleset: the integer GPU
    * passes where the GPU passed the self-test and the deterministic
    * simulation is on, the CPU's else.
    */

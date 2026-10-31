@@ -1,4 +1,9 @@
-import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
+import {
+  arenaSize,
+  ONLINE_SIM_RESOLUTION,
+  SIM_RESOLUTIONS,
+  SimResolution,
+} from './arena-size';
 import { BotDifficulty, difficultyOption } from './bot-controller';
 import { matchChecksum } from './checksum';
 import { isDailyLevelId } from './daily';
@@ -349,18 +354,28 @@ export function savedRegardless(header: ReplayHeader): boolean {
 }
 
 /**
- * True for a match on the online grid of its level - the one grid a
- * replay is stored and checked on (ADR 0011). A local match on another
- * grid is recorded too, to watch again on this device, but never kept.
+ * The simulation resolution a match of its level ran on, from its arena -
+ * null for an arena none of them has. A replay is stored on any of them
+ * (owner's decision of 2026-10-31); online and ranked matches only on the
+ * online grid, the one they are played and checked on (ADR 0011, 0012).
  */
+export function simGridOf(
+  plan: Pick<MatchPlan, 'levelId' | 'width' | 'height'>
+): SimResolution | null {
+  const size = levelSize(getLevel(plan.levelId));
+  return (
+    SIM_RESOLUTIONS.find(({ id }) => {
+      const grid = arenaSize(id, size);
+      return plan.width === grid.width && plan.height === grid.height;
+    })?.id ?? null
+  );
+}
+
+/** True for a match on the online grid of its level. */
 export function onOnlineGrid(
   plan: Pick<MatchPlan, 'levelId' | 'width' | 'height'>
 ): boolean {
-  const grid = arenaSize(
-    ONLINE_SIM_RESOLUTION,
-    levelSize(getLevel(plan.levelId))
-  );
-  return plan.width === grid.width && plan.height === grid.height;
+  return simGridOf(plan) === ONLINE_SIM_RESOLUTION;
 }
 
 /**
@@ -453,7 +468,8 @@ export function playReplay(replay: Replay): ReplayResult | null {
 export interface ParseOptions {
   /**
    * True for a replay to store and check (ADR 0011): version 2 or 3 from
-   * the CPU, on the online grid of its level, with its outcome and
+   * the CPU, on a simulation resolution of its level ({@link simGridOf}) -
+   * the online grid for an online or ranked match - with its outcome and
    * checksum - version 3 never for a ranked attempt or the daily level
    * (ADR 0013).
    */
@@ -754,8 +770,10 @@ function parseHeaderV2(
     header.attempt = { id: attempt['id'], at: attempt['at'] };
   }
   if (stored) {
+    const grid = simGridOf(plan);
     if (
-      !onOnlineGrid(plan) ||
+      grid === null ||
+      (savedRegardless(header) && grid !== ONLINE_SIM_RESOLUTION) ||
       header.outcome === undefined ||
       header.checksum === undefined
     ) {

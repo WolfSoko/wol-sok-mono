@@ -215,12 +215,18 @@ export async function rerunCandidate(
   verify: (replay: Replay) => Verdict
 ): Promise<Verified | 'no-budget' | 'no-blob' | 'changed' | 'not-verified'> {
   const { id, doc } = candidate;
-  if (expectedRerunMs(doc.ticks) > left()) {
+  if (left() <= 0) {
     return 'no-budget';
   }
   const replay = await storedReplay(db, id);
   if (replay === null) {
     return 'no-blob';
+  }
+  // Its arena sets the cost as much as its length: a local match may come
+  // from any simulation resolution.
+  const { ticks, width, height } = replay.header;
+  if (expectedRerunMs(ticks, width * height) > left()) {
+    return 'no-budget';
   }
   const verdict = verify(replay);
   const applied = await applyVerdict(db, id, doc.state, verdict);

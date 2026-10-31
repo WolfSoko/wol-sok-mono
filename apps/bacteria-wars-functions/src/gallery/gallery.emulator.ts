@@ -2,6 +2,7 @@ import {
   BALANCE_VERSION,
   boardAvatar,
   replayFromBytes,
+  type ReplayHeader,
   replayToBytes,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { getApps, initializeApp } from 'firebase-admin/app';
@@ -41,14 +42,25 @@ beforeEach(async () => {
   );
 });
 
-/** A local match of `uid` against the computer, stored as acceptReplay does. */
-async function store(id: string, uid: string, hint = 80) {
-  const replay = dailyReplay({ attempt: undefined, client: 'test-1.0' }, uid);
+/**
+ * A local match of `uid` against the computer, stored as acceptReplay does
+ * - on the online grid, one minute long, unless `header` says otherwise.
+ */
+async function store(
+  id: string,
+  uid: string,
+  hint = 80,
+  header: Partial<ReplayHeader> = {}
+) {
+  const replay = dailyReplay(
+    { attempt: undefined, client: 'test-1.0', ...header },
+    uid
+  );
   await db.doc(`replays/${id}`).set({
     kind: 'computer',
     levelId: replay.header.levelId,
     balanceVersion: BALANCE_VERSION,
-    ticks: TICKS,
+    ticks: replay.header.ticks,
     endedBy: 'annihilation',
     winnerSeat: 0,
     hint,
@@ -323,6 +335,18 @@ describe("the owner's curation", () => {
       }))
     ).toEqual({ ok: false, reason: 'not-verified' });
     expect((await db.doc('replays/l_b').get()).get('state')).toBe('unverified');
+    // "Ultra", four times the cells of the online grid: 5 minutes would
+    // take about 720 s, past the 360 s one command may spend.
+    await store('l_u', 'uma', 80, {
+      width: 640,
+      height: 360,
+      ticks: 5 * 60 * 60,
+    });
+    expect(await curate('c5', 'feature', 'l_u')).toEqual({
+      ok: false,
+      reason: 'no-budget',
+    });
+    expect((await db.doc('replays/l_u').get()).get('state')).toBe('submitted');
     await store('l_c', 'cid');
     await db.doc('counters/2026-10-26').set({ adminVerifyMs: 400_000 });
     expect(await curate('c3', 'feature', 'l_c')).toEqual({

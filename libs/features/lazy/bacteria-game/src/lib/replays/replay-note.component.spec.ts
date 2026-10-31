@@ -162,31 +162,24 @@ describe('ReplayNoteComponent', () => {
     expect(page.querySelector('button')).not.toBeNull();
   });
 
-  it('says a match off the online grid was not saved, and why, and offers to watch it', () => {
+  it('says nothing of the grid for a match off the online grid: it is saved too', async () => {
     const replay = recordedReplay('petri-dish', 90, 7, 'high');
-    recording().set({ replay, hint: 30, id: null });
+    const id = await replays.submit({ replay, hint: 30 });
+    recording().set({ replay, hint: 30, id });
+    replays.accept();
     fixture.detectChanges();
 
-    expect(page.textContent).toContain(
-      'matches are saved only at simulation resolution "Normal"'
-    );
+    expect(page.textContent).toContain('Replay saved in My matches');
     expect(page.querySelector('button')).not.toBeNull();
-
-    TestBed.inject(I18nService).setLanguage('de');
-    fixture.detectChanges();
-    expect(page.textContent).toContain('Simulationsauflösung „Normal“');
   });
 
-  it('names the grid, not the setting, for a match off the online grid with saving off', () => {
+  it('names the setting for a match off the online grid with saving off', () => {
     TestBed.inject(GameSettingsService).saveMatches.set(false);
     const replay = recordedReplay('petri-dish', 90, 7, 'high');
     recording().set({ replay, hint: 30, id: null });
     fixture.detectChanges();
 
-    expect(page.textContent).toContain(
-      'matches are saved only at simulation resolution "Normal"'
-    );
-    expect(page.textContent).not.toContain('"Save my matches" is off');
+    expect(page.textContent).toContain('"Save my matches" is off');
   });
 
   it('offers no replay that would not play back', () => {
