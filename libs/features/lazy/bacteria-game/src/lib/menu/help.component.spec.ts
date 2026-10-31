@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { GameAds } from '../support/game-ads.service';
+import { GameAds } from '../support/ads/game-ads.service';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { I18nService } from '../i18n/i18n.service';
@@ -73,7 +73,7 @@ describe('HelpComponent', () => {
           provide: GAME_SUPPORT,
           useValue: {
             ...GAME_SUPPORT_OPTIONS,
-            ads: { client: 'ca-pub-1', slot: '42' },
+            ads: { network: 'adsense', client: 'ca-pub-1', slot: '42' },
           },
         },
       ],

@@ -5,7 +5,7 @@ import {
   makeEnvironmentProviders,
   provideEnvironmentInitializer,
 } from '@angular/core';
-import { GameAds } from './game-ads.service';
+import { GameAds } from './ads/game-ads.service';
 import { GAME_SUPPORT, GameSupportOptions } from './game-support';
 import { InstallOffer } from './install-offer.service';
 

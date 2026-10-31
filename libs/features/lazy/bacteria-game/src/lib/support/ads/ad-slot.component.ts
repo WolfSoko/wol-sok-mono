@@ -6,28 +6,20 @@ import {
   inject,
   viewChild,
 } from '@angular/core';
-import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { GameAds } from './game-ads.service';
 
 /**
- * A responsive AdSense display ad. Takes no room until the player has
- * answered the consent banner, and none at all without ads.
+ * A display ad from whichever network `GameAds` uses. Takes no room until
+ * the player has answered the consent banner, and none at all without ads.
  */
 @Component({
   selector: 'feat-lazy-bac-game-ad-slot',
   imports: [TranslatePipe],
   template: `
-    @if (ads.consentAnswered() && ads.ad; as ad) {
+    @if (ads.consentAnswered()) {
       <span class="label" aria-hidden="true">{{ 'support.ad' | t }}</span>
-      <ins
-        #slot
-        class="adsbygoogle"
-        style="display: block"
-        data-ad-format="auto"
-        data-full-width-responsive="true"
-        [attr.data-ad-client]="ad.client"
-        [attr.data-ad-slot]="ad.slot"
-      ></ins>
+      <div #slot></div>
     }
   `,
   styles: `
@@ -48,9 +40,11 @@ export class AdSlotComponent {
   private readonly slot = viewChild<ElementRef<HTMLElement>>('slot');
 
   public constructor() {
-    // Runs again only when the slot element changes.
-    afterRenderEffect(() => {
-      if (this.slot()) this.ads.fill();
+    // Runs again only when the slot element changes; the ad goes with the
+    // element, or with the screen.
+    afterRenderEffect((onCleanup) => {
+      const host = this.slot()?.nativeElement;
+      if (host) onCleanup(this.ads.show(host));
     });
   }
 }

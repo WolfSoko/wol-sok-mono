@@ -15,9 +15,10 @@ export {
 export { provideGameCloud } from './lib/storage/provide-game-cloud';
 export type { GameCloudOptions } from './lib/storage/game-cloud';
 export { provideGameSupport } from './lib/support/provide-game-support';
-export { GameAds } from './lib/support/game-ads.service';
+export { GameAds } from './lib/support/ads/game-ads.service';
+export type { GameSupportOptions } from './lib/support/game-support';
 export type {
+  AdNetworkName,
   GameAdsOptions,
-  GameSupportOptions,
-} from './lib/support/game-support';
+} from './lib/support/ads/ad-network-options';
 export { I18nService } from './lib/i18n/i18n.service';
