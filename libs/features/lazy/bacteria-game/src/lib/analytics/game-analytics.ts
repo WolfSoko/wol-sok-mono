@@ -112,13 +112,11 @@ export type GameEvents = {
   logout: Record<string, never>;
 };
 
-export type GameAnalytics = AppAnalytics<GameEvents>;
-
 /**
  * The game's analytics. Only the game's own site provides it (the remote's
  * app config, with the player's consent): inside the shell, in development
  * and in specs every call does nothing.
  */
-export function injectGameAnalytics(): GameAnalytics {
+export function injectGameAnalytics(): AppAnalytics<GameEvents> {
   return injectAnalytics<GameEvents>();
 }

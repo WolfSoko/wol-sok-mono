@@ -8,7 +8,7 @@ import {
 import { FirebaseApp } from '@angular/fire/app';
 import { provideFirebaseAnalytics } from '@wolsok/shared-analytics';
 import { distinctUntilChanged, map } from 'rxjs';
-import { Account } from '../../../shared/account';
+import { Account, isGoogleAccount } from '../../../shared/account';
 import { AccountPort } from '../../ports/account.port';
 import { injectRollaPollaAnalytics } from './rollapolla-analytics';
 
@@ -32,8 +32,8 @@ export function provideGoogleAnalytics(): EnvironmentProviders {
 export type AccountKind = 'none' | 'anonymous' | 'google';
 
 export function accountKind(account: Account | null): AccountKind {
-  if (!account) return 'none';
-  return account.isAnonymous ? 'anonymous' : 'google';
+  if (account === null) return 'none';
+  return isGoogleAccount(account) ? 'google' : 'anonymous';
 }
 
 function reportAccountKind(): void {

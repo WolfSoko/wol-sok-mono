@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, Subscription, switchMap, take, timer } from 'rxjs';
-import { injectGameAnalytics } from './analytics/game-analytics';
+import { GameEvents, injectGameAnalytics } from './analytics/game-analytics';
 import { ProgressService } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import {
@@ -250,7 +250,7 @@ export class EvolutionService {
   }
 
   private spent(
-    item_category: 'gene' | 'weapon' | 'skin',
+    item_category: GameEvents['spend_virtual_currency']['item_category'],
     item_name: string,
     value: number
   ): void {

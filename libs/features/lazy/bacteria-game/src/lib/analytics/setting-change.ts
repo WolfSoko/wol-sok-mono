@@ -8,7 +8,7 @@ import type { GameEvents } from './game-analytics';
  * remembers for itself (`recordingHintShown`), nor the volumes, which a
  * slider changes many times in one go.
  */
-export const REPORTED_SETTINGS: readonly (keyof StoredSettings)[] = [
+const REPORTED_SETTINGS: readonly (keyof StoredSettings)[] = [
   'sound',
   'music',
   'effects',

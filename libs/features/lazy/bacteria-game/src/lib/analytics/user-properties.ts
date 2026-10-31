@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { effect, inject, untracked } from '@angular/core';
+import { computed, effect, inject, untracked } from '@angular/core';
 import { I18nService } from '../i18n/i18n.service';
 import { ProgressService } from '../progress.service';
 import { GameSettingsService } from '../settings.service';
@@ -28,12 +28,15 @@ export function reportUserProperties(): void {
   const progress = inject(ProgressService);
   const settings = inject(GameSettingsService);
   const platform = gamePlatform(inject(DOCUMENT), inject(GAME_SUPPORT));
+  // computed, so a match's XP or a profile read again sends nothing new
+  const rank = computed(() => rankFor(progress.xp()).number);
+  const kind = computed(() => accountKind(account.cloud, account.profile()));
   effect(() => {
     const properties = {
       language: i18n.language(),
       platform,
-      account: accountKind(account.cloud, account.profile()),
-      rank: rankFor(progress.xp()).number,
+      account: kind(),
+      rank: rank(),
       // the ladder's locks off: matches against the computer are free play
       free_play: settings.freePlay(),
     };

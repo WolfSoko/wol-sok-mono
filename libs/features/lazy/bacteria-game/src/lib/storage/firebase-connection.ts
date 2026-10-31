@@ -17,7 +17,8 @@ import * as authSdk from 'firebase/auth';
 import * as dbSdk from 'firebase/firestore';
 import * as rtdbSdk from 'firebase/database';
 import type * as remoteConfigSdk from 'firebase/remote-config';
-import { GAME_FIREBASE_APP, type GameCloudOptions } from './game-cloud';
+import type { GameCloudOptions } from './game-cloud';
+import { gameFirebaseApp } from './game-firebase-app';
 
 /** The game's Remote Config, fetched and activated, with the SDK calls on it. */
 export interface RemoteConfigConnection {
@@ -100,10 +101,8 @@ export function provideFirebase(
       { provide: TAKES_REPLAYS, useValue: options.replays === true },
       { provide: FETCHES_REMOTE_CONFIG, useValue: emulators === undefined },
     ]),
-    provideFirebaseApp(
-      () =>
-        getApps().find((app) => app.name === GAME_FIREBASE_APP) ??
-        initializeApp(options.firebase, GAME_FIREBASE_APP)
+    provideFirebaseApp(() =>
+      gameFirebaseApp({ getApps, initializeApp }, options.firebase)
     ),
     provideAuth((injector) => {
       if (started.auth !== undefined) {

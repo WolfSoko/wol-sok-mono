@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import type { MatchEarnings } from '../state/earnings';
 import type { GameStateState } from '../state/game.states';
 import { getLevel } from '../state/levels';
-import { medalRank } from '../state/medallions';
+import { isNewBest } from '../state/medallions';
 import type { MatchPlan } from '../state/match-setup';
 import type { Player } from '../state/player.model';
-import { rankFor } from '../state/ranks';
+import { xpClimb } from '../state/ranks';
 import type { Simulation } from '../state/simulation';
 import type { MatchOutcome } from '../state/win-conditions';
 import {
@@ -59,8 +59,7 @@ export class MatchAnalytics {
     state: MatchState,
     earnings: MatchEarnings | null
   ): void {
-    const match = this.running;
-    this.running = null;
+    const match = this.takeRunning();
     if (match === null) return;
     const result = outcomeName(outcome.winner, match.kind, state);
     this.analytics.track('level_end', {
@@ -90,13 +89,18 @@ export class MatchAnalytics {
    * under way was left before it ended.
    */
   public left(timePassed: number): void {
-    const match = this.running;
-    this.running = null;
+    const match = this.takeRunning();
     if (match === null) return;
     this.analytics.track('match_abandoned', {
       ...match,
       duration_sec: seconds(timePassed),
     });
+  }
+
+  private takeRunning(): MatchParams | null {
+    const match = this.running;
+    this.running = null;
+    return match;
   }
 }
 
@@ -146,23 +150,12 @@ export function outcomeName(
   return won ? 'win' : 'loss';
 }
 
-type Earned = Pick<
-  GameEvents['level_end'],
-  | 'medal'
-  | 'new_best'
-  | 'achievements'
-  | 'levels_unlocked'
-  | 'xp'
-  | 'mission_done'
->;
-
-function earned(earnings: MatchEarnings | null): Earned {
+function earned(earnings: MatchEarnings | null) {
   const award = earnings?.award ?? null;
   const mission = earnings?.training;
   return {
     medal: award?.medal ?? 'none',
-    new_best:
-      award !== null && medalRank(award.medal) > medalRank(award.previousBest),
+    new_best: award !== null && isNewBest(award),
     achievements: earnings?.achievements.length ?? 0,
     levels_unlocked: earnings?.unlocked.length ?? 0,
     xp: earnings?.xp.total ?? 0,
@@ -175,16 +168,14 @@ function earned(earnings: MatchEarnings | null): Earned {
 function newRank(
   earnings: MatchEarnings | null
 ): GameEvents['level_up'] | null {
-  if (!earnings || earnings.xpBefore === null || earnings.xp.total <= 0) {
-    return null;
-  }
-  const before = rankFor(earnings.xpBefore);
-  const after = rankFor(earnings.xpBefore + earnings.xp.total);
-  return after.number > before.number
-    ? { level: after.number, character: after.rank.id }
+  if (!earnings || earnings.xpBefore === null) return null;
+  const { rankUp, standing } = xpClimb(earnings.xpBefore, earnings.xp.total);
+  return rankUp
+    ? { level: standing.number, character: standing.rank.id }
     : null;
 }
 
+/** Whole seconds, as the match clock shows them. */
 function seconds(ms: number): number {
-  return Math.round(ms / 1000);
+  return Math.floor(ms / 1000);
 }

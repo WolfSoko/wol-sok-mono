@@ -1,12 +1,12 @@
 import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
 import {
-  GAME_FIREBASE_APP,
+  gameFirebaseApp,
   type GameCloudOptions,
 } from '@wolsok/feat-lazy-bac-game';
 import { provideFirebaseAnalytics } from '@wolsok/shared-analytics';
 
 /** Where the browser keeps the player's answer to the statistics question. */
-export const STATS_CONSENT_KEY = 'bacteria-wars-stats-consent';
+const STATS_CONSENT_KEY = 'bacteria-wars-stats-consent';
 
 /**
  * The usage statistics of the game's own site: Firebase Analytics for the
@@ -26,12 +26,6 @@ export function provideGameAnalytics(
   }
   return provideFirebaseAnalytics({
     storageKey: STATS_CONSENT_KEY,
-    app: async () => {
-      const { getApps, initializeApp } = await import('firebase/app');
-      return (
-        getApps().find((app) => app.name === GAME_FIREBASE_APP) ??
-        initializeApp(firebase, GAME_FIREBASE_APP)
-      );
-    },
+    app: async () => gameFirebaseApp(await import('firebase/app'), firebase),
   });
 }

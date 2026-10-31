@@ -33,8 +33,6 @@ export type RollaPollaEvents = {
   poll_not_found: Record<string, never>;
 };
 
-export type RollaPollaAnalytics = AppAnalytics<RollaPollaEvents>;
-
 /** A poll opened from one of the lists, at its place there (from 0). */
 export function pollOpened(
   list: PollListName,
@@ -43,6 +41,6 @@ export function pollOpened(
   return { content_type: 'poll', list, position };
 }
 
-export function injectRollaPollaAnalytics(): RollaPollaAnalytics {
+export function injectRollaPollaAnalytics(): AppAnalytics<RollaPollaEvents> {
   return injectAnalytics<RollaPollaEvents>();
 }

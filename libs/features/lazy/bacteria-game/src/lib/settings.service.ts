@@ -263,7 +263,7 @@ export class GameSettingsService {
         this.restore(isObject(stored) ? (stored as StoredSettings) : {});
         this.restored.set(true);
         this.reportedSettings = this.toStore();
-        this.persist();
+        this.persist(this.reportedSettings);
       });
     this.store
       .select$(() => this.store.currentState())
@@ -410,7 +410,7 @@ export class GameSettingsService {
     const settings = this.toStore();
     this.reportChanges(keys, settings);
     if (this.restored()) {
-      this.storage.write(SETTINGS_STORAGE_KEY, settings);
+      this.persist(settings);
     }
   }
 
@@ -572,8 +572,8 @@ export class GameSettingsService {
     this.gameState.applySetup(setup);
   }
 
-  private persist(): void {
-    this.storage.write(SETTINGS_STORAGE_KEY, this.toStore());
+  private persist(settings = this.toStore()): void {
+    this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }
 
   /** The settings as they are stored. */

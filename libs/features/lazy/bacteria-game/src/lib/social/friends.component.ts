@@ -105,10 +105,7 @@ export class FriendsComponent {
           text: this.i18n.t('social.friends.share.text'),
           url: link,
         });
-        this.analytics.track('share', {
-          method: 'native',
-          content_type: 'friend_invite',
-        });
+        this.trackShare('native');
         return;
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
@@ -121,11 +118,12 @@ export class FriendsComponent {
       copied ? { key: 'social.friends.copied' } : { key: null, link }
     );
     if (copied) {
-      this.analytics.track('share', {
-        method: 'copy',
-        content_type: 'friend_invite',
-      });
+      this.trackShare('copy');
     }
+  }
+
+  private trackShare(method: 'native' | 'copy'): void {
+    this.analytics.track('share', { method, content_type: 'friend_invite' });
   }
 
   private async run<T>(task: () => Promise<T>): Promise<T | null> {
