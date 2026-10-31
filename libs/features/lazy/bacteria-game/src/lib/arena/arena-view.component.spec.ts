@@ -2,11 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { MatchEngine } from '../state/match-engine';
 import { MatchPlan, planMatch } from '../state/match-setup';
 import { TICK_MS } from '../state/fixed-tick';
-import { ArenaFrame, ArenaPainter } from './arena-painter';
+import { ArenaFrame, ArenaLayout, ArenaPainter } from './arena-painter';
 import { arenaTheme } from './arena-theme';
 import {
   ARENA_PAINTER_FACTORY,
-  ArenaLayout,
   ArenaScene,
   ArenaViewComponent,
 } from './arena-view.component';
@@ -28,6 +27,7 @@ const LAYOUT: ArenaLayout = {
   scale: 2,
   detail: 2,
   unit: 1,
+  softwareWebGl: false,
 };
 
 /** A painter that keeps what it was asked to paint - jsdom draws nothing. */

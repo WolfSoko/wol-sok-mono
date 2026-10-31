@@ -17,13 +17,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
-import type { ArenaPainter } from '../arena/arena-painter';
+import type { ArenaLayout, ArenaPainter } from '../arena/arena-painter';
 import { arenaTheme } from '../arena/arena-theme';
-import {
-  ArenaLayout,
-  ArenaScene,
-  ArenaViewComponent,
-} from '../arena/arena-view.component';
+import { ArenaScene, ArenaViewComponent } from '../arena/arena-view.component';
 import { GlArenaPainter } from '../arena/gl/gl-arena-painter';
 import {
   exitFullscreen,
@@ -485,6 +481,9 @@ export class ReplayViewerComponent {
       scale: renderScale(sim, DEFAULT_SCREEN_RESOLUTION, size),
       detail: detailScale(sim, DEFAULT_SCREEN_RESOLUTION, size),
       unit: simScale(sim),
+      // A gpu-int replay plays on the GPU only where it is trusted - never
+      // on one that renders on the CPU.
+      softwareWebGl: false,
     };
   });
   protected readonly theme = computed(() =>

@@ -10,6 +10,38 @@ import type { PaintedColony } from './colony-renderer';
 
 export type { PaintedColony } from './colony-renderer';
 
+/**
+ * What an arena view is laid out for. Another layout gets a fresh canvas -
+ * and with it a painter and a rendering context of its own.
+ */
+export interface ArenaLayout {
+  /** The arena in cells. */
+  width: number;
+  height: number;
+  /** Canvas pixels per arena cell, with all of the arena in view. */
+  scale: number;
+  /** Pixels per cell of the layers painted once, such as the zones. */
+  detail: number;
+  /** Arena cells per base cell - the crosshairs are as big on every grid. */
+  unit: number;
+  /**
+   * Paint with WebGL2 even where the browser renders it on the CPU - for a
+   * war that runs in the painter's context. Without it such a device gets
+   * the Canvas 2D painter, which draws two to three times as fast there.
+   */
+  softwareWebGl: boolean;
+}
+
+/**
+ * What a canvas is rendered for: layouts with the same key share the
+ * canvas and its painter.
+ */
+export function layoutKey(layout: ArenaLayout): string {
+  const { width, height, scale, detail, unit, softwareWebGl } = layout;
+  const webGl = softwareWebGl ? ':software-webgl' : '';
+  return `${width}x${height}@${scale}:${detail}:${unit}${webGl}`;
+}
+
 /** A player's crosshair as it is drawn. */
 export interface CursorShape {
   x: number;
@@ -59,7 +91,8 @@ export interface ArenaFrame {
 
 /**
  * Draws the arena onto its canvas. There are two: one on the GPU through
- * WebGL2, and the Canvas 2D one for browsers without it.
+ * WebGL2, and the Canvas 2D one for browsers without it - or with it on the
+ * CPU only.
  */
 export interface ArenaPainter {
   readonly kind: 'webgl' | 'canvas';

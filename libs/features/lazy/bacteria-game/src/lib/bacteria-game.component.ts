@@ -48,13 +48,11 @@ import {
   timeout,
 } from 'rxjs/operators';
 import { DishAmbience } from './arena/ambience';
-import { ArenaPainter } from './arena/arena-painter';
+import { ArenaLayout, ArenaPainter, layoutKey } from './arena/arena-painter';
 import {
   ArenaContent,
-  ArenaLayout,
   ArenaScene,
   ArenaViewComponent,
-  layoutKey,
 } from './arena/arena-view.component';
 import { armedTap } from './armed-tap';
 import { StageBusyComponent } from './busy/stage-busy.component';
@@ -409,7 +407,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /**
    * What the arena view lays its canvas out for: the arena at the
    * resolutions set. Either resolution changing hands the painter a fresh
-   * canvas and context.
+   * canvas and context - as does the device override sending the war to
+   * the GPU, which keeps WebGL2 even where the browser renders it on the
+   * CPU.
    */
   protected readonly arenaLayout = computed((): ArenaLayout => {
     const sim = this.simResolution();
@@ -420,6 +420,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       scale: renderScale(sim, screen, size),
       detail: detailScale(sim, screen, size),
       unit: simScale(sim),
+      softwareWebGl: this.simulationOverride.override() === 'gpu-int',
     };
   });
   /**

@@ -258,15 +258,11 @@ test('should let the players pick their colours', async ({ page }) => {
   await expect(po.colonyNames).toContainText(['Green', 'Pink']);
 });
 
-test('should draw the arena on the GPU and keep it readable', async ({
+test('should paint the arena so it reads back off the canvas', async ({
   page,
-  browserName,
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  if (browserName === 'chromium') {
-    await expect(po.playArea).toHaveAttribute('data-renderer', 'webgl');
-  }
 
   await po.startMatch();
 
@@ -282,12 +278,19 @@ test('should run the colony war on the GPU', async ({ page, browserName }) => {
   const po = new BacteriaGamePo(page);
   // CI has SwiftShader only, a software renderer the game keeps on the CPU
   // (ADR 0015): the device override sends local matches to the integer GPU
-  // passes all the same. They pass the self-test there too.
+  // passes all the same. They pass the self-test there too, and the arena
+  // keeps WebGL for them.
   await po.goto('/?sim=gpu-int');
   await expect(po.playArea).toHaveAttribute('data-gpu-self-test', 'passed');
+  await expect(po.playArea).toHaveAttribute('data-renderer', 'webgl');
 
   await po.startMatch();
   await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
+  // What the GPU painted reads back off the canvas, as the vaporize effect
+  // does: the orange colony starts a quarter across, halfway down.
+  await expect
+    .poll(() => po.arenaPixel(80, 90))
+    .toEqual(expect.objectContaining({ orange: true }));
   const start = await po.colonyCount(0);
 
   // The colonies divide - the GPU steps the war and the numbers come back.

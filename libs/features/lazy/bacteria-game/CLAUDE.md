@@ -365,6 +365,14 @@ play each other.
   `cpu`; `IntSimulation` replays and checks `gpu-int` matches, it does not
   play them live (except as the stand-in when the GPU fails to start in an
   online `gpu-int` match).
+- A software renderer paints the arena with Canvas 2D, not WebGL2
+  (`createArenaPainter`, asked of a throwaway context through
+  `webGlRenderer`, `gl/renderer.ts`): there it draws two to three times
+  as fast, with every pixel. Without a GL painter the war has no GPU
+  either, so such a device plays `cpu` whatever the toggle says. Only the
+  device override `gpu-int` keeps WebGL2 on it (`ArenaLayout.softwareWebGl`,
+  part of the canvas key, so changing the override builds a fresh
+  canvas): CI's GPU e2e runs that way on SwiftShader.
 - Online, each `hello` names the rulesets the device offers
   (`PlayerService.rulesetOffers`) and the host's `start` the agreed one
   (`agreedRuleset`): `gpu-int` only if both offer it. An agreed `gpu-int`
