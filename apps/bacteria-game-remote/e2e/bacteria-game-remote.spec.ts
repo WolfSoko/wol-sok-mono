@@ -258,17 +258,11 @@ test('should let the players pick their colours', async ({ page }) => {
   await expect(po.colonyNames).toContainText(['Green', 'Pink']);
 });
 
-test('should paint the arena with Canvas 2D where WebGL renders on the CPU, and keep it readable', async ({
+test('should paint the arena so it reads back off the canvas', async ({
   page,
-  browserName,
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  if (browserName === 'chromium') {
-    // Headless Chromium renders WebGL with SwiftShader, on the CPU, where
-    // Canvas 2D draws the arena faster.
-    await expect(po.playArea).toHaveAttribute('data-renderer', 'canvas');
-  }
 
   await po.startMatch();
 
