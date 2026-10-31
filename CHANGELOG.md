@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.126.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.0...v74.126.1) (2026-10-31)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** 🐛 no stuck stage or level flash after the vaporize effect, replays as a fullscreen video player ([#2724](https://github.com/WolfSoko/wol-sok-mono/issues/2724)) ([9e27b31](https://github.com/WolfSoko/wol-sok-mono/commit/9e27b31e79cbedf978e0a3756f7b2f2f76795363))
+
+### Chore
+
+* **release:** publish ([4f0db27](https://github.com/WolfSoko/wol-sok-mono/commit/4f0db27195544dd5782384779574c2f538a0e3fe))
+
 ## [74.126.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.125.2...v74.126.0) (2026-10-28)
 
 ### Features
