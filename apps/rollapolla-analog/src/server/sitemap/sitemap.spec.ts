@@ -12,6 +12,7 @@ describe('sitemapUrls', () => {
     expect(sitemapUrls([], now)).toEqual([
       'https://rollapolla.com/',
       'https://rollapolla.com/polls',
+      'https://rollapolla.com/privacy',
       ...FEATURED_POLLS.map(({ id }) => `https://rollapolla.com/poll/${id}`),
     ]);
   });

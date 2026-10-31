@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { SITE_OWNER } from '../legal/site-owner';
+import { SITE_OWNER } from '@wolsok/shared-legal';
 import { ImpressumComponent } from './impressum.component';
 
 describe('ImpressumComponent', () => {

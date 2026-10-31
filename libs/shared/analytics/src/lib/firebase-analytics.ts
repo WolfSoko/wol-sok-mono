@@ -4,7 +4,6 @@ import {
   InjectionToken,
   Injector,
   runInInjectionContext,
-  signal,
 } from '@angular/core';
 import type { FirebaseApp } from 'firebase/app';
 import type { Analytics as AnalyticsInstance } from 'firebase/analytics';
@@ -17,11 +16,8 @@ import {
   toGaParams,
 } from './analytics-params';
 import { ConsentChoice, ConsentPrompt } from './consent';
-import {
-  deleteAnalyticsCookies,
-  loadChoice,
-  saveChoice,
-} from './consent-storage';
+import { deleteCookies, isAnalyticsCookie } from './consent-storage';
+import { StoredConsent } from './stored-consent';
 
 export interface FirebaseAnalyticsOptions {
   /** The `localStorage` key that keeps the visitor's choice. */
@@ -78,34 +74,29 @@ interface PageContext extends GaParams {
 export class FirebaseAnalytics implements ConsentPrompt, Analytics {
   private readonly options = inject(FIREBASE_ANALYTICS_OPTIONS);
   private readonly injector = inject(Injector);
-  private readonly askingState = signal(false);
-  private readonly choiceState = signal<ConsentChoice | null>(null);
+  private readonly consent = new StoredConsent(
+    this.options.storageKey,
+    (choice) => this.apply(choice)
+  );
   private pending: Command[] = [];
   /** Null when the SDK can't run here (blocked, offline, no IndexedDB). */
   private started?: Promise<StartedSdk | null>;
   private page?: PageContext;
 
-  public readonly asking = this.askingState.asReadonly();
-  public readonly choice = this.choiceState.asReadonly();
+  public readonly asking = this.consent.asking;
+  public readonly choice = this.consent.choice;
 
   /** Applies the choice made on an earlier visit, or asks for one. */
   public restore(): void {
-    const choice = loadChoice(this.options.storageKey);
-    if (choice === null) {
-      this.ask();
-    } else {
-      this.apply(choice);
-    }
+    this.consent.restore();
   }
 
   public ask(): void {
-    this.askingState.set(true);
+    this.consent.ask();
   }
 
   public decide(choice: ConsentChoice): void {
-    this.askingState.set(false);
-    saveChoice(this.options.storageKey, choice);
-    this.apply(choice);
+    this.consent.decide(choice);
   }
 
   public track(name: string, params?: AnalyticsParams): void {
@@ -156,12 +147,12 @@ export class FirebaseAnalytics implements ConsentPrompt, Analytics {
   }
 
   private send(command: Command): void {
-    if (this.choiceState() === 'denied') return;
+    if (this.choice() === 'denied') return;
     if (this.started) {
       // asked again as it runs: the visitor may have withdrawn the consent
       // while the SDK was still loading
       void this.started.then((started) => {
-        if (started && this.choiceState() === 'granted') {
+        if (started && this.choice() === 'granted') {
           command(started);
         }
       });
@@ -171,7 +162,6 @@ export class FirebaseAnalytics implements ConsentPrompt, Analytics {
   }
 
   private apply(choice: ConsentChoice): void {
-    this.choiceState.set(choice);
     if (choice === 'denied') {
       this.pending = [];
     }
@@ -184,7 +174,7 @@ export class FirebaseAnalytics implements ConsentPrompt, Analytics {
           choice === 'granted'
         );
         if (choice === 'denied') {
-          deleteAnalyticsCookies();
+          deleteCookies(isAnalyticsCookie);
         }
       });
     } else if (choice === 'granted') {
@@ -201,7 +191,7 @@ export class FirebaseAnalytics implements ConsentPrompt, Analytics {
       pending.forEach((command) => this.send(command));
     } else {
       // left from before consent was asked for
-      deleteAnalyticsCookies();
+      deleteCookies(isAnalyticsCookie);
     }
   }
 

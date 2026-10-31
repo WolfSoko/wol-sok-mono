@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { SITE_OWNER } from './site-owner';
+import { SITE_OWNER } from '@wolsok/shared-legal';
 
 /**
  * Who runs the site, as the legal pages name them: name, postal address
