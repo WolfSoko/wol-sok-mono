@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
 import { I18nService } from '../i18n/i18n.service';
-import { GameAds } from './game-ads.service';
+import { GameAds } from './ads/game-ads.service';
 import { GAME_SUPPORT } from './game-support';
 import { SiteFooterComponent } from './site-footer.component';
 
