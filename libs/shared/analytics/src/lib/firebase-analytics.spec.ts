@@ -228,6 +228,33 @@ describe('provideFirebaseAnalytics', () => {
       expect(setAnalyticsCollectionEnabled).not.toHaveBeenCalled();
     });
 
+    it('sends nothing more once the visitor withdraws while the SDK loads', async () => {
+      const consent = await render();
+      await track('share', { method: 'copy' });
+
+      consent.decide('granted');
+      consent.decide('denied');
+      await settle();
+
+      expect(logEvent).not.toHaveBeenCalled();
+      expect(setAnalyticsCollectionEnabled).toHaveBeenLastCalledWith(
+        analyticsInstance,
+        false
+      );
+    });
+
+    it('tries again on the next yes when the SDK could not start', async () => {
+      vi.mocked(isSupported).mockResolvedValueOnce(false);
+      const consent = await render('granted');
+      await decide(consent, 'denied');
+
+      await decide(consent, 'granted');
+      await track('share', { method: 'copy' });
+
+      expect(initializeAnalytics).toHaveBeenCalledOnce();
+      expect(loggedEvents()).toEqual([['share', { method: 'copy' }]]);
+    });
+
     it('drops the events where the SDK cannot run', async () => {
       vi.mocked(isSupported).mockResolvedValueOnce(false);
 
@@ -273,6 +300,20 @@ describe('provideFirebaseAnalytics', () => {
         'poll_created',
         { label: 'x'.repeat(100) }
       );
+    });
+
+    it("keeps an event to GA4's 25 parameters, the page included", async () => {
+      await render('granted');
+      await navigate('/polls');
+      const many = Object.fromEntries(
+        Array.from({ length: 30 }, (_, i) => [`p${i}`, i])
+      );
+
+      await track('share', many);
+
+      const [[, params]] = loggedEvents().filter(([name]) => name === 'share');
+      expect(Object.keys(params as object)).toHaveLength(25);
+      expect(params).toMatchObject({ page_path: '/polls', p0: 0, p21: 21 });
     });
 
     it('sends a screen view for a view without a URL', async () => {

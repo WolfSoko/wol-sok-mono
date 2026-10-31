@@ -141,11 +141,14 @@ export class PollOwnerActionsComponent {
    */
   protected deletePoll(): void {
     const { saved } = this.pollsRepo.deletePoll(this.poll().id);
-    this.analytics.track('poll_deleted');
-    saved.catch((error: unknown) => {
-      console.error('Poll deletion was rejected', error);
-      this.snackBar.open('Could not delete the poll.', 'OK');
-    });
+    // counted once the backend took it
+    saved.then(
+      () => this.analytics.track('poll_deleted'),
+      (error: unknown) => {
+        console.error('Poll deletion was rejected', error);
+        this.snackBar.open('Could not delete the poll.', 'OK');
+      }
+    );
     void this.router.navigate(['/my-polls']);
   }
 }

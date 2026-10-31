@@ -17,13 +17,14 @@ export type GaParams = Record<string, string | number>;
  */
 export function toGaParams(
   params: AnalyticsParams | undefined,
-  maxLength: number
+  maxLength: number,
+  maxParams = MAX_EVENT_PARAMS
 ): GaParams {
   const result: GaParams = {};
   let count = 0;
   for (const [key, value] of Object.entries(params ?? {})) {
     if (value === null || value === undefined) continue;
-    if (count++ === MAX_EVENT_PARAMS) break;
+    if (count++ === maxParams) break;
     result[key] =
       typeof value === 'number' ? value : String(value).slice(0, maxLength);
   }

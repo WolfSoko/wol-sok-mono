@@ -12,6 +12,7 @@ import { Analytics, AnalyticsParams } from './analytics';
 import {
   GaParams,
   MAX_EVENT_PARAM_LENGTH,
+  MAX_EVENT_PARAMS,
   MAX_USER_PROPERTY_LENGTH,
   toGaParams,
 } from './analytics-params';
@@ -108,9 +109,16 @@ export class FirebaseAnalytics implements ConsentPrompt, Analytics {
   }
 
   public track(name: string, params?: AnalyticsParams): void {
+    const page = this.page ?? {};
+    // the page goes with each event, so one sent later names the page it
+    // happened on; it counts towards GA4's limit of parameters
     const eventParams = {
-      ...this.page,
-      ...toGaParams(params, MAX_EVENT_PARAM_LENGTH),
+      ...page,
+      ...toGaParams(
+        params,
+        MAX_EVENT_PARAM_LENGTH,
+        MAX_EVENT_PARAMS - Object.keys(page).length
+      ),
     };
     this.send(({ sdk, instance }) => sdk.logEvent(instance, name, eventParams));
   }
@@ -150,7 +158,13 @@ export class FirebaseAnalytics implements ConsentPrompt, Analytics {
   private send(command: Command): void {
     if (this.choiceState() === 'denied') return;
     if (this.started) {
-      void this.started.then((started) => started && command(started));
+      // asked again as it runs: the visitor may have withdrawn the consent
+      // while the SDK was still loading
+      void this.started.then((started) => {
+        if (started && this.choiceState() === 'granted') {
+          command(started);
+        }
+      });
     } else if (this.pending.length < MAX_PENDING_COMMANDS) {
       this.pending.push(command);
     }
@@ -174,7 +188,14 @@ export class FirebaseAnalytics implements ConsentPrompt, Analytics {
         }
       });
     } else if (choice === 'granted') {
-      this.started = this.start();
+      const started = this.start();
+      this.started = started;
+      // the next yes tries again, after a failed download for instance
+      void started.then((sdk) => {
+        if (sdk === null && this.started === started) {
+          this.started = undefined;
+        }
+      });
       const pending = this.pending;
       this.pending = [];
       pending.forEach((command) => this.send(command));

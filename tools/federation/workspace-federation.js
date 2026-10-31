@@ -79,6 +79,7 @@ function workspaceFederation(config) {
       // module, so each app bundles its own copy - and the game inside the
       // shell, which provides none of the remote's, measures nothing.
       '@wolsok/shared-analytics',
+      '@wolsok/shared-analytics/testing',
       // Each remote owns its feature library and nothing else imports it.
       // Shared, it lands in the shell's import map too, and the shell's copy
       // wins: a release that only redeploys the remote keeps showing the copy

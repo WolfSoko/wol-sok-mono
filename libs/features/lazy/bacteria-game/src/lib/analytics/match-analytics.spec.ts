@@ -30,6 +30,7 @@ const local: MatchState = {
   endlessMatch: false,
   ranked: null,
   endlessRanked: null,
+  timePassed: 0,
 };
 
 const cpu = { kind: 'cpu', ruleset: 'cpu' } as const;
@@ -73,7 +74,7 @@ describe('MatchAnalytics', () => {
     matches.started(plan, local, cpu);
     matches.ended(
       { winner: human, reason: 'annihilation' },
-      local,
+      { ...local, timePassed: 61_400 },
       earnings({
         award: {
           medal: 'gold',
@@ -82,8 +83,7 @@ describe('MatchAnalytics', () => {
         achievements: ['first-blood'] as MatchEarnings['achievements'],
         xp: { parts: [], total: 140 },
         unlocked: ['next-level'],
-      }),
-      61_400
+      })
     );
 
     expect(analytics.events).toEqual([
@@ -112,9 +112,8 @@ describe('MatchAnalytics', () => {
     matches.started(plan, local, cpu);
     matches.ended(
       { winner: bot, reason: 'time' },
-      local,
-      earnings({ xpBefore: 0, xp: { parts: [], total: 100_000 } }),
-      1000
+      { ...local, timePassed: 1000 },
+      earnings({ xpBefore: 0, xp: { parts: [], total: 100_000 } })
     );
 
     expect(analytics.tracked('level_up')).toEqual([
@@ -138,9 +137,13 @@ describe('MatchAnalytics', () => {
     ]);
   });
 
-  it('counts a restart as leaving the match under way', () => {
+  it('counts a restart as leaving the match under way, after its time', () => {
     matches.started(plan, local, cpu);
-    matches.started(plan, local, cpu);
+    matches.started(plan, { ...local, timePassed: 95_000 }, cpu);
+
+    expect(analytics.tracked('match_abandoned')).toEqual([
+      { ...started, duration_sec: 95 },
+    ]);
 
     expect(analytics.events.map(({ name }) => name)).toEqual([
       'level_start',
@@ -151,7 +154,11 @@ describe('MatchAnalytics', () => {
 
   it('leaves nothing to abandon once the match ended', () => {
     matches.started(plan, local, cpu);
-    matches.ended({ winner: null, reason: 'time' }, local, null, 0);
+    matches.ended(
+      { winner: null, reason: 'time' },
+      { ...local, timePassed: 0 },
+      null
+    );
     matches.left(0);
 
     expect(analytics.tracked('match_abandoned')).toEqual([]);

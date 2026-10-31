@@ -3,7 +3,8 @@ import type { GameEvents } from './game-analytics';
 
 /**
  * The settings players pick themselves. Not the match setup the menus keep
- * (level, mode, difficulty: the matches tell those), nor what the game
+ * (level, mode, difficulty, colours: the matches tell those, and restoring
+ * it sets them again), nor what the game
  * remembers for itself (`recordingHintShown`), nor the volumes, which a
  * slider changes many times in one go.
  */
@@ -14,7 +15,6 @@ export const REPORTED_SETTINGS: readonly (keyof StoredSettings)[] = [
   'vibration',
   'language',
   'look',
-  'colors',
   'simResolution',
   'screenResolution',
   'vaporize',
@@ -28,13 +28,18 @@ export const REPORTED_SETTINGS: readonly (keyof StoredSettings)[] = [
   'ranked',
 ];
 
-/** The change of `key` to report, null for a setting not reported. */
+/**
+ * The change of `key` from `before` to `after` to report - null for a
+ * setting not reported, or one set to the value it had.
+ */
 export function settingChange(
   key: keyof StoredSettings,
-  settings: StoredSettings
+  before: StoredSettings,
+  after: StoredSettings
 ): GameEvents['setting_changed'] | null {
   if (!REPORTED_SETTINGS.includes(key)) return null;
-  return { setting: key, value: settingValue(settings[key]) };
+  const value = settingValue(after[key]);
+  return value === settingValue(before[key]) ? null : { setting: key, value };
 }
 
 function settingValue(value: unknown): string | number | boolean {

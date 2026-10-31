@@ -126,11 +126,17 @@ export class CreatePollComponent implements OnInit {
         // applied locally at once; the backend may still refuse it later,
         // which brings back the previous version
         const { saved } = this.pollsRepo.updatePoll(poll.id, newPoll);
-        saved.catch((error: unknown) => {
-          console.error('Poll changes were rejected', error);
-          this.snackBar.open('Could not save your changes to the poll.', 'OK');
-        });
-        this.analytics.track('poll_edited', pollShape(newPoll));
+        // counted once the backend took it
+        saved.then(
+          () => this.analytics.track('poll_edited', pollShape(newPoll)),
+          (error: unknown) => {
+            console.error('Poll changes were rejected', error);
+            this.snackBar.open(
+              'Could not save your changes to the poll.',
+              'OK'
+            );
+          }
+        );
         this.editDone.emit();
       } else {
         const pollId = await this.pollsRepo.createPoll(newPoll);

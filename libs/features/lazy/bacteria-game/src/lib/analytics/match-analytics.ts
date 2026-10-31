@@ -19,7 +19,13 @@ import {
 /** What of the game's state tells how a match is played. */
 export type MatchState = Pick<
   GameStateState,
-  'online' | 'ghost' | 'dailyDay' | 'endlessMatch' | 'ranked' | 'endlessRanked'
+  | 'online'
+  | 'ghost'
+  | 'dailyDay'
+  | 'endlessMatch'
+  | 'ranked'
+  | 'endlessRanked'
+  | 'timePassed'
 >;
 
 /**
@@ -33,23 +39,25 @@ export class MatchAnalytics {
   /** The match under way, null between matches. */
   private running: MatchParams | null = null;
 
-  /** A match starts - a restart too, which leaves the one under way. */
+  /**
+   * A match starts - a restart from the pause menu too, which leaves the
+   * one under way after the `timePassed` the state still holds of it.
+   */
   public started(
     plan: MatchPlan,
     state: MatchState,
     simulation: Pick<Simulation, 'kind' | 'ruleset'>
   ): void {
-    this.left(0);
+    this.left(state.timePassed);
     this.running = matchParams(plan, state, simulation);
     this.analytics.track('level_start', this.running);
   }
 
-  /** The match ended with its outcome after `timePassed` ms. */
+  /** The match ended with its outcome, after the state's `timePassed` ms. */
   public ended(
     outcome: MatchOutcome,
     state: MatchState,
-    earnings: MatchEarnings | null,
-    timePassed: number
+    earnings: MatchEarnings | null
   ): void {
     const match = this.running;
     this.running = null;
@@ -61,7 +69,7 @@ export class MatchAnalytics {
       success: result === 'win',
       outcome: result,
       reason: outcome.reason,
-      duration_sec: seconds(timePassed),
+      duration_sec: seconds(state.timePassed),
     });
     for (const achievement_id of earnings?.achievements ?? []) {
       this.analytics.track('unlock_achievement', { achievement_id });

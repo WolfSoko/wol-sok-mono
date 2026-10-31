@@ -172,9 +172,22 @@ export default class PollPageComponent {
 
   constructor() {
     usePollMetaTags(this.poll, this.pollId);
+    this.trackNotFound();
+  }
+
+  /**
+   * Counts a link to a poll that does not exist: only the first answer for
+   * each poll, so the owner deleting it on this page counts as none.
+   */
+  private trackNotFound(): void {
     const analytics = injectRollaPollaAnalytics();
+    let answeredFor: string | null = null;
     effect(() => {
-      if (this.poll() === null) {
+      const poll = this.poll();
+      const pollId = this.pollId();
+      if (poll === undefined || pollId === answeredFor) return;
+      answeredFor = pollId;
+      if (poll === null) {
         analytics.track('poll_not_found');
       }
     });

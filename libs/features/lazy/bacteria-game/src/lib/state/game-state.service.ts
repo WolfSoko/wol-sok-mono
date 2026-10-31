@@ -427,7 +427,7 @@ export class GameStateService {
         ? afterMatch(endless, outcome.winner?.isBot === false)
         : null;
     const earnings = this.recordMatch(outcome.winner, run?.wins ?? null);
-    this.matchAnalytics.ended(outcome, state, earnings, state.timePassed);
+    this.matchAnalytics.ended(outcome, state, earnings);
     const recording = this.recording(outcome);
     const training =
       this.plan != null && getLevel(this.plan.levelId).mission !== undefined;
