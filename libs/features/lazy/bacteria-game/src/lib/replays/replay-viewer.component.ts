@@ -88,7 +88,7 @@ export const CHROME_HIDE_MS = 3000;
     '[class.cursor-hidden]': '!chromeShown() && playing()',
     '(keydown)': 'onKeyDown($event)',
     '(pointermove)': 'wake()',
-    '(pointerdown)': 'wake()',
+    '(pointerdown)': 'onPointerDown()',
     '(focusin)': 'wake()',
     '(document:fullscreenchange)': 'onFullscreenChange()',
     '(document:webkitfullscreenchange)': 'onFullscreenChange()',
@@ -100,7 +100,7 @@ export const CHROME_HIDE_MS = 3000;
         #box
         [attr.aria-label]="label()"
         role="img"
-        (click)="togglePlay()"
+        (click)="onArenaClick()"
       >
         <feat-lazy-bac-game-arena-view
           [layout]="layout()"
@@ -224,7 +224,7 @@ export const CHROME_HIDE_MS = 3000;
               >
             }
           </mat-button-toggle-group>
-          @if (fullscreenSupported()) {
+          @if (fullscreenSupported) {
             <button
               mat-icon-button
               type="button"
@@ -412,6 +412,14 @@ export class ReplayViewerComponent {
       this.awake()
   );
   private hideTimer: ReturnType<typeof setTimeout> | null = null;
+  /** When the controls were last woken, in `Date.now()` ms. */
+  private wokeAt = 0;
+  /**
+   * Whether the controls were seen as the pointer went down: a tap on the
+   * arena that brings them back is not a tap to pause. True without a
+   * pointer, as a click sent by itself has none.
+   */
+  private chromeWasShown = true;
 
   /** True while the viewer itself fills the screen. */
   protected readonly fullscreen = signal(false);
@@ -419,6 +427,8 @@ export class ReplayViewerComponent {
   private readonly document = inject(DOCUMENT);
   private readonly host =
     inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  /** True where the browser lets the viewer fill the screen. */
+  protected readonly fullscreenSupported: boolean;
   private readonly reducedMotion = prefersReducedMotion();
   private readonly box = viewChild<ElementRef<HTMLElement>>('box');
   /** The arena box's size in CSS pixels, zero until it is measured. */
@@ -499,6 +509,7 @@ export class ReplayViewerComponent {
   });
 
   public constructor() {
+    this.fullscreenSupported = isFullscreenSupported(this.document, this.host);
     effect((onCleanup) => {
       const played = this.played();
       untracked(() => {
@@ -551,6 +562,23 @@ export class ReplayViewerComponent {
     this.playing.update((playing) => !playing);
   }
 
+  /** A touch wakes the controls; the click that follows sees whether they were up. */
+  protected onPointerDown(): void {
+    this.chromeWasShown = untracked(this.chromeShown);
+    this.wake();
+  }
+
+  /**
+   * A click on the arena plays and pauses, like a video - unless it was the
+   * tap that brought the controls back, which is all a tap does then.
+   */
+  protected onArenaClick(): void {
+    if (this.chromeWasShown) {
+      this.togglePlay();
+    }
+    this.chromeWasShown = true;
+  }
+
   protected startOver(): void {
     const played = this.played();
     if (played !== null) {
@@ -589,8 +617,18 @@ export class ReplayViewerComponent {
     this.painter.set(painter);
   }
 
-  /** Shows the controls, for `CHROME_HIDE_MS` from now. */
+  /**
+   * Shows the controls, for `CHROME_HIDE_MS` from now. A move soon after
+   * the last one leaves the timer as it is: the controls then go between
+   * half that and the whole of it after the last move, with no timer set
+   * on every move of the pointer.
+   */
   protected wake(): void {
+    const now = Date.now();
+    if (untracked(this.awake) && now - this.wokeAt < CHROME_HIDE_MS / 2) {
+      return;
+    }
+    this.wokeAt = now;
     this.awake.set(true);
     this.clearHideTimer();
     this.hideTimer = setTimeout(() => {
@@ -601,14 +639,15 @@ export class ReplayViewerComponent {
 
   /**
    * The player's keys, as a video player has them. Keys on the controls
-   * themselves are theirs: the slider's arrows, the buttons' Space. A
-   * handled key goes no further, so the stage's own F stays out of it.
+   * themselves are theirs - the slider's arrows, the buttons' Space - but
+   * for F, which is the player's wherever the focus is. A handled key goes
+   * no further, so the stage's own F stays out of it.
    */
   protected onKeyDown(event: KeyboardEvent): void {
-    if (
+    const onControl =
       event.target instanceof Element &&
-      event.target.closest('.chrome') !== null
-    ) {
+      event.target.closest('.chrome') !== null;
+    if (onControl && event.key !== 'f' && event.key !== 'F') {
       return;
     }
     switch (event.key) {
@@ -632,7 +671,7 @@ export class ReplayViewerComponent {
         break;
       case 'f':
       case 'F':
-        if (!this.fullscreenSupported()) {
+        if (!this.fullscreenSupported) {
           return;
         }
         this.toggleFullscreen();
@@ -643,11 +682,6 @@ export class ReplayViewerComponent {
     event.preventDefault();
     event.stopPropagation();
     this.wake();
-  }
-
-  /** True where the browser lets the viewer fill the screen. */
-  protected fullscreenSupported(): boolean {
-    return isFullscreenSupported(this.document, this.host);
   }
 
   protected toggleFullscreen(): void {

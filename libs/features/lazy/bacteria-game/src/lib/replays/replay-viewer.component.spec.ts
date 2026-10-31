@@ -253,8 +253,7 @@ describe('ReplayViewerComponent', () => {
 
   function view(
     replay = recordedReplay(),
-    inputs: Record<string, unknown> = {},
-    beforeRender: (host: HTMLElement) => void = () => undefined
+    inputs: Record<string, unknown> = {}
   ) {
     const fixture = TestBed.createComponent(ReplayViewerComponent);
     fixture.componentRef.setInput('replay', replay);
@@ -262,7 +261,6 @@ describe('ReplayViewerComponent', () => {
       fixture.componentRef.setInput(name, value);
     }
     const page = fixture.nativeElement as HTMLElement;
-    beforeRender(page);
     fixture.detectChanges();
     return { fixture, page };
   }
@@ -273,14 +271,19 @@ describe('ReplayViewerComponent', () => {
     page.querySelector('.time')?.textContent?.replace(/\s+/g, ' ').trim();
   const chromeHidden = (page: HTMLElement) =>
     page.classList.contains('chrome-hidden');
-  const key = (page: HTMLElement, key: string) => {
+  const key = (target: HTMLElement, key: string) => {
     const event = new KeyboardEvent('keydown', {
       key,
       bubbles: true,
       cancelable: true,
     });
-    page.dispatchEvent(event);
+    target.dispatchEvent(event);
     return event;
+  };
+  /** A tap as a phone sends it: the pointer goes down, then the click. */
+  const tap = (target: HTMLElement) => {
+    target.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    target.click();
   };
 
   it('plays the replay on an arena view, with pause and speeds', () => {
@@ -369,6 +372,47 @@ describe('ReplayViewerComponent', () => {
       expect(page.classList.contains('cursor-hidden')).toBe(false);
     });
 
+    it('set no new timer on a move soon after the last', () => {
+      const { fixture, page } = view();
+      const move = () =>
+        page.dispatchEvent(new Event('pointermove', { bubbles: true }));
+
+      // Woken as the replay started; a move within a moment changes nothing.
+      jest.advanceTimersByTime(CHROME_HIDE_MS / 2 - 1);
+      move();
+      jest.advanceTimersByTime(CHROME_HIDE_MS / 2 + 1);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(true);
+
+      // Later on, a move sets the timer again: the controls stay on longer.
+      move();
+      jest.advanceTimersByTime(CHROME_HIDE_MS / 2);
+      move();
+      jest.advanceTimersByTime(CHROME_HIDE_MS / 2);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(false);
+      jest.advanceTimersByTime(CHROME_HIDE_MS / 2);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(true);
+    });
+
+    it('come back on a tap on the arena, which pauses only once they are seen', () => {
+      const { fixture, page } = view();
+      const arena = page.querySelector('.arena') as HTMLElement;
+      jest.advanceTimersByTime(CHROME_HIDE_MS);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(true);
+
+      tap(arena);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(false);
+      expect(playPause(page).getAttribute('aria-label')).toBe('Pause');
+
+      tap(arena);
+      fixture.detectChanges();
+      expect(playPause(page).getAttribute('aria-label')).toBe('Play');
+    });
+
     it('stay while the replay is paused, and while the pointer is on them', () => {
       const { fixture, page } = view();
       playPause(page).click();
@@ -438,19 +482,17 @@ describe('ReplayViewerComponent', () => {
   });
 
   it('leaves the keys on the controls to them', () => {
-    const { fixture, page } = view();
-
+    const { fixture, page } = view(recordedReplay('petri-dish', 90));
     const seek = page.querySelector('[data-testid="seek"]') as HTMLElement;
-    const event = new KeyboardEvent('keydown', {
-      key: ' ',
-      bubbles: true,
-      cancelable: true,
-    });
-    seek.dispatchEvent(event);
+
+    const space = key(seek, ' ');
+    const arrow = key(seek, 'ArrowRight');
     fixture.detectChanges();
 
-    expect(event.defaultPrevented).toBe(false);
+    expect(space.defaultPrevented).toBe(false);
+    expect(arrow.defaultPrevented).toBe(false);
     expect(playPause(page).getAttribute('aria-label')).toBe('Pause');
+    expect(page.textContent).not.toContain('Winding to that time…');
   });
 
   it('shows a way out and a title over the arena where the host gives them', () => {
@@ -482,6 +524,8 @@ describe('ReplayViewerComponent', () => {
   describe('the fullscreen', () => {
     afterEach(() => {
       delete (document as { fullscreenEnabled?: boolean }).fullscreenEnabled;
+      delete (HTMLElement.prototype as { requestFullscreen?: unknown })
+        .requestFullscreen;
     });
 
     it('is not offered where the browser has none', () => {
@@ -497,13 +541,15 @@ describe('ReplayViewerComponent', () => {
         value: true,
         configurable: true,
       });
+      // Asked once, as the viewer is made: on the prototype, before it is.
       const requested = jest.fn(async () => undefined);
-      const { fixture, page } = view(recordedReplay(), {}, (host) => {
-        Object.defineProperty(host, 'requestFullscreen', {
-          value: requested,
-          configurable: true,
-        });
+      Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+        value: requested,
+        configurable: true,
       });
+      const { fixture, page } = view();
+      const reached = jest.fn();
+      document.addEventListener('keydown', reached);
 
       const button = page.querySelector(
         '[data-testid="fullscreen"]'
@@ -511,10 +557,18 @@ describe('ReplayViewerComponent', () => {
       expect(button.getAttribute('aria-label')).toBe('Fullscreen');
       button.click();
       expect(requested).toHaveBeenCalledTimes(1);
+      expect(requested.mock.instances[0]).toBe(page);
 
       // F asks too, and stays with the viewer.
       expect(key(page, 'f').defaultPrevented).toBe(true);
       expect(requested).toHaveBeenCalledTimes(2);
+
+      // Also from a focused control, where the stage's F must not hear it.
+      const onControl = key(playPause(page), 'F');
+      expect(onControl.defaultPrevented).toBe(true);
+      expect(requested).toHaveBeenCalledTimes(3);
+      expect(reached).not.toHaveBeenCalled();
+      document.removeEventListener('keydown', reached);
 
       // The browser put it on the screen: the button offers the way out.
       Object.defineProperty(document, 'fullscreenElement', {
