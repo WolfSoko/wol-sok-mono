@@ -60,6 +60,12 @@ export const settings: Translation<typeof en> = {
     saveMatches: 'Meine Matches speichern',
     saveMatchesNote: 'Online-Matches werden immer aufbewahrt.',
   },
+  privacy: {
+    title: 'Datenschutz',
+    stats: 'Nutzungsstatistik',
+    statsNote:
+      'Zählt mit Google Analytics, welche Modi, Level und Bildschirme gespielt werden, um das Spiel besser zu machen. Nichts, was dich nennt, keine Werbung. Was genau, steht in der Datenschutzerklärung.',
+  },
   simulation: {
     choice: 'Simulation',
     auto: 'Automatisch',

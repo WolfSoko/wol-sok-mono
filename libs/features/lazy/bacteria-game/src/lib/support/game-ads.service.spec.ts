@@ -98,6 +98,7 @@ describe('GameAds', () => {
 
     expect(listeners).toHaveLength(0);
     expect(ads.consentAnswered()).toBe(false);
+    expect(ads.consentSettled()).toBe(true);
   });
 
   it('stops waiting for the consent banner when the script is blocked', () => {
@@ -110,6 +111,18 @@ describe('GameAds', () => {
     jest.advanceTimersByTime(TCF_POLL_INTERVAL_MS * 5);
 
     expect(listeners).toHaveLength(0);
+    expect(ads.consentSettled()).toBe(true);
+  });
+
+  it('stops waiting for a consent banner that never comes', () => {
+    const ads = setUp();
+    ads.start();
+
+    jest.advanceTimersByTime(TCF_POLL_INTERVAL_MS * 149);
+    expect(ads.consentSettled()).toBe(false);
+    jest.advanceTimersByTime(TCF_POLL_INTERVAL_MS);
+
+    expect(ads.consentSettled()).toBe(true);
   });
 
   it('loads nothing without support options, as inside the shell', () => {
@@ -127,9 +140,11 @@ describe('GameAds', () => {
 
     report({ eventStatus: 'cmpuishown' });
     expect(ads.consentAnswered()).toBe(false);
+    expect(ads.consentSettled()).toBe(false);
 
     report({ eventStatus: 'useractioncomplete' });
     expect(ads.consentAnswered()).toBe(true);
+    expect(ads.consentSettled()).toBe(true);
   });
 
   it('shows ads at once to a player who answered on an earlier visit', () => {

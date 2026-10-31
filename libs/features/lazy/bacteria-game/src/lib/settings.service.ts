@@ -43,6 +43,8 @@ import {
   isVaporizeQuality,
   VaporizeQuality,
 } from './vaporize-effect';
+import { injectGameAnalytics } from './analytics/game-analytics';
+import { settingChange } from './analytics/setting-change';
 import { I18nService } from './i18n/i18n.service';
 import { isLanguage, Language } from './i18n/language';
 
@@ -150,6 +152,7 @@ export class GameSettingsService {
   private readonly store = inject(GameStateStore);
   private readonly storage = inject(DeviceStorage);
   private readonly i18n = inject(I18nService);
+  private readonly analytics = injectGameAnalytics();
   /** The settings the player changed - what restoring must keep. */
   private readonly touched = new Set<keyof StoredSettings>();
   /** A stored match setup that arrived during a match, for the next one. */
@@ -396,8 +399,15 @@ export class GameSettingsService {
    */
   private changed(...keys: (keyof StoredSettings)[]): void {
     keys.forEach((key) => this.touched.add(key));
+    const settings = this.toStore();
+    for (const key of keys) {
+      const change = settingChange(key, settings);
+      if (change !== null) {
+        this.analytics.track('setting_changed', change);
+      }
+    }
     if (this.restored()) {
-      this.persist();
+      this.storage.write(SETTINGS_STORAGE_KEY, settings);
     }
   }
 
@@ -546,7 +556,12 @@ export class GameSettingsService {
   }
 
   private persist(): void {
-    const settings: StoredSettings = {
+    this.storage.write(SETTINGS_STORAGE_KEY, this.toStore());
+  }
+
+  /** The settings as they are stored. */
+  private toStore(): StoredSettings {
+    return {
       ...this.matchSetupToStore(),
       look: this.look(),
       simResolution: this.simResolution(),
@@ -571,7 +586,6 @@ export class GameSettingsService {
       ranked: this.ranked(),
       recordingHintShown: this.recordingHintShown(),
     };
-    this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }
 
   /** The match setup as it stands, without tracking it. */

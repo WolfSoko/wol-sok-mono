@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { isObject } from '../state/is-object';
 import { DeviceStorage } from '../storage/game-storage';
 import { GAME_SUPPORT } from './game-support';
@@ -84,6 +85,7 @@ export function detectInstallPlatform(
 export class InstallOffer {
   private readonly options = inject(GAME_SUPPORT);
   private readonly document = inject(DOCUMENT);
+  private readonly analytics = injectGameAnalytics();
   private readonly storage = inject(DeviceStorage);
 
   private readonly inBrowser = signal(false);
@@ -142,6 +144,7 @@ export class InstallOffer {
       this.promptEvent.set(event as BeforeInstallPromptEvent);
     };
     const onInstalled = (): void => {
+      this.analytics.track('app_installed');
       this.promptEvent.set(null);
       this.inBrowser.set(false);
     };
@@ -174,6 +177,7 @@ export class InstallOffer {
     try {
       await event.prompt();
       const { outcome } = await event.userChoice;
+      this.analytics.track('install_prompt', { outcome });
       if (outcome === 'accepted') this.inBrowser.set(false);
     } catch {
       // The prompt was not available after all: the banner falls back to the store link.
@@ -185,6 +189,7 @@ export class InstallOffer {
 
   /** Puts the offer away for a month on this device. */
   public dismiss(): void {
+    this.analytics.track('install_offer_dismissed');
     const now = Date.now();
     this.dismissedAt.set(now);
     this.storage.write(INSTALL_OFFER_KEY, { dismissedAt: now });

@@ -1,0 +1,59 @@
+// What the main menu's notices share (the guest's, the statistics'
+// question): icon and text side by side, the buttons below.
+
+@mixin banner($accent: var(--bw-player)) {
+  :host {
+    display: block;
+  }
+
+  .banner {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 1rem 1.25rem;
+    border: 2px solid #{$accent};
+    border-radius: 1.25rem;
+    background: var(--bw-surface-glass);
+    color: var(--bw-text);
+  }
+
+  .badge {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 2.5rem;
+    color: #{$accent};
+  }
+
+  .text {
+    min-width: 0;
+  }
+
+  .title {
+    display: block;
+    font-family: var(--bw-display);
+    font-weight: 800;
+    font-size: 1.35rem;
+    line-height: 1.15;
+  }
+
+  .note {
+    margin: 0.25rem 0 0;
+    line-height: 1.4;
+    color: var(--bw-soft);
+  }
+
+  .actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  // The button the notice is about.
+  .primary {
+    --mat-button-filled-container-color: #{$accent};
+    --mat-button-filled-label-text-color: var(--bw-on-player);
+  }
+}

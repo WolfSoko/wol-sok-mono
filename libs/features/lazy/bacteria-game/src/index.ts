@@ -13,7 +13,9 @@ export {
   WATCH_PATH,
 } from './lib/replays/watch-links';
 export { provideGameCloud } from './lib/storage/provide-game-cloud';
+export { GAME_FIREBASE_APP } from './lib/storage/game-cloud';
 export type { GameCloudOptions } from './lib/storage/game-cloud';
+export { StatsConsent } from './lib/analytics/stats-consent.service';
 export { provideGameSupport } from './lib/support/provide-game-support';
 export { GameAds } from './lib/support/game-ads.service';
 export type {

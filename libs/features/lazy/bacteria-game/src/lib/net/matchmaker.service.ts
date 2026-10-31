@@ -7,6 +7,7 @@ import {
   untracked,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { FeatureTogglesService } from '../feature-toggles.service';
 import { ModerationService } from '../moderation/moderation.service';
 import {
@@ -56,6 +57,9 @@ export class MatchmakerService {
   private readonly online = inject(OnlineMatchService);
   private readonly toggles = inject(FeatureTogglesService).toggles;
   private readonly moderation = inject(ModerationService);
+  private readonly analytics = injectGameAnalytics();
+  /** When the player started looking, for how long they waited. */
+  private searchStartedAt = 0;
   private readonly stateSignal = signal<MatchmakingState>('idle');
   /** The level the player would like to play - null for any. */
   private readonly level = signal<string | null>(null);
@@ -132,6 +136,8 @@ export class MatchmakerService {
       return;
     }
     this.online.leave();
+    this.searchStartedAt = Date.now();
+    this.analytics.track('matchmaking_started');
     await this.search();
   }
 
@@ -158,6 +164,12 @@ export class MatchmakerService {
   /** Stops looking - and gives up a room opened for a claimed player. */
   public async cancel(): Promise<void> {
     const wasFound = this.stateSignal() === 'found';
+    if (this.stateSignal() !== 'idle') {
+      this.analytics.track('matchmaking_cancelled', {
+        found: wasFound,
+        wait_sec: this.waitedSec(),
+      });
+    }
     this.stop();
     this.clearJoinTimeout();
     this.stateSignal.set('idle');
@@ -316,6 +328,11 @@ export class MatchmakerService {
   private found(): void {
     this.stop();
     this.stateSignal.set('found');
+    this.analytics.track('matchmaking_found', { wait_sec: this.waitedSec() });
+  }
+
+  private waitedSec(): number {
+    return Math.round((Date.now() - this.searchStartedAt) / 1000);
   }
 
   private stop(): void {

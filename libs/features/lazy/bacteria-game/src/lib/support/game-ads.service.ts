@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { GAME_SUPPORT } from './game-support';
 
 /** The slice of an IAB TCF v2.2 TCData object the game waits for. */
@@ -45,6 +45,8 @@ export class GameAds {
   private readonly window = this.document.defaultView as AdsWindow | null;
 
   private readonly answered = signal(false);
+  /** True once there is no consent banner to wait for any more. */
+  private readonly gaveUp = signal(false);
   private started = false;
 
   /** The ad unit the screens show, null without ads. */
@@ -55,12 +57,23 @@ export class GameAds {
    * there to open again.
    */
   public readonly consentAnswered = this.answered.asReadonly();
+  /**
+   * True once the consent banner is done with: it reported a choice, or
+   * it will not show (no script, an ad blocker, no message set up). The
+   * game asks its own questions only then, so they never stack on it.
+   */
+  public readonly consentSettled = computed(
+    () => this.answered() || this.gaveUp()
+  );
 
   public start(): void {
     if (!this.support || !this.window || this.started) return;
     const loaded = this.document.getElementById(AD_SCRIPT_ID) !== null;
     // Neither an ad unit nor the page's script: no banner to wait for.
-    if (!this.ad && !loaded) return;
+    if (!this.ad && !loaded) {
+      this.gaveUp.set(true);
+      return;
+    }
     this.started = true;
     let blocked = false;
     if (this.ad && !loaded) {
@@ -77,7 +90,10 @@ export class GameAds {
     if (this.listen()) return;
     let tries = 0;
     const poll = setInterval(() => {
-      if (blocked || this.listen() || ++tries >= TCF_POLL_MAX_TRIES) {
+      if (blocked || ++tries >= TCF_POLL_MAX_TRIES) {
+        clearInterval(poll);
+        this.gaveUp.set(true);
+      } else if (this.listen()) {
         clearInterval(poll);
       }
     }, TCF_POLL_INTERVAL_MS);

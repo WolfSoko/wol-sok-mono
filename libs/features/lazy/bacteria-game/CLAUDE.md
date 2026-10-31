@@ -391,6 +391,29 @@ play each other.
   The settings show the ruleset local matches play and the self-test's
   verdict (`gl/simulation-check.ts`).
 
+## Usage statistics
+
+- The game measures through `injectGameAnalytics()`
+  (`analytics/game-analytics.ts`), typed by `GameEvents`; the calls do
+  nothing unless the remote's app config provides analytics and the player
+  said yes. A new event goes into `GameEvents`, `docs/analytics.md` and the
+  privacy page (section 11).
+- Matches: `GameStateService` tells `MatchAnalytics` when a match starts,
+  ends and is left; what the match was (mode, level, ruleset) and what it
+  earned is worked out there, not in the state. `MatchAnalytics` injects
+  nothing of the game: `GameSettingsService` injects `GameStateService`, and
+  its constructor changes the match setup, so free play is a user property
+  set from the stage (`reportUserProperties`).
+- Screens: the stage's panel gives the `screen_view`s (`trackScreenViews`),
+  `match` while one runs.
+- Settings: `GameSettingsService.changed` reports the keys in
+  `REPORTED_SETTINGS` (`analytics/setting-change.ts`), not the match setup,
+  the volumes or what the game remembers for itself.
+- The consent question (`StatsBannerComponent`, `StatsConsent`) comes before
+  the guest and install banners and only once `GameAds.consentSettled`.
+  `/watch` stays free of analytics (the narrow entry); its page view comes
+  from the router.
+
 ## Texts: English and German
 
 - Every text the player sees goes through `I18nService.t` or the `t` pipe

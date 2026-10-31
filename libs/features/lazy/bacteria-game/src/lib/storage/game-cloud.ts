@@ -25,6 +25,13 @@ import { NoGameToggles } from './no-game-toggles';
 import { LocalGameStorage } from './local-game-storage';
 import { RemoteConfigGameToggles } from './remote-config-game-toggles';
 
+/**
+ * The game's own Firebase app, named so it stands next to the shell's
+ * default app, which belongs to another project. Whoever starts it first -
+ * the game cloud or the site's analytics - starts it with the same options.
+ */
+export const GAME_FIREBASE_APP = 'bacteria-wars';
+
 /** The Firebase project the game keeps the players' progress in. */
 export interface GameCloudOptions {
   /** The web app config from the Firebase console. */

@@ -82,6 +82,7 @@ import { PLAIN_LOADOUT } from './evolution';
 import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
+import { MatchAnalytics } from '../analytics/match-analytics';
 import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
 import { parseAttemptId, rankedPlan } from './attempts';
 import type {
@@ -151,6 +152,7 @@ export class GameStateService {
   private progress = inject(ProgressService);
   private evolution = inject(EvolutionService);
   private online = inject(OnlineMatchService);
+  private matchAnalytics = inject(MatchAnalytics);
   /**
    * Asked for `GameReplays` only once a match is kept: asked any earlier,
    * `GameCloud` would answer before the route named the project.
@@ -417,14 +419,15 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { series, ghost, endless, endlessMatch, online } =
-      this.gameStateStore.snapshot();
+    const state = this.gameStateStore.snapshot();
+    const { series, ghost, endless, endlessMatch, online } = state;
     // The run's match takes the run on - a draw is no win.
     const run =
       endless !== null && endlessMatch
         ? afterMatch(endless, outcome.winner?.isBot === false)
         : null;
     const earnings = this.recordMatch(outcome.winner, run?.wins ?? null);
+    this.matchAnalytics.ended(outcome, state, earnings, state.timePassed);
     const recording = this.recording(outcome);
     const training =
       this.plan != null && getLevel(this.plan.levelId).mission !== undefined;
@@ -544,6 +547,12 @@ export class GameStateService {
         })
         .then(
           (id) => {
+            if (id !== null) {
+              this.matchAnalytics.replaySaved(
+                recordedAs === 'online',
+                attempt !== undefined
+              );
+            }
             if (id !== null && this.lastRecording() === recording) {
               this.lastRecording.set({ ...recording, id });
             }
@@ -1045,6 +1054,13 @@ export class GameStateService {
       // A restart is an attempt as well.
       this.progress.startDailyAttempt(dailyDay);
     }
+    if (this.plan !== null) {
+      this.matchAnalytics.started(
+        this.plan,
+        this.gameStateStore.snapshot(),
+        this.playerService.getSimulation()
+      );
+    }
     this.gameStateStore.update((state) => ({
       currentState: GameState.RUNNING,
       // A match against a ghost, on a level of its own or online is no
@@ -1105,6 +1121,7 @@ export class GameStateService {
   }
 
   reset() {
+    this.matchAnalytics.left(this.gameStateStore.snapshot().timePassed);
     this.gameStateStore.update(() => ({
       currentState: GameState.END,
       timePassed: 0,

@@ -28,7 +28,9 @@
     <h1 class="title">Bacteria <span class="war">Wars</span></h1>
     <p class="tagline">{{ "menu.tagline" | t: { levels: totalLevels } }}</p>
 
-    @if (guestNotice.visible()) {
+    @if (stats.asking()) {
+      <feat-lazy-bac-game-stats-banner />
+    } @else if (guestNotice.visible()) {
       <feat-lazy-bac-game-guest-banner />
     } @else if (installOffer.visible()) {
       <feat-lazy-bac-game-install-banner />

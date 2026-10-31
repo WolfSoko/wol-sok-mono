@@ -18,6 +18,7 @@ import { GameStateStore } from './game.states';
 import { Player } from './player.model';
 import { PlayerStore } from './player.store';
 import { ReplayInputs } from './replay';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import type { Lockstep } from '../net/lockstep';
 import { MatchOutcome } from './win-conditions';
 
@@ -53,6 +54,7 @@ const KEY_SETS: readonly Record<string, SteeringVector>[] = [
 export class PlayerService {
   private playerStore = inject(PlayerStore);
   private gameStateStore = inject(GameStateStore);
+  private readonly analytics = injectGameAnalytics();
 
   /** Builds each match's simulation - on the CPU unless told otherwise. */
   private simulationFactory: SimulationFactory = cpuSimulation;
@@ -376,6 +378,7 @@ export class PlayerService {
         throw error;
       }
       console.warn('The colony war falls back to the CPU', error);
+      this.analytics.track('simulation_fallback');
       this.simulationFactory = this.fallbackFactory;
       this.factoryRuleset = () => 'cpu';
       this.offers = () => ['cpu'];

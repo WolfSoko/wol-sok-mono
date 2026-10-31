@@ -10,6 +10,7 @@ import { Clipboard } from '@angular/cdk/clipboard';
 import { DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { TranslationKey } from '../i18n/dictionaries';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -33,6 +34,7 @@ export class FriendsComponent {
   /** A ban takes adding friends and challenges away (ADR 0012). */
   protected readonly moderation = inject(ModerationService);
   private readonly clipboard = inject(Clipboard);
+  private readonly analytics = injectGameAnalytics();
   private readonly document = inject(DOCUMENT);
   private readonly i18n = inject(I18nService);
 
@@ -103,6 +105,10 @@ export class FriendsComponent {
           text: this.i18n.t('social.friends.share.text'),
           url: link,
         });
+        this.analytics.track('share', {
+          method: 'native',
+          content_type: 'friend_invite',
+        });
         return;
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
@@ -110,11 +116,16 @@ export class FriendsComponent {
         }
       }
     }
+    const copied = this.clipboard.copy(link);
     this.note.set(
-      this.clipboard.copy(link)
-        ? { key: 'social.friends.copied' }
-        : { key: null, link }
+      copied ? { key: 'social.friends.copied' } : { key: null, link }
     );
+    if (copied) {
+      this.analytics.track('share', {
+        method: 'copy',
+        content_type: 'friend_invite',
+      });
+    }
   }
 
   private async run<T>(task: () => Promise<T>): Promise<T | null> {

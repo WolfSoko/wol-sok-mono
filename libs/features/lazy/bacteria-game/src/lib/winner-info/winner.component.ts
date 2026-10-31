@@ -15,6 +15,7 @@ import { DatePipe, DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { TranslationKey } from '../i18n/dictionaries';
 import {
   achievementTexts,
@@ -263,6 +264,7 @@ export class WinnerComponent {
   );
 
   private readonly social = inject(SocialService);
+  private readonly analytics = injectGameAnalytics();
   /** The opponent of an online match, to add as a friend - null otherwise. */
   public readonly newFriend = computed(() => {
     const opponent = this.social.opponent();
@@ -373,11 +375,16 @@ export class WinnerComponent {
       return;
     }
     if (typeof navigator.share !== 'function') {
+      const copied = this.clipboard.copy(url);
       this.shareNote.set(
-        this.clipboard.copy(url)
-          ? 'match.share.copied'
-          : 'match.share.copyFailed'
+        copied ? 'match.share.copied' : 'match.share.copyFailed'
       );
+      if (copied) {
+        this.analytics.track('share', {
+          method: 'copy',
+          content_type: 'ghost_run',
+        });
+      }
       return;
     }
     this.sharing = true;
@@ -390,7 +397,13 @@ export class WinnerComponent {
         url,
       })
       .then(
-        () => this.shareNote.set(null),
+        () => {
+          this.shareNote.set(null);
+          this.analytics.track('share', {
+            method: 'native',
+            content_type: 'ghost_run',
+          });
+        },
         (error: unknown) => {
           // Closing the share sheet is no failure.
           if (!(error instanceof DOMException && error.name === 'AbortError')) {
