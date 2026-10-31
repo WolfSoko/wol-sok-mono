@@ -69,6 +69,17 @@ npx nx affected -t build,test,lint,lint-templates
 npx nx graph
 ```
 
+## Engineering Principles (mandatory)
+
+Long-term, strategic software engineering is required. A change that works but leaves the code harder to change is not done.
+
+- **Improve the codebase with every feature and bug fix.** Leave the code you touch cleaner than you found it: extract duplication, split oversized files/functions/components, fix misleading names, remove dead code, and add missing tests around what you changed.
+- **Fix root causes, not symptoms.** No workarounds or one-off special cases when the underlying design is the problem; fix the design.
+- **Stay modular.** Small, focused units with one responsibility and narrow interfaces. Put logic in the right `libs/` layer (see Dependency Constraints) instead of growing app code; keep domain logic out of components and in testable services/stores/pure functions.
+- **Clean Code is the standard.** Intention-revealing names, small functions, no magic values, no deep nesting, no copy-paste, single level of abstraction per function, explicit error handling.
+- **Easy to maintain beats clever.** Prefer simple, readable code a newcomer can follow over terse or tricky solutions.
+- **Scope of cleanup:** improvements to the code your change touches belong in the same PR. A larger refactor that the change exposes but doesn't need goes in its own PR (or an issue), so each PR stays reviewable.
+
 ## Coding Rules
 
 1. **Standalone components only** — no NgModules
@@ -203,7 +214,7 @@ Planned and phased in [ADR 0014](docs/adr/0014-performance-gates-in-ci.md); this
 - **Before every commit**:
   1. `npx nx format:write`
   2. `npx nx affected -t lint,lint-templates`
-- PR scope: include summary, UI screenshots if visual, linked issue; no unrelated refactors
+- PR scope: include summary, UI screenshots if visual, linked issue; cleanups of the touched code belong in the PR (see Engineering Principles), larger unrelated refactors get their own PR
 - **Always request a CodeRabbit review** after opening a PR: this repo gets no automatic reviews
   (fewer than 10 stars), so comment `@coderabbitai review` on the PR and work through the findings
 - **When CodeRabbit and Codex are both rate-limited**, don't wait for them: review the change
