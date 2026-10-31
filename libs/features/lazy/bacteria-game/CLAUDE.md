@@ -175,6 +175,13 @@ serverTimestamp(), expireAt }` and nothing else - what the rules'
   The timeline and the 10 s buttons seek (`ReplayScene.seek`): the war only
   plays forwards, so back restarts it, and the frames after a seek play on
   to its tick within `SEEK_FRAME_MS` each, the view running while paused.
+  The viewer is a video player: it fills the box it is given (the stage's
+  screen, the `/watch` page), fits the arena into it by width and height,
+  and lays its controls over the arena, which hide a few seconds into
+  playback (`CHROME_HIDE_MS`); the controls, the keys and the fullscreen
+  (on its own element) are listed in the component's JSDoc. The match just
+  played and "My matches" show it alone on the screen (`:host.playing`,
+  `screen.player`), the list or the header only while nothing plays.
   Specs draw with `recordingPainters` and play `recordedReplay` (`src/testing/`).
 - `/watch/{publicId}` (the remote's `app.routes.ts`, outside the entry
   route with the cloud) loads `WatchPageComponent` from the narrow entry
@@ -402,3 +409,27 @@ play each other.
   stay immediate. Specs await `fixture.whenStable()` after such a
   tap; the stage's specs, which leave its template out, hold the work
   with a spy on `run` instead.
+
+## Clearing the arena (the vaporize effect)
+
+- The stage clears the arena after a match through `resetGame$`
+  (`bacteria-game.component.ts`): `resetting` is true while the
+  `@wolsok/thanos` directive on `.thanos-container` turns the last frame
+  to dust, and the panel shows nothing meanwhile. Whatever the effect
+  does, the stage must come back: the effect runs on the stage's own
+  subscription to the directive's cold `vaporize$` and is cancelled at
+  the set length plus `VAPORIZE_SLACK_MS` (a capture that finishes later
+  must not lay its canvas over the menu), an effect that fails - at once
+  included - is logged and the reset goes on, and `resetting` is cleared
+  even when `GameStateService.reset()` throws.
+- The directive fades its element back in by itself when it is done. The
+  stage hides `.arena-frame` the moment the effect is over
+  (`hideArenaUntilPainted`) and shows it again only once both the stage
+  rendered what follows (`afterNextRender` in `resetGame$`) and the arena
+  painted its next frame (`arenaScene.painted`), whichever comes last
+  (`revealArenaWhenReady`): a paint alone lands on the next animation
+  frame, often ahead of a slow change detection, and would show the old
+  level under no menu. So it never flashes up between the dust and the
+  menu screen, or before the next match's first frame. A new vaporize
+  reveals it first (`revealArena`), so the snapshot is never taken of a
+  hidden arena.

@@ -99,6 +99,7 @@ export const replay: Translation<typeof en> = {
     back: '{seconds} Sekunden zurück',
     forward: '{seconds} Sekunden vor',
     seeking: 'Spult zu dieser Stelle …',
+    controls: 'Wiedergabe-Steuerung',
   },
   watchPage: {
     title: 'Ansehen: {level} - Bacteria Wars',

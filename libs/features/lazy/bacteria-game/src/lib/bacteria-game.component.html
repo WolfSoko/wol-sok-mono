@@ -298,7 +298,7 @@
       (wsSharedUiElemResized)="onArenaBoxResized($event)"
       (wheel)="onWheel($event)"
     >
-      <div class="arena-frame">
+      <div #arenaFrame class="arena-frame">
         <feat-lazy-bac-game-arena-view
           canvasId="canvasElement"
           [layout]="arenaLayout()"

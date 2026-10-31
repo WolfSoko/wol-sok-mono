@@ -12,7 +12,10 @@ import { IntSimulation } from '../state/gpu-int/int-simulation';
 import type { MatchEngine } from '../state/match-engine';
 import { GPU_INT_REPLAY_VERSION, type Replay } from '../state/replay';
 import { type GpuIntPainter, ReplayScene } from './replay-scene';
-import { ReplayViewerComponent } from './replay-viewer.component';
+import {
+  CHROME_HIDE_MS,
+  ReplayViewerComponent,
+} from './replay-viewer.component';
 
 /** The colony sizes the scene's war got to. */
 const sizes = (scene: ReplayScene) =>
@@ -248,41 +251,69 @@ describe('ReplayViewerComponent', () => {
     TestBed.inject(I18nService).setLanguage('en');
   });
 
-  function view(replay = recordedReplay()) {
+  function view(
+    replay = recordedReplay(),
+    inputs: Record<string, unknown> = {}
+  ) {
     const fixture = TestBed.createComponent(ReplayViewerComponent);
     fixture.componentRef.setInput('replay', replay);
+    for (const [name, value] of Object.entries(inputs)) {
+      fixture.componentRef.setInput(name, value);
+    }
+    const page = fixture.nativeElement as HTMLElement;
     fixture.detectChanges();
-    return { fixture, page: fixture.nativeElement as HTMLElement };
+    return { fixture, page };
   }
+
+  const playPause = (page: HTMLElement) =>
+    page.querySelector('[data-testid="play-pause"]') as HTMLButtonElement;
+  const time = (page: HTMLElement) =>
+    page.querySelector('.time')?.textContent?.replace(/\s+/g, ' ').trim();
+  const chromeHidden = (page: HTMLElement) =>
+    page.classList.contains('chrome-hidden');
+  const key = (target: HTMLElement, key: string) => {
+    const event = new KeyboardEvent('keydown', {
+      key,
+      bubbles: true,
+      cancelable: true,
+    });
+    target.dispatchEvent(event);
+    return event;
+  };
+  /** A tap as a phone sends it: the pointer goes down, then the click. */
+  const tap = (target: HTMLElement) => {
+    target.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    target.click();
+  };
 
   it('plays the replay on an arena view, with pause and speeds', () => {
     const { fixture, page } = view();
 
     expect(page.querySelector('feat-lazy-bac-game-arena-view')).not.toBeNull();
     expect(painters).toHaveLength(1);
-    const button = page.querySelector(
-      '[data-testid="play-pause"]'
-    ) as HTMLButtonElement;
-    expect(button.textContent).toContain('Pause');
+    expect(page.getAttribute('tabindex')).toBe('0');
+    const button = playPause(page);
+    expect(button.getAttribute('aria-label')).toBe('Pause');
+    expect(button.textContent).toContain('pause');
 
     button.click();
     fixture.detectChanges();
 
-    expect(button.textContent).toContain('Play');
+    expect(button.getAttribute('aria-label')).toBe('Play');
+    expect(button.textContent).toContain('play_arrow');
     expect(page.textContent).toContain('4×');
+    expect(
+      page.querySelector('[role="group"]')?.getAttribute('aria-label')
+    ).toBe('Playback controls');
   });
 
   it('shows the time and seeks with the skip buttons, playing on to it while paused', () => {
     const { fixture, page } = view(recordedReplay('petri-dish', 90));
     const arena = fixture.debugElement.query(By.directive(ArenaViewComponent))
       .componentInstance as ArenaViewComponent;
-    const times = () =>
-      Array.from(page.querySelectorAll('.time')).map((time) =>
-        time.textContent?.trim()
-      );
 
-    expect(times()).toEqual(['0:00', '0:01']);
-    (page.querySelector('[data-testid="play-pause"]') as HTMLElement).click();
+    expect(time(page)).toBe('0:00 / 0:01');
+    playPause(page).click();
     fixture.detectChanges();
     expect(arena.paused()).toBe(true);
 
@@ -290,9 +321,264 @@ describe('ReplayViewerComponent', () => {
     fixture.detectChanges();
 
     expect(page.textContent).toContain('Winding to that time…');
-    expect(times()[0]).toBe('0:01');
+    expect(time(page)).toBe('0:01 / 0:01');
     // Paused, the view still runs the frames the seek plays in.
     expect(arena.paused()).toBe(false);
+  });
+
+  it('fits the arena into the box it has, at its aspect, as large as it lets it', () => {
+    const { fixture } = view(recordedReplay('petri-dish', 60, 7, 'high'));
+    const arena = fixture.debugElement.query(By.directive(ArenaViewComponent))
+      .componentInstance as ArenaViewComponent;
+    // Unmeasured, the canvas keeps its own size.
+    expect(arena.size()).toEqual({ width: 960, height: 540 });
+
+    (
+      fixture.componentInstance as unknown as {
+        boxSize: { set(size: { width: number; height: number }): void };
+      }
+    ).boxSize.set({ width: 1920, height: 600 });
+    fixture.detectChanges();
+
+    // The height binds: 600 tall, 16:9 wide.
+    expect(arena.size()).toEqual({ width: 1066, height: 600 });
+  });
+
+  describe('the controls', () => {
+    beforeEach(() => {
+      jest.useFakeTimers({
+        doNotFake: [
+          'queueMicrotask',
+          'nextTick',
+          'requestAnimationFrame',
+          'cancelAnimationFrame',
+        ],
+      });
+    });
+    afterEach(() => jest.useRealTimers());
+
+    it('go after a while as the replay plays, and come back on a move', () => {
+      const { fixture, page } = view();
+      expect(chromeHidden(page)).toBe(false);
+
+      jest.advanceTimersByTime(CHROME_HIDE_MS);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(true);
+
+      page.dispatchEvent(new Event('pointermove', { bubbles: true }));
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(false);
+    });
+
+    it('set no new timer on a move soon after the last', () => {
+      const { fixture, page } = view();
+      const move = () =>
+        page.dispatchEvent(new Event('pointermove', { bubbles: true }));
+
+      // Woken as the replay started; a move within a moment changes nothing.
+      jest.advanceTimersByTime(CHROME_HIDE_MS / 2 - 1);
+      move();
+      jest.advanceTimersByTime(CHROME_HIDE_MS / 2 + 1);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(true);
+
+      // Later on, a move sets the timer again: the controls stay on longer.
+      move();
+      jest.advanceTimersByTime(CHROME_HIDE_MS / 2);
+      move();
+      jest.advanceTimersByTime(CHROME_HIDE_MS / 2);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(false);
+      jest.advanceTimersByTime(CHROME_HIDE_MS / 2);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(true);
+    });
+
+    it('come back on a tap on the arena, which pauses only once they are seen', () => {
+      const { fixture, page } = view();
+      const arena = page.querySelector('.arena') as HTMLElement;
+      jest.advanceTimersByTime(CHROME_HIDE_MS);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(true);
+
+      tap(arena);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(false);
+      expect(playPause(page).getAttribute('aria-label')).toBe('Pause');
+
+      tap(arena);
+      fixture.detectChanges();
+      expect(playPause(page).getAttribute('aria-label')).toBe('Play');
+    });
+
+    it('stay while the replay is paused, and while the pointer is on them', () => {
+      const { fixture, page } = view();
+      playPause(page).click();
+      fixture.detectChanges();
+
+      jest.advanceTimersByTime(CHROME_HIDE_MS * 2);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(false);
+
+      // Playing again, but hovered.
+      const chrome = page.querySelector('.chrome.bottom') as HTMLElement;
+      chrome.dispatchEvent(new Event('pointerenter'));
+      playPause(page).click();
+      jest.advanceTimersByTime(CHROME_HIDE_MS * 2);
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(false);
+
+      chrome.dispatchEvent(new Event('pointerleave'));
+      fixture.detectChanges();
+      expect(chromeHidden(page)).toBe(true);
+    });
+
+    it('clear their timer when the viewer goes', () => {
+      const { fixture } = view();
+      const cleared = jest.spyOn(globalThis, 'clearTimeout');
+
+      fixture.destroy();
+
+      expect(cleared).toHaveBeenCalled();
+      cleared.mockRestore();
+    });
+  });
+
+  it('pauses and plays on a click on the arena, like a video', () => {
+    const { fixture, page } = view();
+    const arena = page.querySelector('.arena') as HTMLElement;
+
+    arena.click();
+    fixture.detectChanges();
+    expect(playPause(page).getAttribute('aria-label')).toBe('Play');
+
+    arena.click();
+    fixture.detectChanges();
+    expect(playPause(page).getAttribute('aria-label')).toBe('Pause');
+  });
+
+  it('takes the keys of a video player on the host, and goes no further with them', () => {
+    const { fixture, page } = view(recordedReplay('petri-dish', 90));
+    const reached = jest.fn();
+    document.addEventListener('keydown', reached);
+
+    const space = key(page, ' ');
+    fixture.detectChanges();
+    expect(playPause(page).getAttribute('aria-label')).toBe('Play');
+    expect(space.defaultPrevented).toBe(true);
+
+    key(page, 'ArrowRight');
+    fixture.detectChanges();
+    expect(page.textContent).toContain('Winding to that time…');
+
+    // A key it has no use for goes on to the stage.
+    const other = key(page, 'x');
+    expect(other.defaultPrevented).toBe(false);
+    expect(reached).toHaveBeenCalledTimes(1);
+    expect(reached).toHaveBeenCalledWith(other);
+    document.removeEventListener('keydown', reached);
+  });
+
+  it('leaves the keys on the controls to them', () => {
+    const { fixture, page } = view(recordedReplay('petri-dish', 90));
+    const seek = page.querySelector('[data-testid="seek"]') as HTMLElement;
+
+    const space = key(seek, ' ');
+    const arrow = key(seek, 'ArrowRight');
+    fixture.detectChanges();
+
+    expect(space.defaultPrevented).toBe(false);
+    expect(arrow.defaultPrevented).toBe(false);
+    expect(playPause(page).getAttribute('aria-label')).toBe('Pause');
+    expect(page.textContent).not.toContain('Winding to that time…');
+  });
+
+  it('shows a way out and a title over the arena where the host gives them', () => {
+    const { fixture, page } = view(recordedReplay(), {
+      title: 'Petri dish',
+      closeLabel: 'Back to the list',
+    });
+    const closed = jest.fn();
+    fixture.componentInstance.close.subscribe(closed);
+
+    expect(page.querySelector('.chrome.top')?.textContent).toContain(
+      'Petri dish'
+    );
+    (
+      page.querySelector('button[aria-label="Back to the list"]') as HTMLElement
+    ).click();
+
+    expect(closed).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders no top chrome without a title or a way out', () => {
+    const { page } = view();
+
+    expect(page.querySelector('.chrome.top')).toBeNull();
+    expect(page.querySelector('[data-testid="close"]')).toBeNull();
+    expect(page.querySelector('.chrome.bottom')).not.toBeNull();
+  });
+
+  describe('the fullscreen', () => {
+    afterEach(() => {
+      delete (document as { fullscreenEnabled?: boolean }).fullscreenEnabled;
+      delete (HTMLElement.prototype as { requestFullscreen?: unknown })
+        .requestFullscreen;
+    });
+
+    it('is not offered where the browser has none', () => {
+      const { page } = view();
+
+      expect(page.querySelector('[data-testid="fullscreen"]')).toBeNull();
+      // F does nothing, and goes on to the stage.
+      expect(key(page, 'f').defaultPrevented).toBe(false);
+    });
+
+    it('is asked of the browser for the viewer itself where it has one', () => {
+      Object.defineProperty(document, 'fullscreenEnabled', {
+        value: true,
+        configurable: true,
+      });
+      // Asked once, as the viewer is made: on the prototype, before it is.
+      const requested = jest.fn(async () => undefined);
+      Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+        value: requested,
+        configurable: true,
+      });
+      const { fixture, page } = view();
+      const reached = jest.fn();
+      document.addEventListener('keydown', reached);
+
+      const button = page.querySelector(
+        '[data-testid="fullscreen"]'
+      ) as HTMLButtonElement;
+      expect(button.getAttribute('aria-label')).toBe('Fullscreen');
+      button.click();
+      expect(requested).toHaveBeenCalledTimes(1);
+      expect(requested.mock.instances[0]).toBe(page);
+
+      // F asks too, and stays with the viewer.
+      expect(key(page, 'f').defaultPrevented).toBe(true);
+      expect(requested).toHaveBeenCalledTimes(2);
+
+      // Also from a focused control, where the stage's F must not hear it.
+      const onControl = key(playPause(page), 'F');
+      expect(onControl.defaultPrevented).toBe(true);
+      expect(requested).toHaveBeenCalledTimes(3);
+      expect(reached).not.toHaveBeenCalled();
+      document.removeEventListener('keydown', reached);
+
+      // The browser put it on the screen: the button offers the way out.
+      Object.defineProperty(document, 'fullscreenElement', {
+        value: page,
+        configurable: true,
+      });
+      document.dispatchEvent(new Event('fullscreenchange'));
+      fixture.detectChanges();
+      expect(button.getAttribute('aria-label')).toBe('Exit fullscreen');
+      expect(button.textContent).toContain('fullscreen_exit');
+      delete (document as { fullscreenElement?: Element }).fullscreenElement;
+    });
   });
 
   it('lays out a replay on its own grid, not the online one', () => {

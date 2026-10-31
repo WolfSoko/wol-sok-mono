@@ -1,20 +1,19 @@
-<feat-lazy-bac-game-screen-header
-  [title]="'replay.matches.title' | t"
-  (back)="back.emit()"
-/>
-<section class="matches" [attr.aria-label]="'replay.matches.region' | t">
-  @if (watching(); as replay) {
-    <feat-lazy-bac-game-replay-viewer
-      [replay]="replay"
-      [look]="look()"
-      [label]="'replay.viewer.title' | t"
-      [gpu]="trustedGpu()"
-    />
-    <button mat-button type="button" (click)="watching.set(null)">
-      <mat-icon>arrow_back</mat-icon>
-      {{ "replay.matches.list" | t }}
-    </button>
-  } @else {
+@if (watching(); as replay) {
+  <feat-lazy-bac-game-replay-viewer
+    [replay]="replay"
+    [look]="look()"
+    [label]="'replay.viewer.title' | t"
+    [gpu]="trustedGpu()"
+    [title]="watchingTitle() | gameText"
+    [closeLabel]="'replay.matches.list' | t"
+    (close)="watching.set(null)"
+  />
+} @else {
+  <feat-lazy-bac-game-screen-header
+    [title]="'replay.matches.title' | t"
+    (back)="back.emit()"
+  />
+  <section class="matches" [attr.aria-label]="'replay.matches.region' | t">
     <p class="intro">
       {{ (cloud ? "replay.matches.intro" : "replay.matches.device") | t }}
     </p>
@@ -111,5 +110,5 @@
         [attr.aria-label]="'replay.matches.loading' | t"
       />
     }
-  }
-</section>
+  </section>
+}

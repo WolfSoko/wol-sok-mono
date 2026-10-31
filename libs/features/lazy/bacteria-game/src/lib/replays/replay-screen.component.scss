@@ -1,0 +1,17 @@
+@use '../menu/screen';
+
+:host {
+  @include screen.screen;
+}
+
+// With a replay the viewer is the screen.
+:host.playing {
+  @include screen.player;
+}
+
+.matches {
+  @include screen.section;
+
+  width: 100%;
+  max-width: 40rem;
+}
