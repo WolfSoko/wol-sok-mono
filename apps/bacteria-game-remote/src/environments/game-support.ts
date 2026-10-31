@@ -1,5 +1,5 @@
 import type { GameSupportOptions } from '@wolsok/feat-lazy-bac-game';
-import { SITE_OWNER } from '../app/legal/site-owner';
+import { SITE_OWNER } from '@wolsok/shared-legal';
 
 /** The tips every build offers, without ads: the live site adds those. */
 export const SUPPORT_DEFAULTS: GameSupportOptions = {
