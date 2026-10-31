@@ -74,6 +74,12 @@ function workspaceFederation(config) {
       // would lose it from the import map to `ignoreUnusedDeps` while its
       // import stayed external.
       '@sentry/angular',
+      // Analytics is started by an app's own config only (the game's
+      // standalone app, with the player's consent), never by an exposed
+      // module, so each app bundles its own copy - and the game inside the
+      // shell, which provides none of the remote's, measures nothing.
+      '@wolsok/shared-analytics',
+      '@wolsok/shared-analytics/testing',
       // Each remote owns its feature library and nothing else imports it.
       // Shared, it lands in the shell's import map too, and the shell's copy
       // wins: a release that only redeploys the remote keeps showing the copy

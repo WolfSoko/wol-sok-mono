@@ -270,6 +270,21 @@
     </mat-slide-toggle>
     <p class="section-note">{{ "settings.matches.saveMatchesNote" | t }}</p>
   </section>
+  @if (stats.available) {
+    <section class="screen-section switches" aria-labelledby="settings-privacy">
+      <h3 id="settings-privacy" class="section-title">
+        {{ "settings.privacy.title" | t }}
+      </h3>
+      <mat-slide-toggle
+        class="usage-stats"
+        [checked]="stats.granted()"
+        (change)="stats.decide($event.checked)"
+      >
+        {{ "settings.privacy.stats" | t }}
+      </mat-slide-toggle>
+      <p class="section-note">{{ "settings.privacy.statsNote" | t }}</p>
+    </section>
+  }
   <section class="screen-section" aria-labelledby="settings-language">
     <h3 id="settings-language" class="section-title">
       {{ "settings.language.title" | t }}

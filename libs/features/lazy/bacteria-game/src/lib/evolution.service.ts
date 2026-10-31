@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, Subscription, switchMap, take, timer } from 'rxjs';
+import { GameEvents, injectGameAnalytics } from './analytics/game-analytics';
 import { ProgressService } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import {
@@ -40,7 +41,7 @@ import {
   withSkin,
   withWeapon,
 } from './state/evolution-progress';
-import { BacteriaLook } from './state/skins';
+import { BacteriaLook, skinCost } from './state/skins';
 import { GameAccount, PlayerSwitch } from './storage/game-account';
 import { DeviceStorage, GameStorage } from './storage/game-storage';
 
@@ -81,6 +82,7 @@ export class EvolutionService {
   private readonly account = inject(GameAccount);
   private readonly device = inject(DeviceStorage);
   private readonly progress = inject(ProgressService);
+  private readonly analytics = injectGameAnalytics();
   private readonly state = signal(EMPTY_EVOLUTION);
   /** True once the storage has answered for the evolution. */
   private readonly answered = signal(false);
@@ -213,6 +215,7 @@ export class EvolutionService {
     if (!this.canBuySkin(skin)) {
       return false;
     }
+    this.spent('skin', skin, skinCost(skin));
     this.apply((evolution) => withSkin(evolution, skin));
     return true;
   }
@@ -230,6 +233,7 @@ export class EvolutionService {
     if (!this.canBuyGene(gene)) {
       return false;
     }
+    this.spent('gene', gene, this.geneCost(gene) ?? 0);
     const level = this.level(gene) + 1;
     this.apply((evolution) => withGeneLevel(evolution, gene, level));
     return true;
@@ -240,8 +244,22 @@ export class EvolutionService {
     if (!this.canBuyWeapon(weapon)) {
       return false;
     }
+    this.spent('weapon', weapon, this.weaponCost(weapon));
     this.apply((evolution) => withWeapon(evolution, weapon));
     return true;
+  }
+
+  private spent(
+    item_category: GameEvents['spend_virtual_currency']['item_category'],
+    item_name: string,
+    value: number
+  ): void {
+    this.analytics.track('spend_virtual_currency', {
+      virtual_currency_name: 'dna',
+      value,
+      item_name,
+      item_category,
+    });
   }
 
   /** Carries a weapon held into the next match - or none, for null. */

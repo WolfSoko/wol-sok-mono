@@ -24,6 +24,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
+import { trackScreenViews } from './analytics/screen-views';
+import { reportUserProperties } from './analytics/user-properties';
 import { TranslationKey } from './i18n/dictionaries';
 import { I18nService } from './i18n/i18n.service';
 import { difficultyKeys, levelNameText, missionKeys } from './i18n/game-texts';
@@ -734,6 +736,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly pinch = new Pinch();
 
   constructor() {
+    trackScreenViews(
+      computed(() => (this.resetting() ? null : (this.panel() ?? 'match')))
+    );
+    reportUserProperties();
     this.gameStateService.reset();
     // A series lasts for a visit of the page: one left unfinished last time
     // does not carry over.

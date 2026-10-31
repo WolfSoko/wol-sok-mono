@@ -43,6 +43,8 @@ import {
   isVaporizeQuality,
   VaporizeQuality,
 } from './vaporize-effect';
+import { injectGameAnalytics } from './analytics/game-analytics';
+import { settingChange } from './analytics/setting-change';
 import { I18nService } from './i18n/i18n.service';
 import { isLanguage, Language } from './i18n/language';
 
@@ -150,6 +152,7 @@ export class GameSettingsService {
   private readonly store = inject(GameStateStore);
   private readonly storage = inject(DeviceStorage);
   private readonly i18n = inject(I18nService);
+  private readonly analytics = injectGameAnalytics();
   /** The settings the player changed - what restoring must keep. */
   private readonly touched = new Set<keyof StoredSettings>();
   /** A stored match setup that arrived during a match, for the next one. */
@@ -232,9 +235,16 @@ export class GameSettingsService {
    */
   public readonly loaded: Signal<boolean>;
   private readonly restored = signal(false);
+  /**
+   * The settings the statistics last saw, so a setter that sets the value
+   * in force again (a menu that sets free play on every visit) counts as
+   * no change.
+   */
+  private reportedSettings: StoredSettings;
 
   constructor() {
     this.loaded = this.restored.asReadonly();
+    this.reportedSettings = this.toStore();
     // Synchronous, so a change is told apart from a restored setup.
     this.store
       .select$(() => this.currentMatchSetup(), sameMatchSetup)
@@ -252,7 +262,8 @@ export class GameSettingsService {
       .subscribe((stored) => {
         this.restore(isObject(stored) ? (stored as StoredSettings) : {});
         this.restored.set(true);
-        this.persist();
+        this.reportedSettings = this.toStore();
+        this.persist(this.reportedSettings);
       });
     this.store
       .select$(() => this.store.currentState())
@@ -396,8 +407,24 @@ export class GameSettingsService {
    */
   private changed(...keys: (keyof StoredSettings)[]): void {
     keys.forEach((key) => this.touched.add(key));
+    const settings = this.toStore();
+    this.reportChanges(keys, settings);
     if (this.restored()) {
-      this.persist();
+      this.persist(settings);
+    }
+  }
+
+  private reportChanges(
+    keys: readonly (keyof StoredSettings)[],
+    settings: StoredSettings
+  ): void {
+    const before = this.reportedSettings;
+    this.reportedSettings = settings;
+    for (const key of keys) {
+      const change = settingChange(key, before, settings);
+      if (change !== null) {
+        this.analytics.track('setting_changed', change);
+      }
     }
   }
 
@@ -545,8 +572,13 @@ export class GameSettingsService {
     this.gameState.applySetup(setup);
   }
 
-  private persist(): void {
-    const settings: StoredSettings = {
+  private persist(settings = this.toStore()): void {
+    this.storage.write(SETTINGS_STORAGE_KEY, settings);
+  }
+
+  /** The settings as they are stored. */
+  private toStore(): StoredSettings {
+    return {
       ...this.matchSetupToStore(),
       look: this.look(),
       simResolution: this.simResolution(),
@@ -571,7 +603,6 @@ export class GameSettingsService {
       ranked: this.ranked(),
       recordingHintShown: this.recordingHintShown(),
     };
-    this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }
 
   /** The match setup as it stands, without tracking it. */

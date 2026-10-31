@@ -2,6 +2,10 @@ import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import {
+  provideRecordingAnalytics,
+  RecordingAnalytics,
+} from '@wolsok/shared-analytics/testing';
+import {
   provideShareTargets,
   ShareContent,
   ShareTarget,
@@ -32,6 +36,9 @@ const mailTarget: ShareTarget = {
 
 describe('ShareComponent', () => {
   let fixture: ComponentFixture<ShareComponent>;
+  let analytics: RecordingAnalytics;
+
+  beforeEach(() => (analytics = new RecordingAnalytics()));
 
   afterEach(() => {
     delete (navigator as Partial<Navigator>).share;
@@ -49,7 +56,10 @@ describe('ShareComponent', () => {
     });
     TestBed.configureTestingModule({
       imports: [ShareComponent],
-      providers: [provideShareTargets(...targets)],
+      providers: [
+        provideShareTargets(...targets),
+        provideRecordingAnalytics(analytics),
+      ],
     });
     fixture = TestBed.createComponent(ShareComponent);
     fixture.componentRef.setInput('content', content);
@@ -197,6 +207,50 @@ describe('ShareComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.classList).toContain('highlighted');
+  });
+
+  describe('usage statistics', () => {
+    it('counts a share through the share sheet, not a closed one', async () => {
+      const share = vi
+        .fn()
+        .mockRejectedValueOnce(new DOMException('closed', 'AbortError'))
+        .mockResolvedValueOnce(undefined);
+      await render(share);
+
+      await clickShare();
+      await clickShare();
+
+      expect(analytics.tracked('share')).toEqual([
+        { method: 'native', content_type: 'poll' },
+      ]);
+    });
+
+    it('counts a copied link, not a failed copy', async () => {
+      await render();
+      const copy = vi.spyOn(TestBed.inject(Clipboard), 'copy');
+      copy.mockReturnValueOnce(false).mockReturnValueOnce(true);
+
+      query('copy-link').nativeElement.click();
+      query('copy-link').nativeElement.click();
+
+      expect(analytics.tracked('share')).toEqual([
+        { method: 'copy', content_type: 'poll' },
+      ]);
+    });
+
+    it('counts a share target by its id, with what is shared', async () => {
+      await render();
+      fixture.componentRef.setInput('subject', 'site');
+      fixture.detectChanges();
+      const link = query('share-mail').nativeElement as HTMLAnchorElement;
+      link.addEventListener('click', (event) => event.preventDefault());
+
+      link.click();
+
+      expect(analytics.tracked('share')).toEqual([
+        { method: 'mail', content_type: 'site' },
+      ]);
+    });
   });
 
   async function clickShare(): Promise<void> {

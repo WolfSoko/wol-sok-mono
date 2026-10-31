@@ -1,5 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import {
+  provideRecordingAnalytics,
+  RecordingAnalytics,
+} from '@wolsok/shared-analytics/testing';
+import {
   DEFAULT_EFFECTS_VOLUME,
   DEFAULT_MUSIC_VOLUME,
   GameSettingsService,
@@ -75,6 +79,27 @@ describe('GameSettingsService', () => {
       mode: 'two-players',
       levelId: LEVELS[1].id,
     });
+  });
+
+  it('counts the settings the player changes, not the volumes or a value set again', () => {
+    const analytics = new RecordingAnalytics();
+    TestBed.configureTestingModule({
+      providers: [provideRecordingAnalytics(analytics)],
+    });
+    const service = TestBed.inject(GameSettingsService);
+
+    service.setSound(false);
+    // the same again: no change
+    service.setSound(false);
+    service.setLanguage('de');
+    service.setLanguage(null);
+    service.setMusicVolume(40);
+
+    expect(analytics.tracked('setting_changed')).toEqual([
+      { setting: 'sound', value: false },
+      { setting: 'language', value: 'de' },
+      { setting: 'language', value: 'auto' },
+    ]);
   });
 
   it('remembers the frame rate badge', () => {

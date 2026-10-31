@@ -1,5 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { take } from 'rxjs';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { isRuleset, Ruleset } from '../state/simulation';
 import { DeviceStorage } from '../storage/game-storage';
 
@@ -50,6 +51,7 @@ export function overrideFromQuery(search: string): Ruleset | null | undefined {
 @Injectable({ providedIn: 'root' })
 export class SimulationOverrideService {
   private readonly storage = inject(DeviceStorage);
+  private readonly analytics = injectGameAnalytics();
   private readonly forced = signal<Ruleset | null>(null);
   private started = false;
   /** True once the player chose: a late stored value must not undo it. */
@@ -90,6 +92,10 @@ export class SimulationOverrideService {
    * takes `?sim=` out of the address, or a reload would undo it.
    */
   public choose(ruleset: Ruleset | null): void {
+    this.analytics.track('setting_changed', {
+      setting: 'simulation',
+      value: ruleset ?? 'auto',
+    });
     this.chosen = true;
     this.forced.set(ruleset);
     this.storage.write(SIMULATION_OVERRIDE_STORAGE_KEY, ruleset);

@@ -23,6 +23,7 @@ import {
   take,
   timeout,
 } from 'rxjs';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { EvolutionService } from '../evolution.service';
 import { GpuSelfTestService } from '../gl/gpu-self-test.service';
 import { TranslationKey } from '../i18n/dictionaries';
@@ -94,6 +95,7 @@ interface MatchRow {
 })
 export class MyMatchesComponent {
   private readonly replays = inject(GameReplays);
+  private readonly analytics = injectGameAnalytics();
   private readonly i18n = inject(I18nService);
   private readonly evolution = inject(EvolutionService);
   /** The GPU that passed the self-test, which GPU replays play on. */
@@ -173,6 +175,7 @@ export class MyMatchesComponent {
         return;
       }
       this.watching.set(replay);
+      this.analytics.track('replay_watched', { source: 'my_matches' });
     } finally {
       this.busy.set(null);
     }
@@ -233,11 +236,13 @@ export class MyMatchesComponent {
         );
         return;
       }
+      const keptOut = type === 'remove' && this.cloud;
       this.notice.set(
-        type === 'remove' && this.cloud
-          ? 'replay.matches.keptOut'
-          : 'replay.matches.removed'
+        keptOut ? 'replay.matches.keptOut' : 'replay.matches.removed'
       );
+      this.analytics.track(keptOut ? 'replay_kept_out' : 'replay_deleted', {
+        cloud: this.cloud,
+      });
       this.reload.next();
     } catch (error) {
       // No answer in time, or the watch gave up.

@@ -58,6 +58,12 @@ export const settings = {
     saveMatches: 'Save my matches',
     saveMatchesNote: 'Online matches are always kept.',
   },
+  privacy: {
+    title: 'Privacy',
+    stats: 'Usage statistics',
+    statsNote:
+      'Counts with Google Analytics which modes, levels and screens get played, to make the game better. Nothing that names you, no ads. The privacy policy says what exactly.',
+  },
   simulation: {
     choice: 'Simulation',
     auto: 'Auto',

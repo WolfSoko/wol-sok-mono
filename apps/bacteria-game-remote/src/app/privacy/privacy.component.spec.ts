@@ -4,6 +4,7 @@ import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { AdNetworkName, GameAds } from '@wolsok/feat-lazy-bac-game';
+import { ConsentPrompt } from '@wolsok/shared-analytics';
 import { PrivacyComponent } from './privacy.component';
 
 describe('PrivacyComponent', () => {
@@ -440,20 +441,69 @@ describe('PrivacyComponent', () => {
       [...page.querySelectorAll(`article[lang="${lang}"] h2`)].map(
         (h2) => h2.textContent?.split('.')[0]
       );
-    const expected = Array.from({ length: 14 }, (_, i) => `${i + 1}`);
+    const expected = Array.from({ length: 15 }, (_, i) => `${i + 1}`);
 
     expect(numbers('de')).toEqual(expected);
     expect(numbers('en')).toEqual(expected);
     const { de, en } = texts(page);
-    // Deleting the account is section 11 now.
-    expect(de).toContain('wie in Abschnitt 11');
-    expect(en).toContain('in section 11');
+    // Deleting the account is section 12 now.
+    expect(de).toContain('wie in Abschnitt 12');
+    expect(en).toContain('in section 12');
     // Every reference to section 10 means the error reports, its only
-    // content; one that says how to delete data points to 11.
+    // content; one that says how to delete data points to the deletion, 12.
     for (const text of [de, en]) {
       expect(text).not.toMatch(/(Abschnitt|section) 10\s+(explains|steht)/i);
     }
-    expect(en).toContain('Section 11 explains how to have it deleted');
+    expect(en).toContain('Section 12 explains how to have it deleted');
+  });
+
+  describe('the usage statistics', () => {
+    const choice = signal<'granted' | 'denied' | null>(null);
+    const decide = jest.fn((made: 'granted' | 'denied') => choice.set(made));
+
+    function statsButtons(page: HTMLElement): HTMLButtonElement[] {
+      return [...page.querySelectorAll<HTMLButtonElement>('.stats-settings')];
+    }
+
+    it('says what is counted, and how to change it', async () => {
+      const { de, en } = texts(await open());
+
+      expect(de).toContain('11. Nutzungsstatistik (Google Analytics)');
+      expect(en).toContain('11. Usage statistics (Google Analytics)');
+      expect(de).toContain(
+        'Ohne deine Einwilligung lädt das Spiel Google Analytics nicht'
+      );
+      expect(en).toContain(
+        'Without your consent the game does not load Google Analytics'
+      );
+      expect(de).toContain('„Datenschutz“ → „Nutzungsstatistik“');
+      expect(en).toContain('“Privacy” → “Usage statistics”');
+      expect(de).not.toContain('nutzt keine Analysedienste');
+      expect(en).not.toContain('uses no analytics');
+    });
+
+    it('offers no switch where the game does not measure', async () => {
+      expect(statsButtons(await open())).toEqual([]);
+    });
+
+    it('switches the statistics on and off where the game measures', async () => {
+      choice.set(null);
+      decide.mockClear();
+      TestBed.overrideProvider(ConsentPrompt, {
+        useValue: { asking: signal(false), choice, decide },
+      });
+      const page = await open();
+
+      const [de, en] = statsButtons(page);
+      expect(de.textContent?.trim()).toBe('Nutzungsstatistik einschalten');
+      en.click();
+      TestBed.tick();
+
+      expect(decide).toHaveBeenCalledWith('granted');
+      expect(statsButtons(page)[1].textContent?.trim()).toBe(
+        'Switch usage statistics off'
+      );
+    });
   });
 
   it('has its own title while open', async () => {

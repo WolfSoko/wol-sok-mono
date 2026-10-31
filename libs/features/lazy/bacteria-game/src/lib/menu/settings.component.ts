@@ -11,6 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
+import { StatsConsent } from '../analytics/stats-consent.service';
 import { FeatureTogglesService } from '../feature-toggles.service';
 import { Size } from '../fullscreen';
 import { GpuSelfTestService } from '../gl/gpu-self-test.service';
@@ -56,6 +57,8 @@ import { ScreenHeaderComponent } from './screen-header.component';
 })
 export class SettingsComponent {
   protected readonly settings = inject(GameSettingsService);
+  /** The usage statistics' switch, only where the game measures. */
+  protected readonly stats = inject(StatsConsent);
   private readonly i18n = inject(I18nService);
   private readonly gpuSelfTest = inject(GpuSelfTestService);
   private readonly simulationOverride = inject(SimulationOverrideService);

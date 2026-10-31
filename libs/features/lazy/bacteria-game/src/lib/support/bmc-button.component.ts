@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { TranslatePipe } from '../i18n/translate.pipe';
 
 /**
@@ -16,6 +17,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       [href]="url()"
       target="_blank"
       rel="noopener noreferrer"
+      (click)="analytics.track('tip_link_opened')"
     >
       <svg class="cup" viewBox="0 0 32 32" aria-hidden="true">
         <path
@@ -89,4 +91,5 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 })
 export class BmcButtonComponent {
   public readonly url = input.required<string>();
+  protected readonly analytics = injectGameAnalytics();
 }

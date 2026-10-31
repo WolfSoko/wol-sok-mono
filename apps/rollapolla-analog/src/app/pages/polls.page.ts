@@ -22,6 +22,7 @@ import {
 } from '../adapter/pending-until-first-value';
 import { EndlessScroll } from '../core/endless-scroll/endless-scroll';
 import { EndlessScrollEndComponent } from '../core/endless-scroll/endless-scroll-end.component';
+import { injectRollaPollaAnalytics } from '../core/analytics/rollapolla-analytics';
 import { PollListComponent } from '../core/poll-list/poll-list.component';
 import { PollsRepoPort } from '../ports/polls-repo.port';
 import { SITE_TAGS, usePageTags } from './site-tags';
@@ -96,6 +97,7 @@ import { SITE_TAGS, usePageTags } from './site-tags';
         @if (results.length) {
           <rap-poll-list
             [polls]="results"
+            list="browse"
             testIdPrefix="search-result-"
             data-testid="poll-search-results"
           />
@@ -191,6 +193,7 @@ export default class PollsPageComponent {
   );
 
   private readonly pollsRepo = inject(PollsRepoPort);
+  private readonly analytics = injectRollaPollaAnalytics();
   /** Search filters the polls loaded so far and keeps loading while few match. */
   protected readonly scroll = new EndlessScroll();
   private readonly polls = toSignal(
@@ -238,6 +241,7 @@ export default class PollsPageComponent {
   }
 
   protected setSort(sort: PollSort): void {
+    this.analytics.track('poll_list_sorted', { sort });
     this.sort.set(sort);
     this.updateUrl();
   }

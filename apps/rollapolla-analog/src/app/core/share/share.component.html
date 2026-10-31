@@ -58,6 +58,7 @@
           [attr.aria-label]="'Share on ' + link.label"
           [matTooltip]="link.label"
           [attr.data-testid]="'share-' + link.id"
+          (click)="trackShare(link.id)"
         >
           @if (link.icon.kind === "svg") {
             <mat-icon [svgIcon]="link.svgIcon" />

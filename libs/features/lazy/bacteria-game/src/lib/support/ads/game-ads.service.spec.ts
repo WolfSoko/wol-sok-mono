@@ -7,7 +7,7 @@ import {
 import { GAME_SUPPORT, GameSupportOptions } from '../game-support';
 import { ADINPLAY_SCRIPT_ID, AdinPlayWindow } from './adinplay-network';
 import { ADSENSE_SCRIPT_ID } from './adsense-network';
-import { GameAds } from './game-ads.service';
+import { CONSENT_BANNER_WAIT_MS, GameAds } from './game-ads.service';
 
 describe('GameAds', () => {
   const adsWindow = window as AdinPlayWindow;
@@ -83,6 +83,30 @@ describe('GameAds', () => {
     document.dispatchEvent(new Event('aip_consent'));
 
     expect(gameAds.consentAnswered()).toBe(true);
+  });
+
+  it('is done with the consent banner at once without a network', () => {
+    const gameAds = setUp({ ...GAME_SUPPORT_OPTIONS, ads: null });
+
+    gameAds.start();
+
+    expect(gameAds.consentSettled()).toBe(true);
+  });
+
+  it('is done with the consent banner once it answered, or did not come in time', () => {
+    const answering = setUp({ ...GAME_SUPPORT_OPTIONS, ads: ADINPLAY_ADS });
+    answering.start();
+    expect(answering.consentSettled()).toBe(false);
+    document.dispatchEvent(new Event('aip_consent'));
+    expect(answering.consentSettled()).toBe(true);
+
+    TestBed.resetTestingModule();
+    const blocked = setUp({ ...GAME_SUPPORT_OPTIONS, ads: ADSENSE_ADS });
+    blocked.start();
+    jest.advanceTimersByTime(CONSENT_BANNER_WAIT_MS - 1);
+    expect(blocked.consentSettled()).toBe(false);
+    jest.advanceTimersByTime(1);
+    expect(blocked.consentSettled()).toBe(true);
   });
 
   it("shows the network's ad and opens its consent banner", () => {

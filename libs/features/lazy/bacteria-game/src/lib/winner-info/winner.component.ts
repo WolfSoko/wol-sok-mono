@@ -15,6 +15,7 @@ import { DatePipe, DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { TranslationKey } from '../i18n/dictionaries';
 import {
   achievementTexts,
@@ -34,7 +35,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { GameMode, GameStateStore } from '../state/game.states';
 import { getLevel, Level, nextLevel } from '../state/levels';
-import { MedalAward, medalRank } from '../state/medallions';
+import { isNewBest, MedalAward, medalRank } from '../state/medallions';
 import { Player } from '../state/player.model';
 import { AchievementId } from '../state/achievement-ids';
 import { MatchEarnings } from '../state/earnings';
@@ -263,6 +264,7 @@ export class WinnerComponent {
   );
 
   private readonly social = inject(SocialService);
+  private readonly analytics = injectGameAnalytics();
   /** The opponent of an online match, to add as a friend - null otherwise. */
   public readonly newFriend = computed(() => {
     const opponent = this.social.opponent();
@@ -321,8 +323,7 @@ export class WinnerComponent {
   private readonly succeeded = computed(() => {
     const award = this.award();
     return (
-      (award?.medal != null &&
-        medalRank(award.medal) > medalRank(award.previousBest)) ||
+      (award != null && isNewBest(award)) ||
       this.earned().length > 0 ||
       this.xp()?.climb?.rankUp === true
     );
@@ -365,6 +366,10 @@ export class WinnerComponent {
    * Shares the link to the run just played, for a friend to fight as a
    * ghost: through the system's share sheet where there is one, else copied.
    */
+  private trackShare(method: 'native' | 'copy'): void {
+    this.analytics.track('share', { method, content_type: 'ghost_run' });
+  }
+
   public shareRun(): void {
     const url = this.shareLink();
     const run = this.state.lastReplay();
@@ -373,11 +378,13 @@ export class WinnerComponent {
       return;
     }
     if (typeof navigator.share !== 'function') {
+      const copied = this.clipboard.copy(url);
       this.shareNote.set(
-        this.clipboard.copy(url)
-          ? 'match.share.copied'
-          : 'match.share.copyFailed'
+        copied ? 'match.share.copied' : 'match.share.copyFailed'
       );
+      if (copied) {
+        this.trackShare('copy');
+      }
       return;
     }
     this.sharing = true;
@@ -390,7 +397,10 @@ export class WinnerComponent {
         url,
       })
       .then(
-        () => this.shareNote.set(null),
+        () => {
+          this.shareNote.set(null);
+          this.trackShare('native');
+        },
         (error: unknown) => {
           // Closing the share sheet is no failure.
           if (!(error instanceof DOMException && error.name === 'AbortError')) {
@@ -533,7 +543,7 @@ export class WinnerComponent {
     if (award?.medal == null) {
       return this.t('match.medal.none');
     }
-    const newBest = medalRank(award.medal) > medalRank(award.previousBest);
+    const newBest = isNewBest(award);
     return this.t(newBest ? 'match.medal.newBest' : 'common.medal', {
       medal: this.t(medalKey(award.medal)),
     });

@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { take } from 'rxjs';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { BALANCE_VERSION } from '../state/game-balance';
 import { GPU_SELF_TEST_VERSION } from '../state/gpu-int/self-test-golden';
 import { DeviceStorage } from '../storage/game-storage';
@@ -100,6 +101,7 @@ export const SELF_TEST_IDLE_TIMEOUT_MS = 2_000;
 @Injectable({ providedIn: 'root' })
 export class GpuSelfTestService {
   private readonly storage = inject(DeviceStorage);
+  private readonly analytics = injectGameAnalytics();
   private readonly verdict = signal<GpuSelfTestResult | null>(null);
   private started = false;
   /** The GPU the arena's WebGL2 context renders with, once it said. */
@@ -184,6 +186,10 @@ export class GpuSelfTestService {
     now: () => number
   ): void {
     const result = run();
+    this.analytics.track('gpu_self_test', {
+      passed: result.ok,
+      ran_through: result.error == null,
+    });
     if (!result.ok) {
       console.warn(
         'The GPU fails the deterministic self-test - matches play on the CPU',

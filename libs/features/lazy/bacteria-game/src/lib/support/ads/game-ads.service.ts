@@ -1,10 +1,16 @@
 import { DOCUMENT } from '@angular/common';
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { GAME_SUPPORT } from '../game-support';
 import type { AdNetwork } from './ad-network';
 import type { AdNetworkName, GameAdsOptions } from './ad-network-options';
 import { AdinPlayNetwork } from './adinplay-network';
 import { AdSenseNetwork } from './adsense-network';
+
+/**
+ * How long the game waits at most for the network's consent banner: an ad
+ * blocker holds its script back for good, and no answer ever comes.
+ */
+export const CONSENT_BANNER_WAIT_MS = 30_000;
 
 function createAdNetwork(
   options: GameAdsOptions,
@@ -33,6 +39,7 @@ export class GameAds {
     : null;
 
   private readonly answered = signal(false);
+  private readonly gaveUp = signal(false);
   private started = false;
 
   /** The network the ads come from, null without ads. */
@@ -44,11 +51,20 @@ export class GameAds {
    * open again.
    */
   public readonly consentAnswered = this.answered.asReadonly();
+  /**
+   * True once the network's consent banner is done with: there is no
+   * network, the banner reported a choice, or it did not come in time. The
+   * game asks its own questions only then, so they never stack on it.
+   */
+  public readonly consentSettled = computed(
+    () => this.network === null || this.answered() || this.gaveUp()
+  );
 
   public start(): void {
     if (!this.network || this.started) return;
     this.started = true;
     this.network.load(() => this.answered.set(true));
+    setTimeout(() => this.gaveUp.set(true), CONSENT_BANNER_WAIT_MS);
   }
 
   /**

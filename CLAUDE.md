@@ -188,6 +188,14 @@ Keep `sitemap.xml` and the SEO tags in shape with every change that adds, rename
 - **Plugin E2E (Jest)**: `apps/nx-aws-cdk-v2-e2e` exercises `@wolsok/nx-aws-cdk-v2` in a generated throwaway workspace. Its target is `e2e` (not `e2e-ci`), so CI does not run it — run `npx nx e2e nx-aws-cdk-v2-e2e` by hand after changing the plugin
 - Run `npx nx affected -t test` before pushing
 
+## Analytics
+
+- Usage statistics go to GA4 through Firebase Analytics with `@wolsok/shared-analytics` (`libs/shared/analytics`), only with the visitor's opt-in (Consent Mode basic: nothing loads before it; ads, ad personalisation and Google signals always off). What each app measures, the rules and the GA4 setup are in [`docs/analytics.md`](docs/analytics.md); keep its tables in step with the catalogs.
+- Each app keeps its events as a typed catalog (`RollaPollaEvents` in rollapolla's `core/analytics/rollapolla-analytics.ts`, `GameEvents` in the game lib's `analytics/game-analytics.ts`) and tracks through `injectRollaPollaAnalytics()` / `injectGameAnalytics()`, which do nothing where analytics doesn't run (server, development, e2e, the shell, specs). Specs check events with `RecordingAnalytics` (`@wolsok/shared-analytics/testing`).
+- Never send ids (accounts, polls, rooms, replays, friends), names or typed text. Page views carry the route pattern (`/poll/:pollId`), never the URL, query or hash.
+- RollaPolla provides it in `main.ts` (browser, production). The game provides it in the remote's `app.config.ts` (`app/analytics/analytics.ts`, only with a `measurementId`, so not in development or e2e), on the game's named Firebase app (`gameFirebaseApp`, which the game cloud starts the same way); the main menu asks (`StatsConsent`, after the ad network's consent window, where there is one, is done with: `GameAds.consentSettled`), Settings → Privacy changes it. `@wolsok/shared-analytics` is skipped in `workspace-federation.js`, so the game inside the shell measures nothing. `GameStateService` reports matches only through `MatchAnalytics`.
+- A change to what the game sends goes into its privacy policy (section 11) in the same PR.
+
 ## Performance Gates
 
 Planned and phased in [ADR 0014](docs/adr/0014-performance-gates-in-ci.md); this section says what is in place. Keep it current with each phase.

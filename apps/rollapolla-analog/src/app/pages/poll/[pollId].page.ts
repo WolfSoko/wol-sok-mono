@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   Injector,
   linkedSignal,
@@ -17,6 +18,7 @@ import {
   pendingUntilFirstValue,
   SSR_DATA_TIMEOUT_MS,
 } from '../../adapter/pending-until-first-value';
+import { injectRollaPollaAnalytics } from '../../core/analytics/rollapolla-analytics';
 import { CreatePollComponent } from '../../core/create-poll/create-poll.component';
 import { CREATED_POLL_ID } from '../../core/create-poll/created-poll-id';
 import { PollChatComponent } from '../../core/poll-chat/poll-chat.component';
@@ -170,5 +172,24 @@ export default class PollPageComponent {
 
   constructor() {
     usePollMetaTags(this.poll, this.pollId);
+    this.trackNotFound();
+  }
+
+  /**
+   * Counts a link to a poll that does not exist: only the first answer for
+   * each poll, so the owner deleting it on this page counts as none.
+   */
+  private trackNotFound(): void {
+    const analytics = injectRollaPollaAnalytics();
+    let answeredFor: string | null = null;
+    effect(() => {
+      const poll = this.poll();
+      const pollId = this.pollId();
+      if (poll === undefined || pollId === answeredFor) return;
+      answeredFor = pollId;
+      if (poll === null) {
+        analytics.track('poll_not_found');
+      }
+    });
   }
 }

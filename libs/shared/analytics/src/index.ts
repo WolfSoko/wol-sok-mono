@@ -1,0 +1,8 @@
+export { Analytics } from './lib/analytics';
+export type { AnalyticsParams, AnalyticsValue } from './lib/analytics';
+export { ConsentPrompt } from './lib/consent';
+export type { ConsentChoice } from './lib/consent';
+export type { FirebaseAnalyticsOptions } from './lib/firebase-analytics';
+export { injectAnalytics } from './lib/inject-analytics';
+export type { AppAnalytics } from './lib/inject-analytics';
+export { provideFirebaseAnalytics } from './lib/provide-firebase-analytics';
