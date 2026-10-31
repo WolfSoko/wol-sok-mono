@@ -88,8 +88,10 @@ export interface GameBalance {
  * with it. Raise it with every change that plays a recorded match out
  * differently: a replay only plays again under the version it was recorded
  * with. Version 6 brings the `gpu-int` ruleset into play (ADR 0015, step 8).
+ * Version 7: on the `cpu` ruleset a bacterium with no free cell around sits
+ * its move out without drawing random numbers - it could not move anyway.
  */
-export const BALANCE_VERSION = 6;
+export const BALANCE_VERSION = 7;
 
 export const gameBalance: GameBalance = {
   startBacteriaRadius: 14,

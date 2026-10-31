@@ -727,7 +727,11 @@ describe('replays with evolution', () => {
 });
 
 describe('a boss with a weapon', () => {
-  /** A match against the boss of a level, the human sent at it. */
+  /**
+   * A match against the boss of a level, the human sent at it - on a seed
+   * where neither side is done before the boss's weapon is charged, as on
+   * most seeds.
+   */
   function bossMatch(levelId: string, loadouts?: MatchPlan['loadouts']) {
     const plan: MatchPlan = {
       ...PLAN,
@@ -735,6 +739,7 @@ describe('a boss with a weapon', () => {
       width: 320,
       height: 180,
       loadouts,
+      seed: 1,
     };
     const engine = engineOf(plan);
     const boss = engine.players[1];

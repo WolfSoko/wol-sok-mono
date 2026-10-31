@@ -386,6 +386,67 @@ describe('BacteriaSimulation', () => {
       });
     });
 
+    it('lets a bacterium with no free cell around sit its move out, drawing nothing', () => {
+      // given a dish packed wall to wall, too hungry to divide
+      const width = 8;
+      const height = 6;
+      const random = jest.fn(() => 0.5);
+      const simulation = new BacteriaSimulation(balance(), random);
+      simulation.resize(width, height);
+      simulation.setMap(getMap('open-field'));
+      simulation.init([
+        { playerId: 0, color: [255, 0, 0, 255], x: 0, y: 0, radius: 0 },
+      ]);
+      const [colony] = simulation.getColonies() as Colony[];
+      const packed = Array.from({ length: width * height }, (_, cell) =>
+        bacterium(cell % width, Math.floor(cell / width), 0.5)
+      );
+      setBacteria(colony, packed);
+      const player = createPlayer({
+        id: 0,
+        x: width,
+        y: height / 2,
+        color: [255, 0, 0, 255],
+      });
+      random.mockClear();
+
+      // when
+      simulation.step([player], 1 / 60);
+
+      // then
+      expect(random).not.toHaveBeenCalled();
+      expect(bacteriaOf(colony).map(({ x, y }) => [x, y])).toEqual(
+        packed.map(({ x, y }) => [x, y])
+      );
+    });
+
+    it('lets a bacterium move into a cell freed earlier in the same step', () => {
+      // given a queue in a corridor one cell high, its head first
+      const simulation = new BacteriaSimulation(balance(), () => 0.5);
+      simulation.resize(6, 1);
+      simulation.setMap(getMap('open-field'));
+      simulation.init([
+        { playerId: 0, color: [255, 0, 0, 255], x: 0, y: 0, radius: 0 },
+      ]);
+      const [colony] = simulation.getColonies() as Colony[];
+      setBacteria(colony, [bacterium(2, 0), bacterium(1, 0), bacterium(0, 0)]);
+      const player = createPlayer({
+        id: 0,
+        x: 6,
+        y: 0,
+        color: [255, 0, 0, 255],
+      });
+
+      // when
+      simulation.step([player], 1 / 60);
+
+      // then every one of them moved up behind the one ahead
+      const [head, middle, tail] = bacteriaOf(colony);
+      expect(head.x).toBeGreaterThan(2);
+      expect(middle.x).toBeGreaterThan(1);
+      expect(tail.x).toBeGreaterThan(0);
+    });
+
     it('never puts two bacteria on the same cell', () => {
       const { simulation, colonies, players } = setup(
         [ring(10, 10), ring(50, 30)],
