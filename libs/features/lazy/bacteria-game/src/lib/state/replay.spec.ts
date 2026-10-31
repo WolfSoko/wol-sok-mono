@@ -1,6 +1,7 @@
 import { Lockstep } from '../net/lockstep';
 import { NetMessage } from '../net/net-message';
 import { matchChecksum } from './checksum';
+import { arenaSize, SIM_RESOLUTIONS } from './arena-size';
 import { TICKS_PER_SEC } from './fixed-tick';
 import { BALANCE_VERSION } from './game-balance';
 import { MatchEngine } from './match-engine';
@@ -18,6 +19,7 @@ import {
   replayOutcome,
   REPLAY_VERSION,
   savedRegardless,
+  simGridOf,
 } from './replay';
 import { onlineReplayId } from './replay-id';
 
@@ -335,30 +337,53 @@ describe('replay', () => {
       ).toBeNull();
     });
 
-    it('stores only what was played on the online grid, with its outcome', () => {
+    it.each(SIM_RESOLUTIONS.map(({ id }) => id))(
+      'stores a match at simulation resolution "%s", with its outcome',
+      (grid) => {
+        const plan = { ...PLAN, ...arenaSize(grid) };
+        const { engine, replay } = record(plan, 10);
+        const stored = replayOf(plan, 'cpu', 10, engine.recorded, {
+          outcome: { endedBy: 'time', winnerSeat: null },
+          checksum: matchChecksum(engine.players),
+        });
+
+        expect(simGridOf(plan)).toBe(grid);
+        expect(parseReplay(stored, { stored: true })).toEqual(stored);
+        // Without its outcome it is no replay to keep.
+        expect(parseReplay(replay, { stored: true })).toBeNull();
+      }
+    );
+
+    it('stores nothing on an arena no simulation resolution has', () => {
       const { engine, replay } = record(PLAN, 10);
       const extras = {
         outcome: { endedBy: 'time' as const, winnerSeat: null },
         checksum: matchChecksum(engine.players),
       };
-      const onGrid = replayOf(
-        { ...PLAN, width: 320, height: 180 },
-        'cpu',
-        10,
-        engine.recorded,
-        extras
-      );
 
-      expect(parseReplay(onGrid, { stored: true })).toEqual(onGrid);
-      // 320 x 140 is no level's online grid.
+      // 320 x 140 is no grid of the level.
+      expect(simGridOf(PLAN)).toBeNull();
       expect(
         parseReplay(
           { ...replay, header: { ...replay.header, ...extras } },
           { stored: true }
         )
       ).toBeNull();
-      expect(parseReplay(replay, { stored: true })).toBeNull();
       expect(parseReplay(replay)).toEqual(replay);
+    });
+
+    it('stores an online match only on the online grid, the one it is played on', () => {
+      const high = { ...ONLINE, ...arenaSize('high') };
+      const { engine } = record(high, 10);
+      const online = replayOf(high, 'cpu', 10, engine.recorded, {
+        roomCode: 'K7QPXM',
+        n: 1,
+        outcome: { endedBy: 'time', winnerSeat: null },
+        checksum: matchChecksum(engine.players),
+      });
+
+      expect(parseReplay(online, { stored: true })).toBeNull();
+      expect(parseReplay(online)).toEqual(online);
     });
 
     it.each([

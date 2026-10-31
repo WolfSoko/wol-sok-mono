@@ -47,6 +47,8 @@ export {
   ticksToMs,
 } from './lib/state/fixed-tick';
 
+export { arenaSize, ONLINE_SIM_RESOLUTION } from './lib/state/arena-size';
+
 // Replays.
 export {
   EVOLVED_REPLAY_VERSION,

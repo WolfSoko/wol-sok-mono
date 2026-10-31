@@ -474,7 +474,7 @@ export class ReplayViewerComponent {
   protected readonly layout = computed((): ArenaLayout => {
     const { width, height, levelId } = this.replay().header;
     const size = levelSize(getLevel(levelId));
-    const sim = simResolutionOf(width, size);
+    const sim = simResolutionOf({ width, height }, size);
     return {
       width,
       height,

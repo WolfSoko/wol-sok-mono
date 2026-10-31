@@ -77,6 +77,12 @@ function calls, and server-verified match results.
   device. Off the online grid it keeps the simulation the device picks -
   a float GPU match is not recorded - and it is never uploaded; only a
   replay on the online grid is stored and checked.)
+  (Changed by the owner's decision of 2026-10-31: a local replay is
+  uploaded and stored on every simulation resolution, like one on the
+  online grid; online and ranked matches stay on the online grid. A
+  server re-run's expected cost grows with the arena's cells
+  (`expectedRerunMs` in `boards/budgets.ts`), so an "Ultra" match - four
+  times the cells - is re-run only where the budget covers it.)
 - **"Save my matches" (on by default)** decides whether recorded matches
   are uploaded. Off, a replay stays on the device until the next match.
   (Changed by ADR 0012: it governs local matches only. Online matches are
