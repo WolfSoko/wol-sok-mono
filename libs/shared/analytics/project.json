@@ -1,0 +1,15 @@
+{
+  "name": "shared-analytics",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/shared/analytics/src",
+  "tags": ["shared"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "options": {
+        "configFile": "libs/shared/analytics/vite.config.ts"
+      }
+    }
+  }
+}
