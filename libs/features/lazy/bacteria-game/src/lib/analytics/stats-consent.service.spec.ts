@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ConsentChoice, ConsentPrompt } from '@wolsok/shared-analytics';
-import { GameAds } from '../support/game-ads.service';
+import { GameAds } from '../support/ads/game-ads.service';
 import { StatsConsent } from './stats-consent.service';
 
 describe('StatsConsent', () => {

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.127.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.3...v74.127.0) (2026-10-31)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ put the ad network behind a port, with AdinPlay as the next network ([#2727](https://github.com/WolfSoko/wol-sok-mono/issues/2727)) ([a60a8f3](https://github.com/WolfSoko/wol-sok-mono/commit/a60a8f3691866f702107b429ed5df824d189762f))
+
 ## [74.126.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.2...v74.126.3) (2026-10-31)
 
 ### Performance

@@ -74,8 +74,8 @@ User property: `account` (`none`, `anonymous`, `google`).
 ## Bacteria Wars (`bacteria-wars`, web stream `G-5HSMB2CHGY`)
 
 Consent: the main menu asks (`StatsBannerComponent`, before the guest and the
-install banner), only once Google's ad consent window is done with
-(`GameAds.consentSettled`), so the two never stack. Settings → Privacy →
+install banner), only once the ad network's consent window, where the game
+has ads, is done with (`GameAds.consentSettled`), so the two never stack. Settings → Privacy →
 Usage statistics and the button in the privacy policy change it. Choice in
 `localStorage` `bacteria-wars-stats-consent`.
 

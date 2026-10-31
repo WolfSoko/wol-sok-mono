@@ -29,7 +29,7 @@ import { ACHIEVEMENTS } from '../state/achievements';
 import { rankFor, RANKS } from '../state/ranks';
 import { dnaEarned } from '../state/evolution';
 import { RankStandingComponent } from '../rank/rank-standing.component';
-import { AdSlotComponent } from '../support/ad-slot.component';
+import { AdSlotComponent } from '../support/ads/ad-slot.component';
 import {
   LifetimeTotals,
   medalTally,

@@ -22,7 +22,7 @@ What the shell adds:
   opens, and the Android OAuth client Play Games Services asks for lives on
   that app. The manifest drops the advertising id permission Analytics
   brings along and turns its advertising id collection off: the app itself
-  serves no ads (the web game's AdSense ads run in Chrome, without the
+  serves no ads (the web game's ads run in Chrome, without the
   Android advertising id), and the app's Play declaration says so. The file
   holds no secret: the API key identifies the project and ships in every
   build, so restrict it in the Cloud console rather than hide it. Download

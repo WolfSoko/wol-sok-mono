@@ -41,9 +41,14 @@
       nur, wenn du ihn öffentlich zeigst (Abschnitt 4). Deine Matches zeichnet
       das Spiel auf und speichert sie 30 Tage in der Cloud, lesbar nur für die
       Spieler des Matches; öffentlich wird ein Match nur, wenn wir es in der
-      Galerie zeigen (Abschnitt 4). Das Spiel lädt das Werbeskript von Google
-      mit seinem Einwilligungsfenster, zeigt aber keine Anzeigen (Abschnitt 7),
-      und bittet um ein freiwilliges Trinkgeld (Abschnitt 8). Spielst du das
+      Galerie zeigen (Abschnitt 4).
+      @if (ads.networkName) {
+        Auf einigen Menüseiten zeigt das Spiel Werbung, nach deiner Wahl in
+        einem Einwilligungsfenster (Abschnitt 7).
+      } @else {
+        Werbung zeigt das Spiel derzeit keine (Abschnitt 7).
+      }
+      Es bittet um ein freiwilliges Trinkgeld (Abschnitt 8). Spielst du das
       Spiel eingebettet in einer anderen Seite, etwa
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       zeigt es dort weder Werbung noch Trinkgeld, und diese Erklärung gilt nicht
@@ -119,17 +124,20 @@
     <p>
       Diese Daten verlassen dein Gerät nicht, außer wie in Abschnitt 4
       beschrieben. Das Spiel selbst setzt keine Cookies, außer mit deiner
-      Einwilligung die der Nutzungsstatistik (Abschnitt 11); was die Werbung auf
-      deinem Gerät speichert, steht in Abschnitt 7. Die Speicherung ist für das
-      Spiel, das du ausdrücklich aufrufst, unbedingt erforderlich (§ 25 Abs. 2
-      Nr. 2 TDDDG). Du kannst die Daten jederzeit löschen: im Browser, indem du
-      unter „Website-Einstellungen“ die gespeicherten Daten von
-      bacteria-wars.wolsok.de löschst. Die Android-App speichert sie nicht bei
-      sich, sondern in Chrome (oder dem Browser, in dem sie das Spiel öffnet,
-      Abschnitt 6): Dort löschst du sie unter Chrome → Einstellungen →
-      Website-Einstellungen → Alle Websites → bacteria-wars.wolsok.de →
-      „Löschen“. Nur wenn die App das Spiel in ihrer WebView zeigt, löschst du
-      sie in den Android-Einstellungen unter Apps → Bacteria Wars → Speicher.
+      Einwilligung die der Nutzungsstatistik (Abschnitt 11).
+      @if (ads.networkName) {
+        Was die Werbung auf deinem Gerät speichert, steht in Abschnitt 7.
+      }
+      Die Speicherung ist für das Spiel, das du ausdrücklich aufrufst, unbedingt
+      erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG). Du kannst die Daten jederzeit
+      löschen: im Browser, indem du unter „Website-Einstellungen“ die
+      gespeicherten Daten von bacteria-wars.wolsok.de löschst. Die Android-App
+      speichert sie nicht bei sich, sondern in Chrome (oder dem Browser, in dem
+      sie das Spiel öffnet, Abschnitt 6): Dort löschst du sie unter Chrome →
+      Einstellungen → Website-Einstellungen → Alle Websites →
+      bacteria-wars.wolsok.de → „Löschen“. Nur wenn die App das Spiel in ihrer
+      WebView zeigt, löschst du sie in den Android-Einstellungen unter Apps →
+      Bacteria Wars → Speicher.
     </p>
 
     <h2 id="de-konto">4. Spielstand in der Cloud und Konto</h2>
@@ -549,51 +557,105 @@
       Google.
     </p>
 
-    <h2 id="de-werbung">7. Werbung (Google AdSense)</h2>
-    <p>
-      Auf bacteria-wars.wolsok.de und in der Android-App lädt das Spiel beim
-      Start ein Skript von Google AdSense (pagead2.googlesyndication.com;
-      Anbieter: Google Ireland Limited, Anschrift wie in Abschnitt 4); dabei
-      erhält Google deine IP-Adresse und Angaben zu Browser und Gerät.
-      Werbeflächen hat das Spiel derzeit nicht eingeschaltet: Es zeigt keine
-      Anzeigen. Rechtsgrundlage dafür, das Skript zu laden und sein
-      Einwilligungsfenster zu zeigen, ist Art. 6 Abs. 1 lit. f DSGVO: Unser
-      berechtigtes Interesse ist, dich nach deiner Wahl zur Werbung zu fragen
-      und die Seite von Google für AdSense prüfen zu lassen.
-    </p>
-    <p>
-      Das Skript zeigt ein Einwilligungsfenster von Google („Privacy &amp;
-      Messaging“, nach dem IAB Transparency &amp; Consent Framework 2.2):
-    </p>
-    <ul>
-      <li>
-        Willigst du ein, dürfen Google und seine Partner Cookies und ähnliche
-        Techniken auf deinem Gerät nutzen, um Werbung auszuliefern, zu messen
-        und nach deinen Interessen auszuwählen. Rechtsgrundlage ist deine
-        Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG).
-      </li>
-      <li>
-        Lehnst du ab, verarbeitet Google Daten nur, soweit es ohne Einwilligung
-        zulässig ist, etwa zur Betrugsabwehr (Art. 6 Abs. 1 lit. f DSGVO).
-      </li>
-    </ul>
-    <p>
-      Deine Wahl speichert das Einwilligungsfenster auf deinem Gerät. Ändern
-      oder widerrufen kannst du sie jederzeit mit dem Button
-      „Datenschutz-Einstellungen für Anzeigen“, der das Fenster wieder öffnet:
-      Er steht hier, unter dem Hauptmenü des Spiels und in der Hilfe, sobald das
-      Fenster deine Wahl kennt. Erscheint er nicht, etwa weil ein Werbeblocker
-      das Skript aufhält oder das Fenster nicht geladen ist, lösche die
-      gespeicherten Daten der Seite wie in Abschnitt 3 beschrieben, in der
-      Android-App also in Chrome unter Chrome → Einstellungen →
-      Website-Einstellungen → Alle Websites → bacteria-wars.wolsok.de →
-      „Löschen“ (nur in der WebView der App über die Android-Einstellungen);
-      beim nächsten Start fragt das Fenster wieder. Zur Übermittlung in die USA
-      siehe Abschnitt 4. Mehr dazu, wie Google diese Daten nutzt:
-      <a href="https://policies.google.com/technologies/partner-sites?hl=de"
-        >Datennutzung durch Google bei Websites und Apps von Partnern</a
-      >.
-    </p>
+    @switch (ads.networkName) {
+      @case ("adinplay") {
+        <h2 id="de-werbung">7. Werbung (AdinPlay)</h2>
+        <p>
+          Auf bacteria-wars.wolsok.de und in der Android-App zeigt das Spiel auf
+          einigen Menüseiten Werbung von AdinPlay (Anbieter: AdinPlay BV,
+          Oranjestraat 10, 7451 CC Holten, Niederlande). Dafür lädt es beim
+          Start ein Skript von AdinPlay (api.adinplay.com); dabei erhält
+          AdinPlay deine IP-Adresse und Angaben zu Browser und Gerät.
+          Rechtsgrundlage dafür, das Skript zu laden und sein
+          Einwilligungsfenster zu zeigen, ist Art. 6 Abs. 1 lit. f DSGVO: Unser
+          berechtigtes Interesse ist, dich nach deiner Wahl zur Werbung zu
+          fragen. Anzeigen fordert das Spiel erst an, wenn du dort gewählt hast.
+        </p>
+        <p>Das Skript zeigt ein Einwilligungsfenster von AdinPlay:</p>
+        <ul>
+          <li>
+            Willigst du ein, dürfen AdinPlay und seine Werbepartner Cookies und
+            ähnliche Techniken auf deinem Gerät nutzen, um Werbung auszuliefern,
+            zu messen und nach deinen Interessen auszuwählen. Rechtsgrundlage
+            ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1
+            TDDDG). Welche Partner das sind und wo sie Daten verarbeiten, auch
+            außerhalb der EU, nennt das Einwilligungsfenster.
+          </li>
+          <li>
+            Lehnst du ab, verarbeitet AdinPlay Daten nur, soweit es ohne
+            Einwilligung zulässig ist, etwa zur Betrugsabwehr (Art. 6 Abs. 1
+            lit. f DSGVO).
+          </li>
+        </ul>
+        <p>
+          Mehr dazu, wie AdinPlay diese Daten nutzt:
+          <a href="https://adinplay.com/privacy-policy"
+            >Datenschutzerklärung von AdinPlay</a
+          >.
+        </p>
+      }
+      @case ("adsense") {
+        <h2 id="de-werbung">7. Werbung (Google AdSense)</h2>
+        <p>
+          Auf bacteria-wars.wolsok.de und in der Android-App zeigt das Spiel auf
+          einigen Menüseiten Werbung von Google AdSense (Anbieter: Google
+          Ireland Limited, Anschrift wie in Abschnitt 4). Dafür lädt es beim
+          Start ein Skript von Google AdSense (pagead2.googlesyndication.com);
+          dabei erhält Google deine IP-Adresse und Angaben zu Browser und Gerät.
+          Rechtsgrundlage dafür, das Skript zu laden und sein
+          Einwilligungsfenster zu zeigen, ist Art. 6 Abs. 1 lit. f DSGVO: Unser
+          berechtigtes Interesse ist, dich nach deiner Wahl zur Werbung zu
+          fragen. Anzeigen fordert das Spiel erst an, wenn du dort gewählt hast.
+        </p>
+        <p>
+          Das Skript zeigt ein Einwilligungsfenster von Google („Privacy &amp;
+          Messaging“, nach dem IAB Transparency &amp; Consent Framework 2.2):
+        </p>
+        <ul>
+          <li>
+            Willigst du ein, dürfen Google und seine Partner Cookies und
+            ähnliche Techniken auf deinem Gerät nutzen, um Werbung auszuliefern,
+            zu messen und nach deinen Interessen auszuwählen. Rechtsgrundlage
+            ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1
+            TDDDG).
+          </li>
+          <li>
+            Lehnst du ab, verarbeitet Google Daten nur, soweit es ohne
+            Einwilligung zulässig ist, etwa zur Betrugsabwehr (Art. 6 Abs. 1
+            lit. f DSGVO).
+          </li>
+        </ul>
+        <p>
+          Zur Übermittlung in die USA siehe Abschnitt 4. Mehr dazu, wie Google
+          diese Daten nutzt:
+          <a href="https://policies.google.com/technologies/partner-sites?hl=de"
+            >Datennutzung durch Google bei Websites und Apps von Partnern</a
+          >.
+        </p>
+      }
+      @default {
+        <h2 id="de-werbung">7. Werbung</h2>
+        <p>
+          Das Spiel zeigt derzeit keine Werbung: Es lädt kein Skript eines
+          Werbenetzwerks und fragt nicht nach einer Einwilligung dafür.
+        </p>
+      }
+    }
+    @if (ads.networkName) {
+      <p>
+        Deine Wahl speichert das Einwilligungsfenster auf deinem Gerät. Ändern
+        oder widerrufen kannst du sie jederzeit mit dem Button
+        „Datenschutz-Einstellungen für Anzeigen“, der das Fenster wieder öffnet:
+        Er steht hier, unter dem Hauptmenü des Spiels und in der Hilfe, sobald
+        das Fenster deine Wahl kennt. Erscheint er nicht, etwa weil ein
+        Werbeblocker das Skript aufhält oder das Fenster nicht geladen ist,
+        lösche die gespeicherten Daten der Seite wie in Abschnitt 3 beschrieben,
+        in der Android-App also in Chrome unter Chrome → Einstellungen →
+        Website-Einstellungen → Alle Websites → bacteria-wars.wolsok.de →
+        „Löschen“ (nur in der WebView der App über die Android-Einstellungen);
+        beim nächsten Start fragt das Fenster wieder.
+      </p>
+    }
     @if (ads.consentAnswered()) {
       <p>
         <button
@@ -671,8 +733,8 @@
       Hauptmenü, ob es mit Google Analytics zählen darf, wie es gespielt wird
       (Anbieter: Google Ireland Limited, Anschrift wie in Abschnitt 4), damit
       wir sehen, welche Modi, Level und Funktionen ankommen und wo Spieler
-      aufgeben. Es fragt erst, wenn das Einwilligungsfenster für die Werbung
-      (Abschnitt 7) deine Wahl kennt oder nicht erscheint. Ohne deine
+      aufgeben. Zeigt das Spiel Werbung mit einem eigenen Einwilligungsfenster
+      (Abschnitt 7), fragt es erst, wenn dieses deine Wahl kennt. Ohne deine
       Einwilligung lädt das Spiel Google Analytics nicht und sendet nichts
       dorthin.
     </p>
@@ -822,9 +884,11 @@
         beruhen (Art. 21),
       </li>
       <li>
-        Widerruf einer Einwilligung mit Wirkung für die Zukunft (Art. 7 Abs. 3),
-        für die Werbung wie in Abschnitt 7, für die Nutzungsstatistik wie in
-        Abschnitt 11 beschrieben.
+        Widerruf einer Einwilligung mit Wirkung für die Zukunft (Art. 7 Abs. 3).
+        @if (ads.networkName) {
+          Wie das für die Werbung geht, steht in Abschnitt 7.
+        }
+        Wie das für die Nutzungsstatistik geht, steht in Abschnitt 11.
       </li>
     </ul>
     <p>
@@ -863,10 +927,15 @@
       makes an entry on a leaderboard, with your name only if you show it in
       public (section 4). The game records your matches and keeps them in the
       cloud for 30 days, readable only by the players of the match; a match
-      becomes public only if we show it in the gallery (section 4). The game
-      loads Google's ad script with its consent window, but shows no ads
-      (section 7), and asks for a voluntary tip (section 8). When you play the
-      game embedded in another site, such as
+      becomes public only if we show it in the gallery (section 4).
+      @if (ads.networkName) {
+        The game shows ads on some menu pages, by your choice in a consent
+        window (section 7).
+      } @else {
+        The game shows no ads at present (section 7).
+      }
+      It asks for a voluntary tip (section 8). When you play the game embedded
+      in another site, such as
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       it shows neither ads nor the tip there, and this policy does not cover
       that site and its services. The German version above is the binding one.
@@ -936,15 +1005,18 @@
     <p>
       This data does not leave your device except as described in section 4. The
       game itself sets no cookies, except, with your consent, those of the usage
-      statistics (section 11); what the ads store on your device is in section
-      7. The storage is strictly necessary for the game you chose to open (§
-      25(2) no. 2 TDDDG). You can delete it at any time: in the browser by
-      clearing the stored data of bacteria-wars.wolsok.de in its site settings.
-      The Android app does not keep it itself but in Chrome (or the browser it
-      opens the game in, section 6): clear it there under Chrome → Settings →
-      Site settings → All sites → bacteria-wars.wolsok.de → “Clear”. Only when
-      the app shows the game in its WebView do you clear it in Android's
-      settings under Apps → Bacteria Wars → Storage.
+      statistics (section 11).
+      @if (ads.networkName) {
+        What the ads store on your device is in section 7.
+      }
+      The storage is strictly necessary for the game you chose to open (§ 25(2)
+      no. 2 TDDDG). You can delete it at any time: in the browser by clearing
+      the stored data of bacteria-wars.wolsok.de in its site settings. The
+      Android app does not keep it itself but in Chrome (or the browser it opens
+      the game in, section 6): clear it there under Chrome → Settings → Site
+      settings → All sites → bacteria-wars.wolsok.de → “Clear”. Only when the
+      app shows the game in its WebView do you clear it in Android's settings
+      under Apps → Bacteria Wars → Storage.
     </p>
 
     <h2 id="en-account">4. Progress in the cloud and accounts</h2>
@@ -1325,48 +1397,98 @@
       updating the app, under Google's privacy policy.
     </p>
 
-    <h2 id="en-ads">7. Ads (Google AdSense)</h2>
-    <p>
-      At bacteria-wars.wolsok.de and in the Android app the game loads a script
-      from Google AdSense (pagead2.googlesyndication.com; provider: Google
-      Ireland Limited, address as in section 4) on start, which gives Google
-      your IP address and details of your browser and device. The game has no ad
-      slots switched on at present: it shows no ads. The legal basis for loading
-      the script and showing its consent window is Art. 6(1)(f) GDPR, our
-      legitimate interest in asking for your choice on ads and having Google
-      check the site for AdSense.
-    </p>
-    <p>
-      The script shows a consent window from Google (“Privacy &amp; Messaging”,
-      under the IAB Transparency &amp; Consent Framework 2.2):
-    </p>
-    <ul>
-      <li>
-        If you consent, Google and its partners may use cookies and similar
-        techniques on your device to serve and measure ads and to choose them by
-        your interests. Legal basis: your consent (Art. 6(1)(a) GDPR, § 25(1)
-        TDDDG).
-      </li>
-      <li>
-        If you decline, Google processes data only as far as it may without
-        consent, such as to prevent fraud (Art. 6(1)(f) GDPR).
-      </li>
-    </ul>
-    <p>
-      The consent window stores your choice on your device. You can change or
-      withdraw it at any time with the button “Ad privacy settings”, which opens
-      the window again: it is here, under the game's main menu and in the Help,
-      once the window knows your choice. If it does not show, for instance
-      because an ad blocker holds the script back or the window has not loaded,
-      clear the site's stored data as described in section 3, so for the Android
-      app in Chrome under Chrome → Settings → Site settings → All sites →
-      bacteria-wars.wolsok.de → “Clear” (only in the app's WebView through
-      Android's settings); the window asks again on the next start. For
-      transfers to the USA see section 4. More on how Google uses this data:
-      <a href="https://policies.google.com/technologies/partner-sites?hl=en"
-        >How Google uses information from sites or apps that use its services</a
-      >.
-    </p>
+    @switch (ads.networkName) {
+      @case ("adinplay") {
+        <h2 id="en-ads">7. Ads (AdinPlay)</h2>
+        <p>
+          At bacteria-wars.wolsok.de and in the Android app the game shows ads
+          from AdinPlay on some menu pages (provider: AdinPlay BV, Oranjestraat
+          10, 7451 CC Holten, the Netherlands). For this it loads a script from
+          AdinPlay (api.adinplay.com) on start, which gives AdinPlay your IP
+          address and details of your browser and device. The legal basis for
+          loading the script and showing its consent window is Art. 6(1)(f)
+          GDPR, our legitimate interest in asking for your choice on ads. The
+          game asks for ads only once you have chosen there.
+        </p>
+        <p>The script shows a consent window from AdinPlay:</p>
+        <ul>
+          <li>
+            If you consent, AdinPlay and its ad partners may use cookies and
+            similar techniques on your device to serve and measure ads and to
+            choose them by your interests. Legal basis: your consent (Art.
+            6(1)(a) GDPR, § 25(1) TDDDG). The consent window names these
+            partners and where they process data, outside the EU too.
+          </li>
+          <li>
+            If you decline, AdinPlay processes data only as far as it may
+            without consent, such as to prevent fraud (Art. 6(1)(f) GDPR).
+          </li>
+        </ul>
+        <p>
+          More on how AdinPlay uses this data:
+          <a href="https://adinplay.com/privacy-policy"
+            >AdinPlay's privacy policy</a
+          >.
+        </p>
+      }
+      @case ("adsense") {
+        <h2 id="en-ads">7. Ads (Google AdSense)</h2>
+        <p>
+          At bacteria-wars.wolsok.de and in the Android app the game shows ads
+          from Google AdSense on some menu pages (provider: Google Ireland
+          Limited, address as in section 4). For this it loads a script from
+          Google AdSense (pagead2.googlesyndication.com) on start, which gives
+          Google your IP address and details of your browser and device. The
+          legal basis for loading the script and showing its consent window is
+          Art. 6(1)(f) GDPR, our legitimate interest in asking for your choice
+          on ads. The game asks for ads only once you have chosen there.
+        </p>
+        <p>
+          The script shows a consent window from Google (“Privacy &amp;
+          Messaging”, under the IAB Transparency &amp; Consent Framework 2.2):
+        </p>
+        <ul>
+          <li>
+            If you consent, Google and its partners may use cookies and similar
+            techniques on your device to serve and measure ads and to choose
+            them by your interests. Legal basis: your consent (Art. 6(1)(a)
+            GDPR, § 25(1) TDDDG).
+          </li>
+          <li>
+            If you decline, Google processes data only as far as it may without
+            consent, such as to prevent fraud (Art. 6(1)(f) GDPR).
+          </li>
+        </ul>
+        <p>
+          For transfers to the USA see section 4. More on how Google uses this
+          data:
+          <a href="https://policies.google.com/technologies/partner-sites?hl=en"
+            >How Google uses information from sites or apps that use its
+            services</a
+          >.
+        </p>
+      }
+      @default {
+        <h2 id="en-ads">7. Ads</h2>
+        <p>
+          The game shows no ads at present: it loads no ad network's script and
+          asks for no consent to one.
+        </p>
+      }
+    }
+    @if (ads.networkName) {
+      <p>
+        The consent window stores your choice on your device. You can change or
+        withdraw it at any time with the button “Ad privacy settings”, which
+        opens the window again: it is here, under the game's main menu and in
+        the Help, once the window knows your choice. If it does not show, for
+        instance because an ad blocker holds the script back or the window has
+        not loaded, clear the site's stored data as described in section 3, so
+        for the Android app in Chrome under Chrome → Settings → Site settings →
+        All sites → bacteria-wars.wolsok.de → “Clear” (only in the app's WebView
+        through Android's settings); the window asks again on the next start.
+      </p>
+    }
     @if (ads.consentAnswered()) {
       <p>
         <button
@@ -1442,9 +1564,9 @@
       main menu whether it may count with Google Analytics how it is played
       (provider: Google Ireland Limited, address as in section 4), so that we
       see which modes, levels and features go down well and where players give
-      up. It asks only once the consent window for the ads (section 7) knows
-      your choice or does not show. Without your consent the game does not load
-      Google Analytics and sends nothing there.
+      up. Where the game shows ads with a consent window of their own (section
+      7), it asks only once that window knows your choice. Without your consent
+      the game does not load Google Analytics and sends nothing there.
     </p>
     <p>If you consent, the game sends Google Analytics:</p>
     <ul>
@@ -1580,8 +1702,11 @@
       <li>data portability (Art. 20),</li>
       <li>object to processing based on Art. 6(1)(f) GDPR (Art. 21),</li>
       <li>
-        withdraw a consent for the future (Art. 7(3)), for the ads as described
-        in section 7, for the usage statistics as in section 11.
+        withdraw a consent for the future (Art. 7(3)).
+        @if (ads.networkName) {
+          How to do so for the ads is in section 7.
+        }
+        How to do so for the usage statistics is in section 11.
       </li>
     </ul>
     <p>

@@ -27,9 +27,10 @@ export class PrivacyComponent {
   protected readonly owner = SITE_OWNER;
   protected readonly legalNoticePath = LEGAL_NOTICE_PATH;
   /**
-   * The way back into the ad consent window, as in the game's footer: shown
-   * once the window answered, which it does only where the game support
-   * (and with it the consent banner) is set up, on the game's own site.
+   * The ad network section 7 describes, and the way back into its consent
+   * window, as in the game's footer: shown once the window answered, which
+   * it does only where the game support (and with it the network) is set
+   * up, on the game's own site.
    */
   protected readonly ads = inject(GameAds);
   /**

@@ -1,6 +1,6 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { ConsentPrompt } from '@wolsok/shared-analytics';
-import { GameAds } from '../support/game-ads.service';
+import { GameAds } from '../support/ads/game-ads.service';
 
 /**
  * The player's say over the usage statistics, as the game's screens see
@@ -15,8 +15,9 @@ export class StatsConsent {
 
   public readonly available = this.prompt !== null;
   /**
-   * Whether the main menu asks: a choice is due, and Google's consent
-   * banner for the ads is done with, so the two never stack.
+   * Whether the main menu asks: a choice is due, and the ad network's
+   * consent banner, where the game has ads, is done with, so the two never
+   * stack.
    */
   public readonly asking = computed(
     () => this.prompt?.asking() === true && this.ads.consentSettled()
