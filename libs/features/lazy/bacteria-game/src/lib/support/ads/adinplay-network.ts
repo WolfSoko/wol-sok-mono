@@ -1,8 +1,9 @@
 import type { AdNetwork } from './ad-network';
 import type { AdinPlayOptions } from './ad-network-options';
+import { addScript } from './add-script';
 
 /** What the AdinPlay tag reads before it loads, and queues calls on. */
-export interface AipTag {
+interface AipTag {
   cmd?: {
     display?: (() => void)[];
     player?: (() => void)[];
@@ -44,7 +45,6 @@ function adinPlayScriptUrl(publisherId: string): string {
  * menu shows one ad at a time.
  */
 export class AdinPlayNetwork implements AdNetwork {
-  public readonly name = 'adinplay';
   private readonly window: AdinPlayWindow;
 
   public constructor(
@@ -78,11 +78,12 @@ export class AdinPlayNetwork implements AdNetwork {
     aiptag.cmp = { show: true, button: false };
     // An interstitial would cover the game.
     aiptag.disableInterstitialAd = true;
-    const script = this.document.createElement('script');
-    script.id = ADINPLAY_SCRIPT_ID;
-    script.async = true;
-    script.src = adinPlayScriptUrl(this.options.publisherId);
-    this.document.head.appendChild(script);
+    addScript(this.document, {
+      id: ADINPLAY_SCRIPT_ID,
+      src: adinPlayScriptUrl(this.options.publisherId),
+      // A tag that never loads never answers.
+      onError: () => listening.abort(),
+    });
   }
 
   public show(host: HTMLElement): () => void {

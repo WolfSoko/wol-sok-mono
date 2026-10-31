@@ -1,21 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { GAME_SUPPORT_OPTIONS } from '../../../testing/game-support-options';
+import {
+  ADINPLAY_ADS,
+  ADSENSE_ADS,
+  GAME_SUPPORT_OPTIONS,
+} from '../../../testing/game-support-options';
 import { GAME_SUPPORT, GameSupportOptions } from '../game-support';
-import type { GameAdsOptions } from './ad-network-options';
 import { ADINPLAY_SCRIPT_ID, AdinPlayWindow } from './adinplay-network';
 import { ADSENSE_SCRIPT_ID } from './adsense-network';
 import { GameAds } from './game-ads.service';
-
-const ADINPLAY: GameAdsOptions = {
-  network: 'adinplay',
-  publisherId: 'BW',
-  placementId: 'BW_menu',
-};
-const ADSENSE: GameAdsOptions = {
-  network: 'adsense',
-  client: 'ca-pub-1',
-  slot: '42',
-};
 
 describe('GameAds', () => {
   const adsWindow = window as AdinPlayWindow;
@@ -49,15 +41,15 @@ describe('GameAds', () => {
   });
 
   it.each([
-    ['adinplay', ADINPLAY, ADINPLAY_SCRIPT_ID],
-    ['adsense', ADSENSE, ADSENSE_SCRIPT_ID],
-  ])('loads the script of %s once', (name, ads, scriptId) => {
+    { ads: ADINPLAY_ADS, scriptId: ADINPLAY_SCRIPT_ID },
+    { ads: ADSENSE_ADS, scriptId: ADSENSE_SCRIPT_ID },
+  ])('loads the script of $ads.network once', ({ ads, scriptId }) => {
     const gameAds = setUp({ ...GAME_SUPPORT_OPTIONS, ads });
 
     gameAds.start();
     gameAds.start();
 
-    expect(gameAds.networkName).toBe(name);
+    expect(gameAds.networkName).toBe(ads.network);
     expect(scripts().map((script) => script.id)).toEqual([scriptId]);
   });
 
@@ -84,7 +76,7 @@ describe('GameAds', () => {
   });
 
   it("answers once the network's consent banner did", () => {
-    const gameAds = setUp({ ...GAME_SUPPORT_OPTIONS, ads: ADINPLAY });
+    const gameAds = setUp({ ...GAME_SUPPORT_OPTIONS, ads: ADINPLAY_ADS });
     gameAds.start();
     expect(gameAds.consentAnswered()).toBe(false);
 
@@ -96,7 +88,7 @@ describe('GameAds', () => {
   it("shows the network's ad and opens its consent banner", () => {
     const showCMPScreen = jest.fn();
     adsWindow.aipAPItag = { showCMPScreen };
-    const gameAds = setUp({ ...GAME_SUPPORT_OPTIONS, ads: ADINPLAY });
+    const gameAds = setUp({ ...GAME_SUPPORT_OPTIONS, ads: ADINPLAY_ADS });
     gameAds.start();
     const host = document.createElement('div');
 

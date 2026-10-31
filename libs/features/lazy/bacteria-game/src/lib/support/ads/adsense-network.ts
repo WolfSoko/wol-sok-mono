@@ -1,5 +1,6 @@
 import type { AdNetwork } from './ad-network';
 import type { AdSenseOptions } from './ad-network-options';
+import { addScript } from './add-script';
 
 /** The slice of an IAB TCF v2.2 TCData object the game waits for. */
 export interface TcData {
@@ -7,7 +8,7 @@ export interface TcData {
   readonly gdprApplies?: boolean;
 }
 
-export type TcfApi = (
+type TcfApi = (
   command: 'addEventListener',
   version: 2,
   callback: (tcData: TcData, success: boolean) => void
@@ -48,7 +49,6 @@ function isAnswered(tcData: TcData, success: boolean): boolean {
  * from that choice itself.
  */
 export class AdSenseNetwork implements AdNetwork {
-  public readonly name = 'adsense';
   private readonly window: AdSenseWindow;
 
   public constructor(
@@ -60,13 +60,12 @@ export class AdSenseNetwork implements AdNetwork {
 
   public load(onConsentAnswered: () => void): void {
     let blocked = false;
-    const script = this.document.createElement('script');
-    script.id = ADSENSE_SCRIPT_ID;
-    script.async = true;
-    script.crossOrigin = 'anonymous';
-    script.src = adSenseScriptUrl(this.options.client);
-    script.onerror = () => (blocked = true);
-    this.document.head.appendChild(script);
+    addScript(this.document, {
+      id: ADSENSE_SCRIPT_ID,
+      src: adSenseScriptUrl(this.options.client),
+      crossOrigin: 'anonymous',
+      onError: () => (blocked = true),
+    });
     // The script installs `__tcfapi` once it has loaded. Without it - an
     // ad blocker, no consent message set up - no ads are asked for.
     if (this.listen(onConsentAnswered)) return;
@@ -97,10 +96,9 @@ export class AdSenseNetwork implements AdNetwork {
   }
 
   public openConsentSettings(): void {
-    const window = this.window;
-    const googlefc = (window.googlefc ??= {});
+    const googlefc = (this.window.googlefc ??= {});
     (googlefc.callbackQueue ??= []).push({
-      CONSENT_DATA_READY: () => window.googlefc?.showRevocationMessage?.(),
+      CONSENT_DATA_READY: () => this.window.googlefc?.showRevocationMessage?.(),
     });
   }
 

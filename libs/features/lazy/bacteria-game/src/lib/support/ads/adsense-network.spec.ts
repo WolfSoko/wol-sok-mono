@@ -5,6 +5,7 @@ import {
   TcData,
   TCF_POLL_INTERVAL_MS,
 } from './adsense-network';
+import { ADSENSE_ADS } from '../../../testing/game-support-options';
 
 describe('AdSenseNetwork', () => {
   const adsWindow = window as AdSenseWindow;
@@ -12,10 +13,7 @@ describe('AdSenseNetwork', () => {
   let answered: jest.Mock;
 
   function network(): AdSenseNetwork {
-    return new AdSenseNetwork(
-      { network: 'adsense', client: 'ca-pub-1', slot: '42' },
-      document
-    );
+    return new AdSenseNetwork(ADSENSE_ADS, document);
   }
 
   function installCmp(): void {

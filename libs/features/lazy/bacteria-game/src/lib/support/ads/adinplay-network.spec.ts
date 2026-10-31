@@ -4,16 +4,14 @@ import {
   AdinPlayNetwork,
   AdinPlayWindow,
 } from './adinplay-network';
+import { ADINPLAY_ADS } from '../../../testing/game-support-options';
 
 describe('AdinPlayNetwork', () => {
   const adsWindow = window as AdinPlayWindow;
   let answered: jest.Mock;
 
   function network(): AdinPlayNetwork {
-    return new AdinPlayNetwork(
-      { network: 'adinplay', publisherId: 'BW', placementId: 'BW_menu' },
-      document
-    );
+    return new AdinPlayNetwork(ADINPLAY_ADS, document);
   }
 
   /** The loaded tag runs a queued call at once. */

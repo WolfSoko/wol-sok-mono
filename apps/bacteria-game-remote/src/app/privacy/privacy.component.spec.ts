@@ -256,9 +256,11 @@ describe('PrivacyComponent', () => {
         'Werbung zeigt das Spiel derzeit keine (Abschnitt 7).'
       );
       expect(en).toContain('The game shows no ads at present (section 7).');
-      // Section 3 points to nothing the ads store.
+      // Sections 3 and 12 point to no ads.
       expect(de).not.toContain('Was die Werbung auf deinem Gerät speichert');
       expect(en).not.toContain('What the ads store on your device');
+      expect(de).not.toContain('Wie das für die Werbung geht');
+      expect(en).not.toContain('How to do so for the ads');
     });
 
     it.each(Object.entries(PROVIDERS))(
@@ -281,14 +283,21 @@ describe('PrivacyComponent', () => {
         expect(en).toContain('If it does not show');
         expect(de).toContain('lösche die gespeicherten Daten der Seite');
         expect(en).toContain("clear the site's stored data");
-        expect(texts(page).de).toContain(
+        const whole = texts(page);
+        expect(whole.de).toContain(
           'Auf einigen Menüseiten zeigt das Spiel Werbung'
         );
-        expect(texts(page).de).toContain(
+        expect(whole.de).toContain(
           'Was die Werbung auf deinem Gerät speichert, steht in Abschnitt 7.'
         );
-        expect(texts(page).en).toContain(
+        expect(whole.en).toContain(
           'What the ads store on your device is in section 7.'
+        );
+        expect(whole.de).toContain(
+          '(Art. 7 Abs. 3). Wie das für die Werbung geht, steht in Abschnitt 7.'
+        );
+        expect(whole.en).toContain(
+          '(Art. 7(3)). How to do so for the ads is in section 7.'
         );
       }
     );
