@@ -1,3 +1,5 @@
+import type { AdNetworkName } from './ad-network-options';
+
 /**
  * The seam between the game and an ad network: everything the game asks of
  * one, so the network can change without a screen noticing. Every network
@@ -5,6 +7,8 @@
  * for no ad before the player has answered it.
  */
 export interface AdNetwork {
+  /** Which network it is, for the privacy policy's section on ads. */
+  readonly name: AdNetworkName;
   /**
    * Adds the network's script, and with it its consent banner, to the page.
    * Calls `onConsentAnswered` once the player has made a choice there, or

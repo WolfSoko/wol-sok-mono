@@ -28,18 +28,16 @@ function createAdNetwork(
 @Injectable({ providedIn: 'root' })
 export class GameAds {
   private readonly document = inject(DOCUMENT);
-  private readonly options = inject(GAME_SUPPORT)?.ads ?? null;
-  private readonly network =
-    this.options && this.document.defaultView
-      ? createAdNetwork(this.options, this.document)
-      : null;
+  private readonly network = this.createNetwork(
+    inject(GAME_SUPPORT)?.ads ?? null
+  );
 
   private readonly answered = signal(false);
   private started = false;
 
   /** The network the ads come from, null without ads. */
   public readonly networkName: AdNetworkName | null =
-    this.network && this.options ? this.options.network : null;
+    this.network?.name ?? null;
   /**
    * True once the consent banner reported a choice, or that none is
    * needed - and with it, that ads may be shown and the banner is there to
@@ -67,5 +65,11 @@ export class GameAds {
    */
   public openConsentSettings(): void {
     this.network?.openConsentSettings();
+  }
+
+  private createNetwork(options: GameAdsOptions | null): AdNetwork | null {
+    return options && this.document.defaultView
+      ? createAdNetwork(options, this.document)
+      : null;
   }
 }

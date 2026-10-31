@@ -119,17 +119,20 @@
     </ul>
     <p>
       Diese Daten verlassen dein Gerät nicht, außer wie in Abschnitt 4
-      beschrieben. Das Spiel selbst setzt keine Cookies; was die Werbung auf
-      deinem Gerät speichert, steht in Abschnitt 7. Die Speicherung ist für das
-      Spiel, das du ausdrücklich aufrufst, unbedingt erforderlich (§ 25 Abs. 2
-      Nr. 2 TDDDG). Du kannst die Daten jederzeit löschen: im Browser, indem du
-      unter „Website-Einstellungen“ die gespeicherten Daten von
-      bacteria-wars.wolsok.de löschst. Die Android-App speichert sie nicht bei
-      sich, sondern in Chrome (oder dem Browser, in dem sie das Spiel öffnet,
-      Abschnitt 6): Dort löschst du sie unter Chrome → Einstellungen →
-      Website-Einstellungen → Alle Websites → bacteria-wars.wolsok.de →
-      „Löschen“. Nur wenn die App das Spiel in ihrer WebView zeigt, löschst du
-      sie in den Android-Einstellungen unter Apps → Bacteria Wars → Speicher.
+      beschrieben. Das Spiel selbst setzt keine Cookies.
+      @if (ads.networkName) {
+        Was die Werbung auf deinem Gerät speichert, steht in Abschnitt 7.
+      }
+      Die Speicherung ist für das Spiel, das du ausdrücklich aufrufst, unbedingt
+      erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG). Du kannst die Daten jederzeit
+      löschen: im Browser, indem du unter „Website-Einstellungen“ die
+      gespeicherten Daten von bacteria-wars.wolsok.de löschst. Die Android-App
+      speichert sie nicht bei sich, sondern in Chrome (oder dem Browser, in dem
+      sie das Spiel öffnet, Abschnitt 6): Dort löschst du sie unter Chrome →
+      Einstellungen → Website-Einstellungen → Alle Websites →
+      bacteria-wars.wolsok.de → „Löschen“. Nur wenn die App das Spiel in ihrer
+      WebView zeigt, löschst du sie in den Android-Einstellungen unter Apps →
+      Bacteria Wars → Speicher.
     </p>
 
     <h2 id="de-konto">4. Spielstand in der Cloud und Konto</h2>
@@ -903,15 +906,18 @@
     </ul>
     <p>
       This data does not leave your device except as described in section 4. The
-      game itself sets no cookies; what the ads store on your device is in
-      section 7. The storage is strictly necessary for the game you chose to
-      open (§ 25(2) no. 2 TDDDG). You can delete it at any time: in the browser
-      by clearing the stored data of bacteria-wars.wolsok.de in its site
-      settings. The Android app does not keep it itself but in Chrome (or the
-      browser it opens the game in, section 6): clear it there under Chrome →
-      Settings → Site settings → All sites → bacteria-wars.wolsok.de → “Clear”.
-      Only when the app shows the game in its WebView do you clear it in
-      Android's settings under Apps → Bacteria Wars → Storage.
+      game itself sets no cookies.
+      @if (ads.networkName) {
+        What the ads store on your device is in section 7.
+      }
+      The storage is strictly necessary for the game you chose to open (§ 25(2)
+      no. 2 TDDDG). You can delete it at any time: in the browser by clearing
+      the stored data of bacteria-wars.wolsok.de in its site settings. The
+      Android app does not keep it itself but in Chrome (or the browser it opens
+      the game in, section 6): clear it there under Chrome → Settings → Site
+      settings → All sites → bacteria-wars.wolsok.de → “Clear”. Only when the
+      app shows the game in its WebView do you clear it in Android's settings
+      under Apps → Bacteria Wars → Storage.
     </p>
 
     <h2 id="en-account">4. Progress in the cloud and accounts</h2>

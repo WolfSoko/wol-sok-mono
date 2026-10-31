@@ -67,6 +67,15 @@ describe('AdinPlayNetwork', () => {
     }
   );
 
+  it('answers once, whatever else the consent tool sends', () => {
+    network().load(answered);
+
+    document.dispatchEvent(new Event('aip_consentapproved'));
+    document.dispatchEvent(new Event('aip_consent'));
+
+    expect(answered).toHaveBeenCalledTimes(1);
+  });
+
   it('waits for no other event of the consent tool', () => {
     network().load(answered);
 

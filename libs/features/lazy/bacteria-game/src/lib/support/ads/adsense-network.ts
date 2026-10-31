@@ -48,6 +48,7 @@ function isAnswered(tcData: TcData, success: boolean): boolean {
  * from that choice itself.
  */
 export class AdSenseNetwork implements AdNetwork {
+  public readonly name = 'adsense';
   private readonly window: AdSenseWindow;
 
   public constructor(

@@ -44,6 +44,7 @@ function adinPlayScriptUrl(publisherId: string): string {
  * menu shows one ad at a time.
  */
 export class AdinPlayNetwork implements AdNetwork {
+  public readonly name = 'adinplay';
   private readonly window: AdinPlayWindow;
 
   public constructor(
@@ -55,10 +56,16 @@ export class AdinPlayNetwork implements AdNetwork {
 
   public load(onConsentAnswered: () => void): void {
     // Listening before the tag loads: it may answer at once, from the
-    // choice of an earlier visit.
+    // choice of an earlier visit. The first answer is the one the game
+    // waits for, so it ends all four listeners.
+    const listening = new AbortController();
+    const answered = () => {
+      listening.abort();
+      onConsentAnswered();
+    };
     for (const event of ADINPLAY_CONSENT_EVENTS) {
-      this.document.addEventListener(event, onConsentAnswered, {
-        once: true,
+      this.document.addEventListener(event, answered, {
+        signal: listening.signal,
       });
     }
     // The settings have to be there before the tag loads.

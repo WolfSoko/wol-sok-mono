@@ -64,6 +64,12 @@ for every `AdNetworkName`, so a new adapter cannot ship without its text.
   network's `ads.txt` lines, which it hands out with its approval: an
   `ads.txt` in `apps/bacteria-game-remote/src`, listed in the `esbuild`
   target's assets beside `robots.txt`.
+- Going back to AdSense also needs its site verification again (the
+  `google-adsense-account` meta tag in `index.html`, or its `ads.txt`
+  line): its crawler reads the static page, not the script the game adds.
+- The AdinPlay tag's URL is the one AdinPlay's API documentation names
+  (`pub/<AIP ID>/tag.min.js`); should the tag it hands out read
+  differently, `adinPlayScriptUrl` follows it.
 - AdinPlay's text in the privacy policy names the provider, the script's
   host and the consent; the owner checks it against the wording AdinPlay
   asks for before turning it on.
