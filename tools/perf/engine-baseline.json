@@ -3,7 +3,7 @@
   "node": "v24.21.0",
   "fixtures": {
     "golden-cpu": {
-      "ratio": 7.606,
+      "ratio": 8.868,
       "checksum": 3394093791,
       "ticks": 360,
       "outcome": null
@@ -15,7 +15,7 @@
       "outcome": null
     },
     "heavy-cpu": {
-      "ratio": 44.354,
+      "ratio": 32.095,
       "checksum": 2356925357,
       "ticks": 600,
       "outcome": null
