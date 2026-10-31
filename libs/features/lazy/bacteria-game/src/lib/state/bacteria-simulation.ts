@@ -1291,17 +1291,38 @@ export class BacteriaSimulation implements Simulation {
 
   /** Index of a random free neighbouring cell, or -1 when there is none. */
   private findFreeNeighbour(x: number, y: number): number {
-    const start = Math.floor(this.random() * NEIGHBOURS.length);
+    return this.freeNeighbour(
+      x,
+      y,
+      Math.floor(this.random() * NEIGHBOURS.length)
+    );
+  }
+
+  /**
+   * Index of the first free cell round (x, y), looking from neighbour
+   * `start` on - -1 when the arena's edge, walls and bacteria fill all
+   * eight.
+   */
+  private freeNeighbour(x: number, y: number, start: number): number {
+    const { width, height, owner, neighbourOffsets } = this;
+    const index = y * width + x;
+    // Away from the edges every neighbour is in the arena.
+    const inner = x > 0 && y > 0 && x < width - 1 && y < height - 1;
     for (let k = 0; k < NEIGHBOURS.length; k++) {
       const neighbour = (start + k) % NEIGHBOURS.length;
-      const nx = x + NEIGHBOUR_X[neighbour];
-      const ny = y + NEIGHBOUR_Y[neighbour];
-      if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) {
-        continue;
+      let neighbourIndex: number;
+      if (inner) {
+        neighbourIndex = index + neighbourOffsets[neighbour];
+      } else {
+        const nx = x + NEIGHBOUR_X[neighbour];
+        const ny = y + NEIGHBOUR_Y[neighbour];
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+          continue;
+        }
+        neighbourIndex = ny * width + nx;
       }
-      const index = ny * this.width + nx;
-      if (this.owner[index] === EMPTY_CELL) {
-        return index;
+      if (owner[neighbourIndex] === EMPTY_CELL) {
+        return neighbourIndex;
       }
     }
     return -1;
@@ -1313,6 +1334,13 @@ export class BacteriaSimulation implements Simulation {
    *
    * A boosted colony moves faster and hunts harder for as long as the boost
    * lasts - that is the whole point of firing one.
+   *
+   * A bacterium with no free cell around stays put and draws no random
+   * numbers: every way it could go - the first cell of its ray, the slides
+   * and the random step - is one of its eight neighbours. Inside a colony
+   * that is most of them, so the step costs little more than its fronts.
+   * Whether a cell is free is asked on its turn, as the ones before it
+   * may have moved away.
    */
   private move(
     colonies: Colony[],
@@ -1348,6 +1376,9 @@ export class BacteriaSimulation implements Simulation {
       for (let i = 0; i < count; i++) {
         const x = xs[i];
         const y = ys[i];
+        if (this.freeNeighbour(x, y, 0) < 0) {
+          continue;
+        }
         const zone = zones === null ? 0 : zones[y * width + x];
         if (
           zone === ZONE_CODE.ice &&

@@ -28,11 +28,11 @@ const PLAN: MatchPlan = {
 };
 
 const GOLDEN: { name: string; plan: MatchPlan; fingerprint: string }[] = [
-  { name: 'the first level', plan: PLAN, fingerprint: '87477:e2a6eb76' },
+  { name: 'the first level', plan: PLAN, fingerprint: '104490:cce5179' },
   {
     name: 'a boss',
     plan: { ...PLAN, levelId: 'meltdown', width: 320, height: 180 },
-    fingerprint: '82485:91fbeb56',
+    fingerprint: '74760:e8536005',
   },
   {
     name: 'a boss on normal',
@@ -43,27 +43,27 @@ const GOLDEN: { name: string; plan: MatchPlan; fingerprint: string }[] = [
       width: 320,
       height: 180,
     },
-    fingerprint: '66883:f1cf8d34',
+    fingerprint: '69328:24fdf66b',
   },
   {
     name: 'neutral colonies',
     plan: { ...PLAN, levelId: 'quarantine', width: 320, height: 180 },
-    fingerprint: '93178:af464b8c',
+    fingerprint: '87450:edbfd521',
   },
   {
     name: 'a zone to hold',
     plan: { ...PLAN, levelId: 'control-room', width: 320, height: 180 },
-    fingerprint: '72630:4fe4a7af',
+    fingerprint: '63265:4c379b08',
   },
   {
     name: 'two players',
     plan: { ...PLAN, mode: 'two-players', headStart: 1 },
-    fingerprint: '83852:75e319d9',
+    fingerprint: '84186:e5d63371',
   },
   {
     name: 'a generated level',
     plan: { ...PLAN, levelId: dailyLevelId('2026-10-20') },
-    fingerprint: '70316:c343e069',
+    fingerprint: '69544:bf453038',
   },
 ];
 
@@ -123,9 +123,10 @@ function fingerprintOf(value: unknown): string {
 /**
  * A match against the ladder's computer (ADR 0016): its skill along the
  * curve and its loadout. It plays bit for bit the same under one
- * `LADDER_VERSION`, or every version 4 replay plays another match: a
- * change that moves it on purpose raises `LADDER_VERSION` and takes the
- * new fingerprint over.
+ * `LADDER_VERSION` and `BALANCE_VERSION`, or every version 4 replay plays
+ * another match: a change to the ladder that moves it on purpose raises
+ * `LADDER_VERSION`, one to the balance or the rules `BALANCE_VERSION`, and
+ * takes the new fingerprint over.
  */
 const LADDER_PLAN: MatchPlan = {
   ...PLAN,
@@ -138,7 +139,7 @@ const LADDER_PLAN: MatchPlan = {
   ],
   ladder: LADDER_VERSION,
 };
-const LADDER_FINGERPRINT = '96657:a086f6df';
+const LADDER_FINGERPRINT = '112750:7220e363';
 /**
  * The computer's loadouts on every ladder level and difficulty. A replay
  * against it takes them from the ladder, not from its header, so what moves
@@ -181,7 +182,7 @@ describe("the ladder's computer", () => {
 
 describe('plain matches', () => {
   it('play under the balance version the fingerprints were taken with', () => {
-    expect(BALANCE_VERSION).toBe(6);
+    expect(BALANCE_VERSION).toBe(7);
   });
 
   it.each(GOLDEN)(
