@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.126.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.2...v74.126.3) (2026-10-31)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡️ paint with Canvas 2D where WebGL renders on the CPU ([#2726](https://github.com/WolfSoko/wol-sok-mono/issues/2726)) ([644b815](https://github.com/WolfSoko/wol-sok-mono/commit/644b815e3524e125dfbfcdc164ed5271d66fd03c))
+
 ## [74.126.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.1...v74.126.2) (2026-10-31)
 
 ### Documentation
