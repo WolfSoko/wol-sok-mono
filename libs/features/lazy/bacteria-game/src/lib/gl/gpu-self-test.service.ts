@@ -4,7 +4,7 @@ import { BALANCE_VERSION } from '../state/game-balance';
 import { GPU_SELF_TEST_VERSION } from '../state/gpu-int/self-test-golden';
 import { DeviceStorage } from '../storage/game-storage';
 import { GpuSelfTestResult, runGpuSelfTest } from './gpu-self-test';
-import { rendererOf } from './renderer';
+import { webGlRenderer } from './renderer';
 import { gpuTrusted } from './simulation-check';
 
 /** Where this device keeps the self-test's last result. */
@@ -225,16 +225,5 @@ function whenIdle(task: () => void): void {
  */
 function thisDevice(arenaRenderer: string | null): SelfTestDevice {
   const browser = typeof navigator === 'undefined' ? '' : navigator.userAgent;
-  if (arenaRenderer != null) {
-    return { renderer: arenaRenderer, browser };
-  }
-  const gl = document.createElement('canvas').getContext('webgl2');
-  if (gl == null) {
-    return { renderer: 'none', browser };
-  }
-  try {
-    return { renderer: rendererOf(gl), browser };
-  } finally {
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
-  }
+  return { renderer: arenaRenderer ?? webGlRenderer() ?? 'none', browser };
 }
