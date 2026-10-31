@@ -28,7 +28,7 @@ import { GlArenaPainter } from '../arena/gl/gl-arena-painter';
 import {
   exitFullscreen,
   fitInside,
-  fullscreenElementOf,
+  isFullscreen,
   isFullscreenSupported,
   requestFullscreen,
 } from '../fullscreen';
@@ -85,9 +85,7 @@ export const CHROME_HIDE_MS = 3000;
   host: {
     tabindex: '0',
     '[class.chrome-hidden]': '!chromeShown()',
-    '[class.cursor-hidden]': '!chromeShown() && playing()',
     '(keydown)': 'onKeyDown($event)',
-    '(pointermove)': 'wake()',
     '(pointerdown)': 'onPointerDown()',
     '(focusin)': 'wake()',
     '(document:fullscreenchange)': 'onFullscreenChange()',
@@ -278,7 +276,7 @@ export const CHROME_HIDE_MS = 3000;
     :host:focus-visible {
       box-shadow: inset 0 0 0 3px var(--bw-gold, #e9b949);
     }
-    :host.cursor-hidden {
+    :host.chrome-hidden {
       cursor: none;
     }
     .arena {
@@ -428,7 +426,10 @@ export class ReplayViewerComponent {
   private readonly host =
     inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   /** True where the browser lets the viewer fill the screen. */
-  protected readonly fullscreenSupported: boolean;
+  protected readonly fullscreenSupported = isFullscreenSupported(
+    this.document,
+    this.host
+  );
   private readonly reducedMotion = prefersReducedMotion();
   private readonly box = viewChild<ElementRef<HTMLElement>>('box');
   /** The arena box's size in CSS pixels, zero until it is measured. */
@@ -509,7 +510,6 @@ export class ReplayViewerComponent {
   });
 
   public constructor() {
-    this.fullscreenSupported = isFullscreenSupported(this.document, this.host);
     effect((onCleanup) => {
       const played = this.played();
       untracked(() => {
@@ -551,7 +551,15 @@ export class ReplayViewerComponent {
         untracked(() => this.wake());
       }
     });
-    inject(DestroyRef).onDestroy(() => this.clearHideTimer());
+    // Not a host listener: that would mark the view dirty on every move of
+    // the pointer, while `wake` mostly returns early. Setting `awake` still
+    // schedules change detection when the state flips.
+    const wake = () => this.wake();
+    this.host.addEventListener('pointermove', wake, { passive: true });
+    inject(DestroyRef).onDestroy(() => {
+      this.host.removeEventListener('pointermove', wake);
+      this.clearHideTimer();
+    });
   }
 
   protected togglePlay(): void {
@@ -647,30 +655,27 @@ export class ReplayViewerComponent {
     const onControl =
       event.target instanceof Element &&
       event.target.closest('.chrome') !== null;
-    if (onControl && event.key !== 'f' && event.key !== 'F') {
+    const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (onControl && key !== 'f') {
       return;
     }
-    switch (event.key) {
+    switch (key) {
       case ' ':
       case 'k':
-      case 'K':
         this.togglePlay();
         break;
       case 'ArrowLeft':
       case 'j':
-      case 'J':
         this.skipBy(-this.skip);
         break;
       case 'ArrowRight':
       case 'l':
-      case 'L':
         this.skipBy(this.skip);
         break;
       case 'Home':
         this.startOver();
         break;
       case 'f':
-      case 'F':
         if (!this.fullscreenSupported) {
           return;
         }
@@ -694,7 +699,7 @@ export class ReplayViewerComponent {
 
   /** The browser put the viewer on the screen, or took it off. */
   protected onFullscreenChange(): void {
-    this.fullscreen.set(fullscreenElementOf(this.document) === this.host);
+    this.fullscreen.set(isFullscreen(this.document, this.host));
   }
 
   private clearHideTimer(): void {

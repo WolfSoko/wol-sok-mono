@@ -52,6 +52,13 @@
   font-family: var(--bw-body);
 }
 
+// A screen that is nothing but the replay player: no padding, nothing to scroll.
+@mixin player {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
 // The header of a sub screen: back, title, then its controls.
 @mixin header {
   display: flex;

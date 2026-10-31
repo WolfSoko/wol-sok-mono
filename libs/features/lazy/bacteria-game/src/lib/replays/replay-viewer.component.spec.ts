@@ -364,12 +364,10 @@ describe('ReplayViewerComponent', () => {
       jest.advanceTimersByTime(CHROME_HIDE_MS);
       fixture.detectChanges();
       expect(chromeHidden(page)).toBe(true);
-      expect(page.classList.contains('cursor-hidden')).toBe(true);
 
       page.dispatchEvent(new Event('pointermove', { bubbles: true }));
       fixture.detectChanges();
       expect(chromeHidden(page)).toBe(false);
-      expect(page.classList.contains('cursor-hidden')).toBe(false);
     });
 
     it('set no new timer on a move soon after the last', () => {

@@ -4,28 +4,14 @@
   @include screen.screen;
 }
 
-// With a replay the viewer is the screen: no padding, nothing to scroll.
+// With a replay the viewer is the screen.
 :host.playing {
-  padding: 0;
-  gap: 0;
-  overflow: hidden;
-}
-
-.player {
-  flex: 1 1 auto;
-  min-height: 0;
+  @include screen.player;
 }
 
 .matches {
-  @include screen.panel;
+  @include screen.section;
 
   width: 100%;
   max-width: 40rem;
-  padding: 1.25rem;
-
-  p {
-    margin: 0;
-    line-height: 1.5;
-    color: var(--bw-soft);
-  }
 }

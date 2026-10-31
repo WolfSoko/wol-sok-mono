@@ -104,15 +104,10 @@ type WatchView =
       flex-direction: column;
       gap: 0.5rem;
       padding: 0.75rem 1rem;
-      max-width: none;
     }
     h1 {
       font-size: 1.2rem;
       margin: 0;
-    }
-    feat-lazy-bac-game-replay-viewer {
-      flex: 1 1 auto;
-      min-height: 0;
     }
     .links {
       display: flex;

@@ -84,7 +84,7 @@ describe('MyMatchesComponent', () => {
     ).not.toBeNull();
     // The viewer is the screen: the list, the intro and the header step aside.
     expect(page.textContent).not.toContain('Vs computer');
-    expect(fixture.nativeElement.classList.contains('watching')).toBe(true);
+    expect(fixture.nativeElement.classList.contains('playing')).toBe(true);
     (
       page.querySelector(
         'button[aria-label="Back to the list"]'
@@ -93,7 +93,7 @@ describe('MyMatchesComponent', () => {
     await settle(fixture);
     expect(page.querySelector('feat-lazy-bac-game-replay-viewer')).toBeNull();
     expect(page.textContent).toContain('Vs computer');
-    expect(fixture.nativeElement.classList.contains('watching')).toBe(false);
+    expect(fixture.nativeElement.classList.contains('playing')).toBe(false);
   });
 
   it('plays no match of an older balance', async () => {

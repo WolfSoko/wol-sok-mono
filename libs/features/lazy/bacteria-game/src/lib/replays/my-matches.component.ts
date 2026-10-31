@@ -87,7 +87,7 @@ interface MatchRow {
     ScreenHeaderComponent,
     TranslatePipe,
   ],
-  host: { '[class.watching]': 'watching() !== null' },
+  host: { '[class.playing]': 'watching() !== null' },
   templateUrl: './my-matches.component.html',
   styleUrl: './my-matches.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

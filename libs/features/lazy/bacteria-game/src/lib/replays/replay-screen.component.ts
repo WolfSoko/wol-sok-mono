@@ -25,7 +25,6 @@ import { ReplayViewerComponent } from './replay-viewer.component';
   template: `
     @if (replay(); as replay) {
       <feat-lazy-bac-game-replay-viewer
-        class="player"
         [replay]="replay"
         [look]="look()"
         [label]="'replay.viewer.title' | t"
