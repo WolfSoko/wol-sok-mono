@@ -61,6 +61,7 @@ async function store(
     levelId: replay.header.levelId,
     balanceVersion: BALANCE_VERSION,
     ticks: replay.header.ticks,
+    cells: replay.header.width * replay.header.height,
     endedBy: 'annihilation',
     winnerSeat: 0,
     hint,

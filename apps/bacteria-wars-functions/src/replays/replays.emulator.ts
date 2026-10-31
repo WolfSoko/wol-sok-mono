@@ -115,6 +115,7 @@ describe('acceptReplay', () => {
       replayVersion: 2,
       simulation: 'cpu',
       ticks: 360,
+      cells: 320 * 180,
       endedBy: 'time',
       winnerSeat: 1,
       hint: 40,
@@ -127,6 +128,12 @@ describe('acceptReplay', () => {
     const blob = await db.doc('replays/l_s1/blob/data').get();
     expect(blob.get('size')).toBe(bytes.length);
     expect((await db.doc('replaySubmissions/s1').get()).exists).toBe(false);
+  });
+
+  it('stores a match at simulation resolution "Ultra", with its cells', async () => {
+    const bytes = await bytesOf({ width: 640, height: 360 });
+    expect(await submit('s1', 'ada', bytes)).toBe('stored');
+    expect((await db.doc('replays/l_s1').get()).get('cells')).toBe(640 * 360);
   });
 
   it('stores a submission once, however often it arrives', async () => {

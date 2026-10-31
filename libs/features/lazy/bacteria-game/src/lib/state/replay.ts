@@ -1,9 +1,4 @@
-import {
-  arenaSize,
-  ONLINE_SIM_RESOLUTION,
-  SIM_RESOLUTIONS,
-  SimResolution,
-} from './arena-size';
+import { gridOf, ONLINE_SIM_RESOLUTION, SimResolution } from './arena-size';
 import { BotDifficulty, difficultyOption } from './bot-controller';
 import { matchChecksum } from './checksum';
 import { isDailyLevelId } from './daily';
@@ -355,20 +350,12 @@ export function savedRegardless(header: ReplayHeader): boolean {
 
 /**
  * The simulation resolution a match of its level ran on, from its arena -
- * null for an arena none of them has. A replay is stored on any of them
- * (owner's decision of 2026-10-31); online and ranked matches only on the
- * online grid, the one they are played and checked on (ADR 0011, 0012).
+ * null for an arena none of them has.
  */
 export function simGridOf(
   plan: Pick<MatchPlan, 'levelId' | 'width' | 'height'>
 ): SimResolution | null {
-  const size = levelSize(getLevel(plan.levelId));
-  return (
-    SIM_RESOLUTIONS.find(({ id }) => {
-      const grid = arenaSize(id, size);
-      return plan.width === grid.width && plan.height === grid.height;
-    })?.id ?? null
-  );
+  return gridOf(plan, levelSize(getLevel(plan.levelId)));
 }
 
 /** True for a match on the online grid of its level. */
@@ -471,7 +458,9 @@ export interface ParseOptions {
    * the CPU, on a simulation resolution of its level ({@link simGridOf}) -
    * the online grid for an online or ranked match - with its outcome and
    * checksum - version 3 never for a ranked attempt or the daily level
-   * (ADR 0013).
+   * (ADR 0013). Any simulation resolution is stored (owner's decision of
+   * 2026-10-31); an online or ranked match only on the online grid, the
+   * one it is played and checked on (ADR 0011, 0012).
    */
   stored?: boolean;
 }

@@ -18,6 +18,7 @@ import {
   DAILY_VERIFY_MS,
   DAY_MS,
   expectedRerunMs,
+  RANKED_CELLS,
   FAILED_CHECKS_TO_SKIP,
   MAX_VERIFIED_TICKS,
   SLICE_MS,
@@ -366,7 +367,7 @@ export async function checkBestAttempt(
   if (best === undefined) {
     return 'none';
   }
-  if (expectedRerunMs(best.ticks) > leftMs) {
+  if (expectedRerunMs(best.ticks, RANKED_CELLS) > leftMs) {
     return 'too-long';
   }
   const replay = await storedReplay(db, best.replayId);

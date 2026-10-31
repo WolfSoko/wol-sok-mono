@@ -5,6 +5,7 @@ import {
   scaleOf,
   scaleRect,
   SIM_RESOLUTIONS,
+  gridOf,
   simResolutionOf,
 } from './arena-size';
 import { getLevel, gridScale, levelBalance, levelSize } from './levels';
@@ -27,13 +28,15 @@ function asymmetricCells(walls: Rect[], width: number, height: number) {
 }
 
 describe('arena size', () => {
-  it('tells the grid from an arena width, on a base map and a bigger one', () => {
+  it('tells the grid from an arena, on a base map and a bigger one', () => {
     for (const { id } of SIM_RESOLUTIONS) {
-      expect(simResolutionOf(arenaSize(id).width)).toBe(id);
-      expect(simResolutionOf(arenaSize(id, 2).width, 2)).toBe(id);
+      expect(simResolutionOf(arenaSize(id))).toBe(id);
+      expect(simResolutionOf(arenaSize(id, 2), 2)).toBe(id);
+      expect(gridOf(arenaSize(id, 2), 2)).toBe(id);
     }
-    // A width no grid has: the online one.
-    expect(simResolutionOf(333)).toBe('normal');
+    // An arena no grid has: no grid, or the online one.
+    expect(gridOf({ width: 320, height: 140 })).toBeNull();
+    expect(simResolutionOf({ width: 333, height: 180 })).toBe('normal');
   });
 
   it('makes a bigger map bigger, not finer', () => {

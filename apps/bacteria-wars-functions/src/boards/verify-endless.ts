@@ -7,6 +7,7 @@ import {
   DAILY_VERIFY_MS,
   ENDLESS_VERIFY_MS,
   expectedRerunMs,
+  RANKED_CELLS,
   MAX_VERIFIED_TICKS,
 } from './budgets';
 import { countRerun } from '../replays/level-stats';
@@ -104,7 +105,7 @@ export async function verifyRunWins(
   let checked = 0;
   while (run !== null) {
     const next = nextWin(run);
-    if (next === null || expectedRerunMs(next.ticks) > left()) {
+    if (next === null || expectedRerunMs(next.ticks, RANKED_CELLS) > left()) {
       break;
     }
     const replay = await storedReplay(db, next.replayId);

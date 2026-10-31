@@ -8,7 +8,12 @@ import {
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
-import { DAY_MS, expectedRerunMs, GALLERY_VERIFY_MS } from '../boards/budgets';
+import {
+  DAY_MS,
+  expectedRerunMs,
+  GALLERY_VERIFY_MS,
+  RANKED_CELLS,
+} from '../boards/budgets';
 import { storedReplay } from '../boards/declared-match';
 import { boardProfileOf } from '../boards/names';
 import {
@@ -215,18 +220,13 @@ export async function rerunCandidate(
   verify: (replay: Replay) => Verdict
 ): Promise<Verified | 'no-budget' | 'no-blob' | 'changed' | 'not-verified'> {
   const { id, doc } = candidate;
-  if (left() <= 0) {
+  // A replay stored before its arena was kept is on the online grid.
+  if (expectedRerunMs(doc.ticks, doc.cells ?? RANKED_CELLS) > left()) {
     return 'no-budget';
   }
   const replay = await storedReplay(db, id);
   if (replay === null) {
     return 'no-blob';
-  }
-  // Its arena sets the cost as much as its length: a local match may come
-  // from any simulation resolution.
-  const { ticks, width, height } = replay.header;
-  if (expectedRerunMs(ticks, width * height) > left()) {
-    return 'no-budget';
   }
   const verdict = verify(replay);
   const applied = await applyVerdict(db, id, doc.state, verdict);
