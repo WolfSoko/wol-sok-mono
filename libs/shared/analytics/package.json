@@ -1,0 +1,10 @@
+{
+  "name": "@wolsok/shared-analytics",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/core": "22.2.3",
+    "@angular/router": "22.2.3",
+    "firebase": "11.10.0"
+  },
+  "sideEffects": false
+}
