@@ -1,4 +1,5 @@
 import { StageBusy } from './busy/stage-busy';
+import { Provider } from '@angular/core';
 import {
   ComponentFixture,
   ComponentFixtureAutoDetect,
@@ -6,8 +7,9 @@ import {
 } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable, Subject } from 'rxjs';
-import type { ArenaFrame } from './arena/arena-painter';
+import type { ArenaFrame, ArenaPainter } from './arena/arena-painter';
 import { arenaTheme } from './arena/arena-theme';
+import { ARENA_PAINTER_FACTORY } from './arena/arena-view.component';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { I18nService } from './i18n/i18n.service';
 import { MatchmakerService } from './net/matchmaker.service';
@@ -82,6 +84,8 @@ function stage(granted: boolean) {
       stubFullscreen(arena as unknown as Element);
       return Promise.resolve();
     }),
+    /** Nothing sits inside the bare stage until a test puts something there. */
+    contains: (() => false) as (node: Node) => boolean,
   };
   return arena;
 }
@@ -109,13 +113,19 @@ describe('BacteriaGameComponent', () => {
    * timers run passes `autoDetect: false`: the change detection a timer
    * would run renders the template, with the canvas jsdom cannot draw on.
    */
-  function create(granted = false, touch = true, autoDetect = true) {
+  function create(
+    granted = false,
+    touch = true,
+    autoDetect = true,
+    providers: Provider[] = []
+  ) {
     stubTouch(touch);
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [BacteriaGameComponent, NoopAnimationsModule],
       providers: [
         { provide: ComponentFixtureAutoDetect, useValue: autoDetect },
+        ...providers,
       ],
     });
     store = TestBed.inject(GameStateStore);
@@ -434,9 +444,7 @@ describe('BacteriaGameComponent', () => {
     /** A player inside the stage, which takes the screen for itself. */
     function playerInside(arena: ReturnType<typeof stage>): Element {
       const player = document.createElement('div');
-      (arena as unknown as { contains: (node: Node) => boolean }).contains = (
-        node
-      ) => node === player;
+      arena.contains = (node) => node === player;
       return player;
     }
 
@@ -702,31 +710,103 @@ describe('BacteriaGameComponent', () => {
       }
     });
 
-    it('keeps the arena out of sight from the end of the effect until the next frame is painted', () => {
-      create();
-      startMatch('vs-computer');
-      const div = document.createElement('div');
-      (component as unknown as { arenaFrame: () => unknown }).arenaFrame =
-        () => ({ nativeElement: div });
-      const vaporized = new Subject<void>();
-      (component as unknown as { thanos: unknown }).thanos = {
-        vaporize$: () => vaporized,
-      };
+    /**
+     * The stage after the effect waits for its own render, so these tests
+     * render the template - the one place in this file that does. jsdom has
+     * no `ResizeObserver` and draws on no canvas: the arena gets a painter
+     * that paints nothing, the other canvases a context of null, which they
+     * take.
+     */
+    describe('the hidden arena', () => {
+      let getContext: jest.SpyInstance;
 
-      component.resetGame();
-      expect(div.style.visibility).toBe('');
+      beforeEach(() => {
+        Object.assign(globalThis, {
+          ResizeObserver: class {
+            observe(): void {}
+            unobserve(): void {}
+            disconnect(): void {}
+          },
+        });
+        getContext = jest
+          .spyOn(HTMLCanvasElement.prototype, 'getContext')
+          .mockImplementation(() => null);
+      });
 
-      vaporized.complete();
-      expect(div.style.visibility).toBe('hidden');
+      afterEach(() => {
+        getContext.mockRestore();
+        delete (globalThis as { ResizeObserver?: unknown }).ResizeObserver;
+      });
 
-      const frame = {
-        view: { x: 0, y: 0, width: 320, height: 140 },
-        dynamicWalls: [],
-        deltaTimeSec: 0,
-      } as unknown as ArenaFrame;
-      component['arenaScene'].painted?.(frame);
+      /**
+       * Runs a match through the vaporize effect to its end, with the arena
+       * frame wired up by hand, and gives back that frame along with the two
+       * events it waits for: the stage rendering what follows (a change
+       * detection, which runs the after-render hooks) and the arena painting
+       * its next frame.
+       */
+      function vaporizedArena(): {
+        div: HTMLDivElement;
+        render: () => void;
+        paint: () => void;
+      } {
+        const painter: ArenaPainter = {
+          kind: 'canvas',
+          setFloor: () => undefined,
+          paint: () => undefined,
+          showLastFrame: () => undefined,
+          dispose: () => undefined,
+        };
+        create(false, true, true, [
+          { provide: ARENA_PAINTER_FACTORY, useValue: () => painter },
+        ]);
+        startMatch('vs-computer');
+        const div = document.createElement('div');
+        (component as unknown as { arenaFrame: () => unknown }).arenaFrame =
+          () => ({ nativeElement: div });
+        const vaporized = new Subject<void>();
+        (component as unknown as { thanos: unknown }).thanos = {
+          vaporize$: () => vaporized,
+        };
 
-      expect(div.style.visibility).toBe('');
+        component.resetGame();
+        expect(div.style.visibility).toBe('');
+        vaporized.complete();
+        expect(div.style.visibility).toBe('hidden');
+
+        const frame = {
+          view: { x: 0, y: 0, width: 320, height: 140 },
+          dynamicWalls: [],
+          deltaTimeSec: 0,
+        } as unknown as ArenaFrame;
+        return {
+          div,
+          render: () => fixture.detectChanges(),
+          paint: () => component['arenaScene'].painted?.(frame),
+        };
+      }
+
+      it('stays out of sight after the effect until the stage rendered and the next frame is painted', () => {
+        const { div, render, paint } = vaporizedArena();
+
+        paint();
+        expect(div.style.visibility).toBe('hidden');
+
+        render();
+
+        expect(div.style.visibility).toBe('');
+      });
+
+      it('stays out of sight until the frame painted after the stage rendered', () => {
+        const { div, render, paint } = vaporizedArena();
+
+        render();
+        expect(div.style.visibility).toBe('hidden');
+
+        paint();
+
+        expect(div.style.visibility).toBe('');
+      });
     });
 
     it('names the difficulty next to the level', () => {

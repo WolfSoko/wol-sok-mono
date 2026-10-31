@@ -45,6 +45,7 @@ import {
   map,
   takeUntil,
   tap,
+  timeout,
 } from 'rxjs/operators';
 import { DishAmbience } from './arena/ambience';
 import { ArenaPainter } from './arena/arena-painter';
@@ -209,19 +210,6 @@ const MINIMAP_UPDATE_MS = 100;
  */
 const VAPORIZE_SLACK_MS = 5_000;
 
-/**
- * True when `element` sits inside `parent`, not being `parent` itself. The
- * parent may be anything the stage ref holds - the specs wire up a bare
- * object without `contains` - so it is asked only when it can answer.
- */
-function isDescendantOf(parent: unknown, element: Element): boolean {
-  if (parent == null || parent === element) {
-    return false;
-  }
-  const node = parent as { contains?: (node: Node) => boolean };
-  return typeof node.contains === 'function' && node.contains(element);
-}
-
 /** A goal the HUD counts each colony up towards. */
 
 @UntilDestroy()
@@ -334,14 +322,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private thanos!: WsThanosDirective;
   /**
    * The frame around the arena canvas, inside the vaporized container -
-   * hidden between the end of the effect and the next painted frame, see
-   * {@link hideArenaUntilPainted}. Missing where the template is not
-   * rendered, as in the specs.
+   * hidden from the end of the effect until the stage shows what comes
+   * next, see {@link hideArenaUntilPainted}. Missing where the template is
+   * not rendered, as in the specs.
    */
   private readonly arenaFrame =
     viewChild<ElementRef<HTMLElement>>('arenaFrame');
-  /** True while the arena frame is hidden until the next frame is painted. */
+  /** True while the arena frame is hidden, see {@link hideArenaUntilPainted}. */
   private arenaHidden = false;
+  /** True once the stage rendered what follows the effect, while hidden. */
+  private stageRendered = false;
+  /** True once the arena painted its next frame, while hidden. */
+  private arenaPainted = false;
   /** Draws the arena - on the GPU where the browser can; the view builds it. */
   private painter: ArenaPainter | null = null;
   /** The layout the last painter was built for - null before the first. */
@@ -447,9 +439,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     content: (alpha) => this.content(alpha),
     view: () => this.shakenView(),
     painted: (frame) => {
-      // Inside the animation frame, right after the paint and before the
-      // browser shows it: what shows next is what was just painted.
-      this.revealArena();
+      this.arenaPainted = true;
+      this.revealArenaWhenReady();
       this.paintAmbience(frame.view, frame.deltaTimeSec);
       this.paintMinimap(this.lastCamera ?? frame.view, frame.dynamicWalls);
     },
@@ -582,12 +573,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   });
   /** True while the browser shows the stage on the whole screen. */
   protected readonly nativeFullscreen = signal(false);
-  /**
-   * The element that filled the screen at the last `fullscreenchange` -
-   * null when none did. Tells a screen taken off the stage from one taken
-   * off something else, see {@link onFullscreenChange}.
-   */
-  private fullscreenWas: Element | null = null;
   /** False where the browser has no Fullscreen API, as on iPhones. */
   protected readonly nativeFullscreenSupported = signal(false);
   /** False where the device cannot vibrate - the setting is left out then. */
@@ -1629,7 +1614,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private vaporize(): Observable<void> {
-    // Never a snapshot of a hidden arena.
+    // Never a snapshot of a hidden arena, see hideArenaUntilPainted.
     this.revealArena();
     // Switched off, the arena simply clears - still after the caller is
     // through, as it would after the effect.
@@ -1651,15 +1636,21 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Takes the arena frame out of sight until the stage painted what comes
+   * Takes the arena frame out of sight until the stage shows what comes
    * next - the reset arena under the menu screen, or the next match's
-   * first frame - see {@link revealArena}.
+   * first frame.
    *
    * The vaporize directive fades its container back in by itself at the end
    * of the effect, before the reset ran and before the menu screen is
    * rendered, which on a slow device takes a while: the old level would
    * show between the dust and the menu. Hidden here, synchronously as the
-   * effect ends, the frame shows nothing until the next painted frame.
+   * effect ends, the frame comes back only once both the stage rendered
+   * what follows (`afterNextRender` in {@link resetGame$}) and the arena
+   * painted its next frame (the scene's `painted`, inside the animation
+   * frame): the repaint lands on the next frame, often ahead of a slow
+   * change detection, so a paint alone would show the old level still. See
+   * {@link revealArenaWhenReady}; {@link vaporize} reveals the frame
+   * regardless, so no snapshot is taken of a hidden arena.
    */
   private hideArenaUntilPainted(): void {
     const frame = this.arenaFrame()?.nativeElement;
@@ -1668,17 +1659,24 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     frame.style.visibility = 'hidden';
     this.arenaHidden = true;
+    this.stageRendered = false;
+    this.arenaPainted = false;
   }
 
   /**
-   * Shows the arena frame again, once the next frame is on its canvas -
-   * called from the scene's `painted`, inside the animation frame, so the
-   * frame is shown and the fresh paint displayed together.
+   * Shows the hidden arena frame once both the render and the paint are
+   * through, see {@link hideArenaUntilPainted}. Called every frame, so it
+   * costs a boolean check while the frame is shown.
    */
-  private revealArena(): void {
-    if (!this.arenaHidden) {
+  private revealArenaWhenReady(): void {
+    if (!this.arenaHidden || !this.stageRendered || !this.arenaPainted) {
       return;
     }
+    this.revealArena();
+  }
+
+  /** Shows the arena frame, whatever it still waits for. */
+  private revealArena(): void {
     this.arenaHidden = false;
     const frame = this.arenaFrame()?.nativeElement;
     if (frame != null) {
@@ -1718,8 +1716,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       defaultIfEmpty(undefined),
       last(),
       tap(() => {
-        // Out of sight before the reset arena is on the canvas - the
-        // effect has just faded the container back in.
+        // The effect has just faded the container back in.
         this.hideArenaUntilPainted();
         try {
           this.gameStateService.reset();
@@ -1730,6 +1727,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           // change detection it schedules is registered before the
           // repaint's animation frame.
           this.resetting.set(false);
+          afterNextRender(
+            () => {
+              this.stageRendered = true;
+              this.revealArenaWhenReady();
+            },
+            { injector: this.injector }
+          );
           this.draw();
           if (this.onlineStartPending) {
             this.onlineStartPending = false;
@@ -2186,21 +2190,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * its fullscreen underneath), so such an event is let pass. And the screen
    * going away afterwards - the viewer closed while fullscreen, say, with
    * the menu already up - took nothing off the stage, so it pauses nothing
-   * and keeps the layout: only a screen the stage itself held counts as
-   * taken off ({@link fullscreenWas}). The orientation lock goes either
-   * way, since no element holds the screen any more.
+   * and keeps the layout: only a screen the stage itself held
+   * (`nativeFullscreen` before this change) counts as taken off. The
+   * orientation lock goes either way, since no element holds the screen
+   * any more.
    */
   @HostListener('document:fullscreenchange')
   @HostListener('document:webkitfullscreenchange')
   protected onFullscreenChange(): void {
     const stage = this.stageRef?.nativeElement;
     const current = fullscreenElementOf(document) ?? null;
-    const wasStage = this.fullscreenWas === stage;
-    this.fullscreenWas = current;
-    if (current != null && isDescendantOf(stage, current)) {
+    if (
+      current != null &&
+      stage != null &&
+      current !== stage &&
+      stage.contains(current)
+    ) {
       return;
     }
-    const native = this.isNativeFullscreen();
+    const wasStage = this.nativeFullscreen();
+    const native = current != null && (stage == null || current === stage);
     this.nativeFullscreen.set(native);
     if (native) {
       this.fullscreen.set(true);

@@ -177,14 +177,11 @@ serverTimestamp(), expireAt }` and nothing else - what the rules'
   to its tick within `SEEK_FRAME_MS` each, the view running while paused.
   The viewer is a video player: it fills the box it is given (the stage's
   screen, the `/watch` page), fits the arena into it by width and height,
-  and lays its controls over the arena (seek bar, play, 10 s back and
-  forward, start over, time, speed, fullscreen through the Fullscreen API
-  on its own element, a close button where the host sets `closeLabel`).
-  They hide a few seconds into playback (`CHROME_HIDE_MS`) and come back
-  on any pointer move or key; a click on the arena pauses, Space/K, the
-  arrows, J/L, Home and F work on the focused player. The match just
-  played and "My matches" show it alone on the screen, the list or the
-  header only while nothing plays.
+  and lays its controls over the arena, which hide a few seconds into
+  playback (`CHROME_HIDE_MS`); the controls, the keys and the fullscreen
+  (on its own element) are listed in the component's JSDoc. The match just
+  played and "My matches" show it alone on the screen (`:host.playing`,
+  `screen.player`), the list or the header only while nothing plays.
   Specs draw with `recordingPainters` and play `recordedReplay` (`src/testing/`).
 - `/watch/{publicId}` (the remote's `app.routes.ts`, outside the entry
   route with the cloud) loads `WatchPageComponent` from the narrow entry
@@ -427,8 +424,12 @@ play each other.
   even when `GameStateService.reset()` throws.
 - The directive fades its element back in by itself when it is done. The
   stage hides `.arena-frame` the moment the effect is over
-  (`hideArenaUntilPainted`) and shows it again only with the next painted
-  frame (`revealArena` in `arenaScene.painted`), so the old level never
-  flashes up between the dust and the menu screen, or before the next
-  match's first frame. A new vaporize reveals it first, so the snapshot
-  is never taken of a hidden arena.
+  (`hideArenaUntilPainted`) and shows it again only once both the stage
+  rendered what follows (`afterNextRender` in `resetGame$`) and the arena
+  painted its next frame (`arenaScene.painted`), whichever comes last
+  (`revealArenaWhenReady`): a paint alone lands on the next animation
+  frame, often ahead of a slow change detection, and would show the old
+  level under no menu. So it never flashes up between the dust and the
+  menu screen, or before the next match's first frame. A new vaporize
+  reveals it first (`revealArena`), so the snapshot is never taken of a
+  hidden arena.
