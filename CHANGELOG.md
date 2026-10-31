@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.126.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.1...v74.126.2) (2026-10-31)
+
+### Documentation
+
+* **nx:** 📚️ 📝 long-term engineering principles are mandatory ([6073ea2](https://github.com/WolfSoko/wol-sok-mono/commit/6073ea2a2a64d9c2f412f9a8716031f0d1d8e072))
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡️ let a bacterium with no free cell around sit its move out ([#2725](https://github.com/WolfSoko/wol-sok-mono/issues/2725)) ([2b7e3e2](https://github.com/WolfSoko/wol-sok-mono/commit/2b7e3e21e5f9043424e9dc1c11fa4bce4eaac4e5))
+
 ## [74.126.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.0...v74.126.1) (2026-10-31)
 
 ### Bug Fixes
