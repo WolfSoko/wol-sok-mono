@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { ConsentPrompt } from './consent';
+import { ConsentPrompt } from '@wolsok/shared-analytics';
 
 /**
  * Asks for analytics consent, fixed at the bottom of the page. Its own surface
@@ -17,8 +17,9 @@ import { ConsentPrompt } from './consent';
         data-testid="consent-banner"
       >
         <p>
-          May RollaPolla count your visit with Google Analytics? No ads, no ad
-          tracking.
+          May RollaPolla count visits and which features get used, with Google
+          Analytics? It never sends your polls or anything that names you, and
+          no ad tracking.
         </p>
         <div>
           <button

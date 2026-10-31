@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { isOpen, Poll } from '../../../shared/poll';
+import { injectRollaPollaAnalytics } from '../analytics/rollapolla-analytics';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 
 /** What the creator of a poll may do with it: edit it while open, delete it. */
@@ -128,6 +129,7 @@ export class PollOwnerActionsComponent {
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly analytics = injectRollaPollaAnalytics();
 
   /** Closed polls take no more votes, so there is nothing left to reset. */
   protected readonly open = computed(() => isOpen(this.poll()));
@@ -139,6 +141,7 @@ export class PollOwnerActionsComponent {
    */
   protected deletePoll(): void {
     const { saved } = this.pollsRepo.deletePoll(this.poll().id);
+    this.analytics.track('poll_deleted');
     saved.catch((error: unknown) => {
       console.error('Poll deletion was rejected', error);
       this.snackBar.open('Could not delete the poll.', 'OK');

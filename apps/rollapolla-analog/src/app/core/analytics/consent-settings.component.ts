@@ -5,7 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ConsentPrompt } from './consent';
+import { ConsentPrompt } from '@wolsok/shared-analytics';
 
 /**
  * Lets visitors change their analytics choice. Shown only where analytics runs

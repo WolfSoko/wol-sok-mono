@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ConsentPrompt } from './consent';
+import { ConsentPrompt } from '@wolsok/shared-analytics';
 import { ConsentBannerComponent } from './consent-banner.component';
 
 describe('ConsentBannerComponent', () => {

@@ -34,6 +34,7 @@ const HOT_POLLS_COUNT = 5;
         <rap-poll-list
           [polls]="polls"
           ranked
+          list="hot"
           testIdPrefix="hot-poll-"
           data-testid="hot-polls"
         />

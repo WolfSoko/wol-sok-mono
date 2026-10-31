@@ -25,8 +25,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { Poll, PRIVATE_POLL_HINT } from '../../../shared/poll';
+import { NewPoll, Poll, PRIVATE_POLL_HINT } from '../../../shared/poll';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
+import { injectRollaPollaAnalytics } from '../analytics/rollapolla-analytics';
 import { CREATED_POLL_ID } from './created-poll-id';
 
 @Component({
@@ -63,6 +64,7 @@ export class CreatePollComponent implements OnInit {
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly analytics = injectRollaPollaAnalytics();
 
   protected readonly saving = signal(false);
   protected readonly saveFailed = signal(false);
@@ -128,9 +130,11 @@ export class CreatePollComponent implements OnInit {
           console.error('Poll changes were rejected', error);
           this.snackBar.open('Could not save your changes to the poll.', 'OK');
         });
+        this.analytics.track('poll_edited', pollShape(newPoll));
         this.editDone.emit();
       } else {
         const pollId = await this.pollsRepo.createPoll(newPoll);
+        this.analytics.track('poll_created', pollShape(newPoll));
         await this.router.navigate(['/poll', pollId], {
           state: { [CREATED_POLL_ID]: pollId },
         });
@@ -160,4 +164,10 @@ function trimmedMinLength(minLength: number): ValidatorFn {
       ? { minlength: { requiredLength: minLength, actualLength } }
       : null;
   };
+}
+
+/** What analytics learns about a poll: its shape, never its text. */
+function pollShape(poll: NewPoll): { options: number; listed: boolean } {
+  // unset means unlisted, as the repo stores it
+  return { options: poll.options.length, listed: poll.listed ?? false };
 }

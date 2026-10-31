@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ConsentPrompt } from './consent';
+import { ConsentPrompt } from '@wolsok/shared-analytics';
 import { ConsentSettingsComponent } from './consent-settings.component';
 
 describe('ConsentSettingsComponent', () => {

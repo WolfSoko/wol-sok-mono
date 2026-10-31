@@ -8,6 +8,11 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { Poll } from '../../../shared/poll';
+import {
+  injectRollaPollaAnalytics,
+  PollListName,
+  pollOpened,
+} from '../analytics/rollapolla-analytics';
 
 /** Polls as links: question, votes and how long they still run. */
 @Component({
@@ -21,6 +26,7 @@ import { Poll } from '../../../shared/poll';
             class="poll"
             [routerLink]="['/poll', poll.id]"
             [attr.data-testid]="testIdPrefix() + poll.id"
+            (click)="opened(rank)"
           >
             @if (ranked()) {
               <span class="rank" aria-hidden="true">{{ rank + 1 }}</span>
@@ -125,4 +131,12 @@ export class PollListComponent {
   /** Numbers the polls, for a ranking. */
   public readonly ranked = input(false, { transform: booleanAttribute });
   public readonly testIdPrefix = input('poll-link-');
+  /** Which list this is, for the usage statistics. */
+  public readonly list = input.required<PollListName>();
+
+  private readonly analytics = injectRollaPollaAnalytics();
+
+  protected opened(position: number): void {
+    this.analytics.track('select_content', pollOpened(this.list(), position));
+  }
 }

@@ -2,6 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
+import {
+  provideRecordingAnalytics,
+  RecordingAnalytics,
+} from '@wolsok/shared-analytics/testing';
 import { PRIVATE_POLL_HINT } from '../../../shared/poll';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
@@ -12,14 +16,17 @@ describe('CreatePollComponent', () => {
   let fixture: ComponentFixture<CreatePollComponent>;
   let repo: PollsRepoAdapterMock;
   let navigate: ReturnType<typeof vi.fn>;
+  let analytics: RecordingAnalytics;
 
   beforeEach(async () => {
     navigate = vi.fn().mockResolvedValue(true);
+    analytics = new RecordingAnalytics();
     await TestBed.configureTestingModule({
       imports: [CreatePollComponent, NoopAnimationsModule],
       providers: [
         { provide: PollsRepoPort, useClass: PollsRepoAdapterMock },
         { provide: Router, useValue: { navigate } },
+        provideRecordingAnalytics(analytics),
       ],
     }).compileComponents();
 
@@ -63,6 +70,9 @@ describe('CreatePollComponent', () => {
     expect(navigate).toHaveBeenCalledWith(['/poll', polls[0].id], {
       state: { [CREATED_POLL_ID]: polls[0].id },
     });
+    expect(analytics.tracked('poll_created')).toEqual([
+      { options: 2, listed: true },
+    ]);
   });
 
   it('creates a private poll, found only through its link', async () => {
@@ -79,6 +89,31 @@ describe('CreatePollComponent', () => {
     await fixture.whenStable();
 
     expect(Object.values(repo.polls())[0].listed).toBe(false);
+    expect(analytics.tracked('poll_created')).toEqual([
+      { options: 2, listed: false },
+    ]);
+  });
+
+  it('counts an edit, not a new poll, when the creator saves changes', async () => {
+    const pollId = await repo.createPoll({
+      question: 'Pizza or pasta?',
+      options: ['Pizza', 'Pasta'],
+      listed: true,
+    });
+    fixture = TestBed.createComponent(CreatePollComponent);
+    fixture.componentRef.setInput('poll', repo.polls()[pollId]);
+    fixture.detectChanges();
+    button('add-option-button').click();
+    fixture.detectChanges();
+    type('poll-option-input-2', 'Both');
+
+    button('save-poll-button').click();
+    await fixture.whenStable();
+
+    expect(analytics.tracked('poll_created')).toEqual([]);
+    expect(analytics.tracked('poll_edited')).toEqual([
+      { options: 3, listed: true },
+    ]);
   });
 
   it('does not create a poll with a blank option', () => {

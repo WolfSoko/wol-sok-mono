@@ -64,6 +64,11 @@ export function featuredPoll(pollId: string): FeaturedPoll | undefined {
   return FEATURED_POLLS.find(({ id }) => id === pollId);
 }
 
+/** One of RollaPolla's own polls, stored or not yet. */
+export function isFeaturedPoll(poll: { id: string }): boolean {
+  return featuredPoll(poll.id) !== undefined;
+}
+
 /**
  * Featured polls run in yearly seasons: they close at the next 1 January
  * (UTC), and the first vote after that starts a new season. Every client

@@ -2,6 +2,10 @@ import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Auth } from '@angular/fire/auth';
 import * as fireAuth from '@angular/fire/auth';
+import {
+  provideRecordingAnalytics,
+  RecordingAnalytics,
+} from '@wolsok/shared-analytics/testing';
 import { firstValueFrom, of } from 'rxjs';
 import { SignInCancelled } from '../ports/account.port';
 import { AccountAdapter } from './account.adapter';
@@ -28,6 +32,7 @@ describe('AccountAdapter', () => {
     providerData: [],
   };
   let auth: { currentUser: unknown; authStateReady: () => Promise<void> };
+  let analytics: RecordingAnalytics;
 
   function createAdapter(platform = 'browser'): AccountAdapter {
     TestBed.configureTestingModule({
@@ -35,6 +40,7 @@ describe('AccountAdapter', () => {
         AccountAdapter,
         { provide: Auth, useValue: auth },
         { provide: PLATFORM_ID, useValue: platform },
+        provideRecordingAnalytics(analytics),
       ],
     });
     return TestBed.inject(AccountAdapter);
@@ -42,6 +48,7 @@ describe('AccountAdapter', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    analytics = new RecordingAnalytics();
     vi.mocked(fireAuth.linkWithPopup).mockResolvedValue({
       user: { ...anonymousUser, displayName: 'set', providerData: [] },
     } as unknown as fireAuth.UserCredential);
@@ -59,6 +66,9 @@ describe('AccountAdapter', () => {
       expect.any(fireAuth.GoogleAuthProvider)
     );
     expect(fireAuth.signInWithCredential).not.toHaveBeenCalled();
+    expect(analytics.events).toEqual([
+      { name: 'sign_up', params: { method: 'google' } },
+    ]);
   });
 
   it('switches to the Google account when it is already in use', async () => {
@@ -77,6 +87,9 @@ describe('AccountAdapter', () => {
       auth,
       credential
     );
+    expect(analytics.events).toEqual([
+      { name: 'login', params: { method: 'google' } },
+    ]);
   });
 
   it('signs in with a popup when nobody is signed in', async () => {
@@ -86,6 +99,9 @@ describe('AccountAdapter', () => {
 
     expect(fireAuth.signInWithPopup).toHaveBeenCalled();
     expect(fireAuth.linkWithPopup).not.toHaveBeenCalled();
+    expect(analytics.events).toEqual([
+      { name: 'login', params: { method: 'google' } },
+    ]);
   });
 
   it('reports a closed popup as cancelled', async () => {
@@ -96,6 +112,7 @@ describe('AccountAdapter', () => {
     await expect(createAdapter().signInWithGoogle()).rejects.toBeInstanceOf(
       SignInCancelled
     );
+    expect(analytics.events).toEqual([]);
   });
 
   it('passes other errors on', async () => {

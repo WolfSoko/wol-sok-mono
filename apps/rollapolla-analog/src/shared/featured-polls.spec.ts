@@ -4,6 +4,7 @@ import {
   featuredPoll,
   featuredPollClosesAt,
   featuredPollDraft,
+  isFeaturedPoll,
   pollOrFeaturedDraft,
 } from './featured-polls';
 import { PollsRepoPort } from '../app/ports/polls-repo.port';
@@ -54,6 +55,11 @@ describe('featured polls', () => {
       closesAt: new Date('2027-01-01T00:00:00Z'),
     });
     expect(featuredPoll('some-poll')).toBeUndefined();
+  });
+
+  it("tells featured polls from the visitors' polls", () => {
+    expect(isFeaturedPoll({ id: 'featured-superpower' })).toBe(true);
+    expect(isFeaturedPoll({ id: 'some-poll' })).toBe(false);
   });
 
   it('closes every season on the next 1 January (UTC)', () => {
