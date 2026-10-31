@@ -4,8 +4,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { Title } from '@angular/platform-browser';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { AccountComponent } from './core/account/account.component';
-import { ConsentBannerComponent } from './core/analytics/consent-banner.component';
-import { ConsentSettingsComponent } from './core/analytics/consent-settings.component';
+import { ConsentBannerComponent } from './core/consent/consent-banner.component';
+import { ConsentSettingsComponent } from './core/consent/consent-settings.component';
 
 @Component({
   selector: 'rap-root',
@@ -60,6 +60,9 @@ import { ConsentSettingsComponent } from './core/analytics/consent-settings.comp
         <span>© RollaPolla · Polls for everyone</span>
         <nav class="footer-links" aria-label="More">
           <a routerLink="/polls">Browse polls</a>
+          <a routerLink="/privacy" data-testid="footer-privacy-link"
+            >Privacy policy</a
+          >
           <rap-consent-settings />
           <span>Built with Angular &amp; Analog</span>
         </nav>
