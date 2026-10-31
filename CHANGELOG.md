@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.129.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.128.0...v74.129.0) (2026-10-31)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ full usage statistics for RollaPolla and Bacteria Wars, opt-in only ([#2729](https://github.com/WolfSoko/wol-sok-mono/issues/2729)) ([7b5690b](https://github.com/WolfSoko/wol-sok-mono/commit/7b5690bdf834a80a6421fe1f6f53391b1888ce3b))
+
 ## [74.128.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.127.0...v74.128.0) (2026-10-31)
 
 ### Features
