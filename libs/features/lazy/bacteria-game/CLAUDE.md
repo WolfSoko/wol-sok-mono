@@ -419,9 +419,12 @@ play each other.
   (`bacteria-game.component.ts`): `resetting` is true while the
   `@wolsok/thanos` directive on `.thanos-container` turns the last frame
   to dust, and the panel shows nothing meanwhile. Whatever the effect
-  does, the stage must come back: the directive's completion is awaited
-  at most the set length plus `VAPORIZE_SLACK_MS`, and `resetting` is
-  cleared even when `GameStateService.reset()` throws.
+  does, the stage must come back: the effect runs on the stage's own
+  subscription to the directive's cold `vaporize$` and is cancelled at
+  the set length plus `VAPORIZE_SLACK_MS` (a capture that finishes later
+  must not lay its canvas over the menu), an effect that fails - at once
+  included - is logged and the reset goes on, and `resetting` is cleared
+  even when `GameStateService.reset()` throws.
 - The directive fades its element back in by itself when it is done. The
   stage hides `.arena-frame` the moment the effect is over
   (`hideArenaUntilPainted`) and shows it again only with the next painted

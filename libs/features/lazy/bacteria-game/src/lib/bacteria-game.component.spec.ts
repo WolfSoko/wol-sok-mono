@@ -5,7 +5,7 @@ import {
   TestBed,
 } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import type { ArenaFrame } from './arena/arena-painter';
 import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
@@ -402,21 +402,73 @@ describe('BacteriaGameComponent', () => {
       expect(arena.requestFullscreen).not.toHaveBeenCalled();
     });
 
-    it('follows the browser when it takes the arena off the main menu', () => {
-      create();
-
+    /**
+     * Puts the stage on the screen, as the browser tells it, and takes it
+     * off again - the handler sees both changes, as it would in a browser.
+     */
+    function screenTakenOffStage(arena: ReturnType<typeof stage>): void {
+      stubFullscreen(arena as unknown as Element);
       component['onFullscreenChange']();
+      stubFullscreen(null);
+      component['onFullscreenChange']();
+    }
+
+    it('follows the browser when it takes the arena off the main menu', () => {
+      const arena = create();
+
+      screenTakenOffStage(arena);
 
       expect(component['fullscreen']()).toBe(false);
     });
 
     it('pauses a running match instead when the browser leaves fullscreen', () => {
-      create();
+      const arena = create();
       startMatch('vs-computer');
 
-      component['onFullscreenChange']();
+      screenTakenOffStage(arena);
 
       expect(component['paused']()).toBe(true);
+      expect(component['fullscreen']()).toBe(true);
+    });
+
+    /** A player inside the stage, which takes the screen for itself. */
+    function playerInside(arena: ReturnType<typeof stage>): Element {
+      const player = document.createElement('div');
+      (arena as unknown as { contains: (node: Node) => boolean }).contains = (
+        node
+      ) => node === player;
+      return player;
+    }
+
+    it('lets a replay player inside the stage take the screen without changing the stage', () => {
+      const arena = create();
+      const player = playerInside(arena);
+
+      stubFullscreen(player);
+      component['onFullscreenChange']();
+
+      expect(component['nativeFullscreen']()).toBe(false);
+      expect(component['fullscreen']()).toBe(true);
+
+      // The player closed while on the screen: the browser gives it back,
+      // but it never was the stage's, so the layout stays.
+      stubFullscreen(null);
+      component['onFullscreenChange']();
+
+      expect(component['fullscreen']()).toBe(true);
+    });
+
+    it('does not pause a match when the screen a player inside the stage held goes away', () => {
+      const arena = create();
+      const player = playerInside(arena);
+      startMatch('vs-computer');
+      stubFullscreen(player);
+      component['onFullscreenChange']();
+
+      stubFullscreen(null);
+      component['onFullscreenChange']();
+
+      expect(component['paused']()).toBe(false);
       expect(component['fullscreen']()).toBe(true);
     });
 
@@ -541,7 +593,7 @@ describe('BacteriaGameComponent', () => {
       startMatch('vs-computer');
       const vaporized = new Subject<void>();
       (component as unknown as { thanos: unknown }).thanos = {
-        vaporize: () => vaporized,
+        vaporize$: () => vaporized,
       };
       const before = store.snapshot().levelId;
       store.update({ endedBy: 'annihilation' });
@@ -563,7 +615,7 @@ describe('BacteriaGameComponent', () => {
         dispose: () => undefined,
       };
       (component as unknown as { thanos: unknown }).thanos = {
-        vaporize: () => {
+        vaporize$: () => {
           calls.push('snapshot');
           return new Subject<void>();
         },
@@ -574,21 +626,28 @@ describe('BacteriaGameComponent', () => {
       expect(calls).toEqual(['show', 'snapshot']);
     });
 
-    it('goes on without the effect when it never ends', () => {
+    it('goes on without the effect when it never ends, and cancels it', () => {
       jest.useFakeTimers();
       try {
         create(false, true, false);
         startMatch('vs-computer');
         const settings = TestBed.inject(GameSettingsService);
+        let cancelled = false;
         (component as unknown as { thanos: unknown }).thanos = {
-          vaporize: () => new Subject<void>(),
+          vaporize$: () =>
+            new Observable<void>(() => () => {
+              cancelled = true;
+            }),
         };
 
         component.resetGame();
         expect(component['resetting']()).toBe(true);
 
-        jest.advanceTimersByTime(settings.vaporizeMs() + 5_000 + 1);
+        jest.advanceTimersByTime(settings.vaporizeMs() + 5_000 - 1);
+        expect(cancelled).toBe(false);
+        jest.advanceTimersByTime(2);
 
+        expect(cancelled).toBe(true);
         expect(component['resetting']()).toBe(false);
         expect(store.snapshot().currentState).toBe(GameState.START);
       } finally {
@@ -606,7 +665,7 @@ describe('BacteriaGameComponent', () => {
         });
       const vaporized = new Subject<void>();
       (component as unknown as { thanos: unknown }).thanos = {
-        vaporize: () => vaporized,
+        vaporize$: () => vaporized,
       };
       const error = jest.fn();
 
@@ -617,6 +676,32 @@ describe('BacteriaGameComponent', () => {
       expect(error).toHaveBeenCalledWith(expect.any(Error));
     });
 
+    it('frees the stage when the effect fails before it even starts', () => {
+      create();
+      startMatch('vs-computer');
+      const consoleError = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
+      try {
+        (component as unknown as { thanos: unknown }).thanos = {
+          vaporize$: () => {
+            throw new Error('no context');
+          },
+        };
+
+        component.resetGame();
+
+        expect(component['resetting']()).toBe(false);
+        expect(store.snapshot().currentState).toBe(GameState.START);
+        expect(consoleError).toHaveBeenCalledWith(
+          'The arena could not be vaporized',
+          expect.any(Error)
+        );
+      } finally {
+        consoleError.mockRestore();
+      }
+    });
+
     it('keeps the arena out of sight from the end of the effect until the next frame is painted', () => {
       create();
       startMatch('vs-computer');
@@ -625,7 +710,7 @@ describe('BacteriaGameComponent', () => {
         () => ({ nativeElement: div });
       const vaporized = new Subject<void>();
       (component as unknown as { thanos: unknown }).thanos = {
-        vaporize: () => vaporized,
+        vaporize$: () => vaporized,
       };
 
       component.resetGame();
@@ -715,8 +800,8 @@ describe('BacteriaGameComponent', () => {
     it('simply clears the arena while the effect is off', async () => {
       create();
       TestBed.inject(GameSettingsService).setVaporize('off');
-      const vaporize = jest.fn(() => new Subject<void>());
-      (component as unknown as { thanos: unknown }).thanos = { vaporize };
+      const vaporize$ = jest.fn(() => new Subject<void>());
+      (component as unknown as { thanos: unknown }).thanos = { vaporize$ };
       const done = jest.fn();
 
       component['vaporize']().subscribe({ complete: done });
@@ -724,7 +809,7 @@ describe('BacteriaGameComponent', () => {
       expect(done).not.toHaveBeenCalled();
       await Promise.resolve();
 
-      expect(vaporize).not.toHaveBeenCalled();
+      expect(vaporize$).not.toHaveBeenCalled();
       expect(done).toHaveBeenCalled();
     });
   });

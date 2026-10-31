@@ -83,10 +83,11 @@ export class WsThanosDirective {
    * Vaporize the dom element of this directive
    * @param removeElem remove the vaporized dom element or blend back in after a while
    * @returns an observable that emits once and completes when the effect is
-   * over: after it finished, after it failed (the error is logged and
-   * reported as an unhandled RxJS error, as with `vaporize$`) and when the
-   * directive was destroyed meanwhile. It replays, so a caller that
-   * subscribes after a synchronous failure still gets the completion.
+   * over: after it finished, after it failed and when the directive was
+   * destroyed meanwhile. It replays, so a caller that subscribes after a
+   * synchronous failure still gets the completion. A failure is logged
+   * (`console.error`) and not thrown further: a caller that wants the error
+   * itself subscribes to `vaporize$` instead.
    */
   public vaporize(removeElem = true): Observable<void> {
     const done = new ReplaySubject<void>(1);
@@ -98,7 +99,9 @@ export class WsThanosDirective {
         }),
         this.untilDestroyed
       )
-      .subscribe();
+      // Logged by vaporize$ already; left unhandled, RxJS would report it a
+      // second time as an error on the window, without its context.
+      .subscribe({ error: () => undefined });
     return done.asObservable();
   }
 }

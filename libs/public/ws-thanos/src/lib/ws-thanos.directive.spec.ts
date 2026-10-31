@@ -164,14 +164,6 @@ describe('Integration Test: WsThanosDirective', () => {
       const consoleError = jest
         .spyOn(console, 'error')
         .mockImplementation(() => undefined);
-      // The error stays unhandled on purpose and RxJS rethrows it on a timeout;
-      // catch it on the window so jsdom does not fail the test with it.
-      const unhandled: unknown[] = [];
-      const onError = (event: ErrorEvent) => {
-        unhandled.push(event.error);
-        event.preventDefault();
-      };
-      window.addEventListener('error', onError);
       try {
         givenStubbedThanosService_VaporizeReturns(
           throwError(() => new Error('no context'))
@@ -186,10 +178,7 @@ describe('Integration Test: WsThanosDirective', () => {
           expect.any(Error),
           expect.objectContaining({ removeElem: false })
         );
-        await new Promise((resolve) => setTimeout(resolve));
-        expect(unhandled).toEqual([new Error('no context')]);
       } finally {
-        window.removeEventListener('error', onError);
         consoleError.mockRestore();
       }
     });

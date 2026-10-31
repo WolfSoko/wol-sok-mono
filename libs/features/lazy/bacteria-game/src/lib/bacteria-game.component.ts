@@ -38,13 +38,13 @@ import {
   timer,
 } from 'rxjs';
 import {
+  catchError,
   defaultIfEmpty,
   filter,
   last,
   map,
-  take,
+  takeUntil,
   tap,
-  timeout,
 } from 'rxjs/operators';
 import { DishAmbience } from './arena/ambience';
 import { ArenaPainter } from './arena/arena-painter';
@@ -72,6 +72,7 @@ import { WeaponPadComponent } from './weapon-pad/weapon-pad.component';
 import {
   exitFullscreen,
   fitInside,
+  fullscreenElementOf,
   isFullscreen,
   isFullscreenSupported,
   lockLandscape,
@@ -207,6 +208,19 @@ const MINIMAP_UPDATE_MS = 100;
  * a snapshot that never completes must not leave the stage without a menu.
  */
 const VAPORIZE_SLACK_MS = 5_000;
+
+/**
+ * True when `element` sits inside `parent`, not being `parent` itself. The
+ * parent may be anything the stage ref holds - the specs wire up a bare
+ * object without `contains` - so it is asked only when it can answer.
+ */
+function isDescendantOf(parent: unknown, element: Element): boolean {
+  if (parent == null || parent === element) {
+    return false;
+  }
+  const node = parent as { contains?: (node: Node) => boolean };
+  return typeof node.contains === 'function' && node.contains(element);
+}
 
 /** A goal the HUD counts each colony up towards. */
 
@@ -568,6 +582,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   });
   /** True while the browser shows the stage on the whole screen. */
   protected readonly nativeFullscreen = signal(false);
+  /**
+   * The element that filled the screen at the last `fullscreenchange` -
+   * null when none did. Tells a screen taken off the stage from one taken
+   * off something else, see {@link onFullscreenChange}.
+   */
+  private fullscreenWas: Element | null = null;
   /** False where the browser has no Fullscreen API, as on iPhones. */
   protected readonly nativeFullscreenSupported = signal(false);
   /** False where the device cannot vibrate - the setting is left out then. */
@@ -1619,13 +1639,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // The effect takes its snapshot of the canvas right away.
     this.painter?.showLastFrame();
     // Should the capture or the effect never end, the stage goes on
-    // without them rather than staying without a menu.
-    return this.thanos.vaporize(false).pipe(
-      take(1),
-      timeout({
-        first: this.settings.vaporizeMs() + VAPORIZE_SLACK_MS,
-        with: () => of(undefined),
-      })
+    // without them rather than staying without a menu. The cold `vaporize$`
+    // runs the effect on this subscription, so leaving it at the deadline
+    // cancels the effect: a capture that only finishes later must not dim
+    // the container and lay its canvas over the menu or the next match.
+    // The directive's teardown fades the container back in.
+    return this.thanos.vaporize$(false).pipe(
+      takeUntil(timer(this.settings.vaporizeMs() + VAPORIZE_SLACK_MS)),
+      map(() => undefined)
     );
   }
 
@@ -1680,36 +1701,44 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    *
    * The animation is allowed to finish without emitting - what matters is that
    * it is over, so the reset hangs off the completion rather than off a value.
+   * An effect that fails - even at once, while {@link vaporize} sets it up -
+   * is over too: the error is logged here and the reset goes on, so
+   * `resetting` never sticks.
    */
   private resetGame$(): Observable<void> {
     return defer(() => {
       this.resetting.set(true);
       this.gameStateService.pause();
-      return this.vaporize().pipe(
-        defaultIfEmpty(undefined),
-        last(),
-        tap(() => {
-          // Out of sight before the reset arena is on the canvas - the
-          // effect has just faded the container back in.
-          this.hideArenaUntilPainted();
-          try {
-            this.gameStateService.reset();
-          } finally {
-            // Whatever the reset came to (a GPU simulation may fail to set
-            // up again), the stage gets its menu back; the error goes on.
-            // The signal first, so the change detection it schedules is
-            // registered before the repaint's animation frame.
-            this.resetting.set(false);
-            this.draw();
-          }
+      return this.vaporize();
+    }).pipe(
+      catchError((error: unknown) => {
+        console.error('The arena could not be vaporized', error);
+        return of(undefined);
+      }),
+      defaultIfEmpty(undefined),
+      last(),
+      tap(() => {
+        // Out of sight before the reset arena is on the canvas - the
+        // effect has just faded the container back in.
+        this.hideArenaUntilPainted();
+        try {
+          this.gameStateService.reset();
+        } finally {
+          // Whatever the reset came to (a GPU simulation may fail to set
+          // up again), the stage gets its menu back and a pending online
+          // start is taken up; the error goes on. The signal first, so the
+          // change detection it schedules is registered before the
+          // repaint's animation frame.
+          this.resetting.set(false);
+          this.draw();
           if (this.onlineStartPending) {
             this.onlineStartPending = false;
             this.startOnlineMatch();
           }
-        }),
-        map(() => undefined)
-      );
-    });
+        }
+      }),
+      map(() => undefined)
+    );
   }
 
   /**
@@ -2150,10 +2179,27 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * the settings toggle - the game reacts as it does to Escape, which the
    * browser consumes before it reaches {@link onKeyDown}: a running match
    * pauses, a screen stays open, and only the main menu leaves for the page.
+   *
+   * The event tells of every element in the document. The replay viewer on
+   * the 'replay' screen takes the screen for its own element, a descendant
+   * of the stage: that changes nothing about the stage's standing (it keeps
+   * its fullscreen underneath), so such an event is let pass. And the screen
+   * going away afterwards - the viewer closed while fullscreen, say, with
+   * the menu already up - took nothing off the stage, so it pauses nothing
+   * and keeps the layout: only a screen the stage itself held counts as
+   * taken off ({@link fullscreenWas}). The orientation lock goes either
+   * way, since no element holds the screen any more.
    */
   @HostListener('document:fullscreenchange')
   @HostListener('document:webkitfullscreenchange')
   protected onFullscreenChange(): void {
+    const stage = this.stageRef?.nativeElement;
+    const current = fullscreenElementOf(document) ?? null;
+    const wasStage = this.fullscreenWas === stage;
+    this.fullscreenWas = current;
+    if (current != null && isDescendantOf(stage, current)) {
+      return;
+    }
     const native = this.isNativeFullscreen();
     this.nativeFullscreen.set(native);
     if (native) {
@@ -2162,6 +2208,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     unlockOrientation(screen);
+    if (!wasStage) {
+      return;
+    }
     if (this.running() && !this.paused()) {
       this.gameStateService.togglePause();
     } else if (this.panel() === 'menu') {
