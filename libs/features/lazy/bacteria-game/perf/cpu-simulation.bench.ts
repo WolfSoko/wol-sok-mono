@@ -1,8 +1,10 @@
 /**
  * How long a tick of the `cpu` ruleset takes - `BacteriaSimulation` inside a
- * `MatchEngine`, bot included - on the matches the golden spec plays, and
- * which phase of the step the time goes to. Prints ms per tick; no gate
- * (ADR 0014: CI's workers are shared, absolute times vary).
+ * `MatchEngine`, bot included - on levels the golden spec plays, all on the
+ * base arena (and one on the finest grid), a human who steers, then drags
+ * the crosshair, and which phase of the step the time goes to. Prints ms
+ * per tick; no gate (ADR 0014: CI's workers are shared, absolute times
+ * vary).
  *
  *   npx tsx libs/features/lazy/bacteria-game/perf/cpu-simulation.bench.ts
  */
@@ -77,7 +79,8 @@ function bench(
   const { spawns, options } = planMatch(plan);
   const engine = new MatchEngine(spawns, options);
   const totals = timePhases(engine.simulation as BacteriaSimulation);
-  let start = 0;
+  // Only `engine.tick` is timed - not the inputs or the counting around it.
+  let tickMs = 0;
   let measured = 0;
   let bacteria = 0;
   let worst = 0;
@@ -87,20 +90,21 @@ function bench(
       engine.setDragTarget(0, plan.width * 0.6, plan.height * 0.25);
     }
     if (tick === warmup) {
-      start = performance.now();
       totals.forEach((_, phase) => totals.set(phase, 0));
     }
     const before = performance.now();
     engine.tick(plan.width, plan.height);
+    const took = performance.now() - before;
     if (tick >= warmup) {
-      worst = Math.max(worst, performance.now() - before);
+      tickMs += took;
+      worst = Math.max(worst, took);
       measured++;
       bacteria += (engine.simulation as BacteriaSimulation)
         .getColonies()
         .reduce((sum, colony) => sum + colony.cells.length, 0);
     }
   }
-  const ms = (performance.now() - start) / measured;
+  const ms = tickMs / measured;
   const phases = [...totals]
     .map(([phase, total]) => `${phase} ${(total / measured).toFixed(3)}`)
     .join(', ');
