@@ -170,9 +170,16 @@ export const EN = {
   },
   balance: {
     version: 'Balance version',
-    hint: 'Counted from stored local matches against the computer; the medallions only from the matches the server re-ran.',
+    hint: 'Counted from stored local matches against the computer, each simulation resolution apart; the medallions only from the matches the server re-ran.',
     showing: 'Balance version {version}',
     offCurve: 'computer off the curve',
+    /** The simulation resolution a row was played on, as the game names it. */
+    grid: {
+      low: 'Low',
+      normal: 'Normal',
+      high: 'High',
+      ultra: 'Ultra',
+    },
     medal: {
       platinum: 'Platinum',
       gold: 'Gold',

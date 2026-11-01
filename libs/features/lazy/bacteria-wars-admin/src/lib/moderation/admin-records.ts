@@ -367,9 +367,9 @@ export function parseStoredReplay(
 }
 
 /**
- * `levelStats/{id}` (ADR 0016): how a level went against one computer -
- * attempts, results, durations, evolved play and weapons, and the
- * medallions of the matches the server re-ran.
+ * `levelStats/{id}` (ADR 0016): how a level went against one computer on
+ * one simulation resolution - attempts, results, durations, evolved play
+ * and weapons, and the medallions of the matches the server re-ran.
  */
 export interface LevelStatsRecord {
   id: string;
@@ -378,6 +378,8 @@ export interface LevelStatsRecord {
   balanceVersion: number | null;
   /** The ladder's version, 0 for a computer off the curve. */
   ladder: number;
+  /** The simulation resolution (`low`, `normal`, `high`, `ultra`). */
+  grid: string;
   attempts: number;
   wins: number;
   losses: number;
@@ -406,6 +408,9 @@ export const counts = (value: unknown): Record<string, number> =>
       )
     : {};
 
+/** The simulation resolution of online matches, and of every stored replay before. */
+const ONLINE_GRID = 'normal';
+
 export function parseLevelStats(
   id: string,
   value: unknown
@@ -420,6 +425,8 @@ export function parseLevelStats(
     difficulty: text(value['difficulty']) ?? '',
     balanceVersion: numberOrNull(value['balanceVersion']),
     ladder: count('ladder'),
+    // Counted apart since 2026-11-01; until then only the online grid's.
+    grid: text(value['grid']) ?? ONLINE_GRID,
     attempts: count('attempts'),
     wins: count('wins'),
     losses: count('losses'),

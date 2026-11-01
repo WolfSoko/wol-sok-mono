@@ -17,11 +17,13 @@ const header = (fields: Partial<ReplayHeader>) =>
   }) as ReplayHeader;
 
 describe('levelStatsKey', () => {
-  const header = (levelId: string, ladder?: number) =>
+  const header = (levelId: string, ladder?: number, width = 320) =>
     ({
       levelId,
       difficulty: 'hard',
       balanceVersion: 12,
+      width,
+      height: (width / 16) * 9,
       ...(ladder === undefined ? {} : { ladder }),
     }) as ReplayHeader;
 
@@ -34,7 +36,20 @@ describe('levelStatsKey', () => {
       difficulty: 'hard',
       balanceVersion: 12,
       ladder: 0,
+      grid: 'normal',
     });
+  });
+
+  it('counts each simulation resolution apart, the online grid under its old id', () => {
+    const id = (width: number) =>
+      levelStatsId(levelStatsKey(header('quarantine', 1, width), 'computer'));
+    expect(id(320)).toBe('quarantine_hard_b12_l1');
+    expect(id(256)).toBe('quarantine_hard_b12_l1_glow');
+    expect(id(480)).toBe('quarantine_hard_b12_l1_ghigh');
+    expect(id(640)).toBe('quarantine_hard_b12_l1_gultra');
+    expect(levelStatsKey(header('quarantine', 1, 640), 'computer').grid).toBe(
+      'ultra'
+    );
   });
 
   it('takes a generated level by its recipe and difficulty, daily and endless apart', () => {

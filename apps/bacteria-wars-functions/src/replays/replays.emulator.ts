@@ -147,16 +147,19 @@ describe('acceptReplay', () => {
     await submit('s1', 'ada', bytes);
     await submit('s1', 'ada', bytes);
     await submit('s3', 'bob', await bytesOf());
+    // "Ultra" counts apart: its matches go differently.
+    await submit('s4', 'cid', await bytesOf({ width: 640, height: 360 }));
     const { difficulty } = golden.header;
     const stats = await db.collection('levelStats').get();
-    expect(stats.docs.map((doc) => doc.id)).toEqual([
-      `quarantine_${difficulty}_b${BALANCE_VERSION}_l0`,
-    ]);
+    const id = `quarantine_${difficulty}_b${BALANCE_VERSION}_l0`;
+    expect(stats.docs.map((doc) => doc.id)).toEqual([id, `${id}_gultra`]);
+    expect(stats.docs[1].data()).toMatchObject({ grid: 'ultra', attempts: 1 });
     expect(stats.docs[0].data()).toMatchObject({
       level: 'quarantine',
       difficulty,
       balanceVersion: BALANCE_VERSION,
       ladder: 0,
+      grid: 'normal',
       attempts: 2,
       losses: 2,
       durations: { lt1m: 2 },

@@ -1,7 +1,10 @@
 import {
   isPlainLoadout,
+  ONLINE_SIM_RESOLUTION,
   parseGeneratedId,
   type ReplayHeader,
+  simGridOf,
+  type SimResolution,
   TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
@@ -10,8 +13,8 @@ import type { Verdict } from '../boards/verify';
 import type { ReplayKind } from './accept-plan';
 
 /**
- * The level statistics (ADR 0016 §4): counters per level and bot
- * difficulty in `levelStats/{id}`, added to once a local replay is
+ * The level statistics (ADR 0016 §4): counters per level, bot difficulty
+ * and simulation resolution in `levelStats/{id}`, added to once a local replay is
  * stored - no uid, increments only, from what the replay claims - and
  * the medallions of the matches the server re-ran (`countRerun`). The admin area's
  * Balance view reads them; nobody else does.
@@ -41,6 +44,12 @@ export interface LevelStatsKey {
   balanceVersion: number;
   /** ...and the ladder's version, 0 for a computer off the curve. */
   ladder: number;
+  /**
+   * The simulation resolution it was played on: a finer grid holds more,
+   * smaller bacteria, so its matches go differently (owner's decision of
+   * 2026-11-01).
+   */
+  grid: SimResolution;
 }
 
 /** The key of the statistics a local replay counts into. */
@@ -58,12 +67,19 @@ export function levelStatsKey(
     difficulty: header.difficulty,
     balanceVersion: header.balanceVersion,
     ladder: header.ladder ?? 0,
+    // A stored replay is always on a grid of its level.
+    grid: simGridOf(header) ?? ONLINE_SIM_RESOLUTION,
   };
 }
 
-/** The document id of a key: a changed computer starts counters of its own. */
+/**
+ * The document id of a key: a changed computer or another grid starts
+ * counters of their own. The online grid keeps the id it had before the
+ * grids were counted apart, so its counters go on.
+ */
 export function levelStatsId(key: LevelStatsKey): string {
-  return `${key.level}_${key.difficulty}_b${key.balanceVersion}_l${key.ladder}`;
+  const id = `${key.level}_${key.difficulty}_b${key.balanceVersion}_l${key.ladder}`;
+  return key.grid === ONLINE_SIM_RESOLUTION ? id : `${id}_g${key.grid}`;
 }
 
 /**
