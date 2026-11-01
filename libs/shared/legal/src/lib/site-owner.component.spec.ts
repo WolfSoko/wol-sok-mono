@@ -9,6 +9,19 @@ import { SiteOwnerComponent } from './site-owner.component';
 })
 class HostComponent {}
 
+/** The text between the `<br>`s of an element, a line each. */
+function linesOf(element: Element | null): string[] {
+  const lines = [''];
+  for (const node of Array.from(element?.childNodes ?? [])) {
+    if (node.nodeName === 'BR') {
+      lines.push('');
+    } else if (node.nodeType !== Node.COMMENT_NODE) {
+      lines[lines.length - 1] += node.textContent ?? '';
+    }
+  }
+  return lines.map((line) => line.replace(/\s+/g, ' ').trim());
+}
+
 describe('SiteOwnerComponent', () => {
   it('names the owner with the postal address and the email, a line each', async () => {
     const fixture = TestBed.createComponent(HostComponent);
@@ -17,10 +30,7 @@ describe('SiteOwnerComponent', () => {
       'address'
     );
 
-    const lines = (address?.innerHTML ?? '')
-      .split(/<br\s*\/?>/)
-      .map((line) => line.replace(/<[^>]+>|<!--.*?-->/g, '').trim());
-    expect(lines).toEqual([
+    expect(linesOf(address)).toEqual([
       SITE_OWNER.name,
       ...SITE_OWNER.addressLines,
       `E-Mail: ${SITE_OWNER.email}`,
