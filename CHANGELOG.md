@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.134.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.133.0...v74.134.0) (2026-11-01)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ count the level statistics per simulation resolution ([#2735](https://github.com/WolfSoko/wol-sok-mono/issues/2735)) ([5a0e7e8](https://github.com/WolfSoko/wol-sok-mono/commit/5a0e7e8c6bcb4c70161f7da0f9ad3fa623c6bb8e)), references [#2728](https://github.com/WolfSoko/wol-sok-mono/issues/2728)
+
 ## [74.133.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.132.0...v74.133.0) (2026-11-01)
 
 ### Features
