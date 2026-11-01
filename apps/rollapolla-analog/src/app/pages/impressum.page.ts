@@ -16,7 +16,7 @@ import { SITE_TAGS, usePageTags } from './site-tags';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class ImpressumPageComponent {
-  /** For the email in the contact paragraph. */
+  /** For the email in the contact paragraph and the VAT ID. */
   protected readonly owner = SITE_OWNER;
 
   constructor() {
