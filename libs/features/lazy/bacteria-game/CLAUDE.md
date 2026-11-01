@@ -121,7 +121,8 @@ storage until then. Settings stay with the device either way.
   recording - recording never moves a match off the GPU there. The viewer
   lays a replay out on its own grid (`simResolutionOf`,
   `state/arena-size.ts`); the functions scale a re-run's expected cost by
-  the arena's cells (`expectedRerunMs`).
+  the arena's cells (`expectedRerunMs`) and count the level statistics
+  per grid (`levelStatsKey`, `simGridOf` through `engine.ts`).
 - Ranked daily attempts and endless runs (ADR 0012) are declared through
   the `GameRanked` port (`storage/game-ranked.ts`, `FirestoreGameRanked`),
   asked of `GameCloud.ranked()` - null without a project - and only by

@@ -272,6 +272,7 @@ describe('admin records', () => {
       difficulty: 'hard',
       balanceVersion: 6,
       ladder: 1,
+      grid: 'normal',
       attempts: 10,
       wins: 6,
       losses: 3,
@@ -285,5 +286,9 @@ describe('admin records', () => {
       medals: { gold: 1 },
     });
     expect(parseLevelStats('x', { attempts: 3 })).toBeNull();
+    expect(
+      parseLevelStats('l1_hard_b6_l1_gultra', { level: 'l1', grid: 'ultra' })
+        ?.grid
+    ).toBe('ultra');
   });
 });

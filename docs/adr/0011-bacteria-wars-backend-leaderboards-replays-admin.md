@@ -82,7 +82,8 @@ function calls, and server-verified match results.
   online grid; online and ranked matches stay on the online grid. A
   server re-run's expected cost grows with the arena's cells
   (`expectedRerunMs` in `boards/budgets.ts`), so an "Ultra" match - four
-  times the cells - is re-run only where the budget covers it.)
+  times the cells - is re-run only where the budget covers it. The level
+  statistics count each grid apart, ADR 0016 §4.)
 - **"Save my matches" (on by default)** decides whether recorded matches
   are uploaded. Off, a replay stays on the device until the next match.
   (Changed by ADR 0012: it governs local matches only. Online matches are
