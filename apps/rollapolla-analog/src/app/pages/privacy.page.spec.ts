@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { SITE_OWNER } from '@wolsok/shared-legal';
+import { EMAIL_FORWARDING, SITE_OWNER } from '@wolsok/shared-legal';
 import PrivacyPageComponent from './privacy.page';
 
 describe('PrivacyPageComponent', () => {
@@ -31,6 +31,17 @@ describe('PrivacyPageComponent', () => {
     expect(controller?.querySelector('a')?.getAttribute('href')).toBe(
       `mailto:${SITE_OWNER.email}`
     );
+  });
+
+  it('names the forwarding of emails through ImprovMX to Gmail', async () => {
+    const page = await render();
+    const { forwarder, inbox } = EMAIL_FORWARDING;
+
+    const email = page.querySelector('[data-testid="privacy-email"]');
+    expect(email?.textContent?.replace(/\s+/g, ' ')).toContain(
+      `${forwarder.company}, ${forwarder.address}`
+    );
+    expect(email?.textContent).toContain(inbox.company);
   });
 
   it('numbers its sections in order', async () => {
