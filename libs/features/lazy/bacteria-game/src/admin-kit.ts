@@ -52,6 +52,7 @@ export {
 } from './lib/state/boards';
 export { utcDay } from './lib/state/daily';
 export { BALANCE_VERSION } from './lib/state/game-balance';
+export { ONLINE_SIM_RESOLUTION, SIM_RESOLUTIONS } from './lib/state/arena-size';
 export type {
   BoardId,
   BoardKind,

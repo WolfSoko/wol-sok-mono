@@ -10,7 +10,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
-import { BALANCE_VERSION } from '@wolsok/feat-lazy-bac-game/admin-kit';
+import {
+  BALANCE_VERSION,
+  SIM_RESOLUTIONS,
+} from '@wolsok/feat-lazy-bac-game/admin-kit';
 import {
   AdminI18n,
   type AdminTextKey,
@@ -34,7 +37,7 @@ const DURATIONS = ['lt1m', 'lt2m', 'lt3m', 'lt5m', 'lt10m', 'ge10m'] as const;
 const MEDALS = ['platinum', 'gold', 'silver', 'bronze'] as const;
 
 /** The simulation resolutions, as the game names them; another shows its id. */
-const GRIDS = ['low', 'normal', 'high', 'ultra'] as const;
+const GRIDS = SIM_RESOLUTIONS.map(({ id }) => id);
 
 /** A counter map's keys: the known ones in their order, then the rest. */
 function ordered(counts: Record<string, number>, known: readonly string[]) {

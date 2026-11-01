@@ -190,7 +190,9 @@ the cryo pulse is weak in the computer's hands.
   simulation resolution a grid (owner's decision of 2026-11-01, once
   replays are stored on every grid: `_g{grid}` after the id, the online
   grid keeping the id without it, so its counters go on; the Balance
-  view names each row's grid). Evolved
+  view names each row's grid. The online grid's counters of balance
+  version 7 also hold the few matches on other grids stored from release
+  74.128.0 to the one that split them). Evolved
   means the player's own loadout, not the ladder's computer's.
   Medallions come from the server's re-run, never the client: a verified
   re-run of a match against the computer adds `rerun` and its best tier

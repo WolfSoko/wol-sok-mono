@@ -5,6 +5,7 @@ import {
   type BoardKind,
   type EntryShow,
   type EntryStatus,
+  ONLINE_SIM_RESOLUTION,
   parseBoardId,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 
@@ -408,9 +409,6 @@ export const counts = (value: unknown): Record<string, number> =>
       )
     : {};
 
-/** The simulation resolution of online matches, and of every stored replay before. */
-const ONLINE_GRID = 'normal';
-
 export function parseLevelStats(
   id: string,
   value: unknown
@@ -425,8 +423,8 @@ export function parseLevelStats(
     difficulty: text(value['difficulty']) ?? '',
     balanceVersion: numberOrNull(value['balanceVersion']),
     ladder: count('ladder'),
-    // Counted apart since 2026-11-01; until then only the online grid's.
-    grid: text(value['grid']) ?? ONLINE_GRID,
+    // Counted apart since 2026-11-01; a document from before is the online grid's.
+    grid: text(value['grid']) ?? ONLINE_SIM_RESOLUTION,
     attempts: count('attempts'),
     wins: count('wins'),
     losses: count('losses'),
