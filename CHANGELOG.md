@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.133.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.132.0...v74.133.0) (2026-11-01)
+
+### Features
+
+* **shared-legal:** ✨ the privacy policies name the email forwarding through ImprovMX ([#2734](https://github.com/WolfSoko/wol-sok-mono/issues/2734)) ([53adf54](https://github.com/WolfSoko/wol-sok-mono/commit/53adf5424da7af928883941c5240cdbf4b97c2bc))
+
 ## [74.132.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.131.0...v74.132.0) (2026-11-01)
 
 ### Features
