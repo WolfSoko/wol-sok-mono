@@ -10,10 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
-import {
-  BALANCE_VERSION,
-  SIM_RESOLUTIONS,
-} from '@wolsok/feat-lazy-bac-game/admin-kit';
+import { BALANCE_VERSION } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import {
   AdminI18n,
   type AdminTextKey,
@@ -35,9 +32,6 @@ const DURATIONS = ['lt1m', 'lt2m', 'lt3m', 'lt5m', 'lt10m', 'ge10m'] as const;
  * whose module brings the engine along); a tier not listed here follows.
  */
 const MEDALS = ['platinum', 'gold', 'silver', 'bronze'] as const;
-
-/** The simulation resolutions, as the game names them; another shows its id. */
-const GRIDS = SIM_RESOLUTIONS.map(({ id }) => id);
 
 /** A counter map's keys: the known ones in their order, then the rest. */
 function ordered(counts: Record<string, number>, known: readonly string[]) {
@@ -236,14 +230,12 @@ export class BalanceComponent {
       whole > 0 ? percent.format(part / whole) : '–';
     // A known id by its text, any other as it is.
     const name =
-      (prefix: 'bucket' | 'medal' | 'grid', known: readonly string[]) =>
-      (id: string) =>
+      (prefix: 'bucket' | 'medal', known: readonly string[]) => (id: string) =>
         known.includes(id)
           ? this.i18n.t(`balance.${prefix}.${id}` as AdminTextKey)
           : id;
     const bucketName = name('bucket', DURATIONS);
     const medalName = name('medal', MEDALS);
-    const gridName = name('grid', GRIDS);
     return this.list.rows().map((stats) => {
       const plain = stats.attempts - stats.evolved;
       return {
@@ -252,7 +244,7 @@ export class BalanceComponent {
           stats.ladder === 0
             ? this.i18n.t('balance.offCurve')
             : this.i18n.t('balance.ladder', { ladder: stats.ladder }),
-        grid: gridName(stats.grid),
+        grid: this.i18n.gridName(stats.grid),
         winRate: rate(stats.wins, stats.attempts),
         plainWinRate: rate(stats.plainWins, plain),
         evolvedShare: rate(stats.evolved, stats.attempts),

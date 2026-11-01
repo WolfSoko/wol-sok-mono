@@ -31,6 +31,7 @@ export type {
   TranslationParams,
 } from './lib/i18n/translation';
 export type { Language } from './lib/i18n/language';
+export type { TranslationKey } from './lib/i18n/dictionaries';
 
 // Players.
 export { AvatarComponent } from './lib/social/avatar.component';
@@ -52,7 +53,7 @@ export {
 } from './lib/state/boards';
 export { utcDay } from './lib/state/daily';
 export { BALANCE_VERSION } from './lib/state/game-balance';
-export { ONLINE_SIM_RESOLUTION, SIM_RESOLUTIONS } from './lib/state/arena-size';
+export { ONLINE_SIM_RESOLUTION } from './lib/state/arena-size';
 export type {
   BoardId,
   BoardKind,

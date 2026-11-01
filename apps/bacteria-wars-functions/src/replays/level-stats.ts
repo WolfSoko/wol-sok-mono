@@ -67,19 +67,42 @@ export function levelStatsKey(
     difficulty: header.difficulty,
     balanceVersion: header.balanceVersion,
     ladder: header.ladder ?? 0,
-    // A stored replay is always on a grid of its level.
-    grid: simGridOf(header) ?? ONLINE_SIM_RESOLUTION,
+    grid: gridOf(header),
   };
 }
 
 /**
+ * The grid of a stored replay - the stored parse takes none off a grid of
+ * its level. One that is off throws, and its counter is skipped: counted
+ * on another grid it would skew that grid's statistics.
+ */
+function gridOf(header: ReplayHeader): SimResolution {
+  const grid = simGridOf(header);
+  if (grid === null) {
+    throw new Error(
+      `${header.width}x${header.height} is no grid of ${header.levelId}`
+    );
+  }
+  return grid;
+}
+
+/**
+ * The last balance version counted before the grids were apart: its online
+ * grid keeps the id without a grid, so its counters go on. Every later one
+ * names its grid in the id.
+ */
+const UNSPLIT_BALANCE_VERSION = 7;
+
+/**
  * The document id of a key: a changed computer or another grid starts
- * counters of their own. The online grid keeps the id it had before the
- * grids were counted apart, so its counters go on.
+ * counters of their own.
  */
 export function levelStatsId(key: LevelStatsKey): string {
   const id = `${key.level}_${key.difficulty}_b${key.balanceVersion}_l${key.ladder}`;
-  return key.grid === ONLINE_SIM_RESOLUTION ? id : `${id}_g${key.grid}`;
+  const unsplit =
+    key.balanceVersion <= UNSPLIT_BALANCE_VERSION &&
+    key.grid === ONLINE_SIM_RESOLUTION;
+  return unsplit ? id : `${id}_g${key.grid}`;
 }
 
 /**
