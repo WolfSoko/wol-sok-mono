@@ -69,6 +69,7 @@
       ],
       "@wolsok/nx-aws-cdk-v2": ["./libs/public/nx-aws-cdk-v2/src/index.ts"],
       "@wolsok/shared-analytics": ["./libs/shared/analytics/src/index.ts"],
+      "@wolsok/shared-legal": ["./libs/shared/legal/src/index.ts"],
       "@wolsok/shared-analytics/testing": [
         "./libs/shared/analytics/src/testing.ts"
       ],

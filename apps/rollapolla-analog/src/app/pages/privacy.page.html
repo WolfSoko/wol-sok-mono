@@ -1,0 +1,238 @@
+<article class="privacy rap-container" data-testid="privacy-policy">
+  <h1>Privacy policy</h1>
+  <p class="updated">Last updated: 31 October 2026</p>
+  <p>
+    This policy covers RollaPolla at
+    <a href="https://rollapolla.com">rollapolla.com</a>. In short: you can
+    create polls and vote without telling us who you are. What you write in a
+    poll or a chat is stored so others can see it, and is deleted automatically.
+    Usage statistics (Google Analytics) and ads (Google AdSense) run only if you
+    agree, and you can change your mind at any time with “Privacy settings” at
+    the bottom of every page. RollaPolla sells no data.
+  </p>
+
+  <h2 id="controller">1. Who is responsible</h2>
+  <address data-testid="privacy-controller">
+    {{ owner.name }}<br />
+    @for (line of owner.addressLines; track line) { {{ line }}<br />
+    } Email: <a [href]="'mailto:' + owner.email">{{ owner.email }}</a>
+  </address>
+  <p>
+    Write to this address with any question about your data or to use your
+    rights (section 9).
+  </p>
+
+  <h2 id="hosting">2. Loading the site (hosting)</h2>
+  <p>
+    The site is delivered by Firebase Hosting and its pages are put together by
+    Cloud Functions for Firebase in Google's Warsaw region (europe-central2).
+    The provider is Google Ireland Limited, Gordon House, Barrow Street, Dublin
+    4, Ireland. When you open a page, these servers process your IP address, the
+    date and time, the page asked for and details of your browser and operating
+    system, as they need to in order to send you the page. We analyse no access
+    logs.
+  </p>
+  <p>
+    Legal basis: Art. 6(1)(f) GDPR, our legitimate interest in delivering the
+    site securely and reliably.
+  </p>
+
+  <h2 id="device">3. Storage on your device</h2>
+  <p>RollaPolla keeps in your browser's local storage:</p>
+  <ul>
+    <li>
+      which option you voted for in which poll, so the poll shows your vote and
+      its results right away,
+    </li>
+    <li>
+      your answers to the questions about usage statistics and ads (sections 5
+      and 6),
+    </li>
+    <li>
+      once you create a poll, vote or write in a chat: your sign-in with
+      Firebase Authentication (section 4), kept by Firebase in the browser's
+      IndexedDB.
+    </li>
+  </ul>
+  <p>
+    This storage is strictly necessary for the service you asked for (§ 25(2)
+    no. 2 TDDDG). RollaPolla sets no cookies of its own; Google Analytics and
+    Google AdSense set theirs only with your consent. You can delete all of it
+    at any time by clearing the stored data of rollapolla.com in your browser's
+    site settings.
+  </p>
+
+  <h2 id="polls">4. Polls, votes, chats and accounts</h2>
+  <p>
+    Polls, votes and chats are stored in Cloud Firestore, sign-ins in Firebase
+    Authentication (both from Google Ireland Limited, address as in section 2).
+  </p>
+  <h3>Your account</h3>
+  <p>
+    The first time you create a poll, vote or write in a poll's discussion,
+    RollaPolla signs you in anonymously: Firebase gives your browser an account
+    with a random identifier. It names no person; we cannot tell who is behind
+    it. Your polls and votes are kept under that identifier.
+  </p>
+  <p>
+    You can sign in with Google if you like, which you need for the lobby chat.
+    Your anonymous account then becomes your Google account, so your polls and
+    votes stay yours. Firebase then receives from Google your name, email
+    address, profile picture and Google account identifier. The site shows your
+    name and picture in its header, and your name next to your chat messages.
+    Signing out ends the sign-in on this device.
+  </p>
+  <h3>Polls</h3>
+  <p>
+    A poll holds its question and answers as you wrote them, the vote counts,
+    when it was created and when it closes, and the identifier of your account.
+    A public poll appears on the home page and in the search; a private one only
+    to those who have its link. Anyone who opens a poll sees its question,
+    answers and results, and can vote. A poll is deleted automatically 30 days
+    after it was created; you can delete your own polls earlier. RollaPolla's
+    own featured polls run until the next 1 January.
+  </p>
+  <h3>Votes</h3>
+  <p>
+    Your vote is stored with your account identifier and the answer you chose,
+    so you can vote only once, and is deleted with its poll. Others see only the
+    counts, never who voted for what.
+  </p>
+  <h3>Chats</h3>
+  <p>
+    A poll's discussion takes messages from anyone signed in, the lobby chat
+    only from visitors signed in with Google. A message is stored with your
+    account identifier and, if you signed in with Google, your Google name, and
+    everyone can read it with that name. Messages in a poll's discussion are
+    deleted with the poll, messages in the lobby after 7 days.
+  </p>
+  <h3>Moderation</h3>
+  <p>
+    The site's administrators can delete polls and chat messages that break the
+    law or the rules of decent behaviour, and they see the list of accounts with
+    name, email address and picture, so they can keep the site running and act
+    on abuse.
+  </p>
+  <h3>Legal basis and retention</h3>
+  <p>
+    Storing your polls, votes, messages and account is necessary to provide the
+    service you use (Art. 6(1)(b) GDPR); moderating it is our legitimate
+    interest in a safe site (Art. 6(1)(f) GDPR). Polls, votes and messages are
+    deleted as described above. An account stays until you ask us to delete it
+    (section 9); deleting it deletes its polls and votes as well.
+  </p>
+  <p>
+    Google may process data in the USA. Google LLC is certified under the EU-US
+    Data Privacy Framework, so the transfer relies on the European Commission's
+    adequacy decision (Art. 45 GDPR), and in addition on standard contractual
+    clauses (Art. 46(2)(c) GDPR).
+  </p>
+
+  <h2 id="statistics">
+    5. Usage statistics (Google Analytics), only with your consent
+  </h2>
+  <p>
+    If you agree to usage statistics, RollaPolla uses Google Analytics
+    (provider: Google Ireland Limited, address as in section 2) to see which
+    pages and features are used, so we can improve them. Without your consent
+    the site loads nothing from Google Analytics and sends nothing there.
+  </p>
+  <p>With your consent, RollaPolla sends Google Analytics:</p>
+  <ul>
+    <li>
+      which pages you open, as patterns without identifiers (“/poll/:pollId”
+      instead of a poll's address) and without the part after “?” and “#”, so
+      neither a poll's link nor your search text is sent,
+    </li>
+    <li>
+      what you do: creating, editing and deleting a poll (how many answers,
+      public or private), voting (how many answers the poll has, whether it is a
+      featured poll), sharing a poll or the site (and through which service),
+      opening a poll from a list (which list, which place), sorting the list,
+      signing in with Google, writing a chat message (which chat), opening a
+      poll that no longer exists, and a vote that failed,
+    </li>
+    <li>whether you are signed in, anonymously or with Google.</li>
+  </ul>
+  <p>
+    Google Analytics collects technical details itself: your IP address, from
+    which it derives your approximate location and which, according to Google,
+    it does not store, a random identifier of your browser in the cookies “_ga”
+    and “_ga_…” and in local storage, the type and version of your browser,
+    operating system and device, the screen size, the page you came from, and
+    the time and duration of use. RollaPolla never sends a poll's question or
+    answers, chat messages, your name, email address or any identifier of you or
+    a poll. Ad features and Google signals are switched off; the statistics are
+    not linked to a Google account. What you do before you answer the question
+    is kept in memory only and sent once you agree; if you decline, it is
+    dropped.
+  </p>
+  <p>
+    Legal basis: your consent (Art. 6(1)(a) GDPR, § 25(1) TDDDG). Google
+    processes the data on our behalf and deletes it after 2 months; for
+    transfers to the USA see section 4.
+  </p>
+
+  <h2 id="ads">6. Ads (Google AdSense), only with your consent</h2>
+  <p>
+    If you agree to ads, RollaPolla loads the ad script of Google AdSense
+    (pagead2.googlesyndication.com; provider: Google Ireland Limited, address as
+    in section 2), which may show ads on its pages. Without your consent the
+    script does not load: Google receives nothing from it, and you see no ads.
+  </p>
+  <p>
+    With your consent, Google and its partners receive your IP address and
+    details of your browser and device, and may use cookies and similar
+    techniques (such as “__gads”, “__gpi” and “__eoi”) to deliver ads, to
+    measure them and, where you allow it in Google's own consent window, to
+    choose them by your interests. Legal basis: your consent (Art. 6(1)(a) GDPR,
+    § 25(1) TDDDG). How Google uses this data:
+    <a href="https://policies.google.com/technologies/partner-sites"
+      >How Google uses information from sites that use its services</a
+    >. For transfers to the USA see section 4.
+  </p>
+
+  <h2 id="choices">7. Changing your choices</h2>
+  <p>
+    “Privacy settings” at the bottom of every page, and the button here, open
+    the question again: you can agree to or withdraw each purpose on its own,
+    with effect for the future (Art. 7(3) GDPR). When you withdraw, the site
+    stops sending usage statistics and asks for no more ads, and deletes the
+    cookies of Google Analytics and Google AdSense on rollapolla.com. Cookies
+    that Google keeps on its own domains are managed in
+    <a href="https://myadcenter.google.com/">Google's ad settings</a>.
+  </p>
+  <p><rap-consent-settings /></p>
+
+  <h2 id="fonts">8. Fonts and icons</h2>
+  <p>
+    Fonts and icons come with the site itself; nothing is loaded from Google
+    Fonts or other third parties for them.
+  </p>
+
+  <h2 id="rights">9. Your rights</h2>
+  <p>Under the GDPR you have the right to</p>
+  <ul>
+    <li>access your data (Art. 15),</li>
+    <li>rectification (Art. 16) and erasure (Art. 17),</li>
+    <li>restriction of processing (Art. 18),</li>
+    <li>data portability (Art. 20),</li>
+    <li>object to processing based on Art. 6(1)(f) GDPR (Art. 21),</li>
+    <li>withdraw a consent for the future (Art. 7(3)), as in section 7.</li>
+  </ul>
+  <p>
+    To have your account and its polls deleted, write to the address in section
+    1 and tell us the email address of your Google account. An anonymous account
+    only has a random identifier that we cannot link to you (Art. 11 GDPR);
+    clearing your browser's data ends your access to it, and its polls and votes
+    are deleted with their polls. You can also complain to a data protection
+    supervisory authority, for example the one where you live (Art. 77 GDPR).
+  </p>
+
+  <h2 id="changes">10. Changes</h2>
+  <p>
+    When RollaPolla starts to process other data, we update this policy. The
+    version on this page applies.
+    <a routerLink="/">Back to RollaPolla</a>
+  </p>
+</article>

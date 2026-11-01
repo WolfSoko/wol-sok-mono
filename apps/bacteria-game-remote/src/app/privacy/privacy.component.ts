@@ -7,7 +7,7 @@ import {
   StatsConsent,
 } from '@wolsok/feat-lazy-bac-game';
 import { setUpLegalPage } from '../legal/legal-page';
-import { SITE_OWNER } from '../legal/site-owner';
+import { SITE_OWNER } from '@wolsok/shared-legal';
 import { SiteOwnerComponent } from '../legal/site-owner.component';
 
 /**

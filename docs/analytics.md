@@ -29,8 +29,8 @@ GA4 so the reports show it. The code is `@wolsok/shared-analytics`
   never shares an `Analytics` with the remote.
 - **A change to what is sent goes into the privacy policy in the same PR**:
   the game's `apps/bacteria-game-remote/src/app/privacy` (section 11,
-  German binding, English). RollaPolla has no privacy page yet (see Open
-  points).
+  German binding, English) and RollaPolla's `/privacy`
+  (`apps/rollapolla-analog/src/app/pages/privacy.page.html`, section 5).
 
 ## How to add an event
 
@@ -51,8 +51,12 @@ GA4 so the reports show it. The code is `@wolsok/shared-analytics`
 
 ## RollaPolla (`rollapolla-v1`, `G-6ZM8TB6QCY`)
 
-Consent: the banner at the bottom (`rap-consent-banner`), "Privacy settings"
-in the footer asks again. Choice in `localStorage` `rap-analytics-consent`.
+Consent: the banner at the bottom (`rap-consent-banner`) asks for each purpose
+of `SiteConsent` on its own: usage statistics (this page) and ads (Google
+AdSense, `core/consent/ad-consent.ts`: the ad script loads only after a yes;
+withdrawn, ad requests pause and Google's ad cookies on rollapolla.com go).
+"Privacy settings" in the footer and on `/privacy` asks again. Choices in
+`localStorage` `rap-analytics-consent` and `rap-ads-consent`.
 
 | Event               | Parameters                                                                     | Where                                  |
 | ------------------- | ------------------------------------------------------------------------------ | -------------------------------------- |
@@ -161,9 +165,9 @@ on and look at Admin → DebugView.
 
 ## Open points
 
-- RollaPolla has no privacy policy page, which GDPR (Art. 13) requires for
-  analytics, and its `index.html` loads AdSense on every page without asking.
-  Both belong in a change of their own.
+- RollaPolla has no legal notice (Impressum, § 5 DDG) yet; its privacy
+  policy names the controller from `SITE_OWNER` (`@wolsok/shared-legal`),
+  whose postal address is still to be filled in.
 - The portfolio (`wolsok.de`) and `angular-examples` measure nothing; either
   can use `provideFirebaseAnalytics` the same way (and a privacy text).
 - The public replay pages (`/replays`, rendered by the `publicSite`
