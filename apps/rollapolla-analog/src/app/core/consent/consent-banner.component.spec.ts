@@ -95,6 +95,9 @@ describe('ConsentBannerComponent', () => {
     await render();
 
     await click('consent-choose');
+    expect(byTestId('consent-privacy-link')?.getAttribute('href')).toBe(
+      '/privacy'
+    );
     await click('consent-statistics', 'button');
     await click('consent-save');
 

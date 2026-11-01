@@ -56,6 +56,9 @@ const PURPOSES: Record<
             }
           </div>
           <div class="actions">
+            <a routerLink="/privacy" data-testid="consent-privacy-link"
+              >Privacy policy</a
+            >
             <button mat-button data-testid="consent-save" (click)="save()">
               Save choices
             </button>
