@@ -8,5 +8,10 @@ What the sites' legal pages share:
 - `SiteOwnerComponent` (`<wolsok-site-owner emailLabel="E-Mail" />`): that
   owner as an address block, a line each. The page styles the element and
   sets the link colour through `--site-owner-link-color`.
+- `EmailForwardingComponent` (`<wolsok-email-forwarding lang="de" />`): what
+  happens to mail to an address at wolsok.de (ImprovMX forwards it to Gmail),
+  as the privacy policies say it, in German or English. Inline text: the page
+  puts it into a paragraph of its own. The services it names are
+  `EMAIL_FORWARDING` (`lib/email-forwarding.ts`).
 
 `npx nx test shared-legal` runs its specs (Jest).

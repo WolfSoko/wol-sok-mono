@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { SiteOwnerComponent } from '@wolsok/shared-legal';
+import {
+  EmailForwardingComponent,
+  SiteOwnerComponent,
+} from '@wolsok/shared-legal';
 import { ConsentSettingsComponent } from '../core/consent/consent-settings.component';
 import { SITE_TAGS, usePageTags } from './site-tags';
 
@@ -13,7 +16,12 @@ import { SITE_TAGS, usePageTags } from './site-tags';
  */
 @Component({
   selector: 'rap-privacy-page',
-  imports: [ConsentSettingsComponent, RouterLink, SiteOwnerComponent],
+  imports: [
+    ConsentSettingsComponent,
+    EmailForwardingComponent,
+    RouterLink,
+    SiteOwnerComponent,
+  ],
   templateUrl: './privacy.page.html',
   styleUrl: './legal-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

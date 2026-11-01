@@ -17,8 +17,8 @@ describe('PrivacyPageComponent', () => {
     return harness.routeNativeElement as HTMLElement;
   }
 
-  function text(page: HTMLElement): string {
-    return (page.textContent ?? '').replace(/\s+/g, ' ');
+  function text(element: Element | null): string {
+    return (element?.textContent ?? '').replace(/\s+/g, ' ');
   }
 
   it('names who runs the site, with the address to write to', async () => {
@@ -30,6 +30,14 @@ describe('PrivacyPageComponent', () => {
     }
     expect(controller?.querySelector('a')?.getAttribute('href')).toBe(
       `mailto:${SITE_OWNER.email}`
+    );
+  });
+
+  it('names the forwarding of emails', async () => {
+    const page = await render();
+
+    expect(text(page.querySelector('[data-testid="privacy-email"]'))).toContain(
+      'forwards the message to our Gmail inbox'
     );
   });
 

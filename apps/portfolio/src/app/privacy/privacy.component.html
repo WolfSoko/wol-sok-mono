@@ -8,6 +8,9 @@
 
   <h2>1. Verantwortlicher</h2>
   <wolsok-site-owner emailLabel="E-Mail" />
+  <p data-testid="privacy-email-de">
+    <wolsok-email-forwarding lang="de" />
+  </p>
 
   <h2>2. Hosting</h2>
   <p>
@@ -64,6 +67,10 @@
     wolsok.de is hosted on Amazon Web Services and shows ads through Google
     AdSense, which may use cookies; personalised ads only with your consent,
     asked for in the consent banner. No other tracking. Questions:
-    <a href="mailto:privacy@wolsok.de">privacy&#64;wolsok.de</a>.
+    <a href="mailto:{{ owner.email }}">{{ owner.email }}</a
+    >.
+  </p>
+  <p data-testid="privacy-email-en">
+    <wolsok-email-forwarding lang="en" />
   </p>
 </article>

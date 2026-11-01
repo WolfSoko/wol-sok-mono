@@ -46,6 +46,13 @@ describe('PrivacyComponent', () => {
     );
   });
 
+  it('names the forwarding of emails, in both languages', async () => {
+    const { de, en } = texts(await open());
+
+    expect(de).toContain('leitet der Dienst ImprovMX');
+    expect(en).toContain('forwards the message to our Gmail inbox');
+  });
+
   it('has each section on the cloud in both languages', async () => {
     const page = await open();
     const pairs = [
