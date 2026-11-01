@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.130.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.129.0...v74.130.0) (2026-11-01)
+
+### Features
+
+* **rollapolla-analog:** ✨ a privacy policy, and AdSense only with consent ([#2730](https://github.com/WolfSoko/wol-sok-mono/issues/2730)) ([049ce4f](https://github.com/WolfSoko/wol-sok-mono/commit/049ce4f0ca105d9e66f2eee93f8056c75ea050ba))
+
+### Chore
+
+* **release:** publish ([402d033](https://github.com/WolfSoko/wol-sok-mono/commit/402d033836e48898bc24b8df30d0336c74c42e15))
+
 ## [74.129.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.128.0...v74.129.0) (2026-10-31)
 
 ### Features
