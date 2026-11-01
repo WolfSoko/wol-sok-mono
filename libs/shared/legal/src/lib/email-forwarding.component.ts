@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { EMAIL_FORWARDING } from './email-forwarding';
 
 /**
@@ -21,8 +16,8 @@ import { EMAIL_FORWARDING } from './email-forwarding';
         {{ forwarder.service }} (Anbieter: {{ forwarder.company }},
         {{ forwarder.address }}) die Nachricht an unser Postfach bei
         {{ inbox.service }} weiter (Anbieter: {{ inbox.company }},
-        {{ inboxAddress() }}). Beide verarbeiten dabei deine E-Mail-Adresse, den
-        Inhalt der Nachricht und technische Angaben zu ihrer Zustellung.
+        {{ inbox.address.de }}). Beide verarbeiten dabei deine E-Mail-Adresse,
+        den Inhalt der Nachricht und technische Angaben zu ihrer Zustellung.
         {{ forwarder.service }} ist ein Unternehmen in den USA, deine Nachricht
         kann also dorthin übermittelt werden. Wir nutzen sie nur, um deine
         Anfrage zu beantworten, und bewahren sie auf, solange das dafür nötig
@@ -35,7 +30,7 @@ import { EMAIL_FORWARDING } from './email-forwarding';
         {{ forwarder.service }} (provider: {{ forwarder.company }},
         {{ forwarder.address }}) forwards the message to our
         {{ inbox.service }} inbox (provider: {{ inbox.company }},
-        {{ inboxAddress() }}). Both process your email address, the content of
+        {{ inbox.address.en }}). Both process your email address, the content of
         the message and technical details of its delivery.
         {{ forwarder.service }} is a company in the USA, so your message may be
         transferred there. We use it only to answer your request and keep it as
@@ -53,7 +48,4 @@ export class EmailForwardingComponent {
 
   protected readonly forwarder = EMAIL_FORWARDING.forwarder;
   protected readonly inbox = EMAIL_FORWARDING.inbox;
-  protected readonly inboxAddress = computed(
-    () => EMAIL_FORWARDING.inbox.address[this.lang()]
-  );
 }

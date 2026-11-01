@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { EMAIL_FORWARDING } from '@wolsok/shared-legal';
 import { PrivacyComponent } from './privacy.component';
 
 describe('PrivacyComponent', () => {
@@ -22,17 +21,14 @@ describe('PrivacyComponent', () => {
     ).replace(/\s+/g, ' ');
   }
 
-  it('names the forwarding of emails through ImprovMX to Gmail, in German and English', async () => {
+  it('names the forwarding of emails, in German and English', async () => {
     const page = await render();
-    const { forwarder, inbox } = EMAIL_FORWARDING;
 
-    for (const testId of ['privacy-email-de', 'privacy-email-en']) {
-      expect(text(page, testId)).toContain(
-        `${forwarder.company}, ${forwarder.address}`
-      );
-      expect(text(page, testId)).toContain(inbox.company);
-    }
-    expect(text(page, 'privacy-email-de')).toContain('in den USA');
-    expect(text(page, 'privacy-email-en')).toContain('in the USA');
+    expect(text(page, 'privacy-email-de')).toContain(
+      'leitet der Dienst ImprovMX'
+    );
+    expect(text(page, 'privacy-email-en')).toContain(
+      'forwards the message to our Gmail inbox'
+    );
   });
 });

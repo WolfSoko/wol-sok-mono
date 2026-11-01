@@ -1,8 +1,9 @@
 /**
  * Where mail to an address at wolsok.de goes: ImprovMX forwards it (the
  * domain's MX records) to the owner's Gmail inbox. Every privacy policy
- * names both through `EmailForwardingComponent`; a change of either
- * belongs here, and only here.
+ * names both through `EmailForwardingComponent`, so a change of either
+ * belongs here. Its text says the forwarder is a company in the USA: a
+ * forwarder elsewhere changes that sentence too.
  */
 export const EMAIL_FORWARDING = {
   forwarder: {

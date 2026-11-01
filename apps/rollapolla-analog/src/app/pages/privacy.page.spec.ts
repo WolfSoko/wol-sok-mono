@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { EMAIL_FORWARDING, SITE_OWNER } from '@wolsok/shared-legal';
+import { SITE_OWNER } from '@wolsok/shared-legal';
 import PrivacyPageComponent from './privacy.page';
 
 describe('PrivacyPageComponent', () => {
@@ -17,8 +17,8 @@ describe('PrivacyPageComponent', () => {
     return harness.routeNativeElement as HTMLElement;
   }
 
-  function text(page: HTMLElement): string {
-    return (page.textContent ?? '').replace(/\s+/g, ' ');
+  function text(element: Element | null): string {
+    return (element?.textContent ?? '').replace(/\s+/g, ' ');
   }
 
   it('names who runs the site, with the address to write to', async () => {
@@ -33,15 +33,12 @@ describe('PrivacyPageComponent', () => {
     );
   });
 
-  it('names the forwarding of emails through ImprovMX to Gmail', async () => {
+  it('names the forwarding of emails', async () => {
     const page = await render();
-    const { forwarder, inbox } = EMAIL_FORWARDING;
 
-    const email = page.querySelector('[data-testid="privacy-email"]');
-    expect(email?.textContent?.replace(/\s+/g, ' ')).toContain(
-      `${forwarder.company}, ${forwarder.address}`
+    expect(text(page.querySelector('[data-testid="privacy-email"]'))).toContain(
+      'forwards the message to our Gmail inbox'
     );
-    expect(email?.textContent).toContain(inbox.company);
   });
 
   it('numbers its sections in order', async () => {

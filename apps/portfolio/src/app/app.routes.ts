@@ -2,7 +2,6 @@ import { Route } from '@angular/router';
 import { ANGULAR_SINCE, CAREER_SINCE } from './career/career-since';
 import { HomeComponent } from './home/home.component';
 import { Localized } from './i18n/language';
-import { PrivacyComponent } from './privacy/privacy.component';
 
 /** Title and description of a page in every language, set by SeoService. */
 export interface PageData {
@@ -42,7 +41,8 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'privacy',
-    component: PrivacyComponent,
+    loadComponent: () =>
+      import('./privacy/privacy.component').then((m) => m.PrivacyComponent),
     data: {
       title: {
         en: 'Datenschutzerklärung – wolsok.de',

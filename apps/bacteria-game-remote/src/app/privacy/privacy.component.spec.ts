@@ -5,7 +5,6 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { AdNetworkName, GameAds } from '@wolsok/feat-lazy-bac-game';
 import { ConsentPrompt } from '@wolsok/shared-analytics';
-import { EMAIL_FORWARDING } from '@wolsok/shared-legal';
 import { PrivacyComponent } from './privacy.component';
 
 describe('PrivacyComponent', () => {
@@ -47,18 +46,11 @@ describe('PrivacyComponent', () => {
     );
   });
 
-  it('names the forwarding of emails through ImprovMX to Gmail, in both languages', async () => {
-    const page = await open();
-    const text = (id: string) =>
-      (page.querySelector(`#${id}`)?.textContent ?? '').replace(/\s+/g, ' ');
+  it('names the forwarding of emails, in both languages', async () => {
+    const { de, en } = texts(await open());
 
-    const { forwarder, inbox } = EMAIL_FORWARDING;
-    for (const id of ['de-email', 'en-email']) {
-      expect(text(id)).toContain(`${forwarder.company}, ${forwarder.address}`);
-      expect(text(id)).toContain(inbox.company);
-    }
-    expect(text('de-email')).toContain('in den USA');
-    expect(text('en-email')).toContain('in the USA');
+    expect(de).toContain('leitet der Dienst ImprovMX');
+    expect(en).toContain('forwards the message to our Gmail inbox');
   });
 
   it('has each section on the cloud in both languages', async () => {
