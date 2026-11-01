@@ -16,7 +16,7 @@ export const CAREER_SOURCE: CareerSource = {
   fileId: '1N-f-F_S9ziYTEpP6tjquOLQDqUoWKX5r',
   fileName: '2026-10-28_Wolfram-Sokollek_QualifikationsProfil.pdf',
   profileDate: '2026-10-28',
-  checkedAt: '2026-10-28',
+  checkedAt: '2026-11-01',
 };
 
 export const CAREER_PROFILE: CareerProfile = {
