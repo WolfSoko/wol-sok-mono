@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.131.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.130.0...v74.131.0) (2026-11-01)
+
+### Features
+
+* **shared-legal:** ✨ the owner's postal address, and legal notices for RollaPolla and wolsok.de ([#2732](https://github.com/WolfSoko/wol-sok-mono/issues/2732)) ([b3efc27](https://github.com/WolfSoko/wol-sok-mono/commit/b3efc27a3e223a93824a9e413b24602e3874df86))
+
+### Chore
+
+* **release:** publish ([3bfdde7](https://github.com/WolfSoko/wol-sok-mono/commit/3bfdde7146111c317be7109ab8265aa034c02a19))
+
 ## [74.130.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.129.0...v74.130.0) (2026-11-01)
 
 ### Features
