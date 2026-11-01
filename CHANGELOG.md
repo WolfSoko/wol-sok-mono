@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.132.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.131.0...v74.132.0) (2026-11-01)
+
+### Features
+
+* **shared-legal:** ✨ the VAT ID in the legal notices ([#2733](https://github.com/WolfSoko/wol-sok-mono/issues/2733)) ([4ad7407](https://github.com/WolfSoko/wol-sok-mono/commit/4ad7407cbe06dc561c805e967489de935a741aea))
+
 ## [74.131.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.130.0...v74.131.0) (2026-11-01)
 
 ### Features

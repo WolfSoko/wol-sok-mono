@@ -13,6 +13,12 @@
     <a routerLink="/privacy">Datenschutzerklärung</a>.
   </p>
 
+  <h2>Umsatzsteuer-ID</h2>
+  <p>
+    Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz:
+    {{ owner.vatId }}
+  </p>
+
   <h2>Verbraucherstreitbeilegung</h2>
   <p>
     Ich bin nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren
@@ -43,7 +49,8 @@
   <p>
     wolsok.de is run by the provider below, under § 5 of the German Digital
     Services Act (DDG). Email is the fastest way to reach me. The German version
-    above is the binding one.
+    above is the binding one. VAT identification number under § 27a of the
+    German VAT Act (UStG): {{ owner.vatId }}.
   </p>
   <wolsok-site-owner data-testid="impressum-provider-en" emailLabel="Email" />
 </article>

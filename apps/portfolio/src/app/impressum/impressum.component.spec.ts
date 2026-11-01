@@ -20,9 +20,14 @@ describe('ImpressumComponent', () => {
     return (element?.textContent ?? '').replace(/\s+/g, ' ');
   }
 
-  it('names the provider with the postal address and the email, in German and English', async () => {
+  it('names the provider with the postal address, the email and the VAT ID, in German and English', async () => {
     const page = await render();
 
+    const articles = page.querySelectorAll('article');
+    expect(articles).toHaveLength(2);
+    for (const article of articles) {
+      expect(article.textContent).toContain(SITE_OWNER.vatId);
+    }
     for (const [language, emailLabel] of [
       ['de', 'E-Mail'],
       ['en', 'Email'],

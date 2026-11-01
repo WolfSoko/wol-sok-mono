@@ -18,7 +18,7 @@ import { SITE_OWNER, SiteOwnerComponent } from '@wolsok/shared-legal';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImpressumComponent {
-  /** For the email in the contact paragraphs. */
+  /** For the email in the contact paragraphs and the VAT ID. */
   protected readonly owner = SITE_OWNER;
   protected readonly siteUrl = GAME_SITE_URL;
   protected readonly siteHost = new URL(GAME_SITE_URL).host;
