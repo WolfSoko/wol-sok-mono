@@ -7,8 +7,7 @@ import {
   StatsConsent,
 } from '@wolsok/feat-lazy-bac-game';
 import { setUpLegalPage } from '../legal/legal-page';
-import { SITE_OWNER } from '@wolsok/shared-legal';
-import { SiteOwnerComponent } from '../legal/site-owner.component';
+import { SITE_OWNER, SiteOwnerComponent } from '@wolsok/shared-legal';
 
 /**
  * The privacy policy of the game, its web app and its Android app, in
