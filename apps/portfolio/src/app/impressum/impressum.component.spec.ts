@@ -20,9 +20,14 @@ describe('ImpressumComponent', () => {
     return (element?.textContent ?? '').replace(/\s+/g, ' ');
   }
 
-  it('names the provider with the postal address and the email, in German and English', async () => {
+  it('names the provider with the postal address, the email and the VAT ID, in German and English', async () => {
     const page = await render();
 
+    const articles = page.querySelectorAll('article');
+    expect(articles).toHaveLength(2);
+    for (const article of articles) {
+      expect(article.textContent).toContain(SITE_OWNER.vatId);
+    }
     for (const [language, emailLabel] of [
       ['de', 'E-Mail'],
       ['en', 'Email'],
@@ -35,15 +40,6 @@ describe('ImpressumComponent', () => {
       }
       expect(provider).toContain(`${emailLabel}: ${SITE_OWNER.email}`);
     }
-  });
-
-  it('names the VAT ID in German and English', async () => {
-    const page = await render();
-
-    for (const article of page.querySelectorAll('article')) {
-      expect(article.textContent).toContain(SITE_OWNER.vatId);
-    }
-    expect(page.querySelectorAll('article')).toHaveLength(2);
   });
 
   it('links to the privacy policy', async () => {

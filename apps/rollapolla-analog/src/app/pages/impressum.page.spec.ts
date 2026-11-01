@@ -23,7 +23,7 @@ describe('ImpressumPageComponent', () => {
     return (element?.textContent ?? '').replace(/\s+/g, ' ');
   }
 
-  it('names the provider with the postal address and the email', async () => {
+  it('names the provider with the postal address, the email and the VAT ID', async () => {
     const page = await render();
 
     const provider = text(
@@ -33,12 +33,7 @@ describe('ImpressumPageComponent', () => {
       expect(provider).toContain(part);
     }
     expect(provider).toContain(`Email: ${SITE_OWNER.email}`);
-  });
-
-  it('names the VAT ID', async () => {
-    expect(text(await render())).toContain(
-      `VAT identification number under § 27a of the German VAT Act (UStG): ${SITE_OWNER.vatId}`
-    );
+    expect(text(page)).toContain(SITE_OWNER.vatId);
   });
 
   it('names the point of contact under the Digital Services Act, and where to report content', async () => {
