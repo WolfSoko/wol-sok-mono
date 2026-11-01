@@ -35,6 +35,12 @@ describe('ImpressumPageComponent', () => {
     expect(provider).toContain(`Email: ${SITE_OWNER.email}`);
   });
 
+  it('names the VAT ID', async () => {
+    expect(text(await render())).toContain(
+      `VAT identification number under § 27a of the German VAT Act (UStG): ${SITE_OWNER.vatId}`
+    );
+  });
+
   it('names the point of contact under the Digital Services Act, and where to report content', async () => {
     const notice = text(await render());
 

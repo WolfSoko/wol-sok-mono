@@ -37,6 +37,15 @@ describe('ImpressumComponent', () => {
     }
   });
 
+  it('names the VAT ID in German and English', async () => {
+    const page = await render();
+
+    for (const article of page.querySelectorAll('article')) {
+      expect(article.textContent).toContain(SITE_OWNER.vatId);
+    }
+    expect(page.querySelectorAll('article')).toHaveLength(2);
+  });
+
   it('links to the privacy policy', async () => {
     const page = await render();
 

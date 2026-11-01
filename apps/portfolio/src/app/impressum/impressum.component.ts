@@ -14,6 +14,6 @@ import { SITE_OWNER, SiteOwnerComponent } from '@wolsok/shared-legal';
   styleUrl: '../legal/legal-page.scss',
 })
 export class ImpressumComponent {
-  /** For the email in the contact paragraph. */
+  /** For the email in the contact paragraph and the VAT ID. */
   protected readonly owner = SITE_OWNER;
 }

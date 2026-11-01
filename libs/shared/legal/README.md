@@ -2,7 +2,7 @@
 
 What the sites' legal pages share:
 
-- `SITE_OWNER`: who runs them (name, email, postal address), the provider of
+- `SITE_OWNER`: who runs them (name, email, postal address, VAT ID), the provider of
   the legal notices (Impressum) of Bacteria Wars, RollaPolla and wolsok.de
   and the controller their privacy policies name. Change it here, once.
 - `SiteOwnerComponent` (`<wolsok-site-owner emailLabel="E-Mail" />`): that
