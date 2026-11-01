@@ -25,7 +25,9 @@ describe('PrivacyPageComponent', () => {
     const page = await render();
 
     const controller = page.querySelector('[data-testid="privacy-controller"]');
-    expect(controller?.textContent).toContain(SITE_OWNER.name);
+    for (const part of [SITE_OWNER.name, ...SITE_OWNER.addressLines]) {
+      expect(controller?.textContent).toContain(part);
+    }
     expect(controller?.querySelector('a')?.getAttribute('href')).toBe(
       `mailto:${SITE_OWNER.email}`
     );

@@ -54,5 +54,22 @@ export const appRoutes: Route[] = [
       },
     } satisfies PageData,
   },
+  {
+    path: 'impressum',
+    loadComponent: () =>
+      import('./impressum/impressum.component').then(
+        (m) => m.ImpressumComponent
+      ),
+    data: {
+      title: {
+        en: 'Legal notice (Impressum) – wolsok.de',
+        de: 'Impressum – wolsok.de',
+      },
+      description: {
+        en: 'Legal notice of wolsok.de: who runs the site, postal address and contact.',
+        de: 'Impressum von wolsok.de: Anbieter, Anschrift und Kontakt.',
+      },
+    } satisfies PageData,
+  },
   { path: '**', redirectTo: '' },
 ];

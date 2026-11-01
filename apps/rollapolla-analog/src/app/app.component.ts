@@ -63,6 +63,9 @@ import { ConsentSettingsComponent } from './core/consent/consent-settings.compon
           <a routerLink="/privacy" data-testid="footer-privacy-link"
             >Privacy policy</a
           >
+          <a routerLink="/impressum" data-testid="footer-legal-notice-link"
+            >Legal notice</a
+          >
           <rap-consent-settings />
           <span>Built with Angular &amp; Analog</span>
         </nav>

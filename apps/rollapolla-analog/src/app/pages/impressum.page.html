@@ -1,0 +1,56 @@
+<article class="legal-page rap-container" data-testid="legal-notice">
+  <h1>Legal notice (Impressum)</h1>
+  <p class="updated">
+    Information under § 5 of the German Digital Services Act (DDG) and § 18 of
+    the German Interstate Media Treaty (MStV) for RollaPolla at
+    <a href="https://rollapolla.com">rollapolla.com</a>.
+  </p>
+
+  <h2 id="provider">Provider</h2>
+  <wolsok-site-owner data-testid="legal-notice-provider" emailLabel="Email" />
+
+  <h2 id="contact">Contact</h2>
+  <p>
+    Email is the fastest way:
+    <a [href]="'mailto:' + owner.email">{{ owner.email }}</a>. This address is
+    also the single point of contact for authorities and for users under
+    Articles 11 and 12 of the Digital Services Act (Regulation (EU) 2022/2065),
+    in German or English. For questions about your data, see the
+    <a routerLink="/privacy">privacy policy</a>.
+  </p>
+
+  <h2 id="reports">Reporting unlawful content</h2>
+  <p>
+    Polls and chat messages are written by the people who use RollaPolla. They
+    are third-party information that we do not check before it appears and do
+    not monitor in general (Articles 6 and 8 of the Digital Services Act). To
+    report a poll or a message that breaks the law, write to the email address
+    above with its link and why it is unlawful; we remove it promptly once we
+    know of it.
+  </p>
+
+  <h2 id="disputes">Consumer dispute resolution</h2>
+  <p>
+    We are neither willing nor obliged to take part in dispute resolution
+    proceedings before a consumer arbitration board (§ 36 VSBG).
+  </p>
+
+  <h2 id="liability">Liability</h2>
+  <p>
+    The content of these pages was prepared with care, but we do not warrant
+    that it is accurate, complete or current. RollaPolla links to other sites,
+    for instance where you share a poll; their providers are responsible for
+    their content. We remove a link once we learn that the page behind it breaks
+    the law.
+  </p>
+
+  <h2 id="copyright">Copyright</h2>
+  <p>
+    RollaPolla's design, texts and code are protected under German copyright
+    law. The source code is published at
+    <a href="https://github.com/WolfSoko/wol-sok-mono">github.com/WolfSoko</a>
+    under the licence stated there. Polls and messages belong to the people who
+    wrote them.
+  </p>
+  <p><a routerLink="/">Back to RollaPolla</a></p>
+</article>

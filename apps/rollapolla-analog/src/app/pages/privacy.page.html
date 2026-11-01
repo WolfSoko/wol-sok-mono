@@ -1,6 +1,6 @@
-<article class="privacy rap-container" data-testid="privacy-policy">
+<article class="legal-page rap-container" data-testid="privacy-policy">
   <h1>Privacy policy</h1>
-  <p class="updated">Last updated: 31 October 2026</p>
+  <p class="updated">Last updated: 1 November 2026</p>
   <p>
     This policy covers RollaPolla at
     <a href="https://rollapolla.com">rollapolla.com</a>. In short: you can
@@ -12,11 +12,7 @@
   </p>
 
   <h2 id="controller">1. Who is responsible</h2>
-  <address data-testid="privacy-controller">
-    {{ owner.name }}<br />
-    @for (line of owner.addressLines; track line) { {{ line }}<br />
-    } Email: <a [href]="'mailto:' + owner.email">{{ owner.email }}</a>
-  </address>
+  <wolsok-site-owner data-testid="privacy-controller" emailLabel="Email" />
   <p>
     Write to this address with any question about your data or to use your
     rights (section 9).

@@ -165,9 +165,8 @@ on and look at Admin → DebugView.
 
 ## Open points
 
-- RollaPolla has no legal notice (Impressum, § 5 DDG) yet; its privacy
-  policy names the controller from `SITE_OWNER` (`@wolsok/shared-legal`),
-  whose postal address is still to be filled in.
+- `angular-examples` loads Google Tag Manager from its `index.html` without
+  asking and has neither a privacy policy nor a legal notice.
 - The portfolio (`wolsok.de`) and `angular-examples` measure nothing; either
   can use `provideFirebaseAnalytics` the same way (and a privacy text).
 - The public replay pages (`/replays`, rendered by the `publicSite`
