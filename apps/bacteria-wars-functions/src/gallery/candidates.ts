@@ -35,6 +35,8 @@ export interface GalleryReplay extends Pick<
   | 'hint'
   | 'attempt'
 > {
+  /** Absent on a replay stored before its arena was kept, on the online grid. */
+  cells?: number;
   state: string;
   /** Who reported it: a local match's player, an online match's reporters. */
   players: string[];

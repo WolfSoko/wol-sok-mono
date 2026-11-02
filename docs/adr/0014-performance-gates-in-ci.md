@@ -226,7 +226,52 @@ is decided after a month, like gate 3.
      minutes. To block, drop that flag from the `perf` target.
 3. **Phase 3, browser frame time**: `perf.spec.ts` and the debug hook,
    report-only.
+   - As built (2026-10-27): the fixed seed comes from the spec, not the
+     game: an init script pins `Math.random` to a seeded generator before
+     the page loads, which fixes the match's seed and every other draw. The
+     debug hook is `state/perf-probe.ts`: the spec puts
+     `window.__bacteriaPerfProbe` on the page, and `GameStateService`
+     times each tick only when it finds one (one null check per tick in
+     play). The match is the campaign's first against the computer, the
+     player idle, on `?sim=cpu`. The numbers go to the log and the
+     attachment `frame-time.json`; the job summary only where
+     `GITHUB_STEP_SUMMARY` is set, which the Nx Cloud workers that run the
+     e2e tasks don't have. Two local runs on SwiftShader: frame interval
+     p50 66.7 / 66.6 ms, p95 83.4 ms both, tick p50 2.7 / 2.4 ms, 898 / 937
+     ticks in 20 s (the game slows its clock when frames run long), about
+     260 long tasks: the painting on a software renderer, not the engine,
+     sets the pace there.
 4. **Phase 4, Lighthouse**: report-only.
+   - As built (2026-10-27): a `lighthouse` target on `portfolio`,
+     `angular-examples` and `rollapolla-analog`, depending on `build`, in
+     `nx affected` and `stop-after` like `perf`. Each app's
+     `lighthouse.json` names what to serve and which pages, and
+     `tools/perf/lighthouse-run.mjs` adds the shared settings (a relative
+     import from an app into `tools/` breaks the module boundaries). They
+     warn only, so the run fails only when
+     nothing could be measured; Chrome is Playwright's, which the workers
+     install for the e2e tasks. The ADR's assertions are on LCP, TBT, CLS
+     and total byte weight at Lighthouse's own "good" marks. rollapolla's
+     SSR build (Nitro's `firebase` preset) exports a function and listens
+     nowhere, so `tools/perf/serve-firebase-function.mjs` serves it the way
+     Hosting does: the public folder first, the function for the rest. The
+     public replay pages are left out for now: they are a Cloud Function
+     behind Hosting and need the functions emulator.
+   - First local numbers (mobile, headless, no GPU): `angular-examples` `/`
+     LCP about 12 s; its total blocking time was about 139 s while Chrome
+     drew the title's shader on software WebGL, and about 4.4 s once
+     `--disable-gpu` took WebGL away (the CI workers' containers need it,
+     with `--disable-dev-shm-usage`, or the tab crashes).
+     The title's shader then got paced (`RenderShaderComponent`'s
+     `resolutionScale`, `maxFps`, `startWhenIdle`, `stillOnSlowRenderer`):
+     half the resolution, 20 fps, started once the page is idle, and one
+     still frame on a software renderer or with reduced motion. Measured
+     with WebGL on SwiftShader, TBT went from about 141 s to 7.5-13 s; what
+     is left is the app's own start (polyfills, the main chunks), not the
+     shader.
+     `rollapolla-analog` `/` LCP 8-15 s, TBT about 300 ms, 2.1 MB, `/polls`
+     LCP 13-15 s. The portfolio's prerender does not run
+     in the development container; CI measures it.
 
 Each phase is its own PR. CLAUDE.md's "Performance gates" section says what
 is in place; it is updated with each phase.

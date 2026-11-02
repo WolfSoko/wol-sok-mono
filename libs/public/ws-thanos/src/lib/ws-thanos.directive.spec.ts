@@ -5,7 +5,7 @@ import {
   ViewChildren,
 } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { combineLatest, firstValueFrom, of } from 'rxjs';
+import { combineLatest, firstValueFrom, of, throwError } from 'rxjs';
 import image from '../assets/how-to-be-funny.png';
 import { AnimationState } from './animation.state';
 import { provideWsThanosOptions } from './ws-thanos-options.token';
@@ -141,6 +141,48 @@ describe('Integration Test: WsThanosDirective', () => {
       });
     });
 
+    it('should complete and fade the element back in after a normal effect', async () => {
+      const animationState: AnimationState = {
+        animationT: 1,
+        deltaTSec: 0,
+        maxHeight: 0,
+        maxWidth: 0,
+      };
+      givenStubbedThanosService_VaporizeReturns(of(animationState));
+      const elem = getDirectiveElement();
+      elem.style.opacity = '0';
+
+      await expect(
+        firstValueFrom(directive.vaporize(false))
+      ).resolves.toBeUndefined();
+
+      expect(elem.style.opacity).toBe('1');
+      expect(elem.isConnected).toBe(true);
+    });
+
+    it('should still complete when the effect fails synchronously', async () => {
+      const consoleError = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
+      try {
+        givenStubbedThanosService_VaporizeReturns(
+          throwError(() => new Error('no context'))
+        );
+
+        await expect(
+          firstValueFrom(directive.vaporize(false))
+        ).resolves.toBeUndefined();
+
+        expect(consoleError).toHaveBeenCalledWith(
+          'Error vaporizing',
+          expect.any(Error),
+          expect.objectContaining({ removeElem: false })
+        );
+      } finally {
+        consoleError.mockRestore();
+      }
+    });
+
     // SKIPPED: This test requires real browser features (html2canvas, canvas rendering, getComputedStyle)
     // that are not properly simulated in jsdom. See E2E tests in apps/ws-thanos-test-app instead.
     it.skip('should emit complete when vaporize is complete', (done) => {
@@ -164,6 +206,10 @@ describe('Integration Test: WsThanosDirective', () => {
 
   function getWsThanosService(): WsThanosService {
     return TestBed.inject(WsThanosService);
+  }
+
+  function getDirectiveElement(): HTMLElement {
+    return hostFixture.nativeElement.querySelector('.thanos-test-container');
   }
 
   function thenThanosServiceVaporizeWasCalled() {

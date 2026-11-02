@@ -29,6 +29,9 @@ export const settings: Translation<typeof en> = {
       long: 'Lang',
     },
     ambience: 'Blasen und Nebel in der Schale',
+    adaptiveQuality: 'Schärfe ans Gerät anpassen',
+    adaptiveQualityNote:
+      'Kommen die Bilder zu langsam, wird die Arena mit weniger Pixeln gezeichnet.',
     screenResolution: 'Bildschirmauflösung',
     locked:
       'Farben und Auflösungen wählst du vor einem Match – solange eines läuft, bleiben sie, wie sie sind.',
@@ -57,11 +60,21 @@ export const settings: Translation<typeof en> = {
     saveMatches: 'Meine Matches speichern',
     saveMatchesNote: 'Online-Matches werden immer aufbewahrt.',
   },
+  privacy: {
+    title: 'Datenschutz',
+    stats: 'Nutzungsstatistik',
+    statsNote:
+      'Zählt mit Google Analytics, welche Modi, Level und Bildschirme gespielt werden, um das Spiel besser zu machen. Nichts, was dich nennt, keine Werbung. Was genau, steht in der Datenschutzerklärung.',
+  },
   simulation: {
+    choice: 'Simulation',
+    auto: 'Automatisch',
+    gpu: 'GPU',
+    cpuChoice: 'CPU',
     gpuInt: 'Partien laufen auf der GPU, auf jedem Gerät gleich.',
     cpu: 'Partien laufen auf der CPU.',
     forced:
-      'Für dieses Gerät mit ?sim={ruleset} festgelegt; ?sim=auto hebt es auf.',
+      'Für dieses Gerät gewählt – Automatisch lässt wieder das Spiel entscheiden.',
     passed: 'GPU-Selbsttest auf {renderer} bestanden.',
     software:
       'GPU-Selbsttest auf {renderer} bestanden, doch der zeichnet auf der CPU - zu langsam für Partien auf der GPU.',

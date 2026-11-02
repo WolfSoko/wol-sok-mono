@@ -220,7 +220,8 @@ export class AdminRecordsService {
   }
 
   /**
-   * The level statistics of one balance version, by level - ordered by a
+   * The level statistics of one balance version, a row per level, computer
+   * and simulation resolution - ordered by a
    * field every document has (`level`, part of its key), since Firestore
    * leaves out documents without the ordered field.
    */

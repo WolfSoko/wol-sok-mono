@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { ProgressService } from '../progress.service';
 import { GameAccount } from '../storage/game-account';
 
@@ -13,6 +14,7 @@ import { GameAccount } from '../storage/game-account';
 export class SignIn {
   private readonly account = inject(GameAccount);
   private readonly progress = inject(ProgressService);
+  private readonly analytics = injectGameAnalytics();
 
   public readonly busy = signal(false);
   /** True when the last sign-in or sign-out failed. */
@@ -25,13 +27,22 @@ export class SignIn {
   public async signIn(): Promise<void> {
     if (!this.ready()) return;
     await this.whileBusy(async () => {
-      this.failed.set((await this.account.signIn()) === 'failed');
+      const outcome = await this.account.signIn();
+      this.failed.set(outcome === 'failed');
+      if (outcome === 'signed-in') {
+        this.analytics.track('login', { method: 'google' });
+      } else {
+        this.analytics.track('login_failed', { reason: outcome });
+      }
     });
   }
 
   public async signOut(): Promise<void> {
     if (this.busy()) return;
-    await this.whileBusy(() => this.account.signOut());
+    await this.whileBusy(async () => {
+      await this.account.signOut();
+      this.analytics.track('logout');
+    });
   }
 
   private async whileBusy(task: () => Promise<void>): Promise<void> {

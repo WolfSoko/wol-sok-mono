@@ -21,6 +21,7 @@ import {
   startWith,
   switchMap,
 } from 'rxjs';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { ModerationService } from '../moderation/moderation.service';
 import { OnlineMatchService } from '../net/online-match.service';
 import { GameAccount } from '../storage/game-account';
@@ -70,6 +71,7 @@ export class SocialService {
   private readonly store = inject(GameStateStore);
   private readonly online = inject(OnlineMatchService);
   private readonly moderation = inject(ModerationService);
+  private readonly analytics = injectGameAnalytics();
   private readonly social = this.cloud.social();
   private readonly presence = this.cloud.presence();
   /** Cards already watched, by uid - each is read once, however often shown. */
@@ -288,10 +290,12 @@ export class SocialService {
       throw new Error('The stored profile is not read yet');
     }
     this.assertNotBanned();
+    const first = this.storedProfile() === null;
     await this.social.saveProfile(
       uid,
-      this.storedProfile() === null ? { ...profile, ...changes } : changes
+      first ? { ...profile, ...changes } : changes
     );
+    this.analytics.track('profile_saved', { first });
   }
 
   /** What others see of a player - a made-up card until theirs is read. */
@@ -315,21 +319,39 @@ export class SocialService {
 
   /** Asks a player - the opponent of a match - to be friends. */
   public async addFriend(uid: string): Promise<void> {
-    await this.withWriter((social, me) =>
-      me === uid ? Promise.resolve() : social.sendRequest(me, uid)
+    const sent = await this.withWriter((social, me) =>
+      me === uid ? Promise.resolve(null) : social.sendRequest(me, uid)
     );
+    if (sent !== null) {
+      this.analytics.track('friend_request_sent');
+    }
   }
 
   public async acceptRequest(uid: string): Promise<void> {
-    await this.withWriter((social, me) => social.acceptRequest(me, uid));
+    const done = await this.withWriter((social, me) =>
+      social.acceptRequest(me, uid)
+    );
+    if (done !== null) {
+      this.analytics.track('friend_request_answered', { accepted: true });
+    }
   }
 
   public async declineRequest(uid: string): Promise<void> {
-    await this.withPlayer((social, me) => social.declineRequest(me, uid));
+    const done = await this.withPlayer((social, me) =>
+      social.declineRequest(me, uid)
+    );
+    if (done !== null) {
+      this.analytics.track('friend_request_answered', { accepted: false });
+    }
   }
 
   public async removeFriend(uid: string): Promise<void> {
-    await this.withPlayer((social, me) => social.removeFriend(me, uid));
+    const done = await this.withPlayer((social, me) =>
+      social.removeFriend(me, uid)
+    );
+    if (done !== null) {
+      this.analytics.track('friend_removed');
+    }
   }
 
   /** A link that makes whoever opens it the player's friend, for a week. */
@@ -357,12 +379,22 @@ export class SocialService {
   }
 
   public async acceptInvite(token: string, from: string): Promise<void> {
-    await this.withWriter((social, me) => social.acceptInvite(me, token, from));
+    const done = await this.withWriter((social, me) =>
+      social.acceptInvite(me, token, from)
+    );
+    if (done !== null) {
+      this.analytics.track('invite_accepted');
+    }
   }
 
   /** Challenges a friend to the match in room `code`. */
   public async challenge(friend: string, code: string): Promise<void> {
-    await this.withWriter((social, me) => social.challenge(me, friend, code));
+    const done = await this.withWriter((social, me) =>
+      social.challenge(me, friend, code)
+    );
+    if (done !== null) {
+      this.analytics.track('challenge_sent');
+    }
   }
 
   /**

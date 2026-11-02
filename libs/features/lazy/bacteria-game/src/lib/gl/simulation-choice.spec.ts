@@ -130,6 +130,20 @@ describe('chooseSimulation', () => {
       expect(ruleset()).toBeNull();
       expect(offers()).toEqual(['cpu']);
     });
+
+    it('plays the CPU where the device chose it', () => {
+      const { factory, ruleset } = chooseSimulation({
+        deterministic: () => false,
+        gpu,
+        gpuTrusted: () => true,
+        override: () => 'cpu',
+      });
+      expect(factory?.(gameBalance, random, 7)).toBeInstanceOf(
+        BacteriaSimulation
+      );
+      expect(asked).toEqual([]);
+      expect(ruleset()).toBe('cpu');
+    });
   });
 
   describe("following the owner's toggle", () => {

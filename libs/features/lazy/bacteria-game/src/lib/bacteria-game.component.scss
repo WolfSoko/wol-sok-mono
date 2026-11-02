@@ -4,10 +4,14 @@
   display: block;
 }
 
+// The stage is a grid whose cells overlap: the arena spans all of it, and
+// the HUD, the joystick zones, the pads and the minimap lie over it in its
+// cells. Upright, the short edges are the top and the bottom edge, so a
+// player's side is the half at their end; lying across it is the half at
+// the left or the right edge. The HUD takes the row along the top.
 .stage {
-  // The seat track must hold the boost pad's recharge ring (RECHARGE_RING_SIZE
-  // in boost-pad.component.ts, 100px) across its narrow side.
-  --seat: clamp(6.5rem, 15vw, 10rem);
+  // How far a pad keeps from the edges of its cell.
+  --pad-inset: 0.75rem;
 
   position: relative;
   // Embedded in the page, the stage fills the viewport below what is above
@@ -15,20 +19,24 @@
   // the menu screens.
   height: max(30rem, calc(100dvh - var(--stage-top, 0px)));
   display: grid;
-  grid-template-columns: var(--seat) minmax(0, 1fr) var(--seat);
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
-    'stick-0 center boost-1'
-    'boost-0 center stick-1';
+    'hud'
+    'side-1'
+    'side-0';
   overflow: hidden;
   color: #fff;
   background: rgb(var(--arena-rim, 0 0 0));
   transition: background-color 400ms ease;
   user-select: none;
 
-  &.solo {
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-areas: 'stick-0 center boost-0';
+  @media (orientation: landscape) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'hud hud'
+      'side-0 side-1';
   }
 
   // Fullscreen: the same stage over the whole viewport, handed to the
@@ -42,12 +50,18 @@
     overscroll-behavior: none;
   }
 
+  // The arena, under everything else.
   .center {
-    grid-area: center;
+    grid-area: 1 / 1 / -1 / -1;
     display: flex;
     flex-direction: column;
     min-width: 0;
     min-height: 0;
+  }
+
+  feat-lazy-bac-game-hud-bar {
+    grid-area: hud;
+    z-index: 2;
   }
 
   .thanos-container {
@@ -59,27 +73,15 @@
     min-height: 0;
   }
 
-  // Out of the flex flow, otherwise the badge sits next to the arena and
-  // pushes it off centre.
-  ws-shared-ui-show-fps {
-    position: absolute;
-    right: 0.5rem;
-    bottom: 0.25rem;
-    font-size: 0.7rem;
-    opacity: 0.6;
-  }
-
-  // The arena canvas and the minimap over its corner. The size comes from
-  // the component, which fits the arena into the box without letterboxing
-  // inside the element - see `canvasSize`. The arena view styles its canvas.
+  // The arena canvas. The size comes from the component, which fits the
+  // arena into the box without letterboxing inside the element - see
+  // `canvasSize`. The arena view styles its canvas.
   .arena-frame {
     position: relative;
     max-width: 100%;
     max-height: 100%;
   }
 
-  // Only a glance: small, in the top right corner, and never in the way of
-  // a finger.
   // The bubbles and the mist, laid over the arena canvas, as big as it.
   .ambience {
     position: absolute;
@@ -89,11 +91,16 @@
     pointer-events: none;
   }
 
+  // Only a glance: small, in the top right corner below the HUD, and never
+  // in the way of a finger.
   .minimap {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
+    grid-row: 2;
+    grid-column: 1 / -1;
+    align-self: start;
+    justify-self: end;
+    z-index: 1;
     width: clamp(6rem, 22%, 14rem);
+    margin: 0.25rem 0.5rem;
     border: 1px solid rgb(255 255 255 / 35%);
     border-radius: 4px;
     opacity: 0.85;
@@ -101,135 +108,116 @@
   }
 }
 
-// The seating plan. Two players sit at the short edges of the phone, one at
-// each end, and each gets the stick in the left hand and the boost pad in
-// the right, turned towards them - the pad as a whole, the stick only by its
-// label, since a stick looks the same from every side. With the phone lying
-// across, seat 0 is the left column (turned a quarter clockwise, so its
-// stick is at the top of the screen) and seat 1 the right one (turned the
-// other way). A single player gets the stick left of the arena and the pad
-// right of it, neither turned.
+// The seating plan. Each human player's joystick zone covers their side of
+// the arena - the stick appears wherever the finger lands there and follows
+// it - and their boost pad (with the weapon, if they carry one) stays pinned
+// to the corner under their right hand, see-through enough to show the match
+// below. A single player's other side is left to dragging the crosshair and
+// pinching the camera; two players' sides make up the whole arena.
 //
-// The pad's cell is a size container: a turned pad is sized with the cell's
-// width and height swapped, so that it fills the cell once it is turned.
+// Two players sit at the short edges of the phone, one at each end, turned
+// towards them - the pad as a whole, the stick only by its label, since a
+// stick looks the same from every side. Seat 0 sits at the bottom edge (the
+// left one with the phone lying across, turned a quarter clockwise, so its
+// left hand is at the top of the screen), seat 1 at the opposite one. A
+// single player sits at the bottom edge, never turned, the pad in the
+// bottom right corner of the screen.
+//
+// Each seat names its side (--side) and where in it its stick rests and its
+// pad sits (--stick-*, --pad-*: start or end, vertically and horizontally).
 .stage {
-  .stick,
-  .seat {
-    min-width: 0;
-    min-height: 0;
+  [data-seat='0'] {
+    --side: side-0;
+    --stick-v: end;
+    --stick-h: start;
+    --pad-v: end;
+    --pad-h: end;
   }
 
-  .seat {
-    position: relative;
-    container-type: size;
-
-    feat-lazy-bac-game-boost-pad {
-      position: absolute;
-      inset: 0;
-      transform: rotate(var(--seat-turn, 0deg));
-    }
+  [data-seat='1'] {
+    --side: side-1;
+    --stick-v: start;
+    --stick-h: end;
+    --pad-v: start;
+    --pad-h: start;
+    --seat-turn: 180deg;
   }
 
-  // The phone lying across: a quarter turn each way, the pad sized with
-  // the cell's width and height swapped.
   @media (orientation: landscape) {
+    &.solo .seat {
+      --side: side-1;
+    }
+
     &:not(.solo) {
       [data-seat='0'] {
+        --stick-v: start;
+        --pad-h: start;
         --seat-turn: 90deg;
       }
 
       [data-seat='1'] {
+        --stick-v: end;
+        --pad-h: end;
         --seat-turn: 270deg;
       }
-
-      .seat feat-lazy-bac-game-boost-pad {
-        inset: auto;
-        top: 50%;
-        left: 50%;
-        width: 100cqh;
-        height: 100cqw;
-        transform: translate(-50%, -50%) rotate(var(--seat-turn));
-      }
     }
+  }
+
+  .stick {
+    grid-area: var(--side);
+    z-index: 1;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    align-self: var(--stick-v);
+    justify-self: var(--stick-h);
+    // At rest the stick waits by the player's left thumb.
+    justify-content: var(--stick-v);
+    align-items: var(--stick-h);
+    padding: 1.5rem;
+  }
+
+  .seat {
+    grid-area: var(--side);
+    z-index: 1;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    gap: 0.25rem;
+    align-self: var(--pad-v);
+    justify-self: var(--pad-h);
+    margin: var(--pad-inset);
+    opacity: 0.65;
+    transform: rotate(var(--seat-turn, 0deg));
   }
 }
 
-// A colony with a weapon (ADR 0013) - only ever a single player against the
-// computer, so never turned: the weapon button right beneath the boost pad,
-// the two centred together in the tall column, or beside it in a band along
-// the bottom edge.
-.stage .seat.armed {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-
-  // The pad is a size container, so it takes the height it is given: about
-  // as much as its contents need, less where the column is shorter.
-  feat-lazy-bac-game-boost-pad {
-    position: relative;
-    inset: auto;
-    flex: 0 1 16rem;
-    min-height: 0;
-  }
-
-  feat-lazy-bac-game-weapon-pad {
-    flex: 0 0 auto;
-  }
-
-  @media (orientation: portrait) {
-    flex-direction: row;
-
-    feat-lazy-bac-game-boost-pad {
-      flex: 1 1 0;
-      min-width: 0;
-    }
-  }
-}
-
-// Upright phone, or a tablet held that way: the short edges are the top and
-// the bottom edge, so the seats become bands along them - seat 0 at the
-// bottom, seat 1 at the top upside down.
-@media (orientation: portrait) {
-  .stage {
-    --seat: clamp(6.5rem, 20vh, 9rem);
-
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: var(--seat) minmax(0, 1fr) var(--seat);
-    grid-template-areas:
-      'boost-1 stick-1'
-      'center center'
-      'stick-0 boost-0';
-
-    &.solo {
-      grid-template-rows: minmax(0, 1fr) var(--seat);
-      grid-template-areas:
-        'center center'
-        'stick-0 boost-0';
-    }
-
-    &:not(.solo) [data-seat='1'] {
-      --seat-turn: 180deg;
-    }
+// With a mouse the arena is steered by dragging the crosshair, so a stick
+// zone keeps to a corner of its player's side and leaves the rest to it.
+@media (hover: hover) and (pointer: fine) {
+  .stage .stick {
+    width: min(100%, 16rem);
+    height: min(100%, 16rem);
   }
 }
 
 // The goal of a training mission, at the top of the arena while it runs.
 .mission-goal {
-  position: absolute;
-  top: 4.5rem;
-  left: 50%;
+  grid-row: 2;
+  grid-column: 1 / -1;
+  align-self: start;
+  justify-self: center;
   z-index: 2;
   display: flex;
   align-items: center;
   gap: 0.4rem;
   max-width: calc(100% - 2rem);
-  margin: 0;
+  margin: 1rem 0 0;
   padding: 0.35rem 0.9rem;
   border-radius: 999px;
   background: rgb(0 0 0 / 55%);
   color: #fff;
   font-size: 0.9rem;
-  transform: translateX(-50%);
   pointer-events: none;
 
   mat-icon {
@@ -262,7 +250,7 @@
 
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;

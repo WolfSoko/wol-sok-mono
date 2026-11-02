@@ -14,6 +14,7 @@ import {
 import { map, merge, Observable, of, shareReplay, Subject } from 'rxjs';
 import { Account } from '../../shared/account';
 import { AccountPort, SignInCancelled } from '../ports/account.port';
+import { injectRollaPollaAnalytics } from '../core/analytics/rollapolla-analytics';
 import { adoptGoogleProfile } from './ensure-signed-in';
 
 const CANCELLED_CODES = new Set([
@@ -27,6 +28,7 @@ export class AccountAdapter extends AccountPort {
   private readonly auth: Auth = inject(Auth);
   /** Linking keeps the uid, so the auth listeners may not fire for it. */
   private readonly linked$ = new Subject<void>();
+  private readonly analytics = injectRollaPollaAnalytics();
 
   public readonly account$: Observable<Account | null> = isPlatformServer(
     inject(PLATFORM_ID)
@@ -43,11 +45,15 @@ export class AccountAdapter extends AccountPort {
     const provider = new GoogleAuthProvider();
     const current = this.auth.currentUser;
     try {
+      let keptAnonymous = false;
       if (current?.isAnonymous) {
-        await this.linkOrSwitch(current, provider);
+        keptAnonymous = await this.linkOrSwitch(current, provider);
       } else {
         await signInWithPopup(this.auth, provider);
       }
+      this.analytics.track(keptAnonymous ? 'sign_up' : 'login', {
+        method: 'google',
+      });
     } catch (error) {
       if (CANCELLED_CODES.has((error as AuthError).code)) {
         throw new SignInCancelled();
@@ -61,13 +67,15 @@ export class AccountAdapter extends AccountPort {
     await signOut(this.auth);
   }
 
+  /** True when the anonymous account became the Google one, keeping its uid. */
   private async linkOrSwitch(
     anonymous: User,
     provider: GoogleAuthProvider
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       const { user } = await linkWithPopup(anonymous, provider);
       await adoptGoogleProfile(user);
+      return true;
     } catch (error) {
       const credential =
         (error as AuthError).code === 'auth/credential-already-in-use'
@@ -78,6 +86,7 @@ export class AccountAdapter extends AccountPort {
       }
       // the Google account is already in use elsewhere: switch to it
       await signInWithCredential(this.auth, credential);
+      return false;
     }
   }
 }

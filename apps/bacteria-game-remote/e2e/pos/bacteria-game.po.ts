@@ -1,5 +1,13 @@
 import { Locator, Page } from '@playwright/test';
 
+/** Where an element is on the screen, in CSS pixels. */
+export interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 /** The bacteria game page: the arena, its controls and the match setup. */
 export class BacteriaGamePo {
   public readonly playArea: Locator;
@@ -150,9 +158,7 @@ export class BacteriaGamePo {
   }
 
   /** Where an element is on the screen; it must have a layout. */
-  public async boxOf(
-    locator: Locator
-  ): Promise<{ x: number; y: number; width: number; height: number }> {
+  public async boxOf(locator: Locator): Promise<Box> {
     const box = await locator.boundingBox();
     if (box == null) {
       throw new Error('the element has no layout yet');
@@ -160,14 +166,17 @@ export class BacteriaGamePo {
     return box;
   }
 
+  /** The middle of a box on the screen. */
+  public centreOf(box: Box): { x: number; y: number } {
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  }
+
   /**
    * Pushes a seat's joystick with a finger: touches down in the middle of
    * the zone, drags by the offset and stays there until {@link release}.
    */
   public async push(seat: number, dx: number, dy: number): Promise<void> {
-    const box = await this.boxOf(this.joystick(seat));
-    const x = box.x + box.width / 2;
-    const y = box.y + box.height / 2;
+    const { x, y } = this.centreOf(await this.boxOf(this.joystick(seat)));
     await this.page.mouse.move(x, y);
     await this.page.mouse.down();
     await this.page.mouse.move(x + dx, y + dy, { steps: 5 });
@@ -189,17 +198,9 @@ export class BacteriaGamePo {
     const stick = await this.boxOf(this.joystick(seat));
     const boost = await this.boxOf(this.boostOf(seat));
     const cdp = await this.page.context().newCDPSession(this.page);
-    const finger = {
-      x: stick.x + stick.width / 2,
-      y: stick.y + stick.height / 2,
-      id: 1,
-    };
+    const finger = { ...this.centreOf(stick), id: 1 };
     const pushed = { ...finger, x: finger.x + 30 };
-    const tap = {
-      x: boost.x + boost.width / 2,
-      y: boost.y + boost.height / 2,
-      id: 2,
-    };
+    const tap = { ...this.centreOf(boost), id: 2 };
     const touch = (
       type: 'touchStart' | 'touchMove' | 'touchEnd',
       touchPoints: (typeof finger)[]

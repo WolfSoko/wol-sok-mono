@@ -33,6 +33,11 @@ export interface CrosshairPosition {
   y: number;
 }
 
+/** Where a pointer is, in client (CSS pixel) coordinates. */
+export function clientPoint(event: PointerEvent): Point {
+  return { x: event.clientX, y: event.clientY };
+}
+
 /**
  * Converts a pointer position in client (CSS pixel) coordinates into arena
  * coordinates.
@@ -145,6 +150,11 @@ export class Pinch {
     this.fingers.set(pointerId, point);
     this.pair = [other, pointerId];
     return true;
+  }
+
+  /** True from a pinch's start until both its fingers are lifted. */
+  public active(): boolean {
+    return this.pair != null;
   }
 
   public pinches(pointerId: number): boolean {

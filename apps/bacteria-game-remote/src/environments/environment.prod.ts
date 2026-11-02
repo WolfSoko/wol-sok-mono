@@ -27,9 +27,9 @@ export const environment: Environment = {
     // uploaded and listed in "My matches".
     replays: true,
   },
-  // index.html loads AdSense and its consent banner. For ads on the menu
-  // screens, add the display ad unit from AdSense:
-  // ads: { client: 'ca-pub-6346271540341424', slot: '<ad unit id>' }
+  // No ad network yet. Once AdinPlay takes the site, add to the support
+  // options (the privacy policy's section 7 follows):
+  // ads: { network: 'adinplay', publisherId: '<AIP ID>', placementId: '<id>' }
   support: SUPPORT_DEFAULTS,
   // Error reports to the Sentry project `bacteria-wars` (owner's decision
   // of 2026-10-26). A DSN is public by design. The release is the one the

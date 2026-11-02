@@ -4,6 +4,11 @@
   @include screen.screen;
 }
 
+// Watching a match, the viewer is the screen.
+:host.playing {
+  @include screen.player;
+}
+
 .matches {
   @include screen.panel;
 

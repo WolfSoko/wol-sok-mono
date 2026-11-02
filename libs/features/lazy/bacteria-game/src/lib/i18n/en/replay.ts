@@ -8,8 +8,6 @@ export const replay = {
     saved: 'Replay saved in My matches, for 30 days',
     savedDevice: 'Replay kept on this device, in My matches',
     notSaved: 'Replay not saved: "Save my matches" is off.',
-    notSavedGrid:
-      'Replay not saved: matches are saved only at simulation resolution "Normal".',
     unconfirmed:
       'Could not confirm the replay was saved. Look for it in My matches later.',
     /** Once, after the first saved match against the computer. */
@@ -98,6 +96,11 @@ export const replay = {
     over: 'End of the replay',
     play: 'Play',
     pause: 'Pause',
+    seek: 'Time in the match',
+    back: '{seconds} seconds back',
+    forward: '{seconds} seconds forward',
+    seeking: 'Winding to that time…',
+    controls: 'Playback controls',
   },
   watchPage: {
     title: 'Watch: {level} - Bacteria Wars',

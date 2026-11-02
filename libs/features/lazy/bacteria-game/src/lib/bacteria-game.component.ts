@@ -24,15 +24,13 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
+import { trackScreenViews } from './analytics/screen-views';
+import { reportUserProperties } from './analytics/user-properties';
 import { TranslationKey } from './i18n/dictionaries';
 import { I18nService } from './i18n/i18n.service';
 import { difficultyKeys, levelNameText, missionKeys } from './i18n/game-texts';
 import { TranslatePipe } from './i18n/translate.pipe';
-import {
-  ElemResizedDirective,
-  ResizedEvent,
-  ShowFpsComponent,
-} from '@wolsok/ui-kit';
+import { ElemResizedDirective, ResizedEvent } from '@wolsok/ui-kit';
 import {
   asapScheduler,
   defer,
@@ -42,24 +40,25 @@ import {
   timer,
 } from 'rxjs';
 import {
+  catchError,
   defaultIfEmpty,
   filter,
   last,
   map,
-  take,
+  takeUntil,
   tap,
   timeout,
 } from 'rxjs/operators';
 import { DishAmbience } from './arena/ambience';
-import { ArenaPainter } from './arena/arena-painter';
+import { ArenaLayout, ArenaPainter, layoutKey } from './arena/arena-painter';
 import {
   ArenaContent,
-  ArenaLayout,
   ArenaScene,
   ArenaViewComponent,
-  layoutKey,
 } from './arena/arena-view.component';
 import { armedTap } from './armed-tap';
+import { StageBusyComponent } from './busy/stage-busy.component';
+import { StageBusy } from './busy/stage-busy';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
@@ -74,6 +73,7 @@ import { WeaponPadComponent } from './weapon-pad/weapon-pad.component';
 import {
   exitFullscreen,
   fitInside,
+  fullscreenElementOf,
   isFullscreen,
   isFullscreenSupported,
   lockLandscape,
@@ -145,6 +145,7 @@ import { MatchResult } from './state/match-engine';
 import { levelMusic } from './sound/level-music';
 import {
   arenaPointFromClient,
+  clientPoint,
   nearestFreeCrosshair,
   Pinch,
 } from './touch-controls';
@@ -180,6 +181,10 @@ import { mapZones, Zone } from './state/zones';
 import { Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
 import { PlayerService } from './state/player.service';
+import { FramePerf } from './arena/frame-perf';
+import { AdaptiveQuality } from './arena/adaptive-quality';
+import type { GpuTimer } from './gl/gpu-timer';
+import { HudPerf, simulationLabel } from './hud-perf';
 import {
   MatchEndAction,
   WinnerComponent,
@@ -198,6 +203,13 @@ const RUNNING_OUT_SEC = 10;
 /** How often the minimap takes in where the colonies are. */
 const MINIMAP_UPDATE_MS = 100;
 
+/**
+ * How much longer than the set length the vaporize effect - its capture
+ * of the canvas included - may take before the stage goes on without it:
+ * a snapshot that never completes must not leave the stage without a menu.
+ */
+const VAPORIZE_SLACK_MS = 5_000;
+
 /** A goal the HUD counts each colony up towards. */
 
 @UntilDestroy()
@@ -207,7 +219,6 @@ const MINIMAP_UPDATE_MS = 100;
     MatCardModule,
     WsThanosDirective,
     MatButtonModule,
-    ShowFpsComponent,
     MatIconModule,
     SocialNoticesComponent,
     ModerationNoticesComponent,
@@ -230,6 +241,7 @@ const MINIMAP_UPDATE_MS = 100;
     EvolutionComponent,
     TranslatePipe,
     ArenaViewComponent,
+    StageBusyComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -240,6 +252,7 @@ const MINIMAP_UPDATE_MS = 100;
 export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private store = inject(GameStateStore);
   private gameStateService = inject(GameStateService);
+  private readonly busy = inject(StageBusy);
   private playerService = inject(PlayerService);
   private playerStore = inject(PlayerStore);
   protected readonly settings = inject(GameSettingsService);
@@ -307,6 +320,20 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private stageRef!: ElementRef<HTMLElement>;
   @ViewChild(WsThanosDirective, { static: true })
   private thanos!: WsThanosDirective;
+  /**
+   * The frame around the arena canvas, inside the vaporized container -
+   * hidden from the end of the effect until the stage shows what comes
+   * next, see {@link hideArenaUntilPainted}. Missing where the template is
+   * not rendered, as in the specs.
+   */
+  private readonly arenaFrame =
+    viewChild<ElementRef<HTMLElement>>('arenaFrame');
+  /** True while the arena frame is hidden, see {@link hideArenaUntilPainted}. */
+  private arenaHidden = false;
+  /** True once the stage rendered what follows the effect, while hidden. */
+  private stageRendered = false;
+  /** True once the arena painted its next frame, while hidden. */
+  private arenaPainted = false;
   /** Draws the arena - on the GPU where the browser can; the view builds it. */
   private painter: ArenaPainter | null = null;
   /** The layout the last painter was built for - null before the first. */
@@ -327,6 +354,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private minimap: MinimapPainter | null = null;
   /** When the minimap last took in where the colonies are. */
   private minimapUpdatedAt = Number.NEGATIVE_INFINITY;
+  /**
+   * True while the painter draws the ambience with the arena - the stage
+   * then lays no canvas of its own over it.
+   */
+  protected readonly painterAmbience = signal(false);
+  /** Where the frames spend their time, while the HUD shows it. */
+  private readonly framePerf = new FramePerf();
+  /** How many of the canvas's pixels the frames of a match are built with. */
+  private readonly quality = new AdaptiveQuality();
+  /** Where the last match on each arena size left it - for the next one. */
+  private readonly qualityByArena = new Map<string, number>();
+  /** True while a match on, with the setting, adapts the sharpness. */
+  private readonly adapts = computed(
+    () => this.running() && this.settings.adaptiveQuality()
+  );
+  /**
+   * The breakdown of a frame beside the frame rate - null while the
+   * settings hide the frame rate, or before a window of frames is over.
+   */
+  protected readonly hudPerf = signal<HudPerf | null>(null);
 
   /**
    * The arena in cells, as fine as the simulation resolution asks for and
@@ -353,15 +400,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly mapSize = computed(() => levelSize(this.store.level()));
   /**
    * True while the camera shows part of a big map: in a match of one human -
-   * with two, it shows the whole map.
+   * with two, it shows the whole map. The minimap shows then, and the
+   * camera zooms.
    */
-  protected readonly showMinimap = computed(
+  protected readonly cameraFollows = computed(
     () => this.mapSize() > 1 && this.running() && this.humans().length === 1
   );
   /**
    * What the arena view lays its canvas out for: the arena at the
    * resolutions set. Either resolution changing hands the painter a fresh
-   * canvas and context.
+   * canvas and context - as does the device override sending the war to
+   * the GPU, which keeps WebGL2 even where the browser renders it on the
+   * CPU.
    */
   protected readonly arenaLayout = computed((): ArenaLayout => {
     const sim = this.simResolution();
@@ -372,6 +422,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       scale: renderScale(sim, screen, size),
       detail: detailScale(sim, screen, size),
       unit: simScale(sim),
+      softwareWebGl: this.simulationOverride.override() === 'gpu-int',
     };
   });
   /**
@@ -391,6 +442,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     content: (alpha) => this.content(alpha),
     view: () => this.shakenView(),
     painted: (frame) => {
+      this.arenaPainted = true;
+      this.revealArenaWhenReady();
       this.paintAmbience(frame.view, frame.deltaTimeSec);
       this.paintMinimap(this.lastCamera ?? frame.view, frame.dynamicWalls);
     },
@@ -407,7 +460,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     NEUTRAL_COLOR[1],
     NEUTRAL_COLOR[2],
   ])})`;
-  protected readonly fps = this.store.fps;
+  /**
+   * The frame rate in the HUD, in whole frames - null while the settings
+   * hide it, so the HUD renders again only when the number it shows changes.
+   */
+  protected readonly hudFps = computed(() =>
+    this.settings.showFps() ? Math.round(this.store.fps()) : null
+  );
   /** True while a match is on, paused or not. */
   protected readonly running: Signal<boolean>;
   protected readonly paused: Signal<boolean>;
@@ -677,6 +736,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly pinch = new Pinch();
 
   constructor() {
+    trackScreenViews(
+      computed(() => (this.resetting() ? null : (this.panel() ?? 'match')))
+    );
+    reportUserProperties();
     this.gameStateService.reset();
     // A series lasts for a visit of the page: one left unfinished last time
     // does not carry over.
@@ -812,6 +875,27 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       if (!this.running() || this.paused()) {
         untracked(() => this.draw());
       }
+    });
+    // The breakdown of a frame starts over with each match, and whenever
+    // the frame rate is shown again - no frames of before in its average.
+    effect(() => {
+      this.settings.showFps();
+      this.running();
+      untracked(() => {
+        this.framePerf.reset();
+        this.hudPerf.set(null);
+      });
+    });
+    // A match starts at the sharpness the last one on its arena ended with;
+    // between matches, and with the setting off, every pixel is painted.
+    effect(() => {
+      const adapts = this.adapts();
+      untracked(() => {
+        const { width, height } = this.arena();
+        const remembered = this.qualityByArena.get(arenaKey(width, height));
+        this.quality.start(adapts ? (remembered ?? 1) : 1);
+        this.painter?.setRenderScale?.(this.quality.scale);
+      });
     });
     // A resumed match picks its music up where the match clock stands, so
     // it stays in step with a map that moves to it.
@@ -1082,10 +1166,30 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (run === null || this.resetting()) {
       return;
     }
-    this.dismissChallenge();
-    this.gameStateService.leaveOnline();
-    this.gameStateService.playGhost(run);
-    this.startGame();
+    this.startOnTap(() => {
+      // A reset may have begun in the frame the spinner took.
+      if (this.resetting()) {
+        return;
+      }
+      this.dismissChallenge();
+      this.gameStateService.leaveOnline();
+      this.gameStateService.playGhost(run);
+      this.startGame();
+    });
+  }
+
+  /**
+   * Starts a match from a tap: the stage takes the screen on the tap
+   * itself, the one moment every browser allows it, and the match is set
+   * up behind the busy spinner (`StageBusy`), until it runs.
+   */
+  private startOnTap(start: () => void | Promise<void>): void {
+    // A tap while busy is dropped, and takes no screen either.
+    if (this.busy.active()) {
+      return;
+    }
+    this.requestNativeFullscreen();
+    this.busy.run(start);
   }
 
   protected dismissChallenge(): void {
@@ -1159,7 +1263,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
             this.gameStateService.playMission(mission);
           }
           if (action === 'campaign') {
-            this.continueCampaign();
+            this.playFurthestLevel();
           } else if (
             action === 'again' ||
             action === 'next' ||
@@ -1365,23 +1469,31 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * training mission.
    */
   protected startNewGame(kind: PlayKind): void {
-    switch (kind) {
-      case 'daily':
-        void this.playDaily();
-        return;
-      case 'endless':
-        void this.playEndless();
-        return;
-      case 'training':
-        this.playMission(this.missionId());
-        return;
-      default:
-        this.startGame();
+    // The host's online start stays in step with the lockstep's own starts.
+    if (kind === 'online') {
+      this.startGame();
+      return;
     }
+    this.startOnTap(() => {
+      switch (kind) {
+        case 'daily':
+          return this.playDaily();
+        case 'endless':
+          return this.playEndless();
+        case 'training':
+          return this.playMission(this.missionId());
+        default:
+          return this.startGame();
+      }
+    });
   }
 
   /** Starts a match on the furthest level the campaign ladder has opened. */
   protected continueCampaign(): void {
+    this.startOnTap(() => this.playFurthestLevel());
+  }
+
+  private playFurthestLevel(): void {
     this.gameStateService.leaveOnline();
     this.selectMode('vs-computer');
     this.gameStateService.setLevel(this.campaign.furthestLevel());
@@ -1450,6 +1562,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   protected onPainterChange(painter: ArenaPainter | null): void {
     this.painter = painter;
+    this.painterAmbience.set(painter?.paintsAmbience === true);
+    painter?.setRenderScale?.(this.quality.scale);
     if (painter != null) {
       this.painterLayout.set(untracked(this.arenaLayout));
     }
@@ -1507,6 +1621,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private vaporize(): Observable<void> {
+    // Never a snapshot of a hidden arena, see hideArenaUntilPainted.
+    this.revealArena();
     // Switched off, the arena simply clears - still after the caller is
     // through, as it would after the effect.
     if (this.settings.vaporize() === 'off') {
@@ -1514,7 +1630,65 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     // The effect takes its snapshot of the canvas right away.
     this.painter?.showLastFrame();
-    return this.thanos.vaporize(false).pipe(take(1));
+    // Should the capture or the effect never end, the stage goes on
+    // without them rather than staying without a menu. The cold `vaporize$`
+    // runs the effect on this subscription, so leaving it at the deadline
+    // cancels the effect: a capture that only finishes later must not dim
+    // the container and lay its canvas over the menu or the next match.
+    // The directive's teardown fades the container back in.
+    return this.thanos.vaporize$(false).pipe(
+      takeUntil(timer(this.settings.vaporizeMs() + VAPORIZE_SLACK_MS)),
+      map(() => undefined)
+    );
+  }
+
+  /**
+   * Takes the arena frame out of sight until the stage shows what comes
+   * next - the reset arena under the menu screen, or the next match's
+   * first frame.
+   *
+   * The vaporize directive fades its container back in by itself at the end
+   * of the effect, before the reset ran and before the menu screen is
+   * rendered, which on a slow device takes a while: the old level would
+   * show between the dust and the menu. Hidden here, synchronously as the
+   * effect ends, the frame comes back only once both the stage rendered
+   * what follows (`afterNextRender` in {@link resetGame$}) and the arena
+   * painted its next frame (the scene's `painted`, inside the animation
+   * frame): the repaint lands on the next frame, often ahead of a slow
+   * change detection, so a paint alone would show the old level still. See
+   * {@link revealArenaWhenReady}; {@link vaporize} reveals the frame
+   * regardless, so no snapshot is taken of a hidden arena.
+   */
+  private hideArenaUntilPainted(): void {
+    const frame = this.arenaFrame()?.nativeElement;
+    if (frame == null) {
+      return;
+    }
+    frame.style.visibility = 'hidden';
+    this.arenaHidden = true;
+    this.stageRendered = false;
+    this.arenaPainted = false;
+  }
+
+  /**
+   * Shows the hidden arena frame once both the render and the paint are
+   * through, see {@link hideArenaUntilPainted}. Called every frame, so it
+   * costs a boolean check while the frame is shown.
+   */
+  private revealArenaWhenReady(): void {
+    if (!this.arenaHidden || !this.stageRendered || !this.arenaPainted) {
+      return;
+    }
+    this.revealArena();
+  }
+
+  /** Shows the arena frame, whatever it still waits for. */
+  private revealArena(): void {
+    this.arenaHidden = false;
+    const frame = this.arenaFrame()?.nativeElement;
+    if (frame != null) {
+      frame.style.visibility = '';
+    }
   }
 
   /**
@@ -1532,26 +1706,50 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    *
    * The animation is allowed to finish without emitting - what matters is that
    * it is over, so the reset hangs off the completion rather than off a value.
+   * An effect that fails - even at once, while {@link vaporize} sets it up -
+   * is over too: the error is logged here and the reset goes on, so
+   * `resetting` never sticks.
    */
   private resetGame$(): Observable<void> {
     return defer(() => {
       this.resetting.set(true);
       this.gameStateService.pause();
-      return this.vaporize().pipe(
-        defaultIfEmpty(undefined),
-        last(),
-        tap(() => {
+      return this.vaporize();
+    }).pipe(
+      catchError((error: unknown) => {
+        console.error('The arena could not be vaporized', error);
+        return of(undefined);
+      }),
+      defaultIfEmpty(undefined),
+      last(),
+      tap(() => {
+        // The effect has just faded the container back in.
+        this.hideArenaUntilPainted();
+        try {
           this.gameStateService.reset();
-          this.draw();
+        } finally {
+          // Whatever the reset came to (a GPU simulation may fail to set
+          // up again), the stage gets its menu back and a pending online
+          // start is taken up; the error goes on. The signal first, so the
+          // change detection it schedules is registered before the
+          // repaint's animation frame.
           this.resetting.set(false);
+          afterNextRender(
+            () => {
+              this.stageRendered = true;
+              this.revealArenaWhenReady();
+            },
+            { injector: this.injector }
+          );
+          this.draw();
           if (this.onlineStartPending) {
             this.onlineStartPending = false;
             this.startOnlineMatch();
           }
-        }),
-        map(() => undefined)
-      );
-    });
+        }
+      }),
+      map(() => undefined)
+    );
   }
 
   /**
@@ -1564,7 +1762,21 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const { width, height } = this.arena();
+    // Timed only while the HUD shows the frame rate.
+    const perf = untracked(this.settings.showFps) ? this.framePerf : null;
+    const timer = perf === null ? null : (this.painter.gpuTimer?.() ?? null);
+    // The ticks' GPU time where the war runs on the GPU.
+    const simulation = this.playerService.getSimulation();
+    const simTimer = timer !== null && simulation.kind === 'gpu' ? timer : null;
+    const adapting =
+      this.painter.setRenderScale != null && untracked(this.adapts);
+    // The main thread's time is taken where the HUD or the sharpness asks.
+    const timed = perf !== null || adapting;
+    const start = timed ? performance.now() : 0;
+    simTimer?.begin('sim');
     this.gameStateService.advance(width, height, frame.ticks);
+    simTimer?.end();
+    const ticked = timed ? performance.now() : 0;
     const events = this.playerService.getFrameEvents();
     this.sound.frame(events);
     this.haptics.frame(events);
@@ -1572,7 +1784,54 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // The shake goes with the match's frames: a pause holds the view still.
     this.shake.advance(frame.elapsedSec);
     this.pendingFires = events.weapons;
+    const painting = perf === null ? 0 : performance.now();
+    timer?.begin('draw');
     this.arenaView()?.paintFrame(frame.elapsedSec, frame.alpha);
+    timer?.end();
+    const end = timed ? performance.now() : 0;
+    // A simulation's wait for the GPU is the GPU's time, not the main
+    // thread's own.
+    const gpuWait = simulation.takeGpuWaitMs?.() ?? 0;
+    if (adapting) {
+      // The sharpness goes by how long the main thread was busy with this
+      // frame's ticks and painting.
+      const scale = this.quality.frame(end, end - start - gpuWait);
+      if (scale !== null) {
+        this.qualityByArena.set(arenaKey(width, height), scale);
+        this.painter.setRenderScale?.(scale);
+      }
+    }
+    if (perf !== null) {
+      this.notePerf(perf, timer, frame.ticks, start, ticked, painting, end);
+    }
+  }
+
+  /** Takes a frame's timings, and shows the averages once a window is over. */
+  private notePerf(
+    perf: FramePerf,
+    timer: GpuTimer | null,
+    ticks: number,
+    start: number,
+    ticked: number,
+    painting: number,
+    end: number
+  ): void {
+    timer?.poll((slot, ms) => perf.recordGpu(slot, ms));
+    const report = perf.record(end, ticked - start, end - painting, ticks);
+    if (report === null) {
+      return;
+    }
+    const simulation = this.playerService.getSimulation();
+    const { width, height } = this.arena();
+    this.hudPerf.set({
+      ...report,
+      simulation: simulationLabel(simulation.kind, simulation.ruleset),
+      cells: arenaKey(width, height),
+      // The Canvas 2D painter paints every pixel, whatever the scale says.
+      // A share of the pixels: the scale goes for the width and the height.
+      pixels:
+        this.painter?.setRenderScale == null ? 1 : this.quality.scale ** 2,
+    });
   }
 
   /**
@@ -1592,10 +1851,21 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * depth is drawn, and only once per view and canvas size.
    */
   private paintAmbience(view: Rect, deltaTimeSec: number): void {
+    const ambience = this.ambience;
+    if (ambience == null || !this.settings.ambience()) {
+      return;
+    }
+    const moving = !this.reducedMotion() && this.matchPaints();
+    if (untracked(this.painterAmbience)) {
+      // The painter draws it with the arena: here it only moves on.
+      if (moving) {
+        ambience.advance(deltaTimeSec);
+      }
+      return;
+    }
     const canvas = this.ambienceRef()?.nativeElement;
     const arena = this.arenaView()?.canvas();
-    const ambience = this.ambience;
-    if (canvas == null || arena == null || ambience == null) {
+    if (canvas == null || arena == null) {
       return;
     }
     const { width, height } = arena;
@@ -1604,7 +1874,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       canvas.width = width;
       canvas.height = height;
     }
-    const moving = !this.reducedMotion() && this.matchPaints();
     const still = this.stillAmbience;
     if (
       !moving &&
@@ -1720,7 +1989,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return this.camera != null && this.cameraTarget() != null;
   }
 
-  private zoomBy(factor: number): void {
+  protected zoomBy(factor: number): void {
     if (factor === 1) {
       return;
     }
@@ -1740,18 +2009,24 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       dataset['simulation'] = simulation.kind;
     }
     const players = untracked(this.playerStore.entities);
-    return arenaContent({
-      players,
-      crosshairAt: (player) => this.playerService.crosshairAt(player, alpha),
-      simulation,
-      walls: this.walls(),
-      balance: this.balance(),
-      looks: seatLooks(players, this.skin(), this.computerLook()),
-      reducedMotion: this.reducedMotion(),
-      weaponFires: this.takeFires(),
-      seatColors: this.seatColors,
-      screenResolution: this.settings.screenResolution(),
-    });
+    return {
+      ...arenaContent({
+        players,
+        crosshairAt: (player) => this.playerService.crosshairAt(player, alpha),
+        simulation,
+        walls: this.walls(),
+        balance: this.balance(),
+        looks: seatLooks(players, this.skin(), this.computerLook()),
+        reducedMotion: this.reducedMotion(),
+        weaponFires: this.takeFires(),
+        seatColors: this.seatColors,
+        screenResolution: this.settings.screenResolution(),
+      }),
+      ambience:
+        this.painterAmbience() && this.settings.ambience()
+          ? this.ambience
+          : null,
+    };
   }
 
   /** The weapons fired since the frame before - each goes into one frame. */
@@ -1915,11 +2190,33 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * the settings toggle - the game reacts as it does to Escape, which the
    * browser consumes before it reaches {@link onKeyDown}: a running match
    * pauses, a screen stays open, and only the main menu leaves for the page.
+   *
+   * The event tells of every element in the document. The replay viewer on
+   * the 'replay' screen takes the screen for its own element, a descendant
+   * of the stage: that changes nothing about the stage's standing (it keeps
+   * its fullscreen underneath), so such an event is let pass. And the screen
+   * going away afterwards - the viewer closed while fullscreen, say, with
+   * the menu already up - took nothing off the stage, so it pauses nothing
+   * and keeps the layout: only a screen the stage itself held
+   * (`nativeFullscreen` before this change) counts as taken off. The
+   * orientation lock goes either way, since no element holds the screen
+   * any more.
    */
   @HostListener('document:fullscreenchange')
   @HostListener('document:webkitfullscreenchange')
   protected onFullscreenChange(): void {
-    const native = this.isNativeFullscreen();
+    const stage = this.stageRef?.nativeElement;
+    const current = fullscreenElementOf(document) ?? null;
+    if (
+      current != null &&
+      stage != null &&
+      current !== stage &&
+      stage.contains(current)
+    ) {
+      return;
+    }
+    const wasStage = this.nativeFullscreen();
+    const native = current != null && (stage == null || current === stage);
     this.nativeFullscreen.set(native);
     if (native) {
       this.fullscreen.set(true);
@@ -1927,6 +2224,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     unlockOrientation(screen);
+    if (!wasStage) {
+      return;
+    }
     if (this.running() && !this.paused()) {
       this.gameStateService.togglePause();
     } else if (this.panel() === 'menu') {
@@ -2022,7 +2322,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown($event: KeyboardEvent) {
-    if (isTypingTarget($event.target)) {
+    // Nor while a tap's work waits to run: Escape would back out of the
+    // screen it belongs to, as the busy veil keeps a tap from doing.
+    if (isTypingTarget($event.target) || this.busy.active()) {
       return;
     }
     // F is handled here rather than in the store: the fullscreen request has
@@ -2134,10 +2436,6 @@ function selfTestState(result: GpuSelfTestResult | null): string {
   return result.ok ? 'passed' : 'failed';
 }
 
-function clientPoint(event: PointerEvent): Point {
-  return { x: event.clientX, y: event.clientY };
-}
-
 function isTypingTarget(target: EventTarget | null): boolean {
   const element = target as HTMLElement | null;
   if (element == null || typeof element.closest !== 'function') {
@@ -2179,4 +2477,9 @@ function isTouchDevice(): boolean {
   return (
     typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
   );
+}
+
+/** An arena's size, "640×360" - the sharpness a device manages goes by it. */
+function arenaKey(width: number, height: number): string {
+  return `${width}×${height}`;
 }

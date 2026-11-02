@@ -7,12 +7,17 @@ export const stage: Translation<typeof en> = {
     timeLeft: 'Restzeit',
     secondsHeld: 'Sekunden gehalten',
     pelletsEaten: 'Pellets gefressen',
+    energy: 'Energie',
+    fps: '{fps} FPS',
+    perf: '{simulation} {cells} · {pixels} % Pixel · Ticks {sim} ms · Zeichnen {draw} ms · {ticks} Ticks pro Bild',
+    perfGpu: 'GPU: Ticks {sim} ms · Zeichnen {draw} ms',
     pause: 'Pause',
     giveUp: 'Aufgeben',
     giveUpAgain:
       'Zum Aufgeben noch einmal tippen: der gewertete Versuch zählt als gespielt',
   },
   waitingForPeer: 'Warte auf deinen Gegner …',
+  busy: 'Wird geladen …',
   pause: {
     title: 'Pause',
     resume: 'Weiter',

@@ -1,37 +1,22 @@
-<div class="pad">
-  <span class="button-with-ring">
-    <mat-progress-spinner
-      class="charge"
-      mode="determinate"
-      [value]="colony().boostCharge * 100"
-      [diameter]="ringSize"
-      [strokeWidth]="4"
-      [attr.aria-label]="'controls.boost.recharge' | t"
-    />
-    <button
-      mat-fab
-      type="button"
-      class="boost-fab"
-      [attr.aria-label]="'controls.boost.button' | t: { name: name() }"
-      [disabled]="disabled() || !colony().boostReady"
-      (pointerdown)="onPress($event)"
-      (click)="boost.emit()"
-    >
-      <mat-icon>bolt</mat-icon>
-      <span class="boost-state">{{ boostLabel() }}</span>
-    </button>
-  </span>
-  <span class="pad-info">
-    <span class="pad-name">{{ name() }}</span>
-    <span class="pad-stats">
-      <span>{{ colony().bacterias }}</span>
-      <span>⚡ {{ colony().energy }}%</span>
-    </span>
-    <mat-progress-bar
-      class="share"
-      mode="determinate"
-      [value]="colony().share"
-      [attr.aria-label]="'controls.boost.share' | t"
-    />
-  </span>
-</div>
+<span class="button-with-ring">
+  <mat-progress-spinner
+    class="charge"
+    mode="determinate"
+    [value]="colony().boostCharge * 100"
+    [diameter]="ringSize"
+    [strokeWidth]="4"
+    [attr.aria-label]="'controls.boost.recharge' | t"
+  />
+  <button
+    mat-fab
+    type="button"
+    class="boost-fab"
+    [attr.aria-label]="'controls.boost.button' | t: { name: name() }"
+    [disabled]="disabled() || !colony().boostReady"
+    (pointerdown)="onPress($event)"
+    (click)="boost.emit()"
+  >
+    <mat-icon>bolt</mat-icon>
+    <span class="boost-state">{{ boostLabel() }}</span>
+  </button>
+</span>

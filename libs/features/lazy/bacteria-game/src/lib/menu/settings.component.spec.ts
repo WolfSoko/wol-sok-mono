@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { MatButtonToggleHarness } from '@angular/material/button-toggle/testing';
 import { MatSlideToggleHarness } from '@angular/material/slide-toggle/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { SimulationOverrideService } from '../gl/simulation-override.service';
 import { I18nService } from '../i18n/i18n.service';
 import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { GameSettingsService, SETTINGS_STORAGE_KEY } from '../settings.service';
@@ -22,8 +23,8 @@ describe('SettingsComponent', () => {
     return {
       fixture,
       text: () => element.textContent?.replace(/\s+/g, ' ') ?? '',
-      toggle: (text: string) =>
-        loader.getHarness(MatButtonToggleHarness.with({ text })),
+      toggle: (text: string, ancestor?: string) =>
+        loader.getHarness(MatButtonToggleHarness.with({ text, ancestor })),
       slideToggle: (label: string) =>
         loader.getHarness(MatSlideToggleHarness.with({ label })),
     };
@@ -57,7 +58,7 @@ describe('SettingsComponent', () => {
       JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}')
     ).toMatchObject({ language: 'de' });
 
-    await (await toggle('Automatisch')).check();
+    await (await toggle('Automatisch', '.language-picker')).check();
     await fixture.whenStable();
 
     expect(TestBed.inject(I18nService).choice()).toBeNull();
@@ -71,6 +72,28 @@ describe('SettingsComponent', () => {
     await fixture.whenStable();
 
     expect(text()).toContain('Pause menu');
+  });
+
+  it('lets the device pick the simulation, Auto following the self-test', async () => {
+    const { fixture, text, toggle } = await render();
+    const override = TestBed.inject(SimulationOverrideService);
+    expect(await (await toggle('Auto')).isChecked()).toBe(true);
+
+    await (await toggle('CPU')).check();
+    await fixture.whenStable();
+    expect(override.override()).toBe('cpu');
+    expect(text()).toContain('Matches run on the CPU.');
+    expect(text()).toContain('Chosen for this device');
+
+    await (await toggle('GPU')).check();
+    await fixture.whenStable();
+    expect(override.override()).toBe('gpu-int');
+    expect(text()).toContain('Matches run on the GPU');
+
+    await (await toggle('Auto')).check();
+    await fixture.whenStable();
+    expect(override.override()).toBeNull();
+    expect(text()).not.toContain('Chosen for this device');
   });
 
   it("shows the simulation check while the owner's toggle has the deterministic simulation on", async () => {

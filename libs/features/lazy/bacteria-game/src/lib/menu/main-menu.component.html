@@ -28,7 +28,9 @@
     <h1 class="title">Bacteria <span class="war">Wars</span></h1>
     <p class="tagline">{{ "menu.tagline" | t: { levels: totalLevels } }}</p>
 
-    @if (guestNotice.visible()) {
+    @if (stats.asking()) {
+      <feat-lazy-bac-game-stats-banner />
+    } @else if (guestNotice.visible()) {
       <feat-lazy-bac-game-guest-banner />
     } @else if (installOffer.visible()) {
       <feat-lazy-bac-game-install-banner />
@@ -46,7 +48,7 @@
         mat-flat-button
         type="button"
         class="play"
-        (click)="newGame.emit()"
+        (click)="busyEmit(newGame)"
       >
         <mat-icon>play_arrow</mat-icon>
         <span class="play-text">
@@ -59,7 +61,7 @@
           mat-stroked-button
           type="button"
           class="training"
-          (click)="training.emit()"
+          (click)="busyEmit(training)"
         >
           <mat-icon>school</mat-icon>
           <span class="play-text">

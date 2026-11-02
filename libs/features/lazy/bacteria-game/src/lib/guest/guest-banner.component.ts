@@ -30,7 +30,7 @@ import { SignIn } from './sign-in.service';
         <button
           mat-flat-button
           type="button"
-          class="sign-in"
+          class="sign-in primary"
           [disabled]="!signIn.ready()"
           (click)="signIn.signIn()"
         >
@@ -46,70 +46,7 @@ import { SignIn } from './sign-in.service';
       }
     </aside>
   `,
-  styles: `
-    :host {
-      display: block;
-    }
-
-    .banner {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 0.5rem 1rem;
-      align-items: center;
-      box-sizing: border-box;
-      padding: 1rem 1.25rem;
-      border: 2px solid var(--bw-player);
-      border-radius: 1.25rem;
-      background: var(--bw-surface-glass);
-      color: var(--bw-text);
-    }
-
-    .badge {
-      width: 2.5rem;
-      height: 2.5rem;
-      font-size: 2.5rem;
-      color: var(--bw-player);
-    }
-
-    .text {
-      min-width: 0;
-    }
-
-    .title {
-      display: block;
-      font-family: var(--bw-display);
-      font-weight: 800;
-      font-size: 1.35rem;
-      line-height: 1.15;
-    }
-
-    .note {
-      margin: 0.25rem 0 0;
-      line-height: 1.4;
-      color: var(--bw-soft);
-    }
-
-    .actions,
-    .failed {
-      grid-column: 1 / -1;
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .sign-in {
-      --mat-button-filled-container-color: var(--bw-player);
-      --mat-button-filled-label-text-color: var(--bw-on-player);
-    }
-
-    .failed {
-      font-size: 0.85rem;
-      color: var(--bw-gold);
-    }
-  `,
+  styleUrl: './guest-banner.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GuestBannerComponent {

@@ -19,7 +19,7 @@ import {
   READBACK_SLOTS,
 } from '../state/grid-simulation';
 import { decodeReport, ReportLayout } from '../state/simulation-report';
-import { activeRects } from './active-area';
+import { activeRects, reachSinceReport } from './active-area';
 import {
   bindTexture,
   createProgram,
@@ -176,6 +176,8 @@ export interface GpuSimulationOptions extends GridSimulationOptions {
  * {@link GridSimulation}: they are a handful of rects and points.
  */
 export class GpuSimulation extends GridSimulation {
+  /** Milliseconds the main thread waited for reports - see `takeGpuWaitMs`. */
+  private gpuWaitMs = 0;
   public readonly kind = 'gpu';
   private resources: Resources | null = null;
   /** The state the next pass reads. */
@@ -768,15 +770,17 @@ export class GpuSimulation extends GridSimulation {
    * runs while no report is in hand, for the first ticks, whose state
    * textures still hold the last match, while a wall shoves bacteria out of
    * the way, and when the report is further behind than the reach kept.
+   *
+   * Outside the area every state texture is empty and stays so through the
+   * tick: the area holds every cell a bacterium may reach by the end of it,
+   * and the cells of the last ticks until all three textures are written
+   * empty there. The passes would only write empty over empty there, so the
+   * area changes no bit of the war - the deterministic simulation runs on
+   * it too, and plays as the TypeScript reference, which runs the whole
+   * arena. A big map, whose colonies hold a small share of it, runs a
+   * fraction of the cells.
    */
   private updateArea(mostSteps: number): void {
-    if (this.deterministic) {
-      // The area follows the report and the frame's steps - exact, but a
-      // second thing the TypeScript reference would have to mirror. The
-      // whole arena changes nothing about the war.
-      this.area = null;
-      return;
-    }
     const reach = this.recentReach;
     reach.unshift(
       mostSteps +
@@ -784,17 +788,18 @@ export class GpuSimulation extends GridSimulation {
         (this.escapePending ? escapeReach(this.width, this.map.size) : 0)
     );
     reach.length = Math.min(reach.length, REACH_HISTORY);
-    const behind = this.steps - this.reportStep;
     const whole = [{ x: 0, y: 0, width: this.width, height: this.height }];
+    const report = this.report;
+    const margin =
+      report == null || this.escapePending || this.steps <= AREA_HISTORY
+        ? null
+        : reachSinceReport(reach, this.steps - this.reportStep);
     const own =
-      this.report == null ||
-      this.escapePending ||
-      this.steps <= AREA_HISTORY ||
-      behind > reach.length
+      report == null || margin === null
         ? whole
         : activeRects(
-            this.report.colonies.map((colony) => colony.bounds),
-            reach.slice(0, behind).reduce((sum, cells) => sum + cells, 0),
+            report.colonies.map((colony) => colony.bounds),
+            margin,
             this.width,
             this.height
           );
@@ -928,6 +933,8 @@ export class GpuSimulation extends GridSimulation {
     );
     for (let taken = 0; taken < due; taken++) {
       const readback = pending[0];
+      // One the GPU has not finished keeps the main thread waiting for it.
+      const forced = readback.sync != null && !this.isFinished(readback.sync);
       if (readback.sync != null) {
         gl.deleteSync(readback.sync);
         readback.sync = null;
@@ -937,15 +944,25 @@ export class GpuSimulation extends GridSimulation {
       if (readback.stale) {
         continue;
       }
+      const waitFrom = forced ? performance.now() : 0;
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, readback.buffer);
       gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, data);
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+      if (forced) {
+        this.gpuWaitMs += performance.now() - waitFrom;
+      }
       this.reportStep = readback.step;
       this.takeReport(
         decodeReport(data, this.layout, this.spawns.length),
         readback.generation
       );
     }
+  }
+
+  public takeGpuWaitMs(): number {
+    const waited = this.gpuWaitMs;
+    this.gpuWaitMs = 0;
+    return waited;
   }
 
   private isFinished(sync: WebGLSync): boolean {

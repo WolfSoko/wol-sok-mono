@@ -54,12 +54,25 @@ describe('planAcceptance', () => {
         replayVersion: 2,
         simulation: 'cpu',
         ticks: 3_600,
+        cells: 320 * 180,
         endedBy: 'annihilation',
         winnerSeat: 0,
         checksum: 1234,
         hint: 42,
       },
     });
+  });
+
+  it('keeps the cells of the arena, on whatever grid it was played', () => {
+    const plan = planAcceptance(
+      replay({ width: 640, height: 360 }),
+      submission()
+    );
+    expect(plan).toEqual(
+      expect.objectContaining({
+        record: expect.objectContaining({ cells: 640 * 360 }),
+      })
+    );
   });
 
   it('stores an online match under the id both devices know', () => {

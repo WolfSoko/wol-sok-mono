@@ -21,8 +21,6 @@ export interface ColonyStats {
   lost: number;
   /** Average energy in percent of the normal maximum. */
   energy: number;
-  /** Share of all living bacteria in percent. */
-  share: number;
   /** True while the boost of this colony is running. */
   boosting: boolean;
   /** True when the boost can be fired right now. */
@@ -160,7 +158,6 @@ export function toColonyStats(
   players: Player[],
   balance: GameBalance = gameBalance
 ): ColonyStats[] {
-  const total = players.reduce((sum, player) => sum + player.bacteriaCount, 0);
   const humans = players.filter((player) => !player.isBot);
   return players.map((player) => ({
     id: player.id,
@@ -171,8 +168,6 @@ export function toColonyStats(
     captured: player.captured,
     lost: player.lost,
     energy: Math.round((player.averageEnergy / balance.maxEnergy) * 100),
-    // Whole percent: the bar would move every frame otherwise, invisibly.
-    share: total > 0 ? Math.round((player.bacteriaCount / total) * 100) : 0,
     boosting: isBoosted(player),
     boostReady: isBoostReady(player),
     boostCooldown: isBoostReady(player)

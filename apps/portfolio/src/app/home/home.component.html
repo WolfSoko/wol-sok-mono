@@ -2,55 +2,69 @@
   <div class="dish" aria-hidden="true">
     <span></span><span></span><span></span><span></span><span></span>
   </div>
-  <p class="eyebrow">Wolfram Sokollek · wolsok.de</p>
-  <h1>Games, apps and wild experiments, <em>built for the web.</em></h1>
-  <p class="lead">
-    I build things in Angular that run fast in the browser: a GPU-powered
-    strategy game, fitness and running apps, polls, shaders, neural networks and
-    fractals. Everything here is live, and most of it is open source.
-  </p>
-  <nav class="jump" aria-label="Sections">
-    <a href="#apps">Apps</a>
-    <a href="#experiments">Experiments</a>
-    <a href="#open-source">Open source</a>
+  <p class="eyebrow">{{ t().home.eyebrow }}</p>
+  <h1>
+    {{ t().home.title }} <em>{{ t().home.titleAccent }}</em>
+  </h1>
+  <p class="lead">{{ t().home.lead }}</p>
+  <nav class="jump" [attr.aria-label]="t().nav.sections">
+    <a href="#apps">{{ t().home.jumpApps }}</a>
+    <a href="#experiments">{{ t().home.jumpExperiments }}</a>
+    <a href="#open-source">{{ t().home.jumpOpenSource }}</a>
+    <a routerLink="/career">{{ t().home.jumpCareer }}</a>
   </nav>
 </section>
 
 <section id="apps" aria-labelledby="apps-title">
-  <h2 id="apps-title">Apps</h2>
-  <p class="intro">Each one on its own domain, ready to use.</p>
+  <h2 id="apps-title">{{ t().home.apps }}</h2>
+  <p class="intro">{{ t().home.appsIntro }}</p>
   <div class="grid">
-    @for (project of apps; track project.name) {
-      <wolsok-project-card [project]="project" />
+    @for (project of apps; track project.name; let i = $index) {
+      <wolsok-project-card [project]="project" [wolsokReveal]="(i % 3) * 0.1" />
     }
   </div>
 </section>
 
 <section id="experiments" aria-labelledby="experiments-title">
-  <h2 id="experiments-title">Experiments</h2>
+  <h2 id="experiments-title">{{ t().home.experiments }}</h2>
   <p class="intro">
-    Interactive demos in the
-    <a href="https://angularexamples.wolsok.de/">Angular Examples</a> lab:
-    graphics, simulations and machine learning, all in the browser.
+    {{ t().home.experimentsIntroBefore }}
+    <a href="https://angularexamples.wolsok.de/">{{
+      t().home.experimentsLab
+    }}</a>
+    {{ t().home.experimentsIntroAfter }}
   </p>
   <div class="grid small">
-    @for (project of experiments; track project.name) {
-      <wolsok-project-card [project]="project" />
+    @for (project of experiments; track project.name; let i = $index) {
+      <wolsok-project-card
+        [project]="project"
+        [wolsokReveal]="(i % 4) * 0.08"
+      />
     }
   </div>
 </section>
 
 <section id="open-source" aria-labelledby="open-source-title">
-  <h2 id="open-source-title">Open source</h2>
+  <h2 id="open-source-title">{{ t().home.openSource }}</h2>
   <p class="intro">
-    Everything above lives in one Nx monorepo:
+    {{ t().home.openSourceIntroBefore }}
     <a href="https://github.com/WolfSoko/wol-sok-mono"
       >github.com/WolfSoko/wol-sok-mono</a
-    >. Two pieces of it are published on npm.
+    >. {{ t().home.openSourceIntroAfter }}
   </p>
   <div class="grid">
-    @for (project of packages; track project.name) {
-      <wolsok-project-card [project]="project" />
+    @for (project of packages; track project.name; let i = $index) {
+      <wolsok-project-card [project]="project" [wolsokReveal]="i * 0.1" />
     }
+  </div>
+</section>
+
+<section id="career" class="career" aria-labelledby="career-title" wolsokReveal>
+  <div class="career-card">
+    <div>
+      <h2 id="career-title">{{ t().home.careerTitle }}</h2>
+      <p class="intro">{{ careerLead() }}</p>
+    </div>
+    <a matButton="filled" routerLink="/career">{{ t().home.careerLink }}</a>
   </div>
 </section>

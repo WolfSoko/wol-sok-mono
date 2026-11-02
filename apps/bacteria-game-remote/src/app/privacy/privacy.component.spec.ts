@@ -3,7 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { GameAds } from '@wolsok/feat-lazy-bac-game';
+import { AdNetworkName, GameAds } from '@wolsok/feat-lazy-bac-game';
+import { ConsentPrompt } from '@wolsok/shared-analytics';
 import { PrivacyComponent } from './privacy.component';
 
 describe('PrivacyComponent', () => {
@@ -43,6 +44,13 @@ describe('PrivacyComponent', () => {
     expect(page.querySelector('address')?.textContent).toContain(
       'privacy@wolsok.de'
     );
+  });
+
+  it('names the forwarding of emails, in both languages', async () => {
+    const { de, en } = texts(await open());
+
+    expect(de).toContain('leitet der Dienst ImprovMX');
+    expect(en).toContain('forwards the message to our Gmail inbox');
   });
 
   it('has each section on the cloud in both languages', async () => {
@@ -204,36 +212,106 @@ describe('PrivacyComponent', () => {
     return { de: text('de'), en: text('en') };
   }
 
-  describe('the ad consent', () => {
-    let ads: { consentAnswered: ReturnType<typeof signal<boolean>> };
-    let openConsentSettings: jest.Mock;
+  describe('the ads', () => {
+    /** Whom section 7 names for each network the game can show ads from. */
+    const PROVIDERS: Record<AdNetworkName, string> = {
+      adinplay: 'AdinPlay',
+      adsense: 'Google AdSense',
+    };
+    let ads: {
+      networkName: AdNetworkName | null;
+      consentAnswered: ReturnType<typeof signal<boolean>>;
+      openConsentSettings: jest.Mock;
+    };
 
     beforeEach(() => {
-      openConsentSettings = jest.fn();
-      ads = { consentAnswered: signal(false) };
-      TestBed.overrideProvider(GameAds, {
-        useValue: { ...ads, openConsentSettings },
-      });
+      ads = {
+        networkName: null,
+        consentAnswered: signal(false),
+        openConsentSettings: jest.fn(),
+      };
+      TestBed.overrideProvider(GameAds, { useFactory: () => ads });
     });
+
+    function adSection(page: HTMLElement, id: string): string {
+      const heading = page.querySelector(`#${id}`);
+      let text = heading?.textContent ?? '';
+      for (
+        let next = heading?.nextElementSibling;
+        next && next.tagName !== 'H2';
+        next = next.nextElementSibling
+      ) {
+        text += ` ${next.textContent}`;
+      }
+      return text.replace(/\s+/g, ' ').trim();
+    }
 
     function adButtons(page: HTMLElement): HTMLButtonElement[] {
       return [...page.querySelectorAll<HTMLButtonElement>('.ad-settings')];
     }
 
-    it('names the button that changes it, with clearing the data as the fallback', async () => {
-      const { de, en } = texts(await open());
+    it('says that the game shows none without an ad network', async () => {
+      const page = await open();
+      const { de, en } = texts(page);
 
-      expect(de).toContain(
-        'mit dem Button „Datenschutz-Einstellungen für Anzeigen“'
+      expect(adSection(page, 'de-werbung')).toBe(
+        '7. Werbung Das Spiel zeigt derzeit keine Werbung: Es lädt kein Skript eines Werbenetzwerks und fragt nicht nach einer Einwilligung dafür.'
       );
-      expect(en).toContain('with the button “Ad privacy settings”');
-      expect(de).toContain('Erscheint er nicht');
-      expect(en).toContain('If it does not show');
-      expect(de).toContain('lösche die gespeicherten Daten der Seite');
-      expect(en).toContain("clear the site's stored data");
+      expect(adSection(page, 'en-ads')).toBe(
+        "7. Ads The game shows no ads at present: it loads no ad network's script and asks for no consent to one."
+      );
+      expect(de).toContain(
+        'Werbung zeigt das Spiel derzeit keine (Abschnitt 7).'
+      );
+      expect(en).toContain('The game shows no ads at present (section 7).');
+      // Sections 3 and 12 point to no ads.
+      expect(de).not.toContain('Was die Werbung auf deinem Gerät speichert');
+      expect(en).not.toContain('What the ads store on your device');
+      expect(de).not.toContain('Wie das für die Werbung geht');
+      expect(en).not.toContain('How to do so for the ads');
     });
 
+    it.each(Object.entries(PROVIDERS))(
+      'names %s as its provider, and the button that changes the consent',
+      async (network, provider) => {
+        ads.networkName = network as AdNetworkName;
+        const page = await open();
+        const de = adSection(page, 'de-werbung');
+        const en = adSection(page, 'en-ads');
+
+        expect(de).toContain(`7. Werbung (${provider})`);
+        expect(en).toContain(`7. Ads (${provider})`);
+        expect(de).toContain(`Werbung von ${provider}`);
+        expect(en).toContain(`ads from ${provider}`);
+        expect(de).toContain(
+          'mit dem Button „Datenschutz-Einstellungen für Anzeigen“'
+        );
+        expect(en).toContain('with the button “Ad privacy settings”');
+        expect(de).toContain('Erscheint er nicht');
+        expect(en).toContain('If it does not show');
+        expect(de).toContain('lösche die gespeicherten Daten der Seite');
+        expect(en).toContain("clear the site's stored data");
+        const whole = texts(page);
+        expect(whole.de).toContain(
+          'Auf einigen Menüseiten zeigt das Spiel Werbung'
+        );
+        expect(whole.de).toContain(
+          'Was die Werbung auf deinem Gerät speichert, steht in Abschnitt 7.'
+        );
+        expect(whole.en).toContain(
+          'What the ads store on your device is in section 7.'
+        );
+        expect(whole.de).toContain(
+          '(Art. 7 Abs. 3). Wie das für die Werbung geht, steht in Abschnitt 7.'
+        );
+        expect(whole.en).toContain(
+          '(Art. 7(3)). How to do so for the ads is in section 7.'
+        );
+      }
+    );
+
     it('offers the button only once the consent window answered', async () => {
+      ads.networkName = 'adinplay';
       const page = await open();
       expect(adButtons(page)).toEqual([]);
 
@@ -248,7 +326,7 @@ describe('PrivacyComponent', () => {
       expect(en.closest('article')?.lang).toBe('en');
       expect(en.textContent?.trim()).toBe('Ad privacy settings');
       en.click();
-      expect(openConsentSettings).toHaveBeenCalled();
+      expect(ads.openConsentSettings).toHaveBeenCalled();
     });
   });
 
@@ -370,20 +448,69 @@ describe('PrivacyComponent', () => {
       [...page.querySelectorAll(`article[lang="${lang}"] h2`)].map(
         (h2) => h2.textContent?.split('.')[0]
       );
-    const expected = Array.from({ length: 14 }, (_, i) => `${i + 1}`);
+    const expected = Array.from({ length: 15 }, (_, i) => `${i + 1}`);
 
     expect(numbers('de')).toEqual(expected);
     expect(numbers('en')).toEqual(expected);
     const { de, en } = texts(page);
-    // Deleting the account is section 11 now.
-    expect(de).toContain('wie in Abschnitt 11');
-    expect(en).toContain('in section 11');
+    // Deleting the account is section 12 now.
+    expect(de).toContain('wie in Abschnitt 12');
+    expect(en).toContain('in section 12');
     // Every reference to section 10 means the error reports, its only
-    // content; one that says how to delete data points to 11.
+    // content; one that says how to delete data points to the deletion, 12.
     for (const text of [de, en]) {
       expect(text).not.toMatch(/(Abschnitt|section) 10\s+(explains|steht)/i);
     }
-    expect(en).toContain('Section 11 explains how to have it deleted');
+    expect(en).toContain('Section 12 explains how to have it deleted');
+  });
+
+  describe('the usage statistics', () => {
+    const choice = signal<'granted' | 'denied' | null>(null);
+    const decide = jest.fn((made: 'granted' | 'denied') => choice.set(made));
+
+    function statsButtons(page: HTMLElement): HTMLButtonElement[] {
+      return [...page.querySelectorAll<HTMLButtonElement>('.stats-settings')];
+    }
+
+    it('says what is counted, and how to change it', async () => {
+      const { de, en } = texts(await open());
+
+      expect(de).toContain('11. Nutzungsstatistik (Google Analytics)');
+      expect(en).toContain('11. Usage statistics (Google Analytics)');
+      expect(de).toContain(
+        'Ohne deine Einwilligung lädt das Spiel Google Analytics nicht'
+      );
+      expect(en).toContain(
+        'Without your consent the game does not load Google Analytics'
+      );
+      expect(de).toContain('„Datenschutz“ → „Nutzungsstatistik“');
+      expect(en).toContain('“Privacy” → “Usage statistics”');
+      expect(de).not.toContain('nutzt keine Analysedienste');
+      expect(en).not.toContain('uses no analytics');
+    });
+
+    it('offers no switch where the game does not measure', async () => {
+      expect(statsButtons(await open())).toEqual([]);
+    });
+
+    it('switches the statistics on and off where the game measures', async () => {
+      choice.set(null);
+      decide.mockClear();
+      TestBed.overrideProvider(ConsentPrompt, {
+        useValue: { asking: signal(false), choice, decide },
+      });
+      const page = await open();
+
+      const [de, en] = statsButtons(page);
+      expect(de.textContent?.trim()).toBe('Nutzungsstatistik einschalten');
+      en.click();
+      TestBed.tick();
+
+      expect(decide).toHaveBeenCalledWith('granted');
+      expect(statsButtons(page)[1].textContent?.trim()).toBe(
+        'Switch usage statistics off'
+      );
+    });
   });
 
   it('has its own title while open', async () => {

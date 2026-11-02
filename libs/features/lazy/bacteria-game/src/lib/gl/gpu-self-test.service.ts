@@ -1,10 +1,12 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { take } from 'rxjs';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { BALANCE_VERSION } from '../state/game-balance';
 import { GPU_SELF_TEST_VERSION } from '../state/gpu-int/self-test-golden';
 import { DeviceStorage } from '../storage/game-storage';
 import { GpuSelfTestResult, runGpuSelfTest } from './gpu-self-test';
-import { rendererOf } from './renderer';
+import { webGlRenderer } from './renderer';
+import { gpuTrusted } from './simulation-check';
 
 /** Where this device keeps the self-test's last result. */
 export const GPU_SELF_TEST_STORAGE_KEY = 'bacteria-game.gpu-self-test';
@@ -99,6 +101,7 @@ export const SELF_TEST_IDLE_TIMEOUT_MS = 2_000;
 @Injectable({ providedIn: 'root' })
 export class GpuSelfTestService {
   private readonly storage = inject(DeviceStorage);
+  private readonly analytics = injectGameAnalytics();
   private readonly verdict = signal<GpuSelfTestResult | null>(null);
   private started = false;
   /** The GPU the arena's WebGL2 context renders with, once it said. */
@@ -115,6 +118,15 @@ export class GpuSelfTestService {
     return verdict != null && arena != null && verdict.renderer !== arena
       ? null
       : verdict;
+  });
+
+  /**
+   * The renderer of a GPU trusted with the integer passes (`gpuTrusted`),
+   * null while none is: a replay of them plays on that GPU.
+   */
+  public readonly trustedRenderer = computed(() => {
+    const verdict = this.result();
+    return verdict !== null && gpuTrusted(verdict) ? verdict.renderer : null;
   });
 
   /**
@@ -174,6 +186,10 @@ export class GpuSelfTestService {
     now: () => number
   ): void {
     const result = run();
+    this.analytics.track('gpu_self_test', {
+      passed: result.ok,
+      ran_through: result.error == null,
+    });
     if (!result.ok) {
       console.warn(
         'The GPU fails the deterministic self-test - matches play on the CPU',
@@ -215,16 +231,5 @@ function whenIdle(task: () => void): void {
  */
 function thisDevice(arenaRenderer: string | null): SelfTestDevice {
   const browser = typeof navigator === 'undefined' ? '' : navigator.userAgent;
-  if (arenaRenderer != null) {
-    return { renderer: arenaRenderer, browser };
-  }
-  const gl = document.createElement('canvas').getContext('webgl2');
-  if (gl == null) {
-    return { renderer: 'none', browser };
-  }
-  try {
-    return { renderer: rendererOf(gl), browser };
-  } finally {
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
-  }
+  return { renderer: arenaRenderer ?? webGlRenderer() ?? 'none', browser };
 }

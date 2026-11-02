@@ -63,7 +63,7 @@ describe('MainMenuComponent', () => {
     expect(card).toContain('5 · Pillar Field · Normal');
   });
 
-  it('reports what the player picks', () => {
+  it('reports what the player picks', async () => {
     const newGame = jest.fn();
     const open = jest.fn();
     const resume = jest.fn();
@@ -71,18 +71,22 @@ describe('MainMenuComponent', () => {
     fixture.componentInstance.open.subscribe(open);
     fixture.componentInstance.continueCampaign.subscribe(resume);
 
+    // The ways into play wait for the stage's spinner to show.
     button('New game').click();
+    expect(newGame).not.toHaveBeenCalled();
+    await fixture.whenStable();
     button('Profile').click();
     button('Settings').click();
     button('How to play').click();
     button('Continue the campaign').click();
+    await fixture.whenStable();
 
     expect(newGame).toHaveBeenCalledTimes(1);
     expect(open.mock.calls).toEqual([['profile'], ['settings'], ['help']]);
     expect(resume).toHaveBeenCalled();
   });
 
-  it('offers the training until every mission is done', () => {
+  it('offers the training until every mission is done', async () => {
     const training = jest.fn();
     fixture.componentInstance.training.subscribe(training);
     fixture.componentRef.setInput('missionsDone', 2);
@@ -93,6 +97,7 @@ describe('MainMenuComponent', () => {
       'New here? 2 of 5 missions done'
     );
     button('New here?').click();
+    await fixture.whenStable();
     expect(training).toHaveBeenCalled();
 
     fixture.componentRef.setInput('missionsDone', 5);

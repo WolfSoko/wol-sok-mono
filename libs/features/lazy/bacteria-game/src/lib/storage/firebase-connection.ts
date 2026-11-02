@@ -18,6 +18,7 @@ import * as dbSdk from 'firebase/firestore';
 import * as rtdbSdk from 'firebase/database';
 import type * as remoteConfigSdk from 'firebase/remote-config';
 import type { GameCloudOptions } from './game-cloud';
+import { gameFirebaseApp } from './game-firebase-app';
 
 /** The game's Remote Config, fetched and activated, with the SDK calls on it. */
 export interface RemoteConfigConnection {
@@ -71,12 +72,6 @@ const REMOTE_CONFIG_MAX_AGE_MS = 3_600_000;
 const REMOTE_CONFIG_FETCH_TIMEOUT_MS = 10_000;
 
 /**
- * The game's own Firebase app, named so it stands next to the shell's
- * default app, which belongs to another project.
- */
-const APP_NAME = 'bacteria-wars';
-
-/**
  * The instances started on the game's app, kept so a second route that
  * provides the project (the admin area beside the game) reuses them: Auth
  * and Firestore throw when initialised twice, and an emulator connection
@@ -106,10 +101,8 @@ export function provideFirebase(
       { provide: TAKES_REPLAYS, useValue: options.replays === true },
       { provide: FETCHES_REMOTE_CONFIG, useValue: emulators === undefined },
     ]),
-    provideFirebaseApp(
-      () =>
-        getApps().find((app) => app.name === APP_NAME) ??
-        initializeApp(options.firebase, APP_NAME)
+    provideFirebaseApp(() =>
+      gameFirebaseApp({ getApps, initializeApp }, options.firebase)
     ),
     provideAuth((injector) => {
       if (started.auth !== undefined) {

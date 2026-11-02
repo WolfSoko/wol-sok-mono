@@ -26,14 +26,14 @@ import { GameSettingsService } from '../settings.service';
 import { isRunOver } from '../state/endless';
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
-import { canPlayBack, onOnlineGrid, savedRegardless } from '../state/replay';
+import { canPlayBack, savedRegardless } from '../state/replay';
 import { GameReplays } from '../storage/game-replays';
 
 /**
  * The line under a match's result about its recording (ADR 0011): whether
  * the replay was saved - "saved" only once it is stored, and why not where
- * it is not (the setting, a grid other than the online one) - and the way to
- * watch it again ("Watch replay"), which opens the stage's replay screen
+ * it is not ("Save my matches" is off) - and the way to watch it again
+ * ("Watch replay"), which opens the stage's replay screen
  * on `GameStateService.lastRecording`. After the first match against the
  * computer saved in the cloud it also says, once per device, that such
  * matches are saved and where to turn that off (the device setting
@@ -175,15 +175,10 @@ export class ReplayNoteComponent {
         ? 'replay.status.unconfirmed'
         : 'replay.status.uploading';
     }
-    // An online or ranked match is always handed over; another one only
-    // on the online grid - the reason the setting cannot change comes
-    // first - and with the setting on.
-    const { header } = recording.replay;
-    if (savedRegardless(header)) {
+    // An online or ranked match is always handed over, another one with
+    // the setting on.
+    if (savedRegardless(recording.replay.header)) {
       return null;
-    }
-    if (!onOnlineGrid(header)) {
-      return 'replay.status.notSavedGrid';
     }
     return this.settings.saveMatches() ? null : 'replay.status.notSaved';
   });

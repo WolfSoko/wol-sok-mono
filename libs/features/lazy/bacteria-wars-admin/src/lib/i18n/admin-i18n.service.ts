@@ -5,6 +5,7 @@ import {
   I18nService,
   type Language,
   translate,
+  type TranslationKey,
   type TranslationParams,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import type { HideReason } from '../moderation/admin-records';
@@ -45,6 +46,16 @@ export class AdminI18n {
   /** Why an entry is hidden, such as "owner, ban". */
   public hideReasons(reasons: readonly HideReason[]): string {
     return reasons.map((reason) => this.t(`hidden.${reason}`)).join(', ');
+  }
+
+  /**
+   * A simulation resolution as the game's settings name it, such as
+   * "Ultra" - its id for one the game does not name.
+   */
+  public gridName(grid: string): string {
+    const key = `settings.display.simResolutions.${grid}`;
+    const name = this.i18n.t(key as TranslationKey);
+    return name === key ? grid : name;
   }
 
   public t(key: AdminTextKey, params?: TranslationParams): string {

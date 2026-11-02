@@ -14,6 +14,12 @@ export const support: Translation<typeof en> = {
   close: 'Schließen',
   ad: 'Anzeige',
   adSettings: 'Datenschutz-Einstellungen für Anzeigen',
+  stats: {
+    title: 'Hilf, das Spiel besser zu machen',
+    note: 'Darf das Spiel mit Google Analytics zählen, welche Modi, Level und Bildschirme gespielt werden? Nichts, was dich nennt, keine Werbung. Ändern kannst du das jederzeit in den Einstellungen.',
+    allow: 'Erlauben',
+    decline: 'Nein danke',
+  },
   install: {
     title: 'Spiel Bacteria Wars als App',
     android:

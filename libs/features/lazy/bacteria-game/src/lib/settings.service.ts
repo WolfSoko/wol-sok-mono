@@ -43,6 +43,8 @@ import {
   isVaporizeQuality,
   VaporizeQuality,
 } from './vaporize-effect';
+import { injectGameAnalytics } from './analytics/game-analytics';
+import { settingChange } from './analytics/setting-change';
 import { I18nService } from './i18n/i18n.service';
 import { isLanguage, Language } from './i18n/language';
 
@@ -80,6 +82,8 @@ export interface StoredSettings {
   vaporizeMs?: number;
   /** Whether bubbles rise and mist drifts through the dish. */
   ambience?: boolean;
+  /** Whether a slow device paints the arena with fewer pixels. */
+  adaptiveQuality?: boolean;
   /** The language the player picked, absent to follow the browser. */
   language?: Language;
   /** The level the player would like to meet opponents on, absent for any. */
@@ -148,6 +152,7 @@ export class GameSettingsService {
   private readonly store = inject(GameStateStore);
   private readonly storage = inject(DeviceStorage);
   private readonly i18n = inject(I18nService);
+  private readonly analytics = injectGameAnalytics();
   /** The settings the player changed - what restoring must keep. */
   private readonly touched = new Set<keyof StoredSettings>();
   /** A stored match setup that arrived during a match, for the next one. */
@@ -189,15 +194,20 @@ export class GameSettingsService {
   public readonly vaporizeMs = signal(DEFAULT_VAPORIZE_MS);
   /** True while bubbles rise and mist drifts through the dish. */
   public readonly ambience = signal(true);
+  /**
+   * True while a device too slow for every pixel of the arena paints it
+   * with fewer, scaled up - steady frames before sharp ones.
+   */
+  public readonly adaptiveQuality = signal(true);
 
   /** The language the player picked, null to follow the browser. */
   public readonly language = this.i18n.choice;
   /** The level the matchmaking asks for, null for any level. */
   public readonly matchLevel = signal<string | null>(null);
   /**
-   * True while local matches against the computer are recorded, at the
-   * online grid (ADR 0011). On by default (the owner's decision of
-   * 2026-10-23). A recorded match plays on a ruleset: the integer GPU
+   * True while local matches against the computer are recorded, on every
+   * simulation resolution (ADR 0011). On by default (the owner's decision
+   * of 2026-10-23). A recorded match plays on a ruleset: the integer GPU
    * passes where the GPU passed the self-test and the deterministic
    * simulation is on, the CPU's else.
    */
@@ -225,9 +235,16 @@ export class GameSettingsService {
    */
   public readonly loaded: Signal<boolean>;
   private readonly restored = signal(false);
+  /**
+   * The settings the statistics last saw, so a setter that sets the value
+   * in force again (a menu that sets free play on every visit) counts as
+   * no change.
+   */
+  private reportedSettings: StoredSettings;
 
   constructor() {
     this.loaded = this.restored.asReadonly();
+    this.reportedSettings = this.toStore();
     // Synchronous, so a change is told apart from a restored setup.
     this.store
       .select$(() => this.currentMatchSetup(), sameMatchSetup)
@@ -245,7 +262,8 @@ export class GameSettingsService {
       .subscribe((stored) => {
         this.restore(isObject(stored) ? (stored as StoredSettings) : {});
         this.restored.set(true);
-        this.persist();
+        this.reportedSettings = this.toStore();
+        this.persist(this.reportedSettings);
       });
     this.store
       .select$(() => this.store.currentState())
@@ -340,6 +358,11 @@ export class GameSettingsService {
     this.changed('ambience');
   }
 
+  public setAdaptiveQuality(on: boolean): void {
+    this.adaptiveQuality.set(on);
+    this.changed('adaptiveQuality');
+  }
+
   /** Asks the matchmaking for a level that plays online, or any for null. */
   public setMatchLevel(levelId: string | null): void {
     this.matchLevel.set(isMatchLevel(levelId) ? levelId : null);
@@ -384,8 +407,24 @@ export class GameSettingsService {
    */
   private changed(...keys: (keyof StoredSettings)[]): void {
     keys.forEach((key) => this.touched.add(key));
+    const settings = this.toStore();
+    this.reportChanges(keys, settings);
     if (this.restored()) {
-      this.persist();
+      this.persist(settings);
+    }
+  }
+
+  private reportChanges(
+    keys: readonly (keyof StoredSettings)[],
+    settings: StoredSettings
+  ): void {
+    const before = this.reportedSettings;
+    this.reportedSettings = settings;
+    for (const key of keys) {
+      const change = settingChange(key, before, settings);
+      if (change !== null) {
+        this.analytics.track('setting_changed', change);
+      }
     }
   }
 
@@ -424,6 +463,12 @@ export class GameSettingsService {
     }
     if (restores('ambience') && typeof stored.ambience === 'boolean') {
       this.ambience.set(stored.ambience);
+    }
+    if (
+      restores('adaptiveQuality') &&
+      typeof stored.adaptiveQuality === 'boolean'
+    ) {
+      this.adaptiveQuality.set(stored.adaptiveQuality);
     }
     if (restores('showFps') && typeof stored.showFps === 'boolean') {
       this.showFps.set(stored.showFps);
@@ -527,8 +572,13 @@ export class GameSettingsService {
     this.gameState.applySetup(setup);
   }
 
-  private persist(): void {
-    const settings: StoredSettings = {
+  private persist(settings = this.toStore()): void {
+    this.storage.write(SETTINGS_STORAGE_KEY, settings);
+  }
+
+  /** The settings as they are stored. */
+  private toStore(): StoredSettings {
+    return {
       ...this.matchSetupToStore(),
       look: this.look(),
       simResolution: this.simResolution(),
@@ -536,6 +586,7 @@ export class GameSettingsService {
       vaporize: this.vaporize(),
       vaporizeMs: this.vaporizeMs(),
       ambience: this.ambience(),
+      adaptiveQuality: this.adaptiveQuality(),
       showFps: this.showFps(),
       freePlay: this.freePlay(),
       arena: this.arena() ?? undefined,
@@ -552,7 +603,6 @@ export class GameSettingsService {
       ranked: this.ranked(),
       recordingHintShown: this.recordingHintShown(),
     };
-    this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }
 
   /** The match setup as it stands, without tracking it. */

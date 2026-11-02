@@ -5,11 +5,19 @@ export const stage = {
     timeLeft: 'Time left',
     secondsHeld: 'seconds held',
     pelletsEaten: 'pellets eaten',
+    energy: 'energy',
+    fps: '{fps} FPS',
+    /** Where a frame's time goes - on the main thread, per frame. */
+    perf: '{simulation} {cells} · {pixels} % pixels · ticks {sim} ms · drawing {draw} ms · {ticks} ticks a frame',
+    /** And on the GPU, where the browser can time it. */
+    perfGpu: 'GPU: ticks {sim} ms · drawing {draw} ms',
     pause: 'Pause',
     giveUp: 'Give up',
     giveUpAgain: 'Tap again to give up: the ranked attempt counts as played',
   },
   waitingForPeer: 'Waiting for your opponent…',
+  /** The spinner while a tap's work is under way. */
+  busy: 'Loading…',
   pause: {
     title: 'Paused',
     resume: 'Resume',

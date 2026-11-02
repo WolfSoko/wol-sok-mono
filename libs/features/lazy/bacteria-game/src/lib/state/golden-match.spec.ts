@@ -1,8 +1,10 @@
 import { BacteriaSimulation } from './bacteria-simulation';
+import { BOT_DIFFICULTIES } from './bot-controller';
 import { computerLoadout } from './computer-opponent';
 import { LADDER_VERSION } from './difficulty-curve';
 import { dailyLevelId } from './daily';
 import { BALANCE_VERSION } from './game-balance';
+import { LEVELS } from './levels';
 import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { playReplay, replayOf } from './replay';
@@ -26,11 +28,11 @@ const PLAN: MatchPlan = {
 };
 
 const GOLDEN: { name: string; plan: MatchPlan; fingerprint: string }[] = [
-  { name: 'the first level', plan: PLAN, fingerprint: '87477:e2a6eb76' },
+  { name: 'the first level', plan: PLAN, fingerprint: '104490:cce5179' },
   {
     name: 'a boss',
     plan: { ...PLAN, levelId: 'meltdown', width: 320, height: 180 },
-    fingerprint: '82485:91fbeb56',
+    fingerprint: '74760:e8536005',
   },
   {
     name: 'a boss on normal',
@@ -41,27 +43,27 @@ const GOLDEN: { name: string; plan: MatchPlan; fingerprint: string }[] = [
       width: 320,
       height: 180,
     },
-    fingerprint: '66883:f1cf8d34',
+    fingerprint: '69328:24fdf66b',
   },
   {
     name: 'neutral colonies',
     plan: { ...PLAN, levelId: 'quarantine', width: 320, height: 180 },
-    fingerprint: '93178:af464b8c',
+    fingerprint: '87450:edbfd521',
   },
   {
     name: 'a zone to hold',
     plan: { ...PLAN, levelId: 'control-room', width: 320, height: 180 },
-    fingerprint: '72630:4fe4a7af',
+    fingerprint: '63265:4c379b08',
   },
   {
     name: 'two players',
     plan: { ...PLAN, mode: 'two-players', headStart: 1 },
-    fingerprint: '83852:75e319d9',
+    fingerprint: '84186:e5d63371',
   },
   {
     name: 'a generated level',
     plan: { ...PLAN, levelId: dailyLevelId('2026-10-20') },
-    fingerprint: '70316:c343e069',
+    fingerprint: '69544:bf453038',
   },
 ];
 
@@ -90,7 +92,7 @@ function play(plan: MatchPlan, ticks: number): MatchEngine {
 /** FNV-1a over everything the match holds - players and bacteria. */
 function fingerprint(engine: MatchEngine): string {
   const simulation = engine.simulation as BacteriaSimulation;
-  const text = JSON.stringify({
+  return fingerprintOf({
     ticks: engine.tickCount,
     // Without what only the painter dresses a seat by - no part of the play.
     players: engine.players.map(
@@ -100,10 +102,17 @@ function fingerprint(engine: MatchEngine): string {
       captured: colony.captured,
       lost: colony.lost,
       pellets: colony.pellets,
-      bacterias: colony.bacterias.map(({ x, y, energy }) => [x, y, energy]),
+      bacterias: colony.cells
+        .toBacteria()
+        .map(({ x, y, energy }) => [x, y, energy]),
     })),
     nutrients: simulation.getNutrients(),
   });
+}
+
+/** FNV-1a over a value's JSON, with its length. */
+function fingerprintOf(value: unknown): string {
+  const text = JSON.stringify(value);
   let hash = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193) >>> 0;
@@ -114,9 +123,10 @@ function fingerprint(engine: MatchEngine): string {
 /**
  * A match against the ladder's computer (ADR 0016): its skill along the
  * curve and its loadout. It plays bit for bit the same under one
- * `LADDER_VERSION`, or every version 4 replay plays another match: a
- * change that moves it on purpose raises `LADDER_VERSION` and takes the
- * new fingerprint over.
+ * `LADDER_VERSION` and `BALANCE_VERSION`, or every version 4 replay plays
+ * another match: a change to the ladder that moves it on purpose raises
+ * `LADDER_VERSION`, one to the balance or the rules `BALANCE_VERSION`, and
+ * takes the new fingerprint over.
  */
 const LADDER_PLAN: MatchPlan = {
   ...PLAN,
@@ -129,11 +139,28 @@ const LADDER_PLAN: MatchPlan = {
   ],
   ladder: LADDER_VERSION,
 };
-const LADDER_FINGERPRINT = '96657:a086f6df';
+const LADDER_FINGERPRINT = '112750:7220e363';
+/**
+ * The computer's loadouts on every ladder level and difficulty. A replay
+ * against it takes them from the ladder, not from its header, so what moves
+ * them - its budget, a character, the gene or weapon costs it spends
+ * along - raises `LADDER_VERSION` as well.
+ */
+const LADDER_LOADOUTS_FINGERPRINT = '4747:9206f2e5';
 
 describe("the ladder's computer", () => {
   it('plays under the ladder version the fingerprint was taken with', () => {
-    expect(LADDER_VERSION).toBe(1);
+    expect(LADDER_VERSION).toBe(2);
+  });
+
+  it('carries the loadouts it had on every ladder level', () => {
+    const loadouts = LEVELS.flatMap(({ id: levelId }) =>
+      BOT_DIFFICULTIES.map(({ id: difficulty }) =>
+        computerLoadout(levelId, difficulty)
+      )
+    );
+
+    expect(fingerprintOf(loadouts)).toBe(LADDER_LOADOUTS_FINGERPRINT);
   });
 
   it('plays a match bit for bit as before', () => {
@@ -155,7 +182,7 @@ describe("the ladder's computer", () => {
 
 describe('plain matches', () => {
   it('play under the balance version the fingerprints were taken with', () => {
-    expect(BALANCE_VERSION).toBe(6);
+    expect(BALANCE_VERSION).toBe(7);
   });
 
   it.each(GOLDEN)(

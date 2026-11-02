@@ -111,16 +111,18 @@ storage until then. Settings stay with the device either way.
   `recordingHintShown` keeps it shown; the note decides only once
   `GameSettingsService.loaded` says the stored settings are read.
 - A local match against the computer is recorded on every simulation
-  resolution (owner's decision of 2026-10-26), but only one on the online
-  grid (`onOnlineGrid`, `state/replay.ts`) goes to `GameReplays`: the
-  stored parse and the functions take no other. On the online grid a
-  recorded match plays a ruleset (`recordedSeats` in `PlayerService.init`:
-  `cpu` where the device would pick the float GPU); on another grid it
-  plays what the device picks unrecorded, and a float GPU match leaves no
-  recording - recording never moves a match off the GPU there. Such a
-  recording stays in `lastRecording` for "Watch replay", the note says it
-  is not saved and why (`replay.status.notSavedGrid`), and the viewer lays
-  a replay out on its own grid (`simResolutionOf`, `state/arena-size.ts`).
+  resolution (owner's decision of 2026-10-26) and goes to `GameReplays` on
+  every one of them too (owner's decision of 2026-10-31): the stored parse
+  takes any grid of the level (`simGridOf`, `state/replay.ts`), an online
+  or ranked match only the online grid. On the online grid a recorded
+  match plays a ruleset (`recordedSeats` in `PlayerService.init`: `cpu`
+  where the device would pick the float GPU); on another grid it plays
+  what the device picks unrecorded, and a float GPU match leaves no
+  recording - recording never moves a match off the GPU there. The viewer
+  lays a replay out on its own grid (`simResolutionOf`,
+  `state/arena-size.ts`); the functions scale a re-run's expected cost by
+  the arena's cells (`expectedRerunMs`) and count the level statistics
+  per grid (`levelStatsKey`, `simGridOf` through `engine.ts`).
 - Ranked daily attempts and endless runs (ADR 0012) are declared through
   the `GameRanked` port (`storage/game-ranked.ts`, `FirestoreGameRanked`),
   asked of `GameCloud.ranked()` - null without a project - and only by
@@ -163,8 +165,26 @@ serverTimestamp(), expireAt }` and nothing else - what the rules'
   game's):
   its own `MatchEngine` from `replayEngine` (`state/replay.ts`, beside
   `canPlayBack` and `playReplay`, which the functions import through
-  `engine.ts`: keep its signature), nothing of the game's state. Specs
-  draw with `recordingPainters` and play `recordedReplay` (`src/testing/`).
+  `engine.ts`: keep its signature), nothing of the game's state. A
+  `gpu-int` replay plays on the viewer's own GL painter (the third
+  argument of `replayEngine`) where its renderer is the host's `gpu`
+  (`GpuSelfTestService.trustedRenderer`: "My matches" and the match just
+  played; `/watch` runs no self-test and stays on `IntSimulation`).
+  `ReplayScene.useGpu` moves the war between the GPU and the CPU where it
+  was: onto the painter once it is there, off it before its context goes;
+  a GPU that fails to set up falls back to `IntSimulation` and is not
+  asked again.
+  The timeline and the 10 s buttons seek (`ReplayScene.seek`): the war only
+  plays forwards, so back restarts it, and the frames after a seek play on
+  to its tick within `SEEK_FRAME_MS` each, the view running while paused.
+  The viewer is a video player: it fills the box it is given (the stage's
+  screen, the `/watch` page), fits the arena into it by width and height,
+  and lays its controls over the arena, which hide a few seconds into
+  playback (`CHROME_HIDE_MS`); the controls, the keys and the fullscreen
+  (on its own element) are listed in the component's JSDoc. The match just
+  played and "My matches" show it alone on the screen (`:host.playing`,
+  `screen.player`), the list or the header only while nothing plays.
+  Specs draw with `recordingPainters` and play `recordedReplay` (`src/testing/`).
 - `/watch/{publicId}` (the remote's `app.routes.ts`, outside the entry
   route with the cloud) loads `WatchPageComponent` from the narrow entry
   `@wolsok/feat-lazy-bac-game/watch` (`src/watch.ts`), skipped by
@@ -297,9 +317,10 @@ play each other.
   plays its place on the difficulty curve (`state/difficulty-curve.ts`) and
   carries `computerLoadout` (`state/computer-opponent.ts`). Such a replay
   is version 4. A change to `SKILL`, `STRENGTH`, the bands or a rule only the ladder's
-  profiles switch on (`attacksAtCap`, `pushesAfterCryo`) changes those matches:
-  raise `LADDER_VERSION` and take the new fingerprint in
-  `golden-match.spec.ts`. A plain match must not move (`BALANCE_VERSION`).
+  profiles switch on (`attacksAtCap`, `pushesAfterCryo`) changes those matches,
+  as does one to what the computer buys (its budget, a character, the gene
+  or weapon costs it spends along): raise `LADDER_VERSION` and take the new
+  fingerprints in `golden-match.spec.ts`. A plain match must not move (`BALANCE_VERSION`).
 - The balance lab (`state/balance/`, runner `tools/bacteria-game/balance/`)
   plays the stand-in (`REFERENCE_PROFILE`) against that computer. A change
   to the balance, the levels, the bots or the curve re-checks it:
@@ -320,6 +341,14 @@ play each other.
   Then regenerate the goldens: `golden-gpu-int.json`, `golden-gpu-sim.json`
   and `SELF_TEST_GOLDEN`, bumping `GPU_SELF_TEST_VERSION`, so devices test
   again.
+- `GpuSimulation` runs its cell passes on the active area
+  (`updateArea`) in deterministic matches too (ADR 0015, step 10): it
+  must hold every cell a bacterium can reach since the report the area
+  comes from, that report's own tick included, and the cells of the last
+  `AREA_HISTORY` ticks. A change to how far a bacterium gets in a tick (a
+  new pass that moves one, a longer escape) grows `recentReach` with it;
+  the self-test and the cross-check's `roomy` scenario play on the area
+  and catch one far too small, not one a tick short.
 - Two rulesets (`Ruleset`, `state/simulation.ts`): `cpu`
   (`BacteriaSimulation`) and `gpu-int` (the integer passes: `GpuSimulation`
   with `deterministic`, or `IntSimulation`). `Simulation.ruleset` names a
@@ -338,6 +367,14 @@ play each other.
   `cpu`; `IntSimulation` replays and checks `gpu-int` matches, it does not
   play them live (except as the stand-in when the GPU fails to start in an
   online `gpu-int` match).
+- A software renderer paints the arena with Canvas 2D, not WebGL2
+  (`createArenaPainter`, asked of a throwaway context through
+  `webGlRenderer`, `gl/renderer.ts`): there it draws two to three times
+  as fast, with every pixel. Without a GL painter the war has no GPU
+  either, so such a device plays `cpu` whatever the toggle says. Only the
+  device override `gpu-int` keeps WebGL2 on it (`ArenaLayout.softwareWebGl`,
+  part of the canvas key, so changing the override builds a fresh
+  canvas): CI's GPU e2e runs that way on SwiftShader.
 - Online, each `hello` names the rulesets the device offers
   (`PlayerService.rulesetOffers`) and the host's `start` the agreed one
   (`agreedRuleset`): `gpu-int` only if both offer it. An agreed `gpu-int`
@@ -348,11 +385,36 @@ play each other.
   ranked match plays the integer GPU passes whatever the toggle says
   (`PlayerService.init` with `ruleset: 'gpu-int'`, no lockstep), so it is
   offered only where the GPU is trusted (`RankedService.deviceReady`).
-- The device override for a real-device check: `?sim=gpu-int`, `?sim=cpu`
-  or `?sim=auto` in the URL (`SimulationOverrideService`, kept in
-  `DeviceStorage`). It changes what local matches play, never what the
-  device offers online. The settings ("Screen") show the ruleset local
-  matches play and the self-test's verdict (`gl/simulation-check.ts`).
+- The device's choice of simulation: "Simulation" (Auto, GPU, CPU) in
+  the settings ("Screen"), or `?sim=gpu-int`, `?sim=cpu` or `?sim=auto`
+  in the URL (`SimulationOverrideService`, kept in `DeviceStorage`). It
+  changes what local matches play, also with the owner's
+  `deterministicSimulation` off, never what the device offers online.
+  The settings show the ruleset local matches play and the self-test's
+  verdict (`gl/simulation-check.ts`).
+
+## Usage statistics
+
+- The game measures through `injectGameAnalytics()`
+  (`analytics/game-analytics.ts`), typed by `GameEvents`; the calls do
+  nothing unless the remote's app config provides analytics and the player
+  said yes. A new event goes into `GameEvents`, `docs/analytics.md` and the
+  privacy page (section 11).
+- Matches: `GameStateService` tells `MatchAnalytics` when a match starts,
+  ends and is left; what the match was (mode, level, ruleset) and what it
+  earned is worked out there, not in the state. `MatchAnalytics` injects
+  nothing of the game: `GameSettingsService` injects `GameStateService`, and
+  its constructor changes the match setup, so free play is a user property
+  set from the stage (`reportUserProperties`).
+- Screens: the stage's panel gives the `screen_view`s (`trackScreenViews`),
+  `match` while one runs.
+- Settings: `GameSettingsService.changed` reports the keys in
+  `REPORTED_SETTINGS` (`analytics/setting-change.ts`), not the match setup,
+  the volumes or what the game remembers for itself.
+- The consent question (`StatsBannerComponent`, `StatsConsent`) comes before
+  the guest and install banners and only once `GameAds.consentSettled`.
+  `/watch` stays free of analytics (the narrow entry); its page view comes
+  from the router.
 
 ## Texts: English and German
 
@@ -364,3 +426,43 @@ play each other.
   texts, colour names and the like are looked up by their id in the
   components, never translated by the engine. The engine stays
   language-free like it stays deterministic.
+
+## Busy indicator
+
+- A tap that sets heavy work off runs it through `StageBusy.run`
+  (`busy/stage-busy.ts`): the stage shows its spinner
+  (`StageBusyComponent`), the browser paints it, and only then the work
+  runs; a tap meanwhile is dropped, a key ignored (`onKeyDown`). The menus
+  wrap their steps (New game, the training, a mode, a mission, a level,
+  Next); a match is started by the stage through `startOnTap`, which asks
+  for the fullscreen on the tap itself first (WebKit takes it nowhere
+  else) and keeps the spinner up until the match runs, a ranked
+  declaration included. Back, the stepper's header, taps during a match,
+  the host's online start (lockstep) and the result screen's ways on
+  stay immediate. Specs await `fixture.whenStable()` after such a
+  tap; the stage's specs, which leave its template out, hold the work
+  with a spy on `run` instead.
+
+## Clearing the arena (the vaporize effect)
+
+- The stage clears the arena after a match through `resetGame$`
+  (`bacteria-game.component.ts`): `resetting` is true while the
+  `@wolsok/thanos` directive on `.thanos-container` turns the last frame
+  to dust, and the panel shows nothing meanwhile. Whatever the effect
+  does, the stage must come back: the effect runs on the stage's own
+  subscription to the directive's cold `vaporize$` and is cancelled at
+  the set length plus `VAPORIZE_SLACK_MS` (a capture that finishes later
+  must not lay its canvas over the menu), an effect that fails - at once
+  included - is logged and the reset goes on, and `resetting` is cleared
+  even when `GameStateService.reset()` throws.
+- The directive fades its element back in by itself when it is done. The
+  stage hides `.arena-frame` the moment the effect is over
+  (`hideArenaUntilPainted`) and shows it again only once both the stage
+  rendered what follows (`afterNextRender` in `resetGame$`) and the arena
+  painted its next frame (`arenaScene.painted`), whichever comes last
+  (`revealArenaWhenReady`): a paint alone lands on the next animation
+  frame, often ahead of a slow change detection, and would show the old
+  level under no menu. So it never flashes up between the dust and the
+  menu screen, or before the next match's first frame. A new vaporize
+  reveals it first (`revealArena`), so the snapshot is never taken of a
+  hidden arena.

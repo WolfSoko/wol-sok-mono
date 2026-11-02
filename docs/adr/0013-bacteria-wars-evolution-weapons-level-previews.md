@@ -27,7 +27,9 @@ The shared model is `state/evolution.ts`.
 - **DNA is derived, not stored**: `dnaEarned(xpOf(progress))`, one strand
   per 50 XP. It merges as cleanly as XP does and can never be lost.
 - **Genes** (`mitosis`, `toxins`, `membrane`, `flagella`, `metabolism`),
-  five levels each, multiply a colony trait per level. They extend the
+  five levels each, multiply a colony trait per level. Each level costs
+  exponentially more than the one before (`geneLevelCost`: 2 strands
+  times 1.6 per level, rounded - 2, 3, 5, 8, 13). They extend the
   boss's `ColonyTraits` with `toughnessFactor`, `speedFactor` and
   `weaponCooldownFactor`; absent traits are 1.
 - **Weapons** (`toxin-bomb`, `cryo-pulse`, `phage-strike`, `agar-bloom`,

@@ -1157,25 +1157,31 @@ describe('GameStateService local recordings', () => {
     expect(replays.submissions).toEqual([]);
   });
 
-  it('records a match off the online grid to watch again, but keeps none, which no server could check', async () => {
-    // "High": 1.5 cells per base cell.
-    await play('vs-computer', 480, 270);
+  it.each([
+    ['Low', 256, 144],
+    ['High', 480, 270],
+    ['Ultra', 640, 360],
+  ])(
+    'records and keeps a match at simulation resolution "%s"',
+    async (_grid, width, height) => {
+      await play('vs-computer', width, height);
 
-    const recording = service.lastRecording();
-    const replay = recording?.replay as Replay;
-    expect(replay.header).toEqual(
-      expect.objectContaining({
-        simulation: 'cpu',
-        width: 480,
-        height: 270,
-        ticks: 120,
-      })
-    );
-    expect(playReplay(replay)?.checksum).toBe(replay.header.checksum);
-    expect(parseReplay(replay, { stored: true })).toBeNull();
-    expect(replays.submissions).toEqual([]);
-    expect(recording?.id).toBeNull();
-  });
+      const recording = service.lastRecording();
+      const replay = recording?.replay as Replay;
+      expect(replay.header).toEqual(
+        expect.objectContaining({
+          simulation: 'cpu',
+          width,
+          height,
+          ticks: 120,
+        })
+      );
+      expect(playReplay(replay)?.checksum).toBe(replay.header.checksum);
+      expect(parseReplay(replay, { stored: true })).toEqual(replay);
+      expect(replays.submissions).toEqual([{ replay, hint: recording?.hint }]);
+      expect(recording?.id).toBe('l_fake0');
+    }
+  );
 
   it('keeps the float GPU off the online grid, and records nothing on it', async () => {
     useGpu();

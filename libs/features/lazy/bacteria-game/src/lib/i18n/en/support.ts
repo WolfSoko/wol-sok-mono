@@ -15,6 +15,13 @@ export const support = {
   close: 'Close',
   ad: 'Ad',
   adSettings: 'Ad privacy settings',
+  /** The main menu's question whether the game may count how it is played. */
+  stats: {
+    title: 'Help make the game better',
+    note: 'May the game count with Google Analytics which modes, levels and screens get played? Nothing that names you, no ads. Settings changes it any time.',
+    allow: 'Allow',
+    decline: 'No thanks',
+  },
   install: {
     title: 'Play Bacteria Wars as an app',
     /** How to get it, one text per platform (`InstallPlatform`). */

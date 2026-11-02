@@ -23,7 +23,9 @@ import {
   take,
   timeout,
 } from 'rxjs';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { EvolutionService } from '../evolution.service';
+import { GpuSelfTestService } from '../gl/gpu-self-test.service';
 import { TranslationKey } from '../i18n/dictionaries';
 import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
@@ -86,14 +88,18 @@ interface MatchRow {
     ScreenHeaderComponent,
     TranslatePipe,
   ],
+  host: { '[class.playing]': 'watching() !== null' },
   templateUrl: './my-matches.component.html',
   styleUrl: './my-matches.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyMatchesComponent {
   private readonly replays = inject(GameReplays);
+  private readonly analytics = injectGameAnalytics();
   private readonly i18n = inject(I18nService);
   private readonly evolution = inject(EvolutionService);
+  /** The GPU that passed the self-test, which GPU replays play on. */
+  protected readonly trustedGpu = inject(GpuSelfTestService).trustedRenderer;
   /** The skin the colonies wear in a replay: the player's, once owned. */
   protected readonly look = this.evolution.worn;
 
@@ -135,6 +141,13 @@ export class MyMatchesComponent {
   protected readonly notice = signal<TranslationKey | null>(null);
   /** The replay being watched, null for the list. */
   protected readonly watching = signal<Replay | null>(null);
+  /** The level's name over the replay being watched. */
+  protected readonly watchingTitle = computed(() => {
+    const replay = this.watching();
+    return replay === null
+      ? null
+      : levelNameText(getLevel(replay.header.levelId));
+  });
   /** "Delete" in two taps, armed by the replay's id. */
   private readonly deleteTap = armedTap<string>();
   /** The replay whose "Delete" waits for its second tap - null for none. */
@@ -162,6 +175,7 @@ export class MyMatchesComponent {
         return;
       }
       this.watching.set(replay);
+      this.analytics.track('replay_watched', { source: 'my_matches' });
     } finally {
       this.busy.set(null);
     }
@@ -222,11 +236,13 @@ export class MyMatchesComponent {
         );
         return;
       }
+      const keptOut = type === 'remove' && this.cloud;
       this.notice.set(
-        type === 'remove' && this.cloud
-          ? 'replay.matches.keptOut'
-          : 'replay.matches.removed'
+        keptOut ? 'replay.matches.keptOut' : 'replay.matches.removed'
       );
+      this.analytics.track(keptOut ? 'replay_kept_out' : 'replay_deleted', {
+        cloud: this.cloud,
+      });
       this.reload.next();
     } catch (error) {
       // No answer in time, or the watch gave up.

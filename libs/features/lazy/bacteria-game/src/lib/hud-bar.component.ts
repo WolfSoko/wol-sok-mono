@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   input,
   output,
@@ -17,6 +18,8 @@ import {
   renderGameText,
 } from './i18n/game-texts';
 import { I18nService } from './i18n/i18n.service';
+import type { TranslationParams } from './i18n/translation';
+import { HudPerf, perfMs } from './hud-perf';
 import { TranslatePipe } from './i18n/translate.pipe';
 
 /**
@@ -33,9 +36,10 @@ export interface HudGoal {
 }
 
 /**
- * The bar above the arena while a match is on: the level, the clock, each
- * colony's count and the match's buttons - sound, pause (or giving up a
- * ranked match, in two taps) and fullscreen.
+ * The bar along the top of the screen while a match is on, laid over the
+ * arena: the level, the clock, each colony's count and energy, the frame
+ * rate where the settings show it, and the match's buttons - sound, pause
+ * (or giving up a ranked match, in two taps) and fullscreen.
  */
 @Component({
   selector: 'feat-lazy-bac-game-hud-bar',
@@ -63,6 +67,10 @@ export class HudBarComponent {
   /** The neutral colonies' count, null on a level without them. */
   public readonly neutral = input<number | null>(null);
   public readonly neutralCss = input.required<string>();
+  /** Frames a second, null while the settings hide them. */
+  public readonly fps = input<number | null>(null);
+  /** Where a frame's time goes, beside the frame rate - null while hidden. */
+  public readonly perf = input<HudPerf | null>(null);
   public readonly sound = input.required<boolean>();
   /** True where the match can be paused right now. */
   public readonly showPause = input(false);
@@ -70,6 +78,37 @@ export class HudBarComponent {
   public readonly showGiveUp = input(false);
   public readonly giveUpArmed = input(false);
   public readonly fullscreen = input.required<boolean>();
+
+  /** The breakdown's numbers as the two lines of it show them. */
+  protected readonly perfParams = computed(
+    (): {
+      frame: TranslationParams;
+      gpu: TranslationParams | null;
+    } | null => {
+      const perf = this.perf();
+      if (perf === null) {
+        return null;
+      }
+      const { gpuSimMs, gpuDrawMs } = perf;
+      return {
+        frame: {
+          simulation: perf.simulation,
+          cells: perf.cells,
+          pixels: Math.round(perf.pixels * 100),
+          sim: perfMs(perf.simMs),
+          draw: perfMs(perf.drawMs),
+          ticks: perf.ticks.toFixed(1),
+        },
+        gpu:
+          gpuSimMs === null && gpuDrawMs === null
+            ? null
+            : {
+                sim: gpuSimMs === null ? '–' : perfMs(gpuSimMs),
+                draw: gpuDrawMs === null ? '–' : perfMs(gpuDrawMs),
+              },
+      };
+    }
+  );
 
   public readonly soundChange = output<boolean>();
   public readonly pause = output<void>();

@@ -34,7 +34,7 @@
           "budgets": [
             {
               "type": "initial",
-              "baseline": "341kb",
+              "baseline": "417kb",
               "maximumWarning": "10%",
               "maximumError": "20%"
             },
@@ -46,7 +46,7 @@
             },
             {
               "type": "allScript",
-              "baseline": "334kb",
+              "baseline": "465kb",
               "maximumWarning": "5%",
               "maximumError": "10%"
             },
@@ -97,6 +97,22 @@
         "staticFilePath": "dist/apps/portfolio",
         "port": 4210,
         "watch": false
+      }
+    },
+    "lighthouse": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "cache": true,
+      "parallelism": false,
+      "inputs": [
+        "production",
+        "^production",
+        "{projectRoot}/lighthouse.json",
+        "{workspaceRoot}/tools/perf/lighthouse-run.mjs",
+        "{workspaceRoot}/tools/perf/serve-firebase-function.mjs"
+      ],
+      "options": {
+        "command": "node tools/perf/lighthouse-run.mjs portfolio"
       }
     }
   }

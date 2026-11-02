@@ -52,6 +52,7 @@ import {
 import { matchRecord } from './medallions';
 import { Player } from './player.model';
 import { randomSeed } from './geometry';
+import { perfProbeOf } from './perf-probe';
 import { MatchOutcome } from './win-conditions';
 import { MatchPlan, planMatch } from './match-setup';
 import {
@@ -81,6 +82,7 @@ import { PLAIN_LOADOUT } from './evolution';
 import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
+import { MatchAnalytics } from '../analytics/match-analytics';
 import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
 import { parseAttemptId, rankedPlan } from './attempts';
 import type {
@@ -150,6 +152,7 @@ export class GameStateService {
   private progress = inject(ProgressService);
   private evolution = inject(EvolutionService);
   private online = inject(OnlineMatchService);
+  private matchAnalytics = inject(MatchAnalytics);
   /**
    * Asked for `GameReplays` only once a match is kept: asked any earlier,
    * `GameCloud` would answer before the route named the project.
@@ -202,6 +205,8 @@ export class GameStateService {
   private readonly frames = new Subject<GameFrame>();
   private subscriptions?: Subscription;
   private measureFps = new MeasureFps();
+  /** The frame-time spec's probe (ADR 0014, gate 3) - null in play. */
+  private readonly perfProbe = perfProbeOf(globalThis);
 
   /**
    * Emits every frame of a running match - inside the animation frame, so
@@ -237,7 +242,13 @@ export class GameStateService {
       this.gameStateStore.update((state) => ({
         timePassed: ticksToMs(Math.round(state.timePassed / TICK_MS) + 1),
       }));
-      this.playerService.tick(width, height);
+      if (this.perfProbe === null) {
+        this.playerService.tick(width, height);
+      } else {
+        const start = performance.now();
+        this.playerService.tick(width, height);
+        this.perfProbe.tickMs.push(performance.now() - start);
+      }
       const outcome = this.playerService.outcome();
       if (outcome != null) {
         this.endMatch(outcome);
@@ -408,14 +419,15 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { series, ghost, endless, endlessMatch, online } =
-      this.gameStateStore.snapshot();
+    const state = this.gameStateStore.snapshot();
+    const { series, ghost, endless, endlessMatch, online } = state;
     // The run's match takes the run on - a draw is no win.
     const run =
       endless !== null && endlessMatch
         ? afterMatch(endless, outcome.winner?.isBot === false)
         : null;
     const earnings = this.recordMatch(outcome.winner, run?.wins ?? null);
+    this.matchAnalytics.ended(outcome, state, earnings);
     const recording = this.recording(outcome);
     const training =
       this.plan != null && getLevel(this.plan.levelId).mission !== undefined;
@@ -477,8 +489,8 @@ export class GameStateService {
   /**
    * The recording of a match that has just ended, handed over to be kept
    * - online and ranked always, a local one with "Save my matches" on (ADR
-   * 0011, 0012), and only on the online grid, the one a stored replay is
-   * checked on. Null for a match that was not recorded.
+   * 0011, 0012), on whatever simulation resolution it was played. Null for
+   * a match that was not recorded.
    */
   private recording(outcome: MatchOutcome): MatchRecording | null {
     const recordedAs = this.recordedAs;
@@ -522,10 +534,7 @@ export class GameStateService {
     this.lastRecording.set(recording);
     // An online or ranked match is uploaded whatever the settings say.
     const attempt = ranked?.attempt.id;
-    if (
-      onOnlineGrid(replay.header) &&
-      (savedRegardless(replay.header) || this.replayPrefs.saveMatches)
-    ) {
+    if (savedRegardless(replay.header) || this.replayPrefs.saveMatches) {
       this.injector
         .get(GameReplays)
         .submit({
@@ -535,6 +544,12 @@ export class GameStateService {
         })
         .then(
           (id) => {
+            if (id !== null) {
+              this.matchAnalytics.replaySaved(
+                recordedAs === 'online',
+                attempt !== undefined
+              );
+            }
             if (id !== null && this.lastRecording() === recording) {
               this.lastRecording.set({ ...recording, id });
             }
@@ -547,8 +562,7 @@ export class GameStateService {
 
   /**
    * Whether a local match from `plan` is recorded: against the computer,
-   * no ghost, with recording on - on any grid, though only one on the
-   * online grid is kept.
+   * no ghost, with recording on - on any grid.
    */
   private recordsLocal(plan: MatchPlan, ghost: Replay | null): boolean {
     return (
@@ -1036,6 +1050,13 @@ export class GameStateService {
       // A restart is an attempt as well.
       this.progress.startDailyAttempt(dailyDay);
     }
+    if (this.plan !== null) {
+      this.matchAnalytics.started(
+        this.plan,
+        this.gameStateStore.snapshot(),
+        this.playerService.getSimulation()
+      );
+    }
     this.gameStateStore.update((state) => ({
       currentState: GameState.RUNNING,
       // A match against a ghost, on a level of its own or online is no
@@ -1096,6 +1117,7 @@ export class GameStateService {
   }
 
   reset() {
+    this.matchAnalytics.left(this.gameStateStore.snapshot().timePassed);
     this.gameStateStore.update(() => ({
       currentState: GameState.END,
       timePassed: 0,

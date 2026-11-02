@@ -14,6 +14,7 @@ import {
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideGameSupport } from '@wolsok/feat-lazy-bac-game';
 import { environment } from '../environments/environment';
+import { provideGameAnalytics } from './analytics/analytics';
 import { appRoutes } from './app.routes';
 import { provideErrorReports } from './error-reports/error-reports';
 import { providePwaUpdates } from './pwa-updates';
@@ -40,5 +41,8 @@ export const appConfig: ApplicationConfig = {
     // Not on the route like the game cloud: inside the shell the game shows
     // neither tips nor ads.
     provideGameSupport(environment.support),
+    // The usage statistics, on the live site and with the player's consent
+    // only; inside the shell the game measures nothing either.
+    provideGameAnalytics(environment.gameCloud),
   ],
 };

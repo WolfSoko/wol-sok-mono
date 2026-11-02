@@ -1,12 +1,5 @@
 import { InjectionToken } from '@angular/core';
-
-/** AdSense ads on the menu screens. */
-export interface GameAdsOptions {
-  /** The AdSense publisher id, `ca-pub-…`. */
-  readonly client: string;
-  /** The id of the display ad unit the menu screens show. */
-  readonly slot: string;
-}
+import type { GameAdsOptions } from './ads/ad-network-options';
 
 /** How players can pay for the game. */
 export interface GameSupportOptions {
@@ -23,9 +16,8 @@ export interface GameSupportOptions {
   /** Who runs the site, for the footer's copyright line. */
   readonly siteOwner: string;
   /**
-   * Null for no ad slots. The consent banner then comes only from a script
-   * the page loads itself (the remote's `index.html`), which `GameAds`
-   * listens to all the same.
+   * The ad network of the menu screens, null for no ads: the game then
+   * loads no ad script and shows no consent banner.
    */
   readonly ads: GameAdsOptions | null;
 }

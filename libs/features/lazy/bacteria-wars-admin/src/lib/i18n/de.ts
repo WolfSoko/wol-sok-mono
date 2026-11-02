@@ -175,7 +175,7 @@ export const DE: Translation<typeof EN> = {
   },
   balance: {
     version: 'Balance-Version',
-    hint: 'Gezählt aus gespeicherten lokalen Partien gegen den Computer; die Medaillen nur aus den Partien, die der Server nachgespielt hat.',
+    hint: 'Gezählt aus gespeicherten lokalen Partien gegen den Computer, jede Simulationsauflösung für sich; die Medaillen nur aus den Partien, die der Server nachgespielt hat.',
     showing: 'Balance-Version {version}',
     offCurve: 'Computer abseits der Kurve',
     medal: {

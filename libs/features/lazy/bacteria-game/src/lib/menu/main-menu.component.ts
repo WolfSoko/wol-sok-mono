@@ -5,6 +5,7 @@ import {
   inject,
   input,
   output,
+  OutputEmitterRef,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,6 +13,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { injectGameAnalytics } from '../analytics/game-analytics';
+import { StageBusy } from '../busy/stage-busy';
 import { FeatureTogglesService } from '../feature-toggles.service';
 import { GameTextPipe, medalKey } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -31,6 +34,8 @@ import { AccountChipComponent } from '../guest/account-chip.component';
 import { GuestBannerComponent } from '../guest/guest-banner.component';
 import { GuestNotice } from '../guest/guest-notice.service';
 import { InstallBannerComponent } from '../support/install-banner.component';
+import { StatsBannerComponent } from '../analytics/stats-banner.component';
+import { StatsConsent } from '../analytics/stats-consent.service';
 import { InstallOffer } from '../support/install-offer.service';
 import { ADMIN_PATH } from '../support/legal-links';
 import { SiteFooterComponent } from '../support/site-footer.component';
@@ -75,6 +80,7 @@ export type MenuPage =
     GhostChallengeComponent,
     DnaHelixComponent,
     InstallBannerComponent,
+    StatsBannerComponent,
     AccountChipComponent,
     GuestBannerComponent,
     SiteFooterComponent,
@@ -122,6 +128,17 @@ export class MainMenuComponent {
   public readonly fightChallenge = output<void>();
   public readonly dismissChallenge = output<void>();
 
+  private readonly busy = inject(StageBusy);
+
+  /**
+   * Emits a way into a new game behind the stage's spinner: the screen it
+   * opens takes a moment to lay out. A match is started behind it by the
+   * stage, which takes the screen on the tap first.
+   */
+  protected busyEmit(output: OutputEmitterRef<void>): void {
+    this.busy.run(() => output.emit());
+  }
+
   protected readonly medalCount = computed(() =>
     Object.values(this.campaign().medals).reduce((sum, n) => sum + n, 0)
   );
@@ -143,6 +160,7 @@ export class MainMenuComponent {
   protected readonly installOffer = inject(InstallOffer);
   /** The guest's notice, which the install offer waits behind. */
   protected readonly guestNotice = inject(GuestNotice);
+  protected readonly stats = inject(StatsConsent);
   /** True on the game's own site, where the support options are provided. */
   protected readonly onSite = inject(GAME_SUPPORT) !== null;
   private readonly account = inject(GameAccount);
@@ -155,9 +173,11 @@ export class MainMenuComponent {
   );
   protected readonly adminPath = ADMIN_PATH;
   private readonly dialog = inject(MatDialog);
+  private readonly analytics = injectGameAnalytics();
 
   /** The Play tips, in the app, where the Buy Me a Coffee page is not allowed. */
   protected openTips(): void {
+    this.analytics.track('tip_dialog_opened');
     this.dialog.open(SupportDialogComponent, {
       maxWidth: '30rem',
       ariaLabelledBy: SUPPORT_DIALOG_HEADING_ID,

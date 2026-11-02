@@ -1,14 +1,15 @@
 import { GameBalance } from '../../state/game-balance';
-import { Bacteria } from '../../state/player.model';
+import type { CellList } from '../../state/cells';
 import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
 import { Rect } from '../../state/maps';
 import { ArenaFrame, ArenaPainter, PaintedColony } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
-import { paintZoneLayer } from '../zone-decal';
+import { layerScale, paintZoneLayer } from '../zone-decal';
 import { Zone } from '../../state/zones';
 import { ArenaTheme } from '../arena-theme';
 import {
   cellDensity,
+  colonyBounds,
   hatchPattern,
   jamDrops,
   lookReach,
@@ -20,6 +21,7 @@ import {
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
 import { GpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
 import { rendererOf } from '../../gl/renderer';
+import { GpuTimer } from '../../gl/gpu-timer';
 import { Motes } from '../motes';
 import {
   bindTexture,
@@ -40,11 +42,15 @@ import {
   SHAPE_FRAGMENT,
   SHAPE_VERTEX,
   MAX_TINTS,
-  ZONES_FRAGMENT,
+  WALLS_FRAGMENT,
 } from './shaders';
+import { AMBIENCE, DishAmbience } from '../ambience';
 import {
-  pushBackground,
+  pushAmbience,
+  pushDynamicWalls,
   pushForeground,
+  pushMotes,
+  pushWalls,
   pushWeaponMarks,
   SHAPE_STRIDE,
   ShapeBatch,
@@ -94,32 +100,41 @@ export function packTints(
   return count;
 }
 
+/** A box of arena cells, `[x0, y0, x1, y1]` - x1 and y1 just past it. */
+export type CellBox = readonly [number, number, number, number];
+
 /**
  * Packs a colony into the cells texture, two bytes per arena cell: its
  * density - 0 for an empty cell, from 0.55 up for a bacterium, by its
  * strength - and its overcharge. This is all the CPU does for a colony; the
  * blur, the outline, the gloss and the shimmer run on the GPU.
  *
- * Returns the cells the colony covers, null for a colony without bacteria.
+ * Only the cells in `box` are packed, the rest of `out` is left as it was:
+ * what is uploaded and read this frame is no more than that box.
  */
 export function encodeCells(
   out: Uint8Array,
   width: number,
-  bacterias: readonly Bacteria[],
-  balance: GameBalance
-): CellBounds | null {
-  out.fill(0);
-  if (bacterias.length === 0) {
-    return null;
+  bacterias: CellList,
+  balance: GameBalance,
+  box: CellBox
+): void {
+  const [x0, y0, x1, y1] = box;
+  for (let y = y0; y < y1; y++) {
+    out.fill(0, (y * width + x0) * 2, (y * width + x1) * 2);
   }
-  const bounds = emptyBounds();
-  for (const { x, y, energy } of bacterias) {
+  const { x: xs, y: ys, energy: energies, length } = bacterias;
+  for (let i = 0; i < length; i++) {
+    const x = xs[i];
+    const y = ys[i];
+    const energy = energies[i];
+    if (x < x0 || x >= x1 || y < y0 || y >= y1) {
+      continue;
+    }
     const index = (y * width + x) * 2;
     out[index] = Math.round(255 * cellDensity(strengthOf(energy, balance)));
     out[index + 1] = Math.round(255 * overcharge(energy, balance));
-    growBounds(bounds, x, y);
   }
-  return bounds;
 }
 
 /**
@@ -160,7 +175,8 @@ export function passMargins(reach: number): {
 
 interface Programs {
   floor: Program;
-  zones: Program;
+  /** The walls, laid once into their layer. */
+  walls: Program;
   blit: Program;
   blur: Program;
   colony: Program;
@@ -171,6 +187,23 @@ interface Programs {
   effects: Program;
 }
 
+/**
+ * What a colony is drawn from: its cells - uploaded from the CPU, or drawn
+ * from the GPU state - and their blur, its density.
+ */
+interface ColonyTargets {
+  cells: Target;
+  density: Target;
+}
+
+/** A colony whose cells and density are ready for its pass over the frame. */
+interface PreparedColony {
+  layer: PaintedColony;
+  bounds: CellBounds;
+  margin: ReturnType<typeof passMargins>;
+  targets: ColonyTargets;
+}
+
 interface Resources {
   programs: Programs;
   quad: WebGLVertexArrayObject;
@@ -179,10 +212,15 @@ interface Resources {
   floor: WebGLTexture;
   /** The zones' layer, finer than the cells - null without zones. */
   zones: WebGLTexture | null;
-  /** One colony's cells - uploaded from the CPU, or drawn from the GPU state. */
-  cells: Target;
-  /** The two halves of the separable blur. */
-  blur: [Target, Target];
+  /**
+   * The walls, laid once as fine as the zones - they never move, so they
+   * are not drawn shape by shape every frame. Null until the first frame.
+   */
+  walls: Target | null;
+  /** The first half of the separable blur, for one colony after another. */
+  blur: Target;
+  /** Each colony's cells and density, by its place in the frame - grown as needed. */
+  colonies: ColonyTargets[];
   /** The frame being built - it survives into the next, for the trail. */
   trail: Target;
 }
@@ -203,6 +241,7 @@ interface Resources {
  */
 export class GlArenaPainter implements ArenaPainter {
   public readonly kind = 'webgl';
+  public readonly paintsAmbience = true;
   private resources: Resources | null = null;
   /** True once the context was handed back - it is not built again then. */
   private disposed = false;
@@ -215,11 +254,33 @@ export class GlArenaPainter implements ArenaPainter {
   /** The weapons going off and acting, and a batch per layer of them. */
   private readonly weapons: WeaponFx;
   private readonly weaponBatch = new ShapeBatch();
+  /** The ambience's mist and bubbles, over the finished frame. */
+  private readonly ambienceBatch = new ShapeBatch();
+  /** What the walls' layer was laid for - laid again when either changes. */
+  private wallsFor: { walls: readonly Rect[]; theme: ArenaTheme } | null = null;
+  /**
+   * The dish's ambience while it is on - the frame is copied with its depth
+   * then, and with its mist and bubbles while it moves too.
+   */
+  private ambience: DishAmbience | null = null;
+  private ambienceMoves = false;
+  /** The wisps of mist in view the frame is copied with, four numbers each. */
+  private readonly wisps = new Float32Array(AMBIENCE.wisps * 4);
+  private wispCount = 0;
+  private readonly mist = new Float32Array(3);
   private readonly tintCircles = new Float32Array(MAX_TINTS * 4);
   private readonly tintModes = new Float32Array(MAX_TINTS);
   private readonly cellBytes: Uint8Array;
   private readonly canvasWidth: number;
   private readonly canvasHeight: number;
+  /**
+   * The size of the frame's own target: the canvas's, or less on a device
+   * too slow for every pixel - the copy onto the canvas scales it up.
+   */
+  private renderWidth: number;
+  private renderHeight: number;
+  /** True while the frame's target holds no frame yet to leave a trail. */
+  private freshTrail = false;
   /** Cells per base cell - the jam and the crosshairs are as big on every grid. */
   private readonly unit: number;
   /** Pixels per cell the zones are painted with. */
@@ -266,6 +327,8 @@ export class GlArenaPainter implements ArenaPainter {
     // Sized by `createArenaPainter`.
     this.canvasWidth = canvas.width;
     this.canvasHeight = canvas.height;
+    this.renderWidth = canvas.width;
+    this.renderHeight = canvas.height;
     this.unit = unit;
     this.detail = detail;
     this.view = { x: 0, y: 0, width, height };
@@ -287,6 +350,9 @@ export class GlArenaPainter implements ArenaPainter {
         return;
       }
       this.resources = this.setup();
+      // The old context's queries and layers went with it.
+      this.timer = undefined;
+      this.wallsFor = null;
       if (this.theme != null) {
         this.uploadFloor(this.theme);
       }
@@ -309,6 +375,14 @@ export class GlArenaPainter implements ArenaPainter {
     return new GpuSimulation(this.gl, balance, random, options);
   }
 
+  /** The timer of the HUD's breakdown, once asked for. */
+  private timer: GpuTimer | null | undefined;
+
+  public gpuTimer(): GpuTimer | null {
+    this.timer ??= GpuTimer.create(this.gl);
+    return this.timer;
+  }
+
   /** The GPU and driver this painter's context renders with. */
   public renderer(): string {
     return rendererOf(this.gl);
@@ -321,7 +395,48 @@ export class GlArenaPainter implements ArenaPainter {
   public dispose(): void {
     this.disposed = true;
     this.resources = null;
+    this.timer?.dispose();
     this.gl.getExtension('WEBGL_lose_context')?.loseContext();
+  }
+
+  public setRenderScale(scale: number): void {
+    const width = Math.max(1, Math.round(this.canvasWidth * scale));
+    const height = Math.max(1, Math.round(this.canvasHeight * scale));
+    if (width === this.renderWidth && height === this.renderHeight) {
+      return;
+    }
+    const from = { width: this.renderWidth, height: this.renderHeight };
+    this.renderWidth = width;
+    this.renderHeight = height;
+    const resources = this.resources;
+    // Without a context, the restored one builds it at that size.
+    if (resources == null) {
+      return;
+    }
+    // The last frame goes along, scaled: the trail goes on from it, and a
+    // snapshot before the next frame shows it rather than black.
+    const gl = this.gl;
+    const old = resources.trail;
+    const trail = this.target(width, height, gl.LINEAR);
+    gl.disable(gl.SCISSOR_TEST);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, old.framebuffer);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, trail.framebuffer);
+    gl.blitFramebuffer(
+      0,
+      0,
+      from.width,
+      from.height,
+      0,
+      0,
+      width,
+      height,
+      gl.COLOR_BUFFER_BIT,
+      gl.LINEAR
+    );
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.deleteFramebuffer(old.framebuffer);
+    gl.deleteTexture(old.texture);
+    resources.trail = trail;
   }
 
   public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {
@@ -346,10 +461,15 @@ export class GlArenaPainter implements ArenaPainter {
     const { programs } = resources;
     this.motes.advance(frame.deltaTimeSec);
     this.weapons.update(frame);
+    // Laid before the frame's own target is bound: no switch between them.
+    this.layWalls(resources, frame.walls, theme);
     this.view = frame.view;
+    // Every colony's cells and blur before the frame's own target is bound:
+    // a GPU that renders in tiles stores and loads a target at each switch.
+    const colonies = this.prepareColonies(resources, frame);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
-    gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
+    gl.viewport(0, 0, this.renderWidth, this.renderHeight);
     gl.enable(gl.BLEND);
     this.useAlphaBlend();
 
@@ -358,31 +478,32 @@ export class GlArenaPainter implements ArenaPainter {
     bindTexture(gl, 0, resources.floor, programs.floor.uniforms['uFloor']);
     this.setView(programs.floor);
     gl.uniform2f(programs.floor.uniforms['uArena'], this.width, this.height);
-    gl.uniform1f(programs.floor.uniforms['uAlpha'], frame.clear ? 1 : 0.7);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // A target without a frame yet takes the floor whole, or it would show
+    // the black it was cleared to through it.
+    const floorAlpha = frame.clear || this.freshTrail ? 1 : 0.7;
+    this.freshTrail = false;
+    gl.uniform1f(programs.floor.uniforms['uAlpha'], floorAlpha);
+    gl.uniform1i(
+      programs.floor.uniforms['uHasZones'],
+      resources.zones == null ? 0 : 1
+    );
     if (resources.zones != null) {
-      this.useFullscreen(programs.zones);
-      bindTexture(gl, 0, resources.zones, programs.zones.uniforms['uZones']);
-      this.setView(programs.zones);
-      gl.uniform2f(programs.zones.uniforms['uArena'], this.width, this.height);
-      gl.uniform1f(programs.zones.uniforms['uAlpha'], frame.clear ? 1 : 0.7);
-      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      this.useAlphaBlend();
+      bindTexture(gl, 1, resources.zones, programs.floor.uniforms['uZones']);
     }
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    this.useAlphaBlend();
 
     this.background.clear();
-    pushBackground(
-      this.background,
-      theme,
-      this.motes,
-      frame.walls,
-      frame.dynamicWalls
-    );
+    pushMotes(this.background, theme, this.motes);
+    this.drawShapes(this.background);
+    this.drawWalls(resources);
+    this.background.clear();
+    pushDynamicWalls(this.background, theme, this.motes, frame.dynamicWalls);
     this.drawShapes(this.background);
     this.drawWeaponLayer(this.weapons.ground, false);
 
-    for (const colony of frame.colonies) {
+    for (const colony of colonies) {
       this.drawColony(frame, colony);
     }
     if (!frame.reducedMotion) {
@@ -407,6 +528,9 @@ export class GlArenaPainter implements ArenaPainter {
       this.unit
     );
     this.drawShapes(this.foreground);
+    this.ambience = frame.ambience ?? null;
+    this.ambienceMoves = this.ambience != null && !frame.reducedMotion;
+    this.packWisps(theme);
     this.showLastFrame();
   }
 
@@ -421,66 +545,224 @@ export class GlArenaPainter implements ArenaPainter {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
     gl.disable(gl.BLEND);
-    this.useFullscreen(programs.blit);
-    bindTexture(
-      gl,
-      0,
-      resources.trail.texture,
-      programs.blit.uniforms['uImage']
-    );
+    const blit = programs.blit;
+    this.useFullscreen(blit);
+    bindTexture(gl, 0, resources.trail.texture, blit.uniforms['uImage']);
+    const ambience = this.ambience;
+    gl.uniform1i(blit.uniforms['uDepth'], ambience == null ? 0 : 1);
+    gl.uniform1i(blit.uniforms['uWispCount'], this.wispCount);
+    if (this.wispCount > 0) {
+      gl.uniform4fv(blit.uniforms['uWisps[0]'], this.wisps);
+      gl.uniform3fv(blit.uniforms['uMist'], this.mist);
+    }
+    if (ambience != null) {
+      this.setView(blit);
+      gl.uniform2f(blit.uniforms['uArena'], this.width, this.height);
+      gl.uniform1f(
+        blit.uniforms['uReach'],
+        AMBIENCE.rimWidth * Math.min(this.width, this.height)
+      );
+      gl.uniform2f(
+        blit.uniforms['uCanvas'],
+        this.canvasWidth,
+        this.canvasHeight
+      );
+    }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (ambience != null && this.ambienceMoves) {
+      this.drawAmbience(ambience);
+    }
   }
 
   /**
-   * One colony: its cells - uploaded from the CPU, or drawn straight from the
-   * GPU simulation's state - are blurred on the arena grid for every look
-   * but the pixels, and drawn over the frame in a single pass.
+   * Takes the frame's wisps of mist in view - none without the ambience's
+   * motion.
    */
-  private drawColony(frame: ArenaFrame, layer: PaintedColony): void {
+  private packWisps(theme: ArenaTheme): void {
+    this.wispCount = 0;
+    const ambience = this.ambience;
+    if (ambience == null || !this.ambienceMoves) {
+      return;
+    }
+    const wisps = this.wisps;
+    ambience.forEachWisp(this.view, (x, y, radius, alpha) => {
+      const at = this.wispCount++ * 4;
+      wisps[at] = x;
+      wisps[at + 1] = y;
+      wisps[at + 2] = radius;
+      wisps[at + 3] = alpha;
+    });
+    const [r, g, b] = theme.motes;
+    this.mist[0] = r / 255;
+    this.mist[1] = g / 255;
+    this.mist[2] = b / 255;
+  }
+
+  /** The ambience's bubbles, over the frame on the canvas. */
+  private drawAmbience(ambience: DishAmbience): void {
+    const gl = this.gl;
+    gl.enable(gl.BLEND);
+    this.useAlphaBlend();
+    this.ambienceBatch.clear();
+    pushAmbience(
+      this.ambienceBatch,
+      ambience,
+      this.view,
+      this.view.width / this.canvasWidth
+    );
+    this.drawShapes(this.ambienceBatch);
+  }
+
+  /**
+   * Lays the walls into their layer, as fine as the zones' - once per
+   * level and look, the walls being the level's and never moving.
+   */
+  private layWalls(
+    resources: Resources,
+    walls: readonly Rect[],
+    theme: ArenaTheme
+  ): void {
+    if (this.wallsFor?.walls === walls && this.wallsFor.theme === theme) {
+      return;
+    }
+    this.wallsFor = { walls, theme };
+    // A level without walls has no layer to lay - nor to draw.
+    if (walls.length === 0) {
+      return;
+    }
+    const gl = this.gl;
+    const scale = layerScale(this.detail);
+    const width = this.width * scale;
+    const height = this.height * scale;
+    resources.walls ??= createTarget(gl, gl.RGBA8, width, height, gl.LINEAR);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, resources.walls.framebuffer);
+    gl.viewport(0, 0, width, height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    // Straight colours over a premultiplied layer leave it premultiplied.
+    this.useAlphaBlend();
+    this.background.clear();
+    pushWalls(this.background, theme, walls);
+    // All of the arena, row 0 of the layer at its top - as the zones' is.
+    const view = this.view;
+    this.view = {
+      x: 0,
+      y: this.height,
+      width: this.width,
+      height: -this.height,
+    };
+    this.drawShapes(this.background);
+    this.view = view;
+  }
+
+  /** The walls' layer over the floor and its specks. */
+  private drawWalls(resources: Resources): void {
+    const walls = resources.walls;
+    if (walls == null || this.wallsFor?.walls.length === 0) {
+      return;
+    }
+    const gl = this.gl;
+    const program = resources.programs.walls;
+    this.useFullscreen(program);
+    bindTexture(gl, 0, walls.texture, program.uniforms['uWalls']);
+    this.setView(program);
+    gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    this.useAlphaBlend();
+  }
+
+  /**
+   * Makes each colony in view ready to draw, in targets of its own: its
+   * cells - uploaded from the CPU, or drawn straight from the GPU
+   * simulation's state - blurred on the arena grid for every look but the
+   * pixels.
+   */
+  private prepareColonies(
+    resources: Resources,
+    frame: ArenaFrame
+  ): PreparedColony[] {
+    const gl = this.gl;
+    const prepared: PreparedColony[] = [];
+    // Every pass here draws on the arena grid, unblended and scissored.
+    gl.disable(gl.BLEND);
+    gl.viewport(0, 0, this.width, this.height);
+    gl.enable(gl.SCISSOR_TEST);
+    frame.colonies.forEach((layer, index) => {
+      const bounds =
+        layer.kind === 'cells' ? colonyBounds(layer.cells) : layer.bounds;
+      // A look that reaches past the colony - the lattice looks, with
+      // their cells and tiles - is drawn that much further out, and every
+      // pass before the drawing moves out with it, or it would read stale
+      // density.
+      const margin = passMargins(lookReach(layer.look, this.unit));
+      if (bounds == null || !this.inView(bounds, margin.colony)) {
+        return;
+      }
+      const targets = this.colonyTargets(resources, index);
+      // Only the box around the colony, as far as it is in view, is
+      // packed, blurred and drawn - the rest of the arena would be bytes to
+      // upload and fragments the GPU works on to discard them.
+      if (layer.kind === 'cells') {
+        this.uploadCells(
+          layer.cells,
+          frame.balance,
+          this.passBox(bounds, margin.cells),
+          targets.cells
+        );
+      }
+      if (layer.kind === 'state') {
+        this.drawCellsFromState(
+          layer,
+          bounds,
+          frame.balance,
+          margin.cells,
+          targets.cells
+        );
+      }
+      if (LOOKS[layer.look].fromDensity) {
+        this.useFullscreen(resources.programs.blur);
+        this.scissorCells(bounds, margin.horizontalBlur);
+        this.blurPass(targets.cells.texture, resources.blur, 1, 0);
+        this.scissorCells(bounds, margin.verticalBlur);
+        this.blurPass(resources.blur.texture, targets.density, 0, 1);
+      }
+      prepared.push({ layer, bounds, margin, targets });
+    });
+    gl.disable(gl.SCISSOR_TEST);
+    return prepared;
+  }
+
+  /** The targets of the colony at that place in the frame, made on first use. */
+  private colonyTargets(resources: Resources, index: number): ColonyTargets {
+    const gl = this.gl;
+    const targets = resources.colonies;
+    while (targets.length <= index) {
+      targets.push({
+        cells: createTarget(gl, gl.RG8, this.width, this.height),
+        density: this.target(this.width, this.height, gl.LINEAR),
+      });
+    }
+    return targets[index];
+  }
+
+  /** One colony's pass over the frame, from its prepared cells and density. */
+  private drawColony(frame: ArenaFrame, prepared: PreparedColony): void {
     const gl = this.gl;
     const resources = this.resources;
     if (resources == null) {
       return;
     }
-    const { programs, blur, cells } = resources;
+    const { programs } = resources;
+    const { layer, bounds, margin, targets } = prepared;
     const { color, boostTarget, look } = layer;
-    const bounds =
-      layer.kind === 'cells'
-        ? this.uploadCells(layer.bacterias, frame.balance)
-        : layer.bounds;
-    // A look that reaches past the colony - the lattice looks, with their
-    // cells and tiles - is drawn that much further out, and every pass
-    // before the drawing moves out with it, or it would read stale density.
-    const margin = passMargins(lookReach(look, this.unit));
-    if (bounds == null || !this.inView(bounds, margin.colony)) {
-      return;
-    }
-    // Only the box around the colony is blurred and drawn - the rest of the
-    // arena would be fragments the GPU works on to discard them.
     gl.enable(gl.SCISSOR_TEST);
-    if (layer.kind === 'state') {
-      this.drawCellsFromState(layer, bounds, frame.balance, margin.cells);
-    }
-
-    const blurred = LOOKS[look].fromDensity;
-    if (blurred) {
-      gl.disable(gl.BLEND);
-      gl.viewport(0, 0, this.width, this.height);
-      this.useFullscreen(programs.blur);
-      this.scissorCells(bounds, margin.horizontalBlur);
-      this.blurPass(cells.texture, blur[0], 1, 0);
-      this.scissorCells(bounds, margin.verticalBlur);
-      this.blurPass(blur[0].texture, blur[1], 0, 1);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
-      gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
-      gl.enable(gl.BLEND);
-    }
-
     this.scissorCanvas(bounds, margin.colony);
     const program = programs.colony;
     this.useFullscreen(program);
-    bindTexture(gl, 0, blur[1].texture, program.uniforms['uDensity']);
-    bindTexture(gl, 1, cells.texture, program.uniforms['uCells']);
+    bindTexture(gl, 0, targets.density.texture, program.uniforms['uDensity']);
+    bindTexture(gl, 1, targets.cells.texture, program.uniforms['uCells']);
     this.setView(program);
     gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
     gl.uniform3f(
@@ -494,7 +776,7 @@ export class GlArenaPainter implements ArenaPainter {
     gl.uniform1f(program.uniforms['uUnit'], this.unit);
     gl.uniform1f(
       program.uniforms['uPixel'],
-      this.view.width / this.canvasWidth
+      this.view.width / this.renderWidth
     );
     gl.uniform1f(program.uniforms['uTime'], frame.timeSec);
     const hatch = hatchPattern(color);
@@ -531,7 +813,7 @@ export class GlArenaPainter implements ArenaPainter {
   }
 
   /** The colony's cells grown by a margin, clamped to the arena. */
-  private box(bounds: CellBounds, margin: number): number[] {
+  private box(bounds: CellBounds, margin: number): CellBox {
     return [
       Math.max(0, bounds.minX - margin),
       Math.max(0, bounds.minY - margin),
@@ -541,22 +823,22 @@ export class GlArenaPainter implements ArenaPainter {
   }
 
   /**
-   * Scissors a pass on the canvas, whose row 0 is the bottom of the view -
-   * cut to the canvas, which a box out of view misses altogether.
+   * Scissors a pass on the frame's target, whose row 0 is the bottom of the
+   * view - cut to the target, which a box out of view misses altogether.
    */
   private scissorCanvas(bounds: CellBounds, margin: number): void {
     const [x0, y0, x1, y1] = this.box(bounds, margin);
     const view = this.view;
-    const scale = this.canvasWidth / view.width;
-    const clampX = (x: number) => Math.min(Math.max(x, 0), this.canvasWidth);
-    const clampY = (y: number) => Math.min(Math.max(y, 0), this.canvasHeight);
+    const width = this.renderWidth;
+    const height = this.renderHeight;
+    const scale = width / view.width;
+    const clampX = (x: number) => Math.min(Math.max(x, 0), width);
+    const clampY = (y: number) => Math.min(Math.max(y, 0), height);
     // Out to whole pixels - at a scale like 7.5 a cell edge falls inside one.
     const left = clampX(Math.floor((x0 - view.x) * scale));
     const right = clampX(Math.ceil((x1 - view.x) * scale));
-    const bottom = clampY(
-      Math.floor(this.canvasHeight - (y1 - view.y) * scale)
-    );
-    const top = clampY(Math.ceil(this.canvasHeight - (y0 - view.y) * scale));
+    const bottom = clampY(Math.floor(height - (y1 - view.y) * scale));
+    const top = clampY(Math.ceil(height - (y0 - view.y) * scale));
     this.gl.scissor(left, bottom, right - left, top - bottom);
   }
 
@@ -573,37 +855,61 @@ export class GlArenaPainter implements ArenaPainter {
     return x0 < x + width && x1 > x && y0 < y + height && y1 > y;
   }
 
+  /**
+   * The colony's box grown by a margin, cut to the view grown by the same
+   * margin: a pass on the arena grid only has to cover what the passes
+   * after it read of the cells in view. The margins grow from one pass to
+   * the one before it, so each still covers what the next one reads.
+   */
+  private passBox(bounds: CellBounds, margin: number): CellBox {
+    const [x0, y0, x1, y1] = this.box(bounds, margin);
+    const { x, y, width, height } = this.view;
+    const left = Math.max(x0, Math.floor(x) - margin);
+    const top = Math.max(y0, Math.floor(y) - margin);
+    return [
+      left,
+      top,
+      Math.max(left, Math.min(x1, Math.ceil(x + width) + margin)),
+      Math.max(top, Math.min(y1, Math.ceil(y + height) + margin)),
+    ];
+  }
+
   /** Scissors a pass on the arena grid - its row y is arena row y. */
   private scissorCells(bounds: CellBounds, margin: number): void {
-    const [x0, y0, x1, y1] = this.box(bounds, margin);
+    const [x0, y0, x1, y1] = this.passBox(bounds, margin);
     this.gl.scissor(x0, y0, x1 - x0, y1 - y0);
   }
 
-  /** Packs a CPU colony into the cells texture and uploads it. */
+  /** Packs the box of a CPU colony into its cells texture and uploads it. */
   private uploadCells(
-    bacterias: readonly Bacteria[],
-    balance: GameBalance
-  ): CellBounds | null {
+    bacterias: CellList,
+    balance: GameBalance,
+    box: CellBox,
+    cells: Target
+  ): void {
     const gl = this.gl;
-    const cells = this.resources?.cells;
-    const bounds = encodeCells(this.cellBytes, this.width, bacterias, balance);
-    if (cells == null || bounds == null) {
-      return bounds;
+    const [x0, y0, x1, y1] = box;
+    encodeCells(this.cellBytes, this.width, bacterias, balance, box);
+    if (x1 <= x0 || y1 <= y0) {
+      return;
     }
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, cells.texture);
+    // The box's rows, out of the arena's.
+    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, this.width);
     gl.texSubImage2D(
       gl.TEXTURE_2D,
       0,
-      0,
-      0,
-      this.width,
-      this.height,
+      x0,
+      y0,
+      x1 - x0,
+      y1 - y0,
       gl.RG,
       gl.UNSIGNED_BYTE,
-      this.cellBytes
+      this.cellBytes,
+      (y0 * this.width + x0) * 2
     );
-    return bounds;
+    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, 0);
   }
 
   /**
@@ -617,7 +923,8 @@ export class GlArenaPainter implements ArenaPainter {
     bounds: CellBounds,
     balance: GameBalance,
     /** How far past the bounds to draw - what the horizontal blur reads. */
-    margin: number
+    margin: number,
+    cells: Target
   ): void {
     const gl = this.gl;
     const resources = this.resources;
@@ -625,9 +932,7 @@ export class GlArenaPainter implements ArenaPainter {
       return;
     }
     const program = resources.programs.cells;
-    gl.disable(gl.BLEND);
-    gl.viewport(0, 0, this.width, this.height);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, resources.cells.framebuffer);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, cells.framebuffer);
     this.scissorCells(bounds, margin);
     this.useFullscreen(program);
     bindTexture(gl, 0, colony.state, program.uniforms['uState']);
@@ -638,9 +943,6 @@ export class GlArenaPainter implements ArenaPainter {
       balance.superChargedMaxEnergy
     );
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
-    gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
-    gl.enable(gl.BLEND);
   }
 
   /** Adds the glow of what the colonies do over them, light on light. */
@@ -837,17 +1139,28 @@ export class GlArenaPainter implements ArenaPainter {
     const programs: Programs = {
       floor: createProgram(gl, FULLSCREEN_VERTEX, FLOOR_FRAGMENT, [
         'uFloor',
-        'uView',
-        'uArena',
-        'uAlpha',
-      ]),
-      zones: createProgram(gl, FULLSCREEN_VERTEX, ZONES_FRAGMENT, [
         'uZones',
+        'uHasZones',
         'uView',
         'uArena',
         'uAlpha',
       ]),
-      blit: createProgram(gl, FULLSCREEN_VERTEX, BLIT_FRAGMENT, ['uImage']),
+      walls: createProgram(gl, FULLSCREEN_VERTEX, WALLS_FRAGMENT, [
+        'uWalls',
+        'uView',
+        'uArena',
+      ]),
+      blit: createProgram(gl, FULLSCREEN_VERTEX, BLIT_FRAGMENT, [
+        'uImage',
+        'uDepth',
+        'uWispCount',
+        'uWisps[0]',
+        'uMist',
+        'uView',
+        'uArena',
+        'uReach',
+        'uCanvas',
+      ]),
       blur: createProgram(gl, FULLSCREEN_VERTEX, BLUR_FRAGMENT, [
         'uSource',
         'uStep',
@@ -918,12 +1231,10 @@ export class GlArenaPainter implements ArenaPainter {
       this.height,
       gl.NEAREST
     );
-    const cells = createTarget(gl, gl.RG8, this.width, this.height);
-    const blur: [Target, Target] = [
-      this.target(this.width, this.height, gl.LINEAR),
-      this.target(this.width, this.height, gl.LINEAR),
-    ];
-    const trail = this.target(this.canvasWidth, this.canvasHeight, gl.NEAREST);
+    const blur = this.target(this.width, this.height, gl.LINEAR);
+    // Sampled smoothly: scaled up to the canvas when it is the smaller.
+    const trail = this.target(this.renderWidth, this.renderHeight, gl.LINEAR);
+    this.freshTrail = true;
 
     return {
       programs,
@@ -932,8 +1243,9 @@ export class GlArenaPainter implements ArenaPainter {
       instances,
       floor,
       zones: null,
-      cells,
+      walls: null,
       blur,
+      colonies: [],
       trail,
     };
   }

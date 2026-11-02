@@ -9,8 +9,6 @@ export const replay: Translation<typeof en> = {
     savedDevice: 'Wiederholung auf diesem Gerät behalten, in „Meine Matches“',
     notSaved:
       'Wiederholung nicht gespeichert: „Meine Matches speichern“ ist aus.',
-    notSavedGrid:
-      'Wiederholung nicht gespeichert: Gespeichert werden nur Matches mit Simulationsauflösung „Normal“.',
     unconfirmed:
       'Ob die Wiederholung gespeichert wurde, ließ sich nicht bestätigen. Schau später in „Meine Matches“ nach.',
     recordingHint:
@@ -95,6 +93,11 @@ export const replay: Translation<typeof en> = {
     over: 'Ende der Wiederholung',
     play: 'Abspielen',
     pause: 'Pause',
+    seek: 'Zeit im Match',
+    back: '{seconds} Sekunden zurück',
+    forward: '{seconds} Sekunden vor',
+    seeking: 'Spult zu dieser Stelle …',
+    controls: 'Wiedergabe-Steuerung',
   },
   watchPage: {
     title: 'Ansehen: {level} - Bacteria Wars',

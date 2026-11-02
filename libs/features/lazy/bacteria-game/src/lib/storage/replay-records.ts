@@ -5,7 +5,7 @@ import type { EndReason } from '../state/win-conditions';
 
 /** A recorded match to keep (ADR 0011). */
 export interface ReplaySubmission {
-  /** The version 2 replay - CPU only, on the online grid of its level. */
+  /** The replay to store, as `parseReplay` with `stored` takes it. */
   replay: Replay;
   /** The client's own `replayScore`, 0-100 - only ranks the candidates. */
   hint: number;

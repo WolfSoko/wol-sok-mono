@@ -46,6 +46,12 @@ export interface ReplayRecord {
   replayVersion: number;
   simulation: string;
   ticks: number;
+  /**
+   * The arena's cells, width times height: with `ticks` what a re-run
+   * costs (`expectedRerunMs`), on whatever simulation resolution it was
+   * played.
+   */
+  cells: number;
   endedBy: string;
   winnerSeat: number | null;
   checksum: number;
@@ -97,6 +103,7 @@ export function planAcceptance(
     replayVersion: header.version,
     simulation: header.simulation,
     ticks: header.ticks,
+    cells: header.width * header.height,
     endedBy: header.outcome?.endedBy ?? 'none',
     winnerSeat: header.outcome?.winnerSeat ?? null,
     checksum: header.checksum ?? 0,
