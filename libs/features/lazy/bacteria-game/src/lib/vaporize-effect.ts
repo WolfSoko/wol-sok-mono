@@ -54,6 +54,16 @@ export function isVaporizeMs(value: unknown): value is number {
   return VAPORIZE_DURATIONS.some((option) => option.ms === value);
 }
 
+/**
+ * Where the dust of the next snap blows to, in whole degrees clockwise from
+ * up: any way at all, so no two match ends look alike.
+ */
+export function randomWindDirection(
+  random: () => number = Math.random
+): number {
+  return Math.floor(random() * 360);
+}
+
 /** The quality's pixel budget, undefined for none. */
 export function vaporizePixels(quality: VaporizeQuality): number | undefined {
   return VAPORIZE_QUALITIES.find((option) => option.id === quality)?.pixels;

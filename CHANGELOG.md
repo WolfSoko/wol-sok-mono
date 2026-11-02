@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.135.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.134.0...v74.135.0) (2026-11-02)
+
+### Features
+
+* **bacteria-wars-functions:** link the replay gallery and give it the game's look ([#2738](https://github.com/WolfSoko/wol-sok-mono/issues/2738)) ([c6af786](https://github.com/WolfSoko/wol-sok-mono/commit/c6af7862459b28bd15ec4ad52cba28c951d61946))
+
+### Bug Fixes
+
+* **fourier-analysis-remote-cdk:** apply ESNext target override per CDK policy ([#2414](https://github.com/WolfSoko/wol-sok-mono/issues/2414)) ([8c38030](https://github.com/WolfSoko/wol-sok-mono/commit/8c38030d28ec4bf1ec1357926877a1310e08a30f)), closes [#2412](https://github.com/WolfSoko/wol-sok-mono/issues/2412)
+* **rollapolla-analog:** give the Google sign-in test headroom past the default timeout ([#2481](https://github.com/WolfSoko/wol-sok-mono/issues/2481)) ([21bf2e9](https://github.com/WolfSoko/wol-sok-mono/commit/21bf2e9dfda90cc1b17283629648c855a0fd0caf)), closes [#2480](https://github.com/WolfSoko/wol-sok-mono/issues/2480), references [ChangeDetectionSchedulerImpl#switchToMicrotaskScheduler](https://github.com/WolfSoko/wol-sok-mono/issues/switchToMicrotaskScheduler)
+
+### Documentation
+
+* **tools:** refresh architecture diagrams ([#2736](https://github.com/WolfSoko/wol-sok-mono/issues/2736)) ([87d37ad](https://github.com/WolfSoko/wol-sok-mono/commit/87d37ad449a5407f5748f8e8ea12cac6edb03021))
+
 ## [74.134.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.133.0...v74.134.0) (2026-11-01)
 
 ### Features
