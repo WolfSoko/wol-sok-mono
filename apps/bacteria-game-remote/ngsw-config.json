@@ -42,7 +42,7 @@
       "installMode": "lazy",
       "updateMode": "lazy",
       "resources": {
-        "files": ["/media/**"]
+        "files": ["/media/**", "/fonts/**"]
       }
     }
   ]

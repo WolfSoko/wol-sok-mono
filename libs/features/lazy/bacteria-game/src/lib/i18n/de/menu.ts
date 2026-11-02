@@ -7,6 +7,7 @@ export const menu: Translation<typeof en> = {
   newGameNote:
     'Training, Kampagne, Tageslevel, Endlos, Frei, Zwei Spieler, Online',
   more: 'Mehr',
+  gallery: 'Matches des Tages',
   admin: 'Verwaltung',
   friendRequests: {
     one: '{count} Freundschaftsanfrage',
