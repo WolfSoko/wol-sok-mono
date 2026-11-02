@@ -1,3 +1,4 @@
+import type { WeaponId } from './evolution';
 import { gameBalance } from './game-balance';
 
 export type PlayerColorArray = [number, number, number, number];
@@ -13,6 +14,15 @@ export interface Player {
   name: string;
   /** True when the computer steers this crosshair. */
   isBot: boolean;
+  /**
+   * True when the computer plays this colony - a seat it steers on its
+   * level, which dresses it (`colony-looks.ts`). False for a seat a
+   * recording drives in a human's stead: a ghost's, the other device's
+   * online.
+   */
+  computer: boolean;
+  /** True for the level's boss - see `Boss` in `levels.ts`. */
+  boss: boolean;
   x: number;
   y: number;
   color: PlayerColorArray;
@@ -44,11 +54,26 @@ export interface Player {
   pellets: number;
   /** The cooldown the last boost started - a boss's is shorter. */
   boostCooldownFullSec: number;
+  /** The weapon the colony carries - see `evolution.ts` - null for none. */
+  weapon: WeaponId | null;
+  /** Seconds the weapon's effect keeps acting, 0 while there is none. */
+  weaponActiveSec: number;
+  /** Seconds until the weapon can be fired again, 0 when it is ready. */
+  weaponCooldownSec: number;
+  /** The cooldown the last shot started, for the button's ring. */
+  weaponCooldownFullSec: number;
+  /** Weapons fired since the game started. */
+  weaponsFired: number;
 }
 
 /** True while the player's boost is running. */
 export function isBoosted(player: Player | null): boolean {
   return player != null && player.boostActiveSec > 0;
+}
+
+/** True when the player carries a weapon that can be fired right now. */
+export function isWeaponReady(player: Player): boolean {
+  return player.weapon !== null && player.weaponCooldownSec <= 0;
 }
 
 /** True when the player can fire a boost right now. */
@@ -72,6 +97,8 @@ export function createPlayer(params: Partial<Player>): Player {
     id: playerId++,
     name: '',
     isBot: false,
+    computer: false,
+    boss: false,
     maxSpeed: 150,
     boostActiveSec: 0,
     boostCooldownSec: 0,
@@ -85,6 +112,11 @@ export function createPlayer(params: Partial<Player>): Player {
     holdTicks: 0,
     pellets: 0,
     boostCooldownFullSec: 0,
+    weapon: null,
+    weaponActiveSec: 0,
+    weaponCooldownSec: 0,
+    weaponCooldownFullSec: 0,
+    weaponsFired: 0,
     ...params,
   } as Player;
 }

@@ -13,6 +13,9 @@ import {
 import { ArenaTheme, Rgb } from '../arena-theme';
 import { darker, JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
+import { WEAPON_CODE } from '../../state/weapon-effects';
+import { MarkLayer } from '../weapon-fx';
+import { AMBIENCE, DishAmbience } from '../ambience';
 
 /**
  * What the shape shader draws for one instance. Every shape is a rect in
@@ -31,6 +34,23 @@ export const SHAPE = {
   disc: 4,
   /** A drop of jam: a glossy gradient from the second colour to the first. */
   jam: 5,
+  /** A soft glow filling the circle in the rect, gone at its rim. */
+  glow: 6,
+  /**
+   * A hexagon centred in the rect, its corners `p2` out, turned by `p0` -
+   * an outline `p1` wide, or filled for 0.
+   */
+  hex: 7,
+  /**
+   * A weapon's effect over the circle in the rect: `p0` the weapon (see
+   * `WEAPON_CODE`, as the simulation's shaders know it), `p1` its clock, `p2` how far it has spread.
+   */
+  field: 8,
+  /**
+   * An ellipse centred in the rect, turned by `p0`, its radii `p1` and
+   * `p2` - from the first colour at its base to the second at its tip.
+   */
+  ellipse: 9,
 } as const;
 
 export type ShapeKind = (typeof SHAPE)[keyof typeof SHAPE];
@@ -64,7 +84,8 @@ export class ShapeBatch {
     color2: Rgb = color,
     alpha2 = alpha,
     p0 = 0,
-    p1 = 0
+    p1 = 0,
+    p2 = 0
   ): void {
     if ((this.count + 1) * SHAPE_STRIDE > this.data.length) {
       const grown = new Float32Array(this.data.length * 2);
@@ -88,26 +109,31 @@ export class ShapeBatch {
     d[i++] = kind;
     d[i++] = p0;
     d[i++] = p1;
-    d[i] = 0;
+    d[i] = p2;
     this.count++;
   }
 }
 
-/**
- * Everything drawn between the floor and the colonies: the drifting specks,
- * the walls with their lit edge, and the gates and sliding walls - striped
- * when closed, a blinking outline while open.
- */
-export function pushBackground(
+/** The drifting specks over the floor, one cell each. */
+export function pushMotes(
   batch: ShapeBatch,
   theme: ArenaTheme,
-  motes: Motes,
-  walls: readonly Rect[],
-  dynamicWalls: readonly DynamicWall[]
+  motes: Motes
 ): void {
   motes.forEach((x, y, alpha) =>
     batch.push(SHAPE.rect, { x, y, width: 1, height: 1 }, theme.motes, alpha)
   );
+}
+
+/**
+ * The level's walls with their lit edge - they never move, so the GL
+ * painter lays them once into a layer of their own.
+ */
+export function pushWalls(
+  batch: ShapeBatch,
+  theme: ArenaTheme,
+  walls: readonly Rect[]
+): void {
   pushBlobs(batch, walls, darker(theme.wall), theme);
   for (const wall of walls) {
     if (wall.round) {
@@ -125,6 +151,18 @@ export function pushBackground(
       theme.wallEdge
     );
   }
+}
+
+/**
+ * The gates and sliding walls as they stand - striped when closed, a
+ * blinking outline while open.
+ */
+export function pushDynamicWalls(
+  batch: ShapeBatch,
+  theme: ArenaTheme,
+  motes: Motes,
+  dynamicWalls: readonly DynamicWall[]
+): void {
   // Living tissue rather than machinery: rimmed in the frame colour.
   pushBlobs(batch, dynamicWalls, theme.border, theme);
   for (const wall of dynamicWalls) {
@@ -151,6 +189,76 @@ export function pushBackground(
       openGateFill(wall.warning, blink)
     );
     batch.push(SHAPE.outline, wall, theme.border, openGateOutline(blink));
+  }
+}
+
+const WHITE: Rgb = [255, 255, 255];
+
+/** The bubbles in view, three numbers each - grown as needed. */
+let bubbles = new Float32Array(0);
+
+/**
+ * The dish's bubbles over the finished frame, as `DishAmbience` paints
+ * them: the film of every bubble, every rim and every spot of light - the
+ * mist goes with the copy onto the canvas. `pixel` is a canvas pixel's
+ * width in arena cells.
+ */
+export function pushAmbience(
+  batch: ShapeBatch,
+  ambience: DishAmbience,
+  view: Rect,
+  pixel: number
+): void {
+  let count = 0;
+  ambience.forEachBubble(view, (x, y, radius) => {
+    if (count + 3 > bubbles.length) {
+      const grown = new Float32Array(Math.max(48, bubbles.length * 2));
+      grown.set(bubbles);
+      bubbles = grown;
+    }
+    bubbles[count++] = x;
+    bubbles[count++] = y;
+    bubbles[count++] = radius;
+  });
+  const { bubbleFilm, bubbleRim, bubbleSpot, spotSize, spotX, spotY } =
+    AMBIENCE;
+  // In three rounds, as the Canvas 2D one strokes them: films, rims, spots.
+  for (let i = 0; i < count; i += 3) {
+    batch.push(
+      SHAPE.disc,
+      square(bubbles[i], bubbles[i + 1], bubbles[i + 2]),
+      WHITE,
+      bubbleFilm
+    );
+  }
+  const rimWidth = Math.max(pixel, AMBIENCE.bubbleRimWidth);
+  // The ring's rect reaches past the circle by half the line and a pixel.
+  const outer = rimWidth / 2 + pixel;
+  for (let i = 0; i < count; i += 3) {
+    const radius = bubbles[i + 2];
+    batch.push(
+      SHAPE.ring,
+      square(bubbles[i], bubbles[i + 1], radius + outer),
+      WHITE,
+      bubbleRim,
+      WHITE,
+      bubbleRim,
+      radius,
+      rimWidth
+    );
+  }
+  for (let i = 0; i < count; i += 3) {
+    const radius = bubbles[i + 2];
+    batch.push(
+      SHAPE.disc,
+      square(
+        bubbles[i] - radius * spotX,
+        bubbles[i + 1] - radius * spotY,
+        radius * spotSize
+      ),
+      WHITE,
+      bubbleSpot
+    );
   }
 }
 
@@ -254,14 +362,88 @@ export function pushForeground(
   }
 }
 
-/** A square centred on a point. */
+/**
+ * A layer of the weapons' effects - see `WeaponFx` - one instance per
+ * mark.
+ */
+export function pushWeaponMarks(batch: ShapeBatch, layer: MarkLayer): void {
+  for (let i = 0; i < layer.count; i++) {
+    const mark = layer.at(i);
+    const { x, y, radius, size, angle, color, color2, alpha } = mark;
+    switch (mark.kind) {
+      case 'glow':
+        batch.push(SHAPE.glow, square(x, y, radius), color, alpha);
+        break;
+      case 'ring':
+        batch.push(
+          SHAPE.ring,
+          square(x, y, radius + size),
+          color,
+          alpha,
+          color,
+          alpha,
+          radius,
+          size
+        );
+        break;
+      case 'hex':
+        batch.push(
+          SHAPE.hex,
+          square(x, y, radius + size),
+          color,
+          alpha,
+          color,
+          alpha,
+          angle,
+          size,
+          radius
+        );
+        break;
+      case 'ellipse':
+        batch.push(
+          SHAPE.ellipse,
+          square(x, y, Math.max(radius, size)),
+          color,
+          alpha,
+          color2,
+          alpha,
+          angle,
+          radius,
+          size
+        );
+        break;
+      case 'field':
+        batch.push(
+          SHAPE.field,
+          square(x, y, radius),
+          color,
+          alpha,
+          color2,
+          alpha,
+          WEAPON_CODE[mark.weapon],
+          mark.timeSec,
+          mark.growth
+        );
+        break;
+    }
+  }
+}
+
+/** Scratch for a shape's box - `push` copies it straight away. */
+const box: Rect = { x: 0, y: 0, width: 0, height: 0 };
+
+/** A square centred on a point, in {@link box}. */
 function square(x: number, y: number, half: number): Rect {
   return ellipse(x, y, half, half);
 }
 
-/** The box around an ellipse. */
+/** The box around an ellipse, in {@link box}. */
 function ellipse(x: number, y: number, rx: number, ry: number): Rect {
-  return { x: x - rx, y: y - ry, width: rx * 2, height: ry * 2 };
+  box.x = x - rx;
+  box.y = y - ry;
+  box.width = rx * 2;
+  box.height = ry * 2;
+  return box;
 }
 
 /**

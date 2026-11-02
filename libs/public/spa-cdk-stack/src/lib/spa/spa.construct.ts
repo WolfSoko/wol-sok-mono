@@ -2,6 +2,7 @@ import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import {
   Certificate,
   CertificateValidation,
+  ICertificate,
 } from 'aws-cdk-lib/aws-certificatemanager';
 import {
   AllowedMethods,
@@ -35,6 +36,12 @@ export interface SpaProps {
   bucketRemovalPolicy?: RemovalPolicy;
   extraAllowedOrigins?: string[];
   /**
+   * The certificate of the distribution, which CloudFront only takes from
+   * us-east-1. Without it the construct creates one, so it must then sit in a
+   * us-east-1 stack. SpaStack passes one when its region is another.
+   */
+  certificate?: ICertificate;
+  /**
    * Files that keep their names across releases, such as a service worker,
    * its ngsw.json or an import map, as globs relative to buildOutputPath.
    * They are served with no-cache instead of the one year max-age the hashed
@@ -50,6 +57,12 @@ export interface SpaProps {
    * the later header wins. Wildcards may only appear in the last segment.
    */
   cacheOverrides?: CacheOverride[];
+}
+
+interface DeploymentOptions {
+  /** @default one year max-age */
+  cacheControl?: CacheControl;
+  contentType?: string;
 }
 
 export interface CacheOverride {
@@ -80,6 +93,15 @@ function onlyInclude(files: string[]): string[] {
     included.add(file + '/**');
   }
   return ['**', ...[...included].map((glob) => '!' + glob)];
+}
+
+/**
+ * The names the certificate of a SPA covers: the main domain, and the site
+ * domain as well when it is a subdomain.
+ */
+export function certificateDomainNames(domainName: string): string[] {
+  const mainDomain = domainName.split('.').slice(-2).join('.');
+  return mainDomain === domainName ? [mainDomain] : [mainDomain, domainName];
 }
 
 const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
@@ -128,13 +150,9 @@ export class SpaConstruct extends Construct {
 
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
 
-    let certificate: Certificate;
-
-    if (mainDomain === siteDomain) {
-      certificate = this.createCertificate(zone, mainDomain);
-    } else {
-      certificate = this.createCertificate(zone, mainDomain, siteDomain);
-    }
+    const certificate: ICertificate =
+      props.certificate ??
+      this.createCertificate(zone, ...certificateDomainNames(siteDomain));
 
     this.bucket = this.createBucket(siteDomain, removalPolicy);
 
@@ -151,35 +169,29 @@ export class SpaConstruct extends Construct {
     // again to restore it. Old bundles stay for tabs still running them.
     // The first deployment owns the handler that all of them share, so the
     // build output comes first and index.html, which waits for the rest, second.
-    this.lastUpload = this.createBucketDeployment(
-      [
-        Source.asset(buildOutputPath, {
-          exclude: ['index.html', ...overrides.flatMap(({ files }) => files)],
-        }),
-      ],
-      CacheControl.maxAge(Duration.days(365)),
-      false,
-      this.bucket,
-      this.distribution
-    );
+    // Every deployment invalidates the distribution when its content changed,
+    // but only the last one, index.html, waits for its invalidation: one wait
+    // at the end instead of one per deployment.
+    this.lastUpload = this.createBucketDeployment([
+      Source.asset(buildOutputPath, {
+        exclude: ['index.html', ...overrides.flatMap(({ files }) => files)],
+      }),
+    ]);
     this.bucketDeployments.push(this.lastUpload);
 
     // index.html goes last, once every file it points at is uploaded.
     this.indexDeployment = this.createBucketDeployment(
       [Source.asset(buildOutputPath, { exclude: ['**', '!index.html'] })],
-      CacheControl.noCache(),
-      false,
-      this.bucket,
-      this.distribution
+      { cacheControl: CacheControl.noCache() },
+      true
     );
     this.bucketDeployments.push(this.indexDeployment);
     this.indexDeployment.node.addDependency(this.lastUpload);
 
     for (const { files, cacheControl, contentType } of overrides) {
-      this.addExtraAssets(
+      this.addUpload(
         [Source.asset(buildOutputPath, { exclude: onlyInclude(files) })],
-        cacheControl,
-        contentType
+        { cacheControl, contentType }
       );
     }
   }
@@ -192,22 +204,19 @@ export class SpaConstruct extends Construct {
    */
   public addExtraAssets(
     assets: ISource[],
-    cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
+    cacheControl?: CacheControl,
     contentType?: string
   ): void {
-    const extraAssetsDeployment: BucketDeployment = this.createBucketDeployment(
-      assets,
-      cacheControl,
-      false,
-      this.bucket,
-      this.distribution,
-      contentType
-    );
+    this.addUpload(assets, { cacheControl, contentType });
+  }
 
-    extraAssetsDeployment.node.addDependency(this.lastUpload);
-    this.lastUpload = extraAssetsDeployment;
-    this.bucketDeployments.push(extraAssetsDeployment);
-    this.indexDeployment.node.addDependency(extraAssetsDeployment);
+  /** Adds a deployment that runs after the uploads so far and before index.html. */
+  private addUpload(sources: ISource[], options: DeploymentOptions): void {
+    const deployment = this.createBucketDeployment(sources, options);
+    deployment.node.addDependency(this.lastUpload);
+    this.lastUpload = deployment;
+    this.bucketDeployments.push(deployment);
+    this.indexDeployment.node.addDependency(deployment);
   }
 
   private createBucket(
@@ -262,7 +271,7 @@ export class SpaConstruct extends Construct {
 
   private createDistribution(
     siteDomain: string,
-    certificate: Certificate,
+    certificate: ICertificate,
     siteBucket: IBucket,
     allowedOrigins: string[] = []
   ): Distribution {
@@ -329,25 +338,25 @@ export class SpaConstruct extends Construct {
 
   private createBucketDeployment(
     sources: ISource[],
-    cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
-    prune: boolean,
-    destinationBucket: IBucket,
-    distribution: IDistribution,
-    contentType?: string
+    {
+      cacheControl = CacheControl.maxAge(Duration.days(365)),
+      contentType,
+    }: DeploymentOptions = {},
+    waitForDistributionInvalidation = false
   ): BucketDeployment {
-    // Deploy site contents to S3 spaBucket
     return new BucketDeployment(
       this,
       'DeployWithInvalidation' + (this.bucketDeployments.length + 1),
       {
         sources,
-        destinationBucket,
-        distribution,
-        prune,
-        memoryLimit: 1024,
+        destinationBucket: this.bucket,
+        distribution: this.distribution,
         distributionPaths: ['/*'],
+        waitForDistributionInvalidation,
+        prune: false,
+        memoryLimit: 1024,
         cacheControl: [cacheControl],
-        ...(contentType ? { contentType } : {}),
+        contentType,
       }
     );
   }

@@ -1,3 +1,4 @@
+import { english, GameText, GameTextParams } from '../i18n/game-text';
 import { ACHIEVEMENT_IDS, AchievementId } from './achievement-ids';
 import { goldOn, levelWon } from './campaign';
 import { CHAPTERS } from './chapters';
@@ -38,95 +39,103 @@ const SCHOLAR_LEVELS = CHAPTERS[0].levelIds;
 const won = (match: MatchRecord | null): match is MatchRecord =>
   match?.won === true;
 
-const RULES: Record<AchievementId, Omit<Achievement, 'id'>> = {
+/**
+ * The test of each achievement, and the values its condition's text is
+ * filled with - name and condition come from the dictionaries.
+ */
+interface Rule {
+  params?: GameTextParams;
+  earned: Achievement['earned'];
+}
+
+const RULES: Record<AchievementId, Rule> = {
   'first-blood': {
-    name: 'First Blood',
-    condition: 'Win a match against the computer',
     // A medallion is a win too - one won before the totals were counted.
     earned: (progress) =>
       progress.totals.wins > 0 ||
       LEVELS.some(({ id }) => levelWon(progress, id)),
   },
   pacifist: {
-    name: 'Pacifist',
-    condition: 'Win without firing a boost',
     earned: (_, match) => won(match) && match.boostsFired === 0,
   },
   blitz: {
-    name: 'Blitz',
-    condition: `Win in under ${BLITZ_SEC} seconds`,
+    params: { seconds: BLITZ_SEC },
     earned: (_, match) => won(match) && match.durationSec < BLITZ_SEC,
   },
   comeback: {
-    name: 'Comeback',
-    condition: 'Win after falling below a quarter of the enemy’s size',
     earned: (_, match) => won(match) && match.lowestSizeRatio < COMEBACK_RATIO,
   },
   siege: {
-    name: 'Siege',
-    condition: 'Win a match of 5 minutes or more',
+    params: { minutes: SIEGE_SEC / 60 },
     earned: (_, match) => won(match) && match.durationSec >= SIEGE_SEC,
   },
   'clean-sweep': {
-    name: 'Clean Sweep',
-    condition: 'Win losing under 10 % of your colony at its peak',
+    params: { percent: Math.round(CLEAN_SWEEP_LOSS_SHARE * 100) },
     earned: (_, match) =>
       won(match) &&
       match.peakCount > 0 &&
       match.lost < CLEAN_SWEEP_LOSS_SHARE * match.peakCount,
   },
   'full-dish': {
-    name: 'Full Dish',
-    condition: 'Grow your colony as big as the dish lets it',
     earned: (_, match) => match !== null && match.peakShare >= FULL_DISH_SHARE,
   },
   gatekeeper: {
-    name: 'Gatekeeper',
-    condition: `Let walls crush ${GATEKEEPER_CRUSHED} enemy bacteria`,
+    params: { count: GATEKEEPER_CRUSHED },
     earned: (progress) => progress.totals.enemyCrushed >= GATEKEEPER_CRUSHED,
   },
   converter: {
-    name: 'Converter',
-    condition: `Capture ${CONVERTER_CAPTURED.toLocaleString('en')} enemy bacteria`,
+    params: { count: CONVERTER_CAPTURED },
     earned: (progress) => progress.totals.captured >= CONVERTER_CAPTURED,
   },
   glutton: {
-    name: 'Glutton',
-    condition: `Eat up ${GLUTTON_PELLETS} pellets against the computer`,
+    params: { count: GLUTTON_PELLETS },
     earned: (progress) => progress.totals.pellets >= GLUTTON_PELLETS,
   },
   flawless: {
-    name: 'Flawless',
-    condition: 'Earn a platinum medallion',
     earned: (progress) => medalTally(progress.medals).platinum > 0,
   },
   'petri-scholar': {
-    name: 'Petri Scholar',
-    condition: `Gold on every level of the ${CHAPTERS[0].name} chapter`,
+    params: { chapter: { key: `levels.chapters.${CHAPTERS[0].id}.name` } },
     earned: (progress) => SCHOLAR_LEVELS.every((id) => goldOn(progress, id)),
   },
   'hard-boiled': {
-    name: 'Hard Boiled',
-    condition: 'Win every level on Hard',
     earned: (progress) =>
       LEVELS.every(({ id }) => bestMedal(progress, id, 'hard') !== null),
   },
   'couch-war': {
-    name: 'Couch War',
-    condition: `Play ${COUCH_WAR_MATCHES} matches between two players`,
+    params: { count: COUCH_WAR_MATCHES },
     earned: (progress) => progress.totals.couchMatches >= COUCH_WAR_MATCHES,
   },
 };
 
-/** Every achievement, in the order of {@link ACHIEVEMENT_IDS}. */
-export const ACHIEVEMENTS: readonly Achievement[] = ACHIEVEMENT_IDS.map(
-  (id) => ({ id, ...RULES[id] })
-);
+/** An achievement's name and condition as texts to translate. */
+export function achievementTexts(id: AchievementId): {
+  name: GameText;
+  condition: GameText;
+} {
+  return {
+    name: { key: `achievements.${id}.name` },
+    condition: {
+      key: `achievements.${id}.condition`,
+      params: RULES[id].params,
+    },
+  };
+}
 
 /** The achievement with that id. */
 export function getAchievement(id: AchievementId): Achievement {
-  return { id, ...RULES[id] };
+  const { name, condition } = achievementTexts(id);
+  return {
+    id,
+    name: english(name),
+    condition: english(condition),
+    earned: RULES[id].earned,
+  };
 }
+
+/** Every achievement, in the order of {@link ACHIEVEMENT_IDS}. */
+export const ACHIEVEMENTS: readonly Achievement[] =
+  ACHIEVEMENT_IDS.map(getAchievement);
 
 /**
  * The progress with every achievement the match earned marked on the day

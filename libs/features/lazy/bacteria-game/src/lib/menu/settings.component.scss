@@ -22,9 +22,14 @@
   font-size: 0.85rem;
 }
 
-// Seats under each other, so the swatches fit a third of the screen.
-.stacked {
+.simulation-check {
+  display: flex;
   flex-direction: column;
+  gap: 0.2rem;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+  overflow-wrap: anywhere;
 }
 
 .option-picker {
@@ -37,6 +42,11 @@
 .option-label {
   font-size: 0.9rem;
   color: var(--bw-muted);
+}
+
+// As wide as its options, like the pickers above, not the whole section.
+.language-picker {
+  align-self: flex-start;
 }
 
 .resolution-hint {

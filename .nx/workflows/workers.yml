@@ -1,0 +1,53 @@
+# Launch template of the Nx Cloud workers; .nx/ci-config.yaml says how many to start.
+# Reference: https://nx.dev/docs/kb/launch-templates
+launch-templates:
+  wolsokmono-linux-extra-large:
+    resource-class: 'docker_linux_amd64/extra_large'
+    # Newest image Nx Cloud lists; the install-node step below still installs
+    # the version from .nvmrc via nvm.
+    image: 'ubuntu22.04-node24.14-v1'
+    env:
+      HUSKY: 0
+      NODE_OPTIONS: '--max_old_space_size=4096'
+
+    init-steps:
+      - name: Checkout # using a reusable step
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/checkout/main.yaml'
+        env:
+          GIT_CHECKOUT_DEPTH: '50'
+          GIT_FETCH_TAGS: 'true'
+
+      - name: Install Node
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/install-node/main.yaml'
+
+      - name: Install necessary binaries
+        script: |
+
+          echo "node version used: $(node -v)"
+
+          # Not reduced to the Playwright libraries and the JDK: without these the
+          # bacteria-game-remote e2e server never comes up on the workers
+          # (PR #2571), although allowScripts denies the gl build they were
+          # added for.
+          echo "Install the packages the worker image lacks"
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential pkg-config python3 python-is-python3 libx11-dev libxext-dev libxi-dev libxrandr-dev libxfixes-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev xserver-xorg-dev libavif13 libgtk-4-1 libgraphene-1.0-dev
+
+          echo "Install a JVM for the Firestore emulator (bacteria-game-remote e2e)"
+          sudo apt-get install -y openjdk-21-jre-headless
+
+      - name: Restore Node Modules Cache
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/cache/main.yaml'
+        inputs:
+          key: 'package-lock.json'
+          paths: |
+            ~/workflows/workspace/node_modules/
+            ~/.npm
+          base-branch: 'main'
+
+      - name: Install Node Modules
+        script: |
+          npm install
+
+      - name: Install Browsers (if needed)
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/install-browsers/main.yaml'

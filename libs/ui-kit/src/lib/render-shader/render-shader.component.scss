@@ -14,3 +14,17 @@
   // width: 100%;
   // height: 100%;
 }
+
+canvas {
+  display: block;
+  opacity: 1;
+  transition: opacity 600ms ease-in;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &.waiting {
+    opacity: 0;
+  }
+}

@@ -1,16 +1,8 @@
 name: 'Install Dependencies'
-description: 'Installs all dependencies for this repo to run'
+description: 'Restores node_modules from the Actions cache, or runs npm ci once and saves it'
 inputs:
-  run-scripts: # id of input
-    description: 'run npm install with --no-scripts flag'
-    required: false
-    default: 'false'
   browser:
     description: 'install browser and playwright dependencies'
-    required: false
-    default: 'false'
-  apt-packages:
-    description: 'install packages needed to run tests'
     required: false
     default: 'false'
 
@@ -18,23 +10,43 @@ runs:
   using: composite
 
   steps:
-    - name: Install ubuntu dependencies
-      if: inputs.apt-packages == 'true'
-      shell: bash
-      run: ./.github/actions/install-deps/install-ubuntu-packages.sh
-
     - uses: actions/setup-node@v7
       with:
         node-version-file: '.nvmrc'
-        cache: npm
 
-    - name: Workaround gl build (force include uintptr_t definition)
+    # The whole node_modules tree is cached, keyed on everything that shapes it:
+    # the manifest, the lockfile, the npm config and the Node version (package.json
+    # is in the key so that a manifest edit without a lockfile update still runs
+    # npm ci, which rejects the mismatch). An exact hit restores the
+    # finished install (including node_modules/.bin), so npm ci is skipped; there
+    # are no restore-keys on purpose, because npm ci wipes node_modules anyway and
+    # a stale tree would only cost the download. (An earlier attempt skipped
+    # npm ci on setup-node's cache-hit, which only means ~/.npm was restored, not
+    # node_modules - that is why nx was missing back then.)
+    - name: Restore node_modules
+      id: node-modules
+      uses: actions/cache/restore@v6
+      with:
+        path: node_modules
+        key: node-modules-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.nvmrc', '.npmrc', 'package.json', 'package-lock.json') }}
+
+    # Install scripts stay off: nothing in CI needs them (the allowScripts list in
+    # package.json denies `gl`, the only native module without a prebuild for
+    # Node 24, and the rest ship their binaries as optional platform packages).
+    # No scripts also means no compiler toolchain or X11 headers on the runner.
+    - name: Install dependencies
+      if: steps.node-modules.outputs.cache-hit != 'true'
       shell: bash
-      run: |
-        # stdint.h funktioniert für C und C++ (uintptr_t); cstdint würde beim C-Compiler fehlschlagen
-        echo 'CXXFLAGS=-include stdint.h' >> $GITHUB_ENV
-        echo 'CPPFLAGS=-include stdint.h' >> $GITHUB_ENV
-        echo 'Applied CXXFLAGS workaround (-include stdint.h) for gl angleutils uintptr_t build failure'
+      run: npm ci --ignore-scripts --no-audit --no-fund
+
+    # Saved right after the install, so the cache holds the pristine tree and not
+    # whatever the job writes into node_modules/.cache later on.
+    - name: Save node_modules
+      if: steps.node-modules.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: node_modules
+        key: ${{ steps.node-modules.outputs.cache-primary-key }}
 
     - name: Cache Playwright binaries
       id: cache-playwright-binary
@@ -43,12 +55,6 @@ runs:
       with:
         path: ~/.cache/ms-playwright
         key: playwright-binary-${{ hashFiles('package-lock.json') }}
-
-    # WICHTIG: npm ci muss IMMER laufen. Vorheriger Zustand übersprang Installation bei Cache-Hit -> Nx konnte nicht gefunden werden.
-    - name: Install dependencies
-      shell: bash
-      run: |
-        npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
 
     - name: Install Playwright browsers (only if needed)
       if: inputs.browser == 'true' && steps.cache-playwright-binary.outputs.cache-hit != 'true'

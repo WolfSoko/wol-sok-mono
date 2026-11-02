@@ -11,6 +11,7 @@ import {
   nextLevel,
 } from './levels';
 import { GAME_MAPS } from './game-maps';
+import { TRAINING_LEVELS } from './training-levels';
 import { MAX_GPU_COLONIES } from '../gl/simulation-shaders';
 
 describe('LEVELS', () => {
@@ -41,8 +42,8 @@ describe('LEVELS', () => {
     ).toEqual([]);
   });
 
-  it('uses unique ids', () => {
-    const ids = LEVELS.map((level) => level.id);
+  it('uses unique ids, the training missions included', () => {
+    const ids = [...LEVELS, ...TRAINING_LEVELS].map((level) => level.id);
 
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -50,13 +51,15 @@ describe('LEVELS', () => {
   it('only references maps that exist', () => {
     const mapIds = GAME_MAPS.map((map) => map.id);
 
-    for (const level of LEVELS) {
+    for (const level of [...LEVELS, ...TRAINING_LEVELS]) {
       expect(mapIds).toContain(level.mapId);
     }
   });
 
-  it('plays every map at least once', () => {
-    const played = new Set(LEVELS.map((level) => level.mapId));
+  it('plays every map at least once, on the ladder or in the training', () => {
+    const played = new Set(
+      [...LEVELS, ...TRAINING_LEVELS].map((level) => level.mapId)
+    );
 
     expect(played.size).toBe(GAME_MAPS.length);
   });

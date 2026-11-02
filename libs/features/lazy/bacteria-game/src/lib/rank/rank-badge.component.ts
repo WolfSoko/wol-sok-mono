@@ -2,8 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
 } from '@angular/core';
+import { I18nService } from '../i18n/i18n.service';
 import { RANKS } from '../state/ranks';
 
 /**
@@ -30,17 +32,24 @@ import { RANKS } from '../state/ranks';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     role: 'img',
-    '[attr.aria-label]': '"Rank: " + name()',
+    '[attr.aria-label]': 'label()',
     '[style.width.px]': 'size()',
     '[style.height.px]': 'size()',
   },
 })
 export class RankBadgeComponent {
+  private readonly i18n = inject(I18nService);
+
+  /** The rank's name in the active language. */
   public readonly name = input.required<string>();
   /** 1 for the first rank. */
   public readonly number = input.required<number>();
   /** Width and height in CSS pixels. */
   public readonly size = input(64);
+
+  protected readonly label = computed(() =>
+    this.i18n.t('match.rank.badge', { name: this.name() })
+  );
 
   /**
    * The x of each pip, centred under the initial - eight of them still

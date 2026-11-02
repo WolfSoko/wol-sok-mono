@@ -6,12 +6,7 @@
 
 import { GameMap, pointSymmetric, Rect } from './maps';
 import { blob } from './shapes';
-import { puddle, Zone, ZoneKind } from './zones';
-
-/** A round zone around a point - see {@link blob}. */
-function disc(kind: ZoneKind, x: number, y: number, radius: number): Zone {
-  return { ...blob(x, y, radius), kind };
-}
+import { disc, puddle } from './zones';
 
 /** The fuel rods of the left half, as shares of the arena. */
 const RODS = [

@@ -35,11 +35,33 @@ export function turnedOnto(
   };
 }
 
+/** An input that changes nothing. */
+export const NO_INPUT: GhostInputs = Object.freeze({
+  boost: false,
+  drag: null,
+  steer: null,
+  weapon: false,
+});
+
 /** What a ghost puts in before a tick - null where it changes nothing. */
 export interface GhostInputs {
   boost: boolean;
   drag: Point | null;
   steer: SteeringVector | null;
+  /**
+   * True when it fires its weapon - never for a driver without weapons, as
+   * online, where both seats play plain.
+   */
+  weapon: boolean;
+}
+
+/**
+ * Whatever puts in for a seat the humans at this screen do not steer
+ * directly: a recording, or the other device of an online match.
+ */
+export interface SeatDriver {
+  /** What the seat puts in before `tick`. */
+  before(tick: number): GhostInputs;
 }
 
 /** One list of a recording, read in the order of its ticks. */
@@ -61,10 +83,11 @@ class Cursor<T extends readonly number[]> {
  * replay plays every human back this way, a ghost match one of them against
  * a live player.
  */
-export class GhostController {
+export class GhostController implements SeatDriver {
   private readonly steers: Cursor<ReplayInputs['steers'][number]>;
   private readonly drags: Cursor<ReplayInputs['drags'][number]>;
   private readonly boosts: Cursor<ReplayInputs['boosts'][number]>;
+  private readonly weapons: Cursor<ReplayInputs['weapons'][number]>;
 
   /** Plays the inputs of `seat` in the recording, mapped by `mapping`. */
   public constructor(
@@ -77,12 +100,17 @@ export class GhostController {
     this.steers = of(inputs.steers);
     this.drags = of(inputs.drags);
     this.boosts = of(inputs.boosts);
+    this.weapons = of(inputs.weapons);
   }
 
   /** What the human put in before `tick`, each kind's last input winning. */
   public before(tick: number): GhostInputs {
-    const inputs: GhostInputs = { boost: false, drag: null, steer: null };
-    inputs.boost = [...this.boosts.dueBy(tick)].length > 0;
+    const inputs: GhostInputs = {
+      boost: [...this.boosts.dueBy(tick)].length > 0,
+      drag: null,
+      steer: null,
+      weapon: [...this.weapons.dueBy(tick)].length > 0,
+    };
     for (const [, , x, y] of this.drags.dueBy(tick)) {
       inputs.drag = this.mapping.point({ x, y });
     }

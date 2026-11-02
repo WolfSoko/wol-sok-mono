@@ -99,7 +99,7 @@ These applications are loaded as remote modules into the main application:
 CDK (Cloud Development Kit) applications provide infrastructure as code:
 
 - `angular-examples-cdk`: AWS infrastructure for angular-examples
-- `bacteria-game-remote-cdk`: AWS infrastructure for bacteria-game
+- `bacteria-game-remote-cdk`: the DNS record of bacteria-wars.wolsok.de (the game itself is on Firebase Hosting)
 - `fourier-analysis-remote-cdk`: AWS infrastructure for fourier-analysis
 - `shader-examples-remote-cdk`: AWS infrastructure for shader-examples
 

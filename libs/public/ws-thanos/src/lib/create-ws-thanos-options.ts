@@ -1,3 +1,4 @@
+import { DEFAULT_WIND_DIRECTION } from './wind';
 import { WsThanosOptions } from './ws-thanos.options';
 
 export function createWsThanosOptions(
@@ -10,6 +11,7 @@ export function createWsThanosOptions(
     sound: true,
     soundVolume: 0.5,
     crumble: 'shards',
+    windDirection: DEFAULT_WIND_DIRECTION,
     preload: true,
     ...options,
   };

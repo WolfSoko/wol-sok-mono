@@ -2,7 +2,11 @@ import { computed, effect, inject, Injectable, untracked } from '@angular/core';
 import { ProgressService } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { difficultyOption } from './state/bot-controller';
-import { CampaignSummary, furthestOpenLevel } from './state/campaign';
+import {
+  CampaignSummary,
+  continueText,
+  furthestOpenLevel,
+} from './state/campaign';
 import { activeArena } from './state/unlocks';
 import { getLevel, isLadderLevel, LEVELS } from './state/levels';
 import { medalTally } from './state/progress';
@@ -50,6 +54,7 @@ export class CampaignService {
     achievements: Object.keys(this.progress.achievements()).length,
     xp: this.progress.xp(),
     continueLabel: `${getLevel(this.furthestLevel()).name} · ${difficultyOption(this.difficulty())?.name ?? ''}`,
+    continueText: continueText(this.furthestLevel(), this.difficulty()),
   }));
 
   /** True while the campaign's ladder applies - against the computer, no free play. */

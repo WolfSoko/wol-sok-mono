@@ -1,0 +1,70 @@
+<section class="hero">
+  <div class="dish" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <p class="eyebrow">{{ t().home.eyebrow }}</p>
+  <h1>
+    {{ t().home.title }} <em>{{ t().home.titleAccent }}</em>
+  </h1>
+  <p class="lead">{{ t().home.lead }}</p>
+  <nav class="jump" [attr.aria-label]="t().nav.sections">
+    <a href="#apps">{{ t().home.jumpApps }}</a>
+    <a href="#experiments">{{ t().home.jumpExperiments }}</a>
+    <a href="#open-source">{{ t().home.jumpOpenSource }}</a>
+    <a routerLink="/career">{{ t().home.jumpCareer }}</a>
+  </nav>
+</section>
+
+<section id="apps" aria-labelledby="apps-title">
+  <h2 id="apps-title">{{ t().home.apps }}</h2>
+  <p class="intro">{{ t().home.appsIntro }}</p>
+  <div class="grid">
+    @for (project of apps; track project.name; let i = $index) {
+      <wolsok-project-card [project]="project" [wolsokReveal]="(i % 3) * 0.1" />
+    }
+  </div>
+</section>
+
+<section id="experiments" aria-labelledby="experiments-title">
+  <h2 id="experiments-title">{{ t().home.experiments }}</h2>
+  <p class="intro">
+    {{ t().home.experimentsIntroBefore }}
+    <a href="https://angularexamples.wolsok.de/">{{
+      t().home.experimentsLab
+    }}</a>
+    {{ t().home.experimentsIntroAfter }}
+  </p>
+  <div class="grid small">
+    @for (project of experiments; track project.name; let i = $index) {
+      <wolsok-project-card
+        [project]="project"
+        [wolsokReveal]="(i % 4) * 0.08"
+      />
+    }
+  </div>
+</section>
+
+<section id="open-source" aria-labelledby="open-source-title">
+  <h2 id="open-source-title">{{ t().home.openSource }}</h2>
+  <p class="intro">
+    {{ t().home.openSourceIntroBefore }}
+    <a href="https://github.com/WolfSoko/wol-sok-mono"
+      >github.com/WolfSoko/wol-sok-mono</a
+    >. {{ t().home.openSourceIntroAfter }}
+  </p>
+  <div class="grid">
+    @for (project of packages; track project.name; let i = $index) {
+      <wolsok-project-card [project]="project" [wolsokReveal]="i * 0.1" />
+    }
+  </div>
+</section>
+
+<section id="career" class="career" aria-labelledby="career-title" wolsokReveal>
+  <div class="career-card">
+    <div>
+      <h2 id="career-title">{{ t().home.careerTitle }}</h2>
+      <p class="intro">{{ careerLead() }}</p>
+    </div>
+    <a matButton="filled" routerLink="/career">{{ t().home.careerLink }}</a>
+  </div>
+</section>

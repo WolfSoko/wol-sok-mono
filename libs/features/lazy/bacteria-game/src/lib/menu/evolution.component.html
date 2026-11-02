@@ -1,0 +1,251 @@
+<feat-lazy-bac-game-screen-header
+  [title]="'evolution.title' | t"
+  (back)="back.emit()"
+>
+  <feat-lazy-bac-game-dna-counter
+    #counter
+    data-dna-counter
+    [dna]="evolution.dna()"
+    [earned]="evolution.earned()"
+    [loaded]="evolution.loaded()"
+    [ready]="evolution.canEvolve()"
+  />
+</feat-lazy-bac-game-screen-header>
+<p class="cdk-visually-hidden" role="status">{{ announced() }}</p>
+
+<div class="layout">
+  <aside class="lab">
+    <div class="dish">
+      <feat-lazy-bac-game-colony-preview
+        class="preview"
+        [loadout]="evolution.loadout()"
+        [color]="color()"
+        [label]="'evolution.preview.label' | t"
+      />
+      @if (carried(); as weapon) {
+        <span class="carried" [style.--weapon]="weapon.css">
+          <mat-icon>{{ weapon.icon }}</mat-icon>
+          {{ weapon.name | t }}
+        </span>
+      }
+    </div>
+    <p class="tagline">{{ "evolution.tagline" | t }}</p>
+    <p class="note">
+      {{ "evolution.dna.how" | t }} {{ "evolution.plays" | t }}
+    </p>
+    @if (confirmingReset()) {
+      <div class="confirm" role="group" aria-labelledby="reset-title">
+        <h3 id="reset-title" class="confirm-title">
+          {{ "evolution.reset.title" | t }}
+        </h3>
+        <p>{{ "evolution.reset.text" | t }}</p>
+        <div class="confirm-actions">
+          <button
+            mat-flat-button
+            type="button"
+            class="confirm-reset"
+            (click)="reset()"
+          >
+            <mat-icon>restart_alt</mat-icon>
+            {{ "evolution.reset.confirm" | t }}
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="confirmingReset.set(false)"
+          >
+            {{ "evolution.reset.cancel" | t }}
+          </button>
+        </div>
+      </div>
+    } @else {
+      <button
+        mat-stroked-button
+        type="button"
+        class="reset"
+        [disabled]="nothingHeld()"
+        (click)="confirmingReset.set(true)"
+      >
+        <mat-icon>restart_alt</mat-icon>
+        {{ "evolution.reset.button" | t }}
+      </button>
+    }
+  </aside>
+
+  <div class="shop">
+    <section aria-labelledby="genes-title">
+      <h3 id="genes-title" class="section-title">
+        {{ "evolution.genes.title" | t }}
+      </h3>
+      <ul class="genes">
+        @for (gene of genes(); track gene.id) {
+          @let name = gene.name | t;
+          <li class="gene" [class.maxed]="gene.maxed" [style.--gene]="gene.css">
+            <span class="gene-icon" aria-hidden="true">
+              <mat-icon>{{ gene.icon }}</mat-icon>
+            </span>
+            <div class="gene-text">
+              <h4 class="card-title">{{ name }}</h4>
+              <p class="card-note">{{ gene.description | t }}</p>
+              <p class="effect">
+                @if (gene.level > 0) {
+                  <strong>{{
+                    gene.effect | t: { percent: gene.percent }
+                  }}</strong>
+                } @else {
+                  {{ "evolution.genes.none" | t }}
+                }
+                @if (gene.nextPercent !== null) {
+                  <span class="next">{{
+                    "evolution.genes.next"
+                      | t
+                        : {
+                            effect:
+                              (gene.effect | t: { percent: gene.nextPercent }),
+                          }
+                  }}</span>
+                }
+              </p>
+            </div>
+            <span
+              class="pips"
+              role="img"
+              [attr.aria-label]="
+                'evolution.genes.pips'
+                  | t: { name, level: gene.level, max: maxLevel }
+              "
+            >
+              @for (pip of pips; track pip) {
+                <span
+                  class="pip"
+                  [class.on]="pip < gene.shown"
+                  [attr.data-pip]="gene.id + '-' + pip"
+                ></span>
+              }
+            </span>
+            @if (gene.maxed) {
+              <span class="maxed-label">
+                <mat-icon aria-hidden="true">auto_awesome</mat-icon>
+                {{ "evolution.genes.maxed" | t }}
+              </span>
+            } @else {
+              <button
+                mat-flat-button
+                type="button"
+                class="buy"
+                [disabled]="!gene.canBuy"
+                [attr.aria-label]="
+                  'evolution.genes.buyLabel'
+                    | t: { name, level: gene.level + 1, cost: gene.cost ?? 0 }
+                "
+                (click)="buyGene(gene.id)"
+              >
+                {{ "evolution.genes.buy" | t }}
+                <span class="cost">
+                  <feat-lazy-bac-game-dna-helix
+                    [size]="16"
+                    [animated]="false"
+                  />
+                  {{ gene.cost }}
+                </span>
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section aria-labelledby="weapons-title">
+      <h3 id="weapons-title" class="section-title">
+        {{ "evolution.weapons.title" | t }}
+      </h3>
+      <p class="note">{{ "evolution.weapons.where" | t }}</p>
+      <ul class="weapons">
+        @for (weapon of weapons(); track weapon.id) {
+          @let name = weapon.name | t;
+          <li
+            class="weapon"
+            [class.owned]="weapon.owned"
+            [class.equipped]="weapon.equipped"
+            [style.--weapon]="weapon.css"
+          >
+            <feat-lazy-bac-game-weapon-demo
+              class="demo"
+              [weapon]="weapon.id"
+              [icon]="weapon.icon"
+            />
+            <div class="weapon-text">
+              <h4 class="card-title">{{ name }}</h4>
+              <p class="card-note">{{ weapon.description | t }}</p>
+              <p class="stats">
+                <span class="stat"
+                  ><mat-icon aria-hidden="true">timer</mat-icon
+                  >{{
+                    "evolution.weapons.cooldown"
+                      | t: { seconds: weapon.cooldown }
+                  }}</span
+                >
+                <span class="stat"
+                  ><mat-icon aria-hidden="true">radio_button_unchecked</mat-icon
+                  >{{
+                    "evolution.weapons.radius" | t: { radius: weapon.radius }
+                  }}</span
+                >
+                <span class="stat"
+                  ><mat-icon aria-hidden="true">hourglass_bottom</mat-icon
+                  >{{
+                    weapon.duration > 0
+                      ? ("evolution.weapons.duration"
+                        | t: { seconds: weapon.duration })
+                      : ("evolution.weapons.instant" | t)
+                  }}</span
+                >
+              </p>
+            </div>
+            @if (weapon.owned) {
+              <button
+                mat-stroked-button
+                type="button"
+                class="equip"
+                [attr.aria-pressed]="weapon.equipped"
+                [attr.aria-label]="'evolution.weapons.equipLabel' | t: { name }"
+                (click)="toggleEquip(weapon.id)"
+              >
+                <mat-icon>{{
+                  weapon.equipped ? "check_circle" : "radio_button_unchecked"
+                }}</mat-icon>
+                {{
+                  (weapon.equipped
+                    ? "evolution.weapons.equipped"
+                    : "evolution.weapons.equip"
+                  ) | t
+                }}
+              </button>
+            } @else {
+              <button
+                mat-flat-button
+                type="button"
+                class="buy"
+                [disabled]="!weapon.canBuy"
+                [attr.aria-label]="
+                  'evolution.weapons.buyLabel' | t: { name, cost: weapon.cost }
+                "
+                (click)="buyWeapon(weapon.id)"
+              >
+                {{ "evolution.weapons.buy" | t }}
+                <span class="cost">
+                  <feat-lazy-bac-game-dna-helix
+                    [size]="16"
+                    [animated]="false"
+                  />
+                  {{ weapon.cost }}
+                </span>
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  </div>
+</div>
+<div #fx class="fx" aria-hidden="true"></div>

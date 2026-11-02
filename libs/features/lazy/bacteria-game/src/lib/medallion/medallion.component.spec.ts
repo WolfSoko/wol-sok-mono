@@ -1,3 +1,4 @@
+import { I18nService } from '../i18n/i18n.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MedalTier } from '../state/medallions';
 import { MedallionComponent } from './medallion.component';
@@ -76,5 +77,13 @@ describe('MedallionComponent', () => {
       render('platinum').nativeElement.querySelector('.sheen')
     ).not.toBeNull();
     expect(render('gold').nativeElement.querySelector('.sheen')).toBeNull();
+  });
+
+  it('names the medallion in German', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+
+    expect(
+      render('gold', 'hard').nativeElement.getAttribute('aria-label')
+    ).toBe('Goldmedaille, Schwer');
   });
 });

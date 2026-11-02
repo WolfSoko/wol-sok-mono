@@ -5,6 +5,7 @@ import {
   EnvironmentProviders,
   inject,
   InjectionToken,
+  Injector,
   provideAppInitializer,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -39,16 +40,23 @@ export function providePwaUpdates(): EnvironmentProviders {
     }
     const snackBar = inject(MatSnackBar);
     const reloadPage = inject(RELOAD_PAGE);
+    const injector = inject(Injector);
     const destroyRef = inject(DestroyRef);
 
     swUpdate.versionUpdates
       .pipe(takeUntilDestroyed(destroyRef))
       .subscribe((event) => {
         if (event.type === 'VERSION_READY') {
-          snackBar
-            .open('A new version of the game is ready', 'Reload')
-            .onAction()
-            .subscribe(reloadPage);
+          // In the game's language, which its settings choose. The game is
+          // loaded lazily, with its routes, so its texts come only now and
+          // never with the privacy page.
+          void import('./remote-entry/entry.routes').then(({ I18nService }) => {
+            const i18n = injector.get(I18nService);
+            snackBar
+              .open(i18n.t('stage.update.ready'), i18n.t('stage.update.reload'))
+              .onAction()
+              .subscribe(reloadPage);
+          });
         } else if (event.type === 'VERSION_INSTALLATION_FAILED') {
           console.error('Could not install the new version', event.error);
         }

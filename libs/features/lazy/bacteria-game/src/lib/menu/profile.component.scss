@@ -4,18 +4,26 @@
   @include screen.screen;
 }
 
-.kept {
-  margin-left: auto;
-  font-size: 0.9rem;
-  color: var(--bw-muted);
-}
-
 .body {
   flex: 1 1 auto;
   display: flex;
   flex-wrap: wrap;
   gap: 1.25rem;
   min-height: 0;
+}
+
+.online {
+  @include screen.panel;
+
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.online .section-title {
+  margin: 0;
 }
 
 .summary {

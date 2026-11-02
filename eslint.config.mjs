@@ -21,9 +21,14 @@ const selectorPrefixes = {
   'apps/fourier-analysis-remote': ['wolsok', 'wolsok'],
   'apps/shader-examples-remote': ['app', 'app'],
   'apps/pacetrainer': ['pace', 'pace'],
+  'apps/portfolio': ['wolsok', 'wolsok'],
   'apps/rollapolla-analog': ['rap', 'rap'],
   'libs/features/api/auth': ['ftApiAuth', 'ft-api-auth'],
   'libs/features/lazy/bacteria-game': ['featLazyBacGame', 'feat-lazy-bac-game'],
+  'libs/features/lazy/bacteria-wars-admin': [
+    'featLazyBacAdmin',
+    'feat-lazy-bac-admin',
+  ],
   'libs/features/lazy/fourier-analysis': ['lazyFeatFanal', 'lazy-feat-fanal'],
   'libs/features/lazy/gravity-rocks': ['featLazyGravity', 'feat-lazy-gravity'],
   'libs/features/lazy/neural-networks': [
@@ -50,6 +55,7 @@ const selectorPrefixes = {
   'libs/public/ws-thanos': ['wsThanos', 'ws-thanos'],
   'libs/shared/data-access': ['lib', 'lib'],
   'libs/shared/headline-animation': ['lib', 'lib'],
+  'libs/shared/legal': ['wolsok', 'wolsok'],
   'libs/ui-kit': ['wsSharedUi', 'ws-shared-ui'],
   'libs/utils/gpu-calc': ['wsUtilsGpuJs', 'ws-utils-gpu-js'],
 };

@@ -1,5 +1,12 @@
-import { BOT_DIFFICULTIES } from './bot-controller';
-import { levelTitle, LEVELS } from './levels';
+import { english, GameText } from '../i18n/game-text';
+import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
+import {
+  getLevel,
+  levelNameText,
+  levelTitleText,
+  LEVELS,
+  previousLevel,
+} from './levels';
 import { medalRank, MedalTier } from './medallions';
 import { bestMedal, Progress } from './progress';
 
@@ -14,6 +21,22 @@ export interface CampaignSummary {
   xp: number;
   /** "5 · Pillar Field · Normal" - where Continue picks up. */
   continueLabel: string;
+  /** The continue label as a text to translate. */
+  continueText?: GameText;
+}
+
+/** Where Continue picks up - "5 · Pillar Field · Normal" - to translate. */
+export function continueText(
+  levelId: string,
+  difficulty: BotDifficulty
+): GameText {
+  return {
+    key: 'game.continue',
+    params: {
+      level: levelNameText(getLevel(levelId)),
+      difficulty: { key: `game.difficulties.${difficulty}.name` },
+    },
+  };
 }
 
 /**
@@ -45,16 +68,39 @@ export function goldOn(progress: Progress, levelId: string): boolean {
 export function ladderLocks(
   progress: Progress
 ): Readonly<Record<string, string>> {
-  const locks: Record<string, string> = {};
-  let previous: { title: string; won: boolean } | null = null;
+  return Object.fromEntries(
+    Object.entries(ladderLockTexts(progress)).map(([id, text]) => [
+      id,
+      english(text),
+    ])
+  );
+}
+
+/** {@link ladderLocks} as texts to translate. */
+export function ladderLockTexts(
+  progress: Progress
+): Readonly<Record<string, GameText>> {
+  const locks: Record<string, GameText> = {};
+  let previousWon: boolean | null = null;
   for (const level of LEVELS) {
     const won = levelWon(progress, level.id);
-    if (previous !== null && !previous.won && !won) {
-      locks[level.id] = `Win ${previous.title} to unlock`;
+    if (previousWon === false && !won) {
+      locks[level.id] = ladderLockText(level.id);
     }
-    previous = { title: levelTitle(level), won };
+    previousWon = won;
   }
   return locks;
+}
+
+/**
+ * Why a level of the ladder is locked, while it is: "Win Corridors to
+ * unlock", after the level before it.
+ */
+export function ladderLockText(levelId: string): GameText {
+  return {
+    key: 'levels.locks.ladder',
+    params: { title: levelTitleText(previousLevel(levelId) ?? LEVELS[0]) },
+  };
 }
 
 /** The levels a change of the ladder's locks opened, in the ladder's order. */

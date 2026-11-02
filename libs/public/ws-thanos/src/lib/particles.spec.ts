@@ -20,10 +20,12 @@ function imageDataOf(
   return { width, height, data, colorSpace: 'srgb' } as ImageData;
 }
 
+const AT_ORIGIN = { x: 0, y: 0 };
+
 describe('createParticles', () => {
   it('should create one particle per visible pixel', () => {
     const image = imageDataOf(4, 3, (x) => x < 2);
-    const particles = createParticles(image, 1000, 30);
+    const particles = createParticles(image, 1000, AT_ORIGIN);
     expect(particles.count).toBe(6);
     expect(particles.state.length).toBe(6 * PARTICLE_STATE_LENGTH);
     expect(particles.colors.length).toBe(6 * 4);
@@ -33,22 +35,22 @@ describe('createParticles', () => {
     const particles = createParticles(
       imageDataOf(10, 10, () => true),
       25,
-      50
+      AT_ORIGIN
     );
     expect(particles.count).toBe(25);
     expect(particles.state.length).toBe(25 * PARTICLE_STATE_LENGTH);
   });
 
-  it('should place particles at the bottom of the taller effect canvas with the pixel color', () => {
+  it('should place particles at the element offset in the effect canvas with the pixel color', () => {
     const particles = createParticles(
       imageDataOf(1, 2, (_, y) => y === 1),
       10,
-      10
+      { x: 3, y: 8 }
     );
     const s = particles.state;
-    expect(s[ParticleStateIndex.X]).toBe(0);
-    // pixel y=1 of a 2px image inside a 10px high effect canvas
-    expect(s[ParticleStateIndex.Y]).toBe(1 + 10 - 2);
+    expect(s[ParticleStateIndex.X]).toBe(3);
+    // pixel y=1 of an element 8px below the top of the effect canvas
+    expect(s[ParticleStateIndex.Y]).toBe(1 + 8);
     expect(s[ParticleStateIndex.ALPHA]).toBe(200);
     expect(Array.from(particles.colors)).toEqual([10, 21, 30, 200]);
   });
@@ -58,7 +60,7 @@ describe('createParticles', () => {
       createParticles(
         imageDataOf(4, 4, () => true),
         16,
-        10
+        AT_ORIGIN
       ).sampled
     ).toBe(false);
   });
@@ -68,7 +70,7 @@ describe('createParticles', () => {
       createParticles(
         imageDataOf(4, 4, () => true),
         15,
-        10
+        AT_ORIGIN
       ).sampled
     ).toBe(true);
   });
@@ -77,7 +79,7 @@ describe('createParticles', () => {
     const particles = createParticles(
       imageDataOf(3, 3, () => true),
       100,
-      30
+      AT_ORIGIN
     );
     for (let i = 0; i < particles.count; i++) {
       const base = i * PARTICLE_STATE_LENGTH;
@@ -88,14 +90,18 @@ describe('createParticles', () => {
     }
   });
 
-  it('should report the vaporizing front bounds', () => {
+  it('should report the box around the visible particles in the effect canvas', () => {
     const particles = createParticles(
-      imageDataOf(5, 5, (x, y) => x <= 3 && y >= 2),
+      imageDataOf(5, 5, (x, y) => x >= 1 && x <= 3 && y >= 2),
       1000,
-      25
+      { x: 2, y: 20 }
     );
-    expect(particles.maxParticleX).toBe(3);
-    expect(particles.minParticleY).toBe(2);
+    expect(particles.bounds).toEqual({
+      left: 3,
+      top: 22,
+      right: 5,
+      bottom: 24,
+    });
   });
 });
 
@@ -109,12 +115,12 @@ describe('limitParticles', () => {
     }) as ImageData;
 
   it('should keep particles below the limit as they are', () => {
-    const particles = createParticles(opaque(4, 4), 100, 20);
+    const particles = createParticles(opaque(4, 4), 100, AT_ORIGIN);
     expect(limitParticles(particles, 16)).toBe(particles);
   });
 
   it('should keep a random sample of the particles above the limit', () => {
-    const particles = createParticles(opaque(10, 10), 1000, 50);
+    const particles = createParticles(opaque(10, 10), 1000, { x: 0, y: 40 });
 
     const limited = limitParticles(particles, 30);
 

@@ -2,12 +2,20 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
 } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  colonyColorText,
+  colorLockText,
+  renderGameText,
+} from '../i18n/game-texts';
+import { I18nService } from '../i18n/i18n.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { COLONY_COLORS } from '../state/colony-colors';
 import { GameMode } from '../state/game.states';
 
@@ -24,7 +32,12 @@ export interface ColorChange {
  */
 @Component({
   selector: 'feat-lazy-bac-game-colony-colors',
-  imports: [MatButtonToggleModule, MatIconModule, MatTooltipModule],
+  imports: [
+    MatButtonToggleModule,
+    MatIconModule,
+    MatTooltipModule,
+    TranslatePipe,
+  ],
   templateUrl: './colony-colors.component.html',
   styleUrl: './colony-colors.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,23 +55,50 @@ export class ColonyColorsComponent {
 
   public readonly colorChange = output<ColorChange>();
 
-  protected readonly palette = COLONY_COLORS;
+  private readonly i18n = inject(I18nService);
+
+  /**
+   * The colours with their names and, for one still to earn, what opens
+   * it - in the active language.
+   */
+  protected readonly palette = computed(() => {
+    const t = this.i18n.t.bind(this.i18n);
+    return COLONY_COLORS.map(({ id, rgb }) => {
+      const lock = this.locks()[id];
+      const lockText = colorLockText(id);
+      return {
+        id,
+        rgb,
+        name: renderGameText(colonyColorText(id), t),
+        // The stored English lock where the game has no text for it.
+        lock:
+          lock === undefined
+            ? null
+            : lockText === null
+              ? lock
+              : renderGameText(lockText, t),
+      };
+    });
+  });
 
   /** Who sits in each seat, for the label of its colour picker. */
   protected readonly seats = computed(() =>
     this.mode() === 'vs-computer'
-      ? (['You', 'Computer'] as const)
-      : (['Left player', 'Right player'] as const)
+      ? [this.i18n.t('game.players.you'), this.i18n.t('game.players.computer')]
+      : [
+          this.i18n.t('controls.colors.left'),
+          this.i18n.t('controls.colors.right'),
+        ]
   );
 
   /** The colours still to earn, with what opens each - written out, for touch and keyboard. */
   protected readonly lockedList = computed(() =>
-    this.palette
-      .filter(({ id }) => id in this.locks())
-      .map(({ id, name, rgb }) => ({
+    this.palette()
+      .filter(({ lock }) => lock !== null)
+      .map(({ id, name, rgb, lock }) => ({
         id,
         name,
-        lock: this.locks()[id],
+        lock,
         css: `rgb(${rgb.join(',')})`,
       }))
   );

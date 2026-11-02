@@ -1,3 +1,4 @@
+import { I18nService } from '../i18n/i18n.service';
 import { TestBed } from '@angular/core/testing';
 import { RankStandingComponent } from './rank-standing.component';
 
@@ -24,5 +25,13 @@ describe('RankStandingComponent', () => {
     expect(render(20_000).querySelector('.xp-line')?.textContent).not.toContain(
       ' to '
     );
+  });
+
+  it('speaks German', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    const host = render(1240);
+
+    expect(host.querySelector('.rank-name')?.textContent).toBe('Bazillus');
+    expect(host.querySelector('.rank-label')?.textContent).toBe('Rang 3 von 8');
   });
 });

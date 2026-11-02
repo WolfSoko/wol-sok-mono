@@ -10,7 +10,7 @@ import {
   browserTracingIntegration,
   init,
   replayIntegration,
-} from '@sentry/angular-ivy';
+} from '@sentry/angular';
 import { provideWsThanosOptions } from '@wolsok/thanos';
 import { provideAppRouter } from './app/app-routing';
 import { AppComponent } from './app/app.component';

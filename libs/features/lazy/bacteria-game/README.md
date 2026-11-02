@@ -1,6 +1,6 @@
 # feat-lazy-bacteria-game
 
-Bacteria war for one or two players. Each player steers a crosshair, the colony
+Bacteria war for one or two players, on one screen or two devices. Each player steers a crosshair, the colony
 follows it and tries to eat the other one. Play against the computer or share
 one screen (and keyboard) with a second human.
 
@@ -31,15 +31,20 @@ one screen (and keyboard) with a second human.
 - **2 Players** - Orange on WASD, Blue on the arrow keys, or one finger each on
   a touchscreen.
 
+- **Online** - two devices, a colony each ([`net/`](./src/lib/net)). See
+  [Online matches](#online-matches).
+
 ## Touch layout
 
-The page opens in fullscreen: the
-[`BacteriaGameComponent`](./src/lib/bacteria-game.component.ts) lays its stage
-over the whole viewport from the first render and asks the browser's
-Fullscreen API for the rest, where a browser offers it (iPhones do not) - right
-away when a click brought the player here, otherwise with the next gesture the
-game owns (Start, resume, F or the button), because browsers refuse the
-request without a gesture. The stage is a grid
+The [`BacteriaGameComponent`](./src/lib/bacteria-game.component.ts) has one
+stage, which looks the same embedded in the page and fullscreen. Embedded, it
+fills the viewport below whatever is above it (the shell's toolbar, or nothing
+on the game's own site). Fullscreen - the button in the menu or the bar, or F -
+lays it over the whole viewport and asks the browser's Fullscreen API for the
+rest, where a browser offers it (iPhones do not). A touch device opens
+fullscreen and asks right away when a click brought the player here, otherwise
+with the next gesture the game owns (Start, resume, F or the button), because
+browsers refuse the request without a gesture. The stage is a grid
 with the arena in the middle and one _seat_ per human player, made of a
 [joystick zone](./src/lib/joystick/joystick.component.ts) on one side of the
 arena and a [boost pad](./src/lib/boost-pad/boost-pad.component.ts) on the
@@ -61,9 +66,9 @@ the finger lands becomes the centre of the stick, and the crosshair keeps
 moving in the direction it is pushed - slower for a gentle push - until it is
 released. Dragging a crosshair across the arena still works too.
 
-Entering the native fullscreen also locks a phone into landscape. Escape, the
-back gesture or the button in the bar return to the page, where the keyboard
-instructions live.
+Entering the native fullscreen also locks a phone into landscape. Escape on
+the main menu, the back gesture or the fullscreen button put the stage back
+into the page.
 
 The host application has to provide the CDK's `FullscreenOverlayContainer` as
 its `OverlayContainer` (both apps in this workspace do): the browser paints
@@ -76,17 +81,33 @@ The stage opens on the menu screens ([`menu/`](./src/lib/menu)), which fill
 it, opaque, over a swarm of bacteria drifting in the players' colours (plain
 CSS animation, still for players who ask for less motion):
 
-- **Main menu** - the title, _New game_, the way to Profile, Settings and
-  How to play, and a card with the campaign so far: levels open, medallions
-  per metal and _Continue the campaign_, which starts the furthest open
-  level right away.
+- **Main menu** - the title, _New game_, the way to My Colony, Profile,
+  Settings and How to play, and a card with the campaign so far: levels
+  open, medallions per metal and _Continue the campaign_, which starts the
+  furthest open level right away.
+- **My Colony** ([`my-colony.component.ts`](./src/lib/menu/my-colony.component.ts)) -
+  the player's colony as it will look in the dish, drawn by the game's own
+  painter ([`look-preview.ts`](./src/lib/arena/look-preview.ts)), the skin
+  it wears - a gallery of every look, each on a sample colony in the
+  player's colour - and the colonies' colours. The slime and the pixels
+  are free; every other skin is bought with the DNA of the Evolution screen
+  ([`state/skins.ts`](./src/lib/state/skins.ts),
+  kept in the evolution progress, where they survive a reset) and worn from
+  the moment they are bought. The player's colony wears the skin; the
+  computer's dresses by its level - the plain slime on the first, then the
+  skins to buy in the gallery's order the further up the ladder, so its
+  dress tells its skill - and a boss wears the eclipse, a look no skin
+  offers ([`state/colony-looks.ts`](./src/lib/state/colony-looks.ts)).
+  More of the colony is to be shaped here in time.
 - **New game** ([`new-game.component.ts`](./src/lib/menu/new-game.component.ts)) -
   a Material stepper that goes through only the steps the mode picked needs
   ([`play-modes.ts`](./src/lib/menu/play-modes.ts)):
-  - _Mode_: a card each for the **campaign** (levels open), the **daily
+  - _Mode_: a card each for the **training** (missions done), the
+    **campaign** (levels open), the **daily
     level** (attempts and streak), the **endless run** (the best one), **free
     play** and **two players** (the rivalry).
-  - _Level_ - for the campaign, free play and two players: the
+  - _Level_ - for the training its missions (see [Training](#training));
+    for the campaign, free play and two players the
     [level map](./src/lib/menu/level-map.component.ts), the ladder in
     chapters (Petri, Laboratory, Body, Reactor -
     [`state/chapters.ts`](./src/lib/state/chapters.ts)), a card per level in
@@ -110,7 +131,7 @@ CSS animation, still for players who ask for less motion):
 
 - **Profile** - levels won, medallions per metal and every medallion level by
   level.
-- **Settings** - colony colours, how the bacteria look, the two resolutions,
+- **Settings** - the two resolutions,
   sound with music and effects switched and set in volume on their own,
   vibration where the device can, the frame rate badge and browser
   fullscreen.
@@ -120,7 +141,7 @@ While a screen is open, the arena, its bar and the seats under it are inert.
 The pause menu (Resume, Restart, Settings, Quit to menu) and the match result
 (Main menu, Choose a level, Play again, Next) stay cards over the arena.
 Escape behaves like in a game: it pauses a match, backs out of a screen, and
-only leaves for the page from the main menu. The browser taking its own
+only leaves fullscreen from the main menu. The browser taking its own
 fullscreen off - its Escape, the back gesture, the settings toggle - is
 treated the same way, since that Escape never reaches the game.
 
@@ -131,13 +152,85 @@ once its first view is up ([`splash.ts`](./src/lib/splash.ts)).
 [`GameSettingsService`](./src/lib/settings.service.ts) remembers opponent,
 difficulty, level and the frame rate badge in the game storage.
 
+## Languages
+
+The game speaks English and German ([`i18n/`](./src/lib/i18n)), switched at
+runtime: one build serves both, as a remote inside the shell and as the PWA.
+[`I18nService`](./src/lib/i18n/i18n.service.ts) follows the browser's
+preferred language (German if it starts with `de`, English otherwise) until
+the player picks one under Settings > Language; the choice is a setting of
+the device (`GameSettingsService.setLanguage`). The game's root element
+carries the active language as its `lang`.
+
+Templates take the `t` pipe, `{{ 'settings.title' | t }}` or
+`{{ 'lobby.waiting' | t: { name } }}`; code calls `I18nService.t(key, params)`
+inside a `computed` or right where it builds a text. The texts are plain
+objects per area, `en/<area>.ts` and `de/<area>.ts`, merged in
+[`dictionaries.ts`](./src/lib/i18n/dictionaries.ts). The German object is
+typed against the English one, so a missing or an extra key fails to
+compile, and so does a key that names no text. A text holds `{name}`
+placeholders, and a plural is `{ one, other }`, picked by the `count` param
+with `Intl.PluralRules`. A text German lacks at runtime falls back to English.
+Words several screens share (mute, fullscreen, a medallion's name, "of
+{total}") live in `common`; a screen's name is its area's `title`, which the
+buttons that open it take as well.
+
 ## Storage
 
-Everything the game remembers goes through the
-[`GameStorage`](./src/lib/storage/game-storage.ts) port. Its default backend is
-[`LocalGameStorage`](./src/lib/storage/local-game-storage.ts), and a Firebase
-backend can take its place later. [`CLAUDE.md`](./CLAUDE.md) has the rules
-that keep it exchangeable.
+Everything the game remembers goes through the ports in
+[`src/lib/storage/`](./src/lib/storage/game-storage.ts):
+
+- **Progress** (medallions, campaign, XP, achievements, totals) goes through
+  `GameStorage` and belongs to the player. With a Firebase project configured
+  it lives in Firestore
+  ([`FirestoreGameStorage`](./src/lib/storage/firestore-game-storage.ts)),
+  otherwise in local storage
+  ([`LocalGameStorage`](./src/lib/storage/local-game-storage.ts)).
+- **Settings** go through `DeviceStorage` and always stay in this browser's
+  local storage, whoever signs in.
+
+[`CLAUDE.md`](./CLAUDE.md) has the rules that keep the backends exchangeable.
+
+### Cloud save
+
+With a project, every visitor plays as a guest (an anonymous Firebase
+account) and their progress is saved to the cloud from the first match. In
+the profile they can **Sign in with Google** to keep it on every device:
+
+- A guest signing in to a Google account for the first time keeps their
+  progress. The guest account becomes the Google account.
+- Signing in to a Google account that already played elsewhere adds what the
+  guest played on this device to it, once.
+- Signing out starts a new guest from the start. The progress stays with the
+  Google account.
+
+The game uses its own Firebase project, `bacteria-wars` (production builds
+only; development builds stay local). Its config sits in
+`apps/bacteria-game-remote/src/environments/environment.prod.ts`, and the
+project needs, in the [Firebase console](https://console.firebase.google.com/project/bacteria-wars):
+
+1. **Authentication** with the providers **Anonymous** and **Google**, and the
+   domains the game runs on (`bacteria-wars.wolsok.de` and the shell's
+   `angularexamples.wolsok.de`)
+   under _Authentication > Settings > Authorized domains_.
+2. A **Firestore** database.
+
+The game itself runs on Firebase Hosting in the same project, at
+`bacteria-wars.wolsok.de` ([ADR 0008](../../../../docs/adr/0008-bacteria-wars-on-firebase-hosting.md)).
+
+The release pipeline deploys the game to Firebase Hosting, the Firestore
+rules (`apps/bacteria-game-remote/firestore.rules`) and the indexes with the
+TTL policy of the rooms (`apps/bacteria-game-remote/firestore.indexes.json`):
+`bacteria-game-remote` has a `deploy` target
+(`firebase deploy --only hosting,firestore`, config in
+`firebase.bacteria-game-remote.json`, project alias in `.firebaserc`), which
+the non-CDK job of `deploy.yml` runs with the `FIREBASE_TOKEN` secret like
+the other Firebase apps. The token's account needs access to the project.
+
+To play against local emulators instead (a `demo-` project, no credentials):
+`npx nx run bacteria-game-remote:serve-emulator`. It needs Java for the
+Firestore emulator. The e2e tests (`npx nx e2e bacteria-game-remote`) run
+the production build against the same emulators, never the real project.
 
 ## Medallions
 
@@ -224,6 +317,75 @@ progress, so nothing about them is stored:
 
 The result screen names what a match opened.
 
+## Online matches
+
+Two players on two devices, through the game's Firebase project
+([ADR 0009](../../../../docs/adr/0009-bacteria-wars-online-lockstep.md)):
+
+- **Lobby** - _Online_ in the new game's modes. One player opens a match
+  and gets a code of six letters and digits; the other types it in. The
+  host plays the left colony, picks the level and the colours and starts
+  each match; the guest plays the right one and follows - their result
+  screen waits for the host's next start. Big maps are locked online.
+- **Lockstep** - both devices run the same match: the same `MatchEngine`,
+  the same seed, the CPU simulation on the _Normal_ grid whatever the
+  settings. Each tick is played once both players' inputs for it are in
+  ([`Lockstep`](./src/lib/net/lockstep.ts)); what a player puts in is
+  played six ticks (100 ms) later on both devices, so it has time to reach
+  the other one. Both seats are played by the lockstep through the engine's
+  seat drivers, as a ghost is. A device that waits too long says so
+  ("Waiting for your opponent…"); pausing holds the match on both.
+- **Checks** - once a second the devices compare a checksum of the
+  players; should they differ, the match ends as out of step. A device that
+  leaves or loses the connection forfeits the match under way.
+- **Connection** - a WebRTC data channel, ordered and reliable
+  ([`PeerLink`](./src/lib/net/peer-link.ts)). The host writes its offer
+  into `rooms/{code}` in Firestore, the guest its answer
+  ([`FirestoreGameRooms`](./src/lib/storage/firestore-game-rooms.ts)); the
+  rules let anyone signed in read a room by its code, never list them, and
+  one guest answer it. There is no TURN server, so two devices behind
+  strict NATs cannot connect. A room expires an hour after it was opened
+  (`expireAt`); a TTL policy on that field (`firestore.indexes.json`,
+  deployed with the rules) has Firestore delete it some time after that,
+  usually within a day.
+- Online matches earn nothing - no medallion, XP or totals - and leave no
+  replay. Without a Firebase project the mode says it is not available.
+
+## Profiles, friends and matchmaking
+
+Online play has people behind it ([ADR 0010](../../../../docs/adr/0010-bacteria-wars-profiles-friends-matchmaking.md),
+[`social/`](./src/lib/social)):
+
+- **Profile** - in _Profile_, every player, guests too, has a name, a motto
+  and a picture: one of twelve bacteria the game draws
+  ([`avatar-art.ts`](./src/lib/social/avatar-art.ts)), their Google photo
+  once signed in with Google, or an image they upload, scaled down to
+  96 px in the browser ([`shrink-image.ts`](./src/lib/social/shrink-image.ts))
+  and kept in the profile document. A player without a saved profile goes
+  by a name and a bacterium made from their uid. The name and the picture
+  stand for the opponent in the match, the lobby and the result.
+- **Find an opponent** - the online lobby's first button. Players wait in a
+  queue in Firestore; the newer of two opens a room and hands its code to
+  the older one, who joins ([`MatchmakerService`](./src/lib/net/matchmaker.service.ts)).
+  The host starts at once on a random level that plays online.
+- **Friends** - "Add as a friend" on the result of an online match sends a
+  request; the other player accepts it in their lobby. _Invite a friend_
+  shares a link (`#friend=<token>`, a week long); whoever opens it is asked
+  to add the inviter. Friends are listed in the lobby with their status,
+  and the player can remove one there.
+- **Online status** - friends who share it show as online or playing, from
+  the Realtime Database, which clears it the moment a connection drops
+  ([`RtdbGamePresence`](./src/lib/storage/rtdb-game-presence.ts)). The
+  profile has the switch.
+- **Challenges** - _Challenge_ on an online friend opens a room and leaves
+  its code with them; they see it on any menu screen and _Play_ joins it.
+- Playing with a code stays as it was.
+
+The project needs a Realtime Database instance whose URL is the web app
+config's `databaseURL`; without one the game shows no online status.
+`database.rules.json` and the TTL policies of queue entries, challenges and
+invitations deploy with the other rules.
+
 ## Two-player rivalry
 
 Two players on one screen get a loop of their own
@@ -251,6 +413,42 @@ levels were won. A locked level shows a lock and what opens it in the level
 list, and the result screen's _Next_ button stays locked until it is open.
 _Free play_ beside the level list opens every level, for players who know the
 game already. Two players always have every level open.
+
+## Training
+
+Five short missions teach a new player the game, one thing each
+([`state/training.ts`](./src/lib/state/training.ts)): **Steer** (hold the
+white zone for 4 seconds), **Feed** (eat 8 pellets), **Boost** (eat 12
+pellets and boost twice on the way, with a boost that recharges in 3
+seconds), **Attack** (wipe out the dummy) and **First Fight** (be bigger than
+the easy computer after a minute, or wipe it out). The main menu
+offers _Training_ under _New game_ until every mission is done, and _New
+game_ has it as a mode of its own: the missions in a list, done ones ticked,
+the next one marked, then a briefing with the goal, a tip and the opponent.
+While a mission runs, its goal stays at the top of the arena.
+
+A mission is a level of its own
+([`state/training-levels.ts`](./src/lib/state/training-levels.ts)), apart
+from the ladder, that names its `mission` and its `opponent`: it is set for
+one match like the daily level (`matchLevel`) and won by an existing win
+rule - hold, harvest, timed or annihilation - with the boosts fired checked
+on top where a mission asks for them. The first four put a _training dummy_
+across: an `opponent` of `'dummy'` gives the right seat an idle seat driver
+(`planMatch`), so the colony sits where it spawned and only fights back
+where it is attacked; the engine is unchanged and stays deterministic.
+_First Fight_ names the easy computer, which plays whatever difficulty is
+picked (`levelDifficulty`). Missions play plain - no evolution - are not
+recorded and leave no ghost to fight.
+
+A done mission is kept in the progress with the day it was done, merged as
+the earlier day like an achievement, and is worth 25 XP while it is held.
+Missions count for nothing else: no medallion, no totals, no achievements,
+and a mission played again or not done leaves the stored progress alone.
+The result screen says whether the match did the mission - or what it fell
+short of - and goes on to the next mission, or to the campaign once every
+mission is done.
+`training.spec.ts` plays every mission through with a scripted player, so a
+balance change that makes one unwinnable fails a test.
 
 ## Win conditions
 
@@ -386,13 +584,37 @@ zooms (`detailScale`), the pointer maps through the view
 (`arenaPointFromClient`), and a frame whose view moved lays its floor fully
 instead of fading into a trail that lies elsewhere. Every match starts on
 the whole map.
+While the camera shows part of the map, a
+[minimap](./src/lib/arena/minimap.ts) in the arena's top right corner shows
+all of it: the walls, laid once per map, the colonies block by block - each
+block of `influenceCellSize` cells in the colour of the colony with the most
+bacteria in it (`minimapPixels`) - and a frame around the camera's view. Both
+simulations hand out those blocks (`Simulation.blockCounts`): the GPU one
+reads them back with its report anyway, the CPU one counts its bacteria
+only when asked. The minimap is a small Canvas 2D overlay whichever painter
+draws the arena; it takes in the colonies ten times a second and draws the
+view frame on every frame.
+
+Empty space costs the GPU simulation little: its cell passes - crush,
+combat, feed, the claim and apply pairs - run only over the
+[active area](./src/lib/gl/active-area.ts), the colonies' boxes from the
+report grown by how far a bacterium gets in the ticks since (a step per
+move, one for a child, one to spare), together with the area of the last
+three ticks, so a spot a colony left is written empty in every state
+texture before the passes stop at it. Every pass finds its cell from
+`gl_FragCoord`, so a scissor per rect is all it takes, and a cell drawn
+twice where two rects overlap comes out the same. The whole arena runs for
+the first ticks of a match, while a wall shoves bacteria aside, when the
+report lags further behind than the reach kept, and once the rects cover
+nine tenths of it. On _Expanse_ that is about half the cells of a tick;
+the coarse passes, the glow and the report still run over everything.
 _Expanse_ opens the chapter of the same name: four times the room, rocks,
 and two neutral colonies, won on size after four minutes.
 
 ## Boost
 
 Every player has a boost (Space for the first player, Enter for the second, or
-the button next to the scoreboard). For `boostDurationSec` the colony moves
+the boost pad on a touchscreen). For `boostDurationSec` the colony moves
 `boostSpeedFactor` times faster, hunts with `boostAggression` and its bacteria
 exert `boostAttackFactor` times their energy as pressure. Once the boost is
 over it recharges for `boostCooldownSec` before it can be fired again. Fire it
@@ -484,7 +706,7 @@ link with the run packed into its hash
 numbers on the engine's grid, ticks as the distance to the input before,
 deflated and written in base64url. A minute of steering a stick all the time
 fits in a few KB, and the run never reaches a server. Opening the link offers
-a ghost challenge on the main menu and above the setup of the page layout;
+a ghost challenge on the main menu;
 the hash is taken out of the address once read. The engine keeps a stick push
 in steps of 1/16 and a drag target in quarter cells, so what is played is
 exactly what the link carries.

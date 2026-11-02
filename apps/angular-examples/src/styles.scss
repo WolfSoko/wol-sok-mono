@@ -4,6 +4,21 @@
 @use '@angular/cdk' as cdk;
 @use '@angular/material' as mat;
 
+// Fonts and icons come from npm (Fontsource, material-icons) and are served
+// from this site: no request goes to Google Fonts, and the build fetches
+// nothing. A browser downloads a face only once text uses it.
+@import '@fontsource/roboto/latin-300.css';
+@import '@fontsource/roboto/latin-400.css';
+@import '@fontsource/roboto/latin-500.css';
+@import 'material-icons/iconfont/filled.css';
+// The game's faces: the shell embeds the Bacteria Wars remote, whose menus
+// use them.
+@import '@fontsource/atkinson-hyperlegible/latin-400.css';
+@import '@fontsource/atkinson-hyperlegible/latin-700.css';
+@import '@fontsource/bricolage-grotesque/latin-600.css';
+@import '@fontsource/bricolage-grotesque/latin-800.css';
+@import '@fontsource/cookie/latin-400.css';
+
 @include cdk.a11y-visually-hidden();
 
 body,

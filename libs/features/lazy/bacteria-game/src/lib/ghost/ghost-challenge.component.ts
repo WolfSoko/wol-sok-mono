@@ -6,6 +6,8 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { GameTextPipe, levelNameText } from '../i18n/game-texts';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { Level } from '../state/levels';
 
 /**
@@ -14,7 +16,7 @@ import { Level } from '../state/levels';
  */
 @Component({
   selector: 'feat-lazy-bac-game-ghost-challenge',
-  imports: [MatButtonModule, MatIconModule],
+  imports: [GameTextPipe, MatButtonModule, MatIconModule, TranslatePipe],
   templateUrl: './ghost-challenge.component.html',
   styleUrl: './ghost-challenge.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,4 +27,6 @@ export class GhostChallengeComponent {
 
   public readonly fight = output<void>();
   public readonly dismiss = output<void>();
+
+  protected readonly levelNameText = levelNameText;
 }

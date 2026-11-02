@@ -315,6 +315,7 @@ describe('win conditions', () => {
       steers: [],
       drags: [],
       boosts: [],
+      weapons: [],
     });
 
     const { spawns, options } = planMatch(plan, ghost);

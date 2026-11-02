@@ -1,0 +1,20 @@
+{
+  "en": {
+    "tagline": "Steer your colony. Swallow theirs.",
+    "steer": "Steer your <em>colony</em>.",
+    "swallow": "Swallow <b>theirs</b>.",
+    "twoPlayers": "Two players.<br>One phone.",
+    "bigMaps": "Maps bigger<br>than the screen.",
+    "levels": "20 levels.<br>A new one every day.",
+    "store": "Get it on Google Play"
+  },
+  "de": {
+    "tagline": "Lenke deine Kolonie. Verschlinge die andere.",
+    "steer": "Lenke deine <em>Kolonie</em>.",
+    "swallow": "Verschlinge <b>die andere</b>.",
+    "twoPlayers": "Zu zweit.<br>Auf einem Handy.",
+    "bigMaps": "Karten, größer<br>als der Bildschirm.",
+    "levels": "20 Level.<br>Jeden Tag ein neues.",
+    "store": "Jetzt bei Google Play"
+  }
+}

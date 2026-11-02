@@ -8,29 +8,33 @@ test('should open on the main menu with the game and its controls', async ({
   await po.goto();
 
   await expect(po.stage).toBeVisible();
-  await expect(po.menuTitle).toHaveText('Bacteria War');
+  await expect(po.menuTitle).toHaveText('Bacteria Wars');
   await expect(po.playArea).toBeVisible();
   await expect(po.playCta).toBeVisible();
   await expect(po.profileCta).toBeVisible();
   await expect(po.settingsCta).toBeVisible();
   await expect(po.helpCta).toBeVisible();
-  await expect(po.intro).toHaveCount(0);
 });
 
-test('should return to the page on request', async ({ page }) => {
+test('should look the same in the page and fullscreen', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-
-  await po.leaveFullscreenCta.click();
-
-  await expect(po.stage).toHaveCount(0);
-  await expect(po.mainTitle).toContainText('Bacteria War Game');
-  await expect(po.intro).toBeVisible();
-  await expect(po.fullscreenCta).toBeVisible();
+  // A desktop opens the stage in the page, filling the viewport.
+  await expect(po.fullscreenStage).toHaveCount(0);
+  const embedded = await po.boxOf(po.stage);
+  expect(embedded.height).toBeGreaterThan(400);
 
   await po.fullscreenCta.click();
 
-  await expect(po.stage).toBeVisible();
+  await expect(po.fullscreenStage).toBeVisible();
+  await expect(po.menuTitle).toHaveText('Bacteria Wars');
+  await expect(po.playCta).toBeVisible();
+
+  await po.exitFullscreenCta.click();
+
+  await expect(po.fullscreenStage).toHaveCount(0);
+  await expect(po.menuTitle).toHaveText('Bacteria Wars');
+  await expect(po.fullscreenCta).toBeVisible();
 });
 
 test('should let the player pick a level when starting a match', async ({
@@ -136,19 +140,35 @@ test('should seat two players at opposite edges', async ({ page }) => {
   await expect(po.boostCta).toHaveCount(2);
   await expect(po.joysticks).toHaveCount(2);
 
-  // Seat 0 is the left column, seat 1 the right one, each turned towards
-  // its player: the stick sits in their left hand and the boost pad in their
-  // right, so the pad is below the stick for the left player and above it
-  // for the right one.
-  const [leftStick, leftBoost, rightStick, rightBoost] = await Promise.all([
-    po.boxOf(po.joystick(0)),
-    po.boxOf(po.boostOf(0)),
-    po.boxOf(po.joystick(1)),
-    po.boxOf(po.boostOf(1)),
-  ]);
-  expect(leftStick.x).toBeLessThan(rightStick.x);
-  expect(leftBoost.y).toBeGreaterThan(leftStick.y);
-  expect(rightBoost.y).toBeLessThan(rightStick.y);
+  // Each player's controls lie over the arena at their end of the screen,
+  // turned towards them: seat 0 at the left edge (the bottom one on an
+  // upright screen), seat 1 at the opposite one. The boost pad sits in the
+  // corner under the player's right hand, so the two pads are in opposite
+  // corners.
+  const [stage, leftStick, leftBoost, rightStick, rightBoost] =
+    await Promise.all([
+      po.boxOf(po.stage),
+      po.boxOf(po.joystick(0)),
+      po.boxOf(po.boostOf(0)),
+      po.boxOf(po.joystick(1)),
+      po.boxOf(po.boostOf(1)),
+    ]);
+  // The stylesheet seats by the viewport's orientation, not the stage's.
+  const viewport = page.viewportSize();
+  if (viewport == null || viewport.width > viewport.height) {
+    expect(po.centreOf(leftStick).x).toBeLessThan(po.centreOf(rightStick).x);
+    expect(po.centreOf(leftBoost).x).toBeLessThan(po.centreOf(rightBoost).x);
+    expect(leftBoost.y).toBeGreaterThan(rightBoost.y);
+  } else {
+    expect(po.centreOf(leftStick).y).toBeGreaterThan(po.centreOf(rightStick).y);
+    expect(po.centreOf(leftBoost).y).toBeGreaterThan(po.centreOf(rightBoost).y);
+    expect(leftBoost.x).toBeGreaterThan(rightBoost.x);
+  }
+  // The arena takes the whole stage, under the controls.
+  const arena = await po.boxOf(po.playArea);
+  expect(
+    Math.max(arena.width / stage.width, arena.height / stage.height)
+  ).toBeGreaterThan(0.95);
 });
 
 test('should arm the boost once the match runs', async ({ page }) => {
@@ -227,7 +247,7 @@ test('should let the players pick their colours', async ({ page }) => {
   await po.chooseMode('Two players');
   await po.stepBackCta.click();
   await po.backCta.click();
-  await po.settingsCta.click();
+  await po.colonyCta.click();
 
   await po.chooseColor('Left player', 'Green');
   await po.chooseColor('Right player', 'Pink');
@@ -238,15 +258,11 @@ test('should let the players pick their colours', async ({ page }) => {
   await expect(po.colonyNames).toContainText(['Green', 'Pink']);
 });
 
-test('should draw the arena on the GPU and keep it readable', async ({
+test('should paint the arena so it reads back off the canvas', async ({
   page,
-  browserName,
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  if (browserName === 'chromium') {
-    await expect(po.playArea).toHaveAttribute('data-renderer', 'webgl');
-  }
 
   await po.startMatch();
 
@@ -260,10 +276,21 @@ test('should draw the arena on the GPU and keep it readable', async ({
 test('should run the colony war on the GPU', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'WebGL2 is checked in Chromium');
   const po = new BacteriaGamePo(page);
-  await po.goto();
-  await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
+  // CI has SwiftShader only, a software renderer the game keeps on the CPU
+  // (ADR 0015): the device override sends local matches to the integer GPU
+  // passes all the same. They pass the self-test there too, and the arena
+  // keeps WebGL for them.
+  await po.goto('/?sim=gpu-int');
+  await expect(po.playArea).toHaveAttribute('data-gpu-self-test', 'passed');
+  await expect(po.playArea).toHaveAttribute('data-renderer', 'webgl');
 
   await po.startMatch();
+  await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
+  // What the GPU painted reads back off the canvas, as the vaporize effect
+  // does: the orange colony starts a quarter across, halfway down.
+  await expect
+    .poll(() => po.arenaPixel(80, 90))
+    .toEqual(expect.objectContaining({ orange: true }));
   const start = await po.colonyCount(0);
 
   // The colonies divide - the GPU steps the war and the numbers come back.
@@ -299,7 +326,7 @@ test('should keep the colours still to earn locked, saying what opens them', asy
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.settingsCta.click();
+  await po.colonyCta.click();
 
   const green = page
     .getByRole('radiogroup', { name: 'Colour of You' })
@@ -308,4 +335,59 @@ test('should keep the colours still to earn locked, saying what opens them', asy
   await expect(page.locator('.locked-list')).toContainText(
     'Green - Earn First Blood'
   );
+});
+
+test('should show the privacy policy on a page of its own', async ({
+  page,
+}) => {
+  await page.goto('/privacy#en-delete');
+
+  await expect(page).toHaveTitle('Datenschutz - Bacteria Wars');
+  await expect(
+    page.getByRole('heading', { name: 'Datenschutzerklärung' })
+  ).toBeVisible();
+  // by its title, not its number, which moves when a section comes in
+  await expect(
+    page.getByRole('heading', {
+      name: /^\d+\. Deleting your account and data$/,
+    })
+  ).toBeInViewport();
+  await expect(page.locator('#bacteria-game-splash')).toHaveCount(0);
+
+  await page.getByRole('link', { name: /Back to the game/ }).click();
+
+  // The click lets the game ask for native fullscreen, which WebKit may
+  // refuse and so leave the game in the page: the arena is there either way.
+  // The game's chunk, Firebase included, loads only now, while the service
+  // worker the policy page registered prefetches the app.
+  await expect(new BacteriaGamePo(page).playArea).toBeVisible({
+    timeout: 15_000,
+  });
+});
+
+test('should show the legal notice on a page of its own, reached from the menu', async ({
+  page,
+}) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+
+  await page
+    .locator('footer')
+    .getByRole('link', { name: 'Legal notice' })
+    .click();
+
+  await expect(page).toHaveTitle('Impressum - Bacteria Wars');
+  await expect(page.getByRole('heading', { name: 'Impressum' })).toBeVisible();
+  await expect(page.locator('address').first()).toContainText(
+    'Wolfram Sokollek'
+  );
+  await expect(page.locator('#bacteria-game-splash')).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'English' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Legal notice' })
+  ).toBeInViewport();
+
+  await page.getByRole('link', { name: /Back to the game/ }).click();
+  await expect(po.playArea).toBeVisible({ timeout: 15_000 });
 });

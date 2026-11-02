@@ -60,6 +60,15 @@ export interface ZoneLayer {
 }
 
 /**
+ * Whole pixels per cell for a layer of what never moves (the zones, the
+ * walls) - finer than {@link MAX_LAYER_SCALE} adds nothing a softened edge
+ * would show, and costs.
+ */
+export function layerScale(scale: number): number {
+  return Math.min(MAX_LAYER_SCALE, Math.max(1, Math.round(scale)));
+}
+
+/**
  * Paints the zones as a layer over the floor, `scale` pixels per arena cell
  * - finer than the cells, so the edges come out smooth: each zone tinted in
  * its colour with a bright rim along its edge, organic as the blobs it is
@@ -78,8 +87,7 @@ export function paintZoneLayer(
   if (zones.length === 0) {
     return null;
   }
-  // Finer than this adds nothing a softened edge would show - and costs.
-  const s = Math.min(MAX_LAYER_SCALE, Math.max(1, Math.round(scale)));
+  const s = layerScale(scale);
   const cells = new Uint8Array(width * height);
   stampZones(cells, width, height, zones);
   const cellAt = (x: number, y: number) =>

@@ -1,0 +1,46 @@
+{
+  "products": [
+    {
+      "id": "tip_small",
+      "basePriceEur": "2.52",
+      "listings": {
+        "de-DE": {
+          "title": "Kleiner Kaffee",
+          "description": "Ein kleines Trinkgeld für die Weiterentwicklung von Bacteria Wars. Schaltet nichts frei – danke fürs Unterstützen!"
+        },
+        "en-US": {
+          "title": "Small coffee",
+          "description": "A small tip for the development of Bacteria Wars. Unlocks nothing – thank you for your support!"
+        }
+      }
+    },
+    {
+      "id": "tip_medium",
+      "basePriceEur": "4.20",
+      "listings": {
+        "de-DE": {
+          "title": "Großer Kaffee",
+          "description": "Ein Trinkgeld für Server und neue Level von Bacteria Wars. Schaltet nichts frei – danke fürs Unterstützen!"
+        },
+        "en-US": {
+          "title": "Large coffee",
+          "description": "A tip for the servers and new levels of Bacteria Wars. Unlocks nothing – thank you for your support!"
+        }
+      }
+    },
+    {
+      "id": "tip_large",
+      "basePriceEur": "8.40",
+      "listings": {
+        "de-DE": {
+          "title": "Kaffee mit Kuchen",
+          "description": "Ein großes Trinkgeld für die Weiterentwicklung von Bacteria Wars. Schaltet nichts frei – vielen Dank!"
+        },
+        "en-US": {
+          "title": "Coffee and cake",
+          "description": "A big tip for the development of Bacteria Wars. Unlocks nothing – thank you so much!"
+        }
+      }
+    }
+  ]
+}

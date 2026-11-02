@@ -43,6 +43,14 @@ export class LateGameStorage implements GameStorage {
     pending.forEach((answer) => answer());
   }
 
+  /**
+   * Answers only the latest thing asked; the rest still waits for `flush()`
+   * - a change from another device that overtakes one made here.
+   */
+  public flushLast(): void {
+    this.pending.pop()?.();
+  }
+
   /** The value stored under a key, null when there is none. */
   public stored(key: string): unknown {
     const json = this.values.get(key);

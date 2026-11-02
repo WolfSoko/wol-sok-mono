@@ -1,0 +1,156 @@
+{
+  "first-blood": {
+    "points": 10,
+    "en-US": {
+      "name": "First Blood",
+      "description": "Win a match against the computer"
+    },
+    "de-DE": {
+      "name": "Erstes Blut",
+      "description": "Gewinne eine Partie gegen den Computer"
+    }
+  },
+  "pacifist": {
+    "points": 30,
+    "en-US": {
+      "name": "Pacifist",
+      "description": "Win without firing a boost"
+    },
+    "de-DE": {
+      "name": "Pazifist",
+      "description": "Gewinne, ohne den Boost zu zünden"
+    }
+  },
+  "blitz": {
+    "points": 30,
+    "en-US": {
+      "name": "Blitz",
+      "description": "Win in under 45 seconds"
+    },
+    "de-DE": {
+      "name": "Blitz",
+      "description": "Gewinne in unter 45 Sekunden"
+    }
+  },
+  "comeback": {
+    "points": 40,
+    "en-US": {
+      "name": "Comeback",
+      "description": "Win after falling below a quarter of the enemy’s size"
+    },
+    "de-DE": {
+      "name": "Comeback",
+      "description": "Gewinne, nachdem du auf unter ein Viertel der Größe des Gegners gefallen bist"
+    }
+  },
+  "siege": {
+    "points": 30,
+    "en-US": {
+      "name": "Siege",
+      "description": "Win a match of 5 minutes or more"
+    },
+    "de-DE": {
+      "name": "Belagerung",
+      "description": "Gewinne eine Partie von 5 Minuten oder länger"
+    }
+  },
+  "clean-sweep": {
+    "points": 40,
+    "en-US": {
+      "name": "Clean Sweep",
+      "description": "Win losing under 10 % of your colony at its peak"
+    },
+    "de-DE": {
+      "name": "Reiner Tisch",
+      "description": "Gewinne und verliere dabei unter 10 % deiner Kolonie auf ihrem Höchststand"
+    }
+  },
+  "full-dish": {
+    "points": 20,
+    "en-US": {
+      "name": "Full Dish",
+      "description": "Grow your colony as big as the dish lets it"
+    },
+    "de-DE": {
+      "name": "Volle Schale",
+      "description": "Lass deine Kolonie so groß werden, wie die Schale es zulässt"
+    }
+  },
+  "gatekeeper": {
+    "points": 50,
+    "en-US": {
+      "name": "Gatekeeper",
+      "description": "Let walls crush 500 enemy bacteria"
+    },
+    "de-DE": {
+      "name": "Torwächter",
+      "description": "Lass Wände 500 gegnerische Bakterien zerquetschen"
+    }
+  },
+  "converter": {
+    "points": 100,
+    "en-US": {
+      "name": "Converter",
+      "description": "Capture 10,000 enemy bacteria"
+    },
+    "de-DE": {
+      "name": "Bekehrer",
+      "description": "Erobere 10.000 gegnerische Bakterien"
+    }
+  },
+  "glutton": {
+    "points": 50,
+    "en-US": {
+      "name": "Glutton",
+      "description": "Eat up 100 pellets against the computer"
+    },
+    "de-DE": {
+      "name": "Vielfraß",
+      "description": "Friss 100 Pellets gegen den Computer"
+    }
+  },
+  "flawless": {
+    "points": 60,
+    "en-US": {
+      "name": "Flawless",
+      "description": "Earn a platinum medallion"
+    },
+    "de-DE": {
+      "name": "Makellos",
+      "description": "Verdiene eine Platin-Medaille"
+    }
+  },
+  "petri-scholar": {
+    "points": 60,
+    "en-US": {
+      "name": "Petri Scholar",
+      "description": "Gold on every level of the Petri chapter"
+    },
+    "de-DE": {
+      "name": "Petri-Gelehrter",
+      "description": "Gold auf jedem Level des Kapitels Petri"
+    }
+  },
+  "hard-boiled": {
+    "points": 200,
+    "en-US": {
+      "name": "Hard Boiled",
+      "description": "Win every level on Hard"
+    },
+    "de-DE": {
+      "name": "Hartgesotten",
+      "description": "Gewinne jedes Level auf Schwer"
+    }
+  },
+  "couch-war": {
+    "points": 40,
+    "en-US": {
+      "name": "Couch War",
+      "description": "Play 10 matches between two players"
+    },
+    "de-DE": {
+      "name": "Couch-Krieg",
+      "description": "Spiele 10 Partien zu zweit"
+    }
+  }
+}

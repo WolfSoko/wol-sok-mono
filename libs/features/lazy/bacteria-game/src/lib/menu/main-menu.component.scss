@@ -62,22 +62,67 @@
 .play {
   @include screen.primary;
 
-  height: 4.25rem;
+  height: auto;
+  min-height: 4.25rem;
+  padding-block: 0.5rem;
   justify-content: flex-start;
   font-size: 1.6rem;
+  text-align: left;
 
-  .play-note {
-    margin-left: auto;
-    padding-left: 1rem;
-    font-family: var(--bw-body);
-    font-weight: 700;
-    font-size: 0.85rem;
+  // Material's label may shrink, so the note wraps inside the button.
+  ::ng-deep .mdc-button__label {
+    min-width: 0;
   }
+}
+
+// The way into the training, for new players: under New game, quieter.
+.training {
+  height: auto;
+  min-height: 3.25rem;
+  padding-block: 0.4rem;
+  justify-content: flex-start;
+  border-color: var(--bw-gold);
+  color: var(--bw-text);
+  font-family: var(--bw-display);
+  font-size: 1.15rem;
+  text-align: left;
+
+  mat-icon {
+    color: var(--bw-gold);
+  }
+
+  ::ng-deep .mdc-button__label {
+    min-width: 0;
+  }
+}
+
+// The modes in a line under the name: beside it the note wrapped into a
+// ragged block next to the name at 1280px - and German is longer still.
+.play-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.play-title {
+  line-height: 1.1;
+}
+
+.play-note {
+  font-family: var(--bw-body);
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  white-space: normal;
+  opacity: 0.85;
 }
 
 .tiles {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  // Four to six tiles - friends and support come and go: in one row
+  // where they fit, wrapping where they do not.
+  grid-template-columns: repeat(auto-fit, minmax(5.25rem, 1fr));
   gap: 0.75rem;
 }
 
@@ -93,7 +138,9 @@
   border-radius: 0.9rem;
   color: var(--bw-text);
   font: inherit;
+  position: relative;
   font-weight: 700;
+  text-decoration: none;
   cursor: pointer;
 
   &:hover {
@@ -108,10 +155,59 @@
   mat-icon {
     color: var(--bw-soft);
 
+    &.player {
+      color: var(--bw-player);
+    }
+
     &.gold {
       color: var(--bw-gold);
     }
   }
+}
+
+// Evolution glows while its DNA buys something.
+.tile.ready {
+  border-color: var(--bw-gold);
+  animation: evolve-ready 1.8s ease-in-out infinite;
+}
+
+.tile-helix {
+  color: var(--bw-soft);
+}
+
+@keyframes evolve-ready {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(233 185 73 / 0%);
+  }
+
+  50% {
+    box-shadow: 0 0 16px 1px rgb(233 185 73 / 45%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile.ready {
+    animation: none;
+  }
+}
+
+// The friend requests waiting, a gold pill in the tile's corner.
+.count {
+  @include screen.figure;
+
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  min-width: 1.25rem;
+  padding: 0.1rem 0.4rem;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--bw-gold);
+  color: var(--bw-ground);
+  font-size: 0.75rem;
+  line-height: 1.1rem;
+  text-align: center;
 }
 
 .card {
@@ -220,18 +316,24 @@
   color: var(--bw-muted);
 }
 
-// Too narrow for the note beside Play.
+// Too narrow for the note under Play.
 @media (max-width: 30rem) {
-  .play .play-note {
+  .play-note {
     display: none;
   }
 }
 
 // A phone held across: title and buttons beside a slimmer card.
 @media (max-height: 30rem) {
+  // Sound and fullscreen stacked in a rail of their own, clear of the card.
+  .top {
+    flex-direction: column;
+  }
+
   .layout {
     flex-wrap: nowrap;
     gap: 1.5rem;
+    padding-right: 3rem;
   }
 
   .hero {
@@ -244,12 +346,23 @@
   }
 
   .play {
-    height: 3.5rem;
+    min-height: 3.5rem;
+  }
+
+  // Side by side the hero is short of height: the name alone.
+  .play-note {
+    display: none;
   }
 
   .tiles .tile {
     min-height: 3.25rem;
     flex-direction: row;
+  }
+
+  // Side by side, icon and name share a line, so the tiles get wider.
+  .tiles {
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 0.5rem;
   }
 
   .card {

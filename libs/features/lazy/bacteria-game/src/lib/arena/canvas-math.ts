@@ -43,3 +43,56 @@ export function createCanvas(
   canvas.height = height;
   return canvas;
 }
+
+/**
+ * Puts RGBA pixels on a canvas through its context - false without one, as
+ * in the test DOM.
+ */
+export function putPixels(
+  cx:
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D
+    | null
+    | undefined,
+  data: Uint8ClampedArray,
+  width: number,
+  height: number
+): boolean {
+  if (cx == null) {
+    return false;
+  }
+  const image = cx.createImageData(width, height);
+  image.data.set(data);
+  cx.putImageData(image, 0, 0);
+  return true;
+}
+
+/**
+ * Smoothly interpolated noise on an integer lattice, from 0 to 1 - the
+ * `valueNoise` of the colony shader, on its own hash: the two agree on the
+ * look of a noise, not on its every value.
+ */
+export function valueNoise(x: number, y: number, seed: number): number {
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const fx = x - ix;
+  const fy = y - iy;
+  const sx = fx * fx * (3 - 2 * fx);
+  const sy = fy * fy * (3 - 2 * fy);
+  const top = lerp(hash(ix, iy, seed), hash(ix + 1, iy, seed), sx);
+  const bottom = lerp(hash(ix, iy + 1, seed), hash(ix + 1, iy + 1, seed), sx);
+  return lerp(top, bottom, sy);
+}
+
+/** Three octaves of {@link valueNoise}, from 0 to 1 - the shader's `fbm`. */
+export function fbm(x: number, y: number, seed: number): number {
+  let sum = 0;
+  let amplitude = 0.5;
+  for (let i = 0; i < 3; i++) {
+    sum += amplitude * valueNoise(x, y, seed);
+    x = x * 2.03 + 17.1;
+    y = y * 2.03 + 17.1;
+    amplitude *= 0.5;
+  }
+  return sum / 0.875;
+}

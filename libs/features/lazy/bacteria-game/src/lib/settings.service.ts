@@ -1,4 +1,10 @@
-import { Injectable, inject, signal, untracked } from '@angular/core';
+import {
+  Injectable,
+  inject,
+  type Signal,
+  signal,
+  untracked,
+} from '@angular/core';
 import { filter, pairwise, take } from 'rxjs';
 import {
   DEFAULT_SCREEN_RESOLUTION,
@@ -19,6 +25,7 @@ import {
   isMatchOn,
 } from './state/game.states';
 import { isLevelId } from './state/levels';
+import { isMatchLevel } from './state/match-level';
 import {
   HeadStart,
   isHeadStart,
@@ -28,7 +35,18 @@ import {
 } from './state/rivalry';
 import { clamp } from './state/geometry';
 import { isObject } from './state/is-object';
-import { GameStorage } from './storage/game-storage';
+import { DeviceStorage } from './storage/game-storage';
+import {
+  DEFAULT_VAPORIZE_MS,
+  DEFAULT_VAPORIZE_QUALITY,
+  isVaporizeMs,
+  isVaporizeQuality,
+  VaporizeQuality,
+} from './vaporize-effect';
+import { injectGameAnalytics } from './analytics/game-analytics';
+import { settingChange } from './analytics/setting-change';
+import { I18nService } from './i18n/i18n.service';
+import { isLanguage, Language } from './i18n/language';
 
 /** What the game remembers between visits. */
 export interface StoredSettings {
@@ -58,18 +76,38 @@ export interface StoredSettings {
   look?: BacteriaLook;
   simResolution?: SimResolution;
   screenResolution?: ScreenResolution;
+  /** How finely the arena turns to dust once a match is left, or 'off'. */
+  vaporize?: VaporizeQuality;
+  /** How long it takes, in ms. */
+  vaporizeMs?: number;
+  /** Whether bubbles rise and mist drifts through the dish. */
+  ambience?: boolean;
+  /** Whether a slow device paints the arena with fewer pixels. */
+  adaptiveQuality?: boolean;
+  /** The language the player picked, absent to follow the browser. */
+  language?: Language;
+  /** The level the player would like to meet opponents on, absent for any. */
+  matchLevel?: string;
+  /**
+   * Whether local matches against the computer are recorded - on the
+   * device's ruleset (ADR 0011, 0015).
+   */
+  recordLocal?: boolean;
+  /** Whether recorded local matches are kept; online ones always are. */
+  saveMatches?: boolean;
+  /**
+   * Whether daily matches and endless runs are declared as ranked ones
+   * where ranked play is offered (ADR 0012) - else practice.
+   */
+  ranked?: boolean;
+  /**
+   * Whether the result screen told, once, that matches against the
+   * computer are saved and where to turn that off.
+   */
+  recordingHintShown?: boolean;
 }
 
-/**
- * How the bacteria are drawn: as one gooey, glossy slime per colony, or as
- * the crisp pixels the game started with.
- */
-export type BacteriaLook = 'slime' | 'pixels';
-
-export const BACTERIA_LOOKS: readonly { id: BacteriaLook; name: string }[] = [
-  { id: 'slime', name: 'Slime' },
-  { id: 'pixels', name: 'Pixels' },
-];
+import { BacteriaLook, isBacteriaLook } from './state/skins';
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
@@ -91,10 +129,14 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
 /**
  * Keeps the player's choices - opponent, difficulty, level, colours, the
  * series and the head start between two players, free play or the campaign
- * ladder, the arena, how the bacteria look, the resolutions, whether the
+ * ladder, the arena, how the bacteria look, the resolutions, how the arena
+ * vaporizes and for how long, whether the dish has its bubbles and mist,
+ * whether the
  * frame rate is shown, whether the game makes sound, plays music and
- * effects and how loud, and whether the phone vibrates - across visits, in
- * the game storage.
+ * effects and how loud, whether the phone vibrates, the level the
+ * matchmaking asks for and the language -
+ * across visits, in the storage of this device - they stay with the device
+ * whoever signs in.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them once the storage answers and writes them back whenever
@@ -108,8 +150,9 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
 export class GameSettingsService {
   private readonly gameState = inject(GameStateService);
   private readonly store = inject(GameStateStore);
-  private readonly storage = inject(GameStorage);
-  private restored = false;
+  private readonly storage = inject(DeviceStorage);
+  private readonly i18n = inject(I18nService);
+  private readonly analytics = injectGameAnalytics();
   /** The settings the player changed - what restoring must keep. */
   private readonly touched = new Set<keyof StoredSettings>();
   /** A stored match setup that arrived during a match, for the next one. */
@@ -145,8 +188,63 @@ export class GameSettingsService {
   public readonly screenResolution = signal<ScreenResolution>(
     DEFAULT_SCREEN_RESOLUTION
   );
+  /** How finely the arena turns to dust once a match is left, or 'off'. */
+  public readonly vaporize = signal<VaporizeQuality>(DEFAULT_VAPORIZE_QUALITY);
+  /** How long the arena takes to blow away, in ms. */
+  public readonly vaporizeMs = signal(DEFAULT_VAPORIZE_MS);
+  /** True while bubbles rise and mist drifts through the dish. */
+  public readonly ambience = signal(true);
+  /**
+   * True while a device too slow for every pixel of the arena paints it
+   * with fewer, scaled up - steady frames before sharp ones.
+   */
+  public readonly adaptiveQuality = signal(true);
+
+  /** The language the player picked, null to follow the browser. */
+  public readonly language = this.i18n.choice;
+  /** The level the matchmaking asks for, null for any level. */
+  public readonly matchLevel = signal<string | null>(null);
+  /**
+   * True while local matches against the computer are recorded, on every
+   * simulation resolution (ADR 0011). On by default (the owner's decision
+   * of 2026-10-23). A recorded match plays on a ruleset: the integer GPU
+   * passes where the GPU passed the self-test and the deterministic
+   * simulation is on, the CPU's else.
+   */
+  public readonly recordLocal = signal(true);
+  /**
+   * True while recorded local matches are kept, "Save my matches" - online
+   * matches are kept either way (ADR 0012).
+   */
+  public readonly saveMatches = signal(true);
+  /**
+   * True while daily matches and endless runs are played ranked where
+   * ranked play is offered (ADR 0012, on by default) - false for practice,
+   * with the player's own setup.
+   */
+  public readonly ranked = signal(true);
+  /**
+   * True once the result screen told that matches against the computer
+   * are saved in My matches, and where to turn it off - it says so once
+   * per device.
+   */
+  public readonly recordingHintShown = signal(false);
+  /**
+   * True once the stored settings are read: before that a setting holds
+   * its default, not what an earlier visit stored.
+   */
+  public readonly loaded: Signal<boolean>;
+  private readonly restored = signal(false);
+  /**
+   * The settings the statistics last saw, so a setter that sets the value
+   * in force again (a menu that sets free play on every visit) counts as
+   * no change.
+   */
+  private reportedSettings: StoredSettings;
 
   constructor() {
+    this.loaded = this.restored.asReadonly();
+    this.reportedSettings = this.toStore();
     // Synchronous, so a change is told apart from a restored setup.
     this.store
       .select$(() => this.currentMatchSetup(), sameMatchSetup)
@@ -163,8 +261,9 @@ export class GameSettingsService {
       .pipe(take(1))
       .subscribe((stored) => {
         this.restore(isObject(stored) ? (stored as StoredSettings) : {});
-        this.restored = true;
-        this.persist();
+        this.restored.set(true);
+        this.reportedSettings = this.toStore();
+        this.persist(this.reportedSettings);
       });
     this.store
       .select$(() => this.store.currentState())
@@ -244,14 +343,88 @@ export class GameSettingsService {
     this.changed('screenResolution');
   }
 
+  public setVaporize(quality: VaporizeQuality): void {
+    this.vaporize.set(quality);
+    this.changed('vaporize');
+  }
+
+  public setVaporizeMs(ms: number): void {
+    this.vaporizeMs.set(ms);
+    this.changed('vaporizeMs');
+  }
+
+  public setAmbience(on: boolean): void {
+    this.ambience.set(on);
+    this.changed('ambience');
+  }
+
+  public setAdaptiveQuality(on: boolean): void {
+    this.adaptiveQuality.set(on);
+    this.changed('adaptiveQuality');
+  }
+
+  /** Asks the matchmaking for a level that plays online, or any for null. */
+  public setMatchLevel(levelId: string | null): void {
+    this.matchLevel.set(isMatchLevel(levelId) ? levelId : null);
+    this.changed('matchLevel');
+  }
+
+  /** Records local matches against the computer from the next one on - or not. */
+  public setRecordLocal(on: boolean): void {
+    this.recordLocal.set(on);
+    this.gameState.setReplayPrefs({ recordLocal: on });
+    this.changed('recordLocal');
+  }
+
+  /** Keeps the recorded local matches from now on - or not. */
+  public setSaveMatches(on: boolean): void {
+    this.saveMatches.set(on);
+    this.gameState.setReplayPrefs({ saveMatches: on });
+    this.changed('saveMatches');
+  }
+
+  /** Plays daily matches and endless runs ranked from now on - or practice. */
+  public setRanked(on: boolean): void {
+    this.ranked.set(on);
+    this.changed('ranked');
+  }
+
+  /** Notes that the hint on saved matches was shown on this device. */
+  public markRecordingHintShown(): void {
+    this.recordingHintShown.set(true);
+    this.changed('recordingHintShown');
+  }
+
+  /** Speaks a language from now on, or follows the browser for null. */
+  public setLanguage(language: Language | null): void {
+    this.i18n.setLanguage(language);
+    this.changed('language');
+  }
+
   /**
    * Remembers which settings the player changed, so restoring keeps them,
    * and writes the settings back once they are restored.
    */
   private changed(...keys: (keyof StoredSettings)[]): void {
     keys.forEach((key) => this.touched.add(key));
-    if (this.restored) {
-      this.persist();
+    const settings = this.toStore();
+    this.reportChanges(keys, settings);
+    if (this.restored()) {
+      this.persist(settings);
+    }
+  }
+
+  private reportChanges(
+    keys: readonly (keyof StoredSettings)[],
+    settings: StoredSettings
+  ): void {
+    const before = this.reportedSettings;
+    this.reportedSettings = settings;
+    for (const key of keys) {
+      const change = settingChange(key, before, settings);
+      if (change !== null) {
+        this.analytics.track('setting_changed', change);
+      }
     }
   }
 
@@ -267,11 +440,8 @@ export class GameSettingsService {
       this.restoreMatchSetup(stored);
     }
     const restores = (key: keyof StoredSettings) => !this.touched.has(key);
-    if (
-      restores('look') &&
-      BACTERIA_LOOKS.some((option) => option.id === stored.look)
-    ) {
-      this.look.set(stored.look as BacteriaLook);
+    if (restores('look') && isBacteriaLook(stored.look)) {
+      this.look.set(stored.look);
     }
     if (
       restores('simResolution') &&
@@ -284,6 +454,21 @@ export class GameSettingsService {
       SCREEN_RESOLUTIONS.some((option) => option.id === stored.screenResolution)
     ) {
       this.screenResolution.set(stored.screenResolution as ScreenResolution);
+    }
+    if (restores('vaporize') && isVaporizeQuality(stored.vaporize)) {
+      this.vaporize.set(stored.vaporize);
+    }
+    if (restores('vaporizeMs') && isVaporizeMs(stored.vaporizeMs)) {
+      this.vaporizeMs.set(stored.vaporizeMs);
+    }
+    if (restores('ambience') && typeof stored.ambience === 'boolean') {
+      this.ambience.set(stored.ambience);
+    }
+    if (
+      restores('adaptiveQuality') &&
+      typeof stored.adaptiveQuality === 'boolean'
+    ) {
+      this.adaptiveQuality.set(stored.adaptiveQuality);
     }
     if (restores('showFps') && typeof stored.showFps === 'boolean') {
       this.showFps.set(stored.showFps);
@@ -311,6 +496,33 @@ export class GameSettingsService {
     }
     if (restores('vibration') && typeof stored.vibration === 'boolean') {
       this.vibration.set(stored.vibration);
+    }
+    if (restores('matchLevel') && isMatchLevel(stored.matchLevel)) {
+      this.matchLevel.set(stored.matchLevel);
+    }
+    if (restores('recordLocal') && typeof stored.recordLocal === 'boolean') {
+      this.recordLocal.set(stored.recordLocal);
+    }
+    if (restores('saveMatches') && typeof stored.saveMatches === 'boolean') {
+      this.saveMatches.set(stored.saveMatches);
+    }
+    if (restores('ranked') && typeof stored.ranked === 'boolean') {
+      this.ranked.set(stored.ranked);
+    }
+    if (
+      restores('recordingHintShown') &&
+      typeof stored.recordingHintShown === 'boolean'
+    ) {
+      this.recordingHintShown.set(stored.recordingHintShown);
+    }
+    this.gameState.setReplayPrefs({
+      recordLocal: this.recordLocal(),
+      saveMatches: this.saveMatches(),
+    });
+    if (restores('language')) {
+      this.i18n.setLanguage(
+        isLanguage(stored.language) ? stored.language : null
+      );
     }
   }
 
@@ -360,12 +572,21 @@ export class GameSettingsService {
     this.gameState.applySetup(setup);
   }
 
-  private persist(): void {
-    const settings: StoredSettings = {
+  private persist(settings = this.toStore()): void {
+    this.storage.write(SETTINGS_STORAGE_KEY, settings);
+  }
+
+  /** The settings as they are stored. */
+  private toStore(): StoredSettings {
+    return {
       ...this.matchSetupToStore(),
       look: this.look(),
       simResolution: this.simResolution(),
       screenResolution: this.screenResolution(),
+      vaporize: this.vaporize(),
+      vaporizeMs: this.vaporizeMs(),
+      ambience: this.ambience(),
+      adaptiveQuality: this.adaptiveQuality(),
       showFps: this.showFps(),
       freePlay: this.freePlay(),
       arena: this.arena() ?? undefined,
@@ -375,8 +596,13 @@ export class GameSettingsService {
       musicVolume: this.musicVolume(),
       effectsVolume: this.effectsVolume(),
       vibration: this.vibration(),
+      language: this.language() ?? undefined,
+      matchLevel: this.matchLevel() ?? undefined,
+      recordLocal: this.recordLocal(),
+      saveMatches: this.saveMatches(),
+      ranked: this.ranked(),
+      recordingHintShown: this.recordingHintShown(),
     };
-    this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }
 
   /** The match setup as it stands, without tracking it. */

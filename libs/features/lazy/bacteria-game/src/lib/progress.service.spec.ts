@@ -1,19 +1,23 @@
 import { aMatchRecord } from '../testing/match-record';
+import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { PROGRESS_STORAGE_KEY, ProgressService } from './progress.service';
 import { dailyLevelId } from './state/daily';
 import { getLevel } from './state/levels';
 import { MatchRecord } from './state/medallions';
-import { GameStorage } from './storage/game-storage';
+import { MISSIONS } from './state/training';
+import { GameAccount } from './storage/game-account';
+import { DeviceStorage, GameStorage } from './storage/game-storage';
+import { FakeGameAccount } from '../testing/fake-game-account';
 import { LateGameStorage } from '../testing/late-game-storage';
 
 const LIMITS = getLevel('hourglass').medal;
 
-/** A gold win: in time and clean, but with a boost. */
+/** A gold win: in time and clean, but with a boost - and a blitz, under 45 s. */
 const GOLD_WIN = aMatchRecord({
   levelId: 'hourglass',
   difficulty: 'hard',
-  durationSec: LIMITS.goldSec,
+  durationSec: Math.min(LIMITS.goldSec, 40),
   boostsFired: 1,
 });
 
@@ -32,7 +36,8 @@ describe('ProgressService', () => {
   }
 
   it('awards a medallion and remembers it across visits', () => {
-    expect(create().recordMatch(GOLD_WIN)).toEqual({
+    // Partly: the texts to translate beside the English ones are left out.
+    expect(create().recordMatch(GOLD_WIN)).toMatchObject({
       award: {
         record: GOLD_WIN,
         medal: 'gold',
@@ -220,6 +225,78 @@ describe('ProgressService', () => {
     expect(stored()['medals']).toEqual({});
   });
 
+  describe('the training', () => {
+    const [steer, , boost] = MISSIONS;
+    const mission = (won: boolean, boostsFired = 2): MatchRecord => ({
+      ...GOLD_WIN,
+      levelId: boost.levelId,
+      difficulty: 'easy',
+      won,
+      boostsFired,
+    });
+
+    it('remembers a mission done, with its XP and nothing else', () => {
+      const progress = create();
+
+      expect(progress.recordTraining(mission(true), boost)).toMatchObject({
+        award: null,
+        achievements: [],
+        xp: { parts: [{ label: 'Training mission', xp: 25 }], total: 25 },
+        training: { shortfall: null, first: true, next: 'attack' },
+      });
+      expect(progress.training().boost).toBeDefined();
+      expect(progress.missionsDone()).toBe(1);
+      expect(progress.firstOpenMission()).toBe('steer');
+      expect(progress.totals().matches).toBe(0);
+      expect(progress.medals()).toEqual({});
+
+      TestBed.resetTestingModule();
+      expect(create().training().boost).toBeDefined();
+    });
+
+    it('is done once: again it is worth no XP, and stores nothing', () => {
+      const progress = create();
+      progress.recordTraining(
+        { ...mission(true), levelId: steer.levelId },
+        steer
+      );
+      const writes = jest.spyOn(TestBed.inject(GameStorage), 'update');
+
+      expect(
+        progress.recordTraining(
+          { ...mission(true), levelId: steer.levelId },
+          steer
+        )
+      ).toMatchObject({
+        xp: { total: 0 },
+        training: { shortfall: null, first: false, next: 'feed' },
+      });
+      expect(writes).not.toHaveBeenCalled();
+    });
+
+    it('tells a match what it fell short of', () => {
+      const progress = create();
+
+      expect(progress.recordTraining(mission(true, 1), boost)).toMatchObject({
+        xp: { total: 0 },
+        training: {
+          next: null,
+          shortfall: {
+            key: 'training.result.boosts',
+            params: { count: 2, fired: 1 },
+          },
+        },
+      });
+      expect(progress.recordTraining(mission(false), boost).training).toEqual({
+        shortfall: { key: 'training.missions.boost.goal' },
+        first: false,
+        allDone: false,
+        next: null,
+      });
+      expect(progress.missionsDone()).toBe(0);
+    });
+  });
+
   describe('the daily level', () => {
     const DAY = '2026-10-20';
     const daily = (won: boolean, day = DAY): MatchRecord => ({
@@ -379,6 +456,24 @@ describe('ProgressService', () => {
       });
     });
 
+    it('keeps the earlier day of a mission, the stored one or the new one', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: { training: { feed: '2026-01-02' } },
+      });
+      const [, feed] = MISSIONS;
+
+      progress.recordTraining(
+        { ...GOLD_WIN, levelId: feed.levelId, difficulty: 'easy' },
+        feed
+      );
+      storage.flush();
+
+      expect(progress.training()).toEqual({ feed: '2026-01-02' });
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        training: { feed: '2026-01-02' },
+      });
+    });
+
     it('shows the stored medallions once the storage answers', () => {
       const progress = createWith({
         [PROGRESS_STORAGE_KEY]: { medals: { hourglass: { hard: 'silver' } } },
@@ -475,6 +570,111 @@ describe('ProgressService', () => {
 
       expect(progress.medal('hourglass', 'hard')).toBe('gold');
       expect(progress.medal('villi', 'easy')).toBe('gold');
+    });
+  });
+
+  describe('when another player takes over', () => {
+    let account: FakeGameAccount;
+
+    function createFor(
+      stored: Record<string, unknown> = {},
+      providers: Provider[] = []
+    ): ProgressService {
+      account = new FakeGameAccount('guest');
+      account.seed('guest', stored);
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: GameAccount, useValue: account },
+          { provide: GameStorage, useValue: account.storage },
+          ...providers,
+        ],
+      });
+      return create();
+    }
+
+    it("starts over from the next player's progress", () => {
+      const progress = createFor();
+      progress.recordMatch(GOLD_WIN);
+      account.flush();
+      account.seed('ada', {
+        [PROGRESS_STORAGE_KEY]: { medals: { corridors: { easy: 'silver' } } },
+      });
+
+      account.switchTo('ada');
+
+      expect(progress.loaded()).toBe(false);
+      expect(progress.medal('hourglass', 'hard')).toBeNull();
+      account.flush();
+      expect(progress.loaded()).toBe(true);
+      expect(progress.medal('corridors', 'easy')).toBe('silver');
+      expect(progress.medal('hourglass', 'hard')).toBeNull();
+      expect(progress.totals().matches).toBe(0);
+    });
+
+    it("keeps each player's matches in their own storage", () => {
+      const progress = createFor();
+      account.flush();
+      account.switchTo('ada');
+      account.flush();
+
+      progress.recordMatch(GOLD_WIN);
+      account.flush();
+
+      expect(
+        account.storageOf('ada').stored(PROGRESS_STORAGE_KEY)
+      ).toMatchObject({ totals: { matches: 1 } });
+      expect(account.storageOf('guest').stored(PROGRESS_STORAGE_KEY)).toBe(
+        null
+      );
+    });
+
+    it('hands the progress this device kept before the cloud to the first player, once', () => {
+      const device = new LateGameStorage({
+        [PROGRESS_STORAGE_KEY]: {
+          medals: { hourglass: { hard: 'gold' } },
+          totals: { matches: 3 },
+        },
+      });
+      const progress = createFor({}, [
+        { provide: DeviceStorage, useValue: device },
+      ]);
+
+      device.flush();
+      account.flush();
+      device.flush();
+
+      expect(progress.medal('hourglass', 'hard')).toBe('gold');
+      expect(
+        account.storageOf('guest').stored(PROGRESS_STORAGE_KEY)
+      ).toMatchObject({ totals: { matches: 3 } });
+      expect(device.stored(PROGRESS_STORAGE_KEY)).toBeNull();
+    });
+
+    it("adds the guest's progress to the account signed in to, once", () => {
+      const progress = createFor({
+        [PROGRESS_STORAGE_KEY]: { totals: { matches: 5, wins: 2 } },
+      });
+      progress.recordMatch(GOLD_WIN);
+      account.flush();
+      account.seed('ada', {
+        [PROGRESS_STORAGE_KEY]: {
+          medals: { corridors: { easy: 'silver' } },
+          totals: { matches: 10, wins: 4 },
+        },
+      });
+
+      account.switchTo('ada', true);
+      account.flush();
+
+      const expected = {
+        medals: { corridors: { easy: 'silver' }, hourglass: { hard: 'gold' } },
+        totals: { matches: 16, wins: 7 },
+      };
+      expect(
+        account.storageOf('ada').stored(PROGRESS_STORAGE_KEY)
+      ).toMatchObject(expected);
+      expect(progress.medals()).toEqual(expected.medals);
+      expect(progress.totals()).toMatchObject(expected.totals);
     });
   });
 });

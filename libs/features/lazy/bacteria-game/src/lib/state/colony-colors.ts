@@ -1,4 +1,9 @@
+import type { game as gameTexts } from '../i18n/en/game';
+import type { GameText } from '../i18n/game-text';
 import { PlayerColorArray } from './player.model';
+
+/** The id of a colony colour, as the dictionaries list it. */
+export type ColonyColorId = keyof typeof gameTexts.colors;
 
 /** A colour a player can give their colony. */
 export interface ColonyColor {
@@ -32,6 +37,20 @@ export const NEUTRAL_COLOR: PlayerColorArray = [150, 156, 162, 255];
 
 /** Orange on the left, blue on the right - the colours the game started with. */
 export const DEFAULT_COLORS: readonly [string, string] = ['orange', 'blue'];
+
+/** True for the id of a colour on offer. */
+export function isColonyColorId(id: string): id is ColonyColorId {
+  return COLONY_COLORS.some((color) => color.id === id);
+}
+
+/**
+ * A colour's name as a text to translate - the first colour's for an id
+ * not on offer, as {@link getColonyColor} falls back to it.
+ */
+export function colonyColorText(id: string): GameText {
+  const known = isColonyColorId(id) ? id : 'orange';
+  return { key: `game.colors.${known}` };
+}
 
 /** The colour with that id, falling back to the first one. */
 export function getColonyColor(id: string): ColonyColor {
@@ -109,4 +128,37 @@ export function pickColor(
   }
   next[seat] = colorId;
   return next;
+}
+
+/**
+ * The colours of an online match, made by the host from both players'
+ * picks: the host's own colour on the left, the guest's own on the right.
+ * A guest who picked the host's colour plays its second one, which its pair
+ * keeps apart from the first - so the two always differ. Until the guest's
+ * picks are in, the host's pair stands.
+ *
+ * Only the host makes the pair; the guest plays the one it is sent, so both
+ * devices spawn the same colours.
+ */
+export function onlineColors(
+  host: readonly [string, string],
+  guest: readonly [string, string] | null
+): [string, string] {
+  const own = validColorPair(host) ?? [DEFAULT_COLORS[0], DEFAULT_COLORS[1]];
+  const theirs = validColorPair(guest);
+  if (theirs === null) {
+    return own;
+  }
+  return [own[0], theirs[0] !== own[0] ? theirs[0] : theirs[1]];
+}
+
+/**
+ * The pair as one seat sees it: its own colour first, the other seat's
+ * second.
+ */
+export function seatFirst(
+  colors: readonly [string, string],
+  seat: 0 | 1
+): [string, string] {
+  return seat === 0 ? [colors[0], colors[1]] : [colors[1], colors[0]];
 }

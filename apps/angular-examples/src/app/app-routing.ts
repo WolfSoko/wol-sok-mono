@@ -5,8 +5,10 @@ import {
   withComponentInputBinding,
   withEnabledBlockingInitialNavigation,
   withInMemoryScrolling,
+  withNavigationErrorHandler,
   withRouterConfig,
 } from '@angular/router';
+import { reloadOnStaleBundle } from './core/reload-on-stale-bundle';
 import { InfoComponent } from './feature/lazy/info/info.component';
 import { loadRemoteModule } from '@angular-architects/native-federation';
 
@@ -103,10 +105,10 @@ export const APP_ROUTES: MainNavRoutes = [
         './Routes'
       ).then((routes) => routes.entryRoutes),
     data: {
-      linkText: 'Bacteria Game',
+      linkText: 'Bacteria Wars',
       subTitle: 'Served independently by MF',
       description:
-        'Bacteria War: a browser game where bacteria colonies fight for territory, built with Angular and loaded at runtime via Native Federation.',
+        'Bacteria Wars: a browser game where bacteria colonies fight for territory, built with Angular and loaded at runtime via Native Federation.',
     },
   },
   {
@@ -166,6 +168,18 @@ export const APP_ROUTES: MainNavRoutes = [
     },
   },
   {
+    path: 'thanosPlayground',
+    loadChildren: () =>
+      import('./feature/lazy/thanos-playground/thanos-playground.routes').then(
+        (m) => m.routes
+      ),
+    data: {
+      linkText: 'Thanos snap playground (@wolsok/thanos)',
+      description:
+        'Try the @wolsok/thanos Angular directive live: vaporize a card into dust, cracks, shards or chunks on the GPU and set the wind direction, duration and particle count.',
+    },
+  },
+  {
     path: 'webassemblyTests',
     loadChildren: () => import('@wolsok/feat-wasm-test').then((m) => m.routes),
     data: {
@@ -187,5 +201,7 @@ export const provideAppRouter = () =>
     withInMemoryScrolling({
       scrollPositionRestoration: 'enabled',
       anchorScrolling: 'enabled',
-    })
+    }),
+    // A remote released since this tab loaded has replaced its bundles.
+    withNavigationErrorHandler(reloadOnStaleBundle)
   );

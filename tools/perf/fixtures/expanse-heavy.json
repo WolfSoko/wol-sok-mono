@@ -1,0 +1,28 @@
+{
+  "header": {
+    "version": 2,
+    "balanceVersion": 6,
+    "simulation": "cpu",
+    "levelId": "expanse",
+    "mode": "vs-computer",
+    "difficulty": "hard",
+    "colors": ["orange", "blue"],
+    "headStart": 0,
+    "width": 640,
+    "height": 360,
+    "seed": 20261027,
+    "ticks": 600,
+    "seats": [{ "isBot": false }, { "isBot": true }]
+  },
+  "inputs": {
+    "steers": [
+      [0, 0, 1, 0],
+      [300, 0, 0.5, 0.75]
+    ],
+    "drags": [
+      [150, 0, 192, 90],
+      [450, 0, 320, 180]
+    ],
+    "boosts": [[400, 0]]
+  }
+}

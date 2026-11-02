@@ -1,10 +1,16 @@
 import { TestBed } from '@angular/core/testing';
-import { GameHapticsService } from './haptics.service';
+import { GameHapticsService, WEAPON_PATTERNS } from './haptics.service';
 import { GameSettingsService } from './settings.service';
+import { WeaponFire, WeaponId, WEAPONS } from './state/evolution';
 import { FrameEvents } from './state/match-engine';
+
+function fired(weapon: WeaponId, isBot = false): WeaponFire {
+  return { playerId: 1, weapon, x: 10, y: 10, radius: 14, isBot };
+}
 
 const QUIET: FrameEvents = {
   boosts: [],
+  weapons: [],
   captures: 0,
   pelletsEaten: 0,
   crushed: 0,
@@ -85,6 +91,47 @@ describe('GameHapticsService', () => {
     now += 50;
     haptics.tap();
     expect(vibrate).toHaveBeenCalledTimes(1);
+  });
+
+  it('plays a pattern of its own for each weapon a human fires', () => {
+    const haptics = TestBed.inject(GameHapticsService);
+    const felt = WEAPONS.map(({ id }) => {
+      now += 1000;
+      haptics.frame({ ...QUIET, weapons: [fired(id)] });
+      return vibrate.mock.lastCall?.[0] as number[];
+    });
+
+    expect(felt).toEqual(WEAPONS.map(({ id }) => WEAPON_PATTERNS[id]));
+    expect(new Set(felt.map((pattern) => pattern.join())).size).toBe(
+      WEAPONS.length
+    );
+  });
+
+  it("does not shake the phone for the computer's weapons", () => {
+    const haptics = TestBed.inject(GameHapticsService);
+
+    haptics.frame({ ...QUIET, weapons: [fired('phage-strike', true)] });
+
+    expect(vibrate).not.toHaveBeenCalled();
+  });
+
+  it('lets a weapon cut through a boost, and a gate through both', () => {
+    const haptics = TestBed.inject(GameHapticsService);
+
+    haptics.frame({
+      ...QUIET,
+      boosts: [false],
+      weapons: [fired('cryo-pulse')],
+    });
+    expect(vibrate).toHaveBeenLastCalledWith(WEAPON_PATTERNS['cryo-pulse']);
+
+    now += 1000;
+    haptics.frame({
+      ...QUIET,
+      gatesClosed: 1,
+      weapons: [fired('cryo-pulse')],
+    });
+    expect(vibrate).toHaveBeenLastCalledWith([70]);
   });
 
   it('plays a flourish on top of the win for a medallion', () => {

@@ -460,7 +460,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -568,7 +568,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -1169,7 +1169,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -1277,7 +1277,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "SystemMetadata": {
           "cache-control": "max-age=123456",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -1874,7 +1874,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -2405,7 +2405,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -3059,7 +3059,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",

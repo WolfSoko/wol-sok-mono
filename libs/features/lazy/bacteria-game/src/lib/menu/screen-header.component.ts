@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '../i18n/translate.pipe';
 
 /**
  * The head of a menu sub screen: the way back, the screen's title, and
@@ -13,11 +14,11 @@ import { MatIconModule } from '@angular/material/icon';
  */
 @Component({
   selector: 'feat-lazy-bac-game-screen-header',
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule, TranslatePipe],
   template: `
     <button mat-stroked-button type="button" class="back" (click)="back.emit()">
       <mat-icon>arrow_back</mat-icon>
-      {{ backLabel() }}
+      {{ backLabel() ?? ('common.menu' | t) }}
     </button>
     <h2 class="screen-title">{{ title() }}</h2>
     <ng-content />
@@ -27,8 +28,8 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class ScreenHeaderComponent {
   public readonly title = input.required<string>();
-  /** Names where the way back leads. */
-  public readonly backLabel = input('Menu');
+  /** Names where the way back leads - the menu unless told otherwise. */
+  public readonly backLabel = input<string | null>(null);
 
   public readonly back = output<void>();
 }

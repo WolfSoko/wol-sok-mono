@@ -1,4 +1,8 @@
-import { computeCaptureScale } from './capture-scale';
+import {
+  capturePixelsScale,
+  computeCaptureScale,
+  effectCanvasScale,
+} from './capture-scale';
 import {
   CANVAS_MAX_PARTICLE_COUNT,
   CanvasParticleRenderer,
@@ -6,6 +10,7 @@ import {
 import { ParticleRenderer, ParticleRendererParams } from './particle-renderer';
 import { limitParticles, Particles } from './particles';
 import { WebGlParticleRenderer } from './webgl/webgl-particle-renderer';
+import type { EffectScale } from './wind';
 
 /**
  * Browsers drop the oldest WebGL context once about 16 are alive,
@@ -35,6 +40,8 @@ export class GpuContextBudget {
 export interface ChooseParticleRendererParams {
   maxParticleCount: number;
   devicePixelRatio: number;
+  /** the most pixels an element is captured with, no limit when unset */
+  maxCapturePixels?: number;
   createCanvas: () => HTMLCanvasElement;
   gpuBudget?: GpuContextBudget;
 }
@@ -42,8 +49,8 @@ export interface ChooseParticleRendererParams {
 export interface ParticleRendererChoice {
   /** how many particles this renderer can handle */
   readonly maxParticleCount: number;
-  /** scale to capture an element of the given css size */
-  captureScale(width: number, height: number): number;
+  /** scale to capture an element of the given css size, see computeCaptureScale() */
+  captureScale(width: number, height: number, effectScale: EffectScale): number;
   create(
     particles: Particles,
     params: ParticleRendererParams
@@ -60,6 +67,7 @@ export interface ParticleRendererChoice {
 export function chooseParticleRenderer({
   maxParticleCount,
   devicePixelRatio,
+  maxCapturePixels,
   createCanvas,
   gpuBudget = new GpuContextBudget(),
 }: ChooseParticleRendererParams): ParticleRendererChoice {
@@ -74,7 +82,13 @@ export function chooseParticleRenderer({
     );
   const canvasChoice: ParticleRendererChoice = {
     maxParticleCount: Math.min(maxParticleCount, CANVAS_MAX_PARTICLE_COUNT),
-    captureScale: () => 1,
+    // css pixels keep the CPU work low, fewer for a big element
+    captureScale: (width, height, effectScale) =>
+      Math.min(
+        1,
+        capturePixelsScale(width, height, maxCapturePixels),
+        effectCanvasScale(width, height, effectScale)
+      ),
     create: createCanvasRenderer,
     release: () => undefined,
   };
@@ -104,8 +118,15 @@ export function chooseParticleRenderer({
   const maxCanvasSize = WebGlParticleRenderer.maxCanvasSize(gl);
   return {
     maxParticleCount,
-    captureScale: (width, height) =>
-      computeCaptureScale({ width, height, devicePixelRatio, maxCanvasSize }),
+    captureScale: (width, height, effectScale) =>
+      computeCaptureScale({
+        width,
+        height,
+        effectScale,
+        devicePixelRatio,
+        maxCanvasSize,
+        maxCapturePixels,
+      }),
     create: (particles, params) => {
       try {
         return new WebGlParticleRenderer(canvas, gl, particles, params);

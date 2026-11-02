@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   linkedSignal,
   output,
@@ -10,6 +11,18 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
+import {
+  chapterKeys,
+  english,
+  GameText,
+  ladderLockText,
+  levelTitleText,
+  ONLINE_LOCK_TEXT,
+  recipeKeys,
+  renderGameText,
+} from '../i18n/game-texts';
+import { I18nService } from '../i18n/i18n.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { CHAPTERS } from '../state/chapters';
 import {
@@ -18,12 +31,8 @@ import {
   parseGeneratedId,
   rollLevelId,
 } from '../state/level-generator/generate-level';
-import {
-  RECIPE_IDS,
-  RecipeId,
-  RECIPES,
-} from '../state/level-generator/recipes';
-import { getLevel, levelTitle, LEVELS } from '../state/levels';
+import { RECIPE_IDS, RecipeId } from '../state/level-generator/recipes';
+import { getLevel, LEVELS, levelSize } from '../state/levels';
 import { Progress } from '../state/progress';
 import { LevelCard, LevelCardComponent } from './level-card.component';
 import { levelColors } from './menu-cards';
@@ -43,12 +52,15 @@ import { levelColors } from './menu-cards';
     MatButtonToggleModule,
     MatIconModule,
     MatSliderModule,
+    TranslatePipe,
   ],
   templateUrl: './level-map.component.html',
   styleUrl: './level-map.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LevelMapComponent {
+  private readonly i18n = inject(I18nService);
+
   /** The level picked so far. */
   public readonly levelId = input.required<string>();
   /** Every medallion held, by level id, then by difficulty. */
@@ -69,8 +81,8 @@ export class LevelMapComponent {
     CHAPTERS.map((chapter) => {
       const cards = chapter.levelIds.map((id) => this.card(id));
       return {
-        name: chapter.name,
-        blurb: chapter.blurb,
+        id: chapter.id,
+        ...chapterKeys(chapter.id),
         open: cards.filter((card) => card.lock === null).length,
         cards,
       };
@@ -93,8 +105,11 @@ export class LevelMapComponent {
   });
 
   protected readonly styles = [
-    { id: 'any' as const, name: 'Any' },
-    ...RECIPE_IDS.map((id) => ({ id, name: RECIPES[id].label })),
+    {
+      id: 'any' as const,
+      name: 'newGame.levelMap.generated.anyStyle' as const,
+    },
+    ...RECIPE_IDS.map((id) => ({ id, name: recipeKeys(id).label })),
   ];
   protected readonly minDifficulty = MIN_DIFFICULTY;
   protected readonly maxDifficulty = MAX_DIFFICULTY;
@@ -116,24 +131,43 @@ export class LevelMapComponent {
 
   /**
    * A level's card: its badge - its place on the ladder, or the style of a
-   * generated one - its lock, its medallions, its arena's colours.
+   * generated one - its lock, its medallions, its arena's colours and the
+   * size of its map, whose picture the card draws. Its
+   * texts are in the active language: the computeds that call it follow a
+   * switch.
    */
   private card(id: string): LevelCard {
     const level = getLevel(id);
     const made = parseGeneratedId(id);
+    const lock = this.locks()[id];
     return {
       id,
       badge:
         made === null
           ? String(LEVELS.indexOf(level) + 1)
-          : RECIPES[made.recipe].label,
-      title: made === null ? levelTitle(level) : level.name,
-      lock: this.locks()[id] ?? null,
+          : this.i18n.t(recipeKeys(made.recipe).label),
+      title: this.text(levelTitleText(level)),
+      lock: lock === undefined ? null : this.text(lockText(id, lock)),
       ...levelColors(id),
+      size: levelSize(level),
       medals: BOT_DIFFICULTIES.map((difficulty) => ({
         difficulty: difficulty.id,
         tier: this.medals()[id]?.[difficulty.id] ?? null,
       })),
     };
   }
+
+  private text(text: GameText): string {
+    return renderGameText(text, (key, params) => this.i18n.t(key, params));
+  }
+}
+
+const ONLINE_LOCK = english(ONLINE_LOCK_TEXT);
+
+/**
+ * A lock as a text to translate. The locks come in English, as the state
+ * keeps them: a level too big to play online, or else the ladder's.
+ */
+function lockText(id: string, lock: string): GameText {
+  return lock === ONLINE_LOCK ? ONLINE_LOCK_TEXT : ladderLockText(id);
 }

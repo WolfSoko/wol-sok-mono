@@ -87,9 +87,11 @@ export interface GameBalance {
  * The version of the balance table and of the rules the simulation applies
  * with it. Raise it with every change that plays a recorded match out
  * differently: a replay only plays again under the version it was recorded
- * with.
+ * with. Version 6 brings the `gpu-int` ruleset into play (ADR 0015, step 8).
+ * Version 7: on the `cpu` ruleset a bacterium with no free cell around sits
+ * its move out without drawing random numbers - it could not move anyway.
  */
-export const BALANCE_VERSION = 5;
+export const BALANCE_VERSION = 7;
 
 export const gameBalance: GameBalance = {
   startBacteriaRadius: 14,

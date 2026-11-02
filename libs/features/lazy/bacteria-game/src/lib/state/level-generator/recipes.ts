@@ -1,3 +1,4 @@
+import type { levels as levelTexts } from '../../i18n/en/levels';
 import { Rect } from '../maps';
 import {
   blob,
@@ -23,8 +24,11 @@ export function isRecipeId(value: unknown): value is RecipeId {
 export interface Recipe {
   /** The style's name in the level choice - "Corridors". */
   label: string;
-  /** The second word of a generated name - "Quiet Corridors". */
-  nouns: readonly string[];
+  /**
+   * The second word of a generated name - "Quiet Corridors" - by its id in
+   * the dictionaries, which place the adjective before it.
+   */
+  nouns: readonly GeneratedNoun[];
   /** The briefing of a generated level. */
   description: string;
   /** How winding the way between the start spots should be - see `detour`. */
@@ -37,6 +41,9 @@ export interface Recipe {
    */
   build(rng: Rng, width: number, height: number, heat: number): Rect[];
 }
+
+/** A noun a generated name can end on. */
+export type GeneratedNoun = keyof typeof levelTexts.generated.nouns;
 
 /** Square or round pillars scattered over the left half. */
 function pillars(
@@ -97,7 +104,7 @@ function bar(
  */
 const field: Recipe = {
   label: 'Field',
-  nouns: ['Meadow', 'Flats', 'Garden', 'Plain', 'Shallows'],
+  nouns: ['meadow', 'flats', 'garden', 'plain', 'shallows'],
   description: 'Open ground with pillars for cover - mass beats cleverness.',
   detour: 1.1,
   family: ['petri-dish', 'pillar-field'],
@@ -115,7 +122,7 @@ const field: Recipe = {
  */
 const corridor: Recipe = {
   label: 'Corridors',
-  nouns: ['Corridors', 'Halls', 'Passage', 'Lanes', 'Locks'],
+  nouns: ['corridors', 'halls', 'passage', 'lanes', 'locks'],
   description: 'Walls from edge to edge, with gaps to push through.',
   detour: 1.35,
   family: ['corridors', 'hourglass', 'serpentine'],
@@ -150,7 +157,7 @@ const corridor: Recipe = {
  */
 const fortress: Recipe = {
   label: 'Fortress',
-  nouns: ['Keep', 'Bastion', 'Citadel', 'Ramparts', 'Redoubt'],
+  nouns: ['keep', 'bastion', 'citadel', 'ramparts', 'redoubt'],
   description: 'A keep around each colony, with doors to hold or to storm.',
   detour: 1.45,
   family: ['twin-chambers', 'inner-ring'],
@@ -215,7 +222,7 @@ function withDoor(wall: Rect, door: number, rng: Rng): Rect[] {
  */
 const cave: Recipe = {
   label: 'Cave',
-  nouns: ['Caverns', 'Grotto', 'Hollows', 'Burrow', 'Tissue'],
+  nouns: ['caverns', 'grotto', 'hollows', 'burrow', 'tissue'],
   description:
     'Round walls like living tissue - winding channels, no straights.',
   detour: 1.3,

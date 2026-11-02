@@ -1,5 +1,7 @@
+import type { GameText } from '../i18n/game-text';
 import { AchievementId } from './achievement-ids';
 import { MedalAward } from './medallions';
+import type { MissionResult } from './training';
 import { XpGain } from './xp';
 
 /** Everything a match that has ended earned, for the result screen. */
@@ -17,8 +19,12 @@ export interface MatchEarnings {
   unlocked: readonly string[];
   /** The cosmetics the match opened, named - "Green colonies". */
   cosmetics: readonly string[];
+  /** The cosmetics as texts to translate, in the same order. */
+  cosmeticTexts?: readonly GameText[];
   /** On the daily level: which attempt it was, and the streak after it. */
   daily?: DailyResult;
+  /** On a training mission's level: whether the match did the mission. */
+  training?: MissionResult;
 }
 
 export interface DailyResult {

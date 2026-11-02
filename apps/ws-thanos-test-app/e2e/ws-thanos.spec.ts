@@ -314,6 +314,31 @@ test.describe('WsThanos Directive E2E Tests', () => {
         'chunks'
       );
     });
+
+    test('should make room for the dust where the wind blows it', async ({
+      page,
+    }) => {
+      await page.goto('/?demo');
+      // to the left
+      await page.getByTestId('playground-wind').fill('270');
+
+      await page.getByTestId('btn-playground').click();
+      await expect(effectCanvas(page)).toBeAttached();
+      const card = await page.getByTestId('playground').boundingBox();
+      const canvas = await effectCanvas(page).boundingBox();
+      if (card == null || canvas == null) {
+        throw new Error('card or effect canvas not visible');
+      }
+
+      // one card width to the left, nothing to the right
+      expect(canvas.x).toBeCloseTo(card.x - card.width, 0);
+      expect(canvas.x + canvas.width).toBeCloseTo(card.x + card.width, 0);
+      // the dust spreads up and down evenly
+      expect(card.y - canvas.y).toBeCloseTo(
+        canvas.y + canvas.height - (card.y + card.height),
+        0
+      );
+    });
   });
 });
 

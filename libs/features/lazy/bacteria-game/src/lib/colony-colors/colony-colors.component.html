@@ -4,19 +4,27 @@
     <mat-button-toggle-group
       class="swatches"
       hideSingleSelectionIndicator
-      [attr.aria-label]="'Colour of ' + seat"
+      [attr.aria-label]="'controls.colors.group' | t: { seat }"
       [value]="colors()[index]"
       [disabled]="disabled()"
       (change)="pick(index, $event.value)"
     >
-      @for (color of palette; track color.id) {
-        @let lock = locks()[color.id];
+      @for (color of palette(); track color.id) {
+        @let lock = color.lock;
         <mat-button-toggle
           [value]="color.id"
           [disabled]="blocked(index, color.id)"
           [disabledInteractive]="true"
-          [aria-label]="lock ? color.name + ', locked: ' + lock : color.name"
-          [matTooltip]="lock ? color.name + ' - ' + lock : color.name"
+          [aria-label]="
+            lock
+              ? ('controls.colors.locked' | t: { color: color.name, lock })
+              : color.name
+          "
+          [matTooltip]="
+            lock
+              ? ('controls.colors.lockedTip' | t: { color: color.name, lock })
+              : color.name
+          "
           [class.locked]="!!lock"
         >
           <span
@@ -33,7 +41,7 @@
   </div>
 }
 @if (lockedList().length > 0) {
-  <ul class="locked-list" aria-label="Colours still to earn">
+  <ul class="locked-list" [attr.aria-label]="'controls.colors.toEarn' | t">
     @for (locked of lockedList(); track locked.id) {
       <li>
         <span
@@ -41,7 +49,10 @@
           [style.background-color]="locked.css"
           aria-hidden="true"
         ></span>
-        {{ locked.name }} - {{ locked.lock }}
+        {{
+          "controls.colors.lockedTip"
+            | t: { color: locked.name, lock: locked.lock ?? "" }
+        }}
       </li>
     }
   </ul>

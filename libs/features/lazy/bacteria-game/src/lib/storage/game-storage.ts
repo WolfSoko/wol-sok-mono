@@ -1,12 +1,14 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { GameCloud } from './game-cloud';
 import { LocalGameStorage } from './local-game-storage';
 
 /**
- * Where the game keeps what it remembers between visits, value by key. The
- * browser's local storage does for now; a Firebase backend can take over
- * later by providing another class for this one:
- * `{ provide: GameStorage, useClass: FirestoreGameStorage }`.
+ * Where the game keeps what it remembers between visits, value by key: the
+ * player's progress. It answers for whoever plays (`GameAccount`) - from the
+ * Firebase project once `provideGameCloud` names one, else from the
+ * browser's local storage. A spec provides another class for this one:
+ * `{ provide: GameStorage, useValue: new LateGameStorage() }`.
  *
  * Every backend may answer late, so the services keep their state in
  * signals and never wait on storage. Values are plain JSON - what
@@ -14,7 +16,10 @@ import { LocalGameStorage } from './local-game-storage';
  * browser that refuses storage - reads as nothing stored and lets a write go,
  * so the value lasts for this visit only. None of the calls throws or errors.
  */
-@Injectable({ providedIn: 'root', useClass: LocalGameStorage })
+@Injectable({
+  providedIn: 'root',
+  useFactory: () => inject(GameCloud).storage(),
+})
 export abstract class GameStorage {
   /**
    * The value stored under a key - null when there is none or it is
@@ -45,3 +50,11 @@ export abstract class GameStorage {
     change: (stored: unknown) => unknown
   ): void;
 }
+
+/**
+ * What stays with this device, whoever plays on it: the settings - sound,
+ * controls, the graphics a device can afford. Always the browser's local
+ * storage.
+ */
+@Injectable({ providedIn: 'root', useClass: LocalGameStorage })
+export abstract class DeviceStorage extends GameStorage {}

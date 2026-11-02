@@ -1,0 +1,71 @@
+@use 'screen';
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.text {
+  margin: 0;
+  line-height: 1.4;
+  color: var(--bw-soft);
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+}
+
+.host {
+  @include screen.primary;
+}
+
+.find {
+  margin-bottom: 0.5rem;
+}
+
+.join {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  mat-form-field {
+    flex: 1 1 auto;
+  }
+
+  input {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+}
+
+.code {
+  @include screen.figure;
+
+  margin: 0;
+  font-size: 2.25rem;
+  letter-spacing: 0.25em;
+  color: var(--bw-gold);
+  user-select: all;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+
+  &.connected mat-icon {
+    color: var(--bw-gold);
+  }
+}
+
+.notice {
+  margin: 0;
+  color: var(--bw-gold);
+}
+
+.leave {
+  align-self: flex-start;
+}

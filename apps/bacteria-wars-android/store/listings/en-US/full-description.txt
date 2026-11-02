@@ -1,0 +1,26 @@
+Two bacteria colonies, one petri dish. Steer your crosshair, and your colony flows after it: eat the food, grow, and swallow the other colony before it swallows you.
+
+Every bacterium is simulated, thousands of them at once, on your phone's graphics chip. Colonies stretch round walls, squeeze through gates, split and merge again, and fight cell by cell where they meet.
+
+HOW IT PLAYS
+• A joystick steers your colony, a button fires the boost.
+• Food makes your colony bigger, and the bigger colony wins the fight.
+• Time the boost to break through or to get away.
+
+20 LEVELS IN FOUR CHAPTERS
+From a plain petri dish through the laboratory and the body to the reactor: gates, sliding walls, a heart that beats, antibiotic, ice and agar, neutral colonies and a map far bigger than the screen.
+
+MANY WAYS TO PLAY
+• Campaign: open level after level and earn a bronze, silver or gold medallion on every difficulty.
+• Daily level: a new level each day, the same for everyone.
+• Endless run: one level after another, as far as you get.
+• Free play: any level, or a level generated for you.
+• Two players: one phone lying flat between you, a joystick and a boost each.
+
+AN OPPONENT THAT PLAYS FAIR
+The computer comes in Easy, Normal and Hard. It only does what you can do: it steers its crosshair and fires its boost.
+
+ALSO
+• Plays offline.
+• Ranks, achievements and colony colours to unlock.
+• Synthesised music and sound in the key of each level, and vibration you can feel: a tap for a boost, a thud for a gate.

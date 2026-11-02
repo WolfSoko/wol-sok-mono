@@ -208,8 +208,8 @@ npx nx graph                              # Visualize dependency graph
 
 ### Installation Prerequisites
 
-- `node-gyp` must be properly configured for `npm install`
-- See: [node-gyp installation](https://github.com/nodejs/node-gyp#installation)
+- `npm ci` needs no compiler toolchain: native modules ship prebuilt binaries, and
+  `allowScripts` in `package.json` denies the optional `gl` module, so node-gyp never runs
 
 ### Notable Libraries in This Repo
 

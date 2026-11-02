@@ -1,4 +1,5 @@
 import {
+  adoptProgress,
   addCouchWin,
   addMedal,
   addTotals,
@@ -60,6 +61,7 @@ describe('mergeProgress', () => {
     couchWins: { orange: 4, blue: 2 },
     daily: { day: '2026-10-19', attempts: 2, streak: 4 },
     endlessBest: 6,
+    training: { steer: '2026-10-02', feed: '2026-10-05' },
   };
   const elsewhere: Progress = {
     medals: {
@@ -71,6 +73,7 @@ describe('mergeProgress', () => {
     couchWins: { orange: 3, green: 1 },
     daily: { day: '2026-10-19', attempts: 3, streak: 4 },
     endlessBest: 4,
+    training: { feed: '2026-10-03', boost: '2026-10-06' },
   };
 
   it('keeps the better medallion, the higher total and the earlier day', () => {
@@ -89,6 +92,11 @@ describe('mergeProgress', () => {
       // The daily record of the same day: the one with more attempts.
       daily: { day: '2026-10-19', attempts: 3, streak: 4 },
       endlessBest: 6,
+      training: {
+        steer: '2026-10-02',
+        feed: '2026-10-03',
+        boost: '2026-10-06',
+      },
     });
   });
 
@@ -102,6 +110,31 @@ describe('mergeProgress', () => {
     expect(mergeProgress(here, EMPTY_PROGRESS)).toBe(here);
     expect(mergeProgress(here, here)).toBe(here);
     expect(mergeProgress(EMPTY_PROGRESS, here)).toEqual(here);
+  });
+});
+
+describe('adoptProgress', () => {
+  it("adds the guest's counts and merges the rest", () => {
+    const account = parseProgress({
+      medals: { hourglass: { hard: 'silver' } },
+      totals: { matches: 10, wins: 4 },
+      couchWins: { orange: 3 },
+      endlessBest: 2,
+    });
+    const guest = parseProgress({
+      medals: { hourglass: { hard: 'gold' }, corridors: { easy: 'bronze' } },
+      totals: { matches: 2, wins: 1 },
+      couchWins: { orange: 1, blue: 2 },
+      endlessBest: 5,
+    });
+
+    expect(adoptProgress(account, guest)).toEqual({
+      ...EMPTY_PROGRESS,
+      medals: { hourglass: { hard: 'gold' }, corridors: { easy: 'bronze' } },
+      totals: { ...NO_TOTALS, matches: 12, wins: 5 },
+      couchWins: { orange: 4, blue: 2 },
+      endlessBest: 5,
+    });
   });
 });
 
@@ -194,6 +227,7 @@ describe('parseProgress', () => {
       couchWins: { purple: 7 },
       daily: { day: '2026-10-20', attempts: 2, streak: 6 },
       endlessBest: 11,
+      training: { steer: '2026-10-21' },
     };
     expect(parseProgress(JSON.parse(JSON.stringify(progress)))).toEqual(
       progress
@@ -225,6 +259,7 @@ describe('parseProgress', () => {
         couchWins: { red: 2.5, mauve: 4, blue: -1 },
         daily: { day: 'yesterday', attempts: 2, streak: 1 },
         endlessBest: -3,
+        training: { steer: '2026-10-19', jump: '2026-10-19', feed: 3 },
       })
     ).toEqual({
       medals: { corridors: { normal: 'gold' } },
@@ -233,6 +268,7 @@ describe('parseProgress', () => {
       couchWins: { red: 2 },
       daily: null,
       endlessBest: 0,
+      training: { steer: '2026-10-19' },
     });
   });
 

@@ -24,30 +24,25 @@
   --mat-stepper-header-focus-state-layer-color: transparent;
   --mat-stepper-header-height: 56px;
 
+  // The steps' contents take the room the header leaves, and scroll on
+  // their own.
+  ::ng-deep .mat-horizontal-content-container {
+    padding: 0.75rem 0 0;
+  }
+}
+
+// The panes that take the room left to them, as columns that scroll on
+// their own: the stepper, its steps and the level step.
+.stepper,
+.stepper ::ng-deep .mat-horizontal-content-container,
+.stepper
+  ::ng-deep
+  .mat-horizontal-stepper-content:not(.mat-horizontal-stepper-content-inactive),
+.level-step {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
-
-  // The steps' contents take the room the header leaves, and scroll on
-  // their own.
-  ::ng-deep .mat-horizontal-content-container {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    padding: 0.75rem 0 0;
-  }
-
-  ::ng-deep
-    .mat-horizontal-stepper-content:not(
-      .mat-horizontal-stepper-content-inactive
-    ) {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
 }
 
 // The modes, a card each.
@@ -58,9 +53,14 @@
   padding: 0.25rem;
 }
 
-.mode {
+// The panels: the mode cards, the setup and the briefing.
+.mode,
+.setup,
+.details {
   @include screen.panel;
+}
 
+.mode {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -93,9 +93,12 @@
   }
 }
 
-.mode-name {
+.mode-name,
+.rivalry-score {
   @include screen.figure;
+}
 
+.mode-name {
   font-size: 1.25rem;
 }
 
@@ -112,19 +115,41 @@
 
 // The level map, with the way on below it.
 .level-step {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
   gap: 0.75rem;
-  min-height: 0;
+}
+
+// The way forward: on from the map, and the start.
+.next,
+.start {
+  @include screen.primary;
 }
 
 .next {
-  @include screen.primary;
-
   flex: none;
   align-self: flex-end;
   min-width: 10rem;
+}
+
+// A mission's goal and tip, under its briefing.
+.mission-brief {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  line-height: 1.4;
+
+  dt {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--bw-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--bw-soft);
+  }
 }
 
 // The briefing beside the setup and the way to start.
@@ -135,6 +160,12 @@
   align-items: start;
   gap: 1.25rem;
   min-height: 0;
+}
+
+// The online lobby before a match: no briefing, the lobby on its own.
+.start-step.lobby-only {
+  grid-template-columns: minmax(0, 32rem);
+  justify-content: center;
 }
 
 // The rule and the zones of the level, each in its colour.
@@ -159,8 +190,6 @@
 }
 
 .setup {
-  @include screen.panel;
-
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -174,8 +203,6 @@
 }
 
 .details {
-  @include screen.panel;
-
   // In the colours of the level's arena: its floor, its frame.
   border-color: rgb(var(--level-edge, 38 49 66) / 70%);
   background:
@@ -191,6 +218,13 @@
   gap: 0.75rem;
   padding: 1.25rem;
   overflow: auto;
+}
+
+// The map of the level, as big as the briefing has room for.
+.details-preview {
+  flex: none;
+  width: 100%;
+  max-width: 30rem;
 }
 
 .details-number {
@@ -273,14 +307,10 @@
 }
 
 .rivalry-score {
-  @include screen.figure;
-
   font-size: 1.3rem;
 }
 
 .start {
-  @include screen.primary;
-
   // Always in reach, however far the setup scrolls.
   position: sticky;
   bottom: 0;
@@ -312,6 +342,7 @@
 
   .mode-blurb,
   .details-description,
+  .details-preview,
   .opponent {
     display: none;
   }
@@ -323,4 +354,14 @@
       display: none;
     }
   }
+}
+
+.ranked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ranked-line {
+  margin: 0;
 }

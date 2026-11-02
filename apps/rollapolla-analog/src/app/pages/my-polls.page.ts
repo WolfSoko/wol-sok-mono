@@ -14,6 +14,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 import { EndlessScroll } from '../core/endless-scroll/endless-scroll';
 import { EndlessScrollEndComponent } from '../core/endless-scroll/endless-scroll-end.component';
+import {
+  injectRollaPollaAnalytics,
+  pollOpened,
+} from '../core/analytics/rollapolla-analytics';
 import { PollsRepoPort } from '../ports/polls-repo.port';
 import { retry, tap, timer } from 'rxjs';
 import { useNoindexPage } from './site-tags';
@@ -48,12 +52,13 @@ const RETRY_DELAY_MS = 10_000;
       } @else if (polls(); as polls) {
         @if (polls.length) {
           <ul class="polls" data-testid="my-polls-list">
-            @for (poll of polls; track poll.id) {
+            @for (poll of polls; track poll.id; let position = $index) {
               <li>
                 <a
                   class="poll"
                   [routerLink]="['/poll', poll.id]"
                   [attr.data-testid]="'my-poll-' + poll.id"
+                  (click)="opened(position)"
                 >
                   <span class="question">{{ poll.question }}</span>
                   <span class="meta">
@@ -191,6 +196,7 @@ export default class MyPollsPageComponent {
 
   protected readonly scroll = new EndlessScroll();
   private readonly pollsRepo = inject(PollsRepoPort);
+  private readonly analytics = injectRollaPollaAnalytics();
   private readonly myPolls = toSignal(
     this.pollsRepo.watchMyPolls(this.scroll.counts).pipe(
       tap((page) => {
@@ -222,5 +228,9 @@ export default class MyPollsPageComponent {
 
   constructor() {
     useNoindexPage('My polls | RollaPolla');
+  }
+
+  protected opened(position: number): void {
+    this.analytics.track('select_content', pollOpened('mine', position));
   }
 }

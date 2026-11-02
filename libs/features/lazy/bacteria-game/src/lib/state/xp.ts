@@ -1,26 +1,26 @@
+import { english, GameText } from '../i18n/game-text';
 import { ACHIEVEMENT_IDS } from './achievement-ids';
-import {
-  BOT_DIFFICULTIES,
-  BotDifficulty,
-  difficultyOption,
-} from './bot-controller';
+import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { isLadderLevel, LEVELS } from './levels';
-import { MatchRecord, MEDAL_NAMES, MedalTier } from './medallions';
+import { MatchRecord, medalText, MedalTier } from './medallions';
 import { bestMedal, Progress } from './progress';
+import { missionsDone } from './training';
 
 /**
  * XP is not stored as such: it follows from the progress. What a match is
  * worth on its own - finishing, winning, the difficulty - is counted as it
  * is played (`totals.matchXp`); what the player holds - the best medallion
- * of each level and difficulty, every achievement - is worth its XP as long
- * as it is held. So XP merges as cleanly as the progress does, never pays
- * the same thing twice, and players who held medallions before XP existed
- * have theirs from the start.
+ * of each level and difficulty, every achievement, every training mission
+ * done - is worth its XP as long as it is held. So XP merges as cleanly as
+ * the progress does, never pays the same thing twice, and players who held
+ * medallions before XP existed have theirs from the start.
  */
 
 /** One line of what a match earned in XP, for the result screen. */
 export interface XpPart {
   label: string;
+  /** The label as a text to translate. */
+  text?: GameText;
   xp: number;
 }
 
@@ -41,19 +41,29 @@ const DIFFICULTY_FACTOR: Record<BotDifficulty, number> = {
   hard: 1.5,
 };
 /** XP a held medallion is worth - a better one replaces the one below. */
-const MEDAL_XP: Record<MedalTier, number> = {
+export const MEDAL_XP: Readonly<Record<MedalTier, number>> = {
   bronze: 20,
   silver: 40,
   gold: 70,
   platinum: 120,
 };
 /** XP an achievement is worth. */
-const ACHIEVEMENT_XP = 50;
+export const ACHIEVEMENT_XP = 50;
+/** XP a training mission done is worth. */
+const MISSION_XP = 25;
 /** XP for a match between two players. */
 export const COUCH_XP = 15;
 
+/**
+ * The match an XP gain is for: one against the computer, one between two
+ * players, or a training mission's, which is worth no XP on its own.
+ */
+export type XpMatch = MatchRecord | 'couch' | 'training';
+
 /** What a match against the computer is worth on its own. */
-export function matchXp(record: MatchRecord): number {
+export function matchXp(
+  record: Pick<MatchRecord, 'won' | 'difficulty'>
+): number {
   return Math.round(
     (FINISH_XP + (record.won ? WIN_XP : 0)) *
       DIFFICULTY_FACTOR[record.difficulty]
@@ -72,46 +82,65 @@ export function xpOf(progress: Progress): number {
   const achievements = ACHIEVEMENT_IDS.filter(
     (id) => progress.achievements[id] != null
   ).length;
-  return xp + achievements * ACHIEVEMENT_XP;
+  return (
+    xp +
+    achievements * ACHIEVEMENT_XP +
+    missionsDone(progress.training) * MISSION_XP
+  );
 }
 
 /**
  * What a match earned, from the progress before and after it, line by
- * line: the match itself, a better medallion, the achievements.
+ * line: the match itself, a better medallion, the achievements, the
+ * training missions.
  */
 export function xpGain(
   before: Progress,
   after: Progress,
-  record: MatchRecord | null
+  match: XpMatch
 ): XpGain {
   const parts: XpPart[] = [];
-  if (record === null) {
-    parts.push({ label: 'Two players', xp: COUCH_XP });
-  } else {
-    const difficulty = difficultyOption(record.difficulty)?.name ?? '';
-    parts.push({
-      label: `${record.won ? 'Win' : 'Played'} · ${difficulty}`,
-      xp: matchXp(record),
-    });
+  const add = (text: GameText, xp: number) =>
+    parts.push({ label: english(text), text, xp });
+  if (match === 'couch') {
+    add({ key: 'game.xp.couch' }, COUCH_XP);
+  } else if (match !== 'training') {
+    const record = match;
+    add(
+      {
+        key: record.won ? 'game.xp.win' : 'game.xp.played',
+        params: {
+          difficulty: { key: `game.difficulties.${record.difficulty}.name` },
+        },
+      },
+      matchXp(record)
+    );
     const held = bestMedal(before, record.levelId, record.difficulty);
     const best = bestMedal(after, record.levelId, record.difficulty);
     // Only the ladder's medallions pay XP - see xpOf.
     const onLadder = isLadderLevel(record.levelId);
     if (onLadder && best !== null && best !== held) {
-      parts.push({
-        label: `${MEDAL_NAMES[best]} medallion, a new best`,
-        xp: MEDAL_XP[best] - (held === null ? 0 : MEDAL_XP[held]),
-      });
+      add(
+        { key: 'game.xp.medal', params: { medal: medalText(best) } },
+        MEDAL_XP[best] - (held === null ? 0 : MEDAL_XP[held])
+      );
     }
   }
   const earned = ACHIEVEMENT_IDS.filter(
     (id) => before.achievements[id] == null && after.achievements[id] != null
   ).length;
   if (earned > 0) {
-    parts.push({
-      label: earned === 1 ? 'Achievement' : `${earned} achievements`,
-      xp: earned * ACHIEVEMENT_XP,
-    });
+    add(
+      { key: 'game.xp.achievements', params: { count: earned } },
+      earned * ACHIEVEMENT_XP
+    );
+  }
+  const done = missionsDone(after.training) - missionsDone(before.training);
+  if (done > 0) {
+    add(
+      { key: 'game.xp.missions', params: { count: done } },
+      done * MISSION_XP
+    );
   }
   return { parts, total: parts.reduce((sum, { xp }) => sum + xp, 0) };
 }

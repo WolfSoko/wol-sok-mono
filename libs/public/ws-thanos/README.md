@@ -4,7 +4,9 @@ An angular directive that vaporizes your DOM Elements like Thanos snaps his fing
 
 #### Live Demo:
 
-Click the technology cards on https://angularexamples.wolsok.de/home?thanosDemo=true
+Try every option in the playground: https://angularexamples.wolsok.de/thanosPlayground
+
+Or click the technology cards on https://angularexamples.wolsok.de/home?thanosDemo=true
 
 ## Usage
 
@@ -54,10 +56,12 @@ export class SharedModule {}
 | -------------------- | :-----: | ------: | -------------------------------------------------------------------: |
 | animationLength      | number  |    5000 |                                           the animation length in ms |
 | maxParticleCount     | number  | 3000000 | max amount of particles (capped at 400000 without WebGL2, see below) |
+| maxCapturePixels     | number  |   unset |           most pixels to capture the element with, see GPU rendering |
 | particleAcceleration | number  |      30 |                                   speed of the particle acceleration |
 | sound                | boolean |    true |                           play a windy, sandy sound while vaporizing |
 | soundVolume          | number  |     0.5 |                                      volume of the sound from 0 to 1 |
 | crumble              | string  |  shards |                   how the element breaks apart, see crumble variants |
+| windDirection        | number  |      45 |     degrees the dust blows to, clockwise from up, see wind direction |
 | preload              | boolean |    true |       warm up the effect while idle, so the first snap won't stutter |
 
 #### Sound
@@ -94,7 +98,24 @@ afterNextRender(() => void thanos.preload());
 The particles are simulated and drawn on the graphics card with WebGL2,
 one particle per device pixel (up to a pixel ratio of 2) for crisp results on high resolution screens.
 Without WebGL2 ws-thanos falls back to the CPU canvas renderer, which captures at css pixels and uses at most 400000 particles.
+
+A big element on a big screen makes millions of pixels, and the effect canvas around it is five times as tall.
+Set `maxCapturePixels` to capture it with fewer: ws-thanos lowers the pixel ratio, below css pixels if needed,
+so the particles get coarser. `maxParticleCount` instead leaves out random pixels at full resolution.
+Both renderers follow it.
 The effect canvas has a `data-ws-thanos-renderer` attribute (`webgl` or `canvas`) showing which renderer is in use.
+
+#### Frame rate
+
+The effect draws one frame for every frame the screen shows (`requestAnimationFrame`), 120 per second on a 120 Hz screen,
+and looks the same at any frame rate. After a stalled frame or a hidden tab the particles carry on instead of jumping away.
+
+#### Images
+
+html2canvas captures the element, and it stretches every `<img>` over its box.
+ws-thanos draws images with `object-fit` and `object-position` the way the browser shows them before html2canvas captures them,
+so logos and photos keep their shape while they vaporize.
+Images from another origin can't be read back and stay stretched; serve them from your origin or with CORS.
 
 #### Crumble variants
 
@@ -109,6 +130,24 @@ The `crumble` option decides how the element breaks apart while it vaporizes:
 
 The variants need WebGL2, the canvas fallback always turns into `'dust'`.
 The effect canvas shows the variant in use in its `data-ws-thanos-crumble` attribute.
+`WS_THANOS_CRUMBLES` lists all variants, e.g. to pick a random one for every snap.
+
+#### Wind direction
+
+`windDirection` turns the whole effect: the dust blows that way and the vaporizing front sweeps against it,
+so the element breaks apart on the side the dust blows to first.
+It is an angle in degrees, clockwise from up like a css gradient angle:
+`0` up, `90` right, `180` down, `270` left. The default `45` blows to the top right.
+
+```html
+<div wsThanos [wsThanosOptions]="{ windDirection: 270 }">
+  Blows away to the left
+</div>
+```
+
+The effect canvas reaches past the element where the dust flies: up to one element width sideways and four element heights up or down,
+less for the sides the dust only drifts towards.
+For a wind that blows down it reaches below the element, so near the end of the page it can make the page scroll for a moment.
 
 #### Options per element
 
@@ -134,7 +173,8 @@ directly in html via template ref:
 <button (click)="thanos.vaporize(true)">Vaporize</button>
 ```
 
-- `vaporize(removeElem = true)` starts the effect and returns an observable that emits once it is complete.
+- `vaporize(removeElem = true)` starts the effect and returns an observable that emits once and completes when the effect is over,
+  also when the effect failed (the error is logged) or the directive was destroyed meanwhile, so a caller waiting on it never hangs.
   With `removeElem = false` the element fades back in afterwards instead of being removed.
 - `vaporize$(removeElem = true)` returns an observable of the `AnimationState` of every frame. Subscribe to start the effect.
 

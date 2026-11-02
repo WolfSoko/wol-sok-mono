@@ -1,0 +1,22 @@
+@use 'screen';
+
+:host {
+  @include screen.screen;
+}
+
+.friends {
+  @include screen.panel;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: 100%;
+  max-width: 40rem;
+  padding: 1.25rem;
+}
+
+.intro {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--bw-soft);
+}

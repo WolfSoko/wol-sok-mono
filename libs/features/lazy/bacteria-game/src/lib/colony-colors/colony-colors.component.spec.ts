@@ -1,3 +1,4 @@
+import { I18nService } from '../i18n/i18n.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ColonyColorsComponent } from './colony-colors.component';
 
@@ -68,5 +69,15 @@ describe('ColonyColorsComponent', () => {
       (fixture.nativeElement as HTMLElement).querySelector('.locked-list')
         ?.textContent
     ).toContain('Green - Earn First Blood');
+  });
+
+  it('names the seats and colours in German', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    const host = render('two-players');
+
+    expect(host.querySelector('.seat-name')?.textContent?.trim()).toBe(
+      'Linker Spieler'
+    );
+    expect(host.querySelector('button[aria-label="Blau"]')).not.toBeNull();
   });
 });

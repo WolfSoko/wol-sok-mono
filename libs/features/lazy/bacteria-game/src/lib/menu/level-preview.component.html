@@ -1,0 +1,22 @@
+@if (url(); as src) {
+  <img
+    class="picture"
+    [src]="src"
+    [alt]="
+      decorative()
+        ? ''
+        : ('newGame.levelMap.preview.alt' | t: { title: title() })
+    "
+    width="640"
+    height="360"
+    decoding="async"
+  />
+}
+@if (size() > 1) {
+  <span
+    class="size"
+    [attr.aria-hidden]="decorative() ? 'true' : null"
+    [attr.title]="'newGame.levelMap.preview.sizeLabel' | t: { size: size() }"
+    >{{ "newGame.levelMap.preview.size" | t: { size: size() } }}</span
+  >
+}

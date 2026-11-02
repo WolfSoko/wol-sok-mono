@@ -1,3 +1,4 @@
+import { I18nService } from '../i18n/i18n.service';
 import { aMatchRecord } from '../../testing/match-record';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -38,6 +39,42 @@ describe('WinnerComponent', () => {
     fixture.detectChanges();
     return fixture.nativeElement.textContent as string;
   }
+
+  it('says which ranked attempt the match was', () => {
+    store.update({
+      mode: 'vs-computer',
+      winner: createPlayer({ id: 0, name: 'You' }),
+      levelId: LEVELS[0].id,
+      ranked: { match: null, note: { kind: 'daily', n: 2 } },
+    });
+
+    expect(text()).toContain('Ranked attempt 2 of 3 · ranked setup');
+  });
+
+  it('says the match of a ranked run, and why one was not ranked', () => {
+    store.update({
+      mode: 'vs-computer',
+      winner: createPlayer({ id: 0, name: 'You' }),
+      levelId: LEVELS[0].id,
+      ranked: { match: null, note: { kind: 'endless', match: 4 } },
+    });
+    expect(text()).toContain('Ranked run · match 4');
+
+    store.update({
+      ranked: { match: null, note: { kind: 'unranked', reason: 'offline' } },
+    });
+    expect(text()).toContain('Not ranked: offline when the match started');
+
+    TestBed.inject(I18nService).setLanguage('de');
+    store.update({
+      ranked: {
+        match: null,
+        note: { kind: 'unranked', reason: 'run-dropped' },
+      },
+    });
+    expect(text()).toContain('Dieser Lauf wird nicht mehr gewertet');
+    TestBed.inject(I18nService).setLanguage('en');
+  });
 
   it('names the winner', () => {
     store.update({
@@ -263,7 +300,7 @@ describe('WinnerComponent', () => {
         simulation: 'cpu' as const,
         ticks: 600,
       },
-      inputs: { steers: [], drags: [], boosts: [] },
+      inputs: { steers: [], drags: [], boosts: [], weapons: [] },
     };
 
     function ghostButton(): HTMLButtonElement | undefined {
@@ -478,6 +515,115 @@ describe('WinnerComponent', () => {
     });
   });
 
+  describe('in the training', () => {
+    function buttons(): HTMLButtonElement[] {
+      fixture.detectChanges();
+      return Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+      );
+    }
+
+    it('tells the mission done and leads on to the next one', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You' }),
+        endedBy: 'hold',
+        matchLevel: 'training-steer',
+        earnings: earnings({
+          training: {
+            shortfall: null,
+            first: true,
+            allDone: false,
+            next: 'feed',
+          },
+        }),
+      });
+      const picked = jest.fn();
+      fixture.componentInstance.action.subscribe(picked);
+
+      expect(text()).toContain('Mission complete!');
+      expect(text()).not.toContain('Fight your ghost');
+      const labels = buttons().map((button) => button.textContent ?? '');
+      expect(labels.some((label) => label.includes('All missions'))).toBe(true);
+      buttons()
+        .find((button) => button.textContent?.includes('Next mission'))
+        ?.click();
+      expect(picked).toHaveBeenCalledWith('mission');
+    });
+
+    it('tells what the match fell short of, and offers it again', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You' }),
+        endedBy: 'harvest',
+        matchLevel: 'training-boost',
+        earnings: earnings({
+          training: {
+            shortfall: {
+              key: 'training.result.boosts',
+              params: { count: 2, fired: 1 },
+            },
+            first: false,
+            allDone: false,
+            next: null,
+          },
+        }),
+      });
+
+      expect(text()).toContain(
+        'Not yet - boost 2 times on the way, you boosted 1'
+      );
+      expect(text()).toContain('Try it again');
+      expect(text()).not.toContain('Next mission');
+    });
+
+    /** The fight won, as the result shows it once it is recorded. */
+    function fightWon(): void {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You' }),
+        endedBy: 'time',
+        matchLevel: 'training-fight',
+        earnings: earnings({
+          training: {
+            shortfall: null,
+            first: true,
+            allDone: false,
+            next: 'steer',
+          },
+        }),
+      });
+    }
+
+    it('leads on to a mission still to do after the last one, taken first', () => {
+      fightWon();
+
+      expect(text()).not.toContain('Training complete');
+      expect(text()).toContain('Next mission');
+    });
+
+    it('leads on to the campaign once every mission is done', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You' }),
+        endedBy: 'time',
+        matchLevel: 'training-fight',
+        earnings: earnings({
+          training: { shortfall: null, first: true, allDone: true, next: null },
+        }),
+      });
+      const picked = jest.fn();
+      fixture.componentInstance.action.subscribe(picked);
+
+      expect(text()).toContain('Training complete');
+      expect(text()).not.toContain('Next mission');
+      buttons()
+        .find((button) => button.textContent?.includes('To the campaign'))
+        ?.click();
+      expect(picked).toHaveBeenCalledWith('campaign');
+    });
+  });
+
   it('reports what the player picks', () => {
     store.update({ winner: null, levelId: LEVELS[0].id });
     const picked = jest.fn();
@@ -582,5 +728,17 @@ describe('WinnerComponent', () => {
       expect(text()).toContain('Bronze needs a win.');
       expect(text()).not.toContain('Won in');
     });
+  });
+
+  it('speaks German', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    store.update({
+      mode: 'two-players',
+      winner: createPlayer({ id: 1, name: 'Blue' }),
+      levelId: LEVELS[0].id,
+    });
+
+    expect(text()).toContain('Glückwunsch! Blau gewinnt das Match!');
+    expect(text()).toContain('Hauptmenü');
   });
 });

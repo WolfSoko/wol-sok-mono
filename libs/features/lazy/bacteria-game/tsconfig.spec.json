@@ -2,8 +2,17 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../../dist/out-tsc",
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "resolveJsonModule": true
   },
   "files": ["src/test-setup.ts"],
-  "include": ["jest.config.ts", "**/*.test.ts", "**/*.spec.ts", "**/*.d.ts"]
+  "include": [
+    "jest.config.ts",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.d.ts",
+    "gpu-crosscheck/**/*.ts",
+    "perf/**/*.ts",
+    "playwright.config.ts"
+  ]
 }

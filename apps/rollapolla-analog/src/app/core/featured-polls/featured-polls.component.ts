@@ -2,6 +2,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { FEATURED_POLLS } from '../../../shared/featured-polls';
+import {
+  injectRollaPollaAnalytics,
+  pollOpened,
+} from '../analytics/rollapolla-analytics';
 
 /** RollaPolla's own polls, to try voting right away. */
 @Component({
@@ -9,12 +13,13 @@ import { FEATURED_POLLS } from '../../../shared/featured-polls';
   imports: [MatIconModule, RouterLink],
   template: `
     <ul class="grid">
-      @for (poll of polls; track poll.id) {
+      @for (poll of polls; track poll.id; let position = $index) {
         <li>
           <a
             class="card"
             [routerLink]="['/poll', poll.id]"
             [attr.data-testid]="poll.id"
+            (click)="opened(position)"
           >
             <span class="question">{{ poll.question }}</span>
             <span class="options">
@@ -101,4 +106,9 @@ import { FEATURED_POLLS } from '../../../shared/featured-polls';
 })
 export class FeaturedPollsComponent {
   protected readonly polls = FEATURED_POLLS;
+  private readonly analytics = injectRollaPollaAnalytics();
+
+  protected opened(position: number): void {
+    this.analytics.track('select_content', pollOpened('featured', position));
+  }
 }

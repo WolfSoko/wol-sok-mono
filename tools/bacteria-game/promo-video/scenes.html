@@ -1,0 +1,352 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,800&display=block"
+    />
+    <style>
+      :root {
+        --bg: #0a0d12;
+        --ink: #eef2f8;
+        --muted: #b9c4d4;
+        --orange: #ff7a2f;
+        --blue: #3d8bff;
+        --gold: #f5b942;
+      }
+      html,
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      body {
+        width: var(--w);
+        height: var(--h);
+        position: relative;
+        font-family: "Atkinson Hyperlegible", sans-serif;
+        color: var(--ink);
+      }
+      .layer {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+      }
+      /* A swarm of soft cells drifting behind everything, as in the menu. */
+      #swarm {
+        position: absolute;
+        inset: 0;
+        opacity: 1;
+      }
+      .cell {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(1px);
+      }
+      /* Title */
+      #title {
+        flex-direction: column;
+        gap: calc(var(--u) * 3);
+        text-align: center;
+      }
+      .dish {
+        width: calc(var(--u) * 26);
+        height: calc(var(--u) * 26);
+        border-radius: 50%;
+        box-shadow: 0 0 calc(var(--u) * 8) #f5b94266;
+      }
+      h1 {
+        margin: 0;
+        font:
+          800 calc(var(--u) * 14)/0.95 "Bricolage Grotesque",
+          sans-serif;
+        letter-spacing: calc(var(--u) * -0.3);
+      }
+      h1 span {
+        color: var(--orange);
+      }
+      .tag {
+        font-size: calc(var(--u) * 4.4);
+        color: var(--muted);
+      }
+      /* The phone, lying across, with the game in it. */
+      #phone {
+        position: absolute;
+        left: 50%;
+        top: var(--phone-top);
+        width: var(--phone-w);
+        aspect-ratio: 16 / 9;
+        opacity: 0;
+        padding: calc(var(--phone-w) * 0.018) calc(var(--phone-w) * 0.035);
+        background: #05070a;
+        border-radius: calc(var(--phone-w) * 0.06);
+        box-shadow:
+          0 0 0 calc(var(--phone-w) * 0.004) #2a3140,
+          0 calc(var(--u) * 3) calc(var(--u) * 12) #000a,
+          0 0 calc(var(--u) * 20) #ff7a2f22;
+      }
+      #phone::before {
+        content: "";
+        position: absolute;
+        left: calc(var(--phone-w) * 0.014);
+        top: 50%;
+        width: calc(var(--phone-w) * 0.008);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: #1b212c;
+        transform: translateY(-50%);
+      }
+      #screen {
+        width: 100%;
+        height: 100%;
+        border-radius: calc(var(--phone-w) * 0.02);
+        overflow: hidden;
+        background: #000;
+      }
+      #screen img {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      /* Captions */
+      .caption {
+        position: absolute;
+        left: var(--cap-x);
+        right: var(--cap-x);
+        top: var(--cap-top);
+        text-align: var(--cap-align);
+        opacity: 0;
+        font:
+          800 calc(var(--u) * var(--cap-size))/1.02 "Bricolage Grotesque",
+          sans-serif;
+        letter-spacing: calc(var(--u) * -0.1);
+        text-shadow: 0 calc(var(--u) * 0.4) calc(var(--u) * 3) #000c;
+      }
+      .caption em {
+        font-style: normal;
+        color: var(--orange);
+      }
+      .caption b {
+        color: var(--blue);
+      }
+      /* End card */
+      #end {
+        flex-direction: column;
+        gap: calc(var(--u) * 2.6);
+        text-align: center;
+      }
+      #end .dish {
+        width: calc(var(--u) * 20);
+        height: calc(var(--u) * 20);
+      }
+      #end h1 {
+        font-size: calc(var(--u) * 11);
+      }
+      .store {
+        margin-top: calc(var(--u) * 1);
+        padding: calc(var(--u) * 1.6) calc(var(--u) * 4);
+        border-radius: calc(var(--u) * 2);
+        background: var(--orange);
+        color: #10131a;
+        font:
+          800 calc(var(--u) * 4.6) "Bricolage Grotesque",
+          sans-serif;
+      }
+      .site {
+        font-size: calc(var(--u) * 3.2);
+        color: var(--muted);
+      }
+      /* Portrait has room under the phone for the name during the clips. */
+      #brand {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 1420px;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+        opacity: 0;
+      }
+      #brand img {
+        width: 170px;
+        height: 170px;
+        border-radius: 50%;
+        box-shadow: 0 0 60px #f5b94255;
+      }
+      #brand h1 {
+        font-size: 104px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="swarm"></div>
+    <div class="layer" id="title">
+      <img class="dish" id="dish1" alt="" />
+      <h1>Bacteria <span>Wars</span></h1>
+      <div class="tag" data-copy="tagline"></div>
+    </div>
+    <div id="phone">
+      <div id="screen"><img id="frame" alt="" /></div>
+    </div>
+    <div class="caption" id="cap"></div>
+    <div id="brand">
+      <img id="dish3" alt="" />
+      <h1>Bacteria <span>Wars</span></h1>
+    </div>
+    <div class="layer" id="end">
+      <img class="dish" id="dish2" alt="" />
+      <h1>Bacteria <span>Wars</span></h1>
+      <div class="store" data-copy="store"></div>
+      <div class="site">bacteria-wars.wolsok.de</div>
+    </div>
+    <script>
+      // Everything on screen is a pure function of the time t in ms, so a renderer
+      // can seek any frame: window.__seek(t).
+      const P = new URLSearchParams(location.search);
+      const FORMAT = P.get("format") ?? "landscape";
+      const COPY = window.__copy;
+      const CLIPS = window.__clips; // { name: { times: [s...], dir } }
+      const SCENES = window.__timeline.scenes;
+      const portrait = FORMAT === "portrait";
+      const [W, H] = portrait ? [1080, 1920] : [1920, 1080];
+      const root = document.documentElement.style;
+      root.setProperty("--w", W + "px");
+      root.setProperty("--h", H + "px");
+      root.setProperty("--u", (portrait ? W : H) / 100 + "px");
+      root.setProperty("--phone-w", portrait ? "1000px" : "1300px");
+      root.setProperty("--phone-top", portrait ? "760px" : "235px");
+      root.setProperty("--cap-x", portrait ? "70px" : "120px");
+      root.setProperty("--cap-top", portrait ? "330px" : "62px");
+      root.setProperty("--cap-align", portrait ? "center" : "left");
+      root.setProperty("--cap-size", portrait ? "9.5" : "8.2");
+      for (const el of document.querySelectorAll("[data-copy]"))
+        el.textContent = COPY[el.dataset.copy];
+      for (const id of ["dish1", "dish2", "dish3"])
+        document.getElementById(id).src = window.__icon;
+
+      // A fixed swarm, seeded, so every render draws the same cells.
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+      const swarm = document.getElementById("swarm");
+      const cells = Array.from({ length: 34 }, () => {
+        const el = document.createElement("div");
+        el.className = "cell";
+        const size = 14 + rnd() * 60;
+        const orange = rnd() < 0.5;
+        el.style.width = el.style.height = size + "px";
+        el.style.background = `radial-gradient(circle at 35% 30%, ${orange ? "#ff9a55" : "#6aa6ff"}, ${orange ? "#7a2f0c" : "#0d2f6e"})`;
+        swarm.append(el);
+        return {
+          el,
+          x: rnd() * W,
+          y: rnd() * H,
+          vx: (rnd() - 0.5) * 40,
+          vy: -10 - rnd() * 30,
+          phase: rnd() * 6.28,
+          alpha: 0.25 + rnd() * 0.4,
+        };
+      });
+
+      const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+      const ease = (v) => 1 - Math.pow(1 - clamp(v), 3);
+      /** 0 before start, fades in, 1, fades out before end. */
+      function fade(t, start, end, inMs = 450, outMs = 450) {
+        return clamp(Math.min((t - start) / inMs, (end - t) / outMs));
+      }
+      function scene(t) {
+        return SCENES.find((s) => t >= s.start && t < s.end) ?? SCENES.at(-1);
+      }
+
+      const frame = document.getElementById("frame");
+      async function showClip(name, seconds) {
+        const clip = CLIPS[name];
+        const t0 = clip.times[0];
+        let i = 0;
+        while (i + 1 < clip.times.length && clip.times[i + 1] - t0 <= seconds)
+          i++;
+        const src = `${clip.dir}/${String(i + 1).padStart(5, "0")}.jpg`;
+        if (!frame.src.endsWith(src)) {
+          frame.src = src;
+          await frame.decode().catch(() => {});
+        }
+      }
+
+      window.__seek = async (t) => {
+        const s = scene(t);
+        // Swarm
+        for (const c of cells) {
+          const x =
+            (c.x +
+              (c.vx * t) / 1000 +
+              Math.sin(t / 900 + c.phase) * 12 +
+              W * 2) %
+            W;
+          const y = (c.y + (c.vy * t) / 1000 + H * 4) % H;
+          c.el.style.transform = `translate(${x}px, ${y}px)`;
+          c.el.style.opacity = c.alpha * (s.kind === "clip" ? 0.35 : 1);
+        }
+        // Title
+        const title = document.getElementById("title");
+        const tt = SCENES.find((x) => x.kind === "title");
+        title.style.opacity = fade(t, tt.start, tt.end, 1, 500);
+        const pop = ease((t - tt.start - 100) / 900);
+        document.getElementById("dish1").style.transform =
+          `scale(${0.4 + 0.6 * pop}) rotate(${(1 - pop) * -90}deg)`;
+        title.querySelector("h1").style.transform =
+          `translateY(${(1 - ease((t - tt.start - 450) / 700)) * 60}px)`;
+        title.querySelector("h1").style.opacity = ease(
+          (t - tt.start - 450) / 700
+        );
+        title.querySelector(".tag").style.opacity = ease(
+          (t - tt.start - 1100) / 600
+        );
+        // Phone and clips
+        const clips = SCENES.filter((x) => x.kind === "clip");
+        const first = clips[0],
+          last = clips.at(-1);
+        const phone = document.getElementById("phone");
+        const shown = fade(t, first.start, last.end, 600, 500);
+        phone.style.opacity = shown;
+        phone.style.transform = `translateX(-50%) translateY(${(1 - ease((t - first.start) / 700)) * 120}px) scale(${0.94 + 0.06 * ease((t - first.start) / 700)})`;
+        const brand = document.getElementById("brand");
+        brand.style.display = portrait ? "flex" : "none";
+        brand.style.opacity = fade(t, first.start + 300, last.end, 600, 500);
+        if (s.kind === "clip")
+          await showClip(s.clip, (t - s.start) / 1000 + (s.from ?? 0));
+        // Captions: each clip scene has one or two lines, the second from `split`.
+        const cap = document.getElementById("cap");
+        if (s.kind === "clip") {
+          const parts = s.captions.map((key) => COPY[key]);
+          const second = s.split != null && t >= s.start + s.split;
+          const lineStart = second ? s.start + s.split : s.start;
+          const lineEnd = second || s.split == null ? s.end : s.start + s.split;
+          // Landscape has room for one line only, above the phone.
+          const text = parts[second ? 1 : 0];
+          cap.innerHTML = portrait ? text : text.replaceAll("<br>", " ");
+          const v = fade(t, lineStart + 150, lineEnd, 350, 300);
+          cap.style.opacity = v;
+          cap.style.transform = `translateY(${(1 - ease((t - lineStart - 150) / 450)) * 40}px)`;
+        } else {
+          cap.style.opacity = 0;
+        }
+        // End card
+        const end = document.getElementById("end");
+        const et = SCENES.find((x) => x.kind === "end");
+        end.style.opacity = fade(t, et.start, et.end + 10000, 600);
+        const endPop = ease((t - et.start - 150) / 800);
+        document.getElementById("dish2").style.transform =
+          `scale(${0.6 + 0.4 * endPop})`;
+        end.querySelector(".store").style.transform =
+          `scale(${0.85 + 0.15 * ease((t - et.start - 700) / 500)})`;
+        end.querySelector(".store").style.opacity = ease(
+          (t - et.start - 700) / 500
+        );
+      };
+    </script>
+  </body>
+</html>
