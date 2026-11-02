@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.136.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.135.0...v74.136.0) (2026-11-02)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ the arena's dust blows a new way at every match end ([#2637](https://github.com/WolfSoko/wol-sok-mono/issues/2637)) ([330f431](https://github.com/WolfSoko/wol-sok-mono/commit/330f4313d89f59a67aee2f63d7a0239335033d6b))
+
+### Bug Fixes
+
+* **deps:** update non-major dependencies from [#2416](https://github.com/WolfSoko/wol-sok-mono/issues/2416) except p5 ([#2532](https://github.com/WolfSoko/wol-sok-mono/issues/2532)) ([56f0d5c](https://github.com/WolfSoko/wol-sok-mono/commit/56f0d5c227bb926f091a5193355071eaabaf2bae)), closes [#2458](https://github.com/WolfSoko/wol-sok-mono/issues/2458)
+
+### Chore
+
+* **release:** publish ([c97443d](https://github.com/WolfSoko/wol-sok-mono/commit/c97443dbec69ad7cc0a1c04e4e84c7188863aaf0))
+
+### Documentation
+
+* **feat-lazy-bacteria-wars-admin:** rewrap admin shell JSDoc ([#2703](https://github.com/WolfSoko/wol-sok-mono/issues/2703)) ([a403da2](https://github.com/WolfSoko/wol-sok-mono/commit/a403da2150fdb56b08dfd5676b592aea2a5eb3e2))
+
 ## [74.135.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.134.0...v74.135.0) (2026-11-02)
 
 ### Features
