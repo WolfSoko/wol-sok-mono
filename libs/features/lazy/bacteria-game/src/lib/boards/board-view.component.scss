@@ -1,0 +1,60 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+
+  --mat-list-list-item-label-text-color: var(--bw-text);
+  --mat-list-list-item-supporting-text-color: var(--bw-soft);
+  --mat-list-subheader-label-text-color: var(--bw-gold);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.info {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--bw-soft);
+}
+
+.place {
+  display: inline-block;
+  min-width: 2.5rem;
+  font-weight: 700;
+  color: var(--bw-gold);
+}
+
+.detail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chips {
+  --mat-chip-container-height: 1.4rem;
+}
+
+.final {
+  --mat-chip-elevated-container-color: var(--bw-gold);
+  --mat-chip-label-text-color: var(--bw-surface-raised);
+}
+
+.more {
+  align-self: center;
+}
+
+.own {
+  position: sticky;
+  bottom: 0;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--bw-line-strong);
+  border-radius: 0.75rem;
+  background: var(--bw-surface-raised);
+  font-weight: 700;
+}

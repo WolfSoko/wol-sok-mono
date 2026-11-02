@@ -9,7 +9,9 @@ import {
   Bytes,
   collection,
   doc,
+  documentId,
   type Firestore,
+  getCountFromServer,
   getDoc,
   getDocs,
   limit,
@@ -18,6 +20,7 @@ import {
   serverTimestamp,
   setDoc,
   setLogLevel,
+  startAfter,
   Timestamp,
   updateDoc,
   where,
@@ -125,7 +128,7 @@ describe('declared attempts', () => {
     await assertFails(declare('eve', `d_${today()}_1`));
   });
 
-  it('wants the server time, an expiry in 30 to 32 days and nothing else', async () => {
+  it('wants the server time, an expiry in 28 to 32 days and nothing else', async () => {
     const id = `d_${today()}_1`;
     await assertFails(declare('ada', id, declaration({ at: Timestamp.now() })));
     await assertFails(
@@ -146,6 +149,31 @@ describe('declared attempts', () => {
     );
     await assertFails(declare('ada', id, declaration({ seed: 1 })));
     await assertFails(declare('ada', 'x_1', declaration()));
+  });
+
+  it('refuses an expiry shorter than 28 days, which TTL would turn into another try', async () => {
+    const id = `d_${today()}_1`;
+    for (const ms of [60_000, 27 * 24 * HOUR]) {
+      await assertFails(
+        declare(
+          'ada',
+          id,
+          declaration({ expireAt: Timestamp.fromMillis(Date.now() + ms) })
+        )
+      );
+    }
+    // A device whose clock runs almost 3 days slow still declares.
+    await assertSucceeds(
+      declare(
+        'ada',
+        id,
+        declaration({
+          expireAt: Timestamp.fromMillis(
+            Date.now() - (3 * 24 - 1) * HOUR + 31 * 24 * HOUR
+          ),
+        })
+      )
+    );
   });
 
   it("takes an endless run's matches in order, from today's runs", async () => {
@@ -176,6 +204,31 @@ describe('declared attempts', () => {
         at: serverTimestamp(),
       })
     );
+  });
+  it('lets a player declare a void daily attempt again, nothing else', async () => {
+    const day = today();
+    const voided = { at: Timestamp.now(), void: true, voidReason: 'cap' };
+    await seed(`players/ada/attempts/d_${day}_1`, voided);
+    // A whole new declaration in its place: the void marker goes.
+    await assertFails(
+      updateDoc(doc(db('ada'), `players/ada/attempts/d_${day}_1`), {
+        at: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      setDoc(doc(db('bob'), `players/ada/attempts/d_${day}_1`), declaration())
+    );
+    await assertSucceeds(declare('ada', `d_${day}_1`));
+    await assertFails(declare('ada', `d_${day}_1`));
+    // Only on its day, and never an endless match.
+    await seed(`players/ada/attempts/d_${yesterday()}_1`, voided);
+    await assertFails(declare('ada', `d_${yesterday()}_1`));
+    const run = `${compact(day)}1`;
+    await seed(`players/ada/attempts/e_${run}_0`, voided);
+    await assertFails(declare('ada', `e_${run}_0`));
+    await seed('bans/eve', { until: null });
+    await seed(`players/eve/attempts/d_${day}_1`, voided);
+    await assertFails(declare('eve', `d_${day}_1`));
   });
 });
 
@@ -244,9 +297,25 @@ describe('replayCommands', () => {
   const add = (writer: string, data: object, token: object = {}) =>
     setDoc(doc(db(writer, token), 'replayCommands/c1'), data);
 
-  it('takes `remove` from any player, in their own name', async () => {
-    await assertSucceeds(add('ada', command('ada', 'remove')));
-    await assertFails(add('ada', command('bob', 'remove')));
+  it('takes `remove` and `forget` from any player, in their own name', async () => {
+    for (const type of ['remove', 'forget']) {
+      // A new document each: a command is created, never rewritten.
+      const ref = doc(db('ada'), `replayCommands/c-${type}`);
+      await assertFails(setDoc(ref, command('bob', type)));
+      await assertSucceeds(setDoc(ref, command('ada', type)));
+    }
+  });
+
+  it('takes `forget` from a banned player too, as a deletion', async () => {
+    await seed('bans/eve', { until: null });
+    // The refusals first: once `add` created its document, a second write
+    // to it is an update, which the rules refuse whatever it holds.
+    await assertFails(add('eve', command('eve', 'remove')));
+    await assertFails(
+      add('eve', command('eve', 'forget', { createdAt: Timestamp.now() }))
+    );
+    await assertFails(add('eve', command('eve', 'forget', { extra: 1 })));
+    await assertSucceeds(add('eve', command('eve', 'forget')));
   });
 
   it("takes the gallery's types only from the owner", async () => {
@@ -296,6 +365,13 @@ describe('replays', () => {
     await assertSucceeds(getDoc(doc(db('bob'), 'replays/r1/blob/data')));
     await assertFails(getDoc(doc(db('eve'), 'replays/r1')));
     await assertFails(getDoc(doc(db('eve'), 'replays/r1/blob/data')));
+  });
+
+  it('lets the owner look one up by id, not list them or read the bytes', async () => {
+    const owner = db('own', OWNER_TOKEN);
+    await assertSucceeds(getDoc(doc(owner, 'replays/r1')));
+    await assertFails(getDocs(query(collection(owner, 'replays'), limit(10))));
+    await assertFails(getDoc(doc(owner, 'replays/r1/blob/data')));
   });
 
   it("lists a player's own, 50 at a time", async () => {
@@ -358,6 +434,42 @@ describe('the leaderboards', () => {
     );
   });
 
+  it("takes the game's page and own-rank count, and reads a missing entry as not found", async () => {
+    const entries = collection(db('bob'), 'boards/xp/entries');
+    await assertSucceeds(
+      getDocs(
+        query(
+          entries,
+          where('status', 'in', visible),
+          orderBy('sort', 'desc'),
+          orderBy('atHour', 'asc'),
+          orderBy(documentId(), 'asc'),
+          startAfter(9, 0, 'e0'),
+          limit(25)
+        )
+      )
+    );
+    await assertSucceeds(
+      getCountFromServer(
+        query(
+          entries,
+          where('status', 'in', visible),
+          where('sort', '>', 1),
+          orderBy('sort', 'desc'),
+          orderBy('atHour', 'asc')
+        )
+      )
+    );
+    // A board the membership still lists whose entry the functions
+    // deleted: the game reads it as "no counted result yet", not hidden.
+    const gone = await assertSucceeds(
+      getDoc(doc(db('ada'), 'boards/xp/entries/gone'))
+    );
+    expect(gone.exists()).toBe(false);
+    // A hidden one stays refused, so a refusal always means hidden.
+    await assertFails(getDoc(doc(db('ada'), 'boards/xp/entries/e2')));
+  });
+
   it('keeps hidden entries from players, not from the owner', async () => {
     await assertFails(getDoc(doc(db('bob'), 'boards/xp/entries/e2')));
     await assertFails(
@@ -379,6 +491,21 @@ describe('the leaderboards', () => {
       setDoc(doc(db('ada'), 'boards/xp/entries/e1'), { status: 'counted' })
     );
     await assertFails(setDoc(doc(db('ada'), 'boardMembers/ada'), { xp: {} }));
+  });
+});
+
+describe('board memberships', () => {
+  it("are listed by the owner only, to find an entry's player", async () => {
+    await seed('boardMembers/ada', { entryIds: { xp: 'e1' } });
+    const byEntry = (uid: string, token?: object) =>
+      getDocs(
+        query(
+          collection(db(uid, token), 'boardMembers'),
+          where('entryIds.xp', '==', 'e1')
+        )
+      );
+    await assertSucceeds(byEntry('own', OWNER_TOKEN));
+    await assertFails(byEntry('ada'));
   });
 });
 
@@ -406,6 +533,15 @@ describe('profiles', () => {
       setDoc(doc(db('ada'), 'profiles/ada'), profile({ admin: true }))
     );
   });
+
+  it('are listed by the owner only', async () => {
+    await seed('profiles/ada', { name: 'Ada' });
+    await assertSucceeds(
+      getDocs(collection(db('own', OWNER_TOKEN), 'profiles'))
+    );
+    await assertFails(getDocs(collection(db('ada'), 'profiles')));
+    await assertSucceeds(getDoc(doc(db('bob'), 'profiles/ada')));
+  });
 });
 
 describe('bans', () => {
@@ -414,6 +550,346 @@ describe('bans', () => {
     await assertSucceeds(getDoc(doc(db('ada'), 'bans/ada')));
     await assertFails(getDoc(doc(db('bob'), 'bans/ada')));
     await assertSucceeds(getDoc(doc(db('own', OWNER_TOKEN), 'bans/ada')));
+  });
+
+  it('are listed by the owner only', async () => {
+    await seed('bans/ada', { until: null });
+    await assertSucceeds(getDocs(collection(db('own', OWNER_TOKEN), 'bans')));
+    await assertFails(getDocs(collection(db('ada'), 'bans')));
+  });
+});
+
+describe('adminCommands', () => {
+  /** The owner, signed in just now - as destructive types want. */
+  const fresh = () => ({
+    ...OWNER_TOKEN,
+    auth_time: Math.floor(Date.now() / 1000),
+  });
+  const adminCommand = (extra: object = {}) => ({
+    uid: 'own',
+    type: 'player.ban',
+    target: { uid: 'eve' },
+    reason: 'cheats',
+    args: { until: null, reason: 'cheating' },
+    createdAt: serverTimestamp(),
+    expireAt: inADay(),
+    ...extra,
+  });
+  let sent = 0;
+  // A new document each time: a command is created, never rewritten.
+  const send = (data: object, token: object = fresh(), uid = 'own') =>
+    setDoc(doc(db(uid, token), `adminCommands/a${++sent}`), data);
+
+  it('takes a command from the owner, in their own name', async () => {
+    await assertSucceeds(send(adminCommand()));
+    await assertFails(send(adminCommand({ uid: 'bob' })));
+    await assertFails(
+      send(
+        adminCommand({ uid: 'eve' }),
+        { auth_time: fresh().auth_time },
+        'eve'
+      )
+    );
+  });
+
+  it('wants the claim on a verified Google account', async () => {
+    const { auth_time } = fresh();
+    await assertFails(
+      send(adminCommand(), { ...OWNER_TOKEN, auth_time, admin: false })
+    );
+    await assertFails(
+      send(adminCommand(), { ...OWNER_TOKEN, auth_time, email_verified: false })
+    );
+    await assertFails(
+      send(adminCommand(), {
+        ...OWNER_TOKEN,
+        auth_time,
+        firebase: { sign_in_provider: 'anonymous' },
+      })
+    );
+  });
+
+  it('takes feature toggles as booleans, with a reason', async () => {
+    const toggles = (values: unknown, extra: object = {}) =>
+      adminCommand({
+        type: 'toggles.set',
+        target: null,
+        args: { values },
+        ...extra,
+      });
+    await assertSucceeds(
+      send(toggles({ rankedDaily: false, matchmaking: true }))
+    );
+    await assertFails(send(toggles({})));
+    await assertFails(send(toggles({ gallery: true })));
+    await assertFails(send(toggles({ leaderboards: 'off' })));
+    await assertFails(send(toggles({ rankedDaily: false }, { reason: '' })));
+    await assertFails(
+      send(toggles({ rankedDaily: false }, { target: { uid: 'eve' } }))
+    );
+    // It changes the game for everybody: a recent sign-in too.
+    await assertFails(
+      send(toggles({ rankedDaily: false }), {
+        ...OWNER_TOKEN,
+        auth_time: Math.floor((Date.now() - 2 * HOUR) / 1000),
+      })
+    );
+  });
+
+  it('wants a recent sign-in for destructive types only', async () => {
+    const stale = {
+      ...OWNER_TOKEN,
+      auth_time: Math.floor((Date.now() - 2 * HOUR) / 1000),
+    };
+    await assertFails(send(adminCommand(), stale));
+    await assertFails(
+      send(adminCommand({ type: 'profile.reset', args: {} }), stale)
+    );
+    await assertSucceeds(
+      send(adminCommand({ type: 'player.unban', args: {} }), stale)
+    );
+    await assertSucceeds(
+      send(
+        adminCommand({
+          type: 'stats.refresh',
+          target: null,
+          reason: '',
+          args: {},
+        }),
+        stale
+      )
+    );
+  });
+
+  it('wants the server time, a short expiry and no extra field', async () => {
+    await assertFails(send(adminCommand({ createdAt: Timestamp.now() })));
+    await assertFails(
+      send(
+        adminCommand({
+          expireAt: Timestamp.fromMillis(Date.now() + 3 * 24 * HOUR),
+        })
+      )
+    );
+    await assertFails(send(adminCommand({ result: { ok: true } })));
+    await assertFails(send(adminCommand({ type: 'player.delete' })));
+  });
+
+  it('wants a reason, but not for statistics', async () => {
+    await assertFails(send(adminCommand({ reason: '' })));
+    await assertFails(send(adminCommand({ reason: '   ' })));
+    await assertFails(send(adminCommand({ reason: 'x'.repeat(201) })));
+    const { reason: _reason, ...noReason } = adminCommand({
+      type: 'stats.recount',
+      target: null,
+      args: {},
+    });
+    await assertSucceeds(send(noReason));
+  });
+
+  it("checks each type's target", async () => {
+    const entry = { boardId: 'daily-2026-11-03', entryId: 'e_1-x' };
+    await assertSucceeds(send(adminCommand({ target: entry })));
+    await assertFails(send(adminCommand({ target: { uid: 'e/ve' } })));
+    await assertFails(
+      send(adminCommand({ target: { boardId: 'week', entryId: 'e1' } }))
+    );
+    await assertFails(send(adminCommand({ target: null })));
+    await assertFails(
+      send(adminCommand({ type: 'player.unban', target: entry, args: {} }))
+    );
+    await assertFails(
+      send(
+        adminCommand({
+          type: 'board.verify',
+          target: { boardId: 'xp', entryId: 'e1' },
+          args: {},
+        })
+      )
+    );
+    await assertSucceeds(
+      send(
+        adminCommand({
+          type: 'board.verify',
+          target: { boardId: 'endless', entryId: 'e1' },
+          args: {},
+        })
+      )
+    );
+    await assertFails(
+      send(
+        adminCommand({
+          type: 'stats.refresh',
+          target: { uid: 'eve' },
+          args: {},
+        })
+      )
+    );
+  });
+
+  it("checks each type's arguments", async () => {
+    const ban = (args: object) => send(adminCommand({ args }));
+    await assertSucceeds(
+      ban({
+        until: Timestamp.fromMillis(Date.now() + 24 * HOUR),
+        reason: 'spam',
+      })
+    );
+    await assertSucceeds(ban({ until: Date.now() + HOUR, reason: 'other' }));
+    await assertFails(ban({ until: Date.now() - HOUR, reason: 'other' }));
+    await assertFails(ban({ until: null, reason: 'rude' }));
+    await assertFails(ban({ until: null }));
+    await assertFails(ban({ until: null, reason: 'spam', extra: 1 }));
+    const hide = (args: object) =>
+      send(
+        adminCommand({
+          type: 'board.hideEntry',
+          target: { boardId: 'xp', entryId: 'e1' },
+          args,
+        })
+      );
+    await assertSucceeds(hide({ bar: true }));
+    await assertSucceeds(hide({}));
+    await assertFails(hide({ bar: 'yes' }));
+    await assertFails(
+      send(adminCommand({ type: 'player.unban', args: { bar: true } }))
+    );
+  });
+
+  it('takes the presence backfill without a target, a reason or arguments', async () => {
+    const backfill = (extra: object = {}) => {
+      const { reason: _reason, ...data } = adminCommand({
+        type: 'presence.backfill',
+        target: null,
+        args: {},
+      });
+      return { ...data, ...extra };
+    };
+    // Not destructive: no fresh sign-in needed.
+    await assertSucceeds(send(backfill(), OWNER_TOKEN));
+    await assertSucceeds(send(backfill({ reason: 'after the deploy' })));
+    await assertFails(send(backfill({ target: { uid: 'eve' } })));
+    await assertFails(send(backfill({ args: { all: true } })));
+    await assertFails(
+      send(backfill(), { auth_time: fresh().auth_time }, 'eve')
+    );
+  });
+
+  it("lets the owner read their own commands, nobody else's", async () => {
+    await seed('adminCommands/a1', { uid: 'own', type: 'stats.refresh' });
+    await assertSucceeds(
+      getDoc(doc(db('own', OWNER_TOKEN), 'adminCommands/a1'))
+    );
+    await assertFails(getDoc(doc(db('ada'), 'adminCommands/a1')));
+    await assertFails(
+      updateDoc(doc(db('own', fresh()), 'adminCommands/a1'), {
+        result: { ok: true },
+      })
+    );
+  });
+});
+
+describe('adminAudit', () => {
+  it('lets the owner read it, nobody write it', async () => {
+    await seed('adminAudit/a1', { by: 'own', type: 'player.ban' });
+    await assertSucceeds(getDoc(doc(db('own', OWNER_TOKEN), 'adminAudit/a1')));
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db('own', OWNER_TOKEN), 'adminAudit'),
+          orderBy('at', 'desc'),
+          limit(25)
+        )
+      )
+    );
+    await assertFails(getDoc(doc(db('ada'), 'adminAudit/a1')));
+    await assertFails(
+      setDoc(doc(db('own', OWNER_TOKEN), 'adminAudit/a2'), { by: 'own' })
+    );
+  });
+});
+
+describe('adminStats', () => {
+  it('lets the owner read it, nobody write it', async () => {
+    await seed('adminStats/now', { accounts: 3 });
+    await seed('adminStats/h_2026110312', { accounts: 3 });
+    await assertSucceeds(getDoc(doc(db('own', OWNER_TOKEN), 'adminStats/now')));
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db('own', OWNER_TOKEN), 'adminStats'),
+          orderBy('at', 'desc'),
+          limit(24)
+        )
+      )
+    );
+    await assertFails(getDoc(doc(db('ada'), 'adminStats/now')));
+    await assertFails(
+      setDoc(doc(db('own', OWNER_TOKEN), 'adminStats/now'), { accounts: 9 })
+    );
+  });
+});
+
+describe('levelStats', () => {
+  it('lets the owner read it, nobody write it', async () => {
+    await seed('levelStats/quarantine_hard_b12_l1', { attempts: 3 });
+    await assertSucceeds(
+      getDocs(collection(db('own', OWNER_TOKEN), 'levelStats'))
+    );
+    await assertFails(
+      getDoc(doc(db('ada'), 'levelStats/quarantine_hard_b12_l1'))
+    );
+    await assertFails(
+      setDoc(doc(db('own', OWNER_TOKEN), 'levelStats/quarantine_hard_b12_l1'), {
+        attempts: 9,
+      })
+    );
+  });
+});
+
+describe('the gallery', () => {
+  it("lets the owner read a day's runners-up and the public replays, but not their bytes", async () => {
+    await seed('replayCandidates/2026-10-25', { done: true });
+    await seed('publicReplays/p1', { replayId: 'l_a', removedAt: null });
+    await seed('publicReplays/p1/blob/data', { size: 3 });
+    const owner = db('own', OWNER_TOKEN);
+    await assertSucceeds(getDoc(doc(owner, 'replayCandidates/2026-10-25')));
+    await assertFails(getDoc(doc(db('ada'), 'replayCandidates/2026-10-25')));
+    await assertSucceeds(getDoc(doc(owner, 'publicReplays/p1')));
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(owner, 'publicReplays'),
+          where('removedAt', '==', null),
+          orderBy('featuredAt', 'desc')
+        )
+      )
+    );
+    await assertFails(getDoc(doc(owner, 'publicReplays/p1/blob/data')));
+    await assertFails(getDoc(doc(db('ada'), 'publicReplays/p1')));
+    await assertFails(getDocs(collection(db('ada'), 'publicReplays')));
+  });
+});
+
+describe('notices and moderation', () => {
+  it("lets a player read and delete their own notices, nobody else's", async () => {
+    await seed('players/ada/notices/n1', { type: 'banned' });
+    await assertSucceeds(getDoc(doc(db('ada'), 'players/ada/notices/n1')));
+    await assertSucceeds(getDocs(collection(db('ada'), 'players/ada/notices')));
+    await assertFails(getDoc(doc(db('bob'), 'players/ada/notices/n1')));
+    await assertFails(
+      setDoc(doc(db('ada'), 'players/ada/notices/n2'), { type: 'unbanned' })
+    );
+    await assertSucceeds(
+      import('firebase/firestore').then(({ deleteDoc }) =>
+        deleteDoc(doc(db('ada'), 'players/ada/notices/n1'))
+      )
+    );
+  });
+
+  it('lets only the owner read the moderation counters', async () => {
+    await seed('moderation/ada', { bans: 1 });
+    await assertSucceeds(getDoc(doc(db('own', OWNER_TOKEN), 'moderation/ada')));
+    await assertFails(getDoc(doc(db('ada'), 'moderation/ada')));
   });
 });
 
@@ -439,6 +915,34 @@ describe('the room stub', () => {
     const room = answered();
     await seed('rooms/ABC234', room);
     await assertSucceeds(setDoc(doc(db('ada'), 'rooms/ABC234'), stub(room)));
+  });
+
+  it('takes the stub as FirestoreGameRooms writes it: createdAt read back, 6 hours on', async () => {
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'rooms/GHJ234'), {
+        host: 'ada',
+        offer: 'o',
+        createdAt: serverTimestamp(),
+        expireAt: Timestamp.fromMillis(Date.now() + HOUR),
+      })
+    );
+    await assertSucceeds(
+      updateDoc(doc(db('bob'), 'rooms/GHJ234'), { guest: 'bob', answer: 'a' })
+    );
+    const room = await getDoc(doc(db('ada'), 'rooms/GHJ234'));
+    const createdAt = room.get('createdAt') as Timestamp;
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'rooms/GHJ234'), {
+        host: 'ada',
+        guest: room.get('guest'),
+        createdAt,
+        expireAt: new Timestamp(
+          createdAt.seconds + 6 * 60 * 60,
+          createdAt.nanoseconds
+        ),
+        taken: true,
+      })
+    );
   });
 
   it('refuses the guest, a room not yet answered, a longer life or other players', async () => {
@@ -479,6 +983,47 @@ describe('the room stub', () => {
     await assertSucceeds(
       updateDoc(doc(db('bob'), 'rooms/ABC234'), { guest: 'bob', answer: 'a' })
     );
+  });
+});
+
+describe('the friend lists', () => {
+  const at = () => ({ at: serverTimestamp() });
+  const since = () => ({ since: serverTimestamp() });
+
+  it('take a friend, a request and a challenge keyed by uids', async () => {
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'players/ada/friends/bob'), since())
+    );
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'players/bob/requests/ada'), at())
+    );
+    await seed('players/bob/friends/ada', { since: Timestamp.now() });
+    await assertSucceeds(
+      setDoc(doc(db('ada'), 'players/bob/challenges/ada'), {
+        code: 'ABC234',
+        at: serverTimestamp(),
+        expireAt: Timestamp.fromMillis(Date.now() + HOUR / 2),
+      })
+    );
+  });
+
+  it('refuse an id the Realtime Database mirror cannot take as a key', async () => {
+    for (const bad of ['b.b', 'b#b', 'b$b', 'b[b', 'b]b', 'b-b']) {
+      await assertFails(
+        setDoc(doc(db('ada'), `players/ada/friends/${bad}`), since())
+      );
+      await assertFails(
+        setDoc(doc(db('ada'), `players/${bad}/requests/ada`), at())
+      );
+      await seed(`players/${bad}/friends/ada`, { since: Timestamp.now() });
+      await assertFails(
+        setDoc(doc(db('ada'), `players/${bad}/challenges/ada`), {
+          code: 'ABC234',
+          at: serverTimestamp(),
+          expireAt: Timestamp.fromMillis(Date.now() + HOUR / 2),
+        })
+      );
+    }
   });
 });
 

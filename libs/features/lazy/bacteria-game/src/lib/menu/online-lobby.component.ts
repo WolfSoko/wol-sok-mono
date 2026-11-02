@@ -24,6 +24,7 @@ import { I18nService } from '../i18n/i18n.service';
 import type { TranslationKey } from '../i18n/dictionaries';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { MatchmakerService } from '../net/matchmaker.service';
+import { ModerationService } from '../moderation/moderation.service';
 import { GameSettingsService } from '../settings.service';
 import { getLevel, levelTitleText } from '../state/levels';
 import { MATCH_LEVELS } from '../state/match-level';
@@ -61,6 +62,8 @@ export class OnlineLobbyComponent {
   protected readonly matchmaker = inject(MatchmakerService);
   protected readonly social = inject(SocialService);
   protected readonly settings = inject(GameSettingsService);
+  /** A ban takes online play away (ADR 0012): the lobby says so. */
+  protected readonly moderation = inject(ModerationService);
   private readonly i18n = inject(I18nService);
 
   public readonly lobby = input.required<OnlineLobby>();

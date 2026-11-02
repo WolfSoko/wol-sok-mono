@@ -36,8 +36,8 @@ import {
 import { compareDynamicWalls, DynamicWall, GameMap, stampRect } from './maps';
 import { escapeReach } from './arena-size';
 import { getMap } from './game-maps';
+import { Cells } from './cells';
 import {
-  Bacteria,
   createBacteriaBlob,
   isBoosted,
   Player,
@@ -58,7 +58,8 @@ export interface Nutrient {
 export interface Colony {
   playerId: number;
   color: PlayerColorArray;
-  bacterias: Bacteria[];
+  /** Its bacteria, in columns - what the simulation walks. */
+  cells: Cells;
   /** Enemy bacteria eaten since the game started. */
   captured: number;
   /** Own bacteria lost since the game started. */
@@ -208,13 +209,19 @@ export function addEvents(a: StepEvents, b: StepEvents): StepEvents {
   };
 }
 
-/** A bacterium that dies this frame - and nobody captures it. */
-interface Death {
-  bacterium: Bacteria;
+/** A bacterium leaving its colony. */
+interface Removal {
   /** Index of the colony that is losing the bacterium. */
   victim: number;
-  /** Position of the bacterium inside the victim's array. */
+  /** The bacterium's index in the victim's columns. */
   victimIndex: number;
+}
+
+/** A bacterium that dies this frame - and nobody captures it. */
+interface Death extends Removal {
+  /** The bacterium's cell. */
+  x: number;
+  y: number;
 }
 
 /** A bacterium another colony killed this frame. */
@@ -233,6 +240,9 @@ const NEIGHBOURS: readonly [number, number][] = [
   [0, 1],
   [1, 1],
 ];
+/** {@link NEIGHBOURS} as two arrays, read in the hot loops without destructuring. */
+const NEIGHBOUR_X = Int8Array.from(NEIGHBOURS, ([dx]) => dx);
+const NEIGHBOUR_Y = Int8Array.from(NEIGHBOURS, ([, dy]) => dy);
 
 /**
  * Grid based bacteria war simulation.
@@ -286,6 +296,19 @@ export class BacteriaSimulation implements Simulation {
   /** Unit vector per coarse cell and colony, pointing at the closest enemies. */
   private huntFieldX = new Float32Array(0);
   private huntFieldY = new Float32Array(0);
+  /**
+   * The enemies per coarse cell of the colony whose hunt field is being
+   * built, with a border of empty cells around the coarse grid.
+   */
+  private enemiesAround = new Float64Array(0);
+  /** The coarse column of each arena column, and the coarse row offset of each row. */
+  private coarseColumn = new Int32Array(0);
+  private coarseRow = new Int32Array(0);
+  /**
+   * The index offsets of the {@link NEIGHBOURS}, in their order - for a
+   * cell away from the arena's edges.
+   */
+  private neighbourOffsets = new Int32Array(NEIGHBOURS.length);
 
   private colonies: Colony[] = [];
   /** The summaries as of the last step, built when first asked for. */
@@ -368,17 +391,17 @@ export class BacteriaSimulation implements Simulation {
       let sumX = 0;
       let sumY = 0;
       let onHill = 0;
-      for (const bacterium of colony.bacterias) {
-        sumX += bacterium.x;
-        sumY += bacterium.y;
+      const { x, y, length: count } = colony.cells;
+      for (let i = 0; i < count; i++) {
+        sumX += x[i];
+        sumY += y[i];
         if (
           this.hasHill &&
-          this.zone[bacterium.y * this.width + bacterium.x] === ZONE_CODE.hill
+          this.zone[y[i] * this.width + x[i]] === ZONE_CODE.hill
         ) {
           onHill++;
         }
       }
-      const count = colony.bacterias.length;
       return {
         playerId: colony.playerId,
         color: colony.color,
@@ -397,7 +420,7 @@ export class BacteriaSimulation implements Simulation {
     return this.colonies.map((colony) => ({
       kind: 'cells',
       color: colony.color,
-      bacterias: colony.bacterias,
+      cells: colony.cells,
       boostTarget: boosts.get(colony.playerId) ?? null,
     }));
   }
@@ -417,10 +440,10 @@ export class BacteriaSimulation implements Simulation {
     const blocksY = this.influenceHeight;
     const counts = this.colonies.map((colony) => {
       const blocks = new Uint32Array(blocksX * blocksY);
-      for (const bacterium of colony.bacterias) {
+      const { x, y, length } = colony.cells;
+      for (let i = 0; i < length; i++) {
         blocks[
-          Math.floor(bacterium.y / cellSize) * blocksX +
-            Math.floor(bacterium.x / cellSize)
+          Math.floor(y[i] / cellSize) * blocksX + Math.floor(x[i] / cellSize)
         ]++;
       }
       return blocks;
@@ -436,13 +459,14 @@ export class BacteriaSimulation implements Simulation {
       if (colony.playerId === playerId) {
         continue;
       }
-      for (const bacterium of colony.bacterias) {
-        const dx = bacterium.x - from.x;
-        const dy = bacterium.y - from.y;
+      const { x, y, length } = colony.cells;
+      for (let i = 0; i < length; i++) {
+        const dx = x[i] - from.x;
+        const dy = y[i] - from.y;
         const squared = dx * dx + dy * dy;
         if (squared < nearestDistance) {
           nearestDistance = squared;
-          nearest = { x: bacterium.x, y: bacterium.y };
+          nearest = { x: x[i], y: y[i] };
         }
       }
     }
@@ -461,21 +485,23 @@ export class BacteriaSimulation implements Simulation {
 
   /** Replaces all colonies with a fresh blob per player. */
   public init(spawns: ColonySpawn[]): void {
-    this.colonies = spawns.map((spawn) => ({
-      playerId: spawn.playerId,
-      color: spawn.color,
-      bacterias: createBacteriaBlob(spawn.x, spawn.y, spawn.radius),
-      captured: 0,
-      lost: 0,
-      totalEnergy: 0,
-      pellets: 0,
-      traits: spawn.traits ?? PLAIN_TRAITS,
-    }));
+    this.colonies = spawns.map((spawn) => {
+      const cells = Cells.of(
+        createBacteriaBlob(spawn.x, spawn.y, spawn.radius)
+      );
+      return {
+        playerId: spawn.playerId,
+        color: spawn.color,
+        cells,
+        captured: 0,
+        lost: 0,
+        totalEnergy: cells.length * this.balance.maxEnergy,
+        pellets: 0,
+        traits: spawn.traits ?? PLAIN_TRAITS,
+      };
+    });
     this.colonySummaries = null;
     this.colonyBlocks = null;
-    for (const colony of this.colonies) {
-      colony.totalEnergy = colony.bacterias.length * this.balance.maxEnergy;
-    }
     this.elapsedSec = 0;
     this.events = noEvents();
     this.weaponEffects.clear();
@@ -511,6 +537,20 @@ export class BacteriaSimulation implements Simulation {
     this.influenceHeight = Math.ceil(height / cellSize);
     this.influenceTotal = new Float32Array(
       this.influenceWidth * this.influenceHeight
+    );
+    this.enemiesAround = new Float64Array(
+      (this.influenceWidth + 2) * (this.influenceHeight + 2)
+    );
+    this.coarseColumn = Int32Array.from({ length: width }, (_, x) =>
+      Math.floor(x / cellSize)
+    );
+    this.coarseRow = Int32Array.from(
+      { length: height },
+      (_, y) => Math.floor(y / cellSize) * this.influenceWidth
+    );
+    this.neighbourOffsets = Int32Array.from(
+      NEIGHBOURS,
+      ([dx, dy]) => dy * width + dx
     );
 
     this.reset();
@@ -579,13 +619,13 @@ export class BacteriaSimulation implements Simulation {
    * once someone is trapped.
    */
   private evictFromWalls(): void {
-    const trapped: [number, Bacteria][] = [];
-    this.colonies.forEach((colony, colonyIndex) => {
-      for (const bacterium of colony.bacterias) {
-        if (
-          this.baseOwner[bacterium.y * this.width + bacterium.x] === WALL_CELL
-        ) {
-          trapped.push([colonyIndex, bacterium]);
+    // The trapped bacteria by colony and index, in order.
+    const trapped: Removal[] = [];
+    this.colonies.forEach((colony, victim) => {
+      const { x, y, length } = colony.cells;
+      for (let i = 0; i < length; i++) {
+        if (this.baseOwner[y[i] * this.width + x[i]] === WALL_CELL) {
+          trapped.push({ victim, victimIndex: i });
         }
       }
     });
@@ -595,33 +635,31 @@ export class BacteriaSimulation implements Simulation {
 
     this.owner.set(this.baseOwner);
     this.colonies.forEach((colony, colonyIndex) => {
-      for (const bacterium of colony.bacterias) {
-        const index = bacterium.y * this.width + bacterium.x;
+      const { x, y, length } = colony.cells;
+      for (let i = 0; i < length; i++) {
+        const index = y[i] * this.width + x[i];
         if (this.owner[index] !== WALL_CELL) {
           this.owner[index] = colonyIndex;
         }
       }
     });
 
-    const crushed = new Set<Bacteria>();
-    for (const [colonyIndex, bacterium] of trapped) {
-      const cell = this.findEscape(bacterium.x, bacterium.y);
+    const crushed: Removal[] = [];
+    for (const removal of trapped) {
+      const { victim, victimIndex: i } = removal;
+      const cells = this.colonies[victim].cells;
+      const cell = this.findEscape(cells.x[i], cells.y[i]);
       if (cell < 0) {
-        crushed.add(bacterium);
-        this.colonies[colonyIndex].lost++;
+        crushed.push(removal);
+        this.colonies[victim].lost++;
         continue;
       }
-      bacterium.x = cell % this.width;
-      bacterium.y = Math.floor(cell / this.width);
-      this.owner[cell] = colonyIndex;
+      cells.x[i] = cell % this.width;
+      cells.y[i] = Math.floor(cell / this.width);
+      this.owner[cell] = victim;
     }
-    if (crushed.size === 0) {
-      return;
-    }
-    this.events.crushed += crushed.size;
-    for (const colony of this.colonies) {
-      colony.bacterias = colony.bacterias.filter((b) => !crushed.has(b));
-    }
+    this.events.crushed += crushed.length;
+    this.compact(crushed);
   }
 
   /** The closest free cell within a few steps, or -1 when it is all packed. */
@@ -699,7 +737,7 @@ export class BacteriaSimulation implements Simulation {
     const captures = this.runCombat(deltaTimeSec, attackFactor, deaths, hits);
     this.applyCaptures(captures);
     this.clearDeaths(deaths);
-    this.compact([...captures, ...deaths]);
+    this.compact(captures, deaths);
     if (effects.length > 0) {
       this.strikePhages(hits);
     }
@@ -711,8 +749,9 @@ export class BacteriaSimulation implements Simulation {
 
     for (const colony of this.colonies) {
       let totalEnergy = 0;
-      for (const bacterium of colony.bacterias) {
-        totalEnergy += bacterium.energy;
+      const { energy, length } = colony.cells;
+      for (let i = 0; i < length; i++) {
+        totalEnergy += energy[i];
       }
       colony.totalEnergy = totalEnergy;
     }
@@ -769,24 +808,34 @@ export class BacteriaSimulation implements Simulation {
       const strikers = phages.map((phage) =>
         this.colonies.findIndex(({ playerId }) => playerId === phage.owner)
       );
-      const kept: Bacteria[] = [];
-      for (const bacterium of colony.bacterias) {
-        const struck = phages.findIndex((effect) =>
-          covers(effect, bacterium.x, bacterium.y)
-        );
-        const winner = struck < 0 ? -1 : strikers[struck];
+      const cells = colony.cells;
+      const turned = new Uint8Array(cells.length);
+      let turnedCount = 0;
+      for (let i = 0; i < cells.length; i++) {
+        const x = cells.x[i];
+        const y = cells.y[i];
+        let winner = -1;
+        for (let p = 0; p < phages.length; p++) {
+          if (covers(phages[p], x, y)) {
+            winner = strikers[p];
+            break;
+          }
+        }
         if (winner < 0 || this.random() >= WEAPON_EFFECTS.phageConvertShare) {
-          kept.push(bacterium);
           continue;
         }
-        this.colonies[winner].bacterias.push(bacterium);
+        turned[i] = 1;
+        turnedCount++;
+        this.colonies[winner].cells.push(x, y, cells.energy[i]);
         this.colonies[winner].captured++;
         colony.lost++;
         this.events.captures++;
-        this.owner[bacterium.y * this.width + bacterium.x] = winner;
-        this.leaveFood(bacterium, winner);
+        this.owner[y * this.width + x] = winner;
+        this.leaveFood(x, y, winner);
       }
-      colony.bacterias = kept;
+      if (turnedCount > 0) {
+        cells.keep(turned);
+      }
     });
   }
 
@@ -794,18 +843,19 @@ export class BacteriaSimulation implements Simulation {
    * The food a kill leaves behind, which fuels a breakthrough: on its cell,
    * and on the cells of the winning colony around it.
    */
-  private leaveFood(bacterium: Bacteria, winner: number): void {
+  private leaveFood(x: number, y: number, winner: number): void {
     const { feedEnergyPerCapture } = this.balance;
-    this.feed[bacterium.y * this.width + bacterium.x] += feedEnergyPerCapture;
-    for (const [dx, dy] of NEIGHBOURS) {
-      const nx = bacterium.x + dx;
-      const ny = bacterium.y + dy;
-      if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) {
+    const { width, height, owner, feed } = this;
+    feed[y * width + x] += feedEnergyPerCapture;
+    for (let k = 0; k < NEIGHBOURS.length; k++) {
+      const nx = x + NEIGHBOUR_X[k];
+      const ny = y + NEIGHBOUR_Y[k];
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
         continue;
       }
-      const neighbourIndex = ny * this.width + nx;
-      if (this.owner[neighbourIndex] === winner) {
-        this.feed[neighbourIndex] += feedEnergyPerCapture;
+      const neighbourIndex = ny * width + nx;
+      if (owner[neighbourIndex] === winner) {
+        feed[neighbourIndex] += feedEnergyPerCapture;
       }
     }
   }
@@ -839,30 +889,33 @@ export class BacteriaSimulation implements Simulation {
     }
     this.influenceTotal.fill(0);
 
-    const cellSize = this.balance.influenceCellSize;
+    const { width, height, owner, energy, influence, influenceTotal } = this;
+    const { coarseColumn, coarseRow } = this;
     for (
       let colonyIndex = 0;
       colonyIndex < this.colonies.length;
       colonyIndex++
     ) {
       const offset = colonyIndex * cells;
-      const bacterias = this.colonies[colonyIndex].bacterias;
-      for (let i = 0; i < bacterias.length; i++) {
-        const bacterium = bacterias[i];
-        const x = clamp(Math.round(bacterium.x), 0, this.width - 1);
-        const y = clamp(Math.round(bacterium.y), 0, this.height - 1);
-        bacterium.x = x;
-        bacterium.y = y;
+      const {
+        x: xs,
+        y: ys,
+        energy: energies,
+        length,
+      } = this.colonies[colonyIndex].cells;
+      for (let i = 0; i < length; i++) {
+        const x = clamp(xs[i], 0, width - 1);
+        const y = clamp(ys[i], 0, height - 1);
+        xs[i] = x;
+        ys[i] = y;
 
-        const index = y * this.width + x;
-        this.owner[index] = colonyIndex;
-        this.energy[index] = bacterium.energy;
+        const index = y * width + x;
+        owner[index] = colonyIndex;
+        energy[index] = energies[i];
 
-        const influenceIndex =
-          Math.floor(y / cellSize) * this.influenceWidth +
-          Math.floor(x / cellSize);
-        this.influence[offset + influenceIndex]++;
-        this.influenceTotal[influenceIndex]++;
+        const influenceIndex = coarseRow[y] + coarseColumn[x];
+        influence[offset + influenceIndex]++;
+        influenceTotal[influenceIndex]++;
       }
     }
 
@@ -874,36 +927,45 @@ export class BacteriaSimulation implements Simulation {
    * so the movement phase only has to look the answer up.
    */
   private buildHuntField(colonyCount: number): void {
-    const cells = this.influenceWidth * this.influenceHeight;
+    const columns = this.influenceWidth;
+    const rows = this.influenceHeight;
+    const cells = columns * rows;
+    const { influence, influenceTotal, huntFieldX, huntFieldY } = this;
+    // The enemies of each coarse cell, inside a border of none - the
+    // neighbours off the grid count for nothing.
+    const stride = columns + 2;
+    const enemies = this.enemiesAround;
     for (let colony = 0; colony < colonyCount; colony++) {
       const offset = colony * cells;
-      for (let cy = 0; cy < this.influenceHeight; cy++) {
-        for (let cx = 0; cx < this.influenceWidth; cx++) {
-          const cell = cy * this.influenceWidth + cx;
-          let dirX = 0;
-          let dirY = 0;
-          for (const [dx, dy] of NEIGHBOURS) {
-            const gx = cx + dx;
-            const gy = cy + dy;
-            if (
-              gx < 0 ||
-              gy < 0 ||
-              gx >= this.influenceWidth ||
-              gy >= this.influenceHeight
-            ) {
-              continue;
-            }
-            const index = gy * this.influenceWidth + gx;
-            const enemies =
-              this.influenceTotal[index] - this.influence[offset + index];
-            if (enemies > 0) {
-              dirX += dx * enemies;
-              dirY += dy * enemies;
-            }
-          }
+      for (let cy = 0; cy < rows; cy++) {
+        for (let cx = 0; cx < columns; cx++) {
+          const index = cy * columns + cx;
+          enemies[(cy + 1) * stride + cx + 1] =
+            influenceTotal[index] - influence[offset + index];
+        }
+      }
+      // The counts are whole numbers, so the sums come out exact in any
+      // order - the same pull towards the enemies around as one neighbour
+      // at a time.
+      for (let cy = 0; cy < rows; cy++) {
+        let above = cy * stride;
+        let here = above + stride;
+        let below = here + stride;
+        for (let cx = 0; cx < columns; cx++, above++, here++, below++) {
+          const dirX =
+            enemies[above + 2] +
+            enemies[here + 2] +
+            enemies[below + 2] -
+            (enemies[above] + enemies[here] + enemies[below]);
+          const dirY =
+            enemies[below] +
+            enemies[below + 1] +
+            enemies[below + 2] -
+            (enemies[above] + enemies[above + 1] + enemies[above + 2]);
           const length = Math.sqrt(dirX * dirX + dirY * dirY);
-          this.huntFieldX[offset + cell] = length > 0 ? dirX / length : 0;
-          this.huntFieldY[offset + cell] = length > 0 ? dirY / length : 0;
+          const cell = offset + cy * columns + cx;
+          huntFieldX[cell] = length > 0 ? dirX / length : 0;
+          huntFieldY[cell] = length > 0 ? dirY / length : 0;
         }
       }
     }
@@ -983,49 +1045,70 @@ export class BacteriaSimulation implements Simulation {
 
     const captures: Capture[] = [];
     const enemyStrength = new Float32Array(this.colonies.length);
+    /** False while `enemyStrength` holds zeros only. */
+    let strengthSet = false;
+    const { width, height, owner, nutrientBonus, feed, neighbourOffsets } =
+      this;
+    const energyAt = this.energy;
+    const zone = this.hasZones ? this.zone : null;
 
     for (
       let colonyIndex = 0;
       colonyIndex < this.colonies.length;
       colonyIndex++
     ) {
-      const bacterias = this.colonies[colonyIndex].bacterias;
+      const {
+        x: xs,
+        y: ys,
+        energy: energies,
+        length,
+      } = this.colonies[colonyIndex].cells;
       // 1 for a plain colony: the pressure times 1 is the pressure, exactly.
       const { toughness, toxins, cryo } = hits[colonyIndex];
-      for (let i = 0; i < bacterias.length; i++) {
-        const bacterium = bacterias[i];
-        const { x, y } = bacterium;
-        const index = y * this.width + x;
+      for (let i = 0; i < length; i++) {
+        const x = xs[i];
+        const y = ys[i];
+        const index = y * width + x;
 
-        enemyStrength.fill(0);
+        if (strengthSet) {
+          enemyStrength.fill(0);
+          strengthSet = false;
+        }
         let enemy = 0;
         let own = 0;
-        for (const [dx, dy] of NEIGHBOURS) {
-          const nx = x + dx;
-          const ny = y + dy;
-          if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) {
-            continue;
+        // Away from the edges every neighbour is in the arena.
+        const inner = x > 0 && y > 0 && x < width - 1 && y < height - 1;
+        for (let k = 0; k < NEIGHBOURS.length; k++) {
+          let neighbourIndex: number;
+          if (inner) {
+            neighbourIndex = index + neighbourOffsets[k];
+          } else {
+            const nx = x + NEIGHBOUR_X[k];
+            const ny = y + NEIGHBOUR_Y[k];
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+              continue;
+            }
+            neighbourIndex = ny * width + nx;
           }
-          const neighbourIndex = ny * this.width + nx;
-          const neighbour = this.owner[neighbourIndex];
+          const neighbour = owner[neighbourIndex];
           if (neighbour < 0) {
             continue;
           }
-          const neighbourEnergy = this.energy[neighbourIndex];
+          const neighbourEnergy = energyAt[neighbourIndex];
           if (neighbour === colonyIndex) {
             own += neighbourEnergy;
           } else {
             const strength = neighbourEnergy * attackFactor[neighbour];
             enemy += strength;
             enemyStrength[neighbour] += strength;
+            strengthSet = true;
           }
         }
 
-        let energy =
-          bacterium.energy + this.nutrientBonus[index] + this.feed[index];
+        let energy = energies[i] + nutrientBonus[index] + feed[index];
 
         const antibiotic =
-          this.hasZones && this.zone[index] === ZONE_CODE.antibiotic;
+          zone !== null && zone[index] === ZONE_CODE.antibiotic;
         if (antibiotic) {
           energy -= ZONE_EFFECTS.antibioticDrainPerSec * deltaTimeSec;
         }
@@ -1056,7 +1139,7 @@ export class BacteriaSimulation implements Simulation {
         }
 
         if (energy > 0) {
-          bacterium.energy = energy;
+          energies[i] = energy;
           continue;
         }
 
@@ -1065,20 +1148,18 @@ export class BacteriaSimulation implements Simulation {
           // The antibiotic or the toxin killed it: lost, and nobody
           // captured it.
           this.colonies[colonyIndex].lost++;
-          deaths.push({ bacterium, victim: colonyIndex, victimIndex: i });
+          deaths.push({ x, y, victim: colonyIndex, victimIndex: i });
           continue;
         }
         if (winner < 0) {
           // Nothing around that could take over - stay alive on fumes.
-          bacterium.energy = Math.min(
-            maxEnergy,
-            energyRegenPerSec * deltaTimeSec
-          );
+          energies[i] = Math.min(maxEnergy, energyRegenPerSec * deltaTimeSec);
           continue;
         }
         this.colonies[colonyIndex].lost++;
         captures.push({
-          bacterium,
+          x,
+          y,
           victim: colonyIndex,
           victimIndex: i,
           winner,
@@ -1103,8 +1184,8 @@ export class BacteriaSimulation implements Simulation {
 
     for (const capture of captures) {
       const colony = this.colonies[capture.winner];
-      const bacterium = capture.bacterium;
-      const index = bacterium.y * this.width + bacterium.x;
+      const { x, y } = capture;
+      const index = y * this.width + x;
       colony.captured++;
 
       if (this.random() < consumeChance) {
@@ -1113,42 +1194,40 @@ export class BacteriaSimulation implements Simulation {
         this.owner[index] = EMPTY_CELL;
         this.energy[index] = 0;
       } else {
-        bacterium.energy = captureEnergy;
-        colony.bacterias.push(bacterium);
+        colony.cells.push(x, y, captureEnergy);
         this.owner[index] = capture.winner;
         this.energy[index] = captureEnergy;
       }
 
-      this.leaveFood(bacterium, capture.winner);
+      this.leaveFood(x, y, capture.winner);
     }
   }
 
   /** Frees the cells of the bacteria that died without a captor. */
   private clearDeaths(deaths: readonly Death[]): void {
-    for (const { bacterium } of deaths) {
-      const index = bacterium.y * this.width + bacterium.x;
+    for (const { x, y } of deaths) {
+      const index = y * this.width + x;
       this.owner[index] = EMPTY_CELL;
       this.energy[index] = 0;
     }
   }
 
-  /** Removes the bacteria that were killed this frame from their old colony. */
-  private compact(captures: readonly Death[]): void {
-    if (captures.length === 0) {
-      return;
-    }
-    const removed = new Map<number, Set<number>>();
-    for (const capture of captures) {
-      let indices = removed.get(capture.victim);
-      if (indices == null) {
-        indices = new Set<number>();
-        removed.set(capture.victim, indices);
+  /** Removes the bacteria in the lists from their colony. */
+  private compact(...lists: (readonly Removal[])[]): void {
+    // A mark per bacterium of each colony that lost any, by its index.
+    const removed: (Uint8Array | undefined)[] = [];
+    for (const list of lists) {
+      for (const { victim, victimIndex } of list) {
+        (removed[victim] ??= new Uint8Array(
+          this.colonies[victim].cells.length
+        ))[victimIndex] = 1;
       }
-      indices.add(capture.victimIndex);
     }
-    for (const [colonyIndex, indices] of removed) {
-      const colony = this.colonies[colonyIndex];
-      colony.bacterias = colony.bacterias.filter((_, i) => !indices.has(i));
+    for (let colonyIndex = 0; colonyIndex < removed.length; colonyIndex++) {
+      const marks = removed[colonyIndex];
+      if (marks !== undefined) {
+        this.colonies[colonyIndex].cells.keep(marks);
+      }
     }
   }
 
@@ -1168,42 +1247,43 @@ export class BacteriaSimulation implements Simulation {
       const colonyIndex = this.colonies.indexOf(colony);
       const chance = divideChanceOf(this.balance, colony.traits, deltaTimeSec);
       const { blooms, cryo } = hits[colonyIndex];
-      const bacterias = colony.bacterias;
-      let count = bacterias.length;
+      const cells = colony.cells;
+      let count = cells.length;
       const parents = count;
       for (let i = 0; i < parents && count < capacity; i++) {
-        const bacterium = bacterias[i];
-        if (bacterium.energy < divideEnergyThreshold) {
+        // Read afresh: a child pushed may have grown the columns.
+        const energy = cells.energy[i];
+        if (energy < divideEnergyThreshold) {
           continue;
         }
+        const x = cells.x[i];
+        const y = cells.y[i];
         const onAgar =
-          this.hasZones &&
-          this.zone[bacterium.y * this.width + bacterium.x] === ZONE_CODE.agar;
+          this.hasZones && this.zone[y * this.width + x] === ZONE_CODE.agar;
         const groundChance = onAgar
           ? chance * ZONE_EFFECTS.agarDivideFactor
           : chance;
         if (
           this.random() >=
           (blooms.length > 0 || cryo.length > 0
-            ? groundChance * effectDivideFactor(bacterium, blooms, cryo)
+            ? groundChance * effectDivideFactor(x, y, blooms, cryo)
             : groundChance)
         ) {
           continue;
         }
-        const cell = this.findFreeNeighbour(bacterium.x, bacterium.y);
+        const cell = this.findFreeNeighbour(x, y);
         if (cell < 0) {
           continue;
         }
-        const childEnergy = bacterium.energy * (1 - parentEnergyShare);
-        bacterium.energy *= parentEnergyShare;
-        const child: Bacteria = {
-          x: cell % this.width,
-          y: Math.floor(cell / this.width),
-          energy: childEnergy,
-        };
+        const childEnergy = energy * (1 - parentEnergyShare);
+        cells.energy[i] = energy * parentEnergyShare;
         this.owner[cell] = colonyIndex;
         this.energy[cell] = childEnergy;
-        bacterias.push(child);
+        cells.push(
+          cell % this.width,
+          Math.floor(cell / this.width),
+          childEnergy
+        );
         count++;
       }
     }
@@ -1211,17 +1291,38 @@ export class BacteriaSimulation implements Simulation {
 
   /** Index of a random free neighbouring cell, or -1 when there is none. */
   private findFreeNeighbour(x: number, y: number): number {
-    const start = Math.floor(this.random() * NEIGHBOURS.length);
+    return this.freeNeighbour(
+      x,
+      y,
+      Math.floor(this.random() * NEIGHBOURS.length)
+    );
+  }
+
+  /**
+   * Index of the first free cell round (x, y), looking from neighbour
+   * `start` on - -1 when the arena's edge, walls and bacteria fill all
+   * eight.
+   */
+  private freeNeighbour(x: number, y: number, start: number): number {
+    const { width, height, owner, neighbourOffsets } = this;
+    const index = y * width + x;
+    // Away from the edges every neighbour is in the arena.
+    const inner = x > 0 && y > 0 && x < width - 1 && y < height - 1;
     for (let k = 0; k < NEIGHBOURS.length; k++) {
-      const [dx, dy] = NEIGHBOURS[(start + k) % NEIGHBOURS.length];
-      const nx = x + dx;
-      const ny = y + dy;
-      if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) {
-        continue;
+      const neighbour = (start + k) % NEIGHBOURS.length;
+      let neighbourIndex: number;
+      if (inner) {
+        neighbourIndex = index + neighbourOffsets[neighbour];
+      } else {
+        const nx = x + NEIGHBOUR_X[neighbour];
+        const ny = y + NEIGHBOUR_Y[neighbour];
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+          continue;
+        }
+        neighbourIndex = ny * width + nx;
       }
-      const index = ny * this.width + nx;
-      if (this.owner[index] === EMPTY_CELL) {
-        return index;
+      if (owner[neighbourIndex] === EMPTY_CELL) {
+        return neighbourIndex;
       }
     }
     return -1;
@@ -1233,6 +1334,13 @@ export class BacteriaSimulation implements Simulation {
    *
    * A boosted colony moves faster and hunts harder for as long as the boost
    * lasts - that is the whole point of firing one.
+   *
+   * A bacterium with no free cell around stays put and draws no random
+   * numbers: every way it could go - the first cell of its ray, the slides
+   * and the random step - is one of its eight neighbours. Inside a colony
+   * that is most of them, so the step costs little more than its fronts.
+   * Whether a cell is free is asked on its turn, as the ones before it
+   * may have moved away.
    */
   private move(
     colonies: Colony[],
@@ -1240,8 +1348,10 @@ export class BacteriaSimulation implements Simulation {
     deltaTimeSec: number,
     hits: readonly WeaponHits[]
   ): void {
-    const { jitter, influenceCellSize: cellSize } = this.balance;
+    const { jitter } = this.balance;
     const cells = this.influenceWidth * this.influenceHeight;
+    const { coarseColumn, coarseRow, huntFieldX, huntFieldY, width } = this;
+    const zones = this.hasZones ? this.zone : null;
 
     for (const colony of colonies) {
       const colonyIndex = this.colonies.indexOf(colony);
@@ -1261,10 +1371,15 @@ export class BacteriaSimulation implements Simulation {
       const { aggression } = intent;
       const maxStep = paceSteps(intent, this.paces, colonyIndex);
 
-      for (const bacterium of colony.bacterias) {
-        const zone = this.hasZones
-          ? this.zone[bacterium.y * this.width + bacterium.x]
-          : 0;
+      const bacteria = colony.cells;
+      const { x: xs, y: ys, length: count } = bacteria;
+      for (let i = 0; i < count; i++) {
+        const x = xs[i];
+        const y = ys[i];
+        if (this.freeNeighbour(x, y, 0) < 0) {
+          continue;
+        }
+        const zone = zones === null ? 0 : zones[y * width + x];
         if (
           zone === ZONE_CODE.ice &&
           this.random() < ZONE_EFFECTS.iceStayChance
@@ -1274,27 +1389,24 @@ export class BacteriaSimulation implements Simulation {
         // Frozen by an enemy's cryo pulse, it all but sits the step out.
         if (
           cryo.length > 0 &&
-          anyCovers(cryo, bacterium.x, bacterium.y) &&
+          anyCovers(cryo, x, y) &&
           this.random() < WEAPON_EFFECTS.cryoStayChance
         ) {
           continue;
         }
         const hunt =
           zone === ZONE_CODE.heat ? heatedAggression(aggression) : aggression;
-        let dirX = targetX - bacterium.x;
-        let dirY = targetY - bacterium.y;
+        let dirX = targetX - x;
+        let dirY = targetY - y;
         const length = Math.sqrt(dirX * dirX + dirY * dirY);
         if (length > 0) {
           dirX /= length;
           dirY /= length;
         }
 
-        const huntCell =
-          huntOffset +
-          Math.floor(bacterium.y / cellSize) * this.influenceWidth +
-          Math.floor(bacterium.x / cellSize);
-        let huntX = this.huntFieldX[huntCell];
-        let huntY = this.huntFieldY[huntCell];
+        const huntCell = huntOffset + coarseRow[y] + coarseColumn[x];
+        let huntX = huntFieldX[huntCell];
+        let huntY = huntFieldY[huntCell];
         // The hunt never drags a colony back against its crosshair: the
         // part of it that points away from the crosshair is dropped, so a
         // colony can always run - it only bends sideways towards the enemy.
@@ -1316,7 +1428,8 @@ export class BacteriaSimulation implements Simulation {
           continue;
         }
         this.tryMove(
-          bacterium,
+          bacteria,
+          i,
           colonyIndex,
           dirX / blended,
           dirY / blended,
@@ -1334,12 +1447,16 @@ export class BacteriaSimulation implements Simulation {
    * wall whenever a long frame makes `maxStep` exceed the wall thickness.
    */
   private tryMove(
-    bacterium: Bacteria,
+    cells: Cells,
+    i: number,
     colonyIndex: number,
     dirX: number,
     dirY: number,
     maxStep: number
   ): boolean {
+    const { width, height, owner } = this;
+    const x = cells.x[i];
+    const y = cells.y[i];
     let reachedX = 0;
     let reachedY = 0;
     for (let step = 1; step <= maxStep; step++) {
@@ -1348,44 +1465,55 @@ export class BacteriaSimulation implements Simulation {
       if (dx === reachedX && dy === reachedY) {
         continue;
       }
-      if (!this.isFree(bacterium.x + dx, bacterium.y + dy)) {
+      // Stops at the edge of the arena, a wall or a bacterium.
+      const toX = x + dx;
+      const toY = y + dy;
+      if (
+        toX < 0 ||
+        toY < 0 ||
+        toX >= width ||
+        toY >= height ||
+        owner[toY * width + toX] !== EMPTY_CELL
+      ) {
         break;
       }
       reachedX = dx;
       reachedY = dy;
     }
-    if (this.occupy(bacterium, colonyIndex, reachedX, reachedY)) {
+    if (this.occupy(cells, i, x, y, colonyIndex, reachedX, reachedY)) {
       return true;
     }
-    // Blocked head on - slide along the wall instead of piling up in front of it.
-    const slideFirst = this.random() < 0.5;
-    const slides: [number, number][] = [
-      [Math.sign(dirX), 0],
-      [0, Math.sign(dirY)],
-    ];
-    if (!slideFirst) {
-      slides.reverse();
+    // Blocked head on - slide along the wall instead of piling up in front
+    // of it, along x or y first by a coin toss.
+    const slideX = Math.sign(dirX);
+    const slideY = Math.sign(dirY);
+    if (
+      this.random() < 0.5
+        ? this.occupy(cells, i, x, y, colonyIndex, slideX, 0) ||
+          this.occupy(cells, i, x, y, colonyIndex, 0, slideY)
+        : this.occupy(cells, i, x, y, colonyIndex, 0, slideY) ||
+          this.occupy(cells, i, x, y, colonyIndex, slideX, 0)
+    ) {
+      return true;
     }
-    for (const [dx, dy] of slides) {
-      if (this.occupy(bacterium, colonyIndex, dx, dy)) {
-        return true;
-      }
-    }
-    const [dx, dy] = NEIGHBOURS[Math.floor(this.random() * NEIGHBOURS.length)];
-    return this.occupy(bacterium, colonyIndex, dx, dy);
+    const neighbour = Math.floor(this.random() * NEIGHBOURS.length);
+    return this.occupy(
+      cells,
+      i,
+      x,
+      y,
+      colonyIndex,
+      NEIGHBOUR_X[neighbour],
+      NEIGHBOUR_Y[neighbour]
+    );
   }
 
-  /** True when the cell is inside the arena and neither wall nor bacterium. */
-  private isFree(x: number, y: number): boolean {
-    if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
-      return false;
-    }
-    return this.owner[y * this.width + x] === EMPTY_CELL;
-  }
-
-  /** Moves a bacterium by the given offset if the target cell is free. */
+  /** Moves bacterium `i`, on cell (x, y), by the offset if that cell is free. */
   private occupy(
-    bacterium: Bacteria,
+    cells: Cells,
+    i: number,
+    x: number,
+    y: number,
     colonyIndex: number,
     dx: number,
     dy: number
@@ -1393,22 +1521,23 @@ export class BacteriaSimulation implements Simulation {
     if (dx === 0 && dy === 0) {
       return false;
     }
-    const toX = clamp(bacterium.x + dx, 0, this.width - 1);
-    const toY = clamp(bacterium.y + dy, 0, this.height - 1);
-    if (toX === bacterium.x && toY === bacterium.y) {
+    const { width, owner, energy } = this;
+    const toX = clamp(x + dx, 0, width - 1);
+    const toY = clamp(y + dy, 0, this.height - 1);
+    if (toX === x && toY === y) {
       return false;
     }
-    const to = toY * this.width + toX;
-    if (this.owner[to] !== EMPTY_CELL) {
+    const to = toY * width + toX;
+    if (owner[to] !== EMPTY_CELL) {
       return false;
     }
-    const from = bacterium.y * this.width + bacterium.x;
-    this.owner[from] = EMPTY_CELL;
-    this.energy[from] = 0;
-    this.owner[to] = colonyIndex;
-    this.energy[to] = bacterium.energy;
-    bacterium.x = toX;
-    bacterium.y = toY;
+    const from = y * width + x;
+    owner[from] = EMPTY_CELL;
+    energy[from] = 0;
+    owner[to] = colonyIndex;
+    energy[to] = cells.energy[i];
+    cells.x[i] = toX;
+    cells.y[i] = toY;
     return true;
   }
 }
@@ -1442,7 +1571,8 @@ const HIT_LISTS: Readonly<
 
 /** Times a bacterium's chance to divide from a bloom and a freeze. */
 function effectDivideFactor(
-  { x, y }: Bacteria,
+  x: number,
+  y: number,
   blooms: readonly ActiveEffect[],
   cryo: readonly ActiveEffect[]
 ): number {

@@ -8,6 +8,12 @@
     "build": {
       "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
+      "inputs": [
+        "sharedGlobals",
+        "production",
+        "^production",
+        "{workspaceRoot}/version.json"
+      ],
       "options": {
         "main": "apps/bacteria-wars-functions/src/main.ts",
         "outputPath": "dist/apps/bacteria-wars-functions",
@@ -31,6 +37,15 @@
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.config.ts",
+        "{workspaceRoot}/.codecov.yml",
+        "{workspaceRoot}/apps/bacteria-game-remote/firestore.indexes.json",
+        "{workspaceRoot}/firebase.bacteria-game-remote.json"
+      ],
       "options": {
         "jestConfig": "apps/bacteria-wars-functions/jest.config.ts"
       }
@@ -45,7 +60,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["build"],
       "options": {
-        "command": "nx run bacteria-game-remote:firebase deploy --only functions:bacteria --force --non-interactive"
+        "command": "firebase deploy --config=firebase.bacteria-game-remote.json --project=bacteria-game-remote --only functions:bacteria --force --non-interactive"
       }
     }
   }

@@ -1,3 +1,7 @@
+import {
+  provideRecordingAnalytics,
+  RecordingAnalytics,
+} from '@wolsok/shared-analytics/testing';
 import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
@@ -38,7 +42,7 @@ describe('EvolutionService', () => {
     expect(evolution.buyGene('mitosis')).toBe(true);
     expect(evolution.buyGene('mitosis')).toBe(true);
     expect(evolution.level('mitosis')).toBe(2);
-    expect(evolution.dna()).toBe(20 - 2 - 4);
+    expect(evolution.dna()).toBe(20 - 2 - 3);
     expect(stored()).toEqual({
       genes: { mitosis: 2 },
       weapons: [],
@@ -47,6 +51,42 @@ describe('EvolutionService', () => {
       epoch: 0,
       skins: [],
     });
+  });
+
+  it('counts the DNA each purchase spends, and on what', () => {
+    const analytics = new RecordingAnalytics();
+    TestBed.configureTestingModule({
+      providers: [provideRecordingAnalytics(analytics)],
+    });
+    earn(1000);
+    const evolution = create();
+
+    evolution.buyGene('mitosis');
+    evolution.buyGene('mitosis');
+    evolution.buyWeapon('toxin-bomb');
+    // held already: nothing spent
+    evolution.buyWeapon('toxin-bomb');
+
+    expect(analytics.tracked('spend_virtual_currency')).toEqual([
+      {
+        virtual_currency_name: 'dna',
+        value: 2,
+        item_name: 'mitosis',
+        item_category: 'gene',
+      },
+      {
+        virtual_currency_name: 'dna',
+        value: 3,
+        item_name: 'mitosis',
+        item_category: 'gene',
+      },
+      {
+        virtual_currency_name: 'dna',
+        value: 6,
+        item_name: 'toxin-bomb',
+        item_category: 'weapon',
+      },
+    ]);
   });
 
   it('buys nothing the DNA does not pay for', () => {
@@ -182,7 +222,7 @@ describe('EvolutionService', () => {
 
       expect(evolution.loaded()).toBe(true);
       expect(evolution.level('mitosis')).toBe(2);
-      expect(evolution.dna()).toBe(10 - 6);
+      expect(evolution.dna()).toBe(10 - 5);
     });
 
     it('settles once the storage has told what is held', () => {

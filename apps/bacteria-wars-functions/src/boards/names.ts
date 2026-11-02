@@ -2,7 +2,9 @@ import {
   AVATAR_COUNT,
   boardAvatar,
   boardTag,
+  type EntryStatus,
   posesAsLabel,
+  showsName,
 } from '@wolsok/feat-lazy-bac-game/engine';
 
 /**
@@ -68,6 +70,8 @@ export interface BoardProfile {
   name: string;
   publicName: boolean;
   boardOptOut: boolean;
+  /** Keeps all of the player's matches out of the gallery (ADR 0011). */
+  galleryOptOut: boolean;
   /** The preset avatar the player shows, null for a photo or an image. */
   preset: number | null;
 }
@@ -94,6 +98,7 @@ export function boardProfileOf(value: unknown): BoardProfile {
     name: typeof v['name'] === 'string' ? v['name'] : '',
     publicName: v['publicName'] === true,
     boardOptOut: v['boardOptOut'] === true,
+    galleryOptOut: v['galleryOptOut'] === true,
     preset,
   };
 }
@@ -114,11 +119,11 @@ export interface EntryLabel {
 export function entryLabel(
   entryId: string,
   profile: BoardProfile,
-  status: string
+  status: EntryStatus
 ): EntryLabel {
   const named =
     profile.publicName &&
-    (status === 'counted' || status === 'verified') &&
+    showsName(status) &&
     profile.name.trim() !== '' &&
     !isBlockedName(profile.name);
   return {

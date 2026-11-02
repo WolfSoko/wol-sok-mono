@@ -94,7 +94,7 @@ describe('EvolutionComponent', () => {
     await click(toxins().querySelector<HTMLButtonElement>('.buy'));
     await click(toxins().querySelector<HTMLButtonElement>('.buy'));
 
-    expect(counter()).toBe(String(20 - 2 - 4));
+    expect(counter()).toBe(String(20 - 2 - 3));
     expect(pipsOn(toxins())).toBe(2);
     expect(toxins().textContent).toContain('+10 % bite');
     expect(toxins().textContent).toContain('Next: +15 % bite');
@@ -190,7 +190,7 @@ describe('EvolutionComponent', () => {
       weapons: ['toxin-bomb'],
       equipped: 'toxin-bomb',
     });
-    expect(counter()).toBe(String(20 - 6 - 6));
+    expect(counter()).toBe(String(20 - 5 - 6));
     const reset = () =>
       Array.from(host.querySelectorAll<HTMLButtonElement>('button')).find(
         (button) => button.textContent?.includes('Reset all')
@@ -205,7 +205,7 @@ describe('EvolutionComponent', () => {
         host.querySelectorAll<HTMLButtonElement>('.confirm button')
       ).find((button) => button.textContent?.includes('Keep it')) ?? null
     );
-    expect(counter()).toBe('8');
+    expect(counter()).toBe('9');
 
     await click(reset());
     await click(host.querySelector<HTMLButtonElement>('.confirm-reset'));
@@ -214,7 +214,7 @@ describe('EvolutionComponent', () => {
     expect(pipsOn(gene('Mitosis Engine'))).toBe(0);
     expect(reset()?.disabled).toBe(true);
     expect(host.querySelector('[role="status"]')?.textContent).toContain(
-      'Everything reset - 12 DNA back.'
+      'Everything reset - 11 DNA back.'
     );
   });
 

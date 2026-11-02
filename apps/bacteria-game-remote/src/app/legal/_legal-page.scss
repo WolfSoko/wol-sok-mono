@@ -61,6 +61,16 @@ a {
   color: var(--gold);
 }
 
+wolsok-site-owner {
+  --site-owner-link-color: var(--gold);
+
+  line-height: 1.7;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+}
+
 h1 {
   font-size: 1.6rem;
   line-height: 1.2;

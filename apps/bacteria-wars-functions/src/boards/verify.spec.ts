@@ -58,6 +58,25 @@ describe('verifyReplay', () => {
     expect(verifyReplay(dailyReplay()).state).toBe('unverified');
   });
 
+  it("judges the human's medallion in a match against the computer, never online", () => {
+    const human = { id: 0, isBot: false, bacteriaCount: 40, lost: 0 };
+    const bot = { id: 1, isBot: true, bacteriaCount: 0, lost: 99 };
+    const match = (winner: typeof human | typeof bot) =>
+      played({
+        players: [human, bot],
+        outcome: { winner, reason: 'annihilation' },
+      } as never);
+    jest.mocked(playReplay).mockReturnValue(match(human));
+    expect(verifyReplay(dailyReplay()).medal).toEqual(expect.any(String));
+    jest.mocked(playReplay).mockReturnValue(match(bot));
+    const lost = { endedBy: 'annihilation', winnerSeat: 1 } as const;
+    expect(verifyReplay(dailyReplay({ outcome: lost })).medal).toBeNull();
+    jest.mocked(playReplay).mockReturnValue(match(human));
+    expect(
+      verifyReplay(dailyReplay({ mode: 'two-players' })).medal
+    ).toBeUndefined();
+  });
+
   it('never plays a replay of another balance table', () => {
     expect(verifyReplay(dailyReplay({ balanceVersion: 1 })).state).toBe(
       'balance-mismatch'

@@ -2,22 +2,12 @@ import type { TranslationKey } from '../i18n/dictionaries';
 import type { TranslationParams } from '../i18n/translation';
 import type { Ruleset } from '../state/simulation';
 import type { GpuSelfTestResult } from './gpu-self-test';
+import { isSoftwareRenderer } from './renderer';
 
 /** One line of the settings' simulation check, a text to translate. */
 export interface SimulationCheckLine {
   key: TranslationKey;
   params?: TranslationParams;
-}
-
-/**
- * A renderer that draws on the CPU: Chromium's SwiftShader, Mesa's llvmpipe
- * and softpipe, Windows' basic render driver. Such a "GPU" computes the
- * integer passes right, so it passes the self-test, but takes hundreds of
- * milliseconds a tick at the online grid, where the CPU's ruleset takes a
- * few.
- */
-export function isSoftwareRenderer(renderer: string): boolean {
-  return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer);
 }
 
 /**

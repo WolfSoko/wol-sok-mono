@@ -1,6 +1,8 @@
 import {
+  type ArrivalReason,
   type Attempt,
   attemptSeed,
+  type DeclaredReason,
   declaredBeforeMatch,
   isRankedPlan,
   parseAttemptId,
@@ -9,6 +11,7 @@ import {
   submissionDeadline,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import {
+  type DocumentSnapshot,
   FieldValue,
   type Firestore,
   Timestamp,
@@ -21,23 +24,9 @@ import { isBanned } from '../limits';
  * against it, and the `rankedReason` the replay carries.
  */
 
-/** What {@link checkDeclaredMatch} finds. */
-export type DeclaredReason =
-  | 'counted'
-  | 'ruleset'
-  | 'seed'
-  | 'plan-mismatch'
-  | 'level'
-  | 'early'
-  | 'late';
-
-/** Why a ranked replay did (not) count - its `rankedReason`. */
-export type ArrivalReason =
-  | DeclaredReason
-  | 'banned'
-  | 'no-attempt'
-  | 'duplicate'
-  | 'unreadable';
+// What `checkDeclaredMatch` finds, and why a ranked replay did (not) count
+// - its `rankedReason`: the game's lists, which its texts follow.
+export type { ArrivalReason, DeclaredReason };
 
 /**
  * The checks every declared match passes, always against the stored
@@ -94,6 +83,50 @@ export function rankedFields(reason: ArrivalReason) {
   return { rankedReason: reason, rankedAt: FieldValue.serverTimestamp() };
 }
 
+/**
+ * A replay read in a ranking transaction: null while it may still rank,
+ * else what the ranking returns - `gone` (its account was deleted) or the
+ * answer an earlier delivery stored. `rankReplay` retries, and a replay
+ * keeps its answer, even when a ban or an expired declaration would answer
+ * otherwise now.
+ */
+export function earlierAnswer(
+  replay: DocumentSnapshot
+): ArrivalReason | 'gone' | null {
+  if (!replay.exists) {
+    return 'gone';
+  }
+  const ranked = replay.get('rankedReason');
+  return typeof ranked === 'string' ? (ranked as ArrivalReason) : null;
+}
+
+/**
+ * True while the replay still names `uid` in `players`. A declared
+ * board's ranking checks it first and answers `gone` when not: the player
+ * deleted their account or forgot the match since (ADR 0012, 2026-10-26).
+ */
+export function namesPlayer(replay: DocumentSnapshot, uid: string): boolean {
+  const players: unknown = replay.get('players');
+  return replay.exists && Array.isArray(players) && players.includes(uid);
+}
+
+/** Stores why a replay does not rank, unless {@link earlierAnswer} has one. */
+export async function answerReplay(
+  db: Firestore,
+  replayId: string,
+  reason: ArrivalReason
+): Promise<ArrivalReason | 'gone'> {
+  const replayRef = db.doc(`replays/${replayId}`);
+  return db.runTransaction(async (tx) => {
+    const earlier = earlierAnswer(await tx.get(replayRef));
+    if (earlier !== null) {
+      return earlier;
+    }
+    tx.update(replayRef, rankedFields(reason));
+    return reason;
+  });
+}
+
 /** A declared replay ready for its board's checks. */
 export interface DeclaredReplay<A extends Attempt> {
   uid: string;
@@ -109,7 +142,9 @@ export interface DeclaredReplay<A extends Attempt> {
 /**
  * Reads what a new replay of a declared `kind` attempt needs: its player,
  * the stored declaration and the replay itself - or why it cannot rank
- * (`no-attempt`, `banned`, `unreadable`).
+ * (`no-attempt`, `void`, `banned`, `unreadable`). A `void` declaration is
+ * one whose submission the server dropped (`voidAttempt`): it never ranks,
+ * a daily one may be declared again instead.
  */
 export async function readDeclaredReplay<K extends Attempt['kind']>(
   db: Firestore,
@@ -142,6 +177,9 @@ export async function readDeclaredReplay<K extends Attempt['kind']>(
   }
   if (!(at instanceof Timestamp)) {
     return { reason: 'no-attempt' };
+  }
+  if (declaration.get('void') === true) {
+    return { reason: 'void' };
   }
   if (replay === null) {
     return { reason: 'unreadable' };

@@ -9,7 +9,6 @@ export const controls: Translation<typeof en> = {
     cooldown: '{seconds} s',
     button: 'Boost für {name}',
     recharge: 'Boost lädt auf',
-    share: 'Anteil an allen Bakterien',
   },
   weaponKeys: {
     before: 'Im Match gegen den Computer feuert',

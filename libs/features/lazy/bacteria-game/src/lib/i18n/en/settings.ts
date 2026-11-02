@@ -27,6 +27,9 @@ export const settings = {
       long: 'Long',
     },
     ambience: 'Bubbles and mist in the dish',
+    adaptiveQuality: 'Adapt the sharpness to the device',
+    adaptiveQualityNote:
+      'Where the frames come too slowly, the arena is drawn with fewer pixels.',
     screenResolution: 'Screen resolution',
     locked:
       'Pick the colours and resolutions before a match - they stay as they are while one is on.',
@@ -47,10 +50,28 @@ export const settings = {
     showFps: 'Show the frame rate',
     fullscreen: 'Browser fullscreen',
   },
+  matches: {
+    title: 'Matches',
+    recordLocal: 'Record matches against the computer',
+    recordLocalNote:
+      'With "Save my matches" they are kept in My matches: in the cloud for 30 days, or on this device without it.',
+    saveMatches: 'Save my matches',
+    saveMatchesNote: 'Online matches are always kept.',
+  },
+  privacy: {
+    title: 'Privacy',
+    stats: 'Usage statistics',
+    statsNote:
+      'Counts with Google Analytics which modes, levels and screens get played, to make the game better. Nothing that names you, no ads. The privacy policy says what exactly.',
+  },
   simulation: {
+    choice: 'Simulation',
+    auto: 'Auto',
+    gpu: 'GPU',
+    cpuChoice: 'CPU',
     gpuInt: 'Matches run on the GPU, alike on every device.',
     cpu: 'Matches run on the CPU.',
-    forced: 'Set for this device by ?sim={ruleset}; ?sim=auto undoes it.',
+    forced: 'Chosen for this device - Auto lets the game decide again.',
     passed: 'GPU self-test passed on {renderer}.',
     software:
       'GPU self-test passed on {renderer}, which draws on the CPU - too slow for matches on the GPU.',

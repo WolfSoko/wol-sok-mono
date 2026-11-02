@@ -23,6 +23,12 @@ import type {
 })
 export abstract class GameReplays {
   /**
+   * True when the replays go to the game's project, false when they stay
+   * on this device - "My matches" says which.
+   */
+  public abstract readonly cloud: boolean;
+
+  /**
    * Hands a recorded match over to be kept. Resolves to the id the replay
    * will be stored under - null when nothing was handed over: no player
    * yet, or a replay too big to keep. The write itself goes on in the

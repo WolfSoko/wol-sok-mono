@@ -23,6 +23,16 @@ export interface PlayerCard {
 export interface Profile extends PlayerCard {
   /** True when friends may see that the player is online. */
   shareStatus: boolean;
+  /**
+   * True when the name may be shown in public: on the leaderboards and,
+   * once it ships, in the match gallery (ADR 0011, 0012). Off by default -
+   * the name may be the Google account's.
+   */
+  publicName: boolean;
+  /** True to keep all of the player's leaderboard entries hidden. */
+  boardOptOut: boolean;
+  /** True to keep all of the player's matches out of the public gallery. */
+  galleryOptOut: boolean;
 }
 
 export const NAME_MAX = 24;
@@ -44,6 +54,9 @@ export function defaultProfile(
     motto: '',
     avatar: { kind: 'preset', id: hash % AVATAR_COUNT },
     shareStatus: true,
+    publicName: false,
+    boardOptOut: false,
+    galleryOptOut: false,
   };
 }
 
@@ -74,6 +87,9 @@ export function parseProfile(value: unknown, uid: string): Profile | null {
     motto: typeof value['motto'] === 'string' ? cleanMotto(value['motto']) : '',
     avatar: parseAvatar(value['avatar']) ?? fallback.avatar,
     shareStatus: value['shareStatus'] !== false,
+    publicName: value['publicName'] === true,
+    boardOptOut: value['boardOptOut'] === true,
+    galleryOptOut: value['galleryOptOut'] === true,
   };
 }
 

@@ -2,6 +2,475 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.134.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.133.0...v74.134.0) (2026-11-01)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ count the level statistics per simulation resolution ([#2735](https://github.com/WolfSoko/wol-sok-mono/issues/2735)) ([5a0e7e8](https://github.com/WolfSoko/wol-sok-mono/commit/5a0e7e8c6bcb4c70161f7da0f9ad3fa623c6bb8e)), references [#2728](https://github.com/WolfSoko/wol-sok-mono/issues/2728)
+
+## [74.133.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.132.0...v74.133.0) (2026-11-01)
+
+### Features
+
+* **shared-legal:** ✨ the privacy policies name the email forwarding through ImprovMX ([#2734](https://github.com/WolfSoko/wol-sok-mono/issues/2734)) ([53adf54](https://github.com/WolfSoko/wol-sok-mono/commit/53adf5424da7af928883941c5240cdbf4b97c2bc))
+
+## [74.132.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.131.0...v74.132.0) (2026-11-01)
+
+### Features
+
+* **shared-legal:** ✨ the VAT ID in the legal notices ([#2733](https://github.com/WolfSoko/wol-sok-mono/issues/2733)) ([4ad7407](https://github.com/WolfSoko/wol-sok-mono/commit/4ad7407cbe06dc561c805e967489de935a741aea))
+
+## [74.131.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.130.0...v74.131.0) (2026-11-01)
+
+### Features
+
+* **shared-legal:** ✨ the owner's postal address, and legal notices for RollaPolla and wolsok.de ([#2732](https://github.com/WolfSoko/wol-sok-mono/issues/2732)) ([b3efc27](https://github.com/WolfSoko/wol-sok-mono/commit/b3efc27a3e223a93824a9e413b24602e3874df86))
+
+### Chore
+
+* **release:** publish ([3bfdde7](https://github.com/WolfSoko/wol-sok-mono/commit/3bfdde7146111c317be7109ab8265aa034c02a19))
+
+## [74.130.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.129.0...v74.130.0) (2026-11-01)
+
+### Features
+
+* **rollapolla-analog:** ✨ a privacy policy, and AdSense only with consent ([#2730](https://github.com/WolfSoko/wol-sok-mono/issues/2730)) ([049ce4f](https://github.com/WolfSoko/wol-sok-mono/commit/049ce4f0ca105d9e66f2eee93f8056c75ea050ba))
+
+### Chore
+
+* **release:** publish ([402d033](https://github.com/WolfSoko/wol-sok-mono/commit/402d033836e48898bc24b8df30d0336c74c42e15))
+
+## [74.129.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.128.0...v74.129.0) (2026-10-31)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ full usage statistics for RollaPolla and Bacteria Wars, opt-in only ([#2729](https://github.com/WolfSoko/wol-sok-mono/issues/2729)) ([7b5690b](https://github.com/WolfSoko/wol-sok-mono/commit/7b5690bdf834a80a6421fe1f6f53391b1888ce3b))
+
+## [74.128.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.127.0...v74.128.0) (2026-10-31)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ save replays on every simulation resolution ([#2728](https://github.com/WolfSoko/wol-sok-mono/issues/2728)) ([ffacf34](https://github.com/WolfSoko/wol-sok-mono/commit/ffacf34138082bac39344bd259fa52139d3cf020))
+
+## [74.127.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.3...v74.127.0) (2026-10-31)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ put the ad network behind a port, with AdinPlay as the next network ([#2727](https://github.com/WolfSoko/wol-sok-mono/issues/2727)) ([a60a8f3](https://github.com/WolfSoko/wol-sok-mono/commit/a60a8f3691866f702107b429ed5df824d189762f))
+
+## [74.126.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.2...v74.126.3) (2026-10-31)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡️ paint with Canvas 2D where WebGL renders on the CPU ([#2726](https://github.com/WolfSoko/wol-sok-mono/issues/2726)) ([644b815](https://github.com/WolfSoko/wol-sok-mono/commit/644b815e3524e125dfbfcdc164ed5271d66fd03c))
+
+## [74.126.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.1...v74.126.2) (2026-10-31)
+
+### Documentation
+
+* **nx:** 📚️ 📝 long-term engineering principles are mandatory ([6073ea2](https://github.com/WolfSoko/wol-sok-mono/commit/6073ea2a2a64d9c2f412f9a8716031f0d1d8e072))
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡️ let a bacterium with no free cell around sit its move out ([#2725](https://github.com/WolfSoko/wol-sok-mono/issues/2725)) ([2b7e3e2](https://github.com/WolfSoko/wol-sok-mono/commit/2b7e3e21e5f9043424e9dc1c11fa4bce4eaac4e5))
+
+## [74.126.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.126.0...v74.126.1) (2026-10-31)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** 🐛 no stuck stage or level flash after the vaporize effect, replays as a fullscreen video player ([#2724](https://github.com/WolfSoko/wol-sok-mono/issues/2724)) ([9e27b31](https://github.com/WolfSoko/wol-sok-mono/commit/9e27b31e79cbedf978e0a3756f7b2f2f76795363))
+
+### Chore
+
+* **release:** publish ([4f0db27](https://github.com/WolfSoko/wol-sok-mono/commit/4f0db27195544dd5782384779574c2f538a0e3fe))
+
+## [74.126.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.125.2...v74.126.0) (2026-10-28)
+
+### Features
+
+* **portfolio:** ✨ link the LinkedIn and Xing profiles from the career ([#2723](https://github.com/WolfSoko/wol-sok-mono/issues/2723)) ([ee11f27](https://github.com/WolfSoko/wol-sok-mono/commit/ee11f27acc59decf9d1a54236550656ab594d9ed))
+
+## [74.125.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.125.1...v74.125.2) (2026-10-28)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ lower the CPU fixtures' engine baseline after the columns ([#2722](https://github.com/WolfSoko/wol-sok-mono/issues/2722)) ([27a69e1](https://github.com/WolfSoko/wol-sok-mono/commit/27a69e1e2fc21243aed15a786717ff831d15ff06)), references [#2721](https://github.com/WolfSoko/wol-sok-mono/issues/2721) [#2721](https://github.com/WolfSoko/wol-sok-mono/issues/2721)
+
+## [74.125.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.125.0...v74.125.1) (2026-10-28)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ keep the CPU simulation's bacteria in columns ([#2721](https://github.com/WolfSoko/wol-sok-mono/issues/2721)) ([93c742c](https://github.com/WolfSoko/wol-sok-mono/commit/93c742c247c37139c150dd96c5004814188b5b99))
+
+## [74.125.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.124.0...v74.125.0) (2026-10-28)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ paint the arena with fewer pixels where the device is slow ([#2720](https://github.com/WolfSoko/wol-sok-mono/issues/2720)) ([f667071](https://github.com/WolfSoko/wol-sok-mono/commit/f667071d28def7248c7fc7ebccbb0ffca830929a))
+
+## [74.124.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.123.0...v74.124.0) (2026-10-28)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ pick the simulation in the settings: Auto, GPU or CPU ([#2719](https://github.com/WolfSoko/wol-sok-mono/issues/2719)) ([60f2199](https://github.com/WolfSoko/wol-sok-mono/commit/60f2199d28889fde5cdc62dc70096f7a55e00506))
+
+## [74.123.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.122.1...v74.123.0) (2026-10-28)
+
+### Features
+
+* **portfolio:** ✨ update the career from the profile of 2026-10-28 ([#2718](https://github.com/WolfSoko/wol-sok-mono/issues/2718)) ([676e013](https://github.com/WolfSoko/wol-sok-mono/commit/676e013430d1db07f271337935be87b27ebcc00a))
+
+## [74.122.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.122.0...v74.122.1) (2026-10-28)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ lay the walls once, draw the ambience in GL, prepare colonies before the frame ([#2717](https://github.com/WolfSoko/wol-sok-mono/issues/2717)) ([71846fe](https://github.com/WolfSoko/wol-sok-mono/commit/71846fe177a8c024ca7be0fe3557b46a7d47eae2))
+
+## [74.122.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.121.0...v74.122.0) (2026-10-28)
+
+### Features
+
+* **portfolio:** ✨ career page, two languages and a light theme ([#2716](https://github.com/WolfSoko/wol-sok-mono/issues/2716)) ([5994950](https://github.com/WolfSoko/wol-sok-mono/commit/5994950de0e491c1ec54c16215da085032212cc9))
+
+## [74.121.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.120.1...v74.121.0) (2026-10-28)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ break a frame's time down beside the frame rate ([#2715](https://github.com/WolfSoko/wol-sok-mono/issues/2715)) ([e1cf500](https://github.com/WolfSoko/wol-sok-mono/commit/e1cf5002e16bfb87f683d0145256967001dfa051))
+
+### Documentation
+
+* note NX_NO_CLOUD fix for sandboxed nx affected/run-many ([#2413](https://github.com/WolfSoko/wol-sok-mono/issues/2413)) ([9e5f2f7](https://github.com/WolfSoko/wol-sok-mono/commit/9e5f2f7f17639a014e5307fdba6b0dce321a8777))
+
+## [74.120.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.120.0...v74.120.1) (2026-10-27)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** ♻️ tidy the big-map speed-ups ([50cf0a3](https://github.com/WolfSoko/wol-sok-mono/commit/50cf0a3283bc450543d901aa859ab1329cfbe7c4))
+
+### Chore
+
+* **feat-lazy-bacteria-game:** 🔧 drop a local Playwright config committed by mistake ([51e0c0f](https://github.com/WolfSoko/wol-sok-mono/commit/51e0c0f26eed1bf26ecc20ce60a8cacc72676b7a))
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡️ let the GPU self-test play on the active area ([c11ad2d](https://github.com/WolfSoko/wol-sok-mono/commit/c11ad2d10b0a71e7cb0ae2cb979802314a17225a))
+* **feat-lazy-bacteria-game:** ⚡️ pack, upload and blur only the colony in view ([207c9e8](https://github.com/WolfSoko/wol-sok-mono/commit/207c9e8cf9170620c97dd41e13ce424f8065f27f))
+* **feat-lazy-bacteria-game:** ⚡️ run the deterministic GPU passes on the active area ([b604b3d](https://github.com/WolfSoko/wol-sok-mono/commit/b604b3db31d0d5067b44ebe3038d64da5688ec7b))
+* **feat-lazy-bacteria-game:** ⚡️ speed up the CPU simulation's tick, bit for bit ([3fd90d8](https://github.com/WolfSoko/wol-sok-mono/commit/3fd90d80725213ccc7b7b5ab078ed09c55f4761f))
+
+## [74.120.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.119.0...v74.120.0) (2026-10-27)
+
+### Features
+
+* **feat-lazy-bacteria-game:** show a spinner while a tap's work is under way ([#2711](https://github.com/WolfSoko/wol-sok-mono/issues/2711)) ([e8c18e3](https://github.com/WolfSoko/wol-sok-mono/commit/e8c18e3e7ae2b5902c335b41fbda3921346d02fc))
+
+## [74.119.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.118.3...v74.119.0) (2026-10-27)
+
+### Features
+
+* **feat-lazy-bacteria-game:** grow gene level costs exponentially ([#2710](https://github.com/WolfSoko/wol-sok-mono/issues/2710)) ([b533197](https://github.com/WolfSoko/wol-sok-mono/commit/b53319764f874379260d9cf673d247f0fb4cb68f))
+
+## [74.118.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.118.2...v74.118.3) (2026-10-27)
+
+### Performance
+
+* **angular-examples:** pace the title's shader ([#2709](https://github.com/WolfSoko/wol-sok-mono/issues/2709)) ([2ce08de](https://github.com/WolfSoko/wol-sok-mono/commit/2ce08de60b953ad6fc21bdfa3af8be52a150bff0))
+
+## [74.118.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.118.1...v74.118.2) (2026-10-27)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** pinch the camera inside a joystick zone ([#2708](https://github.com/WolfSoko/wol-sok-mono/issues/2708)) ([f8986bd](https://github.com/WolfSoko/wol-sok-mono/commit/f8986bd0186eba57685933294555aa2c6346dd2d))
+
+## [74.118.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.118.0...v74.118.1) (2026-10-27)
+
+### Performance
+
+* **tools:** add Lighthouse CI for the public pages, report-only ([#2707](https://github.com/WolfSoko/wol-sok-mono/issues/2707)) ([9fe10e5](https://github.com/WolfSoko/wol-sok-mono/commit/9fe10e5cca297e6267dbccb5dc799e177f97c343))
+
+## [74.118.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.117.0...v74.118.0) (2026-10-27)
+
+### Features
+
+* **feat-lazy-bacteria-game:** lay the touch controls over a full-screen arena ([#2706](https://github.com/WolfSoko/wol-sok-mono/issues/2706)) ([c7bffb7](https://github.com/WolfSoko/wol-sok-mono/commit/c7bffb71afe7cd2fb3e517df0d52837072991757))
+
+## [74.117.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.5...v74.117.0) (2026-10-27)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ play GPU replays on the GPU, and seek in a replay ([#2705](https://github.com/WolfSoko/wol-sok-mono/issues/2705)) ([b7406d7](https://github.com/WolfSoko/wol-sok-mono/commit/b7406d7b4c1b0ae3310c8ebc189d0b21e56fd32b))
+
+## [74.116.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.4...v74.116.5) (2026-10-27)
+
+### Performance
+
+* **bacteria-game-remote:** add the frame-time spec, report-only ([#2704](https://github.com/WolfSoko/wol-sok-mono/issues/2704)) ([ef308f4](https://github.com/WolfSoko/wol-sok-mono/commit/ef308f4b2707e94aec135eb47b7c01ede53f60c3))
+
+## [74.116.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.3...v74.116.4) (2026-10-27)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** add the engine benchmark gate, report-only ([#2701](https://github.com/WolfSoko/wol-sok-mono/issues/2701)) ([bd12576](https://github.com/WolfSoko/wol-sok-mono/commit/bd12576065cc9327d4edabfd234a19a9d9d7f95e))
+
+## [74.116.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.2...v74.116.3) (2026-10-26)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ no component stylesheet over its budget ([#2700](https://github.com/WolfSoko/wol-sok-mono/issues/2700)) ([af3784c](https://github.com/WolfSoko/wol-sok-mono/commit/af3784caec63733040a8ce8550227d69e709c9eb))
+
+## [74.116.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.1...v74.116.2) (2026-10-26)
+
+### Bug Fixes
+
+* **bacteria-game-remote:** self-host fonts and icons instead of loading Google Fonts ([#2699](https://github.com/WolfSoko/wol-sok-mono/issues/2699)) ([d88584c](https://github.com/WolfSoko/wol-sok-mono/commit/d88584c052e2440b3757b271bb8b93c6aed27c32))
+
+### Chore
+
+* **release:** publish ([5bdf015](https://github.com/WolfSoko/wol-sok-mono/commit/5bdf0151812d8f8a7a0f2883d7285884af531229))
+
+### Performance
+
+* **nx:** ⚡ anyScript, allScript and tightened initial budgets for every Angular app ([#2698](https://github.com/WolfSoko/wol-sok-mono/issues/2698)) ([289b3f7](https://github.com/WolfSoko/wol-sok-mono/commit/289b3f778cd5bb2a190fb0c1f035c32cbdf6b78c))
+
+## [74.116.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.116.0...v74.116.1) (2026-10-26)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-wars-admin:** 🐛 the curation and the overview's history order by a field, not the document id ([#2695](https://github.com/WolfSoko/wol-sok-mono/issues/2695)) ([78a01f7](https://github.com/WolfSoko/wol-sok-mono/commit/78a01f78fb2609f4cdb994e961fc98dbd5fd9a46))
+
+## [74.116.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.115.0...v74.116.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-wars-admin:** link back to the game from the admin toolbar ([#2694](https://github.com/WolfSoko/wol-sok-mono/issues/2694)) ([048d874](https://github.com/WolfSoko/wol-sok-mono/commit/048d8740d9249073459d9d9e77a5dd53ec1f959f))
+
+### Chore
+
+* **tools:** set up Claude Code cloud sessions ([#2619](https://github.com/WolfSoko/wol-sok-mono/issues/2619)) ([71ce9e8](https://github.com/WolfSoko/wol-sok-mono/commit/71ce9e8c0becc28cce0cdec45e43bbc47bee894a))
+
+## [74.115.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.114.0...v74.115.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-game:** offer guests the sign-in and tell them of the 90-day deletion ([#2692](https://github.com/WolfSoko/wol-sok-mono/issues/2692)) ([22fcab9](https://github.com/WolfSoko/wol-sok-mono/commit/22fcab9b5c7e0408c49513376421c097c737523e))
+
+## [74.114.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.113.1...v74.114.0) (2026-10-26)
+
+### Features
+
+* **bacteria-game-remote:** report errors to Sentry, without personal data ([#2690](https://github.com/WolfSoko/wol-sok-mono/issues/2690)) ([a07fc6e](https://github.com/WolfSoko/wol-sok-mono/commit/a07fc6eb5b03ff5f51d4580faa891099dace2745))
+
+### Chore
+
+* **release:** publish ([270d08d](https://github.com/WolfSoko/wol-sok-mono/commit/270d08d7f445e5c8f87263e4e8e6745b947ac2ae))
+
+## [74.113.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.113.0...v74.113.1) (2026-10-26)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** record local matches on every simulation resolution ([#2689](https://github.com/WolfSoko/wol-sok-mono/issues/2689)) ([2fc089e](https://github.com/WolfSoko/wol-sok-mono/commit/2fc089e8b856480752bb85b4e2ee7448332dda43))
+
+## [74.113.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.112.0...v74.113.0) (2026-10-26)
+
+### Features
+
+* **bacteria-game-remote:** only friends read the online status, idle guests are deleted after 90 days ([#2688](https://github.com/WolfSoko/wol-sok-mono/issues/2688)) ([613d383](https://github.com/WolfSoko/wol-sok-mono/commit/613d38358f6d950597f4bc03f1a0e26cff29f57d))
+
+## [74.112.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.111.0...v74.112.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-game:** delete a match, the ad privacy button, a hint on saved matches, the privacy decisions on the privacy page ([#2687](https://github.com/WolfSoko/wol-sok-mono/issues/2687)) ([1fa833c](https://github.com/WolfSoko/wol-sok-mono/commit/1fa833c617623de16500cb384bea8c9e376717bd))
+
+## [74.111.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.110.0...v74.111.0) (2026-10-26)
+
+### Features
+
+* **bacteria-wars-functions:** erase personal data, delete idle guests, mirror friend lists, forget a replay ([#2686](https://github.com/WolfSoko/wol-sok-mono/issues/2686)) ([bbda1b9](https://github.com/WolfSoko/wol-sok-mono/commit/bbda1b9a3a6b3334a1836823d987e0b70a0865cf))
+
+## [74.110.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.109.1...v74.110.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-game:** dress the computer by its level, the boss in an eclipse ([#2685](https://github.com/WolfSoko/wol-sok-mono/issues/2685)) ([6ae3004](https://github.com/WolfSoko/wol-sok-mono/commit/6ae300429fbb6e826f1ec186e46ff02c7c090f0f))
+
+## [74.109.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.109.0...v74.109.1) (2026-10-26)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ the GPU self-test check waits for idle and asks the arena for the GPU ([#2684](https://github.com/WolfSoko/wol-sok-mono/issues/2684)) ([bab44c9](https://github.com/WolfSoko/wol-sok-mono/commit/bab44c906b9d5bb24aa3e12f153650519cd2030d))
+
+## [74.109.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.108.0...v74.109.0) (2026-10-26)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ the gallery's daily pick goes live ([#2683](https://github.com/WolfSoko/wol-sok-mono/issues/2683)) ([49f8aa8](https://github.com/WolfSoko/wol-sok-mono/commit/49f8aa8437769cd3848381b2d0abdbdb3f2846e3))
+
+## [74.108.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.107.0...v74.108.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ranked daily attempts, ranked endless runs and the ban banner ([#2680](https://github.com/WolfSoko/wol-sok-mono/issues/2680)) ([c14ba3b](https://github.com/WolfSoko/wol-sok-mono/commit/c14ba3b0842e43895e0173de5a4684d52a442aa8))
+
+## [74.107.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.106.0...v74.107.0) (2026-10-26)
+
+### Features
+
+* **feat-lazy-bacteria-game:** my matches, the replay viewer, /watch and cloud replays ([#2678](https://github.com/WolfSoko/wol-sok-mono/issues/2678)) ([de5c1fd](https://github.com/WolfSoko/wol-sok-mono/commit/de5c1fdbc33ef4b0127de89d45f1793d916de993))
+
+### Chore
+
+* **release:** publish ([5be5670](https://github.com/WolfSoko/wol-sok-mono/commit/5be56708ded3a30662f9f3b7b88045155a55f7ce))
+
+## [74.106.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.105.0...v74.106.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ the leaderboards screen and the profile's public-name and opt-out switches ([#2677](https://github.com/WolfSoko/wol-sok-mono/issues/2677)) ([83d7f21](https://github.com/WolfSoko/wol-sok-mono/commit/83d7f21b09f451a7151becc90037dc6045b98f05))
+
+## [74.105.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.104.0...v74.105.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-wars-admin:** ✨ the toggle page publishes the feature toggles ([#2676](https://github.com/WolfSoko/wol-sok-mono/issues/2676)) ([ce3e005](https://github.com/WolfSoko/wol-sok-mono/commit/ce3e0054477ef721c0564f7eecfdbb5c9829cb32))
+
+## [74.104.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.103.0...v74.104.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ feature toggles from Remote Config, the Matches settings, and the owner's admin link ([#2675](https://github.com/WolfSoko/wol-sok-mono/issues/2675)) ([ab129a1](https://github.com/WolfSoko/wol-sok-mono/commit/ab129a19f420083de21fb8c628843a3831e4e238))
+
+## [74.103.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.102.0...v74.103.0) (2026-10-25)
+
+### Features
+
+* **bacteria-game-remote:** ✨ the privacy policy says what the game does now ([#2673](https://github.com/WolfSoko/wol-sok-mono/issues/2673)) ([9c6fc5c](https://github.com/WolfSoko/wol-sok-mono/commit/9c6fc5cd70ac0fd1ae82b632caea5c8110367499))
+* **feat-lazy-bacteria-wars-admin:** the Balance view reads the level statistics ([#2674](https://github.com/WolfSoko/wol-sok-mono/issues/2674)) ([8577f85](https://github.com/WolfSoko/wol-sok-mono/commit/8577f8576e0383538d065fa32843d0de97f35bd3))
+
+## [74.102.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.101.0...v74.102.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-wars-admin:** the Replays view and recounting the accounts ([#2672](https://github.com/WolfSoko/wol-sok-mono/issues/2672)) ([71edb6e](https://github.com/WolfSoko/wol-sok-mono/commit/71edb6e933877e655f32b268e64ae13b08f3fa9b))
+
+## [74.101.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.100.0...v74.101.0) (2026-10-25)
+
+### Features
+
+* **bacteria-game-remote:** ✨ Hosting sends /replays to publicSite ([#2671](https://github.com/WolfSoko/wol-sok-mono/issues/2671)) ([67d93e7](https://github.com/WolfSoko/wol-sok-mono/commit/67d93e775fa27035225a3941da7fa1acad4f6b79))
+
+## [74.100.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.99.0...v74.100.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-wars-admin:** leaderboards view and changing a ban's end ([#2670](https://github.com/WolfSoko/wol-sok-mono/issues/2670)) ([c046682](https://github.com/WolfSoko/wol-sok-mono/commit/c046682cda5d919efd0a259689f59e1242433eb0))
+
+## [74.99.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.98.0...v74.99.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ the owner's gallery curation in replayCommand ([#2669](https://github.com/WolfSoko/wol-sok-mono/issues/2669)) ([c02b07f](https://github.com/WolfSoko/wol-sok-mono/commit/c02b07f1359c9b05f7b71f492b455647837e761a))
+
+## [74.98.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.97.0...v74.98.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ publicSite renders the public replay pages ([#2664](https://github.com/WolfSoko/wol-sok-mono/issues/2664)) ([e916c3e](https://github.com/WolfSoko/wol-sok-mono/commit/e916c3eab76597255c480d6a6448c543e51c6445))
+* **feat-lazy-bacteria-wars-admin:** moderation views for profiles, players, bans and the audit ([#2668](https://github.com/WolfSoko/wol-sok-mono/issues/2668)) ([3e18eb8](https://github.com/WolfSoko/wol-sok-mono/commit/3e18eb8e58aa468823aa2548e7b483280f6d7f28))
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** deploy the functions with the Firebase CLI itself ([#2666](https://github.com/WolfSoko/wol-sok-mono/issues/2666)) ([1cf2082](https://github.com/WolfSoko/wol-sok-mono/commit/1cf20826a534ac43afdb17c525bcb0bbd3a12a18))
+
+## [74.97.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.96.0...v74.97.0) (2026-10-25)
+
+### Features
+
+* **feat-lazy-bacteria-wars-admin:** the admin area's lib, gate and overview ([#2658](https://github.com/WolfSoko/wol-sok-mono/issues/2658)) ([64429c9](https://github.com/WolfSoko/wol-sok-mono/commit/64429c93fbbcdb186007086d8456849dd5795f35))
+
+### Chore
+
+* **release:** publish ([a445732](https://github.com/WolfSoko/wol-sok-mono/commit/a445732a2ef542587d435700c9c8dfbb6bec3e94))
+
+## [74.96.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.95.0...v74.96.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ featureBest picks and publishes the gallery's matches, switched off ([#2663](https://github.com/WolfSoko/wol-sok-mono/issues/2663)) ([250e445](https://github.com/WolfSoko/wol-sok-mono/commit/250e445c1b5bbafe602fe20361a9d2cda638f7ee))
+
+## [74.95.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.94.0...v74.95.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ level statistics count the medallions of verified re-runs ([#2661](https://github.com/WolfSoko/wol-sok-mono/issues/2661)) ([f248e17](https://github.com/WolfSoko/wol-sok-mono/commit/f248e178ad4b3e95a84d779750f6bfe273d4b5d9))
+
+## [74.94.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.93.0...v74.94.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ level statistics for every stored local replay ([#2659](https://github.com/WolfSoko/wol-sok-mono/issues/2659)) ([894fc0d](https://github.com/WolfSoko/wol-sok-mono/commit/894fc0d9e74105b73a5400888b9f99f7298af1d8))
+
+## [74.93.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.92.0...v74.93.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ board.verify plays an entry again now ([#2655](https://github.com/WolfSoko/wol-sok-mono/issues/2655)) ([84c3568](https://github.com/WolfSoko/wol-sok-mono/commit/84c35685f2ec5df3075b303a80b68905cbc9b1ad))
+
+## [74.92.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.91.0...v74.92.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ feature toggles in Remote Config ([#2653](https://github.com/WolfSoko/wol-sok-mono/issues/2653)) ([fef661b](https://github.com/WolfSoko/wol-sok-mono/commit/fef661bfd67ef43ebe9986ae963c46d7733a23fe))
+
+## [74.91.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.90.0...v74.91.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** the owner's statistics ([#2652](https://github.com/WolfSoko/wol-sok-mono/issues/2652)) ([aa32c59](https://github.com/WolfSoko/wol-sok-mono/commit/aa32c59b3b7ed1df1d8b20e9234edea0ef1a0c4a))
+
+## [74.90.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.89.0...v74.90.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ profile and board moderation commands ([#2649](https://github.com/WolfSoko/wol-sok-mono/issues/2649)) ([a982ca1](https://github.com/WolfSoko/wol-sok-mono/commit/a982ca1255afd988a4a6536f766c1bb23aa2650d))
+
+## [74.89.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.88.0...v74.89.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ ban tombstones and countAccount ([#2647](https://github.com/WolfSoko/wol-sok-mono/issues/2647)) ([001bfff](https://github.com/WolfSoko/wol-sok-mono/commit/001bfff4acdb7ff0b689df792bfbc7cc4cab204b))
+
+## [74.88.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.87.0...v74.88.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ admin commands with player.ban and player.unban ([#2646](https://github.com/WolfSoko/wol-sok-mono/issues/2646)) ([ec4fb96](https://github.com/WolfSoko/wol-sok-mono/commit/ec4fb9693f08024c1fc7e9c50f50a5dc0f6a915a))
+
+## [74.87.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.3...v74.87.0) (2026-10-25)
+
+### Features
+
+* **bacteria-wars-functions:** a deleted account leaves the boards ([#2643](https://github.com/WolfSoko/wol-sok-mono/issues/2643)) ([ec106b6](https://github.com/WolfSoko/wol-sok-mono/commit/ec106b6d54f86c90d923b7524aeb3f5dd3b5b2f4))
+
+## [74.86.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.2...v74.86.3) (2026-10-25)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** hourly hygiene - "Not reported" by closeAt, re-runs that fit, daily boards that expire from their day ([#2640](https://github.com/WolfSoko/wol-sok-mono/issues/2640)) ([e070acd](https://github.com/WolfSoko/wol-sok-mono/commit/e070acd3ea5c50e8641b9651497ca42073339cc1))
+
+## [74.86.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.1...v74.86.2) (2026-10-25)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** a ranked submission dropped on our side voids its attempt ([#2638](https://github.com/WolfSoko/wol-sok-mono/issues/2638)) ([c7b50ef](https://github.com/WolfSoko/wol-sok-mono/commit/c7b50ef1f9de050540c24b7e385f40fdea970db6))
+
+## [74.86.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.86.0...v74.86.1) (2026-10-25)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** six defects from the parallel backend's review, on main's functions ([#2635](https://github.com/WolfSoko/wol-sok-mono/issues/2635)) ([39cde17](https://github.com/WolfSoko/wol-sok-mono/commit/39cde17349d482c6c5600bec71c8b9e05e157662))
+
 ## [74.86.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.85.0...v74.86.0) (2026-10-25)
 
 ### Features

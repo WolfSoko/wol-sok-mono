@@ -1,8 +1,4 @@
-import {
-  gpuTrusted,
-  isSoftwareRenderer,
-  simulationCheckLines,
-} from './simulation-check';
+import { gpuTrusted, simulationCheckLines } from './simulation-check';
 
 describe('simulationCheckLines', () => {
   it('says a device that passed plays on the GPU, and on which one', () => {
@@ -73,23 +69,5 @@ describe('gpuTrusted', () => {
     expect(
       gpuTrusted({ ok: true, renderer: 'llvmpipe (LLVM 15.0.7, 256 bits)' })
     ).toBe(false);
-  });
-
-  it('tells the software renderers', () => {
-    for (const renderer of [
-      'Google SwiftShader',
-      'llvmpipe (LLVM 15.0.7, 256 bits)',
-      'softpipe',
-      'ANGLE (Microsoft, Microsoft Basic Render Driver Direct3D11 vs_5_0 ps_5_0)',
-    ]) {
-      expect(isSoftwareRenderer(renderer)).toBe(true);
-    }
-    for (const renderer of [
-      'ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 Direct3D11 vs_5_0 ps_5_0)',
-      'Apple GPU',
-      'Mali-G78',
-    ]) {
-      expect(isSoftwareRenderer(renderer)).toBe(false);
-    }
   });
 });

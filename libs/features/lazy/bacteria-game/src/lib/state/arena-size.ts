@@ -71,6 +71,30 @@ export function arenaSize(
   };
 }
 
+/**
+ * The grid an arena runs on, for a map `size` times the base arena - a
+ * replay's, from its header. Null for an arena no grid has.
+ */
+export function gridOf(
+  arena: { width: number; height: number },
+  size = 1
+): SimResolution | null {
+  return (
+    SIM_RESOLUTIONS.find(({ id }) => {
+      const grid = arenaSize(id, size);
+      return grid.width === arena.width && grid.height === arena.height;
+    })?.id ?? null
+  );
+}
+
+/** {@link gridOf}, the online grid for an arena no grid has. */
+export function simResolutionOf(
+  arena: { width: number; height: number },
+  size = 1
+): SimResolution {
+  return gridOf(arena, size) ?? ONLINE_SIM_RESOLUTION;
+}
+
 /** The widest a layer painted once - the zones - is, in pixels. */
 const MAX_LAYER_WIDTH = 4096;
 

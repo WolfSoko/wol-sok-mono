@@ -6,6 +6,7 @@ import {
   Injectable,
   signal,
 } from '@angular/core';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { beforeRetry } from '../storage/retry';
 import { GAME_SUPPORT } from './game-support';
 import { PlayBillingService, TipProduct } from './play-billing.service';
@@ -31,6 +32,7 @@ function buyMeACoffeeUrl(handle: string): string {
 export class GameSupport {
   private readonly options = inject(GAME_SUPPORT);
   private readonly billing = inject(PlayBillingService);
+  private readonly analytics = injectGameAnalytics();
   private readonly document = inject(DOCUMENT);
 
   private readonly onWeb = signal(false);
@@ -71,8 +73,10 @@ export class GameSupport {
     try {
       const outcome = await this.billing.buy(productId);
       if (outcome === 'purchased') this.lastTip.set('thanks');
+      this.analytics.track('tip', { product_id: productId, outcome });
     } catch {
       this.lastTip.set('failed');
+      this.analytics.track('tip', { product_id: productId, outcome: 'failed' });
     } finally {
       this.buying.set(false);
     }

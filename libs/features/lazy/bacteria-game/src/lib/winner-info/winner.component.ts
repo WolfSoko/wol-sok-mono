@@ -8,12 +8,14 @@ import {
   inject,
   input,
   output,
+  untracked,
 } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import { TranslationKey } from '../i18n/dictionaries';
 import {
   achievementTexts,
@@ -33,7 +35,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { GameMode, GameStateStore } from '../state/game.states';
 import { getLevel, Level, nextLevel } from '../state/levels';
-import { MedalAward, medalRank } from '../state/medallions';
+import { isNewBest, MedalAward, medalRank } from '../state/medallions';
 import { Player } from '../state/player.model';
 import { AchievementId } from '../state/achievement-ids';
 import { MatchEarnings } from '../state/earnings';
@@ -41,8 +43,12 @@ import { xpClimb } from '../state/ranks';
 import { formatScore, rivalryScore, seriesWinner } from '../state/rivalry';
 import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
+import { ReplayNoteComponent } from '../replays/replay-note.component';
+import { GuestNotice } from '../guest/guest-notice.service';
+import { GuestSignInComponent } from '../guest/guest-sign-in.component';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
+import { RANKED_DAILY_ATTEMPTS } from '../state/attempts';
 import { BOSS_SEAT, EndReason } from '../state/win-conditions';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
@@ -63,7 +69,9 @@ export type MatchEndAction =
   // On to the next training mission.
   | 'mission'
   // From the training to the campaign, once the last mission is done.
-  | 'campaign';
+  | 'campaign'
+  // Watch the match just played again.
+  | 'watch';
 
 /**
  * The screen a match ends on: who won, and what to play next. It sits in the
@@ -76,10 +84,12 @@ export type MatchEndAction =
     DatePipe,
     DnaHelixComponent,
     GameTextPipe,
+    GuestSignInComponent,
     MatButtonModule,
     MatIconModule,
     MatProgressBarModule,
     MedallionComponent,
+    ReplayNoteComponent,
     TranslatePipe,
   ],
   templateUrl: './winner.component.html',
@@ -201,6 +211,28 @@ export class WinnerComponent {
     };
   });
 
+  /**
+   * What the daily or endless match came to on the leaderboards (ADR
+   * 0012): "Ranked attempt 2 of 3", or why it was not ranked - null for
+   * any other match, and for one played as practice.
+   */
+  public rankedNote: Signal<string | null> = computed(() => {
+    const note = this.state.ranked()?.note;
+    switch (note?.kind) {
+      case 'daily':
+        return this.t('boards.ranked.result.daily', {
+          n: note.n,
+          total: RANKED_DAILY_ATTEMPTS,
+        });
+      case 'endless':
+        return this.t('boards.ranked.result.endless', { match: note.match });
+      case 'unranked':
+        return this.t(`boards.ranked.result.${note.reason}`);
+      default:
+        return null;
+    }
+  });
+
   /** What the match was part of - the daily level, an endless run - in a line. */
   public runNote: Signal<string | null> = computed(
     () => this.dailyNote() ?? this.endlessNote()
@@ -232,6 +264,7 @@ export class WinnerComponent {
   );
 
   private readonly social = inject(SocialService);
+  private readonly analytics = injectGameAnalytics();
   /** The opponent of an online match, to add as a friend - null otherwise. */
   public readonly newFriend = computed(() => {
     const opponent = this.social.opponent();
@@ -281,7 +314,37 @@ export class WinnerComponent {
   public readonly shareLink = signal<string | null>(null);
   private sharing = false;
 
+  private readonly guestNotice = inject(GuestNotice);
+
+  /**
+   * True when the match just played earned something worth keeping: a new
+   * best medallion, an achievement or a new rank.
+   */
+  private readonly succeeded = computed(() => {
+    const award = this.award();
+    return (
+      (award != null && isNewBest(award)) ||
+      this.earned().length > 0 ||
+      this.xp()?.climb?.rankUp === true
+    );
+  });
+
+  /**
+   * True when the result offers a guest to sign in and keep what they
+   * earned: after the first success, once per device.
+   */
+  protected readonly offersSignIn = signal(false);
+
   public constructor() {
+    effect(() => {
+      if (!this.succeeded() || !this.guestNotice.successHintDue()) {
+        return;
+      }
+      untracked(() => {
+        this.offersSignIn.set(true);
+        this.guestNotice.markSuccessHintShown();
+      });
+    });
     effect(() => {
       const run = this.canFightGhost() ? this.state.lastReplay() : null;
       this.shareLink.set(null);
@@ -303,6 +366,10 @@ export class WinnerComponent {
    * Shares the link to the run just played, for a friend to fight as a
    * ghost: through the system's share sheet where there is one, else copied.
    */
+  private trackShare(method: 'native' | 'copy'): void {
+    this.analytics.track('share', { method, content_type: 'ghost_run' });
+  }
+
   public shareRun(): void {
     const url = this.shareLink();
     const run = this.state.lastReplay();
@@ -311,11 +378,13 @@ export class WinnerComponent {
       return;
     }
     if (typeof navigator.share !== 'function') {
+      const copied = this.clipboard.copy(url);
       this.shareNote.set(
-        this.clipboard.copy(url)
-          ? 'match.share.copied'
-          : 'match.share.copyFailed'
+        copied ? 'match.share.copied' : 'match.share.copyFailed'
       );
+      if (copied) {
+        this.trackShare('copy');
+      }
       return;
     }
     this.sharing = true;
@@ -328,7 +397,10 @@ export class WinnerComponent {
         url,
       })
       .then(
-        () => this.shareNote.set(null),
+        () => {
+          this.shareNote.set(null);
+          this.trackShare('native');
+        },
         (error: unknown) => {
           // Closing the share sheet is no failure.
           if (!(error instanceof DOMException && error.name === 'AbortError')) {
@@ -471,7 +543,7 @@ export class WinnerComponent {
     if (award?.medal == null) {
       return this.t('match.medal.none');
     }
-    const newBest = medalRank(award.medal) > medalRank(award.previousBest);
+    const newBest = isNewBest(award);
     return this.t(newBest ? 'match.medal.newBest' : 'common.medal', {
       medal: this.t(medalKey(award.medal)),
     });

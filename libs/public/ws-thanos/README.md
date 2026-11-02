@@ -173,7 +173,8 @@ directly in html via template ref:
 <button (click)="thanos.vaporize(true)">Vaporize</button>
 ```
 
-- `vaporize(removeElem = true)` starts the effect and returns an observable that emits once it is complete.
+- `vaporize(removeElem = true)` starts the effect and returns an observable that emits once and completes when the effect is over,
+  also when the effect failed (the error is logged) or the directive was destroyed meanwhile, so a caller waiting on it never hangs.
   With `removeElem = false` the element fades back in afterwards instead of being removed.
 - `vaporize$(removeElem = true)` returns an observable of the `AnimationState` of every frame. Subscribe to start the effect.
 

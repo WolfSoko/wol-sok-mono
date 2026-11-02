@@ -58,6 +58,16 @@
     ],
     "SessionStart": [
       {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/tools/claude-cloud/session-start.sh\"",
+            "timeout": 900
+          }
+        ]
+      },
+      {
         "matcher": "",
         "hooks": [
           {

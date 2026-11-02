@@ -1,0 +1,203 @@
+:host {
+  display: block;
+}
+
+.hero {
+  position: relative;
+  padding: 4rem 0 3rem;
+}
+
+.aurora {
+  position: absolute;
+  inset: -2rem 0 auto auto;
+  width: min(60vw, 34rem);
+  aspect-ratio: 1;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.5;
+
+  // Blurred one by one: a filter on the animated element is rasterised
+  // once and then only transformed, one on the group would refilter per frame.
+  span {
+    position: absolute;
+    border-radius: 50%;
+    width: 55%;
+    aspect-ratio: 1;
+    filter: blur(60px);
+    animation: aurora 16s ease-in-out infinite alternate;
+  }
+  span:nth-child(1) {
+    top: 0;
+    left: 10%;
+    background: var(--accent-warm);
+  }
+  span:nth-child(2) {
+    top: 35%;
+    left: 40%;
+    background: var(--accent-cool);
+    animation-delay: -5s;
+  }
+  span:nth-child(3) {
+    top: 50%;
+    left: 0;
+    width: 40%;
+    background: #e879f9;
+    animation-delay: -10s;
+  }
+}
+
+@keyframes aurora {
+  to {
+    transform: translate(20%, -15%) scale(1.2) rotate(20deg);
+  }
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pulse {
+  position: relative;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--accent-warm);
+
+  // The ring grows by transform and fades, which the compositor does alone.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--accent-warm);
+    opacity: 0.6;
+    animation: pulse 2.2s ease-out infinite;
+  }
+}
+
+@keyframes pulse {
+  to {
+    transform: scale(3.5);
+    opacity: 0;
+  }
+}
+
+h1 {
+  margin: 0;
+  max-width: 22ch;
+  font-size: clamp(2.3rem, 6vw, 4.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+
+  .name {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.42em;
+    letter-spacing: 0.01em;
+    color: var(--muted);
+  }
+
+  em {
+    font-style: normal;
+    background: linear-gradient(
+      90deg,
+      var(--accent-cool),
+      var(--accent-warm),
+      #e879f9,
+      var(--accent-cool)
+    );
+    background-size: 300% 100%;
+    background-clip: text;
+    color: transparent;
+    // Finite: a text-clipped gradient repaints on every frame it moves.
+    animation: shimmer 8s linear 3;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 300% 0;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1rem;
+  margin: 3rem 0 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.25rem 1rem;
+  border-radius: 1.25rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 1px 2px var(--shadow);
+  animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 0.12s);
+
+  dt {
+    order: 2;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+}
+
+// The number counts up from 0 (`@property --num` in styles.scss).
+.count {
+  animation: count 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 0.12s + 0.2s);
+  counter-reset: num var(--num);
+
+  &::after {
+    content: counter(num);
+  }
+}
+
+@keyframes count {
+  from {
+    --num: 0;
+  }
+}
+
+.plus {
+  color: var(--accent-warm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora span,
+  .pulse::after,
+  h1 em,
+  .stat,
+  .count {
+    animation: none;
+  }
+}

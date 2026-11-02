@@ -153,6 +153,7 @@ export function planMatch(
                 ? 'Computer'
                 : right.name,
         isBot: versusComputer,
+        computer: versusComputer && ghost === null,
         // The boss plays from the right seat - BOSS_SEAT - whoever steers
         // it. Not a ghost: it replays a run played from the left seat.
         startScale: rightScale * (boss?.startScale ?? 1),

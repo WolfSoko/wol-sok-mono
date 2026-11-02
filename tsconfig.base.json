@@ -28,6 +28,15 @@
       "@wolsok/feat-lazy-bac-game/engine": [
         "./libs/features/lazy/bacteria-game/src/engine.ts"
       ],
+      "@wolsok/feat-lazy-bac-game/admin-kit": [
+        "./libs/features/lazy/bacteria-game/src/admin-kit.ts"
+      ],
+      "@wolsok/feat-lazy-bac-game/watch": [
+        "./libs/features/lazy/bacteria-game/src/watch.ts"
+      ],
+      "@wolsok/feat-lazy-bac-wars-admin": [
+        "./libs/features/lazy/bacteria-wars-admin/src/index.ts"
+      ],
       "@wolsok/feat-lazy-gravity-rocks": [
         "./libs/features/lazy/gravity-rocks/src/index.ts"
       ],
@@ -59,6 +68,11 @@
         "./libs/shared/headline-animation/src/index.ts"
       ],
       "@wolsok/nx-aws-cdk-v2": ["./libs/public/nx-aws-cdk-v2/src/index.ts"],
+      "@wolsok/shared-analytics": ["./libs/shared/analytics/src/index.ts"],
+      "@wolsok/shared-legal": ["./libs/shared/legal/src/index.ts"],
+      "@wolsok/shared-analytics/testing": [
+        "./libs/shared/analytics/src/testing.ts"
+      ],
       "@wolsok/shared-data-access": ["./libs/shared/data-access/src/index.ts"],
       "@wolsok/spa-cdk-stack": ["./libs/public/spa-cdk-stack/src/index.ts"],
       "@wolsok/test-helper": ["./libs/test-helper/src/index.ts"],

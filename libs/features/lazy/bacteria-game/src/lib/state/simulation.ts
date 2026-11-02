@@ -3,7 +3,8 @@ import { ColonySpawn, Nutrient, StepEvents } from './bacteria-simulation';
 import { GameBalance } from './game-balance';
 import { CellBounds, Point } from './geometry';
 import { DynamicWall, GameMap } from './maps';
-import { Bacteria, Player, PlayerColorArray } from './player.model';
+import type { CellList } from './cells';
+import { Player, PlayerColorArray } from './player.model';
 
 /**
  * A texture of the GPU simulation (a `WebGLTexture`), typed without the DOM
@@ -28,7 +29,11 @@ interface ColonyLayerBase {
 /** A colony of the CPU simulation: its bacteria. */
 export interface CellsLayer extends ColonyLayerBase {
   kind: 'cells';
-  bacterias: readonly Bacteria[];
+  /**
+   * Its bacteria as they stand after the last tick - the simulation's own
+   * columns, which change with the next: copy what has to outlast it.
+   */
+  cells: CellList;
 }
 
 /**
@@ -147,6 +152,11 @@ export interface Simulation {
   nearestEnemy(playerId: number, from: Point): Point | null;
   /** Frees whatever the simulation holds outside the JavaScript heap. */
   dispose(): void;
+  /**
+   * Milliseconds the main thread waited for the GPU since the last call,
+   * counting afresh - absent where nothing waits for the GPU.
+   */
+  takeGpuWaitMs?(): number;
 }
 
 /**
@@ -159,12 +169,3 @@ export type SimulationFactory = (
   random: () => number,
   seed: number
 ) => Simulation;
-
-/**
- * True when matches run the deterministic simulation of ADR 0015 where the
- * device can: the integer passes on a GPU that passed the self-test, the
- * CPU's ruleset else. The rollout's switch (step 8), on since the owner's
- * real-device check passed; `?sim=` still overrides local play on one
- * device (see `chooseSimulation`).
- */
-export const DETERMINISTIC_SIMULATION = true;

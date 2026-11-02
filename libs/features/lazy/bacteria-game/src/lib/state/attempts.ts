@@ -121,18 +121,35 @@ export function requiredAttempt(attempt: Attempt): string | null {
 }
 
 /**
+ * True when attempt `id` is taken: declared already (`declared`), unless a
+ * daily attempt the server marked void (`isVoid`), which may be declared
+ * again in its place. A void endless match counts as not played, and its
+ * run goes on with the next one.
+ */
+export function attemptTaken(
+  id: string,
+  declared: boolean,
+  isVoid: boolean
+): boolean {
+  return declared && !(isVoid && parseAttemptId(id)?.kind === 'daily');
+}
+
+/**
  * True when `id` may be declared at `atMillis` (the server's time) by a
  * player holding the attempts `declared` - what the Firestore rules check.
  * A daily attempt and the first match of a run belong to the UTC day of
- * the declaration; a run's later matches may go on past midnight.
+ * the declaration; a run's later matches may go on past midnight. A daily
+ * attempt the server marked void (`voided`, its submission dropped on the
+ * server's side, ADR 0012) may be declared again in its place.
  */
 export function canDeclare(
   id: string,
   atMillis: number,
-  declared: ReadonlySet<string>
+  declared: ReadonlySet<string>,
+  voided: ReadonlySet<string> = new Set()
 ): boolean {
   const attempt = parseAttemptId(id);
-  if (attempt === null || declared.has(id)) {
+  if (attempt === null || attemptTaken(id, declared.has(id), voided.has(id))) {
     return false;
   }
   const today = utcDay(new Date(atMillis));
@@ -143,18 +160,38 @@ export function canDeclare(
   return required === null || declared.has(required);
 }
 
-/** The next ranked daily attempt on `day`, null once all three are used. */
+/**
+ * The next ranked daily attempt on `day`, null once all three are used - a
+ * `voided` one first, which is declared again in its place.
+ */
 export function nextDailyAttemptId(
   day: string,
-  declared: ReadonlySet<string>
+  declared: ReadonlySet<string>,
+  voided: ReadonlySet<string> = new Set()
 ): string | null {
   for (let n = 1; n <= RANKED_DAILY_ATTEMPTS; n++) {
     const id = dailyAttemptId(day, n);
-    if (!declared.has(id)) {
+    if (!attemptTaken(id, declared.has(id), voided.has(id))) {
       return id;
     }
   }
   return null;
+}
+
+/** The ranked daily attempts on `day` not yet taken - a void one counts. */
+export function dailyAttemptsLeft(
+  day: string,
+  declared: ReadonlySet<string>,
+  voided: ReadonlySet<string> = new Set()
+): number {
+  let left = 0;
+  for (let n = 1; n <= RANKED_DAILY_ATTEMPTS; n++) {
+    const id = dailyAttemptId(day, n);
+    if (!attemptTaken(id, declared.has(id), voided.has(id))) {
+      left++;
+    }
+  }
+  return left;
 }
 
 /** The next ranked run to start on `day`, null once five have started. */
@@ -171,6 +208,32 @@ export function nextRunId(
   return null;
 }
 
+/** The ranked runs still to start on `day`: five less those with a match 0. */
+export function runsLeft(day: string, declared: ReadonlySet<string>): number {
+  let started = 0;
+  for (let r = 1; r <= RANKED_RUNS_PER_DAY; r++) {
+    if (declared.has(endlessAttemptId(endlessRunId(day, r), 0))) {
+      started++;
+    }
+  }
+  return RANKED_RUNS_PER_DAY - started;
+}
+
+/**
+ * The attempts that say what is left of `day`: its daily attempts and the
+ * match 0 of each of its runs.
+ */
+export function dayAttemptIds(day: string): string[] {
+  return [
+    ...Array.from({ length: RANKED_DAILY_ATTEMPTS }, (_, i) =>
+      dailyAttemptId(day, i + 1)
+    ),
+    ...Array.from({ length: RANKED_RUNS_PER_DAY }, (_, i) =>
+      endlessAttemptId(endlessRunId(day, i + 1), 0)
+    ),
+  ];
+}
+
 /** When an attempt declared at `atMillis` expires (its TTL). */
 export function attemptExpireAt(atMillis: number): number {
   return atMillis + ATTEMPT_DAYS * 86_400_000;
@@ -183,13 +246,17 @@ export function attemptExpireAt(atMillis: number): number {
  * the server's time of the declaration - so no match can be played before
  * it. An endless run's levels come from the seed of its match 0.
  * A 32-bit unsigned integer, the same in every JavaScript engine.
+ *
+ * The time counts in whole milliseconds, as the server's Admin SDK reads
+ * it: a fraction (the browser SDK's `toMillis()` keeps microseconds) is
+ * floored, so both sides hash the same text.
  */
 export function attemptSeed(
   uid: string,
   attemptId: string,
   atMillis: number
 ): number {
-  const text = `${uid}\u0000${attemptId}\u0000${atMillis}`;
+  const text = `${uid}\u0000${attemptId}\u0000${Math.floor(atMillis)}`;
   let hash = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193);

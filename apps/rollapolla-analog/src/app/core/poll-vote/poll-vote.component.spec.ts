@@ -1,6 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import {
+  provideRecordingAnalytics,
+  RecordingAnalytics,
+} from '@wolsok/shared-analytics/testing';
 import { firstValueFrom } from 'rxjs';
 import { Poll } from '../../../shared/poll';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
@@ -11,12 +15,17 @@ describe('PollVoteComponent', () => {
   let fixture: ComponentFixture<PollVoteComponent>;
   let repo: PollsRepoAdapterMock;
   let pollId: string;
+  let analytics: RecordingAnalytics;
 
   beforeEach(async () => {
     localStorage.clear();
+    analytics = new RecordingAnalytics();
     await TestBed.configureTestingModule({
       imports: [PollVoteComponent, NoopAnimationsModule],
-      providers: [{ provide: PollsRepoPort, useClass: PollsRepoAdapterMock }],
+      providers: [
+        { provide: PollsRepoPort, useClass: PollsRepoAdapterMock },
+        provideRecordingAnalytics(analytics),
+      ],
     }).compileComponents();
 
     repo = TestBed.inject(PollsRepoPort) as PollsRepoAdapterMock;
@@ -67,6 +76,9 @@ describe('PollVoteComponent', () => {
     expect(JSON.parse(localStorage.getItem('rap-voted-polls') ?? '{}')).toEqual(
       { [pollId]: 1 }
     );
+    expect(analytics.tracked('vote')).toEqual([
+      { options: 2, featured: false, just_created: false },
+    ]);
   });
 
   it('ignores unusable stored votes', async () => {
@@ -130,6 +142,7 @@ describe('PollVoteComponent', () => {
     expect(JSON.parse(localStorage.getItem('rap-voted-polls') ?? '{}')).toEqual(
       {}
     );
+    expect(analytics.tracked('vote_failed')).toEqual([{ late: true }]);
   });
 
   it('shows the stored vote when the backend rejects a second vote', async () => {
@@ -219,6 +232,8 @@ describe('PollVoteComponent', () => {
     expect(query('vote-error')).not.toBeNull();
     expect(query('vote-button').nativeElement.disabled).toBe(false);
     expect(localStorage.getItem('rap-voted-polls')).toBeNull();
+    expect(analytics.tracked('vote')).toEqual([]);
+    expect(analytics.tracked('vote_failed')).toEqual([{ late: false }]);
   });
 
   it('offers sharing below the poll, or first right after creating it', () => {

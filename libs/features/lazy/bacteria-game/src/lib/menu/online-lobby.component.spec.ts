@@ -3,7 +3,10 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { TestBed } from '@angular/core/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { BehaviorSubject, of } from 'rxjs';
+import type { FeatureToggles } from '../state/feature-toggles';
 import { FakeGameAccount } from '../../testing/fake-game-account';
+import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { I18nService } from '../i18n/i18n.service';
 import {
   MatchLevel,
@@ -15,12 +18,16 @@ import { GameSettingsService } from '../settings.service';
 import { MATCH_LEVELS } from '../state/match-level';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
+import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { LocalGameStorage } from '../storage/local-game-storage';
 import { OnlineLobbyComponent } from './online-lobby.component';
 
 describe('OnlineLobbyComponent', () => {
+  let moderation: FakeGameModeration;
+
   beforeEach(() => {
     TestBed.resetTestingModule();
+    moderation = new FakeGameModeration();
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: new FakeGameAccount('ada') },
@@ -30,7 +37,9 @@ describe('OnlineLobbyComponent', () => {
             social: () => null,
             presence: () => null,
             rooms: () => null,
+            moderation: () => moderation,
             storage: () => new LocalGameStorage(),
+            toggles: () => ({ watch: () => of({}) }),
           },
         },
       ],
@@ -56,6 +65,16 @@ describe('OnlineLobbyComponent', () => {
 
     expect(text(host)).toContain('Play with a code');
     expect(text(host)).toContain('Open a match');
+  });
+
+  it('offers no online play while a ban holds, and says so', () => {
+    moderation.banFor(null);
+    const host = render({});
+
+    expect(text(host)).toContain(
+      'Online play is not available while your account is suspended.'
+    );
+    expect(text(host)).not.toContain('Open a match');
   });
 
   it('names the colony the player steers, and the notice', () => {
@@ -95,6 +114,7 @@ describe('OnlineLobbyComponent', () => {
   describe('the level the matchmaking asks for', () => {
     let matchmaker: {
       available: boolean;
+      enabled: ReturnType<typeof signal<boolean>>;
       state: ReturnType<typeof signal<MatchmakingState>>;
       matchLevel: ReturnType<typeof signal<MatchLevel | null>>;
       setLevel: jest.Mock;
@@ -107,6 +127,7 @@ describe('OnlineLobbyComponent', () => {
       localStorage.clear();
       matchmaker = {
         available: true,
+        enabled: signal(true),
         state: signal<MatchmakingState>('idle'),
         matchLevel: signal<MatchLevel | null>(null),
         setLevel: jest.fn(),
@@ -211,6 +232,61 @@ describe('OnlineLobbyComponent', () => {
         auto: true,
       });
       expect(text(matched)).toContain('Level: Sanduhr (Wahl deines Gegners)');
+    });
+  });
+
+  describe('while the owner has paused matchmaking', () => {
+    let toggles: BehaviorSubject<Partial<FeatureToggles>>;
+    let matchmaker: MatchmakerService;
+
+    beforeEach(() => {
+      localStorage.clear();
+      toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
+      TestBed.configureTestingModule({
+        providers: [provideGameToggles(toggles)],
+      });
+      matchmaker = TestBed.inject(MatchmakerService);
+      // A build with the cloud: the matchmaking itself would run.
+      Object.defineProperty(matchmaker, 'available', { value: true });
+    });
+
+    const find = (host: HTMLElement) => host.querySelector('button.find');
+
+    it('offers "Find an opponent" while it runs', () => {
+      const host = render({});
+
+      expect(find(host)?.textContent).toContain('Find an opponent');
+      expect(host.querySelector('.match-level')).not.toBeNull();
+      expect(host.querySelector('.matchmaking-paused')).toBeNull();
+    });
+
+    it('says random matches are paused and points to a code instead', () => {
+      toggles.next({ matchmaking: false });
+      const host = render({});
+
+      expect(find(host)).toBeNull();
+      expect(host.querySelector('.match-level')).toBeNull();
+      expect(text(host)).toContain(
+        'Random matches are paused for now. Play a friend with a code instead.'
+      );
+      expect(text(host)).toContain('Open a match');
+    });
+
+    it('takes the pause back when switched on again, in German too', () => {
+      toggles.next({ matchmaking: false });
+      TestBed.inject(GameSettingsService);
+      TestBed.inject(I18nService).setLanguage('de');
+      const fixture = TestBed.createComponent(OnlineLobbyComponent);
+      fixture.componentRef.setInput('lobby', IDLE_LOBBY);
+      fixture.detectChanges();
+      const host: HTMLElement = fixture.nativeElement;
+      expect(text(host)).toContain('Zufällige Matches sind gerade pausiert.');
+
+      toggles.next({ matchmaking: true });
+      fixture.detectChanges();
+
+      expect(find(host)?.textContent).toContain('Gegner finden');
+      expect(matchmaker.enabled()).toBe(true);
     });
   });
 });

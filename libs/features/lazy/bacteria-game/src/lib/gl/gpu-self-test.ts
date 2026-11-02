@@ -7,6 +7,7 @@ import {
 } from '../state/gpu-int/sim-scenarios';
 import { SELF_TEST_GOLDEN } from '../state/gpu-int/self-test-golden';
 import { GpuSimulation } from './gpu-simulation';
+import { rendererOf } from './renderer';
 
 /** What the self-test found on this device's GPU. */
 export interface GpuSelfTestResult extends SelfTestVerdict {
@@ -71,15 +72,6 @@ export function runGpuSelfTest(
   } finally {
     gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
-}
-
-/** The GPU and driver a context renders with. */
-export function rendererOf(gl: WebGL2RenderingContext): string {
-  const info = gl.getExtension('WEBGL_debug_renderer_info');
-  const name: unknown = gl.getParameter(
-    info == null ? gl.RENDERER : info.UNMASKED_RENDERER_WEBGL
-  );
-  return typeof name === 'string' ? name : 'unknown';
 }
 
 function freshContext(): WebGL2RenderingContext | null {

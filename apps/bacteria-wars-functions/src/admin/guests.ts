@@ -1,0 +1,203 @@
+import { logger } from 'firebase-functions/logger';
+import { GUEST_IDLE_DAYS } from '../config';
+
+/**
+ * Guest accounts unused for {@link GUEST_IDLE_DAYS} days are deleted
+ * (ADR 0012, owner's decision of 2026-10-26) by the daily `guestCleanup`.
+ * The selection is pure, so the specs check it without Auth.
+ */
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The longest a guest may go unused before its account goes. */
+export const GUEST_IDLE_MS = GUEST_IDLE_DAYS * DAY_MS;
+
+/** Accounts one `deleteUsers` call takes at most. */
+export const DELETE_BATCH = 1000;
+
+/** Guests one run deletes at most; the next day takes the rest. */
+export const GUEST_SWEEP_LIMIT = 2000;
+
+/** Guests erased at once. */
+const PARALLEL_ERASES = 10;
+
+/**
+ * `deleteUsers` is rate limited to one call a second: the pause before
+ * the next one, with room to spare.
+ */
+const DELETE_PAUSE_MS = 1500;
+
+/** The parts of an Auth user the selection reads. */
+export interface GuestRecord {
+  uid: string;
+  providerData: readonly unknown[];
+  customClaims?: Record<string, unknown>;
+  metadata: {
+    creationTime: string;
+    lastSignInTime: string;
+    lastRefreshTime?: string | null;
+  };
+}
+
+/**
+ * When the account was last used, in ms: the latest of its last token
+ * refresh (a guest signs in once and then only refreshes), its last
+ * sign-in and its creation - null when Auth says none of them.
+ */
+export function lastActiveAt(user: GuestRecord): number | null {
+  const { lastRefreshTime, lastSignInTime, creationTime } = user.metadata;
+  const times = [lastRefreshTime, lastSignInTime, creationTime]
+    .map((time) => (typeof time === 'string' ? Date.parse(time) : NaN))
+    .filter((at) => Number.isFinite(at));
+  return times.length === 0 ? null : Math.max(...times);
+}
+
+/**
+ * True for a guest - an account without any sign-in provider (anonymous,
+ * or one that unlinked its last) and no admin claim - unused for longer
+ * than {@link GUEST_IDLE_MS}. An account whose last use is unknown stays.
+ */
+export function isIdleGuest(user: GuestRecord, now: number): boolean {
+  const at = lastActiveAt(user);
+  return (
+    user.providerData.length === 0 &&
+    user.customClaims?.['admin'] !== true &&
+    at !== null &&
+    now - at > GUEST_IDLE_MS
+  );
+}
+
+/** What `sweepGuests` needs of Auth and of the account clean-up. */
+export interface GuestSweepPorts {
+  /** Every account, page after page as Auth lists them. */
+  users(): AsyncIterable<GuestRecord>;
+  deleteUsers(
+    uids: readonly string[]
+  ): Promise<{ successCount: number; failureCount: number }>;
+  /**
+   * Erases the account's data, as its deletion does (`erasePlayer`), and
+   * calls `uncounted` when it claimed the account's decrement of
+   * `stats/accounts`, which it leaves to {@link GuestSweepPorts.uncount}.
+   */
+  erase(uid: string, uncounted: () => void): Promise<void>;
+  /** Lowers `stats/accounts` by `by` at once. */
+  uncount(by: number): Promise<void>;
+  /** Waits between two `deleteUsers` calls. */
+  pause(ms: number): Promise<void>;
+}
+
+/** What a sweep did - for the log and the specs. */
+export interface GuestSweep {
+  /** Accounts looked at. */
+  listed: number;
+  /** Idle guests found, up to the run's limit. */
+  idle: number;
+  /** Whose data could not be erased: their accounts stay for the next run. */
+  failed: number;
+  /** Accounts Auth deleted. */
+  deleted: number;
+  /** By how much `stats/accounts` went down. */
+  uncounted: number;
+}
+
+/**
+ * The daily clean-up of idle guests: goes through every account, picks
+ * the idle guests ({@link isIdleGuest}, {@link GUEST_SWEEP_LIMIT} at most),
+ * erases each one's data first (`erase`, a few at a time) and then deletes
+ * the accounts whose data went, {@link DELETE_BATCH} a call and a call at
+ * most every {@link DELETE_PAUSE_MS}. Erasing first, because Auth's bulk
+ * deletion fires no `onDelete` trigger; the clean-up is idempotent, so
+ * one that fires all the same changes nothing. An account whose erasing
+ * failed stays, and the next run tries it again. The account count goes
+ * down once a batch, by the decrements its erases claimed - a single
+ * document takes about one write a second - and one that fails is logged
+ * and left to `stats.recount`.
+ */
+export async function sweepGuests(
+  ports: GuestSweepPorts,
+  now: number
+): Promise<GuestSweep> {
+  const idle: string[] = [];
+  let listed = 0;
+  for await (const user of ports.users()) {
+    listed++;
+    if (isIdleGuest(user, now)) {
+      idle.push(user.uid);
+      if (idle.length === GUEST_SWEEP_LIMIT) {
+        break;
+      }
+    }
+  }
+  const sweep: GuestSweep = {
+    listed,
+    idle: idle.length,
+    failed: 0,
+    deleted: 0,
+    uncounted: 0,
+  };
+  for (let i = 0; i < idle.length; i += DELETE_BATCH) {
+    const { erased, uncounted } = await eraseBatch(
+      ports,
+      idle.slice(i, i + DELETE_BATCH)
+    );
+    sweep.failed += Math.min(DELETE_BATCH, idle.length - i) - erased.length;
+    if (uncounted > 0) {
+      try {
+        await ports.uncount(uncounted);
+        sweep.uncounted += uncounted;
+      } catch (error) {
+        logger.error('Could not lower the account count', {
+          by: uncounted,
+          error,
+        });
+      }
+    }
+    if (erased.length === 0) {
+      continue;
+    }
+    if (i > 0) {
+      await ports.pause(DELETE_PAUSE_MS);
+    }
+    const result = await ports.deleteUsers(erased);
+    sweep.deleted += result.successCount;
+    if (result.failureCount > 0) {
+      logger.warn('Some idle guests were not deleted', {
+        failed: result.failureCount,
+      });
+    }
+  }
+  return sweep;
+}
+
+/**
+ * Erases the guests' data, {@link PARALLEL_ERASES} at a time: the uids
+ * whose data went, and how many account decrements the erases claimed.
+ */
+async function eraseBatch(
+  ports: GuestSweepPorts,
+  uids: readonly string[]
+): Promise<{ erased: string[]; uncounted: number }> {
+  const erased: string[] = [];
+  let uncounted = 0;
+  for (let i = 0; i < uids.length; i += PARALLEL_ERASES) {
+    const group = uids.slice(i, i + PARALLEL_ERASES);
+    const settled = await Promise.allSettled(
+      group.map((uid) =>
+        ports.erase(uid, () => {
+          uncounted++;
+        })
+      )
+    );
+    settled.forEach((result, k) => {
+      if (result.status === 'fulfilled') {
+        erased.push(group[k]);
+      } else {
+        logger.error('Could not erase an idle guest', {
+          uid: group[k],
+          error: result.reason,
+        });
+      }
+    });
+  }
+  return { erased, uncounted };
+}
