@@ -185,8 +185,6 @@ export class MainMenuComponent {
       ? galleryPath(this.i18n.language())
       : galleryUrl(this.i18n.language())
   );
-  /** The game's language, for the tiles' hyphenation. */
-  protected readonly language = this.i18n.language;
   private readonly dialog = inject(MatDialog);
   private readonly analytics = injectGameAnalytics();
 

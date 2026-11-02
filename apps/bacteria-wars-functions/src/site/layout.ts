@@ -1,6 +1,7 @@
 import {
   GAME_SITE_URL,
   LEGAL_NOTICE_PATH,
+  LOCALES,
   PRIVACY_POLICY_PATH,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import { escapeHtml, href, inLang, scriptJson, text } from './html';
@@ -50,7 +51,7 @@ const FONT_FACES = SITE_FONTS.map(
 
 // The tokens are the menus' (`menu/_screen.scss` in the game lib).
 const STYLE = `${FONT_FACES}
-:root{--ground:#0b0f14;--surface:#121821;--raised:#19212c;--line:#263142;--line-strong:#3a4659;--text:#e8eef5;--soft:#b7c3d0;--muted:#9aa8b8;--gold:#e9b949;--orange:#ff7a2e;--on-orange:#1a0d05;--display:'Bricolage Grotesque',system-ui,sans-serif;--body:'Atkinson Hyperlegible',system-ui,sans-serif;color-scheme:dark}
+:root{--ground:${THEME_COLOR};--surface:#121821;--raised:#19212c;--line:#263142;--line-strong:#3a4659;--text:#e8eef5;--soft:#b7c3d0;--muted:#9aa8b8;--gold:#e9b949;--orange:#ff7a2e;--on-orange:#1a0d05;--display:'Bricolage Grotesque',system-ui,sans-serif;--body:'Atkinson Hyperlegible',system-ui,sans-serif;color-scheme:dark}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -20%,#1a2433 0,var(--ground) 60%) fixed var(--ground);color:var(--text);font:1rem/1.55 var(--body)}
 .wrap{max-width:52rem;margin:0 auto;padding:1rem}
@@ -117,6 +118,8 @@ export function pageUrl(
 
 /** A whole page around its body. */
 export function page(lang: Lang, head: Head, body: string): string {
+  const title = escapeHtml(head.title);
+  const description = escapeHtml(head.description);
   const other: Lang = lang === 'de' ? 'en' : 'de';
   const preloads = SITE_FONTS.map(
     ({ file }) =>
@@ -127,9 +130,9 @@ export function page(lang: Lang, head: Head, body: string): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(head.title)}</title>
-<meta name="description" content="${escapeHtml(head.description)}">
-${head.noindex === true ? '<meta name="robots" content="noindex">\n' : indexed(head, lang)}<meta name="theme-color" content="${THEME_COLOR}">
+<title>${title}</title>
+<meta name="description" content="${description}">
+${head.noindex === true ? '<meta name="robots" content="noindex">\n' : indexed(head, lang, title, description)}<meta name="theme-color" content="${THEME_COLOR}">
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 ${preloads}
@@ -156,12 +159,16 @@ ${body}
 
 /**
  * What a page that may be indexed adds to its head: robots, the canonical
- * URL and its language alternates, Open Graph and JSON-LD.
+ * URL and its language alternates, Open Graph and JSON-LD. `title` and
+ * `description` come escaped.
  */
-function indexed(head: Head, lang: Lang): string {
+function indexed(
+  head: Head,
+  lang: Lang,
+  title: string,
+  description: string
+): string {
   const url = (l: Lang) => escapeHtml(pageUrl(head.path, l, head.params));
-  const title = escapeHtml(head.title);
-  const description = escapeHtml(head.description);
   return `<meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="${url(lang)}">
 <link rel="alternate" hreflang="en" href="${url('en')}">
@@ -169,7 +176,7 @@ function indexed(head: Head, lang: Lang): string {
 <link rel="alternate" hreflang="x-default" href="${url('en')}">
 <meta property="og:type" content="${head.type}">
 <meta property="og:site_name" content="Bacteria Wars">
-<meta property="og:locale" content="${lang === 'de' ? 'de_DE' : 'en_GB'}">
+<meta property="og:locale" content="${LOCALES[lang].replace('-', '_')}">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:url" content="${url(lang)}">

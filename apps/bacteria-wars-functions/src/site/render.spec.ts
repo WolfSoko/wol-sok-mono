@@ -177,7 +177,7 @@ describe('a replay without its pick date', () => {
 
 describe('statusPage', () => {
   it('is never indexed and has no canonical', () => {
-    const { head, body } = parts(statusPage(410, 'de', 'removed'));
+    const { head, body } = parts(statusPage(410, 'de', 'removed', '/replays'));
     expect(head).toContain('<meta name="robots" content="noindex">');
     expect(head).not.toContain('canonical');
     expect(body).toContain('Dieses Match ist nicht mehr öffentlich.');

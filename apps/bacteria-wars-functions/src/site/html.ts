@@ -1,3 +1,4 @@
+import { inLang } from '@wolsok/feat-lazy-bac-game/engine';
 import { type Lang, t, type Word } from './texts';
 
 /** Text for HTML, in an element or an attribute. */
@@ -17,20 +18,10 @@ export function scriptJson(value: unknown): string {
 }
 
 /**
- * A page's path in a language - English plain, German with `?lang=de` -
- * and further query parameters.
+ * A page's path in a language: the game's own rule, which its links to
+ * these pages follow too.
  */
-export function inLang(
-  path: string,
-  lang: Lang,
-  params: Readonly<Record<string, string>> = {}
-): string {
-  const query = new URLSearchParams({
-    ...params,
-    ...(lang === 'de' ? { lang } : {}),
-  }).toString();
-  return query === '' ? path : `${path}?${query}`;
-}
+export { inLang } from '@wolsok/feat-lazy-bac-game/engine';
 
 /** A word of the pages, escaped. */
 export function text(

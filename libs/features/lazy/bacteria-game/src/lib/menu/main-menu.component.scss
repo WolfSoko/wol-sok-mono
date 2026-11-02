@@ -147,7 +147,7 @@
   line-height: 1.15;
   text-align: center;
   // A name never runs out of its tile: hyphenated in the game's language
-  // (the nav's `lang`), broken anywhere as the last resort.
+  // (the `lang` the game's host sets), broken anywhere as the last resort.
   hyphens: auto;
   overflow-wrap: anywhere;
   text-decoration: none;

@@ -54,9 +54,9 @@ const CARD_FIELDS = [
  * replay (`/replays/{id}`, `/replays/{id}/replay.json` for the viewer) and
  * the replays' sitemap (`/replays/sitemap.xml`). The gallery pages back
  * with `?before={ms}_{id}`, so every replay still up is linked, and the
- * sitemap lists the newest `SITEMAP_REPLAYS` of them. It reads `publicReplays` only: a private id
- * answers 404 like an unknown one, a removed replay 410. `?lang=de` for
- * German, English otherwise.
+ * sitemap lists the newest `SITEMAP_REPLAYS` of them. It reads
+ * `publicReplays` only: a private id answers 404 like an unknown one, a
+ * removed replay 410. `?lang=de` for German, English otherwise.
  */
 export async function handleSite(
   db: Firestore,
@@ -85,6 +85,7 @@ export async function handleSite(
   if (id === 'sitemap.xml' && file === undefined) {
     const listed = await stillUp(db)
       .select('featuredAt')
+      // Only what `sitemap` lists, which caps it itself.
       .limit(SITEMAP_REPLAYS)
       .get();
     return {

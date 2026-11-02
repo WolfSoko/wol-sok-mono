@@ -19,27 +19,13 @@ const project = JSON.parse(
   };
 };
 
-/**
- * The file names a glob of the assets names: its `{a,b}` alternatives
- * spelt out, the only pattern the font entries use.
- */
-function expand(glob: string): string[] {
-  const group = /\{([^{}]*)\}/.exec(glob);
-  if (group === null) {
-    return [glob];
-  }
-  const [whole, list = ''] = group;
-  return list
-    .split(',')
-    .flatMap((choice) => expand(glob.replace(whole, choice)));
-}
-
 describe("the pages' faces", () => {
   it('are copied into /fonts by the game build, from files that exist', () => {
+    // One asset entry a face, its glob the file's name.
     const copied = project.targets.esbuild.options.assets.flatMap((asset) =>
       typeof asset === 'string' || asset.output !== 'fonts'
         ? []
-        : expand(asset.glob).map((file) => ({ file, input: asset.input }))
+        : [{ file: asset.glob, input: asset.input }]
     );
     expect(copied.map(({ file }) => file).sort()).toEqual(
       SITE_FONTS.map(({ file }) => file).sort()

@@ -1,9 +1,11 @@
 import {
   clock,
   getColonyColor,
+  LOCALES,
   TICKS_PER_SEC,
 } from '@wolsok/feat-lazy-bac-game/engine';
 import type { PublicSeat } from '../gallery/publish';
+import { dayOf } from '../limits';
 import { escapeHtml, href, text } from './html';
 import { GAME_JSONLD_ID, gameJsonLd, page, pageUrl } from './layout';
 import {
@@ -17,9 +19,9 @@ import {
 
 /**
  * The public replay pages (ADR 0011): small server-rendered HTML in the
- * game's look (`layout.ts`), not the SPA, so link previews and crawlers
- * see all of it. Pure, so the specs check every page without a server. Names show in
- * the body only, never in the head (title, description, Open Graph,
+ * game's look (`layout.ts`), not the SPA, so link previews and crawlers see
+ * all of it. Pure, so the specs check every page without a server. Names
+ * show in the body only, never in the head (title, description, Open Graph,
  * JSON-LD): link previews and search snippets carry none.
  */
 
@@ -71,20 +73,34 @@ function rgb(colorId: string): string {
   return `rgb(${getColonyColor(colorId).rgb.join(',')})`;
 }
 
-/**
- * The day a replay was picked, in the page's language - nothing where it
- * is unknown (`featuredAt` 0).
- */
-function pickedOn(lang: Lang, featuredAt: number): string {
-  if (featuredAt <= 0) {
-    return '';
-  }
-  const date = new Date(featuredAt);
-  const shown = new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', {
+/** How the pages write the day a replay was picked, per language. */
+const PICKED_FORMAT: Record<Lang, Intl.DateTimeFormat> = {
+  en: pickedFormat('en'),
+  de: pickedFormat('de'),
+};
+
+function pickedFormat(lang: Lang): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat(LOCALES[lang], {
     dateStyle: 'medium',
     timeZone: 'UTC',
-  }).format(date);
-  return `<time datetime="${date.toISOString().slice(0, 10)}">${text(lang, 'picked', { date: shown })}</time>`;
+  });
+}
+
+/** True when a replay's pick date is known (`featuredAt` is 0 otherwise). */
+function isPicked(featuredAt: number): boolean {
+  return featuredAt > 0;
+}
+
+/**
+ * The day a replay was picked, in the page's language, after `prefix` -
+ * nothing where it is unknown.
+ */
+function pickedOn(lang: Lang, featuredAt: number, prefix = ''): string {
+  if (!isPicked(featuredAt)) {
+    return '';
+  }
+  const shown = PICKED_FORMAT[lang].format(featuredAt);
+  return `${prefix}<time datetime="${dayOf(featuredAt)}">${text(lang, 'picked', { date: shown })}</time>`;
 }
 
 /** The players of a match, with their colours - names where public. */
@@ -232,7 +248,7 @@ export function replayPage(lang: Lang, view: ReplayView): string {
             url: pageUrl(path, lang),
             inLanguage: lang,
             description,
-            ...(view.featuredAt > 0
+            ...(isPicked(view.featuredAt)
               ? { datePublished: new Date(view.featuredAt).toISOString() }
               : {}),
             about: { '@id': GAME_JSONLD_ID },
@@ -258,7 +274,7 @@ export function replayPage(lang: Lang, view: ReplayView): string {
         ],
       },
     },
-    `<p class="meta"><a href="${href('/replays', lang)}">${text(lang, 'gallery')}</a>${view.featuredAt > 0 ? ` › ${pickedOn(lang, view.featuredAt)}` : ''}</p>
+    `<p class="meta"><a href="${href('/replays', lang)}">${text(lang, 'gallery')}</a>${pickedOn(lang, view.featuredAt, ' › ')}</p>
 <h1>${text(lang, 'matchOfTheDay')}: ${escapeHtml(level)}</h1>
 <p class="players lead">${playersLine(lang, view)}</p>
 <p class="result lead">${escapeHtml(result(lang, view, true))}</p>
@@ -278,7 +294,7 @@ export function statusPage(
   status: 404 | 410,
   lang: Lang,
   word: 'notFound' | 'removed',
-  path = '/replays'
+  path: string
 ): string {
   return page(
     lang,
@@ -314,17 +330,20 @@ export function sitemap(
   replays: readonly { id: string; featuredAt: number }[]
 ): string {
   const urls = (path: string, lastmod?: number) => {
-    const alternates = SITEMAP_LANGS.map(
-      (lang) =>
-        `<xhtml:link rel="alternate" hreflang="${lang}" href="${escapeHtml(pageUrl(path, lang))}"/>`
-    ).join('');
+    const locs = SITEMAP_LANGS.map((lang) => ({
+      lang,
+      loc: escapeHtml(pageUrl(path, lang)),
+    }));
+    const alternates = locs
+      .map(
+        ({ lang, loc }) =>
+          `<xhtml:link rel="alternate" hreflang="${lang}" href="${loc}"/>`
+      )
+      .join('');
     const modified =
-      lastmod === undefined
-        ? ''
-        : `<lastmod>${new Date(lastmod).toISOString().slice(0, 10)}</lastmod>`;
-    return SITEMAP_LANGS.map(
-      (lang) =>
-        `<url><loc>${escapeHtml(pageUrl(path, lang))}</loc>${modified}${alternates}</url>`
+      lastmod === undefined ? '' : `<lastmod>${dayOf(lastmod)}</lastmod>`;
+    return locs.map(
+      ({ loc }) => `<url><loc>${loc}</loc>${modified}${alternates}</url>`
     );
   };
   return `<?xml version="1.0" encoding="UTF-8"?>

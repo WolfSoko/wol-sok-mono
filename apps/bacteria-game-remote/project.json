@@ -39,7 +39,12 @@
             "output": "fonts"
           },
           {
-            "glob": "atkinson-hyperlegible-latin-{400,700}-normal.woff2",
+            "glob": "atkinson-hyperlegible-latin-400-normal.woff2",
+            "input": "node_modules/@fontsource/atkinson-hyperlegible/files",
+            "output": "fonts"
+          },
+          {
+            "glob": "atkinson-hyperlegible-latin-700-normal.woff2",
             "input": "node_modules/@fontsource/atkinson-hyperlegible/files",
             "output": "fonts"
           }

@@ -17,8 +17,9 @@ import { SignIn } from './sign-in.service';
  * Who plays, at the top of the main menu: for a guest the way to sign in
  * with Google, for a signed-in player their picture, which opens the
  * profile: the avatar of their profile (an upload, a drawn bacterium or
- * their Google photo, as they chose), the Google photo until it is read
- * and for a player without a stored profile. Nothing without the cloud or before the account is known.
+ * their Google photo, as they chose), the Google photo until it is read and
+ * for a player without a stored profile. Nothing without the cloud or
+ * before the account is known.
  */
 @Component({
   selector: 'feat-lazy-bac-game-account-chip',

@@ -76,12 +76,12 @@ type WatchView =
         }
       }
       <nav class="links">
-        @if (publicId(); as id) {
-          <a mat-button [href]="galleryUrl(language(), id)">
+        @if (detailsUrl(); as url) {
+          <a mat-button [href]="url">
             {{ 'replay.watchPage.details' | t }}
           </a>
         }
-        <a mat-button [href]="galleryUrl(language())">
+        <a mat-button [href]="galleryLink()">
           {{ 'replay.watchPage.gallery' | t }}
         </a>
         <a mat-button href="/">{{ 'replay.watchPage.game' | t }}</a>
@@ -124,10 +124,6 @@ export class WatchPageComponent {
   private readonly i18n = inject(I18nService);
   private readonly document = inject(DOCUMENT);
 
-  protected readonly galleryUrl = galleryUrl;
-  /** The language the links to the gallery's pages speak. */
-  protected readonly language = this.i18n.language;
-
   /** The public replay's id, from the route. */
   protected readonly publicId = toSignal(
     inject(ActivatedRoute).paramMap.pipe(
@@ -135,6 +131,15 @@ export class WatchPageComponent {
     ),
     { initialValue: null }
   );
+  /** The gallery, in the game's language. */
+  protected readonly galleryLink = computed(() =>
+    galleryUrl(this.i18n.language())
+  );
+  /** The replay's own page (its canonical), null without an id. */
+  protected readonly detailsUrl = computed(() => {
+    const id = this.publicId();
+    return id === null ? null : galleryUrl(this.i18n.language(), id);
+  });
   private readonly loaded = resource({
     params: () => this.publicId() ?? undefined,
     loader: ({ params }) => this.loader.load(params),
@@ -184,7 +189,6 @@ export class WatchPageComponent {
     this.document.head.append(canonical);
     meta.updateTag({ name: 'robots', content: 'noindex' });
     effect(() => {
-      const id = this.publicId();
       title.setTitle(
         this.i18n.t('replay.watchPage.title', { level: this.levelText() })
       );
@@ -192,7 +196,7 @@ export class WatchPageComponent {
         name: 'description',
         content: this.i18n.t('replay.watchPage.description'),
       });
-      canonical.href = galleryUrl(this.i18n.language(), id ?? undefined);
+      canonical.href = this.detailsUrl() ?? this.galleryLink();
     });
     inject(DestroyRef).onDestroy(() => {
       title.setTitle(previousTitle);
