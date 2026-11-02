@@ -20,11 +20,10 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { dismissSplash } from '../splash';
 import { getLevel, levelNameText } from '../state/levels';
-import { GAME_SITE_URL } from '../support/legal-links';
 import type { Replay } from '../state/replay';
 import { PublicReplayError, PublicReplays } from './public-replays';
 import { ReplayViewerComponent } from './replay-viewer.component';
-import { GALLERY_PATH, WATCH_PARAM } from './watch-links';
+import { galleryUrl, WATCH_PARAM } from './watch-links';
 
 const ERRORS: Readonly<Record<PublicReplayError, TranslationKey>> = {
   'not-found': 'replay.watchPage.notFound',
@@ -78,11 +77,11 @@ type WatchView =
       }
       <nav class="links">
         @if (publicId(); as id) {
-          <a mat-button [href]="siteUrl + '/' + galleryPath + '/' + id">
+          <a mat-button [href]="galleryUrl(language(), id)">
             {{ 'replay.watchPage.details' | t }}
           </a>
         }
-        <a mat-button [href]="siteUrl + '/' + galleryPath">
+        <a mat-button [href]="galleryUrl(language())">
           {{ 'replay.watchPage.gallery' | t }}
         </a>
         <a mat-button href="/">{{ 'replay.watchPage.game' | t }}</a>
@@ -125,8 +124,9 @@ export class WatchPageComponent {
   private readonly i18n = inject(I18nService);
   private readonly document = inject(DOCUMENT);
 
-  protected readonly siteUrl = GAME_SITE_URL;
-  protected readonly galleryPath = GALLERY_PATH;
+  protected readonly galleryUrl = galleryUrl;
+  /** The language the links to the gallery's pages speak. */
+  protected readonly language = this.i18n.language;
 
   /** The public replay's id, from the route. */
   protected readonly publicId = toSignal(
@@ -192,10 +192,7 @@ export class WatchPageComponent {
         name: 'description',
         content: this.i18n.t('replay.watchPage.description'),
       });
-      canonical.href =
-        id === null
-          ? `${GAME_SITE_URL}/${GALLERY_PATH}`
-          : `${GAME_SITE_URL}/${GALLERY_PATH}/${id}`;
+      canonical.href = galleryUrl(this.i18n.language(), id ?? undefined);
     });
     inject(DestroyRef).onDestroy(() => {
       title.setTitle(previousTitle);

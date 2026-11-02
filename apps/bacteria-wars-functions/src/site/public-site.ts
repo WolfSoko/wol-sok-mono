@@ -75,9 +75,9 @@ export async function handleSite(
   }
   const [, id, file] = parts;
   if (id === undefined || (id === 'index.json' && file === undefined)) {
-    const { views, older } = await galleryOf(db, query['before']);
+    const { views, older, before } = await galleryOf(db, query['before']);
     return id === undefined
-      ? html(200, galleryPage(lang, views, older))
+      ? html(200, galleryPage(lang, views, older, before))
       : json(200, { replays: views, ...(older === null ? {} : { older }) });
   }
   if (id === 'sitemap.xml' && file === undefined) {
@@ -129,13 +129,18 @@ function stillUp(db: Firestore): Query {
 
 /**
  * A page of the gallery: the replays before the `before` cursor
- * (`{ms}_{id}`, the last card of the page before), and the cursor of the
- * next page, null on the last.
+ * (`{ms}_{id}`, the last card of the page before), the cursor of the
+ * next page, null on the last, and the cursor it took, null where there
+ * was none or none it could read (then it is the first page).
  */
 async function galleryOf(
   db: Firestore,
   before: unknown
-): Promise<{ views: CardView[]; older: string | null }> {
+): Promise<{
+  views: CardView[];
+  older: string | null;
+  before: string | null;
+}> {
   let query = stillUp(db).select(...CARD_FIELDS);
   const cursor =
     typeof before === 'string'
@@ -156,6 +161,7 @@ async function galleryOf(
       snapshot.size > GALLERY_SIZE && last !== undefined
         ? `${last.featuredAt}_${last.id}`
         : null,
+    before: cursor === null ? null : cursor[0],
   };
 }
 
