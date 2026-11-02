@@ -15,8 +15,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatRadioModule } from '@angular/material/radio';
 import { distinctUntilChanged, map, switchMap } from 'rxjs';
+import { isFeaturedPoll } from '../../../shared/featured-polls';
 import { Poll } from '../../../shared/poll';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
+import { injectRollaPollaAnalytics } from '../analytics/rollapolla-analytics';
 import { PollShareComponent } from '../poll-share/poll-share.component';
 import { percentages } from './percentages';
 import { VotedPollsStore } from './voted-polls.store';
@@ -50,6 +52,7 @@ export class PollVoteComponent {
 
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly votedPolls = inject(VotedPollsStore);
+  private readonly analytics = injectRollaPollaAnalytics();
 
   /** Dropped when the creator edits the poll: the answers may have changed. */
   protected readonly selectedOption = linkedSignal<Poll, number | undefined>({
@@ -105,9 +108,15 @@ export class PollVoteComponent {
     try {
       const { saved } = await this.pollsRepo.vote(poll, optionIndex);
       this.votedPolls.rememberVote(poll, optionIndex);
+      this.analytics.track('vote', {
+        options: poll.options.length,
+        featured: isFeaturedPoll(poll),
+        just_created: this.justCreated(),
+      });
       saved.catch((error: unknown) => this.voteRejected(poll, error));
     } catch (error) {
       console.error('Could not vote', error);
+      this.analytics.track('vote_failed', { late: false });
       this.voteFailed.set(true);
     } finally {
       this.voting.set(false);
@@ -120,6 +129,7 @@ export class PollVoteComponent {
    */
   private voteRejected(poll: Poll, error: unknown): void {
     console.error('Vote was rejected', error);
+    this.analytics.track('vote_failed', { late: true });
     this.votedPolls.forgetVote(poll);
     if (this.ownVote() === undefined) {
       this.voteFailed.set(true);

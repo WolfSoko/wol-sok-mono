@@ -1,4 +1,8 @@
-import { capturePixelsScale, computeCaptureScale } from './capture-scale';
+import {
+  capturePixelsScale,
+  computeCaptureScale,
+  effectCanvasScale,
+} from './capture-scale';
 import {
   CANVAS_MAX_PARTICLE_COUNT,
   CanvasParticleRenderer,
@@ -6,6 +10,7 @@ import {
 import { ParticleRenderer, ParticleRendererParams } from './particle-renderer';
 import { limitParticles, Particles } from './particles';
 import { WebGlParticleRenderer } from './webgl/webgl-particle-renderer';
+import type { EffectScale } from './wind';
 
 /**
  * Browsers drop the oldest WebGL context once about 16 are alive,
@@ -44,8 +49,8 @@ export interface ChooseParticleRendererParams {
 export interface ParticleRendererChoice {
   /** how many particles this renderer can handle */
   readonly maxParticleCount: number;
-  /** scale to capture an element of the given css size */
-  captureScale(width: number, height: number): number;
+  /** scale to capture an element of the given css size, see computeCaptureScale() */
+  captureScale(width: number, height: number, effectScale: EffectScale): number;
   create(
     particles: Particles,
     params: ParticleRendererParams
@@ -78,8 +83,12 @@ export function chooseParticleRenderer({
   const canvasChoice: ParticleRendererChoice = {
     maxParticleCount: Math.min(maxParticleCount, CANVAS_MAX_PARTICLE_COUNT),
     // css pixels keep the CPU work low, fewer for a big element
-    captureScale: (width, height) =>
-      Math.min(1, capturePixelsScale(width, height, maxCapturePixels)),
+    captureScale: (width, height, effectScale) =>
+      Math.min(
+        1,
+        capturePixelsScale(width, height, maxCapturePixels),
+        effectCanvasScale(width, height, effectScale)
+      ),
     create: createCanvasRenderer,
     release: () => undefined,
   };
@@ -109,10 +118,11 @@ export function chooseParticleRenderer({
   const maxCanvasSize = WebGlParticleRenderer.maxCanvasSize(gl);
   return {
     maxParticleCount,
-    captureScale: (width, height) =>
+    captureScale: (width, height, effectScale) =>
       computeCaptureScale({
         width,
         height,
+        effectScale,
         devicePixelRatio,
         maxCanvasSize,
         maxCapturePixels,

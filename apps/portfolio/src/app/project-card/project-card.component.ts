@@ -1,5 +1,11 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { I18nService } from '../i18n/i18n.service';
 import { Project } from '../projects';
 
 @Component({
@@ -10,9 +16,9 @@ import { Project } from '../projects';
   template: `
     <article>
       <h3>{{ project().name }}</h3>
-      <p class="tagline">{{ project().tagline }}</p>
-      <p>{{ project().description }}</p>
-      <ul class="tech" aria-label="Built with">
+      <p class="tagline">{{ i18n.pick(project().tagline) }}</p>
+      <p>{{ i18n.pick(project().description) }}</p>
+      <ul class="tech" [attr.aria-label]="i18n.texts().home.builtWith">
         @for (tech of project().tech; track tech) {
           <li>{{ tech }}</li>
         }
@@ -49,13 +55,16 @@ import { Project } from '../projects';
         ),
         var(--surface);
       border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+      box-shadow: 0 1px 2px var(--shadow);
       transition:
         transform 0.2s ease,
-        border-color 0.2s ease;
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
     }
     article:hover {
       transform: translateY(-3px);
       border-color: var(--accent);
+      box-shadow: 0 12px 30px -12px var(--shadow);
     }
     h3 {
       margin: 0;
@@ -97,4 +106,5 @@ import { Project } from '../projects';
 })
 export class ProjectCardComponent {
   public readonly project = input.required<Project>();
+  protected readonly i18n = inject(I18nService);
 }

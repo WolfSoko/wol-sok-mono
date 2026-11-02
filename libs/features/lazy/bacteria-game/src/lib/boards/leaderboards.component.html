@@ -1,0 +1,38 @@
+<feat-lazy-bac-game-screen-header
+  [title]="'boards.title' | t"
+  (back)="back.emit()"
+/>
+<section class="boards" [attr.aria-label]="'boards.region' | t">
+  @if (!available) {
+    <p class="intro">{{ "boards.noCloud" | t }}</p>
+  } @else {
+    <feat-lazy-bac-game-guest-sign-in [note]="'profile.guest.boards'" />
+    <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+      @for (kind of kinds; track kind) {
+        <mat-tab [label]="tabKey(kind) | t">
+          <ng-template matTabContent>
+            @if (kind === "daily") {
+              <div class="daily">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>{{ "boards.day" | t }}</mat-label>
+                  <mat-select
+                    [value]="shownDay()"
+                    (selectionChange)="day.set($event.value)"
+                  >
+                    @for (option of days(); track option.day) {
+                      <mat-option [value]="option.day">{{
+                        option.name
+                      }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <span class="next">{{ nextBoard() }}</span>
+              </div>
+            }
+            <feat-lazy-bac-game-board-view [board]="boardOf(kind)" />
+          </ng-template>
+        </mat-tab>
+      }
+    </mat-tab-group>
+  }
+</section>

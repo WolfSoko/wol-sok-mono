@@ -11,6 +11,9 @@
     },
     {
       "path": "./tsconfig.editor.json"
+    },
+    {
+      "path": "./rules-test/tsconfig.json"
     }
   ],
   "compilerOptions": {

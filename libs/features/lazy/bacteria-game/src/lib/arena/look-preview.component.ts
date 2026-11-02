@@ -7,7 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { prefersReducedMotion } from '../reduced-motion';
-import { BacteriaLook } from '../state/skins';
+import { ColonyLook } from '../state/skins';
 import { paintLookPreview, PreviewSize, SKIN_PREVIEW } from './look-preview';
 
 /** How many canvas pixels a cell of the preview gets - two per layer pixel. */
@@ -46,7 +46,7 @@ const FRAME_MS = 66;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LookPreviewComponent {
-  public readonly look = input.required<BacteriaLook>();
+  public readonly look = input.required<ColonyLook>();
   /** The colony's colour, RGB from 0 to 255. */
   public readonly color = input.required<readonly number[]>();
   public readonly size = input<PreviewSize>(SKIN_PREVIEW);

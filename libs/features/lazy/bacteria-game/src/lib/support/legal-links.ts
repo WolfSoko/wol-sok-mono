@@ -13,5 +13,12 @@ export const GAME_SITE_URL = 'https://bacteria-wars.wolsok.de';
 export const PRIVACY_POLICY_PATH = 'privacy';
 export const LEGAL_NOTICE_PATH = 'impressum';
 
+/**
+ * The route of the owner's admin area on that site (ADR 0012): the
+ * remote's `app.routes.ts` serves it, the main menu links to it for the
+ * owner. The shell has no such route.
+ */
+export const ADMIN_PATH = 'admin';
+
 /** The privacy policy: the help screen links to it, the Play listing as well. */
 export const PRIVACY_POLICY_URL = `${GAME_SITE_URL}/${PRIVACY_POLICY_PATH}`;

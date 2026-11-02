@@ -55,7 +55,7 @@ import {
 import { mapZones } from './zones';
 import { NeutralBrain } from './neutral-brain';
 import {
-  flood,
+  FloodCache,
   lineOf,
   NavField,
   NavGrid,
@@ -81,6 +81,12 @@ export interface PlayerSpawn {
   weapon?: WeaponId | null;
   /** True for a boss - a boss bot charges with every boost once behind. */
   boss?: boolean;
+  /**
+   * True when the computer plays the seat: in a match against it, not a
+   * recording driving it as a ghost or the other device online. The
+   * painter dresses the colony by it; the engine steers by `isBot` alone.
+   */
+  computer?: boolean;
   /**
    * True for a neutral colony: it has no crosshair and no player, and counts
    * for no side. Neutral spawns come after every player's.
@@ -271,7 +277,17 @@ export class MatchEngine {
   private heldFrom: readonly ColonySummary[] | null = null;
   private heldUpTo = 0;
   /** The bots' grid of the static walls and the zones, by arena size. */
-  private nav: { width: number; height: number; grid: NavGrid } | null = null;
+  private nav: {
+    width: number;
+    height: number;
+    grid: NavGrid;
+    /**
+     * That grid with the moving walls that block now, by where they stand -
+     * the same grid as long as they stand still, so its floods are kept.
+     */
+    walls: { key: string; grid: NavGrid } | null;
+  } | null = null;
+  private readonly floods = new FloodCache();
   /** True when the match has neutral colonies - see {@link neutralCount}. */
   private readonly hasNeutral: boolean;
   /** The neutral colonies' bacteria, all together. */
@@ -332,6 +348,8 @@ export class MatchEngine {
         color: spawn.color,
         name: spawn.name,
         isBot: spawn.isBot,
+        computer: spawn.computer === true,
+        boss: spawn.boss === true,
         maxSpeed: options.crosshairSpeed ?? DEFAULT_CROSSHAIR_SPEED,
         weapon: spawn.weapon ?? null,
         weaponCooldownSec: charging,
@@ -841,7 +859,7 @@ export class MatchEngine {
     let grid: NavGrid | null = null;
     let field: NavField | null = null;
     const grid$ = () => (grid ??= this.navGridAt(width, height));
-    const field$ = () => (field ??= flood(grid$(), from));
+    const field$ = () => (field ??= this.floods.flood(grid$(), from));
     // A clear straight line needs no flood - most decisions on open ground.
     const clear = (to: Point) => lineOf(grid$(), from, to) === 'clear';
     return {
@@ -869,14 +887,22 @@ export class MatchEngine {
           mapZones(this.map, width, height),
           this.unitAt(width)
         ),
+        walls: null,
       };
     }
-    return withWalls(
-      this.nav.grid,
-      this.simulation
-        .getDynamicWalls()
-        .filter((wall) => wall.solid || wall.warning > 0)
-    );
+    const walls = this.simulation
+      .getDynamicWalls()
+      .filter((wall) => wall.solid || wall.warning > 0);
+    const key = walls
+      .map(
+        ({ x, y, width, height, round }) =>
+          `${x},${y},${width},${height},${round === true}`
+      )
+      .join(';');
+    if (this.nav.walls?.key !== key) {
+      this.nav.walls = { key, grid: withWalls(this.nav.grid, walls) };
+    }
+    return this.nav.walls.grid;
   }
 
   /**

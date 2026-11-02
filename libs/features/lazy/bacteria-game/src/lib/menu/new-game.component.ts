@@ -10,12 +10,15 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatStepperModule } from '@angular/material/stepper';
+import { StageBusy } from '../busy/stage-busy';
 import { rgba } from '../arena/canvas-math';
 import { ZONE_COLORS } from '../arena/zone-look';
 import {
   difficultyKeys,
   GameText,
+  GameTextPipe,
   levelDescriptionText,
   levelNameText,
   levelTitleText,
@@ -67,6 +70,7 @@ import {
   missionsDone,
 } from '../state/training';
 import { LevelMapComponent } from './level-map.component';
+import { MissionListComponent, MissionRow } from './mission-list.component';
 import { LevelPreviewComponent } from './level-preview.component';
 import { LevelPreviewService } from './level-preview.service';
 import { OnlineLobbyComponent } from './online-lobby.component';
@@ -86,6 +90,8 @@ import {
   stepsOf,
 } from './play-modes';
 import { ScreenHeaderComponent } from './screen-header.component';
+import type { RankedKind, RankedOffer } from '../ranked/ranked.service';
+import type { TranslationKey } from '../i18n/dictionaries';
 
 /**
  * A new game, step by step: first the mode - the training, the campaign,
@@ -104,11 +110,14 @@ import { ScreenHeaderComponent } from './screen-header.component';
     MatButtonModule,
     MatButtonToggleModule,
     MatIconModule,
+    MatSlideToggleModule,
     MatStepperModule,
     MedallionComponent,
+    MissionListComponent,
     OnlineLobbyComponent,
     ScreenHeaderComponent,
     TranslatePipe,
+    GameTextPipe,
   ],
   templateUrl: './new-game.component.html',
   styleUrl: './new-game.component.scss',
@@ -116,6 +125,8 @@ import { ScreenHeaderComponent } from './screen-header.component';
 })
 export class NewGameComponent {
   private readonly i18n = inject(I18nService);
+  /** The steps ahead take a moment to lay out: a spinner meanwhile. */
+  private readonly busy = inject(StageBusy);
   /** True where the briefing shows a picture of the level's map. */
   protected readonly previews = inject(LevelPreviewService).supported;
   /**
@@ -158,6 +169,15 @@ export class NewGameComponent {
   public readonly online = input<OnlineLobby>(IDLE_LOBBY);
   /** False where online matches cannot be played. */
   public readonly onlineAvailable = input(false);
+  /**
+   * Ranked play on the daily level and in endless runs (ADR 0012), as
+   * offered - a mode left out, or null, offers none.
+   */
+  public readonly rankedOffers = input<
+    Partial<Record<RankedKind, RankedOffer | null>>
+  >({});
+  /** True while a ranked attempt is being declared: Start waits. */
+  public readonly declaring = input(false);
 
   /** A mode was picked - the host sets the game up for it. */
   public readonly kindChange = output<PlayKind>();
@@ -166,6 +186,8 @@ export class NewGameComponent {
   public readonly difficultyChange = output<BotDifficulty>();
   public readonly seriesLengthChange = output<SeriesLength>();
   public readonly headStartChange = output<HeadStart>();
+  /** Ranked or practice for daily matches and endless runs - the setting. */
+  public readonly rankedChange = output<boolean>();
   /** Start the match - or the run - of the mode picked. */
   public readonly start = output<PlayKind>();
   public readonly hostOnline = output<void>();
@@ -247,7 +269,7 @@ export class NewGameComponent {
    * The training's missions, each with whether it is done - and the one to
    * play next marked, the first still to do.
    */
-  protected readonly missions = computed(() => {
+  protected readonly missions = computed((): MissionRow[] => {
     const days = this.training();
     const upNext = firstOpenMission(days);
     return MISSIONS.map((mission, index) => ({
@@ -353,7 +375,7 @@ export class NewGameComponent {
     if (!isLadderLevel(level.id) && this.kind() !== 'daily') {
       return null;
     }
-    const best = this.medals()[level.id]?.[this.difficulty()] ?? null;
+    const best = this.medals()[level.id]?.[this.playedDifficulty()] ?? null;
     return {
       best,
       bestName: this.text(
@@ -400,9 +422,30 @@ export class NewGameComponent {
     return this.i18n.t('newGame.enemy.evolved', { list: parts.join(', ') });
   });
 
-  /** The keys of the name and the briefing of the selected difficulty. */
+  /** Ranked play in the mode picked - null where it offers none. */
+  protected readonly rankedOffer = computed(() => {
+    const kind = this.kind();
+    return kind === 'daily' || kind === 'endless'
+      ? (this.rankedOffers()[kind] ?? null)
+      : null;
+  });
+
+  /** The ranked switch's label: an attempt, or a run. */
+  protected readonly rankedLabel = computed((): TranslationKey =>
+    this.kind() === 'endless' ? 'boards.ranked.endless' : 'boards.ranked.daily'
+  );
+
+  /**
+   * The difficulty the computer plays, and the medallion counts for: the
+   * one selected, the normal one in a ranked match.
+   */
+  protected readonly playedDifficulty = computed((): BotDifficulty =>
+    this.rankedOffer()?.on === true ? 'normal' : this.difficulty()
+  );
+
+  /** The keys of the name and the briefing of the played difficulty. */
   protected readonly difficultyTexts = computed(() =>
-    difficultyKeys(this.difficulty())
+    difficultyKeys(this.playedDifficulty())
   );
 
   /** The head starts on offer, named after the colony that gets it. */
@@ -449,15 +492,19 @@ export class NewGameComponent {
 
   /** Picks a mode and goes on to its next step. */
   protected pickKind(kind: PlayKind): void {
-    this.kind.set(kind);
-    this.kindChange.emit(kind);
-    this.step.set(stepsOf(kind)[1]);
+    this.busy.run(() => {
+      this.kind.set(kind);
+      this.kindChange.emit(kind);
+      this.step.set(stepsOf(kind)[1]);
+    });
   }
 
   /** Picks a training mission and goes on to its start. */
   protected pickMission(id: MissionId): void {
-    this.missionChange.emit(id);
-    this.step.set('start');
+    this.busy.run(() => {
+      this.missionChange.emit(id);
+      this.step.set('start');
+    });
   }
 
   /**
@@ -465,9 +512,11 @@ export class NewGameComponent {
    * created, it opens the match on that level too.
    */
   protected pickLevel(id: string): void {
-    this.levelChange.emit(id);
-    this.openCreatedMatch();
-    this.step.set('start');
+    this.busy.run(() => {
+      this.levelChange.emit(id);
+      this.openCreatedMatch();
+      this.step.set('start');
+    });
   }
 
   /**
@@ -503,7 +552,9 @@ export class NewGameComponent {
   }
 
   protected next(): void {
-    this.goTo(Math.min(this.index() + 1, this.steps().length - 1));
+    this.busy.run(() =>
+      this.goTo(Math.min(this.index() + 1, this.steps().length - 1))
+    );
   }
 
   protected goBack(): void {

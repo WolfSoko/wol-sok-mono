@@ -4,8 +4,15 @@ export interface OpenRoom {
   code: string;
   /** The guest's answer to the offer, once one has joined. */
   answer: Promise<string>;
-  /** Gives the room up - a guest can no longer join. */
+  /** Gives a room nobody joined up - a guest can no longer join. */
   close(): void;
+  /**
+   * Swaps the answered room for its stub (ADR 0011): who played, without
+   * the offer and answer and the addresses in them, so nobody else joins
+   * and the functions bind the room's replays to its two players. The host
+   * calls it once the link to the guest opened, instead of `close`.
+   */
+  take(): Promise<void>;
 }
 
 /** A room this device joins. */

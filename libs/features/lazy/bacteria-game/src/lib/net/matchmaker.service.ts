@@ -1,5 +1,15 @@
-import { effect, inject, Injectable, signal, untracked } from '@angular/core';
+import {
+  computed,
+  effect,
+  inject,
+  Injectable,
+  signal,
+  untracked,
+} from '@angular/core';
 import { Subscription } from 'rxjs';
+import { injectGameAnalytics } from '../analytics/game-analytics';
+import { FeatureTogglesService } from '../feature-toggles.service';
+import { ModerationService } from '../moderation/moderation.service';
 import {
   isMatchLevel,
   MatchLevelPick,
@@ -45,6 +55,11 @@ export class MatchmakerService {
   private readonly social: GameSocial | null = inject(GameCloud).social();
   private readonly players = inject(SocialService);
   private readonly online = inject(OnlineMatchService);
+  private readonly toggles = inject(FeatureTogglesService).toggles;
+  private readonly moderation = inject(ModerationService);
+  private readonly analytics = injectGameAnalytics();
+  /** When the player started looking, for how long they waited. */
+  private searchStartedAt = 0;
   private readonly stateSignal = signal<MatchmakingState>('idle');
   /** The level the player would like to play - null for any. */
   private readonly level = signal<string | null>(null);
@@ -68,8 +83,27 @@ export class MatchmakerService {
    */
   public readonly matchLevel = this.matchLevelSignal.asReadonly();
   public readonly available = this.social !== null && this.online.available;
+  /**
+   * False while the owner has paused matchmaking (the `matchmaking`
+   * toggle, ADR 0012), or a ban holds the player, whose queue entry the
+   * rules refuse: no new search starts, and one under way stops.
+   */
+  public readonly enabled = computed(
+    () => this.toggles().matchmaking && !this.moderation.banned()
+  );
 
   public constructor() {
+    // Paused by the owner: a search under way stops. A match it found
+    // already goes on.
+    effect(() => {
+      if (!this.enabled()) {
+        untracked(() => {
+          if (this.stateSignal() === 'searching') {
+            void this.cancel();
+          }
+        });
+      }
+    });
     // Found and connected: the search is over. Found and the connection
     // failed before the match: back into the queue.
     let last = this.online.lobby().phase;
@@ -86,7 +120,11 @@ export class MatchmakerService {
           this.stateSignal.set('idle');
         } else if (phase === 'idle') {
           this.clearJoinTimeout();
-          void this.search();
+          if (this.enabled()) {
+            void this.search();
+          } else {
+            void this.cancel();
+          }
         }
       });
     });
@@ -94,10 +132,12 @@ export class MatchmakerService {
 
   /** Starts looking for an opponent. */
   public async find(): Promise<void> {
-    if (!this.available || this.stateSignal() !== 'idle') {
+    if (!this.available || !this.enabled() || this.stateSignal() !== 'idle') {
       return;
     }
     this.online.leave();
+    this.searchStartedAt = Date.now();
+    this.analytics.track('matchmaking_started');
     await this.search();
   }
 
@@ -124,6 +164,12 @@ export class MatchmakerService {
   /** Stops looking - and gives up a room opened for a claimed player. */
   public async cancel(): Promise<void> {
     const wasFound = this.stateSignal() === 'found';
+    if (this.stateSignal() !== 'idle') {
+      this.analytics.track('matchmaking_cancelled', {
+        found: wasFound,
+        wait_sec: this.waitedSec(),
+      });
+    }
     this.stop();
     this.clearJoinTimeout();
     this.stateSignal.set('idle');
@@ -282,6 +328,11 @@ export class MatchmakerService {
   private found(): void {
     this.stop();
     this.stateSignal.set('found');
+    this.analytics.track('matchmaking_found', { wait_sec: this.waitedSec() });
+  }
+
+  private waitedSec(): number {
+    return Math.round((Date.now() - this.searchStartedAt) / 1000);
   }
 
   private stop(): void {

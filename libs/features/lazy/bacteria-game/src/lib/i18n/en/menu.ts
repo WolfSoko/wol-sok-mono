@@ -4,6 +4,8 @@ export const menu = {
     'Steer your colony, swallow theirs. {levels} dishes, a level a day, endless runs - and a friend to beat.',
   newGameNote: 'Training, campaign, daily, endless, free, two players, online',
   more: 'More',
+  /** The owner's way to the admin area. */
+  admin: 'Admin',
   friendRequests: {
     one: '{count} friend request',
     other: '{count} friend requests',

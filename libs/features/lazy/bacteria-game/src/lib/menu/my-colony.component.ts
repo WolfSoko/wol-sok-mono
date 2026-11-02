@@ -95,9 +95,7 @@ export class MyColonyComponent {
     }))
   );
   /** The skin the colonies wear: the one picked, once it is owned. */
-  protected readonly worn = computed(() =>
-    this.evolution.wornSkin(this.settings.look())
-  );
+  protected readonly worn = this.evolution.worn;
   /** The player's colour, RGB. */
   protected readonly playerRgb = computed(
     () => getColonyColor(this.colors()[0]).rgb

@@ -11,6 +11,8 @@ import { PlayerService, PlayerSpawn } from './player.service';
 import { BacteriaSimulation } from './bacteria-simulation';
 import { IntSimulation } from './gpu-int/int-simulation';
 import { SimulationFactory } from './simulation';
+import { chooseSimulation } from '../gl/simulation-choice';
+import type { GpuSimulationOptions } from '../gl/gpu-simulation';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -116,6 +118,7 @@ describe('PlayerService', () => {
       service.useSimulation(gpuInt, undefined, {
         ruleset: () => 'gpu-int',
         offers: () => ['cpu', 'gpu-int'],
+        gpuInt,
       });
       const lockstep = new Lockstep(0, () => undefined);
 
@@ -125,6 +128,53 @@ describe('PlayerService', () => {
 
       service.init(spawns(false), { lockstep, ruleset: 'cpu' });
       expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
+    });
+
+    it('keeps an agreed gpu-int match on the GPU when the toggle flips after the hello', () => {
+      let toggle = true;
+      const asked: GpuSimulationOptions[] = [];
+      const choice = chooseSimulation({
+        deterministic: () => toggle,
+        gpu: (balance, random, options) => {
+          asked.push(options);
+          return gpuInt(balance, random, options.matchSeed ?? 0);
+        },
+        gpuTrusted: () => true,
+      });
+      service.useSimulation(choice.factory, choice.fallback, choice);
+      // What this device offered at the hello.
+      expect(service.rulesetOffers()).toEqual(['cpu', 'gpu-int']);
+
+      // Remote Config switches the deterministic simulation off meanwhile.
+      toggle = false;
+      service.init(spawns(false), {
+        lockstep: new Lockstep(0, () => undefined),
+        ruleset: 'gpu-int',
+      });
+
+      expect(service.getSimulation().kind).toBe('gpu');
+      expect(service.getSimulation().ruleset).toBe('gpu-int');
+      expect(asked.at(-1)?.deterministic).toBe(true);
+    });
+
+    it('stands in with IntSimulation for an agreed gpu-int match where the GPU fails', () => {
+      service.useSimulation(gpuInt, undefined, {
+        ruleset: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+        gpuInt: () => {
+          throw new Error('No GPU here');
+        },
+      });
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+      service.init(spawns(false), {
+        lockstep: new Lockstep(0, () => undefined),
+        ruleset: 'gpu-int',
+      });
+
+      expect(service.getSimulation()).toBeInstanceOf(IntSimulation);
+      expect(service.getSimulation().kind).not.toBe('gpu');
+      expect(service.rulesetOffers()).toEqual(['cpu']);
     });
 
     it('plays the CPU ruleset online when nothing was agreed', () => {
@@ -138,6 +188,45 @@ describe('PlayerService', () => {
       });
 
       expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
+    });
+
+    it('plays a ranked match on the integer GPU passes whatever the device plays', () => {
+      // The owner's toggle is off: local matches play the float GPU one.
+      service.useSimulation(gpuInt, undefined, {
+        ruleset: () => null,
+        offers: () => ['cpu'],
+        gpuInt,
+      });
+      expect(service.gpuIntReady()).toBe(true);
+
+      service.init(spawns(true), {
+        recordedSeats: new Set([0]),
+        ruleset: 'gpu-int',
+      });
+
+      expect(service.getSimulation().kind).toBe('gpu');
+      expect(service.getSimulation().ruleset).toBe('gpu-int');
+    });
+
+    it('has no integer GPU passes to rank on without them, or once they failed', () => {
+      service.useSimulation(null);
+      expect(service.gpuIntReady()).toBe(false);
+
+      service.useSimulation(gpuInt, undefined, {
+        ruleset: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+        gpuInt: () => {
+          throw new Error('No GPU here');
+        },
+      });
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      service.init(spawns(true), {
+        recordedSeats: new Set([0]),
+        ruleset: 'gpu-int',
+      });
+
+      expect(service.getSimulation()).toBeInstanceOf(IntSimulation);
+      expect(service.gpuIntReady()).toBe(false);
     });
 
     it('records a local match on the device ruleset - the CPU one for the float GPU', () => {

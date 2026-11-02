@@ -93,8 +93,12 @@ CSS animation, still for players who ask for less motion):
   are free; every other skin is bought with the DNA of the Evolution screen
   ([`state/skins.ts`](./src/lib/state/skins.ts),
   kept in the evolution progress, where they survive a reset) and worn from
-  the moment they are bought. More of the colony is to be shaped here in
-  time.
+  the moment they are bought. The player's colony wears the skin; the
+  computer's dresses by its level - the plain slime on the first, then the
+  skins to buy in the gallery's order the further up the ladder, so its
+  dress tells its skill - and a boss wears the eclipse, a look no skin
+  offers ([`state/colony-looks.ts`](./src/lib/state/colony-looks.ts)).
+  More of the colony is to be shaped here in time.
 - **New game** ([`new-game.component.ts`](./src/lib/menu/new-game.component.ts)) -
   a Material stepper that goes through only the steps the mode picked needs
   ([`play-modes.ts`](./src/lib/menu/play-modes.ts)):

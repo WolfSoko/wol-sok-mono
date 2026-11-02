@@ -101,6 +101,22 @@
       "options": {
         "command": "nx run {projectName}:firebase deploy"
       }
+    },
+    "lighthouse": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "cache": true,
+      "parallelism": false,
+      "inputs": [
+        "production",
+        "^production",
+        "{projectRoot}/lighthouse.json",
+        "{workspaceRoot}/tools/perf/lighthouse-run.mjs",
+        "{workspaceRoot}/tools/perf/serve-firebase-function.mjs"
+      ],
+      "options": {
+        "command": "node tools/perf/lighthouse-run.mjs rollapolla-analog"
+      }
     }
   }
 }

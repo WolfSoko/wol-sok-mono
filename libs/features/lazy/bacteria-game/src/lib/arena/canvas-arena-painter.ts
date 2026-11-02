@@ -7,7 +7,7 @@ import {
 } from './arena-painter';
 import { ArenaRenderer } from './arena-renderer';
 import { ArenaTheme } from './arena-theme';
-import { ColonyRenderer, drawJam, LOOKS } from './colony-renderer';
+import { ColonyRenderer, drawJam } from './colony-renderer';
 import { WeaponFx } from './weapon-fx';
 
 /**
@@ -65,21 +65,20 @@ export class CanvasArenaPainter implements ArenaPainter {
     this.weapons.update(frame);
     this.arena.drawWeaponMarks(cx, this.weapons.ground, false);
 
-    const layer = this.colonies.render(
+    const layers = this.colonies.render(
       frame.colonies,
       frame.balance,
-      frame.look,
       frame.timeSec,
       view
     );
-    if (layer != null) {
-      this.arena.tintColonies(layer, this.weapons.tints);
+    for (const layer of layers) {
+      this.arena.tintColonies(layer.canvas, this.weapons.tints);
       // A layer drawn from the density is scaled up smoothly, the pixel
       // layer stays crisp.
-      cx.imageSmoothingEnabled = LOOKS[frame.look].fromDensity;
-      cx.drawImage(layer, 0, 0, this.width, this.height);
-      cx.imageSmoothingEnabled = false;
+      cx.imageSmoothingEnabled = layer.smooth;
+      cx.drawImage(layer.canvas, 0, 0, this.width, this.height);
     }
+    cx.imageSmoothingEnabled = false;
     // The weapons over the colonies, then their light - under the jam and
     // the crosshairs, which stay readable.
     this.arena.drawWeaponMarks(cx, this.weapons.over, false);

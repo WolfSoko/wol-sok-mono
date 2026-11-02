@@ -1,0 +1,9 @@
+@use '../menu-banner';
+
+@include menu-banner.banner;
+
+.failed {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  color: var(--bw-gold);
+}

@@ -52,7 +52,7 @@ export const help = {
   touch: {
     title: 'Touch',
     controls:
-      'Push the joystick zone at your edge and tap the boost button - or drag your crosshair across the arena.',
+      'Touch your side of the arena and push the joystick: it sits where your finger lands and follows it. The boost button waits in your corner. Playing alone, you can also drag your crosshair on the other side of the arena.',
     twoPlayers:
       "For two players lay the phone flat between you, one at each end - each player's controls are turned towards them.",
   },

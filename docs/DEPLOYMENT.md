@@ -205,7 +205,8 @@ A release is one pipeline, started by the CI/CD workflow after a green run on
    one atomic push.
 2. **`release.yml`, job `release`** - checks out the tag, builds the apps and creates
    the GitHub release with the changelog section as notes and the build as asset,
-   plus the Sentry release (`.github/actions/create-release`).
+   plus the Sentry releases (`.github/actions/create-release`): `angular-examples@<tag>`,
+   and `bacteria-wars@<tag>` for the projects `bacteria-wars` and `bacteria-wars-functions`.
 3. **`deploy.yml`, called by `release.yml`** - deploys at that tag, see below.
 
 The version job works on the commit CI validated, not on the branch tip. If `main`

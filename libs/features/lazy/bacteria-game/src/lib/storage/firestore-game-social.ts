@@ -22,6 +22,16 @@ const TOKEN_LENGTH = 20;
 /** What the rules take as a queue entry's level. */
 const QUEUE_LEVEL = /^[a-z0-9-]{1,40}$/;
 const PICKS: readonly MatchLevelPick[] = ['waiting', 'claimer', 'random'];
+/** The profile's fields, the only ones the rules take besides `updatedAt`. */
+const PROFILE_FIELDS = [
+  'name',
+  'motto',
+  'avatar',
+  'shareStatus',
+  'publicName',
+  'boardOptOut',
+  'galleryOptOut',
+] as const satisfies readonly (keyof Profile)[];
 
 /**
  * The social data in Firestore - see ADR 0010 for the documents and
@@ -30,20 +40,52 @@ const PICKS: readonly MatchLevelPick[] = ['waiting', 'claimer', 'random'];
 export class FirestoreGameSocial implements GameSocial {
   public constructor(private readonly connection: FirebaseConnection) {}
 
+  /**
+   * Listens to metadata changes as well: a miss read from the cache alone
+   * is held back, and the server's answer to it changes only the metadata.
+   */
   public watchProfile(uid: string): Observable<unknown> {
-    return this.watchDoc(this.doc('profiles', uid), (snapshot) =>
-      snapshot.exists() ? snapshot.data() : null
+    const { dbSdk } = this.connection;
+    const ref = this.doc('profiles', uid);
+    return new Observable((subscriber) =>
+      dbSdk.onSnapshot(
+        ref,
+        { includeMetadataChanges: true },
+        (snapshot) => {
+          if (snapshot.exists()) {
+            subscriber.next(snapshot.data());
+          } else if (!snapshot.metadata.fromCache) {
+            subscriber.next(null);
+          }
+        },
+        (error) => console.error(`Could not read ${ref.path}`, error)
+      )
     );
   }
 
-  public async saveProfile(uid: string, profile: Profile): Promise<void> {
+  /**
+   * Writes the fields given, each whole - an avatar replaces the last one
+   * rather than merging into it, which the rules would refuse - and leaves
+   * any other field of the document as it is.
+   */
+  public async saveProfile(
+    uid: string,
+    profile: Partial<Profile>
+  ): Promise<void> {
     const { dbSdk } = this.connection;
-    await dbSdk.setDoc(this.doc('profiles', uid), {
-      name: profile.name,
-      motto: profile.motto,
-      avatar: { ...profile.avatar },
-      shareStatus: profile.shareStatus,
+    const data: Record<string, unknown> = {
+      ...Object.fromEntries(
+        PROFILE_FIELDS.flatMap((field) => {
+          const value = profile[field];
+          return value === undefined
+            ? []
+            : [[field, typeof value === 'object' ? { ...value } : value]];
+        })
+      ),
       updatedAt: dbSdk.serverTimestamp(),
+    };
+    await dbSdk.setDoc(this.doc('profiles', uid), data, {
+      mergeFields: Object.keys(data),
     });
   }
 

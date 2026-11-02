@@ -26,6 +26,19 @@
   color: var(--bw-muted);
 }
 
+.public {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.explain {
+  margin: -0.2rem 0 0.3rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--bw-soft);
+}
+
 .pictures {
   display: flex;
   flex-wrap: wrap;

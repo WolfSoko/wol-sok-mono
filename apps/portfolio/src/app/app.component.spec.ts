@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
+import { I18nService } from './i18n/i18n.service';
 import { APPS, EXPERIMENTS, PACKAGES } from './projects';
 import { SeoService } from './seo.service';
 
@@ -24,7 +25,7 @@ describe('AppComponent', () => {
     }
   });
 
-  it('sets the canonical URL and description per page', async () => {
+  it('sets the canonical URL, title and description per page and language', async () => {
     TestBed.inject(SeoService).init();
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/privacy');
@@ -34,7 +35,41 @@ describe('AppComponent', () => {
     ).toBe('https://wolsok.de/privacy');
     expect(
       head.querySelector('meta[name="description"]')?.getAttribute('content')
-    ).toContain('Datenschutzerklärung');
+    ).toContain('Privacy policy');
+
+    await harness.navigateByUrl('/career');
+    expect(document.title).toContain('Career');
+    TestBed.inject(I18nService).setLanguage('de');
+    TestBed.tick();
+    expect(document.title).toContain('Werdegang');
+    expect(
+      head.querySelector('meta[name="description"]')?.getAttribute('content')
+    ).toContain('Freiberuflicher');
+    localStorage.clear();
+  });
+
+  it('switches the language and the theme from the header', async () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('header .career')?.textContent).toContain(
+      'Career'
+    );
+
+    root
+      .querySelector<HTMLButtonElement>('.switch [lang="de"] button')
+      ?.click();
+    await fixture.whenStable();
+    expect(root.querySelector('header .career')?.textContent).toContain(
+      'Werdegang'
+    );
+    expect(document.documentElement.lang).toBe('de');
+
+    root.querySelector<HTMLButtonElement>('.theme')?.click();
+    await fixture.whenStable();
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
   });
 });
 
@@ -51,5 +86,40 @@ describe('sitemap.xml', () => {
       .filter((route) => route.path !== '**')
       .map((route) => `https://wolsok.de/${route.path}`);
     expect(listed.sort()).toEqual(routed.sort());
+  });
+
+  it('names the same pages as the Lighthouse run', () => {
+    const { url } = JSON.parse(
+      readFileSync(join(__dirname, '../../lighthouse.json'), 'utf8')
+    ) as { url: string[] };
+    const routed = appRoutes
+      .filter((route) => route.path !== '**')
+      .map((route) => `/${route.path}`);
+    expect(url.sort()).toEqual(routed.sort());
+  });
+});
+
+describe('projects.ts', () => {
+  it('links only to pages angular-examples has', () => {
+    const sitemap = readFileSync(
+      join(__dirname, '../../../angular-examples/src/sitemap.xml'),
+      'utf8'
+    );
+    const pages = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+      ([, loc]) => new URL(loc).pathname
+    );
+    const examplesLinks = [...APPS, ...EXPERIMENTS, ...PACKAGES]
+      .flatMap((project) => project.links)
+      .map((link) => new URL(link.url))
+      .filter((url) => url.host === 'angularexamples.wolsok.de')
+      .map((url) => url.pathname.replace(/\/$/, ''));
+
+    // a link may point to a page or to a section that redirects to one of its tabs
+    const missing = examplesLinks.filter(
+      (path) =>
+        path !== '' &&
+        !pages.some((page) => page === path || page.startsWith(`${path}/`))
+    );
+    expect(missing).toEqual([]);
   });
 });

@@ -23,6 +23,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SITE_URL } from '../../../shared/site-url';
 import {
+  injectRollaPollaAnalytics,
+  ShareSubject,
+} from '../analytics/rollapolla-analytics';
+import {
   SHARE_ICON_NAMESPACE,
   SHARE_TARGETS,
   ShareContent,
@@ -81,11 +85,14 @@ export class ShareComponent {
   public readonly highlighted = input(false, { transform: booleanAttribute });
   /** Label of the field the link is shown in when copying fails. */
   public readonly linkLabel = input('Link');
+  /** What the link leads to, for the usage statistics. */
+  public readonly subject = input<ShareSubject>('poll');
 
   private readonly clipboard = inject(Clipboard);
   private readonly document = inject(DOCUMENT);
   private readonly targets =
     inject(SHARE_TARGETS, { optional: true }) ?? ([] as ShareTarget[]);
+  private readonly analytics = injectRollaPollaAnalytics();
 
   /** Only known in the browser, so the server renders without it. */
   protected readonly canShareNatively = signal(false);
@@ -135,6 +142,7 @@ export class ShareComponent {
     const { url, title, text } = this.content();
     try {
       await this.document.defaultView?.navigator.share({ url, title, text });
+      this.trackShare('native');
     } catch (error) {
       // Closing the share sheet rejects with an AbortError, that is no failure.
       if (!(error instanceof DOMException && error.name === 'AbortError')) {
@@ -149,11 +157,17 @@ export class ShareComponent {
     const copied = this.clipboard.copy(this.content().url);
     this.copyState.set(copied ? 'copied' : 'failed');
     if (copied) {
+      this.trackShare('copy');
       this.linkCopiedTimer = setTimeout(
         () => this.copyState.set('idle'),
         LINK_COPIED_RESET_MS
       );
     }
+  }
+
+  /** `method`: `native`, `copy` or the id of the share target. */
+  protected trackShare(method: string): void {
+    this.analytics.track('share', { method, content_type: this.subject() });
   }
 
   /** A click's mouseup would undo a selection made on focus. */

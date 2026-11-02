@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { GameAds } from './game-ads.service';
+import { GameAds } from './ads/game-ads.service';
 import { GAME_SUPPORT } from './game-support';
 import { LEGAL_NOTICE_PATH, PRIVACY_POLICY_PATH } from './legal-links';
 

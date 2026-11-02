@@ -79,6 +79,27 @@ describe('JoystickComponent', () => {
     expect(component['knob']()).toEqual({ x: RIM, y: 0 });
   });
 
+  it('drags the base along behind a finger pulled past the rim', () => {
+    down(1, 40, 60);
+
+    move(1, 40 + RIM + 30, 60);
+
+    expect(component['origin']()).toEqual({ x: 70, y: 60 });
+    expect(component['knob']()).toEqual({ x: RIM, y: 0 });
+    expect(steered).toEqual([{ x: 1, y: 0 }]);
+  });
+
+  it('turns at once once the base followed the finger', () => {
+    down(1, 40, 60);
+    move(1, 40 + RIM + 30, 60);
+
+    // Back by one radius: the knob sits in the middle of the moved base.
+    move(1, 40 + 30, 60);
+
+    expect(component['knob']()).toEqual({ x: 0, y: 0 });
+    expect(steered.at(-1)).toEqual({ x: 0, y: 0 });
+  });
+
   it('ignores a mouse button that would open a menu', () => {
     component['onPointerDown'](pointer(1, 40, 60, 2));
 
@@ -119,6 +140,70 @@ describe('JoystickComponent', () => {
 
     expect(steered).toEqual([]);
     expect(component['origin']()).toEqual({ x: 40, y: 60 });
+  });
+
+  it('pinches the camera with a second finger where it zooms', () => {
+    const zoomed: number[] = [];
+    component.zoom.subscribe((factor) => zoomed.push(factor));
+    fixture.componentRef.setInput('zooms', true);
+    down(1, 40, 60);
+    move(1, 40 + RIM, 60);
+
+    // The first finger rests at x 84, so the gap is 56 pixels: it doubles
+    // to 112, then shrinks back to 56.
+    down(2, 140, 60);
+    move(2, 196, 60);
+    move(1, 140, 60);
+
+    expect(steered).toEqual([
+      { x: 1, y: 0 },
+      { x: 0, y: 0 },
+    ]);
+    expect(component['origin']()).toBeNull();
+    expect(zoomed).toEqual([2, 0.5]);
+  });
+
+  it('takes no finger for the stick until both of a pinch are lifted', () => {
+    fixture.componentRef.setInput('zooms', true);
+    down(1, 40, 60);
+    down(2, 140, 60);
+
+    up(1);
+    down(3, 40, 60);
+    expect(component['origin']()).toBeNull();
+
+    up(2);
+    up(3);
+    down(4, 40, 60);
+    expect(component['origin']()).toEqual({ x: 40, y: 60 });
+  });
+
+  it('takes a lifted finger of a pinch back when another lands', () => {
+    const zoomed: number[] = [];
+    component.zoom.subscribe((factor) => zoomed.push(factor));
+    fixture.componentRef.setInput('zooms', true);
+    down(1, 40, 60);
+    down(2, 140, 60);
+
+    up(2);
+    down(3, 240, 60);
+    move(3, 440, 60);
+
+    expect(component['origin']()).toBeNull();
+    expect(zoomed).toEqual([2]);
+  });
+
+  it('stops zooming once the camera no longer zooms', () => {
+    const zoomed: number[] = [];
+    component.zoom.subscribe((factor) => zoomed.push(factor));
+    fixture.componentRef.setInput('zooms', true);
+    down(1, 40, 60);
+    down(2, 140, 60);
+
+    fixture.componentRef.setInput('zooms', false);
+    move(2, 240, 60);
+
+    expect(zoomed).toEqual([]);
   });
 
   it('keeps the stick for the finger that lifts elsewhere', () => {

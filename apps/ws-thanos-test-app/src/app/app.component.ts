@@ -48,6 +48,8 @@ export class AppComponent {
   public readonly crumble = signal<WsThanosCrumble>('shards');
   public readonly animationLength = signal(6000);
   public readonly particleAcceleration = signal(30);
+  /** clockwise from up, 45 blows to the top right */
+  public readonly windDirection = signal(45);
   public readonly maxParticleCount = signal(3_000_000);
   public readonly sound = signal(true);
   public readonly soundVolume = signal(0.5);
@@ -57,6 +59,7 @@ export class AppComponent {
       crumble: this.crumble(),
       animationLength: this.animationLength(),
       particleAcceleration: this.particleAcceleration(),
+      windDirection: this.windDirection(),
       maxParticleCount: this.maxParticleCount(),
       sound: this.sound(),
       soundVolume: this.soundVolume(),

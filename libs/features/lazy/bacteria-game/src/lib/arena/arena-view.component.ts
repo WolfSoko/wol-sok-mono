@@ -18,25 +18,14 @@ import { FramePacer } from '../state/frame-pacer';
 import { TICK_MS, TickClock } from '../state/fixed-tick';
 import { Rect } from '../state/maps';
 import { Zone } from '../state/zones';
-import { ArenaFrame, ArenaPainter } from './arena-painter';
+import {
+  ArenaFrame,
+  ArenaLayout,
+  ArenaPainter,
+  layoutKey,
+} from './arena-painter';
 import { ArenaTheme } from './arena-theme';
 import { createArenaPainter } from './create-arena-painter';
-
-/**
- * What an arena view is laid out for. Another layout gets a fresh canvas -
- * and with it a painter and a rendering context of its own.
- */
-export interface ArenaLayout {
-  /** The arena in cells. */
-  width: number;
-  height: number;
-  /** Canvas pixels per arena cell, with all of the arena in view. */
-  scale: number;
-  /** Pixels per cell of the layers painted once, such as the zones. */
-  detail: number;
-  /** Arena cells per base cell - the crosshairs are as big on every grid. */
-  unit: number;
-}
 
 /** What a frame shows of the war - the view adds the rest. */
 export type ArenaContent = Omit<
@@ -65,20 +54,12 @@ export type ArenaPainterFactory = (
   layout: ArenaLayout
 ) => ArenaPainter | null;
 
-/** The painter factory - WebGL2 where the browser can, Canvas 2D otherwise. */
+/** The painter factory - see {@link createArenaPainter}. */
 export const ARENA_PAINTER_FACTORY = new InjectionToken<ArenaPainterFactory>(
   'ARENA_PAINTER_FACTORY',
   {
     providedIn: 'root',
-    factory: () => (canvas, layout) =>
-      createArenaPainter(
-        canvas,
-        layout.width,
-        layout.height,
-        layout.scale,
-        layout.detail,
-        layout.unit
-      ),
+    factory: () => createArenaPainter,
   }
 );
 
@@ -153,10 +134,7 @@ export class ArenaViewComponent implements OnDestroy {
    * One key per layout: the canvas is rendered for the key, so another
    * layout hands the painter a fresh canvas and context.
    */
-  protected readonly canvasKey = computed(() => {
-    const { width, height, scale, detail, unit } = this.layout();
-    return [`${width}x${height}@${scale}:${detail}:${unit}`];
-  });
+  protected readonly canvasKey = computed(() => [layoutKey(this.layout())]);
 
   /** What of the arena the last frame showed. */
   private lastView: Rect | null = null;

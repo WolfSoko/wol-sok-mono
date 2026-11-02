@@ -27,10 +27,36 @@ const google = (uid: string, name: string): FakeUser => ({
   providerData: [{ providerId: 'google.com', displayName: name }],
 });
 
-/** Just enough of Firebase Auth: one listener, users set by hand. */
+/** What a user's ID token says, as `getIdTokenResult` reads it. */
+interface FakeToken {
+  claims: Record<string, unknown>;
+  signInProvider: string | null;
+}
+
+/** The token of the owner: the claim, a verified email, a Google sign-in. */
+const OWNER_TOKEN: FakeToken = {
+  claims: { admin: true, email_verified: true },
+  signInProvider: 'google.com',
+};
+
+/** Just enough of Firebase Auth: one listener each, users set by hand. */
 class FakeAuth {
   public currentUser: FakeUser | null = null;
   private listener: (user: FakeUser | null) => void = () => undefined;
+  private tokenListener: (user: FakeUser | null) => void = () => undefined;
+  /** The token each user holds, by uid - a plain Google one by default. */
+  public tokens = new Map<string, FakeToken>();
+  public getIdTokenResult = jest.fn(
+    async (user: FakeUser, forceRefresh?: boolean): Promise<FakeToken> => {
+      void forceRefresh;
+      return (
+        this.tokens.get(user.uid) ?? {
+          claims: { email_verified: true },
+          signInProvider: 'google.com',
+        }
+      );
+    }
+  );
   private guests = 0;
   /** The error code guest sign-ins fail with, null while they work. */
   public refusesGuests: string | null = null;
@@ -46,6 +72,13 @@ class FakeAuth {
       queueMicrotask(() => listener(this.currentUser));
       return () => undefined;
     },
+    onIdTokenChanged: (_auth: unknown, listener: (user: unknown) => void) => {
+      this.tokenListener = listener;
+      queueMicrotask(() => listener(this.currentUser));
+      return () => undefined;
+    },
+    getIdTokenResult: (user: FakeUser, forceRefresh?: boolean) =>
+      this.getIdTokenResult(user, forceRefresh),
     signInAnonymously: async () => {
       if (this.refusesGuests !== null) {
         throw { code: this.refusesGuests };
@@ -67,6 +100,12 @@ class FakeAuth {
   public become(user: FakeUser | null): void {
     this.currentUser = user;
     this.listener(user);
+    this.tokenListener(user);
+  }
+
+  /** A new token for the same user - a refresh, or a claim granted. */
+  public newToken(): void {
+    this.tokenListener(this.currentUser);
   }
 
   public connection(): FirebaseConnection {
@@ -190,5 +229,74 @@ describe('FirebaseGameAccount', () => {
     expect(await account.signIn()).toBe('cancelled');
     expect(await account.signIn()).toBe('failed');
     expect(switches).toHaveLength(1);
+  });
+
+  describe('owner', () => {
+    it('is nobody as a guest, without reading the token', () => {
+      expect(account.owner()).toBe(false);
+      expect(auth.getIdTokenResult).not.toHaveBeenCalled();
+    });
+
+    it('is the Google account with the admin claim and a verified email, read from the token it holds', async () => {
+      auth.tokens.set('ada', OWNER_TOKEN);
+
+      auth.become(google('ada', 'Ada'));
+      await settle();
+
+      expect(account.owner()).toBe(true);
+      // No forced refresh: the admin area checks with a fresh one.
+      expect(auth.getIdTokenResult).toHaveBeenLastCalledWith(
+        expect.objectContaining({ uid: 'ada' }),
+        undefined
+      );
+    });
+
+    it.each<[string, FakeToken]>([
+      ['no admin claim', { ...OWNER_TOKEN, claims: { email_verified: true } }],
+      [
+        'an admin claim that is not true',
+        { ...OWNER_TOKEN, claims: { admin: 'yes', email_verified: true } },
+      ],
+      [
+        'an unverified email',
+        { ...OWNER_TOKEN, claims: { admin: true, email_verified: false } },
+      ],
+      [
+        'a sign-in other than Google',
+        { ...OWNER_TOKEN, signInProvider: 'password' },
+      ],
+    ])('is nobody with %s', async (_case, token) => {
+      auth.tokens.set('ada', token);
+
+      auth.become(google('ada', 'Ada'));
+      await settle();
+
+      expect(account.owner()).toBe(false);
+    });
+
+    it('follows the token: a claim granted shows with the next one, and goes with a sign-out', async () => {
+      auth.become(google('ada', 'Ada'));
+      await settle();
+      expect(account.owner()).toBe(false);
+
+      auth.tokens.set('ada', OWNER_TOKEN);
+      auth.newToken();
+      await settle();
+      expect(account.owner()).toBe(true);
+
+      await account.signOut();
+      await settle();
+      expect(account.owner()).toBe(false);
+    });
+
+    it('is nobody when the token cannot be read', async () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      auth.getIdTokenResult.mockRejectedValueOnce(new Error('offline'));
+
+      auth.become(google('ada', 'Ada'));
+      await settle();
+
+      expect(account.owner()).toBe(false);
+    });
   });
 });

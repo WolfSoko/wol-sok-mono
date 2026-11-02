@@ -1,5 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import {
+  provideRecordingAnalytics,
+  RecordingAnalytics,
+} from '@wolsok/shared-analytics/testing';
+import {
   DEFAULT_EFFECTS_VOLUME,
   DEFAULT_MUSIC_VOLUME,
   GameSettingsService,
@@ -14,7 +18,6 @@ import { LEVELS, playableOnline } from './state/levels';
 import { MATCH_LEVELS } from './state/match-level';
 import { DeviceStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
-import { DETERMINISTIC_SIMULATION } from './state/simulation';
 
 describe('GameSettingsService', () => {
   beforeEach(() => {
@@ -76,6 +79,27 @@ describe('GameSettingsService', () => {
       mode: 'two-players',
       levelId: LEVELS[1].id,
     });
+  });
+
+  it('counts the settings the player changes, not the volumes or a value set again', () => {
+    const analytics = new RecordingAnalytics();
+    TestBed.configureTestingModule({
+      providers: [provideRecordingAnalytics(analytics)],
+    });
+    const service = TestBed.inject(GameSettingsService);
+
+    service.setSound(false);
+    // the same again: no change
+    service.setSound(false);
+    service.setLanguage('de');
+    service.setLanguage(null);
+    service.setMusicVolume(40);
+
+    expect(analytics.tracked('setting_changed')).toEqual([
+      { setting: 'sound', value: false },
+      { setting: 'language', value: 'de' },
+      { setting: 'language', value: 'auto' },
+    ]);
   });
 
   it('remembers the frame rate badge', () => {
@@ -336,6 +360,17 @@ describe('GameSettingsService', () => {
     expect(TestBed.inject(GameSettingsService).ambience()).toBe(false);
   });
 
+  it('paints with fewer pixels where the device is slow, unless told otherwise', () => {
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.adaptiveQuality()).toBe(true);
+
+    service.setAdaptiveQuality(false);
+
+    expect(stored()).toMatchObject({ adaptiveQuality: false });
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).adaptiveQuality()).toBe(false);
+  });
+
   it('remembers how the arena vaporizes', () => {
     const service = TestBed.inject(GameSettingsService);
 
@@ -407,26 +442,48 @@ describe('GameSettingsService', () => {
       return TestBed.inject(GameSettingsService);
     }
 
-    it('keeps matches, records local ones as the rollout switch says, and hands the stored choice to the game', () => {
-      const byDefault = DETERMINISTIC_SIMULATION;
+    it('keeps and records matches by default, and hands the stored choice to the game', () => {
       const service = createWith({
         saveMatches: false,
-        recordLocal: !byDefault,
+        recordLocal: false,
       });
       const prefs = jest.spyOn(
         TestBed.inject(GameStateService),
         'setReplayPrefs'
       );
       expect(service.saveMatches()).toBe(true);
-      expect(service.recordLocal()).toBe(byDefault);
+      expect(service.recordLocal()).toBe(true);
 
       storage.flush();
 
       expect(service.saveMatches()).toBe(false);
-      expect(service.recordLocal()).toBe(!byDefault);
+      expect(service.recordLocal()).toBe(false);
       expect(prefs).toHaveBeenLastCalledWith({
-        recordLocal: !byDefault,
+        recordLocal: false,
         saveMatches: false,
+      });
+    });
+
+    it('says when the stored settings are read, and restores the hint on saved matches', () => {
+      const service = createWith({ recordingHintShown: true });
+      expect(service.loaded()).toBe(false);
+      expect(service.recordingHintShown()).toBe(false);
+
+      storage.flush();
+
+      expect(service.loaded()).toBe(true);
+      expect(service.recordingHintShown()).toBe(true);
+    });
+
+    it('remembers that the hint on saved matches was shown', () => {
+      const service = createWith({});
+      storage.flush();
+
+      service.markRecordingHintShown();
+      storage.flush();
+
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        recordingHintShown: true,
       });
     });
 
@@ -445,10 +502,10 @@ describe('GameSettingsService', () => {
       expect(service.saveMatches()).toBe(false);
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         saveMatches: false,
-        recordLocal: DETERMINISTIC_SIMULATION,
+        recordLocal: true,
       });
       expect(prefs).toHaveBeenLastCalledWith({
-        recordLocal: DETERMINISTIC_SIMULATION,
+        recordLocal: true,
         saveMatches: false,
       });
     });

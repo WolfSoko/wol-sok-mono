@@ -1,12 +1,14 @@
+import { Cells } from '../state/cells';
 import { gameBalance } from '../state/game-balance';
 import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
-import { BACTERIA_LOOKS, BacteriaLook } from '../state/skins';
+import { BACTERIA_LOOKS, BOSS_LOOK, ColonyLook } from '../state/skins';
 import { COLONY_COLORS } from '../state/colony-colors';
 
 import {
   cellBubble,
   CELLS,
+  colonyBounds,
   colonyDensity,
   createImageDataFromBacterias,
   hatchPattern,
@@ -44,11 +46,11 @@ function slime(
   bacterias: Bacteria[],
   shimmerTimeSec: number | null = null,
   view: Rect = WHOLE,
-  look: Exclude<BacteriaLook, 'pixels'> = 'slime',
+  look: Exclude<ColonyLook, 'pixels'> = 'slime',
   timeSec = 0
 ) {
   const target: Point = { x: 30, y: 10 };
-  const region = slimeRegion(bacterias, view, WIDTH, HEIGHT);
+  const region = slimeRegion(Cells.of(bacterias), view, WIDTH, HEIGHT);
   const cells = WIDTH * HEIGHT;
   const density = new Float32Array(cells);
   const heat = new Float32Array(cells);
@@ -58,7 +60,7 @@ function slime(
     new Float32Array(cells),
     WIDTH,
     HEIGHT,
-    bacterias,
+    Cells.of(bacterias),
     gameBalance,
     region ?? undefined
   );
@@ -88,7 +90,7 @@ function slime(
 }
 
 /** Every look's pixels inside and outside a colony. */
-function withLook(look: Exclude<BacteriaLook, 'pixels'>) {
+function withLook(look: Exclude<ColonyLook, 'pixels'>) {
   const data = slime(blob(20, 10, 6), null, WHOLE, look);
   return { data, inside: pixelsWithin(data, 20, 10, 4) };
 }
@@ -159,7 +161,9 @@ describe('paintSlime', () => {
   it('paints nothing of a colony out of view', () => {
     const view: Rect = { x: 20, y: 0, width: 20, height: 20 };
 
-    expect(slimeRegion(blob(5, 10, 3), view, WIDTH, HEIGHT)).toBeNull();
+    expect(
+      slimeRegion(Cells.of(blob(5, 10, 3)), view, WIDTH, HEIGHT)
+    ).toBeNull();
   });
 
   it('lights a boosted colony up', () => {
@@ -191,9 +195,12 @@ describe('paintCells', () => {
   });
 });
 
-/** Every look drawn from the density, the slime with its own tests above. */
-const DENSITY_LOOKS = BACTERIA_LOOKS.filter(
-  (look): look is Exclude<BacteriaLook, 'pixels' | 'slime'> =>
+/**
+ * Every look drawn from the density - the skins, the slime with its own
+ * tests above, and the boss's.
+ */
+const DENSITY_LOOKS = [...BACTERIA_LOOKS, BOSS_LOOK].filter(
+  (look): look is Exclude<ColonyLook, 'pixels' | 'slime'> =>
     look !== 'pixels' && look !== 'slime'
 );
 
@@ -327,8 +334,8 @@ describe('slimeRegion', () => {
     const view: Rect = { x: 10, y: 0, width: 10, height: HEIGHT };
     const bacterias = blob(20, 10, 8);
 
-    const slime = slimeRegion(bacterias, view, WIDTH, HEIGHT);
-    const lattice = slimeRegion(bacterias, view, WIDTH, HEIGHT, 3);
+    const slime = slimeRegion(Cells.of(bacterias), view, WIDTH, HEIGHT);
+    const lattice = slimeRegion(Cells.of(bacterias), view, WIDTH, HEIGHT, 3);
 
     expect(slime).not.toBeNull();
     // Past the view's right edge, where the colony goes on.
@@ -372,9 +379,12 @@ describe('createImageDataFromBacterias', () => {
   it('draws one pixel per bacterium in the colour of the colony', () => {
     const data = new Uint8ClampedArray(WIDTH * HEIGHT * 4);
 
-    createImageDataFromBacterias(data, WIDTH, ORANGE, [
-      { x: 3, y: 2, energy: gameBalance.maxEnergy },
-    ]);
+    createImageDataFromBacterias(
+      data,
+      WIDTH,
+      ORANGE,
+      Cells.of([{ x: 3, y: 2, energy: gameBalance.maxEnergy }])
+    );
 
     const index = (2 * WIDTH + 3) * 4;
     expect(Array.from(data.slice(index, index + 4))).toEqual(ORANGE);
@@ -408,5 +418,23 @@ describe('shimmerAt', () => {
     const fine = { timeSec: 0.4, target: { x: 100, y: 60 }, unit: 2 };
 
     expect(shimmerAt(170, 60, fine)).toBeCloseTo(shimmerAt(85, 30, base));
+  });
+});
+
+describe('colonyBounds', () => {
+  it('reports the box of cells a colony covers', () => {
+    expect(
+      colonyBounds(
+        Cells.of([
+          { x: 1, y: 1, energy: 1 },
+          { x: 5, y: 2, energy: 1 },
+          { x: 3, y: 3, energy: 1 },
+        ])
+      )
+    ).toEqual({ minX: 1, minY: 1, maxX: 5, maxY: 3 });
+  });
+
+  it('reports nothing for an empty colony', () => {
+    expect(colonyBounds(Cells.of([]))).toBeNull();
   });
 });

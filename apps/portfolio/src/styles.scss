@@ -1,19 +1,29 @@
 @use '@angular/material' as mat;
+@use '@angular/cdk' as cdk;
+@import '@fontsource/bricolage-grotesque/latin-800.css';
 
+// The theme follows the system through `color-scheme: light dark` and
+// `light-dark()`; a choice (ThemeService, and the script in index.html
+// before the first paint) pins it with `data-theme` on the root element.
 :root {
-  color-scheme: dark;
-  --bg: #0b0f14;
-  --surface: #121821;
-  --line: #243041;
-  --text: #eef2f7;
-  --muted: #9aa8b8;
-  --accent-warm: #ff7a1a;
-  --accent-cool: #3b82f6;
+  color-scheme: light dark;
+  --bg: light-dark(#f6f8fb, #0b0f14);
+  --surface: light-dark(#ffffff, #121821);
+  --surface-2: light-dark(#eef2f7, #1a2230);
+  --line: light-dark(#dbe2ec, #243041);
+  --text: light-dark(#0f172a, #eef2f7);
+  --muted: light-dark(#526174, #9aa8b8);
+  --accent-warm: light-dark(#e8640a, #ff7a1a);
+  --accent-cool: light-dark(#2563eb, #3b82f6);
+  --accent-glow: light-dark(rgb(232 100 10 / 10%), rgb(255 122 26 / 14%));
+  --cool-glow: light-dark(rgb(37 99 235 / 8%), rgb(59 130 246 / 12%));
+  --shadow: light-dark(rgb(15 23 42 / 8%), rgb(0 0 0 / 35%));
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
 
   @include mat.theme(
     (
       color: (
-        theme-type: dark,
+        theme-type: color-scheme,
         primary: mat.$orange-palette,
       ),
       typography: system-ui,
@@ -22,8 +32,18 @@
   );
 }
 
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
 html {
   scroll-behavior: smooth;
+  // Decorations may drift past the right edge; the page never scrolls sideways.
+  overflow-x: clip;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -35,12 +55,8 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(
-      ellipse at 85% -10%,
-      rgb(255 122 26 / 12%),
-      transparent 45%
-    ),
-    radial-gradient(ellipse at 0% 30%, rgb(59 130 246 / 10%), transparent 40%),
+    radial-gradient(ellipse at 85% -10%, var(--accent-glow), transparent 45%),
+    radial-gradient(ellipse at 0% 30%, var(--cool-glow), transparent 40%),
     var(--bg);
   color: var(--text);
   font-family:
@@ -49,9 +65,99 @@ body {
     'Segoe UI',
     Roboto,
     sans-serif;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
-a:focus-visible {
+h1,
+h2 {
+  font-family: var(--font-display);
+}
+
+@include cdk.a11y-visually-hidden();
+
+// The chrome every page section shares: the heading, its intro line, and
+// the hero's eyebrow and lead.
+main section {
+  padding: 3rem 0;
+}
+
+main h2 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.intro {
+  margin: 0.5rem 0 1.75rem;
+  color: var(--muted);
+
+  a {
+    color: var(--text);
+  }
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  color: var(--accent-warm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.lead {
+  max-width: 60ch;
+  margin: 1.5rem 0 0;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+a:focus-visible,
+button:focus-visible {
   outline: 2px solid var(--accent-warm);
   outline-offset: 3px;
+}
+
+// Reveal on scroll (RevealDirective): the class only arrives in the browser,
+// so the prerendered page and crawlers see everything at once.
+.reveal {
+  opacity: 0;
+  transform: translateY(1.25rem);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0s);
+
+  &.reveal-in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// The hero's numbers count up with a CSS animation of this property.
+@property --num {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: true;
 }

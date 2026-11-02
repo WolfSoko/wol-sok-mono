@@ -11,7 +11,8 @@ export class PostTracker {
   private readonly failedSignal = signal(false);
   public readonly failed: Signal<boolean> = this.failedSignal.asReadonly();
 
-  public async post(send: () => Promise<PostReceipt>): Promise<void> {
+  /** True when the message went out (the backend may still refuse it). */
+  public async post(send: () => Promise<PostReceipt>): Promise<boolean> {
     this.failedSignal.set(false);
     try {
       const { saved } = await send();
@@ -19,9 +20,11 @@ export class PostTracker {
         console.error('Chat message was rejected', error);
         this.failedSignal.set(true);
       });
+      return true;
     } catch (error) {
       console.error('Could not post chat message', error);
       this.failedSignal.set(true);
+      return false;
     }
   }
 }

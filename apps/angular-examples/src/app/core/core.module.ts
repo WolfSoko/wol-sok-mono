@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { AkitaNgRouterStoreModule } from '@datorama/akita-ng-router-store';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import { createErrorHandler, TraceService } from '@sentry/angular-ivy';
+import { createErrorHandler, TraceService } from '@sentry/angular';
 import { AuthModule } from '@wolsok/feat-api-auth';
 import { provideDataAccess } from '@wolsok/shared-data-access';
 import { Angulartics2Module } from 'angulartics2';

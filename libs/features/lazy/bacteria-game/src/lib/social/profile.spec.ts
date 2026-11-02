@@ -45,9 +45,35 @@ describe('profile', () => {
       motto: 'Divide!',
       avatar: { kind: 'preset', id: 3 },
       shareStatus: false,
+      publicName: false,
+      boardOptOut: false,
+      galleryOptOut: false,
     });
     const damaged = parseProfile({ name: 42, avatar: 'cat' }, 'u');
     expect(damaged).toEqual({ ...defaultProfile('u'), motto: '' });
+  });
+
+  it('keeps the name private and the player on the boards by default', () => {
+    expect(defaultProfile('u')).toMatchObject({
+      publicName: false,
+      boardOptOut: false,
+      galleryOptOut: false,
+    });
+    expect(
+      parseProfile(
+        {
+          name: 'Ada',
+          publicName: true,
+          boardOptOut: true,
+          galleryOptOut: 'yes',
+        },
+        'u'
+      )
+    ).toMatchObject({
+      publicName: true,
+      boardOptOut: true,
+      galleryOptOut: false,
+    });
   });
 
   it('takes only avatars the rules take', () => {

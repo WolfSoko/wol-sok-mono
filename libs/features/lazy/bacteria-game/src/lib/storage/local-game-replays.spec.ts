@@ -110,6 +110,19 @@ describe('LocalGameReplays', () => {
     expect(parseLocalReplays(storage.stored(LOCAL_REPLAYS_KEY))).toEqual([]);
   });
 
+  it('deletes a replay on "Delete" (forget) too', async () => {
+    const id = (await replays.submit({ replay: REPLAY, hint: 1 })) as string;
+    await settle();
+
+    const forgotten = (await replays.sendCommand('forget', id)) as string;
+    await settle();
+
+    expect(await firstValueFrom(replays.watchCommand(forgotten))).toEqual({
+      ok: true,
+    });
+    expect(parseLocalReplays(storage.stored(LOCAL_REPLAYS_KEY))).toEqual([]);
+  });
+
   it('reads a damaged entry as nothing kept', () => {
     expect(parseLocalReplays('nonsense')).toEqual([]);
     expect(parseLocalReplays([{ id: 'x' }, null])).toEqual([]);
