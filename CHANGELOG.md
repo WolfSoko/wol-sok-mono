@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.136.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.1...v74.136.2) (2026-11-02)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** share one quad per GL context ([#2742](https://github.com/WolfSoko/wol-sok-mono/issues/2742)) ([f1d0758](https://github.com/WolfSoko/wol-sok-mono/commit/f1d07584e752f0ea7e66453b4ab5df4076e216e8))
+
 ## [74.136.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.0...v74.136.1) (2026-11-02)
 
 ### Bug Fixes
