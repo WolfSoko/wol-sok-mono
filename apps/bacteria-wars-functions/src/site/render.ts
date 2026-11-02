@@ -5,7 +5,7 @@ import {
 } from '@wolsok/feat-lazy-bac-game/engine';
 import type { PublicSeat } from '../gallery/publish';
 import { escapeHtml, href, text } from './html';
-import { gameJsonLd, page, pageUrl } from './layout';
+import { GAME_JSONLD_ID, gameJsonLd, page, pageUrl } from './layout';
 import {
   colorName,
   endingName,
@@ -71,8 +71,14 @@ function rgb(colorId: string): string {
   return `rgb(${getColonyColor(colorId).rgb.join(',')})`;
 }
 
-/** The day a replay was picked, in the page's language. */
+/**
+ * The day a replay was picked, in the page's language - nothing where it
+ * is unknown (`featuredAt` 0).
+ */
 function pickedOn(lang: Lang, featuredAt: number): string {
+  if (featuredAt <= 0) {
+    return '';
+  }
   const date = new Date(featuredAt);
   const shown = new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', {
     dateStyle: 'medium',
@@ -118,7 +124,8 @@ function playButton(lang: Lang): string {
  * `/replays`: the matches of the day, newest first, and a link to the
  * older ones (`older`, the next page's cursor) where there are more.
  * `before` is the cursor this page starts after, null for the first:
- * each page is its own canonical URL, so every one of them is indexed.
+ * each page is its own canonical URL, so every one of them is indexed -
+ * but one past the last replay, which only a typed cursor reaches.
  */
 export function galleryPage(
   lang: Lang,
@@ -144,6 +151,7 @@ export function galleryPage(
       path: '/replays',
       params,
       type: 'website',
+      noindex: before !== null && views.length === 0,
       jsonLd: {
         '@context': 'https://schema.org',
         '@graph': [
@@ -153,7 +161,7 @@ export function galleryPage(
             url: pageUrl('/replays', lang, params),
             inLanguage: lang,
             description: t(lang, 'galleryIntro'),
-            about: { '@id': gameJsonLd(lang)['@id'] },
+            about: { '@id': GAME_JSONLD_ID },
             mainEntity: {
               '@type': 'ItemList',
               itemListElement: views.map((view, i) => ({
@@ -224,8 +232,10 @@ export function replayPage(lang: Lang, view: ReplayView): string {
             url: pageUrl(path, lang),
             inLanguage: lang,
             description,
-            datePublished: new Date(view.featuredAt).toISOString(),
-            about: { '@id': gameJsonLd(lang)['@id'] },
+            ...(view.featuredAt > 0
+              ? { datePublished: new Date(view.featuredAt).toISOString() }
+              : {}),
+            about: { '@id': GAME_JSONLD_ID },
             breadcrumb: {
               '@type': 'BreadcrumbList',
               itemListElement: [
@@ -248,7 +258,7 @@ export function replayPage(lang: Lang, view: ReplayView): string {
         ],
       },
     },
-    `<p class="meta"><a href="${href('/replays', lang)}">${text(lang, 'gallery')}</a> › ${pickedOn(lang, view.featuredAt)}</p>
+    `<p class="meta"><a href="${href('/replays', lang)}">${text(lang, 'gallery')}</a>${view.featuredAt > 0 ? ` › ${pickedOn(lang, view.featuredAt)}` : ''}</p>
 <h1>${text(lang, 'matchOfTheDay')}: ${escapeHtml(level)}</h1>
 <p class="players lead">${playersLine(lang, view)}</p>
 <p class="result lead">${escapeHtml(result(lang, view, true))}</p>
@@ -260,18 +270,22 @@ ${timeline(lang, view)}
   );
 }
 
-/** A short page for an answer without content, never indexed. */
+/**
+ * A short page for an answer without content, never indexed. `path` is
+ * the page asked for, which its language switch leads to.
+ */
 export function statusPage(
   status: 404 | 410,
   lang: Lang,
-  word: 'notFound' | 'removed'
+  word: 'notFound' | 'removed',
+  path = '/replays'
 ): string {
   return page(
     lang,
     {
       title: `${status} | ${t(lang, 'site')}`,
       description: t(lang, word),
-      path: '/replays',
+      path,
       type: 'website',
       noindex: true,
     },

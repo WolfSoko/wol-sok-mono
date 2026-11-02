@@ -324,7 +324,8 @@ describe('MainMenuComponent support tile', () => {
       render('web').querySelectorAll<HTMLAnchorElement>('a.tile')
     ).find((a) => a.textContent?.includes('Matches of the day'));
 
-    expect(link?.href).toBe('https://bacteria-wars.wolsok.de/replays');
+    // On whatever origin serves the game: a preview or a dev server too.
+    expect(link?.getAttribute('href')).toBe('/replays');
     expect(link?.target).toBe('');
   });
 

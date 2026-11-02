@@ -119,4 +119,22 @@ describe('AccountChipComponent', () => {
         ?.getAttribute('src')
     ).toBe(upload);
   });
+
+  it('keeps the Google photo for a player who never saved a profile', async () => {
+    const fixture = await render(
+      {
+        guest: false,
+        name: 'Ada',
+        photoUrl: 'https://lh3.googleusercontent.com/ada',
+      },
+      new FakeGameSocial()
+    );
+    await fixture.whenStable();
+
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.querySelector('feat-lazy-bac-game-avatar')).toBeNull();
+    expect(element.querySelector('img.photo')?.getAttribute('src')).toBe(
+      'https://lh3.googleusercontent.com/ada'
+    );
+  });
 });

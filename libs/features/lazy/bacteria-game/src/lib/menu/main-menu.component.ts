@@ -23,7 +23,7 @@ import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { ACHIEVEMENTS } from '../state/achievements';
 import { CampaignSummary } from '../state/campaign';
 import { MISSIONS } from '../state/training';
-import { galleryUrl } from '../replays/watch-links';
+import { galleryPath, galleryUrl } from '../replays/watch-links';
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { Level, LEVELS } from '../state/levels';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
@@ -177,10 +177,13 @@ export class MainMenuComponent {
   private readonly i18n = inject(I18nService);
   /**
    * The matches of the day (`publicSite`), in the game's language: a page
-   * of the game's own site, opened in a tab of its own from the shell.
+   * of the site the game runs on, or of the game's site in a tab of its
+   * own from the shell.
    */
   protected readonly galleryUrl = computed(() =>
-    galleryUrl(this.i18n.language())
+    this.onSite
+      ? galleryPath(this.i18n.language())
+      : galleryUrl(this.i18n.language())
   );
   /** The game's language, for the tiles' hyphenation. */
   protected readonly language = this.i18n.language;

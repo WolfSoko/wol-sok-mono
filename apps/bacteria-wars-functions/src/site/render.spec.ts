@@ -117,6 +117,14 @@ describe('galleryPage', () => {
     );
   });
 
+  it('keeps a page past the last replay out of the index', () => {
+    const { head } = parts(
+      galleryPage('en', [], null, '1_AbCdEfGhIjKlMnOpQrSt')
+    );
+    expect(head).toContain('<meta name="robots" content="noindex">');
+    expect(parts(galleryPage('en', [])).head).toContain('index, follow');
+  });
+
   it('is indexed, with a preview image and the replays as a list', () => {
     const { head } = parts(galleryPage('en', [view()]));
     expect(head).toContain(
@@ -159,12 +167,26 @@ describe('galleryPage', () => {
   });
 });
 
+describe('a replay without its pick date', () => {
+  it('names no date rather than 1970', () => {
+    const page = replayPage('en', view({ featuredAt: 0 }));
+    expect(page).not.toContain('1970');
+    expect(page).not.toContain('datePublished');
+  });
+});
+
 describe('statusPage', () => {
   it('is never indexed and has no canonical', () => {
     const { head, body } = parts(statusPage(410, 'de', 'removed'));
     expect(head).toContain('<meta name="robots" content="noindex">');
     expect(head).not.toContain('canonical');
     expect(body).toContain('Dieses Match ist nicht mehr öffentlich.');
+  });
+
+  it('switches language on the page asked for', () => {
+    expect(
+      statusPage(410, 'de', 'removed', '/replays/AbCdEfGhIjKlMnOpQrSt')
+    ).toContain('href="/replays/AbCdEfGhIjKlMnOpQrSt" hreflang="en"');
   });
 });
 

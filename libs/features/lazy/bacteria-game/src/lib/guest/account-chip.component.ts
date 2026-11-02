@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   inject,
   output,
 } from '@angular/core';
@@ -10,7 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { AvatarComponent } from '../social/avatar.component';
-import { Avatar } from '../social/profile';
 import { SocialService } from '../social/social.service';
 import { GameAccount } from '../storage/game-account';
 import { SignIn } from './sign-in.service';
@@ -19,7 +17,8 @@ import { SignIn } from './sign-in.service';
  * Who plays, at the top of the main menu: for a guest the way to sign in
  * with Google, for a signed-in player their picture, which opens the
  * profile: the avatar of their profile (an upload, a drawn bacterium or
- * their Google photo, as they chose), the Google photo until it is read. Nothing without the cloud or before the account is known.
+ * their Google photo, as they chose), the Google photo until it is read
+ * and for a player without a stored profile. Nothing without the cloud or before the account is known.
  */
 @Component({
   selector: 'feat-lazy-bac-game-account-chip',
@@ -117,8 +116,9 @@ export class AccountChipComponent {
   protected readonly signIn = inject(SignIn);
   private readonly social = inject(SocialService);
 
-  /** The avatar the player chose - null until their profile is read. */
-  protected readonly avatar = computed((): Avatar | null =>
-    this.social.profileLoaded() ? (this.social.profile()?.avatar ?? null) : null
-  );
+  /**
+   * The avatar of the player's stored profile - null until it is read and
+   * for a player who never saved one, who keeps their Google photo.
+   */
+  protected readonly avatar = this.social.storedAvatar;
 }

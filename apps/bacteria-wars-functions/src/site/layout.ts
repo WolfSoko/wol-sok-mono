@@ -99,7 +99,10 @@ export interface Head {
   params?: Readonly<Record<string, string>>;
   type: 'website' | 'article';
   jsonLd?: unknown;
-  /** True for an answer without content (404, 410): never indexed. */
+  /**
+   * True for a page that must not be indexed: an answer without content
+   * (404, 410) or a gallery page past the last replay.
+   */
   noindex?: boolean;
 }
 
@@ -175,11 +178,14 @@ function indexed(head: Head, lang: Lang): string {
 ${head.jsonLd === undefined ? '' : `<script type="application/ld+json">${scriptJson(head.jsonLd)}</script>\n`}`;
 }
 
+/** The JSON-LD id of the game, which every page is `about`. */
+export const GAME_JSONLD_ID = `${GAME_SITE_URL}/#game`;
+
 /** The JSON-LD of the game itself, which every page is about. */
 export function gameJsonLd(lang: Lang): Record<string, unknown> {
   return {
     '@type': 'VideoGame',
-    '@id': `${GAME_SITE_URL}/#game`,
+    '@id': GAME_JSONLD_ID,
     name: 'Bacteria Wars',
     url: `${GAME_SITE_URL}/`,
     image: PREVIEW_IMAGE,

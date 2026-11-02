@@ -13,13 +13,21 @@ export const WATCH_PATH = 'watch';
 export const WATCH_PARAM = 'publicId';
 
 /**
- * A page `publicSite` renders, in a language and absolute: the gallery
- * without a `publicId`, a replay's own page with one. The game links to
- * them from its own site, the Play Store app and the shell alike.
- * `publicSite` speaks German with `?lang=de`, English otherwise.
+ * A page `publicSite` renders, in a language: the gallery without a
+ * `publicId`, a replay's own page with one. `publicSite` speaks German
+ * with `?lang=de`, English otherwise. The path alone, for a link on the
+ * game's own site, wherever that is served (a preview, a dev server).
  */
-export function galleryUrl(language: Language, publicId?: string): string {
+export function galleryPath(language: Language, publicId?: string): string {
   const path = publicId === undefined ? '' : `/${publicId}`;
   const query = language === 'de' ? '?lang=de' : '';
-  return `${GAME_SITE_URL}/${GALLERY_PATH}${path}${query}`;
+  return `/${GALLERY_PATH}${path}${query}`;
+}
+
+/**
+ * The same page, absolute: for the shell and for canonical links, which
+ * name the game's site.
+ */
+export function galleryUrl(language: Language, publicId?: string): string {
+  return `${GAME_SITE_URL}${galleryPath(language, publicId)}`;
 }
