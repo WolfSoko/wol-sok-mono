@@ -12,6 +12,7 @@ import {
   replayPage,
   type ReplayView,
   sitemap,
+  SITEMAP_REPLAYS,
   statusPage,
 } from './render';
 import type { Lang } from './texts';
@@ -25,8 +26,6 @@ export interface SiteResponse {
 
 /** The replays the gallery page shows at most. */
 const GALLERY_SIZE = 60;
-/** The replays the sitemap lists at most: a sitemap's limit. */
-const SITEMAP_SIZE = 50_000;
 
 /**
  * Hosting's CDN keeps a page two minutes and a browser one more, so a
@@ -83,7 +82,7 @@ export async function handleSite(
   if (id === 'sitemap.xml' && file === undefined) {
     const listed = await stillUp(db)
       .select('featuredAt')
-      .limit(SITEMAP_SIZE)
+      .limit(SITEMAP_REPLAYS)
       .get();
     return {
       status: 200,

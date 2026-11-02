@@ -5,6 +5,7 @@ import {
   replayPage,
   type ReplayView,
   sitemap,
+  SITEMAP_REPLAYS,
   statusPage,
 } from './render';
 
@@ -168,6 +169,16 @@ describe('statusPage', () => {
 });
 
 describe('sitemap', () => {
+  it('stays within the 50,000 URLs a sitemap may hold', () => {
+    const many = Array.from({ length: SITEMAP_REPLAYS + 5 }, (_, i) => ({
+      id: `r${i}`,
+      featuredAt: 0,
+    }));
+    const urls = sitemap(many).match(/<url>/g) ?? [];
+    expect(urls.length).toBeLessThanOrEqual(50_000);
+    expect(urls.length).toBe(2 * (SITEMAP_REPLAYS + 1));
+  });
+
   it('lists the gallery and each replay, in both languages', () => {
     const xml = sitemap([view()]);
     expect(xml).toContain(`<loc>${SITE_URL}/replays</loc>`);

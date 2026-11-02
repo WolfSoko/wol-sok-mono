@@ -280,33 +280,42 @@ export function statusPage(
   );
 }
 
+/** The languages every page of the sitemap is listed in. */
+const SITEMAP_LANGS = ['en', 'de'] as const;
+/** The URLs one sitemap may hold (sitemaps.org). */
+const SITEMAP_URL_LIMIT = 50_000;
 /**
- * `/replays/sitemap.xml`: the gallery and every public replay, in English
- * and German, each naming the other as its language alternate.
+ * The replays one sitemap lists at most: each one, like the gallery,
+ * takes a URL per language. Some 70 years of daily picks.
+ */
+export const SITEMAP_REPLAYS =
+  Math.floor(SITEMAP_URL_LIMIT / SITEMAP_LANGS.length) - 1;
+
+/**
+ * `/replays/sitemap.xml`: the gallery and the newest public replays (at
+ * most `SITEMAP_REPLAYS`), in English and German, each naming the other as
+ * its language alternate.
  */
 export function sitemap(
   replays: readonly { id: string; featuredAt: number }[]
 ): string {
-  const langs = ['en', 'de'] as const;
   const urls = (path: string, lastmod?: number) => {
-    const alternates = langs
-      .map(
-        (lang) =>
-          `<xhtml:link rel="alternate" hreflang="${lang}" href="${escapeHtml(pageUrl(path, lang))}"/>`
-      )
-      .join('');
+    const alternates = SITEMAP_LANGS.map(
+      (lang) =>
+        `<xhtml:link rel="alternate" hreflang="${lang}" href="${escapeHtml(pageUrl(path, lang))}"/>`
+    ).join('');
     const modified =
       lastmod === undefined
         ? ''
         : `<lastmod>${new Date(lastmod).toISOString().slice(0, 10)}</lastmod>`;
-    return langs.map(
+    return SITEMAP_LANGS.map(
       (lang) =>
         `<url><loc>${escapeHtml(pageUrl(path, lang))}</loc>${modified}${alternates}</url>`
     );
   };
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${[urls('/replays'), ...replays.map((r) => urls(`/replays/${r.id}`, r.featuredAt))].flat().join('\n')}
+${[urls('/replays'), ...replays.slice(0, SITEMAP_REPLAYS).map((r) => urls(`/replays/${r.id}`, r.featuredAt))].flat().join('\n')}
 </urlset>
 `;
 }
