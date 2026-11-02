@@ -19,29 +19,33 @@ const project = JSON.parse(
   };
 };
 
+/**
+ * The file names a glob of the assets names: its `{a,b}` alternatives
+ * spelt out, the only pattern the font entries use.
+ */
+function expand(glob: string): string[] {
+  const group = /\{([^{}]*)\}/.exec(glob);
+  if (group === null) {
+    return [glob];
+  }
+  const [whole, list = ''] = group;
+  return list
+    .split(',')
+    .flatMap((choice) => expand(glob.replace(whole, choice)));
+}
+
 describe("the pages' faces", () => {
   it('are copied into /fonts by the game build, from files that exist', () => {
-    const copied = project.targets.esbuild.options.assets
-      .filter((asset) => typeof asset !== 'string' && asset.output === 'fonts')
-      .flatMap((asset) => {
-        if (typeof asset === 'string') {
-          return [];
-        }
-        const pattern = new RegExp(
-          `^${asset.glob
-            .replace(/[.]/g, '\\.')
-            .replace(
-              /\{([^}]+)\}/g,
-              (_, list: string) => `(${list.split(',').join('|')})`
-            )}$`
-        );
-        return SITE_FONTS.filter(({ file }) => pattern.test(file)).map(
-          ({ file }) => join(ROOT, asset.input, file)
-        );
-      });
-    expect(copied).toHaveLength(SITE_FONTS.length);
-    for (const file of copied) {
-      expect(() => readFileSync(file)).not.toThrow();
+    const copied = project.targets.esbuild.options.assets.flatMap((asset) =>
+      typeof asset === 'string' || asset.output !== 'fonts'
+        ? []
+        : expand(asset.glob).map((file) => ({ file, input: asset.input }))
+    );
+    expect(copied.map(({ file }) => file).sort()).toEqual(
+      SITE_FONTS.map(({ file }) => file).sort()
+    );
+    for (const { file, input } of copied) {
+      expect(() => readFileSync(join(ROOT, input, file))).not.toThrow();
     }
   });
 });
