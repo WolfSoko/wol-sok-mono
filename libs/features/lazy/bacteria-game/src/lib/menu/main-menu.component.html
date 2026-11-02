@@ -92,10 +92,6 @@
           }}</span>
         }
       </button>
-      <button type="button" class="tile" (click)="open.emit('profile')">
-        <mat-icon class="gold">person</mat-icon>
-        {{ "profile.title" | t }}
-      </button>
       <button
         type="button"
         class="tile evolve"
@@ -111,6 +107,11 @@
             "evolution.menu.ready" | t: { count }
           }}</span>
         }
+      </button>
+      <!-- Progress, then other players and matches, then the game itself. -->
+      <button type="button" class="tile" (click)="open.emit('profile')">
+        <mat-icon class="gold">person</mat-icon>
+        {{ "profile.title" | t }}
       </button>
       @if (cloudAvailable()) {
         <button type="button" class="tile" (click)="open.emit('friends')">
@@ -135,6 +136,15 @@
         <mat-icon>smart_display</mat-icon>
         {{ "replay.matches.title" | t }}
       </button>
+      <a
+        class="tile"
+        [href]="galleryUrl()"
+        [attr.target]="onSite ? null : '_blank'"
+        [attr.rel]="onSite ? null : 'noopener'"
+      >
+        <mat-icon class="gold">video_library</mat-icon>
+        {{ "menu.gallery" | t }}
+      </a>
       <button type="button" class="tile" (click)="open.emit('settings')">
         <mat-icon>tune</mat-icon>
         {{ "settings.title" | t }}
@@ -144,7 +154,12 @@
         {{ "help.title" | t }}
       </button>
       @if (support.url(); as url) {
-        <a class="tile" [href]="url" target="_blank" rel="noopener noreferrer">
+        <a
+          class="tile support"
+          [href]="url"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <mat-icon class="gold">local_cafe</mat-icon>
           {{ "support.tile" | t }}
         </a>

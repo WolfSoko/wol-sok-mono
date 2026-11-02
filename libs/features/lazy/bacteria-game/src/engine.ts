@@ -239,7 +239,14 @@ export {
 } from './lib/state/levels';
 export type { LadderLevelId, Level } from './lib/state/levels';
 export { parseGeneratedId } from './lib/state/level-generator/generate-level';
-export { GAME_SITE_URL } from './lib/support/legal-links';
+export {
+  GAME_SITE_URL,
+  LEGAL_NOTICE_PATH,
+  PRIVACY_POLICY_PATH,
+} from './lib/support/legal-links';
+// The public replay pages' URL rule and locales, shared with `publicSite`.
+export { inLang } from './lib/replays/watch-links';
+export { type Language, LOCALES } from './lib/i18n/language';
 export { matchRecord, medalFor } from './lib/state/medallions';
 export type { MedalTier } from './lib/state/medallions';
 export { DEFAULT_MODE, isGameMode } from './lib/state/game-mode';
