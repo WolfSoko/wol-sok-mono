@@ -96,10 +96,6 @@
           }}</span>
         }
       </button>
-      <button type="button" class="tile" (click)="open.emit('profile')">
-        <mat-icon class="gold">person</mat-icon>
-        {{ "profile.title" | t }}
-      </button>
       <button
         type="button"
         class="tile evolve"
@@ -115,6 +111,11 @@
             "evolution.menu.ready" | t: { count }
           }}</span>
         }
+      </button>
+      <!-- Progress, then other players and matches, then the game itself. -->
+      <button type="button" class="tile" (click)="open.emit('profile')">
+        <mat-icon class="gold">person</mat-icon>
+        {{ "profile.title" | t }}
       </button>
       @if (cloudAvailable()) {
         <button type="button" class="tile" (click)="open.emit('friends')">

@@ -215,6 +215,21 @@ describe('MainMenuComponent', () => {
     expect(tile()).toBeUndefined();
   });
 
+  it('groups its tiles: progress, then players and matches, then the game', () => {
+    const names = Array.from(host.querySelectorAll('.tiles .tile')).map(
+      (tile) => tile.textContent?.replace(/\s+/g, ' ').trim() ?? ''
+    );
+    expect(names).toEqual([
+      expect.stringContaining('My Colony'),
+      expect.stringContaining('Evolution'),
+      expect.stringContaining('Profile'),
+      expect.stringContaining('My matches'),
+      expect.stringContaining('Matches of the day'),
+      expect.stringContaining('Settings'),
+      expect.stringContaining('How to play'),
+    ]);
+  });
+
   it('always offers My matches, with or without the cloud', () => {
     const open = jest.fn();
     fixture.componentInstance.open.subscribe(open);
