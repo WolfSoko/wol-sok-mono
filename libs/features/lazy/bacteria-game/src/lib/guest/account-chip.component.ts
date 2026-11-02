@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   output,
 } from '@angular/core';
@@ -8,17 +9,27 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { AvatarComponent } from '../social/avatar.component';
+import { Avatar } from '../social/profile';
+import { SocialService } from '../social/social.service';
 import { GameAccount } from '../storage/game-account';
 import { SignIn } from './sign-in.service';
 
 /**
  * Who plays, at the top of the main menu: for a guest the way to sign in
  * with Google, for a signed-in player their picture, which opens the
- * profile. Nothing without the cloud or before the account is known.
+ * profile: the avatar of their profile (an upload, a drawn bacterium or
+ * their Google photo, as they chose), the Google photo until it is read. Nothing without the cloud or before the account is known.
  */
 @Component({
   selector: 'feat-lazy-bac-game-account-chip',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe],
+  imports: [
+    AvatarComponent,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+    TranslatePipe,
+  ],
   template: `
     @if (account.cloud) {
       @if (account.profile(); as player) {
@@ -46,7 +57,9 @@ import { SignIn } from './sign-in.service';
             [matTooltip]="label"
             (click)="profile.emit()"
           >
-            @if (player.photoUrl; as photo) {
+            @if (avatar(); as chosen) {
+              <feat-lazy-bac-game-avatar [avatar]="chosen" [size]="28" />
+            } @else if (player.photoUrl; as photo) {
               <img
                 class="photo"
                 [src]="photo"
@@ -102,4 +115,10 @@ export class AccountChipComponent {
 
   protected readonly account = inject(GameAccount);
   protected readonly signIn = inject(SignIn);
+  private readonly social = inject(SocialService);
+
+  /** The avatar the player chose - null until their profile is read. */
+  protected readonly avatar = computed((): Avatar | null =>
+    this.social.profileLoaded() ? (this.social.profile()?.avatar ?? null) : null
+  );
 }
