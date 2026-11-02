@@ -495,12 +495,10 @@ export class GpuSimulation extends GridSimulation {
       gl.deleteTexture(target.texture);
     }
     gl.deleteTexture(resources.mask);
-    // A read back still in flight writes into its buffer: deleting that
-    // under the GPU is what some drivers get wrong, so it finishes first -
-    // once, as the match ends.
-    if (resources.pendingReadbacks.some((readback) => readback.sync != null)) {
-      gl.finish();
-    }
+    // A read back may still be in flight, also one a new match marked stale
+    // and freed unread: deleting its buffer under the GPU is what some
+    // drivers get wrong, so the GPU finishes first - once, as the match ends.
+    gl.finish();
     for (const readback of [
       ...resources.freeReadbacks,
       ...resources.pendingReadbacks,
