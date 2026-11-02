@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.136.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.0...v74.136.1) (2026-11-02)
+
+### Bug Fixes
+
+* **deps:** patch the four critical npm audit findings ([#2621](https://github.com/WolfSoko/wol-sok-mono/issues/2621)) ([6e671a1](https://github.com/WolfSoko/wol-sok-mono/commit/6e671a12dbbfa2b3c687e241a26558cb109f7c3b)), closes [#2424](https://github.com/WolfSoko/wol-sok-mono/issues/2424) [#2428](https://github.com/WolfSoko/wol-sok-mono/issues/2428) [#2531](https://github.com/WolfSoko/wol-sok-mono/issues/2531) [#2558](https://github.com/WolfSoko/wol-sok-mono/issues/2558), references [#2425](https://github.com/WolfSoko/wol-sok-mono/issues/2425) [#2429](https://github.com/WolfSoko/wol-sok-mono/issues/2429) [#2533](https://github.com/WolfSoko/wol-sok-mono/issues/2533) [#2560](https://github.com/WolfSoko/wol-sok-mono/issues/2560)
+* **deps:** update @angular/fire to 22.0.0-rc.0 and firebase to 12 ([#2739](https://github.com/WolfSoko/wol-sok-mono/issues/2739)) ([77ea0c3](https://github.com/WolfSoko/wol-sok-mono/commit/77ea0c3f3e5d1ab6c2a63a43b4bf4346b9cd9cf6))
+
+### Chore
+
+* **release:** publish ([2484352](https://github.com/WolfSoko/wol-sok-mono/commit/24843520d4c2fe6b1b1f64c53f34b492d439ca2c))
+
 ## [74.136.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.135.0...v74.136.0) (2026-11-02)
 
 ### Features
