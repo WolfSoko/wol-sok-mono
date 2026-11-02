@@ -4,22 +4,28 @@ import { BacteriaGamePo } from './pos/bacteria-game.po';
 
 /**
  * Frame time in the browser (ADR 0014, gate 3), report-only: a local match
- * against the computer on the CPU simulation, played for {@link MATCH_SEC}
- * seconds from a fixed seed, and what it cost - the frame interval, long
+ * against the computer on the CPU simulation, played for up to
+ * {@link MATCH_SEC} seconds, and what it cost - the frame interval, long
  * tasks and the engine's time per tick through the game's probe
- * (`state/perf-probe.ts`). It fails only when nothing was measured.
+ * (`state/perf-probe.ts`). It fails only when too little was measured.
  * Headless Chromium on a shared CI worker with a software renderer says
  * little about a phone: the numbers show trends and catch a regression by
  * an order of magnitude.
  */
 
+/** Seconds of the match measured at most. */
+const MATCH_SEC = 20;
 /**
- * Seconds of the match measured. Nobody steers your colony, and the computer
- * eats it at about 21 s of match time: 20 s ended the match on the faster CI
- * workers. At 15 s it still holds over a thousand cells.
+ * Seconds of the match measured at least. Nobody steers your colony, and
+ * the computer eats it somewhere between 14 and 21 s of match time: the
+ * seed of the match is drawn from `Math.random` after however many calls the
+ * menu's frames made, so the match is another one on every run.
  */
-const MATCH_SEC = 15;
-/** The seed `Math.random` is pinned to, so the match plays alike each run. */
+const MIN_MATCH_SEC = 8;
+/**
+ * The seed `Math.random` is pinned to. The menu's frames draw from it too,
+ * so the match still differs from run to run - see {@link MIN_MATCH_SEC}.
+ */
 const SEED = 20261027;
 /** A task this long is a long task to the browser. */
 const LONG_TASK_MS = 50;
@@ -86,10 +92,12 @@ test('should report the frame time of a match on the CPU simulation', async ({
     (scope['__bacteriaPerfProbe'] as unknown as { tickMs: number[] }).tickMs =
       [];
   });
-  await page.waitForTimeout(MATCH_SEC * 1000);
-  // A match over sooner would leave the frames measured past its end and
-  // the ticks short of them: the numbers would not compare.
-  await expect(po.winner).toHaveCount(0);
+  // Until the match is over or MATCH_SEC have passed, whichever comes
+  // first: frames past its end would measure the result screen.
+  const startedAt = Date.now();
+  await po.winner.waitFor({ timeout: MATCH_SEC * 1000 }).catch(() => undefined);
+  const measuredSec = (Date.now() - startedAt) / 1000;
+  expect(measuredSec).toBeGreaterThanOrEqual(MIN_MATCH_SEC);
 
   const numbers = await page.evaluate((): PageNumbers => {
     const scope = window as unknown as Record<string, unknown>;
@@ -133,9 +141,9 @@ test('should report the frame time of a match on the CPU simulation', async ({
     };
   });
 
-  const report = summarise(numbers);
+  const report = summarise(numbers, measuredSec);
   const table = [
-    `Frame time (ADR 0014, gate 3): ${MATCH_SEC} s of a match on the CPU simulation, seed ${SEED}`,
+    `Frame time (ADR 0014, gate 3): ${report.matchSec.toFixed(1)} s of a match on the CPU simulation, seed ${SEED}`,
     `Calibration loop in the page: ${report.calibrationMs.toFixed(1)} ms`,
     '',
     '| Measure | p50 | p95 | max | ratio p50 / calibration |',
@@ -157,7 +165,7 @@ test('should report the frame time of a match on the CPU simulation', async ({
     contentType: 'application/json',
   });
 
-  // Report-only: it fails only when there was nothing to measure.
+  // Report-only: it fails only when there was too little to measure.
   expect(report.ticks).toBeGreaterThan(0);
   expect(report.frames).toBeGreaterThan(0);
 });
@@ -177,10 +185,10 @@ function spread(values: number[]): Spread {
   return { p50: at(0.5), p95: at(0.95), max: sorted.at(-1) ?? 0 };
 }
 
-function summarise(numbers: PageNumbers) {
+function summarise(numbers: PageNumbers, matchSec: number) {
   return {
     seed: SEED,
-    matchSec: MATCH_SEC,
+    matchSec,
     calibrationMs: numbers.calibrationMs,
     frames: numbers.frameMs.length,
     frame: spread(numbers.frameMs),
