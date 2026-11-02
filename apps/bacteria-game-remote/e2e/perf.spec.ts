@@ -13,8 +13,12 @@ import { BacteriaGamePo } from './pos/bacteria-game.po';
  * an order of magnitude.
  */
 
-/** Seconds of the match measured. */
-const MATCH_SEC = 20;
+/**
+ * Seconds of the match measured. Nobody steers your colony, and the computer
+ * eats it at about 21 s of match time: 20 s ended the match on the faster CI
+ * workers. At 15 s it still holds over a thousand cells.
+ */
+const MATCH_SEC = 15;
 /** The seed `Math.random` is pinned to, so the match plays alike each run. */
 const SEED = 20261027;
 /** A task this long is a long task to the browser. */
