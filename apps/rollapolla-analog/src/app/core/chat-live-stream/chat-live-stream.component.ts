@@ -15,6 +15,7 @@ import { ChatMessage } from '../../../shared/chat.message';
 import { AccountPort } from '../../ports/account.port';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
 import { AccountAction } from '../account/account-action';
+import { injectRollaPollaAnalytics } from '../analytics/rollapolla-analytics';
 import { ChatMessageFormComponent } from './chat-message-form.component';
 import { PostTracker } from './post-tracker';
 import { MessagesListComponent } from './messages-list.component';
@@ -74,6 +75,7 @@ export class ChatLiveStreamComponent {
 
   private readonly chatMessagesRepo = inject(ChatMessagesRepoPort);
   private readonly accountPort = inject(AccountPort);
+  private readonly analytics = injectRollaPollaAnalytics();
 
   chatMessages: Signal<ChatMessage[] | undefined> =
     this.chatMessagesRepo.getChatMessages();
@@ -88,10 +90,13 @@ export class ChatLiveStreamComponent {
   private readonly posts = new PostTracker();
   protected readonly postFailed = this.posts.failed;
 
-  protected addChatMessage(message: string): Promise<void> {
-    return this.posts.post(() =>
+  protected async addChatMessage(message: string): Promise<void> {
+    const sent = await this.posts.post(() =>
       this.chatMessagesRepo.addChatMessage(message.trim())
     );
+    if (sent) {
+      this.analytics.track('chat_message_sent', { chat: 'lobby' });
+    }
   }
 
   protected signIn(): Promise<void> {

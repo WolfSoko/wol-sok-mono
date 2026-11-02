@@ -1,8 +1,7 @@
 <div
   class="base"
   [class.idle]="origin() === null"
-  [style.left.px]="origin()?.x"
-  [style.top.px]="origin()?.y"
+  [style.transform]="baseTransform()"
   [style.width.px]="radius * 2"
   [style.height.px]="radius * 2"
 >

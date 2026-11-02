@@ -3,8 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import { GAME_SITE_URL, PRIVACY_POLICY_PATH } from '@wolsok/feat-lazy-bac-game';
 import { setUpLegalPage } from '../legal/legal-page';
-import { SITE_OWNER } from '../legal/site-owner';
-import { SiteOwnerComponent } from '../legal/site-owner.component';
+import { SITE_OWNER, SiteOwnerComponent } from '@wolsok/shared-legal';
 
 /**
  * The legal notice (Impressum) the game's site owes under § 5 DDG, in
@@ -19,7 +18,7 @@ import { SiteOwnerComponent } from '../legal/site-owner.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImpressumComponent {
-  /** For the email in the contact paragraphs. */
+  /** For the email in the contact paragraphs and the VAT ID. */
   protected readonly owner = SITE_OWNER;
   protected readonly siteUrl = GAME_SITE_URL;
   protected readonly siteHost = new URL(GAME_SITE_URL).host;

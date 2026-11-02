@@ -2,8 +2,8 @@
   wsThanos
   #thanos="thanos"
   class="thanos-container"
-  [wsThanosOptions]="{ crumble: crumble() }"
-  (wsThanosComplete)="nextCrumble()"
+  [wsThanosOptions]="{ crumble: crumble(), windDirection: windDirection() }"
+  (wsThanosComplete)="nextSnap()"
 >
   <mat-card
     appearance="raised"

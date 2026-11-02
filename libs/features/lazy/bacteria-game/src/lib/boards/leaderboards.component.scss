@@ -1,0 +1,38 @@
+@use '../menu/screen';
+
+:host {
+  @include screen.screen;
+}
+
+.boards {
+  @include screen.panel;
+
+  width: 100%;
+  max-width: 44rem;
+  padding: 1rem 1.25rem 1.25rem;
+
+  --mat-tab-header-inactive-label-text-color: var(--bw-soft);
+  --mat-tab-header-active-label-text-color: var(--bw-text);
+  --mat-tab-header-active-focus-label-text-color: var(--bw-text);
+  --mat-tab-header-active-hover-label-text-color: var(--bw-text);
+  --mdc-tab-indicator-active-indicator-color: var(--bw-gold);
+  --mat-tab-header-active-ripple-color: var(--bw-gold);
+}
+
+.intro {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--bw-soft);
+}
+
+.daily {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  padding-top: 1rem;
+}
+
+.next {
+  color: var(--bw-muted);
+}

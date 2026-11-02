@@ -9,6 +9,7 @@ import { MatCardModule } from '@angular/material/card';
 import { catchError, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { isOpen, Poll } from '../../../shared/poll';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
+import { injectRollaPollaAnalytics } from '../analytics/rollapolla-analytics';
 import { ChatMessageFormComponent } from '../chat-live-stream/chat-message-form.component';
 import { PostTracker } from '../chat-live-stream/post-tracker';
 import { MessagesListComponent } from '../chat-live-stream/messages-list.component';
@@ -82,6 +83,7 @@ export class PollChatComponent {
   public readonly poll = input.required<Poll>();
 
   private readonly chatRepo = inject(ChatMessagesRepoPort);
+  private readonly analytics = injectRollaPollaAnalytics();
 
   protected readonly minLength: number =
     ChatMessagesRepoPort.MIN_MESSAGE_LENGTH;
@@ -108,9 +110,12 @@ export class PollChatComponent {
     )
   );
 
-  protected post(message: string): Promise<void> {
-    return this.posts.post(() =>
+  protected async post(message: string): Promise<void> {
+    const sent = await this.posts.post(() =>
       this.chatRepo.addPollChatMessage(this.poll(), message.trim())
     );
+    if (sent) {
+      this.analytics.track('chat_message_sent', { chat: 'poll' });
+    }
   }
 }

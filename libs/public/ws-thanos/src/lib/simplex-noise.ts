@@ -138,22 +138,22 @@ export class SimplexNoise {
     const n0 =
       t0 < 0
         ? 0.0
-        : Math.pow(t0, 4) * this.dot(SimplexNoise.GRAD3D[gi0], [x0, y0, z0]);
+        : Math.pow(t0, 4) * dot3(SimplexNoise.GRAD3D[gi0], x0, y0, z0);
     const t1 = 0.5 - x1 * x1 - y1 * y1 - z1 * z1;
     const n1 =
       t1 < 0
         ? 0.0
-        : Math.pow(t1, 4) * this.dot(SimplexNoise.GRAD3D[gi1], [x1, y1, z1]);
+        : Math.pow(t1, 4) * dot3(SimplexNoise.GRAD3D[gi1], x1, y1, z1);
     const t2 = 0.5 - x2 * x2 - y2 * y2 - z2 * z2;
     const n2 =
       t2 < 0
         ? 0.0
-        : Math.pow(t2, 4) * this.dot(SimplexNoise.GRAD3D[gi2], [x2, y2, z2]);
+        : Math.pow(t2, 4) * dot3(SimplexNoise.GRAD3D[gi2], x2, y2, z2);
     const t3 = 0.5 - x3 * x3 - y3 * y3 - z3 * z3;
     const n3 =
       t3 < 0
         ? 0.0
-        : Math.pow(t3, 4) * this.dot(SimplexNoise.GRAD3D[gi3], [x3, y3, z3]);
+        : Math.pow(t3, 4) * dot3(SimplexNoise.GRAD3D[gi3], x3, y3, z3);
 
     // Add contributions from each corner to get the final noise value.
     // The result is scaled to stay just inside [-1,1]
@@ -185,6 +185,11 @@ export class SimplexNoise {
     this.memScale3D[memIndex] = result;
     return result;
   }
+}
+
+/** like dot() without allocating, raw3D runs many times in a row */
+function dot3(g: number[], x: number, y: number, z: number): number {
+  return g[0] * x + g[1] * y + g[2] * z;
 }
 
 function createOptionsWithDefaults(options?: Partial<SimplexNoiseOptions>) {

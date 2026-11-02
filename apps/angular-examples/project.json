@@ -75,8 +75,21 @@
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "2.48mb",
-              "maximumError": "2.9mb"
+              "baseline": "136kb",
+              "maximumWarning": "10%",
+              "maximumError": "20%"
+            },
+            {
+              "type": "anyScript",
+              "baseline": "335kb",
+              "maximumWarning": "5%",
+              "maximumError": "10%"
+            },
+            {
+              "type": "allScript",
+              "baseline": "488kb",
+              "maximumWarning": "5%",
+              "maximumError": "10%"
             },
             {
               "type": "anyComponentStyle",
@@ -198,6 +211,22 @@
         "tsConfig": "apps/angular-examples/tsconfig.spec.json"
       },
       "dependsOn": ["generate-version"]
+    },
+    "lighthouse": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "cache": true,
+      "parallelism": false,
+      "inputs": [
+        "production",
+        "^production",
+        "{projectRoot}/lighthouse.json",
+        "{workspaceRoot}/tools/perf/lighthouse-run.mjs",
+        "{workspaceRoot}/tools/perf/serve-firebase-function.mjs"
+      ],
+      "options": {
+        "command": "node tools/perf/lighthouse-run.mjs angular-examples"
+      }
     }
   }
 }

@@ -5,7 +5,7 @@ const ORANGE = [255, 100, 20];
 
 describe('previewColony', () => {
   it('fills most of the arena, weaker towards the right', () => {
-    const colony = previewColony(SKIN_PREVIEW);
+    const colony = previewColony(SKIN_PREVIEW).toBacteria();
     const cells = SKIN_PREVIEW.width * SKIN_PREVIEW.height;
     const left = colony.find((b) => b.x === 16 && b.y === 18);
     const right = colony.find((b) => b.x === 48 && b.y === 18);
@@ -16,8 +16,8 @@ describe('previewColony', () => {
   });
 
   it('lives with the time: it moves, and stays within the arena', () => {
-    const still = previewColony(SKIN_PREVIEW);
-    const later = previewColony(SKIN_PREVIEW, 1.5);
+    const still = previewColony(SKIN_PREVIEW).toBacteria();
+    const later = previewColony(SKIN_PREVIEW, 1.5).toBacteria();
     const cells = SKIN_PREVIEW.width * SKIN_PREVIEW.height;
     const key = ({ x, y }: { x: number; y: number }) => `${x}:${y}`;
     const before = new Set(still.map(key));

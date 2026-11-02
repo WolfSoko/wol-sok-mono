@@ -1,4 +1,4 @@
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, EMPTY, map, Observable, switchMap } from 'rxjs';
 import type { Profile } from '../lib/social/profile';
 import type { PickedMatchLevel } from '../lib/state/match-level';
 import type {
@@ -22,12 +22,24 @@ export class FakeGameSocial implements GameSocial {
   private clock = 1000;
   private tokens = 0;
 
+  /** False holds the profiles back, as before the server answered. */
+  public readonly profilesAnswer = new BehaviorSubject(true);
+
   public watchProfile(uid: string): Observable<unknown> {
-    return this.watch(`profiles/${uid}`);
+    return this.profilesAnswer.pipe(
+      switchMap((answer) => (answer ? this.watch(`profiles/${uid}`) : EMPTY))
+    );
   }
 
-  public async saveProfile(uid: string, profile: Profile): Promise<void> {
-    this.put(`profiles/${uid}`, { ...profile });
+  public async saveProfile(
+    uid: string,
+    profile: Partial<Profile>
+  ): Promise<void> {
+    const stored = this.docs.value.get(`profiles/${uid}`);
+    this.put(`profiles/${uid}`, {
+      ...(typeof stored === 'object' ? stored : {}),
+      ...profile,
+    });
   }
 
   public watchFriends(uid: string): Observable<string[]> {
@@ -216,7 +228,11 @@ export class FakeGamePresence implements GamePresence {
     ReadonlyMap<string, PresenceState>
   >(new Map());
 
+  /** Every player whose status was asked for, in order. */
+  public readonly watched: string[] = [];
+
   public watch(uid: string): Observable<PresenceState | null> {
+    this.watched.push(uid);
     return this.states.pipe(map((states) => states.get(uid) ?? null));
   }
 

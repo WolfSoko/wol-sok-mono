@@ -1,6 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, Observable, Subject } from 'rxjs';
+import { injectGameAnalytics } from '../analytics/game-analytics';
 import type { GameText } from '../i18n/game-text';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
@@ -84,6 +85,7 @@ export const IDLE_LOBBY: OnlineLobby = {
 @Injectable({ providedIn: 'root' })
 export class OnlineMatchService {
   private readonly cloud = inject(GameCloud);
+  private readonly analytics = injectGameAnalytics();
   /** Who plays at this device - their uid goes to the other one. */
   private readonly playerId = toSignal(
     inject(GameAccount).players.pipe(map(({ playerId }) => playerId)),
@@ -164,9 +166,15 @@ export class OnlineMatchService {
       this.update({ phase: 'connecting' });
       await link.accept(answer);
       await link.opened;
-      // Taken: nobody else may join it.
-      room.close();
+      // Taken: nobody else may join it, and the stub names who played -
+      // what the functions bind the room's replays to (ADR 0011). The
+      // match goes on without it; its uploads would be refused.
       this.room = null;
+      if (attempt === this.attempt) {
+        room.take().catch((error: unknown) => {
+          console.warn('The room could not be taken', error);
+        });
+      }
     } catch (error) {
       this.fail(attempt, error);
     }
@@ -412,6 +420,10 @@ export class OnlineMatchService {
     this.greeted = true;
     this.update({ phase: 'connected', notice: null });
     const { role, auto } = this.lobby();
+    this.analytics.track('online_connected', {
+      role: role ?? 'none',
+      matchmade: auto,
+    });
     this.events.next({
       type: 'connected',
       seat: role === 'host' ? 0 : 1,
@@ -439,6 +451,7 @@ export class OnlineMatchService {
     if (attempt !== this.attempt) {
       return;
     }
+    this.analytics.track('online_ended', { reason, notice: notice.key });
     this.restart({ notice }, reason);
   }
 

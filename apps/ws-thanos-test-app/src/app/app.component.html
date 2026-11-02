@@ -165,6 +165,18 @@
           />
         </label>
         <label>
+          Wind: {{ windDirection() }}°
+          <input
+            type="range"
+            min="0"
+            max="345"
+            step="15"
+            data-testid="playground-wind"
+            [value]="windDirection()"
+            (input)="windDirection.set(+$any($event.target).value)"
+          />
+        </label>
+        <label>
           Max particles
           <select
             data-testid="playground-particles"

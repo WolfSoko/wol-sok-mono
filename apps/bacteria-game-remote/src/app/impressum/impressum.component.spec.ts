@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { SITE_OWNER } from '../legal/site-owner';
+import { SITE_OWNER } from '@wolsok/shared-legal';
 import { ImpressumComponent } from './impressum.component';
 
 describe('ImpressumComponent', () => {
@@ -36,6 +36,9 @@ describe('ImpressumComponent', () => {
     expect(owners[0]).toContain(SITE_OWNER.name);
     expect(owners[0]).toContain(`E-Mail: ${SITE_OWNER.email}`);
     expect(owners[1]).toContain(`Email: ${SITE_OWNER.email}`);
+    for (const article of page.querySelectorAll('article')) {
+      expect(article.textContent).toContain(SITE_OWNER.vatId);
+    }
     expect(page.querySelector('a[href="/privacy"]')).not.toBeNull();
     expect(TestBed.inject(Title).getTitle()).toBe('Impressum - Bacteria Wars');
   });

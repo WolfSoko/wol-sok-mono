@@ -14,7 +14,7 @@
         <button
           mat-stroked-button
           type="button"
-          [disabled]="busy()"
+          [disabled]="busy() || moderation.banned()"
           (click)="accept(caller.uid)"
         >
           {{ "social.friends.accept" | t }}
@@ -60,7 +60,7 @@
           <button
             mat-stroked-button
             type="button"
-            [disabled]="!canChallenge()"
+            [disabled]="!canChallenge() || moderation.banned()"
             (click)="challenge.emit(friend)"
           >
             <mat-icon>sports_kabaddi</mat-icon>
@@ -87,12 +87,15 @@
   mat-button
   type="button"
   class="invite"
-  [disabled]="busy()"
+  [disabled]="busy() || moderation.banned()"
   (click)="invite()"
 >
   <mat-icon>person_add</mat-icon>
   {{ "social.friends.invite" | t }}
 </button>
+@if (moderation.banned()) {
+  <p class="note" role="status">{{ "moderation.friends" | t }}</p>
+}
 @if (note(); as note) {
   <p class="note" role="status">
     {{ note.key === null ? note.link : (note.key | t) }}

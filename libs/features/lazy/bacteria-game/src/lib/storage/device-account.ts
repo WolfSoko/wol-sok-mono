@@ -11,6 +11,8 @@ import type {
 export class DeviceAccount implements GameAccount {
   public readonly cloud = false;
   public readonly profile = signal<PlayerProfile | null>(null).asReadonly();
+  /** Nobody owns a game without a project. */
+  public readonly owner = signal(false).asReadonly();
   public readonly players: Observable<PlayerSwitch> = of({
     playerId: 'device',
     adoptsGuest: false,

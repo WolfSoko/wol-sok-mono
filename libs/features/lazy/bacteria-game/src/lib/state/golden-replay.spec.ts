@@ -20,6 +20,8 @@ const GOLDEN: Readonly<
   5: { checksum: 196095863, ticks: 360, sizes: [1579, 1687], outcome: null },
   // The CPU's rules did not change with the gpu-int ruleset.
   6: { checksum: 196095863, ticks: 360, sizes: [1579, 1687], outcome: null },
+  // A bacterium with no free cell around draws no random numbers any more.
+  7: { checksum: 3394093791, ticks: 360, sizes: [1522, 1556], outcome: null },
 };
 
 /**
@@ -35,6 +37,8 @@ const GPU_INT_GOLDEN: Readonly<
   >
 > = {
   6: { checksum: 3330364408, ticks: 360, sizes: [1500, 1975], outcome: null },
+  // The integer passes did not change with the CPU's move.
+  7: { checksum: 3330364408, ticks: 360, sizes: [1500, 1975], outcome: null },
 };
 
 const FIXTURE = join(__dirname, 'golden-replay.json');

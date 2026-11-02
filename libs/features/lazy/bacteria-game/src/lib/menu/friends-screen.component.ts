@@ -9,6 +9,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 import { FriendsComponent } from '../social/friends.component';
 import { FriendView, SocialService } from '../social/social.service';
 import { ScreenHeaderComponent } from './screen-header.component';
+import { GuestSignInComponent } from '../guest/guest-sign-in.component';
 
 /**
  * The player's friends as a screen of its own: who is online, the requests
@@ -17,7 +18,12 @@ import { ScreenHeaderComponent } from './screen-header.component';
  */
 @Component({
   selector: 'feat-lazy-bac-game-friends-screen',
-  imports: [FriendsComponent, ScreenHeaderComponent, TranslatePipe],
+  imports: [
+    FriendsComponent,
+    GuestSignInComponent,
+    ScreenHeaderComponent,
+    TranslatePipe,
+  ],
   templateUrl: './friends-screen.component.html',
   styleUrl: './friends-screen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

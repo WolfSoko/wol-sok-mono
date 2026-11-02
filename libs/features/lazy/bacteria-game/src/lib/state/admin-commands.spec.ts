@@ -64,6 +64,13 @@ describe('admin commands', () => {
       },
       { type: 'stats.refresh', target: null, args: {} },
       { type: 'stats.recount', target: null, reason: '', args: {} },
+      {
+        type: 'toggles.set',
+        target: null,
+        reason: 'Ranked servers overloaded',
+        args: { values: { rankedDaily: false } },
+      },
+      { type: 'presence.backfill', target: null, args: {} },
     ];
 
     for (const command of valid) {
@@ -196,6 +203,42 @@ describe('admin commands', () => {
     ).toBeNull();
   });
 
+  it('reads the presence backfill without a target or arguments', () => {
+    const backfill = (more: object) =>
+      parseAdminCommand({ type: 'presence.backfill', ...more });
+    expect(backfill({ target: null, args: {} })).toEqual({
+      type: 'presence.backfill',
+      target: null,
+      reason: '',
+      args: {},
+    });
+    expect(backfill({ target: { uid: UID }, args: {} })).toBeNull();
+    expect(backfill({ target: null, args: { all: true } })).toBeNull();
+  });
+
+  it('reads toggles to set, and refuses unknown or empty ones', () => {
+    const toggles = (values: unknown, more: object = {}) =>
+      parseAdminCommand({
+        type: 'toggles.set',
+        target: null,
+        reason: 'Rollout',
+        args: { values },
+        ...more,
+      });
+    expect(toggles({ matchmaking: false, leaderboards: true })?.args).toEqual({
+      values: { matchmaking: false, leaderboards: true },
+    });
+    expect(toggles({})).toBeNull();
+    expect(toggles({ gallery: true })).toBeNull();
+    expect(toggles({ rankedDaily: 'off' })).toBeNull();
+    expect(toggles(null)).toBeNull();
+    // It changes the game for everybody: a reason is a must.
+    expect(toggles({ rankedDaily: false }, { reason: '' })).toBeNull();
+    expect(
+      toggles({ rankedDaily: false }, { target: { uid: UID } })
+    ).toBeNull();
+  });
+
   it('refuses targets the type does not take', () => {
     for (const value of [
       { type: 'profile.reset', target: ENTRY, reason: 'r', args: {} },
@@ -237,6 +280,7 @@ describe('admin commands', () => {
       'player.ban',
       'profile.removeImage',
       'profile.reset',
+      'toggles.set',
     ]);
   });
 });

@@ -2,6 +2,7 @@ import type { TranslationKey } from '../i18n/dictionaries';
 import type { TranslationParams } from '../i18n/translation';
 import type { Ruleset } from '../state/simulation';
 import type { GpuSelfTestResult } from './gpu-self-test';
+import { isSoftwareRenderer } from './renderer';
 
 /** One line of the settings' simulation check, a text to translate. */
 export interface SimulationCheckLine {
@@ -10,11 +11,19 @@ export interface SimulationCheckLine {
 }
 
 /**
+ * Whether this device's GPU plays the deterministic simulation (and offers
+ * it online): it passed the self-test, on hardware.
+ */
+export function gpuTrusted(verdict: GpuSelfTestResult | null): boolean {
+  return verdict?.ok === true && !isSoftwareRenderer(verdict.renderer);
+}
+
+/**
  * What the settings show about the deterministic simulation (ADR 0015) -
  * for the owner's real-device check, and for anybody who wonders why their
  * device plays where it does:
  * - which ruleset local matches play: the override's, or `gpu-int` where
- *   the GPU passed the self-test, `cpu` else;
+ *   the GPU is trusted (`gpuTrusted`), `cpu` else;
  * - that an override (`?sim=`) set it, where one did;
  * - what the self-test found, and on which GPU.
  */
@@ -22,7 +31,7 @@ export function simulationCheckLines(
   verdict: GpuSelfTestResult | null,
   override: Ruleset | null
 ): SimulationCheckLine[] {
-  const ruleset = override ?? (verdict?.ok === true ? 'gpu-int' : 'cpu');
+  const ruleset = override ?? (gpuTrusted(verdict) ? 'gpu-int' : 'cpu');
   const lines: SimulationCheckLine[] = [
     {
       key:
@@ -47,7 +56,12 @@ function verdictLine(verdict: GpuSelfTestResult | null): SimulationCheckLine {
   }
   const renderer = verdict.renderer;
   if (verdict.ok) {
-    return { key: 'settings.simulation.passed', params: { renderer } };
+    return {
+      key: isSoftwareRenderer(renderer)
+        ? 'settings.simulation.software'
+        : 'settings.simulation.passed',
+      params: { renderer },
+    };
   }
   if (verdict.error !== undefined) {
     return {

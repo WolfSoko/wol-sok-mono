@@ -8,10 +8,12 @@ function poll(id: string, closesAt: string) {
 }
 
 describe('sitemapUrls', () => {
-  it('lists home, the poll search and the featured polls', () => {
+  it('lists home, the poll search, the legal pages and the featured polls', () => {
     expect(sitemapUrls([], now)).toEqual([
       'https://rollapolla.com/',
       'https://rollapolla.com/polls',
+      'https://rollapolla.com/privacy',
+      'https://rollapolla.com/impressum',
       ...FEATURED_POLLS.map(({ id }) => `https://rollapolla.com/poll/${id}`),
     ]);
   });

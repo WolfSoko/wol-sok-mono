@@ -1,0 +1,222 @@
+import {
+  atHourOf,
+  dailyBoardId,
+  NOT_REPORTED,
+  onlineSort,
+  utcDay,
+} from '@wolsok/feat-lazy-bac-game/engine';
+import {
+  FieldValue,
+  type Firestore,
+  Timestamp,
+} from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/logger';
+import { expireBans } from '../admin/bans';
+import type { Realtime } from '../admin/realtime';
+import { refreshStats } from '../admin/stats';
+import { entryData, hiddenFor, memberIn, profileIn } from './entries';
+import { MIN_COUNTED_TICKS } from './rank-online';
+import { DAY_MS, SLICE_MS } from './budgets';
+import { closeStaleMatches } from './rank-endless';
+import { verifyEndlessSlice } from './verify-endless';
+import { type AccountInfo, verifyDailySlice } from './verify-slice';
+
+const HOUR_MS = 3_600_000;
+/** The replays one sweep closes at most; the next one takes the rest. */
+const SWEEP_LIMIT = 500;
+/** Endings a device reports only after a real match. */
+const REGULAR_ENDINGS = ['annihilation', 'time', 'forfeit'];
+
+/**
+ * Closes online replays still `waiting` 2 hours after they came (ADR 0012,
+ * "Not reported"): with only one report, the match never counts. When that
+ * report has a regular ending after at least 30 s, the stub's other player
+ * gets `nr + 1` on their online entry - shown, never part of `sort`. The
+ * replay's `rankedReason` makes `acceptReplay` drop a late second report
+ * (`closed`), and the `rankedReplays` marker keeps it from counting.
+ * `acceptReplay` gives a waiting replay its `closeAt`, which the second
+ * report or the close removes: a closed replay leaves the sweep's query,
+ * however many there are, and a missed run is caught up by the next.
+ */
+export async function closeNotReported(
+  db: Firestore,
+  now: number
+): Promise<number> {
+  const waiting = await db
+    .collection('replays')
+    .where('closeAt', '<=', Timestamp.fromMillis(now))
+    .orderBy('closeAt', 'asc')
+    .limit(SWEEP_LIMIT)
+    .get();
+  let closed = 0;
+  for (const doc of waiting.docs) {
+    try {
+      if (await closeOne(db, doc.id, now)) {
+        closed++;
+      }
+    } catch (error) {
+      // Tried again in an hour, rather than first in every run's query:
+      // one replay must not stop the sweep or the hour's verification.
+      logger.error('Could not close a replay', { id: doc.id, error });
+      await doc.ref
+        .update({ closeAt: Timestamp.fromMillis(now + HOUR_MS) })
+        .catch(() => undefined);
+    }
+  }
+  return closed;
+}
+
+async function closeOne(
+  db: Firestore,
+  replayId: string,
+  now: number
+): Promise<boolean> {
+  return db.runTransaction(async (tx) => {
+    const replayRef = db.doc(`replays/${replayId}`);
+    const marker = db.doc(`rankedReplays/${replayId}`);
+    const replay = await tx.get(replayRef);
+    if (replay.get('state') !== 'waiting' || (await tx.get(marker)).exists) {
+      return false;
+    }
+    const reporter = (replay.get('players') as string[] | undefined)?.[0];
+    const seats = replay.get('seats') as unknown;
+    const other = Array.isArray(seats)
+      ? seats.find((uid) => typeof uid === 'string' && uid !== reporter)
+      : undefined;
+    const regular =
+      REGULAR_ENDINGS.includes(String(replay.get('endedBy'))) &&
+      Number(replay.get('ticks')) >= MIN_COUNTED_TICKS &&
+      replay.get('stubExpired') !== true;
+    const counts = regular && typeof other === 'string';
+    // Reads first, as a transaction must.
+    const member = counts ? await memberIn(tx, db, other) : null;
+    const profile = counts ? await profileIn(tx, db, other) : null;
+    const entryRef =
+      member === null
+        ? null
+        : db.doc(`boards/online/entries/${member.entryIds.online}`);
+    const entry = entryRef === null ? null : await tx.get(entryRef);
+    tx.create(marker, {
+      at: FieldValue.serverTimestamp(),
+      expireAt: Timestamp.fromMillis(now + 31 * DAY_MS),
+    });
+    tx.update(replayRef, {
+      rankedReason: NOT_REPORTED,
+      rankedAt: FieldValue.serverTimestamp(),
+      closeAt: FieldValue.delete(),
+    });
+    if (
+      member === null ||
+      profile === null ||
+      entryRef === null ||
+      entry === null ||
+      typeof other !== 'string'
+    ) {
+      return true;
+    }
+    const show = (entry.get('show') ?? {}) as Record<string, unknown>;
+    const n = (key: string) => {
+      const x = Number(show[key] ?? 0);
+      return Number.isSafeInteger(x) && x >= 0 ? x : 0;
+    };
+    const record = { w: n('w'), l: n('l'), d: n('d'), nr: n('nr') + 1 };
+    const atHour = entry.get('atHour');
+    tx.set(
+      db.doc(`boardMembers/${other}`),
+      { entryIds: member.entryIds, boards: FieldValue.arrayUnion('online') },
+      { merge: true }
+    );
+    tx.set(
+      entryRef,
+      entryData(
+        member.entryIds.online,
+        {
+          sort: onlineSort(record.w, record.l),
+          // `nr` is not part of `sort`: the row keeps its place among ties.
+          atHour: typeof atHour === 'number' ? atHour : atHourOf(now),
+          baseStatus: 'counted',
+          show: record,
+        },
+        profile,
+        hiddenFor(member.data, 'online', entry.get('hiddenBy'))
+      )
+    );
+    return true;
+  });
+}
+
+/**
+ * From 23:00 UTC yesterday's daily board is closed (ADR 0012): its top
+ * document gets `final: true`, and verification moves on to today alone.
+ * Entries still provisional stay marked as such.
+ */
+export async function finalizeDailyBoards(
+  db: Firestore,
+  now: number
+): Promise<string | null> {
+  if (new Date(now).getUTCHours() < 23) {
+    return null;
+  }
+  const boardId = dailyBoardId(utcDay(new Date(now - DAY_MS)));
+  const top = db.doc(`boards/${boardId}`);
+  if (!(await top.get()).exists) {
+    return null;
+  }
+  await top.update({ final: true });
+  return boardId;
+}
+
+/**
+ * The hourly run (ADR 0012), in order: cleans up bans that ended, closes
+ * unreported online matches and endless matches whose replay never came,
+ * closes yesterday's daily board, then spends the hour's verification
+ * slice - the daily boards first, the `endless` board with the rest - and
+ * writes the hour's statistics snapshot.
+ */
+export async function runHourly(
+  db: Firestore,
+  now: number,
+  accountInfo: (uid: string) => Promise<AccountInfo>,
+  realtime: Realtime
+) {
+  // A ban has ended wherever it is checked already: a failed clean-up
+  // waits for the next run, and must not cost this one its verification.
+  const bansEnded = await expireBans(db, realtime, now).catch(
+    (error: unknown) => {
+      logger.error('Could not clean up ended bans', { error });
+      return 0;
+    }
+  );
+  // Independent sweeps, then the slices that spend the hour's budget.
+  const [notReported, staleRuns, finalized] = await Promise.all([
+    closeNotReported(db, now),
+    closeStaleMatches(db, now),
+    finalizeDailyBoards(db, now),
+  ]);
+  const daily = await verifyDailySlice(db, now, accountInfo);
+  const endless = await verifyEndlessSlice(
+    db,
+    now,
+    accountInfo,
+    SLICE_MS - daily.spentMs
+  );
+  // The overview's snapshot of the hour; a failure costs only that.
+  const statsWritten = await refreshStats(db, realtime, now, {
+    snapshot: true,
+  }).then(
+    () => true,
+    (error: unknown) => {
+      logger.error('Could not write the statistics', { error });
+      return false;
+    }
+  );
+  return {
+    bansEnded,
+    notReported,
+    staleRuns,
+    finalized,
+    daily,
+    endless,
+    statsWritten,
+  };
+}

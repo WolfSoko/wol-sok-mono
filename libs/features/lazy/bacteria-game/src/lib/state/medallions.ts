@@ -229,6 +229,13 @@ export function medalRank(tier: MedalTier | null): number {
   return tier == null ? 0 : MEDAL_TIERS.indexOf(tier) + 1;
 }
 
+/** True when the match earned a better medallion than the level held. */
+export function isNewBest(
+  award: Pick<MedalAward, 'medal' | 'previousBest'>
+): boolean {
+  return medalRank(award.medal) > medalRank(award.previousBest);
+}
+
 /**
  * What the match lacked for this one tier, its own condition only - the
  * tiers below are checked on their own. Null when nothing is missing.

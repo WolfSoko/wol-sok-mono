@@ -1,0 +1,67 @@
+{
+  "name": "bacteria-wars-functions",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/bacteria-wars-functions/src",
+  "tags": ["app", "type:firebase", "type:functions"],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "inputs": [
+        "sharedGlobals",
+        "production",
+        "^production",
+        "{workspaceRoot}/version.json"
+      ],
+      "options": {
+        "main": "apps/bacteria-wars-functions/src/main.ts",
+        "outputPath": "dist/apps/bacteria-wars-functions",
+        "outputFileName": "main.js",
+        "tsConfig": "apps/bacteria-wars-functions/tsconfig.app.json",
+        "platform": "node",
+        "format": ["esm"],
+        "bundle": true,
+        "thirdParty": false,
+        "generatePackageJson": false,
+        "declaration": false,
+        "assets": [
+          {
+            "input": "apps/bacteria-wars-functions",
+            "glob": "package.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.config.ts",
+        "{workspaceRoot}/.codecov.yml",
+        "{workspaceRoot}/apps/bacteria-game-remote/firestore.indexes.json",
+        "{workspaceRoot}/firebase.bacteria-game-remote.json"
+      ],
+      "options": {
+        "jestConfig": "apps/bacteria-wars-functions/jest.config.ts"
+      }
+    },
+    "test-emulator": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "firebase emulators:exec --config apps/bacteria-wars-functions/emulator.json --project demo-bacteria-functions --only firestore \"jest -c apps/bacteria-wars-functions/jest.emulator.config.ts\""
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "firebase deploy --config=firebase.bacteria-game-remote.json --project=bacteria-game-remote --only functions:bacteria --force --non-interactive"
+      }
+    }
+  }
+}

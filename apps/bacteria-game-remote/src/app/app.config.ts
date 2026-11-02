@@ -14,7 +14,9 @@ import {
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideGameSupport } from '@wolsok/feat-lazy-bac-game';
 import { environment } from '../environments/environment';
+import { provideGameAnalytics } from './analytics/analytics';
 import { appRoutes } from './app.routes';
+import { provideErrorReports } from './error-reports/error-reports';
 import { providePwaUpdates } from './pwa-updates';
 
 // Only used when the game runs on its own: inside the shell the remote's
@@ -23,6 +25,9 @@ import { providePwaUpdates } from './pwa-updates';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
+    // Angular's errors to Sentry, on the live site only (bootstrap.ts
+    // starts it); the shell reports to its own project.
+    provideErrorReports(environment.sentry),
     provideAnimations(),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
     provideServiceWorker('ngsw-worker.js', {
@@ -36,5 +41,8 @@ export const appConfig: ApplicationConfig = {
     // Not on the route like the game cloud: inside the shell the game shows
     // neither tips nor ads.
     provideGameSupport(environment.support),
+    // The usage statistics, on the live site and with the player's consent
+    // only; inside the shell the game measures nothing either.
+    provideGameAnalytics(environment.gameCloud),
   ],
 };
