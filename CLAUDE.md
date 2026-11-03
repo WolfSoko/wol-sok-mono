@@ -102,6 +102,7 @@ Long-term, strategic software engineering is required. A change that works but l
 - The workspace version (`version.json`) is read only through `@wolsok/utils-version` (`libs/utils/version`, `WORKSPACE_VERSION`, `releaseName(project)`), which declares the file as an input, so every task depending on it reruns on a release.
 - oxlint only lints JS/TS. Angular templates are covered by a second, template-only ESLint setup: the root `eslint.config.mjs` (angular-eslint template rules for `.html` and inline templates, plus the per-project component/directive selector prefixes) is inferred as the `lint-templates` target by `@nx/eslint/plugin`. New Angular projects get their selector prefix added to `selectorPrefixes` in that file. The JSON-based `@nx/dependency-checks` rule is gone; keep package.json deps correct by hand.
 - `nx format:write` / `nx format:check` run oxfmt (HTML, SCSS, Markdown and YAML are formatted through its Prettier-backed path).
+- The SpeedDev cockpit files (`.claude/hooks/cockpit/`, `.claude/skills/cockpit/`) come from SpeedDev's setup page as they are, so `.oxfmtrc.json` leaves them out of formatting; don't reformat or hand-edit them.
 
 ## Dependency Constraints
 
