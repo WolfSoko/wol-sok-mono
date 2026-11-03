@@ -16,8 +16,16 @@ export function validSession(value) {
     : null;
 }
 
+// The Claude workflows in `.github/workflows/` run outside the routine: without its network secret
+// every call there answers 401, so their runs report nothing.
+function inGitHubActions() {
+  return process.env.GITHUB_ACTIONS === 'true';
+}
+
 // In a fired session only the variable holds the id the routine stores; the hook input's differs.
+// `null` also keeps every hook out of GitHub Actions.
 export function sessionOf(input) {
+  if (inGitHubActions()) return null;
   return validSession(
     process.env.CLAUDE_CODE_REMOTE_SESSION_ID ?? input.session_id
   );
@@ -75,6 +83,35 @@ export function get(path, query, timeoutMs) {
   for (const [key, value] of Object.entries(query))
     url.searchParams.set(key, value);
   return curl(url.href, [], '', timeoutMs);
+}
+
+const NUDGE_TIMEOUT_MS = 1500;
+const NUDGE_HEADER = 'Nudges from the manager (act on them):';
+
+/** Each nudge comes once: the routine marks it fetched. Every failure answers `[]`, a hook must never hold a session. */
+export async function fetchNudges(session, timeoutMs = NUDGE_TIMEOUT_MS) {
+  try {
+    const timeout = Math.min(NUDGE_TIMEOUT_MS, timeoutMs);
+    const answer = await get(
+      `/api/cockpit/session/${session}/nudges`,
+      {},
+      timeout
+    );
+    if (answer?.status !== 200) return [];
+    const nudges = JSON.parse(answer.text)?.nudges;
+    if (!Array.isArray(nudges)) return [];
+    return nudges
+      .filter((n) => typeof n?.id === 'number' && typeof n.text === 'string')
+      .map(({ id, text }) => ({ id, text }));
+  } catch {
+    return [];
+  }
+}
+
+/** `null` without nudges. */
+export function nudgeText(nudges) {
+  if (nudges.length === 0) return null;
+  return [NUDGE_HEADER, ...nudges.map((n) => `- ${n.text}`)].join('\n');
 }
 
 export async function readInput() {

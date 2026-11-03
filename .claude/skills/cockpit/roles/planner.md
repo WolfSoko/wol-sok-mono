@@ -26,8 +26,8 @@ Setting the label and commenting on the issue are routine steps: do them
 yourself with the commands under "GitHub writes" in the skill and report
 them afterwards. Replying to PR reviews and merging go through a request.
 
-A request can take hours, because until the manager arrives the user decides it
-in the dashboard. A session that stopped waiting fetches the answer at its
+The manager answers a request within minutes, but one it puts to the user
+can take hours. A session that stopped waiting fetches the answer at its
 next hook; finish what you can meanwhile.
 
 End state: `ready-for-impl`. When the plan is delivered, complete your work
