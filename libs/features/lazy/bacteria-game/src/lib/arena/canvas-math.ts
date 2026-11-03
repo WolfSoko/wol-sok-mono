@@ -96,3 +96,7 @@ export function fbm(x: number, y: number, seed: number): number {
   }
   return sum / 0.875;
 }
+
+export function darker([r, g, b]: Rgb): Rgb {
+  return [r * 0.55, g * 0.55, b * 0.55];
+}

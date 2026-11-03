@@ -11,7 +11,7 @@ import {
   smoothstep,
   valueNoise,
 } from './canvas-math';
-import { darker } from './colony-renderer';
+import { darker } from './canvas-math';
 import { Zone } from '../state/zones';
 import { clamp } from '../state/geometry';
 import { paintZoneLayer } from './zone-decal';

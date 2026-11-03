@@ -5,20 +5,17 @@ import { Bacteria } from '../state/player.model';
 import { BACTERIA_LOOKS, BOSS_LOOK, ColonyLook } from '../state/skins';
 import { COLONY_COLORS } from '../state/colony-colors';
 
+import { cellBubble, CELLS, hatchPattern, latticeTile } from './lattice-cells';
 import {
-  cellBubble,
-  CELLS,
   colonyBounds,
   colonyDensity,
   createImageDataFromBacterias,
-  hatchPattern,
-  latticeTile,
-  LOOK_TUNING,
-  paintColony,
-  shimmerAt,
   SLIME_SCALE,
   slimeRegion,
-} from './colony-renderer';
+} from './slime-painter';
+import { LOOK_TUNING } from './look-tuning';
+import { paintColony } from './colony-renderer';
+import { shimmerAt } from './colony-energy';
 import { Rect } from '../state/maps';
 
 const { CELL_MIN } = LOOK_TUNING;
