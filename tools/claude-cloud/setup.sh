@@ -6,7 +6,7 @@
 # per-session work (PATH, GCP key, npm ci) is in session-start.sh.
 set -euo pipefail
 
-NODE_VERSION=24.21.0 # keep in sync with .nvmrc
+NODE_VERSION=24.21.0 # any release of the major in .nvmrc
 
 curl -fsSL "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" | tar -xJ -C /opt
 ln -sfn "/opt/node-v$NODE_VERSION-linux-x64" /opt/node24

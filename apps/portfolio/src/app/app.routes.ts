@@ -2,7 +2,6 @@ import { Route } from '@angular/router';
 import { ANGULAR_SINCE, CAREER_SINCE } from './career/career-since';
 import { HomeComponent } from './home/home.component';
 import { Localized } from './i18n/language';
-import { PrivacyComponent } from './privacy/privacy.component';
 
 /** Title and description of a page in every language, set by SeoService. */
 export interface PageData {
@@ -42,7 +41,8 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'privacy',
-    component: PrivacyComponent,
+    loadComponent: () =>
+      import('./privacy/privacy.component').then((m) => m.PrivacyComponent),
     data: {
       title: {
         en: 'Datenschutzerklärung – wolsok.de',
@@ -51,6 +51,23 @@ export const appRoutes: Route[] = [
       description: {
         en: 'Privacy policy of wolsok.de: hosting on AWS, ads through Google AdSense and your rights.',
         de: 'Datenschutzerklärung von wolsok.de: Hosting bei AWS, Werbung mit Google AdSense und deine Rechte.',
+      },
+    } satisfies PageData,
+  },
+  {
+    path: 'impressum',
+    loadComponent: () =>
+      import('./impressum/impressum.component').then(
+        (m) => m.ImpressumComponent
+      ),
+    data: {
+      title: {
+        en: 'Legal notice (Impressum) – wolsok.de',
+        de: 'Impressum – wolsok.de',
+      },
+      description: {
+        en: 'Legal notice of wolsok.de: who runs the site, postal address and contact.',
+        de: 'Impressum von wolsok.de: Anbieter, Anschrift und Kontakt.',
       },
     } satisfies PageData,
   },

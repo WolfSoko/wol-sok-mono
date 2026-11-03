@@ -7,8 +7,11 @@ import {
   StatsConsent,
 } from '@wolsok/feat-lazy-bac-game';
 import { setUpLegalPage } from '../legal/legal-page';
-import { SITE_OWNER } from '../legal/site-owner';
-import { SiteOwnerComponent } from '../legal/site-owner.component';
+import {
+  EmailForwardingComponent,
+  SITE_OWNER,
+  SiteOwnerComponent,
+} from '@wolsok/shared-legal';
 
 /**
  * The privacy policy of the game, its web app and its Android app, in
@@ -17,7 +20,12 @@ import { SiteOwnerComponent } from '../legal/site-owner.component';
  */
 @Component({
   selector: 'wolsok-privacy',
-  imports: [MatButtonModule, RouterLink, SiteOwnerComponent],
+  imports: [
+    EmailForwardingComponent,
+    MatButtonModule,
+    RouterLink,
+    SiteOwnerComponent,
+  ],
   templateUrl: './privacy.component.html',
   styleUrl: './privacy.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

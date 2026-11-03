@@ -9,8 +9,9 @@ export type SitemapPoll = {
 };
 
 /**
- * The URLs of the indexable pages: home, the poll search, the featured polls and every
- * listed poll that still takes votes. Personal pages (my polls, admin) and
+ * The URLs of the indexable pages: home, the poll search, the privacy policy,
+ * the legal notice, the featured polls and every listed poll that still
+ * takes votes. Personal pages (my polls, admin) and
  * unlisted polls are `noindex`, so they stay out.
  */
 export function sitemapUrls(
@@ -21,6 +22,8 @@ export function sitemapUrls(
   return [
     `${SITE_URL}/`,
     `${SITE_URL}/polls`,
+    `${SITE_URL}/privacy`,
+    `${SITE_URL}/impressum`,
     ...FEATURED_POLLS.map(({ id }) => pollUrl(id)),
     // no lastmod: an edit changes a poll without a date to tell
     ...polls

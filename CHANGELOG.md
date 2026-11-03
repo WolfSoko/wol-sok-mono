@@ -2,6 +2,116 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.136.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.4...v74.136.5) (2026-11-03)
+
+### Bug Fixes
+
+* **deps:** install function deps without the workspace's legacy-peer-deps ([#2751](https://github.com/WolfSoko/wol-sok-mono/issues/2751)) ([114f4e5](https://github.com/WolfSoko/wol-sok-mono/commit/114f4e5b1012addb14815f0ea54d05c4591a97ac)), closes [#2749](https://github.com/WolfSoko/wol-sok-mono/issues/2749)
+
+## [74.136.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.3...v74.136.4) (2026-11-03)
+
+### Bug Fixes
+
+* **deps:** pin marked to 15.0.12 to satisfy @analogjs/content peer range ([#2744](https://github.com/WolfSoko/wol-sok-mono/issues/2744)) ([334cb93](https://github.com/WolfSoko/wol-sok-mono/commit/334cb9380976d4c09d77d7fea1333bf3752efaca)), closes [#2743](https://github.com/WolfSoko/wol-sok-mono/issues/2743)
+
+### Chore
+
+* **release:** publish ([107a3b0](https://github.com/WolfSoko/wol-sok-mono/commit/107a3b0b479d6d3f1fbf826f1bebaa1e33584470))
+
+## [74.136.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.2...v74.136.3) (2026-11-03)
+
+### Testing
+
+* **spa-cdk-stack:** raise vitest testTimeout to 20s for CDK synth cold start ([#2745](https://github.com/WolfSoko/wol-sok-mono/issues/2745)) ([da695d2](https://github.com/WolfSoko/wol-sok-mono/commit/da695d22953a3fd0a1a9ea967e26ebbb5fd9f685)), references [#2432](https://github.com/WolfSoko/wol-sok-mono/issues/2432)
+
+## [74.136.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.1...v74.136.2) (2026-11-02)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** share one quad per GL context ([#2742](https://github.com/WolfSoko/wol-sok-mono/issues/2742)) ([f1d0758](https://github.com/WolfSoko/wol-sok-mono/commit/f1d07584e752f0ea7e66453b4ab5df4076e216e8))
+
+## [74.136.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.0...v74.136.1) (2026-11-02)
+
+### Bug Fixes
+
+* **deps:** patch the four critical npm audit findings ([#2621](https://github.com/WolfSoko/wol-sok-mono/issues/2621)) ([6e671a1](https://github.com/WolfSoko/wol-sok-mono/commit/6e671a12dbbfa2b3c687e241a26558cb109f7c3b)), closes [#2424](https://github.com/WolfSoko/wol-sok-mono/issues/2424) [#2428](https://github.com/WolfSoko/wol-sok-mono/issues/2428) [#2531](https://github.com/WolfSoko/wol-sok-mono/issues/2531) [#2558](https://github.com/WolfSoko/wol-sok-mono/issues/2558), references [#2425](https://github.com/WolfSoko/wol-sok-mono/issues/2425) [#2429](https://github.com/WolfSoko/wol-sok-mono/issues/2429) [#2533](https://github.com/WolfSoko/wol-sok-mono/issues/2533) [#2560](https://github.com/WolfSoko/wol-sok-mono/issues/2560)
+* **deps:** update @angular/fire to 22.0.0-rc.0 and firebase to 12 ([#2739](https://github.com/WolfSoko/wol-sok-mono/issues/2739)) ([77ea0c3](https://github.com/WolfSoko/wol-sok-mono/commit/77ea0c3f3e5d1ab6c2a63a43b4bf4346b9cd9cf6))
+
+### Chore
+
+* **release:** publish ([2484352](https://github.com/WolfSoko/wol-sok-mono/commit/24843520d4c2fe6b1b1f64c53f34b492d439ca2c))
+
+## [74.136.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.135.0...v74.136.0) (2026-11-02)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ the arena's dust blows a new way at every match end ([#2637](https://github.com/WolfSoko/wol-sok-mono/issues/2637)) ([330f431](https://github.com/WolfSoko/wol-sok-mono/commit/330f4313d89f59a67aee2f63d7a0239335033d6b))
+
+### Bug Fixes
+
+* **deps:** update non-major dependencies from [#2416](https://github.com/WolfSoko/wol-sok-mono/issues/2416) except p5 ([#2532](https://github.com/WolfSoko/wol-sok-mono/issues/2532)) ([56f0d5c](https://github.com/WolfSoko/wol-sok-mono/commit/56f0d5c227bb926f091a5193355071eaabaf2bae)), closes [#2458](https://github.com/WolfSoko/wol-sok-mono/issues/2458)
+
+### Chore
+
+* **release:** publish ([c97443d](https://github.com/WolfSoko/wol-sok-mono/commit/c97443dbec69ad7cc0a1c04e4e84c7188863aaf0))
+
+### Documentation
+
+* **feat-lazy-bacteria-wars-admin:** rewrap admin shell JSDoc ([#2703](https://github.com/WolfSoko/wol-sok-mono/issues/2703)) ([a403da2](https://github.com/WolfSoko/wol-sok-mono/commit/a403da2150fdb56b08dfd5676b592aea2a5eb3e2))
+
+## [74.135.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.134.0...v74.135.0) (2026-11-02)
+
+### Features
+
+* **bacteria-wars-functions:** link the replay gallery and give it the game's look ([#2738](https://github.com/WolfSoko/wol-sok-mono/issues/2738)) ([c6af786](https://github.com/WolfSoko/wol-sok-mono/commit/c6af7862459b28bd15ec4ad52cba28c951d61946))
+
+### Bug Fixes
+
+* **fourier-analysis-remote-cdk:** apply ESNext target override per CDK policy ([#2414](https://github.com/WolfSoko/wol-sok-mono/issues/2414)) ([8c38030](https://github.com/WolfSoko/wol-sok-mono/commit/8c38030d28ec4bf1ec1357926877a1310e08a30f)), closes [#2412](https://github.com/WolfSoko/wol-sok-mono/issues/2412)
+* **rollapolla-analog:** give the Google sign-in test headroom past the default timeout ([#2481](https://github.com/WolfSoko/wol-sok-mono/issues/2481)) ([21bf2e9](https://github.com/WolfSoko/wol-sok-mono/commit/21bf2e9dfda90cc1b17283629648c855a0fd0caf)), closes [#2480](https://github.com/WolfSoko/wol-sok-mono/issues/2480), references [ChangeDetectionSchedulerImpl#switchToMicrotaskScheduler](https://github.com/WolfSoko/wol-sok-mono/issues/switchToMicrotaskScheduler)
+
+### Documentation
+
+* **tools:** refresh architecture diagrams ([#2736](https://github.com/WolfSoko/wol-sok-mono/issues/2736)) ([87d37ad](https://github.com/WolfSoko/wol-sok-mono/commit/87d37ad449a5407f5748f8e8ea12cac6edb03021))
+
+## [74.134.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.133.0...v74.134.0) (2026-11-01)
+
+### Features
+
+* **bacteria-wars-functions:** ✨ count the level statistics per simulation resolution ([#2735](https://github.com/WolfSoko/wol-sok-mono/issues/2735)) ([5a0e7e8](https://github.com/WolfSoko/wol-sok-mono/commit/5a0e7e8c6bcb4c70161f7da0f9ad3fa623c6bb8e)), references [#2728](https://github.com/WolfSoko/wol-sok-mono/issues/2728)
+
+## [74.133.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.132.0...v74.133.0) (2026-11-01)
+
+### Features
+
+* **shared-legal:** ✨ the privacy policies name the email forwarding through ImprovMX ([#2734](https://github.com/WolfSoko/wol-sok-mono/issues/2734)) ([53adf54](https://github.com/WolfSoko/wol-sok-mono/commit/53adf5424da7af928883941c5240cdbf4b97c2bc))
+
+## [74.132.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.131.0...v74.132.0) (2026-11-01)
+
+### Features
+
+* **shared-legal:** ✨ the VAT ID in the legal notices ([#2733](https://github.com/WolfSoko/wol-sok-mono/issues/2733)) ([4ad7407](https://github.com/WolfSoko/wol-sok-mono/commit/4ad7407cbe06dc561c805e967489de935a741aea))
+
+## [74.131.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.130.0...v74.131.0) (2026-11-01)
+
+### Features
+
+* **shared-legal:** ✨ the owner's postal address, and legal notices for RollaPolla and wolsok.de ([#2732](https://github.com/WolfSoko/wol-sok-mono/issues/2732)) ([b3efc27](https://github.com/WolfSoko/wol-sok-mono/commit/b3efc27a3e223a93824a9e413b24602e3874df86))
+
+### Chore
+
+* **release:** publish ([3bfdde7](https://github.com/WolfSoko/wol-sok-mono/commit/3bfdde7146111c317be7109ab8265aa034c02a19))
+
+## [74.130.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.129.0...v74.130.0) (2026-11-01)
+
+### Features
+
+* **rollapolla-analog:** ✨ a privacy policy, and AdSense only with consent ([#2730](https://github.com/WolfSoko/wol-sok-mono/issues/2730)) ([049ce4f](https://github.com/WolfSoko/wol-sok-mono/commit/049ce4f0ca105d9e66f2eee93f8056c75ea050ba))
+
+### Chore
+
+* **release:** publish ([402d033](https://github.com/WolfSoko/wol-sok-mono/commit/402d033836e48898bc24b8df30d0336c74c42e15))
+
 ## [74.129.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.128.0...v74.129.0) (2026-10-31)
 
 ### Features

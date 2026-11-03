@@ -186,7 +186,13 @@ the cryo pulse is weak in the computer's hands.
   statistics, not the submission. A generated level counts by its recipe
   and generator difficulty (`gen-cave-6`, `daily-cave-6`,
   `endless-cave-6`), since each roll is a level of its own; the balance
-  table and the ladder's version keep a changed computer apart. Evolved
+  table and the ladder's version keep a changed computer apart, the
+  simulation resolution a grid (owner's decision of 2026-11-01, once
+  replays are stored on every grid: `_g{grid}` after the id; only the
+  online grid of balance version 7, counted before the split, keeps its
+  id without it, so its counters go on - they also hold the few matches
+  on other grids stored from release 74.128.0 to the one that split them.
+  The Balance view names each row's grid as the game's settings do). Evolved
   means the player's own loadout, not the ladder's computer's.
   Medallions come from the server's re-run, never the client: a verified
   re-run of a match against the computer adds `rerun` and its best tier

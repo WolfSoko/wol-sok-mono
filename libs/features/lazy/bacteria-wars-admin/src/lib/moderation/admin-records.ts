@@ -5,6 +5,7 @@ import {
   type BoardKind,
   type EntryShow,
   type EntryStatus,
+  ONLINE_SIM_RESOLUTION,
   parseBoardId,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 
@@ -367,9 +368,9 @@ export function parseStoredReplay(
 }
 
 /**
- * `levelStats/{id}` (ADR 0016): how a level went against one computer -
- * attempts, results, durations, evolved play and weapons, and the
- * medallions of the matches the server re-ran.
+ * `levelStats/{id}` (ADR 0016): how a level went against one computer on
+ * one simulation resolution - attempts, results, durations, evolved play
+ * and weapons, and the medallions of the matches the server re-ran.
  */
 export interface LevelStatsRecord {
   id: string;
@@ -378,6 +379,8 @@ export interface LevelStatsRecord {
   balanceVersion: number | null;
   /** The ladder's version, 0 for a computer off the curve. */
   ladder: number;
+  /** The simulation resolution (`low`, `normal`, `high`, `ultra`). */
+  grid: string;
   attempts: number;
   wins: number;
   losses: number;
@@ -420,6 +423,8 @@ export function parseLevelStats(
     difficulty: text(value['difficulty']) ?? '',
     balanceVersion: numberOrNull(value['balanceVersion']),
     ladder: count('ladder'),
+    // Counted apart since 2026-11-01; a document from before is the online grid's.
+    grid: text(value['grid']) ?? ONLINE_SIM_RESOLUTION,
     attempts: count('attempts'),
     wins: count('wins'),
     losses: count('losses'),

@@ -126,6 +126,14 @@ export class SocialService {
       : null;
   });
 
+  /**
+   * The avatar of the player's stored profile - null while none is stored
+   * or it is not read yet, when `profile` holds a made-up one.
+   */
+  public readonly storedAvatar = computed(
+    () => this.storedProfile()?.avatar ?? null
+  );
+
   /** The player's profile - the stored one, else one made from their uid. */
   public readonly profile: Signal<Profile | null> = computed(() => {
     const uid = this.uid();

@@ -17,6 +17,7 @@ export const de: Translation<typeof en> = {
   },
   footer: {
     privacy: 'Datenschutz',
+    legalNotice: 'Impressum',
     source: 'Quellcode',
   },
   home: {

@@ -98,10 +98,31 @@ export function createTarget(
 }
 
 /** A unit quad, corners from 0 to 1, as a triangle strip in attribute 0. */
-export function createQuad(gl: WebGL2RenderingContext): {
+export interface Quad {
   vao: WebGLVertexArrayObject;
   corners: WebGLBuffer;
-} {
+}
+
+const QUADS = new WeakMap<WebGL2RenderingContext, Quad>();
+
+/**
+ * The quad of a context, made once and shared by everything drawing in it -
+ * the painter and every match's simulation. Nobody deletes it: a buffer made
+ * and deleted with every match, while the GPU may still work on the last
+ * one, is what some drivers get wrong, and the full screen passes then lose
+ * a corner. A lost context takes it along; the restored one makes a new one.
+ */
+export function sharedQuad(gl: WebGL2RenderingContext): Quad {
+  const cached = QUADS.get(gl);
+  if (cached != null && gl.isVertexArray(cached.vao)) {
+    return cached;
+  }
+  const quad = createQuad(gl);
+  QUADS.set(gl, quad);
+  return quad;
+}
+
+function createQuad(gl: WebGL2RenderingContext): Quad {
   const corners = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, corners);
   gl.bufferData(
@@ -117,7 +138,6 @@ export function createQuad(gl: WebGL2RenderingContext): {
   return { vao, corners };
 }
 
-/** A quad over the whole target, for the full screen passes. */
 /** Binds a texture to a unit and points a sampler uniform at it. */
 export function bindTexture(
   gl: WebGL2RenderingContext,

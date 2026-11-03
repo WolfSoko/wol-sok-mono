@@ -9,7 +9,7 @@
  */
 import {
   createProgram,
-  createQuad,
+  sharedQuad,
   createTarget,
   createTexture,
   FULLSCREEN_VERTEX,
@@ -148,7 +148,7 @@ class IntPasses {
     this.hunt = createTarget(gl, gl.RGBA16I, this.blocksX, this.blocksY);
     this.huntMore = createTarget(gl, gl.RGBA16I, this.blocksX, this.blocksY);
     this.claims = createTarget(gl, gl.R8UI, width, height);
-    gl.bindVertexArray(createQuad(gl).vao);
+    gl.bindVertexArray(sharedQuad(gl).vao);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.bindTexture(gl.TEXTURE_2D, this.states[0].texture);
     gl.texSubImage2D(

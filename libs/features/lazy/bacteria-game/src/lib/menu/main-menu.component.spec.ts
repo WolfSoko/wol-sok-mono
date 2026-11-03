@@ -215,6 +215,21 @@ describe('MainMenuComponent', () => {
     expect(tile()).toBeUndefined();
   });
 
+  it('groups its tiles: progress, then players and matches, then the game', () => {
+    const names = Array.from(host.querySelectorAll('.tiles .tile')).map(
+      (tile) => tile.textContent?.replace(/\s+/g, ' ').trim() ?? ''
+    );
+    expect(names).toEqual([
+      expect.stringContaining('My Colony'),
+      expect.stringContaining('Evolution'),
+      expect.stringContaining('Profile'),
+      expect.stringContaining('My matches'),
+      expect.stringContaining('Matches of the day'),
+      expect.stringContaining('Settings'),
+      expect.stringContaining('How to play'),
+    ]);
+  });
+
   it('always offers My matches, with or without the cloud', () => {
     const open = jest.fn();
     fixture.componentInstance.open.subscribe(open);
@@ -222,6 +237,20 @@ describe('MainMenuComponent', () => {
     button('My matches').click();
 
     expect(open).toHaveBeenCalledWith('my-matches');
+  });
+
+  it('links the matches of the day in a tab of its own inside the shell', () => {
+    const link = Array.from(
+      host.querySelectorAll<HTMLAnchorElement>('a.tile')
+    ).find((a) => a.textContent?.includes('Matches of the day'));
+
+    expect(link?.href).toBe('https://bacteria-wars.wolsok.de/replays');
+    expect(link?.target).toBe('_blank');
+
+    TestBed.inject(I18nService).setLanguage('de');
+    fixture.detectChanges();
+    expect(link?.textContent).toContain('Matches des Tages');
+    expect(link?.href).toBe('https://bacteria-wars.wolsok.de/replays?lang=de');
   });
 
   it('speaks German, the campaign line included', () => {
@@ -282,11 +311,22 @@ describe('MainMenuComponent support tile', () => {
   }
 
   it('links to the Buy Me a Coffee page on the web, in a tab of its own', () => {
-    const link = render('web').querySelector<HTMLAnchorElement>('a.tile');
+    const link =
+      render('web').querySelector<HTMLAnchorElement>('a.tile.support');
 
     expect(link?.textContent).toContain('Support');
     expect(link?.href).toBe('https://buymeacoffee.com/wolf');
     expect(link?.target).toBe('_blank');
+  });
+
+  it("opens the matches of the day in place on the game's own site", () => {
+    const link = Array.from(
+      render('web').querySelectorAll<HTMLAnchorElement>('a.tile')
+    ).find((a) => a.textContent?.includes('Matches of the day'));
+
+    // On whatever origin serves the game: a preview or a dev server too.
+    expect(link?.getAttribute('href')).toBe('/replays');
+    expect(link?.target).toBe('');
   });
 
   it("ends in the legal lines on the game's own site", () => {
@@ -301,7 +341,9 @@ describe('MainMenuComponent support tile', () => {
     TestBed.inject(I18nService).setLanguage('de');
     TestBed.tick();
 
-    expect(host.querySelector('a.tile')?.textContent).toContain('Unterstützen');
+    expect(host.querySelector('a.tile.support')?.textContent).toContain(
+      'Unterstützen'
+    );
   });
 
   it('opens the Play tips in the app', () => {
@@ -313,7 +355,7 @@ describe('MainMenuComponent support tile', () => {
 
     tile?.click();
 
-    expect(host.querySelector('a.tile')).toBeNull();
+    expect(host.querySelector('a.tile.support')).toBeNull();
     expect(open).toHaveBeenCalledWith(
       SupportDialogComponent,
       expect.anything()
