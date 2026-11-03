@@ -23,7 +23,7 @@ import { activeRects, reachSinceReport } from './active-area';
 import {
   bindTexture,
   createProgram,
-  createQuad,
+  sharedQuad,
   createTarget,
   createTexture,
   FULLSCREEN_VERTEX,
@@ -109,8 +109,8 @@ interface Readback {
 
 interface Resources {
   programs: Programs;
+  /** The context's quad, shared with the painter - see `sharedQuad`. */
   quad: WebGLVertexArrayObject;
-  corners: WebGLBuffer;
   /**
    * The cell state. Combat renders into one of them, which then holds the
    * frame's record of who took whom until the report is drawn; the passes
@@ -495,8 +495,10 @@ export class GpuSimulation extends GridSimulation {
       gl.deleteTexture(target.texture);
     }
     gl.deleteTexture(resources.mask);
-    gl.deleteVertexArray(resources.quad);
-    gl.deleteBuffer(resources.corners);
+    // A read back may still be in flight, also one a new match marked stale
+    // and freed unread: deleting its buffer under the GPU is what some
+    // drivers get wrong, so the GPU finishes first - once, as the match ends.
+    gl.finish();
     for (const readback of [
       ...resources.freeReadbacks,
       ...resources.pendingReadbacks,
@@ -1001,7 +1003,7 @@ export class GpuSimulation extends GridSimulation {
     const programs = this.deterministic
       ? { ...compiledSharedPrograms(gl), ...compiledIntPrograms(gl) }
       : { ...compiledSharedPrograms(gl), ...compiledFloatPrograms(gl) };
-    const { vao: quad, corners } = createQuad(gl);
+    const quad = sharedQuad(gl).vao;
     const state = () =>
       createTarget(gl, gl.RGBA16UI, this.width, this.height, gl.NEAREST);
     const layout = this.layout;
@@ -1018,7 +1020,6 @@ export class GpuSimulation extends GridSimulation {
     const resources: Resources = {
       programs,
       quad,
-      corners,
       states: [state(), state(), state()],
       claims: createTarget(gl, gl.R8UI, this.width, this.height, gl.NEAREST),
       mask: createTexture(gl, gl.R8UI, this.width, this.height, gl.NEAREST),

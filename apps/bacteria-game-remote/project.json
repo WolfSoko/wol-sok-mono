@@ -32,6 +32,21 @@
             "glob": "assetlinks.json",
             "input": "apps/bacteria-game-remote/src/.well-known",
             "output": ".well-known"
+          },
+          {
+            "glob": "bricolage-grotesque-latin-800-normal.woff2",
+            "input": "node_modules/@fontsource/bricolage-grotesque/files",
+            "output": "fonts"
+          },
+          {
+            "glob": "atkinson-hyperlegible-latin-400-normal.woff2",
+            "input": "node_modules/@fontsource/atkinson-hyperlegible/files",
+            "output": "fonts"
+          },
+          {
+            "glob": "atkinson-hyperlegible-latin-700-normal.woff2",
+            "input": "node_modules/@fontsource/atkinson-hyperlegible/files",
+            "output": "fonts"
           }
         ],
         "styles": [

@@ -55,6 +55,7 @@ const selectorPrefixes = {
   'libs/public/ws-thanos': ['wsThanos', 'ws-thanos'],
   'libs/shared/data-access': ['lib', 'lib'],
   'libs/shared/headline-animation': ['lib', 'lib'],
+  'libs/shared/legal': ['wolsok', 'wolsok'],
   'libs/ui-kit': ['wsSharedUi', 'ws-shared-ui'],
   'libs/utils/gpu-calc': ['wsUtilsGpuJs', 'ws-utils-gpu-js'],
 };

@@ -20,7 +20,7 @@ import { Motes } from '../motes';
 import {
   bindTexture,
   createProgram,
-  createQuad,
+  sharedQuad,
   createTarget,
   createTexture,
   FULLSCREEN_VERTEX,
@@ -1193,7 +1193,7 @@ export class GlArenaPainter implements ArenaPainter {
       ]),
     };
 
-    const { vao: quad, corners } = createQuad(gl);
+    const { vao: quad, corners } = sharedQuad(gl);
 
     const shapes = gl.createVertexArray();
     gl.bindVertexArray(shapes);

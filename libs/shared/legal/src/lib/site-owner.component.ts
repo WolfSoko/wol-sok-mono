@@ -3,13 +3,14 @@ import { SITE_OWNER } from './site-owner';
 
 /**
  * Who runs the site, as the legal pages name them: name, postal address
- * and email. The label before the email is the page's, as it is in the
- * page's language.
+ * and email, a line each. The label before the email is the page's, in the
+ * page's language. The page styles the block through this element; the
+ * link takes `--site-owner-link-color`.
  */
 @Component({
   selector: 'wolsok-site-owner',
   template: `
-    <address class="contact">
+    <address>
       {{ owner.name }}<br />
       @for (line of owner.addressLines; track line) {
         {{ line }}<br />
@@ -23,17 +24,12 @@ import { SITE_OWNER } from './site-owner';
       display: block;
     }
 
-    .contact {
+    address {
       font-style: normal;
-      line-height: 1.7;
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--card);
     }
 
     a {
-      color: var(--gold);
+      color: var(--site-owner-link-color, LinkText);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

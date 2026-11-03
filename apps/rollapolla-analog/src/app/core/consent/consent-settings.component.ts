@@ -5,17 +5,17 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ConsentPrompt } from '@wolsok/shared-analytics';
+import { SiteConsent } from './site-consent';
 
 /**
- * Lets visitors change their analytics choice. Shown only where analytics runs
- * (the browser in production), and only after hydration, so the server markup
- * stays the same.
+ * Lets visitors change their choices for usage statistics and ads. Shown
+ * only where something asks for consent (the browser in production), and
+ * only after hydration, so the server markup stays the same.
  */
 @Component({
   selector: 'rap-consent-settings',
   template: `
-    @if (consent && shown()) {
+    @if (consent.available && shown()) {
       <button
         type="button"
         class="consent-settings"
@@ -40,7 +40,7 @@ import { ConsentPrompt } from '@wolsok/shared-analytics';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConsentSettingsComponent {
-  protected readonly consent = inject(ConsentPrompt, { optional: true });
+  protected readonly consent = inject(SiteConsent);
   protected readonly shown = signal(false);
 
   constructor() {

@@ -19,6 +19,7 @@ export const en = {
   },
   footer: {
     privacy: 'Privacy',
+    legalNotice: 'Legal notice',
     source: 'Source',
   },
   home: {

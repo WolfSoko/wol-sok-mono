@@ -42,6 +42,12 @@
       steht auch, wie du dein Konto und deine Daten löschen lässt.
     </p>
 
+    <h2 id="de-umsatzsteuer">Umsatzsteuer-ID</h2>
+    <p>
+      Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz:
+      {{ owner.vatId }}
+    </p>
+
     <h2 id="de-streitbeilegung">Verbraucherstreitbeilegung</h2>
     <p>
       Ich bin nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren
@@ -99,6 +105,12 @@
       >. For questions about your data, see the
       <a [routerLink]="['/', privacyPolicyPath]" fragment="en">privacy policy</a
       >, which also says how to have your account and data deleted.
+    </p>
+
+    <h2 id="en-vat">VAT ID</h2>
+    <p>
+      VAT identification number under § 27a of the German VAT Act (UStG):
+      {{ owner.vatId }}
     </p>
 
     <h2 id="en-disputes">Consumer dispute resolution</h2>

@@ -10,6 +10,7 @@ const STATS: LevelStatsRecord = {
   difficulty: 'hard',
   balanceVersion: 6,
   ladder: 1,
+  grid: 'normal',
   attempts: 10,
   wins: 6,
   losses: 3,
@@ -32,6 +33,7 @@ function render() {
         id: 'l2',
         level: 'l2',
         ladder: 0,
+        grid: 'ultra',
         attempts: 0,
         wins: 0,
         // Buckets and tiers the view does not know follow the known ones.
@@ -58,7 +60,8 @@ describe('BalanceComponent', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain(`Balance version ${BALANCE_VERSION}`);
     expect(text).toContain('l1');
-    expect(text).toContain('hard · ladder 1');
+    expect(text).toContain('hard · ladder 1 · Normal');
+    expect(text).toContain('computer off the curve · Ultra');
     expect(text).toContain('6 won · 3 lost · 1 drawn');
     // 6 of 10 won; 3 of the 6 plain ones; 4 of 10 evolved, 3 of them won.
     expect(text).toContain('60%');

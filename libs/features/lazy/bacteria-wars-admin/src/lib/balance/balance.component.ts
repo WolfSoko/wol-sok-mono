@@ -50,6 +50,7 @@ const TOP_WEAPONS = 3;
 interface StatsView {
   stats: LevelStatsRecord;
   ladder: string;
+  grid: string;
   winRate: string;
   plainWinRate: string;
   evolvedShare: string;
@@ -61,7 +62,7 @@ interface StatsView {
 
 /**
  * The Balance view (ADR 0016 §4): the level statistics of one balance
- * version, by level - how often the player wins, with and
+ * version, by level and simulation resolution - how often the player wins, with and
  * without evolving, how long matches last, which weapons they carry, and
  * the medallions of the matches the server re-ran. The lab's numbers from
  * real play.
@@ -107,7 +108,10 @@ interface StatsView {
         </th>
         <td mat-cell *matCellDef="let row">
           {{ row.stats.level }}
-          <br /><small>{{ row.stats.difficulty }} · {{ row.ladder }}</small>
+          <br /><small
+            >{{ row.stats.difficulty }} · {{ row.ladder }} ·
+            {{ row.grid }}</small
+          >
         </td>
       </ng-container>
       <ng-container matColumnDef="attempts">
@@ -240,6 +244,7 @@ export class BalanceComponent {
           stats.ladder === 0
             ? this.i18n.t('balance.offCurve')
             : this.i18n.t('balance.ladder', { ladder: stats.ladder }),
+        grid: this.i18n.gridName(stats.grid),
         winRate: rate(stats.wins, stats.attempts),
         plainWinRate: rate(stats.plainWins, plain),
         evolvedShare: rate(stats.evolved, stats.attempts),
