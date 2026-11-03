@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M6HGKHY0GR2HSSE8HMG12JMP",
+  "strategy": "manual-commit",
+  "branch": "speeddev/cockpit-files",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".claude/hooks/cockpit/shared.mjs",
+    ".github/workflows/claude.yml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 28,
+    "cache_creation_tokens": 16194,
+    "cache_read_tokens": 1355981,
+    "output_tokens": 6174,
+    "api_call_count": 13
+  }
+}
