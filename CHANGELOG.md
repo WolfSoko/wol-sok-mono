@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.136.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.3...v74.136.4) (2026-11-03)
+
+### Bug Fixes
+
+* **deps:** pin marked to 15.0.12 to satisfy @analogjs/content peer range ([#2744](https://github.com/WolfSoko/wol-sok-mono/issues/2744)) ([334cb93](https://github.com/WolfSoko/wol-sok-mono/commit/334cb9380976d4c09d77d7fea1333bf3752efaca)), closes [#2743](https://github.com/WolfSoko/wol-sok-mono/issues/2743)
+
+### Chore
+
+* **release:** publish ([107a3b0](https://github.com/WolfSoko/wol-sok-mono/commit/107a3b0b479d6d3f1fbf826f1bebaa1e33584470))
+
 ## [74.136.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.2...v74.136.3) (2026-11-03)
 
 ### Testing
