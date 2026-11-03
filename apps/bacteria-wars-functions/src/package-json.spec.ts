@@ -24,3 +24,22 @@ describe('the deployed package.json', () => {
     }
   });
 });
+
+describe('the predeploy install', () => {
+  // Firebase runs it inside `npx nx`, which hands the workspace's `.npmrc`
+  // (`legacy-peer-deps=true`) on as `npm_config_legacy_peer_deps`. The lock
+  // file would then lack required peers, and Cloud Build's plain `npm ci`
+  // refuses such a lock, so the install turns the setting off itself.
+  it('writes a lock file with the peers that npm ci in Cloud Build expects', () => {
+    const { functions } = JSON.parse(
+      readFileSync(
+        join(__dirname, '../../../firebase.bacteria-game-remote.json'),
+        'utf8'
+      )
+    ) as { functions: { codebase: string; predeploy: string[] }[] };
+    const bacteria = functions.find(({ codebase }) => codebase === 'bacteria');
+    expect(bacteria?.predeploy).toEqual([
+      'npm --prefix "$RESOURCE_DIR" install --omit dev --legacy-peer-deps=false',
+    ]);
+  });
+});
