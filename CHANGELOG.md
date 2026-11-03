@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.136.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.2...v74.136.3) (2026-11-03)
+
+### Testing
+
+* **spa-cdk-stack:** raise vitest testTimeout to 20s for CDK synth cold start ([#2745](https://github.com/WolfSoko/wol-sok-mono/issues/2745)) ([da695d2](https://github.com/WolfSoko/wol-sok-mono/commit/da695d22953a3fd0a1a9ea967e26ebbb5fd9f685)), references [#2432](https://github.com/WolfSoko/wol-sok-mono/issues/2432)
+
 ## [74.136.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.1...v74.136.2) (2026-11-02)
 
 ### Bug Fixes
