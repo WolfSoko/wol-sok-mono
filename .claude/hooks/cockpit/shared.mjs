@@ -16,8 +16,16 @@ export function validSession(value) {
     : null;
 }
 
+// The Claude workflows in `.github/workflows/` run outside the routine: without its network secret
+// every call there answers 401, so their runs report nothing.
+function inGitHubActions() {
+  return process.env.GITHUB_ACTIONS === 'true';
+}
+
 // In a fired session only the variable holds the id the routine stores; the hook input's differs.
+// `null` also keeps every hook out of GitHub Actions.
 export function sessionOf(input) {
+  if (inGitHubActions()) return null;
   return validSession(
     process.env.CLAUDE_CODE_REMOTE_SESSION_ID ?? input.session_id
   );
