@@ -7,7 +7,7 @@ import {
   milliseconds,
   minutes,
   mToMs,
-} from '../model/constants/time-utils';
+} from '@wolsok/utils-time';
 
 @Pipe({
   name: 'trainingTime',
