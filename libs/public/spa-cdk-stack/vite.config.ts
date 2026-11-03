@@ -21,6 +21,8 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
+    // The first Template.fromStack synth pays the CDK module import cost (~9s cold)
+    testTimeout: 20000,
     coverage: {
       reporter: ['lcov', 'html', 'text-summary'],
       reportsDirectory: '../../../coverage/libs/public/spa-cdk-stack',
