@@ -1,4 +1,12 @@
-import { baseUrl, get, isEntryPoint, readInput, sessionOf } from './shared.mjs';
+import {
+  baseUrl,
+  fetchNudges,
+  get,
+  isEntryPoint,
+  nudgeText,
+  readInput,
+  sessionOf,
+} from './shared.mjs';
 
 export function waitBlock(id) {
   return [
@@ -26,17 +34,11 @@ export function reasonFor(request) {
 
 /** `null`: nothing to block on. Every failure counts as nothing: the hook must never hold a session. */
 export async function unattendedRequest(session) {
-  const answer = await get(
-    `/api/cockpit/session/${session}/unattended-request`,
-    {},
-    2000
-  );
+  const answer = await get(`/api/cockpit/session/${session}/unattended-request`, {}, 2000);
   if (answer?.status !== 200) return null;
   const body = JSON.parse(answer.text);
   const request = body?.ok === true ? body.request : null;
-  return typeof request?.id === 'number' && typeof request.state === 'string'
-    ? request
-    : null;
+  return typeof request?.id === 'number' && typeof request.state === 'string' ? request : null;
 }
 
 async function main() {
@@ -44,11 +46,12 @@ async function main() {
   if (input === null || input.stop_hook_active === true) return;
   const session = sessionOf(input);
   if (session === null) return;
-  const request = await unattendedRequest(session);
-  if (request === null) return;
-  process.stdout.write(
-    JSON.stringify({ decision: 'block', reason: reasonFor(request) })
-  );
+  const nudges = nudgeText(await fetchNudges(session));
+  // The routine marked the nudges fetched: a throw from here on must not swallow them.
+  const request = await unattendedRequest(session).catch(() => null);
+  const reasons = [nudges, request === null ? null : reasonFor(request)].filter((r) => r !== null);
+  if (reasons.length === 0) return;
+  process.stdout.write(JSON.stringify({ decision: 'block', reason: reasons.join('\n\n') }));
 }
 
 if (isEntryPoint(import.meta.url)) {
