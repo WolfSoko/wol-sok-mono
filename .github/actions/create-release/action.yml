@@ -84,9 +84,10 @@ runs:
     # Bacteria Wars reports to two projects of its own, the game on its own
     # site and its Cloud Functions, both as `bacteria-wars@<tag>` (the game's
     # environment.prod.ts and the functions' error-reports.ts build the same
-    # name from version.json). The game's source maps are served with it
-    # already (`hidden: false`), so uploading them shows nothing new; the
-    # functions' bundle has none and is not minified.
+    # name from version.json through releaseName in @wolsok/utils-version).
+    # The game's source maps are served with it already (`hidden: false`), so
+    # uploading them shows nothing new; the functions' bundle has none and is
+    # not minified.
     - name: Create Sentry Release for Bacteria Wars
       uses: getsentry/action-release@v3
       with:
