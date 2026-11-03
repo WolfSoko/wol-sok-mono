@@ -102,9 +102,10 @@ Tests that prove it:
 - `arena/colony-renderer.spec.ts`, `arena/look-preview.spec.ts`,
   `arena/arena-renderer.spec.ts`, `arena/gl/shape-batch.spec.ts`,
   `arena/create-arena-painter.spec.ts` unchanged in their assertions.
-- GPU cross-check (the lib's inferred Playwright target, `npx nx show project
-feat-lazy-bacteria-game` names it; `nx affected -t e2e-ci` in CI) green with goldens untouched (`git diff --stat` shows
-  no `golden*` file).
+- GPU cross-check (the lib's inferred Playwright target, which
+  `npx nx show project feat-lazy-bacteria-game` names; `nx affected -t e2e-ci`
+  in CI) green with goldens untouched (`git diff --stat` shows no `golden*`
+  file).
 - `npx nx run feat-lazy-bacteria-game:perf` (report-only) no worse than ±10%.
 - `npx nx build bacteria-game-remote -c production`: `anyScript`/`allScript`
   budgets unchanged (bundler output differs only in module order).
