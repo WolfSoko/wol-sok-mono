@@ -24,11 +24,19 @@ jobs:
       issues: read
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
+    env:
+      # The commit hooks would run lint-staged on Claude's commits; it formats itself instead.
+      HUSKY: 0
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
+
+      # Without node_modules nx cannot run, so Claude could neither format, lint nor test.
+      # This installs from the default branch's lockfile; a PR that changes it runs `npm ci` again.
+      - name: Install dependencies
+        uses: ./.github/actions/install-deps
 
       - name: Run Claude Code
         id: claude
@@ -36,14 +44,13 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # This is an optional setting that allows Claude to read CI results on PRs
+          # Lets Claude read CI results on PRs
           additional_permissions: |
             actions: read
 
-          # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
-          # prompt: 'Update the pull request description to include a summary of changes.'
-
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr *)'
+          # Bash is off by default: allow what CLAUDE.md asks for before a commit (format, lint, test)
+          # and what is needed to follow it. On a PR the action restores `.claude/`, `CLAUDE.md` and
+          # `.husky/` from the base branch for security, so those show up as local changes.
+          claude_args: |
+            --allowedTools "Bash(npx nx *),Bash(npm exec nx *),Bash(npm ci *),Bash(git status*),Bash(git diff*),Bash(git log*),Bash(git add *),Bash(git commit *),Bash(git push*),Bash(gh pr *),Bash(gh run *)"
+            --append-system-prompt "On pull requests the action restores .claude/, .mcp.json, CLAUDE.md, CLAUDE.local.md and .husky/ from the base branch before you start, so they differ from the PR head in the working tree. That is expected: never commit, revert or format those paths, and stage only the files you changed yourself (git add <paths>, never git add -A). node_modules is installed from the default branch's lockfile; run npm ci --ignore-scripts --no-audit --no-fund if the PR changes package-lock.json."

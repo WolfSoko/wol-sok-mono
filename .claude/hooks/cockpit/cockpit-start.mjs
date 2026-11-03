@@ -2,9 +2,11 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
 import {
+  fetchNudges,
   get,
   isEntryPoint,
   markerPath,
+  nudgeText,
   post,
   readInput,
   sessionOf,
@@ -58,16 +60,24 @@ export function repoName(cwd, commonDir) {
   return commonDir ? basename(dirname(commonDir)) : basename(cwd);
 }
 
-export function buildOutput(ticket, session, markdown) {
+function contextText(ticket, session, markdown) {
   const header =
     `Cockpit-Kontext zu ${ticket}, vom Hook geholt. Deine Sitzung: \`${session}\` — ` +
     'gib sie beim Anlegen der Arbeit als `sitzung` mit. Den Kontext nicht noch einmal abrufen.';
+  return `${header}\n\n${markdown}`;
+}
+
+function hookOutput(additionalContext) {
   return JSON.stringify({
     hookSpecificOutput: {
       hookEventName: 'UserPromptSubmit',
-      additionalContext: `${header}\n\n${markdown}`,
+      additionalContext,
     },
   });
+}
+
+export function buildOutput(ticket, session, markdown) {
+  return hookOutput(contextText(ticket, session, markdown));
 }
 
 async function fetchRequestSection(ticket, role, timeoutMs) {
@@ -113,6 +123,40 @@ function dirOrHere(value) {
   }
 }
 
+/** `null`: no context, because the session had it already, names no ticket, or the routine did not give it. */
+async function firstContext(input, session) {
+  const marker = markerPath(session);
+  if (existsSync(marker)) return null;
+  const cwd = dirOrHere(input.cwd);
+
+  const ticket =
+    findTicket(input.prompt, null) ??
+    findTicket(null, git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']));
+  if (ticket === null) return null;
+
+  const repo = repoName(
+    cwd,
+    git(cwd, ['rev-parse', '--path-format=absolute', '--git-common-dir'])
+  );
+  const context = await fetchContext(
+    ticket,
+    repo,
+    findRole(input.prompt),
+    timeLeft
+  );
+  if (context === null) return null;
+
+  // Marker first, and if it throws, no context: otherwise the same context would come back with
+  // every prompt, each time as a new delivery.
+  try {
+    mkdirSync(dirname(marker), { recursive: true });
+    writeFileSync(marker, '');
+  } catch {
+    return null;
+  }
+  return contextText(ticket, session, context);
+}
+
 async function main() {
   const input = await readInput();
   if (input === null) return;
@@ -127,32 +171,10 @@ async function main() {
       timeout
     );
   }
-  const marker = markerPath(session);
-  if (existsSync(marker)) return;
-  const cwd = dirOrHere(input.cwd);
-
-  const ticket =
-    findTicket(input.prompt, null) ??
-    findTicket(null, git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']));
-  if (ticket === null) return;
-
-  const repo = repoName(
-    cwd,
-    git(cwd, ['rev-parse', '--path-format=absolute', '--git-common-dir'])
-  );
-  const context = await fetchContext(
-    ticket,
-    repo,
-    findRole(input.prompt),
-    timeLeft
-  );
-  if (context === null) return;
-
-  // Marker first, and if it throws, no output: otherwise the same context would come back with
-  // every prompt, each time as a new delivery.
-  mkdirSync(dirname(marker), { recursive: true });
-  writeFileSync(marker, '');
-  process.stdout.write(buildOutput(ticket, session, context));
+  const nudges = nudgeText(await fetchNudges(session, timeLeft()));
+  const context = await firstContext(input, session).catch(() => null);
+  const parts = [nudges, context].filter((part) => part !== null);
+  if (parts.length > 0) process.stdout.write(hookOutput(parts.join('\n\n')));
 }
 
 // Never `process.exit()`: on a pipe under Linux, output not yet written would be lost.
