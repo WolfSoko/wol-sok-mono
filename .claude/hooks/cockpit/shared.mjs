@@ -11,24 +11,12 @@ export function baseUrl() {
 
 // The ID becomes the file name of the marker: anything but letters, digits, `_` and `-` would leave a path open.
 export function validSession(value) {
-  return typeof value === 'string' && /^[A-Za-z0-9_-]{1,200}$/.test(value)
-    ? value
-    : null;
-}
-
-// The Claude workflows in `.github/workflows/` run outside the routine: without its network secret
-// every call there answers 401, so their runs report nothing.
-function inGitHubActions() {
-  return process.env.GITHUB_ACTIONS === 'true';
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{1,200}$/.test(value) ? value : null;
 }
 
 // In a fired session only the variable holds the id the routine stores; the hook input's differs.
-// `null` also keeps every hook out of GitHub Actions.
 export function sessionOf(input) {
-  if (inGitHubActions()) return null;
-  return validSession(
-    process.env.CLAUDE_CODE_REMOTE_SESSION_ID ?? input.session_id
-  );
+  return validSession(process.env.CLAUDE_CODE_REMOTE_SESSION_ID ?? input.session_id);
 }
 
 export function markerPath(session) {
@@ -47,17 +35,9 @@ function curl(url, args, stdin, timeoutMs) {
   return new Promise((done) => {
     const child = execFile(
       'curl',
-      [
-        '-s',
-        '--max-time',
-        String(timeoutMs / 1000),
-        '-w',
-        '\n%{http_code}',
-        ...args,
-        url,
-      ],
+      ['-s', '--max-time', String(timeoutMs / 1000), '-w', '\n%{http_code}', ...args, url],
       { timeout: timeoutMs + CURL_GRACE_MS, windowsHide: true },
-      (error, stdout) => done(error ? null : parseCurlOutput(stdout))
+      (error, stdout) => done(error ? null : parseCurlOutput(stdout)),
     );
     // Without curl the pipe breaks as well, and an unhandled `error` would end the hook loudly.
     child.stdin.on('error', () => {});
@@ -69,19 +49,13 @@ function curl(url, args, stdin, timeoutMs) {
 export function post(path, body, timeoutMs) {
   const headers = ['-H', 'Content-Type: application/json; charset=utf-8'];
   const args = [...headers, '--data-binary', '@-'];
-  return curl(
-    new URL(path, baseUrl()).href,
-    args,
-    JSON.stringify(body),
-    timeoutMs
-  );
+  return curl(new URL(path, baseUrl()).href, args, JSON.stringify(body), timeoutMs);
 }
 
 /** `null`: no answer, for whatever reason. */
 export function get(path, query, timeoutMs) {
   const url = new URL(path, baseUrl());
-  for (const [key, value] of Object.entries(query))
-    url.searchParams.set(key, value);
+  for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
   return curl(url.href, [], '', timeoutMs);
 }
 
@@ -92,11 +66,7 @@ const NUDGE_HEADER = 'Nudges from the manager (act on them):';
 export async function fetchNudges(session, timeoutMs = NUDGE_TIMEOUT_MS) {
   try {
     const timeout = Math.min(NUDGE_TIMEOUT_MS, timeoutMs);
-    const answer = await get(
-      `/api/cockpit/session/${session}/nudges`,
-      {},
-      timeout
-    );
+    const answer = await get(`/api/cockpit/session/${session}/nudges`, {}, timeout);
     if (answer?.status !== 200) return [];
     const nudges = JSON.parse(answer.text)?.nudges;
     if (!Array.isArray(nudges)) return [];
@@ -127,8 +97,5 @@ export async function readInput() {
 }
 
 export function isEntryPoint(metaUrl) {
-  return (
-    process.argv[1] !== undefined &&
-    fileURLToPath(metaUrl) === resolve(process.argv[1])
-  );
+  return process.argv[1] !== undefined && fileURLToPath(metaUrl) === resolve(process.argv[1]);
 }
