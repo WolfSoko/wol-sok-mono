@@ -26,11 +26,17 @@ export function reasonFor(request) {
 
 /** `null`: nothing to block on. Every failure counts as nothing: the hook must never hold a session. */
 export async function unattendedRequest(session) {
-  const answer = await get(`/api/cockpit/session/${session}/unattended-request`, {}, 2000);
+  const answer = await get(
+    `/api/cockpit/session/${session}/unattended-request`,
+    {},
+    2000
+  );
   if (answer?.status !== 200) return null;
   const body = JSON.parse(answer.text);
   const request = body?.ok === true ? body.request : null;
-  return typeof request?.id === 'number' && typeof request.state === 'string' ? request : null;
+  return typeof request?.id === 'number' && typeof request.state === 'string'
+    ? request
+    : null;
 }
 
 async function main() {
@@ -40,7 +46,9 @@ async function main() {
   if (session === null) return;
   const request = await unattendedRequest(session);
   if (request === null) return;
-  process.stdout.write(JSON.stringify({ decision: 'block', reason: reasonFor(request) }));
+  process.stdout.write(
+    JSON.stringify({ decision: 'block', reason: reasonFor(request) })
+  );
 }
 
 if (isEntryPoint(import.meta.url)) {

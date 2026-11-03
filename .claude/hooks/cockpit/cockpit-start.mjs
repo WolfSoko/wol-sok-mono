@@ -1,7 +1,14 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
-import { get, isEntryPoint, markerPath, post, readInput, sessionOf } from './shared.mjs';
+import {
+  get,
+  isEntryPoint,
+  markerPath,
+  post,
+  readInput,
+  sessionOf,
+} from './shared.mjs';
 
 const DEADLINE_MS = 4500;
 const REPORT_TIMEOUT_MS = 2000;
@@ -16,13 +23,14 @@ const JIRA_KEY = String.raw`[A-Z][A-Z0-9]+-\d+`;
 const ROLES = 'spec-author|planner|implementierer|reviewer|tester';
 
 // The payload's lines arrive indented inside `<routine-fire-payload>`, and the saved prompt around them is free text.
-const payloadLine = (name, value) => new RegExp(String.raw`^\s*${name}:\s*(${value})\s*$`, 'm');
+const payloadLine = (name, value) =>
+  new RegExp(String.raw`^\s*${name}:\s*(${value})\s*$`, 'm');
 const TICKET_LINE = payloadLine('ticket', `${GITHUB_KEY}|${JIRA_KEY}`);
 const ROLE_LINE = payloadLine('role', ROLES);
 const WORK_ITEM_LINE = payloadLine('work item', String.raw`\d+`);
 // No `\b`: `_` counts as a word character, so `ABC-12_review` would find nothing.
 const TICKET_IN_BRANCH = new RegExp(
-  String.raw`(?<![\w/.-])${GITHUB_KEY}(?!\w)|(?<![A-Za-z0-9])${JIRA_KEY}(?![A-Za-z0-9])`,
+  String.raw`(?<![\w/.-])${GITHUB_KEY}(?!\w)|(?<![A-Za-z0-9])${JIRA_KEY}(?![A-Za-z0-9])`
 );
 
 function payloadValue(line, prompt) {
@@ -32,7 +40,9 @@ function payloadValue(line, prompt) {
 export function findTicket(prompt, branch) {
   const ticket = payloadValue(TICKET_LINE, prompt);
   if (ticket !== null) return ticket;
-  return typeof branch === 'string' ? (TICKET_IN_BRANCH.exec(branch)?.[0] ?? null) : null;
+  return typeof branch === 'string'
+    ? (TICKET_IN_BRANCH.exec(branch)?.[0] ?? null)
+    : null;
 }
 
 export function findRole(prompt) {
@@ -95,7 +105,9 @@ function git(cwd, args) {
 
 function dirOrHere(value) {
   try {
-    return typeof value === 'string' && statSync(value).isDirectory() ? value : process.cwd();
+    return typeof value === 'string' && statSync(value).isDirectory()
+      ? value
+      : process.cwd();
   } catch {
     return process.cwd();
   }
@@ -109,7 +121,11 @@ async function main() {
   const workItem = findWorkItem(input.prompt);
   if (workItem !== null) {
     const timeout = Math.min(REPORT_TIMEOUT_MS, timeLeft());
-    await post(`/api/cockpit/arbeit/${workItem}/report`, { sitzung: session }, timeout);
+    await post(
+      `/api/cockpit/arbeit/${workItem}/report`,
+      { sitzung: session },
+      timeout
+    );
   }
   const marker = markerPath(session);
   if (existsSync(marker)) return;
@@ -120,8 +136,16 @@ async function main() {
     findTicket(null, git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']));
   if (ticket === null) return;
 
-  const repo = repoName(cwd, git(cwd, ['rev-parse', '--path-format=absolute', '--git-common-dir']));
-  const context = await fetchContext(ticket, repo, findRole(input.prompt), timeLeft);
+  const repo = repoName(
+    cwd,
+    git(cwd, ['rev-parse', '--path-format=absolute', '--git-common-dir'])
+  );
+  const context = await fetchContext(
+    ticket,
+    repo,
+    findRole(input.prompt),
+    timeLeft
+  );
   if (context === null) return;
 
   // Marker first, and if it throws, no output: otherwise the same context would come back with
