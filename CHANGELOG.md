@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.137.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.0...v74.137.1) (2026-11-03)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** split the colony renderer into modules by concern ([#2753](https://github.com/WolfSoko/wol-sok-mono/issues/2753)) ([626564c](https://github.com/WolfSoko/wol-sok-mono/commit/626564c7e5ea1a96d8cce98da052af62ddaa6324)), references [#2750](https://github.com/WolfSoko/wol-sok-mono/issues/2750)
+
+### Chore
+
+* **tools:** leave the cockpit files out of formatting ([#2759](https://github.com/WolfSoko/wol-sok-mono/issues/2759)) ([22e1bac](https://github.com/WolfSoko/wol-sok-mono/commit/22e1bacbd8d2c4d32e247214de7a669d5d43cfbd)), references [#2758](https://github.com/WolfSoko/wol-sok-mono/issues/2758)
+
 ## [74.137.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.5...v74.137.0) (2026-11-03)
 
 ### Features
