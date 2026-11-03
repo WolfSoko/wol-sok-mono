@@ -6,14 +6,11 @@
  */
 import * as Sentry from '@sentry/node';
 import type { ErrorEvent } from '@sentry/node';
-// The workspace's version, which names the release tag: a root file, not a
-// project's code (and no edge in the project graph).
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import { version } from '../../../version.json';
+import { releaseName } from '@wolsok/utils-version';
 import { SENTRY_DSN } from './config';
 
 /** The release the release workflow creates in Sentry for the game. */
-export const RELEASE = `bacteria-wars@v${version}`;
+export const RELEASE = releaseName('bacteria-wars');
 
 /**
  * How long a failed handler waits for its report to leave: an instance may
