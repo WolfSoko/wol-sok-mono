@@ -1,0 +1,8 @@
+{
+  "name": "oxlint-workspace-rules",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/oxlint",
+  "projectType": "library",
+  "tags": ["tools"],
+  "targets": {}
+}
