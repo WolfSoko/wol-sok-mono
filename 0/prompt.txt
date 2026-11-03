@@ -1,0 +1,9 @@
+cleanup local and remote branches and worktrees
+
+---
+
+3
+
+---
+
+use a ^24 in nvmrc
