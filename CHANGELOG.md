@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.136.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.4...v74.136.5) (2026-11-03)
+
+### Bug Fixes
+
+* **deps:** install function deps without the workspace's legacy-peer-deps ([#2751](https://github.com/WolfSoko/wol-sok-mono/issues/2751)) ([114f4e5](https://github.com/WolfSoko/wol-sok-mono/commit/114f4e5b1012addb14815f0ea54d05c4591a97ac)), closes [#2749](https://github.com/WolfSoko/wol-sok-mono/issues/2749)
+
 ## [74.136.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.3...v74.136.4) (2026-11-03)
 
 ### Bug Fixes
