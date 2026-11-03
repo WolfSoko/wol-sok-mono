@@ -29,19 +29,26 @@ export function parseTarget(repo, number) {
   return { repo, number: Number(number) };
 }
 
-const hasOnly = (value, keys) => Object.keys(value).every((key) => keys.includes(key));
+const hasOnly = (value, keys) =>
+  Object.keys(value).every((key) => keys.includes(key));
 const isText = (value) => typeof value === 'string' && value.trim() !== '';
 const isPlainObject = (value) =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 function commentError(comment, i) {
   const at = `comments[${i}]`;
-  if (!isPlainObject(comment) || !hasOnly(comment, ['path', 'line', 'side', 'body'])) {
+  if (
+    !isPlainObject(comment) ||
+    !hasOnly(comment, ['path', 'line', 'side', 'body'])
+  ) {
     return `${at} holds exactly path, line, side and body.`;
   }
-  if (!isText(comment.path)) return `${at}.path is the file's path in the repo.`;
-  if (!Number.isInteger(comment.line) || comment.line < 1) return `${at}.line is a line number.`;
-  if (!SIDES.includes(comment.side)) return `${at}.side is RIGHT (or LEFT for a removed line).`;
+  if (!isText(comment.path))
+    return `${at}.path is the file's path in the repo.`;
+  if (!Number.isInteger(comment.line) || comment.line < 1)
+    return `${at}.line is a line number.`;
+  if (!SIDES.includes(comment.side))
+    return `${at}.side is RIGHT (or LEFT for a removed line).`;
   if (!isText(comment.body)) return `${at}.body is the finding's text.`;
   return null;
 }
@@ -53,10 +60,14 @@ export function parseReview(text) {
   } catch {
     return 'The review on stdin is no valid JSON.';
   }
-  if (!isPlainObject(review) || !hasOnly(review, ['event', 'body', 'comments'])) {
+  if (
+    !isPlainObject(review) ||
+    !hasOnly(review, ['event', 'body', 'comments'])
+  ) {
     return 'The review holds exactly event, body and comments.';
   }
-  if (!EVENTS.includes(review.event)) return `event is one of ${EVENTS.join(', ')}.`;
+  if (!EVENTS.includes(review.event))
+    return `event is one of ${EVENTS.join(', ')}.`;
   if (!isText(review.body)) return 'body is the approved review text.';
   if (!Array.isArray(review.comments))
     return 'comments is a list, empty when no finding has a line.';
@@ -79,13 +90,19 @@ export function reviewArgs(target) {
 }
 
 // GitHub answers 422 for both, with these phrases in its error list.
-const refusedOwnPr = (text) => /HTTP 422/.test(text) && /own pull request/i.test(text);
+const refusedOwnPr = (text) =>
+  /HTTP 422/.test(text) && /own pull request/i.test(text);
 const refusedLine = (text) =>
-  /HTTP 422/.test(text) && /\b(line|position|path|diff)\b|could not be resolved/i.test(text);
+  /HTTP 422/.test(text) &&
+  /\b(line|position|path|diff)\b|could not be resolved/i.test(text);
 
 function withLinesInBody(review) {
   const lines = review.comments.map((c) => `- ${c.path}:${c.line} — ${c.body}`);
-  return { ...review, body: `${review.body}\n\nLine comments:\n${lines.join('\n')}`, comments: [] };
+  return {
+    ...review,
+    body: `${review.body}\n\nLine comments:\n${lines.join('\n')}`,
+    comments: [],
+  };
 }
 
 /** `send` posts one review and returns `{ ok: true }` or `{ ok: false, text }` with gh's output. */
@@ -115,7 +132,9 @@ export function postReview(target, review, send) {
       };
     }
     if (refusedOwnPr(answer.text) && current.event !== 'COMMENT') {
-      notes.push(`GitHub refused ${current.event} on the account's own pull request`);
+      notes.push(
+        `GitHub refused ${current.event} on the account's own pull request`
+      );
       // A comment review carries no verdict of its own, so the body has to.
       current = {
         ...current,
@@ -136,15 +155,24 @@ function ghSend(target) {
       encoding: 'utf8',
       windowsHide: true,
     });
-    if (run.error) return { ok: false, text: `gh did not run: ${run.error.message}` };
-    return run.status === 0 ? { ok: true } : { ok: false, text: `${run.stderr}\n${run.stdout}` };
+    if (run.error)
+      return { ok: false, text: `gh did not run: ${run.error.message}` };
+    return run.status === 0
+      ? { ok: true }
+      : { ok: false, text: `${run.stderr}\n${run.stdout}` };
   };
 }
 
 function main() {
   const target = parseTarget(process.argv[2], process.argv[3]);
-  const review = typeof target === 'string' ? null : parseReview(readFileSync(0, 'utf8'));
-  const invalid = typeof target === 'string' ? target : typeof review === 'string' ? review : null;
+  const review =
+    typeof target === 'string' ? null : parseReview(readFileSync(0, 'utf8'));
+  const invalid =
+    typeof target === 'string'
+      ? target
+      : typeof review === 'string'
+        ? review
+        : null;
   if (invalid !== null) {
     console.error(`${invalid} Nothing was posted.`);
     process.exitCode = EXIT_INVALID;

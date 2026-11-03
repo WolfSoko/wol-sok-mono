@@ -31,7 +31,7 @@ commits; this file replaces its merge and push steps.
 7. After the request, wait for the routine's nudge; never run `gh pr merge`.
    The routine merges what the user approved. After "merged", watch the run
    the merge started with read-only `gh`: `gh run list --branch <base branch>
-   --limit 1` names it, `gh run watch` follows it. "Not merged" names the
+--limit 1` names it, `gh run watch` follows it. "Not merged" names the
    reason: fix it, push, and ask again. Report a failed run as a `blocker`
    with its link.
 
