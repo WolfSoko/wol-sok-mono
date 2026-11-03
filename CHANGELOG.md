@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.137.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.5...v74.137.0) (2026-11-03)
+
+### Features
+
+* **utils-version:** read version.json through one lib, forbid inline boundary disables ([#2752](https://github.com/WolfSoko/wol-sok-mono/issues/2752)) ([6332f52](https://github.com/WolfSoko/wol-sok-mono/commit/6332f5273ea6c62934a66c2d32424ccfa0f25ac1)), closes [#2737](https://github.com/WolfSoko/wol-sok-mono/issues/2737)
+
+### Chore
+
+* **release:** publish ([d007334](https://github.com/WolfSoko/wol-sok-mono/commit/d00733459654f824cd24a5a318514539099f4721))
+* **tools:** pin .nvmrc to the Node 24 major instead of a patch release ([5ecdeec](https://github.com/WolfSoko/wol-sok-mono/commit/5ecdeecf1d807b8f8b359242247cf3dcb9deaa18))
+
 ## [74.136.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.4...v74.136.5) (2026-11-03)
 
 ### Bug Fixes
