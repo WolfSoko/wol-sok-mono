@@ -1,9 +1,13 @@
 import { TestBed } from '@angular/core/testing';
+import { EMPTY } from 'rxjs';
 import { StageBusy } from '../busy/stage-busy';
+import { RankedService } from '../ranked/ranked.service';
 import { GameSettingsService } from '../settings.service';
+import { GameStateService } from '../state/game-state.service';
 import { STAGE_PROVIDERS } from '../stage-providers';
+import { ArenaStage } from '../stage/arena-stage';
 import { StageFullscreen } from '../stage/stage-fullscreen';
-import { GameStateStore } from '../state/game.states';
+import { GameState, GameStateStore } from '../state/game.states';
 import { LEVELS } from '../state/levels';
 import { PlayerStore } from '../state/player.store';
 import { replayOf } from '../state/replay';
@@ -153,6 +157,73 @@ describe('PlayFlow', () => {
     });
   });
 
+  describe('a start that waits', () => {
+    /** Holds the arena not ready yet, and gives back its release. */
+    function holdArena(): () => void {
+      let ready = (): void => undefined;
+      jest
+        .spyOn(TestBed.inject(ArenaStage), 'whenReady')
+        .mockImplementation(() => new Promise<void>((done) => (ready = done)));
+      return () => ready();
+    }
+
+    /** Holds the daily's ranked declaration, and gives back its answer. */
+    function holdDeclaration(): () => void {
+      const ranked = TestBed.inject(RankedService);
+      jest.spyOn(ranked, 'wants').mockReturnValue(true);
+      let answer = (): void => undefined;
+      jest.spyOn(ranked, 'declareDaily').mockImplementation(
+        () =>
+          new Promise((done) => {
+            answer = () => done(null as never);
+          })
+      );
+      return () => answer();
+    }
+
+    it('starts the daily match once the arena is ready, not before', async () => {
+      const ready = holdArena();
+      const start = spyOnStart();
+
+      const daily = flow.playDaily();
+      await Promise.resolve();
+      expect(start).not.toHaveBeenCalled();
+
+      ready();
+      await daily;
+      expect(start).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts nothing once another match started while the arena got ready', async () => {
+      const ready = holdArena();
+      const start = spyOnStart();
+
+      const daily = flow.playDaily();
+      store.update({ currentState: GameState.RUNNING });
+      ready();
+      await daily;
+
+      expect(start).not.toHaveBeenCalled();
+    });
+
+    it('drops a declared start when a match came and went meanwhile', async () => {
+      const answer = holdDeclaration();
+      const start = spyOnStart();
+      const play = jest.spyOn(TestBed.inject(GameStateService), 'playDaily');
+
+      const daily = flow.playDaily();
+      // A match is given up, and its arena clear again, before the answer.
+      jest.spyOn(TestBed.inject(ArenaStage), 'vaporize').mockReturnValue(EMPTY);
+      flow.resetGame$().subscribe();
+      expect(flow.resetting()).toBe(false);
+      answer();
+      await daily;
+
+      expect(play).not.toHaveBeenCalled();
+      expect(start).not.toHaveBeenCalled();
+    });
+  });
+
   describe('giving a ranked match up', () => {
     function armed(): jest.SpyInstance {
       return jest.spyOn(flow, 'quitToMenu').mockImplementation(() => undefined);
@@ -168,6 +239,17 @@ describe('PlayFlow', () => {
       flow.giveUp();
       expect(quit).toHaveBeenCalledTimes(1);
       expect(flow.giveUpArmed()).toBe(false);
+    });
+
+    it('does not carry a first tap over into the next match', () => {
+      const quit = armed();
+
+      flow.giveUp();
+      flow.startGame();
+      expect(flow.giveUpArmed()).toBe(false);
+
+      flow.giveUp();
+      expect(quit).not.toHaveBeenCalled();
     });
 
     it('disarms by itself after a while', () => {

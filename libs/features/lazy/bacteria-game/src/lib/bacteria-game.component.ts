@@ -173,8 +173,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * of a match.
    */
   private readonly soundtrack = computed<Soundtrack | null>(() => {
-    const { running, paused, matchOver, level } = this.hud;
-    if (running() && !paused()) {
+    const { running, playing, matchOver, level } = this.hud;
+    if (playing()) {
       return levelMusic(level().id);
     }
     const inMenu = !running() && !matchOver() && !this.flow.resetting();
@@ -283,7 +283,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (!this.stageFullscreen.followBrowser()) {
       return;
     }
-    if (this.hud.running() && !this.hud.paused()) {
+    if (this.hud.playing()) {
       this.gameStateService.togglePause();
     } else if (this.flow.panel() === 'menu') {
       this.stageFullscreen.leave();
@@ -307,11 +307,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * from the main menu leaves fullscreen for the page.
    */
   private onEscape(): void {
-    const { running, paused, matchOver } = this.hud;
+    const { playing, paused, matchOver } = this.hud;
     if (matchOver() || this.flow.resetting()) {
       return;
     }
-    if (running() && !paused()) {
+    if (playing()) {
       this.flow.togglePause();
     } else if (this.flow.screen() !== 'menu') {
       this.flow.screen.set('menu');

@@ -42,8 +42,17 @@ export class OnlineFlow {
   public readonly available = this.online.available;
   /** An invitation link opened on this visit, until it is answered. */
   public readonly inviteOffer = signal<InviteOffer | null>(null);
-  /** A match the host started while this device still cleared the last one. */
-  private startPending = false;
+  /**
+   * The start of a match that came in while this device still cleared the
+   * last one - the host's, or the matchmaking's - played once it is clear.
+   */
+  private pendingStart: (() => void) | null = null;
+  /** True once the stage is gone: a late answer then changes nothing. */
+  private gone = false;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => (this.gone = true));
+  }
 
   /**
    * Takes what the link brought - a shared run, an invitation - and follows
@@ -73,16 +82,15 @@ export class OnlineFlow {
     this.flow.arenaCleared$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        if (this.startPending) {
-          this.startPending = false;
-          this.startOnlineMatch();
-        }
+        const start = this.pendingStart;
+        this.pendingStart = null;
+        start?.();
       });
   }
 
   /** Takes a friend's challenge: on to the online lobby, into their room. */
   public playChallenge(call: ChallengeView): void {
-    this.flow.openNewGameOn({ kind: 'online', step: 'start' });
+    this.openLobby();
     void this.online.join(call.code);
   }
 
@@ -91,8 +99,13 @@ export class OnlineFlow {
     if (this.lobby().phase !== 'idle') {
       return;
     }
-    this.flow.openNewGameOn({ kind: 'online', step: 'start' });
+    this.openLobby();
     this.social.challengeFriend(friend);
+  }
+
+  /** Opens the new game on the online lobby. */
+  private openLobby(): void {
+    this.flow.openNewGameOn({ kind: 'online', step: 'start' });
   }
 
   /** Opens an online match for a friend to join. */
@@ -112,13 +125,24 @@ export class OnlineFlow {
 
   /**
    * Starts an automatic online match on the level the matchmaking picked -
-   * a random level that plays online if it has none.
+   * a random level that plays online if it has none - once the arena is
+   * clear, as the reset under way would end the match, and switched only
+   * then, so it does not flash up under the dust.
    */
   private startMatchmadeMatch(): void {
-    this.gameStateService.setLevel(
+    const levelId =
       this.matchmaker.matchLevel()?.levelId ??
-        pickMatchLevel(null, null, Math.random).levelId
-    );
+      pickMatchLevel(null, null, Math.random).levelId;
+    if (this.flow.resetting()) {
+      this.pendingStart = () => {
+        if (this.store.snapshot().online?.seat === 0) {
+          this.gameStateService.setLevel(levelId);
+          this.flow.startGame();
+        }
+      };
+      return;
+    }
+    this.gameStateService.setLevel(levelId);
     this.flow.startGame();
   }
 
@@ -129,7 +153,7 @@ export class OnlineFlow {
   private followOnlineStart(): void {
     const resetting = this.flow.resetting();
     if (resetting || this.hud.matchOver()) {
-      this.startPending = true;
+      this.pendingStart = () => this.startOnlineMatch();
       if (!resetting) {
         // Not resetGame: that gives the online match up.
         this.flow
@@ -164,8 +188,8 @@ export class OnlineFlow {
 
   /**
    * Takes the invitation a link carries in its hash (`#friend=<token>`)
-   * and offers to add the inviter as a friend - and takes it out of the
-   * address, so a reload does not offer it again.
+   * and offers to add the inviter as a friend - and, once it is read,
+   * takes it out of the address, so a reload does not offer it again.
    */
   private async takeInvite(): Promise<void> {
     const match = /^#friend=([a-z2-9]{20})$/.exec(this.document.location.hash);
@@ -173,8 +197,20 @@ export class OnlineFlow {
       return;
     }
     const token = match[1];
-    await this.dropHash();
-    const from = await this.social.readInvite(token).catch(() => null);
+    let from: string | null;
+    try {
+      from = await this.social.readInvite(token);
+    } catch {
+      // Kept in the address, so a reload reads the invitation again.
+      return;
+    }
+    if (this.gone) {
+      return;
+    }
+    // Only while the address still carries it: the player may have moved on.
+    if (this.document.location.hash === match[0]) {
+      await this.dropHash();
+    }
     if (from !== null) {
       this.inviteOffer.set({ token, from });
     }
