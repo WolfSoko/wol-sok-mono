@@ -1,5 +1,7 @@
-import type { TranslationKey } from '../i18n/dictionaries';
-import type { TranslationParams } from '../i18n/translation';
+import type {
+  TranslationKey,
+  TranslationParams,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { Ruleset } from '../state/simulation';
 import type { GpuSelfTestResult } from './gpu-self-test';
 import { isSoftwareRenderer } from './renderer';

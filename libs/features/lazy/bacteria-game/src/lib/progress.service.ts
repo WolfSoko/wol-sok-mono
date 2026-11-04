@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, switchMap, take } from 'rxjs';
-import { english, GameText } from './i18n/game-text';
+import { english, GameText } from '@wolsok/feat-shared-bacteria-engine';
 import { BotDifficulty } from './state/bot-controller';
 import { ladderLocks, newlyUnlocked } from './state/campaign';
 import { getLevel, isLadderLevel } from './state/levels';

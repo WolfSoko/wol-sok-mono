@@ -22,15 +22,15 @@ export { SPLASH_ID } from './lib/splash';
 
 // The language the game speaks, and the helpers for a dictionary of its own.
 export { I18nService } from './lib/i18n/i18n.service';
-export { translate } from './lib/i18n/translation';
+export { translate } from '@wolsok/feat-shared-bacteria-engine';
 export type {
   Dictionary,
   EntryPath,
   Plural,
   Translation,
   TranslationParams,
-} from './lib/i18n/translation';
-export type { Language } from './lib/i18n/language';
+} from '@wolsok/feat-shared-bacteria-engine';
+export type { Language } from '@wolsok/feat-shared-bacteria-engine';
 
 // Players.
 export { AvatarComponent } from './lib/social/avatar.component';

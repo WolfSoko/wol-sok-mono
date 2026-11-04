@@ -9,11 +9,13 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { rgba } from '../arena/canvas-math';
 import { ZONE_COLORS } from '../arena/zone-look';
-import { TranslationKey } from '../i18n/dictionaries';
+import {
+  TranslationKey,
+  TranslationParams,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { playerNameText, renderGameText, zoneKey } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { TranslationParams } from '../i18n/translation';
 import { ZONE_EFFECTS, ZoneKind } from '../state/zones';
 import { AdSlotComponent } from '../support/ads/ad-slot.component';
 import { GameAds } from '../support/ads/game-ads.service';

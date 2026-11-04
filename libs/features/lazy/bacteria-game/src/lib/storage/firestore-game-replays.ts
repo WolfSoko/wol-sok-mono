@@ -10,7 +10,7 @@ import {
   type ArrivalReason,
   ONLINE_REASONS,
   type OnlineReason,
-} from '../state/replay-reasons';
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   hintOf,
   MAX_REPLAY_LIST,

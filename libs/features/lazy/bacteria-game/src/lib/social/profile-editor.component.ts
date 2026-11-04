@@ -12,7 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { TranslationKey } from '../i18n/dictionaries';
+import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ModerationService } from '../moderation/moderation.service';
 import { GameAccount } from '../storage/game-account';

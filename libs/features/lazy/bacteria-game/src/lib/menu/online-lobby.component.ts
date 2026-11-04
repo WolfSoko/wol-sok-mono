@@ -21,7 +21,7 @@ import {
   renderGameText,
 } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
-import type { TranslationKey } from '../i18n/dictionaries';
+import type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { MatchmakerService } from '../net/matchmaker.service';
 import { ModerationService } from '../moderation/moderation.service';

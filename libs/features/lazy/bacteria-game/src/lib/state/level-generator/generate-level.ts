@@ -1,4 +1,4 @@
-import { english, GameText } from '../../i18n/game-text';
+import { english, GameText } from '@wolsok/feat-shared-bacteria-engine';
 import { lerp, randomSeed, streamSeed } from '../geometry';
 import { GameBalance } from '../game-balance';
 import type { Level } from '../levels';

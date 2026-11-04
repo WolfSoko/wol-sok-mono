@@ -1,4 +1,8 @@
-import { english, GameText, GameTextParams } from '../i18n/game-text';
+import {
+  english,
+  GameText,
+  GameTextParams,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ACHIEVEMENT_IDS, AchievementId } from './achievement-ids';
 import { goldOn, levelWon } from './campaign';
 import { CHAPTERS } from './chapters';

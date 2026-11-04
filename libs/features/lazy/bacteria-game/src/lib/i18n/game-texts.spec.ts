@@ -15,7 +15,14 @@ import { SERIES_LENGTHS } from '../state/rivalry';
 import { colorLocks } from '../state/unlocks';
 import { ZONE_NAMES, ZoneKind } from '../state/zones';
 import { aMatchRecord } from '../../testing/match-record';
-import { DICTIONARIES, EN, TranslationKey } from './dictionaries';
+import {
+  DICTIONARIES,
+  EN,
+  Language,
+  lookUp,
+  translate,
+  TranslationKey,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameTextPipe } from './game-text.pipe';
 import {
   achievementKeys,
@@ -42,8 +49,6 @@ import {
   zoneKey,
 } from './game-texts';
 import { I18nService } from './i18n.service';
-import { Language } from './language';
-import { lookUp, translate } from './translation';
 
 /** The text of a key in a language - its own, without falling back. */
 function own(language: Language, key: TranslationKey): string | undefined {

@@ -18,10 +18,13 @@ import { GpuSelfTestService } from '../gl/gpu-self-test.service';
 import { simulationCheckLines } from '../gl/simulation-check';
 import { SimulationOverrideService } from '../gl/simulation-override.service';
 import type { Ruleset } from '../state/simulation';
-import { TranslationKey } from '../i18n/dictionaries';
+import {
+  Language,
+  LANGUAGES,
+  TranslationKey,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
-import { Language, LANGUAGES } from '../i18n/language';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameSettingsService, MAX_VOLUME } from '../settings.service';
 import { SCREEN_RESOLUTIONS, SIM_RESOLUTIONS } from '../state/arena-size';

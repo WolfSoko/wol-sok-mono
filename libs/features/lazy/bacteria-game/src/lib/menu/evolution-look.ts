@@ -1,5 +1,5 @@
 import type { Rgb } from '../arena/arena-theme';
-import type { TranslationKey } from '../i18n/dictionaries';
+import type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { Gene, GeneId, MAX_GENE_LEVEL, WeaponId } from '../state/evolution';
 import { clamp } from '../state/geometry';
 

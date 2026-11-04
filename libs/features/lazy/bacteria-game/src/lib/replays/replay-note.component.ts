@@ -20,7 +20,7 @@ import {
   scan,
   switchMap,
 } from 'rxjs';
-import { TranslationKey } from '../i18n/dictionaries';
+import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameSettingsService } from '../settings.service';
 import { isRunOver } from '../state/endless';

@@ -46,7 +46,7 @@ import {
 import { injectGameAnalytics } from './analytics/game-analytics';
 import { settingChange } from './analytics/setting-change';
 import { I18nService } from './i18n/i18n.service';
-import { isLanguage, Language } from './i18n/language';
+import { isLanguage, Language } from '@wolsok/feat-shared-bacteria-engine';
 
 /** What the game remembers between visits. */
 export interface StoredSettings {

@@ -1,4 +1,4 @@
-import type { GameText } from '../i18n/game-text';
+import type { GameText } from '@wolsok/feat-shared-bacteria-engine';
 import { AchievementId } from './achievement-ids';
 import { MedalAward } from './medallions';
 import type { MissionResult } from './training';

@@ -13,8 +13,10 @@ import type { RankId } from '../state/ranks';
 import type { SeriesLength } from '../state/rivalry';
 import type { MissionId } from '../state/training-levels';
 import type { ZoneKind } from '../state/zones';
-import type { TranslationKey } from './dictionaries';
-import type { GameText } from './game-text';
+import type {
+  GameText,
+  TranslationKey,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /*
  * The keys of the game data's texts, by the ids the state keeps: the state
@@ -152,8 +154,12 @@ export function playerNameText(name: string): GameText | null {
   return key === undefined ? null : { key };
 }
 
-export { english, renderGameText } from './game-text';
-export type { GameText, GameTextParams, Translate } from './game-text';
+export { english, renderGameText } from '@wolsok/feat-shared-bacteria-engine';
+export type {
+  GameText,
+  GameTextParams,
+  Translate,
+} from '@wolsok/feat-shared-bacteria-engine';
 export { GameTextPipe } from './game-text.pipe';
 export { achievementTexts } from '../state/achievements';
 export { continueText, ladderLockText } from '../state/campaign';

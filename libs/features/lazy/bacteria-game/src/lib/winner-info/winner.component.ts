@@ -16,7 +16,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { injectGameAnalytics } from '../analytics/game-analytics';
-import { TranslationKey } from '../i18n/dictionaries';
+import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import {
   achievementTexts,
   colonyColorText,

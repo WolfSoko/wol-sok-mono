@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { TranslationKey } from '../i18n/dictionaries';
+import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { MissionId } from '../state/training-levels';
 
 /** A training mission as its row shows it. */

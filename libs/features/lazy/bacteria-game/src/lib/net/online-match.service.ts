@@ -2,7 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, Observable, Subject } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
-import type { GameText } from '../i18n/game-text';
+import type { GameText } from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import type { OpenRoom } from '../storage/game-rooms';

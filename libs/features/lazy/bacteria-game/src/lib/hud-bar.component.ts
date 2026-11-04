@@ -10,7 +10,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ColonyStats } from './colony-stats';
-import { TranslationKey } from './i18n/dictionaries';
+import {
+  TranslationKey,
+  type TranslationParams,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   GameText,
   GameTextPipe,
@@ -18,7 +21,6 @@ import {
   renderGameText,
 } from './i18n/game-texts';
 import { I18nService } from './i18n/i18n.service';
-import type { TranslationParams } from './i18n/translation';
 import { HudPerf, perfMs } from './hud-perf';
 import { TranslatePipe } from './i18n/translate.pipe';
 

@@ -14,8 +14,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
-import { TranslationKey } from '../i18n/dictionaries';
-import { renderGameText } from '../i18n/game-text';
+import {
+  renderGameText,
+  TranslationKey,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { dismissSplash } from '../splash';

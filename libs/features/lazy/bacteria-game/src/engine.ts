@@ -98,12 +98,12 @@ export {
   DECLARED_REASONS,
   NOT_REPORTED,
   ONLINE_REASONS,
-} from './lib/state/replay-reasons';
+} from '@wolsok/feat-shared-bacteria-engine';
 export type {
   ArrivalReason,
   DeclaredReason,
   OnlineReason,
-} from './lib/state/replay-reasons';
+} from '@wolsok/feat-shared-bacteria-engine';
 export { matchChecksum } from './lib/state/checksum';
 export { replayFromHash, replayLink } from './lib/state/replay-link';
 export { GhostController } from './lib/state/ghost';

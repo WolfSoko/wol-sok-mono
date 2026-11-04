@@ -26,7 +26,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
 import { trackScreenViews } from './analytics/screen-views';
 import { reportUserProperties } from './analytics/user-properties';
-import { TranslationKey } from './i18n/dictionaries';
+import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from './i18n/i18n.service';
 import { difficultyKeys, levelNameText, missionKeys } from './i18n/game-texts';
 import { TranslatePipe } from './i18n/translate.pipe';

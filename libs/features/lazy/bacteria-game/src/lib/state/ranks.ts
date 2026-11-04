@@ -1,4 +1,4 @@
-import type { game as gameTexts } from '../i18n/en/game';
+import type { game as gameTexts } from '@wolsok/feat-shared-bacteria-engine';
 import { clamp } from './geometry';
 
 /** The id of a rank, as the dictionaries list it. */

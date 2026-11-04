@@ -15,10 +15,12 @@ import type { Rgb } from '../arena/arena-theme';
 import { rgba } from '../arena/canvas-math';
 import { EvolutionService } from '../evolution.service';
 import { GameHapticsService } from '../haptics.service';
-import { TranslationKey } from '../i18n/dictionaries';
+import {
+  TranslationKey,
+  TranslationParams,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { TranslationParams } from '../i18n/translation';
 import { GameSoundService } from '../sound/game-sound.service';
 import {
   GENES,

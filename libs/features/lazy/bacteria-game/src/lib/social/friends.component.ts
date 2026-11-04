@@ -11,7 +11,7 @@ import { DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { injectGameAnalytics } from '../analytics/game-analytics';
-import { TranslationKey } from '../i18n/dictionaries';
+import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ModerationService } from '../moderation/moderation.service';
