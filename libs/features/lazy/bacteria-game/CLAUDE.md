@@ -127,8 +127,8 @@ storage until then. Settings stay with the device either way.
   the `GameRanked` port (`storage/game-ranked.ts`, `FirestoreGameRanked`),
   asked of `GameCloud.ranked()` - null without a project - and only by
   `RankedService` (`ranked/`). A declaration is a transaction (it fails
-  offline instead of waiting in the cache) that writes `{ at:
-serverTimestamp(), expireAt }` and nothing else - what the rules'
+  offline instead of waiting in the cache) that writes
+  `{ at: serverTimestamp(), expireAt }` and nothing else - what the rules'
   `isDeclaration` wants - then reads `at` back with `getDocFromServer`,
   3 s in all (`DECLARE_TIMEOUT_MS`; past it one more read from the server
   takes a declaration that committed late), `at` floored to whole ms
@@ -432,7 +432,7 @@ play each other.
 - A tap that sets heavy work off runs it through `StageBusy.run`
   (`busy/stage-busy.ts`): the stage shows its spinner
   (`StageBusyComponent`), the browser paints it, and only then the work
-  runs; a tap meanwhile is dropped, a key ignored (`onKeyDown`). The menus
+  runs; a tap meanwhile is dropped, a key ignored (`StageInput.keyDown`). The menus
   wrap their steps (New game, the training, a mode, a mission, a level,
   Next); a match is started by the stage through `startOnTap`, which asks
   for the fullscreen on the tap itself first (WebKit takes it nowhere
@@ -446,23 +446,48 @@ play each other.
 ## Clearing the arena (the vaporize effect)
 
 - The stage clears the arena after a match through `resetGame$`
-  (`bacteria-game.component.ts`): `resetting` is true while the
-  `@wolsok/thanos` directive on `.thanos-container` turns the last frame
-  to dust, and the panel shows nothing meanwhile. Whatever the effect
-  does, the stage must come back: the effect runs on the stage's own
-  subscription to the directive's cold `vaporize$` and is cancelled at
+  (`bacteria-game.component.ts`), with the effect run by
+  `ArenaStage.vaporize` (`stage/arena-stage.ts`): `resetting` is true
+  while the `@wolsok/thanos` directive on `.thanos-container` turns the
+  last frame to dust, and the panel shows nothing meanwhile. Whatever the
+  effect does, the stage must come back: the effect runs on the stage's
+  own subscription to the directive's cold `vaporize$` and is cancelled at
   the set length plus `VAPORIZE_SLACK_MS` (a capture that finishes later
   must not lay its canvas over the menu), an effect that fails - at once
   included - is logged and the reset goes on, and `resetting` is cleared
   even when `GameStateService.reset()` throws.
 - The directive fades its element back in by itself when it is done. The
   stage hides `.arena-frame` the moment the effect is over
-  (`hideArenaUntilPainted`) and shows it again only once both the stage
-  rendered what follows (`afterNextRender` in `resetGame$`) and the arena
-  painted its next frame (`arenaScene.painted`), whichever comes last
-  (`revealArenaWhenReady`): a paint alone lands on the next animation
+  (`ArenaStage.hideUntilPainted`) and shows it again only once both the
+  stage rendered what follows (`afterNextRender` in `resetGame$`, which
+  calls `stageRenderedAfterReset`) and the arena painted its next frame
+  (`StageFrame.scene.painted`, which calls `arenaPaintedAfterReset`),
+  whichever comes last: a paint alone lands on the next animation
   frame, often ahead of a slow change detection, and would show the old
   level under no menu. So it never flashes up between the dust and the
   menu screen, or before the next match's first frame. A new vaporize
-  reveals it first (`revealArena`), so the snapshot is never taken of a
-  hidden arena.
+  reveals it first, so the snapshot is never taken of a hidden arena.
+
+## The stage's parts
+
+- `BacteriaGameComponent` provides one of each of the services in
+  `stage/` (`providers`), so every stage has its own: `StageFullscreen`
+  (the full-viewport layout and the browser's Fullscreen API),
+  `ArenaStage` (the arena's grid, layout and canvas size, the painter and
+  the simulation it picks, the vaporize effect), `StageFrame` (the game
+  loop's frames: camera, shake, ambience, minimap, adaptive quality and
+  the HUD's frame timings) and `StageInput` (pointer, pinch, wheel, keys,
+  touch pads). `StageFrame` and `StageInput` depend on `ArenaStage`, never
+  the other way round.
+- The services take the template's parts from the component through
+  `bind`: `StageFullscreen.bind` the stage element, `ArenaStage.bind` an
+  `ArenaStageHost` (the view queries, read on every use, and `declaring`,
+  which moves the war onto the online grid). The `@HostListener`s stay on
+  the component (Angular binds them to the host) and hand on to the
+  services; what Escape and the browser leaving fullscreen do depends on
+  the menu, so the component decides it (`onEscape`,
+  `onFullscreenChange`).
+- `TouchPadsComponent` (`stage/touch-pads.component.ts`) draws the seats'
+  joysticks and pads. Its host is `display: contents`, so its sticks and
+  seats are cells of the stage's grid; the seating plan lives in its
+  stylesheet.
