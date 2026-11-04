@@ -33,14 +33,14 @@ are.
 
 ## Fixed values
 
-| What                 | Value                                                                                                                                                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Address              | `https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/…`                                                                                                                                                            |
-| Command prefix       | `curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit`, exactly so, the address right after `--max-time 5`; a permission rule in the Claude settings may target this prefix                    |
+| What | Value |
+|---|---|
+| Address | `https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/…` |
+| Command prefix | `curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit`, exactly so, the address right after `--max-time 5`; a permission rule in the Claude settings may target this prefix |
 | File download prefix | `curl -sf --max-time 60 https://routine-utt5l6k4qa-ez.a.run.app/api/manager/messages/`, exactly so: a message's file can take longer than 5 seconds, and `-f` keeps an error answer out of the file (see "Nudges") |
-| Roles                | `spec-author`, `planner`, `implementierer`, `reviewer`, `tester`                                                                                                                                                   |
-| Ticket               | a Jira key in upper case, `ABC-12`, or a GitHub issue key `owner/repo#12`, case as the repo spells it (otherwise 400)                                                                                              |
-| Limits               | title, step title, repo, keyword 200 characters each; texts, notes, summaries 4 000 each; at most 50 steps and 10 keywords; `aufgabe` 500 characters; at most 12 ratings, each `grund` 400                         |
+| Roles | `spec-author`, `planner`, `implementierer`, `reviewer`, `tester` |
+| Ticket | a Jira key in upper case, `ABC-12`, or a GitHub issue key `owner/repo#12`, case as the repo spells it (otherwise 400) |
+| Limits | title, step title, repo, keyword 200 characters each; texts, notes, summaries 4 000 each; at most 50 steps and 10 keywords; `aufgabe` 500 characters; at most 12 ratings, each `grund` 400 |
 
 ## Role instructions
 
@@ -140,23 +140,20 @@ ticket, role, repo, `id` and texts.
 A text with a quote and two lines:
 
 ```json
-{
-  "art": "entscheidung",
-  "text": "Field stays \"kundennummer\" — renaming it would break the batch.\nThe business department has not answered yet."
-}
+{"art":"entscheidung","text":"Field stays \"kundennummer\" — renaming it would break the batch.\nThe business department has not answered yet."}
 ```
 
 **Reading answers** (plain JSON, read it directly):
 
-| Answer                                                      | Meaning                                                                                                         |
-| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `{"id":42,"neu":true}` / `{"id":7}` / `{"ok":true}`         | stored                                                                                                          |
-| `{"id":42,"neu":true,"hinweis":"…"}`                        | work item created **without** a link to the delivery; the hint says why (see "Create the work item")            |
-| `{"ok":true,"uebergangen":[7]}`                             | completion stored; no verdict reached the listed learnings (see "Completion")                                   |
-| `{"ok":false,"hinweis":"…"}`                                | refused (400, 403 or 404); the hint names the field. Correct the body once and send it again                    |
-| 404 „Unbekannte Arbeit" / 409 „Arbeit ist archiviert."      | the `id` is stale, see "Routine unreachable"                                                                    |
-| `{"statusCode":400,…,"message":"Body is not valid JSON …"}` | broken JSON: almost always an unescaped `"`, a real line break or a backslash in a text                         |
-| no output, exit code 7, 28, 52 or 56                        | routine restarting (connection refused, 5 seconds up, empty reply, connection reset), see "Routine unreachable" |
+| Answer | Meaning |
+|---|---|
+| `{"id":42,"neu":true}` / `{"id":7}` / `{"ok":true}` | stored |
+| `{"id":42,"neu":true,"hinweis":"…"}` | work item created **without** a link to the delivery; the hint says why (see "Create the work item") |
+| `{"ok":true,"uebergangen":[7]}` | completion stored; no verdict reached the listed learnings (see "Completion") |
+| `{"ok":false,"hinweis":"…"}` | refused (400, 403 or 404); the hint names the field. Correct the body once and send it again |
+| 404 „Unbekannte Arbeit" / 409 „Arbeit ist archiviert." | the `id` is stale, see "Routine unreachable" |
+| `{"statusCode":400,…,"message":"Body is not valid JSON …"}` | broken JSON: almost always an unescaped `"`, a real line break or a backslash in a text |
+| no output, exit code 7, 28, 52 or 56 | routine restarting (connection refused, 5 seconds up, empty reply, connection reset), see "Routine unreachable" |
 
 **Send every body once.** A refusal gets one corrected body, a `hinweis` on a
 stored call gets nothing: repeating a call either stores it twice or fails
@@ -390,12 +387,7 @@ executes it after approval through the ticket's source, a Jira transition or a
 GitHub status label:
 
 ```json
-{
-  "kind": "transition",
-  "title": "ABC-12 to ready-for-review",
-  "text": "PR #2366 is open, self-review done.",
-  "targetStatus": "ready-for-review"
-}
+{"kind":"transition","title":"ABC-12 to ready-for-review","text":"PR #2366 is open, self-review done.","targetStatus":"ready-for-review"}
 ```
 
 A review verdict as reviewer, everything in one request. The `draft` is the
@@ -404,12 +396,7 @@ whole review as it will appear: the verdict line (`APPROVE` or
 on a line of the diff, as `- path:line — text`:
 
 ```json
-{
-  "kind": "review",
-  "title": "Review ABC-12: two findings, approve",
-  "text": "Checked: diff, specs, started locally.",
-  "draft": "Verdict: APPROVE\n\nChecked the diff against the issue and ran the tests. The test \"empty\" in src/app/x.spec.ts does not cover the empty case.\n\nLine comments:\n- src/app/x.ts:42 — Null check missing when the contract has no options."
-}
+{"kind":"review","title":"Review ABC-12: two findings, approve","text":"Checked: diff, specs, started locally.","draft":"Verdict: APPROVE\n\nChecked the diff against the issue and ran the tests. The test \"empty\" in src/app/x.spec.ts does not cover the empty case.\n\nLine comments:\n- src/app/x.ts:42 — Null check missing when the contract has no options."}
 ```
 
 A `merge` names the PR and its checks: the PR number in `title` and in
@@ -426,13 +413,7 @@ the reason (fix it, push, and ask again). An answer whose `execution` is
 check `gh pr view <n> --json state` and ask again if the PR is still open:
 
 ```json
-{
-  "kind": "merge",
-  "title": "Merge PR #34: check tariff changes in the service",
-  "text": "PR #34 targets main. Checks: test green, lint green, typecheck green. It moves the tariff check into the service.",
-  "prNumber": 34,
-  "headSha": "3f2a9c41d07be5a6c8e1f0b2d4a69e7c51b3d820"
-}
+{"kind":"merge","title":"Merge PR #34: check tariff changes in the service","text":"PR #34 targets main. Checks: test green, lint green, typecheck green. It moves the tariff check into the service.","prNumber":34,"headSha":"3f2a9c41d07be5a6c8e1f0b2d4a69e7c51b3d820"}
 ```
 
 A grilling interview (`mattpocock-skills:grilling`) asks the manager in
@@ -444,12 +425,7 @@ question, one after the other, and go on with the next round once they are
 answered:
 
 ```json
-{
-  "kind": "question",
-  "grilling": true,
-  "title": "Grilling ABC-12, round 1",
-  "text": "Q1 — Where does the check live? Recommended: in the service, the batch uses it too.\nQ2 — Does the option disappear or turn grey? Recommended: disappear, as the ticket says."
-}
+{"kind":"question","grilling":true,"title":"Grilling ABC-12, round 1","text":"Q1 — Where does the check live? Recommended: in the service, the batch uses it too.\nQ2 — Does the option disappear or turn grey? Recommended: disappear, as the ticket says."}
 ```
 
 **Then wait.** Run this block as a background command (Bash tool with
@@ -476,14 +452,14 @@ curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request
 
 The last line prints the answer:
 
-| Answer                                                                                                     | Meaning                                                                                                                                                                               |
-| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Answer | Meaning |
+|---|---|
 | `{"ok":true,"decision":"approved","answer":"…","draft":"…","targetStatus":…,"assigneeTo":…,"execution":…}` | approved: `draft` is the text you now send or post verbatim; for a `transition`, `execution` is `ok` or names the source's error (then note it in the log and go on without retrying) |
-| `…"execution":"No transition to …"` or `"unknown — execution did not finish"`                              | the transition did not run or its outcome is unknown: check the ticket in Jira, do not assume; note it in the log                                                                     |
-| `…"decision":"rejected","answer":"<reason>"…`                                                              | rejected: adapt, new request                                                                                                                                                          |
-| no output (204)                                                                                            | not decided yet                                                                                                                                                                       |
-| any other `{"ok":false,…}` (e.g. `Setup incomplete`)                                                       | the routine was restarting when the block ended: start it again                                                                                                                       |
-| `{"ok":false,"hinweis":"Unknown request."}`                                                                | wrong number                                                                                                                                                                          |
+| `…"execution":"No transition to …"` or `"unknown — execution did not finish"` | the transition did not run or its outcome is unknown: check the ticket in Jira, do not assume; note it in the log |
+| `…"decision":"rejected","answer":"<reason>"…` | rejected: adapt, new request |
+| no output (204) | not decided yet |
+| any other `{"ok":false,…}` (e.g. `Setup incomplete`) | the routine was restarting when the block ended: start it again |
+| `{"ok":false,"hinweis":"Unknown request."}` | wrong number |
 
 If the context at start has a section `## Requests`, read it first: an open
 request means wait (block above); a decided request marked
@@ -581,11 +557,11 @@ With the completion you rate the learnings the context showed you, the field
 next session and to spot stale ones. Every `[L…]` gets **exactly one**
 verdict, with the number after the `L` as `learning` (no quotes):
 
-| `urteil`          | means                                                                            |
-| ----------------- | -------------------------------------------------------------------------------- |
-| `geholfen`        | the learning changed or sped up the work                                         |
-| `nicht_gebraucht` | it did not fit this task                                                         |
-| `falsch`          | it was stale or misleading; add `grund`, half a sentence on what no longer holds |
+| `urteil` | means |
+|---|---|
+| `geholfen` | the learning changed or sped up the work |
+| `nicht_gebraucht` | it did not fit this task |
+| `falsch` | it was stale or misleading; add `grund`, half a sentence on what no longer holds |
 
 - **Rate honestly:** a learning you only read did not help.
 - **Leave out what you cannot judge:** a learning without a verdict counts
@@ -613,11 +589,11 @@ EOF
 
 Answer `{"id":7}`. The fields:
 
-| `bereich` | required               | for                                                                                             |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------------------- |
-| `ticket`  | `ticket` (plus `repo`) | only this ticket: an agreement with the business department, a test case that only works on GIT |
-| `repo`    | `repo`                 | always in this repo, whatever the ticket                                                        |
-| `global`  | none                   | everywhere, in every session                                                                    |
+| `bereich` | required | for |
+|---|---|---|
+| `ticket` | `ticket` (plus `repo`) | only this ticket: an agreement with the business department, a test case that only works on GIT |
+| `repo` | `repo` | always in this repo, whatever the ticket |
+| `global` | none | everywhere, in every session |
 
 Plus `titel` and `text` (required) and `stichworte` (optional, a list). A
 `ticket` learning without ticket or a `repo` learning without repo gets 400:
@@ -713,3 +689,4 @@ Create the work item once more via `POST /arbeit` and report on with the
 answer's `id` when someone says the cockpit runs again (it finds the old one),
 on a 400/404 „Unbekannte Arbeit" (the `id` is stale) and on a 409 „Arbeit ist
 archiviert" (it was confirmed done and archived meanwhile).
+

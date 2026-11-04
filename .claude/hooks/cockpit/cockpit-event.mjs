@@ -1,12 +1,6 @@
 import { mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import {
-  isEntryPoint,
-  markerPath,
-  post,
-  readInput,
-  sessionOf,
-} from './shared.mjs';
+import { isEntryPoint, markerPath, post, readInput, sessionOf } from './shared.mjs';
 
 const TEXT_MAX = 4000;
 const CWD_MAX = 1000;
@@ -22,25 +16,16 @@ export function keepEnd(text, max = TEXT_MAX) {
 export function eventBody(input) {
   const sitzung = sessionOf(input);
   if (sitzung === null) return null;
-  const cwd =
-    typeof input.cwd === 'string' ? input.cwd.slice(0, CWD_MAX) : null;
+  const cwd = typeof input.cwd === 'string' ? input.cwd.slice(0, CWD_MAX) : null;
   switch (input.hook_event_name) {
     case 'Stop':
-      return {
-        sitzung,
-        ereignis: 'stop',
-        cwd,
-        text: keepEnd(input.last_assistant_message),
-      };
+      return { sitzung, ereignis: 'stop', cwd, text: keepEnd(input.last_assistant_message) };
     case 'Notification':
       return {
         sitzung,
         ereignis: 'notification',
         cwd,
-        typ:
-          typeof input.notification_type === 'string'
-            ? input.notification_type
-            : null,
+        typ: typeof input.notification_type === 'string' ? input.notification_type : null,
         text: keepEnd(input.message),
       };
     // The prompt itself stays in the session; the routine only needs "it went on".
