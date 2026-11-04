@@ -60,7 +60,7 @@ gh pr comment <n> --body-file - <<'EOF'
 EOF
 ```
 
-End state: `ready-for-test`, or back at `ready-for-impl`. When the verdict is
-set, complete your work item through the cockpit (`/abschluss`); a reclaimed
-session may send no end event, and an unfinished item blocks the next
-handover of this role.
+End state: `ready-for-test`, or back at `ready-for-impl`. When the verdict
+is set, complete your work item through the cockpit (`/abschluss`) with a
+handoff note (`uebergabe`), as on every pause; a reclaimed session may send
+no end event, and an unfinished item blocks the next handover of this role.

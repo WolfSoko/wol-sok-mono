@@ -22,7 +22,7 @@ const timeLeft = () => Math.floor(DEADLINE_MS - performance.now());
 
 const GITHUB_KEY = String.raw`[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+#\d+`;
 const JIRA_KEY = String.raw`[A-Z][A-Z0-9]+-\d+`;
-const ROLES = 'spec-author|planner|implementierer|reviewer|tester';
+const ROLES = 'spec-author|planner|implementierer|reviewer|tester|end-to-end';
 
 // The payload's lines arrive indented inside `<routine-fire-payload>`, and the saved prompt around them is free text.
 const payloadLine = (name, value) => new RegExp(String.raw`^\s*${name}:\s*(${value})\s*$`, 'm');
@@ -81,8 +81,12 @@ async function fetchRequestSection(ticket, role, timeoutMs) {
 }
 
 /** `null`: no context. Requests are not part of `/kontext`: they live with the handover points. */
-export async function fetchContext(ticket, repo, role, left) {
-  const answer = await get('/api/cockpit/kontext', { ticket, repo }, left());
+// `rolle` picks this role's handoff note; `sitzung` lets the routine see a predecessor that never ended.
+export async function fetchContext(ticket, repo, role, session, left) {
+  const query = { ticket, repo };
+  if (role !== null) query.rolle = role;
+  if (session !== null) query.sitzung = session;
+  const answer = await get('/api/cockpit/kontext', query, left());
   if (answer?.status !== 200) return null;
   if (left() < REQUESTS_MIN_MS) return answer.text;
   const requests = await fetchRequestSection(ticket, role, left());
@@ -127,7 +131,7 @@ async function firstContext(input, session) {
   if (ticket === null) return null;
 
   const repo = repoName(cwd, git(cwd, ['rev-parse', '--path-format=absolute', '--git-common-dir']));
-  const context = await fetchContext(ticket, repo, findRole(input.prompt), timeLeft);
+  const context = await fetchContext(ticket, repo, findRole(input.prompt), session, timeLeft);
   if (context === null) return null;
 
   // Marker first, and if it throws, no context: otherwise the same context would come back with

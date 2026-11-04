@@ -1,6 +1,6 @@
 # SpeedDev cloud session
 
-cockpit: 1
+cockpit: 3
 
 The routine started you with a payload: the `<routine-fire-payload>` block
 below the saved prompt. Its lines say what to do; this file says how to read

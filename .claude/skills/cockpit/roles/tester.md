@@ -29,6 +29,7 @@ can take hours. A session that stopped waiting fetches the answer at its
 next hook; finish what you can meanwhile.
 
 End state: `ready-for-deployment`, or back at `ready-for-impl`. When the
-verdict is set, complete your work item through the cockpit (`/abschluss`); a
-reclaimed session may send no end event, and an unfinished item blocks the
-next handover of this role.
+verdict is set, complete your work item through the cockpit (`/abschluss`)
+with a handoff note (`uebergabe`), as on every pause; a reclaimed session
+may send no end event, and an unfinished item blocks the next handover of
+this role.
