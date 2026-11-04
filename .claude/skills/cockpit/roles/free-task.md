@@ -39,5 +39,7 @@ A request can take hours when the user decides it. A session that stopped
 waiting fetches the answer at its next hook; finish what you can meanwhile.
 
 End state: the PR is merged and its run is green. Then complete your work
-item through the cockpit (`/abschluss`) with `erledigt`; with the merge still
-open or a failed run, complete it with `pausiert` and say what is left.
+item through the cockpit (`/abschluss`) with `erledigt`; with the merge
+still open or a failed run, complete it with `pausiert` and say what is
+left. Every completion carries a handoff note (`uebergabe`) for the next
+session.
