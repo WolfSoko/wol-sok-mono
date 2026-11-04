@@ -434,7 +434,7 @@ play each other.
   (`StageBusyComponent`), the browser paints it, and only then the work
   runs; a tap meanwhile is dropped, a key ignored (`StageInput.keyDown`). The menus
   wrap their steps (New game, the training, a mode, a mission, a level,
-  Next); a match is started by the stage through `startOnTap`, which asks
+  Next); a match is started by the stage through `PlayFlow.startOnTap`, which asks
   for the fullscreen on the tap itself first (WebKit takes it nowhere
   else) and keeps the spinner up until the match runs, a ranked
   declaration included. Back, the stepper's header, taps during a match,
@@ -446,7 +446,7 @@ play each other.
 ## Clearing the arena (the vaporize effect)
 
 - The stage clears the arena after a match through `resetGame$`
-  (`bacteria-game.component.ts`), with the effect run by
+  (`PlayFlow`, `flow/play-flow.ts`), with the effect run by
   `ArenaStage.vaporize` (`stage/arena-stage.ts`): `resetting` is true
   while the `@wolsok/thanos` directive on `.thanos-container` turns the
   last frame to dust, and the panel shows nothing meanwhile. Whatever the
@@ -491,3 +491,25 @@ play each other.
   joysticks and pads. Its host is `display: contents`, so its sticks and
   seats are cells of the stage's grid; the seating plan lives in its
   stylesheet.
+- The rest of the stage's state lives in services of its own, provided
+  the same way (all of them listed in `STAGE_PROVIDERS`,
+  `stage-providers.ts`, which the component and the flows' specs use):
+  `HudState` (`hud/`: what the HUD, the panels and the menus show of the
+  match and its setup; read-only, the clock's text in the pure
+  `match-clock.ts`), `PlayFlow` (`flow/`: the open screen and panel, the
+  modes a new game starts, the ranked declarations, starting, pausing and
+  clearing a match; the mode last played is the pure `playKindOf` in
+  `play-kind.ts`), `MatchSetup` (the menus' picks for the next match),
+  `OnlineFlow` (hosting, joining, challenges, the matchmaking's and the
+  host's starts, and what a link's hash brings in; `start()` sets it
+  going from the component's constructor) and `MatchEnd` (the end's sound
+  and buzz, the result screen's ways on). They depend downwards only:
+  `MatchEnd` and `OnlineFlow` on `PlayFlow`, `PlayFlow` on `HudState` and
+  the stage services, never back. A start that has to wait for the clear
+  arena listens to `PlayFlow.arenaCleared$` rather than reaching into the
+  reset.
+- The template reads those services directly (`hud.clockText()`,
+  `flow.show('menu')`, ...); the component keeps the layout, the
+  `@HostListener`s, Escape and the browser leaving fullscreen, the music,
+  the GPU self-test and the settings switches that answer with a tick or
+  a buzz.

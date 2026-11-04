@@ -11,6 +11,7 @@ import type { ArenaFrame, ArenaPainter } from './arena/arena-painter';
 import { arenaTheme } from './arena/arena-theme';
 import { ARENA_PAINTER_FACTORY } from './arena/arena-view.component';
 import { BacteriaGameComponent } from './bacteria-game.component';
+import { CampaignService } from './campaign.service';
 import { I18nService } from './i18n/i18n.service';
 import { MatchmakerService } from './net/matchmaker.service';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
@@ -96,10 +97,10 @@ describe('BacteriaGameComponent', () => {
       const arena = create(false, false);
 
       expect(component['stageFullscreen'].fullscreen()).toBe(false);
-      expect(component['panel']()).toBe('menu');
-      expect(component['screenOpen']()).toBe(true);
+      expect(component['flow'].panel()).toBe('menu');
+      expect(component['flow'].screenOpen()).toBe(true);
 
-      component.startGame();
+      component['flow'].startGame();
       expect(arena.requestFullscreen).not.toHaveBeenCalled();
     });
 
@@ -108,7 +109,7 @@ describe('BacteriaGameComponent', () => {
       component['stageFullscreen'].requestNative();
       await settle();
 
-      component['togglePause']();
+      component['flow'].togglePause();
 
       expect(arena.requestFullscreen).toHaveBeenCalledTimes(2);
     });
@@ -118,7 +119,7 @@ describe('BacteriaGameComponent', () => {
       component['stageFullscreen'].requestNative();
       await settle();
 
-      component['togglePause']();
+      component['flow'].togglePause();
 
       expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
     });
@@ -129,7 +130,7 @@ describe('BacteriaGameComponent', () => {
       const arena = create();
       component['stageFullscreen'].leave();
 
-      component['togglePause']();
+      component['flow'].togglePause();
 
       expect(arena.requestFullscreen).not.toHaveBeenCalled();
     });
@@ -159,7 +160,7 @@ describe('BacteriaGameComponent', () => {
 
       screenTakenOffStage(arena);
 
-      expect(component['paused']()).toBe(true);
+      expect(component['hud'].paused()).toBe(true);
       expect(component['stageFullscreen'].fullscreen()).toBe(true);
     });
 
@@ -180,19 +181,19 @@ describe('BacteriaGameComponent', () => {
       stubFullscreen(null);
       component['onFullscreenChange']();
 
-      expect(component['paused']()).toBe(false);
+      expect(component['hud'].paused()).toBe(false);
       expect(component['stageFullscreen'].fullscreen()).toBe(true);
     });
 
     it('keeps a screen open when the browser fullscreen toggle goes off', () => {
       create();
-      component['show']('settings');
+      component['flow'].show('settings');
 
       component['stageFullscreen'].setNative(false);
       component['onFullscreenChange']();
 
       expect(component['stageFullscreen'].fullscreen()).toBe(true);
-      expect(component['panel']()).toBe('settings');
+      expect(component['flow'].panel()).toBe('settings');
     });
 
     it('leaves on Escape where no browser fullscreen is there to leave', () => {
@@ -209,27 +210,27 @@ describe('BacteriaGameComponent', () => {
     it('opens on the main menu', () => {
       create();
 
-      expect(component['panel']()).toBe('menu');
+      expect(component['flow'].panel()).toBe('menu');
     });
 
     it('shows a screen and comes back', () => {
       create();
 
-      component['show']('settings');
-      expect(component['panel']()).toBe('settings');
+      component['flow'].show('settings');
+      expect(component['flow'].panel()).toBe('settings');
 
       component.onKeyDown(keyEvent('Escape', document.body));
-      expect(component['panel']()).toBe('menu');
+      expect(component['flow'].panel()).toBe('menu');
     });
 
     it('takes no key while the work of a tap waits to run', () => {
       create();
-      component['show']('new-game');
+      component['flow'].show('new-game');
 
       TestBed.inject(StageBusy).run(() => undefined);
       component.onKeyDown(keyEvent('Escape', document.body));
 
-      expect(component['panel']()).toBe('new-game');
+      expect(component['flow'].panel()).toBe('new-game');
     });
 
     it('leaves fullscreen on Escape from the main menu only', () => {
@@ -244,7 +245,7 @@ describe('BacteriaGameComponent', () => {
       create();
       startMatch('vs-computer');
 
-      expect(component['panel']()).toBeNull();
+      expect(component['flow'].panel()).toBeNull();
     });
 
     it('pauses the match on Escape and opens the pause menu', () => {
@@ -253,31 +254,31 @@ describe('BacteriaGameComponent', () => {
 
       component.onKeyDown(keyEvent('Escape', document.body));
 
-      expect(component['paused']()).toBe(true);
-      expect(component['panel']()).toBe('pause');
+      expect(component['hud'].paused()).toBe(true);
+      expect(component['flow'].panel()).toBe('pause');
     });
 
     it('opens the settings over a paused match', () => {
       create();
       startMatch('vs-computer');
-      component['togglePause']();
+      component['flow'].togglePause();
 
-      component['show']('settings');
-      expect(component['panel']()).toBe('settings');
+      component['flow'].show('settings');
+      expect(component['flow'].panel()).toBe('settings');
 
       component.onKeyDown(keyEvent('Escape', document.body));
-      expect(component['panel']()).toBe('pause');
+      expect(component['flow'].panel()).toBe('pause');
     });
 
     it('resumes a paused match on Escape from the pause menu', () => {
       create();
       startMatch('vs-computer');
-      component['togglePause']();
+      component['flow'].togglePause();
 
       component.onKeyDown(keyEvent('Escape', document.body));
 
-      expect(component['paused']()).toBe(false);
-      expect(component['panel']()).toBeNull();
+      expect(component['hud'].paused()).toBe(false);
+      expect(component['flow'].panel()).toBeNull();
     });
 
     it('shows the result once the match is over', () => {
@@ -286,7 +287,7 @@ describe('BacteriaGameComponent', () => {
 
       store.update({ endedBy: 'annihilation' });
 
-      expect(component['panel']()).toBe('over');
+      expect(component['flow'].panel()).toBe('over');
     });
 
     it('switches to the next level only once the old arena is vaporized', () => {
@@ -300,7 +301,7 @@ describe('BacteriaGameComponent', () => {
       const before = store.snapshot().levelId;
       store.update({ endedBy: 'annihilation' });
 
-      component['onMatchEnd']('next');
+      component['matchEnd'].onMatchEnd('next');
       expect(store.snapshot().levelId).toBe(before);
 
       vaporized.complete();
@@ -323,7 +324,7 @@ describe('BacteriaGameComponent', () => {
         },
       };
 
-      component.resetGame();
+      component['flow'].resetGame();
 
       expect(calls).toEqual(['show', 'snapshot']);
     });
@@ -342,15 +343,15 @@ describe('BacteriaGameComponent', () => {
             }),
         };
 
-        component.resetGame();
-        expect(component['resetting']()).toBe(true);
+        component['flow'].resetGame();
+        expect(component['flow'].resetting()).toBe(true);
 
         jest.advanceTimersByTime(settings.vaporizeMs() + 5_000 - 1);
         expect(cancelled).toBe(false);
         jest.advanceTimersByTime(2);
 
         expect(cancelled).toBe(true);
-        expect(component['resetting']()).toBe(false);
+        expect(component['flow'].resetting()).toBe(false);
         expect(store.snapshot().currentState).toBe(GameState.START);
       } finally {
         jest.useRealTimers();
@@ -371,10 +372,10 @@ describe('BacteriaGameComponent', () => {
       };
       const error = jest.fn();
 
-      component['resetGame$']().subscribe({ error });
+      component['flow'].resetGame$().subscribe({ error });
       vaporized.complete();
 
-      expect(component['resetting']()).toBe(false);
+      expect(component['flow'].resetting()).toBe(false);
       expect(error).toHaveBeenCalledWith(expect.any(Error));
     });
 
@@ -391,9 +392,9 @@ describe('BacteriaGameComponent', () => {
           },
         };
 
-        component.resetGame();
+        component['flow'].resetGame();
 
-        expect(component['resetting']()).toBe(false);
+        expect(component['flow'].resetting()).toBe(false);
         expect(store.snapshot().currentState).toBe(GameState.START);
         expect(consoleError).toHaveBeenCalledWith(
           'The arena could not be vaporized',
@@ -463,7 +464,7 @@ describe('BacteriaGameComponent', () => {
           vaporize$: () => vaporized,
         };
 
-        component.resetGame();
+        component['flow'].resetGame();
         expect(div.style.visibility).toBe('');
         vaporized.complete();
         expect(div.style.visibility).toBe('hidden');
@@ -503,55 +504,33 @@ describe('BacteriaGameComponent', () => {
       });
     });
 
-    it('names the difficulty next to the level', () => {
-      create();
-      TestBed.inject(GameStateService).setDifficulty('hard');
-
-      expect(component['difficultyName']()).toBe('Hard');
-    });
-
     it('speaks German once the player picks it', () => {
       create();
       TestBed.inject(GameStateService).setDifficulty('hard');
-      expect(component['clockLabel']()).toBe('Game time');
+      expect(component['hud'].clockLabel()).toBe('Game time');
 
       TestBed.inject(I18nService).setLanguage('de');
 
-      expect(component['clockLabel']()).toBe('Spielzeit');
-      expect(component['difficultyName']()).toBe('Schwer');
-      expect(component['settingsBackLabel']()).toBe('Menü');
+      expect(component['hud'].clockLabel()).toBe('Spielzeit');
+      expect(component['hud'].difficultyName()).toBe('Schwer');
+      expect(component['flow'].settingsBackLabel()).toBe('Menü');
     });
   });
 
   describe('a new game', () => {
-    it('sets the game up for the mode picked', () => {
-      create();
-      const settings = TestBed.inject(GameSettingsService);
-
-      component['setPlayKind']('two-players');
-      expect(store.snapshot().mode).toBe('two-players');
-
-      component['setPlayKind']('free');
-      expect(store.snapshot().mode).toBe('vs-computer');
-      expect(settings.freePlay()).toBe(true);
-
-      component['setPlayKind']('campaign');
-      expect(settings.freePlay()).toBe(false);
-    });
-
     it('opens on the mode last played, and its levels after a match', () => {
       create();
-      component['setPlayKind']('free');
+      component['flow'].setPlayKind('free');
 
-      component['openNewGame']();
-      expect(component['panel']()).toBe('new-game');
-      expect(component['newGameEntry']()).toEqual({
+      component['flow'].openNewGame();
+      expect(component['flow'].panel()).toBe('new-game');
+      expect(component['flow'].newGameEntry()).toEqual({
         kind: 'free',
         step: 'mode',
       });
 
-      component['onMatchEnd']('levels');
-      expect(component['newGameEntry']()).toEqual({
+      component['matchEnd'].onMatchEnd('levels');
+      expect(component['flow'].newGameEntry()).toEqual({
         kind: 'free',
         step: 'level',
       });
@@ -559,11 +538,11 @@ describe('BacteriaGameComponent', () => {
 
     it('opens the daily level, which has no level to choose, on its mode', () => {
       create();
-      component['setPlayKind']('daily');
+      component['flow'].setPlayKind('daily');
 
-      component['onMatchEnd']('levels');
+      component['matchEnd'].onMatchEnd('levels');
 
-      expect(component['newGameEntry']()).toEqual({
+      expect(component['flow'].newGameEntry()).toEqual({
         kind: 'daily',
         step: 'mode',
       });
@@ -575,10 +554,12 @@ describe('BacteriaGameComponent', () => {
       create();
       TestBed.inject(GameStateService).setMode('vs-computer');
 
-      expect(component['lockedLevels']()[LEVELS[2].id]).toBe(
+      expect(TestBed.inject(CampaignService).locks()[LEVELS[2].id]).toBe(
         `Win ${levelTitle(LEVELS[1])} to unlock`
       );
-      expect(LEVELS[0].id in component['lockedLevels']()).toBe(false);
+      expect(LEVELS[0].id in TestBed.inject(CampaignService).locks()).toBe(
+        false
+      );
     });
 
     it('locks the next level on the result screen until it is open', () => {
@@ -587,10 +568,10 @@ describe('BacteriaGameComponent', () => {
       const before = store.snapshot().levelId;
       store.update({ endedBy: 'annihilation' });
 
-      expect(component['upcomingLock']()).toBe(
+      expect(component['hud'].upcomingLock()).toBe(
         `Win ${levelTitle(LEVELS[0])} to unlock`
       );
-      component['onMatchEnd']('next');
+      component['matchEnd'].onMatchEnd('next');
       expect(store.snapshot().levelId).toBe(before);
     });
   });
@@ -611,202 +592,6 @@ describe('BacteriaGameComponent', () => {
       create();
       TestBed.inject(GameSettingsService).setArena(LEVELS[2].id);
       expect(component['arenaStage'].theme()).toEqual(arenaTheme(LEVELS[2].id));
-    });
-  });
-
-  describe('the colony colours', () => {
-    it('keeps a colour still to earn from either seat, also by a swap', () => {
-      create();
-      const gameState = TestBed.inject(GameStateService);
-      gameState.setMode('two-players');
-      // Settings from before the lock: the right seat plays green.
-      gameState.setColors(['orange', 'green']);
-
-      component['selectColor']({ seat: 0, colorId: 'green' });
-      expect(store.snapshot().colors).toEqual(['orange', 'green']);
-
-      component['selectColor']({ seat: 1, colorId: 'orange' });
-      expect(store.snapshot().colors).toEqual(['orange', 'green']);
-
-      component['selectColor']({ seat: 1, colorId: 'blue' });
-      expect(store.snapshot().colors).toEqual(['orange', 'blue']);
-    });
-  });
-
-  describe('a shared run', () => {
-    const run = replayOf(
-      {
-        levelId: LEVELS[3].id,
-        mode: 'vs-computer',
-        difficulty: 'normal',
-        colors: ['orange', 'blue'],
-        headStart: 0,
-        width: 320,
-        height: 140,
-        seed: 9,
-      },
-      'cpu',
-      600,
-      { steers: [[0, 0, 1, 0]], drags: [], boosts: [], weapons: [] }
-    );
-
-    it('starts a match against it on Fight it', async () => {
-      create();
-      store.update({ challenge: run });
-
-      const held = holdBusyWork();
-      component['fightChallenge']();
-      await held[0]();
-
-      expect(store.ghost()).toEqual(run);
-      expect(store.challenge()).toBeNull();
-      expect(store.level().id).toBe(LEVELS[3].id);
-      expect(TestBed.inject(PlayerStore).entities()[1].name).toBe('Ghost');
-    });
-
-    it('lets it go on Not now', () => {
-      create();
-      store.update({ challenge: run });
-
-      component['dismissChallenge']();
-
-      expect(store.challenge()).toBeNull();
-      expect(store.ghost()).toBeNull();
-    });
-  });
-
-  /**
-   * Holds the work a tap sets off behind the spinner, rather than waiting
-   * out the frame (which would render the template these specs leave out).
-   */
-  function holdBusyWork(): Array<() => void | Promise<unknown>> {
-    const held: Array<() => void | Promise<unknown>> = [];
-    jest
-      .spyOn(TestBed.inject(StageBusy), 'run')
-      .mockImplementation((work) => held.push(work));
-    return held;
-  }
-
-  describe('a match started from a tap', () => {
-    it('takes the screen on the tap, and sets the match up behind the spinner', async () => {
-      create();
-      const held = holdBusyWork();
-      const fullscreen = jest
-        .spyOn(component['stageFullscreen'], 'requestNative')
-        .mockImplementation(() => undefined);
-      const start = jest
-        .spyOn(component, 'startGame')
-        .mockImplementation(() => undefined);
-
-      component['startNewGame']('campaign');
-
-      expect(fullscreen).toHaveBeenCalled();
-      expect(start).not.toHaveBeenCalled();
-      await held[0]();
-      expect(start).toHaveBeenCalledTimes(1);
-    });
-
-    it('starts an online match on the tap, in step with the other device', () => {
-      create();
-      const held = holdBusyWork();
-      const start = jest
-        .spyOn(component, 'startGame')
-        .mockImplementation(() => undefined);
-
-      component['startNewGame']('online');
-
-      expect(start).toHaveBeenCalledTimes(1);
-      expect(held).toEqual([]);
-    });
-
-    it('starts the next campaign match from the result screen at once', () => {
-      create();
-      const held = holdBusyWork();
-      const start = jest
-        .spyOn(component, 'startGame')
-        .mockImplementation(() => undefined);
-
-      component['playFurthestLevel']();
-
-      expect(start).toHaveBeenCalledTimes(1);
-      expect(held).toEqual([]);
-    });
-
-    it('stays busy until a daily match is under way', async () => {
-      create();
-      const held = holdBusyWork();
-      let started = (): void => undefined;
-      jest
-        .spyOn(component as never, 'playDaily')
-        .mockImplementation(
-          (() => new Promise<void>((resolve) => (started = resolve))) as never
-        );
-
-      component['startNewGame']('daily');
-      let done = false;
-      const work = Promise.resolve(held[0]()).then(() => (done = true));
-      await Promise.resolve();
-
-      expect(done).toBe(false);
-      started();
-      await work;
-      expect(done).toBe(true);
-    });
-  });
-
-  describe('a match the matchmaking set up', () => {
-    it('is played on the level the matchmaking picked', () => {
-      create();
-      const levelId = MATCH_LEVELS[3].id;
-      jest
-        .spyOn(TestBed.inject(MatchmakerService), 'matchLevel')
-        .mockReturnValue({ levelId, reason: 'theirs' });
-      const start = jest
-        .spyOn(component as unknown as { startGame(): void }, 'startGame')
-        .mockImplementation(() => undefined);
-
-      (
-        component as unknown as { startMatchmadeMatch(): void }
-      ).startMatchmadeMatch();
-
-      expect(store.snapshot().levelId).toBe(levelId);
-      expect(start).toHaveBeenCalled();
-    });
-  });
-
-  describe('giving a ranked match up', () => {
-    function armed() {
-      create();
-      return jest
-        .spyOn(component as never, 'quitToMenu')
-        .mockImplementation(() => undefined);
-    }
-
-    it('quits on the second tap only, while the first is armed', () => {
-      const quit = armed();
-
-      component['giveUp']();
-      expect(component['giveUpArmed']()).toBe(true);
-      expect(quit).not.toHaveBeenCalled();
-
-      component['giveUp']();
-      expect(quit).toHaveBeenCalledTimes(1);
-      expect(component['giveUpArmed']()).toBe(false);
-    });
-
-    it('disarms by itself after a while', () => {
-      const quit = armed();
-      const timers = jest.spyOn(globalThis, 'setTimeout');
-
-      component['giveUp']();
-      const [disarm, ms] = timers.mock.calls.at(-1) ?? [];
-      expect(ms).toBe(3_000);
-      (disarm as () => void)();
-      expect(component['giveUpArmed']()).toBe(false);
-
-      component['giveUp']();
-      expect(quit).not.toHaveBeenCalled();
-      timers.mockRestore();
     });
   });
 });
