@@ -7,7 +7,7 @@ Generated from the Nx project graph, the module boundary rules in
 the architecture routine; for the narrative overview see
 [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md).
 
-**47 projects · 76 internal dependencies · 3 federated remotes**
+**49 projects · 78 internal dependencies · 3 federated remotes**
 
 ## Contents
 
@@ -30,12 +30,13 @@ flowchart TD
   public["libs/public (published)<br/>3 projects"]
   features["libs/features<br/>14 projects"]
   shared["libs/shared<br/>5 projects"]
-  utils["libs/utils<br/>5 projects"]
+  utils["libs/utils<br/>7 projects"]
   other["libs (other)<br/>4 projects"]
   apps -- 15 --> features
   apps -- 1 --> other
   apps -- 3 --> public
   apps -- 10 --> shared
+  apps -- 2 --> utils
   features -- 11 --> other
   features -- 1 --> public
   features -- 4 --> shared
@@ -180,8 +181,10 @@ flowchart LR
     math["math"]
     utils_decorators["utils-decorators"]
     utils_gpu_calc["utils-gpu-calc"]
+    utils_json["utils-json"]
     utils_measure_fps["utils-measure-fps"]
     utils_operators["utils-operators"]
+    utils_time["utils-time"]
   end
   subgraph other["libs (other)"]
     fib_wasm["fib-wasm"]
@@ -249,6 +252,8 @@ flowchart LR
   fourier_analysis_remote_cdk --> spa_cdk_stack
   neural_networks --> ui_kit
   nx_aws_cdk_v2_e2e ==> nx_aws_cdk_v2
+  pacetrainer --> utils_json
+  pacetrainer --> utils_time
   portfolio ==> angular_examples
   portfolio --> shared_legal
   portfolio_cdk ==> portfolio
@@ -309,6 +314,7 @@ flowchart LR
 | `fib-wasm-api`                           | other    | api                                     | 1           | 1            | 0.5         |
 | `math`                                   | utils    | utils                                   | 2           | 0            | 0           |
 | `neural-networks`                        | features | feature:lazy                            | 1           | 1            | 0.5         |
+| `pacetrainer`                            | apps     | app, type:firebase                      | 0           | 2            | 1           |
 | `ws-gl`                                  | shared   | shared                                  | 2           | 0            | 0           |
 | `bacteria-wars-functions`                | apps     | app, type:firebase, type:functions      | 0           | 1            | 1           |
 | `fib-wasm`                               | other    | shared                                  | 1           | 0            | 0           |
@@ -316,9 +322,10 @@ flowchart LR
 | `nx-aws-cdk-v2-e2e`                      | apps     | e2e                                     | 0           | 1            | 1           |
 | `test-helper`                            | other    | shared                                  | 1           | 0            | 0           |
 | `utils-decorators`                       | utils    | utils                                   | 1           | 0            | 0           |
+| `utils-json`                             | utils    | utils                                   | 1           | 0            | 0           |
+| `utils-time`                             | utils    | utils                                   | 1           | 0            | 0           |
 | `ws-thanos-test-app`                     | apps     | app, type:test-app                      | 0           | 1            | 1           |
 | `bacteria-wars-android`                  | apps     | type:android                            | 0           | 0            | –           |
-| `pacetrainer`                            | apps     | app, type:firebase                      | 0           | 0            | –           |
 
 ## Automated findings
 

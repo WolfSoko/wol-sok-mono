@@ -2,7 +2,7 @@ import {
   JSONCompatible,
   safeJsonParse,
   safeJsonStringify,
-} from '../utils/json-utils/json-utils';
+} from '@wolsok/utils-json';
 
 export const LOCAL_STORAGE_KEY_PREFIX = 'PACETRAINER@V0.9';
 

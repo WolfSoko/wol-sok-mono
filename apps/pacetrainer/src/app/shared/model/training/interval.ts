@@ -1,4 +1,4 @@
-import { Milliseconds, mul } from '../constants/time-utils';
+import { Milliseconds, mul } from '@wolsok/utils-time';
 import { ExerciseWithDuration } from './excercise';
 import { calcTotalDuration, createDuration, Duration } from '../timing';
 

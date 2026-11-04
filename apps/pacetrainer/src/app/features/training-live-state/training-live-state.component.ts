@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { Milliseconds } from '../../shared/model/constants/time-utils';
+import { Milliseconds } from '@wolsok/utils-time';
 import { CountdownModel } from '../../shared/model/training/countdown.model';
 import { IntervalView, RunPhase } from '../../shared/training-run/training-run';
 import { TrainingNamePipe } from '../../shared/ui/training-name.pipe';

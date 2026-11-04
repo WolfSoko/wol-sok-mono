@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import {
   add,
   compare,
@@ -24,7 +23,7 @@ import {
   SECONDS_IN_MINUTE,
   sToMs,
   subtract,
-} from './time-utils';
+} from './time-units';
 
 describe('Time Conversion Functions', () => {
   it('should convert seconds to milliseconds', () => {
