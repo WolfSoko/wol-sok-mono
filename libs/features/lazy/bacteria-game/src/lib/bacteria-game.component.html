@@ -7,47 +7,25 @@
   stylesheet has the seating plan.
 -->
 <div
-  #arenaStage
+  #stageElement
   class="stage"
-  [class.fullscreen]="fullscreen()"
-  [style.--stage-top.px]="stageTop()"
-  [class.solo]="humanStats().length < 2"
-  [style.--arena-border]="arenaBorder()"
-  [style.--arena-rim]="arenaRim()"
+  [class.fullscreen]="stageFullscreen.fullscreen()"
+  [style.--stage-top.px]="stageFullscreen.stageTop()"
+  [style.--arena-border]="arenaStage.arenaBorder()"
+  [style.--arena-rim]="arenaStage.arenaRim()"
 >
-  @for (colony of humanStats(); track colony.id; let seat = $index) {
-    <feat-lazy-bac-game-joystick
-      class="stick"
-      [attr.inert]="screenOpen() ? '' : null"
-      [attr.data-seat]="seat"
-      [color]="colony.css"
-      [label]="colony.name"
-      [disabled]="!running()"
-      [zooms]="cameraFollows()"
-      (steer)="steer(colony.id, $event)"
-      (zoom)="zoomBy($event)"
-      (wheel)="onWheel($event)"
-    />
-    <div
-      class="seat"
-      [attr.inert]="screenOpen() ? '' : null"
-      [attr.data-seat]="seat"
-    >
-      <feat-lazy-bac-game-boost-pad
-        [colony]="colony"
-        [disabled]="!running()"
-        (boost)="boost(colony.id)"
-      />
-      @if (colony.weapon; as weapon) {
-        <feat-lazy-bac-game-weapon-pad
-          [weapon]="weapon"
-          [disabled]="!running()"
-          [over]="matchOver()"
-          (fire)="fireWeapon(colony.id)"
-        />
-      }
-    </div>
-  }
+  <feat-lazy-bac-game-touch-pads
+    [colonies]="humanStats()"
+    [disabled]="!running()"
+    [over]="matchOver()"
+    [zooms]="arenaStage.cameraFollows()"
+    [outOfReach]="screenOpen()"
+    (steer)="stageInput.steer($event.playerId, $event.vector)"
+    (boost)="stageInput.boost($event)"
+    (fire)="stageInput.fireWeapon($event)"
+    (zoom)="stageInput.zoomBy($event)"
+    (zoomWheel)="stageInput.wheel($event)"
+  />
 
   @if (running() && !paused() && missionGoal(); as goal) {
     <p class="mission-goal" role="status">
@@ -159,8 +137,8 @@
               (training)="openTraining()"
               (open)="show($event)"
               (soundChange)="setSound($event)"
-              [fullscreen]="fullscreen()"
-              (fullscreenChange)="setFullscreen($event)"
+              [fullscreen]="stageFullscreen.fullscreen()"
+              (fullscreenChange)="stageFullscreen.set($event)"
               [challenge]="challengeLevel()"
               [cloudAvailable]="social.available"
               [friendRequests]="social.requests().length"
@@ -239,8 +217,10 @@
               class="screen"
               [locked]="running()"
               [arenaSize]="arena()"
-              [nativeFullscreenSupported]="nativeFullscreenSupported()"
-              [nativeFullscreen]="nativeFullscreen()"
+              [nativeFullscreenSupported]="
+                stageFullscreen.nativeFullscreenSupported()
+              "
+              [nativeFullscreen]="stageFullscreen.nativeFullscreen()"
               [backLabel]="settingsBackLabel()"
               [vibrationSupported]="vibrationSupported"
               (soundChange)="setSound($event)"
@@ -249,7 +229,7 @@
               (vibrationChange)="setVibration($event)"
               [arenaLocks]="arenaLocks()"
               [activeArena]="campaign.activeArena()"
-              (nativeFullscreenChange)="setNativeFullscreen($event)"
+              (nativeFullscreenChange)="stageFullscreen.setNative($event)"
               (back)="show('menu')"
             />
           }
@@ -294,32 +274,32 @@
     <div
       wsThanos
       class="thanos-container"
-      [wsThanosOptions]="thanosOptions()"
-      (wsSharedUiElemResized)="onArenaBoxResized($event)"
-      (wheel)="onWheel($event)"
+      [wsThanosOptions]="arenaStage.thanosOptions()"
+      (wsSharedUiElemResized)="arenaStage.onArenaBoxResized($event)"
+      (wheel)="stageInput.wheel($event)"
     >
       <div #arenaFrame class="arena-frame">
         <feat-lazy-bac-game-arena-view
           canvasId="canvasElement"
-          [layout]="arenaLayout()"
-          [scene]="arenaScene"
-          [theme]="theme()"
-          [zones]="zones()"
-          [size]="canvasSize()"
-          (painterChange)="onPainterChange($event)"
-          (pointerdown)="onPointerDown($event)"
-          (pointermove)="onPointerMove($event)"
-          (pointerup)="onPointerUp($event)"
-          (pointercancel)="onPointerUp($event)"
+          [layout]="arenaStage.arenaLayout()"
+          [scene]="stageFrame.scene"
+          [theme]="arenaStage.theme()"
+          [zones]="arenaStage.zones()"
+          [size]="arenaStage.canvasSize()"
+          (painterChange)="stageFrame.onPainterChange($event)"
+          (pointerdown)="stageInput.pointerDown($event)"
+          (pointermove)="stageInput.pointerMove($event)"
+          (pointerup)="stageInput.pointerUp($event)"
+          (pointercancel)="stageInput.pointerUp($event)"
         ></feat-lazy-bac-game-arena-view>
-        @if (settings.ambience() && !painterAmbience()) {
+        @if (settings.ambience() && !arenaStage.painterAmbience()) {
           <!-- Bubbles and mist over the arena; the pointer goes through it. -->
           <canvas
             #ambienceElement
             class="ambience"
             aria-hidden="true"
-            [style.width.px]="canvasSize()?.width"
-            [style.height.px]="canvasSize()?.height"
+            [style.width.px]="arenaStage.canvasSize()?.width"
+            [style.height.px]="arenaStage.canvasSize()?.height"
           ></canvas>
         }
       </div>
@@ -337,22 +317,22 @@
       [neutral]="neutralCount()"
       [neutralCss]="neutralCss"
       [fps]="hudFps()"
-      [perf]="settings.showFps() ? hudPerf() : null"
+      [perf]="settings.showFps() ? stageFrame.hudPerf() : null"
       [sound]="settings.sound()"
       [showPause]="running() && !paused() && canPause()"
       [showGiveUp]="running() && !canPause()"
       [giveUpArmed]="giveUpArmed()"
-      [fullscreen]="fullscreen()"
+      [fullscreen]="stageFullscreen.fullscreen()"
       (soundChange)="setSound($event)"
       (pause)="togglePause()"
       (giveUp)="giveUp()"
-      (fullscreenChange)="setFullscreen($event)"
+      (fullscreenChange)="stageFullscreen.set($event)"
     />
   }
   <!-- Over everything while a tap's work is under way: a spinner. -->
   <feat-lazy-bac-game-stage-busy [style.--bw-player]="colonyCss()[0]" />
   <!-- Only a glance: small, in the top right corner below the HUD. -->
-  @if (cameraFollows()) {
+  @if (arenaStage.cameraFollows()) {
     <canvas
       #minimapElement
       class="minimap"
