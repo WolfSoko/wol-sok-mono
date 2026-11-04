@@ -207,7 +207,10 @@ export class OnlineFlow {
     if (this.gone) {
       return;
     }
-    await this.dropHash();
+    // Only while the address still carries it: the player may have moved on.
+    if (this.document.location.hash === match[0]) {
+      await this.dropHash();
+    }
     if (from !== null) {
       this.inviteOffer.set({ token, from });
     }

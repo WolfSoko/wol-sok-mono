@@ -137,6 +137,18 @@ describe('OnlineFlow', () => {
       expect(navigate).toHaveBeenCalled();
     });
 
+    it('leaves an address be that no longer carries the link', async () => {
+      jest.spyOn(social, 'readInvite').mockImplementation(async () => {
+        TestBed.inject(DOCUMENT).location.hash = '';
+        return 'Ada';
+      });
+
+      await takeInvite();
+
+      expect(online.inviteOffer()).toEqual({ token, from: 'Ada' });
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
     it('keeps the link when it could not be read, for a reload', async () => {
       jest.spyOn(social, 'readInvite').mockRejectedValue(new Error('offline'));
 
