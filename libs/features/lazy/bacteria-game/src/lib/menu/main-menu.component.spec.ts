@@ -298,7 +298,7 @@ describe('MainMenuComponent support tile', () => {
     jest
       .spyOn(support, 'url')
       .mockReturnValue(
-        where === 'web' ? 'https://buymeacoffee.com/wolf' : null
+        where === 'web' ? 'https://buymeacoffee.com/wolfsoko' : null
       );
     jest
       .spyOn(support, 'tipProducts')
@@ -318,7 +318,7 @@ describe('MainMenuComponent support tile', () => {
       render('web').querySelector<HTMLAnchorElement>('a.tile.support');
 
     expect(link?.textContent).toContain('Support');
-    expect(link?.href).toBe('https://buymeacoffee.com/wolf');
+    expect(link?.href).toBe('https://buymeacoffee.com/wolfsoko');
     expect(link?.target).toBe('_blank');
   });
 

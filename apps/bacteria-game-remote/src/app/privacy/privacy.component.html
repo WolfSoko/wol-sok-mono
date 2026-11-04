@@ -673,9 +673,9 @@
     <h2 id="de-trinkgeld">8. Trinkgeld</h2>
     <p>
       Im Browser führt der Button „Spendier mir einen Kaffee“ zur Seite
-      <a href="https://buymeacoffee.com/wolf">buymeacoffee.com/wolf</a> des
-      Dienstes Buy Me a Coffee. Das Spiel lädt nichts von dort, solange du den
-      Link nicht öffnest. Für die Seite und eine Zahlung dort gilt die
+      <a [href]="buyMeACoffee.url">{{ buyMeACoffee.label }}</a> des Dienstes Buy
+      Me a Coffee. Das Spiel lädt nichts von dort, solange du den Link nicht
+      öffnest. Für die Seite und eine Zahlung dort gilt die
       <a href="https://buymeacoffee.com/privacy-policy"
         >Datenschutzerklärung von Buy Me a Coffee</a
       >.
@@ -1507,9 +1507,9 @@
     <h2 id="en-tips">8. Tips</h2>
     <p>
       In the browser, the “Buy me a coffee” button leads to the page
-      <a href="https://buymeacoffee.com/wolf">buymeacoffee.com/wolf</a> of the
-      service Buy Me a Coffee. The game loads nothing from there unless you open
-      the link. The
+      <a [href]="buyMeACoffee.url">{{ buyMeACoffee.label }}</a> of the service
+      Buy Me a Coffee. The game loads nothing from there unless you open the
+      link. The
       <a href="https://buymeacoffee.com/privacy-policy"
         >privacy policy of Buy Me a Coffee</a
       >

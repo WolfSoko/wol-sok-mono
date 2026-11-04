@@ -413,6 +413,18 @@ describe('PrivacyComponent', () => {
     expect(en).not.toContain('any signed-in player who knows your identifier');
   });
 
+  it("links the owner's Buy Me a Coffee page, in both languages", async () => {
+    const page = await open();
+
+    for (const lang of ['de', 'en']) {
+      const link = page.querySelector<HTMLAnchorElement>(
+        `article[lang="${lang}"] a[href^="https://buymeacoffee.com/"]:not([href$="/privacy-policy"])`
+      );
+      expect(link?.href).toBe('https://buymeacoffee.com/wolfsoko');
+      expect(link?.textContent?.trim()).toBe('buymeacoffee.com/wolfsoko');
+    }
+  });
+
   it('names the hint on saved matches among what the device keeps', async () => {
     const { de, en } = texts(await open());
 

@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { beforeRetry } from '../storage/retry';
-import { GAME_SUPPORT } from './game-support';
+import { buyMeACoffeeUrl, GAME_SUPPORT } from './game-support';
 import { PlayBillingService, TipProduct } from './play-billing.service';
 import { isTwaSession } from './twa-session';
 
@@ -16,10 +16,6 @@ import { isTwaSession } from './twa-session';
 export type TipNotice = 'thanks' | 'failed' | null;
 
 const PRODUCT_LOAD_ATTEMPTS = 3;
-
-function buyMeACoffeeUrl(handle: string): string {
-  return `https://buymeacoffee.com/${encodeURIComponent(handle)}`;
-}
 
 /**
  * How a player can pay for the game where they play it: the Buy Me a

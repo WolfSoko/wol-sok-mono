@@ -57,7 +57,7 @@ describe('GameSupport', () => {
   it('offers the Buy Me a Coffee page on the web', async () => {
     const support = await setUp();
 
-    expect(support.url()).toBe('https://buymeacoffee.com/wolf');
+    expect(support.url()).toBe('https://buymeacoffee.com/wolfsoko');
     expect(support.tipProducts()).toEqual([]);
     expect(support.available()).toBe(true);
     expect(billing.loadProducts).not.toHaveBeenCalled();
@@ -91,7 +91,7 @@ describe('GameSupport', () => {
       'android-app://com.google.android.gm/'
     );
 
-    expect(support.url()).toBe('https://buymeacoffee.com/wolf');
+    expect(support.url()).toBe('https://buymeacoffee.com/wolfsoko');
     expect(billing.loadProducts).not.toHaveBeenCalled();
   });
 
