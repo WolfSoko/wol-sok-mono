@@ -136,7 +136,9 @@
     {
       "codebase": "bacteria",
       "source": "dist/apps/bacteria-wars-functions",
-      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" install --omit dev"]
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" install --omit dev --legacy-peer-deps=false"
+      ]
     }
   ]
 }

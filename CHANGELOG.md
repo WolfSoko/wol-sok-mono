@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.137.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.0...v74.137.1) (2026-11-03)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** split the colony renderer into modules by concern ([#2753](https://github.com/WolfSoko/wol-sok-mono/issues/2753)) ([626564c](https://github.com/WolfSoko/wol-sok-mono/commit/626564c7e5ea1a96d8cce98da052af62ddaa6324)), references [#2750](https://github.com/WolfSoko/wol-sok-mono/issues/2750)
+
+### Chore
+
+* **tools:** leave the cockpit files out of formatting ([#2759](https://github.com/WolfSoko/wol-sok-mono/issues/2759)) ([22e1bac](https://github.com/WolfSoko/wol-sok-mono/commit/22e1bacbd8d2c4d32e247214de7a669d5d43cfbd)), references [#2758](https://github.com/WolfSoko/wol-sok-mono/issues/2758)
+
+## [74.137.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.5...v74.137.0) (2026-11-03)
+
+### Features
+
+* **utils-version:** read version.json through one lib, forbid inline boundary disables ([#2752](https://github.com/WolfSoko/wol-sok-mono/issues/2752)) ([6332f52](https://github.com/WolfSoko/wol-sok-mono/commit/6332f5273ea6c62934a66c2d32424ccfa0f25ac1)), closes [#2737](https://github.com/WolfSoko/wol-sok-mono/issues/2737)
+
+### Chore
+
+* **release:** publish ([d007334](https://github.com/WolfSoko/wol-sok-mono/commit/d00733459654f824cd24a5a318514539099f4721))
+* **tools:** pin .nvmrc to the Node 24 major instead of a patch release ([5ecdeec](https://github.com/WolfSoko/wol-sok-mono/commit/5ecdeecf1d807b8f8b359242247cf3dcb9deaa18))
+
+## [74.136.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.4...v74.136.5) (2026-11-03)
+
+### Bug Fixes
+
+* **deps:** install function deps without the workspace's legacy-peer-deps ([#2751](https://github.com/WolfSoko/wol-sok-mono/issues/2751)) ([114f4e5](https://github.com/WolfSoko/wol-sok-mono/commit/114f4e5b1012addb14815f0ea54d05c4591a97ac)), closes [#2749](https://github.com/WolfSoko/wol-sok-mono/issues/2749)
+
 ## [74.136.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.3...v74.136.4) (2026-11-03)
 
 ### Bug Fixes

@@ -1,4 +1,12 @@
-import { baseUrl, get, isEntryPoint, readInput, sessionOf } from './shared.mjs';
+import {
+  baseUrl,
+  fetchNudges,
+  get,
+  isEntryPoint,
+  nudgeText,
+  readInput,
+  sessionOf,
+} from './shared.mjs';
 
 export function waitBlock(id) {
   return [
@@ -44,10 +52,15 @@ async function main() {
   if (input === null || input.stop_hook_active === true) return;
   const session = sessionOf(input);
   if (session === null) return;
-  const request = await unattendedRequest(session);
-  if (request === null) return;
+  const nudges = nudgeText(await fetchNudges(session));
+  // The routine marked the nudges fetched: a throw from here on must not swallow them.
+  const request = await unattendedRequest(session).catch(() => null);
+  const reasons = [nudges, request === null ? null : reasonFor(request)].filter(
+    (r) => r !== null
+  );
+  if (reasons.length === 0) return;
   process.stdout.write(
-    JSON.stringify({ decision: 'block', reason: reasonFor(request) })
+    JSON.stringify({ decision: 'block', reason: reasons.join('\n\n') })
   );
 }
 

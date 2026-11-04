@@ -7,17 +7,11 @@ import { paintArenaBackground } from '../arena-renderer';
 import { layerScale, paintZoneLayer } from '../zone-decal';
 import { Zone } from '../../state/zones';
 import { ArenaTheme } from '../arena-theme';
-import {
-  cellDensity,
-  colonyBounds,
-  hatchPattern,
-  jamDrops,
-  lookReach,
-  LOOKS,
-  overcharge,
-  StateLayer,
-  strengthOf,
-} from '../colony-renderer';
+import { cellDensity, overcharge, strengthOf } from '../colony-energy';
+import { colonyBounds } from '../slime-painter';
+import { hatchPattern, lookReach, LOOKS } from '../lattice-cells';
+import { jamDrops } from '../jam';
+import { StateLayer } from '../colony-renderer';
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
 import { GpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
 import { rendererOf } from '../../gl/renderer';
