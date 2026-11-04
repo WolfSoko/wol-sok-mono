@@ -83,7 +83,7 @@ describe('HelpComponent', () => {
     });
     jest
       .spyOn(TestBed.inject(GameSupport), 'url')
-      .mockReturnValue('https://buymeacoffee.com/wolf');
+      .mockReturnValue('https://buymeacoffee.com/wolfsoko');
     const ads = TestBed.inject(GameAds);
     jest.spyOn(ads, 'consentAnswered').mockReturnValue(true);
     const reopen = jest
@@ -98,7 +98,7 @@ describe('HelpComponent', () => {
 
     expect(host.textContent).toContain('Support the game');
     expect(
-      host.querySelector('a[href="https://buymeacoffee.com/wolf"]')
+      host.querySelector('a[href="https://buymeacoffee.com/wolfsoko"]')
     ).not.toBeNull();
     expect(reopen).toHaveBeenCalled();
   });

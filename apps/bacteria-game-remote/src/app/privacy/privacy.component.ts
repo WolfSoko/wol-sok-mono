@@ -2,16 +2,23 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import {
+  buyMeACoffeeUrl,
   GameAds,
   LEGAL_NOTICE_PATH,
   StatsConsent,
 } from '@wolsok/feat-lazy-bac-game';
+import { SUPPORT_DEFAULTS } from '../../environments/game-support';
 import { setUpLegalPage } from '../legal/legal-page';
 import {
   EmailForwardingComponent,
   SITE_OWNER,
   SiteOwnerComponent,
 } from '@wolsok/shared-legal';
+
+function buyMeACoffeeLink(handle: string): { url: string; label: string } {
+  const url = buyMeACoffeeUrl(handle);
+  return { url, label: url.replace(/^https:\/\//, '') };
+}
 
 /**
  * The privacy policy of the game, its web app and its Android app, in
@@ -34,6 +41,10 @@ export class PrivacyComponent {
   /** For the email in the deletion links. */
   protected readonly owner = SITE_OWNER;
   protected readonly legalNoticePath = LEGAL_NOTICE_PATH;
+  /** The page the tip button leads to on the web, named in section 8. */
+  protected readonly buyMeACoffee = buyMeACoffeeLink(
+    SUPPORT_DEFAULTS.buyMeACoffeeHandle
+  );
   /**
    * The ad network section 7 describes, and the way back into its consent
    * window, as in the game's footer: shown once the window answered, which

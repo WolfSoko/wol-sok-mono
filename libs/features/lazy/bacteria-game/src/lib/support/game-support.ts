@@ -22,6 +22,11 @@ export interface GameSupportOptions {
   readonly ads: GameAdsOptions | null;
 }
 
+/** The Buy Me a Coffee page of a handle. */
+export function buyMeACoffeeUrl(handle: string): string {
+  return `https://buymeacoffee.com/${encodeURIComponent(handle)}`;
+}
+
 export const GAME_SUPPORT = new InjectionToken<GameSupportOptions | null>(
   'GAME_SUPPORT',
   { factory: () => null }
