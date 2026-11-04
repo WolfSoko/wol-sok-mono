@@ -127,8 +127,8 @@ storage until then. Settings stay with the device either way.
   the `GameRanked` port (`storage/game-ranked.ts`, `FirestoreGameRanked`),
   asked of `GameCloud.ranked()` - null without a project - and only by
   `RankedService` (`ranked/`). A declaration is a transaction (it fails
-  offline instead of waiting in the cache) that writes `{ at:
-serverTimestamp(), expireAt }` and nothing else - what the rules'
+  offline instead of waiting in the cache) that writes
+  `{ at: serverTimestamp(), expireAt }` and nothing else - what the rules'
   `isDeclaration` wants - then reads `at` back with `getDocFromServer`,
   3 s in all (`DECLARE_TIMEOUT_MS`; past it one more read from the server
   takes a declaration that committed late), `at` floored to whole ms
