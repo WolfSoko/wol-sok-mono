@@ -7,7 +7,7 @@ import {
   LEGAL_NOTICE_PATH,
   StatsConsent,
 } from '@wolsok/feat-lazy-bac-game';
-import { SUPPORT_DEFAULTS } from '../../environments/game-support';
+import { environment } from '../../environments/environment';
 import { setUpLegalPage } from '../legal/legal-page';
 import {
   EmailForwardingComponent,
@@ -41,9 +41,9 @@ export class PrivacyComponent {
   /** For the email in the deletion links. */
   protected readonly owner = SITE_OWNER;
   protected readonly legalNoticePath = LEGAL_NOTICE_PATH;
-  /** The page the tip button leads to on the web, named in section 8. */
+  /** The page the tip button leads to on the web (its options), in section 8. */
   protected readonly buyMeACoffee = buyMeACoffeeLink(
-    SUPPORT_DEFAULTS.buyMeACoffeeHandle
+    environment.support.buyMeACoffeeHandle
   );
   /**
    * The ad network section 7 describes, and the way back into its consent
