@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.137.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.6...v74.137.7) (2026-11-04)
+
+### Bug Fixes
+
+* **bacteria-game-remote:** link the owner's Buy Me a Coffee page ([#2768](https://github.com/WolfSoko/wol-sok-mono/issues/2768)) ([a8f7cdd](https://github.com/WolfSoko/wol-sok-mono/commit/a8f7cddc82103e10d64cf8e6084dc5da1717f305)), closes [#2767](https://github.com/WolfSoko/wol-sok-mono/issues/2767)
+
 ## [74.137.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.5...v74.137.6) (2026-11-04)
 
 ### Refactorings
