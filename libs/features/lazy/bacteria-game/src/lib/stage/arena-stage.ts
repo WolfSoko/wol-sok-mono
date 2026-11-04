@@ -391,14 +391,17 @@ export class ArenaStage {
     // The directive's teardown fades the container back in.
     // vaporize$ reads its options as it is called: this snap has its wind,
     // the next one blows another way.
-    const thanos = this.hostParts()?.thanos();
-    if (thanos == null) {
-      return of(undefined);
+    const host = this.hostParts();
+    if (host == null) {
+      throw new Error('The arena stage has no host to vaporize');
     }
-    const vaporized = thanos.vaporize$(false).pipe(
-      takeUntil(timer(this.settings.vaporizeMs() + VAPORIZE_SLACK_MS)),
-      map(() => undefined)
-    );
+    const vaporized = host
+      .thanos()
+      .vaporize$(false)
+      .pipe(
+        takeUntil(timer(this.settings.vaporizeMs() + VAPORIZE_SLACK_MS)),
+        map(() => undefined)
+      );
     this.windDirection.set(randomWindDirection());
     return vaporized;
   }

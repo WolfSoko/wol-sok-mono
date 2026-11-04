@@ -1320,7 +1320,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   @HostListener('document:keydown', ['$event'])
   public onKeyDown(event: KeyboardEvent): void {
-    if (this.stageInput.keyDown(event)) {
+    if (this.stageInput.keyDown(event) === 'escape') {
       this.onEscape();
     }
   }
@@ -1368,14 +1368,6 @@ export type MenuScreen =
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;
 
-/**
- * True while the key went to a control rather than to the game.
- *
- * Anything inside an overlay counts too: the level picker is a combobox whose
- * panel lives in the CDK overlay container, and typing a level name there must
- * not throw the page into fullscreen.
- */
-/** Where the pointer is, in client pixels. */
 /** The GPU self-test's verdict, as the canvas carries it. */
 function selfTestState(result: GpuSelfTestResult | null): string {
   if (result == null) {

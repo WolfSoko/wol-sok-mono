@@ -198,7 +198,7 @@ describe('StageInput', () => {
     it('is left to the stage, which backs out of what is open', () => {
       create();
 
-      expect(input.keyDown(keyEvent('Escape', document.body))).toBe(true);
+      expect(input.keyDown(keyEvent('Escape', document.body))).toBe('escape');
       expect(store.snapshot().keysPressed).not.toContain('Escape');
     });
 
@@ -206,7 +206,7 @@ describe('StageInput', () => {
       create();
       jest.spyOn(TestBed.inject(StageBusy), 'active').mockReturnValue(true);
 
-      expect(input.keyDown(keyEvent('Escape', document.body))).toBe(false);
+      expect(input.keyDown(keyEvent('Escape', document.body))).toBeNull();
     });
   });
 

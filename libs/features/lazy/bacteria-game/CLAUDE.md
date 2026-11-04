@@ -432,7 +432,7 @@ play each other.
 - A tap that sets heavy work off runs it through `StageBusy.run`
   (`busy/stage-busy.ts`): the stage shows its spinner
   (`StageBusyComponent`), the browser paints it, and only then the work
-  runs; a tap meanwhile is dropped, a key ignored (`onKeyDown`). The menus
+  runs; a tap meanwhile is dropped, a key ignored (`StageInput.keyDown`). The menus
   wrap their steps (New game, the training, a mode, a mission, a level,
   Next); a match is started by the stage through `startOnTap`, which asks
   for the fullscreen on the tap itself first (WebKit takes it nowhere

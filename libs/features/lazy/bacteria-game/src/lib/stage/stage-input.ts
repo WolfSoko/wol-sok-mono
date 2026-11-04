@@ -10,6 +10,9 @@ import { ArenaStage } from './arena-stage';
 import { StageFrame } from './stage-frame';
 import { StageFullscreen } from './stage-fullscreen';
 
+/** A key the stage answers itself, null for every other. */
+export type StageKey = 'escape' | null;
+
 /**
  * What the players do on the stage - fingers and the mouse on the arena,
  * the wheel, the keys and the touch pads - turned into the game's input.
@@ -32,25 +35,27 @@ export class StageInput {
   private readonly pinch = new Pinch();
 
   /**
-   * Takes a key pressed anywhere in the document, and tells whether it was
-   * an Escape the stage should answer - pause a match, back out of a
-   * screen, and only from the main menu leave fullscreen for the page. The
-   * browser takes its own fullscreen off on Escape before this runs.
+   * Takes a key pressed anywhere in the document. What Escape does - pause
+   * a match, back out of a screen, and only from the main menu leave
+   * fullscreen for the page - depends on the menu, so an Escape the game
+   * takes comes back as `'escape'` for the stage to answer; every other key
+   * is dealt with here, or left to the page. The browser takes its own
+   * fullscreen off on Escape before this runs.
    */
-  public keyDown(event: KeyboardEvent): boolean {
+  public keyDown(event: KeyboardEvent): StageKey {
     // Nor while a tap's work waits to run: Escape would back out of the
     // screen it belongs to, as the busy veil keeps a tap from doing.
     if (isTypingTarget(event.target) || this.busy.active()) {
-      return false;
+      return null;
     }
     // F is handled here rather than in the store: the fullscreen request has
     // to happen inside the key event, browsers reject it otherwise.
     if (event.key.toLowerCase() === 'f' && !event.repeat) {
       this.fullscreen.set(!this.fullscreen.fullscreen());
-      return false;
+      return null;
     }
     if (event.key === 'Escape') {
-      return true;
+      return 'escape';
     }
     // The boost and weapon keys belong to the game only while a match is
     // on, and never while a button has the focus: a keyboard user pressing
@@ -68,7 +73,7 @@ export class StageInput {
       if (!event.repeat) {
         this.boost(boosted.id);
       }
-      return false;
+      return null;
     }
     const armed = inMatch
       ? humanForWeaponKey(humans, event.key, event.code)
@@ -78,10 +83,10 @@ export class StageInput {
       if (!event.repeat) {
         this.fireWeapon(armed.id);
       }
-      return false;
+      return null;
     }
     this.gameStateService.addKeyPress(event.key);
-    return false;
+    return null;
   }
 
   /** Takes a key let go of anywhere in the document. */
@@ -107,11 +112,6 @@ export class StageInput {
           ? 400
           : 1;
     this.frame.zoomBy(Math.exp((-event.deltaY * perUnit) / 500));
-  }
-
-  /** Zooms the camera by a pinch on a joystick zone. */
-  public zoomBy(factor: number): void {
-    this.frame.zoomBy(factor);
   }
 
   /**
