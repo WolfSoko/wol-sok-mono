@@ -3,7 +3,7 @@ import {
   LEGAL_NOTICE_PATH,
   LOCALES,
   PRIVACY_POLICY_PATH,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { escapeHtml, href, inLang, scriptJson, text } from './html';
 import { type Lang, t } from './texts';
 

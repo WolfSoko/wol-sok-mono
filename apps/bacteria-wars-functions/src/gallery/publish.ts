@@ -1,4 +1,7 @@
-import { boardAvatar, replayToBytes } from '@wolsok/feat-lazy-bac-game/engine';
+import {
+  boardAvatar,
+  replayToBytes,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   FieldValue,
   type DocumentSnapshot,

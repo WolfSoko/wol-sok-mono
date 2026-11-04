@@ -1,13 +1,15 @@
 import {
+  HEART_PERIOD_SEC,
   heatOf,
+  keepRecent,
+  lerp,
   parseGeneratedId,
+  type RecipeId,
+  Rng,
+  seeded,
+  streamSeed,
   tuneSeed,
-} from '../state/level-generator/generate-level';
-import { keepRecent } from '../state/recent-cache';
-import { Rng } from '../state/level-generator/rng';
-import type { RecipeId } from '../state/level-generator/recipes';
-import { lerp, seeded, streamSeed } from '../state/geometry';
-import { HEART_PERIOD_SEC } from '../state/organic-maps';
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * The background music of a level, composed from a handful of numbers.

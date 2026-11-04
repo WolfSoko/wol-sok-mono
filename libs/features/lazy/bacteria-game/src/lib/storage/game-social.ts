@@ -1,6 +1,8 @@
 import { Observable } from 'rxjs';
-import type { Profile } from '../social/profile';
-import type { PickedMatchLevel } from '../state/match-level';
+import type {
+  PickedMatchLevel,
+  Profile,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** A friend's challenge to a match: the room it opened. */
 export interface Challenge {

@@ -7,46 +7,52 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, switchMap, take } from 'rxjs';
-import { english, GameText } from './i18n/game-text';
-import { BotDifficulty } from './state/bot-controller';
-import { ladderLocks, newlyUnlocked } from './state/campaign';
-import { getLevel, isLadderLevel } from './state/levels';
-import { judgeMatch, MatchRecord, MedalTier } from './state/medallions';
-import { earnAchievements } from './state/achievements';
-import { MatchEarnings } from './state/earnings';
-import { arenaLocks, colorLocks, newCosmeticTexts } from './state/unlocks';
-import { COUCH_XP, matchXp, XpMatch, xpGain, xpOf } from './state/xp';
+import { english, GameText } from '@wolsok/feat-shared-bacteria-engine';
 import {
+  addCouchWin,
+  addDailyAttempt,
+  addEndlessRun,
+  addMedal,
   addMission,
+  addTotals,
+  adoptProgress,
+  arenaLocks,
+  attemptsOn,
+  bestMedal,
+  BotDifficulty,
+  colorLocks,
+  COUCH_XP,
+  DAILY_ATTEMPTS,
+  dailyLevelId,
+  earnAchievements,
+  EMPTY_PROGRESS,
   firstOpenMission,
+  getLevel,
+  isLadderLevel,
   isMissionDone,
+  judgeMatch,
+  ladderLocks,
+  MatchEarnings,
+  MatchRecord,
+  matchXp,
+  MedalTier,
+  mergeProgress,
   Mission,
   missionResult,
   missionsDone,
   missionShortfall,
-} from './state/training';
-import {
-  attemptsOn,
-  DAILY_ATTEMPTS,
-  dailyLevelId,
-  standingStreak,
-  utcDay,
-} from './state/daily';
-import {
-  addCouchWin,
-  adoptProgress,
-  addDailyAttempt,
-  addEndlessRun,
-  addMedal,
-  addTotals,
-  bestMedal,
-  EMPTY_PROGRESS,
-  mergeProgress,
+  newCosmeticTexts,
+  newlyUnlocked,
   NO_TOTALS,
   parseProgress,
   Progress,
+  standingStreak,
   totalsOf,
-} from './state/progress';
+  utcDay,
+  xpGain,
+  XpMatch,
+  xpOf,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount, PlayerSwitch } from './storage/game-account';
 import { DeviceStorage, GameStorage } from './storage/game-storage';
 

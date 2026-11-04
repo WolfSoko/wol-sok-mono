@@ -10,13 +10,17 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
-import { TranslationKey } from '../i18n/dictionaries';
+import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
-import { BOARD_KINDS, BoardKind, BoardRef } from '../state/boards';
+import {
+  BOARD_KINDS,
+  BoardKind,
+  BoardRef,
+  utcDay,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { DAILY_DAYS_SHOWN } from './board-rows';
-import { utcDay } from '../state/daily';
 import { BoardViewComponent } from './board-view.component';
 import { BoardsService } from './boards.service';
 import { GuestSignInComponent } from '../guest/guest-sign-in.component';

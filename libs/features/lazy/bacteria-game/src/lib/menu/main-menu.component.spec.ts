@@ -6,15 +6,18 @@ import { FakeGameAccount } from '../../testing/fake-game-account';
 import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
 import { GameAccount } from '../storage/game-account';
 import { provideGameToggles } from '../../testing/fake-game-toggles';
-import type { FeatureToggles } from '../state/feature-toggles';
-import { ADMIN_PATH } from '../support/legal-links';
+import {
+  ADMIN_PATH,
+  BOT_DIFFICULTIES,
+  CampaignSummary,
+  continueText,
+  type FeatureToggles,
+  LEVELS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
 import { I18nService } from '../i18n/i18n.service';
-import { BOT_DIFFICULTIES } from '../state/bot-controller';
-import { CampaignSummary, continueText } from '../state/campaign';
-import { LEVELS } from '../state/levels';
 import { MainMenuComponent } from './main-menu.component';
 
 const CAMPAIGN: CampaignSummary = {

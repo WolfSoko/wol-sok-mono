@@ -4,7 +4,7 @@ import {
   parseAdminCommand,
   parseBoardId,
   type PlayerTarget,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { banPlayer, liftBan } from './bans';

@@ -4,7 +4,7 @@ import {
   FakeGamePresence,
   FakeGameSocial,
 } from '../../testing/fake-game-social';
-import { defaultProfile } from '../social/profile';
+import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import { GameCloud } from '../storage/game-cloud';
 import { GameAccount, PlayerProfile } from '../storage/game-account';
 import { GameStorage } from '../storage/game-storage';

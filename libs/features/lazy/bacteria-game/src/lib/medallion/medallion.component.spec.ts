@@ -1,6 +1,6 @@
 import { I18nService } from '../i18n/i18n.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MedalTier } from '../state/medallions';
+import { MedalTier } from '@wolsok/feat-shared-bacteria-engine';
 import { MedallionComponent } from './medallion.component';
 
 describe('MedallionComponent', () => {

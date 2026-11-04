@@ -15,23 +15,24 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { catchError, map, of, switchMap } from 'rxjs';
-import type { TranslationKey } from '../i18n/dictionaries';
+import type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { rankKey } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { AvatarComponent } from '../social/avatar.component';
-import type { Avatar } from '../social/profile';
 import {
+  type Avatar,
   type BoardEntry,
   type BoardRef,
   type BoardRow,
+  clock,
   formatTag,
   PAGE_ROWS,
+  rankFor,
   showsName,
+  TICKS_PER_SEC,
   TOP_ROWS,
-} from '../state/boards';
-import { clock, TICKS_PER_SEC } from '../state/fixed-tick';
-import { rankFor } from '../state/ranks';
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { BoardTop } from '../storage/game-boards';
 import { boardSections, WIN_RATE_AFTER } from './board-rows';
 import {

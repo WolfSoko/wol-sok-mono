@@ -292,8 +292,8 @@ a dead end), `verified`, `unverified`, `balance-mismatch`.
   `@nx/esbuild:esbuild` (platform node, ESM, bundled, `firebase-functions`
   and `firebase-admin` external, `generatePackageJson`, `engines.node: 22`)
   into `dist/apps/bacteria-wars-functions`, deployed like
-  `firebase.pacetrainer.json` (`predeploy: npm --prefix $RESOURCE_DIR
-install --omit dev`).
+  `firebase.pacetrainer.json`
+  (`predeploy: npm --prefix $RESOURCE_DIR install --omit dev`).
 - **It imports the engine through an Angular-free entry point**,
   `libs/features/lazy/bacteria-game/src/engine.ts`, alias
   `@wolsok/feat-lazy-bac-game/engine`:
@@ -310,6 +310,13 @@ install --omit dev`).
     relative imports.
   - The verifying code loads the engine with `await import()`, so
     `publicSite` does not pay for it on a cold start.
+  - Note (2026-11, #2482): the code moved, the decision did not. The
+    engine is now a lib of its own, `libs/features/bacteria-engine`
+    (`feat-shared-bacteria-engine`, alias
+    `@wolsok/feat-shared-bacteria-engine`), holding what `engine.ts`
+    reached plus the rest of `state/` and the dictionaries. The
+    `/engine` entry is gone; the oxlint override and the bundle spec guard
+    the whole lib.
 - **2nd gen, Node 22, one region**: the Firestore location of
   `bacteria-wars` (confirmed by the owner before the first deploy).
   `setGlobalOptions({ region, maxInstances: 5 })`; `initializeApp()` without
@@ -622,8 +629,8 @@ The rules and `replayCommand` require `admin == true`,
      levels, the German ones the game's, kept complete by a spec.
    - Then the owner's curation in `replayCommand` (`src/gallery/curate.ts`),
      each checked against Auth afresh (`isOwnerRecord`) and audited like
-     an admin command (`runAudited`: `adminAudit/{commandId}`, `source:
-'replayCommand'`, type `replay.feature` and so on, claimed first so
+     an admin command (`runAudited`: `adminAudit/{commandId}`,
+     `source: 'replayCommand'`, type `replay.feature` and so on, claimed first so
      a second delivery runs nothing). `feature` takes a stored replay that
      fits the gallery (`fitsGallery`; any account, guests too), re-runs it
      first if the boards have not verified it, from the admin budget

@@ -1,4 +1,4 @@
-import type { Replay } from '@wolsok/feat-lazy-bac-game/engine';
+import type { Replay } from '@wolsok/feat-shared-bacteria-engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import type { ModerationChange } from '../admin/moderation';

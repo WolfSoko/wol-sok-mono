@@ -1,5 +1,5 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
-import { GameText, renderGameText } from './game-text';
+import { GameText, renderGameText } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from './i18n.service';
 
 /**

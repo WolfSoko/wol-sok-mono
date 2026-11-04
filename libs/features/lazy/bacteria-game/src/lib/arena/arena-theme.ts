@@ -1,5 +1,7 @@
-import type { WeaponId } from '../state/evolution';
-import { generatedLevel } from '../state/level-generator/generate-level';
+import {
+  generatedLevel,
+  type WeaponId,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** A colour as red, green and blue from 0 to 255. */
 export type Rgb = readonly [number, number, number];

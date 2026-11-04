@@ -1,4 +1,4 @@
-import { IMAGE_MAX, isImageData } from './profile';
+import { IMAGE_MAX, isImageData } from '@wolsok/feat-shared-bacteria-engine';
 
 /** The side of an uploaded picture, in pixels - twice the biggest shown. */
 export const PICTURE_SIZE = 96;

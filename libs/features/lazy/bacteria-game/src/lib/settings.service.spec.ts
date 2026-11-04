@@ -14,8 +14,11 @@ import {
 import { I18nService } from './i18n/i18n.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
-import { LEVELS, playableOnline } from './state/levels';
-import { MATCH_LEVELS } from './state/match-level';
+import {
+  LEVELS,
+  MATCH_LEVELS,
+  playableOnline,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { DeviceStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
 

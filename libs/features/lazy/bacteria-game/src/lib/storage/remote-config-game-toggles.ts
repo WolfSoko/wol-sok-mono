@@ -2,7 +2,7 @@ import { defer, map, Observable } from 'rxjs';
 import {
   FEATURE_TOGGLE_KEYS,
   type FeatureToggles,
-} from '../state/feature-toggles';
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { RemoteConfigConnection } from './firebase-connection';
 import type { GameToggles } from './game-toggles';
 

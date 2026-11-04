@@ -1,11 +1,12 @@
-import type { ScreenResolution } from '../state/arena-size';
 import {
   type ActiveEffect,
+  clamp,
+  type ScreenResolution,
+  seeded,
   type WeaponFire,
   type WeaponId,
   weaponOf,
-} from '../state/evolution';
-import { clamp, seeded } from '../state/geometry';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { Rgb, WEAPON_COLORS } from './arena-theme';
 import { hash, lerp, mix, smoothstep } from './canvas-math';
 

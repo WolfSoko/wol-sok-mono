@@ -1,0 +1,33 @@
+@for (colony of colonies(); track colony.id; let seat = $index) {
+  <feat-lazy-bac-game-joystick
+    class="stick"
+    [attr.inert]="outOfReach() ? '' : null"
+    [attr.data-seat]="seat"
+    [color]="colony.css"
+    [label]="colony.name"
+    [disabled]="disabled()"
+    [zooms]="zooms()"
+    (steer)="steer.emit({ playerId: colony.id, vector: $event })"
+    (zoom)="zoom.emit($event)"
+    (wheel)="zoomWheel.emit($event)"
+  />
+  <div
+    class="seat"
+    [attr.inert]="outOfReach() ? '' : null"
+    [attr.data-seat]="seat"
+  >
+    <feat-lazy-bac-game-boost-pad
+      [colony]="colony"
+      [disabled]="disabled()"
+      (boost)="boost.emit(colony.id)"
+    />
+    @if (colony.weapon; as weapon) {
+      <feat-lazy-bac-game-weapon-pad
+        [weapon]="weapon"
+        [disabled]="disabled()"
+        [over]="over()"
+        (fire)="fire.emit(colony.id)"
+      />
+    }
+  </div>
+}

@@ -1,0 +1,151 @@
+import { clockOf, winRuleOf } from './win-conditions';
+import { gameBalance } from './game-balance';
+import {
+  DEFAULT_CROSSHAIR_SPEED,
+  getLevel,
+  LEVELS,
+  levelBalance,
+  levelCrosshairSpeed,
+  levelMap,
+  levelTitle,
+  nextLevel,
+} from './levels';
+import { GAME_MAPS } from './game-maps';
+import { TRAINING_LEVELS } from './training-levels';
+
+describe('LEVELS', () => {
+  it('asks a timed level for a win before its clock runs out for silver', () => {
+    // A win on time is bronze: silver and gold ask for a wipe-out before.
+    const timed = LEVELS.flatMap((level) =>
+      clockOf(winRuleOf(level)) === null
+        ? []
+        : [
+            {
+              silverSec: level.medal.silverSec,
+              limitSec: clockOf(winRuleOf(level)) ?? 0,
+            },
+          ]
+    );
+
+    expect(timed.length).toBeGreaterThan(0);
+    expect(
+      timed.filter(({ silverSec, limitSec }) => silverSec >= limitSec)
+    ).toEqual([]);
+  });
+
+  it('uses unique ids, the training missions included', () => {
+    const ids = [...LEVELS, ...TRAINING_LEVELS].map((level) => level.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('only references maps that exist', () => {
+    const mapIds = GAME_MAPS.map((map) => map.id);
+
+    for (const level of [...LEVELS, ...TRAINING_LEVELS]) {
+      expect(mapIds).toContain(level.mapId);
+    }
+  });
+
+  it('plays every map at least once, on the ladder or in the training', () => {
+    const played = new Set(
+      [...LEVELS, ...TRAINING_LEVELS].map((level) => level.mapId)
+    );
+
+    expect(played.size).toBe(GAME_MAPS.length);
+  });
+});
+
+describe('levelBalance', () => {
+  it('applies the tweaks of a level on top of the base balance', () => {
+    const level = getLevel('petri-dish');
+
+    const balance = levelBalance(level);
+
+    expect(balance.aggression).toBe(level.balance?.aggression);
+    expect(balance.maxEnergy).toBe(gameBalance.maxEnergy);
+  });
+
+  it('hands out the plain balance for a level without tweaks', () => {
+    expect(levelBalance(getLevel('corridors'))).toEqual(gameBalance);
+  });
+});
+
+describe('levelMap', () => {
+  it('resolves the map of a level', () => {
+    expect(levelMap(getLevel('serpentine')).id).toBe('serpentine');
+  });
+});
+
+describe('levelCrosshairSpeed', () => {
+  it('falls back to the default speed', () => {
+    expect(levelCrosshairSpeed(getLevel('corridors'))).toBe(
+      DEFAULT_CROSSHAIR_SPEED
+    );
+  });
+
+  it('uses the speed of the level when it has one', () => {
+    expect(levelCrosshairSpeed(getLevel('serpentine'))).toBe(200);
+  });
+});
+
+describe('getLevel', () => {
+  it('falls back to the first level for an unknown id', () => {
+    expect(getLevel('nope')).toBe(LEVELS[0]);
+  });
+});
+
+describe('nextLevel', () => {
+  it('walks through the whole list in order', () => {
+    let level = LEVELS[0];
+    const visited = [level.id];
+
+    for (
+      let step = nextLevel(level.id);
+      step != null;
+      step = nextLevel(level.id)
+    ) {
+      level = step;
+      visited.push(level.id);
+    }
+
+    expect(visited).toEqual(LEVELS.map((entry) => entry.id));
+  });
+
+  it('has nothing after the last level', () => {
+    expect(nextLevel(LEVELS[LEVELS.length - 1].id)).toBeNull();
+  });
+
+  it('has nothing after an unknown level', () => {
+    expect(nextLevel('nope')).toBeNull();
+  });
+});
+
+describe('levelBalance on a finer grid', () => {
+  const level = getLevel('petri-dish');
+
+  it('grows the lengths with the cells and the room with the area', () => {
+    const base = levelBalance(level);
+    const fine = levelBalance(level, 2);
+
+    expect(fine.startBacteriaRadius).toBe(base.startBacteriaRadius * 2);
+    expect(fine.maxTotalBacteria).toBe(base.maxTotalBacteria * 4);
+    expect(fine.maxBacteriaPerPlayer).toBe(base.maxBacteriaPerPlayer * 4);
+    expect(fine.influenceCellSize).toBe(base.influenceCellSize * 2);
+    expect(fine.nutrientEnergy).toBe(base.nutrientEnergy * 4);
+    expect(fine.aggression).toBe(base.aggression);
+  });
+
+  it('speeds the crosshairs up so they cross the arena as fast', () => {
+    expect(levelCrosshairSpeed(level, 1.5)).toBe(
+      levelCrosshairSpeed(level) * 1.5
+    );
+  });
+});
+
+describe('levelTitle', () => {
+  it('drops the number from the name', () => {
+    expect(levelTitle(getLevel('hourglass'))).toBe('Hourglass');
+    expect(LEVELS.every((level) => !/\d/.test(levelTitle(level)))).toBe(true);
+  });
+});

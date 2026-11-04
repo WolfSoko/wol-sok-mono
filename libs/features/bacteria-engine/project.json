@@ -1,0 +1,71 @@
+{
+  "name": "feat-shared-bacteria-engine",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/bacteria-engine/src",
+  "projectType": "library",
+  "tags": ["feat-shared"],
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/libs/features/bacteria-engine"],
+      "options": {
+        "project": "libs/features/bacteria-engine/ng-package.json",
+        "tsConfig": "libs/features/bacteria-engine/tsconfig.lib.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/features/bacteria-engine/tsconfig.lib.prod.json"
+        },
+        "development": {}
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.cjs",
+        "{workspaceRoot}/jest.config.ts"
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/features/bacteria-engine"],
+      "options": {
+        "jestConfig": "libs/features/bacteria-engine/jest.config.ts",
+        "codeCoverage": true,
+        "tsConfig": "libs/features/bacteria-engine/tsconfig.spec.json"
+      }
+    },
+    "balance-check": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/tools/bacteria-game/balance/**/*"
+      ],
+      "options": {
+        "command": "tsx ./tools/bacteria-game/balance/run.ts check"
+      }
+    },
+    "balance": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/balance"],
+      "options": {
+        "command": "tsx ./tools/bacteria-game/balance/run.ts full"
+      }
+    },
+    "perf": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "parallelism": false,
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/tools/perf/**/*"
+      ],
+      "options": {
+        "command": "node --expose-gc tools/perf/engine-bench.mjs --report-only"
+      }
+    }
+  }
+}

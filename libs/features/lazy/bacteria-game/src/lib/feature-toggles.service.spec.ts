@@ -2,7 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { provideGameToggles } from '../testing/fake-game-toggles';
 import { FeatureTogglesService } from './feature-toggles.service';
-import { FEATURE_TOGGLES, type FeatureToggles } from './state/feature-toggles';
+import {
+  FEATURE_TOGGLES,
+  type FeatureToggles,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameCloud } from './storage/game-cloud';
 import { GameToggles } from './storage/game-toggles';
 import type { FirebaseConnection } from './storage/firebase-connection';

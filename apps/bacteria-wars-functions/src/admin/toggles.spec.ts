@@ -1,4 +1,4 @@
-import { FEATURE_TOGGLES } from '@wolsok/feat-lazy-bac-game/engine';
+import { FEATURE_TOGGLES } from '@wolsok/feat-shared-bacteria-engine';
 import type { RemoteConfigTemplate } from 'firebase-admin/remote-config';
 import { togglesOf, withToggles } from './toggles';
 

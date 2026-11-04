@@ -28,7 +28,12 @@ import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import type { GameSocial, PresenceState } from '../storage/game-social';
 import { GameStateStore, isMatchOn } from '../state/game.states';
-import { defaultProfile, parseProfile, PlayerCard, Profile } from './profile';
+import {
+  defaultProfile,
+  parseProfile,
+  PlayerCard,
+  Profile,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** The player's stored profile as read, unparsed. */
 interface StoredProfile {

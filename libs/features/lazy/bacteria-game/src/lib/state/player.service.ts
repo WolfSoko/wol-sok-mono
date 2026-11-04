@@ -1,28 +1,36 @@
-import type { ActiveEffect } from './evolution';
-import { Injectable, computed, inject, signal, untracked } from '@angular/core';
-import { Nutrient } from './bacteria-simulation';
-import { Ruleset, Simulation, SimulationFactory } from './simulation';
-import { intSimulation } from './gpu-int/int-simulation';
-import { GameBalance } from './game-balance';
-import { isSteering, Point, randomSeed, SteeringVector } from './geometry';
-import { DynamicWall } from './maps';
 import {
+  type ActiveEffect,
   cpuSimulation,
+  DynamicWall,
   FrameEvents,
+  GameBalance,
+  intSimulation,
+  isSteering,
   MatchEngine,
   MatchOptions,
+  MatchOutcome,
   noFrameEvents,
+  Nutrient,
+  Player,
   PlayerSpawn,
-} from './match-engine';
+  Point,
+  randomSeed,
+  ReplayInputs,
+  Ruleset,
+  Simulation,
+  SimulationFactory,
+  SteeringVector,
+} from '@wolsok/feat-shared-bacteria-engine';
+import { Injectable, computed, inject, signal, untracked } from '@angular/core';
 import { GameStateStore } from './game.states';
-import { Player } from './player.model';
 import { PlayerStore } from './player.store';
-import { ReplayInputs } from './replay';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import type { Lockstep } from '../net/lockstep';
-import { MatchOutcome } from './win-conditions';
 
-export type { FrameEvents, PlayerSpawn } from './match-engine';
+export type {
+  FrameEvents,
+  PlayerSpawn,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * The keys that steer a crosshair, one set per human player: WASD for the

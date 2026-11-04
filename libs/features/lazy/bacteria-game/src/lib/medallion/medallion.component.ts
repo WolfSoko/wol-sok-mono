@@ -7,8 +7,11 @@ import {
 } from '@angular/core';
 import { difficultyKeys, medalKey } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
-import { BotDifficulty, difficultyOption } from '../state/bot-controller';
-import { MedalTier } from '../state/medallions';
+import {
+  BotDifficulty,
+  difficultyOption,
+  MedalTier,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** Highlight, body and rim of each metal. */
 const METALS: Record<MedalTier, readonly [string, string, string]> = {

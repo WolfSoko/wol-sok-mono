@@ -1,8 +1,12 @@
 import { Injectable, computed, effect, inject } from '@angular/core';
 import { GameSettingsService, MAX_VOLUME } from '../settings.service';
-import type { WeaponId } from '../state/evolution';
-import { FrameEvents, MatchResult } from '../state/match-engine';
-import { MedalTier, medalRank } from '../state/medallions';
+import {
+  FrameEvents,
+  MatchResult,
+  medalRank,
+  MedalTier,
+  type WeaponId,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { SoundtrackPlayer } from './audio-nodes';
 import { degreeToMidi, LevelMusic, levelMusic, midiToHz } from './level-music';
 import { MenuMusicPlayer } from './menu-music-player';

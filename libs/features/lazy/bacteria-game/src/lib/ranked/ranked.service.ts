@@ -16,17 +16,15 @@ import {
   parseAttemptId,
   RANKED_DAILY_ATTEMPTS,
   RANKED_RUNS_PER_DAY,
+  type RankedMatch,
+  type RankedOutcome,
+  type RankedRun,
+  type RankedRunOutcome,
   runsLeft,
-} from '../state/attempts';
-import { utcDay } from '../state/daily';
+  type UnrankedReason,
+  utcDay,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerService } from '../state/player.service';
-import type {
-  RankedMatch,
-  RankedOutcome,
-  RankedRun,
-  RankedRunOutcome,
-  UnrankedReason,
-} from '../state/ranked-match';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 

@@ -5,8 +5,8 @@
 import {
   LabMatch,
   playLabMatch,
-} from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/lab-match';
-import type { NamedCell } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/report';
+} from '../../../libs/features/bacteria-engine/src/lib/state/balance/lab-match';
+import type { NamedCell } from '../../../libs/features/bacteria-engine/src/lib/state/balance/report';
 
 export interface WorkerResult {
   index: number;

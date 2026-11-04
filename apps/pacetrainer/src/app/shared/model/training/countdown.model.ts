@@ -1,4 +1,4 @@
-import { Milliseconds } from '../constants/time-utils';
+import { Milliseconds } from '@wolsok/utils-time';
 import { TrainingName } from './training-name';
 
 export interface CountdownModel {

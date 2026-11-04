@@ -6,8 +6,8 @@ import {
   type BoardRow,
   ENTRY_STATUSES,
   type EntryShow,
-} from '../state/boards';
-import { isObject } from '../state/is-object';
+  isObject,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * A board's top document, `boards/{boardId}`, as `rebuildTop` writes it:

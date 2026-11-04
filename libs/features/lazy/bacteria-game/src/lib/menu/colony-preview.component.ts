@@ -13,8 +13,12 @@ import {
 import type { Rgb } from '../arena/arena-theme';
 import { mix, rgba } from '../arena/canvas-math';
 import { prefersReducedMotion } from '../reduced-motion';
-import { geneLevel, Loadout, MAX_GENE_LEVEL } from '../state/evolution';
-import { seeded } from '../state/geometry';
+import {
+  geneLevel,
+  Loadout,
+  MAX_GENE_LEVEL,
+  seeded,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GENE_COLORS, MAXED_COLOR, WEAPON_COLORS } from './evolution-look';
 
 /** The preview's size in CSS pixels - drawn sharper on dense screens. */

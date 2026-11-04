@@ -11,20 +11,31 @@ import {
   withState,
 } from '@ngrx/signals';
 import { distinctUntilChanged, Observable } from 'rxjs';
-import { BotDifficulty, DEFAULT_DIFFICULTY } from './bot-controller';
-import { DEFAULT_COLORS, seatFirst } from './colony-colors';
-import { getLevel, LEVELS } from './levels';
-import { MatchEarnings } from './earnings';
-import { HeadStart, Series, SeriesLength } from './rivalry';
-import { Player } from './player.model';
-import type { Replay } from './replay';
-import type { EndlessRun } from './endless';
-import type { RankedOutcome, RankedRun } from './ranked-match';
-import { EndReason, timeLeft, winRuleOf } from './win-conditions';
-import { DEFAULT_MODE, GameMode } from './game-mode';
+import {
+  BotDifficulty,
+  DEFAULT_COLORS,
+  DEFAULT_DIFFICULTY,
+  DEFAULT_MODE,
+  type EndlessRun,
+  EndReason,
+  GameMode,
+  getLevel,
+  HeadStart,
+  LEVELS,
+  MatchEarnings,
+  Player,
+  type RankedOutcome,
+  type RankedRun,
+  type Replay,
+  seatFirst,
+  Series,
+  SeriesLength,
+  timeLeft,
+  winRuleOf,
+} from '@wolsok/feat-shared-bacteria-engine';
 
-export { DEFAULT_MODE, isGameMode } from './game-mode';
-export type { GameMode } from './game-mode';
+export { DEFAULT_MODE, isGameMode } from '@wolsok/feat-shared-bacteria-engine';
+export type { GameMode } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * An online match as this device takes part in it: its seat - 0 for the

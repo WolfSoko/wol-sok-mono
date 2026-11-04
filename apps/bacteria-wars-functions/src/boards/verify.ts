@@ -10,7 +10,7 @@ import {
   type SizeSample,
   replayOutcome,
   TICKS_PER_SEC,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** What playing a replay again found (ADR 0011, 0012). */
 export type VerifiedState = 'verified' | 'unverified' | 'balance-mismatch';

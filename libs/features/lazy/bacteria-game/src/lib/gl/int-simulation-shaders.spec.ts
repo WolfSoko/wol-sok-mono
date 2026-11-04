@@ -1,6 +1,9 @@
-import { INT_MAX_EFFECTS } from '../state/gpu-int/int-effects';
-import { INT_COLONIES, INT_PELLETS } from '../state/gpu-int/int-frame-uniforms';
-import { INT_RECORD } from '../state/gpu-int/int-reference';
+import {
+  INT_COLONIES,
+  INT_MAX_EFFECTS,
+  INT_PELLETS,
+  INT_RECORD,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   LOSER_SHIFT,
   MAX_EFFECTS,

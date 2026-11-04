@@ -22,21 +22,24 @@ export { SPLASH_ID } from './lib/splash';
 
 // The language the game speaks, and the helpers for a dictionary of its own.
 export { I18nService } from './lib/i18n/i18n.service';
-export { translate } from './lib/i18n/translation';
+export { translate } from '@wolsok/feat-shared-bacteria-engine';
 export type {
   Dictionary,
   EntryPath,
   Plural,
   Translation,
   TranslationParams,
-} from './lib/i18n/translation';
-export type { Language } from './lib/i18n/language';
-export type { TranslationKey } from './lib/i18n/dictionaries';
+} from '@wolsok/feat-shared-bacteria-engine';
+export type { Language } from '@wolsok/feat-shared-bacteria-engine';
+export type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 
 // Players.
 export { AvatarComponent } from './lib/social/avatar.component';
-export { defaultProfile, parseProfile } from './lib/social/profile';
-export type { Avatar, Profile } from './lib/social/profile';
+export {
+  defaultProfile,
+  parseProfile,
+} from '@wolsok/feat-shared-bacteria-engine';
+export type { Avatar, Profile } from '@wolsok/feat-shared-bacteria-engine';
 
 // The contracts the admin views read and write.
 export {
@@ -50,10 +53,10 @@ export {
   isUtcDay,
   parseBoardId,
   VISIBLE_STATUSES,
-} from './lib/state/boards';
-export { utcDay } from './lib/state/daily';
-export { BALANCE_VERSION } from './lib/state/game-balance';
-export { ONLINE_SIM_RESOLUTION } from './lib/state/arena-size';
+} from '@wolsok/feat-shared-bacteria-engine';
+export { utcDay } from '@wolsok/feat-shared-bacteria-engine';
+export { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
+export { ONLINE_SIM_RESOLUTION } from '@wolsok/feat-shared-bacteria-engine';
 export type {
   BoardId,
   BoardKind,
@@ -61,7 +64,7 @@ export type {
   BoardRow,
   EntryShow,
   EntryStatus,
-} from './lib/state/boards';
+} from '@wolsok/feat-shared-bacteria-engine';
 export {
   ADMIN_COMMAND_TYPES,
   BAN_REASONS,
@@ -69,19 +72,19 @@ export {
   isUid,
   parseAdminCommand,
   REASON_MAX,
-} from './lib/state/admin-commands';
+} from '@wolsok/feat-shared-bacteria-engine';
 export type {
   AdminCommand,
   AdminCommandType,
   BanReason,
   EntryTarget,
   PlayerTarget,
-} from './lib/state/admin-commands';
+} from '@wolsok/feat-shared-bacteria-engine';
 export {
   FEATURE_TOGGLE_KEYS,
   FEATURE_TOGGLES,
-} from './lib/state/feature-toggles';
+} from '@wolsok/feat-shared-bacteria-engine';
 export type {
   FeatureToggle,
   FeatureToggles,
-} from './lib/state/feature-toggles';
+} from '@wolsok/feat-shared-bacteria-engine';

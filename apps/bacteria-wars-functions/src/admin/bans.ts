@@ -1,4 +1,4 @@
-import type { BanReason } from '@wolsok/feat-lazy-bac-game/engine';
+import type { BanReason } from '@wolsok/feat-shared-bacteria-engine';
 import {
   FieldValue,
   type Firestore,

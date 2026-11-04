@@ -9,7 +9,7 @@ import {
   rankedPlan,
   type Replay,
   type ReplayHeader,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** The player of the specs' ranked daily replays - never bundled. */
 export const UID = 'ada';

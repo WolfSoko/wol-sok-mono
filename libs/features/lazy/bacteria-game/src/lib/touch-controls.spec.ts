@@ -1,4 +1,4 @@
-import { isSteering } from './state/geometry';
+import { isSteering } from '@wolsok/feat-shared-bacteria-engine';
 import {
   arenaPointFromClient,
   nearestFreeCrosshair,

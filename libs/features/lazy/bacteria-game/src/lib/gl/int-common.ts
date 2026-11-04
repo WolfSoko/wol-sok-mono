@@ -1,5 +1,10 @@
-import { chanceThreshold, ONE_Q14, Q14 } from '../state/gpu-int/fixed-point';
-import { SALT_SPREAD, STEP_SALT_STRIDE } from '../state/gpu-int/draws';
+import {
+  chanceThreshold,
+  ONE_Q14,
+  Q14,
+  SALT_SPREAD,
+  STEP_SALT_STRIDE,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * The GLSL twin of `state/gpu-int/` (ADR 0015): the draws, the Q14 products,

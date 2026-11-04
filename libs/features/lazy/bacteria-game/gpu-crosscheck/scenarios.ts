@@ -41,7 +41,7 @@ import {
   WEAPON_EFFECTS,
   ZONE_CODE,
   ZONE_SHIFT,
-} from '../src/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 
 export interface CrosscheckTick {
   inputs: IntTickInputs;

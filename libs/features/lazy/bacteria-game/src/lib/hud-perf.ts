@@ -1,5 +1,5 @@
 import type { FramePerfReport } from './arena/frame-perf';
-import type { Ruleset, Simulation } from './state/simulation';
+import type { Ruleset, Simulation } from '@wolsok/feat-shared-bacteria-engine';
 
 /** The breakdown of a frame the HUD shows beside the frame rate. */
 export interface HudPerf extends FramePerfReport {

@@ -1,4 +1,4 @@
-import { attemptTaken } from '../lib/state/attempts';
+import { attemptTaken } from '@wolsok/feat-shared-bacteria-engine';
 import type {
   DeclaredAttempt,
   Declaration,

@@ -5,7 +5,7 @@ import {
   type EntryStatus,
   posesAsLabel,
   showsName,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * Words a public name may not contain, English and German (ADR 0011, 0012):

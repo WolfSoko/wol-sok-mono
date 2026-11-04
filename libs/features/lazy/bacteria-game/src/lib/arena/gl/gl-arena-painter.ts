@@ -1,23 +1,21 @@
-import { GameBalance } from '../../state/game-balance';
-import type { CellList } from '../../state/cells';
-import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
-import { Rect } from '../../state/maps';
+import {
+  CellBounds,
+  type CellList,
+  emptyBounds,
+  GameBalance,
+  growBounds,
+  Rect,
+  Zone,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ArenaFrame, ArenaPainter, PaintedColony } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
 import { layerScale, paintZoneLayer } from '../zone-decal';
-import { Zone } from '../../state/zones';
 import { ArenaTheme } from '../arena-theme';
-import {
-  cellDensity,
-  colonyBounds,
-  hatchPattern,
-  jamDrops,
-  lookReach,
-  LOOKS,
-  overcharge,
-  StateLayer,
-  strengthOf,
-} from '../colony-renderer';
+import { cellDensity, overcharge, strengthOf } from '../colony-energy';
+import { colonyBounds } from '../slime-painter';
+import { hatchPattern, lookReach, LOOKS } from '../lattice-cells';
+import { jamDrops } from '../jam';
+import { StateLayer } from '../colony-renderer';
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
 import { GpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
 import { rendererOf } from '../../gl/renderer';

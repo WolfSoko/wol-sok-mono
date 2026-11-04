@@ -15,19 +15,21 @@ import type { Rgb } from '../arena/arena-theme';
 import { rgba } from '../arena/canvas-math';
 import { EvolutionService } from '../evolution.service';
 import { GameHapticsService } from '../haptics.service';
-import { TranslationKey } from '../i18n/dictionaries';
+import {
+  TranslationKey,
+  TranslationParams,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { TranslationParams } from '../i18n/translation';
 import { GameSoundService } from '../sound/game-sound.service';
 import {
-  GENES,
   GeneId,
+  GENES,
   MAX_GENE_LEVEL,
-  WEAPONS,
+  refundableDna,
   WeaponId,
-} from '../state/evolution';
-import { refundableDna } from '../state/evolution-progress';
+  WEAPONS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { WeaponDemoComponent } from './weapon-demo.component';
 import { ColonyPreviewComponent } from './colony-preview.component';
 import { DnaCounterComponent } from './dna-counter.component';

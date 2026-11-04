@@ -1,4 +1,4 @@
-import { clamp } from '../state/geometry';
+import { clamp } from '@wolsok/feat-shared-bacteria-engine';
 import { Rgb } from './arena-theme';
 
 /** A repeatable pseudo random number from 0 to 1 for a lattice point. */
@@ -95,4 +95,8 @@ export function fbm(x: number, y: number, seed: number): number {
     amplitude *= 0.5;
   }
   return sum / 0.875;
+}
+
+export function darker([r, g, b]: Rgb): Rgb {
+  return [r * 0.55, g * 0.55, b * 0.55];
 }

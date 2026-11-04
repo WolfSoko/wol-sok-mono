@@ -1,13 +1,18 @@
 import { arenaContent, SeatColors } from '../arena/arena-content';
 import type { GlArenaPainter } from '../arena/gl/gl-arena-painter';
 import type { ArenaContent, ArenaScene } from '../arena/arena-view.component';
-import { computerLook, seatLooks } from '../state/colony-looks';
-import type { Rect } from '../state/maps';
-import { getLevel, levelMap } from '../state/levels';
-import type { MatchEngine } from '../state/match-engine';
-import { replayEngine, type Replay } from '../state/replay';
-import type { Simulation } from '../state/simulation';
-import type { BacteriaLook } from '../state/skins';
+import {
+  type BacteriaLook,
+  computerLook,
+  getLevel,
+  levelMap,
+  type MatchEngine,
+  type Rect,
+  type Replay,
+  replayEngine,
+  seatLooks,
+  type Simulation,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * How long a frame may spend playing on towards where the viewer seeks:

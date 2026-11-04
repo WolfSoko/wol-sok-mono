@@ -3,7 +3,7 @@ import {
   sameColonyStats,
   toColonyStats,
 } from './colony-stats';
-import { createPlayer } from './state/player.model';
+import { createPlayer } from '@wolsok/feat-shared-bacteria-engine';
 
 function players(bacteriaCount: number, x = 10) {
   return [

@@ -1,6 +1,8 @@
-import { seeded } from '../state/geometry';
-import { COLONY_COLORS } from '../state/colony-colors';
-import { AVATAR_COUNT } from './profile';
+import {
+  AVATAR_COUNT,
+  COLONY_COLORS,
+  seeded,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** How a drawn avatar looks: a wobbly bacterium with a face, in a colour. */
 export interface AvatarArt {

@@ -15,7 +15,7 @@ import {
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import { GameState, GameStateStore } from '../state/game.states';
-import { defaultProfile } from './profile';
+import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import { FriendView, SocialService } from './social.service';
 
 describe('SocialService', () => {

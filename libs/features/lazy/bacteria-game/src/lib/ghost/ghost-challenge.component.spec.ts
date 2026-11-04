@@ -1,6 +1,6 @@
 import { I18nService } from '../i18n/i18n.service';
 import { TestBed } from '@angular/core/testing';
-import { LEVELS } from '../state/levels';
+import { LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { GhostChallengeComponent } from './ghost-challenge.component';
 
 describe('GhostChallengeComponent', () => {

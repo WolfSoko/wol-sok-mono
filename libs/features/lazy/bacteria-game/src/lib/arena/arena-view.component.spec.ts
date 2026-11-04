@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { MatchEngine } from '../state/match-engine';
-import { MatchPlan, planMatch } from '../state/match-setup';
-import { TICK_MS } from '../state/fixed-tick';
+import {
+  MatchEngine,
+  MatchPlan,
+  planMatch,
+  TICK_MS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ArenaFrame, ArenaLayout, ArenaPainter } from './arena-painter';
 import { arenaTheme } from './arena-theme';
 import {

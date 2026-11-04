@@ -25,9 +25,6 @@
       "@wolsok/feat-lazy-bac-game": [
         "./libs/features/lazy/bacteria-game/src/index.ts"
       ],
-      "@wolsok/feat-lazy-bac-game/engine": [
-        "./libs/features/lazy/bacteria-game/src/engine.ts"
-      ],
       "@wolsok/feat-lazy-bac-game/admin-kit": [
         "./libs/features/lazy/bacteria-game/src/admin-kit.ts"
       ],
@@ -59,6 +56,12 @@
       "@wolsok/feat-shader-examples": [
         "./libs/features/lazy/shader-examples/src/index.ts"
       ],
+      "@wolsok/feat-shared-bacteria-engine": [
+        "./libs/features/bacteria-engine/src/index.ts"
+      ],
+      "@wolsok/feat-shared-bacteria-engine/testing": [
+        "./libs/features/bacteria-engine/src/testing.ts"
+      ],
       "@wolsok/feat-shared-reaction-diffusion-kernels": [
         "./libs/features/reaction-diffusion-kernels/src/index.ts"
       ],
@@ -80,9 +83,11 @@
       "@wolsok/ui-kit": ["./libs/ui-kit/src/index.ts"],
       "@wolsok/utils-decorators": ["./libs/utils/decorators/src/index.ts"],
       "@wolsok/utils-gpu-calc": ["./libs/utils/gpu-calc/src/index.ts"],
+      "@wolsok/utils-json": ["./libs/utils/json/src/index.ts"],
       "@wolsok/utils-math": ["./libs/utils/math/src/index.ts"],
       "@wolsok/utils-measure-fps": ["./libs/utils/measure-fps/src/index.ts"],
       "@wolsok/utils-operators": ["./libs/utils/operators/src/index.ts"],
+      "@wolsok/utils-time": ["./libs/utils/time/src/index.ts"],
       "@wolsok/utils-version": ["./libs/utils/version/src/index.ts"],
       "@wolsok/ws-gl": ["./libs/shared/ws-gl/src/index.ts"],
       "bacteria-game-remote/Routes": [

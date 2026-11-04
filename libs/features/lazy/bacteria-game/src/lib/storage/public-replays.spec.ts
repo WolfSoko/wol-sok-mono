@@ -1,6 +1,8 @@
-import type { MatchPlan } from '../state/match-setup';
-import { replayOf } from '../state/replay';
-import { replayToBytes } from '../state/replay-pack';
+import {
+  type MatchPlan,
+  replayOf,
+  replayToBytes,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { loadPublicReplay } from './public-replays';
 
 const ID = 'AbCdEfGhIjKlMnOpQrSt';

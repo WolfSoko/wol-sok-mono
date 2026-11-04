@@ -1,8 +1,10 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { take } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
-import { BALANCE_VERSION } from '../state/game-balance';
-import { GPU_SELF_TEST_VERSION } from '../state/gpu-int/self-test-golden';
+import {
+  BALANCE_VERSION,
+  GPU_SELF_TEST_VERSION,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { DeviceStorage } from '../storage/game-storage';
 import { GpuSelfTestResult, runGpuSelfTest } from './gpu-self-test';
 import { webGlRenderer } from './renderer';

@@ -7,7 +7,7 @@ import {
   TOP_ROWS,
   topRows,
   VISIBLE_STATUSES,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   FieldValue,
   type Firestore,

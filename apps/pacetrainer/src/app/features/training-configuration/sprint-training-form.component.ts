@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { debounceTime, map } from 'rxjs';
-import { msToS, sToMs } from '../../shared/model/constants/time-utils';
+import { msToS, sToMs } from '@wolsok/utils-time';
 import { SprintTrainingDataService } from './data/sprint-training-data.service';
 
 @Component({

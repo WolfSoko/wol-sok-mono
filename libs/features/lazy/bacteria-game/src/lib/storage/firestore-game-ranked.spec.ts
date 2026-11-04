@@ -1,5 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
-import { ATTEMPT_DAYS, attemptSeed } from '../state/attempts';
+import { ATTEMPT_DAYS, attemptSeed } from '@wolsok/feat-shared-bacteria-engine';
 import type { FirebaseConnection } from './firebase-connection';
 import { FirestoreGameRanked } from './firestore-game-ranked';
 import { DECLARE_TIMEOUT_MS, LOAD_TIMEOUT_MS } from './game-ranked';

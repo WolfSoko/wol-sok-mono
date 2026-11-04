@@ -1,4 +1,4 @@
-import { Milliseconds } from '../../../shared/model/constants/time-utils';
+import { Milliseconds } from '@wolsok/utils-time';
 
 export type SprintTrainingData = {
   recoveryTime: Milliseconds;

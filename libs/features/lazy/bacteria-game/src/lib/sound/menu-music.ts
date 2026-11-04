@@ -1,4 +1,4 @@
-import { clamp, seeded } from '../state/geometry';
+import { clamp, seeded } from '@wolsok/feat-shared-bacteria-engine';
 import { STEPS_PER_BAR, stepSeconds } from './level-music';
 
 /**

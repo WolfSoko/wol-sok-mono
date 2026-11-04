@@ -1,5 +1,8 @@
 import { createHash } from 'node:crypto';
-import { BOARD_KINDS, defaultProfile } from '@wolsok/feat-lazy-bac-game/engine';
+import {
+  BOARD_KINDS,
+  defaultProfile,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   type DocumentReference,
   FieldValue,

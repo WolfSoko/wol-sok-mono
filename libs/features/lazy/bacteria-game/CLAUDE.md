@@ -3,6 +3,14 @@
 Rules for working on `libs/features/lazy/bacteria-game`, on top of the repo's
 `CLAUDE.md`.
 
+The engine (the match, its simulation, replays, levels, progress and the
+texts) is the lib `feat-shared-bacteria-engine` (`libs/features/bacteria-engine`,
+see its `CLAUDE.md`). Paths below that start with `state/`, or name the
+dictionaries in `i18n/`, are in that lib unless they name one of the four
+Angular files that stay here (`game-state.service.ts`, `game.states.ts`,
+`player.service.ts`, `player.store.ts`). The game imports the engine only
+through `@wolsok/feat-shared-bacteria-engine`.
+
 ## Persistence: local storage or Firebase, behind ports
 
 The game keeps the player's progress (medallions, campaign, XP, achievements,
@@ -81,8 +89,8 @@ storage until then. Settings stay with the device either way.
   and reads its own replays back (`listMine`, one query in `GAME_QUERIES`).
   `listingOf` reads the functions' fields of `replays/{id}` - the seat from
   `seats` (online, host 0), `rankedReason` (`ARRIVAL_REASONS`,
-  `ONLINE_REASONS` in `state/replay-reasons.ts`, exported through
-  `engine.ts`, where the functions take their reason types from),
+  `ONLINE_REASONS` in `state/replay-reasons.ts`, exported by the engine,
+  where the functions take their reason types from),
   `galleryOut`, `publicId` - and leaves out what it does not know. A new
   reason needs its text in the `replay.reasons` area (a `satisfies` there
   fails to compile without it). In the cloud
@@ -120,15 +128,15 @@ storage until then. Settings stay with the device either way.
   what the device picks unrecorded, and a float GPU match leaves no
   recording - recording never moves a match off the GPU there. The viewer
   lays a replay out on its own grid (`simResolutionOf`,
-  `state/arena-size.ts`); the functions scale a re-run's expected cost by
+  the engine's `state/arena-size.ts`); the functions scale a re-run's expected cost by
   the arena's cells (`expectedRerunMs`) and count the level statistics
-  per grid (`levelStatsKey`, `simGridOf` through `engine.ts`).
+  per grid (`levelStatsKey`, `simGridOf` from the engine lib).
 - Ranked daily attempts and endless runs (ADR 0012) are declared through
   the `GameRanked` port (`storage/game-ranked.ts`, `FirestoreGameRanked`),
   asked of `GameCloud.ranked()` - null without a project - and only by
   `RankedService` (`ranked/`). A declaration is a transaction (it fails
-  offline instead of waiting in the cache) that writes `{ at:
-serverTimestamp(), expireAt }` and nothing else - what the rules'
+  offline instead of waiting in the cache) that writes
+  `{ at: serverTimestamp(), expireAt }` and nothing else - what the rules'
   `isDeclaration` wants - then reads `at` back with `getDocFromServer`,
   3 s in all (`DECLARE_TIMEOUT_MS`; past it one more read from the server
   takes a declaration that committed late), `at` floored to whole ms
@@ -164,8 +172,8 @@ serverTimestamp(), expireAt }` and nothing else - what the rules'
   (its frames drawn by `arenaContent`, `arena/arena-content.ts`, like the
   game's):
   its own `MatchEngine` from `replayEngine` (`state/replay.ts`, beside
-  `canPlayBack` and `playReplay`, which the functions import through
-  `engine.ts`: keep its signature), nothing of the game's state. A
+  `canPlayBack` and `playReplay`, which the functions import from the
+  engine: keep its signature), nothing of the game's state. A
   `gpu-int` replay plays on the viewer's own GL painter (the third
   argument of `replayEngine`) where its renderer is the host's `gpu`
   (`GpuSelfTestService.trustedRenderer`: "My matches" and the match just
@@ -324,7 +332,7 @@ play each other.
 - The balance lab (`state/balance/`, runner `tools/bacteria-game/balance/`)
   plays the stand-in (`REFERENCE_PROFILE`) against that computer. A change
   to the balance, the levels, the bots or the curve re-checks it:
-  `nx run feat-lazy-bacteria-game:balance-check` (short, against the
+  `nx run feat-shared-bacteria-engine:balance-check` (short, against the
   committed `state/balance/balance-report.json`); a new baseline with
   `tsx tools/bacteria-game/balance/run.ts full --update` (hours; nightly on
   GitHub, `.github/workflows/bacteria-balance.yml`).
@@ -420,7 +428,7 @@ play each other.
 
 - Every text the player sees goes through `I18nService.t` or the `t` pipe
   (`src/lib/i18n/`), with an English and a German entry in the area's
-  `en/` and `de/` files. No literal user-facing strings in templates or
+  `en/` and `de/` files (in the engine lib's `src/lib/i18n/`). No literal user-facing strings in templates or
   notices.
 - The state and the engine keep ids, not texts: level names, achievement
   texts, colour names and the like are looked up by their id in the
@@ -432,9 +440,9 @@ play each other.
 - A tap that sets heavy work off runs it through `StageBusy.run`
   (`busy/stage-busy.ts`): the stage shows its spinner
   (`StageBusyComponent`), the browser paints it, and only then the work
-  runs; a tap meanwhile is dropped, a key ignored (`onKeyDown`). The menus
+  runs; a tap meanwhile is dropped, a key ignored (`StageInput.keyDown`). The menus
   wrap their steps (New game, the training, a mode, a mission, a level,
-  Next); a match is started by the stage through `startOnTap`, which asks
+  Next); a match is started by the stage through `PlayFlow.startOnTap`, which asks
   for the fullscreen on the tap itself first (WebKit takes it nowhere
   else) and keeps the spinner up until the match runs, a ranked
   declaration included. Back, the stepper's header, taps during a match,
@@ -446,23 +454,70 @@ play each other.
 ## Clearing the arena (the vaporize effect)
 
 - The stage clears the arena after a match through `resetGame$`
-  (`bacteria-game.component.ts`): `resetting` is true while the
-  `@wolsok/thanos` directive on `.thanos-container` turns the last frame
-  to dust, and the panel shows nothing meanwhile. Whatever the effect
-  does, the stage must come back: the effect runs on the stage's own
-  subscription to the directive's cold `vaporize$` and is cancelled at
+  (`PlayFlow`, `flow/play-flow.ts`), with the effect run by
+  `ArenaStage.vaporize` (`stage/arena-stage.ts`): `resetting` is true
+  while the `@wolsok/thanos` directive on `.thanos-container` turns the
+  last frame to dust, and the panel shows nothing meanwhile. Whatever the
+  effect does, the stage must come back: the effect runs on the stage's
+  own subscription to the directive's cold `vaporize$` and is cancelled at
   the set length plus `VAPORIZE_SLACK_MS` (a capture that finishes later
   must not lay its canvas over the menu), an effect that fails - at once
   included - is logged and the reset goes on, and `resetting` is cleared
   even when `GameStateService.reset()` throws.
 - The directive fades its element back in by itself when it is done. The
   stage hides `.arena-frame` the moment the effect is over
-  (`hideArenaUntilPainted`) and shows it again only once both the stage
-  rendered what follows (`afterNextRender` in `resetGame$`) and the arena
-  painted its next frame (`arenaScene.painted`), whichever comes last
-  (`revealArenaWhenReady`): a paint alone lands on the next animation
+  (`ArenaStage.hideUntilPainted`) and shows it again only once both the
+  stage rendered what follows (`afterNextRender` in `resetGame$`, which
+  calls `stageRenderedAfterReset`) and the arena painted its next frame
+  (`StageFrame.scene.painted`, which calls `arenaPaintedAfterReset`),
+  whichever comes last: a paint alone lands on the next animation
   frame, often ahead of a slow change detection, and would show the old
   level under no menu. So it never flashes up between the dust and the
   menu screen, or before the next match's first frame. A new vaporize
-  reveals it first (`revealArena`), so the snapshot is never taken of a
-  hidden arena.
+  reveals it first, so the snapshot is never taken of a hidden arena.
+
+## The stage's parts
+
+- `BacteriaGameComponent` provides one of each of the services in
+  `stage/` (`providers`), so every stage has its own: `StageFullscreen`
+  (the full-viewport layout and the browser's Fullscreen API),
+  `ArenaStage` (the arena's grid, layout and canvas size, the painter and
+  the simulation it picks, the vaporize effect), `StageFrame` (the game
+  loop's frames: camera, shake, ambience, minimap, adaptive quality and
+  the HUD's frame timings) and `StageInput` (pointer, pinch, wheel, keys,
+  touch pads). `StageFrame` and `StageInput` depend on `ArenaStage`, never
+  the other way round.
+- The services take the template's parts from the component through
+  `bind`: `StageFullscreen.bind` the stage element, `ArenaStage.bind` an
+  `ArenaStageHost` (the view queries, read on every use, and `declaring`,
+  which moves the war onto the online grid). The `@HostListener`s stay on
+  the component (Angular binds them to the host) and hand on to the
+  services; what Escape and the browser leaving fullscreen do depends on
+  the menu, so the component decides it (`onEscape`,
+  `onFullscreenChange`).
+- `TouchPadsComponent` (`stage/touch-pads.component.ts`) draws the seats'
+  joysticks and pads. Its host is `display: contents`, so its sticks and
+  seats are cells of the stage's grid; the seating plan lives in its
+  stylesheet.
+- The rest of the stage's state lives in services of its own, provided
+  the same way (all of them listed in `STAGE_PROVIDERS`,
+  `stage-providers.ts`, which the component and the flows' specs use):
+  `HudState` (`hud/`: what the HUD, the panels and the menus show of the
+  match and its setup; read-only, the clock's text in the pure
+  `match-clock.ts`), `PlayFlow` (`flow/`: the open screen and panel, the
+  modes a new game starts, the ranked declarations, starting, pausing and
+  clearing a match; the mode last played is the pure `playKindOf` in
+  `play-kind.ts`), `MatchSetup` (the menus' picks for the next match),
+  `OnlineFlow` (hosting, joining, challenges, the matchmaking's and the
+  host's starts, and what a link's hash brings in; `start()` sets it
+  going from the component's constructor) and `MatchEnd` (the end's sound
+  and buzz, the result screen's ways on). They depend downwards only:
+  `MatchEnd` and `OnlineFlow` on `PlayFlow`, `PlayFlow` on `HudState` and
+  the stage services, never back. A start that has to wait for the clear
+  arena listens to `PlayFlow.arenaCleared$` rather than reaching into the
+  reset.
+- The template reads those services directly (`hud.clockText()`,
+  `flow.show('menu')`, ...); the component keeps the layout, the
+  `@HostListener`s, Escape and the browser leaving fullscreen, the music,
+  the GPU self-test and the settings switches that answer with a tick or
+  a buzz.

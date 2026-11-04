@@ -28,7 +28,7 @@ import {
 } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { dirname, resolve } from 'node:path';
-import type { LabMatch } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/lab-match';
+import type { LabMatch } from '../../../libs/features/bacteria-engine/src/lib/state/balance/lab-match';
 import {
   BalanceReport,
   checkDrift,
@@ -44,12 +44,12 @@ import {
   NamedCell,
   summarize,
   versionDrift,
-} from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/report';
+} from '../../../libs/features/bacteria-engine/src/lib/state/balance/report';
 import {
   isBigMap,
   isLadderLevel,
   LEVELS,
-} from '../../../libs/features/lazy/bacteria-game/src/lib/state/levels';
+} from '../../../libs/features/bacteria-engine/src/lib/state/levels';
 import type { WorkerResult } from './worker';
 
 /** The workspace, where Nx runs the targets from. */
@@ -57,7 +57,7 @@ const ROOT = process.cwd();
 /** The committed baseline. */
 const BASELINE = resolve(
   ROOT,
-  'libs/features/lazy/bacteria-game/src/lib/state/balance/balance-report.json'
+  'libs/features/bacteria-engine/src/lib/state/balance/balance-report.json'
 );
 
 interface Played {

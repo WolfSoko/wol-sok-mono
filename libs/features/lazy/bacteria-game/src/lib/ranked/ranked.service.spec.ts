@@ -6,13 +6,15 @@ import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { FakeGameRanked } from '../../testing/fake-game-ranked';
 import type { GpuSelfTestResult } from '../gl/gpu-self-test';
 import { GpuSelfTestService } from '../gl/gpu-self-test.service';
-import { attemptSeed } from '../state/attempts';
-import { cpuSimulation } from '../state/match-engine';
+import {
+  attemptSeed,
+  cpuSimulation,
+  type FeatureToggles,
+  type RankedRun,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerService } from '../state/player.service';
-import type { FeatureToggles } from '../state/feature-toggles';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
-import type { RankedRun } from '../state/ranked-match';
 import { RankedService } from './ranked.service';
 
 /** The run a ranked start came to - it must have one. */

@@ -2,7 +2,7 @@ import {
   COLONY_COLORS,
   isLadderLevel,
   LEVELS,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { COLOR_IDS, DE_TITLES, levelName } from './texts';
 
 describe('the pages’ dictionary', () => {

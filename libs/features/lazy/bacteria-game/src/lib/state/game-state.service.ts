@@ -11,17 +11,71 @@ import {
   switchMap,
   takeUntil,
 } from 'rxjs';
-import { FramePacer } from './frame-pacer';
-import { GameFrame, TICK_MS, TickClock, ticksToMs } from './fixed-tick';
-import { BotDifficulty } from './bot-controller';
 import {
+  addSeriesMatch,
+  afterMatch,
+  arenaSize,
+  BotDifficulty,
+  colonyCapacity,
+  computerLoadout,
+  dailyLevelId,
+  endlessLevelId,
+  FramePacer,
+  GameFrame,
   getColonyColor,
+  getLevel,
+  gridScale,
+  HeadStart,
+  isRunOver,
+  LADDER_VERSION,
+  levelBalance,
+  levelDifficulty,
+  LEVELS,
+  levelSize,
+  matchChecksum,
+  MatchEarnings,
+  MatchOutcome,
+  MatchPlan,
+  matchRecord,
+  missionById,
+  MissionId,
+  missionOf,
+  newRun,
+  newSeries,
+  ONLINE_SIM_RESOLUTION,
   onlineColors,
+  onOnlineGrid,
+  parseAttemptId,
+  perfProbeOf,
   pickColor,
+  PLAIN_LOADOUT,
+  planMatch,
+  playableOnline,
+  Player,
+  randomSeed,
+  type RankedMatch,
+  type RankedOutcome,
+  rankedPlan,
+  type RankedRunOutcome,
+  Replay,
+  ReplayExtras,
+  replayFromHash,
+  replayOf,
+  replayOutcome,
+  replayScore,
+  type Ruleset,
   sameColors,
+  savedRegardless,
   seatFirst,
+  Series,
+  SeriesLength,
+  seriesWinner,
+  type SizeSample,
+  TICK_MS,
+  TickClock,
+  ticksToMs,
   validColorPair,
-} from './colony-colors';
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   GameMode,
   GameState,
@@ -30,66 +84,15 @@ import {
   isMatchOn,
   OnlineSeat,
 } from './game.states';
-import {
-  getLevel,
-  gridScale,
-  levelBalance,
-  levelDifficulty,
-  levelSize,
-  LEVELS,
-  playableOnline,
-} from './levels';
-import { colonyCapacity } from './game-balance';
-import { MatchEarnings } from './earnings';
-import {
-  addSeriesMatch,
-  HeadStart,
-  newSeries,
-  Series,
-  SeriesLength,
-  seriesWinner,
-} from './rivalry';
-import { matchRecord } from './medallions';
-import { Player } from './player.model';
-import { randomSeed } from './geometry';
-import { perfProbeOf } from './perf-probe';
-import { MatchOutcome } from './win-conditions';
-import { MatchPlan, planMatch } from './match-setup';
-import {
-  onOnlineGrid,
-  Replay,
-  ReplayExtras,
-  replayOf,
-  replayOutcome,
-  savedRegardless,
-} from './replay';
-import type { Ruleset } from './simulation';
-import { matchChecksum } from './checksum';
-import { replayScore } from './replay-score';
-import type { SizeSample } from './match-engine';
 import { GameReplays } from '../storage/game-replays';
-import { dailyLevelId } from './daily';
-import { afterMatch, endlessLevelId, isRunOver, newRun } from './endless';
-import { MissionId, missionById, missionOf } from './training';
-import { replayFromHash } from './replay-link';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
 import { EvolutionService } from '../evolution.service';
-import { computerLoadout } from './computer-opponent';
-import { LADDER_VERSION } from './difficulty-curve';
-import { PLAIN_LOADOUT } from './evolution';
 import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
 import { MatchAnalytics } from '../analytics/match-analytics';
-import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
-import { parseAttemptId, rankedPlan } from './attempts';
-import type {
-  RankedMatch,
-  RankedOutcome,
-  RankedRunOutcome,
-} from './ranked-match';
 
 /**
  * The most time one frame may take the war forward, in milliseconds. A

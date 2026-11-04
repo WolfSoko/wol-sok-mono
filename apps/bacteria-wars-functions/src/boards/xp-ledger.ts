@@ -2,7 +2,7 @@ import {
   XP_FULL_COUNT,
   XP_FULL_COUNT_BEFORE,
   xpRiseCap,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { dayOf } from '../limits';
 
 /** What the XP board has counted of a player (`boardMembers/{uid}.xp`). */

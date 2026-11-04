@@ -3,7 +3,7 @@ import {
   WeaponFire,
   WeaponId,
   WEAPONS,
-} from '../state/evolution';
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   BURST_SEC,
   effectFade,

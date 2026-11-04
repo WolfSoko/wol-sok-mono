@@ -14,10 +14,13 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { FramePacer } from '../state/frame-pacer';
-import { TICK_MS, TickClock } from '../state/fixed-tick';
-import { Rect } from '../state/maps';
-import { Zone } from '../state/zones';
+import {
+  FramePacer,
+  Rect,
+  TICK_MS,
+  TickClock,
+  Zone,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   ArenaFrame,
   ArenaLayout,

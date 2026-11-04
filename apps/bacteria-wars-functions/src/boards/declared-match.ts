@@ -9,7 +9,7 @@ import {
   type Replay,
   replayFromBytes,
   submissionDeadline,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   type DocumentSnapshot,
   FieldValue,

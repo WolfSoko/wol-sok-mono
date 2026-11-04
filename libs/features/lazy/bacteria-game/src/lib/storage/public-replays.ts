@@ -1,7 +1,9 @@
-import { fromBase64 } from '../state/base64';
-import type { Replay } from '../state/replay';
-import { PUBLIC_ID } from '../state/replay-id';
-import { replayFromBytes } from '../state/replay-pack';
+import {
+  fromBase64,
+  PUBLIC_ID,
+  type Replay,
+  replayFromBytes,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** Where and how {@link loadPublicReplay} fetches. */
 export interface PublicReplayOptions {

@@ -1,10 +1,10 @@
 import { of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FakeGameReplays } from '../../testing/fake-game-replays';
-import { recordedReplay } from '../../testing/recorded-replay';
+import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { I18nService } from '../i18n/i18n.service';
 import { GameSettingsService, SETTINGS_STORAGE_KEY } from '../settings.service';
-import { BALANCE_VERSION } from '../state/game-balance';
+import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService } from '../state/game-state.service';
 import { GameReplays } from '../storage/game-replays';
 import { ReplayNoteComponent } from './replay-note.component';

@@ -1,6 +1,8 @@
 import { BehaviorSubject, EMPTY, map, Observable, switchMap } from 'rxjs';
-import type { Profile } from '../lib/social/profile';
-import type { PickedMatchLevel } from '../lib/state/match-level';
+import type {
+  PickedMatchLevel,
+  Profile,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type {
   Challenge,
   GamePresence,

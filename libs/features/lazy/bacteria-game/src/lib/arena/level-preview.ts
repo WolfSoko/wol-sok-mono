@@ -1,13 +1,20 @@
-import { arenaSize } from '../state/arena-size';
-import { DEFAULT_COLORS } from '../state/colony-colors';
-import { getLevel, levelBalance, levelMap, levelSize } from '../state/levels';
-import { DynamicWall, Rect } from '../state/maps';
-import { planMatch } from '../state/match-setup';
-import { mapZones, Zone } from '../state/zones';
+import {
+  arenaSize,
+  DEFAULT_COLORS,
+  DynamicWall,
+  getLevel,
+  levelBalance,
+  levelMap,
+  levelSize,
+  mapZones,
+  planMatch,
+  Rect,
+  Zone,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { drawWallBlobs, paintArenaBackground } from './arena-renderer';
 import { ArenaTheme, arenaTheme, Rgb } from './arena-theme';
 import { hash, mix, rgba } from './canvas-math';
-import { darker } from './colony-renderer';
+import { darker } from './canvas-math';
 import { paintZoneLayer } from './zone-decal';
 
 /** The size of a level preview in pixels - 16:9, like the base arena. */

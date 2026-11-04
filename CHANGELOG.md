@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.137.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.5...v74.137.6) (2026-11-04)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** move the game's engine into its own lib ([#2764](https://github.com/WolfSoko/wol-sok-mono/issues/2764)) ([f21d951](https://github.com/WolfSoko/wol-sok-mono/commit/f21d951d1bd8f1bcb229c0c86f8a66f5ac2f53eb)), references [#2482](https://github.com/WolfSoko/wol-sok-mono/issues/2482)
+
+## [74.137.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.4...v74.137.5) (2026-11-04)
+
+### Bug Fixes
+
+* **deps:** update nx monorepo ([#2765](https://github.com/WolfSoko/wol-sok-mono/issues/2765)) ([03146cf](https://github.com/WolfSoko/wol-sok-mono/commit/03146cfc7b386f574cf1177f9ee1a4e375730576))
+
+### Chore
+
+* **release:** publish ([3611629](https://github.com/WolfSoko/wol-sok-mono/commit/3611629ad4a29bf45b6104c056d02e07778e2ac5))
+
+## [74.137.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.3...v74.137.4) (2026-11-04)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** move the flows and hud state out of the game component ([#2761](https://github.com/WolfSoko/wol-sok-mono/issues/2761)) ([197ea7c](https://github.com/WolfSoko/wol-sok-mono/commit/197ea7caf33f567266b0f2ae45799137ccebff83)), closes [#2762](https://github.com/WolfSoko/wol-sok-mono/issues/2762)
+
+## [74.137.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.2...v74.137.3) (2026-11-04)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** move the stage out of the game component ([#2760](https://github.com/WolfSoko/wol-sok-mono/issues/2760)) ([cd1a0bf](https://github.com/WolfSoko/wol-sok-mono/commit/cd1a0bff77b1cd705f5df9f1ae57f472934dc9e1)), references [#2682](https://github.com/WolfSoko/wol-sok-mono/issues/2682)
+
+## [74.137.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.1...v74.137.2) (2026-11-04)
+
+### Refactorings
+
+* **pacetrainer:** move time units and JSON helpers into utils libs ([#2754](https://github.com/WolfSoko/wol-sok-mono/issues/2754)) ([7d9f649](https://github.com/WolfSoko/wol-sok-mono/commit/7d9f649269bd6f4111a3950022afde892455b6b7)), references [#2441](https://github.com/WolfSoko/wol-sok-mono/issues/2441) [#2381](https://github.com/WolfSoko/wol-sok-mono/issues/2381)
+
+## [74.137.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.0...v74.137.1) (2026-11-03)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** split the colony renderer into modules by concern ([#2753](https://github.com/WolfSoko/wol-sok-mono/issues/2753)) ([626564c](https://github.com/WolfSoko/wol-sok-mono/commit/626564c7e5ea1a96d8cce98da052af62ddaa6324)), references [#2750](https://github.com/WolfSoko/wol-sok-mono/issues/2750)
+
+### Chore
+
+* **tools:** leave the cockpit files out of formatting ([#2759](https://github.com/WolfSoko/wol-sok-mono/issues/2759)) ([22e1bac](https://github.com/WolfSoko/wol-sok-mono/commit/22e1bacbd8d2c4d32e247214de7a669d5d43cfbd)), references [#2758](https://github.com/WolfSoko/wol-sok-mono/issues/2758)
+
 ## [74.137.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.136.5...v74.137.0) (2026-11-03)
 
 ### Features

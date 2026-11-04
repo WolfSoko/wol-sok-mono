@@ -1,25 +1,26 @@
-import { Cells } from '../state/cells';
-import { gameBalance } from '../state/game-balance';
-import { Point } from '../state/geometry';
-import { Bacteria } from '../state/player.model';
-import { BACTERIA_LOOKS, BOSS_LOOK, ColonyLook } from '../state/skins';
-import { COLONY_COLORS } from '../state/colony-colors';
-
 import {
-  cellBubble,
-  CELLS,
+  Bacteria,
+  BACTERIA_LOOKS,
+  BOSS_LOOK,
+  Cells,
+  COLONY_COLORS,
+  ColonyLook,
+  gameBalance,
+  Point,
+  Rect,
+} from '@wolsok/feat-shared-bacteria-engine';
+
+import { cellBubble, CELLS, hatchPattern, latticeTile } from './lattice-cells';
+import {
   colonyBounds,
   colonyDensity,
   createImageDataFromBacterias,
-  hatchPattern,
-  latticeTile,
-  LOOK_TUNING,
-  paintColony,
-  shimmerAt,
   SLIME_SCALE,
   slimeRegion,
-} from './colony-renderer';
-import { Rect } from '../state/maps';
+} from './slime-painter';
+import { LOOK_TUNING } from './look-tuning';
+import { paintColony } from './colony-renderer';
+import { shimmerAt } from './colony-energy';
 
 const { CELL_MIN } = LOOK_TUNING;
 

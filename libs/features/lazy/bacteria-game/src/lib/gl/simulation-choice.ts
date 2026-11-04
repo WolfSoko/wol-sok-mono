@@ -1,7 +1,11 @@
-import { intSimulation } from '../state/gpu-int/int-simulation';
-import { GameBalance } from '../state/game-balance';
-import { cpuSimulation } from '../state/match-engine';
-import { Ruleset, Simulation, SimulationFactory } from '../state/simulation';
+import {
+  cpuSimulation,
+  GameBalance,
+  intSimulation,
+  Ruleset,
+  Simulation,
+  SimulationFactory,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { GpuSimulationOptions } from './gpu-simulation';
 
 /** Builds a GPU simulation on the arena's context. */

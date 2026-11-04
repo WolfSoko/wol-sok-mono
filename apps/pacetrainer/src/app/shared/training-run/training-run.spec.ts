@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { milliseconds, seconds, sToMs } from '../model/constants/time-utils';
+import { milliseconds, seconds, sToMs } from '@wolsok/utils-time';
 import {
   createRecoveryExercise,
   createSprintExercise,

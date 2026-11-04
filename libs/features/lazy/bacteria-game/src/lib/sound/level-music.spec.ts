@@ -1,5 +1,10 @@
-import { LEVELS } from '../state/levels';
-import { HEART_PERIOD_SEC } from '../state/organic-maps';
+import {
+  HEART_PERIOD_SEC,
+  LEVELS,
+  parseGeneratedId,
+  RECIPE_IDS,
+  tuneSeed,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   composeLoop,
   degreeToMidi,
@@ -106,5 +111,40 @@ describe('level music', () => {
         expect(midiToHz(note.midi)).toBeLessThan(2000);
       }
     });
+  });
+});
+
+describe('the music of a generated level', () => {
+  const id = 'gen:corridor:12345:4';
+
+  it('plays its own tune, the same each time', () => {
+    expect(levelMusic(id).seed).toBe(tuneSeed(parseGeneratedId(id)!));
+    // The same tune each time: the player restarts one handed anew.
+    expect(levelMusic(id)).toBe(levelMusic(id));
+  });
+
+  it('plays a tune of its own: the style sets the sound, the seed the chords', () => {
+    const tune = levelMusic(id);
+    const sameStyle = levelMusic('gen:corridor:999:4');
+    const harder = levelMusic('gen:corridor:12345:9');
+
+    // Corridors drive in a minor key; the seed moves the key a little.
+    expect(tune.drums).toBe('drive');
+    expect(tune.bass).toBe(sameStyle.bass);
+    expect(Math.abs(tune.root - 45)).toBeLessThanOrEqual(2);
+    expect(harder.bpm).toBeGreaterThan(tune.bpm);
+    expect(levelMusic('gen:cave:12345:4').lead).not.toBe(tune.lead);
+    for (const level of LEVELS) {
+      expect(tune).not.toEqual(LEVEL_MUSIC[level.id]);
+    }
+  });
+
+  it('composes into a loop for every style', () => {
+    for (const recipe of RECIPE_IDS) {
+      const loop = composeLoop(levelMusic(`gen:${recipe}:4242:6`));
+
+      expect(loop.notes.length).toBeGreaterThan(0);
+      expect(loop.steps).toBeGreaterThan(0);
+    }
   });
 });

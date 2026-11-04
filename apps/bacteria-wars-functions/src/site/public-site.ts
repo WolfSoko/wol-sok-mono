@@ -1,4 +1,4 @@
-import { PUBLIC_ID } from '@wolsok/feat-lazy-bac-game/engine';
+import { PUBLIC_ID } from '@wolsok/feat-shared-bacteria-engine';
 import {
   type DocumentSnapshot,
   FieldPath,

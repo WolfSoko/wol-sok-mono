@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { Rgb } from '../arena/arena-theme';
 import { mix, rgba } from '../arena/canvas-math';
-import { seeded } from '../state/geometry';
+import { seeded } from '@wolsok/feat-shared-bacteria-engine';
 
 /** One drifting bacterium of the swarm, in the units its styles take. */
 interface SwarmCell {

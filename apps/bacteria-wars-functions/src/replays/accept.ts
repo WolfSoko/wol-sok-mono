@@ -1,7 +1,7 @@
 import {
   replayFromBytes,
   type ReplayHeader,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   type DocumentReference,
   type DocumentSnapshot,

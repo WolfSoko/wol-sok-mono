@@ -23,17 +23,20 @@ import {
 } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { BOT_DIFFICULTIES } from '../state/bot-controller';
-import { CHAPTERS } from '../state/chapters';
 import {
+  BOT_DIFFICULTIES,
+  CHAPTERS,
+  getLevel,
+  LEVELS,
+  levelSize,
   MAX_DIFFICULTY,
   MIN_DIFFICULTY,
   parseGeneratedId,
+  Progress,
+  RECIPE_IDS,
+  RecipeId,
   rollLevelId,
-} from '../state/level-generator/generate-level';
-import { RECIPE_IDS, RecipeId } from '../state/level-generator/recipes';
-import { getLevel, LEVELS, levelSize } from '../state/levels';
-import { Progress } from '../state/progress';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { LevelCard, LevelCardComponent } from './level-card.component';
 import { levelColors } from './menu-cards';
 

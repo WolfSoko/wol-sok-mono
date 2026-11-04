@@ -5,7 +5,7 @@ import {
   type ReplayHeader,
   type ReplayOutcome,
   replayScore,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import {
