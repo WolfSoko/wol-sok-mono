@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.137.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.1...v74.137.2) (2026-11-04)
+
+### Refactorings
+
+* **pacetrainer:** move time units and JSON helpers into utils libs ([#2754](https://github.com/WolfSoko/wol-sok-mono/issues/2754)) ([7d9f649](https://github.com/WolfSoko/wol-sok-mono/commit/7d9f649269bd6f4111a3950022afde892455b6b7)), references [#2441](https://github.com/WolfSoko/wol-sok-mono/issues/2441) [#2381](https://github.com/WolfSoko/wol-sok-mono/issues/2381)
+
 ## [74.137.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.0...v74.137.1) (2026-11-03)
 
 ### Refactorings
