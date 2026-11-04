@@ -1,7 +1,7 @@
 import { WEAPONS } from '../../state/evolution';
 import { WEAPON_CODE } from '../../state/weapon-effects';
 import { arenaTheme } from '../arena-theme';
-import { JamDrop } from '../colony-renderer';
+import { JamDrop } from '../jam';
 import { Motes } from '../motes';
 import { MarkLayer } from '../weapon-fx';
 import { DishAmbience } from '../ambience';

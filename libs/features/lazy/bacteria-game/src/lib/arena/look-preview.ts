@@ -6,10 +6,10 @@ import { createCanvas } from './canvas-math';
 import {
   colonyDensity,
   createImageDataFromBacterias,
-  LOOKS,
-  paintColony,
   SLIME_SCALE,
-} from './colony-renderer';
+} from './slime-painter';
+import { LOOKS } from './lattice-cells';
+import { paintColony } from './colony-renderer';
 
 /** The arena of a look preview, in cells - 16:9, like the real one. */
 export interface PreviewSize {
