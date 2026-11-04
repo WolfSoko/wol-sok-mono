@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.137.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.5...v74.137.6) (2026-11-04)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** move the game's engine into its own lib ([#2764](https://github.com/WolfSoko/wol-sok-mono/issues/2764)) ([f21d951](https://github.com/WolfSoko/wol-sok-mono/commit/f21d951d1bd8f1bcb229c0c86f8a66f5ac2f53eb)), references [#2482](https://github.com/WolfSoko/wol-sok-mono/issues/2482)
+
 ## [74.137.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.4...v74.137.5) (2026-11-04)
 
 ### Bug Fixes
