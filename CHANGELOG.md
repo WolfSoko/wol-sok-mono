@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.137.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.3...v74.137.4) (2026-11-04)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** move the flows and hud state out of the game component ([#2761](https://github.com/WolfSoko/wol-sok-mono/issues/2761)) ([197ea7c](https://github.com/WolfSoko/wol-sok-mono/commit/197ea7caf33f567266b0f2ae45799137ccebff83)), closes [#2762](https://github.com/WolfSoko/wol-sok-mono/issues/2762)
+
 ## [74.137.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.2...v74.137.3) (2026-11-04)
 
 ### Refactorings
