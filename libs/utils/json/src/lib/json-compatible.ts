@@ -7,7 +7,10 @@ export type JSONValue =
       [key: string]: JSONValue;
     };
 
-export type NotAssignableToJson = bigint | symbol | typeof Function;
+export type NotAssignableToJson =
+  | bigint
+  | symbol
+  | ((...args: never[]) => unknown);
 
 export type JSONCompatible<T> = unknown extends T
   ? never
