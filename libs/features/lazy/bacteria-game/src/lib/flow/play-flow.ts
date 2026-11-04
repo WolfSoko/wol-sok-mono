@@ -60,6 +60,12 @@ export class PlayFlow {
   private readonly arenaStage = inject(ArenaStage);
   private readonly stageFrame = inject(StageFrame);
   private readonly cleared = new Subject<void>();
+  /**
+   * Counts the matches started and the resets begun: a start that waited -
+   * for a declaration, for the arena - sees by it whether the stage moved
+   * on meanwhile, even when that match is over again by then.
+   */
+  private stageMoves = 0;
 
   /**
    * Which of the menu screens is open while no match runs - and, while one
@@ -272,8 +278,9 @@ export class PlayFlow {
     }
     this.gameStateService.leaveOnline();
     if (this.ranked.wants('endless', this.settings.ranked())) {
+      const moves = this.stageMoves;
       const start = await this.whileDeclaring(() => this.ranked.startRun());
-      if (this.startedMeanwhile()) {
+      if (this.movedSince(moves)) {
         return;
       }
       this.gameStateService.startEndless(start);
@@ -297,10 +304,11 @@ export class PlayFlow {
     // A ranked attempt plays its own day's level, past midnight too.
     const day = this.progress.daily().day;
     if (this.ranked.wants('daily', this.settings.ranked())) {
+      const moves = this.stageMoves;
       const attempt = await this.whileDeclaring(() =>
         this.ranked.declareDaily()
       );
-      if (this.startedMeanwhile()) {
+      if (this.movedSince(moves)) {
         return;
       }
       this.gameStateService.playDaily(day, attempt);
@@ -321,13 +329,14 @@ export class PlayFlow {
       await this.playEndless();
       return;
     }
+    const moves = this.stageMoves;
     const next =
       endlessRanked === null
         ? null
         : await this.whileDeclaring(() =>
             this.ranked.declareRunMatch(endlessRanked)
           );
-    if (this.startedMeanwhile()) {
+    if (this.movedSince(moves)) {
       return;
     }
     this.gameStateService.continueEndless(next);
@@ -392,8 +401,11 @@ export class PlayFlow {
    * gesture nearly every session makes, so it also takes the screen.
    */
   public startGame(): void {
+    this.stageMoves++;
     // A match started from the level choice backs out to the main menu.
     this.screen.set('menu');
+    // A first tap on "Give up" in the match before does not carry over.
+    this.giveUpTap.disarm();
     this.stageFullscreen.requestNative();
     this.sound.matchStart(levelMusic(this.hud.level().id));
     this.haptics.matchStart();
@@ -441,6 +453,7 @@ export class PlayFlow {
    */
   public resetGame$(): Observable<void> {
     return defer(() => {
+      this.stageMoves++;
       this.resetting.set(true);
       this.gameStateService.pause();
       return this.arenaStage.vaporize();
@@ -475,12 +488,12 @@ export class PlayFlow {
   }
 
   /**
-   * True when another match started (or the last one is still being
-   * reset) while a declaration was under way: the declared start is void
-   * then, rather than ending that match.
+   * True when another match started or a reset began since the stage stood
+   * at `moves` - or a match is on or being reset now: a start that waited
+   * is void then, rather than ending or replacing that match.
    */
-  private startedMeanwhile(): boolean {
-    return this.hud.running() || this.resetting();
+  private movedSince(moves: number): boolean {
+    return this.stageMoves !== moves || this.hud.running() || this.resetting();
   }
 
   /** What `declare` comes to, with the declaring note up meanwhile. */
@@ -496,10 +509,15 @@ export class PlayFlow {
   /**
    * Starts the match once the arena is laid out for it: a ranked match
    * plays the online grid, whose canvas the arena view builds a moment
-   * after the grid changed. Waits a little at most.
+   * after the grid changed. Waits a little at most, and starts nothing
+   * when another match started meanwhile.
    */
   private async startWhenArenaReady(): Promise<void> {
+    const moves = this.stageMoves;
     await this.arenaStage.whenReady();
+    if (this.movedSince(moves)) {
+      return;
+    }
     this.startGame();
   }
 

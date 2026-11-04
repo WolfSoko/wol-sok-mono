@@ -1,8 +1,11 @@
+import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { MatchmakerService } from '../net/matchmaker.service';
 import type { OnlineStart } from '../net/net-message';
 import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
+import { SocialService } from '../social/social.service';
 import { STAGE_PROVIDERS } from '../stage-providers';
 import { GameStateStore } from '../state/game.states';
 import { MATCH_LEVELS } from '../state/match-level';
@@ -22,6 +25,15 @@ describe('OnlineFlow', () => {
     store = TestBed.inject(GameStateStore);
   });
 
+  /** The online match's events, to send them from the spec. */
+  function onlineEvents(): Subject<OnlineEvent> {
+    return (
+      TestBed.inject(OnlineMatchService) as unknown as {
+        events: Subject<OnlineEvent>;
+      }
+    ).events;
+  }
+
   describe('a match the matchmaking set up', () => {
     it('is played on the level the matchmaking picked', () => {
       const levelId = MATCH_LEVELS[3].id;
@@ -39,15 +51,34 @@ describe('OnlineFlow', () => {
       expect(store.snapshot().levelId).toBe(levelId);
       expect(start).toHaveBeenCalled();
     });
+
+    it('waits for the arena to be clear before the host starts it', () => {
+      const events = onlineEvents();
+      const cleared = (flow as unknown as { cleared: Subject<void> }).cleared;
+      const start = jest
+        .spyOn(flow, 'startGame')
+        .mockImplementation(() => undefined);
+      online.start();
+      flow.resetting.set(true);
+
+      events.next({ type: 'connected', auto: true, seat: 0 } as OnlineEvent);
+      expect(start).not.toHaveBeenCalled();
+
+      store.update({
+        online: {
+          seat: 0,
+          levelId: MATCH_LEVELS[0].id,
+          colors: ['orange', 'blue'],
+        },
+      });
+      cleared.next();
+      expect(start).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('the host’s start', () => {
     it('waits for the arena to be clear, then plays it once', () => {
-      const events = (
-        TestBed.inject(OnlineMatchService) as unknown as {
-          events: Subject<OnlineEvent>;
-        }
-      ).events;
+      const events = onlineEvents();
       const cleared = (flow as unknown as { cleared: Subject<void> }).cleared;
       const start = jest
         .spyOn(flow, 'startGame')
@@ -69,6 +100,47 @@ describe('OnlineFlow', () => {
       expect(start).toHaveBeenCalledTimes(1);
       cleared.next();
       expect(start).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('an invitation link', () => {
+    const token = 'abcdefghjkmnpqrstuvw';
+    let social: SocialService;
+    let navigate: jest.SpyInstance;
+
+    beforeEach(() => {
+      social = TestBed.inject(SocialService);
+      Object.defineProperty(social, 'available', { value: true });
+      navigate = jest
+        .spyOn(TestBed.inject(Router), 'navigateByUrl')
+        .mockResolvedValue(true);
+      TestBed.inject(DOCUMENT).location.hash = `#friend=${token}`;
+    });
+
+    afterEach(() => (TestBed.inject(DOCUMENT).location.hash = ''));
+
+    function takeInvite(): Promise<void> {
+      return (
+        online as unknown as { takeInvite(): Promise<void> }
+      ).takeInvite();
+    }
+
+    it('offers the inviter, and takes the link out of the address', async () => {
+      jest.spyOn(social, 'readInvite').mockResolvedValue('Ada');
+
+      await takeInvite();
+
+      expect(online.inviteOffer()).toEqual({ token, from: 'Ada' });
+      expect(navigate).toHaveBeenCalled();
+    });
+
+    it('keeps the link when it could not be read, for a reload', async () => {
+      jest.spyOn(social, 'readInvite').mockRejectedValue(new Error('offline'));
+
+      await takeInvite();
+
+      expect(online.inviteOffer()).toBeNull();
+      expect(navigate).not.toHaveBeenCalled();
     });
   });
 });

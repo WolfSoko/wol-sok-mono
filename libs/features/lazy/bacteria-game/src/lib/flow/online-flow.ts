@@ -42,8 +42,11 @@ export class OnlineFlow {
   public readonly available = this.online.available;
   /** An invitation link opened on this visit, until it is answered. */
   public readonly inviteOffer = signal<InviteOffer | null>(null);
-  /** A match the host started while this device still cleared the last one. */
-  private startPending = false;
+  /**
+   * The start of a match that came in while this device still cleared the
+   * last one - the host's, or the matchmaking's - played once it is clear.
+   */
+  private pendingStart: (() => void) | null = null;
 
   /**
    * Takes what the link brought - a shared run, an invitation - and follows
@@ -73,10 +76,9 @@ export class OnlineFlow {
     this.flow.arenaCleared$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        if (this.startPending) {
-          this.startPending = false;
-          this.startOnlineMatch();
-        }
+        const start = this.pendingStart;
+        this.pendingStart = null;
+        start?.();
       });
   }
 
@@ -112,13 +114,18 @@ export class OnlineFlow {
 
   /**
    * Starts an automatic online match on the level the matchmaking picked -
-   * a random level that plays online if it has none.
+   * a random level that plays online if it has none - once the arena is
+   * clear, as the reset under way would end the match.
    */
   private startMatchmadeMatch(): void {
     this.gameStateService.setLevel(
       this.matchmaker.matchLevel()?.levelId ??
         pickMatchLevel(null, null, Math.random).levelId
     );
+    if (this.flow.resetting()) {
+      this.pendingStart = () => this.startOnlineMatch(0);
+      return;
+    }
     this.flow.startGame();
   }
 
@@ -129,7 +136,7 @@ export class OnlineFlow {
   private followOnlineStart(): void {
     const resetting = this.flow.resetting();
     if (resetting || this.hud.matchOver()) {
-      this.startPending = true;
+      this.pendingStart = () => this.startOnlineMatch(1);
       if (!resetting) {
         // Not resetGame: that gives the online match up.
         this.flow
@@ -139,12 +146,13 @@ export class OnlineFlow {
       }
       return;
     }
-    this.startOnlineMatch();
+    this.startOnlineMatch(1);
   }
 
-  private startOnlineMatch(): void {
+  /** Starts the online match this device plays in `seat`. */
+  private startOnlineMatch(seat: 0 | 1): void {
     // Not once this device has left - it would start a match of its own.
-    if (this.store.snapshot().online?.seat === 1) {
+    if (this.store.snapshot().online?.seat === seat) {
       this.flow.startGame();
     }
   }
@@ -164,8 +172,8 @@ export class OnlineFlow {
 
   /**
    * Takes the invitation a link carries in its hash (`#friend=<token>`)
-   * and offers to add the inviter as a friend - and takes it out of the
-   * address, so a reload does not offer it again.
+   * and offers to add the inviter as a friend - and, once it is read,
+   * takes it out of the address, so a reload does not offer it again.
    */
   private async takeInvite(): Promise<void> {
     const match = /^#friend=([a-z2-9]{20})$/.exec(this.document.location.hash);
@@ -173,8 +181,14 @@ export class OnlineFlow {
       return;
     }
     const token = match[1];
+    let from: string | null;
+    try {
+      from = await this.social.readInvite(token);
+    } catch {
+      // Kept in the address, so a reload reads the invitation again.
+      return;
+    }
     await this.dropHash();
-    const from = await this.social.readInvite(token).catch(() => null);
     if (from !== null) {
       this.inviteOffer.set({ token, from });
     }

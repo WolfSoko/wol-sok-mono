@@ -30,5 +30,14 @@ describe('MatchSetup', () => {
       setup.selectColor({ seat: 1, colorId: 'blue' });
       expect(store.snapshot().colors).toEqual(['orange', 'blue']);
     });
+
+    it('lets one seat change while the other keeps its locked colour', () => {
+      const gameState = TestBed.inject(GameStateService);
+      gameState.setMode('two-players');
+      gameState.setColors(['orange', 'green']);
+
+      setup.selectColor({ seat: 0, colorId: 'blue' });
+      expect(store.snapshot().colors).toEqual(['blue', 'green']);
+    });
   });
 });

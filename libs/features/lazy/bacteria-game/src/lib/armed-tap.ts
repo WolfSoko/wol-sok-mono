@@ -13,6 +13,8 @@ export interface ArmedTap<K> {
    * the tap that acts.
    */
   tap(key: K): boolean;
+  /** Drops a waiting first tap, so the next tap arms again. */
+  disarm(): void;
 }
 
 /**
@@ -34,6 +36,10 @@ export function armedTap<K>(): ArmedTap<K> {
       }
       armed.set(null);
       return true;
+    },
+    disarm: () => {
+      clearTimeout(timer);
+      armed.set(null);
     },
   };
 }
