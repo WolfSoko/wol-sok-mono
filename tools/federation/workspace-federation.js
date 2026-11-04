@@ -93,6 +93,10 @@ function workspaceFederation(config) {
       '@wolsok/feat-lazy-bac-game/admin-kit',
       '@wolsok/feat-lazy-bac-game/watch',
       '@wolsok/feat-lazy-bac-wars-admin',
+      // The game's engine is the game's too: shared, the shell's copy would
+      // win the same way.
+      '@wolsok/feat-shared-bacteria-engine',
+      '@wolsok/feat-shared-bacteria-engine/testing',
       '@wolsok/feat-shader-examples',
       ...(config.skip ?? []),
     ],

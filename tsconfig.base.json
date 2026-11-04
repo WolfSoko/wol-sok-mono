@@ -59,6 +59,12 @@
       "@wolsok/feat-shader-examples": [
         "./libs/features/lazy/shader-examples/src/index.ts"
       ],
+      "@wolsok/feat-shared-bacteria-engine": [
+        "./libs/features/bacteria-engine/src/index.ts"
+      ],
+      "@wolsok/feat-shared-bacteria-engine/testing": [
+        "./libs/features/bacteria-engine/src/testing.ts"
+      ],
       "@wolsok/feat-shared-reaction-diffusion-kernels": [
         "./libs/features/reaction-diffusion-kernels/src/index.ts"
       ],

@@ -27,6 +27,9 @@ coverage:
       feat-lazy-bacteria-game:
         flags:
           - feat-lazy-bacteria-game
+      feat-shared-bacteria-engine:
+        flags:
+          - feat-shared-bacteria-engine
       feat-lazy-fourier-analysis:
         flags:
           - feat-lazy-fourier-analysis
@@ -82,6 +85,9 @@ flags:
   feat-lazy-bacteria-game:
     paths:
       - libs/features/lazy/bacteria-game
+  feat-shared-bacteria-engine:
+    paths:
+      - libs/features/bacteria-engine
   feat-lazy-fourier-analysis:
     paths:
       - libs/features/lazy/fourier-analysis
