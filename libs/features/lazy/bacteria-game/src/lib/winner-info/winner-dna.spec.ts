@@ -2,10 +2,12 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EvolutionService } from '../evolution.service';
 import { I18nService } from '../i18n/i18n.service';
-import { MatchEarnings } from '../state/earnings';
+import {
+  createPlayer,
+  LEVELS,
+  MatchEarnings,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateStore } from '../state/game.states';
-import { LEVELS } from '../state/levels';
-import { createPlayer } from '../state/player.model';
 import { WinnerComponent } from './winner.component';
 
 /** The result screen's line on the DNA a match grew, and the way to spend it. */

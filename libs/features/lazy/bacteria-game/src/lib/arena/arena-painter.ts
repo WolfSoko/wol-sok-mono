@@ -1,10 +1,14 @@
 import type { GpuTimer } from '../gl/gpu-timer';
 import type { DishAmbience } from './ambience';
-import { Nutrient } from '../state/bacteria-simulation';
-import type { ActiveEffect, WeaponFire } from '../state/evolution';
-import { GameBalance } from '../state/game-balance';
-import { DynamicWall, Rect } from '../state/maps';
-import { Zone } from '../state/zones';
+import {
+  type ActiveEffect,
+  DynamicWall,
+  GameBalance,
+  Nutrient,
+  Rect,
+  type WeaponFire,
+  Zone,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ArenaTheme } from './arena-theme';
 import type { PaintedColony } from './colony-renderer';
 

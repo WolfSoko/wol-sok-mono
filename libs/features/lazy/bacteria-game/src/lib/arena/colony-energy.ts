@@ -1,5 +1,4 @@
-import { Point } from '../state/geometry';
-import { GameBalance } from '../state/game-balance';
+import { GameBalance, Point } from '@wolsok/feat-shared-bacteria-engine';
 import { hash } from './canvas-math';
 
 /** The shimmer of a boosted colony at one moment. */

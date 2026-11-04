@@ -4,23 +4,26 @@ import { rgba } from '../arena/canvas-math';
 import { CampaignService } from '../campaign.service';
 import { ColonyStats, sameColonyStats, toColonyStats } from '../colony-stats';
 import type { HudGoal } from '../hud-bar.component';
-import type { TranslationKey } from '../i18n/dictionaries';
+import {
+  getColonyColor,
+  getLevel,
+  harvestTarget,
+  holdTarget,
+  NEUTRAL_COLOR,
+  nextLevel,
+  ONLINE_LOCKS,
+  readableOn,
+  rivalryScore,
+  type TranslationKey,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { difficultyKeys, levelNameText, missionKeys } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { ProgressService } from '../progress.service';
 import { GameSettingsService } from '../settings.service';
 import { SocialService } from '../social/social.service';
 import { ArenaStage } from '../stage/arena-stage';
-import {
-  getColonyColor,
-  NEUTRAL_COLOR,
-  readableOn,
-} from '../state/colony-colors';
 import { GameStateStore } from '../state/game.states';
-import { getLevel, nextLevel, ONLINE_LOCKS } from '../state/levels';
 import { PlayerStore } from '../state/player.store';
-import { rivalryScore } from '../state/rivalry';
-import { harvestTarget, holdTarget } from '../state/win-conditions';
 import {
   isTimeRunningOut,
   matchClockLabel,

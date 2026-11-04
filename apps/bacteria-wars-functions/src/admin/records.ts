@@ -1,4 +1,4 @@
-import type { BanReason } from '@wolsok/feat-lazy-bac-game/engine';
+import type { BanReason } from '@wolsok/feat-shared-bacteria-engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { DAY_MS } from '../boards/budgets';

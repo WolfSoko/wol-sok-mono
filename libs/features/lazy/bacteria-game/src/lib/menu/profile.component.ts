@@ -22,20 +22,21 @@ import { AccountComponent } from './account.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 import { ProfileEditorComponent } from '../social/profile-editor.component';
 import { SocialService } from '../social/social.service';
-import { BOT_DIFFICULTIES } from '../state/bot-controller';
-import { LEVELS } from '../state/levels';
-import { MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
-import { ACHIEVEMENTS } from '../state/achievements';
-import { rankFor, RANKS } from '../state/ranks';
-import { dnaEarned } from '../state/evolution';
-import { RankStandingComponent } from '../rank/rank-standing.component';
-import { AdSlotComponent } from '../support/ads/ad-slot.component';
 import {
+  ACHIEVEMENTS,
+  BOT_DIFFICULTIES,
+  dnaEarned,
+  LEVELS,
   LifetimeTotals,
+  MEDAL_TIERS_RAREST_FIRST,
   medalTally,
   NO_TOTALS,
   Progress,
-} from '../state/progress';
+  rankFor,
+  RANKS,
+} from '@wolsok/feat-shared-bacteria-engine';
+import { RankStandingComponent } from '../rank/rank-standing.component';
+import { AdSlotComponent } from '../support/ads/ad-slot.component';
 
 /**
  * The player's profile: what they have done over all their matches, every

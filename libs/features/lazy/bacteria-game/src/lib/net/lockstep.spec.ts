@@ -1,6 +1,9 @@
-import { MatchEngine } from '../state/match-engine';
-import { MatchPlan, planMatch } from '../state/match-setup';
-import { createPlayer } from '../state/player.model';
+import {
+  createPlayer,
+  MatchEngine,
+  MatchPlan,
+  planMatch,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   CHECK_EVERY_TICKS,
   INPUT_DELAY_TICKS,

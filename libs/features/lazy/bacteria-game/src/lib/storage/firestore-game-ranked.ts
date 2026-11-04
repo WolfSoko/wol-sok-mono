@@ -1,5 +1,8 @@
 import type { Observable } from 'rxjs';
-import { attemptExpireAt, attemptTaken } from '../state/attempts';
+import {
+  attemptExpireAt,
+  attemptTaken,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { FirebaseConnection } from './firebase-connection';
 import { millisOf, signedIn } from './firestore-values';
 import {

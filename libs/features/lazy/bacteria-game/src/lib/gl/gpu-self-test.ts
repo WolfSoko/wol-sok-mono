@@ -1,11 +1,11 @@
 import {
   playScenario,
   scenarioRandom,
+  SELF_TEST_GOLDEN,
   SELF_TEST_SCENARIO,
   selfTestVerdict,
   SelfTestVerdict,
-} from '../state/gpu-int/sim-scenarios';
-import { SELF_TEST_GOLDEN } from '../state/gpu-int/self-test-golden';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GpuSimulation } from './gpu-simulation';
 import { rendererOf } from './renderer';
 

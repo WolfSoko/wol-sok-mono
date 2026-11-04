@@ -1,4 +1,4 @@
-import { CellBounds, Point } from '../state/geometry';
+import { CellBounds, Point } from './geometry';
 import {
   ENERGY_SCALE,
   MAX_GPU_COLONIES,

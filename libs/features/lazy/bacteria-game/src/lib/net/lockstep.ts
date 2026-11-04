@@ -1,13 +1,20 @@
-import { clampLength, SteeringVector } from '../state/geometry';
-import { DRAG_STEPS, onGrid, STEER_STEPS } from '../state/match-engine';
-import { GhostInputs, NO_INPUT, SeatDriver } from '../state/ghost';
-import { TICKS_PER_SEC } from '../state/fixed-tick';
-import { matchChecksum } from '../state/checksum';
-import { Player } from '../state/player.model';
+import {
+  clampLength,
+  DRAG_STEPS,
+  GhostInputs,
+  matchChecksum,
+  NO_INPUT,
+  onGrid,
+  Player,
+  SeatDriver,
+  STEER_STEPS,
+  SteeringVector,
+  TICKS_PER_SEC,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { NetMessage, TickInput } from './net-message';
 
 /** Moved to `state/checksum.ts` (ADR 0011); kept here for the net code. */
-export { matchChecksum } from '../state/checksum';
+export { matchChecksum } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * How many ticks after it is put in an input is played: 100 ms at 60 ticks

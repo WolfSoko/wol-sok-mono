@@ -1,4 +1,4 @@
-import { XP_FULL_COUNT_BEFORE } from '@wolsok/feat-lazy-bac-game/engine';
+import { XP_FULL_COUNT_BEFORE } from '@wolsok/feat-shared-bacteria-engine';
 import { hiddenFor } from './entries';
 import { relabels } from './profile-changed';
 import { boardProfileOf, entryLabel, isBlockedName } from './names';

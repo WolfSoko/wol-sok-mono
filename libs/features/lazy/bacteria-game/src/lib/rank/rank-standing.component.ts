@@ -7,7 +7,7 @@ import {
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { rankKey } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { rankFor, RANKS } from '../state/ranks';
+import { rankFor, RANKS } from '@wolsok/feat-shared-bacteria-engine';
 import { RankBadgeComponent } from './rank-badge.component';
 
 /**

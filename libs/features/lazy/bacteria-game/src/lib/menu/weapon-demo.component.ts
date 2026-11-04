@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { WeaponId } from '../state/evolution';
+import { WeaponId } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * A weapon's card demo: a small dish in which the weapon plays on a few

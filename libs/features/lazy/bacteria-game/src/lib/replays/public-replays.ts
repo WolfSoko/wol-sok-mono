@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { canPlayBack, type Replay } from '../state/replay';
+import { canPlayBack, type Replay } from '@wolsok/feat-shared-bacteria-engine';
 import {
   loadPublicReplay,
   type PublicReplayAnswer,

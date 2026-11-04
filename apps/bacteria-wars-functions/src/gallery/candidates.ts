@@ -1,7 +1,7 @@
 import {
   BALANCE_VERSION,
   TICKS_PER_SEC,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { ReplaySummary } from '../boards/verify';
 import { type AccountInfo, trustOf } from '../boards/verify-slice';
 import type { ReplayRecord } from '../replays/accept-plan';

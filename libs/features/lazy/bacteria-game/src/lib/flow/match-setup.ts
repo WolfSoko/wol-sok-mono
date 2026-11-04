@@ -1,11 +1,14 @@
 import { computed, inject, Injectable } from '@angular/core';
 import type { ColorChange } from '../colony-colors/colony-colors.component';
 import { ProgressService } from '../progress.service';
-import type { BotDifficulty } from '../state/bot-controller';
-import { pickColor } from '../state/colony-colors';
+import {
+  type BotDifficulty,
+  type HeadStart,
+  pickColor,
+  type SeriesLength,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
-import type { HeadStart, SeriesLength } from '../state/rivalry';
 
 /**
  * The setup of the next match as the menus pick it: level, opponent,

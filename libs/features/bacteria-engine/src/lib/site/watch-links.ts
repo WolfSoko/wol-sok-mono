@@ -1,5 +1,5 @@
 import type { Language } from '../i18n/language';
-import { GAME_SITE_URL } from '../support/legal-links';
+import { GAME_SITE_URL } from './legal-links';
 
 /**
  * The public gallery's paths on the game's site (ADR 0011): `publicSite`

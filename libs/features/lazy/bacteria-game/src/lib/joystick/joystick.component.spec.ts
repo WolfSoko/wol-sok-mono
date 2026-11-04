@@ -1,6 +1,6 @@
 import { I18nService } from '../i18n/i18n.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SteeringVector } from '../state/geometry';
+import { SteeringVector } from '@wolsok/feat-shared-bacteria-engine';
 import { JOYSTICK_RADIUS, JoystickComponent } from './joystick.component';
 
 /** A pointer event as the zone sees it; the zone sits at (100, 200) on screen. */

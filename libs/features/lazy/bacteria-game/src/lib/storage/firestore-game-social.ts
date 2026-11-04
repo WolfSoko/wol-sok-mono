@@ -5,9 +5,12 @@ import type {
   Query,
 } from 'firebase/firestore';
 import { Observable } from 'rxjs';
-import type { Profile } from '../social/profile';
+import type {
+  MatchLevelPick,
+  PickedMatchLevel,
+  Profile,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { FirebaseConnection } from './firebase-connection';
-import type { MatchLevelPick, PickedMatchLevel } from '../state/match-level';
 import type { Challenge, GameSocial, QueueEntry, Waiting } from './game-social';
 
 /** How long an invitation link works. */

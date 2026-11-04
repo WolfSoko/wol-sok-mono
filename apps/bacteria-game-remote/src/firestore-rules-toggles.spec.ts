@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { FEATURE_TOGGLE_KEYS } from '@wolsok/feat-lazy-bac-game/engine';
+import { FEATURE_TOGGLE_KEYS } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * The feature toggles a `toggles.set` command may set in the rules

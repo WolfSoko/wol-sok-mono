@@ -31,17 +31,20 @@ import {
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { prefersReducedMotion } from '../reduced-motion';
 import {
+  type BacteriaLook,
+  clock,
   DEFAULT_SCREEN_RESOLUTION,
   detailScale,
+  getLevel,
+  levelMap,
+  levelSize,
+  mapZones,
   renderScale,
+  type Replay,
   simResolutionOf,
   simScale,
-} from '../state/arena-size';
-import { clock, TICKS_PER_SEC } from '../state/fixed-tick';
-import { getLevel, levelMap, levelSize } from '../state/levels';
-import type { Replay } from '../state/replay';
-import type { BacteriaLook } from '../state/skins';
-import { mapZones } from '../state/zones';
+  TICKS_PER_SEC,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ReplayScene, type ReplayLook } from './replay-scene';
 
 /** The speeds the viewer offers. */

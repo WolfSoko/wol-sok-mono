@@ -1,5 +1,13 @@
-import type { CellList } from '../state/cells';
-import { gameBalance, GameBalance } from '../state/game-balance';
+import {
+  CellBounds,
+  type CellList,
+  clamp,
+  emptyBounds,
+  gameBalance,
+  GameBalance,
+  growBounds,
+  Rect,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   type BoostShimmer,
   cellDensity,
@@ -8,8 +16,6 @@ import {
   sparkle,
   strengthOf,
 } from './colony-energy';
-import { CellBounds, clamp, emptyBounds, growBounds } from '../state/geometry';
-import { Rect } from '../state/maps';
 import { lerp, smoothstep } from './canvas-math';
 import { LIGHT_X, LIGHT_Y } from './look-tuning';
 

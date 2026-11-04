@@ -92,9 +92,10 @@ const FUNCTION_QUERIES = read(
   '../../bacteria-wars-functions/src/firestore-queries.json'
 ) as Queries;
 
-/** The client code that queries Firestore: the game and the admin area. */
+/** The client code that queries Firestore: the game, its engine and the admin area. */
 const CLIENT_SOURCES = [
   '../../../libs/features/lazy/bacteria-game/src',
+  '../../../libs/features/bacteria-engine/src',
   '../../../libs/features/lazy/bacteria-wars-admin/src',
 ];
 /**

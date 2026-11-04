@@ -5,7 +5,7 @@ name: Bacteria Wars balance
 # Cloud run, so it runs here at night, split over jobs, and opens or updates
 # an issue labelled `balance` when a check fails or the results drift from
 # the committed baseline, and closes it once a run is back in line. The lab
-# is deterministic: a night on which nothing it plays changed - the game lib,
+# is deterministic: a night on which nothing it plays changed - the engine,
 # the runner, the dependencies - since the last run that went through is
 # skipped, since it would play the same report (run it by hand to play
 # anyway). Needs nothing but the default GITHUB_TOKEN.
@@ -38,7 +38,7 @@ jobs:
       - name: Key what the lab plays
         id: key
         run: |
-          lib=$(git rev-parse HEAD:libs/features/lazy/bacteria-game)
+          lib=$(git rev-parse HEAD:libs/features/bacteria-engine)
           runner=$(git rev-parse HEAD:tools/bacteria-game/balance)
           deps=$(sha256sum package-lock.json | cut -d ' ' -f 1)
           echo "key=bacteria-balance-$lib-$runner-$deps" >> "$GITHUB_OUTPUT"
@@ -68,7 +68,7 @@ jobs:
 
       - name: Play a share of the matrix
         run: >
-          npx nx run feat-lazy-bacteria-game:balance
+          npx nx run feat-shared-bacteria-engine:balance
           --shard=${{ matrix.shard }}/${{ env.SHARDS }}
           --raw=dist/balance/part-${{ matrix.shard }}.json
 

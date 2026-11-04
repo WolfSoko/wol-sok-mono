@@ -1,4 +1,4 @@
-import { GAME_SITE_URL as SITE_URL } from '@wolsok/feat-lazy-bac-game/engine';
+import { GAME_SITE_URL as SITE_URL } from '@wolsok/feat-shared-bacteria-engine';
 import { escapeHtml, scriptJson } from './html';
 import {
   galleryPage,

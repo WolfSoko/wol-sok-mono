@@ -4,7 +4,7 @@ import {
   rankFor,
   xpOf,
   xpSort,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { isBanned } from '../limits';
 import { entryData, hiddenFor, memberIn, profileIn } from './entries';

@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { I18nService } from '../i18n/i18n.service';
 import { avatarArt } from './avatar-art';
-import { Avatar } from './profile';
+import { Avatar } from '@wolsok/feat-shared-bacteria-engine';
 
 /** A player's picture in a circle: a drawn bacterium, a photo or an upload. */
 @Component({

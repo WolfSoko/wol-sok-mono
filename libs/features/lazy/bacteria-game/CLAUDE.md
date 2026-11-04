@@ -3,6 +3,14 @@
 Rules for working on `libs/features/lazy/bacteria-game`, on top of the repo's
 `CLAUDE.md`.
 
+The engine (the match, its simulation, replays, levels, progress and the
+texts) is the lib `feat-shared-bacteria-engine` (`libs/features/bacteria-engine`,
+see its `CLAUDE.md`). Paths below that start with `state/`, or name the
+dictionaries in `i18n/`, are in that lib unless they name one of the four
+Angular files that stay here (`game-state.service.ts`, `game.states.ts`,
+`player.service.ts`, `player.store.ts`). The game imports the engine only
+through `@wolsok/feat-shared-bacteria-engine`.
+
 ## Persistence: local storage or Firebase, behind ports
 
 The game keeps the player's progress (medallions, campaign, XP, achievements,
@@ -81,8 +89,8 @@ storage until then. Settings stay with the device either way.
   and reads its own replays back (`listMine`, one query in `GAME_QUERIES`).
   `listingOf` reads the functions' fields of `replays/{id}` - the seat from
   `seats` (online, host 0), `rankedReason` (`ARRIVAL_REASONS`,
-  `ONLINE_REASONS` in `state/replay-reasons.ts`, exported through
-  `engine.ts`, where the functions take their reason types from),
+  `ONLINE_REASONS` in `state/replay-reasons.ts`, exported by the engine,
+  where the functions take their reason types from),
   `galleryOut`, `publicId` - and leaves out what it does not know. A new
   reason needs its text in the `replay.reasons` area (a `satisfies` there
   fails to compile without it). In the cloud
@@ -120,9 +128,9 @@ storage until then. Settings stay with the device either way.
   what the device picks unrecorded, and a float GPU match leaves no
   recording - recording never moves a match off the GPU there. The viewer
   lays a replay out on its own grid (`simResolutionOf`,
-  `state/arena-size.ts`); the functions scale a re-run's expected cost by
+  the engine's `state/arena-size.ts`); the functions scale a re-run's expected cost by
   the arena's cells (`expectedRerunMs`) and count the level statistics
-  per grid (`levelStatsKey`, `simGridOf` through `engine.ts`).
+  per grid (`levelStatsKey`, `simGridOf` from the engine lib).
 - Ranked daily attempts and endless runs (ADR 0012) are declared through
   the `GameRanked` port (`storage/game-ranked.ts`, `FirestoreGameRanked`),
   asked of `GameCloud.ranked()` - null without a project - and only by
@@ -164,8 +172,8 @@ storage until then. Settings stay with the device either way.
   (its frames drawn by `arenaContent`, `arena/arena-content.ts`, like the
   game's):
   its own `MatchEngine` from `replayEngine` (`state/replay.ts`, beside
-  `canPlayBack` and `playReplay`, which the functions import through
-  `engine.ts`: keep its signature), nothing of the game's state. A
+  `canPlayBack` and `playReplay`, which the functions import from the
+  engine: keep its signature), nothing of the game's state. A
   `gpu-int` replay plays on the viewer's own GL painter (the third
   argument of `replayEngine`) where its renderer is the host's `gpu`
   (`GpuSelfTestService.trustedRenderer`: "My matches" and the match just
@@ -324,7 +332,7 @@ play each other.
 - The balance lab (`state/balance/`, runner `tools/bacteria-game/balance/`)
   plays the stand-in (`REFERENCE_PROFILE`) against that computer. A change
   to the balance, the levels, the bots or the curve re-checks it:
-  `nx run feat-lazy-bacteria-game:balance-check` (short, against the
+  `nx run feat-shared-bacteria-engine:balance-check` (short, against the
   committed `state/balance/balance-report.json`); a new baseline with
   `tsx tools/bacteria-game/balance/run.ts full --update` (hours; nightly on
   GitHub, `.github/workflows/bacteria-balance.yml`).
@@ -420,7 +428,7 @@ play each other.
 
 - Every text the player sees goes through `I18nService.t` or the `t` pipe
   (`src/lib/i18n/`), with an English and a German entry in the area's
-  `en/` and `de/` files. No literal user-facing strings in templates or
+  `en/` and `de/` files (in the engine lib's `src/lib/i18n/`). No literal user-facing strings in templates or
   notices.
 - The state and the engine keep ids, not texts: level names, achievement
   texts, colour names and the like are looked up by their id in the

@@ -34,7 +34,7 @@ describe('the engine bundle in Node', () => {
 
   it('plays the same replay twice to the very same result', async () => {
     await build({
-      entryPoints: [join(__dirname, 'engine.ts')],
+      entryPoints: [join(__dirname, 'index.ts')],
       bundle: true,
       platform: 'node',
       format: 'esm',

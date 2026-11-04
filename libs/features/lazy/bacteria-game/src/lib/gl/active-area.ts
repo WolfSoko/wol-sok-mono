@@ -1,5 +1,4 @@
-import { CellBounds } from '../state/geometry';
-import { Rect } from '../state/maps';
+import { CellBounds, Rect } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * Above this share of the arena, one pass over all of it is about as cheap

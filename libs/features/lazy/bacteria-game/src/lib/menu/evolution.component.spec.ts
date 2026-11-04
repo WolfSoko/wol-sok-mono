@@ -4,12 +4,11 @@ import { GameHapticsService } from '../haptics.service';
 import { I18nService } from '../i18n/i18n.service';
 import { PROGRESS_STORAGE_KEY } from '../progress.service';
 import { GameSoundService } from '../sound/game-sound.service';
-import { GENES, WEAPONS } from '../state/evolution';
+import { GENES, WEAPONS } from '@wolsok/feat-shared-bacteria-engine';
 import { colonyLook } from './colony-preview.component';
 import { EvolutionComponent } from './evolution.component';
 import { geneKeys, weaponKeys } from './evolution-look';
-import { DE, EN } from '../i18n/dictionaries';
-import { lookUp } from '../i18n/translation';
+import { DE, EN, lookUp } from '@wolsok/feat-shared-bacteria-engine';
 
 describe('EvolutionComponent', () => {
   let fixture: ComponentFixture<EvolutionComponent>;

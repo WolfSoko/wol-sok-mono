@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import type { ArenaPainter } from '../arena/arena-painter';
 import type { ArenaViewComponent } from '../arena/arena-view.component';
 import { GameStateService } from '../state/game-state.service';
-import { isBigMap, LEVELS } from '../state/levels';
+import { isBigMap, LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerService } from '../state/player.service';
 import { ArenaStage } from './arena-stage';
 import { StageFrame } from './stage-frame';

@@ -1,11 +1,11 @@
 import {
+  coversPoint,
   kindOfCode,
   stampZones,
   Zone,
   ZONE_CODE,
   ZoneKind,
-} from '../state/zones';
-import { coversPoint } from '../state/maps';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { hash, mix } from './canvas-math';
 import { Rgb } from './arena-theme';
 import { ZONE_COLORS } from './zone-look';

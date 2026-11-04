@@ -1,7 +1,7 @@
 import {
   arenaSize,
   ONLINE_SIM_RESOLUTION,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * The verification budgets (ADR 0012) - server-only, unlike the board

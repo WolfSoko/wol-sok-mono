@@ -6,7 +6,7 @@ import {
   input,
 } from '@angular/core';
 import { I18nService } from '../i18n/i18n.service';
-import { RANKS } from '../state/ranks';
+import { RANKS } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * A rank's emblem: a gold hexagon around its initial, with a pip for every

@@ -8,9 +8,8 @@ import { STAGE_PROVIDERS } from '../stage-providers';
 import { ArenaStage } from '../stage/arena-stage';
 import { StageFullscreen } from '../stage/stage-fullscreen';
 import { GameState, GameStateStore } from '../state/game.states';
-import { LEVELS } from '../state/levels';
+import { LEVELS, replayOf } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerStore } from '../state/player.store';
-import { replayOf } from '../state/replay';
 import { stubActivation, stubFullscreen } from '../../testing/fullscreen-stubs';
 import { PlayFlow } from './play-flow';
 

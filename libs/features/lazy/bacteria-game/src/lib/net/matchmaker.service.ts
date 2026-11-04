@@ -15,7 +15,7 @@ import {
   MatchLevelPick,
   PickedMatchLevel,
   pickMatchLevel,
-} from '../state/match-level';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameCloud } from '../storage/game-cloud';
 import type { GameSocial, Waiting } from '../storage/game-social';
 import { SocialService } from '../social/social.service';

@@ -1,5 +1,5 @@
 import { type BoostShimmer, shimmerAt, sparkle } from './colony-energy';
-import { CellBounds, clamp } from '../state/geometry';
+import { CellBounds, clamp } from '@wolsok/feat-shared-bacteria-engine';
 import { SLIME_SCALE } from './slime-painter';
 import { lerp, mix, smoothstep } from './canvas-math';
 import { cellLatticeOffset } from './lattice-cells';

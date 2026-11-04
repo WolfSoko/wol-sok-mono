@@ -1,16 +1,20 @@
 import { TestBed } from '@angular/core/testing';
-import { TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
-import { gameBalance } from './game-balance';
+import {
+  BacteriaSimulation,
+  gameBalance,
+  getMap,
+  IntSimulation,
+  MatchPlan,
+  planMatch,
+  PlayerColorArray,
+  SimulationFactory,
+  TICK_SEC,
+  TICKS_PER_SEC,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameState, GameStateStore } from './game.states';
-import { getMap } from './game-maps';
 import { Lockstep } from '../net/lockstep';
-import { MatchPlan, planMatch } from './match-setup';
-import { PlayerColorArray } from './player.model';
 import { PlayerStore } from './player.store';
 import { PlayerService, PlayerSpawn } from './player.service';
-import { BacteriaSimulation } from './bacteria-simulation';
-import { IntSimulation } from './gpu-int/int-simulation';
-import { SimulationFactory } from './simulation';
 import { chooseSimulation } from '../gl/simulation-choice';
 import type { GpuSimulationOptions } from '../gl/gpu-simulation';
 

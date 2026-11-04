@@ -8,7 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { GameTextPipe, levelNameText } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { Level } from '../state/levels';
+import { Level } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * The offer of a run someone shared: a ghost to fight on its level. A dumb

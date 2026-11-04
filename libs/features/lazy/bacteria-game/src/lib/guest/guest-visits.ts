@@ -1,4 +1,4 @@
-import { isObject } from '../state/is-object';
+import { isObject } from '@wolsok/feat-shared-bacteria-engine';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

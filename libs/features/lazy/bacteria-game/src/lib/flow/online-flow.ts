@@ -14,7 +14,7 @@ import {
 } from '../social/social.service';
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
-import { pickMatchLevel } from '../state/match-level';
+import { pickMatchLevel } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayFlow } from './play-flow';
 
 /**

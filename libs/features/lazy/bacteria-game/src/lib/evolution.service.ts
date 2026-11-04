@@ -12,23 +12,20 @@ import { GameEvents, injectGameAnalytics } from './analytics/game-analytics';
 import { ProgressService } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import {
-  dnaEarned,
-  GeneId,
-  Loadout,
-  weaponOf,
-  WeaponId,
-} from './state/evolution';
-import {
   adoptEvolution,
   availableDna,
+  BacteriaLook,
   canBuyAnySkin,
   canBuyAnything,
   canBuyGene,
   canBuySkin,
   canBuyWeapon,
+  dnaEarned,
   EMPTY_EVOLUTION,
   EvolutionProgress,
+  GeneId,
   levelOf,
+  Loadout,
   loadoutOf,
   mergeEvolution,
   nextGeneCost,
@@ -36,12 +33,14 @@ import {
   parseEvolution,
   resetEvolution,
   sameEvolution,
+  skinCost,
+  WeaponId,
+  weaponOf,
   withEquipped,
   withGeneLevel,
   withSkin,
   withWeapon,
-} from './state/evolution-progress';
-import { BacteriaLook, skinCost } from './state/skins';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount, PlayerSwitch } from './storage/game-account';
 import { DeviceStorage, GameStorage } from './storage/game-storage';
 

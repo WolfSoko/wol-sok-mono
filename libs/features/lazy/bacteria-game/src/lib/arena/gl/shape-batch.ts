@@ -1,4 +1,8 @@
-import { DynamicWall, Rect } from '../../state/maps';
+import {
+  DynamicWall,
+  Rect,
+  WEAPON_CODE,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { boostRingRadius, crosshairBars, CursorShape } from '../arena-painter';
 import {
   BLOB_ALPHA,
@@ -14,7 +18,6 @@ import { ArenaTheme, Rgb } from '../arena-theme';
 import { darker } from '../canvas-math';
 import { JamDrop } from '../jam';
 import { Motes } from '../motes';
-import { WEAPON_CODE } from '../../state/weapon-effects';
 import { MarkLayer } from '../weapon-fx';
 import { AMBIENCE, DishAmbience } from '../ambience';
 

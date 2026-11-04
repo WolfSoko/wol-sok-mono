@@ -1,7 +1,9 @@
-import { ColonyLook } from '../state/skins';
-import { gameBalance } from '../state/game-balance';
-import { CellBounds } from '../state/geometry';
-import { Cells } from '../state/cells';
+import {
+  CellBounds,
+  Cells,
+  ColonyLook,
+  gameBalance,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { createCanvas } from './canvas-math';
 import {
   colonyDensity,

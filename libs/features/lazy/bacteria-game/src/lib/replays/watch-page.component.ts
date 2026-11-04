@@ -14,16 +14,20 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
-import { TranslationKey } from '../i18n/dictionaries';
-import { renderGameText } from '../i18n/game-text';
+import {
+  galleryUrl,
+  getLevel,
+  levelNameText,
+  renderGameText,
+  type Replay,
+  TranslationKey,
+  WATCH_PARAM,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { dismissSplash } from '../splash';
-import { getLevel, levelNameText } from '../state/levels';
-import type { Replay } from '../state/replay';
 import { PublicReplayError, PublicReplays } from './public-replays';
 import { ReplayViewerComponent } from './replay-viewer.component';
-import { galleryUrl, WATCH_PARAM } from './watch-links';
 
 const ERRORS: Readonly<Record<PublicReplayError, TranslationKey>> = {
   'not-found': 'replay.watchPage.notFound',

@@ -1,11 +1,15 @@
-import { GameBalance } from '../../state/game-balance';
-import type { CellList } from '../../state/cells';
-import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
-import { Rect } from '../../state/maps';
+import {
+  CellBounds,
+  type CellList,
+  emptyBounds,
+  GameBalance,
+  growBounds,
+  Rect,
+  Zone,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ArenaFrame, ArenaPainter, PaintedColony } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
 import { layerScale, paintZoneLayer } from '../zone-decal';
-import { Zone } from '../../state/zones';
 import { ArenaTheme } from '../arena-theme';
 import { cellDensity, overcharge, strengthOf } from '../colony-energy';
 import { colonyBounds } from '../slime-painter';

@@ -1,4 +1,4 @@
-import { inLang } from '@wolsok/feat-lazy-bac-game/engine';
+import { inLang } from '@wolsok/feat-shared-bacteria-engine';
 import { type Lang, t, type Word } from './texts';
 
 /** Text for HTML, in an element or an attribute. */
@@ -21,7 +21,7 @@ export function scriptJson(value: unknown): string {
  * A page's path in a language: the game's own rule, which its links to
  * these pages follow too.
  */
-export { inLang } from '@wolsok/feat-lazy-bac-game/engine';
+export { inLang } from '@wolsok/feat-shared-bacteria-engine';
 
 /** A word of the pages, escaped. */
 export function text(

@@ -3,7 +3,7 @@ import {
   type NOT_REPORTED,
   type OnlineReason as StoredOnlineReason,
   onlineSort,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   FieldValue,
   type Firestore,

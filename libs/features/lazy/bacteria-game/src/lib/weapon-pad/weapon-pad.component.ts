@@ -14,7 +14,7 @@ import { WeaponStats } from '../colony-stats';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { WEAPON_COLORS, weaponKeys } from '../menu/evolution-look';
-import { weaponOf } from '../state/evolution';
+import { weaponOf } from '@wolsok/feat-shared-bacteria-engine';
 
 /** The weapon button in CSS pixels; its recharge ring runs just outside it. */
 export const WEAPON_BUTTON_SIZE = 64;

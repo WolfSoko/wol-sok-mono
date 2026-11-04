@@ -7,7 +7,7 @@ import {
 import { BoostPadComponent } from '../boost-pad/boost-pad.component';
 import { ColonyStats } from '../colony-stats';
 import { JoystickComponent } from '../joystick/joystick.component';
-import { SteeringVector } from '../state/geometry';
+import { SteeringVector } from '@wolsok/feat-shared-bacteria-engine';
 import { WeaponPadComponent } from '../weapon-pad/weapon-pad.component';
 
 /** A push of a player's joystick. */

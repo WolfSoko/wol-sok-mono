@@ -21,13 +21,16 @@ import {
   renderGameText,
 } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
-import type { TranslationKey } from '../i18n/dictionaries';
+import type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { MatchmakerService } from '../net/matchmaker.service';
 import { ModerationService } from '../moderation/moderation.service';
 import { GameSettingsService } from '../settings.service';
-import { getLevel, levelTitleText } from '../state/levels';
-import { MATCH_LEVELS } from '../state/match-level';
+import {
+  getLevel,
+  levelTitleText,
+  MATCH_LEVELS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { OnlineLobby } from '../net/online-match.service';
 import { AvatarComponent } from '../social/avatar.component';
 import { FriendsComponent } from '../social/friends.component';

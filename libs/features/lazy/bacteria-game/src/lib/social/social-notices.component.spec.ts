@@ -7,7 +7,7 @@ import {
 import { I18nService } from '../i18n/i18n.service';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
-import { defaultProfile } from './profile';
+import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import { SocialNoticesComponent } from './social-notices.component';
 
 describe('SocialNoticesComponent', () => {

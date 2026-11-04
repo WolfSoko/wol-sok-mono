@@ -21,13 +21,17 @@ import { GameHapticsService } from '../haptics.service';
 import { HudPerf, simulationLabel } from '../hud-perf';
 import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from '../sound/game-sound.service';
-import { computerLook, seatLooks } from '../state/colony-looks';
-import type { WeaponFire } from '../state/evolution';
-import { GameFrame } from '../state/fixed-tick';
+import {
+  computerLook,
+  DynamicWall,
+  GameFrame,
+  Point,
+  Rect,
+  seatLooks,
+  type WeaponFire,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
-import { Point } from '../state/geometry';
-import { DynamicWall, Rect } from '../state/maps';
 import { PlayerService } from '../state/player.service';
 import { PlayerStore } from '../state/player.store';
 import { ArenaStage } from './arena-stage';

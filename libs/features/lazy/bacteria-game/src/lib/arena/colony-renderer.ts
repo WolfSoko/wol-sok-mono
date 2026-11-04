@@ -1,5 +1,9 @@
-import type { ColonyLayer } from '../state/simulation';
-import type { ColonyLook } from '../state/skins';
+import {
+  type ColonyLayer,
+  type ColonyLook,
+  GameBalance,
+  Rect,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { LookPainter } from './look-shading';
 import {
   paintChrome,
@@ -25,11 +29,13 @@ import {
   SLIME_SCALE,
   slimeRegion,
 } from './slime-painter';
-import { GameBalance } from '../state/game-balance';
-import { Rect } from '../state/maps';
 import { lookReach } from './lattice-cells';
 
-export type { CellsLayer, ColonyLayer, StateLayer } from '../state/simulation';
+export type {
+  CellsLayer,
+  ColonyLayer,
+  StateLayer,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** A colony as it is painted: its layer, in the look it wears. */
 export type PaintedColony = ColonyLayer & { look: ColonyLook };

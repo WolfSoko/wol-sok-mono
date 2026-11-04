@@ -1,8 +1,7 @@
-import type { ColonyLook } from '../state/skins';
+import { clamp, type ColonyLook } from '@wolsok/feat-shared-bacteria-engine';
 import { LOOK_TUNING, type LookDescription } from './look-tuning';
 import { hash, smoothstep } from './canvas-math';
 import { sampleDensity } from './slime-painter';
-import { clamp } from '../state/geometry';
 
 const {
   CELL_SPACING,

@@ -4,7 +4,10 @@ import type { WsThanosDirective } from '@wolsok/thanos';
 import { Subject } from 'rxjs';
 import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from '../sound/game-sound.service';
-import { arenaSize, ONLINE_SIM_RESOLUTION } from '../state/arena-size';
+import {
+  arenaSize,
+  ONLINE_SIM_RESOLUTION,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ArenaStage, ArenaStageHost } from './arena-stage';
 
 describe('ArenaStage', () => {

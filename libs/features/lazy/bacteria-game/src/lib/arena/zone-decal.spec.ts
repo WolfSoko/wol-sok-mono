@@ -1,6 +1,6 @@
 import { paintZoneLayer } from './zone-decal';
 import { ZONE_COLORS } from './zone-look';
-import { Zone } from '../state/zones';
+import { Zone } from '@wolsok/feat-shared-bacteria-engine';
 
 const WIDTH = 320;
 const HEIGHT = 180;

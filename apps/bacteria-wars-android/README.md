@@ -175,7 +175,7 @@ it still needs; `store/` holds all of it:
   `store/graphics/`. The Publishing API has no way to them, so they go in by
   hand, and again when the listing changes.
 - **Achievements** the game lists itself, in
-  `libs/features/lazy/bacteria-game/src/lib/state/play-games-achievements.json`
+  `libs/features/bacteria-engine/src/lib/state/play-games-achievements.json`
   next to its achievements: every one of them, in the game's order, with its
   points (a multiple of 5, 200 at most, 2000 in all) and its texts per locale.
   The spec beside it fails when the `en-US` texts or the ids drift from the

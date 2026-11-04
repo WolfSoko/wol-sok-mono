@@ -1,5 +1,7 @@
-import type { TranslationKey } from '../i18n/dictionaries';
-import { clock } from '../state/fixed-tick';
+import {
+  clock,
+  type TranslationKey,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** The last seconds of a timed level, when its clock turns red. */
 export const RUNNING_OUT_SEC = 10;

@@ -1,5 +1,5 @@
 import { Rgb } from './arena-theme';
-import { Nutrient } from '../state/bacteria-simulation';
+import { Nutrient } from '@wolsok/feat-shared-bacteria-engine';
 import { darker, rgba } from './canvas-math';
 
 /** A pellet of food as a drop of jam, in one of a few flavours. */

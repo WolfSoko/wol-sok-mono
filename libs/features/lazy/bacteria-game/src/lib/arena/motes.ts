@@ -1,4 +1,4 @@
-import { wrap } from '../state/geometry';
+import { wrap } from '@wolsok/feat-shared-bacteria-engine';
 import { ArenaTheme } from './arena-theme';
 
 /** A speck drifting over the floor. */

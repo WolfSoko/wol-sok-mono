@@ -2,7 +2,7 @@ import { firstValueFrom } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
 import { FirestoreGameSocial, inviteToken } from './firestore-game-social';
 import type { QueueEntry } from './game-social';
-import { defaultProfile } from '../social/profile';
+import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 
 describe('inviteToken', () => {
   it('is twenty letters and digits, a letter per byte', () => {

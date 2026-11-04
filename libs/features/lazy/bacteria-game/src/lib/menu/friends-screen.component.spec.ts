@@ -5,7 +5,7 @@ import {
   FakeGameSocial,
 } from '../../testing/fake-game-social';
 import { I18nService } from '../i18n/i18n.service';
-import { defaultProfile } from '../social/profile';
+import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import { FriendView } from '../social/social.service';
 import { GameAccount } from '../storage/game-account';
 import { LateGameStorage } from '../../testing/late-game-storage';

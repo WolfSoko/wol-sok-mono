@@ -29,21 +29,25 @@ import { GameSoundService } from '../sound/game-sound.service';
 import {
   arenaSize,
   detailScale,
+  GameBalance,
+  gridScale,
+  levelBalance,
+  levelMap,
+  levelSize,
+  mapZones,
   ONLINE_SIM_RESOLUTION,
+  Player,
+  Point,
+  Rect,
   renderScale,
   SimResolution,
   simScale,
-} from '../state/arena-size';
-import { GameBalance } from '../state/game-balance';
+  Zone,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
-import { Point } from '../state/geometry';
-import { gridScale, levelBalance, levelMap, levelSize } from '../state/levels';
-import { Rect } from '../state/maps';
-import { Player } from '../state/player.model';
 import { PlayerService } from '../state/player.service';
 import { PlayerStore } from '../state/player.store';
-import { mapZones, Zone } from '../state/zones';
 import { arenaPointFromClient } from '../touch-controls';
 import { randomWindDirection, vaporizePixels } from '../vaporize-effect';
 

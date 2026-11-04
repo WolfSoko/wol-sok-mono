@@ -1,7 +1,10 @@
 import { ArenaRenderer, paintArenaBackground } from './arena-renderer';
 import { arenaTheme } from './arena-theme';
-import { LEVELS } from '../state/levels';
-import { ActiveEffect, WEAPONS } from '../state/evolution';
+import {
+  ActiveEffect,
+  LEVELS,
+  WEAPONS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { MarkLayer, WeaponFx } from './weapon-fx';
 
 /** A 2D context that records what is drawn and how it is blended. */

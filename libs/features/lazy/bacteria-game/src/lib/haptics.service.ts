@@ -1,7 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { GameSettingsService } from './settings.service';
-import type { WeaponId } from './state/evolution';
-import { FrameEvents, MatchResult } from './state/match-engine';
+import {
+  FrameEvents,
+  MatchResult,
+  type WeaponId,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** A short buzz is skipped this close after the last one, in milliseconds. */
 const BUZZ_INTERVAL_MS = 90;

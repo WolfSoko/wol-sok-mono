@@ -1,5 +1,5 @@
 import { avatarArt } from './avatar-art';
-import { AVATAR_COUNT } from './profile';
+import { AVATAR_COUNT } from '@wolsok/feat-shared-bacteria-engine';
 
 describe('avatarArt', () => {
   it('draws the same bacterium for an id, another for each id', () => {

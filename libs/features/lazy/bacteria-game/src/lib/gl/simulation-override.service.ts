@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { take } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
-import { isRuleset, Ruleset } from '../state/simulation';
+import { isRuleset, Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { DeviceStorage } from '../storage/game-storage';
 
 /** Where this device keeps its simulation override. */

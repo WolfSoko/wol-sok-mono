@@ -3,7 +3,7 @@ import {
   getColonyColor,
   LOCALES,
   TICKS_PER_SEC,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { PublicSeat } from '../gallery/publish';
 import { dayOf } from '../limits';
 import { escapeHtml, href, text } from './html';

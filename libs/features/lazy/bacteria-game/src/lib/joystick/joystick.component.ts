@@ -18,7 +18,7 @@ import {
   NO_STEERING,
   Point,
   SteeringVector,
-} from '../state/geometry';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { clientPoint, Pinch, steeringVector } from '../touch-controls';
 
 /** Finger distance from the centre, in CSS pixels, that counts as full push. */

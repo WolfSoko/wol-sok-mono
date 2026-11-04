@@ -1,7 +1,12 @@
-import type { Replay } from '../state/replay';
-import { onlineReplayId } from '../state/replay-id';
-import type { ArrivalReason, OnlineReason } from '../state/replay-reasons';
-import type { EndReason } from '../state/win-conditions';
+import {
+  type EndReason,
+  onlineReplayId,
+  type Replay,
+} from '@wolsok/feat-shared-bacteria-engine';
+import type {
+  ArrivalReason,
+  OnlineReason,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** A recorded match to keep (ADR 0011). */
 export interface ReplaySubmission {

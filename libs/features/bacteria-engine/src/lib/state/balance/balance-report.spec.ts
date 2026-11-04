@@ -18,7 +18,7 @@ import {
 /**
  * The balance lab's committed baseline (ADR 0016) held to the ADR's checks.
  * The lab itself plays minutes per match, so it runs as its own Nx targets
- * (`feat-lazy-bacteria-game:balance-check`, `:balance`) and nightly; here
+ * (`feat-shared-bacteria-engine:balance-check`, `:balance`) and nightly; here
  * the baseline is checked, and a few seconds of a lab match pin what the
  * lab plays.
  */

@@ -1,4 +1,4 @@
-import { BALANCE_VERSION } from '@wolsok/feat-lazy-bac-game/engine';
+import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
 import {
   fitsGallery,
   type GalleryReplay,

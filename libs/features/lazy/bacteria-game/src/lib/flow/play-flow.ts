@@ -26,11 +26,14 @@ import { levelMusic } from '../sound/level-music';
 import { ArenaStage } from '../stage/arena-stage';
 import { StageFrame } from '../stage/stage-frame';
 import { StageFullscreen } from '../stage/stage-fullscreen';
-import { isRunOver } from '../state/endless';
+import {
+  getLevel,
+  isRunOver,
+  MissionId,
+  ONLINE_LOCKS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
-import { getLevel, ONLINE_LOCKS } from '../state/levels';
-import { MissionId } from '../state/training';
 import { playKindOf } from './play-kind';
 import type { MenuScreen, StagePanel } from './stage-screens';
 

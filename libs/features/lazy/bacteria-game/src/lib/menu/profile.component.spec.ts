@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { I18nService } from '../i18n/i18n.service';
-import { ACHIEVEMENT_IDS } from '../state/achievement-ids';
-import { LEVELS } from '../state/levels';
+import { ACHIEVEMENT_IDS, LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { ProfileComponent } from './profile.component';
 
 describe('ProfileComponent', () => {

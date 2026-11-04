@@ -1,15 +1,16 @@
 import {
+  type ColonyLook,
   DEFAULT_SCREEN_RESOLUTION,
+  type GameBalance,
+  isBoosted,
+  NEUTRAL_LOOK,
+  type Player,
+  type Point,
+  type Rect,
   type ScreenResolution,
-} from '../state/arena-size';
-import type { WeaponFire } from '../state/evolution';
-import type { GameBalance } from '../state/game-balance';
-import type { Point } from '../state/geometry';
-import type { Rect } from '../state/maps';
-import { isBoosted, type Player } from '../state/player.model';
-import type { Simulation } from '../state/simulation';
-import { NEUTRAL_LOOK } from '../state/colony-looks';
-import type { ColonyLook } from '../state/skins';
+  type Simulation,
+  type WeaponFire,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { ArenaContent } from './arena-view.component';
 import { particleBudget } from './weapon-fx';
 

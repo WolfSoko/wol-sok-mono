@@ -23,20 +23,19 @@
  * and radii in sixteenths of a cell, see `state/gpu-int/int-effects.ts`.
  */
 
-import { PICK_OF_8_SHIFT, SALT } from '../state/gpu-int/draws';
-import {
-  ONE_Q14,
-  Q14_DRAW_SHIFT,
-  TARGET_SHIFT,
-} from '../state/gpu-int/fixed-point';
 import {
   DIVIDE_VARIANTS,
   DRAIN_SHIFT,
   INT_COLONIES,
+  INT_EFFECTS,
+  INT_MAX_EFFECTS,
   INT_PELLETS,
-} from '../state/gpu-int/int-frame-uniforms';
-import { INT_MAX_EFFECTS } from '../state/gpu-int/int-effects';
-import { INT_EFFECTS } from '../state/gpu-int/int-uniforms';
+  ONE_Q14,
+  PICK_OF_8_SHIFT,
+  Q14_DRAW_SHIFT,
+  SALT,
+  TARGET_SHIFT,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { INT_COMMON } from './int-common';
 import { COMMON, HUNT_COLONIES, WEAPON_CODES } from './simulation-shaders';
 

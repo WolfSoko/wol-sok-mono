@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
-import type { MatchEarnings } from '../state/earnings';
+import {
+  getLevel,
+  isNewBest,
+  type MatchEarnings,
+  type MatchOutcome,
+  type MatchPlan,
+  type Player,
+  type Simulation,
+  xpClimb,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { GameStateState } from '../state/game.states';
-import { getLevel } from '../state/levels';
-import { isNewBest } from '../state/medallions';
-import type { MatchPlan } from '../state/match-setup';
-import type { Player } from '../state/player.model';
-import { xpClimb } from '../state/ranks';
-import type { Simulation } from '../state/simulation';
-import type { MatchOutcome } from '../state/win-conditions';
 import {
   GameEvents,
   injectGameAnalytics,

@@ -1,14 +1,14 @@
 import {
   playReplay,
   type ReplayResult,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { dailyReplay } from '../testing/daily-replay';
 import { TIMELINE_POINTS, verifyReplay } from './verify';
 
 // A whole match takes long on IntSimulation: the engine's own specs
 // (golden-replay) check what it plays; this checks what is compared.
-jest.mock('@wolsok/feat-lazy-bac-game/engine', () => ({
-  ...jest.requireActual('@wolsok/feat-lazy-bac-game/engine'),
+jest.mock('@wolsok/feat-shared-bacteria-engine', () => ({
+  ...jest.requireActual('@wolsok/feat-shared-bacteria-engine'),
   playReplay: jest.fn(),
 }));
 

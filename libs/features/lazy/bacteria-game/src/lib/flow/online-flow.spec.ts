@@ -8,7 +8,7 @@ import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import { SocialService } from '../social/social.service';
 import { STAGE_PROVIDERS } from '../stage-providers';
 import { GameStateStore } from '../state/game.states';
-import { MATCH_LEVELS } from '../state/match-level';
+import { MATCH_LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { OnlineFlow } from './online-flow';
 import { PlayFlow } from './play-flow';
 

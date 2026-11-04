@@ -11,10 +11,10 @@ import {
   length,
   NO_STEERING,
   Point,
+  Rect,
   scaleTo,
   SteeringVector,
-} from './state/geometry';
-import { Rect } from './state/maps';
+} from '@wolsok/feat-shared-bacteria-engine';
 
 export type ArenaPoint = Point;
 

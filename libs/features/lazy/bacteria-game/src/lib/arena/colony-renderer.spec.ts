@@ -1,9 +1,14 @@
-import { Cells } from '../state/cells';
-import { gameBalance } from '../state/game-balance';
-import { Point } from '../state/geometry';
-import { Bacteria } from '../state/player.model';
-import { BACTERIA_LOOKS, BOSS_LOOK, ColonyLook } from '../state/skins';
-import { COLONY_COLORS } from '../state/colony-colors';
+import {
+  Bacteria,
+  BACTERIA_LOOKS,
+  BOSS_LOOK,
+  Cells,
+  COLONY_COLORS,
+  ColonyLook,
+  gameBalance,
+  Point,
+  Rect,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 import { cellBubble, CELLS, hatchPattern, latticeTile } from './lattice-cells';
 import {
@@ -16,7 +21,6 @@ import {
 import { LOOK_TUNING } from './look-tuning';
 import { paintColony } from './colony-renderer';
 import { shimmerAt } from './colony-energy';
-import { Rect } from '../state/maps';
 
 const { CELL_MIN } = LOOK_TUNING;
 

@@ -1,4 +1,4 @@
-import type { Replay } from '@wolsok/feat-lazy-bac-game/engine';
+import type { Replay } from '@wolsok/feat-shared-bacteria-engine';
 import type { DocumentSnapshot, Firestore } from 'firebase-admin/firestore';
 import type { ModerationChange } from '../admin/moderation';
 import { type Verdict, verifyReplay } from '../boards/verify';

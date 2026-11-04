@@ -1,7 +1,9 @@
-import { BacteriaSimulation } from '../state/bacteria-simulation';
-import { gameBalance } from '../state/game-balance';
-import { cpuSimulation } from '../state/match-engine';
-import { Simulation } from '../state/simulation';
+import {
+  BacteriaSimulation,
+  cpuSimulation,
+  gameBalance,
+  Simulation,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { GpuSimulationOptions } from './gpu-simulation';
 import { chooseSimulation, GpuFactory } from './simulation-choice';
 

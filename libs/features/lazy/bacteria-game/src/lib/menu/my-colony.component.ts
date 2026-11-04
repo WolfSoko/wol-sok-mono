@@ -18,14 +18,17 @@ import {
 } from '../colony-colors/colony-colors.component';
 import { EvolutionService } from '../evolution.service';
 import { GameHapticsService } from '../haptics.service';
-import { TranslationKey } from '../i18n/dictionaries';
+import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from '../sound/game-sound.service';
-import { getColonyColor } from '../state/colony-colors';
+import {
+  BacteriaLook,
+  getColonyColor,
+  SKINS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameMode } from '../state/game.states';
-import { BacteriaLook, SKINS } from '../state/skins';
 import { DnaCounterComponent } from './dna-counter.component';
 import { DnaHelixComponent } from './dna-helix.component';
 import { celebrate } from './evolution-fx';

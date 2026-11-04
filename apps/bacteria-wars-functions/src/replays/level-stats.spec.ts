@@ -3,7 +3,7 @@ import {
   type ReplayHeader,
   type SimResolution,
   TICKS_PER_SEC,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { FieldValue } from 'firebase-admin/firestore';
 import { levelStatsCounts, levelStatsId, levelStatsKey } from './level-stats';
 

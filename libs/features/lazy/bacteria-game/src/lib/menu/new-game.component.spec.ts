@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EvolutionService } from '../evolution.service';
 import { I18nService } from '../i18n/i18n.service';
-import { getLevel, LEVELS } from '../state/levels';
+import { getLevel, LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import {
   drawPreviews,
   fakePreviewUrl,

@@ -7,7 +7,7 @@ import {
   ADSENSE_ADS,
   GAME_SUPPORT_OPTIONS,
 } from '../../testing/game-support-options';
-import { PRIVACY_POLICY_URL } from '../support/legal-links';
+import { PRIVACY_POLICY_URL } from '@wolsok/feat-shared-bacteria-engine';
 import { HelpComponent } from './help.component';
 
 describe('HelpComponent', () => {

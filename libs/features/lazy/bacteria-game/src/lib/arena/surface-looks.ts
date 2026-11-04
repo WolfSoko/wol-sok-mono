@@ -17,7 +17,7 @@ import {
 } from './look-shading';
 import { fbm, hash, lerp, mix, smoothstep, valueNoise } from './canvas-math';
 import { cellBubble, MARBLES } from './lattice-cells';
-import { clamp } from '../state/geometry';
+import { clamp } from '@wolsok/feat-shared-bacteria-engine';
 import { LOOK_TUNING } from './look-tuning';
 
 const {

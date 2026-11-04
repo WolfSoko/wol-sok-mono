@@ -5,14 +5,15 @@
  *
  *   npx tsx libs/features/lazy/bacteria-game/perf/int-simulation.bench.ts
  */
-import { TICK_SEC } from '../src/lib/state/fixed-tick';
-import { IntSimulation } from '../src/lib/state/gpu-int/int-simulation';
 import {
+  createPlayer,
+  IntSimulation,
+  Player,
   scenarioRandom,
   SimScenario,
   skirmish,
-} from '../src/lib/state/gpu-int/sim-scenarios';
-import { createPlayer, Player } from '../src/lib/state/player.model';
+  TICK_SEC,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 function msPerTick(scenario: SimScenario, warmup: number): number {
   const simulation = new IntSimulation(

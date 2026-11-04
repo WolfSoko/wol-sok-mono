@@ -1,11 +1,13 @@
-import { aMatchRecord } from '../testing/match-record';
+import { aMatchRecord } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { PROGRESS_STORAGE_KEY, ProgressService } from './progress.service';
-import { dailyLevelId } from './state/daily';
-import { getLevel } from './state/levels';
-import { MatchRecord } from './state/medallions';
-import { MISSIONS } from './state/training';
+import {
+  dailyLevelId,
+  getLevel,
+  MatchRecord,
+  MISSIONS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from './storage/game-account';
 import { DeviceStorage, GameStorage } from './storage/game-storage';
 import { FakeGameAccount } from '../testing/fake-game-account';

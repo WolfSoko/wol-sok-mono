@@ -6,8 +6,10 @@ import {
   FakeGamePresence,
   FakeGameSocial,
 } from '../../testing/fake-game-social';
-import { defaultProfile } from '../social/profile';
-import type { BoardEntry } from '../state/boards';
+import {
+  type BoardEntry,
+  defaultProfile,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from '../storage/game-account';
 import type { BoardTop, PagedEntry } from '../storage/game-boards';
 import { GameCloud } from '../storage/game-cloud';

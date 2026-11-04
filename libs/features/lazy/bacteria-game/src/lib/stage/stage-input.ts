@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { StageBusy } from '../busy/stage-busy';
 import { humanForBoostKey, humanForWeaponKey } from '../colony-stats';
-import { SteeringVector } from '../state/geometry';
+import { SteeringVector } from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService } from '../state/game-state.service';
 import { GameState, GameStateStore } from '../state/game.states';
 import { PlayerService } from '../state/player.service';

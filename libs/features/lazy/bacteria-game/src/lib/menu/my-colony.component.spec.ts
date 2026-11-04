@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { EvolutionService } from '../evolution.service';
 import { I18nService } from '../i18n/i18n.service';
 import { GameSettingsService } from '../settings.service';
-import { BACTERIA_LOOKS } from '../state/skins';
+import { BACTERIA_LOOKS } from '@wolsok/feat-shared-bacteria-engine';
 import { earnXp as earn } from '../../testing/earn-xp';
 import { MyColonyComponent } from './my-colony.component';
 

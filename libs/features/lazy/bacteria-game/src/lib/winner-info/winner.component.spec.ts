@@ -1,12 +1,14 @@
 import { I18nService } from '../i18n/i18n.service';
-import { aMatchRecord } from '../../testing/match-record';
+import { aMatchRecord } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GameStateStore } from '../state/game.states';
-import { LEVELS } from '../state/levels';
-import { MatchEarnings } from '../state/earnings';
-import { MedalAward } from '../state/medallions';
-import { createPlayer } from '../state/player.model';
+import {
+  createPlayer,
+  LEVELS,
+  MatchEarnings,
+  MedalAward,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { WinnerComponent } from './winner.component';
 
 describe('WinnerComponent', () => {

@@ -21,7 +21,7 @@ import {
 import { hash, lerp, mix, smoothstep } from './canvas-math';
 import { SLIME_EDGE_END, SLIME_EDGE_START, SLIME_SCALE } from './slime-painter';
 import { Rgb } from './arena-theme';
-import { wrap } from '../state/geometry';
+import { wrap } from '@wolsok/feat-shared-bacteria-engine';
 import { LOOK_TUNING } from './look-tuning';
 
 const {

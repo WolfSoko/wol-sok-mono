@@ -1,4 +1,9 @@
-import type { Ruleset } from './simulation';
+import {
+  getColonyColor,
+  onlineColors,
+  type Ruleset,
+  toPlayerColor,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
@@ -9,7 +14,6 @@ import {
   OnlineLobby,
   OnlineMatchService,
 } from '../net/online-match.service';
-import { getColonyColor, onlineColors, toPlayerColor } from './colony-colors';
 import { GameStateService } from './game-state.service';
 import { GameStateStore } from './game.states';
 import { PlayerStore } from './player.store';

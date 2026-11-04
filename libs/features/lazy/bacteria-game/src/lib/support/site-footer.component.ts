@@ -3,7 +3,10 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameAds } from './ads/game-ads.service';
 import { GAME_SUPPORT } from './game-support';
-import { LEGAL_NOTICE_PATH, PRIVACY_POLICY_PATH } from './legal-links';
+import {
+  LEGAL_NOTICE_PATH,
+  PRIVACY_POLICY_PATH,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * The legal lines a site owes under every page: who runs it, the privacy

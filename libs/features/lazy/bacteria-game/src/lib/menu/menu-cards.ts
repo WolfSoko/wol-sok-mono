@@ -1,6 +1,6 @@
 import { arenaTheme, cssTriple } from '../arena/arena-theme';
 import type { GameText } from '../i18n/game-texts';
-import { DAILY_ATTEMPTS } from '../state/daily';
+import { DAILY_ATTEMPTS } from '@wolsok/feat-shared-bacteria-engine';
 
 /** Today's daily level as the menus show it. */
 export interface DailyCard {
