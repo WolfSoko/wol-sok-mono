@@ -10,20 +10,17 @@ import {
   Rect,
 } from '@wolsok/feat-shared-bacteria-engine';
 
+import { cellBubble, CELLS, hatchPattern, latticeTile } from './lattice-cells';
 import {
-  cellBubble,
-  CELLS,
   colonyBounds,
   colonyDensity,
   createImageDataFromBacterias,
-  hatchPattern,
-  latticeTile,
-  LOOK_TUNING,
-  paintColony,
-  shimmerAt,
   SLIME_SCALE,
   slimeRegion,
-} from './colony-renderer';
+} from './slime-painter';
+import { LOOK_TUNING } from './look-tuning';
+import { paintColony } from './colony-renderer';
+import { shimmerAt } from './colony-energy';
 
 const { CELL_MIN } = LOOK_TUNING;
 

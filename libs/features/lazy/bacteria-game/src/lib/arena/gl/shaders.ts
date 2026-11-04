@@ -11,7 +11,8 @@ import {
   MAX_GPU_COLONIES,
   RECORD_MASK,
 } from '../../gl/simulation-shaders';
-import { LOOK_TUNING, LOOKS } from '../colony-renderer';
+import { LOOK_TUNING } from '../look-tuning';
+import { LOOKS } from '../lattice-cells';
 import { AMBIENCE } from '../ambience';
 
 /** The looks' tuning and their `uLook` values, as GLSL constants. */
@@ -228,7 +229,7 @@ void main() {
  * on a jittered hex lattice, each lit from the top left with a dark rim,
  * as on the app icon. A cell grows with the density under its centre, so
  * the cells are small along the front and big inside - the lattice of
- * `paintCells` in colony-renderer.ts, `uUnit` base cells apart, and
+ * `paintCells` in cell-looks.ts, `uUnit` base cells apart, and
  * `uPixel` arena cells per canvas pixel for the anti-aliasing of its rims.
  * Heat and the boost light the cells up like the slime.
  *
@@ -237,7 +238,7 @@ void main() {
  * crystal - wherever the density under the tile's centre suffices, over the
  * same dark base. The honeycomb's tiles are glossy with dark seams, the
  * crystal's facets flat in their own shades with bright seams. See
- * `paintTiles` in colony-renderer.ts.
+ * `paintTiles` in cell-looks.ts.
  *
  * Neon: the slime's outline as a glowing line in the colony's colour, a
  * fainter line further in, a soft halo outside and a dark body between -
@@ -312,7 +313,7 @@ const float PI = 3.14159265;
 ${LOOK_CONSTANTS}
 const vec2 LIGHT = vec2(LIGHT_X, LIGHT_Y);
 
-// Crests closing in on the crosshair - see shimmerAt in colony-renderer.ts.
+// Crests closing in on the crosshair - see shimmerAt in colony-energy.ts.
 float shimmer(vec2 p, float t) {
   float distance = length(p - uBoostTarget) / uUnit;
   float wave = 0.5 + 0.5 * sin(t * 9.0 + distance * 0.35);
@@ -345,7 +346,7 @@ float hash01(ivec2 lattice, uint salt) {
 }
 
 // A look's colour over the dark base of the lattice looks, with the alpha
-// of both - see overBase in colony-renderer.ts.
+// of both - see overBase in look-shading.ts.
 vec4 overBase(vec3 face, float alpha, float baseAlpha) {
   float total = alpha + baseAlpha * (1.0 - alpha);
   vec3 base = uColor * CELL_BASE;
@@ -359,7 +360,7 @@ float latticeOffset(int row, float spacing) {
 }
 
 // The cell of a lattice point: its centre and its radius, 0 for none - see
-// cellBubble in colony-renderer.ts.
+// cellBubble in lattice-cells.ts.
 vec3 cellBubble(ivec2 lattice, vec4 cells) {
   float spacing = cells.x * uUnit;
   float rowHeight = spacing * CELL_ROW_HEIGHT;
@@ -380,7 +381,7 @@ vec3 cellBubble(ivec2 lattice, vec4 cells) {
 }
 
 // The lattice of a look's cells: spacing in base cells, radius in spacings,
-// varied from a share up by this much - CELLS and BUBBLES in colony-renderer.ts.
+// varied from a share up by this much - CELLS and BUBBLES in lattice-cells.ts.
 const vec4 CELLS = vec4(CELL_SPACING, CELL_RADIUS, CELL_RADIUS_MIN, CELL_RADIUS_VARY);
 const vec4 BUBBLES = vec4(BUBBLE_SPACING, BUBBLE_RADIUS, BUBBLE_RADIUS_MIN, BUBBLE_RADIUS_VARY);
 const vec4 MARBLES = vec4(MARBLE_SPACING, MARBLE_RADIUS, MARBLE_RADIUS_MIN, MARBLE_RADIUS_VARY);
@@ -388,7 +389,7 @@ const vec4 MARBLES = vec4(MARBLE_SPACING, MARBLE_RADIUS, MARBLE_RADIUS_MIN, MARB
 // The cell of a lattice look the fragment is deepest in: its unit disc
 // coordinates, its radius (0 for none), the square of the fragment's unit
 // distance and the lattice point it sits on - see nearestBubble in
-// colony-renderer.ts.
+// look-shading.ts.
 struct Bubble {
   vec2 unit;
   float radius;
@@ -455,7 +456,7 @@ float octet(uint h, uint i) {
 }
 
 // How much of a DNA snippet covers a point of a bubble's unit disc - see
-// layHelices and dnaAt in colony-renderer.ts. aa is a pixel's width on the
+// layHelices and dnaAt in cell-looks.ts. aa is a pixel's width on the
 // disc.
 float dnaAt(vec2 u, ivec2 lattice, float aa) {
   float cover = 0.0;
@@ -536,7 +537,7 @@ vec4 cellsLook(vec2 p, float d) {
 }
 
 // The tile of a lattice point for the honeycomb or the crystal: its centre
-// and the density under it - see latticeTile in colony-renderer.ts.
+// and the density under it - see latticeTile in lattice-cells.ts.
 vec3 latticeTile(ivec2 lattice, float spacing, bool crystal) {
   float rowHeight = spacing * CELL_ROW_HEIGHT;
   vec2 centre = vec2(
@@ -614,7 +615,7 @@ vec2 densitySlope(vec2 p) {
 }
 
 // The highlight of the light mirrored by a surface with that unit normal,
-// seen from straight above - highlight in colony-renderer.ts.
+// seen from straight above - highlight in surface-looks.ts.
 float highlight(vec3 n, float shine, float strength) {
   float mirrored = 2.0 * dot(n, SURFACE_LIGHT) * n.z - SURFACE_LIGHT.z;
   return mirrored <= 0.0 ? 0.0 : pow(mirrored, shine) * strength;

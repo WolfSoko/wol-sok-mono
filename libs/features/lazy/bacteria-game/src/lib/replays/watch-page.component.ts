@@ -15,20 +15,17 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 import {
+  galleryUrl,
+  getLevel,
+  levelNameText,
   renderGameText,
+  type Replay,
   TranslationKey,
+  WATCH_PARAM,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { dismissSplash } from '../splash';
-import {
-  GALLERY_PATH,
-  GAME_SITE_URL,
-  getLevel,
-  levelNameText,
-  type Replay,
-  WATCH_PARAM,
-} from '@wolsok/feat-shared-bacteria-engine';
 import { PublicReplayError, PublicReplays } from './public-replays';
 import { ReplayViewerComponent } from './replay-viewer.component';
 
@@ -83,12 +80,12 @@ type WatchView =
         }
       }
       <nav class="links">
-        @if (publicId(); as id) {
-          <a mat-button [href]="siteUrl + '/' + galleryPath + '/' + id">
+        @if (detailsUrl(); as url) {
+          <a mat-button [href]="url">
             {{ 'replay.watchPage.details' | t }}
           </a>
         }
-        <a mat-button [href]="siteUrl + '/' + galleryPath">
+        <a mat-button [href]="galleryLink()">
           {{ 'replay.watchPage.gallery' | t }}
         </a>
         <a mat-button href="/">{{ 'replay.watchPage.game' | t }}</a>
@@ -131,9 +128,6 @@ export class WatchPageComponent {
   private readonly i18n = inject(I18nService);
   private readonly document = inject(DOCUMENT);
 
-  protected readonly siteUrl = GAME_SITE_URL;
-  protected readonly galleryPath = GALLERY_PATH;
-
   /** The public replay's id, from the route. */
   protected readonly publicId = toSignal(
     inject(ActivatedRoute).paramMap.pipe(
@@ -141,6 +135,15 @@ export class WatchPageComponent {
     ),
     { initialValue: null }
   );
+  /** The gallery, in the game's language. */
+  protected readonly galleryLink = computed(() =>
+    galleryUrl(this.i18n.language())
+  );
+  /** The replay's own page (its canonical), null without an id. */
+  protected readonly detailsUrl = computed(() => {
+    const id = this.publicId();
+    return id === null ? null : galleryUrl(this.i18n.language(), id);
+  });
   private readonly loaded = resource({
     params: () => this.publicId() ?? undefined,
     loader: ({ params }) => this.loader.load(params),
@@ -190,7 +193,6 @@ export class WatchPageComponent {
     this.document.head.append(canonical);
     meta.updateTag({ name: 'robots', content: 'noindex' });
     effect(() => {
-      const id = this.publicId();
       title.setTitle(
         this.i18n.t('replay.watchPage.title', { level: this.levelText() })
       );
@@ -198,10 +200,7 @@ export class WatchPageComponent {
         name: 'description',
         content: this.i18n.t('replay.watchPage.description'),
       });
-      canonical.href =
-        id === null
-          ? `${GAME_SITE_URL}/${GALLERY_PATH}`
-          : `${GAME_SITE_URL}/${GALLERY_PATH}/${id}`;
+      canonical.href = this.detailsUrl() ?? this.galleryLink();
     });
     inject(DestroyRef).onDestroy(() => {
       title.setTitle(previousTitle);

@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { seconds, sToMs } from '../../../shared/model/constants/time-utils';
+import { seconds, sToMs } from '@wolsok/utils-time';
 import { provideRepositoryMock } from '../../../shared/repository/provide-repository.mock';
 import { RepositoryFactoryMock } from '../../../shared/repository/repository.factory.mock';
 import { SprintTrainingDataService } from './sprint-training-data.service';

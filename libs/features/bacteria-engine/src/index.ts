@@ -34,7 +34,14 @@ export {
   PRIVACY_POLICY_PATH,
   PRIVACY_POLICY_URL,
 } from './lib/site/legal-links';
-export { GALLERY_PATH, WATCH_PARAM, WATCH_PATH } from './lib/site/watch-links';
+export {
+  GALLERY_PATH,
+  galleryPath,
+  galleryUrl,
+  inLang,
+  WATCH_PARAM,
+  WATCH_PATH,
+} from './lib/site/watch-links';
 export {
   AVATAR_COUNT,
   cleanMotto,
@@ -455,6 +462,7 @@ export { Rng } from './lib/state/level-generator/rng';
 export {
   getLevel,
   gridScale,
+  isBigMap,
   isLadderLevel,
   isLadderLevelId,
   isLevelId,
@@ -603,6 +611,7 @@ export {
   replayOf,
   replayOutcome,
   savedRegardless,
+  simGridOf,
 } from './lib/state/replay';
 export type {
   ParseOptions,

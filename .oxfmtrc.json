@@ -25,6 +25,8 @@
     ".cursor/**",
     ".gemini/**",
     ".junie/**",
+    ".claude/hooks/cockpit/**",
+    ".claude/skills/cockpit/**",
     "CHANGELOG.md",
     "**/*__template__"
   ]

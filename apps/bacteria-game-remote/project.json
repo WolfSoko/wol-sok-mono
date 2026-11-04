@@ -32,6 +32,21 @@
             "glob": "assetlinks.json",
             "input": "apps/bacteria-game-remote/src/.well-known",
             "output": ".well-known"
+          },
+          {
+            "glob": "bricolage-grotesque-latin-800-normal.woff2",
+            "input": "node_modules/@fontsource/bricolage-grotesque/files",
+            "output": "fonts"
+          },
+          {
+            "glob": "atkinson-hyperlegible-latin-400-normal.woff2",
+            "input": "node_modules/@fontsource/atkinson-hyperlegible/files",
+            "output": "fonts"
+          },
+          {
+            "glob": "atkinson-hyperlegible-latin-700-normal.woff2",
+            "input": "node_modules/@fontsource/atkinson-hyperlegible/files",
+            "output": "fonts"
           }
         ],
         "styles": [
@@ -118,12 +133,7 @@
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/dist/apps/bacteria-game-remote/ngsw.json"],
-      "inputs": [
-        "sharedGlobals",
-        "production",
-        "^production",
-        "{workspaceRoot}/version.json"
-      ],
+      "inputs": ["sharedGlobals", "production", "^production"],
       "dependsOn": ["build-federation"],
       "options": {
         "command": "echo No service worker in development builds.",
@@ -140,12 +150,7 @@
     "build-federation": {
       "executor": "@angular-architects/native-federation:build",
       "outputs": ["{workspaceRoot}/dist/apps/bacteria-game-remote"],
-      "inputs": [
-        "sharedGlobals",
-        "production",
-        "^production",
-        "{workspaceRoot}/version.json"
-      ],
+      "inputs": ["sharedGlobals", "production", "^production"],
       "dependsOn": ["^build"],
       "cache": true,
       "options": {},

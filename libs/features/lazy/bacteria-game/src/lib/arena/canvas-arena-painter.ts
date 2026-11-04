@@ -7,7 +7,8 @@ import {
 } from './arena-painter';
 import { ArenaRenderer } from './arena-renderer';
 import { ArenaTheme } from './arena-theme';
-import { ColonyRenderer, drawJam } from './colony-renderer';
+import { ColonyRenderer } from './colony-renderer';
+import { drawJam } from './jam';
 import { WeaponFx } from './weapon-fx';
 
 /**

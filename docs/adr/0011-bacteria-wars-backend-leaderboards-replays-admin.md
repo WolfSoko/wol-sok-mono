@@ -82,7 +82,8 @@ function calls, and server-verified match results.
   online grid; online and ranked matches stay on the online grid. A
   server re-run's expected cost grows with the arena's cells
   (`expectedRerunMs` in `boards/budgets.ts`), so an "Ultra" match - four
-  times the cells - is re-run only where the budget covers it.)
+  times the cells - is re-run only where the budget covers it. The level
+  statistics count each grid apart, ADR 0016 §4.)
 - **"Save my matches" (on by default)** decides whether recorded matches
   are uploaded. Off, a replay stays on the device until the next match.
   (Changed by ADR 0012: it governs local matches only. Online matches are
@@ -291,8 +292,8 @@ a dead end), `verified`, `unverified`, `balance-mismatch`.
   `@nx/esbuild:esbuild` (platform node, ESM, bundled, `firebase-functions`
   and `firebase-admin` external, `generatePackageJson`, `engines.node: 22`)
   into `dist/apps/bacteria-wars-functions`, deployed like
-  `firebase.pacetrainer.json` (`predeploy: npm --prefix $RESOURCE_DIR
-install --omit dev`).
+  `firebase.pacetrainer.json`
+  (`predeploy: npm --prefix $RESOURCE_DIR install --omit dev`).
 - **It imports the engine through an Angular-free entry point**,
   `libs/features/lazy/bacteria-game/src/engine.ts`, alias
   `@wolsok/feat-lazy-bac-game/engine`:
@@ -628,8 +629,8 @@ The rules and `replayCommand` require `admin == true`,
      levels, the German ones the game's, kept complete by a spec.
    - Then the owner's curation in `replayCommand` (`src/gallery/curate.ts`),
      each checked against Auth afresh (`isOwnerRecord`) and audited like
-     an admin command (`runAudited`: `adminAudit/{commandId}`, `source:
-'replayCommand'`, type `replay.feature` and so on, claimed first so
+     an admin command (`runAudited`: `adminAudit/{commandId}`,
+     `source: 'replayCommand'`, type `replay.feature` and so on, claimed first so
      a second delivery runs nothing). `feature` takes a stored replay that
      fits the gallery (`fitsGallery`; any account, guests too), re-runs it
      first if the boards have not verified it, from the admin budget

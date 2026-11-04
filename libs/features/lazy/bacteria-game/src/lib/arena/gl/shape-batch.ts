@@ -15,7 +15,8 @@ import {
   openGateOutline,
 } from '../arena-renderer';
 import { ArenaTheme, Rgb } from '../arena-theme';
-import { darker, JamDrop } from '../colony-renderer';
+import { darker } from '../canvas-math';
+import { JamDrop } from '../jam';
 import { Motes } from '../motes';
 import { MarkLayer } from '../weapon-fx';
 import { AMBIENCE, DishAmbience } from '../ambience';

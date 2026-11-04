@@ -10,7 +10,9 @@ consent (Google Consent Mode, basic: nothing loads before it).
   calls; inject it optionally, so builds and hosts without analytics stay
   free of it.
 - `ConsentPrompt` (`asking`, `choice`, `ask`, `decide`) is what the app's
-  consent banner and settings use. Events from before the choice wait in
+  consent banner and settings use. `StoredConsent` is one consent kept in
+  `localStorage` - the analytics' own, and any other purpose an app asks
+  for (RollaPolla's ads); `deleteCookies` clears a purpose's cookies. Events from before the choice wait in
   memory and are sent only once the visitor consents.
 
 What each app measures, and what to set up in GA4 for it, is in

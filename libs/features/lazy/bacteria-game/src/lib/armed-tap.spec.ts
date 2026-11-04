@@ -47,6 +47,16 @@ describe('armedTap', () => {
     expect(tap.tap('a')).toBe(false);
   });
 
+  it('drops a waiting tap on disarm, so the next tap arms again', () => {
+    const cleared = jest.spyOn(globalThis, 'clearTimeout');
+    tap.tap('a');
+
+    tap.disarm();
+    expect(cleared).toHaveBeenCalled();
+    expect(tap.armed()).toBeNull();
+    expect(tap.tap('a')).toBe(false);
+  });
+
   it('clears its timer when the component goes', () => {
     const timers = jest.spyOn(globalThis, 'setTimeout');
     const cleared = jest.spyOn(globalThis, 'clearTimeout');

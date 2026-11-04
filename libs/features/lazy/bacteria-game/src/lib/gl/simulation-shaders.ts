@@ -21,7 +21,7 @@
  * state with the same seeded random numbers, so they always agree.
  */
 
-import { MIN_CELL_DENSITY } from '../arena/colony-renderer';
+import { MIN_CELL_DENSITY } from '../arena/colony-energy';
 import {
   ENERGY_SCALE,
   LOSER_SHIFT,

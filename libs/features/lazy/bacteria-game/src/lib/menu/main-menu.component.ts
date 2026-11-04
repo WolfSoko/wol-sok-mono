@@ -17,12 +17,15 @@ import { injectGameAnalytics } from '../analytics/game-analytics';
 import { StageBusy } from '../busy/stage-busy';
 import { FeatureTogglesService } from '../feature-toggles.service';
 import { GameTextPipe, medalKey } from '../i18n/game-texts';
+import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import {
   ACHIEVEMENTS,
   ADMIN_PATH,
   BOT_DIFFICULTIES,
   CampaignSummary,
+  galleryPath,
+  galleryUrl,
   Level,
   LEVELS,
   MEDAL_TIERS_RAREST_FIRST,
@@ -69,7 +72,7 @@ export type MenuPage =
  * sign in and, from the third day, the notice that an unused guest account
  * is deleted; and, on the game's own site, the offer to install it, the
  * legal lines under everything and, for the owner, the way to the admin
- * area.
+ * area. The matches of the day are a page of the game's site everywhere.
  */
 @Component({
   selector: 'feat-lazy-bac-game-main-menu',
@@ -175,6 +178,17 @@ export class MainMenuComponent {
     () => this.onSite && this.account.owner()
   );
   protected readonly adminPath = ADMIN_PATH;
+  private readonly i18n = inject(I18nService);
+  /**
+   * The matches of the day (`publicSite`), in the game's language: a page
+   * of the site the game runs on, or of the game's site in a tab of its
+   * own from the shell.
+   */
+  protected readonly galleryUrl = computed(() =>
+    this.onSite
+      ? galleryPath(this.i18n.language())
+      : galleryUrl(this.i18n.language())
+  );
   private readonly dialog = inject(MatDialog);
   private readonly analytics = injectGameAnalytics();
 

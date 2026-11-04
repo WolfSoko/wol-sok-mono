@@ -1,7 +1,10 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "oxc", "import"],
-  "jsPlugins": ["@nx/oxlint/boundaries-plugin"],
+  "jsPlugins": [
+    "@nx/oxlint/boundaries-plugin",
+    "./tools/oxlint/workspace-rules.mjs"
+  ],
   "options": {
     "typeAware": true
   },
@@ -125,6 +128,7 @@
         ]
       }
     ],
+    "wolsok/no-boundary-disable": "error",
     "unicorn/no-new-array": "off",
     "typescript/unbound-method": [
       "error",
@@ -220,6 +224,40 @@
                   "**/evolution.service"
                 ],
                 "message": "The watch entry (watch.ts, ADR 0011) loads without the stage, the storage backends or Firebase: it reaches a public replay through loadPublicReplay only."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["libs/utils/version/src/version.ts"],
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "allow": ["^\\.\\./\\.\\./\\.\\./\\.\\./version\\.json$"],
+            "depConstraints": [
+              {
+                "sourceTag": "utils",
+                "onlyDependOnLibsWithTags": ["utils"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/*/federation.config.js"],
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "allow": ["^\\.\\./\\.\\./tools/federation/workspace-federation$"],
+            "depConstraints": [
+              {
+                "sourceTag": "*",
+                "onlyDependOnLibsWithTags": []
               }
             ]
           }

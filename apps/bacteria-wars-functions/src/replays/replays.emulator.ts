@@ -16,6 +16,7 @@ import { acceptSubmission, giveUpSubmission } from './accept';
 import { deleteReplayChildren } from './cleanup';
 import { runReplayCommand } from './command';
 import { forgetPlayerReplays } from './forget';
+import { levelStatsId } from './level-stats';
 
 /**
  * The replay functions against the Firestore emulator (`test-emulator`):
@@ -147,23 +148,38 @@ describe('acceptReplay', () => {
     await submit('s1', 'ada', bytes);
     await submit('s1', 'ada', bytes);
     await submit('s3', 'bob', await bytesOf());
+    // "Ultra" counts apart: its matches go differently.
+    await submit('s4', 'cid', await bytesOf({ width: 640, height: 360 }));
     const { difficulty } = golden.header;
     const stats = await db.collection('levelStats').get();
-    expect(stats.docs.map((doc) => doc.id)).toEqual([
-      `quarantine_${difficulty}_b${BALANCE_VERSION}_l0`,
-    ]);
-    expect(stats.docs[0].data()).toMatchObject({
+    const key = {
       level: 'quarantine',
       difficulty,
       balanceVersion: BALANCE_VERSION,
       ladder: 0,
+    };
+    const id = levelStatsId({ ...key, grid: 'normal' });
+    expect(stats.docs.map((doc) => doc.id).sort()).toEqual(
+      [id, levelStatsId({ ...key, grid: 'ultra' })].sort()
+    );
+    const doc = (grid: string) =>
+      stats.docs.find((stat) => stat.get('grid') === grid);
+    expect(doc('ultra')?.data()).toMatchObject({ attempts: 1 });
+    expect(doc('normal')?.data()).toMatchObject({
+      level: 'quarantine',
+      difficulty,
+      balanceVersion: BALANCE_VERSION,
+      ladder: 0,
+      grid: 'normal',
       attempts: 2,
       losses: 2,
       durations: { lt1m: 2 },
     });
-    expect(stats.docs[0].get('wins')).toBeUndefined();
+    expect(doc('normal')?.get('wins')).toBeUndefined();
     // No uid anywhere in it.
-    expect(JSON.stringify(stats.docs[0].data())).not.toMatch(/ada|bob/);
+    expect(JSON.stringify(stats.docs.map((stat) => stat.data()))).not.toMatch(
+      /ada|bob/
+    );
   });
 
   it('drops what a banned player sends, while the ban holds', async () => {

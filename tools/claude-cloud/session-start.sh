@@ -20,10 +20,12 @@ export CXXFLAGS='-include stdint.h' # gl's bundled ANGLE needs it under GCC 13+,
   echo "export CXXFLAGS='$CXXFLAGS'"
 } >> "$env_file"
 
-wanted_node="v$(cat .nvmrc)"
-if [ "$(node --version 2>/dev/null)" != "$wanted_node" ]; then
-  echo "Node $(node --version 2>/dev/null || echo missing) is on PATH, .nvmrc wants $wanted_node: update NODE_VERSION in the environment's setup script." >&2
-fi
+wanted_major="$(cat .nvmrc)" # a major version, e.g. 24
+node_version="$(node --version 2>/dev/null || echo missing)"
+case "$node_version" in
+  "v$wanted_major".*) ;;
+  *) echo "Node $node_version is on PATH, .nvmrc wants Node $wanted_major: update NODE_VERSION in the environment's setup script." >&2 ;;
+esac
 
 if [ -n "${GCP_SA_KEY_B64:-}" ]; then
   key_file="$HOME/.config/gcloud/claude-code-dev.json"

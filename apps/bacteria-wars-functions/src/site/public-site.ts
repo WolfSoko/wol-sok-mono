@@ -12,6 +12,7 @@ import {
   replayPage,
   type ReplayView,
   sitemap,
+  SITEMAP_REPLAYS,
   statusPage,
 } from './render';
 import type { Lang } from './texts';
@@ -25,8 +26,6 @@ export interface SiteResponse {
 
 /** The replays the gallery page shows at most. */
 const GALLERY_SIZE = 60;
-/** The replays the sitemap lists at most: a sitemap's limit. */
-const SITEMAP_SIZE = 50_000;
 
 /**
  * Hosting's CDN keeps a page two minutes and a browser one more, so a
@@ -55,9 +54,9 @@ const CARD_FIELDS = [
  * replay (`/replays/{id}`, `/replays/{id}/replay.json` for the viewer) and
  * the replays' sitemap (`/replays/sitemap.xml`). The gallery pages back
  * with `?before={ms}_{id}`, so every replay still up is linked, and the
- * sitemap lists them all. It reads `publicReplays` only: a private id
- * answers 404 like an unknown one, a removed replay 410. `?lang=de` for
- * German, English otherwise.
+ * sitemap lists the newest `SITEMAP_REPLAYS` of them. It reads
+ * `publicReplays` only: a private id answers 404 like an unknown one, a
+ * removed replay 410. `?lang=de` for German, English otherwise.
  */
 export async function handleSite(
   db: Firestore,
@@ -71,19 +70,23 @@ export async function handleSite(
   const lang: Lang = query['lang'] === 'de' ? 'de' : 'en';
   const parts = path.replace(/\/+$/, '').split('/').slice(1);
   if (parts[0] !== 'replays' || parts.length > 3) {
-    return notFound(lang);
+    // Not one of the pages: its language switch leads to the gallery.
+    return notFound(lang, '/replays');
   }
+  // The page asked for, rebuilt from its parts: always under /replays.
+  const asked = `/${parts.join('/')}`;
   const [, id, file] = parts;
   if (id === undefined || (id === 'index.json' && file === undefined)) {
-    const { views, older } = await galleryOf(db, query['before']);
+    const { views, older, before } = await galleryOf(db, query['before']);
     return id === undefined
-      ? html(200, galleryPage(lang, views, older))
+      ? html(200, galleryPage(lang, views, older, before))
       : json(200, { replays: views, ...(older === null ? {} : { older }) });
   }
   if (id === 'sitemap.xml' && file === undefined) {
     const listed = await stillUp(db)
       .select('featuredAt')
-      .limit(SITEMAP_SIZE)
+      // Only what `sitemap` lists, which caps it itself.
+      .limit(SITEMAP_REPLAYS)
       .get();
     return {
       status: 200,
@@ -97,15 +100,15 @@ export async function handleSite(
     };
   }
   if (!PUBLIC_ID.test(id) || (file !== undefined && file !== 'replay.json')) {
-    return notFound(lang);
+    return notFound(lang, asked);
   }
   const doc = await db.doc(`publicReplays/${id}`).get();
   if (!doc.exists) {
-    return notFound(lang);
+    return notFound(lang, asked);
   }
   const removedAt: unknown = doc.get('removedAt');
   if (removedAt !== null && removedAt !== undefined) {
-    return gone(lang, file !== undefined);
+    return gone(lang, asked, file !== undefined);
   }
   if (file === undefined) {
     return html(200, replayPage(lang, replayOf(doc)));
@@ -113,7 +116,7 @@ export async function handleSite(
   const blob = await doc.ref.collection('blob').doc('data').get();
   const bytes: unknown = blob.get('bytes');
   if (!(bytes instanceof Uint8Array)) {
-    return gone(lang, true);
+    return gone(lang, asked, true);
   }
   return json(200, { bytes: Buffer.from(bytes).toString('base64') });
 }
@@ -129,13 +132,18 @@ function stillUp(db: Firestore): Query {
 
 /**
  * A page of the gallery: the replays before the `before` cursor
- * (`{ms}_{id}`, the last card of the page before), and the cursor of the
- * next page, null on the last.
+ * (`{ms}_{id}`, the last card of the page before), the cursor of the
+ * next page, null on the last, and the cursor it took, null where there
+ * was none or none it could read (then it is the first page).
  */
 async function galleryOf(
   db: Firestore,
   before: unknown
-): Promise<{ views: CardView[]; older: string | null }> {
+): Promise<{
+  views: CardView[];
+  older: string | null;
+  before: string | null;
+}> {
   let query = stillUp(db).select(...CARD_FIELDS);
   const cursor =
     typeof before === 'string'
@@ -156,6 +164,7 @@ async function galleryOf(
       snapshot.size > GALLERY_SIZE && last !== undefined
         ? `${last.featuredAt}_${last.id}`
         : null,
+    before: cursor === null ? null : cursor[0],
   };
 }
 
@@ -219,12 +228,12 @@ function json(status: number, value: unknown): SiteResponse {
   };
 }
 
-function notFound(lang: Lang): SiteResponse {
-  return html(404, statusPage(404, lang, 'notFound'));
+function notFound(lang: Lang, path: string): SiteResponse {
+  return html(404, statusPage(404, lang, 'notFound', path));
 }
 
-function gone(lang: Lang, asJson: boolean): SiteResponse {
+function gone(lang: Lang, path: string, asJson: boolean): SiteResponse {
   return asJson
     ? json(410, { error: 'removed' })
-    : html(410, statusPage(410, lang, 'removed'));
+    : html(410, statusPage(410, lang, 'removed', path));
 }

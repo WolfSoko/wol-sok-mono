@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { IntervalCountdownService } from '../../shared/interval-countdown/interval-countdown.service';
-import { milliseconds } from '../../shared/model/constants/time-utils';
+import { milliseconds } from '@wolsok/utils-time';
 import { TrainingRun } from '../../shared/training-run/training-run';
 import { CountDownCircleComponent } from '../../shared/ui/count-down-circle/count-down-circle.component';
 import { ScreenWakeLockService } from '../../shared/wake-lock/screen-wake-lock.service';

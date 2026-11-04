@@ -1,0 +1,17 @@
+{
+  "name": "shared-legal",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/shared/legal/src",
+  "tags": ["shared"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/shared/legal/jest.config.ts",
+        "tsConfig": "libs/shared/legal/tsconfig.spec.json"
+      }
+    }
+  }
+}

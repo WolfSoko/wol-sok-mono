@@ -4,7 +4,7 @@ import {
   computed,
   input,
 } from '@angular/core';
-import { Milliseconds } from '../../model/constants/time-utils';
+import { Milliseconds } from '@wolsok/utils-time';
 import { TrainingTimePipe } from '../training-time.pipe';
 
 const RADIUS = 45;

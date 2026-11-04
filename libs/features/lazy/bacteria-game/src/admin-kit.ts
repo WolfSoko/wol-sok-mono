@@ -31,6 +31,7 @@ export type {
   TranslationParams,
 } from '@wolsok/feat-shared-bacteria-engine';
 export type { Language } from '@wolsok/feat-shared-bacteria-engine';
+export type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 
 // Players.
 export { AvatarComponent } from './lib/social/avatar.component';
@@ -55,6 +56,7 @@ export {
 } from '@wolsok/feat-shared-bacteria-engine';
 export { utcDay } from '@wolsok/feat-shared-bacteria-engine';
 export { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
+export { ONLINE_SIM_RESOLUTION } from '@wolsok/feat-shared-bacteria-engine';
 export type {
   BoardId,
   BoardKind,

@@ -1,7 +1,4 @@
-// The workspace's version, which names the release tag: a root file, not a
-// project's code (and no edge in the project graph).
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import { version } from '../../../../version.json';
+import { releaseName } from '@wolsok/utils-version';
 import { Environment } from './environment.type';
 import { SUPPORT_DEFAULTS } from './game-support';
 
@@ -37,6 +34,6 @@ export const environment: Environment = {
   sentry: {
     dsn: 'https://1624d373f20e21df253a680b693b99f9@o1384048.ingest.us.sentry.io/4512322908520448',
     environment: 'production',
-    release: `bacteria-wars@v${version}`,
+    release: releaseName('bacteria-wars'),
   },
 };

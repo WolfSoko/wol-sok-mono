@@ -1,5 +1,7 @@
 import {
+  arenaSize,
   type ReplayHeader,
+  type SimResolution,
   TICKS_PER_SEC,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -17,24 +19,64 @@ const header = (fields: Partial<ReplayHeader>) =>
   }) as ReplayHeader;
 
 describe('levelStatsKey', () => {
-  const header = (levelId: string, ladder?: number) =>
+  const header = (
+    levelId: string,
+    ladder?: number,
+    arena: { width: number; height: number } = arenaSize('normal')
+  ) =>
     ({
       levelId,
       difficulty: 'hard',
       balanceVersion: 12,
+      ...arena,
       ...(ladder === undefined ? {} : { ladder }),
     }) as ReplayHeader;
 
   it('keeps a ladder level by its id, per difficulty and computer', () => {
     expect(
       levelStatsId(levelStatsKey(header('quarantine', 1), 'computer'))
-    ).toBe('quarantine_hard_b12_l1');
+    ).toBe('quarantine_hard_b12_l1_gnormal');
     expect(levelStatsKey(header('quarantine'), 'computer')).toEqual({
       level: 'quarantine',
       difficulty: 'hard',
       balanceVersion: 12,
       ladder: 0,
+      grid: 'normal',
     });
+  });
+
+  it('counts each simulation resolution apart, its grid in the id', () => {
+    const id = (grid: SimResolution) =>
+      levelStatsId(
+        levelStatsKey(header('quarantine', 1, arenaSize(grid)), 'computer')
+      );
+    expect(id('normal')).toBe('quarantine_hard_b12_l1_gnormal');
+    expect(id('low')).toBe('quarantine_hard_b12_l1_glow');
+    expect(id('high')).toBe('quarantine_hard_b12_l1_ghigh');
+    expect(id('ultra')).toBe('quarantine_hard_b12_l1_gultra');
+    expect(
+      levelStatsKey(header('quarantine', 1, arenaSize('ultra')), 'computer')
+        .grid
+    ).toBe('ultra');
+  });
+
+  it('keeps the online grid of balance version 7 under its id from before the split', () => {
+    const key = levelStatsKey(header('quarantine', 1), 'computer');
+    expect(levelStatsId({ ...key, balanceVersion: 7 })).toBe(
+      'quarantine_hard_b7_l1'
+    );
+    expect(levelStatsId({ ...key, balanceVersion: 7, grid: 'high' })).toBe(
+      'quarantine_hard_b7_l1_ghigh'
+    );
+  });
+
+  it('refuses an arena that is no grid of its level', () => {
+    expect(() =>
+      levelStatsKey(
+        header('quarantine', 1, { width: 320, height: 140 }),
+        'computer'
+      )
+    ).toThrow('320x140 is no grid of quarantine');
   });
 
   it('takes a generated level by its recipe and difficulty, daily and endless apart', () => {

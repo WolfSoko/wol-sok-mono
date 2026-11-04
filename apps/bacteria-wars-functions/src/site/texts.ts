@@ -71,6 +71,13 @@ const WORDS = {
     generated: 'Generated level',
     timeline: 'Colony sizes over the match',
     language: 'Deutsch',
+    about:
+      'Bacteria Wars is a free game for the browser and Android: steer a colony of bacteria and take the petri dish from the computer, a friend or players online.',
+    picked: 'Picked on {date}',
+    privacy: 'Privacy policy',
+    legalNotice: 'Legal notice',
+    languageLabel: 'Language',
+    home: 'Bacteria Wars, the game',
   },
   de: {
     site: 'Bacteria Wars',
@@ -99,6 +106,13 @@ const WORDS = {
     generated: 'Generiertes Level',
     timeline: 'Koloniegrößen im Verlauf',
     language: 'English',
+    about:
+      'Bacteria Wars ist ein kostenloses Spiel für Browser und Android: Steuere eine Bakterienkolonie und erobere die Petrischale gegen den Computer, Freunde oder Spieler online.',
+    picked: 'Ausgewählt am {date}',
+    privacy: 'Datenschutz',
+    legalNotice: 'Impressum',
+    languageLabel: 'Sprache',
+    home: 'Bacteria Wars, das Spiel',
   },
 } as const;
 

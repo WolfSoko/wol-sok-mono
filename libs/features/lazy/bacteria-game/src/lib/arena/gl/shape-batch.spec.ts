@@ -1,6 +1,6 @@
 import { WEAPON_CODE, WEAPONS } from '@wolsok/feat-shared-bacteria-engine';
 import { arenaTheme } from '../arena-theme';
-import { JamDrop } from '../colony-renderer';
+import { JamDrop } from '../jam';
 import { Motes } from '../motes';
 import { MarkLayer } from '../weapon-fx';
 import { DishAmbience } from '../ambience';

@@ -12,7 +12,7 @@ import {
   Milliseconds,
   subtract,
   ZERO_MS,
-} from '../model/constants/time-utils';
+} from '@wolsok/utils-time';
 import { ExerciseType } from '../model/training/excercise';
 import { RepositoryFactory } from '../repository/repository.factory';
 import { TrainingConfigWithDuration } from '../model/training/training-config-with.duration';

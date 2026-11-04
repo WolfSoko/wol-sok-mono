@@ -16,7 +16,7 @@ import {
   smoothstep,
   valueNoise,
 } from './canvas-math';
-import { darker } from './colony-renderer';
+import { darker } from './canvas-math';
 import { paintZoneLayer } from './zone-decal';
 import { ColonyTint, MarkLayer, sameRgb, WeaponMark } from './weapon-fx';
 
