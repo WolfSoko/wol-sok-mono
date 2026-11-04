@@ -27,14 +27,14 @@
     (zoomWheel)="stageInput.wheel($event)"
   />
 
-  @if (hud.running() && !hud.paused() && hud.missionGoal(); as goal) {
+  @if (hud.playing() && hud.missionGoal(); as goal) {
     <p class="mission-goal" role="status">
       <mat-icon aria-hidden="true">school</mat-icon>
       {{ goal | t }}
     </p>
   }
 
-  @if (hud.running() && !hud.paused() && hud.waitingForPeer()) {
+  @if (hud.playing() && hud.waitingForPeer()) {
     <p class="peer-wait" role="status">
       {{ "stage.waitingForPeer" | t }}
     </p>
@@ -321,7 +321,7 @@
       [fps]="hud.hudFps()"
       [perf]="settings.showFps() ? stageFrame.hudPerf() : null"
       [sound]="settings.sound()"
-      [showPause]="hud.running() && !hud.paused() && hud.canPause()"
+      [showPause]="hud.playing() && hud.canPause()"
       [showGiveUp]="hud.running() && !hud.canPause()"
       [giveUpArmed]="flow.giveUpArmed()"
       [fullscreen]="stageFullscreen.fullscreen()"

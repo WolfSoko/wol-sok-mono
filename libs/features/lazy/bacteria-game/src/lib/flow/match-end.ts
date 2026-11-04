@@ -84,6 +84,10 @@ export class MatchEnd {
       .resetGame$()
       .pipe(
         tap(() => {
+          // An online start that waited for the clear arena plays instead.
+          if (this.hud.running()) {
+            return;
+          }
           // Only once the old arena has turned to dust: switched before, the
           // next level would flash up just to be vaporized with the old one.
           if (next != null) {

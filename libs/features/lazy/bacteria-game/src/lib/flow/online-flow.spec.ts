@@ -53,6 +53,7 @@ describe('OnlineFlow', () => {
     });
 
     it('waits for the arena to be clear before the host starts it', () => {
+      const levelBefore = store.snapshot().levelId;
       const events = onlineEvents();
       const cleared = (flow as unknown as { cleared: Subject<void> }).cleared;
       const start = jest
@@ -63,6 +64,8 @@ describe('OnlineFlow', () => {
 
       events.next({ type: 'connected', auto: true, seat: 0 } as OnlineEvent);
       expect(start).not.toHaveBeenCalled();
+      // The level switches only once the old arena has turned to dust.
+      expect(store.snapshot().levelId).toBe(levelBefore);
 
       store.update({
         online: {

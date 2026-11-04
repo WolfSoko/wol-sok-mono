@@ -47,6 +47,12 @@ export class OnlineFlow {
    * last one - the host's, or the matchmaking's - played once it is clear.
    */
   private pendingStart: (() => void) | null = null;
+  /** True once the stage is gone: a late answer then changes nothing. */
+  private gone = false;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => (this.gone = true));
+  }
 
   /**
    * Takes what the link brought - a shared run, an invitation - and follows
@@ -84,7 +90,7 @@ export class OnlineFlow {
 
   /** Takes a friend's challenge: on to the online lobby, into their room. */
   public playChallenge(call: ChallengeView): void {
-    this.flow.openNewGameOn({ kind: 'online', step: 'start' });
+    this.openLobby();
     void this.online.join(call.code);
   }
 
@@ -93,8 +99,13 @@ export class OnlineFlow {
     if (this.lobby().phase !== 'idle') {
       return;
     }
-    this.flow.openNewGameOn({ kind: 'online', step: 'start' });
+    this.openLobby();
     this.social.challengeFriend(friend);
+  }
+
+  /** Opens the new game on the online lobby. */
+  private openLobby(): void {
+    this.flow.openNewGameOn({ kind: 'online', step: 'start' });
   }
 
   /** Opens an online match for a friend to join. */
@@ -115,17 +126,23 @@ export class OnlineFlow {
   /**
    * Starts an automatic online match on the level the matchmaking picked -
    * a random level that plays online if it has none - once the arena is
-   * clear, as the reset under way would end the match.
+   * clear, as the reset under way would end the match, and switched only
+   * then, so it does not flash up under the dust.
    */
   private startMatchmadeMatch(): void {
-    this.gameStateService.setLevel(
+    const levelId =
       this.matchmaker.matchLevel()?.levelId ??
-        pickMatchLevel(null, null, Math.random).levelId
-    );
+      pickMatchLevel(null, null, Math.random).levelId;
     if (this.flow.resetting()) {
-      this.pendingStart = () => this.startOnlineMatch(0);
+      this.pendingStart = () => {
+        if (this.store.snapshot().online?.seat === 0) {
+          this.gameStateService.setLevel(levelId);
+          this.flow.startGame();
+        }
+      };
       return;
     }
+    this.gameStateService.setLevel(levelId);
     this.flow.startGame();
   }
 
@@ -136,7 +153,7 @@ export class OnlineFlow {
   private followOnlineStart(): void {
     const resetting = this.flow.resetting();
     if (resetting || this.hud.matchOver()) {
-      this.pendingStart = () => this.startOnlineMatch(1);
+      this.pendingStart = () => this.startOnlineMatch();
       if (!resetting) {
         // Not resetGame: that gives the online match up.
         this.flow
@@ -146,13 +163,12 @@ export class OnlineFlow {
       }
       return;
     }
-    this.startOnlineMatch(1);
+    this.startOnlineMatch();
   }
 
-  /** Starts the online match this device plays in `seat`. */
-  private startOnlineMatch(seat: 0 | 1): void {
+  private startOnlineMatch(): void {
     // Not once this device has left - it would start a match of its own.
-    if (this.store.snapshot().online?.seat === seat) {
+    if (this.store.snapshot().online?.seat === 1) {
       this.flow.startGame();
     }
   }
@@ -186,6 +202,9 @@ export class OnlineFlow {
       from = await this.social.readInvite(token);
     } catch {
       // Kept in the address, so a reload reads the invitation again.
+      return;
+    }
+    if (this.gone) {
       return;
     }
     await this.dropHash();

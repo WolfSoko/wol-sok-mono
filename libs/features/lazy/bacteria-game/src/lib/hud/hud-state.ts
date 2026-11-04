@@ -50,6 +50,8 @@ export class HudState {
   /** True while a match is on, paused or not. */
   public readonly running = this.store.isMatchOn;
   public readonly paused = this.store.isPaused;
+  /** True while a match is on and not paused: the war plays. */
+  public readonly playing = computed(() => this.running() && !this.paused());
   /** True once a match is over and its result is shown, until the next one. */
   public readonly matchOver = this.store.matchEnded;
   /** True while an online match waits for the other device. */
