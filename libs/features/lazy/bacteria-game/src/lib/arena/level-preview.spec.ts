@@ -1,6 +1,11 @@
-import { getColonyColor, NEUTRAL_COLOR } from '../state/colony-colors';
-import { getLevel, levelBalance, levelMap } from '../state/levels';
-import { mapZones } from '../state/zones';
+import {
+  getColonyColor,
+  getLevel,
+  levelBalance,
+  levelMap,
+  mapZones,
+  NEUTRAL_COLOR,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { arenaTheme } from './arena-theme';
 import {
   colonyRadius,

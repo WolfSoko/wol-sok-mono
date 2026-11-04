@@ -1,4 +1,4 @@
-import type { levels as levelTexts } from '@wolsok/feat-shared-bacteria-engine';
+import type { levels as levelTexts } from '../i18n/en/levels';
 
 /** The id of a chapter, as the dictionaries list it. */
 export type ChapterId = keyof typeof levelTexts.chapters;

@@ -4,7 +4,7 @@ import {
   upsertEntities,
   withEntities,
 } from '@ngrx/signals/entities';
-import { Player } from './player.model';
+import { Player } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * The players of the match on the board, as the UI sees them - mirrored from

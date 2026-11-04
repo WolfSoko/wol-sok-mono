@@ -1,11 +1,13 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
-import type { FeatureToggles } from '../state/feature-toggles';
+import {
+  type FeatureToggles,
+  MATCH_LEVELS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameSocial } from '../../testing/fake-game-social';
 import { FakeGameModeration } from '../../testing/fake-game-moderation';
-import { MATCH_LEVELS } from '../state/match-level';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import { provideGameToggles } from '../../testing/fake-game-toggles';

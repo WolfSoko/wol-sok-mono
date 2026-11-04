@@ -102,27 +102,54 @@ import { SettingsComponent } from './menu/settings.component';
 import { prefersReducedMotion } from './reduced-motion';
 import { SwarmComponent } from './menu/swarm.component';
 import {
+  arenaSize,
+  BotDifficulty,
+  clock,
+  computerLook,
+  detailScale,
+  DynamicWall,
+  GameBalance,
+  GameFrame,
   getColonyColor,
+  getLevel,
+  gridScale,
+  harvestTarget,
+  HeadStart,
+  holdTarget,
+  isRunOver,
+  Level,
+  levelBalance,
+  levelMap,
+  levelSize,
+  mapZones,
+  MatchResult,
+  MissionId,
   NEUTRAL_COLOR,
+  nextLevel,
+  ONLINE_LOCKS,
+  ONLINE_SIM_RESOLUTION,
   pickColor,
+  pickMatchLevel,
+  Player,
+  Point,
   readableOn,
-} from './state/colony-colors';
-import { BotDifficulty } from './state/bot-controller';
+  Rect,
+  renderScale,
+  rivalryScore,
+  seatLooks,
+  SeriesLength,
+  SimResolution,
+  simScale,
+  SteeringVector,
+  type WeaponFire,
+  Zone,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameSettingsService } from './settings.service';
 import { vaporizePixels } from './vaporize-effect';
 import { ProgressService } from './progress.service';
 import { EvolutionService } from './evolution.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
-import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
-import {
-  arenaSize,
-  detailScale,
-  ONLINE_SIM_RESOLUTION,
-  renderScale,
-  SimResolution,
-  simScale,
-} from './state/arena-size';
 import { MatchmakerService } from './net/matchmaker.service';
 import { OnlineMatchService } from './net/online-match.service';
 import {
@@ -135,13 +162,10 @@ import {
   SocialService,
 } from './social/social.service';
 import { arenaContent, SeatColors } from './arena/arena-content';
-import { computerLook, seatLooks } from './state/colony-looks';
 import { Camera, CameraShake } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
-import type { WeaponFire } from './state/evolution';
 import { GameHapticsService } from './haptics.service';
 import { GameSoundService, Soundtrack } from './sound/game-sound.service';
-import { MatchResult } from './state/match-engine';
 import { levelMusic } from './sound/level-music';
 import {
   arenaPointFromClient,
@@ -157,28 +181,8 @@ import {
   toColonyStats,
 } from './colony-stats';
 import { HudBarComponent, HudGoal } from './hud-bar.component';
-import { GameBalance } from './state/game-balance';
-import { clock, GameFrame } from './state/fixed-tick';
-import { Point, SteeringVector } from './state/geometry';
 import { GameStateService } from './state/game-state.service';
 import { GameMode, GameState, GameStateStore } from './state/game.states';
-import {
-  getLevel,
-  gridScale,
-  Level,
-  levelBalance,
-  levelMap,
-  levelSize,
-  ONLINE_LOCKS,
-  nextLevel,
-} from './state/levels';
-import { pickMatchLevel } from './state/match-level';
-import { isRunOver } from './state/endless';
-import { DynamicWall, Rect } from './state/maps';
-import { harvestTarget, holdTarget } from './state/win-conditions';
-import { MissionId } from './state/training';
-import { mapZones, Zone } from './state/zones';
-import { Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
 import { PlayerService } from './state/player.service';
 import { FramePerf } from './arena/frame-perf';

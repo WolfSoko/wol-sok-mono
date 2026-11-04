@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { GameSettingsService } from '../settings.service';
-import { WEAPONS } from '../state/evolution';
+import { WEAPONS } from '@wolsok/feat-shared-bacteria-engine';
 import { GameSoundService } from './game-sound.service';
 import { levelMusic } from './level-music';
 import { MusicPlayer } from './music-player';

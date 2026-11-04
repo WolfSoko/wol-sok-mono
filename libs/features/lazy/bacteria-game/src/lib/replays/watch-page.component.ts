@@ -21,12 +21,16 @@ import {
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { dismissSplash } from '../splash';
-import { getLevel, levelNameText } from '../state/levels';
-import { GAME_SITE_URL } from '../support/legal-links';
-import type { Replay } from '../state/replay';
+import {
+  GALLERY_PATH,
+  GAME_SITE_URL,
+  getLevel,
+  levelNameText,
+  type Replay,
+  WATCH_PARAM,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { PublicReplayError, PublicReplays } from './public-replays';
 import { ReplayViewerComponent } from './replay-viewer.component';
-import { GALLERY_PATH, WATCH_PARAM } from './watch-links';
 
 const ERRORS: Readonly<Record<PublicReplayError, TranslationKey>> = {
   'not-found': 'replay.watchPage.notFound',

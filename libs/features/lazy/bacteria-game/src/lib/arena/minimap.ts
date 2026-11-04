@@ -1,5 +1,8 @@
-import { BlockCounts } from '../state/simulation';
-import { DynamicWall, Rect } from '../state/maps';
+import {
+  BlockCounts,
+  DynamicWall,
+  Rect,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ArenaTheme } from './arena-theme';
 import { rgba } from './canvas-math';
 

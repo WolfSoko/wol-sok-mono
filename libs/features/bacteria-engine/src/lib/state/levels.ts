@@ -1,8 +1,5 @@
-import {
-  english,
-  GameText,
-  type levels as levelTexts,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { english, GameText } from '../i18n/game-text';
+import type { levels as levelTexts } from '../i18n/en/levels';
 import { scaleOf } from './arena-size';
 import { ColonyTraits, GameBalance, gameBalance } from './game-balance';
 import type { WeaponId } from './evolution';

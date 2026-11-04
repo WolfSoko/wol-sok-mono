@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { buildSync } from 'esbuild';
 import { join } from 'node:path';
-import { BALANCE_VERSION } from '../src/engine';
-import { SIM_SCENARIOS } from '../src/lib/state/gpu-int/sim-scenarios';
+import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
+import { SIM_SCENARIOS } from '@wolsok/feat-shared-bacteria-engine';
 import golden from './golden-gpu-int.json';
 import simGolden from './golden-gpu-sim.json';
 import { SCENARIOS } from './scenarios';

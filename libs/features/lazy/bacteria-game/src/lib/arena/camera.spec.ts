@@ -1,4 +1,4 @@
-import { WeaponFire } from '../state/evolution';
+import { WeaponFire } from '@wolsok/feat-shared-bacteria-engine';
 import { Camera, CameraShake, WEAPON_SHAKE } from './camera';
 
 describe('Camera', () => {

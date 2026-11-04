@@ -1,24 +1,21 @@
 import type { StateLayer } from '../arena/colony-renderer';
-import { escapeReach } from '../state/arena-size';
-import { GameBalance } from '../state/game-balance';
-import { Point } from '../state/geometry';
-import { Rect } from '../state/maps';
-import { frameSeed } from '../state/gpu-int/draws';
 import {
+  decodeReport,
+  DETERMINISTIC_REPORT_LAG,
+  escapeReach,
   fillIntCombatUniforms,
   fillIntFrameUniforms,
-} from '../state/gpu-int/int-frame-uniforms';
-import { intMatchUniforms } from '../state/gpu-int/int-uniforms';
-import {
-  DETERMINISTIC_REPORT_LAG,
-  readbacksToTake,
-} from '../state/gpu-int/int-readback';
-import {
+  frameSeed,
+  GameBalance,
   GridSimulation,
   GridSimulationOptions,
+  intMatchUniforms,
+  Point,
   READBACK_SLOTS,
-} from '../state/grid-simulation';
-import { decodeReport, ReportLayout } from '../state/simulation-report';
+  readbacksToTake,
+  Rect,
+  ReportLayout,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { activeRects, reachSinceReport } from './active-area';
 import {
   bindTexture,

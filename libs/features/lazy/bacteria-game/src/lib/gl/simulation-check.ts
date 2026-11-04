@@ -2,7 +2,7 @@ import type {
   TranslationKey,
   TranslationParams,
 } from '@wolsok/feat-shared-bacteria-engine';
-import type { Ruleset } from '../state/simulation';
+import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import type { GpuSelfTestResult } from './gpu-self-test';
 import { isSoftwareRenderer } from './renderer';
 

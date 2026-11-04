@@ -7,7 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { prefersReducedMotion } from '../reduced-motion';
-import { ColonyLook } from '../state/skins';
+import { ColonyLook } from '@wolsok/feat-shared-bacteria-engine';
 import { paintLookPreview, PreviewSize, SKIN_PREVIEW } from './look-preview';
 
 /** How many canvas pixels a cell of the preview gets - two per layer pixel. */

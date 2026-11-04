@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { BALANCE_VERSION } from '../src/engine';
+import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
 import golden from './golden-gpu-int.json';
 import { referenceHashes, SCENARIOS } from './scenarios';
 

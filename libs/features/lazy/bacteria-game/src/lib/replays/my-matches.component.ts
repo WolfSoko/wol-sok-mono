@@ -31,11 +31,16 @@ import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
-import { clock, TICKS_PER_SEC } from '../state/fixed-tick';
-import { BALANCE_VERSION } from '../state/game-balance';
-import { getLevel, levelNameText } from '../state/levels';
-import { canPlayBack, type Replay } from '../state/replay';
-import { replayFromBytes } from '../state/replay-pack';
+import {
+  BALANCE_VERSION,
+  canPlayBack,
+  clock,
+  getLevel,
+  levelNameText,
+  type Replay,
+  replayFromBytes,
+  TICKS_PER_SEC,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
 import { isCounted, type ReplayListing } from '../storage/replay-records';

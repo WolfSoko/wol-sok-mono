@@ -1,4 +1,4 @@
-import type { levels as levelTexts } from '@wolsok/feat-shared-bacteria-engine';
+import type { levels as levelTexts } from '../../i18n/en/levels';
 import { Rect } from '../maps';
 import {
   blob,

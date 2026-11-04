@@ -7,15 +7,28 @@ import {
 } from '@angular/core';
 import { filter, pairwise, take } from 'rxjs';
 import {
+  BacteriaLook,
+  BotDifficulty,
+  clamp,
   DEFAULT_SCREEN_RESOLUTION,
   DEFAULT_SIM_RESOLUTION,
+  difficultyOption,
+  HeadStart,
+  isBacteriaLook,
+  isHeadStart,
+  isLevelId,
+  isMatchLevel,
+  isObject,
+  isSeriesLength,
+  sameColors,
   SCREEN_RESOLUTIONS,
   ScreenResolution,
+  SeriesLength,
+  seriesWinner,
   SIM_RESOLUTIONS,
   SimResolution,
-} from './state/arena-size';
-import { BotDifficulty, difficultyOption } from './state/bot-controller';
-import { sameColors, validColorPair } from './state/colony-colors';
+  validColorPair,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService, MatchSetup } from './state/game-state.service';
 import {
   GameMode,
@@ -24,17 +37,6 @@ import {
   isGameMode,
   isMatchOn,
 } from './state/game.states';
-import { isLevelId } from './state/levels';
-import { isMatchLevel } from './state/match-level';
-import {
-  HeadStart,
-  isHeadStart,
-  isSeriesLength,
-  SeriesLength,
-  seriesWinner,
-} from './state/rivalry';
-import { clamp } from './state/geometry';
-import { isObject } from './state/is-object';
 import { DeviceStorage } from './storage/game-storage';
 import {
   DEFAULT_VAPORIZE_MS,
@@ -106,8 +108,6 @@ export interface StoredSettings {
    */
   recordingHintShown?: boolean;
 }
-
-import { BacteriaLook, isBacteriaLook } from './state/skins';
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 

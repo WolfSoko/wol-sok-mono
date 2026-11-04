@@ -16,7 +16,7 @@ import {
   type BoardRow,
   dailyBoardId,
   PAGE_ROWS,
-} from '../state/boards';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from '../storage/game-account';
 import type { BoardTop } from '../storage/game-boards';
 import { GameCloud } from '../storage/game-cloud';

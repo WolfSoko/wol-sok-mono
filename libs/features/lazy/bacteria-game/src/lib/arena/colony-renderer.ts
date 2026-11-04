@@ -1,16 +1,18 @@
-import type { ColonyLook } from '../state/skins';
-import { Nutrient } from '../state/bacteria-simulation';
-import { GameBalance, gameBalance } from '../state/game-balance';
 import {
   CellBounds,
+  type CellList,
   clamp,
+  type ColonyLayer,
+  type ColonyLook,
   emptyBounds,
+  gameBalance,
+  GameBalance,
   growBounds,
+  Nutrient,
   Point,
+  Rect,
   wrap,
-} from '../state/geometry';
-import { Rect } from '../state/maps';
-import type { CellList } from '../state/cells';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { Rgb } from './arena-theme';
 import {
   createCanvas,
@@ -23,9 +25,11 @@ import {
   valueNoise,
 } from './canvas-math';
 
-import type { ColonyLayer } from '../state/simulation';
-
-export type { CellsLayer, ColonyLayer, StateLayer } from '../state/simulation';
+export type {
+  CellsLayer,
+  ColonyLayer,
+  StateLayer,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** A colony as it is painted: its layer, in the look it wears. */
 export type PaintedColony = ColonyLayer & { look: ColonyLook };

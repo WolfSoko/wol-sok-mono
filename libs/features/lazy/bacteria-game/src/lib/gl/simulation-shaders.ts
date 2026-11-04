@@ -22,17 +22,6 @@
  */
 
 import { MIN_CELL_DENSITY } from '../arena/colony-renderer';
-import { WEAPON_EFFECTS } from '../state/evolution';
-import { WEAPON_CODE } from '../state/weapon-effects';
-import { WALL_BIT, ZONE_CODE, ZONE_EFFECTS, ZONE_SHIFT } from '../state/zones';
-
-export { WALL_BIT, ZONE_SHIFT };
-
-/** A number as a GLSL float literal - "2.0", never the int "2". */
-export function glslFloat(value: number): string {
-  return Number.isInteger(value) ? value.toFixed(1) : String(value);
-}
-
 import {
   ENERGY_SCALE,
   LOSER_SHIFT,
@@ -42,7 +31,20 @@ import {
   POISONED,
   RECORD_MASK,
   REPORT_ROWS,
-} from '../state/grid-format';
+  WALL_BIT,
+  WEAPON_CODE,
+  WEAPON_EFFECTS,
+  ZONE_CODE,
+  ZONE_EFFECTS,
+  ZONE_SHIFT,
+} from '@wolsok/feat-shared-bacteria-engine';
+
+export { WALL_BIT, ZONE_SHIFT };
+
+/** A number as a GLSL float literal - "2.0", never the int "2". */
+export function glslFloat(value: number): string {
+  return Number.isInteger(value) ? value.toFixed(1) : String(value);
+}
 
 export {
   ENERGY_SCALE,
@@ -54,7 +56,7 @@ export {
   RECORD_MASK,
   REPORT_ROWS,
 };
-export { REPORT_EXTRA_ROWS } from '../state/grid-format';
+export { REPORT_EXTRA_ROWS } from '@wolsok/feat-shared-bacteria-engine';
 
 /** The colonies one hunt texture holds: two, x and y each. */
 export const HUNT_COLONIES = 2;

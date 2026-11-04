@@ -1,4 +1,4 @@
-import { ZoneKind } from '../state/zones';
+import { ZoneKind } from '@wolsok/feat-shared-bacteria-engine';
 import { Rgb } from './arena-theme';
 
 /**

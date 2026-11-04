@@ -25,9 +25,6 @@
       "@wolsok/feat-lazy-bac-game": [
         "./libs/features/lazy/bacteria-game/src/index.ts"
       ],
-      "@wolsok/feat-lazy-bac-game/engine": [
-        "./libs/features/lazy/bacteria-game/src/engine.ts"
-      ],
       "@wolsok/feat-lazy-bac-game/admin-kit": [
         "./libs/features/lazy/bacteria-game/src/admin-kit.ts"
       ],

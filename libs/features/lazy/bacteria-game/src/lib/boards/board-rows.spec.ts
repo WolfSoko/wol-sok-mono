@@ -1,4 +1,4 @@
-import { BoardRow, EntryStatus } from '../state/boards';
+import { BoardRow, EntryStatus } from '@wolsok/feat-shared-bacteria-engine';
 import { boardSections } from './board-rows';
 
 function aRow(

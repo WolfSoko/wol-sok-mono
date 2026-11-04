@@ -1,6 +1,10 @@
-import type { WeaponFire, WeaponId } from '../state/evolution';
-import { clamp, Point } from '../state/geometry';
-import { Rect } from '../state/maps';
+import {
+  clamp,
+  Point,
+  Rect,
+  type WeaponFire,
+  type WeaponId,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { lerp } from './canvas-math';
 
 /** How quickly the camera catches up, per second - higher is snappier. */

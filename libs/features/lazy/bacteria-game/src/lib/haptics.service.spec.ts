@@ -1,8 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { GameHapticsService, WEAPON_PATTERNS } from './haptics.service';
 import { GameSettingsService } from './settings.service';
-import { WeaponFire, WeaponId, WEAPONS } from './state/evolution';
-import { FrameEvents } from './state/match-engine';
+import {
+  FrameEvents,
+  WeaponFire,
+  WeaponId,
+  WEAPONS,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 function fired(weapon: WeaponId, isBot = false): WeaponFire {
   return { playerId: 1, weapon, x: 10, y: 10, radius: 14, isBot };

@@ -1,20 +1,30 @@
 import { TestBed } from '@angular/core/testing';
-import { ACHIEVEMENT_IDS } from '../state/achievement-ids';
-import { ACHIEVEMENTS, achievementTexts } from '../state/achievements';
-import { BOT_DIFFICULTIES } from '../state/bot-controller';
-import { ladderLocks } from '../state/campaign';
-import { CHAPTERS } from '../state/chapters';
-import { COLONY_COLORS } from '../state/colony-colors';
-import { GENERATED_ADJECTIVES } from '../state/level-generator/generate-level';
-import { RECIPE_IDS, RECIPES } from '../state/level-generator/recipes';
-import { getLevel, LadderLevelId, LEVELS, ONLINE_LOCKS } from '../state/levels';
-import { judgeMatch, MEDAL_NAMES, MEDAL_TIERS } from '../state/medallions';
-import { EMPTY_PROGRESS } from '../state/progress';
-import { RANKS } from '../state/ranks';
-import { SERIES_LENGTHS } from '../state/rivalry';
-import { colorLocks } from '../state/unlocks';
-import { ZONE_NAMES, ZoneKind } from '../state/zones';
-import { aMatchRecord } from '../../testing/match-record';
+import {
+  ACHIEVEMENT_IDS,
+  ACHIEVEMENTS,
+  achievementTexts,
+  BOT_DIFFICULTIES,
+  CHAPTERS,
+  COLONY_COLORS,
+  colorLocks,
+  EMPTY_PROGRESS,
+  GENERATED_ADJECTIVES,
+  getLevel,
+  judgeMatch,
+  LadderLevelId,
+  ladderLocks,
+  LEVELS,
+  MEDAL_NAMES,
+  MEDAL_TIERS,
+  ONLINE_LOCKS,
+  RANKS,
+  RECIPE_IDS,
+  RECIPES,
+  SERIES_LENGTHS,
+  ZONE_NAMES,
+  ZoneKind,
+} from '@wolsok/feat-shared-bacteria-engine';
+import { aMatchRecord } from '@wolsok/feat-shared-bacteria-engine/testing';
 import {
   DICTIONARIES,
   EN,

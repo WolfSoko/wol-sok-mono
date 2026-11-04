@@ -16,12 +16,15 @@ import {
 import { playerNameText, renderGameText, zoneKey } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { ZONE_EFFECTS, ZoneKind } from '../state/zones';
+import {
+  PRIVACY_POLICY_URL,
+  ZONE_EFFECTS,
+  ZoneKind,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { AdSlotComponent } from '../support/ads/ad-slot.component';
 import { GameAds } from '../support/ads/game-ads.service';
 import { GameSupport } from '../support/game-support.service';
 import { SupportCardComponent } from '../support/support-card.component';
-import { PRIVACY_POLICY_URL } from '../support/legal-links';
 import { ScreenHeaderComponent } from './screen-header.component';
 
 const { agarDivideFactor, iceStayChance } = ZONE_EFFECTS;

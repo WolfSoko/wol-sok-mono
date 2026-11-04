@@ -1,4 +1,4 @@
-import { english, GameText } from '@wolsok/feat-shared-bacteria-engine';
+import { english, GameText } from '../i18n/game-text';
 import { ACHIEVEMENT_IDS } from './achievement-ids';
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { isLadderLevel, LEVELS } from './levels';

@@ -8,9 +8,12 @@
  *
  *   npx tsx libs/features/lazy/bacteria-game/perf/cpu-simulation.bench.ts
  */
-import { BacteriaSimulation } from '../src/lib/state/bacteria-simulation';
-import { MatchEngine } from '../src/lib/state/match-engine';
-import { MatchPlan, planMatch } from '../src/lib/state/match-setup';
+import {
+  BacteriaSimulation,
+  MatchEngine,
+  MatchPlan,
+  planMatch,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 const PLAN: MatchPlan = {
   levelId: 'petri-dish',

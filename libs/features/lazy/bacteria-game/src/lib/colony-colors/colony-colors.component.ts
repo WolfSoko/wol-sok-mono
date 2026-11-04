@@ -16,7 +16,7 @@ import {
 } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { COLONY_COLORS } from '../state/colony-colors';
+import { COLONY_COLORS } from '@wolsok/feat-shared-bacteria-engine';
 import { GameMode } from '../state/game.states';
 
 /** A seat - 0 is the left one, 1 the right one - picked another colour. */

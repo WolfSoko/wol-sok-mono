@@ -1,6 +1,8 @@
 import { AppAnalytics, injectAnalytics } from '@wolsok/shared-analytics';
-import type { AchievementId } from '../state/achievement-ids';
-import type { EndReason } from '../state/win-conditions';
+import type {
+  AchievementId,
+  EndReason,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** How a match is played, as the statistics tell the modes apart. */
 export type MatchKind =

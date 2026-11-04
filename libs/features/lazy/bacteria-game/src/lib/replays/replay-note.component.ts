@@ -23,10 +23,13 @@ import {
 import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameSettingsService } from '../settings.service';
-import { isRunOver } from '../state/endless';
+import {
+  canPlayBack,
+  isRunOver,
+  savedRegardless,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
-import { canPlayBack, savedRegardless } from '../state/replay';
 import { GameReplays } from '../storage/game-replays';
 
 /**

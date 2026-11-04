@@ -1,4 +1,4 @@
-import { clamp } from '../state/geometry';
+import { clamp } from '@wolsok/feat-shared-bacteria-engine';
 import { Rgb } from './arena-theme';
 
 /** A repeatable pseudo random number from 0 to 1 for a lattice point. */

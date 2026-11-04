@@ -1,7 +1,10 @@
 import type { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
 import { catchError, EMPTY, firstValueFrom, map, Observable, of } from 'rxjs';
-import { replayToBytes, MAX_PACKED_BYTES } from '../state/replay-pack';
-import type { EndReason } from '../state/win-conditions';
+import {
+  type EndReason,
+  MAX_PACKED_BYTES,
+  replayToBytes,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameReplays } from './game-replays';
 import { millisOf, signedIn } from './firestore-values';

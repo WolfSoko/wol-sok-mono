@@ -1,7 +1,5 @@
-import type {
-  game as gameTexts,
-  GameText,
-} from '@wolsok/feat-shared-bacteria-engine';
+import type { game as gameTexts } from '../i18n/en/game';
+import type { GameText } from '../i18n/game-text';
 import { PlayerColorArray } from './player.model';
 
 /** The id of a colony colour, as the dictionaries list it. */

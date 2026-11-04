@@ -1,5 +1,4 @@
-import { Cells } from '../../state/cells';
-import { gameBalance } from '../../state/game-balance';
+import { Cells, gameBalance } from '@wolsok/feat-shared-bacteria-engine';
 import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-fx';
 import { encodeCells, packTints, passMargins } from './gl-arena-painter';
 import { MAX_TINTS } from './shaders';

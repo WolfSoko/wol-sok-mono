@@ -1,5 +1,4 @@
-import { wrap } from '../state/geometry';
-import { Rect } from '../state/maps';
+import { Rect, wrap } from '@wolsok/feat-shared-bacteria-engine';
 import { ArenaTheme, Rgb } from './arena-theme';
 import { createCanvas, rgba } from './canvas-math';
 

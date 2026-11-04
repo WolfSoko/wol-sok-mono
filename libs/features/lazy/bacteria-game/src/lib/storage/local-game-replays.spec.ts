@@ -1,8 +1,10 @@
 import { firstValueFrom } from 'rxjs';
 import { LateGameStorage } from '../../testing/late-game-storage';
-import type { MatchPlan } from '../state/match-setup';
-import { replayOf } from '../state/replay';
-import { replayFromBytes } from '../state/replay-pack';
+import {
+  type MatchPlan,
+  replayFromBytes,
+  replayOf,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   LOCAL_REPLAYS_KEY,
   LocalGameReplays,

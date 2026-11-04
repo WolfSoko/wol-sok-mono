@@ -1,4 +1,4 @@
-import { BlockCounts } from '../state/simulation';
+import { BlockCounts } from '@wolsok/feat-shared-bacteria-engine';
 import { minimapPixels } from './minimap';
 
 const RED = [255, 0, 0];

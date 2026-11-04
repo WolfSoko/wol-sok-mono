@@ -1,4 +1,4 @@
-import { Zone } from '../state/zones';
+import { Zone } from '@wolsok/feat-shared-bacteria-engine';
 import {
   ArenaFrame,
   ArenaPainter,

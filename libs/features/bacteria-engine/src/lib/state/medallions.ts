@@ -1,4 +1,4 @@
-import { english, GameText } from '@wolsok/feat-shared-bacteria-engine';
+import { english, GameText } from '../i18n/game-text';
 import { BotDifficulty } from './bot-controller';
 import { clock } from './fixed-tick';
 import { Player } from './player.model';

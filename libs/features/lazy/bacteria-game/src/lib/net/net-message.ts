@@ -1,9 +1,13 @@
-import { validColorPair } from '../state/colony-colors';
-import { BALANCE_VERSION } from '../state/game-balance';
-import { isInteger, isObject } from '../state/is-object';
-import { isLevelId } from '../state/levels';
-import { TICKS_PER_SEC } from '../state/fixed-tick';
-import { isRuleset, Ruleset } from '../state/simulation';
+import {
+  BALANCE_VERSION,
+  isInteger,
+  isLevelId,
+  isObject,
+  isRuleset,
+  Ruleset,
+  TICKS_PER_SEC,
+  validColorPair,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { parseStoredJson } from '../storage/stored-json';
 
 /**

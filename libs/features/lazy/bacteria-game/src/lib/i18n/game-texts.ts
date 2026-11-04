@@ -1,18 +1,18 @@
-import type { AchievementId } from '../state/achievement-ids';
-import type { BotDifficulty } from '../state/bot-controller';
-import type { ChapterId } from '../state/chapters';
 import {
+  type AchievementId,
+  type BotDifficulty,
+  type ChapterId,
   COLONY_COLORS,
-  colonyColorText,
   type ColonyColorId,
-} from '../state/colony-colors';
-import type { RecipeId } from '../state/level-generator/recipes';
-import type { LadderLevelId } from '../state/levels';
-import type { MedalTier } from '../state/medallions';
-import type { RankId } from '../state/ranks';
-import type { SeriesLength } from '../state/rivalry';
-import type { MissionId } from '../state/training-levels';
-import type { ZoneKind } from '../state/zones';
+  colonyColorText,
+  type LadderLevelId,
+  type MedalTier,
+  type MissionId,
+  type RankId,
+  type RecipeId,
+  type SeriesLength,
+  type ZoneKind,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type {
   GameText,
   TranslationKey,
@@ -161,15 +161,21 @@ export type {
   Translate,
 } from '@wolsok/feat-shared-bacteria-engine';
 export { GameTextPipe } from './game-text.pipe';
-export { achievementTexts } from '../state/achievements';
-export { continueText, ladderLockText } from '../state/campaign';
+export { achievementTexts } from '@wolsok/feat-shared-bacteria-engine';
+export {
+  continueText,
+  ladderLockText,
+} from '@wolsok/feat-shared-bacteria-engine';
 export { colonyColorText };
 export {
   levelDescriptionText,
   levelNameText,
   levelTitleText,
   ONLINE_LOCK_TEXT,
-} from '../state/levels';
-export { medalGoalText, medalText } from '../state/medallions';
-export { arenaLockText, colorLockText } from '../state/unlocks';
-export { ruleNoteText } from '../state/win-conditions';
+} from '@wolsok/feat-shared-bacteria-engine';
+export { medalGoalText, medalText } from '@wolsok/feat-shared-bacteria-engine';
+export {
+  arenaLockText,
+  colorLockText,
+} from '@wolsok/feat-shared-bacteria-engine';
+export { ruleNoteText } from '@wolsok/feat-shared-bacteria-engine';

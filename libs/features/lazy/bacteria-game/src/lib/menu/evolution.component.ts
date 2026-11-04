@@ -23,13 +23,13 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameSoundService } from '../sound/game-sound.service';
 import {
-  GENES,
   GeneId,
+  GENES,
   MAX_GENE_LEVEL,
-  WEAPONS,
+  refundableDna,
   WeaponId,
-} from '../state/evolution';
-import { refundableDna } from '../state/evolution-progress';
+  WEAPONS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { WeaponDemoComponent } from './weapon-demo.component';
 import { ColonyPreviewComponent } from './colony-preview.component';
 import { DnaCounterComponent } from './dna-counter.component';

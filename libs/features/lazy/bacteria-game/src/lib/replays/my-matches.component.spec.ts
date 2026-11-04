@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameReplays } from '../../testing/fake-game-replays';
-import { recordedReplay } from '../../testing/recorded-replay';
+import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { recordingPainters } from '../../testing/recording-painter';
 import { ARMED_MS } from '../armed-tap';
 import { I18nService } from '../i18n/i18n.service';
-import { BALANCE_VERSION } from '../state/game-balance';
+import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
 import { NEVER, of, throwError } from 'rxjs';

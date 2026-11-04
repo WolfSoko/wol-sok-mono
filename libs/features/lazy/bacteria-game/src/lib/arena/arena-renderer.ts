@@ -1,5 +1,10 @@
 import { Motes } from './motes';
-import { DynamicWall, Rect } from '../state/maps';
+import {
+  clamp,
+  DynamicWall,
+  Rect,
+  Zone,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
 import {
   createCanvas,
@@ -12,8 +17,6 @@ import {
   valueNoise,
 } from './canvas-math';
 import { darker } from './colony-renderer';
-import { Zone } from '../state/zones';
-import { clamp } from '../state/geometry';
 import { paintZoneLayer } from './zone-decal';
 import { ColonyTint, MarkLayer, sameRgb, WeaponMark } from './weapon-fx';
 

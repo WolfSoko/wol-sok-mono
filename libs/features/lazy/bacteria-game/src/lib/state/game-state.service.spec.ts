@@ -1,23 +1,38 @@
-import type { Ruleset } from './simulation';
+import {
+  ANNIHILATION,
+  attemptSeed,
+  cpuSimulation,
+  dailyLevelId,
+  endlessLevelId,
+  getLevel,
+  GPU_INT_REPLAY_VERSION,
+  isRankedPlan,
+  judgeOutcome,
+  LADDER_REPLAY_VERSION,
+  LADDER_VERSION,
+  levelCrosshairSpeed,
+  LEVELS,
+  matchChecksum,
+  MatchEngine,
+  onlineReplayId,
+  parseReplay,
+  planMatch,
+  playReplay,
+  type RankedMatch,
+  rankedPlan,
+  Replay,
+  REPLAY_VERSION,
+  replayLink,
+  replayOf,
+  type Ruleset,
+  TICK_MS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
-import { dailyLevelId } from './daily';
-import { TICK_MS } from './fixed-tick';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
-import { getLevel, LEVELS, levelCrosshairSpeed } from './levels';
 import { PlayerStore } from './player.store';
-import { ANNIHILATION, judgeOutcome } from './win-conditions';
 import { PlayerService } from './player.service';
-import { LADDER_VERSION } from './difficulty-curve';
-import {
-  LADDER_REPLAY_VERSION,
-  playReplay,
-  Replay,
-  replayOf,
-  REPLAY_VERSION,
-} from './replay';
-import { replayLink } from './replay-link';
 import { signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Lockstep, INPUT_DELAY_TICKS } from '../net/lockstep';
@@ -30,16 +45,7 @@ import {
 import { FakeGameReplays } from '../../testing/fake-game-replays';
 import { GameReplays } from '../storage/game-replays';
 import { onlineIdOf } from '../storage/replay-records';
-import { onlineReplayId } from './replay-id';
-import { parseReplay } from './replay';
-import { matchChecksum } from './checksum';
-import { MatchEngine, cpuSimulation } from './match-engine';
-import { planMatch } from './match-setup';
 import type { NetMessage } from '../net/net-message';
-import { attemptSeed, isRankedPlan, rankedPlan } from './attempts';
-import { endlessLevelId } from './endless';
-import { GPU_INT_REPLAY_VERSION } from './replay';
-import type { RankedMatch } from './ranked-match';
 
 const WIDTH = 320;
 const HEIGHT = 140;

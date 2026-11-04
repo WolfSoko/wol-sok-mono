@@ -8,8 +8,7 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { MedallionComponent } from '../medallion/medallion.component';
-import { BotDifficulty } from '../state/bot-controller';
-import { MedalTier } from '../state/medallions';
+import { BotDifficulty, MedalTier } from '@wolsok/feat-shared-bacteria-engine';
 import { LevelPreviewComponent } from './level-preview.component';
 import { LevelPreviewService } from './level-preview.service';
 

@@ -3,7 +3,7 @@ import { computed, effect, inject, untracked } from '@angular/core';
 import { I18nService } from '../i18n/i18n.service';
 import { ProgressService } from '../progress.service';
 import { GameSettingsService } from '../settings.service';
-import { rankFor } from '../state/ranks';
+import { rankFor } from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount, type PlayerProfile } from '../storage/game-account';
 import { GAME_SUPPORT, GameSupportOptions } from '../support/game-support';
 import { isInstalledWebApp } from '../support/install-offer.service';

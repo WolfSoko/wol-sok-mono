@@ -18,7 +18,7 @@ import {
 } from './net-message';
 import { PeerLink } from './peer-link';
 import { PlayerService } from '../state/player.service';
-import type { Ruleset } from '../state/simulation';
+import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { errorCode } from '../storage/retry';
 
 /** Where the lobby of an online match stands. */

@@ -1,5 +1,5 @@
 import { BehaviorSubject, map, Observable } from 'rxjs';
-import { replayToBytes } from '../lib/state/replay-pack';
+import { replayToBytes } from '@wolsok/feat-shared-bacteria-engine';
 import type { GameReplays } from '../lib/storage/game-replays';
 import {
   hintOf,

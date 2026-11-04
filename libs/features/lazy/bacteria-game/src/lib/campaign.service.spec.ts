@@ -4,7 +4,7 @@ import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
-import { levelTitle, LEVELS } from './state/levels';
+import { LEVELS, levelTitle } from '@wolsok/feat-shared-bacteria-engine';
 import { GameStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
 

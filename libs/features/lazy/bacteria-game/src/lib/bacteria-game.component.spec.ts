@@ -18,10 +18,13 @@ import { GameSettingsService } from './settings.service';
 import { GameSoundService } from './sound/game-sound.service';
 import { GameStateService } from './state/game-state.service';
 import { GameState, GameStateStore } from './state/game.states';
-import { levelTitle, LEVELS } from './state/levels';
-import { MATCH_LEVELS } from './state/match-level';
+import {
+  LEVELS,
+  levelTitle,
+  MATCH_LEVELS,
+  replayOf,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerStore } from './state/player.store';
-import { replayOf } from './state/replay';
 
 /**
  * Lets the helpers believe the browser offers the API and that the given

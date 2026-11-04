@@ -1,16 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ArenaViewComponent } from '../arena/arena-view.component';
-import { recordedReplay } from '../../testing/recorded-replay';
+import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';
 import {
   RecordingPainter,
   recordingPainters,
 } from '../../testing/recording-painter';
 import { I18nService } from '../i18n/i18n.service';
-import { BALANCE_VERSION } from '../state/game-balance';
-import { IntSimulation } from '../state/gpu-int/int-simulation';
-import type { MatchEngine } from '../state/match-engine';
-import { GPU_INT_REPLAY_VERSION, type Replay } from '../state/replay';
+import {
+  BALANCE_VERSION,
+  GPU_INT_REPLAY_VERSION,
+  IntSimulation,
+  type MatchEngine,
+  type Replay,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { type GpuIntPainter, ReplayScene } from './replay-scene';
 import {
   CHROME_HIDE_MS,

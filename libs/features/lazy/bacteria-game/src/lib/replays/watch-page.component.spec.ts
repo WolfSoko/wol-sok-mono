@@ -3,12 +3,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { recordedReplay } from '../../testing/recorded-replay';
+import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { recordingPainters } from '../../testing/recording-painter';
 import { I18nService } from '../i18n/i18n.service';
-import { BALANCE_VERSION } from '../state/game-balance';
-import { replayToBytes } from '../state/replay-pack';
-import type { Replay } from '../state/replay';
+import {
+  BALANCE_VERSION,
+  type Replay,
+  replayToBytes,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { PublicReplayResult, PublicReplays } from './public-replays';
 import { WatchPageComponent } from './watch-page.component';
 

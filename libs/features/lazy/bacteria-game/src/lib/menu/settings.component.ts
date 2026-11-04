@@ -17,7 +17,14 @@ import { Size } from '../fullscreen';
 import { GpuSelfTestService } from '../gl/gpu-self-test.service';
 import { simulationCheckLines } from '../gl/simulation-check';
 import { SimulationOverrideService } from '../gl/simulation-override.service';
-import type { Ruleset } from '../state/simulation';
+import {
+  arenaLockText,
+  levelNameText,
+  LEVELS,
+  type Ruleset,
+  SCREEN_RESOLUTIONS,
+  SIM_RESOLUTIONS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   Language,
   LANGUAGES,
@@ -27,9 +34,6 @@ import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameSettingsService, MAX_VOLUME } from '../settings.service';
-import { SCREEN_RESOLUTIONS, SIM_RESOLUTIONS } from '../state/arena-size';
-import { arenaLockText } from '../state/unlocks';
-import { LEVELS, levelNameText } from '../state/levels';
 import { VAPORIZE_DURATIONS, VAPORIZE_QUALITIES } from '../vaporize-effect';
 import { ScreenHeaderComponent } from './screen-header.component';
 

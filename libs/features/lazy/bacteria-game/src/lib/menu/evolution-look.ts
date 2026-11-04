@@ -1,7 +1,12 @@
 import type { Rgb } from '../arena/arena-theme';
 import type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
-import { Gene, GeneId, MAX_GENE_LEVEL, WeaponId } from '../state/evolution';
-import { clamp } from '../state/geometry';
+import {
+  clamp,
+  Gene,
+  GeneId,
+  MAX_GENE_LEVEL,
+  WeaponId,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * How the menus show evolution: the colour of each weapon's aura and of

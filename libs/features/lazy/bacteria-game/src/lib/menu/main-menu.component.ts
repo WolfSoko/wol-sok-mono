@@ -18,15 +18,19 @@ import { StageBusy } from '../busy/stage-busy';
 import { FeatureTogglesService } from '../feature-toggles.service';
 import { GameTextPipe, medalKey } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { BOT_DIFFICULTIES } from '../state/bot-controller';
-import { ACHIEVEMENTS } from '../state/achievements';
-import { CampaignSummary } from '../state/campaign';
-import { MISSIONS } from '../state/training';
+import {
+  ACHIEVEMENTS,
+  ADMIN_PATH,
+  BOT_DIFFICULTIES,
+  CampaignSummary,
+  Level,
+  LEVELS,
+  MEDAL_TIERS_RAREST_FIRST,
+  MISSIONS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { RankStandingComponent } from '../rank/rank-standing.component';
-import { Level, LEVELS } from '../state/levels';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { DnaHelixComponent } from './dna-helix.component';
-import { MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 import { GameAccount } from '../storage/game-account';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
@@ -37,7 +41,6 @@ import { InstallBannerComponent } from '../support/install-banner.component';
 import { StatsBannerComponent } from '../analytics/stats-banner.component';
 import { StatsConsent } from '../analytics/stats-consent.service';
 import { InstallOffer } from '../support/install-offer.service';
-import { ADMIN_PATH } from '../support/legal-links';
 import { SiteFooterComponent } from '../support/site-footer.component';
 import {
   SUPPORT_DIALOG_HEADING_ID,

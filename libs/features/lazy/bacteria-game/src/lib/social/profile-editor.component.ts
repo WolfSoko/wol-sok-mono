@@ -26,7 +26,7 @@ import {
   MOTTO_MAX,
   NAME_MAX,
   Profile,
-} from './profile';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { shrinkImage } from './shrink-image';
 import { SocialService } from './social.service';
 

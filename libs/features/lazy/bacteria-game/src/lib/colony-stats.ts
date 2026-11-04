@@ -1,14 +1,15 @@
-import { GameBalance, gameBalance } from './state/game-balance';
-import { TICKS_PER_SEC } from './state/fixed-tick';
-import { clamp } from './state/geometry';
 import {
+  clamp,
+  gameBalance,
+  GameBalance,
   isBoosted,
   isBoostReady,
+  isObject,
   isWeaponReady,
   Player,
-} from './state/player.model';
-import type { WeaponId } from './state/evolution';
-import { isObject } from './state/is-object';
+  TICKS_PER_SEC,
+  type WeaponId,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** Statistics of one colony, ready to be rendered by the template. */
 export interface ColonyStats {

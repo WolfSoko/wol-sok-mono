@@ -1,9 +1,14 @@
-import { Cells } from '../state/cells';
-import { gameBalance } from '../state/game-balance';
-import { Point } from '../state/geometry';
-import { Bacteria } from '../state/player.model';
-import { BACTERIA_LOOKS, BOSS_LOOK, ColonyLook } from '../state/skins';
-import { COLONY_COLORS } from '../state/colony-colors';
+import {
+  Bacteria,
+  BACTERIA_LOOKS,
+  BOSS_LOOK,
+  Cells,
+  COLONY_COLORS,
+  ColonyLook,
+  gameBalance,
+  Point,
+  Rect,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 import {
   cellBubble,
@@ -19,7 +24,6 @@ import {
   SLIME_SCALE,
   slimeRegion,
 } from './colony-renderer';
-import { Rect } from '../state/maps';
 
 const { CELL_MIN } = LOOK_TUNING;
 

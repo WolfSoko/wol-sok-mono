@@ -1,8 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { I18nService } from '../i18n/i18n.service';
-import { CHAPTERS } from '../state/chapters';
-import { getLevel, LEVELS } from '../state/levels';
-import { parseGeneratedId } from '../state/level-generator/generate-level';
+import {
+  CHAPTERS,
+  getLevel,
+  LEVELS,
+  parseGeneratedId,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   drawPreviews,
   fakePreviewUrl,

@@ -1,8 +1,10 @@
 import { BehaviorSubject, firstValueFrom, take, toArray } from 'rxjs';
-import { replayOf } from '../state/replay';
-import { replayFromBytes } from '../state/replay-pack';
-import { onlineReplayId } from '../state/replay-id';
-import type { MatchPlan } from '../state/match-setup';
+import {
+  type MatchPlan,
+  onlineReplayId,
+  replayFromBytes,
+  replayOf,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { FirebaseConnection } from './firebase-connection';
 import {
   COMMAND_TTL_MS,

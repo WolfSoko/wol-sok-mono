@@ -5,13 +5,13 @@ export {
   LEGAL_NOTICE_PATH,
   PRIVACY_POLICY_PATH,
   PRIVACY_POLICY_URL,
-} from './lib/support/legal-links';
+} from '@wolsok/feat-shared-bacteria-engine';
 export { SPLASH_ID } from './lib/splash';
 export {
   GALLERY_PATH,
   WATCH_PARAM,
   WATCH_PATH,
-} from './lib/replays/watch-links';
+} from '@wolsok/feat-shared-bacteria-engine';
 export { provideGameCloud } from './lib/storage/provide-game-cloud';
 export { gameFirebaseApp } from './lib/storage/game-firebase-app';
 export type { GameCloudOptions } from './lib/storage/game-cloud';

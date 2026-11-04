@@ -1,12 +1,19 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { EvolutionService } from '../evolution.service';
-import { computerLoadout } from './computer-opponent';
-import { isPlainLoadout, Loadout, PLAIN_LOADOUT } from './evolution';
+import {
+  computerLoadout,
+  isPlainLoadout,
+  Loadout,
+  MatchPlan,
+  PLAIN_LOADOUT,
+  Replay,
+  REPLAY_VERSION,
+  ReplayInputs,
+  replayOf,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
-import { MatchPlan } from './match-setup';
-import { Replay, ReplayInputs, replayOf, REPLAY_VERSION } from './replay';
 
 const WIDTH = 320;
 const HEIGHT = 140;

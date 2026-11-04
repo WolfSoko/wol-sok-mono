@@ -3,12 +3,14 @@ import {
   provideRecordingAnalytics,
   RecordingAnalytics,
 } from '@wolsok/shared-analytics/testing';
-import type { MatchEarnings } from '../state/earnings';
-import { LEVELS } from '../state/levels';
-import type { MatchPlan } from '../state/match-setup';
-import type { Player } from '../state/player.model';
-import type { RankedOutcome } from '../state/ranked-match';
-import type { Replay } from '../state/replay';
+import {
+  LEVELS,
+  type MatchEarnings,
+  type MatchPlan,
+  type Player,
+  type RankedOutcome,
+  type Replay,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   MatchAnalytics,
   matchKind,

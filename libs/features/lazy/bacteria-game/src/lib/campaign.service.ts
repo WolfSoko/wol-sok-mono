@@ -1,15 +1,17 @@
 import { computed, effect, inject, Injectable, untracked } from '@angular/core';
 import { ProgressService } from './progress.service';
 import { GameSettingsService } from './settings.service';
-import { difficultyOption } from './state/bot-controller';
 import {
+  activeArena,
   CampaignSummary,
   continueText,
+  difficultyOption,
   furthestOpenLevel,
-} from './state/campaign';
-import { activeArena } from './state/unlocks';
-import { getLevel, isLadderLevel, LEVELS } from './state/levels';
-import { medalTally } from './state/progress';
+  getLevel,
+  isLadderLevel,
+  LEVELS,
+  medalTally,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateStore } from './state/game.states';
 import { GameStateService } from './state/game-state.service';
 

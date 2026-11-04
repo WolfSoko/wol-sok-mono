@@ -4,13 +4,13 @@
 import { build } from 'esbuild';
 import { join } from 'node:path';
 
-/** Packages the engine entry point must never pull in (ADR 0011). */
+/** Packages the engine must never pull in (ADR 0011). */
 const FORBIDDEN = ['@angular', '@ngrx', 'rxjs', 'firebase'];
 
-describe('engine entry point', () => {
+describe('engine', () => {
   it('bundles without Angular, NgRx, RxJS or Firebase', async () => {
     const result = await build({
-      entryPoints: [join(__dirname, 'engine.ts')],
+      entryPoints: [join(__dirname, 'index.ts')],
       bundle: true,
       platform: 'node',
       format: 'esm',

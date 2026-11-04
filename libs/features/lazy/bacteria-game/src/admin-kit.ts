@@ -34,8 +34,11 @@ export type { Language } from '@wolsok/feat-shared-bacteria-engine';
 
 // Players.
 export { AvatarComponent } from './lib/social/avatar.component';
-export { defaultProfile, parseProfile } from './lib/social/profile';
-export type { Avatar, Profile } from './lib/social/profile';
+export {
+  defaultProfile,
+  parseProfile,
+} from '@wolsok/feat-shared-bacteria-engine';
+export type { Avatar, Profile } from '@wolsok/feat-shared-bacteria-engine';
 
 // The contracts the admin views read and write.
 export {
@@ -49,9 +52,9 @@ export {
   isUtcDay,
   parseBoardId,
   VISIBLE_STATUSES,
-} from './lib/state/boards';
-export { utcDay } from './lib/state/daily';
-export { BALANCE_VERSION } from './lib/state/game-balance';
+} from '@wolsok/feat-shared-bacteria-engine';
+export { utcDay } from '@wolsok/feat-shared-bacteria-engine';
+export { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
 export type {
   BoardId,
   BoardKind,
@@ -59,7 +62,7 @@ export type {
   BoardRow,
   EntryShow,
   EntryStatus,
-} from './lib/state/boards';
+} from '@wolsok/feat-shared-bacteria-engine';
 export {
   ADMIN_COMMAND_TYPES,
   BAN_REASONS,
@@ -67,19 +70,19 @@ export {
   isUid,
   parseAdminCommand,
   REASON_MAX,
-} from './lib/state/admin-commands';
+} from '@wolsok/feat-shared-bacteria-engine';
 export type {
   AdminCommand,
   AdminCommandType,
   BanReason,
   EntryTarget,
   PlayerTarget,
-} from './lib/state/admin-commands';
+} from '@wolsok/feat-shared-bacteria-engine';
 export {
   FEATURE_TOGGLE_KEYS,
   FEATURE_TOGGLES,
-} from './lib/state/feature-toggles';
+} from '@wolsok/feat-shared-bacteria-engine';
 export type {
   FeatureToggle,
   FeatureToggles,
-} from './lib/state/feature-toggles';
+} from '@wolsok/feat-shared-bacteria-engine';

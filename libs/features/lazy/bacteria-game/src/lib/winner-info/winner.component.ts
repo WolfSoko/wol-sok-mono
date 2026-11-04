@@ -34,26 +34,35 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { GameMode, GameStateStore } from '../state/game.states';
-import { getLevel, Level, nextLevel } from '../state/levels';
-import { isNewBest, MedalAward, medalRank } from '../state/medallions';
-import { Player } from '../state/player.model';
-import { AchievementId } from '../state/achievement-ids';
-import { MatchEarnings } from '../state/earnings';
-import { xpClimb } from '../state/ranks';
-import { formatScore, rivalryScore, seriesWinner } from '../state/rivalry';
+import {
+  AchievementId,
+  BOSS_SEAT,
+  DAILY_ATTEMPTS,
+  dnaEarned,
+  EndReason,
+  formatScore,
+  getLevel,
+  isNewBest,
+  isRunOver,
+  Level,
+  MatchEarnings,
+  MedalAward,
+  medalRank,
+  nextLevel,
+  Player,
+  RANKED_DAILY_ATTEMPTS,
+  replayLink,
+  rivalryScore,
+  seriesWinner,
+  xpClimb,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { ProgressService } from '../progress.service';
-import { replayLink } from '../state/replay-link';
 import { ReplayNoteComponent } from '../replays/replay-note.component';
 import { GuestNotice } from '../guest/guest-notice.service';
 import { GuestSignInComponent } from '../guest/guest-sign-in.component';
-import { DAILY_ATTEMPTS } from '../state/daily';
-import { isRunOver } from '../state/endless';
-import { RANKED_DAILY_ATTEMPTS } from '../state/attempts';
-import { BOSS_SEAT, EndReason } from '../state/win-conditions';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
 import { DnaHelixComponent } from '../menu/dna-helix.component';
-import { dnaEarned } from '../state/evolution';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =

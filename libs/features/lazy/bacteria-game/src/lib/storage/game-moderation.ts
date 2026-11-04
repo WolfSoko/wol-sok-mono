@@ -9,8 +9,11 @@ import {
   switchMap,
   timer,
 } from 'rxjs';
-import { BAN_REASONS, type BanReason } from '../state/admin-commands';
-import { isObject } from '../state/is-object';
+import {
+  BAN_REASONS,
+  type BanReason,
+  isObject,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { millisOf } from './firestore-values';
 
 /**

@@ -35,40 +35,39 @@ import {
 import { EvolutionService } from '../evolution.service';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { BASE_ARENA } from '../state/arena-size';
-import { MedallionComponent } from '../medallion/medallion.component';
-import { BOT_DIFFICULTIES, BotDifficulty } from '../state/bot-controller';
-import { computerLoadout } from '../state/computer-opponent';
-import { isDailyLevelId } from '../state/daily';
-import { geneLevel, GENES, isPlainLoadout } from '../state/evolution';
-import { ENDLESS_LIVES } from '../state/endless';
-import { parseGeneratedId } from '../state/level-generator/generate-level';
 import {
+  BASE_ARENA,
+  BOT_DIFFICULTIES,
+  BotDifficulty,
+  computerLoadout,
+  ENDLESS_LIVES,
+  firstOpenMission,
+  geneLevel,
+  GENES,
   getLevel,
-  isLadderLevel,
-  Level,
-  LEVELS,
-  levelMap,
-  levelSize,
-} from '../state/levels';
-import { mapZones } from '../state/zones';
-import { Progress } from '../state/progress';
-import {
   HEAD_STARTS,
   HeadStart,
-  SERIES_LENGTHS,
-  SeriesLength,
-} from '../state/rivalry';
-import { winRuleOf } from '../state/win-conditions';
-import { geneKeys, weaponKeys } from './evolution-look';
-import {
-  firstOpenMission,
+  isDailyLevelId,
+  isLadderLevel,
   isMissionDone,
-  MissionId,
+  isPlainLoadout,
+  Level,
+  levelMap,
+  LEVELS,
+  levelSize,
+  mapZones,
   missionById,
+  MissionId,
   MISSIONS,
   missionsDone,
-} from '../state/training';
+  parseGeneratedId,
+  Progress,
+  SERIES_LENGTHS,
+  SeriesLength,
+  winRuleOf,
+} from '@wolsok/feat-shared-bacteria-engine';
+import { MedallionComponent } from '../medallion/medallion.component';
+import { geneKeys, weaponKeys } from './evolution-look';
 import { LevelMapComponent } from './level-map.component';
 import { MissionListComponent, MissionRow } from './mission-list.component';
 import { LevelPreviewComponent } from './level-preview.component';

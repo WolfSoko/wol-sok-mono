@@ -86,10 +86,9 @@ function workspaceFederation(config) {
       // from the shell's last build. Skipped, the remote bundles its own.
       '@wolsok/feat-fourier-analysis',
       '@wolsok/feat-lazy-bac-game',
-      // The engine entry point (for Cloud Functions) belongs to it too, as
-      // do the admin area and the narrow entry it takes from the game, and
-      // the narrow entry of the public replay viewer (`/watch`).
-      '@wolsok/feat-lazy-bac-game/engine',
+      // The admin area and the narrow entry it takes from the game belong
+      // to it too, as does the narrow entry of the public replay viewer
+      // (`/watch`).
       '@wolsok/feat-lazy-bac-game/admin-kit',
       '@wolsok/feat-lazy-bac-game/watch',
       '@wolsok/feat-lazy-bac-wars-admin',
