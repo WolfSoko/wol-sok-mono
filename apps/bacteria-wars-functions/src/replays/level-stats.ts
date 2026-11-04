@@ -3,7 +3,7 @@ import {
   parseGeneratedId,
   type ReplayHeader,
   TICKS_PER_SEC,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import type { Verdict } from '../boards/verify';

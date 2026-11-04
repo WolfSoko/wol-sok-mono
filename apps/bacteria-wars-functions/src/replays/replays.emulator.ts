@@ -4,7 +4,7 @@ import {
   type Replay,
   type ReplayHeader,
   replayToBytes,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { readFileSync } from 'node:fs';
@@ -36,7 +36,7 @@ const golden = parseReplay(
     readFileSync(
       join(
         __dirname,
-        '../../../../libs/features/lazy/bacteria-game/src/lib/state/golden-replay.json'
+        '../../../../libs/features/bacteria-engine/src/lib/state/golden-replay.json'
       ),
       'utf8'
     )

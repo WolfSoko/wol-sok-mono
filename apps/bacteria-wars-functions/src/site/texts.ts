@@ -4,7 +4,7 @@ import {
   isLadderLevel,
   parseGeneratedId,
   type ReplayReason,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * The words of the public replay pages (ADR 0011), English and German: a

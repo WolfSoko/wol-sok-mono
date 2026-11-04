@@ -1,7 +1,7 @@
 import {
   BALANCE_VERSION,
   type Replay,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import {
   DAILY_VERIFY_MS,

@@ -1,5 +1,5 @@
 // The engine benchmark (ADR 0014, gate 2): plays fixed replays through the
-// pure engine, bundled from `engine.ts` as the functions bundle it, and
+// pure engine, bundled from the engine lib's `index.ts` as the functions bundle it, and
 // compares each one's time with a calibration loop timed in the same
 // process - a ratio, so a slower or busier machine changes little.
 //
@@ -16,7 +16,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = join(import.meta.dirname, '../..');
-const ENGINE = join(ROOT, 'libs/features/lazy/bacteria-game/src/engine.ts');
+const ENGINE = join(ROOT, 'libs/features/bacteria-engine/src/index.ts');
 const BASELINE = join(import.meta.dirname, 'engine-baseline.json');
 
 /** Above this much over its baseline a ratio fails the gate. */
@@ -41,11 +41,11 @@ const CALIBRATION_RUNS = 15;
 const FIXTURES = [
   {
     name: 'golden-cpu',
-    file: 'libs/features/lazy/bacteria-game/src/lib/state/golden-replay.json',
+    file: 'libs/features/bacteria-engine/src/lib/state/golden-replay.json',
   },
   {
     name: 'golden-gpu-int',
-    file: 'libs/features/lazy/bacteria-game/src/lib/state/golden-replay.json',
+    file: 'libs/features/bacteria-engine/src/lib/state/golden-replay.json',
     gpuInt: true,
   },
   { name: 'heavy-cpu', file: 'tools/perf/fixtures/expanse-heavy.json' },

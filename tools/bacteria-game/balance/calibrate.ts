@@ -14,16 +14,16 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { BalanceReport } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/report';
-import { expectedStats } from '../../../libs/features/lazy/bacteria-game/src/lib/state/balance/report';
-import { BOT_DIFFICULTIES } from '../../../libs/features/lazy/bacteria-game/src/lib/state/bot-controller';
+import type { BalanceReport } from '../../../libs/features/bacteria-engine/src/lib/state/balance/report';
+import { expectedStats } from '../../../libs/features/bacteria-engine/src/lib/state/balance/report';
+import { BOT_DIFFICULTIES } from '../../../libs/features/bacteria-engine/src/lib/state/bot-controller';
 import {
   SKILL,
   strengthOf,
   targetWinRate,
-} from '../../../libs/features/lazy/bacteria-game/src/lib/state/difficulty-curve';
-import { clamp } from '../../../libs/features/lazy/bacteria-game/src/lib/state/geometry';
-import { LEVELS } from '../../../libs/features/lazy/bacteria-game/src/lib/state/levels';
+} from '../../../libs/features/bacteria-engine/src/lib/state/difficulty-curve';
+import { clamp } from '../../../libs/features/bacteria-engine/src/lib/state/geometry';
+import { LEVELS } from '../../../libs/features/bacteria-engine/src/lib/state/levels';
 
 /** Skill moved per point of win rate off the target. */
 const STEP = Number(process.env['CALIBRATION_STEP'] ?? 1.2);

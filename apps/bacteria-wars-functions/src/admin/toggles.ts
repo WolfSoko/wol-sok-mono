@@ -2,7 +2,7 @@ import {
   type FeatureToggle,
   type FeatureToggles,
   featureToggles,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import type {
   RemoteConfig,
   RemoteConfigParameter,

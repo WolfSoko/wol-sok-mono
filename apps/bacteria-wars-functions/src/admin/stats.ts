@@ -1,4 +1,4 @@
-import { atHourOf, dailyBoardId } from '@wolsok/feat-lazy-bac-game/engine';
+import { atHourOf, dailyBoardId } from '@wolsok/feat-shared-bacteria-engine';
 import {
   FieldValue,
   type Firestore,

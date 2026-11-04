@@ -6,7 +6,7 @@ import {
   parseAttemptId,
   parseBoardId,
   type Replay,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   type Firestore,
   Timestamp,

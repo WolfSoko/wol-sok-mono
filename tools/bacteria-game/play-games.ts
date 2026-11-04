@@ -3,7 +3,7 @@
  * achievements of the game, as Play Console's "Publish" page wants them.
  *
  * The game lists them itself, in `play-games-achievements.json` next to its
- * achievements (libs/features/lazy/bacteria-game/src/lib/state/): by id, in
+ * achievements (libs/features/bacteria-engine/src/lib/state/): by id, in
  * the game's order, each with its points and its texts per locale, and its
  * spec `play-games-achievements.spec.ts` keeps the file in step with the
  * achievements. Here `playGamesAchievements()` reads it and refuses what
@@ -23,7 +23,7 @@ import { resolve } from 'node:path';
 
 const API = 'https://gamesconfiguration.googleapis.com/games/v1configuration';
 const achievementsFile = resolve(
-  'libs/features/lazy/bacteria-game/src/lib/state/play-games-achievements.json'
+  'libs/features/bacteria-engine/src/lib/state/play-games-achievements.json'
 );
 /**
  * The game's Play Games Services project sits on its Cloud project, the one

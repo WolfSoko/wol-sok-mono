@@ -3,7 +3,7 @@ import {
   onlineReplayId,
   type Replay,
   type ReplayHeader,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import { planAcceptance, type SubmissionMeta } from './accept-plan';
 
 const DAY_MS = 24 * 3_600_000;

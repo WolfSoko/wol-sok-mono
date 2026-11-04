@@ -309,6 +309,13 @@ install --omit dev`).
     relative imports.
   - The verifying code loads the engine with `await import()`, so
     `publicSite` does not pay for it on a cold start.
+  - Note (2026-11, #2482): the code moved, the decision did not. The
+    engine is now a lib of its own, `libs/features/bacteria-engine`
+    (`feat-shared-bacteria-engine`, alias
+    `@wolsok/feat-shared-bacteria-engine`), holding what `engine.ts`
+    reached plus the rest of `state/` and the dictionaries. The
+    `/engine` entry is gone; the oxlint override and the bundle spec guard
+    the whole lib.
 - **2nd gen, Node 22, one region**: the Firestore location of
   `bacteria-wars` (confirmed by the owner before the first deploy).
   `setGlobalOptions({ region, maxInstances: 5 })`; `initializeApp()` without

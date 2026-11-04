@@ -7,7 +7,7 @@ Generated from the Nx project graph, the module boundary rules in
 the architecture routine; for the narrative overview see
 [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md).
 
-**40 projects · 66 internal dependencies · 3 federated remotes**
+**47 projects · 75 internal dependencies · 3 federated remotes**
 
 ## Contents
 
@@ -25,20 +25,20 @@ dependencies).
 
 ```mermaid
 flowchart TD
-  infra["Infrastructure (CDK)<br/>4 projects"]
-  apps["Apps<br/>8 projects"]
+  infra["Infrastructure (CDK)<br/>5 projects"]
+  apps["Apps<br/>11 projects"]
   public["libs/public (published)<br/>3 projects"]
-  features["libs/features<br/>13 projects"]
-  shared["libs/shared<br/>3 projects"]
+  features["libs/features<br/>15 projects"]
+  shared["libs/shared<br/>4 projects"]
   utils["libs/utils<br/>5 projects"]
   other["libs (other)<br/>4 projects"]
-  apps -- 13 --> features
+  apps -- 16 --> features
   apps -- 1 --> other
   apps -- 3 --> public
-  apps -- 5 --> shared
+  apps -- 7 --> shared
   features -- 11 --> other
   features -- 1 --> public
-  features -- 3 --> shared
+  features -- 4 --> shared
   features -- 12 --> utils
   infra -- 4 --> apps
   infra -- 4 --> public
@@ -59,6 +59,7 @@ flowchart TD
   e2e(["e2e"])
   feat_shared(["feat-shared"])
   feature(["feature"])
+  feature_admin(["feature:admin"])
   feature_lazy(["feature:lazy"])
   infra(["infra"])
   infra_shared(["infra-shared"])
@@ -69,6 +70,8 @@ flowchart TD
   app --> utils
   app --> feature
   app --> feature_lazy
+  app --> feature_admin
+  app --> feat_shared
   app --> api
   app --> type_remote
   infra --> infra_shared
@@ -82,6 +85,11 @@ flowchart TD
   feature_lazy --> shared
   feature_lazy --> utils
   feature_lazy --> api
+  feature_admin --> feature_lazy
+  feature_admin --> feat_shared
+  feature_admin --> shared
+  feature_admin --> utils
+  feature_admin --> api
   feat_shared --> shared
   feat_shared --> utils
   feat_shared --> api
@@ -100,6 +108,9 @@ flowchart LR
   bacteria_game_remote["bacteria-game-remote"]
   shell -. "loadRemoteModule" .-> bacteria_game_remote
   bacteria_game_remote --> feat_lazy_bacteria_game["feat-lazy-bacteria-game"]
+  bacteria_game_remote --> feat_lazy_bacteria_wars_admin["feat-lazy-bacteria-wars-admin"]
+  bacteria_game_remote --> feat_shared_bacteria_engine["feat-shared-bacteria-engine"]
+  bacteria_game_remote --> shared_analytics["shared-analytics"]
   fourier_analysis_remote["fourier-analysis-remote"]
   shell -. "loadRemoteModule" .-> fourier_analysis_remote
   fourier_analysis_remote --> feat_lazy_fourier_analysis["feat-lazy-fourier-analysis"]
@@ -122,14 +133,18 @@ flowchart LR
     angular_examples_cdk["angular-examples-cdk"]
     bacteria_game_remote_cdk["bacteria-game-remote-cdk"]
     fourier_analysis_remote_cdk["fourier-analysis-remote-cdk"]
+    portfolio_cdk["portfolio-cdk"]
     shader_examples_remote_cdk["shader-examples-remote-cdk"]
   end
   subgraph apps["Apps"]
     angular_examples["angular-examples"]
     bacteria_game_remote["bacteria-game-remote"]
+    bacteria_wars_android["bacteria-wars-android"]
+    bacteria_wars_functions["bacteria-wars-functions"]
     fourier_analysis_remote["fourier-analysis-remote"]
     nx_aws_cdk_v2_e2e["nx-aws-cdk-v2-e2e"]
     pacetrainer["pacetrainer"]
+    portfolio["portfolio"]
     rollapolla_analog["rollapolla-analog"]
     shader_examples_remote["shader-examples-remote"]
     ws_thanos_test_app["ws-thanos-test-app"]
@@ -142,6 +157,7 @@ flowchart LR
   subgraph features["libs/features"]
     feat_api_auth["feat-api-auth"]
     feat_lazy_bacteria_game["feat-lazy-bacteria-game"]
+    feat_lazy_bacteria_wars_admin["feat-lazy-bacteria-wars-admin"]
     feat_lazy_fourier_analysis["feat-lazy-fourier-analysis"]
     feat_lazy_gravity_rocks["feat-lazy-gravity-rocks"]
     feat_lazy_poisson["feat-lazy-poisson"]
@@ -151,11 +167,13 @@ flowchart LR
     feat_lazy_tf_examples["feat-lazy-tf-examples"]
     feat_lazy_wasm_test["feat-lazy-wasm-test"]
     feat_lazy_web_gl["feat-lazy-web-gl"]
+    feat_shared_bacteria_engine["feat-shared-bacteria-engine"]
     feat_shared_reaction_diffusion_kernels["feat-shared-reaction-diffusion-kernels"]
     neural_networks["neural-networks"]
   end
   subgraph shared["libs/shared"]
     headline_animation["headline-animation"]
+    shared_analytics["shared-analytics"]
     shared_data_access["shared-data-access"]
     ws_gl["ws-gl"]
   end
@@ -192,11 +210,16 @@ flowchart LR
   angular_examples_cdk ==> angular_examples
   angular_examples_cdk --> spa_cdk_stack
   bacteria_game_remote --> feat_lazy_bacteria_game
-  bacteria_game_remote_cdk ==> bacteria_game_remote
-  bacteria_game_remote_cdk --> spa_cdk_stack
+  bacteria_game_remote -.-> feat_lazy_bacteria_wars_admin
+  bacteria_game_remote --> feat_shared_bacteria_engine
+  bacteria_game_remote --> shared_analytics
+  bacteria_wars_functions --> feat_shared_bacteria_engine
+  feat_lazy_bacteria_game --> feat_shared_bacteria_engine
+  feat_lazy_bacteria_game --> shared_analytics
   feat_lazy_bacteria_game --> ui_kit
   feat_lazy_bacteria_game --> utils_measure_fps
   feat_lazy_bacteria_game --> ws_thanos
+  feat_lazy_bacteria_wars_admin --> feat_lazy_bacteria_game
   feat_lazy_fourier_analysis --> ui_kit
   feat_lazy_gravity_rocks --> math
   feat_lazy_gravity_rocks --> test_helper
@@ -228,6 +251,10 @@ flowchart LR
   fourier_analysis_remote_cdk --> spa_cdk_stack
   neural_networks --> ui_kit
   nx_aws_cdk_v2_e2e ==> nx_aws_cdk_v2
+  portfolio ==> angular_examples
+  portfolio_cdk ==> portfolio
+  portfolio_cdk --> spa_cdk_stack
+  rollapolla_analog --> shared_analytics
   rollapolla_analog --> shared_data_access
   shader_examples_remote --> feat_api_auth
   shader_examples_remote --> feat_lazy_shader_examples
@@ -250,41 +277,47 @@ flowchart LR
 
 | Project                                  | Group    | Tags                                    | Fan-in (Ca) | Fan-out (Ce) | Instability |
 | ---------------------------------------- | -------- | --------------------------------------- | ----------- | ------------ | ----------- |
-| `angular-examples`                       | apps     | app, type:host                          | 1           | 17           | 0.94        |
+| `angular-examples`                       | apps     | app, type:host                          | 2           | 17           | 0.89        |
 | `ui-kit`                                 | other    | shared, ui                              | 10          | 2            | 0.17        |
+| `feat-lazy-bacteria-game`                | features | feature:lazy                            | 2           | 5            | 0.71        |
 | `feat-lazy-react-diff`                   | features | feature:lazy                            | 1           | 5            | 0.83        |
+| `bacteria-game-remote`                   | apps     | app, type:firebase, type:remote         | 1           | 4            | 0.8         |
 | `feat-lazy-some-gpu-calculation`         | features | feature:lazy                            | 1           | 4            | 0.8         |
 | `shader-examples-remote`                 | apps     | app, scope:shader-examples, type:remote | 2           | 3            | 0.6         |
 | `utils-measure-fps`                      | utils    | utils                                   | 4           | 1            | 0.2         |
-| `feat-lazy-bacteria-game`                | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `feat-lazy-gravity-rocks`                | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `feat-lazy-poisson`                      | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `feat-lazy-shader-examples`              | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `shared-data-access`                     | shared   | shared                                  | 4           | 0            | 0           |
 | `spa-cdk-stack`                          | public   | infra-shared, published                 | 4           | 0            | 0           |
 | `utils-operators`                        | utils    | utils                                   | 4           | 0            | 0           |
-| `bacteria-game-remote`                   | apps     | app, type:remote                        | 2           | 1            | 0.33        |
 | `feat-api-auth`                          | features | api                                     | 3           | 0            | 0           |
 | `feat-lazy-tf-examples`                  | features | feature:lazy                            | 1           | 2            | 0.67        |
 | `feat-lazy-wasm-test`                    | features | feature:lazy                            | 1           | 2            | 0.67        |
+| `feat-shared-bacteria-engine`            | features | feat-shared                             | 3           | 0            | 0           |
 | `fourier-analysis-remote`                | apps     | app, type:remote                        | 2           | 1            | 0.33        |
 | `headline-animation`                     | shared   | shared                                  | 3           | 0            | 0           |
+| `shared-analytics`                       | shared   | shared                                  | 3           | 0            | 0           |
 | `utils-gpu-calc`                         | utils    | utils                                   | 3           | 0            | 0           |
 | `ws-thanos`                              | public   | published, shared, ui                   | 3           | 0            | 0           |
+| `feat-lazy-bacteria-wars-admin`          | features | feature:admin                           | 1           | 1            | 0.5         |
 | `feat-lazy-fourier-analysis`             | features | feature:lazy                            | 1           | 1            | 0.5         |
 | `feat-lazy-web-gl`                       | features | feature:lazy                            | 1           | 1            | 0.5         |
 | `feat-shared-reaction-diffusion-kernels` | features | feat-shared                             | 1           | 1            | 0.5         |
 | `fib-wasm-api`                           | other    | api                                     | 1           | 1            | 0.5         |
 | `math`                                   | utils    | utils                                   | 2           | 0            | 0           |
 | `neural-networks`                        | features | feature:lazy                            | 1           | 1            | 0.5         |
+| `portfolio`                              | apps     | app, type:portfolio                     | 1           | 1            | 0.5         |
+| `rollapolla-analog`                      | apps     | app, type:firebase                      | 0           | 2            | 1           |
 | `ws-gl`                                  | shared   | shared                                  | 2           | 0            | 0           |
+| `bacteria-wars-functions`                | apps     | app, type:firebase, type:functions      | 0           | 1            | 1           |
 | `fib-wasm`                               | other    | shared                                  | 1           | 0            | 0           |
 | `nx-aws-cdk-v2`                          | public   | infra-shared, published                 | 1           | 0            | 0           |
 | `nx-aws-cdk-v2-e2e`                      | apps     | e2e                                     | 0           | 1            | 1           |
-| `rollapolla-analog`                      | apps     | app, type:firebase                      | 0           | 1            | 1           |
 | `test-helper`                            | other    | shared                                  | 1           | 0            | 0           |
 | `utils-decorators`                       | utils    | utils                                   | 1           | 0            | 0           |
 | `ws-thanos-test-app`                     | apps     | app, type:test-app                      | 0           | 1            | 1           |
+| `bacteria-wars-android`                  | apps     | type:android                            | 0           | 0            | –           |
 | `pacetrainer`                            | apps     | app, type:firebase                      | 0           | 0            | –           |
 
 ## Automated findings
@@ -293,5 +326,6 @@ flowchart LR
 - **Tag constraint violations** (`.oxlintrc.json`): none
 - **Unused libraries:** none
 - **Projects without tags:** none
-- **Libraries with high fan-out (≥ 5):** 1
+- **Libraries with high fan-out (≥ 5):** 2
+  - `feat-lazy-bacteria-game` (5)
   - `feat-lazy-react-diff` (5)

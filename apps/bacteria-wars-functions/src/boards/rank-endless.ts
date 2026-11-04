@@ -3,7 +3,7 @@ import {
   attemptSeed,
   endlessAttemptId,
   parseAttemptId,
-} from '@wolsok/feat-lazy-bac-game/engine';
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   FieldPath,
   FieldValue,

@@ -1,4 +1,4 @@
-import { type ReplayHeader } from '@wolsok/feat-lazy-bac-game/engine';
+import { type ReplayHeader } from '@wolsok/feat-shared-bacteria-engine';
 import { AT, ATTEMPT, dailyReplay, TICKS, UID } from '../testing/daily-replay';
 import {
   checkDailyAttempt,
