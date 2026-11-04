@@ -1,8 +1,5 @@
 import { expect, Locator, Page } from '@playwright/test';
-import {
-  seconds,
-  Seconds,
-} from '../../src/app/shared/model/constants/time-utils';
+import { seconds, Seconds } from '@wolsok/utils-time';
 
 export class SprintTrainingPage {
   readonly page: Page;

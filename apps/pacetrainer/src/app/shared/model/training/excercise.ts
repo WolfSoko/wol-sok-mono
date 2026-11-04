@@ -1,4 +1,4 @@
-import { Milliseconds } from '../constants/time-utils';
+import { Milliseconds } from '@wolsok/utils-time';
 import { createDuration, Duration } from '../timing';
 
 export type ExerciseType =

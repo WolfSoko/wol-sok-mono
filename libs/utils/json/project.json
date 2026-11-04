@@ -1,0 +1,26 @@
+{
+  "name": "utils-json",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/utils/json/src",
+  "projectType": "library",
+  "tags": ["utils"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/utils/json",
+        "main": "libs/utils/json/src/index.ts",
+        "tsConfig": "libs/utils/json/tsconfig.lib.json",
+        "assets": ["libs/utils/json/*.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/utils/json/jest.config.ts"
+      }
+    }
+  }
+}

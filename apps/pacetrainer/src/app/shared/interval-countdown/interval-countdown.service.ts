@@ -15,7 +15,7 @@ import {
   SECOND_IN_MS,
   Seconds,
   seconds,
-} from '../model/constants/time-utils';
+} from '@wolsok/utils-time';
 import { CountdownModel } from '../model/training/countdown.model';
 import { TrainingName } from '../model/training/training-name';
 import { TrainingNamePipe } from '../ui/training-name.pipe';

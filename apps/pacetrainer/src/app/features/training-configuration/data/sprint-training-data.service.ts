@@ -1,10 +1,5 @@
 import { computed, effect, inject, Injectable, signal } from '@angular/core';
-import {
-  add,
-  milliseconds,
-  Seconds,
-  sToMs,
-} from '../../../shared/model/constants/time-utils';
+import { add, milliseconds, Seconds, sToMs } from '@wolsok/utils-time';
 import {
   createRecoveryExercise,
   createSprintExercise,

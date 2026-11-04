@@ -1,4 +1,4 @@
-import { add, Milliseconds, subtract, ZERO_MS } from './constants/time-utils';
+import { add, Milliseconds, subtract, ZERO_MS } from '@wolsok/utils-time';
 
 export interface Duration {
   duration: Milliseconds;
