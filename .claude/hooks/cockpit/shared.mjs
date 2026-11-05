@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { existsSync, realpathSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const CURL_GRACE_MS = 1000;
@@ -96,6 +97,32 @@ export async function readInput() {
   }
 }
 
+// A plugin folder reached through a symlink gives the module its real path but `argv` the linked one.
+function samePath(a, b) {
+  try {
+    return realpathSync(a) === realpathSync(b);
+  } catch {
+    return resolve(a) === resolve(b);
+  }
+}
+
 export function isEntryPoint(metaUrl) {
-  return process.argv[1] !== undefined && fileURLToPath(metaUrl) === resolve(process.argv[1]);
+  return process.argv[1] !== undefined && samePath(fileURLToPath(metaUrl), process.argv[1]);
+}
+
+// The plugin on the claude.ai account reaches every session, also one whose repo brings the cockpit files itself.
+// Its hooks sit in `<plugin>/skills/cockpit/hooks/`; a user-level copy reports to another routine and stays on.
+export function yieldsToRepoCopy(metaUrl, projectDir) {
+  if (typeof projectDir !== 'string' || projectDir === '') return false;
+  const own = dirname(fileURLToPath(metaUrl));
+  const fromPlugin = existsSync(join(own, '..', '..', '..', '.claude-plugin', 'plugin.json'));
+  return fromPlugin && existsSync(join(projectDir, '.claude', 'hooks', 'cockpit', 'shared.mjs'));
+}
+
+/** Run as a hook, and not a plugin copy standing aside for the repo's own hooks. */
+export function runsAsHook(metaUrl) {
+  return (
+    isEntryPoint(metaUrl) &&
+    !yieldsToRepoCopy(metaUrl, process.env.CLAUDE_PROJECT_DIR ?? process.cwd())
+  );
 }

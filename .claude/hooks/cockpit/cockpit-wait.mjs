@@ -2,7 +2,7 @@ import {
   baseUrl,
   fetchNudges,
   get,
-  isEntryPoint,
+  runsAsHook,
   nudgeText,
   readInput,
   sessionOf,
@@ -54,7 +54,7 @@ async function main() {
   process.stdout.write(JSON.stringify({ decision: 'block', reason: reasons.join('\n\n') }));
 }
 
-if (isEntryPoint(import.meta.url)) {
+if (runsAsHook(import.meta.url)) {
   main()
     .catch(() => {})
     .finally(() => {
