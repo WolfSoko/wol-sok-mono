@@ -181,6 +181,13 @@
   <aside class="card" [attr.aria-label]="'menu.card.label' | t">
     @let summary = campaign();
     <feat-lazy-bac-game-rank-standing [xp]="summary.xp" [badgeSize]="60" />
+    <feat-lazy-bac-game-dna-counter
+      class="card-dna"
+      [dna]="dna()"
+      [earned]="dnaEarned()"
+      [loaded]="dnaLoaded()"
+      [ready]="dnaReady()"
+    />
     <div class="stat">
       <span class="stat-label">{{ "menu.card.campaign" | t }}</span>
       <span class="stat-value"

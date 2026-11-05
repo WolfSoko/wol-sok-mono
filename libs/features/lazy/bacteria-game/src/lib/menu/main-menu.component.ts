@@ -33,6 +33,7 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
+import { DnaCounterComponent } from './dna-counter.component';
 import { DnaHelixComponent } from './dna-helix.component';
 import { GameAccount } from '../storage/game-account';
 import { GAME_SUPPORT } from '../support/game-support';
@@ -84,6 +85,7 @@ export type MenuPage =
     RankStandingComponent,
     RouterLink,
     GhostChallengeComponent,
+    DnaCounterComponent,
     DnaHelixComponent,
     InstallBannerComponent,
     StatsBannerComponent,
@@ -116,6 +118,12 @@ export class MainMenuComponent {
   public readonly evolveDna = input(0);
   /** The DNA left while it buys a skin - the badge on the My Colony tile - 0 otherwise. */
   public readonly colonyDna = input(0);
+  /** The DNA left to spend, shown in the card as on My Colony. */
+  public readonly dna = input(0);
+  /** The DNA all the XP so far has earned, spent or not. */
+  public readonly dnaEarned = input(0);
+  /** False while the storage has not told what DNA is held - so until it is bound. */
+  public readonly dnaLoaded = input(false);
   /** True while the game fills the whole screen rather than its page. */
   public readonly fullscreen = input(false);
   /** The training missions done - the way to the training shows until all are. */
@@ -147,6 +155,11 @@ export class MainMenuComponent {
 
   protected readonly medalCount = computed(() =>
     Object.values(this.campaign().medals).reduce((sum, n) => sum + n, 0)
+  );
+
+  /** The card's DNA glows while either tile's badge says it buys something. */
+  protected readonly dnaReady = computed(
+    () => this.evolveDna() > 0 || this.colonyDna() > 0
   );
 
   protected readonly medalKey = medalKey;

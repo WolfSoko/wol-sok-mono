@@ -159,6 +159,66 @@ describe('MainMenuComponent', () => {
     expect(open).toHaveBeenCalledWith('evolution');
   });
 
+  it('reads the DNA in the card until the game binds it', () => {
+    const card = host.querySelector('.card feat-lazy-bac-game-dna-counter');
+    expect(card?.textContent).toContain('Reading your DNA…');
+  });
+
+  describe('DNA counter in the card', () => {
+    const counter = () =>
+      host.querySelector('.card feat-lazy-bac-game-dna-counter');
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('dna', 34);
+      fixture.componentRef.setInput('dnaEarned', 120);
+      fixture.componentRef.setInput('dnaLoaded', true);
+      fixture.detectChanges();
+    });
+
+    it('shows the DNA left and the DNA earned in all', () => {
+      expect(counter()?.querySelector('.dna-count')?.textContent?.trim()).toBe(
+        '34'
+      );
+      expect(counter()?.textContent).toContain('120 DNA earned in all');
+    });
+
+    it('reads the DNA until the evolution is loaded', () => {
+      fixture.componentRef.setInput('dnaLoaded', false);
+      fixture.detectChanges();
+
+      expect(counter()?.textContent).toContain('Reading your DNA…');
+      expect(counter()?.textContent).not.toContain('earned in all');
+    });
+
+    it('glows while the Evolution or the My Colony badge shows', () => {
+      expect(counter()?.classList).not.toContain('ready');
+
+      fixture.componentRef.setInput('evolveDna', 34);
+      fixture.detectChanges();
+      expect(counter()?.classList).toContain('ready');
+
+      fixture.componentRef.setInput('evolveDna', 0);
+      fixture.componentRef.setInput('colonyDna', 34);
+      fixture.detectChanges();
+      expect(counter()?.classList).toContain('ready');
+
+      fixture.componentRef.setInput('colonyDna', 0);
+      fixture.detectChanges();
+      expect(counter()?.classList).not.toContain('ready');
+    });
+
+    it('speaks German', () => {
+      TestBed.inject(I18nService).setLanguage('de');
+      fixture.detectChanges();
+
+      expect(counter()?.textContent).toContain('120 DNA insgesamt verdient');
+
+      fixture.componentRef.setInput('dnaLoaded', false);
+      fixture.detectChanges();
+      expect(counter()?.textContent).toContain('Deine DNA wird gelesen…');
+    });
+  });
+
   it('shows the friends only with the cloud, with the requests waiting', () => {
     const tile = () =>
       Array.from(host.querySelectorAll('.tiles button')).find((b) =>

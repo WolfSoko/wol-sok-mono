@@ -146,6 +146,9 @@
               [friendRequests]="social.requests().length"
               [evolveDna]="evolution.canEvolve() ? evolution.dna() : 0"
               [colonyDna]="evolution.skinDna()"
+              [dna]="evolution.dna()"
+              [dnaEarned]="evolution.earned()"
+              [dnaLoaded]="evolution.loaded()"
               (fightChallenge)="flow.fightChallenge()"
               (dismissChallenge)="flow.dismissChallenge()"
             />
