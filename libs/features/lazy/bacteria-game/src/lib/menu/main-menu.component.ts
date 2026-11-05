@@ -122,8 +122,8 @@ export class MainMenuComponent {
   public readonly dna = input(0);
   /** The DNA all the XP so far has earned, spent or not. */
   public readonly dnaEarned = input(0);
-  /** False while the storage has not told what DNA is held. */
-  public readonly dnaLoaded = input(true);
+  /** False while the storage has not told what DNA is held - so until it is bound. */
+  public readonly dnaLoaded = input(false);
   /** True while the game fills the whole screen rather than its page. */
   public readonly fullscreen = input(false);
   /** The training missions done - the way to the training shows until all are. */

@@ -207,6 +207,10 @@ describe('MainMenuComponent', () => {
       fixture.detectChanges();
 
       expect(counter()?.textContent).toContain('120 DNA insgesamt verdient');
+
+      fixture.componentRef.setInput('dnaLoaded', false);
+      fixture.detectChanges();
+      expect(counter()?.textContent).toContain('Deine DNA wird gelesen…');
     });
   });
 
