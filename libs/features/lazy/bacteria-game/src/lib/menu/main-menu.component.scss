@@ -231,6 +231,12 @@
   background: var(--bw-surface-glass);
 }
 
+// The DNA counter of My Colony, left under the rank rather than pushed right.
+.card-dna {
+  align-self: flex-start;
+  margin-left: 0;
+}
+
 .stat {
   display: flex;
   flex-direction: column;
