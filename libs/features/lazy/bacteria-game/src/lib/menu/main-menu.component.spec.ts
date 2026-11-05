@@ -159,6 +159,11 @@ describe('MainMenuComponent', () => {
     expect(open).toHaveBeenCalledWith('evolution');
   });
 
+  it('reads the DNA in the card until the game binds it', () => {
+    const card = host.querySelector('.card feat-lazy-bac-game-dna-counter');
+    expect(card?.textContent).toContain('Reading your DNA…');
+  });
+
   describe('DNA counter in the card', () => {
     const counter = () =>
       host.querySelector('.card feat-lazy-bac-game-dna-counter');
