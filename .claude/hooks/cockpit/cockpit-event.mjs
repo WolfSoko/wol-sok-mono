@@ -1,6 +1,6 @@
 import { mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { isEntryPoint, markerPath, post, readInput, sessionOf } from './shared.mjs';
+import { runsAsHook, markerPath, post, readInput, sessionOf } from './shared.mjs';
 
 const TEXT_MAX = 4000;
 const CWD_MAX = 1000;
@@ -66,7 +66,7 @@ async function main() {
   await post('/api/cockpit/ereignis', body, 2000);
 }
 
-if (isEntryPoint(import.meta.url)) {
+if (runsAsHook(import.meta.url)) {
   main()
     .catch(() => {})
     .finally(() => {

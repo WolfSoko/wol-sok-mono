@@ -1,4 +1,4 @@
-import { isEntryPoint, post, readInput, sessionOf } from './shared.mjs';
+import { runsAsHook, post, readInput, sessionOf } from './shared.mjs';
 
 // The marker stays: a `--resume` keeps the id, and the conversation already has the context.
 async function main() {
@@ -9,7 +9,7 @@ async function main() {
   await post('/api/cockpit/sitzung-ende', { sitzung }, 3000);
 }
 
-if (isEntryPoint(import.meta.url)) {
+if (runsAsHook(import.meta.url)) {
   main()
     .catch(() => {})
     .finally(() => {

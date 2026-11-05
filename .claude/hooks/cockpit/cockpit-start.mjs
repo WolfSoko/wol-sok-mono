@@ -4,7 +4,7 @@ import { basename, dirname } from 'node:path';
 import {
   fetchNudges,
   get,
-  isEntryPoint,
+  runsAsHook,
   markerPath,
   nudgeText,
   post,
@@ -162,7 +162,7 @@ async function main() {
 }
 
 // Never `process.exit()`: on a pipe under Linux, output not yet written would be lost.
-if (isEntryPoint(import.meta.url)) {
+if (runsAsHook(import.meta.url)) {
   main()
     .catch(() => {})
     .finally(() => {
