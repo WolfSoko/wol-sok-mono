@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.138.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.7...v74.138.0) (2026-11-05)
+
+### Features
+
+* **feat-lazy-bacteria-game:** show the DNA on the main menu ([#2772](https://github.com/WolfSoko/wol-sok-mono/issues/2772)) ([6e3d06e](https://github.com/WolfSoko/wol-sok-mono/commit/6e3d06e787fc996a856d3b085063c3ea6e06c887)), closes [#2770](https://github.com/WolfSoko/wol-sok-mono/issues/2770)
+
+### Bug Fixes
+
+* **deps:** update nx monorepo ([#2773](https://github.com/WolfSoko/wol-sok-mono/issues/2773)) ([925ff29](https://github.com/WolfSoko/wol-sok-mono/commit/925ff296070ca6b7a0602adbf366f90b351f1813))
+
+### Chore
+
+* **release:** publish ([fe872f5](https://github.com/WolfSoko/wol-sok-mono/commit/fe872f5e048e158a7e63a89211cbc0fa10306832))
+
 ## [74.137.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.6...v74.137.7) (2026-11-04)
 
 ### Bug Fixes
