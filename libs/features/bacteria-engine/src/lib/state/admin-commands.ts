@@ -1,4 +1,5 @@
 import { isEntryId, parseBoardId } from './boards';
+import { isCommandDocumentKey } from './command-documents';
 import { type FeatureToggles, parseToggleValues } from './feature-toggles';
 import { isObject } from './is-object';
 
@@ -125,8 +126,6 @@ const SCHEMA: Readonly<
 
 /** The fields of the command itself. */
 const COMMAND_KEYS = ['type', 'target', 'reason', 'args'];
-/** The fields of the stored document around it, which the parser skips. */
-const ENVELOPE_KEYS = ['uid', 'createdAt', 'expireAt', 'result'];
 
 /** A Firebase Auth uid as this project makes them. */
 const UID = /^[A-Za-z0-9]{1,128}$/;
@@ -159,7 +158,7 @@ export function parseAdminCommand(value: unknown): AdminCommand | null {
   const keys = Object.keys(value);
   if (
     keys.some(
-      (key) => !COMMAND_KEYS.includes(key) && !ENVELOPE_KEYS.includes(key)
+      (key) => !COMMAND_KEYS.includes(key) && !isCommandDocumentKey(key)
     ) ||
     !('target' in value) ||
     !('args' in value) ||

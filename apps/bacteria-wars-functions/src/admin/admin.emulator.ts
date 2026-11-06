@@ -406,18 +406,10 @@ describe('player.unban', () => {
 });
 
 describe('the owner check', () => {
-  it('refuses anybody but the owner, without an audit', async () => {
+  it('refuses anybody but the owner now, without an audit', async () => {
     expect(
       await command('c1', ban('ada', null, { uid: 'eve' }), context(), 'eve')
     ).toEqual({ ok: false, error: 'not-admin' });
-    expect(await command('c2', ban('ada', null), context(), 'eve')).toEqual({
-      ok: false,
-      error: 'not-writer',
-    });
-    expect(await command('c3', ban('ada', null), context(), null)).toEqual({
-      ok: false,
-      error: 'not-writer',
-    });
     // A claim revoked since the rules let the command in.
     expect(
       await command('c4', ban('ada', null), context(fakeRealtime(), []))

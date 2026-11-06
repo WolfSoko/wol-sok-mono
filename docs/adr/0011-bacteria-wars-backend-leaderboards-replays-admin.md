@@ -202,6 +202,8 @@ writes **command documents** the functions process:
   `anonymise` (only with the admin claim, a verified email and Google
   sign-in, checked by the rules and again by the function). The writer may
   read its own command to see the result the function writes back.
+  (Changed by #2783: the result is `{ ok, error?, at }`, as on
+  `adminCommands`; it named a failure `reason` before.)
   (Added by ADR 0012: the rules require `uid == request.auth.uid` and
   `createdAt == request.time`, and `replayCommand` uses the auth-context
   trigger and refuses unless the writer is `uid`.)

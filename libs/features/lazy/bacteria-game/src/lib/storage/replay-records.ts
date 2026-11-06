@@ -58,26 +58,6 @@ export function isCounted(listing: Pick<ReplayListing, 'rankedReason'>) {
   return listing.rankedReason === 'counted';
 }
 
-/**
- * What a player may ask of a replay: `remove` keeps it out of the public
- * gallery, `forget` deletes it from their matches - in the cloud it takes
- * them out of the replay, which stays anonymised for the statistics (ADR
- * 0012, owner's decision of 2026-10-26). The rest only the owner.
- */
-export type ReplayCommandType =
-  | 'remove'
-  | 'forget'
-  | 'feature'
-  | 'unfeature'
-  | 'anonymise';
-
-/** What the server made of a command. */
-export interface ReplayCommandResult {
-  ok: boolean;
-  /** Why not, when it did not - an id, never a text to show as it is. */
-  reason?: string;
-}
-
 /** The most replays a list asks for - what the rules allow (ADR 0011). */
 export const MAX_REPLAY_LIST = 50;
 
@@ -97,16 +77,4 @@ export function hintOf(hint: number): number {
   return Number.isFinite(hint)
     ? Math.min(100, Math.max(0, Math.round(hint)))
     : 0;
-}
-
-/** A command's result as stored - null for none or one it cannot read. */
-export function parseCommandResult(value: unknown): ReplayCommandResult | null {
-  if (typeof value !== 'object' || value === null) {
-    return null;
-  }
-  const { ok, reason } = value as Record<string, unknown>;
-  if (typeof ok !== 'boolean') {
-    return null;
-  }
-  return typeof reason === 'string' ? { ok, reason } : { ok };
 }

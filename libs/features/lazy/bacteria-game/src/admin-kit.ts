@@ -66,6 +66,15 @@ export type {
   EntryStatus,
 } from '@wolsok/feat-shared-bacteria-engine';
 export {
+  CURATION_COMMAND_TYPES,
+  parseCommandResult,
+} from '@wolsok/feat-shared-bacteria-engine';
+export type {
+  CommandResult,
+  CurationCommandType,
+} from '@wolsok/feat-shared-bacteria-engine';
+export { commandEnvelope } from './lib/storage/command-envelope';
+export {
   ADMIN_COMMAND_TYPES,
   BAN_REASONS,
   DESTRUCTIVE_COMMAND_TYPES,

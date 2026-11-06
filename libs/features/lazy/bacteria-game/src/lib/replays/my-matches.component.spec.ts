@@ -263,7 +263,7 @@ describe('MyMatchesComponent', () => {
 
   it('says a match the boards may still rank can be deleted later', async () => {
     await replays.submit({ replay: recordedReplay(), hint: 40 });
-    replays.forgetAnswer = { ok: false, reason: 'ranking' };
+    replays.forgetAnswer = { ok: false, error: 'ranking' };
     const { fixture, page } = await render();
 
     await deleteByTwoTaps(page, fixture);
@@ -281,7 +281,7 @@ describe('MyMatchesComponent', () => {
     jest.spyOn(replays, 'sendCommand').mockImplementation(async () => 'c_gone');
     jest
       .spyOn(replays, 'watchCommand')
-      .mockReturnValue(of({ ok: false, reason: 'not-found' }));
+      .mockReturnValue(of({ ok: false, error: 'not-found' }));
 
     await deleteByTwoTaps(page, fixture);
 

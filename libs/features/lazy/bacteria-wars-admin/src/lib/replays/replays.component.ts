@@ -11,8 +11,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
-import { isEntryId } from '@wolsok/feat-lazy-bac-game/admin-kit';
-import type { ReplayCommandType } from '../commands/command-types';
+import {
+  type CurationCommandType,
+  isEntryId,
+} from '@wolsok/feat-lazy-bac-game/admin-kit';
 import { AdminI18n, AdminTextPipe } from '../i18n/admin-i18n.service';
 import { AdminActionsService } from '../moderation/admin-actions.service';
 import type {
@@ -321,7 +323,7 @@ export class ReplaysComponent {
 
   /** Runs a curation, then reloads what it changed. */
   protected async curate(
-    type: ReplayCommandType,
+    type: CurationCommandType,
     replayId: string,
     subject: string
   ): Promise<void> {

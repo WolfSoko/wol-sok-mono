@@ -1,5 +1,6 @@
 import type {
   BanReason,
+  CommandResult,
   NoticeType,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
@@ -92,7 +93,7 @@ export async function runAudited(
   head: Omit<AuditEntry, 'before' | 'after' | 'ok' | 'error'>,
   act: () => Promise<AuditedAction>,
   now: number
-): Promise<{ ok: boolean; error?: string } | null> {
+): Promise<CommandResult | null> {
   const audit = db.doc(`adminAudit/${commandId}`);
   const claimed = await writeAudit(
     db,

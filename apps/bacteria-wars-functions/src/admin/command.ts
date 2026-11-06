@@ -1,12 +1,13 @@
 import {
   type AdminCommand,
+  type CommandResult,
   type EntryTarget,
   parseAdminCommand,
   parseBoardId,
   type PlayerTarget,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { FieldValue, type Firestore } from 'firebase-admin/firestore';
-import { logger } from 'firebase-functions/logger';
+import type { Firestore } from 'firebase-admin/firestore';
+import { runCommandDocument } from '../commands/run-command-document';
 import { banPlayer, liftBan } from './bans';
 import {
   moderateBoards,
@@ -20,13 +21,6 @@ import { recountAccounts, refreshStats } from './stats';
 import { backfillMirrors } from '../social/mirror';
 import { googleProviderOf } from './tombstones';
 import { type AuditedAction, runAudited } from './records';
-
-/** What the server made of a command, written back on it as `result`. */
-export interface AdminResult {
-  ok: boolean;
-  /** Why not - an id, never a text to show. */
-  error?: string;
-}
 
 /** What `adminCommand` needs besides Firestore. */
 export interface AdminContext {
@@ -66,57 +60,44 @@ export function isOwnerRecord(user: OwnerRecord): boolean {
 }
 
 /**
- * Runs `adminCommands/{id}` (ADR 0012), in order:
- * 1. checks the admin: the writer (`authId`, from the auth-context
- *    trigger) is the command's `uid`, and is the owner now;
- * 2. runs the action once, audited (`runAudited`): a second delivery of
+ * Runs `adminCommands/{id}` (ADR 0012) through `runCommandDocument`, which
+ * checks that the writer is the command's `uid`, catches and writes the
+ * result back. On top of that, in order:
+ * 1. checks the owner: the writer is the owner now (`not-admin`);
+ * 2. reads the command (`parseAdminCommand`, `malformed` for anything that
+ *    is not exactly one) - neither refusal is audited;
+ * 3. runs the action once, audited (`runAudited`): a second delivery of
  *    the event neither runs it again nor overwrites the first one's
- *    result;
- * 3. writes `result: { ok, error?, at }` back on the command.
- * A command that is not exactly one (`parseAdminCommand`) answers
- * `malformed`; one from anybody but the owner `not-writer` or `not-admin`
- * - neither is audited. Every type runs: `bans.ts`, `moderation.ts`,
- * `stats.ts`, `toggles.ts`, the boards' `verify-now.ts` and the friend
- * lists' mirror (`social/mirror.ts`, `presence.backfill`).
+ *    result.
+ * Every type runs: `bans.ts`, `moderation.ts`, `stats.ts`, `toggles.ts`,
+ * the boards' `verify-now.ts` and the friend lists' mirror
+ * (`social/mirror.ts`, `presence.backfill`).
  */
-export async function runAdminCommand(
+export function runAdminCommand(
   db: Firestore,
   commandId: string,
   data: Record<string, unknown>,
   authId: string | undefined,
   context: AdminContext,
   now: number = Date.now()
-): Promise<AdminResult | null> {
-  let result: AdminResult | null;
-  try {
-    result = await run(db, commandId, data, authId, context, now);
-  } catch (error) {
-    // Retries are off: the owner still gets an answer, and may send the
-    // command again.
-    logger.error('Admin command failed', { commandId, error });
-    result = { ok: false, error: 'internal' };
-  }
-  // Null: another delivery runs it, and writes the result.
-  if (result !== null) {
-    await db.doc(`adminCommands/${commandId}`).update({
-      result: { ...result, at: FieldValue.serverTimestamp() },
-    });
-  }
-  return result;
+): Promise<CommandResult | null> {
+  return runCommandDocument(
+    db,
+    `adminCommands/${commandId}`,
+    data,
+    authId,
+    (uid) => run(db, commandId, uid, data, context, now)
+  );
 }
 
 async function run(
   db: Firestore,
   commandId: string,
+  uid: string,
   data: Record<string, unknown>,
-  authId: string | undefined,
   context: AdminContext,
   now: number
-): Promise<AdminResult | null> {
-  const uid = data['uid'];
-  if (typeof uid !== 'string' || authId !== uid) {
-    return { ok: false, error: 'not-writer' };
-  }
+): Promise<CommandResult | null> {
   if (!(await context.isOwner(uid))) {
     return { ok: false, error: 'not-admin' };
   }

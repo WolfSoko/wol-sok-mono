@@ -1,3 +1,4 @@
+import type { CommandResult } from '@wolsok/feat-shared-bacteria-engine';
 import {
   type DocumentReference,
   type Firestore,
@@ -13,7 +14,6 @@ import {
   publicCopiesNaming,
   takeDownPublic,
 } from '../gallery/publish';
-import type { CommandResult } from './command';
 import {
   type ForgettableReplay,
   forgetChanges,
@@ -114,7 +114,7 @@ export async function forgetForPlayer(
     return null;
   }
   if (outcome === 'ranking') {
-    return { ok: false, reason: 'ranking' };
+    return { ok: false, error: 'ranking' };
   }
   const copies = await publicCopiesNaming(db, uid, replayId);
   await Promise.all(
@@ -123,7 +123,7 @@ export async function forgetForPlayer(
   await anonymiseCopies(db, uid, copies);
   return outcome === 'forgotten' || copies.length > 0
     ? { ok: true }
-    : { ok: false, reason: 'not-found' };
+    : { ok: false, error: 'not-found' };
 }
 
 /**

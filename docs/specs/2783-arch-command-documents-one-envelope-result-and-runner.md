@@ -60,7 +60,8 @@ exported to the admin through `@wolsok/feat-lazy-bac-game/admin-kit`).
   `replayCommand`): an account deletion may take a pending command while it
   runs; nobody is left to read the result.
 - **`parseReplayCommand` is strict** like `parseAdminCommand`: only the
-  envelope keys plus `type` and `replayId`, `replayId` as the rules take it
+  envelope keys, the fields the functions write on it (`result`, and
+  `claimed` from `forget`) plus `type` and `replayId`, `replayId` as the rules take it
   (`[A-Za-z0-9_-]{1,64}`). The rules allow nothing else, so nothing that
   runs today is refused.
 - **The engine's admin command parser takes `COMMAND_ENVELOPE_KEYS`** in

@@ -472,23 +472,23 @@ describe('replayCommand', () => {
     });
   });
 
-  it('refuses a writer acting for another player, or a stranger to the match', async () => {
-    expect(
-      await run({ uid: 'ada', type: 'remove', replayId: 'r1' }, 'eve')
-    ).toEqual({ ok: false, reason: 'not-writer' });
+  it('refuses a stranger to the match, and a command that is not one', async () => {
     expect(
       await run({ uid: 'eve', type: 'remove', replayId: 'r1' }, 'eve')
-    ).toEqual({ ok: false, reason: 'not-found' });
+    ).toEqual({ ok: false, error: 'not-found' });
+    expect(
+      await run({ uid: 'ada', type: 'delete', replayId: 'r1' }, 'ada')
+    ).toEqual({ ok: false, error: 'malformed' });
   });
 
   it("refuses a banned player, and the owner's types to anybody else", async () => {
     await db.doc('bans/ada').set({ until: null });
     expect(
       await run({ uid: 'ada', type: 'remove', replayId: 'r1' }, 'ada')
-    ).toEqual({ ok: false, reason: 'banned' });
+    ).toEqual({ ok: false, error: 'banned' });
     expect(
       await run({ uid: 'bob', type: 'unfeature', replayId: 'r1' }, 'bob')
-    ).toEqual({ ok: false, reason: 'not-admin' });
+    ).toEqual({ ok: false, error: 'not-admin' });
     expect((await db.doc('adminAudit/c1').get()).exists).toBe(false);
   });
 });
@@ -622,15 +622,11 @@ describe('forget', () => {
     ).toBeNull();
     expect((await forget('ada', 'mine')).result).toEqual({
       ok: false,
-      reason: 'not-found',
+      error: 'not-found',
     });
     expect((await forget('eve', 'mine')).result).toEqual({
       ok: false,
-      reason: 'not-found',
-    });
-    expect((await forget('ada', 'mine', 'eve')).result).toEqual({
-      ok: false,
-      reason: 'not-writer',
+      error: 'not-found',
     });
   });
 
@@ -644,7 +640,7 @@ describe('forget', () => {
     });
     expect((await forget('ada', 'ranked')).result).toEqual({
       ok: false,
-      reason: 'ranking',
+      error: 'ranking',
     });
     await db.doc('replays/ranked').update({ rankedReason: 'counted' });
     expect((await forget('ada', 'ranked')).result).toEqual({ ok: true });
@@ -664,7 +660,7 @@ describe('forget', () => {
     for (const uid of ['ada', 'bob']) {
       expect((await forget(uid, 'waiting')).result).toEqual({
         ok: false,
-        reason: 'ranking',
+        error: 'ranking',
       });
     }
     await closeNotReported(db, NOW);

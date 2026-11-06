@@ -1,12 +1,11 @@
+import type {
+  CommandResult,
+  ReplayCommandType,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { GameCloud } from './game-cloud';
-import type {
-  ReplayCommandResult,
-  ReplayCommandType,
-  ReplayListing,
-  ReplaySubmission,
-} from './replay-records';
+import type { ReplayListing, ReplaySubmission } from './replay-records';
 
 /**
  * Where the player's recorded matches go: to the game's project, whose
@@ -59,5 +58,5 @@ export abstract class GameReplays {
   /** What came of a command - null until the server answered. */
   public abstract watchCommand(
     commandId: string
-  ): Observable<ReplayCommandResult | null>;
+  ): Observable<CommandResult | null>;
 }

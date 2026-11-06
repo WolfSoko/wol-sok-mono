@@ -1,3 +1,7 @@
+import type {
+  CommandResult,
+  ReplayCommandType,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { replayToBytes } from '@wolsok/feat-shared-bacteria-engine';
 import type { GameReplays } from '../lib/storage/game-replays';
@@ -5,8 +9,6 @@ import {
   hintOf,
   MAX_REPLAY_LIST,
   onlineIdOf,
-  ReplayCommandResult,
-  ReplayCommandType,
   ReplayListing,
   ReplaySubmission,
 } from '../lib/storage/replay-records';
@@ -26,7 +28,7 @@ export class FakeGameReplays implements GameReplays {
     ReadonlyMap<string, ReplaySubmission>
   >(new Map());
   private readonly pending: [string, ReplaySubmission][] = [];
-  private readonly results = new Map<string, ReplayCommandResult>();
+  private readonly results = new Map<string, CommandResult>();
   private readonly changes = new Map<string, Partial<ReplayListing>>();
   private next = 0;
   /**
@@ -34,7 +36,7 @@ export class FakeGameReplays implements GameReplays {
    * while the boards may still rank it. One it does not keep is
    * `not-found`.
    */
-  public forgetAnswer: ReplayCommandResult = { ok: true };
+  public forgetAnswer: CommandResult = { ok: true };
 
   public constructor(
     private readonly autoAccept = false,
@@ -117,9 +119,9 @@ export class FakeGameReplays implements GameReplays {
     const id = `c_fake${this.next++}`;
     const saved = new Map(this.saved.value);
     if (type === 'forget') {
-      const result: ReplayCommandResult = saved.has(replayId)
+      const result: CommandResult = saved.has(replayId)
         ? this.forgetAnswer
-        : { ok: false, reason: 'not-found' };
+        : { ok: false, error: 'not-found' };
       if (result.ok) {
         // In the cloud the player leaves the replay, so it leaves the list.
         saved.delete(replayId);
@@ -140,13 +142,11 @@ export class FakeGameReplays implements GameReplays {
       saved.delete(replayId);
     }
     this.saved.next(saved);
-    this.results.set(id, ok ? { ok } : { ok, reason: 'refused' });
+    this.results.set(id, ok ? { ok } : { ok, error: 'refused' });
     return id;
   }
 
-  public watchCommand(
-    commandId: string
-  ): Observable<ReplayCommandResult | null> {
+  public watchCommand(commandId: string): Observable<CommandResult | null> {
     return this.saved.pipe(map(() => this.results.get(commandId) ?? null));
   }
 }
