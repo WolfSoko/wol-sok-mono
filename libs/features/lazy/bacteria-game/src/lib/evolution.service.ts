@@ -100,7 +100,8 @@ export class EvolutionService {
     },
     onStored: () => this.trustsPick.set(false),
   });
-  private readonly state = this.document.value;
+  /** Everything held. */
+  public readonly evolution = this.document.value;
 
   public constructor() {
     inject(DestroyRef).onDestroy(() => this.waiting?.unsubscribe());
@@ -121,40 +122,41 @@ export class EvolutionService {
    */
   public readonly settled = computed(() => this.loaded() || this.waitedOut());
 
-  /** Everything held. */
-  public readonly evolution = this.state;
-
   /** The DNA all the XP so far has earned, spent or not. */
   public readonly earned = computed(() => dnaEarned(this.progress.xp()));
 
   /** The DNA left to spend - 0 after a merge that spent more. */
   public readonly dna = computed(() =>
-    availableDna(this.earned(), this.state())
+    availableDna(this.earned(), this.evolution())
   );
 
   /** True when the DNA left buys something - the menu's badge. */
   public readonly canEvolve = computed(
-    () => this.loaded() && canBuyAnything(this.earned(), this.state())
+    () => this.loaded() && canBuyAnything(this.earned(), this.evolution())
   );
 
   /** What the player takes into a match against the computer. */
-  public readonly loadout = computed((): Loadout => loadoutOf(this.state()));
+  public readonly loadout = computed((): Loadout =>
+    loadoutOf(this.evolution())
+  );
 
   /** The weapon carried into the next match, null for none. */
-  public readonly equipped = computed(() => this.state().equipped);
+  public readonly equipped = computed(() => this.evolution().equipped);
 
   /** The DNA left while it buys a skin, 0 otherwise - the My Colony tile's badge. */
   public readonly skinDna = computed(() =>
-    this.loaded() && canBuyAnySkin(this.earned(), this.state()) ? this.dna() : 0
+    this.loaded() && canBuyAnySkin(this.earned(), this.evolution())
+      ? this.dna()
+      : 0
   );
 
   public level(gene: GeneId): number {
-    return levelOf(this.state(), gene);
+    return levelOf(this.evolution(), gene);
   }
 
   /** The cost of a gene's next level, null once it is at the top. */
   public geneCost(gene: GeneId): number | null {
-    return nextGeneCost(this.state(), gene);
+    return nextGeneCost(this.evolution(), gene);
   }
 
   public weaponCost(weapon: WeaponId): number {
@@ -162,12 +164,12 @@ export class EvolutionService {
   }
 
   public owns(weapon: WeaponId): boolean {
-    return this.state().weapons.includes(weapon);
+    return this.evolution().weapons.includes(weapon);
   }
 
   /** True for a skin the player may wear: free, or bought. */
   public ownsSkin(skin: BacteriaLook): boolean {
-    return ownsSkin(this.state(), skin);
+    return ownsSkin(this.evolution(), skin);
   }
 
   /**
@@ -180,7 +182,9 @@ export class EvolutionService {
    * `computed` over it follows along.
    */
   public wornSkin(look: BacteriaLook): BacteriaLook {
-    return this.trustsPick() || ownsSkin(this.state(), look) ? look : 'slime';
+    return this.trustsPick() || ownsSkin(this.evolution(), look)
+      ? look
+      : 'slime';
   }
 
   /**
@@ -193,7 +197,7 @@ export class EvolutionService {
   );
 
   public canBuySkin(skin: BacteriaLook): boolean {
-    return this.loaded() && canBuySkin(this.earned(), this.state(), skin);
+    return this.loaded() && canBuySkin(this.earned(), this.evolution(), skin);
   }
 
   /** Buys a skin, if the DNA left pays for it. Returns whether it did. */
@@ -207,11 +211,13 @@ export class EvolutionService {
   }
 
   public canBuyGene(gene: GeneId): boolean {
-    return this.loaded() && canBuyGene(this.earned(), this.state(), gene);
+    return this.loaded() && canBuyGene(this.earned(), this.evolution(), gene);
   }
 
   public canBuyWeapon(weapon: WeaponId): boolean {
-    return this.loaded() && canBuyWeapon(this.earned(), this.state(), weapon);
+    return (
+      this.loaded() && canBuyWeapon(this.earned(), this.evolution(), weapon)
+    );
   }
 
   /** Breeds a gene one level up, if the DNA left pays for it. Returns whether it did. */
@@ -258,7 +264,7 @@ export class EvolutionService {
 
   /** Gives every strand back: no gene, no weapon. Free. The skins stay. */
   public reset(): void {
-    const held = this.state();
+    const held = this.evolution();
     this.document.apply(resetEvolution(held), (stored) =>
       resetEvolution(held, stored)
     );
@@ -272,7 +278,7 @@ export class EvolutionService {
   private apply(
     change: (evolution: EvolutionProgress) => EvolutionProgress
   ): void {
-    const held = this.state();
+    const held = this.evolution();
     this.document.apply(change(held), (stored) =>
       change(mergeEvolution(stored, held))
     );

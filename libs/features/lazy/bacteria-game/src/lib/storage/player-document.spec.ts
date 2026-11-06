@@ -36,12 +36,20 @@ describe('playerDocument', () => {
   let account: FakeGameAccount;
   let device: LateGameStorage;
 
-  function create(
-    stored: Record<string, unknown> = {},
-    options: Partial<PlayerDocumentOptions<Badges>> = {},
-    onDevice: Record<string, unknown> = {},
-    cloud = true
-  ): PlayerDocument<Badges> {
+  interface Setup extends Partial<PlayerDocumentOptions<Badges>> {
+    /** What the guest's storage holds. */
+    stored?: Record<string, unknown>;
+    /** What the device's storage holds. */
+    onDevice?: Record<string, unknown>;
+    cloud?: boolean;
+  }
+
+  function create({
+    stored = {},
+    onDevice = {},
+    cloud = true,
+    ...options
+  }: Setup = {}): PlayerDocument<Badges> {
     TestBed.resetTestingModule();
     account = new FakeGameAccount('guest');
     Object.defineProperty(account, 'cloud', { value: cloud });
@@ -60,14 +68,12 @@ describe('playerDocument', () => {
   }
 
   function add(document: PlayerDocument<Badges>, badge: string): void {
-    const held = document.value();
-    document.apply(union(held, [badge]), (stored) =>
-      union(stored, union(held, [badge]))
-    );
+    const next = union(document.value(), [badge]);
+    document.apply(next, (stored) => union(stored, next));
   }
 
   it('holds the empty value until the storage answers, then the stored one', () => {
-    const document = create({ [KEY]: ['gold'] });
+    const document = create({ stored: { [KEY]: ['gold'] } });
 
     expect(document.loaded()).toBe(false);
     expect(document.value()).toEqual([]);
@@ -77,7 +83,7 @@ describe('playerDocument', () => {
   });
 
   it('merges what the storage tells into what changed here meanwhile', () => {
-    const document = create({ [KEY]: ['gold'] });
+    const document = create({ stored: { [KEY]: ['gold'] } });
 
     add(document, 'silver');
     expect(document.value()).toEqual(['silver']);
@@ -98,7 +104,7 @@ describe('playerDocument', () => {
   });
 
   it('keeps the value it holds for a stored value equal to it', () => {
-    const document = create({ [KEY]: ['gold'] });
+    const document = create({ stored: { [KEY]: ['gold'] } });
     account.flush();
     const held = document.value();
 
@@ -109,7 +115,7 @@ describe('playerDocument', () => {
   });
 
   it('reads an unreadable stored value as empty', () => {
-    const document = create({ [KEY]: { not: 'badges' } });
+    const document = create({ stored: { [KEY]: { not: 'badges' } } });
     account.flush();
 
     expect(document.value()).toEqual([]);
@@ -119,7 +125,7 @@ describe('playerDocument', () => {
   describe('when another player takes over', () => {
     it("starts over from the next player's value", () => {
       const onSwitch = jest.fn();
-      const document = create({ [KEY]: ['gold'] }, { onSwitch });
+      const document = create({ stored: { [KEY]: ['gold'] }, onSwitch });
       account.flush();
       account.seed('ada', { [KEY]: ['silver'] });
 
@@ -149,7 +155,7 @@ describe('playerDocument', () => {
 
     it("adds the guest's value to the account signed in to, once", () => {
       const adopt = jest.fn(union);
-      const document = create({ [KEY]: ['gold'] }, { adopt });
+      const document = create({ stored: { [KEY]: ['gold'] }, adopt });
       account.flush();
       account.seed('ada', { [KEY]: ['silver'] });
 
@@ -163,7 +169,7 @@ describe('playerDocument', () => {
 
     it('adopts nothing from a guest who held nothing', () => {
       const adopt = jest.fn(union);
-      create({}, { adopt });
+      create({ adopt });
       account.flush();
 
       account.switchTo('ada', true);
@@ -176,7 +182,10 @@ describe('playerDocument', () => {
 
   describe('the copy this device kept before the cloud', () => {
     it('goes to the first player, once, and leaves the device', () => {
-      const document = create({ [KEY]: ['silver'] }, {}, { [KEY]: ['gold'] });
+      const document = create({
+        stored: { [KEY]: ['silver'] },
+        onDevice: { [KEY]: ['gold'] },
+      });
 
       device.flush();
       account.flush();
@@ -196,7 +205,7 @@ describe('playerDocument', () => {
     });
 
     it('goes to no player who takes over before the device answered', () => {
-      create({}, {}, { [KEY]: ['gold'] });
+      create({ onDevice: { [KEY]: ['gold'] } });
       account.flush();
 
       account.switchTo('ada');
@@ -209,7 +218,7 @@ describe('playerDocument', () => {
     });
 
     it('stays on the device without the cloud', () => {
-      const document = create({}, {}, { [KEY]: ['gold'] }, false);
+      const document = create({ onDevice: { [KEY]: ['gold'] }, cloud: false });
       expect(account.cloud).toBe(false);
 
       device.flush();
@@ -230,7 +239,7 @@ describe('playerDocument', () => {
         }
       }
     );
-    const document = create({ [KEY]: ['gold'] }, { onStored });
+    const document = create({ stored: { [KEY]: ['gold'] }, onStored });
 
     account.flush();
     expect(onStored).toHaveBeenCalledWith(['gold'], expect.any(Function));

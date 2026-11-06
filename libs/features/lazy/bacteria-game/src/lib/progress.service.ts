@@ -108,7 +108,7 @@ export class ProgressService {
     onStored: (held, apply) => {
       const { progress, earned } = earnAchievements(held, null, today());
       if (earned.length > 0) {
-        apply(progress, storedWith(progress, countsNothing));
+        apply(progress, storedWith(progress));
       }
     },
   });
@@ -376,11 +376,6 @@ export class ProgressService {
   }
 }
 
-/** A write that adds no counts: what it stores only merges. */
-function countsNothing(stored: Progress): Progress {
-  return stored;
-}
-
 /**
  * How the progress is written: medallions and achievements merge with the
  * stored ones, the match's counts are added to the stored ones - not to the
@@ -389,7 +384,7 @@ function countsNothing(stored: Progress): Progress {
  */
 function storedWith(
   progress: Progress,
-  count: (progress: Progress) => Progress
+  count: (progress: Progress) => Progress = (stored) => stored
 ): (stored: Progress) => Progress {
   const gains = {
     ...progress,
