@@ -28,7 +28,7 @@ import {
   isRunOver,
   savedRegardless,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { GameStateService } from '../state/game-state.service';
+import { MatchRecorder } from '../state/match-recorder';
 import { GameStateStore } from '../state/game.states';
 import { GameReplays } from '../storage/game-replays';
 
@@ -37,7 +37,7 @@ import { GameReplays } from '../storage/game-replays';
  * the replay was saved - "saved" only once it is stored, and why not where
  * it is not ("Save my matches" is off) - and the way to watch it again
  * ("Watch replay"), which opens the stage's replay screen
- * on `GameStateService.lastRecording`. After the first match against the
+ * on `MatchRecorder.lastRecording`. After the first match against the
  * computer saved in the cloud it also says, once per device, that such
  * matches are saved and where to turn that off (the device setting
  * `recordingHintShown`).
@@ -89,7 +89,7 @@ export class ReplayNoteComponent {
   public readonly watch = output<void>();
 
   /** The recording of the match that just ended - null for none. */
-  private readonly recording = inject(GameStateService).lastRecording;
+  private readonly recording = inject(MatchRecorder).lastRecording;
 
   /**
    * Where saving the replay under `id` stands - `pending` for none, too.

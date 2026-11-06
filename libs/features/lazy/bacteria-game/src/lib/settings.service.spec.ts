@@ -13,6 +13,7 @@ import {
 } from './settings.service';
 import { I18nService } from './i18n/i18n.service';
 import { GameStateService } from './state/game-state.service';
+import { MatchRecorder } from './state/match-recorder';
 import { GameStateStore } from './state/game.states';
 import { DeviceStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
@@ -173,10 +174,7 @@ describe('GameSettingsService', () => {
 
     it('keeps and records matches by default, and hands the stored choice to the game', () => {
       const service = createWith({ saveMatches: false, recordLocal: false });
-      const prefs = jest.spyOn(
-        TestBed.inject(GameStateService),
-        'setReplayPrefs'
-      );
+      const recorder = TestBed.inject(MatchRecorder);
       expect(service.value('saveMatches')).toBe(true);
       expect(service.value('recordLocal')).toBe(true);
 
@@ -184,7 +182,7 @@ describe('GameSettingsService', () => {
 
       expect(service.value('saveMatches')).toBe(false);
       expect(service.value('recordLocal')).toBe(false);
-      expect(prefs).toHaveBeenLastCalledWith({
+      expect(recorder.prefs).toEqual({
         recordLocal: false,
         saveMatches: false,
       });
@@ -192,16 +190,10 @@ describe('GameSettingsService', () => {
 
     it('hands "Save my matches" to the game as switched before the storage answered', () => {
       const service = createWith({ saveMatches: true });
-      const prefs = jest.spyOn(
-        TestBed.inject(GameStateService),
-        'setReplayPrefs'
-      );
+      const recorder = TestBed.inject(MatchRecorder);
 
       service.set('saveMatches', false);
-      expect(prefs).toHaveBeenLastCalledWith({
-        recordLocal: true,
-        saveMatches: false,
-      });
+      expect(recorder.prefs).toEqual({ recordLocal: true, saveMatches: false });
       storage.flush();
       storage.flush();
 
@@ -210,10 +202,7 @@ describe('GameSettingsService', () => {
         saveMatches: false,
         recordLocal: true,
       });
-      expect(prefs).toHaveBeenLastCalledWith({
-        recordLocal: true,
-        saveMatches: false,
-      });
+      expect(recorder.prefs).toEqual({ recordLocal: true, saveMatches: false });
     });
 
     it('says when the stored settings are read', () => {

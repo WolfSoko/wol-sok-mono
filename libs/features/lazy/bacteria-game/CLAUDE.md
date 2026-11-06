@@ -6,9 +6,9 @@ Rules for working on `libs/features/lazy/bacteria-game`, on top of the repo's
 The engine (the match, its simulation, replays, levels, progress and the
 texts) is the lib `feat-shared-bacteria-engine` (`libs/features/bacteria-engine`,
 see its `CLAUDE.md`). Paths below that start with `state/`, or name the
-dictionaries in `i18n/`, are in that lib unless they name one of the four
+dictionaries in `i18n/`, are in that lib unless they name one of the five
 Angular files that stay here (`game-state.service.ts`, `game.states.ts`,
-`player.service.ts`, `player.store.ts`) or `match-rules.ts`. The game imports the engine only
+`match-recorder.ts`, `player.service.ts`, `player.store.ts`) or `match-rules.ts`. The game imports the engine only
 through `@wolsok/feat-shared-bacteria-engine`.
 
 ## Persistence: local storage or Firebase, behind ports
@@ -90,6 +90,14 @@ storage until then. Settings stay with the device either way.
   0012, owner's decision of 2026-10-25). Specs use `FakeGameBoards` and
   its `topRowsOf` (`src/testing/`). The main menu shows the screen with the
   cloud while the `leaderboards` toggle is on.
+- The match on the board is recorded by `MatchRecorder`
+  (`state/match-recorder.ts`): `GameStateService` calls `begin` with the
+  plan and how the match records as its colonies spawn, the engine samples
+  through `sample`, and `finish` scores the replay, sets `lastRecording`
+  (what the replay screens read) and submits it. It reads the engine only
+  through the `MatchTape` port, which `PlayerService` fills, so its specs
+  play a `MatchEngine` instead of the whole service. The settings hand it
+  the replay preferences (`setPrefs`, from `syncReplayPrefs` only).
 - Recorded matches (ADR 0011) go through the `GameReplays` port
   (`storage/game-replays.ts`), asked of `GameCloud.replays()`:
   `FirestoreGameReplays` once the project takes them
@@ -333,6 +341,13 @@ storage until then. Settings stay with the device either way.
 
 ## Online matches: keep the engine deterministic
 
+`OnlineSeatSync` (`net/online-seat-sync.ts`) keeps this device's seat in
+step with the other one: it follows `OnlineMatchService.events$`, owns the
+colour handshake (the guest offers its pick, the host makes the pair and
+shares the setup), starts the match (`matchStart`) and hands its changes
+to `GameStateService` as patches (`changes$`), which applies them and
+ends the match when the connection goes.
+
 Online matches run in lockstep (`net/lockstep.ts`, ADR 0009): both devices
 play the same `MatchEngine` from the same seed and the same inputs. Anything
 that changes what a tick does from those - a `Math.random`, the wall clock,
@@ -529,8 +544,9 @@ play each other.
   `HudState` (`hud/`: what the HUD, the panels and the menus show of the
   match and its setup; read-only, the clock's text in the pure
   `match-clock.ts`), `PlayFlow` (`flow/`: the open screen and panel, the
-  modes a new game starts, the ranked declarations, starting, pausing and
-  clearing a match; the mode last played is the pure `playKindOf` in
+  modes a new game starts, the ranked declarations, starting (through
+  `GameStateService.startMatch`, which owns the frame loop's order),
+  pausing and clearing a match; the mode last played is the pure `playKindOf` in
   `play-kind.ts`), `MatchSetup` (the menus' picks for the next match),
   `OnlineFlow` (hosting, joining, challenges, the matchmaking's and the
   host's starts, and what a link's hash brings in; `start()` sets it

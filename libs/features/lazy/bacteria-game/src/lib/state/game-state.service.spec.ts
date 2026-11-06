@@ -11,7 +11,6 @@ import {
   LADDER_REPLAY_VERSION,
   LADDER_VERSION,
   levelCrosshairSpeed,
-  LEVELS,
   matchChecksum,
   MatchEngine,
   onlineReplayId,
@@ -29,6 +28,7 @@ import {
 import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
 import { GameStateService } from './game-state.service';
+import { MatchRecorder } from './match-recorder';
 import { GameState, GameStateStore } from './game.states';
 import { SETUP_MATCH } from './match-rules';
 import { PlayerStore } from './player.store';
@@ -242,8 +242,7 @@ describe('GameStateService', () => {
 
     it('counts the ticks of a frame on the match clock', () => {
       service.setArenaSize(WIDTH, HEIGHT);
-      service.init(WIDTH, HEIGHT);
-      service.start();
+      service.startMatch({ width: WIDTH, height: HEIGHT });
 
       service.advance(WIDTH, HEIGHT, 3);
 
@@ -252,8 +251,7 @@ describe('GameStateService', () => {
 
     it('lands on every second exactly', () => {
       service.setArenaSize(WIDTH, HEIGHT);
-      service.init(WIDTH, HEIGHT);
-      service.start();
+      service.startMatch({ width: WIDTH, height: HEIGHT });
 
       for (let frame = 0; frame < 60; frame++) {
         service.advance(WIDTH, HEIGHT, 1);
@@ -266,8 +264,7 @@ describe('GameStateService', () => {
       service.setMode('vs-computer');
       service.setDifficulty('hard');
       service.setArenaSize(WIDTH, HEIGHT);
-      service.init(WIDTH, HEIGHT);
-      service.start();
+      service.startMatch({ width: WIDTH, height: HEIGHT });
       const players = TestBed.inject(PlayerService);
 
       store.update({ keysPressed: ['d'] });
@@ -280,7 +277,9 @@ describe('GameStateService', () => {
         service.advance(WIDTH, HEIGHT, 3);
       }
 
-      const replay = service['replay']() as Replay;
+      const replay = TestBed.inject(MatchRecorder).replay(
+        TestBed.inject(PlayerService)
+      ) as Replay;
       // Against the ladder's computer (ADR 0016): version 4.
       expect(replay.header).toEqual(
         expect.objectContaining({
@@ -297,8 +296,7 @@ describe('GameStateService', () => {
 
     it('plays no tick of the frame after the one that ended the match', () => {
       service.setArenaSize(WIDTH, HEIGHT);
-      service.init(WIDTH, HEIGHT);
-      service.start();
+      service.startMatch({ width: WIDTH, height: HEIGHT });
       const players = TestBed.inject(PlayerService);
       const tick = jest.spyOn(players, 'tick').mockImplementation(() => {
         if (tick.mock.calls.length === 2) {
@@ -365,7 +363,6 @@ describe('GameStateService', () => {
       service.setMode(mode);
       service.setLevel('hourglass');
       service.setArenaSize(WIDTH, HEIGHT);
-      service.init(WIDTH, HEIGHT);
       winMatch();
     }
 
@@ -417,7 +414,6 @@ describe('GameStateService', () => {
 
       beforeEach(() => {
         service.setArenaSize(WIDTH, HEIGHT);
-        service.init(WIDTH, HEIGHT);
       });
 
       it('climbs a level with every win and keeps the best run', () => {
@@ -477,7 +473,6 @@ describe('GameStateService', () => {
         service.setMode('two-players');
         service.setLevel('corridors');
         service.setArenaSize(WIDTH, HEIGHT);
-        service.init(WIDTH, HEIGHT);
 
         service.playDaily('2026-10-20');
         winMatch();
@@ -531,7 +526,6 @@ describe('GameStateService', () => {
         service.setDifficulty('hard');
         service.setLevel('corridors');
         service.setArenaSize(WIDTH, HEIGHT);
-        service.init(WIDTH, HEIGHT);
 
         service.playMission('fight');
         winMatch();
@@ -772,6 +766,7 @@ describe('GameStateService online', () => {
   let playerStore: PlayerStore;
   let online: FakeOnlineMatch;
   let replays: FakeGameReplays;
+  let recorder: MatchRecorder;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
@@ -784,6 +779,7 @@ describe('GameStateService online', () => {
       ],
     });
     service = TestBed.inject(GameStateService);
+    recorder = TestBed.inject(MatchRecorder);
     store = TestBed.inject(GameStateStore);
     playerStore = TestBed.inject(PlayerStore);
     service.setArenaSize(320, 180);
@@ -850,36 +846,36 @@ describe('GameStateService online', () => {
     expect(state.online).toBeNull();
   });
 
-  it('takes no big map online', () => {
-    service.setLevel('expanse');
-
-    online.connect(0);
-
-    expect(store.snapshot().online?.levelId).toBe(LEVELS[0].id);
-  });
-
-  it('ends a match out of step even while it waits for the other device', () => {
-    online.connect(0);
-    service.start();
-    for (let frame = 0; frame < INPUT_DELAY_TICKS + 2; frame++) {
-      service.advance(320, 180, 1);
-    }
-    const lockstep = online.startMatch.mock.results[0].value as Lockstep;
-
-    lockstep.putRemoteSum(60, 1);
-    lockstep.ticked(60, playerStore.entities());
-    service.advance(320, 180, 1);
-
-    expect(store.snapshot().endedBy).toBe('desync');
-    expect(store.snapshot().winner).toBeNull();
-  });
-
   it('starts nothing as the guest until the host started', () => {
     online.connect(1);
 
     service.start();
 
     expect(store.snapshot().currentState).toBe(GameState.START);
+  });
+
+  it("spawns the board anew on the host's setup", () => {
+    online.connect(1);
+    const init = jest.spyOn(TestBed.inject(PlayerService), 'init');
+
+    online.events.next({
+      type: 'setup',
+      setup: { levelId: 'serpentine', colors: ['green', 'purple'] },
+    });
+
+    expect(store.snapshot().online?.levelId).toBe('serpentine');
+    expect(init).toHaveBeenCalledTimes(1);
+  });
+
+  it("spawns the board anew on the guest's colours, even for the same pair", () => {
+    online.connect(0);
+    const init = jest.spyOn(TestBed.inject(PlayerService), 'init');
+    const { colors, online: seat } = store.snapshot();
+
+    online.events.next({ type: 'colors', colors: [colors[1], colors[0]] });
+
+    expect(store.snapshot().online).toBe(seat);
+    expect(init).toHaveBeenCalledTimes(1);
   });
 
   describe('the recording', () => {
@@ -956,7 +952,7 @@ describe('GameStateService online', () => {
       online.events.next({ type: 'ended', reason: 'left' });
       await Promise.resolve();
 
-      const recording = service.lastRecording();
+      const recording = recorder.lastRecording();
       expect(recording).not.toBeNull();
       const replay = recording?.replay as Replay;
       expect(replay.header).toEqual(
@@ -987,17 +983,6 @@ describe('GameStateService online', () => {
       });
       expect(guestReplay?.checksum).toBe(matchChecksum(other.engine.players));
     });
-
-    it('keeps an online match even with saving off', async () => {
-      service.setReplayPrefs({ saveMatches: false });
-      online.connect(0);
-      service.start();
-      online.events.next({ type: 'ended', reason: 'left' });
-      await Promise.resolve();
-
-      expect(replays.submissions).toHaveLength(1);
-      expect(replays.submissions[0].replay.header.roomCode).toBe('K7QPXM');
-    });
   });
 });
 
@@ -1006,6 +991,7 @@ describe('GameStateService local recordings', () => {
   let store: GameStateStore;
   let players: PlayerService;
   let replays: FakeGameReplays;
+  let recorder: MatchRecorder;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
@@ -1014,11 +1000,12 @@ describe('GameStateService local recordings', () => {
       providers: [{ provide: GameReplays, useValue: replays }],
     });
     service = TestBed.inject(GameStateService);
+    recorder = TestBed.inject(MatchRecorder);
     store = TestBed.inject(GameStateStore);
     players = TestBed.inject(PlayerService);
     service.setLevel('petri-dish');
     // Off by default until the CPU's medal limits are checked (ADR 0011).
-    service.setReplayPrefs({ recordLocal: true });
+    recorder.setPrefs({ recordLocal: true });
   });
 
   afterEach(() => {
@@ -1048,8 +1035,7 @@ describe('GameStateService local recordings', () => {
   ): Promise<void> {
     service.setMode(mode);
     service.setArenaSize(width, height);
-    service.init(width, height);
-    service.start();
+    service.startMatch({ width, height });
     for (let frame = 0; frame < 120; frame++) {
       store.update({ keysPressed: frame < 60 ? ['d'] : ['w'] });
       if (frame === 119) {
@@ -1067,7 +1053,7 @@ describe('GameStateService local recordings', () => {
 
     await play('vs-computer');
 
-    const recording = service.lastRecording();
+    const recording = recorder.lastRecording();
     const replay = recording?.replay as Replay;
     // A ladder match against the computer: its computer plays the curve.
     expect(replay.header).toEqual(
@@ -1091,23 +1077,14 @@ describe('GameStateService local recordings', () => {
     expect(store.snapshot().lastReplay).toBe(replay);
   });
 
-  it('keeps nothing with "Save my matches" off, but still records', async () => {
-    service.setReplayPrefs({ saveMatches: false });
-
-    await play('vs-computer');
-
-    expect(service.lastRecording()).not.toBeNull();
-    expect(replays.submissions).toEqual([]);
-  });
-
   it('records nothing on the GPU with recording off', async () => {
     useGpu();
-    service.setReplayPrefs({ recordLocal: false });
+    recorder.setPrefs({ recordLocal: false });
 
     await play('vs-computer');
 
     expect(players.getSimulation().kind).toBe('gpu');
-    expect(service.lastRecording()).toBeNull();
+    expect(recorder.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
     // Still a run for a ghost race.
     expect(store.snapshot().lastReplay?.header.simulation).toBe('gpu');
@@ -1116,7 +1093,7 @@ describe('GameStateService local recordings', () => {
   it('records no couch match', async () => {
     await play('two-players');
 
-    expect(service.lastRecording()).toBeNull();
+    expect(recorder.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
   });
 
@@ -1127,7 +1104,7 @@ describe('GameStateService local recordings', () => {
 
     await play('vs-computer');
 
-    expect(service.lastRecording()).toBeNull();
+    expect(recorder.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
   });
 
@@ -1140,7 +1117,7 @@ describe('GameStateService local recordings', () => {
     async (_grid, width, height) => {
       await play('vs-computer', width, height);
 
-      const recording = service.lastRecording();
+      const recording = recorder.lastRecording();
       const replay = recording?.replay as Replay;
       expect(replay.header).toEqual(
         expect.objectContaining({
@@ -1169,7 +1146,7 @@ describe('GameStateService local recordings', () => {
       expect.not.objectContaining({ recordedSeats: expect.anything() })
     );
     expect(players.getSimulation().kind).toBe('gpu');
-    expect(service.lastRecording()).toBeNull();
+    expect(recorder.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
     expect(store.snapshot().lastReplay?.header.simulation).toBe('gpu');
   });
@@ -1182,6 +1159,7 @@ describe('GameStateService ranked matches', () => {
   let store: GameStateStore;
   let players: PlayerService;
   let replays: FakeGameReplays;
+  let recorder: MatchRecorder;
 
   function declared(id: string, uid = 'ada'): RankedMatch {
     return { attempt: { id, at: AT }, seed: attemptSeed(uid, id, AT) };
@@ -1194,10 +1172,11 @@ describe('GameStateService ranked matches', () => {
       providers: [{ provide: GameReplays, useValue: replays }],
     });
     service = TestBed.inject(GameStateService);
+    recorder = TestBed.inject(MatchRecorder);
     store = TestBed.inject(GameStateStore);
     players = TestBed.inject(PlayerService);
     // A player who records nothing and keeps nothing - and set up harder.
-    service.setReplayPrefs({ recordLocal: false, saveMatches: false });
+    recorder.setPrefs({ recordLocal: false, saveMatches: false });
     service.setDifficulty('hard');
     service.setHeadStart(2);
   });
@@ -1212,8 +1191,7 @@ describe('GameStateService ranked matches', () => {
   async function play(): Promise<void> {
     const { width, height } = rankedPlan(store.matchRules().levelId, 0);
     service.setArenaSize(width, height);
-    service.init(width, height);
-    service.start();
+    service.startMatch({ width, height });
     for (let frame = 0; frame < 10; frame++) {
       if (frame === 9) {
         jest
@@ -1231,7 +1209,7 @@ describe('GameStateService ranked matches', () => {
 
     await play();
 
-    const replay = service.lastRecording()?.replay as Replay;
+    const replay = recorder.lastRecording()?.replay as Replay;
     const { width, height } = rankedPlan(dailyLevelId(DAY), match.seed);
     expect(replay.header).toEqual(
       expect.objectContaining({
@@ -1279,8 +1257,7 @@ describe('GameStateService ranked matches', () => {
     });
     const { width, height } = rankedPlan(dailyLevelId(DAY), 0);
     service.setArenaSize(width, height);
-    service.init(width, height);
-    service.start();
+    service.startMatch({ width, height });
 
     service.togglePause();
     expect(store.snapshot().currentState).toBe(GameState.RUNNING);
@@ -1295,8 +1272,7 @@ describe('GameStateService ranked matches', () => {
     });
     const { width, height } = rankedPlan(dailyLevelId(DAY), 0);
     service.setArenaSize(width, height);
-    service.init(width, height);
-    service.start();
+    service.startMatch({ width, height });
 
     service.togglePause();
 
@@ -1329,7 +1305,7 @@ describe('GameStateService ranked matches', () => {
 
     await play();
 
-    expect(service.lastRecording()).toBeNull();
+    expect(recorder.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
     expect(store.matchRules().ranked).toEqual({
       match: null,

@@ -1,4 +1,4 @@
-import { Injectable, Injector, inject, signal, untracked } from '@angular/core';
+import { Injectable, inject, untracked } from '@angular/core';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
 import {
   animationFrames,
@@ -30,9 +30,7 @@ import {
   LADDER_VERSION,
   levelBalance,
   levelDifficulty,
-  LEVELS,
   levelSize,
-  matchChecksum,
   MatchEarnings,
   MatchOutcome,
   MatchPlan,
@@ -42,34 +40,23 @@ import {
   newRun,
   newSeries,
   ONLINE_SIM_RESOLUTION,
-  onlineColors,
   onOnlineGrid,
   parseAttemptId,
   perfProbeOf,
   pickColor,
   PLAIN_LOADOUT,
   planMatch,
-  playableOnline,
   Player,
   randomSeed,
   type RankedMatch,
   type RankedOutcome,
   rankedPlan,
   type RankedRunOutcome,
-  Replay,
-  ReplayExtras,
   replayFromHash,
-  replayOf,
-  replayOutcome,
-  replayScore,
-  type Ruleset,
   sameColors,
-  savedRegardless,
-  seatFirst,
   Series,
   SeriesLength,
   seriesWinner,
-  type SizeSample,
   TICK_MS,
   TickClock,
   ticksToMs,
@@ -83,14 +70,16 @@ import {
   isMatchOn,
   OnlineSeat,
 } from './game.states';
-import { GameReplays } from '../storage/game-replays';
+import { MatchRecorder, MatchRecording } from './match-recorder';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
 import { EvolutionService } from '../evolution.service';
-import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
-import type { Lockstep } from '../net/lockstep';
-import type { OnlineSetup } from '../net/net-message';
+import {
+  OnlineMatchStart,
+  OnlineSeatSync,
+  SeatChange,
+} from '../net/online-seat-sync';
 import { MatchAnalytics, MatchState } from '../analytics/match-analytics';
 import {
   type MatchKind,
@@ -117,27 +106,6 @@ const WAIT_NOTICE_FRAMES = 20;
 /** The seat a local match records: the human's - never the bot's. */
 const LOCAL_RECORDED_SEATS: ReadonlySet<number> = new Set([0]);
 
-/** A recorded match (ADR 0011), as the last match left it. */
-export interface MatchRecording {
-  /**
-   * The replay - version 2 to 5, on a ruleset. Only one on the online grid
-   * is handed over to be kept; another one is for watching again.
-   */
-  replay: Replay;
-  /** The client's `replayScore` of it, 0-100. */
-  hint: number;
-  /** The id it is kept under once handed over - null before, or if it is not. */
-  id: string | null;
-}
-
-/** What the player set about recording - see the settings. */
-export interface ReplayPrefs {
-  /** Local matches against the computer are recorded, on the device's ruleset. */
-  recordLocal: boolean;
-  /** Recorded local matches are kept; online ones always are (ADR 0012). */
-  saveMatches: boolean;
-}
-
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
   private gameStateStore = inject(GameStateStore);
@@ -145,40 +113,13 @@ export class GameStateService {
   private playerService = inject(PlayerService);
   private progress = inject(ProgressService);
   private evolution = inject(EvolutionService);
-  private online = inject(OnlineMatchService);
+  private readonly seatSync = inject(OnlineSeatSync);
   private matchAnalytics = inject(MatchAnalytics);
-  /**
-   * Asked for `GameReplays` only once a match is kept: asked any earlier,
-   * `GameCloud` would answer before the route named the project.
-   */
-  private injector = inject(Injector);
-  /** What the player set about recording - the settings tell, these until then. */
-  private replayPrefs: ReplayPrefs = {
-    recordLocal: true,
-    saveMatches: true,
-  };
-  /** Whether the match on the board is recorded, and how - null if not. */
-  private recordedAs: 'online' | 'local' | null = null;
-  /**
-   * The ranked attempt the match on the board was declared as - null for
-   * an unranked one. Such a match is recorded locally, and uploaded.
-   */
-  private rankedMatch: RankedMatch | null = null;
-  /** The room and number of the online match on the board. */
-  private onlineRef: { roomCode: string; n: number } | null = null;
-  /** The colony sizes after every second of the match on the board. */
-  private samples: SizeSample[] = [];
+  private readonly recorder = inject(MatchRecorder);
   /** What the colonies on the board were spawned from - see `initPlayers`. */
   private plan: MatchPlan | null = null;
-  /** True when evolution plays a part in that match - `planMatch` says. */
-  private planEvolved = false;
   /** Frames in a row an online match could not go on, waiting for the other device. */
   private stalledFrames = 0;
-  /**
-   * The host's word of the guest's own colours, null before it came - what
-   * the host makes the online pair from, with its own.
-   */
-  private guestColors: [string, string] | null = null;
 
   /**
    * The ticks of the display frames the game runs on - see
@@ -208,15 +149,8 @@ export class GameStateService {
    */
   public readonly frames$: Observable<GameFrame> = this.frames.asObservable();
 
-  /**
-   * The recording of the last match (ADR 0011) - online matches and local
-   * ones against the computer, on a ruleset (ADR 0015); null for any other,
-   * and for couch, ghost and float GPU matches.
-   */
-  public readonly lastRecording = signal<MatchRecording | null>(null);
-
   public constructor() {
-    this.online.events$.subscribe((event) => this.onOnline(event));
+    this.seatSync.changes$.subscribe((change) => this.applySeat(change));
   }
 
   /**
@@ -268,63 +202,19 @@ export class GameStateService {
     }
   }
 
-  /** Takes what the player set about recording - from the settings. */
-  public setReplayPrefs(prefs: Partial<ReplayPrefs>): void {
-    this.replayPrefs = { ...this.replayPrefs, ...prefs };
-  }
-
-  /** Follows the online match: the lobby, the host's setup, the connection. */
-  private onOnline(event: OnlineEvent): void {
-    switch (event.type) {
-      case 'connected': {
-        const state = this.gameStateStore.snapshot();
-        const levelId = playableOnline(getLevel(state.levelId))
-          ? state.levelId
-          : LEVELS[0].id;
-        this.guestColors = null;
-        // The guest waits for the host's pair in its own colour - and tells
-        // the host what it picked, for the host to make the pair from.
-        const colors =
-          event.seat === 0
-            ? onlineColors(state.colors, null)
-            : seatFirst(state.colors, 1);
-        this.gameStateStore.update({
-          levelId,
-          online: { seat: event.seat, levelId, colors },
-        });
-        if (event.seat === 0) {
-          this.online.share({ levelId, colors });
-        } else {
-          this.online.offerColors(state.colors);
-        }
-        this.respawnIfIdle();
-        return;
-      }
-      case 'colors': {
-        if (this.gameStateStore.snapshot().online?.seat === 0) {
-          this.guestColors = event.colors;
-          this.shareSetup();
-          this.respawnIfIdle();
-        }
-        return;
-      }
-      case 'setup': {
-        const { online } = this.gameStateStore.snapshot();
-        if (online !== null && !sameSetup(online, event.setup)) {
-          this.gameStateStore.update({
-            online: { ...online, ...event.setup },
-          });
-          this.respawnIfIdle();
-        }
-        return;
-      }
-      case 'ended':
-        this.endOnline();
-        return;
-      case 'start':
-        // The game component starts the match - see `start`.
-        return;
+  /**
+   * Takes what the online seat changed and spawns the next match anew - or
+   * ends the online match when the connection went.
+   */
+  private applySeat(change: SeatChange): void {
+    if (change.kind === 'ended') {
+      this.endOnline();
+      return;
     }
+    if (change.kind === 'patch') {
+      this.gameStateStore.update(change.patch);
+    }
+    this.respawnIfIdle();
   }
 
   /**
@@ -344,7 +234,6 @@ export class GameStateService {
         ) ?? null;
       this.endMatch({ winner, reason: 'forfeit' });
     }
-    this.guestColors = null;
     this.gameStateStore.update({ online: null, waitingForPeer: false });
     // A match it ended stays on the board under its result until reset.
     if (!matchOn) {
@@ -352,23 +241,23 @@ export class GameStateService {
     }
   }
 
-  /** The host tells the guest when the next match is set up anew. */
-  private shareSetup(): void {
-    const { online, levelId, colors } = this.gameStateStore.snapshot();
-    // The pair is made here and only here: the guest plays what it is sent.
-    const setup = { levelId, colors: onlineColors(colors, this.guestColors) };
-    if (online?.seat !== 0 || sameSetup(online, setup)) {
-      return;
-    }
-    this.gameStateStore.update({ online: { ...online, ...setup } });
-    this.online.share(setup);
-  }
-
   private isRunning(): boolean {
     return untracked(this.gameStateStore.currentState) === GameState.RUNNING;
   }
 
-  init(width: number, height: number) {
+  /**
+   * Starts the next match on an arena of that size: the frame loop of the
+   * last one stops, a fresh one waits for the match to run, and the match
+   * starts - in that order, which only this method keeps.
+   */
+  public startMatch(arena: { width: number; height: number }): void {
+    this.cleanup();
+    this.init(arena.width, arena.height);
+    this.start();
+  }
+
+  /** Sets the arena up for a match and runs the frame loop while it runs. */
+  private init(width: number, height: number): void {
     this.gameStateStore.update({
       width,
       height,
@@ -423,7 +312,7 @@ export class GameStateService {
         : null;
     const earnings = this.recordMatch(outcome.winner, run?.wins ?? null);
     this.matchAnalytics.ended(outcome, this.matchState(), earnings);
-    const recording = this.recording(outcome);
+    const recording = this.recorder.finish(outcome, this.playerService);
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
       ...this.lastReplayAfter(kind, outcome, recording),
@@ -468,111 +357,12 @@ export class GameStateService {
       case 'ghost':
         return {};
       default:
-        return { lastReplay: recording?.replay ?? this.replay(outcome) };
+        return {
+          lastReplay:
+            recording?.replay ??
+            this.recorder.replay(this.playerService, outcome),
+        };
     }
-  }
-
-  /**
-   * The recording of the match on the board, as far as it got - with its
-   * outcome and checksum once it has one, as a version 2 replay keeps them.
-   */
-  private replay(
-    outcome: MatchOutcome | null = null,
-    extras: ReplayExtras = {}
-  ): Replay | null {
-    const end = replayOutcome(outcome);
-    return this.plan == null
-      ? null
-      : replayOf(
-          this.plan,
-          this.playerService.getSimulation().ruleset ?? 'gpu',
-          this.playerService.tickCount,
-          this.playerService.recorded,
-          {
-            ...extras,
-            ...(end === null
-              ? {}
-              : {
-                  outcome: end,
-                  checksum: matchChecksum(this.playerService.players),
-                }),
-          },
-          this.planEvolved
-        );
-  }
-
-  /**
-   * The recording of a match that has just ended, handed over to be kept
-   * - online and ranked always, a local one with "Save my matches" on (ADR
-   * 0011, 0012), on whatever simulation resolution it was played. Null for
-   * a match that was not recorded.
-   */
-  private recording(outcome: MatchOutcome): MatchRecording | null {
-    const recordedAs = this.recordedAs;
-    const rankedMatch = this.rankedMatch;
-    this.recordedAs = null;
-    this.rankedMatch = null;
-    if (
-      recordedAs === null ||
-      this.playerService.getSimulation().ruleset === null ||
-      (recordedAs === 'online' && this.onlineRef === null)
-    ) {
-      this.lastRecording.set(null);
-      return null;
-    }
-    // A ranked match carries its attempt - on the one ruleset the boards
-    // take (ADR 0012, 0015), which it always plays.
-    const ranked =
-      this.playerService.getSimulation().ruleset === 'gpu-int'
-        ? rankedMatch
-        : null;
-    const replay = this.replay(
-      outcome,
-      recordedAs === 'online' && this.onlineRef !== null
-        ? { roomCode: this.onlineRef.roomCode, n: this.onlineRef.n }
-        : ranked !== null
-          ? { attempt: ranked.attempt }
-          : {}
-    );
-    const end = replayOutcome(outcome);
-    if (replay === null || end === null) {
-      this.lastRecording.set(null);
-      return null;
-    }
-    const { score } = replayScore({
-      samples: this.samples,
-      outcome: end,
-      ticks: replay.header.ticks,
-      online: recordedAs === 'online',
-    });
-    const recording: MatchRecording = { replay, hint: score, id: null };
-    this.lastRecording.set(recording);
-    // An online or ranked match is uploaded whatever the settings say.
-    const attempt = ranked?.attempt.id;
-    if (savedRegardless(replay.header) || this.replayPrefs.saveMatches) {
-      this.injector
-        .get(GameReplays)
-        .submit({
-          replay,
-          hint: score,
-          ...(attempt === undefined ? {} : { attempt }),
-        })
-        .then(
-          (id) => {
-            if (id !== null) {
-              this.matchAnalytics.replaySaved(
-                recordedAs === 'online',
-                attempt !== undefined
-              );
-            }
-            if (id !== null && this.lastRecording() === recording) {
-              this.lastRecording.set({ ...recording, id });
-            }
-          },
-          (error: unknown) => console.warn('The replay was not kept', error)
-        );
-    }
-    return recording;
   }
 
   /**
@@ -587,14 +377,11 @@ export class GameStateService {
       case 'ranked':
         return 'local';
       case 'local':
-        return this.replayPrefs.recordLocal ? 'local' : null;
+        return this.recorder.prefs.recordLocal ? 'local' : null;
       case 'none':
         return null;
     }
   }
-
-  /** Takes the colony sizes once a second, for the recording's score. */
-  private readonly sample = (sizes: SizeSample) => this.samples.push(sizes);
 
   /**
    * Remembers a match that has ended - against the computer its medallion
@@ -669,7 +456,6 @@ export class GameStateService {
       return;
     }
     const ghost = next.kind === 'ghost' ? next.run : null;
-    this.rankedMatch = null;
     this.plan = {
       levelId: rules.levelId,
       mode: rules.planMode,
@@ -696,14 +482,12 @@ export class GameStateService {
       }
     }
     const { spawns, options, evolved } = planMatch(this.plan, ghost);
-    this.planEvolved = evolved;
-    this.recordedAs = this.recordedAsFor(rules);
-    const records = this.recordedAs !== null;
-    this.onlineRef = null;
-    this.samples = [];
+    const recordedAs = this.recordedAsFor(rules);
+    this.recorder.begin(this.plan, { as: recordedAs, evolved });
+    const records = recordedAs !== null;
     this.playerService.init(spawns, {
       ...options,
-      onSecond: this.sample,
+      onSecond: this.recorder.sample,
       // On the online grid recorded on a ruleset, a simulation a replay
       // plays back on, whatever the device picks. On another grid the
       // device picks as it would unrecorded: a match the float GPU plays,
@@ -724,14 +508,14 @@ export class GameStateService {
   private initRanked(levelId: string, ranked: RankedMatch): void {
     this.plan = rankedPlan(levelId, ranked.seed);
     const { spawns, options, evolved } = planMatch(this.plan, null);
-    this.planEvolved = evolved;
-    this.rankedMatch = ranked;
-    this.recordedAs = this.recordedAsFor(this.gameStateStore.matchRules());
-    this.onlineRef = null;
-    this.samples = [];
+    this.recorder.begin(this.plan, {
+      as: this.recordedAsFor(this.gameStateStore.matchRules()),
+      ranked,
+      evolved,
+    });
     this.playerService.init(spawns, {
       ...options,
-      onSecond: this.sample,
+      onSecond: this.recorder.sample,
       recordedSeats: LOCAL_RECORDED_SEATS,
       ruleset: 'gpu-int',
     });
@@ -761,17 +545,18 @@ export class GameStateService {
       seat: online.seat,
       drivers: match?.lockstep.drivers() ?? new Map(),
     });
-    this.planEvolved = evolved;
     // Every online match is recorded - both seats, as the lockstep played.
-    this.recordedAs =
-      match === undefined
-        ? null
-        : this.recordedAsFor(this.gameStateStore.matchRules());
-    this.rankedMatch = null;
-    this.samples = [];
+    this.recorder.begin(this.plan, {
+      as:
+        match === undefined
+          ? null
+          : this.recordedAsFor(this.gameStateStore.matchRules()),
+      onlineRef: match?.ref ?? null,
+      evolved,
+    });
     this.playerService.init(spawns, {
       ...options,
-      onSecond: this.sample,
+      onSecond: this.recorder.sample,
       lockstep: match?.lockstep,
       ruleset: match?.ruleset,
     });
@@ -900,7 +685,7 @@ export class GameStateService {
    * blobs where the next match will actually begin - before that the store
    * still has its default size and would put them outside the canvas.
    */
-  setArenaSize(width: number, height: number): void {
+  public setArenaSize(width: number, height: number): void {
     this.gameStateStore.update({ width, height });
     this.initPlayers();
   }
@@ -933,16 +718,10 @@ export class GameStateService {
         JSON.stringify(setup[key]) !== JSON.stringify(current[key])
     );
     this.gameStateStore.update(changed ? { ...setup, series: null } : setup);
-    // The guest's colours are its own pick: the host makes the pair of
-    // the match from them.
-    if (
-      setup.colors !== undefined &&
-      setup.colors !== current.colors &&
-      current.online?.seat === 1
-    ) {
-      this.online.offerColors(setup.colors);
+    const seatPatch = this.seatSync.setupChanged(current);
+    if (seatPatch !== null) {
+      this.gameStateStore.update(seatPatch);
     }
-    this.shareSetup();
     this.respawnIfIdle();
   }
 
@@ -1029,15 +808,20 @@ export class GameStateService {
    * Starts the match, with what the player evolved as it is known now: the
    * match never waits on storage, and once it runs its loadouts are fixed.
    * The new game's Start waits for the evolution instead - see
-   * `EvolutionService.settled`.
+   * `EvolutionService.settled`. The stage starts a match with
+   * {@link startMatch}, which runs the frame loop too; this starts the
+   * match alone, for callers that advance it themselves (the specs).
    */
-  start(): void {
+  public start(): void {
     // Online wins over a one-match setting still set (see `nextMatch`).
     const next = this.gameStateStore.nextMatch();
     if (next.kind === 'online') {
-      const match = this.onlineMatch(next.seat);
+      const match = this.seatSync.matchStart(next.seat);
       if (match === null) {
         return;
+      }
+      if (match.seat !== next.seat) {
+        this.gameStateStore.update({ online: match.seat });
       }
       this.initPlayers(match);
       this.stalledFrames = 0;
@@ -1071,48 +855,19 @@ export class GameStateService {
   }
 
   /**
-   * The online match to start: the host picks the seed and tells the guest,
-   * the guest takes the match the host started - and neither starts one on
-   * its own. Null when there is none to start.
-   */
-  private onlineMatch(online: OnlineSeat): OnlineMatchStart | null {
-    if (online.seat === 0) {
-      const seed = randomSeed();
-      const ruleset = this.online.agreedRuleset();
-      const lockstep = this.online.startMatch({
-        levelId: online.levelId,
-        colors: online.colors,
-        seed,
-        ruleset,
-      });
-      this.onlineRef = this.online.matchRef();
-      return lockstep === null ? null : { seed, lockstep, ruleset };
-    }
-    const taken = this.online.takeStart();
-    if (taken === null) {
-      return null;
-    }
-    this.onlineRef = this.online.matchRef();
-    const { levelId, colors, seed, ruleset } = taken.start;
-    this.gameStateStore.update({ online: { ...online, levelId, colors } });
-    return { seed, lockstep: taken.lockstep, ruleset };
-  }
-
-  /**
    * Leaves the online match - the connection, and the match if one is on,
    * which the other device then wins.
    */
   public leaveOnline(): void {
-    if (this.online.lobby().phase === 'idle') {
+    if (!this.seatSync.connected) {
       return;
     }
     // Whoever leaves wins nothing: the match goes with the connection.
-    this.guestColors = null;
     this.gameStateStore.update({ online: null, waitingForPeer: false });
-    this.online.leave();
+    this.seatSync.leave();
   }
 
-  reset() {
+  public reset(): void {
     this.matchAnalytics.left(this.gameStateStore.snapshot().timePassed);
     this.gameStateStore.update(() => ({
       currentState: GameState.END,
@@ -1134,7 +889,7 @@ export class GameStateService {
    * button. Never pauses a ranked match: its attempt has a deadline from
    * the declaration on (ADR 0012), which a pause would quietly miss.
    */
-  togglePause(): void {
+  public togglePause(): void {
     const { canPause } = this.gameStateStore.matchRules();
     this.gameStateStore.update((state) => {
       if (state.currentState === GameState.RUNNING && canPause) {
@@ -1147,7 +902,7 @@ export class GameStateService {
     });
   }
 
-  addKeyPress(keyToAdd: string): void {
+  public addKeyPress(keyToAdd: string): void {
     if (keyToAdd.toLowerCase() === 'p') {
       this.togglePause();
       return;
@@ -1160,19 +915,19 @@ export class GameStateService {
     }));
   }
 
-  removeKeyPress(key: string): void {
+  public removeKeyPress(key: string): void {
     this.gameStateStore.update((state) => ({
       keysPressed: state.keysPressed.filter((keys) => key !== keys),
     }));
   }
 
-  cleanup(): void {
+  public cleanup(): void {
     this.pause();
     this.gameStateStore.update({ keysPressed: [], fps: 0 });
     this.subscriptions?.unsubscribe();
   }
 
-  pause() {
+  public pause(): void {
     this.gameStateStore.update({ currentState: GameState.PAUSED });
   }
 }
@@ -1185,11 +940,6 @@ function nextSeries(series: Series | null, length: SeriesLength): Series {
   return series !== null && seriesWinner(series) === null
     ? series
     : newSeries(length);
-}
-
-/** True when two online setups set the same match up. */
-function sameSetup(a: OnlineSetup, b: OnlineSetup): boolean {
-  return a.levelId === b.levelId && sameColors(a.colors, b.colors);
 }
 
 /** The seat of the player who won - 0 left, 1 right - null for a draw. */
@@ -1213,10 +963,3 @@ const SERIES_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
   'seriesLength',
   'headStart',
 ];
-
-/** An online match about to start: its seed, lockstep and agreed ruleset. */
-interface OnlineMatchStart {
-  seed: number;
-  lockstep: Lockstep;
-  ruleset: Ruleset;
-}
