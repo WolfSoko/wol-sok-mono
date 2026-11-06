@@ -1,84 +1,15 @@
 import { BehaviorSubject, Subscription } from 'rxjs';
-import type { FirebaseConnection } from './firebase-connection';
+import { FakeFirebase } from '../../testing/fake-firebase-sdk';
 import { FirestoreGameStorage } from './firestore-game-storage';
 
 const KEY = 'bacteria-game.progress';
 
-/**
- * Just enough of Firestore for the storage: documents by path, snapshot
- * listeners, transactions that fail while `offline` or `refused`.
- */
-class FakeFirestore {
-  public readonly docs = new Map<string, { json: string }>();
-  public writes = 0;
-  public offline = false;
-  public refused = false;
-  private readonly listeners = new Map<string, Set<() => void>>();
+const PATH_ALICE = `players/alice/storage/${KEY}`;
 
-  public readonly sdk = {
-    doc: (_db: unknown, ...segments: string[]) => ({
-      path: segments.join('/'),
-    }),
-    serverTimestamp: () => 'now',
-    onSnapshot: (
-      ref: { path: string },
-      next: (snapshot: unknown) => void
-    ): (() => void) => {
-      const tell = () => next(this.snapshot(ref.path));
-      const listeners = this.listeners.get(ref.path) ?? new Set();
-      listeners.add(tell);
-      this.listeners.set(ref.path, listeners);
-      queueMicrotask(tell);
-      return () => listeners.delete(tell);
-    },
-    setDoc: (ref: { path: string }, data: { json: string }) => {
-      this.store(ref.path, data);
-      return Promise.resolve();
-    },
-    runTransaction: async (
-      _db: unknown,
-      run: (transaction: unknown) => Promise<void>
-    ) => {
-      if (this.offline) {
-        throw Object.assign(new Error('offline'), { code: 'unavailable' });
-      }
-      if (this.refused) {
-        throw Object.assign(new Error('refused'), {
-          code: 'permission-denied',
-        });
-      }
-      const sets: [string, { json: string }][] = [];
-      await run({
-        get: async (ref: { path: string }) => this.snapshot(ref.path),
-        set: (ref: { path: string }, data: { json: string }) =>
-          sets.push([ref.path, data]),
-      });
-      sets.forEach(([path, data]) => this.store(path, data));
-    },
-  };
-
-  public connection(): FirebaseConnection {
-    return {
-      db: {},
-      dbSdk: this.sdk,
-    } as unknown as FirebaseConnection;
-  }
-
-  public value(uid: string): unknown {
-    const doc = this.docs.get(`players/${uid}/storage/${KEY}`);
-    return doc === undefined ? null : JSON.parse(doc.json);
-  }
-
-  private snapshot(path: string) {
-    const doc = this.docs.get(path);
-    return { get: (field: 'json') => doc?.[field] };
-  }
-
-  private store(path: string, data: { json: string }): void {
-    this.writes++;
-    this.docs.set(path, { json: data.json });
-    this.listeners.get(path)?.forEach((tell) => queueMicrotask(tell));
-  }
+/** What is stored for the player under the key, parsed. */
+function valueOf(firestore: FakeFirebase, uid: string): unknown {
+  const doc = firestore.docs.get(`players/${uid}/storage/${KEY}`);
+  return doc === undefined ? null : JSON.parse(doc['json'] as string);
 }
 
 /** Lets the promises and microtasks queued so far run. */
@@ -89,13 +20,13 @@ async function settle(): Promise<void> {
 }
 
 describe('FirestoreGameStorage', () => {
-  let firestore: FakeFirestore;
+  let firestore: FakeFirebase;
   let players: BehaviorSubject<string | null>;
   let storage: FirestoreGameStorage;
   let subscription: Subscription | undefined;
 
   beforeEach(() => {
-    firestore = new FakeFirestore();
+    firestore = new FakeFirebase();
     players = new BehaviorSubject<string | null>('alice');
     storage = new FirestoreGameStorage(firestore.connection(), players);
   });
@@ -131,7 +62,7 @@ describe('FirestoreGameStorage', () => {
     storage.update(KEY, addOne);
     await settle();
 
-    expect(firestore.value('alice')).toEqual({ count: 3 });
+    expect(valueOf(firestore, 'alice')).toEqual({ count: 3 });
   });
 
   it('skips a change that leaves the value as it is', async () => {
@@ -140,7 +71,7 @@ describe('FirestoreGameStorage', () => {
     storage.update(KEY, () => ({ count: 1 }));
     await settle();
 
-    expect(firestore.writes).toBe(1);
+    expect(firestore.writes.length).toBe(1);
   });
 
   it('skips a write of the value last seen', async () => {
@@ -150,7 +81,7 @@ describe('FirestoreGameStorage', () => {
     storage.write(KEY, { count: 1 });
     await settle();
 
-    expect(firestore.writes).toBe(1);
+    expect(firestore.writes.length).toBe(1);
   });
 
   it('applies a change made offline once online, exactly once', async () => {
@@ -158,27 +89,27 @@ describe('FirestoreGameStorage', () => {
     firestore.offline = true;
     storage.update(KEY, addOne);
     await settle();
-    expect(firestore.value('alice')).toBeNull();
+    expect(valueOf(firestore, 'alice')).toBeNull();
 
     firestore.offline = false;
     await jest.advanceTimersByTimeAsync(1000);
 
-    expect(firestore.value('alice')).toEqual({ count: 1 });
+    expect(valueOf(firestore, 'alice')).toEqual({ count: 1 });
     await jest.advanceTimersByTimeAsync(60_000);
-    expect(firestore.writes).toBe(1);
+    expect(firestore.writes.length).toBe(1);
   });
 
   it('drops a change the rules refuse', async () => {
     jest.useFakeTimers();
-    firestore.refused = true;
+    firestore.refused.add(PATH_ALICE);
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
     storage.update(KEY, addOne);
     await settle();
 
-    firestore.refused = false;
+    firestore.refused.delete(PATH_ALICE);
     await jest.advanceTimersByTimeAsync(60_000);
 
-    expect(firestore.writes).toBe(0);
+    expect(firestore.writes.length).toBe(0);
   });
 
   it('answers for the next player after a switch', async () => {
@@ -192,20 +123,20 @@ describe('FirestoreGameStorage', () => {
     await settle();
 
     expect(values).toEqual([{ owner: 'alice' }, null, { owner: 'bob' }]);
-    expect(firestore.value('alice')).toEqual({ owner: 'alice' });
+    expect(valueOf(firestore, 'alice')).toEqual({ owner: 'alice' });
   });
 
   it('holds back what is stored while nobody plays, for the next guest', async () => {
     players.next(null);
     storage.update(KEY, addOne);
     await settle();
-    expect(firestore.writes).toBe(0);
+    expect(firestore.writes.length).toBe(0);
 
     players.next('guest');
     await settle();
 
-    expect(firestore.value('guest')).toEqual({ count: 1 });
-    expect(firestore.value('alice')).toBeNull();
+    expect(valueOf(firestore, 'guest')).toEqual({ count: 1 });
+    expect(valueOf(firestore, 'alice')).toBeNull();
   });
 
   it('holds the writes while a ban holds, and makes them once it ends', async () => {
@@ -214,12 +145,12 @@ describe('FirestoreGameStorage', () => {
     storage.update(KEY, addOne);
     storage.write('bacteria-game.settings', { sound: true });
     await settle();
-    expect(firestore.writes).toBe(0);
+    expect(firestore.writes.length).toBe(0);
 
     banned.next(false);
     await settle();
 
-    expect(firestore.value('alice')).toEqual({ count: 1 });
-    expect(firestore.writes).toBe(2);
+    expect(valueOf(firestore, 'alice')).toEqual({ count: 1 });
+    expect(firestore.writes.length).toBe(2);
   });
 });

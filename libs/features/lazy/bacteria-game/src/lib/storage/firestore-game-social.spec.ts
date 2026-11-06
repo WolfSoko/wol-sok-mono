@@ -1,5 +1,10 @@
 import { firstValueFrom } from 'rxjs';
-import type { FirebaseConnection } from './firebase-connection';
+import {
+  FAKE_SERVER_TIME,
+  FakeFirebase,
+  FakeTimestamp,
+  SERVER_TIMESTAMP,
+} from '../../testing/fake-firebase-sdk';
 import { FirestoreGameSocial, inviteToken } from './firestore-game-social';
 import type { QueueEntry } from './game-social';
 import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
@@ -12,130 +17,53 @@ describe('inviteToken', () => {
   });
 });
 
-/** Just enough of Firestore for the queue: documents by path. */
-class FakeFirestore {
-  public readonly docs = new Map<string, Record<string, unknown>>();
-  public readonly updates: [string, Record<string, unknown>][] = [];
-  /** True while the snapshots come from the device's cache alone. */
-  public fromCache = false;
-  private readonly listeners: (() => void)[] = [];
-
-  /** Tells every listener again, as a change of the metadata does. */
-  public tell(): void {
-    this.listeners.forEach((listener) => listener());
-  }
-
-  public readonly sdk = {
-    doc: (_db: unknown, path: string) => ({ path }),
-    serverTimestamp: () => 'now',
-    Timestamp: class {
-      public static fromMillis(ms: number) {
-        return { ms };
-      }
-    },
-    deleteDoc: async (ref: { path: string }) => {
-      this.docs.delete(ref.path);
-    },
-    setDoc: async (
-      ref: { path: string },
-      data: Record<string, unknown>,
-      options?: { mergeFields?: string[] }
-    ) => {
-      if (options?.mergeFields === undefined) {
-        this.docs.set(ref.path, data);
-        return;
-      }
-      // Each named field whole, the rest of the document as it was.
-      const merged = { ...this.docs.get(ref.path) };
-      for (const field of options.mergeFields) {
-        merged[field] = data[field];
-      }
-      this.docs.set(ref.path, merged);
-    },
-    updateDoc: async (ref: { path: string }, data: Record<string, unknown>) =>
-      this.update(ref.path, data),
-    onSnapshot: (ref: { path: string }, ...args: unknown[]): (() => void) => {
-      const next = args.find(
-        (arg): arg is (snapshot: unknown) => void => typeof arg === 'function'
-      );
-      this.listeners.push(() => next?.(this.snapshot(ref.path)));
-      next?.(this.snapshot(ref.path));
-      return () => undefined;
-    },
-    runTransaction: async <T>(
-      _db: unknown,
-      run: (transaction: unknown) => Promise<T>
-    ): Promise<T> =>
-      run({
-        get: async (ref: { path: string }) => this.snapshot(ref.path),
-        update: (ref: { path: string }, data: Record<string, unknown>) =>
-          this.update(ref.path, data),
-      }),
-  };
-
-  public social(): FirestoreGameSocial {
-    return new FirestoreGameSocial({
-      db: {},
-      dbSdk: this.sdk,
-    } as unknown as FirebaseConnection);
-  }
-
-  private update(path: string, data: Record<string, unknown>): void {
-    this.updates.push([path, data]);
-    this.docs.set(path, { ...this.docs.get(path), ...data });
-  }
-
-  private snapshot(path: string) {
-    const doc = this.docs.get(path);
-    return {
-      exists: () => doc !== undefined,
-      data: () => doc,
-      get: (field: string) => doc?.[field],
-      metadata: { fromCache: this.fromCache },
-    };
-  }
+/** The social backend on the fake. */
+function socialOf(firestore: FakeFirebase): FirestoreGameSocial {
+  return new FirestoreGameSocial(firestore.connection());
 }
+
+/** The server's time as the fake stores it. */
+const NOW = FakeTimestamp.fromMillis(FAKE_SERVER_TIME);
 
 describe('FirestoreGameSocial profile', () => {
   it('tells no profile until the server says there is none', () => {
-    const firestore = new FakeFirestore();
+    const firestore = new FakeFirebase();
     firestore.fromCache = true;
     const seen: unknown[] = [];
-    firestore
-      .social()
+    socialOf(firestore)
       .watchProfile('ada')
       .subscribe((value) => seen.push(value));
 
     expect(seen).toEqual([]);
 
     firestore.fromCache = false;
-    firestore.tell();
+    firestore.resend();
     expect(seen).toEqual([null]);
 
     firestore.docs.set('profiles/ada', { name: 'Ada' });
     firestore.fromCache = true;
-    firestore.tell();
+    firestore.resend();
     expect(seen).toEqual([null, { name: 'Ada' }]);
   });
 
   it('writes only the fields given', async () => {
-    const firestore = new FakeFirestore();
+    const firestore = new FakeFirebase();
     firestore.docs.set('profiles/ada', { name: 'Ada', boardOptOut: true });
 
-    await firestore.social().saveProfile('ada', { motto: 'Hi' });
+    await socialOf(firestore).saveProfile('ada', { motto: 'Hi' });
 
     expect(firestore.docs.get('profiles/ada')).toEqual({
       name: 'Ada',
       boardOptOut: true,
       motto: 'Hi',
-      updatedAt: 'now',
+      updatedAt: NOW,
     });
   });
 
   it('saves the public-name and opt-out flags with the profile', async () => {
-    const firestore = new FakeFirestore();
+    const firestore = new FakeFirebase();
 
-    await firestore.social().saveProfile('ada', {
+    await socialOf(firestore).saveProfile('ada', {
       ...defaultProfile('ada'),
       name: 'Ada',
       publicName: true,
@@ -151,19 +79,19 @@ describe('FirestoreGameSocial profile', () => {
       publicName: true,
       boardOptOut: true,
       galleryOptOut: false,
-      updatedAt: 'now',
+      updatedAt: NOW,
     });
   });
 
   it('replaces the picture whole and keeps fields it does not know', async () => {
-    const firestore = new FakeFirestore();
+    const firestore = new FakeFirebase();
     firestore.docs.set('profiles/ada', {
       name: 'Ada',
       avatar: { kind: 'image', data: 'data:image/png;base64,AAAA' },
       laterFlag: true,
     });
 
-    await firestore.social().saveProfile('ada', {
+    await socialOf(firestore).saveProfile('ada', {
       ...defaultProfile('ada'),
       avatar: { kind: 'preset', id: 2 },
     });
@@ -175,12 +103,12 @@ describe('FirestoreGameSocial profile', () => {
 });
 
 describe('FirestoreGameSocial queue', () => {
-  let firestore: FakeFirestore;
+  let firestore: FakeFirebase;
   let social: FirestoreGameSocial;
 
   beforeEach(() => {
-    firestore = new FakeFirestore();
-    social = firestore.social();
+    firestore = new FakeFirebase();
+    social = socialOf(firestore);
   });
 
   async function entry(uid: string): Promise<QueueEntry | null> {
@@ -206,12 +134,19 @@ describe('FirestoreGameSocial queue', () => {
 
     await social.setQueueLevel('ada', 'corridors');
 
-    expect(firestore.updates).toEqual([
+    expect(firestore.writes.filter((write) => write.kind === 'update')).toEqual(
       [
-        'queue/ada',
-        { level: 'corridors', seen: 'now', expireAt: expect.anything() },
-      ],
-    ]);
+        {
+          kind: 'update',
+          path: 'queue/ada',
+          data: {
+            level: 'corridors',
+            seen: SERVER_TIMESTAMP,
+            expireAt: expect.any(FakeTimestamp),
+          },
+        },
+      ]
+    );
   });
 
   it('picks from the level in the entry at the claim, and writes the pick', async () => {
