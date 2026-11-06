@@ -13,6 +13,7 @@ describe('replayVerdict', () => {
   // ticks: a match that ends, as the device recorded it.
   const ended = recordedReplay('meltdown', 600);
   const { header } = ended;
+  const played = replayModule.playReplay(ended);
 
   it('verifies a replay that plays to its claimed end', () => {
     // The cases below each change one field of exactly this end.
@@ -32,10 +33,14 @@ describe('replayVerdict', () => {
     ['another winner', { outcome: { endedBy: 'annihilation', winnerSeat: 0 } }],
     ['no claimed outcome', { outcome: undefined }],
   ])('cannot confirm %s', (_, change) => {
+    // Only the header changes: the re-run is the one the verified case
+    // played, so this checks the comparison without playing again.
+    const play = jest.spyOn(replayModule, 'playReplay').mockReturnValue(played);
+
     const verdict = replayVerdict(tampered(ended, change));
 
-    expect(verdict.state).toBe('unverified');
-    expect(verdict).toHaveProperty('result');
+    expect(verdict).toEqual({ state: 'unverified', result: played });
+    play.mockRestore();
   });
 
   it('cannot confirm a match that had not ended when it was recorded', () => {
