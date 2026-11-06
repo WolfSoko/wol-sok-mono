@@ -91,7 +91,7 @@ export function fakeRealtime(
         delete parent[key];
       }
     } else {
-      node[last] = value;
+      node[last] = structuredClone(value);
     }
   };
   /** Writes and logs: `null` removes. */

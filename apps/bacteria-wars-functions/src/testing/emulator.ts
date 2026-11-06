@@ -1,4 +1,3 @@
-import { beforeEach } from '@jest/globals';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { type Firestore, getFirestore } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
