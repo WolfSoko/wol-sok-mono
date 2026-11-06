@@ -8,7 +8,9 @@ import {
   LEVELS,
   MatchEarnings,
   MedalAward,
+  type RankedOutcome,
 } from '@wolsok/feat-shared-bacteria-engine';
+import type { OneMatch } from '../state/match-rules';
 import { WinnerComponent } from './winner.component';
 
 describe('WinnerComponent', () => {
@@ -37,6 +39,11 @@ describe('WinnerComponent', () => {
     };
   }
 
+  /** The daily match whose ranked start came to `ranked`. */
+  function daily(ranked: RankedOutcome): OneMatch {
+    return { kind: 'daily', day: '2026-11-06', levelId: LEVELS[0].id, ranked };
+  }
+
   function text(): string {
     fixture.detectChanges();
     return fixture.nativeElement.textContent as string;
@@ -47,7 +54,7 @@ describe('WinnerComponent', () => {
       mode: 'vs-computer',
       winner: createPlayer({ id: 0, name: 'You' }),
       levelId: LEVELS[0].id,
-      ranked: { match: null, note: { kind: 'daily', n: 2 } },
+      next: daily({ match: null, note: { kind: 'daily', n: 2 } }),
     });
 
     expect(text()).toContain('Ranked attempt 2 of 3 · ranked setup');
@@ -58,21 +65,24 @@ describe('WinnerComponent', () => {
       mode: 'vs-computer',
       winner: createPlayer({ id: 0, name: 'You' }),
       levelId: LEVELS[0].id,
-      ranked: { match: null, note: { kind: 'endless', match: 4 } },
+      next: daily({ match: null, note: { kind: 'endless', match: 4 } }),
     });
     expect(text()).toContain('Ranked run · match 4');
 
     store.update({
-      ranked: { match: null, note: { kind: 'unranked', reason: 'offline' } },
+      next: daily({
+        match: null,
+        note: { kind: 'unranked', reason: 'offline' },
+      }),
     });
     expect(text()).toContain('Not ranked: offline when the match started');
 
     TestBed.inject(I18nService).setLanguage('de');
     store.update({
-      ranked: {
+      next: daily({
         match: null,
         note: { kind: 'unranked', reason: 'run-dropped' },
-      },
+      }),
     });
     expect(text()).toContain('Dieser Lauf wird nicht mehr gewertet');
     TestBed.inject(I18nService).setLanguage('en');
@@ -238,6 +248,19 @@ describe('WinnerComponent', () => {
       winner: null,
       levelId: LEVELS[0].id,
       earnings: earnings({}),
+    });
+
+    expect(text()).not.toContain('Rivalry');
+  });
+
+  it('leaves the couch rivalry out of an online match, whatever the setup', () => {
+    store.update({
+      mode: 'two-players',
+      colors: ['orange', 'blue'],
+      winner: createPlayer({ id: 0, name: 'Orange' }),
+      levelId: LEVELS[0].id,
+      online: { seat: 0, levelId: LEVELS[0].id, colors: ['orange', 'blue'] },
+      earnings: null,
     });
 
     expect(text()).not.toContain('Rivalry');
@@ -430,7 +453,7 @@ describe('WinnerComponent', () => {
         winner: createPlayer({ id: 1, name: 'Ghost', isBot: true }),
         levelId: LEVELS[0].id,
         lastReplay: run,
-        ghost: run,
+        next: { kind: 'ghost', run },
       });
 
       expect(text()).toContain('The ghost wins');
@@ -476,7 +499,7 @@ describe('WinnerComponent', () => {
         winner: createPlayer({ id: 0, name: 'You', isBot: false }),
         levelId: LEVELS[0].id,
         endless: { seed: 1, wins: 3, lives: 2 },
-        endlessMatch: true,
+        next: { kind: 'endless', levelId: LEVELS[0].id, ranked: null },
       });
       const picked = jest.fn();
       fixture.componentInstance.action.subscribe(picked);
@@ -494,7 +517,6 @@ describe('WinnerComponent', () => {
         winner: createPlayer({ id: 0, name: 'You', isBot: false }),
         levelId: LEVELS[0].id,
         endless: { seed: 1, wins: 3, lives: 2 },
-        endlessMatch: false,
       });
 
       expect(text()).not.toContain('Endless run');
@@ -507,7 +529,7 @@ describe('WinnerComponent', () => {
         winner: createPlayer({ id: 1, name: 'Computer', isBot: true }),
         levelId: LEVELS[0].id,
         endless: { seed: 1, wins: 3, lives: 1 },
-        endlessMatch: true,
+        next: { kind: 'endless', levelId: LEVELS[0].id, ranked: null },
       });
       expect(endlessButton()?.textContent).toContain('Try it again');
 
@@ -530,7 +552,7 @@ describe('WinnerComponent', () => {
         mode: 'vs-computer',
         winner: createPlayer({ id: 0, name: 'You' }),
         endedBy: 'hold',
-        matchLevel: 'training-steer',
+        next: { kind: 'mission', mission: 'steer' },
         earnings: earnings({
           training: {
             shortfall: null,
@@ -558,7 +580,7 @@ describe('WinnerComponent', () => {
         mode: 'vs-computer',
         winner: createPlayer({ id: 0, name: 'You' }),
         endedBy: 'harvest',
-        matchLevel: 'training-boost',
+        next: { kind: 'mission', mission: 'boost' },
         earnings: earnings({
           training: {
             shortfall: {
@@ -585,7 +607,7 @@ describe('WinnerComponent', () => {
         mode: 'vs-computer',
         winner: createPlayer({ id: 0, name: 'You' }),
         endedBy: 'time',
-        matchLevel: 'training-fight',
+        next: { kind: 'mission', mission: 'fight' },
         earnings: earnings({
           training: {
             shortfall: null,
@@ -609,7 +631,7 @@ describe('WinnerComponent', () => {
         mode: 'vs-computer',
         winner: createPlayer({ id: 0, name: 'You' }),
         endedBy: 'time',
-        matchLevel: 'training-fight',
+        next: { kind: 'mission', mission: 'fight' },
         earnings: earnings({
           training: { shortfall: null, first: true, allDone: true, next: null },
         }),

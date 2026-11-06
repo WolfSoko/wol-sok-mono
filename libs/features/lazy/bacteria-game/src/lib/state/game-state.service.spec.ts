@@ -30,6 +30,7 @@ import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
+import { SETUP_MATCH } from './match-rules';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { Lockstep, INPUT_DELAY_TICKS } from '../net/lockstep';
@@ -446,8 +447,8 @@ describe('GameStateService', () => {
         service.continueEndless();
 
         expect(store.snapshot().endless?.lives).toBe(0);
-        // Over: no level is set for it any more.
-        expect(store.snapshot().matchLevel).toBeNull();
+        // Over: no match of the run is set any more.
+        expect(store.snapshot().next).toEqual(SETUP_MATCH);
       });
 
       it('outlasts the reset between its matches, and ends with another', () => {
@@ -482,7 +483,7 @@ describe('GameStateService', () => {
         winMatch();
 
         const state = store.snapshot();
-        expect(store.matchMode()).toBe('vs-computer');
+        expect(store.matchRules().planMode).toBe('vs-computer');
         expect(store.level().id).toBe(dailyLevelId('2026-10-20'));
         expect(state.levelId).toBe('corridors');
         expect(state.series).toBeNull();
@@ -519,12 +520,7 @@ describe('GameStateService', () => {
 
         service.reset();
 
-        expect(service.oneMatch()).toEqual({
-          ghost: null,
-          matchLevel: null,
-          dailyDay: null,
-          endlessMatch: false,
-        });
+        expect(service.oneMatch()).toEqual(SETUP_MATCH);
         expect(store.level().id).toBe(store.snapshot().levelId);
       });
     });
@@ -541,7 +537,7 @@ describe('GameStateService', () => {
         winMatch();
 
         const state = store.snapshot();
-        expect(store.matchMode()).toBe('vs-computer');
+        expect(store.matchRules().planMode).toBe('vs-computer');
         expect(store.level().id).toBe('training-fight');
         // The setup stays as it is, for the next match outside the training.
         expect(state.levelId).toBe('corridors');
@@ -576,7 +572,7 @@ describe('GameStateService', () => {
         service.playGhost();
         service.start();
 
-        expect(store.snapshot().ghost).toBe(run);
+        expect(store.snapshot().next).toEqual({ kind: 'ghost', run });
         expect(store.level().id).toBe('hourglass');
         expect(store.snapshot().levelId).toBe('corridors');
         expect(playerStore.entities()[1].name).toBe('Ghost');
@@ -600,12 +596,12 @@ describe('GameStateService', () => {
         service.playGhost();
         // A setup restored late changes the next match, not the ghost's.
         service.applySetup({ difficulty: 'hard' });
-        expect(store.snapshot().ghost).not.toBeNull();
+        expect(store.snapshot().next.kind).toBe('ghost');
 
         service.reset();
         service.start();
 
-        expect(store.snapshot().ghost).toBeNull();
+        expect(store.snapshot().next).toEqual(SETUP_MATCH);
         expect(playerStore.entities()[1].name).toBe('Computer');
       });
 
@@ -624,11 +620,26 @@ describe('GameStateService', () => {
 
       it('needs a run against the computer', () => {
         service.playGhost();
-        expect(store.snapshot().ghost).toBeNull();
+        expect(store.snapshot().next).toEqual(SETUP_MATCH);
 
         winAgainst('two-players');
         service.playGhost();
-        expect(store.snapshot().ghost).toBeNull();
+        expect(store.snapshot().next).toEqual(SETUP_MATCH);
+      });
+
+      it("refuses a run on a training mission's level", () => {
+        winAgainst('vs-computer');
+        const run = store.snapshot().lastReplay;
+        if (run === null) {
+          throw new Error('no run to fight');
+        }
+
+        service.playGhost({
+          ...run,
+          header: { ...run.header, levelId: 'training-steer' },
+        });
+
+        expect(store.snapshot().next).toEqual(SETUP_MATCH);
       });
     });
 
@@ -1199,10 +1210,7 @@ describe('GameStateService ranked matches', () => {
 
   /** Plays a few ticks on the arena the game lays out for it and ends on time. */
   async function play(): Promise<void> {
-    const { width, height } = rankedPlan(
-      store.snapshot().matchLevel ?? 'petri-dish',
-      0
-    );
+    const { width, height } = rankedPlan(store.matchRules().levelId, 0);
     service.setArenaSize(width, height);
     service.init(width, height);
     service.start();
@@ -1244,7 +1252,10 @@ describe('GameStateService ranked matches', () => {
     expect(replays.submissions).toEqual([
       { replay, hint: expect.any(Number), attempt: `d_${DAY}_1` },
     ]);
-    expect(store.snapshot().ranked?.note).toEqual({ kind: 'daily', n: 1 });
+    expect(store.matchRules().ranked?.note).toEqual({
+      kind: 'daily',
+      n: 1,
+    });
   });
 
   it("plays a ranked attempt on its own day's level, past midnight too", () => {
@@ -1254,8 +1265,11 @@ describe('GameStateService ranked matches', () => {
       note: { kind: 'daily', n: 1 },
     });
 
-    expect(store.snapshot().matchLevel).toBe(dailyLevelId(DAY));
-    expect(store.snapshot().dailyDay).toBe(DAY);
+    expect(store.snapshot().next).toMatchObject({
+      kind: 'daily',
+      day: DAY,
+      levelId: dailyLevelId(DAY),
+    });
   });
 
   it('never pauses a ranked match, which has to be played in one go', async () => {
@@ -1300,8 +1314,11 @@ describe('GameStateService ranked matches', () => {
     service.reset();
     service.replayOneMatch(rematch);
 
-    expect(store.snapshot().ranked).toBeNull();
-    expect(store.snapshot().dailyDay).toBe(DAY);
+    expect(store.snapshot().next).toMatchObject({
+      kind: 'daily',
+      day: DAY,
+      ranked: null,
+    });
   });
 
   it('plays an unranked daily match on the setup, and says why', async () => {
@@ -1314,7 +1331,7 @@ describe('GameStateService ranked matches', () => {
 
     expect(service.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
-    expect(store.snapshot().ranked).toEqual({
+    expect(store.matchRules().ranked).toEqual({
       match: null,
       note: { kind: 'unranked', reason: 'offline' },
     });
@@ -1329,7 +1346,7 @@ describe('GameStateService ranked matches', () => {
     });
 
     expect(store.snapshot().endless?.seed).toBe(match.seed);
-    expect(store.snapshot().matchLevel).toBe(
+    expect(store.level().id).toBe(
       endlessLevelId({ seed: match.seed, wins: 0, lives: 3 })
     );
     await play();
@@ -1357,8 +1374,8 @@ describe('GameStateService ranked matches', () => {
     });
 
     expect(store.snapshot().endlessRanked).toBeNull();
-    expect(store.rankedMatch()).toBeNull();
-    expect(store.snapshot().ranked?.note).toEqual({
+    expect(store.matchRules().rankedMatch).toBeNull();
+    expect(store.matchRules().ranked?.note).toEqual({
       kind: 'unranked',
       reason: 'run-dropped',
     });

@@ -83,7 +83,7 @@ describe('PlayFlow', () => {
       flow.fightChallenge();
       await held[0]();
 
-      expect(store.ghost()).toEqual(run);
+      expect(store.next()).toEqual({ kind: 'ghost', run });
       expect(store.challenge()).toBeNull();
       expect(store.level().id).toBe(LEVELS[3].id);
       expect(TestBed.inject(PlayerStore).entities()[1].name).toBe('Ghost');
@@ -95,7 +95,7 @@ describe('PlayFlow', () => {
       flow.dismissChallenge();
 
       expect(store.challenge()).toBeNull();
-      expect(store.ghost()).toBeNull();
+      expect(store.next().kind).toBe('setup');
     });
   });
 

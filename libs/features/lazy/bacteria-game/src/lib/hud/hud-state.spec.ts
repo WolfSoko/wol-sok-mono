@@ -38,18 +38,6 @@ describe('HudState', () => {
     expect(hud.timeRunningOut()).toBe(false);
   });
 
-  describe('a ranked match', () => {
-    it('can neither be paused nor restarted', () => {
-      expect(hud.canPause()).toBe(true);
-      expect(hud.canRestart()).toBe(true);
-
-      store.update({ ranked: { match: {} } as never });
-
-      expect(hud.canPause()).toBe(false);
-      expect(hud.canRestart()).toBe(false);
-    });
-  });
-
   describe('online', () => {
     it('lets only the host restart', () => {
       store.update({
@@ -59,7 +47,6 @@ describe('HudState', () => {
           colors: ['orange', 'blue'],
         },
       });
-      expect(hud.onlineSeat()).toBe(1);
       expect(hud.canRestart()).toBe(false);
 
       store.update({

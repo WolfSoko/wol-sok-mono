@@ -10,10 +10,8 @@ import type { MenuScreen } from './stage-screens';
 
 describe('the mode last played', () => {
   const nothing: PlayKindState = {
-    missionSet: false,
+    matchKind: 'vs-computer',
     lastKind: null,
-    daily: false,
-    endless: false,
     mode: 'vs-computer',
     freePlay: false,
   };
@@ -22,11 +20,11 @@ describe('the mode last played', () => {
     ['the campaign by default', {}, 'campaign'],
     ['free play where it is set', { freePlay: true }, 'free'],
     ['two players by the mode', { mode: 'two-players' }, 'two-players'],
-    ['an endless run while one is on', { endless: true }, 'endless'],
-    ['the daily level before a run', { daily: true, endless: true }, 'daily'],
+    ['an endless run while one is on', { matchKind: 'endless' }, 'endless'],
+    ['the daily level while it is set', { matchKind: 'daily' }, 'daily'],
     [
       'the mode picked before all that',
-      { lastKind: 'online', daily: true },
+      { lastKind: 'online', matchKind: 'daily' },
       'online',
     ],
     [
@@ -36,7 +34,7 @@ describe('the mode last played', () => {
     ],
     [
       'the training while a mission is set',
-      { missionSet: true, lastKind: 'online' },
+      { matchKind: 'training', lastKind: 'online' },
       'training',
     ],
   ])('is %s', (_, state, kind) => {
