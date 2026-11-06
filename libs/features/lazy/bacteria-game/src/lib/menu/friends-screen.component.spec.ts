@@ -10,7 +10,7 @@ import { FriendView } from '../social/social.service';
 import { GameAccount } from '../storage/game-account';
 import { LateGameStorage } from '../../testing/late-game-storage';
 import { GameStorage } from '../storage/game-storage';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { FriendsScreenComponent } from './friends-screen.component';
 
 describe('FriendsScreenComponent', () => {
@@ -26,15 +26,10 @@ describe('FriendsScreenComponent', () => {
         { provide: GameAccount, useValue: new FakeGameAccount('ada') },
         // The guest's sign-in line waits for the progress.
         { provide: GameStorage, useValue: new LateGameStorage() },
-        {
-          provide: GameCloud,
-          useValue: {
-            social: () => (withCloud ? social : null),
-            presence: () => (withCloud ? presence : null),
-            rooms: () => null,
-            moderation: () => null,
-          },
-        },
+        provideFakeGameCloud({
+          social: withCloud ? social : null,
+          presence: withCloud ? presence : null,
+        }),
       ],
     });
   }

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { I18nService } from '../i18n/i18n.service';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { ModerationNoticesComponent } from './moderation-notices.component';
 
 describe('ModerationNoticesComponent', () => {
@@ -11,9 +11,7 @@ describe('ModerationNoticesComponent', () => {
     TestBed.resetTestingModule();
     moderation = new FakeGameModeration();
     TestBed.configureTestingModule({
-      providers: [
-        { provide: GameCloud, useValue: { moderation: () => moderation } },
-      ],
+      providers: [provideFakeGameCloud({ moderation })],
     });
     TestBed.inject(I18nService).setLanguage('en');
   });

@@ -9,7 +9,7 @@ import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { FakeGameSocial } from '../../testing/fake-game-social';
 import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { GameAccount } from '../storage/game-account';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { claimable, MatchmakerService } from './matchmaker.service';
 import { OnlineMatchService } from './online-match.service';
@@ -25,15 +25,7 @@ describe('MatchmakerService', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: new FakeGameAccount(uid) },
-        {
-          provide: GameCloud,
-          useValue: {
-            social: () => social,
-            presence: () => null,
-            rooms: () => null,
-            moderation: () => moderation,
-          },
-        },
+        provideFakeGameCloud({ social, moderation }),
         { provide: OnlineMatchService, useValue: online },
         provideGameToggles(toggles),
       ],

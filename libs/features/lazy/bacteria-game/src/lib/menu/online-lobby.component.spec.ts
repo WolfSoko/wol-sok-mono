@@ -3,7 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { TestBed } from '@angular/core/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import {
   type FeatureToggles,
   MATCH_LEVELS,
@@ -19,9 +19,8 @@ import {
 import { IDLE_LOBBY, OnlineLobby } from '../net/online-match.service';
 import { GameSettingsService } from '../settings.service';
 import { GameAccount } from '../storage/game-account';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { provideGameToggles } from '../../testing/fake-game-toggles';
-import { LocalGameStorage } from '../storage/local-game-storage';
 import { OnlineLobbyComponent } from './online-lobby.component';
 
 describe('OnlineLobbyComponent', () => {
@@ -33,17 +32,7 @@ describe('OnlineLobbyComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: new FakeGameAccount('ada') },
-        {
-          provide: GameCloud,
-          useValue: {
-            social: () => null,
-            presence: () => null,
-            rooms: () => null,
-            moderation: () => moderation,
-            storage: () => new LocalGameStorage(),
-            toggles: () => ({ watch: () => of({}) }),
-          },
-        },
+        provideFakeGameCloud({ moderation }),
       ],
     });
   });

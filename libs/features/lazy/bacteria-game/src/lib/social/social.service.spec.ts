@@ -9,7 +9,7 @@ import {
 } from '../../testing/fake-game-social';
 import { OnlineMatchService } from '../net/online-match.service';
 import { GameAccount } from '../storage/game-account';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { GameState, GameStateStore } from '../state/game.states';
 import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import { FriendView, SocialService } from './social.service';
@@ -33,15 +33,7 @@ describe('SocialService', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: account },
-        {
-          provide: GameCloud,
-          useValue: {
-            social: () => social,
-            presence: () => presence,
-            rooms: () => null,
-            moderation: () => moderation,
-          },
-        },
+        provideFakeGameCloud({ social, presence, moderation }),
       ],
     });
   });

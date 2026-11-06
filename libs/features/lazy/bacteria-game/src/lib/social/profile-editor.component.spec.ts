@@ -6,7 +6,7 @@ import {
 } from '../../testing/fake-game-social';
 import { I18nService } from '../i18n/i18n.service';
 import { GameAccount } from '../storage/game-account';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import { ProfileEditorComponent } from './profile-editor.component';
 
@@ -33,15 +33,7 @@ describe('ProfileEditorComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: account },
-        {
-          provide: GameCloud,
-          useValue: {
-            social: () => social,
-            presence: () => new FakeGamePresence(),
-            rooms: () => null,
-            moderation: () => null,
-          },
-        },
+        provideFakeGameCloud({ social, presence: new FakeGamePresence() }),
       ],
     });
   });

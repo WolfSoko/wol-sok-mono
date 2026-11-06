@@ -5,7 +5,7 @@ import {
   FakeGameSocial,
 } from '../../testing/fake-game-social';
 import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { GameAccount, PlayerProfile } from '../storage/game-account';
 import { GameStorage } from '../storage/game-storage';
 import { AccountChipComponent } from './account-chip.component';
@@ -27,15 +27,10 @@ describe('AccountChipComponent', () => {
         ...(social === null
           ? []
           : [
-              {
-                provide: GameCloud,
-                useValue: {
-                  social: () => social,
-                  presence: () => new FakeGamePresence(),
-                  rooms: () => null,
-                  moderation: () => null,
-                },
-              },
+              provideFakeGameCloud({
+                social,
+                presence: new FakeGamePresence(),
+              }),
             ]),
       ],
     });

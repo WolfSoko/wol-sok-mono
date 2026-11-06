@@ -16,7 +16,7 @@ import { GameAccount } from '../storage/game-account';
 import type { PagedEntry } from '../storage/game-boards';
 import { LateGameStorage } from '../../testing/late-game-storage';
 import { GameStorage } from '../storage/game-storage';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { BoardViewComponent } from './board-view.component';
 import { BoardsService } from './boards.service';
 import { LeaderboardsComponent } from './leaderboards.component';
@@ -68,16 +68,11 @@ describe('Leaderboards', () => {
         { provide: GameAccount, useValue: new FakeGameAccount('ada') },
         // The guest's sign-in line waits for the progress.
         { provide: GameStorage, useValue: new LateGameStorage() },
-        {
-          provide: GameCloud,
-          useValue: {
-            boards: () => (withCloud ? boards : null),
-            social: () => (withCloud ? social : null),
-            presence: () => new FakeGamePresence(),
-            rooms: () => null,
-            moderation: () => null,
-          },
-        },
+        provideFakeGameCloud({
+          boards: withCloud ? boards : null,
+          social: withCloud ? social : null,
+          presence: new FakeGamePresence(),
+        }),
       ],
     });
     TestBed.inject(I18nService).setLanguage('en');

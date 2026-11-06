@@ -9,7 +9,7 @@ import {
 } from '../../testing/paired-transport';
 import { PlayerService } from '../state/player.service';
 import { GameAccount } from '../storage/game-account';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import type { OnlineSetup, OnlineStart } from './net-message';
 import { NET_VERSION } from './net-message';
 import { OnlineEvent, OnlineMatchService } from './online-match.service';
@@ -39,7 +39,7 @@ describe('OnlineMatchService between two devices', () => {
     transport = pairedTransport();
     TestBed.configureTestingModule({
       providers: [
-        { provide: GameCloud, useValue: { rooms: () => rooms } },
+        provideFakeGameCloud({ rooms }),
         { provide: PeerTransport, useValue: transport },
       ],
     });
