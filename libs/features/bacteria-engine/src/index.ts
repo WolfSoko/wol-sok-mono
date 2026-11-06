@@ -102,9 +102,8 @@ export type {
 export {
   COMMAND_ENVELOPE_KEYS,
   COMMAND_TTL_MS,
-  commandExpiresAt,
   CURATION_COMMAND_TYPES,
-  isCommandDocumentKey,
+  hasOnlyCommandKeys,
   isCurationCommandType,
   parseCommandResult,
   parseReplayCommand,
@@ -114,8 +113,6 @@ export {
 export type {
   CommandResult,
   CurationCommandType,
-  PlayerReplayCommandType,
-  ReplayCommand,
   ReplayCommandType,
 } from './lib/state/command-documents';
 export {

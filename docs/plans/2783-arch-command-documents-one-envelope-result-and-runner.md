@@ -5,7 +5,7 @@ Spec: `docs/specs/2783-arch-command-documents-one-envelope-result-and-runner.md`
 1. **Engine module, test first.**
    `libs/features/bacteria-engine/src/lib/state/command-documents.spec.ts`,
    then `command-documents.ts`: `COMMAND_ENVELOPE_KEYS`, `COMMAND_TTL_MS`,
-   `commandExpiresAt`, `REPLAY_COMMAND_TYPES`, `PLAYER_REPLAY_COMMAND_TYPES`,
+   `hasOnlyCommandKeys`, `REPLAY_COMMAND_TYPES`, `PLAYER_REPLAY_COMMAND_TYPES`,
    `CURATION_COMMAND_TYPES` and their types, `parseReplayCommand`,
    `CommandResult`, `parseCommandResult`. `admin-commands.ts` takes the
    envelope keys from it. Export through `src/index.ts`.

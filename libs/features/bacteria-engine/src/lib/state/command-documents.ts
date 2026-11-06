@@ -1,3 +1,4 @@
+import { isEntryId } from './boards';
 import { isObject } from './is-object';
 
 /**
@@ -21,19 +22,20 @@ const RESULT_KEY = 'result';
  */
 export const COMMAND_TTL_MS = 24 * 60 * 60 * 1000;
 
-/** The `expireAt` of a command written at `now`, in ms since the epoch. */
-export function commandExpiresAt(now: number): number {
-  return now + COMMAND_TTL_MS;
-}
+/** The stored document's own fields: its envelope and its result. */
+const DOCUMENT_KEYS: readonly string[] = [...COMMAND_ENVELOPE_KEYS, RESULT_KEY];
 
 /**
- * True for a field of the stored document - its envelope and its result -
- * rather than of its command.
+ * True when every field of a stored command is one of `commandKeys` or the
+ * document's own (envelope, result) - the "exactly one command" check
+ * both parsers start with.
  */
-export function isCommandDocumentKey(key: string): boolean {
-  return (
-    key === RESULT_KEY ||
-    (COMMAND_ENVELOPE_KEYS as readonly string[]).includes(key)
+export function hasOnlyCommandKeys(
+  value: Record<string, unknown>,
+  commandKeys: readonly string[]
+): boolean {
+  return Object.keys(value).every(
+    (key) => commandKeys.includes(key) || DOCUMENT_KEYS.includes(key)
   );
 }
 
@@ -57,8 +59,6 @@ export const REPLAY_COMMAND_TYPES = [
   ...CURATION_COMMAND_TYPES,
 ] as const;
 
-export type PlayerReplayCommandType =
-  (typeof PLAYER_REPLAY_COMMAND_TYPES)[number];
 export type CurationCommandType = (typeof CURATION_COMMAND_TYPES)[number];
 export type ReplayCommandType = (typeof REPLAY_COMMAND_TYPES)[number];
 
@@ -68,14 +68,7 @@ export interface ReplayCommand {
   replayId: string;
 }
 
-/** A replay id as the rules take it in a command. */
-const REPLAY_ID = /^[A-Za-z0-9_-]{1,64}$/;
-
-/**
- * The fields of a replay command, and `claimed`, with which `forget` takes
- * its command once - a second delivery carries it.
- */
-const REPLAY_COMMAND_KEYS = ['type', 'replayId', 'claimed'];
+const REPLAY_COMMAND_KEYS = ['type', 'replayId'];
 
 export function isCurationCommandType(
   type: ReplayCommandType
@@ -86,7 +79,7 @@ export function isCurationCommandType(
 /**
  * Reads a replay command - null for anything that is not exactly one: an
  * unknown type, a missing or extra field, a replay id the rules would
- * refuse. The stored document's own fields may come along and are left
+ * refuse (a document id as `isEntryId` takes it). The stored document's own fields may come along and are left
  * out of the result; the writer is the runner's to check.
  */
 export function parseReplayCommand(value: unknown): ReplayCommand | null {
@@ -95,13 +88,11 @@ export function parseReplayCommand(value: unknown): ReplayCommand | null {
   }
   const { type, replayId } = value;
   if (
-    Object.keys(value).some(
-      (key) => !REPLAY_COMMAND_KEYS.includes(key) && !isCommandDocumentKey(key)
-    ) ||
+    !hasOnlyCommandKeys(value, REPLAY_COMMAND_KEYS) ||
     typeof type !== 'string' ||
     !(REPLAY_COMMAND_TYPES as readonly string[]).includes(type) ||
     typeof replayId !== 'string' ||
-    !REPLAY_ID.test(replayId)
+    !isEntryId(replayId)
   ) {
     return null;
   }

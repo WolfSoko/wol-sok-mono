@@ -12,7 +12,7 @@ over four places. After this change it sits in two deep modules:
 
 - **Engine** (`libs/features/bacteria-engine/src/lib/state/command-documents.ts`,
   Node-only, pure): the envelope's fields and TTL (`COMMAND_ENVELOPE_KEYS`,
-  `COMMAND_TTL_MS`, `commandExpiresAt(now)`), the replay command types
+  `COMMAND_TTL_MS`, `hasOnlyCommandKeys`), the replay command types
   (`REPLAY_COMMAND_TYPES` with the player's and the owner's subsets),
   `parseReplayCommand`, and one `CommandResult` with `parseCommandResult`.
 - **Functions** (`apps/bacteria-wars-functions/src/commands/run-command-document.ts`):
@@ -66,11 +66,10 @@ exported to the admin through `@wolsok/feat-lazy-bac-game/admin-kit`).
   `replayCommand`): an account deletion may take a pending command while it
   runs; nobody is left to read the result.
 - **`parseReplayCommand` is strict** like `parseAdminCommand`: only the
-  envelope keys, the fields the functions write on it (`result`, and
-  `claimed` from `forget`) plus `type` and `replayId`, `replayId` as the rules take it
-  (`[A-Za-z0-9_-]{1,64}`). The rules allow nothing else, so nothing that
+  envelope keys and `result` plus `type` and `replayId`, `replayId` as the rules take it
+  (`[A-Za-z0-9_-]{1,64}`, the engine's `isEntryId`). The rules allow nothing else, so nothing that
   runs today is refused.
-- **The engine's admin command parser takes `COMMAND_ENVELOPE_KEYS`** in
+- **The engine's admin command parser shares the key check** (`hasOnlyCommandKeys`) in
   place of its own list (plus `result`, which it skips).
 - **Replace, don't layer**: the game's `ReplayCommandType`,
   `ReplayCommandResult` and `parseCommandResult` (`storage/replay-records.ts`),

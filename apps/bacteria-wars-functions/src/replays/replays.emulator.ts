@@ -608,13 +608,12 @@ describe('forget', () => {
       .set({ players: ['ada'], optOut: [], createdAt: born });
     const { id, result } = await forget('ada', 'mine');
     expect(result).toEqual({ ok: true });
-    // A second delivery of the same event.
-    const data = (await db.doc(`replayCommands/${id}`).get()).data() ?? {};
+    // A second delivery of the same event carries the document as created.
     expect(
       await runReplayCommand(
         db,
         id,
-        data,
+        { uid: 'ada', type: 'forget', replayId: 'mine' },
         'ada',
         { isOwner: async () => false },
         NOW

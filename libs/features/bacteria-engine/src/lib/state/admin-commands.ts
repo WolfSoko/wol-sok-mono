@@ -1,5 +1,5 @@
 import { isEntryId, parseBoardId } from './boards';
-import { isCommandDocumentKey } from './command-documents';
+import { hasOnlyCommandKeys } from './command-documents';
 import { type FeatureToggles, parseToggleValues } from './feature-toggles';
 import { isObject } from './is-object';
 
@@ -155,11 +155,8 @@ export function parseAdminCommand(value: unknown): AdminCommand | null {
   const type = value['type'];
   const schema = SCHEMA[type];
   const optional = schema.reasonOptional === true;
-  const keys = Object.keys(value);
   if (
-    keys.some(
-      (key) => !COMMAND_KEYS.includes(key) && !isCommandDocumentKey(key)
-    ) ||
+    !hasOnlyCommandKeys(value, COMMAND_KEYS) ||
     !('target' in value) ||
     !('args' in value) ||
     (!optional && !('reason' in value)) ||

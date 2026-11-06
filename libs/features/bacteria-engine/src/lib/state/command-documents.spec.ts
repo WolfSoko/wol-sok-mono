@@ -1,9 +1,8 @@
 import {
   COMMAND_ENVELOPE_KEYS,
   COMMAND_TTL_MS,
-  commandExpiresAt,
   CURATION_COMMAND_TYPES,
-  isCommandDocumentKey,
+  hasOnlyCommandKeys,
   parseCommandResult,
   parseReplayCommand,
   PLAYER_REPLAY_COMMAND_TYPES,
@@ -18,17 +17,15 @@ describe('command documents', () => {
 
     it('expires a day after the write, inside the rules’ two days', () => {
       expect(COMMAND_TTL_MS).toBe(24 * 60 * 60 * 1000);
-      expect(commandExpiresAt(1_000)).toBe(1_000 + COMMAND_TTL_MS);
       expect(COMMAND_TTL_MS).toBeLessThan(2 * 24 * 60 * 60 * 1000);
     });
 
-    it('takes the envelope and the result as the stored document’s own keys', () => {
-      for (const key of [...COMMAND_ENVELOPE_KEYS, 'result']) {
-        expect(isCommandDocumentKey(key)).toBe(true);
-      }
-      expect(isCommandDocumentKey('type')).toBe(false);
-      // Only `forget` claims its command; an admin command never carries it.
-      expect(isCommandDocumentKey('claimed')).toBe(false);
+    it('takes only the command’s keys besides the envelope and result', () => {
+      const stored = { uid: 'a', createdAt: 1, expireAt: 2, result: {} };
+      expect(hasOnlyCommandKeys({ ...stored, type: 'x' }, ['type'])).toBe(true);
+      expect(hasOnlyCommandKeys({ ...stored, extra: 1 }, ['type'])).toBe(false);
+      // Only `forget` claims its command, and never on what the trigger reads.
+      expect(hasOnlyCommandKeys({ claimed: true }, ['type'])).toBe(false);
     });
   });
 
@@ -46,22 +43,18 @@ describe('command documents', () => {
       ]);
     });
 
-    it.each(REPLAY_COMMAND_TYPES)(
-      'reads %s with its envelope, also once claimed',
-      (type) => {
-        expect(
-          parseReplayCommand({
-            uid: 'ada',
-            type,
-            replayId: 'l_a-1',
-            createdAt: {},
-            expireAt: {},
-            result: { ok: true },
-            claimed: true,
-          })
-        ).toEqual({ type, replayId: 'l_a-1' });
-      }
-    );
+    it.each(REPLAY_COMMAND_TYPES)('reads %s with its envelope', (type) => {
+      expect(
+        parseReplayCommand({
+          uid: 'ada',
+          type,
+          replayId: 'l_a-1',
+          createdAt: {},
+          expireAt: {},
+          result: { ok: true },
+        })
+      ).toEqual({ type, replayId: 'l_a-1' });
+    });
 
     it.each<[string, unknown]>([
       ['no object', null],

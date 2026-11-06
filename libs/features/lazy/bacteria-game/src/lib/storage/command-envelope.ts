@@ -1,11 +1,11 @@
-import { commandExpiresAt } from '@wolsok/feat-shared-bacteria-engine';
+import { COMMAND_TTL_MS } from '@wolsok/feat-shared-bacteria-engine';
 import type * as dbSdk from 'firebase/firestore';
 
 /** The SDK calls the envelope is built with. */
 export type EnvelopeSdk = Pick<typeof dbSdk, 'serverTimestamp' | 'Timestamp'>;
 
 /** The fields every command document carries (`COMMAND_ENVELOPE_KEYS`). */
-export interface CommandEnvelope {
+interface CommandEnvelope {
   uid: string;
   createdAt: dbSdk.FieldValue;
   expireAt: dbSdk.Timestamp;
@@ -26,6 +26,6 @@ export function commandEnvelope(
   return {
     uid,
     createdAt: sdk.serverTimestamp(),
-    expireAt: sdk.Timestamp.fromMillis(commandExpiresAt(now)),
+    expireAt: sdk.Timestamp.fromMillis(now + COMMAND_TTL_MS),
   };
 }
