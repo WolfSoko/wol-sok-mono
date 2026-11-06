@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.138.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.1...v74.138.2) (2026-11-06)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** MatchRun, one runner that plays a match to its end ([#2807](https://github.com/WolfSoko/wol-sok-mono/issues/2807)) ([71bd907](https://github.com/WolfSoko/wol-sok-mono/commit/71bd9079f94c04130caf3141cbe910cb56190c68)), references [#2780](https://github.com/WolfSoko/wol-sok-mono/issues/2780)
+
 ## [74.138.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.0...v74.138.1) (2026-11-06)
 
 ### Refactorings
