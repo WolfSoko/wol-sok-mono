@@ -3,15 +3,16 @@ import type { GlArenaPainter } from '../arena/gl/gl-arena-painter';
 import type { ArenaContent, ArenaScene } from '../arena/arena-view.component';
 import {
   type BacteriaLook,
+  canPlayBack,
   computerLook,
   getLevel,
   levelMap,
-  type MatchEngine,
+  MatchRun,
   type Rect,
   type Replay,
-  replayEngine,
+  replayRun,
   seatLooks,
-  type Simulation,
+  type SimulationFactory,
 } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
@@ -23,45 +24,28 @@ export const SEEK_FRAME_MS = 30;
 /** A GL painter, as far as a `gpu-int` replay runs on its GPU. */
 export type GpuIntPainter = Pick<GlArenaPainter, 'createSimulation'>;
 
-/** A replay's engine, and the painter whose GPU it runs on - null: CPU. */
-interface Built {
-  engine: MatchEngine;
-  gpu: GpuIntPainter | null;
-}
-
 /**
- * The replay's engine - null for one that does not play back here. A
- * `gpu-int` replay runs on `gpu`'s integer passes (ADR 0015), the same war
- * as `IntSimulation`, much faster. A GPU that fails to set up - in the
- * painter, sizing its targets, or in the engine's own setup - is let go
- * of, and the replay plays on `IntSimulation`, as a live match falls back
- * (`PlayerService`).
+ * The integer passes on `gpu`'s GPU for a `gpu-int` replay (ADR 0015), the
+ * same war as `IntSimulation`, much faster - sized at once, so that a GPU
+ * failing to set up throws while the engine is built, not on the first
+ * tick, and `replayRun` falls back to the CPU.
  */
-function engineOf(replay: Replay, gpu: GpuIntPainter | null): Built | null {
-  if (gpu === null || replay.header.simulation !== 'gpu-int') {
-    const engine = replayEngine(replay);
-    return engine && { engine, gpu: null };
-  }
+function gpuIntOn(gpu: GpuIntPainter, replay: Replay): SimulationFactory {
   const { width, height } = replay.header;
-  const made: Simulation[] = [];
-  try {
-    const engine = replayEngine(replay, undefined, (balance, random, seed) => {
-      const simulation = gpu.createSimulation(balance, random, {
-        deterministic: true,
-        matchSeed: seed,
-      });
-      made.push(simulation);
-      // Sized now, so that a GPU failing to set up throws here, not on
-      // the first tick.
-      simulation.resize(width, height);
-      return simulation;
+  return (balance, random, seed) => {
+    const simulation = gpu.createSimulation(balance, random, {
+      deterministic: true,
+      matchSeed: seed,
     });
-    return engine && { engine, gpu };
-  } catch (error) {
-    made.forEach((simulation) => simulation.dispose());
-    console.warn('The replay falls back to the CPU', error);
-    return engineOf(replay, null);
-  }
+    try {
+      simulation.resize(width, height);
+    } catch (error) {
+      // Not handed out yet, so let go of here.
+      simulation.dispose();
+      throw error;
+    }
+    return simulation;
+  };
 }
 
 /** How a replay is drawn: the device's look and its wish for less motion. */
@@ -71,27 +55,24 @@ export interface ReplayLook {
 }
 
 /**
- * A recorded match as an `ArenaView` plays it by itself (ADR 0011): its
- * own `MatchEngine` from `replayEngine` - the humans played back from the
- * recording, the bot and the neutral colonies simulated again from the
- * seed, on the replay's ruleset - with nothing of the game's state, its
- * account or Firebase. The view calls {@link advance} with the ticks of
- * each frame and paints {@link content}.
+ * A recorded match as an `ArenaView` plays it by itself (ADR 0011): a
+ * `MatchRun` on its own engine from `replayEngine` - the humans played
+ * back from the recording, the bot and the neutral colonies simulated
+ * again from the seed, on the replay's ruleset - with nothing of the
+ * game's state, its account or Firebase. The view calls {@link advance}
+ * with the ticks of each frame and paints {@link content}.
  */
 export class ReplayScene implements ArenaScene {
-  private engine: MatchEngine;
+  private run: MatchRun;
   /** The painter whose GPU the war runs on - null on the CPU. */
-  private gpu: GpuIntPainter | null;
+  private gpu: GpuIntPainter | null = null;
   /** A painter whose GPU failed to set up, not asked again. */
   private refused: GpuIntPainter | null = null;
   private readonly walls: readonly Rect[];
   /** The look the computer wears on the replay's level. */
   private readonly computer: BacteriaLook;
   private readonly seatColors = new SeatColors();
-  private ended = false;
   private disposed = false;
-  /** The tick a seek plays on towards - null while none is under way. */
-  private target: number | null = null;
 
   /**
    * Builds the scene - null for a replay that does not play back here.
@@ -102,20 +83,16 @@ export class ReplayScene implements ArenaScene {
     look: ReplayLook,
     gpu: GpuIntPainter | null = null
   ): ReplayScene | null {
-    const built = engineOf(replay, gpu);
-    return built && new ReplayScene(replay, look, built, gpu);
+    return canPlayBack(replay) ? new ReplayScene(replay, look, gpu) : null;
   }
 
   private constructor(
     public readonly replay: Replay,
     /** How it is drawn - a new look takes effect on the next frame. */
     public look: ReplayLook,
-    built: Built,
-    asked: GpuIntPainter | null
+    gpu: GpuIntPainter | null
   ) {
-    this.engine = built.engine;
-    this.gpu = built.gpu;
-    this.noteRefusal(built, asked);
+    this.run = this.runOn(gpu);
     const { levelId, width, height } = replay.header;
     this.walls = levelMap(getLevel(levelId)).createWalls(width, height);
     this.computer = computerLook(levelId);
@@ -123,17 +100,17 @@ export class ReplayScene implements ArenaScene {
 
   /** The ticks played so far. */
   public get tick(): number {
-    return this.engine.tickCount;
+    return this.run.tickCount;
   }
 
   /** Where the view is going: a seek's tick while one is under way. */
   public get shownTick(): number {
-    return this.target ?? this.engine.tickCount;
+    return this.run.shownTick;
   }
 
   /** True once the match played to its end - its outcome, or its last tick. */
   public get over(): boolean {
-    return this.ended;
+    return this.run.over;
   }
 
   /** True while the war runs on the GPU, in the GL painter's context. */
@@ -143,7 +120,7 @@ export class ReplayScene implements ArenaScene {
 
   /** True while a seek plays on towards its tick. */
   public get seeking(): boolean {
-    return this.target !== null;
+    return this.run.seeking;
   }
 
   /**
@@ -152,16 +129,12 @@ export class ReplayScene implements ArenaScene {
    * {@link SEEK_FRAME_MS} allows.
    */
   public advance(ticks: number): void {
-    if (this.disposed) {
+    if (!this.run.seeking) {
+      this.run.advance(ticks);
       return;
     }
-    if (this.target !== null) {
-      this.playTowardsTarget();
-      return;
-    }
-    for (let played = 0; played < ticks && !this.ended; played++) {
-      this.step();
-    }
+    const deadline = performance.now() + SEEK_FRAME_MS;
+    this.run.advance(ticks, () => performance.now() >= deadline);
   }
 
   /**
@@ -171,19 +144,12 @@ export class ReplayScene implements ArenaScene {
    * shows on the next frame.
    */
   public seek(tick: number): void {
-    const target = Math.max(
-      0,
-      Math.min(Math.round(tick), this.replay.header.ticks)
-    );
-    if (target < this.engine.tickCount) {
-      this.restart();
-    }
-    this.target = target;
+    this.run.seek(tick);
   }
 
   /** The match from its first tick again - none once disposed. */
   public restart(): void {
-    this.rebuild(this.gpu);
+    this.run.restart();
   }
 
   /**
@@ -201,57 +167,36 @@ export class ReplayScene implements ArenaScene {
       return;
     }
     const at = this.shownTick;
-    this.rebuild(gpu);
+    this.run.dispose();
+    this.run = this.runOn(gpu);
     if (at > 0) {
       this.seek(at);
     }
   }
 
-  private rebuild(gpu: GpuIntPainter | null): void {
-    if (this.disposed) {
-      return;
+  /**
+   * A run from the first tick, on `gpu` for a `gpu-int` replay - on the
+   * CPU from the moment the GPU fails to set up.
+   */
+  private runOn(gpu: GpuIntPainter | null): MatchRun {
+    const onGpu = gpu !== null && this.replay.header.simulation === 'gpu-int';
+    this.gpu = onGpu ? gpu : null;
+    const run = replayRun(this.replay, {
+      ...(onGpu ? { gpuInt: gpuIntOn(gpu, this.replay) } : {}),
+      onGpuFailure: (error) => {
+        console.warn('The replay falls back to the CPU', error);
+        this.refused = gpu;
+        this.gpu = null;
+      },
+    });
+    if (run === null) {
+      throw new Error('The replay does not play back');
     }
-    this.engine.dispose();
-    const built = engineOf(this.replay, gpu);
-    if (built === null) {
-      return;
-    }
-    this.engine = built.engine;
-    this.gpu = built.gpu;
-    this.noteRefusal(built, gpu);
-    this.ended = false;
-    this.target = null;
-  }
-
-  private noteRefusal(built: Built, asked: GpuIntPainter | null): void {
-    if (asked !== null && built.gpu === null) {
-      this.refused = asked;
-    }
-  }
-  private playTowardsTarget(): void {
-    const deadline = performance.now() + SEEK_FRAME_MS;
-    while (
-      this.target !== null &&
-      !this.ended &&
-      this.engine.tickCount < this.target
-    ) {
-      this.step();
-      if (performance.now() >= deadline) {
-        return;
-      }
-    }
-    this.target = null;
-  }
-
-  private step(): void {
-    const { width, height, ticks: last } = this.replay.header;
-    this.engine.tick(width, height);
-    this.ended =
-      this.engine.outcome() !== null || this.engine.tickCount >= last;
+    return run;
   }
 
   public content(alpha: number): ArenaContent {
-    const { engine } = this;
+    const { engine } = this.run;
     const { width, height } = this.replay.header;
     return arenaContent({
       players: engine.players,
@@ -274,7 +219,7 @@ export class ReplayScene implements ArenaScene {
   public dispose(): void {
     if (!this.disposed) {
       this.disposed = true;
-      this.engine.dispose();
+      this.run.dispose();
     }
   }
 }

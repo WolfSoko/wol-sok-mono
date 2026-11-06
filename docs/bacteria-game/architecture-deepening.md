@@ -135,6 +135,10 @@ untouched.
 
 ## 4. `MatchRun`
 
+**Status.** Done in [#2780](https://github.com/WolfSoko/wol-sok-mono/issues/2780)
+for `playReplay`, the balance lab, the replay viewer and the CPU bench;
+`GameStateService.advance` follows after [#2778](https://github.com/WolfSoko/wol-sok-mono/issues/2778).
+
 **Today.** Five places write the same loop,
 `while (outcome() == null && tickCount < N) engine.tick(width, height)`:
 

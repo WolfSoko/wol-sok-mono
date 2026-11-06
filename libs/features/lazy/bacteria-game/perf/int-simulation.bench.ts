@@ -3,7 +3,7 @@
  * on the CPU (ADR 0015) - at the sizes the game plays. Prints ms per tick;
  * no gate (ADR 0014: CI's workers are shared, absolute times vary).
  *
- *   npx tsx libs/features/lazy/bacteria-game/perf/int-simulation.bench.ts
+ *   npx tsx --tsconfig tsconfig.base.json libs/features/lazy/bacteria-game/perf/int-simulation.bench.ts
  */
 import {
   createPlayer,

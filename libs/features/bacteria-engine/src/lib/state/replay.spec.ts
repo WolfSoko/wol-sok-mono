@@ -14,6 +14,7 @@ import {
   Replay,
   replayEngine,
   replayOf,
+  replayRun,
   REPLAY_VERSION,
   savedRegardless,
   simGridOf,
@@ -141,7 +142,7 @@ describe('replay', () => {
     ).toBe(true);
   });
 
-  describe('canPlayBack and replayEngine', () => {
+  describe('canPlayBack, replayEngine and replayRun', () => {
     it('tell what plays back, as playReplay does', () => {
       const { replay } = record(PLAN, 10);
       const refused = [
@@ -155,31 +156,69 @@ describe('replay', () => {
       for (const other of refused) {
         expect(canPlayBack(other)).toBe(false);
         expect(replayEngine(other)).toBeNull();
+        expect(replayRun(other)).toBeNull();
         expect(playReplay(other)).toBeNull();
       }
     });
 
-    it('give an engine that plays the match tick by tick as recorded', () => {
+    it('give a run that plays the match as recorded, tick by tick', () => {
       const { engine, replay } = record(PLAN, 400);
       const seconds: unknown[] = [];
 
-      const played = replayEngine(replay, (sizes) => seconds.push(sizes));
-      expect(played).not.toBeNull();
+      const run = replayRun(replay, {
+        onSecond: (sizes) => seconds.push(sizes),
+      });
+      expect(run).not.toBeNull();
       try {
-        while (
-          played !== null &&
-          played.outcome() == null &&
-          played.tickCount < replay.header.ticks
-        ) {
-          played.tick(PLAN.width, PLAN.height);
+        while (run !== null && !run.over) {
+          run.advance(1);
         }
-        expect(played?.tickCount).toBe(engine.tickCount);
-        expect(matchChecksum(played?.players ?? [])).toBe(
-          matchChecksum(engine.players)
-        );
+        expect(run?.result()).toMatchObject({
+          ticks: engine.tickCount,
+          checksum: matchChecksum(engine.players),
+        });
         expect(seconds).toHaveLength(Math.floor(400 / TICKS_PER_SEC));
       } finally {
-        played?.dispose();
+        run?.dispose();
+      }
+    });
+  });
+
+  describe('replayRun on a GPU that fails to set up', () => {
+    it('plays on IntSimulation, tells it once and asks the GPU no more', () => {
+      const { replay } = record(PLAN, 60);
+      const gpuInt = {
+        ...replay,
+        header: {
+          ...replay.header,
+          simulation: 'gpu-int' as const,
+          version: GPU_INT_REPLAY_VERSION,
+        },
+      };
+      const straight = replayRun(gpuInt);
+      const factory = jest.fn(() => {
+        throw new Error('Incomplete render target');
+      });
+      const failures: unknown[] = [];
+      const run = replayRun(gpuInt, {
+        gpuInt: factory,
+        onGpuFailure: (error) => failures.push(error),
+      });
+      if (run === null || straight === null) {
+        throw new Error('The replay did not play');
+      }
+      try {
+        run.advance(30);
+        run.seek(10);
+        run.advance(Infinity);
+        straight.advance(10);
+
+        expect(failures).toHaveLength(1);
+        expect(factory).toHaveBeenCalledTimes(1);
+        expect(run.result().checksum).toBe(straight.result().checksum);
+      } finally {
+        run.dispose();
+        straight.dispose();
       }
     });
   });

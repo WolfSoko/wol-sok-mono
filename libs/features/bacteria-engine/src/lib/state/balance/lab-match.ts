@@ -9,11 +9,12 @@ import { computerLoadout } from '../computer-opponent';
 import { LADDER_VERSION } from '../difficulty-curve';
 import { Loadout } from '../evolution';
 import { TICKS_PER_SEC } from '../fixed-tick';
-import { getLevel, levelSize } from '../levels';
+import { getLevel, Level, levelSize } from '../levels';
 import { MatchEngine } from '../match-engine';
+import { MatchRun } from '../match-run';
 import { MatchPlan, planMatch } from '../match-setup';
 import { medalFor, MedalTier } from '../medallions';
-import { clockOf, winRuleOf } from '../win-conditions';
+import { clockOf, WinRule, winRuleOf } from '../win-conditions';
 import { mean, round } from './stats';
 
 /**
@@ -123,32 +124,38 @@ export function playLabMatch(cell: LabCell): LabMatch {
   if (botProfile === undefined) {
     throw new Error(`No ladder computer on ${cell.levelId}`);
   }
-  const engine = new MatchEngine(
-    spawns.map((spawn, seat) =>
-      seat === 0 ? { ...spawn, isBot: true } : spawn
-    ),
-    {
-      ...options,
-      botProfile: { ...botProfile, ...cell.tweaks },
-      standIns: new Map([[0, REFERENCE_PROFILE]]),
-    }
+  const level = getLevel(cell.levelId);
+  const rule = winRuleOf(level);
+  const limit = Math.min(cell.horizonSec, (clockOf(rule) ?? Infinity) + 1);
+  const run = new MatchRun(
+    () =>
+      new MatchEngine(
+        spawns.map((spawn, seat) =>
+          seat === 0 ? { ...spawn, isBot: true } : spawn
+        ),
+        {
+          ...options,
+          botProfile: { ...botProfile, ...cell.tweaks },
+          standIns: new Map([[0, REFERENCE_PROFILE]]),
+        }
+      ),
+    { width, height },
+    Math.round(limit * TICKS_PER_SEC)
   );
   try {
-    return measure(engine, cell, width, height);
+    return measure(run, cell, level, rule);
   } finally {
-    engine.dispose();
+    run.dispose();
   }
 }
 
 function measure(
-  engine: MatchEngine,
+  run: MatchRun,
   cell: LabCell,
-  width: number,
-  height: number
+  level: Level,
+  rule: WinRule
 ): LabMatch {
-  const level = getLevel(cell.levelId);
-  const rule = winRuleOf(level);
-  const limit = Math.min(cell.horizonSec, (clockOf(rule) ?? Infinity) + 1);
+  const { engine } = run;
   const { capacity } = engine;
   const shares: number[] = [];
   const shareAt: number[] = [];
@@ -158,9 +165,8 @@ function measure(
   let stalled = false;
   let shotsSeen = 0;
   let computerShare = 0;
-  const maxTicks = Math.round(limit * TICKS_PER_SEC);
-  for (let tick = 0; tick < maxTicks && engine.outcome() == null; tick++) {
-    engine.tick(width, height);
+  while (!run.over) {
+    run.advance(1);
     const [standIn, computer] = engine.players;
     const all =
       standIn.bacteriaCount +
