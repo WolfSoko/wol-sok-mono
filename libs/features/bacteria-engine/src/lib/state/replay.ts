@@ -1,6 +1,5 @@
 import { gridOf, ONLINE_SIM_RESOLUTION, SimResolution } from './arena-size';
 import { BotDifficulty, difficultyOption } from './bot-controller';
-import { matchChecksum } from './checksum';
 import { isDailyLevelId } from './daily';
 import { isWeaponId, Loadout, parseGeneLevels } from './evolution';
 import { validColorPair } from './colony-colors';
@@ -14,11 +13,12 @@ import { GhostController } from './ghost';
 import {
   DRAG_STEPS,
   MatchEngine,
+  SecondSampler,
   SizeSample,
   STEER_STEPS,
 } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
-import { Player } from './player.model';
+import { MatchRun, MatchRunResult } from './match-run';
 import { intSimulation } from './gpu-int/int-simulation';
 import { isRuleset, Ruleset, SimulationFactory } from './simulation';
 import { isHeadStart } from './rivalry';
@@ -250,13 +250,7 @@ export type ReplayExtras = Pick<
 >;
 
 /** A match played again from its replay. */
-export interface ReplayResult {
-  players: readonly Player[];
-  /** How it ended - null when the recording stops before an outcome. */
-  outcome: MatchOutcome | null;
-  ticks: number;
-  /** The {@link matchChecksum} after the last tick played. */
-  checksum: number;
+export interface ReplayResult extends MatchRunResult {
   /** The colony sizes by seat after every full second - see `onSecond`. */
   samples: SizeSample[];
 }
@@ -395,12 +389,47 @@ export function canPlayBack(replay: Replay): boolean {
  */
 export function replayEngine(
   replay: Replay,
-  onSecond?: (sizes: SizeSample) => void,
+  onSecond?: SecondSampler,
   gpuInt?: SimulationFactory
 ): MatchEngine | null {
+  return canPlayBack(replay)
+    ? playbackEngine(replay, { onSecond, gpuInt })
+    : null;
+}
+
+/** How {@link replayRun} plays a replay. */
+export interface ReplayRunOptions {
+  /** Called after every full second - again from the start on a seek back. */
+  onSecond?: SecondSampler;
+  /** The integer passes on a trusted GPU - see {@link replayEngine}. */
+  gpuInt?: SimulationFactory;
+}
+
+/**
+ * A recorded match as a {@link MatchRun} on {@link replayEngine}, in its
+ * arena, cut off at its last recorded tick. Null for a replay that would
+ * not play out as it was played. The caller disposes of it.
+ */
+export function replayRun(
+  replay: Replay,
+  options: ReplayRunOptions = {}
+): MatchRun | null {
   if (!canPlayBack(replay)) {
     return null;
   }
+  const { width, height, ticks } = replay.header;
+  return new MatchRun(
+    () => playbackEngine(replay, options),
+    { width, height },
+    ticks
+  );
+}
+
+/** {@link replayEngine} for a replay known to play back. */
+function playbackEngine(
+  replay: Replay,
+  { onSecond, gpuInt }: ReplayRunOptions
+): MatchEngine {
   const { header, inputs } = replay;
   const { spawns, options } = planMatch(header);
   // Every human is played back from the recording, as they were.
@@ -423,31 +452,20 @@ export function replayEngine(
 
 /**
  * Plays a recorded match again on its ruleset's simulation, without anyone
- * watching - see {@link replayEngine}. Null for a replay that would not
+ * watching - see {@link replayRun}. Null for a replay that would not
  * play out as it was played.
  */
 export function playReplay(replay: Replay): ReplayResult | null {
   const samples: SizeSample[] = [];
-  const engine = replayEngine(replay, (sizes) => samples.push(sizes));
-  if (engine === null) {
+  const run = replayRun(replay, { onSecond: (sizes) => samples.push(sizes) });
+  if (run === null) {
     return null;
   }
-  const { header } = replay;
   try {
-    let outcome = engine.outcome();
-    while (outcome == null && engine.tickCount < header.ticks) {
-      engine.tick(header.width, header.height);
-      outcome = engine.outcome();
-    }
-    return {
-      players: engine.players,
-      outcome,
-      ticks: engine.tickCount,
-      checksum: matchChecksum(engine.players),
-      samples,
-    };
+    run.advance(Infinity);
+    return { ...run.result(), samples };
   } finally {
-    engine.dispose();
+    run.dispose();
   }
 }
 
