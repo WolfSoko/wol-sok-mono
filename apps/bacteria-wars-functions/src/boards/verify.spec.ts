@@ -17,17 +17,16 @@ jest.mock('@wolsok/feat-shared-bacteria-engine', () => ({
 const played = (extra: Partial<ReplayResult> = {}) =>
   ({
     ticks: 3_600,
-    checksum: 1,
     outcome: { winner: { id: 0 }, reason: 'annihilation' },
     players: [{ bacteriaCount: 40 }, { bacteriaCount: 0 }],
     samples: Array.from({ length: 1_000 }, (_, i) => [i, 1_000 - i]),
     ...extra,
   }) as unknown as ReplayResult;
 
-const verified = (result = played(), winnerSeat = 0): ReplayVerdict => ({
+const verified = (result = played()): ReplayVerdict => ({
   state: 'verified',
   result,
-  outcome: { endedBy: 'annihilation', winnerSeat },
+  outcome: { endedBy: 'annihilation', winnerSeat: 0 },
 });
 
 describe('verifyReplay', () => {
@@ -76,7 +75,7 @@ describe('verifyReplay', () => {
       } as never);
     jest.mocked(replayVerdict).mockReturnValue(verified(match(human)));
     expect(verifyReplay(dailyReplay()).medal).toEqual(expect.any(String));
-    jest.mocked(replayVerdict).mockReturnValue(verified(match(bot), 1));
+    jest.mocked(replayVerdict).mockReturnValue(verified(match(bot)));
     const lost = { endedBy: 'annihilation', winnerSeat: 1 } as const;
     expect(verifyReplay(dailyReplay({ outcome: lost })).medal).toBeNull();
     jest.mocked(replayVerdict).mockReturnValue(verified(match(human)));
