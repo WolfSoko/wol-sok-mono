@@ -5,12 +5,12 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import { Timestamp } from 'firebase-admin/firestore';
 import { forgetPlayerReplays } from '../replays/forget';
+import { useEmulatorDb } from '../testing/emulator';
 import { deletePlayerBoards } from './delete-player';
 import { boardProfileChanged } from './profile-changed';
 import { type AccountCreatedAt, rankOnline } from './rank-online';
 import { rankProgress } from './rank-progress';
 import { rebuildTop } from './rebuild-top';
-import { useEmulatorDb } from '../testing/emulator';
 
 /**
  * The board functions against the Firestore emulator (`test-emulator`):

@@ -10,10 +10,9 @@ export interface FakeRealtimeHooks {
   afterRemoveIf?: () => Promise<unknown>;
 }
 
-export interface FakeRealtimeOptions {
+export interface FakeRealtimeOptions extends FakeRealtimeHooks {
   /** Paths whose removal fails with `unavailable`; setting them works. */
   failRemoving?: readonly string[];
-  hooks?: FakeRealtimeHooks;
 }
 
 export type FakeRealtime = Realtime & {
@@ -25,6 +24,8 @@ export type FakeRealtime = Realtime & {
    * nothing.
    */
   calls: string[];
+  /** The value at `path`, read without any hook: for a spec's checks. */
+  peek(path: string): unknown;
 };
 
 /**
@@ -35,7 +36,7 @@ export type FakeRealtime = Realtime & {
  */
 export function fakeRealtime(
   initial: Record<string, unknown> = {},
-  { failRemoving = [], hooks = {} }: FakeRealtimeOptions = {}
+  { failRemoving = [], ...hooks }: FakeRealtimeOptions = {}
 ): FakeRealtime {
   const tree: Record<string, unknown> = structuredClone(initial);
   const calls: string[] = [];
@@ -108,6 +109,7 @@ export function fakeRealtime(
   return {
     tree,
     calls,
+    peek: (path) => structuredClone(read(path)),
     get: async (path) => {
       await hooks.beforeGet?.();
       return structuredClone(read(path));
@@ -116,6 +118,7 @@ export function fakeRealtime(
     remove: async (path) => record(path, null),
     removeIf: async (path, test) => {
       await hooks.beforeRemoveIf?.();
+      // Fails like the real transaction, whether or not the test holds.
       checkRemovable(path);
       if (test(read(path))) {
         record(path, null);

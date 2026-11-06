@@ -5,8 +5,8 @@
    `testing/fake-realtime.ts` until it passes. Move `src/testing/**` from
    `tsconfig.app.json` to `tsconfig.spec.json`. Check: `npx nx test bacteria-wars-functions`.
 2. **Admin onto the shared fake.** Delete the private fake in
-   `admin/admin.emulator.ts`; use `fakeRealtime({}, { failRemoving, hooks })`,
-   read values through `realtime.get`/`tree`, seed `connections` in the
+   `admin/admin.emulator.ts`; use `fakeRealtime({}, { failRemoving, ...hooks })`,
+   read values through `realtime.peek`, seed `connections` in the
    statistics spec. Check: `test-emulator`.
 3. **Harness.** Add `testing/emulator.ts` with `useEmulatorDb()` and move
    all eight `*.emulator.ts` onto it. Check: `test-emulator`, same test

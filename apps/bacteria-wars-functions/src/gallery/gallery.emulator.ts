@@ -11,9 +11,9 @@ import type { Verdict } from '../boards/verify';
 import { runReplayCommand } from '../replays/command';
 import { forgetPlayerReplays } from '../replays/forget';
 import { dailyReplay, TICKS } from '../testing/daily-replay';
+import { useEmulatorDb } from '../testing/emulator';
 import { featureBest } from './feature-best';
 import { publicProfileChanged } from './publish';
-import { useEmulatorDb } from '../testing/emulator';
 
 /**
  * The gallery against the Firestore emulator (`test-emulator`):

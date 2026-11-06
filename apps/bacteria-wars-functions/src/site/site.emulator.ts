@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { handleSite } from './public-site';
 import { useEmulatorDb } from '../testing/emulator';
+import { handleSite } from './public-site';
 
 /**
  * `publicSite` against the Firestore emulator (`test-emulator`): what each

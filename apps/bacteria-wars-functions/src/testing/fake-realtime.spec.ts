@@ -53,20 +53,21 @@ describe('fakeRealtime', () => {
     const realtime = fakeRealtime(
       { bans: { ada: 1 } },
       {
-        hooks: {
-          beforeGet: async () => order.push('beforeGet'),
-          beforeRemoveIf: async () => {
-            order.push('beforeRemoveIf');
-            // Another writer in between: the test sees its value.
-            await realtime.set('bans/ada', 2);
-          },
-          afterRemoveIf: async () => order.push('afterRemoveIf'),
+        beforeGet: async () => order.push('beforeGet'),
+        beforeRemoveIf: async () => {
+          order.push('beforeRemoveIf');
+          // Another writer in between: the test sees its value.
+          await realtime.set('bans/ada', 2);
         },
+        afterRemoveIf: async () => order.push('afterRemoveIf'),
       }
     );
     expect(await realtime.get('bans/ada')).toBe(1);
     await realtime.removeIf('bans/ada', (value) => value === 1);
     expect(order).toEqual(['beforeGet', 'beforeRemoveIf', 'afterRemoveIf']);
     expect(realtime.tree).toEqual({ bans: { ada: 2 } });
+    // peek reads without the hook.
+    expect(realtime.peek('bans/ada')).toBe(2);
+    expect(order).toHaveLength(3);
   });
 });

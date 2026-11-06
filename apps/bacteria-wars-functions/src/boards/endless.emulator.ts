@@ -6,6 +6,7 @@ import {
 import { Timestamp } from 'firebase-admin/firestore';
 import { voidAttempt } from '../replays/accept';
 import { endlessReplay, RUN_ID, TICKS } from '../testing/daily-replay';
+import { useEmulatorDb } from '../testing/emulator';
 import {
   closeStaleMatches,
   rankEndless,
@@ -14,7 +15,6 @@ import {
 import { type Verdict } from './verify';
 import { verifyEndlessSlice } from './verify-endless';
 import { verifyNow } from './verify-now';
-import { useEmulatorDb } from '../testing/emulator';
 
 /**
  * The endless board against the Firestore emulator (`test-emulator`):

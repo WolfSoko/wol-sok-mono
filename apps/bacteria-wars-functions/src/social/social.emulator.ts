@@ -1,10 +1,10 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { runAdminCommand } from '../admin/command';
 import { erasePlayer } from '../admin/erase';
+import { useEmulatorDb } from '../testing/emulator';
 import { fakeRealtime } from '../testing/fake-realtime';
 import { deletePlayerSocial } from './delete-player';
 import { backfillMirrors, mirrorListing } from './mirror';
-import { useEmulatorDb } from '../testing/emulator';
 
 /**
  * The friend lists' mirrors and the erasing of a deleted account's social

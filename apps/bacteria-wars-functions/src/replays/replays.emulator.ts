@@ -11,12 +11,12 @@ import { join } from 'node:path';
 import { closeNotReported } from '../boards/hourly';
 import { clearBanCache, dayOf, takeSubmissionSlot } from '../limits';
 import { dailyReplay } from '../testing/daily-replay';
+import { useEmulatorDb } from '../testing/emulator';
 import { acceptSubmission, giveUpSubmission } from './accept';
 import { deleteReplayChildren } from './cleanup';
 import { runReplayCommand } from './command';
 import { forgetPlayerReplays } from './forget';
 import { levelStatsId } from './level-stats';
-import { useEmulatorDb } from '../testing/emulator';
 
 /**
  * The replay functions against the Firestore emulator (`test-emulator`):

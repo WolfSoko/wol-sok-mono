@@ -7,12 +7,12 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
 import { forgetPlayerReplays } from '../replays/forget';
 import { AT, ATTEMPT, dailyReplay, TICKS } from '../testing/daily-replay';
+import { useEmulatorDb } from '../testing/emulator';
 import { closeNotReported, finalizeDailyBoards } from './hourly';
 import { rankDaily } from './rank-daily';
 import { type Verdict } from './verify';
 import { verifyNow } from './verify-now';
 import { verifyDailySlice } from './verify-slice';
-import { useEmulatorDb } from '../testing/emulator';
 
 /**
  * The daily board against the Firestore emulator (`test-emulator`):

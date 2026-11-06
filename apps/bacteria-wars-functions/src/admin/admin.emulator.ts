@@ -7,15 +7,15 @@ import {
 import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { clearBanCache, isBanned } from '../limits';
+import { useEmulatorDb } from '../testing/emulator';
+import { fakeRealtime } from '../testing/fake-realtime';
 import { countAccount, deleteAccount } from './accounts';
 import { expireBans } from './bans';
 import { type AdminContext, runAdminCommand } from './command';
 import type { Realtime } from './realtime';
-import { type FakeRealtime, fakeRealtime } from '../testing/fake-realtime';
 import type { RemoteToggles } from './toggles';
 import { refreshStats } from './stats';
 import { checkGoogleLink } from './tombstones';
-import { useEmulatorDb } from '../testing/emulator';
 
 /**
  * The admin commands against the Firestore emulator (`test-emulator`):
@@ -31,10 +31,6 @@ const NOW = Date.UTC(2026, 10, 3, 12);
 const DAILY = 'daily-2026-11-03';
 
 afterEach(() => jest.restoreAllMocks());
-
-/** The value the fake Realtime Database mirrors for `uid`'s ban, if any. */
-const mirroredBan = (realtime: FakeRealtime, uid: string): unknown =>
-  (realtime.tree['bans'] as Record<string, unknown> | undefined)?.[uid] ?? null;
 
 /** Remote Config's toggles, kept in memory. */
 function fakeToggles(): RemoteToggles & { published: FeatureToggles } {
@@ -355,7 +351,7 @@ describe('player.unban', () => {
       ok: false,
       error: 'not-banned',
     });
-    expect(mirroredBan(realtime, 'ada')).toBeNull();
+    expect(realtime.peek('bans/ada')).toBeNull();
   });
 
   it.each(['beforeGet', 'beforeRemoveIf'] as const)(
@@ -366,9 +362,7 @@ describe('player.unban', () => {
       const realtime = fakeRealtime(
         {},
         {
-          hooks: {
-            [hook]: () => command('c2', ban('ada', until), context(realtime)),
-          },
+          [hook]: () => command('c2', ban('ada', until), context(realtime)),
         }
       );
       // Left behind by a ban command that failed after Firestore.
@@ -377,7 +371,7 @@ describe('player.unban', () => {
         ok: false,
         error: 'not-banned',
       });
-      expect(mirroredBan(realtime, 'ada')).toBe(until);
+      expect(realtime.peek('bans/ada')).toBe(until);
       expect(realtime.calls).not.toContain('remove bans/ada');
       expect((await entry('boards/xp/entries/xpAda')).get('hiddenBy')).toEqual({
         ban: true,
@@ -390,10 +384,8 @@ describe('player.unban', () => {
     const realtime = fakeRealtime(
       {},
       {
-        hooks: {
-          beforeRemoveIf: () =>
-            command('c2', ban('ada', NOW + DAY), context(realtime)),
-        },
+        beforeRemoveIf: () =>
+          command('c2', ban('ada', NOW + DAY), context(realtime)),
       }
     );
     await command('c1', ban('ada', null), context(realtime));
@@ -401,7 +393,7 @@ describe('player.unban', () => {
       ok: false,
       error: 'ban-changed',
     });
-    expect(mirroredBan(realtime, 'ada')).toBe(NOW + DAY);
+    expect(realtime.peek('bans/ada')).toBe(NOW + DAY);
     expect((await db.doc('bans/ada').get()).get('until').toMillis()).toBe(
       NOW + DAY
     );
@@ -888,16 +880,14 @@ describe('expireBans', () => {
       const realtime = fakeRealtime(
         {},
         {
-          hooks: {
-            [hook]: () =>
-              command(
-                'c2',
-                ban('ada', renewed),
-                context(realtime),
-                'owner',
-                later
-              ),
-          },
+          [hook]: () =>
+            command(
+              'c2',
+              ban('ada', renewed),
+              context(realtime),
+              'owner',
+              later
+            ),
         }
       );
       await command('c1', ban('ada', NOW + HOUR), context(realtime));
@@ -907,7 +897,7 @@ describe('expireBans', () => {
       const stored = (await db.doc('bans/ada').get()).data();
       expect(stored?.['until'].toMillis()).toBe(renewed);
       expect(stored?.['since'].toMillis()).toBe(later);
-      expect(mirroredBan(realtime, 'ada')).toBe(renewed);
+      expect(realtime.peek('bans/ada')).toBe(renewed);
       // Only the ended ban's value is removed, and only before the new one.
       expect(realtime.calls.includes('remove bans/ada')).toBe(
         hook === 'afterRemoveIf'
@@ -931,7 +921,7 @@ describe('expireBans', () => {
     // An end the Realtime Database kept from before, already passed.
     await realtime.set('bans/ada', NOW + 30 * 60_000);
     expect(await expireBans(db, realtime, NOW + DAY)).toBe(1);
-    expect(mirroredBan(realtime, 'ada')).toBeNull();
+    expect(realtime.peek('bans/ada')).toBeNull();
   });
 
   it('goes on past a ban it cannot lift', async () => {
@@ -1041,7 +1031,7 @@ describe('ban tombstones', () => {
         until: Timestamp.fromMillis(until),
         reason: 'spam',
       });
-      expect(mirroredBan(realtime, 'eve')).toBe(until);
+      expect(realtime.peek('bans/eve')).toBe(until);
       expect(
         (await db.doc('adminAudit/tombstone_eve').get()).data()
       ).toMatchObject({
@@ -1134,7 +1124,7 @@ describe('ban tombstones', () => {
         reason: 'cheating',
       });
       expect((await db.doc('bans/ada').get()).exists).toBe(false);
-      expect(mirroredBan(realtime, 'ada')).toBeNull();
+      expect(realtime.peek('bans/ada')).toBeNull();
       expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
         target: { uid: 'ada' },
         type: 'player.ban',
