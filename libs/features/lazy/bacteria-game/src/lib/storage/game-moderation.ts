@@ -52,7 +52,8 @@ export interface GameModeration {
   /**
    * The ban holding the player now - null while none does - again when it
    * changes, and null once it ends by itself at its `until`. Emits once the
-   * ban was read; never errors (a ban it cannot read is none).
+   * ban was read; never errors (a read that fails is none; a ban document
+   * without a readable end is a ban for good, as the rules take it).
    */
   ban(): Observable<PlayerBan | null>;
   /** The player's notices, oldest first; never errors. */
@@ -63,10 +64,11 @@ export interface GameModeration {
 
 /**
  * A ban as `bans/{uid}` stores it, read by the engine's `parseBan` - null
- * for none. Its times are browser Timestamps or ms.
+ * for none. Its times are Timestamps only: the rules take no number for
+ * an end, so a ban whose end is one holds for good there and here.
  */
 export function parseBan(value: unknown): PlayerBan | null {
-  return parseCloudBan(value, (time) => millisOf(time, { numbers: true }));
+  return parseCloudBan(value, (time) => millisOf(time));
 }
 
 /**

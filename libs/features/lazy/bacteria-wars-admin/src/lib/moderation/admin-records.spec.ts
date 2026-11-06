@@ -30,6 +30,12 @@ describe('admin records', () => {
     expect(parseBan('ada', undefined)).toBeNull();
   });
 
+  it('reads an end in ms as a ban for good, as the rules do', () => {
+    expect(
+      parseBan('ada', { since: at(1), until: 9, reason: 'spam' })?.until
+    ).toBeNull();
+  });
+
   it('shows a ban changed by hand with its fallbacks', () => {
     expect(parseBan('ada', { until: null, reason: 'rude' })).toEqual({
       uid: 'ada',

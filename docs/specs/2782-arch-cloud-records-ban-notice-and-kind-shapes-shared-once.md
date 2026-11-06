@@ -33,7 +33,7 @@ engine and each side maps its own Timestamp.
    comments that call it "inclusive" (`bans.ts`, `limits.ts`) go.
 2. **One lenient parser, as the rules read a ban.** `parseBan(data, toMillis)` returns
    `{ since, until, reason }` with `since` and `reason` null when unreadable, and null only for no
-   document. An `until` that is null or not a time reads as a ban for good, as the rules refuse a
+   document. An `until` that is null or not a Timestamp (a plain number included, which the rules cannot compare with `request.time`) reads as a ban for good, as the rules refuse a
    player whose ban document lacks a readable end. This is what the functions do today
    (`banOf`, `isBanned`); the game read such a ban as none and the admin dropped it. Both now
    show what the rules enforce.

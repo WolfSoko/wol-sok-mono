@@ -16,10 +16,10 @@ describe('parseBan', () => {
     ).toEqual({ since: 10, until: 500, reason: 'spam' });
   });
 
-  it('reads ms as well, as older documents hold them', () => {
-    expect(parseBan({ since: 10, until: 500, reason: 'spam' })?.until).toBe(
-      500
-    );
+  it('reads an end in ms as a ban for good, as the rules do', () => {
+    expect(
+      parseBan({ since: 10, until: 500, reason: 'spam' })?.until
+    ).toBeNull();
   });
 });
 

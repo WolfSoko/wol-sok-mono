@@ -126,13 +126,17 @@ export function parseProfileFlags(value: unknown): ProfileFlags {
   };
 }
 
+/** A Firestore Timestamp in ms - the rules take no number for a ban's end. */
+const timestampMillis = (value: unknown): number | null =>
+  typeof value === 'number' ? null : millisOf(value);
+
 /**
  * `bans/{uid}`, read by the engine's `parseBan` as the rules read it. The
  * functions write start and reason, so the fallbacks (0, `other`) only
  * meet a document changed by hand.
  */
 export function parseBan(uid: string, value: unknown): BanRecord | null {
-  const ban = parseCloudBan(value, millisOf);
+  const ban = parseCloudBan(value, timestampMillis);
   return ban === null
     ? null
     : {
