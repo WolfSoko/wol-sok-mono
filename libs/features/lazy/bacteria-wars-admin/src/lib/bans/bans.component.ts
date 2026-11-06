@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import type { BanReason } from '@wolsok/feat-lazy-bac-game/admin-kit';
+import { banHolds, type BanReason } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import {
   AdminI18n,
   type AdminTextKey,
@@ -12,7 +12,7 @@ import {
   AdminActionsService,
   type ModerationAction,
 } from '../moderation/admin-actions.service';
-import { type BanRecord, banHolds } from '../moderation/admin-records';
+import type { BanRecord } from '../moderation/admin-records';
 import { AdminRecordsService } from '../moderation/admin-records.service';
 import { ListFooterComponent } from '../moderation/list-footer.component';
 import { PagedList } from '../moderation/paged-list';

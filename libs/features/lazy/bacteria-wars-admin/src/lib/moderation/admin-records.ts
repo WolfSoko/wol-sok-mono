@@ -1,11 +1,13 @@
 import {
-  BAN_REASONS,
   BOARD_KINDS,
   type BanReason,
   type BoardKind,
   type EntryShow,
   type EntryStatus,
+  HIDE_REASONS,
+  type HideReason,
   ONLINE_SIM_RESOLUTION,
+  parseBan as parseCloudBan,
   parseBoardId,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 
@@ -44,10 +46,6 @@ export interface MemberRecord {
   barred: BoardKind[];
   activeAt: number | null;
 }
-
-/** Why an entry is hidden; any reason hides it. */
-export const HIDE_REASONS = ['ban', 'admin', 'optout'] as const;
-export type HideReason = (typeof HIDE_REASONS)[number];
 
 /** `boards/{boardId}/entries/{entryId}`, as far as moderation needs it. */
 export interface EntryRecord {
@@ -128,26 +126,21 @@ export function parseProfileFlags(value: unknown): ProfileFlags {
   };
 }
 
+/**
+ * `bans/{uid}`, read by the engine's `parseBan` as the rules read it. The
+ * functions write start and reason, so the fallbacks (0, `other`) only
+ * meet a document changed by hand.
+ */
 export function parseBan(uid: string, value: unknown): BanRecord | null {
-  if (!isObject(value)) {
-    return null;
-  }
-  const since = millisOf(value['since']);
-  const until = value['until'] === null ? null : millisOf(value['until']);
-  const reason = value['reason'];
-  if (
-    since === null ||
-    (until === null && value['until'] !== null) ||
-    !(BAN_REASONS as readonly unknown[]).includes(reason)
-  ) {
-    return null;
-  }
-  return { uid, since, until, reason: reason as BanReason };
-}
-
-/** True while the ban holds at `now`; the hourly sweep lifts the others. */
-export function banHolds(ban: BanRecord, now: number): boolean {
-  return ban.until === null || ban.until > now;
+  const ban = parseCloudBan(value, millisOf);
+  return ban === null
+    ? null
+    : {
+        uid,
+        since: ban.since ?? 0,
+        until: ban.until,
+        reason: ban.reason ?? 'other',
+      };
 }
 
 export function parseMember(value: unknown): MemberRecord {

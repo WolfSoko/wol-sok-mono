@@ -1,25 +1,16 @@
+import {
+  ADMIN_STATS_FIGURES,
+  type AdminStatsFigure,
+  type AdminStats as ComputedStats,
+} from '@wolsok/feat-lazy-bac-game/admin-kit';
 import { counts } from '../moderation/admin-records';
 
-/** `adminStats/now` and the hourly snapshots, as the overview reads them. */
-export interface AdminStats {
-  accounts: number;
-  active24h: number;
-  active7d: number;
-  online: number;
-  playing: number;
-  searching: number;
-  roomsOpen: number;
-  matchesRunning: number;
-  replays: number;
-  replaysToday: number;
-  submissionsWaiting: number;
-  bans: number;
-  uploadedPictures: number;
-  entries: Record<string, number>;
-  today: Record<string, number>;
-  /** When it was computed, ms since the epoch. */
-  at: number | null;
-}
+/**
+ * `adminStats/now` and the hourly snapshots, as the overview reads them:
+ * the functions' statistics and when they were computed (ms, null when
+ * not readable).
+ */
+export type AdminStats = ComputedStats & { at: number | null };
 
 /** The single figures, in the order the overview shows them, by group. */
 export const FIGURE_GROUPS = {
@@ -27,7 +18,7 @@ export const FIGURE_GROUPS = {
   matches: ['searching', 'roomsOpen', 'matchesRunning'],
   replays: ['replays', 'replaysToday', 'submissionsWaiting'],
   moderation: ['bans', 'uploadedPictures'],
-} as const satisfies Record<string, readonly (keyof AdminStats)[]>;
+} as const satisfies Record<string, readonly AdminStatsFigure[]>;
 
 export type Figure = (typeof FIGURE_GROUPS)[keyof typeof FIGURE_GROUPS][number];
 
@@ -45,20 +36,11 @@ export function parseAdminStats(
     return null;
   }
   const at = data['at'] as { toMillis?: () => number } | null | undefined;
+  const figures = Object.fromEntries(
+    ADMIN_STATS_FIGURES.map((figure) => [figure, count(data[figure])])
+  ) as Record<AdminStatsFigure, number>;
   return {
-    accounts: count(data['accounts']),
-    active24h: count(data['active24h']),
-    active7d: count(data['active7d']),
-    online: count(data['online']),
-    playing: count(data['playing']),
-    searching: count(data['searching']),
-    roomsOpen: count(data['roomsOpen']),
-    matchesRunning: count(data['matchesRunning']),
-    replays: count(data['replays']),
-    replaysToday: count(data['replaysToday']),
-    submissionsWaiting: count(data['submissionsWaiting']),
-    bans: count(data['bans']),
-    uploadedPictures: count(data['uploadedPictures']),
+    ...figures,
     entries: counts(data['entries']),
     today: counts(data['today']),
     at: typeof at?.toMillis === 'function' ? at.toMillis() : null,

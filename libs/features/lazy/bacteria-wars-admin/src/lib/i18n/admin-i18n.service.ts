@@ -2,13 +2,13 @@ import { inject, Injectable, Pipe, PipeTransform } from '@angular/core';
 import {
   type Dictionary,
   type EntryPath,
+  type HideReason,
   I18nService,
   type Language,
   translate,
   type TranslationKey,
   type TranslationParams,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
-import type { HideReason } from '../moderation/admin-records';
 import { DE } from './de';
 import { EN } from './en';
 
