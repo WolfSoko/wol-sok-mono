@@ -37,6 +37,7 @@ export class MatchRun<E extends RunnableEngine = MatchEngine> {
   public get shownTick(): number;
   public advance(maxTicks: number, deadline?: () => boolean): number;
   public seek(tick: number): void;
+  public restart(): void;
   public result(): MatchRunResult; // players, outcome, ticks, checksum
   public dispose(): void;
 }
@@ -48,12 +49,12 @@ tested on a small fake as well as on real matches.
 
 ## Callers moved onto it
 
-| Caller                                     | Today                                           | After                                                                                                                    |
-| ------------------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `playReplay` (`state/replay.ts`)           | own loop, `try`/`finally`, checksum             | `replayRun(...)`, `advance(Infinity)`, `result()`; signature unchanged                                                   |
-| balance lab (`state/balance/lab-match.ts`) | own `for` loop to `maxTicks`                    | `MatchRun` with `lastTick = maxTicks`, measuring after each `advance(1)`, stops on a stall                               |
-| replay viewer (`replays/replay-scene.ts`)  | own `step`, seek target, deadline loop, rebuild | `MatchRun` built from the scene's engine factory (GPU with CPU fallback); `advance(ticks, deadline)` and `seek` delegate |
-| `perf/cpu-simulation.bench.ts`             | own `for` loop                                  | `MatchRun`, timing each `advance(1)`                                                                                     |
+| Caller                                     | Today                                           | After                                                                                                    |
+| ------------------------------------------ | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `playReplay` (`state/replay.ts`)           | own loop, `try`/`finally`, checksum             | `replayRun(...)`, `advance(Infinity)`, `result()`; signature unchanged                                   |
+| balance lab (`state/balance/lab-match.ts`) | own `for` loop to `maxTicks`                    | `MatchRun` with `lastTick = maxTicks`, measuring after each `advance(1)`, stops on a stall               |
+| replay viewer (`replays/replay-scene.ts`)  | own `step`, seek target, deadline loop, rebuild | `replayRun` with the scene's `gpuInt` factory; `advance(ticks, deadline)`, `seek` and `restart` delegate |
+| `perf/cpu-simulation.bench.ts`             | own `for` loop                                  | `MatchRun`, timing each `advance(1)`                                                                     |
 
 ## Non-goals
 
@@ -71,9 +72,12 @@ tested on a small fake as well as on real matches.
 
 1. **Built from an engine factory, not an engine.** Seeking back needs a
    fresh engine (the war plays forwards only); the factory is how the run
-   rebuilds without knowing about replays, plans or GPUs. The viewer's
-   factory keeps its GPU-to-CPU fallback, so a GPU that fails on a rebuild
-   still falls back.
+   rebuilds without knowing about replays, plans or GPUs. A seek back
+   disposes the old engine before it builds the new one, so two GPU
+   engines never hold memory at once; a build that throws ends the run.
+   `replayRun` owns the GPU-to-CPU fallback (`gpuInt`, `onGpuFailure`): a
+   GPU that fails to set up is let go of and the run plays on
+   `IntSimulation` from then on, a seek back included.
 2. **Arena size and last tick in the constructor.** Every caller passed the
    same size on every tick and checked the same budget.
 3. **`advance(maxTicks, deadline?)` returns the ticks played.** While a
@@ -87,8 +91,9 @@ tested on a small fake as well as on real matches.
    do nothing afterwards.
 6. **`replayRun` lives in `replay.ts`, `replayEngine` stays exported.**
    `playReplay` uses the run, so the run must not import replays (no
-   import cycle). The viewer's GPU factory needs `replayEngine`. Its
-   tick-by-tick spec moves to `replayRun`.
+   import cycle). `replayEngine` stays for #2779 and #2781. Its
+   tick-by-tick spec moves to `replayRun`; the viewer runs on `replayRun`
+   too, so a replay's arena and last tick are read in one place.
 7. **Replace, don't layer.** The seek specs of `replay-viewer.component.spec.ts`
    that test seeking itself (on and back, no further than the replay) move
    to `match-run.spec.ts`; the viewer keeps the ones about the scene (GPU,

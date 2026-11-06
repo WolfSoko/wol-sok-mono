@@ -114,13 +114,17 @@ export class MatchRun<E extends RunnableEngine = MatchEngine> {
     }
     const target = Math.max(0, Math.min(Math.round(tick), this.lastTick));
     if (target < this.current.tickCount) {
-      // Built first: an engine that fails to build leaves the run as it was.
-      const fresh = this.build();
-      this.current.dispose();
-      this.current = fresh;
-      this.outcome = fresh.outcome();
+      this.rebuild();
     }
     this.target = target;
+  }
+
+  /** The match from its first tick again, on a new engine - none once disposed. */
+  public restart(): void {
+    if (!this.disposed) {
+      this.rebuild();
+      this.target = null;
+    }
   }
 
   /** Where the match stands now. */
@@ -132,6 +136,18 @@ export class MatchRun<E extends RunnableEngine = MatchEngine> {
       ticks: tickCount,
       checksum: matchChecksum(players),
     };
+  }
+
+  /**
+   * A new engine from the first tick. The old one goes first, so two never
+   * hold a GPU's memory at once; a build that throws ends the run.
+   */
+  private rebuild(): void {
+    this.disposed = true;
+    this.current.dispose();
+    this.current = this.build();
+    this.outcome = this.current.outcome();
+    this.disposed = false;
   }
 
   /** Lets go of the engine - once is enough; the run plays no more. */

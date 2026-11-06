@@ -184,6 +184,45 @@ describe('replay', () => {
     });
   });
 
+  describe('replayRun on a GPU that fails to set up', () => {
+    it('plays on IntSimulation, tells it once and asks the GPU no more', () => {
+      const { replay } = record(PLAN, 60);
+      const gpuInt = {
+        ...replay,
+        header: {
+          ...replay.header,
+          simulation: 'gpu-int' as const,
+          version: GPU_INT_REPLAY_VERSION,
+        },
+      };
+      const straight = replayRun(gpuInt);
+      const factory = jest.fn(() => {
+        throw new Error('Incomplete render target');
+      });
+      const failures: unknown[] = [];
+      const run = replayRun(gpuInt, {
+        gpuInt: factory,
+        onGpuFailure: (error) => failures.push(error),
+      });
+      if (run === null || straight === null) {
+        throw new Error('The replay did not play');
+      }
+      try {
+        run.advance(30);
+        run.seek(10);
+        run.advance(Infinity);
+        straight.advance(10);
+
+        expect(failures).toHaveLength(1);
+        expect(factory).toHaveBeenCalledTimes(1);
+        expect(run.result().checksum).toBe(straight.result().checksum);
+      } finally {
+        run.dispose();
+        straight.dispose();
+      }
+    });
+  });
+
   describe('parseReplay', () => {
     it('reads back what was stored', () => {
       const { replay } = record(PLAN, 120);

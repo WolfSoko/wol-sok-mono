@@ -88,7 +88,8 @@ function bench(
   );
   const { engine } = run;
   const totals = timePhases(engine.simulation as BacteriaSimulation);
-  // Only the tick is timed - not the inputs or the counting around it.
+  // Only the run's tick is timed, its outcome check included - not the
+  // inputs or the counting around it.
   let tickMs = 0;
   let measured = 0;
   let bacteria = 0;

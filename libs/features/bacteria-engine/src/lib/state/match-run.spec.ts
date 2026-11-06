@@ -1,8 +1,8 @@
 import { matchChecksum } from './checksum';
-import { MatchEngine } from './match-engine';
+import { recordedReplay } from '../../testing/recorded-replay';
 import { MatchArena, MatchRun, RunnableEngine } from './match-run';
-import { MatchPlan, planMatch } from './match-setup';
 import { Player } from './player.model';
+import { replayRun } from './replay';
 import { MatchOutcome } from './win-conditions';
 
 const ARENA: MatchArena = { width: 320, height: 140 };
@@ -127,7 +127,7 @@ describe('MatchRun', () => {
     expect(run.engine).toBe(built[1]);
   });
 
-  it('keeps its engine when a seek back fails to build a new one', () => {
+  it('lets go of the old engine first and ends when a new one fails to build', () => {
     const first = new FakeEngine();
     let builds = 0;
     const run = new MatchRun(
@@ -143,9 +143,23 @@ describe('MatchRun', () => {
     run.advance(30);
 
     expect(() => run.seek(10)).toThrow('No engine');
-    expect(run.engine).toBe(first);
-    expect(first.disposed).toBe(0);
-    expect(run.advance(1)).toBe(1);
+    expect(first.disposed).toBe(1);
+    expect(run.advance(1)).toBe(0);
+    run.dispose();
+    expect(first.disposed).toBe(1);
+  });
+
+  it('restarts from the first tick on a new engine, with no seek under way', () => {
+    const { run, built } = fakeRun(100);
+    run.advance(30);
+    run.seek(60);
+
+    run.restart();
+
+    expect(built).toHaveLength(2);
+    expect(built[0].disposed).toBe(1);
+    expect(run.tickCount).toBe(0);
+    expect(run.seeking).toBe(false);
   });
 
   it('plays a seek across frames as its deadline allows', () => {
@@ -193,28 +207,22 @@ describe('MatchRun', () => {
     expect(run.advance(5)).toBe(0);
   });
 
-  describe('on a real match', () => {
-    const PLAN: MatchPlan = {
-      levelId: 'petri-dish',
-      mode: 'vs-computer',
-      difficulty: 'hard',
-      colors: ['orange', 'blue'],
-      headStart: 0,
-      width: ARENA.width,
-      height: ARENA.height,
-      seed: 1234,
-    };
-    const build = (): MatchEngine => {
-      const { spawns, options } = planMatch(PLAN);
-      return new MatchEngine(spawns, options);
+  describe('on a recorded match', () => {
+    const replay = recordedReplay('petri-dish', 120);
+    const runOf = (): MatchRun => {
+      const run = replayRun(replay);
+      if (run === null) {
+        throw new Error('The replay did not play');
+      }
+      return run;
     };
 
     it('gives the checksum of the war it reached', () => {
-      const run = new MatchRun(build, ARENA, 120);
+      const run = runOf();
       try {
         run.advance(Infinity);
         const result = run.result();
-        expect(result.ticks).toBe(120);
+        expect(result.ticks).toBe(replay.header.ticks);
         expect(result.checksum).toBe(matchChecksum(run.engine.players));
       } finally {
         run.dispose();
@@ -222,9 +230,7 @@ describe('MatchRun', () => {
     });
 
     it('seeks on and back to the war it reaches when played straight', () => {
-      const straight = new MatchRun(build, ARENA, 120);
-      const seeking = new MatchRun(build, ARENA, 120);
-      const again = new MatchRun(build, ARENA, 120);
+      const [straight, seeking, again] = [runOf(), runOf(), runOf()];
       try {
         straight.advance(60);
         seeking.seek(60);
