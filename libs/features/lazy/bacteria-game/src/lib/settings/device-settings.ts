@@ -1,18 +1,12 @@
 import { signal, type WritableSignal } from '@angular/core';
-import type { SettingSpec } from './setting-table';
-
-type Table = Record<string, SettingSpec<unknown>>;
-type ValuesOf<T extends Table> = { [K in keyof T]: T[K]['default'] };
-type StoredOf<T extends Table> = {
-  [K in keyof T]?: Exclude<ValuesOf<T>[K], null>;
-};
+import type { SettingTable, StoredOf, ValuesOf } from './setting-table';
 
 /**
  * The device settings of a table, one signal per key: what each one is
  * now, what the player changed, and their stored form. Storage, the
  * statistics and what a setting sets off are its owner's business.
  */
-export class DeviceSettings<T extends Table> {
+export class DeviceSettings<T extends SettingTable> {
   private readonly values: { [K in keyof T]: WritableSignal<ValuesOf<T>[K]> };
   /** The settings the player changed - what restoring must keep. */
   private readonly touched = new Set<keyof T>();

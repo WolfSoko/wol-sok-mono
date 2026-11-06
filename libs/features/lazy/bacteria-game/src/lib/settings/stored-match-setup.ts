@@ -19,7 +19,7 @@ import {
 } from '../state/game.states';
 
 /** The settings that set up a match - kept in the game state store. */
-export const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
+const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
   'mode',
   'difficulty',
   'levelId',

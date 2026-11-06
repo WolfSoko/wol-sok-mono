@@ -29,7 +29,6 @@ describe('I18nService', () => {
   it("follows the browser's language until the player picks one", () => {
     const i18n = withBrowser('de-DE', 'en');
 
-    expect(i18n.choice()).toBeNull();
     expect(i18n.language()).toBe('de');
     expect(i18n.locale()).toBe('de-DE');
     expect(i18n.t('settings.title')).toBe('Einstellungen');

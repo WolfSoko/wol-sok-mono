@@ -141,21 +141,26 @@ export const SETTINGS = {
    * the game remembers for itself, so not reported.
    */
   recordingHintShown: flag(false),
-} satisfies Record<string, SettingSpec<unknown>>;
+} satisfies SettingTable;
+
+/** Any table of settings, keyed by name. */
+export type SettingTable = Record<string, SettingSpec<unknown>>;
+/** The value type of each setting of a table. */
+export type ValuesOf<T extends SettingTable> = {
+  [K in keyof T]: T[K]['default'];
+};
+/** A table's settings as they are stored: `null` ones absent. */
+export type StoredOf<T extends SettingTable> = {
+  [K in keyof T]?: Exclude<ValuesOf<T>[K], null>;
+};
 
 export type DeviceSettingsTable = typeof SETTINGS;
 export type SettingKey = keyof DeviceSettingsTable;
-/** The value type of each setting. */
-export type SettingValues = {
-  [K in SettingKey]: DeviceSettingsTable[K]['default'];
-};
-/** The settings as they are stored: `null` ones absent. */
-export type StoredDeviceSettings = {
-  [K in SettingKey]?: Exclude<SettingValues[K], null>;
-};
+export type SettingValues = ValuesOf<DeviceSettingsTable>;
+export type StoredDeviceSettings = StoredOf<DeviceSettingsTable>;
 
 /** True for a whole number from 0 to {@link MAX_VOLUME}. */
-export function isVolume(value: unknown): value is number {
+function isVolume(value: unknown): value is number {
   return (
     typeof value === 'number' &&
     Number.isInteger(value) &&
@@ -165,7 +170,7 @@ export function isVolume(value: unknown): value is number {
 }
 
 /** A whole number on the slider - or the fallback for what is no number. */
-export function clampVolume(volume: number, fallback: number): number {
+function clampVolume(volume: number, fallback: number): number {
   return Number.isFinite(volume)
     ? Math.round(clamp(volume, 0, MAX_VOLUME))
     : fallback;

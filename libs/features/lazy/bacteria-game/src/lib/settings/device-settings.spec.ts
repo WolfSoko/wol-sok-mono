@@ -36,7 +36,7 @@ const SAMPLES: {
   language: { valid: 'de', invalid: 'klingon' },
   matchLevel: {
     valid: MATCH_LEVELS[1].id,
-    invalid: LEVELS.find((level) => !playableOnline(level))?.id,
+    invalid: LEVELS.find((level) => !playableOnline(level))?.id ?? 'moon',
   },
   recordLocal: { valid: false, invalid: 'never' },
   saveMatches: { valid: false, invalid: {} },

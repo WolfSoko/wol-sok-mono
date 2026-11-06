@@ -286,6 +286,37 @@ describe('GameSettingsService', () => {
       expect(store.snapshot().levelId).toBe(LEVELS[2].id);
     });
 
+    it('speaks a language picked before the storage answered, and stores it', () => {
+      const service = createWith({ language: 'en' });
+      const i18n = TestBed.inject(I18nService);
+
+      service.set('language', 'de');
+      storage.flush();
+      storage.flush();
+
+      expect(service.value('language')).toBe('de');
+      expect(i18n.language()).toBe('de');
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        language: 'de',
+      });
+    });
+
+    it('keeps an arena and free play picked before the storage answered', () => {
+      const service = createWith({ arena: LEVELS[2].id, freePlay: true });
+
+      service.set('arena', LEVELS[5].id);
+      service.set('freePlay', false);
+      storage.flush();
+      storage.flush();
+
+      expect(service.value('arena')).toBe(LEVELS[5].id);
+      expect(service.value('freePlay')).toBe(false);
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        arena: LEVELS[5].id,
+        freePlay: false,
+      });
+    });
+
     it('stores the changes made after the settings were restored', () => {
       const service = createWith({ sound: false });
       storage.flush();

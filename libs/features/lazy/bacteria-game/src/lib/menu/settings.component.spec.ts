@@ -61,7 +61,7 @@ describe('SettingsComponent', () => {
     await (await toggle('Automatisch', '.language-picker')).check();
     await fixture.whenStable();
 
-    expect(TestBed.inject(I18nService).choice()).toBeNull();
+    expect(TestBed.inject(GameSettingsService).value('language')).toBeNull();
     expect(text()).toContain('Settings');
   });
 

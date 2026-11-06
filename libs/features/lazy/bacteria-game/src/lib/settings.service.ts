@@ -84,8 +84,11 @@ export class GameSettingsService {
   public set<K extends SettingKey>(key: K, value: SettingValues[K]): void {
     this.settings.set(key, value);
     this.applyToGame(key);
-    this.report(key);
-    this.persistOnceRestored();
+    const settings = this.settings.toStore();
+    this.report(key, settings);
+    if (this.restored()) {
+      this.persist(settings);
+    }
   }
 
   /**
@@ -119,10 +122,10 @@ export class GameSettingsService {
     }
   }
 
-  private report(key: SettingKey): void {
+  private report(key: SettingKey, settings: StoredDeviceSettings): void {
     const before = this.reported;
-    this.reported = this.settings.toStore();
-    const change = settingChange(key, before, this.reported);
+    this.reported = settings;
+    const change = settingChange(key, before, settings);
     if (change !== null) {
       this.analytics.track('setting_changed', change);
     }
@@ -134,11 +137,11 @@ export class GameSettingsService {
     }
   }
 
-  private persist(): void {
-    const settings: StoredSettings = {
+  private persist(settings = this.settings.toStore()): void {
+    const stored: StoredSettings = {
       ...this.matchSetup.toStore(),
-      ...this.settings.toStore(),
+      ...settings,
     };
-    this.storage.write(SETTINGS_STORAGE_KEY, settings);
+    this.storage.write(SETTINGS_STORAGE_KEY, stored);
   }
 }

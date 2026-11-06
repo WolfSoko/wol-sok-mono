@@ -149,8 +149,10 @@ The standalone app shows a loading screen while the game downloads - the
 spinning petri dish of its icon and the title - which the game takes down
 once its first view is up ([`splash.ts`](./src/lib/splash.ts)).
 
-[`GameSettingsService`](./src/lib/settings.service.ts) remembers opponent,
-difficulty, level and the frame rate badge in the game storage.
+[`GameSettingsService`](./src/lib/settings.service.ts) remembers the device
+settings (one entry each in [`SETTINGS`](./src/lib/settings/setting-table.ts):
+sound, graphics, language, recording, ...) and the match setup in the
+device's storage.
 
 ## Languages
 
@@ -159,7 +161,7 @@ runtime: one build serves both, as a remote inside the shell and as the PWA.
 [`I18nService`](./src/lib/i18n/i18n.service.ts) follows the browser's
 preferred language (German if it starts with `de`, English otherwise) until
 the player picks one under Settings > Language; the choice is a setting of
-the device (`GameSettingsService.setLanguage`). The game's root element
+the device (`GameSettingsService.set('language', …)`). The game's root element
 carries the active language as its `lang`.
 
 Templates take the `t` pipe, `{{ 'settings.title' | t }}` or
