@@ -34,6 +34,8 @@ export interface MatchRunResult {
  */
 export class MatchRun<E extends RunnableEngine = MatchEngine> {
   private current: E;
+  /** The engine's outcome, judged once a tick - only a tick changes it. */
+  private outcome: MatchOutcome | null;
   /** The tick a seek plays on towards - null while none is under way. */
   private target: number | null = null;
   private disposed = false;
@@ -48,6 +50,7 @@ export class MatchRun<E extends RunnableEngine = MatchEngine> {
     public readonly lastTick: number
   ) {
     this.current = build();
+    this.outcome = this.current.outcome();
   }
 
   /** The engine the match runs on - a new one after a seek back. */
@@ -62,9 +65,7 @@ export class MatchRun<E extends RunnableEngine = MatchEngine> {
 
   /** True once the match is over: its outcome, or its last tick. */
   public get over(): boolean {
-    return (
-      this.current.outcome() !== null || this.current.tickCount >= this.lastTick
-    );
+    return this.outcome !== null || this.current.tickCount >= this.lastTick;
   }
 
   /** True while a seek plays on towards its tick. */
@@ -91,6 +92,7 @@ export class MatchRun<E extends RunnableEngine = MatchEngine> {
     let played = 0;
     while (!this.over && this.current.tickCount < until) {
       this.current.tick(this.arena.width, this.arena.height);
+      this.outcome = this.current.outcome();
       played++;
       if (deadline?.() === true) {
         return played;
@@ -112,8 +114,11 @@ export class MatchRun<E extends RunnableEngine = MatchEngine> {
     }
     const target = Math.max(0, Math.min(Math.round(tick), this.lastTick));
     if (target < this.current.tickCount) {
+      // Built first: an engine that fails to build leaves the run as it was.
+      const fresh = this.build();
       this.current.dispose();
-      this.current = this.build();
+      this.current = fresh;
+      this.outcome = fresh.outcome();
     }
     this.target = target;
   }
@@ -123,7 +128,7 @@ export class MatchRun<E extends RunnableEngine = MatchEngine> {
     const { players, tickCount } = this.current;
     return {
       players,
-      outcome: this.current.outcome(),
+      outcome: this.outcome,
       ticks: tickCount,
       checksum: matchChecksum(players),
     };

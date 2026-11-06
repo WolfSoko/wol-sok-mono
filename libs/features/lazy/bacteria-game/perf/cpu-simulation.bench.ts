@@ -93,28 +93,31 @@ function bench(
   let measured = 0;
   let bacteria = 0;
   let worst = 0;
-  while (!run.over) {
-    const tick = run.tickCount;
-    engine.setSteering(0, tick < 60 ? { x: 1, y: 0.5 } : { x: 0, y: 0 });
-    if (tick === 90) {
-      engine.setDragTarget(0, plan.width * 0.6, plan.height * 0.25);
+  try {
+    while (!run.over) {
+      const tick = run.tickCount;
+      engine.setSteering(0, tick < 60 ? { x: 1, y: 0.5 } : { x: 0, y: 0 });
+      if (tick === 90) {
+        engine.setDragTarget(0, plan.width * 0.6, plan.height * 0.25);
+      }
+      if (tick === warmup) {
+        totals.forEach((_, phase) => totals.set(phase, 0));
+      }
+      const before = performance.now();
+      run.advance(1);
+      const took = performance.now() - before;
+      if (tick >= warmup) {
+        tickMs += took;
+        worst = Math.max(worst, took);
+        measured++;
+        bacteria += (engine.simulation as BacteriaSimulation)
+          .getColonies()
+          .reduce((sum, colony) => sum + colony.cells.length, 0);
+      }
     }
-    if (tick === warmup) {
-      totals.forEach((_, phase) => totals.set(phase, 0));
-    }
-    const before = performance.now();
-    run.advance(1);
-    const took = performance.now() - before;
-    if (tick >= warmup) {
-      tickMs += took;
-      worst = Math.max(worst, took);
-      measured++;
-      bacteria += (engine.simulation as BacteriaSimulation)
-        .getColonies()
-        .reduce((sum, colony) => sum + colony.cells.length, 0);
-    }
+  } finally {
+    run.dispose();
   }
-  run.dispose();
   const ms = tickMs / measured;
   const phases = [...totals]
     .map(([phase, total]) => `${phase} ${(total / measured).toFixed(3)}`)

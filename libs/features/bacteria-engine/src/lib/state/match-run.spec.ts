@@ -127,6 +127,27 @@ describe('MatchRun', () => {
     expect(run.engine).toBe(built[1]);
   });
 
+  it('keeps its engine when a seek back fails to build a new one', () => {
+    const first = new FakeEngine();
+    let builds = 0;
+    const run = new MatchRun(
+      () => {
+        if (builds++ > 0) {
+          throw new Error('No engine');
+        }
+        return first;
+      },
+      ARENA,
+      100
+    );
+    run.advance(30);
+
+    expect(() => run.seek(10)).toThrow('No engine');
+    expect(run.engine).toBe(first);
+    expect(first.disposed).toBe(0);
+    expect(run.advance(1)).toBe(1);
+  });
+
   it('plays a seek across frames as its deadline allows', () => {
     const { run } = fakeRun(100);
 

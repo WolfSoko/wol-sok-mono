@@ -9,12 +9,12 @@ import { computerLoadout } from '../computer-opponent';
 import { LADDER_VERSION } from '../difficulty-curve';
 import { Loadout } from '../evolution';
 import { TICKS_PER_SEC } from '../fixed-tick';
-import { getLevel, levelSize } from '../levels';
+import { getLevel, Level, levelSize } from '../levels';
 import { MatchEngine } from '../match-engine';
 import { MatchRun } from '../match-run';
 import { MatchPlan, planMatch } from '../match-setup';
 import { medalFor, MedalTier } from '../medallions';
-import { clockOf, winRuleOf } from '../win-conditions';
+import { clockOf, WinRule, winRuleOf } from '../win-conditions';
 import { mean, round } from './stats';
 
 /**
@@ -143,16 +143,19 @@ export function playLabMatch(cell: LabCell): LabMatch {
     Math.round(limit * TICKS_PER_SEC)
   );
   try {
-    return measure(run, cell);
+    return measure(run, cell, level, rule);
   } finally {
     run.dispose();
   }
 }
 
-function measure(run: MatchRun, cell: LabCell): LabMatch {
+function measure(
+  run: MatchRun,
+  cell: LabCell,
+  level: Level,
+  rule: WinRule
+): LabMatch {
   const { engine } = run;
-  const level = getLevel(cell.levelId);
-  const rule = winRuleOf(level);
   const { capacity } = engine;
   const shares: number[] = [];
   const shareAt: number[] = [];
