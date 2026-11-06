@@ -1,234 +1,159 @@
 import { BehaviorSubject } from 'rxjs';
-import type { FirebaseConnection } from './firebase-connection';
+import {
+  FakeFirebase,
+  settleSnapshots,
+  timestampAt,
+} from '../../testing/fake-firebase-sdk';
 import { FirestoreGameModeration } from './firestore-game-moderation';
 import type { PlayerBan, PlayerNotice } from './game-moderation';
 
-const at = (ms: number) => ({ toMillis: () => ms });
-
-/**
- * Just enough of Firestore and the Realtime Database for the player's ban
- * and notices: live documents and collections by path, values by path.
- */
-class FakeBackend {
-  private readonly docs = new Map<string, Record<string, unknown> | null>();
-  private readonly listeners = new Map<string, Set<() => void>>();
-  private readonly values = new Map<string, unknown>();
-  private readonly valueListeners = new Map<string, Set<() => void>>();
-  /** Every path listened to, in order. */
-  public readonly listened: string[] = [];
-  public readonly deleted: string[] = [];
-  /** Documents whose first snapshot waits for a `set`, as from the server. */
-  public readonly pending = new Set<string>();
-
-  public readonly dbSdk = {
-    doc: (_db: unknown, ...segments: string[]) => ({
-      path: segments.join('/'),
-    }),
-    collection: (_db: unknown, ...segments: string[]) => ({
-      path: segments.join('/'),
-      collection: true,
-    }),
-    onSnapshot: (
-      ref: { path: string; collection?: boolean },
-      next: (snapshot: unknown) => void
-    ) => {
-      this.listened.push(ref.path);
-      const emit = () =>
-        next(
-          ref.collection ? this.collectionOf(ref.path) : this.docOf(ref.path)
-        );
-      this.on(this.listeners, ref.path, emit);
-      if (!this.pending.has(ref.path)) {
-        emit();
-      }
-      return () => this.listeners.get(ref.path)?.delete(emit);
-    },
-    deleteDoc: async (ref: { path: string }) => {
-      this.deleted.push(ref.path);
-      this.set(ref.path, null);
-    },
-  };
-
-  public readonly rtdbSdk = {
-    ref: (_db: unknown, path: string) => ({ path }),
-    onValue: (ref: { path: string }, next: (snapshot: unknown) => void) => {
-      this.listened.push(`rtdb:${ref.path}`);
-      const emit = () => next({ val: () => this.values.get(ref.path) ?? null });
-      this.on(this.valueListeners, ref.path, emit);
-      emit();
-      return () => this.valueListeners.get(ref.path)?.delete(emit);
-    },
-  };
-
-  public set(path: string, data: Record<string, unknown> | null): void {
-    this.docs.set(path, data);
-    for (const [listened, emits] of this.listeners) {
-      if (path === listened || path.startsWith(`${listened}/`)) {
-        emits.forEach((emit) => emit());
-      }
-    }
-  }
-
-  public setValue(path: string, value: unknown): void {
-    this.values.set(path, value);
-    this.valueListeners.get(path)?.forEach((emit) => emit());
-  }
-
-  public moderation(
-    playerIds: BehaviorSubject<string | null>,
-    rtdb = true
-  ): FirestoreGameModeration {
-    return new FirestoreGameModeration(
-      {
-        db: {},
-        dbSdk: this.dbSdk,
-        rtdb: rtdb ? {} : null,
-        rtdbSdk: this.rtdbSdk,
-      } as unknown as FirebaseConnection,
-      playerIds
-    );
-  }
-
-  private on(
-    map: Map<string, Set<() => void>>,
-    path: string,
-    emit: () => void
-  ): void {
-    const set = map.get(path) ?? new Set();
-    set.add(emit);
-    map.set(path, set);
-  }
-
-  private docOf(path: string) {
-    const data = this.docs.get(path) ?? null;
-    return { exists: () => data !== null, data: () => data ?? undefined };
-  }
-
-  private collectionOf(path: string) {
-    return {
-      docs: [...this.docs.entries()]
-        .filter(
-          ([each, data]) =>
-            data !== null &&
-            each.startsWith(`${path}/`) &&
-            !each.slice(path.length + 1).includes('/')
-        )
-        .map(([each, data]) => ({
-          id: each.slice(path.length + 1),
-          data: () => data,
-        })),
-    };
-  }
+/** The moderation of whoever plays, on the fake. */
+function moderationOf(
+  backend: FakeFirebase,
+  playerIds: BehaviorSubject<string | null>,
+  rtdb = true
+): FirestoreGameModeration {
+  return new FirestoreGameModeration(backend.connection({ rtdb }), playerIds);
 }
 
 describe('FirestoreGameModeration', () => {
-  let backend: FakeBackend;
+  let backend: FakeFirebase;
   let playerIds: BehaviorSubject<string | null>;
 
   beforeEach(() => {
-    backend = new FakeBackend();
+    backend = new FakeFirebase();
     playerIds = new BehaviorSubject<string | null>(null);
   });
 
-  it('listens to nothing before a player signed in', () => {
+  it('listens to nothing before a player signed in', async () => {
     const bans: (PlayerBan | null)[] = [];
-    backend
-      .moderation(playerIds)
+    moderationOf(backend, playerIds)
       .ban()
       .subscribe((ban) => bans.push(ban));
+    await settleSnapshots();
 
     expect(backend.listened).toEqual([]);
     expect(bans).toEqual([]);
   });
 
-  it("reads the player's ban, with why and until when", () => {
+  it("reads the player's ban, with why and until when", async () => {
     playerIds.next('ada');
-    backend.set('bans/ada', { since: at(1), until: null, reason: 'spam' });
+    backend.put('bans/ada', {
+      since: timestampAt(1),
+      until: null,
+      reason: 'spam',
+    });
+    await settleSnapshots();
     const bans: (PlayerBan | null)[] = [];
-    backend
-      .moderation(playerIds)
+    moderationOf(backend, playerIds)
       .ban()
       .subscribe((ban) => bans.push(ban));
+    await settleSnapshots();
 
     expect(bans).toEqual([{ since: 1, until: null, reason: 'spam' }]);
-    backend.set('bans/ada', null);
+    backend.put('bans/ada', null);
+    await settleSnapshots();
     expect(bans.at(-1)).toBeNull();
   });
 
-  it('takes the mirror for a ban while the stored one is not there yet', () => {
+  it('takes the mirror for a ban while the stored one is not there yet', async () => {
     playerIds.next('ada');
     const bans: (PlayerBan | null)[] = [];
-    backend
-      .moderation(playerIds)
+    moderationOf(backend, playerIds)
       .ban()
       .subscribe((ban) => bans.push(ban));
+    await settleSnapshots();
 
-    backend.setValue('bans/ada', 0);
+    backend.putValue('bans/ada', 0);
+    await settleSnapshots();
 
     expect(backend.listened).toContain('rtdb:bans/ada');
-    expect(bans.at(-1)).toEqual({ since: null, until: null, reason: null });
+    expect(bans.at(-1)).toEqual({
+      since: null,
+      until: null,
+      reason: null,
+    });
   });
 
-  it('does without the mirror where there is no Realtime Database', () => {
+  it('does without the mirror where there is no Realtime Database', async () => {
     playerIds.next('ada');
     const bans: (PlayerBan | null)[] = [];
-    backend
-      .moderation(playerIds, false)
+    moderationOf(backend, playerIds, false)
       .ban()
       .subscribe((ban) => bans.push(ban));
+    await settleSnapshots();
 
     expect(bans).toEqual([null]);
     expect(backend.listened).toEqual(['bans/ada']);
   });
 
-  it('follows whoever plays', () => {
+  it('follows whoever plays', async () => {
     playerIds.next('ada');
-    backend.set('bans/bob', { since: at(1), until: null, reason: 'other' });
+    backend.put('bans/bob', {
+      since: timestampAt(1),
+      until: null,
+      reason: 'other',
+    });
+    await settleSnapshots();
     const bans: (PlayerBan | null)[] = [];
-    backend
-      .moderation(playerIds)
+    moderationOf(backend, playerIds)
       .ban()
       .subscribe((ban) => bans.push(ban));
+    await settleSnapshots();
 
     playerIds.next('bob');
+    await settleSnapshots();
 
     expect(bans).toEqual([null, { since: 1, until: null, reason: 'other' }]);
   });
 
-  it("never hands a late subscriber the last player's ban", () => {
+  it("never hands a late subscriber the last player's ban", async () => {
     playerIds.next('ada');
-    const moderation = backend.moderation(playerIds);
+    const moderation = moderationOf(backend, playerIds);
     const kept = moderation.ban().subscribe();
+    await settleSnapshots();
     backend.pending.add('bans/bob');
 
     playerIds.next('bob');
+    await settleSnapshots();
     const late: (PlayerBan | null)[] = [];
     moderation.ban().subscribe((ban) => late.push(ban));
+    await settleSnapshots();
 
     // Not ada's "no ban": nothing until bob's is read.
     expect(late).toEqual([]);
-    backend.set('bans/bob', { since: at(1), until: null, reason: 'spam' });
+    backend.put('bans/bob', {
+      since: timestampAt(1),
+      until: null,
+      reason: 'spam',
+    });
+    await settleSnapshots();
     expect(late).toEqual([{ since: 1, until: null, reason: 'spam' }]);
     kept.unsubscribe();
   });
 
   it('lists the notices oldest first, and deletes one dismissed', async () => {
     playerIds.next('ada');
-    backend.set('players/ada/notices/b', { type: 'unbanned', at: at(20) });
-    backend.set('players/ada/notices/a', {
+    backend.put('players/ada/notices/b', {
+      type: 'unbanned',
+      at: timestampAt(20),
+    });
+    await settleSnapshots();
+    backend.put('players/ada/notices/a', {
       type: 'banned',
-      at: at(10),
-      until: at(15),
+      at: timestampAt(10),
+      until: timestampAt(15),
       reason: 'cheating',
     });
-    const moderation = backend.moderation(playerIds);
+    const moderation = moderationOf(backend, playerIds);
     const seen: PlayerNotice[][] = [];
     moderation.notices().subscribe((notices) => seen.push(notices));
+    await settleSnapshots();
 
     expect(seen.at(-1)?.map((notice) => notice.id)).toEqual(['a', 'b']);
     await moderation.dismiss('a');
 
-    expect(backend.deleted).toEqual(['players/ada/notices/a']);
+    expect(backend.deleted()).toEqual(['players/ada/notices/a']);
     expect(seen.at(-1)?.map((notice) => notice.id)).toEqual(['b']);
   });
 });

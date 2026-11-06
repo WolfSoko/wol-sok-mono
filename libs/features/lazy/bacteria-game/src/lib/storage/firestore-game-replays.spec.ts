@@ -5,7 +5,14 @@ import {
   replayFromBytes,
   replayOf,
 } from '@wolsok/feat-shared-bacteria-engine';
-import type { FirebaseConnection } from './firebase-connection';
+import {
+  FAKE_SERVER_STAMP,
+  FakeBytes,
+  FakeFirebase,
+  FakeTimestamp,
+  settleSnapshots,
+  timestampAt,
+} from '../../testing/fake-firebase-sdk';
 import {
   COMMAND_TTL_MS,
   FirestoreGameReplays,
@@ -42,108 +49,26 @@ const ONLINE = replayOf(
   }
 );
 
-class FakeBytes {
-  public constructor(private readonly bytes: Uint8Array) {}
-  public static fromUint8Array(bytes: Uint8Array): FakeBytes {
-    return new FakeBytes(bytes);
-  }
-  public toUint8Array(): Uint8Array {
-    return this.bytes;
-  }
-}
-
-class FakeTimestamp {
-  public constructor(public readonly ms: number) {}
-  public static fromMillis(ms: number): FakeTimestamp {
-    return new FakeTimestamp(ms);
-  }
-  public toMillis(): number {
-    return this.ms;
-  }
-}
-
-/** Just enough of Firestore for the replays: documents by path, one query. */
-class FakeFirestore {
-  public readonly docs = new Map<string, Record<string, unknown>>();
-  public readonly queries: unknown[][] = [];
-  /** Paths the rules refuse to read. */
-  public readonly refused = new Set<string>();
-  private ids = 0;
-
-  public readonly sdk = {
-    Bytes: FakeBytes,
-    Timestamp: FakeTimestamp,
-    serverTimestamp: () => 'now',
-    collection: (_db: unknown, path: string) => ({ path }),
-    doc: (parent: unknown, ...segments: string[]) => {
-      if (segments.length === 0) {
-        const path = `${(parent as { path: string }).path}/auto${++this.ids}`;
-        return { path, id: `auto${this.ids}` };
-      }
-      const path = segments.join('/');
-      return { path, id: segments[segments.length - 1] };
-    },
-    setDoc: async (ref: { path: string }, data: Record<string, unknown>) => {
-      this.docs.set(ref.path, data);
-    },
-    getDoc: async (ref: { path: string }) => this.snapshot(ref.path),
-    onSnapshot: (
-      ref: { path: string },
-      next: (snapshot: unknown) => void,
-      error: (error: unknown) => void
-    ) => {
-      if (this.refused.has(ref.path)) {
-        error(
-          Object.assign(new Error('refused'), { code: 'permission-denied' })
-        );
-      } else {
-        next(this.snapshot(ref.path));
-      }
-      return () => undefined;
-    },
-    where: (...args: unknown[]) => ['where', ...args],
-    orderBy: (...args: unknown[]) => ['orderBy', ...args],
-    limit: (n: number) => ['limit', n],
-    query: (collection: { path: string }, ...constraints: unknown[]) => {
-      this.queries.push([collection.path, ...constraints]);
-      return collection;
-    },
-    getDocs: async (collection: { path: string }) => ({
-      docs: [...this.docs.entries()]
-        .filter(([path]) => path.startsWith(`${collection.path}/`))
-        .map(([path]) => this.snapshot(path)),
-    }),
-  };
-
-  public replays(
-    uid: string | null = 'ada',
-    banned = new BehaviorSubject(false)
-  ): FirestoreGameReplays {
-    return new FirestoreGameReplays(
-      { db: {}, dbSdk: this.sdk } as unknown as FirebaseConnection,
-      new BehaviorSubject(uid),
-      banned
-    );
-  }
-
-  private snapshot(path: string) {
-    const doc = this.docs.get(path);
-    return {
-      id: path.split('/').pop(),
-      exists: () => doc !== undefined,
-      get: (field: string) => doc?.[field],
-      data: () => doc,
-    };
-  }
+/** The replays of whoever plays, on the fake. */
+function replaysOf(
+  firestore: FakeFirebase,
+  uid: string | null = 'ada',
+  banned = new BehaviorSubject(false)
+): FirestoreGameReplays {
+  return new FirestoreGameReplays(
+    firestore.connection(),
+    new BehaviorSubject(uid),
+    banned
+  );
 }
 
 describe('FirestoreGameReplays', () => {
-  let firestore: FakeFirestore;
+  let firestore: FakeFirebase;
   let replays: FirestoreGameReplays;
 
   beforeEach(() => {
-    firestore = new FakeFirestore();
-    replays = firestore.replays();
+    firestore = new FakeFirebase();
+    replays = replaysOf(firestore);
   });
 
   afterEach(() => jest.restoreAllMocks());
@@ -159,8 +84,8 @@ describe('FirestoreGameReplays', () => {
       uid: 'ada',
       bytes: expect.any(FakeBytes),
       hint: 62,
-      createdAt: 'now',
-      expireAt: new FakeTimestamp(1_000_000 + COMMAND_TTL_MS),
+      createdAt: FAKE_SERVER_STAMP,
+      expireAt: timestampAt(1_000_000 + COMMAND_TTL_MS),
     });
     expect(COMMAND_TTL_MS).toBe(24 * 60 * 60 * 1000);
     const bytes = (doc as { bytes: FakeBytes }).bytes.toUint8Array();
@@ -185,7 +110,7 @@ describe('FirestoreGameReplays', () => {
 
   it('sends neither submissions nor commands while a ban holds', async () => {
     const banned = new BehaviorSubject(true);
-    replays = firestore.replays('ada', banned);
+    replays = replaysOf(firestore, 'ada', banned);
 
     expect(await replays.submit({ replay: LOCAL, hint: 50 })).toBeNull();
     expect(await replays.sendCommand('remove', 'l_x')).toBeNull();
@@ -196,7 +121,7 @@ describe('FirestoreGameReplays', () => {
   });
 
   it('still sends "Delete" (forget) while a ban holds, as the rules take it', async () => {
-    replays = firestore.replays('ada', new BehaviorSubject(true));
+    replays = replaysOf(firestore, 'ada', new BehaviorSubject(true));
 
     const id = await replays.sendCommand('forget', 'l_x');
 
@@ -204,7 +129,7 @@ describe('FirestoreGameReplays', () => {
       uid: 'ada',
       type: 'forget',
       replayId: 'l_x',
-      createdAt: 'now',
+      createdAt: FAKE_SERVER_STAMP,
       expireAt: expect.any(FakeTimestamp),
     });
   });
@@ -217,6 +142,7 @@ describe('FirestoreGameReplays', () => {
       const subscription = replays
         .watchSaved('l_x')
         .subscribe((saved) => seen.push(saved));
+      await settleSnapshots();
       expect(seen).toEqual([false]);
 
       firestore.refused.delete('replays/l_x');
@@ -237,14 +163,19 @@ describe('FirestoreGameReplays', () => {
       levelId: 'petri-dish',
       balanceVersion: 3,
       replayVersion: 2,
-      createdAt: new FakeTimestamp(500),
+      createdAt: timestampAt(500),
       ticks: 120,
       endedBy: 'time',
       winnerSeat: 0,
       hint: 40,
       state: 'submitted',
     });
-    firestore.docs.set('replays/broken', { players: ['ada'], kind: 'what' });
+    // Through the query, but no listing: `listingOf` must drop it.
+    firestore.docs.set('replays/broken', {
+      players: ['ada'],
+      kind: 'what',
+      createdAt: timestampAt(400),
+    });
 
     const listed = await replays.listMine(80);
 
@@ -292,7 +223,7 @@ describe('FirestoreGameReplays', () => {
       uid: 'ada',
       type: 'remove',
       replayId: 'l_1',
-      createdAt: 'now',
+      createdAt: FAKE_SERVER_STAMP,
       expireAt: expect.any(FakeTimestamp),
     });
     expect(await firstValueFrom(replays.watchCommand(id as string))).toBeNull();
@@ -347,7 +278,6 @@ describe('FirestoreGameReplays', () => {
   });
 
   describe('listingOf', () => {
-    const at = (ms: number) => new FakeTimestamp(ms);
     const record = {
       levelId: 'petri-dish',
       balanceVersion: 3,
@@ -358,8 +288,8 @@ describe('FirestoreGameReplays', () => {
       winnerSeat: 1,
       checksum: 77,
       hint: 55,
-      createdAt: at(1_000),
-      expireAt: at(1_000 + 30 * 86_400_000),
+      createdAt: timestampAt(1_000),
+      expireAt: timestampAt(1_000 + 30 * 86_400_000),
       optOut: [],
     };
     const doc = (id: string, data: Record<string, unknown>) => ({
@@ -375,10 +305,10 @@ describe('FirestoreGameReplays', () => {
         players: ['host', 'guest'],
         seats: ['host', 'guest'],
         room: 'K7QPXM',
-        stubCreatedAt: at(900),
+        stubCreatedAt: timestampAt(900),
         stubExpired: false,
         rankedReason: 'counted',
-        rankedAt: at(2_000),
+        rankedAt: timestampAt(2_000),
         publicId: 'AbCdEfGhIjKlMnOpQrSt',
       });
 
@@ -429,7 +359,7 @@ describe('FirestoreGameReplays', () => {
           players: ['ada'],
           attempt: { id: 'd_2026-10-25_1', at: 900 },
           rankedReason: 'late',
-          submittedAt: at(1_100),
+          submittedAt: timestampAt(1_100),
           optOut: ['ada'],
           galleryOut: true,
         }),
