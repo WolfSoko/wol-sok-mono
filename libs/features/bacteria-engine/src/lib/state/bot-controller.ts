@@ -2,7 +2,6 @@ import { weaponOf, WeaponId } from './evolution';
 import { countDown } from './fixed-tick';
 import { Nutrient } from './bacteria-simulation';
 import { clamp, distance, Point } from './geometry';
-import { ColonySummary } from './simulation';
 
 /**
  * The computer opponent.
@@ -514,78 +513,4 @@ export class BotController {
       y: clamp(point.y + (this.random() - 0.5) * 2 * noise, 0, view.height),
     };
   }
-}
-
-/**
- * What the bot gets to see: its own colony, the strongest enemy colony and
- * the enemy bacterium closest to its own centre of mass - from the colony
- * summaries, so it works the same whichever processor runs the war.
- */
-export function buildBotView(
-  width: number,
-  height: number,
-  own: ColonySummary,
-  colonies: readonly ColonySummary[],
-  nearestEnemy: (from: Point) => Point | null,
-  nutrients: readonly Nutrient[],
-  boostReady: boolean,
-  maxEnergy: number,
-  objective: Point | null,
-  routes: (from: Point) => BotRoutes,
-  unit: number,
-  prey: readonly Nutrient[],
-  feeding: boolean,
-  weapon: BotWeaponView | null,
-  capacity: number
-): BotView {
-  const ownView = colonyView(own, maxEnergy);
-  let enemy: ColonyView | null = null;
-  for (const colony of colonies) {
-    if (colony.playerId === own.playerId || colony.count === 0) {
-      continue;
-    }
-    const view = colonyView(colony, maxEnergy);
-    if (enemy == null || view.count > enemy.count) {
-      enemy = view;
-    }
-  }
-
-  return {
-    width,
-    height,
-    own: ownView,
-    enemy,
-    nearestEnemy: enemy == null ? null : nearestEnemy(ownView),
-    nutrients,
-    boostReady,
-    objective,
-    routes: routes(ownView),
-    prey,
-    feeding,
-    unit,
-    weapon,
-    capacity,
-  };
-}
-
-/**
- * A neutral colony as a bot sees it - prey as big as the colony, at its
- * centre - none once it is eaten up.
- */
-export function neutralFood(colony: ColonySummary): Nutrient[] {
-  const { x, y, count } = colonyView(colony, 1);
-  return count === 0 ? [] : [{ x, y, amount: count }];
-}
-
-/** Centre of mass, size and average energy of a colony. */
-function colonyView(colony: ColonySummary, maxEnergy: number): ColonyView {
-  if (colony.count === 0 || colony.center == null) {
-    return { x: 0, y: 0, count: 0, energy: 0 };
-  }
-  return {
-    x: colony.center.x,
-    y: colony.center.y,
-    count: colony.count,
-    energy: colony.totalEnergy / colony.count / maxEnergy,
-  };
 }
