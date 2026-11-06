@@ -32,7 +32,12 @@ import {
   timeLeft,
   winRuleOf,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { matchRules, nextMatchOf, OneMatch, SETUP_MATCH } from './match-rules';
+import {
+  matchRules,
+  nextMatchOf,
+  type OneMatch,
+  SETUP_MATCH,
+} from './match-rules';
 
 export { DEFAULT_MODE, isGameMode } from '@wolsok/feat-shared-bacteria-engine';
 export type { GameMode } from '@wolsok/feat-shared-bacteria-engine';

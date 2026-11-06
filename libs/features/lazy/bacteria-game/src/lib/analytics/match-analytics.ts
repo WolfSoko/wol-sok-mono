@@ -10,7 +10,7 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import type { GameStateState } from '../state/game.states';
 import {
-  type MatchKind as RulesKind,
+  type MatchKind as MatchRulesKind,
   type NextMatch,
   rankedOutcomeOf,
 } from '../state/match-rules';
@@ -30,7 +30,7 @@ export type MatchState = Pick<
   /** What the match is - see `matchRules`. */
   next: NextMatch;
   /** How it is played, as `matchRules` tells it. */
-  kind: RulesKind;
+  kind: MatchRulesKind;
 };
 
 /**
@@ -135,7 +135,7 @@ export function matchParams(
  * its own: the user property `free_play` tells it from the campaign's
  * ladder.
  */
-const ANALYTICS_KIND: Readonly<Record<RulesKind, MatchKind>> = {
+const ANALYTICS_KIND: Readonly<Record<MatchRulesKind, MatchKind>> = {
   'two-players': 'two_players',
   'vs-computer': 'vs_computer',
   ghost: 'ghost',

@@ -38,6 +38,7 @@ import {
   MatchPlan,
   matchRecord,
   missionById,
+  missionOf,
   MissionId,
   newRun,
   newSeries,
@@ -92,7 +93,13 @@ import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
 import { MatchAnalytics, MatchState } from '../analytics/match-analytics';
-import { MatchKind, OneMatch, rematchOf, SETUP_MATCH } from './match-rules';
+import {
+  type MatchKind,
+  type MatchRules,
+  type OneMatch,
+  rematchOf,
+  SETUP_MATCH,
+} from './match-rules';
 
 /**
  * The most time one frame may take the war forward, in milliseconds. A
@@ -571,6 +578,24 @@ export class GameStateService {
     return recording;
   }
 
+  /**
+   * How the match the rules describe is recorded: online and ranked ones
+   * always (a ranked one as a local match), another local one while the
+   * player records local matches.
+   */
+  private recordedAsFor({ recording }: MatchRules): 'online' | 'local' | null {
+    switch (recording) {
+      case 'online':
+        return 'online';
+      case 'ranked':
+        return 'local';
+      case 'local':
+        return this.replayPrefs.recordLocal ? 'local' : null;
+      case 'none':
+        return null;
+    }
+  }
+
   /** Takes the colony sizes once a second, for the recording's score. */
   private readonly sample = (sizes: SizeSample) => this.samples.push(sizes);
 
@@ -676,8 +701,8 @@ export class GameStateService {
     }
     const { spawns, options, evolved } = planMatch(this.plan, ghost);
     this.planEvolved = evolved;
-    const records = rules.recording === 'local' && this.replayPrefs.recordLocal;
-    this.recordedAs = records ? 'local' : null;
+    this.recordedAs = this.recordedAsFor(rules);
+    const records = this.recordedAs !== null;
     this.onlineRef = null;
     this.samples = [];
     this.playerService.init(spawns, {
@@ -705,7 +730,7 @@ export class GameStateService {
     const { spawns, options, evolved } = planMatch(this.plan, null);
     this.planEvolved = evolved;
     this.rankedMatch = ranked;
-    this.recordedAs = 'local';
+    this.recordedAs = this.recordedAsFor(this.gameStateStore.matchRules());
     this.onlineRef = null;
     this.samples = [];
     this.playerService.init(spawns, {
@@ -742,7 +767,10 @@ export class GameStateService {
     });
     this.planEvolved = evolved;
     // Every online match is recorded - both seats, as the lockstep played.
-    this.recordedAs = match === undefined ? null : 'online';
+    this.recordedAs =
+      match === undefined
+        ? null
+        : this.recordedAsFor(this.gameStateStore.matchRules());
     this.rankedMatch = null;
     this.samples = [];
     this.playerService.init(spawns, {
@@ -853,7 +881,12 @@ export class GameStateService {
    * The setup stays as it is, the ghost's level and mode are its own.
    */
   public playGhost(run = this.gameStateStore.snapshot().lastReplay): void {
-    if (run === null || run.header.mode !== 'vs-computer') {
+    // A training mission's level is no replay's: its run is none to race.
+    if (
+      run === null ||
+      run.header.mode !== 'vs-computer' ||
+      missionOf(run.header.levelId) !== null
+    ) {
       return;
     }
     this.gameStateStore.update({ next: { kind: 'ghost', run } });
@@ -1008,7 +1041,9 @@ export class GameStateService {
    * `EvolutionService.settled`.
    */
   start(): void {
-    const { online, next } = this.gameStateStore.snapshot();
+    const { online } = this.gameStateStore.snapshot();
+    // Online wins over a one-match setting still set (see `nextMatch`).
+    const next = this.gameStateStore.nextMatch();
     if (online !== null) {
       const match = this.onlineMatch(online);
       if (match === null) {

@@ -632,6 +632,21 @@ describe('GameStateService', () => {
         service.playGhost();
         expect(store.snapshot().next).toEqual(SETUP_MATCH);
       });
+
+      it("refuses a run on a training mission's level", () => {
+        winAgainst('vs-computer');
+        const run = store.snapshot().lastReplay;
+        if (run === null) {
+          throw new Error('no run to fight');
+        }
+
+        service.playGhost({
+          ...run,
+          header: { ...run.header, levelId: 'training-steer' },
+        });
+
+        expect(store.snapshot().next).toEqual(SETUP_MATCH);
+      });
     });
 
     it('judges a win against the computer and keeps the award', () => {

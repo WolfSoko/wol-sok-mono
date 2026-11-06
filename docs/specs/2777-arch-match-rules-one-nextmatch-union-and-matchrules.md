@@ -43,8 +43,8 @@ by every caller from five loose store fields.
   outlasts a match and a reset.
 - No split of `GameStateService` (that is
   [#2778](https://github.com/WolfSoko/wol-sok-mono/issues/2778)).
-- No change in behaviour, the analytics events or the UI, but the one fix
-  of decision 9.
+- No change in behaviour, the analytics events or the UI, but the fix of
+  decision 9 and the guard of decision 10.
 
 ## Decisions
 
@@ -79,6 +79,10 @@ by every caller from five loose store fields.
    was two players (it read the setup's mode). It now reads the rules'
    `kind`, which is `online`: the couch rivalry is no online match's, and an
    online match never counts for it (`earns` is false).
+10. **`playGhost` refuses a run on a training mission's level.** Training
+    is the `mission` variant only (decision 5), so such a ghost would play
+    as a plain ghost. The game never records one (a training match leaves
+    no `lastReplay`); only a crafted challenge link could carry it.
 
 ## Acceptance
 
