@@ -3,11 +3,10 @@ import {
   type Replay,
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { clearBanCache } from '../limits';
+import { Timestamp } from 'firebase-admin/firestore';
 import { voidAttempt } from '../replays/accept';
 import { endlessReplay, RUN_ID, TICKS } from '../testing/daily-replay';
+import { useEmulatorDb } from '../testing/emulator';
 import {
   closeStaleMatches,
   rankEndless,
@@ -22,11 +21,7 @@ import { verifyNow } from './verify-now';
  * runs computed from their declared matches, in any order, the sweep of
  * matches without a replay and the verification of a run's wins.
  */
-const PROJECT = 'demo-bacteria-functions';
-if (getApps().length === 0) {
-  initializeApp({ projectId: PROJECT });
-}
-const db = getFirestore();
+const db = useEmulatorDb();
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -36,14 +31,6 @@ const atOf = (i: number) => AT0 + i * 10 * MINUTE;
 /** A minute after the match ended. */
 const arrivalOf = (i: number) => atOf(i) + 5_000 + 2 * MINUTE;
 const NOW = AT0 + 3 * HOUR;
-
-beforeEach(async () => {
-  clearBanCache();
-  await fetch(
-    `http://${process.env['FIRESTORE_EMULATOR_HOST']}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
-});
 
 /** Declares match `i` of a run of Ada's, as the client does. */
 async function declare(i: number, runId = RUN_ID) {

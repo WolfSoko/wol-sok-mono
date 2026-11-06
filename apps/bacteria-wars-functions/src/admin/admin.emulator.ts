@@ -4,10 +4,11 @@ import {
   FEATURE_TOGGLES,
   type FeatureToggles,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { clearBanCache, isBanned } from '../limits';
+import { useEmulatorDb } from '../testing/emulator';
+import { fakeRealtime } from '../testing/fake-realtime';
 import { countAccount, deleteAccount } from './accounts';
 import { expireBans } from './bans';
 import { type AdminContext, runAdminCommand } from './command';
@@ -22,11 +23,7 @@ import { checkGoogleLink } from './tombstones';
  * the types still to come, and the hourly clean-up of ended bans. The
  * Realtime Database is a fake that records what it was asked.
  */
-const PROJECT = 'demo-bacteria-functions';
-if (getApps().length === 0) {
-  initializeApp({ projectId: PROJECT });
-}
-const db = getFirestore();
+const db = useEmulatorDb();
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -34,74 +31,6 @@ const NOW = Date.UTC(2026, 10, 3, 12);
 const DAILY = 'daily-2026-11-03';
 
 afterEach(() => jest.restoreAllMocks());
-
-beforeEach(async () => {
-  clearBanCache();
-  await fetch(
-    `http://${process.env['FIRESTORE_EMULATOR_HOST']}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
-});
-
-/**
- * A Realtime Database that keeps its values and records its writes, and
- * fails for `failFor`. `beforeRemoveIf` runs when a conditional remove
- * starts, `afterRemoveIf` once it is done, `beforeGet` before a read - to
- * let another command run in between.
- */
-function fakeRealtime(
-  failFor?: string,
-  hooks: {
-    beforeRemoveIf?: () => Promise<unknown>;
-    afterRemoveIf?: () => Promise<unknown>;
-    beforeGet?: () => Promise<unknown>;
-  } = {}
-): Realtime & { calls: string[]; values: Map<string, number> } {
-  const calls: string[] = [];
-  const values = new Map<string, number>();
-  const fail = (path: string) => {
-    if (failFor !== undefined && path === `bans/${failFor}`) {
-      throw new Error('unavailable');
-    }
-  };
-  return {
-    calls,
-    values,
-    get: async (path) => {
-      await hooks.beforeGet?.();
-      return values.get(path) ?? null;
-    },
-    set: async (path, value) => {
-      calls.push(`set ${path} ${value}`);
-      values.set(path, value);
-    },
-    remove: async (path) => {
-      fail(path);
-      calls.push(`remove ${path}`);
-      values.delete(path);
-    },
-    removeIf: async (path, test) => {
-      await hooks.beforeRemoveIf?.();
-      fail(path);
-      if (test(values.get(path) ?? null)) {
-        calls.push(`remove ${path}`);
-        values.delete(path);
-      }
-      await hooks.afterRemoveIf?.();
-    },
-    update: async (changes) => {
-      for (const [path, value] of Object.entries(changes)) {
-        if (value === null) {
-          fail(path);
-          calls.push(`remove ${path}`);
-          values.delete(path);
-        } else {
-          calls.push(`update ${path} ${value}`);
-        }
-      }
-    },
-  };
-}
 
 /** Remote Config's toggles, kept in memory. */
 function fakeToggles(): RemoteToggles & { published: FeatureToggles } {
@@ -422,7 +351,7 @@ describe('player.unban', () => {
       ok: false,
       error: 'not-banned',
     });
-    expect(realtime.values.has('bans/ada')).toBe(false);
+    expect(realtime.peek('bans/ada')).toBeNull();
   });
 
   it.each(['beforeGet', 'beforeRemoveIf'] as const)(
@@ -430,16 +359,19 @@ describe('player.unban', () => {
     async (hook) => {
       await seedAda();
       const until = NOW + DAY;
-      const realtime = fakeRealtime(undefined, {
-        [hook]: () => command('c2', ban('ada', until), context(realtime)),
-      });
+      const realtime = fakeRealtime(
+        {},
+        {
+          [hook]: () => command('c2', ban('ada', until), context(realtime)),
+        }
+      );
       // Left behind by a ban command that failed after Firestore.
       await realtime.set('bans/ada', 0);
       expect(await command('c1', unban('ada'), context(realtime))).toEqual({
         ok: false,
         error: 'not-banned',
       });
-      expect(realtime.values.get('bans/ada')).toBe(until);
+      expect(realtime.peek('bans/ada')).toBe(until);
       expect(realtime.calls).not.toContain('remove bans/ada');
       expect((await entry('boards/xp/entries/xpAda')).get('hiddenBy')).toEqual({
         ban: true,
@@ -449,16 +381,19 @@ describe('player.unban', () => {
 
   it('leaves a ban that changed while it ran', async () => {
     await seedAda();
-    const realtime = fakeRealtime(undefined, {
-      beforeRemoveIf: () =>
-        command('c2', ban('ada', NOW + DAY), context(realtime)),
-    });
+    const realtime = fakeRealtime(
+      {},
+      {
+        beforeRemoveIf: () =>
+          command('c2', ban('ada', NOW + DAY), context(realtime)),
+      }
+    );
     await command('c1', ban('ada', null), context(realtime));
     expect(await command('c3', unban('ada'), context(realtime))).toEqual({
       ok: false,
       error: 'ban-changed',
     });
-    expect(realtime.values.get('bans/ada')).toBe(NOW + DAY);
+    expect(realtime.peek('bans/ada')).toBe(NOW + DAY);
     expect((await db.doc('bans/ada').get()).get('until').toMillis()).toBe(
       NOW + DAY
     );
@@ -565,16 +500,13 @@ describe('board.verify', () => {
 
 describe('statistics', () => {
   /** Two players connected, one of them in a match. */
-  const connected = (): Realtime => ({
-    ...fakeRealtime(),
-    get: async (path) =>
-      path === 'connections'
-        ? {
-            ada: { state: 'playing', at: NOW },
-            bob: { state: 'online', at: NOW },
-          }
-        : null,
-  });
+  const connected = (): Realtime =>
+    fakeRealtime({
+      connections: {
+        ada: { state: 'playing', at: NOW },
+        bob: { state: 'online', at: NOW },
+      },
+    });
   const at = (ms: number) => Timestamp.fromMillis(ms);
 
   async function seedFigures(): Promise<void> {
@@ -945,10 +877,19 @@ describe('expireBans', () => {
       await seedAda();
       const later = NOW + DAY;
       const renewed = later + 3 * DAY;
-      const realtime = fakeRealtime(undefined, {
-        [hook]: () =>
-          command('c2', ban('ada', renewed), context(realtime), 'owner', later),
-      });
+      const realtime = fakeRealtime(
+        {},
+        {
+          [hook]: () =>
+            command(
+              'c2',
+              ban('ada', renewed),
+              context(realtime),
+              'owner',
+              later
+            ),
+        }
+      );
       await command('c1', ban('ada', NOW + HOUR), context(realtime));
 
       expect(await expireBans(db, realtime, later)).toBe(0);
@@ -956,7 +897,7 @@ describe('expireBans', () => {
       const stored = (await db.doc('bans/ada').get()).data();
       expect(stored?.['until'].toMillis()).toBe(renewed);
       expect(stored?.['since'].toMillis()).toBe(later);
-      expect(realtime.values.get('bans/ada')).toBe(renewed);
+      expect(realtime.peek('bans/ada')).toBe(renewed);
       // Only the ended ban's value is removed, and only before the new one.
       expect(realtime.calls.includes('remove bans/ada')).toBe(
         hook === 'afterRemoveIf'
@@ -980,12 +921,12 @@ describe('expireBans', () => {
     // An end the Realtime Database kept from before, already passed.
     await realtime.set('bans/ada', NOW + 30 * 60_000);
     expect(await expireBans(db, realtime, NOW + DAY)).toBe(1);
-    expect(realtime.values.has('bans/ada')).toBe(false);
+    expect(realtime.peek('bans/ada')).toBeNull();
   });
 
   it('goes on past a ban it cannot lift', async () => {
     jest.spyOn(logger, 'error').mockImplementation(() => undefined);
-    const realtime = fakeRealtime('ada');
+    const realtime = fakeRealtime({}, { failRemoving: ['bans/ada'] });
     await command('c1', ban('ada', NOW + HOUR), context(realtime));
     await command('c2', ban('bob', NOW + 2 * HOUR), context(realtime));
     expect(await expireBans(db, realtime, NOW + DAY)).toBe(1);
@@ -1090,7 +1031,7 @@ describe('ban tombstones', () => {
         until: Timestamp.fromMillis(until),
         reason: 'spam',
       });
-      expect(realtime.values.get('bans/eve')).toBe(until);
+      expect(realtime.peek('bans/eve')).toBe(until);
       expect(
         (await db.doc('adminAudit/tombstone_eve').get()).data()
       ).toMatchObject({
@@ -1183,7 +1124,7 @@ describe('ban tombstones', () => {
         reason: 'cheating',
       });
       expect((await db.doc('bans/ada').get()).exists).toBe(false);
-      expect(realtime.values.has('bans/ada')).toBe(false);
+      expect(realtime.peek('bans/ada')).toBeNull();
       expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
         target: { uid: 'ada' },
         type: 'player.ban',

@@ -1,25 +1,17 @@
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
+import { useEmulatorDb } from '../testing/emulator';
 import { handleSite } from './public-site';
 
 /**
  * `publicSite` against the Firestore emulator (`test-emulator`): what each
  * path answers, read from `publicReplays` alone.
  */
-const PROJECT = 'demo-bacteria-functions';
-if (getApps().length === 0) {
-  initializeApp({ projectId: PROJECT });
-}
-const db = getFirestore();
+const db = useEmulatorDb();
 
 const UP = 'AbCdEfGhIjKlMnOpQrSt';
 const DOWN = 'ZyXwVuTsRqPoNmLkJiHg';
 
 beforeEach(async () => {
-  await fetch(
-    `http://${process.env['FIRESTORE_EMULATOR_HOST']}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
   const replay = (id: string, removedAt: Timestamp | null, at: number) =>
     db.doc(`publicReplays/${id}`).set({
       replayId: `l_${id}`,

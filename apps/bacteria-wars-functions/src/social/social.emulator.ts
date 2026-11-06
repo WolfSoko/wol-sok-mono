@@ -1,8 +1,7 @@
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import { runAdminCommand } from '../admin/command';
 import { erasePlayer } from '../admin/erase';
-import { clearBanCache } from '../limits';
+import { useEmulatorDb } from '../testing/emulator';
 import { fakeRealtime } from '../testing/fake-realtime';
 import { deletePlayerSocial } from './delete-player';
 import { backfillMirrors, mirrorListing } from './mirror';
@@ -13,23 +12,11 @@ import { backfillMirrors, mirrorListing } from './mirror';
  * 0012, owner's decisions of 2026-10-26. The Realtime Database is a fake
  * tree (`testing/fake-realtime.ts`).
  */
-const PROJECT = 'demo-bacteria-functions';
-if (getApps().length === 0) {
-  initializeApp({ projectId: PROJECT });
-}
-const db = getFirestore();
+const db = useEmulatorDb();
 
 const HOUR = 3_600_000;
 const NOW = Date.UTC(2026, 9, 26, 12);
 const since = Timestamp.fromMillis(NOW - HOUR);
-
-beforeEach(async () => {
-  clearBanCache();
-  await fetch(
-    `http://${process.env['FIRESTORE_EMULATOR_HOST']}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
-});
 
 const exists = async (path: string) => (await db.doc(path).get()).exists;
 

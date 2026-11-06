@@ -3,10 +3,9 @@ import {
   XP_FULL_COUNT_BEFORE,
   xpSort,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { clearBanCache } from '../limits';
+import { Timestamp } from 'firebase-admin/firestore';
 import { forgetPlayerReplays } from '../replays/forget';
+import { useEmulatorDb } from '../testing/emulator';
 import { deletePlayerBoards } from './delete-player';
 import { boardProfileChanged } from './profile-changed';
 import { type AccountCreatedAt, rankOnline } from './rank-online';
@@ -17,25 +16,13 @@ import { rebuildTop } from './rebuild-top';
  * The board functions against the Firestore emulator (`test-emulator`):
  * the XP and online boards, the top documents and the relabelling.
  */
-const PROJECT = 'demo-bacteria-functions';
-if (getApps().length === 0) {
-  initializeApp({ projectId: PROJECT });
-}
-const db = getFirestore();
+const db = useEmulatorDb();
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const NOW = Date.UTC(2026, 10, 3, 12);
 const BEFORE_CUT = XP_FULL_COUNT_BEFORE - HOUR;
 const AFTER_CUT = XP_FULL_COUNT_BEFORE + HOUR;
-
-beforeEach(async () => {
-  clearBanCache();
-  await fetch(
-    `http://${process.env['FIRESTORE_EMULATOR_HOST']}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
-});
 
 /** A stored progress worth `xp` from finished matches alone. */
 const progressWorth = (xp: number) => ({
