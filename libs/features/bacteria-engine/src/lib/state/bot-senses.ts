@@ -17,11 +17,10 @@ import {
   withWalls,
 } from './bot-navigation';
 import { weaponOf } from './evolution';
-import { GameBalance } from './game-balance';
-import { Point } from './geometry';
+import { distance, Point } from './geometry';
 import { GameMap, rectCenter } from './maps';
 import { isBoostReady, isWeaponReady, Player } from './player.model';
-import { ColonySummary, Simulation } from './simulation';
+import { ColonySummary, MatchColonies, Simulation } from './simulation';
 import { WinRule } from './win-conditions';
 import { mapZones } from './zones';
 
@@ -38,20 +37,12 @@ export type SensedSimulation = Pick<
   | 'nearestEnemy'
 >;
 
-/**
- * The colonies of the last step, split: the players' and the neutral ones,
- * which count for no side.
- */
-export interface MatchColonies {
-  players: readonly ColonySummary[];
-  neutral: readonly ColonySummary[];
-}
-
 /** What a match's senses are built from. */
 export interface BotSensesSetup {
   map: GameMap;
   win: WinRule;
-  balance: GameBalance;
+  /** The normal maximum energy of a bacterium, the bots' energy scale. */
+  maxEnergy: number;
   /** The most bacteria a colony of the match may grow to. */
   capacity: number;
   /** True when the match has neutral colonies. */
@@ -100,15 +91,13 @@ export class BotSenses {
     width: number,
     height: number
   ): BotView {
-    const { balance, simulation, win } = this.setup;
+    const { maxEnergy, simulation, win } = this.setup;
     // The nutrients before the nearest enemy, the routes and the weapon
     // count only when the bot uses them: a simulation sees the same calls
     // in every match, so a replay plays the same.
     const nutrients = simulation.getNutrients();
-    const objective = this.hillAt(width, height);
-    const weapon = this.weaponView(player, width);
-    const ownView = colonyView(own, balance.maxEnergy);
-    const enemy = strongestEnemy(own, colonies.players, balance.maxEnergy);
+    const ownView = colonyView(own, maxEnergy);
+    const enemy = strongestEnemy(own, colonies.players, maxEnergy);
     // The simulation's nearest enemy may be a neutral bacterium: with
     // neutral colonies about, the bots charge the enemy's centre.
     const nearestEnemy =
@@ -123,13 +112,13 @@ export class BotSenses {
       nearestEnemy,
       nutrients,
       boostReady: isBoostReady(player),
-      objective,
+      objective: this.hillAt(width, height),
       routes: this.routesFrom(ownView, width, height),
       // A neutral colony is no enemy to the bots: it is prey, food that bites.
       prey: colonies.neutral.flatMap(neutralFood),
       feeding: win.kind === 'harvest',
       unit: this.unitAt(width),
-      weapon,
+      weapon: this.weaponView(player, width),
       capacity: this.setup.capacity,
     };
   }
@@ -147,10 +136,7 @@ export class BotSenses {
     const clear = (to: Point) => lineOf(grid$(), from, to) === 'clear';
     return {
       waypoint: (to) => (clear(to) ? to : waypoint(field$(), to)),
-      travel: (to) =>
-        clear(to)
-          ? Math.hypot(to.x - from.x, to.y - from.y)
-          : travel(field$(), to),
+      travel: (to) => (clear(to) ? distance(from, to) : travel(field$(), to)),
     };
   }
 

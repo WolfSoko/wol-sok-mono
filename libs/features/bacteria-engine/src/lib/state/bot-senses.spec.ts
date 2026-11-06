@@ -1,4 +1,5 @@
 import { FloodCache } from './bot-navigation';
+import { BotView } from './bot-controller';
 import { BotSenses, BotSensesSetup, SensedSimulation } from './bot-senses';
 import { weaponOf } from './evolution';
 import { gameBalance } from './game-balance';
@@ -90,7 +91,7 @@ function senses(
   return new BotSenses({
     map: aMap(),
     win: { kind: 'annihilation' },
-    balance: gameBalance,
+    maxEnergy: gameBalance.maxEnergy,
     capacity: 900,
     hasNeutral: false,
     simulation,
@@ -102,25 +103,49 @@ function bot(change: Partial<Player> = {}): Player {
   return createPlayer({ id: 0, x: 100, y: 90, isBot: true, ...change });
 }
 
+/** The own colony every view below is looked at from. */
+const OWN = colony(0, 100);
+
+/** What the bot of seat 0 sees, with its colony {@link OWN} among `enemies`. */
+function look({
+  simulation = new FakeSimulation(),
+  setup = {},
+  player = bot(),
+  enemies = [],
+  neutral = [],
+  width = WIDTH,
+  height = HEIGHT,
+}: {
+  simulation?: FakeSimulation;
+  setup?: Partial<BotSensesSetup>;
+  player?: Player;
+  enemies?: ColonySummary[];
+  neutral?: ColonySummary[];
+  width?: number;
+  height?: number;
+} = {}): BotView {
+  return senses(simulation, setup).viewFor(
+    player,
+    OWN,
+    { players: [OWN, ...enemies], neutral },
+    width,
+    height
+  );
+}
+
 describe('BotSenses', () => {
   describe('viewFor', () => {
     it('sees its own colony, the strongest living enemy and the nearest enemy bacterium', () => {
       const simulation = new FakeSimulation();
-      const own = colony(0, 100);
-      const players = [
-        own,
-        colony(1, 40, { x: 300, y: 10 }),
-        colony(2, 70, { x: 240, y: 90 }),
-        colony(3, 0),
-      ];
 
-      const view = senses(simulation).viewFor(
-        bot(),
-        own,
-        { players, neutral: [] },
-        WIDTH,
-        HEIGHT
-      );
+      const view = look({
+        simulation,
+        enemies: [
+          colony(1, 40, { x: 300, y: 10 }),
+          colony(2, 70, { x: 240, y: 90 }),
+          colony(3, 0),
+        ],
+      });
 
       expect(view.own).toEqual({ x: 80, y: 90, count: 100, energy: 0.5 });
       expect(view.enemy).toEqual({ x: 240, y: 90, count: 70, energy: 0.5 });
@@ -141,16 +166,13 @@ describe('BotSenses', () => {
 
     it('asks the simulation for nutrients, then the nearest enemy, and for the routes and the weapon count only when they are used', () => {
       const simulation = new FakeSimulation();
-      const own = colony(0, 100);
-      simulation.colonies = [own];
+      simulation.colonies = [OWN];
 
-      const view = senses(simulation).viewFor(
-        bot({ weapon: 'toxin-bomb' }),
-        own,
-        { players: [own, colony(1, 50, { x: 240, y: 90 })], neutral: [] },
-        WIDTH,
-        HEIGHT
-      );
+      const view = look({
+        simulation,
+        player: bot({ weapon: 'toxin-bomb' }),
+        enemies: [colony(1, 50, { x: 240, y: 90 })],
+      });
 
       expect(simulation.calls).toEqual([
         'getNutrients',
@@ -168,15 +190,8 @@ describe('BotSenses', () => {
 
     it('sees no enemy and asks for no nearest bacterium once every enemy is gone', () => {
       const simulation = new FakeSimulation();
-      const own = colony(0, 100);
 
-      const view = senses(simulation).viewFor(
-        bot(),
-        own,
-        { players: [own, colony(1, 0)], neutral: [] },
-        WIDTH,
-        HEIGHT
-      );
+      const view = look({ simulation, enemies: [colony(1, 0)] });
 
       expect(view.enemy).toBeNull();
       expect(view.nearestEnemy).toBeNull();
@@ -185,72 +200,48 @@ describe('BotSenses', () => {
 
     it('charges the centre with neutral colonies about, whose bacteria the simulation counts as enemies', () => {
       const simulation = new FakeSimulation();
-      const own = colony(0, 100);
 
-      const view = senses(simulation, { hasNeutral: true }).viewFor(
-        bot(),
-        own,
-        { players: [own, colony(1, 50, { x: 240, y: 90 })], neutral: [] },
-        WIDTH,
-        HEIGHT
-      );
+      const view = look({
+        simulation,
+        setup: { hasNeutral: true },
+        enemies: [colony(1, 50, { x: 240, y: 90 })],
+      });
 
       expect(view.nearestEnemy).toBeNull();
       expect(simulation.calls).toEqual(['getNutrients']);
     });
 
     it('sees a neutral colony as prey as big as it is, and none once it is eaten up', () => {
-      const own = colony(0, 100);
-
-      const view = senses(new FakeSimulation(), { hasNeutral: true }).viewFor(
-        bot(),
-        own,
-        {
-          players: [own],
-          neutral: [colony(2, 500, { x: 160, y: 70 }), colony(3, 0)],
-        },
-        WIDTH,
-        HEIGHT
-      );
+      const view = look({
+        setup: { hasNeutral: true },
+        neutral: [colony(2, 500, { x: 160, y: 70 }), colony(3, 0)],
+      });
 
       expect(view.prey).toEqual([{ x: 160, y: 70, amount: 500 }]);
     });
 
     it('feeds first on a level won by eating pellets', () => {
-      const own = colony(0, 100);
-
-      const view = senses(new FakeSimulation(), {
-        win: { kind: 'harvest', pellets: 10 },
-      }).viewFor(bot(), own, { players: [own], neutral: [] }, WIDTH, HEIGHT);
+      const view = look({ setup: { win: { kind: 'harvest', pellets: 10 } } });
 
       expect(view.feeding).toBe(true);
     });
 
     it('heads for the centre of the hill on a hold-the-zone level', () => {
-      const own = colony(0, 100);
       const map = aMap(
         [],
         [{ kind: 'hill', x: 140, y: 70, width: 40, height: 40 }]
       );
-      const hold = senses(new FakeSimulation(), {
-        map,
-        win: { kind: 'hold', holdSec: 30 },
-      });
-      const plain = senses(new FakeSimulation(), { map });
-      const colonies = { players: [own], neutral: [] };
 
-      expect(
-        hold.viewFor(bot(), own, colonies, WIDTH, HEIGHT).objective
-      ).toEqual({ x: 160, y: 90 });
-      expect(
-        plain.viewFor(bot(), own, colonies, WIDTH, HEIGHT).objective
-      ).toBeNull();
+      const hold = look({ setup: { map, win: { kind: 'hold', holdSec: 30 } } });
+      const plain = look({ setup: { map } });
+
+      expect(hold.objective).toEqual({ x: 160, y: 90 });
+      expect(plain.objective).toBeNull();
     });
 
     it('sees the weapon it carries, grown with the grid, and counts the bacteria round its crosshair only when asked', () => {
       const simulation = new FakeSimulation();
-      const own = colony(0, 100);
-      simulation.colonies = [colony(1, 50), own];
+      simulation.colonies = [colony(1, 50), OWN];
       // Two blocks of 320 x 360 cells: the crosshair stands in the left one.
       simulation.blocks = {
         blocksX: 2,
@@ -258,15 +249,13 @@ describe('BotSenses', () => {
         cellSize: 320,
         counts: [new Uint32Array([30, 7]), new Uint32Array([12, 9])],
       };
-      const armed = bot({ weapon: 'toxin-bomb', x: 160, y: 180 });
 
-      const view = senses(simulation).viewFor(
-        armed,
-        own,
-        { players: [own], neutral: [] },
-        WIDTH * 2,
-        HEIGHT * 2
-      );
+      const view = look({
+        simulation,
+        player: bot({ weapon: 'toxin-bomb', x: 160, y: 180 }),
+        width: WIDTH * 2,
+        height: HEIGHT * 2,
+      });
 
       expect(view.weapon).toMatchObject({
         id: 'toxin-bomb',
@@ -278,15 +267,7 @@ describe('BotSenses', () => {
     });
 
     it('counts nothing round the crosshair while the simulation has no blocks', () => {
-      const own = colony(0, 100);
-
-      const view = senses(new FakeSimulation()).viewFor(
-        bot({ weapon: 'cryo-pulse' }),
-        own,
-        { players: [own], neutral: [] },
-        WIDTH,
-        HEIGHT
-      );
+      const view = look({ player: bot({ weapon: 'cryo-pulse' }) });
 
       expect(view.weapon?.around()).toEqual({ own: 0, enemy: 0 });
     });

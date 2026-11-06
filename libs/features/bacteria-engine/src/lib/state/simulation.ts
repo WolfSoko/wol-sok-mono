@@ -76,6 +76,15 @@ export interface ColonySummary {
 }
 
 /**
+ * The colonies of the last step, split: the players' and the neutral ones,
+ * which count for no side.
+ */
+export interface MatchColonies {
+  players: readonly ColonySummary[];
+  neutral: readonly ColonySummary[];
+}
+
+/**
  * Where the colonies are, coarsely: the arena cut into blocks of cells, and
  * the bacteria of each colony in each block - for the minimap.
  */

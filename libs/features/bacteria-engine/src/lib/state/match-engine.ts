@@ -6,7 +6,12 @@ import {
   noEvents,
   StepEvents,
 } from './bacteria-simulation';
-import { ColonySummary, Simulation, SimulationFactory } from './simulation';
+import {
+  ColonySummary,
+  MatchColonies,
+  Simulation,
+  SimulationFactory,
+} from './simulation';
 import {
   BotController,
   BotProfile,
@@ -14,7 +19,7 @@ import {
   BotDifficulty,
   DEFAULT_DIFFICULTY,
 } from './bot-controller';
-import { BotSenses, MatchColonies } from './bot-senses';
+import { BotSenses } from './bot-senses';
 import { countDown, TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
 import {
   colonyCapacity,
@@ -343,7 +348,7 @@ export class MatchEngine {
     this.senses = new BotSenses({
       map: this.map,
       win: this.win,
-      balance: this.balance,
+      maxEnergy: this.balance.maxEnergy,
       capacity: this.capacity,
       hasNeutral: this.hasNeutral,
       simulation: this.simulation,
