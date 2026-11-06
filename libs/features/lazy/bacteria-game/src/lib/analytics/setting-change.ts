@@ -18,18 +18,6 @@ export function settingChange(
 ): GameEvents['setting_changed'] | null {
   const spec: { reported?: boolean } = SETTINGS[key];
   if (!spec.reported) return null;
-  const value = settingValue(after[key]);
-  return value === settingValue(before[key]) ? null : { setting: key, value };
-}
-
-function settingValue(value: unknown): string | number | boolean {
-  if (value === undefined) return 'auto';
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
-    return value;
-  }
-  return JSON.stringify(value);
+  const value = after[key] ?? 'auto';
+  return value === (before[key] ?? 'auto') ? null : { setting: key, value };
 }

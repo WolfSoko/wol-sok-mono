@@ -198,7 +198,10 @@ describe('GameSettingsService', () => {
       );
 
       service.set('saveMatches', false);
-      expect(prefs).toHaveBeenLastCalledWith({ saveMatches: false });
+      expect(prefs).toHaveBeenLastCalledWith({
+        recordLocal: true,
+        saveMatches: false,
+      });
       storage.flush();
       storage.flush();
 

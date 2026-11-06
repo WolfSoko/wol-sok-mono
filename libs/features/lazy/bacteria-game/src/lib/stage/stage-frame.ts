@@ -53,6 +53,8 @@ export class StageFrame {
   private readonly playerService = inject(PlayerService);
   private readonly playerStore = inject(PlayerStore);
   private readonly settings = inject(GameSettingsService);
+  /** Reads the frame rate switch - made once, as the frames read it each. */
+  private readonly showsFps = () => this.settings.value('showFps');
   private readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   /** The skin the player's colony wears: the look picked, once owned. */
@@ -235,9 +237,7 @@ export class StageFrame {
     }
     const { width, height } = this.stage.arena();
     // Timed only while the HUD shows the frame rate.
-    const perf = untracked(() => this.settings.value('showFps'))
-      ? this.framePerf
-      : null;
+    const perf = untracked(this.showsFps) ? this.framePerf : null;
     const timer = perf === null ? null : (painter.gpuTimer?.() ?? null);
     // The ticks' GPU time where the war runs on the GPU.
     const simulation = this.playerService.getSimulation();

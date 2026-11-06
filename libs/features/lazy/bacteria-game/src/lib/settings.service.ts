@@ -86,9 +86,7 @@ export class GameSettingsService {
     this.applyToGame(key);
     const settings = this.settings.toStore();
     this.report(key, settings);
-    if (this.restored()) {
-      this.persist(settings);
-    }
+    this.persistOnceRestored(settings);
   }
 
   /**
@@ -103,11 +101,8 @@ export class GameSettingsService {
   private restore(stored: Readonly<Record<string, unknown>>): void {
     this.matchSetup.restore(stored);
     this.settings.restore(stored);
-    this.gameState.setReplayPrefs({
-      recordLocal: this.value('recordLocal'),
-      saveMatches: this.value('saveMatches'),
-    });
-    this.i18n.setLanguage(this.value('language'));
+    this.syncReplayPrefs();
+    this.syncLanguage();
     this.reported = this.settings.toStore();
     this.restored.set(true);
     this.persist();
@@ -116,10 +111,21 @@ export class GameSettingsService {
   /** Hands a setting the rest of the game keeps a copy of on to it. */
   private applyToGame(key: SettingKey): void {
     if (key === 'recordLocal' || key === 'saveMatches') {
-      this.gameState.setReplayPrefs({ [key]: this.value(key) });
+      this.syncReplayPrefs();
     } else if (key === 'language') {
-      this.i18n.setLanguage(this.value('language'));
+      this.syncLanguage();
     }
+  }
+
+  private syncReplayPrefs(): void {
+    this.gameState.setReplayPrefs({
+      recordLocal: this.value('recordLocal'),
+      saveMatches: this.value('saveMatches'),
+    });
+  }
+
+  private syncLanguage(): void {
+    this.i18n.setLanguage(this.value('language'));
   }
 
   private report(key: SettingKey, settings: StoredDeviceSettings): void {
@@ -131,9 +137,9 @@ export class GameSettingsService {
     }
   }
 
-  private persistOnceRestored(): void {
+  private persistOnceRestored(settings = this.settings.toStore()): void {
     if (this.restored()) {
-      this.persist();
+      this.persist(settings);
     }
   }
 

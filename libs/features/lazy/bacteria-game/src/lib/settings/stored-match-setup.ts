@@ -18,15 +18,25 @@ import {
   isMatchOn,
 } from '../state/game.states';
 
+/** How each part of the match setup is read back from storage. */
+const MATCH_SETUP: {
+  readonly [K in keyof MatchSetup]: (
+    stored: unknown
+  ) => MatchSetup[K] | undefined;
+} = {
+  mode: (stored) => (isGameMode(stored) ? stored : undefined),
+  difficulty: (stored) => {
+    const id = (stored ?? null) as BotDifficulty | null;
+    return difficultyOption(id)?.id;
+  },
+  levelId: (stored) => (isLevelId(stored) ? stored : undefined),
+  colors: (stored) => validColorPair(stored) ?? undefined,
+  seriesLength: (stored) => (isSeriesLength(stored) ? stored : undefined),
+  headStart: (stored) => (isHeadStart(stored) ? stored : undefined),
+};
+
 /** The settings that set up a match - kept in the game state store. */
-const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
-  'mode',
-  'difficulty',
-  'levelId',
-  'colors',
-  'seriesLength',
-  'headStart',
-];
+const MATCH_SETUP_KEYS = Object.keys(MATCH_SETUP) as (keyof MatchSetup)[];
 
 /** The match setup as it is stored beside the device settings. */
 export type StoredMatchSetupValues = Partial<MatchSetup>;
@@ -91,9 +101,9 @@ export class StoredMatchSetup {
   }
 
   private touch(before: MatchSetup, after: MatchSetup): void {
-    MATCH_SETUP_KEYS.filter(
-      (key) => JSON.stringify(before[key]) !== JSON.stringify(after[key])
-    ).forEach((key) => this.touched.add(key));
+    MATCH_SETUP_KEYS.filter((key) => !sameValue(key, before, after)).forEach(
+      (key) => this.touched.add(key)
+    );
   }
 
   /** The stored setup a late answer found under way, once the menu is back. */
@@ -115,56 +125,37 @@ export class StoredMatchSetup {
    * once, so the colonies are spawned again only once.
    */
   private apply(stored: Readonly<Record<string, unknown>>): void {
-    const restores = (key: keyof MatchSetup) => !this.touched.has(key);
-    const setup: Partial<MatchSetup> = {};
-    if (restores('mode') && isGameMode(stored['mode'])) {
-      setup.mode = stored['mode'];
+    const setup: Record<string, unknown> = {};
+    for (const key of MATCH_SETUP_KEYS) {
+      const value = this.touched.has(key)
+        ? undefined
+        : MATCH_SETUP[key](stored[key]);
+      if (value !== undefined) {
+        setup[key] = value;
+      }
     }
-    const difficulty = stored['difficulty'] as BotDifficulty | undefined;
-    if (
-      restores('difficulty') &&
-      difficultyOption(difficulty ?? null) != null
-    ) {
-      setup.difficulty = difficulty;
-    }
-    if (restores('levelId') && isLevelId(stored['levelId'])) {
-      setup.levelId = stored['levelId'];
-    }
-    const colors = validColorPair(stored['colors']);
-    if (restores('colors') && colors != null) {
-      setup.colors = colors;
-    }
-    if (restores('seriesLength') && isSeriesLength(stored['seriesLength'])) {
-      setup.seriesLength = stored['seriesLength'];
-    }
-    if (restores('headStart') && isHeadStart(stored['headStart'])) {
-      setup.headStart = stored['headStart'];
-    }
-    this.gameState.applySetup(setup);
+    this.gameState.applySetup(setup as Partial<MatchSetup>);
   }
 
   /** The match setup as it stands, without tracking it. */
   private current(): MatchSetup {
-    const { mode, difficulty, levelId, colors, seriesLength, headStart } =
-      this.store;
-    return untracked(() => ({
-      mode: mode(),
-      difficulty: difficulty(),
-      levelId: levelId(),
-      colors: colors(),
-      seriesLength: seriesLength(),
-      headStart: headStart(),
-    }));
+    return untracked(
+      () =>
+        Object.fromEntries(
+          MATCH_SETUP_KEYS.map((key) => [key, this.store[key]()])
+        ) as MatchSetup
+    );
   }
 }
 
 function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {
-  return (
-    a.mode === b.mode &&
-    a.difficulty === b.difficulty &&
-    a.levelId === b.levelId &&
-    sameColors(a.colors, b.colors) &&
-    a.seriesLength === b.seriesLength &&
-    a.headStart === b.headStart
-  );
+  return MATCH_SETUP_KEYS.every((key) => sameValue(key, a, b));
+}
+
+function sameValue(
+  key: keyof MatchSetup,
+  a: MatchSetup,
+  b: MatchSetup
+): boolean {
+  return key === 'colors' ? sameColors(a.colors, b.colors) : a[key] === b[key];
 }
