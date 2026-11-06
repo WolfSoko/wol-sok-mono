@@ -32,8 +32,8 @@ Spec: `docs/specs/2783-arch-command-documents-one-envelope-result-and-runner.md`
    Check: `nx test feat-lazy-bacteria-wars-admin`.
 5. **Docs.** `CLAUDE.md` (Cloud Functions section), ADR 0011's result
    field, the privacy spec's TTL comment.
-6. **Checks and commit.** `nx format:write`, `nx affected -t
-lint,lint-templates,test`, the functions' emulator target, the goldens'
-   specs; one commit
+6. **Checks and commit.** `nx format:write`,
+   `nx affected -t lint,lint-templates,test`, the functions' emulator
+   target, the goldens' specs; one commit
    `refactor(feat-shared-bacteria-engine): one envelope, result and runner for command documents`
    with spec, plan and code; PR to `main` with `Closes #2783`.
