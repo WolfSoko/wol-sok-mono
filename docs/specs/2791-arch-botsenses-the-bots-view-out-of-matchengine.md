@@ -40,9 +40,9 @@ decision.
   counts down, and changing that order would change the matches. Taking
   `own` keeps the lookup where the order is decided and costs no second
   search.
-- **The senses depend on a narrow slice of the simulation**:
-  `SensedSimulation = Pick<Simulation, 'getNutrients' | 'getDynamicWalls' |
-'summaries' | 'blockCounts' | 'nearestEnemy'>`. A spec fakes those five
+- **The senses depend on a narrow slice of the simulation**,
+  `SensedSimulation`: a `Pick` of `getNutrients`, `getDynamicWalls`,
+  `summaries`, `blockCounts` and `nearestEnemy`. A spec fakes those five
   calls instead of the whole interface, and the senses cannot step or
   change the war.
 - **Same calls, same order.** `viewFor` calls the simulation exactly as
