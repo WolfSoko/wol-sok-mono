@@ -31,7 +31,7 @@ import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
-import { rankedOutcomeOf, SETUP_MATCH } from './match-rules';
+import { SETUP_MATCH } from './match-rules';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { signal } from '@angular/core';
@@ -1295,7 +1295,7 @@ describe('GameStateService ranked matches', () => {
     expect(replays.submissions).toEqual([
       { replay, hint: expect.any(Number), attempt: `d_${DAY}_1` },
     ]);
-    expect(rankedOutcomeOf(store.nextMatch())?.note).toEqual({
+    expect(store.matchRules().ranked?.note).toEqual({
       kind: 'daily',
       n: 1,
     });
@@ -1374,7 +1374,7 @@ describe('GameStateService ranked matches', () => {
 
     expect(service.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
-    expect(rankedOutcomeOf(store.nextMatch())).toEqual({
+    expect(store.matchRules().ranked).toEqual({
       match: null,
       note: { kind: 'unranked', reason: 'offline' },
     });
@@ -1418,7 +1418,7 @@ describe('GameStateService ranked matches', () => {
 
     expect(store.snapshot().endlessRanked).toBeNull();
     expect(store.matchRules().rankedMatch).toBeNull();
-    expect(rankedOutcomeOf(store.nextMatch())?.note).toEqual({
+    expect(store.matchRules().ranked?.note).toEqual({
       kind: 'unranked',
       reason: 'run-dropped',
     });

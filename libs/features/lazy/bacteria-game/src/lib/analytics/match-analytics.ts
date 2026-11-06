@@ -9,10 +9,9 @@ import {
   xpClimb,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type { GameStateState } from '../state/game.states';
-import {
-  type MatchKind as MatchRulesKind,
-  type NextMatch,
-  rankedOutcomeOf,
+import type {
+  MatchKind as MatchRulesKind,
+  MatchRules,
 } from '../state/match-rules';
 import {
   GameEvents,
@@ -25,13 +24,9 @@ import {
 /** What of the game's state tells how a match is played. */
 export type MatchState = Pick<
   GameStateState,
-  'endlessRanked' | 'timePassed'
-> & {
-  /** What the match is - see `matchRules`. */
-  next: NextMatch;
-  /** How it is played, as `matchRules` tells it. */
-  kind: MatchRulesKind;
-};
+  'online' | 'endlessRanked' | 'timePassed'
+> &
+  Pick<MatchRules, 'kind' | 'ranked'>;
 
 /**
  * The match statistics: when a match starts, ends and is left before it
@@ -66,7 +61,7 @@ export class MatchAnalytics {
   ): void {
     const match = this.takeRunning();
     if (match === null) return;
-    const result = outcomeName(outcome.winner, match.kind, state.next);
+    const result = outcomeName(outcome.winner, match.kind, state);
     this.analytics.track('level_end', {
       ...match,
       ...earned(earnings),
@@ -123,7 +118,7 @@ export function matchParams(
         ? plan.difficulty
         : 'none',
     ranked:
-      rankedOutcomeOf(state.next) !== null ||
+      state.ranked !== null ||
       (state.kind === 'endless' && state.endlessRanked !== null),
     simulation: simulation.kind,
     ruleset: simulation.ruleset ?? 'float',
@@ -149,12 +144,12 @@ const ANALYTICS_KIND: Readonly<Record<MatchRulesKind, MatchKind>> = {
 export function outcomeName(
   winner: Player | null,
   kind: MatchKind,
-  next: NextMatch
+  state: Pick<MatchState, 'online'>
 ): MatchOutcomeName {
   if (winner === null) return 'draw';
   if (kind === 'two_players') return 'decided';
   const won =
-    next.kind === 'online' ? winner.id === next.seat.seat : !winner.isBot;
+    state.online !== null ? winner.id === state.online.seat : !winner.isBot;
   return won ? 'win' : 'loss';
 }
 

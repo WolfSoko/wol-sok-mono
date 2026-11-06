@@ -12,7 +12,7 @@ import {
   NextMatch,
   nextMatchOf,
   OneMatch,
-  rankedOutcomeOf,
+  canRaceAsGhost,
   rematchOf,
   RulesSetup,
   SETUP_MATCH,
@@ -75,6 +75,7 @@ const plain: MatchRules = {
   earns: true,
   inSeries: false,
   rankedMatch: null,
+  ranked: null,
   canPause: true,
   canRestart: true,
   onlineGrid: false,
@@ -140,7 +141,12 @@ describe('matchRules', () => {
       'a daily match that could not be ranked',
       daily(practice),
       vsComputer,
-      { kind: 'daily', levelId: dailyLevelId(DAY), evolves: false },
+      {
+        kind: 'daily',
+        levelId: dailyLevelId(DAY),
+        evolves: false,
+        ranked: practice,
+      },
     ],
     [
       'a ranked daily attempt',
@@ -152,6 +158,7 @@ describe('matchRules', () => {
         evolves: false,
         recording: 'ranked',
         rankedMatch: declared.match,
+        ranked: declared,
         canPause: false,
         canRestart: false,
         onlineGrid: true,
@@ -178,6 +185,7 @@ describe('matchRules', () => {
         evolves: false,
         recording: 'ranked',
         rankedMatch: declared.match,
+        ranked: declared,
         canPause: false,
         canRestart: false,
         onlineGrid: true,
@@ -232,14 +240,21 @@ describe('nextMatchOf', () => {
   });
 });
 
-describe('rankedOutcomeOf', () => {
-  it.each<[string, NextMatch, RankedOutcome | null]>([
-    ['a ranked daily attempt', daily(declared), declared],
-    ['an endless match that could not be ranked', endless(practice), practice],
-    ['a daily match played as practice', daily(null), null],
-    ['any other match', SETUP_MATCH, null],
-  ])('is the outcome of %s', (_, next, outcome) => {
-    expect(rankedOutcomeOf(next)).toBe(outcome);
+describe('canRaceAsGhost', () => {
+  it('takes a run against the computer', () => {
+    expect(canRaceAsGhost(run)).toBe(true);
+  });
+
+  it("refuses one between two players, or on a training mission's level", () => {
+    expect(
+      canRaceAsGhost({ ...run, header: { ...run.header, mode: 'two-players' } })
+    ).toBe(false);
+    expect(
+      canRaceAsGhost({
+        ...run,
+        header: { ...run.header, levelId: missionById('steer').levelId },
+      })
+    ).toBe(false);
   });
 });
 

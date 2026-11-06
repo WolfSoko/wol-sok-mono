@@ -63,7 +63,7 @@ import { GuestSignInComponent } from '../guest/guest-sign-in.component';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
 import { DnaHelixComponent } from '../menu/dna-helix.component';
-import { rankedOutcomeOf } from '../state/match-rules';
+import { canRaceAsGhost } from '../state/match-rules';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =
@@ -229,7 +229,7 @@ export class WinnerComponent {
    * any other match, and for one played as practice.
    */
   public rankedNote: Signal<string | null> = computed(() => {
-    const note = rankedOutcomeOf(this.state.nextMatch())?.note;
+    const note = this.rules().ranked?.note;
     switch (note?.kind) {
       case 'daily':
         return this.t('boards.ranked.result.daily', {
@@ -427,11 +427,10 @@ export class WinnerComponent {
    * True when the run just played can come back as a ghost - after a match
    * against the computer, not against a ghost already.
    */
-  public canFightGhost: Signal<boolean> = computed(
-    () =>
-      !this.againstGhost() &&
-      this.state.lastReplay()?.header.mode === 'vs-computer'
-  );
+  public canFightGhost: Signal<boolean> = computed(() => {
+    const run = this.state.lastReplay();
+    return !this.againstGhost() && run !== null && canRaceAsGhost(run);
+  });
 
   /** Everything the match earned, null until it has ended. */
   public earnings: Signal<MatchEarnings | null> = this.state.earnings;

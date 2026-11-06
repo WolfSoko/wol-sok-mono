@@ -59,10 +59,6 @@ export class HudState {
   public readonly matchOver = this.store.matchEnded;
   /** True while an online match waits for the other device. */
   public readonly waitingForPeer = this.store.waitingForPeer;
-  /** This device's seat in an online match, null outside one. */
-  public readonly onlineSeat = computed(
-    () => this.store.online()?.seat ?? null
-  );
 
   /** The level the next match is played on. */
   public readonly level = this.store.level;

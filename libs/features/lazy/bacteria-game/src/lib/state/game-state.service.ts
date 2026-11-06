@@ -38,7 +38,6 @@ import {
   MatchPlan,
   matchRecord,
   missionById,
-  missionOf,
   MissionId,
   newRun,
   newSeries,
@@ -97,6 +96,7 @@ import {
   type MatchKind,
   type MatchRules,
   type OneMatch,
+  canRaceAsGhost,
   rematchOf,
   SETUP_MATCH,
 } from './match-rules';
@@ -442,13 +442,10 @@ export class GameStateService {
 
   /** What the match statistics are told of the match on the board. */
   private matchState(): MatchState {
-    const { endlessRanked, timePassed } = this.gameStateStore.snapshot();
-    return {
-      next: this.gameStateStore.nextMatch(),
-      kind: this.gameStateStore.matchRules().kind,
-      endlessRanked,
-      timePassed,
-    };
+    const { online, endlessRanked, timePassed } =
+      this.gameStateStore.snapshot();
+    const { kind, ranked } = this.gameStateStore.matchRules();
+    return { online, endlessRanked, timePassed, kind, ranked };
   }
 
   /**
@@ -672,13 +669,12 @@ export class GameStateService {
       return;
     }
     const ghost = next.kind === 'ghost' ? next.run : null;
-    const planned = rules.levelId;
     this.rankedMatch = null;
     this.plan = {
-      levelId: planned,
+      levelId: rules.levelId,
       mode: rules.planMode,
       // A level with an opponent of its own - a training mission's - plays it.
-      difficulty: levelDifficulty(getLevel(planned), difficulty),
+      difficulty: levelDifficulty(getLevel(rules.levelId), difficulty),
       colors,
       headStart,
       width,
@@ -866,7 +862,7 @@ export class GameStateService {
    */
   public async offerChallenge(hash: string): Promise<boolean> {
     const run = await replayFromHash(hash);
-    if (run === null || run.header.mode !== 'vs-computer') {
+    if (run === null || !canRaceAsGhost(run)) {
       return false;
     }
     this.gameStateStore.update({ challenge: run });
@@ -881,12 +877,7 @@ export class GameStateService {
    * The setup stays as it is, the ghost's level and mode are its own.
    */
   public playGhost(run = this.gameStateStore.snapshot().lastReplay): void {
-    // A training mission's level is no replay's: its run is none to race.
-    if (
-      run === null ||
-      run.header.mode !== 'vs-computer' ||
-      missionOf(run.header.levelId) !== null
-    ) {
+    if (run === null || !canRaceAsGhost(run)) {
       return;
     }
     this.gameStateStore.update({ next: { kind: 'ghost', run } });
@@ -1041,11 +1032,10 @@ export class GameStateService {
    * `EvolutionService.settled`.
    */
   start(): void {
-    const { online } = this.gameStateStore.snapshot();
     // Online wins over a one-match setting still set (see `nextMatch`).
     const next = this.gameStateStore.nextMatch();
-    if (online !== null) {
-      const match = this.onlineMatch(online);
+    if (next.kind === 'online') {
+      const match = this.onlineMatch(next.seat);
       if (match === null) {
         return;
       }

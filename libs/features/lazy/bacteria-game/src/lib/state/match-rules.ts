@@ -1,5 +1,6 @@
 import {
   missionById,
+  missionOf,
   type MissionId,
   type RankedMatch,
   type RankedOutcome,
@@ -92,6 +93,12 @@ export interface MatchRules {
   inSeries: boolean;
   /** The ranked attempt the match was declared as, null for an unranked one. */
   rankedMatch: RankedMatch | null;
+  /**
+   * What the ranked start of a daily or endless match came to (ADR 0012):
+   * the attempt - null when it plays unranked - and what the result screen
+   * says of it. Null for any other match, and for one played as practice.
+   */
+  ranked: RankedOutcome | null;
   /** False for a ranked match: its attempt has a deadline (ADR 0012). */
   canPause: boolean;
   /**
@@ -112,17 +119,23 @@ export interface MatchRules {
 /** The rules of the next match, set up as `setup` says. */
 export function matchRules(next: NextMatch, setup: RulesSetup): MatchRules {
   const kind = kindOf(next, setup.mode);
-  const rankedMatch = rankedOutcomeOf(next)?.match ?? null;
+  const ranked = hasRankedStart(next) ? next.ranked : null;
+  const rankedMatch = ranked?.match ?? null;
   return {
     kind,
     levelId: levelIdOf(next, setup.levelId),
-    planMode: plannedMode(next, setup.mode),
+    // A level picked for the match is fought against the computer.
+    planMode:
+      kind === 'two-players' || kind === 'online'
+        ? 'two-players'
+        : 'vs-computer',
     mission: next.kind === 'mission' ? next.mission : null,
     recording: recordingOf(kind, rankedMatch),
     evolves: kind === 'vs-computer' || kind === 'ghost',
     earns: kind !== 'ghost' && kind !== 'online',
     inSeries: kind === 'two-players' && setup.seriesLength !== 1,
     rankedMatch,
+    ranked,
     canPause: rankedMatch === null,
     canRestart:
       kind !== 'endless' &&
@@ -145,11 +158,14 @@ export function nextMatchOf(
 }
 
 /**
- * What the ranked start of a daily or endless match came to - null for an
- * unranked one, and for any other match.
+ * True for a run that can be raced as a ghost: one against the computer,
+ * not on a training mission's level - its level is no replay's, and its
+ * dummy no opponent to race.
  */
-export function rankedOutcomeOf(next: NextMatch): RankedOutcome | null {
-  return next.kind === 'daily' || next.kind === 'endless' ? next.ranked : null;
+export function canRaceAsGhost(run: Replay): boolean {
+  return (
+    run.header.mode === 'vs-computer' && missionOf(run.header.levelId) === null
+  );
 }
 
 /**
@@ -157,9 +173,14 @@ export function rankedOutcomeOf(next: NextMatch): RankedOutcome | null {
  * attempt, which is declared anew - or not.
  */
 export function rematchOf(next: OneMatch): OneMatch {
-  return next.kind === 'daily' || next.kind === 'endless'
-    ? { ...next, ranked: null }
-    : next;
+  return hasRankedStart(next) ? { ...next, ranked: null } : next;
+}
+
+/** The variants a ranked start (ADR 0012) can be declared for. */
+type RankedStart = Extract<NextMatch, { kind: 'daily' | 'endless' }>;
+
+function hasRankedStart(next: NextMatch): next is RankedStart {
+  return next.kind === 'daily' || next.kind === 'endless';
 }
 
 function kindOf(next: NextMatch, mode: GameMode): MatchKind {
@@ -185,17 +206,6 @@ function levelIdOf(next: NextMatch, setupLevelId: string): string {
       return next.seat.levelId;
     default:
       return next.levelId;
-  }
-}
-
-function plannedMode(next: NextMatch, mode: GameMode): GameMode {
-  switch (next.kind) {
-    case 'setup':
-      return mode;
-    case 'online':
-      return 'two-players';
-    default:
-      return 'vs-computer';
   }
 }
 

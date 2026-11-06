@@ -10,7 +10,7 @@ import {
   type Player,
   type RankedOutcome,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { type MatchKind, SETUP_MATCH } from '../state/match-rules';
+import type { MatchKind } from '../state/match-rules';
 import {
   MatchAnalytics,
   matchParams,
@@ -25,7 +25,8 @@ const plan = {
 } as MatchPlan;
 
 const local: MatchState = {
-  next: SETUP_MATCH,
+  online: null,
+  ranked: null,
   kind: 'vs-computer',
   endlessRanked: null,
   timePassed: 0,
@@ -195,7 +196,7 @@ describe('matchParams', () => {
     const daily: MatchState = {
       ...local,
       kind: 'daily',
-      next: { kind: 'daily', day: 'd', levelId: 'x', ranked: practice },
+      ranked: practice,
     };
     expect(matchParams(plan, daily, cpu).ranked).toBe(true);
     expect(matchParams(plan, local, cpu).ranked).toBe(false);
@@ -205,7 +206,6 @@ describe('matchParams', () => {
     const endless: MatchState = {
       ...local,
       kind: 'endless',
-      next: { kind: 'endless', levelId: 'x', ranked: null },
       endlessRanked: { runId: 'r', next: 2 },
     };
     expect(matchParams(plan, endless, cpu).ranked).toBe(true);
@@ -220,8 +220,7 @@ describe('matchParams', () => {
 
 describe('outcomeName', () => {
   const online = {
-    kind: 'online' as const,
-    seat: {
+    online: {
       seat: 1 as const,
       levelId: 'x',
       colors: ['a', 'b'] as [string, string],
@@ -234,6 +233,6 @@ describe('outcomeName', () => {
   });
 
   it('calls a match between two players decided', () => {
-    expect(outcomeName(human, 'two_players', SETUP_MATCH)).toBe('decided');
+    expect(outcomeName(human, 'two_players', local)).toBe('decided');
   });
 });

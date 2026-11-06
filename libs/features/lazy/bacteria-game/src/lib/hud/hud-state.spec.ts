@@ -47,7 +47,6 @@ describe('HudState', () => {
           colors: ['orange', 'blue'],
         },
       });
-      expect(hud.onlineSeat()).toBe(1);
       expect(hud.canRestart()).toBe(false);
 
       store.update({

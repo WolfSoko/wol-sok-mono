@@ -152,7 +152,7 @@ storage until then. Settings stay with the device either way.
   passes (`deviceReady`), to a signed-in player no ban holds; the
   player's choice is the device setting `ranked`. The store's `next`
   holds the start's outcome in its `daily` and `endless` variants
-  (`ranked`, read with `rankedOutcomeOf`): the declared match
+  (`ranked`, read as `matchRules().ranked`): the declared match
   (`matchRules().rankedMatch`) and what the result screen says of it
   (`note`, ids, texts in `boards.ranked`).
   Specs use `FakeGameRanked`.
