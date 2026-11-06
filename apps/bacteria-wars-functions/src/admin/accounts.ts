@@ -4,7 +4,10 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { deletePlayerBoards } from '../boards/delete-player';
+import { boardRefsOf } from '../boards/delete-player';
+import { deleteRefs } from '../deletes';
+import type { ErasureContext } from '../erasure/context';
+import { eraseListed } from '../erasure/erase-listed';
 import { settleAll } from '../settle';
 import { notedTombstones, readBan } from './bans';
 import type { Realtime } from './realtime';
@@ -60,7 +63,7 @@ export async function countAccount(
 
 /**
  * How `stats/accounts` changes: +1 in `countAccount`, -1 in
- * `deletePlayerBoards` for an account `countAccount` counted, and minus
+ * `deleteAccount` for an account `countAccount` counted, and minus
  * the guests a `guestCleanup` batch erased, at once. `stats.recount` sets
  * it exactly.
  */
@@ -74,45 +77,38 @@ export function accountsChange(
   };
 }
 
-/** How `deleteAccount` goes about the account. */
-export interface DeletedAccount {
-  /** Its ban tombstone id, null without a Google provider. */
-  tombstone: string | null;
-  realtime: Realtime;
-  /**
-   * Told instead of lowering `stats/accounts`, when the caller sums the
-   * accounts it erased and lowers the count once (`guestCleanup`).
-   */
-  uncounted?: () => void;
-}
-
 /**
- * A deleted account (ADR 0012, the `deletePlayerBoards` trigger): erases
- * its board data (`deletePlayerBoards`), scrubs the audit entries about it
- * and lowers `stats/accounts` if `countAccount` counted it - once, as
+ * The `account` part of the erasure (ADR 0012, the `deletePlayerBoards`
+ * trigger, through `erasePart`): what `PLAYER_DATA` lists of it -
+ * `boardMembers`, `limits`, `moderation`, `endlessRuns` - and its board
+ * entries and `dailyRuns` (`boardRefsOf`); scrubs the audit entries about
+ * it and lowers `stats/accounts` if `countAccount` counted it - once, as
  * `uncount` claims that first, so a retried or doubled erase lowers it no
- * further. Both ban documents go once a banned account's tombstone is
- * written - by the id of its Google provider (`tombstone`), and those its
- * bans noted - so the ban survives the deletion. Runs for banned accounts
- * too: a deletion must erase the player's data. Throws when a step fails,
- * after the others ran; returns the board documents it went through.
+ * further (with `uncounted`, the caller lowers it). Both ban documents go
+ * once a banned account's tombstone is written - by the id of its Google
+ * provider (`tombstone`), and those its bans noted - so the ban survives
+ * the deletion. Runs for banned accounts too: a deletion must erase the
+ * player's data. Throws when a step fails, after the others ran; returns
+ * the documents it deleted.
  */
 export async function deleteAccount(
-  db: Firestore,
-  uid: string,
-  { tombstone, realtime, uncounted }: DeletedAccount,
-  now: number
+  ctx: ErasureContext,
+  uid: string
 ): Promise<number> {
-  const [counted, moderation] = await Promise.all([
+  const { db, realtime, tombstone, uncounted, now } = ctx;
+  // What goes with `boardMembers` and `moderation` - read before them.
+  const [counted, moderation, boardRefs] = await Promise.all([
     uncount(db, uid),
     db.doc(`moderation/${uid}`).get(),
+    boardRefsOf(db, uid),
   ]);
   const ids = new Set(notedTombstones(moderation.data()));
   if (tombstone !== null) {
     ids.add(tombstone);
   }
-  const [boards] = await settleAll([
-    deletePlayerBoards(db, uid),
+  const [boards, listed] = await settleAll([
+    deleteRefs(db, boardRefs),
+    eraseListed(ctx, uid, 'account'),
     scrubAudit(db, uid),
     !counted
       ? undefined
@@ -126,7 +122,7 @@ export async function deleteAccount(
       ])
     ),
   ]);
-  return boards;
+  return boards + listed;
 }
 
 /**

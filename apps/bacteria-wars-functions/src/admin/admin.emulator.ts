@@ -7,9 +7,11 @@ import {
 import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { clearBanCache, isBanned } from '../limits';
+import { erasePart } from '../erasure/erase';
+import { erasureAt } from '../testing/erasure';
 import { useEmulatorDb } from '../testing/emulator';
 import { fakeRealtime } from '../testing/fake-realtime';
-import { countAccount, deleteAccount } from './accounts';
+import { countAccount } from './accounts';
 import { expireBans } from './bans';
 import { type AdminContext, runAdminCommand } from './command';
 import type { Realtime } from './realtime';
@@ -589,12 +591,7 @@ describe('statistics', () => {
     expect((await db.doc('boardMembers/eve').get()).get('accountCounted')).toBe(
       true
     );
-    await deleteAccount(
-      db,
-      'eve',
-      { tombstone: null, realtime: fakeRealtime() },
-      NOW
-    );
+    await erasePart('account', erasureAt(db, NOW), 'eve');
     expect((await db.doc('stats/accounts').get()).get('total')).toBe(2);
   });
 });
@@ -1100,75 +1097,6 @@ describe('ban tombstones', () => {
         await checkGoogleLink(db, fakeRealtime(), 'ada', async () => null, NOW)
       ).toBe(false);
       expect((await db.doc('boardMembers/ada').get()).exists).toBe(false);
-    });
-  });
-
-  describe('deleteAccount', () => {
-    it("keeps a banned Google account's ban as a tombstone, and erases the rest", async () => {
-      const realtime = fakeRealtime();
-      const until = NOW + 30 * DAY;
-      // Banned while a guest: the deletion writes the tombstone.
-      await command('c1', ban('ada', until), context(realtime));
-      await db.doc('stats/accounts').set({ total: 3 });
-      await db.doc('boardMembers/ada').set({ accountCounted: true });
-
-      await deleteAccount(
-        db,
-        'ada',
-        { tombstone: tombstoneOfUid('ada'), realtime },
-        NOW + DAY
-      );
-
-      expect((await tombstone('ada')).data()).toMatchObject({
-        until: Timestamp.fromMillis(until),
-        reason: 'cheating',
-      });
-      expect((await db.doc('bans/ada').get()).exists).toBe(false);
-      expect(realtime.peek('bans/ada')).toBeNull();
-      expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
-        target: { uid: 'ada' },
-        type: 'player.ban',
-        before: { scrubbed: true },
-        after: { scrubbed: true },
-      });
-      expect((await db.doc('stats/accounts').get()).get('total')).toBe(2);
-    });
-
-    it('finds the tombstone by the id the ban noted, once Google is unlinked', async () => {
-      const realtime = fakeRealtime();
-      await command(
-        'c1',
-        ban('ada', null),
-        context(realtime, ['owner'], ['ada'])
-      );
-      // Gone meanwhile, as if never written.
-      await db.doc(`banTombstones/${tombstoneOfUid('ada')}`).delete();
-      await deleteAccount(db, 'ada', { tombstone: null, realtime }, NOW + DAY);
-      expect((await tombstone('ada')).get('reason')).toBe('cheating');
-      expect((await db.doc('bans/ada').get()).exists).toBe(false);
-    });
-
-    it('lowers the count only for an account countAccount counted', async () => {
-      await db.doc('stats/accounts').set({ total: 3 });
-      await db.doc('boardMembers/ada').set({ entryIds: {} });
-      await deleteAccount(
-        db,
-        'ada',
-        { tombstone: null, realtime: fakeRealtime() },
-        NOW
-      );
-      expect((await db.doc('stats/accounts').get()).get('total')).toBe(3);
-    });
-
-    it('writes no tombstone for an account whose ban ended', async () => {
-      await command('c1', ban('ada', NOW + HOUR));
-      await deleteAccount(
-        db,
-        'ada',
-        { tombstone: tombstoneOfUid('ada'), realtime: fakeRealtime() },
-        NOW + DAY
-      );
-      expect((await tombstone('ada')).exists).toBe(false);
     });
   });
 });
