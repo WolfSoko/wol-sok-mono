@@ -19,23 +19,23 @@ in the table. Line numbers refer to the base commit and will drift.
 
 ## Ranking
 
-| #   | Issue | Candidate                                                     | Area                           | Size | Depends on |
-| --- | ----- | ------------------------------------------------------------- | ------------------------------ | ---- | ---------- |
-| 1   | #2777 | Match rules: one `NextMatch` union and `matchRules()`         | game                           | M    | none       |
-| 2   | #2778 | Split `GameStateService`: `MatchRecorder`, `OnlineSeatSync`   | game                           | L    | 1          |
-| 3   | #2779 | `SimulationProvider`: ruleset to simulation, with fallback    | engine, game                   | M    | none       |
-| 4   | #2780 | `MatchRun`: one runner that plays a match to its end          | engine, game                   | M    | 3 helps    |
-| 5   | #2781 | `replayVerdict()`: the engine judges a replay                 | engine, functions              | S    | 4 helps    |
-| 6   | #2782 | Cloud records: ban, notice and kind shapes shared once        | engine, game, admin, functions | L    | none       |
-| 7   | #2783 | Command documents: one envelope, result and runner            | engine, game, admin, functions | M    | 6 helps    |
-| 8   | #2784 | Player data map for account erasure                           | functions                      | M    | none       |
-| 9   | #2785 | Settings schema table in `GameSettingsService`                | game                           | M    | none       |
-| 10  | #2786 | `playerDocument<T>()` for data that follows the player        | game                           | S-M  | none       |
-| 11  | #2787 | `PeerTransport` port and shared online fakes                  | game                           | M    | none       |
-| 12  | #2788 | One fake Firebase SDK for the game's storage adapter specs    | game                           | M    | none       |
-| 13  | #2789 | Functions emulator harness and one Realtime fake              | functions                      | S    | none       |
-| 14  | #2790 | `GridSimulation`: composition over inheritance (`CellPasses`) | engine, game                   | L    | 3          |
-| 15  | #2791 | `BotSenses`: the bots' view out of `MatchEngine`              | engine                         | M    | none       |
+| #   | Issue                                                         | Candidate                                                     | Area                           | Size | Depends on |
+| --- | ------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------ | ---- | ---------- |
+| 1   | [#2777](https://github.com/WolfSoko/wol-sok-mono/issues/2777) | Match rules: one `NextMatch` union and `matchRules()`         | game                           | M    | none       |
+| 2   | [#2778](https://github.com/WolfSoko/wol-sok-mono/issues/2778) | Split `GameStateService`: `MatchRecorder`, `OnlineSeatSync`   | game                           | L    | 1          |
+| 3   | [#2779](https://github.com/WolfSoko/wol-sok-mono/issues/2779) | `SimulationProvider`: ruleset to simulation, with fallback    | engine, game                   | M    | none       |
+| 4   | [#2780](https://github.com/WolfSoko/wol-sok-mono/issues/2780) | `MatchRun`: one runner that plays a match to its end          | engine, game                   | M    | 3 helps    |
+| 5   | [#2781](https://github.com/WolfSoko/wol-sok-mono/issues/2781) | `replayVerdict()`: the engine judges a replay                 | engine, functions              | S    | 4 helps    |
+| 6   | [#2782](https://github.com/WolfSoko/wol-sok-mono/issues/2782) | Cloud records: ban, notice and kind shapes shared once        | engine, game, admin, functions | L    | none       |
+| 7   | [#2783](https://github.com/WolfSoko/wol-sok-mono/issues/2783) | Command documents: one envelope, result and runner            | engine, game, admin, functions | M    | 6 helps    |
+| 8   | [#2784](https://github.com/WolfSoko/wol-sok-mono/issues/2784) | Player data map for account erasure                           | functions                      | M    | none       |
+| 9   | [#2785](https://github.com/WolfSoko/wol-sok-mono/issues/2785) | Settings schema table in `GameSettingsService`                | game                           | M    | none       |
+| 10  | [#2786](https://github.com/WolfSoko/wol-sok-mono/issues/2786) | `playerDocument<T>()` for data that follows the player        | game                           | S-M  | none       |
+| 11  | [#2787](https://github.com/WolfSoko/wol-sok-mono/issues/2787) | `PeerTransport` port and shared online fakes                  | game                           | M    | none       |
+| 12  | [#2788](https://github.com/WolfSoko/wol-sok-mono/issues/2788) | One fake Firebase SDK for the game's storage adapter specs    | game                           | M    | none       |
+| 13  | [#2789](https://github.com/WolfSoko/wol-sok-mono/issues/2789) | Functions emulator harness and one Realtime fake              | functions                      | S    | none       |
+| 14  | [#2790](https://github.com/WolfSoko/wol-sok-mono/issues/2790) | `GridSimulation`: composition over inheritance (`CellPasses`) | engine, game                   | L    | 3          |
+| 15  | [#2791](https://github.com/WolfSoko/wol-sok-mono/issues/2791) | `BotSenses`: the bots' view out of `MatchEngine`              | engine                         | M    | none       |
 
 Smaller findings that need no issue of their own are at the end.
 
