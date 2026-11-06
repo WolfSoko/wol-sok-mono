@@ -1,10 +1,8 @@
 import { BehaviorSubject } from 'rxjs';
 import {
-  banHolds,
   holdingBan,
   holdingBans,
   parseBan,
-  parseMirroredBan,
   parseNotice,
   type PlayerBan,
 } from './game-moderation';
@@ -12,51 +10,16 @@ import {
 const at = (ms: number) => ({ toMillis: () => ms });
 
 describe('parseBan', () => {
-  it('reads a ban as the functions store it', () => {
-    expect(parseBan({ since: at(10), until: at(500), reason: 'spam' })).toEqual(
-      { since: 10, until: 500, reason: 'spam' }
+  it("reads the browser's Timestamps in whole ms", () => {
+    expect(
+      parseBan({ since: at(10.6), until: at(500.2), reason: 'spam' })
+    ).toEqual({ since: 10, until: 500, reason: 'spam' });
+  });
+
+  it('reads ms as well, as older documents hold them', () => {
+    expect(parseBan({ since: 10, until: 500, reason: 'spam' })?.until).toBe(
+      500
     );
-  });
-
-  it('reads a permanent ban, and an unknown reason as none', () => {
-    expect(parseBan({ since: at(10), until: null, reason: 'grief' })).toEqual({
-      since: 10,
-      until: null,
-      reason: null,
-    });
-  });
-
-  it('reads nothing it cannot take for an end', () => {
-    expect(parseBan(null)).toBeNull();
-    expect(parseBan({ reason: 'spam' })).toBeNull();
-    expect(parseBan({ until: 'soon' })).toBeNull();
-  });
-});
-
-describe('parseMirroredBan', () => {
-  it('reads the end in ms, 0 for good', () => {
-    expect(parseMirroredBan(900)).toEqual({
-      since: null,
-      until: 900,
-      reason: null,
-    });
-    expect(parseMirroredBan(0)?.until).toBeNull();
-  });
-
-  it('reads no value, or a damaged one, as no ban', () => {
-    expect(parseMirroredBan(null)).toBeNull();
-    expect(parseMirroredBan('0')).toBeNull();
-    expect(parseMirroredBan(-1)).toBeNull();
-  });
-});
-
-describe('banHolds', () => {
-  it('holds until its end, exclusive, as notBanned() does', () => {
-    const ban: PlayerBan = { since: 0, until: 100, reason: 'spam' };
-    expect(banHolds(ban, 99)).toBe(true);
-    expect(banHolds(ban, 100)).toBe(false);
-    expect(banHolds({ ...ban, until: null }, 1e15)).toBe(true);
-    expect(banHolds(null, 0)).toBe(false);
   });
 });
 

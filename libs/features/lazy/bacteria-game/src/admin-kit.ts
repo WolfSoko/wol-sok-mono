@@ -81,6 +81,18 @@ export type {
   PlayerTarget,
 } from '@wolsok/feat-shared-bacteria-engine';
 export {
+  ADMIN_STATS_FIGURES,
+  banHolds,
+  HIDE_REASONS,
+  parseBan,
+} from '@wolsok/feat-shared-bacteria-engine';
+export type {
+  AdminStats,
+  AdminStatsFigure,
+  CloudBan,
+  HideReason,
+} from '@wolsok/feat-shared-bacteria-engine';
+export {
   FEATURE_TOGGLE_KEYS,
   FEATURE_TOGGLES,
 } from '@wolsok/feat-shared-bacteria-engine';

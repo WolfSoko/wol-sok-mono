@@ -8,13 +8,13 @@ import {
   startWith,
   switchMap,
 } from 'rxjs';
+import { parseMirroredBan } from '@wolsok/feat-shared-bacteria-engine';
 import type { FirebaseConnection } from './firebase-connection';
 import { signedIn } from './firestore-values';
 import {
   type GameModeration,
   holdingBans,
   parseBan,
-  parseMirroredBan,
   parseNotice,
   type PlayerBan,
   type PlayerNotice,

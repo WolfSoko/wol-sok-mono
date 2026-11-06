@@ -11,34 +11,22 @@ import {
 } from 'rxjs';
 import {
   BAN_REASONS,
+  banHolds,
   type BanReason,
+  type CloudBan,
   isObject,
+  NOTICE_TYPES,
+  type NoticeType,
+  parseBan as parseCloudBan,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { millisOf } from './firestore-values';
 
 /**
  * A ban holding a player (ADR 0012), as they may read it: since when, until
- * when - null for good - and why. The owner who set it is never in it.
+ * when - null for good - and why, each null where not known (the mirror
+ * tells neither start nor reason). The owner who set it is never in it.
  */
-export interface PlayerBan {
-  /** When it began, in ms - null when not known (the mirror tells no start). */
-  since: number | null;
-  /** When it ends by itself, in ms - null for a permanent ban. */
-  until: number | null;
-  /** Why - null when not known (the mirror tells no reason). */
-  reason: BanReason | null;
-}
-
-/** What the owner's actions tell a player - the functions' `NoticeType`. */
-export const NOTICE_TYPES = [
-  'profile-reset',
-  'image-removed',
-  'board-hidden',
-  'banned',
-  'unbanned',
-] as const;
-
-export type NoticeType = (typeof NOTICE_TYPES)[number];
+export type PlayerBan = CloudBan;
 
 /** A notice in `players/{uid}/notices/{id}`, which the player reads and deletes. */
 export interface PlayerNotice {
@@ -73,39 +61,12 @@ export interface GameModeration {
   dismiss(id: string): Promise<void>;
 }
 
-/** A ban as `bans/{uid}` stores it - null for none, or none it can read. */
+/**
+ * A ban as `bans/{uid}` stores it, read by the engine's `parseBan` - null
+ * for none. Its times are browser Timestamps or ms.
+ */
 export function parseBan(value: unknown): PlayerBan | null {
-  if (!isObject(value)) {
-    return null;
-  }
-  const until = value['until'] === null ? null : timeOf(value['until']);
-  if (until === undefined) {
-    return null;
-  }
-  return {
-    since: timeOf(value['since']) ?? null,
-    until,
-    reason: banReasonOf(value['reason']),
-  };
-}
-
-/**
- * The ban the Realtime Database mirrors (`bans/{uid}`, its end in ms, `0`
- * for good) - null for none.
- */
-export function parseMirroredBan(value: unknown): PlayerBan | null {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
-    return null;
-  }
-  return { since: null, until: value === 0 ? null : value, reason: null };
-}
-
-/**
- * True while a ban holds at `now`: a permanent one always, any other
- * until its end - exclusive, as the rules' `notBanned()` takes the end.
- */
-export function banHolds(ban: PlayerBan | null, now: number): boolean {
-  return ban !== null && (ban.until === null || ban.until > now);
+  return parseCloudBan(value, (time) => millisOf(time, { numbers: true }));
 }
 
 /**

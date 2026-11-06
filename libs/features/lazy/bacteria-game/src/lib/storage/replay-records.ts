@@ -2,6 +2,8 @@ import {
   type EndReason,
   onlineReplayId,
   type Replay,
+  type ReplayKind,
+  type ReplayState,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type {
   ArrivalReason,
@@ -17,23 +19,6 @@ export interface ReplaySubmission {
   /** The ranked attempt the match was declared as (ADR 0012), if any. */
   attempt?: string;
 }
-
-/**
- * Where a stored replay stands - see ADR 0011's data model. `submitted` is
- * a local match, `waiting` and `agreed` online ones with one or both
- * reports.
- */
-export type ReplayState =
-  | 'submitted'
-  | 'waiting'
-  | 'agreed'
-  | 'disputed'
-  | 'verified'
-  | 'unverified'
-  | 'balance-mismatch';
-
-/** What kind of match a replay is - derived by the server, never claimed. */
-export type ReplayKind = 'online' | 'computer' | 'daily' | 'endless';
 
 /** A stored replay in the player's list, without its bytes. */
 export interface ReplayListing {

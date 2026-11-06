@@ -4,6 +4,7 @@ import {
   fromBase64,
   isObject,
   MAX_PACKED_BYTES,
+  type ReplayKind,
   replayToBytes,
   toBase64,
   utcDay,
@@ -16,7 +17,6 @@ import {
   onlineIdOf,
   ReplayCommandResult,
   ReplayCommandType,
-  ReplayKind,
   ReplayListing,
   ReplaySubmission,
 } from './replay-records';

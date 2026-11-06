@@ -3,6 +3,9 @@ import { catchError, EMPTY, firstValueFrom, map, Observable, of } from 'rxjs';
 import {
   type EndReason,
   MAX_PACKED_BYTES,
+  REPLAY_KINDS,
+  REPLAY_STATES,
+  type ReplayKind,
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type { FirebaseConnection } from './firebase-connection';
@@ -21,9 +24,7 @@ import {
   parseCommandResult,
   ReplayCommandResult,
   ReplayCommandType,
-  ReplayKind,
   ReplayListing,
-  ReplayState,
   ReplaySubmission,
 } from './replay-records';
 import { beforeRetry, errorCode } from './retry';
@@ -38,17 +39,6 @@ export const COMMAND_TTL_MS = 24 * 60 * 60 * 1000;
  * asked again before the watch gives up.
  */
 const REFUSED_TRIES = 8;
-
-const KINDS: readonly ReplayKind[] = ['online', 'computer', 'daily', 'endless'];
-const STATES: readonly ReplayState[] = [
-  'submitted',
-  'waiting',
-  'agreed',
-  'disputed',
-  'verified',
-  'unverified',
-  'balance-mismatch',
-];
 
 /**
  * The replays in Firestore (ADR 0011). The client never writes `replays`:
@@ -258,7 +248,7 @@ export function listingOf(
   const { kind, levelId, balanceVersion, replayVersion, ticks, endedBy } = data;
   const { winnerSeat, hint, state, score, seats } = data;
   if (
-    !KINDS.includes(kind) ||
+    !REPLAY_KINDS.includes(kind) ||
     typeof levelId !== 'string' ||
     typeof balanceVersion !== 'number' ||
     typeof replayVersion !== 'number' ||
@@ -267,7 +257,7 @@ export function listingOf(
     typeof endedBy !== 'string' ||
     (winnerSeat !== null && typeof winnerSeat !== 'number') ||
     typeof hint !== 'number' ||
-    !STATES.includes(state)
+    !REPLAY_STATES.includes(state)
   ) {
     return null;
   }
