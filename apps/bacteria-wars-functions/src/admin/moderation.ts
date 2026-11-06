@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import {
   BOARD_KINDS,
   defaultProfile,
+  type NoticeType,
 } from '@wolsok/feat-shared-bacteria-engine';
 import {
   type DocumentReference,
@@ -15,7 +16,7 @@ import {
   memberEntries,
   setHidden,
 } from '../boards/entries';
-import { noticeData, type NoticeType } from './records';
+import { noticeData } from './records';
 
 /**
  * The owner's moderation of profiles and boards (ADR 0012): `profile.*`

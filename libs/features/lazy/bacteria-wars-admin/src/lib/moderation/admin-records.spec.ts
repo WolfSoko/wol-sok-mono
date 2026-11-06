@@ -1,5 +1,4 @@
 import {
-  banHolds,
   millisOf,
   parseAudit,
   parseBan,
@@ -24,25 +23,26 @@ describe('admin records', () => {
     expect(millisOf(Number.NaN)).toBeNull();
   });
 
-  it('reads a ban, for good or until a moment', () => {
+  it('reads a ban with its uid and Timestamps in ms', () => {
     expect(
       parseBan('ada', { since: at(1), until: at(9), reason: 'spam' })
     ).toEqual({ uid: 'ada', since: 1, until: 9, reason: 'spam' });
-    expect(
-      parseBan('ada', { since: at(1), until: null, reason: 'cheating' })
-    ).toEqual({ uid: 'ada', since: 1, until: null, reason: 'cheating' });
-    expect(parseBan('ada', { since: at(1), reason: 'spam' })).toBeNull();
-    expect(
-      parseBan('ada', { since: at(1), until: null, reason: 'rude' })
-    ).toBeNull();
     expect(parseBan('ada', undefined)).toBeNull();
   });
 
-  it('tells whether a ban still holds', () => {
-    const ban = { uid: 'ada', since: 1, reason: 'spam' as const };
-    expect(banHolds({ ...ban, until: null }, 100)).toBe(true);
-    expect(banHolds({ ...ban, until: 101 }, 100)).toBe(true);
-    expect(banHolds({ ...ban, until: 100 }, 100)).toBe(false);
+  it('reads an end in ms as a ban for good, as the rules do', () => {
+    expect(
+      parseBan('ada', { since: at(1), until: 9, reason: 'spam' })?.until
+    ).toBeNull();
+  });
+
+  it('shows a ban changed by hand with its fallbacks', () => {
+    expect(parseBan('ada', { until: null, reason: 'rude' })).toEqual({
+      uid: 'ada',
+      since: 0,
+      until: null,
+      reason: 'other',
+    });
   });
 
   it('reads the entries a membership points to, and the kinds barred', () => {

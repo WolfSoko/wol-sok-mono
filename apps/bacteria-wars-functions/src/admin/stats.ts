@@ -1,4 +1,8 @@
-import { atHourOf, dailyBoardId } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  type AdminStats,
+  atHourOf,
+  dailyBoardId,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   FieldValue,
   type Firestore,
@@ -15,27 +19,6 @@ export const SNAPSHOT_TTL_MS = 90 * DAY_MS;
 /** A queue entry not seen for this long has left. */
 const QUEUE_SEEN_MS = 45_000;
 const HOUR_MS = 3_600_000;
-
-/** The overview's figures (ADR 0012): counters and `count()`s, no scans. */
-export interface AdminStats {
-  accounts: number;
-  active24h: number;
-  active7d: number;
-  online: number;
-  playing: number;
-  searching: number;
-  roomsOpen: number;
-  matchesRunning: number;
-  replays: number;
-  replaysToday: number;
-  submissionsWaiting: number;
-  bans: number;
-  uploadedPictures: number;
-  /** Entries per board: `xp`, `online`, `endless` and today's daily one. */
-  entries: Record<string, number>;
-  /** Today's counters (`counters/{day}`), verification minutes included. */
-  today: Record<string, number>;
-}
 
 const count = async (query: Query) => (await query.count().get()).data().count;
 

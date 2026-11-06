@@ -1,7 +1,8 @@
 import { createHmac } from 'node:crypto';
+import { banHolds } from '@wolsok/feat-shared-bacteria-engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
-import { banOf, banPlayer, holds, readBan } from './bans';
+import { banOf, banPlayer, readBan } from './bans';
 import type { Realtime } from './realtime';
 import { writeAudit } from './records';
 
@@ -68,8 +69,8 @@ async function banByTombstone(
   const tombstone = banOf((await db.doc(`banTombstones/${id}`).get()).data());
   if (
     tombstone === null ||
-    !holds(tombstone, now) ||
-    holds(await readBan(db, uid), now)
+    !banHolds(tombstone, now) ||
+    banHolds(await readBan(db, uid), now)
   ) {
     return false;
   }

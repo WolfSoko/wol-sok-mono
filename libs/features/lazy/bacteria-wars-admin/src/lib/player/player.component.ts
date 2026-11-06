@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   AvatarComponent,
+  banHolds,
   type BanReason,
   isUid,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
@@ -26,7 +27,6 @@ import {
 } from '../moderation/admin-actions.service';
 import {
   type AuditRecord,
-  banHolds,
   MODERATION_COUNTS,
   type ModerationCount,
 } from '../moderation/admin-records';

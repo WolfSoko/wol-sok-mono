@@ -1,3 +1,4 @@
+import { banHolds } from '@wolsok/feat-shared-bacteria-engine';
 import {
   FieldValue,
   type Firestore,
@@ -5,7 +6,7 @@ import {
 } from 'firebase-admin/firestore';
 import { deletePlayerBoards } from '../boards/delete-player';
 import { settleAll } from '../settle';
-import { holds, notedTombstones, readBan } from './bans';
+import { notedTombstones, readBan } from './bans';
 import type { Realtime } from './realtime';
 import { scrubAudit, tombstoneData } from './records';
 import { applyTombstone } from './tombstones';
@@ -154,7 +155,7 @@ async function keepAsTombstones(
   now: number
 ): Promise<void> {
   const ban = await readBan(db, uid);
-  if (ban === null || !holds(ban, now)) {
+  if (ban === null || !banHolds(ban, now)) {
     return;
   }
   const batch = db.batch();

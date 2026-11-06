@@ -78,6 +78,27 @@ export type {
   EntryTarget,
   PlayerTarget,
 } from './lib/state/admin-commands';
+export { ADMIN_STATS_FIGURES } from './lib/state/cloud-records/admin-stats';
+export type {
+  AdminStats,
+  AdminStatsFigure,
+} from './lib/state/cloud-records/admin-stats';
+export {
+  banHolds,
+  mirroredBan,
+  parseBan,
+  parseMirroredBan,
+} from './lib/state/cloud-records/ban';
+export type { CloudBan, ToMillis } from './lib/state/cloud-records/ban';
+export { HIDE_REASONS } from './lib/state/cloud-records/hide-reasons';
+export type { HideReason } from './lib/state/cloud-records/hide-reasons';
+export { NOTICE_TYPES } from './lib/state/cloud-records/notices';
+export type { NoticeType } from './lib/state/cloud-records/notices';
+export { REPLAY_KINDS, REPLAY_STATES } from './lib/state/cloud-records/replays';
+export type {
+  ReplayKind,
+  ReplayState,
+} from './lib/state/cloud-records/replays';
 export {
   arenaSize,
   BASE_ARENA,

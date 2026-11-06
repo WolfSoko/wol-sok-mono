@@ -4,6 +4,7 @@ import {
   type BoardRef,
   type EntryShow,
   type EntryStatus,
+  type HideReason,
   parseBoardId,
 } from '@wolsok/feat-shared-bacteria-engine';
 import {
@@ -16,7 +17,7 @@ import { randomBytes } from 'node:crypto';
 import { type BoardProfile, boardProfileOf, entryLabel } from './names';
 
 /** Why an entry is hidden; any reason hides it. */
-export type HiddenBy = Partial<Record<'ban' | 'admin' | 'optout', true>>;
+export type HiddenBy = Partial<Record<HideReason, true>>;
 
 /** What a ranking function decides about an entry. */
 export interface EntryBase {

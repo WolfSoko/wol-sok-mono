@@ -3,6 +3,7 @@ import {
   ONLINE_SIM_RESOLUTION,
   parseGeneratedId,
   type ReplayHeader,
+  type ReplayKind,
   simGridOf,
   type SimResolution,
   TICKS_PER_SEC,
@@ -10,7 +11,6 @@ import {
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import type { Verdict } from '../boards/verify';
-import type { ReplayKind } from './accept-plan';
 
 /**
  * The level statistics (ADR 0016 §4): counters per level, bot difficulty

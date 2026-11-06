@@ -1,4 +1,9 @@
 import {
+  banHolds,
+  type CloudBan,
+  parseBan,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
   FieldValue,
   type Firestore,
   Timestamp,
@@ -10,6 +15,7 @@ import {
   RETRY_FOR_MS,
   SUBMISSIONS_PER_HOUR,
 } from './config';
+import { timestampMillis } from './timestamps';
 
 /** Thrown for a player whose ban holds now. */
 export class Banned extends Error {
@@ -19,19 +25,12 @@ export class Banned extends Error {
   }
 }
 
-/** A stored ban: until when it holds, null for good. */
-interface BanDoc {
-  until?: Timestamp | null;
-}
-
-const banCache = new Map<
-  string,
-  { banned: boolean; until: number | null; at: number }
->();
+/** Each player's ban as read (null for none), and when it was read. */
+const banCache = new Map<string, { ban: CloudBan | null; at: number }>();
 
 /**
  * Throws {@link Banned} while `bans/{uid}` holds (ADR 0012). A ban ends by
- * itself at `until`, inclusive like the rules' `notBanned()`. The ban
+ * itself at `until` (exclusive, like the rules' `notBanned()`). The ban
  * document is kept a minute per instance.
  */
 export async function assertActive(
@@ -58,16 +57,11 @@ export async function isBanned(
   const readAt = Date.now();
   let cached = banCache.get(uid);
   if (cached === undefined || readAt - cached.at > BAN_CACHE_MS) {
-    const snapshot = await db.doc(`bans/${uid}`).get();
-    const until = (snapshot.data() as BanDoc | undefined)?.until;
-    cached = {
-      banned: snapshot.exists,
-      until: until instanceof Timestamp ? until.toMillis() : null,
-      at: readAt,
-    };
+    const data = (await db.doc(`bans/${uid}`).get()).data();
+    cached = { ban: parseBan(data, timestampMillis), at: readAt };
     banCache.set(uid, cached);
   }
-  return cached.banned && (cached.until === null || cached.until > now);
+  return banHolds(cached.ban, now);
 }
 
 /** Forgets the cached ban decisions - for specs. */
