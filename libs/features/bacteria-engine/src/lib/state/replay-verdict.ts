@@ -11,7 +11,8 @@ import {
  * What playing a replay again found, against what its header claims
  * (ADR 0011, 0012):
  * - `verified`: it played to exactly the claimed ticks, checksum and outcome;
- * - `unverified`: it played, but to another end - "could not be confirmed",
+ * - `unverified`: it played, but to another end, or to none, or the header
+ *   claims none - "could not be confirmed",
  *   never "cheated" (another browser may round floats differently on `cpu`);
  * - `balance-mismatch`: recorded on another balance table, not played;
  * - `unplayable`: a replay the engine cannot play out as it was played for

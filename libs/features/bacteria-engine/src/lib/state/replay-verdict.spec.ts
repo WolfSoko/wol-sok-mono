@@ -1,4 +1,5 @@
 import { recordedReplay } from '../../testing/recorded-replay';
+import * as replayModule from './replay';
 import { type Replay, type ReplayHeader } from './replay';
 import { replayVerdict } from './replay-verdict';
 
@@ -14,7 +15,8 @@ describe('replayVerdict', () => {
   const { header } = ended;
 
   it('verifies a replay that plays to its claimed end', () => {
-    expect(header.outcome?.endedBy).toBe('annihilation');
+    // The cases below each change one field of exactly this end.
+    expect(header.outcome).toEqual({ endedBy: 'annihilation', winnerSeat: 1 });
 
     expect(replayVerdict(ended)).toMatchObject({
       state: 'verified',
@@ -42,11 +44,15 @@ describe('replayVerdict', () => {
   });
 
   it('never plays a replay of another balance table', () => {
+    const play = jest.spyOn(replayModule, 'playReplay');
+
     expect(
       replayVerdict(
         tampered(ended, { balanceVersion: header.balanceVersion - 1 })
       )
     ).toEqual({ state: 'balance-mismatch' });
+    expect(play).not.toHaveBeenCalled();
+    play.mockRestore();
   });
 
   it.each<[string, Partial<ReplayHeader>]>([

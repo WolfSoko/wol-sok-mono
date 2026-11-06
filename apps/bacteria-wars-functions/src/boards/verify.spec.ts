@@ -53,11 +53,11 @@ describe('verifyReplay', () => {
     expect(verdict.summary?.timeline.slice(0, 4)).toEqual([0, 1_000, 3, 997]);
   });
 
-  it.each<[ReplayVerdict, string]>([
-    [{ state: 'unverified', result: played() }, 'unverified'],
-    [{ state: 'unplayable' }, 'unverified'],
-    [{ state: 'balance-mismatch' }, 'balance-mismatch'],
-  ])('keeps the engine verdict %o as %s', (engine, state) => {
+  it.each<[string, ReplayVerdict, string]>([
+    ['unverified', { state: 'unverified', result: played() }, 'unverified'],
+    ['unplayable', { state: 'unplayable' }, 'unverified'],
+    ['balance-mismatch', { state: 'balance-mismatch' }, 'balance-mismatch'],
+  ])('stores the engine verdict %s as %s', (_, engine, state) => {
     jest.mocked(replayVerdict).mockReturnValue(engine);
     let t = 0;
     expect(verifyReplay(dailyReplay(), () => (t += 3))).toEqual({
