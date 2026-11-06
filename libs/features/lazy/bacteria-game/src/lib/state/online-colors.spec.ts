@@ -1,19 +1,12 @@
 import {
   getColonyColor,
   onlineColors,
-  type Ruleset,
   toPlayerColor,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Subject } from 'rxjs';
-import { Lockstep } from '../net/lockstep';
-import { parseNetMessage, type OnlineStart } from '../net/net-message';
-import {
-  OnlineEvent,
-  OnlineLobby,
-  OnlineMatchService,
-} from '../net/online-match.service';
+import { FakeOnlineMatch } from '../../testing/fake-online-match';
+import { parseNetMessage } from '../net/net-message';
+import { OnlineMatchService } from '../net/online-match.service';
 import { GameStateService } from './game-state.service';
 import { GameStateStore } from './game.states';
 import { PlayerStore } from './player.store';
@@ -71,51 +64,14 @@ describe("the guest's colours on the wire", () => {
 });
 
 describe('GameStateService online colours', () => {
-  /** The online service, without a network: the test plays the other device. */
-  class FakeOnline {
-    public readonly events = new Subject<OnlineEvent>();
-    public readonly events$ = this.events.asObservable();
-    public readonly lobby = signal<OnlineLobby>({
-      phase: 'idle',
-      role: null,
-      code: null,
-      notice: null,
-      auto: false,
-    });
-    public readonly share = jest.fn();
-    public readonly offerColors = jest.fn();
-    public readonly leave = jest.fn();
-    public pending: { start: OnlineStart; lockstep: Lockstep } | null = null;
-    public readonly startMatch = jest.fn(
-      () => new Lockstep(0, () => undefined)
-    );
-    public readonly matchRef = () => ({ roomCode: 'K7QPXM', n: 1 });
-    public readonly agreedRuleset = (): Ruleset => 'cpu';
-    public takeStart() {
-      const pending = this.pending;
-      this.pending = null;
-      return pending;
-    }
-    public connect(seat: 0 | 1): void {
-      this.lobby.set({
-        phase: 'connected',
-        role: seat === 0 ? 'host' : 'guest',
-        code: null,
-        notice: null,
-        auto: false,
-      });
-      this.events.next({ type: 'connected', seat, auto: false });
-    }
-  }
-
   let service: GameStateService;
   let store: GameStateStore;
   let playerStore: PlayerStore;
-  let online: FakeOnline;
+  let online: FakeOnlineMatch;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
-    online = new FakeOnline();
+    online = new FakeOnlineMatch();
     TestBed.configureTestingModule({
       providers: [{ provide: OnlineMatchService, useValue: online }],
     });

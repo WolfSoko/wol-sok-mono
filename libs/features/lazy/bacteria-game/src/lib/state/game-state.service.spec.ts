@@ -24,7 +24,6 @@ import {
   REPLAY_VERSION,
   replayLink,
   replayOf,
-  type Ruleset,
   TICK_MS,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { ProgressService } from '../progress.service';
@@ -33,15 +32,10 @@ import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
-import { signal } from '@angular/core';
-import { Subject } from 'rxjs';
 import { Lockstep, INPUT_DELAY_TICKS } from '../net/lockstep';
 import type { OnlineStart } from '../net/net-message';
-import {
-  OnlineEvent,
-  OnlineLobby,
-  OnlineMatchService,
-} from '../net/online-match.service';
+import { OnlineMatchService } from '../net/online-match.service';
+import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { FakeGameReplays } from '../../testing/fake-game-replays';
 import { GameReplays } from '../storage/game-replays';
 import { onlineIdOf } from '../storage/replay-records';
@@ -762,52 +756,15 @@ describe('GameStateService', () => {
 });
 
 describe('GameStateService online', () => {
-  /** The online service, without a network: the test plays the other device. */
-  class FakeOnline {
-    public readonly events = new Subject<OnlineEvent>();
-    public readonly events$ = this.events.asObservable();
-    public readonly lobby = signal<OnlineLobby>({
-      phase: 'idle',
-      role: null,
-      code: null,
-      notice: null,
-    });
-    public readonly sent: unknown[] = [];
-    public readonly share = jest.fn();
-    public readonly offerColors = jest.fn();
-    public readonly leave = jest.fn();
-    public pending: { start: OnlineStart; lockstep: Lockstep } | null = null;
-    public startMatch = jest.fn(
-      (start: OnlineStart) =>
-        new Lockstep(0, (message) => this.sent.push({ ...start, ...message }))
-    );
-    public matchRef = jest.fn(() => ({ roomCode: 'K7QPXM', n: 1 }));
-    public agreedRuleset = jest.fn((): Ruleset => 'cpu');
-    public takeStart() {
-      const pending = this.pending;
-      this.pending = null;
-      return pending;
-    }
-    public connect(seat: 0 | 1): void {
-      this.lobby.set({
-        phase: 'connected',
-        role: seat === 0 ? 'host' : 'guest',
-        code: null,
-        notice: null,
-      });
-      this.events.next({ type: 'connected', seat });
-    }
-  }
-
   let service: GameStateService;
   let store: GameStateStore;
   let playerStore: PlayerStore;
-  let online: FakeOnline;
+  let online: FakeOnlineMatch;
   let replays: FakeGameReplays;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
-    online = new FakeOnline();
+    online = new FakeOnlineMatch();
     replays = new FakeGameReplays();
     TestBed.configureTestingModule({
       providers: [
