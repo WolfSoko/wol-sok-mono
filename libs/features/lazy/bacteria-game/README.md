@@ -339,7 +339,8 @@ Two players on two devices, through the game's Firebase project
   players; should they differ, the match ends as out of step. A device that
   leaves or loses the connection forfeits the match under way.
 - **Connection** - a WebRTC data channel, ordered and reliable
-  ([`PeerLink`](./src/lib/net/peer-link.ts)). The host writes its offer
+  ([`WebRtcTransport`](./src/lib/net/peer-link.ts), behind the
+  [`PeerTransport`](./src/lib/net/peer-transport.ts) port). The host writes its offer
   into `rooms/{code}` in Firestore, the guest its answer
   ([`FirestoreGameRooms`](./src/lib/storage/firestore-game-rooms.ts)); the
   rules let anyone signed in read a room by its code, never list them, and

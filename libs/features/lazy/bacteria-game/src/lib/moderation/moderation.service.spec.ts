@@ -1,14 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { FakeGameModeration } from '../../testing/fake-game-moderation';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { ModerationService } from './moderation.service';
 
 describe('ModerationService', () => {
   function configure(moderation: FakeGameModeration | null): ModerationService {
     TestBed.configureTestingModule({
-      providers: [
-        { provide: GameCloud, useValue: { moderation: () => moderation } },
-      ],
+      providers: [provideFakeGameCloud({ moderation })],
     });
     return TestBed.inject(ModerationService);
   }

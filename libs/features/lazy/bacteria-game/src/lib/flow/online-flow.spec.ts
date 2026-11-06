@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { MatchmakerService } from '../net/matchmaker.service';
 import type { OnlineStart } from '../net/net-message';
 import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
+import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { SocialService } from '../social/social.service';
 import { STAGE_PROVIDERS } from '../stage-providers';
 import { GameStateStore } from '../state/game.states';
@@ -16,23 +17,21 @@ describe('OnlineFlow', () => {
   let online: OnlineFlow;
   let flow: PlayFlow;
   let store: GameStateStore;
+  let match: FakeOnlineMatch;
 
   beforeEach(() => {
     localStorage.clear();
-    TestBed.configureTestingModule({ providers: STAGE_PROVIDERS });
+    match = new FakeOnlineMatch();
+    TestBed.configureTestingModule({
+      providers: [
+        STAGE_PROVIDERS,
+        { provide: OnlineMatchService, useValue: match },
+      ],
+    });
     online = TestBed.inject(OnlineFlow);
     flow = TestBed.inject(PlayFlow);
     store = TestBed.inject(GameStateStore);
   });
-
-  /** The online match's events, to send them from the spec. */
-  function onlineEvents(): Subject<OnlineEvent> {
-    return (
-      TestBed.inject(OnlineMatchService) as unknown as {
-        events: Subject<OnlineEvent>;
-      }
-    ).events;
-  }
 
   describe('a match the matchmaking set up', () => {
     it('is played on the level the matchmaking picked', () => {
@@ -54,7 +53,7 @@ describe('OnlineFlow', () => {
 
     it('waits for the arena to be clear before the host starts it', () => {
       const levelBefore = store.snapshot().levelId;
-      const events = onlineEvents();
+      const events = match.events;
       const cleared = (flow as unknown as { cleared: Subject<void> }).cleared;
       const start = jest
         .spyOn(flow, 'startGame')
@@ -81,7 +80,7 @@ describe('OnlineFlow', () => {
 
   describe('the host’s start', () => {
     it('waits for the arena to be clear, then plays it once', () => {
-      const events = onlineEvents();
+      const events = match.events;
       const cleared = (flow as unknown as { cleared: Subject<void> }).cleared;
       const start = jest
         .spyOn(flow, 'startGame')

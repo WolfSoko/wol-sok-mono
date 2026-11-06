@@ -1,4 +1,3 @@
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import {
@@ -6,39 +5,18 @@ import {
   MATCH_LEVELS,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { FakeGameAccount } from '../../testing/fake-game-account';
+import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { FakeGameSocial } from '../../testing/fake-game-social';
 import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { GameAccount } from '../storage/game-account';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { claimable, MatchmakerService } from './matchmaker.service';
-import {
-  IDLE_LOBBY,
-  OnlineLobby,
-  OnlineMatchService,
-} from './online-match.service';
-
-/** The connection, as far as the matchmaking uses it. */
-class FakeOnline {
-  public readonly available = true;
-  public readonly peer = signal<string | null>(null);
-  public readonly lobby = signal<OnlineLobby>(IDLE_LOBBY);
-  public readonly join = jest.fn(async () =>
-    this.lobby.set({ ...IDLE_LOBBY, phase: 'connecting', role: 'guest' })
-  );
-  public readonly leave = jest.fn(() => this.lobby.set(IDLE_LOBBY));
-  public readonly host = jest.fn(
-    (options: { onCode?: (code: string) => void }) => {
-      this.lobby.set({ ...IDLE_LOBBY, phase: 'waiting', code: 'ROOM22' });
-      options.onCode?.('ROOM22');
-      return new Promise<void>(() => undefined);
-    }
-  );
-}
+import { OnlineMatchService } from './online-match.service';
 
 describe('MatchmakerService', () => {
   let social: FakeGameSocial;
-  let online: FakeOnline;
+  let online: FakeOnlineMatch;
   let toggles: BehaviorSubject<Partial<FeatureToggles>>;
   let moderation: FakeGameModeration;
 
@@ -47,15 +25,7 @@ describe('MatchmakerService', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: new FakeGameAccount(uid) },
-        {
-          provide: GameCloud,
-          useValue: {
-            social: () => social,
-            presence: () => null,
-            rooms: () => null,
-            moderation: () => moderation,
-          },
-        },
+        provideFakeGameCloud({ social, moderation }),
         { provide: OnlineMatchService, useValue: online },
         provideGameToggles(toggles),
       ],
@@ -66,7 +36,7 @@ describe('MatchmakerService', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     social = new FakeGameSocial();
-    online = new FakeOnline();
+    online = new FakeOnlineMatch({ code: 'ROOM22' });
     toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
     moderation = new FakeGameModeration();
   });

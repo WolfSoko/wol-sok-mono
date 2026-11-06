@@ -12,7 +12,7 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from '../storage/game-account';
 import type { BoardTop, PagedEntry } from '../storage/game-boards';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { BoardsService, idOfBoard, ownPlace } from './boards.service';
 
 function anEntry(
@@ -50,16 +50,11 @@ describe('BoardsService', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: new FakeGameAccount('ada') },
-        {
-          provide: GameCloud,
-          useValue: {
-            boards: () => (withBoards ? boards : null),
-            social: () => (withBoards ? social : null),
-            presence: () => new FakeGamePresence(),
-            rooms: () => null,
-            moderation: () => null,
-          },
-        },
+        provideFakeGameCloud({
+          boards: withBoards ? boards : null,
+          social: withBoards ? social : null,
+          presence: new FakeGamePresence(),
+        }),
       ],
     });
   }

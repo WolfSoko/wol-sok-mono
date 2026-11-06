@@ -1,19 +1,15 @@
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, take, throwError, toArray } from 'rxjs';
+import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import {
   FakeGamePresence,
   FakeGameSocial,
 } from '../../testing/fake-game-social';
-import {
-  IDLE_LOBBY,
-  OnlineLobby,
-  OnlineMatchService,
-} from '../net/online-match.service';
+import { OnlineMatchService } from '../net/online-match.service';
 import { GameAccount } from '../storage/game-account';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { GameState, GameStateStore } from '../state/game.states';
 import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import { FriendView, SocialService } from './social.service';
@@ -37,15 +33,7 @@ describe('SocialService', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: account },
-        {
-          provide: GameCloud,
-          useValue: {
-            social: () => social,
-            presence: () => presence,
-            rooms: () => null,
-            moderation: () => moderation,
-          },
-        },
+        provideFakeGameCloud({ social, presence, moderation }),
       ],
     });
   });
@@ -230,22 +218,8 @@ describe('SocialService', () => {
   });
 
   describe('challenging a friend', () => {
-    const lobby = signal<OnlineLobby>(IDLE_LOBBY);
     /** The rooms of online matches, open at once under one code. */
-    const online = {
-      lobby: lobby.asReadonly(),
-      peer: signal<string | null>(null).asReadonly(),
-      host: jest.fn(async (options: { onCode?: (code: string) => void }) => {
-        lobby.set({
-          ...IDLE_LOBBY,
-          phase: 'waiting',
-          role: 'host',
-          code: 'K7QPXM',
-        });
-        options.onCode?.('K7QPXM');
-      }),
-      leave: jest.fn(() => lobby.set(IDLE_LOBBY)),
-    };
+    let online: FakeOnlineMatch;
     const bob: FriendView = {
       uid: 'bob',
       card: defaultProfile('bob'),
@@ -254,9 +228,7 @@ describe('SocialService', () => {
     };
 
     beforeEach(() => {
-      lobby.set(IDLE_LOBBY);
-      online.host.mockClear();
-      online.leave.mockClear();
+      online = new FakeOnlineMatch();
       TestBed.overrideProvider(OnlineMatchService, { useValue: online });
     });
 
@@ -293,7 +265,7 @@ describe('SocialService', () => {
       const players = service();
       players.challengeFriend(bob);
       await Promise.resolve();
-      lobby.update((open) => ({ ...open, phase: 'connected' }));
+      online.lobby.update((open) => ({ ...open, phase: 'connected' }));
       TestBed.tick();
 
       players.cancelChallenge();

@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, InjectionToken, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, Observable, Subject } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
@@ -16,7 +16,8 @@ import {
   parseNetMessage,
   agreedRuleset,
 } from './net-message';
-import { PeerLink } from './peer-link';
+import { WebRtcTransport } from './peer-link';
+import type { PeerConnection, PeerTransport } from './peer-transport';
 import { PlayerService } from '../state/player.service';
 import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { errorCode } from '../storage/retry';
@@ -66,6 +67,16 @@ export type OnlineEvent =
   /** The connection is gone. */
   | { type: 'ended'; reason: OnlineEnd };
 
+/**
+ * The transport online matches connect over: WebRTC unless a spec provides
+ * `pairedTransport()`. Declared here, beside the service that injects it,
+ * so the bundle needs no import of Angular's of its own for it.
+ */
+export const PEER_TRANSPORT = new InjectionToken<PeerTransport>(
+  'PeerTransport',
+  { providedIn: 'root', factory: () => new WebRtcTransport() }
+);
+
 export const IDLE_LOBBY: OnlineLobby = {
   phase: 'idle',
   role: null,
@@ -85,6 +96,8 @@ export const IDLE_LOBBY: OnlineLobby = {
 @Injectable({ providedIn: 'root' })
 export class OnlineMatchService {
   private readonly cloud = inject(GameCloud);
+  /** The direct line to the other device - WebRTC in the game. */
+  private readonly wire = inject(PEER_TRANSPORT);
   private readonly analytics = injectGameAnalytics();
   /** Who plays at this device - their uid goes to the other one. */
   private readonly playerId = toSignal(
@@ -102,7 +115,7 @@ export class OnlineMatchService {
   private peerOffers: readonly Ruleset[] = ['cpu'];
   private readonly lobbyState = signal<OnlineLobby>(IDLE_LOBBY);
   private readonly events = new Subject<OnlineEvent>();
-  private link: PeerLink | null = null;
+  private link: PeerConnection | null = null;
   private room: OpenRoom | null = null;
   /** The lockstep of the match under way, null before the first one. */
   private lockstep: Lockstep | null = null;
@@ -126,7 +139,7 @@ export class OnlineMatchService {
 
   /** True where online matches can be played: with the cloud and WebRTC. */
   public get available(): boolean {
-    return PeerLink.supported() && this.cloud.rooms() !== null;
+    return this.wire.supported() && this.cloud.rooms() !== null;
   }
 
   /**
@@ -147,7 +160,7 @@ export class OnlineMatchService {
       auto: options.auto ?? false,
     });
     try {
-      const { link, offer } = await PeerLink.offer();
+      const { link, offer } = await this.wire.offer();
       if (!this.adopt(link, attempt)) {
         return;
       }
@@ -209,7 +222,7 @@ export class OnlineMatchService {
         this.endWith(attempt, { key: 'online.notices.noRoom' });
         return;
       }
-      const { link, answer } = await PeerLink.answer(room.offer);
+      const { link, answer } = await this.wire.answer(room.offer);
       if (!this.adopt(link, attempt)) {
         return;
       }
@@ -322,7 +335,7 @@ export class OnlineMatchService {
   }
 
   /** Takes the link of an attempt - false when the attempt is over. */
-  private adopt(link: PeerLink, attempt: number): boolean {
+  private adopt(link: PeerConnection, attempt: number): boolean {
     if (attempt !== this.attempt) {
       link.close();
       return false;
@@ -431,7 +444,7 @@ export class OnlineMatchService {
     });
   }
 
-  private onClosed(link: PeerLink): void {
+  private onClosed(link: PeerConnection): void {
     if (link === this.link) {
       this.endWith(this.attempt, { key: 'online.notices.lost' }, 'lost');
     }

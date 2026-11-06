@@ -14,7 +14,7 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerService } from '../state/player.service';
 import { GameAccount } from '../storage/game-account';
-import { GameCloud } from '../storage/game-cloud';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { RankedService } from './ranked.service';
 
 /** The run a ranked start came to - it must have one. */
@@ -55,13 +55,10 @@ describe('RankedService', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: new FakeGameAccount('ada') },
-        {
-          provide: GameCloud,
-          useValue: {
-            ranked: () => (options.cloud === false ? null : ranked),
-            moderation: () => moderation,
-          },
-        },
+        provideFakeGameCloud({
+          ranked: options.cloud === false ? null : ranked,
+          moderation,
+        }),
         { provide: GpuSelfTestService, useValue: { result: verdict } },
         provideGameToggles(options.toggles ?? {}),
       ],
