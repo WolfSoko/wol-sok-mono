@@ -1,20 +1,18 @@
-import type { StoredSettings } from '../settings.service';
+import type { StoredDeviceSettings } from '../settings/setting-table';
 import { settingChange } from './setting-change';
 
 describe('settingChange', () => {
-  const before: StoredSettings = {
+  const before: StoredDeviceSettings = {
     sound: true,
     language: 'de',
     look: 'slime',
     vaporizeMs: 600,
   };
-  const settings: StoredSettings = {
+  const settings: StoredDeviceSettings = {
     sound: false,
     language: undefined,
     look: 'slime',
-    colors: ['orange', 'blue'],
     vaporizeMs: 900,
-    levelId: 'petri-1',
     recordingHintShown: true,
   };
 
@@ -33,7 +31,7 @@ describe('settingChange', () => {
     expect(settingChange('look', before, settings)).toBeNull();
   });
 
-  it.each(['levelId', 'colors', 'recordingHintShown', 'musicVolume'] as const)(
+  it.each(['recordingHintShown', 'musicVolume'] as const)(
     'leaves %s out',
     (setting) => {
       expect(settingChange(setting, before, settings)).toBeNull();

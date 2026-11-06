@@ -24,7 +24,13 @@ storage until then. Settings stay with the device either way.
     `FirestoreGameStorage` with a project, `LocalGameStorage` without.
   - `DeviceStorage` is this device's storage, always `LocalGameStorage`. The
     settings (`GameSettingsService`) live there, so sound, controls and
-    graphics stay per device whoever signs in.
+    graphics stay per device whoever signs in. Each device setting is one
+    entry of `SETTINGS` (`settings/setting-table.ts`: default, `parse` of
+    the stored value, `normalize`, `reported`), read and changed through
+    `value(key)`, `set(key, v)` and `preview(key, v)`; `DeviceSettings`
+    restores, keeps and stores all of them alike, `StoredMatchSetup` the
+    match setup beside them. A new setting is a new entry (and a sample
+    in `device-settings.spec.ts`), no new signal or setter.
   - `GameAccount` says who plays (`FirebaseGameAccount`, or `DeviceAccount`
     without a project) and signs in and out. Its `owner` (the admin claim,
     a verified email and a Google sign-in in the current token) only shows
@@ -432,8 +438,8 @@ play each other.
   set from the stage (`reportUserProperties`).
 - Screens: the stage's panel gives the `screen_view`s (`trackScreenViews`),
   `match` while one runs.
-- Settings: `GameSettingsService.changed` reports the keys in
-  `REPORTED_SETTINGS` (`analytics/setting-change.ts`), not the match setup,
+- Settings: `GameSettingsService.set` reports the settings `SETTINGS`
+  marks `reported` (`analytics/setting-change.ts`), not the match setup,
   the volumes or what the game remembers for itself.
 - The consent question (`StatsBannerComponent`, `StatsConsent`) comes before
   the guest and install banners and only once `GameAds.consentSettled`.

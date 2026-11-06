@@ -237,7 +237,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Turns the sound on or off - with a tick to show it is on. */
   protected setSound(on: boolean): void {
-    this.settings.setSound(on);
+    this.settings.set('sound', on);
     if (on) {
       this.sound.tick();
     }
@@ -245,7 +245,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Turns the sound effects on or off - with a tick to show they are on. */
   protected setEffects(on: boolean): void {
-    this.settings.setEffects(on);
+    this.settings.set('effects', on);
     if (on) {
       this.sound.tick();
     }
@@ -253,7 +253,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Turns the vibration on or off - with a buzz to show it is on. */
   protected setVibration(on: boolean): void {
-    this.settings.setVibration(on);
+    this.settings.set('vibration', on);
     if (on) {
       this.haptics.tap();
     } else {

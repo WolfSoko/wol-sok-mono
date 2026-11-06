@@ -144,16 +144,16 @@ describe('EvolutionService', () => {
   it('buys a skin and wears it once owned, the slime otherwise', () => {
     earn(2000);
     const settings = TestBed.inject(GameSettingsService);
-    settings.setLook('chrome');
+    settings.set('look', 'chrome');
     const evolution = create();
 
     // Not owned: the setting stays, the dish wears the slime.
-    expect(settings.look()).toBe('chrome');
-    expect(evolution.wornSkin(settings.look())).toBe('slime');
+    expect(settings.value('look')).toBe('chrome');
+    expect(evolution.wornSkin(settings.value('look'))).toBe('slime');
     expect(evolution.skinDna()).toBe(40);
     expect(evolution.buySkin('chrome')).toBe(true);
     expect(evolution.buySkin('chrome')).toBe(false);
-    expect(evolution.wornSkin(settings.look())).toBe('chrome');
+    expect(evolution.wornSkin(settings.value('look'))).toBe('chrome');
     expect(evolution.dna()).toBe(10);
     // 10 DNA still buys the cheaper skins.
     expect(evolution.skinDna()).toBe(10);

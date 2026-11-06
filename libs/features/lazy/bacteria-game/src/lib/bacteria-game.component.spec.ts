@@ -349,7 +349,7 @@ describe('BacteriaGameComponent', () => {
         component['flow'].resetGame();
         expect(component['flow'].resetting()).toBe(true);
 
-        jest.advanceTimersByTime(settings.vaporizeMs() + 5_000 - 1);
+        jest.advanceTimersByTime(settings.value('vaporizeMs') + 5_000 - 1);
         expect(cancelled).toBe(false);
         jest.advanceTimersByTime(2);
 
@@ -585,7 +585,7 @@ describe('BacteriaGameComponent', () => {
       const settings = TestBed.inject(GameSettingsService);
       const own = component['arenaStage'].theme();
 
-      settings.setArena(LEVELS[2].id);
+      settings.set('arena', LEVELS[2].id);
       expect(component['arenaStage'].theme()).toEqual(own);
 
       localStorage.setItem(
@@ -593,7 +593,7 @@ describe('BacteriaGameComponent', () => {
         JSON.stringify({ medals: { [LEVELS[2].id]: { easy: 'gold' } } })
       );
       create();
-      TestBed.inject(GameSettingsService).setArena(LEVELS[2].id);
+      TestBed.inject(GameSettingsService).set('arena', LEVELS[2].id);
       expect(component['arenaStage'].theme()).toEqual(arenaTheme(LEVELS[2].id));
     });
   });

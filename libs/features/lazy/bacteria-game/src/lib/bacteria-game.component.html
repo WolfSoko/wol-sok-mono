@@ -132,7 +132,7 @@
             <feat-lazy-bac-game-main-menu
               class="screen"
               [campaign]="campaign.summary()"
-              [sound]="settings.sound()"
+              [sound]="settings.value('sound')"
               (newGame)="flow.openNewGame()"
               (continueCampaign)="flow.continueCampaign()"
               [missionsDone]="progress.missionsDone()"
@@ -175,7 +175,7 @@
               [onlineAvailable]="onlineFlow.available"
               [rankedOffers]="flow.rankedOffers()"
               [declaring]="flow.declaring()"
-              (rankedChange)="settings.setRanked($event)"
+              (rankedChange)="settings.set('ranked', $event)"
               (hostOnline)="onlineFlow.host()"
               (joinOnline)="onlineFlow.join($event)"
               (leaveOnline)="onlineFlow.leave()"
@@ -297,7 +297,7 @@
           (pointerup)="stageInput.pointerUp($event)"
           (pointercancel)="stageInput.pointerUp($event)"
         ></feat-lazy-bac-game-arena-view>
-        @if (settings.ambience() && !arenaStage.painterAmbience()) {
+        @if (settings.value("ambience") && !arenaStage.painterAmbience()) {
           <!-- Bubbles and mist over the arena; the pointer goes through it. -->
           <canvas
             #ambienceElement
@@ -322,8 +322,8 @@
       [neutral]="hud.neutralCount()"
       [neutralCss]="hud.neutralCss"
       [fps]="hud.hudFps()"
-      [perf]="settings.showFps() ? stageFrame.hudPerf() : null"
-      [sound]="settings.sound()"
+      [perf]="settings.value('showFps') ? stageFrame.hudPerf() : null"
+      [sound]="settings.value('sound')"
       [showPause]="hud.playing() && hud.canPause()"
       [showGiveUp]="hud.running() && !hud.canPause()"
       [giveUpArmed]="flow.giveUpArmed()"

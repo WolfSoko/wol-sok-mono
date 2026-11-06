@@ -97,7 +97,9 @@ describe('ReplayNoteComponent', () => {
     fixture.detectChanges();
     expect(page.textContent).toContain('Replay saved in My matches');
     expect(page.textContent).toContain(HINT);
-    expect(TestBed.inject(GameSettingsService).recordingHintShown()).toBe(true);
+    expect(
+      TestBed.inject(GameSettingsService).value('recordingHintShown')
+    ).toBe(true);
 
     const second = await replays.submit({ replay, hint: 30 });
     recording().set({ replay, hint: 30, id: second });
@@ -136,9 +138,9 @@ describe('ReplayNoteComponent', () => {
 
     expect(page.textContent).toContain('Replay saved in My matches');
     expect(page.textContent).not.toContain(HINT);
-    expect(TestBed.inject(GameSettingsService).recordingHintShown()).toBe(
-      false
-    );
+    expect(
+      TestBed.inject(GameSettingsService).value('recordingHintShown')
+    ).toBe(false);
   });
 
   it('gives no hint for a match kept on this device', async () => {
@@ -154,7 +156,7 @@ describe('ReplayNoteComponent', () => {
   });
 
   it('says a local match was not saved with "Save my matches" off', () => {
-    TestBed.inject(GameSettingsService).saveMatches.set(false);
+    TestBed.inject(GameSettingsService).set('saveMatches', false);
     recording().set({ replay: recordedReplay(), hint: 30, id: null });
     fixture.detectChanges();
 
@@ -174,7 +176,7 @@ describe('ReplayNoteComponent', () => {
   });
 
   it('names the setting for a match off the online grid with saving off', () => {
-    TestBed.inject(GameSettingsService).saveMatches.set(false);
+    TestBed.inject(GameSettingsService).set('saveMatches', false);
     const replay = recordedReplay('petri-dish', 90, 7, 'high');
     recording().set({ replay, hint: 30, id: null });
     fixture.detectChanges();

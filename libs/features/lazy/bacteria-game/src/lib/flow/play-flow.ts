@@ -118,8 +118,8 @@ export class PlayFlow {
   public readonly declaring = signal(false);
   /** Ranked play as the new game offers it, by mode. */
   public readonly rankedOffers = computed(() => ({
-    daily: this.ranked.offer('daily', this.settings.ranked()),
-    endless: this.ranked.offer('endless', this.settings.ranked()),
+    daily: this.ranked.offer('daily', this.settings.value('ranked')),
+    endless: this.ranked.offer('endless', this.settings.value('ranked')),
   }));
 
   /** Where a new game opens - on the mode last played, to pick another. */
@@ -143,7 +143,7 @@ export class PlayFlow {
       daily: this.store.dailyDay() !== null,
       endless: this.store.endlessMatch(),
       mode: this.store.mode(),
-      freePlay: this.settings.freePlay(),
+      freePlay: this.settings.value('freePlay'),
     });
   });
   /**
@@ -217,7 +217,7 @@ export class PlayFlow {
       this.gameStateService.setMode(opponent);
     }
     if (kind === 'campaign' || kind === 'free') {
-      this.settings.setFreePlay(kind === 'free');
+      this.settings.set('freePlay', kind === 'free');
     }
     if (kind === 'daily' || kind === 'endless') {
       void this.ranked.refresh(false);
@@ -280,7 +280,7 @@ export class PlayFlow {
       return;
     }
     this.gameStateService.leaveOnline();
-    if (this.ranked.wants('endless', this.settings.ranked())) {
+    if (this.ranked.wants('endless', this.settings.value('ranked'))) {
       const moves = this.stageMoves;
       const start = await this.whileDeclaring(() => this.ranked.startRun());
       if (this.movedSince(moves)) {
@@ -306,7 +306,7 @@ export class PlayFlow {
     this.gameStateService.leaveOnline();
     // A ranked attempt plays its own day's level, past midnight too.
     const day = this.progress.daily().day;
-    if (this.ranked.wants('daily', this.settings.ranked())) {
+    if (this.ranked.wants('daily', this.settings.value('ranked'))) {
       const moves = this.stageMoves;
       const attempt = await this.whileDeclaring(() =>
         this.ranked.declareDaily()

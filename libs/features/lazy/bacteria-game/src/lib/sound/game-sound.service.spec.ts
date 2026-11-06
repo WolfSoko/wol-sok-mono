@@ -91,22 +91,22 @@ describe('GameSoundService', () => {
     });
 
     it('makes no effect nodes while the effects are off', () => {
-      settings.setEffects(false);
+      settings.set('effects', false);
       sound.boost(false);
       sound.matchEnd('win');
       expect(context.started).toBe(0);
 
-      settings.setEffects(true);
+      settings.set('effects', true);
       sound.boost(false);
       expect(context.started).toBeGreaterThan(0);
     });
 
     it('follows the switches without waiting for an effect to run', () => {
-      settings.setSound(false);
+      settings.set('sound', false);
       sound.tick();
       expect(context.started).toBe(0);
 
-      settings.setSound(true);
+      settings.set('sound', true);
       sound.tick();
       expect(context.started).toBe(1);
       // The master bus was steered up by the tick itself.
@@ -116,7 +116,7 @@ describe('GameSoundService', () => {
     it('heats the level music up with the fighting even with the effects off', () => {
       const excite = jest.spyOn(MusicPlayer.prototype, 'excite');
       sound.setMusic(levelMusic('corridors'));
-      settings.setEffects(false);
+      settings.set('effects', false);
 
       sound.frame({
         boosts: [],
@@ -132,7 +132,7 @@ describe('GameSoundService', () => {
     });
 
     it('makes no effect nodes at volume zero either', () => {
-      settings.setEffectsVolume(0);
+      settings.set('effectsVolume', 0);
       sound.pause();
       expect(context.started).toBe(0);
     });
@@ -221,7 +221,7 @@ describe('GameSoundService', () => {
       });
 
       it('stays silent with the effects off', () => {
-        settings.setEffects(false);
+        settings.set('effects', false);
         for (const { id } of WEAPONS) {
           sound.weapon(id);
         }

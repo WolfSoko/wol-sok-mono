@@ -149,7 +149,7 @@ export class ReplayNoteComponent {
         !this.replays.cloud ||
         this.saved() !== 'saved' ||
         !this.settings.loaded() ||
-        this.settings.recordingHintShown() ||
+        this.settings.value('recordingHintShown') ||
         savedRegardless(recording.replay.header)
       ) {
         return;
@@ -157,7 +157,7 @@ export class ReplayNoteComponent {
       const id = recording.id;
       untracked(() => {
         this.hintFor.set(id);
-        this.settings.markRecordingHintShown();
+        this.settings.set('recordingHintShown', true);
       });
     });
   }
@@ -183,7 +183,7 @@ export class ReplayNoteComponent {
     if (savedRegardless(recording.replay.header)) {
       return null;
     }
-    return this.settings.saveMatches() ? null : 'replay.status.notSaved';
+    return this.settings.value('saveMatches') ? null : 'replay.status.notSaved';
   });
 }
 

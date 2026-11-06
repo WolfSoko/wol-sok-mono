@@ -38,7 +38,7 @@ export function reportUserProperties(): void {
       account: kind(),
       rank: rank(),
       // the ladder's locks off: matches against the computer are free play
-      free_play: settings.freePlay(),
+      free_play: settings.value('freePlay'),
     };
     untracked(() => analytics.setUserProperties(properties));
   });

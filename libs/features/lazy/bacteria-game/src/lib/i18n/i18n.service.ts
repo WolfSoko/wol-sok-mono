@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { computed, inject, Injectable, Signal, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import {
   detectLanguage,
   DICTIONARIES,
@@ -18,8 +18,8 @@ import {
  *
  * It keeps the choice only in memory and depends on nothing else, so any
  * service can inject it. The settings screen picks the language through
- * `GameSettingsService.setLanguage`, which also stores it on the device and
- * sets it here again on the next visit.
+ * `GameSettingsService.set('language', …)`, which owns the choice, stores
+ * it on the device and sets it here again on the next visit.
  */
 @Injectable({ providedIn: 'root' })
 export class I18nService {
@@ -28,8 +28,6 @@ export class I18nService {
   );
   private readonly chosen = signal<Language | null>(null);
 
-  /** The player's choice, null to follow the browser. */
-  public readonly choice: Signal<Language | null> = this.chosen.asReadonly();
   /** The language the game speaks. */
   public readonly language = computed(() => this.chosen() ?? this.detected);
   /** The locale for `Intl` number and date formatting, such as `'de-DE'`. */

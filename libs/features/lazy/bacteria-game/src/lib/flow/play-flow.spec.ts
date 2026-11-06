@@ -52,10 +52,10 @@ describe('PlayFlow', () => {
 
       flow.setPlayKind('free');
       expect(store.snapshot().mode).toBe('vs-computer');
-      expect(settings.freePlay()).toBe(true);
+      expect(settings.value('freePlay')).toBe(true);
 
       flow.setPlayKind('campaign');
-      expect(settings.freePlay()).toBe(false);
+      expect(settings.value('freePlay')).toBe(false);
     });
   });
 

@@ -3,25 +3,26 @@ import {
   provideRecordingAnalytics,
   RecordingAnalytics,
 } from '@wolsok/shared-analytics/testing';
+import { LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import {
   DEFAULT_EFFECTS_VOLUME,
   DEFAULT_MUSIC_VOLUME,
   GameSettingsService,
-  MAX_VOLUME,
   SETTINGS_STORAGE_KEY,
   StoredSettings,
 } from './settings.service';
 import { I18nService } from './i18n/i18n.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
-import {
-  LEVELS,
-  MATCH_LEVELS,
-  playableOnline,
-} from '@wolsok/feat-shared-bacteria-engine';
 import { DeviceStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
 
+/**
+ * How the service ties the settings to the storage, the statistics and the
+ * game. What each setting restores, ignores and stores is the table's
+ * spec (`settings/device-settings.spec.ts`), the match setup's in
+ * `settings/stored-match-setup.spec.ts`.
+ */
 describe('GameSettingsService', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -32,14 +33,14 @@ describe('GameSettingsService', () => {
     return JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
   }
 
-  it('restores what an earlier visit chose', () => {
+  it('restores the settings and the match setup an earlier visit stored', () => {
     localStorage.setItem(
       SETTINGS_STORAGE_KEY,
       JSON.stringify({
         mode: 'two-players',
-        difficulty: 'hard',
         levelId: LEVELS[2].id,
         showFps: true,
+        look: 'pixels',
       })
     );
 
@@ -47,23 +48,9 @@ describe('GameSettingsService', () => {
     const state = TestBed.inject(GameStateStore).snapshot();
 
     expect(state.mode).toBe('two-players');
-    expect(state.difficulty).toBe('hard');
     expect(state.levelId).toBe(LEVELS[2].id);
-    expect(service.showFps()).toBe(true);
-  });
-
-  it('ignores values it does not know', () => {
-    localStorage.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({ mode: 'four-players', levelId: 'moon', showFps: 'yes' })
-    );
-
-    const service = TestBed.inject(GameSettingsService);
-    const state = TestBed.inject(GameStateStore).snapshot();
-
-    expect(state.mode).toBe('vs-computer');
-    expect(state.levelId).toBe(LEVELS[0].id);
-    expect(service.showFps()).toBe(false);
+    expect(service.value('showFps')).toBe(true);
+    expect(service.value('look')).toBe('pixels');
   });
 
   it('survives unreadable storage', () => {
@@ -72,16 +59,30 @@ describe('GameSettingsService', () => {
     expect(() => TestBed.inject(GameSettingsService)).not.toThrow();
   });
 
-  it('remembers a changed match setup', () => {
-    TestBed.inject(GameSettingsService);
+  it('stores the device settings and the match setup in one entry', () => {
+    const service = TestBed.inject(GameSettingsService);
 
-    TestBed.inject(GameStateService).setMode('two-players');
+    service.set('sound', false);
     TestBed.inject(GameStateService).setLevel(LEVELS[1].id);
 
     expect(stored()).toMatchObject({
-      mode: 'two-players',
+      sound: false,
       levelId: LEVELS[1].id,
+      mode: 'vs-computer',
+      musicVolume: DEFAULT_MUSIC_VOLUME,
     });
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).value('sound')).toBe(false);
+  });
+
+  it('leaves the settings without a value out of the stored entry', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    service.set('arena', LEVELS[3].id);
+    expect(stored()['arena']).toBe(LEVELS[3].id);
+
+    service.set('arena', null);
+    expect(stored()).not.toHaveProperty('arena');
   });
 
   it('counts the settings the player changes, not the volumes or a value set again', () => {
@@ -91,12 +92,14 @@ describe('GameSettingsService', () => {
     });
     const service = TestBed.inject(GameSettingsService);
 
-    service.setSound(false);
+    service.set('sound', false);
     // the same again: no change
-    service.setSound(false);
-    service.setLanguage('de');
-    service.setLanguage(null);
-    service.setMusicVolume(40);
+    service.set('sound', false);
+    service.set('language', 'de');
+    service.set('language', null);
+    service.set('musicVolume', 40);
+    service.preview('effectsVolume', 10);
+    TestBed.inject(GameStateService).setLevel(LEVELS[1].id);
 
     expect(analytics.tracked('setting_changed')).toEqual([
       { setting: 'sound', value: false },
@@ -105,318 +108,41 @@ describe('GameSettingsService', () => {
     ]);
   });
 
-  it('remembers the frame rate badge', () => {
-    const service = TestBed.inject(GameSettingsService);
-
-    service.setShowFps(true);
-
-    expect(stored().showFps).toBe(true);
-  });
-
-  it('remembers free play, with the campaign ladder by default', () => {
-    const service = TestBed.inject(GameSettingsService);
-    expect(service.freePlay()).toBe(false);
-
-    service.setFreePlay(true);
-
-    expect(stored().freePlay).toBe(true);
-    TestBed.resetTestingModule();
-    expect(TestBed.inject(GameSettingsService).freePlay()).toBe(true);
-  });
-
-  it('remembers the matchmaking level, any level by default', () => {
-    const service = TestBed.inject(GameSettingsService);
-    expect(service.matchLevel()).toBeNull();
-
-    service.setMatchLevel(MATCH_LEVELS[2].id);
-    expect(stored().matchLevel).toBe(MATCH_LEVELS[2].id);
-    TestBed.resetTestingModule();
-    expect(TestBed.inject(GameSettingsService).matchLevel()).toBe(
-      MATCH_LEVELS[2].id
-    );
-
-    TestBed.inject(GameSettingsService).setMatchLevel(null);
-    expect(stored().matchLevel).toBeUndefined();
-  });
-
-  it('takes only a level that plays online for the matchmaking', () => {
-    const offline = LEVELS.find((level) => !playableOnline(level))?.id;
-    for (const matchLevel of ['moon', offline, 42]) {
-      localStorage.setItem(
-        SETTINGS_STORAGE_KEY,
-        JSON.stringify({ matchLevel })
-      );
-      TestBed.resetTestingModule();
-      expect(TestBed.inject(GameSettingsService).matchLevel()).toBeNull();
-    }
-  });
-
-  it('remembers the arena, and ignores one it does not know', () => {
-    const service = TestBed.inject(GameSettingsService);
-    expect(service.arena()).toBeNull();
-
-    service.setArena(LEVELS[3].id);
-    expect(stored().arena).toBe(LEVELS[3].id);
-    TestBed.resetTestingModule();
-    expect(TestBed.inject(GameSettingsService).arena()).toBe(LEVELS[3].id);
-
-    localStorage.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({ arena: 'moon' })
-    );
-    TestBed.resetTestingModule();
-    expect(TestBed.inject(GameSettingsService).arena()).toBeNull();
-  });
-
-  it('remembers the series and the head start between two players', () => {
-    TestBed.inject(GameSettingsService);
-    const gameState = TestBed.inject(GameStateService);
-
-    gameState.setSeriesLength(5);
-    gameState.setHeadStart(-1);
-
-    expect(stored()).toMatchObject({ seriesLength: 5, headStart: -1 });
-    TestBed.resetTestingModule();
-    TestBed.inject(GameSettingsService);
-    expect(TestBed.inject(GameStateStore).snapshot()).toMatchObject({
-      seriesLength: 5,
-      headStart: -1,
-    });
-  });
-
-  it('makes sound unless an earlier visit muted it', () => {
-    expect(TestBed.inject(GameSettingsService).sound()).toBe(true);
-  });
-
-  it('remembers a muted game', () => {
-    const service = TestBed.inject(GameSettingsService);
-
-    service.setSound(false);
-
-    expect(stored().sound).toBe(false);
-    TestBed.resetTestingModule();
-    expect(TestBed.inject(GameSettingsService).sound()).toBe(false);
-  });
-
-  it('remembers music switched off, with the sound still on', () => {
-    const service = TestBed.inject(GameSettingsService);
-
-    expect(service.music()).toBe(true);
-    service.setMusic(false);
-
-    expect(stored().music).toBe(false);
-    TestBed.resetTestingModule();
-    const restored = TestBed.inject(GameSettingsService);
-    expect(restored.music()).toBe(false);
-    expect(restored.sound()).toBe(true);
-  });
-
-  it('plays the effects at their volumes and vibrates, unless told otherwise', () => {
-    const service = TestBed.inject(GameSettingsService);
-
-    expect(service.effects()).toBe(true);
-    expect(service.vibration()).toBe(true);
-    expect(service.musicVolume()).toBe(DEFAULT_MUSIC_VOLUME);
-    expect(service.effectsVolume()).toBe(DEFAULT_EFFECTS_VOLUME);
-
-    service.setEffects(false);
-    service.setVibration(false);
-    service.setMusicVolume(35);
-    service.setEffectsVolume(100);
-
-    expect(stored()).toMatchObject({
-      effects: false,
-      vibration: false,
-      musicVolume: 35,
-      effectsVolume: 100,
-    });
-    TestBed.resetTestingModule();
-    const restored = TestBed.inject(GameSettingsService);
-    expect(restored.effects()).toBe(false);
-    expect(restored.vibration()).toBe(false);
-    expect(restored.musicVolume()).toBe(35);
-    expect(restored.effectsVolume()).toBe(100);
-  });
-
-  it('keeps the volumes on the slider', () => {
-    const service = TestBed.inject(GameSettingsService);
-
-    service.setMusicVolume(140);
-    service.setEffectsVolume(-3);
-    expect(service.musicVolume()).toBe(MAX_VOLUME);
-    expect(service.effectsVolume()).toBe(0);
-
-    service.setMusicVolume(33.4);
-    expect(service.musicVolume()).toBe(33);
-
-    service.setMusicVolume(Number.NaN);
-    service.setEffectsVolume(Number.NaN);
-    expect(service.musicVolume()).toBe(DEFAULT_MUSIC_VOLUME);
-    expect(service.effectsVolume()).toBe(DEFAULT_EFFECTS_VOLUME);
-  });
-
   it('previews a volume without writing it', () => {
     const service = TestBed.inject(GameSettingsService);
 
-    service.previewMusicVolume(20);
-    service.previewEffectsVolume(30);
+    service.preview('musicVolume', 20);
+    service.preview('effectsVolume', 30);
 
-    expect(service.musicVolume()).toBe(20);
-    expect(service.effectsVolume()).toBe(30);
+    expect(service.value('musicVolume')).toBe(20);
+    expect(service.value('effectsVolume')).toBe(30);
     expect(stored()).toMatchObject({
       musicVolume: DEFAULT_MUSIC_VOLUME,
       effectsVolume: DEFAULT_EFFECTS_VOLUME,
     });
 
-    service.setMusicVolume(25);
+    service.set('musicVolume', 25);
     expect(stored()).toMatchObject({ musicVolume: 25, effectsVolume: 30 });
   });
 
-  it('ignores volumes it cannot read', () => {
-    localStorage.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({ musicVolume: 'loud', effectsVolume: 250 })
-    );
-
-    const service = TestBed.inject(GameSettingsService);
-
-    expect(service.musicVolume()).toBe(DEFAULT_MUSIC_VOLUME);
-    expect(service.effectsVolume()).toBe(DEFAULT_EFFECTS_VOLUME);
-  });
-
-  it('remembers the colours and the look of the bacteria', () => {
-    const service = TestBed.inject(GameSettingsService);
-
-    TestBed.inject(GameStateService).setColor(0, 'purple');
-    service.setLook('pixels');
-
-    expect(stored()).toMatchObject({
-      colors: ['purple', 'blue'],
-      look: 'pixels',
-    });
-    TestBed.resetTestingModule();
-    expect(TestBed.inject(GameSettingsService).look()).toBe('pixels');
-    expect(TestBed.inject(GameStateStore).snapshot().colors).toEqual([
-      'purple',
-      'blue',
-    ]);
-  });
-
-  it('draws slime unless told otherwise, and ignores colours it does not know', () => {
-    localStorage.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({ colors: ['gold', 'blue'], look: 'smoke' })
-    );
-
-    const service = TestBed.inject(GameSettingsService);
-
-    expect(service.look()).toBe('slime');
-    expect(TestBed.inject(GameStateStore).snapshot().colors).toEqual([
-      'orange',
-      'blue',
-    ]);
-  });
-
-  it('remembers both resolutions', () => {
-    const service = TestBed.inject(GameSettingsService);
-
-    service.setSimResolution('high');
-    service.setScreenResolution('full-hd');
-
-    expect(stored()).toMatchObject({
-      simResolution: 'high',
-      screenResolution: 'full-hd',
-    });
-    TestBed.resetTestingModule();
-    const restored = TestBed.inject(GameSettingsService);
-    expect(restored.simResolution()).toBe('high');
-    expect(restored.screenResolution()).toBe('full-hd');
-  });
-
-  it('falls back to the default resolutions for ones it does not know', () => {
-    localStorage.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({ simResolution: '8k', screenResolution: 42 })
-    );
-
-    const service = TestBed.inject(GameSettingsService);
-
-    expect(service.simResolution()).toBe('normal');
-    expect(service.screenResolution()).toBe('medium');
-  });
-
-  it('vaporizes at medium quality in half the time it used to, unless told otherwise', () => {
-    const service = TestBed.inject(GameSettingsService);
-
-    expect(service.vaporize()).toBe('medium');
-    expect(service.vaporizeMs()).toBe(2500);
-  });
-
-  it('fills the dish with bubbles and mist unless told otherwise', () => {
-    const service = TestBed.inject(GameSettingsService);
-    expect(service.ambience()).toBe(true);
-
-    service.setAmbience(false);
-
-    expect(stored()).toMatchObject({ ambience: false });
-    TestBed.resetTestingModule();
-    expect(TestBed.inject(GameSettingsService).ambience()).toBe(false);
-  });
-
-  it('paints with fewer pixels where the device is slow, unless told otherwise', () => {
-    const service = TestBed.inject(GameSettingsService);
-    expect(service.adaptiveQuality()).toBe(true);
-
-    service.setAdaptiveQuality(false);
-
-    expect(stored()).toMatchObject({ adaptiveQuality: false });
-    TestBed.resetTestingModule();
-    expect(TestBed.inject(GameSettingsService).adaptiveQuality()).toBe(false);
-  });
-
-  it('remembers how the arena vaporizes', () => {
-    const service = TestBed.inject(GameSettingsService);
-
-    service.setVaporize('off');
-    service.setVaporizeMs(5000);
-
-    expect(stored()).toMatchObject({ vaporize: 'off', vaporizeMs: 5000 });
-    TestBed.resetTestingModule();
-    const restored = TestBed.inject(GameSettingsService);
-    expect(restored.vaporize()).toBe('off');
-    expect(restored.vaporizeMs()).toBe(5000);
-  });
-
-  it('ignores vaporize settings it does not know', () => {
-    localStorage.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({ vaporize: 'ultra', vaporizeMs: 1234 })
-    );
-
-    const service = TestBed.inject(GameSettingsService);
-
-    expect(service.vaporize()).toBe('medium');
-    expect(service.vaporizeMs()).toBe(2500);
-  });
-
-  it('follows the browser until the player picks a language, and remembers it', () => {
+  it('follows the browser until the player picks a language, and speaks it', () => {
     const service = TestBed.inject(GameSettingsService);
     const i18n = TestBed.inject(I18nService);
-    expect(service.language()).toBeNull();
+    expect(service.value('language')).toBeNull();
     expect(i18n.language()).toBe('en');
 
-    service.setLanguage('de');
+    service.set('language', 'de');
 
     expect(i18n.language()).toBe('de');
     expect(stored()).toMatchObject({ language: 'de' });
 
-    service.setLanguage(null);
+    service.set('language', null);
 
     expect(i18n.language()).toBe('en');
     expect(stored()['language']).toBeUndefined();
   });
 
-  it('restores the language, and follows the browser for one it does not know', () => {
+  it('speaks the restored language, and follows the browser for one it does not know', () => {
     localStorage.setItem(
       SETTINGS_STORAGE_KEY,
       JSON.stringify({ language: 'de' })
@@ -430,7 +156,7 @@ describe('GameSettingsService', () => {
       JSON.stringify({ language: 'klingon' })
     );
     const service = TestBed.inject(GameSettingsService);
-    expect(service.language()).toBeNull();
+    expect(service.value('language')).toBeNull();
     expect(TestBed.inject(I18nService).language()).toBe('en');
   });
 
@@ -446,63 +172,40 @@ describe('GameSettingsService', () => {
     }
 
     it('keeps and records matches by default, and hands the stored choice to the game', () => {
-      const service = createWith({
-        saveMatches: false,
-        recordLocal: false,
-      });
+      const service = createWith({ saveMatches: false, recordLocal: false });
       const prefs = jest.spyOn(
         TestBed.inject(GameStateService),
         'setReplayPrefs'
       );
-      expect(service.saveMatches()).toBe(true);
-      expect(service.recordLocal()).toBe(true);
+      expect(service.value('saveMatches')).toBe(true);
+      expect(service.value('recordLocal')).toBe(true);
 
       storage.flush();
 
-      expect(service.saveMatches()).toBe(false);
-      expect(service.recordLocal()).toBe(false);
+      expect(service.value('saveMatches')).toBe(false);
+      expect(service.value('recordLocal')).toBe(false);
       expect(prefs).toHaveBeenLastCalledWith({
         recordLocal: false,
         saveMatches: false,
       });
     });
 
-    it('says when the stored settings are read, and restores the hint on saved matches', () => {
-      const service = createWith({ recordingHintShown: true });
-      expect(service.loaded()).toBe(false);
-      expect(service.recordingHintShown()).toBe(false);
-
-      storage.flush();
-
-      expect(service.loaded()).toBe(true);
-      expect(service.recordingHintShown()).toBe(true);
-    });
-
-    it('remembers that the hint on saved matches was shown', () => {
-      const service = createWith({});
-      storage.flush();
-
-      service.markRecordingHintShown();
-      storage.flush();
-
-      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
-        recordingHintShown: true,
-      });
-    });
-
-    it('keeps "Save my matches" as switched before the storage answered', () => {
+    it('hands "Save my matches" to the game as switched before the storage answered', () => {
       const service = createWith({ saveMatches: true });
       const prefs = jest.spyOn(
         TestBed.inject(GameStateService),
         'setReplayPrefs'
       );
 
-      service.setSaveMatches(false);
-      expect(prefs).toHaveBeenLastCalledWith({ saveMatches: false });
+      service.set('saveMatches', false);
+      expect(prefs).toHaveBeenLastCalledWith({
+        recordLocal: true,
+        saveMatches: false,
+      });
       storage.flush();
       storage.flush();
 
-      expect(service.saveMatches()).toBe(false);
+      expect(service.value('saveMatches')).toBe(false);
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         saveMatches: false,
         recordLocal: true,
@@ -513,46 +216,28 @@ describe('GameSettingsService', () => {
       });
     });
 
-    it('restores the matchmaking level once the storage answers', () => {
-      const service = createWith({ matchLevel: MATCH_LEVELS[1].id });
-      expect(service.matchLevel()).toBeNull();
+    it('says when the stored settings are read', () => {
+      const service = createWith({ recordingHintShown: true });
+      expect(service.loaded()).toBe(false);
+      expect(service.value('recordingHintShown')).toBe(false);
 
       storage.flush();
 
-      expect(service.matchLevel()).toBe(MATCH_LEVELS[1].id);
-    });
-
-    it('keeps a matchmaking level picked before the storage answered', () => {
-      const service = createWith({ matchLevel: MATCH_LEVELS[1].id });
-
-      service.setMatchLevel(null);
-      storage.flush();
-
-      expect(service.matchLevel()).toBeNull();
-    });
-
-    it('restores the settings once the storage answers', () => {
-      const service = createWith({ levelId: LEVELS[2].id, sound: false });
-      expect(service.sound()).toBe(true);
-
-      storage.flush();
-
-      expect(service.sound()).toBe(false);
-      expect(TestBed.inject(GameStateStore).snapshot().levelId).toBe(
-        LEVELS[2].id
-      );
+      expect(service.loaded()).toBe(true);
+      expect(service.value('recordingHintShown')).toBe(true);
     });
 
     it('does not overwrite the stored settings with the defaults meanwhile', () => {
       const service = createWith({ levelId: LEVELS[2].id, sound: false });
 
-      service.setShowFps(true);
+      service.set('showFps', true);
       storage.flush();
       storage.flush();
 
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         levelId: LEVELS[2].id,
         sound: false,
+        showFps: true,
       });
     });
 
@@ -563,16 +248,13 @@ describe('GameSettingsService', () => {
         levelId: LEVELS[2].id,
       });
 
-      service.setSound(true);
+      service.set('sound', true);
       TestBed.inject(GameStateService).setLevel(LEVELS[3].id);
       storage.flush();
       storage.flush();
 
-      expect(service.sound()).toBe(true);
-      expect(service.look()).toBe('pixels');
-      expect(TestBed.inject(GameStateStore).snapshot().levelId).toBe(
-        LEVELS[3].id
-      );
+      expect(service.value('sound')).toBe(true);
+      expect(service.value('look')).toBe('pixels');
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         sound: true,
         look: 'pixels',
@@ -580,7 +262,7 @@ describe('GameSettingsService', () => {
       });
     });
 
-    it('keeps the stored setup of a match under way for the next one', () => {
+    it('stores the stored setup of a match under way while settings change', () => {
       const service = createWith({
         levelId: LEVELS[2].id,
         difficulty: 'hard',
@@ -591,12 +273,11 @@ describe('GameSettingsService', () => {
 
       gameState.start();
       storage.flush();
-      service.setSound(false);
+      service.set('sound', false);
       storage.flush();
 
       expect(store.snapshot().levelId).toBe(LEVELS[0].id);
-      expect(store.snapshot().difficulty).toBe('normal');
-      expect(service.showFps()).toBe(true);
+      expect(service.value('showFps')).toBe(true);
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         levelId: LEVELS[2].id,
         difficulty: 'hard',
@@ -606,86 +287,36 @@ describe('GameSettingsService', () => {
       gameState.reset();
 
       expect(store.snapshot().levelId).toBe(LEVELS[2].id);
-      expect(store.snapshot().difficulty).toBe('hard');
     });
 
-    it('lets a stored setup wait for a series under way to end', () => {
-      createWith({ colors: ['green', 'pink'] });
-      const gameState = TestBed.inject(GameStateService);
-      const store = TestBed.inject(GameStateStore);
-      gameState.setMode('two-players');
-      gameState.setSeriesLength(3);
-
-      gameState.start();
-      storage.flush();
-      TestBed.inject(GameStateStore).update({
-        series: { bestOf: 3, wins: [1, 0] },
-      });
-      gameState.reset();
-
-      expect(store.snapshot().colors).toEqual(['orange', 'blue']);
-      expect(store.snapshot().series?.wins).toEqual([1, 0]);
-
-      gameState.endSeries();
-      gameState.reset();
-      expect(store.snapshot().colors).toEqual(['green', 'pink']);
-    });
-
-    it('drops the stored setup the player changed during the match', () => {
-      createWith({ levelId: LEVELS[2].id, difficulty: 'hard' });
-      const gameState = TestBed.inject(GameStateService);
-      const store = TestBed.inject(GameStateStore);
-
-      gameState.start();
-      storage.flush();
-      gameState.setLevel(LEVELS[4].id);
-      gameState.reset();
-      storage.flush();
-
-      expect(store.snapshot().levelId).toBe(LEVELS[4].id);
-      expect(store.snapshot().difficulty).toBe('hard');
-      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
-        levelId: LEVELS[4].id,
-        difficulty: 'hard',
-      });
-    });
-
-    it('restores free play late, unless the player switched it meanwhile', () => {
-      const service = createWith({ freePlay: true });
-      expect(service.freePlay()).toBe(false);
-      storage.flush();
-      expect(service.freePlay()).toBe(true);
-
-      const other =
-        (TestBed.resetTestingModule(), createWith({ freePlay: true }));
-      other.setFreePlay(false);
-      storage.flush();
-      expect(other.freePlay()).toBe(false);
-    });
-
-    it('keeps an arena picked before the storage answered', () => {
-      const service = createWith({ arena: LEVELS[2].id });
-
-      service.setArena(LEVELS[5].id);
-      storage.flush();
-      storage.flush();
-
-      expect(service.arena()).toBe(LEVELS[5].id);
-      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
-        arena: LEVELS[5].id,
-      });
-    });
-
-    it('keeps a language picked before the storage answered', () => {
+    it('speaks a language picked before the storage answered, and stores it', () => {
       const service = createWith({ language: 'en' });
+      const i18n = TestBed.inject(I18nService);
 
-      service.setLanguage('de');
+      service.set('language', 'de');
       storage.flush();
       storage.flush();
 
-      expect(service.language()).toBe('de');
+      expect(service.value('language')).toBe('de');
+      expect(i18n.language()).toBe('de');
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         language: 'de',
+      });
+    });
+
+    it('keeps an arena and free play picked before the storage answered', () => {
+      const service = createWith({ arena: LEVELS[2].id, freePlay: true });
+
+      service.set('arena', LEVELS[5].id);
+      service.set('freePlay', false);
+      storage.flush();
+      storage.flush();
+
+      expect(service.value('arena')).toBe(LEVELS[5].id);
+      expect(service.value('freePlay')).toBe(false);
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        arena: LEVELS[5].id,
+        freePlay: false,
       });
     });
 
@@ -693,7 +324,7 @@ describe('GameSettingsService', () => {
       const service = createWith({ sound: false });
       storage.flush();
 
-      service.setMusic(false);
+      service.set('music', false);
       storage.flush();
 
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
