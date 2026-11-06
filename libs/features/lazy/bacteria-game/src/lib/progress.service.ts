@@ -5,8 +5,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map, switchMap, take } from 'rxjs';
 import { english, GameText } from '@wolsok/feat-shared-bacteria-engine';
 import {
   addCouchWin,
@@ -53,8 +51,7 @@ import {
   XpMatch,
   xpOf,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { GameAccount, PlayerSwitch } from './storage/game-account';
-import { DeviceStorage, GameStorage } from './storage/game-storage';
+import { playerDocument } from './storage/player-document';
 
 export const PROGRESS_STORAGE_KEY = 'bacteria-game.progress';
 
@@ -99,84 +96,32 @@ export interface DailyOffer {
  */
 @Injectable({ providedIn: 'root' })
 export class ProgressService {
-  private readonly storage = inject(GameStorage);
-  private readonly account = inject(GameAccount);
-  private readonly device = inject(DeviceStorage);
-  private readonly progress = signal(EMPTY_PROGRESS);
+  private readonly document = playerDocument({
+    key: PROGRESS_STORAGE_KEY,
+    parse: parseProgress,
+    empty: EMPTY_PROGRESS,
+    merge: mergeProgress,
+    adopt: adoptProgress,
+    // What the stored progress earns on its own - a medallion won before
+    // the achievement existed, say - is earned now, quietly, rather than
+    // credited to whichever match comes next.
+    onStored: (stored, apply) => {
+      const { progress, earned } = earnAchievements(stored, null, today());
+      if (earned.length > 0) {
+        apply(
+          progress,
+          storedWith(progress, (stored) => stored)
+        );
+      }
+    },
+  });
+  private readonly progress = this.document.value;
   /** True once the storage has answered - before, nothing is known yet. */
-  public readonly loaded = signal(false);
+  public readonly loaded = this.document.loaded;
 
   constructor() {
     const clock = setInterval(() => this.today.set(utcDay(new Date())), 60_000);
     inject(DestroyRef).onDestroy(() => clearInterval(clock));
-    this.account.players
-      .pipe(
-        switchMap((player, index) => {
-          if (index > 0) {
-            this.switchTo(player);
-          } else if (this.account.cloud) {
-            this.moveDeviceProgress();
-          }
-          return this.storage.watch(PROGRESS_STORAGE_KEY);
-        }),
-        map(parseProgress),
-        takeUntilDestroyed()
-      )
-      .subscribe((stored) => {
-        // What the stored progress earns on its own - a medallion won before
-        // the achievement existed, say - is earned now, quietly, rather
-        // than credited to whichever match comes next.
-        const { progress, earned } = earnAchievements(
-          mergeProgress(this.progress(), stored),
-          null,
-          today()
-        );
-        this.progress.set(progress);
-        this.loaded.set(true);
-        if (earned.length > 0) {
-          this.store(progress, (stored) => stored);
-        }
-      });
-  }
-
-  /**
-   * Starts over for the next player, from what the storage tells of them -
-   * nothing of the player before carries over, unless they played here as
-   * a guest and signed in: then the guest's progress joins the account's,
-   * once.
-   */
-  private switchTo({ adoptsGuest }: PlayerSwitch): void {
-    const guest = this.progress();
-    this.loaded.set(false);
-    if (!adoptsGuest) {
-      this.progress.set(EMPTY_PROGRESS);
-      return;
-    }
-    this.adopt(guest);
-  }
-
-  /**
-   * Hands the progress this device kept before the game had the cloud - in
-   * its own storage, under the same key - to the first player, once.
-   */
-  private moveDeviceProgress(): void {
-    this.device
-      .watch(PROGRESS_STORAGE_KEY)
-      .pipe(take(1))
-      .subscribe((stored) => {
-        if (stored === null) {
-          return;
-        }
-        this.adopt(parseProgress(stored));
-        this.device.write(PROGRESS_STORAGE_KEY, null);
-      });
-  }
-
-  /** Adds progress from elsewhere to the stored progress, once. */
-  private adopt(progress: Progress): void {
-    this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
-      adoptProgress(parseProgress(stored), progress)
-    );
   }
 
   /** Every medallion held, by level id, then by difficulty. */
@@ -289,8 +234,7 @@ export class ProgressService {
    */
   public startDailyAttempt(day: string): void {
     const count = (progress: Progress) => addDailyAttempt(progress, day);
-    this.progress.update(count);
-    this.store(this.progress(), count);
+    this.store(count(this.progress()), count);
   }
 
   /** The UTC day, looked at again every minute - the daily level turns over. */
@@ -403,7 +347,6 @@ export class ProgressService {
       record,
       today()
     );
-    this.progress.set(progress);
     this.store(progress, count);
     return {
       achievements: earned,
@@ -427,26 +370,32 @@ export class ProgressService {
     return { cosmetics: texts.map(english), cosmeticTexts: texts };
   }
 
-  /**
-   * Writes the progress: medallions and achievements merge with the stored
-   * ones, the match's counts are added to the stored ones - not to the
-   * ones here, which miss what the storage has not told yet. So no match is
-   * lost, whenever the storage answers and whoever else writes.
-   */
+  /** Holds the progress here and writes it ({@link storedWith}). */
   private store(
     progress: Progress,
     count: (progress: Progress) => Progress
   ): void {
-    const gains = {
-      ...progress,
-      totals: NO_TOTALS,
-      couchWins: {},
-      daily: null,
-    };
-    this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
-      mergeProgress(count(parseProgress(stored)), gains)
-    );
+    this.document.apply(progress, storedWith(progress, count));
   }
+}
+
+/**
+ * How the progress is written: medallions and achievements merge with the
+ * stored ones, the match's counts are added to the stored ones - not to the
+ * ones here, which miss what the storage has not told yet. So no match is
+ * lost, whenever the storage answers and whoever else writes.
+ */
+function storedWith(
+  progress: Progress,
+  count: (progress: Progress) => Progress
+): (stored: Progress) => Progress {
+  const gains = {
+    ...progress,
+    totals: NO_TOTALS,
+    couchWins: {},
+    daily: null,
+  };
+  return (stored) => mergeProgress(count(stored), gains);
 }
 
 /**

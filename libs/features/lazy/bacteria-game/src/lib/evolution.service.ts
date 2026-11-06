@@ -6,8 +6,7 @@ import {
   Injector,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map, Subscription, switchMap, take, timer } from 'rxjs';
+import { Subscription, timer } from 'rxjs';
 import { GameEvents, injectGameAnalytics } from './analytics/game-analytics';
 import { ProgressService } from './progress.service';
 import { GameSettingsService } from './settings.service';
@@ -41,10 +40,16 @@ import {
   withSkin,
   withWeapon,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { GameAccount, PlayerSwitch } from './storage/game-account';
-import { DeviceStorage, GameStorage } from './storage/game-storage';
+import { playerDocument } from './storage/player-document';
 
 export const EVOLUTION_STORAGE_KEY = 'bacteria-game.evolution';
+
+/**
+ * How long the new game's Start waits for the storage to tell what the
+ * player evolved, in milliseconds. Offline with nothing cached it may never
+ * tell: Start opens then, and the match plays what is known.
+ */
+export const EVOLUTION_WAIT_MS = 3000;
 
 /**
  * What the player has bred into their colony - the genes, the weapons bought
@@ -63,28 +68,15 @@ export const EVOLUTION_STORAGE_KEY = 'bacteria-game.evolution';
  * (`GameSettingsService.value('look')`), worn only once it is owned
  * ({@link wornSkin}).
  *
- * Like the progress it follows the player: on a sign-in or sign-out it
- * starts over from the next player's, and a guest who signs in to an account
- * brings what they bred along.
+ * Like the progress it follows the player (`playerDocument`): on a sign-in
+ * or sign-out it starts over from the next player's, and a guest who signs
+ * in to an account brings what they bred along.
  */
-/**
- * How long the new game's Start waits for the storage to tell what the
- * player evolved, in milliseconds. Offline with nothing cached it may never
- * tell: Start opens then, and the match plays what is known.
- */
-export const EVOLUTION_WAIT_MS = 3000;
-
 @Injectable({ providedIn: 'root' })
 export class EvolutionService {
-  private readonly storage = inject(GameStorage);
   private readonly injector = inject(Injector);
-  private readonly account = inject(GameAccount);
-  private readonly device = inject(DeviceStorage);
   private readonly progress = inject(ProgressService);
   private readonly analytics = injectGameAnalytics();
-  private readonly state = signal(EMPTY_EVOLUTION);
-  /** True once the storage has answered for the evolution. */
-  private readonly answered = signal(false);
   /**
    * True while the device's pick of a skin is trusted without the storage:
    * until it answers for the first time, or another player takes over.
@@ -93,36 +85,29 @@ export class EvolutionService {
   /** True once {@link EVOLUTION_WAIT_MS} passed since the player was known. */
   private readonly waitedOut = signal(false);
   private waiting: Subscription | null = null;
+  private readonly document = playerDocument({
+    key: EVOLUTION_STORAGE_KEY,
+    parse: parseEvolution,
+    empty: EMPTY_EVOLUTION,
+    merge: mergeEvolution,
+    adopt: adoptEvolution,
+    equal: sameEvolution,
+    onSwitch: () => {
+      this.trustsPick.set(false);
+      this.waitForStorage();
+    },
+    onStored: () => this.trustsPick.set(false),
+  });
+  private readonly state = this.document.value;
 
   public constructor() {
     inject(DestroyRef).onDestroy(() => this.waiting?.unsubscribe());
     this.waitForStorage();
-    this.account.players
-      .pipe(
-        switchMap((player, index) => {
-          if (index > 0) {
-            this.switchTo(player);
-          } else if (this.account.cloud) {
-            this.moveDeviceEvolution();
-          }
-          return this.storage.watch(EVOLUTION_STORAGE_KEY);
-        }),
-        map(parseEvolution),
-        takeUntilDestroyed()
-      )
-      .subscribe((stored) => {
-        const merged = mergeEvolution(this.state(), stored);
-        if (!sameEvolution(merged, this.state())) {
-          this.state.set(merged);
-        }
-        this.answered.set(true);
-        this.trustsPick.set(false);
-      });
   }
 
   /** True once both the evolution and the progress are known. */
   public readonly loaded = computed(
-    () => this.answered() && this.progress.loaded()
+    () => this.document.loaded() && this.progress.loaded()
   );
 
   /**
@@ -135,7 +120,7 @@ export class EvolutionService {
   public readonly settled = computed(() => this.loaded() || this.waitedOut());
 
   /** Everything held. */
-  public readonly evolution = this.state.asReadonly();
+  public readonly evolution = this.state;
 
   /** The DNA all the XP so far has earned, spent or not. */
   public readonly earned = computed(() => dnaEarned(this.progress.xp()));
@@ -272,9 +257,8 @@ export class EvolutionService {
   /** Gives every strand back: no gene, no weapon. Free. The skins stay. */
   public reset(): void {
     const held = this.state();
-    this.state.set(resetEvolution(held));
-    this.storage.update(EVOLUTION_STORAGE_KEY, (stored) =>
-      resetEvolution(held, parseEvolution(stored))
+    this.document.apply(resetEvolution(held), (stored) =>
+      resetEvolution(held, stored)
     );
   }
 
@@ -287,9 +271,8 @@ export class EvolutionService {
     change: (evolution: EvolutionProgress) => EvolutionProgress
   ): void {
     const held = this.state();
-    this.state.set(change(held));
-    this.storage.update(EVOLUTION_STORAGE_KEY, (stored) =>
-      change(mergeEvolution(parseEvolution(stored), held))
+    this.document.apply(change(held), (stored) =>
+      change(mergeEvolution(stored, held))
     );
   }
 
@@ -299,44 +282,6 @@ export class EvolutionService {
     this.waitedOut.set(false);
     this.waiting = timer(EVOLUTION_WAIT_MS).subscribe(() =>
       this.waitedOut.set(true)
-    );
-  }
-
-  /**
-   * Starts over for the next player - unless a guest signed in to an account
-   * that has played elsewhere: then what the guest bred joins it, once.
-   */
-  private switchTo({ adoptsGuest }: PlayerSwitch): void {
-    const guest = this.state();
-    this.answered.set(false);
-    this.trustsPick.set(false);
-    this.waitForStorage();
-    this.state.set(EMPTY_EVOLUTION);
-    if (adoptsGuest) {
-      this.adopt(guest);
-    }
-  }
-
-  /** Hands what this device bred before the cloud to the first player, once. */
-  private moveDeviceEvolution(): void {
-    this.device
-      .watch(EVOLUTION_STORAGE_KEY)
-      .pipe(take(1))
-      .subscribe((stored) => {
-        if (stored === null) {
-          return;
-        }
-        this.adopt(parseEvolution(stored));
-        this.device.write(EVOLUTION_STORAGE_KEY, null);
-      });
-  }
-
-  private adopt(guest: EvolutionProgress): void {
-    if (sameEvolution(guest, EMPTY_EVOLUTION)) {
-      return;
-    }
-    this.storage.update(EVOLUTION_STORAGE_KEY, (stored) =>
-      adoptEvolution(parseEvolution(stored), guest)
     );
   }
 }

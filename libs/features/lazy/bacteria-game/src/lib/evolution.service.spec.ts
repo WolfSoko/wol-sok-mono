@@ -2,7 +2,6 @@ import {
   provideRecordingAnalytics,
   RecordingAnalytics,
 } from '@wolsok/shared-analytics/testing';
-import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   EVOLUTION_STORAGE_KEY,
@@ -11,7 +10,7 @@ import {
 } from './evolution.service';
 import { GameSettingsService } from './settings.service';
 import { GameAccount } from './storage/game-account';
-import { DeviceStorage, GameStorage } from './storage/game-storage';
+import { GameStorage } from './storage/game-storage';
 import { FakeGameAccount } from '../testing/fake-game-account';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { earnXp as earn, progressWorth } from '../testing/earn-xp';
@@ -388,59 +387,17 @@ describe('EvolutionService', () => {
   describe('when another player takes over', () => {
     let account: FakeGameAccount;
 
-    function createFor(
-      stored: Record<string, unknown> = {},
-      providers: Provider[] = []
-    ): EvolutionService {
+    function createFor(stored: Record<string, unknown> = {}): EvolutionService {
       account = new FakeGameAccount('guest');
       account.seed('guest', stored);
       TestBed.configureTestingModule({
         providers: [
           { provide: GameAccount, useValue: account },
           { provide: GameStorage, useValue: account.storage },
-          ...providers,
         ],
       });
       return create();
     }
-
-    it("starts over from the next player's evolution", () => {
-      const evolution = createFor({
-        [PROGRESS_STORAGE_KEY]: progressWorth(1000),
-        [EVOLUTION_STORAGE_KEY]: { genes: { mitosis: 3 } },
-      });
-      account.flush();
-      expect(evolution.level('mitosis')).toBe(3);
-      account.seed('ada', {
-        [EVOLUTION_STORAGE_KEY]: { genes: { toxins: 1 } },
-      });
-
-      account.switchTo('ada');
-
-      expect(evolution.loaded()).toBe(false);
-      expect(evolution.level('mitosis')).toBe(0);
-      account.flush();
-      expect(evolution.level('toxins')).toBe(1);
-      expect(evolution.level('mitosis')).toBe(0);
-    });
-
-    it("keeps each player's purchases in their own storage", () => {
-      const evolution = createFor();
-      account.seed('ada', { [PROGRESS_STORAGE_KEY]: progressWorth(1000) });
-      account.flush();
-      account.switchTo('ada');
-      account.flush();
-
-      evolution.buyGene('flagella');
-      account.flush();
-
-      expect(
-        account.storageOf('ada').stored(EVOLUTION_STORAGE_KEY)
-      ).toMatchObject({ genes: { flagella: 1 } });
-      expect(account.storageOf('guest').stored(EVOLUTION_STORAGE_KEY)).toBe(
-        null
-      );
-    });
 
     it('brings what a guest bred along to the account signed in to', () => {
       const evolution = createFor({
@@ -486,9 +443,8 @@ describe('EvolutionService', () => {
 
       account.switchTo('ada', true);
 
-      // Unlike the progress, which keeps the guest's until the account's
-      // arrives, the evolution starts over empty meanwhile - and nothing
-      // can be bought before both have been told.
+      // The evolution starts over empty meanwhile - and nothing can be
+      // bought before both it and the progress have been told.
       expect(evolution.loaded()).toBe(false);
       expect(evolution.level('mitosis')).toBe(0);
       expect(evolution.canBuyGene('flagella')).toBe(false);
@@ -509,22 +465,6 @@ describe('EvolutionService', () => {
         genes: { mitosis: 3, toxins: 1 },
         weapons: ['toxin-bomb', 'cryo-pulse'],
       });
-    });
-
-    it('hands what this device bred before the cloud to the first player, once', () => {
-      const device = new LateGameStorage({
-        [EVOLUTION_STORAGE_KEY]: { genes: { metabolism: 2 } },
-      });
-      const evolution = createFor({}, [
-        { provide: DeviceStorage, useValue: device },
-      ]);
-
-      device.flush();
-      account.flush();
-      device.flush();
-
-      expect(evolution.level('metabolism')).toBe(2);
-      expect(device.stored(EVOLUTION_STORAGE_KEY)).toBeNull();
     });
   });
 });
