@@ -521,6 +521,12 @@ export type {
   SecondSampler,
   SizeSample,
 } from './lib/state/match-engine';
+export { MatchRun } from './lib/state/match-run';
+export type {
+  MatchArena,
+  MatchRunResult,
+  RunnableEngine,
+} from './lib/state/match-run';
 export {
   isMatchLevel,
   MATCH_LEVELS,
@@ -631,6 +637,7 @@ export {
   replayEngine,
   replayOf,
   replayOutcome,
+  replayRun,
   savedRegardless,
   simGridOf,
 } from './lib/state/replay';
@@ -645,6 +652,7 @@ export type {
   ReplayInputs,
   ReplayOutcome,
   ReplayResult,
+  ReplayRunOptions,
   ReplaySeat,
   ReplaySteer,
   ReplayWeapon,
