@@ -63,6 +63,7 @@ import { GuestSignInComponent } from '../guest/guest-sign-in.component';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
 import { DnaHelixComponent } from '../menu/dna-helix.component';
+import { rankedOutcomeOf } from '../state/match-rules';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =
@@ -146,7 +147,9 @@ export class WinnerComponent {
   protected readonly rankKey = rankKey;
 
   /** How the match was played - a daily level vs the computer, say. */
-  private mode: Signal<GameMode> = this.state.matchMode;
+  private rules = this.state.matchRules;
+  /** The mode it was planned in: a level picked for it is vs the computer. */
+  private mode: Signal<GameMode> = computed(() => this.rules().planMode);
 
   /** On the daily level: the attempt and the streak, in a line. */
   public dailyNote: Signal<string | null> = computed(() => {
@@ -169,7 +172,7 @@ export class WinnerComponent {
 
   /** The endless run the match was part of, null when it was none of it. */
   private endless = computed(() =>
-    this.state.endlessMatch() ? this.state.endless() : null
+    this.rules().kind === 'endless' ? this.state.endless() : null
   );
   private progress = inject(ProgressService);
   private endlessBest = this.progress.endlessBest;
@@ -197,7 +200,7 @@ export class WinnerComponent {
    * campaign comes next - null outside the training.
    */
   public mission = computed(() => {
-    if (this.level().mission === undefined) {
+    if (this.rules().mission === null) {
       return null;
     }
     const result = this.earnings()?.training ?? null;
@@ -226,7 +229,7 @@ export class WinnerComponent {
    * any other match, and for one played as practice.
    */
   public rankedNote: Signal<string | null> = computed(() => {
-    const note = this.state.ranked()?.note;
+    const note = rankedOutcomeOf(this.state.nextMatch())?.note;
     switch (note?.kind) {
       case 'daily':
         return this.t('boards.ranked.result.daily', {
@@ -310,7 +313,7 @@ export class WinnerComponent {
 
   /** True in a match against the player's own ghost. */
   public againstGhost: Signal<boolean> = computed(
-    () => this.state.ghost() !== null
+    () => this.rules().kind === 'ghost'
   );
 
   /** What sharing the run came to, under the buttons - null before. */
@@ -470,7 +473,8 @@ export class WinnerComponent {
    * - and the lifetime rivalry of the two colours.
    */
   public duel = computed(() => {
-    if (this.mode() !== 'two-players') {
+    // Couch matches only: an online match counts for no couch rivalry.
+    if (this.rules().kind !== 'two-players') {
       return null;
     }
     const colors = this.colors();

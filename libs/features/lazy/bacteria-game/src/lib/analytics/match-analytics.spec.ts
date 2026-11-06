@@ -9,11 +9,10 @@ import {
   type MatchPlan,
   type Player,
   type RankedOutcome,
-  type Replay,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { type MatchKind, SETUP_MATCH } from '../state/match-rules';
 import {
   MatchAnalytics,
-  matchKind,
   matchParams,
   MatchState,
   outcomeName,
@@ -26,11 +25,8 @@ const plan = {
 } as MatchPlan;
 
 const local: MatchState = {
-  online: null,
-  ghost: null,
-  dailyDay: null,
-  endlessMatch: false,
-  ranked: null,
+  next: SETUP_MATCH,
+  kind: 'vs-computer',
   endlessRanked: null,
   timePassed: 0,
 };
@@ -172,37 +168,19 @@ describe('MatchAnalytics', () => {
   });
 });
 
-describe('matchKind', () => {
-  it.each([
-    [{ online: { seat: 0, levelId: 'x', colors: ['a', 'b'] } }, 'online'],
-    [{ ghost: {} as Replay }, 'ghost'],
-    [{ dailyDay: '2026-10-31' }, 'daily'],
-    [{ endlessMatch: true }, 'endless'],
-  ] as [Partial<MatchState>, string][])(
-    'tells %o a %s match',
-    (state, kind) => {
-      expect(matchKind(plan, { ...local, ...state })).toBe(kind);
-    }
-  );
-
-  it('tells a training mission by its level', () => {
-    expect(matchKind({ ...plan, levelId: 'training-steer' }, local)).toBe(
-      'training'
-    );
-  });
-
-  it('tells a match against the computer, on the ladder or free', () => {
-    expect(matchKind(plan, local)).toBe('vs_computer');
-  });
-
-  it('tells two players at one device', () => {
-    expect(matchKind({ ...plan, mode: 'two-players' }, local)).toBe(
-      'two_players'
-    );
-  });
-});
-
 describe('matchParams', () => {
+  it.each<[MatchKind, string]>([
+    ['vs-computer', 'vs_computer'],
+    ['two-players', 'two_players'],
+    ['ghost', 'ghost'],
+    ['training', 'training'],
+    ['daily', 'daily'],
+    ['endless', 'endless'],
+    ['online', 'online'],
+  ])('names a %s match %s', (kind, name) => {
+    expect(matchParams(plan, { ...local, kind }, cpu).kind).toBe(name);
+  });
+
   it('names the ruleset of the float GPU, which has none', () => {
     expect(
       matchParams(plan, local, { kind: 'gpu', ruleset: null })
@@ -210,9 +188,27 @@ describe('matchParams', () => {
   });
 
   it('says whether the match is ranked', () => {
-    expect(
-      matchParams(plan, { ...local, ranked: {} as RankedOutcome }, cpu).ranked
-    ).toBe(true);
+    const practice: RankedOutcome = {
+      match: null,
+      note: { kind: 'unranked', reason: 'offline' },
+    };
+    const daily: MatchState = {
+      ...local,
+      kind: 'daily',
+      next: { kind: 'daily', day: 'd', levelId: 'x', ranked: practice },
+    };
+    expect(matchParams(plan, daily, cpu).ranked).toBe(true);
+    expect(matchParams(plan, local, cpu).ranked).toBe(false);
+  });
+
+  it('counts every match of a ranked endless run as ranked', () => {
+    const endless: MatchState = {
+      ...local,
+      kind: 'endless',
+      next: { kind: 'endless', levelId: 'x', ranked: null },
+      endlessRanked: { runId: 'r', next: 2 },
+    };
+    expect(matchParams(plan, endless, cpu).ranked).toBe(true);
   });
 
   it('gives no difficulty between two players', () => {
@@ -224,7 +220,8 @@ describe('matchParams', () => {
 
 describe('outcomeName', () => {
   const online = {
-    online: {
+    kind: 'online' as const,
+    seat: {
       seat: 1 as const,
       levelId: 'x',
       colors: ['a', 'b'] as [string, string],
@@ -237,6 +234,6 @@ describe('outcomeName', () => {
   });
 
   it('calls a match between two players decided', () => {
-    expect(outcomeName(human, 'two_players', local)).toBe('decided');
+    expect(outcomeName(human, 'two_players', SETUP_MATCH)).toBe('decided');
   });
 });

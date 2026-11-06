@@ -134,7 +134,9 @@ export class ReplayNoteComponent {
     return (
       replay !== null &&
       canPlayBack(replay) &&
-      (run === null || !this.store.endlessMatch() || isRunOver(run))
+      (run === null ||
+        this.store.matchRules().kind !== 'endless' ||
+        isRunOver(run))
     );
   });
 

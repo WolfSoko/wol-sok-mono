@@ -101,7 +101,7 @@ export class MatchEnd {
             void this.flow.continueRun();
             return;
           }
-          if (rematch?.dailyDay != null) {
+          if (rematch?.kind === 'daily') {
             // Again on the daily level: ranked again where it may be.
             void this.flow.playDaily();
             return;

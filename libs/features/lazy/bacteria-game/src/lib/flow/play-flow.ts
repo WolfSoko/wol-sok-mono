@@ -27,7 +27,6 @@ import { ArenaStage } from '../stage/arena-stage';
 import { StageFrame } from '../stage/stage-frame';
 import { StageFullscreen } from '../stage/stage-fullscreen';
 import {
-  getLevel,
   isRunOver,
   MissionId,
   ONLINE_LOCKS,
@@ -135,13 +134,9 @@ export class PlayFlow {
   private readonly lastKind = signal<PlayKind | null>(null);
   /** The mode last played, see `playKindOf`. */
   public readonly playKind = computed((): PlayKind => {
-    const matchLevel = this.store.matchLevel();
     return playKindOf({
-      missionSet:
-        matchLevel !== null && getLevel(matchLevel).mission !== undefined,
+      matchKind: this.store.matchRules().kind,
       lastKind: this.lastKind(),
-      daily: this.store.dailyDay() !== null,
-      endless: this.store.endlessMatch(),
       mode: this.store.mode(),
       freePlay: this.settings.freePlay(),
     });

@@ -63,8 +63,6 @@ export class HudState {
   public readonly onlineSeat = computed(
     () => this.store.online()?.seat ?? null
   );
-  /** True in a match of an endless run - no restart, it would cost no life. */
-  public readonly inEndlessRun = this.store.endlessMatch;
 
   /** The level the next match is played on. */
   public readonly level = this.store.level;
@@ -155,8 +153,8 @@ export class HudState {
   });
   /** The goal of the training mission under way, for the arena - null outside one. */
   public readonly missionGoal = computed((): TranslationKey | null => {
-    const { mission } = this.store.level();
-    return mission === undefined ? null : missionKeys(mission).goal;
+    const { mission } = this.store.matchRules();
+    return mission === null ? null : missionKeys(mission).goal;
   });
 
   /** The colour ids of the left and the right colony. */
@@ -193,24 +191,17 @@ export class HudState {
   public readonly upcomingLock = computed(() => {
     const upcoming = this.upcomingLevel();
     const locks =
-      this.store.online() === null ? this.campaign.locks() : ONLINE_LOCKS;
+      this.store.matchRules().locks === 'online'
+        ? ONLINE_LOCKS
+        : this.campaign.locks();
     return upcoming === null ? null : (locks[upcoming.id] ?? null);
   });
-  /**
-   * True where Restart may start the match again - online, the host only;
-   * never a ranked match, whose declared seed plays once.
-   */
+  /** True where Restart may start the match again - see `matchRules`. */
   public readonly canRestart = computed(
-    () =>
-      !this.inEndlessRun() &&
-      this.store.rankedMatch() === null &&
-      this.onlineSeat() !== 1
+    () => this.store.matchRules().canRestart
   );
-  /**
-   * True where the match may be paused: never a ranked one, whose attempt
-   * has a deadline from its declaration on (ADR 0012).
-   */
-  public readonly canPause = computed(() => this.store.rankedMatch() === null);
+  /** True where the match may be paused - see `matchRules`. */
+  public readonly canPause = computed(() => this.store.matchRules().canPause);
 
   /** The players, the online opponent under their profile's name. */
   private readonly namedPlayers = computed(() => {

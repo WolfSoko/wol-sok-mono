@@ -39,7 +39,6 @@ import {
   matchRecord,
   missionById,
   MissionId,
-  missionOf,
   newRun,
   newSeries,
   ONLINE_SIM_RESOLUTION,
@@ -92,7 +91,8 @@ import { EvolutionService } from '../evolution.service';
 import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
-import { MatchAnalytics } from '../analytics/match-analytics';
+import { MatchAnalytics, MatchState } from '../analytics/match-analytics';
+import { MatchKind, OneMatch, rematchOf, SETUP_MATCH } from './match-rules';
 
 /**
  * The most time one frame may take the war forward, in milliseconds. A
@@ -106,15 +106,6 @@ const MAX_FRAME_MS = 3 * TICK_MS;
  * a short stutter on a slow connection is no news.
  */
 const WAIT_NOTICE_FRAMES = 20;
-
-/**
- * What the next match is set to outside the setup: a ghost to fight, a
- * level picked for it, the daily day it counts for. It holds for one match.
- */
-export type OneMatch = Pick<
-  GameStateState,
-  'ghost' | 'matchLevel' | 'dailyDay' | 'endlessMatch'
->;
 
 /** The seat a local match records: the human's - never the bot's. */
 const LOCAL_RECORDED_SEATS: ReadonlySet<number> = new Set([0]);
@@ -139,13 +130,6 @@ export interface ReplayPrefs {
   /** Recorded local matches are kept; online ones always are (ADR 0012). */
   saveMatches: boolean;
 }
-
-const NO_ONE_MATCH: OneMatch = {
-  ghost: null,
-  matchLevel: null,
-  dailyDay: null,
-  endlessMatch: false,
-};
 
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
@@ -423,30 +407,19 @@ export class GameStateService {
    */
   private endMatch(outcome: MatchOutcome): void {
     const state = this.gameStateStore.snapshot();
-    const { series, ghost, endless, endlessMatch, online } = state;
+    const { series, endless } = state;
+    const { kind } = this.gameStateStore.matchRules();
     // The run's match takes the run on - a draw is no win.
     const run =
-      endless !== null && endlessMatch
+      endless !== null && kind === 'endless'
         ? afterMatch(endless, outcome.winner?.isBot === false)
         : null;
     const earnings = this.recordMatch(outcome.winner, run?.wins ?? null);
-    this.matchAnalytics.ended(outcome, state, earnings);
+    this.matchAnalytics.ended(outcome, this.matchState(), earnings);
     const recording = this.recording(outcome);
-    const training =
-      this.plan != null && getLevel(this.plan.levelId).mission !== undefined;
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
-      // A ghost match is no match to play again: its opponent is no bot.
-      // One online is its recording, which has no bot to fight as a ghost.
-      // A training mission's is none to fight either: its levels are no
-      // replay's, and a dummy is no opponent to race.
-      ...(training
-        ? { lastReplay: null }
-        : online !== null
-          ? { lastReplay: recording?.replay ?? null }
-          : ghost === null
-            ? { lastReplay: recording?.replay ?? this.replay(outcome) }
-            : {}),
+      ...this.lastReplayAfter(kind, outcome, recording),
       waitingForPeer: false,
       endless: run,
       currentState: GameState.END,
@@ -458,6 +431,41 @@ export class GameStateService {
           ? null
           : addSeriesMatch(series, winnerSeat(outcome.winner)),
     });
+  }
+
+  /** What the match statistics are told of the match on the board. */
+  private matchState(): MatchState {
+    const { endlessRanked, timePassed } = this.gameStateStore.snapshot();
+    return {
+      next: this.gameStateStore.nextMatch(),
+      kind: this.gameStateStore.matchRules().kind,
+      endlessRanked,
+      timePassed,
+    };
+  }
+
+  /**
+   * What a match of `kind` leaves to fight as a ghost. A ghost match is no
+   * match to play again: its opponent is no bot. One online is its
+   * recording, which has no bot to fight as a ghost. A training mission's
+   * is none to fight either: its levels are no replay's, and a dummy is no
+   * opponent to race.
+   */
+  private lastReplayAfter(
+    kind: MatchKind,
+    outcome: MatchOutcome,
+    recording: MatchRecording | null
+  ): Partial<GameStateState> {
+    switch (kind) {
+      case 'training':
+        return { lastReplay: null };
+      case 'online':
+        return { lastReplay: recording?.replay ?? null };
+      case 'ghost':
+        return {};
+      default:
+        return { lastReplay: recording?.replay ?? this.replay(outcome) };
+    }
   }
 
   /**
@@ -563,20 +571,6 @@ export class GameStateService {
     return recording;
   }
 
-  /**
-   * Whether a local match from `plan` is recorded: against the computer,
-   * no ghost, with recording on - on any grid.
-   */
-  private recordsLocal(plan: MatchPlan, ghost: Replay | null): boolean {
-    return (
-      this.replayPrefs.recordLocal &&
-      ghost === null &&
-      // A training mission's level is no replay's.
-      getLevel(plan.levelId).mission === undefined &&
-      plan.mode === 'vs-computer'
-    );
-  }
-
   /** Takes the colony sizes once a second, for the recording's score. */
   private readonly sample = (sizes: SizeSample) => this.samples.push(sizes);
 
@@ -590,9 +584,9 @@ export class GameStateService {
     /** The levels the endless run has beaten after this match, if it was one. */
     endlessWins: number | null
   ): MatchEarnings | null {
-    const { timePassed, ghost, dailyDay, online, ...setup } =
-      this.gameStateStore.snapshot();
-    if (ghost !== null || online !== null) {
+    const { timePassed, next, ...setup } = this.gameStateStore.snapshot();
+    const { earns, mission } = this.gameStateStore.matchRules();
+    if (!earns) {
       // Beating your own ghost is for the fun of it - no medallion, no XP.
       // An online match counts for nothing either: it is played for fun.
       return null;
@@ -609,7 +603,6 @@ export class GameStateService {
       }
       case 'vs-computer': {
         const level = getLevel(levelId);
-        const mission = missionOf(levelId);
         const record = matchRecord(untracked(this.playerStore.entities), {
           levelId,
           difficulty,
@@ -626,8 +619,11 @@ export class GameStateService {
           return null;
         }
         return mission === null
-          ? this.progress.recordMatch(record, { dailyDay, endlessWins })
-          : this.progress.recordTraining(record, mission);
+          ? this.progress.recordMatch(record, {
+              dailyDay: next.kind === 'daily' ? next.day : null,
+              endlessWins,
+            })
+          : this.progress.recordTraining(record, missionById(mission));
       }
     }
   }
@@ -643,27 +639,19 @@ export class GameStateService {
       this.initOnline(online, match);
       return;
     }
-    const {
-      width,
-      height,
-      levelId,
-      mode,
-      difficulty,
-      colors,
-      headStart,
-      ghost,
-      matchLevel,
-      ranked,
-    } = this.gameStateStore.snapshot();
-    const planned = matchLevel ?? levelId;
-    if (ranked?.match != null && matchLevel !== null && ghost === null) {
-      this.initRanked(matchLevel, ranked.match);
+    const { width, height, difficulty, colors, headStart, next } =
+      this.gameStateStore.snapshot();
+    const rules = this.gameStateStore.matchRules();
+    if (rules.rankedMatch !== null) {
+      this.initRanked(rules.levelId, rules.rankedMatch);
       return;
     }
+    const ghost = next.kind === 'ghost' ? next.run : null;
+    const planned = rules.levelId;
     this.rankedMatch = null;
     this.plan = {
       levelId: planned,
-      mode: planModeOf(mode, matchLevel),
+      mode: rules.planMode,
       // A level with an opponent of its own - a training mission's - plays it.
       difficulty: levelDifficulty(getLevel(planned), difficulty),
       colors,
@@ -675,7 +663,7 @@ export class GameStateService {
     // Taken as the colonies spawn: the plan keeps it for the whole match,
     // whatever the storage or the player change meanwhile. The computer
     // evolves with the ladder (ADR 0016); a ghost race has none.
-    if (this.evolves()) {
+    if (rules.evolves) {
       this.plan.loadouts = [
         untracked(this.evolution.loadout),
         ghost === null
@@ -688,7 +676,7 @@ export class GameStateService {
     }
     const { spawns, options, evolved } = planMatch(this.plan, ghost);
     this.planEvolved = evolved;
-    const records = this.recordsLocal(this.plan, ghost);
+    const records = rules.recording === 'local' && this.replayPrefs.recordLocal;
     this.recordedAs = records ? 'local' : null;
     this.onlineRef = null;
     this.samples = [];
@@ -726,25 +714,6 @@ export class GameStateService {
       recordedSeats: LOCAL_RECORDED_SEATS,
       ruleset: 'gpu-int',
     });
-  }
-
-  /**
-   * True when the next match is one the evolution plays in: against the
-   * computer or a ghost on the ladder or a generated level - see
-   * `evolution.ts`. The daily level and endless runs feed the leaderboards
-   * and stay plain, as do couch and online matches and the training
-   * missions, which teach the colony every player starts with.
-   */
-  private evolves(): boolean {
-    const { online, mode, matchLevel, dailyDay, endlessMatch } =
-      this.gameStateStore.snapshot();
-    return (
-      online === null &&
-      planModeOf(mode, matchLevel) === 'vs-computer' &&
-      dailyDay === null &&
-      !endlessMatch &&
-      (matchLevel === null || getLevel(matchLevel).mission === undefined)
-    );
   }
 
   /**
@@ -796,9 +765,12 @@ export class GameStateService {
       ranked?.match == null ? null : parseAttemptId(ranked.match.attempt.id);
     const played = attempt?.kind === 'daily' ? attempt.day : day;
     this.gameStateStore.update({
-      matchLevel: dailyLevelId(played),
-      dailyDay: played,
-      ranked,
+      next: {
+        kind: 'daily',
+        day: played,
+        levelId: dailyLevelId(played),
+        ranked,
+      },
     });
   }
 
@@ -808,11 +780,7 @@ export class GameStateService {
    * for that one match; {@link reset} ends it.
    */
   public playMission(id: MissionId): void {
-    this.gameStateStore.update({
-      ...NO_ONE_MATCH,
-      ranked: null,
-      matchLevel: missionById(id).levelId,
-    });
+    this.gameStateStore.update({ next: { kind: 'mission', mission: id } });
   }
 
   /**
@@ -839,26 +807,28 @@ export class GameStateService {
     const { endless, endlessRanked } = this.gameStateStore.snapshot();
     if (endless !== null && !isRunOver(endless)) {
       this.gameStateStore.update({
-        ...NO_ONE_MATCH,
-        matchLevel: endlessLevelId(endless),
-        endlessMatch: true,
-        ranked:
-          ranked === null ? null : { match: ranked.match, note: ranked.note },
+        next: {
+          kind: 'endless',
+          levelId: endlessLevelId(endless),
+          ranked:
+            ranked === null ? null : { match: ranked.match, note: ranked.note },
+        },
         endlessRanked: ranked === null ? endlessRanked : ranked.run,
       });
     }
   }
 
-  /** What the next match is set to outside the setup - see {@link reset}. */
+  /**
+   * What the next match is set to outside the setup, for a rematch - not
+   * as a ranked attempt, which is declared anew. See {@link reset}.
+   */
   public oneMatch(): OneMatch {
-    const { ghost, matchLevel, dailyDay, endlessMatch } =
-      this.gameStateStore.snapshot();
-    return { ghost, matchLevel, dailyDay, endlessMatch };
+    return rematchOf(this.gameStateStore.snapshot().next);
   }
 
   /** Sets the next match as one before it was - for a rematch. */
   public replayOneMatch(match: OneMatch): void {
-    this.gameStateStore.update(match);
+    this.gameStateStore.update({ next: match });
   }
 
   /**
@@ -886,7 +856,7 @@ export class GameStateService {
     if (run === null || run.header.mode !== 'vs-computer') {
       return;
     }
-    this.gameStateStore.update({ ghost: run, matchLevel: run.header.levelId });
+    this.gameStateStore.update({ next: { kind: 'ghost', run } });
   }
 
   /**
@@ -1038,7 +1008,7 @@ export class GameStateService {
    * `EvolutionService.settled`.
    */
   start(): void {
-    const { online, dailyDay } = this.gameStateStore.snapshot();
+    const { online, next } = this.gameStateStore.snapshot();
     if (online !== null) {
       const match = this.onlineMatch(online);
       if (match === null) {
@@ -1049,26 +1019,24 @@ export class GameStateService {
     } else {
       this.initPlayers();
     }
-    if (dailyDay !== null) {
+    if (next.kind === 'daily') {
       // A restart is an attempt as well.
-      this.progress.startDailyAttempt(dailyDay);
+      this.progress.startDailyAttempt(next.day);
     }
     if (this.plan !== null) {
       this.matchAnalytics.started(
         this.plan,
-        this.gameStateStore.snapshot(),
+        this.matchState(),
         this.playerService.getSimulation()
       );
     }
+    const { inSeries, kind } = this.gameStateStore.matchRules();
     this.gameStateStore.update((state) => ({
       currentState: GameState.RUNNING,
-      // A match against a ghost, on a level of its own or online is no
-      // match of a series.
-      series:
-        state.matchLevel === null && online === null ? nextSeries(state) : null,
+      series: inSeries ? nextSeries(state.series, state.seriesLength) : null,
       // Any match but the run's leaves the endless run.
-      endless: state.endlessMatch ? state.endless : null,
-      endlessRanked: state.endlessMatch ? state.endlessRanked : null,
+      endless: kind === 'endless' ? state.endless : null,
+      endlessRanked: kind === 'endless' ? state.endlessRanked : null,
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,
@@ -1124,8 +1092,7 @@ export class GameStateService {
     this.gameStateStore.update(() => ({
       currentState: GameState.END,
       timePassed: 0,
-      ...NO_ONE_MATCH,
-      ranked: null,
+      next: SETUP_MATCH,
     }));
     this.initPlayers();
     this.gameStateStore.update(() => ({
@@ -1143,11 +1110,9 @@ export class GameStateService {
    * the declaration on (ADR 0012), which a pause would quietly miss.
    */
   togglePause(): void {
+    const { canPause } = this.gameStateStore.matchRules();
     this.gameStateStore.update((state) => {
-      if (
-        state.currentState === GameState.RUNNING &&
-        state.ranked?.match == null
-      ) {
+      if (state.currentState === GameState.RUNNING && canPause) {
         return { currentState: GameState.PAUSED };
       }
       if (state.currentState === GameState.PAUSED) {
@@ -1188,17 +1153,13 @@ export class GameStateService {
 }
 
 /**
- * The series the next match belongs to: the one under way between two
- * players, a new one once it has been decided - none for single matches or
- * against the computer.
+ * The series a match of a series belongs to: the one under way, a new one
+ * once it has been decided.
  */
-function nextSeries(state: GameStateState): Series | null {
-  if (state.mode !== 'two-players' || state.seriesLength === 1) {
-    return null;
-  }
-  return state.series !== null && seriesWinner(state.series) === null
-    ? state.series
-    : newSeries(state.seriesLength);
+function nextSeries(series: Series | null, length: SeriesLength): Series {
+  return series !== null && seriesWinner(series) === null
+    ? series
+    : newSeries(length);
 }
 
 /** True when two online setups set the same match up. */
@@ -1227,14 +1188,6 @@ const SERIES_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
   'seriesLength',
   'headStart',
 ];
-
-/**
- * The mode a match is planned in: a level picked for the match is fought
- * against the computer, whatever the mode set.
- */
-function planModeOf(mode: GameMode, matchLevel: string | null): GameMode {
-  return matchLevel === null ? mode : 'vs-computer';
-}
 
 /** An online match about to start: its seed, lockstep and agreed ruleset. */
 interface OnlineMatchStart {

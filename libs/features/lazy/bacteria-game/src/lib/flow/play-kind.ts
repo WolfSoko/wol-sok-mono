@@ -1,18 +1,16 @@
 import type { MatchEndAction } from '../winner-info/winner.component';
 import { NewGameEntry, PlayKind, stepsOf } from '../menu/play-modes';
 import type { GameMode } from '../state/game.states';
+import type { MatchKind } from '../state/match-rules';
 import type { MenuScreen } from './stage-screens';
 
 /** What the mode last played is told from. */
 export interface PlayKindState {
-  /** True while a training mission is set as the match's level. */
-  missionSet: boolean;
+  /** How the next match is played - see `matchRules`. */
+  matchKind: MatchKind;
   /** The mode picked in a new game this visit, null before. */
   lastKind: PlayKind | null;
-  /** True while the daily level is set up. */
-  daily: boolean;
-  /** True in a match of an endless run. */
-  endless: boolean;
+  /** The setup's mode. */
   mode: GameMode;
   freePlay: boolean;
 }
@@ -25,17 +23,15 @@ export interface PlayKindState {
  * the campaign's Continue would come back to.
  */
 export function playKindOf(state: PlayKindState): PlayKind {
-  if (state.missionSet) {
+  const { matchKind } = state;
+  if (matchKind === 'training') {
     return 'training';
   }
   if (state.lastKind !== null && state.lastKind !== 'training') {
     return state.lastKind;
   }
-  if (state.daily) {
-    return 'daily';
-  }
-  if (state.endless) {
-    return 'endless';
+  if (matchKind === 'daily' || matchKind === 'endless') {
+    return matchKind;
   }
   if (state.mode === 'two-players') {
     return 'two-players';

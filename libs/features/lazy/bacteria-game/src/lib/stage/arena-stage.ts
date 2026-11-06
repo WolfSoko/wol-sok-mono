@@ -136,9 +136,8 @@ export class ArenaStage {
    * for a ranked match (`rankedPlan`), from its declaration on.
    */
   private readonly simResolution = computed((): SimResolution =>
-    this.store.online() === null &&
+    !this.store.matchRules().onlineGrid &&
     this.store.endedBy() !== 'forfeit' &&
-    this.store.rankedMatch() === null &&
     !(this.host()?.declaring() ?? false)
       ? this.settings.simResolution()
       : ONLINE_SIM_RESOLUTION

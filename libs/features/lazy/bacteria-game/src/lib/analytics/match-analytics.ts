@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import {
-  getLevel,
   isNewBest,
   type MatchEarnings,
   type MatchOutcome,
@@ -10,6 +9,11 @@ import {
   xpClimb,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type { GameStateState } from '../state/game.states';
+import {
+  type MatchKind as RulesKind,
+  type NextMatch,
+  rankedOutcomeOf,
+} from '../state/match-rules';
 import {
   GameEvents,
   injectGameAnalytics,
@@ -21,14 +25,13 @@ import {
 /** What of the game's state tells how a match is played. */
 export type MatchState = Pick<
   GameStateState,
-  | 'online'
-  | 'ghost'
-  | 'dailyDay'
-  | 'endlessMatch'
-  | 'ranked'
-  | 'endlessRanked'
-  | 'timePassed'
->;
+  'endlessRanked' | 'timePassed'
+> & {
+  /** What the match is - see `matchRules`. */
+  next: NextMatch;
+  /** How it is played, as `matchRules` tells it. */
+  kind: RulesKind;
+};
 
 /**
  * The match statistics: when a match starts, ends and is left before it
@@ -63,7 +66,7 @@ export class MatchAnalytics {
   ): void {
     const match = this.takeRunning();
     if (match === null) return;
-    const result = outcomeName(outcome.winner, match.kind, state);
+    const result = outcomeName(outcome.winner, match.kind, state.next);
     this.analytics.track('level_end', {
       ...match,
       ...earned(earnings),
@@ -111,7 +114,7 @@ export function matchParams(
   state: MatchState,
   simulation: Pick<Simulation, 'kind' | 'ruleset'>
 ): MatchParams {
-  const kind = matchKind(plan, state);
+  const kind = ANALYTICS_KIND[state.kind];
   return {
     level_name: plan.levelId,
     kind,
@@ -120,35 +123,38 @@ export function matchParams(
         ? plan.difficulty
         : 'none',
     ranked:
-      state.ranked !== null || (state.endlessMatch && !!state.endlessRanked),
+      rankedOutcomeOf(state.next) !== null ||
+      (state.kind === 'endless' && state.endlessRanked !== null),
     simulation: simulation.kind,
     ruleset: simulation.ruleset ?? 'float',
   };
 }
 
 /**
- * The mode of a match. Free play is no mode of its own: the user property
- * `free_play` tells it from the campaign's ladder.
+ * The mode of a match as the statistics name it. Free play is no mode of
+ * its own: the user property `free_play` tells it from the campaign's
+ * ladder.
  */
-export function matchKind(plan: MatchPlan, state: MatchState): MatchKind {
-  if (state.online !== null) return 'online';
-  if (state.ghost !== null) return 'ghost';
-  if (getLevel(plan.levelId).mission !== undefined) return 'training';
-  if (state.dailyDay !== null) return 'daily';
-  if (state.endlessMatch) return 'endless';
-  return plan.mode === 'two-players' ? 'two_players' : 'vs_computer';
-}
+const ANALYTICS_KIND: Readonly<Record<RulesKind, MatchKind>> = {
+  'two-players': 'two_players',
+  'vs-computer': 'vs_computer',
+  ghost: 'ghost',
+  training: 'training',
+  daily: 'daily',
+  endless: 'endless',
+  online: 'online',
+};
 
 /** How the match ended for the player at this device. */
 export function outcomeName(
   winner: Player | null,
   kind: MatchKind,
-  state: Pick<MatchState, 'online'>
+  next: NextMatch
 ): MatchOutcomeName {
   if (winner === null) return 'draw';
   if (kind === 'two_players') return 'decided';
   const won =
-    state.online !== null ? winner.id === state.online.seat : !winner.isBot;
+    next.kind === 'online' ? winner.id === next.seat.seat : !winner.isBot;
   return won ? 'win' : 'loss';
 }
 

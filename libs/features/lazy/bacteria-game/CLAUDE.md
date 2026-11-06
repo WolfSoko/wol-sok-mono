@@ -8,7 +8,7 @@ texts) is the lib `feat-shared-bacteria-engine` (`libs/features/bacteria-engine`
 see its `CLAUDE.md`). Paths below that start with `state/`, or name the
 dictionaries in `i18n/`, are in that lib unless they name one of the four
 Angular files that stay here (`game-state.service.ts`, `game.states.ts`,
-`player.service.ts`, `player.store.ts`). The game imports the engine only
+`player.service.ts`, `player.store.ts`) or `match-rules.ts`. The game imports the engine only
 through `@wolsok/feat-shared-bacteria-engine`.
 
 ## Persistence: local storage or Firebase, behind ports
@@ -150,9 +150,11 @@ storage until then. Settings stay with the device either way.
   the owner's toggles (`rankedDaily`, `rankedEndless`: off hides the
   switch) on a device whose GPU passed the self-test and has the integer
   passes (`deviceReady`), to a signed-in player no ban holds; the
-  player's choice is the device setting `ranked`. The store's `ranked`
-  holds the start's outcome: the declared match (`rankedMatch`) and what
-  the result screen says of it (`note`, ids, texts in `boards.ranked`).
+  player's choice is the device setting `ranked`. The store's `next`
+  holds the start's outcome in its `daily` and `endless` variants
+  (`ranked`, read with `rankedOutcomeOf`): the declared match
+  (`matchRules().rankedMatch`) and what the result screen says of it
+  (`note`, ids, texts in `boards.ranked`).
   Specs use `FakeGameRanked`.
 - The owner's moderation reaches the player through the `GameModeration`
   port (`storage/game-moderation.ts`, `FirestoreGameModeration`), asked
@@ -516,6 +518,16 @@ play each other.
   the stage services, never back. A start that has to wait for the clear
   arena listens to `PlayFlow.arenaCleared$` rather than reaching into the
   reset.
+- What the next match is and what follows from it live in one pure
+  module, `state/match-rules.ts` (here, not the engine): the store's
+  `next` (`OneMatch`: `setup`, `ghost`, `mission`, `daily`, `endless`,
+  set for one match and reset to `setup`), merged with the online seat
+  into `nextMatch`, and `matchRules(next, setup)`, which the store exposes
+  as `matchRules`: the kind, level and plan mode, the mission, whether it
+  records, evolves, earns or counts in a series, its ranked attempt, pause,
+  restart, grid and locks. A new kind of match is a variant there and a
+  row in `match-rules.spec.ts`; callers read the rules, never the variant's
+  fields to work out a rule again.
 - The template reads those services directly (`hud.clockText()`,
   `flow.show('menu')`, ...); the component keeps the layout, the
   `@HostListener`s, Escape and the browser leaving fullscreen, the music,

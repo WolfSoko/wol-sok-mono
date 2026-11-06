@@ -24,7 +24,6 @@ import {
   LEVELS,
   MatchEarnings,
   Player,
-  type RankedOutcome,
   type RankedRun,
   type Replay,
   seatFirst,
@@ -33,6 +32,7 @@ import {
   timeLeft,
   winRuleOf,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { matchRules, nextMatchOf, OneMatch, SETUP_MATCH } from './match-rules';
 
 export { DEFAULT_MODE, isGameMode } from '@wolsok/feat-shared-bacteria-engine';
 export type { GameMode } from '@wolsok/feat-shared-bacteria-engine';
@@ -95,34 +95,17 @@ export interface GameStateState {
   series: Series | null;
   /** The recording of the last match but a ghost match, null before one. */
   lastReplay: Replay | null;
-  /**
-   * The recording the opponent plays back in a ghost match - the player's
-   * own earlier run, turned to the other side - null outside one. It holds
-   * for the one match it was set for.
-   */
-  ghost: Replay | null;
   /** A run someone shared in a link, offered as a ghost to fight. */
   challenge: Replay | null;
   /**
-   * A level picked for one match against the computer outside the setup -
-   * a ghost's, the daily level - null otherwise. It holds for that one
-   * match; a reset ends it.
+   * What the next match is set to outside the setup - a ghost, a training
+   * mission, the daily level, the endless run's match, with its ranked
+   * start (ADR 0012) - see `matchRules`. It holds for that one match; a
+   * reset sets it back to `setup`.
    */
-  matchLevel: string | null;
-  /** The UTC day of the daily level the match is played as, null otherwise. */
-  dailyDay: string | null;
-  /** True when the match is the endless run's - it takes the run on. */
-  endlessMatch: boolean;
+  next: OneMatch;
   /** The endless run under way, null outside one - it outlasts a match. */
   endless: EndlessRun | null;
-  /**
-   * What the ranked start of the next daily or endless match came to (ADR
-   * 0012): the attempt it was declared as - null when it plays unranked -
-   * and what the result screen says of it. Null for any other match, and
-   * for one played as practice. It holds for that one match; a reset ends
-   * it.
-   */
-  ranked: RankedOutcome | null;
   /** The ranked endless run under way - null for an unranked one. */
   endlessRanked: RankedRun | null;
   /** The online match this device is connected to, null outside one. */
@@ -150,13 +133,9 @@ export function createInitialState(): GameStateState {
     headStart: 0,
     series: null,
     lastReplay: null,
-    ghost: null,
     challenge: null,
-    matchLevel: null,
-    dailyDay: null,
-    endlessMatch: false,
+    next: SETUP_MATCH,
     endless: null,
-    ranked: null,
     endlessRanked: null,
     online: null,
     waitingForPeer: false,
@@ -176,36 +155,37 @@ export const GameStateStore = signalStore(
       currentState,
       levelId,
       timePassed,
-      matchLevel,
+      next,
       mode,
+      seriesLength,
       endedBy,
       online,
       colors,
-      ranked,
     }) => {
-      const level = computed(() =>
-        getLevel(online()?.levelId ?? matchLevel() ?? levelId())
+      const nextMatch = computed(() => nextMatchOf(next(), online()));
+      const rules = computed(() =>
+        matchRules(nextMatch(), {
+          levelId: levelId(),
+          mode: mode(),
+          seriesLength: seriesLength(),
+        })
       );
+      const level = computed(() => getLevel(rules().levelId));
       const winRule = computed(() => winRuleOf(level()));
       const gameSeconds = computed(() => Math.floor(timePassed() / 1000));
       return {
+        /** What the next match is: online, set outside the setup, or the setup's. */
+        nextMatch,
+        /** How the next match is played and what it counts for. */
+        matchRules: rules,
         /** The level of the next match: one picked for it, or the selected one. */
         level,
         /** How the next match is won. */
         winRule,
-        /** How the next match is played: a level picked for it, vs the computer. */
-        matchMode: computed((): GameMode =>
-          matchLevel() === null ? mode() : 'vs-computer'
-        ),
         /** True while a match is on, paused or not. */
         isMatchOn: computed(() => isMatchOn(currentState())),
         /** True while the match is paused. */
         isPaused: computed(() => currentState() === GameState.PAUSED),
-        /**
-         * The ranked attempt the next match was declared as - null for an
-         * unranked one. A ranked match plays through: no pause, no restart.
-         */
-        rankedMatch: computed(() => ranked()?.match ?? null),
         /** Whole seconds of the match played, as the match clock shows them. */
         gameSeconds,
         /**
