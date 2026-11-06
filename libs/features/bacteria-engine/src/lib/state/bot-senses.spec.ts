@@ -1,3 +1,4 @@
+import { FloodCache } from './bot-navigation';
 import { BotSenses, BotSensesSetup, SensedSimulation } from './bot-senses';
 import { weaponOf } from './evolution';
 import { gameBalance } from './game-balance';
@@ -44,14 +45,17 @@ class FakeSimulation implements SensedSimulation {
   }
 
   public getDynamicWalls() {
+    this.calls.push('getDynamicWalls');
     return this.dynamicWalls;
   }
 
   public summaries() {
+    this.calls.push('summaries');
     return this.colonies;
   }
 
   public blockCounts() {
+    this.calls.push('blockCounts');
     return this.blocks;
   }
 
@@ -135,12 +139,13 @@ describe('BotSenses', () => {
       });
     });
 
-    it('asks the simulation as the engine always did: nutrients first, then the nearest enemy', () => {
+    it('asks the simulation for nutrients, then the nearest enemy, and for the routes and the weapon count only when they are used', () => {
       const simulation = new FakeSimulation();
       const own = colony(0, 100);
+      simulation.colonies = [own];
 
-      senses(simulation).viewFor(
-        bot(),
+      const view = senses(simulation).viewFor(
+        bot({ weapon: 'toxin-bomb' }),
         own,
         { players: [own, colony(1, 50, { x: 240, y: 90 })], neutral: [] },
         WIDTH,
@@ -150,6 +155,14 @@ describe('BotSenses', () => {
       expect(simulation.calls).toEqual([
         'getNutrients',
         'nearestEnemy 0 80,90',
+      ]);
+
+      view.routes.travel({ x: 200, y: 90 });
+      view.weapon?.around();
+
+      expect(simulation.calls.slice(2)).toEqual([
+        'getDynamicWalls',
+        'blockCounts',
       ]);
     });
 
@@ -317,6 +330,31 @@ describe('BotSenses', () => {
       expect(
         sensing.routesFrom(from, WIDTH, HEIGHT).travel(to)
       ).toBeGreaterThan(240);
+
+      simulation.dynamicWalls = [{ ...wall, solid: true, warning: 0 }];
+
+      expect(
+        sensing.routesFrom(from, WIDTH, HEIGHT).travel(to)
+      ).toBeGreaterThan(240);
+    });
+
+    it('keeps the grid, and so its floods, while the moving walls stand still', () => {
+      const flood = jest.spyOn(FloodCache.prototype, 'flood');
+      const simulation = new FakeSimulation();
+      const sensing = senses(simulation);
+      const gridOfCall = (call: number) => flood.mock.calls[call][0];
+      simulation.dynamicWalls = [{ ...wall, solid: true, warning: 0 }];
+
+      sensing.routesFrom(from, WIDTH, HEIGHT).travel(to);
+      // The same walls, handed out anew: the grid is kept by where they stand.
+      simulation.dynamicWalls = [{ ...wall, solid: true, warning: 0 }];
+      sensing.routesFrom(from, WIDTH, HEIGHT).travel(to);
+      simulation.dynamicWalls = [{ ...wall, x: 140, solid: true, warning: 0 }];
+      sensing.routesFrom(from, WIDTH, HEIGHT).travel(to);
+
+      expect(gridOfCall(1)).toBe(gridOfCall(0));
+      expect(gridOfCall(2)).not.toBe(gridOfCall(0));
+      flood.mockRestore();
     });
 
     it('lays the static walls out once per arena size', () => {

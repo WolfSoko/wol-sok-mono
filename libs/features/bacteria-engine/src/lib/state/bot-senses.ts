@@ -101,8 +101,9 @@ export class BotSenses {
     height: number
   ): BotView {
     const { balance, simulation, win } = this.setup;
-    // Asked in the order the engine always asked, so a simulation that
-    // counts its calls sees the same ones.
+    // The nutrients before the nearest enemy, the routes and the weapon
+    // count only when the bot uses them: a simulation sees the same calls
+    // in every match, so a replay plays the same.
     const nutrients = simulation.getNutrients();
     const objective = this.hillAt(width, height);
     const weapon = this.weaponView(player, width);

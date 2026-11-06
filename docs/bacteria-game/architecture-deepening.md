@@ -439,6 +439,11 @@ is needed (CI has no GPU).
 
 ## 15. `BotSenses`
 
+**Done** in [#2791](https://github.com/WolfSoko/wol-sok-mono/issues/2791):
+`state/bot-senses.ts`, with `viewFor(player, own, colonies, width, height)`
+and `routesFrom(from, width, height)`; the line numbers below are those
+before it.
+
 **Today.** `state/match-engine.ts` (1105 lines) builds the bots' world
 next to input recording, ghosts, weapons and scoring. That world is the nav
 grid, the floods, the hill and the weapon view (:789-981, about 190 lines,
