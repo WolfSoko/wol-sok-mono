@@ -35,6 +35,8 @@ export class FakeTimestamp {
 
   public static fromMillis(ms: number): FakeTimestamp {
     const seconds = Math.floor(ms / 1000);
+    // Rounded, not floored as the SDK does: a float of ms cannot hold every
+    // nanosecond, and rounding gives back those a `toMillis()` came from.
     return new FakeTimestamp(seconds, Math.round((ms - seconds * 1000) * 1e6));
   }
 
@@ -99,15 +101,41 @@ interface QuerySnapshot {
 
 interface Listener {
   ref: Listened;
+  /** Told of metadata changes too (`includeMetadataChanges`). */
+  metadata: boolean;
   emit(): void;
 }
 
-/** A write staged by a transaction or a batch. */
-type Staged = () => void;
+/** A write staged by a transaction or a batch, applied at its commit. */
+interface Staged {
+  path: string;
+  /** An update: the document has to be there at the commit. */
+  needsDoc: boolean;
+  apply(): void;
+}
+
+/**
+ * Lets the snapshots the fake queued so far reach their listeners: like the
+ * SDK, the fake calls a listener back asynchronously, never inside the call
+ * that caused it.
+ */
+export async function settleSnapshots(): Promise<void> {
+  for (let i = 0; i < 100; i++) {
+    await Promise.resolve();
+  }
+}
 
 /** An error with the code the SDK gives it. */
 function firestoreError(code: string): Error {
   return Object.assign(new Error(code), { code });
+}
+
+/**
+ * Runs the callback in a microtask - through a promise, not
+ * `queueMicrotask`, which Jest's fake timers hold back.
+ */
+function later(callback: () => void): void {
+  void Promise.resolve().then(callback);
 }
 
 /** A promise that never settles: a call whose answer never arrives. */
@@ -115,7 +143,27 @@ function never<T>(): Promise<T> {
   return new Promise<T>(() => undefined);
 }
 
-/** Orders two field values, timestamps by their time. */
+/** A field value's type, as Firestore orders and compares by it. */
+function typeOf(value: unknown): string {
+  if (value === null) {
+    return 'null';
+  }
+  if (value instanceof FakeTimestamp) {
+    return 'timestamp';
+  }
+  return Array.isArray(value) ? 'array' : typeof value;
+}
+
+/** Whether two values compare at all: Firestore never compares across types. */
+function comparable(a: unknown, b: unknown): boolean {
+  const type = typeOf(a);
+  return (
+    type === typeOf(b) &&
+    ['number', 'string', 'boolean', 'timestamp'].includes(type)
+  );
+}
+
+/** Orders two comparable values, timestamps by their time. */
 function compare(a: unknown, b: unknown): number {
   const left = a instanceof FakeTimestamp ? a.toMillis() : a;
   const right = b instanceof FakeTimestamp ? b.toMillis() : b;
@@ -125,14 +173,29 @@ function compare(a: unknown, b: unknown): number {
   return (left as number | string) < (right as number | string) ? -1 : 1;
 }
 
+/** Equality by value, arrays and maps included, never across types. */
+function equal(a: unknown, b: unknown): boolean {
+  if (typeOf(a) !== typeOf(b)) {
+    return false;
+  }
+  return comparable(a, b)
+    ? compare(a, b) === 0
+    : JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** A range filter: only a field of the value's own type matches. */
+const range =
+  (holds: (order: number) => boolean) => (field: unknown, value: unknown) =>
+    comparable(field, value) && holds(compare(field, value));
+
 const OPERATORS: Record<string, (field: unknown, value: unknown) => boolean> = {
-  '==': (field, value) => compare(field, value) === 0,
-  '<': (field, value) => field !== undefined && compare(field, value) < 0,
-  '<=': (field, value) => field !== undefined && compare(field, value) <= 0,
-  '>': (field, value) => field !== undefined && compare(field, value) > 0,
-  '>=': (field, value) => field !== undefined && compare(field, value) >= 0,
+  '==': equal,
+  '<': range((order) => order < 0),
+  '<=': range((order) => order <= 0),
+  '>': range((order) => order > 0),
+  '>=': range((order) => order >= 0),
   'array-contains': (field, value) =>
-    Array.isArray(field) && field.includes(value),
+    Array.isArray(field) && field.some((each) => equal(each, value)),
 };
 
 /**
@@ -263,17 +326,15 @@ export class FakeFirebase {
       const staged: Staged[] = [];
       return {
         set: (ref: DocRef, data: FakeDoc, options?: { merge?: boolean }) => {
-          staged.push(() => this.set(ref.path, data, options));
+          staged.push(this.stagedSet(ref.path, data, options));
         },
         update: (ref: DocRef, data: FakeDoc) => {
-          staged.push(() => this.update(ref.path, data));
+          staged.push(this.stagedUpdate(ref.path, data));
         },
         delete: (ref: DocRef) => {
-          staged.push(() => this.remove(ref.path));
+          staged.push(this.stagedDelete(ref.path));
         },
-        commit: async () => {
-          staged.forEach((write) => write());
-        },
+        commit: async () => this.commit(staged),
       };
     },
     runTransaction: async <T>(
@@ -290,7 +351,8 @@ export class FakeFirebase {
       next: (snapshot: { val(): unknown }) => void
     ): (() => void) => {
       this.listened.push(`rtdb:${ref.path}`);
-      const emit = () => next({ val: () => this.values.get(ref.path) ?? null });
+      const emit = () =>
+        later(() => next({ val: () => this.values.get(ref.path) ?? null }));
       const emits = this.valueListeners.get(ref.path) ?? new Set();
       emits.add(emit);
       this.valueListeners.set(ref.path, emits);
@@ -331,9 +393,14 @@ export class FakeFirebase {
     this.valueListeners.get(path)?.forEach((emit) => emit());
   }
 
-  /** Tells every listener again, as a change of the metadata does. */
+  /**
+   * Tells the listeners that take metadata changes again, as a change of
+   * `fromCache` does.
+   */
   public resend(): void {
-    [...this.listeners].forEach((listener) => listener.emit());
+    Array.from(this.listeners)
+      .filter((listener) => listener.metadata)
+      .forEach((listener) => listener.emit());
   }
 
   /** The paths deleted, in order. */
@@ -373,27 +440,47 @@ export class FakeFirebase {
   /** The direct children of a collection, the query's constraints applied. */
   private listOf(ref: CollectionRef | QueryRef): QuerySnapshot {
     const prefix = `${ref.path}/`;
+    const constraints = ref.kind === 'query' ? ref.constraints : [];
+    const orders = constraints.filter(
+      (constraint) => constraint.type === 'orderBy'
+    );
+    // As Firestore: filters first, a document without an ordered field left
+    // out, sorted by the first orderBy, then the next; the limit last.
     let docs = [...this.docs.keys()]
       .filter(
         (path) =>
           path.startsWith(prefix) && !path.slice(prefix.length).includes('/')
       )
-      .map((path) => this.snapshot(path));
-    for (const constraint of ref.kind === 'query' ? ref.constraints : []) {
-      if (constraint.type === 'where') {
-        const matches = OPERATORS[constraint.op];
-        docs = docs.filter((doc) =>
-          matches(doc.get(constraint.field), constraint.value)
-        );
-      } else if (constraint.type === 'orderBy') {
-        const sign = constraint.direction === 'desc' ? -1 : 1;
-        docs = docs
-          .filter((doc) => doc.get(constraint.field) !== undefined)
-          .sort(
-            (a, b) =>
-              sign * compare(a.get(constraint.field), b.get(constraint.field))
-          );
-      } else {
+      .map((path) => this.snapshot(path))
+      .filter((doc) =>
+        constraints.every(
+          (constraint) =>
+            constraint.type !== 'where' ||
+            OPERATORS[constraint.op](
+              doc.get(constraint.field),
+              constraint.value
+            )
+        )
+      )
+      .filter((doc) =>
+        orders.every((order) => doc.get(order.field) !== undefined)
+      )
+      .sort((a, b) => {
+        for (const order of orders) {
+          const sign = order.direction === 'desc' ? -1 : 1;
+          const left = a.get(order.field);
+          const right = b.get(order.field);
+          const ordered = comparable(left, right)
+            ? compare(left, right)
+            : compare(typeOf(left), typeOf(right));
+          if (ordered !== 0) {
+            return sign * ordered;
+          }
+        }
+        return 0;
+      });
+    for (const constraint of constraints) {
+      if (constraint.type === 'limit') {
         docs = docs.slice(0, constraint.count);
       }
     }
@@ -424,30 +511,43 @@ export class FakeFirebase {
     ]);
   }
 
-  /** `onSnapshot(ref, [options,] next, [error])`, emitting at once. */
+  /** `onSnapshot(ref, [options,] next, [error])`, telling the first snapshot soon. */
   private listen(ref: Listened, args: unknown[]): () => void {
+    if (
+      args.some(
+        (arg) => typeof arg === 'object' && arg !== null && 'next' in arg
+      )
+    ) {
+      throw new Error('The fake takes onSnapshot callbacks, not an observer');
+    }
     const [next, error] = args.filter(
       (arg): arg is (value: unknown) => void => typeof arg === 'function'
+    );
+    const options = args.find(
+      (arg): arg is { includeMetadataChanges?: boolean } =>
+        typeof arg === 'object' && arg !== null
     );
     this.listened.push(ref.path);
     if (ref.kind !== 'doc') {
       this.logQuery(ref);
     }
     let stopped = false;
+    const tellNow = () => {
+      if (stopped) {
+        return;
+      }
+      if (this.refused.has(ref.path)) {
+        stopped = true;
+        this.listeners.delete(listener);
+        error?.(firestoreError('permission-denied'));
+        return;
+      }
+      next?.(ref.kind === 'doc' ? this.snapshot(ref.path) : this.listOf(ref));
+    };
     const listener: Listener = {
       ref,
-      emit: () => {
-        if (stopped) {
-          return;
-        }
-        if (this.refused.has(ref.path)) {
-          stopped = true;
-          this.listeners.delete(listener);
-          error?.(firestoreError('permission-denied'));
-          return;
-        }
-        next?.(ref.kind === 'doc' ? this.snapshot(ref.path) : this.listOf(ref));
-      },
+      metadata: options?.includeMetadataChanges === true,
+      emit: () => later(tellNow),
     };
     this.listeners.add(listener);
     if (!this.pending.has(ref.path)) {
@@ -538,20 +638,56 @@ export class FakeFirebase {
       throw firestoreError('unavailable');
     }
     const staged: Staged[] = [];
-    const stage = (path: string, write: Staged) => {
-      this.check(path);
-      staged.push(write);
-    };
     const transaction = {
       get: async (ref: DocRef) => this.read(ref),
-      set: (ref: DocRef, data: FakeDoc, options?: { merge?: boolean }) =>
-        stage(ref.path, () => this.set(ref.path, data, options)),
-      update: (ref: DocRef, data: FakeDoc) =>
-        stage(ref.path, () => this.update(ref.path, data)),
-      delete: (ref: DocRef) => stage(ref.path, () => this.remove(ref.path)),
+      set: (ref: DocRef, data: FakeDoc, options?: { merge?: boolean }) => {
+        staged.push(this.stagedSet(ref.path, data, options));
+      },
+      update: (ref: DocRef, data: FakeDoc) => {
+        staged.push(this.stagedUpdate(ref.path, data));
+      },
+      delete: (ref: DocRef) => {
+        staged.push(this.stagedDelete(ref.path));
+      },
     };
     const result = await run(transaction);
-    staged.forEach((write) => write());
+    this.commit(staged);
     return this.lateCommit ? never() : result;
+  }
+
+  private stagedSet(
+    path: string,
+    data: FakeDoc,
+    options?: { merge?: boolean; mergeFields?: string[] }
+  ): Staged {
+    return {
+      path,
+      needsDoc: false,
+      apply: () => this.set(path, data, options),
+    };
+  }
+
+  private stagedUpdate(path: string, data: FakeDoc): Staged {
+    return { path, needsDoc: true, apply: () => this.update(path, data) };
+  }
+
+  private stagedDelete(path: string): Staged {
+    return { path, needsDoc: false, apply: () => this.remove(path) };
+  }
+
+  /**
+   * Applies the staged writes all or none: every path is checked against
+   * the rules, and every update against its document, before the first one.
+   */
+  private commit(staged: Staged[]): void {
+    const present = new Set(this.docs.keys());
+    for (const write of staged) {
+      this.check(write.path);
+      if (write.needsDoc && !present.has(write.path)) {
+        throw firestoreError('not-found');
+      }
+      present.add(write.path);
+    }
+    staged.forEach((write) => write.apply());
   }
 }

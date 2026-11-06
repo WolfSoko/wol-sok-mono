@@ -3,14 +3,8 @@ import {
   FakeFirebase,
   FakeTimestamp,
   SERVER_TIMESTAMP,
+  settleSnapshots,
 } from './fake-firebase-sdk';
-
-/** Lets the promises queued so far run. */
-async function settle(): Promise<void> {
-  for (let i = 0; i < 20; i++) {
-    await Promise.resolve();
-  }
-}
 
 describe('FakeFirebase', () => {
   let fake: FakeFirebase;
@@ -104,6 +98,24 @@ describe('FakeFirebase', () => {
       expect(fake.deleted()).toEqual(['a/2']);
     });
 
+    it('commits a batch whole or not at all', async () => {
+      fake.refused.add('a/2');
+      const refused = sdk.writeBatch();
+      refused.set(sdk.doc({}, 'a/1'), { n: 1 });
+      refused.set(sdk.doc({}, 'a/2'), { n: 2 });
+      const missing = sdk.writeBatch();
+      missing.set(sdk.doc({}, 'a/1'), { n: 1 });
+      missing.update(sdk.doc({}, 'a/3'), { n: 3 });
+
+      await expect(refused.commit()).rejects.toMatchObject({
+        code: 'permission-denied',
+      });
+      await expect(missing.commit()).rejects.toMatchObject({
+        code: 'not-found',
+      });
+      expect(fake.writes).toEqual([]);
+    });
+
     it('refuses reads and writes of a refused path', async () => {
       fake.refused.add('a/1');
       const ref = sdk.doc({}, 'a/1');
@@ -167,64 +179,115 @@ describe('FakeFirebase', () => {
       expect(snapshot.docs.map((doc) => doc.id)).toEqual(['b']);
     });
 
+    it('orders by the first orderBy, then the next, and limits last', async () => {
+      fake.docs.set('s/x', { sort: 1, at: 2 });
+      fake.docs.set('s/y', { sort: 2, at: 9 });
+      fake.docs.set('s/z', { sort: 1, at: 1 });
+
+      const snapshot = await sdk.getDocs(
+        sdk.query(
+          sdk.collection({}, 's'),
+          sdk.limit(2),
+          sdk.orderBy('sort', 'desc'),
+          sdk.orderBy('at')
+        )
+      );
+
+      expect(snapshot.docs.map((doc) => doc.id)).toEqual(['y', 'z']);
+    });
+
+    it('never compares across types, and compares arrays by value', async () => {
+      fake.docs.set('t/n', { seen: 5, tags: ['a', 'b'] });
+      fake.docs.set('t/s', { seen: FakeTimestamp.fromMillis(5) });
+      fake.docs.set('t/z', { seen: null });
+
+      const later = await sdk.getDocs(
+        sdk.query(
+          sdk.collection({}, 't'),
+          sdk.where('seen', '>=', FakeTimestamp.fromMillis(0))
+        )
+      );
+      const tagged = await sdk.getDocs(
+        sdk.query(sdk.collection({}, 't'), sdk.where('tags', '==', ['a', 'b']))
+      );
+      const below = await sdk.getDocs(
+        sdk.query(sdk.collection({}, 't'), sdk.where('seen', '<', 10))
+      );
+
+      expect(later.docs.map((doc) => doc.id)).toEqual(['s']);
+      expect(tagged.docs.map((doc) => doc.id)).toEqual(['n']);
+      expect(below.docs.map((doc) => doc.id)).toEqual(['n']);
+    });
+
     it('throws for an operator it does not know, rather than guess', () => {
       expect(() => sdk.where('a', 'not-in', [])).toThrow(/not-in/);
     });
   });
 
   describe('listeners', () => {
-    it('tells a document at once and on each write, until stopped', async () => {
+    it('tells a document soon, never inside the call, and on each write until stopped', async () => {
       const seen: unknown[] = [];
       const stop = sdk.onSnapshot(
         sdk.doc({}, 'a/1'),
-        { includeMetadataChanges: true },
         (snapshot: { get(field: string): unknown }) =>
           seen.push(snapshot.get('n'))
       );
+      expect(seen).toEqual([]);
+      await settleSnapshots();
 
       await sdk.setDoc(sdk.doc({}, 'a/1'), { n: 1 });
+      await settleSnapshots();
       stop();
       await sdk.setDoc(sdk.doc({}, 'a/1'), { n: 2 });
+      await settleSnapshots();
 
       expect(seen).toEqual([undefined, 1]);
     });
 
-    it("tells a collection of its children's changes", () => {
+    it("tells a collection of its children's changes", async () => {
       const seen: string[][] = [];
       sdk.onSnapshot(
         sdk.collection({}, 'n'),
         (snapshot: { docs: { id: string }[] }) =>
           seen.push(snapshot.docs.map((doc) => doc.id))
       );
+      await settleSnapshots();
 
       fake.put('n/a', { x: 1 });
+      await settleSnapshots();
       fake.put('n/a/deeper/z', { x: 1 });
+      await settleSnapshots();
       fake.put('n/a', null);
+      await settleSnapshots();
 
       expect(seen).toEqual([[], ['a'], []]);
     });
 
-    it('waits with a pending document until it is written', () => {
+    it('waits with a pending document until it is written', async () => {
       fake.pending.add('a/1');
       const seen: unknown[] = [];
       sdk.onSnapshot(sdk.doc({}, 'a/1'), (snapshot: { exists(): boolean }) =>
         seen.push(snapshot.exists())
       );
+      await settleSnapshots();
       expect(seen).toEqual([]);
 
       fake.put('a/1', {});
+      await settleSnapshots();
 
       expect(seen).toEqual([true]);
     });
 
-    it('tells a refused listener its error and nothing more', () => {
+    it('tells a refused listener its error and nothing more', async () => {
       fake.refused.add('a/1');
       const next = jest.fn();
       const error = jest.fn();
 
       sdk.onSnapshot(sdk.doc({}, 'a/1'), next, error);
+      await settleSnapshots();
       fake.refused.delete('a/1');
       fake.put('a/1', {});
+      await settleSnapshots();
 
       expect(next).not.toHaveBeenCalled();
       expect(error).toHaveBeenCalledWith(
@@ -232,27 +295,41 @@ describe('FakeFirebase', () => {
       );
     });
 
-    it('tells everyone again on a resend, with the cache flag', () => {
+    it('resends only to listeners that take metadata changes, with the cache flag', async () => {
       const flags: boolean[] = [];
+      const plain = jest.fn();
       sdk.onSnapshot(
         sdk.doc({}, 'a/1'),
+        { includeMetadataChanges: true },
         (snapshot: { metadata: { fromCache: boolean } }) =>
           flags.push(snapshot.metadata.fromCache)
       );
+      sdk.onSnapshot(sdk.doc({}, 'a/1'), plain);
+      await settleSnapshots();
 
       fake.fromCache = true;
       fake.resend();
+      await settleSnapshots();
 
       expect(flags).toEqual([false, true]);
+      expect(plain).toHaveBeenCalledTimes(1);
     });
 
-    it('tells the Realtime Database values, and gives no database on request', () => {
+    it('refuses an observer object rather than ignore it', () => {
+      expect(() =>
+        sdk.onSnapshot(sdk.doc({}, 'a/1'), { next: () => undefined })
+      ).toThrow(/observer/);
+    });
+
+    it('tells the Realtime Database values, and gives no database on request', async () => {
       const values: unknown[] = [];
       fake.rtdbSdk.onValue(fake.rtdbSdk.ref({}, 'bans/ada'), (snapshot) =>
         values.push(snapshot.val())
       );
+      await settleSnapshots();
 
       fake.putValue('bans/ada', 0);
+      await settleSnapshots();
 
       expect(values).toEqual([null, 0]);
       expect(fake.listened).toEqual(['rtdb:bans/ada']);
@@ -310,7 +387,7 @@ describe('FakeFirebase', () => {
       const answered = jest.fn();
       fake.hanging = true;
       void sdk.runTransaction({}, async () => undefined).then(answered);
-      await settle();
+      await settleSnapshots();
       expect(answered).not.toHaveBeenCalled();
 
       fake.hanging = false;
@@ -323,7 +400,7 @@ describe('FakeFirebase', () => {
           )
         )
         .then(answered);
-      await settle();
+      await settleSnapshots();
       expect(answered).not.toHaveBeenCalled();
       expect(fake.docs.get('a/1')).toEqual({ n: 1 });
     });
@@ -332,7 +409,7 @@ describe('FakeFirebase', () => {
       const answered = jest.fn();
       fake.hangingReads = true;
       void sdk.getDoc(ref()).then(answered);
-      await settle();
+      await settleSnapshots();
 
       expect(answered).not.toHaveBeenCalled();
     });

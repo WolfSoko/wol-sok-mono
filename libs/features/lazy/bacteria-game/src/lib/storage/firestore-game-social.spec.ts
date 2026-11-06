@@ -4,6 +4,7 @@ import {
   FakeFirebase,
   FakeTimestamp,
   SERVER_TIMESTAMP,
+  settleSnapshots,
 } from '../../testing/fake-firebase-sdk';
 import { FirestoreGameSocial, inviteToken } from './firestore-game-social';
 import type { QueueEntry } from './game-social';
@@ -26,23 +27,26 @@ function socialOf(firestore: FakeFirebase): FirestoreGameSocial {
 const NOW = FakeTimestamp.fromMillis(FAKE_SERVER_TIME);
 
 describe('FirestoreGameSocial profile', () => {
-  it('tells no profile until the server says there is none', () => {
+  it('tells no profile until the server says there is none', async () => {
     const firestore = new FakeFirebase();
     firestore.fromCache = true;
     const seen: unknown[] = [];
     socialOf(firestore)
       .watchProfile('ada')
       .subscribe((value) => seen.push(value));
+    await settleSnapshots();
 
     expect(seen).toEqual([]);
 
     firestore.fromCache = false;
     firestore.resend();
+    await settleSnapshots();
     expect(seen).toEqual([null]);
 
     firestore.docs.set('profiles/ada', { name: 'Ada' });
     firestore.fromCache = true;
     firestore.resend();
+    await settleSnapshots();
     expect(seen).toEqual([null, { name: 'Ada' }]);
   });
 

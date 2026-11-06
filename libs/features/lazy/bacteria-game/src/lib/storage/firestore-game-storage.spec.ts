@@ -1,5 +1,5 @@
 import { BehaviorSubject, Subscription } from 'rxjs';
-import { FakeFirebase } from '../../testing/fake-firebase-sdk';
+import { FakeFirebase, settleSnapshots } from '../../testing/fake-firebase-sdk';
 import { FirestoreGameStorage } from './firestore-game-storage';
 
 const KEY = 'bacteria-game.progress';
@@ -10,13 +10,6 @@ const PATH_ALICE = `players/alice/storage/${KEY}`;
 function valueOf(firestore: FakeFirebase, uid: string): unknown {
   const doc = firestore.docs.get(`players/${uid}/storage/${KEY}`);
   return doc === undefined ? null : JSON.parse(doc['json'] as string);
-}
-
-/** Lets the promises and microtasks queued so far run. */
-async function settle(): Promise<void> {
-  for (let i = 0; i < 100; i++) {
-    await Promise.resolve();
-  }
 }
 
 describe('FirestoreGameStorage', () => {
@@ -48,10 +41,10 @@ describe('FirestoreGameStorage', () => {
 
   it('reads nothing stored as null, then each value stored', async () => {
     const values = watched();
-    await settle();
+    await settleSnapshots();
 
     storage.update(KEY, addOne);
-    await settle();
+    await settleSnapshots();
 
     expect(values).toEqual([null, { count: 1 }]);
   });
@@ -60,16 +53,16 @@ describe('FirestoreGameStorage', () => {
     storage.update(KEY, addOne);
     storage.update(KEY, addOne);
     storage.update(KEY, addOne);
-    await settle();
+    await settleSnapshots();
 
     expect(valueOf(firestore, 'alice')).toEqual({ count: 3 });
   });
 
   it('skips a change that leaves the value as it is', async () => {
     storage.update(KEY, () => ({ count: 1 }));
-    await settle();
+    await settleSnapshots();
     storage.update(KEY, () => ({ count: 1 }));
-    await settle();
+    await settleSnapshots();
 
     expect(firestore.writes.length).toBe(1);
   });
@@ -77,9 +70,9 @@ describe('FirestoreGameStorage', () => {
   it('skips a write of the value last seen', async () => {
     watched();
     storage.write(KEY, { count: 1 });
-    await settle();
+    await settleSnapshots();
     storage.write(KEY, { count: 1 });
-    await settle();
+    await settleSnapshots();
 
     expect(firestore.writes.length).toBe(1);
   });
@@ -88,7 +81,7 @@ describe('FirestoreGameStorage', () => {
     jest.useFakeTimers();
     firestore.offline = true;
     storage.update(KEY, addOne);
-    await settle();
+    await settleSnapshots();
     expect(valueOf(firestore, 'alice')).toBeNull();
 
     firestore.offline = false;
@@ -104,7 +97,7 @@ describe('FirestoreGameStorage', () => {
     firestore.refused.add(PATH_ALICE);
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
     storage.update(KEY, addOne);
-    await settle();
+    await settleSnapshots();
 
     firestore.refused.delete(PATH_ALICE);
     await jest.advanceTimersByTimeAsync(60_000);
@@ -114,13 +107,13 @@ describe('FirestoreGameStorage', () => {
 
   it('answers for the next player after a switch', async () => {
     storage.update(KEY, () => ({ owner: 'alice' }));
-    await settle();
+    await settleSnapshots();
     const values = watched();
-    await settle();
+    await settleSnapshots();
 
     players.next('bob');
     storage.update(KEY, () => ({ owner: 'bob' }));
-    await settle();
+    await settleSnapshots();
 
     expect(values).toEqual([{ owner: 'alice' }, null, { owner: 'bob' }]);
     expect(valueOf(firestore, 'alice')).toEqual({ owner: 'alice' });
@@ -129,11 +122,11 @@ describe('FirestoreGameStorage', () => {
   it('holds back what is stored while nobody plays, for the next guest', async () => {
     players.next(null);
     storage.update(KEY, addOne);
-    await settle();
+    await settleSnapshots();
     expect(firestore.writes.length).toBe(0);
 
     players.next('guest');
-    await settle();
+    await settleSnapshots();
 
     expect(valueOf(firestore, 'guest')).toEqual({ count: 1 });
     expect(valueOf(firestore, 'alice')).toBeNull();
@@ -144,11 +137,11 @@ describe('FirestoreGameStorage', () => {
     storage = new FirestoreGameStorage(firestore.connection(), players, banned);
     storage.update(KEY, addOne);
     storage.write('bacteria-game.settings', { sound: true });
-    await settle();
+    await settleSnapshots();
     expect(firestore.writes.length).toBe(0);
 
     banned.next(false);
-    await settle();
+    await settleSnapshots();
 
     expect(valueOf(firestore, 'alice')).toEqual({ count: 1 });
     expect(firestore.writes.length).toBe(2);

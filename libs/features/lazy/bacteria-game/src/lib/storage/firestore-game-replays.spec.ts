@@ -10,6 +10,7 @@ import {
   FakeBytes,
   FakeFirebase,
   FakeTimestamp,
+  settleSnapshots,
 } from '../../testing/fake-firebase-sdk';
 import {
   COMMAND_TTL_MS,
@@ -145,6 +146,7 @@ describe('FirestoreGameReplays', () => {
       const subscription = replays
         .watchSaved('l_x')
         .subscribe((saved) => seen.push(saved));
+      await settleSnapshots();
       expect(seen).toEqual([false]);
 
       firestore.refused.delete('replays/l_x');
@@ -172,7 +174,12 @@ describe('FirestoreGameReplays', () => {
       hint: 40,
       state: 'submitted',
     });
-    firestore.docs.set('replays/broken', { players: ['ada'], kind: 'what' });
+    // Through the query, but no listing: `listingOf` must drop it.
+    firestore.docs.set('replays/broken', {
+      players: ['ada'],
+      kind: 'what',
+      createdAt: at(400),
+    });
 
     const listed = await replays.listMine(80);
 
