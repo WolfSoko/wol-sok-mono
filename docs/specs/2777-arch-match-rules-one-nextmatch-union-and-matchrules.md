@@ -79,10 +79,12 @@ by every caller from five loose store fields.
    was two players (it read the setup's mode). It now reads the rules'
    `kind`, which is `online`: the couch rivalry is no online match's, and an
    online match never counts for it (`earns` is false).
-10. **`playGhost` refuses a run on a training mission's level.** Training
+10. **A run on a training mission's level is no ghost to race.** Training
     is the `mission` variant only (decision 5), so such a ghost would play
-    as a plain ghost. The game never records one (a training match leaves
-    no `lastReplay`); only a crafted challenge link could carry it.
+    as a plain ghost. One predicate, `canRaceAsGhost`, keeps it out of
+    `playGhost`, a challenge link (`offerChallenge`) and the result
+    screen's ghost button. The game never records such a run (a training
+    match leaves no `lastReplay`); only a crafted link could carry one.
 
 ## Acceptance
 
