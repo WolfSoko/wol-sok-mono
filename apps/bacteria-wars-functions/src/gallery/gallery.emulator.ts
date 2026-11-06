@@ -5,16 +5,15 @@ import {
   type ReplayHeader,
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import { DAY_MS } from '../boards/budgets';
 import type { Verdict } from '../boards/verify';
-import { clearBanCache } from '../limits';
 import { runReplayCommand } from '../replays/command';
 import { forgetPlayerReplays } from '../replays/forget';
 import { dailyReplay, TICKS } from '../testing/daily-replay';
 import { featureBest } from './feature-best';
 import { publicProfileChanged } from './publish';
+import { useEmulatorDb } from '../testing/emulator';
 
 /**
  * The gallery against the Firestore emulator (`test-emulator`):
@@ -22,25 +21,13 @@ import { publicProfileChanged } from './publish';
  * once, and `remove` takes it down again; the owner's `feature`,
  * `unfeature` and `anonymise` curate it by hand.
  */
-const PROJECT = 'demo-bacteria-functions';
-if (getApps().length === 0) {
-  initializeApp({ projectId: PROJECT });
-}
-const db = getFirestore();
+const db = useEmulatorDb();
 
 const HOUR = 3_600_000;
 /** 04:00 on the 26th: the pick for the 25th. */
 const NOW = Date.UTC(2026, 9, 26, 3);
 const PLAYED = Date.UTC(2026, 9, 25, 18);
 const old = async () => ({ createdAt: NOW - 30 * DAY_MS, google: true });
-
-beforeEach(async () => {
-  clearBanCache();
-  await fetch(
-    `http://${process.env['FIRESTORE_EMULATOR_HOST']}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
-});
 
 /**
  * A local match of `uid` against the computer, stored as acceptReplay does

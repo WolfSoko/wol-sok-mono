@@ -9,6 +9,7 @@
     "jest.emulator.config.ts",
     "src/**/*.spec.ts",
     "src/**/*.emulator.ts",
+    "src/testing/**/*.ts",
     "src/**/*.d.ts"
   ]
 }

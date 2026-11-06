@@ -3,8 +3,7 @@ import {
   type Replay,
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
 import { forgetPlayerReplays } from '../replays/forget';
 import { AT, ATTEMPT, dailyReplay, TICKS } from '../testing/daily-replay';
@@ -13,17 +12,14 @@ import { rankDaily } from './rank-daily';
 import { type Verdict } from './verify';
 import { verifyNow } from './verify-now';
 import { verifyDailySlice } from './verify-slice';
+import { useEmulatorDb } from '../testing/emulator';
 
 /**
  * The daily board against the Firestore emulator (`test-emulator`):
  * declared attempts into `dailyRuns` and the board, the verification slice
  * and the hourly sweeps.
  */
-const PROJECT = 'demo-bacteria-functions';
-if (getApps().length === 0) {
-  initializeApp({ projectId: PROJECT });
-}
-const db = getFirestore();
+const db = useEmulatorDb();
 
 const HOUR = 3_600_000;
 const NOW = Date.UTC(2026, 9, 25, 12);
@@ -31,14 +27,6 @@ const DAY = '2026-10-25';
 const BOARD = `daily-${DAY}`;
 /** A minute after the match ended. */
 const ARRIVED = AT + 5_000 + 60_000 + 60_000;
-
-beforeEach(async () => {
-  clearBanCache();
-  await fetch(
-    `http://${process.env['FIRESTORE_EMULATOR_HOST']}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
-});
 
 /**
  * Stores a replay of a declared attempt as acceptReplay would, declared

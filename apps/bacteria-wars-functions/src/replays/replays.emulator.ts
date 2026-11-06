@@ -5,8 +5,7 @@ import {
   type ReplayHeader,
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { closeNotReported } from '../boards/hourly';
@@ -17,17 +16,14 @@ import { deleteReplayChildren } from './cleanup';
 import { runReplayCommand } from './command';
 import { forgetPlayerReplays } from './forget';
 import { levelStatsId } from './level-stats';
+import { useEmulatorDb } from '../testing/emulator';
 
 /**
  * The replay functions against the Firestore emulator (`test-emulator`):
  * what acceptReplay, replayCommand and deletePlayerReplays leave behind -
  * a deleted account's replays forgetting it (ADR 0012, 2026-10-26).
  */
-const PROJECT = 'demo-bacteria-functions';
-if (getApps().length === 0) {
-  initializeApp({ projectId: PROJECT });
-}
-const db = getFirestore();
+const db = useEmulatorDb();
 
 const NOW = Date.now();
 const HOUR = 3_600_000;
@@ -94,14 +90,6 @@ async function submit(
   const data = (await ref.get()).data() ?? {};
   return acceptSubmission(db, id, data, NOW);
 }
-
-beforeEach(async () => {
-  clearBanCache();
-  await fetch(
-    `http://${process.env['FIRESTORE_EMULATOR_HOST']}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
-});
 
 describe('acceptReplay', () => {
   it('stores a match against the computer, its bytes beside it', async () => {
