@@ -1,14 +1,13 @@
 import {
-  BALANCE_VERSION,
   getLevel,
   matchRecord,
   medalFor,
   type MedalTier,
-  playReplay,
   type Replay,
+  type ReplayOutcome,
   type ReplayResult,
+  replayVerdict,
   type SizeSample,
-  replayOutcome,
   TICKS_PER_SEC,
 } from '@wolsok/feat-shared-bacteria-engine';
 
@@ -47,57 +46,52 @@ export interface Verdict {
 export const TIMELINE_POINTS = 360;
 
 /**
- * Plays a stored replay again on its ruleset's simulation - `cpu` on
- * `BacteriaSimulation`, `gpu-int` on `IntSimulation` - and compares the end
- * with what the device reported: ticks, outcome and checksum.
+ * Judges a stored replay with the engine's {@link replayVerdict} and keeps
+ * what the boards need of it: the state, a summary of a verified match,
+ * its medallion against the computer and how long the re-run took.
  *
- * A mismatch means "could not be confirmed", never "cheated": Safari and
- * Firefox may round some float functions differently from Node's V8 (on the
- * `cpu` ruleset; `gpu-int` is integer throughout). A replay of another
- * balance table cannot be played at all.
+ * A replay the engine cannot play for another reason than its balance
+ * table is stored as `unverified`, like one that played to another end.
  */
 export function verifyReplay(
   replay: Replay,
   clock: () => number = () => performance.now()
 ): Verdict {
   const start = clock();
-  const { header } = replay;
-  if (header.balanceVersion !== BALANCE_VERSION) {
-    return { state: 'balance-mismatch', ms: clock() - start };
-  }
-  const result = playReplay(replay);
+  const verdict = replayVerdict(replay);
   const ms = clock() - start;
-  if (result === null) {
-    return { state: 'unverified', ms };
+  switch (verdict.state) {
+    case 'balance-mismatch':
+      return { state: 'balance-mismatch', ms };
+    case 'unplayable':
+    case 'unverified':
+      return { state: 'unverified', ms };
+    case 'verified':
+      return {
+        state: 'verified',
+        summary: summaryOf(verdict.result, verdict.outcome),
+        ...(replay.header.mode === 'vs-computer'
+          ? { medal: medalOf(replay, verdict.result) }
+          : {}),
+        ms,
+      };
   }
-  const outcome = replayOutcome(result.outcome);
-  const claimed = header.outcome;
-  const agrees =
-    result.ticks === header.ticks &&
-    result.checksum === header.checksum &&
-    outcome !== null &&
-    claimed !== undefined &&
-    outcome.endedBy === claimed.endedBy &&
-    outcome.winnerSeat === claimed.winnerSeat;
-  if (!agrees || outcome === null) {
-    return { state: 'unverified', ms };
-  }
+}
+
+/** A verified match's end and its course, thinned to the timeline's points. */
+function summaryOf(
+  result: ReplayResult,
+  { endedBy, winnerSeat }: ReplayOutcome
+): ReplaySummary {
   const step = Math.max(1, Math.ceil(result.samples.length / TIMELINE_POINTS));
   return {
-    state: 'verified',
-    summary: {
-      ticks: result.ticks,
-      endedBy: outcome.endedBy,
-      winnerSeat: outcome.winnerSeat,
-      sizes: result.players.map((player) => player.bacteriaCount),
-      timeline: result.samples
-        .filter((_, i) => i % step === 0)
-        .flatMap((sizes) => [...sizes]),
-    },
-    ...(header.mode === 'vs-computer'
-      ? { medal: medalOf(replay, result) }
-      : {}),
-    ms,
+    ticks: result.ticks,
+    endedBy,
+    winnerSeat,
+    sizes: result.players.map((player) => player.bacteriaCount),
+    timeline: result.samples
+      .filter((_, i) => i % step === 0)
+      .flatMap((sizes) => [...sizes]),
   };
 }
 
