@@ -105,13 +105,10 @@ export class ProgressService {
     // What the stored progress earns on its own - a medallion won before
     // the achievement existed, say - is earned now, quietly, rather than
     // credited to whichever match comes next.
-    onStored: (stored, apply) => {
-      const { progress, earned } = earnAchievements(stored, null, today());
+    onStored: (held, apply) => {
+      const { progress, earned } = earnAchievements(held, null, today());
       if (earned.length > 0) {
-        apply(
-          progress,
-          storedWith(progress, (stored) => stored)
-        );
+        apply(progress, storedWith(progress, countsNothing));
       }
     },
   });
@@ -377,6 +374,11 @@ export class ProgressService {
   ): void {
     this.document.apply(progress, storedWith(progress, count));
   }
+}
+
+/** A write that adds no counts: what it stores only merges. */
+function countsNothing(stored: Progress): Progress {
+  return stored;
 }
 
 /**

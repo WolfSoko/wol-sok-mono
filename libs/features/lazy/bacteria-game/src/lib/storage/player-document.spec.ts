@@ -195,8 +195,22 @@ describe('playerDocument', () => {
       expect(account.storageOf('ada').stored(KEY)).toBeNull();
     });
 
+    it('goes to no player who takes over before the device answered', () => {
+      create({}, {}, { [KEY]: ['gold'] });
+      account.flush();
+
+      account.switchTo('ada');
+      device.flush();
+      account.flush();
+
+      expect(account.storageOf('guest').stored(KEY)).toBeNull();
+      expect(account.storageOf('ada').stored(KEY)).toBeNull();
+      expect(device.stored(KEY)).toEqual(['gold']);
+    });
+
     it('stays on the device without the cloud', () => {
       const document = create({}, {}, { [KEY]: ['gold'] }, false);
+      expect(account.cloud).toBe(false);
 
       device.flush();
       account.flush();

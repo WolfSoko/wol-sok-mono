@@ -85,6 +85,8 @@ export class EvolutionService {
   /** True once {@link EVOLUTION_WAIT_MS} passed since the player was known. */
   private readonly waitedOut = signal(false);
   private waiting: Subscription | null = null;
+  // Declared after the fields its hooks use: a storage that answers at
+  // once calls them while this field is still being set.
   private readonly document = playerDocument({
     key: EVOLUTION_STORAGE_KEY,
     parse: parseEvolution,

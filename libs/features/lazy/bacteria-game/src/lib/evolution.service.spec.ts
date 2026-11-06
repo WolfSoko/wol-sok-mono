@@ -399,6 +399,35 @@ describe('EvolutionService', () => {
       return create();
     }
 
+    it('trusts the skin picked here until the storage answers, not after', () => {
+      const evolution = createFor({
+        [PROGRESS_STORAGE_KEY]: progressWorth(1000),
+      });
+      expect(evolution.wornSkin('chrome')).toBe('chrome');
+
+      account.flush();
+
+      expect(evolution.wornSkin('chrome')).toBe('slime');
+    });
+
+    it('trusts no pick and waits for the storage again once another player takes over', () => {
+      jest.useFakeTimers();
+      try {
+        const evolution = createFor();
+        jest.advanceTimersByTime(EVOLUTION_WAIT_MS - 1);
+
+        account.switchTo('ada');
+
+        expect(evolution.wornSkin('chrome')).toBe('slime');
+        jest.advanceTimersByTime(1);
+        expect(evolution.settled()).toBe(false);
+        jest.advanceTimersByTime(EVOLUTION_WAIT_MS - 1);
+        expect(evolution.settled()).toBe(true);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     it('brings what a guest bred along to the account signed in to', () => {
       const evolution = createFor({
         [PROGRESS_STORAGE_KEY]: progressWorth(1000),

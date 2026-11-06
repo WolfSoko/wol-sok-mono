@@ -63,6 +63,15 @@ initialiser) and stops with it (`takeUntilDestroyed`).
   and the stored value they merge in already holds the adopted guest's
   data, so the document starts empty for both: nothing of one player shows
   as another's, as `GameAccount` asks.
+- **The empty window.** An adopting switch now opens the window every visit
+  already has before its first answer: the menus show no progress
+  meanwhile, and a match played in it reports its achievements against the
+  empty progress (its XP and unlocks it leaves out while `loaded` is
+  false). Closing that window for the achievements is a matter of its own.
+- **The device copy goes to the first player only.** Its read is dropped
+  when another player takes over before the device answered, and with the
+  service, so it never lands in the next player's storage: a gap the
+  services had before.
 - **Adopting an empty value is no write** (`equal(guest, empty)`, by
   default `Object.is`), as the evolution does today: the storage is not
   called without a change.

@@ -1,6 +1,6 @@
-import { inject, Signal, signal } from '@angular/core';
+import { DestroyRef, inject, Signal, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map, switchMap, take } from 'rxjs';
+import { map, Subscription, switchMap, take } from 'rxjs';
 import { GameAccount, PlayerSwitch } from './game-account';
 import { DeviceStorage, GameStorage } from './game-storage';
 
@@ -61,6 +61,9 @@ export function playerDocument<T>(
   const device = inject(DeviceStorage);
   const value = signal(empty, { equal });
   const loaded = signal(false);
+  /** The device copy on its way to the first player, dropped once they are gone. */
+  let deviceMove: Subscription | null = null;
+  inject(DestroyRef).onDestroy(() => deviceMove?.unsubscribe());
 
   const apply = (next: T, write: (stored: T) => T): void => {
     value.set(next);
@@ -75,6 +78,7 @@ export function playerDocument<T>(
   };
 
   const switchTo = ({ adoptsGuest }: PlayerSwitch): void => {
+    deviceMove?.unsubscribe();
     const guest = value();
     loaded.set(false);
     value.set(empty);
@@ -85,7 +89,7 @@ export function playerDocument<T>(
   };
 
   const moveDeviceCopy = (): void => {
-    device
+    deviceMove = device
       .watch(key)
       .pipe(take(1))
       .subscribe((stored) => {
