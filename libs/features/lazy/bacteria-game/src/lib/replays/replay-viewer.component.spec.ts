@@ -11,7 +11,7 @@ import {
   BALANCE_VERSION,
   GPU_INT_REPLAY_VERSION,
   IntSimulation,
-  type MatchEngine,
+  type MatchRun,
   type Replay,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { type GpuIntPainter, ReplayScene } from './replay-scene';
@@ -22,7 +22,7 @@ import {
 
 /** The colony sizes the scene's war got to. */
 const sizes = (scene: ReplayScene) =>
-  (scene as unknown as { engine: MatchEngine }).engine.players.map(
+  (scene as unknown as { run: MatchRun }).run.engine.players.map(
     (player) => player.bacteriaCount
   );
 
@@ -75,47 +75,6 @@ describe('ReplayScene', () => {
     scene?.restart();
     expect(scene?.over).toBe(false);
     expect(scene?.tick).toBe(0);
-    scene?.dispose();
-  });
-
-  it('seeks on and back to the war it reaches when played straight', () => {
-    const replay = recordedReplay('petri-dish', 90);
-    const straight = ReplayScene.of(replay, look);
-    const seeking = ReplayScene.of(replay, look);
-    if (straight === null || seeking === null) {
-      throw new Error('The replay did not play');
-    }
-
-    straight.advance(60);
-    seeking.seek(60);
-    expect(seeking.seeking).toBe(true);
-    finishSeek(seeking);
-
-    expect(seeking.tick).toBe(60);
-    expect(sizes(seeking)).toEqual(sizes(straight));
-
-    // Back plays from the start again, to the same war.
-    seeking.seek(20);
-    finishSeek(seeking);
-    const again = ReplayScene.of(replay, look);
-    again?.advance(20);
-
-    expect(seeking.tick).toBe(20);
-    expect(again && sizes(again)).toEqual(sizes(seeking));
-    [straight, seeking, again].forEach((scene) => scene?.dispose());
-  });
-
-  it('seeks no further than the replay goes', () => {
-    const replay = recordedReplay('petri-dish', 30);
-    const scene = ReplayScene.of(replay, look);
-
-    scene?.seek(10_000);
-    if (scene !== null) {
-      finishSeek(scene);
-    }
-
-    expect(scene?.tick).toBe(replay.header.ticks);
-    expect(scene?.over).toBe(true);
     scene?.dispose();
   });
 

@@ -6,12 +6,13 @@
  * per tick; no gate (ADR 0014: CI's workers are shared, absolute times
  * vary).
  *
- *   npx tsx libs/features/lazy/bacteria-game/perf/cpu-simulation.bench.ts
+ *   npx tsx --tsconfig tsconfig.base.json libs/features/lazy/bacteria-game/perf/cpu-simulation.bench.ts
  */
 import {
   BacteriaSimulation,
   MatchEngine,
   MatchPlan,
+  MatchRun,
   planMatch,
 } from '@wolsok/feat-shared-bacteria-engine';
 
@@ -80,14 +81,20 @@ function bench(
   warmup: number
 ): void {
   const { spawns, options } = planMatch(plan);
-  const engine = new MatchEngine(spawns, options);
+  const run = new MatchRun(
+    () => new MatchEngine(spawns, options),
+    { width: plan.width, height: plan.height },
+    ticks
+  );
+  const { engine } = run;
   const totals = timePhases(engine.simulation as BacteriaSimulation);
-  // Only `engine.tick` is timed - not the inputs or the counting around it.
+  // Only the tick is timed - not the inputs or the counting around it.
   let tickMs = 0;
   let measured = 0;
   let bacteria = 0;
   let worst = 0;
-  for (let tick = 0; tick < ticks && engine.outcome() == null; tick++) {
+  while (!run.over) {
+    const tick = run.tickCount;
     engine.setSteering(0, tick < 60 ? { x: 1, y: 0.5 } : { x: 0, y: 0 });
     if (tick === 90) {
       engine.setDragTarget(0, plan.width * 0.6, plan.height * 0.25);
@@ -96,7 +103,7 @@ function bench(
       totals.forEach((_, phase) => totals.set(phase, 0));
     }
     const before = performance.now();
-    engine.tick(plan.width, plan.height);
+    run.advance(1);
     const took = performance.now() - before;
     if (tick >= warmup) {
       tickMs += took;
@@ -107,6 +114,7 @@ function bench(
         .reduce((sum, colony) => sum + colony.cells.length, 0);
     }
   }
+  run.dispose();
   const ms = tickMs / measured;
   const phases = [...totals]
     .map(([phase, total]) => `${phase} ${(total / measured).toFixed(3)}`)
