@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { Lockstep } from '../lib/net/lockstep';
-import type { NetMessage, OnlineStart } from '../lib/net/net-message';
+import type { OnlineStart } from '../lib/net/net-message';
 import {
   IDLE_LOBBY,
   type OnlineEvent,
@@ -25,19 +25,21 @@ export class FakeOnlineMatch implements Pick<
 > {
   /** The room's code: what `host` opens and `matchRef` names. */
   public readonly code: string;
-  public readonly available = true;
+  public readonly available: boolean;
   public readonly lobby = signal<OnlineLobby>(IDLE_LOBBY);
   public readonly peer = signal<string | null>(null);
   /** What the spec tells the game, as the other device would. */
   public readonly events = new Subject<OnlineEvent>();
   public readonly events$ = this.events.asObservable();
-  /** The host's lockstep messages, each with the start of its match. */
-  public readonly sent: (OnlineStart & NetMessage)[] = [];
   /** A start the host sent, for the guest's `takeStart`. */
   public pending: ReturnType<OnlineMatchService['takeStart']> = null;
 
-  public constructor(options: { code?: string } = {}) {
+  /** The seat of the last {@link connect} - what `startMatch` plays. */
+  private seat: 0 | 1 = 0;
+
+  public constructor(options: { code?: string; available?: boolean } = {}) {
     this.code = options.code ?? 'K7QPXM';
+    this.available = options.available ?? true;
   }
 
   /** Opens the room under {@link code} at once and waits there. */
@@ -72,10 +74,10 @@ export class FakeOnlineMatch implements Pick<
   public readonly leave = jest.fn(() => this.lobby.set(IDLE_LOBBY));
   public readonly share = jest.fn();
   public readonly offerColors = jest.fn();
-  /** A lockstep for seat 0 whose messages land in {@link sent}. */
+  /** A lockstep for the connected seat, sending nowhere. */
   public readonly startMatch = jest.fn(
-    (start: OnlineStart): Lockstep | null =>
-      new Lockstep(0, (message) => this.sent.push({ ...start, ...message }))
+    (_start: OnlineStart): Lockstep | null =>
+      new Lockstep(this.seat, () => undefined)
   );
   public readonly agreedRuleset = jest.fn((): Ruleset => 'cpu');
   public readonly matchRef = jest.fn(
@@ -93,6 +95,7 @@ export class FakeOnlineMatch implements Pick<
 
   /** The other device is there: this one plays `seat`. */
   public connect(seat: 0 | 1, auto = false): void {
+    this.seat = seat;
     this.lobby.set({
       phase: 'connected',
       role: seat === 0 ? 'host' : 'guest',

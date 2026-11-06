@@ -1,20 +1,9 @@
 import type { Provider } from '@angular/core';
 import { GameCloud } from '../lib/storage/game-cloud';
 
-/** The backends a spec may hand the game cloud. */
-type Backend =
-  | 'rooms'
-  | 'social'
-  | 'presence'
-  | 'boards'
-  | 'moderation'
-  | 'ranked'
-  | 'storage'
-  | 'replays';
-
 /** The backends a spec gives the fake game cloud, each as the cloud returns it. */
 export type FakeGameBackends = Partial<{
-  [K in Backend]: ReturnType<GameCloud[K]>;
+  [K in Exclude<keyof GameCloud, 'use'>]: ReturnType<GameCloud[K]>;
 }>;
 
 /**

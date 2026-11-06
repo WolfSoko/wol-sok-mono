@@ -1,7 +1,4 @@
-import { pairedTransport } from './paired-transport';
-
-/** Lets every message under way arrive. */
-const flush = () => new Promise((resolve) => setTimeout(resolve));
+import { flush, pairedTransport } from './paired-transport';
 
 describe('pairedTransport', () => {
   async function pair() {

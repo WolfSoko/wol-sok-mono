@@ -1,17 +1,21 @@
 import { Subject } from 'rxjs';
 import type { PeerConnection, PeerTransport } from '../lib/net/peer-transport';
 
+/** Lets every message under way arrive, and the promises it settles. */
+export const flush = (): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve));
+
 /** One end of an in-memory connection. */
 class PairedEnd implements PeerConnection {
   private readonly incoming = new Subject<string>();
   private readonly ended = new Subject<void>();
   private isOpen = false;
-  private closed = false;
+  private isClosed = false;
   private resolveOpened: () => void = () => undefined;
-  /** The other end, once the guest answered. */
-  public other: PairedEnd | null = null;
-  /** The guest's answer this end, as the host's, waits for. */
-  public expectedAnswer: string | null = null;
+  /** The guest's end and its answer, once the guest answered this host. */
+  private guest: { end: PairedEnd; answer: string } | null = null;
+  /** The other end, once paired. */
+  private other: PairedEnd | null = null;
 
   public readonly messages$ = this.incoming.asObservable();
   public readonly closed$ = this.ended.asObservable();
@@ -26,17 +30,24 @@ class PairedEnd implements PeerConnection {
   }
 
   /** True once this end closed - the host gave up, say. */
-  public get gone(): boolean {
-    return this.closed;
+  public get closed(): boolean {
+    return this.isClosed;
+  }
+
+  /** Pairs this host's end with the guest's, which answered with `answer`. */
+  public pair(guest: PairedEnd, answer: string): void {
+    this.guest = { end: guest, answer };
+    this.other = guest;
+    guest.other = this;
   }
 
   public async accept(answer: string): Promise<void> {
-    const other = this.other;
-    if (other === null || answer !== this.expectedAnswer) {
+    const guest = this.guest;
+    if (guest === null || answer !== guest.answer) {
       throw new Error(`No guest answered with "${answer}".`);
     }
     this.open();
-    other.open();
+    guest.end.open();
   }
 
   public send(message: string): void {
@@ -49,10 +60,10 @@ class PairedEnd implements PeerConnection {
   }
 
   public close(): void {
-    if (this.closed) {
+    if (this.isClosed) {
       return;
     }
-    this.closed = true;
+    this.isClosed = true;
     this.isOpen = false;
     this.ended.next();
     this.ended.complete();
@@ -63,7 +74,7 @@ class PairedEnd implements PeerConnection {
   }
 
   private open(): void {
-    if (!this.closed) {
+    if (!this.isClosed) {
       this.isOpen = true;
       this.resolveOpened();
     }
@@ -76,10 +87,10 @@ class PairedEnd implements PeerConnection {
   }
 }
 
-/** A {@link PeerTransport} in memory, with the ends it made for a spec. */
+/** A {@link PeerTransport} in memory, with the guest's end for a spec. */
 export interface PairedTransport extends PeerTransport {
-  /** Every end made so far, the host's and the guest's, in that order. */
-  readonly ends: readonly PeerConnection[];
+  /** The end of the guest that answered last - to lose its connection. */
+  readonly lastGuest: PeerConnection | null;
 }
 
 /**
@@ -90,30 +101,29 @@ export interface PairedTransport extends PeerTransport {
  */
 export function pairedTransport(): PairedTransport {
   const offers = new Map<string, PairedEnd>();
-  const ends: PairedEnd[] = [];
   let made = 0;
+  let lastGuest: PairedEnd | null = null;
   return {
-    ends,
+    get lastGuest() {
+      return lastGuest;
+    },
     supported: () => true,
     async offer() {
       const host = new PairedEnd();
       const offer = `offer-${++made}`;
       offers.set(offer, host);
-      ends.push(host);
       return { link: host, offer };
     },
     async answer(offer: string) {
       const host = offers.get(offer);
-      if (host === undefined || host.gone) {
+      if (host === undefined || host.closed) {
         throw new Error(`No open offer "${offer}".`);
       }
       offers.delete(offer);
       const guest = new PairedEnd();
       const answer = `answer-${++made}`;
-      host.other = guest;
-      host.expectedAnswer = answer;
-      guest.other = host;
-      ends.push(guest);
+      host.pair(guest, answer);
+      lastGuest = guest;
       return { link: guest, answer };
     },
   };

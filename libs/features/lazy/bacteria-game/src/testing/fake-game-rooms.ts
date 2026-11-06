@@ -85,6 +85,9 @@ export class FakeGameRooms implements GameRooms {
       return undefined;
     }
     // Closed first: closing a taken room would delete its stub.
-    return room.closed ? 'closed' : room.taken ? 'taken' : 'open';
+    if (room.closed) {
+      return 'closed';
+    }
+    return room.taken ? 'taken' : 'open';
   }
 }

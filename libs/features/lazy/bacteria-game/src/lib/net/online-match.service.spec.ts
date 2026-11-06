@@ -4,6 +4,7 @@ import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameRooms } from '../../testing/fake-game-rooms';
 import {
+  flush,
   pairedTransport,
   type PairedTransport,
 } from '../../testing/paired-transport';
@@ -18,16 +19,13 @@ import {
   PEER_TRANSPORT,
 } from './online-match.service';
 
-/** Lets every message and promise under way settle. */
-const flush = () => new Promise((resolve) => setTimeout(resolve));
-
 const SETUP: OnlineSetup = {
   levelId: 'petri-dish',
   colors: ['orange', 'blue'],
 };
 const START: OnlineStart = { ...SETUP, seed: 42, ruleset: 'cpu' };
 
-/** One device: its own service, account and offers, on the shared network. */
+/** One device's online match and what it told its game. */
 interface Device {
   online: OnlineMatchService;
   events: OnlineEvent[];
@@ -69,15 +67,23 @@ describe('OnlineMatchService between two devices', () => {
     return { online, events };
   }
 
+  /** A device that opened a room and waits in it, with the room's code. */
+  async function waitingHost(
+    uid: string,
+    offers?: readonly Ruleset[]
+  ): Promise<{ host: Device; hosting: Promise<void>; code: string }> {
+    const host = device(uid, offers);
+    const hosting = host.online.host();
+    await flush();
+    return { host, hosting, code: host.online.lobby().code ?? '' };
+  }
+
   /** Ada hosts, Bob joins with her code; both said hello. */
   async function connected(
     offers: { host?: readonly Ruleset[]; guest?: readonly Ruleset[] } = {}
   ): Promise<{ host: Device; guest: Device; code: string }> {
-    const host = device('ada', offers.host);
+    const { host, hosting, code } = await waitingHost('ada', offers.host);
     const guest = device('bob', offers.guest);
-    const hosting = host.online.host();
-    await flush();
-    const code = host.online.lobby().code ?? '';
     await guest.online.join(code);
     await hosting;
     await flush();
@@ -142,10 +148,7 @@ describe('OnlineMatchService between two devices', () => {
     });
 
     it('deletes a room nobody joined when the host leaves', async () => {
-      const host = device('ada');
-      void host.online.host();
-      await flush();
-      const code = host.online.lobby().code ?? '';
+      const { host, code } = await waitingHost('ada');
 
       host.online.leave();
 
@@ -293,7 +296,7 @@ describe('OnlineMatchService between two devices', () => {
     it('tells the player when the connection is lost', async () => {
       const { host } = await connected();
 
-      transport.ends[1].close();
+      transport.lastGuest?.close();
       await flush();
 
       expect(host.online.lobby().notice).toEqual({
@@ -303,11 +306,9 @@ describe('OnlineMatchService between two devices', () => {
     });
 
     it('ends with a device of another version', async () => {
-      const host = device('ada');
-      void host.online.host();
-      await flush();
+      const { host, code } = await waitingHost('ada');
       // A guest of another version, playing the protocol by hand.
-      const room = await rooms.join(host.online.lobby().code ?? '');
+      const room = await rooms.join(code);
       if (room === null) {
         throw new Error('The room is gone.');
       }
