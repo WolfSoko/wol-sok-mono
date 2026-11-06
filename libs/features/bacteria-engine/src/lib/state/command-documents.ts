@@ -11,11 +11,8 @@ import { isObject } from './is-object';
 /** The fields every command document carries around its command. */
 export const COMMAND_ENVELOPE_KEYS = ['uid', 'createdAt', 'expireAt'] as const;
 
-/**
- * The fields the functions write on a command: its {@link CommandResult},
- * and `claimed`, with which `forget` takes its command once.
- */
-const SERVER_KEYS = ['result', 'claimed'];
+/** The field the functions write a command's {@link CommandResult} into. */
+const RESULT_KEY = 'result';
 
 /**
  * How long a command document lives before TTL takes it: a day. The rules
@@ -30,12 +27,12 @@ export function commandExpiresAt(now: number): number {
 }
 
 /**
- * True for a field of the stored document - the envelope and what the
- * functions write on it - rather than of its command.
+ * True for a field of the stored document - its envelope and its result -
+ * rather than of its command.
  */
 export function isCommandDocumentKey(key: string): boolean {
   return (
-    SERVER_KEYS.includes(key) ||
+    key === RESULT_KEY ||
     (COMMAND_ENVELOPE_KEYS as readonly string[]).includes(key)
   );
 }
@@ -74,7 +71,11 @@ export interface ReplayCommand {
 /** A replay id as the rules take it in a command. */
 const REPLAY_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
-const REPLAY_COMMAND_KEYS = ['type', 'replayId'];
+/**
+ * The fields of a replay command, and `claimed`, with which `forget` takes
+ * its command once - a second delivery carries it.
+ */
+const REPLAY_COMMAND_KEYS = ['type', 'replayId', 'claimed'];
 
 export function isCurationCommandType(
   type: ReplayCommandType

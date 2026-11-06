@@ -77,20 +77,34 @@ async function run(
     return { ok: false, error: 'malformed' };
   }
   const { type, replayId } = command;
-  if (type === 'forget') {
-    return forgetForPlayer(db, commandId, uid, replayId, now);
-  }
   if (isCurationCommandType(type)) {
     if (!(await context.isOwner(uid))) {
       return { ok: false, error: 'not-admin' };
     }
     return curate(db, commandId, uid, type, replayId, context, now);
   }
+  switch (type) {
+    case 'forget':
+      return forgetForPlayer(db, commandId, uid, replayId, now);
+    case 'remove':
+      return removeForPlayer(db, uid, replayId, now);
+  }
+}
+
+/**
+ * Keeps a player's replay out of the gallery for good and takes down a
+ * public copy - refused while a ban holds.
+ */
+async function removeForPlayer(
+  db: Firestore,
+  uid: string,
+  replayId: string,
+  now: number
+): Promise<CommandResult> {
   if (await isBanned(db, uid, now)) {
     return { ok: false, error: 'banned' };
   }
-  const ref = db.doc(`replays/${replayId}`);
-  const replay = await ref.get();
+  const replay = await db.doc(`replays/${replayId}`).get();
   const players = replay.get('players');
   if (!replay.exists || !Array.isArray(players) || !players.includes(uid)) {
     return { ok: false, error: 'not-found' };

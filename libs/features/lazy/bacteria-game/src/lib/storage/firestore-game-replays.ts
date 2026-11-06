@@ -1,28 +1,24 @@
 import type { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
 import { catchError, EMPTY, firstValueFrom, map, Observable, of } from 'rxjs';
 import {
+  ARRIVAL_REASONS,
+  type ArrivalReason,
+  type CommandResult,
   type EndReason,
   MAX_PACKED_BYTES,
+  ONLINE_REASONS,
+  type OnlineReason,
+  parseCommandResult,
   REPLAY_KINDS,
   REPLAY_STATES,
+  type ReplayCommandType,
   type ReplayKind,
   replayToBytes,
-} from '@wolsok/feat-shared-bacteria-engine';
-import {
-  type CommandResult,
-  parseCommandResult,
-  type ReplayCommandType,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { commandEnvelope } from './command-envelope';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameReplays } from './game-replays';
 import { millisOf, signedIn } from './firestore-values';
-import {
-  ARRIVAL_REASONS,
-  type ArrivalReason,
-  ONLINE_REASONS,
-  type OnlineReason,
-} from '@wolsok/feat-shared-bacteria-engine';
 import {
   hintOf,
   MAX_REPLAY_LIST,

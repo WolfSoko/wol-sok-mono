@@ -103,7 +103,7 @@ export class AdminCommandsService {
   /**
    * Waits for the function's `result` on a command document - `timeout`
    * when none comes within {@link RESULT_TIMEOUT_MS}, `internal` for a
-   * result it cannot read.
+   * failure without its error.
    */
   private result(
     { dbSdk }: FirebaseConnection,
@@ -117,15 +117,14 @@ export class AdminCommandsService {
       const stop = dbSdk.onSnapshot(
         ref,
         (snapshot) => {
-          const result: unknown = snapshot.get('result');
-          if (typeof result === 'object' && result !== null) {
+          const result = parseCommandResult(snapshot.get('result'));
+          if (result !== null) {
             clearTimeout(timer);
             stop();
-            const parsed = parseCommandResult(result);
             resolve(
-              parsed?.ok === true
+              result.ok
                 ? { ok: true }
-                : { ok: false, error: parsed?.error ?? 'internal' }
+                : { ok: false, error: result.error ?? 'internal' }
             );
           }
         },

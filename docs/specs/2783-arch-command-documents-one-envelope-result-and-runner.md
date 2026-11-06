@@ -45,6 +45,12 @@ exported to the admin through `@wolsok/feat-lazy-bac-game/admin-kit`).
   the general "could not delete" text, and one answered `not-found` shows
   that text instead of "deleted". No data is at risk, so no compatibility
   layer (writing both fields) is added.
+  The other way round, a release whose hosting deploy lands while its
+  functions deploy lags or fails, new clients read `error` from old
+  functions that still write `reason`: the admin shows the curation's
+  refusals as `internal`, and "My matches" a `not-found` delete as "could
+  not delete". It is as harmless and ends with the functions' deploy, so
+  no read fallback either.
 - **The envelope helper lives in the game lib, not the engine**: it needs
   the Firebase SDK (`serverTimestamp`, `Timestamp`), which the engine must
   not import. The engine holds the TTL arithmetic it builds on.

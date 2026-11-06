@@ -1,8 +1,8 @@
+import { inject, Injectable } from '@angular/core';
 import type {
   CommandResult,
   ReplayCommandType,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { GameCloud } from './game-cloud';
 import type { ReplayListing, ReplaySubmission } from './replay-records';

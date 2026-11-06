@@ -1,4 +1,7 @@
-import { COMMAND_TTL_MS } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  COMMAND_ENVELOPE_KEYS,
+  COMMAND_TTL_MS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { commandEnvelope, type EnvelopeSdk } from './command-envelope';
 
 describe('commandEnvelope', () => {
@@ -13,5 +16,11 @@ describe('commandEnvelope', () => {
       createdAt: 'server-time',
       expireAt: { ms: 1_000 + COMMAND_TTL_MS },
     });
+  });
+
+  it('writes exactly the engine’s envelope keys', () => {
+    expect(Object.keys(commandEnvelope(sdk, 'ada', 0))).toEqual([
+      ...COMMAND_ENVELOPE_KEYS,
+    ]);
   });
 });

@@ -1,9 +1,9 @@
-import type {
-  CommandResult,
-  ReplayCommandType,
-} from '@wolsok/feat-shared-bacteria-engine';
 import { BehaviorSubject, map, Observable } from 'rxjs';
-import { replayToBytes } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  type CommandResult,
+  type ReplayCommandType,
+  replayToBytes,
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { GameReplays } from '../lib/storage/game-replays';
 import {
   hintOf,

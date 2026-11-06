@@ -1,13 +1,11 @@
-import type {
-  CommandResult,
-  ReplayCommandType,
-} from '@wolsok/feat-shared-bacteria-engine';
 import { map, Observable, of } from 'rxjs';
 import {
+  type CommandResult,
   dailyLevelId,
   fromBase64,
   isObject,
   MAX_PACKED_BYTES,
+  type ReplayCommandType,
   type ReplayKind,
   replayToBytes,
   toBase64,

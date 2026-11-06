@@ -22,11 +22,13 @@ describe('command documents', () => {
       expect(COMMAND_TTL_MS).toBeLessThan(2 * 24 * 60 * 60 * 1000);
     });
 
-    it('takes the envelope and the functions’ fields as the stored document’s own keys', () => {
-      for (const key of [...COMMAND_ENVELOPE_KEYS, 'result', 'claimed']) {
+    it('takes the envelope and the result as the stored document’s own keys', () => {
+      for (const key of [...COMMAND_ENVELOPE_KEYS, 'result']) {
         expect(isCommandDocumentKey(key)).toBe(true);
       }
       expect(isCommandDocumentKey('type')).toBe(false);
+      // Only `forget` claims its command; an admin command never carries it.
+      expect(isCommandDocumentKey('claimed')).toBe(false);
     });
   });
 
@@ -44,19 +46,22 @@ describe('command documents', () => {
       ]);
     });
 
-    it.each(REPLAY_COMMAND_TYPES)('reads %s with its envelope', (type) => {
-      expect(
-        parseReplayCommand({
-          uid: 'ada',
-          type,
-          replayId: 'l_a-1',
-          createdAt: {},
-          expireAt: {},
-          result: { ok: true },
-          claimed: true,
-        })
-      ).toEqual({ type, replayId: 'l_a-1' });
-    });
+    it.each(REPLAY_COMMAND_TYPES)(
+      'reads %s with its envelope, also once claimed',
+      (type) => {
+        expect(
+          parseReplayCommand({
+            uid: 'ada',
+            type,
+            replayId: 'l_a-1',
+            createdAt: {},
+            expireAt: {},
+            result: { ok: true },
+            claimed: true,
+          })
+        ).toEqual({ type, replayId: 'l_a-1' });
+      }
+    );
 
     it.each<[string, unknown]>([
       ['no object', null],
