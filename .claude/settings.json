@@ -43,16 +43,6 @@
             "timeout": 30
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/cockpit/cockpit-event.mjs\"",
-            "timeout": 5,
-            "async": true
-          }
-        ]
       }
     ],
     "SessionEnd": [
@@ -62,15 +52,6 @@
           {
             "type": "command",
             "command": "sh -c 'if ! command -v entire >/dev/null 2>&1; then exit 0; fi; exec entire hooks claude-code session-end'"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/cockpit/cockpit-end.mjs\"",
-            "timeout": 5
           }
         ]
       }
@@ -105,25 +86,6 @@
             "type": "command",
             "command": "sh -c 'if ! command -v entire >/dev/null 2>&1; then exit 0; fi; exec entire hooks claude-code stop'",
             "timeout": 120
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/cockpit/cockpit-event.mjs\"",
-            "timeout": 5,
-            "async": true
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/cockpit/cockpit-wait.mjs\"",
-            "timeout": 5
           }
         ]
       }
@@ -174,37 +136,6 @@
             "timeout": 30
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/cockpit/cockpit-start.mjs\"",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/cockpit/cockpit-event.mjs\"",
-            "timeout": 5,
-            "async": true
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/cockpit/cockpit-event.mjs\"",
-            "timeout": 5,
-            "async": true
-          }
-        ]
       }
     ]
   },
@@ -215,7 +146,6 @@
   },
   "permissions": {
     "allow": [
-      "Bash(node .claude/hooks/cockpit/post-review.mjs *)",
       "Bash(gh pr comment * --body-file *)",
       "Bash(gh pr create --base * --body-file *)",
       "Bash(gh issue create --title * --body-file *)",
