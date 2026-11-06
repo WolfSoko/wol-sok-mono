@@ -21,10 +21,10 @@ in the table. Line numbers refer to the base commit and will drift.
 
 | #   | Issue | Candidate                                                     | Area                           | Size | Depends on |
 | --- | ----- | ------------------------------------------------------------- | ------------------------------ | ---- | ---------- |
-| 1   | #2777 | Match rules: one `NextMatch` union and `matchRules()`         | game, engine                   | M    | none       |
+| 1   | #2777 | Match rules: one `NextMatch` union and `matchRules()`         | game                           | M    | none       |
 | 2   | #2778 | Split `GameStateService`: `MatchRecorder`, `OnlineSeatSync`   | game                           | L    | 1          |
 | 3   | #2779 | `SimulationProvider`: ruleset to simulation, with fallback    | engine, game                   | M    | none       |
-| 4   | #2780 | `MatchRun`: one runner that plays a match to its end          | engine                         | M    | 3 helps    |
+| 4   | #2780 | `MatchRun`: one runner that plays a match to its end          | engine, game                   | M    | 3 helps    |
 | 5   | #2781 | `replayVerdict()`: the engine judges a replay                 | engine, functions              | S    | 4 helps    |
 | 6   | #2782 | Cloud records: ban, notice and kind shapes shared once        | engine, game, admin, functions | L    | none       |
 | 7   | #2783 | Command documents: one envelope, result and runner            | engine, game, admin, functions | M    | 6 helps    |
@@ -54,8 +54,10 @@ caller works out the kind and its rules again:
   `planModeOf` (:1235).
 - The pause and restart rules in `hud/hud-state.ts:206-213` and the grid
   choice in `stage/arena-stage.ts:139-141`.
-- "Is this a training mission" is tested as
-  `getLevel(x).mission !== undefined` in seven places.
+- "Is this a training mission" is tested through `getLevel(x).mission` in
+  five places (`play-flow.ts:141`, `game-state.service.ts:436`, :575 and
+  :746, `match-analytics.ts:136`), and through `level().mission` in two
+  more (`winner.component.ts:200`, `hud/hud-state.ts:159`).
 
 Six methods set the one-match fields, and `flow/match-end.ts:72-98` saves
 and restores `oneMatch()` around the reset.
@@ -64,8 +66,11 @@ and restores `oneMatch()` around the reset.
 `NextMatch = setup | ghost | mission | daily | endless | online` and one
 function `matchRules(next, setup)` that returns the kind, plan mode,
 whether the match records, evolves, earns or counts in a series, whether it
-can pause or restart, its grid and its locks. It is Angular-free, so it
-belongs in the engine beside `planMatch`.
+can pause or restart, its grid and its locks. It starts in the game lib
+(`state/`), since the pause, restart, grid and lock rules and the
+`OnlineSeat` and `RankedOutcome` payloads are the game's. Only the parts
+the engine's `planMatch` needs, such as the plan mode, move into the engine
+beside it.
 
 **Dependency.** In-process.
 
@@ -137,7 +142,7 @@ untouched.
 - the balance lab (`state/balance/lab-match.ts:126-163`)
 - the replay viewer (`replays/replay-scene.ts:231-251`)
 - `GameStateService.advance` (:232-262)
-- `perf/cpu-simulation.bench.ts:82-99`
+- the game lib's `perf/cpu-simulation.bench.ts:82-99`
 
 Each one has to know that `tick` takes the arena size on every call, that
 `dispose()` belongs in a `finally`, how the checksum is formed and how
@@ -180,11 +185,14 @@ verdict specs on the recorded replay fixture plus a tampered header.
 shape: one parser that the admin view and the functions share. Most other
 document shapes are written once per side:
 
-- **The ban.** `bans/{uid}` is parsed in five places:
+- **The ban.** `bans/{uid}` is parsed in four places, and its Realtime
+  Database mirror (a number) in two more:
   - `functions/admin/bans.ts:73`
   - inline in `functions/limits.ts:53-71`
-  - twice in the game's `storage/game-moderation.ts` (:77 and :96)
-  - in the admin's `moderation/admin-records.ts:131`
+  - the game's `storage/game-moderation.ts:77`
+  - the admin's `moderation/admin-records.ts:131`
+  - the mirror: `holdsInRealtime` in `functions/admin/bans.ts:59` and
+    `parseMirroredBan` in `game-moderation.ts:96`
 - **The ban rule.** "Does the ban hold" is written four times. The code
   agrees everywhere, but the comments disagree on whether the end is
   inclusive (`bans.ts:87`, `limits.ts:32`) or exclusive
@@ -213,8 +221,10 @@ replaces four. Each side checks only its own Timestamp mapping.
   `commands/command-types.ts:7`.
 - **The envelope.** `{uid, createdAt, expireAt}` and its 24-hour TTL are
   written twice, in the admin's `admin-commands.service.ts:32` and the
-  game's `firestore-game-replays.ts:35`. The Firestore rules check
-  `expireAt`, so both have to agree with them.
+  game's `firestore-game-replays.ts:35`. The Firestore rules cap
+  `expireAt` at two days after the write (`firestore.rules:436`), and the
+  two comments describe that rule differently (`admin-commands.service.ts:31`
+  says "up to 2 days", `firestore-game-replays.ts:32` "a day after").
 - **The result.** `adminCommand` writes `result.error` and `replayCommand`
   writes `result.reason`. The admin client works around that
   (`admin-commands.service.ts:136`).
@@ -270,7 +280,8 @@ the erasure.
 
 ## 9. Settings schema table
 
-**Today.** Each of the 24 settings in `settings.service.ts` (665 lines) is
+**Today.** Each of the 22 device settings in `settings.service.ts` (665
+lines; `StoredSettings` holds 6 match-setup fields besides) is
 written out five times: its stored field (54-110), a signal (162-231), a
 setter (274-402; 21 setters with 51 call sites in 7 files), a restore
 branch (443-526) and a line in `toStore()` (580-606). The service also
@@ -298,7 +309,9 @@ test per setting.
 4. Track a loaded flag.
 5. Merge and write.
 
-`CLAUDE.md` asks every new player-data service to copy it.
+The game lib's `CLAUDE.md` (:273-274) asks every new player-data service
+to "listen to `players` and start over", which today means writing this
+pipeline once more.
 
 **Deeper module.** `playerDocument<T>({ key, parse, merge, adopt, empty })`,
 which returns `{ value, loaded, apply(change) }`.
