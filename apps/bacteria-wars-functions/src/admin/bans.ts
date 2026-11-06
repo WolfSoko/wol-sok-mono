@@ -1,4 +1,10 @@
-import type { BanReason } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  banHolds,
+  type BanReason,
+  mirroredBan,
+  parseBan,
+  parseMirroredBan,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   FieldValue,
   type Firestore,
@@ -12,6 +18,7 @@ import {
   removeFromGallery,
   takeDownPublic,
 } from '../gallery/publish';
+import { timestampMillis } from '../timestamps';
 import type { Realtime } from './realtime';
 import { noticeData, tombstoneData, writeAudit } from './records';
 
@@ -51,14 +58,9 @@ function stored(ban: BanState): StoredBan {
   };
 }
 
-/** A ban as the Realtime Database mirrors it: its end in ms, `0` for good. */
-function realtimeBan(until: number | null): number {
-  return until ?? 0;
-}
-
 /** True when a Realtime Database ban value still holds at `now`. */
 function holdsInRealtime(value: unknown, now: number): boolean {
-  return typeof value === 'number' && endHolds(value === 0 ? null : value, now);
+  return banHolds(parseMirroredBan(value), now);
 }
 
 /** The player's ban, also one that ended but is not cleaned up yet. */
@@ -69,28 +71,22 @@ export async function readBan(
   return banOf((await db.doc(`bans/${uid}`).get()).data());
 }
 
-/** A ban (or a tombstone, which keeps its end and reason) as stored. */
+/**
+ * A ban (or a tombstone, which keeps its end and reason) as stored, read
+ * by the engine's `parseBan`. The functions write start and reason, so the
+ * fallbacks (0, `other`) only meet a document changed by hand.
+ */
 export function banOf(
   data: Record<string, unknown> | undefined
 ): BanState | null {
-  if (data === undefined) {
-    return null;
-  }
-  const { since, until, reason } = data;
-  return {
-    since: since instanceof Timestamp ? since.toMillis() : 0,
-    until: until instanceof Timestamp ? until.toMillis() : null,
-    reason: reason as BanReason,
-  };
-}
-
-/** True while a ban holds at `now` - inclusive at its end, like the rules. */
-export function holds(ban: BanState | null, now: number): boolean {
-  return ban !== null && endHolds(ban.until, now);
-}
-
-function endHolds(until: number | null, now: number): boolean {
-  return until === null || until > now;
+  const ban = parseBan(data, timestampMillis);
+  return ban === null
+    ? null
+    : {
+        since: ban.since ?? 0,
+        until: ban.until,
+        reason: ban.reason ?? 'other',
+      };
 }
 
 /** What a ban or an unban changed, for the audit. */
@@ -133,7 +129,7 @@ export async function banPlayer(
   const { before, after } = await db.runTransaction(async (tx) => {
     const before = banOf((await tx.get(banRef)).data());
     // A ban that holds keeps its start; one that ended counts as new.
-    const renewed = before !== null && holds(before, now);
+    const renewed = before !== null && banHolds(before, now);
     const after: BanState = {
       since: renewed ? before.since : now,
       until,
@@ -168,7 +164,7 @@ export async function banPlayer(
     }
     return { before, after };
   });
-  await realtime.set(`bans/${uid}`, realtimeBan(until));
+  await realtime.set(`bans/${uid}`, mirroredBan(until));
   await clearOut(db, realtime, uid);
   await changeBanHide(db, uid, null);
   await takeDownPublicReplays(db, uid, now);
@@ -215,7 +211,7 @@ export async function liftBan(
       // ban: a ban set meanwhile is committed before its mirror is written,
       // so either it is read here or its mirror is not the value seen.
       const mirrored = await realtime.get(`bans/${uid}`);
-      if (mirrored !== null && !holds(await readBan(db, uid), now)) {
+      if (mirrored !== null && !banHolds(await readBan(db, uid), now)) {
         await realtime.removeIf(`bans/${uid}`, (value) => value === mirrored);
       }
       await changeBanHide(db, uid, { lifted: null, now });
@@ -224,11 +220,11 @@ export async function liftBan(
   }
   if (
     endedUntil !== undefined &&
-    (holds(before, now) || before.until !== endedUntil)
+    (banHolds(before, now) || before.until !== endedUntil)
   ) {
     return 'ban-changed';
   }
-  const value = realtimeBan(before.until);
+  const value = mirroredBan(before.until);
   await realtime.removeIf(
     `bans/${uid}`,
     (current) => current === value || !holdsInRealtime(current, now)
@@ -357,7 +353,7 @@ function changeBanHide(
             keeps: (data) => {
               const ban = banOf(data);
               return (
-                holds(ban, unhide.now) &&
+                banHolds(ban, unhide.now) &&
                 (unhide.lifted === null || !sameBan(ban, unhide.lifted))
               );
             },

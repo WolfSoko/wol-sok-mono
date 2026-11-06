@@ -3,12 +3,10 @@ import {
   onlineReplayId,
   parseAttemptId,
   type Replay,
+  type ReplayKind,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { createHash } from 'node:crypto';
 import { dayOf } from '../limits';
-
-/** What kind of match a replay is - derived here, never claimed. */
-export type ReplayKind = 'online' | 'computer' | 'daily' | 'endless';
 
 /** A submission as the function reads it, beside its replay. */
 export interface SubmissionMeta {

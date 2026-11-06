@@ -1,4 +1,7 @@
-import type { BanReason } from '@wolsok/feat-shared-bacteria-engine';
+import type {
+  BanReason,
+  NoticeType,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { DAY_MS } from '../boards/budgets';
@@ -137,14 +140,6 @@ export async function runAudited(
   });
   return { ok: true };
 }
-
-/** What a player is told about the owner's action (ADR 0012). */
-export type NoticeType =
-  | 'profile-reset'
-  | 'image-removed'
-  | 'board-hidden'
-  | 'banned'
-  | 'unbanned';
 
 /**
  * A notice as `players/{uid}/notices/{id}` keeps it - the player reads and
