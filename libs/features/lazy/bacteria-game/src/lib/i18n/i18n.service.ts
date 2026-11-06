@@ -18,7 +18,7 @@ import {
  *
  * It keeps the choice only in memory and depends on nothing else, so any
  * service can inject it. The settings screen picks the language through
- * `GameSettingsService.setLanguage`, which also stores it on the device and
+ * `GameSettingsService.set('language', …)`, which also stores it on the device and
  * sets it here again on the next visit.
  */
 @Injectable({ providedIn: 'root' })

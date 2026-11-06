@@ -107,7 +107,7 @@ export class OnlineLobbyComponent {
   public constructor() {
     // The matchmaking asks for the level set - also one restored late.
     effect(() => {
-      const level = this.settings.matchLevel();
+      const level = this.settings.value('matchLevel');
       untracked(() => this.matchmaker.setLevel(level));
     });
   }
@@ -141,7 +141,7 @@ export class OnlineLobbyComponent {
   }
 
   protected pickLevel(value: string): void {
-    this.settings.setMatchLevel(value === this.anyLevel ? null : value);
+    this.settings.set('matchLevel', value === this.anyLevel ? null : value);
   }
 
   protected type(event: Event): void {

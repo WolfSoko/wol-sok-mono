@@ -76,7 +76,7 @@ describe('MyColonyComponent', () => {
     wearButtons()[1].click();
     await fixture.whenStable();
 
-    expect(TestBed.inject(GameSettingsService).look()).toBe('pixels');
+    expect(TestBed.inject(GameSettingsService).value('look')).toBe('pixels');
     expect(wearButtons()[1].getAttribute('aria-pressed')).toBe('true');
     expect(wearButtons()[0].getAttribute('aria-pressed')).toBe('false');
     expect(skins()[1].classList).toContain('picked');
@@ -103,7 +103,7 @@ describe('MyColonyComponent', () => {
     await fixture.whenStable();
 
     expect(evolution.ownsSkin('cells')).toBe(true);
-    expect(settings.look()).toBe('cells');
+    expect(settings.value('look')).toBe('cells');
     expect(element.querySelector('.dna-count')?.textContent?.trim()).toBe('11');
     expect(skins()[2].classList).toContain('picked');
     expect(skins()[2].classList).not.toContain('locked');
@@ -112,7 +112,7 @@ describe('MyColonyComponent', () => {
   });
 
   it('wears a skin picked only once it is owned', async () => {
-    TestBed.inject(GameSettingsService).setLook('chrome');
+    TestBed.inject(GameSettingsService).set('look', 'chrome');
     const { element } = await render();
 
     expect(element.querySelector('.skin.picked .skin-name')?.textContent).toBe(

@@ -45,10 +45,10 @@ describe('CampaignService', () => {
   it('opens every level in free play and between two players', () => {
     const campaign = create();
 
-    settings.setFreePlay(true);
+    settings.set('freePlay', true);
     expect(campaign.locks()).toEqual({});
 
-    settings.setFreePlay(false);
+    settings.set('freePlay', false);
     gameState.setMode('two-players');
     expect(campaign.locks()).toEqual({});
   });
@@ -69,12 +69,12 @@ describe('CampaignService', () => {
 
   it('puts the ladder back on an open level when free play ends', () => {
     create();
-    settings.setFreePlay(true);
+    settings.set('freePlay', true);
     gameState.setLevel(LEVELS[5].id);
     TestBed.tick();
     expect(store.snapshot().levelId).toBe(LEVELS[5].id);
 
-    settings.setFreePlay(false);
+    settings.set('freePlay', false);
     TestBed.tick();
 
     expect(store.snapshot().levelId).toBe(LEVELS[0].id);
@@ -82,12 +82,12 @@ describe('CampaignService', () => {
 
   it('puts the ladder back on a ladder level from a generated one', () => {
     create();
-    settings.setFreePlay(true);
+    settings.set('freePlay', true);
     gameState.setLevel('gen:field:7:3');
     TestBed.tick();
     expect(store.snapshot().levelId).toBe('gen:field:7:3');
 
-    settings.setFreePlay(false);
+    settings.set('freePlay', false);
     TestBed.tick();
 
     expect(store.snapshot().levelId).toBe(LEVELS[0].id);
@@ -95,11 +95,11 @@ describe('CampaignService', () => {
 
   it('does not change the level of a match under way', () => {
     create();
-    settings.setFreePlay(true);
+    settings.set('freePlay', true);
     gameState.setLevel(LEVELS[5].id);
     gameState.start();
 
-    settings.setFreePlay(false);
+    settings.set('freePlay', false);
     TestBed.tick();
 
     expect(store.snapshot().levelId).toBe(LEVELS[5].id);

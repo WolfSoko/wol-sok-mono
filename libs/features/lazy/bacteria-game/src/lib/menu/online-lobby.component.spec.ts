@@ -183,7 +183,7 @@ describe('OnlineLobbyComponent', () => {
       expect(names.some((name) => /\d/.test(name))).toBe(false);
       await select.clickOptions({ text: 'Hourglass' });
 
-      expect(TestBed.inject(GameSettingsService).matchLevel()).toBe(
+      expect(TestBed.inject(GameSettingsService).value('matchLevel')).toBe(
         hourglass?.id
       );
       expect(matchmaker.setLevel).toHaveBeenLastCalledWith(hourglass?.id);

@@ -60,7 +60,7 @@ export const EVOLUTION_STORAGE_KEY = 'bacteria-game.evolution';
  *
  * The skins (`state/skins.ts`) are bought with the same DNA and kept here
  * too; which one the colonies wear is the device's setting
- * (`GameSettingsService.look`), worn only once it is owned
+ * (`GameSettingsService.value('look')`), worn only once it is owned
  * ({@link wornSkin}).
  *
  * Like the progress it follows the player: on a sign-in or sign-out it
@@ -198,11 +198,11 @@ export class EvolutionService {
 
   /**
    * The skin the colonies wear for the device's look ({@link wornSkin} of
-   * `GameSettingsService.look`). The settings are asked on first read:
+   * `GameSettingsService.value('look')`). The settings are asked on first read:
    * they need the game's state, which needs this service.
    */
   public readonly worn = computed(() =>
-    this.wornSkin(this.injector.get(GameSettingsService).look())
+    this.wornSkin(this.injector.get(GameSettingsService).value('look'))
   );
 
   public canBuySkin(skin: BacteriaLook): boolean {

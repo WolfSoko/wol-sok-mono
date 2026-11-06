@@ -117,7 +117,7 @@ export class MyColonyComponent {
     if (!this.evolution.buySkin(id)) {
       return;
     }
-    this.settings.setLook(id);
+    this.settings.set('look', id);
     const name = this.i18n.t(`colony.skin.names.${id}`);
     this.announced.set(this.i18n.t('colony.announce.bought', { name }));
     this.sound.evolve(1);

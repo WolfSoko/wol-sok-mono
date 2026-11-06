@@ -140,7 +140,7 @@ export class ArenaStage {
     this.store.endedBy() !== 'forfeit' &&
     this.store.rankedMatch() === null &&
     !(this.host()?.declaring() ?? false)
-      ? this.settings.simResolution()
+      ? this.settings.value('simResolution')
       : ONLINE_SIM_RESOLUTION
   );
   /** How many times the base arena the level's map is along each side. */
@@ -192,7 +192,7 @@ export class ArenaStage {
    */
   public readonly arenaLayout = computed((): ArenaLayout => {
     const sim = this.simResolution();
-    const screen = this.settings.screenResolution();
+    const screen = this.settings.value('screenResolution');
     const size = this.mapSize();
     return {
       ...this.arena(),
@@ -255,8 +255,8 @@ export class ArenaStage {
   public readonly thanosOptions = computed((): Partial<WsThanosOptions> => {
     const gain = this.sound.effectsGain();
     return {
-      animationLength: this.settings.vaporizeMs(),
-      maxCapturePixels: vaporizePixels(this.settings.vaporize()),
+      animationLength: this.settings.value('vaporizeMs'),
+      maxCapturePixels: vaporizePixels(this.settings.value('vaporize')),
       sound: gain > 0,
       soundVolume: gain * SNAP_LEVEL,
       windDirection: this.windDirection(),
@@ -382,7 +382,7 @@ export class ArenaStage {
     this.revealArena();
     // Switched off, the arena simply clears - still after the caller is
     // through, as it would after the effect.
-    if (this.settings.vaporize() === 'off') {
+    if (this.settings.value('vaporize') === 'off') {
       return timer(0, asapScheduler).pipe(map(() => undefined));
     }
     // The effect takes its snapshot of the canvas right away.
@@ -403,7 +403,7 @@ export class ArenaStage {
       .thanos()
       .vaporize$(false)
       .pipe(
-        takeUntil(timer(this.settings.vaporizeMs() + VAPORIZE_SLACK_MS)),
+        takeUntil(timer(this.settings.value('vaporizeMs') + VAPORIZE_SLACK_MS)),
         map(() => undefined)
       );
     this.windDirection.set(randomWindDirection());

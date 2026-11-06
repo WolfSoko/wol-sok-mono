@@ -154,7 +154,7 @@ describe('GameHapticsService', () => {
     const haptics = TestBed.inject(GameHapticsService);
     const settings = TestBed.inject(GameSettingsService);
 
-    settings.setVibration(false);
+    settings.set('vibration', false);
     haptics.stop();
     expect(vibrate).toHaveBeenCalledWith(0);
     vibrate.mockClear();
@@ -164,7 +164,7 @@ describe('GameHapticsService', () => {
     haptics.tap();
     expect(vibrate).not.toHaveBeenCalled();
 
-    settings.setVibration(true);
+    settings.set('vibration', true);
     haptics.tap();
     expect(vibrate).toHaveBeenCalledWith([12]);
   });

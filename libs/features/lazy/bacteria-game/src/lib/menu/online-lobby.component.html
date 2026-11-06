@@ -16,7 +16,7 @@
           <mat-label>{{ "online.level" | t }}</mat-label>
           <mat-select
             panelWidth=""
-            [value]="settings.matchLevel() ?? anyLevel"
+            [value]="settings.value('matchLevel') ?? anyLevel"
             (selectionChange)="pickLevel($event.value)"
           >
             <mat-option [value]="anyLevel">

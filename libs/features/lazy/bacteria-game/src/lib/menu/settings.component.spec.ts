@@ -128,10 +128,10 @@ describe('SettingsComponent', () => {
       const save = await slideToggle('Save my matches');
 
       await save.toggle();
-      expect(settings.saveMatches()).toBe(false);
+      expect(settings.value('saveMatches')).toBe(false);
 
       await (await slideToggle('Record matches against the computer')).toggle();
-      expect(settings.recordLocal()).toBe(false);
+      expect(settings.value('recordLocal')).toBe(false);
       expect(await save.isDisabled()).toBe(true);
       expect(
         JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}')

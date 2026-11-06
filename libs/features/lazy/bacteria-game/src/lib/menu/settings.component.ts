@@ -105,7 +105,7 @@ export class SettingsComponent {
   protected readonly ownArena = 'own';
 
   protected pickArena(value: string): void {
-    this.settings.setArena(value === this.ownArena ? null : value);
+    this.settings.set('arena', value === this.ownArena ? null : value);
   }
   protected readonly simResolutions = SIM_RESOLUTIONS.map(({ id }) => ({
     id,
@@ -128,7 +128,7 @@ export class SettingsComponent {
   protected readonly automatic = 'auto' as const;
   protected readonly languages = LANGUAGES;
   protected readonly languageChoice = computed(
-    () => this.settings.language() ?? this.automatic
+    () => this.settings.value('language') ?? this.automatic
   );
 
   /**
@@ -161,7 +161,7 @@ export class SettingsComponent {
   }
 
   protected pickLanguage(value: Language | 'auto'): void {
-    this.settings.setLanguage(value === this.automatic ? null : value);
+    this.settings.set('language', value === this.automatic ? null : value);
   }
 
   /** The slider's label: a volume as a percentage, for the locale. */

@@ -108,7 +108,7 @@ export class GameHapticsService {
    * short buzzes off until it and `gapMs` more have passed.
    */
   private pattern(pattern: number[], gapMs = 0): void {
-    if (!this.supported || !this.settings.vibration()) {
+    if (!this.supported || !this.settings.value('vibration')) {
       return;
     }
     this.busyUntilMs =

@@ -90,7 +90,7 @@ export class StageFrame {
   private readonly qualityByArena = new Map<string, number>();
   /** True while a match on, with the setting, adapts the sharpness. */
   private readonly adapts = computed(
-    () => this.stage.running() && this.settings.adaptiveQuality()
+    () => this.stage.running() && this.settings.value('adaptiveQuality')
   );
   /**
    * The breakdown of a frame beside the frame rate - null while the
@@ -121,7 +121,7 @@ export class StageFrame {
       this.stage.walls();
       this.store.colors();
       this.skin();
-      this.settings.ambience();
+      this.settings.value('ambience');
       this.stage.reducedMotion();
       this.stage.draw();
     });
@@ -152,7 +152,7 @@ export class StageFrame {
     // The breakdown of a frame starts over with each match, and whenever
     // the frame rate is shown again - no frames of before in its average.
     effect(() => {
-      this.settings.showFps();
+      this.settings.value('showFps');
       this.stage.running();
       untracked(() => {
         this.framePerf.reset();
@@ -235,7 +235,9 @@ export class StageFrame {
     }
     const { width, height } = this.stage.arena();
     // Timed only while the HUD shows the frame rate.
-    const perf = untracked(this.settings.showFps) ? this.framePerf : null;
+    const perf = untracked(() => this.settings.value('showFps'))
+      ? this.framePerf
+      : null;
     const timer = perf === null ? null : (painter.gpuTimer?.() ?? null);
     // The ticks' GPU time where the war runs on the GPU.
     const simulation = this.playerService.getSimulation();
@@ -315,7 +317,7 @@ export class StageFrame {
    */
   private paintAmbience(view: Rect, deltaTimeSec: number): void {
     const ambience = this.ambience;
-    if (ambience == null || !this.settings.ambience()) {
+    if (ambience == null || !this.settings.value('ambience')) {
       return;
     }
     const reducedMotion = this.stage.reducedMotion();
@@ -446,10 +448,10 @@ export class StageFrame {
         reducedMotion: this.stage.reducedMotion(),
         weaponFires: this.takeFires(),
         seatColors: this.seatColors,
-        screenResolution: this.settings.screenResolution(),
+        screenResolution: this.settings.value('screenResolution'),
       }),
       ambience:
-        this.stage.painterAmbience() && this.settings.ambience()
+        this.stage.painterAmbience() && this.settings.value('ambience')
           ? this.ambience
           : null,
     };

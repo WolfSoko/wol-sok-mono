@@ -54,7 +54,7 @@
               class="wear"
               [attr.aria-label]="name"
               [attr.aria-pressed]="picked"
-              (click)="settings.setLook(skin.id)"
+              (click)="settings.set('look', skin.id)"
             ></button>
           } @else {
             <button

@@ -39,7 +39,7 @@ describe('ArenaStage', () => {
 
   describe('the grid', () => {
     it('plays the online grid from the declaration of a ranked attempt on', () => {
-      settings.setSimResolution('low');
+      settings.set('simResolution', 'low');
       const low = stage.arena();
 
       declaring.set(true);
@@ -54,10 +54,10 @@ describe('ArenaStage', () => {
   describe('the vaporize effect', () => {
     it('snaps only while the sound and the effects are on', () => {
       expect(stage.thanosOptions().sound).toBe(true);
-      settings.setSound(false);
+      settings.set('sound', false);
       expect(stage.thanosOptions().sound).toBe(false);
-      settings.setSound(true);
-      settings.setEffects(false);
+      settings.set('sound', true);
+      settings.set('effects', false);
       expect(stage.thanosOptions().sound).toBe(false);
     });
 
@@ -65,7 +65,7 @@ describe('ArenaStage', () => {
       const louder = () => stage.thanosOptions().soundVolume ?? 0;
 
       const atDefault = louder();
-      settings.setEffectsVolume(40);
+      settings.set('effectsVolume', 40);
 
       expect(louder()).toBeLessThan(atDefault);
       expect(louder()).toBeCloseTo(
@@ -75,7 +75,7 @@ describe('ArenaStage', () => {
 
     it('takes as long as set', () => {
       expect(stage.thanosOptions().animationLength).toBe(2500);
-      settings.setVaporizeMs(5000);
+      settings.set('vaporizeMs', 5000);
       expect(stage.thanosOptions().animationLength).toBe(5000);
     });
 
@@ -83,9 +83,9 @@ describe('ArenaStage', () => {
       const pixels = () => stage.thanosOptions().maxCapturePixels;
 
       expect(pixels()).toBe(500_000);
-      settings.setVaporize('low');
+      settings.set('vaporize', 'low');
       expect(pixels()).toBe(250_000);
-      settings.setVaporize('full');
+      settings.set('vaporize', 'full');
       expect(pixels()).toBeUndefined();
     });
 
@@ -106,7 +106,7 @@ describe('ArenaStage', () => {
     });
 
     it('simply clears the arena while the effect is off', async () => {
-      settings.setVaporize('off');
+      settings.set('vaporize', 'off');
       const vaporize$ = jest.fn(() => new Subject<void>());
       bind({ vaporize$ });
       const done = jest.fn();

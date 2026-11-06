@@ -41,7 +41,7 @@ export class CampaignService {
    * it is earned - null for each level its own.
    */
   public readonly activeArena = computed(() =>
-    activeArena(this.settings.arena(), this.progress.arenaLocks())
+    activeArena(this.settings.value('arena'), this.progress.arenaLocks())
   );
 
   /** The furthest level the ladder has opened - where Continue picks up. */
@@ -61,7 +61,7 @@ export class CampaignService {
 
   /** True while the campaign's ladder applies - against the computer, no free play. */
   private readonly onLadder = computed(
-    () => this.mode() === 'vs-computer' && !this.settings.freePlay()
+    () => this.mode() === 'vs-computer' && !this.settings.value('freePlay')
   );
 
   /**

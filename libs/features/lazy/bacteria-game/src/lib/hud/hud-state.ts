@@ -113,7 +113,7 @@ export class HudState {
    * hide it, so the HUD renders again only when the number it shows changes.
    */
   public readonly hudFps = computed(() =>
-    this.settings.showFps() ? Math.round(this.store.fps()) : null
+    this.settings.value('showFps') ? Math.round(this.store.fps()) : null
   );
 
   /** What the match clock shows, once a second - "1:05". */
