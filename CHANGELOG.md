@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.138.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.0...v74.138.1) (2026-11-06)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** one NextMatch union and matchRules() ([#2805](https://github.com/WolfSoko/wol-sok-mono/issues/2805)) ([9c9a309](https://github.com/WolfSoko/wol-sok-mono/commit/9c9a309b447f08d57b27e375aea340a3a3f64633)), closes [#2777](https://github.com/WolfSoko/wol-sok-mono/issues/2777)
+* **feat-lazy-bacteria-game:** PeerTransport port and shared online fakes ([#2808](https://github.com/WolfSoko/wol-sok-mono/issues/2808)) ([6f1f5ba](https://github.com/WolfSoko/wol-sok-mono/commit/6f1f5ba237aa4852f09e3e456ebb96b0707b6527)), references [#2787](https://github.com/WolfSoko/wol-sok-mono/issues/2787)
+* **feat-lazy-bacteria-game:** settings schema table in GameSettingsService ([#2796](https://github.com/WolfSoko/wol-sok-mono/issues/2796)) ([6c40357](https://github.com/WolfSoko/wol-sok-mono/commit/6c40357ff248eb83b5b1810b96da3c1d152ed809)), references [#2785](https://github.com/WolfSoko/wol-sok-mono/issues/2785)
+* **feat-shared-bacteria-engine:** describe the cloud records once ([#2793](https://github.com/WolfSoko/wol-sok-mono/issues/2793)) ([39e21f6](https://github.com/WolfSoko/wol-sok-mono/commit/39e21f6c2120fc48379f93c3d35562047ea567bf)), references [#2782](https://github.com/WolfSoko/wol-sok-mono/issues/2782)
+
+### Chore
+
+* **deps:** update actions/download-artifact action to v8 ([#2774](https://github.com/WolfSoko/wol-sok-mono/issues/2774)) ([0fd5979](https://github.com/WolfSoko/wol-sok-mono/commit/0fd597936b28355dc076b03f54cfaf5169a549f5))
+
+### Documentation
+
+* **feat-lazy-bacteria-game:** record the architecture deepening candidates ([#2792](https://github.com/WolfSoko/wol-sok-mono/issues/2792)) ([afefac4](https://github.com/WolfSoko/wol-sok-mono/commit/afefac4204ffd1c40b910151b68a9c50ab898531)), references [#2776](https://github.com/WolfSoko/wol-sok-mono/issues/2776)
+
+### Testing
+
+* **bacteria-wars-functions:** share one emulator harness and one Realtime fake ([#2804](https://github.com/WolfSoko/wol-sok-mono/issues/2804)) ([01c4835](https://github.com/WolfSoko/wol-sok-mono/commit/01c483587e8f090f820342a5985487a4bcf78577))
+* **feat-lazy-bacteria-game:** one fake Firebase SDK for the storage adapter specs ([#2795](https://github.com/WolfSoko/wol-sok-mono/issues/2795)) ([da15154](https://github.com/WolfSoko/wol-sok-mono/commit/da15154f109023858ebc06db020d2091b6c865df)), references [#2788](https://github.com/WolfSoko/wol-sok-mono/issues/2788)
+
 ## [74.138.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.137.7...v74.138.0) (2026-11-05)
 
 ### Features
