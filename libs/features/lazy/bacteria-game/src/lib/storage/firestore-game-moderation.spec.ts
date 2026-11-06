@@ -150,10 +150,7 @@ describe('FirestoreGameModeration', () => {
     moderation.notices().subscribe((notices) => seen.push(notices));
     await settleSnapshots();
 
-    expect(seen.at(-1)?.map((notice) => notice.id)).toEqual([
-      'a',
-      'b',
-    ]);
+    expect(seen.at(-1)?.map((notice) => notice.id)).toEqual(['a', 'b']);
     await moderation.dismiss('a');
 
     expect(backend.deleted()).toEqual(['players/ada/notices/a']);
