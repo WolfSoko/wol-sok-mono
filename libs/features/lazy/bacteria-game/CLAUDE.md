@@ -49,7 +49,12 @@ storage until then. Settings stay with the device either way.
   Firestore. Once the link opened, the host swaps the room for its stub
   (`OpenRoom.take`, ADR 0011), which the functions bind an online replay's
   players to: without it every online upload is refused. Only a room
-  nobody joined is deleted (`close`).
+  nobody joined is deleted (`close`). `OnlineMatchService` reaches the
+  other device through the `PeerTransport` port (`net/peer-transport.ts`,
+  token `PEER_TRANSPORT`): `WebRtcTransport` (`net/peer-link.ts`) in the
+  game, `pairedTransport()` with `FakeGameRooms` (`src/testing/`) in specs,
+  where two real services play the protocol against each other. Specs of
+  what uses the online match provide `FakeOnlineMatch` (`src/testing/`).
 - Profiles, friends, challenges and the matchmaking queue go through the
   `GameSocial` port (`storage/game-social.ts`, `FirestoreGameSocial`), the
   online status through `GamePresence` (`RtdbGamePresence`, the Realtime
@@ -165,8 +170,11 @@ storage until then. Settings stay with the device either way.
   sends nothing, `SocialService` writes nothing and takes the status
   back, matchmaking stops, the lobby, profile editor and friends shut,
   ranked play is refused. A new client write path follows the ban too.
-  Specs use `FakeGameModeration`; a spec that mocks `GameCloud` gives it
-  `moderation: () => null` (or a fake) where `SocialService` is in play.
+  Specs use `FakeGameModeration`.
+- Specs provide the game cloud with `provideFakeGameCloud({ … })`
+  (`src/testing/fake-game-cloud.ts`): a `GameCloud` without a project,
+  every backend left out null (or on this device), never a hand-built
+  object.
 - The replay viewer (`replays/replay-viewer.component.ts`) plays a
   `ReplayScene` (`replay-scene.ts`) on an `ArenaViewComponent` by itself
   (its frames drawn by `arenaContent`, `arena/arena-content.ts`, like the

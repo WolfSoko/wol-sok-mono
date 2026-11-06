@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, InjectionToken, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, Observable, Subject } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
@@ -16,7 +16,8 @@ import {
   parseNetMessage,
   agreedRuleset,
 } from './net-message';
-import { PeerConnection, PeerTransport } from './peer-transport';
+import { WebRtcTransport } from './peer-link';
+import type { PeerConnection, PeerTransport } from './peer-transport';
 import { PlayerService } from '../state/player.service';
 import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { errorCode } from '../storage/retry';
@@ -66,6 +67,16 @@ export type OnlineEvent =
   /** The connection is gone. */
   | { type: 'ended'; reason: OnlineEnd };
 
+/**
+ * The transport online matches connect over: WebRTC unless a spec provides
+ * `pairedTransport()`. Declared here, beside the service that injects it,
+ * so the bundle needs no import of Angular's of its own for it.
+ */
+export const PEER_TRANSPORT = new InjectionToken<PeerTransport>(
+  'PeerTransport',
+  { providedIn: 'root', factory: () => new WebRtcTransport() }
+);
+
 export const IDLE_LOBBY: OnlineLobby = {
   phase: 'idle',
   role: null,
@@ -85,7 +96,8 @@ export const IDLE_LOBBY: OnlineLobby = {
 @Injectable({ providedIn: 'root' })
 export class OnlineMatchService {
   private readonly cloud = inject(GameCloud);
-  private readonly transport = inject(PeerTransport);
+  /** The direct line to the other device - WebRTC in the game. */
+  private readonly wire = inject(PEER_TRANSPORT);
   private readonly analytics = injectGameAnalytics();
   /** Who plays at this device - their uid goes to the other one. */
   private readonly playerId = toSignal(
@@ -127,7 +139,7 @@ export class OnlineMatchService {
 
   /** True where online matches can be played: with the cloud and WebRTC. */
   public get available(): boolean {
-    return this.transport.supported() && this.cloud.rooms() !== null;
+    return this.wire.supported() && this.cloud.rooms() !== null;
   }
 
   /**
@@ -148,7 +160,7 @@ export class OnlineMatchService {
       auto: options.auto ?? false,
     });
     try {
-      const { link, offer } = await this.transport.offer();
+      const { link, offer } = await this.wire.offer();
       if (!this.adopt(link, attempt)) {
         return;
       }
@@ -210,7 +222,7 @@ export class OnlineMatchService {
         this.endWith(attempt, { key: 'online.notices.noRoom' });
         return;
       }
-      const { link, answer } = await this.transport.answer(room.offer);
+      const { link, answer } = await this.wire.answer(room.offer);
       if (!this.adopt(link, attempt)) {
         return;
       }

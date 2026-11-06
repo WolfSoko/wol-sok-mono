@@ -27,6 +27,15 @@ describe('pairedTransport', () => {
     await expect(host.link.accept('made-up')).rejects.toThrow();
   });
 
+  it('refuses to answer an offer whose host gave up', async () => {
+    const transport = pairedTransport();
+    const host = await transport.offer();
+
+    host.link.close();
+
+    await expect(transport.answer(host.offer)).rejects.toThrow();
+  });
+
   it('delivers in order and later, never during the send', async () => {
     const { host, guest } = await pair();
     const received: string[] = [];

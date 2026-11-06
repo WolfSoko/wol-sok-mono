@@ -32,7 +32,11 @@ export function provideFakeGameCloud(
 function fakeGameCloud(backends: FakeGameBackends): GameCloud {
   const cloud = new GameCloud();
   for (const [name, backend] of Object.entries(backends)) {
-    Object.defineProperty(cloud, name, { value: () => backend });
+    Object.defineProperty(cloud, name, {
+      value: () => backend,
+      writable: true,
+      configurable: true,
+    });
   }
   return cloud;
 }

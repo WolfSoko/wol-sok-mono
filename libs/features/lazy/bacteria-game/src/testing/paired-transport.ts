@@ -25,6 +25,11 @@ class PairedEnd implements PeerConnection {
     this.opened.catch(() => undefined);
   }
 
+  /** True once this end closed - the host gave up, say. */
+  public get gone(): boolean {
+    return this.closed;
+  }
+
   public async accept(answer: string): Promise<void> {
     const other = this.other;
     if (other === null || answer !== this.expectedAnswer) {
@@ -99,8 +104,8 @@ export function pairedTransport(): PairedTransport {
     },
     async answer(offer: string) {
       const host = offers.get(offer);
-      if (host === undefined) {
-        throw new Error(`No offer "${offer}".`);
+      if (host === undefined || host.gone) {
+        throw new Error(`No open offer "${offer}".`);
       }
       offers.delete(offer);
       const guest = new PairedEnd();

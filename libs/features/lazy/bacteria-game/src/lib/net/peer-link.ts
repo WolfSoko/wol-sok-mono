@@ -1,4 +1,3 @@
-import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import type { PeerConnection, PeerTransport } from './peer-transport';
 
@@ -27,7 +26,6 @@ export const CONNECT_TIMEOUT_MS = 20_000;
  * The offer and the answer carry every candidate at once rather than one
  * by one, so the room only has to pass on one string each way.
  */
-@Injectable({ providedIn: 'root' })
 export class WebRtcTransport implements PeerTransport {
   public supported(): boolean {
     return typeof RTCPeerConnection === 'function';

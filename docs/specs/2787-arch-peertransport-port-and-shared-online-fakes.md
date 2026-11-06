@@ -9,13 +9,14 @@ The online match's one true-external dependency, WebRTC, sits behind an
 injectable port with two adapters, and the specs share one fake of each
 seam they cross instead of building their own:
 
-1. **`PeerTransport`** (`lib/net/peer-transport.ts`): an injectable port
-   with `supported()`, `offer()` and `answer(offer)`, each handing back a
+1. **`PeerTransport`** (`lib/net/peer-transport.ts`): a port with
+   `supported()`, `offer()` and `answer(offer)`, injected through
+   `PEER_TRANSPORT`, each handing back a
    `PeerConnection` (`messages$`, `closed$`, `opened`, `accept`, `send`,
    `close`). `OnlineMatchService` injects it instead of calling
    `PeerLink`'s statics.
    - Production adapter: `WebRtcTransport` (`lib/net/peer-link.ts`), the
-     port's default (`providedIn: 'root'`); `PeerLink` loses its statics.
+     token's default; `PeerLink` loses its statics.
    - In-memory adapter: `pairedTransport()` in `src/testing`: an offer made
      on it is answered on it, and once the host accepts the answer both
      ends open and pass messages to each other, ordered and asynchronous,
@@ -49,10 +50,16 @@ seam they cross instead of building their own:
 
 ## Decisions
 
-- **Abstract class as the port and DI token**, `providedIn: 'root'` with
-  `useClass: WebRtcTransport`: specs override it with
-  `{ provide: PeerTransport, useValue: pairedTransport() }`, nothing else in
-  the game needs a provider. An `InjectionToken` would need an extra type.
+- **An `InjectionToken`, `PEER_TRANSPORT`, beside `OnlineMatchService`**
+  (in `online-match.service.ts`, `providedIn: 'root'`, factory
+  `new WebRtcTransport()`); the port itself is an interface in
+  `net/peer-transport.ts`. The draft had an abstract class as the token,
+  but its two injectables (the class and the adapter) and the extra
+  `@angular/core` import cost the game's bundle about 460 bytes in each
+  of its two copies, which crossed the `allScript` warning budget. The
+  token in the file that already imports Angular adds about 100 bytes and
+  stays under it. Specs override it with
+  `{ provide: PEER_TRANSPORT, useValue: pairedTransport() }`.
 - **One transport object for both ends.** `pairedTransport()` returns a
   single `PeerTransport`; both services' injectors get the same instance,
   as both devices reach the same network. The offer string is the key that
@@ -89,9 +96,10 @@ seam they cross instead of building their own:
 6. No spec in the lib provides `GameCloud` with an object literal; all use
    `provideFakeGameCloud`.
 7. `nx test feat-lazy-bacteria-game`, `lint`, `lint-templates` and
-   `format:check` pass; the game builds (`bacteria-game-remote:build`).
-8. `CLAUDE.md` names the port and the shared fakes where it describes the
-   online match's testing, if it describes it; else no change.
+   `format:check` pass; the game builds (`bacteria-game-remote:build`)
+   without a budget warning.
+8. The lib's `CLAUDE.md` and `README.md` name the port and the shared
+   fakes where they describe the connection and the specs' game cloud.
 
 ## Open questions
 

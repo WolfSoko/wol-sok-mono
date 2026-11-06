@@ -12,8 +12,11 @@ import { GameAccount } from '../storage/game-account';
 import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import type { OnlineSetup, OnlineStart } from './net-message';
 import { NET_VERSION } from './net-message';
-import { OnlineEvent, OnlineMatchService } from './online-match.service';
-import { PeerTransport } from './peer-transport';
+import {
+  OnlineEvent,
+  OnlineMatchService,
+  PEER_TRANSPORT,
+} from './online-match.service';
 
 /** Lets every message and promise under way settle. */
 const flush = () => new Promise((resolve) => setTimeout(resolve));
@@ -33,17 +36,22 @@ interface Device {
 describe('OnlineMatchService between two devices', () => {
   let rooms: FakeGameRooms;
   let transport: PairedTransport;
+  /** Each device's injector, destroyed after the test. */
+  let injectors: EnvironmentInjector[];
 
   beforeEach(() => {
     rooms = new FakeGameRooms();
     transport = pairedTransport();
+    injectors = [];
     TestBed.configureTestingModule({
       providers: [
         provideFakeGameCloud({ rooms }),
-        { provide: PeerTransport, useValue: transport },
+        { provide: PEER_TRANSPORT, useValue: transport },
       ],
     });
   });
+
+  afterEach(() => injectors.forEach((injector) => injector.destroy()));
 
   function device(uid: string, offers: readonly Ruleset[] = ['cpu']): Device {
     const injector = createEnvironmentInjector(
@@ -54,6 +62,7 @@ describe('OnlineMatchService between two devices', () => {
       ],
       TestBed.inject(EnvironmentInjector)
     );
+    injectors.push(injector);
     const online = injector.get(OnlineMatchService);
     const events: OnlineEvent[] = [];
     online.events$.subscribe((event) => events.push(event));
@@ -298,10 +307,12 @@ describe('OnlineMatchService between two devices', () => {
       void host.online.host();
       await flush();
       // A guest of another version, playing the protocol by hand.
-      const { link, answer } = await transport.answer('offer-1');
-      await rooms
-        .join(host.online.lobby().code ?? '')
-        .then((room) => room?.answer(answer));
+      const room = await rooms.join(host.online.lobby().code ?? '');
+      if (room === null) {
+        throw new Error('The room is gone.');
+      }
+      const { link, answer } = await transport.answer(room.offer);
+      await room.answer(answer);
       await link.opened;
       link.send(
         JSON.stringify({

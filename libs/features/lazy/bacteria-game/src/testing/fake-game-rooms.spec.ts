@@ -39,4 +39,14 @@ describe('FakeGameRooms', () => {
     expect(rooms.state(closed.code)).toBe('closed');
     expect(rooms.state(taken.code)).toBe('taken');
   });
+
+  it('tells a taken room that was closed afterwards by its close', async () => {
+    const rooms = new FakeGameRooms();
+    const room = await rooms.open('offer');
+
+    await room.take();
+    room.close();
+
+    expect(rooms.state(room.code)).toBe('closed');
+  });
 });

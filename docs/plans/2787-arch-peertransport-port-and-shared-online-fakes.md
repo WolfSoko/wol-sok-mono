@@ -5,7 +5,7 @@ Lib: `libs/features/lazy/bacteria-game` (project `feat-lazy-bacteria-game`); pat
 below are relative to its `src/`.
 
 1. **Port and WebRTC adapter.** Add `lib/net/peer-transport.ts`
-   (`PeerConnection`, abstract `PeerTransport`, default `WebRtcTransport`);
+   (`PeerConnection`, `PeerTransport` interfaces; token `PEER_TRANSPORT` in `online-match.service.ts`, default `WebRtcTransport`);
    move `supported/offer/answer` out of `PeerLink` into `WebRtcTransport`
    in `lib/net/peer-link.ts`. Inject the port in `OnlineMatchService`.
    Tests: the existing spec still green (temporarily overriding the port

@@ -1,11 +1,10 @@
-import type {
-  GameRooms,
-  JoinedRoom,
-  OpenRoom,
+import {
+  CODE_LENGTH,
+  type GameRooms,
+  type JoinedRoom,
+  type OpenRoom,
+  roomCode,
 } from '../lib/storage/game-rooms';
-
-/** Letters a room code may end in, as `normalizeRoomCode` takes them. */
-const CODE_ENDINGS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 /** A room as the fake keeps it. */
 interface FakeRoom {
@@ -20,7 +19,7 @@ interface FakeRoom {
  * Rooms in memory, for specs: the host's offer reaches the guest who
  * joins with the code, the guest's answer reaches the host. One fake
  * stands for the project, so two devices' services can meet through it.
- * Codes run "K7QPXA", "K7QPXB", … in the order the rooms open.
+ * Codes run "AAAAAA", "BBBBBB", … in the order the rooms open.
  */
 export class FakeGameRooms implements GameRooms {
   private readonly rooms = new Map<string, FakeRoom>();
@@ -28,7 +27,10 @@ export class FakeGameRooms implements GameRooms {
   public takeFails: Error | null = null;
 
   public async open(offer: string): Promise<OpenRoom> {
-    const code = `K7QPX${CODE_ENDINGS[this.rooms.size]}`;
+    const code = roomCode(new Uint8Array(CODE_LENGTH).fill(this.rooms.size));
+    if (this.rooms.has(code)) {
+      throw new Error('The fake runs out of room codes.');
+    }
     let answerWith: (answer: string) => void = () => undefined;
     const answer = new Promise<string>((resolve) => {
       answerWith = resolve;
@@ -82,6 +84,7 @@ export class FakeGameRooms implements GameRooms {
     if (room === undefined) {
       return undefined;
     }
-    return room.taken ? 'taken' : room.closed ? 'closed' : 'open';
+    // Closed first: closing a taken room would delete its stub.
+    return room.closed ? 'closed' : room.taken ? 'taken' : 'open';
   }
 }

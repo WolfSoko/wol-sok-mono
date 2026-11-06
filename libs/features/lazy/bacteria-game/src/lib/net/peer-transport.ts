@@ -1,6 +1,4 @@
-import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { WebRtcTransport } from './peer-link';
 
 /**
  * A direct connection to the other device of an online match: ordered and
@@ -23,19 +21,15 @@ export interface PeerConnection {
 /**
  * How two devices connect directly: the host makes an offer, the room
  * carries it to the guest, the guest's answer goes back the same way.
- * WebRTC in the game ({@link WebRtcTransport}); `pairedTransport()` from
- * the lib's testing folder in specs, where two services play each other.
+ * WebRTC in the game (`WebRtcTransport`), `pairedTransport()` from the
+ * lib's testing folder in specs; `OnlineMatchService` injects it through
+ * `PEER_TRANSPORT`.
  */
-@Injectable({ providedIn: 'root', useFactory: () => inject(WebRtcTransport) })
-export abstract class PeerTransport {
+export interface PeerTransport {
   /** True where this device can make a direct connection at all. */
-  public abstract supported(): boolean;
-
+  supported(): boolean;
   /** A connection for the host, with the offer to pass on to the guest. */
-  public abstract offer(): Promise<{ link: PeerConnection; offer: string }>;
-
+  offer(): Promise<{ link: PeerConnection; offer: string }>;
   /** A connection for the guest, answering the host's offer. */
-  public abstract answer(
-    offer: string
-  ): Promise<{ link: PeerConnection; answer: string }>;
+  answer(offer: string): Promise<{ link: PeerConnection; answer: string }>;
 }
