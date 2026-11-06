@@ -1,16 +1,14 @@
 import { BehaviorSubject } from 'rxjs';
 import { ATTEMPT_DAYS, attemptSeed } from '@wolsok/feat-shared-bacteria-engine';
 import {
+  FAKE_SERVER_TIME,
   FakeFirebase,
   FakeTimestamp,
   SERVER_TIMESTAMP,
+  timestampAt,
 } from '../../testing/fake-firebase-sdk';
 import { FirestoreGameRanked } from './firestore-game-ranked';
 import { DECLARE_TIMEOUT_MS, LOAD_TIMEOUT_MS } from './game-ranked';
-
-const SERVER_TIME = Date.UTC(2026, 9, 26, 12);
-
-const stamp = (ms: number) => FakeTimestamp.fromMillis(ms);
 
 /** The ranked backend of whoever plays, on the fake. */
 function rankedOf(
@@ -23,18 +21,11 @@ function rankedOf(
   );
 }
 
-/** What each transaction wrote, in order, as the adapter sent it. */
-function writesOf(
-  firestore: FakeFirebase
-): [string, Record<string, unknown>][] {
-  return firestore.writes.map((write) => [write.path, write.data ?? {}]);
-}
-
 describe('FirestoreGameRanked', () => {
   let firestore: FakeFirebase;
 
   beforeEach(() => {
-    firestore = new FakeFirebase({ serverTime: SERVER_TIME });
+    firestore = new FakeFirebase();
     jest.spyOn(console, 'warn').mockImplementation(() => undefined);
   });
 
@@ -43,8 +34,8 @@ describe('FirestoreGameRanked', () => {
   it('declares with the server time and an end 31 days ahead - nothing else', async () => {
     const declared = await rankedOf(firestore).declare('d_2026-10-26_1');
 
-    expect(declared).toEqual({ uid: 'ada', at: SERVER_TIME });
-    const [[path, data]] = writesOf(firestore);
+    expect(declared).toEqual({ uid: 'ada', at: FAKE_SERVER_TIME });
+    const [{ path, data = {} }] = firestore.writes;
     expect(path).toBe('players/ada/attempts/d_2026-10-26_1');
     expect(Object.keys(data).sort()).toEqual(['at', 'expireAt']);
     expect(data['at']).toBe(SERVER_TIMESTAMP);
@@ -56,7 +47,7 @@ describe('FirestoreGameRanked', () => {
 
   it('refuses an attempt declared already', async () => {
     firestore.docs.set('players/ada/attempts/d_2026-10-26_1', {
-      at: stamp(1),
+      at: timestampAt(1),
     });
 
     expect(await rankedOf(firestore).declare('d_2026-10-26_1')).toBe('taken');
@@ -65,16 +56,16 @@ describe('FirestoreGameRanked', () => {
 
   it('declares a void daily attempt again, whole, without its void marks', async () => {
     firestore.docs.set('players/ada/attempts/d_2026-10-26_2', {
-      at: stamp(1),
+      at: timestampAt(1),
       void: true,
       voidReason: 'cap',
     });
 
     expect(await rankedOf(firestore).declare('d_2026-10-26_2')).toEqual({
       uid: 'ada',
-      at: SERVER_TIME,
+      at: FAKE_SERVER_TIME,
     });
-    expect(Object.keys(writesOf(firestore)[0][1]).sort()).toEqual([
+    expect(Object.keys(firestore.writes[0].data ?? {}).sort()).toEqual([
       'at',
       'expireAt',
     ]);
@@ -82,7 +73,7 @@ describe('FirestoreGameRanked', () => {
 
   it('never declares a void endless match again: it counts as not played', async () => {
     firestore.docs.set('players/ada/attempts/e_202610261_3', {
-      at: stamp(1),
+      at: timestampAt(1),
       void: true,
     });
 
@@ -107,24 +98,24 @@ describe('FirestoreGameRanked', () => {
 
   it('reads the server time back in whole milliseconds, as the server does', async () => {
     // 123456000 ns past the second: the browser's `toMillis()` says .456.
-    firestore.serverTime = SERVER_TIME + 123.456;
+    firestore.serverTime = FAKE_SERVER_TIME + 123.456;
 
     const declared = await rankedOf(firestore).declare('d_2026-10-26_1');
 
-    expect(declared).toEqual({ uid: 'ada', at: SERVER_TIME + 123 });
+    expect(declared).toEqual({ uid: 'ada', at: FAKE_SERVER_TIME + 123 });
     const at = typeof declared === 'string' ? NaN : declared.at;
     expect(Number.isInteger(at)).toBe(true);
     expect(attemptSeed('ada', 'd_2026-10-26_1', at)).toBe(
-      attemptSeed('ada', 'd_2026-10-26_1', SERVER_TIME + 123)
+      attemptSeed('ada', 'd_2026-10-26_1', FAKE_SERVER_TIME + 123)
     );
     firestore.docs.set('players/ada/attempts/d_2026-10-26_2', {
-      at: stamp(SERVER_TIME + 0.5),
+      at: timestampAt(FAKE_SERVER_TIME + 0.5),
     });
     expect(
       await rankedOf(firestore).declared(['d_2026-10-26_1', 'd_2026-10-26_2'])
     ).toEqual([
-      { id: 'd_2026-10-26_1', at: SERVER_TIME + 123, void: false },
-      { id: 'd_2026-10-26_2', at: SERVER_TIME, void: false },
+      { id: 'd_2026-10-26_1', at: FAKE_SERVER_TIME + 123, void: false },
+      { id: 'd_2026-10-26_2', at: FAKE_SERVER_TIME, void: false },
     ]);
   });
 
@@ -134,7 +125,7 @@ describe('FirestoreGameRanked', () => {
     const declared = rankedOf(firestore).declare('d_2026-10-26_1');
     await jest.advanceTimersByTimeAsync(DECLARE_TIMEOUT_MS);
 
-    expect(await declared).toEqual({ uid: 'ada', at: SERVER_TIME });
+    expect(await declared).toEqual({ uid: 'ada', at: FAKE_SERVER_TIME });
     jest.useRealTimers();
   });
 
@@ -142,7 +133,7 @@ describe('FirestoreGameRanked', () => {
     jest.useFakeTimers();
     firestore.hanging = true;
     firestore.docs.set('players/ada/attempts/d_2026-10-26_1', {
-      at: stamp(1),
+      at: timestampAt(1),
       void: true,
     });
     const declared = rankedOf(firestore).declare('d_2026-10-26_1');
@@ -164,10 +155,10 @@ describe('FirestoreGameRanked', () => {
 
   it('reads back which of the ids are declared, and which are void', async () => {
     firestore.docs.set('players/ada/attempts/d_2026-10-26_1', {
-      at: stamp(5),
+      at: timestampAt(5),
     });
     firestore.docs.set('players/ada/attempts/d_2026-10-26_2', {
-      at: stamp(6),
+      at: timestampAt(6),
       void: true,
     });
 

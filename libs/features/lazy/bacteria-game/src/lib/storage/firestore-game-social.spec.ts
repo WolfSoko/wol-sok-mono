@@ -1,6 +1,6 @@
 import { firstValueFrom } from 'rxjs';
 import {
-  FAKE_SERVER_TIME,
+  FAKE_SERVER_STAMP,
   FakeFirebase,
   FakeTimestamp,
   SERVER_TIMESTAMP,
@@ -22,9 +22,6 @@ describe('inviteToken', () => {
 function socialOf(firestore: FakeFirebase): FirestoreGameSocial {
   return new FirestoreGameSocial(firestore.connection());
 }
-
-/** The server's time as the fake stores it. */
-const NOW = FakeTimestamp.fromMillis(FAKE_SERVER_TIME);
 
 describe('FirestoreGameSocial profile', () => {
   it('tells no profile until the server says there is none', async () => {
@@ -60,7 +57,7 @@ describe('FirestoreGameSocial profile', () => {
       name: 'Ada',
       boardOptOut: true,
       motto: 'Hi',
-      updatedAt: NOW,
+      updatedAt: FAKE_SERVER_STAMP,
     });
   });
 
@@ -83,7 +80,7 @@ describe('FirestoreGameSocial profile', () => {
       publicName: true,
       boardOptOut: true,
       galleryOptOut: false,
-      updatedAt: NOW,
+      updatedAt: FAKE_SERVER_STAMP,
     });
   });
 

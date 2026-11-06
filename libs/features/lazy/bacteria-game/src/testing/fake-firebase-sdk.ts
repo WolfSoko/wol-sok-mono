@@ -23,6 +23,11 @@ export interface FakeFirebaseOptions {
 /** The server's time when nothing else is set: 2026-10-26 12:00 UTC. */
 export const FAKE_SERVER_TIME = Date.UTC(2026, 9, 26, 12);
 
+/** A timestamp of the given ms: what a spec seeds and expects. */
+export function timestampAt(ms: number): FakeTimestamp {
+  return FakeTimestamp.fromMillis(ms);
+}
+
 /** What `serverTimestamp()` hands the adapter: the field before the write. */
 export const SERVER_TIMESTAMP = Object.freeze({ serverTimestamp: true });
 
@@ -44,6 +49,9 @@ export class FakeTimestamp {
     return this.seconds * 1000 + this.nanoseconds / 1e6;
   }
 }
+
+/** The default server time as the fake stores it. */
+export const FAKE_SERVER_STAMP = FakeTimestamp.fromMillis(FAKE_SERVER_TIME);
 
 /** Bytes as the SDK wraps them. */
 export class FakeBytes {
@@ -109,8 +117,8 @@ interface Listener {
 /** A write staged by a transaction or a batch, applied at its commit. */
 interface Staged {
   path: string;
-  /** An update: the document has to be there at the commit. */
-  needsDoc: boolean;
+  /** An update needs its document there at the commit. */
+  kind: FakeWrite['kind'];
   apply(): void;
 }
 
@@ -222,13 +230,16 @@ export class FakeFirebase {
   public serverTime: number;
   /** True while the snapshots come from the device's cache alone. */
   public fromCache = false;
-  /** Transactions and server reads fail with `unavailable`. */
+  /**
+   * Transactions and `getDocFromServer` fail with `unavailable`; the cache's
+   * reads (`getDoc`, `getDocs`, listeners) and plain writes go on.
+   */
   public offline = false;
-  /** Transactions never answer. */
+  /** Transactions never answer (before `offline` is looked at). */
   public hanging = false;
   /** Transactions commit, but their answer never arrives. */
   public lateCommit = false;
-  /** `getDoc` and `getDocs` never answer. */
+  /** `getDoc` and `getDocs` never answer; `getDocFromServer` still does. */
   public hangingReads = false;
 
   private readonly listeners = new Set<Listener>();
@@ -325,15 +336,7 @@ export class FakeFirebase {
     writeBatch: () => {
       const staged: Staged[] = [];
       return {
-        set: (ref: DocRef, data: FakeDoc, options?: { merge?: boolean }) => {
-          staged.push(this.stagedSet(ref.path, data, options));
-        },
-        update: (ref: DocRef, data: FakeDoc) => {
-          staged.push(this.stagedUpdate(ref.path, data));
-        },
-        delete: (ref: DocRef) => {
-          staged.push(this.stagedDelete(ref.path));
-        },
+        ...this.stager(staged),
         commit: async () => this.commit(staged),
       };
     },
@@ -376,15 +379,12 @@ export class FakeFirebase {
     } as unknown as FirebaseConnection;
   }
 
-  /** Stores a document - or deletes it, for null - and tells the listeners. */
+  /**
+   * Stores a document - or deletes it, for null - and tells the listeners,
+   * as another device's write would: not in `writes`.
+   */
   public put(path: string, data: FakeDoc | null): void {
-    if (data === null) {
-      this.docs.delete(path);
-    } else {
-      this.docs.set(path, data);
-    }
-    this.pending.delete(path);
-    this.tell(path);
+    this.apply(path, data);
   }
 
   /** Stores a Realtime Database value and tells its listeners. */
@@ -496,18 +496,10 @@ export class FakeFirebase {
     if (ref.kind !== 'query') {
       return;
     }
+    // Each constraint as its call: its fields are built in argument order.
     this.queries.push([
       ref.path,
-      ...ref.constraints.map((constraint) => {
-        switch (constraint.type) {
-          case 'where':
-            return ['where', constraint.field, constraint.op, constraint.value];
-          case 'orderBy':
-            return ['orderBy', constraint.field, constraint.direction];
-          case 'limit':
-            return ['limit', constraint.count];
-        }
-      }),
+      ...ref.constraints.map((constraint) => Object.values(constraint)),
     ]);
   }
 
@@ -603,7 +595,7 @@ export class FakeFirebase {
             ),
           };
     this.writes.push({ kind: 'set', path, data });
-    this.store(path, doc);
+    this.apply(path, doc);
   }
 
   private update(path: string, data: FakeDoc): void {
@@ -612,17 +604,21 @@ export class FakeFirebase {
       throw firestoreError('not-found');
     }
     this.writes.push({ kind: 'update', path, data });
-    this.store(path, { ...current, ...this.stamped(data) });
+    this.apply(path, { ...current, ...this.stamped(data) });
   }
 
   private remove(path: string): void {
     this.writes.push({ kind: 'delete', path });
-    this.docs.delete(path);
-    this.tell(path);
+    this.apply(path, null);
   }
 
-  private store(path: string, data: FakeDoc): void {
-    this.docs.set(path, data);
+  /** The one way a document changes: stored or deleted, then told. */
+  private apply(path: string, data: FakeDoc | null): void {
+    if (data === null) {
+      this.docs.delete(path);
+    } else {
+      this.docs.set(path, data);
+    }
     this.pending.delete(path);
     this.tell(path);
   }
@@ -639,40 +635,43 @@ export class FakeFirebase {
     }
     const staged: Staged[] = [];
     const transaction = {
+      ...this.stager(staged),
       get: async (ref: DocRef) => this.read(ref),
-      set: (ref: DocRef, data: FakeDoc, options?: { merge?: boolean }) => {
-        staged.push(this.stagedSet(ref.path, data, options));
-      },
-      update: (ref: DocRef, data: FakeDoc) => {
-        staged.push(this.stagedUpdate(ref.path, data));
-      },
-      delete: (ref: DocRef) => {
-        staged.push(this.stagedDelete(ref.path));
-      },
     };
     const result = await run(transaction);
     this.commit(staged);
     return this.lateCommit ? never() : result;
   }
 
-  private stagedSet(
-    path: string,
-    data: FakeDoc,
-    options?: { merge?: boolean; mergeFields?: string[] }
-  ): Staged {
+  /** The writes a batch and a transaction stage alike, until their commit. */
+  private stager(staged: Staged[]) {
     return {
-      path,
-      needsDoc: false,
-      apply: () => this.set(path, data, options),
+      set: (
+        ref: DocRef,
+        data: FakeDoc,
+        options?: { merge?: boolean; mergeFields?: string[] }
+      ) => {
+        staged.push({
+          path: ref.path,
+          kind: 'set',
+          apply: () => this.set(ref.path, data, options),
+        });
+      },
+      update: (ref: DocRef, data: FakeDoc) => {
+        staged.push({
+          path: ref.path,
+          kind: 'update',
+          apply: () => this.update(ref.path, data),
+        });
+      },
+      delete: (ref: DocRef) => {
+        staged.push({
+          path: ref.path,
+          kind: 'delete',
+          apply: () => this.remove(ref.path),
+        });
+      },
     };
-  }
-
-  private stagedUpdate(path: string, data: FakeDoc): Staged {
-    return { path, needsDoc: true, apply: () => this.update(path, data) };
-  }
-
-  private stagedDelete(path: string): Staged {
-    return { path, needsDoc: false, apply: () => this.remove(path) };
   }
 
   /**
@@ -683,10 +682,14 @@ export class FakeFirebase {
     const present = new Set(this.docs.keys());
     for (const write of staged) {
       this.check(write.path);
-      if (write.needsDoc && !present.has(write.path)) {
+      if (write.kind === 'update' && !present.has(write.path)) {
         throw firestoreError('not-found');
       }
-      present.add(write.path);
+      if (write.kind === 'delete') {
+        present.delete(write.path);
+      } else {
+        present.add(write.path);
+      }
     }
     staged.forEach((write) => write.apply());
   }

@@ -1,13 +1,11 @@
 import { BehaviorSubject } from 'rxjs';
 import {
   FakeFirebase,
-  FakeTimestamp,
   settleSnapshots,
+  timestampAt,
 } from '../../testing/fake-firebase-sdk';
 import { FirestoreGameModeration } from './firestore-game-moderation';
 import type { PlayerBan, PlayerNotice } from './game-moderation';
-
-const at = (ms: number) => FakeTimestamp.fromMillis(ms);
 
 /** The moderation of whoever plays, on the fake. */
 function moderationOf(
@@ -40,8 +38,11 @@ describe('FirestoreGameModeration', () => {
 
   it("reads the player's ban, with why and until when", async () => {
     playerIds.next('ada');
-    await settleSnapshots();
-    backend.put('bans/ada', { since: at(1), until: null, reason: 'spam' });
+    backend.put('bans/ada', {
+      since: timestampAt(1),
+      until: null,
+      reason: 'spam',
+    });
     await settleSnapshots();
     const bans: (PlayerBan | null)[] = [];
     moderationOf(backend, playerIds)
@@ -57,7 +58,6 @@ describe('FirestoreGameModeration', () => {
 
   it('takes the mirror for a ban while the stored one is not there yet', async () => {
     playerIds.next('ada');
-    await settleSnapshots();
     const bans: (PlayerBan | null)[] = [];
     moderationOf(backend, playerIds)
       .ban()
@@ -68,12 +68,15 @@ describe('FirestoreGameModeration', () => {
     await settleSnapshots();
 
     expect(backend.listened).toContain('rtdb:bans/ada');
-    expect(bans.at(-1)).toEqual({ since: null, until: null, reason: null });
+    expect(bans.at(-1)).toEqual({
+      since: null,
+      until: null,
+      reason: null,
+    });
   });
 
   it('does without the mirror where there is no Realtime Database', async () => {
     playerIds.next('ada');
-    await settleSnapshots();
     const bans: (PlayerBan | null)[] = [];
     moderationOf(backend, playerIds, false)
       .ban()
@@ -86,8 +89,11 @@ describe('FirestoreGameModeration', () => {
 
   it('follows whoever plays', async () => {
     playerIds.next('ada');
-    await settleSnapshots();
-    backend.put('bans/bob', { since: at(1), until: null, reason: 'other' });
+    backend.put('bans/bob', {
+      since: timestampAt(1),
+      until: null,
+      reason: 'other',
+    });
     await settleSnapshots();
     const bans: (PlayerBan | null)[] = [];
     moderationOf(backend, playerIds)
@@ -103,7 +109,6 @@ describe('FirestoreGameModeration', () => {
 
   it("never hands a late subscriber the last player's ban", async () => {
     playerIds.next('ada');
-    await settleSnapshots();
     const moderation = moderationOf(backend, playerIds);
     const kept = moderation.ban().subscribe();
     await settleSnapshots();
@@ -117,7 +122,11 @@ describe('FirestoreGameModeration', () => {
 
     // Not ada's "no ban": nothing until bob's is read.
     expect(late).toEqual([]);
-    backend.put('bans/bob', { since: at(1), until: null, reason: 'spam' });
+    backend.put('bans/bob', {
+      since: timestampAt(1),
+      until: null,
+      reason: 'spam',
+    });
     await settleSnapshots();
     expect(late).toEqual([{ since: 1, until: null, reason: 'spam' }]);
     kept.unsubscribe();
@@ -125,13 +134,15 @@ describe('FirestoreGameModeration', () => {
 
   it('lists the notices oldest first, and deletes one dismissed', async () => {
     playerIds.next('ada');
-    await settleSnapshots();
-    backend.put('players/ada/notices/b', { type: 'unbanned', at: at(20) });
+    backend.put('players/ada/notices/b', {
+      type: 'unbanned',
+      at: timestampAt(20),
+    });
     await settleSnapshots();
     backend.put('players/ada/notices/a', {
       type: 'banned',
-      at: at(10),
-      until: at(15),
+      at: timestampAt(10),
+      until: timestampAt(15),
       reason: 'cheating',
     });
     const moderation = moderationOf(backend, playerIds);
@@ -139,7 +150,10 @@ describe('FirestoreGameModeration', () => {
     moderation.notices().subscribe((notices) => seen.push(notices));
     await settleSnapshots();
 
-    expect(seen.at(-1)?.map((notice) => notice.id)).toEqual(['a', 'b']);
+    expect(seen.at(-1)?.map((notice) => notice.id)).toEqual([
+      'a',
+      'b',
+    ]);
     await moderation.dismiss('a');
 
     expect(backend.deleted()).toEqual(['players/ada/notices/a']);

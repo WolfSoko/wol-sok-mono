@@ -6,11 +6,12 @@ import {
   replayOf,
 } from '@wolsok/feat-shared-bacteria-engine';
 import {
-  FAKE_SERVER_TIME,
+  FAKE_SERVER_STAMP,
   FakeBytes,
   FakeFirebase,
   FakeTimestamp,
   settleSnapshots,
+  timestampAt,
 } from '../../testing/fake-firebase-sdk';
 import {
   COMMAND_TTL_MS,
@@ -61,11 +62,6 @@ function replaysOf(
   );
 }
 
-const at = (ms: number) => FakeTimestamp.fromMillis(ms);
-
-/** The server's time as the fake stores it. */
-const NOW = at(FAKE_SERVER_TIME);
-
 describe('FirestoreGameReplays', () => {
   let firestore: FakeFirebase;
   let replays: FirestoreGameReplays;
@@ -88,8 +84,8 @@ describe('FirestoreGameReplays', () => {
       uid: 'ada',
       bytes: expect.any(FakeBytes),
       hint: 62,
-      createdAt: NOW,
-      expireAt: at(1_000_000 + COMMAND_TTL_MS),
+      createdAt: FAKE_SERVER_STAMP,
+      expireAt: timestampAt(1_000_000 + COMMAND_TTL_MS),
     });
     expect(COMMAND_TTL_MS).toBe(24 * 60 * 60 * 1000);
     const bytes = (doc as { bytes: FakeBytes }).bytes.toUint8Array();
@@ -133,7 +129,7 @@ describe('FirestoreGameReplays', () => {
       uid: 'ada',
       type: 'forget',
       replayId: 'l_x',
-      createdAt: NOW,
+      createdAt: FAKE_SERVER_STAMP,
       expireAt: expect.any(FakeTimestamp),
     });
   });
@@ -167,7 +163,7 @@ describe('FirestoreGameReplays', () => {
       levelId: 'petri-dish',
       balanceVersion: 3,
       replayVersion: 2,
-      createdAt: at(500),
+      createdAt: timestampAt(500),
       ticks: 120,
       endedBy: 'time',
       winnerSeat: 0,
@@ -178,7 +174,7 @@ describe('FirestoreGameReplays', () => {
     firestore.docs.set('replays/broken', {
       players: ['ada'],
       kind: 'what',
-      createdAt: at(400),
+      createdAt: timestampAt(400),
     });
 
     const listed = await replays.listMine(80);
@@ -227,7 +223,7 @@ describe('FirestoreGameReplays', () => {
       uid: 'ada',
       type: 'remove',
       replayId: 'l_1',
-      createdAt: NOW,
+      createdAt: FAKE_SERVER_STAMP,
       expireAt: expect.any(FakeTimestamp),
     });
     expect(await firstValueFrom(replays.watchCommand(id as string))).toBeNull();
@@ -292,8 +288,8 @@ describe('FirestoreGameReplays', () => {
       winnerSeat: 1,
       checksum: 77,
       hint: 55,
-      createdAt: at(1_000),
-      expireAt: at(1_000 + 30 * 86_400_000),
+      createdAt: timestampAt(1_000),
+      expireAt: timestampAt(1_000 + 30 * 86_400_000),
       optOut: [],
     };
     const doc = (id: string, data: Record<string, unknown>) => ({
@@ -309,10 +305,10 @@ describe('FirestoreGameReplays', () => {
         players: ['host', 'guest'],
         seats: ['host', 'guest'],
         room: 'K7QPXM',
-        stubCreatedAt: at(900),
+        stubCreatedAt: timestampAt(900),
         stubExpired: false,
         rankedReason: 'counted',
-        rankedAt: at(2_000),
+        rankedAt: timestampAt(2_000),
         publicId: 'AbCdEfGhIjKlMnOpQrSt',
       });
 
@@ -363,7 +359,7 @@ describe('FirestoreGameReplays', () => {
           players: ['ada'],
           attempt: { id: 'd_2026-10-25_1', at: 900 },
           rankedReason: 'late',
-          submittedAt: at(1_100),
+          submittedAt: timestampAt(1_100),
           optOut: ['ada'],
           galleryOut: true,
         }),
