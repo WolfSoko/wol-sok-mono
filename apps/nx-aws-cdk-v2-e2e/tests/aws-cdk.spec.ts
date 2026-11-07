@@ -18,6 +18,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import * as path from 'node:path';
+import { stripVTControlCharacters } from 'node:util';
 
 // Disable the Nx daemon for spawned `nx` commands: with the daemon on, `nx show project`
 // can read a stale project graph right after a generator creates a new project, causing
@@ -41,13 +42,23 @@ describe('aws-cdk-v2 e2e', () => {
     return JSON.parse(result.stdout) as ProjectConfiguration;
   }
 
-  it('should create aws-cdk', async () => {
+  it('should create aws-cdk with a passing unit test and no validation warnings', async () => {
     const plugin = uniq('aws-cdk-v2');
 
     await runNxCommandAsync(
       `generate @wolsok/nx-aws-cdk-v2:application ${plugin}`
     );
-  }, 120000);
+
+    const testResult = await runNxCommandAsync(
+      `test ${plugin} --output-style=stream`
+    );
+    const output = stripVTControlCharacters(
+      `${testResult.stdout}\n${testResult.stderr}`
+    );
+
+    expect(output).toMatch(/Tests:\s+\d+ passed, \d+ total/);
+    expect(output).not.toContain('CloudFormation-Validate');
+  }, 180000);
 
   it('should generate when package.json uses type module', async () => {
     const plugin = uniq('aws-cdk-v2');
