@@ -80,9 +80,9 @@ export function accountsChange(
 /**
  * The `account` part of the erasure (ADR 0012, the `deletePlayerBoards`
  * trigger, through `erasePart`): what `PLAYER_DATA` lists of it -
- * `boardMembers`, `limits`, `moderation`, `endlessRuns` - and its board
- * entries and `dailyRuns` (`boardRefsOf`); scrubs the audit entries about
- * it and lowers `stats/accounts` if `countAccount` counted it - once, as
+ * `boardMembers`, `limits`, `moderation`, `endlessRuns`, `pairs`, the
+ * owner's `adminCommands` about it - and its board entries and `dailyRuns`
+ * (`boardRefsOf`); scrubs the audit entries about it and lowers `stats/accounts` if `countAccount` counted it - once, as
  * `uncount` claims that first, so a retried or doubled erase lowers it no
  * further (with `uncounted`, the caller lowers it). Both ban documents go
  * once a banned account's tombstone is written - by the id of its Google

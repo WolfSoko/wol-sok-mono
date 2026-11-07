@@ -69,6 +69,9 @@ export function isOwnerRecord(user: OwnerRecord): boolean {
  * 3. runs the action once, audited (`runAudited`): a second delivery of
  *    the event neither runs it again nor overwrites the first one's
  *    result.
+ * The target as found, with the player's `uid`, goes back on the command
+ * with its result, so a command by board entry names its player for the
+ * account erasure (`PLAYER_DATA`).
  * Every type runs: `bans.ts`, `moderation.ts`, `stats.ts`, `toggles.ts`,
  * the boards' `verify-now.ts` and the friend lists' mirror
  * (`social/mirror.ts`, `presence.backfill`).
@@ -81,12 +84,17 @@ export function runAdminCommand(
   context: AdminContext,
   now: number = Date.now()
 ): Promise<CommandResult | null> {
+  let found: Record<string, unknown> | undefined;
   return runCommandDocument(
     db,
     `adminCommands/${commandId}`,
     data,
     authId,
-    (uid) => run(db, commandId, uid, data, context, now)
+    (uid) =>
+      run(db, commandId, uid, data, context, now, (target) => {
+        found = target;
+      }),
+    () => (found === undefined ? {} : { target: found })
   );
 }
 
@@ -96,7 +104,9 @@ async function run(
   uid: string,
   data: Record<string, unknown>,
   context: AdminContext,
-  now: number
+  now: number,
+  /** Called with the target once it names the player it found. */
+  onFound: (target: Record<string, unknown>) => void
 ): Promise<CommandResult | null> {
   if (!(await context.isOwner(uid))) {
     return { ok: false, error: 'not-admin' };
@@ -115,7 +125,13 @@ async function run(
       reason: command.reason,
       source: 'adminCommand',
     },
-    () => act(db, commandId, command, context, now),
+    async () => {
+      const action = await act(db, commandId, command, context, now);
+      if (action.target != null && 'uid' in action.target) {
+        onFound(action.target);
+      }
+      return action;
+    },
     now
   );
 }

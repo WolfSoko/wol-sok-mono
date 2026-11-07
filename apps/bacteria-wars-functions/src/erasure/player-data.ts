@@ -41,6 +41,8 @@ interface Listed extends Erased {
 export interface ByField extends Erased {
   erase: 'field';
   field: string;
+  /** The field is an array, and holds the uid among others. */
+  contains?: true;
 }
 
 /**
@@ -200,6 +202,22 @@ export const PLAYER_DATA: readonly PlayerData[] = [
   },
   {
     store: 'firestore',
+    path: 'adminCommands/{id}',
+    part: 'account',
+    erase: 'field',
+    // Written on a command by board entry once it ran (`runAdminCommand`).
+    field: 'target.uid',
+  },
+  {
+    store: 'firestore',
+    path: 'pairs/{id}',
+    part: 'account',
+    erase: 'field',
+    field: 'uids',
+    contains: true,
+  },
+  {
+    store: 'firestore',
     path: 'stats/{id}',
     part: 'account',
     erase: 'custom',
@@ -270,21 +288,9 @@ export const PLAYER_DATA: readonly PlayerData[] = [
   },
   {
     store: 'firestore',
-    path: 'pairs/{day}_{uidA}_{uidB}',
-    erase: 'keep',
-    why: "The day's online matches of two players, named by both uids; expires after 2 days (expireAt).",
-  },
-  {
-    store: 'firestore',
     path: 'counters/{day}',
     erase: 'keep',
     why: "The day's totals and budgets, without a uid.",
-  },
-  {
-    store: 'firestore',
-    path: 'adminCommands/{id}',
-    erase: 'keep',
-    why: "The owner's commands and their results; one may name its target's uid, as the audit does.",
   },
   {
     store: 'firestore',

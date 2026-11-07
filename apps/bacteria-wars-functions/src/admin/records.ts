@@ -6,7 +6,7 @@ import type {
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { DAY_MS } from '../boards/budgets';
-import { hasGrpcCode } from '../grpc';
+import { hasGrpcCode, ignoreNotFound } from '../grpc';
 import type { ModerationChange } from './moderation';
 
 /** How long an audit entry is kept (ADR 0012): 2 years, then TTL. */
@@ -185,10 +185,9 @@ export function tombstoneData(
 /**
  * Scrubs the audit entries about a deleted account (ADR 0012): their
  * `before` and `after`, which may hold the replaced name and motto, become
- * `{ scrubbed: true }`; the uid, type, reason and date stay. Returns how
- * many entries it scrubbed.
+ * `{ scrubbed: true }`; the uid, type, reason and date stay.
  */
-export async function scrubAudit(db: Firestore, uid: string): Promise<number> {
+export async function scrubAudit(db: Firestore, uid: string): Promise<void> {
   const entries = await db
     .collection('adminAudit')
     .where('target.uid', '==', uid)
@@ -199,14 +198,9 @@ export async function scrubAudit(db: Firestore, uid: string): Promise<number> {
   const updates = entries.docs.map((doc) =>
     writer
       .update(doc.ref, { before: scrubbed, after: scrubbed })
-      .catch((error: unknown) => {
-        // TTL took the entry meanwhile.
-        if (!hasGrpcCode(error, 5, 'not-found')) {
-          throw error;
-        }
-      })
+      // TTL took the entry meanwhile.
+      .catch(ignoreNotFound)
   );
   await writer.close();
   await Promise.all(updates);
-  return entries.size;
 }

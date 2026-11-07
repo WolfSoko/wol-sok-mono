@@ -184,6 +184,12 @@ describe('rankOnline', () => {
     expect(await rank('r4', replay({ ticks: 1_800 }))).toBe('pair-cap');
   });
 
+  it('names both players of a pair in uids, so the erasure finds it', async () => {
+    await rank('r1', replay({ seats: ['bob', 'ada'] }));
+    const pairs = await db.collection('pairs').get();
+    expect(pairs.docs.map((doc) => doc.get('uids'))).toEqual([['ada', 'bob']]);
+  });
+
   it('counts five wins a day against new accounts, the losses always', async () => {
     const young = async (uid: string) =>
       uid === 'ada' ? NOW - 30 * DAY : NOW - DAY;
