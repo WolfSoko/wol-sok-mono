@@ -5,6 +5,10 @@
   "sourceRoot": "apps/fourier-analysis-remote-cdk/src",
   "tags": ["infra", "cdk"],
   "implicitDependencies": ["fourier-analysis-remote"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "cdkTsconfig"],
+    "cdkTsconfig": ["{workspaceRoot}/tsconfig.cdk.json"]
+  },
   "targets": {
     "deploy": {
       "dependsOn": ["^build"],

@@ -1,11 +1,10 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.cdk.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "types": ["node", "jest"],
     "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "target": "ESNext"
+    "moduleResolution": "NodeNext"
   },
   "include": [],
   "files": [],

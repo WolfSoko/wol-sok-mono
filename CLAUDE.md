@@ -120,7 +120,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 
 - Root `.browserslistrc` and `tsconfig.base.json` govern everything — apps/libs inherit.
 - **Do not bump targets in `libs/public/*`** — published packages, held back for consumer compat.
-- **`apps/*-cdk` use `target: "ESNext"`** intentionally (Node runtime) — exclude from browser-target changes.
+- **`apps/*-cdk` use `target: "ESNext"`** intentionally (Node runtime) — exclude from browser-target changes. Their `tsconfig.json` extends the root `tsconfig.cdk.json`, which holds that target; a new CDK app extends it too, never `tsconfig.base.json` directly.
 
 ## Native Federation
 

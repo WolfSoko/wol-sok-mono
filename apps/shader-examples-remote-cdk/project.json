@@ -5,6 +5,10 @@
   "sourceRoot": "apps/shader-examples-remote-cdk/src",
   "tags": ["infra", "cdk"],
   "implicitDependencies": ["shader-examples-remote"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "cdkTsconfig"],
+    "cdkTsconfig": ["{workspaceRoot}/tsconfig.cdk.json"]
+  },
   "targets": {
     "deploy": {
       "dependsOn": ["^build"],

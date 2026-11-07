@@ -5,6 +5,10 @@
   "sourceRoot": "apps/portfolio-cdk/src",
   "tags": ["infra", "cdk"],
   "implicitDependencies": ["portfolio"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "cdkTsconfig"],
+    "cdkTsconfig": ["{workspaceRoot}/tsconfig.cdk.json"]
+  },
   "targets": {
     "deploy": {
       "dependsOn": ["^build"],

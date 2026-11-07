@@ -1,12 +1,11 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.cdk.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "types": ["node"],
     "esModuleInterop": true,
     "module": "NodeNext",
-    "moduleResolution": "bundler",
-    "target": "ESNext"
+    "moduleResolution": "bundler"
   },
   "include": [],
   "files": [],
