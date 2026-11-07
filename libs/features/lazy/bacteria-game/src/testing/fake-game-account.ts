@@ -30,7 +30,10 @@ export class FakeGameAccount implements GameAccount {
   private readonly storages = new Map<string, LateGameStorage>();
 
   public constructor(playerId: string | null = 'guest') {
-    this.switches = new BehaviorSubject({ playerId, adoptsGuest: false });
+    this.switches = new BehaviorSubject<PlayerSwitch>({
+      playerId,
+      adoptsGuest: false,
+    });
     this.players = this.switches.asObservable();
   }
 

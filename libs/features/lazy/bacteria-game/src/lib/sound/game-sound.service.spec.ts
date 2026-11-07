@@ -295,9 +295,9 @@ class FakeAudioContext {
 
   public createOscillator(): FakeSource {
     const node = new FakeSource(this, ['frequency', 'detune']);
-    const frequency = node.frequency as FakeParam;
+    const frequency = node.param('frequency');
     const record = (value: number) => this.frequencies.push(value);
-    frequency.setValueAtTime = (value) => {
+    frequency.setValueAtTime = (value: number) => {
       record(value);
       return frequency;
     };
@@ -328,7 +328,7 @@ class FakeNode {
 
 class FakeParam {
   public value = 0;
-  public setValueAtTime(): FakeParam {
+  public setValueAtTime(_value: number, _time?: number): FakeParam {
     return this;
   }
   public exponentialRampToValueAtTime(): FakeParam {
@@ -351,6 +351,15 @@ class FakeParamNode extends FakeNode {
       this[param] = new FakeParam();
     }
   }
+
+  /** The audio param of that name, as the constructor made it. */
+  public param(name: string): FakeParam {
+    const param = this[name];
+    if (!(param instanceof FakeParam)) {
+      throw new Error(`No audio param ${name}`);
+    }
+    return param;
+  }
 }
 
 /** A gain node that remembers where its gain was steered to. */
@@ -359,7 +368,7 @@ class FakeGainNode extends FakeParamNode {
 
   public constructor() {
     super(['gain']);
-    const gain = this.gain as FakeParam;
+    const gain = this.param('gain');
     gain.setTargetAtTime = (value: number) => {
       this.targets.push(value);
       return gain;

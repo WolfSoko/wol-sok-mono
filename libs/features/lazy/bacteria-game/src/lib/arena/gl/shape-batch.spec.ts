@@ -153,6 +153,9 @@ describe('pushAmbience', () => {
 });
 
 describe('pushForeground', () => {
+  /** The base grid: a cell per base cell. */
+  const BASE_UNIT = 1;
+
   const drop: JamDrop = {
     jam: { body: [200, 20, 55], light: [255, 120, 140] },
     x: 10,
@@ -164,7 +167,7 @@ describe('pushForeground', () => {
   it('draws a drop of jam as halo, shadow, drop and highlight', () => {
     const batch = new ShapeBatch();
 
-    pushForeground(batch, [drop], []);
+    pushForeground(batch, [drop], [], BASE_UNIT);
 
     expect(kinds(batch)).toEqual([
       SHAPE.disc,
@@ -177,7 +180,7 @@ describe('pushForeground', () => {
   it('packs the dark end of the jam gradient into the first parameter', () => {
     const batch = new ShapeBatch();
 
-    pushForeground(batch, [drop], []);
+    pushForeground(batch, [drop], [], BASE_UNIT);
 
     // 200, 20, 55 darkened to 110, 11, 30.
     expect(batch.instances[2 * SHAPE_STRIDE + 13]).toBe(
@@ -194,7 +197,8 @@ describe('pushForeground', () => {
       [
         { x: 50, y: 50, color: [255, 0, 0, 255], boostLeft: null },
         { x: 90, y: 50, color: [0, 0, 255, 255], boostLeft: 0.5 },
-      ]
+      ],
+      BASE_UNIT
     );
 
     expect(kinds(batch)).toEqual([

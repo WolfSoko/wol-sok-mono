@@ -141,7 +141,7 @@ describe('FirebaseGameAccount', () => {
   });
 
   it('knows the next player already when a switch is told', async () => {
-    const seen: string[] = [];
+    const seen: (string | null)[] = [];
     account.players.subscribe(() =>
       firstValueFrom(account.playerIds).then((id) => seen.push(id))
     );

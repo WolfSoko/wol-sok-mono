@@ -14,6 +14,9 @@ import { LateGameStorage } from '../testing/late-game-storage';
 
 const LIMITS = getLevel('hourglass').medal;
 
+/** A couch match nobody won: no colour gains a win. */
+const DRAW = null;
+
 /** A gold win: in time and clean, but with a boost - and a blitz, under 45 s. */
 const GOLD_WIN = aMatchRecord({
   levelId: 'hourglass',
@@ -117,7 +120,7 @@ describe('ProgressService', () => {
 
     const earned = Array.from(
       { length: 10 },
-      () => progress.recordCouchMatch().achievements
+      () => progress.recordCouchMatch(DRAW).achievements
     );
 
     expect(progress.totals().couchMatches).toBe(10);
@@ -129,7 +132,7 @@ describe('ProgressService', () => {
     const progress = create();
 
     const first = progress.recordMatch(GOLD_WIN);
-    const second = progress.recordCouchMatch();
+    const second = progress.recordCouchMatch(DRAW);
 
     expect(second.xpBefore).toBe(first.xp.total);
     expect(progress.xp()).toBe(first.xp.total + second.xp.total);
@@ -143,8 +146,8 @@ describe('ProgressService', () => {
       durationSec: LIMITS.silverSec + 1,
     });
 
-    expect(award.medal).toBe('bronze');
-    expect(award.previousBest).toBe('gold');
+    expect(award?.medal).toBe('bronze');
+    expect(award?.previousBest).toBe('gold');
     expect(progress.medal('hourglass', 'hard')).toBe('gold');
   });
 
@@ -491,7 +494,7 @@ describe('ProgressService', () => {
         [PROGRESS_STORAGE_KEY]: { medals: { corridors: { easy: 'silver' } } },
       });
 
-      expect(progress.recordMatch(GOLD_WIN).award.medal).toBe('gold');
+      expect(progress.recordMatch(GOLD_WIN).award?.medal).toBe('gold');
       storage.flush();
 
       expect(progress.medal('hourglass', 'hard')).toBe('gold');
@@ -534,7 +537,7 @@ describe('ProgressService', () => {
       expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
         achievements: { 'first-blood': expect.any(String) },
       });
-      expect(progress.recordCouchMatch().achievements).toEqual([]);
+      expect(progress.recordCouchMatch(DRAW).achievements).toEqual([]);
     });
 
     it('counts the XP of a match that ends before the storage answers, without guessing the rank', () => {

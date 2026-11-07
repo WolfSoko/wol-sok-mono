@@ -127,7 +127,7 @@ describe('StageFrame', () => {
     expect(arenaView.canvas().dataset['simulation']).toBe(
       TestBed.inject(PlayerService).getSimulation().kind
     );
-    expect(frame.scene.view()).toEqual({
+    expect(frame.scene.view?.()).toEqual({
       x: 0,
       y: 0,
       ...TestBed.inject(ArenaStage).arena(),

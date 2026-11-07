@@ -830,7 +830,12 @@ describe('GameStateService online', () => {
   it('gives the match to the player left when the other one goes', () => {
     online.connect(1);
     online.pending = {
-      start: { levelId: 'petri-dish', colors: ['orange', 'blue'], seed: 9 },
+      start: {
+        levelId: 'petri-dish',
+        colors: ['orange', 'blue'],
+        seed: 9,
+        ruleset: 'cpu',
+      },
       lockstep: new Lockstep(1, () => undefined),
     };
     service.start();

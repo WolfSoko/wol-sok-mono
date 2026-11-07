@@ -35,7 +35,7 @@ export function fakePreviewUrl(levelId: string): string {
 
 /** Previews drawn by a fake, as if the browser had a canvas. */
 export function provideFakePreviews(
-  renderer = new FakePreviewRenderer()
+  renderer: LevelPreviewRenderer = new FakePreviewRenderer()
 ): Provider {
   return { provide: LEVEL_PREVIEW_RENDERER, useValue: renderer };
 }

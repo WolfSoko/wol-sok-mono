@@ -2,9 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import {
   MatchEngine,
   MatchPlan,
+  NEUTRAL_LOOK,
   planMatch,
   TICK_MS,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { arenaContent, SeatColors } from './arena-content';
 import { ArenaFrame, ArenaLayout, ArenaPainter } from './arena-painter';
 import { arenaTheme } from './arena-theme';
 import {
@@ -93,23 +95,22 @@ class AnimationFrames {
 /** A scene that shows an engine and plays it on, as a replay would. */
 function engineScene(engine: MatchEngine): ArenaScene & { ticks: number } {
   const { width, height } = PLAN;
+  const seatColors = new SeatColors();
   const scene = {
     ticks: 0,
-    content: (alpha: number) => ({
-      walls: [],
-      dynamicWalls: engine.simulation.getDynamicWalls(),
-      colonies: engine.simulation
-        .colonyLayers(new Map())
-        .map((layer) => ({ ...layer, look: 'slime' as const })),
-      reducedMotion: false,
-      nutrients: engine.simulation.getNutrients(),
-      balance: engine.balance,
-      cursors: engine.players.map((player) => ({
-        ...engine.crosshairAt(player, alpha, width, height),
-        color: player.color,
-        boostLeft: null,
-      })),
-    }),
+    content: (alpha: number) =>
+      arenaContent({
+        players: engine.players,
+        crosshairAt: (player) =>
+          engine.crosshairAt(player, alpha, width, height),
+        simulation: engine.simulation,
+        walls: [],
+        balance: engine.balance,
+        looks: engine.players.map(() => NEUTRAL_LOOK),
+        reducedMotion: false,
+        weaponFires: engine.takeFrameEvents().weapons,
+        seatColors,
+      }),
     advance: (ticks: number) => {
       for (let tick = 0; tick < ticks; tick++) {
         engine.tick(width, height);

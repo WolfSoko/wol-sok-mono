@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { WsThanosDirective } from '@wolsok/thanos';
+import type { AnimationState, WsThanosDirective } from '@wolsok/thanos';
 import { Subject } from 'rxjs';
 import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from '../sound/game-sound.service';
@@ -90,7 +90,7 @@ describe('ArenaStage', () => {
     });
 
     it('rolls the next snap its own wind as this one starts', () => {
-      bind({ vaporize$: () => new Subject<void>() });
+      bind({ vaporize$: () => new Subject<AnimationState>() });
       const random = jest.spyOn(Math, 'random');
       try {
         random.mockReturnValue(0.1);
@@ -107,7 +107,7 @@ describe('ArenaStage', () => {
 
     it('simply clears the arena while the effect is off', async () => {
       settings.set('vaporize', 'off');
-      const vaporize$ = jest.fn(() => new Subject<void>());
+      const vaporize$ = jest.fn(() => new Subject<AnimationState>());
       bind({ vaporize$ });
       const done = jest.fn();
 
