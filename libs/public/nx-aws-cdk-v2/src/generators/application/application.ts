@@ -12,6 +12,7 @@ import {
   readProjectConfiguration,
   runTasksInSerial,
   Tree,
+  updateJson,
   updateProjectConfiguration,
 } from '@nx/devkit';
 import { configurationGenerator } from '@nx/jest';
@@ -35,6 +36,29 @@ const BASE_TSCONFIG = 'tsconfig.base.json';
 /** The root tsconfig the app's tsconfig.json extends: the CDK one where the workspace has it. */
 function baseTsconfig(host: Tree): string {
   return host.exists(CDK_TSCONFIG) ? CDK_TSCONFIG : BASE_TSCONFIG;
+}
+
+/**
+ * In a TS-solution workspace `@nx/jest` writes a `tsconfig.spec.json` that extends
+ * `<offset>tsconfig.base.json` directly. Point it at the root tsconfig the app itself
+ * extends, so the specs compile with the same options as the app. Any other `extends`
+ * (`./tsconfig.json` outside a TS-solution workspace) is left as it is.
+ */
+function pointSpecTsconfigAtAppBase(
+  host: Tree,
+  options: NormalizedSchema
+): void {
+  const specTsconfig = `${options.projectRoot}/tsconfig.spec.json`;
+  if (options.baseTsconfig === BASE_TSCONFIG || !host.exists(specTsconfig)) {
+    return;
+  }
+  const offset = offsetFromRoot(options.projectRoot);
+  updateJson(host, specTsconfig, (json) => {
+    if (json.extends === `${offset}${BASE_TSCONFIG}`) {
+      json.extends = `${offset}${options.baseTsconfig}`;
+    }
+    return json;
+  });
 }
 
 function normalizeOptions(
@@ -147,6 +171,7 @@ export async function applicationGenerator(
     } as const;
     const jestTask = await configurationGenerator(host, jestConfigOptions);
     tasks.push(jestTask);
+    pointSpecTsconfigAtAppBase(host, normalizedOptions);
     addFiles(host, normalizedOptions, 'jest-files');
   }
 
