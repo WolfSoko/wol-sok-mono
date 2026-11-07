@@ -25,6 +25,18 @@ function kinds(batch: ShapeBatch): number[] {
   return result;
 }
 
+/** The floats of one instance. */
+function instance(batch: ShapeBatch, index: number): number[] {
+  return Array.from(
+    batch.instances.subarray(index * SHAPE_STRIDE, (index + 1) * SHAPE_STRIDE)
+  );
+}
+
+/** The rect of one instance, as x, y, width and height. */
+function rectOf(batch: ShapeBatch, index: number): number[] {
+  return instance(batch, index).slice(0, 4);
+}
+
 describe('ShapeBatch', () => {
   it('packs a rect, two colours, the kind and its parameters', () => {
     const batch = new ShapeBatch();
@@ -209,16 +221,55 @@ describe('pushForeground', () => {
       SHAPE.ring,
     ]);
   });
+
+  describe('on a grid of two cells per base cell', () => {
+    /** Expected values below are worked out by hand for this unit. */
+    const DOUBLE_UNIT = 2;
+
+    it('widens the halo of a drop by the unit', () => {
+      const batch = new ShapeBatch();
+
+      pushForeground(batch, [drop], [], DOUBLE_UNIT);
+
+      // Radius 3 + (1.5 + 0.5) * 2 = 7 around (10, 10); 5 at the base unit.
+      expect(rectOf(batch, 0)).toEqual([3, 3, 14, 14]);
+    });
+
+    it('draws the crosshair bars twice as long and thick', () => {
+      const batch = new ShapeBatch();
+
+      pushForeground(
+        batch,
+        [],
+        [{ x: 50, y: 50, color: [255, 0, 0, 255], boostLeft: null }],
+        DOUBLE_UNIT
+      );
+
+      expect(rectOf(batch, 0)).toEqual([38, 49, 26, 4]);
+      expect(rectOf(batch, 1)).toEqual([49, 38, 4, 26]);
+    });
+
+    it('draws the boost ring twice as wide, with room for its line', () => {
+      const batch = new ShapeBatch();
+
+      pushForeground(
+        batch,
+        [],
+        [{ x: 90, y: 50, color: [0, 0, 255, 255], boostLeft: 0.5 }],
+        DOUBLE_UNIT
+      );
+
+      const ring = 2;
+      expect(kinds(batch)[ring]).toBe(SHAPE.ring);
+      // Radius (9 + 4 * 0.5) * 2 = 22, plus a unit of room: half 24.
+      expect(rectOf(batch, ring)).toEqual([66, 26, 48, 48]);
+      // The radius and the line width, 1.5 * 2.
+      expect(instance(batch, ring).slice(13, 15)).toEqual([22, 3]);
+    });
+  });
 });
 
 describe('pushWeaponMarks', () => {
-  /** The floats of one instance. */
-  function instance(batch: ShapeBatch, index: number): number[] {
-    return Array.from(
-      batch.instances.subarray(index * SHAPE_STRIDE, (index + 1) * SHAPE_STRIDE)
-    );
-  }
-
   it('turns each mark into an instance of its shape', () => {
     const layer = new MarkLayer();
     layer.add('glow', 10, 20, 4, [255, 255, 255], 0.5);
