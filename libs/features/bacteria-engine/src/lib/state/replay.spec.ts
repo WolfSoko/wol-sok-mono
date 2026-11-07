@@ -6,10 +6,13 @@ import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import {
   canPlayBack,
+  EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
   GPU_INT_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
+  playbackRefusal,
+  type PlaybackRefusal,
   playReplay,
   Replay,
   replayEngine,
@@ -140,6 +143,44 @@ describe('replay', () => {
         attempt: { id: 'd_2026-10-26_1', at: 0 },
       })
     ).toBe(true);
+  });
+
+  describe('playbackRefusal', () => {
+    const { replay } = record(PLAN, 10);
+    const { header } = replay;
+
+    it('lets a recorded match play back', () => {
+      expect(playbackRefusal(replay)).toBeNull();
+    });
+
+    it.each<[string, Partial<Replay['header']>, PlaybackRefusal]>([
+      [
+        'another balance table',
+        { balanceVersion: BALANCE_VERSION + 1 },
+        'balance',
+      ],
+      ['the ghost format', { version: GHOST_REPLAY_VERSION }, 'format'],
+      ['an unknown format', { version: 0 }, 'format'],
+      // The recorded match is format 2, which records `cpu` only.
+      ['a ruleset its format lacks', { simulation: 'gpu-int' }, 'ruleset'],
+      ['another ladder computer', { ladder: -1 }, 'ladder'],
+      // A format that records the float GPU, so only the GPU refuses it.
+      [
+        'the float GPU',
+        { version: EVOLVED_REPLAY_VERSION, simulation: 'gpu' },
+        'gpu',
+      ],
+      [
+        'another balance table in an unknown format',
+        { balanceVersion: BALANCE_VERSION - 1, version: 0 },
+        'balance',
+      ],
+    ])('refuses %s', (_, change, refusal) => {
+      const other = { ...replay, header: { ...header, ...change } };
+
+      expect(playbackRefusal(other)).toBe(refusal);
+      expect(canPlayBack(other)).toBe(false);
+    });
   });
 
   describe('canPlayBack, replayEngine and replayRun', () => {
