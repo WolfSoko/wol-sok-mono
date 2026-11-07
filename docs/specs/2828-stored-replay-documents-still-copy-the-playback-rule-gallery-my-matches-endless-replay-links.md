@@ -64,8 +64,11 @@ table only:
 - **The game's listing carries `simulation` and `ladder`** (`ReplayListing`):
   the Firestore parse (`listingOf`) reads them, the local store
   (`local-game-replays.ts`, for guests without the cloud) writes them from the
-  header and tolerates old entries without them as above, and so does the
-  spec fake (`testing/fake-game-replays.ts`). `MatchRow.playable` becomes
+  header, and so does the spec fake (`testing/fake-game-replays.ts`). A local
+  entry kept before this change has no `simulation`; rather than refuse it,
+  `listMine` reads `simulation` and `ladder` from the entry's own bytes (at
+  most 20 entries, only the old ones), so the rule stays strict and the row
+  is still judged by the whole of it. `MatchRow.playable` becomes
   `storedPlaybackRefusal(listing) === null`.
 - **`GalleryReplay` picks `replayVersion`, `simulation` and `ladder`** from
   `ReplayRecord`; `fitsGallery` replaces `balanceVersion === BALANCE_VERSION`

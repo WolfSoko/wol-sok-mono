@@ -7,6 +7,7 @@ import {
   MAX_PACKED_BYTES,
   type ReplayCommandType,
   type ReplayKind,
+  replayFromBytes,
   replayToBytes,
   toBase64,
   utcDay,
@@ -75,6 +76,8 @@ export class LocalGameReplays implements GameReplays {
       levelId: header.levelId,
       balanceVersion: header.balanceVersion,
       replayVersion: header.version,
+      simulation: header.simulation,
+      ...(header.ladder === undefined ? {} : { ladder: header.ladder }),
       createdAt,
       ticks: header.ticks,
       endedBy: header.outcome?.endedBy ?? 'annihilation',
@@ -102,12 +105,9 @@ export class LocalGameReplays implements GameReplays {
       );
   }
 
-  public listMine(limit = MAX_REPLAY_LIST): Promise<ReplayListing[]> {
-    return this.read().then((replays) =>
-      replays
-        .slice(0, Math.max(0, limit))
-        .map(({ bytes: _bytes, ...listing }) => listing)
-    );
+  public async listMine(limit = MAX_REPLAY_LIST): Promise<ReplayListing[]> {
+    const replays = (await this.read()).slice(0, Math.max(0, limit));
+    return Promise.all(replays.map(listingOf));
   }
 
   public async replayBytes(
@@ -178,11 +178,39 @@ function isLocalReplay(value: unknown): value is LocalReplay {
     typeof value['hint'] === 'number' &&
     typeof value['balanceVersion'] === 'number' &&
     typeof value['replayVersion'] === 'number' &&
+    (value['simulation'] === undefined ||
+      typeof value['simulation'] === 'string') &&
+    (value['ladder'] === undefined || typeof value['ladder'] === 'number') &&
     typeof value['endedBy'] === 'string' &&
     (value['winnerSeat'] === null || typeof value['winnerSeat'] === 'number') &&
     typeof value['kind'] === 'string' &&
     value['state'] === 'submitted'
   );
+}
+
+/**
+ * A kept replay's row. An entry kept before the store wrote `simulation`
+ * and `ladder` takes them from its own bytes, so its row is judged by the
+ * whole playback rule too; one whose bytes do not read stays without them,
+ * refused by it.
+ */
+async function listingOf({
+  bytes,
+  ...listing
+}: KeptReplay): Promise<ReplayListing> {
+  if (listing.simulation !== undefined) {
+    return listing;
+  }
+  const packed = fromBase64(bytes);
+  const header =
+    packed === null ? undefined : (await replayFromBytes(packed))?.header;
+  return header === undefined
+    ? listing
+    : {
+        ...listing,
+        simulation: header.simulation,
+        ...(header.ladder === undefined ? {} : { ladder: header.ladder }),
+      };
 }
 
 /** The newest replays that fit the caps. */

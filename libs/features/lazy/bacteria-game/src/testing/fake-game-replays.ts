@@ -93,6 +93,10 @@ export class FakeGameReplays implements GameReplays {
       levelId: replay.header.levelId,
       balanceVersion: replay.header.balanceVersion,
       replayVersion: replay.header.version,
+      simulation: replay.header.simulation,
+      ...(replay.header.ladder === undefined
+        ? {}
+        : { ladder: replay.header.ladder }),
       createdAt: 0,
       ticks: replay.header.ticks,
       endedBy: replay.header.outcome?.endedBy ?? 'annihilation',

@@ -32,13 +32,13 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
 import {
-  BALANCE_VERSION,
   canPlayBack,
   clock,
   getLevel,
   levelNameText,
   type Replay,
   replayFromBytes,
+  storedPlaybackRefusal,
   TICKS_PER_SEC,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from '../storage/game-account';
@@ -275,7 +275,7 @@ export class MyMatchesComponent {
         clock(Math.floor(replay.ticks / TICKS_PER_SEC)),
       ].join(' · '),
       chips: this.chipsOf(replay),
-      playable: replay.balanceVersion === BALANCE_VERSION,
+      playable: storedPlaybackRefusal(replay) === null,
     };
   }
 

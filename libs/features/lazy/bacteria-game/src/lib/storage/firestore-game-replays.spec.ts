@@ -314,6 +314,7 @@ describe('FirestoreGameReplays', () => {
         levelId: 'petri-dish',
         balanceVersion: 3,
         replayVersion: 5,
+        simulation: 'gpu-int',
         createdAt: 1_000,
         ticks: 900,
         endedBy: 'annihilation',
@@ -325,6 +326,29 @@ describe('FirestoreGameReplays', () => {
         publicId: 'AbCdEfGhIjKlMnOpQrSt',
       });
       expect(listingOf(online, 'host')?.seat).toBe(0);
+    });
+
+    it('keeps the ladder version, and lists a replay stored before it was kept', () => {
+      const local = (fields: Record<string, unknown>) =>
+        listingOf(
+          doc('l_1', {
+            ...record,
+            kind: 'computer',
+            state: 'submitted',
+            players: ['ada'],
+            ...fields,
+          }),
+          'ada'
+        );
+
+      expect(local({ replayVersion: 4, ladder: 2 })).toEqual(
+        expect.objectContaining({ replayVersion: 4, ladder: 2 })
+      );
+      expect(local({ replayVersion: 4 })).not.toBeNull();
+      expect(local({ replayVersion: 4 })).not.toHaveProperty('ladder');
+      const malformed = local({ simulation: 7, ladder: 'two' });
+      expect(malformed).not.toHaveProperty('simulation');
+      expect(malformed).not.toHaveProperty('ladder');
     });
 
     it('takes the hourly sweep\'s "not reported"', () => {
