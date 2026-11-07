@@ -261,8 +261,11 @@ Apps generated before 4.1.3 hold a `src/main.test.ts` that asserts
 empty stack without a `Resources` key, so that test fails with _"Missing key 'Resources'"_.
 
 The `update-starter-test` migration rewrites the test to the one the generator writes now, but only
-where it is still exactly the generated test (formatting aside). It leaves a test you changed alone
-and names it in a warning if it still holds the failing assertion. Change such a test by hand:
+where it is still exactly the generated test (formatting aside) and the workspace's `package.json`
+asks for `aws-cdk-lib` 2.265.0 or newer, which the new test is written for (older versions still
+write the empty `Resources` key, so the old test passes there). It leaves a test you changed alone
+and names it in a warning if it still holds the failing assertion. Change such a test by hand while
+its stack is still empty:
 
 ```ts
 import { App, Validations } from 'aws-cdk-lib';

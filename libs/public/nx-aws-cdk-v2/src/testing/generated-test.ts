@@ -101,18 +101,18 @@ export function collectGeneratedTests(
 
 /**
  * Runs every test of a generated test file against the workspace's packages,
- * one after the other, and captures what they log. Throws on the first failing
+ * one after the other, and captures what they log, loading included. Throws on the first failing
  * test, naming it.
  */
 export async function runGeneratedTests(
   tree: Tree,
   testPath: string
 ): Promise<GeneratedTestRun> {
-  const tests = collectGeneratedTests(tree, testPath);
   const consoleSpies = CAPTURED_CONSOLE_METHODS.map((method) =>
     jest.spyOn(console, method).mockImplementation(() => undefined)
   );
   try {
+    const tests = collectGeneratedTests(tree, testPath);
     for (const test of tests) {
       await runNamed(test);
     }
