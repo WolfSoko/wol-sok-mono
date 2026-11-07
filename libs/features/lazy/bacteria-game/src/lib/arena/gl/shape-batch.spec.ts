@@ -16,13 +16,34 @@ import {
   ShapeBatch,
 } from './shape-batch';
 
+/** Where an instance keeps its kind, and after it the parameters `p0` to `p2`. */
+const KIND_OFFSET = 12;
+const PARAMS_OFFSET = KIND_OFFSET + 1;
+
 /** The kind of every instance in the batch, in drawing order. */
 function kinds(batch: ShapeBatch): number[] {
   const result: number[] = [];
   for (let i = 0; i < batch.count; i++) {
-    result.push(batch.instances[i * SHAPE_STRIDE + 12]);
+    result.push(batch.instances[i * SHAPE_STRIDE + KIND_OFFSET]);
   }
   return result;
+}
+
+/** The floats of one instance. */
+function instance(batch: ShapeBatch, index: number): number[] {
+  return Array.from(
+    batch.instances.subarray(index * SHAPE_STRIDE, (index + 1) * SHAPE_STRIDE)
+  );
+}
+
+/** The rect of one instance, as x, y, width and height. */
+function rectOf(batch: ShapeBatch, index: number): number[] {
+  return instance(batch, index).slice(0, 4);
+}
+
+/** The parameters `p0`, `p1` and `p2` of one instance. */
+function paramsOf(batch: ShapeBatch, index: number): number[] {
+  return instance(batch, index).slice(PARAMS_OFFSET);
 }
 
 describe('ShapeBatch', () => {
@@ -183,9 +204,7 @@ describe('pushForeground', () => {
     pushForeground(batch, [drop], [], BASE_UNIT);
 
     // 200, 20, 55 darkened to 110, 11, 30.
-    expect(batch.instances[2 * SHAPE_STRIDE + 13]).toBe(
-      110 * 65536 + 11 * 256 + 30
-    );
+    expect(paramsOf(batch, 2)[0]).toBe(110 * 65536 + 11 * 256 + 30);
   });
 
   it('rings a crosshair only while its boost runs', () => {
@@ -209,16 +228,71 @@ describe('pushForeground', () => {
       SHAPE.ring,
     ]);
   });
+
+  describe('on a grid of two cells per base cell', () => {
+    /** Expected values below are worked out by hand for this unit. */
+    const DOUBLE_UNIT = 2;
+
+    /** Off the diagonal, so swapped coordinates show. */
+    const offDiagonalDrop: JamDrop = { ...drop, y: 20 };
+
+    it('widens the halo of a drop by the unit', () => {
+      const batch = new ShapeBatch();
+
+      pushForeground(batch, [offDiagonalDrop], [], DOUBLE_UNIT);
+
+      // Radius 3 + (1.5 + 0.5) * 2 = 7 around (10, 20); 5 at the base unit.
+      expect(rectOf(batch, 0)).toEqual([3, 13, 14, 14]);
+    });
+
+    it('keeps the shadow, the drop and its highlight as on the base grid', () => {
+      const base = new ShapeBatch();
+      const doubled = new ShapeBatch();
+
+      pushForeground(base, [offDiagonalDrop], [], BASE_UNIT);
+      pushForeground(doubled, [offDiagonalDrop], [], DOUBLE_UNIT);
+
+      for (const index of [1, 2, 3]) {
+        expect(rectOf(doubled, index)).toEqual(rectOf(base, index));
+      }
+    });
+
+    it('draws the crosshair bars twice as long and thick', () => {
+      const batch = new ShapeBatch();
+
+      pushForeground(
+        batch,
+        [],
+        [{ x: 50, y: 30, color: [255, 0, 0, 255], boostLeft: null }],
+        DOUBLE_UNIT
+      );
+
+      expect(rectOf(batch, 0)).toEqual([38, 29, 26, 4]);
+      expect(rectOf(batch, 1)).toEqual([49, 18, 4, 26]);
+    });
+
+    it('draws the boost ring twice as wide, with room for its line', () => {
+      const batch = new ShapeBatch();
+
+      pushForeground(
+        batch,
+        [],
+        // A quarter left: an inverted boost would give another radius.
+        [{ x: 90, y: 40, color: [0, 0, 255, 255], boostLeft: 0.25 }],
+        DOUBLE_UNIT
+      );
+
+      const ring = 2;
+      expect(kinds(batch)).toEqual([SHAPE.rect, SHAPE.rect, SHAPE.ring]);
+      // Radius (9 + 4 * (1 - 0.25)) * 2 = 24, plus a unit of room: half 26.
+      expect(rectOf(batch, ring)).toEqual([64, 14, 52, 52]);
+      // The radius and the line width, 1.5 * 2.
+      expect(paramsOf(batch, ring)).toEqual([24, 3, 0]);
+    });
+  });
 });
 
 describe('pushWeaponMarks', () => {
-  /** The floats of one instance. */
-  function instance(batch: ShapeBatch, index: number): number[] {
-    return Array.from(
-      batch.instances.subarray(index * SHAPE_STRIDE, (index + 1) * SHAPE_STRIDE)
-    );
-  }
-
   it('turns each mark into an instance of its shape', () => {
     const layer = new MarkLayer();
     layer.add('glow', 10, 20, 4, [255, 255, 255], 0.5);
@@ -245,21 +319,17 @@ describe('pushWeaponMarks', () => {
       SHAPE.field,
     ]);
     // A glow fills the square around its circle.
-    expect(instance(batch, 0).slice(0, 4)).toEqual([6, 16, 8, 8]);
+    expect(rectOf(batch, 0)).toEqual([6, 16, 8, 8]);
     // A ring has room for its line.
-    expect(instance(batch, 1).slice(0, 4)).toEqual([2, 12, 16, 16]);
-    expect(instance(batch, 1).slice(13, 15)).toEqual([6, 2]);
+    expect(rectOf(batch, 1)).toEqual([2, 12, 16, 16]);
+    expect(paramsOf(batch, 1)).toEqual([6, 2, 0]);
     // A hexagon: its turn, its line and its corners.
-    expect(instance(batch, 2).slice(13)).toEqual([0.25, 0.5, 3]);
+    expect(paramsOf(batch, 2)).toEqual([0.25, 0.5, 3]);
     // An ellipse turned any way fits the square of its long radius.
-    expect(instance(batch, 3).slice(0, 4)).toEqual([45, 45, 10, 10]);
-    expect(instance(batch, 3).slice(13)).toEqual([1.5, 5, 1]);
+    expect(rectOf(batch, 3)).toEqual([45, 45, 10, 10]);
+    expect(paramsOf(batch, 3)).toEqual([1.5, 5, 1]);
     // A field: the weapon, its clock and how far it has spread.
-    expect(instance(batch, 4).slice(13)).toEqual([
-      WEAPON_CODE['cryo-pulse'],
-      3,
-      0.5,
-    ]);
+    expect(paramsOf(batch, 4)).toEqual([WEAPON_CODE['cryo-pulse'], 3, 0.5]);
     expect(instance(batch, 4)[7]).toBeCloseTo(0.75);
   });
 
@@ -272,7 +342,7 @@ describe('pushWeaponMarks', () => {
 
     pushWeaponMarks(batch, layer);
 
-    expect(WEAPONS.map((_, i) => instance(batch, i)[13])).toEqual(
+    expect(WEAPONS.map((_, i) => paramsOf(batch, i)[0])).toEqual(
       WEAPONS.map(({ id }) => WEAPON_CODE[id])
     );
     expect(new Set(Object.values(WEAPON_CODE)).size).toBe(WEAPONS.length);
