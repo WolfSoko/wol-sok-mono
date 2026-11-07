@@ -4,7 +4,6 @@ import {
   joinPathFragments,
   logger,
   names,
-  readJson,
   Tree,
 } from '@nx/devkit';
 
@@ -52,48 +51,6 @@ test('Empty Stack', () => {
     });
 });
 `;
-
-/** A version as `[major, minor, patch]`. */
-type Version = readonly [number, number, number];
-
-/** The first `x.y.z` in a version or range, such as `^2.265.0`. */
-function lowestVersion(range: string): Version | undefined {
-  const parts = /(\d+)\.(\d+)\.(\d+)/.exec(range);
-  return parts
-    ? [Number(parts[1]), Number(parts[2]), Number(parts[3])]
-    : undefined;
-}
-
-function isAtLeast(version: Version, minimum: Version): boolean {
-  for (let part = 0; part < minimum.length; part++) {
-    if (version[part] !== minimum[part]) {
-      return version[part] > minimum[part];
-    }
-  }
-  return true;
-}
-
-/** The oldest aws-cdk-lib the rewritten test is written for: the generator's own minimum. */
-const MIN_CDK_LIB = lowestVersion(CDK_LIB_VERSION) as Version;
-
-/**
- * Whether the workspace's root package.json asks for an aws-cdk-lib the
- * rewritten test runs on. An older one still writes the empty `Resources` key,
- * so its starter test passes and stays as it is.
- */
-function hasCurrentCdkLib(tree: Tree): boolean {
-  if (!tree.exists('package.json')) {
-    return false;
-  }
-  const { dependencies = {}, devDependencies = {} } = readJson<{
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-  }>(tree, 'package.json');
-  const declared = lowestVersion(
-    dependencies['aws-cdk-lib'] ?? devDependencies['aws-cdk-lib'] ?? ''
-  );
-  return declared !== undefined && isAtLeast(declared, MIN_CDK_LIB);
-}
 
 /** The names an untouched starter test carries. */
 interface StarterNames {
@@ -172,23 +129,14 @@ function warnAboutEditedTest(testPath: string): void {
   );
 }
 
-function warnAboutOldCdkLib(testPath: string): void {
-  logger.warn(
-    `${testPath} is the old starter test, left as it is: the workspace's package.json asks for no aws-cdk-lib ` +
-      `${CDK_LIB_VERSION}, which the new test is written for. Once you update aws-cdk-lib: ` +
-      MANUAL_FIX
-  );
-}
-
 /**
  * Rewrites the starter `src/main.test.ts` of apps generated before 4.1.3, which
  * fails on current aws-cdk-lib, to the test the generator writes now. Only a
- * test that is still exactly the generated one is rewritten, and only where the
- * workspace asks for the aws-cdk-lib the new test is written for; an edited test
- * that still holds the failing assertion is named in a warning.
+ * test that is still exactly the generated one is rewritten; an edited test that
+ * still holds the failing assertion is named in a warning. The aws-cdk-lib the
+ * new test needs comes from the 4.2.0 entry of `packageJsonUpdates`.
  */
 export default async function updateStarterTest(tree: Tree): Promise<void> {
-  const canRewrite = hasCurrentCdkLib(tree);
   let rewritten = false;
   for (const [projectName, project] of getProjects(tree)) {
     const testPath = joinPathFragments(project.root, STARTER_TEST);
@@ -198,15 +146,13 @@ export default async function updateStarterTest(tree: Tree): Promise<void> {
     }
     const normalised = normalise(source);
     const starter = matchStarter(normalised);
-    if (starter && canRewrite) {
+    if (starter) {
       writeStarterTest(
         tree,
         project.root,
         starterTestNames(starter, projectName)
       );
       rewritten = true;
-    } else if (starter) {
-      warnAboutOldCdkLib(testPath);
     } else if (normalised.includes(FAILING_ASSERTION)) {
       warnAboutEditedTest(testPath);
     }

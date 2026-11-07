@@ -29,7 +29,6 @@ Both fail on current aws-cdk-lib with _"Missing key 'Resources'"_.
 
 - No change to tests the user edited, beyond a warning.
 - No change to the generator's template (fixed in #2835) or to `AppStack`.
-- No `packageJsonUpdates` (no dependency bump).
 - The e2e synth failure stays with
   [#2831](https://github.com/WolfSoko/wol-sok-mono/issues/2831).
 
@@ -58,7 +57,17 @@ Both fail on current aws-cdk-lib with _"Missing key 'Resources'"_.
    for a `feat`, and `nx migrate` runs a migration whose version lies above
    the installed one up to the target, so users on 4.1.3 who generated their
    apps earlier get it too.
-7. **The migration's result is run, not just compared.** Its spec writes each
+7. **Raise aws-cdk-lib with the migration, not gate the rewrite on it.** The
+   new test imports `Validations`, which old aws-cdk-lib may lack. A
+   `packageJsonUpdates` entry at 4.2.0 raises `aws-cdk-lib` to the generator's
+   `CDK_LIB_VERSION` (`^2.265.0`) where the workspace names an older one
+   (`alwaysAddToPackageJson: false`), so the migration always rewrites an
+   untouched starter test. A gate that only warned on older versions would
+   leave the test to break on the workspace's next aws-cdk-lib update, when
+   `nx migrate` no longer runs this migration (manager's decision on request
+   523 of 2026-11-07, after the `/simplify` pass on
+   [PR #2849](https://github.com/WolfSoko/wol-sok-mono/pull/2849)).
+8. **The migration's result is run, not just compared.** Its spec writes each
    old starter test into a generated app, runs the migration and then runs the
    rewritten test against the workspace's aws-cdk-lib, with the loader the
    `generated-test.spec.ts` of #2835 uses, moved into a shared test helper.
@@ -76,8 +85,10 @@ Both fail on current aws-cdk-lib with _"Missing key 'Resources'"_.
    `templateMatches({ Resources: {} })` is named in a warning.
 5. A project without `src/main.test.ts` and a workspace without CDK apps pass
    through without change.
-6. The README describes the migration and the manual change.
-7. `nx test nx-aws-cdk-v2`, `nx build nx-aws-cdk-v2`, `nx lint nx-aws-cdk-v2`
+6. `packageJsonUpdates` at 4.2.0 raises `aws-cdk-lib` to `CDK_LIB_VERSION`
+   without adding it where it is missing.
+7. The README describes the migration, the version bump and the manual change.
+8. `nx test nx-aws-cdk-v2`, `nx build nx-aws-cdk-v2`, `nx lint nx-aws-cdk-v2`
    and `nx format:check` pass.
 
 ## Open questions

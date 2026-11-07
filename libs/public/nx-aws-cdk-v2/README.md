@@ -260,11 +260,11 @@ Apps generated before 4.1.3 hold a `src/main.test.ts` that asserts
 `Template.fromStack(stack).templateMatches({ Resources: {} })`. Current `aws-cdk-lib` writes an
 empty stack without a `Resources` key, so that test fails with _"Missing key 'Resources'"_.
 
-The `update-starter-test` migration rewrites the test to the one the generator writes now, but only
-where it is still exactly the generated test (formatting aside) and the workspace's `package.json`
-asks for `aws-cdk-lib` 2.265.0 or newer, which the new test is written for (older versions still
-write the empty `Resources` key, so the old test passes there). It leaves a test you changed alone
-and names it in a warning if it still holds the failing assertion. Change such a test by hand while
+The 4.2.0 update raises `aws-cdk-lib` to `^2.265.0` where your `package.json` names an older
+version, since the new test needs it. Its `update-starter-test` migration then rewrites the test to
+the one the generator writes now, but only where it is still exactly the generated test (formatting
+aside). It leaves a test you changed alone and names it in a warning if it still holds the failing
+assertion. Change such a test by hand while
 its stack is still empty:
 
 ```ts

@@ -150,30 +150,20 @@ describe('update-starter-test migration', () => {
     expect(warn.mock.calls[0][0]).toContain('#420-starter-test-of-older-apps');
   });
 
-  it.each([
-    ['an older aws-cdk-lib', '~2.100.0'],
-    ['no aws-cdk-lib', undefined],
-  ])(
-    'leaves the starter test as it is and says why with %s',
-    async (_case, cdkLib) => {
-      const tree = await workspaceWithStarterTest(CURRENT_STARTER);
-      updateJson(tree, 'package.json', (json) => {
-        delete json.dependencies?.['aws-cdk-lib'];
-        delete json.devDependencies?.['aws-cdk-lib'];
-        if (cdkLib) {
-          json.dependencies = { ...json.dependencies, 'aws-cdk-lib': cdkLib };
-        }
-        return json;
-      });
+  it('rewrites the starter test whatever aws-cdk-lib package.json names', async () => {
+    // nx migrate raises aws-cdk-lib through the 4.2.0 packageJsonUpdates entry.
+    const tree = await workspaceWithStarterTest(CURRENT_STARTER);
+    updateJson(tree, 'package.json', (json) => {
+      delete json.dependencies?.['aws-cdk-lib'];
+      delete json.devDependencies?.['aws-cdk-lib'];
+      return json;
+    });
 
-      await migrate(tree);
+    await migrate(tree);
 
-      expect(tree.read(TEST_PATH, 'utf-8')).toBe(CURRENT_STARTER);
-      expect(warn).toHaveBeenCalledTimes(1);
-      expect(warn.mock.calls[0][0]).toContain(TEST_PATH);
-      expect(warn.mock.calls[0][0]).toContain('aws-cdk-lib');
-    }
-  );
+    expect(tree.read(TEST_PATH, 'utf-8')).not.toBe(CURRENT_STARTER);
+    expect(warn).not.toHaveBeenCalled();
+  });
 
   it('leaves a test of the user alone without a warning', async () => {
     const tree = await workspaceWithStarterTest(OWN_TEST);
