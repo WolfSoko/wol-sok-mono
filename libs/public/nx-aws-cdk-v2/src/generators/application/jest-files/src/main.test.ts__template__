@@ -1,4 +1,4 @@
-import { App } from 'aws-cdk-lib';
+import { App, Validations } from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { AppStack } from './stacks/app-stack';
 
@@ -7,7 +7,13 @@ describe('<%= className %>', () => {
     const app = new App();
 
     const stack = new AppStack(app, '<%= projectName %>TestStack');
+    Validations.of(stack).acknowledge({
+      id: 'CloudFormation-Validate::F0001',
+      reason: 'The starter stack has no resources yet.',
+    });
 
-    Template.fromStack(stack).templateMatches({ Resources: {} });
+    // aws-cdk-lib leaves the Resources key out of an empty template.
+    const { Resources = {} } = Template.fromStack(stack).toJSON();
+    expect(Resources).toEqual({});
   });
 });

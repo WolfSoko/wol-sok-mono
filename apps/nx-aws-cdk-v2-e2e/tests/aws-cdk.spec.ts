@@ -174,6 +174,22 @@ describe('aws-cdk-v2 e2e', () => {
     ).toThrow();
   }, 120000);
 
+  it('should pass the generated unit test without validation warnings', async () => {
+    const plugin = uniq('aws-cdk-v2');
+
+    await runNxCommandAsync(
+      `generate @wolsok/nx-aws-cdk-v2:application ${plugin}`
+    );
+
+    const testResult = await runNxCommandAsync(
+      `test ${plugin} --output-style=stream --skip-nx-cache`
+    );
+    const output = `${testResult.stdout}\n${testResult.stderr}`;
+
+    expect(output).toContain('Successfully ran target test');
+    expect(output).not.toContain('CloudFormation-Validate');
+  }, 120000);
+
   describe('--directory', () => {
     it('should create src in the specified directory', async () => {
       const plugin = uniq('aws-cdk-v2');
