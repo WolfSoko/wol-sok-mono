@@ -1,5 +1,6 @@
 import { BehaviorSubject, firstValueFrom, take, toArray } from 'rxjs';
 import {
+  COMMAND_TTL_MS,
   type MatchPlan,
   onlineReplayId,
   replayFromBytes,
@@ -13,11 +14,7 @@ import {
   settleSnapshots,
   timestampAt,
 } from '../../testing/fake-firebase-sdk';
-import {
-  COMMAND_TTL_MS,
-  FirestoreGameReplays,
-  listingOf,
-} from './firestore-game-replays';
+import { FirestoreGameReplays, listingOf } from './firestore-game-replays';
 
 const PLAN: MatchPlan = {
   levelId: 'petri-dish',
@@ -87,7 +84,6 @@ describe('FirestoreGameReplays', () => {
       createdAt: FAKE_SERVER_STAMP,
       expireAt: timestampAt(1_000_000 + COMMAND_TTL_MS),
     });
-    expect(COMMAND_TTL_MS).toBe(24 * 60 * 60 * 1000);
     const bytes = (doc as { bytes: FakeBytes }).bytes.toUint8Array();
     expect(
       await replayFromBytes(bytes as Uint8Array<ArrayBuffer>, { stored: true })

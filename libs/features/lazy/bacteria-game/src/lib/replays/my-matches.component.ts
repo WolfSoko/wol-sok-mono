@@ -232,10 +232,10 @@ export class MyMatchesComponent {
       // already - the same as deleted.
       const deleted =
         result?.ok === true ||
-        (type === 'forget' && result?.reason === 'not-found');
+        (type === 'forget' && result?.error === 'not-found');
       if (!deleted) {
         this.notice.set(
-          type === 'forget' && result?.reason === 'ranking'
+          type === 'forget' && result?.error === 'ranking'
             ? 'replay.matches.stillRanking'
             : 'replay.matches.removeFailed'
         );

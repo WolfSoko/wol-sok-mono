@@ -1,9 +1,11 @@
 import { map, Observable, of } from 'rxjs';
 import {
+  type CommandResult,
   dailyLevelId,
   fromBase64,
   isObject,
   MAX_PACKED_BYTES,
+  type ReplayCommandType,
   type ReplayKind,
   replayToBytes,
   toBase64,
@@ -15,8 +17,6 @@ import {
   hintOf,
   MAX_REPLAY_LIST,
   onlineIdOf,
-  ReplayCommandResult,
-  ReplayCommandType,
   ReplayListing,
   ReplaySubmission,
 } from './replay-records';
@@ -52,7 +52,7 @@ export type KeptReplay = LocalReplay & Pick<ReplayListing, 'seat'>;
  */
 export class LocalGameReplays implements GameReplays {
   public readonly cloud = false;
-  private readonly commands = new Map<string, ReplayCommandResult>();
+  private readonly commands = new Map<string, CommandResult>();
   private nextId = 0;
 
   public constructor(private readonly storage: GameStorage) {}
@@ -130,14 +130,12 @@ export class LocalGameReplays implements GameReplays {
       this.commands.set(id, { ok: true });
     } else {
       // Featuring and the like need the server.
-      this.commands.set(id, { ok: false, reason: 'no-cloud' });
+      this.commands.set(id, { ok: false, error: 'no-cloud' });
     }
     return id;
   }
 
-  public watchCommand(
-    commandId: string
-  ): Observable<ReplayCommandResult | null> {
+  public watchCommand(commandId: string): Observable<CommandResult | null> {
     return of(this.commands.get(commandId) ?? null);
   }
 

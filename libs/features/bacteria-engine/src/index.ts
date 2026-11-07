@@ -100,6 +100,22 @@ export type {
   ReplayState,
 } from './lib/state/cloud-records/replays';
 export {
+  COMMAND_ENVELOPE_KEYS,
+  COMMAND_TTL_MS,
+  CURATION_COMMAND_TYPES,
+  hasOnlyCommandKeys,
+  isCurationCommandType,
+  parseCommandResult,
+  parseReplayCommand,
+  PLAYER_REPLAY_COMMAND_TYPES,
+  REPLAY_COMMAND_TYPES,
+} from './lib/state/command-documents';
+export type {
+  CommandResult,
+  CurationCommandType,
+  ReplayCommandType,
+} from './lib/state/command-documents';
+export {
   arenaSize,
   BASE_ARENA,
   DEFAULT_SCREEN_RESOLUTION,

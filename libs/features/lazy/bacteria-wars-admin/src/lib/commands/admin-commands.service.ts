@@ -1,23 +1,17 @@
 import { inject, Injectable } from '@angular/core';
 import {
   type AdminCommandType,
+  commandEnvelope,
+  type CommandResult,
+  type CurationCommandType,
   DESTRUCTIVE_COMMAND_TYPES,
   type FirebaseConnection,
   GameCloud,
+  parseCommandResult,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import type { DocumentReference } from 'firebase/firestore';
 import { AdminAccessService } from '../access/admin-access.service';
-import {
-  DESTRUCTIVE_REPLAY_TYPES,
-  type ReplayCommandType,
-} from './command-types';
-
-/** What the server made of a command (`adminCommands/{id}.result`). */
-export interface AdminResult {
-  ok: boolean;
-  /** An id such as `not-found`, never a text to show. */
-  error?: string;
-}
+import { DESTRUCTIVE_REPLAY_TYPES } from './command-types';
 
 /** A command as the admin views send it; the envelope is added here. */
 export interface AdminCommandInput {
@@ -27,9 +21,6 @@ export interface AdminCommandInput {
   reason: string;
   args: Record<string, unknown>;
 }
-
-/** How long a command document lives (TTL); the rules allow up to 2 days. */
-const COMMAND_TTL_MS = 24 * 3_600_000;
 
 /**
  * How long `send` waits for the function's `result`: past the trigger's
@@ -52,7 +43,7 @@ export class AdminCommandsService {
   public send(
     command: AdminCommandInput,
     now: number = Date.now()
-  ): Promise<AdminResult> {
+  ): Promise<CommandResult> {
     return this.write(
       'adminCommands',
       {
@@ -74,10 +65,10 @@ export class AdminCommandsService {
    * want a fresh sign-in too.
    */
   public sendReplay(
-    type: ReplayCommandType,
+    type: CurationCommandType,
     replayId: string,
     now: number = Date.now()
-  ): Promise<AdminResult> {
+  ): Promise<CommandResult> {
     return this.write(
       'replayCommands',
       { type, replayId },
@@ -92,7 +83,7 @@ export class AdminCommandsService {
     fields: Record<string, unknown>,
     destructive: boolean,
     now: number
-  ): Promise<AdminResult> {
+  ): Promise<CommandResult> {
     const connection = this.cloud.firebase();
     const uid = this.access.uid();
     if (connection === null || uid === null) {
@@ -103,24 +94,22 @@ export class AdminCommandsService {
     }
     const { db, dbSdk } = connection;
     const ref = await dbSdk.addDoc(dbSdk.collection(db, collection), {
-      uid,
+      ...commandEnvelope(dbSdk, uid, now),
       ...fields,
-      createdAt: dbSdk.serverTimestamp(),
-      expireAt: dbSdk.Timestamp.fromMillis(now + COMMAND_TTL_MS),
     });
     return this.result(connection, ref);
   }
 
   /**
    * Waits for the function's `result` on a command document - `timeout`
-   * when none comes within {@link RESULT_TIMEOUT_MS}. `adminCommand` names
-   * a failure `error`, `replayCommand` `reason`.
+   * when none comes within {@link RESULT_TIMEOUT_MS}, `internal` for a
+   * failure without its error.
    */
   private result(
     { dbSdk }: FirebaseConnection,
     ref: DocumentReference
-  ): Promise<AdminResult> {
-    return new Promise<AdminResult>((resolve, reject) => {
+  ): Promise<CommandResult> {
+    return new Promise<CommandResult>((resolve, reject) => {
       const timer = setTimeout(() => {
         stop();
         resolve({ ok: false, error: 'timeout' });
@@ -128,19 +117,14 @@ export class AdminCommandsService {
       const stop = dbSdk.onSnapshot(
         ref,
         (snapshot) => {
-          const result: unknown = snapshot.get('result');
-          if (typeof result === 'object' && result !== null) {
+          const result = parseCommandResult(snapshot.get('result'));
+          if (result !== null) {
             clearTimeout(timer);
             stop();
-            const { ok, error, reason } = result as Record<string, unknown>;
-            const why = error ?? reason;
             resolve(
-              ok === true
+              result.ok
                 ? { ok: true }
-                : {
-                    ok: false,
-                    error: typeof why === 'string' ? why : 'internal',
-                  }
+                : { ok: false, error: result.error ?? 'internal' }
             );
           }
         },

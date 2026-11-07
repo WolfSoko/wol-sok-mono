@@ -107,7 +107,7 @@ describe('LocalGameReplays', () => {
     });
     expect(await firstValueFrom(replays.watchCommand(featured))).toEqual({
       ok: false,
-      reason: 'no-cloud',
+      error: 'no-cloud',
     });
     expect(parseLocalReplays(storage.stored(LOCAL_REPLAYS_KEY))).toEqual([]);
   });

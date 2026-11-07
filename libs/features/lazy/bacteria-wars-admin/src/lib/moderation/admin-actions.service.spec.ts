@@ -3,13 +3,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { of, Subject } from 'rxjs';
 import { AdminAccessService } from '../access/admin-access.service';
-import {
-  type AdminResult,
-  AdminCommandsService,
-} from '../commands/admin-commands.service';
+import type { CommandResult } from '@wolsok/feat-lazy-bac-game/admin-kit';
+import { AdminCommandsService } from '../commands/admin-commands.service';
 import { AdminActionsService } from './admin-actions.service';
 
-function setUp(confirmed: unknown, result: AdminResult | Error) {
+function setUp(confirmed: unknown, result: CommandResult | Error) {
   const action = new Subject<void>();
   const snackBar = {
     open: jest.fn(() => ({ onAction: () => action })),
@@ -20,7 +18,7 @@ function setUp(confirmed: unknown, result: AdminResult | Error) {
     }
     return result;
   });
-  const sendReplay = jest.fn(async () => result as AdminResult);
+  const sendReplay = jest.fn(async () => result as CommandResult);
   const signIn = jest.fn(async () => true);
   TestBed.configureTestingModule({
     providers: [

@@ -444,7 +444,7 @@ describe('the replays part', () => {
         { isOwner: async () => false },
         NOW
       )
-    ).toEqual({ ok: false, reason: 'not-found' });
+    ).toEqual({ ok: false, error: 'not-found' });
     expect(await exists('replayCommands/c1')).toBe(false);
   });
 });

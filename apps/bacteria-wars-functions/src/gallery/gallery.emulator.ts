@@ -302,7 +302,7 @@ describe("the owner's curation", () => {
     expect((await db.collection('publicReplays').get()).size).toBe(1);
     expect(await curate('c2', 'feature', 'l_a')).toEqual({
       ok: false,
-      reason: 'already-public',
+      error: 'already-public',
     });
   });
 
@@ -311,7 +311,7 @@ describe("the owner's curation", () => {
     await db.doc('replays/l_a').update({ optOut: ['ada'], galleryOut: true });
     expect(await curate('c1', 'feature', 'l_a')).toEqual({
       ok: false,
-      reason: 'not-eligible',
+      error: 'not-eligible',
     });
     expect((await db.doc('adminAudit/c1').get()).get('error')).toBe(
       'not-eligible'
@@ -322,7 +322,7 @@ describe("the owner's curation", () => {
         state: 'unverified',
         ms: 0,
       }))
-    ).toEqual({ ok: false, reason: 'not-verified' });
+    ).toEqual({ ok: false, error: 'not-verified' });
     expect((await db.doc('replays/l_b').get()).get('state')).toBe('unverified');
     // "Ultra", four times the cells of the online grid: 5 minutes would
     // take about 720 s, past the 360 s one command may spend.
@@ -333,18 +333,18 @@ describe("the owner's curation", () => {
     });
     expect(await curate('c5', 'feature', 'l_u')).toEqual({
       ok: false,
-      reason: 'no-budget',
+      error: 'no-budget',
     });
     expect((await db.doc('replays/l_u').get()).get('state')).toBe('submitted');
     await store('l_c', 'cid');
     await db.doc('counters/2026-10-26').set({ adminVerifyMs: 400_000 });
     expect(await curate('c3', 'feature', 'l_c')).toEqual({
       ok: false,
-      reason: 'no-budget',
+      error: 'no-budget',
     });
     expect(await curate('c4', 'feature', 'nope')).toEqual({
       ok: false,
-      reason: 'not-found',
+      error: 'not-found',
     });
   });
 
@@ -359,7 +359,7 @@ describe("the owner's curation", () => {
     expect(await publicIdOf('l_a')).toBeUndefined();
     expect(await curate('c3', 'unfeature', publicId)).toEqual({
       ok: false,
-      reason: 'not-public',
+      error: 'not-public',
     });
     // Verified now: featured again without a re-run, keeping the score
     // stored (`featureBest` may have given it the best-daily feat).

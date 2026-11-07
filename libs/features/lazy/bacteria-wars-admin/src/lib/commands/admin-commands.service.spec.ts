@@ -85,7 +85,7 @@ describe('AdminCommandsService', () => {
     expect(dbSdk.addDoc).not.toHaveBeenCalled();
   });
 
-  it('sends a gallery curation as a replay command, reading its reason', async () => {
+  it('sends a gallery curation as a replay command, reading its error', async () => {
     const { dbSdk, answer } = setUp();
     const sent = TestBed.inject(AdminCommandsService).sendReplay(
       'unfeature',
@@ -101,7 +101,7 @@ describe('AdminCommandsService', () => {
       expireAt: { ms: NOW + 24 * 3_600_000 },
     });
 
-    answer({ ok: false, reason: 'not-public' });
+    answer({ ok: false, error: 'not-public' });
     expect(await sent).toEqual({ ok: false, error: 'not-public' });
   });
 

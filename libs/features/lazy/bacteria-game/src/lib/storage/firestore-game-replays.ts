@@ -1,39 +1,33 @@
 import type { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
 import { catchError, EMPTY, firstValueFrom, map, Observable, of } from 'rxjs';
 import {
+  ARRIVAL_REASONS,
+  type ArrivalReason,
+  type CommandResult,
   type EndReason,
   MAX_PACKED_BYTES,
+  ONLINE_REASONS,
+  type OnlineReason,
+  parseCommandResult,
   REPLAY_KINDS,
   REPLAY_STATES,
+  type ReplayCommandType,
   type ReplayKind,
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { commandEnvelope } from './command-envelope';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameReplays } from './game-replays';
 import { millisOf, signedIn } from './firestore-values';
 import {
-  ARRIVAL_REASONS,
-  type ArrivalReason,
-  ONLINE_REASONS,
-  type OnlineReason,
-} from '@wolsok/feat-shared-bacteria-engine';
-import {
   hintOf,
   MAX_REPLAY_LIST,
   onlineIdOf,
-  parseCommandResult,
-  ReplayCommandResult,
-  ReplayCommandType,
   ReplayListing,
   ReplaySubmission,
 } from './replay-records';
 import { beforeRetry, errorCode } from './retry';
 
-/**
- * How long a command document lasts: the rules want `expireAt` a day after
- * the write, and TTL removes what a failed function left behind.
- */
-export const COMMAND_TTL_MS = 24 * 60 * 60 * 1000;
 /**
  * How often a document the rules refuse - one that does not exist yet - is
  * asked again before the watch gives up.
@@ -79,11 +73,9 @@ export class FirestoreGameReplays implements GameReplays {
     // match is long over by then. `watchSaved` tells once it landed.
     dbSdk
       .setDoc(ref, {
-        uid,
+        ...commandEnvelope(dbSdk, uid, Date.now()),
         bytes: dbSdk.Bytes.fromUint8Array(bytes),
         hint: hintOf(hint),
-        createdAt: dbSdk.serverTimestamp(),
-        expireAt: dbSdk.Timestamp.fromMillis(Date.now() + COMMAND_TTL_MS),
         ...(attempt === undefined ? {} : { attempt }),
       })
       .catch((error: unknown) =>
@@ -157,11 +149,9 @@ export class FirestoreGameReplays implements GameReplays {
     const ref = dbSdk.doc(dbSdk.collection(db, 'replayCommands'));
     dbSdk
       .setDoc(ref, {
-        uid,
+        ...commandEnvelope(dbSdk, uid, Date.now()),
         type,
         replayId,
-        createdAt: dbSdk.serverTimestamp(),
-        expireAt: dbSdk.Timestamp.fromMillis(Date.now() + COMMAND_TTL_MS),
       })
       .catch((error: unknown) =>
         console.warn('The replay command could not be sent', error)
@@ -169,9 +159,7 @@ export class FirestoreGameReplays implements GameReplays {
     return ref.id;
   }
 
-  public watchCommand(
-    commandId: string
-  ): Observable<ReplayCommandResult | null> {
+  public watchCommand(commandId: string): Observable<CommandResult | null> {
     const { db, dbSdk } = this.connection;
     // A command still on its way to the server is refused like a replay
     // not yet stored; a watch that gives up errors.

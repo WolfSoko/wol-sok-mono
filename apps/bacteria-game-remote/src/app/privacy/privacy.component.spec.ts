@@ -146,7 +146,8 @@ describe('PrivacyComponent', () => {
     // Kept 30 days after saving, as the functions' REPLAY_TTL_MS.
     expect(de).toContain('30 Tage nach dem Speichern');
     expect(en).toContain('30 days after it was saved');
-    // A submission expires a day after the client wrote it (COMMAND_TTL_MS).
+    // A submission expires a day after the client wrote it (the engine's
+    // COMMAND_TTL_MS).
     expect(de.replace(/\s+/g, ' ')).toContain(
       'nicht innerhalb eines Tages nach dem Match hochladen'
     );

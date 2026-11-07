@@ -3,12 +3,14 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { AdminAccessService } from '../access/admin-access.service';
+import type {
+  CommandResult,
+  CurationCommandType,
+} from '@wolsok/feat-lazy-bac-game/admin-kit';
 import {
   type AdminCommandInput,
-  type AdminResult,
   AdminCommandsService,
 } from '../commands/admin-commands.service';
-import type { ReplayCommandType } from '../commands/command-types';
 import { AdminI18n } from '../i18n/admin-i18n.service';
 import {
   CommandDialogComponent,
@@ -39,7 +41,7 @@ export class AdminActionsService {
   private readonly access = inject(AdminAccessService);
   private readonly i18n = inject(AdminI18n);
 
-  public async run(action: ModerationAction): Promise<AdminResult | null> {
+  public async run(action: ModerationAction): Promise<CommandResult | null> {
     const confirmed = await this.confirm(action);
     return confirmed === undefined
       ? null
@@ -55,10 +57,10 @@ export class AdminActionsService {
 
   /** The same for the gallery's curation (`replayCommands`), without a reason. */
   public async runReplay(
-    type: ReplayCommandType,
+    type: CurationCommandType,
     replayId: string,
     subject: string
-  ): Promise<AdminResult | null> {
+  ): Promise<CommandResult | null> {
     const confirmed = await this.confirm({
       type: `replay.${type}`,
       subject,
@@ -83,10 +85,10 @@ export class AdminActionsService {
   }
 
   private async send(
-    command: () => Promise<AdminResult>
-  ): Promise<AdminResult> {
+    command: () => Promise<CommandResult>
+  ): Promise<CommandResult> {
     this.snackBar.open(this.i18n.t('command.sent'));
-    let result: AdminResult;
+    let result: CommandResult;
     try {
       result = await command();
     } catch (error) {
@@ -97,7 +99,7 @@ export class AdminActionsService {
     return result;
   }
 
-  private tell(result: AdminResult): void {
+  private tell(result: CommandResult): void {
     if (result.ok) {
       this.snackBar.open(this.i18n.t('command.done'), undefined, {
         duration: 4000,
