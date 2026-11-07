@@ -102,10 +102,21 @@ describe('update-starter-test migration', () => {
     ['the legacy starter', LEGACY_STARTER, 'Starter'],
   ])('with %s', (_case, starter, describeName) => {
     let tree: Tree;
+    let warnings: unknown[][];
 
-    beforeEach(async () => {
-      tree = await workspaceWithStarterTest(starter);
-      await migrate(tree);
+    // The tests only read the migrated tree, so it is built once per shape.
+    beforeAll(async () => {
+      const migrationWarn = jest
+        .spyOn(logger, 'warn')
+        .mockImplementation(() => undefined);
+      try {
+        tree = await workspaceWithStarterTest(starter);
+        migrationWarn.mockClear();
+        await updateStarterTest(tree);
+        warnings = [...migrationWarn.mock.calls];
+      } finally {
+        migrationWarn.mockRestore();
+      }
     });
 
     it('rewrites it to pass against the workspace aws-cdk-lib without validation warnings', async () => {
@@ -124,7 +135,7 @@ describe('update-starter-test migration', () => {
     });
 
     it('warns about nothing', () => {
-      expect(warn).not.toHaveBeenCalled();
+      expect(warnings).toEqual([]);
     });
   });
 
@@ -136,7 +147,7 @@ describe('update-starter-test migration', () => {
     expect(tree.read(TEST_PATH, 'utf-8')).toBe(EDITED_STARTER);
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0][0]).toContain(TEST_PATH);
-    expect(warn.mock.calls[0][0]).toContain('toJSON().Resources ?? {}');
+    expect(warn.mock.calls[0][0]).toContain('#420-starter-test-of-older-apps');
   });
 
   it.each([

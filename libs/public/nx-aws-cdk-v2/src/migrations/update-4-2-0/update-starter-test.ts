@@ -1,7 +1,5 @@
-import * as path from 'path';
 import {
   formatFiles,
-  generateFiles,
   getProjects,
   joinPathFragments,
   logger,
@@ -10,16 +8,14 @@ import {
   Tree,
 } from '@nx/devkit';
 
+import {
+  StarterTestNames,
+  writeStarterTest,
+} from '../../generators/application/application';
 import { CDK_LIB_VERSION } from '../../utils/cdk-shared';
 
 /** The starter test's place in a project, as the application generator writes it. */
 const STARTER_TEST = 'src/main.test.ts';
-
-/** The generator's own starter test template, written in place of the old one. */
-const STARTER_TEMPLATE_DIR = path.join(
-  __dirname,
-  '../../generators/application/jest-files'
-);
 
 /** Stand-ins for the names a starter test carries, in the shapes below. */
 const DESCRIBE_NAME = '__DESCRIBE_NAME__';
@@ -99,9 +95,6 @@ function hasCurrentCdkLib(tree: Tree): boolean {
   return declared !== undefined && isAtLeast(declared, MIN_CDK_LIB);
 }
 
-/** The assertion that fails on current aws-cdk-lib while the stack is empty, normalised. */
-const FAILING_ASSERTION = normalise('templateMatches({ Resources: {} })');
-
 /** The names an untouched starter test carries. */
 interface StarterNames {
   /** The describe block's name, where the starter test had one. */
@@ -139,9 +132,11 @@ const STARTER_PATTERNS = [
   shapePattern(LEGACY_SHAPE),
 ];
 
-/** The names of an untouched starter test, or `undefined` for any other test. */
-function matchStarter(source: string): StarterNames | undefined {
-  const normalised = normalise(source);
+/** The assertion that fails on current aws-cdk-lib while the stack is empty, normalised. */
+const FAILING_ASSERTION = normalise('templateMatches({ Resources: {} })');
+
+/** The names of an untouched starter test, given normalised, or `undefined` for any other test. */
+function matchStarter(normalised: string): StarterNames | undefined {
   for (const pattern of STARTER_PATTERNS) {
     const groups = pattern.exec(normalised)?.groups;
     if (groups) {
@@ -154,27 +149,25 @@ function matchStarter(source: string): StarterNames | undefined {
   return undefined;
 }
 
-function rewriteStarter(
-  tree: Tree,
-  projectRoot: string,
-  projectName: string,
-  starter: StarterNames
-): void {
-  generateFiles(tree, STARTER_TEMPLATE_DIR, projectRoot, {
-    className: starter.describeName ?? names(projectName).className,
-    projectName: starter.stackPrefix,
-    template: '',
-  });
+/** The names the generator's starter test gets in place of an old one's. */
+function starterTestNames(
+  starter: StarterNames,
+  projectName: string
+): StarterTestNames {
+  return {
+    describeName: starter.describeName ?? names(projectName).className,
+    stackPrefix: starter.stackPrefix,
+  };
 }
 
+/** Where the README shows the change to make by hand. */
 const MANUAL_FIX =
-  'assert expect(Template.fromStack(stack).toJSON().Resources ?? {}).toEqual({}) for an empty stack instead, and acknowledge ' +
-  "'CloudFormation-Validate::F0001' with Validations.of(stack).acknowledge(...) to silence the empty-stack warning.";
+  'Change it by hand as https://github.com/WolfSoko/wol-sok-mono/tree/main/libs/public/nx-aws-cdk-v2#420-starter-test-of-older-apps shows.';
 
 function warnAboutEditedTest(testPath: string): void {
   logger.warn(
     `${testPath} asserts templateMatches({ Resources: {} }), which fails on aws-cdk-lib ${CDK_LIB_VERSION} ` +
-      'while the stack is still empty: an empty stack has no Resources key. The migration leaves edited tests alone; ' +
+      'while the stack is still empty: an empty stack has no Resources key. The migration leaves edited tests alone. ' +
       MANUAL_FIX
   );
 }
@@ -182,7 +175,7 @@ function warnAboutEditedTest(testPath: string): void {
 function warnAboutOldCdkLib(testPath: string): void {
   logger.warn(
     `${testPath} is the old starter test, left as it is: the workspace's package.json asks for no aws-cdk-lib ` +
-      `${CDK_LIB_VERSION}, which the new test is written for. Once you update aws-cdk-lib, ` +
+      `${CDK_LIB_VERSION}, which the new test is written for. Once you update aws-cdk-lib: ` +
       MANUAL_FIX
   );
 }
@@ -203,13 +196,18 @@ export default async function updateStarterTest(tree: Tree): Promise<void> {
     if (source === null) {
       continue;
     }
-    const starter = matchStarter(source);
-    if (starter && !canRewrite) {
-      warnAboutOldCdkLib(testPath);
-    } else if (starter) {
-      rewriteStarter(tree, project.root, projectName, starter);
+    const normalised = normalise(source);
+    const starter = matchStarter(normalised);
+    if (starter && canRewrite) {
+      writeStarterTest(
+        tree,
+        project.root,
+        starterTestNames(starter, projectName)
+      );
       rewritten = true;
-    } else if (normalise(source).includes(FAILING_ASSERTION)) {
+    } else if (starter) {
+      warnAboutOldCdkLib(testPath);
+    } else if (normalised.includes(FAILING_ASSERTION)) {
       warnAboutEditedTest(testPath);
     }
   }

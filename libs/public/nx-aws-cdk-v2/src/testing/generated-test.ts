@@ -4,7 +4,7 @@ import { runInThisContext } from 'node:vm';
 import * as ts from 'typescript';
 
 /** A test body a generated spec registered with `it` or `test`. */
-export interface GeneratedTest {
+interface GeneratedTest {
   readonly name: string;
   readonly run: () => unknown;
 }
@@ -82,10 +82,7 @@ function loadFromTree(
 }
 
 /** Loads a generated test file from the tree and returns the tests it registers. */
-export function collectGeneratedTests(
-  tree: Tree,
-  testPath: string
-): GeneratedTest[] {
+function collectGeneratedTests(tree: Tree, testPath: string): GeneratedTest[] {
   const tests: GeneratedTest[] = [];
   const register = (name: string, run: () => unknown): void => {
     tests.push({ name, run });

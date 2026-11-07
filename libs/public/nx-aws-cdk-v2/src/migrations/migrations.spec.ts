@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readJsonFile } from '@nx/devkit';
 import { join } from 'node:path';
 
 /** The package root, where `migrations.json` resolves its paths from. */
@@ -10,9 +10,9 @@ interface MigrationEntry {
   readonly implementation: string;
 }
 
-const migrations: { generators: Record<string, MigrationEntry> } = JSON.parse(
-  readFileSync(join(PACKAGE_ROOT, 'migrations.json'), 'utf-8')
-);
+const migrations = readJsonFile<{
+  generators: Record<string, MigrationEntry>;
+}>(join(PACKAGE_ROOT, 'migrations.json'));
 
 describe('migrations.json', () => {
   it.each(Object.entries(migrations.generators))(
