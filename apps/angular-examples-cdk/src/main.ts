@@ -1,7 +1,7 @@
 import { envOrDie, SpaStack } from '@wolsok/spa-cdk-stack';
+import { WORKSPACE_VERSION } from '@wolsok/utils-version';
 import { App, Duration, RemovalPolicy, Tags } from 'aws-cdk-lib';
 import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
-import { WORKSPACE_VERSION } from '@wolsok/utils-version';
 
 const app = new App();
 
@@ -11,6 +11,7 @@ const stack = new SpaStack(app, stackName, {
     region: 'eu-central-1',
     account: '088632064895',
   },
+  // The CDK executors run from the workspace root.
   buildOutputPath: 'dist/apps/angular-examples',
   domainName: 'angularexamples.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
