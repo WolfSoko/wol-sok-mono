@@ -229,7 +229,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.cleanup();
     // The GPU simulation lives in this canvas's context, which goes with it.
     // The arena view disposes the painter.
-    this.playerService.useSimulation(null);
+    this.playerService.useSimulations(null);
     this.sound.setMusic(null);
     // Leaving the page must give the screen back as well.
     this.stageFullscreen.release();

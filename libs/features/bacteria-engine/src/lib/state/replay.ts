@@ -19,13 +19,17 @@ import {
 } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { MatchRun, MatchRunResult } from './match-run';
-import { intSimulation } from './gpu-int/int-simulation';
 import {
   isRuleset,
   Ruleset,
   Simulation,
   SimulationFactory,
 } from './simulation';
+import {
+  CPU_SIMULATIONS,
+  createSimulationProvider,
+  SimulationProvider,
+} from './simulation-provider';
 import { isHeadStart } from './rivalry';
 import { EndReason, MatchOutcome } from './win-conditions';
 
@@ -364,6 +368,11 @@ export function onOnlineGrid(
   return simGridOf(plan) === ONLINE_SIM_RESOLUTION;
 }
 
+/** A replay that plays out again as it was played - see {@link canPlayBack}. */
+export type PlayableReplay = Replay & {
+  header: ReplayHeader & { simulation: Ruleset };
+};
+
 /**
  * Why a replay would not play out again as it was played:
  * - `balance`: recorded on another balance table - a balance change retires
@@ -408,7 +417,7 @@ export function playbackRefusal(replay: Replay): PlaybackRefusal | null {
  * True when a replay plays out again as it was played - see
  * {@link playbackRefusal}.
  */
-export function canPlayBack(replay: Replay): boolean {
+export function canPlayBack(replay: Replay): replay is PlayableReplay {
   return playbackRefusal(replay) === null;
 }
 
@@ -419,15 +428,22 @@ export function canPlayBack(replay: Replay): boolean {
  * `BacteriaSimulation` for `cpu`, `IntSimulation` for `gpu-int`. Null for
  * a replay that would not play out as it was played ({@link canPlayBack}).
  * The caller disposes of it. A viewer with a trusted GPU hands in
- * `gpuInt`, the integer passes on its GPU, which play a `gpu-int` replay
- * alike (ADR 0015) and much faster.
+ * `simulations` with the integer passes on its GPU, which play a `gpu-int`
+ * replay alike (ADR 0015) and much faster - and fall back to
+ * `IntSimulation` should the GPU fail to start.
  */
 export function replayEngine(
   replay: Replay,
   onSecond?: SecondSampler,
-  gpuInt?: SimulationFactory
+  simulations: SimulationProvider = CPU_SIMULATIONS
 ): MatchEngine | null {
-  return canPlayBack(replay) ? playbackEngine(replay, onSecond, gpuInt) : null;
+  return canPlayBack(replay)
+    ? playbackEngine(
+        replay,
+        onSecond,
+        simulations.simulationFor(replay.header.simulation)
+      )
+    : null;
 }
 
 /** How {@link replayRun} plays a replay. */
@@ -436,9 +452,10 @@ export interface ReplayRunOptions {
   onSecond?: SecondSampler;
   /**
    * The integer passes on a trusted GPU - see {@link replayEngine}. A GPU
-   * that fails to set up - the factory throws, or the engine's own setup
-   * on it - is let go of: the run plays on `IntSimulation` from then on,
-   * as a live match falls back, and tells {@link onGpuFailure}.
+   * that fails to set up - the factory throws (the `SimulationProvider`
+   * steps down), or the engine's own setup on it - is let go of: the run
+   * plays on `IntSimulation` from then on, as a live match falls back, and
+   * tells {@link onGpuFailure}.
    */
   gpuInt?: SimulationFactory;
   /** Told once when {@link gpuInt} failed to set up. */
@@ -457,14 +474,29 @@ export function replayRun(
   if (!canPlayBack(replay)) {
     return null;
   }
-  const { width, height, ticks } = replay.header;
-  let { gpuInt } = options;
+  const { width, height, ticks, simulation: ruleset } = replay.header;
+  let failed = false;
+  const fail = (error: unknown): void => {
+    if (!failed) {
+      failed = true;
+      options.onGpuFailure?.(error);
+    }
+  };
+  let simulations =
+    options.gpuInt === undefined
+      ? CPU_SIMULATIONS
+      : createSimulationProvider({
+          gpu: { int: options.gpuInt },
+          onFallback: fail,
+        });
+  const engineOn = (on: SimulationProvider): MatchEngine =>
+    playbackEngine(replay, options.onSecond, on.simulationFor(ruleset));
   const build = (): MatchEngine => {
-    if (gpuInt === undefined) {
-      return playbackEngine(replay, options.onSecond);
+    if (simulations === CPU_SIMULATIONS) {
+      return engineOn(CPU_SIMULATIONS);
     }
     const made: Simulation[] = [];
-    const factory = gpuInt;
+    const factory = simulations.simulationFor(ruleset);
     try {
       return playbackEngine(replay, options.onSecond, (...args) => {
         const simulation = factory(...args);
@@ -472,20 +504,22 @@ export function replayRun(
         return simulation;
       });
     } catch (error) {
+      // The engine's own setup failed on the GPU's simulation.
       made.forEach((simulation) => simulation.dispose());
-      gpuInt = undefined;
-      options.onGpuFailure?.(error);
-      return playbackEngine(replay, options.onSecond);
+      simulations = CPU_SIMULATIONS;
+      console.warn('The replay falls back to the CPU', error);
+      fail(error);
+      return engineOn(CPU_SIMULATIONS);
     }
   };
   return new MatchRun(build, { width, height }, ticks);
 }
 
-/** {@link replayEngine} for a replay known to play back. */
+/** {@link replayEngine} for a replay known to play back, on `simulation`. */
 function playbackEngine(
-  replay: Replay,
-  onSecond?: SecondSampler,
-  gpuInt?: SimulationFactory
+  replay: PlayableReplay,
+  onSecond: SecondSampler | undefined,
+  simulation: SimulationFactory
 ): MatchEngine {
   const { header, inputs } = replay;
   const { spawns, options } = planMatch(header);
@@ -499,9 +533,7 @@ function playbackEngine(
   });
   return new MatchEngine(spawns, {
     ...options,
-    ...(header.simulation === 'gpu-int'
-      ? { simulation: gpuInt ?? intSimulation }
-      : {}),
+    simulation,
     ghosts,
     ...(onSecond === undefined ? {} : { onSecond }),
   });

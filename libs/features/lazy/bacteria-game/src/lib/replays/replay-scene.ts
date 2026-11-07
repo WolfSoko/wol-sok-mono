@@ -1,5 +1,6 @@
 import { arenaContent, SeatColors } from '../arena/arena-content';
 import type { GlArenaPainter } from '../arena/gl/gl-arena-painter';
+import { gpuSimulationsOf } from '../gl/simulation-choice';
 import type { ArenaContent, ArenaScene } from '../arena/arena-view.component';
 import {
   type BacteriaLook,
@@ -32,11 +33,11 @@ export type GpuIntPainter = Pick<GlArenaPainter, 'createSimulation'>;
  */
 function gpuIntOn(gpu: GpuIntPainter, replay: Replay): SimulationFactory {
   const { width, height } = replay.header;
+  const { int } = gpuSimulationsOf((balance, random, options) =>
+    gpu.createSimulation(balance, random, options)
+  );
   return (balance, random, seed) => {
-    const simulation = gpu.createSimulation(balance, random, {
-      deterministic: true,
-      matchSeed: seed,
-    });
+    const simulation = int(balance, random, seed);
     try {
       simulation.resize(width, height);
     } catch (error) {
@@ -183,8 +184,8 @@ export class ReplayScene implements ArenaScene {
     this.gpu = onGpu ? gpu : null;
     const run = replayRun(this.replay, {
       ...(onGpu ? { gpuInt: gpuIntOn(gpu, this.replay) } : {}),
-      onGpuFailure: (error) => {
-        console.warn('The replay falls back to the CPU', error);
+      // The engine warned already.
+      onGpuFailure: () => {
         this.refused = gpu;
         this.gpu = null;
       },

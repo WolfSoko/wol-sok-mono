@@ -662,6 +662,7 @@ export {
 } from './lib/state/replay';
 export type {
   ParseOptions,
+  PlayableReplay,
   PlaybackRefusal,
   Replay,
   ReplayAttempt,
@@ -693,6 +694,18 @@ export type { HeadStart, Series, SeriesLength } from './lib/state/rivalry';
 export { decodeReport } from './lib/state/simulation-report';
 export type { ReportLayout } from './lib/state/simulation-report';
 export { isRuleset } from './lib/state/simulation';
+export {
+  CPU_SIMULATIONS,
+  createSimulationProvider,
+} from './lib/state/simulation-provider';
+export type {
+  ArenaSize,
+  DevicePlay,
+  GpuSimulations,
+  SimulationProvider,
+  SimulationRequest,
+  SimulationSources,
+} from './lib/state/simulation-provider';
 export type {
   BlockCounts,
   CellsLayer,
