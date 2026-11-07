@@ -371,7 +371,8 @@ export function onOnlineGrid(
  * - `format`: a format that does not play (the ghost) or none known;
  * - `ruleset`: a simulation its format does not record;
  * - `ladder`: another version of the ladder computer;
- * - `gpu`: the float GPU, which never runs the same twice.
+ * - `gpu`: the float GPU, in a format that records it - it never runs the
+ *   same twice.
  */
 export type PlaybackRefusal =
   | 'balance'

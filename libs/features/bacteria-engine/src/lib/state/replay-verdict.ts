@@ -35,7 +35,10 @@ export function replayVerdict(replay: Replay): ReplayVerdict {
   if (refusal === 'balance') {
     return { state: 'balance-mismatch' };
   }
-  const result = refusal === null ? playReplay(replay) : null;
+  if (refusal !== null) {
+    return { state: 'unplayable' };
+  }
+  const result = playReplay(replay);
   if (result === null) {
     return { state: 'unplayable' };
   }

@@ -81,5 +81,4 @@ export function playbackRefusal(replay: Replay): PlaybackRefusal | null;
 
 ## Open questions
 
-- PR #2800 is not merged yet. This change builds on `main` once it is; until
-  then the build waits (see the plan).
+None: PR #2800 is on `main`, and this change builds on it.

@@ -643,7 +643,6 @@ export type {
 } from './lib/state/replay-score';
 export {
   canPlayBack,
-  playbackRefusal,
   EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
   GPU_INT_REPLAY_VERSION,
@@ -651,6 +650,7 @@ export {
   MAX_TICKS,
   onOnlineGrid,
   parseReplay,
+  playbackRefusal,
   playReplay,
   REPLAY_VERSION,
   replayEngine,
