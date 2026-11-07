@@ -48,6 +48,11 @@ async function store(
     kind: 'computer',
     levelId: replay.header.levelId,
     balanceVersion: BALANCE_VERSION,
+    replayVersion: replay.header.version,
+    simulation: replay.header.simulation,
+    ...(replay.header.ladder === undefined
+      ? {}
+      : { ladder: replay.header.ladder }),
     ticks: replay.header.ticks,
     cells: replay.header.width * replay.header.height,
     endedBy: 'annihilation',

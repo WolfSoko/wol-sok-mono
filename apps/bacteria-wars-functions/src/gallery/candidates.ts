@@ -1,5 +1,5 @@
 import {
-  BALANCE_VERSION,
+  storedPlaybackRefusal,
   TICKS_PER_SEC,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type { ReplaySummary } from '../boards/verify';
@@ -30,6 +30,9 @@ export interface GalleryReplay extends Pick<
   | 'kind'
   | 'levelId'
   | 'balanceVersion'
+  | 'replayVersion'
+  | 'simulation'
+  | 'ladder'
   | 'ticks'
   | 'winnerSeat'
   | 'hint'
@@ -86,7 +89,9 @@ export function humansOf(doc: GalleryReplay): string[] | null {
 /**
  * What the replay alone decides, checked before any account is looked up:
  * a local match `submitted` or an online one `agreed` - or one the boards
- * verified already - on the current balance and at most 6 minutes long;
+ * verified already - that the gallery's viewer plays back
+ * (`storedPlaybackRefusal`: balance, format, ruleset, ladder) and at most
+ * 6 minutes long;
  * no ranked attempt the boards have still to check, nobody took it down,
  * not public yet, and its human seats known.
  */
@@ -98,7 +103,7 @@ export function fitsGallery(doc: GalleryReplay): boolean {
       : doc.state === 'submitted' && doc.attempt === undefined);
   return (
     stateFits &&
-    doc.balanceVersion === BALANCE_VERSION &&
+    storedPlaybackRefusal(doc) === null &&
     doc.ticks <= MAX_GALLERY_TICKS &&
     !isOut(doc) &&
     doc.stubExpired !== true &&
