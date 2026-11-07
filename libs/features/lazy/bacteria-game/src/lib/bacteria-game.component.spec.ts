@@ -13,17 +13,11 @@ import { ARENA_PAINTER_FACTORY } from './arena/arena-view.component';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { CampaignService } from './campaign.service';
 import { I18nService } from './i18n/i18n.service';
-import { MatchmakerService } from './net/matchmaker.service';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { GameStateService } from './state/game-state.service';
 import { GameState, GameStateStore } from './state/game.states';
-import {
-  LEVELS,
-  levelTitle,
-  MATCH_LEVELS,
-  replayOf,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { LEVELS, levelTitle } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerStore } from './state/player.store';
 import {
   keyEvent,

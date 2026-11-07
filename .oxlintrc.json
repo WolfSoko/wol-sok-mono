@@ -170,6 +170,12 @@
       }
     },
     {
+      "files": ["libs/features/lazy/bacteria-game/**/*.ts"],
+      "rules": {
+        "no-unused-vars": "error"
+      }
+    },
+    {
       "files": ["libs/features/bacteria-engine/src/**/*.ts"],
       "rules": {
         "no-restricted-imports": [
