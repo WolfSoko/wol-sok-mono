@@ -13,7 +13,7 @@ Spec: [docs/specs/2831-nx-aws-cdk-v2-e2e-synth-test-fails-on-main-and-ci-never-r
 3. **Run it in CI.** `apps/nx-aws-cdk-v2-e2e/project.json`: add
    `e2e-ci` (`nx:noop`, `dependsOn: ["e2e"]`). Check with
    `npx nx show project nx-aws-cdk-v2-e2e` and `npx nx run
-nx-aws-cdk-v2-e2e:e2e-ci`. Update the "Plugin E2E" line in `CLAUDE.md`.
+   nx-aws-cdk-v2-e2e:e2e-ci`. Update the "Plugin E2E" line in `CLAUDE.md`.
    Commit `ci(nx-aws-cdk-v2-e2e): run the plugin e2e in CI through e2e-ci`.
 4. **Checks.** `npx nx format:write`, `npx nx affected -t lint,lint-templates`,
    push, PR with `Closes #2831`, watch the CI run's `e2e-ci` on the workers.

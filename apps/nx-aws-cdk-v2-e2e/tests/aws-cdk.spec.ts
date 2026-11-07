@@ -168,7 +168,8 @@ describe('aws-cdk-v2 e2e', () => {
 
     const synthOutput = await runNxTaskWithLogs(`run ${plugin}:synth`);
 
-    expect(synthOutput).toContain(plugin);
+    // The template cdk prints; Nx's own lines name the project too, so they prove nothing.
+    expect(synthOutput).toContain(`aws:cdk:path: ${plugin}/CDKMetadata`);
     expect(() =>
       checkFilesExist(`cdk.out/${plugin}.template.json`)
     ).not.toThrow();

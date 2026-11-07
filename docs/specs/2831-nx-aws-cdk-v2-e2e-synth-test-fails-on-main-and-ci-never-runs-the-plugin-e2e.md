@@ -39,7 +39,9 @@ target, so nothing ever runs it outside a developer's shell.
 1. **Ask Nx for the task log instead of dropping the assertion.** The synth
    call passes `--output-style=stream`, like the `nx test` call already does.
    The stdout check is the one place the test sees that the cdk CLI itself ran
-   and reported the stack; `cdk.out` alone would also pass if the files came
+   and reported the stack, so it asserts on the template cdk prints
+   (`aws:cdk:path: <stack>/CDKMetadata`), not on the stack name, which Nx's own
+   lines carry too; `cdk.out` alone would also pass if the files came
    from somewhere else. Both calls go through one helper in the spec
    (`runNxTaskWithLogs`), which adds the flag and strips terminal escape
    codes, so the next test that reads a task's output does not fall into the
@@ -51,11 +53,14 @@ target, so nothing ever runs it outside a developer's shell.
    no second copy of the Jest options; `npx nx e2e nx-aws-cdk-v2-e2e` stays
    the command to run it by hand. Renaming `e2e` to `e2e-ci` would break that
    documented command for nothing.
-3. **Caching as for every Jest target.** `e2e` keeps `@nx/jest:jest`, which
-   Nx caches on its inputs (sources of the e2e and, through the implicit
-   dependency, of the plugin). A run that does not touch either is a cache
-   hit; a dependency bump in the lock file makes it run again, which is what
-   caught #2835's aws-cdk-lib break too late.
+3. **No cache, no coverage for `e2e`.** The suite installs the generated
+   app's dependencies from the registry against caret ranges
+   (`aws-cdk-lib`, `aws-cdk`), so the same inputs can give another result
+   tomorrow: `e2e` sets `cache: false`, and a run that is affected always
+   runs. Its `ci` configuration turns off the `codeCoverage` the Jest
+   defaults switch on for CI, so the e2e's coverage does not reach Codecov
+   as unit-test coverage. CI still runs it only when the plugin or the e2e
+   is affected; a new aws-cdk-lib release alone does not trigger it.
 4. **The CLAUDE.md line about the plugin e2e is updated**: CI now runs it on
    affected PRs; running it by hand after a plugin change stays useful for a
    fast loop.
@@ -67,7 +72,7 @@ target, so nothing ever runs it outside a developer's shell.
    reproduced in this session).
 2. `npx nx show projects --affected -t e2e-ci` (or the project graph) lists
    `nx-aws-cdk-v2-e2e` when `nx-aws-cdk-v2` changes, and `npx nx run
-nx-aws-cdk-v2-e2e:e2e-ci` runs the Jest suite.
+   nx-aws-cdk-v2-e2e:e2e-ci` runs the Jest suite.
 3. The PR's CI run (`nx affected -t ...,e2e-ci,...`) runs
    `nx-aws-cdk-v2-e2e:e2e` on the Nx Cloud workers and it passes there.
 4. `nx lint nx-aws-cdk-v2-e2e`, `nx format:check` pass.
