@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.138.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.3...v74.138.4) (2026-11-07)
+
+### Bug Fixes
+
+* **portfolio-cdk:** share one ESNext target across the cdk apps ([#2819](https://github.com/WolfSoko/wol-sok-mono/issues/2819)) ([b43fef9](https://github.com/WolfSoko/wol-sok-mono/commit/b43fef991d31633f653dbdf85a0c37ff997e4c33)), closes [#2412](https://github.com/WolfSoko/wol-sok-mono/issues/2412)
+
+### Refactorings
+
+* **bacteria-wars-functions:** the engine judges a replay with replayVerdict ([#2800](https://github.com/WolfSoko/wol-sok-mono/issues/2800)) ([6bcc804](https://github.com/WolfSoko/wol-sok-mono/commit/6bcc80492feb33d402485cc9de6159fa89d7dec7)), references [#2781](https://github.com/WolfSoko/wol-sok-mono/issues/2781) [#2781](https://github.com/WolfSoko/wol-sok-mono/issues/2781) [#2781](https://github.com/WolfSoko/wol-sok-mono/issues/2781)
+* **feat-shared-bacteria-engine:** BotSenses, the bots' view out of MatchEngine ([#2810](https://github.com/WolfSoko/wol-sok-mono/issues/2810)) ([b876264](https://github.com/WolfSoko/wol-sok-mono/commit/b876264f50c330d1ad0f940f71b85d503810c0f9)), references [#2791](https://github.com/WolfSoko/wol-sok-mono/issues/2791) [#2791](https://github.com/WolfSoko/wol-sok-mono/issues/2791)
+* **feat-shared-bacteria-engine:** one envelope, result and runner for command documents ([#2802](https://github.com/WolfSoko/wol-sok-mono/issues/2802)) ([37523a1](https://github.com/WolfSoko/wol-sok-mono/commit/37523a1efc44ece7ced9ea483669f373dc048832)), closes [#2783](https://github.com/WolfSoko/wol-sok-mono/issues/2783)
+
 ## [74.138.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.2...v74.138.3) (2026-11-07)
 
 ### Refactorings
