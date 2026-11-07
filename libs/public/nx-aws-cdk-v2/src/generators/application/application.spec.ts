@@ -90,5 +90,75 @@ describe('aws-cdk generator', () => {
         '../../../tsconfig.cdk.json'
       );
     });
+
+    it('sets its own NodeNext module settings, independent of the root', async () => {
+      await generator(appTree, options);
+
+      const { compilerOptions } = readJson(appTree, 'apps/test/tsconfig.json');
+      expect(compilerOptions.module).toBe('NodeNext');
+      expect(compilerOptions.moduleResolution).toBe('NodeNext');
+    });
+  });
+
+  describe('types', () => {
+    const typesOf = (path: string): string[] =>
+      readJson(appTree, path).compilerOptions.types;
+
+    beforeEach(() => {
+      appTree.write('apps/.gitkeep', '');
+    });
+
+    it('lists no jest types without a unit test runner', async () => {
+      await generator(appTree, { ...options, unitTestRunner: 'none' });
+
+      expect(typesOf('apps/test/tsconfig.json')).toEqual(['node']);
+      expect(typesOf('apps/test/tsconfig.app.json')).toEqual(['node']);
+      expect(appTree.exists('apps/test/tsconfig.spec.json')).toBe(false);
+    });
+
+    it('keeps the jest types in tsconfig.spec.json only', async () => {
+      await generator(appTree, options);
+
+      expect(typesOf('apps/test/tsconfig.json')).toEqual(['node']);
+      expect(typesOf('apps/test/tsconfig.app.json')).toEqual(['node']);
+      expect(typesOf('apps/test/tsconfig.spec.json')).toContain('jest');
+    });
+  });
+
+  describe('tsconfig.spec.json in a TS-solution workspace', () => {
+    const specExtends = (): string =>
+      readJson(appTree, 'apps/test/tsconfig.spec.json').extends;
+
+    beforeEach(() => {
+      appTree.write('apps/.gitkeep', '');
+      writeJson(appTree, 'package.json', {
+        name: 'consumer',
+        workspaces: ['apps/*'],
+      });
+      writeJson(appTree, 'tsconfig.base.json', {
+        compilerOptions: { composite: true, declaration: true },
+      });
+      writeJson(appTree, 'tsconfig.json', {
+        extends: './tsconfig.base.json',
+        files: [],
+        references: [],
+      });
+    });
+
+    it('extends tsconfig.cdk.json when the workspace root has one', async () => {
+      writeJson(appTree, 'tsconfig.cdk.json', {
+        extends: './tsconfig.base.json',
+      });
+
+      await generator(appTree, options);
+
+      expect(specExtends()).toBe('../../tsconfig.cdk.json');
+    });
+
+    it('keeps tsconfig.base.json when the workspace has no tsconfig.cdk.json', async () => {
+      await generator(appTree, options);
+
+      expect(specExtends()).toBe('../../tsconfig.base.json');
+    });
   });
 });

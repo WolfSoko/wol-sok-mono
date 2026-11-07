@@ -114,7 +114,17 @@ otherwise the workspace root. The Nx project name is the path below `<appsDir>` 
 The generated `tsconfig.json` extends `tsconfig.cdk.json` at the workspace root when that file
 exists, otherwise `tsconfig.base.json`. Keep a `tsconfig.cdk.json` (extending `tsconfig.base.json`)
 when your CDK apps need other compiler options than the rest of the workspace, such as a newer
-`target` for the Node runtime while browser apps stay on an older one.
+`target` for the Node runtime while browser apps stay on an older one. In a TS-solution workspace,
+where `@nx/jest` lets `tsconfig.spec.json` extend `tsconfig.base.json` directly, the generator
+points it at `tsconfig.cdk.json` as well.
+
+The app's `tsconfig.json` sets `"module": "NodeNext"` and `"moduleResolution": "NodeNext"` itself,
+since the app runs on Node, so it compiles whatever module settings the root config holds. It lists
+only the `node` types; the Jest types live in `tsconfig.spec.json`.
+
+> If your root `package.json` has `"type": "module"`, NodeNext checks `src/main.ts` as an ES module
+> and asks for file extensions on relative imports: write `./stacks/app-stack.js` in `main.ts`
+> (`tsx` runs the app either way).
 
 The generator also adds `aws-cdk-lib` and `constructs` to `dependencies`, and the `aws-cdk` CLI plus
 the TypeScript loader `tsx` to `devDependencies` of your workspace.

@@ -1,9 +1,10 @@
 {
   "extends": "<%= offsetFromRoot %><%= baseTsconfig %>",
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "outDir": "<%= offsetFromRoot %>dist/out-tsc",
-    "types": ["node", "jest"]
+    "types": ["node"]
   },
   "include": [],
   "files": [],
