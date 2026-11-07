@@ -8,15 +8,14 @@ import {
 import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
 import {
   createCanvas,
+  darker,
   hash,
-  lerp,
   mix,
   putPixels,
   rgba,
   smoothstep,
   valueNoise,
 } from './canvas-math';
-import { darker } from './canvas-math';
 import { paintZoneLayer } from './zone-decal';
 import { ColonyTint, MarkLayer, sameRgb, WeaponMark } from './weapon-fx';
 
