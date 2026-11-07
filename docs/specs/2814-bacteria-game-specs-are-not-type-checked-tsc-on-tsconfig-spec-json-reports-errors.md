@@ -46,7 +46,7 @@ warnings, and neither can come back unnoticed.
 
 1. `npx oxlint libs/features/lazy/bacteria-game` reports no warnings.
 2. An unused import added to a file of the lib fails `nx lint
-feat-lazy-bacteria-game` (checked by hand, not committed).
+   feat-lazy-bacteria-game` (checked by hand, not committed).
 3. `nx run feat-lazy-bacteria-game:typecheck-specs` passes.
 4. `nx test feat-lazy-bacteria-game` passes.
 5. `nx lint` of every project passes (the override touches only the lib).
