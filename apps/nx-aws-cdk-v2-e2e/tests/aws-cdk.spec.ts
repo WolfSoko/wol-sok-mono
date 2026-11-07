@@ -18,6 +18,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import * as path from 'node:path';
+import { stripVTControlCharacters } from 'node:util';
 
 // Disable the Nx daemon for spawned `nx` commands: with the daemon on, `nx show project`
 // can read a stale project graph right after a generator creates a new project, causing
@@ -184,9 +185,11 @@ describe('aws-cdk-v2 e2e', () => {
     const testResult = await runNxCommandAsync(
       `test ${plugin} --output-style=stream --skip-nx-cache`
     );
-    const output = `${testResult.stdout}\n${testResult.stderr}`;
+    const output = stripVTControlCharacters(
+      `${testResult.stdout}\n${testResult.stderr}`
+    );
 
-    expect(output).toContain('Successfully ran target test');
+    expect(output).toMatch(/Tests:\s+1 passed, 1 total/);
     expect(output).not.toContain('CloudFormation-Validate');
   }, 120000);
 
