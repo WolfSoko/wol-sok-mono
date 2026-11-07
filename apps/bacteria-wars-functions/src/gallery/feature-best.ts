@@ -27,7 +27,7 @@ import {
   spendBudget,
   verdictFields,
 } from '../boards/verify-slice';
-import { hasGrpcCode } from '../grpc';
+import { ignoreNotFound } from '../grpc';
 import { dayOf, dayStart, isBanned } from '../limits';
 import { countRerun } from '../replays/level-stats';
 import {
@@ -371,11 +371,7 @@ export async function storeScore(
   await db
     .doc(`replays/${candidate.id}`)
     .update({ score, reasons })
-    .catch((error: unknown) => {
-      if (!hasGrpcCode(error, 5, 'not-found')) {
-        throw error;
-      }
-    });
+    .catch(ignoreNotFound);
   return { id: candidate.id, doc: { ...doc, score, reasons } };
 }
 

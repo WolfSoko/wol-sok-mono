@@ -1,7 +1,7 @@
 import type { CommandResult } from '@wolsok/feat-shared-bacteria-engine';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
-import { hasGrpcCode } from '../grpc';
+import { ignoreNotFound } from '../grpc';
 
 /**
  * Runs a command document (`adminCommands/{id}`, `replayCommands/{id}`,
@@ -11,8 +11,9 @@ import { hasGrpcCode } from '../grpc';
  *    otherwise, without running anything;
  * 2. runs `run` for that uid; a throw answers `internal` (retries are
  *    off, so the writer still gets an answer and may send it again);
- * 3. writes `result: { ok, error?, at }` back - unless `run` answered
- *    null, where another delivery runs the command and writes it.
+ * 3. writes `result: { ok, error?, at }` back, with the `fields` `alsoWrite`
+ *    gives at that moment - unless `run` answered null, where another
+ *    delivery runs the command and writes it.
  * A command deleted meanwhile (its player's account deletion, ADR 0012)
  * gets no result: nobody is left to read it.
  */
@@ -21,7 +22,8 @@ export async function runCommandDocument(
   path: string,
   data: Record<string, unknown>,
   authId: string | undefined,
-  run: (uid: string) => Promise<CommandResult | null>
+  run: (uid: string) => Promise<CommandResult | null>,
+  alsoWrite: () => Record<string, unknown> = () => ({})
 ): Promise<CommandResult | null> {
   const uid = data['uid'];
   let result: CommandResult | null;
@@ -36,7 +38,7 @@ export async function runCommandDocument(
     }
   }
   if (result !== null) {
-    await writeResult(db, path, result);
+    await writeResult(db, path, result, alsoWrite());
   }
   return result;
 }
@@ -44,15 +46,14 @@ export async function runCommandDocument(
 async function writeResult(
   db: Firestore,
   path: string,
-  result: CommandResult
+  result: CommandResult,
+  fields: Record<string, unknown>
 ): Promise<void> {
-  try {
-    await db
-      .doc(path)
-      .update({ result: { ...result, at: FieldValue.serverTimestamp() } });
-  } catch (error) {
-    if (!hasGrpcCode(error, 5, 'not-found')) {
-      throw error;
-    }
-  }
+  await db
+    .doc(path)
+    .update({
+      ...fields,
+      result: { ...result, at: FieldValue.serverTimestamp() },
+    })
+    .catch(ignoreNotFound);
 }

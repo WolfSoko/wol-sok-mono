@@ -210,6 +210,16 @@
       "indexes": []
     },
     {
+      "collectionGroup": "pairs",
+      "fieldPath": "uids",
+      "indexes": [
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        }
+      ]
+    },
+    {
       "collectionGroup": "rankedReplays",
       "fieldPath": "expireAt",
       "ttl": true,

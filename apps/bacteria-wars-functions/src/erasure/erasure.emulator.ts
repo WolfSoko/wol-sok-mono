@@ -35,6 +35,23 @@ function placesOf(entry: Plain, uid: string): string[] {
   }
 }
 
+/**
+ * What a document of `entry` holds for `uid`: its field, if it has one -
+ * nested where the field is a path (`target.uid`), an array beside another
+ * uid where it `contains` it.
+ */
+function seedOf(entry: Plain, uid: string): Record<string, unknown> {
+  if (entry.erase !== 'field') {
+    return {};
+  }
+  const [last, ...outer] = entry.field.split('.').reverse();
+  const leaf = { [last]: entry.contains ? [uid, 'zoe'] : uid };
+  return outer.reduce<Record<string, unknown>>(
+    (inner, key) => ({ [key]: inner }),
+    leaf
+  );
+}
+
 describe('the plain entries of the player data map', () => {
   const entries = ERASURE_PARTS.flatMap((part) => plainEntriesOf(part));
 
@@ -47,9 +64,7 @@ describe('the plain entries of the player data map', () => {
           if (entry.erase === 'node') {
             await realtime.update({ [`${path}/state`]: true });
           } else {
-            await db
-              .doc(path)
-              .set(entry.erase === 'field' ? { [entry.field]: uid } : {});
+            await db.doc(path).set(seedOf(entry, uid));
           }
         }
       }

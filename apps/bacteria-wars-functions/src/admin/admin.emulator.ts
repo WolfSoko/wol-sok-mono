@@ -124,6 +124,24 @@ async function seedAda(): Promise<void> {
 
 const entry = (path: string) => db.doc(path).get();
 
+describe('a command erased with its target', () => {
+  it('runs, and answers without its document', async () => {
+    // The target's account was erased while the command ran, and with it
+    // the command (scrubModeration).
+    expect(
+      await runAdminCommand(
+        db,
+        'gone',
+        { uid: 'owner', reason: 'test', args: {}, ...unban('ada') },
+        'owner',
+        context(),
+        NOW
+      )
+    ).toEqual({ ok: false, error: 'not-banned' });
+    expect((await entry('adminCommands/gone')).exists).toBe(false);
+  });
+});
+
 describe('player.ban', () => {
   it('bans a player, hides their entries and tells them', async () => {
     await seedAda();
@@ -696,6 +714,11 @@ describe('board moderation', () => {
       'board-hidden'
     );
     expect((await db.doc('moderation/ada').get()).get('hides')).toBe(1);
+    // The command names its player too, for the account erasure.
+    expect((await entry('adminCommands/c1')).get('target')).toEqual({
+      ...xp,
+      uid: 'ada',
+    });
     expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
       target: { ...xp, uid: 'ada' },
       before: { barred: [] },

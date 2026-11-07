@@ -100,7 +100,8 @@ export async function rankOnline(
       return answer(reason);
     }
     const roomRef = db.doc(`rankedRooms/${String(replay['room'])}`);
-    const pairRef = db.doc(`pairs/${day}_${[host, guest].sort().join('_')}`);
+    const pair = [host, guest].sort();
+    const pairRef = db.doc(`pairs/${day}_${pair.join('_')}`);
     const [room, pairDoc] = await tx.getAll(roomRef, pairRef);
     const members = [
       await memberIn(tx, db, host),
@@ -143,6 +144,8 @@ export async function rankOnline(
       expireAt: Timestamp.fromMillis(stubCreatedAt + 12 * 3_600_000),
     });
     tx.set(pairRef, {
+      // For the erasure, which cannot find a player in the id.
+      uids: pair,
       count: Number(pairDoc.get('count') ?? 0) + 1,
       expireAt: Timestamp.fromMillis(now + 2 * DAY_MS),
     });

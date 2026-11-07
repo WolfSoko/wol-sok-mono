@@ -177,6 +177,8 @@ describe('the player data map', () => {
       'endlessRuns/{runId}',
       'limits/{uid}',
       'moderation/{uid}',
+      'adminCommands/{id}',
+      'pairs/{id}',
     ]);
     expect(plainEntriesOf('replays').map((entry) => entry.path)).toEqual([
       'replaySubmissions/{id}',

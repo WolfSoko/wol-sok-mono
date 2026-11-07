@@ -31,8 +31,13 @@ export async function eraseListed(
       pathsOf('doc').map((path) => db.doc(path))
     ),
     settleAll(
-      byField.map(({ path, field }) =>
-        deleteAll(db, db.collection(path.split('/')[0]).where(field, '==', uid))
+      byField.map(({ path, field, contains }) =>
+        deleteAll(
+          db,
+          db
+            .collection(path.split('/')[0])
+            .where(field, contains ? 'array-contains' : '==', uid)
+        )
       )
     ),
     settleAll(pathsOf('tree').map((path) => db.recursiveDelete(db.doc(path)))),

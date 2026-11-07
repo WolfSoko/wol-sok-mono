@@ -171,7 +171,7 @@ ADR 0009 and 0011 note that Safari and Firefox may round `Math.sin` and
   through the engine entry point (`@wolsok/feat-lazy-bac-game/engine`,
   ADR 0011).
 - **Ledger** in `boardMembers/{uid}.xp`: `{ counted, claimed, lastAt,
-firstAt, risenToday, todayDay }`.
+  firstAt, risenToday, todayDay }`.
   - When the claimed XP is at or below `counted`, `counted` follows it
     down: a reset progress lowers the board.
   - Above it, the board XP rises by at most
@@ -220,7 +220,8 @@ firstAt, risenToday, todayDay }`.
     Rooms cannot run matches in parallel faster than real time.
   - **Caps**, in one transaction with the count:
     - at most 3 counted results per pair of uids per UTC day
-      (`pairs/{day}_{uidA}_{uidB}`, uids sorted);
+      (`pairs/{day}_{uidA}_{uidB}`, uids sorted, also in its `uids` field,
+      where the erasure finds them);
     - at most 5 counted wins a day against opponents whose Auth account is
       younger than 3 days;
     - at most 30 counted wins a day in all (`boardMembers/{uid}.online`).
@@ -522,7 +523,7 @@ All of it is written by functions only, except `attempts`,
 | `players/{uid}/notices/{id}`                  | `{ type: 'profile-reset' \| 'image-removed' \| 'board-hidden' \| 'banned' \| 'unbanned', at, until?, reason?: 'cheating' \| 'offensive-profile' \| 'spam' \| 'other', expireAt }`                                                                    | its player (read and delete)              |
 | `dailyRuns/{day}_{uid}`                       | the day's attempts: `{ attemptId, replayId, sort, state }[]`                                                                                                                                                                                         | nobody                                    |
 | `endlessRuns/{uid}_{runId}`                   | `{ seed, attempts: [...], claimedDepth, verifiedWins, status, updatedAt, expireAt? }`                                                                                                                                                                | nobody                                    |
-| `pairs/{day}_{uidA}_{uidB}`                   | `{ count, expireAt }`                                                                                                                                                                                                                                | nobody                                    |
+| `pairs/{day}_{uidA}_{uidB}`                   | `{ uids, count, expireAt }`                                                                                                                                                                                                                          | nobody                                    |
 | `rankedReplays/{replayId}`                    | `{ at, expireAt }`                                                                                                                                                                                                                                   | nobody                                    |
 | `rankedRooms/{roomCode}`                      | `{ stubCreatedAt, ticks, expireAt }`                                                                                                                                                                                                                 | nobody                                    |
 | `bans/{uid}`                                  | `{ since, until: timestamp \| null, reason }`                                                                                                                                                                                                        | its player (`get`), admin                 |
@@ -587,7 +588,7 @@ All of it is written by functions only, except `attempts`,
 - **The top 50** is a `get` of `boards/{boardId}`, live (`onSnapshot`)
   while the screen is open.
 - **Further pages**: `boards/{id}/entries` with `status in ['counted',
-'verified', 'provisional', 'stale']`, `orderBy(sort desc, atHour asc)`,
+  'verified', 'provisional', 'stale']`, `orderBy(sort desc, atHour asc)`,
   `startAfter`, 25 at a time. Positions past 50 are counted by order.
 - **The player's own row** comes from `boardMembers/{uid}.entryIds`, read
   once, then a `get` of the entry. That is one read per board.
@@ -721,7 +722,7 @@ All of it is written by functions only, except `attempts`,
 **Every admin action is a command document.**
 
 - `adminCommands/{auto}` = `{ uid, type, target, reason, args, createdAt,
-expireAt }`, create only by `isAdmin()`.
+  expireAt }`, create only by `isAdmin()`.
   - `reason` is 1-200 characters (not required for `stats.*`).
   - `type` is from a fixed list, and the keys are checked with `hasOnly`.
 - `adminCommand` (a trigger on create) does the following, in order:
@@ -1056,11 +1057,15 @@ the privacy page as built are at the end of this section:
   (`players/{other}/friends|requests|challenges/{uid}`). A collection-group
   query cannot find those by a bare document id (see "Bans"), so the
   others come from the player's own lists and from the `listedBy` mirror
-  below. What still names the uid after a deletion, each for a short
+  below. The account part also deletes the online caps' `pairs` of the
+  player (by `uids`) and the owner's commands about them (`adminCommands`,
+  by `target.uid`, which `adminCommand` writes back on a command by board
+  entry once it found the player). What
+  still names the uid after a deletion, each for a short
   while: a taken room's stub (at most 6 hours; the other player's report
   is checked against it), a challenge of a friend who removed the player
   since (TTL within the hour), a queue claim (TTL within the hour), the
-  online caps' `pairs` (2 days) and `rankedRooms` (12 hours), and the
+  online caps' `rankedRooms` (12 hours), and the
   audit's uid, type, reason and date (2 years, legitimate interest, as
   before). A client's ID token stays valid for up to an hour after its
   account is deleted: what the device still writes with it in that hour
