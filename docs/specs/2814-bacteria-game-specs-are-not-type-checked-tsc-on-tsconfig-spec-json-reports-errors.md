@@ -26,7 +26,8 @@ warnings, and neither can come back unnoticed.
 - Raising `no-unused-vars` to `error` workspace-wide: the one other warning
   is in `libs/public/spa-cdk-stack` (`IDistribution`, a published package),
   outside this ticket; raised to the manager as a follow-up.
-- Further spec typecheck work: done by #2821.
+- Further spec typecheck work: done by
+  [#2821](https://github.com/WolfSoko/wol-sok-mono/pull/2821).
 
 ## Decisions
 
@@ -37,13 +38,15 @@ warnings, and neither can come back unnoticed.
   through an `overrides` entry in `.oxlintrc.json` (the workspace's way to
   set project rules). Reason: a warning never fails CI, so the issue's
   "cannot return" needs an error; scoped to this lib, which is clean after
-  the fix.
+  the fix. The override sets the whole rule, so options later added to the
+  root `no-unused-vars` must be repeated there; it goes away once the rule
+  is an `error` workspace-wide.
 
 ## Acceptance
 
 1. `npx oxlint libs/features/lazy/bacteria-game` reports no warnings.
 2. An unused import added to a file of the lib fails `nx lint
-   feat-lazy-bacteria-game` (checked by hand, not committed).
+feat-lazy-bacteria-game` (checked by hand, not committed).
 3. `nx run feat-lazy-bacteria-game:typecheck-specs` passes.
 4. `nx test feat-lazy-bacteria-game` passes.
 5. `nx lint` of every project passes (the override touches only the lib).
