@@ -618,6 +618,8 @@ export type {
   OnlineReason,
 } from './lib/state/replay-reasons';
 export { replayScore } from './lib/state/replay-score';
+export { replayVerdict } from './lib/state/replay-verdict';
+export type { ReplayVerdict } from './lib/state/replay-verdict';
 export type {
   ReplayReason,
   ReplayScore,
