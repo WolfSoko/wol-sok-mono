@@ -46,7 +46,7 @@ read no longer depends on the working directory.
 3. `npx nx lint angular-examples-cdk` and `npx nx lint utils-version` pass
    (module boundaries included).
 4. A local synth (`RELEASE_VERSION=0.0.0-test npx tsx --tsconfig
-apps/angular-examples-cdk/tsconfig.app.json apps/angular-examples-cdk/src/main.ts`
+   apps/angular-examples-cdk/tsconfig.app.json apps/angular-examples-cdk/src/main.ts`
    with a placeholder build output) succeeds, and the `version.json` asset in
    `cdk.out` holds the version from the root `version.json`.
 5. No other `apps/*-cdk` reads `version.json` directly.
