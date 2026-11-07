@@ -197,7 +197,9 @@ storage until then. Settings stay with the device either way.
   game's):
   its own `MatchEngine` from `replayEngine` (`state/replay.ts`, beside
   `canPlayBack` and `playReplay`, which the engine's `replayVerdict`,
-  the functions' verification, builds on: keep their signatures), nothing of the game's state. A
+  the functions' verification, builds on: keep their signatures; which
+  parsed replays play back, and why not, is `playbackRefusal` alone, which
+  `canPlayBack` and `replayVerdict` ask), nothing of the game's state. A
   `gpu-int` replay plays on the viewer's own GL painter (the third
   argument of `replayEngine`) where its renderer is the host's `gpu`
   (`GpuSelfTestService.trustedRenderer`: "My matches" and the match just

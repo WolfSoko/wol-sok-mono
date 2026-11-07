@@ -650,6 +650,7 @@ export {
   MAX_TICKS,
   onOnlineGrid,
   parseReplay,
+  playbackRefusal,
   playReplay,
   REPLAY_VERSION,
   replayEngine,
@@ -661,6 +662,7 @@ export {
 } from './lib/state/replay';
 export type {
   ParseOptions,
+  PlaybackRefusal,
   Replay,
   ReplayAttempt,
   ReplayBoost,

@@ -365,21 +365,51 @@ export function onOnlineGrid(
 }
 
 /**
- * True when a replay plays out again as it was played: a format that
- * plays (versions 2 to 5), this balance table, this ladder computer and a
- * ruleset - never a match the float GPU ran. A balance change retires
- * every replay before it (ADR 0011).
+ * Why a replay would not play out again as it was played:
+ * - `balance`: recorded on another balance table - a balance change retires
+ *   every replay before it (ADR 0011);
+ * - `format`: a format that does not play (the ghost) or none known;
+ * - `ruleset`: a simulation its format does not record;
+ * - `ladder`: another version of the ladder computer;
+ * - `gpu`: the float GPU, in a format that records it - it never runs the
+ *   same twice.
+ */
+export type PlaybackRefusal =
+  | 'balance'
+  | 'format'
+  | 'ruleset'
+  | 'ladder'
+  | 'gpu';
+
+/**
+ * Why a replay does not play back, null when it does. The balance table
+ * comes first: a replay of another one is `balance`, whatever else is
+ * wrong with it.
+ */
+export function playbackRefusal(replay: Replay): PlaybackRefusal | null {
+  const { header } = replay;
+  if (header.balanceVersion !== BALANCE_VERSION) {
+    return 'balance';
+  }
+  const rules = VERSIONS.get(header.version);
+  if (rules?.playable !== true) {
+    return 'format';
+  }
+  if (!rules.simulations.includes(header.simulation)) {
+    return 'ruleset';
+  }
+  if (header.ladder !== undefined && header.ladder !== LADDER_VERSION) {
+    return 'ladder';
+  }
+  return header.simulation === 'gpu' ? 'gpu' : null;
+}
+
+/**
+ * True when a replay plays out again as it was played - see
+ * {@link playbackRefusal}.
  */
 export function canPlayBack(replay: Replay): boolean {
-  const { header } = replay;
-  const rules = VERSIONS.get(header.version);
-  return (
-    rules?.playable === true &&
-    rules.simulations.includes(header.simulation) &&
-    header.balanceVersion === BALANCE_VERSION &&
-    (header.ladder === undefined || header.ladder === LADDER_VERSION) &&
-    header.simulation !== 'gpu'
-  );
+  return playbackRefusal(replay) === null;
 }
 
 /**

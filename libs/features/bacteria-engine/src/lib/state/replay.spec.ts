@@ -6,10 +6,13 @@ import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import {
   canPlayBack,
+  EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
   GPU_INT_REPLAY_VERSION,
   MAX_TICKS,
   parseReplay,
+  playbackRefusal,
+  type PlaybackRefusal,
   playReplay,
   Replay,
   replayEngine,
@@ -142,25 +145,52 @@ describe('replay', () => {
     ).toBe(true);
   });
 
-  describe('canPlayBack, replayEngine and replayRun', () => {
-    it('tell what plays back, as playReplay does', () => {
-      const { replay } = record(PLAN, 10);
-      const refused = [
-        { ...replay.header, simulation: 'gpu' as const },
-        { ...replay.header, version: GHOST_REPLAY_VERSION },
-        { ...replay.header, balanceVersion: BALANCE_VERSION + 1 },
-        { ...replay.header, ladder: -1 },
-      ].map((header) => ({ ...replay, header }));
+  describe('playbackRefusal', () => {
+    const { replay } = record(PLAN, 10);
+    const { header } = replay;
 
+    it('lets a recorded match play back', () => {
+      expect(playbackRefusal(replay)).toBeNull();
       expect(canPlayBack(replay)).toBe(true);
-      for (const other of refused) {
+    });
+
+    it.each<[string, Partial<Replay['header']>, PlaybackRefusal]>([
+      [
+        'another balance table',
+        { balanceVersion: BALANCE_VERSION + 1 },
+        'balance',
+      ],
+      ['the ghost format', { version: GHOST_REPLAY_VERSION }, 'format'],
+      ['an unknown format', { version: 0 }, 'format'],
+      // The recorded match is format 2, which records `cpu` only.
+      ['a ruleset its format lacks', { simulation: 'gpu-int' }, 'ruleset'],
+      ['another ladder computer', { ladder: -1 }, 'ladder'],
+      // A format that records the float GPU, so only the GPU refuses it.
+      [
+        'the float GPU',
+        { version: EVOLVED_REPLAY_VERSION, simulation: 'gpu' },
+        'gpu',
+      ],
+      [
+        'another balance table in an unknown format',
+        { balanceVersion: BALANCE_VERSION - 1, version: 0 },
+        'balance',
+      ],
+    ])(
+      'refuses %s, as everything that plays back does',
+      (_, change, refusal) => {
+        const other = { ...replay, header: { ...header, ...change } };
+
+        expect(playbackRefusal(other)).toBe(refusal);
         expect(canPlayBack(other)).toBe(false);
         expect(replayEngine(other)).toBeNull();
         expect(replayRun(other)).toBeNull();
         expect(playReplay(other)).toBeNull();
       }
-    });
+    );
+  });
 
+  describe('replayEngine and replayRun', () => {
     it('give a run that plays the match as recorded, tick by tick', () => {
       const { engine, replay } = record(PLAN, 400);
       const seconds: unknown[] = [];

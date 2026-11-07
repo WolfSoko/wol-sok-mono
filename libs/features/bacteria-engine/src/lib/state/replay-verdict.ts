@@ -1,5 +1,5 @@
-import { BALANCE_VERSION } from './game-balance';
 import {
+  playbackRefusal,
   playReplay,
   type Replay,
   type ReplayOutcome,
@@ -16,7 +16,8 @@ import {
  *   never "cheated" (another browser may round floats differently on `cpu`);
  * - `balance-mismatch`: recorded on another balance table, not played;
  * - `unplayable`: a replay the engine cannot play out as it was played for
- *   any other reason (format, ruleset, ladder computer, float GPU).
+ *   any other reason (format, ruleset, ladder computer, float GPU - see
+ *   `playbackRefusal`).
  */
 export type ReplayVerdict =
   | { state: 'verified'; result: ReplayResult; outcome: ReplayOutcome }
@@ -30,9 +31,10 @@ export type ReplayVerdict =
  * outcome. A replay of another balance table is never played.
  */
 export function replayVerdict(replay: Replay): ReplayVerdict {
-  if (replay.header.balanceVersion !== BALANCE_VERSION) {
+  if (playbackRefusal(replay) === 'balance') {
     return { state: 'balance-mismatch' };
   }
+  // Null for every other refusal of playbackRefusal.
   const result = playReplay(replay);
   if (result === null) {
     return { state: 'unplayable' };
