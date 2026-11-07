@@ -296,8 +296,8 @@ class FakeAudioContext {
   public createOscillator(): FakeSource {
     const node = new FakeSource(this, ['frequency', 'detune']);
     const frequency = node.param('frequency');
-    const record = (value = 0) => this.frequencies.push(value);
-    frequency.setValueAtTime = (value?: number) => {
+    const record = (value: number) => this.frequencies.push(value);
+    frequency.setValueAtTime = (value: number) => {
       record(value);
       return frequency;
     };
@@ -328,7 +328,7 @@ class FakeNode {
 
 class FakeParam {
   public value = 0;
-  public setValueAtTime(_value?: number): FakeParam {
+  public setValueAtTime(_value: number, _time?: number): FakeParam {
     return this;
   }
   public exponentialRampToValueAtTime(): FakeParam {

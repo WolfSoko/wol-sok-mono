@@ -6,9 +6,7 @@
   "prefix": "feat-lazy-bac-game",
   "tags": ["feature:lazy"],
   "targets": {
-    "typecheck-specs": {
-      "command": "tsc -p {projectRoot}/tsconfig.spec.json --noEmit"
-    },
+    "typecheck-specs": {},
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/bacteria-game"],

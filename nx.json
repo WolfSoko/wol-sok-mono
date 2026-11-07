@@ -127,11 +127,11 @@
       }
     },
     "typecheck-specs": {
+      "command": "tsc -p {projectRoot}/tsconfig.spec.json --noEmit",
       "inputs": [
         "default",
         "^production",
-        "{workspaceRoot}/tsconfig.base.json",
-        { "externalDependencies": ["typescript"] }
+        "{workspaceRoot}/tsconfig.base.json"
       ],
       "cache": true
     },
