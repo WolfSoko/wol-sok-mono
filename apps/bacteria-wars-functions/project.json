@@ -39,6 +39,8 @@
         "{workspaceRoot}/jest.config.ts",
         "{workspaceRoot}/.codecov.yml",
         "{workspaceRoot}/apps/bacteria-game-remote/firestore.indexes.json",
+        "{workspaceRoot}/apps/bacteria-game-remote/firestore.rules",
+        "{workspaceRoot}/apps/bacteria-game-remote/database.rules.json",
         "{workspaceRoot}/firebase.bacteria-game-remote.json"
       ],
       "options": {

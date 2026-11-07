@@ -3,7 +3,8 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { deleteAll } from '../deletes';
+import type { ErasureContext } from '../erasure/context';
+import { eraseListed } from '../erasure/erase-listed';
 import { settleAll } from '../settle';
 import {
   anonymiseCopies,
@@ -126,24 +127,29 @@ export async function forgetForPlayer(
 }
 
 /**
- * Takes a deleted account out of its replays (ADR 0011, changed by ADR
- * 0012 on 2026-10-26, owner's decision): every replay that names it -
+ * The `replays` part of the erasure (`erasePart`): takes a deleted account
+ * out of its replays (ADR 0011, changed by ADR 0012 on 2026-10-26, owner's
+ * decision): every replay that names it -
  * in `players` or, for an online match only the other player reported, in
  * the seats - forgets it (`forgetReplay`) and stays, anonymised, for the
  * statistics until its `expireAt`; none is deleted. Its public replays stay
  * up without its uid and with the colour label for its name
- * (`anonymisePublic`). Its pending submissions and commands go first
- * (`withdrawPending`). Runs for banned accounts too: a deletion must erase
+ * (`anonymisePublic`). What `PLAYER_DATA` lists of the part goes first:
+ * its `replaySubmissions` and `replayCommands` no trigger has handled yet.
+ * A submission whose `acceptReplay` runs later finds itself gone and
+ * stores nothing (`withdrawn`); a command still runs on its event's copy,
+ * finds the player in no replay, and has no document to write its result
+ * on. Runs for banned accounts too: a deletion must erase
  * the player's data.
  */
 export async function forgetPlayerReplays(
-  db: Firestore,
-  uid: string,
-  now: number
+  ctx: ErasureContext,
+  uid: string
 ): Promise<{ anonymised: number; public: number; pending: number }> {
+  const { db, now } = ctx;
   // Its submissions and commands not handled yet, before the replays are
   // looked for: `acceptReplay` stores none whose submission is gone.
-  const pending = await withdrawPending(db, uid);
+  const pending = await eraseListed(ctx, uid, 'replays');
   // Its public replays at the same time: they hold no private replay.
   // Both settle before the first failure is told, so neither is left
   // running without a handler.
@@ -182,20 +188,4 @@ async function forgetAll(
     );
   }
   return outcomes.filter((outcome) => outcome === 'forgotten').length;
-}
-
-/**
- * Deletes the player's `replaySubmissions` and `replayCommands` that no
- * trigger has handled yet. A submission whose `acceptReplay` runs later
- * finds itself gone and stores nothing (`withdrawn`); a command still runs
- * on its event's copy, finds the player in no replay, and has no document
- * to write its result on. The number of documents.
- */
-async function withdrawPending(db: Firestore, uid: string): Promise<number> {
-  const [submissions, commands] = await Promise.all(
-    ['replaySubmissions', 'replayCommands'].map((name) =>
-      deleteAll(db, db.collection(name).where('uid', '==', uid))
-    )
-  );
-  return submissions + commands;
 }

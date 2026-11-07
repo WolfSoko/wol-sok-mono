@@ -4,8 +4,9 @@ import {
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { Timestamp } from 'firebase-admin/firestore';
+import { erasePart } from '../erasure/erase';
+import { erasureAt } from '../testing/erasure';
 import { clearBanCache } from '../limits';
-import { forgetPlayerReplays } from '../replays/forget';
 import { AT, ATTEMPT, dailyReplay, TICKS } from '../testing/daily-replay';
 import { useEmulatorDb } from '../testing/emulator';
 import { closeNotReported, finalizeDailyBoards } from './hourly';
@@ -159,7 +160,7 @@ describe('rankDaily', () => {
       .doc('replays/l_1/blob/data')
       .set({ bytes: Buffer.from(await replayToBytes(replay)) });
     // Ada deletes her account before the event is handled.
-    await forgetPlayerReplays(db, 'ada', NOW);
+    await erasePart('replays', erasureAt(db, NOW), 'ada');
     expect(await rankDaily(db, 'l_1', doc, NOW)).toBe('gone');
     // Kept for the statistics, without her (ADR 0012, 2026-10-26).
     expect((await db.doc('replays/l_1').get()).get('players')).toEqual([]);

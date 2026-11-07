@@ -25,10 +25,8 @@ import {
   ACCOUNTS_DOC,
   accountsChange,
   countAccount as countAccountOf,
-  deleteAccount,
 } from './admin/accounts';
 import { isOwnerRecord, runAdminCommand } from './admin/command';
-import { erasePlayer } from './admin/erase';
 import { sweepGuests } from './admin/guests';
 import { realtimeOf } from './admin/realtime';
 import { remoteTogglesOf } from './admin/toggles';
@@ -55,6 +53,8 @@ import {
   RETRY_FOR_MS,
   RTDB_URL,
 } from './config';
+import type { ErasureContext } from './erasure/context';
+import { erasePart, erasePlayer } from './erasure/erase';
 import { initErrorReports, reportError, withSentry } from './error-reports';
 import { featureBest as pickBest } from './gallery/feature-best';
 import { publicProfileChanged } from './gallery/publish';
@@ -64,8 +64,6 @@ import { tooOldToRetry } from './limits';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
 import { runReplayCommand } from './replays/command';
-import { forgetPlayerReplays } from './replays/forget';
-import { deletePlayerSocial } from './social/delete-player';
 import { type MirroredList, mirrorListing } from './social/mirror';
 
 // Only in a deployed function. Every handler below is wrapped in
@@ -177,18 +175,26 @@ export const cleanReplay = onDocumentDeleted(
   withSentry((event) => deleteReplayChildren(db(), event.params.id))
 );
 
+/** What an erasure of a deleted account goes by - see `erasePart`. */
+function erasureOf(
+  tombstone: string | null,
+  now: number = Date.now()
+): ErasureContext {
+  return { db: db(), realtime, now, tombstone };
+}
+
 /**
  * A deleted account's replays forget it and stay, anonymised, for the
  * statistics until they expire (ADR 0012, owner's decision of 2026-10-26) -
- * see `forgetPlayerReplays`. The function keeps its old name, as a renamed
- * one would be deleted and deployed anew.
+ * the `replays` part of `erasePart`. The function keeps its old name, as a
+ * renamed one would be deleted and deployed anew.
  */
 export const deletePlayerReplays = v1
   .region(REGION)
   .auth.user()
   .onDelete(
     withSentry(async (user) => {
-      const counts = await forgetPlayerReplays(db(), user.uid, Date.now());
+      const counts = await erasePart('replays', erasureOf(null), user.uid);
       logger.info('Replays of a deleted account', { uid: user.uid, ...counts });
     })
   );
@@ -196,14 +202,14 @@ export const deletePlayerReplays = v1
 /**
  * A deleted account leaves its profile, progress, friends and the other
  * players' lists, the queue, its rooms and invites, and its presence (ADR
- * 0012, owner's decision of 2026-10-26) - see `deletePlayerSocial`.
+ * 0012, owner's decision of 2026-10-26) - the `social` part of `erasePart`.
  */
 export const deletePlayerData = v1
   .region(REGION)
   .auth.user()
   .onDelete(
     withSentry(async (user) => {
-      const erased = await deletePlayerSocial(db(), realtime, user.uid);
+      const erased = await erasePart('social', erasureOf(null), user.uid);
       logger.info('Personal data of a deleted account', {
         uid: user.uid,
         ...erased,
@@ -213,7 +219,7 @@ export const deletePlayerData = v1
 
 /**
  * A deleted account leaves the boards, a banned Google account its
- * tombstone - see `deletePlayerBoards`.
+ * tombstone - the `account` part of `erasePart`.
  */
 export const deletePlayerBoards = v1
   .region(REGION)
@@ -221,15 +227,14 @@ export const deletePlayerBoards = v1
   .auth.user()
   .onDelete(
     withSentry(async (user) => {
-      const deleted = await deleteAccount(
-        db(),
-        user.uid,
-        { tombstone: tombstoneId(BAN_TOMBSTONE_KEY.value(), user), realtime },
-        Date.now()
+      const erased = await erasePart(
+        'account',
+        erasureOf(tombstoneId(BAN_TOMBSTONE_KEY.value(), user)),
+        user.uid
       );
       logger.info('Board data of a deleted account', {
         uid: user.uid,
-        deleted,
+        ...erased,
       });
     })
   );
@@ -634,7 +639,7 @@ export const guestCleanup = GUEST_CLEANUP_ON
             deleteUsers: async (uids) => (await auth()).deleteUsers([...uids]),
             // A guest has no Google provider, so no ban tombstone.
             erase: (uid, uncounted) =>
-              erasePlayer(db(), realtime, uid, null, now, { uncounted }),
+              erasePlayer({ ...erasureOf(null, now), uncounted }, uid),
             uncount: async (by) => {
               await db()
                 .doc(ACCOUNTS_DOC)

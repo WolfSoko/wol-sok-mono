@@ -6,10 +6,11 @@ import {
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { Timestamp } from 'firebase-admin/firestore';
+import { erasePart } from '../erasure/erase';
+import { erasureAt } from '../testing/erasure';
 import { DAY_MS } from '../boards/budgets';
 import type { Verdict } from '../boards/verify';
 import { runReplayCommand } from '../replays/command';
-import { forgetPlayerReplays } from '../replays/forget';
 import { dailyReplay, TICKS } from '../testing/daily-replay';
 import { useEmulatorDb } from '../testing/emulator';
 import { featureBest } from './feature-best';
@@ -203,7 +204,7 @@ describe('featureBest', () => {
     const publicId = String(
       (await db.doc('replays/l_a').get()).get('publicId')
     );
-    await forgetPlayerReplays(db, 'ada', NOW);
+    await erasePart('replays', erasureAt(db, NOW), 'ada');
     const published = (await db.doc(`publicReplays/${publicId}`).get()).data();
     expect(published).toMatchObject({ uids: [], seatUids: [null, null] });
     expect(published?.['players'][0]).toMatchObject({ name: null });
