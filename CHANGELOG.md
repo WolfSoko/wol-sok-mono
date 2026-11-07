@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.6...v74.139.7) (2026-11-07)
+
+### Testing
+
+* **feat-lazy-bacteria-game:** pin the crosshair scaling of both painters ([#2853](https://github.com/WolfSoko/wol-sok-mono/issues/2853)) ([27841f2](https://github.com/WolfSoko/wol-sok-mono/commit/27841f26d80611f0b147e28403128bed1bafa828)), closes [#2851](https://github.com/WolfSoko/wol-sok-mono/issues/2851)
+
 ## [74.139.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.5...v74.139.6) (2026-11-07)
 
 ### Chore
