@@ -126,7 +126,7 @@ describe('LocalGameReplays', () => {
     expect(parseLocalReplays(storage.stored(LOCAL_REPLAYS_KEY))).toEqual([]);
   });
 
-  it('lists an entry kept before the store wrote its simulation, read from its bytes', async () => {
+  it('lists an entry kept before the store wrote its simulation, read from its bytes once', async () => {
     const id = (await replays.submit({ replay: REPLAY, hint: 33 })) as string;
     await settle();
     storage.update(LOCAL_REPLAYS_KEY, (stored) =>
@@ -139,6 +139,10 @@ describe('LocalGameReplays', () => {
     const list = replays.listMine();
     await settle();
     expect(await list).toEqual([
+      expect.objectContaining({ id, simulation: 'cpu' }),
+    ]);
+    await settle();
+    expect(parseLocalReplays(storage.stored(LOCAL_REPLAYS_KEY))).toEqual([
       expect.objectContaining({ id, simulation: 'cpu' }),
     ]);
   });

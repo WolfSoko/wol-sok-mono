@@ -76,8 +76,7 @@ export class LocalGameReplays implements GameReplays {
       levelId: header.levelId,
       balanceVersion: header.balanceVersion,
       replayVersion: header.version,
-      simulation: header.simulation,
-      ...(header.ladder === undefined ? {} : { ladder: header.ladder }),
+      ...playbackFieldsOf(header),
       createdAt,
       ticks: header.ticks,
       endedBy: header.outcome?.endedBy ?? 'annihilation',
@@ -107,7 +106,28 @@ export class LocalGameReplays implements GameReplays {
 
   public async listMine(limit = MAX_REPLAY_LIST): Promise<ReplayListing[]> {
     const replays = (await this.read()).slice(0, Math.max(0, limit));
-    return Promise.all(replays.map(listingOf));
+    const listings = await Promise.all(replays.map(keptListingOf));
+    this.keepPlayback(listings.filter((listing) => listing.filled));
+    return listings.map(({ filled: _filled, ...listing }) => listing);
+  }
+
+  /**
+   * Writes back what old entries read from their bytes (see
+   * {@link keptListingOf}), so each one is read for it once.
+   */
+  private keepPlayback(filled: readonly ReplayListing[]): void {
+    if (filled.length === 0) {
+      return;
+    }
+    const byId = new Map(filled.map((listing) => [listing.id, listing]));
+    this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
+      parseLocalReplays(stored).map(({ seat: _seat, ...entry }) => {
+        const listing = byId.get(entry.id);
+        return listing === undefined
+          ? entry
+          : { ...entry, ...playbackFieldsOf(listing) };
+      })
+    );
   }
 
   public async replayBytes(
@@ -190,27 +210,37 @@ function isLocalReplay(value: unknown): value is LocalReplay {
 
 /**
  * A kept replay's row. An entry kept before the store wrote `simulation`
- * and `ladder` takes them from its own bytes, so its row is judged by the
- * whole playback rule too; one whose bytes do not read stays without them,
- * refused by it.
+ * and `ladder` takes them from its own bytes (`filled`), so its row is
+ * judged by the whole playback rule too; one whose bytes do not read stays
+ * without them, refused by it.
  */
-async function listingOf({
+async function keptListingOf({
   bytes,
   ...listing
-}: KeptReplay): Promise<ReplayListing> {
+}: KeptReplay): Promise<ReplayListing & { filled: boolean }> {
   if (listing.simulation !== undefined) {
-    return listing;
+    return { ...listing, filled: false };
   }
   const packed = fromBase64(bytes);
   const header =
     packed === null ? undefined : (await replayFromBytes(packed))?.header;
   return header === undefined
-    ? listing
-    : {
-        ...listing,
-        simulation: header.simulation,
-        ...(header.ladder === undefined ? {} : { ladder: header.ladder }),
-      };
+    ? { ...listing, filled: false }
+    : { ...listing, ...playbackFieldsOf(header), filled: true };
+}
+
+/** The playback fields a kept entry stores beside the header's version. */
+function playbackFieldsOf({
+  simulation,
+  ladder,
+}: Pick<ReplayListing, 'simulation' | 'ladder'>): Pick<
+  ReplayListing,
+  'simulation' | 'ladder'
+> {
+  return {
+    simulation,
+    ...(ladder === undefined ? {} : { ladder }),
+  };
 }
 
 /** The newest replays that fit the caps. */

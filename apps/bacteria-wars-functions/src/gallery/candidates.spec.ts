@@ -4,6 +4,7 @@ import {
   GHOST_REPLAY_VERSION,
   LADDER_REPLAY_VERSION,
   LADDER_VERSION,
+  REPLAY_VERSION,
 } from '@wolsok/feat-shared-bacteria-engine';
 import {
   fitsGallery,
@@ -25,7 +26,7 @@ function replay(fields: Partial<GalleryReplay> = {}): GalleryReplay {
     state: 'submitted',
     levelId: 'quarantine',
     balanceVersion: BALANCE_VERSION,
-    replayVersion: 2,
+    replayVersion: REPLAY_VERSION,
     simulation: 'cpu',
     ticks: 3_600,
     winnerSeat: 0,
