@@ -151,6 +151,7 @@ describe('replay', () => {
 
     it('lets a recorded match play back', () => {
       expect(playbackRefusal(replay)).toBeNull();
+      expect(canPlayBack(replay)).toBe(true);
     });
 
     it.each<[string, Partial<Replay['header']>, PlaybackRefusal]>([
@@ -175,33 +176,21 @@ describe('replay', () => {
         { balanceVersion: BALANCE_VERSION - 1, version: 0 },
         'balance',
       ],
-    ])('refuses %s', (_, change, refusal) => {
-      const other = { ...replay, header: { ...header, ...change } };
+    ])(
+      'refuses %s, as everything that plays back does',
+      (_, change, refusal) => {
+        const other = { ...replay, header: { ...header, ...change } };
 
-      expect(playbackRefusal(other)).toBe(refusal);
-      expect(canPlayBack(other)).toBe(false);
-    });
-  });
-
-  describe('canPlayBack, replayEngine and replayRun', () => {
-    it('tell what plays back, as playReplay does', () => {
-      const { replay } = record(PLAN, 10);
-      const refused = [
-        { ...replay.header, simulation: 'gpu' as const },
-        { ...replay.header, version: GHOST_REPLAY_VERSION },
-        { ...replay.header, balanceVersion: BALANCE_VERSION + 1 },
-        { ...replay.header, ladder: -1 },
-      ].map((header) => ({ ...replay, header }));
-
-      expect(canPlayBack(replay)).toBe(true);
-      for (const other of refused) {
+        expect(playbackRefusal(other)).toBe(refusal);
         expect(canPlayBack(other)).toBe(false);
         expect(replayEngine(other)).toBeNull();
         expect(replayRun(other)).toBeNull();
         expect(playReplay(other)).toBeNull();
       }
-    });
+    );
+  });
 
+  describe('replayEngine and replayRun', () => {
     it('give a run that plays the match as recorded, tick by tick', () => {
       const { engine, replay } = record(PLAN, 400);
       const seconds: unknown[] = [];

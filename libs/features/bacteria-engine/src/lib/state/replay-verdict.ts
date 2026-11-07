@@ -31,13 +31,10 @@ export type ReplayVerdict =
  * outcome. A replay of another balance table is never played.
  */
 export function replayVerdict(replay: Replay): ReplayVerdict {
-  const refusal = playbackRefusal(replay);
-  if (refusal === 'balance') {
+  if (playbackRefusal(replay) === 'balance') {
     return { state: 'balance-mismatch' };
   }
-  if (refusal !== null) {
-    return { state: 'unplayable' };
-  }
+  // Null for every other refusal of playbackRefusal.
   const result = playReplay(replay);
   if (result === null) {
     return { state: 'unplayable' };

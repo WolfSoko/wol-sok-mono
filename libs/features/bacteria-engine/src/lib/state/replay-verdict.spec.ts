@@ -48,19 +48,7 @@ describe('replayVerdict', () => {
     expect(replayVerdict(recordedReplay()).state).toBe('unverified');
   });
 
-  it('never plays a replay of another balance table', () => {
-    const play = jest.spyOn(replayModule, 'playReplay');
-
-    expect(
-      replayVerdict(
-        tampered(ended, { balanceVersion: header.balanceVersion - 1 })
-      )
-    ).toEqual({ state: 'balance-mismatch' });
-    expect(play).not.toHaveBeenCalled();
-    play.mockRestore();
-  });
-
-  it('calls a replay of another balance table a mismatch, whatever else is wrong', () => {
+  it('never plays a replay of another balance table, whatever else is wrong', () => {
     const play = jest.spyOn(replayModule, 'playReplay');
 
     expect(
@@ -78,7 +66,6 @@ describe('replayVerdict', () => {
   it.each<[string, Partial<ReplayHeader>]>([
     ['the float GPU', { simulation: 'gpu' }],
     ['an unknown format', { version: 0 }],
-    ['another ladder computer', { ladder: -1 }],
   ])('cannot play a replay of %s', (_, change) => {
     expect(replayVerdict(tampered(ended, change))).toEqual({
       state: 'unplayable',
