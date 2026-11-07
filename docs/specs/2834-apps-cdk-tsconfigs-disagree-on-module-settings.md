@@ -10,8 +10,10 @@ share one ESNext target through `tsconfig.cdk.json`),
 
 The five hand-made CDK apps (`angular-examples-cdk`, `bacteria-game-remote-cdk`,
 `fourier-analysis-remote-cdk`, `portfolio-cdk`, `shader-examples-remote-cdk`)
-use one valid module setting, set once per app, and look like what the
-`@wolsok/nx-aws-cdk-v2` application generator writes since #2832.
+use one valid module setting, set once per app, and set their module
+options and `types` as the `@wolsok/nx-aws-cdk-v2` application generator
+writes them since #2832 (the apps keep their `tsconfig.spec.json` reference,
+which the generator adds only with Jest).
 
 Today:
 
@@ -50,6 +52,8 @@ Today:
   `NodeNext` with a CommonJS package to CommonJS, as `commonjs` did.
 - **`types`**: `tsconfig.json` and `tsconfig.app.json` list `["node"]`,
   `tsconfig.spec.json` `["jest", "node"]`, as the generator writes.
+- **`outDir` in every `tsconfig.json`**: `bacteria-game-remote-cdk` gains the
+  `outDir` the other four apps and the generator already set.
 - **Drop options the root already sets**: `esModuleInterop` (in
   `tsconfig.base.json`). `resolveJsonModule` in `bacteria-game-remote-cdk`
   goes too: no CDK app imports JSON (they read files with `readFileSync`).
