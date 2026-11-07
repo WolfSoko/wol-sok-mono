@@ -8,7 +8,6 @@
     "e2e": {
       "executor": "@nx/jest:jest",
       "dependsOn": ["nx-aws-cdk-v2:build"],
-      "cache": false,
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "apps/nx-aws-cdk-v2-e2e/jest.config.ts",

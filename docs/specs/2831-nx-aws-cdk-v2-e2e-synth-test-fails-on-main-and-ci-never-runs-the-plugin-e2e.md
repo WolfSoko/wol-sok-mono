@@ -53,14 +53,17 @@ target, so nothing ever runs it outside a developer's shell.
    no second copy of the Jest options; `npx nx e2e nx-aws-cdk-v2-e2e` stays
    the command to run it by hand. Renaming `e2e` to `e2e-ci` would break that
    documented command for nothing.
-3. **No cache, no coverage for `e2e`.** The suite installs the generated
-   app's dependencies from the registry against caret ranges
-   (`aws-cdk-lib`, `aws-cdk`), so the same inputs can give another result
-   tomorrow: `e2e` sets `cache: false`, and a run that is affected always
-   runs. Its `ci` configuration turns off the `codeCoverage` the Jest
-   defaults switch on for CI, so the e2e's coverage does not reach Codecov
-   as unit-test coverage. CI still runs it only when the plugin or the e2e
-   is affected; a new aws-cdk-lib release alone does not trigger it.
+3. **Cached like every Jest target, without coverage.** `e2e` stays
+   cacheable on its inputs (the e2e's and, through the implicit dependency,
+   the plugin's sources). `cache: false` was tried: Nx Cloud then ran the
+   non-cacheable dependency on every worker that ran `e2e-ci` (five times,
+   about 50 s each, in the PR's first green run), since a worker cannot take
+   its result from the cache. The suite installs the generated app's
+   dependencies from the registry against caret ranges, so a new
+   `aws-cdk-lib` release alone neither reruns nor invalidates it; a change to
+   the plugin or the e2e does. Its `ci` configuration turns off the
+   `codeCoverage` the Jest defaults switch on for CI, so the e2e's coverage
+   does not reach Codecov as unit-test coverage.
 4. **The CLAUDE.md line about the plugin e2e is updated**: CI now runs it on
    affected PRs; running it by hand after a plugin change stays useful for a
    fast loop.
