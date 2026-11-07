@@ -302,8 +302,13 @@ storage until then. Settings stay with the device either way.
   `GameAccount.players` tells a switch with `adoptsGuest`, and
   `ProgressService` adds the guest's progress to the account once
   (`adoptProgress`). Any other switch (signing out starts a new guest) resets
-  the service to the next player's progress. A service that keeps the
-  player's data has to do the same: listen to `players` and start over.
+  the service to the next player's progress. `playerDocument`
+  (`storage/player-document.ts`) does that for a key: it follows `players`,
+  starts over from `empty` on a switch, adopts the guest's value, moves the
+  device's copy, tracks `loaded` and writes through `apply`. A service that
+  keeps the player's data holds one (as `ProgressService` and
+  `EvolutionService` do) and keeps only its merges and hooks; its spec
+  tests the domain, not the switch.
 - Guests are offered the Google sign-in in `guest/` (owner's decision of
   2026-10-26). `SignIn` is the one way every button signs in and out; it
   waits for `ProgressService.loaded`. The main menu has
@@ -321,8 +326,8 @@ storage until then. Settings stay with the device either way.
   a switch stores for the next player. Between a sign-out and the next guest
   the player is null; the storage holds back what is stored meanwhile for
   that guest.
-- The first cloud player adopts the progress this device kept in local
-  storage before the cloud (`moveDeviceProgress`), once.
+- The first cloud player adopts what this device kept in local storage
+  under the document's key before the cloud (`playerDocument`), once.
 - Specs for a service that stores data also run it against `LateGameStorage`
   (`src/testing/`, kept out of the lib build), an asynchronous fake, so a
   service that depends on local storage answering synchronously fails a test.

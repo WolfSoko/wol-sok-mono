@@ -1,5 +1,4 @@
 import { aMatchRecord } from '@wolsok/feat-shared-bacteria-engine/testing';
-import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { PROGRESS_STORAGE_KEY, ProgressService } from './progress.service';
 import {
@@ -9,7 +8,7 @@ import {
   MISSIONS,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from './storage/game-account';
-import { DeviceStorage, GameStorage } from './storage/game-storage';
+import { GameStorage } from './storage/game-storage';
 import { FakeGameAccount } from '../testing/fake-game-account';
 import { LateGameStorage } from '../testing/late-game-storage';
 
@@ -578,79 +577,17 @@ describe('ProgressService', () => {
   describe('when another player takes over', () => {
     let account: FakeGameAccount;
 
-    function createFor(
-      stored: Record<string, unknown> = {},
-      providers: Provider[] = []
-    ): ProgressService {
+    function createFor(stored: Record<string, unknown> = {}): ProgressService {
       account = new FakeGameAccount('guest');
       account.seed('guest', stored);
       TestBed.configureTestingModule({
         providers: [
           { provide: GameAccount, useValue: account },
           { provide: GameStorage, useValue: account.storage },
-          ...providers,
         ],
       });
       return create();
     }
-
-    it("starts over from the next player's progress", () => {
-      const progress = createFor();
-      progress.recordMatch(GOLD_WIN);
-      account.flush();
-      account.seed('ada', {
-        [PROGRESS_STORAGE_KEY]: { medals: { corridors: { easy: 'silver' } } },
-      });
-
-      account.switchTo('ada');
-
-      expect(progress.loaded()).toBe(false);
-      expect(progress.medal('hourglass', 'hard')).toBeNull();
-      account.flush();
-      expect(progress.loaded()).toBe(true);
-      expect(progress.medal('corridors', 'easy')).toBe('silver');
-      expect(progress.medal('hourglass', 'hard')).toBeNull();
-      expect(progress.totals().matches).toBe(0);
-    });
-
-    it("keeps each player's matches in their own storage", () => {
-      const progress = createFor();
-      account.flush();
-      account.switchTo('ada');
-      account.flush();
-
-      progress.recordMatch(GOLD_WIN);
-      account.flush();
-
-      expect(
-        account.storageOf('ada').stored(PROGRESS_STORAGE_KEY)
-      ).toMatchObject({ totals: { matches: 1 } });
-      expect(account.storageOf('guest').stored(PROGRESS_STORAGE_KEY)).toBe(
-        null
-      );
-    });
-
-    it('hands the progress this device kept before the cloud to the first player, once', () => {
-      const device = new LateGameStorage({
-        [PROGRESS_STORAGE_KEY]: {
-          medals: { hourglass: { hard: 'gold' } },
-          totals: { matches: 3 },
-        },
-      });
-      const progress = createFor({}, [
-        { provide: DeviceStorage, useValue: device },
-      ]);
-
-      device.flush();
-      account.flush();
-      device.flush();
-
-      expect(progress.medal('hourglass', 'hard')).toBe('gold');
-      expect(
-        account.storageOf('guest').stored(PROGRESS_STORAGE_KEY)
-      ).toMatchObject({ totals: { matches: 3 } });
-      expect(device.stored(PROGRESS_STORAGE_KEY)).toBeNull();
-    });
 
     it("adds the guest's progress to the account signed in to, once", () => {
       const progress = createFor({
