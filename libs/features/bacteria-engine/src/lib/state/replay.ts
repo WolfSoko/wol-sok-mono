@@ -391,12 +391,26 @@ export type PlaybackRefusal =
   | 'gpu';
 
 /**
- * Why a replay does not play back, null when it does. The balance table
- * comes first: a replay of another one is `balance`, whatever else is
- * wrong with it.
+ * The fields of a header that decide whether it plays back. `simulation`
+ * is any text, so a stored record passes what it holds unchecked: one this
+ * client does not know is refused as `ruleset`.
  */
-export function playbackRefusal(replay: Replay): PlaybackRefusal | null {
-  const { header } = replay;
+export interface PlaybackHeader extends Pick<
+  ReplayHeader,
+  'version' | 'balanceVersion' | 'ladder'
+> {
+  simulation: string;
+}
+
+/**
+ * Why a replay does not play back, null when it does - decided by its
+ * header alone, so a stored record of it asks the same (see
+ * `storedPlaybackRefusal`). The balance table comes first: a replay of
+ * another one is `balance`, whatever else is wrong with it.
+ */
+export function playbackRefusal(
+  header: PlaybackHeader
+): PlaybackRefusal | null {
   if (header.balanceVersion !== BALANCE_VERSION) {
     return 'balance';
   }
@@ -404,7 +418,7 @@ export function playbackRefusal(replay: Replay): PlaybackRefusal | null {
   if (rules?.playable !== true) {
     return 'format';
   }
-  if (!rules.simulations.includes(header.simulation)) {
+  if (!rules.simulations.some((ran) => ran === header.simulation)) {
     return 'ruleset';
   }
   if (header.ladder !== undefined && header.ladder !== LADDER_VERSION) {
@@ -418,7 +432,7 @@ export function playbackRefusal(replay: Replay): PlaybackRefusal | null {
  * {@link playbackRefusal}.
  */
 export function canPlayBack(replay: Replay): replay is PlayableReplay {
-  return playbackRefusal(replay) === null;
+  return playbackRefusal(replay.header) === null;
 }
 
 /**

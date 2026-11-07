@@ -37,8 +37,9 @@ table only:
 ## Decisions
 
 - **`playbackRefusal` takes the header fields it reads**, a new
-  `PlaybackHeader = Pick<ReplayHeader, 'version' | 'simulation' |
-  'balanceVersion' | 'ladder'>`, not the whole `Replay`. `canPlayBack(replay)`
+  `PlaybackHeader` (`version`, `balanceVersion` and `ladder` picked from
+  `ReplayHeader`, `simulation` as any text, so a stored record passes what it
+  holds without a cast), not the whole `Replay`. `canPlayBack(replay)`
   passes `replay.header`; `replayVerdict` likewise. Nothing in the rule
   changes, so the existing table of refusals in `replay.spec.ts` keeps
   holding.
