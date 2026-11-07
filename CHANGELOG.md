@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.5...v74.139.0) (2026-11-07)
+
+### Features
+
+* **nx-aws-cdk-v2:** extend tsconfig.cdk.json in generated apps where the workspace has one ([#2829](https://github.com/WolfSoko/wol-sok-mono/issues/2829)) ([6252424](https://github.com/WolfSoko/wol-sok-mono/commit/6252424d4d067947679d07c3888213bb7657d91b)), closes [#2824](https://github.com/WolfSoko/wol-sok-mono/issues/2824)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** one source for the replay playback refusals ([#2827](https://github.com/WolfSoko/wol-sok-mono/issues/2827)) ([de050db](https://github.com/WolfSoko/wol-sok-mono/commit/de050db1f83cb053f3c977a7069bd61345ce7ad6))
+
+### Chore
+
+* **release:** publish ([91ba866](https://github.com/WolfSoko/wol-sok-mono/commit/91ba866333df367ec414658396ee1c5974828121))
+
+### Testing
+
+* **feat-lazy-bacteria-game:** typecheck the game lib's specs in CI ([#2821](https://github.com/WolfSoko/wol-sok-mono/issues/2821)) ([9d5f657](https://github.com/WolfSoko/wol-sok-mono/commit/9d5f65765c19703c5eba27f03a264e805a2afc68)), references [#2815](https://github.com/WolfSoko/wol-sok-mono/issues/2815)
+
 ## [74.138.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.4...v74.138.5) (2026-11-07)
 
 ### Bug Fixes
