@@ -18,7 +18,7 @@ import {
 
 /** Where an instance keeps its kind, and after it the parameters `p0` to `p2`. */
 const KIND_OFFSET = 12;
-const PARAMS_OFFSET = 13;
+const PARAMS_OFFSET = KIND_OFFSET + 1;
 
 /** The kind of every instance in the batch, in drawing order. */
 function kinds(batch: ShapeBatch): number[] {
@@ -283,7 +283,7 @@ describe('pushForeground', () => {
       );
 
       const ring = 2;
-      expect(kinds(batch)[ring]).toBe(SHAPE.ring);
+      expect(kinds(batch)).toEqual([SHAPE.rect, SHAPE.rect, SHAPE.ring]);
       // Radius (9 + 4 * (1 - 0.25)) * 2 = 24, plus a unit of room: half 26.
       expect(rectOf(batch, ring)).toEqual([64, 14, 52, 52]);
       // The radius and the line width, 1.5 * 2.
