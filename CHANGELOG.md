@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.4...v74.139.5) (2026-11-07)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** remove unused imports and fail lint on new ones ([#2850](https://github.com/WolfSoko/wol-sok-mono/issues/2850)) ([7b7cc69](https://github.com/WolfSoko/wol-sok-mono/commit/7b7cc6910b932eb5551b8759744b8e2ba795be9f)), references [#2814](https://github.com/WolfSoko/wol-sok-mono/issues/2814) [#2814](https://github.com/WolfSoko/wol-sok-mono/issues/2814) [#2821](https://github.com/WolfSoko/wol-sok-mono/issues/2821)
+
+### Chore
+
+* **release:** publish ([f3491d7](https://github.com/WolfSoko/wol-sok-mono/commit/f3491d7ae9c250cfe1f404148b6b6c921c3e7ef3))
+
+### Testing
+
+* **feat-lazy-bacteria-game:** pin pushForeground's unit scaling ([#2844](https://github.com/WolfSoko/wol-sok-mono/issues/2844)) ([503aee4](https://github.com/WolfSoko/wol-sok-mono/commit/503aee440c9a14804db21c5eeda4cdea2a7303ee)), closes [#2833](https://github.com/WolfSoko/wol-sok-mono/issues/2833)
+
 ## [74.139.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.3...v74.139.4) (2026-11-07)
 
 ### Bug Fixes
