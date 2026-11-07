@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.5...v74.139.6) (2026-11-07)
+
+### Chore
+
+* **nx:** make no-unused-vars an error workspace-wide ([#2854](https://github.com/WolfSoko/wol-sok-mono/issues/2854)) ([3959cf9](https://github.com/WolfSoko/wol-sok-mono/commit/3959cf9544dfd2f5ad799b12f661e85d416a317e)), closes [#2847](https://github.com/WolfSoko/wol-sok-mono/issues/2847)
+
 ## [74.139.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.4...v74.139.5) (2026-11-07)
 
 ### Bug Fixes
