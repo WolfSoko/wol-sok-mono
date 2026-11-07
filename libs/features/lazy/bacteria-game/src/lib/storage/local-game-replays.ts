@@ -9,6 +9,7 @@ import {
   type ReplayKind,
   replayFromBytes,
   replayToBytes,
+  storedPlaybackOf,
   toBase64,
   utcDay,
 } from '@wolsok/feat-shared-bacteria-engine';
@@ -37,7 +38,12 @@ export const MAX_LOCAL_REPLAY_CHARS = 1_000_000;
  * no seat: without a project there are no online matches, and against the
  * computer the player is seat 0, which {@link parseLocalReplays} adds.
  */
-export interface LocalReplay extends Omit<ReplayListing, 'seat'> {
+export interface LocalReplay extends Omit<
+  ReplayListing,
+  'seat' | 'simulation'
+> {
+  /** Absent on an entry kept before the store wrote it. */
+  simulation?: string;
   bytes: string;
 }
 
@@ -74,9 +80,7 @@ export class LocalGameReplays implements GameReplays {
       id,
       kind: kindOf(header.levelId, header.roomCode !== undefined, createdAt),
       levelId: header.levelId,
-      balanceVersion: header.balanceVersion,
-      replayVersion: header.version,
-      ...playbackFieldsOf(header),
+      ...storedPlaybackOf(header),
       createdAt,
       ticks: header.ticks,
       endedBy: header.outcome?.endedBy ?? 'annihilation',
@@ -107,27 +111,7 @@ export class LocalGameReplays implements GameReplays {
   public async listMine(limit = MAX_REPLAY_LIST): Promise<ReplayListing[]> {
     const replays = (await this.read()).slice(0, Math.max(0, limit));
     const listings = await Promise.all(replays.map(keptListingOf));
-    this.keepPlayback(listings.filter((listing) => listing.filled));
-    return listings.map(({ filled: _filled, ...listing }) => listing);
-  }
-
-  /**
-   * Writes back what old entries read from their bytes (see
-   * {@link keptListingOf}), so each one is read for it once.
-   */
-  private keepPlayback(filled: readonly ReplayListing[]): void {
-    if (filled.length === 0) {
-      return;
-    }
-    const byId = new Map(filled.map((listing) => [listing.id, listing]));
-    this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
-      parseLocalReplays(stored).map(({ seat: _seat, ...entry }) => {
-        const listing = byId.get(entry.id);
-        return listing === undefined
-          ? entry
-          : { ...entry, ...playbackFieldsOf(listing) };
-      })
-    );
+    return listings.filter((listing) => listing !== null);
   }
 
   public async replayBytes(
@@ -210,37 +194,23 @@ function isLocalReplay(value: unknown): value is LocalReplay {
 
 /**
  * A kept replay's row. An entry kept before the store wrote `simulation`
- * and `ladder` takes them from its own bytes (`filled`), so its row is
- * judged by the whole playback rule too; one whose bytes do not read stays
- * without them, refused by it.
+ * takes it (and `ladder`) from its own bytes, so its row is judged by the
+ * whole playback rule too; one whose bytes do not read is left out.
  */
 async function keptListingOf({
   bytes,
+  simulation,
   ...listing
-}: KeptReplay): Promise<ReplayListing & { filled: boolean }> {
-  if (listing.simulation !== undefined) {
-    return { ...listing, filled: false };
+}: KeptReplay): Promise<ReplayListing | null> {
+  if (simulation !== undefined) {
+    return { ...listing, simulation };
   }
   const packed = fromBase64(bytes);
   const header =
     packed === null ? undefined : (await replayFromBytes(packed))?.header;
   return header === undefined
-    ? { ...listing, filled: false }
-    : { ...listing, ...playbackFieldsOf(header), filled: true };
-}
-
-/** The playback fields a kept entry stores beside the header's version. */
-function playbackFieldsOf({
-  simulation,
-  ladder,
-}: Pick<ReplayListing, 'simulation' | 'ladder'>): Pick<
-  ReplayListing,
-  'simulation' | 'ladder'
-> {
-  return {
-    simulation,
-    ...(ladder === undefined ? {} : { ladder }),
-  };
+    ? null
+    : { ...listing, ...storedPlaybackOf(header) };
 }
 
 /** The newest replays that fit the caps. */

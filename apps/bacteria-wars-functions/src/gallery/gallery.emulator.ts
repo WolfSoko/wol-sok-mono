@@ -1,9 +1,9 @@
 import {
-  BALANCE_VERSION,
   boardAvatar,
   replayFromBytes,
   type ReplayHeader,
   replayToBytes,
+  storedPlaybackOf,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { Timestamp } from 'firebase-admin/firestore';
 import { erasePart } from '../erasure/erase';
@@ -47,12 +47,7 @@ async function store(
   await db.doc(`replays/${id}`).set({
     kind: 'computer',
     levelId: replay.header.levelId,
-    balanceVersion: BALANCE_VERSION,
-    replayVersion: replay.header.version,
-    simulation: replay.header.simulation,
-    ...(replay.header.ladder === undefined
-      ? {}
-      : { ladder: replay.header.ladder }),
+    ...storedPlaybackOf(replay.header),
     ticks: replay.header.ticks,
     cells: replay.header.width * replay.header.height,
     endedBy: 'annihilation',

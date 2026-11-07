@@ -9,12 +9,7 @@ import {
   playbackRefusal,
   REPLAY_VERSION,
 } from '../replay';
-import { type StoredPlayback, storedPlaybackRefusal } from './replay-playback';
-
-/** The record the functions store of a header. */
-function storedOf({ version, ...rest }: PlaybackHeader): StoredPlayback {
-  return { replayVersion: version, ...rest };
-}
+import { storedPlaybackOf, storedPlaybackRefusal } from './replay-playback';
 
 const PLAIN: PlaybackHeader = {
   version: REPLAY_VERSION,
@@ -61,16 +56,20 @@ describe('storedPlaybackRefusal', () => {
       { ...PLAIN, version: EVOLVED_REPLAY_VERSION, simulation: 'gpu' },
     ],
   ])('judges %s as its header would', (_, header) => {
-    expect(storedPlaybackRefusal(storedOf(header))).toBe(
+    expect(storedPlaybackRefusal(storedPlaybackOf(header))).toBe(
       playbackRefusal(header)
     );
   });
 
   it('pins the refusals the table relies on', () => {
-    expect(storedPlaybackRefusal(storedOf(PLAIN))).toBeNull();
+    expect(storedPlaybackRefusal(storedPlaybackOf(PLAIN))).toBeNull();
     expect(
       storedPlaybackRefusal(
-        storedOf({ ...PLAIN, version: LADDER_REPLAY_VERSION, ladder: -1 })
+        storedPlaybackOf({
+          ...PLAIN,
+          version: LADDER_REPLAY_VERSION,
+          ladder: -1,
+        })
       )
     ).toBe('ladder');
   });
@@ -85,18 +84,15 @@ describe('storedPlaybackRefusal', () => {
     ).toBeNull();
   });
 
-  it('refuses a record without a simulation as ruleset, after the balance', () => {
+  it('stores the version as replayVersion, and no ladder for a header without one', () => {
+    expect(storedPlaybackOf(PLAIN)).toEqual({
+      balanceVersion: BALANCE_VERSION,
+      replayVersion: REPLAY_VERSION,
+      simulation: 'cpu',
+    });
+    expect(storedPlaybackOf(PLAIN)).not.toHaveProperty('ladder');
     expect(
-      storedPlaybackRefusal({
-        replayVersion: REPLAY_VERSION,
-        balanceVersion: BALANCE_VERSION,
-      })
-    ).toBe('ruleset');
-    expect(
-      storedPlaybackRefusal({
-        replayVersion: REPLAY_VERSION,
-        balanceVersion: BALANCE_VERSION - 1,
-      })
-    ).toBe('balance');
+      storedPlaybackOf({ ...PLAIN, version: LADDER_REPLAY_VERSION, ladder: 2 })
+    ).toEqual(expect.objectContaining({ ladder: 2 }));
   });
 });

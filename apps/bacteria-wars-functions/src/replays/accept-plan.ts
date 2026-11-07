@@ -4,6 +4,8 @@ import {
   parseAttemptId,
   type Replay,
   type ReplayKind,
+  type StoredPlayback,
+  storedPlaybackOf,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { createHash } from 'node:crypto';
 import { dayOf } from '../limits';
@@ -36,13 +38,14 @@ export interface AcceptPlan {
   record: ReplayRecord;
 }
 
-/** The fields of `replays/{id}` that come from the replay itself. */
-export interface ReplayRecord {
+/**
+ * The fields of `replays/{id}` that come from the replay itself - with
+ * what decides whether it plays back (`StoredPlayback`, `ladder` only for
+ * a match against the ladder computer).
+ */
+export interface ReplayRecord extends StoredPlayback {
   kind: ReplayKind;
   levelId: string;
-  balanceVersion: number;
-  replayVersion: number;
-  simulation: string;
   ticks: number;
   /**
    * The arena's cells, width times height: with `ticks` what a re-run
@@ -55,12 +58,6 @@ export interface ReplayRecord {
   checksum: number;
   hint: number;
   attempt?: { id: string; at: number };
-  /**
-   * The ladder computer's version, for a match against it only - as in the
-   * header; absent on a record stored before it was kept (see
-   * `StoredPlayback`).
-   */
-  ladder?: number;
 }
 
 /** Why a submission was dropped. */
@@ -103,9 +100,7 @@ export function planAcceptance(
   const record = (kind: ReplayKind): ReplayRecord => ({
     kind,
     levelId: header.levelId,
-    balanceVersion: header.balanceVersion,
-    replayVersion: header.version,
-    simulation: header.simulation,
+    ...storedPlaybackOf(header),
     ticks: header.ticks,
     cells: header.width * header.height,
     endedBy: header.outcome?.endedBy ?? 'none',
@@ -115,7 +110,6 @@ export function planAcceptance(
     ...(header.attempt === undefined
       ? {}
       : { attempt: { id: header.attempt.id, at: header.attempt.at } }),
-    ...(header.ladder === undefined ? {} : { ladder: header.ladder }),
   });
   if (header.roomCode !== undefined && header.n !== undefined) {
     if (header.mode !== 'two-players' || attempt !== null) {

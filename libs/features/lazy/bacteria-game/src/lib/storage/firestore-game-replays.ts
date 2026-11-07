@@ -240,6 +240,7 @@ export function listingOf(
     typeof levelId !== 'string' ||
     typeof balanceVersion !== 'number' ||
     typeof replayVersion !== 'number' ||
+    typeof simulation !== 'string' ||
     millis === null ||
     typeof ticks !== 'number' ||
     typeof endedBy !== 'string' ||
@@ -264,7 +265,7 @@ export function listingOf(
     levelId,
     balanceVersion,
     replayVersion,
-    ...(typeof simulation === 'string' ? { simulation } : {}),
+    simulation,
     ...(typeof ladder === 'number' ? { ladder } : {}),
     createdAt: millis,
     ticks,

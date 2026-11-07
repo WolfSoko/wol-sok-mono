@@ -99,8 +99,11 @@ export type {
   ReplayKind,
   ReplayState,
 } from './lib/state/cloud-records/replays';
-export { storedPlaybackRefusal } from './lib/state/cloud-records/replay-playback';
-export type { StoredPlayback } from './lib/state/cloud-records/replay-playback';
+export {
+  type StoredPlayback,
+  storedPlaybackOf,
+  storedPlaybackRefusal,
+} from './lib/state/cloud-records/replay-playback';
 export {
   COMMAND_ENVELOPE_KEYS,
   COMMAND_TTL_MS,

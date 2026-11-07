@@ -159,6 +159,7 @@ describe('FirestoreGameReplays', () => {
       levelId: 'petri-dish',
       balanceVersion: 3,
       replayVersion: 2,
+      simulation: 'cpu',
       createdAt: timestampAt(500),
       ticks: 120,
       endedBy: 'time',
@@ -190,6 +191,7 @@ describe('FirestoreGameReplays', () => {
         levelId: 'petri-dish',
         balanceVersion: 3,
         replayVersion: 2,
+        simulation: 'cpu',
         createdAt: 500,
         ticks: 120,
         endedBy: 'time',
@@ -344,11 +346,12 @@ describe('FirestoreGameReplays', () => {
       expect(local({ replayVersion: 4, ladder: 2 })).toEqual(
         expect.objectContaining({ replayVersion: 4, ladder: 2 })
       );
-      expect(local({ replayVersion: 4 })).not.toBeNull();
-      expect(local({ replayVersion: 4 })).not.toHaveProperty('ladder');
-      const malformed = local({ simulation: 7, ladder: 'two' });
-      expect(malformed).not.toHaveProperty('simulation');
-      expect(malformed).not.toHaveProperty('ladder');
+      const unladdered = local({ replayVersion: 4 });
+      expect(unladdered).not.toBeNull();
+      expect(unladdered).not.toHaveProperty('ladder');
+      expect(local({ ladder: 'two' })).not.toHaveProperty('ladder');
+      // Every writer stores a simulation: a record without one is no listing.
+      expect(local({ simulation: 7 })).toBeNull();
     });
 
     it('takes the hourly sweep\'s "not reported"', () => {

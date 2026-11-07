@@ -45,10 +45,13 @@ table only:
   holding.
 - **One parse for the stored side**, in the engine's `state/cloud-records/`
   (where shapes both the functions and the game read live):
-  `StoredPlayback { balanceVersion; replayVersion; simulation?; ladder? }` and
-  `storedPlaybackRefusal(stored)`, which maps `replayVersion` to `version` and
-  asks `playbackRefusal`. The row and `fitsGallery` call it; neither keeps a
-  rule of its own.
+  `StoredPlayback { balanceVersion; replayVersion; simulation; ladder? }`,
+  `storedPlaybackOf(header)`, which every writer spreads into what it stores
+  (the functions' record, the local store, the spec fake, the gallery's
+  emulator fixture; `ladder` only when the header has one, as Firestore takes
+  no undefined value), and `storedPlaybackRefusal(stored)`, which maps
+  `replayVersion` back to `version` and asks `playbackRefusal`. The row and
+  `fitsGallery` call it; neither keeps a rule of its own.
 - **The functions store `ladder`** on `replays/{id}` at accept time
   (`ReplayRecord`, `replays/accept-plan.ts`), only when the header has one, as
   the header does. `simulation` and `replayVersion` are stored already (since
@@ -58,17 +61,20 @@ table only:
   safe: `BALANCE_VERSION` 7 (PR
   [#2725](https://github.com/WolfSoko/wol-sok-mono/pull/2725), 2026-10-31)
   came after `LADDER_VERSION` 2 (PR #2710, 2026-10-27), so every document on
-  the current balance was recorded with ladder 2 or none; the next ladder bump
-  finds the field stored. An absent `simulation` (none exists, but the game
-  parses what it reads) is a refusal (`ruleset`), not a guess.
+  the current balance was recorded with ladder 2 or none; a document stored before
+  this change expires 30 days after its match (`REPLAY_TTL_MS`), and the
+  gallery takes only the day's matches, so a ladder bump later finds the field
+  stored on every document that counts. Every writer has stored `simulation`
+  since PR #2622, so it is required: a Firestore document without one is no
+  listing (`listingOf` drops it, as other malformed fields).
 - **The game's listing carries `simulation` and `ladder`** (`ReplayListing`):
   the Firestore parse (`listingOf`) reads them, the local store
   (`local-game-replays.ts`, for guests without the cloud) writes them from the
   header, and so does the spec fake (`testing/fake-game-replays.ts`). A local
   entry kept before this change has no `simulation`; rather than refuse it,
   `listMine` reads `simulation` and `ladder` from the entry's own bytes (at
-  most 20 entries, only the old ones), so the rule stays strict and the row
-  is still judged by the whole of it. `MatchRow.playable` becomes
+  most 20 entries, only the old ones, which age out of the store), so the row
+  is still judged by the whole rule; one whose bytes do not read is left out. `MatchRow.playable` becomes
   `storedPlaybackRefusal(listing) === null`.
 - **`GalleryReplay` picks `replayVersion`, `simulation` and `ladder`** from
   `ReplayRecord`; `fitsGallery` replaces `balanceVersion === BALANCE_VERSION`
@@ -82,8 +88,8 @@ table only:
    assert.
 2. `storedPlaybackRefusal` gives the same refusal as `playbackRefusal` for a
    stored record of each case in `replay.spec.ts` (balance, format, ruleset,
-   ladder, gpu, playable), null for a record without `ladder`, and `ruleset`
-   for one without `simulation`.
+   ladder, gpu, playable) and null for a record without `ladder`;
+   `storedPlaybackOf` stores no `ladder` for a header without one.
 3. `planAcceptance` stores `ladder` for a header with one and leaves it out
    for a header without one (`accept-plan.spec.ts`).
 4. `fitsGallery` refuses a document on the current balance but another
@@ -94,7 +100,9 @@ table only:
    format (`my-matches.component.spec.ts`), and the play icon for a playable
    one.
 6. `listingOf` and the local store read `simulation` and `ladder`, and an
-   entry without `ladder` still lists (their specs).
+   entry without `ladder` still lists; a Firestore document without
+   `simulation` is no listing, an old local entry takes it from its bytes
+   (their specs).
 7. `npx nx affected -t test,lint,lint-templates,typecheck-specs` and
    `npx nx test-emulator bacteria-wars-functions` pass.
 
