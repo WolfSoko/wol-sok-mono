@@ -14,7 +14,6 @@ import {
   type DocumentSnapshot,
   FieldValue,
   type Firestore,
-  Timestamp,
 } from 'firebase-admin/firestore';
 import { timestampMillis } from '../timestamps';
 import { isBanned } from '../limits';
@@ -172,11 +171,11 @@ export async function readDeclaredReplay<K extends Attempt['kind']>(
     db.doc(`players/${uid}/attempts/${attemptId}`).get(),
     storedReplay(db, replayId),
   ]);
-  const at = declaration.get('at');
+  const declaredAt = timestampMillis(declaration.get('at'));
   if (banned) {
     return { reason: 'banned' };
   }
-  if (!(at instanceof Timestamp)) {
+  if (declaredAt === null) {
     return { reason: 'no-attempt' };
   }
   if (declaration.get('void') === true) {
@@ -190,7 +189,7 @@ export async function readDeclaredReplay<K extends Attempt['kind']>(
     uid,
     attemptId,
     attempt: attempt as Extract<Attempt, { kind: K }>,
-    declaredAt: at.toMillis(),
+    declaredAt,
     arrivedAt: timestampMillis(sent) ?? now,
     replay,
   };

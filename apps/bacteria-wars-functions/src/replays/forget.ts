@@ -63,10 +63,9 @@ export async function forgetReplay(
     if (data === undefined) {
       return 'absent';
     }
-    const createdAt: unknown = data['createdAt'];
     const forgettable: ForgettableReplay = {
       ...data,
-      createdAt: timestampMillis(createdAt),
+      createdAt: timestampMillis(data['createdAt']),
     };
     const changes = forgetChanges(forgettable, uid, now);
     if (changes === null) {

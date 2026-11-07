@@ -164,8 +164,7 @@ export async function takeDownPublic(
     tx.delete(published.ref.collection('blob').doc('data'));
     // Only while it still points here: a copy featured meanwhile keeps it.
     if (replay?.exists === true && replay.get('publicId') === published.id) {
-      const createdAt = replay.get('createdAt');
-      const born = timestampMillis(createdAt) ?? now;
+      const born = timestampMillis(replay.get('createdAt')) ?? now;
       tx.update(replay.ref, {
         publicId: FieldValue.delete(),
         expireAt: Timestamp.fromMillis(anonymisedExpireAt(born, now)),

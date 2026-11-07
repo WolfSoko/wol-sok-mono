@@ -17,7 +17,9 @@ The places:
   `takeDownPublic` (fallback `now`)
 - `replays/accept.ts`: `createdAt` in `submissionMeta` (fallback `now`)
 - `replays/forget.ts`: `createdAt` (fallback `null`)
-- `boards/declared-match.ts`: `sent` as `arrivedAt` (fallback `now`)
+- `boards/declared-match.ts`: `sent` as `arrivedAt` (fallback `now`), and the
+  declaration's `at`, which `readDeclaredReplay` checks and then converts: it
+  reads `timestampMillis` once and answers `no-attempt` on `null`
 - `site/public-site.ts`: `featuredAt` (fallback `0`)
 - `boards/rank-online.ts`: `stubCreatedAt` (fallback `null`; the issue missed
   it, same pattern)
@@ -27,7 +29,7 @@ The places:
 - Guards that test `instanceof Timestamp` and compare in one expression
   (`at instanceof Timestamp && at.toMillis() <= sentAt` in `replays/accept.ts`,
   `boards/verify-slice.ts`, `boards/rebuild-top.ts`, `admin/tombstones.ts`,
-  `boards/rank-endless.ts`, `boards/declared-match.ts`' `no-attempt` check):
+  `boards/rank-endless.ts`):
   they read as a type check, and rewriting them as
   `(timestampMillis(x) ?? -Infinity) > now` hides which way a missing time
   falls. They stay as they are.
