@@ -22,7 +22,11 @@ A new engine function names the reason:
 
 ```ts
 export type PlaybackRefusal =
-  'balance' | 'format' | 'ruleset' | 'ladder' | 'gpu';
+  | 'balance'
+  | 'format'
+  | 'ruleset'
+  | 'ladder'
+  | 'gpu';
 export function playbackRefusal(replay: Replay): PlaybackRefusal | null;
 ```
 
