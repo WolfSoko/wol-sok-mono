@@ -19,8 +19,11 @@ override on their own, so each new CDK app has to remember it.
 ## Non-goals
 
 - No change to `module`/`moduleResolution` of the CDK apps: they differ
-  between apps (`bundler` vs `NodeNext`) and `tsconfig.app.json` overrides
-  both with `node16` anyway. Unifying them is a separate topic.
+  between apps (`bundler` vs `NodeNext`); `tsconfig.app.json` overrides both
+  with `node16`, but the spec configs inherit them (in
+  `angular-examples-cdk` an invalid `NodeNext`/`bundler` pair that `tsc`
+  rejects and ts-jest tolerates). Unifying them is a separate topic, raised
+  as a follow-up.
 - No change to `lib` (still `dom`, `ES2024` from the base).
 - No change to `libs/public/*` (published, held back by policy), including
   the `@wolsok/nx-aws-cdk-v2` generator templates.
@@ -39,7 +42,8 @@ override on their own, so each new CDK app has to remember it.
   root file outside a project, so each `apps/*-cdk/project.json` adds
   `{workspaceRoot}/tsconfig.cdk.json` to its `default` named input
   (`cdkTsconfig`), as `libs/utils/version` does for `version.json`; a change
-  to it then reruns their cached tasks.
+  to it then reruns their cached `test` (oxlint's inferred `lint` follows
+  `extends` by itself; `deploy` is not cached).
 - **This PR supersedes the nightshift draft
   [#2818](https://github.com/WolfSoko/wol-sok-mono/pull/2818)**, which adds
   the line to `portfolio-cdk` alone: the shared file fixes that app and the
