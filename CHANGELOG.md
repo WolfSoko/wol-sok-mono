@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.0...v74.139.1) (2026-11-07)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** choose simulations through a SimulationProvider ([#2794](https://github.com/WolfSoko/wol-sok-mono/issues/2794)) ([ffc5fb5](https://github.com/WolfSoko/wol-sok-mono/commit/ffc5fb55ce82f6130582e84a931b4552c9b78dea)), references [#2807](https://github.com/WolfSoko/wol-sok-mono/issues/2807) [#2779](https://github.com/WolfSoko/wol-sok-mono/issues/2779)
+
 ## [74.139.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.5...v74.139.0) (2026-11-07)
 
 ### Features
