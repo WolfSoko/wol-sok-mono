@@ -10,6 +10,7 @@ import {
   Timestamp,
   type Transaction,
 } from 'firebase-admin/firestore';
+import { timestampMillis } from '../timestamps';
 import { logger } from 'firebase-functions/logger';
 import { trackDeclaredMatch } from '../boards/rank-endless';
 import { NOT_REPORTED_AFTER_MS, REPLAY_TTL_MS } from '../config';
@@ -238,7 +239,7 @@ function submissionMeta(
     uid,
     hint,
     ...(attempt === undefined ? {} : { attempt }),
-    createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : now,
+    createdAt: timestampMillis(createdAt) ?? now,
   };
 }
 

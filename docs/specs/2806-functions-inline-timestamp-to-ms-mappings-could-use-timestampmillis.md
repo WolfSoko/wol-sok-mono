@@ -44,8 +44,8 @@ The places:
 ## Acceptance
 
 1. None of the seven places spells out `instanceof Timestamp ? … .toMillis() :`;
-   `grep -rn "instanceof Timestamp ?" apps/bacteria-wars-functions/src` finds
-   nothing.
+   `grep -rnE "instanceof Timestamp \? .*toMillis" apps/bacteria-wars-functions/src`
+   finds only `timestamps.ts` itself.
 2. `npx nx test bacteria-wars-functions` passes unchanged (no spec needs to
    change, since the behaviour does not).
 3. `npx nx lint bacteria-wars-functions` and `npx nx build bacteria-wars-functions`

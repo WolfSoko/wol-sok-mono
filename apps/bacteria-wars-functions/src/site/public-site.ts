@@ -6,6 +6,7 @@ import {
   type Query,
   Timestamp,
 } from 'firebase-admin/firestore';
+import { timestampMillis } from '../timestamps';
 import {
   type CardView,
   galleryPage,
@@ -170,8 +171,7 @@ async function galleryOf(
 
 /** When a public replay was featured, in ms. */
 function millisOf(doc: DocumentSnapshot): number {
-  const featuredAt: unknown = doc.get('featuredAt');
-  return featuredAt instanceof Timestamp ? featuredAt.toMillis() : 0;
+  return timestampMillis(doc.get('featuredAt')) ?? 0;
 }
 
 /** A public replay as a gallery card shows it. */

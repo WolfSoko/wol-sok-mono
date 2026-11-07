@@ -16,6 +16,7 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
+import { timestampMillis } from '../timestamps';
 import { isBanned } from '../limits';
 
 /**
@@ -190,7 +191,7 @@ export async function readDeclaredReplay<K extends Attempt['kind']>(
     attemptId,
     attempt: attempt as Extract<Attempt, { kind: K }>,
     declaredAt: at.toMillis(),
-    arrivedAt: sent instanceof Timestamp ? sent.toMillis() : now,
+    arrivedAt: timestampMillis(sent) ?? now,
     replay,
   };
 }
