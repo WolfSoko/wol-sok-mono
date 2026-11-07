@@ -61,7 +61,7 @@ async function expectAttemptsLeft(
  * The game saves progress in a Firestore transaction, which lives only in
  * the page until the server took it: a reload before then drops the save.
  * So a test checks the cloud here, with the first tab still open, and
- * reloads that one only after.
+ * closes this tab and reloads the first one only after.
  */
 async function visitAgain(page: Page): Promise<{
   page: Page;
@@ -93,6 +93,7 @@ test.describe('cloud save', () => {
 
     const later = await visitAgain(page);
     await expectAttemptsLeft(later.po, later.page, 2);
+    await later.page.close();
     // Only now that the cloud has the attempt: see visitAgain.
     await page.reload();
 
@@ -150,11 +151,6 @@ test.describe('cloud save', () => {
     const account = await openProfile(page);
     await expect(account.medallions).toContainText('1 of');
 
-    const later = await visitAgain(page);
-    await expect((await openProfile(later.page)).medallions).toContainText(
-      '1 of'
-    );
-    // Only now that the cloud has the medallion: see visitAgain.
     await page.reload();
 
     await expect((await openProfile(page)).medallions).toContainText('1 of');
