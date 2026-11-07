@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.138.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.2...v74.138.3) (2026-11-07)
+
+### Refactorings
+
+* **bacteria-wars-functions:** erase a player through one player data map ([#2809](https://github.com/WolfSoko/wol-sok-mono/issues/2809)) ([34a5077](https://github.com/WolfSoko/wol-sok-mono/commit/34a5077d34d2130171fa97e344f71185192f6cb3)), closes [#2784](https://github.com/WolfSoko/wol-sok-mono/issues/2784)
+* **feat-lazy-bacteria-game:** keep player data in a playerDocument ([#2799](https://github.com/WolfSoko/wol-sok-mono/issues/2799)) ([8174984](https://github.com/WolfSoko/wol-sok-mono/commit/817498455a5384a6b58e40ab9096a259df44e236)), closes [#2786](https://github.com/WolfSoko/wol-sok-mono/issues/2786)
+* **feat-lazy-bacteria-game:** split GameStateService into MatchRecorder and OnlineSeatSync ([#2812](https://github.com/WolfSoko/wol-sok-mono/issues/2812)) ([24791f6](https://github.com/WolfSoko/wol-sok-mono/commit/24791f6490a7fb865f7f447e2a1572be9e8284a2)), closes [#2778](https://github.com/WolfSoko/wol-sok-mono/issues/2778)
+
 ## [74.138.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.1...v74.138.2) (2026-11-06)
 
 ### Refactorings
