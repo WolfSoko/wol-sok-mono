@@ -54,6 +54,25 @@ async function expectAttemptsLeft(
   await po.backCta.click();
 }
 
+/**
+ * Opens the game in another tab of the same browser: the same player on
+ * another visit, reading what the cloud keeps.
+ *
+ * The game saves progress in a Firestore transaction, which lives only in
+ * the page until the server took it: a reload before then drops the save.
+ * So a test checks the cloud here, with the first tab still open, and
+ * closes this tab and reloads the first one only after.
+ */
+async function visitAgain(page: Page): Promise<{
+  page: Page;
+  po: BacteriaGamePo;
+}> {
+  const tab = await page.context().newPage();
+  const po = new BacteriaGamePo(tab);
+  await po.goto();
+  return { page: tab, po };
+}
+
 async function openProfile(page: Page): Promise<AccountPo> {
   await page.getByRole('button', { name: 'Profile', exact: true }).click();
   const account = new AccountPo(page);
@@ -72,6 +91,10 @@ test.describe('cloud save', () => {
     await useDailyAttempt(po, page);
     await expectAttemptsLeft(po, page, 2);
 
+    const later = await visitAgain(page);
+    await expectAttemptsLeft(later.po, later.page, 2);
+    await later.page.close();
+    // Only now that the cloud has the attempt: see visitAgain.
     await page.reload();
 
     await expectAttemptsLeft(po, page, 2);
