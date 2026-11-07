@@ -24,6 +24,17 @@ interface NormalizedSchema extends ApplicationSchema {
   projectRoot: string;
   projectDirectory: string;
   parsedTags: string[];
+  /** Root tsconfig the app's tsconfig.json extends. */
+  baseTsconfig: string;
+}
+
+/** Root tsconfig a workspace keeps for Node-only CDK apps (e.g. an ESNext target). */
+const CDK_TSCONFIG = 'tsconfig.cdk.json';
+const BASE_TSCONFIG = 'tsconfig.base.json';
+
+/** The root tsconfig the app's tsconfig.json extends: the CDK one where the workspace has it. */
+function baseTsconfig(host: Tree): string {
+  return host.exists(CDK_TSCONFIG) ? CDK_TSCONFIG : BASE_TSCONFIG;
 }
 
 function normalizeOptions(
@@ -46,25 +57,16 @@ function normalizeOptions(
     projectRoot,
     projectDirectory,
     parsedTags,
+    baseTsconfig: baseTsconfig(host),
     unitTestRunner: options.unitTestRunner ?? 'jest',
   };
 }
 
-/** Root tsconfig a workspace keeps for Node-only CDK apps (e.g. an ESNext target). */
-const CDK_TSCONFIG = 'tsconfig.cdk.json';
-const BASE_TSCONFIG = 'tsconfig.base.json';
-
-/** The root tsconfig the app's tsconfig.json extends: the CDK one where the workspace has it. */
-function baseTsconfig(host: Tree): string {
-  return host.exists(CDK_TSCONFIG) ? CDK_TSCONFIG : BASE_TSCONFIG;
-}
-
-function templateOptions(host: Tree, options: NormalizedSchema) {
+function templateOptions(options: NormalizedSchema) {
   return {
     ...options,
     ...names(options.projectName),
     offsetFromRoot: offsetFromRoot(options.projectRoot),
-    baseTsconfig: baseTsconfig(host),
     template: '',
   };
 }
@@ -74,7 +76,7 @@ function addFiles(host: Tree, options: NormalizedSchema, folder: string) {
     host,
     path.join(__dirname, folder),
     options.projectRoot,
-    templateOptions(host, options)
+    templateOptions(options)
   );
 }
 

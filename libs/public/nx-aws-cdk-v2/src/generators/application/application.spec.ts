@@ -75,6 +75,8 @@ describe('aws-cdk generator', () => {
       expect(extendsOf('apps/test/tsconfig.json')).toBe(
         '../../tsconfig.cdk.json'
       );
+      expect(extendsOf('apps/test/tsconfig.app.json')).toBe('./tsconfig.json');
+      expect(extendsOf('apps/test/tsconfig.spec.json')).toBe('./tsconfig.json');
     });
 
     it('extends tsconfig.cdk.json from a nested directory', async () => {
