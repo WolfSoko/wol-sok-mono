@@ -362,7 +362,10 @@ describe('WinnerComponent', () => {
     });
 
     describe('sharing', () => {
-      const navigator = window.navigator as Navigator & { share?: unknown };
+      // jsdom has no share sheet: the specs add one and take it away again.
+      const navigator = window.navigator as Omit<Navigator, 'share'> & {
+        share?: Navigator['share'];
+      };
 
       afterEach(() => {
         delete navigator.share;

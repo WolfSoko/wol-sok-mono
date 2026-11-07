@@ -126,6 +126,15 @@
         }
       }
     },
+    "typecheck-specs": {
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/tsconfig.base.json",
+        { "externalDependencies": ["typescript"] }
+      ],
+      "cache": true
+    },
     "build-storybook": {
       "inputs": [
         "default",

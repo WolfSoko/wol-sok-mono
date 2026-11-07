@@ -11,7 +11,7 @@ describe('AdSlotComponent', () => {
   beforeEach(() => {
     consentAnswered = signal(false);
     remove = jest.fn();
-    show = jest.fn(() => remove);
+    show = jest.fn((_slot: HTMLElement) => remove);
     TestBed.configureTestingModule({
       providers: [{ provide: GameAds, useValue: { consentAnswered, show } }],
     });
