@@ -6,17 +6,20 @@ import {
   noEvents,
   StepEvents,
 } from './bacteria-simulation';
-import { ColonySummary, Simulation, SimulationFactory } from './simulation';
+import {
+  ColonySummary,
+  MatchColonies,
+  Simulation,
+  SimulationFactory,
+} from './simulation';
 import {
   BotController,
   BotProfile,
-  BotRoutes,
+  BotDecision,
   BotDifficulty,
-  BotWeaponView,
-  buildBotView,
   DEFAULT_DIFFICULTY,
-  neutralFood,
 } from './bot-controller';
+import { BotSenses } from './bot-senses';
 import { countDown, TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
 import {
   colonyCapacity,
@@ -35,7 +38,7 @@ import {
 } from './geometry';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
 import { getMap } from './game-maps';
-import { GameMap, rectCenter } from './maps';
+import { GameMap } from './maps';
 import {
   createPlayer,
   isBoostReady,
@@ -52,18 +55,7 @@ import {
   winRuleOf,
   zoneHolder,
 } from './win-conditions';
-import { mapZones } from './zones';
 import { NeutralBrain } from './neutral-brain';
-import {
-  FloodCache,
-  lineOf,
-  NavField,
-  NavGrid,
-  navGrid,
-  travel,
-  waypoint,
-  withWalls,
-} from './bot-navigation';
 
 /** What a match needs to know about one player before it starts. */
 export interface PlayerSpawn {
@@ -276,27 +268,14 @@ export class MatchEngine {
    */
   private heldFrom: readonly ColonySummary[] | null = null;
   private heldUpTo = 0;
-  /** The bots' grid of the static walls and the zones, by arena size. */
-  private nav: {
-    width: number;
-    height: number;
-    grid: NavGrid;
-    /**
-     * That grid with the moving walls that block now, by where they stand -
-     * the same grid as long as they stand still, so its floods are kept.
-     */
-    walls: { key: string; grid: NavGrid } | null;
-  } | null = null;
-  private readonly floods = new FloodCache();
+  /** What the computer opponents see of the match. */
+  private readonly senses: BotSenses;
   /** True when the match has neutral colonies - see {@link neutralCount}. */
   private readonly hasNeutral: boolean;
   /** The neutral colonies' bacteria, all together. */
   private neutralBacteria = 0;
   /** What moves each neutral colony, in seat order. */
   private readonly neutralMovers: readonly NeutralMover[];
-  /** The centre of the hold zone on the arena last asked for, by its size. */
-  private hill: { width: number; height: number; at: Point | null } | null =
-    null;
 
   public constructor(spawns: readonly PlayerSpawn[], options: MatchOptions) {
     this.seed = options.seed;
@@ -366,6 +345,14 @@ export class MatchEngine {
       this.simulation.resize(options.arena.width, options.arena.height);
     }
     this.simulation.setMap(this.map);
+    this.senses = new BotSenses({
+      map: this.map,
+      win: this.win,
+      maxEnergy: this.balance.maxEnergy,
+      capacity: this.capacity,
+      hasNeutral: this.hasNeutral,
+      simulation: this.simulation,
+    });
     const radius = this.balance.startBacteriaRadius;
     this.simulation.init(
       spawns.map((spawn, index) => ({
@@ -780,197 +767,38 @@ export class MatchEngine {
     }
   }
 
-  /**
-   * What a bot sees of the weapon it carries, null without one - built only
-   * when it decides: the bacteria round its crosshair are counted only when
-   * it asks, from the blocks the simulation counts - a few times a second
-   * at the most.
-   */
-  private botWeaponView(player: Player, width: number): BotWeaponView | null {
-    if (player.weapon == null) {
-      return null;
-    }
-    const radius = weaponOf(player.weapon).radius * this.unitAt(width);
-    const crosshair = { x: player.x, y: player.y };
-    return {
-      id: player.weapon,
-      ready: isWeaponReady(player),
-      radius,
-      at: crosshair,
-      around: () => this.bacteriaAround(player.id, crosshair, radius),
-    };
-  }
-
-  /**
-   * A colony's own bacteria and everybody else's - neutral ones too, which
-   * the weapons hit as well - in the blocks whose centre lies in a circle.
-   */
-  private bacteriaAround(
-    playerId: number,
-    at: Point,
-    radius: number
-  ): { own: number; enemy: number } {
-    const blocks = this.simulation.blockCounts();
-    const around = { own: 0, enemy: 0 };
-    if (blocks === null) {
-      return around;
-    }
-    const { blocksX, blocksY, cellSize, counts } = blocks;
-    const own = this.simulation
-      .summaries()
-      .findIndex((summary) => summary.playerId === playerId);
-    const reach = Math.ceil(radius / cellSize);
-    const centerX = Math.floor(at.x / cellSize);
-    const centerY = Math.floor(at.y / cellSize);
-    for (
-      let by = Math.max(0, centerY - reach);
-      by <= Math.min(blocksY - 1, centerY + reach);
-      by++
-    ) {
-      for (
-        let bx = Math.max(0, centerX - reach);
-        bx <= Math.min(blocksX - 1, centerX + reach);
-        bx++
-      ) {
-        const dx = (bx + 0.5) * cellSize - at.x;
-        const dy = (by + 0.5) * cellSize - at.y;
-        if (dx * dx + dy * dy > radius * radius) {
-          continue;
-        }
-        const block = by * blocksX + bx;
-        for (let index = 0; index < counts.length; index++) {
-          if (index === own) {
-            around.own += counts[index][block];
-          } else {
-            around.enemy += counts[index][block];
-          }
-        }
-      }
-    }
-    return around;
-  }
-
-  /**
-   * The ways round the walls from a bot's colony. The grid and the flood
-   * are only worked out once the bot asks - it decides a few times a second,
-   * not every tick.
-   */
-  private routesFrom(from: Point, width: number, height: number): BotRoutes {
-    let grid: NavGrid | null = null;
-    let field: NavField | null = null;
-    const grid$ = () => (grid ??= this.navGridAt(width, height));
-    const field$ = () => (field ??= this.floods.flood(grid$(), from));
-    // A clear straight line needs no flood - most decisions on open ground.
-    const clear = (to: Point) => lineOf(grid$(), from, to) === 'clear';
-    return {
-      waypoint: (to) => (clear(to) ? to : waypoint(field$(), to)),
-      travel: (to) =>
-        clear(to)
-          ? Math.hypot(to.x - from.x, to.y - from.y)
-          : travel(field$(), to),
-    };
-  }
-
-  /**
-   * The grid the bots plan on: the static walls and the zones, and the
-   * gates and sliding walls that are shut - or about to shut - right now.
-   */
-  private navGridAt(width: number, height: number): NavGrid {
-    if (this.nav?.width !== width || this.nav.height !== height) {
-      this.nav = {
-        width,
-        height,
-        grid: navGrid(
-          width,
-          height,
-          this.map.createWalls(width, height),
-          mapZones(this.map, width, height),
-          this.unitAt(width)
-        ),
-        walls: null,
-      };
-    }
-    const walls = this.simulation
-      .getDynamicWalls()
-      .filter((wall) => wall.solid || wall.warning > 0);
-    const key = walls
-      .map(
-        ({ x, y, width, height, round }) =>
-          `${x},${y},${width},${height},${round === true}`
-      )
-      .join(';');
-    if (this.nav.walls?.key !== key) {
-      this.nav.walls = { key, grid: withWalls(this.nav.grid, walls) };
-    }
-    return this.nav.walls.grid;
-  }
-
-  /**
-   * The centre of the zone a hold-the-zone level is won on, on an arena of
-   * that size - null on any other level.
-   */
-  private hillAt(width: number, height: number): Point | null {
-    if (this.win.kind !== 'hold') {
-      return null;
-    }
-    if (this.hill?.width !== width || this.hill.height !== height) {
-      const zone = mapZones(this.map, width, height).find(
-        ({ kind }) => kind === 'hill'
-      );
-      this.hill = {
-        width,
-        height,
-        at: zone === undefined ? null : rectCenter(zone),
-      };
-    }
-    return this.hill.at;
-  }
-
   /** Lets every computer opponent look at the arena and steer its crosshair. */
   private runBots(width: number, height: number): void {
     if (this.bots.size === 0) {
       return;
     }
-    const { players: colonies, neutral } = this.splitColonies();
-    // A neutral colony is no enemy to the bots: it is prey, food that bites.
-    const prey = neutral.flatMap(neutralFood);
+    const colonies = this.splitColonies();
     for (const [playerId, bot] of this.bots) {
       const player = this.playerList[playerId];
-      const own = colonies.find((colony) => colony.playerId === playerId);
+      const own = colonies.players.find(
+        (colony) => colony.playerId === playerId
+      );
       // Between its decisions the bot looks at nothing: no view to build.
       if (player == null || own == null || bot.waits(TICK_SEC)) {
         continue;
       }
-      const view = buildBotView(
-        width,
-        height,
-        own,
-        colonies,
-        // The simulation's nearest enemy may be a neutral bacterium: with
-        // neutral colonies about, the bots charge the enemy's centre.
-        (from) =>
-          this.hasNeutral ? null : this.simulation.nearestEnemy(playerId, from),
-        this.simulation.getNutrients(),
-        isBoostReady(player),
-        this.balance.maxEnergy,
-        this.hillAt(width, height),
-        (from) => this.routesFrom(from, width, height),
-        this.unitAt(width),
-        prey,
-        this.win.kind === 'harvest',
-        this.botWeaponView(player, width),
-        this.capacity
+      this.obey(
+        playerId,
+        bot.decideNow(this.senses.viewFor(player, own, colonies, width, height))
       );
-      const decision = bot.decideNow(view);
-      if (decision.target != null) {
-        this.dragTargets.set(playerId, decision.target);
-      }
-      if (decision.boost) {
-        this.fireBoost(playerId);
-      }
-      if (decision.weapon) {
-        this.shoot(playerId);
-      }
+    }
+  }
+
+  /** Does what a bot decided: steers, boosts and fires. */
+  private obey(playerId: number, decision: BotDecision): void {
+    if (decision.target != null) {
+      this.dragTargets.set(playerId, decision.target);
+    }
+    if (decision.boost) {
+      this.fireBoost(playerId);
+    }
+    if (decision.weapon) {
+      this.shoot(playerId);
     }
   }
 
@@ -1003,9 +831,9 @@ export class MatchEngine {
       }
       mover.pace -= steps;
       // Around the walls, as the bots go, not into the one in the way.
-      const at = this.routesFrom(own.center, width, height).waypoint(
-        course.goal
-      );
+      const at = this.senses
+        .routesFrom(own.center, width, height)
+        .waypoint(course.goal);
       mover.crosshair = {
         ...mover.crosshair,
         x: at.x,
@@ -1029,10 +857,8 @@ export class MatchEngine {
    * for nobody: not as an enemy to measure up against, not as the one
    * holding the zone.
    */
-  private splitColonies(): {
+  private splitColonies(): MatchColonies & {
     all: readonly ColonySummary[];
-    players: readonly ColonySummary[];
-    neutral: readonly ColonySummary[];
   } {
     const all = this.simulation.summaries();
     if (!this.hasNeutral) {

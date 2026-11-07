@@ -6,11 +6,9 @@ import {
   BotView,
   BotWeaponView,
   ColonyView,
-  neutralFood,
   straightRoutes,
 } from './bot-controller';
 import { weaponOf } from './evolution';
-import { ColonySummary } from './simulation';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -542,29 +540,5 @@ describe('BotController with a weapon', () => {
     );
 
     expect(armed).toEqual({ ...plain, weapon: true });
-  });
-});
-
-describe('neutralFood', () => {
-  function summary(count: number): ColonySummary {
-    return {
-      playerId: 2,
-      color: [0, 0, 0, 255],
-      count,
-      center: count > 0 ? { x: 160, y: 70 } : null,
-      totalEnergy: count,
-      captured: 0,
-      lost: 0,
-      onHill: 0,
-      pellets: 0,
-    };
-  }
-
-  it('makes a neutral colony a pellet as big as it is, at its centre', () => {
-    expect(neutralFood(summary(500))).toEqual([{ x: 160, y: 70, amount: 500 }]);
-  });
-
-  it('makes no food of a neutral colony that is eaten up', () => {
-    expect(neutralFood(summary(0))).toEqual([]);
   });
 });
