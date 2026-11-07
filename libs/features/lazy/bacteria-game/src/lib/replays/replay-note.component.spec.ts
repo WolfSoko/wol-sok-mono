@@ -5,7 +5,7 @@ import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { I18nService } from '../i18n/i18n.service';
 import { GameSettingsService, SETTINGS_STORAGE_KEY } from '../settings.service';
 import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
-import { GameStateService } from '../state/game-state.service';
+import { MatchRecorder } from '../state/match-recorder';
 import { GameReplays } from '../storage/game-replays';
 import { ReplayNoteComponent } from './replay-note.component';
 
@@ -25,7 +25,7 @@ describe('ReplayNoteComponent', () => {
     page = fixture.nativeElement as HTMLElement;
   }
 
-  const recording = () => TestBed.inject(GameStateService).lastRecording;
+  const recording = () => TestBed.inject(MatchRecorder).lastRecording;
 
   beforeEach(() => {
     localStorage.clear();

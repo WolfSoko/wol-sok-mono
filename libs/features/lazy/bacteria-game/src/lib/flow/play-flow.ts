@@ -408,10 +408,7 @@ export class PlayFlow {
     this.sound.matchStart(levelMusic(this.hud.level().id));
     this.haptics.matchStart();
     this.stageFrame.newMatch();
-    this.gameStateService.cleanup();
-    const { width, height } = this.arenaStage.arena();
-    this.gameStateService.init(width, height);
-    this.gameStateService.start();
+    this.gameStateService.startMatch(this.arenaStage.arena());
   }
 
   /** Toggles pause - the touch equivalent of the P key. */

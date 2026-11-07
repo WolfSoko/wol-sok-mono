@@ -9,7 +9,7 @@ import { EvolutionService } from '../evolution.service';
 import { GpuSelfTestService } from '../gl/gpu-self-test.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
-import { GameStateService } from '../state/game-state.service';
+import { MatchRecorder } from '../state/match-recorder';
 import { ReplayViewerComponent } from './replay-viewer.component';
 
 /**
@@ -51,7 +51,7 @@ export class ReplayScreenComponent {
   /** The GPU that passed the self-test, which GPU replays play on. */
   protected readonly trustedGpu = inject(GpuSelfTestService).trustedRenderer;
 
-  private readonly recording = inject(GameStateService).lastRecording;
+  private readonly recording = inject(MatchRecorder).lastRecording;
 
   public readonly back = output<void>();
 

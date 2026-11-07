@@ -7,6 +7,7 @@ import {
   IDLE_LOBBY,
   type OnlineEvent,
   type OnlineLobby,
+  type OnlineMatchRef,
   type OnlineMatchService,
 } from '../lib/net/online-match.service';
 
@@ -80,12 +81,10 @@ export class FakeOnlineMatch implements Pick<
       new Lockstep(this.seat, () => undefined)
   );
   public readonly agreedRuleset = jest.fn((): Ruleset => 'cpu');
-  public readonly matchRef = jest.fn(
-    (): { roomCode: string; n: number } | null => ({
-      roomCode: this.code,
-      n: 1,
-    })
-  );
+  public readonly matchRef = jest.fn((): OnlineMatchRef | null => ({
+    roomCode: this.code,
+    n: 1,
+  }));
 
   public takeStart(): ReturnType<OnlineMatchService['takeStart']> {
     const pending = this.pending;

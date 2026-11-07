@@ -306,6 +306,11 @@ export class PlayerService {
     return this.engine.recorded;
   }
 
+  /** The ruleset the match plays by - null on the float GPU. */
+  public get ruleset(): Ruleset | null {
+    return this.engine.simulation.ruleset;
+  }
+
   /** The nutrient pellets currently on the map - used for rendering only. */
   public getNutrients(): Nutrient[] {
     return this.engine.simulation.getNutrients();

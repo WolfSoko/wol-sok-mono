@@ -16,6 +16,7 @@ import {
   type StoredMatchSetupValues,
 } from './settings/stored-match-setup';
 import { GameStateService } from './state/game-state.service';
+import { MatchRecorder } from './state/match-recorder';
 import { GameStateStore } from './state/game.states';
 import { DeviceStorage } from './storage/game-storage';
 
@@ -47,6 +48,7 @@ export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 @Injectable({ providedIn: 'root' })
 export class GameSettingsService {
   private readonly gameState = inject(GameStateService);
+  private readonly recorder = inject(MatchRecorder);
   private readonly storage = inject(DeviceStorage);
   private readonly i18n = inject(I18nService);
   private readonly analytics = injectGameAnalytics();
@@ -117,8 +119,9 @@ export class GameSettingsService {
     }
   }
 
+  /** Hands what the player set about recording to the recorder. */
   private syncReplayPrefs(): void {
-    this.gameState.setReplayPrefs({
+    this.recorder.setPrefs({
       recordLocal: this.value('recordLocal'),
       saveMatches: this.value('saveMatches'),
     });

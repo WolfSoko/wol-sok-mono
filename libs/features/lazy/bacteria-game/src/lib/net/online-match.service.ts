@@ -51,6 +51,12 @@ export interface OnlineLobby {
   auto: boolean;
 }
 
+/** The room of an online match and its number there - with the seed, its replay's id. */
+export interface OnlineMatchRef {
+  roomCode: string;
+  n: number;
+}
+
 /** Why an online connection ended. */
 export type OnlineEnd = 'left' | 'lost';
 
@@ -290,7 +296,7 @@ export class OnlineMatchService {
    * what its replay's id is made of (ADR 0011). Null before the first
    * match of a room.
    */
-  public matchRef(): { roomCode: string; n: number } | null {
+  public matchRef(): OnlineMatchRef | null {
     const { code } = this.lobby();
     return code === null || this.match === 0
       ? null

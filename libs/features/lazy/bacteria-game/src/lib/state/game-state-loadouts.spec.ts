@@ -7,12 +7,13 @@ import {
   Loadout,
   MatchPlan,
   PLAIN_LOADOUT,
-  Replay,
   REPLAY_VERSION,
   ReplayInputs,
   replayOf,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService } from './game-state.service';
+import { MatchRecorder } from './match-recorder';
+import { PlayerService } from './player.service';
 import { GameState, GameStateStore } from './game.states';
 
 const WIDTH = 320;
@@ -200,7 +201,9 @@ describe('GameStateService loadouts', () => {
 
     service.playGhost(run);
     service.start();
-    const replay = (service as unknown as { replay(): Replay | null }).replay();
+    const replay = TestBed.inject(MatchRecorder).replay(
+      TestBed.inject(PlayerService)
+    );
 
     expect(plan()?.loadouts).toEqual([PLAIN_LOADOUT, PLAIN_LOADOUT]);
     expect(replay?.header.version).toBe(REPLAY_VERSION);
