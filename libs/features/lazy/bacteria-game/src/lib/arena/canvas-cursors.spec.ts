@@ -1,40 +1,39 @@
 import { CursorShape } from './arena-painter';
 import { drawCursors } from './canvas-cursors';
 
-interface DrawCall {
-  op: 'fillRect' | 'beginPath' | 'arc' | 'stroke';
-  /** The fill style for a fill, the stroke style otherwise. */
-  style: string;
-  lineWidth: number;
-  args: number[];
-}
+type DrawCall =
+  | { op: 'fillRect'; style: string; args: number[] }
+  | {
+      op: 'beginPath' | 'arc' | 'stroke';
+      style: string;
+      lineWidth: number;
+      args: number[];
+    };
 
 /** A 2D context that records the crosshair's calls with the style they use. */
 function recordingContext() {
   const calls: DrawCall[] = [];
   const context = { fillStyle: '', strokeStyle: '', lineWidth: 1, calls };
-  const record =
-    (op: DrawCall['op']) =>
-    (...args: number[]) => {
-      const style = op === 'fillRect' ? context.fillStyle : context.strokeStyle;
-      calls.push({ op, style, lineWidth: context.lineWidth, args });
-    };
-  return Object.assign(context, {
-    fillRect: record('fillRect'),
-    beginPath: record('beginPath'),
-    arc: record('arc'),
-    stroke: record('stroke'),
+  const fill = (...args: number[]) =>
+    calls.push({ op: 'fillRect', style: context.fillStyle, args });
+  const line =
+    (op: 'beginPath' | 'arc' | 'stroke') =>
+    (...args: number[]) =>
+      calls.push({
+        op,
+        style: context.strokeStyle,
+        lineWidth: context.lineWidth,
+        args,
+      });
+  const recording = Object.assign(context, {
+    fillRect: fill,
+    beginPath: line('beginPath'),
+    arc: line('arc'),
+    stroke: line('stroke'),
   });
-}
-
-type RecordingContext = ReturnType<typeof recordingContext>;
-
-function draw(
-  cx: RecordingContext,
-  cursors: CursorShape[],
-  unit: number
-): void {
-  drawCursors(cx as unknown as CanvasRenderingContext2D, cursors, unit);
+  return recording as unknown as CanvasRenderingContext2D & {
+    calls: DrawCall[];
+  };
 }
 
 describe('drawCursors on a grid of two cells per base cell', () => {
@@ -61,23 +60,23 @@ describe('drawCursors on a grid of two cells per base cell', () => {
   it('fills the crosshair bars twice as long and thick, without a ring', () => {
     const cx = recordingContext();
 
-    draw(cx, [plain], DOUBLE_UNIT);
+    drawCursors(cx, [plain], DOUBLE_UNIT);
 
     expect(cx.calls).toEqual([
-      { op: 'fillRect', style: red, lineWidth: 1, args: [38, 29, 26, 4] },
-      { op: 'fillRect', style: red, lineWidth: 1, args: [49, 18, 4, 26] },
+      { op: 'fillRect', style: red, args: [38, 29, 26, 4] },
+      { op: 'fillRect', style: red, args: [49, 18, 4, 26] },
     ]);
   });
 
   it('strokes the boost ring twice as wide, with a line twice as thick', () => {
     const cx = recordingContext();
 
-    draw(cx, [boosted], DOUBLE_UNIT);
+    drawCursors(cx, [boosted], DOUBLE_UNIT);
 
     // Bars around (90, 40); radius (9 + 4 * (1 - 0.25)) * 2 = 24, line 1.5 * 2 = 3.
     expect(cx.calls).toEqual([
-      { op: 'fillRect', style: blue, lineWidth: 1, args: [78, 39, 26, 4] },
-      { op: 'fillRect', style: blue, lineWidth: 1, args: [89, 28, 4, 26] },
+      { op: 'fillRect', style: blue, args: [78, 39, 26, 4] },
+      { op: 'fillRect', style: blue, args: [89, 28, 4, 26] },
       { op: 'beginPath', style: blue, lineWidth: 3, args: [] },
       {
         op: 'arc',
@@ -92,22 +91,16 @@ describe('drawCursors on a grid of two cells per base cell', () => {
   it('draws each crosshair in its own colour, each ring on a path of its own', () => {
     const cx = recordingContext();
 
-    draw(cx, [boosted, plain, boosted], DOUBLE_UNIT);
+    drawCursors(cx, [boosted, plain, boosted], DOUBLE_UNIT);
 
+    const bars = (style: string) => [`fillRect ${style}`, `fillRect ${style}`];
+    const ringed = (style: string) => [
+      ...bars(style),
+      `beginPath ${style}`,
+      `arc ${style}`,
+      `stroke ${style}`,
+    ];
     const styles = cx.calls.map((call) => `${call.op} ${call.style}`);
-    expect(styles).toEqual([
-      `fillRect ${blue}`,
-      `fillRect ${blue}`,
-      `beginPath ${blue}`,
-      `arc ${blue}`,
-      `stroke ${blue}`,
-      `fillRect ${red}`,
-      `fillRect ${red}`,
-      `fillRect ${blue}`,
-      `fillRect ${blue}`,
-      `beginPath ${blue}`,
-      `arc ${blue}`,
-      `stroke ${blue}`,
-    ]);
+    expect(styles).toEqual([...ringed(blue), ...bars(red), ...ringed(blue)]);
   });
 });
