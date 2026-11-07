@@ -111,6 +111,11 @@ otherwise the workspace root. The Nx project name is the path below `<appsDir>` 
 └── tsconfig.spec.json           # only with --unitTestRunner=jest
 ```
 
+The generated `tsconfig.json` extends `tsconfig.cdk.json` at the workspace root when that file
+exists, otherwise `tsconfig.base.json`. Keep a `tsconfig.cdk.json` (extending `tsconfig.base.json`)
+when your CDK apps need other compiler options than the rest of the workspace, such as a newer
+`target` for the Node runtime while browser apps stay on an older one.
+
 The generator also adds `aws-cdk-lib` and `constructs` to `dependencies`, and the `aws-cdk` CLI plus
 the TypeScript loader `tsx` to `devDependencies` of your workspace.
 

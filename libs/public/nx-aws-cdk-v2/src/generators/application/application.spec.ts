@@ -1,5 +1,10 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
-import { Tree, readProjectConfiguration } from '@nx/devkit';
+import {
+  Tree,
+  readJson,
+  readProjectConfiguration,
+  writeJson,
+} from '@nx/devkit';
 
 import generator from './application';
 import { ApplicationSchema } from './schema';
@@ -42,5 +47,46 @@ describe('aws-cdk generator', () => {
     await generator(appTree, directoryOptions);
     const config = readProjectConfiguration(appTree, 'sub-test');
     expect(config).toBeDefined();
+  });
+
+  describe('tsconfig.json', () => {
+    const extendsOf = (path: string): string => readJson(appTree, path).extends;
+
+    beforeEach(() => {
+      // An apps/ folder puts the project two levels below the root.
+      appTree.write('apps/.gitkeep', '');
+    });
+
+    it('extends tsconfig.base.json when the workspace has no tsconfig.cdk.json', async () => {
+      await generator(appTree, options);
+
+      expect(extendsOf('apps/test/tsconfig.json')).toBe(
+        '../../tsconfig.base.json'
+      );
+    });
+
+    it('extends tsconfig.cdk.json when the workspace root has one', async () => {
+      writeJson(appTree, 'tsconfig.cdk.json', {
+        extends: './tsconfig.base.json',
+      });
+
+      await generator(appTree, options);
+
+      expect(extendsOf('apps/test/tsconfig.json')).toBe(
+        '../../tsconfig.cdk.json'
+      );
+    });
+
+    it('extends tsconfig.cdk.json from a nested directory', async () => {
+      writeJson(appTree, 'tsconfig.cdk.json', {
+        extends: './tsconfig.base.json',
+      });
+
+      await generator(appTree, { ...options, directory: 'sub' });
+
+      expect(extendsOf('apps/sub/test/tsconfig.json')).toBe(
+        '../../../tsconfig.cdk.json'
+      );
+    });
   });
 });

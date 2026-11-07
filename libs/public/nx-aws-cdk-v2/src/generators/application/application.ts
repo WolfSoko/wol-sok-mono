@@ -50,34 +50,31 @@ function normalizeOptions(
   };
 }
 
-function addFiles(host: Tree, options: NormalizedSchema) {
-  const templateOptions = {
-    ...options,
-    ...names(options.projectName),
-    offsetFromRoot: offsetFromRoot(options.projectRoot),
-    template: '',
-  };
+/** Root tsconfig a workspace keeps for Node-only CDK apps (e.g. an ESNext target). */
+const CDK_TSCONFIG = 'tsconfig.cdk.json';
+const BASE_TSCONFIG = 'tsconfig.base.json';
 
-  generateFiles(
-    host,
-    path.join(__dirname, 'files'),
-    options.projectRoot,
-    templateOptions
-  );
+/** The root tsconfig the app's tsconfig.json extends: the CDK one where the workspace has it. */
+function baseTsconfig(host: Tree): string {
+  return host.exists(CDK_TSCONFIG) ? CDK_TSCONFIG : BASE_TSCONFIG;
 }
 
-function addJestFiles(host: Tree, options: NormalizedSchema) {
-  const templateOptions = {
+function templateOptions(host: Tree, options: NormalizedSchema) {
+  return {
     ...options,
     ...names(options.projectName),
     offsetFromRoot: offsetFromRoot(options.projectRoot),
+    baseTsconfig: baseTsconfig(host),
     template: '',
   };
+}
+
+function addFiles(host: Tree, options: NormalizedSchema, folder: string) {
   generateFiles(
     host,
-    path.join(__dirname, 'jest-files'),
+    path.join(__dirname, folder),
     options.projectRoot,
-    templateOptions
+    templateOptions(host, options)
   );
 }
 
@@ -125,7 +122,7 @@ export async function applicationGenerator(
   );
 
   updateProjectConfiguration(host, normalizedOptions.projectName, workspace);
-  addFiles(host, normalizedOptions);
+  addFiles(host, normalizedOptions, 'files');
 
   if (normalizedOptions.unitTestRunner === 'jest') {
     // `configurationGenerator` forwards its whole options object to `@nx/js`'s init
@@ -148,7 +145,7 @@ export async function applicationGenerator(
     } as const;
     const jestTask = await configurationGenerator(host, jestConfigOptions);
     tasks.push(jestTask);
-    addJestFiles(host, normalizedOptions);
+    addFiles(host, normalizedOptions, 'jest-files');
   }
 
   if (!options.skipFormat) {

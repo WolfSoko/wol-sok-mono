@@ -1,5 +1,5 @@
 {
-  "extends": "<%= offsetFromRoot %>tsconfig.base.json",
+  "extends": "<%= offsetFromRoot %><%= baseTsconfig %>",
   "compilerOptions": {
     "module": "commonjs",
     "outDir": "<%= offsetFromRoot %>dist/out-tsc",
