@@ -42,7 +42,7 @@ After the change:
 - `PlayerService.useSimulation(...)` becomes
   `useSimulations(sources | null)` (the sources without `onFallback`,
   which the service adds); `PlayerService.init` only turns its options into a request. `replayEngine(replay, onSecond,
-simulations)` takes a provider; `replayRun` (MatchRun,
+  simulations)` takes a provider; `replayRun` (MatchRun,
   [#2780](https://github.com/WolfSoko/wol-sok-mono/issues/2780)) builds one
   from the GPU's integer passes, so the replay scene no longer carries a
   fallback of its own.
