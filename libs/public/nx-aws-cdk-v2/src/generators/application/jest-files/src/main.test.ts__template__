@@ -13,7 +13,7 @@ describe('<%= className %>', () => {
     });
 
     // aws-cdk-lib leaves the Resources key out of an empty template.
-    const { Resources = {} } = Template.fromStack(stack).toJSON();
-    expect(Resources).toEqual({});
+    const resources = Template.fromStack(stack).toJSON().Resources ?? {};
+    expect(resources).toEqual({});
   });
 });

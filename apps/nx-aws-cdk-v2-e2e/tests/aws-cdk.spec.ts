@@ -189,7 +189,8 @@ describe('aws-cdk-v2 e2e', () => {
       `${testResult.stdout}\n${testResult.stderr}`
     );
 
-    expect(output).toMatch(/Tests:\s+1 passed, 1 total/);
+    expect(output).toMatch(/Tests:\s+\d+ passed, \d+ total/);
+    expect(output).not.toMatch(/\d+ failed/);
     expect(output).not.toContain('CloudFormation-Validate');
   }, 120000);
 

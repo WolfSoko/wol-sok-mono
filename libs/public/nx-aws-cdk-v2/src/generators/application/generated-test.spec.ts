@@ -13,6 +13,18 @@ interface GeneratedTest {
 
 const APP_STACK_IMPORT = './stacks/app-stack';
 
+/** Where aws-cdk-lib may print its validation report. */
+const CAPTURED_CONSOLE_METHODS = ['log', 'warn', 'error'] as const;
+
+/** Runs a generated test and names it in the failure. */
+async function runNamed(test: GeneratedTest): Promise<void> {
+  try {
+    await test.run();
+  } catch (failure) {
+    throw new Error(`Generated test "${test.name}" failed`, { cause: failure });
+  }
+}
+
 function transpile(source: string): string {
   return ts.transpileModule(source, {
     compilerOptions: {
@@ -91,23 +103,20 @@ describe('generated main.test.ts', () => {
   });
 
   it('passes against the workspace aws-cdk-lib without validation warnings', async () => {
-    const warn = jest
-      .spyOn(console, 'warn')
-      .mockImplementation(() => undefined);
-    const error = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
+    const consoleSpies = CAPTURED_CONSOLE_METHODS.map((method) =>
+      jest.spyOn(console, method).mockImplementation(() => undefined)
+    );
     try {
       for (const test of tests) {
-        await test.run();
+        await runNamed(test);
       }
-      const logged = [...warn.mock.calls, ...error.mock.calls]
+      const logged = consoleSpies
+        .flatMap((spy) => spy.mock.calls)
         .flat()
         .join('\n');
       expect(logged).not.toContain('CloudFormation-Validate');
     } finally {
-      warn.mockRestore();
-      error.mockRestore();
+      consoleSpies.forEach((spy) => spy.mockRestore());
     }
   });
 });
