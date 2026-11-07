@@ -32,7 +32,7 @@
     "**/vitest.config.*.timestamp*"
   ],
   "rules": {
-    "no-unused-vars": "warn",
+    "no-unused-vars": "error",
     "typescript/no-explicit-any": "warn",
     "typescript/no-empty-object-type": "error",
     "typescript/no-unsafe-function-type": "error",
@@ -167,12 +167,6 @@
         "vitest/require-mock-type-parameters": "off",
         "vitest/no-disabled-tests": "warn",
         "typescript/unbound-method": "off"
-      }
-    },
-    {
-      "files": ["libs/features/lazy/bacteria-game/**/*.ts"],
-      "rules": {
-        "no-unused-vars": "error"
       }
     },
     {
