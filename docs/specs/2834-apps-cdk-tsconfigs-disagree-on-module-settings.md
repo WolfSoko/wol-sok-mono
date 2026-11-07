@@ -65,9 +65,10 @@ Today:
    `tsconfig.spec.json` pass for all five apps (TypeScript 6, the workspace's).
 3. `npx nx run-many -t test,lint -p <the five apps>` passes, including
    `bacteria-game-remote-cdk`'s `firebase-domain.spec.ts`.
-4. `cdk synth` of one app still runs: `npx tsx --tsconfig tsconfig.app.json src/main.ts`
-   in `apps/bacteria-game-remote-cdk` (the one without required env vars)
-   synthesises without error.
+4. Every app still synthesises (condition of the approval): from the
+   workspace root, `npx tsx --tsconfig apps/<app>/tsconfig.app.json apps/<app>/src/main.ts`
+   with `RELEASE_VERSION` set and a scratch `CDK_OUTDIR` (synth only, no
+   deploy) succeeds for all five apps, and its `cdk.out` equals `main`'s.
 
 ## Open questions
 

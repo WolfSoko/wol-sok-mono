@@ -3,9 +3,8 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "types": ["node"],
-    "esModuleInterop": true,
     "module": "NodeNext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "NodeNext"
   },
   "include": [],
   "files": [],

@@ -18,8 +18,9 @@ Spec: [docs/specs/2834-…](../specs/2834-apps-cdk-tsconfigs-disagree-on-module-
 ## Task 3: checks and commit
 
 - Rerun Task 1's tsc calls: all pass.
-- `npx nx run-many -t test,lint -p` the five apps; synth check of
-  `bacteria-game-remote-cdk` with `tsx`.
+- `npx nx run-many -t test,lint -p` the five apps; synth all five
+  apps with `tsx` from the root (placeholder `dist/apps/*` folders, scratch
+  `CDK_OUTDIR`), on the branch and on `main`, and compare the `cdk.out`.
 - `npx nx format:write`, `npx nx affected -t lint,lint-templates`.
 - One commit `chore(nx): align the CDK apps' tsconfig module settings`
   (workspace configuration across five projects, so the `nx` scope), with
