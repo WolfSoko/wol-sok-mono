@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.2...v74.139.3) (2026-11-07)
+
+### Bug Fixes
+
+* **nx-aws-cdk-v2:** keep generated tsconfigs valid and in line with the CDK apps ([#2836](https://github.com/WolfSoko/wol-sok-mono/issues/2836)) ([a10a88c](https://github.com/WolfSoko/wol-sok-mono/commit/a10a88c53742d0c3ebcae7db6d369288c047e07e)), closes [#2832](https://github.com/WolfSoko/wol-sok-mono/issues/2832), references [#2832](https://github.com/WolfSoko/wol-sok-mono/issues/2832)
+
+### Chore
+
+* **release:** publish ([1d3eea6](https://github.com/WolfSoko/wol-sok-mono/commit/1d3eea6a2d5036b779e71ab369f72dbe1550876a))
+
 ## [74.139.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.1...v74.139.2) (2026-11-07)
 
 ### Bug Fixes
