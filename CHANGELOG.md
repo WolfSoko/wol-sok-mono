@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.3...v74.139.4) (2026-11-07)
+
+### Bug Fixes
+
+* **nx-aws-cdk-v2:** keep the generated unit test green on current aws-cdk-lib ([#2840](https://github.com/WolfSoko/wol-sok-mono/issues/2840)) ([d8dc48e](https://github.com/WolfSoko/wol-sok-mono/commit/d8dc48efaee3aad597e6bc78a35721032463134e)), closes [#2835](https://github.com/WolfSoko/wol-sok-mono/issues/2835)
+
+### Chore
+
+* **nx:** align the CDK apps' tsconfig module settings ([#2839](https://github.com/WolfSoko/wol-sok-mono/issues/2839)) ([417cee9](https://github.com/WolfSoko/wol-sok-mono/commit/417cee95599197d261f8ea66079a1158819806c6)), closes [#2834](https://github.com/WolfSoko/wol-sok-mono/issues/2834), references [#2834](https://github.com/WolfSoko/wol-sok-mono/issues/2834) [#2834](https://github.com/WolfSoko/wol-sok-mono/issues/2834)
+* **release:** publish ([baf2ed8](https://github.com/WolfSoko/wol-sok-mono/commit/baf2ed85529fa43b41847bf9b7b2a71591a2c25e))
+
 ## [74.139.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.2...v74.139.3) (2026-11-07)
 
 ### Bug Fixes
