@@ -245,7 +245,7 @@ describe('pushForeground', () => {
       expect(rectOf(batch, 0)).toEqual([3, 13, 14, 14]);
     });
 
-    it('keeps the shadow, the drop and its highlight as big as the drop', () => {
+    it('keeps the shadow, the drop and its highlight as on the base grid', () => {
       const base = new ShapeBatch();
       const doubled = new ShapeBatch();
 
