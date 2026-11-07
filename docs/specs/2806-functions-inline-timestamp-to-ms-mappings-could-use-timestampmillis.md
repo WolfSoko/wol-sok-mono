@@ -13,8 +13,8 @@ ms in one place.
 
 The places:
 
-- `gallery/publish.ts`: `createdAt` in `publishPicked` (fallback `now`) and in
-  `unpublish` (fallback `now`)
+- `gallery/publish.ts`: `createdAt` in `publishReplay` (fallback `now`) and in
+  `takeDownPublic` (fallback `now`)
 - `replays/accept.ts`: `createdAt` in `submissionMeta` (fallback `now`)
 - `replays/forget.ts`: `createdAt` (fallback `null`)
 - `boards/declared-match.ts`: `sent` as `arrivedAt` (fallback `now`)
