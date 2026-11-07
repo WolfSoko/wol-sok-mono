@@ -1,5 +1,6 @@
 import { Tree } from '@nx/devkit';
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
+import { posix } from 'node:path';
 import { runInThisContext } from 'node:vm';
 import * as ts from 'typescript';
 
@@ -11,10 +12,15 @@ interface GeneratedTest {
   readonly run: () => unknown;
 }
 
-const APP_STACK_IMPORT = './stacks/app-stack';
-
 /** Where aws-cdk-lib may print its validation report. */
 const CAPTURED_CONSOLE_METHODS = ['log', 'warn', 'error'] as const;
+
+/** The test globals the generated spec uses. */
+interface TestGlobals {
+  readonly describe: (name: string, body: () => void) => void;
+  readonly it: (name: string, run: () => unknown) => void;
+  readonly expect: typeof expect;
+}
 
 /** Runs a generated test and names it in the failure. */
 async function runNamed(test: GeneratedTest): Promise<void> {
@@ -36,56 +42,46 @@ function transpile(source: string): string {
 }
 
 /**
- * Evaluates a transpiled CommonJS module. `localModules` stands in for the
- * app's own relative imports; everything else comes from the workspace.
+ * Loads a generated TypeScript module from the tree as CommonJS. Its relative
+ * imports load from the tree the same way; everything else comes from the
+ * workspace, aws-cdk-lib included.
  */
-function evaluate(
-  code: string,
-  localModules: Record<string, unknown>,
-  globals: Record<string, unknown> = {}
+function loadFromTree(
+  tree: Tree,
+  path: string,
+  globals?: TestGlobals
 ): Record<string, unknown> {
+  const source = tree.read(path, 'utf-8');
+  if (source === null) {
+    throw new Error(`The generator wrote no ${path}`);
+  }
   const moduleRecord = { exports: {} as Record<string, unknown> };
   const requireModule = (id: string): unknown =>
-    id in localModules ? localModules[id] : require(id);
-  const globalNames = Object.keys(globals);
+    id.startsWith('.')
+      ? loadFromTree(tree, `${posix.join(posix.dirname(path), id)}.ts`)
+      : require(id);
   const factory: (...args: unknown[]) => void = runInThisContext(
-    `(function (require, module, exports, ${globalNames.join(', ')}) {\n${code}\n})`
+    `(function (require, module, exports, describe, it, expect) {\n${transpile(source)}\n})`
   );
   factory(
     requireModule,
     moduleRecord,
     moduleRecord.exports,
-    ...globalNames.map((name) => globals[name])
+    globals?.describe,
+    globals?.it,
+    globals?.expect
   );
   return moduleRecord.exports;
 }
 
-/**
- * Loads the generated `main.test.ts` against the generated app stack and the
- * workspace's aws-cdk-lib, and returns the tests it registers.
- */
-function collectGeneratedTests(
-  tree: Tree,
-  sourceRoot: string
-): GeneratedTest[] {
-  const read = (path: string): string => {
-    const content = tree.read(`${sourceRoot}/${path}`, 'utf-8');
-    if (content === null) {
-      throw new Error(`The generator wrote no ${sourceRoot}/${path}`);
-    }
-    return content;
-  };
-  const appStack = evaluate(transpile(read('stacks/app-stack.ts')), {});
+/** Loads the generated `main.test.ts` and returns the tests it registers. */
+function collectGeneratedTests(tree: Tree, testPath: string): GeneratedTest[] {
   const tests: GeneratedTest[] = [];
-  evaluate(
-    transpile(read('main.test.ts')),
-    { [APP_STACK_IMPORT]: appStack },
-    {
-      describe: (_name: string, body: () => void) => body(),
-      it: (name: string, run: () => unknown) => tests.push({ name, run }),
-      expect,
-    }
-  );
+  loadFromTree(tree, testPath, {
+    describe: (_name, body) => body(),
+    it: (name, run) => tests.push({ name, run }),
+    expect,
+  });
   return tests;
 }
 
@@ -95,7 +91,7 @@ describe('generated main.test.ts', () => {
   beforeAll(async () => {
     const tree = createTreeWithEmptyWorkspace();
     await generator(tree, { name: 'starter', skipFormat: true });
-    tests = collectGeneratedTests(tree, 'starter/src');
+    tests = collectGeneratedTests(tree, 'starter/src/main.test.ts');
   });
 
   it('registers at least one test', () => {

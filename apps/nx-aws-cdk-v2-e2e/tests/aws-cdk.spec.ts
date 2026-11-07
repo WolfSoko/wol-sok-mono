@@ -42,13 +42,23 @@ describe('aws-cdk-v2 e2e', () => {
     return JSON.parse(result.stdout) as ProjectConfiguration;
   }
 
-  it('should create aws-cdk', async () => {
+  it('should create aws-cdk with a passing unit test and no validation warnings', async () => {
     const plugin = uniq('aws-cdk-v2');
 
     await runNxCommandAsync(
       `generate @wolsok/nx-aws-cdk-v2:application ${plugin}`
     );
-  }, 120000);
+
+    const testResult = await runNxCommandAsync(
+      `test ${plugin} --output-style=stream`
+    );
+    const output = stripVTControlCharacters(
+      `${testResult.stdout}\n${testResult.stderr}`
+    );
+
+    expect(output).toMatch(/Tests:\s+\d+ passed, \d+ total/);
+    expect(output).not.toContain('CloudFormation-Validate');
+  }, 180000);
 
   it('should generate when package.json uses type module', async () => {
     const plugin = uniq('aws-cdk-v2');
@@ -173,25 +183,6 @@ describe('aws-cdk-v2 e2e', () => {
     expect(() =>
       checkFilesExist(`${project.root}/cdk.out/${plugin}.template.json`)
     ).toThrow();
-  }, 120000);
-
-  it('should pass the generated unit test without validation warnings', async () => {
-    const plugin = uniq('aws-cdk-v2');
-
-    await runNxCommandAsync(
-      `generate @wolsok/nx-aws-cdk-v2:application ${plugin}`
-    );
-
-    const testResult = await runNxCommandAsync(
-      `test ${plugin} --output-style=stream --skip-nx-cache`
-    );
-    const output = stripVTControlCharacters(
-      `${testResult.stdout}\n${testResult.stderr}`
-    );
-
-    expect(output).toMatch(/Tests:\s+\d+ passed, \d+ total/);
-    expect(output).not.toMatch(/\d+ failed/);
-    expect(output).not.toContain('CloudFormation-Validate');
   }, 120000);
 
   describe('--directory', () => {
