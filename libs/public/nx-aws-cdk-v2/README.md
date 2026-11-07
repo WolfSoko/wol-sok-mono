@@ -26,6 +26,7 @@ around the CDK Toolkit CLI: they build a `cdk` command line and run it, so anyth
   - [`bootstrap`](#bootstrap)
   - [Passing extra CDK flags](#passing-extra-cdk-flags)
 - [How the executors invoke the CDK CLI](#how-the-executors-invoke-the-cdk-cli)
+- [Upgrading](#upgrading)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -242,6 +243,43 @@ All four executors build the same shape of command and run it **from the workspa
   invoke `cdk` yourself from the project directory.
 
 Run any target with `--verbose` to see the exact command that is executed.
+
+## Upgrading
+
+Update the plugin with `nx migrate`, so its migrations run on your workspace:
+
+```shell
+npx nx migrate @wolsok/nx-aws-cdk-v2@latest
+npm install
+npx nx migrate --run-migrations
+```
+
+### 4.2.0: starter test of older apps
+
+Apps generated before 4.1.3 hold a `src/main.test.ts` that asserts
+`Template.fromStack(stack).templateMatches({ Resources: {} })`. Current `aws-cdk-lib` writes an
+empty stack without a `Resources` key, so that test fails with _"Missing key 'Resources'"_.
+
+The `update-starter-test` migration rewrites the test to the one the generator writes now, but only
+where it is still exactly the generated test (formatting aside). It leaves a test you changed alone
+and names it in a warning if it still holds the failing assertion. Change such a test by hand:
+
+```ts
+import { App, Validations } from 'aws-cdk-lib';
+import { Template } from 'aws-cdk-lib/assertions';
+
+// ...
+Validations.of(stack).acknowledge({
+  id: 'CloudFormation-Validate::F0001',
+  reason: 'The starter stack has no resources yet.',
+});
+
+// aws-cdk-lib leaves the Resources key out of an empty template.
+expect(Template.fromStack(stack).toJSON().Resources ?? {}).toEqual({});
+```
+
+The acknowledgement keeps the test's output free of the empty-stack warning; `cdk synth` still
+reports it until the stack has its first resource.
 
 ## Documentation
 

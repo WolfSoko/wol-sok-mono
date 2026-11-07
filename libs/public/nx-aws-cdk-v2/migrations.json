@@ -1,5 +1,11 @@
 {
   "$schema": "http://json-schema.org/schema",
-  "generators": {},
+  "generators": {
+    "update-starter-test": {
+      "version": "4.2.0",
+      "description": "Rewrite the untouched starter src/main.test.ts of apps generated before 4.1.3, which fails on current aws-cdk-lib (an empty stack has no Resources key); warn about edited tests that still hold the failing assertion.",
+      "implementation": "./src/migrations/update-4-2-0/update-starter-test"
+    }
+  },
   "packageJsonUpdates": {}
 }
