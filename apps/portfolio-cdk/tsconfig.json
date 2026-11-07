@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.cdk.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "types": ["node", "jest"],

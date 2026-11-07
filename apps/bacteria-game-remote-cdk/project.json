@@ -4,6 +4,10 @@
   "projectType": "application",
   "sourceRoot": "apps/bacteria-game-remote-cdk/src",
   "tags": ["infra", "cdk"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "cdkTsconfig"],
+    "cdkTsconfig": ["{workspaceRoot}/tsconfig.cdk.json"]
+  },
   "targets": {
     "deploy": {
       "executor": "@wolsok/nx-aws-cdk-v2:deploy",

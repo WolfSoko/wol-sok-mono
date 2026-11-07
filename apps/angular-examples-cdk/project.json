@@ -5,6 +5,10 @@
   "sourceRoot": "apps/angular-examples-cdk/src",
   "tags": ["infra", "cdk"],
   "implicitDependencies": ["angular-examples"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "cdkTsconfig"],
+    "cdkTsconfig": ["{workspaceRoot}/tsconfig.cdk.json"]
+  },
   "targets": {
     "deploy": {
       "dependsOn": ["^build"],

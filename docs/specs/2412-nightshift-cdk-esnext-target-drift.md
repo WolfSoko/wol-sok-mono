@@ -35,6 +35,11 @@ override on their own, so each new CDK app has to remember it.
   browser-target bump in `tsconfig.base.json` cannot reach the CDK apps. A
   root file sits next to `tsconfig.base.json`, where type-aware oxlint
   (TypeScript 7 semantics) resolves `extends` chains as usual.
+- **The shared file is a declared input of the CDK apps.** Nx hashes no
+  root file outside a project, so each `apps/*-cdk/project.json` adds
+  `{workspaceRoot}/tsconfig.cdk.json` to its `default` named input
+  (`cdkTsconfig`), as `libs/utils/version` does for `version.json`; a change
+  to it then reruns their cached tasks.
 - **This PR supersedes the nightshift draft
   [#2818](https://github.com/WolfSoko/wol-sok-mono/pull/2818)**, which adds
   the line to `portfolio-cdk` alone: the shared file fixes that app and the
@@ -58,6 +63,8 @@ override on their own, so each new CDK app has to remember it.
    than on `main` for each of the five apps.
 4. `npx nx run-many -t test,lint -p <the five apps>` passes.
 5. `CLAUDE.md`'s Target Policy names `tsconfig.cdk.json`.
+6. `npx nx show project <app> --json` lists `cdkTsconfig` in the `default`
+   named input of each of the five apps.
 
 ## Open questions
 
