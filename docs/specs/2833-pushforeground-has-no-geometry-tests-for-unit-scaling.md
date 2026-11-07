@@ -36,13 +36,16 @@ cannot show.
 
 ## Acceptance
 
-1. At `unit = 2` the jam halo of a drop at (10, 10) with radius 3 and halo 0.5
-   is the square `[3, 3, 14, 14]` (radius 7; 5 at unit 1).
-2. At `unit = 2` a crosshair at (50, 50) draws the bars `[38, 49, 26, 4]` and
-   `[49, 38, 4, 26]`.
-3. At `unit = 2` a boosted crosshair at (90, 50) with half its boost left
-   draws a ring in the square `[66, 26, 48, 48]` with radius `p0 = 22` and
-   line width `p1 = 3`.
+1. At `unit = 2` the jam halo of a drop at (10, 20) with radius 3 and halo 0.5
+   is the square `[3, 13, 14, 14]` (radius 7; 5 at unit 1). The drop's
+   shadow, body and highlight keep the rects they have at unit 1.
+2. At `unit = 2` a crosshair at (50, 30) draws the bars `[38, 29, 26, 4]` and
+   `[49, 18, 4, 26]`.
+3. At `unit = 2` a boosted crosshair at (90, 40) with a quarter of its boost
+   left draws a ring in the square `[64, 14, 52, 52]` with radius `p0 = 24`
+   and line width `p1 = 3`.
+   Centres off the diagonal and a boost other than a half (from the review)
+   also catch swapped coordinates and an inverted boost.
 4. Each new assertion fails when `unit` is dropped from its formula in
    `shape-batch.ts` / `arena-painter.ts` (checked by hand, not committed).
 5. `npx nx test feat-lazy-bacteria-game`, `typecheck-specs` and lint pass.
