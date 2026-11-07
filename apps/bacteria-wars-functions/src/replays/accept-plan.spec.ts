@@ -75,6 +75,23 @@ describe('planAcceptance', () => {
     );
   });
 
+  it('keeps the ladder version of a match against the ladder computer, and none for one without', () => {
+    const ladder = planAcceptance(
+      replay({ version: 4, ladder: 2 }),
+      submission()
+    );
+    expect(ladder).toEqual(
+      expect.objectContaining({
+        record: expect.objectContaining({ replayVersion: 4, ladder: 2 }),
+      })
+    );
+    const plain = planAcceptance(replay(), submission());
+    expect(plain).toEqual(
+      expect.objectContaining({ record: expect.anything() })
+    );
+    expect((plain as { record: object }).record).not.toHaveProperty('ladder');
+  });
+
   it('stores an online match under the id both devices know', () => {
     const plan = planAcceptance(
       replay({

@@ -55,6 +55,12 @@ export interface ReplayRecord {
   checksum: number;
   hint: number;
   attempt?: { id: string; at: number };
+  /**
+   * The ladder computer's version, for a match against it only - as in the
+   * header; absent on a record stored before it was kept (see
+   * `StoredPlayback`).
+   */
+  ladder?: number;
 }
 
 /** Why a submission was dropped. */
@@ -109,6 +115,7 @@ export function planAcceptance(
     ...(header.attempt === undefined
       ? {}
       : { attempt: { id: header.attempt.id, at: header.attempt.at } }),
+    ...(header.ladder === undefined ? {} : { ladder: header.ladder }),
   });
   if (header.roomCode !== undefined && header.n !== undefined) {
     if (header.mode !== 'two-players' || attempt !== null) {
