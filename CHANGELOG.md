@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.138.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.4...v74.138.5) (2026-11-07)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** erase a deleted player's pairs and the owner's commands about them ([#2825](https://github.com/WolfSoko/wol-sok-mono/issues/2825)) ([dff9db3](https://github.com/WolfSoko/wol-sok-mono/commit/dff9db37a69f65ca9931cfa8c6a61a50f746e7b5)), closes [#2816](https://github.com/WolfSoko/wol-sok-mono/issues/2816)
+
+### Testing
+
+* **bacteria-game-remote:** wait for the cloud save before reloading in the cloud-save e2e ([#2826](https://github.com/WolfSoko/wol-sok-mono/issues/2826)) ([fcda517](https://github.com/WolfSoko/wol-sok-mono/commit/fcda517b16fea2cc477b323c6dd71aa7e0ffb191)), closes [#2817](https://github.com/WolfSoko/wol-sok-mono/issues/2817), references [#2817](https://github.com/WolfSoko/wol-sok-mono/issues/2817)
+
 ## [74.138.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.138.3...v74.138.4) (2026-11-07)
 
 ### Bug Fixes
