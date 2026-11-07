@@ -60,15 +60,16 @@ describe('StageFrame', () => {
 
   describe('a new painter', () => {
     it('gets the war a simulation and the arena its size', () => {
-      const use = jest.spyOn(TestBed.inject(PlayerService), 'useSimulation');
+      const use = jest.spyOn(TestBed.inject(PlayerService), 'useSimulations');
       const size = jest.spyOn(TestBed.inject(GameStateService), 'setArenaSize');
 
       frame.onPainterChange(painter());
 
       expect(use).toHaveBeenCalledWith(
-        expect.any(Function),
-        expect.anything(),
-        expect.anything()
+        expect.objectContaining({
+          plays: expect.any(Function),
+          offers: expect.any(Function),
+        })
       );
       const { width, height } = TestBed.inject(ArenaStage).arena();
       expect(size).toHaveBeenCalledWith(width, height);
@@ -84,7 +85,7 @@ describe('StageFrame', () => {
     });
 
     it('lets the GPU simulation go with the painter before it', () => {
-      const use = jest.spyOn(TestBed.inject(PlayerService), 'useSimulation');
+      const use = jest.spyOn(TestBed.inject(PlayerService), 'useSimulations');
 
       frame.onPainterChange(null);
 

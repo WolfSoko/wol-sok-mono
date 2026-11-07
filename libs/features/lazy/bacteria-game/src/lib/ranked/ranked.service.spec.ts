@@ -64,15 +64,11 @@ describe('RankedService', () => {
       ],
     });
     if (options.gpu !== false) {
-      TestBed.inject(PlayerService).useSimulation(
-        cpuSimulation,
-        cpuSimulation,
-        {
-          ruleset: () => 'gpu-int',
-          offers: () => ['cpu', 'gpu-int'],
-          gpuInt: cpuSimulation,
-        }
-      );
+      TestBed.inject(PlayerService).useSimulations({
+        gpu: { int: cpuSimulation },
+        plays: () => 'gpu-int',
+        offers: () => ['cpu', 'gpu-int'],
+      });
     }
     return TestBed.inject(RankedService);
   }

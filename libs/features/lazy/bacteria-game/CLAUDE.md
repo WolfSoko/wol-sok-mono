@@ -407,8 +407,18 @@ play each other.
   (`BacteriaSimulation`) and `gpu-int` (the integer passes: `GpuSimulation`
   with `deterministic`, or `IntSimulation`). `Simulation.ruleset` names a
   simulation's; the float GPU one has none (null) and is never recorded.
-- The game picks a simulation with `chooseSimulation`
-  (`gl/simulation-choice.ts`): with the owner's toggle
+- Which simulation plays a ruleset, and what stands in when the GPU fails
+  to start, is the engine's `SimulationProvider`
+  (`state/simulation-provider.ts`, `createSimulationProvider`): a match asks
+  `simulationFor('cpu' | 'gpu-int' | 'device')`; a GPU that fails to start
+  or to be sized is let go of and the provider steps down for good (this
+  match on `IntSimulation` for `gpu-int`, on `BacteriaSimulation` for the
+  device's own; later ones on the CPU, offering `cpu` only).
+  `CPU_SIMULATIONS` is the default without a GPU; `PlayerService.useSimulations`
+  and the engine's `replayRun` build theirs from the GPU adapter. Don't rebuild that
+  choice or the fallback anywhere else.
+- The game picks what the device plays with `chooseSimulation`
+  (`gl/simulation-choice.ts`, `plays()`, `offers()` and the GPU adapter): with the owner's toggle
   `deterministicSimulation` on (default on since the owner's real-device
   check, `FEATURE_TOGGLES`; read as each match starts and in each online
   `hello`), the integer
@@ -432,7 +442,7 @@ play each other.
 - Online, each `hello` names the rulesets the device offers
   (`PlayerService.rulesetOffers`) and the host's `start` the agreed one
   (`agreedRuleset`): `gpu-int` only if both offer it. An agreed `gpu-int`
-  match plays on the GPU (`SimulationChoice.gpuInt`) whatever the toggle
+  match plays on the GPU (`simulationFor('gpu-int')`) whatever the toggle
   says by the time it starts. Ranked attempts are
   `gpu-int` only: a stored replay with an attempt must be one (replay
   version 5, `GPU_INT_REPLAY_VERSION`; it may carry the ladder too). A

@@ -300,7 +300,7 @@ export class ArenaStage {
     this.painterAmbience.set(painter?.paintsAmbience === true);
     if (painter == null) {
       // The GPU simulation lives in the old context: let it go while it lasts.
-      this.playerService.useSimulation(null);
+      this.playerService.useSimulations(null);
       return false;
     }
     this.painterLayout.set(untracked(this.arenaLayout));
@@ -319,7 +319,7 @@ export class ArenaStage {
     if (gl != null) {
       this.gpuSelfTest.sawRenderer(gl.renderer());
     }
-    const choice = chooseSimulation({
+    const simulations = chooseSimulation({
       // The owner's toggle, read as each match starts: Remote Config may
       // answer after the arena is up, and a match keeps its simulation.
       deterministic: () =>
@@ -332,7 +332,7 @@ export class ArenaStage {
       gpuTrusted: () => gpuTrusted(this.gpuSelfTest.result()),
       override: this.simulationOverride.override,
     });
-    this.playerService.useSimulation(choice.factory, choice.fallback, choice);
+    this.playerService.useSimulations(simulations);
     const { width, height } = this.arena();
     this.gameStateService.setArenaSize(width, height);
   }

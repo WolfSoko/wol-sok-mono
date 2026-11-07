@@ -2,6 +2,7 @@ import {
   ANNIHILATION,
   attemptSeed,
   cpuSimulation,
+  type SimulationFactory,
   dailyLevelId,
   endlessLevelId,
   getLevel,
@@ -1021,11 +1022,15 @@ describe('GameStateService local recordings', () => {
 
   /** A GPU simulation, as far as the game can tell. */
   function useGpu(): void {
-    players.useSimulation((balance, random, seed) => {
+    const float: SimulationFactory = (balance, random, seed) => {
       const simulation = cpuSimulation(balance, random, seed);
       Object.defineProperty(simulation, 'kind', { value: 'gpu' });
       Object.defineProperty(simulation, 'ruleset', { value: null });
       return simulation;
+    };
+    players.useSimulations({
+      gpu: { int: float, float },
+      plays: () => 'gpu-float',
     });
   }
 
