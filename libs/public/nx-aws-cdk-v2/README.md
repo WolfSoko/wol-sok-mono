@@ -119,7 +119,8 @@ where `@nx/jest` lets `tsconfig.spec.json` extend `tsconfig.base.json` directly,
 points it at `tsconfig.cdk.json` as well.
 
 The app's `tsconfig.json` sets `"module": "NodeNext"` and `"moduleResolution": "NodeNext"` itself,
-since the app runs on Node, so it compiles whatever module settings the root config holds. It lists
+since the app runs on Node, so it compiles whatever `module`/`moduleResolution` the root config
+holds. It lists
 only the `node` types; the Jest types live in `tsconfig.spec.json`.
 
 > If your root `package.json` has `"type": "module"`, NodeNext checks `src/main.ts` as an ES module

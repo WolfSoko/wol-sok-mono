@@ -155,6 +155,18 @@ describe('aws-cdk generator', () => {
       expect(specExtends()).toBe('../../tsconfig.cdk.json');
     });
 
+    it('extends tsconfig.cdk.json from a nested directory', async () => {
+      writeJson(appTree, 'tsconfig.cdk.json', {
+        extends: './tsconfig.base.json',
+      });
+
+      await generator(appTree, { ...options, directory: 'sub' });
+
+      expect(
+        readJson(appTree, 'apps/sub/test/tsconfig.spec.json').extends
+      ).toBe('../../../tsconfig.cdk.json');
+    });
+
     it('keeps tsconfig.base.json when the workspace has no tsconfig.cdk.json', async () => {
       await generator(appTree, options);
 
