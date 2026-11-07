@@ -7,7 +7,9 @@ import {
   MAX_PACKED_BYTES,
   type ReplayCommandType,
   type ReplayKind,
+  replayFromBytes,
   replayToBytes,
+  storedPlaybackOf,
   toBase64,
   utcDay,
 } from '@wolsok/feat-shared-bacteria-engine';
@@ -36,7 +38,12 @@ export const MAX_LOCAL_REPLAY_CHARS = 1_000_000;
  * no seat: without a project there are no online matches, and against the
  * computer the player is seat 0, which {@link parseLocalReplays} adds.
  */
-export interface LocalReplay extends Omit<ReplayListing, 'seat'> {
+export interface LocalReplay extends Omit<
+  ReplayListing,
+  'seat' | 'simulation'
+> {
+  /** Absent on an entry kept before the store wrote it. */
+  simulation?: string;
   bytes: string;
 }
 
@@ -73,8 +80,7 @@ export class LocalGameReplays implements GameReplays {
       id,
       kind: kindOf(header.levelId, header.roomCode !== undefined, createdAt),
       levelId: header.levelId,
-      balanceVersion: header.balanceVersion,
-      replayVersion: header.version,
+      ...storedPlaybackOf(header),
       createdAt,
       ticks: header.ticks,
       endedBy: header.outcome?.endedBy ?? 'annihilation',
@@ -102,12 +108,10 @@ export class LocalGameReplays implements GameReplays {
       );
   }
 
-  public listMine(limit = MAX_REPLAY_LIST): Promise<ReplayListing[]> {
-    return this.read().then((replays) =>
-      replays
-        .slice(0, Math.max(0, limit))
-        .map(({ bytes: _bytes, ...listing }) => listing)
-    );
+  public async listMine(limit = MAX_REPLAY_LIST): Promise<ReplayListing[]> {
+    const replays = (await this.read()).slice(0, Math.max(0, limit));
+    const listings = await Promise.all(replays.map(keptListingOf));
+    return listings.filter((listing) => listing !== null);
   }
 
   public async replayBytes(
@@ -178,11 +182,35 @@ function isLocalReplay(value: unknown): value is LocalReplay {
     typeof value['hint'] === 'number' &&
     typeof value['balanceVersion'] === 'number' &&
     typeof value['replayVersion'] === 'number' &&
+    (value['simulation'] === undefined ||
+      typeof value['simulation'] === 'string') &&
+    (value['ladder'] === undefined || typeof value['ladder'] === 'number') &&
     typeof value['endedBy'] === 'string' &&
     (value['winnerSeat'] === null || typeof value['winnerSeat'] === 'number') &&
     typeof value['kind'] === 'string' &&
     value['state'] === 'submitted'
   );
+}
+
+/**
+ * A kept replay's row. An entry kept before the store wrote `simulation`
+ * takes it (and `ladder`) from its own bytes, so its row is judged by the
+ * whole playback rule too; one whose bytes do not read is left out.
+ */
+async function keptListingOf({
+  bytes,
+  simulation,
+  ...listing
+}: KeptReplay): Promise<ReplayListing | null> {
+  if (simulation !== undefined) {
+    return { ...listing, simulation };
+  }
+  const packed = fromBase64(bytes);
+  const header =
+    packed === null ? undefined : (await replayFromBytes(packed))?.header;
+  return header === undefined
+    ? null
+    : { ...listing, ...storedPlaybackOf(header) };
 }
 
 /** The newest replays that fit the caps. */

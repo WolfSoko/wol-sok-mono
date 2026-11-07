@@ -100,6 +100,11 @@ export type {
   ReplayState,
 } from './lib/state/cloud-records/replays';
 export {
+  type StoredPlayback,
+  storedPlaybackOf,
+  storedPlaybackRefusal,
+} from './lib/state/cloud-records/replay-playback';
+export {
   COMMAND_ENVELOPE_KEYS,
   COMMAND_TTL_MS,
   CURATION_COMMAND_TYPES,
@@ -663,6 +668,7 @@ export {
 export type {
   ParseOptions,
   PlayableReplay,
+  PlaybackHeader,
   PlaybackRefusal,
   Replay,
   ReplayAttempt,

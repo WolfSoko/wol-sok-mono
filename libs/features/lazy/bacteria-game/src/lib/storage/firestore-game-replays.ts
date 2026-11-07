@@ -234,12 +234,13 @@ export function listingOf(
   }
   const millis = millisOf(data['createdAt']);
   const { kind, levelId, balanceVersion, replayVersion, ticks, endedBy } = data;
-  const { winnerSeat, hint, state, score, seats } = data;
+  const { winnerSeat, hint, state, score, seats, simulation, ladder } = data;
   if (
     !REPLAY_KINDS.includes(kind) ||
     typeof levelId !== 'string' ||
     typeof balanceVersion !== 'number' ||
     typeof replayVersion !== 'number' ||
+    typeof simulation !== 'string' ||
     millis === null ||
     typeof ticks !== 'number' ||
     typeof endedBy !== 'string' ||
@@ -264,6 +265,8 @@ export function listingOf(
     levelId,
     balanceVersion,
     replayVersion,
+    simulation,
+    ...(typeof ladder === 'number' ? { ladder } : {}),
     createdAt: millis,
     ticks,
     endedBy: endedBy as EndReason,

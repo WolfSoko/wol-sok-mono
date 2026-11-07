@@ -4,6 +4,7 @@ import {
   type Replay,
   type ReplayKind,
   type ReplayState,
+  type StoredPlayback,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type {
   ArrivalReason,
@@ -21,12 +22,10 @@ export interface ReplaySubmission {
 }
 
 /** A stored replay in the player's list, without its bytes. */
-export interface ReplayListing {
+export interface ReplayListing extends StoredPlayback {
   id: string;
   kind: ReplayKind;
   levelId: string;
-  balanceVersion: number;
-  replayVersion: number;
   /** When the match was stored, in ms since the epoch. */
   createdAt: number;
   ticks: number;

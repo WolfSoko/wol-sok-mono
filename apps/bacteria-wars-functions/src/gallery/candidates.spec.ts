@@ -1,4 +1,11 @@
-import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  BALANCE_VERSION,
+  EVOLVED_REPLAY_VERSION,
+  GHOST_REPLAY_VERSION,
+  LADDER_REPLAY_VERSION,
+  LADDER_VERSION,
+  REPLAY_VERSION,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   fitsGallery,
   type GalleryReplay,
@@ -19,6 +26,8 @@ function replay(fields: Partial<GalleryReplay> = {}): GalleryReplay {
     state: 'submitted',
     levelId: 'quarantine',
     balanceVersion: BALANCE_VERSION,
+    replayVersion: REPLAY_VERSION,
+    simulation: 'cpu',
     ticks: 3_600,
     winnerSeat: 0,
     hint: 50,
@@ -46,11 +55,29 @@ describe('fitsGallery', () => {
     ).toBe(true);
   });
 
+  it('takes a ladder match on the current ladder, and one stored before the ladder was kept', () => {
+    expect(
+      fitsGallery(
+        replay({ replayVersion: LADDER_REPLAY_VERSION, ladder: LADDER_VERSION })
+      )
+    ).toBe(true);
+    expect(fitsGallery(replay({ replayVersion: LADDER_REPLAY_VERSION }))).toBe(
+      true
+    );
+  });
+
   it('leaves out what it cannot or must not show', () => {
     for (const doc of [
       replay({ state: 'unverified' }),
       replay({ attempt: { id: 'd_2026-10-25_1', at: 0 } }),
       replay({ balanceVersion: BALANCE_VERSION - 1 }),
+      // On the current balance, yet the viewer would refuse it as older.
+      replay({
+        replayVersion: LADDER_REPLAY_VERSION,
+        ladder: LADDER_VERSION - 1,
+      }),
+      replay({ replayVersion: GHOST_REPLAY_VERSION }),
+      replay({ replayVersion: EVOLVED_REPLAY_VERSION, simulation: 'gpu' }),
       replay({ ticks: MAX_GALLERY_TICKS + 1 }),
       replay({ optOut: ['ada'] }),
       replay({ galleryOut: true }),
