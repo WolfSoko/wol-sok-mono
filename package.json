@@ -120,7 +120,7 @@
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
     "@commitlint/config-nx-scopes": "21.2.3",
-    "@firebase/rules-unit-testing": "5.0.2",
+    "@firebase/rules-unit-testing": "6.0.0",
     "@lhci/cli": "0.15.1",
     "@ngneat/spectator": "22.1.0",
     "@nx/angular": "23.3.1",
