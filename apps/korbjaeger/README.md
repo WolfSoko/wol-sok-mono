@@ -3,7 +3,7 @@
 The basketball parents app ([#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861)):
 the Spiele, results and Tabellen of a youth Team, read from the German
 Basketball Federation (DBB). German UI. It will run at
-https://korb.wolsok.de (`SITE_URL` in `src/app/site.ts`, the one place
+https://korb.wolsok.de (`SITE_URL` in `src/shared/site.ts`, the one place
 that names the domain); it is not deployed yet.
 
 An Analog app on the Nitro `firebase` preset. Pages render in the browser
@@ -14,7 +14,8 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   provided in `src/app/basketball-data/` with a transport that calls the
   app's own proxy, since the DBB sends no CORS headers.
 - **Proxy:** `src/server/routes/api/dbb/` (thin route files) over
-  `src/server/dbb/`. Only the reads the lib's `dbbHttpRequest` allowlists
+  `src/server/dbb/`; `src/shared/dbb-proxy-routes.ts` maps each read to
+  its route and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists
   get a route, with numeric ids; every other path under `/api/dbb/` is 404.
   It passes the DBB's body on unchanged, caches successes
   (`public, max-age=60, s-maxage=300`) and nothing else, turns DBB
@@ -48,7 +49,8 @@ live data, run `fake-dbb` and `serve-e2e`: the fake DBB
 (`e2e/fake-dbb/server.cts`) answers from the lib's anonymised fixtures
 (`fakeDbbAnswer` of `@wolsok/feat-shared-basketball-data/testing`; Team
 `313036` plays two Ligen), and the `e2e` build mode points the proxy's
-`DBB_BASE_URL` at it. Open `/team/313036`.
+runtime config `dbbBaseUrl` at it (`NITRO_DBB_BASE_URL` overrides it at
+run time). Open `/team/313036`.
 
 ## Tests
 
