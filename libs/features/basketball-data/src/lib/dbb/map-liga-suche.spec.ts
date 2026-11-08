@@ -86,3 +86,29 @@ describe('mapLigaSeite', () => {
     );
   });
 });
+
+describe('gender lookups', () => {
+  it.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])(
+    'refuse the inherited key %s as a Liga gender and a facet',
+    (key) => {
+      const liste = readEnvelope(letzteSeite) as { ligen: object[] };
+      const liga = {
+        ...liste,
+        ligen: [{ ...liste.ligen[0], geschlecht: key }],
+      };
+      const suche = {
+        ...(readEnvelope(wamData) as object),
+        agkGeschlechtList: [
+          { id: '2_1', akg: 'Jugend', geschlecht: key, hits: 1 },
+        ],
+      };
+
+      expect(caughtError(() => mapLigaSeite(liga)).kind).toBe(
+        'unexpected-shape'
+      );
+      expect(caughtError(() => mapLigaSuche(suche)).kind).toBe(
+        'unexpected-shape'
+      );
+    }
+  );
+});

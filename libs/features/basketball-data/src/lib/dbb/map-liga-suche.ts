@@ -6,6 +6,7 @@ import type {
 } from '../domain/liga-suche';
 import { DbbObject, shapeError } from './dbb-object';
 import { mapLiga } from './map-liga';
+import { ownValue } from './own-value';
 
 const AKG_GESCHLECHTER: Readonly<Record<string, string>> = {
   m: 'männlich',
@@ -54,7 +55,7 @@ function mapFacette(facette: DbbObject): Facette<number> {
 
 function mapAltersgruppeGeschlecht(facette: DbbObject): Facette<string> {
   const kurz = facette.string('geschlecht');
-  const geschlecht = AKG_GESCHLECHTER[kurz];
+  const geschlecht = ownValue(AKG_GESCHLECHTER, kurz);
   if (geschlecht === undefined) {
     throw shapeError(`${facette.path}.geschlecht`, 'm or w', kurz);
   }

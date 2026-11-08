@@ -3,6 +3,7 @@ import type { Liga } from '../domain/liga';
 import type { Saison } from '../domain/saison';
 import { shapeError, type DbbObject } from './dbb-object';
 import { optionalField } from './optional-field';
+import { ownValue } from './own-value';
 
 const GESCHLECHTER: Readonly<Record<string, Geschlecht>> = {
   männlich: 'männlich',
@@ -37,7 +38,7 @@ function mapSaison(ligaData: DbbObject): Saison | undefined {
 
 function mapGeschlecht(object: DbbObject, key: string): Geschlecht {
   const text = object.string(key);
-  const geschlecht = GESCHLECHTER[text];
+  const geschlecht = ownValue(GESCHLECHTER, text);
   if (geschlecht === undefined) {
     throw shapeError(
       `${object.path}.${key}`,
