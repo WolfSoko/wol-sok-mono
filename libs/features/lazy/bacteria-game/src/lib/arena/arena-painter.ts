@@ -166,7 +166,14 @@ export interface CursorColor {
   alpha: number;
 }
 
+/** The alpha of an opaque `CursorShape.color`. */
 const OPAQUE = 255;
+/** The boost ring's radius at a fresh boost, in base cells. */
+const BOOST_RING_RADIUS = 9;
+/** How far the ring widens as the boost runs out, in base cells. */
+const BOOST_RING_GROWTH = 4;
+/** The boost ring's line width, in base cells. */
+const BOOST_RING_LINE_WIDTH = 1.5;
 
 /**
  * The ring around a boosted crosshair, `unit` cells per base cell so it is as
@@ -178,8 +185,9 @@ export function boostRing(cursor: CursorShape, unit: number): BoostRing | null {
     return null;
   }
   return {
-    radius: (9 + 4 * (1 - cursor.boostLeft)) * unit,
-    lineWidth: 1.5 * unit,
+    radius:
+      (BOOST_RING_RADIUS + BOOST_RING_GROWTH * (1 - cursor.boostLeft)) * unit,
+    lineWidth: BOOST_RING_LINE_WIDTH * unit,
   };
 }
 
