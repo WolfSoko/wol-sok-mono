@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.145.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.144.1...v74.145.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 10 — deploy to Firebase Hosting at korb.wolsok.de ([#2903](https://github.com/WolfSoko/wol-sok-mono/issues/2903)) ([52bc22e](https://github.com/WolfSoko/wol-sok-mono/commit/52bc22e5bf7ed0d78fcca96ec476ed9474e1a14f)), closes [#2875](https://github.com/WolfSoko/wol-sok-mono/issues/2875), references [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873) [#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861) [#2875](https://github.com/WolfSoko/wol-sok-mono/issues/2875)
+
 ## [74.144.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.144.0...v74.144.1) (2026-11-08)
 
 ### Refactorings
