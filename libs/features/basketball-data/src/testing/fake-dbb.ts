@@ -10,6 +10,7 @@ import boxscore2843814 from '../lib/dbb/fixtures/boxscore-2843814.json';
 import boxscore2861436 from '../lib/dbb/fixtures/boxscore-2861436.json';
 import boxscore2911141 from '../lib/dbb/fixtures/boxscore-2911141.json';
 import club1837Actualmatches from '../lib/dbb/fixtures/club-1837-actualmatches.json';
+import clubNotFound from '../lib/dbb/fixtures/club-not-found.json';
 import boxscoreNotFound from '../lib/dbb/fixtures/boxscore-not-found.json';
 import matchinfo2843814 from '../lib/dbb/fixtures/matchinfo-2843814.json';
 import matchinfo2861436 from '../lib/dbb/fixtures/matchinfo-2861436.json';
@@ -103,6 +104,7 @@ const RECORDED: ReadonlyMap<string, unknown> = new Map(
 /** What the DBB answers for an id it does not know: status `"1"`. */
 const NOT_FOUND: ReadonlyArray<readonly [RegExp, unknown]> = [
   [/^team\/id\/\d+\/matches$/, teamNotFound],
+  [/^club\/id\/\d+\/actualmatches\?rangeDays=\d+$/, clubNotFound],
   [/^competition\/table\/id\/\d+$/, tableNotFound],
   [/^competition\/spielplan\/id\/\d+$/, spielplanNotFound],
   [/^match\/id\/\d+\/matchInfo$/, matchinfoNotFound],

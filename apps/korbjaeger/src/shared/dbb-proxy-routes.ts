@@ -1,6 +1,7 @@
 import {
   assertValidDbbRequest,
   parseDbbId,
+  VEREINS_SPIELE_TAGE,
   type DbbRequest,
   type LigaSucheFilter,
 } from '@wolsok/feat-shared-basketball-data';
@@ -11,6 +12,7 @@ export type ProxyKind =
   | 'liga-seite'
   | 'spielplan'
   | 'team-spiele'
+  | 'vereins-spiele'
   | 'tabelle'
   | 'spiel-info'
   | 'spielbericht';
@@ -85,6 +87,15 @@ export const PROXY_ROUTES: { readonly [K in ProxyKind]: ProxyRoute<K> } = {
     (teamId) => ({ kind: 'team-spiele', teamId }),
     ({ teamId }) => teamId
   ),
+  'vereins-spiele': idRoute(
+    '/api/dbb/verein/:vereinId/spiele',
+    (vereinId) => ({
+      kind: 'vereins-spiele',
+      vereinId,
+      tage: VEREINS_SPIELE_TAGE,
+    }),
+    vereinMitFesterSpanne
+  ),
   tabelle: idRoute(
     '/api/dbb/liga/:ligaId/tabelle',
     (ligaId) => ({ kind: 'tabelle', ligaId }),
@@ -104,11 +115,29 @@ export const PROXY_ROUTES: { readonly [K in ProxyKind]: ProxyRoute<K> } = {
 
 /** The URL, path and query, the browser asks `request` at. */
 export function proxyUrl(request: DbbRequest): string {
+  const { kind } = request;
   if (!isProxyRead(request)) {
     // unreachable: KorbjaegerData offers no read without a route
-    throw new Error(`no proxy route for ${request.kind} yet`);
+    throw new Error(`no proxy route for ${kind} yet`);
   }
   return urlOf(request.kind, request);
+}
+
+/**
+ * The Verein whose Spiele `read` asks for. The route fixes the day range
+ * to the adapter's (`VEREINS_SPIELE_TAGE`), so each Verein has one URL to
+ * cache; a read of another range has none and throws a `RangeError`.
+ */
+function vereinMitFesterSpanne({
+  vereinId,
+  tage,
+}: ProxyRead<'vereins-spiele'>): number {
+  if (tage !== VEREINS_SPIELE_TAGE) {
+    throw new RangeError(
+      `the proxy reads a Verein's Spiele of ${VEREINS_SPIELE_TAGE} days only, not ${tage}`
+    );
+  }
+  return vereinId;
 }
 
 /**

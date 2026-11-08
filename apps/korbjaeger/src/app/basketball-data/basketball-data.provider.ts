@@ -16,6 +16,7 @@ const READS = {
   ligaSeite: 'liga-seite',
   ligaTeams: 'spielplan',
   teamSpiele: 'team-spiele',
+  vereinsTeams: 'vereins-spiele',
   tabelle: 'tabelle',
   spiel: 'spiel-info',
   spielbericht: 'spielbericht',

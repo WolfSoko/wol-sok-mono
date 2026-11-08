@@ -125,6 +125,16 @@ describe('fakeDbbAnswer', () => {
     ).toEqual(vereinsSpiele);
   });
 
+  it('answers the Spiele of a Verein it does not know as not found', () => {
+    const answer = answerTo({
+      kind: 'vereins-spiele',
+      vereinId: 7,
+      tage: VEREINS_SPIELE_TAGE,
+    });
+
+    expect(dbbStatusOf(answer)).toBe('not-found');
+  });
+
   it.each([
     [54689, friendlyTable],
     [54862, vorrundeTable],

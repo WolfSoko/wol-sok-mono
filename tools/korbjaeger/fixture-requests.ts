@@ -159,6 +159,10 @@ export const FIXTURE_REQUESTS: readonly FixtureRequest[] = [
     request: { kind: 'vereins-spiele', vereinId: 1837, tage: 28 },
   },
   {
+    name: 'club-not-found',
+    request: { kind: 'vereins-spiele', vereinId: 1, tage: 28 },
+  },
+  {
     name: 'matchinfo-2911141',
     request: { kind: 'spiel-info', spielId: 2911141 },
   },

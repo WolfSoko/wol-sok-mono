@@ -1,5 +1,6 @@
 import {
   KEIN_LIGA_FILTER,
+  VEREINS_SPIELE_TAGE,
   type DbbRequest,
 } from '@wolsok/feat-shared-basketball-data';
 import {
@@ -76,6 +77,11 @@ describe('DBB proxy routes', () => {
       '/api/dbb/team/313036/spiele',
     ],
     [
+      "a Verein's Spiele of the weeks around today",
+      { kind: 'vereins-spiele', vereinId: 1837, tage: VEREINS_SPIELE_TAGE },
+      '/api/dbb/verein/1837/spiele',
+    ],
+    [
       "a Liga's Tabelle",
       { kind: 'tabelle', ligaId: 54862 },
       '/api/dbb/liga/54862/tabelle',
@@ -101,16 +107,27 @@ describe('DBB proxy routes', () => {
       '/api/dbb/ligen/seite',
       '/api/dbb/liga/:ligaId/spielplan',
       '/api/dbb/team/:teamId/spiele',
+      '/api/dbb/verein/:vereinId/spiele',
       '/api/dbb/liga/:ligaId/tabelle',
       '/api/dbb/spiel/:spielId',
       '/api/dbb/spiel/:spielId/bericht',
     ]);
   });
 
-  it('has no route for a read the app does not offer yet', () => {
+  it("has no URL for a Verein's Spiele of another day range", () => {
+    // the route reads the one range the adapter asks for, so it caches once
     expect(() =>
-      proxyUrl({ kind: 'vereins-spiele', vereinId: 1476, tage: 21 })
-    ).toThrow('no proxy route for vereins-spiele yet');
+      proxyUrl({ kind: 'vereins-spiele', vereinId: 1837, tage: 7 })
+    ).toThrow(RangeError);
+  });
+
+  it("takes no day range for a Verein's Spiele from the query", () => {
+    expect(
+      readAt(
+        PROXY_ROUTES['vereins-spiele'],
+        '/api/dbb/verein/1837/spiele?tage=7'
+      )
+    ).toBeUndefined();
   });
 
   describe('id routes', () => {
