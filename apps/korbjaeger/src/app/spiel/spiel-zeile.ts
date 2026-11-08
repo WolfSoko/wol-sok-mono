@@ -9,7 +9,7 @@ import {
   type SpielSonderfall,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
-import { spielTag } from './spiel-tag';
+import { ergebnisText, spielTag } from './spiel-format';
 
 /** One Spiel seen from a Team, as the screens show it (`SpielZeileComponent`). */
 export interface SpielZeile {
@@ -46,7 +46,7 @@ export function spielZeile(saison: TeamSaison, spiel: Spiel): SpielZeile {
     gegner: seite
       ? parteiName(gegnerVon(spiel, seite))
       : `${parteiName(spiel.heim)} – ${parteiName(spiel.gast)}`,
-    ergebnis: ergebnis && `${ergebnis.heim}:${ergebnis.gast}`,
+    ergebnis: ergebnis && ergebnisText(ergebnis),
     markierung: sonderfallVon(spiel),
   };
 }

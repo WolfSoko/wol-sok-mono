@@ -274,6 +274,9 @@ describe('SpielComponent', () => {
 
       const viertel = teil(seite, 'viertel');
       expect(kopfzellen(viertel)).toContain('1. Verlängerung');
+      expect(
+        [...(viertel?.querySelectorAll('th') ?? [])].map((th) => text(th))
+      ).toEqual(['Team', '1.', '2.', '3.', '4.', 'V1', 'Endstand']);
       expect(zellen(viertel, 'viertel-zeile')[0]).toEqual([
         'MTV Wasbüttel',
         '20',
@@ -593,9 +596,34 @@ describe('SpielComponent', () => {
         'Dieses Spiel kennt der DBB nicht.'
       );
     });
+
+    it.each([
+      ['unknown', 'not-found', 'Dieses Spiel kennt der DBB nicht.'],
+      ['unreachable', 'unavailable', 'Der DBB ist gerade nicht erreichbar.'],
+    ] as const)(
+      'says it once when the Spiel is %s and its Spielbericht fails too',
+      async (_case, kind, meldung) => {
+        const seite = await render(
+          fakeData(
+            async () => {
+              throw new BasketballDataError(kind, 'DBB: nope');
+            },
+            async () => {
+              throw new BasketballDataError(kind, 'DBB: nope');
+            }
+          )
+        );
+
+        expect(seite.textContent?.split(meldung)).toHaveLength(2);
+        expect(teil(seite, 'spielbericht-fehler')).toBeNull();
+        expect(
+          [...seite.querySelectorAll('h2')].map((h2) => text(h2))
+        ).not.toContain('Kader');
+      }
+    );
   });
 
-  it.each(['2861436abc', '-1', '0'])(
+  it.each(['2861436abc', 'abc', '-1', '0'])(
     'shows no Spiel for the id %s, without asking the DBB',
     async (spielId) => {
       const data = fakeData(
@@ -608,6 +636,7 @@ describe('SpielComponent', () => {
       expect(text(seite.querySelector('[role="alert"]'))).toBe(
         'Dieses Spiel kennt der DBB nicht.'
       );
+      expect(text(seite.querySelector('h1'))).toBe('Spiel');
       expect(data.spiel).not.toHaveBeenCalled();
       expect(data.spielbericht).not.toHaveBeenCalled();
       expect(teil(seite, 'spielbericht-fehlt')).toBeNull();

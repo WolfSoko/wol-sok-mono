@@ -7,7 +7,6 @@ import {
   type Spielbericht,
 } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
-import { SEITE } from './spiel-kopf';
 
 /** One Kader with what heads it on the page. */
 export interface KaderTeil {
@@ -24,20 +23,30 @@ export type SpielberichtTeil =
   | { readonly art: 'fehlt'; readonly text: string }
   | { readonly art: 'da'; readonly kader: readonly [KaderTeil, KaderTeil] };
 
+/** What the page calls a Kader's side while the Spiel cannot be read. */
+const SEITE: Readonly<Record<SpielSeite, string>> = {
+  heim: 'Heim',
+  gast: 'Gast',
+};
+
 /**
  * The Spielbericht part of the page, from its read (`bericht`) and the
- * Spiel where that was read (`details`), which names the Kader.
+ * Spiel's (`spiel`), which names the Kader. `undefined` where the
+ * Spielbericht failed with the Spiel: the page's alert says why, once.
  */
 export function spielberichtTeil(
   bericht: Resource<Spielbericht | undefined>,
-  details: SpielDetails | undefined
-): SpielberichtTeil {
+  spiel: Resource<SpielDetails | undefined>
+): SpielberichtTeil | undefined {
+  const details = spiel.hasValue() ? spiel.value() : undefined;
   switch (bericht.status()) {
     case 'error':
-      return {
-        art: 'fehler',
-        text: fehlerText(bericht.error(), KEIN_SPIEL) ?? '',
-      };
+      return spiel.status() === 'error'
+        ? undefined
+        : {
+            art: 'fehler',
+            text: fehlerText(bericht.error(), KEIN_SPIEL) ?? '',
+          };
     case 'resolved':
     case 'local': {
       const gelesen = bericht.value();

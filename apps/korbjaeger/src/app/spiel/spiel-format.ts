@@ -1,3 +1,5 @@
+import type { Spielstand } from '@wolsok/feat-shared-basketball-data';
+
 const TAG = new Intl.DateTimeFormat('de-DE', {
   weekday: 'short',
   day: '2-digit',
@@ -15,4 +17,9 @@ export function spielTag(datum: string): string {
 export function spielTagUndUhrzeit(datum: string, uhrzeit?: string): string {
   const tag = spielTag(datum);
   return uhrzeit === undefined ? tag : `${tag} · ${uhrzeit} Uhr`;
+}
+
+/** A Spiel's points, home first: `78:47`. */
+export function ergebnisText(stand: Spielstand): string {
+  return `${stand.heim}:${stand.gast}`;
 }

@@ -8,7 +8,7 @@ import {
   type Spielstand,
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
-import { spielTagUndUhrzeit } from '../spiel/spiel-tag';
+import { ergebnisText, spielTagUndUhrzeit } from '../spiel/spiel-format';
 
 /** One side of a Spiel as the Spiel page names it. */
 export interface SpielPartner {
@@ -24,10 +24,17 @@ export interface PeriodenZeile {
   readonly gesamt: number;
 }
 
+/** One period's column: its name and the short heading shown. */
+export interface PeriodenSpalte {
+  /** `1. Viertel` … `1. Verlängerung` … */
+  readonly name: string;
+  /** `1.` … `4.`, then `V1` … */
+  readonly kurz: string;
+}
+
 /** The quarter scores, with a column per period. */
 export interface Perioden {
-  /** Each period's heading: `1. Viertel` … `1. Verlängerung` … */
-  readonly namen: readonly string[];
+  readonly spalten: readonly PeriodenSpalte[];
   readonly zeilen: readonly [PeriodenZeile, PeriodenZeile];
 }
 
@@ -57,17 +64,11 @@ export function spielKopf(details: SpielDetails): SpielKopf {
     gast: partner(spiel.gast),
     wann: spielTagUndUhrzeit(spiel.datum, spiel.uhrzeit),
     liga: details.liga.name,
-    ...(ergebnis && { ergebnis: `${ergebnis.heim}:${ergebnis.gast}` }),
+    ...(ergebnis && { ergebnis: ergebnisText(ergebnis) }),
     ...(status && { status }),
     ...(perioden && { perioden }),
   };
 }
-
-/** What the page calls a Kader's side while the Spiel cannot be read. */
-export const SEITE: Readonly<Record<SpielSeite, string>> = {
-  heim: 'Heim',
-  gast: 'Gast',
-};
 
 function partner(partei: SpielPartei): SpielPartner {
   return partei.art === 'team'
@@ -122,9 +123,15 @@ function periodenVon(
     };
   };
   return {
-    namen: [
-      ...viertel.map((_, i) => `${i + 1}. Viertel`),
-      ...verlaengerungen.map((_, i) => `${i + 1}. Verlängerung`),
+    spalten: [
+      ...viertel.map((_, i) => ({
+        name: `${i + 1}. Viertel`,
+        kurz: `${i + 1}.`,
+      })),
+      ...verlaengerungen.map((_, i) => ({
+        name: `${i + 1}. Verlängerung`,
+        kurz: `V${i + 1}`,
+      })),
     ],
     zeilen: [zeile('heim'), zeile('gast')],
   };

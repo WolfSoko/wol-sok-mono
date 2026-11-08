@@ -11,10 +11,11 @@ import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { parseDbbId } from '@wolsok/feat-shared-basketball-data';
 import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
+import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
 import { HalleComponent } from '../halle/halle.component';
 import { KaderComponent } from './kader.component';
-import { SEITE, spielKopf } from './spiel-kopf';
+import { spielKopf } from './spiel-kopf';
 import { spielberichtTeil } from './spielbericht-teil';
 
 /**
@@ -42,11 +43,7 @@ export class SpielComponent {
   private readonly data = inject(BASKETBALL_DATA);
   private readonly spiel = computed(() => parseDbbId(this.spielId()));
 
-  protected readonly details = resource({
-    params: () => this.spiel(),
-    loader: ({ params, abortSignal }) =>
-      this.data.spiel(params, { signal: abortSignal }),
-  });
+  protected readonly details = spielDetailsResource(() => this.spiel());
 
   protected readonly bericht = resource({
     params: () => this.spiel(),
@@ -61,7 +58,7 @@ export class SpielComponent {
   /** Each period's column, then the final score's. */
   protected readonly periodenSpalten = computed(() => [
     'team',
-    ...(this.kopf()?.perioden?.namen.map((_, i) => `periode-${i}`) ?? []),
+    ...(this.kopf()?.perioden?.spalten.map((_, i) => `periode-${i}`) ?? []),
     'gesamt',
   ]);
 
@@ -74,11 +71,6 @@ export class SpielComponent {
   protected readonly spielbericht = computed(() =>
     this.spiel() === undefined
       ? undefined
-      : spielberichtTeil(
-          this.bericht,
-          this.details.hasValue() ? this.details.value() : undefined
-        )
+      : spielberichtTeil(this.bericht, this.details)
   );
-
-  protected readonly seiten = SEITE;
 }

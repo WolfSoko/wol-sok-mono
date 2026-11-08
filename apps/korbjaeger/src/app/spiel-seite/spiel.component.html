@@ -40,15 +40,15 @@
           <th mat-header-cell *matHeaderCellDef>Team</th>
           <td mat-cell *matCellDef="let zeile">{{ zeile.team }}</td>
         </ng-container>
-        @for (name of perioden.namen; track name; let i = $index) {
+        @for (spalte of perioden.spalten; track spalte.name; let i = $index) {
           <ng-container [matColumnDef]="'periode-' + i">
             <th
               mat-header-cell
               *matHeaderCellDef
-              [attr.aria-label]="name"
-              [title]="name"
+              [attr.aria-label]="spalte.name"
+              [title]="spalte.name"
             >
-              {{ i < 4 ? i + 1 + "." : "V" + (i - 3) }}
+              {{ spalte.kurz }}
             </th>
             <td mat-cell *matCellDef="let zeile">{{ zeile.punkte[i] }}</td>
           </ng-container>
@@ -70,7 +70,7 @@
   <korb-halle
     [halle]="details.hasValue() ? details.value().halle : undefined"
   />
-} @else if (spiel() !== undefined) {
+} @else {
   <h1>Spiel</h1>
 }
 @if (spielbericht(); as teil) {
