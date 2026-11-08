@@ -27,7 +27,8 @@ export interface Spielstand {
  *   confirmed it.
  * - `abgesagt`: called off.
  * - `kampflos`: decided without being played, because a side gave it up
- *   (`verzichtet`, absent when the DBB names neither).
+ *   (`verzichtet`: the sides that gave up, empty when the DBB names
+ *   neither).
  */
 export type SpielStatus =
   | { readonly art: 'geplant' }

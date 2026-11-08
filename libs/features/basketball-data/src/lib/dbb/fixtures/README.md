@@ -44,8 +44,9 @@ How the DBB marks things, as seen in these responses:
   `***` / `****`, shirt number `**`. The DBB hides referees the same way.
 - A forfeit: `verzicht: true` on the Spiel and on the Team that gave up.
 - A cancellation: `abgesagt: true`.
-- A slot of a Hauptrunde: a Team without `teamPermanentId`, `seasonTeamId`
-  or `clubId`, named after the place it waits for.
+- A slot of a Hauptrunde: a Team with a `seasonTeamId` but without
+  `teamPermanentId` or `clubId` (both `null`), named after the place it
+  waits for.
 - No Spielbericht yet: `matchBoxscore` with empty player lists.
 - A moved Spiel: no flag; the DBB just carries the new date.
 - Quarter scores (`heimV1stand`, `heimHalbzeitstand`, `heimV3stand`,
