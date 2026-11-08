@@ -44,6 +44,18 @@ describe('dbbFetchInput', () => {
     });
   });
 
+  it('drops every trailing slash of the base URL, also a long run of them', () => {
+    const slashes = '/'.repeat(100_000);
+    const http = dbbHttpRequest({ kind: 'team-spiele', teamId: 313036 });
+
+    expect(
+      dbbFetchInput(`https://dbb.test/rest${slashes}`, http, HEADERS).url
+    ).toBe('https://dbb.test/rest/team/id/313036/matches');
+    expect(dbbFetchInput(slashes, http, HEADERS).url).toBe(
+      '/team/id/313036/matches'
+    );
+  });
+
   it('sends a POST its body as JSON', () => {
     const http = dbbHttpRequest({ kind: 'liga-suche', filter: BAYERN_U14 });
 

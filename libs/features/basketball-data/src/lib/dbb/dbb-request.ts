@@ -188,7 +188,7 @@ export function dbbFetchInput(
   request: DbbHttpRequest,
   headers: Readonly<Record<string, string>>
 ): DbbFetchInput {
-  const url = `${baseUrl.replace(/\/+$/, '')}/${request.path}`;
+  const url = `${withoutTrailingSlashes(baseUrl)}/${request.path}`;
   return request.method === 'POST'
     ? {
         url,
@@ -197,6 +197,15 @@ export function dbbFetchInput(
         body: JSON.stringify(request.body),
       }
     : { url, method: 'GET', headers, body: undefined };
+}
+
+/** Linear in the length, unlike a `/\/+$/` regex, which backtracks. */
+function withoutTrailingSlashes(url: string): string {
+  let end = url.length;
+  while (end > 0 && url[end - 1] === '/') {
+    end--;
+  }
+  return url.slice(0, end);
 }
 
 function get(path: string): DbbHttpRequest {
