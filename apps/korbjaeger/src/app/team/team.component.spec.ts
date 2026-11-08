@@ -1,9 +1,11 @@
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   BasketballDataError,
   type Liga,
   type Spiel,
   type SpielPartei,
+  type Tabelle,
   type Team,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
@@ -11,7 +13,8 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import { TeamSpieleComponent } from './team-spiele.component';
+import { HEUTE } from '../heute';
+import { TeamComponent } from './team.component';
 
 const UNSER_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', vereinId: 1837 };
 
@@ -47,6 +50,20 @@ function spiel(overrides: Partial<Spiel> & Pick<Spiel, 'id' | 'datum'>): Spiel {
   };
 }
 
+function tabellenZeile(rang: number, team: Team): Tabelle['zeilen'][number] {
+  return {
+    rang,
+    partei: { art: 'team', team },
+    spiele: 2,
+    siege: 2 - rang + 1,
+    niederlagen: rang - 1,
+    punkte: 2 * (2 - rang + 1),
+    koerbe: 100,
+    gegenkoerbe: 90,
+    korbdifferenz: 10,
+  };
+}
+
 function saison(spiele: readonly Spiel[]): TeamSaison {
   return {
     team: UNSER_TEAM,
@@ -56,21 +73,48 @@ function saison(spiele: readonly Spiel[]): TeamSaison {
   };
 }
 
-/** `KorbjaegerData` answering `teamSpiele` with `read`, nothing else. */
-function fakeData(read: KorbjaegerData['teamSpiele']): {
-  readonly teamSpiele: ReturnType<typeof vi.fn<KorbjaegerData['teamSpiele']>>;
+type TeamSpieleRead = KorbjaegerData['teamSpiele'];
+type TabelleRead = KorbjaegerData['tabelle'];
+
+/** The day the specs run on: after the last Spiel of the fixtures below. */
+const HEUTE_IM_SPEC = '2026-11-08';
+
+/** An empty Tabelle of Liga `ligaId`. */
+const keineZeilen: TabelleRead = async (ligaId) => ({
+  liga: [TESTSPIELE, VORRUNDE].find(({ id }) => id === ligaId) ?? VORRUNDE,
+  zeilen: [],
+});
+
+/** `KorbjaegerData` answering `teamSpiele` with `read`, Tabellen empty. */
+function fakeData(
+  read: TeamSpieleRead,
+  tabelle: TabelleRead = keineZeilen
+): {
+  readonly teamSpiele: ReturnType<typeof vi.fn<TeamSpieleRead>>;
+  readonly tabelle: ReturnType<typeof vi.fn<TabelleRead>>;
 } {
-  return { teamSpiele: vi.fn<KorbjaegerData['teamSpiele']>(read) };
+  return {
+    teamSpiele: vi.fn<TeamSpieleRead>(read),
+    tabelle: vi.fn<TabelleRead>(tabelle),
+  };
+}
+
+function providers(
+  data: ReturnType<typeof fakeData>,
+  heute: WritableSignal<string> = signal(HEUTE_IM_SPEC)
+) {
+  return [
+    { provide: BASKETBALL_DATA, useValue: data },
+    { provide: HEUTE, useValue: heute },
+  ];
 }
 
 async function render(
   data: ReturnType<typeof fakeData>,
   teamId = '313036'
 ): Promise<HTMLElement> {
-  TestBed.configureTestingModule({
-    providers: [{ provide: BASKETBALL_DATA, useValue: data }],
-  });
-  const fixture = TestBed.createComponent(TeamSpieleComponent);
+  TestBed.configureTestingModule({ providers: providers(data) });
+  const fixture = TestBed.createComponent(TeamComponent);
   fixture.componentRef.setInput('teamId', teamId);
   await fixture.whenStable();
   return fixture.nativeElement as HTMLElement;
@@ -87,7 +131,7 @@ function feld(zeile: HTMLElement, name: string): string | undefined {
     .trim();
 }
 
-describe('TeamSpieleComponent', () => {
+describe('TeamComponent', () => {
   it("reads the Team of the page's id", async () => {
     const data = fakeData(async () => saison([]));
 
@@ -280,14 +324,11 @@ describe('TeamSpieleComponent', () => {
 
   it('shows that it is loading', async () => {
     TestBed.configureTestingModule({
-      providers: [
-        {
-          provide: BASKETBALL_DATA,
-          useValue: fakeData(() => new Promise<TeamSaison>(() => undefined)),
-        },
-      ],
+      providers: providers(
+        fakeData(() => new Promise<TeamSaison>(() => undefined))
+      ),
     });
-    const fixture = TestBed.createComponent(TeamSpieleComponent);
+    const fixture = TestBed.createComponent(TeamComponent);
     fixture.componentRef.setInput('teamId', '313036');
     fixture.detectChanges();
 
@@ -326,10 +367,8 @@ describe('TeamSpieleComponent', () => {
 
   it('cancels the read of a Team the page has left', async () => {
     const data = fakeData(() => new Promise<TeamSaison>(() => undefined));
-    TestBed.configureTestingModule({
-      providers: [{ provide: BASKETBALL_DATA, useValue: data }],
-    });
-    const fixture = TestBed.createComponent(TeamSpieleComponent);
+    TestBed.configureTestingModule({ providers: providers(data) });
+    const fixture = TestBed.createComponent(TeamComponent);
     fixture.componentRef.setInput('teamId', '313036');
     fixture.detectChanges();
     const erster = data.teamSpiele.mock.calls[0][1]?.signal;
@@ -341,5 +380,139 @@ describe('TeamSpieleComponent', () => {
       signal: expect.any(AbortSignal),
     });
     expect(erster?.aborted).toBe(true);
+  });
+  describe('Tabellen', () => {
+    const ZWEI_LIGEN = saison([
+      spiel({ id: 1, datum: '2026-08-29', ligaId: TESTSPIELE.id }),
+      spiel({ id: 2, datum: '2026-09-12' }),
+      spiel({ id: 3, datum: '2026-11-08' }),
+    ]);
+
+    function tabellen(page: HTMLElement): HTMLElement[] {
+      return [...page.querySelectorAll<HTMLElement>('[data-qa="tabelle"]')];
+    }
+
+    function ueberschrift(tabelle: HTMLElement): string | undefined {
+      return tabelle.querySelector('h3')?.textContent?.trim();
+    }
+
+    const VORRUNDE_TABELLE: Tabelle = {
+      liga: VORRUNDE,
+      zeilen: [
+        tabellenZeile(1, { id: 201500, name: 'MTV Gifhorn', vereinId: 201500 }),
+        tabellenZeile(2, UNSER_TEAM),
+      ],
+    };
+
+    it('shows one Tabelle per Liga of its Spiele, the current Liga first', async () => {
+      const data = fakeData(async () => ZWEI_LIGEN);
+
+      const page = await render(data);
+
+      expect(tabellen(page).map(ueberschrift)).toEqual([
+        VORRUNDE.name,
+        TESTSPIELE.name,
+      ]);
+      expect(data.tabelle.mock.calls.map(([ligaId]) => ligaId)).toEqual([
+        VORRUNDE.id,
+        TESTSPIELE.id,
+      ]);
+    });
+
+    it('puts the next Liga first once the day of the last Spiel of the current one has passed', async () => {
+      const heute = signal('2026-11-08');
+      TestBed.configureTestingModule({
+        providers: providers(
+          fakeData(async () =>
+            saison([
+              spiel({ id: 1, datum: '2026-08-29', ligaId: TESTSPIELE.id }),
+              spiel({ id: 2, datum: '2026-11-08' }),
+              spiel({ id: 3, datum: '2026-11-21', ligaId: TESTSPIELE.id }),
+            ])
+          ),
+          heute
+        ),
+      });
+      const fixture = TestBed.createComponent(TeamComponent);
+      fixture.componentRef.setInput('teamId', '313036');
+      await fixture.whenStable();
+      const page = fixture.nativeElement as HTMLElement;
+      expect(tabellen(page).map(ueberschrift)).toEqual([
+        VORRUNDE.name,
+        TESTSPIELE.name,
+      ]);
+
+      heute.set('2026-11-09');
+      await fixture.whenStable();
+
+      expect(tabellen(page).map(ueberschrift)).toEqual([
+        TESTSPIELE.name,
+        VORRUNDE.name,
+      ]);
+    });
+
+    it('highlights the Team in its Tabelle', async () => {
+      const page = await render(
+        fakeData(
+          async () => ZWEI_LIGEN,
+          async (ligaId) =>
+            ligaId === VORRUNDE.id
+              ? VORRUNDE_TABELLE
+              : { liga: TESTSPIELE, zeilen: [] }
+        )
+      );
+
+      const eigene = page.querySelector('[aria-current="true"]');
+      expect(eigene?.textContent).toContain('MTV Wasbüttel');
+      expect(eigene?.textContent).toContain('(dein Team)');
+    });
+
+    it('keeps the Spiele and the other Tabelle when one Tabelle fails', async () => {
+      const page = await render(
+        fakeData(
+          async () => ZWEI_LIGEN,
+          async (ligaId) => {
+            if (ligaId === TESTSPIELE.id) {
+              throw new BasketballDataError('unavailable', 'DBB: nope');
+            }
+            return VORRUNDE_TABELLE;
+          }
+        )
+      );
+
+      expect(spielZeilen(page)).toHaveLength(3);
+      const [vorrunde, testspiele] = tabellen(page);
+      expect(
+        vorrunde.querySelectorAll('[data-qa="tabelle-zeile"]')
+      ).toHaveLength(2);
+      expect(
+        testspiele.querySelector('[data-qa="tabelle-fehler"]')?.textContent
+      ).toContain('Der DBB ist gerade nicht erreichbar.');
+    });
+
+    it('raises no alert per Tabelle when the DBB fails them all', async () => {
+      const page = await render(
+        fakeData(
+          async () => ZWEI_LIGEN,
+          async () => {
+            throw new BasketballDataError('unavailable', 'DBB: nope');
+          }
+        )
+      );
+
+      expect(page.querySelectorAll('[data-qa="tabelle-fehler"]')).toHaveLength(
+        2
+      );
+      expect(page.querySelectorAll('[role="alert"]')).toHaveLength(0);
+    });
+
+    it('shows no Tabelle for a Team without Spiele', async () => {
+      const data = fakeData(async () => saison([]));
+
+      const page = await render(data);
+
+      expect(tabellen(page)).toEqual([]);
+      expect(data.tabelle).not.toHaveBeenCalled();
+    });
   });
 });

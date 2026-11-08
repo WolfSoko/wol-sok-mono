@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-11-08T18:23:39+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "prevSpieltag": null,
+    "selSpieltag": null,
+    "selSpielDatum": null,
+    "nextSpieltag": null,
+    "ligaData": {
+      "seasonId": 2026,
+      "seasonName": "2026/2027",
+      "actualMatchDay": {
+        "spieltag": 36,
+        "bezeichnung": "36. Spieltag"
+      },
+      "ligaId": 54689,
+      "liganame": "Testspiele Braunschweig u12",
+      "liganr": 42145,
+      "skName": "offene Runde",
+      "skNameSmall": null,
+      "skEbeneId": 2,
+      "skEbeneName": "Kreis",
+      "akName": "U12",
+      "geschlechtId": 3,
+      "geschlecht": "mix",
+      "verbandId": 7,
+      "verbandName": "Niedersachsen",
+      "bezirknr": 10,
+      "bezirkName": "Region Braunschweig",
+      "kreisnr": null,
+      "kreisname": null,
+      "statisticType": 0,
+      "vorabliga": false,
+      "tableExists": false,
+      "crossTableExists": false
+    },
+    "spieltage": null,
+    "matches": [],
+    "tabelle": null,
+    "kreuztabelle": null,
+    "teamStatistik": null
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

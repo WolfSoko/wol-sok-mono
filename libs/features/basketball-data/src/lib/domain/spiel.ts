@@ -1,18 +1,10 @@
 import type { Halle } from './halle';
 import type { Liga } from './liga';
 import type { LigaId, SpielId, TeamId } from './ids';
-import type { Team } from './team';
+import { istTeam, type SpielPartei } from './partei';
 
 /** One side of a Spiel. */
 export type SpielSeite = 'heim' | 'gast';
-
-/**
- * Who plays on one side: a Team, or a slot the Liga fills later (e.g.
- * "Nord 1. Platz" in a Hauptrunde before its Vorrunde ended).
- */
-export type SpielPartei =
-  | { readonly art: 'team'; readonly team: Team }
-  | { readonly art: 'offen'; readonly bezeichnung: string };
 
 /** The points of both sides, of a whole Spiel or of one period. */
 export interface Spielstand {
@@ -49,13 +41,35 @@ export interface Spiel {
   readonly id: SpielId;
   readonly ligaId: LigaId;
   readonly spieltag: number;
-  /** The day, `YYYY-MM-DD`; a moved Spiel carries its new day. */
+  /**
+   * The German calendar day, `YYYY-MM-DD` (`datumInDeutschland`); a moved
+   * Spiel carries its new day.
+   */
   readonly datum: string;
   /** The tip-off, `HH:mm`; absent where the DBB has none yet. */
   readonly uhrzeit?: string;
   readonly heim: SpielPartei;
   readonly gast: SpielPartei;
   readonly status: SpielStatus;
+}
+
+/** The DBB dates its Spiele by the German calendar day. */
+const DEUTSCHER_KALENDERTAG = new Intl.DateTimeFormat('de-DE', {
+  timeZone: 'Europe/Berlin',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/**
+ * The German calendar day of `moment`, `YYYY-MM-DD`, as a Spiel's `datum`.
+ * Built from the parts, since a locale's own date pattern may change.
+ */
+export function datumInDeutschland(moment: Date): string {
+  const parts = DEUTSCHER_KALENDERTAG.formatToParts(moment);
+  const part = (type: 'year' | 'month' | 'day'): string =>
+    parts.find((p) => p.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
 /** A Spiel with its Liga, Halle and the points of each period. */
@@ -74,10 +88,10 @@ export type SpielSonderfall = 'abgesagt' | 'kampflos';
 
 /** The side `team` plays in `spiel`, or `undefined` where it plays none. */
 export function seiteVon(spiel: Spiel, team: TeamId): SpielSeite | undefined {
-  if (spielt(spiel.heim, team)) {
+  if (istTeam(spiel.heim, team)) {
     return 'heim';
   }
-  return spielt(spiel.gast, team) ? 'gast' : undefined;
+  return istTeam(spiel.gast, team) ? 'gast' : undefined;
 }
 
 /** Who plays against `seite`. */
@@ -107,8 +121,4 @@ export function sonderfallVon(spiel: Spiel): SpielSonderfall | undefined {
     case 'gespielt':
       return undefined;
   }
-}
-
-function spielt(partei: SpielPartei, team: TeamId): boolean {
-  return partei.art === 'team' && partei.team.id === team;
 }

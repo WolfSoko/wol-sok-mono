@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { TeamSpieleComponent } from '../../team/team-spiele.component';
+import { TeamComponent } from '../../team/team.component';
 
-/** `/team/{id}`: a Team's Spiele of the Saison. */
+/** `/team/{id}`: a Team's Spiele of the Saison and the Tabellen of its Ligen. */
 @Component({
   selector: 'korb-team-page',
-  imports: [TeamSpieleComponent],
-  template: `<korb-team-spiele [teamId]="id()" />`,
+  imports: [TeamComponent],
+  template: `<korb-team [teamId]="id()" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class TeamPage {

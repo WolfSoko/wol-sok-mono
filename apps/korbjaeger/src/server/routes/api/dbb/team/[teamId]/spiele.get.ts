@@ -1,12 +1,5 @@
-import { useRuntimeConfig } from 'nitropack/runtime';
-import type { NitroRuntimeConfig } from 'nitropack/types';
-import { teamSpieleHandler } from '../../../../../dbb/dbb-proxy';
-import {
-  dbbUpstreamOf,
-  type DbbProxyConfig,
-} from '../../../../../dbb/dbb-upstream-config';
+import { PROXY_ROUTES } from '../../../../../../shared/dbb-proxy-routes';
+import { dbbRouteHandler } from '../../../../../dbb/dbb-route-handler';
 
 /** GET /api/dbb/team/{teamId}/spiele: DBB `team/id/{teamId}/matches`. */
-export default teamSpieleHandler(
-  dbbUpstreamOf(useRuntimeConfig<NitroRuntimeConfig & DbbProxyConfig>())
-);
+export default dbbRouteHandler(PROXY_ROUTES['team-spiele']);

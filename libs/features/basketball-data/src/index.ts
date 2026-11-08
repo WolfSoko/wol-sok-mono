@@ -54,8 +54,11 @@ export type {
   LigaSucheFacetten,
   LigaSucheFilter,
 } from './lib/domain/liga-suche';
+export { istTeam, parteiName } from './lib/domain/partei';
+export type { SpielPartei } from './lib/domain/partei';
 export type { Saison } from './lib/domain/saison';
 export {
+  datumInDeutschland,
   ergebnisVon,
   gegnerVon,
   seiteVon,
@@ -64,7 +67,6 @@ export {
 export type {
   Spiel,
   SpielDetails,
-  SpielPartei,
   SpielSeite,
   SpielSonderfall,
   SpielStatus,
@@ -81,6 +83,11 @@ export type {
 } from './lib/domain/spielbericht';
 export type { Tabelle, TabellenZeile } from './lib/domain/tabelle';
 export type { Team } from './lib/domain/team';
+export {
+  ligaVon,
+  ligenAktuellZuerst,
+  naechstesSpiel,
+} from './lib/domain/team-saison';
 export type {
   TeamSaison,
   VereinsTeam,

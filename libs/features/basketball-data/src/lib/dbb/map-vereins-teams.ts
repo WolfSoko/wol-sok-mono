@@ -1,5 +1,5 @@
 import type { Liga } from '../domain/liga';
-import type { SpielPartei } from '../domain/spiel';
+import type { SpielPartei } from '../domain/partei';
 import type { Team } from '../domain/team';
 import type { VereinsTeam, VereinsTeams } from '../domain/team-saison';
 import type { VereinId } from '../domain/ids';

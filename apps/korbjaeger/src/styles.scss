@@ -1,3 +1,4 @@
+@use '@angular/cdk' as cdk;
 @use '@angular/material' as mat;
 @import 'normalize.css/normalize.css';
 // Fonts and icons come from npm (Fontsource, material-icons) and are served
@@ -36,3 +37,6 @@ body {
 *::after {
   box-sizing: border-box;
 }
+
+// `.cdk-visually-hidden`: text for screen readers only, e.g. "(dein Team)"
+@include cdk.a11y-visually-hidden();

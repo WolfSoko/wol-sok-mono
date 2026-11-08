@@ -1,4 +1,4 @@
-import type { SpielPartei } from '../domain/spiel';
+import type { SpielPartei } from '../domain/partei';
 import type { Team } from '../domain/team';
 
 const BY_NAME = new Intl.Collator('de');

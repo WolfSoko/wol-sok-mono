@@ -4,20 +4,36 @@ import {
   type BasketballDataErrorKind,
 } from '@wolsok/feat-shared-basketball-data';
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
+import { createApp, createRouter, toWebHandler } from 'h3';
+import { proxyRouteHandler } from '../../server/dbb/dbb-proxy';
+import type { DbbUpstream } from '../../server/dbb/dbb-upstream';
+import { PROXY_ROUTES } from '../../shared/dbb-proxy-routes';
 import { proxyTransport, type ProxyFetch } from './proxy-transport';
+
+/** The DBB as the fake DBB server answers it, from the recorded fixtures. */
+const recordedDbb: DbbUpstream = async ({ method, path }) => {
+  const answer = fakeDbbAnswer(method, path);
+  return answer === undefined
+    ? { ok: false, reason: 'not recorded' }
+    : { ok: true, body: JSON.stringify(answer) };
+};
+
+/** The app's proxy, its real routes in front of the recorded DBB. */
+const recordedProxyHandler = toWebHandler(
+  createApp().use(
+    Object.values(PROXY_ROUTES).reduce(
+      (router, route) =>
+        router.get(route.pattern, proxyRouteHandler(route, recordedDbb)),
+      createRouter()
+    )
+  )
+);
 
 /** The app's proxy, answering with the DBB's recorded bodies. */
 function recordedProxy(): ReturnType<typeof vi.fn<ProxyFetch>> {
-  return vi.fn<ProxyFetch>(async (url) => {
-    const teamId = /^\/api\/dbb\/team\/(\d+)\/spiele$/.exec(url)?.[1];
-    const answer = fakeDbbAnswer('GET', `team/id/${teamId}/matches`);
-    const status = isNotFound(answer) ? 404 : 200;
-    return new Response(JSON.stringify(answer), { status });
-  });
-}
-
-function isNotFound(answer: unknown): boolean {
-  return (answer as { readonly status: string }).status === '1';
+  return vi.fn<ProxyFetch>((url) =>
+    recordedProxyHandler(new Request(`http://localhost${url}`))
+  );
 }
 
 /** The proxy answering every read with `status` and `body`. */
@@ -47,6 +63,25 @@ describe('proxyTransport', () => {
     });
     expect(saison.team.id).toBe(313036);
     expect(saison.spiele).toHaveLength(6);
+  });
+
+  it("reads a Liga's Tabelle from the app's proxy", async () => {
+    const proxy = recordedProxy();
+    const data = new DbbBasketballData(proxyTransport(proxy));
+
+    const tabelle = await data.tabelle(54862);
+
+    expect(proxy).toHaveBeenCalledWith('/api/dbb/liga/54862/tabelle', {
+      headers: { accept: 'application/json' },
+    });
+    expect(tabelle.liga.id).toBe(54862);
+    expect(tabelle.zeilen).toHaveLength(6);
+  });
+
+  it('reads the Tabelle of a Liga the DBB does not know as not found', async () => {
+    const data = new DbbBasketballData(proxyTransport(recordedProxy()));
+
+    expect(await rejectionKind(data.tabelle(7))).toBe('not-found');
   });
 
   it('hands a 404 to the adapter, which reads the not-found envelope', async () => {

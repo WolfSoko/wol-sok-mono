@@ -1,18 +1,26 @@
-import { dbbHttpRequest } from '../lib/dbb/dbb-request';
+import { dbbHttpRequest, type DbbRequest } from '../lib/dbb/dbb-request';
+import table54689 from '../lib/dbb/fixtures/table-54689.json';
+import table54862 from '../lib/dbb/fixtures/table-54862.json';
+import tableNotFound from '../lib/dbb/fixtures/table-not-found.json';
 import team313036Matches from '../lib/dbb/fixtures/team-313036-matches.json';
 import teamNotFound from '../lib/dbb/fixtures/team-not-found.json';
 
+/** The recorded answers: Team 313036's Spiele and its two Ligen's Tabellen. */
+const RECORDINGS: ReadonlyArray<readonly [DbbRequest, unknown]> = [
+  [{ kind: 'team-spiele', teamId: 313036 }, team313036Matches],
+  [{ kind: 'tabelle', ligaId: 54689 }, table54689],
+  [{ kind: 'tabelle', ligaId: 54862 }, table54862],
+];
+
 /** The recorded answers, by the path `dbbHttpRequest` builds for them. */
-const RECORDED: ReadonlyMap<string, unknown> = new Map([
-  [
-    dbbHttpRequest({ kind: 'team-spiele', teamId: 313036 }).path,
-    team313036Matches,
-  ],
-]);
+const RECORDED: ReadonlyMap<string, unknown> = new Map(
+  RECORDINGS.map(([request, answer]) => [dbbHttpRequest(request).path, answer])
+);
 
 /** What the DBB answers for an id it does not know: status `"1"`. */
 const NOT_FOUND: ReadonlyArray<readonly [RegExp, unknown]> = [
   [/^team\/id\/\d+\/matches$/, teamNotFound],
+  [/^competition\/table\/id\/\d+$/, tableNotFound],
 ];
 
 /**

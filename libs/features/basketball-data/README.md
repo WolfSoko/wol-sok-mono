@@ -36,7 +36,12 @@ and tools are no Nx project.
   `spiel.ts` answers the questions a screen asks of a Spiel: the side a
   Team plays (`seiteVon`), its opponent (`gegnerVon`), the result
   (`ergebnisVon`) and whether it was cancelled or forfeited
-  (`sonderfallVon`).
+  (`sonderfallVon`); a Spiel's `datum` is the German calendar day
+  (`datumInDeutschland`). `partei.ts` tells a Team from a slot (`istTeam`,
+  `parteiName`), for Spiele and Tabellen alike. `team-saison.ts` answers
+  what a Team's page asks of its Saison: a Liga by id (`ligaVon`), the
+  next Spiel (`naechstesSpiel`, passing over cancelled ones) and its Ligen
+  with the current one first (`ligenAktuellZuerst`).
 - **`DbbBasketballData`** (`src/lib/dbb/`), the adapter over the DBB's
   undocumented JSON API (ADR 0018). It takes a `DbbTransport`, a function
   that answers one allowlisted `DbbRequest` with the DBB's JSON;
@@ -57,7 +62,9 @@ and e2e only) holds `fakeDbbAnswer(method, path)`: how the DBB answers a
 read, from the fixtures below (the recording of a recorded id, the DBB's
 not-found envelope for any other id, `undefined` for a read it does not
 know). The app's proxy specs and its e2e fake DBB server answer with it; a
-read a later screen needs gets its row in `src/testing/fake-dbb.ts`.
+read a later screen needs gets its row in `src/testing/fake-dbb.ts`. It
+knows Team `313036`'s Spiele and the Tabellen of its two Ligen (`54862`, a
+Vorrunde, and `54689`, a friendly Liga the DBB keeps none for).
 
 ## Tests
 
