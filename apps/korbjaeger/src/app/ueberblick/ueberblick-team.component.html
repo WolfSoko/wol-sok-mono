@@ -43,6 +43,12 @@
             data-qa="ueberblick-letztes"
           />
         }
+        @if (team.saisonBeendet) {
+          <korb-saison-ende-hinweis
+            data-qa="ueberblick-saison-beendet"
+            [stand]="team.vereinsTeams"
+          />
+        }
         @if (!team.naechstes && !team.letztes && team.ausfaelle.length === 0) {
           <p>Noch keine Spiele in dieser Saison.</p>
         }

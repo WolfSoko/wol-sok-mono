@@ -1,3 +1,4 @@
+import { VEREINS_SPIELE_TAGE } from '../lib/dbb/dbb-basketball-data';
 import {
   dbbHttpRequest,
   type DbbHttpRequest,
@@ -8,6 +9,8 @@ import boxscore2843811 from '../lib/dbb/fixtures/boxscore-2843811.json';
 import boxscore2843814 from '../lib/dbb/fixtures/boxscore-2843814.json';
 import boxscore2861436 from '../lib/dbb/fixtures/boxscore-2861436.json';
 import boxscore2911141 from '../lib/dbb/fixtures/boxscore-2911141.json';
+import club1837Actualmatches from '../lib/dbb/fixtures/club-1837-actualmatches.json';
+import clubNotFound from '../lib/dbb/fixtures/club-not-found.json';
 import boxscoreNotFound from '../lib/dbb/fixtures/boxscore-not-found.json';
 import matchinfo2843814 from '../lib/dbb/fixtures/matchinfo-2843814.json';
 import matchinfo2861436 from '../lib/dbb/fixtures/matchinfo-2861436.json';
@@ -41,6 +44,7 @@ const NIEDERSACHSEN_U12_JUGEND_MAENNLICH = {
  * The recorded answers: the Team wizard's Liga searches down to the male
  * U12 youth Ligen of Niedersachsen (all three pages) and the Spielplan of
  * Team 313036's Vorrunde there, Team 313036's Spiele, its two Ligen's Tabellen,
+ * its Verein's Spiele of the weeks around 8 November 2026,
  * one of its Spiele with a Kader-only Spielbericht not confirmed yet, and
  * the Spiele of the adapter's cases (played with quarters and Spielerwerte,
  * a confirmed Kader-only Spielbericht, planned without a Spielbericht,
@@ -72,6 +76,10 @@ const RECORDINGS: ReadonlyArray<readonly [DbbRequest, unknown]> = [
   ],
   [{ kind: 'spielplan', ligaId: 54862 }, spielplan54862],
   [{ kind: 'team-spiele', teamId: 313036 }, team313036Matches],
+  [
+    { kind: 'vereins-spiele', vereinId: 1837, tage: VEREINS_SPIELE_TAGE },
+    club1837Actualmatches,
+  ],
   [{ kind: 'tabelle', ligaId: 54689 }, table54689],
   [{ kind: 'tabelle', ligaId: 54862 }, table54862],
   [{ kind: 'spiel-info', spielId: 2861436 }, matchinfo2861436],
@@ -96,6 +104,7 @@ const RECORDED: ReadonlyMap<string, unknown> = new Map(
 /** What the DBB answers for an id it does not know: status `"1"`. */
 const NOT_FOUND: ReadonlyArray<readonly [RegExp, unknown]> = [
   [/^team\/id\/\d+\/matches$/, teamNotFound],
+  [/^club\/id\/\d+\/actualmatches\?rangeDays=\d+$/, clubNotFound],
   [/^competition\/table\/id\/\d+$/, tableNotFound],
   [/^competition\/spielplan\/id\/\d+$/, spielplanNotFound],
   [/^match\/id\/\d+\/matchInfo$/, matchinfoNotFound],

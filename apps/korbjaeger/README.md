@@ -25,6 +25,16 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Tabelle loads and fails on its own.
   A toggle button ("Team folgen", `aria-pressed`) adds the Team to Meine
   Teams or takes it out (`team-folgen.component.ts`).
+  Below, "Weitere Teams des Vereins": the Verein's other Teams as its
+  Spiele of four weeks either way show them (the lib's `vereinsTeams`,
+  `vereinsTeamsResource`), each with its Ligen, a link to its page and the
+  same follow button; `VereinsTeamsComponent` (`src/app/verein/`) only
+  shows the read's stand (it keeps them while a sibling Team of the same
+  Verein loads, so that reads the Verein no second time). Once the Team's
+  Saison looks over (the lib's `saisonBeendet`: no Spiel left and the last
+  more than two weeks past) a hint (`SaisonEndeHinweisComponent`, shared
+  with the overview) says no Spiel is set and asks whether the Saison is
+  over, since a break looks the same, and offers these Teams at the top.
 - **Spiel page** (`/spiel/{id}`, `src/app/spiel-seite/`): the result, the
   quarter scores (and overtimes) where the Verband records them, what
   became of the Spiel, both Teams linking to their Team pages, the Halle,
@@ -67,7 +77,10 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   `MeineTeamsUeberblick` holds the reads of each followed Team: its Saison
   (`teamSaisonResource`, as the Team page) and, once its next Spiel is
   known, that Spiel's details for the Halle (`spielDetailsResource`), both
-  ended when the Team is unfollowed. So each card loads and fails
+  ended when the Team is unfollowed. A card whose Team's Saison looks
+  over (`saisonBeendet`) shows the same hint with its Verein's current
+  Teams; only then is the Verein read (`vereinsTeamsResource`), once per
+  Verein however many of its Teams are followed. So each card loads and fails
   on its own and a follow or unfollow reads no other Team again; the cards
   (`ueberblick-team.component.ts`) only show what they are given, and one
   whose read fails offers "Entfernen". Error texts are in
@@ -92,6 +105,9 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   `src/server/dbb/`; `src/shared/dbb-proxy-routes.ts` maps each read to
   its URL and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists
   get a route, with numeric ids; every other path under `/api/dbb/` is 404.
+  A Verein's Spiele (`/api/dbb/verein/{id}/spiele`) are read for the
+  lib's fixed day range (`VEREINS_SPIELE_TAGE`), never one the client
+  names, so each Verein caches under one URL.
   The Liga search is a GET too, its filter in the query
   (`/api/dbb/ligen?verband=7&altersklasse=12&geschlecht=2_1`, a later
   page `/api/dbb/ligen/seite?start=10&...`): the proxy builds the DBB's
@@ -167,7 +183,7 @@ live data, run `fake-dbb` and `serve-e2e`: the fake DBB
 (`fakeDbbAnswer` of `@wolsok/feat-shared-basketball-data/testing`; Team
 `313036` plays two Ligen, found through `/team-einrichten` as
 Niedersachsen, U12, Jugend männlich, the second page of Ligen,
-"Regionsvorrunde Nord Braunschweig mu12": a Vorrunde with a Tabelle and a friendly Liga without one; its Spiel `2861436` has a Kader-only Spielbericht, and Spiele `2911141` (quarters, Spielerwerte) and `2843814` (no Spielbericht yet) open at `/spiel/{id}`), and the `e2e` build mode points the proxy's
+"Regionsvorrunde Nord Braunschweig mu12": a Vorrunde with a Tabelle and a friendly Liga without one; its Spiel `2861436` has a Kader-only Spielbericht, and Spiele `2911141` (quarters, Spielerwerte) and `2843814` (no Spielbericht yet) open at `/spiel/{id}`; its Verein `1837` shows its other Teams), and the `e2e` build mode points the proxy's
 runtime config `dbbBaseUrl` at it (`NITRO_DBB_BASE_URL` overrides it at
 run time). Open `/team/313036`.
 

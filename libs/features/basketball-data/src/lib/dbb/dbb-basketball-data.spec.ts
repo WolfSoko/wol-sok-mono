@@ -6,7 +6,7 @@ import {
   naechsterStartIndex,
   type LigaSucheFilter,
 } from '../domain/liga-suche';
-import { DbbBasketballData, VEREINS_SPIELE_TAGE } from './dbb-basketball-data';
+import { DbbBasketballData } from './dbb-basketball-data';
 import {
   type DbbRequest,
   type DbbRequestKind,
@@ -195,14 +195,14 @@ describe('DbbBasketballData', () => {
     ]);
   });
 
-  it('reads a Verein’s Teams from its Spiele of the weeks around today', async () => {
+  it('reads a Verein’s Teams from its Spiele of four weeks either way', async () => {
     const { data, transport } = dataWith({ 'vereins-spiele': clubMatches });
 
     expect((await data.vereinsTeams(1476)).verein.name).toBe(
       'Post SV Nürnberg'
     );
     expect(transport.requests).toEqual([
-      { kind: 'vereins-spiele', vereinId: 1476, tage: VEREINS_SPIELE_TAGE },
+      { kind: 'vereins-spiele', vereinId: 1476, tage: 28 },
     ]);
   });
 

@@ -301,6 +301,41 @@ describe('SpielComponent', () => {
       ]);
     });
 
+    it.each<[string, SpielDetails['spiel']['status']]>([
+      ['planned', { art: 'geplant' }],
+      ['cancelled', { art: 'abgesagt' }],
+      ['forfeited without a result', { art: 'kampflos', verzichtet: [] }],
+    ])(
+      'shows no final score for quarters of a Spiel %s',
+      async (_case, status) => {
+        const seite = await render(
+          fakeData(
+            async () => ({
+              ...GESPIELT,
+              spiel: { ...GESPIELT.spiel, status },
+            }),
+            async () => undefined
+          )
+        );
+
+        const viertel = teil(seite, 'viertel');
+        expect(kopfzellen(viertel)).toEqual([
+          'Team',
+          '1. Viertel',
+          '2. Viertel',
+          '3. Viertel',
+          '4. Viertel',
+          'Endstand',
+        ]);
+        expect(zellen(viertel, 'viertel-zeile')).toEqual([
+          ['MTV Wasbüttel', '20', '18', '22', '18', '–'],
+          ['MTV Gifhorn', '10', '12', '9', '16', '–'],
+        ]);
+        // the quarters' sums, 78 and 47, are no final score
+        expect(text(viertel)).not.toMatch(/\b(78|47)\b/);
+      }
+    );
+
     it('adds each overtime after the quarters', async () => {
       const seite = await render(
         fakeData(

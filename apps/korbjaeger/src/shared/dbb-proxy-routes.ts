@@ -1,19 +1,18 @@
 import {
   assertValidDbbRequest,
   parseDbbId,
+  VEREINS_SPIELE_TAGE,
   type DbbRequest,
+  type DbbRequestKind,
   type LigaSucheFilter,
 } from '@wolsok/feat-shared-basketball-data';
 
-/** The reads the app's proxy has a route for. */
-export type ProxyKind =
-  | 'liga-suche'
-  | 'liga-seite'
-  | 'spielplan'
-  | 'team-spiele'
-  | 'tabelle'
-  | 'spiel-info'
-  | 'spielbericht';
+/**
+ * The reads the app's proxy has a route for: every read of the lib's
+ * allowlist, so `PROXY_ROUTES` fails to compile without a route for a new
+ * one.
+ */
+export type ProxyKind = DbbRequestKind;
 
 /** The read of kind `K`. */
 export type ProxyRead<K extends ProxyKind> = Extract<DbbRequest, { kind: K }>;
@@ -85,6 +84,15 @@ export const PROXY_ROUTES: { readonly [K in ProxyKind]: ProxyRoute<K> } = {
     (teamId) => ({ kind: 'team-spiele', teamId }),
     ({ teamId }) => teamId
   ),
+  'vereins-spiele': idRoute(
+    '/api/dbb/verein/:vereinId/spiele',
+    (vereinId) => ({
+      kind: 'vereins-spiele',
+      vereinId,
+      tage: VEREINS_SPIELE_TAGE,
+    }),
+    vereinMitFesterSpanne
+  ),
   tabelle: idRoute(
     '/api/dbb/liga/:ligaId/tabelle',
     (ligaId) => ({ kind: 'tabelle', ligaId }),
@@ -104,11 +112,24 @@ export const PROXY_ROUTES: { readonly [K in ProxyKind]: ProxyRoute<K> } = {
 
 /** The URL, path and query, the browser asks `request` at. */
 export function proxyUrl(request: DbbRequest): string {
-  if (!isProxyRead(request)) {
-    // unreachable: KorbjaegerData offers no read without a route
-    throw new Error(`no proxy route for ${request.kind} yet`);
-  }
   return urlOf(request.kind, request);
+}
+
+/**
+ * The Verein whose Spiele `read` asks for. The route fixes the day range
+ * to the adapter's (`VEREINS_SPIELE_TAGE`), so each Verein has one URL to
+ * cache; a read of another range has none and throws a `RangeError`.
+ */
+function vereinMitFesterSpanne({
+  vereinId,
+  tage,
+}: ProxyRead<'vereins-spiele'>): number {
+  if (tage !== VEREINS_SPIELE_TAGE) {
+    throw new RangeError(
+      `the proxy reads a Verein's Spiele of ${VEREINS_SPIELE_TAGE} days only, not ${tage}`
+    );
+  }
+  return vereinId;
 }
 
 /**
@@ -241,10 +262,6 @@ function filterQuery(filter: LigaSucheFilter): URLSearchParams {
 function withQuery(path: string, query: URLSearchParams): string {
   const text = query.toString();
   return text === '' ? path : `${path}?${text}`;
-}
-
-function isProxyRead(request: DbbRequest): request is ProxyRead<ProxyKind> {
-  return Object.hasOwn(PROXY_ROUTES, request.kind);
 }
 
 function urlOf<K extends ProxyKind>(kind: K, request: ProxyRead<K>): string {

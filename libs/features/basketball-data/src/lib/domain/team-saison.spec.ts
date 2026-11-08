@@ -5,6 +5,7 @@ import {
   ligaVon,
   ligenAktuellZuerst,
   naechstesSpiel,
+  saisonBeendet,
   type TeamSaison,
 } from './team-saison';
 
@@ -267,6 +268,69 @@ describe('naechstesSpiel', () => {
     expect(
       naechstesSpiel(saison(spiel(1, VORRUNDE.id, '2026-11-01')), '2026-11-08')
     ).toBeUndefined();
+  });
+});
+
+describe('saisonBeendet', () => {
+  const GESPIELT: Spiel['status'] = {
+    art: 'gespielt',
+    ergebnis: { heim: 78, gast: 47 },
+    bestaetigt: true,
+  };
+
+  it('holds once the last Spiel is more than two weeks past, none to come', () => {
+    expect(
+      saisonBeendet(
+        saison(
+          spiel(1, VORRUNDE.id, '2026-10-03', GESPIELT),
+          spiel(2, VORRUNDE.id, '2026-10-24', GESPIELT)
+        ),
+        '2026-11-08'
+      )
+    ).toBe(true);
+  });
+
+  it('holds from the fifteenth day after the last Spiel on', () => {
+    const vorbei = saison(spiel(1, VORRUNDE.id, '2026-10-24', GESPIELT));
+
+    expect(saisonBeendet(vorbei, '2026-11-08')).toBe(true);
+  });
+
+  it('does not hold exactly two weeks after the last Spiel', () => {
+    const vorbei = saison(spiel(1, VORRUNDE.id, '2026-10-25', GESPIELT));
+
+    expect(saisonBeendet(vorbei, '2026-11-08')).toBe(false);
+  });
+
+  it('counts calendar days across the change to winter time', () => {
+    // 2026-10-25 has 25 hours in Germany
+    const vorbei = saison(spiel(1, VORRUNDE.id, '2026-10-20', GESPIELT));
+
+    expect(saisonBeendet(vorbei, '2026-11-03')).toBe(false);
+    expect(saisonBeendet(vorbei, '2026-11-04')).toBe(true);
+  });
+
+  it('does not hold while a postponed Spiel is still to come', () => {
+    const verlegt = saison(
+      spiel(1, VORRUNDE.id, '2026-09-26', GESPIELT),
+      // moved from October to its new day
+      spiel(2, VORRUNDE.id, '2026-12-05')
+    );
+
+    expect(saisonBeendet(verlegt, '2026-11-08')).toBe(false);
+  });
+
+  it('counts a past Spiel still without its result as the last one', () => {
+    const offen = saison(
+      spiel(1, VORRUNDE.id, '2026-09-26', GESPIELT),
+      spiel(2, VORRUNDE.id, '2026-10-31')
+    );
+
+    expect(saisonBeendet(offen, '2026-11-08')).toBe(false);
+  });
+
+  it('does not hold for a Team without Spiele, whose Saison may not have begun', () => {
+    expect(saisonBeendet(saison(), '2026-11-08')).toBe(false);
   });
 });
 

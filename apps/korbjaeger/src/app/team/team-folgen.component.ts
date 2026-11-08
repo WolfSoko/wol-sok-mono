@@ -13,8 +13,9 @@ import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 
 /**
  * Follows a Team, or unfollows it: a toggle button (`aria-pressed`) whose
- * label stays the same, so a screen reader names it alike in both states.
- * Disabled, and neither pressed nor not, until Meine Teams are read.
+ * label stays the same (in a list, with the Team's name after it), so a
+ * screen reader names it alike in both states. Disabled, and neither
+ * pressed nor not, until Meine Teams are read.
  */
 @Component({
   selector: 'korb-team-folgen',
@@ -25,6 +26,7 @@ import { auswahlAenderung } from '../fehler/auswahl-aenderung';
       type="button"
       [disabled]="folgt() === undefined"
       [attr.aria-pressed]="folgt() ?? null"
+      [attr.aria-label]="teamName() ? 'Team folgen: ' + teamName() : null"
       (click)="umschalten()"
     >
       <mat-icon aria-hidden="true">{{ folgt() ? 'check' : 'add' }}</mat-icon>
@@ -32,7 +34,7 @@ import { auswahlAenderung } from '../fehler/auswahl-aenderung';
     </button>
     @if (aenderung.fehler(); as text) {
       <p class="fehler" role="alert">{{ text }}</p>
-    } @else if (folgt()) {
+    } @else if (folgt() && !teamName()) {
       <p class="hinweis">Steht in Meine Teams auf der Startseite.</p>
     }
   `,
@@ -54,6 +56,11 @@ import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 })
 export class TeamFolgenComponent {
   public readonly teamId = input.required<TeamId>();
+  /**
+   * The Team's name where several Teams are listed: it joins the button's
+   * label, and the hint where a followed Team shows up is left out.
+   */
+  public readonly teamName = input<string>();
 
   private readonly auswahl = inject(AUSWAHL);
 

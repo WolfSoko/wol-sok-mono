@@ -10,6 +10,7 @@ import {
   type Tabelle,
   type Team,
   type TeamSaison,
+  type VereinsTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import {
   BASKETBALL_DATA,
@@ -80,6 +81,7 @@ function saison(spiele: readonly Spiel[]): TeamSaison {
 type TeamSpieleRead = KorbjaegerData['teamSpiele'];
 type TabelleRead = KorbjaegerData['tabelle'];
 type SpielRead = KorbjaegerData['spiel'];
+type VereinsTeamsRead = KorbjaegerData['vereinsTeams'];
 
 /** The day the specs run on: after the last Spiel of the fixtures below. */
 const HEUTE_IM_SPEC = '2026-11-08';
@@ -106,23 +108,48 @@ const inDerSchulsporthalle: SpielRead = async (spielId) => ({
   verlaengerungen: [],
 });
 
+/** The Verein's Teams of its recent Spiele: ours and two others. */
+const UNSER_VEREIN: VereinsTeams = {
+  verein: { id: 1837, name: 'MTV Wasbüttel' },
+  teams: [
+    { team: UNSER_TEAM, ligen: [VORRUNDE] },
+    {
+      team: { id: 317618, name: 'MTV Wasbüttel 2', vereinId: 1837 },
+      ligen: [liga(54900, 'Regionsvorrunde Nordwest mu14')],
+    },
+    {
+      team: { id: 270037, name: 'MTV Wasbüttel', vereinId: 1837 },
+      ligen: [liga(54901, 'Regionsliga Braunschweig mu16')],
+    },
+  ],
+};
+
+/** A Verein whose recent Spiele show no Team. */
+const OHNE_TEAMS: VereinsTeamsRead = async () => ({
+  verein: UNSER_VEREIN.verein,
+  teams: [],
+});
+
 /**
  * `KorbjaegerData` answering `teamSpiele` with `read`, Tabellen empty,
- * every Spiel in the Schulsporthalle.
+ * every Spiel in the Schulsporthalle, the Verein without other Teams.
  */
 function fakeData(
   read: TeamSpieleRead,
   tabelle: TabelleRead = keineZeilen,
-  details: SpielRead = inDerSchulsporthalle
+  details: SpielRead = inDerSchulsporthalle,
+  vereinsTeams: VereinsTeamsRead = OHNE_TEAMS
 ): {
   readonly teamSpiele: ReturnType<typeof vi.fn<TeamSpieleRead>>;
   readonly tabelle: ReturnType<typeof vi.fn<TabelleRead>>;
   readonly spiel: ReturnType<typeof vi.fn<SpielRead>>;
+  readonly vereinsTeams: ReturnType<typeof vi.fn<VereinsTeamsRead>>;
 } {
   return {
     teamSpiele: vi.fn<TeamSpieleRead>(read),
     tabelle: vi.fn<TabelleRead>(tabelle),
     spiel: vi.fn<SpielRead>(details),
+    vereinsTeams: vi.fn<VereinsTeamsRead>(vereinsTeams),
   };
 }
 
@@ -679,6 +706,204 @@ describe('TeamComponent', () => {
 
       expect(tabellen(page)).toEqual([]);
       expect(data.tabelle).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('weitere Teams des Vereins', () => {
+    const MIT_VEREIN = (spiele: readonly Spiel[]) =>
+      fakeData(
+        async () => saison(spiele),
+        keineZeilen,
+        inDerSchulsporthalle,
+        async () => UNSER_VEREIN
+      );
+
+    function feldIn(zeile: HTMLElement, qa: string): string | undefined {
+      return zeile.querySelector(`[data-qa="${qa}"]`)?.textContent?.trim();
+    }
+
+    function vereinsTeams(page: HTMLElement): HTMLElement[] {
+      return [
+        ...page.querySelectorAll<HTMLElement>('[data-qa="vereins-team"]'),
+      ];
+    }
+
+    it("reads the Teams of the Team's Verein", async () => {
+      const data = MIT_VEREIN([]);
+
+      await render(data);
+
+      expect(data.vereinsTeams).toHaveBeenCalledWith(1837, {
+        signal: expect.any(AbortSignal),
+      });
+    });
+
+    it('lists the other Teams with their Ligen, each linking to its page, the Team itself left out', async () => {
+      const page = await render(MIT_VEREIN([]));
+
+      expect(
+        vereinsTeams(page).map((zeile) => [
+          feldIn(zeile, 'vereins-team-name'),
+          feldIn(zeile, 'vereins-team-ligen'),
+        ])
+      ).toEqual([
+        ['MTV Wasbüttel 2', 'Regionsvorrunde Nordwest mu14'],
+        ['MTV Wasbüttel', 'Regionsliga Braunschweig mu16'],
+      ]);
+      expect(
+        vereinsTeams(page).map((zeile) =>
+          zeile.querySelector('a')?.getAttribute('href')
+        )
+      ).toEqual(['/team/317618', '/team/270037']);
+    });
+
+    it('follows another Team of the Verein from its line', async () => {
+      const auswahl = new LokaleAuswahl(undefined);
+      TestBed.configureTestingModule({
+        providers: [
+          ...providers(MIT_VEREIN([])),
+          { provide: AUSWAHL, useValue: auswahl },
+        ],
+      });
+      const fixture = TestBed.createComponent(TeamComponent);
+      fixture.componentRef.setInput('teamId', '313036');
+      await fixture.whenStable();
+      const page = fixture.nativeElement as HTMLElement;
+
+      const knopf = vereinsTeams(page)[0].querySelector('button');
+      expect(knopf?.getAttribute('aria-label')).toBe(
+        'Team folgen: MTV Wasbüttel 2'
+      );
+      knopf?.click();
+      await new Promise((resolve) => setTimeout(resolve));
+      await fixture.whenStable();
+
+      expect(auswahl.teams()).toEqual([317618]);
+      expect(knopf?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('reads the Verein once when switching to a sibling Team of it', async () => {
+      const geschwister: Team = {
+        id: 317618,
+        name: 'MTV Wasbüttel 2',
+        vereinId: 1837,
+      };
+      const data = fakeData(
+        async (teamId) => ({
+          ...saison([]),
+          team: teamId === geschwister.id ? geschwister : UNSER_TEAM,
+        }),
+        keineZeilen,
+        inDerSchulsporthalle,
+        async () => UNSER_VEREIN
+      );
+      TestBed.configureTestingModule({ providers: providers(data) });
+      const fixture = TestBed.createComponent(TeamComponent);
+      fixture.componentRef.setInput('teamId', '313036');
+      await fixture.whenStable();
+
+      fixture.componentRef.setInput('teamId', String(geschwister.id));
+      await fixture.whenStable();
+
+      const page = fixture.nativeElement as HTMLElement;
+      expect(page.querySelector('h1')?.textContent).toContain(
+        'MTV Wasbüttel 2'
+      );
+      expect(data.vereinsTeams).toHaveBeenCalledTimes(1);
+      expect(
+        vereinsTeams(page).map((zeile) =>
+          zeile.querySelector('a')?.getAttribute('href')
+        )
+      ).toEqual(['/team/313036', '/team/270037']);
+    });
+
+    it('says so where the Verein shows no other Team', async () => {
+      const page = await render(fakeData(async () => saison([])));
+
+      expect(vereinsTeams(page)).toEqual([]);
+      expect(
+        page.querySelector('[data-qa="vereins-teams"]')?.textContent
+      ).toContain('Keine weiteren Teams');
+    });
+
+    it('keeps the Spiele when the Verein cannot be read', async () => {
+      const page = await render(
+        fakeData(
+          async () => saison([spiel({ id: 1, datum: '2026-11-21' })]),
+          keineZeilen,
+          inDerSchulsporthalle,
+          async () => {
+            throw new BasketballDataError('unavailable', 'DBB: nope');
+          }
+        )
+      );
+
+      expect(spielZeilen(page)).toHaveLength(1);
+      expect(
+        page.querySelector('[data-qa="vereins-teams-fehler"]')?.textContent
+      ).toContain('Der DBB ist gerade nicht erreichbar.');
+      expect(page.querySelectorAll('[role="alert"]')).toHaveLength(0);
+    });
+  });
+
+  describe('the end of the Saison', () => {
+    const GESPIELT: Spiel['status'] = {
+      art: 'gespielt',
+      ergebnis: { heim: 78, gast: 47 },
+      bestaetigt: true,
+    };
+
+    function mitLetztemSpielAm(datum: string) {
+      return fakeData(
+        async () => saison([spiel({ id: 1, datum, status: GESPIELT })]),
+        keineZeilen,
+        inDerSchulsporthalle,
+        async () => UNSER_VEREIN
+      );
+    }
+
+    function hinweis(page: HTMLElement): HTMLElement | null {
+      return page.querySelector('[data-qa="saison-beendet"]');
+    }
+
+    it("asks whether the Saison is over and suggests the Verein's current Teams", async () => {
+      // more than two weeks before 8 November
+      const page = await render(mitLetztemSpielAm('2026-10-24'));
+
+      expect(hinweis(page)?.textContent).toContain(
+        'Keine Spiele mehr angesetzt. Ist die Saison vorbei?'
+      );
+      expect(hinweis(page)?.textContent).not.toContain('Saison ist vorbei');
+      expect(
+        [
+          ...(hinweis(page)?.querySelectorAll(
+            '[data-qa="vereins-team-name"]'
+          ) ?? []),
+        ].map((name) => name.textContent?.trim())
+      ).toEqual(['MTV Wasbüttel 2', 'MTV Wasbüttel']);
+      expect(page.querySelectorAll('[data-qa="vereins-teams"]')).toHaveLength(
+        1
+      );
+    });
+
+    it('says nothing exactly two weeks after the last Spiel', async () => {
+      const page = await render(mitLetztemSpielAm('2026-10-25'));
+
+      expect(hinweis(page)).toBeNull();
+      expect(page.querySelector('[data-qa="vereins-teams"]')).not.toBeNull();
+    });
+
+    it('says nothing while a Spiel is still to come', async () => {
+      const page = await render(
+        fakeData(async () =>
+          saison([
+            spiel({ id: 1, datum: '2026-09-20', status: GESPIELT }),
+            spiel({ id: 2, datum: '2026-12-05' }),
+          ])
+        )
+      );
+
+      expect(hinweis(page)).toBeNull();
     });
   });
 });

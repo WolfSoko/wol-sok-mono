@@ -51,6 +51,8 @@ const ROUTE_FILES: {
   'liga-seite': () => import('../routes/api/dbb/ligen/seite.get'),
   spielplan: () => import('../routes/api/dbb/liga/[ligaId]/spielplan.get'),
   'team-spiele': () => import('../routes/api/dbb/team/[teamId]/spiele.get'),
+  'vereins-spiele': () =>
+    import('../routes/api/dbb/verein/[vereinId]/spiele.get'),
   tabelle: () => import('../routes/api/dbb/liga/[ligaId]/tabelle.get'),
   'spiel-info': () => import('../routes/api/dbb/spiel/[spielId].get'),
   spielbericht: () => import('../routes/api/dbb/spiel/[spielId]/bericht.get'),
@@ -93,6 +95,11 @@ async function proxyRoutes(): Promise<(request: Request) => Promise<Response>> {
 const ROUTES = [
   { name: "a Liga's Spielplan", route: PROXY_ROUTES.spielplan, id: 54862 },
   { name: "a Team's Spiele", route: PROXY_ROUTES['team-spiele'], id: 313036 },
+  {
+    name: "a Verein's Spiele",
+    route: PROXY_ROUTES['vereins-spiele'],
+    id: 1837,
+  },
   { name: "a Liga's Tabelle", route: PROXY_ROUTES.tabelle, id: 54862 },
   {
     name: "a Spiel's match info",

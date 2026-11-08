@@ -96,6 +96,7 @@ export {
   ligaVon,
   ligenAktuellZuerst,
   naechstesSpiel,
+  saisonBeendet,
 } from './lib/domain/team-saison';
 export type {
   TeamSaison,

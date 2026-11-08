@@ -12,6 +12,13 @@
   <!-- also where the read fails, so a followed Team can be unfollowed -->
   <korb-team-folgen class="folgen" [teamId]="teamId" />
 }
+@if (beendet()) {
+  <korb-saison-ende-hinweis
+    class="saison-ende"
+    data-qa="saison-beendet"
+    [stand]="weitereTeams()"
+  />
+}
 @if (saison.hasValue()) {
   @if (naechstes(); as zeile) {
     <korb-naechstes-spiel
@@ -40,4 +47,8 @@
       <korb-team-tabelle [liga]="liga" [teamId]="saison.value().team.id" />
     }
   }
+}
+@if (saison.hasValue() && !beendet() && weitereTeams(); as stand) {
+  <h2>Weitere Teams des Vereins</h2>
+  <korb-vereins-teams data-qa="vereins-teams" [stand]="stand" />
 }

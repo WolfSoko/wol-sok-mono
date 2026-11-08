@@ -108,6 +108,19 @@ describe('proxyTransport', () => {
     expect(saison.spiele).toHaveLength(6);
   });
 
+  it("reads a Verein's Teams from the app's proxy", async () => {
+    const proxy = recordedProxy();
+    const data = new DbbBasketballData(proxyTransport(proxy));
+
+    const vereinsTeams = await data.vereinsTeams(1837);
+
+    expect(proxy).toHaveBeenCalledWith('/api/dbb/verein/1837/spiele', {
+      headers: { accept: 'application/json' },
+    });
+    expect(vereinsTeams.verein.name).toBe('MTV Wasbüttel');
+    expect(vereinsTeams.teams.map(({ team }) => team.id)).toContain(313036);
+  });
+
   it("reads a Liga's Tabelle from the app's proxy", async () => {
     const proxy = recordedProxy();
     const data = new DbbBasketballData(proxyTransport(proxy));

@@ -4,12 +4,14 @@ import {
   computed,
   inject,
   input,
+  linkedSignal,
 } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
+import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
 import { hallenStand } from '../halle/hallen-stand';
 import { HEUTE } from '../heute';
 import { RouterLink } from '@angular/router';
@@ -17,19 +19,27 @@ import {
   ligenAktuellZuerst,
   naechstesSpiel,
   parseDbbId,
+  saisonBeendet,
+  type TeamSaison,
+  type VereinId,
 } from '@wolsok/feat-shared-basketball-data';
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
 import { spielZeile, spielZeilen } from '../spiel/spiel-zeile';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
 import { TeamFolgenComponent } from './team-folgen.component';
+import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
+import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
+import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
 /**
  * The Team page: its next Spiel with its Halle, its Spiele of the Saison
  * (each opening its Spiel page), across all its Ligen, by date, then the
- * Tabelle of each of those Ligen, the current one first; with a control
- * to follow the Team.
+ * Tabelle of each of those Ligen, the current one first, and the
+ * Verein's other Teams; with a control to follow the Team and each of
+ * those. Once the Team's Saison looks over (`saisonBeendet`), a hint asks
+ * whether it is and offers the Verein's Teams first.
  */
 @Component({
   selector: 'korb-team',
@@ -38,9 +48,11 @@ import { TeamTabelleComponent } from './team-tabelle.component';
     MatProgressBarModule,
     NaechstesSpielComponent,
     RouterLink,
+    SaisonEndeHinweisComponent,
     SpielZeileComponent,
     TeamFolgenComponent,
     TeamTabelleComponent,
+    VereinsTeamsComponent,
   ],
   templateUrl: './team.component.html',
   styleUrl: './team.component.scss',
@@ -100,6 +112,34 @@ export class TeamComponent {
       ? ligenAktuellZuerst(this.saison.value(), this.heute())
       : []
   );
+
+  /** Whether the Team's Saison looks over, as of today. */
+  protected readonly beendet = computed(
+    () =>
+      this.saison.hasValue() && saisonBeendet(this.saison.value(), this.heute())
+  );
+
+  /**
+   * The Team's Verein, kept while the next Team loads, so a sibling Team of
+   * the same Verein reads it no second time.
+   */
+  private readonly vereinId = linkedSignal<
+    TeamSaison | undefined,
+    VereinId | undefined
+  >({
+    source: () => (this.saison.hasValue() ? this.saison.value() : undefined),
+    computation: (saison, vorher) => saison?.verein.id ?? vorher?.value,
+  });
+
+  private readonly vereinsTeams = vereinsTeamsResource(() => this.vereinId());
+
+  /** The Verein's Teams other than this one, as their read stands. */
+  protected readonly weitereTeams = computed(() => {
+    const team = this.team();
+    return team === undefined
+      ? undefined
+      : vereinsTeamsStand(this.vereinsTeams, team);
+  });
 
   protected readonly fehler = computed(() => {
     if (this.team() === undefined) {
