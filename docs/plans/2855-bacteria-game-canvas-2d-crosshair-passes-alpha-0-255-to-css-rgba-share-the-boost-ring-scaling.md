@@ -2,11 +2,11 @@
 
 Spec: [docs/specs/2855-bacteria-game-canvas-2d-crosshair-passes-alpha-0-255-to-css-rgba-share-the-boost-ring-scaling.md](../specs/2855-bacteria-game-canvas-2d-crosshair-passes-alpha-0-255-to-css-rgba-share-the-boost-ring-scaling.md)
 
-## Task 1: shared cursorColor and boostRing
+## Task 1: shared splitColor and boostRing
 
 - Tests first in `libs/features/lazy/bacteria-game/src/lib/arena/arena-painter.spec.ts`:
   acceptance 3 and 4 (the `boostRingRadius` tests move to `boostRing`).
-- `arena/arena-painter.ts`: add `cursorColor(cursor)` and
+- `arena/arena-painter.ts`: add `splitColor(color)` and
   `boostRing(cursor, unit)`; drop `boostRingRadius`.
 
 ## Task 2: both painters on the shared functions
@@ -16,7 +16,7 @@ Spec: [docs/specs/2855-bacteria-game-canvas-2d-crosshair-passes-alpha-0-255-to-c
   translucent cursor's alpha (acceptance 2).
 - `arena/canvas-cursors.ts`: colour through `rgba(rgb, alpha)` from
   `canvas-math.ts`, ring from `boostRing`.
-- `arena/gl/shape-batch.ts` `pushForeground`: colour from `cursorColor`,
+- `arena/gl/shape-batch.ts` `pushForeground`: colour from `splitColor`,
   ring from `boostRing`.
 
 ## Task 3: checks, commit and PR

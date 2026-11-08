@@ -1,7 +1,7 @@
 import {
   boostRing,
   crosshairBars,
-  cursorColor,
+  splitColor,
   CursorShape,
 } from './arena-painter';
 import { rgba } from './canvas-math';
@@ -17,7 +17,7 @@ export function drawCursors(
   unit: number
 ): void {
   for (const cursor of cursors) {
-    const { rgb, alpha } = cursorColor(cursor);
+    const { rgb, alpha } = splitColor(cursor.color);
     const css = rgba(rgb, alpha);
     cx.fillStyle = css;
     for (const bar of crosshairBars(cursor, unit)) {

@@ -160,14 +160,14 @@ export interface BoostRing {
   lineWidth: number;
 }
 
-/** A crosshair's colour as its channels and an alpha from 0 to 1. */
-export interface CursorColor {
+/** A colour as its channels and an alpha from 0 to 1. */
+export interface SplitColor {
   rgb: Rgb;
   alpha: number;
 }
 
-/** The alpha of an opaque `CursorShape.color`. */
-const OPAQUE = 255;
+/** The largest alpha of an RGBA colour such as `CursorShape.color` - opaque. */
+const ALPHA_MAX = 255;
 /** The boost ring's radius at a fresh boost, in base cells. */
 const BOOST_RING_RADIUS = 9;
 /** How far the ring widens as the boost runs out, in base cells. */
@@ -192,11 +192,11 @@ export function boostRing(cursor: CursorShape, unit: number): BoostRing | null {
 }
 
 /**
- * A crosshair's colour for both painters: `CursorShape.color` holds its alpha
- * from 0 to 255, a painter draws with one from 0 to 1. Without an alpha it is
- * opaque.
+ * An RGBA colour, its alpha from 0 to 255 as in `CursorShape.color`, as its
+ * channels and the alpha from 0 to 1 a painter draws with. Without an alpha
+ * it is opaque.
  */
-export function cursorColor(cursor: CursorShape): CursorColor {
-  const [r, g, b, alpha = OPAQUE] = cursor.color;
-  return { rgb: [r, g, b], alpha: alpha / OPAQUE };
+export function splitColor(color: readonly number[]): SplitColor {
+  const [r, g, b, alpha = ALPHA_MAX] = color;
+  return { rgb: [r, g, b], alpha: alpha / ALPHA_MAX };
 }

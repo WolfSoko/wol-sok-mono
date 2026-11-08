@@ -29,13 +29,15 @@ Both arena painters draw a crosshair from the same shared numbers:
 
 ## Decisions
 
-- **`cursorColor(cursor)` in `arena/arena-painter.ts`**, beside
+- **`splitColor(color)` in `arena/arena-painter.ts`**, beside
   `crosshairBars`, returns `{ rgb, alpha }` with the alpha from 0 to 1 (a
   missing alpha counts as opaque, as the GL painter does today). Both painters
   take colour and alpha from it: the Canvas 2D one through the `rgba(rgb,
   alpha)` helper in `canvas-math.ts`, like the rest of its code, the GL one
   as it pushes. One place says what the alpha means, so the painters cannot
-  drift apart again.
+  drift apart again. It takes the colour, not the cursor, so the other
+  readers of an RGBA player colour (the GL colony layer, the scoreboard) can
+  move onto it in a follow-up.
 - **`boostRing(cursor, unit)` in `arena/arena-painter.ts`** returns
   `{ radius, lineWidth }` in arena cells, or `null` without a running boost.
   It replaces `boostRingRadius`, whose only callers are the two painters; its
@@ -52,7 +54,7 @@ Both arena painters draw a crosshair from the same shared numbers:
    in `rgba(0,0,255,0.2)`.
 2. `gl/shape-batch.spec.ts`: the translucent cursor `[0, 0, 255, 51]` pushes
    its bars and ring with alpha `0.2`.
-3. `arena-painter.spec.ts`: `cursorColor` gives `{ rgb: [255, 0, 0], alpha: 1 }`
+3. `arena-painter.spec.ts`: `splitColor` gives `{ rgb: [255, 0, 0], alpha: 1 }`
    for `[255, 0, 0, 255]`, alpha `0.2` for an alpha of 51, and alpha `1` when
    the alpha entry is missing.
 4. `arena-painter.spec.ts`: `boostRing` is `null` without a boost; at
@@ -60,7 +62,7 @@ Both arena painters draw a crosshair from the same shared numbers:
    boost left radius 13; at `unit = 2` and a quarter left it is
    `{ radius: 24, lineWidth: 3 }`.
 5. Both painters take the ring from `boostRing` and the colour from
-   `cursorColor`; `boostRingRadius` and the written-out `1.5 * unit` are gone.
+   `splitColor`; `boostRingRadius` and the written-out `1.5 * unit` are gone.
    The existing ring and bar specs of both painters
    (`canvas-cursors.spec.ts`, `gl/shape-batch.spec.ts`) pass unchanged apart
    from the colour strings of acceptance 1.

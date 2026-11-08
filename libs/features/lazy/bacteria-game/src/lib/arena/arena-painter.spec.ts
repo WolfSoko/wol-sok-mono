@@ -1,7 +1,7 @@
 import {
   boostRing,
   crosshairBars,
-  cursorColor,
+  splitColor,
   CursorShape,
 } from './arena-painter';
 
@@ -56,26 +56,19 @@ describe('boostRing', () => {
   });
 });
 
-describe('cursorColor', () => {
-  const colored = (color: readonly number[]): CursorShape => ({
-    x: 0,
-    y: 0,
-    color,
-    boostLeft: null,
-  });
-
+describe('splitColor', () => {
   it('splits an opaque colour into its channels and an alpha of 1', () => {
-    expect(cursorColor(colored([255, 0, 0, 255]))).toEqual({
+    expect(splitColor([255, 0, 0, 255])).toEqual({
       rgb: [255, 0, 0],
       alpha: 1,
     });
   });
 
   it('turns an alpha from 0 to 255 into one from 0 to 1', () => {
-    expect(cursorColor(colored([0, 0, 255, 51])).alpha).toBe(0.2);
+    expect(splitColor([0, 0, 255, 51]).alpha).toBe(0.2);
   });
 
   it('takes a colour without an alpha as opaque', () => {
-    expect(cursorColor(colored([0, 0, 255])).alpha).toBe(1);
+    expect(splitColor([0, 0, 255]).alpha).toBe(1);
   });
 });

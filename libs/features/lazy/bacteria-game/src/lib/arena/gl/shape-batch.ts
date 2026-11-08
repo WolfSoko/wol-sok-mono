@@ -6,7 +6,7 @@ import {
 import {
   boostRing,
   crosshairBars,
-  cursorColor,
+  splitColor,
   CursorShape,
 } from '../arena-painter';
 import {
@@ -349,7 +349,7 @@ export function pushForeground(
   }
 
   for (const cursor of cursors) {
-    const { rgb, alpha } = cursorColor(cursor);
+    const { rgb, alpha } = splitColor(cursor.color);
     for (const bar of crosshairBars(cursor, unit)) {
       batch.push(SHAPE.rect, bar, rgb, alpha);
     }
