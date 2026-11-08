@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.145.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.145.0...v74.145.1) (2026-11-08)
+
+### Bug Fixes
+
+* **korbjaeger:** set the functions' image cleanup policy before deploying ([#2906](https://github.com/WolfSoko/wol-sok-mono/issues/2906)) ([6194fd1](https://github.com/WolfSoko/wol-sok-mono/commit/6194fd15f80075468abc2e9545c4a7940136a4c1)), closes [#2905](https://github.com/WolfSoko/wol-sok-mono/issues/2905), references [#2875](https://github.com/WolfSoko/wol-sok-mono/issues/2875)
+
 ## [74.145.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.144.1...v74.145.0) (2026-11-08)
 
 ### Features
