@@ -7,14 +7,14 @@ Spielerwerte, Anonymer Spieler, Halle, Kind) are the glossary's in
 `CONTEXT.md`.
 
 Node only: no Angular, Firebase, RxJS or DOM (an oxlint override and the
-lib's `lib: ["ES2024"]` keep them out), so both the app and its server
+lib's `lib: ["ES2024"]` with only Node's types keep them out), so both the app and its server
 routes use it. Import it as `@wolsok/feat-shared-basketball-data`; nothing
 outside the lib imports a path inside it, with one exception: the fixture
 tools in `tools/korbjaeger/` import `src/lib/dbb/dbb-request.ts`, the
 domain's `liga-suche.ts` and the test-only `src/testing/` (the anonymiser,
 `isOutsideFolder`) by relative path, as `tools/bacteria-game/balance` does
-with the engine, since `src/testing/` has no path alias and tools are no
-Nx project.
+with the engine, since the testing entry (below) holds only the fake DBB
+and tools are no Nx project.
 
 ## What it holds
 
@@ -22,7 +22,9 @@ Nx project.
   `ligaSeite`, `ligaTeams`, `vereinsTeams`, `teamSpiele`, `tabelle`,
   `spiel`, `spielbericht`. All async, all in domain types, all rejecting
   with a `BasketballDataError` of kind `not-found`, `unavailable` or
-  `unexpected-shape` only.
+  `unexpected-shape` only. Each takes an optional `{ signal }`
+  (`ReadOptions`), which reaches the transport; a cancelled read rejects
+  with the signal's reason.
 - **The domain types** (`src/lib/domain/`). Ids are the DBB's stable ones:
   a Team is its `teamPermanentId`, a Kind its `person.id`; the
   season-specific `seasonTeamId` stays in the adapter. A Kader entry is a
@@ -34,7 +36,9 @@ Nx project.
   undocumented JSON API (ADR 0018). It takes a `DbbTransport`, a function
   that answers one allowlisted `DbbRequest` with the DBB's JSON;
   `dbbHttpRequest` turns a `DbbRequest` into the DBB's method, path and
-  body, for the app's proxy to reuse. `readEnvelope` maps the DBB's
+  body, for the app's proxy to reuse. A transport that has no way to make
+  a read throws `UnsupportedDbbRequestError`, which the adapter passes on
+  as the app's bug; anything else it throws becomes `unavailable`. `readEnvelope` maps the DBB's
   `status` (`"0"`, `"1"`, `"-1"`; it answers HTTP 200 regardless, and
   `dbbStatusOf` reads it for the proxy, which passes the body on), one
   `map-*.ts` per endpoint maps its JSON, and `DbbObject` checks each

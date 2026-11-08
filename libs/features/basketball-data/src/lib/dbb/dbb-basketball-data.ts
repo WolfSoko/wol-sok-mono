@@ -1,4 +1,4 @@
-import type { BasketballData } from '../basketball-data';
+import type { BasketballData, ReadOptions } from '../basketball-data';
 import {
   BasketballDataError,
   isBasketballDataError,
@@ -18,8 +18,10 @@ import {
   assertValidDbbRequest,
   dbbIdOf,
   isDbbId,
+  UnsupportedDbbRequestError,
   type DbbRequest,
   type DbbTransport,
+  type DbbTransportOptions,
 } from './dbb-request';
 import { readEnvelope } from './envelope';
 import { mapLigaSeite, mapLigaSuche } from './map-liga-suche';
@@ -41,57 +43,101 @@ export const VEREINS_SPIELE_TAGE = 21;
 export class DbbBasketballData implements BasketballData {
   public constructor(private readonly transport: DbbTransport) {}
 
-  public ligaSuche(filter: LigaSucheFilter): Promise<LigaSuche> {
-    return this.read({ kind: 'liga-suche', filter }, mapLigaSuche);
+  public ligaSuche(
+    filter: LigaSucheFilter,
+    options?: ReadOptions
+  ): Promise<LigaSuche> {
+    return this.read({ kind: 'liga-suche', filter }, mapLigaSuche, options);
   }
 
   public ligaSeite(
     filter: LigaSucheFilter,
-    startIndex: number
+    startIndex: number,
+    options?: ReadOptions
   ): Promise<LigaSeite> {
-    return this.read({ kind: 'liga-seite', filter, startIndex }, mapLigaSeite);
-  }
-
-  public ligaTeams(liga: LigaId): Promise<readonly Team[]> {
-    return this.read({ kind: 'spielplan', ligaId: liga }, mapLigaTeams);
-  }
-
-  public vereinsTeams(verein: VereinId): Promise<VereinsTeams> {
     return this.read(
-      { kind: 'vereins-spiele', vereinId: verein, tage: VEREINS_SPIELE_TAGE },
-      mapVereinsTeams
+      { kind: 'liga-seite', filter, startIndex },
+      mapLigaSeite,
+      options
     );
   }
 
-  public teamSpiele(team: TeamId): Promise<TeamSaison> {
-    return this.read({ kind: 'team-spiele', teamId: team }, mapTeamSpiele);
+  public ligaTeams(
+    liga: LigaId,
+    options?: ReadOptions
+  ): Promise<readonly Team[]> {
+    return this.read(
+      { kind: 'spielplan', ligaId: liga },
+      mapLigaTeams,
+      options
+    );
   }
 
-  public tabelle(liga: LigaId): Promise<Tabelle> {
-    return this.read({ kind: 'tabelle', ligaId: liga }, mapTabelle);
+  public vereinsTeams(
+    verein: VereinId,
+    options?: ReadOptions
+  ): Promise<VereinsTeams> {
+    return this.read(
+      { kind: 'vereins-spiele', vereinId: verein, tage: VEREINS_SPIELE_TAGE },
+      mapVereinsTeams,
+      options
+    );
   }
 
-  public spiel(spiel: SpielId): Promise<SpielDetails> {
-    return this.read({ kind: 'spiel-info', spielId: spiel }, mapSpielDetails);
+  public teamSpiele(team: TeamId, options?: ReadOptions): Promise<TeamSaison> {
+    return this.read(
+      { kind: 'team-spiele', teamId: team },
+      mapTeamSpiele,
+      options
+    );
   }
 
-  public spielbericht(spiel: SpielId): Promise<Spielbericht | undefined> {
-    return this.read({ kind: 'spielbericht', spielId: spiel }, mapSpielbericht);
+  public tabelle(liga: LigaId, options?: ReadOptions): Promise<Tabelle> {
+    return this.read({ kind: 'tabelle', ligaId: liga }, mapTabelle, options);
+  }
+
+  public spiel(spiel: SpielId, options?: ReadOptions): Promise<SpielDetails> {
+    return this.read(
+      { kind: 'spiel-info', spielId: spiel },
+      mapSpielDetails,
+      options
+    );
+  }
+
+  public spielbericht(
+    spiel: SpielId,
+    options?: ReadOptions
+  ): Promise<Spielbericht | undefined> {
+    return this.read(
+      { kind: 'spielbericht', spielId: spiel },
+      mapSpielbericht,
+      options
+    );
   }
 
   private async read<T>(
     request: DbbRequest,
-    map: (data: unknown) => T
+    map: (data: unknown) => T,
+    options: ReadOptions = {}
   ): Promise<T> {
     assertKnowable(request);
-    return map(readEnvelope(await this.fetch(request)));
+    options.signal?.throwIfAborted();
+    return map(readEnvelope(await this.fetch(request, options)));
   }
 
-  private async fetch(request: DbbRequest): Promise<unknown> {
+  private async fetch(
+    request: DbbRequest,
+    { signal }: ReadOptions
+  ): Promise<unknown> {
+    const transportOptions: DbbTransportOptions = signal ? { signal } : {};
     try {
-      return await this.transport(request);
+      return await this.transport(request, transportOptions);
     } catch (error) {
-      if (isBasketballDataError(error)) {
+      signal?.throwIfAborted();
+      if (
+        isBasketballDataError(error) ||
+        error instanceof UnsupportedDbbRequestError
+      ) {
         throw error;
       }
       throw new BasketballDataError(

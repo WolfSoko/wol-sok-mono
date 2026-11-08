@@ -54,8 +54,34 @@ export type DbbHttpRequest =
       readonly body: DbbLigaFilterBody;
     };
 
-/** How a transport answers one `DbbRequest`: the DBB's JSON, unread. */
-export type DbbTransport = (request: DbbRequest) => Promise<unknown>;
+/** What a transport gets beside the request. */
+export interface DbbTransportOptions {
+  /** Cancels the call, e.g. when the screen that asked is left. */
+  readonly signal?: AbortSignal;
+}
+
+/**
+ * How a transport answers one `DbbRequest`: the DBB's JSON, unread. What it
+ * throws counts as the DBB's or the network's trouble (`unavailable`),
+ * except a `BasketballDataError` or an `UnsupportedDbbRequestError`.
+ */
+export type DbbTransport = (
+  request: DbbRequest,
+  options?: DbbTransportOptions
+) => Promise<unknown>;
+
+/**
+ * A transport has no way to make this read (an app's proxy without its
+ * route yet): a bug of the app, not trouble with the DBB, so the adapter
+ * passes it on as it is.
+ */
+export class UnsupportedDbbRequestError extends Error {
+  public override readonly name = 'UnsupportedDbbRequestError';
+
+  public constructor(public readonly kind: DbbRequestKind) {
+    super(`no way to read ${kind} yet`);
+  }
+}
 
 const AKG_GESCHLECHT_ID = /^\d+_\d+$/;
 const DIGITS = /^\d+$/;

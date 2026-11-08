@@ -1,4 +1,4 @@
-export type { BasketballData } from './lib/basketball-data';
+export type { BasketballData, ReadOptions } from './lib/basketball-data';
 export {
   DbbBasketballData,
   VEREINS_SPIELE_TAGE,
@@ -11,6 +11,7 @@ export {
   dbbIdOf,
   isDbbId,
   parseDbbId,
+  UnsupportedDbbRequestError,
 } from './lib/dbb/dbb-request';
 export type {
   DbbHttpRequest,
@@ -18,6 +19,7 @@ export type {
   DbbRequest,
   DbbRequestKind,
   DbbTransport,
+  DbbTransportOptions,
 } from './lib/dbb/dbb-request';
 export { dbbStatusOf } from './lib/dbb/envelope';
 export type { DbbStatus } from './lib/dbb/envelope';

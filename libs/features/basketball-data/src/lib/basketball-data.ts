@@ -10,26 +10,39 @@ import type { Tabelle } from './domain/tabelle';
 import type { Team } from './domain/team';
 import type { TeamSaison, VereinsTeams } from './domain/team-saison';
 
+/** What every read takes beside its ids. */
+export interface ReadOptions {
+  /** Cancels the read: it then rejects with the signal's reason. */
+  readonly signal?: AbortSignal;
+}
+
 /**
  * The basketball data the app reads, in domain terms. Every read rejects
  * with a `BasketballDataError` only: `not-found`, `unavailable` or
- * `unexpected-shape`. `DbbBasketballData` reads it from the DBB; an
+ * `unexpected-shape`; a cancelled one with its signal's reason. `DbbBasketballData` reads it from the DBB; an
  * official source would be another adapter.
  */
 export interface BasketballData {
   /** The search facets and the first page of Ligen for `filter`. */
-  ligaSuche(filter: LigaSucheFilter): Promise<LigaSuche>;
+  ligaSuche(filter: LigaSucheFilter, options?: ReadOptions): Promise<LigaSuche>;
   /** A later page of the Ligen for `filter`, from `startIndex` on. */
-  ligaSeite(filter: LigaSucheFilter, startIndex: number): Promise<LigaSeite>;
+  ligaSeite(
+    filter: LigaSucheFilter,
+    startIndex: number,
+    options?: ReadOptions
+  ): Promise<LigaSeite>;
   /** The Teams of a Liga, by name. */
-  ligaTeams(liga: LigaId): Promise<readonly Team[]>;
+  ligaTeams(liga: LigaId, options?: ReadOptions): Promise<readonly Team[]>;
   /** The Teams seen in a Verein's Spiele of the last and next weeks. */
-  vereinsTeams(verein: VereinId): Promise<VereinsTeams>;
+  vereinsTeams(verein: VereinId, options?: ReadOptions): Promise<VereinsTeams>;
   /** All Spiele of a Team in the Saison, across its Ligen, by date. */
-  teamSpiele(team: TeamId): Promise<TeamSaison>;
-  tabelle(liga: LigaId): Promise<Tabelle>;
+  teamSpiele(team: TeamId, options?: ReadOptions): Promise<TeamSaison>;
+  tabelle(liga: LigaId, options?: ReadOptions): Promise<Tabelle>;
   /** A Spiel's result, quarters and Halle. */
-  spiel(spiel: SpielId): Promise<SpielDetails>;
+  spiel(spiel: SpielId, options?: ReadOptions): Promise<SpielDetails>;
   /** Both Kader of a Spiel, or `undefined` while there is no Spielbericht. */
-  spielbericht(spiel: SpielId): Promise<Spielbericht | undefined>;
+  spielbericht(
+    spiel: SpielId,
+    options?: ReadOptions
+  ): Promise<Spielbericht | undefined>;
 }

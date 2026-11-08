@@ -2,7 +2,12 @@ import { rejectedError } from '../../testing/caught-error';
 import { BasketballDataError } from '../domain/basketball-data-error';
 import { KEIN_LIGA_FILTER, type LigaSucheFilter } from '../domain/liga-suche';
 import { DbbBasketballData, VEREINS_SPIELE_TAGE } from './dbb-basketball-data';
-import type { DbbRequest, DbbRequestKind } from './dbb-request';
+import {
+  UnsupportedDbbRequestError,
+  type DbbRequest,
+  type DbbRequestKind,
+  type DbbTransport,
+} from './dbb-request';
 import boxscoreNotFound from './fixtures/boxscore-not-found.json';
 import keinBericht from './fixtures/boxscore-2843814.json';
 import mitWerten from './fixtures/boxscore-2911141.json';
@@ -217,5 +222,83 @@ describe('DbbBasketballData', () => {
     expect((await rejectedError(() => data.spiel(2911141))).kind).toBe(
       'unexpected-shape'
     );
+  });
+  it('passes on a read the transport has no way to make, as the bug it is', async () => {
+    const unsupported = new UnsupportedDbbRequestError('tabelle');
+    const data = new DbbBasketballData(() => Promise.reject(unsupported));
+
+    await expect(data.tabelle(54308)).rejects.toBe(unsupported);
+  });
+
+  describe('cancelling', () => {
+    const reads: ReadonlyArray<
+      [
+        string,
+        (data: DbbBasketballData, signal: AbortSignal) => Promise<unknown>,
+      ]
+    > = [
+      ['ligaSuche', (data, signal) => data.ligaSuche(BAYERN_U14, { signal })],
+      [
+        'ligaSeite',
+        (data, signal) => data.ligaSeite(BAYERN_U14, 10, { signal }),
+      ],
+      ['ligaTeams', (data, signal) => data.ligaTeams(54379, { signal })],
+      ['vereinsTeams', (data, signal) => data.vereinsTeams(1476, { signal })],
+      ['teamSpiele', (data, signal) => data.teamSpiele(313036, { signal })],
+      ['tabelle', (data, signal) => data.tabelle(54308, { signal })],
+      ['spiel', (data, signal) => data.spiel(2911141, { signal })],
+      [
+        'spielbericht',
+        (data, signal) => data.spielbericht(2911141, { signal }),
+      ],
+    ];
+
+    it.each(reads)(
+      'hands the signal of %s to the transport',
+      async (_read, read) => {
+        const transport = jest.fn<Promise<unknown>, Parameters<DbbTransport>>(
+          async () => {
+            throw new TypeError('fetch failed');
+          }
+        );
+        const { signal } = new AbortController();
+
+        await read(new DbbBasketballData(transport), signal).catch(
+          () => undefined
+        );
+
+        expect(transport).toHaveBeenCalledWith(expect.anything(), { signal });
+      }
+    );
+
+    it('rejects a cancelled read with the reason it was cancelled for', async () => {
+      const controller = new AbortController();
+      const transport: DbbTransport = (_request, options) =>
+        new Promise((_resolve, reject) =>
+          options?.signal?.addEventListener('abort', () =>
+            reject(new TypeError('aborted fetch'))
+          )
+        );
+      const read = new DbbBasketballData(transport).teamSpiele(313036, {
+        signal: controller.signal,
+      });
+
+      const reason = new Error('navigated away');
+      controller.abort(reason);
+
+      await expect(read).rejects.toBe(reason);
+    });
+
+    it('asks nothing for a read cancelled before it began', async () => {
+      const transport = jest.fn<Promise<unknown>, Parameters<DbbTransport>>();
+      const reason = new Error('navigated away');
+
+      await expect(
+        new DbbBasketballData(transport).teamSpiele(313036, {
+          signal: AbortSignal.abort(reason),
+        })
+      ).rejects.toBe(reason);
+      expect(transport).not.toHaveBeenCalled();
+    });
   });
 });
