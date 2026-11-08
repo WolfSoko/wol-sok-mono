@@ -1,4 +1,9 @@
-import { boostRingRadius, crosshairBars, CursorShape } from './arena-painter';
+import {
+  boostRing,
+  crosshairBars,
+  cursorColor,
+  CursorShape,
+} from './arena-painter';
 
 /** Expected values below are worked out by hand, not through the code. */
 describe('crosshairBars', () => {
@@ -25,16 +30,52 @@ describe('crosshairBars', () => {
   });
 });
 
-describe('boostRingRadius', () => {
-  it('rings a fresh boost at 9 base cells', () => {
-    expect(boostRingRadius(1)).toBe(9);
+describe('boostRing', () => {
+  const at = (boostLeft: number | null): CursorShape => ({
+    x: 90,
+    y: 40,
+    color: [0, 0, 255, 255],
+    boostLeft,
+  });
+
+  it('draws no ring without a running boost', () => {
+    expect(boostRing(at(null), 1)).toBeNull();
+  });
+
+  it('rings a fresh boost at 9 base cells with a line of 1.5', () => {
+    expect(boostRing(at(1), 1)).toEqual({ radius: 9, lineWidth: 1.5 });
   });
 
   it('widens the ring to 13 base cells as the boost runs out', () => {
-    expect(boostRingRadius(0)).toBe(13);
+    expect(boostRing(at(0), 1)?.radius).toBe(13);
   });
 
-  it('widens the ring by 4 base cells over the boost', () => {
-    expect(boostRingRadius(0.25)).toBe(12);
+  it('draws the ring twice as wide, with a line twice as thick, on a grid of two cells per base cell', () => {
+    // Radius (9 + 4 * (1 - 0.25)) * 2 = 24, line 1.5 * 2 = 3.
+    expect(boostRing(at(0.25), 2)).toEqual({ radius: 24, lineWidth: 3 });
+  });
+});
+
+describe('cursorColor', () => {
+  const colored = (color: readonly number[]): CursorShape => ({
+    x: 0,
+    y: 0,
+    color,
+    boostLeft: null,
+  });
+
+  it('splits an opaque colour into its channels and an alpha of 1', () => {
+    expect(cursorColor(colored([255, 0, 0, 255]))).toEqual({
+      rgb: [255, 0, 0],
+      alpha: 1,
+    });
+  });
+
+  it('turns an alpha from 0 to 255 into one from 0 to 1', () => {
+    expect(cursorColor(colored([0, 0, 255, 51])).alpha).toBe(0.2);
+  });
+
+  it('takes a colour without an alpha as opaque', () => {
+    expect(cursorColor(colored([0, 0, 255])).alpha).toBe(1);
   });
 });

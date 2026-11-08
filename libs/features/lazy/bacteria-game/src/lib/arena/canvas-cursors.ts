@@ -1,4 +1,10 @@
-import { boostRingRadius, crosshairBars, CursorShape } from './arena-painter';
+import {
+  boostRing,
+  crosshairBars,
+  cursorColor,
+  CursorShape,
+} from './arena-painter';
+import { rgba } from './canvas-math';
 
 /**
  * Draws each player's crosshair in their own colour, with a ring around it
@@ -11,23 +17,19 @@ export function drawCursors(
   unit: number
 ): void {
   for (const cursor of cursors) {
-    const css = `rgba(${cursor.color.join(',')})`;
+    const { rgb, alpha } = cursorColor(cursor);
+    const css = rgba(rgb, alpha);
     cx.fillStyle = css;
     for (const bar of crosshairBars(cursor, unit)) {
       cx.fillRect(bar.x, bar.y, bar.width, bar.height);
     }
 
-    if (cursor.boostLeft != null) {
+    const ring = boostRing(cursor, unit);
+    if (ring) {
       cx.strokeStyle = css;
-      cx.lineWidth = 1.5 * unit;
+      cx.lineWidth = ring.lineWidth;
       cx.beginPath();
-      cx.arc(
-        cursor.x,
-        cursor.y,
-        boostRingRadius(cursor.boostLeft) * unit,
-        0,
-        Math.PI * 2
-      );
+      cx.arc(cursor.x, cursor.y, ring.radius, 0, Math.PI * 2);
       cx.stroke();
     }
   }

@@ -9,7 +9,7 @@ import {
   type WeaponFire,
   Zone,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { ArenaTheme } from './arena-theme';
+import { ArenaTheme, Rgb } from './arena-theme';
 import type { PaintedColony } from './colony-renderer';
 
 export type { PaintedColony } from './colony-renderer';
@@ -154,7 +154,41 @@ export function crosshairBars(cursor: CursorShape, unit: number): [Rect, Rect] {
   ];
 }
 
-/** The radius of the ring around a boosted crosshair - it widens as the boost runs out. */
-export function boostRingRadius(boostLeft: number): number {
-  return 9 + 4 * (1 - boostLeft);
+/** The ring around a boosted crosshair, in arena cells. */
+export interface BoostRing {
+  radius: number;
+  lineWidth: number;
+}
+
+/** A crosshair's colour as its channels and an alpha from 0 to 1. */
+export interface CursorColor {
+  rgb: Rgb;
+  alpha: number;
+}
+
+const OPAQUE = 255;
+
+/**
+ * The ring around a boosted crosshair, `unit` cells per base cell so it is as
+ * big on every grid - it widens as the boost runs out. Null without a running
+ * boost.
+ */
+export function boostRing(cursor: CursorShape, unit: number): BoostRing | null {
+  if (cursor.boostLeft == null) {
+    return null;
+  }
+  return {
+    radius: (9 + 4 * (1 - cursor.boostLeft)) * unit,
+    lineWidth: 1.5 * unit,
+  };
+}
+
+/**
+ * A crosshair's colour for both painters: `CursorShape.color` holds its alpha
+ * from 0 to 255, a painter draws with one from 0 to 1. Without an alpha it is
+ * opaque.
+ */
+export function cursorColor(cursor: CursorShape): CursorColor {
+  const [r, g, b, alpha = OPAQUE] = cursor.color;
+  return { rgb: [r, g, b], alpha: alpha / OPAQUE };
 }
