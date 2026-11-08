@@ -7,6 +7,9 @@ import type {
 import { DbbObject } from './dbb-object';
 import { optionalField } from './optional-field';
 
+/** A side the boxscore lists no players for. */
+const KEIN_KADER: Kader = { spielerwerteErfasst: false, eintraege: [] };
+
 /** The shirt number the DBB lists for every player where it has none. */
 const NO_SHIRT_NUMBER = '0';
 
@@ -20,12 +23,23 @@ export function mapSpielbericht(data: unknown): Spielbericht | undefined {
   const match = DbbObject.of(data, 'boxscore');
   const spielId = match.number('matchId');
   const boxscore = match.optionalObject('matchBoxscore');
-  const heim = boxscore?.optionalObjects('homePlayerStats') ?? [];
-  const gast = boxscore?.optionalObjects('guestPlayerStats') ?? [];
-  if (heim.length === 0 && gast.length === 0) {
+  const heim = boxscore ? mapKaderOf(boxscore, 'homePlayerStats') : KEIN_KADER;
+  const gast = boxscore ? mapKaderOf(boxscore, 'guestPlayerStats') : KEIN_KADER;
+  if (heim.eintraege.length === 0 && gast.eintraege.length === 0) {
     return undefined;
   }
-  return { spielId, heim: mapKader(heim), gast: mapKader(gast) };
+  return { spielId, heim, gast };
+}
+
+/** The player lists of a boxscore (`matchBoxscore`), one per side. */
+export type PlayerStatsKey = 'homePlayerStats' | 'guestPlayerStats';
+
+/**
+ * One side's Kader of a boxscore (`matchBoxscore`), every entry checked as
+ * `mapSpielbericht` reads it: throws where one cannot be read.
+ */
+export function mapKaderOf(boxscore: DbbObject, key: PlayerStatsKey): Kader {
+  return mapKader(boxscore.optionalObjects(key));
 }
 
 /** Each row mapped once; the numbers kept only where any is not 0. */

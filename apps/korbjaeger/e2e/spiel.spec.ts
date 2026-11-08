@@ -86,7 +86,7 @@ test.describe('Spiel page', () => {
   test('says when there is no Spielbericht yet', async ({ spielPage }) => {
     await spielPage.goto(2843814);
 
-    await expect(spielPage.status).toHaveText('Noch nicht gespielt');
+    await expect(spielPage.status).toHaveText('Noch kein Ergebnis');
     await expect(spielPage.berichtFehlt).toContainText(
       'Noch kein Spielbericht'
     );

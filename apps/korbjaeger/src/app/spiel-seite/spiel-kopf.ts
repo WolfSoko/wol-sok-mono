@@ -79,7 +79,7 @@ function partner(partei: SpielPartei): SpielPartner {
 function statusText(spiel: Spiel): string | undefined {
   switch (spiel.status.art) {
     case 'geplant':
-      return 'Noch nicht gespielt';
+      return 'Noch kein Ergebnis';
     case 'abgesagt':
       return 'abgesagt';
     case 'kampflos': {

@@ -405,11 +405,13 @@ describe('UeberblickComponent', () => {
       expect(text(naechstes?.querySelector('[data-qa="halle-name"]'))).toBe(
         'Sporthalle am Wasserturm'
       );
-      expect(
-        naechstes
-          ?.querySelector('[data-qa="halle-navigation"]')
-          ?.getAttribute('rel')
-      ).toBe('noopener');
+      const navigation = naechstes?.querySelector(
+        '[data-qa="halle-navigation"]'
+      );
+      expect(navigation?.getAttribute('rel')).toBe('noopener');
+      expect(navigation?.getAttribute('href')).toBe(
+        'https://www.google.com/maps/search/?api=1&query=Sporthalle%20am%20Wasserturm%2C%20Turmweg%201%2C%2038518%20Gifhorn'
+      );
     });
 
     it('reads the Halle of each next Spiel only', async () => {

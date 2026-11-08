@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
-  halleNavigationUrl,
   type Halle,
   type Kader,
   type SpielDetails,
@@ -183,6 +182,47 @@ describe('SpielComponent', () => {
     });
   });
 
+  it('reads the new Spiel when the id changes, dropping the last one', async () => {
+    const data = fakeData(
+      (spielId) => (spielId === 2861436 ? Promise.resolve(GESPIELT) : NIE),
+      (spielId) =>
+        spielId === 2861436
+          ? Promise.resolve(bericht(MIT_WERTEN, OHNE_WERTE))
+          : NIE
+    );
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        { provide: BASKETBALL_DATA, useValue: data },
+      ],
+    });
+    const fixture = TestBed.createComponent(SpielComponent);
+    const stabil = async (): Promise<void> => {
+      fixture.detectChanges();
+      await new Promise((resolve) => setTimeout(resolve));
+      fixture.detectChanges();
+    };
+    fixture.componentRef.setInput('spielId', '2861436');
+    await stabil();
+    const seite = fixture.nativeElement as HTMLElement;
+    expect(text(teil(seite, 'spiel-ergebnis'))).toBe('78:47');
+    expect(alle(seite, 'kader')).toHaveLength(2);
+
+    fixture.componentRef.setInput('spielId', '2911141');
+    await stabil();
+
+    expect(data.spiel).toHaveBeenLastCalledWith(2911141, {
+      signal: expect.any(AbortSignal),
+    });
+    expect(data.spielbericht).toHaveBeenLastCalledWith(2911141, {
+      signal: expect.any(AbortSignal),
+    });
+    expect(teil(seite, 'spiel-ergebnis')).toBeNull();
+    expect(teil(seite, 'halle')).toBeNull();
+    expect(alle(seite, 'kader')).toEqual([]);
+    expect(text(seite.querySelector('h1'))).toBe('Spiel');
+  });
+
   describe('the Spiel', () => {
     it('shows the final score, day, time and Liga', async () => {
       const seite = await render(
@@ -302,9 +342,9 @@ describe('SpielComponent', () => {
 
     it.each([
       [
-        'a planned Spiel as not played yet',
+        'a Spiel without a result yet, planned or not entered',
         { art: 'geplant' },
-        'Noch nicht gespielt',
+        'Noch kein Ergebnis',
       ],
       ['a cancelled Spiel', { art: 'abgesagt' }, 'abgesagt'],
       [
@@ -363,7 +403,9 @@ describe('SpielComponent', () => {
         'Schulstr. 12, 38553 Wasbüttel'
       );
       const link = halle?.querySelector('a');
-      expect(link?.getAttribute('href')).toBe(halleNavigationUrl(HALLE));
+      expect(link?.getAttribute('href')).toBe(
+        'https://www.google.com/maps/search/?api=1&query=Schulsporthalle%2C%20Schulstr.%2012%2C%2038553%20Wasb%C3%BCttel'
+      );
       expect(link?.getAttribute('target')).toBe('_blank');
       expect(link?.getAttribute('rel')).toBe('noopener');
     });

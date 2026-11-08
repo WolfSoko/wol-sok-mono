@@ -392,6 +392,9 @@ describe('TeamComponent', () => {
       const navigation = block?.querySelector('[data-qa="halle-navigation"]');
       expect(navigation?.getAttribute('target')).toBe('_blank');
       expect(navigation?.getAttribute('rel')).toBe('noopener');
+      expect(navigation?.getAttribute('href')).toBe(
+        'https://www.google.com/maps/search/?api=1&query=Schulsporthalle%2C%20Schulstr.%2012%2C%2038553%20Wasb%C3%BCttel'
+      );
       expect(block?.querySelector('a[href="/spiel/2"]')?.textContent).toContain(
         'MTV Gifhorn'
       );

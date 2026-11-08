@@ -43,6 +43,31 @@ describe('dbbBoxscoreFinished', () => {
   });
 
   it.each([
+    ['a null entry', null],
+    ['an entry without player', { pts: 2 }],
+    [
+      'a named player without person id',
+      {
+        pts: 2,
+        player: { anonym: false, person: { vorname: 'A', nachname: 'B' } },
+      },
+    ],
+  ])('holds for no Spielbericht with %s in a Kader', (_case, eintrag) => {
+    const { homePlayerStats } = mitWerten.data.matchBoxscore;
+
+    expect(
+      dbbBoxscoreFinished(
+        mit(mitWerten, {
+          matchBoxscore: {
+            ...mitWerten.data.matchBoxscore,
+            homePlayerStats: [...homePlayerStats, eintrag],
+          },
+        })
+      )
+    ).toBe(false);
+  });
+
+  it.each([
     ['no result', { result: null }],
     ['a placeholder result', { result: '-:-' }],
     ['a cancelled Spiel', { abgesagt: true }],
