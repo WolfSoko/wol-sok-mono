@@ -88,7 +88,11 @@
       ],
       "dependsOn": ["build"],
       "options": {
-        "command": "nx run korbjaeger:firebase deploy"
+        "commands": [
+          "nx run korbjaeger:firebase functions:artifacts:setpolicy --location=europe-central2 --days=1 --force",
+          "nx run korbjaeger:firebase deploy"
+        ],
+        "parallel": false
       }
     },
     "typecheck-specs": {}
