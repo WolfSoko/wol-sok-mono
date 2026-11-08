@@ -1,7 +1,7 @@
 # DBB fixtures
 
 Responses of the DBB's JSON API (`https://www.basketball-bund.net/rest`),
-recorded on 2026-11-08 by `tools/korbjaeger/record-fixtures.ts` (the list is
+recorded on 2026-11-08 (the Tabellen of Team 313036's Ligen later that day) by `tools/korbjaeger/record-fixtures.ts` (the list is
 `tools/korbjaeger/fixture-requests.ts`) and anonymised by
 `tools/korbjaeger/anonymise-fixtures.ts`:
 
@@ -9,6 +9,11 @@ recorded on 2026-11-08 by `tools/korbjaeger/record-fixtures.ts` (the list is
 NODE_USE_ENV_PROXY=1 npx tsx tools/korbjaeger/record-fixtures.ts <raw-dir>
 npx tsx tools/korbjaeger/anonymise-fixtures.ts <raw-dir>
 ```
+
+To add a fixture, give it a row in `fixture-requests.ts` and record only it
+(`record-fixtures.ts <raw-dir> <name>...`) into the folder that holds the
+others' recordings, so theirs stay as they were; the anonymiser then rewrites
+every fixture from that folder, the others unchanged.
 
 The raw responses name real children; `<raw-dir>` must lie outside the
 workspace and is never committed. Every person name and id (players,
@@ -26,6 +31,8 @@ invented. Long lists are cut where `fixture-requests.ts` says (`trims`).
 | `spielplan-54379.json`                                                   | Schleswig-Holstein youth Vorrunde: Spiele a Team gave up (`verzicht`)                                                  |
 | `spielplan-54857.json`                                                   | Hauptrunde before its Vorrunden ended: slots without a Team ("Nord 1. Platz")                                          |
 | `table-54308.json`                                                       | Tabelle                                                                                                                |
+| `table-54862.json`                                                       | Tabelle of Team 313036's Vorrunde (the Team on rank 2), for the e2e                                                    |
+| `table-54689.json`                                                       | A friendly Liga: the DBB keeps no Tabelle (`tabelle: null`), for the e2e                                               |
 | `team-313036-matches.json`                                               | A Team in two Ligen (a friendly Liga, then its Vorrunde)                                                               |
 | `club-1476-actualmatches.json`                                           | A Verein's Spiele: two of its Teams against each other (listed twice), a Team in two Ligen                             |
 | `matchinfo-2911141.json`                                                 | Played Spiel: result, quarters, Halle, referees                                                                        |

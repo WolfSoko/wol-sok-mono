@@ -1,6 +1,8 @@
 import { caughtError } from '../../testing/caught-error';
 import { readEnvelope } from './envelope';
 import table from './fixtures/table-54308.json';
+import friendlyTable from './fixtures/table-54689.json';
+import vorrundeTable from './fixtures/table-54862.json';
 import { mapTabelle } from './map-tabelle';
 
 describe('mapTabelle', () => {
@@ -27,6 +29,33 @@ describe('mapTabelle', () => {
     expect(tabelle.zeilen.map((zeile) => zeile.rang)).toEqual([
       1, 2, 3, 4, 5, 6, 7,
     ]);
+  });
+
+  it('reads every line of a Vorrunde, its Teams by the ids their Spiele name', () => {
+    const vorrunde = mapTabelle(readEnvelope(vorrundeTable));
+
+    expect(vorrunde.liga.name).toBe('Regionsvorrunde Nord Braunschweig mu12');
+    expect(vorrunde.zeilen[1]).toEqual({
+      rang: 2,
+      team: { id: 313036, name: 'MTV Wasbüttel -RST-', vereinId: 1837 },
+      spiele: 5,
+      siege: 4,
+      niederlagen: 1,
+      punkte: 8,
+      koerbe: 470,
+      gegenkoerbe: 204,
+      korbdifferenz: 266,
+    });
+    expect(vorrunde.zeilen.map((zeile) => zeile.team.id)).toEqual([
+      313040, 313036, 201500, 320898, 319164, 322695,
+    ]);
+  });
+
+  it('reads a friendly Liga, which the DBB keeps no Tabelle for, as empty', () => {
+    const testspiele = mapTabelle(readEnvelope(friendlyTable));
+
+    expect(testspiele.liga.id).toBe(54689);
+    expect(testspiele.zeilen).toEqual([]);
   });
 
   it('reads a Liga that keeps no Tabelle yet as empty', () => {

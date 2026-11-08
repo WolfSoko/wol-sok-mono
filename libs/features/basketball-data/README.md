@@ -57,7 +57,9 @@ and e2e only) holds `fakeDbbAnswer(method, path)`: how the DBB answers a
 read, from the fixtures below (the recording of a recorded id, the DBB's
 not-found envelope for any other id, `undefined` for a read it does not
 know). The app's proxy specs and its e2e fake DBB server answer with it; a
-read a later screen needs gets its row in `src/testing/fake-dbb.ts`.
+read a later screen needs gets its row in `src/testing/fake-dbb.ts`. It
+knows Team `313036`'s Spiele and the Tabellen of its two Ligen (`54862`, a
+Vorrunde, and `54689`, a friendly Liga the DBB keeps none for).
 
 ## Tests
 

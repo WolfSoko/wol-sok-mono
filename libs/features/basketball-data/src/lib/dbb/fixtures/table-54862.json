@@ -1,0 +1,176 @@
+{
+  "timestamp": "2026-11-08T18:23:41+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "prevSpieltag": null,
+    "selSpieltag": null,
+    "selSpielDatum": null,
+    "nextSpieltag": null,
+    "ligaData": {
+      "seasonId": 2026,
+      "seasonName": "2026/2027",
+      "actualMatchDay": {
+        "spieltag": 5,
+        "bezeichnung": "5. Spieltag"
+      },
+      "ligaId": 54862,
+      "liganame": "Regionsvorrunde Nord Braunschweig mu12",
+      "liganr": 42185,
+      "skName": "Regionsklasse",
+      "skNameSmall": "RKl",
+      "skEbeneId": 1,
+      "skEbeneName": "Bezirk",
+      "akName": "U12",
+      "geschlechtId": 1,
+      "geschlecht": "männlich",
+      "verbandId": 7,
+      "verbandName": "Niedersachsen",
+      "bezirknr": 10,
+      "bezirkName": "Region Braunschweig",
+      "kreisnr": null,
+      "kreisname": null,
+      "statisticType": 1,
+      "vorabliga": false,
+      "tableExists": true,
+      "crossTableExists": true
+    },
+    "spieltage": null,
+    "matches": [],
+    "tabelle": {
+      "ligaData": null,
+      "entries": [
+        {
+          "rang": 1,
+          "team": {
+            "seasonTeamId": 454492,
+            "teamCompetitionId": 454492,
+            "teamPermanentId": 313040,
+            "teamname": "TV Jahn Wolfsburg Honeybadgers -RST-",
+            "teamnameSmall": "TVJ",
+            "clubId": 2486,
+            "verzicht": false
+          },
+          "anzspiele": 5,
+          "anzGewinnpunkte": 10,
+          "anzVerlustpunkte": 0,
+          "s": 5,
+          "n": 0,
+          "koerbe": 510,
+          "gegenKoerbe": 191,
+          "korbdiff": 319
+        },
+        {
+          "rang": 2,
+          "team": {
+            "seasonTeamId": 454493,
+            "teamCompetitionId": 454493,
+            "teamPermanentId": 313036,
+            "teamname": "MTV Wasbüttel -RST-",
+            "teamnameSmall": "WAS",
+            "clubId": 1837,
+            "verzicht": false
+          },
+          "anzspiele": 5,
+          "anzGewinnpunkte": 8,
+          "anzVerlustpunkte": 0,
+          "s": 4,
+          "n": 1,
+          "koerbe": 470,
+          "gegenKoerbe": 204,
+          "korbdiff": 266
+        },
+        {
+          "rang": 3,
+          "team": {
+            "seasonTeamId": 454491,
+            "teamCompetitionId": 454491,
+            "teamPermanentId": 201500,
+            "teamname": "MTV Gifhorn",
+            "teamnameSmall": "GIF",
+            "clubId": 645,
+            "verzicht": false
+          },
+          "anzspiele": 5,
+          "anzGewinnpunkte": 6,
+          "anzVerlustpunkte": 0,
+          "s": 3,
+          "n": 2,
+          "koerbe": 373,
+          "gegenKoerbe": 264,
+          "korbdiff": 109
+        },
+        {
+          "rang": 4,
+          "team": {
+            "seasonTeamId": 454495,
+            "teamCompetitionId": 454495,
+            "teamPermanentId": 320898,
+            "teamname": "SV Groß Oesingen -RST-",
+            "teamnameSmall": "OES",
+            "clubId": 5256,
+            "verzicht": false
+          },
+          "anzspiele": 5,
+          "anzGewinnpunkte": 4,
+          "anzVerlustpunkte": 0,
+          "s": 2,
+          "n": 3,
+          "koerbe": 239,
+          "gegenKoerbe": 366,
+          "korbdiff": -127
+        },
+        {
+          "rang": 5,
+          "team": {
+            "seasonTeamId": 454494,
+            "teamCompetitionId": 454494,
+            "teamPermanentId": 319164,
+            "teamname": "TuS Müden-Dieckhorst -RST/aK-",
+            "teamnameSmall": "Müden",
+            "clubId": 3890,
+            "verzicht": false
+          },
+          "anzspiele": 5,
+          "anzGewinnpunkte": 2,
+          "anzVerlustpunkte": 0,
+          "s": 1,
+          "n": 4,
+          "koerbe": 264,
+          "gegenKoerbe": 358,
+          "korbdiff": -94
+        },
+        {
+          "rang": 6,
+          "team": {
+            "seasonTeamId": 454496,
+            "teamCompetitionId": 454496,
+            "teamPermanentId": 322695,
+            "teamname": "SV Groß Schwülper",
+            "teamnameSmall": "SCHW",
+            "clubId": 4332,
+            "verzicht": false
+          },
+          "anzspiele": 5,
+          "anzGewinnpunkte": 0,
+          "anzVerlustpunkte": 0,
+          "s": 0,
+          "n": 5,
+          "koerbe": 102,
+          "gegenKoerbe": 575,
+          "korbdiff": -473
+        }
+      ],
+      "bbl": false
+    },
+    "kreuztabelle": null,
+    "teamStatistik": null
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}
