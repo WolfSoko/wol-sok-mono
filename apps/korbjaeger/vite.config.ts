@@ -50,11 +50,23 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
             // set, the fake DBB in the e2e build, NITRO_DBB_BASE_URL at run time
             dbbBaseUrl: mode === 'e2e' ? FAKE_DBB_BASE_URL : '',
           },
+          routeRules: {
+            // ADR 0019: no response is indexed. Hosting sends the header on
+            // its files too (firebase.korbjaeger.json); the function sets it
+            // itself, whether or not Hosting's headers reach its responses.
+            '/**': { headers: { 'X-Robots-Tag': 'noindex' } },
+          },
           preset: 'firebase',
-          // region and instances come with the Firebase project (#2875)
           firebase: {
             nodeVersion: '22',
             gen: 2,
+            httpsOptions: {
+              // as pacetrainer and rollapolla-analog
+              region: 'europe-central2',
+              // only the DBB proxy runs here, cached by the CDN: a few
+              // instances serve it and keep a burst off the DBB and the bill
+              maxInstances: 10,
+            },
           },
         },
       }),
