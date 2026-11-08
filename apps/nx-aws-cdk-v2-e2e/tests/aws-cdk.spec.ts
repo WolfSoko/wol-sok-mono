@@ -33,6 +33,15 @@ describe('aws-cdk-v2 e2e', () => {
     );
   }, 120000);
 
+  /**
+   * Runs an Nx task and returns what it printed. Without `--output-style=stream`
+   * Nx prints only its run summary when stdout is no terminal, not the task's log.
+   */
+  async function runNxTaskWithLogs(command: string): Promise<string> {
+    const result = await runNxCommandAsync(`${command} --output-style=stream`);
+    return stripVTControlCharacters(`${result.stdout}\n${result.stderr}`);
+  }
+
   async function readProjectConfigurationFromNx(
     projectName: string
   ): Promise<ProjectConfiguration> {
@@ -49,12 +58,7 @@ describe('aws-cdk-v2 e2e', () => {
       `generate @wolsok/nx-aws-cdk-v2:application ${plugin}`
     );
 
-    const testResult = await runNxCommandAsync(
-      `test ${plugin} --output-style=stream`
-    );
-    const output = stripVTControlCharacters(
-      `${testResult.stdout}\n${testResult.stderr}`
-    );
+    const output = await runNxTaskWithLogs(`test ${plugin}`);
 
     expect(output).toMatch(/Tests:\s+\d+ passed, \d+ total/);
     expect(output).not.toContain('CloudFormation-Validate');
@@ -162,9 +166,10 @@ describe('aws-cdk-v2 e2e', () => {
     );
     const project = await readProjectConfigurationFromNx(plugin);
 
-    const synthResult = await runNxCommandAsync(`run ${plugin}:synth`);
+    const synthOutput = await runNxTaskWithLogs(`run ${plugin}:synth`);
 
-    expect(synthResult.stdout).toContain(plugin);
+    // The template cdk prints; Nx's own lines name the project too, so they prove nothing.
+    expect(synthOutput).toContain(`aws:cdk:path: ${plugin}/CDKMetadata`);
     expect(() =>
       checkFilesExist(`cdk.out/${plugin}.template.json`)
     ).not.toThrow();
