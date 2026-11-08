@@ -1,0 +1,24 @@
+.verein {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.fehler {
+  color: var(--mat-sys-error);
+}
+
+.ausgang {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.ergebnis {
+  font: var(--mat-sys-title-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.markierung {
+  --mat-chip-elevated-container-color: var(--mat-sys-error-container);
+  --mat-chip-label-text-color: var(--mat-sys-on-error-container);
+}
