@@ -20,7 +20,7 @@ export type UeberblickEintrag =
       readonly teamId: TeamId;
       readonly name: string;
       readonly naechstes?: SpielZeile;
-      readonly abgesagt: readonly SpielZeile[];
+      readonly ausfaelle: readonly SpielZeile[];
       readonly letztes?: SpielZeile;
     }
   | {
@@ -55,7 +55,7 @@ interface Sortierbar {
 }
 
 function teamEintrag(saison: TeamSaison, heute: string): Sortierbar {
-  const { naechstes, abgesagt, letztes } = teamUeberblick(saison, heute);
+  const { naechstes, ausfaelle, letztes } = teamUeberblick(saison, heute);
   const zeile = (spiel: Spiel | undefined): SpielZeile | undefined =>
     spiel && spielZeile(saison, spiel);
   return {
@@ -65,7 +65,7 @@ function teamEintrag(saison: TeamSaison, heute: string): Sortierbar {
       teamId: saison.team.id,
       name: saison.team.name,
       naechstes: zeile(naechstes),
-      abgesagt: abgesagt.map((spiel) => spielZeile(saison, spiel)),
+      ausfaelle: ausfaelle.map((spiel) => spielZeile(saison, spiel)),
       letztes: zeile(letztes),
     },
   };

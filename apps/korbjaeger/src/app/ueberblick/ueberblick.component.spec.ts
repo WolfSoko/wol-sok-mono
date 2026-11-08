@@ -259,14 +259,15 @@ describe('UeberblickComponent', () => {
     );
 
     const [eintrag] = eintraege(seite);
-    const abgesagt = text(teil(eintrag, 'abgesagt'));
+    const abgesagt = text(teil(eintrag, 'ausfall'));
+    expect(abgesagt).toContain('Fällt aus');
     expect(abgesagt).toContain('abgesagt');
     expect(abgesagt).toContain('Sa., 14.11.2026');
     expect(abgesagt).toContain('gegen SV Groß Oesingen');
     expect(text(teil(eintrag, 'naechstes'))).toContain('gegen MTV Gifhorn');
   });
 
-  it('shows a forfeited Spiel as forfeited, next or last', async () => {
+  it('shows a forfeited Spiel as forfeited, to come or last', async () => {
     const seite = await render(
       fakeData([
         saison(
@@ -287,7 +288,8 @@ describe('UeberblickComponent', () => {
     );
 
     const [eintrag] = eintraege(seite);
-    expect(text(teil(eintrag, 'naechstes'))).toContain('kampflos');
+    expect(teil(eintrag, 'naechstes')).toBeNull();
+    expect(text(teil(eintrag, 'ausfall'))).toContain('kampflos');
     expect(text(teil(eintrag, 'letztes'))).toContain('kampflos');
     expect(text(teil(eintrag, 'letztes'))).toContain('20:0');
   });

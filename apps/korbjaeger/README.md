@@ -34,8 +34,8 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   `auswahlVertrag` (`testing/auswahl-vertrag.ts`), the Firestore adapter
   of Ticket 8 too.
 - **Overview** (`/`, `src/app/ueberblick/`): each of Meine Teams with its
-  next Spiel (day, time, home or away, opponent), the cancelled Spiele
-  before it and its last result (the lib's `teamUeberblick`), the Team
+  next Spiel (day, time, home or away, opponent), the Spiele
+  before it that fall through (cancelled or forfeited) and its last result (the lib's `teamUeberblick`), the Team
   that plays first first and Teams without a next Spiel last
   (`nachNaechstemSpiel`), each linking to its Team page. Each Team is
   read through `teamSpiele` and fails on its own. The Team-id form below

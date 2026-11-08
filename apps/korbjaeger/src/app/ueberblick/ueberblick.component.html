@@ -32,11 +32,11 @@
               </p>
             }
             @case ("team") {
-              @for (abgesagt of eintrag.abgesagt; track abgesagt.id) {
+              @for (ausfall of eintrag.ausfaelle; track ausfall.id) {
                 <korb-ueberblick-spiel
-                  titel="Abgesagt"
-                  [zeile]="abgesagt"
-                  data-qa="ueberblick-abgesagt"
+                  titel="Fällt aus"
+                  [zeile]="ausfall"
+                  data-qa="ueberblick-ausfall"
                 />
               }
               @if (eintrag.naechstes; as naechstes) {
@@ -56,7 +56,7 @@
               @if (
                 !eintrag.naechstes &&
                 !eintrag.letztes &&
-                eintrag.abgesagt.length === 0
+                eintrag.ausfaelle.length === 0
               ) {
                 <p>Noch keine Spiele in dieser Saison.</p>
               }

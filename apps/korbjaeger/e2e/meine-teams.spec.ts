@@ -5,8 +5,9 @@ const MTV_WASBUETTEL = 313036;
 
 test.describe('Meine Teams', () => {
   test.beforeEach(async ({ page }) => {
-    // a week before the Team's last Spiel in the fixtures
-    await page.clock.setFixedTime(new Date('2026-11-01T12:00:00+01:00'));
+    // the day after the Team's last Spiel in the fixtures: all are played,
+    // so the overview shows the last result only
+    await page.clock.setFixedTime(new Date('2026-11-09T12:00:00+01:00'));
   });
 
   test('a Team followed on its page shows on the overview, after a reload too', async ({
@@ -25,22 +26,18 @@ test.describe('Meine Teams', () => {
     await page.getByRole('link', { name: 'Korbjäger' }).click();
     const team = startPage.team('MTV Wasbüttel');
     await expect(startPage.teams).toHaveCount(1);
-    await expect(startPage.naechstesSpiel(team)).toContainText(
+    await expect(startPage.naechstesSpiel(team)).toHaveCount(0);
+    await expect(startPage.letztesErgebnis(team)).toContainText(
       'So., 08.11.2026 · 09:00 Uhr'
     );
-    await expect(startPage.naechstesSpiel(team)).toContainText(
+    await expect(startPage.letztesErgebnis(team)).toContainText(
       'Heim gegen TV Jahn Wolfsburg Honeybadgers -RST-'
     );
-    await expect(startPage.letztesErgebnis(team)).toContainText(
-      'Auswärts gegen SV Groß Oesingen -RST-'
-    );
-    await expect(startPage.letztesErgebnis(team)).toContainText('30:111');
+    await expect(startPage.letztesErgebnis(team)).toContainText('58:67');
 
     await page.reload();
     await expect(startPage.teams).toHaveCount(1);
-    await expect(startPage.naechstesSpiel(team)).toContainText(
-      'So., 08.11.2026'
-    );
+    await expect(startPage.letztesErgebnis(team)).toContainText('58:67');
 
     await team.getByRole('link', { name: 'MTV Wasbüttel' }).click();
     await expect(teamPage.heading).toHaveText('MTV Wasbüttel');

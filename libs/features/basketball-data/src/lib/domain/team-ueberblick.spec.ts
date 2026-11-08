@@ -47,7 +47,7 @@ const HEUTE = '2026-11-08';
 
 describe('teamUeberblick', () => {
   it('has neither a next Spiel nor a result for a Team without Spiele', () => {
-    expect(teamUeberblick(saison(), HEUTE)).toEqual({ abgesagt: [] });
+    expect(teamUeberblick(saison(), HEUTE)).toEqual({ ausfaelle: [] });
   });
 
   it('has the next Spiel and the last result around today', () => {
@@ -84,28 +84,47 @@ describe('teamUeberblick', () => {
     expect(ueberblick.letztes?.id).toBe(1);
   });
 
-  it("counts today's Spiel as the last result once it has one", () => {
+  it("counts today's Spiel as the last result once it has one, not as the next", () => {
     const ueberblick = teamUeberblick(
-      saison(spiel(1, '2026-10-03', GESPIELT), spiel(2, HEUTE, GESPIELT)),
+      saison(
+        spiel(1, '2026-10-03', GESPIELT),
+        spiel(2, HEUTE, GESPIELT),
+        spiel(3, '2026-11-21')
+      ),
       HEUTE
     );
 
     expect(ueberblick.letztes?.id).toBe(2);
+    expect(ueberblick.naechstes?.id).toBe(3);
   });
 
-  it('counts a forfeited Spiel as a result and as the next Spiel', () => {
+  it('counts a forfeited Spiel as a result, and one to come as falling through', () => {
     const kampflos: Spiel['status'] = { art: 'kampflos', verzichtet: ['gast'] };
 
     const ueberblick = teamUeberblick(
       saison(
         spiel(1, '2026-10-03', kampflos),
-        spiel(2, '2026-11-21', kampflos)
+        spiel(2, '2026-11-14', kampflos),
+        spiel(3, '2026-11-21')
       ),
       HEUTE
     );
 
     expect(ueberblick.letztes?.id).toBe(1);
-    expect(ueberblick.naechstes?.id).toBe(2);
+    expect(ueberblick.naechstes?.id).toBe(3);
+    expect(ids(ueberblick.ausfaelle)).toEqual([2]);
+  });
+
+  it("shows today's forfeit as the last result only", () => {
+    const kampflos: Spiel['status'] = { art: 'kampflos', verzichtet: ['gast'] };
+
+    const ueberblick = teamUeberblick(
+      saison(spiel(1, HEUTE, kampflos), spiel(2, '2026-11-21')),
+      HEUTE
+    );
+
+    expect(ueberblick.letztes?.id).toBe(1);
+    expect(ueberblick.ausfaelle).toEqual([]);
   });
 
   it('lists the cancelled Spiele before the next one, which it passes over', () => {
@@ -122,23 +141,21 @@ describe('teamUeberblick', () => {
     );
 
     expect(ueberblick.naechstes?.id).toBe(3);
-    expect(ids(ueberblick.abgesagt)).toEqual([2]);
+    expect(ids(ueberblick.ausfaelle)).toEqual([2]);
   });
 
-  it('lists every cancelled Spiel to come where none takes place', () => {
-    const abgesagt: Spiel['status'] = { art: 'abgesagt' };
-
+  it('lists every Spiel to come that falls through where none takes place', () => {
     const ueberblick = teamUeberblick(
       saison(
         spiel(1, '2026-10-03', GESPIELT),
-        spiel(2, '2026-11-14', abgesagt),
-        spiel(3, '2026-11-21', abgesagt)
+        spiel(2, '2026-11-14', { art: 'abgesagt' }),
+        spiel(3, '2026-11-21', { art: 'kampflos', verzichtet: [] })
       ),
       HEUTE
     );
 
     expect(ueberblick.naechstes).toBeUndefined();
-    expect(ids(ueberblick.abgesagt)).toEqual([2, 3]);
+    expect(ids(ueberblick.ausfaelle)).toEqual([2, 3]);
     expect(ueberblick.letztes?.id).toBe(1);
   });
 });

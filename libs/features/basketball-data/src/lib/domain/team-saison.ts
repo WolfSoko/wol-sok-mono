@@ -34,10 +34,12 @@ export function ligaVon(saison: TeamSaison, ligaId: LigaId): Liga | undefined {
 }
 
 /**
- * The Team's next Spiel from `heute` on (today's included), passing over
- * cancelled (`abgesagt`) ones, which will not be played that day; a
- * forfeited (`kampflos`) one counts, since its result counts in its Liga's
- * Tabelle. Relies on the date order of `saison.spiele`.
+ * The Team's next Spiel to go to, from `heute` on (today's included): the
+ * first still to be played (`geplant`). It passes over a cancelled
+ * (`abgesagt`) Spiel, one played already (`gespielt`, today's too once its
+ * result is in) and a forfeited (`kampflos`) one, with or without a
+ * result, since none of them is played. Relies on the date order of
+ * `saison.spiele`.
  *
  * @param heute a German calendar day, `YYYY-MM-DD` (`datumInDeutschland`)
  */
@@ -45,22 +47,27 @@ export function naechstesSpiel(
   saison: TeamSaison,
   heute: string
 ): Spiel | undefined {
-  return stattfindende(saison).find(({ datum }) => datum >= heute);
+  return saison.spiele.find(
+    ({ datum, status }) => datum >= heute && status.art === 'geplant'
+  );
 }
 
 /**
- * The Ligen of `saison`, the current one first: the Liga of the next Spiel
- * (`naechstesSpiel`), or of the last Spiel not cancelled once none is left
- * (of the last Spiel where all are). A Hauptrunde takes over with its first
- * Spiel to come; a Vorrunde with a Spiel still ahead stays first. The
- * other Ligen follow by their last Spiel, newest first.
+ * The Ligen of `saison`, the current one first: the Liga of the first Spiel
+ * not cancelled from `heute` on, played or forfeited ones included, since
+ * their results count in the Liga's Tabelle (so on match day the Liga of
+ * today's Spiel stays first once it is played); or of the last Spiel not
+ * cancelled once none is left (of the last Spiel where all are). A
+ * Hauptrunde takes over with its first Spiel to come; a Vorrunde with a
+ * Spiel still ahead stays first. The other Ligen follow by their last
+ * Spiel, newest first.
  */
 export function ligenAktuellZuerst(
   saison: TeamSaison,
   heute: string
 ): readonly Liga[] {
   const aktuell =
-    naechstesSpiel(saison, heute) ??
+    stattfindende(saison).find(({ datum }) => datum >= heute) ??
     stattfindende(saison).at(-1) ??
     saison.spiele.at(-1);
   if (aktuell === undefined) {

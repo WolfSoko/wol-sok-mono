@@ -1,15 +1,16 @@
-import type { Spiel } from './spiel';
+import { sonderfallVon, type Spiel } from './spiel';
 import { naechstesSpiel, type TeamSaison } from './team-saison';
 
 /** What the overview shows of one Team on a given day. */
 export interface TeamUeberblick {
-  /** The next Spiel that takes place (`naechstesSpiel`). */
+  /** The next Spiel to go to (`naechstesSpiel`). */
   readonly naechstes?: Spiel;
   /**
-   * The cancelled Spiele from today on before `naechstes` (every one to
-   * come where none takes place), so no one drives to a Halle for nothing.
+   * The Spiele from today on before `naechstes` (every one to come where
+   * none is left) that fall through: cancelled or forfeited, so no one
+   * drives to a Halle for nothing. Today's forfeit is `letztes` instead.
    */
-  readonly abgesagt: readonly Spiel[];
+  readonly ausfaelle: readonly Spiel[];
   /**
    * The last Spiel decided up to today, today's included: played with a
    * result, or forfeited.
@@ -37,8 +38,11 @@ export function teamUeberblick(
   );
   return {
     ...(naechstes && { naechstes }),
-    abgesagt: bisNaechstes.filter(
-      ({ datum, status }) => datum >= heute && status.art === 'abgesagt'
+    ausfaelle: bisNaechstes.filter(
+      (spiel) =>
+        spiel.datum >= heute &&
+        spiel !== letztes &&
+        sonderfallVon(spiel) !== undefined
     ),
     ...(letztes && { letztes }),
   };
