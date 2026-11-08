@@ -73,12 +73,29 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   whose read fails offers "Entfernen". Error texts are in
   `src/app/fehler/`. Both screens
   show a Spiel through `SpielZeileComponent` (`src/app/spiel/`), as a
-  link to its Spiel page (`SpielLinkComponent` on the cards). The
-  Team-id form below opens a Team to follow.
+  link to its Spiel page (`SpielLinkComponent` on the cards). While
+  Meine Teams is empty it offers "Team einrichten"; the Team-id form
+  below opens a Team to follow, with a link to the wizard beside it.
+- **Team einrichten** (`/team-einrichten`, `src/app/team-einrichten/`):
+  finds a Team without its id, step by step. A Verband, then an age group
+  and a gender, each offering only what the Liga search finds for the
+  picks before it (the lib's `angeboten`, one `ligaSucheResource` per
+  step); then a Liga of the paged list (`ligenSeiten`: the first page
+  with the search, every later one through the DBB's list call,
+  "Weitere Ligen", the lib's `naechsterStartIndex`); then every Team of
+  that Liga (`ligaTeamsResource`, the lib's `ligaTeams` from its
+  Spielplan), by the DBB's Team name, which carries the Verein's team
+  number ("TSV X 2"). One tap follows the Team (`Auswahl.folgen`) and
+  opens its Team page. Changing a pick starts over below it.
 - **Proxy:** `src/server/routes/api/dbb/` (thin route files) over
   `src/server/dbb/`; `src/shared/dbb-proxy-routes.ts` maps each read to
-  its route and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists
+  its URL and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists
   get a route, with numeric ids; every other path under `/api/dbb/` is 404.
+  The Liga search is a GET too, its filter in the query
+  (`/api/dbb/ligen?verband=7&altersklasse=12&geschlecht=2_1`, a later
+  page `/api/dbb/ligen/seite?start=10&...`): the proxy builds the DBB's
+  POST body itself and answers an unknown parameter or an id the lib's
+  `assertValidDbbRequest` refuses with 404.
   It passes the DBB's body on unchanged, caches successes
   (`public, max-age=60, s-maxage=300`; a finished Spiel's Spielbericht,
   `/api/dbb/spiel/{id}/bericht` with a confirmed result and both Kader, by
@@ -147,7 +164,9 @@ npx nx run korbjaeger:serve-e2e        # http://localhost:4304, on the fake DBB
 live data, run `fake-dbb` and `serve-e2e`: the fake DBB
 (`e2e/fake-dbb/server.cts`) answers from the lib's anonymised fixtures
 (`fakeDbbAnswer` of `@wolsok/feat-shared-basketball-data/testing`; Team
-`313036` plays two Ligen, a Vorrunde with a Tabelle and a friendly Liga without one; its Spiel `2861436` has a Kader-only Spielbericht, and Spiele `2911141` (quarters, Spielerwerte) and `2843814` (no Spielbericht yet) open at `/spiel/{id}`), and the `e2e` build mode points the proxy's
+`313036` plays two Ligen, found through `/team-einrichten` as
+Niedersachsen, U12, Jugend männlich, the second page of Ligen,
+"Regionsvorrunde Nord Braunschweig mu12": a Vorrunde with a Tabelle and a friendly Liga without one; its Spiel `2861436` has a Kader-only Spielbericht, and Spiele `2911141` (quarters, Spielerwerte) and `2843814` (no Spielbericht yet) open at `/spiel/{id}`), and the `e2e` build mode points the proxy's
 runtime config `dbbBaseUrl` at it (`NITRO_DBB_BASE_URL` overrides it at
 run time). Open `/team/313036`.
 

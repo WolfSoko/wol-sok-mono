@@ -6,10 +6,15 @@ export class StartPage {
   public readonly teams: Locator;
   /** What the overview says while no Team is followed. */
   public readonly leer: Locator;
+  /** Opens the Team wizard, offered while no Team is followed. */
+  public readonly teamEinrichten: Locator;
 
   public constructor(private readonly page: Page) {
     this.teams = page.getByTestId('ueberblick-team');
     this.leer = page.getByTestId('ueberblick-leer');
+    this.teamEinrichten = this.leer.getByRole('link', {
+      name: 'Team einrichten',
+    });
   }
 
   public async goto(): Promise<void> {

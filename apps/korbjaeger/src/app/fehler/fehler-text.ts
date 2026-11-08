@@ -3,6 +3,12 @@ import { isBasketballDataError } from '@wolsok/feat-shared-basketball-data';
 /** What a screen says for an id that names no Team. */
 export const KEIN_TEAM = 'Dieses Team kennt der DBB nicht.';
 
+/** What a screen says for an id that names no Liga. */
+export const KEINE_LIGA = 'Diese Liga kennt der DBB nicht.';
+
+/** What the Liga search says for a filter the DBB finds nothing for. */
+export const KEINE_LIGEN = 'Für diese Auswahl kennt der DBB keine Ligen.';
+
 /** What a screen says for an id that names no Spiel. */
 export const KEIN_SPIEL = 'Dieses Spiel kennt der DBB nicht.';
 

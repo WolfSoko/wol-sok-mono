@@ -4,7 +4,7 @@ import {
   type DbbTransport,
   type ReadSignal,
 } from '@wolsok/feat-shared-basketball-data';
-import { proxyPath } from '../../shared/dbb-proxy-routes';
+import { proxyUrl } from '../../shared/dbb-proxy-routes';
 
 /** The `fetch` the browser calls the app's proxy with; specs pass a fake. */
 export type ProxyFetch = (url: string, init: RequestInit) => Promise<Response>;
@@ -21,7 +21,7 @@ const HTTP_NOT_FOUND = 404;
  */
 export function proxyTransport(fetchProxy: ProxyFetch): DbbTransport {
   return async (request, options) => {
-    const path = proxyPath(request);
+    const path = proxyUrl(request);
     const response = await reach(path, fetchProxy, options?.signal);
     switch (response.status) {
       case HTTP_OK:

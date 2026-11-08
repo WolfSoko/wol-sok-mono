@@ -12,6 +12,9 @@ import { proxyTransport } from './proxy-transport';
  * with each screen.
  */
 const READS = {
+  ligaSuche: 'liga-suche',
+  ligaSeite: 'liga-seite',
+  ligaTeams: 'spielplan',
   teamSpiele: 'team-spiele',
   tabelle: 'tabelle',
   spiel: 'spiel-info',

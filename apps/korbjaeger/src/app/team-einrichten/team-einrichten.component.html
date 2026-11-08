@@ -1,0 +1,92 @@
+<h1>Team einrichten</h1>
+<p>
+  Such das Team deines Kindes in vier Schritten. Ein Tipp auf das Team setzt es
+  auf Meine Teams.
+</p>
+@if (laedt()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Auswahl wird geladen" />
+}
+@if (fehler(); as text) {
+  <p class="fehler" role="alert">{{ text }}</p>
+}
+
+<section>
+  <h2>1. Verband</h2>
+  @if (verbaende().length > 0) {
+    <mat-form-field appearance="outline">
+      <mat-label>Verband</mat-label>
+      <mat-select
+        data-qa="verband"
+        [value]="verband()"
+        (valueChange)="verband.set($event)"
+      >
+        @for (facette of verbaende(); track facette.id) {
+          <mat-option [value]="facette.id">{{ facette.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+</section>
+
+@if (verband() !== undefined) {
+  <section>
+    <h2>2. Altersklasse und Geschlecht</h2>
+    <div class="nebeneinander">
+      @if (altersklassen().length > 0) {
+        <mat-form-field appearance="outline">
+          <mat-label>Altersklasse</mat-label>
+          <mat-select
+            data-qa="altersklasse"
+            [value]="altersklasse()"
+            (valueChange)="altersklasse.set($event)"
+          >
+            @for (facette of altersklassen(); track facette.id) {
+              <mat-option [value]="facette.id">{{ facette.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (altersklasse() !== undefined && geschlechter().length > 0) {
+        <mat-form-field appearance="outline">
+          <mat-label>Geschlecht</mat-label>
+          <mat-select
+            data-qa="geschlecht"
+            [value]="geschlecht()"
+            (valueChange)="geschlecht.set($event)"
+          >
+            @for (facette of geschlechter(); track facette.id) {
+              <mat-option [value]="facette.id">{{ facette.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+    </div>
+  </section>
+}
+
+@if (ligaFilter(); as filter) {
+  <section>
+    <h2>3. Liga</h2>
+    @if (liga(); as gewaehlt) {
+      <div class="gewaehlt" data-qa="gewaehlte-liga">
+        <p>
+          <strong>{{ gewaehlt.name }}</strong>
+          <br />
+          {{ beschreibung(gewaehlt) }}
+        </p>
+        <button matButton type="button" (click)="liga.set(undefined)">
+          Andere Liga
+        </button>
+      </div>
+    } @else {
+      <korb-liga-wahl [filter]="filter" (gewaehlt)="liga.set($event)" />
+    }
+  </section>
+}
+
+@if (liga(); as gewaehlt) {
+  <section>
+    <h2>4. Team</h2>
+    <korb-liga-teams [ligaId]="gewaehlt.id" />
+  </section>
+}

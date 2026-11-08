@@ -1,67 +1,183 @@
 import {
+  KEIN_LIGA_FILTER,
+  type DbbRequest,
+} from '@wolsok/feat-shared-basketball-data';
+import {
   PROXY_ROUTES,
-  paramOf,
-  proxyPath,
-  proxyRouteRead,
+  proxyUrl,
+  type AnyProxyRoute,
+  type ProxyRouteInput,
 } from './dbb-proxy-routes';
+
+/** What h3 hands a route for `url`: the params its pattern names, the query. */
+function inputAt(route: AnyProxyRoute, url: string): ProxyRouteInput {
+  const parsed = new URL(url, 'http://localhost');
+  const names = [...route.pattern.matchAll(/:(\w+)/g)].map(([, name]) => name);
+  const matcher = new RegExp(`^${route.pattern.replace(/:\w+/g, '([^/]+)')}$`);
+  const values = matcher.exec(parsed.pathname)?.slice(1) ?? [];
+  return {
+    params: Object.fromEntries(names.map((name, i) => [name, values[i]])),
+    query: parsed.searchParams,
+  };
+}
+
+/** The read `route` names for `url`. */
+function readAt(route: AnyProxyRoute, url: string): DbbRequest | undefined {
+  return route.readOf(inputAt(route, url));
+}
+
+const NIEDERSACHSEN_U12_JUGEND_MAENNLICH = {
+  verbandIds: [7],
+  altersklasseIds: [12],
+  altersgruppeGeschlechtIds: ['2_1'],
+};
 
 describe('DBB proxy routes', () => {
   it.each([
     [
+      'the Liga search without a filter',
+      { kind: 'liga-suche', filter: KEIN_LIGA_FILTER },
+      '/api/dbb/ligen',
+    ],
+    [
+      'the Liga search with a filter',
+      { kind: 'liga-suche', filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH },
+      '/api/dbb/ligen?verband=7&altersklasse=12&geschlecht=2_1',
+    ],
+    [
+      'the Liga search with several values each',
+      {
+        kind: 'liga-suche',
+        filter: {
+          verbandIds: [7, 10],
+          altersklasseIds: [12, 14],
+          altersgruppeGeschlechtIds: ['2_1', '2_2'],
+        },
+      },
+      '/api/dbb/ligen?verband=7&verband=10&altersklasse=12&altersklasse=14&geschlecht=2_1&geschlecht=2_2',
+    ],
+    [
+      'a later page of the Liga list',
+      {
+        kind: 'liga-seite',
+        filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH,
+        startIndex: 10,
+      },
+      '/api/dbb/ligen/seite?start=10&verband=7&altersklasse=12&geschlecht=2_1',
+    ],
+    [
+      "a Liga's Spielplan",
+      { kind: 'spielplan', ligaId: 54862 },
+      '/api/dbb/liga/54862/spielplan',
+    ],
+    [
       "a Team's Spiele",
       { kind: 'team-spiele', teamId: 313036 },
       '/api/dbb/team/313036/spiele',
-      '313036',
     ],
     [
       "a Liga's Tabelle",
       { kind: 'tabelle', ligaId: 54862 },
       '/api/dbb/liga/54862/tabelle',
-      '54862',
     ],
     [
       "a Spiel's match info",
       { kind: 'spiel-info', spielId: 2861436 },
       '/api/dbb/spiel/2861436',
-      '2861436',
     ],
     [
       "a Spiel's Spielbericht",
       { kind: 'spielbericht', spielId: 2861436 },
       '/api/dbb/spiel/2861436/bericht',
-      '2861436',
     ],
-  ] as const)('maps %s to its route and back', (_case, request, path, id) => {
-    expect(proxyPath(request)).toBe(path);
-    expect(proxyRouteRead(PROXY_ROUTES[request.kind], id)).toEqual(request);
+  ] as const)('maps %s to its URL and back', (_case, request, url) => {
+    expect(proxyUrl(request)).toBe(url);
+    expect(readAt(PROXY_ROUTES[request.kind], url)).toEqual(request);
   });
 
-  it('names each route by its pattern, its param the read id', () => {
-    expect(
-      Object.values(PROXY_ROUTES).map((route) => [
-        route.pattern,
-        paramOf(route),
-      ])
-    ).toEqual([
-      ['/api/dbb/team/:teamId/spiele', 'teamId'],
-      ['/api/dbb/liga/:ligaId/tabelle', 'ligaId'],
-      ['/api/dbb/spiel/:spielId', 'spielId'],
-      ['/api/dbb/spiel/:spielId/bericht', 'spielId'],
+  it('names each route by its pattern', () => {
+    expect(Object.values(PROXY_ROUTES).map((route) => route.pattern)).toEqual([
+      '/api/dbb/ligen',
+      '/api/dbb/ligen/seite',
+      '/api/dbb/liga/:ligaId/spielplan',
+      '/api/dbb/team/:teamId/spiele',
+      '/api/dbb/liga/:ligaId/tabelle',
+      '/api/dbb/spiel/:spielId',
+      '/api/dbb/spiel/:spielId/bericht',
     ]);
   });
 
-  it.each([undefined, '', 'abc', '-1', '0', '1.5'])(
-    'names no read for the id %j',
-    (id) => {
-      for (const route of Object.values(PROXY_ROUTES)) {
-        expect(proxyRouteRead(route, id)).toBeUndefined();
-      }
-    }
-  );
-
   it('has no route for a read the app does not offer yet', () => {
-    expect(() => proxyPath({ kind: 'spielplan', ligaId: 54308 })).toThrow(
-      'no proxy route for spielplan yet'
+    expect(() =>
+      proxyUrl({ kind: 'vereins-spiele', vereinId: 1476, tage: 21 })
+    ).toThrow('no proxy route for vereins-spiele yet');
+  });
+
+  describe('id routes', () => {
+    const ID_ROUTES = Object.values(PROXY_ROUTES).filter((route) =>
+      route.pattern.includes(':')
     );
+
+    it.each(['', 'abc', '-1', '0', '1.5', '99999999999999999999'])(
+      'name no read for the id %j',
+      (id) => {
+        for (const route of ID_ROUTES) {
+          const param = /:(\w+)/.exec(route.pattern)?.[1] ?? '';
+          expect(
+            route.readOf({
+              params: { [param]: id },
+              query: new URLSearchParams(),
+            })
+          ).toBeUndefined();
+        }
+      }
+    );
+
+    it('name no read without their id', () => {
+      for (const route of ID_ROUTES) {
+        expect(
+          route.readOf({ params: {}, query: new URLSearchParams() })
+        ).toBeUndefined();
+      }
+    });
+  });
+
+  describe('the Liga search', () => {
+    const suche = PROXY_ROUTES['liga-suche'];
+    const seite = PROXY_ROUTES['liga-seite'];
+
+    it.each([
+      ['a non-numeric Verband', 'verband=abc'],
+      ['a Verband of 0', 'verband=0'],
+      ['a negative Verband', 'verband=-1'],
+      ['a fractional age group', 'altersklasse=1.5'],
+      ['an empty age group', 'altersklasse='],
+      ['a gender without its age group category', 'geschlecht=1'],
+      ['a gender of letters', 'geschlecht=2_m'],
+      ['a gender with a third part', 'geschlecht=2_1_1'],
+      ['a start index, which only a later page takes', 'start=10'],
+      ['a parameter it does not know', 'verband=7&sort=1'],
+    ])('names no search for %s', (_case, query) => {
+      expect(readAt(suche, `/api/dbb/ligen?${query}`)).toBeUndefined();
+    });
+
+    it.each([
+      ['no start index', 'verband=7'],
+      ['a negative start index', 'start=-10'],
+      ['a non-numeric start index', 'start=zehn'],
+      ['a fractional start index', 'start=1.5'],
+      ['two start indexes', 'start=10&start=20'],
+      ['a bad filter', 'start=10&geschlecht=2'],
+    ])('names no later page for %s', (_case, query) => {
+      expect(readAt(seite, `/api/dbb/ligen/seite?${query}`)).toBeUndefined();
+    });
+
+    it('takes the first page as a page too', () => {
+      expect(readAt(seite, '/api/dbb/ligen/seite?start=0')).toEqual({
+        kind: 'liga-seite',
+        filter: KEIN_LIGA_FILTER,
+        startIndex: 0,
+      });
+    });
   });
 });

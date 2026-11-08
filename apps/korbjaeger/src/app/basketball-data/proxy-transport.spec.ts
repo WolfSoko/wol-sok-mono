@@ -2,6 +2,7 @@ import {
   DbbBasketballData,
   isBasketballDataError,
   type BasketballDataErrorKind,
+  type LigaSucheFilter,
 } from '@wolsok/feat-shared-basketball-data';
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
 import { createApp, createRouter, toWebHandler } from 'h3';
@@ -11,8 +12,12 @@ import { PROXY_ROUTES } from '../../shared/dbb-proxy-routes';
 import { proxyTransport, type ProxyFetch } from './proxy-transport';
 
 /** The DBB as the fake DBB server answers it, from the recorded fixtures. */
-const recordedDbb: DbbUpstream = async ({ method, path }) => {
-  const answer = fakeDbbAnswer(method, path);
+const recordedDbb: DbbUpstream = async (call) => {
+  const answer = fakeDbbAnswer(
+    call.method,
+    call.path,
+    call.method === 'POST' ? JSON.stringify(call.body) : undefined
+  );
   return answer === undefined
     ? { ok: false, reason: 'not recorded' }
     : { ok: true, body: JSON.stringify(answer) };
@@ -51,7 +56,45 @@ async function rejectionKind(
   return isBasketballDataError(error) ? error.kind : undefined;
 }
 
+const NIEDERSACHSEN_U12_JUGEND_MAENNLICH: LigaSucheFilter = {
+  verbandIds: [7],
+  altersklasseIds: [12],
+  altersgruppeGeschlechtIds: ['2_1'],
+};
+
 describe('proxyTransport', () => {
+  it("searches Ligen and pages through them from the app's proxy", async () => {
+    const proxy = recordedProxy();
+    const data = new DbbBasketballData(proxyTransport(proxy));
+    const filter = NIEDERSACHSEN_U12_JUGEND_MAENNLICH;
+
+    const suche = await data.ligaSuche(filter);
+    const seite = await data.ligaSeite(filter, 10);
+
+    expect(proxy.mock.calls.map(([url]) => url)).toEqual([
+      '/api/dbb/ligen?verband=7&altersklasse=12&geschlecht=2_1',
+      '/api/dbb/ligen/seite?start=10&verband=7&altersklasse=12&geschlecht=2_1',
+    ]);
+    expect(suche.ersteSeite.ligen).toHaveLength(10);
+    expect(seite.ligen.map((liga) => liga.id)).toContain(54862);
+  });
+
+  it("reads the Teams of a Liga from the app's proxy", async () => {
+    const proxy = recordedProxy();
+    const data = new DbbBasketballData(proxyTransport(proxy));
+
+    const teams = await data.ligaTeams(54862);
+
+    expect(proxy).toHaveBeenCalledWith('/api/dbb/liga/54862/spielplan', {
+      headers: { accept: 'application/json' },
+    });
+    expect(teams).toContainEqual({
+      id: 313036,
+      name: 'MTV Wasbüttel -RST-',
+      vereinId: 1837,
+    });
+  });
+
   it("reads a Team's Spiele from the app's proxy", async () => {
     const proxy = recordedProxy();
     const data = new DbbBasketballData(proxyTransport(proxy));

@@ -6,7 +6,6 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   PROXY_ROUTES,
-  paramOf,
   type AnyProxyRoute,
   type ProxyKind,
 } from '../../shared/dbb-proxy-routes';
@@ -21,9 +20,13 @@ const BASE_URL = 'https://dbb.test/rest';
 
 /** The DBB, answering from the recorded fixtures with a cookie it sets. */
 function recordedDbb(): ReturnType<typeof vi.fn<UpstreamFetch>> {
-  return vi.fn<UpstreamFetch>(async (url) => {
+  return vi.fn<UpstreamFetch>(async (url, init) => {
     const path = String(url).slice(`${BASE_URL}/`.length);
-    const answer = fakeDbbAnswer('GET', path);
+    const answer = fakeDbbAnswer(
+      init.method ?? 'GET',
+      path,
+      typeof init.body === 'string' ? init.body : undefined
+    );
     return answer === undefined
       ? new Response('', { status: 404 })
       : new Response(JSON.stringify(answer), {
@@ -44,6 +47,9 @@ function dbbAnswering(body: string, status = 200): UpstreamFetch {
 const ROUTE_FILES: {
   readonly [K in ProxyKind]: () => Promise<{ readonly default: EventHandler }>;
 } = {
+  'liga-suche': () => import('../routes/api/dbb/ligen.get'),
+  'liga-seite': () => import('../routes/api/dbb/ligen/seite.get'),
+  spielplan: () => import('../routes/api/dbb/liga/[ligaId]/spielplan.get'),
   'team-spiele': () => import('../routes/api/dbb/team/[teamId]/spiele.get'),
   tabelle: () => import('../routes/api/dbb/liga/[ligaId]/tabelle.get'),
   'spiel-info': () => import('../routes/api/dbb/spiel/[spielId].get'),
@@ -54,7 +60,7 @@ const KINDS = Object.keys(PROXY_ROUTES) as ProxyKind[];
 
 /** `route`'s path with `id` (a number, or anything a visitor types). */
 function pathWith(route: AnyProxyRoute, id: number | string): string {
-  return route.pattern.replace(`:${paramOf(route)}`, String(id));
+  return route.pattern.replace(/:\w+/, String(id));
 }
 
 /** Where Nitro's file routing looks for `route`'s file. */
@@ -62,7 +68,7 @@ function routeFile(route: AnyProxyRoute): string {
   return join(
     __dirname,
     '../routes',
-    `${pathWith(route, `[${paramOf(route)}]`)}.get.ts`
+    `${route.pattern.replace(/:(\w+)/g, '[$1]')}.get.ts`
   );
 }
 
@@ -83,8 +89,9 @@ async function proxyRoutes(): Promise<(request: Request) => Promise<Response>> {
   return toWebHandler(createApp().use(router));
 }
 
-/** Each route with an id the fake DBB has a recording of. */
+/** Each route by an id, with one the fake DBB has a recording of. */
 const ROUTES = [
+  { name: "a Liga's Spielplan", route: PROXY_ROUTES.spielplan, id: 54862 },
   { name: "a Team's Spiele", route: PROXY_ROUTES['team-spiele'], id: 313036 },
   { name: "a Liga's Tabelle", route: PROXY_ROUTES.tabelle, id: 54862 },
   {
@@ -102,7 +109,14 @@ const ROUTES = [
 
 /** The DBB path `route` reads for `id`. */
 function dbbPath(route: AnyProxyRoute, id: number): string {
-  return dbbHttpRequest(route.read(id)).path;
+  const read = route.readOf({
+    params: { [/:(\w+)/.exec(route.pattern)?.[1] ?? '']: String(id) },
+    query: new URLSearchParams(),
+  });
+  if (read === undefined) {
+    throw new Error(`${route.pattern} names no read for ${id}`);
+  }
+  return dbbHttpRequest(read).path;
 }
 
 let handle: (request: Request) => Promise<Response>;
@@ -258,6 +272,140 @@ describe('DBB proxy', () => {
           expect(response.headers.get('cache-control')).toBeNull();
         }
       );
+    });
+  });
+
+  describe('the Liga search', () => {
+    const SUCHE = '/api/dbb/ligen?verband=7&altersklasse=12&geschlecht=2_1';
+    const SEITE =
+      '/api/dbb/ligen/seite?start=10&verband=7&altersklasse=12&geschlecht=2_1';
+
+    /** The DBB's Liga search body for the filter of `SUCHE` and `SEITE`. */
+    const BODY = {
+      token: 0,
+      verbandIds: [7],
+      gebietIds: [],
+      ligatypIds: [],
+      akgGeschlechtIds: ['2_1'],
+      altersklasseIds: [12],
+      spielklasseIds: [],
+      sortBy: 0,
+    };
+
+    /** The method, URL and JSON body of the proxy's one call to the DBB. */
+    function callOf(dbb: ReturnType<typeof recordedDbb>): unknown {
+      expect(dbb).toHaveBeenCalledTimes(1);
+      const [url, init] = dbb.mock.calls[0];
+      return {
+        method: init.method,
+        url: String(url),
+        contentType: new Headers(init.headers).get('content-type'),
+        body: typeof init.body === 'string' ? JSON.parse(init.body) : init.body,
+      };
+    }
+
+    it('turns the query into the POST body of the DBB’s search', async () => {
+      const dbb = recordedDbb();
+
+      const response = await proxy(dbb)(SUCHE);
+
+      expect(response.status).toBe(200);
+      expect(callOf(dbb)).toEqual({
+        method: 'POST',
+        url: `${BASE_URL}/wam/data`,
+        contentType: 'application/json',
+        body: BODY,
+      });
+    });
+
+    it('asks a later page of the DBB’s separate list call', async () => {
+      const dbb = recordedDbb();
+
+      const response = await proxy(dbb)(SEITE);
+
+      expect(response.status).toBe(200);
+      expect(callOf(dbb)).toEqual({
+        method: 'POST',
+        url: `${BASE_URL}/wam/liga/list?startAtIndex=10`,
+        contentType: 'application/json',
+        body: BODY,
+      });
+    });
+
+    it('searches every Liga without a query', async () => {
+      const dbb = recordedDbb();
+
+      await proxy(dbb)('/api/dbb/ligen');
+
+      expect(callOf(dbb)).toMatchObject({
+        body: { verbandIds: [], altersklasseIds: [], akgGeschlechtIds: [] },
+      });
+    });
+
+    it('takes several values of a filter', async () => {
+      const dbb = recordedDbb();
+
+      await proxy(dbb)('/api/dbb/ligen?verband=7&verband=10&geschlecht=2_2');
+
+      expect(callOf(dbb)).toMatchObject({
+        body: { verbandIds: [7, 10], akgGeschlechtIds: ['2_2'] },
+      });
+    });
+
+    it.each([SUCHE, SEITE])(
+      'passes the DBB body of %s through, cached as any read',
+      async (path) => {
+        const response = await proxy(recordedDbb())(path);
+
+        expect((await response.json()).status).toBe('0');
+        expect(response.headers.get('cache-control')).toBe(
+          DBB_PROXY_CACHE_CONTROL
+        );
+      }
+    );
+
+    it.each([
+      ['a non-numeric Verband', '/api/dbb/ligen?verband=abc'],
+      ['a Verband of 0', '/api/dbb/ligen?verband=0'],
+      ['a fractional age group', '/api/dbb/ligen?altersklasse=1.5'],
+      ['a malformed gender', '/api/dbb/ligen?geschlecht=2'],
+      ['a gender with a third part', '/api/dbb/ligen?geschlecht=2_1_1'],
+      ['an unknown parameter', '/api/dbb/ligen?verband=7&sortBy=1'],
+      ['a start index on the first page', '/api/dbb/ligen?start=10'],
+      ['a later page without start index', '/api/dbb/ligen/seite?verband=7'],
+      ['a negative start index', '/api/dbb/ligen/seite?start=-10'],
+      ['a start index of letters', '/api/dbb/ligen/seite?start=zehn'],
+      ['more after the search', '/api/dbb/ligen/1'],
+    ])('answers %s with 404 and never asks the DBB', async (_case, path) => {
+      const dbb = recordedDbb();
+
+      const response = await proxy(dbb)(path);
+
+      expect(response.status).toBe(404);
+      expect(response.headers.get('cache-control')).toBeNull();
+      expect(dbb).not.toHaveBeenCalled();
+    });
+
+    it.each([SUCHE, SEITE])(
+      'answers a POST to %s with 404: the proxy builds the body itself',
+      async (path) => {
+        const dbb = recordedDbb();
+
+        const response = await proxy(dbb)(path, {
+          method: 'POST',
+          body: JSON.stringify(BODY),
+        });
+
+        expect(response.status).toBe(404);
+        expect(dbb).not.toHaveBeenCalled();
+      }
+    );
+
+    it('answers a filter the DBB fails on with 502, not cached', async () => {
+      const response = await proxy(dbbAnswering('oops', 503))(SUCHE);
+
+      expect(response.status).toBe(502);
+      expect(response.headers.get('cache-control')).toBeNull();
     });
   });
 

@@ -1,10 +1,14 @@
 <h2>Meine Teams</h2>
 @if (karten(); as karten) {
   @if (karten.length === 0) {
-    <p data-qa="ueberblick-leer">
-      Du folgst noch keinem Team. Öffne ein Team und tippe auf „Team folgen“,
-      dann steht es hier mit seinem nächsten Spiel.
-    </p>
+    <div class="leer" data-qa="ueberblick-leer">
+      <p>
+        Du folgst noch keinem Team. Such das Team deines Kindes Schritt für
+        Schritt über Verband, Altersklasse und Liga, dann steht es hier mit
+        seinem nächsten Spiel.
+      </p>
+      <a mat-flat-button routerLink="/team-einrichten">Team einrichten</a>
+    </div>
   }
   <ul class="ueberblick">
     @for (karte of karten; track karte.teamId) {
