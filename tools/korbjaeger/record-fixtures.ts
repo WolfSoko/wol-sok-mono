@@ -45,13 +45,13 @@ function selected(names: readonly string[]): readonly FixtureRequest[] {
   if (names.length === 0) {
     return FIXTURE_REQUESTS;
   }
-  const unknown = names.filter(
-    (name) => !FIXTURE_REQUESTS.some((fixture) => fixture.name === name)
-  );
-  if (unknown.length > 0) {
-    throw new Error(`no such fixture: ${unknown.join(', ')}`);
-  }
-  return FIXTURE_REQUESTS.filter((fixture) => names.includes(fixture.name));
+  return names.map((name) => {
+    const fixture = FIXTURE_REQUESTS.find((request) => request.name === name);
+    if (fixture === undefined) {
+      throw new Error(`no such fixture: ${name}`);
+    }
+    return fixture;
+  });
 }
 
 async function fetchDbb(request: DbbRequest): Promise<unknown> {
