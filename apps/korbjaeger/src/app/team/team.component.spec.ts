@@ -1,3 +1,4 @@
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   BasketballDataError,
@@ -98,10 +99,13 @@ function fakeData(
   };
 }
 
-function providers(data: ReturnType<typeof fakeData>) {
+function providers(
+  data: ReturnType<typeof fakeData>,
+  heute: WritableSignal<string> = signal(HEUTE_IM_SPEC)
+) {
   return [
     { provide: BASKETBALL_DATA, useValue: data },
-    { provide: HEUTE, useValue: () => HEUTE_IM_SPEC },
+    { provide: HEUTE, useValue: heute },
   ];
 }
 
@@ -412,6 +416,38 @@ describe('TeamComponent', () => {
       expect(data.tabelle.mock.calls.map(([ligaId]) => ligaId)).toEqual([
         VORRUNDE.id,
         TESTSPIELE.id,
+      ]);
+    });
+
+    it('puts the next Liga first once the day of the last Spiel of the current one has passed', async () => {
+      const heute = signal('2026-11-08');
+      TestBed.configureTestingModule({
+        providers: providers(
+          fakeData(async () =>
+            saison([
+              spiel({ id: 1, datum: '2026-08-29', ligaId: TESTSPIELE.id }),
+              spiel({ id: 2, datum: '2026-11-08' }),
+              spiel({ id: 3, datum: '2026-11-21', ligaId: TESTSPIELE.id }),
+            ])
+          ),
+          heute
+        ),
+      });
+      const fixture = TestBed.createComponent(TeamComponent);
+      fixture.componentRef.setInput('teamId', '313036');
+      await fixture.whenStable();
+      const page = fixture.nativeElement as HTMLElement;
+      expect(tabellen(page).map(ueberschrift)).toEqual([
+        VORRUNDE.name,
+        TESTSPIELE.name,
+      ]);
+
+      heute.set('2026-11-09');
+      await fixture.whenStable();
+
+      expect(tabellen(page).map(ueberschrift)).toEqual([
+        TESTSPIELE.name,
+        VORRUNDE.name,
       ]);
     });
 
