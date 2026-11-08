@@ -1,5 +1,18 @@
+// Long Team names wrap: room between the lines for the underline.
+h1 {
+  line-height: 1.3;
+}
+
+// The heading is large; a thin, offset underline keeps the Team links
+// visible as links without weighing on the names.
 h1 a {
   color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
 }
 
 .wann,
