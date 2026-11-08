@@ -7,4 +7,5 @@ Spec: [docs/specs/2886-claude-yml-starts-on-bot-reviews-that-mention-claude-md-a
    (case-insensitive `contains()`, empty `allowed_bots`). Test: actionlint on
    the file (no workflow test harness in the repo); the PR run shows the
    workflow still parses. Commit: `fix(github): skip bot senders in the claude
-   workflow`, together with spec and plan.
+   workflow`; spec and plan go in a docs commit before it, and the squash
+   merge lands both as one commit.

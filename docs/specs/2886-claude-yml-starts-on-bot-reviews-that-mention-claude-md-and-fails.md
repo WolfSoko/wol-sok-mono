@@ -31,8 +31,8 @@ on PR #2885).
   whose text happens to contain `@claude`. The skipped job shows as
   "skipped", which keeps the PR's checks green.
 - **`sender`, not `comment.user` / `review.user`:** `sender` exists on all
-  four events and is the actor the action checks, so one condition covers
-  them all.
+  four events and, for these events, is the same account as `github.actor`,
+  the actor the action checks, so one condition covers them all.
 
 ## Acceptance
 
