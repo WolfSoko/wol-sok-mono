@@ -1,0 +1,69 @@
+<h2>Meine Teams</h2>
+@if (keineTeams()) {
+  <p data-qa="ueberblick-leer">
+    Du folgst noch keinem Team. Öffne ein Team und tippe auf „Team folgen“, dann
+    steht es hier mit seinem nächsten Spiel.
+  </p>
+}
+@if (gelesen.isLoading()) {
+  <mat-progress-bar
+    mode="indeterminate"
+    aria-label="Meine Teams werden geladen"
+  />
+}
+<ul class="ueberblick">
+  @for (eintrag of eintraege(); track eintrag.teamId) {
+    <li>
+      <mat-card appearance="outlined" data-qa="ueberblick-team">
+        <mat-card-header>
+          <mat-card-title>
+            <a
+              [routerLink]="['/team', eintrag.teamId]"
+              data-qa="ueberblick-name"
+              >{{ eintrag.name }}</a
+            >
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @switch (eintrag.art) {
+            @case ("fehler") {
+              <p class="fehler" data-qa="ueberblick-fehler">
+                {{ eintrag.text }}
+              </p>
+            }
+            @case ("team") {
+              @for (abgesagt of eintrag.abgesagt; track abgesagt.id) {
+                <korb-ueberblick-spiel
+                  titel="Abgesagt"
+                  [zeile]="abgesagt"
+                  data-qa="ueberblick-abgesagt"
+                />
+              }
+              @if (eintrag.naechstes; as naechstes) {
+                <korb-ueberblick-spiel
+                  titel="Nächstes Spiel"
+                  [zeile]="naechstes"
+                  data-qa="ueberblick-naechstes"
+                />
+              }
+              @if (eintrag.letztes; as letztes) {
+                <korb-ueberblick-spiel
+                  titel="Letztes Ergebnis"
+                  [zeile]="letztes"
+                  data-qa="ueberblick-letztes"
+                />
+              }
+              @if (
+                !eintrag.naechstes &&
+                !eintrag.letztes &&
+                eintrag.abgesagt.length === 0
+              ) {
+                <p>Noch keine Spiele in dieser Saison.</p>
+              }
+            }
+          }
+        </mat-card-content>
+      </mat-card>
+    </li>
+  }
+</ul>
