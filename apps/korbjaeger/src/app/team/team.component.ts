@@ -16,12 +16,14 @@ import {
   parseDbbId,
 } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText } from './fehler-text';
+import { TeamFolgenComponent } from './team-folgen.component';
 import { KEIN_TEAM, spielZeilen } from './team-spiele';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
 /**
  * The Team page: its Spiele of the Saison, across all its Ligen, by date,
- * then the Tabelle of each of those Ligen, the current one first.
+ * then the Tabelle of each of those Ligen, the current one first; with a
+ * control to follow the Team.
  */
 @Component({
   selector: 'korb-team',
@@ -29,6 +31,7 @@ import { TeamTabelleComponent } from './team-tabelle.component';
     MatChipsModule,
     MatListModule,
     MatProgressBarModule,
+    TeamFolgenComponent,
     TeamTabelleComponent,
   ],
   templateUrl: './team.component.html',

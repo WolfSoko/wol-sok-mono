@@ -13,6 +13,8 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
+import { AUSWAHL } from '../auswahl/auswahl';
+import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import { HEUTE } from '../heute';
 import { TeamComponent } from './team.component';
 
@@ -106,6 +108,8 @@ function providers(
   return [
     { provide: BASKETBALL_DATA, useValue: data },
     { provide: HEUTE, useValue: heute },
+    // in memory: nothing reaches the device's storage
+    { provide: AUSWAHL, useFactory: () => new LokaleAuswahl(undefined) },
   ];
 }
 
@@ -314,6 +318,24 @@ describe('TeamComponent', () => {
     expect(feld(mitErgebnis, 'ergebnis')).toBe('20:0');
     expect(feld(ohneErgebnis, 'markierung')).toBe('kampflos');
     expect(feld(ohneErgebnis, 'ergebnis')).toBeUndefined();
+  });
+
+  it('offers to follow the Team', async () => {
+    const page = await render(fakeData(async () => saison([])));
+
+    expect(page.querySelector('button[aria-pressed]')?.textContent).toContain(
+      'Team folgen'
+    );
+  });
+
+  it('offers no Team to follow for an id the DBB does not know', async () => {
+    const page = await render(
+      fakeData(async () => {
+        throw new BasketballDataError('not-found', 'DBB: nope');
+      })
+    );
+
+    expect(page.querySelector('button[aria-pressed]')).toBeNull();
   });
 
   it('says so when the Team has no Spiele', async () => {

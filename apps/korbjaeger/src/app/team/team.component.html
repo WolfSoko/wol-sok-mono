@@ -7,6 +7,7 @@
 @if (saison.hasValue()) {
   <h1>{{ saison.value().team.name }}</h1>
   <p class="verein">{{ saison.value().verein.name }} · Spiele der Saison</p>
+  <korb-team-folgen class="folgen" [teamId]="saison.value().team.id" />
   @if (zeilen().length === 0) {
     <p>Noch keine Spiele in dieser Saison.</p>
   } @else {
