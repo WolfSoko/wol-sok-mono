@@ -6,7 +6,21 @@
 
 const BOUNDARY_RULE = 'enforce-module-boundaries';
 const VERSION_FILE = 'version.json';
-const READ_FUNCTION = /^read/;
+/** `read`, `readFile`, `readJson`: not `readme` or `ready`. */
+const READ_FUNCTION = /^read(?![a-z])/;
+/** Expressions a path may pass through on its way to the read call. */
+const PATH_EXPRESSIONS = new Set([
+  'TemplateLiteral',
+  'BinaryExpression',
+  'LogicalExpression',
+  'ConditionalExpression',
+  'ParenthesizedExpression',
+  'TSAsExpression',
+  'TSSatisfiesExpression',
+  'TSNonNullExpression',
+]);
+/** Stands for a template's expressions, so `version.json${ext}` names no file. */
+const EXPRESSION_PLACEHOLDER = '\0';
 const DISABLE_DIRECTIVE =
   /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
 
@@ -95,7 +109,9 @@ function staticText(node) {
     return typeof node.value === 'string' ? node.value : undefined;
   }
   if (node.type === 'TemplateLiteral') {
-    return node.quasis.map((quasi) => quasi.value.cooked ?? '').join('');
+    return node.quasis
+      .map((quasi) => quasi.value.cooked ?? '')
+      .join(EXPRESSION_PLACEHOLDER);
   }
   return undefined;
 }
@@ -107,17 +123,18 @@ function namesVersionFile(path) {
 
 /**
  * Whether a path expression reaches a read call within its own expression:
- * up through call arguments (`join(…)`), template literals and `+`, until a
+ * up through call and `new` arguments (`join(…)`, `new URL(…)`), templates,
+ * operators and type assertions, until a
  * call whose function name starts with `read`, or `require`.
  */
 function reachesReadCall(node) {
   let child = node;
   for (let parent = node.parent; parent; parent = parent.parent) {
-    if (parent.type === 'CallExpression') {
+    if (parent.type === 'CallExpression' || parent.type === 'NewExpression') {
       if (!parent.arguments.includes(child)) {
         return false;
       }
-      if (isReadCallee(parent.callee)) {
+      if (parent.type === 'CallExpression' && isReadCallee(parent.callee)) {
         return true;
       }
     } else if (!PATH_EXPRESSIONS.has(parent.type)) {
@@ -128,19 +145,16 @@ function reachesReadCall(node) {
   return false;
 }
 
-/** Expressions a path may pass through on its way to the read call. */
-const PATH_EXPRESSIONS = new Set([
-  'TemplateLiteral',
-  'BinaryExpression',
-  'TSAsExpression',
-  'ParenthesizedExpression',
-]);
-
 /** `readFileSync(…)`, `fs.promises.readFile(…)`, `readJson(…)`, `require(…)`. */
 function isReadCallee(callee) {
   const name =
-    callee.type === 'MemberExpression' ? callee.property.name : callee.name;
+    callee.type === 'MemberExpression' ? propertyName(callee) : callee.name;
   return name === 'require' || READ_FUNCTION.test(name ?? '');
+}
+
+/** `fs.readFile` and `fs['readFile']` alike. */
+function propertyName(member) {
+  return member.computed ? staticText(member.property) : member.property.name;
 }
 
 export default {
