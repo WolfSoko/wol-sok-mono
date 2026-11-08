@@ -10,7 +10,7 @@ import { SCENARIOS } from './scenarios';
 /**
  * The integer shaders against their TypeScript reference, tick by tick, on
  * SwiftShader (ADR 0015, steps 6 and 7) - the passes alone, and whole
- * matches through the game's `GpuSimulation` against `IntSimulation` - plus
+ * matches through the game's `gpuSimulation` against `intSimulation` - plus
  * the self-test a device runs. The deterministic simulation promises the
  * same state on every GPU, and this is the one CI can run. A device whose
  * driver breaks the promise fails the self-test there, not here.
@@ -67,14 +67,14 @@ test("the game's self-test passes on SwiftShader", async ({ page }) => {
 });
 
 for (const scenario of SIM_SCENARIOS) {
-  test(`${scenario.name}: the game's GpuSimulation plays as IntSimulation`, async ({
+  test(`${scenario.name}: the game's gpuSimulation plays as intSimulation`, async ({
     page,
   }) => {
     const gpu = await page.evaluate(
       (name) => window.gpuCrosscheck.simCrosscheck(name),
       scenario.name
     );
-    // The goldens are IntSimulation's hashes - `sim-golden.spec.ts` checks it.
+    // The goldens are intSimulation's hashes - `sim-golden.spec.ts` checks it.
     const expected =
       simGolden.hashes[scenario.name as keyof typeof simGolden.hashes];
     const firstMismatch = gpu.findIndex((hash, i) => hash !== expected[i]);

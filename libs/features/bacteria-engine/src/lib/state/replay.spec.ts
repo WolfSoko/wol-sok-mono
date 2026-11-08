@@ -215,7 +215,7 @@ describe('replay', () => {
   });
 
   describe('replayRun on a GPU that fails to set up', () => {
-    it('plays on IntSimulation, tells it once and asks the GPU no more', () => {
+    it('plays on intSimulation, tells it once and asks the GPU no more', () => {
       const { replay } = record(PLAN, 60);
       const gpuInt = {
         ...replay,

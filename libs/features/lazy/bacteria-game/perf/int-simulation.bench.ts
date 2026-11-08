@@ -1,5 +1,5 @@
 /**
- * How long a tick of `IntSimulation` takes - the deterministic simulation
+ * How long a tick of `intSimulation` takes - the deterministic simulation
  * on the CPU (ADR 0015) - at the sizes the game plays. Prints ms per tick;
  * no gate (ADR 0014: CI's workers are shared, absolute times vary).
  *

@@ -14,7 +14,7 @@ import golden from './golden-gpu-sim.json';
 
 /**
  * The golden hashes of the whole-match scenarios the GPU cross-check plays
- * through `GpuSimulation` are `IntSimulation`'s: a change to the simulation
+ * through `gpuSimulation` are `intSimulation`'s: a change to the simulation
  * or the balance shows up here first, without a browser. Regenerate them by
  * writing what `playScenario` returns; a change to what the simulation
  * computes also bumps `BALANCE_VERSION`, a change to the scenarios does not.

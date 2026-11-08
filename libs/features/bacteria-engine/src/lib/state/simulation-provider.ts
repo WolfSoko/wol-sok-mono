@@ -57,7 +57,7 @@ export interface SimulationProvider {
    * Builds the simulation of one match, sized to `arena` where it is given.
    * A GPU simulation that fails to start or to be sized is let go of, and
    * the match plays on the stand-in that keeps the request's ruleset:
-   * `IntSimulation` for `gpu-int`, `BacteriaSimulation` for the device's
+   * `intSimulation` for `gpu-int`, `BacteriaSimulation` for the device's
    * own match.
    */
   simulationFor(
@@ -133,7 +133,7 @@ export function createSimulationProvider(
 
 /**
  * The engine's default: no GPU - `cpu` plays on `BacteriaSimulation`,
- * `gpu-int` on `IntSimulation`, the device's own matches on the CPU.
+ * `gpu-int` on `intSimulation`, the device's own matches on the CPU.
  */
 export const CPU_SIMULATIONS: SimulationProvider = createSimulationProvider({});
 

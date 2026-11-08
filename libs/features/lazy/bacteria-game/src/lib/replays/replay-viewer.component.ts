@@ -67,7 +67,7 @@ export const CHROME_HIDE_MS = 3000;
  * fast to the time asked for - back from the start, as a deterministic war
  * only plays forwards. Where the host says the GPU is trusted (`gpu`), a
  * `gpu-int` replay plays on the view's GL context, as fast as the match
- * itself was; else on `IntSimulation`, the CPU twin. The game shows it for
+ * itself was; else on `intSimulation`, the CPU twin. The game shows it for
  * "My matches" and the match just played; `/watch` for a public replay. It
  * needs no game state, account or Firebase.
  */
