@@ -30,7 +30,8 @@ export class TeamSpieleComponent {
 
   protected readonly saison = resource({
     params: () => this.team(),
-    loader: ({ params }) => this.data.teamSpiele(params),
+    loader: ({ params, abortSignal }) =>
+      this.data.teamSpiele(params, { signal: abortSignal }),
   });
 
   protected readonly zeilen = computed(() =>

@@ -55,14 +55,14 @@ function saison(spiele: readonly Spiel[]): TeamSaison {
 }
 
 /** `BasketballData` answering `teamSpiele` with `read`, nothing else. */
-function fakeData(
-  read: (team: number) => Promise<TeamSaison>
-): Pick<BasketballData, 'teamSpiele'> {
-  return { teamSpiele: vi.fn(read) };
+function fakeData(read: BasketballData['teamSpiele']): {
+  readonly teamSpiele: ReturnType<typeof vi.fn<BasketballData['teamSpiele']>>;
+} {
+  return { teamSpiele: vi.fn<BasketballData['teamSpiele']>(read) };
 }
 
 async function render(
-  data: Pick<BasketballData, 'teamSpiele'>,
+  data: ReturnType<typeof fakeData>,
   teamId = '313036'
 ): Promise<HTMLElement> {
   TestBed.configureTestingModule({
@@ -91,7 +91,9 @@ describe('TeamSpieleComponent', () => {
 
     await render(data, '313036');
 
-    expect(data.teamSpiele).toHaveBeenCalledWith(313036);
+    expect(data.teamSpiele).toHaveBeenCalledWith(313036, {
+      signal: expect.any(AbortSignal),
+    });
   });
 
   it('names the Team', async () => {
@@ -100,29 +102,30 @@ describe('TeamSpieleComponent', () => {
     expect(page.querySelector('h1')?.textContent).toContain('MTV Wasbüttel');
   });
 
-  it('lists every Spiel of every Liga by date and time', async () => {
+  it("lists every Spiel of every Liga in the port's order, by date", async () => {
+    // the port promises date order; the page shows what it gets as it is
     const page = await render(
       fakeData(async () =>
         saison([
-          spiel({ id: 3, datum: '2026-09-20', uhrzeit: '09:00' }),
           spiel({ id: 1, datum: '2026-08-29', ligaId: TESTSPIELE.id }),
-          spiel({ id: 4, datum: '2026-09-20', uhrzeit: '15:00' }),
-          spiel({ id: 2, datum: '2026-09-12' }),
+          spiel({ id: 2, datum: '2026-09-20', uhrzeit: '15:00' }),
+          spiel({ id: 3, datum: '2026-09-20', uhrzeit: '09:00' }),
+          spiel({ id: 4, datum: '2026-09-12' }),
         ])
       )
     );
 
     expect(spielZeilen(page).map((zeile) => feld(zeile, 'datum'))).toEqual([
       'Sa., 29.08.2026',
+      'So., 20.09.2026',
+      'So., 20.09.2026',
       'Sa., 12.09.2026',
-      'So., 20.09.2026',
-      'So., 20.09.2026',
     ]);
     expect(spielZeilen(page).map((zeile) => feld(zeile, 'uhrzeit'))).toEqual([
       '10:00',
-      '10:00',
-      '09:00',
       '15:00',
+      '09:00',
+      '10:00',
     ]);
     expect(spielZeilen(page).map((zeile) => feld(zeile, 'liga'))).toEqual([
       TESTSPIELE.name,
@@ -298,4 +301,23 @@ describe('TeamSpieleComponent', () => {
       expect(data.teamSpiele).not.toHaveBeenCalled();
     }
   );
+
+  it('cancels the read of a Team the page has left', async () => {
+    const data = fakeData(() => new Promise<TeamSaison>(() => undefined));
+    TestBed.configureTestingModule({
+      providers: [{ provide: BASKETBALL_DATA, useValue: data }],
+    });
+    const fixture = TestBed.createComponent(TeamSpieleComponent);
+    fixture.componentRef.setInput('teamId', '313036');
+    fixture.detectChanges();
+    const erster = data.teamSpiele.mock.calls[0][1]?.signal;
+
+    fixture.componentRef.setInput('teamId', '201500');
+    fixture.detectChanges();
+
+    expect(data.teamSpiele).toHaveBeenLastCalledWith(201500, {
+      signal: expect.any(AbortSignal),
+    });
+    expect(erster?.aborted).toBe(true);
+  });
 });
