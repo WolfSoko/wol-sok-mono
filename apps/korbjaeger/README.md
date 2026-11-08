@@ -28,18 +28,25 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Meine Teams as a signal with `folgen` and `entfolgen`. Its local adapter
   `LokaleAuswahl` keeps them in `localStorage` (`korbjaeger-auswahl`) as
   `{ version: 1, teams: [...] }` (`auswahl-dokument.ts`: ids only, Kinder
-  join as a field of their own later); storage that cannot be read or
-  holds something else counts as empty, storage that takes nothing keeps
-  them for the visit. Every adapter runs the shared contract suite
+  join as a field of their own later). It reads the document again
+  before each write and on the `storage` event, so two tabs keep each
+  other's changes, and keeps fields it does not know. Storage that cannot
+  be read or holds something else counts as empty, storage that takes
+  nothing keeps them for the visit; a document of a newer version is left
+  alone and changes are refused (`AuswahlZuNeuError`, "Bitte die App neu
+  laden"). Every adapter runs the shared contract suite
   `auswahlVertrag` (`testing/auswahl-vertrag.ts`), the Firestore adapter
   of Ticket 8 too.
 - **Overview** (`/`, `src/app/ueberblick/`): each of Meine Teams with its
   next Spiel (day, time, home or away, opponent), the Spiele
   before it that fall through (cancelled or forfeited) and its last result (the lib's `teamUeberblick`), the Team
   that plays first first and Teams without a next Spiel last
-  (`nachNaechstemSpiel`), each linking to its Team page. Each Team is
-  read through `teamSpiele` and fails on its own. The Team-id form below
-  opens a Team to follow.
+  (`nachNaechstemSpiel`), each linking to its Team page. Each Team is a
+  card of its own (`ueberblick-team.component.ts`) that reads its
+  `teamSpiele`, loads and fails on its own and reports its next Spiel for
+  the order; a card whose read fails offers "Entfernen". Both screens
+  show a Spiel through `SpielZeileComponent` (`src/app/spiel/`). The
+  Team-id form below opens a Team to follow.
 - **Proxy:** `src/server/routes/api/dbb/` (thin route files) over
   `src/server/dbb/`; `src/shared/dbb-proxy-routes.ts` maps each read to
   its route and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists
