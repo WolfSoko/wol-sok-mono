@@ -19,7 +19,10 @@ interface FirebaseConfig {
 }
 
 interface ProjectJson {
-  targets: Record<string, { options: { command: string } }>;
+  targets: Record<
+    string,
+    { options: { command?: string; commands?: string[]; parallel?: boolean } }
+  >;
 }
 
 const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
@@ -32,9 +35,30 @@ describe('the Firebase deploy', () => {
     expect(project.targets['firebase'].options.command).toBe(
       'firebase --config=firebase.korbjaeger.json --project=korbjaeger'
     );
-    expect(project.targets['deploy'].options.command).toBe(
+    expect(project.targets['deploy'].options.commands?.at(-1)).toBe(
       'nx run korbjaeger:firebase deploy'
     );
+  });
+
+  /**
+   * A deploy that creates or updates a function fails, after deploying it but
+   * before releasing Hosting, when the function's Artifact Registry has no
+   * cleanup policy (release 74.145.0). So the deploy sets one first, in the
+   * function's region, keeping a day of images.
+   */
+  it("sets the images' cleanup policy in the function's region before deploying", () => {
+    const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
+    const region = /region: '([a-z0-9-]+)'/.exec(
+      readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8')
+    )?.[1];
+    const { commands, parallel } = project.targets['deploy'].options;
+
+    expect(region).toBeDefined();
+    expect(parallel).toBe(false);
+    expect(commands).toEqual([
+      `nx run korbjaeger:firebase functions:artifacts:setpolicy --location=${region} --days=1 --force`,
+      'nx run korbjaeger:firebase deploy',
+    ]);
   });
 
   it("goes to the project's default site, named by .firebaserc alone", () => {

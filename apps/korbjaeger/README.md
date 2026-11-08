@@ -118,7 +118,10 @@ deploys `firebase.korbjaeger.json` from the workspace root, not the
   `X-Robots-Tag: noindex`, from Hosting and, for the proxy, from Nitro's
   route rules too.
 - **Function** `server`, region `europe-central2`, at most 10 instances
-  (`vite.config.ts`, Nitro's `firebase` options).
+  (`vite.config.ts`, Nitro's `firebase` options). The deploy first sets
+  the cleanup policy of its images in that region (one day): without one,
+  the Firebase CLI fails after deploying the function and before
+  releasing Hosting.
 - **Domain** `korb.wolsok.de`: a CNAME to `<site>.web.app` in the CDK app
   `korbjaeger-cdk` (stack `Korbjaeger`, `cdk` leg of `deploy.yml`). It
   keeps the site as `KORBJAEGER_HOSTING_SITE` and the domain as
