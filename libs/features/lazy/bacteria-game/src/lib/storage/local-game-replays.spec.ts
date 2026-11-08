@@ -50,6 +50,28 @@ describe('LocalGameReplays', () => {
     }
   }
 
+  async function submitted(hint: number): Promise<string> {
+    const id = (await replays.submit({ replay: REPLAY, hint })) as string;
+    await settle();
+    return id;
+  }
+
+  async function listed(): Promise<ReplayListing[]> {
+    const list = replays.listMine();
+    await settle();
+    return list;
+  }
+
+  /** Rewrites every stored entry as `change` says. */
+  async function rewriteStored(
+    change: (entry: Record<string, unknown>) => Record<string, unknown>
+  ): Promise<void> {
+    storage.update(LOCAL_REPLAYS_KEY, (stored) =>
+      (stored as Record<string, unknown>[]).map(change)
+    );
+    await settle();
+  }
+
   it('keeps a replay on the device, saved once the storage answered', async () => {
     const seen: boolean[] = [];
     const id = (await replays.submit({ replay: REPLAY, hint: 33 })) as string;
@@ -59,9 +81,7 @@ describe('LocalGameReplays', () => {
     await settle();
 
     expect(seen).toContain(true);
-    const list = replays.listMine();
-    await settle();
-    expect(await list).toEqual([
+    expect(await listed()).toEqual([
       expect.objectContaining({
         id,
         kind: 'computer',
@@ -99,8 +119,7 @@ describe('LocalGameReplays', () => {
   });
 
   it('removes a replay on request, and refuses what needs the server', async () => {
-    const id = (await replays.submit({ replay: REPLAY, hint: 1 })) as string;
-    await settle();
+    const id = await submitted(1);
 
     const removed = (await replays.sendCommand('remove', id)) as string;
     const featured = (await replays.sendCommand('feature', id)) as string;
@@ -117,8 +136,7 @@ describe('LocalGameReplays', () => {
   });
 
   it('deletes a replay on "Delete" (forget) too', async () => {
-    const id = (await replays.submit({ replay: REPLAY, hint: 1 })) as string;
-    await settle();
+    const id = await submitted(1);
 
     const forgotten = (await replays.sendCommand('forget', id)) as string;
     await settle();
@@ -129,95 +147,68 @@ describe('LocalGameReplays', () => {
     expect(parseLocalReplays(storage.stored(LOCAL_REPLAYS_KEY))).toEqual([]);
   });
 
-  /** Bytes that are no base64 at all. */
-  const BROKEN = '!!!';
-  /** Base64 that decodes but does not inflate. */
-  const UNREAD = 'AAAA';
+  describe('with entries kept before the store wrote their simulation', () => {
+    /** Bytes that are no base64 at all. */
+    const BROKEN = '!!!';
+    /** Base64 that decodes but does not inflate. */
+    const UNREAD = 'AAAA';
+    let id: string;
+    let unread: string;
+    let readable: Record<string, unknown>;
+    let unreadAsKept: Record<string, unknown>;
 
-  /** Strips `simulation` from every stored entry, and puts `bytes` into the ones named. */
-  async function keepAsBeforeSimulation(
-    bytes: Record<string, string>
-  ): Promise<void> {
-    storage.update(LOCAL_REPLAYS_KEY, (stored) =>
-      (stored as Record<string, unknown>[]).map(
-        ({ simulation: _simulation, ...old }) => ({
-          ...old,
-          bytes: bytes[old['id'] as string] ?? old['bytes'],
-        })
-      )
-    );
-    await settle();
-  }
+    beforeEach(async () => {
+      id = await submitted(33);
+      unread = await submitted(34);
+      const broken = await submitted(35);
+      const bytes: Record<string, string> = {
+        [unread]: UNREAD,
+        [broken]: BROKEN,
+      };
+      readable = (storage.stored(LOCAL_REPLAYS_KEY) as { id: string }[]).find(
+        (entry) => entry.id === id
+      ) as Record<string, unknown>;
+      await rewriteStored(({ simulation: _simulation, ...old }) => ({
+        ...old,
+        bytes: bytes[old['id'] as string] ?? old['bytes'],
+      }));
+      unreadAsKept = (
+        storage.stored(LOCAL_REPLAYS_KEY) as { id: string }[]
+      ).find((entry) => entry.id === unread) as Record<string, unknown>;
+    });
 
-  async function listed(): Promise<ReplayListing[]> {
-    const list = replays.listMine();
-    await settle();
-    return list;
-  }
+    it('lists the one whose bytes read, with its simulation from them', async () => {
+      expect(await listed()).toEqual([
+        expect.objectContaining({ id, simulation: 'cpu' }),
+      ]);
+    });
 
-  /** Spoils every stored entry's bytes: a listing that still reads them drops the entry. */
-  async function spoilBytes(): Promise<void> {
-    storage.update(LOCAL_REPLAYS_KEY, (stored) =>
-      (stored as Record<string, unknown>[]).map((entry) => ({
-        ...entry,
-        bytes: UNREAD,
-      }))
-    );
-    await settle();
-  }
+    it('writes what it read back once, removes broken bytes and keeps what did not read for next time', async () => {
+      await listed();
 
-  async function submitted(hint: number): Promise<string> {
-    const id = (await replays.submit({ replay: REPLAY, hint })) as string;
-    await settle();
-    return id;
-  }
+      expect(storage.stored(LOCAL_REPLAYS_KEY)).toEqual([
+        unreadAsKept,
+        readable,
+      ]);
+      await rewriteStored((entry) => ({ ...entry, bytes: UNREAD }));
+      expect(await listed()).toEqual([
+        expect.objectContaining({ id, simulation: 'cpu' }),
+      ]);
+    });
 
-  it('lists an entry kept before the store wrote its simulation, read from its bytes', async () => {
-    const id = await submitted(33);
-    const unread = await submitted(34);
-    const broken = await submitted(35);
-    await keepAsBeforeSimulation({ [unread]: UNREAD, [broken]: BROKEN });
+    it('writes nothing when no bytes read', async () => {
+      await listed();
+      const update = jest.spyOn(storage, 'update');
 
-    // The others' bytes do not read: they are left out.
-    expect(await listed()).toEqual([
-      expect.objectContaining({ id, simulation: 'cpu' }),
-    ]);
-  });
+      await listed();
 
-  it('writes what it read back once, removes broken bytes and keeps what did not read for next time', async () => {
-    const id = await submitted(33);
-    const unread = await submitted(34);
-    const broken = await submitted(35);
-    const asSubmitted = new Map(
-      (storage.stored(LOCAL_REPLAYS_KEY) as { id: string }[]).map((entry) => [
-        entry.id,
-        entry,
-      ])
-    );
-    await keepAsBeforeSimulation({ [unread]: UNREAD, [broken]: BROKEN });
-    const {
-      simulation: _simulation,
-      ...unreadAsKept
-    }: Record<string, unknown> = {
-      ...(asSubmitted.get(unread) as Record<string, unknown>),
-      bytes: UNREAD,
-    };
-
-    await listed();
-
-    expect(storage.stored(LOCAL_REPLAYS_KEY)).toEqual([
-      unreadAsKept,
-      asSubmitted.get(id),
-    ]);
-    await spoilBytes();
-    expect(await listed()).toEqual([
-      expect.objectContaining({ id, simulation: 'cpu' }),
-    ]);
+      expect(update).not.toHaveBeenCalled();
+    });
   });
 
   it('neither reads nor writes entries that carry their simulation', async () => {
     await submitted(33);
-    await spoilBytes();
+    await rewriteStored((entry) => ({ ...entry, bytes: 'AAAA' }));
     const update = jest.spyOn(storage, 'update');
 
     expect(await listed()).toHaveLength(1);
@@ -233,20 +224,18 @@ describe('LocalGameReplays', () => {
       ladder: 2,
     };
 
-    it('adds what was read to the entries still lacking it, removes the broken and keeps the unread', () => {
+    it('adds what was read to the entries still lacking it, removes the broken and keeps the rest', () => {
       expect(
         backfilled(
-          [OLD, { ...OLD, id: 'b' }, { ...OLD, id: 'c' }, { ...OLD, id: 'd' }],
+          [OLD, { ...OLD, id: 'b' }, { ...OLD, id: 'c' }],
           new Map<string, ReadPlayback>([
             ['a', PLAYBACK],
             ['b', 'broken'],
-            ['c', 'unread'],
           ])
         )
       ).toEqual([
         { ...OLD, ...PLAYBACK },
         { ...OLD, id: 'c' },
-        { ...OLD, id: 'd' },
       ]);
     });
 
