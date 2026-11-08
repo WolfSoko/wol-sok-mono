@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.143.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.142.0...v74.143.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 3 — Meine Teams and the overview (on the device) ([#2897](https://github.com/WolfSoko/wol-sok-mono/issues/2897)) ([ce8f1b0](https://github.com/WolfSoko/wol-sok-mono/commit/ce8f1b09b6b1ea52cb578eecf52d22fd61b5a026)), references [#2867](https://github.com/WolfSoko/wol-sok-mono/issues/2867) [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873) [#2872](https://github.com/WolfSoko/wol-sok-mono/issues/2872) [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** keep only readable values of a pending match setup ([#2892](https://github.com/WolfSoko/wol-sok-mono/issues/2892)) ([32e8336](https://github.com/WolfSoko/wol-sok-mono/commit/32e8336933ffbebddefb2cf3f8046f84e6f05199)), closes [#2811](https://github.com/WolfSoko/wol-sok-mono/issues/2811)
+
+### Testing
+
+* **nx-aws-cdk-v2:** typecheck the executor specs ([#2893](https://github.com/WolfSoko/wol-sok-mono/issues/2893)) ([974cdc5](https://github.com/WolfSoko/wol-sok-mono/commit/974cdc56c6f7aa89411736e8fbbcc35879e47c5e)), closes [#2852](https://github.com/WolfSoko/wol-sok-mono/issues/2852)
+
 ## [74.142.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.141.0...v74.142.0) (2026-11-08)
 
 ### Features
