@@ -8,7 +8,12 @@
     "build": {
       "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
-      "inputs": ["sharedGlobals", "production", "^production"],
+      "inputs": [
+        "sharedGlobals",
+        "production",
+        "!{projectRoot}/deploy/**",
+        "^production"
+      ],
       "options": {
         "main": "apps/bacteria-wars-functions/src/main.ts",
         "outputPath": "dist/apps/bacteria-wars-functions",
@@ -57,7 +62,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["build"],
       "options": {
-        "command": "firebase deploy --config=firebase.bacteria-game-remote.json --project=bacteria-game-remote --only functions:bacteria --force --non-interactive"
+        "command": "tsx apps/bacteria-wars-functions/deploy/retry-once.ts firebase deploy --config=firebase.bacteria-game-remote.json --project=bacteria-game-remote --only functions:bacteria --force --non-interactive"
       }
     }
   }
