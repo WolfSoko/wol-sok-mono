@@ -56,7 +56,8 @@ send it to the DBB directly.
 app under `/api/dbb/`, one route per allowlisted read, with numeric ids
 validated and 404 for every other path. The Liga search is a `GET` on the
 proxy, its filter in the query string, so the CDN can cache it. It answers
-with `Cache-Control: public, max-age=60, s-maxage=300`, so Firebase
+with `Cache-Control: public, max-age=60, s-maxage=300` (the boxscore of a
+finished Spiel, which rarely changes, `s-maxage=3600`), so Firebase
 Hosting's CDN serves repeats and the DBB sees at most one request per
 resource every few minutes, however many parents watch. It calls the DBB
 with a timeout, a User-Agent that names the app and its URL, and no
@@ -74,8 +75,11 @@ HTTP.
   `src/lib/dbb/fixtures/` are re-recorded with
   `tools/korbjaeger/record-fixtures.ts` and anonymised (ADR 0019) to pick
   the change up.
-- The data can be up to about fifteen minutes old (the DBB's own caching
-  plus the proxy's); the app says so.
+- Schedules, results and Tabellen can be up to about fifteen minutes old
+  (the DBB's own caching plus the proxy's five minutes). The Kader and
+  Spielerwerte of a finished Spiel can be about an hour plus the DBB's
+  caching old, so a correction the Verband makes after the Spiel shows up
+  that late. The app's source note says both.
 - The DBB marks things only implicitly, and the adapter follows what the
   responses show: a forfeit is `verzicht` on the Spiel and the Team that
   gave up, a cancellation `abgesagt`, a Hauptrunde slot a team without

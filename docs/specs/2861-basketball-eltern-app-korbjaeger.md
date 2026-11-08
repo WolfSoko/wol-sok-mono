@@ -37,7 +37,7 @@ As the issue's "Out of Scope": no push or ICS, no Android app, no player search 
 4. `Auswahl`: one spec suite passes against both adapters; first-sign-in merge without duplicates; Firestore rules tested on the emulator (owner only, field allowlist, list caps, nickname cap, delete allowed).
 5. Screens (component specs against fakes): overview ordered by next Spiel, Teams without Kind shown; Kind highlight across Teams and Saisons by person id; "keine Spielerwerte erfasst" instead of zeros; "noch kein Spielbericht"; season-end hint (no upcoming Spiel, last one more than 14 days past) offering the Verein's Teams; Anonyme Spieler not markable; cancelled/forfeited and moved Spiele shown as such; Halle with navigation link; home/away told apart.
 6. Account: sign in, sign out, delete account (document, then auth user).
-7. PWA installable (manifest, service worker); last good data shown with its age offline; clear message when the DBB is unreachable; DBB source note with "may lag by a few minutes".
+7. PWA installable (manifest, service worker); last good data shown with its age offline; clear message when the DBB is unreachable; DBB source note saying the data may lag by a few minutes, and the Spielerwerte of a finished Spiel by about an hour.
 8. `/privacy` and `/impressum` name the provider from `SITE_OWNER`; the privacy policy covers Google sign-in, the Firestore document, device storage, Hosting logs and deletion.
 9. Every page `noindex`; Hosting sends `X-Robots-Tag: noindex`; `robots.txt` disallows all; README explains the missing sitemap.
 10. E2E (Playwright, server through the Nx serve target, DBB base URL on a fake server with the fixtures): set up a Team → mark a Kind → overview shows the next Spiel and the Kader flag.
