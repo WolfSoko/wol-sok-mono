@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.9](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.8...v74.139.9) (2026-11-08)
+
+### Chore
+
+* **deps:** update dependency @firebase/rules-unit-testing to v6 ([#2863](https://github.com/WolfSoko/wol-sok-mono/issues/2863)) ([e9a3ec0](https://github.com/WolfSoko/wol-sok-mono/commit/e9a3ec0f837128b456143509ae627b1630a55431))
+
 ## [74.139.8](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.7...v74.139.8) (2026-11-08)
 
 ### Bug Fixes
