@@ -14,8 +14,8 @@ export interface ProxyResponse {
 
 const JSON_CONTENT_TYPE = 'application/json; charset=utf-8';
 
-/** A DBB body, passed on as it came. */
-export function dbbBody(
+/** A JSON body as it is, a DBB body passed on or an error of the proxy. */
+export function jsonResponse(
   status: number,
   body: string,
   headers: Readonly<Record<string, string>> = {}
@@ -29,12 +29,12 @@ export function dbbBody(
 
 /** No such read, or no such id: 404 with a short JSON error, not cached. */
 export function notFound(): ProxyResponse {
-  return dbbBody(404, JSON.stringify({ error: 'not-found' }));
+  return jsonResponse(404, JSON.stringify({ error: 'not-found' }));
 }
 
 /** The DBB failed or was not reached: 502 with a short JSON error. */
 export function badGateway(): ProxyResponse {
-  return dbbBody(502, JSON.stringify({ error: 'dbb-unavailable' }));
+  return jsonResponse(502, JSON.stringify({ error: 'dbb-unavailable' }));
 }
 
 /** Writes `response` to `event`: only its own headers, never the DBB's. */

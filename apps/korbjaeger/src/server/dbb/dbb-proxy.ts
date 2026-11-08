@@ -6,7 +6,7 @@ import {
 import { defineEventHandler, getRouterParam } from 'h3';
 import {
   badGateway,
-  dbbBody,
+  jsonResponse,
   notFound,
   sendProxyResponse,
   type ProxyResponse,
@@ -38,11 +38,11 @@ export async function proxyDbbRead(
   }
   switch (dbbStatusOf(parsedOrUndefined(answer.body))) {
     case 'ok':
-      return dbbBody(200, answer.body, {
+      return jsonResponse(200, answer.body, {
         'cache-control': DBB_PROXY_CACHE_CONTROL,
       });
     case 'not-found':
-      return dbbBody(404, answer.body);
+      return jsonResponse(404, answer.body);
     default:
       return badGateway();
   }

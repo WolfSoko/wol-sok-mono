@@ -27,6 +27,9 @@ export interface SpielZeile {
   readonly markierung?: SpielMarkierung;
 }
 
+/** What the page says for an id that names no Team. */
+export const KEIN_TEAM = 'Dieses Team kennt der DBB nicht.';
+
 const DATUM = new Intl.DateTimeFormat('de-DE', {
   weekday: 'short',
   day: '2-digit',
@@ -53,9 +56,6 @@ export function fehlerText(error: unknown): string {
   }
   return 'Der DBB ist gerade nicht erreichbar. Bitte später noch einmal versuchen.';
 }
-
-/** What the page says for an id that names no Team. */
-export const KEIN_TEAM = 'Dieses Team kennt der DBB nicht.';
 
 function spielZeile(
   spiel: Spiel,
