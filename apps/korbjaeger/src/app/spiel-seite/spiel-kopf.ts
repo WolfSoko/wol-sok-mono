@@ -10,6 +10,9 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import { ergebnisText, spielTagUndUhrzeit } from '../spiel/spiel-format';
 
+/** What a cell shows that has no value yet. */
+const KEIN_WERT = '–';
+
 /** One side of a Spiel as the Spiel page names it. */
 export interface SpielPartner {
   readonly name: string;
@@ -21,7 +24,11 @@ export interface SpielPartner {
 export interface PeriodenZeile {
   readonly team: string;
   readonly punkte: readonly number[];
-  readonly gesamt: number;
+  /**
+   * The side's final points, `–` while the Spiel has no result: a sum of
+   * the quarters entered so far is no final score.
+   */
+  readonly gesamt: string;
 }
 
 /** One period's column: its name and the short heading shown. */
@@ -35,6 +42,8 @@ export interface PeriodenSpalte {
 /** The quarter scores, with a column per period. */
 export interface Perioden {
   readonly spalten: readonly PeriodenSpalte[];
+  /** The heading of the total column: `Endstand` only with a result. */
+  readonly gesamtTitel: string;
   readonly zeilen: readonly [PeriodenZeile, PeriodenZeile];
 }
 
@@ -119,7 +128,7 @@ function periodenVon(
     return {
       team: parteiName(spiel[seite]),
       punkte,
-      gesamt: ergebnis?.[seite] ?? punkte.reduce((sum, p) => sum + p, 0),
+      gesamt: ergebnis === undefined ? KEIN_WERT : String(ergebnis[seite]),
     };
   };
   return {
@@ -133,6 +142,7 @@ function periodenVon(
         kurz: `V${i + 1}`,
       })),
     ],
+    gesamtTitel: ergebnis === undefined ? 'Gesamt' : 'Endstand',
     zeilen: [zeile('heim'), zeile('gast')],
   };
 }

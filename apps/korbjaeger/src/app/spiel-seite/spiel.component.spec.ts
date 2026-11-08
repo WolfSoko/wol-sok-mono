@@ -301,6 +301,32 @@ describe('SpielComponent', () => {
       ]);
     });
 
+    it('shows no final score for quarters without a result yet', async () => {
+      const seite = await render(
+        fakeData(
+          async () => ({
+            ...GESPIELT,
+            spiel: { ...GESPIELT.spiel, status: { art: 'geplant' } },
+          }),
+          async () => undefined
+        )
+      );
+
+      const viertel = teil(seite, 'viertel');
+      expect(kopfzellen(viertel)).toEqual([
+        'Team',
+        '1. Viertel',
+        '2. Viertel',
+        '3. Viertel',
+        '4. Viertel',
+        'Gesamt',
+      ]);
+      expect(zellen(viertel, 'viertel-zeile')).toEqual([
+        ['MTV Wasbüttel', '20', '18', '22', '18', '–'],
+        ['MTV Gifhorn', '10', '12', '9', '16', '–'],
+      ]);
+    });
+
     it('adds each overtime after the quarters', async () => {
       const seite = await render(
         fakeData(
