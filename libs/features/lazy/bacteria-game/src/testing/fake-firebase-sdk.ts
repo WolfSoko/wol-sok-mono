@@ -1,4 +1,7 @@
 import type { FirebaseConnection } from '../lib/storage/firebase-connection';
+import { later, never, sdkError } from './fake-callbacks';
+import { FakeFirebaseAuth } from './fake-firebase-auth';
+import { FakeRealtimeDatabase } from './fake-realtime-database';
 
 /** A document's fields, as the fake stores them. */
 export type FakeDoc = Record<string, unknown>;
@@ -122,34 +125,7 @@ interface Staged {
   apply(): void;
 }
 
-/**
- * Lets the snapshots the fake queued so far reach their listeners: like the
- * SDK, the fake calls a listener back asynchronously, never inside the call
- * that caused it.
- */
-export async function settleSnapshots(): Promise<void> {
-  for (let i = 0; i < 100; i++) {
-    await Promise.resolve();
-  }
-}
-
-/** An error with the code the SDK gives it. */
-function firestoreError(code: string): Error {
-  return Object.assign(new Error(code), { code });
-}
-
-/**
- * Runs the callback in a microtask - through a promise, not
- * `queueMicrotask`, which Jest's fake timers hold back.
- */
-function later(callback: () => void): void {
-  void Promise.resolve().then(callback);
-}
-
-/** A promise that never settles: a call whose answer never arrives. */
-function never<T>(): Promise<T> {
-  return new Promise<T>(() => undefined);
-}
+export { settleSnapshots } from './fake-callbacks';
 
 /** A field value's type, as Firestore orders and compares by it. */
 function typeOf(value: unknown): string {
@@ -207,10 +183,13 @@ const OPERATORS: Record<string, (field: unknown, value: unknown) => boolean> = {
 };
 
 /**
- * The Firebase SDK surface the game's adapters call on `FirebaseConnection`
- * (`dbSdk`, `rtdbSdk`), in memory, for their specs: documents by path,
- * auto ids, the server's time on write, queries, live listeners, batches
- * and transactions, with switches for what the network and the rules do.
+ * The Firebase SDK surface the game's and the admin's adapters call on
+ * `FirebaseConnection`, in memory, for their specs. Firestore (`dbSdk`)
+ * lives here: documents by path, auto ids, the server's time on write,
+ * queries, live listeners, batches and transactions, with switches for
+ * what the network and the rules do. The Realtime Database (`rtdbSdk`,
+ * {@link FakeRealtimeDatabase}) and Auth (`authSdk`, {@link FakeFirebaseAuth})
+ * are parts of their own, reached as `realtime` and `auth`.
  * The rules emulator suite stays the check of the rules themselves.
  */
 export class FakeFirebase {
@@ -222,7 +201,10 @@ export class FakeFirebase {
   public readonly queries: unknown[][] = [];
   /** Every path listened to, in order; the Realtime Database's as `rtdb:<path>`. */
   public readonly listened: string[] = [];
-  /** Paths the rules refuse to read or write: `permission-denied`. */
+  /**
+   * Paths the rules refuse to read or write: `permission-denied`; a Realtime
+   * Database path as `rtdb:<path>`.
+   */
   public readonly refused: Set<string>;
   /** Paths whose first snapshot waits for a write, as from the server. */
   public readonly pending = new Set<string>();
@@ -242,9 +224,12 @@ export class FakeFirebase {
   /** `getDoc` and `getDocs` never answer; `getDocFromServer` still does. */
   public hangingReads = false;
 
+  /** The Realtime Database part, sharing `listened`, `refused` and the time. */
+  public readonly realtime: FakeRealtimeDatabase;
+  /** The Auth part. */
+  public readonly auth = new FakeFirebaseAuth();
+
   private readonly listeners = new Set<Listener>();
-  private readonly values = new Map<string, unknown>();
-  private readonly valueListeners = new Map<string, Set<() => void>>();
   private ids = 0;
 
   public constructor(options: FakeFirebaseOptions = {}) {
@@ -253,6 +238,11 @@ export class FakeFirebase {
     }
     this.refused = new Set(options.refused);
     this.serverTime = options.serverTime ?? FAKE_SERVER_TIME;
+    this.realtime = new FakeRealtimeDatabase({
+      listened: this.listened,
+      refused: this.refused,
+      serverTime: () => this.serverTime,
+    });
   }
 
   /** The SDK's Firestore calls the adapters use. */
@@ -303,7 +293,7 @@ export class FakeFirebase {
       this.hangingReads ? never() : this.read(ref),
     getDocFromServer: async (ref: DocRef): Promise<DocSnapshot> => {
       if (this.offline) {
-        throw firestoreError('unavailable');
+        throw sdkError('unavailable');
       }
       return this.read(ref);
     },
@@ -322,6 +312,15 @@ export class FakeFirebase {
     ): Promise<void> => {
       this.check(ref.path);
       this.set(ref.path, data, options);
+    },
+    addDoc: async (
+      collection: CollectionRef,
+      data: FakeDoc
+    ): Promise<DocRef> => {
+      const ref = this.docRef(`${collection.path}/auto${++this.ids}`);
+      this.check(ref.path);
+      this.set(ref.path, data);
+      return ref;
     },
     updateDoc: async (ref: DocRef, data: FakeDoc): Promise<void> => {
       this.check(ref.path);
@@ -347,26 +346,18 @@ export class FakeFirebase {
   };
 
   /** The SDK's Realtime Database calls the adapters use. */
-  public readonly rtdbSdk = {
-    ref: (_db: unknown, path: string) => ({ path }),
-    onValue: (
-      ref: { path: string },
-      next: (snapshot: { val(): unknown }) => void
-    ): (() => void) => {
-      this.listened.push(`rtdb:${ref.path}`);
-      const emit = () =>
-        later(() => next({ val: () => this.values.get(ref.path) ?? null }));
-      const emits = this.valueListeners.get(ref.path) ?? new Set();
-      emits.add(emit);
-      this.valueListeners.set(ref.path, emits);
-      emit();
-      return () => emits.delete(emit);
-    },
-  };
+  public get rtdbSdk(): FakeRealtimeDatabase['sdk'] {
+    return this.realtime.sdk;
+  }
+
+  /** The SDK's Auth calls the account uses. */
+  public get authSdk(): FakeFirebaseAuth['sdk'] {
+    return this.auth.sdk;
+  }
 
   /**
-   * The connection an adapter takes - only its Firestore and Realtime
-   * Database parts; `rtdb: false` stands for a project without one.
+   * The connection an adapter takes - its Firestore, Realtime Database and
+   * Auth parts; `rtdb: false` stands for a project without a database.
    */
   public connection({
     rtdb = true,
@@ -376,6 +367,8 @@ export class FakeFirebase {
       dbSdk: this.dbSdk,
       rtdb: rtdb ? {} : null,
       rtdbSdk: this.rtdbSdk,
+      auth: this.auth,
+      authSdk: this.authSdk,
     } as unknown as FirebaseConnection;
   }
 
@@ -389,8 +382,7 @@ export class FakeFirebase {
 
   /** Stores a Realtime Database value and tells its listeners. */
   public putValue(path: string, value: unknown): void {
-    this.values.set(path, value);
-    this.valueListeners.get(path)?.forEach((emit) => emit());
+    this.realtime.put(path, value);
   }
 
   /**
@@ -401,6 +393,11 @@ export class FakeFirebase {
     Array.from(this.listeners)
       .filter((listener) => listener.metadata)
       .forEach((listener) => listener.emit());
+  }
+
+  /** The paths of the Firestore listeners still listening, in order. */
+  public openListeners(): string[] {
+    return Array.from(this.listeners, (listener) => listener.ref.path);
   }
 
   /** The paths deleted, in order. */
@@ -416,7 +413,7 @@ export class FakeFirebase {
 
   private check(path: string): void {
     if (this.refused.has(path)) {
-      throw firestoreError('permission-denied');
+      throw sdkError('permission-denied');
     }
   }
 
@@ -531,7 +528,7 @@ export class FakeFirebase {
       if (this.refused.has(ref.path)) {
         stopped = true;
         this.listeners.delete(listener);
-        error?.(firestoreError('permission-denied'));
+        error?.(sdkError('permission-denied'));
         return;
       }
       next?.(ref.kind === 'doc' ? this.snapshot(ref.path) : this.listOf(ref));
@@ -601,7 +598,7 @@ export class FakeFirebase {
   private update(path: string, data: FakeDoc): void {
     const current = this.docs.get(path);
     if (current === undefined) {
-      throw firestoreError('not-found');
+      throw sdkError('not-found');
     }
     this.writes.push({ kind: 'update', path, data });
     this.apply(path, { ...current, ...this.stamped(data) });
@@ -631,7 +628,7 @@ export class FakeFirebase {
       return never();
     }
     if (this.offline) {
-      throw firestoreError('unavailable');
+      throw sdkError('unavailable');
     }
     const staged: Staged[] = [];
     const transaction = {
@@ -683,7 +680,7 @@ export class FakeFirebase {
     for (const write of staged) {
       this.check(write.path);
       if (write.kind === 'update' && !present.has(write.path)) {
-        throw firestoreError('not-found');
+        throw sdkError('not-found');
       }
       if (write.kind === 'delete') {
         present.delete(write.path);
