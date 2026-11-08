@@ -31,8 +31,11 @@ DBB responses to test against, and those name real children.
 - The app never searches Spielberichte for a person: a marked Kind is
   highlighted where their person id appears in a followed Team's Kader,
   nowhere else.
-- The app is `noindex` everywhere (meta tag, `X-Robots-Tag` header,
-  `robots.txt` with `Disallow: /`) and has no sitemap.
+- The app is `noindex` everywhere (meta tag and `X-Robots-Tag` header) and
+  has no sitemap. `robots.txt` deliberately allows crawling: a URL it blocks
+  is never fetched, so its `noindex` would never be read and a linked URL
+  could still be listed (decided 2026-11-08, replacing the issue's
+  `Disallow: /`).
 
 **An Anonymer Spieler stays anonymous.** The domain type has no person id
 and no name (`AnonymerSpieler`), so it cannot be marked as a Kind or told
