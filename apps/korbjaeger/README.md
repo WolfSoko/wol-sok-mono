@@ -135,14 +135,20 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Teams (browsing them would evict what Meine Teams need), errors, and an
   answer the adapter could not map: the transport only notes an answer in
   the read's `Lesung`, and the resource keeps it once the read mapped it.
-  A read with a `Lesung` that fails as `offline` (fetch throws, or
-  `navigator.onLine` is false, when the proxy is not called at all) or
-  `unavailable` (the proxy's 502) is answered from it, never a 404 or a
-  cancelled read. An answer older than 7 days (`MAX_ALTER_MS`) is neither
-  served nor kept; at the app's start the store drops those and answers
-  of kinds no longer kept. At most 60 answers and 1,000,000 characters
+  A read with a `Lesung` that fails as `offline` (fetch throws or the
+  proxy does not answer within 8 s, `PROXY_ZEITLIMIT_MS`; or
+  `navigator.onLine` is false, `KeinInternetError`, when the proxy is not
+  called at all) or `unavailable` (the proxy's 502) is answered from it,
+  never a 404 or a cancelled read. An answer older than 7 days
+  (`MAX_ALTER_MS`) is neither served nor kept; `LETZTE_ANTWORTEN`
+  (`letzte-antworten-pflege.ts`) drops those and answers of kinds no
+  longer kept at the start, when the page comes back into view and hourly
+  while it stays open. When Meine Teams find the storage full, the
+  answers give way (`SPEICHER_FREIGEBEN`) and `LokaleAuswahl` writes once
+  more. At most 60 answers and 1,000,000 characters
   (`ANTWORT_GRENZEN`, so Meine Teams always find room): a write beyond
-  either evicts the oldest answers first; a full storage
+  either evicts the oldest answers first, once the new one is stored (a
+  write the storage refuses evicts nothing); a full storage
   (`QuotaExceededError`) evicts the oldest until the write fits; an answer
   that is not kept (too large, or the storage full) drops the older one of
   its path too, and a blocked storage keeps nothing. Writes read the index,
@@ -150,15 +156,16 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   rebuilt from them when it cannot be read. The read's options are typed
   (`KorbReadOptions`, `DbbBasketballData<KorbReadOptions>` hands them to
   the transport as they are). Each resource of `basketballDataResource`
-  (a `DatenResource`) has a `stand` beside its value, cleared when a load
-  starts; `korb-stand` (`src/app/stand/`) shows it as "Offline · Stand:
-  vor 2 Std.", aging with `JETZT` (`src/app/jetzt.ts`, the screens' one
+  (a `DatenResource`) has a `stand` beside its value, changing with it (a
+  value shown while reloading keeps its Stand); `korb-stand` (`src/app/stand/`) shows it as "Offline · Stand: vor 2 Std." ("Offline" only where the browser says so, else "Keine Verbindung" or "DBB nicht erreichbar"), aging with `JETZT` (`src/app/jetzt.ts`, the screens' one
   clock, read every minute and on visibility changes; `HEUTE` is its
   German date). The Team page's head, its "Weitere Teams des Vereins",
   each Tabelle, the Spiel page and each overview card show one Stand, the
   oldest of the reads they show (the next Spiel's Halle included).
 - **Errors** (`src/app/fehler/`): `fehlerText` tells the three failures
-  apart: offline ("Keine Verbindung zum Internet"), the DBB unreachable
+  apart: no connection ("Kein Internet" where the browser says it is
+  offline, else "Keine Verbindung. Internet oder Server nicht
+  erreichbar"), the DBB unreachable
   (the proxy's 502, "Der DBB ist gerade nicht erreichbar") and not found
   (the screen's own text, a 404).
 - **Proxy:** `src/server/routes/api/dbb/` (thin route files) over

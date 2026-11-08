@@ -201,7 +201,7 @@ describe('TeamComponent', () => {
         fakeData(async (_team, options?: KorbReadOptions) => {
           options?.lesung?.ersetzt({
             gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
-            grund: 'offline',
+            grund: 'kein-internet',
           });
           return saison([spiel({ id: 1, datum: '2026-09-20' })]);
         })
@@ -243,7 +243,7 @@ describe('TeamComponent', () => {
           async (verein, options?: KorbReadOptions) => {
             options?.lesung?.ersetzt({
               gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
-              grund: 'offline',
+              grund: 'kein-internet',
             });
             return OHNE_TEAMS(verein);
           }
@@ -608,7 +608,7 @@ describe('TeamComponent', () => {
 
   it.each([
     ['not-found', 'Dieses Team kennt der DBB nicht.'],
-    ['offline', 'Keine Verbindung zum Internet.'],
+    ['offline', 'Keine Verbindung. Internet oder Server nicht erreichbar.'],
     ['unavailable', 'Der DBB ist gerade nicht erreichbar.'],
     ['unexpected-shape', 'Die Daten des DBB ließen sich nicht lesen.'],
   ] as const)('explains a %s error', async (kind, text) => {

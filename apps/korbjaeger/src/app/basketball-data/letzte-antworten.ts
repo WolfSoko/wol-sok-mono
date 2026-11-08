@@ -1,4 +1,5 @@
 import type { DbbRequestKind } from '@wolsok/feat-shared-basketball-data';
+import { istSpeicherVoll } from '../geraete-speicher';
 
 /** The last good answer of the proxy at one path, and when it came. */
 export interface LetzteAntwort {
@@ -153,11 +154,12 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
       const index = this.index();
       index.delete(schluessel);
       const aelteste = new Aelteste(index);
-      const geschrieben =
+      // write first: a write the storage refuses evicts nothing
+      if (
         eintrag.zeichen <= this.grenzen.zeichen &&
-        this.innerhalbDerGrenzen(index, aelteste, eintrag.zeichen) &&
-        this.schreiben(schluessel, text, index, aelteste);
-      if (geschrieben) {
+        this.schreiben(schluessel, text, index, aelteste)
+      ) {
+        this.innerhalbDerGrenzen(index, aelteste, eintrag.zeichen);
         index.set(schluessel, eintrag);
       } else {
         // never serve an answer older than the last good one
@@ -166,6 +168,21 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
       this.indexSchreiben(index);
     } catch {
       // storage blocked: the answer is not kept
+    }
+  }
+
+  /** Deletes every answer: for what must not give way (Meine Teams). */
+  public leeren(): void {
+    try {
+      const index = this.index();
+      for (const schluessel of index.keys()) {
+        this.entfernen(schluessel, index);
+      }
+      this.speicher?.removeItem(ANTWORT_INDEX);
+      this.bekannt = undefined;
+      this.bekannterText = null;
+    } catch {
+      // storage blocked: nothing to free
     }
   }
 
@@ -188,27 +205,26 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
   }
 
   /**
-   * Evicts the oldest of `index` until a new answer of `zeichen` fits the
-   * limits beside them; whether it does.
+   * Evicts the oldest of `index` until a new answer of `zeichen`, stored
+   * beside them, keeps the limits.
    */
   private innerhalbDerGrenzen(
     index: Index,
     aelteste: Aelteste,
     zeichen: number
-  ): boolean {
+  ): void {
     let belegt = summe(index) + zeichen;
-    const passt = (): boolean =>
-      index.size + 1 <= this.grenzen.eintraege &&
-      belegt <= this.grenzen.zeichen;
-    while (!passt()) {
+    while (
+      index.size + 1 > this.grenzen.eintraege ||
+      belegt > this.grenzen.zeichen
+    ) {
       const aeltester = aelteste.naechster();
       if (aeltester === undefined) {
-        return false;
+        return;
       }
       belegt -= index.get(aeltester)?.zeichen ?? 0;
       this.entfernen(aeltester, index);
     }
-    return true;
   }
 
   /**
@@ -405,11 +421,16 @@ function istGespeichert(value: unknown): value is Gespeichert {
     'v' in value &&
     value.v === VERSION &&
     'am' in value &&
-    typeof value.am === 'number' &&
+    istZeitpunkt(value.am) &&
     'art' in value &&
     typeof value.art === 'string' &&
     'antwort' in value
   );
+}
+
+/** Whether `am` is a time a `Date` can hold, in ms since the epoch. */
+function istZeitpunkt(am: unknown): am is number {
+  return typeof am === 'number' && Number.isFinite(new Date(am).getTime());
 }
 
 function summe(index: Index): number {
@@ -418,13 +439,4 @@ function summe(index: Index): number {
     zeichen += eintrag.zeichen;
   }
   return zeichen;
-}
-
-/** Whether `error` says the storage is full (Firefox names it its own way). */
-function istSpeicherVoll(error: unknown): boolean {
-  return (
-    error instanceof DOMException &&
-    (error.name === 'QuotaExceededError' ||
-      error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
-  );
 }

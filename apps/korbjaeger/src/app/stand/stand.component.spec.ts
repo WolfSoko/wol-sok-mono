@@ -20,7 +20,7 @@ function render(stand: Stand | undefined, jetzt = signal(GESPEICHERT)) {
 describe('StandComponent', () => {
   it('says why and since when a screen shows its last good data', () => {
     const { element } = render(
-      { gespeichertAm: GESPEICHERT, grund: 'offline' },
+      { gespeichertAm: GESPEICHERT, grund: 'kein-internet' },
       signal(GESPEICHERT + ZWEI_STUNDEN)
     );
 
@@ -45,7 +45,7 @@ describe('StandComponent', () => {
   it('ages with the clock', () => {
     const jetzt = signal(GESPEICHERT);
     const { fixture, element } = render(
-      { gespeichertAm: GESPEICHERT, grund: 'offline' },
+      { gespeichertAm: GESPEICHERT, grund: 'kein-internet' },
       jetzt
     );
 

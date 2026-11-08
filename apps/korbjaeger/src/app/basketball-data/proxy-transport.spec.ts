@@ -12,7 +12,9 @@ import { PROXY_ROUTES } from '../../shared/dbb-proxy-routes';
 import type { DbbRequestKind } from '@wolsok/feat-shared-basketball-data';
 import type { LetzteAntwort, LetzteAntworten } from './letzte-antworten';
 import { Lesung, type KorbReadOptions } from './lesung';
+import { KeinInternetError } from './kein-internet-error';
 import {
+  PROXY_ZEITLIMIT_MS,
   proxyTransport,
   SPEICHERBARE_ARTEN,
   type ProxyFetch,
@@ -47,6 +49,12 @@ function recordedProxy(): ReturnType<typeof vi.fn<ProxyFetch>> {
     recordedProxyHandler(new Request(`http://localhost${url}`))
   );
 }
+
+/** A proxy that never answers, until the call is cancelled. */
+const haengend: ProxyFetch = (_url, init) =>
+  new Promise((_resolve, reject) =>
+    init.signal?.addEventListener('abort', () => reject(init.signal?.reason))
+  );
 
 /** The proxy answering every read with `status` and `body`. */
 function proxyAnswering(status: number, body: string): ProxyFetch {
@@ -92,9 +100,10 @@ describe('proxyTransport', () => {
 
     const teams = await data.ligaTeams(54862);
 
-    expect(proxy).toHaveBeenCalledWith('/api/dbb/liga/54862/spielplan', {
-      headers: { accept: 'application/json' },
-    });
+    expect(proxy).toHaveBeenCalledWith(
+      '/api/dbb/liga/54862/spielplan',
+      expect.objectContaining({ headers: { accept: 'application/json' } })
+    );
     expect(teams).toContainEqual({
       id: 313036,
       name: 'MTV Wasbüttel -RST-',
@@ -108,9 +117,10 @@ describe('proxyTransport', () => {
 
     const saison = await data.teamSpiele(313036);
 
-    expect(proxy).toHaveBeenCalledWith('/api/dbb/team/313036/spiele', {
-      headers: { accept: 'application/json' },
-    });
+    expect(proxy).toHaveBeenCalledWith(
+      '/api/dbb/team/313036/spiele',
+      expect.objectContaining({ headers: { accept: 'application/json' } })
+    );
     expect(saison.team.id).toBe(313036);
     expect(saison.spiele).toHaveLength(6);
   });
@@ -121,9 +131,10 @@ describe('proxyTransport', () => {
 
     const vereinsTeams = await data.vereinsTeams(1837);
 
-    expect(proxy).toHaveBeenCalledWith('/api/dbb/verein/1837/spiele', {
-      headers: { accept: 'application/json' },
-    });
+    expect(proxy).toHaveBeenCalledWith(
+      '/api/dbb/verein/1837/spiele',
+      expect.objectContaining({ headers: { accept: 'application/json' } })
+    );
     expect(vereinsTeams.verein.name).toBe('MTV Wasbüttel');
     expect(vereinsTeams.teams.map(({ team }) => team.id)).toContain(313036);
   });
@@ -134,9 +145,10 @@ describe('proxyTransport', () => {
 
     const tabelle = await data.tabelle(54862);
 
-    expect(proxy).toHaveBeenCalledWith('/api/dbb/liga/54862/tabelle', {
-      headers: { accept: 'application/json' },
-    });
+    expect(proxy).toHaveBeenCalledWith(
+      '/api/dbb/liga/54862/tabelle',
+      expect.objectContaining({ headers: { accept: 'application/json' } })
+    );
     expect(tabelle.liga.id).toBe(54862);
     expect(tabelle.zeilen).toHaveLength(6);
   });
@@ -195,14 +207,31 @@ describe('proxyTransport', () => {
     ).toBe('offline');
   });
 
-  it('reads a device the browser calls offline as offline, without calling the proxy', async () => {
+  it('reads a device the browser calls offline as offline, without internet, without calling the proxy', async () => {
     const proxy = recordedProxy();
     const transport = proxyTransport(proxy, { online: () => false });
 
-    expect(
-      await rejectionKind(transport({ kind: 'team-spiele', teamId: 313036 }))
-    ).toBe('offline');
+    const error = await transport({ kind: 'team-spiele', teamId: 313036 }).then(
+      () => undefined,
+      (caught: unknown) => caught
+    );
+
+    expect(isBasketballDataError(error, 'offline')).toBe(true);
+    expect(error).toBeInstanceOf(KeinInternetError);
     expect(proxy).not.toHaveBeenCalled();
+  });
+
+  it('gives up on a proxy that does not answer within 8 seconds, as unreachable', async () => {
+    const transport = proxyTransport(haengend, { zeitlimitMs: 20 });
+
+    const error = await transport({ kind: 'team-spiele', teamId: 313036 }).then(
+      () => undefined,
+      (caught: unknown) => caught
+    );
+
+    expect(isBasketballDataError(error, 'offline')).toBe(true);
+    expect(error).not.toBeInstanceOf(KeinInternetError);
+    expect(PROXY_ZEITLIMIT_MS).toBe(8_000);
   });
 
   it('reads a body that is no JSON as unavailable', async () => {
@@ -247,7 +276,10 @@ describe('proxyTransport', () => {
     controller.abort(new Error('navigated away'));
 
     await expect(read).rejects.toThrow('navigated away');
-    expect(proxy.mock.calls[0][1].signal).toBe(controller.signal);
+    expect(proxy.mock.calls[0][1].signal?.aborted).toBe(true);
+    expect(proxy.mock.calls[0][1].signal?.reason).toEqual(
+      new Error('navigated away')
+    );
   });
 
   it('cancels the call for a read signal that is no DOM AbortSignal', async () => {
@@ -319,7 +351,11 @@ describe('proxyTransport', () => {
     function transportMit(proxy: ProxyFetch, antworten: LetzteAntworten) {
       let jetzt = 1_000;
       const data = new DbbBasketballData<KorbReadOptions>(
-        proxyTransport(proxy, { antworten, jetzt: () => jetzt })
+        proxyTransport(proxy, {
+          antworten,
+          jetzt: () => jetzt,
+          zeitlimitMs: 20,
+        })
       );
       return {
         data,
@@ -348,7 +384,8 @@ describe('proxyTransport', () => {
     });
 
     it.each([
-      ['offline', nichtErreichbar],
+      ['keine-verbindung', nichtErreichbar],
+      ['keine-verbindung', haengend],
       ['unavailable', proxyAnswering(502, '{"error":"dbb-unavailable"}')],
       ['unavailable', proxyAnswering(200, '<html>captive portal</html>')],
     ] as const)(
@@ -453,7 +490,9 @@ describe('proxyTransport', () => {
         antworten.gemerkt.get('/api/dbb/spiel/2861436')?.antwort
       );
       expect(gespeichert).toContain('Schulsporthalle');
-      expect(gespeichert).not.toMatch(/vorname|nachname|"person/);
+      expect(gespeichert).not.toMatch(
+        /vorname|nachname|"person|playerId|topPerformances/
+      );
     });
 
     it('answers from the last good answer while the browser says it is offline', async () => {
@@ -469,7 +508,10 @@ describe('proxyTransport', () => {
         proxyTransport(recordedProxy(), { antworten, online: () => false })
       ).teamSpiele(313036, { lesung: offline });
 
-      expect(offline.stand).toEqual({ gespeichertAm: 1_000, grund: 'offline' });
+      expect(offline.stand).toEqual({
+        gespeichertAm: 1_000,
+        grund: 'kein-internet',
+      });
     });
 
     it('answers a read that can show no Stand without its last good answer', async () => {

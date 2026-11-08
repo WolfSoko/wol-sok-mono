@@ -80,7 +80,8 @@ class LesendeResource<T> implements DatenResource<T> {
  * gives, none while it gives none; new params cancel the read of the last
  * (`options.signal`). Each load is one `Lesung`: the answers the read
  * mapped are kept as its last good ones, and where the transport answered
- * from those instead, `stand` says so; a load that starts clears it.
+ * from those instead, `stand` says so; it changes with the value, once a
+ * load has its own, so a value shown while reloading keeps its Stand.
  * Created in an injection context, or on `injector`.
  */
 export function basketballDataResource<P, T>(
@@ -97,7 +98,6 @@ export function basketballDataResource<P, T>(
   const ref = resource({
     params,
     loader: async ({ params: gegeben, abortSignal }) => {
-      gelesenerStand.set(undefined);
       const lesung = new Lesung();
       const wert = await read(data, gegeben, {
         signal: abortSignal,
@@ -105,6 +105,8 @@ export function basketballDataResource<P, T>(
       });
       if (!abortSignal.aborted) {
         lesung.abschliessen();
+        // with the value it belongs to: the old one keeps its Stand while
+        // it still shows, reloading
         gelesenerStand.set(lesung.stand);
       }
       return wert;

@@ -1,5 +1,9 @@
-/** Why a read was answered from its last good answer. */
-export type StandGrund = 'offline' | 'unavailable';
+/**
+ * Why a read was answered from its last good answer: the browser says it
+ * has no internet; no server answered (no internet or the server down,
+ * which the browser cannot tell); or the proxy reached no DBB.
+ */
+export type StandGrund = 'kein-internet' | 'keine-verbindung' | 'unavailable';
 
 /**
  * The read was answered from its last good answer: when that came, and

@@ -9,9 +9,14 @@ import { mapTabelle } from './map-tabelle';
 import { mapTeamSpiele } from './map-team-spiele';
 import { dbbOhnePersonen } from './ohne-personen';
 
-/** Whether `body` names a person anywhere (vorname, nachname, person data). */
+/**
+ * Whether `body` says anything of a person: a name, person data, a player
+ * id, or a player's top performances (their values, by id).
+ */
 function nenntPersonen(body: unknown): boolean {
-  return /"(vorname|nachname|person|personData)"/.test(JSON.stringify(body));
+  return /"(vorname|nachname|person|personData|playerId|topPerformances)"/.test(
+    JSON.stringify(body)
+  );
 }
 
 describe('dbbOhnePersonen', () => {

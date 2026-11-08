@@ -78,6 +78,55 @@ describe('LokaleAuswahl', () => {
     expect(new LokaleAuswahl(geraet).teams()).toEqual([]);
   });
 
+  describe('a full storage', () => {
+    /** Storage that is full until `platzSchaffen` freed it. */
+    function volleSpeicher(): {
+      geraet: SpeicherImSpec;
+      platzSchaffen: ReturnType<typeof vi.fn<() => void>>;
+    } {
+      const geraet = new SpeicherImSpec();
+      let voll = true;
+      const schreiben = geraet.setItem.bind(geraet);
+      vi.spyOn(geraet, 'setItem').mockImplementation((key, value) => {
+        if (voll) {
+          throw new DOMException('full', 'QuotaExceededError');
+        }
+        schreiben(key, value);
+      });
+      const platzSchaffen = vi.fn(() => {
+        voll = false;
+      });
+      return { geraet, platzSchaffen };
+    }
+
+    it('has the cached data give way to Meine Teams, and stores them then', async () => {
+      const { geraet, platzSchaffen } = volleSpeicher();
+
+      await new LokaleAuswahl(geraet, undefined, platzSchaffen).folgen(313036);
+
+      expect(platzSchaffen).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? 'null')).toEqual({
+        version: 1,
+        teams: [313036],
+      });
+    });
+
+    it('asks for room only on a full storage, and tries once more only', async () => {
+      const geraet = new SpeicherImSpec();
+      vi.spyOn(geraet, 'setItem').mockImplementation(() => {
+        throw new DOMException('denied', 'SecurityError');
+      });
+      const platzSchaffen = vi.fn();
+      const auswahl = new LokaleAuswahl(geraet, undefined, platzSchaffen);
+
+      await auswahl.folgen(313036);
+
+      expect(platzSchaffen).not.toHaveBeenCalled();
+      // the change still holds for this visit
+      expect(auswahl.teams()).toEqual([313036]);
+    });
+  });
+
   it('writes nothing to unfollow a Team it does not follow', async () => {
     const geraet = new SpeicherImSpec();
     const auswahl = new LokaleAuswahl(geraet);

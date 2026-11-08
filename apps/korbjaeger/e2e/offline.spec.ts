@@ -45,8 +45,6 @@ test.describe('Without a network', () => {
     await expect(teamPage.stand).toHaveText(/Offline · Stand: vor 2 Std\./);
 
     await teamPage.spielGegen('SV Groß Schwülper').first().click();
-    await expect(spielPage.fehler).toHaveText(
-      /^Keine Verbindung zum Internet\./
-    );
+    await expect(spielPage.fehler).toHaveText(/^Kein Internet\./);
   });
 });

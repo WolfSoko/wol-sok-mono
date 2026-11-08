@@ -6,7 +6,7 @@ import {
   type Signal,
 } from '@angular/core';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import { geraeteSpeicher } from '../geraete-speicher';
+import { geraeteSpeicher, SPEICHER_FREIGEBEN } from '../geraete-speicher';
 import { LokaleAuswahl } from './lokale-auswahl';
 
 /**
@@ -44,7 +44,8 @@ export const AUSWAHL = new InjectionToken<Auswahl>('Auswahl', {
   factory: () => {
     const auswahl = new LokaleAuswahl(
       geraeteSpeicher(),
-      inject(DOCUMENT).defaultView ?? undefined
+      inject(DOCUMENT).defaultView ?? undefined,
+      inject(SPEICHER_FREIGEBEN)
     );
     inject(DestroyRef).onDestroy(() => auswahl.beenden());
     return auswahl;

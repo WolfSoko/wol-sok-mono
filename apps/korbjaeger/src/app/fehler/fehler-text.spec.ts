@@ -1,4 +1,5 @@
 import { BasketballDataError } from '@wolsok/feat-shared-basketball-data';
+import { KeinInternetError } from '../basketball-data/kein-internet-error';
 import { fehlerText } from './fehler-text';
 
 describe('fehlerText', () => {
@@ -8,7 +9,7 @@ describe('fehlerText', () => {
 
   it.each([
     ['not-found', 'Nicht da.'],
-    ['offline', 'Keine Verbindung zum Internet.'],
+    ['offline', 'Keine Verbindung. Internet oder Server nicht erreichbar.'],
     ['unavailable', 'Der DBB ist gerade nicht erreichbar.'],
     ['unexpected-shape', 'Die Daten des DBB ließen sich nicht lesen.'],
   ] as const)('explains a %s error', (kind, text) => {
@@ -26,6 +27,15 @@ describe('fehlerText', () => {
       fehlerText(new BasketballDataError(kind, 'DBB: nope'), 'Nicht da.')
     ).not.toBe(
       fehlerText(new BasketballDataError(other, 'DBB: nope'), 'Nicht da.')
+    );
+  });
+
+  it('says there is no internet only where the browser says so', () => {
+    const text = fehlerText(new KeinInternetError('/api/dbb/x'), 'Nicht da.');
+
+    expect(text).toContain('Kein Internet.');
+    expect(text).not.toBe(
+      fehlerText(new BasketballDataError('offline', 'x'), 'Nicht da.')
     );
   });
 

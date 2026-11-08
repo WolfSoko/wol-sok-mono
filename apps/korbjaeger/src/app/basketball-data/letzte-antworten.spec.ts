@@ -241,6 +241,39 @@ describe('LokaleLetzteAntworten', () => {
     });
   });
 
+  it('evicts nothing for a write the storage refuses for another reason, even at its limit', () => {
+    const speicher = new KleinerSpeicher();
+    const antworten = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
+    antworten.merken(TEAM, 'team-spiele', antwort(1000));
+    antworten.merken(TABELLE, 'tabelle', antwort(2000));
+    const schreiben = speicher.setItem.bind(speicher);
+    vi.spyOn(speicher, 'setItem').mockImplementation((key, value) => {
+      if (key === `${ANTWORT_PRAEFIX}${SPIEL}`) {
+        throw new DOMException('denied', 'SecurityError');
+      }
+      schreiben(key, value);
+    });
+
+    antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+
+    expect(gemerkt(antworten, [TEAM, TABELLE, SPIEL])).toEqual([TEAM, TABELLE]);
+  });
+
+  it('gives all its room away for what must not give way (Meine Teams)', () => {
+    const speicher = new KleinerSpeicher();
+    speicher.setItem('korbjaeger-auswahl', '{}');
+    const antworten = new LokaleLetzteAntworten(speicher);
+    antworten.merken(TEAM, 'team-spiele', antwort(1000));
+    antworten.merken(TABELLE, 'tabelle', antwort(2000));
+
+    antworten.leeren();
+
+    expect([...speicher.eintraege.keys()]).toEqual(['korbjaeger-auswahl']);
+    expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([]);
+    antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+    expect(gemerkt(antworten, [SPIEL])).toEqual([SPIEL]);
+  });
+
   describe('its index', () => {
     it('parses the stored index once for writes in a row', () => {
       const speicher = new KleinerSpeicher();
@@ -327,6 +360,7 @@ describe('LokaleLetzteAntworten', () => {
   it.each([
     ['of another version', { v: 1, am: 1000, antwort: {} }],
     ['without its time', { v: 2, art: 'tabelle', antwort: {} }],
+    ['at no valid time', { v: 2, am: 1e20, art: 'tabelle', antwort: {} }],
   ])('reads a stored answer %s as none', (_fall, gespeichert) => {
     const speicher = new KleinerSpeicher();
     speicher.setItem(`${ANTWORT_PRAEFIX}${TEAM}`, JSON.stringify(gespeichert));

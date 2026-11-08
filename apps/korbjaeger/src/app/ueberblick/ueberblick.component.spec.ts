@@ -246,7 +246,7 @@ describe('UeberblickComponent', () => {
       async (_team, options?: KorbReadOptions) => {
         options?.lesung?.ersetzt({
           gespeichertAm: JETZT_IM_SPEC - 3 * 60 * 60_000,
-          grund: 'offline',
+          grund: 'kein-internet',
         });
         return saison(WASBUETTEL);
       }
@@ -272,7 +272,7 @@ describe('UeberblickComponent', () => {
       async (_team, options?: KorbReadOptions) => {
         options?.lesung?.ersetzt({
           gespeichertAm: JETZT_IM_SPEC - STUNDE,
-          grund: 'offline',
+          grund: 'kein-internet',
         });
         return saison(WASBUETTEL, spiel(GIFHORN, WASBUETTEL, '2026-11-14'));
       }

@@ -26,9 +26,16 @@ export function standZeit(gespeichertAm: number): string {
   return ZEIT.format(new Date(gespeichertAm));
 }
 
+/** "Offline" only where the browser says so; else no server answered. */
+const STAND_GRUENDE: Readonly<Record<StandGrund, string>> = {
+  'kein-internet': 'Offline',
+  'keine-verbindung': 'Keine Verbindung',
+  unavailable: 'DBB nicht erreichbar',
+};
+
 /** Why a screen shows its last good answer. */
 export function standGrundText(grund: StandGrund): string {
-  return grund === 'offline' ? 'Offline' : 'DBB nicht erreichbar';
+  return STAND_GRUENDE[grund];
 }
 
 function alterText(alter: number): string {

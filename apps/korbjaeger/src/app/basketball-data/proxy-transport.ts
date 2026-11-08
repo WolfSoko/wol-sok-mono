@@ -9,6 +9,7 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import { proxyUrl } from '../../shared/dbb-proxy-routes';
 import type { LetzteAntwort, LetzteAntworten } from './letzte-antworten';
+import { KeinInternetError } from './kein-internet-error';
 import type { KorbReadOptions, Lesung } from './lesung';
 import type { StandGrund } from './stand';
 
@@ -26,7 +27,16 @@ export interface ProxyTransportOptions {
   readonly antworten?: LetzteAntworten;
   /** The time an answer is stored with, in ms since the epoch. */
   readonly jetzt?: () => number;
+  /** How long a call to the proxy may take; `PROXY_ZEITLIMIT_MS`. */
+  readonly zeitlimitMs?: number;
 }
+
+/**
+ * How long a call to the proxy may take before it counts as unreachable:
+ * `navigator.onLine` says nothing of a Halle's dead reception, where a
+ * call would hang. Above the proxy's own 5 s for the DBB.
+ */
+export const PROXY_ZEITLIMIT_MS = 8_000;
 
 /**
  * The reads whose last good answer is kept: public DBB data, kept without
@@ -51,9 +61,10 @@ const KEINE_ANTWORTEN: LetzteAntworten = {
  * A `DbbTransport` over the app's own proxy, since the DBB sends no CORS
  * headers (ADR 0018). Hands the DBB envelope of a 200 or 404 to the
  * adapter, which reads its status; a 404 of the proxy itself (no such
- * read or id) is `not-found`. A device the browser calls offline, or a
- * call that never reaches the proxy, is `offline`; anything else (a 502,
- * no JSON) is `unavailable`.
+ * read or id) is `not-found`. A device the browser calls offline
+ * (`KeinInternetError`), or a call that reaches no proxy within
+ * `PROXY_ZEITLIMIT_MS`, is `offline`; anything else (a 502, no JSON) is
+ * `unavailable`.
  *
  * The 200 of a read of `SPEICHERBARE_ARTEN` is kept in `antworten` by its
  * proxy path, without the persons in it (`dbbOhnePersonen`), once its `Lesung` (`KorbReadOptions`) says the read mapped
@@ -68,6 +79,7 @@ export function proxyTransport(
     online = browserOnline,
     antworten = KEINE_ANTWORTEN,
     jetzt = Date.now,
+    zeitlimitMs = PROXY_ZEITLIMIT_MS,
   }: ProxyTransportOptions = {}
 ): DbbTransport<KorbReadOptions> {
   return async (request, options) => {
@@ -80,7 +92,7 @@ export function proxyTransport(
         path,
         fetchProxy,
         online,
-        options?.signal,
+        { signal: options?.signal, zeitlimitMs },
         (body) => {
           const gespeichertAm = jetzt();
           lesung?.vormerken(() =>
@@ -118,7 +130,10 @@ function letzteAntwortStatt(
   if (letzte === undefined || !ersetzbar(error, signal)) {
     throw error;
   }
-  lesung.ersetzt({ gespeichertAm: letzte.gespeichertAm, grund: error.kind });
+  lesung.ersetzt({
+    gespeichertAm: letzte.gespeichertAm,
+    grund: standGrundVon(error),
+  });
   return letzte.antwort;
 }
 
@@ -130,13 +145,13 @@ async function readProxy(
   path: string,
   fetchProxy: ProxyFetch,
   online: () => boolean,
-  signal: ReadSignal | undefined,
+  aufruf: Aufruf,
   gelesen: (body: unknown) => void
 ): Promise<unknown> {
   if (!online()) {
-    throw offline(path, 'the browser is offline');
+    throw new KeinInternetError(path);
   }
-  const response = await reach(path, fetchProxy, signal);
+  const response = await reach(path, fetchProxy, aufruf);
   switch (response.status) {
     case HTTP_OK: {
       const body = await readJson(path, response);
@@ -154,7 +169,7 @@ async function readProxy(
 function ersetzbar(
   error: unknown,
   signal: ReadSignal | undefined
-): error is BasketballDataError & { readonly kind: StandGrund } {
+): error is BasketballDataError {
   return (
     signal?.aborted !== true &&
     (isBasketballDataError(error, 'offline') ||
@@ -162,17 +177,43 @@ function ersetzbar(
   );
 }
 
+/** Why a read that failed with `error` took its last good answer. */
+function standGrundVon(error: BasketballDataError): StandGrund {
+  if (error instanceof KeinInternetError) {
+    return 'kein-internet';
+  }
+  return error.kind === 'offline' ? 'keine-verbindung' : 'unavailable';
+}
+
+/** How one call to the proxy goes: cancelled with the read, or timed out. */
+interface Aufruf {
+  readonly signal: ReadSignal | undefined;
+  readonly zeitlimitMs: number;
+}
+
+/**
+ * The proxy's response. A call it never answered, or not within
+ * `zeitlimitMs`, is `offline` (no server reached); one the read cancelled
+ * rejects as `fetch` did, and the adapter rejects with the read's reason.
+ */
 async function reach(
   path: string,
   fetchProxy: ProxyFetch,
-  signal: ReadSignal | undefined
+  { signal, zeitlimitMs }: Aufruf
 ): Promise<Response> {
+  const abbruch = abortSignalOf(signal);
   try {
     return await fetchProxy(path, {
       headers: { accept: 'application/json' },
-      signal: abortSignalOf(signal),
+      signal: AbortSignal.any([
+        ...(abbruch === undefined ? [] : [abbruch]),
+        AbortSignal.timeout(zeitlimitMs),
+      ]),
     });
   } catch (error) {
+    if (abbruch?.aborted) {
+      throw error;
+    }
     throw offline(path, 'proxy not reachable', error);
   }
 }

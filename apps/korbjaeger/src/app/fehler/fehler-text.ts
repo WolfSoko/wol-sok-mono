@@ -1,4 +1,5 @@
 import { isBasketballDataError } from '@wolsok/feat-shared-basketball-data';
+import { KeinInternetError } from '../basketball-data/kein-internet-error';
 
 /** What a screen says for an id that names no Team. */
 export const KEIN_TEAM = 'Dieses Team kennt der DBB nicht.';
@@ -29,9 +30,16 @@ export const KEINE_LIGEN = 'Für diese Auswahl kennt der DBB keine Ligen.';
 /** What a screen says for an id that names no Spiel. */
 export const KEIN_SPIEL = 'Dieses Spiel kennt der DBB nicht.';
 
-/** What a screen says when the device has no network. */
-export const OFFLINE =
-  'Keine Verbindung zum Internet. Bitte die Verbindung prüfen und noch einmal versuchen.';
+/** What a screen says when the browser says it has no internet. */
+export const KEIN_INTERNET =
+  'Kein Internet. Bitte die Verbindung prüfen und noch einmal versuchen.';
+
+/**
+ * What a screen says when no server answered: no internet, or the server
+ * down, which the browser cannot tell apart.
+ */
+export const KEINE_VERBINDUNG =
+  'Keine Verbindung. Internet oder Server nicht erreichbar. Bitte noch einmal versuchen.';
 
 /** What a screen says when the proxy reached no DBB (its 502). */
 export const DBB_NICHT_ERREICHBAR =
@@ -40,7 +48,7 @@ export const DBB_NICHT_ERREICHBAR =
 /**
  * What the page says when a read failed: nothing while none did,
  * `nichtGefunden` where the DBB knows no such Team, Liga or Spiel, that the
- * device is offline, that the DBB's data could not be read, else that the
+ * device has no internet (the browser says so) or reached no server, that the DBB's data could not be read, else that the
  * DBB was not reached.
  */
 export function fehlerText(
@@ -53,8 +61,11 @@ export function fehlerText(
   if (isBasketballDataError(error, 'not-found')) {
     return nichtGefunden;
   }
+  if (error instanceof KeinInternetError) {
+    return KEIN_INTERNET;
+  }
   if (isBasketballDataError(error, 'offline')) {
-    return OFFLINE;
+    return KEINE_VERBINDUNG;
   }
   if (isBasketballDataError(error, 'unexpected-shape')) {
     return 'Die Daten des DBB ließen sich nicht lesen. Bitte später noch einmal versuchen.';

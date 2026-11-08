@@ -83,13 +83,35 @@ describe('basketballDataResource', () => {
     saison.reload();
     await stabil();
     expect(saison.hasValue()).toBe(true);
-    expect(saison.stand()).toEqual({ gespeichertAm: 1_000, grund: 'offline' });
+    expect(saison.stand()).toEqual({
+      gespeichertAm: 1_000,
+      grund: 'keine-verbindung',
+    });
 
     zustand.antwortet(undefined);
     saison.reload();
     await stabil();
     expect(saison.hasValue()).toBe(true);
     expect(saison.stand()).toBeUndefined();
+  });
+
+  it('keeps the Stand while a reload is under way and the value it belongs to still shows', async () => {
+    const zustand = proxyMit();
+    const { saison, stabil } = lesen(zustand.proxy);
+    await stabil();
+    zustand.antwortet(NICHT_ERREICHBAR);
+    saison.reload();
+    await stabil();
+    const stand = saison.stand();
+    expect(stand).toBeDefined();
+
+    zustand.antwortet(() => new Promise<Response>(() => undefined));
+    saison.reload();
+    TestBed.tick();
+    await Promise.resolve();
+
+    expect(saison.status()).toBe('reloading');
+    expect(saison.stand()).toEqual(stand);
   });
 
   it('keeps the last good answer when a later 200 is of a shape the adapter cannot read', async () => {

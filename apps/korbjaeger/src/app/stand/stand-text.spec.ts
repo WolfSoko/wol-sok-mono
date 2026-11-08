@@ -34,7 +34,8 @@ describe('standZeit', () => {
 
 describe('standGrundText', () => {
   it.each([
-    ['offline', 'Offline'],
+    ['kein-internet', 'Offline'],
+    ['keine-verbindung', 'Keine Verbindung'],
     ['unavailable', 'DBB nicht erreichbar'],
   ] as const)('names why a %s read shows its last answer', (grund, text) => {
     expect(standGrundText(grund)).toBe(text);
