@@ -1,9 +1,13 @@
 import { constants } from 'node:os';
 
-/** How a command's process ended: its exit code, or the signal that ended it. */
+/**
+ * How a command's process ended: its exit code, the signal that ended it or
+ * the job it belongs to, or that it could not start at all.
+ */
 export interface RunOutcome {
   code: number | null;
   signal?: NodeJS.Signals | null;
+  startError?: string;
 }
 
 export interface RetryDeps {
@@ -21,22 +25,26 @@ const SHELL_SIGNAL_OFFSET = 128;
 const FALLBACK_FAILURE_CODE = 1;
 
 /**
- * Runs `run` and, when it fails, once more after a pause: a transient error
- * of the platform heals on the retry, a real one fails both attempts.
- * A run ended by a signal (a cancelled job) is not retried.
- * Resolves to the exit code the caller should exit with.
+ * Runs a deploy and, when it fails, once more after a pause: a transient
+ * error of the platform heals on the retry, a real one fails both attempts.
+ * A deploy ended by a signal (a cancelled job) or one that could not start
+ * is not retried. Resolves to the exit code the caller should exit with.
  */
 export async function runWithOneRetry(
   run: () => Promise<RunOutcome>,
   { pause, log, pauseMs = RETRY_PAUSE_MS }: RetryDeps
 ): Promise<number> {
   for (let attempt = 1; ; attempt++) {
-    const { code, signal } = await run();
+    const { code, signal, startError } = await run();
     if (signal) {
       log(
         `::error::Deploy attempt ${attempt} ended by ${signal}, not retried.`
       );
       return signalExitCode(signal);
+    }
+    if (startError) {
+      log(`::error::Deploy could not start: ${startError}. Not retried.`);
+      return FALLBACK_FAILURE_CODE;
     }
     if (code === 0) {
       if (attempt > 1)

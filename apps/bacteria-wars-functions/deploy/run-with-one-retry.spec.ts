@@ -72,6 +72,17 @@ describe('runWithOneRetry', () => {
     expect(pauses).toEqual([]);
   });
 
+  it('does not retry a command that could not start', async () => {
+    const command = scripted({ code: null, startError: 'firebase: ENOENT' });
+
+    await expect(runWithOneRetry(command.run, deps())).resolves.toBe(1);
+
+    expect(command.runs()).toBe(1);
+    expect(lines).toContainEqual(
+      expect.stringMatching(/^::error::.*could not start: firebase: ENOENT/)
+    );
+  });
+
   it('takes a pause of its own', async () => {
     const command = scripted({ code: 1 }, { code: 0 });
 
