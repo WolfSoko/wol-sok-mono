@@ -19,6 +19,18 @@ describe('DBB proxy routes', () => {
       '/api/dbb/liga/54862/tabelle',
       '54862',
     ],
+    [
+      "a Spiel's match info",
+      { kind: 'spiel-info', spielId: 2861436 },
+      '/api/dbb/spiel/2861436',
+      '2861436',
+    ],
+    [
+      "a Spiel's Spielbericht",
+      { kind: 'spielbericht', spielId: 2861436 },
+      '/api/dbb/spiel/2861436/bericht',
+      '2861436',
+    ],
   ] as const)('maps %s to its route and back', (_case, request, path, id) => {
     expect(proxyPath(request)).toBe(path);
     expect(proxyRouteRead(PROXY_ROUTES[request.kind], id)).toEqual(request);
@@ -33,6 +45,8 @@ describe('DBB proxy routes', () => {
     ).toEqual([
       ['/api/dbb/team/:teamId/spiele', 'teamId'],
       ['/api/dbb/liga/:ligaId/tabelle', 'ligaId'],
+      ['/api/dbb/spiel/:spielId', 'spielId'],
+      ['/api/dbb/spiel/:spielId/bericht', 'spielId'],
     ]);
   });
 

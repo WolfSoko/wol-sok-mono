@@ -3,7 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
+  type Halle,
   type Liga,
+  type SpielDetails,
   type Spiel,
   type SpielPartei,
   type Team,
@@ -82,12 +84,38 @@ function saison(von: Team, ...spiele: Spiel[]): TeamSaison {
 }
 
 type TeamSpieleRead = KorbjaegerData['teamSpiele'];
+type SpielRead = KorbjaegerData['spiel'];
 
-/** `KorbjaegerData` answering each Team's Spiele from `saisons`. */
+/** Where every Spiel of the specs is played, unless one says otherwise. */
+const SPORTHALLE: Halle = {
+  name: 'Sporthalle am Wasserturm',
+  strasse: 'Turmweg 1',
+  plz: '38518',
+  ort: 'Gifhorn',
+};
+
+/** Every Spiel's details, in the Sporthalle. */
+const inDerSporthalle: SpielRead = async (spielId) => ({
+  spiel: spiel(WASBUETTEL, GIFHORN, '2026-11-14', { id: spielId }),
+  liga: VORRUNDE,
+  halle: SPORTHALLE,
+  viertel: [],
+  verlaengerungen: [],
+});
+
+/**
+ * `KorbjaegerData` answering each Team's Spiele from `saisons`, and every
+ * Spiel's details by `details`.
+ */
 function fakeData(
-  saisons: readonly (TeamSaison | { teamId: TeamId; fehler: Error })[]
-): { readonly teamSpiele: ReturnType<typeof vi.fn<TeamSpieleRead>> } {
+  saisons: readonly (TeamSaison | { teamId: TeamId; fehler: Error })[],
+  details: SpielRead = inDerSporthalle
+): {
+  readonly teamSpiele: ReturnType<typeof vi.fn<TeamSpieleRead>>;
+  readonly spiel: ReturnType<typeof vi.fn<SpielRead>>;
+} {
   return {
+    spiel: vi.fn<SpielRead>(details),
     teamSpiele: vi.fn<TeamSpieleRead>(async (teamId) => {
       const gefunden = saisons.find((s) =>
         'fehler' in s ? s.teamId === teamId : s.team.id === teamId
@@ -105,7 +133,7 @@ function fakeData(
  * `Auswahl`), once the reads that settle have settled.
  */
 async function render(
-  data: Pick<KorbjaegerData, 'teamSpiele'>,
+  data: Pick<KorbjaegerData, 'teamSpiele' | 'spiel'>,
   gefolgt: readonly TeamId[] | Auswahl
 ): Promise<{
   readonly seite: HTMLElement;
@@ -340,6 +368,109 @@ describe('UeberblickComponent', () => {
     );
   });
 
+  it("opens a Spiel's page from its card, the Team link kept", async () => {
+    const { seite } = await render(
+      fakeData([
+        saison(
+          WASBUETTEL,
+          spiel(WASBUETTEL, GIFHORN, '2026-10-17', {
+            id: 2861436,
+            status: GESPIELT_78_47,
+          }),
+          spiel(OESINGEN, WASBUETTEL, '2026-11-14', { id: 2861445 })
+        ),
+      ]),
+      [WASBUETTEL.id]
+    );
+
+    const [eintrag] = eintraege(seite);
+    const ziele = [...eintrag.querySelectorAll('a[href^="/"]')].map((a) =>
+      a.getAttribute('href')
+    );
+    expect(ziele).toEqual(['/team/313036', '/spiel/2861445', '/spiel/2861436']);
+  });
+
+  describe("the next Spiel's Halle", () => {
+    it('shows it with a link that opens navigation', async () => {
+      const { seite, stabil } = await render(
+        fakeData([
+          saison(WASBUETTEL, spiel(GIFHORN, WASBUETTEL, '2026-11-14')),
+        ]),
+        [WASBUETTEL.id]
+      );
+      // the Halle is read once its card is there
+      await stabil();
+
+      const naechstes = teil(eintraege(seite)[0], 'naechstes');
+      expect(text(naechstes?.querySelector('[data-qa="halle-name"]'))).toBe(
+        'Sporthalle am Wasserturm'
+      );
+      const navigation = naechstes?.querySelector(
+        '[data-qa="halle-navigation"]'
+      );
+      expect(navigation?.getAttribute('rel')).toBe('noopener');
+      expect(navigation?.getAttribute('href')).toBe(
+        'https://www.google.com/maps/search/?api=1&query=Sporthalle%20am%20Wasserturm%2C%20Turmweg%201%2C%2038518%20Gifhorn'
+      );
+    });
+
+    it('reads the Halle of each next Spiel only', async () => {
+      const naechstesWasbuettel = spiel(WASBUETTEL, GIFHORN, '2026-11-14');
+      const naechstesGifhorn = spiel(GIFHORN, OESINGEN, '2026-11-21');
+      const data = fakeData([
+        saison(
+          WASBUETTEL,
+          spiel(WASBUETTEL, OESINGEN, '2026-10-17', { status: GESPIELT_78_47 }),
+          naechstesWasbuettel,
+          spiel(OESINGEN, WASBUETTEL, '2026-11-28')
+        ),
+        saison(GIFHORN, naechstesGifhorn),
+        saison(
+          OESINGEN,
+          spiel(OESINGEN, GIFHORN, '2026-10-17', { status: GESPIELT_78_47 })
+        ),
+      ]);
+
+      await render(data, [WASBUETTEL.id, GIFHORN.id, OESINGEN.id]);
+
+      expect(data.spiel.mock.calls.map(([spielId]) => spielId)).toEqual(
+        expect.arrayContaining([naechstesWasbuettel.id, naechstesGifhorn.id])
+      );
+      expect(data.spiel).toHaveBeenCalledTimes(2);
+    });
+
+    it("keeps a card and the others when one card's Halle fails", async () => {
+      const gifhorns = spiel(GIFHORN, OESINGEN, '2026-11-21');
+      const { seite, stabil } = await render(
+        fakeData(
+          [
+            saison(WASBUETTEL, spiel(WASBUETTEL, OESINGEN, '2026-11-14')),
+            saison(GIFHORN, gifhorns),
+          ],
+          async (spielId) => {
+            if (spielId === gifhorns.id) {
+              throw new BasketballDataError('unavailable', 'DBB: nope');
+            }
+            return inDerSporthalle(spielId);
+          }
+        ),
+        [WASBUETTEL.id, GIFHORN.id]
+      );
+      await stabil();
+
+      const [wasbuettel, gifhorn] = eintraege(seite);
+      expect(text(wasbuettel.querySelector('[data-qa="halle-name"]'))).toBe(
+        'Sporthalle am Wasserturm'
+      );
+      expect(text(gifhorn.querySelector('[data-qa="halle-fehler"]'))).toContain(
+        'Der DBB ist gerade nicht erreichbar.'
+      );
+      expect(text(teil(gifhorn, 'naechstes'))).toContain(
+        'gegen SV Groß Oesingen'
+      );
+    });
+  });
+
   it('keeps the other Teams when one fails', async () => {
     const { seite } = await render(
       fakeData([
@@ -364,10 +495,12 @@ describe('UeberblickComponent', () => {
 
   describe('each Team on its own', () => {
     const NIE: Promise<TeamSaison> = new Promise(() => undefined);
+    const NIE_DETAILS: Promise<SpielDetails> = new Promise(() => undefined);
 
     it('shows a Team while another still loads', async () => {
       const { seite } = await render(
         {
+          spiel: inDerSporthalle,
           teamSpiele: async (teamId) =>
             teamId === GIFHORN.id
               ? NIE
@@ -419,10 +552,36 @@ describe('UeberblickComponent', () => {
       expect(lesung?.aborted).toBe(true);
     });
 
+    it("cancels the next Spiel's Halle read of a Team unfollowed", async () => {
+      const data = fakeData(
+        [saison(GIFHORN, spiel(GIFHORN, OESINGEN, '2026-11-21'))],
+        () => NIE_DETAILS
+      );
+      const { auswahl, stabil } = await render(data, [GIFHORN.id]);
+      await stabil();
+      const lesung = data.spiel.mock.calls[0][1]?.signal;
+      expect(lesung?.aborted).toBe(false);
+
+      await auswahl.entfolgen(GIFHORN.id);
+      await stabil();
+
+      expect(lesung?.aborted).toBe(true);
+    });
+
+    it("reads no Halle before a Team's next Spiel is known", async () => {
+      const data = fakeData([]);
+      data.teamSpiele.mockImplementation(() => NIE);
+
+      await render(data, [GIFHORN.id]);
+
+      expect(data.spiel).not.toHaveBeenCalled();
+    });
+
     it('puts a Team in its place once it has loaded', async () => {
       let gifhornLaden: (saison: TeamSaison) => void = () => undefined;
       const { seite, stabil } = await render(
         {
+          spiel: inDerSporthalle,
           teamSpiele: (teamId) =>
             teamId === GIFHORN.id
               ? new Promise((resolve) => (gifhornLaden = resolve))

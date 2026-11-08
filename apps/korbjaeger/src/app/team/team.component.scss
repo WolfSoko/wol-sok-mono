@@ -6,6 +6,12 @@
   margin-block-end: 1rem;
 }
 
+.naechstes {
+  padding: 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-medium);
+}
+
 // Team and Liga names are long: let them wrap rather than cut them off.
 .spiele {
   .mat-mdc-list-item {

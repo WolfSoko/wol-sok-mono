@@ -9,6 +9,7 @@ import {
   type SpielSonderfall,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
+import { ergebnisText, spielTag } from './spiel-format';
 
 /** One Spiel seen from a Team, as the screens show it (`SpielZeileComponent`). */
 export interface SpielZeile {
@@ -27,14 +28,6 @@ export interface SpielZeile {
   readonly markierung?: SpielSonderfall;
 }
 
-const DATUM = new Intl.DateTimeFormat('de-DE', {
-  weekday: 'short',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
-
 /** Every Spiel of `saison`, across its Ligen, in the port's date order. */
 export function spielZeilen(saison: TeamSaison): readonly SpielZeile[] {
   return saison.spiele.map((spiel) => spielZeile(saison, spiel));
@@ -46,14 +39,14 @@ export function spielZeile(saison: TeamSaison, spiel: Spiel): SpielZeile {
   const ergebnis = ergebnisVon(spiel);
   return {
     id: spiel.id,
-    datum: DATUM.format(new Date(`${spiel.datum}T00:00:00Z`)),
+    datum: spielTag(spiel.datum),
     uhrzeit: spiel.uhrzeit,
     liga: ligaVon(saison, spiel.ligaId)?.name ?? '',
     ort: seite && ORT[seite],
     gegner: seite
       ? parteiName(gegnerVon(spiel, seite))
       : `${parteiName(spiel.heim)} – ${parteiName(spiel.gast)}`,
-    ergebnis: ergebnis && `${ergebnis.heim}:${ergebnis.gast}`,
+    ergebnis: ergebnis && ergebnisText(ergebnis),
     markierung: sonderfallVon(spiel),
   };
 }

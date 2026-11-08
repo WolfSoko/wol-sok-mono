@@ -1,0 +1,92 @@
+<section data-qa="kader">
+  <h3 [id]="ueberschriftId()">{{ titel() }}</h3>
+  @if (zeilen().length === 0) {
+    <p>Im Spielbericht steht kein Kader.</p>
+  } @else {
+    @if (!kader().spielerwerteErfasst) {
+      <p class="ohne-werte" data-qa="kader-ohne-werte">
+        Für dieses Team sind keine Spielerwerte erfasst.
+      </p>
+    }
+    <div class="tabelle">
+      <table
+        mat-table
+        [dataSource]="zeilen()"
+        [attr.aria-labelledby]="ueberschriftId()"
+      >
+        <ng-container matColumnDef="nummer">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            aria-label="Trikotnummer"
+            title="Trikotnummer"
+          >
+            Nr.
+          </th>
+          <td mat-cell *matCellDef="let zeile">{{ zeile.nummer }}</td>
+        </ng-container>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let zeile" [class.anonym]="zeile.anonym">
+            {{ zeile.name }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="punkte">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            aria-label="Punkte"
+            title="Punkte"
+          >
+            Pkt.
+          </th>
+          <td mat-cell *matCellDef="let zeile">{{ zeile.werte?.punkte }}</td>
+        </ng-container>
+        <ng-container matColumnDef="feldkoerbe">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            aria-label="Feldkörbe"
+            title="Feldkörbe"
+          >
+            FK
+          </th>
+          <td mat-cell *matCellDef="let zeile">
+            {{ zeile.werte?.feldkoerbe }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="freiwuerfe">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            aria-label="Freiwürfe getroffen von versucht"
+            title="Freiwürfe getroffen von versucht"
+          >
+            FW
+          </th>
+          <td mat-cell *matCellDef="let zeile">
+            {{ zeile.werte?.freiwuerfe }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="fouls">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            aria-label="Fouls"
+            title="Fouls"
+          >
+            F
+          </th>
+          <td mat-cell *matCellDef="let zeile">{{ zeile.werte?.fouls }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="spalten()"></tr>
+        <tr
+          mat-row
+          *matRowDef="let zeile; columns: spalten()"
+          data-qa="kader-zeile"
+        ></tr>
+      </table>
+    </div>
+  }
+</section>

@@ -1,8 +1,14 @@
-import { istBenannt, spielerwerteErfasst } from '../domain/spielbericht';
+import {
+  istBenannt,
+  spielerwerteErfasst,
+  type Kader,
+  type KaderEintrag,
+} from '../domain/spielbericht';
 import { caughtError } from '../../testing/caught-error';
 import { readEnvelope } from './envelope';
 import keinBericht from './fixtures/boxscore-2843814.json';
 import nurKader from './fixtures/boxscore-2843811.json';
+import nurKaderMitAnonymen from './fixtures/boxscore-2861436.json';
 import mitWerten from './fixtures/boxscore-2911141.json';
 import { mapSpielbericht } from './map-spielbericht';
 
@@ -91,6 +97,34 @@ describe('mapSpielbericht', () => {
         vorname: 'Delon',
         nachname: 'Nesselbach',
         trikotnummer: '30',
+      });
+    });
+  });
+
+  describe('where the Verband records the Kader only, with Anonyme Spieler (Niedersachsen)', () => {
+    const bericht = mapSpielbericht(readEnvelope(nurKaderMitAnonymen));
+
+    it('lists the Anonyme Spieler without number, name or person id', () => {
+      const anonyme = (kader: Kader | undefined): readonly KaderEintrag[] =>
+        (kader?.eintraege ?? []).filter((eintrag) => !istBenannt(eintrag));
+
+      expect(anonyme(bericht?.heim)).toEqual([{ art: 'anonym' }]);
+      expect(anonyme(bericht?.gast)).toEqual([
+        { art: 'anonym' },
+        { art: 'anonym' },
+        { art: 'anonym' },
+      ]);
+    });
+
+    it('reads the named players with their shirt numbers, no Spielerwerte', () => {
+      expect(bericht?.heim.spielerwerteErfasst).toBe(false);
+      expect(bericht?.gast.spielerwerteErfasst).toBe(false);
+      expect(bericht?.gast.eintraege[0]).toEqual({
+        art: 'benannt',
+        personId: expect.any(Number),
+        vorname: 'Orvin',
+        nachname: 'Nesselbach',
+        trikotnummer: '7',
       });
     });
   });

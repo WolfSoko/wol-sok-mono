@@ -3,7 +3,9 @@ import type { PersonId, SpielId } from './ids';
 /** One player's numbers in one Spiel. */
 export interface Spielerwerte {
   readonly punkte: number;
+  /** Two-point field goals made. */
   readonly zweier: number;
+  /** Three-point field goals made. */
   readonly dreier: number;
   readonly freiwuerfe: {
     readonly getroffen: number;
@@ -59,6 +61,14 @@ export interface Spielbericht {
 /** Whether either Kader of a Spielbericht has Spielerwerte. */
 export function spielerwerteErfasst(bericht: Spielbericht): boolean {
   return bericht.heim.spielerwerteErfasst || bericht.gast.spielerwerteErfasst;
+}
+
+/**
+ * A player's field goals (Feldkörbe): the twos and threes made. Only the
+ * hits: the Spielberichte seen list no attempts for them (all 0).
+ */
+export function feldkoerbe(werte: Spielerwerte): number {
+  return werte.zweier + werte.dreier;
 }
 
 /** Whether a Kader entry is a named player, so it can be marked as a Kind. */

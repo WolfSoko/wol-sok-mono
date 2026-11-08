@@ -14,6 +14,8 @@ import { proxyTransport } from './proxy-transport';
 const READS = {
   teamSpiele: 'team-spiele',
   tabelle: 'tabelle',
+  spiel: 'spiel-info',
+  spielbericht: 'spielbericht',
 } as const satisfies Partial<Record<keyof BasketballData, ProxyKind>>;
 
 /** The reads the app offers: those its proxy has a route for. */

@@ -10,7 +10,10 @@ import {
   type AnyProxyRoute,
   type ProxyKind,
 } from '../../shared/dbb-proxy-routes';
-import { DBB_PROXY_CACHE_CONTROL } from './dbb-proxy';
+import {
+  DBB_PROXY_CACHE_CONTROL,
+  FINISHED_BOXSCORE_CACHE_CONTROL,
+} from './dbb-proxy';
 import { PROXY_USER_AGENT } from './dbb-upstream-config';
 import type { UpstreamFetch } from './dbb-upstream';
 
@@ -43,6 +46,8 @@ const ROUTE_FILES: {
 } = {
   'team-spiele': () => import('../routes/api/dbb/team/[teamId]/spiele.get'),
   tabelle: () => import('../routes/api/dbb/liga/[ligaId]/tabelle.get'),
+  'spiel-info': () => import('../routes/api/dbb/spiel/[spielId].get'),
+  spielbericht: () => import('../routes/api/dbb/spiel/[spielId]/bericht.get'),
 };
 
 const KINDS = Object.keys(PROXY_ROUTES) as ProxyKind[];
@@ -82,6 +87,17 @@ async function proxyRoutes(): Promise<(request: Request) => Promise<Response>> {
 const ROUTES = [
   { name: "a Team's Spiele", route: PROXY_ROUTES['team-spiele'], id: 313036 },
   { name: "a Liga's Tabelle", route: PROXY_ROUTES.tabelle, id: 54862 },
+  {
+    name: "a Spiel's match info",
+    route: PROXY_ROUTES['spiel-info'],
+    id: 2911141,
+  },
+  {
+    // planned, so no Spielbericht yet: cached as any other read
+    name: "a Spiel's Spielbericht",
+    route: PROXY_ROUTES.spielbericht,
+    id: 2843814,
+  },
 ] as const;
 
 /** The DBB path `route` reads for `id`. */
@@ -245,10 +261,50 @@ describe('DBB proxy', () => {
     });
   });
 
+  describe("a confirmed Spiel's Spielbericht", () => {
+    it.each([
+      ['with Spielerwerte', 2911141],
+      ['with the Kader only', 2843811],
+    ])('lets the CDN keep it an hour, %s', async (_case, spielId) => {
+      const response = await proxy(recordedDbb())(
+        `/api/dbb/spiel/${spielId}/bericht`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('cache-control')).toBe(
+        'public, max-age=60, s-maxage=3600'
+      );
+      expect(FINISHED_BOXSCORE_CACHE_CONTROL).toBe(
+        'public, max-age=60, s-maxage=3600'
+      );
+    });
+
+    it('keeps one whose result is not confirmed yet five minutes only', async () => {
+      const response = await proxy(recordedDbb())(
+        '/api/dbb/spiel/2861436/bericht'
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('cache-control')).toBe(
+        DBB_PROXY_CACHE_CONTROL
+      );
+    });
+
+    it("keeps the played Spiel's match info five minutes only", async () => {
+      const response = await proxy(recordedDbb())('/api/dbb/spiel/2911141');
+
+      expect(response.headers.get('cache-control')).toBe(
+        DBB_PROXY_CACHE_CONTROL
+      );
+    });
+  });
+
   it.each([
     ['an unknown read', '/api/dbb/team/313036/spieler'],
     ['a DBB path', '/api/dbb/team/id/313036/matches'],
     ['a DBB Tabelle path', '/api/dbb/competition/table/id/54862'],
+    ['a DBB boxscore path', '/api/dbb/match/id/2911141/boxscore'],
+    ['more after a Spielbericht', '/api/dbb/spiel/2911141/bericht/1'],
     ['the bare prefix', '/api/dbb'],
     ['the prefix with a slash', '/api/dbb/'],
   ])('answers %s with 404 and never asks the DBB', async (_case, path) => {

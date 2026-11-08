@@ -42,6 +42,15 @@ export class TeamPage {
     return tabelle.locator('[aria-current="true"]');
   }
 
+  /** The Spiel against `gegner` in the list, a link to its Spiel page. */
+  public spielGegen(gegner: string): Locator {
+    return this.spiele.filter({
+      has: this.page.getByTestId('spiel-gegner').getByText(gegner, {
+        exact: true,
+      }),
+    });
+  }
+
   public async goto(teamId: number): Promise<void> {
     await this.page.goto(`/team/${teamId}`);
   }

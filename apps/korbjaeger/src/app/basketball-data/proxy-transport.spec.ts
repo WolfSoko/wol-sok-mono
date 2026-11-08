@@ -78,6 +78,29 @@ describe('proxyTransport', () => {
     expect(tabelle.zeilen).toHaveLength(6);
   });
 
+  it("reads a Spiel and its Spielbericht from the app's proxy", async () => {
+    const proxy = recordedProxy();
+    const data = new DbbBasketballData(proxyTransport(proxy));
+
+    const [details, bericht] = await Promise.all([
+      data.spiel(2861436),
+      data.spielbericht(2861436),
+    ]);
+
+    expect(proxy.mock.calls.map(([url]) => url)).toEqual([
+      '/api/dbb/spiel/2861436',
+      '/api/dbb/spiel/2861436/bericht',
+    ]);
+    expect(details.halle?.name).toBe('Schulsporthalle');
+    expect(bericht?.heim.eintraege).toHaveLength(9);
+  });
+
+  it('reads a Spiel without Spielbericht yet as such', async () => {
+    const data = new DbbBasketballData(proxyTransport(recordedProxy()));
+
+    expect(await data.spielbericht(2843814)).toBeUndefined();
+  });
+
   it('reads the Tabelle of a Liga the DBB does not know as not found', async () => {
     const data = new DbbBasketballData(proxyTransport(recordedProxy()));
 

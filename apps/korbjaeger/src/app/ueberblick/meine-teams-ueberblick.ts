@@ -11,20 +11,32 @@ import {
 } from '@angular/core';
 import {
   nachNaechstemSpiel,
+  naechstesSpiel,
+  type SpielDetails,
   type TeamId,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
+import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
+import { hallenStand } from '../halle/hallen-stand';
 import { HEUTE } from '../heute';
 import { fehlerKarte, geladeneKarte, type TeamKarte } from './team-karte';
 
-type Lesung = ResourceRef<TeamSaison | undefined>;
+/**
+ * The reads of one followed Team: its Saison, and its next Spiel's details
+ * for the Halle, which starts once that Spiel is known.
+ */
+interface Lesung {
+  readonly saison: ResourceRef<TeamSaison | undefined>;
+  readonly naechsteDetails: ResourceRef<SpielDetails | undefined>;
+}
 
 /**
- * The overview's data: one read per followed Team, each loading and
- * failing on its own. A Team followed is read once; one unfollowed has its
- * read cancelled and dropped, the others' stay as they are.
+ * The overview's data: per followed Team its Saison and its next Spiel's
+ * Halle, each loading and failing on its own. A Team followed is read
+ * once; one unfollowed has its reads cancelled and dropped, the others'
+ * stay as they are.
  */
 @Injectable()
 export class MeineTeamsUeberblick {
@@ -56,17 +68,20 @@ export class MeineTeamsUeberblick {
       const teams = this.teams() ?? [];
       untracked(() => this.lesungen.set(this.abgeglichen(teams)));
     });
-    inject(DestroyRef).onDestroy(() =>
-      this.lesungen().forEach((lesung) => lesung.destroy())
-    );
+    inject(DestroyRef).onDestroy(() => this.lesungen().forEach(beenden));
   }
 
   private karte(teamId: TeamId, lesung: Lesung | undefined): TeamKarte {
-    if (lesung?.hasValue()) {
-      return geladeneKarte(lesung.value(), this.heute());
+    const saison = lesung?.saison;
+    if (lesung && saison?.hasValue()) {
+      return geladeneKarte(
+        saison.value(),
+        this.heute(),
+        hallenStand(lesung.naechsteDetails)
+      );
     }
-    return lesung?.status() === 'error'
-      ? fehlerKarte(teamId, lesung.error())
+    return saison?.status() === 'error'
+      ? fehlerKarte(teamId, saison.error())
       : { art: 'laedt', teamId };
   }
 
@@ -75,14 +90,30 @@ export class MeineTeamsUeberblick {
     const vorher = this.lesungen();
     for (const [teamId, lesung] of vorher) {
       if (!teams.includes(teamId)) {
-        lesung.destroy();
+        beenden(lesung);
       }
     }
     return new Map(
-      teams.map((teamId) => [
-        teamId,
-        vorher.get(teamId) ?? teamSaisonResource(() => teamId, this.injector),
-      ])
+      teams.map((teamId) => [teamId, vorher.get(teamId) ?? this.lesen(teamId)])
     );
   }
+
+  /** The reads of `teamId`: its Saison, then its next Spiel's details. */
+  private lesen(teamId: TeamId): Lesung {
+    const saison = teamSaisonResource(() => teamId, this.injector);
+    const naechsteDetails = spielDetailsResource(
+      () =>
+        saison.hasValue()
+          ? naechstesSpiel(saison.value(), this.heute())?.id
+          : undefined,
+      this.injector
+    );
+    return { saison, naechsteDetails };
+  }
+}
+
+/** Cancels and drops both reads of a Team. */
+function beenden(lesung: Lesung): void {
+  lesung.saison.destroy();
+  lesung.naechsteDetails.destroy();
 }

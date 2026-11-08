@@ -32,7 +32,8 @@ and tools are no Nx project.
   `BenannterSpieler` or an `AnonymerSpieler`, which has no person id and so
   cannot be marked. Each Kader of a Spielbericht says whether its
   Spielerwerte were recorded (`spielerwerteErfasst`); one whose numbers are
-  all 0 has `false` and no Spielerwerte, never zeros.
+  all 0 has `false` and no Spielerwerte, never zeros. A player's field
+  goals are `feldkoerbe(spielerwerte)` (twos and threes made).
   `spiel.ts` answers the questions a screen asks of a Spiel: the side a
   Team plays (`seiteVon`), its opponent (`gegnerVon`), the result
   (`ergebnisVon`) and whether it was cancelled or forfeited
@@ -57,7 +58,10 @@ and tools are no Nx project.
   DBB with it). What a transport throws, other than a
   `BasketballDataError`, becomes `unavailable`. `readEnvelope` maps the DBB's
   `status` (`"0"`, `"1"`, `"-1"`; it answers HTTP 200 regardless, and
-  `dbbStatusOf` reads it for the proxy, which passes the body on), one
+  `dbbStatusOf` reads it for the proxy, which passes the body on;
+  `dbbBoxscoreFinished` tells the proxy a Spielbericht whose result the
+  Verband has confirmed, with both Kader listed, which the CDN may keep
+  longer), one
   `map-*.ts` per endpoint maps its JSON, and `DbbObject` checks each
   field's type on the way.
 
@@ -69,8 +73,13 @@ read, from the fixtures below (the recording of a recorded id, the DBB's
 not-found envelope for any other id, `undefined` for a read it does not
 know). The app's proxy specs and its e2e fake DBB server answer with it; a
 read a later screen needs gets its row in `src/testing/fake-dbb.ts`. It
-knows Team `313036`'s Spiele and the Tabellen of its two Ligen (`54862`, a
-Vorrunde, and `54689`, a friendly Liga the DBB keeps none for).
+knows Team `313036`'s Spiele, the Tabellen of its two Ligen (`54862`, a
+Vorrunde, and `54689`, a friendly Liga the DBB keeps none for) and its
+Spiel `2861436` (match info and a Kader-only Spielbericht, its result not
+confirmed yet), and the match info and boxscores of the adapter's Spiel
+cases (`2911141` played with quarters and Spielerwerte, `2843811` a
+confirmed Kader-only Spielbericht, `2843814` planned without Spielbericht,
+`2930311` cancelled, `2930414` forfeited).
 
 ## Tests
 

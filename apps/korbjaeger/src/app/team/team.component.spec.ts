@@ -1,7 +1,9 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
+  type Halle,
   type Liga,
   type Spiel,
   type SpielPartei,
@@ -77,6 +79,7 @@ function saison(spiele: readonly Spiel[]): TeamSaison {
 
 type TeamSpieleRead = KorbjaegerData['teamSpiele'];
 type TabelleRead = KorbjaegerData['tabelle'];
+type SpielRead = KorbjaegerData['spiel'];
 
 /** The day the specs run on: after the last Spiel of the fixtures below. */
 const HEUTE_IM_SPEC = '2026-11-08';
@@ -87,17 +90,39 @@ const keineZeilen: TabelleRead = async (ligaId) => ({
   zeilen: [],
 });
 
-/** `KorbjaegerData` answering `teamSpiele` with `read`, Tabellen empty. */
+const SCHULSPORTHALLE: Halle = {
+  name: 'Schulsporthalle',
+  strasse: 'Schulstr. 12',
+  plz: '38553',
+  ort: 'Wasbüttel',
+};
+
+/** A Spiel's details, played in the Schulsporthalle. */
+const inDerSchulsporthalle: SpielRead = async (spielId) => ({
+  spiel: spiel({ id: spielId, datum: '2026-11-21' }),
+  liga: VORRUNDE,
+  halle: SCHULSPORTHALLE,
+  viertel: [],
+  verlaengerungen: [],
+});
+
+/**
+ * `KorbjaegerData` answering `teamSpiele` with `read`, Tabellen empty,
+ * every Spiel in the Schulsporthalle.
+ */
 function fakeData(
   read: TeamSpieleRead,
-  tabelle: TabelleRead = keineZeilen
+  tabelle: TabelleRead = keineZeilen,
+  details: SpielRead = inDerSchulsporthalle
 ): {
   readonly teamSpiele: ReturnType<typeof vi.fn<TeamSpieleRead>>;
   readonly tabelle: ReturnType<typeof vi.fn<TabelleRead>>;
+  readonly spiel: ReturnType<typeof vi.fn<SpielRead>>;
 } {
   return {
     teamSpiele: vi.fn<TeamSpieleRead>(read),
     tabelle: vi.fn<TabelleRead>(tabelle),
+    spiel: vi.fn<SpielRead>(details),
   };
 }
 
@@ -106,6 +131,7 @@ function providers(
   heute: WritableSignal<string> = signal(HEUTE_IM_SPEC)
 ) {
   return [
+    provideRouter([]),
     { provide: BASKETBALL_DATA, useValue: data },
     { provide: HEUTE, useValue: heute },
     // in memory: nothing reaches the device's storage
@@ -318,6 +344,96 @@ describe('TeamComponent', () => {
     expect(feld(mitErgebnis, 'ergebnis')).toBe('20:0');
     expect(feld(ohneErgebnis, 'markierung')).toBe('kampflos');
     expect(feld(ohneErgebnis, 'ergebnis')).toBeUndefined();
+  });
+
+  it("opens each Spiel's page", async () => {
+    const page = await render(
+      fakeData(async () =>
+        saison([
+          spiel({ id: 2861436, datum: '2026-09-20' }),
+          spiel({ id: 2861439, datum: '2026-09-25' }),
+        ])
+      )
+    );
+
+    expect(
+      spielZeilen(page).map((zeile) => zeile.closest('a')?.getAttribute('href'))
+    ).toEqual(['/spiel/2861436', '/spiel/2861439']);
+  });
+
+  describe('the next Spiel', () => {
+    const MIT_NAECHSTEM = saison([
+      spiel({
+        id: 1,
+        datum: '2026-10-03',
+        status: {
+          art: 'gespielt',
+          ergebnis: { heim: 78, gast: 47 },
+          bestaetigt: true,
+        },
+      }),
+      spiel({ id: 2, datum: '2026-11-21', uhrzeit: '11:00' }),
+      spiel({ id: 3, datum: '2026-11-28' }),
+    ]);
+
+    function naechstes(page: HTMLElement): HTMLElement | null {
+      return page.querySelector('[data-qa="team-naechstes"]');
+    }
+
+    it('shows it with its Halle and a link that opens navigation', async () => {
+      const page = await render(fakeData(async () => MIT_NAECHSTEM));
+
+      const block = naechstes(page);
+      expect(block?.textContent).toContain('Nächstes Spiel');
+      expect(block?.textContent).toContain('Sa., 21.11.2026');
+      expect(
+        block?.querySelector('[data-qa="halle-name"]')?.textContent?.trim()
+      ).toBe('Schulsporthalle');
+      const navigation = block?.querySelector('[data-qa="halle-navigation"]');
+      expect(navigation?.getAttribute('target')).toBe('_blank');
+      expect(navigation?.getAttribute('rel')).toBe('noopener');
+      expect(navigation?.getAttribute('href')).toBe(
+        'https://www.google.com/maps/search/?api=1&query=Schulsporthalle%2C%20Schulstr.%2012%2C%2038553%20Wasb%C3%BCttel'
+      );
+      expect(block?.querySelector('a[href="/spiel/2"]')?.textContent).toContain(
+        'MTV Gifhorn'
+      );
+    });
+
+    it("reads only the next Spiel's Halle", async () => {
+      const data = fakeData(async () => MIT_NAECHSTEM);
+
+      await render(data);
+
+      expect(data.spiel.mock.calls.map(([spielId]) => spielId)).toEqual([2]);
+    });
+
+    it('shows none and reads no Halle once every Spiel is played', async () => {
+      const data = fakeData(async () => saison([MIT_NAECHSTEM.spiele[0]]));
+
+      const page = await render(data);
+
+      expect(naechstes(page)).toBeNull();
+      expect(data.spiel).not.toHaveBeenCalled();
+    });
+
+    it('keeps the Spiele when its Halle cannot be read', async () => {
+      const page = await render(
+        fakeData(
+          async () => MIT_NAECHSTEM,
+          keineZeilen,
+          async () => {
+            throw new BasketballDataError('unavailable', 'DBB: nope');
+          }
+        )
+      );
+
+      expect(
+        naechstes(page)?.querySelector('[data-qa="halle-fehler"]')?.textContent
+      ).toContain('Der DBB ist gerade nicht erreichbar.');
+      expect(spielZeilen(page)).toHaveLength(3);
+      expect(page.querySelectorAll('[role="alert"]')).toHaveLength(0);
+    });
   });
 
   it('offers to follow the Team', async () => {

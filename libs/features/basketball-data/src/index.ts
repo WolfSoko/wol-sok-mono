@@ -7,6 +7,7 @@ export {
   DbbBasketballData,
   VEREINS_SPIELE_TAGE,
 } from './lib/dbb/dbb-basketball-data';
+export { dbbBoxscoreFinished } from './lib/dbb/boxscore-finished';
 export {
   DBB_BASE_URL,
   MAX_VEREINS_SPIELE_TAGE,
@@ -72,7 +73,11 @@ export type {
   SpielStatus,
   Spielstand,
 } from './lib/domain/spiel';
-export { istBenannt, spielerwerteErfasst } from './lib/domain/spielbericht';
+export {
+  feldkoerbe,
+  istBenannt,
+  spielerwerteErfasst,
+} from './lib/domain/spielbericht';
 export type {
   AnonymerSpieler,
   BenannterSpieler,

@@ -115,7 +115,17 @@ export const FIXTURE_REQUESTS: readonly FixtureRequest[] = [
     name: 'boxscore-2843814',
     request: { kind: 'spielbericht', spielId: 2843814 },
   },
+  { name: 'matchinfo-not-found', request: { kind: 'spiel-info', spielId: 1 } },
   { name: 'boxscore-not-found', request: { kind: 'spielbericht', spielId: 1 } },
+  // a Spiel of Team 313036 (at home against MTV Gifhorn), for the e2e's Spiel page
+  {
+    name: 'matchinfo-2861436',
+    request: { kind: 'spiel-info', spielId: 2861436 },
+  },
+  {
+    name: 'boxscore-2861436',
+    request: { kind: 'spielbericht', spielId: 2861436 },
+  },
 ];
 
 /** The lib's fixtures folder, relative to the workspace root. */
