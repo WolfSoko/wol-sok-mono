@@ -9,6 +9,7 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
+import { timestampMillis } from '../timestamps';
 import { dayOf, isBanned } from '../limits';
 import { entryData, hiddenFor, memberIn, profileIn } from './entries';
 
@@ -117,10 +118,7 @@ export async function rankOnline(
     const entries = [await tx.get(entryRefs[0]), await tx.get(entryRefs[1])];
 
     // Rooms cannot run matches side by side faster than real time.
-    const stubCreatedAt =
-      replay['stubCreatedAt'] instanceof Timestamp
-        ? replay['stubCreatedAt'].toMillis()
-        : null;
+    const stubCreatedAt = timestampMillis(replay['stubCreatedAt']);
     const sameRoom = room.exists && room.get('stubCreatedAt') === stubCreatedAt;
     const roomTicks = (sameRoom ? Number(room.get('ticks') ?? 0) : 0) + ticks;
     if (

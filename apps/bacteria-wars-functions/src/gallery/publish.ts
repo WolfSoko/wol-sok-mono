@@ -9,6 +9,7 @@ import {
   type QueryDocumentSnapshot,
   Timestamp,
 } from 'firebase-admin/firestore';
+import { timestampMillis } from '../timestamps';
 import { storedReplay } from '../boards/declared-match';
 import { type BoardProfile, boardProfileOf, entryLabel } from '../boards/names';
 import { dayOf, isBanned } from '../limits';
@@ -128,7 +129,7 @@ export async function publishReplay(
       featuredAt: Timestamp.fromMillis(now),
       featuredBy,
       ...(anonymised ? { anonymised } : {}),
-      day: dayOf(createdAt instanceof Timestamp ? createdAt.toMillis() : now),
+      day: dayOf(timestampMillis(createdAt) ?? now),
       removedAt: null,
     });
     tx.create(publicRef.collection('blob').doc('data'), {
@@ -163,8 +164,7 @@ export async function takeDownPublic(
     tx.delete(published.ref.collection('blob').doc('data'));
     // Only while it still points here: a copy featured meanwhile keeps it.
     if (replay?.exists === true && replay.get('publicId') === published.id) {
-      const createdAt = replay.get('createdAt');
-      const born = createdAt instanceof Timestamp ? createdAt.toMillis() : now;
+      const born = timestampMillis(replay.get('createdAt')) ?? now;
       tx.update(replay.ref, {
         publicId: FieldValue.delete(),
         expireAt: Timestamp.fromMillis(anonymisedExpireAt(born, now)),
