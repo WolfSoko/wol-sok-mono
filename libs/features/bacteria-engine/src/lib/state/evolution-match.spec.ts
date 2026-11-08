@@ -300,7 +300,8 @@ describe('weapons in a match', () => {
     const spawns: PlayerSpawn[] = [
       {
         ...spawn(60, 70),
-        traits: evolvedTraits(PLAIN_LOADOUT),
+        // A faster boost (Metabolism) must not speed up the weapon.
+        traits: { ...evolvedTraits(PLAIN_LOADOUT), cooldownFactor: 0.5 },
         weapon: 'toxin-bomb',
       },
       spawn(260, 70),
