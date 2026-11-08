@@ -444,6 +444,26 @@ describe('SpielComponent', () => {
       expect(teil(heim, 'kader-ohne-werte')).toBeNull();
     });
 
+    it('leaves out the shirt numbers where the Kader lists none', async () => {
+      const ohneNummern: Kader = {
+        spielerwerteErfasst: true,
+        eintraege: [{ art: 'anonym', spielerwerte: werte(10) }],
+      };
+      const seite = await render(
+        fakeData(
+          async () => GESPIELT,
+          async () => bericht(ohneNummern, OHNE_WERTE)
+        )
+      );
+
+      const [heim, gast] = kader(seite);
+      expect(kopfzellen(heim)[0]).toBe('Name');
+      expect(zellen(heim, 'kader-zeile')).toEqual([
+        ['Anonymer Spieler', '10', '5', '3/5', '2'],
+      ]);
+      expect(kopfzellen(gast)[0]).toBe('Trikotnummer');
+    });
+
     it('says "noch kein Spielbericht" while there is none', async () => {
       const seite = await render(
         fakeData(
