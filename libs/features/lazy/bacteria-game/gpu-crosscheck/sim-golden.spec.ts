@@ -3,7 +3,7 @@
  */
 import {
   BALANCE_VERSION,
-  IntSimulation,
+  intSimulation,
 } from '@wolsok/feat-shared-bacteria-engine';
 import {
   playScenario,
@@ -30,12 +30,12 @@ describe('the golden hashes of the whole-match cross-check', () => {
   });
 
   it.each(SIM_SCENARIOS.map((scenario) => [scenario.name, scenario] as const))(
-    'are IntSimulation’s hashes of %s',
+    'are the integer reference’s hashes of %s',
     (name, scenario) => {
       expect(
         playScenario(
           scenario,
-          new IntSimulation(
+          intSimulation(
             scenario.balance,
             scenarioRandom(scenario),
             scenario.matchSeed

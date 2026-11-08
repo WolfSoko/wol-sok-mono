@@ -78,7 +78,7 @@ describe('ArenaFixtures', () => {
   it('lets an added effect act and lists the pellets', () => {
     const arena = fixtures(plainMap);
     const effect: ActiveEffect = {
-      weapon: 'antibiotic',
+      weapon: 'toxin-bomb',
       owner: 1,
       x: 5,
       y: 5,

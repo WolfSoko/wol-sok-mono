@@ -1,13 +1,21 @@
-import { escapeReach } from '../arena-size';
+import type { ColonySpawn } from '../bacteria-simulation';
+import { Cells } from '../cells';
 import { GameBalance } from '../game-balance';
 import { Point } from '../geometry';
 import { ENERGY_SCALE } from '../grid-format';
-import { Cells } from '../cells';
+import type {
+  CellPasses,
+  GridArena,
+  GridFrame,
+  GridTick,
+  ReportSink,
+} from '../grid/cell-passes';
+import { GridWar } from '../grid/grid-war';
 import { CellsLayer, SimulationFactory } from '../simulation';
-import { decodeReport } from '../simulation-report';
-import { GridSimulation } from '../grid-simulation';
+import { reportLayout } from '../simulation-report';
 import { frameSeed } from './draws';
 import {
+  createIntFrameUniforms,
   fillIntCombatUniforms,
   fillIntFrameUniforms,
 } from './int-frame-uniforms';
@@ -32,20 +40,27 @@ interface PendingReport {
 }
 
 /**
- * The deterministic simulation of ADR 0015 on the CPU: the walls, pellets,
- * effects and uniforms of {@link GridSimulation}, with the cell passes and
- * the report run by their TypeScript reference (`intReferenceTick`,
- * `intReport`) instead of the GPU. It lands on the very states the integer
- * GPU passes do, tick for tick - so a device whose GPU fails the self-test,
- * or has no WebGL2, still plays a deterministic match with everybody else,
- * and the server can play one again.
+ * The cell passes of ADR 0015's deterministic war on the CPU: their
+ * TypeScript reference (`intReferenceTick`, `intReport`) in place of the
+ * GPU. It lands on the very states the integer GPU passes do, tick for
+ * tick - so a device whose GPU fails the self-test, or has no WebGL2, still
+ * plays a deterministic match with everybody else, and the server can play
+ * one again.
  *
- * It takes the reports as `GpuSimulation` does in a deterministic match:
+ * It hands the reports over as the GPU passes do in a deterministic match:
  * the one of tick `t` at the start of tick `t + DETERMINISTIC_REPORT_LAG`.
  */
-export class IntSimulation extends GridSimulation {
+export class IntReferencePasses implements CellPasses {
   public readonly kind = 'int';
+  public readonly deterministic = true;
+  private arena: GridArena = {
+    width: 0,
+    height: 0,
+    layout: reportLayout(0, 0, 1),
+  };
   private state: Uint16Array = new Uint16Array(0);
+  private mask: Uint8Array = new Uint8Array(0);
+  private hasHill = false;
   private scratch = new IntPassScratch(0, 0);
   private buffers = new IntStateBuffers(0);
   /** The reports' buffers - see `takeReportBuffer`. */
@@ -53,117 +68,105 @@ export class IntSimulation extends GridSimulation {
   /** What the painter gets - see `collectBacterias`. */
   private readonly bacterias: Cells[] = [];
   private drawnState: Uint16Array | null = null;
-  private drawnStep = -1;
+  /** Ticks run, to draw each one once - see `colonyLayers`. */
+  private ticks = 0;
+  private drawnTick = -1;
   private readonly match: IntMatchUniforms;
+  private readonly intUniforms = createIntFrameUniforms();
   private readonly trace: IntTickTrace = { combat: null };
-  private pelletCount = 0;
+  private frame: GridFrame | null = null;
   private previousReport: Uint32Array | null = null;
   private readonly pendingReports: PendingReport[] = [];
   private allocated = false;
 
   public constructor(
-    balance: GameBalance,
-    random: () => number = Math.random,
-    matchSeed = 0
+    private readonly balance: GameBalance,
+    private readonly matchSeed = 0
   ) {
-    super(balance, random, { deterministic: true, matchSeed });
     this.match = intMatchUniforms(balance);
   }
 
-  /** The cell state after the last tick - see `GpuSimulation.readState`. */
-  public readState(): Uint16Array | null {
-    return this.allocated ? this.state.slice() : null;
+  /** Nothing to restart: the CPU loses no resources. */
+  public attach(): void {
+    // The CPU keeps its arrays for as long as the war runs.
   }
 
-  public colonyLayers(boosts: ReadonlyMap<number, Point>): CellsLayer[] {
-    if (this.drawnState !== this.state || this.drawnStep !== this.steps) {
-      this.collectBacterias();
-    }
-    return this.spawns.map((spawn, slot) => ({
-      kind: 'cells',
-      color: spawn.color,
-      boostTarget: boosts.get(spawn.playerId) ?? null,
-      cells: this.bacterias[slot],
-    }));
-  }
-
-  public dispose(): void {
-    this.pendingReports.length = 0;
-  }
-
-  protected ready(): boolean {
+  public ready(): boolean {
     return this.allocated;
   }
 
-  protected allocate(): void {
-    this.state = new Uint16Array(this.width * this.height * 4);
-    this.scratch = new IntPassScratch(this.width, this.height);
+  public allocate(arena: GridArena): void {
+    const { width, height, layout } = arena;
+    this.arena = arena;
+    this.state = new Uint16Array(width * height * 4);
+    this.scratch = new IntPassScratch(width, height);
     this.buffers = new IntStateBuffers(this.state.length);
-    const reportLength = this.layout.width * this.layout.height * 4;
+    const reportLength = layout.width * layout.height * 4;
     // The reports in flight, the last one and the one being written.
     this.reportBuffers = Array.from(
       { length: DETERMINISTIC_REPORT_LAG + 2 },
       () => new Uint32Array(reportLength)
     );
-    this.allocated = this.width > 0 && this.height > 0;
+    this.allocated = width > 0 && height > 0;
   }
 
-  protected startMatch(): void {
+  public startMatch(): void {
     this.pendingReports.length = 0;
     this.previousReport = null;
   }
 
-  protected loadMask(): void {
-    this.maskDirty = false;
+  public loadMask(mask: Uint8Array, hasHill: boolean): void {
+    this.mask = mask;
+    this.hasHill = hasHill;
   }
 
-  protected loadState(state: Uint16Array): void {
+  public loadState(state: Uint16Array): void {
     this.state = state;
   }
 
-  protected uploadFrame(_deltaTimeSec: number, pelletCount: number): void {
-    this.pelletCount = pelletCount;
+  public uploadFrame(frame: GridFrame): void {
+    this.frame = frame;
   }
 
-  protected collectReports(): void {
+  public collectReports(step: number, sink: ReportSink): void {
     const pending = this.pendingReports;
     const due = readbacksToTake(
-      pending.map(({ step }) => ({ step, ready: true, stale: false })),
-      this.steps,
+      pending.map((report) => ({
+        step: report.step,
+        ready: true,
+        stale: false,
+      })),
+      step,
       DETERMINISTIC_REPORT_LAG
     );
     for (const report of pending.splice(0, due)) {
-      this.reportStep = report.step;
-      this.takeReport(
-        decodeReport(report.data, this.layout, this.spawns.length),
-        report.generation
-      );
+      sink.take(report.data, report.step, report.generation);
     }
   }
 
-  protected runTick(mostSteps: number): void {
-    const grid: IntGrid = {
-      width: this.width,
-      height: this.height,
-      state: this.state,
-      mask: this.mask,
-    };
+  public runTick(tick: GridTick): void {
+    const frame = this.frame;
+    if (frame == null) {
+      return;
+    }
+    const { width, height, layout } = this.arena;
+    const grid: IntGrid = { width, height, state: this.state, mask: this.mask };
     this.state = intReferenceTick(
       grid,
-      this.tickInputs(mostSteps),
+      this.tickInputs(tick, frame),
       this.scratch,
       this.trace,
       this.buffers
     );
-    this.escapePending = false;
+    this.ticks++;
     const events = this.trace.combat ?? this.state;
     const report = intReport(
       { ...grid, state: this.state },
       events,
-      this.layout,
+      layout,
       {
-        pellets: this.uniforms.pellets,
-        pelletCount: this.pelletCount,
+        pellets: frame.uniforms.pellets,
+        pelletCount: frame.pelletCount,
         pelletRadius: this.balance.nutrientRadius,
         countHill: this.hasHill,
       },
@@ -172,10 +175,33 @@ export class IntSimulation extends GridSimulation {
     );
     this.previousReport = report;
     this.pendingReports.push({
-      step: this.steps,
+      step: tick.step,
       data: report,
-      generation: this.pellets.generations.slice(),
+      generation: tick.generation.slice(),
     });
+  }
+
+  public colonyLayers(
+    colonies: readonly ColonySpawn[],
+    boosts: ReadonlyMap<number, Point>
+  ): CellsLayer[] {
+    if (this.drawnState !== this.state || this.drawnTick !== this.ticks) {
+      this.collectBacterias(colonies.length);
+    }
+    return colonies.map((spawn, slot) => ({
+      kind: 'cells',
+      color: spawn.color,
+      boostTarget: boosts.get(spawn.playerId) ?? null,
+      cells: this.bacterias[slot],
+    }));
+  }
+
+  public readState(): Uint16Array | null {
+    return this.allocated ? this.state.slice() : null;
+  }
+
+  public dispose(): void {
+    this.pendingReports.length = 0;
   }
 
   /**
@@ -185,15 +211,14 @@ export class IntSimulation extends GridSimulation {
    * layer `colonyLayers` returned changes with the next tick - copy what
    * has to outlast it.
    */
-  private collectBacterias(): void {
-    const slots = this.spawns.length;
+  private collectBacterias(slots: number): void {
     const lists = this.bacterias;
     for (let slot = 0; slot < slots; slot++) {
       (lists[slot] ??= new Cells()).length = 0;
     }
     const state = this.state;
-    const width = this.width;
-    for (let cell = 0; cell < width * this.height; cell++) {
+    const { width, height } = this.arena;
+    for (let cell = 0; cell < width * height; cell++) {
       const owner = state[cell * 4];
       if (owner === 0 || owner > slots) {
         continue;
@@ -203,7 +228,7 @@ export class IntSimulation extends GridSimulation {
       lists[owner - 1].push(x, y, state[cell * 4 + 1] / ENERGY_SCALE);
     }
     this.drawnState = this.state;
-    this.drawnStep = this.steps;
+    this.drawnTick = this.ticks;
   }
 
   /**
@@ -222,46 +247,51 @@ export class IntSimulation extends GridSimulation {
         return buffer;
       }
     }
-    const buffer = new Uint32Array(this.layout.width * this.layout.height * 4);
+    const { layout } = this.arena;
+    const buffer = new Uint32Array(layout.width * layout.height * 4);
     this.reportBuffers.push(buffer);
     return buffer;
   }
 
   /**
-   * The tick's inputs from the frame's uniforms, as `GpuSimulation` hands
-   * them to its integer passes.
+   * The tick's inputs from the frame, as the GPU passes take them with
+   * integer rules.
    */
-  private tickInputs(mostSteps: number): IntTickInputs {
-    const u = this.uniforms;
-    const frame = fillIntCombatUniforms(
+  private tickInputs(tick: GridTick, frame: GridFrame): IntTickInputs {
+    const u = frame.uniforms;
+    const ints = fillIntCombatUniforms(
       fillIntFrameUniforms(this.intUniforms, u),
       u,
       this.balance.combatDrainPerSec,
-      this.pelletCount
+      frame.pelletCount
     );
     const match = this.match;
-    const effects = this.intEffects;
     return {
       pass: {
-        ...frame,
+        ...ints,
         steps: u.steps,
-        seed: frameSeed(this.matchSeed, this.steps),
+        seed: frameSeed(this.matchSeed, tick.step),
         jitter: match.jitter,
         divideThreshold: match.divideThreshold,
         parentShare: match.parentShare,
         cellSize: this.balance.influenceCellSize,
-        effects,
+        effects: frame.intEffects,
       },
-      combat: { frame, pelletRadius: this.balance.nutrientRadius },
+      combat: { frame: ints, pelletRadius: this.balance.nutrientRadius },
       match,
-      moveSteps: mostSteps,
-      escapeSteps: this.escapePending
-        ? escapeReach(this.width, this.map.size)
-        : 0,
+      moveSteps: tick.mostSteps,
+      escapeSteps: tick.escapeSteps,
     };
   }
 }
 
-/** The deterministic simulation on the CPU - see {@link IntSimulation}. */
-export const intSimulation: SimulationFactory = (balance, random, seed) =>
-  new IntSimulation(balance, random, seed);
+/**
+ * The deterministic war on the CPU: a {@link GridWar} over the integer
+ * reference passes - see {@link IntReferencePasses}.
+ */
+export const intSimulation = ((balance, random, seed) =>
+  new GridWar(
+    new IntReferencePasses(balance, seed),
+    balance,
+    random
+  )) satisfies SimulationFactory;

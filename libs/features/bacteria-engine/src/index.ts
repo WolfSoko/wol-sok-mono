@@ -445,8 +445,8 @@ export type {
 } from './lib/state/gpu-int/int-reference';
 export {
   intSimulation,
-  IntSimulation,
-} from './lib/state/gpu-int/int-simulation';
+  IntReferencePasses,
+} from './lib/state/gpu-int/int-reference-passes';
 export {
   intColonyCounts,
   intReferenceTick,
@@ -487,6 +487,19 @@ export {
 } from './lib/state/grid-format';
 export { GridSimulation, READBACK_SLOTS } from './lib/state/grid-simulation';
 export type { GridSimulationOptions } from './lib/state/grid-simulation';
+export {
+  GridWar,
+  READBACK_SLOTS as GRID_READBACK_SLOTS,
+} from './lib/state/grid/grid-war';
+export type {
+  CellPasses,
+  CellPassesHost,
+  FrameUniforms,
+  GridArena,
+  GridFrame,
+  GridTick,
+  ReportSink,
+} from './lib/state/grid/cell-passes';
 export { isInteger, isObject } from './lib/state/is-object';
 export {
   GENERATED_ADJECTIVES,

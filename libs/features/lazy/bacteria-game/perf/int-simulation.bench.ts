@@ -7,7 +7,7 @@
  */
 import {
   createPlayer,
-  IntSimulation,
+  intSimulation,
   Player,
   scenarioRandom,
   SimScenario,
@@ -16,7 +16,7 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 
 function msPerTick(scenario: SimScenario, warmup: number): number {
-  const simulation = new IntSimulation(
+  const simulation = intSimulation(
     scenario.balance,
     scenarioRandom(scenario),
     scenario.matchSeed

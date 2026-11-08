@@ -1,5 +1,5 @@
+import { intSimulation } from './int-reference-passes';
 import { BALANCE_VERSION } from '../game-balance';
-import { IntSimulation } from './int-simulation';
 import { SELF_TEST_GOLDEN } from './self-test-golden';
 import {
   playScenario,
@@ -15,7 +15,7 @@ describe('the GPU self-test', () => {
     expect(
       playScenario(
         scenario,
-        new IntSimulation(
+        intSimulation(
           scenario.balance,
           scenarioRandom(scenario),
           scenario.matchSeed

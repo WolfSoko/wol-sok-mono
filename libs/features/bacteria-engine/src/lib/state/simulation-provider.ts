@@ -1,4 +1,4 @@
-import { intSimulation } from './gpu-int/int-simulation';
+import { intSimulation } from './gpu-int/int-reference-passes';
 import { cpuSimulation } from './match-engine';
 import { Ruleset, Simulation, SimulationFactory } from './simulation';
 

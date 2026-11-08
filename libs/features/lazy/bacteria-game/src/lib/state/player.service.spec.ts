@@ -7,7 +7,7 @@ import {
   BacteriaSimulation,
   gameBalance,
   getMap,
-  IntSimulation,
+  intSimulation,
   MatchPlan,
   planMatch,
   PlayerColorArray,
@@ -77,7 +77,7 @@ describe('PlayerService', () => {
   describe('rulesets', () => {
     /** A deterministic GPU simulation, as far as the game can tell. */
     const gpuInt: SimulationFactory = (balance, random, seed) => {
-      const simulation = new IntSimulation(balance, random, seed);
+      const simulation = intSimulation(balance, random, seed);
       Object.defineProperty(simulation, 'kind', { value: 'gpu' });
       return simulation;
     };
@@ -210,7 +210,7 @@ describe('PlayerService', () => {
         ruleset: 'gpu-int',
       });
 
-      expect(service.getSimulation()).toBeInstanceOf(IntSimulation);
+      expect(service.getSimulation()).toMatchObject({ kind: 'int' });
       expect(service.gpuIntReady()).toBe(false);
       expect(service.rulesetOffers()).toEqual(['cpu']);
     });
