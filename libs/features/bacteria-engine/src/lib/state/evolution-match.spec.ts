@@ -781,15 +781,17 @@ describe('a boss with a weapon', () => {
     const plan: MatchPlan = {
       ...PLAN,
       levelId: 'meltdown',
-      width: 320,
-      height: 180,
+      // Room enough for the human to last the boss's whole charge.
+      width: 640,
+      height: 360,
       loadouts: [EVOLVED, PLAIN_LOADOUT],
     };
     const engine = engineOf(plan);
     const [human, boss] = engine.players;
-    const cooldown =
-      weaponOf('toxin-bomb').cooldownSec *
-      (getLevel('meltdown').boss?.traits?.weaponCooldownFactor ?? 1);
+    // A boss's cooldownFactor speeds up its boost, not its weapon: the
+    // weapon charges for its plain cooldown.
+    expect(getLevel('meltdown').boss?.traits.cooldownFactor).toBeLessThan(1);
+    const cooldown = weaponOf('toxin-bomb').cooldownSec;
 
     // The human's weapon is ready from the start, the boss's charging.
     expect(human.weaponCooldownSec).toBe(0);
@@ -801,6 +803,8 @@ describe('a boss with a weapon', () => {
     for (let tick = 0; tick < quiet && engine.outcome() == null; tick++) {
       engine.tick(plan.width, plan.height);
     }
+    // The whole charging window ran, not a match that ended early.
+    expect(engine.tickCount).toBe(quiet);
     expect(engine.players[1].weaponsFired).toBe(0);
   });
 
