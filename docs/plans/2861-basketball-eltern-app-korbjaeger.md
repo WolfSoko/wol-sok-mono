@@ -2,7 +2,7 @@
 
 Spec: [docs/specs/2861-basketball-eltern-app-korbjaeger.md](../specs/2861-basketball-eltern-app-korbjaeger.md). Issue: [#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861).
 
-Six PRs, in order, each green on its own; every task is test first and ends in one commit. Before every commit: `npx nx format:write`, `npx nx affected -t lint,lint-templates,test`.
+Six PRs, in order, each green on its own and merged through its own merge request. The Firebase project id and the domain each live in one place (`.firebaserc` and one app config value), since the owner picks the final project id. Every task is test first and ends in one commit. Before every commit: `npx nx format:write`, `npx nx affected -t lint,lint-templates,test`.
 
 ## PR 1 — Domain lib and DBB adapter (`Refs #2861`)
 
@@ -12,7 +12,7 @@ Six PRs, in order, each green on its own; every task is test first and ends in o
 4. **Envelope** — `dbb/envelope.ts`: `status` `0`/`1`/`-1` → data / not-found / unavailable, wrong shape → unexpected-shape. Spec first. Commit.
 5. **Mappers, one per endpoint** — `dbb/map-*.ts` with specs on the fixtures: Liga search + paging, Liga teams, Verein teams, team matches merged across Ligen, Tabelle, matchInfo (score, quarters, Halle, cancelled/forfeited, moved), boxscore (Kader, Anonyme Spieler, all-zero → not recorded). One commit per mapper.
 6. **`BasketballData` port and `DbbBasketballData` adapter** — over an injected `fetchJson(path, init?)`; spec with a fake transport. Commit.
-7. **ADRs 0018 and 0019**, `CONTEXT.md` rebased on [#2860](https://github.com/WolfSoko/wol-sok-mono/pull/2860). Commit `docs(...)`.
+7. **ADRs 0018 and 0019**; they refer to the glossary of [#2860](https://github.com/WolfSoko/wol-sok-mono/pull/2860) without copying it. Commit `docs(...)`.
 
 ## PR 2 — App shell and proxy (`Refs #2861`)
 
@@ -47,7 +47,7 @@ One commit each, component specs against fake `BasketballData`/`Auswahl`:
 
 ## PR 6 — Deploy (`Closes #2861`)
 
-Needs the owner first (manual steps filed in the cockpit): Firebase project, Google provider, Hosting site, deploy credentials in CI, hosted-zone access.
+Stays unmerged until the owner has created the Firebase project, Google provider, Hosting site, CI deploy credentials and DNS; the PR lists every secret name and setting it expects.
 
 1. `deploy` target, `firebase.korbjaeger.json` `predeploy` with `--legacy-peer-deps=false`, `firebase-deploy.spec.ts`, `.firebaserc` entry. Commit.
 2. `apps/korbjaeger-cdk` (extends `tsconfig.cdk.json`) with the `korb.wolsok.de` CNAME. Commit.
