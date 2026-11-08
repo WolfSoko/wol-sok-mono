@@ -17,7 +17,8 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Saison, then one Tabelle per Liga of those Spiele, the Team's own line
   highlighted. The current Liga comes first, by the lib's
   `ligenAktuellZuerst`: the Liga of the Team's next Spiel from today on
-  (`HEUTE` in `src/app/heute.ts`, which specs replace), or of its last
+  (`HEUTE` in `src/app/heute.ts`, read again when the page comes back
+  into view; specs replace it), or of its last
   Spiel once none is left (a cancelled Spiel decides nothing, a forfeited
   one does); the others follow by their last Spiel, newest first. Each
   Tabelle loads and fails on its own.
