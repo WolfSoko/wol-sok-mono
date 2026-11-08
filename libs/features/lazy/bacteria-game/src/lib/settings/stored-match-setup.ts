@@ -50,7 +50,7 @@ export type StoredMatchSetupValues = Partial<MatchSetup>;
 export class StoredMatchSetup {
   /** The parts of the setup the player changed - what restoring must keep. */
   private readonly touched = new Set<keyof MatchSetup>();
-  /** A stored setup that arrived during a match, for the next one. */
+  /** The readable part of a stored setup that arrived during a match. */
   private pending: StoredMatchSetupValues | null = null;
 
   private readonly changes = new Subject<void>();
@@ -77,10 +77,11 @@ export class StoredMatchSetup {
 
   /** Applies a stored setup now, or once the match under way is over. */
   public restore(stored: Readonly<Record<string, unknown>>): void {
+    const readable = readMatchSetup(stored);
     if (isMatchOn(this.store.snapshot().currentState)) {
-      this.pending = stored as StoredMatchSetupValues;
+      this.pending = readable;
     } else {
-      this.apply(stored);
+      this.apply(readable);
     }
   }
 
@@ -94,10 +95,7 @@ export class StoredMatchSetup {
     if (pending === null) {
       return setup;
     }
-    const kept = MATCH_SETUP_KEYS.filter(
-      (key) => !this.touched.has(key) && pending[key] !== undefined
-    ).map((key) => [key, pending[key]]);
-    return { ...setup, ...Object.fromEntries(kept) };
+    return { ...setup, ...this.untouched(pending) };
   }
 
   private touch(before: MatchSetup, after: MatchSetup): void {
@@ -124,17 +122,17 @@ export class StoredMatchSetup {
    * Applies a stored setup, keeping what the player changed - all of it at
    * once, so the colonies are spawned again only once.
    */
-  private apply(stored: Readonly<Record<string, unknown>>): void {
-    const setup: Record<string, unknown> = {};
-    for (const key of MATCH_SETUP_KEYS) {
-      const value = this.touched.has(key)
-        ? undefined
-        : MATCH_SETUP[key](stored[key]);
-      if (value !== undefined) {
-        setup[key] = value;
-      }
-    }
-    this.gameState.applySetup(setup as Partial<MatchSetup>);
+  private apply(stored: StoredMatchSetupValues): void {
+    this.gameState.applySetup(this.untouched(stored));
+  }
+
+  /** The values of a setup for what the player has not changed. */
+  private untouched(setup: StoredMatchSetupValues): StoredMatchSetupValues {
+    return Object.fromEntries(
+      Object.entries(setup).filter(
+        ([key]) => !this.touched.has(key as keyof MatchSetup)
+      )
+    );
   }
 
   /** The match setup as it stands, without tracking it. */
@@ -146,6 +144,17 @@ export class StoredMatchSetup {
         ) as MatchSetup
     );
   }
+}
+
+/** The parts of a stored setup the game can read; the rest is left out. */
+function readMatchSetup(
+  stored: Readonly<Record<string, unknown>>
+): StoredMatchSetupValues {
+  const readable = MATCH_SETUP_KEYS.map((key) => [
+    key,
+    MATCH_SETUP[key](stored[key]),
+  ]).filter(([, value]) => value !== undefined);
+  return Object.fromEntries(readable);
 }
 
 function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {

@@ -94,6 +94,28 @@ describe('StoredMatchSetup', () => {
     expect(store.snapshot().difficulty).toBe('hard');
   });
 
+  it('keeps only the readable values of a stored setup that waits for the menu', () => {
+    gameState.start();
+
+    setup.restore({
+      levelId: 'moon',
+      colors: ['gold', 'blue'],
+      difficulty: 'hard',
+    });
+
+    expect(setup.toStore()).toMatchObject({
+      levelId: LEVELS[0].id,
+      colors: ['orange', 'blue'],
+      difficulty: 'hard',
+    });
+    gameState.reset();
+    expect(store.snapshot()).toMatchObject({
+      levelId: LEVELS[0].id,
+      colors: ['orange', 'blue'],
+      difficulty: 'hard',
+    });
+  });
+
   it('lets a stored setup wait for a series under way to end', () => {
     gameState.setMode('two-players');
     gameState.setSeriesLength(3);
