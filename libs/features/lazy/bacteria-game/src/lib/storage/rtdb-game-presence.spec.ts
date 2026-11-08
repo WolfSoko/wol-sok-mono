@@ -1,4 +1,13 @@
 import { take } from 'rxjs';
+import {
+  FAKE_SERVER_TIME,
+  FakeFirebase,
+  settleSnapshots,
+} from '../../testing/fake-firebase-sdk';
+import {
+  RTDB_PERMISSION_DENIED,
+  RTDB_SERVER_TIMESTAMP,
+} from '../../testing/fake-realtime-database';
 import type { FirebaseConnection } from './firebase-connection';
 import type { PresenceState } from './game-social';
 import {
@@ -7,127 +16,221 @@ import {
   RtdbGamePresence,
 } from './rtdb-game-presence';
 
-/** Just enough of the Realtime Database for watching a status. */
-class FakeRtdb {
-  /** Paths the rules refuse to read. */
-  public readonly refused = new Set<string>();
-  /** Every listen, by path, in order. */
-  public readonly listened: string[] = [];
-  private readonly values = new Map<string, unknown>();
-  private readonly emits = new Map<string, Set<() => void>>();
+describe('RtdbGamePresence', () => {
+  let fake: FakeFirebase;
 
-  public readonly rtdbSdk = {
-    ref: (_db: unknown, path: string) => ({ path }),
-    onValue: (
-      ref: { path: string },
-      next: (snapshot: unknown) => void,
-      cancel?: (error: Error) => void
-    ) => {
-      this.listened.push(ref.path);
-      if (ref.path === '.info/connected') {
-        next({ val: () => false });
-        return () => undefined;
-      }
-      if (this.refused.has(ref.path)) {
-        // The database ends a refused listener for good.
-        cancel?.(new Error('permission_denied'));
-        return () => undefined;
-      }
-      const emit = () => {
-        const value = this.values.get(ref.path) as
-          | Record<string, unknown>
-          | undefined;
-        next({ child: (key: string) => ({ val: () => value?.[key] ?? null }) });
-      };
-      const set = this.emits.get(ref.path) ?? new Set<() => void>();
-      set.add(emit);
-      this.emits.set(ref.path, set);
-      emit();
-      return () => set.delete(emit);
-    },
-  };
+  beforeEach(() => {
+    fake = new FakeFirebase();
+  });
 
-  public set(path: string, value: unknown): void {
-    this.values.set(path, value);
-    this.emits.get(path)?.forEach((emit) => emit());
-  }
-
-  public presence(): RtdbGamePresence {
+  function presence(): RtdbGamePresence {
     return new RtdbGamePresence(
-      { rtdbSdk: this.rtdbSdk } as unknown as FirebaseConnection,
+      fake.connection(),
       {} as NonNullable<FirebaseConnection['rtdb']>
     );
   }
-}
-
-describe('RtdbGamePresence', () => {
-  let rtdb: FakeRtdb;
-
-  beforeEach(() => {
-    rtdb = new FakeRtdb();
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => jest.useRealTimers());
 
   function listensTo(path: string): number {
-    return rtdb.listened.filter((each) => each === path).length;
+    return fake.listened.filter((each) => each === `rtdb:${path}`).length;
   }
 
-  it("reads a player's status", () => {
-    const seen: (PresenceState | null)[] = [];
-    rtdb
-      .presence()
-      .watch('bob')
-      .subscribe((state) => seen.push(state));
+  describe('watch', () => {
+    beforeEach(() => jest.useFakeTimers());
 
-    rtdb.set('status/bob', { state: 'playing', at: 1 });
+    afterEach(() => jest.useRealTimers());
 
-    expect(seen).toEqual([null, 'playing']);
+    it("reads a player's status", async () => {
+      const seen: (PresenceState | null)[] = [];
+      presence()
+        .watch('bob')
+        .subscribe((state) => seen.push(state));
+      await settleSnapshots();
+
+      fake.realtime.put('status/bob', { state: 'playing', at: 1 });
+      await settleSnapshots();
+
+      expect(seen).toEqual([null, 'playing']);
+    });
+
+    it('asks again while the rules refuse it, as until the friend mirror is written', async () => {
+      fake.refused.add('rtdb:status/bob');
+      const seen: (PresenceState | null)[] = [];
+      presence()
+        .watch('bob')
+        .subscribe((state) => seen.push(state));
+      await settleSnapshots();
+      expect(seen).toEqual([null]);
+
+      fake.refused.delete('rtdb:status/bob');
+      fake.realtime.put('status/bob', { state: 'online', at: 1 });
+      await jest.advanceTimersByTimeAsync(REFUSED_RETRY_MS);
+
+      expect(seen).toEqual([null, 'online']);
+      expect(listensTo('status/bob')).toBe(2);
+    });
+
+    it('gives up after a few refusals in a row', async () => {
+      fake.refused.add('rtdb:status/bob');
+      presence().watch('bob').subscribe();
+
+      await jest.advanceTimersByTimeAsync(REFUSED_RETRY_MS * 100);
+
+      expect(listensTo('status/bob')).toBe(REFUSED_TRIES + 1);
+    });
+
+    it('stops asking again once unsubscribed', async () => {
+      fake.refused.add('rtdb:status/bob');
+      presence().watch('bob').subscribe().unsubscribe();
+
+      await jest.advanceTimersByTimeAsync(REFUSED_RETRY_MS * 100);
+
+      expect(listensTo('status/bob')).toBe(1);
+    });
+
+    it('asks no more once the refusal let the subscriber go', async () => {
+      fake.refused.add('rtdb:status/bob');
+      // The second null comes from a retry, after the first listen.
+      presence().watch('bob').pipe(take(2)).subscribe();
+
+      await jest.advanceTimersByTimeAsync(REFUSED_RETRY_MS * 100);
+
+      expect(listensTo('status/bob')).toBe(2);
+    });
   });
 
-  it('asks again while the rules refuse it, as until the friend mirror is written', () => {
-    rtdb.refused.add('status/bob');
-    const seen: (PresenceState | null)[] = [];
-    rtdb
-      .presence()
-      .watch('bob')
-      .subscribe((state) => seen.push(state));
-    expect(seen).toEqual([null]);
+  describe('set', () => {
+    async function connected(): Promise<RtdbGamePresence> {
+      fake.realtime.connect();
+      const shared = presence();
+      await settleSnapshots();
+      return shared;
+    }
 
-    rtdb.refused.delete('status/bob');
-    rtdb.set('status/bob', { state: 'online', at: 1 });
-    jest.advanceTimersByTime(REFUSED_RETRY_MS);
+    it('shares the status with the server time, armed to clear on a disconnect', async () => {
+      const shared = await connected();
 
-    expect(seen).toEqual([null, 'online']);
-    expect(listensTo('status/bob')).toBe(2);
-  });
+      shared.set('ada', 'online');
+      await settleSnapshots();
 
-  it('gives up after a few refusals in a row', () => {
-    rtdb.refused.add('status/bob');
-    rtdb.presence().watch('bob').subscribe();
+      expect(fake.realtime.writes).toEqual([
+        { kind: 'onDisconnect.remove', path: 'status/ada' },
+        {
+          kind: 'set',
+          path: 'status/ada',
+          value: { state: 'online', at: RTDB_SERVER_TIMESTAMP },
+        },
+      ]);
+      expect(fake.realtime.values.get('status/ada')).toEqual({
+        state: 'online',
+        at: FAKE_SERVER_TIME,
+      });
 
-    jest.advanceTimersByTime(REFUSED_RETRY_MS * 100);
+      fake.realtime.disconnect();
+      expect(fake.realtime.values.has('status/ada')).toBe(false);
+    });
 
-    expect(listensTo('status/bob')).toBe(REFUSED_TRIES + 1);
-  });
+    it('waits for the connection, and shares again when it comes back', async () => {
+      const shared = presence();
+      shared.set('ada', 'playing');
+      await settleSnapshots();
+      expect(fake.realtime.writes).toEqual([]);
 
-  it('stops asking again once unsubscribed', () => {
-    rtdb.refused.add('status/bob');
-    rtdb.presence().watch('bob').subscribe().unsubscribe();
+      fake.realtime.connect();
+      await settleSnapshots();
+      fake.realtime.disconnect();
+      await settleSnapshots();
+      fake.realtime.connect();
+      await settleSnapshots();
 
-    jest.advanceTimersByTime(REFUSED_RETRY_MS * 100);
+      expect(fake.realtime.values.get('status/ada')).toMatchObject({
+        state: 'playing',
+      });
+      expect(
+        fake.realtime.writes.filter((write) => write.kind === 'set')
+      ).toHaveLength(2);
+    });
 
-    expect(listensTo('status/bob')).toBe(1);
-  });
+    it('writes nothing for a status it shares already', async () => {
+      const shared = await connected();
+      shared.set('ada', 'online');
+      await settleSnapshots();
 
-  it('asks no more once the refusal let the subscriber go', () => {
-    rtdb.refused.add('status/bob');
-    // The second null comes from a retry, after the first listen.
-    rtdb.presence().watch('bob').pipe(take(2)).subscribe();
+      shared.set('ada', 'online');
+      await settleSnapshots();
 
-    jest.advanceTimersByTime(REFUSED_RETRY_MS * 100);
+      expect(fake.realtime.writes).toHaveLength(2);
+    });
 
-    expect(listensTo('status/bob')).toBe(2);
+    it('takes the status back for null, the disconnect disarmed', async () => {
+      const shared = await connected();
+      shared.set('ada', 'online');
+      await settleSnapshots();
+
+      shared.set('ada', null);
+      await settleSnapshots();
+
+      expect(fake.realtime.values.has('status/ada')).toBe(false);
+      expect(fake.realtime.armed.has('status/ada')).toBe(false);
+      expect(fake.realtime.writes.slice(2)).toEqual([
+        { kind: 'remove', path: 'status/ada' },
+        { kind: 'onDisconnect.cancel', path: 'status/ada' },
+      ]);
+    });
+
+    it("takes the last player's status back when another one plays on the device", async () => {
+      const shared = await connected();
+      shared.set('ada', 'online');
+      await settleSnapshots();
+
+      shared.set('bob', 'online');
+      await settleSnapshots();
+
+      expect(fake.realtime.values.has('status/ada')).toBe(false);
+      expect(fake.realtime.values.get('status/bob')).toMatchObject({
+        state: 'online',
+      });
+    });
+
+    it('warns, writes nothing, and goes on, when the rules refuse the write', async () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => null);
+      fake.refused.add('rtdb:status/ada');
+      const shared = await connected();
+
+      shared.set('ada', 'online');
+      await settleSnapshots();
+
+      expect(warn).toHaveBeenCalledWith(
+        'Could not share the online status',
+        expect.objectContaining({ code: RTDB_PERMISSION_DENIED })
+      );
+      expect(fake.realtime.values.has('status/ada')).toBe(false);
+
+      shared.set('bob', 'online');
+      await settleSnapshots();
+
+      expect(fake.realtime.values.get('status/bob')).toMatchObject({
+        state: 'online',
+      });
+      warn.mockRestore();
+    });
+
+    it('warns when the status cannot be taken back', async () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => null);
+      const shared = await connected();
+      shared.set('ada', 'online');
+      await settleSnapshots();
+      fake.refused.add('rtdb:status/ada');
+
+      shared.set('ada', null);
+      await settleSnapshots();
+
+      expect(warn).toHaveBeenCalledWith(
+        'Could not take the online status back',
+        expect.objectContaining({ code: RTDB_PERMISSION_DENIED })
+      );
+      // The disconnect still clears it.
+      expect(fake.realtime.armed.has('status/ada')).toBe(true);
+      warn.mockRestore();
+    });
   });
 });

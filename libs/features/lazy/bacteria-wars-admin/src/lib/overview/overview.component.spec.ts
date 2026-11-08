@@ -1,57 +1,52 @@
 import { TestBed } from '@angular/core/testing';
 import {
-  type FirebaseConnection,
-  GameCloud,
-} from '@wolsok/feat-lazy-bac-game/admin-kit';
+  type FakeDoc,
+  FakeFirebase,
+  provideFakeGameCloud,
+  settleSnapshots,
+  timestampAt,
+} from '@wolsok/feat-lazy-bac-game/testing';
 import { AdminCommandsService } from '../commands/admin-commands.service';
 import { OverviewComponent } from './overview.component';
 
-/** Firestore that answers `adminStats/now` and the snapshot query. */
-function fakeStats(now: Record<string, unknown> | undefined) {
-  const dbSdk = {
-    collection: () => 'adminStats',
-    doc: () => 'now',
-    query: () => 'history',
-    where: () => null,
-    orderBy: () => null,
-    limit: () => null,
-    documentId: () => '__name__',
-    onSnapshot: (
-      ref: string,
-      next: (snapshot: {
-        data?: () => unknown;
-        docs?: { id: string; data: () => unknown }[];
-      }) => void
-    ) => {
-      next(
-        ref === 'now'
-          ? { data: () => now }
-          : {
-              docs: [
-                { id: 'h_2026102511', data: () => ({ online: 4 }) },
-                { id: 'now', data: () => ({ online: 9 }) },
-              ],
-            }
-      );
-      return () => undefined;
+const NOON = Date.UTC(2026, 9, 25, 12);
+const HOUR = 3_600_000;
+
+/** `adminStats/now` as seeded, and two hourly snapshots before it. */
+function fakeStats(now: FakeDoc | undefined): FakeFirebase {
+  return new FakeFirebase({
+    docs: {
+      ...(now === undefined ? {} : { 'adminStats/now': now }),
+      'adminStats/h_2026102510': {
+        online: 3,
+        at: timestampAt(NOON - 2 * HOUR),
+      },
+      'adminStats/h_2026102511': { online: 4, at: timestampAt(NOON - HOUR) },
     },
-  };
-  return { db: {}, dbSdk } as unknown as FirebaseConnection;
+  });
 }
 
-function render(
-  now: Record<string, unknown> | undefined,
+async function render(
+  now: FakeDoc | undefined,
   send = jest.fn(async (_command: { type: string }) => ({ ok: true }))
 ) {
+  const fake = fakeStats(now);
   TestBed.configureTestingModule({
     providers: [
-      { provide: GameCloud, useValue: { firebase: () => fakeStats(now) } },
+      provideFakeGameCloud({ firebase: fake.connection() }),
       { provide: AdminCommandsService, useValue: { send } },
     ],
   });
   const fixture = TestBed.createComponent(OverviewComponent);
   fixture.detectChanges();
-  return { fixture, send, text: () => fixture.nativeElement.textContent };
+  await settleSnapshots();
+  fixture.detectChanges();
+  return {
+    fake,
+    fixture,
+    send,
+    text: () => fixture.nativeElement.textContent,
+  };
 }
 
 function button(
@@ -66,22 +61,32 @@ function button(
 describe('OverviewComponent', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('shows the figures and the hourly history', () => {
-    const { text } = render({
+  it('shows the figures and the hourly history, newest first and without now', async () => {
+    const { fixture, fake, text } = await render({
       accounts: 1234,
       online: 7,
       entries: { xp: 3 },
-      at: { toMillis: () => Date.UTC(2026, 9, 25, 12) },
+      at: timestampAt(NOON),
     });
     expect(text()).toContain('Accounts');
     expect(text()).toContain('1,234');
     expect(text()).toContain('Online now');
     expect(text()).toContain('xp');
     expect(text()).toContain('The last 48 hours');
+    const rows = [
+      ...fixture.nativeElement.querySelectorAll('table.history tr[mat-row]'),
+    ].map((row: Element) => row.textContent?.replace(/\s+/g, ' ').trim());
+    expect(rows).toEqual([
+      expect.stringMatching(/^\S+ 11:00 4 /),
+      expect.stringMatching(/^\S+ 10:00 3 /),
+    ]);
+    expect(fake.queries).toEqual([
+      ['adminStats', ['orderBy', 'at', 'desc'], ['limit', 49]],
+    ]);
   });
 
   it('asks for a refresh when there are no statistics yet', async () => {
-    const { fixture, send, text } = render(undefined);
+    const { fixture, send, text } = await render(undefined);
     expect(text()).toContain('No statistics yet');
 
     button(fixture, 'Refresh').click();
@@ -96,7 +101,7 @@ describe('OverviewComponent', () => {
   });
 
   it('shows a refused refresh', async () => {
-    const { fixture, text } = render(
+    const { fixture, text } = await render(
       undefined,
       jest.fn(async () => ({ ok: false, error: 'not-admin' }))
     );
@@ -108,7 +113,7 @@ describe('OverviewComponent', () => {
   });
 
   it('recounts the accounts, then refreshes to show the total', async () => {
-    const { fixture, send } = render(undefined);
+    const { fixture, send } = await render(undefined);
     button(fixture, 'Recount accounts').click();
     await fixture.whenStable();
 
@@ -119,7 +124,7 @@ describe('OverviewComponent', () => {
   });
 
   it('mirrors the friend lists for the online status', async () => {
-    const { fixture, send } = render(undefined);
+    const { fixture, send } = await render(undefined);
     button(fixture, 'Mirror friend lists').click();
     await fixture.whenStable();
 
@@ -133,7 +138,7 @@ describe('OverviewComponent', () => {
       ok: false,
       error: 'not-admin',
     }));
-    const { fixture, text } = render(undefined, send);
+    const { fixture, text } = await render(undefined, send);
     button(fixture, 'Recount accounts').click();
     await fixture.whenStable();
     fixture.detectChanges();
