@@ -31,6 +31,16 @@ export function toIco(images: Array<{ size: number; png: Buffer }>): Buffer {
   return Buffer.concat([header, ...entries, ...images.map(({ png }) => png)]);
 }
 
+/** A page showing `svg` alone, `size` pixels square, to render it. */
+export function svgPage(svg: string, size: number): string {
+  return `<!doctype html>
+<html><head><style>
+  html, body { margin: 0; }
+  svg { display: block; width: ${size}px; height: ${size}px; }
+</style></head>
+<body>${svg}</body></html>`;
+}
+
 export async function render(
   page: Page,
   html: string,

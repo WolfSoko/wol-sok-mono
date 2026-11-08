@@ -101,6 +101,27 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Spielplan), by the DBB's Team name, which carries the Verein's team
   number ("TSV X 2"). One tap follows the Team (`Auswahl.folgen`) and
   opens its Team page. Changing a pick starts over below it.
+- **Installable and offline:** `src/public/manifest.webmanifest` (name,
+  German, `standalone`, the theme's orange `#e37100`, linked from
+  `index.html` with the icons) makes the app installable; its icons
+  (`src/public/icons/`, `favicon.ico`) come from
+  `npx nx run korbjaeger:icons` (`tools/korbjaeger/generate-icons.ts`, a
+  basketball in the theme's orange, maskable): don't draw them by hand.
+  Angular's service worker (`ngsw-config.json`, registered by
+  `provideAppServiceWorker` in `src/app/pwa/`, production builds only)
+  prefetches the shell (`index.html`, the manifest, `assets/*.js` and
+  `*.css`, no source maps), so every page opens without a network; it
+  answers navigations with the shell except files and `/api/**`
+  (`navigationUrls`), and has no data group: it never caches the proxy,
+  whose data is the app's own (below) and the CDN's. `build` runs
+  `build-app` (Analog) and then copies `ngsw-worker.js` and
+  `safety-worker.js` into the Hosting folder and writes `ngsw.json` there
+  (`ngsw-config`), from the hashed files of that very build. A worker that
+  lost files of its release reloads the page; a new release is taken on
+  the next load. Hosting sends the worker's files `no-cache` like the
+  shell. `src/pwa/` specs the manifest and the worker's config. The dev
+  servers (`serve`, `serve-e2e`) run no worker, so the e2e checks the last
+  good data without one.
 - **Last good data** (`src/app/basketball-data/`): the browser transport
   keeps each 200 of the proxy by its path (`LokaleLetzteAntworten`,
   `localStorage` keys `korbjaeger-antwort:/api/dbb/...`, as
