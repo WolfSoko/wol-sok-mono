@@ -10,6 +10,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
+import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
 import { hallenStand } from '../halle/hallen-stand';
 import { HEUTE } from '../heute';
 import { RouterLink } from '@angular/router';
@@ -17,19 +18,24 @@ import {
   ligenAktuellZuerst,
   naechstesSpiel,
   parseDbbId,
+  saisonBeendet,
 } from '@wolsok/feat-shared-basketball-data';
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
 import { spielZeile, spielZeilen } from '../spiel/spiel-zeile';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
 import { TeamFolgenComponent } from './team-folgen.component';
+import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
+import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
 /**
  * The Team page: its next Spiel with its Halle, its Spiele of the Saison
  * (each opening its Spiel page), across all its Ligen, by date, then the
- * Tabelle of each of those Ligen, the current one first; with a control
- * to follow the Team.
+ * Tabelle of each of those Ligen, the current one first, and the
+ * Verein's other Teams; with a control to follow the Team and each of
+ * those. Once the Team's Saison is over (`saisonBeendet`), a hint says so
+ * and offers the Verein's Teams for the next one first.
  */
 @Component({
   selector: 'korb-team',
@@ -41,6 +47,7 @@ import { TeamTabelleComponent } from './team-tabelle.component';
     SpielZeileComponent,
     TeamFolgenComponent,
     TeamTabelleComponent,
+    VereinsTeamsComponent,
   ],
   templateUrl: './team.component.html',
   styleUrl: './team.component.scss',
@@ -100,6 +107,24 @@ export class TeamComponent {
       ? ligenAktuellZuerst(this.saison.value(), this.heute())
       : []
   );
+
+  /** Whether the Team's Saison is over, as of today. */
+  protected readonly beendet = computed(
+    () =>
+      this.saison.hasValue() && saisonBeendet(this.saison.value(), this.heute())
+  );
+
+  private readonly vereinsTeams = vereinsTeamsResource(() =>
+    this.saison.hasValue() ? this.saison.value().verein.id : undefined
+  );
+
+  /** The Verein's Teams other than this one, as their read stands. */
+  protected readonly weitereTeams = computed(() => {
+    const team = this.team();
+    return team === undefined
+      ? undefined
+      : vereinsTeamsStand(this.vereinsTeams, team);
+  });
 
   protected readonly fehler = computed(() => {
     if (this.team() === undefined) {

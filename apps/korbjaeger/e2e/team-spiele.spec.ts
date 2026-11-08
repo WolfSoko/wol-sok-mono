@@ -65,6 +65,27 @@ test.describe('Team page', () => {
     );
   });
 
+  test('offers another Team of its Verein and follows it', async ({
+    page,
+    teamPage,
+  }) => {
+    await page.clock.setFixedTime(new Date('2026-11-08T12:00:00+01:00'));
+    await teamPage.goto(TEAM_IN_ZWEI_LIGEN);
+
+    const geschwister = teamPage.vereinsTeam('Regionsliga Braunschweig mu10');
+    await expect(geschwister.getByRole('link')).toHaveText(
+      'MTV Wasbüttel -RST-'
+    );
+    const folgen = geschwister.getByRole('button', {
+      name: 'Team folgen: MTV Wasbüttel -RST-',
+    });
+    await expect(folgen).toHaveAttribute('aria-pressed', 'false');
+    await folgen.click();
+
+    await expect(folgen).toHaveAttribute('aria-pressed', 'true');
+    await expect(teamPage.folgen).toHaveAttribute('aria-pressed', 'false');
+  });
+
   test('says when the DBB knows no such Team', async ({ page, teamPage }) => {
     await teamPage.goto(1);
 

@@ -17,12 +17,25 @@ export class TeamPage {
   public readonly tabellen: Locator;
   /** Follows the Team, or unfollows it once pressed. */
   public readonly folgen: Locator;
+  /** The Verein's other Teams, each with its Ligen and a follow button. */
+  public readonly vereinsTeams: Locator;
 
   public constructor(private readonly page: Page) {
     this.heading = page.getByRole('heading', { level: 1 });
     this.spiele = page.getByTestId('spiel');
     this.tabellen = page.getByTestId('tabelle');
-    this.folgen = page.getByRole('button', { name: 'Team folgen' });
+    this.folgen = page.getByRole('button', {
+      name: 'Team folgen',
+      exact: true,
+    });
+    this.vereinsTeams = page.getByTestId('vereins-team');
+  }
+
+  /** The Verein's other Team that plays in the Liga `liga`. */
+  public vereinsTeam(liga: string): Locator {
+    return this.vereinsTeams.filter({
+      has: this.page.getByTestId('vereins-team-ligen').getByText(liga),
+    });
   }
 
   /** The Tabelle headed by the Liga `liga`. */
