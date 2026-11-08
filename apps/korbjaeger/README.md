@@ -132,7 +132,7 @@ deploys `firebase.korbjaeger.json` from the workspace root, not the
   Nitro function, every other path without a file extension to
   `/index.html`, so pages come from the CDN without a function call. A
   missing file (an old chunk after a release) is a 404, not the shell, and
-  the shell is sent `no-cache`. Every response carries
+  every page route and `/index.html` are sent `no-cache` (only those: Hosting's header rules override the function's, so a rule reaching `/api/**` would take the proxy off the CDN). Every response carries
   `X-Robots-Tag: noindex`, from Hosting and, for the proxy, from Nitro's
   route rules too.
 - **Function** `server`, region `europe-central2`, at most 10 instances
