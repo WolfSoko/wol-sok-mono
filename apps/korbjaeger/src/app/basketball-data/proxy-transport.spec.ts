@@ -1,6 +1,5 @@
 import {
   DbbBasketballData,
-  UnsupportedDbbRequestError,
   isBasketballDataError,
   type BasketballDataErrorKind,
 } from '@wolsok/feat-shared-basketball-data';
@@ -99,17 +98,6 @@ describe('proxyTransport', () => {
     expect(await rejectionKind(data.teamSpiele(313036))).toBe('not-found');
   });
 
-  it('refuses a read the proxy has no route for yet, as a bug, without a call', async () => {
-    const proxy = recordedProxy();
-    const data = new DbbBasketballData(proxyTransport(proxy));
-
-    const error = await data.tabelle(54308).catch((caught: unknown) => caught);
-
-    expect(error).toBeInstanceOf(UnsupportedDbbRequestError);
-    expect((error as UnsupportedDbbRequestError).kind).toBe('tabelle');
-    expect(proxy).not.toHaveBeenCalled();
-  });
-
   it('cancels the call to the proxy with the read', async () => {
     const proxy = vi.fn<ProxyFetch>(
       (_url, init) =>
@@ -129,5 +117,30 @@ describe('proxyTransport', () => {
 
     await expect(read).rejects.toThrow('navigated away');
     expect(proxy.mock.calls[0][1].signal).toBe(controller.signal);
+  });
+
+  it('cancels the call for a read signal that is no DOM AbortSignal', async () => {
+    const listeners: Array<() => void> = [];
+    const signal = {
+      aborted: false,
+      reason: new Error('navigated away'),
+      throwIfAborted: (): void => undefined,
+      addEventListener: (_type: 'abort', listener: () => void): void => {
+        listeners.push(listener);
+      },
+    };
+    const proxy = vi.fn<ProxyFetch>(
+      () => new Promise<Response>(() => undefined)
+    );
+
+    void proxyTransport(proxy)(
+      { kind: 'team-spiele', teamId: 313036 },
+      { signal }
+    );
+    listeners.forEach((listener) => listener());
+
+    const fetchSignal = proxy.mock.calls[0][1].signal;
+    expect(fetchSignal?.aborted).toBe(true);
+    expect(fetchSignal?.reason).toBe(signal.reason);
   });
 });

@@ -1,4 +1,7 @@
-import type { DbbHttpRequest } from '@wolsok/feat-shared-basketball-data';
+import {
+  dbbFetchInput,
+  type DbbHttpRequest,
+} from '@wolsok/feat-shared-basketball-data';
 
 /** The `fetch` the proxy calls the DBB with; specs pass a fake. */
 export type UpstreamFetch = (
@@ -31,19 +34,14 @@ export type DbbUpstream = (request: DbbHttpRequest) => Promise<UpstreamAnswer>;
  * other status is a failure.
  */
 export function dbbUpstream(options: DbbUpstreamOptions): DbbUpstream {
-  const baseUrl = options.baseUrl.replace(/\/+$/, '');
   return async (request) => {
+    const { url, ...init } = dbbFetchInput(options.baseUrl, request, {
+      accept: 'application/json',
+      'user-agent': options.userAgent,
+    });
     try {
-      const response = await options.fetch(`${baseUrl}/${request.path}`, {
-        ...requestBody(request),
-        method: request.method,
-        headers: {
-          accept: 'application/json',
-          'user-agent': options.userAgent,
-          ...(request.method === 'POST'
-            ? { 'content-type': 'application/json' }
-            : {}),
-        },
+      const response = await options.fetch(url, {
+        ...init,
         credentials: 'omit',
         redirect: 'error',
         signal: AbortSignal.timeout(options.timeoutMs),
@@ -56,12 +54,6 @@ export function dbbUpstream(options: DbbUpstreamOptions): DbbUpstream {
       return { ok: false, reason: failureReason(error) };
     }
   };
-}
-
-function requestBody(request: DbbHttpRequest): Pick<RequestInit, 'body'> {
-  return request.method === 'POST'
-    ? { body: JSON.stringify(request.body) }
-    : {};
 }
 
 /**

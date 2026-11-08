@@ -19,11 +19,11 @@ describe('DBB upstream config', () => {
   });
 
   it('reads the DBB at its own URL by default', () => {
-    expect(dbbBaseUrl({})).toBe(DBB_BASE_URL);
+    expect(dbbBaseUrl({ dbbBaseUrl: '' })).toBe(DBB_BASE_URL);
   });
 
-  it('reads the DBB where DBB_BASE_URL points, as the fake DBB for e2e', () => {
-    expect(dbbBaseUrl({ DBB_BASE_URL: 'http://localhost:4303/rest' })).toBe(
+  it('reads the DBB the runtime config names, as the fake DBB for e2e', () => {
+    expect(dbbBaseUrl({ dbbBaseUrl: 'http://localhost:4303/rest' })).toBe(
       'http://localhost:4303/rest'
     );
   });

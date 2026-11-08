@@ -1,16 +1,16 @@
 import {
+  ergebnisVon,
+  gegnerVon,
   isBasketballDataError,
+  seiteVon,
+  sonderfallVon,
   type Liga,
   type Spiel,
   type SpielPartei,
-  type SpielSeite,
-  type Spielstand,
+  type SpielSonderfall,
   type TeamId,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
-
-/** How a Spiel stands out of the plain list. */
-export type SpielMarkierung = 'abgesagt' | 'kampflos';
 
 /** One line of a Team's Spiele, as the page shows it. */
 export interface SpielZeile {
@@ -20,11 +20,13 @@ export interface SpielZeile {
   /** The tip-off, `HH:mm`; absent where the DBB has none. */
   readonly uhrzeit?: string;
   readonly liga: string;
-  readonly ort: 'Heim' | 'Auswärts';
+  /** Absent where the DBB lists the Team on neither side. */
+  readonly ort?: 'Heim' | 'Auswärts';
+  /** The opponent, or both sides where `ort` is absent. */
   readonly gegner: string;
   /** The points, home first (`78:47`), once there are any. */
   readonly ergebnis?: string;
-  readonly markierung?: SpielMarkierung;
+  readonly markierung?: SpielSonderfall;
 }
 
 /** What the page says for an id that names no Team. */
@@ -64,49 +66,22 @@ function spielZeile(
 ): SpielZeile {
   const seite = seiteVon(spiel, teamId);
   const ergebnis = ergebnisVon(spiel);
-  const markierung = markierungVon(spiel);
   return {
     id: spiel.id,
     datum: DATUM.format(new Date(`${spiel.datum}T00:00:00Z`)),
-    ...(spiel.uhrzeit === undefined ? {} : { uhrzeit: spiel.uhrzeit }),
+    uhrzeit: spiel.uhrzeit,
     liga: liga?.name ?? '',
-    ort: seite === 'heim' ? 'Heim' : 'Auswärts',
-    gegner: name(seite === 'heim' ? spiel.gast : spiel.heim),
-    ...(ergebnis === undefined ? {} : { ergebnis: stand(ergebnis) }),
-    ...(markierung === undefined ? {} : { markierung }),
+    ort: seite && ORT[seite],
+    gegner: seite
+      ? name(gegnerVon(spiel, seite))
+      : `${name(spiel.heim)} – ${name(spiel.gast)}`,
+    ergebnis: ergebnis && `${ergebnis.heim}:${ergebnis.gast}`,
+    markierung: sonderfallVon(spiel),
   };
 }
 
-function seiteVon(spiel: Spiel, teamId: TeamId): SpielSeite {
-  return spiel.heim.art === 'team' && spiel.heim.team.id === teamId
-    ? 'heim'
-    : 'gast';
-}
+const ORT = { heim: 'Heim', gast: 'Auswärts' } as const;
 
 function name(partei: SpielPartei): string {
   return partei.art === 'team' ? partei.team.name : partei.bezeichnung;
-}
-
-function ergebnisVon(spiel: Spiel): Spielstand | undefined {
-  switch (spiel.status.art) {
-    case 'gespielt':
-    case 'kampflos':
-      return spiel.status.ergebnis;
-    default:
-      return undefined;
-  }
-}
-
-function markierungVon(spiel: Spiel): SpielMarkierung | undefined {
-  switch (spiel.status.art) {
-    case 'abgesagt':
-    case 'kampflos':
-      return spiel.status.art;
-    default:
-      return undefined;
-  }
-}
-
-function stand(ergebnis: Spielstand): string {
-  return `${ergebnis.heim}:${ergebnis.gast}`;
 }

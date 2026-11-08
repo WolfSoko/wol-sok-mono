@@ -6,10 +6,9 @@
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
 import { createServer } from 'node:http';
 
-const DEFAULT_PORT = 4303;
+/** The fake DBB's port; `vite.config.ts` and the e2e config point at it. */
+const PORT = 4303;
 const API_PREFIX = '/rest/';
-
-const port = Number(process.argv[2] ?? DEFAULT_PORT);
 
 createServer((request, response) => {
   const url = new URL(request.url ?? '/', 'http://fake-dbb');
@@ -26,6 +25,6 @@ createServer((request, response) => {
   response
     .writeHead(200, { 'content-type': 'application/json' })
     .end(JSON.stringify(answer));
-}).listen(port, () => {
-  console.log(`fake DBB on http://localhost:${port}${API_PREFIX}`);
+}).listen(PORT, () => {
+  console.log(`fake DBB on http://localhost:${PORT}${API_PREFIX}`);
 });

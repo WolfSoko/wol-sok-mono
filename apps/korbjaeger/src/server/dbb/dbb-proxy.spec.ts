@@ -47,14 +47,13 @@ async function proxyRoutes(): Promise<(request: Request) => Promise<Response>> {
 
 let handle: (request: Request) => Promise<Response>;
 
-beforeAll(async () => {
-  // read by the route files when they load, as in a deployed function
-  vi.stubEnv('DBB_BASE_URL', BASE_URL);
-  handle = await proxyRoutes();
-});
+// Nitro's runtime config, as `vite.config.ts` and NITRO_DBB_BASE_URL set it
+vi.mock('nitropack/runtime', () => ({
+  useRuntimeConfig: () => ({ dbbBaseUrl: 'https://dbb.test/rest' }),
+}));
 
-afterAll(() => {
-  vi.unstubAllEnvs();
+beforeAll(async () => {
+  handle = await proxyRoutes();
 });
 
 beforeEach(() => {

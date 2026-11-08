@@ -14,8 +14,10 @@
       @for (zeile of zeilen(); track zeile.id) {
         <mat-list-item lines="3" data-qa="spiel">
           <span matListItemTitle>
-            <span data-qa="spiel-ort">{{ zeile.ort }}</span>
-            gegen <span data-qa="spiel-gegner">{{ zeile.gegner }}</span>
+            @if (zeile.ort) {
+              <span data-qa="spiel-ort">{{ zeile.ort }}</span> gegen
+            }
+            <span data-qa="spiel-gegner">{{ zeile.gegner }}</span>
           </span>
           <span matListItemLine>
             <span data-qa="spiel-datum">{{ zeile.datum }}</span>

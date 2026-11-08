@@ -22,6 +22,7 @@
     "vitest": "5.0.5",
     "@wolsok/feat-shared-basketball-data": "*",
     "@wolsok/utils-version": "*",
-    "normalize.css": "8.0.1"
+    "normalize.css": "8.0.1",
+    "nitropack": "2.13.5"
   }
 }

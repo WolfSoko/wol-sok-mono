@@ -1,14 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import {
   BasketballDataError,
-  type BasketballData,
   type Liga,
   type Spiel,
   type SpielPartei,
   type Team,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
-import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
+import {
+  BASKETBALL_DATA,
+  type KorbjaegerData,
+} from '../basketball-data/basketball-data.provider';
 import { TeamSpieleComponent } from './team-spiele.component';
 
 const UNSER_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', vereinId: 1837 };
@@ -54,11 +56,11 @@ function saison(spiele: readonly Spiel[]): TeamSaison {
   };
 }
 
-/** `BasketballData` answering `teamSpiele` with `read`, nothing else. */
-function fakeData(read: BasketballData['teamSpiele']): {
-  readonly teamSpiele: ReturnType<typeof vi.fn<BasketballData['teamSpiele']>>;
+/** `KorbjaegerData` answering `teamSpiele` with `read`, nothing else. */
+function fakeData(read: KorbjaegerData['teamSpiele']): {
+  readonly teamSpiele: ReturnType<typeof vi.fn<KorbjaegerData['teamSpiele']>>;
 } {
-  return { teamSpiele: vi.fn<BasketballData['teamSpiele']>(read) };
+  return { teamSpiele: vi.fn<KorbjaegerData['teamSpiele']>(read) };
 }
 
 async function render(
@@ -165,6 +167,26 @@ describe('TeamSpieleComponent', () => {
     expect(feld(heim, 'gegner')).toBe('MTV Gifhorn');
     expect(feld(auswaerts, 'ort')).toBe('Auswärts');
     expect(feld(auswaerts, 'gegner')).toBe('SV Groß Oesingen');
+  });
+
+  it('names both sides of a Spiel the DBB lists without the Team', async () => {
+    const page = await render(
+      fakeData(async () =>
+        saison([
+          spiel({
+            id: 1,
+            datum: '2026-09-12',
+            heim: gegner(2, 'MTV Gifhorn'),
+            gast: gegner(3, 'SV Groß Oesingen'),
+          }),
+        ])
+      )
+    );
+
+    expect(feld(spielZeilen(page)[0], 'ort')).toBeUndefined();
+    expect(feld(spielZeilen(page)[0], 'gegner')).toBe(
+      'MTV Gifhorn – SV Groß Oesingen'
+    );
   });
 
   it('names an opponent the Liga has yet to settle by its slot', async () => {

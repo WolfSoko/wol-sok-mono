@@ -1,6 +1,7 @@
 import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { fileURLToPath } from 'node:url';
+import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases';
 import { ConfigEnv, defineConfig } from 'vite';
 
 import { ViteUserConfig } from 'vitest/config';
@@ -8,23 +9,7 @@ import { ViteUserConfig } from 'vitest/config';
 /** Where `nx run korbjaeger:fake-dbb` serves the recorded DBB answers. */
 const FAKE_DBB_BASE_URL = 'http://localhost:4303/rest';
 
-/**
- * The workspace libs the proxy routes import. Nitro bundles the server
- * without the tsconfig paths `nxViteTsPaths` gives Vite, so it gets them
- * as aliases.
- */
-const SERVER_LIBS = {
-  '@wolsok/feat-shared-basketball-data': workspaceFile(
-    'libs/features/basketball-data/src/index.ts'
-  ),
-  '@wolsok/utils-version': workspaceFile('libs/utils/version/src/index.ts'),
-};
-
 export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
-  if (mode === 'e2e') {
-    // the proxy routes (src/server/dbb) read the DBB from the fake server
-    process.env['DBB_BASE_URL'] ??= FAKE_DBB_BASE_URL;
-  }
   return {
     root: 'apps/korbjaeger',
     publicDir: 'src/public',
@@ -58,7 +43,13 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
           inlineStylesExtension: 'scss',
         },
         nitro: {
-          alias: SERVER_LIBS,
+          // Nitro bundles the proxy routes without the tsconfig paths
+          alias: nitroTsPathAliases(),
+          runtimeConfig: {
+            // the DBB the proxy reads (DbbProxyConfig): the real one unless
+            // set, the fake DBB in the e2e build, NITRO_DBB_BASE_URL at run time
+            dbbBaseUrl: mode === 'e2e' ? FAKE_DBB_BASE_URL : '',
+          },
           preset: 'firebase',
           // region and instances come with the Firebase project (#2875)
           firebase: {
@@ -80,9 +71,6 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
         provider: 'v8',
         reporter: ['html', 'lcov', 'text'],
       },
-    },
-    define: {
-      'import.meta.vitest': mode !== 'production',
     },
   };
 });

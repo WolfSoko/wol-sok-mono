@@ -13,7 +13,7 @@ import {
   type ProxyResponse,
 } from './dbb-proxy-response';
 import type { DbbUpstream } from './dbb-upstream';
-import { teamSpieleRequest } from './proxy-requests';
+import { teamSpieleRequest } from '../../shared/dbb-proxy-routes';
 
 /**
  * How long a successful read may be reused: a minute in the browser, five

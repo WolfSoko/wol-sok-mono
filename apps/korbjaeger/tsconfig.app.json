@@ -6,6 +6,10 @@
     "moduleResolution": "bundler"
   },
   "files": ["src/main.ts"],
-  "include": ["src/**/*.d.ts", "src/app/pages/**/*.page.ts"],
+  "include": [
+    "src/**/*.d.ts",
+    "src/app/pages/**/*.page.ts",
+    "src/shared/**/*.ts"
+  ],
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/*.mock.ts"]
 }
