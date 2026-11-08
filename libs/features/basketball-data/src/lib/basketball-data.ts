@@ -33,7 +33,8 @@ export interface ReadOptions {
 
 /**
  * The basketball data the app reads, in domain terms. Every read rejects
- * with a `BasketballDataError` only: `not-found`, `unavailable` or
+ * with a `BasketballDataError` only: `not-found`, `offline` (a transport
+ * that knows the reader's network is down), `unavailable` or
  * `unexpected-shape`; a cancelled one with its signal's reason.
  * `DbbBasketballData` reads it from the DBB; an official source would be
  * another adapter.

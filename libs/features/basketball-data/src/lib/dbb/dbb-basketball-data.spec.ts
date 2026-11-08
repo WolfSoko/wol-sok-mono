@@ -318,12 +318,15 @@ describe('DbbBasketballData', () => {
     expect(error.cause).toBe(cause);
   });
 
-  it('passes on a typed error the transport throws itself', async () => {
-    const own = new BasketballDataError('not-found', 'proxy: 404');
-    const data = new DbbBasketballData(() => Promise.reject(own));
+  it.each(['not-found', 'offline'] as const)(
+    'passes on a typed %s error the transport throws itself',
+    async (kind) => {
+      const own = new BasketballDataError(kind, 'proxy: nope');
+      const data = new DbbBasketballData(() => Promise.reject(own));
 
-    expect(await rejectedError(() => data.spiel(2911141))).toBe(own);
-  });
+      expect(await rejectedError(() => data.spiel(2911141))).toBe(own);
+    }
+  );
 
   it('rejects a response of the wrong shape as unexpected', async () => {
     const { data } = dataWith({

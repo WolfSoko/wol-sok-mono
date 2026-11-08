@@ -531,6 +531,7 @@ describe('TeamComponent', () => {
 
   it.each([
     ['not-found', 'Dieses Team kennt der DBB nicht.'],
+    ['offline', 'Keine Verbindung zum Internet.'],
     ['unavailable', 'Der DBB ist gerade nicht erreichbar.'],
     ['unexpected-shape', 'Die Daten des DBB ließen sich nicht lesen.'],
   ] as const)('explains a %s error', async (kind, text) => {

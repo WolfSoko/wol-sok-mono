@@ -177,7 +177,7 @@ describe('proxyTransport', () => {
     expect(await rejectionKind(data.teamSpiele(313036))).toBe('unavailable');
   });
 
-  it('reads a network failure as unavailable', async () => {
+  it('reads a network failure as offline', async () => {
     const offline: ProxyFetch = async () => {
       throw new TypeError('Failed to fetch');
     };
@@ -185,7 +185,17 @@ describe('proxyTransport', () => {
 
     expect(
       await rejectionKind(transport({ kind: 'team-spiele', teamId: 313036 }))
-    ).toBe('unavailable');
+    ).toBe('offline');
+  });
+
+  it('reads a device the browser calls offline as offline, without calling the proxy', async () => {
+    const proxy = recordedProxy();
+    const transport = proxyTransport(proxy, { online: () => false });
+
+    expect(
+      await rejectionKind(transport({ kind: 'team-spiele', teamId: 313036 }))
+    ).toBe('offline');
+    expect(proxy).not.toHaveBeenCalled();
   });
 
   it('reads a body that is no JSON as unavailable', async () => {

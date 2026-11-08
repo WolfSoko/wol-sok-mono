@@ -29,10 +29,19 @@ export const KEINE_LIGEN = 'Für diese Auswahl kennt der DBB keine Ligen.';
 /** What a screen says for an id that names no Spiel. */
 export const KEIN_SPIEL = 'Dieses Spiel kennt der DBB nicht.';
 
+/** What a screen says when the device has no network. */
+export const OFFLINE =
+  'Keine Verbindung zum Internet. Bitte die Verbindung prüfen und noch einmal versuchen.';
+
+/** What a screen says when the proxy reached no DBB (its 502). */
+export const DBB_NICHT_ERREICHBAR =
+  'Der DBB ist gerade nicht erreichbar. Bitte später noch einmal versuchen.';
+
 /**
  * What the page says when a read failed: nothing while none did,
- * `nichtGefunden` where the DBB knows no such Team, Liga or Spiel, else that its
- * data could not be read or the DBB not reached.
+ * `nichtGefunden` where the DBB knows no such Team, Liga or Spiel, that the
+ * device is offline, that the DBB's data could not be read, else that the
+ * DBB was not reached.
  */
 export function fehlerText(
   error: unknown,
@@ -44,8 +53,11 @@ export function fehlerText(
   if (isBasketballDataError(error, 'not-found')) {
     return nichtGefunden;
   }
+  if (isBasketballDataError(error, 'offline')) {
+    return OFFLINE;
+  }
   if (isBasketballDataError(error, 'unexpected-shape')) {
     return 'Die Daten des DBB ließen sich nicht lesen. Bitte später noch einmal versuchen.';
   }
-  return 'Der DBB ist gerade nicht erreichbar. Bitte später noch einmal versuchen.';
+  return DBB_NICHT_ERREICHBAR;
 }
