@@ -9,7 +9,12 @@ Spielerwerte, Anonymer Spieler, Halle, Kind) are the glossary's in
 Node only: no Angular, Firebase, RxJS or DOM (an oxlint override and the
 lib's `lib: ["ES2024"]` keep them out), so both the app and its server
 routes use it. Import it as `@wolsok/feat-shared-basketball-data`; nothing
-outside the lib imports a path inside it.
+outside the lib imports a path inside it, with one exception: the fixture
+tools in `tools/korbjaeger/` import `src/lib/dbb/dbb-request.ts`, the
+domain's `liga-suche.ts` and the test-only `src/testing/` (the anonymiser,
+`isOutsideFolder`) by relative path, as `tools/bacteria-game/balance` does
+with the engine, since `src/testing/` has no path alias and tools are no
+Nx project.
 
 ## What it holds
 
