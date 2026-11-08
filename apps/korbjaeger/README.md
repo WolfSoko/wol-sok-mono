@@ -25,10 +25,11 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   A toggle button ("Team folgen", `aria-pressed`) adds the Team to Meine
   Teams or takes it out (`team-folgen.component.ts`).
 - **Meine Teams** (`src/app/auswahl/`): the `Auswahl` port (`AUSWAHL`),
-  Meine Teams as a signal with `folgen` and `entfolgen`. Its local adapter
+  Meine Teams as a signal (`undefined` until read) with `folgen` and
+  `entfolgen`. Its local adapter
   `LokaleAuswahl` keeps them in `localStorage` (`korbjaeger-auswahl`) as
   `{ version: 1, teams: [...] }` (`auswahl-dokument.ts`: ids only, Kinder
-  join as a field of their own later). It reads the document again
+  join version 1 as a field of their own, #2872). It reads the document again
   before each write and on the `storage` event, so two tabs keep each
   other's changes, and keeps fields it does not know. Storage that cannot
   be read or holds something else counts as empty, storage that takes
@@ -36,15 +37,18 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   alone and changes are refused (`AuswahlZuNeuError`, "Bitte die App neu
   laden"). Every adapter runs the shared contract suite
   `auswahlVertrag` (`testing/auswahl-vertrag.ts`), the Firestore adapter
-  of Ticket 8 too.
+  of #2873 too.
 - **Overview** (`/`, `src/app/ueberblick/`): each of Meine Teams with its
   next Spiel (day, time, home or away, opponent), the Spiele
   before it that fall through (cancelled or forfeited) and its last result (the lib's `teamUeberblick`), the Team
   that plays first first and Teams without a next Spiel last
-  (`nachNaechstemSpiel`), each linking to its Team page. Each Team is a
-  card of its own (`ueberblick-team.component.ts`) that reads its
-  `teamSpiele`, loads and fails on its own and reports its next Spiel for
-  the order; a card whose read fails offers "Entfernen". Both screens
+  (`nachNaechstemSpiel`), each linking to its Team page.
+  `MeineTeamsUeberblick` holds one read per followed Team
+  (`teamSaisonResource`, as the Team page), so each card loads and fails
+  on its own and a follow or unfollow reads no other Team again; the cards
+  (`ueberblick-team.component.ts`) only show what they are given, and one
+  whose read fails offers "Entfernen". Error texts are in
+  `src/app/fehler/`. Both screens
   show a Spiel through `SpielZeileComponent` (`src/app/spiel/`). The
   Team-id form below opens a Team to follow.
 - **Proxy:** `src/server/routes/api/dbb/` (thin route files) over
