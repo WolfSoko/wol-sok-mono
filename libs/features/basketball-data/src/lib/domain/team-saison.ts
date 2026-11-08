@@ -57,6 +57,33 @@ export function naechstesSpielIndex(saison: TeamSaison, heute: string): number {
   );
 }
 
+/** How many days after its last Spiel a Team's Saison counts as over. */
+export const SAISON_ENDE_NACH_TAGEN = 14;
+
+/**
+ * Whether the Team's Saison is over on `heute`: no Spiel left to go to
+ * (`naechstesSpiel`) and its last Spiel more than two weeks
+ * (`SAISON_ENDE_NACH_TAGEN`) past. Relies on the date order of
+ * `saison.spiele`.
+ *
+ * @param heute a German calendar day, `YYYY-MM-DD` (`datumInDeutschland`)
+ */
+export function saisonBeendet(saison: TeamSaison, heute: string): boolean {
+  const letztes = saison.spiele.at(-1);
+  return (
+    letztes !== undefined &&
+    naechstesSpielIndex(saison, heute) === -1 &&
+    tageZwischen(letztes.datum, heute) > SAISON_ENDE_NACH_TAGEN
+  );
+}
+
+const MS_PRO_TAG = 24 * 60 * 60 * 1000;
+
+/** The calendar days from `von` to `bis`, both `YYYY-MM-DD`. */
+function tageZwischen(von: string, bis: string): number {
+  return (Date.parse(bis) - Date.parse(von)) / MS_PRO_TAG;
+}
+
 /**
  * The Ligen of `saison`, the current one first: the Liga of the first Spiel
  * not cancelled from `heute` on, played or forfeited ones included, since

@@ -93,9 +93,11 @@ export type {
 export type { Tabelle, TabellenZeile } from './lib/domain/tabelle';
 export type { Team } from './lib/domain/team';
 export {
+  SAISON_ENDE_NACH_TAGEN,
   ligaVon,
   ligenAktuellZuerst,
   naechstesSpiel,
+  saisonBeendet,
 } from './lib/domain/team-saison';
 export type {
   TeamSaison,
