@@ -1,6 +1,7 @@
 import { BasketballDataError } from '../domain/basketball-data-error';
 
-type Fields = Readonly<Record<string, unknown>>;
+/** A parsed JSON object, before any of its fields is read. */
+export type JsonObject = Readonly<Record<string, unknown>>;
 
 const MAX_SHOWN_VALUE_LENGTH = 60;
 
@@ -12,12 +13,12 @@ const MAX_SHOWN_VALUE_LENGTH = 60;
  */
 export class DbbObject {
   private constructor(
-    private readonly fields: Fields,
+    private readonly fields: JsonObject,
     public readonly path: string
   ) {}
 
   public static of(value: unknown, path: string): DbbObject {
-    if (!isFields(value)) {
+    if (!isJsonObject(value)) {
       throw shapeError(path, 'an object', value);
     }
     return new DbbObject(value, path);
@@ -139,7 +140,8 @@ function shown(value: unknown): string {
     : text;
 }
 
-function isFields(value: unknown): value is Fields {
+/** Whether `value` is a JSON object: not `null`, not a list. */
+export function isJsonObject(value: unknown): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 

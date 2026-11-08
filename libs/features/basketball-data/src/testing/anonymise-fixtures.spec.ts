@@ -103,7 +103,92 @@ describe('anonymiseFixtures', () => {
 
     expect(
       survivingPersonData(withNote, anonymiseFixtures(withNote, SEED))
-    ).toEqual(['full name Darian Kabir']);
+    ).toEqual([
+      'name Darian in note.json (note)',
+      'name Kabir in note.json (note)',
+    ]);
+  });
+
+  it.each([
+    ['last name first', 'Kabir, Darian'],
+    ['the first name alone', 'Danke Darian'],
+    ['a field it does not know', 'Kabir'],
+  ])('reports %s in any string', (_case, note) => {
+    const withNote = {
+      ...ORIGINAL,
+      'note.json': { data: { kommentar: note } },
+    };
+
+    expect(
+      survivingPersonData(withNote, anonymiseFixtures(withNote, SEED))
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(
+          /^name (Darian|Kabir) in note\.json \(kommentar\)$/
+        ),
+      ])
+    );
+  });
+
+  it('skips the public names of organisations and places', () => {
+    const withHalle = {
+      ...ORIGINAL,
+      'halle.json': {
+        data: { spielfeld: { bezeichnung: 'Darian-Kabir-Schule' } },
+      },
+    };
+
+    expect(
+      survivingPersonData(withHalle, anonymiseFixtures(withHalle, SEED))
+    ).toEqual([]);
+  });
+
+  it('reports a name only as a whole word', () => {
+    const withTeam = {
+      ...ORIGINAL,
+      'team.json': { data: { message: 'Kabirsdorf Darians' } },
+    };
+
+    expect(
+      survivingPersonData(withTeam, anonymiseFixtures(withTeam, SEED))
+    ).toEqual([]);
+  });
+
+  it('replaces the names of a person without id', () => {
+    const files = {
+      'coach.json': {
+        data: { coach: { vorname: 'Matthias', nachname: 'Wadenstorfer' } },
+      },
+    };
+
+    const text = JSON.stringify(anonymiseFixtures(files, SEED));
+
+    expect(text).not.toMatch(/Matthias|Wadenstorfer/);
+    expect(survivingPersonData(files, anonymiseFixtures(files, SEED))).toEqual(
+      []
+    );
+  });
+
+  it('replaces a name of a person that has only one', () => {
+    const files = {
+      'one.json': { data: { person: { id: 881456, nachname: 'Kabir' } } },
+    };
+
+    expect(JSON.stringify(anonymiseFixtures(files, SEED))).not.toMatch(
+      /Kabir|881456|vorname/
+    );
+  });
+
+  it.each([
+    [
+      'person id',
+      { person: { id: '881456', vorname: 'Darian', nachname: 'Kabir' } },
+    ],
+    ['player id', { player: { playerId: '4456015' } }],
+  ])('refuses a %s that is no number', (_case, data) => {
+    expect(() => anonymiseFixtures({ 'bad.json': { data } }, SEED)).toThrow(
+      'is no number'
+    );
   });
 
   it('reports an invented name that happens to be a real one', () => {
@@ -124,7 +209,7 @@ describe('anonymiseFixtures', () => {
     const both = { ...ORIGINAL, ...namesake };
 
     expect(survivingPersonData(both, anonymiseFixtures(both, SEED))).toContain(
-      `name ${invented.vorname}`
+      `name ${invented.vorname} in boxscore.json (vorname)`
     );
   });
 

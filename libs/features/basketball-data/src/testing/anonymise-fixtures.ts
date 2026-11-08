@@ -4,14 +4,21 @@ import {
   INVENTED_NACHNAMEN,
   INVENTED_VORNAMEN,
 } from './invented-names';
+import {
+  HIDDEN_ID,
+  isHiddenPerson,
+  isPerson,
+  NAME_KEYS,
+  namesOf,
+  personIdOf,
+  playerIdOf,
+} from './fixture-persons';
+import { isJsonObject, type JsonObject } from '../lib/dbb/dbb-object';
+import { PUBLIC_TEXT_KEYS } from './fixture-fields';
+import { objectsIn, stringFieldsIn } from './json-walk';
 
 /** Fixture files by name, as parsed JSON. */
 export type FixtureFiles = Readonly<Record<string, unknown>>;
-
-type JsonObject = Readonly<Record<string, unknown>>;
-
-/** Where the DBB hides a person: id 0 and stars for the name. */
-const HIDDEN_PERSON_ID = 0;
 
 /** Fields that hold contact details of a Verein's officials. */
 const CONTACT_FIELDS: ReadonlySet<string> = new Set(['kontaktData']);
@@ -22,8 +29,11 @@ const CONTACT_FIELDS: ReadonlySet<string> = new Set(['kontaktData']);
  * season player id (`playerId`) are replaced by invented ones, and contact
  * details are dropped. The mapping is seeded and keyed by the original id,
  * so one person keeps one invented id and name across all files of a run.
- * Persons the DBB already hides stay as they are; ids of Teams, Vereine,
- * Ligen, Spiele and Hallen stay too.
+ * A person is any object with a first or last name (`isPerson`), with or
+ * without an id; persons the DBB already hides (names of stars) stay as
+ * they are, and so do the ids of Teams, Vereine, Ligen, Spiele and Hallen.
+ * Throws on a person or player id that is no number, which it could not
+ * replace reliably.
  */
 export function anonymiseFixtures(
   files: FixtureFiles,
@@ -38,28 +48,34 @@ export function anonymiseFixtures(
 }
 
 /**
- * What of the persons in `original` still shows in `anonymised`: their
- * names in any person, the full name anywhere, their ids in any person or
- * player id. Empty when the anonymisation held.
+ * What of the persons in `original` still shows in `anonymised`: any of
+ * their first or last names as a word in any string of any file (so in
+ * "Vorname Nachname" and "Nachname, Vorname" alike, and in fields the
+ * anonymiser does not know) but the public names of organisations and
+ * places (`PUBLIC_TEXT_KEYS`), and any of their ids as a person or player
+ * id. Empty when the anonymisation held.
  */
 export function survivingPersonData(
   original: FixtureFiles,
   anonymised: FixtureFiles
 ): readonly string[] {
-  const before = collectPersonData(Object.values(original));
-  const after = collectPersonData(Object.values(anonymised));
-  const texts = collectStrings(Object.values(anonymised));
-  return [
-    ...[...after.names]
-      .filter((name) => before.names.has(name))
-      .map((name) => `name ${name}`),
-    ...[...before.fullNames]
-      .filter((fullName) => texts.some((text) => text.includes(fullName)))
-      .map((fullName) => `full name ${fullName}`),
-    ...[...after.ids]
+  const before = personDataIn(Object.values(original));
+  const names = [...before.names].map((name) => ({
+    name,
+    word: wordPattern(name),
+  }));
+  return Object.entries(anonymised).flatMap(([file, content]) => [
+    ...stringFieldsIn(content)
+      .filter(({ key }) => !PUBLIC_TEXT_KEYS.has(key))
+      .flatMap(({ key, text }) =>
+        names
+          .filter(({ word }) => word.test(text))
+          .map(({ name }) => `name ${name} in ${file} (${key})`)
+      ),
+    ...[...personDataIn([content]).ids]
       .filter((id) => before.ids.has(id))
-      .map((id) => `id ${id}`),
-  ];
+      .map((id) => `id ${id} in ${file}`),
+  ]);
 }
 
 interface InventedName {
@@ -92,28 +108,38 @@ class Anonymiser {
     for (const [key, field] of Object.entries(object)) {
       copy[key] = CONTACT_FIELDS.has(key) ? null : this.anonymise(field);
     }
-    if (isPlayer(object)) {
-      copy['playerId'] = this.inventedId('player', object.playerId);
+    const playerId = playerIdOf(object);
+    if (playerId !== undefined && playerId !== HIDDEN_ID) {
+      copy['playerId'] = this.inventedId('player', playerId);
     }
-    if (isNamedPerson(object)) {
+    if (isPerson(object)) {
       Object.assign(copy, this.inventedPerson(object));
     }
     return copy;
   }
 
-  /** The invented id (where the person has one) and names of `person`. */
-  private inventedPerson(person: NamedPerson): JsonObject {
+  /** The invented id (where it has one) and names of a person the DBB names. */
+  private inventedPerson(person: JsonObject): JsonObject {
+    const originalId = personIdOf(person);
+    if (isHiddenPerson(person)) {
+      return {};
+    }
     const personId =
-      typeof person.id === 'number'
-        ? this.inventedId('person', person.id)
-        : undefined;
-    const nameKey =
+      originalId === undefined || originalId === HIDDEN_ID
+        ? undefined
+        : this.inventedId('person', originalId);
+    const name = this.inventedName(
       personId === undefined
-        ? `name:${person.vorname} ${person.nachname}`
-        : `person:${personId}`;
+        ? `name:${namesOf(person).join(' ')}`
+        : `person:${personId}`
+    );
     return {
       ...(personId === undefined ? {} : { id: personId }),
-      ...this.inventedName(nameKey),
+      ...Object.fromEntries(
+        NAME_KEYS.filter((key) => typeof person[key] === 'string').map(
+          (key) => [key, name[key]]
+        )
+      ),
     };
   }
 
@@ -162,82 +188,37 @@ class Anonymiser {
 }
 
 interface PersonData {
-  readonly names: Set<string>;
-  readonly fullNames: Set<string>;
-  readonly ids: Set<number>;
+  readonly names: ReadonlySet<string>;
+  readonly ids: ReadonlySet<number>;
 }
 
-function collectPersonData(values: readonly unknown[]): PersonData {
-  const data: PersonData = {
-    names: new Set(),
-    fullNames: new Set(),
-    ids: new Set(),
-  };
-  walk(values, (object) => {
-    if (isPlayer(object)) {
-      data.ids.add(object['playerId']);
+/** The names and ids of the persons and players the DBB names in `values`. */
+function personDataIn(values: readonly unknown[]): PersonData {
+  const names = new Set<string>();
+  const ids = new Set<number>();
+  for (const object of objectsIn(values)) {
+    const playerId = playerIdOf(object);
+    if (playerId !== undefined && playerId !== HIDDEN_ID) {
+      ids.add(playerId);
     }
-    if (isNamedPerson(object)) {
-      if (typeof object.id === 'number') {
-        data.ids.add(object.id);
+    if (isPerson(object) && !isHiddenPerson(object)) {
+      const personId = personIdOf(object);
+      if (personId !== undefined && personId !== HIDDEN_ID) {
+        ids.add(personId);
       }
-      data.names.add(object.vorname);
-      data.names.add(object.nachname);
-      data.fullNames.add(`${object.vorname} ${object.nachname}`);
+      namesOf(object)
+        .map((name) => name.trim())
+        .filter((name) => name !== '')
+        .forEach((name) => names.add(name));
     }
-  });
-  return data;
-}
-
-function collectStrings(values: readonly unknown[]): readonly string[] {
-  const strings: string[] = [];
-  walk(values, (object) => {
-    for (const field of Object.values(object)) {
-      if (typeof field === 'string') {
-        strings.push(field);
-      }
-    }
-  });
-  return strings;
-}
-
-function walk(value: unknown, visit: (object: JsonObject) => void): void {
-  if (Array.isArray(value)) {
-    value.forEach((item: unknown) => walk(item, visit));
-  } else if (isJsonObject(value)) {
-    visit(value);
-    Object.values(value).forEach((field) => walk(field, visit));
   }
+  return { names, ids };
 }
 
-interface NamedPerson extends JsonObject {
-  readonly id?: unknown;
-  readonly vorname: string;
-  readonly nachname: string;
-}
-
-/** A person the DBB names, so not one it hides (`anonym`, id 0). */
-function isNamedPerson(object: JsonObject): object is NamedPerson {
-  return (
-    typeof object['vorname'] === 'string' &&
-    typeof object['nachname'] === 'string' &&
-    object['anonym'] !== true &&
-    object['id'] !== HIDDEN_PERSON_ID
-  );
-}
-
-type Player = JsonObject & { readonly playerId: number };
-
-/** A player entry with a season player id that is not hidden. */
-function isPlayer(object: JsonObject): object is Player {
-  return (
-    typeof object['playerId'] === 'number' &&
-    object['playerId'] !== HIDDEN_PERSON_ID
-  );
-}
-
-function isJsonObject(value: unknown): value is JsonObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+/** `name` as a whole word: not inside a longer name or number. */
+function wordPattern(name: string): RegExp {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'u');
 }
 
 /** FNV-1a, 32 bits: a small, stable hash for the seeded mapping. */
