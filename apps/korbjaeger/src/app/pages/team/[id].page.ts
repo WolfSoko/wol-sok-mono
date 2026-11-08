@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TeamComponent } from '../../team/team.component';
 
-/** `/team/{id}`: a Team's Spiele of the Saison. */
+/** `/team/{id}`: a Team's Spiele of the Saison and the Tabellen of its Ligen. */
 @Component({
   selector: 'korb-team-page',
   imports: [TeamComponent],
