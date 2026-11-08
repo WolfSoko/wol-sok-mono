@@ -5,6 +5,7 @@ import {
   BasketballDataError,
   type Halle,
   type Liga,
+  type SpielDetails,
   type Spiel,
   type SpielPartei,
   type Team,
@@ -132,7 +133,7 @@ function fakeData(
  * `Auswahl`), once the reads that settle have settled.
  */
 async function render(
-  data: Pick<KorbjaegerData, 'teamSpiele'> & Partial<KorbjaegerData>,
+  data: Pick<KorbjaegerData, 'teamSpiele' | 'spiel'>,
   gefolgt: readonly TeamId[] | Auswahl
 ): Promise<{
   readonly seite: HTMLElement;
@@ -492,10 +493,12 @@ describe('UeberblickComponent', () => {
 
   describe('each Team on its own', () => {
     const NIE: Promise<TeamSaison> = new Promise(() => undefined);
+    const NIE_DETAILS: Promise<SpielDetails> = new Promise(() => undefined);
 
     it('shows a Team while another still loads', async () => {
       const { seite } = await render(
         {
+          spiel: inDerSporthalle,
           teamSpiele: async (teamId) =>
             teamId === GIFHORN.id
               ? NIE
@@ -547,10 +550,36 @@ describe('UeberblickComponent', () => {
       expect(lesung?.aborted).toBe(true);
     });
 
+    it("cancels the next Spiel's Halle read of a Team unfollowed", async () => {
+      const data = fakeData(
+        [saison(GIFHORN, spiel(GIFHORN, OESINGEN, '2026-11-21'))],
+        () => NIE_DETAILS
+      );
+      const { auswahl, stabil } = await render(data, [GIFHORN.id]);
+      await stabil();
+      const lesung = data.spiel.mock.calls[0][1]?.signal;
+      expect(lesung?.aborted).toBe(false);
+
+      await auswahl.entfolgen(GIFHORN.id);
+      await stabil();
+
+      expect(lesung?.aborted).toBe(true);
+    });
+
+    it("reads no Halle before a Team's next Spiel is known", async () => {
+      const data = fakeData([]);
+      data.teamSpiele.mockImplementation(() => NIE);
+
+      await render(data, [GIFHORN.id]);
+
+      expect(data.spiel).not.toHaveBeenCalled();
+    });
+
     it('puts a Team in its place once it has loaded', async () => {
       let gifhornLaden: (saison: TeamSaison) => void = () => undefined;
       const { seite, stabil } = await render(
         {
+          spiel: inDerSporthalle,
           teamSpiele: (teamId) =>
             teamId === GIFHORN.id
               ? new Promise((resolve) => (gifhornLaden = resolve))

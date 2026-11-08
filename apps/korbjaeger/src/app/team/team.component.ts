@@ -8,7 +8,9 @@ import {
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AUSWAHL } from '../auswahl/auswahl';
+import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
+import { hallenStand } from '../halle/hallen-stand';
 import { HEUTE } from '../heute';
 import { RouterLink } from '@angular/router';
 import {
@@ -71,14 +73,27 @@ export class TeamComponent {
   );
 
   /** The next Spiel to go to, from today on. */
+  private readonly kommendesSpiel = computed(() =>
+    this.saison.hasValue()
+      ? naechstesSpiel(this.saison.value(), this.heute())
+      : undefined
+  );
+
   protected readonly naechstes = computed(() => {
-    if (!this.saison.hasValue()) {
-      return undefined;
-    }
-    const saison = this.saison.value();
-    const spiel = naechstesSpiel(saison, this.heute());
-    return spiel && spielZeile(saison, spiel);
+    const spiel = this.kommendesSpiel();
+    return spiel && this.saison.hasValue()
+      ? spielZeile(this.saison.value(), spiel)
+      : undefined;
   });
+
+  /** The next Spiel's details, for its Halle: that Spiel's only. */
+  private readonly naechsteDetails = spielDetailsResource(
+    () => this.kommendesSpiel()?.id
+  );
+
+  protected readonly naechsteHalle = computed(() =>
+    hallenStand(this.naechsteDetails)
+  );
 
   protected readonly ligen = computed(() =>
     this.saison.hasValue()

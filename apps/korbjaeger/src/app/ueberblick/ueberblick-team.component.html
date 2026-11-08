@@ -32,6 +32,7 @@
         @if (team.naechstes; as naechstes) {
           <korb-naechstes-spiel
             [zeile]="naechstes"
+            [halle]="team.halle"
             data-qa="ueberblick-naechstes"
           />
         }

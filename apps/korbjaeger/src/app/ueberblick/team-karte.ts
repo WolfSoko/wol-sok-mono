@@ -5,6 +5,7 @@ import {
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
+import type { HallenStand } from '../halle/hallen-stand';
 import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
 
 /** One of Meine Teams on the overview, as its card shows it. */
@@ -18,12 +19,21 @@ export type TeamKarte =
       /** The next Spiel, by which the overview orders the cards. */
       readonly naechstesSpiel?: Spiel;
       readonly naechstes?: SpielZeile;
+      /** The read of the next Spiel's Halle, once it started. */
+      readonly halle?: HallenStand;
       readonly ausfaelle: readonly SpielZeile[];
       readonly letztes?: SpielZeile;
     };
 
-/** The card of a Team whose Saison was read, on `heute`. */
-export function geladeneKarte(saison: TeamSaison, heute: string): TeamKarte {
+/**
+ * The card of a Team whose Saison was read, on `heute`, with the read of
+ * its next Spiel's Halle where it started.
+ */
+export function geladeneKarte(
+  saison: TeamSaison,
+  heute: string,
+  halle?: HallenStand
+): TeamKarte {
   const { naechstes, ausfaelle, letztes } = teamUeberblick(saison, heute);
   return {
     art: 'geladen',
@@ -31,6 +41,7 @@ export function geladeneKarte(saison: TeamSaison, heute: string): TeamKarte {
     name: saison.team.name,
     naechstesSpiel: naechstes,
     naechstes: naechstes && spielZeile(saison, naechstes),
+    ...(halle && { halle }),
     ausfaelle: ausfaelle.map((spiel) => spielZeile(saison, spiel)),
     letztes: letztes && spielZeile(saison, letztes),
   };

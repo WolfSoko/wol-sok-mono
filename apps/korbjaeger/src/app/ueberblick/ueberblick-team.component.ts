@@ -18,8 +18,8 @@ import type { TeamKarte } from './team-karte';
  * One of Meine Teams on the overview, as `karte` gives it: its next Spiel
  * with its Halle, what falls through before it and its last result, each
  * opening its Spiel page, or why its read failed, with "Entfernen" to
- * unfollow the Team. Reads no data itself but the next Spiel's Halle
- * (`NaechstesSpielComponent`), so each card's loads and fails on its own.
+ * unfollow the Team. Reads no data itself: `MeineTeamsUeberblick` holds
+ * every card's reads, the next Spiel's Halle included.
  */
 @Component({
   selector: 'korb-ueberblick-team',

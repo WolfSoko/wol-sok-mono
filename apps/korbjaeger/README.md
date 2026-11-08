@@ -38,10 +38,13 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   `kader-zeilen.ts`, `spielbericht-teil.ts`).
 - **Halle** (`src/app/halle/`): `HalleComponent` shows a Halle with a
   link that opens navigation in a tab of its own (the lib's
-  `halleNavigationUrl`); `SpielHalleComponent` reads it from one Spiel's
-  match info. Only the next Spiel's is read, by `NaechstesSpielComponent`
-  (`src/app/spiel/`) on the Team page and on each overview card, so each
-  loads and fails on its own.
+  `halleNavigationUrl`); `SpielHalleComponent` shows where a Halle's read
+  stands (`HallenStand`: loading, failed, read) and reads nothing itself.
+  Only the next Spiel's details are read (`spielDetailsResource` in
+  `src/app/basketball-data/`, beside `teamSaisonResource`): the Team page
+  holds its own read, `MeineTeamsUeberblick` one per followed Team, and
+  `NaechstesSpielComponent` (`src/app/spiel/`) shows the Spiel with its
+  Halle on both, so each loads and fails on its own.
 - **Meine Teams** (`src/app/auswahl/`): the `Auswahl` port (`AUSWAHL`),
   Meine Teams as a signal (`undefined` until read) with `folgen` and
   `entfolgen`. Its local adapter
@@ -61,8 +64,10 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   before it that fall through (cancelled or forfeited) and its last result (the lib's `teamUeberblick`), the Team
   that plays first first and Teams without a next Spiel last
   (`nachNaechstemSpiel`), each linking to its Team page.
-  `MeineTeamsUeberblick` holds one read per followed Team
-  (`teamSaisonResource`, as the Team page), so each card loads and fails
+  `MeineTeamsUeberblick` holds the reads of each followed Team: its Saison
+  (`teamSaisonResource`, as the Team page) and, once its next Spiel is
+  known, that Spiel's details for the Halle (`spielDetailsResource`), both
+  ended when the Team is unfollowed. So each card loads and fails
   on its own and a follow or unfollow reads no other Team again; the cards
   (`ueberblick-team.component.ts`) only show what they are given, and one
   whose read fails offers "Entfernen". Error texts are in
