@@ -62,9 +62,18 @@ export function survivingPersonData(
   ];
 }
 
+interface InventedName {
+  readonly vorname: string;
+  readonly nachname: string;
+}
+
+const NAME_COMBINATIONS = INVENTED_VORNAMEN.length * INVENTED_NACHNAMEN.length;
+
 class Anonymiser {
   private readonly invented = new Map<string, number>();
   private readonly taken = new Set<number>();
+  private readonly names = new Map<string, InventedName>();
+  private readonly namesTaken = new Set<number>();
 
   public constructor(private readonly seed: string) {}
 
@@ -104,12 +113,35 @@ class Anonymiser {
         : `person:${personId}`;
     return {
       ...(personId === undefined ? {} : { id: personId }),
-      vorname: pick(INVENTED_VORNAMEN, hash(`${this.seed}:vorname:${nameKey}`)),
-      nachname: pick(
-        INVENTED_NACHNAMEN,
-        hash(`${this.seed}:nachname:${nameKey}`)
-      ),
+      ...this.inventedName(nameKey),
     };
+  }
+
+  /**
+   * A first and last name for `nameKey`, the same each time it is asked
+   * for and, while combinations last, one no other person of the run has.
+   */
+  private inventedName(nameKey: string): InventedName {
+    const known = this.names.get(nameKey);
+    if (known !== undefined) {
+      return known;
+    }
+    const start = hash(`${this.seed}:name:${nameKey}`) % NAME_COMBINATIONS;
+    let combination = start;
+    while (
+      this.namesTaken.has(combination) &&
+      (combination + 1) % NAME_COMBINATIONS !== start
+    ) {
+      combination = (combination + 1) % NAME_COMBINATIONS;
+    }
+    this.namesTaken.add(combination);
+    const name = {
+      vorname: INVENTED_VORNAMEN[combination % INVENTED_VORNAMEN.length],
+      nachname:
+        INVENTED_NACHNAMEN[Math.floor(combination / INVENTED_VORNAMEN.length)],
+    };
+    this.names.set(nameKey, name);
+    return name;
   }
 
   private inventedId(kind: string, original: number): number {
@@ -206,10 +238,6 @@ function isPlayer(object: JsonObject): object is Player {
 
 function isJsonObject(value: unknown): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function pick<T>(choices: readonly T[], seed: number): T {
-  return choices[seed % choices.length];
 }
 
 /** FNV-1a, 32 bits: a small, stable hash for the seeded mapping. */

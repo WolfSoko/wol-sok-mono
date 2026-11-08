@@ -194,3 +194,24 @@ function topPlayer(files: Readonly<Record<string, unknown>>): SpecPlayer {
   };
   return file.data.matchInfo.topPerformances[0].playerA;
 }
+
+describe('anonymiseFixtures with many persons', () => {
+  it('gives each person a name of their own', () => {
+    const persons = Array.from({ length: 150 }, (_, index) => ({
+      id: 1000 + index,
+      vorname: `Vor${index}`,
+      nachname: `Nach${index}`,
+      anonym: false,
+    }));
+    const anonymised = anonymiseFixtures({ 'many.json': persons }, SEED)[
+      'many.json'
+    ] as {
+      vorname: string;
+      nachname: string;
+    }[];
+
+    expect(
+      new Set(anonymised.map((p) => `${p.vorname} ${p.nachname}`)).size
+    ).toBe(150);
+  });
+});
