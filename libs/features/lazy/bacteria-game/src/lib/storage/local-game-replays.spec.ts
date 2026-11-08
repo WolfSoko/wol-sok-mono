@@ -5,7 +5,9 @@ import {
   replayFromBytes,
   replayOf,
 } from '@wolsok/feat-shared-bacteria-engine';
+import type { ReplayListing } from './replay-records';
 import {
+  backfilled,
   LOCAL_REPLAYS_KEY,
   LocalGameReplays,
   MAX_LOCAL_REPLAYS,
@@ -126,24 +128,108 @@ describe('LocalGameReplays', () => {
     expect(parseLocalReplays(storage.stored(LOCAL_REPLAYS_KEY))).toEqual([]);
   });
 
+  /** Strips `simulation` from every stored entry, and spoils the bytes of all but `readable`. */
+  async function keepAsBeforeSimulation(readable: string): Promise<void> {
+    storage.update(LOCAL_REPLAYS_KEY, (stored) =>
+      (stored as Record<string, unknown>[]).map(
+        ({ simulation: _simulation, ...old }) =>
+          old['id'] === readable ? old : { ...old, bytes: 'AAAA' }
+      )
+    );
+    await settle();
+  }
+
+  async function listed(): Promise<ReplayListing[]> {
+    const list = replays.listMine();
+    await settle();
+    return list;
+  }
+
   it('lists an entry kept before the store wrote its simulation, read from its bytes', async () => {
     const id = (await replays.submit({ replay: REPLAY, hint: 33 })) as string;
     await replays.submit({ replay: REPLAY, hint: 34 });
     await settle();
-    storage.update(LOCAL_REPLAYS_KEY, (stored) =>
-      (stored as Record<string, unknown>[]).map(
-        ({ simulation: _simulation, ...old }) =>
-          old['id'] === id ? old : { ...old, bytes: 'AAAA' }
-      )
-    );
-    await settle();
+    await keepAsBeforeSimulation(id);
 
-    const list = replays.listMine();
-    await settle();
     // The other one's bytes do not read: it is left out.
-    expect(await list).toEqual([
+    expect(await listed()).toEqual([
       expect.objectContaining({ id, simulation: 'cpu' }),
     ]);
+  });
+
+  /** Spoils every stored entry's bytes: a listing that still reads them drops the entry. */
+  async function spoilBytes(): Promise<void> {
+    storage.update(LOCAL_REPLAYS_KEY, (stored) =>
+      (stored as Record<string, unknown>[]).map((entry) => ({
+        ...entry,
+        bytes: 'AAAA',
+      }))
+    );
+    await settle();
+  }
+
+  it('writes what it read back once, and drops an entry whose bytes do not read', async () => {
+    const id = (await replays.submit({ replay: REPLAY, hint: 33 })) as string;
+    await replays.submit({ replay: REPLAY, hint: 34 });
+    await settle();
+    const asSubmitted = storage.stored(LOCAL_REPLAYS_KEY) as unknown[];
+    await keepAsBeforeSimulation(id);
+
+    await listed();
+
+    expect(storage.stored(LOCAL_REPLAYS_KEY)).toEqual(
+      asSubmitted.filter((entry) => (entry as { id: string }).id === id)
+    );
+    await spoilBytes();
+    expect(await listed()).toEqual([
+      expect.objectContaining({ id, simulation: 'cpu' }),
+    ]);
+  });
+
+  it('neither reads nor writes entries that carry their simulation', async () => {
+    await replays.submit({ replay: REPLAY, hint: 33 });
+    await settle();
+    await spoilBytes();
+    const update = jest.spyOn(storage, 'update');
+
+    expect(await listed()).toHaveLength(1);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  describe('backfilled', () => {
+    const OLD = { id: 'a', bytes: 'x', levelId: 'petri-dish' };
+    const PLAYBACK = {
+      balanceVersion: 4,
+      replayVersion: 3,
+      simulation: 'gpu-int',
+      ladder: 2,
+    };
+
+    it('adds what was read to the entries still lacking it, and drops the unreadable', () => {
+      expect(
+        backfilled(
+          [OLD, { ...OLD, id: 'b' }, { ...OLD, id: 'c' }],
+          new Map([
+            ['a', PLAYBACK],
+            ['b', null],
+          ])
+        )
+      ).toEqual([
+        { ...OLD, ...PLAYBACK },
+        { ...OLD, id: 'c' },
+      ]);
+    });
+
+    it('leaves an entry that gained its simulation meanwhile, and a deleted one, as they are', () => {
+      const gained = { ...OLD, simulation: 'cpu', balanceVersion: 5 };
+      const read = new Map([
+        ['a', PLAYBACK],
+        ['gone', null],
+      ]);
+
+      expect(backfilled([gained], read)).toEqual([gained]);
+      expect(backfilled(null, read)).toBeNull();
+    });
   });
 
   it('reads a damaged entry as nothing kept', () => {
