@@ -44,18 +44,6 @@ describe('retry-once.ts', () => {
     expect(result.stdout).not.toContain('retrying');
   });
 
-  it('retries a command that fails once and passes', () => {
-    const marker = join(dir, 'failed-once');
-    const failOnce = `const fs = require('fs');
-      if (!fs.existsSync(${JSON.stringify(marker)})) { fs.writeFileSync(${JSON.stringify(marker)}, ''); process.exit(7); }`;
-
-    const result = runner(...nodeScript(failOnce));
-
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain('attempt 1 of 2 failed with exit code 7');
-    expect(result.stdout).toContain('attempt 2 of 2 succeeded');
-  });
-
   it("exits with the second attempt's code when both fail", () => {
     const result = runner(...nodeScript('process.exit(5)'));
 

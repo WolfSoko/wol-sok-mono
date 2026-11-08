@@ -43,7 +43,7 @@ bug issue opened that the next release healed.
   with inherited output. The retry decision is a pure function
   (`runWithOneRetry(run, { pause, log })`) with the process start and the
   pause passed in, so its spec runs in milliseconds. It lives in the app,
-  outside `src/` (not bundled, not in `tsconfig.app.json`), and its spec runs
+  outside `src/` (not bundled: `build` leaves `deploy/**` out of its inputs), and its spec runs
   with the app's Jest `test` target, so CI covers it.
   Rejected: an `.mjs` in `tools/firebase/` with `node --test`
   (`grant-admin.test.mjs`): no CI target runs it.

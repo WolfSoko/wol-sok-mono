@@ -27,7 +27,7 @@ describe('runWithOneRetry', () => {
   });
 
   it('runs once and passes when the first attempt succeeds', async () => {
-    const command = scripted({ code: 0 });
+    const command = scripted({ kind: 'exit', code: 0 });
 
     await expect(runWithOneRetry(command.run, deps())).resolves.toBe(0);
 
@@ -36,7 +36,10 @@ describe('runWithOneRetry', () => {
   });
 
   it('retries once after the pause and passes when the second attempt succeeds', async () => {
-    const command = scripted({ code: 1 }, { code: 0 });
+    const command = scripted(
+      { kind: 'exit', code: 1 },
+      { kind: 'exit', code: 0 }
+    );
 
     await expect(runWithOneRetry(command.run, deps())).resolves.toBe(0);
 
@@ -53,7 +56,10 @@ describe('runWithOneRetry', () => {
   });
 
   it("fails with the second attempt's code when both attempts fail", async () => {
-    const command = scripted({ code: 1 }, { code: 3 });
+    const command = scripted(
+      { kind: 'exit', code: 1 },
+      { kind: 'exit', code: 3 }
+    );
 
     await expect(runWithOneRetry(command.run, deps())).resolves.toBe(3);
 
@@ -64,7 +70,7 @@ describe('runWithOneRetry', () => {
   });
 
   it('does not retry a run ended by a signal', async () => {
-    const command = scripted({ code: null, signal: 'SIGTERM' });
+    const command = scripted({ kind: 'signal', signal: 'SIGTERM' });
 
     await expect(runWithOneRetry(command.run, deps())).resolves.toBe(128 + 15);
 
@@ -73,7 +79,10 @@ describe('runWithOneRetry', () => {
   });
 
   it('does not retry a command that could not start', async () => {
-    const command = scripted({ code: null, startError: 'firebase: ENOENT' });
+    const command = scripted({
+      kind: 'start-error',
+      message: 'firebase: ENOENT',
+    });
 
     await expect(runWithOneRetry(command.run, deps())).resolves.toBe(1);
 
@@ -84,7 +93,10 @@ describe('runWithOneRetry', () => {
   });
 
   it('takes a pause of its own', async () => {
-    const command = scripted({ code: 1 }, { code: 0 });
+    const command = scripted(
+      { kind: 'exit', code: 1 },
+      { kind: 'exit', code: 0 }
+    );
 
     await runWithOneRetry(command.run, { ...deps(), pauseMs: 5 });
 

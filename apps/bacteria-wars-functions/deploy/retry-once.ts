@@ -5,42 +5,42 @@
  * Usage: tsx apps/bacteria-wars-functions/deploy/retry-once.ts <command> [args...]
  * `RETRY_PAUSE_MS` overrides the pause before the retry (the specs set 0).
  */
-import { spawn } from 'node:child_process';
+import { ChildProcess, spawn } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
-import {
-  RETRY_PAUSE_MS,
-  RunOutcome,
-  runWithOneRetry,
-} from './run-with-one-retry';
+import { RunOutcome, runWithOneRetry } from './run-with-one-retry';
 
 const USAGE_EXIT_CODE = 2;
-const CANCEL_SIGNALS: readonly NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
 
-/** The signal that cancelled this job, if one did: no retry after it. */
+/** The running deploy, which a cancel of the job is forwarded to. */
+let current: ChildProcess | null = null;
+/** The signal that cancelled the job, if one did: no retry after it. */
 let cancelledBy: NodeJS.Signals | null = null;
+
+function onCancel(signal: NodeJS.Signals): void {
+  cancelledBy = signal;
+  current?.kill(signal);
+}
 
 function runCommand([command, ...args]: string[]): Promise<RunOutcome> {
   return new Promise((resolve) => {
-    const child = spawn(command, args, { stdio: 'inherit' });
-    const forward = (signal: NodeJS.Signals) => child.kill(signal);
-    CANCEL_SIGNALS.forEach((signal) => process.on(signal, forward));
-    const settle = (outcome: RunOutcome) => {
-      CANCEL_SIGNALS.forEach((signal) => process.off(signal, forward));
-      resolve(outcome);
-    };
-    child.on('error', (error) =>
-      settle({ code: null, startError: `${command}: ${error.message}` })
+    current = spawn(command, args, { stdio: 'inherit' });
+    current.on('error', (error) =>
+      resolve({ kind: 'start-error', message: `${command}: ${error.message}` })
     );
-    child.on('close', (code, signal) =>
-      settle({ code, signal: signal ?? cancelledBy })
-    );
+    current.on('close', (code, signal) => {
+      const endedBy = signal ?? cancelledBy;
+      resolve(
+        endedBy
+          ? { kind: 'signal', signal: endedBy }
+          : { kind: 'exit', code: code ?? 1 }
+      );
+    });
   });
 }
 
-function pauseMs(): number {
-  const override = process.env['RETRY_PAUSE_MS'];
-  const ms = override ? Number(override) : NaN;
-  return ms >= 0 ? ms : RETRY_PAUSE_MS;
+function pauseOverride(): number | undefined {
+  const ms = Number(process.env['RETRY_PAUSE_MS'] || NaN);
+  return ms >= 0 ? ms : undefined;
 }
 
 async function main(): Promise<number> {
@@ -49,15 +49,12 @@ async function main(): Promise<number> {
     console.error('Usage: retry-once.ts <command> [args...]');
     return USAGE_EXIT_CODE;
   }
-  CANCEL_SIGNALS.forEach((signal) =>
-    process.on(signal, () => {
-      cancelledBy = signal;
-    })
-  );
+  process.on('SIGINT', onCancel);
+  process.on('SIGTERM', onCancel);
   return runWithOneRetry(() => runCommand(command), {
-    pause: (ms) => sleep(ms),
-    log: (line) => console.log(line),
-    pauseMs: pauseMs(),
+    pause: sleep,
+    log: console.log,
+    pauseMs: pauseOverride(),
   });
 }
 

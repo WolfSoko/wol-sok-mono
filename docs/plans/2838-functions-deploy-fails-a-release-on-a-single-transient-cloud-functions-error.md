@@ -15,7 +15,7 @@ Spec: [docs/specs/2838-…](../specs/2838-functions-deploy-fails-a-release-on-a-
 - Spawns the command from `process.argv` with `stdio: 'inherit'`, pauses with
   a timer, exits with the decision's code; usage error (code 2) without a
   command (spec for acceptance 6 on the argument parsing, `deploy/retry-once.spec.ts`).
-- `tsconfig.spec.json` includes `deploy/**/*.ts`.
+- `tsconfig.app.json` includes `deploy/**/*.ts`, `tsconfig.spec.json` `deploy/**/*.spec.ts`.
 
 ## Task 3: wire the target and document
 
