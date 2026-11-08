@@ -4,6 +4,7 @@ import type { Team } from '../domain/team';
 import type { VereinsTeam, VereinsTeams } from '../domain/team-saison';
 import type { VereinId } from '../domain/ids';
 import { DbbObject } from './dbb-object';
+import { mapVerein } from './map-verein';
 import {
   chronologisch,
   distinctLigen,
@@ -18,11 +19,7 @@ import { byName } from './teams';
  */
 export function mapVereinsTeams(data: unknown): VereinsTeams {
   const response = DbbObject.of(data, 'clubMatches');
-  const club = response.object('club');
-  const verein = {
-    id: club.number('vereinId'),
-    name: club.string('vereinsname').trim(),
-  };
+  const verein = mapVerein(response.object('club'));
   const spiele = chronologisch(
     mapSpieleInLigen(response.optionalObjects('matches'))
   );
