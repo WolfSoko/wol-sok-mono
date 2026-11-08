@@ -8,6 +8,7 @@
     "jest.config.ts",
     "jest.emulator.config.ts",
     "src/**/*.spec.ts",
+    "deploy/**/*.ts",
     "src/**/*.emulator.ts",
     "src/testing/**/*.ts",
     "src/**/*.d.ts"
