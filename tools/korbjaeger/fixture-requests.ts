@@ -153,6 +153,11 @@ export const FIXTURE_REQUESTS: readonly FixtureRequest[] = [
     request: { kind: 'vereins-spiele', vereinId: 1476, tage: 7 },
     trims: [{ path: ['data', 'matches'], keep: 15 }],
   },
+  // Team 313036's Verein, for the e2e's Team page: its other Teams
+  {
+    name: 'club-1837-actualmatches',
+    request: { kind: 'vereins-spiele', vereinId: 1837, tage: 28 },
+  },
   {
     name: 'matchinfo-2911141',
     request: { kind: 'spiel-info', spielId: 2911141 },

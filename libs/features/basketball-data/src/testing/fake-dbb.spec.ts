@@ -19,6 +19,8 @@ import friendlyTable from '../lib/dbb/fixtures/table-54689.json';
 import vorrundeTable from '../lib/dbb/fixtures/table-54862.json';
 import vorrundeSpielplan from '../lib/dbb/fixtures/spielplan-54862.json';
 import teamSpiele from '../lib/dbb/fixtures/team-313036-matches.json';
+import vereinsSpiele from '../lib/dbb/fixtures/club-1837-actualmatches.json';
+import { VEREINS_SPIELE_TAGE } from '../lib/dbb/dbb-basketball-data';
 import alleLigen from '../lib/dbb/fixtures/wam-data-alle.json';
 import niedersachsen from '../lib/dbb/fixtures/wam-data-niedersachsen.json';
 import niedersachsenU12 from '../lib/dbb/fixtures/wam-data-niedersachsen-u12.json';
@@ -111,6 +113,16 @@ describe('fakeDbbAnswer', () => {
     const { path } = dbbHttpRequest({ kind: 'team-spiele', teamId: 313036 });
 
     expect(fakeDbbAnswer('GET', path)).toEqual(teamSpiele);
+  });
+
+  it('answers the Spiele of Team 313036’s Verein, as the adapter asks for them', () => {
+    expect(
+      answerTo({
+        kind: 'vereins-spiele',
+        vereinId: 1837,
+        tage: VEREINS_SPIELE_TAGE,
+      })
+    ).toEqual(vereinsSpiele);
   });
 
   it.each([

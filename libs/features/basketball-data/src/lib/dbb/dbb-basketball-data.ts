@@ -30,8 +30,15 @@ import { mapTabelle } from './map-tabelle';
 import { mapTeamSpiele } from './map-team-spiele';
 import { mapVereinsTeams } from './map-vereins-teams';
 
-/** How far either way a Verein's Spiele are looked at for its Teams. */
-export const VEREINS_SPIELE_TAGE = 21;
+/**
+ * How far either way a Verein's Spiele are looked at for its Teams: four
+ * weeks, so a Team pausing over the holidays still shows, and a Team whose
+ * Saison ended (two weeks after its last Spiel, `saisonBeendet`) still
+ * finds the Verein's Teams that ended about when it did; ahead, the next
+ * Saison's Teams show once their first Spiele are set. Wider would cost
+ * every read a longer list for little gain.
+ */
+export const VEREINS_SPIELE_TAGE = 28;
 
 /**
  * `BasketballData` read from the DBB's JSON API through `transport`, which
