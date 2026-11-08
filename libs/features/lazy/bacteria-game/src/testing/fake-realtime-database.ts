@@ -86,6 +86,7 @@ export class FakeRealtimeDatabase {
         this.armed.add(ref.path);
       },
       cancel: async (): Promise<void> => {
+        this.check(ref.path);
         this.writes.push({ kind: 'onDisconnect.cancel', path: ref.path });
         this.armed.delete(ref.path);
       },

@@ -317,9 +317,8 @@ export class FakeFirebase {
       collection: CollectionRef,
       data: FakeDoc
     ): Promise<DocRef> => {
-      const ref = this.docRef(`${collection.path}/auto${++this.ids}`);
-      this.check(ref.path);
-      this.set(ref.path, data);
+      const ref = this.dbSdk.doc(collection);
+      await this.dbSdk.setDoc(ref, data);
       return ref;
     },
     updateDoc: async (ref: DocRef, data: FakeDoc): Promise<void> => {

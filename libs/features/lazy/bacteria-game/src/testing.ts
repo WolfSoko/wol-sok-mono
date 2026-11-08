@@ -20,6 +20,7 @@ export type {
 } from './testing/fake-firebase-sdk';
 export {
   FakeRealtimeDatabase,
+  RTDB_PERMISSION_DENIED,
   RTDB_SERVER_TIMESTAMP,
 } from './testing/fake-realtime-database';
 export type { FakeValueWrite } from './testing/fake-realtime-database';
@@ -27,5 +28,6 @@ export {
   FakeFirebaseAuth,
   googleUser,
   guestUser,
+  PLAIN_GOOGLE_TOKEN,
 } from './testing/fake-firebase-auth';
 export type { FakeToken, FakeUser } from './testing/fake-firebase-auth';

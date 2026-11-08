@@ -1,6 +1,8 @@
 /**
- * How the fake SDK parts answer: like the SDK, they call a listener back
- * asynchronously, never inside the call that caused it.
+ * How the fake SDK parts answer: like the SDK, they tell a new listener
+ * its first value asynchronously, never inside the subscribing call. Auth
+ * tells a switch of user (`become`, a sign-in or sign-out) at once, as the
+ * SDK does before its sign-in call resolves.
  */
 
 /**

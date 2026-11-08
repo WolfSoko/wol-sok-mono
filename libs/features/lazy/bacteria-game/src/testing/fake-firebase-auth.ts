@@ -55,8 +55,8 @@ type UserListener = (user: FakeUser | null) => void;
  * hand ({@link become}) or by the SDK's sign-ins, the auth state and token
  * listeners told soon after they subscribe, guests `guest-1`, `guest-2`, …
  * The popups and the credential sign-in are jest mocks a spec answers;
- * `signInWithCredential` signs in as a Google user named after the
- * credential by default. It is also the `auth` instance the connection
+ * `signInWithCredential` signs in by default as the Google user `Ada`
+ * whose uid is the credential. It is also the `auth` instance the connection
  * carries, so the adapter reads `currentUser` from it.
  */
 export class FakeFirebaseAuth {

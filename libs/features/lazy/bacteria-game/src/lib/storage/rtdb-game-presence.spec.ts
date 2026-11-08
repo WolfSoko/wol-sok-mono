@@ -4,7 +4,10 @@ import {
   FakeFirebase,
   settleSnapshots,
 } from '../../testing/fake-firebase-sdk';
-import { RTDB_SERVER_TIMESTAMP } from '../../testing/fake-realtime-database';
+import {
+  RTDB_PERMISSION_DENIED,
+  RTDB_SERVER_TIMESTAMP,
+} from '../../testing/fake-realtime-database';
 import type { FirebaseConnection } from './firebase-connection';
 import type { PresenceState } from './game-social';
 import {
@@ -43,7 +46,7 @@ describe('RtdbGamePresence', () => {
         .subscribe((state) => seen.push(state));
       await settleSnapshots();
 
-      fake.putValue('status/bob', { state: 'playing', at: 1 });
+      fake.realtime.put('status/bob', { state: 'playing', at: 1 });
       await settleSnapshots();
 
       expect(seen).toEqual([null, 'playing']);
@@ -59,7 +62,7 @@ describe('RtdbGamePresence', () => {
       expect(seen).toEqual([null]);
 
       fake.refused.delete('rtdb:status/bob');
-      fake.putValue('status/bob', { state: 'online', at: 1 });
+      fake.realtime.put('status/bob', { state: 'online', at: 1 });
       await jest.advanceTimersByTimeAsync(REFUSED_RETRY_MS);
 
       expect(seen).toEqual([null, 'online']);
@@ -97,7 +100,7 @@ describe('RtdbGamePresence', () => {
 
   describe('set', () => {
     async function connected(): Promise<RtdbGamePresence> {
-      fake.putValue('.info/connected', true);
+      fake.realtime.put('.info/connected', true);
       const shared = presence();
       await settleSnapshots();
       return shared;
@@ -132,11 +135,11 @@ describe('RtdbGamePresence', () => {
       await settleSnapshots();
       expect(fake.realtime.writes).toEqual([]);
 
-      fake.putValue('.info/connected', true);
+      fake.realtime.put('.info/connected', true);
       await settleSnapshots();
       fake.realtime.disconnect();
       await settleSnapshots();
-      fake.putValue('.info/connected', true);
+      fake.realtime.put('.info/connected', true);
       await settleSnapshots();
 
       expect(fake.realtime.values.get('status/ada')).toMatchObject({
@@ -188,7 +191,7 @@ describe('RtdbGamePresence', () => {
       });
     });
 
-    it('warns, and goes on, when the rules refuse the write', async () => {
+    it('warns, writes nothing, and goes on, when the rules refuse the write', async () => {
       const warn = jest.spyOn(console, 'warn').mockImplementation(() => null);
       fake.refused.add('rtdb:status/ada');
       const shared = await connected();
@@ -198,8 +201,35 @@ describe('RtdbGamePresence', () => {
 
       expect(warn).toHaveBeenCalledWith(
         'Could not share the online status',
-        expect.objectContaining({ code: 'PERMISSION_DENIED' })
+        expect.objectContaining({ code: RTDB_PERMISSION_DENIED })
       );
+      expect(fake.realtime.values.has('status/ada')).toBe(false);
+
+      shared.set('bob', 'online');
+      await settleSnapshots();
+
+      expect(fake.realtime.values.get('status/bob')).toMatchObject({
+        state: 'online',
+      });
+      warn.mockRestore();
+    });
+
+    it('warns when the status cannot be taken back', async () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => null);
+      const shared = await connected();
+      shared.set('ada', 'online');
+      await settleSnapshots();
+      fake.refused.add('rtdb:status/ada');
+
+      shared.set('ada', null);
+      await settleSnapshots();
+
+      expect(warn).toHaveBeenCalledWith(
+        'Could not take the online status back',
+        expect.objectContaining({ code: RTDB_PERMISSION_DENIED })
+      );
+      // The disconnect still clears it.
+      expect(fake.realtime.armedFor('status/ada')).toBe(true);
       warn.mockRestore();
     });
   });
