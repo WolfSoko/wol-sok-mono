@@ -6,6 +6,7 @@ test.describe('DBB proxy', () => {
     ["a Team's Spiele", '/api/dbb/team/313036/spiele'],
     ["a Liga's Tabelle", '/api/dbb/liga/54862/tabelle'],
     ["a Spiel's match info", '/api/dbb/spiel/2861436'],
+    ['a Spielbericht not confirmed yet', '/api/dbb/spiel/2861436/bericht'],
   ] as const) {
     test(`serves ${what}, cached`, async ({ request }) => {
       const response = await request.get(path);
@@ -17,10 +18,10 @@ test.describe('DBB proxy', () => {
     });
   }
 
-  test("lets the CDN keep a played Spiel's Spielbericht an hour", async ({
+  test("lets the CDN keep a confirmed Spiel's Spielbericht an hour", async ({
     request,
   }) => {
-    const response = await request.get('/api/dbb/spiel/2861436/bericht');
+    const response = await request.get('/api/dbb/spiel/2843811/bericht');
 
     expect(response.status()).toBe(200);
     expect(response.headers()['cache-control']).toBe(

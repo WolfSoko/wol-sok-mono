@@ -57,7 +57,10 @@ app under `/api/dbb/`, one route per allowlisted read, with numeric ids
 validated and 404 for every other path. The Liga search is a `GET` on the
 proxy, its filter in the query string, so the CDN can cache it. It answers
 with `Cache-Control: public, max-age=60, s-maxage=300` (the boxscore of a
-finished Spiel, which rarely changes, `s-maxage=3600`), so Firebase
+finished Spiel, which rarely changes, `s-maxage=3600`: one whose result the
+Verband has confirmed, with both Kader listed, as the boxscore body itself
+says; an unconfirmed one keeps the short cache, since its Kader and
+Spielerwerte may still change), so Firebase
 Hosting's CDN serves repeats and the DBB sees at most one request per
 resource every few minutes, however many parents watch. It calls the DBB
 with a timeout, a User-Agent that names the app and its URL, and no

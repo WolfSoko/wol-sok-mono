@@ -2,6 +2,7 @@ import { dbbHttpRequest } from '../lib/dbb/dbb-request';
 import { dbbStatusOf } from '../lib/dbb/envelope';
 import boxscoreGespielt from '../lib/dbb/fixtures/boxscore-2911141.json';
 import boxscoreKeiner from '../lib/dbb/fixtures/boxscore-2843814.json';
+import boxscoreNurKaderBestaetigt from '../lib/dbb/fixtures/boxscore-2843811.json';
 import boxscoreNurKader from '../lib/dbb/fixtures/boxscore-2861436.json';
 import matchInfoGespielt from '../lib/dbb/fixtures/matchinfo-2911141.json';
 import matchInfoGeplant from '../lib/dbb/fixtures/matchinfo-2843814.json';
@@ -43,6 +44,7 @@ describe('fakeDbbAnswer', () => {
 
   it.each([
     [2861436, boxscoreNurKader],
+    [2843811, boxscoreNurKaderBestaetigt],
     [2911141, boxscoreGespielt],
     [2843814, boxscoreKeiner],
   ])('answers the boxscore of Spiel %i', (spielId, recording) => {

@@ -1,4 +1,5 @@
 import { dbbHttpRequest, type DbbRequest } from '../lib/dbb/dbb-request';
+import boxscore2843811 from '../lib/dbb/fixtures/boxscore-2843811.json';
 import boxscore2843814 from '../lib/dbb/fixtures/boxscore-2843814.json';
 import boxscore2861436 from '../lib/dbb/fixtures/boxscore-2861436.json';
 import boxscore2911141 from '../lib/dbb/fixtures/boxscore-2911141.json';
@@ -17,9 +18,10 @@ import teamNotFound from '../lib/dbb/fixtures/team-not-found.json';
 
 /**
  * The recorded answers: Team 313036's Spiele, its two Ligen's Tabellen,
- * one of its Spiele with a Kader-only Spielbericht, and the Spiele of the
- * adapter's cases (played with quarters and Spielerwerte, planned without
- * a Spielbericht, cancelled, forfeited).
+ * one of its Spiele with a Kader-only Spielbericht not confirmed yet, and
+ * the Spiele of the adapter's cases (played with quarters and Spielerwerte,
+ * a confirmed Kader-only Spielbericht, planned without a Spielbericht,
+ * cancelled, forfeited).
  */
 const RECORDINGS: ReadonlyArray<readonly [DbbRequest, unknown]> = [
   [{ kind: 'team-spiele', teamId: 313036 }, team313036Matches],
@@ -32,6 +34,7 @@ const RECORDINGS: ReadonlyArray<readonly [DbbRequest, unknown]> = [
   [{ kind: 'spiel-info', spielId: 2930414 }, matchinfo2930414],
   [{ kind: 'spielbericht', spielId: 2861436 }, boxscore2861436],
   [{ kind: 'spielbericht', spielId: 2911141 }, boxscore2911141],
+  [{ kind: 'spielbericht', spielId: 2843811 }, boxscore2843811],
   [{ kind: 'spielbericht', spielId: 2843814 }, boxscore2843814],
 ];
 

@@ -261,10 +261,10 @@ describe('DBB proxy', () => {
     });
   });
 
-  describe("a played Spiel's Spielbericht", () => {
+  describe("a confirmed Spiel's Spielbericht", () => {
     it.each([
       ['with Spielerwerte', 2911141],
-      ['with the Kader only', 2861436],
+      ['with the Kader only', 2843811],
     ])('lets the CDN keep it an hour, %s', async (_case, spielId) => {
       const response = await proxy(recordedDbb())(
         `/api/dbb/spiel/${spielId}/bericht`
@@ -276,6 +276,17 @@ describe('DBB proxy', () => {
       );
       expect(FINISHED_BOXSCORE_CACHE_CONTROL).toBe(
         'public, max-age=60, s-maxage=3600'
+      );
+    });
+
+    it('keeps one whose result is not confirmed yet five minutes only', async () => {
+      const response = await proxy(recordedDbb())(
+        '/api/dbb/spiel/2861436/bericht'
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('cache-control')).toBe(
+        DBB_PROXY_CACHE_CONTROL
       );
     });
 
