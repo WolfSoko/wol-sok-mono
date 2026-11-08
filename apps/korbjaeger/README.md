@@ -13,8 +13,9 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   `@wolsok/feat-shared-basketball-data` (`libs/features/basketball-data`),
   provided in `src/app/basketball-data/` with a transport that calls the
   app's own proxy, since the DBB sends no CORS headers.
-- **Team page** (`/team/{id}`, `src/app/team/`): the Team's Spiele of the
-  Saison, then one Tabelle per Liga of those Spiele, the Team's own line
+- **Team page** (`/team/{id}`, `src/app/team/`): the Team's next Spiel
+  with its Halle, the Team's Spiele of the Saison (each opening its Spiel
+  page), then one Tabelle per Liga of those Spiele, the Team's own line
   highlighted. The current Liga comes first, by the lib's
   `ligenAktuellZuerst`: the Liga of the Team's next Spiel from today on
   (`HEUTE` in `src/app/heute.ts`, read again when the page comes back
@@ -24,6 +25,23 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Tabelle loads and fails on its own.
   A toggle button ("Team folgen", `aria-pressed`) adds the Team to Meine
   Teams or takes it out (`team-folgen.component.ts`).
+- **Spiel page** (`/spiel/{id}`, `src/app/spiel-seite/`): the result, the
+  quarter scores (and overtimes) where the Verband records them, what
+  became of the Spiel, both Teams linking to their Team pages, the Halle,
+  and both Kader of the Spielbericht. Players appear as the DBB shows
+  them (shirt number, name), an Anonymer Spieler as "Anonymer Spieler",
+  never as a link (ADR 0019). Spielerwerte (points, field goals, free
+  throws, fouls) only for a Kader whose `spielerwerteErfasst` holds,
+  "keine Spielerwerte erfasst" for one without, "Noch kein Spielbericht"
+  while there is none. The Spiel and its Spielbericht load and fail on
+  their own; the view models are pure (`spiel-kopf.ts`,
+  `kader-zeilen.ts`, `spielbericht-teil.ts`).
+- **Halle** (`src/app/halle/`): `HalleComponent` shows a Halle with a
+  link that opens navigation in a tab of its own (the lib's
+  `halleNavigationUrl`); `SpielHalleComponent` reads it from one Spiel's
+  match info. Only the next Spiel's is read, by `NaechstesSpielComponent`
+  (`src/app/spiel/`) on the Team page and on each overview card, so each
+  loads and fails on its own.
 - **Meine Teams** (`src/app/auswahl/`): the `Auswahl` port (`AUSWAHL`),
   Meine Teams as a signal (`undefined` until read) with `folgen` and
   `entfolgen`. Its local adapter
@@ -49,14 +67,17 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   (`ueberblick-team.component.ts`) only show what they are given, and one
   whose read fails offers "Entfernen". Error texts are in
   `src/app/fehler/`. Both screens
-  show a Spiel through `SpielZeileComponent` (`src/app/spiel/`). The
+  show a Spiel through `SpielZeileComponent` (`src/app/spiel/`), as a
+  link to its Spiel page (`SpielLinkComponent` on the cards). The
   Team-id form below opens a Team to follow.
 - **Proxy:** `src/server/routes/api/dbb/` (thin route files) over
   `src/server/dbb/`; `src/shared/dbb-proxy-routes.ts` maps each read to
   its route and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists
   get a route, with numeric ids; every other path under `/api/dbb/` is 404.
   It passes the DBB's body on unchanged, caches successes
-  (`public, max-age=60, s-maxage=300`) and nothing else, turns DBB
+  (`public, max-age=60, s-maxage=300`; a played Spiel's Spielbericht,
+  `/api/dbb/spiel/{id}/bericht` with a result and a Kader, by the lib's
+  `dbbBoxscoreFinished` on the body itself, `s-maxage=3600`) and nothing else, turns DBB
   `status: "1"` into 404 and a timeout (5 s), a network error, a 5xx or
   `status: "-1"` into 502, and calls the DBB with its own User-Agent and
   no cookies. See [ADR 0018](../../docs/adr/0018-korbjaeger-dbb-data-behind-a-caching-proxy.md).
@@ -86,7 +107,7 @@ npx nx run korbjaeger:serve-e2e        # http://localhost:4304, on the fake DBB
 live data, run `fake-dbb` and `serve-e2e`: the fake DBB
 (`e2e/fake-dbb/server.cts`) answers from the lib's anonymised fixtures
 (`fakeDbbAnswer` of `@wolsok/feat-shared-basketball-data/testing`; Team
-`313036` plays two Ligen, a Vorrunde with a Tabelle and a friendly Liga without one), and the `e2e` build mode points the proxy's
+`313036` plays two Ligen, a Vorrunde with a Tabelle and a friendly Liga without one; its Spiel `2861436` has a Kader-only Spielbericht, and Spiele `2911141` (quarters, Spielerwerte) and `2843814` (no Spielbericht yet) open at `/spiel/{id}`), and the `e2e` build mode points the proxy's
 runtime config `dbbBaseUrl` at it (`NITRO_DBB_BASE_URL` overrides it at
 run time). Open `/team/313036`.
 
