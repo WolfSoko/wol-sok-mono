@@ -6,6 +6,7 @@ export {
 export {
   DBB_BASE_URL,
   MAX_VEREINS_SPIELE_TAGE,
+  assertValidDbbRequest,
   dbbHttpRequest,
   dbbIdOf,
   isDbbId,

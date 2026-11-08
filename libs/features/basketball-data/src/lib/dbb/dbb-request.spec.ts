@@ -1,6 +1,7 @@
 import { KEIN_LIGA_FILTER, type LigaSucheFilter } from '../domain/liga-suche';
 import {
   dbbHttpRequest,
+  assertValidDbbRequest,
   dbbIdOf,
   isDbbId,
   type DbbRequest,
@@ -98,5 +99,36 @@ describe('isDbbId', () => {
     expect(
       [0, -1, 1.5, Number.NaN, Number.MAX_SAFE_INTEGER + 1].map(isDbbId)
     ).toEqual([false, false, false, false, false]);
+  });
+});
+
+describe('assertValidDbbRequest', () => {
+  it('takes a request dbbHttpRequest can build', () => {
+    expect(() =>
+      assertValidDbbRequest({
+        kind: 'liga-seite',
+        filter: BAYERN_U14,
+        startIndex: 10,
+      })
+    ).not.toThrow();
+    expect(() =>
+      assertValidDbbRequest({ kind: 'vereins-spiele', vereinId: 1476, tage: 7 })
+    ).not.toThrow();
+  });
+
+  it.each<DbbRequest>([
+    { kind: 'tabelle', ligaId: 0 },
+    { kind: 'liga-seite', filter: KEIN_LIGA_FILTER, startIndex: -10 },
+    { kind: 'vereins-spiele', vereinId: 1476, tage: 61 },
+    {
+      kind: 'liga-suche',
+      filter: { ...KEIN_LIGA_FILTER, altersklasseIds: [1.5] },
+    },
+    {
+      kind: 'liga-suche',
+      filter: { ...KEIN_LIGA_FILTER, altersgruppeGeschlechtIds: ['x'] },
+    },
+  ])('refuses %j without building it', (request) => {
+    expect(() => assertValidDbbRequest(request)).toThrow(RangeError);
   });
 });

@@ -15,6 +15,7 @@ import type { Tabelle } from '../domain/tabelle';
 import type { Team } from '../domain/team';
 import type { TeamSaison, VereinsTeams } from '../domain/team-saison';
 import {
+  assertValidDbbRequest,
   dbbIdOf,
   isDbbId,
   type DbbRequest,
@@ -90,7 +91,7 @@ export class DbbBasketballData implements BasketballData {
     try {
       return await this.transport(request);
     } catch (error) {
-      if (isBasketballDataError(error) || error instanceof RangeError) {
+      if (isBasketballDataError(error)) {
         throw error;
       }
       throw new BasketballDataError(
@@ -105,13 +106,16 @@ export class DbbBasketballData implements BasketballData {
 }
 
 /**
- * An id the DBB cannot have names nothing it knows. Anything else wrong
- * with a request (a negative start index, a malformed filter) is the
- * caller's bug: the transport's `RangeError` reaches the caller as it is.
+ * Checks `request` before the transport sees it. An id the DBB cannot have
+ * names nothing it knows: `not-found`. Anything else wrong (a negative
+ * start index, a malformed filter) is the caller's bug and throws its
+ * `RangeError` as it is. What the transport throws afterwards is the
+ * DBB's or the network's trouble: `unavailable`.
  */
 function assertKnowable(request: DbbRequest): void {
   const id = dbbIdOf(request);
   if (id !== undefined && !isDbbId(id)) {
     throw new BasketballDataError('not-found', `not a DBB id: ${id}`);
   }
+  assertValidDbbRequest(request);
 }

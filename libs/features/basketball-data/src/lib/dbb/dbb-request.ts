@@ -87,10 +87,37 @@ export function dbbIdOf(request: DbbRequest): number | undefined {
 }
 
 /**
- * The DBB call that answers `request`. Throws a `RangeError` for an id that
- * is no positive integer, so nothing but the allowlisted paths is built.
+ * Throws a `RangeError` for anything in `request` the DBB cannot take: an
+ * id that is no positive integer, a negative start index, a day range out
+ * of bounds, a malformed age group and gender id. Checks without building
+ * the call, so a caller can refuse a bad request before any transport.
+ */
+export function assertValidDbbRequest(request: DbbRequest): void {
+  switch (request.kind) {
+    case 'liga-suche':
+      return assertValidFilter(request.filter);
+    case 'liga-seite':
+      assertValidFilter(request.filter);
+      return assertIndex(request.startIndex);
+    case 'vereins-spiele':
+      assertId(request.vereinId);
+      return assertTage(request.tage);
+    default: {
+      const id = dbbIdOf(request);
+      if (id !== undefined) {
+        assertId(id);
+      }
+    }
+  }
+}
+
+/**
+ * The DBB call that answers `request`. Throws a `RangeError` where
+ * `assertValidDbbRequest` does, so nothing but the allowlisted paths is
+ * built.
  */
 export function dbbHttpRequest(request: DbbRequest): DbbHttpRequest {
+  assertValidDbbRequest(request);
   switch (request.kind) {
     case 'liga-suche':
       return {
@@ -101,23 +128,23 @@ export function dbbHttpRequest(request: DbbRequest): DbbHttpRequest {
     case 'liga-seite':
       return {
         method: 'POST',
-        path: `wam/liga/list?startAtIndex=${index(request.startIndex)}`,
+        path: `wam/liga/list?startAtIndex=${request.startIndex}`,
         body: filterBody(request.filter),
       };
     case 'tabelle':
-      return get(`competition/table/id/${id(request.ligaId)}`);
+      return get(`competition/table/id/${request.ligaId}`);
     case 'spielplan':
-      return get(`competition/spielplan/id/${id(request.ligaId)}`);
+      return get(`competition/spielplan/id/${request.ligaId}`);
     case 'team-spiele':
-      return get(`team/id/${id(request.teamId)}/matches`);
+      return get(`team/id/${request.teamId}/matches`);
     case 'vereins-spiele':
       return get(
-        `club/id/${id(request.vereinId)}/actualmatches?rangeDays=${tage(request.tage)}`
+        `club/id/${request.vereinId}/actualmatches?rangeDays=${request.tage}`
       );
     case 'spiel-info':
-      return get(`match/id/${id(request.spielId)}/matchInfo`);
+      return get(`match/id/${request.spielId}/matchInfo`);
     case 'spielbericht':
-      return get(`match/id/${id(request.spielId)}/boxscore`);
+      return get(`match/id/${request.spielId}/boxscore`);
   }
 }
 
@@ -128,31 +155,35 @@ function get(path: string): DbbHttpRequest {
 function filterBody(filter: LigaSucheFilter): DbbLigaFilterBody {
   return {
     token: 0,
-    verbandIds: filter.verbandIds.map(id),
+    verbandIds: filter.verbandIds,
     gebietIds: [],
     ligatypIds: [],
-    akgGeschlechtIds: filter.altersgruppeGeschlechtIds.map(akgGeschlechtId),
-    altersklasseIds: filter.altersklasseIds.map(id),
+    akgGeschlechtIds: filter.altersgruppeGeschlechtIds,
+    altersklasseIds: filter.altersklasseIds,
     spielklasseIds: [],
     sortBy: 0,
   };
 }
 
-function id(value: number): number {
+function assertValidFilter(filter: LigaSucheFilter): void {
+  filter.verbandIds.forEach(assertId);
+  filter.altersklasseIds.forEach(assertId);
+  filter.altersgruppeGeschlechtIds.forEach(assertAkgGeschlechtId);
+}
+
+function assertId(value: number): void {
   if (!isDbbId(value)) {
     throw new RangeError(`not a DBB id: ${value}`);
   }
-  return value;
 }
 
-function index(value: number): number {
+function assertIndex(value: number): void {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new RangeError(`not a list index: ${value}`);
   }
-  return value;
 }
 
-function tage(value: number): number {
+function assertTage(value: number): void {
   if (
     !Number.isSafeInteger(value) ||
     value < 1 ||
@@ -162,12 +193,10 @@ function tage(value: number): number {
       `not a day range of 1 to ${MAX_VEREINS_SPIELE_TAGE}: ${value}`
     );
   }
-  return value;
 }
 
-function akgGeschlechtId(value: string): string {
+function assertAkgGeschlechtId(value: string): void {
   if (!AKG_GESCHLECHT_ID.test(value)) {
     throw new RangeError(`not an age group and gender id: ${value}`);
   }
-  return value;
 }

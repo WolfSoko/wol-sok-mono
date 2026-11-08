@@ -2,11 +2,7 @@ import { rejectedError } from '../../testing/caught-error';
 import { BasketballDataError } from '../domain/basketball-data-error';
 import { KEIN_LIGA_FILTER, type LigaSucheFilter } from '../domain/liga-suche';
 import { DbbBasketballData, VEREINS_SPIELE_TAGE } from './dbb-basketball-data';
-import {
-  dbbHttpRequest,
-  type DbbRequest,
-  type DbbRequestKind,
-} from './dbb-request';
+import type { DbbRequest, DbbRequestKind } from './dbb-request';
 import boxscoreNotFound from './fixtures/boxscore-not-found.json';
 import keinBericht from './fixtures/boxscore-2843814.json';
 import mitWerten from './fixtures/boxscore-2911141.json';
@@ -35,9 +31,7 @@ class FakeTransport {
     private readonly responses: Partial<Record<DbbRequestKind, unknown>>
   ) {}
 
-  /** Builds the DBB call as a real transport would, so bad requests throw. */
   public readonly send = async (request: DbbRequest): Promise<unknown> => {
-    dbbHttpRequest(request);
     this.requests.push(request);
     const response = this.responses[request.kind];
     if (response === undefined) {
@@ -161,14 +155,22 @@ describe('DbbBasketballData', () => {
           altersgruppeGeschlechtIds: ['x'],
         }),
     ],
-  ])('lets %s, a caller’s bug, throw as it is', async (_case, read) => {
-    const { data } = dataWith({
-      'liga-suche': wamData,
-      'liga-seite': zweiteSeite,
-    });
+    [
+      'a Verband id that is no id',
+      (data) => data.ligaSuche({ ...KEIN_LIGA_FILTER, verbandIds: [0] }),
+    ],
+  ])(
+    'lets %s, a caller’s bug, throw before asking the DBB',
+    async (_case, read) => {
+      const { data, transport } = dataWith({
+        'liga-suche': wamData,
+        'liga-seite': zweiteSeite,
+      });
 
-    await expect(read(data)).rejects.toBeInstanceOf(RangeError);
-  });
+      await expect(read(data)).rejects.toBeInstanceOf(RangeError);
+      expect(transport.requests).toEqual([]);
+    }
+  );
 
   it('rejects a DBB server error as unavailable', async () => {
     const { data } = dataWith({ tabelle: unavailable });
@@ -180,6 +182,16 @@ describe('DbbBasketballData', () => {
 
   it('rejects a transport failure as unavailable, keeping its cause', async () => {
     const cause = new TypeError('fetch failed');
+    const data = new DbbBasketballData(() => Promise.reject(cause));
+
+    const error = await rejectedError(() => data.spiel(2911141));
+
+    expect(error.kind).toBe('unavailable');
+    expect(error.cause).toBe(cause);
+  });
+
+  it('rejects even a RangeError of the transport as unavailable', async () => {
+    const cause = new RangeError('Invalid time value');
     const data = new DbbBasketballData(() => Promise.reject(cause));
 
     const error = await rejectedError(() => data.spiel(2911141));
