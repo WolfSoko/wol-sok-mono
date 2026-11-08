@@ -12,12 +12,41 @@
     "headers": [
       {
         "source": "**",
-        "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      },
+      {
+        "source": "**/!(*.*)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/index.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
       }
     ],
     "rewrites": [
-      { "source": "/api/**", "function": "server" },
-      { "source": "**", "destination": "/index.html" }
+      {
+        "source": "/api/**",
+        "function": "server"
+      },
+      {
+        "source": "**/!(*.*)",
+        "destination": "/index.html"
+      }
     ]
   }
 }

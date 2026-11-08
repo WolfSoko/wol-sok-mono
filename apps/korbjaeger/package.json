@@ -16,14 +16,14 @@
     "@fontsource/roboto": "5.3.0",
     "@nx/vite": "23.3.1",
     "@playwright/test": "^1.56.1",
-    "h3": "^1.15.11",
-    "material-icons": "1.13.14",
-    "vite": "8.3.5",
-    "vitest": "5.0.5",
     "@wolsok/feat-shared-basketball-data": "*",
     "@wolsok/utils-version": "*",
-    "normalize.css": "8.0.1",
+    "firebase": "12.19.0",
+    "h3": "^1.15.11",
+    "material-icons": "1.13.14",
     "nitropack": "2.13.5",
-    "firebase": "12.19.0"
+    "normalize.css": "8.0.1",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
   }
 }

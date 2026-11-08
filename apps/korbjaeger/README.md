@@ -111,8 +111,10 @@ deploys `firebase.korbjaeger.json` from the workspace root, not the
   `korbjaeger`). The config names no site, so Hosting is the project's
   default site, `korbjaeger.web.app`.
 - **Hosting** serves the build's public files; only `/api/**` goes to the
-  Nitro function, every other path to `/index.html`, so pages come from
-  the CDN without a function call. Every response carries
+  Nitro function, every other path without a file extension to
+  `/index.html`, so pages come from the CDN without a function call. A
+  missing file (an old chunk after a release) is a 404, not the shell, and
+  the shell is sent `no-cache`. Every response carries
   `X-Robots-Tag: noindex`, from Hosting and, for the proxy, from Nitro's
   route rules too.
 - **Function** `server`, region `europe-central2`, at most 10 instances

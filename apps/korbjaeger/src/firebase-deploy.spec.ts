@@ -14,6 +14,7 @@ interface FirebaseConfig {
     site?: string;
     public: string;
     rewrites: unknown[];
+    headers: { source: string; headers: { key: string; value: string }[] }[];
   };
 }
 
@@ -54,8 +55,28 @@ describe('the Firebase deploy', () => {
     // ssr: false: each page is the one client-rendered shell
     expect(config.hosting.rewrites).toEqual([
       { source: '/api/**', function: 'server' },
-      { source: '**', destination: '/index.html' },
+      { source: '**/!(*.*)', destination: '/index.html' },
     ]);
+  });
+
+  /**
+   * A tab opened before a release still asks for the old hashed chunks. Only
+   * paths without a file extension fall back to the shell, so a chunk that
+   * is gone answers 404 instead of HTML, and the shell itself is revalidated
+   * on every load, so a reload picks up the new release.
+   */
+  it('revalidates the shell, so a page never asks for chunks a release removed', () => {
+    const noCache = (source: string) =>
+      config.hosting.headers.find(
+        (rule) =>
+          rule.source === source &&
+          rule.headers.some(
+            ({ key, value }) => key === 'Cache-Control' && value === 'no-cache'
+          )
+      );
+
+    expect(noCache('**/!(*.*)')).toBeDefined();
+    expect(noCache('/index.html')).toBeDefined();
   });
 
   /**
