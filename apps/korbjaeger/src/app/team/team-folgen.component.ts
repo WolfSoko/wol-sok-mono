@@ -4,17 +4,17 @@ import {
   computed,
   inject,
   input,
-  signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { auswahlFehlerText } from '../auswahl/auswahl-fehler';
+import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 
 /**
  * Follows a Team, or unfollows it: a toggle button (`aria-pressed`) whose
  * label stays the same, so a screen reader names it alike in both states.
+ * Disabled, and neither pressed nor not, until Meine Teams are read.
  */
 @Component({
   selector: 'korb-team-folgen',
@@ -23,13 +23,14 @@ import { auswahlFehlerText } from '../auswahl/auswahl-fehler';
     <button
       [matButton]="folgt() ? 'filled' : 'outlined'"
       type="button"
-      [attr.aria-pressed]="folgt()"
+      [disabled]="folgt() === undefined"
+      [attr.aria-pressed]="folgt() ?? null"
       (click)="umschalten()"
     >
       <mat-icon aria-hidden="true">{{ folgt() ? 'check' : 'add' }}</mat-icon>
       Team folgen
     </button>
-    @if (fehler(); as text) {
+    @if (aenderung.fehler(); as text) {
       <p class="fehler" role="alert">{{ text }}</p>
     } @else if (folgt()) {
       <p class="hinweis">Steht in Meine Teams auf der Startseite.</p>
@@ -48,9 +49,6 @@ import { auswahlFehlerText } from '../auswahl/auswahl-fehler';
     .hinweis {
       color: var(--mat-sys-on-surface-variant);
     }
-    .fehler {
-      color: var(--mat-sys-error);
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -59,21 +57,17 @@ export class TeamFolgenComponent {
 
   private readonly auswahl = inject(AUSWAHL);
 
+  /** Whether the Team is in Meine Teams; `undefined` until they are read. */
   protected readonly folgt = computed(() =>
-    this.auswahl.teams().includes(this.teamId())
+    this.auswahl.teams()?.includes(this.teamId())
   );
 
-  protected readonly fehler = signal<string | undefined>(undefined);
+  protected readonly aenderung = auswahlAenderung();
 
-  protected async umschalten(): Promise<void> {
+  protected umschalten(): Promise<void> {
     const team = this.teamId();
-    this.fehler.set(undefined);
-    try {
-      await (this.folgt()
-        ? this.auswahl.entfolgen(team)
-        : this.auswahl.folgen(team));
-    } catch (fehler: unknown) {
-      this.fehler.set(auswahlFehlerText(fehler));
-    }
+    return this.aenderung.ausfuehren(() =>
+      this.folgt() ? this.auswahl.entfolgen(team) : this.auswahl.folgen(team)
+    );
   }
 }

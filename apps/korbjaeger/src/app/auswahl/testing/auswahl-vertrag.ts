@@ -1,19 +1,27 @@
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import type { Auswahl } from '../auswahl';
+import { AuswahlZuNeuError } from '../auswahl-fehler';
 
 /**
  * Where one adapter of `Auswahl` keeps its data, for `auswahlVertrag`: the
  * device's storage for the local adapter, one account's document for the
- * Firestore adapter.
+ * Firestore adapter (#2873).
  */
 export interface AuswahlSpeicher {
   /**
    * A new adapter on this store, as after a reload. Resolves once the
-   * adapter has read what is stored.
+   * adapter has read what is stored (`teams()` is defined).
    */
   oeffnen(): Promise<Auswahl>;
-  /** Puts something into the store that no adapter would write. */
-  verderben(): Promise<void>;
+  /** Stores `dokument` as it is, as another app version or a fault might. */
+  schreibeRoh(dokument: unknown): Promise<void>;
+  /** What is stored now, as it is. */
+  liesRoh(): Promise<unknown>;
+  /**
+   * Resolves once every open adapter has seen what was last written to the
+   * store (a `storage` event, a snapshot).
+   */
+  bisStabil(): Promise<void>;
 }
 
 const MTV_WASBUETTEL: TeamId = 313036;
@@ -129,8 +137,18 @@ export function auswahlVertrag(
       expect(nachher.teams()).toEqual([MTV_GIFHORN]);
     });
 
-    it('starts empty from a corrupted store, and follows again', async () => {
-      await speicher.verderben();
+    it("shows another instance's change while open", async () => {
+      const tabA = await speicher.oeffnen();
+      const tabB = await speicher.oeffnen();
+
+      await tabB.folgen(MTV_GIFHORN);
+      await speicher.bisStabil();
+
+      expect(tabA.teams()).toEqual([MTV_GIFHORN]);
+    });
+
+    it('starts empty from a store holding no document, and follows again', async () => {
+      await speicher.schreibeRoh({ teams: 'kaputt' });
 
       const auswahl = await speicher.oeffnen();
       expect(auswahl.teams()).toEqual([]);
@@ -138,6 +156,48 @@ export function auswahlVertrag(
       await auswahl.folgen(MTV_WASBUETTEL);
       const nachher = await speicher.oeffnen();
       expect(nachher.teams()).toEqual([MTV_WASBUETTEL]);
+    });
+
+    it('keeps the fields it does not know, which a later version added', async () => {
+      const kinder = [{ personId: 4711, spitzname: 'Mia' }];
+      await speicher.schreibeRoh({ version: 1, teams: [MTV_GIFHORN], kinder });
+
+      const auswahl = await speicher.oeffnen();
+      await auswahl.folgen(MTV_WASBUETTEL);
+
+      expect(await speicher.liesRoh()).toEqual({
+        version: 1,
+        teams: [MTV_GIFHORN, MTV_WASBUETTEL],
+        kinder,
+      });
+    });
+
+    it('follows nothing from a newer version and refuses to change it', async () => {
+      const neuer = { version: 99, teams: [MTV_GIFHORN], mehr: true };
+      await speicher.schreibeRoh(neuer);
+
+      const auswahl = await speicher.oeffnen();
+      expect(auswahl.teams()).toEqual([]);
+      await expect(auswahl.folgen(MTV_WASBUETTEL)).rejects.toBeInstanceOf(
+        AuswahlZuNeuError
+      );
+      await expect(auswahl.entfolgen(MTV_GIFHORN)).rejects.toBeInstanceOf(
+        AuswahlZuNeuError
+      );
+
+      expect(auswahl.teams()).toEqual([]);
+      expect(await speicher.liesRoh()).toEqual(neuer);
+    });
+
+    it('refuses once a newer version wrote since it opened', async () => {
+      const auswahl = await speicher.oeffnen();
+      const neuer = { version: 99, teams: [] };
+      await speicher.schreibeRoh(neuer);
+
+      await expect(auswahl.folgen(MTV_WASBUETTEL)).rejects.toBeInstanceOf(
+        AuswahlZuNeuError
+      );
+      expect(await speicher.liesRoh()).toEqual(neuer);
     });
   });
 }

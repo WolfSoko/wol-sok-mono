@@ -1,60 +1,61 @@
+@let team = karte();
 <mat-card appearance="outlined" data-qa="ueberblick-team">
   <mat-card-header>
     <mat-card-title>
-      <a [routerLink]="['/team', teamId()]" data-qa="ueberblick-name">{{
-        eintrag()?.name ?? "Team " + teamId()
+      <a [routerLink]="['/team', team.teamId]" data-qa="ueberblick-name">{{
+        team.art === "geladen" ? team.name : "Team " + team.teamId
       }}</a>
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    @if (saison.isLoading()) {
-      <mat-progress-bar
-        mode="indeterminate"
-        aria-label="Spiele werden geladen"
-      />
-    }
-    @if (fehler(); as text) {
-      <p class="fehler" data-qa="ueberblick-fehler">{{ text }}</p>
-      @if (entfernenFehler(); as text) {
-        <p class="fehler" role="alert">{{ text }}</p>
-      }
-    }
-    @if (eintrag(); as eintrag) {
-      @for (ausfall of eintrag.ausfaelle; track ausfall.id) {
-        <korb-spiel-zeile
-          titel="Fällt aus"
-          [zeile]="ausfall"
-          data-qa="ueberblick-ausfall"
+    @switch (team.art) {
+      @case ("laedt") {
+        <mat-progress-bar
+          mode="indeterminate"
+          aria-label="Spiele werden geladen"
         />
       }
-      @if (eintrag.naechstes; as naechstes) {
-        <korb-spiel-zeile
-          titel="Nächstes Spiel"
-          [zeile]="naechstes"
-          data-qa="ueberblick-naechstes"
-        />
+      @case ("fehler") {
+        <p class="fehler" data-qa="ueberblick-fehler">{{ team.text }}</p>
+        @if (aenderung.fehler(); as text) {
+          <p class="fehler" role="alert">{{ text }}</p>
+        }
       }
-      @if (eintrag.letztes; as letztes) {
-        <korb-spiel-zeile
-          titel="Letztes Ergebnis"
-          [zeile]="letztes"
-          data-qa="ueberblick-letztes"
-        />
-      }
-      @if (
-        !eintrag.naechstes && !eintrag.letztes && eintrag.ausfaelle.length === 0
-      ) {
-        <p>Noch keine Spiele in dieser Saison.</p>
+      @case ("geladen") {
+        @for (ausfall of team.ausfaelle; track ausfall.id) {
+          <korb-spiel-zeile
+            titel="Fällt aus"
+            [zeile]="ausfall"
+            data-qa="ueberblick-ausfall"
+          />
+        }
+        @if (team.naechstes; as naechstes) {
+          <korb-spiel-zeile
+            titel="Nächstes Spiel"
+            [zeile]="naechstes"
+            data-qa="ueberblick-naechstes"
+          />
+        }
+        @if (team.letztes; as letztes) {
+          <korb-spiel-zeile
+            titel="Letztes Ergebnis"
+            [zeile]="letztes"
+            data-qa="ueberblick-letztes"
+          />
+        }
+        @if (!team.naechstes && !team.letztes && team.ausfaelle.length === 0) {
+          <p>Noch keine Spiele in dieser Saison.</p>
+        }
       }
     }
   </mat-card-content>
-  @if (fehler()) {
+  @if (team.art === "fehler") {
     <mat-card-actions>
       <button
         matButton
         type="button"
         data-qa="ueberblick-entfernen"
-        [attr.aria-label]="'Team ' + teamId() + ' entfernen'"
+        [attr.aria-label]="'Team ' + team.teamId + ' entfernen'"
         (click)="entfernen()"
       >
         Entfernen

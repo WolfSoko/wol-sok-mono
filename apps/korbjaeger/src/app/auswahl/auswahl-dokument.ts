@@ -1,13 +1,14 @@
 import { isDbbId, type TeamId } from '@wolsok/feat-shared-basketball-data';
 
-/** The version of `AuswahlDokument` this app writes. */
+/**
+ * The version of `AuswahlDokument` this app writes. Bumped only for a
+ * change an older app would misread; a new field is none (Kinder join
+ * version 1 as a field of their own, #2872), since every write keeps the
+ * fields it does not know.
+ */
 export const AUSWAHL_VERSION = 1;
 
-/**
- * What an adapter stores of an `Auswahl`: ids only, never names from the
- * DBB. Versioned, so Kinder (Ticket 6) can join as a field of their own
- * without a migration.
- */
+/** What an adapter stores of an `Auswahl`: ids only, never names from the DBB. */
 export interface AuswahlDokument {
   readonly version: typeof AUSWAHL_VERSION;
   readonly teams: readonly TeamId[];
@@ -26,7 +27,7 @@ export type RohesDokument = Readonly<Record<string, unknown>>;
 export type GelesenesDokument =
   | {
       readonly art: 'aktuell';
-      readonly dokument: AuswahlDokument;
+      readonly teams: readonly TeamId[];
       readonly roh: RohesDokument;
     }
   | { readonly art: 'neuer' }
@@ -51,11 +52,7 @@ export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   if (version !== AUSWAHL_VERSION || !sindTeamIds(teams)) {
     return KEINS;
   }
-  return {
-    art: 'aktuell',
-    dokument: { version, teams: [...new Set(teams)] },
-    roh,
-  };
+  return { art: 'aktuell', teams: [...new Set(teams)], roh };
 }
 
 /**

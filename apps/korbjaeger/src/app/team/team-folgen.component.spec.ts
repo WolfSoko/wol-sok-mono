@@ -102,4 +102,20 @@ describe('TeamFolgenComponent', () => {
       'Bitte die App neu laden.'
     );
   });
+
+  it('offers nothing to press before Meine Teams are read', async () => {
+    const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
+    const { knopf, seite, klicken } = await render({
+      teams: signal(undefined),
+      folgen,
+      entfolgen: () => Promise.resolve(),
+    });
+
+    await klicken();
+
+    expect(knopf.disabled).toBe(true);
+    expect(knopf.hasAttribute('aria-pressed')).toBe(false);
+    expect(folgen).not.toHaveBeenCalled();
+    expect(seite.textContent).not.toContain('Steht in Meine Teams');
+  });
 });

@@ -54,7 +54,7 @@ export class LokaleAuswahl implements Auswahl {
       event instanceof StorageEvent &&
       (event.key === null || event.key === AUSWAHL_SCHLUESSEL)
     ) {
-      this.uebernehmen(this.lesen());
+      this.gefolgt.set(teamsAus(this.lesen()));
     }
   };
 
@@ -62,7 +62,10 @@ export class LokaleAuswahl implements Auswahl {
     private readonly speicher: GeraeteSpeicher | undefined,
     private readonly fenster?: Fenster
   ) {
-    this.gefolgt = signal<readonly TeamId[]>(teamsAus(this.lesen()));
+    // read at once, so `teams` is never undefined here
+    this.gefolgt = signal<readonly TeamId[]>(teamsAus(this.lesen()), {
+      equal: gleicheTeams,
+    });
     this.teams = this.gefolgt.asReadonly();
     fenster?.addEventListener('storage', this.beiAenderung);
   }
@@ -72,7 +75,9 @@ export class LokaleAuswahl implements Auswahl {
   }
 
   public async entfolgen(team: TeamId): Promise<void> {
-    this.aendern((teams) => teams.filter((id) => id !== team));
+    this.aendern((teams) =>
+      teams.includes(team) ? teams.filter((id) => id !== team) : teams
+    );
   }
 
   /** Stops listening to other tabs. */
@@ -80,32 +85,26 @@ export class LokaleAuswahl implements Auswahl {
     this.fenster?.removeEventListener('storage', this.beiAenderung);
   }
 
-  /** Applies `aenderung` to what is stored now, and stores the result. */
+  /**
+   * Applies `aenderung` to what is stored now and stores the result, if
+   * it changed anything.
+   */
   private aendern(
     aenderung: (teams: readonly TeamId[]) => readonly TeamId[]
   ): void {
     const gelesen = this.lesen();
     if (gelesen.art === 'neuer') {
-      this.uebernehmen(gelesen);
+      this.gefolgt.set([]);
       throw new AuswahlZuNeuError();
     }
     // where nothing could be read, what this visit followed stands
-    const vorher =
-      gelesen.art === 'aktuell' ? gelesen.dokument.teams : this.gefolgt();
+    const { teams: vorher, roh } =
+      gelesen.art === 'aktuell' ? gelesen : { teams: this.gefolgt(), roh: {} };
     const nachher = aenderung(vorher);
     this.gefolgt.set(nachher);
     if (nachher !== vorher) {
-      this.schreiben(
-        auswahlDokumentMit(
-          nachher,
-          gelesen.art === 'aktuell' ? gelesen.roh : undefined
-        )
-      );
+      this.schreiben(auswahlDokumentMit(nachher, roh));
     }
-  }
-
-  private uebernehmen(gelesen: GelesenesDokument): void {
-    this.gefolgt.set(teamsAus(gelesen));
   }
 
   private lesen(): GelesenesDokument {
@@ -127,5 +126,9 @@ export class LokaleAuswahl implements Auswahl {
 }
 
 function teamsAus(gelesen: GelesenesDokument): readonly TeamId[] {
-  return gelesen.art === 'aktuell' ? gelesen.dokument.teams : [];
+  return gelesen.art === 'aktuell' ? gelesen.teams : [];
+}
+
+function gleicheTeams(a: readonly TeamId[], b: readonly TeamId[]): boolean {
+  return a.length === b.length && a.every((team, i) => team === b[i]);
 }

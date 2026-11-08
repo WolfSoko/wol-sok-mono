@@ -1,47 +1,20 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
-import {
-  nachNaechstemSpiel,
-  type Spiel,
-  type TeamId,
-} from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MeineTeamsUeberblick } from './meine-teams-ueberblick';
 import { UeberblickTeamComponent } from './ueberblick-team.component';
 
 /**
- * The overview: each of Meine Teams as a card of its own, which loads and
- * fails on its own, the Team that plays first first
- * (`nachNaechstemSpiel`). A card still loading keeps its place among the
- * Teams without a next Spiel, in the order they were followed, until it
- * reports its next Spiel.
+ * The overview: each of Meine Teams as a card, the Team that plays first
+ * first (`MeineTeamsUeberblick`). Shows nothing until Meine Teams are
+ * read, then invites to follow a first Team while there is none.
  */
 @Component({
   selector: 'korb-ueberblick',
   imports: [UeberblickTeamComponent],
+  providers: [MeineTeamsUeberblick],
   templateUrl: './ueberblick.component.html',
   styleUrl: './ueberblick.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UeberblickComponent {
-  private readonly teams = inject(AUSWAHL).teams;
-
-  /** Each loaded card's next Spiel, by Team. */
-  private readonly naechste = signal<ReadonlyMap<TeamId, Spiel | undefined>>(
-    new Map()
-  );
-
-  protected readonly reihenfolge = computed(() =>
-    nachNaechstemSpiel(this.teams(), (teamId) => this.naechste().get(teamId))
-  );
-
-  protected geladen(teamId: TeamId, naechstes: Spiel | undefined): void {
-    this.naechste.update((naechste) =>
-      new Map(naechste).set(teamId, naechstes)
-    );
-  }
+  protected readonly karten = inject(MeineTeamsUeberblick).karten;
 }

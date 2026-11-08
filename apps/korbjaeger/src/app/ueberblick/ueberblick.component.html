@@ -1,17 +1,14 @@
 <h2>Meine Teams</h2>
-@if (reihenfolge().length === 0) {
-  <p data-qa="ueberblick-leer">
-    Du folgst noch keinem Team. Öffne ein Team und tippe auf „Team folgen“, dann
-    steht es hier mit seinem nächsten Spiel.
-  </p>
-}
-<ul class="ueberblick">
-  @for (teamId of reihenfolge(); track teamId) {
-    <li>
-      <korb-ueberblick-team
-        [teamId]="teamId"
-        (geladen)="geladen(teamId, $event)"
-      />
-    </li>
+@if (karten(); as karten) {
+  @if (karten.length === 0) {
+    <p data-qa="ueberblick-leer">
+      Du folgst noch keinem Team. Öffne ein Team und tippe auf „Team folgen“,
+      dann steht es hier mit seinem nächsten Spiel.
+    </p>
   }
-</ul>
+  <ul class="ueberblick">
+    @for (karte of karten; track karte.teamId) {
+      <li><korb-ueberblick-team [karte]="karte" /></li>
+    }
+  </ul>
+}

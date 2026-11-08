@@ -4,12 +4,11 @@ import {
   computed,
   inject,
   input,
-  resource,
 } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
+import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { HEUTE } from '../heute';
 import {
   ligenAktuellZuerst,
@@ -17,7 +16,7 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
 import { spielZeilen } from '../spiel/spiel-zeile';
-import { fehlerText, KEIN_TEAM } from './fehler-text';
+import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
 import { TeamFolgenComponent } from './team-folgen.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
@@ -43,16 +42,11 @@ export class TeamComponent {
   /** The Team's DBB id, as the route gives it. */
   public readonly teamId = input.required<string>();
 
-  private readonly data = inject(BASKETBALL_DATA);
   private readonly heute = inject(HEUTE);
   private readonly meineTeams = inject(AUSWAHL).teams;
   private readonly team = computed(() => parseDbbId(this.teamId()));
 
-  protected readonly saison = resource({
-    params: () => this.team(),
-    loader: ({ params, abortSignal }) =>
-      this.data.teamSpiele(params, { signal: abortSignal }),
-  });
+  protected readonly saison = teamSaisonResource(() => this.team());
 
   /**
    * The Team to offer following: one the DBB knows, or one of Meine Teams
@@ -60,10 +54,8 @@ export class TeamComponent {
    */
   protected readonly folgbar = computed(() => {
     const team = this.team();
-    if (team === undefined) {
-      return undefined;
-    }
-    return this.saison.hasValue() || this.meineTeams().includes(team)
+    return team !== undefined &&
+      (this.saison.hasValue() || this.meineTeams()?.includes(team))
       ? team
       : undefined;
   });

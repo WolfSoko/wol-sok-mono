@@ -38,5 +38,10 @@ body {
   box-sizing: border-box;
 }
 
+// what went wrong, on every screen alike
+.fehler {
+  color: var(--mat-sys-error);
+}
+
 // `.cdk-visually-hidden`: text for screen readers only, e.g. "(dein Team)"
 @include cdk.a11y-visually-hidden();

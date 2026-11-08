@@ -10,7 +10,7 @@ import {
   type TeamId,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import {
   BASKETBALL_DATA,
@@ -100,27 +100,20 @@ function fakeData(
   };
 }
 
+/**
+ * Renders the overview on `data`, following `gefolgt` (or with that
+ * `Auswahl`), once the reads that settle have settled.
+ */
 async function render(
-  data: ReturnType<typeof fakeData> | { teamSpiele: TeamSpieleRead },
-  gefolgt: readonly TeamId[]
-): Promise<HTMLElement> {
-  return (await renderMitAuswahl(data, gefolgt)).seite;
-}
-
-/** Renders the overview, waiting for each Team's read to settle. */
-async function renderMitAuswahl(
-  data: ReturnType<typeof fakeData> | { teamSpiele: TeamSpieleRead },
-  gefolgt: readonly TeamId[]
+  data: Pick<KorbjaegerData, 'teamSpiele'>,
+  gefolgt: readonly TeamId[] | Auswahl
 ): Promise<{
   readonly seite: HTMLElement;
-  readonly auswahl: LokaleAuswahl;
-  /** Waits for the reads and the page to settle. */
+  readonly auswahl: Auswahl;
+  /** Waits for the reads that settle and the page. */
   readonly stabil: () => Promise<void>;
 }> {
-  const auswahl = new LokaleAuswahl(undefined);
-  for (const teamId of gefolgt) {
-    await auswahl.folgen(teamId);
-  }
+  const auswahl = 'teams' in gefolgt ? gefolgt : await folgend(gefolgt);
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
@@ -132,14 +125,20 @@ async function renderMitAuswahl(
   const fixture = TestBed.createComponent(UeberblickComponent);
   // not whenStable: it waits for every read, and some never settle here
   const stabil = async (): Promise<void> => {
-    // a read settles, its card reports its next Spiel, the page reorders
-    for (let runde = 0; runde < 3; runde++) {
-      await new Promise((resolve) => setTimeout(resolve));
-      fixture.detectChanges();
-    }
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
   };
   await stabil();
   return { seite: fixture.nativeElement as HTMLElement, auswahl, stabil };
+}
+
+async function folgend(teams: readonly TeamId[]): Promise<LokaleAuswahl> {
+  const auswahl = new LokaleAuswahl(undefined);
+  for (const teamId of teams) {
+    await auswahl.folgen(teamId);
+  }
+  return auswahl;
 }
 
 function eintraege(seite: HTMLElement): HTMLElement[] {
@@ -161,10 +160,24 @@ function teamNamen(seite: HTMLElement): (string | undefined)[] {
 }
 
 describe('UeberblickComponent', () => {
+  it('claims nothing before Meine Teams are read', async () => {
+    const data = fakeData([]);
+
+    const { seite } = await render(data, {
+      teams: signal(undefined),
+      folgen: () => Promise.resolve(),
+      entfolgen: () => Promise.resolve(),
+    });
+
+    expect(seite.querySelector('[data-qa="ueberblick-leer"]')).toBeNull();
+    expect(eintraege(seite)).toEqual([]);
+    expect(data.teamSpiele).not.toHaveBeenCalled();
+  });
+
   it('invites to follow a first Team while none is followed', async () => {
     const data = fakeData([]);
 
-    const seite = await render(data, []);
+    const { seite } = await render(data, []);
 
     expect(eintraege(seite)).toEqual([]);
     expect(text(seite.querySelector('[data-qa="ueberblick-leer"]'))).toContain(
@@ -174,7 +187,7 @@ describe('UeberblickComponent', () => {
   });
 
   it('shows the next Spiel with day, time, home or away and opponent', async () => {
-    const seite = await render(
+    const { seite } = await render(
       fakeData([
         saison(
           WASBUETTEL,
@@ -192,7 +205,7 @@ describe('UeberblickComponent', () => {
   });
 
   it('shows the last result with the next Spiel', async () => {
-    const seite = await render(
+    const { seite } = await render(
       fakeData([
         saison(
           WASBUETTEL,
@@ -214,7 +227,7 @@ describe('UeberblickComponent', () => {
   });
 
   it('shows only the last result of a Team with no Spiel to come', async () => {
-    const seite = await render(
+    const { seite } = await render(
       fakeData([
         saison(
           WASBUETTEL,
@@ -230,7 +243,9 @@ describe('UeberblickComponent', () => {
   });
 
   it('says so for a Team without Spiele', async () => {
-    const seite = await render(fakeData([saison(WASBUETTEL)]), [WASBUETTEL.id]);
+    const { seite } = await render(fakeData([saison(WASBUETTEL)]), [
+      WASBUETTEL.id,
+    ]);
 
     expect(text(eintraege(seite)[0])).toContain(
       'Noch keine Spiele in dieser Saison.'
@@ -238,7 +253,7 @@ describe('UeberblickComponent', () => {
   });
 
   it('orders Meine Teams by their next Spiel, Teams with none last', async () => {
-    const seite = await render(
+    const { seite } = await render(
       fakeData([
         saison(
           OESINGEN,
@@ -266,7 +281,7 @@ describe('UeberblickComponent', () => {
   });
 
   it('shows a cancelled Spiel before the next one as cancelled', async () => {
-    const seite = await render(
+    const { seite } = await render(
       fakeData([
         saison(
           WASBUETTEL,
@@ -289,7 +304,7 @@ describe('UeberblickComponent', () => {
   });
 
   it('shows a forfeited Spiel as forfeited, to come or last', async () => {
-    const seite = await render(
+    const { seite } = await render(
       fakeData([
         saison(
           WASBUETTEL,
@@ -316,7 +331,9 @@ describe('UeberblickComponent', () => {
   });
 
   it('links each Team to its Team page', async () => {
-    const seite = await render(fakeData([saison(WASBUETTEL)]), [WASBUETTEL.id]);
+    const { seite } = await render(fakeData([saison(WASBUETTEL)]), [
+      WASBUETTEL.id,
+    ]);
 
     expect(eintraege(seite)[0].querySelector('a')?.getAttribute('href')).toBe(
       '/team/313036'
@@ -324,7 +341,7 @@ describe('UeberblickComponent', () => {
   });
 
   it('keeps the other Teams when one fails', async () => {
-    const seite = await render(
+    const { seite } = await render(
       fakeData([
         saison(WASBUETTEL, spiel(WASBUETTEL, GIFHORN, '2026-11-14')),
         {
@@ -349,7 +366,7 @@ describe('UeberblickComponent', () => {
     const NIE: Promise<TeamSaison> = new Promise(() => undefined);
 
     it('shows a Team while another still loads', async () => {
-      const seite = await render(
+      const { seite } = await render(
         {
           teamSpiele: async (teamId) =>
             teamId === GIFHORN.id
@@ -372,7 +389,7 @@ describe('UeberblickComponent', () => {
         saison(GIFHORN, spiel(GIFHORN, OESINGEN, '2026-11-21')),
         saison(OESINGEN),
       ]);
-      const { seite, auswahl, stabil } = await renderMitAuswahl(data, [
+      const { seite, auswahl, stabil } = await render(data, [
         WASBUETTEL.id,
         OESINGEN.id,
       ]);
@@ -390,9 +407,21 @@ describe('UeberblickComponent', () => {
       ]);
     });
 
+    it('cancels the read of a Team unfollowed while it loads', async () => {
+      const data = fakeData([]);
+      data.teamSpiele.mockImplementation(() => NIE);
+      const { auswahl, stabil } = await render(data, [GIFHORN.id]);
+      const lesung = data.teamSpiele.mock.calls[0][1]?.signal;
+
+      await auswahl.entfolgen(GIFHORN.id);
+      await stabil();
+
+      expect(lesung?.aborted).toBe(true);
+    });
+
     it('puts a Team in its place once it has loaded', async () => {
       let gifhornLaden: (saison: TeamSaison) => void = () => undefined;
-      const { seite, stabil } = await renderMitAuswahl(
+      const { seite, stabil } = await render(
         {
           teamSpiele: (teamId) =>
             teamId === GIFHORN.id
@@ -412,7 +441,7 @@ describe('UeberblickComponent', () => {
     });
 
     it('removes a Team whose read fails from Meine Teams on request', async () => {
-      const { seite, auswahl, stabil } = await renderMitAuswahl(
+      const { seite, auswahl, stabil } = await render(
         fakeData([
           saison(WASBUETTEL),
           {
@@ -437,7 +466,7 @@ describe('UeberblickComponent', () => {
     });
 
     it('offers no removal for a Team that loaded', async () => {
-      const seite = await render(fakeData([saison(WASBUETTEL)]), [
+      const { seite } = await render(fakeData([saison(WASBUETTEL)]), [
         WASBUETTEL.id,
       ]);
 
