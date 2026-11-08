@@ -2,6 +2,7 @@ import type { Geschlecht } from '../domain/geschlecht';
 import type { Liga } from '../domain/liga';
 import type { Saison } from '../domain/saison';
 import { shapeError, type DbbObject } from './dbb-object';
+import { optionalField } from './optional-field';
 
 const GESCHLECHTER: Readonly<Record<string, Geschlecht>> = {
   männlich: 'männlich',
@@ -23,8 +24,8 @@ export function mapLiga(ligaData: DbbObject): Liga {
     altersklasse: ligaData.string('akName'),
     geschlecht: mapGeschlecht(ligaData, 'geschlecht'),
     spielklasse: ligaData.string('skName'),
-    ...(bezirk === undefined ? {} : { bezirk }),
-    ...(saison === undefined ? {} : { saison }),
+    ...optionalField('bezirk', bezirk),
+    ...optionalField('saison', saison),
   };
 }
 

@@ -7,6 +7,7 @@ import type {
 } from '../domain/spiel';
 import { shapeError, type DbbObject } from './dbb-object';
 import { mapSpielPartei } from './map-team';
+import { optionalField } from './optional-field';
 
 /** How the DBB writes a result: `"57:94"`, home first. */
 const RESULT = /^(\d+):(\d+)$/;
@@ -27,7 +28,7 @@ export function mapSpiel(match: DbbObject, ligaId?: LigaId): Spiel {
       requiredLigaId(match, ligaId),
     spieltag: match.number('matchDay'),
     datum: match.string('kickoffDate'),
-    ...(uhrzeit === undefined || uhrzeit === NO_TIME ? {} : { uhrzeit }),
+    ...optionalField('uhrzeit', uhrzeit === NO_TIME ? undefined : uhrzeit),
     heim: mapSpielPartei(match.object('homeTeam')),
     gast: mapSpielPartei(match.object('guestTeam')),
     status: mapStatus(match),
@@ -50,7 +51,7 @@ function mapStatus(match: DbbObject): SpielStatus {
     return {
       art: 'kampflos',
       verzichtet: verzichteteSeiten(match),
-      ...(ergebnis === undefined ? {} : { ergebnis }),
+      ...optionalField('ergebnis', ergebnis),
     };
   }
   if (ergebnis !== undefined) {
