@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.11](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.10...v74.139.11) (2026-11-08)
+
+### Testing
+
+* **feat-shared-bacteria-engine:** type-check the engine's specs and fix the boss cooldown test ([#2881](https://github.com/WolfSoko/wol-sok-mono/issues/2881)) ([9ee95d9](https://github.com/WolfSoko/wol-sok-mono/commit/9ee95d91ebca20aafee3941abc27b93d1bfa691a)), closes [#2803](https://github.com/WolfSoko/wol-sok-mono/issues/2803) [#2803](https://github.com/WolfSoko/wol-sok-mono/issues/2803)
+
 ## [74.139.10](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.9...v74.139.10) (2026-11-08)
 
 ### Bug Fixes
