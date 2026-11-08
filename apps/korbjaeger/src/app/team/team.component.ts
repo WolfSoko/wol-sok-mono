@@ -15,13 +15,13 @@ import { KEIN_TEAM, fehlerText, spielZeilen } from './team-spiele';
 
 /** A Team's Spiele of the Saison, across all its Ligen, by date. */
 @Component({
-  selector: 'korb-team-spiele',
+  selector: 'korb-team',
   imports: [MatChipsModule, MatListModule, MatProgressBarModule],
-  templateUrl: './team-spiele.component.html',
-  styleUrl: './team-spiele.component.scss',
+  templateUrl: './team.component.html',
+  styleUrl: './team.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TeamSpieleComponent {
+export class TeamComponent {
   /** The Team's DBB id, as the route gives it. */
   public readonly teamId = input.required<string>();
 

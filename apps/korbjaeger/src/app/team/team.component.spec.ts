@@ -11,7 +11,7 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import { TeamSpieleComponent } from './team-spiele.component';
+import { TeamComponent } from './team.component';
 
 const UNSER_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', vereinId: 1837 };
 
@@ -70,7 +70,7 @@ async function render(
   TestBed.configureTestingModule({
     providers: [{ provide: BASKETBALL_DATA, useValue: data }],
   });
-  const fixture = TestBed.createComponent(TeamSpieleComponent);
+  const fixture = TestBed.createComponent(TeamComponent);
   fixture.componentRef.setInput('teamId', teamId);
   await fixture.whenStable();
   return fixture.nativeElement as HTMLElement;
@@ -87,7 +87,7 @@ function feld(zeile: HTMLElement, name: string): string | undefined {
     .trim();
 }
 
-describe('TeamSpieleComponent', () => {
+describe('TeamComponent', () => {
   it("reads the Team of the page's id", async () => {
     const data = fakeData(async () => saison([]));
 
@@ -287,7 +287,7 @@ describe('TeamSpieleComponent', () => {
         },
       ],
     });
-    const fixture = TestBed.createComponent(TeamSpieleComponent);
+    const fixture = TestBed.createComponent(TeamComponent);
     fixture.componentRef.setInput('teamId', '313036');
     fixture.detectChanges();
 
@@ -329,7 +329,7 @@ describe('TeamSpieleComponent', () => {
     TestBed.configureTestingModule({
       providers: [{ provide: BASKETBALL_DATA, useValue: data }],
     });
-    const fixture = TestBed.createComponent(TeamSpieleComponent);
+    const fixture = TestBed.createComponent(TeamComponent);
     fixture.componentRef.setInput('teamId', '313036');
     fixture.detectChanges();
     const erster = data.teamSpiele.mock.calls[0][1]?.signal;
