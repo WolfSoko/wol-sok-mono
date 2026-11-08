@@ -1,6 +1,11 @@
 import { rejectedError } from '../../testing/caught-error';
 import { BasketballDataError } from '../domain/basketball-data-error';
-import { KEIN_LIGA_FILTER, type LigaSucheFilter } from '../domain/liga-suche';
+import {
+  KEIN_LIGA_FILTER,
+  angeboten,
+  naechsterStartIndex,
+  type LigaSucheFilter,
+} from '../domain/liga-suche';
 import { DbbBasketballData, VEREINS_SPIELE_TAGE } from './dbb-basketball-data';
 import {
   type DbbRequest,
@@ -20,12 +25,31 @@ import teamMatches from './fixtures/team-313036-matches.json';
 import teamNotFound from './fixtures/team-not-found.json';
 import wamData from './fixtures/wam-data-bayern-u14.json';
 import zweiteSeite from './fixtures/wam-liga-list-bayern-u14-10.json';
+import alleLigen from './fixtures/wam-data-alle.json';
+import niedersachsen from './fixtures/wam-data-niedersachsen.json';
+import niedersachsenU12 from './fixtures/wam-data-niedersachsen-u12.json';
+import vorrundeSpielplan from './fixtures/spielplan-54862.json';
+import nsU12mErste from './fixtures/wam-data-niedersachsen-u12-jugend-maennlich.json';
+import nsU12mZweite from './fixtures/wam-liga-list-niedersachsen-u12-jugend-maennlich-10.json';
+import nsU12mDritte from './fixtures/wam-liga-list-niedersachsen-u12-jugend-maennlich-20.json';
 
 const BAYERN_U14: LigaSucheFilter = {
   ...KEIN_LIGA_FILTER,
   verbandIds: [2],
   altersklasseIds: [14],
 };
+
+const NIEDERSACHSEN_U12_JUGEND_MAENNLICH: LigaSucheFilter = {
+  verbandIds: [7],
+  altersklasseIds: [12],
+  altersgruppeGeschlechtIds: ['2_1'],
+};
+
+/** The recorded pages of the male U12 youth Ligen of Niedersachsen. */
+const NS_U12M_SEITEN: ReadonlyMap<number, unknown> = new Map([
+  [10, nsU12mZweite],
+  [20, nsU12mDritte],
+]);
 
 /** A transport that answers each kind of read with one recorded response. */
 class FakeTransport {
@@ -74,6 +98,77 @@ describe('DbbBasketballData', () => {
     ]);
   });
 
+  it('offers each Verband that has Ligen when nothing is picked yet', async () => {
+    const { data } = dataWith({ 'liga-suche': alleLigen });
+
+    const { verbaende } = (await data.ligaSuche(KEIN_LIGA_FILTER)).facetten;
+
+    expect(angeboten(verbaende)).toContainEqual({
+      id: 7,
+      name: 'Niedersachsen',
+      treffer: 252,
+    });
+    expect(angeboten(verbaende)).toHaveLength(23);
+  });
+
+  it('offers the age groups a Verband has, and none it lacks', async () => {
+    const { data } = dataWith({ 'liga-suche': niedersachsen });
+
+    const { altersklassen } = (
+      await data.ligaSuche({ ...KEIN_LIGA_FILTER, verbandIds: [7] })
+    ).facetten;
+
+    const namen = angeboten(altersklassen).map((facette) => facette.name);
+    expect(namen).toContain('U12');
+    expect(namen).not.toContain('U19');
+  });
+
+  it('offers the genders of the picked age group only', async () => {
+    const { data } = dataWith({ 'liga-suche': niedersachsenU12 });
+
+    const { altersgruppenGeschlechter } = (
+      await data.ligaSuche({
+        ...KEIN_LIGA_FILTER,
+        verbandIds: [7],
+        altersklasseIds: [12],
+      })
+    ).facetten;
+
+    expect(angeboten(altersgruppenGeschlechter)).toEqual([
+      { id: '2_1', name: 'Jugend männlich', treffer: 28 },
+      { id: '2_2', name: 'Jugend weiblich', treffer: 8 },
+    ]);
+  });
+
+  it('pages through the Ligen of a filter until there are no more', async () => {
+    const requests: DbbRequest[] = [];
+    const data = new DbbBasketballData(async (request) => {
+      requests.push(request);
+      return request.kind === 'liga-seite'
+        ? NS_U12M_SEITEN.get(request.startIndex)
+        : nsU12mErste;
+    });
+
+    const filter = NIEDERSACHSEN_U12_JUGEND_MAENNLICH;
+    const seiten = [(await data.ligaSuche(filter)).ersteSeite];
+    for (
+      let start = naechsterStartIndex(seiten[0]);
+      start !== undefined;
+      start = naechsterStartIndex(seiten[seiten.length - 1])
+    ) {
+      seiten.push(await data.ligaSeite(filter, start));
+    }
+
+    expect(seiten.map((seite) => seite.startIndex)).toEqual([0, 10, 20]);
+    expect(seiten.flatMap((seite) => seite.ligen)).toHaveLength(28);
+    expect(seiten[1].ligen.map((liga) => liga.id)).toContain(54862);
+    expect(requests).toEqual([
+      { kind: 'liga-suche', filter },
+      { kind: 'liga-seite', filter, startIndex: 10 },
+      { kind: 'liga-seite', filter, startIndex: 20 },
+    ]);
+  });
+
   it('reads the Teams of a Liga from its Spielplan', async () => {
     const { data, transport } = dataWith({ spielplan });
 
@@ -81,6 +176,23 @@ describe('DbbBasketballData', () => {
       281627, 234544, 314384, 317492,
     ]);
     expect(transport.requests).toEqual([{ kind: 'spielplan', ligaId: 54379 }]);
+  });
+
+  it('reads every Team of a Liga with its Verein, each once', async () => {
+    const { data } = dataWith({ spielplan: vorrundeSpielplan });
+
+    expect(await data.ligaTeams(54862)).toEqual([
+      { id: 201500, name: 'MTV Gifhorn', vereinId: 645 },
+      { id: 313036, name: 'MTV Wasbüttel -RST-', vereinId: 1837 },
+      { id: 320898, name: 'SV Groß Oesingen -RST-', vereinId: 5256 },
+      { id: 322695, name: 'SV Groß Schwülper', vereinId: 4332 },
+      { id: 319164, name: 'TuS Müden-Dieckhorst -RST/aK-', vereinId: 3890 },
+      {
+        id: 313040,
+        name: 'TV Jahn Wolfsburg Honeybadgers -RST-',
+        vereinId: 2486,
+      },
+    ]);
   });
 
   it('reads a Verein’s Teams from its Spiele of the weeks around today', async () => {

@@ -1,0 +1,528 @@
+{
+  "timestamp": "2026-11-08T22:05:23+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "wam": {
+      "token": "0",
+      "verbandIds": [7],
+      "gebietIds": [],
+      "ligatypIds": [],
+      "akgGeschlechtIds": [],
+      "altersklasseIds": [12],
+      "spielklasseIds": [],
+      "sortBy": 1
+    },
+    "verbaende": [
+      {
+        "id": 100,
+        "label": "Bundesligen",
+        "hits": 0
+      },
+      {
+        "id": 29,
+        "label": "Deutsche Meisterschaften",
+        "hits": 0
+      },
+      {
+        "id": 40,
+        "label": "Deutscher Rollstuhlbasketball",
+        "hits": 0
+      },
+      {
+        "id": 30,
+        "label": "Regionalliga Nord",
+        "hits": 0
+      },
+      {
+        "id": 32,
+        "label": "Regionalliga Südost",
+        "hits": 0
+      },
+      {
+        "id": 31,
+        "label": "Regionalliga Südwest",
+        "hits": 0
+      },
+      {
+        "id": 33,
+        "label": "Regionalliga West",
+        "hits": 2
+      },
+      {
+        "id": 1,
+        "label": "Baden-Württemberg",
+        "hits": 52
+      },
+      {
+        "id": 2,
+        "label": "Bayern",
+        "hits": 67
+      },
+      {
+        "id": 3,
+        "label": "Berlin",
+        "hits": 12
+      },
+      {
+        "id": 14,
+        "label": "Brandenburg",
+        "hits": 3
+      },
+      {
+        "id": 4,
+        "label": "Bremen",
+        "hits": 9
+      },
+      {
+        "id": 5,
+        "label": "Hamburg",
+        "hits": 9
+      },
+      {
+        "id": 6,
+        "label": "Hessen",
+        "hits": 25
+      },
+      {
+        "id": 12,
+        "label": "Mecklenburg-Vorpommern",
+        "hits": 1
+      },
+      {
+        "id": 7,
+        "label": "Niedersachsen",
+        "hits": 34
+      },
+      {
+        "id": 11,
+        "label": "Nordrhein-Westfalen",
+        "hits": 56
+      },
+      {
+        "id": 8,
+        "label": "Rheinland-Pfalz",
+        "hits": 22
+      },
+      {
+        "id": 9,
+        "label": "Saarland",
+        "hits": 5
+      },
+      {
+        "id": 15,
+        "label": "Sachsen",
+        "hits": 17
+      },
+      {
+        "id": 13,
+        "label": "Sachsen-Anhalt",
+        "hits": 11
+      },
+      {
+        "id": 10,
+        "label": "Schleswig-Holstein",
+        "hits": 8
+      },
+      {
+        "id": 16,
+        "label": "Thüringen",
+        "hits": 11
+      }
+    ],
+    "gebiete": [
+      {
+        "id": "_",
+        "bezirk": null,
+        "kreis": null,
+        "hits": 5
+      },
+      {
+        "id": "98_",
+        "bezirk": "Region Braunschweig",
+        "kreis": null,
+        "hits": 8
+      },
+      {
+        "id": "100_",
+        "bezirk": "Region Göttingen",
+        "kreis": null,
+        "hits": 2
+      }
+    ],
+    "ligatypen": [
+      {
+        "id": 1,
+        "label": "Ligaspielbetrieb",
+        "hits": 31
+      },
+      {
+        "id": 2,
+        "label": "Pokalrunde",
+        "hits": 0
+      },
+      {
+        "id": 3,
+        "label": "Auf-/Abstiegsspiele",
+        "hits": 0
+      }
+    ],
+    "agkGeschlechtList": [
+      {
+        "id": "2_1",
+        "akg": "Jugend",
+        "geschlecht": "m",
+        "hits": 28
+      },
+      {
+        "id": "2_2",
+        "akg": "Jugend",
+        "geschlecht": "w",
+        "hits": 8
+      }
+    ],
+    "altersklassen": [
+      {
+        "id": 1,
+        "label": "Senioren",
+        "hits": 68
+      },
+      {
+        "id": 32,
+        "label": "Ü35",
+        "hits": 2
+      },
+      {
+        "id": 40,
+        "label": "Ü40",
+        "hits": 2
+      },
+      {
+        "id": 20,
+        "label": "U20",
+        "hits": 4
+      },
+      {
+        "id": 18,
+        "label": "U18",
+        "hits": 24
+      },
+      {
+        "id": 16,
+        "label": "U16",
+        "hits": 45
+      },
+      {
+        "id": 14,
+        "label": "U14",
+        "hits": 40
+      },
+      {
+        "id": 12,
+        "label": "U12",
+        "hits": 34
+      },
+      {
+        "id": 11,
+        "label": "U11",
+        "hits": 8
+      },
+      {
+        "id": 10,
+        "label": "U10",
+        "hits": 20
+      },
+      {
+        "id": 9,
+        "label": "U9",
+        "hits": 3
+      },
+      {
+        "id": 8,
+        "label": "U8",
+        "hits": 2
+      }
+    ],
+    "spielklassen": [
+      {
+        "id": 711,
+        "label": "Landesliga",
+        "hits": 4
+      },
+      {
+        "id": 722,
+        "label": "Regionsliga",
+        "hits": 16
+      },
+      {
+        "id": 723,
+        "label": "Regionsklasse",
+        "hits": 10
+      }
+    ],
+    "ligaListe": {
+      "startAtIndex": 0,
+      "ligen": [
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54162,
+          "liganame": "Landesliga U12 Nord",
+          "liganr": 4017,
+          "skName": "Landesliga",
+          "skNameSmall": "LL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U12",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54161,
+          "liganame": "Landesliga U12 Süd",
+          "liganr": 4016,
+          "skName": "Landesliga",
+          "skNameSmall": "LL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U12",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54160,
+          "liganame": "Landesliga U12 West",
+          "liganr": 1003,
+          "skName": "Landesliga",
+          "skNameSmall": "LL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U12",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54163,
+          "liganame": "Landesliga wU12",
+          "liganr": 1301,
+          "skName": "Landesliga",
+          "skNameSmall": "LL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U12",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54857,
+          "liganame": "Regionsliga Braunschweig mu12",
+          "liganr": 42161,
+          "skName": "Regionsliga",
+          "skNameSmall": "RL",
+          "skEbeneId": 1,
+          "skEbeneName": "Bezirk",
+          "akName": "U12",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": 10,
+          "bezirkName": "Region Braunschweig",
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54713,
+          "liganame": "Regionsliga Göttingen U12",
+          "liganr": 8346,
+          "skName": "Regionsliga",
+          "skNameSmall": "RL",
+          "skEbeneId": 1,
+          "skEbeneName": "Bezirk",
+          "akName": "U12",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": 30,
+          "bezirkName": "Region Göttingen",
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54537,
+          "liganame": "Regionsliga U12 männlich",
+          "liganr": 45000,
+          "skName": "Regionsliga",
+          "skNameSmall": "RL",
+          "skEbeneId": 1,
+          "skEbeneName": "Bezirk",
+          "akName": "U12",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": 40,
+          "bezirkName": "Region Hannover",
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54186,
+          "liganame": "Regionsliga Mitte mU12",
+          "liganr": 43042,
+          "skName": "Regionsliga",
+          "skNameSmall": "RL",
+          "skEbeneId": 1,
+          "skEbeneName": "Bezirk",
+          "akName": "U12",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": 50,
+          "bezirkName": "Region Lüneburg",
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54182,
+          "liganame": "Regionsliga Ost mU12",
+          "liganr": 43021,
+          "skName": "Regionsliga",
+          "skNameSmall": "RL",
+          "skEbeneId": 1,
+          "skEbeneName": "Bezirk",
+          "akName": "U12",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": 50,
+          "bezirkName": "Region Lüneburg",
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54183,
+          "liganame": "Regionsliga Süd mU12",
+          "liganr": 43022,
+          "skName": "Regionsliga",
+          "skNameSmall": "RL",
+          "skEbeneId": 1,
+          "skEbeneName": "Bezirk",
+          "akName": "U12",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": 50,
+          "bezirkName": "Region Lüneburg",
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        }
+      ],
+      "hasMoreData": true,
+      "size": 10
+    }
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

@@ -47,7 +47,11 @@ export type {
   VereinId,
 } from './lib/domain/ids';
 export type { Liga } from './lib/domain/liga';
-export { KEIN_LIGA_FILTER } from './lib/domain/liga-suche';
+export {
+  KEIN_LIGA_FILTER,
+  angeboten,
+  naechsterStartIndex,
+} from './lib/domain/liga-suche';
 export type {
   Facette,
   LigaSeite,
