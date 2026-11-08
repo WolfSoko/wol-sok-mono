@@ -1,5 +1,6 @@
 import {
   createIntFrameUniforms,
+  DETERMINISTIC_REPORT_LAG,
   fillIntCombatUniforms,
   fillIntFrameUniforms,
   frameSeed,
@@ -66,8 +67,12 @@ export type SetUniforms = (
  * everything that differs between them is here.
  */
 export interface GpuRules {
-  /** The integer passes, which every GPU computes alike. */
-  readonly deterministic: boolean;
+  /**
+   * How old every report the war takes is, in ticks - waited for, none
+   * skipped: the integer passes', which every GPU computes alike. Null takes
+   * them as the GPU finishes them, during the tick.
+   */
+  readonly reportLag: number | null;
   /** This context's cell passes, compiled once per context. */
   cellPrograms(gl: WebGL2RenderingContext): CellPrograms;
   /** The cell passes' uniforms that stay for the match. */
@@ -94,7 +99,7 @@ export interface GpuRules {
  * `DETERMINISTIC_REPORT_LAG` ticks old - waited for when the GPU is slow.
  */
 export class GpuIntRules implements GpuRules {
-  public readonly deterministic = true;
+  public readonly reportLag = DETERMINISTIC_REPORT_LAG;
   private readonly ints = createIntFrameUniforms();
 
   public constructor(
@@ -182,7 +187,7 @@ export class GpuIntRules implements GpuRules {
  * has it. No two GPUs need compute them alike.
  */
 export class GpuFloatRules implements GpuRules {
-  public readonly deterministic = false;
+  public readonly reportLag = null;
 
   public constructor(private readonly balance: GameBalance) {}
 

@@ -345,15 +345,15 @@ export class BacteriaSimulation implements Simulation {
 
   /** The nutrient pellets currently on the map, for rendering. */
   public getNutrients(): Nutrient[] {
-    return this.arena.getNutrients();
+    return this.arena.pellets.nutrients;
   }
 
   public getActiveEffects(): readonly ActiveEffect[] {
-    return this.arena.getActiveEffects();
+    return this.arena.weaponEffects.active;
   }
 
   public addEffect(effect: ActiveEffect): void {
-    this.arena.addEffect(effect);
+    this.arena.weaponEffects.add(effect);
   }
 
   /** The moving walls and gates as they stand right now, for rendering. */

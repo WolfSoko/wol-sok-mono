@@ -39,10 +39,7 @@ import {
   reportLayout,
 } from '../simulation-report';
 import { createIntEffectUniforms, setIntEffect } from '../gpu-int/int-effects';
-import {
-  DETERMINISTIC_REPORT_LAG,
-  divideBudgetOf,
-} from '../gpu-int/int-readback';
+import { divideBudgetOf } from '../gpu-int/int-readback';
 import type {
   CellPasses,
   GridFrame,
@@ -71,7 +68,7 @@ export const READBACK_SLOTS = 3;
  */
 export class GridWar implements Simulation {
   public readonly kind: 'gpu' | 'int';
-  /** `gpu-int` on deterministic passes; the float ones have no ruleset. */
+  /** `gpu-int` on passes with a fixed report lag; the float ones have none. */
   public readonly ruleset: Ruleset | null;
   private width = 0;
   private height = 0;
@@ -132,6 +129,9 @@ export class GridWar implements Simulation {
     reportStep: 0,
     generation: [],
   };
+  /** `boundsOf` for the passes, made once rather than every frame. */
+  private readonly boundsOfSlot = (slot: number): CellBounds | null =>
+    this.boundsOf(slot);
   /** Where the passes hand their reports - see `takeReport`. */
   private readonly sink: ReportSink = {
     take: (data, step, generation) => {
@@ -149,7 +149,7 @@ export class GridWar implements Simulation {
     random: () => number
   ) {
     this.kind = passes.kind;
-    this.ruleset = passes.deterministic ? 'gpu-int' : null;
+    this.ruleset = passes.reportLag === null ? null : 'gpu-int';
     this.arena = new ArenaFixtures(balance, random);
     this.layout = reportLayout(0, 0, balance.influenceCellSize);
     passes.attach({ restart: () => this.restart() });
@@ -194,7 +194,7 @@ export class GridWar implements Simulation {
     }
     this.elapsedSec += deltaTimeSec;
     this.steps++;
-    if (this.passes.deterministic) {
+    if (this.passes.reportLag !== null) {
       this.takeDueReports();
     }
     this.advanceDynamicWalls();
@@ -211,9 +211,7 @@ export class GridWar implements Simulation {
   }
 
   public colonyLayers(boosts: ReadonlyMap<number, Point>): ColonyLayer[] {
-    return this.passes.colonyLayers(this.spawns, boosts, (slot) =>
-      this.boundsOf(slot)
-    );
+    return this.passes.colonyLayers(this.spawns, boosts, this.boundsOfSlot);
   }
 
   /**
@@ -245,15 +243,15 @@ export class GridWar implements Simulation {
   }
 
   public getNutrients(): Nutrient[] {
-    return this.arena.getNutrients();
+    return this.arena.pellets.nutrients;
   }
 
   public getActiveEffects(): readonly ActiveEffect[] {
-    return this.arena.getActiveEffects();
+    return this.arena.weaponEffects.active;
   }
 
   public addEffect(effect: ActiveEffect): void {
-    this.arena.addEffect(effect);
+    this.arena.weaponEffects.add(effect);
   }
 
   public getDynamicWalls(): readonly DynamicWall[] {
@@ -392,12 +390,13 @@ export class GridWar implements Simulation {
   /**
    * How many steps the report in hand lags behind the war - at least the
    * read backs in flight. A display frame may run several steps, and the GPU
-   * finishes no read back between the steps of one frame. The deterministic
-   * war's lag is fixed.
+   * finishes no read back between the steps of one frame. Passes with a
+   * fixed lag report exactly that late.
    */
   private stepsBehind(): number {
-    if (this.passes.deterministic) {
-      return DETERMINISTIC_REPORT_LAG;
+    const lag = this.passes.reportLag;
+    if (lag !== null) {
+      return lag;
     }
     const behind = this.report == null ? 0 : this.steps - this.reportStep;
     return Math.max(READBACK_SLOTS, behind);

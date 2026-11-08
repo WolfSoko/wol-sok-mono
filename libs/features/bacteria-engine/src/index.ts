@@ -489,7 +489,6 @@ export { GridWar, READBACK_SLOTS } from './lib/state/grid/grid-war';
 export type {
   CellPasses,
   CellPassesHost,
-  FrameUniforms,
   GridArena,
   GridFrame,
   GridTick,

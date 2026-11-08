@@ -1,5 +1,6 @@
 import {
   createIntEffectUniforms,
+  DETERMINISTIC_REPORT_LAG,
   frameSeed,
   gameBalance,
   GridFrame,
@@ -85,8 +86,8 @@ function frame(): GridFrame {
 describe('GpuIntRules', () => {
   const rules = new GpuIntRules(gameBalance, 1234);
 
-  it('is deterministic and seeds the draws of each step from the match’s seed', () => {
-    expect(rules.deterministic).toBe(true);
+  it('takes every report a fixed lag late, and seeds the draws of each step from the match’s seed', () => {
+    expect(rules.reportLag).toBe(DETERMINISTIC_REPORT_LAG);
     expect(rules.seed(7)).toBe(frameSeed(1234, 7));
     expect(rules.seed(8)).not.toBe(rules.seed(7));
   });
@@ -127,8 +128,8 @@ describe('GpuIntRules', () => {
 describe('GpuFloatRules', () => {
   const rules = new GpuFloatRules(gameBalance);
 
-  it('is not deterministic and seeds the draws of each step from the step alone', () => {
-    expect(rules.deterministic).toBe(false);
+  it('takes the reports as the GPU finishes them, and seeds the draws of each step from the step alone', () => {
+    expect(rules.reportLag).toBeNull();
     expect(rules.seed(7)).toBe((7 * 2654435761) >>> 0);
   });
 

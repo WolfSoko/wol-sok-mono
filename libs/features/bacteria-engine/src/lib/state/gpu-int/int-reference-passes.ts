@@ -52,7 +52,7 @@ interface PendingReport {
  */
 export class IntReferencePasses implements CellPasses {
   public readonly kind = 'int';
-  public readonly deterministic = true;
+  public readonly reportLag = DETERMINISTIC_REPORT_LAG;
   private arena: GridArena = {
     width: 0,
     height: 0,

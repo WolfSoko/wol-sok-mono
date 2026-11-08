@@ -1,5 +1,4 @@
-import type { ActiveEffect } from './evolution';
-import { noEvents, Nutrient, StepEvents } from './bacteria-simulation';
+import { noEvents, StepEvents } from './bacteria-simulation';
 import { GameBalance } from './game-balance';
 import { getMap } from './game-maps';
 import { compareDynamicWalls, DynamicWall, GameMap } from './maps';
@@ -86,18 +85,5 @@ export class ArenaFixtures {
     this.tickEvents.gatesClosed += closed;
     this.tickEvents.gatesWarned += warned;
     return changed;
-  }
-
-  /** The nutrient pellets on the map, for the painter and the bots. */
-  public getNutrients(): Nutrient[] {
-    return this.pellets.nutrients;
-  }
-
-  public getActiveEffects(): readonly ActiveEffect[] {
-    return this.weaponEffects.active;
-  }
-
-  public addEffect(effect: ActiveEffect): void {
-    this.weaponEffects.add(effect);
   }
 }

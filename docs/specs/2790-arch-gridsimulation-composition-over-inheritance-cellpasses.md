@@ -72,8 +72,8 @@ report:
 ```ts
 interface CellPasses {
   readonly kind: 'gpu' | 'int';
-  /** Integer passes, reports exactly `DETERMINISTIC_REPORT_LAG` ticks old. */
-  readonly deterministic: boolean;
+  /** Integer passes: every report `DETERMINISTIC_REPORT_LAG` ticks old; else null. */
+  readonly reportLag: number | null;
   ready(): boolean;
   allocate(arena: GridArena): void; // width, height, report layout
   startMatch(): void;
@@ -101,9 +101,11 @@ interface CellPasses {
   count, the report in hand with its step, and the match seed. Adapters read
   no field of `GridWar`. `GridWar` clears `escapePending` and `maskDirty`
   itself after the call that consumed them.
-- `deterministic` on the port replaces `GridSimulation`'s option:
-  `GridWar` derives `ruleset` (`gpu-int` or null), the report lag and when
-  reports are collected from it. The ordering rule "reports before pellets
+- `reportLag` on the port replaces `GridSimulation`'s `deterministic`
+  option (it was `deterministic` in the first draft; the review moved it
+  so the lag is stated once, by the adapter): `GridWar` derives `ruleset`
+  (`gpu-int` or null), the report lag and when reports are collected from
+  it. The ordering rule "reports before pellets
   in a deterministic match" becomes one named step in `GridWar.step`, and a
   spec covers it.
 - `GridWar` fills the effects' circles in both formats every tick: each
@@ -174,7 +176,7 @@ for the painter and the divide budget. Its `kind` is the port's; its
      `loadMask` runs once after each change;
    - a report taken through the sink sets the step, the summaries, the
      events (captures, crushed) and drains the pellets of its generation;
-   - `ruleset` and the report lag follow `deterministic`;
+   - `ruleset` and the report lag follow the port's `reportLag`;
    - `init` with more colonies than `MAX_GPU_COLONIES` throws.
 3. `arena-fixtures.spec.ts` covers the wall advance (changed, gate events)
    and the delegated getters.

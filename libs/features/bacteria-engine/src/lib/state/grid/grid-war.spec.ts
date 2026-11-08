@@ -5,6 +5,7 @@ import {
   divideBudgetOf,
 } from '../gpu-int/int-readback';
 import { MAX_GPU_COLONIES, REPORT_ROWS } from '../grid-format';
+import { getMap } from '../game-maps';
 import { GameMap } from '../maps';
 import { createPlayer, Player } from '../player.model';
 import type {
@@ -21,12 +22,7 @@ const WIDTH = 64;
 const HEIGHT = 32;
 const TICK = 0.05;
 
-const plainMap: GameMap = {
-  id: 'plain',
-  name: 'Plain',
-  description: 'No walls',
-  createWalls: () => [],
-};
+const plainMap = getMap('open-field');
 
 /** A gate across the middle that shuts after the first tick. */
 const gateMap: GameMap = {
@@ -78,7 +74,11 @@ class StubPasses implements CellPasses {
   /** The pellets' generations as the last tick ran. */
   public generation: readonly number[] = [];
 
-  public constructor(public readonly deterministic: boolean) {}
+  public readonly reportLag: number | null;
+
+  public constructor(deterministic: boolean) {
+    this.reportLag = deterministic ? DETERMINISTIC_REPORT_LAG : null;
+  }
 
   public attach(host: CellPassesHost): void {
     this.host = host;
@@ -122,7 +122,7 @@ class StubPasses implements CellPasses {
   public runTick(tick: GridTick, sink: ReportSink): void {
     this.calls.push('runTick');
     this.ticks.push({ ...tick });
-    if (!this.deterministic) {
+    if (this.reportLag === null) {
       this.handOver(tick.step, sink);
     }
     this.generation = tick.generation.slice();

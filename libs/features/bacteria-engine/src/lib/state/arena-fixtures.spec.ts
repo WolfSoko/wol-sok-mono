@@ -1,6 +1,6 @@
 import { ArenaFixtures } from './arena-fixtures';
-import type { ActiveEffect } from './evolution';
 import { gameBalance } from './game-balance';
+import { getMap } from './game-maps';
 import { DynamicWall, GameMap } from './maps';
 
 /** A gate that warns from 1 s and is shut from 2 s on. */
@@ -23,12 +23,7 @@ const gateMap: GameMap = {
   createDynamicWalls: (_width, _height, timeSec) => [gate(timeSec)],
 };
 
-const plainMap: GameMap = {
-  id: 'plain',
-  name: 'Plain',
-  description: 'No walls',
-  createWalls: () => [],
-};
+const plainMap = getMap('open-field');
 
 function fixtures(map: GameMap): ArenaFixtures {
   const arena = new ArenaFixtures(gameBalance, () => 0.5);
@@ -73,21 +68,5 @@ describe('ArenaFixtures', () => {
     gated.startWalls(40, 20, 0);
     gated.clearWalls();
     expect(gated.dynamicWalls).toEqual([]);
-  });
-
-  it('lets an added effect act and lists the pellets', () => {
-    const arena = fixtures(plainMap);
-    const effect: ActiveEffect = {
-      weapon: 'toxin-bomb',
-      owner: 1,
-      x: 5,
-      y: 5,
-      radius: 3,
-      remainingSec: 1,
-      durationSec: 1,
-    };
-    arena.addEffect(effect);
-    expect(arena.getActiveEffects()).toEqual([effect]);
-    expect(arena.getNutrients()).toBe(arena.pellets.nutrients);
   });
 });

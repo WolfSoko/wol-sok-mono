@@ -89,11 +89,13 @@ export interface CellPassesHost {
 export interface CellPasses {
   readonly kind: 'gpu' | 'int';
   /**
-   * The integer passes of ADR 0015: the war takes each report exactly
-   * `DETERMINISTIC_REPORT_LAG` ticks late, at the start of a tick. Else the
-   * passes hand reports over as they come in, during `runTick`.
+   * How old, in ticks, every report the war takes is - set only by the
+   * integer passes of ADR 0015, which every device computes alike
+   * (`DETERMINISTIC_REPORT_LAG`): the war then collects them at the start of
+   * a tick and plays the `gpu-int` ruleset. Null for passes that hand
+   * reports over as they come in, during `runTick`.
    */
-  readonly deterministic: boolean;
+  readonly reportLag: number | null;
   /** Called once by the war that runs these passes. */
   attach(host: CellPassesHost): void;
   /** True once the passes can run - their resources are set up. */
@@ -108,7 +110,7 @@ export interface CellPasses {
   loadState(state: Uint16Array): void;
   /** Hands the passes this tick's frame - before `runTick`. */
   uploadFrame(frame: GridFrame): void;
-  /** Hands the reports due by `step` to the sink - deterministic passes. */
+  /** Hands the reports due by `step` to the sink - passes with a `reportLag`. */
   collectReports(step: number, sink: ReportSink): void;
   /**
    * Runs the tick's cell passes and renders its report; passes that are not

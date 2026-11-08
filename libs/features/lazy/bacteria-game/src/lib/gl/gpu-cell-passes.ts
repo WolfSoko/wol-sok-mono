@@ -9,7 +9,7 @@ import {
   GridFrame,
   GridTick,
   Point,
-  DETERMINISTIC_REPORT_LAG,
+  INT_KIND,
   READBACK_SLOTS,
   readbacksToTake,
   Rect,
@@ -49,9 +49,6 @@ const REACH_HISTORY = READBACK_SLOTS + 3;
  * gone after a second is 1 - e^-rate.
  */
 const EFFECT_FADE_PER_SEC = { fight: 2.5, eat: 2.5, move: 6 };
-
-/** What a pass of the claim and apply pair does. */
-const KIND = { move: 0, escape: 1, divide: 2 } as const;
 
 /**
  * The texture unit of each sampler. They are the same in every program, so
@@ -131,12 +128,12 @@ interface Resources {
  *
  * The CPU reads the report back without waiting for the GPU, so the
  * scoreboard, the computer opponent and the pellets work with numbers one
- * or two frames old - or, by deterministic rules, exactly `DETERMINISTIC_REPORT_LAG` ticks
+ * or two frames old - or, by rules with a fixed `reportLag`, exactly that many ticks
  * old, waited for when the GPU is slow.
  */
 export class GpuCellPasses implements CellPasses {
   public readonly kind = 'gpu';
-  public readonly deterministic: boolean;
+  public readonly reportLag: number | null;
   /** Milliseconds the main thread waited for reports - see `takeGpuWaitMs`. */
   private gpuWaitMs = 0;
   private host: CellPassesHost | null = null;
@@ -171,12 +168,6 @@ export class GpuCellPasses implements CellPasses {
   private readonly recentAreas: Rect[][] = [];
   /** How far a bacterium got in each of the last ticks, newest first. */
   private readonly recentReach: number[] = [];
-  /**
-   * The age of the report the war takes - the rules' fixed lag, null to take
-   * them as the GPU finishes them. `GridWar` waits as long on deterministic
-   * passes, so it follows from `deterministic` alone.
-   */
-  private readonly reportLag: number | null;
   /** The frame's length - for the glow's fading. */
   private frameDeltaSec = 0;
 
@@ -185,8 +176,7 @@ export class GpuCellPasses implements CellPasses {
     private readonly balance: GameBalance,
     private readonly rules: GpuRules
   ) {
-    this.deterministic = rules.deterministic;
-    this.reportLag = rules.deterministic ? DETERMINISTIC_REPORT_LAG : null;
+    this.reportLag = rules.reportLag;
     const canvas = gl.canvas;
     if (canvas instanceof HTMLCanvasElement) {
       canvas.addEventListener('webglcontextlost', this.onContextLost);
@@ -379,7 +369,7 @@ export class GpuCellPasses implements CellPasses {
     // 2. Out of the way of a wall that moved - one cell per step, as far
     // as a wall may shove a bacterium - or crushed.
     for (let step = 0; step < tick.escapeSteps; step++) {
-      this.claimAndApply(resources, KIND.escape, step);
+      this.claimAndApply(resources, INT_KIND.escape, step);
     }
     this.statePass(resources, programs.crush);
 
@@ -389,9 +379,9 @@ export class GpuCellPasses implements CellPasses {
     this.statePass(resources, programs.feed);
 
     // 4. Division, 5. movement.
-    this.claimAndApply(resources, KIND.divide, 0);
+    this.claimAndApply(resources, INT_KIND.divide, 0);
     for (let step = 0; step < tick.mostSteps; step++) {
-      this.claimAndApply(resources, KIND.move, step);
+      this.claimAndApply(resources, INT_KIND.move, step);
     }
     this.renderEffects(resources, tick);
 
