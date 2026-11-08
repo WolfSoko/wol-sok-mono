@@ -40,6 +40,15 @@ Nx project.
   `map-*.ts` per endpoint maps its JSON, and `DbbObject` checks each
   field's type on the way.
 
+## Testing entry
+
+`@wolsok/feat-shared-basketball-data/testing` (`src/testing.ts`, for specs
+and e2e only) holds `fakeDbbAnswer(method, path)`: how the DBB answers a
+read, from the fixtures below (the recording of a recorded id, the DBB's
+not-found envelope for any other id, `undefined` for a read it does not
+know). The app's proxy specs and its e2e fake DBB server answer with it; a
+read a later screen needs gets its row in `src/testing/fake-dbb.ts`.
+
 ## Tests
 
 Every mapper's spec reads recorded, anonymised DBB responses: see
