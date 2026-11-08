@@ -89,6 +89,30 @@ describe('mapSpiel', () => {
     });
   });
 
+  it('reads a cancelled Spiel whatever stands in its result', () => {
+    expect(
+      spiel(bayern, 2911146, { abgesagt: true, result: 'abg.' }).status
+    ).toEqual({
+      art: 'abgesagt',
+    });
+    expect(spiel(bayern, 2911132, { abgesagt: true }).status).toEqual({
+      art: 'abgesagt',
+    });
+  });
+
+  it.each(['-:-', '', ' ', 'abg.'])(
+    'reads the placeholder result %j as no result',
+    (result) => {
+      expect(spiel(bayern, 2911146, { result }).status).toEqual({
+        art: 'geplant',
+      });
+      expect(spiel(vorrunde, 2843812, { result }).status).toEqual({
+        art: 'kampflos',
+        verzichtet: ['heim'],
+      });
+    }
+  );
+
   it('reads a slot without a Team by its name', () => {
     const slot = spiel(hauptrunde, 2861786);
 

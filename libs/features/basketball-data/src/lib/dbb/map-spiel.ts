@@ -12,6 +12,9 @@ import { optionalField } from './optional-field';
 /** How the DBB writes a result: `"57:94"`, home first. */
 const RESULT = /^(\d+):(\d+)$/;
 
+/** A result without any digit (`"-:-"`, `"abg."`) is a placeholder: none yet. */
+const HAS_DIGIT = /\d/;
+
 /** The DBB's tip-off time for "not set yet". */
 const NO_TIME = '00:00';
 
@@ -43,10 +46,10 @@ function requiredLigaId(match: DbbObject, ligaId: LigaId | undefined): LigaId {
 }
 
 function mapStatus(match: DbbObject): SpielStatus {
-  const ergebnis = mapErgebnis(match);
   if (match.optionalBoolean('abgesagt')) {
     return { art: 'abgesagt' };
   }
+  const ergebnis = mapErgebnis(match);
   if (match.optionalBoolean('verzicht')) {
     return {
       art: 'kampflos',
@@ -77,7 +80,7 @@ function verzichteteSeiten(match: DbbObject): readonly SpielSeite[] {
 
 function mapErgebnis(match: DbbObject): Spielstand | undefined {
   const result = match.optionalString('result');
-  if (result === undefined) {
+  if (result === undefined || !HAS_DIGIT.test(result)) {
     return undefined;
   }
   const parts = RESULT.exec(result);
