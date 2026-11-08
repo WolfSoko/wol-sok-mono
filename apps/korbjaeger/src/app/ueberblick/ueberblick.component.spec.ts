@@ -11,6 +11,7 @@ import {
   type Team,
   type TeamId,
   type TeamSaison,
+  type VereinsTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
@@ -85,6 +86,13 @@ function saison(von: Team, ...spiele: Spiel[]): TeamSaison {
 
 type TeamSpieleRead = KorbjaegerData['teamSpiele'];
 type SpielRead = KorbjaegerData['spiel'];
+type VereinsTeamsRead = KorbjaegerData['vereinsTeams'];
+
+/** A Verein whose recent Spiele show no Team. */
+const OHNE_TEAMS: VereinsTeamsRead = async (vereinId) => ({
+  verein: { id: vereinId, name: 'Verein' },
+  teams: [],
+});
 
 /** Where every Spiel of the specs is played, unless one says otherwise. */
 const SPORTHALLE: Halle = {
@@ -109,13 +117,16 @@ const inDerSporthalle: SpielRead = async (spielId) => ({
  */
 function fakeData(
   saisons: readonly (TeamSaison | { teamId: TeamId; fehler: Error })[],
-  details: SpielRead = inDerSporthalle
+  details: SpielRead = inDerSporthalle,
+  vereinsTeams: VereinsTeamsRead = OHNE_TEAMS
 ): {
   readonly teamSpiele: ReturnType<typeof vi.fn<TeamSpieleRead>>;
   readonly spiel: ReturnType<typeof vi.fn<SpielRead>>;
+  readonly vereinsTeams: ReturnType<typeof vi.fn<VereinsTeamsRead>>;
 } {
   return {
     spiel: vi.fn<SpielRead>(details),
+    vereinsTeams: vi.fn<VereinsTeamsRead>(vereinsTeams),
     teamSpiele: vi.fn<TeamSpieleRead>(async (teamId) => {
       const gefunden = saisons.find((s) =>
         'fehler' in s ? s.teamId === teamId : s.team.id === teamId
@@ -133,7 +144,7 @@ function fakeData(
  * `Auswahl`), once the reads that settle have settled.
  */
 async function render(
-  data: Pick<KorbjaegerData, 'teamSpiele' | 'spiel'>,
+  data: Pick<KorbjaegerData, 'teamSpiele' | 'spiel' | 'vereinsTeams'>,
   gefolgt: readonly TeamId[] | Auswahl
 ): Promise<{
   readonly seite: HTMLElement;
@@ -519,6 +530,7 @@ describe('UeberblickComponent', () => {
       const { seite } = await render(
         {
           spiel: inDerSporthalle,
+          vereinsTeams: OHNE_TEAMS,
           teamSpiele: async (teamId) =>
             teamId === GIFHORN.id
               ? NIE
@@ -600,6 +612,7 @@ describe('UeberblickComponent', () => {
       const { seite, stabil } = await render(
         {
           spiel: inDerSporthalle,
+          vereinsTeams: OHNE_TEAMS,
           teamSpiele: (teamId) =>
             teamId === GIFHORN.id
               ? new Promise((resolve) => (gifhornLaden = resolve))
@@ -650,6 +663,114 @@ describe('UeberblickComponent', () => {
       expect(
         eintraege(seite)[0].querySelector('[data-qa="ueberblick-entfernen"]')
       ).toBeNull();
+    });
+  });
+
+  describe('the end of the Saison', () => {
+    /** Wasbüttel's Verein: the Team itself and its U14. */
+    const WASBUETTELS_VEREIN: VereinsTeams = {
+      verein: { id: WASBUETTEL.vereinId, name: 'MTV Wasbüttel' },
+      teams: [
+        { team: WASBUETTEL, ligen: [VORRUNDE] },
+        {
+          team: WASBUETTEL_U14,
+          ligen: [{ ...VORRUNDE, id: 54900, name: 'U14 Regionsliga' }],
+        },
+      ],
+    };
+
+    function mitLetztemSpielAm(datum: string) {
+      return fakeData(
+        [
+          saison(
+            WASBUETTEL,
+            spiel(WASBUETTEL, GIFHORN, datum, { status: GESPIELT_78_47 })
+          ),
+        ],
+        inDerSporthalle,
+        async () => WASBUETTELS_VEREIN
+      );
+    }
+
+    it("says a Team's Saison is over and suggests its Verein's current Teams", async () => {
+      // more than two weeks before 8 November
+      const data = mitLetztemSpielAm('2026-10-17');
+
+      const { seite, stabil } = await render(data, [WASBUETTEL.id]);
+      // the Verein is read once its card is there
+      await stabil();
+
+      const hinweis = teil(eintraege(seite)[0], 'saison-beendet');
+      expect(text(hinweis)).toContain('Saison vorbei');
+      expect(data.vereinsTeams).toHaveBeenCalledWith(WASBUETTEL.vereinId, {
+        signal: expect.any(AbortSignal),
+      });
+      expect(
+        [
+          ...(hinweis?.querySelectorAll('[data-qa="vereins-team-name"]') ?? []),
+        ].map((name) => text(name))
+      ).toEqual(['MTV Wasbüttel U14']);
+      expect(text(teil(eintraege(seite)[0], 'letztes'))).toContain('78:47');
+    });
+
+    it('follows a suggested Team from the card', async () => {
+      const { seite, auswahl, stabil } = await render(
+        mitLetztemSpielAm('2026-10-17'),
+        [WASBUETTEL.id]
+      );
+      await stabil();
+
+      teil(eintraege(seite)[0], 'saison-beendet')
+        ?.querySelector<HTMLButtonElement>('button[aria-pressed]')
+        ?.click();
+      await stabil();
+
+      expect(auswahl.teams()).toEqual([WASBUETTEL.id, WASBUETTEL_U14.id]);
+    });
+
+    it('says nothing and reads no Verein exactly two weeks after the last Spiel', async () => {
+      const data = mitLetztemSpielAm('2026-10-25');
+
+      const { seite } = await render(data, [WASBUETTEL.id]);
+
+      expect(teil(eintraege(seite)[0], 'saison-beendet')).toBeNull();
+      expect(data.vereinsTeams).not.toHaveBeenCalled();
+    });
+
+    it('says nothing for a Team without Spiele', async () => {
+      const data = fakeData([saison(WASBUETTEL)]);
+
+      const { seite } = await render(data, [WASBUETTEL.id]);
+
+      expect(teil(eintraege(seite)[0], 'saison-beendet')).toBeNull();
+      expect(data.vereinsTeams).not.toHaveBeenCalled();
+    });
+
+    it('keeps the card when the Verein cannot be read', async () => {
+      const { seite, stabil } = await render(
+        fakeData(
+          [
+            saison(
+              WASBUETTEL,
+              spiel(WASBUETTEL, GIFHORN, '2026-10-17', {
+                status: GESPIELT_78_47,
+              })
+            ),
+          ],
+          inDerSporthalle,
+          async () => {
+            throw new BasketballDataError('unavailable', 'DBB: nope');
+          }
+        ),
+        [WASBUETTEL.id]
+      );
+      await stabil();
+
+      const [eintrag] = eintraege(seite);
+      expect(text(teil(eintrag, 'letztes'))).toContain('78:47');
+      expect(
+        text(eintrag.querySelector('[data-qa="vereins-teams-fehler"]'))
+      ).toContain('Der DBB ist gerade nicht erreichbar.');
     });
   });
 });

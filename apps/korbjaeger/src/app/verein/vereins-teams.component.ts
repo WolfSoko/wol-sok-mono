@@ -80,6 +80,9 @@ import type { VereinsTeamsStand } from './vereins-teams-stand';
     .team {
       display: grid;
     }
+    a {
+      color: inherit;
+    }
     .ligen {
       color: var(--mat-sys-on-surface-variant);
       font: var(--mat-sys-body-medium);

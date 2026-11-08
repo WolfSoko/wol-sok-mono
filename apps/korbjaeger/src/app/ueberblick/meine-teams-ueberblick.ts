@@ -12,24 +12,30 @@ import {
 import {
   nachNaechstemSpiel,
   naechstesSpiel,
+  saisonBeendet,
   type SpielDetails,
   type TeamId,
   type TeamSaison,
+  type VereinsTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
+import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
 import { hallenStand } from '../halle/hallen-stand';
 import { HEUTE } from '../heute';
+import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
 import { fehlerKarte, geladeneKarte, type TeamKarte } from './team-karte';
 
 /**
- * The reads of one followed Team: its Saison, and its next Spiel's details
- * for the Halle, which starts once that Spiel is known.
+ * The reads of one followed Team: its Saison; its next Spiel's details for
+ * the Halle, which starts once that Spiel is known; and its Verein's Teams
+ * to suggest, which starts once its Saison is over.
  */
 interface Lesung {
   readonly saison: ResourceRef<TeamSaison | undefined>;
   readonly naechsteDetails: ResourceRef<SpielDetails | undefined>;
+  readonly vereinsTeams: ResourceRef<VereinsTeams | undefined>;
 }
 
 /**
@@ -77,7 +83,8 @@ export class MeineTeamsUeberblick {
       return geladeneKarte(
         saison.value(),
         this.heute(),
-        hallenStand(lesung.naechsteDetails)
+        hallenStand(lesung.naechsteDetails),
+        vereinsTeamsStand(lesung.vereinsTeams, teamId)
       );
     }
     return saison?.status() === 'error'
@@ -98,7 +105,10 @@ export class MeineTeamsUeberblick {
     );
   }
 
-  /** The reads of `teamId`: its Saison, then its next Spiel's details. */
+  /**
+   * The reads of `teamId`: its Saison, then its next Spiel's details, or
+   * its Verein's Teams once its Saison is over.
+   */
   private lesen(teamId: TeamId): Lesung {
     const saison = teamSaisonResource(() => teamId, this.injector);
     const naechsteDetails = spielDetailsResource(
@@ -108,12 +118,20 @@ export class MeineTeamsUeberblick {
           : undefined,
       this.injector
     );
-    return { saison, naechsteDetails };
+    const vereinsTeams = vereinsTeamsResource(
+      () =>
+        saison.hasValue() && saisonBeendet(saison.value(), this.heute())
+          ? saison.value().verein.id
+          : undefined,
+      this.injector
+    );
+    return { saison, naechsteDetails, vereinsTeams };
   }
 }
 
-/** Cancels and drops both reads of a Team. */
+/** Cancels and drops every read of a Team. */
 function beenden(lesung: Lesung): void {
   lesung.saison.destroy();
   lesung.naechsteDetails.destroy();
+  lesung.vereinsTeams.destroy();
 }
