@@ -1,7 +1,8 @@
 /**
  * Runs the workspace rules through the workspace's own oxlint, as CI lints
  * with them: each case is a file in a temp folder, linted with a config that
- * loads only this plugin.
+ * loads only this plugin. `describe` and `it` return promises `node:test`
+ * awaits itself, hence the `void`.
  */
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -53,7 +54,7 @@ function reportedCodes(source) {
   return JSON.parse(output).diagnostics.map((diagnostic) => diagnostic.code);
 }
 
-describe('wolsok/no-version-json-read', () => {
+void describe('wolsok/no-version-json-read', () => {
   const reads = [
     "readFileSync(join(process.cwd(), 'version.json'), 'utf8');",
     "readFileSync('version.json');",
@@ -73,7 +74,7 @@ describe('wolsok/no-version-json-read', () => {
     "require('../../version.json');",
   ];
   for (const source of reads) {
-    it(`reports ${source}`, () => {
+    void it(`reports ${source}`, () => {
       deepStrictEqual(reportedCodes(source), [VERSION_RULE]);
     });
   }
@@ -91,7 +92,7 @@ describe('wolsok/no-version-json-read', () => {
     '// readFileSync(version.json) is not allowed here',
   ];
   for (const source of allowed) {
-    it(`allows ${source}`, () => {
+    void it(`allows ${source}`, () => {
       deepStrictEqual(reportedCodes(source), []);
     });
   }
