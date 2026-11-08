@@ -781,8 +781,9 @@ describe('a boss with a weapon', () => {
     const plan: MatchPlan = {
       ...PLAN,
       levelId: 'meltdown',
-      width: 320,
-      height: 180,
+      // Room enough for the human to last the boss's whole charge.
+      width: 640,
+      height: 360,
       loadouts: [EVOLVED, PLAIN_LOADOUT],
     };
     const engine = engineOf(plan);
@@ -802,6 +803,8 @@ describe('a boss with a weapon', () => {
     for (let tick = 0; tick < quiet && engine.outcome() == null; tick++) {
       engine.tick(plan.width, plan.height);
     }
+    // The whole charging window ran, not a match that ended early.
+    expect(engine.tickCount).toBe(quiet);
     expect(engine.players[1].weaponsFired).toBe(0);
   });
 
