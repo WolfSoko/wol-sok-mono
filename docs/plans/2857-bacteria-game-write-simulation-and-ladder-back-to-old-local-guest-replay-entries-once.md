@@ -14,7 +14,7 @@ All in `libs/features/lazy/bacteria-game/src/lib/storage/`.
    `readPlayback(entry)` that inflates an old entry's bytes into its
    `StoredPlayback` (null when they do not read); a pure exported
    `backfilled(stored, read)` that merges the read playback into the stored
-   entries still lacking `simulation` and drops those that read as null;
+   entries still lacking `simulation`, drops those whose base64 is broken and keeps those that did not inflate or parse;
    `read()` applies both, issues one `storage.update` when old entries were
    found, and returns the migrated entries. `listMine` drops `bytes` from
    each entry; `keptListingOf` goes. Green.

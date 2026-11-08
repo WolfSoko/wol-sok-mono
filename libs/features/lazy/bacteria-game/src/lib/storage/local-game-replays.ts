@@ -55,10 +55,15 @@ export type KeptReplay = LocalReplay & Pick<ReplayListing, 'seat'>;
 type ReadReplay = ReplayListing & Pick<LocalReplay, 'bytes'>;
 
 /**
- * The playback read from the bytes of entries kept before the store wrote
- * `simulation`, by id - null for bytes that do not read.
+ * What reading an old entry's bytes found: its playback; `broken` for bytes
+ * that are no base64 at all, which never will read; `unread` when they did
+ * not inflate or parse, which may be this runtime's fault, so the entry stays
+ * as stored and is read again next time.
  */
-type ReadPlayback = ReadonlyMap<string, StoredPlayback | null>;
+export type ReadPlayback = StoredPlayback | 'broken' | 'unread';
+
+/** What reading found, by id, for the entries kept before `simulation`. */
+type ReadPlaybacks = ReadonlyMap<string, ReadPlayback>;
 
 /**
  * The player's recorded matches without a project, or while the project
@@ -156,8 +161,8 @@ export class LocalGameReplays implements GameReplays {
   /**
    * The kept replays, once the storage answered. Entries kept before the
    * store wrote `simulation` take it (and `ladder`) from their bytes, and the
-   * store writes it back, so each one is read once; one whose bytes do not
-   * read is removed.
+   * store writes it back, so each one is read once. One whose bytes are
+   * broken is removed; one that did not read is left out of the list.
    */
   private async read(): Promise<ReadReplay[]> {
     const kept = await this.readStored();
@@ -165,7 +170,7 @@ export class LocalGameReplays implements GameReplays {
     if (old.length === 0) {
       return kept.filter(hasSimulation);
     }
-    const read: ReadPlayback = new Map(
+    const read: ReadPlaybacks = new Map(
       await Promise.all(
         old.map(
           async (replay) => [replay.id, await playbackOf(replay)] as const
@@ -175,7 +180,7 @@ export class LocalGameReplays implements GameReplays {
     this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
       backfilled(stored, read)
     );
-    return backfilled(kept, read).filter(hasSimulation);
+    return parseLocalReplays(backfilled(kept, read)).filter(hasSimulation);
   }
 
   /** The kept replays as stored, once the storage answered. */
@@ -228,40 +233,44 @@ function isLocalReplay(value: unknown): value is LocalReplay {
 }
 
 /**
- * The stored entries with the playback read from their bytes: added to each
- * entry still lacking `simulation`, an entry whose bytes did not read
- * removed. Entries not read, and ones that gained `simulation` meanwhile,
- * stay as they are - so this may run more than once, as
- * `GameStorage.update` allows.
+ * The stored entries with what reading their bytes found: the playback added
+ * to each entry still lacking `simulation`, a `broken` one removed, an
+ * `unread` one kept as it is. Entries not read, and ones that gained
+ * `simulation` meanwhile, stay as they are - so this may run more than once,
+ * as `GameStorage.update` allows.
  */
-export function backfilled<T>(stored: T, read: ReadPlayback): T {
+export function backfilled(stored: unknown, read: ReadPlaybacks): unknown {
   if (!Array.isArray(stored)) {
     return stored;
   }
   return stored.flatMap((entry: unknown) => {
-    if (!isObject(entry) || entry['simulation'] !== undefined) {
+    if (
+      !isObject(entry) ||
+      entry['simulation'] !== undefined ||
+      typeof entry['id'] !== 'string'
+    ) {
       return [entry];
     }
-    const playback = read.get(entry['id'] as string);
-    if (playback === undefined) {
+    const found = read.get(entry['id']);
+    if (found === undefined || found === 'unread') {
       return [entry];
     }
-    return playback === null ? [] : [{ ...entry, ...playback }];
-  }) as T;
+    return found === 'broken' ? [] : [{ ...entry, ...found }];
+  });
 }
 
 function hasSimulation(replay: KeptReplay): replay is ReadReplay {
   return replay.simulation !== undefined;
 }
 
-/** The playback a kept replay's bytes hold, null when they do not read. */
-async function playbackOf({
-  bytes,
-}: LocalReplay): Promise<StoredPlayback | null> {
+/** What a kept replay's bytes hold. */
+async function playbackOf({ bytes }: LocalReplay): Promise<ReadPlayback> {
   const packed = fromBase64(bytes);
-  const header =
-    packed === null ? undefined : (await replayFromBytes(packed))?.header;
-  return header === undefined ? null : storedPlaybackOf(header);
+  if (packed === null) {
+    return 'broken';
+  }
+  const replay = await replayFromBytes(packed);
+  return replay === null ? 'unread' : storedPlaybackOf(replay.header);
 }
 
 /** The newest replays that fit the caps. */

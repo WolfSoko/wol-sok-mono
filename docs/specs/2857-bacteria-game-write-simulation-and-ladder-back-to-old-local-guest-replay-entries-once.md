@@ -37,12 +37,18 @@ about 1 MB) on every listing, until those entries age out.
   `GameStorage.update` allows) and two concurrent reads write the same.
   An entry that gained `simulation` meanwhile, or was deleted, is left as it
   is.
-- **An entry whose bytes do not read is removed from storage, not marked.**
-  Nothing can use it: "My matches" leaves it out today and the viewer cannot
-  play its bytes. A marker would keep a dead entry in the 20-replay and
-  1 MB caps until it ages out, and add a field to the stored shape only to
-  say "ignore me". The issue suggested marking; removing gives the same
-  one-time cost with less state.
+- **An entry whose bytes are no base64 at all is removed from storage, not
+  marked; one whose bytes decode but do not inflate or parse stays as
+  stored.** Nothing can use broken base64: "My matches" leaves it out today
+  and the viewer cannot play it, and a marker would keep a dead entry in the
+  20-replay and 1 MB caps until it ages out. A failed inflate or parse,
+  though, is not proof of broken bytes: `replayFromBytes` turns every
+  failure into null, a missing `DecompressionStream` or a parser regression
+  in a later release included, and removing on that could wipe all of a
+  guest's old matches in one bad environment. Such an entry is left out of
+  the listing, as today, and read again next time; that cost remains only
+  for these rare entries, which age out under the caps (decided on PR #2880's
+  review, manager request 568).
 - **The read's own result carries the migrated entries**, so the first
   listing after the update is already complete and does not wait for the
   storage to answer the write.
@@ -57,8 +63,9 @@ about 1 MB) on every listing, until those entries age out.
 3. A second listing reads no bytes: with the bytes spoiled after the
    backfill, the entry is still listed (the engine's exports cannot be
    spied on under ts-jest, so the spec checks it by behaviour).
-4. An old entry whose bytes do not read is left out of the listing, as
-   today, and is gone from storage after it.
+4. An old entry whose bytes are no base64 is left out of the listing, as
+   today, and is gone from storage after it; one whose bytes decode but do
+   not inflate is left out of the listing and stays in storage unchanged.
 5. Entries that already have `simulation` are neither re-read nor rewritten;
    a store without old entries triggers no `update` at all on listing.
 6. The `change` passed to `update` leaves an entry that gained `simulation`

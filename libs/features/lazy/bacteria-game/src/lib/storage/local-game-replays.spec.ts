@@ -12,6 +12,7 @@ import {
   LocalGameReplays,
   MAX_LOCAL_REPLAYS,
   parseLocalReplays,
+  type ReadPlayback,
 } from './local-game-replays';
 
 const PLAN: MatchPlan = {
@@ -128,12 +129,21 @@ describe('LocalGameReplays', () => {
     expect(parseLocalReplays(storage.stored(LOCAL_REPLAYS_KEY))).toEqual([]);
   });
 
-  /** Strips `simulation` from every stored entry, and spoils the bytes of all but `readable`. */
-  async function keepAsBeforeSimulation(readable: string): Promise<void> {
+  /** Bytes that are no base64 at all. */
+  const BROKEN = '!!!';
+  /** Base64 that decodes but does not inflate. */
+  const UNREAD = 'AAAA';
+
+  /** Strips `simulation` from every stored entry, and puts `bytes` into the ones named. */
+  async function keepAsBeforeSimulation(
+    bytes: Record<string, string>
+  ): Promise<void> {
     storage.update(LOCAL_REPLAYS_KEY, (stored) =>
       (stored as Record<string, unknown>[]).map(
-        ({ simulation: _simulation, ...old }) =>
-          old['id'] === readable ? old : { ...old, bytes: 'AAAA' }
+        ({ simulation: _simulation, ...old }) => ({
+          ...old,
+          bytes: bytes[old['id'] as string] ?? old['bytes'],
+        })
       )
     );
     await settle();
@@ -145,41 +155,60 @@ describe('LocalGameReplays', () => {
     return list;
   }
 
-  it('lists an entry kept before the store wrote its simulation, read from its bytes', async () => {
-    const id = (await replays.submit({ replay: REPLAY, hint: 33 })) as string;
-    await replays.submit({ replay: REPLAY, hint: 34 });
-    await settle();
-    await keepAsBeforeSimulation(id);
-
-    // The other one's bytes do not read: it is left out.
-    expect(await listed()).toEqual([
-      expect.objectContaining({ id, simulation: 'cpu' }),
-    ]);
-  });
-
   /** Spoils every stored entry's bytes: a listing that still reads them drops the entry. */
   async function spoilBytes(): Promise<void> {
     storage.update(LOCAL_REPLAYS_KEY, (stored) =>
       (stored as Record<string, unknown>[]).map((entry) => ({
         ...entry,
-        bytes: 'AAAA',
+        bytes: UNREAD,
       }))
     );
     await settle();
   }
 
-  it('writes what it read back once, and drops an entry whose bytes do not read', async () => {
-    const id = (await replays.submit({ replay: REPLAY, hint: 33 })) as string;
-    await replays.submit({ replay: REPLAY, hint: 34 });
+  async function submitted(hint: number): Promise<string> {
+    const id = (await replays.submit({ replay: REPLAY, hint })) as string;
     await settle();
-    const asSubmitted = storage.stored(LOCAL_REPLAYS_KEY) as unknown[];
-    await keepAsBeforeSimulation(id);
+    return id;
+  }
+
+  it('lists an entry kept before the store wrote its simulation, read from its bytes', async () => {
+    const id = await submitted(33);
+    const unread = await submitted(34);
+    const broken = await submitted(35);
+    await keepAsBeforeSimulation({ [unread]: UNREAD, [broken]: BROKEN });
+
+    // The others' bytes do not read: they are left out.
+    expect(await listed()).toEqual([
+      expect.objectContaining({ id, simulation: 'cpu' }),
+    ]);
+  });
+
+  it('writes what it read back once, removes broken bytes and keeps what did not read for next time', async () => {
+    const id = await submitted(33);
+    const unread = await submitted(34);
+    const broken = await submitted(35);
+    const asSubmitted = new Map(
+      (storage.stored(LOCAL_REPLAYS_KEY) as { id: string }[]).map((entry) => [
+        entry.id,
+        entry,
+      ])
+    );
+    await keepAsBeforeSimulation({ [unread]: UNREAD, [broken]: BROKEN });
+    const {
+      simulation: _simulation,
+      ...unreadAsKept
+    }: Record<string, unknown> = {
+      ...(asSubmitted.get(unread) as Record<string, unknown>),
+      bytes: UNREAD,
+    };
 
     await listed();
 
-    expect(storage.stored(LOCAL_REPLAYS_KEY)).toEqual(
-      asSubmitted.filter((entry) => (entry as { id: string }).id === id)
-    );
+    expect(storage.stored(LOCAL_REPLAYS_KEY)).toEqual([
+      unreadAsKept,
+      asSubmitted.get(id),
+    ]);
     await spoilBytes();
     expect(await listed()).toEqual([
       expect.objectContaining({ id, simulation: 'cpu' }),
@@ -187,8 +216,7 @@ describe('LocalGameReplays', () => {
   });
 
   it('neither reads nor writes entries that carry their simulation', async () => {
-    await replays.submit({ replay: REPLAY, hint: 33 });
-    await settle();
+    await submitted(33);
     await spoilBytes();
     const update = jest.spyOn(storage, 'update');
 
@@ -205,26 +233,28 @@ describe('LocalGameReplays', () => {
       ladder: 2,
     };
 
-    it('adds what was read to the entries still lacking it, and drops the unreadable', () => {
+    it('adds what was read to the entries still lacking it, removes the broken and keeps the unread', () => {
       expect(
         backfilled(
-          [OLD, { ...OLD, id: 'b' }, { ...OLD, id: 'c' }],
-          new Map([
+          [OLD, { ...OLD, id: 'b' }, { ...OLD, id: 'c' }, { ...OLD, id: 'd' }],
+          new Map<string, ReadPlayback>([
             ['a', PLAYBACK],
-            ['b', null],
+            ['b', 'broken'],
+            ['c', 'unread'],
           ])
         )
       ).toEqual([
         { ...OLD, ...PLAYBACK },
         { ...OLD, id: 'c' },
+        { ...OLD, id: 'd' },
       ]);
     });
 
     it('leaves an entry that gained its simulation meanwhile, and a deleted one, as they are', () => {
       const gained = { ...OLD, simulation: 'cpu', balanceVersion: 5 };
-      const read = new Map([
+      const read = new Map<string, ReadPlayback>([
         ['a', PLAYBACK],
-        ['gone', null],
+        ['gone', 'broken'],
       ]);
 
       expect(backfilled([gained], read)).toEqual([gained]);
