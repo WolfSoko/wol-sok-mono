@@ -10,13 +10,25 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
+import { HEUTE } from '../heute';
 import { parseDbbId } from '@wolsok/feat-shared-basketball-data';
-import { KEIN_TEAM, fehlerText, spielZeilen } from './team-spiele';
+import { fehlerText } from './fehler-text';
+import { tabellenLigen } from './tabellen-ligen';
+import { KEIN_TEAM, spielZeilen } from './team-spiele';
+import { TeamTabelleComponent } from './team-tabelle.component';
 
-/** A Team's Spiele of the Saison, across all its Ligen, by date. */
+/**
+ * The Team page: its Spiele of the Saison, across all its Ligen, by date,
+ * then the Tabelle of each of those Ligen, the current one first.
+ */
 @Component({
   selector: 'korb-team',
-  imports: [MatChipsModule, MatListModule, MatProgressBarModule],
+  imports: [
+    MatChipsModule,
+    MatListModule,
+    MatProgressBarModule,
+    TeamTabelleComponent,
+  ],
   templateUrl: './team.component.html',
   styleUrl: './team.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,6 +38,7 @@ export class TeamComponent {
   public readonly teamId = input.required<string>();
 
   private readonly data = inject(BASKETBALL_DATA);
+  private readonly heute = inject(HEUTE);
   private readonly team = computed(() => parseDbbId(this.teamId()));
 
   protected readonly saison = resource({
@@ -38,11 +51,17 @@ export class TeamComponent {
     this.saison.hasValue() ? spielZeilen(this.saison.value()) : []
   );
 
+  protected readonly ligen = computed(() =>
+    this.saison.hasValue()
+      ? tabellenLigen(this.saison.value(), this.heute())
+      : []
+  );
+
   protected readonly fehler = computed(() => {
     if (this.team() === undefined) {
       return KEIN_TEAM;
     }
     const error = this.saison.error();
-    return error === undefined ? undefined : fehlerText(error);
+    return error === undefined ? undefined : fehlerText(error, KEIN_TEAM);
   });
 }

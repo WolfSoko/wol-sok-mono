@@ -1,7 +1,6 @@
 import {
   ergebnisVon,
   gegnerVon,
-  isBasketballDataError,
   seiteVon,
   sonderfallVon,
   type Liga,
@@ -46,17 +45,6 @@ export function spielZeilen(saison: TeamSaison): readonly SpielZeile[] {
   return saison.spiele.map((spiel) =>
     spielZeile(spiel, saison.team.id, ligen.get(spiel.ligaId))
   );
-}
-
-/** What the page says when the Team's Spiele could not be read. */
-export function fehlerText(error: unknown): string {
-  if (isBasketballDataError(error, 'not-found')) {
-    return KEIN_TEAM;
-  }
-  if (isBasketballDataError(error, 'unexpected-shape')) {
-    return 'Die Daten des DBB ließen sich nicht lesen. Bitte später noch einmal versuchen.';
-  }
-  return 'Der DBB ist gerade nicht erreichbar. Bitte später noch einmal versuchen.';
 }
 
 function spielZeile(

@@ -42,4 +42,10 @@
       }
     </mat-list>
   }
+  @if (ligen().length > 0) {
+    <h2>Tabellen</h2>
+    @for (liga of ligen(); track liga.id) {
+      <korb-team-tabelle [liga]="liga" [teamId]="saison.value().team.id" />
+    }
+  }
 }

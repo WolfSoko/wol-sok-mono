@@ -4,6 +4,7 @@ import {
   type Liga,
   type Spiel,
   type SpielPartei,
+  type Tabelle,
   type Team,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
@@ -11,6 +12,7 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
+import { HEUTE } from '../heute';
 import { TeamComponent } from './team.component';
 
 const UNSER_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', vereinId: 1837 };
@@ -47,6 +49,20 @@ function spiel(overrides: Partial<Spiel> & Pick<Spiel, 'id' | 'datum'>): Spiel {
   };
 }
 
+function tabellenZeile(rang: number, team: Team): Tabelle['zeilen'][number] {
+  return {
+    rang,
+    team,
+    spiele: 2,
+    siege: 2 - rang + 1,
+    niederlagen: rang - 1,
+    punkte: 2 * (2 - rang + 1),
+    koerbe: 100,
+    gegenkoerbe: 90,
+    korbdifferenz: 10,
+  };
+}
+
 function saison(spiele: readonly Spiel[]): TeamSaison {
   return {
     team: UNSER_TEAM,
@@ -56,20 +72,44 @@ function saison(spiele: readonly Spiel[]): TeamSaison {
   };
 }
 
-/** `KorbjaegerData` answering `teamSpiele` with `read`, nothing else. */
-function fakeData(read: KorbjaegerData['teamSpiele']): {
-  readonly teamSpiele: ReturnType<typeof vi.fn<KorbjaegerData['teamSpiele']>>;
+type TeamSpieleRead = KorbjaegerData['teamSpiele'];
+type TabelleRead = KorbjaegerData['tabelle'];
+
+/** The day the specs run on: after the last Spiel of the fixtures below. */
+const HEUTE_IM_SPEC = '2026-11-08';
+
+/** An empty Tabelle of Liga `ligaId`. */
+const keineZeilen: TabelleRead = async (ligaId) => ({
+  liga: [TESTSPIELE, VORRUNDE].find(({ id }) => id === ligaId) ?? VORRUNDE,
+  zeilen: [],
+});
+
+/** `KorbjaegerData` answering `teamSpiele` with `read`, Tabellen empty. */
+function fakeData(
+  read: TeamSpieleRead,
+  tabelle: TabelleRead = keineZeilen
+): {
+  readonly teamSpiele: ReturnType<typeof vi.fn<TeamSpieleRead>>;
+  readonly tabelle: ReturnType<typeof vi.fn<TabelleRead>>;
 } {
-  return { teamSpiele: vi.fn<KorbjaegerData['teamSpiele']>(read) };
+  return {
+    teamSpiele: vi.fn<TeamSpieleRead>(read),
+    tabelle: vi.fn<TabelleRead>(tabelle),
+  };
+}
+
+function providers(data: ReturnType<typeof fakeData>) {
+  return [
+    { provide: BASKETBALL_DATA, useValue: data },
+    { provide: HEUTE, useValue: () => HEUTE_IM_SPEC },
+  ];
 }
 
 async function render(
   data: ReturnType<typeof fakeData>,
   teamId = '313036'
 ): Promise<HTMLElement> {
-  TestBed.configureTestingModule({
-    providers: [{ provide: BASKETBALL_DATA, useValue: data }],
-  });
+  TestBed.configureTestingModule({ providers: providers(data) });
   const fixture = TestBed.createComponent(TeamComponent);
   fixture.componentRef.setInput('teamId', teamId);
   await fixture.whenStable();
@@ -280,12 +320,9 @@ describe('TeamComponent', () => {
 
   it('shows that it is loading', async () => {
     TestBed.configureTestingModule({
-      providers: [
-        {
-          provide: BASKETBALL_DATA,
-          useValue: fakeData(() => new Promise<TeamSaison>(() => undefined)),
-        },
-      ],
+      providers: providers(
+        fakeData(() => new Promise<TeamSaison>(() => undefined))
+      ),
     });
     const fixture = TestBed.createComponent(TeamComponent);
     fixture.componentRef.setInput('teamId', '313036');
@@ -326,9 +363,7 @@ describe('TeamComponent', () => {
 
   it('cancels the read of a Team the page has left', async () => {
     const data = fakeData(() => new Promise<TeamSaison>(() => undefined));
-    TestBed.configureTestingModule({
-      providers: [{ provide: BASKETBALL_DATA, useValue: data }],
-    });
+    TestBed.configureTestingModule({ providers: providers(data) });
     const fixture = TestBed.createComponent(TeamComponent);
     fixture.componentRef.setInput('teamId', '313036');
     fixture.detectChanges();
@@ -341,5 +376,91 @@ describe('TeamComponent', () => {
       signal: expect.any(AbortSignal),
     });
     expect(erster?.aborted).toBe(true);
+  });
+  describe('Tabellen', () => {
+    const ZWEI_LIGEN = saison([
+      spiel({ id: 1, datum: '2026-08-29', ligaId: TESTSPIELE.id }),
+      spiel({ id: 2, datum: '2026-09-12' }),
+      spiel({ id: 3, datum: '2026-11-08' }),
+    ]);
+
+    function tabellen(page: HTMLElement): HTMLElement[] {
+      return [...page.querySelectorAll<HTMLElement>('[data-qa="tabelle"]')];
+    }
+
+    function ueberschrift(tabelle: HTMLElement): string | undefined {
+      return tabelle.querySelector('h3')?.textContent?.trim();
+    }
+
+    const VORRUNDE_TABELLE: Tabelle = {
+      liga: VORRUNDE,
+      zeilen: [
+        tabellenZeile(1, { id: 201500, name: 'MTV Gifhorn', vereinId: 201500 }),
+        tabellenZeile(2, UNSER_TEAM),
+      ],
+    };
+
+    it('shows one Tabelle per Liga of its Spiele, the current Liga first', async () => {
+      const data = fakeData(async () => ZWEI_LIGEN);
+
+      const page = await render(data);
+
+      expect(tabellen(page).map(ueberschrift)).toEqual([
+        VORRUNDE.name,
+        TESTSPIELE.name,
+      ]);
+      expect(data.tabelle.mock.calls.map(([ligaId]) => ligaId)).toEqual([
+        VORRUNDE.id,
+        TESTSPIELE.id,
+      ]);
+    });
+
+    it('highlights the Team in its Tabelle', async () => {
+      const page = await render(
+        fakeData(
+          async () => ZWEI_LIGEN,
+          async (ligaId) =>
+            ligaId === VORRUNDE.id
+              ? VORRUNDE_TABELLE
+              : { liga: TESTSPIELE, zeilen: [] }
+        )
+      );
+
+      const eigene = page.querySelector('[aria-current="true"]');
+      expect(eigene?.textContent).toContain('MTV Wasbüttel');
+      expect(eigene?.textContent).toContain('(dein Team)');
+    });
+
+    it('keeps the Spiele and the other Tabelle when one Tabelle fails', async () => {
+      const page = await render(
+        fakeData(
+          async () => ZWEI_LIGEN,
+          async (ligaId) => {
+            if (ligaId === TESTSPIELE.id) {
+              throw new BasketballDataError('unavailable', 'DBB: nope');
+            }
+            return VORRUNDE_TABELLE;
+          }
+        )
+      );
+
+      expect(spielZeilen(page)).toHaveLength(3);
+      const [vorrunde, testspiele] = tabellen(page);
+      expect(
+        vorrunde.querySelectorAll('[data-qa="tabelle-zeile"]')
+      ).toHaveLength(2);
+      expect(testspiele.querySelector('[role="alert"]')?.textContent).toContain(
+        'Der DBB ist gerade nicht erreichbar.'
+      );
+    });
+
+    it('shows no Tabelle for a Team without Spiele', async () => {
+      const data = fakeData(async () => saison([]));
+
+      const page = await render(data);
+
+      expect(tabellen(page)).toEqual([]);
+      expect(data.tabelle).not.toHaveBeenCalled();
+    });
   });
 });
