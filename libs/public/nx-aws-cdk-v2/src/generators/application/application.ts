@@ -104,6 +104,30 @@ function addFiles(host: Tree, options: NormalizedSchema, folder: string) {
   );
 }
 
+/** The names the starter test carries. */
+export interface StarterTestNames {
+  /** The name of the test's describe block. */
+  readonly describeName: string;
+  /** The stack id the test passes to `AppStack`, without its `TestStack` suffix. */
+  readonly stackPrefix: string;
+}
+
+/**
+ * Writes the starter `src/main.test.ts` into a project, replacing one that is
+ * there. The `update-starter-test` migration writes it the same way.
+ */
+export function writeStarterTest(
+  host: Tree,
+  projectRoot: string,
+  starter: StarterTestNames
+): void {
+  generateFiles(host, path.join(__dirname, 'jest-files'), projectRoot, {
+    className: starter.describeName,
+    projectName: starter.stackPrefix,
+    template: '',
+  });
+}
+
 export async function applicationGenerator(
   host: Tree,
   options: ApplicationSchema
@@ -172,7 +196,10 @@ export async function applicationGenerator(
     const jestTask = await configurationGenerator(host, jestConfigOptions);
     tasks.push(jestTask);
     pointSpecTsconfigAtAppBase(host, normalizedOptions);
-    addFiles(host, normalizedOptions, 'jest-files');
+    writeStarterTest(host, normalizedOptions.projectRoot, {
+      describeName: names(normalizedOptions.projectName).className,
+      stackPrefix: normalizedOptions.projectName,
+    });
   }
 
   if (!options.skipFormat) {
