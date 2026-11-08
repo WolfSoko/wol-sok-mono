@@ -1,44 +1,25 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  defaultHostingSite,
-  KORBJAEGER_DOMAIN,
-  korbjaegerHostingSite,
-} from './korbjaeger-site';
+import { KORBJAEGER_DOMAIN, KORBJAEGER_HOSTING_SITE } from './korbjaeger-site';
+
+/** A file of the workspace, read as the deploy reads it. */
+function workspaceFile(path: string): string {
+  return readFileSync(join(__dirname, '../../..', path), 'utf8');
+}
 
 describe('the site of Korbjäger', () => {
   it('is the domain the app names as its SITE_URL', () => {
     // the stack cannot import it (see KORBJAEGER_DOMAIN)
-    const appSite = readFileSync(
-      join(__dirname, '../../korbjaeger/src/shared/site.ts'),
-      'utf8'
-    );
-
-    expect(appSite).toContain(
+    expect(workspaceFile('apps/korbjaeger/src/shared/site.ts')).toContain(
       `export const SITE_URL = 'https://${KORBJAEGER_DOMAIN}';`
     );
   });
 
-  it("is hosted where the workspace's .firebaserc deploys it", () => {
-    expect(korbjaegerHostingSite()).toMatch(/^[a-z0-9-]+$/);
-  });
+  it('is the default site of the project the app deploys to', () => {
+    const { projects } = JSON.parse(workspaceFile('.firebaserc')) as {
+      projects: Record<string, string>;
+    };
 
-  describe('defaultHostingSite', () => {
-    const firebaserc = JSON.stringify({
-      projects: { korbjaeger: 'korbjaeger-1234', other: 'other-5678' },
-    });
-
-    it("is the project id .firebaserc gives the app's alias", () => {
-      // a project's default Hosting site carries the project's id
-      expect(defaultHostingSite(firebaserc, 'korbjaeger')).toBe(
-        'korbjaeger-1234'
-      );
-    });
-
-    it('fails on an alias .firebaserc does not know', () => {
-      expect(() => defaultHostingSite(firebaserc, 'missing')).toThrow(
-        "No Firebase project for 'missing' in .firebaserc"
-      );
-    });
+    expect(projects['korbjaeger']).toBe(KORBJAEGER_HOSTING_SITE);
   });
 });

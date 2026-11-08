@@ -120,10 +120,10 @@ deploys `firebase.korbjaeger.json` from the workspace root, not the
 - **Function** `server`, region `europe-central2`, at most 10 instances
   (`vite.config.ts`, Nitro's `firebase` options).
 - **Domain** `korb.wolsok.de`: a CNAME to `<site>.web.app` in the CDK app
-  `korbjaeger-cdk` (stack `Korbjaeger`, `cdk` leg of `deploy.yml`), which
-  reads the site from `.firebaserc`. It keeps the domain as
-  `KORBJAEGER_DOMAIN`, since infra may import no app; its spec keeps it
-  equal to `SITE_URL`.
+  `korbjaeger-cdk` (stack `Korbjaeger`, `cdk` leg of `deploy.yml`). It
+  keeps the site as `KORBJAEGER_HOSTING_SITE` and the domain as
+  `KORBJAEGER_DOMAIN`, since infra may import no app; its spec keeps them
+  equal to `.firebaserc` and `SITE_URL`.
 - **Web config** of the project in `src/environments/environment.ts`,
   read by nothing until sign-in (#2873); its spec keeps `projectId` equal
   to `.firebaserc`.
