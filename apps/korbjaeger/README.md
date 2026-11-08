@@ -101,6 +101,30 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Spielplan), by the DBB's Team name, which carries the Verein's team
   number ("TSV X 2"). One tap follows the Team (`Auswahl.folgen`) and
   opens its Team page. Changing a pick starts over below it.
+- **Last good data** (`src/app/basketball-data/`): the browser transport
+  keeps each 200 of the proxy by its path (`LokaleLetzteAntworten`,
+  `localStorage` keys `korbjaeger-antwort:/api/dbb/...`, as
+  `{ v: 1, am, antwort }`): public DBB data only, nothing of the user. A
+  read that then fails as `offline` (fetch throws, or `navigator.onLine`
+  is false, when the proxy is not called at all) or `unavailable` (the
+  proxy's 502) is answered from it, never a 404 or a cancelled read, and
+  never is an error stored. The store keeps at most 60 answers and
+  1,000,000 characters (`ANTWORT_GRENZEN`, so Meine Teams always find
+  room): a write beyond either evicts the oldest answers first, by when
+  they were stored; a full storage (`QuotaExceededError`) evicts the
+  oldest until the write fits or gives up, and a blocked one keeps
+  nothing. The read's options carry `beiStand` (`StandReadOptions`, which
+  `DbbBasketballData` hands to the transport as they are), so each
+  resource of `basketballDataResource` has a `stand` beside its value;
+  `korb-stand` (`src/app/stand/`) shows it as "Offline · Stand: vor 2
+  Std.", aging with `JETZT` (`src/app/jetzt.ts`, the screens' one clock,
+  read every minute and on visibility changes; `HEUTE` is its German
+  date). The Team page, each Tabelle, the Spiel page (Spiel and
+  Spielbericht) and each overview card show it.
+- **Errors** (`src/app/fehler/`): `fehlerText` tells the three failures
+  apart: offline ("Keine Verbindung zum Internet"), the DBB unreachable
+  (the proxy's 502, "Der DBB ist gerade nicht erreichbar") and not found
+  (the screen's own text, a 404).
 - **Proxy:** `src/server/routes/api/dbb/` (thin route files) over
   `src/server/dbb/`; `src/shared/dbb-proxy-routes.ts` maps each read to
   its URL and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists

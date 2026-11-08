@@ -9,7 +9,9 @@ import { createApp, createRouter, toWebHandler } from 'h3';
 import { proxyRouteHandler } from '../../server/dbb/dbb-proxy';
 import type { DbbUpstream } from '../../server/dbb/dbb-upstream';
 import { PROXY_ROUTES } from '../../shared/dbb-proxy-routes';
+import type { LetzteAntwort, LetzteAntworten } from './letzte-antworten';
 import { proxyTransport, type ProxyFetch } from './proxy-transport';
+import type { Stand, StandReadOptions } from './stand';
 
 /** The DBB as the fake DBB server answers it, from the recorded fixtures. */
 const recordedDbb: DbbUpstream = async (call) => {
@@ -266,5 +268,163 @@ describe('proxyTransport', () => {
     const fetchSignal = proxy.mock.calls[0][1].signal;
     expect(fetchSignal?.aborted).toBe(true);
     expect(fetchSignal?.reason).toBe(signal.reason);
+  });
+
+  describe('the last good answer', () => {
+    const TEAM_SPIELE = '/api/dbb/team/313036/spiele';
+
+    /** `LetzteAntworten` in memory, with what was stored. */
+    class GemerkteAntworten implements LetzteAntworten {
+      public readonly gemerkt = new Map<string, LetzteAntwort>();
+
+      public lesen(pfad: string): LetzteAntwort | undefined {
+        return this.gemerkt.get(pfad);
+      }
+
+      public merken(pfad: string, antwort: LetzteAntwort): void {
+        this.gemerkt.set(pfad, antwort);
+      }
+    }
+
+    /** The proxy as `antworten` answer it: recorded, until told otherwise. */
+    function proxyMit(): {
+      proxy: ProxyFetch;
+      antwortet: (proxy: ProxyFetch) => void;
+    } {
+      let aktuell: ProxyFetch = recordedProxy();
+      return {
+        proxy: (url, init) => aktuell(url, init),
+        antwortet: (proxy) => {
+          aktuell = proxy;
+        },
+      };
+    }
+
+    const nichtErreichbar: ProxyFetch = async () => {
+      throw new TypeError('Failed to fetch');
+    };
+
+    /** A read's options that note the `Stand` it was answered from. */
+    function mitStand(): { options: StandReadOptions; staende: Stand[] } {
+      const staende: Stand[] = [];
+      return { options: { beiStand: (stand) => staende.push(stand) }, staende };
+    }
+
+    function transportMit(proxy: ProxyFetch, antworten: LetzteAntworten) {
+      let jetzt = 1_000;
+      return {
+        data: new DbbBasketballData(
+          proxyTransport(proxy, { antworten, jetzt: () => jetzt })
+        ),
+        spaeter: (ms: number): void => {
+          jetzt += ms;
+        },
+      };
+    }
+
+    it.each([
+      ['offline', nichtErreichbar],
+      ['unavailable', proxyAnswering(502, '{"error":"dbb-unavailable"}')],
+      ['unavailable', proxyAnswering(200, '<html>captive portal</html>')],
+    ] as const)(
+      'answers a read that fails as %s from the last good answer, with when it came',
+      async (grund, danach) => {
+        const { proxy, antwortet } = proxyMit();
+        const { data, spaeter } = transportMit(proxy, new GemerkteAntworten());
+        const frisch = await data.teamSpiele(313036);
+        antwortet(danach);
+        spaeter(7_200_000);
+        const { options, staende } = mitStand();
+
+        const veraltet = await data.teamSpiele(313036, options);
+
+        expect(veraltet).toEqual(frisch);
+        expect(staende).toEqual([{ gespeichertAm: 1_000, grund }]);
+      }
+    );
+
+    it('answers from the last good answer while the browser says it is offline', async () => {
+      const antworten = new GemerkteAntworten();
+      await new DbbBasketballData(
+        proxyTransport(recordedProxy(), { antworten, jetzt: () => 1_000 })
+      ).teamSpiele(313036);
+      const { options, staende } = mitStand();
+
+      await new DbbBasketballData(
+        proxyTransport(recordedProxy(), { antworten, online: () => false })
+      ).teamSpiele(313036, options);
+
+      expect(staende).toEqual([{ gespeichertAm: 1_000, grund: 'offline' }]);
+    });
+
+    it('notes no Stand for a read the proxy answered', async () => {
+      const { data } = transportMit(recordedProxy(), new GemerkteAntworten());
+      const { options, staende } = mitStand();
+
+      await data.teamSpiele(313036, options);
+
+      expect(staende).toEqual([]);
+    });
+
+    it('stores successes only, per proxy path, never an error', async () => {
+      const antworten = new GemerkteAntworten();
+      const { proxy, antwortet } = proxyMit();
+      const { data, spaeter } = transportMit(proxy, antworten);
+      await data.teamSpiele(313036);
+      await data.teamSpiele(7).catch(() => undefined);
+      spaeter(60_000);
+      antwortet(proxyAnswering(502, '{"error":"dbb-unavailable"}'));
+      await data.teamSpiele(313036);
+
+      expect([...antworten.gemerkt.keys()]).toEqual([TEAM_SPIELE]);
+      expect(antworten.gemerkt.get(TEAM_SPIELE)?.gespeichertAm).toBe(1_000);
+    });
+
+    it('answers a 404 as not found, whatever answer it had before', async () => {
+      const { proxy, antwortet } = proxyMit();
+      const { data } = transportMit(proxy, new GemerkteAntworten());
+      await data.teamSpiele(313036);
+      antwortet(proxyAnswering(404, '{"error":"not-found"}'));
+
+      expect(await rejectionKind(data.teamSpiele(313036))).toBe('not-found');
+    });
+
+    it.each([
+      ['offline', nichtErreichbar],
+      ['unavailable', proxyAnswering(502, '{"error":"dbb-unavailable"}')],
+    ] as const)(
+      'fails as %s without a last good answer',
+      async (kind, proxy) => {
+        const { data } = transportMit(proxy, new GemerkteAntworten());
+
+        expect(await rejectionKind(data.teamSpiele(313036))).toBe(kind);
+      }
+    );
+
+    it('answers a cancelled read with its cancellation, not the last good answer', async () => {
+      const { proxy, antwortet } = proxyMit();
+      const { data } = transportMit(proxy, new GemerkteAntworten());
+      await data.teamSpiele(313036);
+      antwortet(
+        (_url, init) =>
+          new Promise((_resolve, reject) =>
+            init.signal?.addEventListener('abort', () =>
+              reject(new DOMException('aborted', 'AbortError'))
+            )
+          )
+      );
+      const controller = new AbortController();
+      const { options, staende } = mitStand();
+      const abbrechbar: StandReadOptions = {
+        ...options,
+        signal: controller.signal,
+      };
+
+      const read = data.teamSpiele(313036, abbrechbar);
+      controller.abort(new Error('navigated away'));
+
+      await expect(read).rejects.toThrow('navigated away');
+      expect(staende).toEqual([]);
+    });
   });
 });

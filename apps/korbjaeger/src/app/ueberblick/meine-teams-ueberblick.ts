@@ -21,6 +21,7 @@ import {
   type VereinsTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
+import type { DatenResource } from '../basketball-data/basketball-data-resource';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
@@ -35,7 +36,7 @@ import { fehlerKarte, geladeneKarte, type TeamKarte } from './team-karte';
  * whose Teams to suggest once its Saison looks over.
  */
 interface Lesung {
-  readonly saison: ResourceRef<TeamSaison | undefined>;
+  readonly saison: DatenResource<TeamSaison | undefined>;
   readonly naechsteDetails: ResourceRef<SpielDetails | undefined>;
   /** The Team's Verein once its Saison looks over (`saisonBeendet`). */
   readonly saisonEndeVerein: Signal<VereinId | undefined>;
@@ -126,6 +127,7 @@ export class MeineTeamsUeberblick {
       const vereinsTeams =
         verein === undefined ? undefined : this.vereinsLesungen().get(verein);
       return geladeneKarte(saison.value(), this.heute(), {
+        stand: saison.stand(),
         halle: hallenStand(lesung.naechsteDetails),
         saisonBeendet: verein !== undefined,
         vereinsTeams: vereinsTeams && vereinsTeamsStand(vereinsTeams, teamId),

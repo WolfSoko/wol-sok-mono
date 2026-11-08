@@ -1,29 +1,16 @@
-import {
-  DestroyRef,
-  DOCUMENT,
-  inject,
-  InjectionToken,
-  signal,
-  type Signal,
-} from '@angular/core';
+import { computed, inject, InjectionToken, type Signal } from '@angular/core';
 import { datumInDeutschland } from '@wolsok/feat-shared-basketball-data';
+import { JETZT } from './jetzt';
 
 /**
- * Today's German date, `YYYY-MM-DD`, as a Spiel's `datum`. Read at start
- * and again whenever the page's visibility changes, so a tablet left open
- * overnight shows the new day once woken. Specs provide a fixed day.
+ * Today's German date, `YYYY-MM-DD`, as a Spiel's `datum`: the date of
+ * `JETZT`, so it turns with the clock and once a page left open overnight
+ * comes back into view. Specs provide a fixed day.
  */
 export const HEUTE = new InjectionToken<Signal<string>>('HEUTE', {
   providedIn: 'root',
   factory: () => {
-    const heute = signal(datumInDeutschland(new Date()));
-    const document = inject(DOCUMENT);
-    // on hiding too: cheaper than asking which way it changed
-    const neuLesen = (): void => heute.set(datumInDeutschland(new Date()));
-    document.addEventListener('visibilitychange', neuLesen);
-    inject(DestroyRef).onDestroy(() =>
-      document.removeEventListener('visibilitychange', neuLesen)
-    );
-    return heute.asReadonly();
+    const jetzt = inject(JETZT);
+    return computed(() => datumInDeutschland(new Date(jetzt())));
   },
 });

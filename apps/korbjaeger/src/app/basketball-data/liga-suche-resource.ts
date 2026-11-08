@@ -1,9 +1,12 @@
-import { inject, Injector, type ResourceRef } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import type {
   LigaSuche,
   LigaSucheFilter,
 } from '@wolsok/feat-shared-basketball-data';
-import { basketballDataResource } from './basketball-data-resource';
+import {
+  basketballDataResource,
+  type DatenResource,
+} from './basketball-data-resource';
 
 /**
  * A resource reading the Liga search (facets and first page of Ligen) for
@@ -14,10 +17,10 @@ import { basketballDataResource } from './basketball-data-resource';
 export function ligaSucheResource(
   filter: () => LigaSucheFilter | undefined,
   injector: Injector = inject(Injector)
-): ResourceRef<LigaSuche | undefined> {
+): DatenResource<LigaSuche | undefined> {
   return basketballDataResource(
     filter,
-    (data, gegeben, signal) => data.ligaSuche(gegeben, { signal }),
+    (data, gegeben, options) => data.ligaSuche(gegeben, options),
     injector
   );
 }

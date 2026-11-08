@@ -5,12 +5,15 @@ import {
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
+import type { Stand } from '../basketball-data/stand';
 import type { HallenStand } from '../halle/hallen-stand';
 import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
 import type { VereinsTeamsStand } from '../verein/vereins-teams-stand';
 
 /** What a card shows beside a Team's Saison, from the overview's reads. */
 export interface KartenZusatz {
+  /** Where the Saison is its last good data: since when, and why. */
+  readonly stand?: Stand;
   /** The read of the next Spiel's Halle, once it started. */
   readonly halle?: HallenStand;
   /** Whether the Team's Saison looks over (`saisonBeendet`). */

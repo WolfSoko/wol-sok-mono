@@ -6,7 +6,8 @@ import {
   type Signal,
 } from '@angular/core';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import { geraeteSpeicher, LokaleAuswahl } from './lokale-auswahl';
+import { geraeteSpeicher } from '../geraete-speicher';
+import { LokaleAuswahl } from './lokale-auswahl';
 
 /**
  * What an Elternteil follows: Meine Teams (Kinder join with #2872). Kept

@@ -4,6 +4,8 @@ import {
   type BasketballData,
 } from '@wolsok/feat-shared-basketball-data';
 import type { ProxyKind } from '../../shared/dbb-proxy-routes';
+import { geraeteSpeicher } from '../geraete-speicher';
+import { LokaleLetzteAntworten } from './letzte-antworten';
 import { proxyTransport } from './proxy-transport';
 
 /**
@@ -30,11 +32,19 @@ export const BASKETBALL_DATA = new InjectionToken<KorbjaegerData>(
   'BasketballData'
 );
 
-/** The DBB's data, read through the app's own proxy. */
+/**
+ * The DBB's data, read through the app's own proxy, each read's last good
+ * answer kept in the device's storage for when the network or the DBB
+ * fails (`LokaleLetzteAntworten`).
+ */
 export function provideBasketballData(): Provider {
   return {
     provide: BASKETBALL_DATA,
     useFactory: (): KorbjaegerData =>
-      new DbbBasketballData(proxyTransport((url, init) => fetch(url, init))),
+      new DbbBasketballData(
+        proxyTransport((url, init) => fetch(url, init), {
+          antworten: new LokaleLetzteAntworten(geraeteSpeicher()),
+        })
+      ),
   };
 }

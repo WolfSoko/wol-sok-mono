@@ -378,6 +378,21 @@ describe('DbbBasketballData', () => {
       }
     );
 
+    it("hands the read's options to the transport as they are, fields of a transport's own too", async () => {
+      const transport = jest.fn<Promise<unknown>, Parameters<DbbTransport>>(
+        async () => {
+          throw new TypeError('fetch failed');
+        }
+      );
+      const options = { signal: new AbortController().signal, eigenes: 1 };
+
+      await new DbbBasketballData(transport)
+        .teamSpiele(313036, options)
+        .catch(() => undefined);
+
+      expect(transport.mock.calls[0][1]).toBe(options);
+    });
+
     it('rejects a cancelled read with the reason it was cancelled for', async () => {
       const controller = new AbortController();
       const transport: DbbTransport = (_request, options) =>

@@ -12,6 +12,7 @@ import { AUSWAHL } from '../auswahl/auswahl';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielLinkComponent } from '../spiel/spiel-link.component';
+import { StandComponent } from '../stand/stand.component';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
 import type { TeamKarte } from './team-karte';
 
@@ -34,6 +35,7 @@ import type { TeamKarte } from './team-karte';
     RouterLink,
     SaisonEndeHinweisComponent,
     SpielLinkComponent,
+    StandComponent,
   ],
   templateUrl: './ueberblick-team.component.html',
   styleUrl: './ueberblick-team.component.scss',

@@ -22,6 +22,7 @@
         }
       }
       @case ("geladen") {
+        <korb-stand data-qa="ueberblick-stand" [stand]="team.stand" />
         @for (ausfall of team.ausfaelle; track ausfall.id) {
           <korb-spiel-link
             titel="Fällt aus"

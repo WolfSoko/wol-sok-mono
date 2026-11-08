@@ -25,7 +25,11 @@ export interface ReadSignal {
   ): void;
 }
 
-/** What every read, and the transport under it, takes beside its ids. */
+/**
+ * What every read, and the transport under it, takes beside its ids. A
+ * read hands its options to the transport as they are, so a transport may
+ * take fields of its own through them.
+ */
 export interface ReadOptions {
   /** Cancels the read: it then rejects with the signal's reason. */
   readonly signal?: ReadSignal;

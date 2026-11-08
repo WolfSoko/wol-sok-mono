@@ -21,18 +21,6 @@ export type Fenster = Pick<
 >;
 
 /**
- * The device's `localStorage`, or `undefined` where the browser withholds
- * it (blocked site data may throw on the mere access).
- */
-export function geraeteSpeicher(): GeraeteSpeicher | undefined {
-  try {
-    return globalThis.localStorage ?? undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-/**
  * The `Auswahl` on the device, for Elternteile without an account.
  * - It reads the stored `AuswahlDokument` at start, whenever another tab
  *   changed it (the `storage` event on `fenster`, until `beenden`), and

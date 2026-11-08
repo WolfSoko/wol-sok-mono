@@ -19,11 +19,15 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
+import type { StandReadOptions } from '../basketball-data/stand';
 import { HEUTE } from '../heute';
+import { JETZT } from '../jetzt';
 import { UeberblickComponent } from './ueberblick.component';
 
 /** The day the specs run on. */
 const HEUTE_IM_SPEC = '2026-11-08';
+/** Noon of `HEUTE_IM_SPEC` in Germany. */
+const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 
 const VORRUNDE: Liga = {
   id: 54862,
@@ -158,6 +162,7 @@ async function render(
       provideRouter([]),
       { provide: BASKETBALL_DATA, useValue: data },
       { provide: HEUTE, useValue: signal(HEUTE_IM_SPEC) },
+      { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
       { provide: AUSWAHL, useValue: auswahl },
     ],
   });
@@ -233,6 +238,35 @@ describe('UeberblickComponent', () => {
     );
     expect(text(link)).toBe('Team einrichten');
     expect(link?.getAttribute('href')).toBe('/team-einrichten');
+  });
+
+  it("labels a card with its Team's last good Spiele and their age", async () => {
+    const data = fakeData([]);
+    data.teamSpiele.mockImplementation(
+      async (_team, options?: StandReadOptions) => {
+        options?.beiStand?.({
+          gespeichertAm: JETZT_IM_SPEC - 3 * 60 * 60_000,
+          grund: 'offline',
+        });
+        return saison(WASBUETTEL);
+      }
+    );
+
+    const { seite } = await render(data, [WASBUETTEL.id]);
+
+    expect(text(teil(eintraege(seite)[0], 'stand'))).toContain(
+      'Offline · Stand: vor 3 Std.'
+    );
+  });
+
+  it('labels no card whose Spiele were just read', async () => {
+    const { seite } = await render(fakeData([saison(WASBUETTEL)]), [
+      WASBUETTEL.id,
+    ]);
+
+    expect(teil(eintraege(seite)[0], 'stand')?.textContent?.trim() ?? '').toBe(
+      ''
+    );
   });
 
   it('offers no set-up once a Team is followed', async () => {
@@ -702,9 +736,10 @@ describe('UeberblickComponent', () => {
 
       const hinweis = teil(eintraege(seite)[0], 'saison-beendet');
       expect(text(hinweis)).toContain('Keine Spiele mehr angesetzt.');
-      expect(data.vereinsTeams).toHaveBeenCalledWith(WASBUETTEL.vereinId, {
-        signal: expect.any(AbortSignal),
-      });
+      expect(data.vereinsTeams).toHaveBeenCalledWith(
+        WASBUETTEL.vereinId,
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
+      );
       expect(
         [
           ...(hinweis?.querySelectorAll('[data-qa="vereins-team-name"]') ?? []),

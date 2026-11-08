@@ -1,9 +1,12 @@
-import { inject, Injector, type ResourceRef } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import type {
   SpielDetails,
   SpielId,
 } from '@wolsok/feat-shared-basketball-data';
-import { basketballDataResource } from './basketball-data-resource';
+import {
+  basketballDataResource,
+  type DatenResource,
+} from './basketball-data-resource';
 
 /**
  * A resource reading the details (result, quarters, Halle) of the Spiel
@@ -13,10 +16,10 @@ import { basketballDataResource } from './basketball-data-resource';
 export function spielDetailsResource(
   spielId: () => SpielId | undefined,
   injector: Injector = inject(Injector)
-): ResourceRef<SpielDetails | undefined> {
+): DatenResource<SpielDetails | undefined> {
   return basketballDataResource(
     spielId,
-    (data, spiel, signal) => data.spiel(spiel, { signal }),
+    (data, spiel, options) => data.spiel(spiel, options),
     injector
   );
 }

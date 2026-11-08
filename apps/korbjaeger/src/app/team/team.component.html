@@ -7,6 +7,7 @@
 @if (saison.hasValue()) {
   <h1>{{ saison.value().team.name }}</h1>
   <p class="verein">{{ saison.value().verein.name }} · Spiele der Saison</p>
+  <korb-stand data-qa="team-stand" [stand]="saison.stand()" />
 }
 @if (folgbar(); as teamId) {
   <!-- also where the read fails, so a followed Team can be unfollowed -->

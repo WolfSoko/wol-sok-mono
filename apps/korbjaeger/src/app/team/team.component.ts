@@ -31,6 +31,7 @@ import { TeamFolgenComponent } from './team-folgen.component';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
 import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
+import { StandComponent } from '../stand/stand.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
 /**
@@ -50,6 +51,7 @@ import { TeamTabelleComponent } from './team-tabelle.component';
     RouterLink,
     SaisonEndeHinweisComponent,
     SpielZeileComponent,
+    StandComponent,
     TeamFolgenComponent,
     TeamTabelleComponent,
     VereinsTeamsComponent,

@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import {
@@ -12,7 +13,12 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
+import type { Stand, StandReadOptions } from '../basketball-data/stand';
+import { JETZT } from '../jetzt';
 import { SpielComponent } from './spiel.component';
+
+/** Noon on the day of the Spiel, in Germany. */
+const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 
 const HALLE: Halle = {
   name: 'Schulsporthalle',
@@ -129,6 +135,7 @@ async function render(
     providers: [
       provideRouter([]),
       { provide: BASKETBALL_DATA, useValue: data },
+      { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
     ],
   });
   const fixture = TestBed.createComponent(SpielComponent);
@@ -166,6 +173,46 @@ function kopfzellen(tabelle: HTMLElement | null): string[] {
 }
 
 describe('SpielComponent', () => {
+  describe('the last good data', () => {
+    const VOR_EINER_STUNDE: Stand = {
+      gespeichertAm: JETZT_IM_SPEC - 60 * 60_000,
+      grund: 'unavailable',
+    };
+
+    it('labels the Spiel and its Spielbericht each with the age of its last good data', async () => {
+      const page = await render(
+        fakeData(
+          async (_spiel, options?: StandReadOptions) => {
+            options?.beiStand?.(VOR_EINER_STUNDE);
+            return GESPIELT;
+          },
+          async (_spiel, options?: StandReadOptions) => {
+            options?.beiStand?.({ ...VOR_EINER_STUNDE, grund: 'offline' });
+            return bericht(MIT_WERTEN, OHNE_WERTE);
+          }
+        )
+      );
+
+      expect(text(teil(page, 'spiel-stand'))).toContain(
+        'DBB nicht erreichbar · Stand: vor 1 Std.'
+      );
+      expect(text(teil(page, 'spielbericht-stand'))).toContain(
+        'Offline · Stand: vor 1 Std.'
+      );
+    });
+
+    it('labels neither while both were just read', async () => {
+      const page = await render(
+        fakeData(
+          async () => GESPIELT,
+          async () => bericht(MIT_WERTEN, OHNE_WERTE)
+        )
+      );
+
+      expect(page.querySelector('[data-qa="stand"]')).toBeNull();
+    });
+  });
+
   it("reads the Spiel and its Spielbericht of the page's id", async () => {
     const data = fakeData(
       async () => GESPIELT,
@@ -174,12 +221,14 @@ describe('SpielComponent', () => {
 
     await render(data);
 
-    expect(data.spiel).toHaveBeenCalledWith(2861436, {
-      signal: expect.any(AbortSignal),
-    });
-    expect(data.spielbericht).toHaveBeenCalledWith(2861436, {
-      signal: expect.any(AbortSignal),
-    });
+    expect(data.spiel).toHaveBeenCalledWith(
+      2861436,
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+    expect(data.spielbericht).toHaveBeenCalledWith(
+      2861436,
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
   });
 
   it('reads the new Spiel when the id changes, dropping the last one', async () => {
@@ -211,12 +260,14 @@ describe('SpielComponent', () => {
     fixture.componentRef.setInput('spielId', '2911141');
     await stabil();
 
-    expect(data.spiel).toHaveBeenLastCalledWith(2911141, {
-      signal: expect.any(AbortSignal),
-    });
-    expect(data.spielbericht).toHaveBeenLastCalledWith(2911141, {
-      signal: expect.any(AbortSignal),
-    });
+    expect(data.spiel).toHaveBeenLastCalledWith(
+      2911141,
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+    expect(data.spielbericht).toHaveBeenLastCalledWith(
+      2911141,
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
     expect(teil(seite, 'spiel-ergebnis')).toBeNull();
     expect(teil(seite, 'halle')).toBeNull();
     expect(alle(seite, 'kader')).toEqual([]);
