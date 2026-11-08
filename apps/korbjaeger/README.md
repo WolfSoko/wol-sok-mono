@@ -58,6 +58,8 @@ npx nx run korbjaeger:typecheck-specs
 npx nx e2e korbjaeger                        # Playwright, on the fake DBB
 ```
 
-The proxy specs mount the route handlers in h3 with the DBB faked; the
-page specs run against a fake `BasketballData`. The e2e starts `fake-dbb`
+The proxy specs mount the real route files in h3 where Nitro's file
+routing puts them, with the DBB faked; `e2e/dbb-proxy.spec.ts` checks that
+routing on the served app. The page specs run against a fake
+`BasketballData`. The e2e starts `fake-dbb`
 and `serve-e2e` as Nx tasks (CLAUDE.md, Testing).

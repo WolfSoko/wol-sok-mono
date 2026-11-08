@@ -21,6 +21,7 @@
     "vite": "8.3.5",
     "vitest": "5.0.5",
     "@wolsok/feat-shared-basketball-data": "*",
-    "@wolsok/utils-version": "*"
+    "@wolsok/utils-version": "*",
+    "normalize.css": "8.0.1"
   }
 }

@@ -1,5 +1,5 @@
 /**
- * The DBB for e2e and `nx run korbjaeger:serve:e2e`: answers the DBB paths
+ * The DBB for e2e and `nx run korbjaeger:serve-e2e`: answers the DBB paths
  * under `/rest/` from the lib's anonymised fixtures (`fakeDbbAnswer`), so
  * no test reaches the real DBB. Run through `nx run korbjaeger:fake-dbb`.
  */
