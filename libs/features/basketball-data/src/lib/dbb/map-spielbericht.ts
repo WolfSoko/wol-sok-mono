@@ -24,26 +24,28 @@ export function mapSpielbericht(data: unknown): Spielbericht | undefined {
   if (heim.length === 0 && gast.length === 0) {
     return undefined;
   }
-  const spielerwerteErfasst = [...heim, ...gast].some((stats) =>
-    hatWerte(mapSpielerwerte(stats))
+  const kader = { heim: mapKader(heim), gast: mapKader(gast) };
+  const spielerwerteErfasst = [...kader.heim, ...kader.gast].some(
+    (eintrag) =>
+      eintrag.spielerwerte !== undefined && hatWerte(eintrag.spielerwerte)
   );
   return {
     spielId: match.number('matchId'),
     spielerwerteErfasst,
-    heim: mapKader(heim, spielerwerteErfasst),
-    gast: mapKader(gast, spielerwerteErfasst),
+    heim: spielerwerteErfasst ? kader.heim : ohneSpielerwerte(kader.heim),
+    gast: spielerwerteErfasst ? kader.gast : ohneSpielerwerte(kader.gast),
   };
 }
 
-function mapKader(
-  playerStats: readonly DbbObject[],
-  spielerwerteErfasst: boolean
-): Kader {
-  const erfasst: Erfasst = {
-    spielerwerte: spielerwerteErfasst,
-    nummern: nummernErfasst(playerStats),
-  };
-  return playerStats.map((stats) => mapEintrag(stats, erfasst));
+/** Each row mapped once, with the numbers as the DBB lists them. */
+function mapKader(playerStats: readonly DbbObject[]): Kader {
+  const nummern = nummernErfasst(playerStats);
+  return playerStats.map((stats) => mapEintrag(stats, nummern));
+}
+
+/** The Kader of a Verband that records no Spielerwerte: none, not zeros. */
+function ohneSpielerwerte(kader: Kader): Kader {
+  return kader.map(({ spielerwerte: _keine, ...eintrag }) => eintrag);
 }
 
 /** Whether the Kader lists shirt numbers: not where every named player has 0. */
@@ -57,20 +59,12 @@ function nummernErfasst(playerStats: readonly DbbObject[]): boolean {
     );
 }
 
-interface Erfasst {
-  readonly spielerwerte: boolean;
-  readonly nummern: boolean;
-}
-
-function mapEintrag(stats: DbbObject, erfasst: Erfasst): KaderEintrag {
+function mapEintrag(stats: DbbObject, nummernErfasst: boolean): KaderEintrag {
   const player = stats.object('player');
   const person = player.object('person');
-  const spielerwerte = optionalField(
-    'spielerwerte',
-    erfasst.spielerwerte ? mapSpielerwerte(stats) : undefined
-  );
+  const spielerwerte = mapSpielerwerte(stats);
   if (istAnonym(player, person)) {
-    return { art: 'anonym', ...spielerwerte };
+    return { art: 'anonym', spielerwerte };
   }
   const nummer = player.optionalString('no')?.trim();
   return {
@@ -80,9 +74,9 @@ function mapEintrag(stats: DbbObject, erfasst: Erfasst): KaderEintrag {
     nachname: person.string('nachname').trim(),
     ...optionalField(
       'trikotnummer',
-      erfasst.nummern && nummer ? nummer : undefined
+      nummernErfasst && nummer ? nummer : undefined
     ),
-    ...spielerwerte,
+    spielerwerte,
   };
 }
 
