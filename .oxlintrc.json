@@ -129,6 +129,7 @@
       }
     ],
     "wolsok/no-boundary-disable": "error",
+    "wolsok/no-version-json-read": "error",
     "unicorn/no-new-array": "off",
     "typescript/unbound-method": [
       "error",
@@ -253,6 +254,12 @@
             ]
           }
         ]
+      }
+    },
+    {
+      "files": ["libs/utils/version/**"],
+      "rules": {
+        "wolsok/no-version-json-read": "off"
       }
     },
     {
