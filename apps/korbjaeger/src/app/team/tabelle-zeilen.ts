@@ -1,9 +1,10 @@
-import type {
-  Tabelle,
-  TabellenZeile,
-  TeamId,
+import {
+  istTeam,
+  parteiName,
+  type Tabelle,
+  type TabellenZeile,
+  type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
-import { parteiName } from './partei-name';
 
 /** One line of a Liga's Tabelle, as the Team page shows it. */
 export interface TabelleZeileAnsicht {
@@ -41,7 +42,7 @@ function tabelleZeile(
     niederlagen: zeile.niederlagen,
     koerbe: `${zeile.koerbe}:${zeile.gegenkoerbe}`,
     differenz: vorzeichen(zeile.korbdifferenz),
-    eigenes: zeile.partei.art === 'team' && zeile.partei.team.id === teamId,
+    eigenes: istTeam(zeile.partei, teamId),
   };
 }
 

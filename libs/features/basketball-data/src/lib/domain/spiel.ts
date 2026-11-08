@@ -1,18 +1,10 @@
 import type { Halle } from './halle';
 import type { Liga } from './liga';
 import type { LigaId, SpielId, TeamId } from './ids';
-import type { Team } from './team';
+import { istTeam, type SpielPartei } from './partei';
 
 /** One side of a Spiel. */
 export type SpielSeite = 'heim' | 'gast';
-
-/**
- * Who plays on one side: a Team, or a slot the Liga fills later (e.g.
- * "Nord 1. Platz" in a Hauptrunde before its Vorrunde ended).
- */
-export type SpielPartei =
-  | { readonly art: 'team'; readonly team: Team }
-  | { readonly art: 'offen'; readonly bezeichnung: string };
 
 /** The points of both sides, of a whole Spiel or of one period. */
 export interface Spielstand {
@@ -74,10 +66,10 @@ export type SpielSonderfall = 'abgesagt' | 'kampflos';
 
 /** The side `team` plays in `spiel`, or `undefined` where it plays none. */
 export function seiteVon(spiel: Spiel, team: TeamId): SpielSeite | undefined {
-  if (spielt(spiel.heim, team)) {
+  if (istTeam(spiel.heim, team)) {
     return 'heim';
   }
-  return spielt(spiel.gast, team) ? 'gast' : undefined;
+  return istTeam(spiel.gast, team) ? 'gast' : undefined;
 }
 
 /** Who plays against `seite`. */
@@ -107,8 +99,4 @@ export function sonderfallVon(spiel: Spiel): SpielSonderfall | undefined {
     case 'gespielt':
       return undefined;
   }
-}
-
-function spielt(partei: SpielPartei, team: TeamId): boolean {
-  return partei.art === 'team' && partei.team.id === team;
 }

@@ -1,4 +1,5 @@
-import type { Spiel, SpielPartei } from './spiel';
+import type { SpielPartei } from './partei';
+import type { Spiel } from './spiel';
 import { ergebnisVon, gegnerVon, seiteVon, sonderfallVon } from './spiel';
 
 const UNS: SpielPartei = {

@@ -1,6 +1,7 @@
 import {
   ergebnisVon,
   gegnerVon,
+  parteiName,
   seiteVon,
   sonderfallVon,
   type Liga,
@@ -9,7 +10,6 @@ import {
   type TeamId,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
-import { parteiName } from './partei-name';
 
 /** One line of a Team's Spiele, as the page shows it. */
 export interface SpielZeile {

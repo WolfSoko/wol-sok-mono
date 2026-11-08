@@ -1,5 +1,5 @@
 import type { Liga } from './liga';
-import type { SpielPartei } from './spiel';
+import type { SpielPartei } from './partei';
 
 /** One Team's line in a Liga's Tabelle. */
 export interface TabellenZeile {

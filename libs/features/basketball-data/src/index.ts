@@ -54,6 +54,8 @@ export type {
   LigaSucheFacetten,
   LigaSucheFilter,
 } from './lib/domain/liga-suche';
+export { istTeam, parteiName } from './lib/domain/partei';
+export type { SpielPartei } from './lib/domain/partei';
 export type { Saison } from './lib/domain/saison';
 export {
   ergebnisVon,
@@ -64,7 +66,6 @@ export {
 export type {
   Spiel,
   SpielDetails,
-  SpielPartei,
   SpielSeite,
   SpielSonderfall,
   SpielStatus,
