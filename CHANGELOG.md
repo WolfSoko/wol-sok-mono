@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.12](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.11...v74.139.12) (2026-11-08)
+
+### Bug Fixes
+
+* **angular-examples-cdk:** read the workspace version through utils-version ([#2843](https://github.com/WolfSoko/wol-sok-mono/issues/2843)) ([ebf614b](https://github.com/WolfSoko/wol-sok-mono/commit/ebf614b1edf9450d3a281ab5a719b8ff7936e900)), closes [#2841](https://github.com/WolfSoko/wol-sok-mono/issues/2841)
+* **feat-lazy-bacteria-game:** write simulation and ladder back to old local replays once ([#2880](https://github.com/WolfSoko/wol-sok-mono/issues/2880)) ([4df08a9](https://github.com/WolfSoko/wol-sok-mono/commit/4df08a9462a4d4c68e87132eaa0f103e91056c89)), closes [#2857](https://github.com/WolfSoko/wol-sok-mono/issues/2857), references [#2857](https://github.com/WolfSoko/wol-sok-mono/issues/2857) [#2857](https://github.com/WolfSoko/wol-sok-mono/issues/2857)
+
 ## [74.139.11](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.10...v74.139.11) (2026-11-08)
 
 ### Testing
