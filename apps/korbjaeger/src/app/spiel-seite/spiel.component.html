@@ -1,0 +1,101 @@
+@if (details.isLoading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Spiel wird geladen" />
+}
+@if (fehler(); as text) {
+  <p class="fehler" role="alert" data-qa="spiel-fehler">{{ text }}</p>
+}
+@if (kopf(); as spiel) {
+  <h1>
+    @for (partner of [spiel.heim, spiel.gast]; track $index) {
+      @if ($index > 0) {
+        –
+      }
+      @if (partner.teamId) {
+        <a [routerLink]="['/team', partner.teamId]">{{ partner.name }}</a>
+      } @else {
+        {{ partner.name }}
+      }
+    }
+  </h1>
+  <p class="wann">
+    <span data-qa="spiel-wann">{{ spiel.wann }}</span>
+    <br />
+    <span data-qa="spiel-liga">{{ spiel.liga }}</span>
+  </p>
+  @if (spiel.ergebnis) {
+    <p class="ergebnis" data-qa="spiel-ergebnis">{{ spiel.ergebnis }}</p>
+  }
+  @if (spiel.status) {
+    <p class="status" data-qa="spiel-status">{{ spiel.status }}</p>
+  }
+  @if (spiel.perioden; as perioden) {
+    <div class="tabelle">
+      <table
+        mat-table
+        [dataSource]="perioden.zeilen"
+        data-qa="viertel"
+        aria-label="Viertel"
+      >
+        <ng-container matColumnDef="team">
+          <th mat-header-cell *matHeaderCellDef>Team</th>
+          <td mat-cell *matCellDef="let zeile">{{ zeile.team }}</td>
+        </ng-container>
+        @for (name of perioden.namen; track name; let i = $index) {
+          <ng-container [matColumnDef]="'periode-' + i">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              [attr.aria-label]="name"
+              [title]="name"
+            >
+              {{ i < 4 ? i + 1 + "." : "V" + (i - 3) }}
+            </th>
+            <td mat-cell *matCellDef="let zeile">{{ zeile.punkte[i] }}</td>
+          </ng-container>
+        }
+        <ng-container matColumnDef="gesamt">
+          <th mat-header-cell *matHeaderCellDef>Endstand</th>
+          <td mat-cell *matCellDef="let zeile">{{ zeile.gesamt }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="periodenSpalten()"></tr>
+        <tr
+          mat-row
+          *matRowDef="let zeile; columns: periodenSpalten()"
+          data-qa="viertel-zeile"
+        ></tr>
+      </table>
+    </div>
+  }
+  <h2>Halle</h2>
+  <korb-halle
+    [halle]="details.hasValue() ? details.value().halle : undefined"
+  />
+} @else if (spiel() !== undefined) {
+  <h1>Spiel</h1>
+}
+@if (spielbericht(); as teil) {
+  <h2>Kader</h2>
+  @switch (teil.art) {
+    @case ("laedt") {
+      <mat-progress-bar
+        mode="indeterminate"
+        aria-label="Spielbericht wird geladen"
+      />
+    }
+    @case ("fehler") {
+      <p class="fehler" data-qa="spielbericht-fehler">{{ teil.text }}</p>
+    }
+    @case ("fehlt") {
+      <p data-qa="spielbericht-fehlt">{{ teil.text }}</p>
+    }
+    @case ("da") {
+      @for (kader of teil.kader; track kader.seite) {
+        <korb-kader
+          [titel]="kader.titel"
+          [kader]="kader.kader"
+          [seite]="kader.seite"
+        />
+      }
+    }
+  }
+}
