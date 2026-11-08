@@ -3,7 +3,6 @@ import { BasketballDataError } from '../domain/basketball-data-error';
 import { KEIN_LIGA_FILTER, type LigaSucheFilter } from '../domain/liga-suche';
 import { DbbBasketballData, VEREINS_SPIELE_TAGE } from './dbb-basketball-data';
 import {
-  UnsupportedDbbRequestError,
   type DbbRequest,
   type DbbRequestKind,
   type DbbTransport,
@@ -223,13 +222,6 @@ describe('DbbBasketballData', () => {
       'unexpected-shape'
     );
   });
-  it('passes on a read the transport has no way to make, as the bug it is', async () => {
-    const unsupported = new UnsupportedDbbRequestError('tabelle');
-    const data = new DbbBasketballData(() => Promise.reject(unsupported));
-
-    await expect(data.tabelle(54308)).rejects.toBe(unsupported);
-  });
-
   describe('cancelling', () => {
     const reads: ReadonlyArray<
       [
@@ -287,6 +279,24 @@ describe('DbbBasketballData', () => {
       controller.abort(reason);
 
       await expect(read).rejects.toBe(reason);
+    });
+
+    it('takes any signal of the shape a read needs, not only a DOM one', async () => {
+      const reason = new Error('navigated away');
+      const signal = {
+        aborted: true,
+        reason,
+        throwIfAborted: (): never => {
+          throw reason;
+        },
+        addEventListener: (): void => undefined,
+      };
+
+      await expect(
+        new DbbBasketballData(async () => teamMatches).teamSpiele(313036, {
+          signal,
+        })
+      ).rejects.toBe(reason);
     });
 
     it('asks nothing for a read cancelled before it began', async () => {

@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { setTimeout as pause } from 'node:timers/promises';
 import {
   DBB_BASE_URL,
+  dbbFetchInput,
   dbbHttpRequest,
   type DbbRequest,
 } from '../../libs/features/basketball-data/src/lib/dbb/dbb-request';
@@ -38,11 +39,10 @@ async function main(): Promise<void> {
 
 async function fetchDbb(request: DbbRequest): Promise<unknown> {
   const http = dbbHttpRequest(request);
-  const response = await fetch(`${DBB_BASE_URL}/${http.path}`, {
-    method: http.method,
-    headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/json' },
-    body: http.method === 'POST' ? JSON.stringify(http.body) : undefined,
+  const { url, ...init } = dbbFetchInput(DBB_BASE_URL, http, {
+    'user-agent': USER_AGENT,
   });
+  const response = await fetch(url, init);
   if (!response.ok) {
     throw new Error(`${http.method} ${http.path}: HTTP ${response.status}`);
   }

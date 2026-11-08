@@ -1,4 +1,5 @@
 import type { LigaId, SpielId, TeamId, VereinId } from '../domain/ids';
+import type { ReadOptions } from '../basketball-data';
 import type { LigaSucheFilter } from '../domain/liga-suche';
 
 /** Where the DBB's JSON API lives; `DbbHttpRequest.path` is relative to it. */
@@ -54,33 +55,23 @@ export type DbbHttpRequest =
       readonly body: DbbLigaFilterBody;
     };
 
-/** What a transport gets beside the request. */
-export interface DbbTransportOptions {
-  /** Cancels the call, e.g. when the screen that asked is left. */
-  readonly signal?: AbortSignal;
-}
-
 /**
  * How a transport answers one `DbbRequest`: the DBB's JSON, unread. What it
- * throws counts as the DBB's or the network's trouble (`unavailable`),
- * except a `BasketballDataError` or an `UnsupportedDbbRequestError`.
+ * throws, other than a `BasketballDataError`, counts as the DBB's or the
+ * network's trouble (`unavailable`).
  */
 export type DbbTransport = (
   request: DbbRequest,
-  options?: DbbTransportOptions
+  options?: ReadOptions
 ) => Promise<unknown>;
 
-/**
- * A transport has no way to make this read (an app's proxy without its
- * route yet): a bug of the app, not trouble with the DBB, so the adapter
- * passes it on as it is.
- */
-export class UnsupportedDbbRequestError extends Error {
-  public override readonly name = 'UnsupportedDbbRequestError';
-
-  public constructor(public readonly kind: DbbRequestKind) {
-    super(`no way to read ${kind} yet`);
-  }
+/** The `fetch` arguments of one DBB call, without what a caller adds. */
+export interface DbbFetchInput {
+  readonly url: string;
+  readonly method: DbbHttpRequest['method'];
+  readonly headers: Readonly<Record<string, string>>;
+  /** The JSON body of a POST; `undefined` for a GET. */
+  readonly body: string | undefined;
 }
 
 const AKG_GESCHLECHT_ID = /^\d+_\d+$/;
@@ -185,6 +176,27 @@ export function dbbHttpRequest(request: DbbRequest): DbbHttpRequest {
     case 'spielbericht':
       return get(`match/id/${request.spielId}/boxscore`);
   }
+}
+
+/**
+ * How to `fetch` `request` from the DBB's API at `baseUrl`: its URL,
+ * method, `headers` and, for a POST, the JSON body with its content type.
+ * The proxy and the fixture tools call the DBB with it.
+ */
+export function dbbFetchInput(
+  baseUrl: string,
+  request: DbbHttpRequest,
+  headers: Readonly<Record<string, string>>
+): DbbFetchInput {
+  const url = `${baseUrl.replace(/\/+$/, '')}/${request.path}`;
+  return request.method === 'POST'
+    ? {
+        url,
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify(request.body),
+      }
+    : { url, method: 'GET', headers, body: undefined };
 }
 
 function get(path: string): DbbHttpRequest {

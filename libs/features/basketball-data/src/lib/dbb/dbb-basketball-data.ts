@@ -18,10 +18,8 @@ import {
   assertValidDbbRequest,
   dbbIdOf,
   isDbbId,
-  UnsupportedDbbRequestError,
   type DbbRequest,
   type DbbTransport,
-  type DbbTransportOptions,
 } from './dbb-request';
 import { readEnvelope } from './envelope';
 import { mapLigaSeite, mapLigaSuche } from './map-liga-suche';
@@ -127,25 +125,19 @@ export class DbbBasketballData implements BasketballData {
 
   private async fetch(
     request: DbbRequest,
-    { signal }: ReadOptions
+    options: ReadOptions
   ): Promise<unknown> {
-    const transportOptions: DbbTransportOptions = signal ? { signal } : {};
     try {
-      return await this.transport(request, transportOptions);
+      return await this.transport(request, options);
     } catch (error) {
-      signal?.throwIfAborted();
-      if (
-        isBasketballDataError(error) ||
-        error instanceof UnsupportedDbbRequestError
-      ) {
+      options.signal?.throwIfAborted();
+      if (isBasketballDataError(error)) {
         throw error;
       }
       throw new BasketballDataError(
         'unavailable',
         `DBB not reachable for ${request.kind}`,
-        {
-          cause: error,
-        }
+        { cause: error }
       );
     }
   }

@@ -10,17 +10,33 @@ import type { Tabelle } from './domain/tabelle';
 import type { Team } from './domain/team';
 import type { TeamSaison, VereinsTeams } from './domain/team-saison';
 
-/** What every read takes beside its ids. */
+/**
+ * The part of an `AbortSignal` a read uses. A browser's or Node's
+ * `AbortSignal` is one; the lib compiles without either's types.
+ */
+export interface ReadSignal {
+  readonly aborted: boolean;
+  readonly reason: unknown;
+  throwIfAborted(): void;
+  addEventListener(
+    type: 'abort',
+    listener: () => void,
+    options?: { readonly once?: boolean }
+  ): void;
+}
+
+/** What every read, and the transport under it, takes beside its ids. */
 export interface ReadOptions {
   /** Cancels the read: it then rejects with the signal's reason. */
-  readonly signal?: AbortSignal;
+  readonly signal?: ReadSignal;
 }
 
 /**
  * The basketball data the app reads, in domain terms. Every read rejects
  * with a `BasketballDataError` only: `not-found`, `unavailable` or
- * `unexpected-shape`; a cancelled one with its signal's reason. `DbbBasketballData` reads it from the DBB; an
- * official source would be another adapter.
+ * `unexpected-shape`; a cancelled one with its signal's reason.
+ * `DbbBasketballData` reads it from the DBB; an official source would be
+ * another adapter.
  */
 export interface BasketballData {
   /** The search facets and the first page of Ligen for `filter`. */

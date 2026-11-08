@@ -1,4 +1,8 @@
-export type { BasketballData, ReadOptions } from './lib/basketball-data';
+export type {
+  BasketballData,
+  ReadOptions,
+  ReadSignal,
+} from './lib/basketball-data';
 export {
   DbbBasketballData,
   VEREINS_SPIELE_TAGE,
@@ -7,22 +11,21 @@ export {
   DBB_BASE_URL,
   MAX_VEREINS_SPIELE_TAGE,
   assertValidDbbRequest,
+  dbbFetchInput,
   dbbHttpRequest,
   dbbIdOf,
   isDbbId,
   parseDbbId,
-  UnsupportedDbbRequestError,
 } from './lib/dbb/dbb-request';
 export type {
+  DbbFetchInput,
   DbbHttpRequest,
   DbbLigaFilterBody,
   DbbRequest,
   DbbRequestKind,
   DbbTransport,
-  DbbTransportOptions,
 } from './lib/dbb/dbb-request';
 export { dbbStatusOf } from './lib/dbb/envelope';
-export type { DbbStatus } from './lib/dbb/envelope';
 export {
   BasketballDataError,
   isBasketballDataError,
@@ -52,11 +55,18 @@ export type {
   LigaSucheFilter,
 } from './lib/domain/liga-suche';
 export type { Saison } from './lib/domain/saison';
+export {
+  ergebnisVon,
+  gegnerVon,
+  seiteVon,
+  sonderfallVon,
+} from './lib/domain/spiel';
 export type {
   Spiel,
   SpielDetails,
   SpielPartei,
   SpielSeite,
+  SpielSonderfall,
   SpielStatus,
   Spielstand,
 } from './lib/domain/spiel';

@@ -1,5 +1,6 @@
 import { KEIN_LIGA_FILTER, type LigaSucheFilter } from '../domain/liga-suche';
 import {
+  dbbFetchInput,
   dbbHttpRequest,
   assertValidDbbRequest,
   dbbIdOf,
@@ -24,6 +25,36 @@ const FILTER_BODY = {
   spielklasseIds: [],
   sortBy: 0,
 };
+
+describe('dbbFetchInput', () => {
+  const HEADERS = { 'user-agent': 'Korbjaeger/test' };
+
+  it('reads a GET under the base URL with the given headers', () => {
+    expect(
+      dbbFetchInput(
+        'https://dbb.test/rest/',
+        dbbHttpRequest({ kind: 'team-spiele', teamId: 313036 }),
+        HEADERS
+      )
+    ).toEqual({
+      url: 'https://dbb.test/rest/team/id/313036/matches',
+      method: 'GET',
+      headers: HEADERS,
+      body: undefined,
+    });
+  });
+
+  it('sends a POST its body as JSON', () => {
+    const http = dbbHttpRequest({ kind: 'liga-suche', filter: BAYERN_U14 });
+
+    expect(dbbFetchInput('https://dbb.test/rest', http, HEADERS)).toEqual({
+      url: 'https://dbb.test/rest/wam/data',
+      method: 'POST',
+      headers: { ...HEADERS, 'content-type': 'application/json' },
+      body: JSON.stringify(http.method === 'POST' ? http.body : undefined),
+    });
+  });
+});
 
 describe('dbbHttpRequest', () => {
   it('posts the Liga search with the filter as the DBB body', () => {

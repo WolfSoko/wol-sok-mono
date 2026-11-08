@@ -21,9 +21,7 @@ export function dbbStatusOf(response: unknown): DbbStatus | undefined {
     return undefined;
   }
   const status: unknown = (response as { readonly status?: unknown }).status;
-  return typeof status === 'string' && Object.hasOwn(DBB_STATUS, status)
-    ? DBB_STATUS[status]
-    : undefined;
+  return typeof status === 'string' ? statusNamed(status) : undefined;
 }
 
 /**
@@ -35,7 +33,7 @@ export function readEnvelope(response: unknown): unknown {
   const envelope = DbbObject.of(response, 'envelope');
   const status = envelope.string('status');
   const message = envelope.optionalString('message') ?? '';
-  switch (dbbStatusOf(response)) {
+  switch (statusNamed(status)) {
     case 'ok':
       return envelope.value('data');
     case 'not-found':
@@ -51,4 +49,8 @@ export function readEnvelope(response: unknown): unknown {
     default:
       throw shapeError('envelope.status', '"0", "1" or "-1"', status);
   }
+}
+
+function statusNamed(status: string): DbbStatus | undefined {
+  return Object.hasOwn(DBB_STATUS, status) ? DBB_STATUS[status] : undefined;
 }

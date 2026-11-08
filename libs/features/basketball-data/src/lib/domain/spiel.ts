@@ -1,6 +1,6 @@
 import type { Halle } from './halle';
 import type { Liga } from './liga';
-import type { LigaId, SpielId } from './ids';
+import type { LigaId, SpielId, TeamId } from './ids';
 import type { Team } from './team';
 
 /** One side of a Spiel. */
@@ -67,4 +67,48 @@ export interface SpielDetails {
   readonly viertel: readonly Spielstand[];
   /** Each overtime's points, in order. */
   readonly verlaengerungen: readonly Spielstand[];
+}
+
+/** How a Spiel stands out of the plain schedule. */
+export type SpielSonderfall = 'abgesagt' | 'kampflos';
+
+/** The side `team` plays in `spiel`, or `undefined` where it plays none. */
+export function seiteVon(spiel: Spiel, team: TeamId): SpielSeite | undefined {
+  if (spielt(spiel.heim, team)) {
+    return 'heim';
+  }
+  return spielt(spiel.gast, team) ? 'gast' : undefined;
+}
+
+/** Who plays against `seite`. */
+export function gegnerVon(spiel: Spiel, seite: SpielSeite): SpielPartei {
+  return seite === 'heim' ? spiel.gast : spiel.heim;
+}
+
+/** The final points of `spiel`, once there are any (a forfeit may have). */
+export function ergebnisVon(spiel: Spiel): Spielstand | undefined {
+  switch (spiel.status.art) {
+    case 'gespielt':
+    case 'kampflos':
+      return spiel.status.ergebnis;
+    case 'geplant':
+    case 'abgesagt':
+      return undefined;
+  }
+}
+
+/** Whether `spiel` was called off or decided without being played. */
+export function sonderfallVon(spiel: Spiel): SpielSonderfall | undefined {
+  switch (spiel.status.art) {
+    case 'abgesagt':
+    case 'kampflos':
+      return spiel.status.art;
+    case 'geplant':
+    case 'gespielt':
+      return undefined;
+  }
+}
+
+function spielt(partei: SpielPartei, team: TeamId): boolean {
+  return partei.art === 'team' && partei.team.id === team;
 }
