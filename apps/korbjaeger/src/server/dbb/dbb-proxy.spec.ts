@@ -30,16 +30,18 @@ function dbbAnswering(body: string, status = 200): UpstreamFetch {
 
 /**
  * The real route files, mounted where Nitro's file routing puts them:
- * `spiele.get.ts` for GET only, `index.ts` and `[...].ts` for any method.
+ * `*.get.ts` for GET only, `index.ts` and `[...].ts` for any method.
  */
 async function proxyRoutes(): Promise<(request: Request) => Promise<Response>> {
-  const [spiele, prefix, rest] = await Promise.all([
+  const [spiele, tabelle, prefix, rest] = await Promise.all([
     import('../routes/api/dbb/team/[teamId]/spiele.get'),
+    import('../routes/api/dbb/liga/[ligaId]/tabelle.get'),
     import('../routes/api/dbb/index'),
     import('../routes/api/dbb/[...]'),
   ]);
   const router = createRouter()
     .get('/api/dbb/team/:teamId/spiele', spiele.default)
+    .get('/api/dbb/liga/:ligaId/tabelle', tabelle.default)
     .use('/api/dbb', prefix.default)
     .use('/api/dbb/**', rest.default);
   return toWebHandler(createApp().use(router));
@@ -232,6 +234,73 @@ describe('DBB proxy', () => {
 
       expect(response.status).toBe(502);
     });
+  });
+
+  describe("a Liga's Tabelle", () => {
+    it("forwards to the DBB's competition table, cached", async () => {
+      const dbb = recordedDbb();
+
+      const response = await proxy(dbb)('/api/dbb/liga/54862/tabelle');
+
+      expect(response.status).toBe(200);
+      expect(String(dbb.mock.calls[0][0])).toBe(
+        `${BASE_URL}/competition/table/id/54862`
+      );
+      expect(await response.json()).toEqual(
+        fakeDbbAnswer('GET', 'competition/table/id/54862')
+      );
+      expect(response.headers.get('cache-control')).toBe(
+        DBB_PROXY_CACHE_CONTROL
+      );
+    });
+
+    it('answers DBB status "1" with 404, not cached', async () => {
+      const response = await proxy(recordedDbb())('/api/dbb/liga/7/tabelle');
+
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual(
+        fakeDbbAnswer('GET', 'competition/table/id/7')
+      );
+      expect(response.headers.get('cache-control')).toBeNull();
+    });
+
+    it.each([
+      ['an upstream 5xx', dbbAnswering('oops', 503)],
+      ['DBB status "-1"', dbbAnswering('{"status":"-1"}')],
+      [
+        'a timeout',
+        async () => {
+          throw new DOMException('The operation timed out.', 'TimeoutError');
+        },
+      ],
+    ] as ReadonlyArray<[string, UpstreamFetch]>)(
+      'answers %s with 502, not cached',
+      async (_case, dbb) => {
+        const response = await proxy(dbb)('/api/dbb/liga/54862/tabelle');
+
+        expect(response.status).toBe(502);
+        expect(await response.json()).toEqual({ error: 'dbb-unavailable' });
+        expect(response.headers.get('cache-control')).toBeNull();
+      }
+    );
+
+    it.each([
+      ['a non-numeric id', 'GET', '/api/dbb/liga/abc/tabelle'],
+      ['an id of 0', 'GET', '/api/dbb/liga/0/tabelle'],
+      ['a DBB path', 'GET', '/api/dbb/competition/table/id/54862'],
+      ['a POST', 'POST', '/api/dbb/liga/54862/tabelle'],
+    ])(
+      'answers %s with 404 and never asks the DBB',
+      async (_case, method, path) => {
+        const dbb = recordedDbb();
+
+        const response = await proxy(dbb)(path, { method });
+
+        expect(response.status).toBe(404);
+        expect(response.headers.get('cache-control')).toBeNull();
+        expect(dbb).not.toHaveBeenCalled();
+      }
+    );
   });
 
   describe('upstream call', () => {

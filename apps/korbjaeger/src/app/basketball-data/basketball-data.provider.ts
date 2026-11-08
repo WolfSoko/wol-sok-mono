@@ -10,7 +10,7 @@ import { proxyTransport } from './proxy-transport';
  * (`shared/dbb-proxy-routes.ts`), so a read without one does not compile.
  * Grows with each screen.
  */
-export type KorbjaegerData = Pick<BasketballData, 'teamSpiele'>;
+export type KorbjaegerData = Pick<BasketballData, 'teamSpiele' | 'tabelle'>;
 
 /** The basketball data the screens read (ADR 0018). */
 export const BASKETBALL_DATA = new InjectionToken<KorbjaegerData>(

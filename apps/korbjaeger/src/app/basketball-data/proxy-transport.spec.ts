@@ -6,11 +6,20 @@ import {
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
 import { proxyTransport, type ProxyFetch } from './proxy-transport';
 
+/** The proxy's routes and the DBB path each one reads. */
+const PROXY_ROUTES: ReadonlyArray<readonly [RegExp, string]> = [
+  [/^\/api\/dbb\/team\/(\d+)\/spiele$/, 'team/id/$1/matches'],
+  [/^\/api\/dbb\/liga\/(\d+)\/tabelle$/, 'competition/table/id/$1'],
+];
+
 /** The app's proxy, answering with the DBB's recorded bodies. */
 function recordedProxy(): ReturnType<typeof vi.fn<ProxyFetch>> {
   return vi.fn<ProxyFetch>(async (url) => {
-    const teamId = /^\/api\/dbb\/team\/(\d+)\/spiele$/.exec(url)?.[1];
-    const answer = fakeDbbAnswer('GET', `team/id/${teamId}/matches`);
+    const route = PROXY_ROUTES.find(([pattern]) => pattern.test(url));
+    const answer = route && fakeDbbAnswer('GET', url.replace(...route));
+    if (answer === undefined) {
+      return new Response('{"error":"not-found"}', { status: 404 });
+    }
     const status = isNotFound(answer) ? 404 : 200;
     return new Response(JSON.stringify(answer), { status });
   });
@@ -47,6 +56,25 @@ describe('proxyTransport', () => {
     });
     expect(saison.team.id).toBe(313036);
     expect(saison.spiele).toHaveLength(6);
+  });
+
+  it("reads a Liga's Tabelle from the app's proxy", async () => {
+    const proxy = recordedProxy();
+    const data = new DbbBasketballData(proxyTransport(proxy));
+
+    const tabelle = await data.tabelle(54862);
+
+    expect(proxy).toHaveBeenCalledWith('/api/dbb/liga/54862/tabelle', {
+      headers: { accept: 'application/json' },
+    });
+    expect(tabelle.liga.id).toBe(54862);
+    expect(tabelle.zeilen).toHaveLength(6);
+  });
+
+  it('reads the Tabelle of a Liga the DBB does not know as not found', async () => {
+    const data = new DbbBasketballData(proxyTransport(recordedProxy()));
+
+    expect(await rejectionKind(data.tabelle(7))).toBe('not-found');
   });
 
   it('hands a 404 to the adapter, which reads the not-found envelope', async () => {
