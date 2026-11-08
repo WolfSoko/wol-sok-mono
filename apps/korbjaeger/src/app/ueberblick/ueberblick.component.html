@@ -1,69 +1,17 @@
 <h2>Meine Teams</h2>
-@if (keineTeams()) {
+@if (reihenfolge().length === 0) {
   <p data-qa="ueberblick-leer">
     Du folgst noch keinem Team. Öffne ein Team und tippe auf „Team folgen“, dann
     steht es hier mit seinem nächsten Spiel.
   </p>
 }
-@if (gelesen.isLoading()) {
-  <mat-progress-bar
-    mode="indeterminate"
-    aria-label="Meine Teams werden geladen"
-  />
-}
 <ul class="ueberblick">
-  @for (eintrag of eintraege(); track eintrag.teamId) {
+  @for (teamId of reihenfolge(); track teamId) {
     <li>
-      <mat-card appearance="outlined" data-qa="ueberblick-team">
-        <mat-card-header>
-          <mat-card-title>
-            <a
-              [routerLink]="['/team', eintrag.teamId]"
-              data-qa="ueberblick-name"
-              >{{ eintrag.name }}</a
-            >
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          @switch (eintrag.art) {
-            @case ("fehler") {
-              <p class="fehler" data-qa="ueberblick-fehler">
-                {{ eintrag.text }}
-              </p>
-            }
-            @case ("team") {
-              @for (ausfall of eintrag.ausfaelle; track ausfall.id) {
-                <korb-spiel-zeile
-                  titel="Fällt aus"
-                  [zeile]="ausfall"
-                  data-qa="ueberblick-ausfall"
-                />
-              }
-              @if (eintrag.naechstes; as naechstes) {
-                <korb-spiel-zeile
-                  titel="Nächstes Spiel"
-                  [zeile]="naechstes"
-                  data-qa="ueberblick-naechstes"
-                />
-              }
-              @if (eintrag.letztes; as letztes) {
-                <korb-spiel-zeile
-                  titel="Letztes Ergebnis"
-                  [zeile]="letztes"
-                  data-qa="ueberblick-letztes"
-                />
-              }
-              @if (
-                !eintrag.naechstes &&
-                !eintrag.letztes &&
-                eintrag.ausfaelle.length === 0
-              ) {
-                <p>Noch keine Spiele in dieser Saison.</p>
-              }
-            }
-          }
-        </mat-card-content>
-      </mat-card>
+      <korb-ueberblick-team
+        [teamId]="teamId"
+        (geladen)="geladen(teamId, $event)"
+      />
     </li>
   }
 </ul>

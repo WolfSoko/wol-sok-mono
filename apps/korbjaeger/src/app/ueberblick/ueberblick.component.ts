@@ -3,62 +3,45 @@ import {
   Component,
   computed,
   inject,
-  resource,
+  signal,
 } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { RouterLink } from '@angular/router';
-import type { TeamId } from '@wolsok/feat-shared-basketball-data';
+import {
+  nachNaechstemSpiel,
+  type Spiel,
+  type TeamId,
+} from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
-import { HEUTE } from '../heute';
-import { ueberblickEintraege, type TeamGelesen } from './ueberblick-eintrag';
-import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
+import { UeberblickTeamComponent } from './ueberblick-team.component';
 
 /**
- * The overview: each of Meine Teams with its next Spiel and its last
- * result, the Team that plays first first. Each Team loads and fails on
- * its own.
+ * The overview: each of Meine Teams as a card of its own, which loads and
+ * fails on its own, the Team that plays first first
+ * (`nachNaechstemSpiel`). A card still loading keeps its place among the
+ * Teams without a next Spiel, in the order they were followed, until it
+ * reports its next Spiel.
  */
 @Component({
   selector: 'korb-ueberblick',
-  imports: [
-    MatCardModule,
-    MatProgressBarModule,
-    RouterLink,
-    SpielZeileComponent,
-  ],
+  imports: [UeberblickTeamComponent],
   templateUrl: './ueberblick.component.html',
   styleUrl: './ueberblick.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UeberblickComponent {
-  private readonly data = inject(BASKETBALL_DATA);
-  private readonly heute = inject(HEUTE);
   private readonly teams = inject(AUSWAHL).teams;
 
-  protected readonly keineTeams = computed(() => this.teams().length === 0);
-
-  protected readonly gelesen = resource({
-    params: () => (this.keineTeams() ? undefined : this.teams()),
-    loader: ({ params, abortSignal }) =>
-      Promise.all(params.map((teamId) => this.lesen(teamId, abortSignal))),
-  });
-
-  protected readonly eintraege = computed(() =>
-    this.gelesen.hasValue()
-      ? ueberblickEintraege(this.gelesen.value(), this.heute())
-      : []
+  /** Each loaded card's next Spiel, by Team. */
+  private readonly naechste = signal<ReadonlyMap<TeamId, Spiel | undefined>>(
+    new Map()
   );
 
-  private async lesen(
-    teamId: TeamId,
-    signal: AbortSignal
-  ): Promise<TeamGelesen> {
-    try {
-      return { teamId, saison: await this.data.teamSpiele(teamId, { signal }) };
-    } catch (fehler: unknown) {
-      return { teamId, fehler };
-    }
+  protected readonly reihenfolge = computed(() =>
+    nachNaechstemSpiel(this.teams(), (teamId) => this.naechste().get(teamId))
+  );
+
+  protected geladen(teamId: TeamId, naechstes: Spiel | undefined): void {
+    this.naechste.update((naechste) =>
+      new Map(naechste).set(teamId, naechstes)
+    );
   }
 }

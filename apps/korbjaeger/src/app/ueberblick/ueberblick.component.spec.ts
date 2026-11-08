@@ -101,9 +101,22 @@ function fakeData(
 }
 
 async function render(
-  data: ReturnType<typeof fakeData>,
+  data: ReturnType<typeof fakeData> | { teamSpiele: TeamSpieleRead },
   gefolgt: readonly TeamId[]
 ): Promise<HTMLElement> {
+  return (await renderMitAuswahl(data, gefolgt)).seite;
+}
+
+/** Renders the overview, waiting for each Team's read to settle. */
+async function renderMitAuswahl(
+  data: ReturnType<typeof fakeData> | { teamSpiele: TeamSpieleRead },
+  gefolgt: readonly TeamId[]
+): Promise<{
+  readonly seite: HTMLElement;
+  readonly auswahl: LokaleAuswahl;
+  /** Waits for the reads and the page to settle. */
+  readonly stabil: () => Promise<void>;
+}> {
   const auswahl = new LokaleAuswahl(undefined);
   for (const teamId of gefolgt) {
     await auswahl.folgen(teamId);
@@ -117,8 +130,16 @@ async function render(
     ],
   });
   const fixture = TestBed.createComponent(UeberblickComponent);
-  await fixture.whenStable();
-  return fixture.nativeElement as HTMLElement;
+  // not whenStable: it waits for every read, and some never settle here
+  const stabil = async (): Promise<void> => {
+    // a read settles, its card reports its next Spiel, the page reorders
+    for (let runde = 0; runde < 3; runde++) {
+      await new Promise((resolve) => setTimeout(resolve));
+      fixture.detectChanges();
+    }
+  };
+  await stabil();
+  return { seite: fixture.nativeElement as HTMLElement, auswahl, stabil };
 }
 
 function eintraege(seite: HTMLElement): HTMLElement[] {
@@ -322,5 +343,107 @@ describe('UeberblickComponent', () => {
     expect(gifhorn.querySelector('a')?.getAttribute('href')).toBe(
       '/team/201500'
     );
+  });
+
+  describe('each Team on its own', () => {
+    const NIE: Promise<TeamSaison> = new Promise(() => undefined);
+
+    it('shows a Team while another still loads', async () => {
+      const seite = await render(
+        {
+          teamSpiele: async (teamId) =>
+            teamId === GIFHORN.id
+              ? NIE
+              : saison(WASBUETTEL, spiel(WASBUETTEL, GIFHORN, '2026-11-14')),
+        },
+        [GIFHORN.id, WASBUETTEL.id]
+      );
+
+      const [wasbuettel, gifhorn] = eintraege(seite);
+      expect(text(teil(wasbuettel, 'naechstes'))).toContain(
+        'gegen MTV Gifhorn'
+      );
+      expect(gifhorn.querySelector('mat-progress-bar')).not.toBeNull();
+    });
+
+    it('reads no other Team again when one is followed or unfollowed', async () => {
+      const data = fakeData([
+        saison(WASBUETTEL, spiel(WASBUETTEL, GIFHORN, '2026-11-14')),
+        saison(GIFHORN, spiel(GIFHORN, OESINGEN, '2026-11-21')),
+        saison(OESINGEN),
+      ]);
+      const { seite, auswahl, stabil } = await renderMitAuswahl(data, [
+        WASBUETTEL.id,
+        OESINGEN.id,
+      ]);
+
+      await auswahl.folgen(GIFHORN.id);
+      await stabil();
+      await auswahl.entfolgen(OESINGEN.id);
+      await stabil();
+
+      expect(teamNamen(seite)).toEqual(['MTV Wasbüttel', 'MTV Gifhorn']);
+      expect(data.teamSpiele.mock.calls.map(([teamId]) => teamId)).toEqual([
+        WASBUETTEL.id,
+        OESINGEN.id,
+        GIFHORN.id,
+      ]);
+    });
+
+    it('puts a Team in its place once it has loaded', async () => {
+      let gifhornLaden: (saison: TeamSaison) => void = () => undefined;
+      const { seite, stabil } = await renderMitAuswahl(
+        {
+          teamSpiele: (teamId) =>
+            teamId === GIFHORN.id
+              ? new Promise((resolve) => (gifhornLaden = resolve))
+              : Promise.resolve(
+                  saison(WASBUETTEL, spiel(WASBUETTEL, OESINGEN, '2026-11-21'))
+                ),
+        },
+        [WASBUETTEL.id, GIFHORN.id]
+      );
+      expect(teamNamen(seite)[0]).toBe('MTV Wasbüttel');
+
+      gifhornLaden(saison(GIFHORN, spiel(GIFHORN, OESINGEN, '2026-11-14')));
+      await stabil();
+
+      expect(teamNamen(seite)).toEqual(['MTV Gifhorn', 'MTV Wasbüttel']);
+    });
+
+    it('removes a Team whose read fails from Meine Teams on request', async () => {
+      const { seite, auswahl, stabil } = await renderMitAuswahl(
+        fakeData([
+          saison(WASBUETTEL),
+          {
+            teamId: GIFHORN.id,
+            fehler: new BasketballDataError('not-found', 'DBB: nope'),
+          },
+        ]),
+        [GIFHORN.id, WASBUETTEL.id]
+      );
+      const [gifhorn] = eintraege(seite);
+      expect(text(teil(gifhorn, 'name'))).toBe('Team 201500');
+      const entfernen = gifhorn.querySelector<HTMLButtonElement>(
+        '[data-qa="ueberblick-entfernen"]'
+      );
+      expect(text(entfernen)).toBe('Entfernen');
+
+      entfernen?.click();
+      await stabil();
+
+      expect(auswahl.teams()).toEqual([WASBUETTEL.id]);
+      expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
+    });
+
+    it('offers no removal for a Team that loaded', async () => {
+      const seite = await render(fakeData([saison(WASBUETTEL)]), [
+        WASBUETTEL.id,
+      ]);
+
+      expect(
+        eintraege(seite)[0].querySelector('[data-qa="ueberblick-entfernen"]')
+      ).toBeNull();
+    });
   });
 });

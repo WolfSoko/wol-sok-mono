@@ -1,0 +1,64 @@
+<mat-card appearance="outlined" data-qa="ueberblick-team">
+  <mat-card-header>
+    <mat-card-title>
+      <a [routerLink]="['/team', teamId()]" data-qa="ueberblick-name">{{
+        eintrag()?.name ?? "Team " + teamId()
+      }}</a>
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (saison.isLoading()) {
+      <mat-progress-bar
+        mode="indeterminate"
+        aria-label="Spiele werden geladen"
+      />
+    }
+    @if (fehler(); as text) {
+      <p class="fehler" data-qa="ueberblick-fehler">{{ text }}</p>
+      @if (entfernenFehler(); as text) {
+        <p class="fehler" role="alert">{{ text }}</p>
+      }
+    }
+    @if (eintrag(); as eintrag) {
+      @for (ausfall of eintrag.ausfaelle; track ausfall.id) {
+        <korb-spiel-zeile
+          titel="Fällt aus"
+          [zeile]="ausfall"
+          data-qa="ueberblick-ausfall"
+        />
+      }
+      @if (eintrag.naechstes; as naechstes) {
+        <korb-spiel-zeile
+          titel="Nächstes Spiel"
+          [zeile]="naechstes"
+          data-qa="ueberblick-naechstes"
+        />
+      }
+      @if (eintrag.letztes; as letztes) {
+        <korb-spiel-zeile
+          titel="Letztes Ergebnis"
+          [zeile]="letztes"
+          data-qa="ueberblick-letztes"
+        />
+      }
+      @if (
+        !eintrag.naechstes && !eintrag.letztes && eintrag.ausfaelle.length === 0
+      ) {
+        <p>Noch keine Spiele in dieser Saison.</p>
+      }
+    }
+  </mat-card-content>
+  @if (fehler()) {
+    <mat-card-actions>
+      <button
+        matButton
+        type="button"
+        data-qa="ueberblick-entfernen"
+        [attr.aria-label]="'Team ' + teamId() + ' entfernen'"
+        (click)="entfernen()"
+      >
+        Entfernen
+      </button>
+    </mat-card-actions>
+  }
+</mat-card>
