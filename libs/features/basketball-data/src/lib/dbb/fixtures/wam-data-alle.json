@@ -1,0 +1,585 @@
+{
+  "timestamp": "2026-11-08T22:05:20+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "wam": {
+      "token": "0",
+      "verbandIds": [],
+      "gebietIds": [],
+      "ligatypIds": [],
+      "akgGeschlechtIds": [],
+      "altersklasseIds": [],
+      "spielklasseIds": [],
+      "sortBy": 1
+    },
+    "verbaende": [
+      {
+        "id": 100,
+        "label": "Bundesligen",
+        "hits": 48
+      },
+      {
+        "id": 29,
+        "label": "Deutsche Meisterschaften",
+        "hits": 76
+      },
+      {
+        "id": 40,
+        "label": "Deutscher Rollstuhlbasketball",
+        "hits": 21
+      },
+      {
+        "id": 30,
+        "label": "Regionalliga Nord",
+        "hits": 8
+      },
+      {
+        "id": 32,
+        "label": "Regionalliga Südost",
+        "hits": 14
+      },
+      {
+        "id": 31,
+        "label": "Regionalliga Südwest",
+        "hits": 24
+      },
+      {
+        "id": 33,
+        "label": "Regionalliga West",
+        "hits": 17
+      },
+      {
+        "id": 1,
+        "label": "Baden-Württemberg",
+        "hits": 280
+      },
+      {
+        "id": 2,
+        "label": "Bayern",
+        "hits": 392
+      },
+      {
+        "id": 3,
+        "label": "Berlin",
+        "hits": 101
+      },
+      {
+        "id": 14,
+        "label": "Brandenburg",
+        "hits": 36
+      },
+      {
+        "id": 4,
+        "label": "Bremen",
+        "hits": 41
+      },
+      {
+        "id": 5,
+        "label": "Hamburg",
+        "hits": 74
+      },
+      {
+        "id": 6,
+        "label": "Hessen",
+        "hits": 130
+      },
+      {
+        "id": 12,
+        "label": "Mecklenburg-Vorpommern",
+        "hits": 22
+      },
+      {
+        "id": 7,
+        "label": "Niedersachsen",
+        "hits": 252
+      },
+      {
+        "id": 11,
+        "label": "Nordrhein-Westfalen",
+        "hits": 338
+      },
+      {
+        "id": 8,
+        "label": "Rheinland-Pfalz",
+        "hits": 96
+      },
+      {
+        "id": 9,
+        "label": "Saarland",
+        "hits": 28
+      },
+      {
+        "id": 15,
+        "label": "Sachsen",
+        "hits": 125
+      },
+      {
+        "id": 13,
+        "label": "Sachsen-Anhalt",
+        "hits": 75
+      },
+      {
+        "id": 10,
+        "label": "Schleswig-Holstein",
+        "hits": 54
+      },
+      {
+        "id": 16,
+        "label": "Thüringen",
+        "hits": 68
+      }
+    ],
+    "gebiete": [
+      {
+        "id": "_",
+        "bezirk": null,
+        "kreis": null,
+        "hits": 1101
+      },
+      {
+        "id": "30_",
+        "bezirk": "Rhein/Neckar",
+        "kreis": null,
+        "hits": 29
+      },
+      {
+        "id": "1_3",
+        "bezirk": "Oberbayern",
+        "kreis": "Kreis Südost",
+        "hits": 15
+      }
+    ],
+    "ligatypen": [
+      {
+        "id": 1,
+        "label": "Ligaspielbetrieb",
+        "hits": 1894
+      },
+      {
+        "id": 2,
+        "label": "Pokalrunde",
+        "hits": 144
+      },
+      {
+        "id": 3,
+        "label": "Auf-/Abstiegsspiele",
+        "hits": 185
+      }
+    ],
+    "agkGeschlechtList": [
+      {
+        "id": "3_1",
+        "akg": "Senioren",
+        "geschlecht": "m",
+        "hits": 544
+      },
+      {
+        "id": "3_2",
+        "akg": "Senioren",
+        "geschlecht": "w",
+        "hits": 244
+      },
+      {
+        "id": "2_1",
+        "akg": "Jugend",
+        "geschlecht": "m",
+        "hits": 1222
+      },
+      {
+        "id": "2_2",
+        "akg": "Jugend",
+        "geschlecht": "w",
+        "hits": 737
+      }
+    ],
+    "altersklassen": [
+      {
+        "id": 1,
+        "label": "Senioren",
+        "hits": 609
+      },
+      {
+        "id": 19,
+        "label": "U19",
+        "hits": 14
+      },
+      {
+        "id": 18,
+        "label": "U18",
+        "hits": 219
+      },
+      {
+        "id": 16,
+        "label": "U16",
+        "hits": 327
+      },
+      {
+        "id": 32,
+        "label": "Ü35",
+        "hits": 46
+      },
+      {
+        "id": 40,
+        "label": "Ü40",
+        "hits": 50
+      },
+      {
+        "id": 45,
+        "label": "Ü45",
+        "hits": 18
+      },
+      {
+        "id": 55,
+        "label": "Ü55",
+        "hits": 11
+      },
+      {
+        "id": 60,
+        "label": "Ü60",
+        "hits": 10
+      },
+      {
+        "id": 70,
+        "label": "Ü70",
+        "hits": 5
+      },
+      {
+        "id": 15,
+        "label": "U15",
+        "hits": 11
+      },
+      {
+        "id": 14,
+        "label": "U14",
+        "hits": 340
+      },
+      {
+        "id": 20,
+        "label": "U20",
+        "hits": 33
+      },
+      {
+        "id": 12,
+        "label": "U12",
+        "hits": 344
+      },
+      {
+        "id": 10,
+        "label": "U10",
+        "hits": 178
+      },
+      {
+        "id": 8,
+        "label": "U8",
+        "hits": 21
+      },
+      {
+        "id": 50,
+        "label": "Ü50",
+        "hits": 1
+      },
+      {
+        "id": 17,
+        "label": "U17",
+        "hits": 16
+      },
+      {
+        "id": 13,
+        "label": "U13",
+        "hits": 23
+      },
+      {
+        "id": 11,
+        "label": "U11",
+        "hits": 28
+      },
+      {
+        "id": 9,
+        "label": "U9",
+        "hits": 16
+      }
+    ],
+    "spielklassen": [
+      {
+        "id": 100,
+        "label": "1. Bundesliga",
+        "hits": 2
+      },
+      {
+        "id": 101,
+        "label": "2. Bundesliga",
+        "hits": 5
+      },
+      {
+        "id": 102,
+        "label": "Jugend-Bundesliga",
+        "hits": 28
+      }
+    ],
+    "ligaListe": {
+      "startAtIndex": 0,
+      "ligen": [
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 55802,
+          "liganame": "1. Bundesliga (easyCredit BBL)",
+          "liganr": 1,
+          "skName": "1. Bundesliga",
+          "skNameSmall": "BL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 100,
+          "verbandName": "Bundesligen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 55738,
+          "liganame": "1. Bundesliga (Toyota DBBL)",
+          "liganr": 30,
+          "skName": "1. Bundesliga",
+          "skNameSmall": "BL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 100,
+          "verbandName": "Bundesligen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 55811,
+          "liganame": "Herren ProA",
+          "liganr": 10,
+          "skName": "2. Bundesliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 100,
+          "verbandName": "Bundesligen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 55815,
+          "liganame": "Herren ProB Nord",
+          "liganr": 20,
+          "skName": "2. Bundesliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 100,
+          "verbandName": "Bundesligen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 55817,
+          "liganame": "Herren ProB Süd",
+          "liganr": 22,
+          "skName": "2. Bundesliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 100,
+          "verbandName": "Bundesligen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 55746,
+          "liganame": "2. DBBL Nord",
+          "liganr": 40,
+          "skName": "2. Bundesliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 100,
+          "verbandName": "Bundesligen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 55749,
+          "liganame": "2. DBBL Süd",
+          "liganr": 43,
+          "skName": "2. Bundesliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 100,
+          "verbandName": "Bundesligen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 56650,
+          "liganame": "NBBL A Nord",
+          "liganr": 1701,
+          "skName": "Jugend-Bundesliga",
+          "skNameSmall": "NBBL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U19",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 100,
+          "verbandName": "Bundesligen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 56655,
+          "liganame": "NBBL A Süd",
+          "liganr": 1704,
+          "skName": "Jugend-Bundesliga",
+          "skNameSmall": "NBBL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U19",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 100,
+          "verbandName": "Bundesligen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 56652,
+          "liganame": "NBBL A Südwest",
+          "liganr": 1702,
+          "skName": "Jugend-Bundesliga",
+          "skNameSmall": "NBBL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U19",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 100,
+          "verbandName": "Bundesligen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        }
+      ],
+      "hasMoreData": true,
+      "size": 10
+    }
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

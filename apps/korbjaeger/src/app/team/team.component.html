@@ -26,7 +26,7 @@
     <p>Noch keine Spiele in dieser Saison.</p>
   } @else {
     <h2>Spiele</h2>
-    <mat-nav-list class="spiele">
+    <mat-nav-list class="umbrechende-liste">
       @for (zeile of zeilen(); track zeile.id) {
         <a mat-list-item data-qa="spiel" [routerLink]="['/spiel', zeile.id]">
           <korb-spiel-zeile matListItemTitle [zeile]="zeile" mitLiga />

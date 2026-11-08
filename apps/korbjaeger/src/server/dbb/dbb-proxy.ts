@@ -5,7 +5,7 @@ import {
   type DbbHttpRequest,
   type DbbRequest,
 } from '@wolsok/feat-shared-basketball-data';
-import { defineEventHandler, getRouterParam } from 'h3';
+import { defineEventHandler, getRequestURL, getRouterParams } from 'h3';
 import {
   badGateway,
   jsonResponse,
@@ -14,11 +14,7 @@ import {
   type ProxyResponse,
 } from './dbb-proxy-response';
 import type { DbbUpstream } from './dbb-upstream';
-import {
-  paramOf,
-  proxyRouteRead,
-  type AnyProxyRoute,
-} from '../../shared/dbb-proxy-routes';
+import type { AnyProxyRoute } from '../../shared/dbb-proxy-routes';
 
 /**
  * How long a successful read may be reused: a minute in the browser, five
@@ -82,14 +78,19 @@ function failed(call: DbbHttpRequest, reason: string): ProxyResponse {
   return badGateway();
 }
 
-/** `route`'s handler over `upstream`: its read, for the id its param names. */
+/**
+ * `route`'s handler over `upstream`: its read, for the params and query
+ * the request carries.
+ */
 export function proxyRouteHandler(route: AnyProxyRoute, upstream: DbbUpstream) {
-  const param = paramOf(route);
   return defineEventHandler(async (event) =>
     sendProxyResponse(
       event,
       await proxyDbbRead(
-        proxyRouteRead(route, getRouterParam(event, param)),
+        route.readOf({
+          params: getRouterParams(event),
+          query: getRequestURL(event).searchParams,
+        }),
         upstream
       )
     )

@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 /** A file of the workspace, read as the deploy reads it. */
 function workspaceJson<T>(path: string): T {
@@ -89,18 +89,50 @@ describe('the Firebase deploy', () => {
    * is gone answers 404 instead of HTML, and the shell itself is revalidated
    * on every load, so a reload picks up the new release.
    */
-  it('revalidates the shell, so a page never asks for chunks a release removed', () => {
-    const noCache = (source: string) =>
-      config.hosting.headers.find(
-        (rule) =>
-          rule.source === source &&
-          rule.headers.some(
-            ({ key, value }) => key === 'Cache-Control' && value === 'no-cache'
-          )
-      );
+  /** The Hosting path of each page file Analog routes (`src/app/pages`). */
+  function pagePaths(): string[] {
+    const pages = new URL('./app/pages/', import.meta.url);
+    return readdirSync(pages, { recursive: true, encoding: 'utf8' })
+      .filter((file) => file.endsWith('.page.ts'))
+      .map((file) =>
+        file
+          .replace(/\.page\.ts$/, '')
+          .replace(/\(home\)$/, '')
+          .replace(/\[[^\]]+\]/g, '*')
+      )
+      .map((route) => `/${route}`)
+      .sort();
+  }
 
-    expect(noCache('**/!(*.*)')).toBeDefined();
-    expect(noCache('/index.html')).toBeDefined();
+  const noCacheSources = () =>
+    config.hosting.headers
+      .filter((rule) =>
+        rule.headers.some(
+          ({ key, value }) => key === 'Cache-Control' && value === 'no-cache'
+        )
+      )
+      .map((rule) => rule.source)
+      .sort();
+
+  it('revalidates the shell on every page, so none asks for chunks a release removed', () => {
+    expect(noCacheSources()).toEqual([...pagePaths(), '/index.html'].sort());
+  });
+
+  /**
+   * Hosting's header rules override what the function sends, and a
+   * catch-all no-cache rule once turned the proxy's
+   * `public, max-age=60, s-maxage=300` into `no-cache`, so the CDN cached
+   * no DBB answer at all on its first live release.
+   */
+  it("leaves the proxy's Cache-Control to the function", () => {
+    const cacheRules = config.hosting.headers.filter((rule) =>
+      rule.headers.some(({ key }) => key.toLowerCase() === 'cache-control')
+    );
+
+    for (const { source } of cacheRules) {
+      expect(source.startsWith('/api')).toBe(false);
+      expect(source).not.toContain('**');
+    }
   });
 
   /**

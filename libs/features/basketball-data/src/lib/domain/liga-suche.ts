@@ -47,3 +47,21 @@ export const KEIN_LIGA_FILTER: LigaSucheFilter = {
   altersklasseIds: [],
   altersgruppeGeschlechtIds: [],
 };
+
+/**
+ * Where the page after `seite` starts, for `ligaSeite`; `undefined` when
+ * `seite` is the last.
+ */
+export function naechsterStartIndex(seite: LigaSeite): number | undefined {
+  return seite.weitere ? seite.startIndex + seite.ligen.length : undefined;
+}
+
+/**
+ * The choices of a facet that leave any Ligen, in the DBB's order: what a
+ * search offers for the current filter, e.g. the age groups a Verband has.
+ */
+export function angeboten<Id>(
+  facetten: readonly Facette<Id>[]
+): readonly Facette<Id>[] {
+  return facetten.filter((facette) => facette.treffer > 0);
+}

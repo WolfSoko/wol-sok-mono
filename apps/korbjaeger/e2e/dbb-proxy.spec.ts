@@ -7,6 +7,12 @@ test.describe('DBB proxy', () => {
     ["a Liga's Tabelle", '/api/dbb/liga/54862/tabelle'],
     ["a Spiel's match info", '/api/dbb/spiel/2861436'],
     ['a Spielbericht not confirmed yet', '/api/dbb/spiel/2861436/bericht'],
+    ['the Liga search', '/api/dbb/ligen?verband=7&altersklasse=12'],
+    [
+      'a later page of Ligen',
+      '/api/dbb/ligen/seite?start=10&verband=7&altersklasse=12&geschlecht=2_1',
+    ],
+    ["a Liga's Spielplan", '/api/dbb/liga/54862/spielplan'],
   ] as const) {
     test(`serves ${what}, cached`, async ({ request }) => {
       const response = await request.get(path);
@@ -34,6 +40,9 @@ test.describe('DBB proxy', () => {
     ['the bare prefix', 'GET', '/api/dbb'],
     ['an unknown read', 'GET', '/api/dbb/team/313036/spieler'],
     ['a non-numeric Liga', 'GET', '/api/dbb/liga/abc/tabelle'],
+    ['a POST to the Liga search', 'POST', '/api/dbb/ligen'],
+    ['a malformed gender', 'GET', '/api/dbb/ligen?geschlecht=2'],
+    ['a read with a query', 'GET', '/api/dbb/team/313036/spiele?anything=x'],
   ] as const) {
     test(`answers ${what} with 404, not cached`, async ({ request }) => {
       const response = await request.fetch(path, { method });

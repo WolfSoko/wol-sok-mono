@@ -6,7 +6,10 @@
  * fixtures' README says which.
  */
 import type { DbbRequest } from '../../libs/features/basketball-data/src/lib/dbb/dbb-request';
-import type { LigaSucheFilter } from '../../libs/features/basketball-data/src/lib/domain/liga-suche';
+import {
+  KEIN_LIGA_FILTER,
+  type LigaSucheFilter,
+} from '../../libs/features/basketball-data/src/lib/domain/liga-suche';
 
 /** A list in a response cut down to its first `keep` items. */
 export interface FixtureTrim {
@@ -22,7 +25,9 @@ export interface FixtureRequest {
 }
 
 const BAYERN = 2;
+const NIEDERSACHSEN = 7;
 const SCHLESWIG_HOLSTEIN = 10;
+const U12 = 12;
 const U14 = 14;
 const JUGEND_MAENNLICH = '2_1';
 const JUGEND_WEIBLICH = '2_2';
@@ -37,6 +42,23 @@ const SCHLESWIG_HOLSTEIN_JUGEND: LigaSucheFilter = {
   verbandIds: [SCHLESWIG_HOLSTEIN],
   altersklasseIds: [],
   altersgruppeGeschlechtIds: [JUGEND_MAENNLICH, JUGEND_WEIBLICH],
+};
+
+/** The e2e's wizard steps to Team 313036's Vorrunde (Liga 54862). */
+const NIEDERSACHSEN_ONLY: LigaSucheFilter = {
+  verbandIds: [NIEDERSACHSEN],
+  altersklasseIds: [],
+  altersgruppeGeschlechtIds: [],
+};
+
+const NIEDERSACHSEN_U12: LigaSucheFilter = {
+  ...NIEDERSACHSEN_ONLY,
+  altersklasseIds: [U12],
+};
+
+const NIEDERSACHSEN_U12_JUGEND_MAENNLICH: LigaSucheFilter = {
+  ...NIEDERSACHSEN_U12,
+  altersgruppeGeschlechtIds: [JUGEND_MAENNLICH],
 };
 
 /** Facets the lib doesn't read, cut short to keep the file small. */
@@ -64,6 +86,49 @@ export const FIXTURE_REQUESTS: readonly FixtureRequest[] = [
       startIndex: 30,
     },
   },
+  // the Team wizard's steps in the e2e: every Verband, Niedersachsen, its
+  // U12, its male U12 youth Ligen (three pages, Liga 54862 on the second)
+  // and the Spielplan of Team 313036's Vorrunde
+  {
+    name: 'wam-data-alle',
+    request: { kind: 'liga-suche', filter: KEIN_LIGA_FILTER },
+    trims: UNREAD_FACETS,
+  },
+  {
+    name: 'wam-data-niedersachsen',
+    request: { kind: 'liga-suche', filter: NIEDERSACHSEN_ONLY },
+    trims: UNREAD_FACETS,
+  },
+  {
+    name: 'wam-data-niedersachsen-u12',
+    request: { kind: 'liga-suche', filter: NIEDERSACHSEN_U12 },
+    trims: UNREAD_FACETS,
+  },
+  {
+    name: 'wam-data-niedersachsen-u12-jugend-maennlich',
+    request: {
+      kind: 'liga-suche',
+      filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH,
+    },
+    trims: UNREAD_FACETS,
+  },
+  {
+    name: 'wam-liga-list-niedersachsen-u12-jugend-maennlich-10',
+    request: {
+      kind: 'liga-seite',
+      filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH,
+      startIndex: 10,
+    },
+  },
+  {
+    name: 'wam-liga-list-niedersachsen-u12-jugend-maennlich-20',
+    request: {
+      kind: 'liga-seite',
+      filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH,
+      startIndex: 20,
+    },
+  },
+  { name: 'spielplan-54862', request: { kind: 'spielplan', ligaId: 54862 } },
   { name: 'spielplan-54308', request: { kind: 'spielplan', ligaId: 54308 } },
   { name: 'spielplan-54379', request: { kind: 'spielplan', ligaId: 54379 } },
   {
@@ -77,6 +142,7 @@ export const FIXTURE_REQUESTS: readonly FixtureRequest[] = [
   { name: 'table-54862', request: { kind: 'tabelle', ligaId: 54862 } },
   { name: 'table-54857', request: { kind: 'tabelle', ligaId: 54857 } },
   { name: 'table-not-found', request: { kind: 'tabelle', ligaId: 1 } },
+  { name: 'spielplan-not-found', request: { kind: 'spielplan', ligaId: 1 } },
   {
     name: 'team-313036-matches',
     request: { kind: 'team-spiele', teamId: 313036 },
