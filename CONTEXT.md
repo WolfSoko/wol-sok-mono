@@ -50,11 +50,11 @@ Shows parents the games, results and league standings of the teams their childre
 ### Language
 
 **Elternteil**:
-A signed-in person who follows teams and marks children; anyone following a child counts, grandparents included.
+A signed-in person who follows any number of Teams and marks any number of Kinder, possibly none; anyone following a child counts, grandparents included.
 _Avoid_: User, Nutzer, Account
 
 **Verband**:
-The association that runs a Liga: a Landesverband, a Regionalliga or the Bundesligen.
+The body a Liga is listed under, as the DBB groups them: a Landesverband (e.g. Schleswig-Holstein), the organiser of a Regionalliga (e.g. Regionalliga Nord) or the Bundesligen; not the Liga itself.
 _Avoid_: Landesverband (too narrow), Federation
 
 **Verein**:
@@ -106,5 +106,5 @@ _Avoid_: Spieler (for the marked one), Profil
 - A **Verein** has many **Teams** per **Saison**; a **Team** belongs to exactly one **Verein**
 - A **Team** plays in one or more **Ligen** per **Saison** (e.g. a Vorrunde, then a Hauptrunde) and stays the same **Team** throughout
 - A **Spiel** belongs to one **Liga** and has at most one **Spielbericht**
-- A **Kind** appears in the **Kader** of the **Spielberichte** of each of its **Teams**; a new **Saison** usually means a new **Team** for the same **Kind**
+- A **Kind** appears in the **Kader** of some, not necessarily all, **Spielberichte** of each of its **Teams**; a new **Saison** usually means a new **Team** for the same **Kind**
 - An **Elternteil** has any number of **Meine Teams** and **Kinder**; an **Anonymer Spieler** can never become a **Kind**
