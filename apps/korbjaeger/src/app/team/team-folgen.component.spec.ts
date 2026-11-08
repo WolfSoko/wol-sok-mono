@@ -15,12 +15,15 @@ interface Gerendert {
   klicken(): Promise<void>;
 }
 
-async function render(auswahl: Auswahl): Promise<Gerendert> {
+async function render(auswahl: Auswahl, teamName?: string): Promise<Gerendert> {
   TestBed.configureTestingModule({
     providers: [{ provide: AUSWAHL, useValue: auswahl }],
   });
   const fixture = TestBed.createComponent(TeamFolgenComponent);
   fixture.componentRef.setInput('teamId', MTV_WASBUETTEL);
+  if (teamName !== undefined) {
+    fixture.componentRef.setInput('teamName', teamName);
+  }
   await fixture.whenStable();
   const seite = fixture.nativeElement as HTMLElement;
   const knopf = seite.querySelector('button');
@@ -56,6 +59,17 @@ describe('TeamFolgenComponent', () => {
     expect(auswahl.teams()).toEqual([MTV_WASBUETTEL]);
     expect(knopf.getAttribute('aria-pressed')).toBe('true');
     expect(seite.textContent).toContain('Steht in Meine Teams');
+  });
+
+  it('names the Team in its label in a list, without the hint', async () => {
+    const auswahl = new LokaleAuswahl(undefined);
+    const { knopf, seite, klicken } = await render(auswahl, 'MTV Wasbüttel');
+    expect(knopf.getAttribute('aria-label')).toBe('Team folgen: MTV Wasbüttel');
+
+    await klicken();
+
+    expect(knopf.getAttribute('aria-pressed')).toBe('true');
+    expect(seite.textContent).not.toContain('Steht in Meine Teams');
   });
 
   it('shows a followed Team as followed, and unfollows it', async () => {

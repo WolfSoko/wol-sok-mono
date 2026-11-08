@@ -47,7 +47,6 @@ import type { VereinsTeamsStand } from './vereins-teams-stand';
                 <korb-team-folgen
                   [teamId]="team.teamId"
                   [teamName]="team.name"
-                  [mitHinweis]="false"
                 />
               </li>
             }

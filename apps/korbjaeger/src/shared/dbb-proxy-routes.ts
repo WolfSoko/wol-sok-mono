@@ -3,19 +3,16 @@ import {
   parseDbbId,
   VEREINS_SPIELE_TAGE,
   type DbbRequest,
+  type DbbRequestKind,
   type LigaSucheFilter,
 } from '@wolsok/feat-shared-basketball-data';
 
-/** The reads the app's proxy has a route for. */
-export type ProxyKind =
-  | 'liga-suche'
-  | 'liga-seite'
-  | 'spielplan'
-  | 'team-spiele'
-  | 'vereins-spiele'
-  | 'tabelle'
-  | 'spiel-info'
-  | 'spielbericht';
+/**
+ * The reads the app's proxy has a route for: every read of the lib's
+ * allowlist, so `PROXY_ROUTES` fails to compile without a route for a new
+ * one.
+ */
+export type ProxyKind = DbbRequestKind;
 
 /** The read of kind `K`. */
 export type ProxyRead<K extends ProxyKind> = Extract<DbbRequest, { kind: K }>;
@@ -115,11 +112,6 @@ export const PROXY_ROUTES: { readonly [K in ProxyKind]: ProxyRoute<K> } = {
 
 /** The URL, path and query, the browser asks `request` at. */
 export function proxyUrl(request: DbbRequest): string {
-  const { kind } = request;
-  if (!isProxyRead(request)) {
-    // unreachable: KorbjaegerData offers no read without a route
-    throw new Error(`no proxy route for ${kind} yet`);
-  }
   return urlOf(request.kind, request);
 }
 
@@ -270,10 +262,6 @@ function filterQuery(filter: LigaSucheFilter): URLSearchParams {
 function withQuery(path: string, query: URLSearchParams): string {
   const text = query.toString();
   return text === '' ? path : `${path}?${text}`;
-}
-
-function isProxyRead(request: DbbRequest): request is ProxyRead<ProxyKind> {
-  return Object.hasOwn(PROXY_ROUTES, request.kind);
 }
 
 function urlOf<K extends ProxyKind>(kind: K, request: ProxyRead<K>): string {

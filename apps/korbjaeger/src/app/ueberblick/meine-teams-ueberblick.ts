@@ -89,17 +89,33 @@ export class MeineTeamsUeberblick {
   public constructor() {
     effect(() => {
       const teams = this.teams() ?? [];
-      untracked(() => this.lesungen.set(this.abgeglichen(teams)));
+      untracked(() =>
+        this.lesungen.set(
+          abgleichen(
+            this.lesungen(),
+            teams,
+            (teamId) => this.lesen(teamId),
+            beenden
+          )
+        )
+      );
     });
     effect(() => {
       const vereine = this.gesuchteVereine();
       untracked(() =>
-        this.vereinsLesungen.set(this.vereineAbgeglichen(vereine))
+        this.vereinsLesungen.set(
+          abgleichen(
+            this.vereinsLesungen(),
+            vereine,
+            (verein) => vereinsTeamsResource(() => verein, this.injector),
+            vereinBeenden
+          )
+        )
       );
     });
     inject(DestroyRef).onDestroy(() => {
       this.lesungen().forEach(beenden);
-      this.vereinsLesungen().forEach((read) => read.destroy());
+      this.vereinsLesungen().forEach(vereinBeenden);
     });
   }
 
@@ -118,37 +134,6 @@ export class MeineTeamsUeberblick {
     return saison?.status() === 'error'
       ? fehlerKarte(teamId, saison.error())
       : { art: 'laedt', teamId };
-  }
-
-  /** A read for each of `teams`: the ones there are kept, the rest ended. */
-  private abgeglichen(teams: readonly TeamId[]): ReadonlyMap<TeamId, Lesung> {
-    const vorher = this.lesungen();
-    for (const [teamId, lesung] of vorher) {
-      if (!teams.includes(teamId)) {
-        beenden(lesung);
-      }
-    }
-    return new Map(
-      teams.map((teamId) => [teamId, vorher.get(teamId) ?? this.lesen(teamId)])
-    );
-  }
-
-  /** A read for each of `vereine`: the ones there are kept, the rest ended. */
-  private vereineAbgeglichen(
-    vereine: ReadonlySet<VereinId>
-  ): ReadonlyMap<VereinId, ResourceRef<VereinsTeams | undefined>> {
-    const vorher = this.vereinsLesungen();
-    for (const [verein, read] of vorher) {
-      if (!vereine.has(verein)) {
-        read.destroy();
-      }
-    }
-    return new Map(
-      [...vereine].map((verein) => [
-        verein,
-        vorher.get(verein) ?? vereinsTeamsResource(() => verein, this.injector),
-      ])
-    );
   }
 
   /**
@@ -171,6 +156,33 @@ export class MeineTeamsUeberblick {
     );
     return { saison, naechsteDetails, saisonEndeVerein };
   }
+}
+
+/**
+ * An entry for each of `keys`, in their order: those in `vorher` kept,
+ * the others made by `lesen`; the entries of `vorher` no key names are
+ * handed to `ende`.
+ */
+function abgleichen<K, V>(
+  vorher: ReadonlyMap<K, V>,
+  keys: Iterable<K>,
+  lesen: (key: K) => V,
+  ende: (eintrag: V) => void
+): ReadonlyMap<K, V> {
+  const gesucht = new Set(keys);
+  for (const [key, eintrag] of vorher) {
+    if (!gesucht.has(key)) {
+      ende(eintrag);
+    }
+  }
+  return new Map(
+    [...gesucht].map((key) => [key, vorher.get(key) ?? lesen(key)])
+  );
+}
+
+/** Cancels and drops the read of a Verein's Teams. */
+function vereinBeenden(read: ResourceRef<VereinsTeams | undefined>): void {
+  read.destroy();
 }
 
 /** Cancels and drops both reads of a Team. */

@@ -1,5 +1,4 @@
 import {
-  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -35,7 +34,7 @@ import { auswahlAenderung } from '../fehler/auswahl-aenderung';
     </button>
     @if (aenderung.fehler(); as text) {
       <p class="fehler" role="alert">{{ text }}</p>
-    } @else if (folgt() && mitHinweis()) {
+    } @else if (folgt() && !teamName()) {
       <p class="hinweis">Steht in Meine Teams auf der Startseite.</p>
     }
   `,
@@ -57,10 +56,11 @@ import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 })
 export class TeamFolgenComponent {
   public readonly teamId = input.required<TeamId>();
-  /** The Team's name, for the button's label where several Teams are listed. */
+  /**
+   * The Team's name where several Teams are listed: it joins the button's
+   * label, and the hint where a followed Team shows up is left out.
+   */
   public readonly teamName = input<string>();
-  /** Whether to say where a followed Team shows up; off in a list. */
-  public readonly mitHinweis = input(true, { transform: booleanAttribute });
 
   private readonly auswahl = inject(AUSWAHL);
 
