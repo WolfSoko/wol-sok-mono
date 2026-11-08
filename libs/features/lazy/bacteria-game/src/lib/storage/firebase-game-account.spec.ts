@@ -1,37 +1,16 @@
 import { firstValueFrom } from 'rxjs';
-import type { FirebaseConnection } from './firebase-connection';
+import {
+  type FakeFirebaseAuth,
+  type FakeToken,
+  googleUser,
+  guestUser,
+} from '../../testing/fake-firebase-auth';
+import {
+  FakeFirebase,
+  settleSnapshots as settle,
+} from '../../testing/fake-firebase-sdk';
 import { FirebaseGameAccount } from './firebase-game-account';
 import type { PlayerSwitch } from './game-account';
-
-interface FakeUser {
-  uid: string;
-  isAnonymous: boolean;
-  displayName: string | null;
-  email: string | null;
-  providerData: { providerId: string; displayName: string | null }[];
-}
-
-const guest = (uid: string): FakeUser => ({
-  uid,
-  isAnonymous: true,
-  displayName: null,
-  email: null,
-  providerData: [],
-});
-
-const google = (uid: string, name: string): FakeUser => ({
-  uid,
-  isAnonymous: false,
-  displayName: null,
-  email: null,
-  providerData: [{ providerId: 'google.com', displayName: name }],
-});
-
-/** What a user's ID token says, as `getIdTokenResult` reads it. */
-interface FakeToken {
-  claims: Record<string, unknown>;
-  signInProvider: string | null;
-}
 
 /** The token of the owner: the claim, a verified email, a Google sign-in. */
 const OWNER_TOKEN: FakeToken = {
@@ -39,97 +18,15 @@ const OWNER_TOKEN: FakeToken = {
   signInProvider: 'google.com',
 };
 
-/** Just enough of Firebase Auth: one listener each, users set by hand. */
-class FakeAuth {
-  public currentUser: FakeUser | null = null;
-  private listener: (user: FakeUser | null) => void = () => undefined;
-  private tokenListener: (user: FakeUser | null) => void = () => undefined;
-  /** The token each user holds, by uid - a plain Google one by default. */
-  public tokens = new Map<string, FakeToken>();
-  public getIdTokenResult = jest.fn(
-    async (user: FakeUser, forceRefresh?: boolean): Promise<FakeToken> => {
-      void forceRefresh;
-      return (
-        this.tokens.get(user.uid) ?? {
-          claims: { email_verified: true },
-          signInProvider: 'google.com',
-        }
-      );
-    }
-  );
-  private guests = 0;
-  /** The error code guest sign-ins fail with, null while they work. */
-  public refusesGuests: string | null = null;
-  public linkWithPopup = jest.fn();
-  public signInWithCredential = jest.fn(async (_auth, credential: string) => {
-    this.become(google(credential, 'Ada'));
-    return { user: this.currentUser };
-  });
-
-  public readonly sdk = {
-    onAuthStateChanged: (_auth: unknown, listener: (user: unknown) => void) => {
-      this.listener = listener;
-      queueMicrotask(() => listener(this.currentUser));
-      return () => undefined;
-    },
-    onIdTokenChanged: (_auth: unknown, listener: (user: unknown) => void) => {
-      this.tokenListener = listener;
-      queueMicrotask(() => listener(this.currentUser));
-      return () => undefined;
-    },
-    getIdTokenResult: (user: FakeUser, forceRefresh?: boolean) =>
-      this.getIdTokenResult(user, forceRefresh),
-    signInAnonymously: async () => {
-      if (this.refusesGuests !== null) {
-        throw { code: this.refusesGuests };
-      }
-      this.become(guest(`guest-${++this.guests}`));
-      return { user: this.currentUser };
-    },
-    signOut: async () => this.become(null),
-    linkWithPopup: (...args: unknown[]) => this.linkWithPopup(...args),
-    signInWithPopup: jest.fn(),
-    signInWithCredential: (...args: [unknown, string]) =>
-      this.signInWithCredential(...args),
-    GoogleAuthProvider: Object.assign(class {}, {
-      credentialFromError: (error: { credential?: string }) =>
-        error.credential ?? null,
-    }),
-  };
-
-  public become(user: FakeUser | null): void {
-    this.currentUser = user;
-    this.listener(user);
-    this.tokenListener(user);
-  }
-
-  /** A new token for the same user - a refresh, or a claim granted. */
-  public newToken(): void {
-    this.tokenListener(this.currentUser);
-  }
-
-  public connection(): FirebaseConnection {
-    return {
-      auth: this,
-      authSdk: this.sdk,
-    } as unknown as FirebaseConnection;
-  }
-}
-
-async function settle(): Promise<void> {
-  for (let i = 0; i < 20; i++) {
-    await Promise.resolve();
-  }
-}
-
 describe('FirebaseGameAccount', () => {
-  let auth: FakeAuth;
+  let auth: FakeFirebaseAuth;
   let account: FirebaseGameAccount;
   let switches: PlayerSwitch[];
 
   beforeEach(async () => {
-    auth = new FakeAuth();
-    account = new FirebaseGameAccount(auth.connection());
+    const fake = new FakeFirebase();
+    auth = fake.auth;
+    account = new FirebaseGameAccount(fake.connection());
     switches = [];
     account.players.subscribe((player) => switches.push(player));
     await settle();
@@ -146,14 +43,16 @@ describe('FirebaseGameAccount', () => {
       firstValueFrom(account.playerIds).then((id) => seen.push(id))
     );
 
-    auth.become(guest('guest-9'));
+    auth.become(guestUser('guest-9'));
     await settle();
 
     expect(seen).toEqual(['guest-1', 'guest-9']);
   });
 
   it('keeps the player when a guest signs in to a new Google account', async () => {
-    auth.linkWithPopup.mockResolvedValue({ user: google('guest-1', 'Ada') });
+    auth.linkWithPopup.mockResolvedValue({
+      user: googleUser('guest-1', 'Ada'),
+    });
 
     expect(await account.signIn()).toBe('signed-in');
 
@@ -240,7 +139,7 @@ describe('FirebaseGameAccount', () => {
     it('is the Google account with the admin claim and a verified email, read from the token it holds', async () => {
       auth.tokens.set('ada', OWNER_TOKEN);
 
-      auth.become(google('ada', 'Ada'));
+      auth.become(googleUser('ada', 'Ada'));
       await settle();
 
       expect(account.owner()).toBe(true);
@@ -268,14 +167,14 @@ describe('FirebaseGameAccount', () => {
     ])('is nobody with %s', async (_case, token) => {
       auth.tokens.set('ada', token);
 
-      auth.become(google('ada', 'Ada'));
+      auth.become(googleUser('ada', 'Ada'));
       await settle();
 
       expect(account.owner()).toBe(false);
     });
 
     it('follows the token: a claim granted shows with the next one, and goes with a sign-out', async () => {
-      auth.become(google('ada', 'Ada'));
+      auth.become(googleUser('ada', 'Ada'));
       await settle();
       expect(account.owner()).toBe(false);
 
@@ -293,7 +192,7 @@ describe('FirebaseGameAccount', () => {
       jest.spyOn(console, 'warn').mockImplementation(() => undefined);
       auth.getIdTokenResult.mockRejectedValueOnce(new Error('offline'));
 
-      auth.become(google('ada', 'Ada'));
+      auth.become(googleUser('ada', 'Ada'));
       await settle();
 
       expect(account.owner()).toBe(false);
