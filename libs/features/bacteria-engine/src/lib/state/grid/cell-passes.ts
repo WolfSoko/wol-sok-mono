@@ -50,7 +50,6 @@ export interface GridTick {
   step: number;
   /** The most cells a colony travels this tick. */
   mostSteps: number;
-  deltaTimeSec: number;
   /** Escape steps to run first - 0 unless a wall moved since the last tick. */
   escapeSteps: number;
   /** The colonies in the match. */

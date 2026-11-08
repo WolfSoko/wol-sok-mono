@@ -126,7 +126,6 @@ export class GridWar implements Simulation {
   private readonly tick: GridTick = {
     step: 0,
     mostSteps: 0,
-    deltaTimeSec: 0,
     escapeSteps: 0,
     colonies: 0,
     report: null,
@@ -206,7 +205,7 @@ export class GridWar implements Simulation {
     this.tickPellets(deltaTimeSec);
     const effects = this.arena.weaponEffects.begin();
     this.passes.uploadFrame(this.fillFrame(players, deltaTimeSec, effects));
-    this.passes.runTick(this.fillTick(deltaTimeSec), this.sink);
+    this.passes.runTick(this.fillTick(), this.sink);
     this.escapePending = false;
     this.arena.weaponEffects.end(deltaTimeSec);
   }
@@ -312,11 +311,10 @@ export class GridWar implements Simulation {
   }
 
   /** What this tick's passes read of the war besides the frame. */
-  private fillTick(deltaTimeSec: number): GridTick {
+  private fillTick(): GridTick {
     const tick = this.tick;
     tick.step = this.steps;
     tick.mostSteps = Math.max(0, ...this.frame.uniforms.steps);
-    tick.deltaTimeSec = deltaTimeSec;
     tick.escapeSteps = this.escapePending
       ? escapeReach(this.width, this.arena.map.size)
       : 0;

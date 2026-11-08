@@ -9,6 +9,7 @@ import {
   GridFrame,
   GridTick,
   Point,
+  DETERMINISTIC_REPORT_LAG,
   READBACK_SLOTS,
   readbacksToTake,
   Rect,
@@ -130,7 +131,7 @@ interface Resources {
  *
  * The CPU reads the report back without waiting for the GPU, so the
  * scoreboard, the computer opponent and the pellets work with numbers one
- * or two frames old - or, with a fixed `reportLag`, exactly that many ticks
+ * or two frames old - or, by deterministic rules, exactly `DETERMINISTIC_REPORT_LAG` ticks
  * old, waited for when the GPU is slow.
  */
 export class GpuCellPasses implements CellPasses {
@@ -170,9 +171,14 @@ export class GpuCellPasses implements CellPasses {
   private readonly recentAreas: Rect[][] = [];
   /** How far a bacterium got in each of the last ticks, newest first. */
   private readonly recentReach: number[] = [];
-  /** The walls and zones the passes hold, for a restored context. */
-  private mask: Uint8Array = new Uint8Array(0);
-  private hasHill = false;
+  /**
+   * The age of the report the war takes - the rules' fixed lag, null to take
+   * them as the GPU finishes them. `GridWar` waits as long on deterministic
+   * passes, so it follows from `deterministic` alone.
+   */
+  private readonly reportLag: number | null;
+  /** The frame's length - for the glow's fading. */
+  private frameDeltaSec = 0;
 
   public constructor(
     private readonly gl: WebGL2RenderingContext,
@@ -180,6 +186,7 @@ export class GpuCellPasses implements CellPasses {
     private readonly rules: GpuRules
   ) {
     this.deterministic = rules.deterministic;
+    this.reportLag = rules.deterministic ? DETERMINISTIC_REPORT_LAG : null;
     const canvas = gl.canvas;
     if (canvas instanceof HTMLCanvasElement) {
       canvas.addEventListener('webglcontextlost', this.onContextLost);
@@ -251,10 +258,8 @@ export class GpuCellPasses implements CellPasses {
   }
 
   public loadMask(mask: Uint8Array, hasHill: boolean): void {
-    this.mask = mask;
-    this.hasHill = hasHill;
     if (this.resources != null) {
-      this.uploadMask(this.resources);
+      this.uploadMask(this.resources, mask, hasHill);
     }
   }
 
@@ -314,6 +319,7 @@ export class GpuCellPasses implements CellPasses {
       return;
     }
     const gl = this.gl;
+    this.frameDeltaSec = frame.deltaTimeSec;
     this.rules.uploadFrame(gl, programs, frame);
     // A plain match has no effects at all: the passes keep their count of
     // none from the last frame.
@@ -391,7 +397,7 @@ export class GpuCellPasses implements CellPasses {
 
     // 6. The report. The one read back is last frame's, which the GPU has
     // finished by now - reading this frame's would make the driver wait.
-    if (this.rules.reportLag === null) {
+    if (this.reportLag === null) {
       this.collectReadbacks(resources, tick.step, sink);
     }
     this.requestReadback(resources, tick.step);
@@ -676,7 +682,7 @@ export class GpuCellPasses implements CellPasses {
     );
     bindTexture(gl, UNIT.previous, previous.texture, null);
     gl.useProgram(program.program);
-    const fade = (rate: number) => Math.exp(-rate * tick.deltaTimeSec);
+    const fade = (rate: number) => Math.exp(-rate * this.frameDeltaSec);
     gl.uniform3f(
       program.uniforms['uFade'],
       fade(EFFECT_FADE_PER_SEC.fight),
@@ -729,9 +735,7 @@ export class GpuCellPasses implements CellPasses {
     // buffers (see DETERMINISTIC_REPORT_LAG), but take another if they did.
     const readback =
       resources.freeReadbacks.pop() ??
-      (this.rules.reportLag === null
-        ? undefined
-        : createReadback(this.gl, layout));
+      (this.reportLag === null ? undefined : createReadback(this.gl, layout));
     if (readback == null) {
       return;
     }
@@ -782,7 +786,7 @@ export class GpuCellPasses implements CellPasses {
         ready: readback.sync == null || this.isFinished(readback.sync),
       })),
       step,
-      this.rules.reportLag
+      this.reportLag
     );
     for (let taken = 0; taken < due; taken++) {
       const readback = pending[0];
@@ -813,7 +817,11 @@ export class GpuCellPasses implements CellPasses {
     return status !== this.gl.TIMEOUT_EXPIRED && status !== this.gl.WAIT_FAILED;
   }
 
-  private uploadMask(resources: Resources): void {
+  private uploadMask(
+    resources: Resources,
+    mask: Uint8Array,
+    hasHill: boolean
+  ): void {
     const gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, resources.mask);
     gl.texSubImage2D(
@@ -825,12 +833,12 @@ export class GpuCellPasses implements CellPasses {
       this.height,
       gl.RED_INTEGER,
       gl.UNSIGNED_BYTE,
-      this.mask
+      mask
     );
     // Only a map with a zone to hold has its bacteria on it counted.
     const report = resources.programs.report;
     gl.useProgram(report.program);
-    gl.uniform1i(report.uniforms['uCountHill'], this.hasHill ? 1 : 0);
+    gl.uniform1i(report.uniforms['uCountHill'], hasHill ? 1 : 0);
   }
 
   /**

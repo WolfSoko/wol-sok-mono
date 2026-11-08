@@ -1,5 +1,9 @@
 import type { ColonySpawn } from '../bacteria-simulation';
-import { gameBalance } from '../game-balance';
+import { colonyCapacity, gameBalance } from '../game-balance';
+import {
+  DETERMINISTIC_REPORT_LAG,
+  divideBudgetOf,
+} from '../gpu-int/int-readback';
 import { MAX_GPU_COLONIES, REPORT_ROWS } from '../grid-format';
 import { GameMap } from '../maps';
 import { createPlayer, Player } from '../player.model';
@@ -11,7 +15,7 @@ import type {
   GridTick,
   ReportSink,
 } from './cell-passes';
-import { GridWar } from './grid-war';
+import { GridWar, READBACK_SLOTS } from './grid-war';
 
 const WIDTH = 64;
 const HEIGHT = 32;
@@ -64,7 +68,9 @@ class StubPasses implements CellPasses {
   public readonly kind = 'int';
   public readonly calls: string[] = [];
   public readonly ticks: GridTick[] = [];
-  public readonly frames: Pick<GridFrame, 'pelletCount' | 'effectCount'>[] = [];
+  public readonly frames: (Pick<GridFrame, 'pelletCount' | 'effectCount'> & {
+    divideBudget: number[];
+  })[] = [];
   public host: CellPassesHost | null = null;
   public arena: GridArena | null = null;
   /** The report to hand over at the next collection, or tick. */
@@ -104,6 +110,7 @@ class StubPasses implements CellPasses {
     this.frames.push({
       pelletCount: frame.pelletCount,
       effectCount: frame.effectCount,
+      divideBudget: Array.from(frame.uniforms.divideBudget.slice(0, 2)),
     });
   }
 
@@ -264,10 +271,47 @@ describe('GridWar', () => {
     expect(passes.frames[0].pelletCount).toBe(grid.getNutrients().length);
   });
 
-  it('starts the match over when the passes were set up afresh', () => {
-    const { passes } = war(true);
+  it('starts the match over when the passes were set up afresh, loading the mask again', () => {
+    const { passes, grid, players } = war(true);
+    grid.step(players, TICK);
+    passes.calls.length = 0;
     passes.host?.restart();
     expect(passes.calls).toEqual(['startMatch', 'loadState']);
+    grid.step(players, TICK);
+    expect(passes.calls).toContain('loadMask');
+  });
+
+  it('budgets division by the report a deterministic tick collected first, a fixed lag old', () => {
+    const { passes, grid, players } = war(true);
+    grid.step(players, TICK);
+    passes.next = { counts: [100, 4] };
+    grid.step(players, TICK);
+    // No report for a while: the lag stays what it is, however old the last.
+    for (let tick = 0; tick < 5; tick++) {
+      grid.step(players, TICK);
+    }
+    const capacity = colonyCapacity(gameBalance, 2);
+    const budget = divideBudgetOf(capacity, 100, DETERMINISTIC_REPORT_LAG);
+    expect(passes.frames[1].divideBudget[0]).toBeCloseTo(budget);
+    expect(passes.frames[6].divideBudget[0]).toBeCloseTo(budget);
+  });
+
+  it('budgets division of passes that are not deterministic by how far the report is behind', () => {
+    const { passes, grid, players } = war(false);
+    passes.next = { counts: [100, 4] };
+    grid.step(players, TICK);
+    for (let tick = 0; tick < 6; tick++) {
+      grid.step(players, TICK);
+    }
+    const capacity = colonyCapacity(gameBalance, 2);
+    // Read backs in flight at least, even right after the report came in.
+    expect(passes.frames[1].divideBudget[0]).toBeCloseTo(
+      divideBudgetOf(capacity, 100, READBACK_SLOTS)
+    );
+    // Six ticks after the report of tick 1.
+    expect(passes.frames[6].divideBudget[0]).toBeCloseTo(
+      divideBudgetOf(capacity, 100, 6)
+    );
   });
 
   it('runs no more colonies than the passes hold', () => {

@@ -4,12 +4,7 @@ import {
   WEAPON_EFFECTS,
   WeaponId,
 } from './evolution';
-import {
-  actsOn,
-  anyCovers,
-  covers,
-  toughnessOf,
-} from './weapon-effects';
+import { actsOn, anyCovers, covers, toughnessOf } from './weapon-effects';
 import {
   heatedAggression,
   mapZones,
@@ -312,12 +307,8 @@ export class BacteriaSimulation implements Simulation {
   /** The summaries as of the last step, built when first asked for. */
   private colonySummaries: ColonySummary[] | null = null;
   private colonyBlocks: BlockCounts | null = null;
-  /** Wall layout the match is fought on. */
   /** Match time, which drives the gates and the sliding walls. */
   private elapsedSec = 0;
-  /** The moving walls and gates as of the current match time. */
-  /** What the last step did, for the sound. */
-  /** The weapons' effects - none at all in a plain match. */
   /** The part of a step each colony's flagella have made up - see `paceSteps`. */
   private paces: number[] = [];
   /** Which effects act on each colony, by colony index - kept from step to step. */
