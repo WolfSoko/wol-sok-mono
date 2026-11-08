@@ -9,14 +9,34 @@ export interface SpielEintrag {
   readonly ergebnis?: string;
 }
 
-/** `/team/{id}`: a Team's Spiele of the Saison. */
+/** `/team/{id}`: a Team's Spiele of the Saison and its Ligen's Tabellen. */
 export class TeamPage {
   public readonly heading: Locator;
   public readonly spiele: Locator;
+  /** One per Liga, the current one first. */
+  public readonly tabellen: Locator;
 
   public constructor(private readonly page: Page) {
     this.heading = page.getByRole('heading', { level: 1 });
     this.spiele = page.getByTestId('spiel');
+    this.tabellen = page.getByTestId('tabelle');
+  }
+
+  /** The Tabelle headed by the Liga `liga`. */
+  public tabelle(liga: string): Locator {
+    return this.tabellen.filter({
+      has: this.page.getByRole('heading', { level: 3, name: liga }),
+    });
+  }
+
+  /** The lines of a Tabelle, as `tabelle(liga)` finds it. */
+  public zeilen(tabelle: Locator): Locator {
+    return tabelle.getByTestId('tabelle-zeile');
+  }
+
+  /** The line a Tabelle marks as the Team's own. */
+  public eigeneZeile(tabelle: Locator): Locator {
+    return tabelle.locator('[aria-current="true"]');
   }
 
   public async goto(teamId: number): Promise<void> {
