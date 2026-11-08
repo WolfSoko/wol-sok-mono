@@ -256,14 +256,21 @@ storage until then. Settings stay with the device either way.
 - Only `firebase-connection.ts` imports Firebase at runtime, and only
   `provide-game-cloud.ts` imports that file; the rest takes types only, so
   the specs never load the SDK.
-- The specs of the Firebase adapters (`firestore-game-*.spec.ts`) run on
+- The specs of the Firebase adapters (`firestore-game-*.spec.ts`,
+  `rtdb-game-presence.spec.ts`, `firebase-game-account.spec.ts`, and the
+  admin lib's, through `@wolsok/feat-lazy-bac-game/testing`) run on
   `FakeFirebase` (`src/testing/fake-firebase-sdk.ts`), the one fake of the
-  SDK surface `FirebaseConnection` hands them: documents by path, auto ids,
-  the server's time as a `FakeTimestamp`, evaluated queries, live listeners,
-  batches, transactions, refused paths and the network's switches
-  (`offline`, `hanging`, `lateCommit`, `hangingReads`). A spec keeps only
-  its scenario; what the fake lacks goes into it, not into a fake of the
-  spec's own. The rules emulator suite stays the check of the rules.
+  SDK surface `FirebaseConnection` hands them. Firestore: documents by
+  path, auto ids (`doc(collection)`, `addDoc`), the server's time as a
+  `FakeTimestamp`, evaluated queries, live listeners, batches,
+  transactions, refused paths and the network's switches (`offline`,
+  `hanging`, `lateCommit`, `hangingReads`). Its parts of their own:
+  `realtime` (`fake-realtime-database.ts`: values by exact path,
+  refusals as `rtdb:<path>`, writes, `onDisconnect` and `disconnect()`)
+  and `auth` (`fake-firebase-auth.ts`: `become`, `newToken`, guests,
+  tokens, the popups as jest mocks). A spec keeps only its scenario; what
+  the fake lacks goes into it, not into a fake of the spec's own. The
+  rules emulator suite stays the check of the rules.
 - The release pipeline deploys `apps/bacteria-game-remote/firestore.rules`
   and `firestore.indexes.json` beside it, which holds the rooms' TTL policy
   (`bacteria-game-remote:deploy`, config `firebase.bacteria-game-remote.json`).

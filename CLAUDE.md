@@ -125,7 +125,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 ## Native Federation
 
 - `angular-examples` is the shell, remotes are `fourier-analysis-remote`, `bacteria-game-remote`, `shader-examples-remote`.
-- Shared setup lives in `tools/federation/workspace-federation.js`; each app's `federation.config.js` only adds its name and `exposes`. A package skipped in one app must be skipped in all of them, or the shell and a remote disagree about the import map. The game lib's secondary entries (`admin-kit`, `watch`) and its engine (`@wolsok/feat-shared-bacteria-engine`, with `/testing`) are skipped there with the lib.
+- Shared setup lives in `tools/federation/workspace-federation.js`; each app's `federation.config.js` only adds its name and `exposes`. A package skipped in one app must be skipped in all of them, or the shell and a remote disagree about the import map. The game lib's secondary entries (`admin-kit`, `watch`, and `testing`, the fake Firebase SDK the admin's specs take) and its engine (`@wolsok/feat-shared-bacteria-engine`, with `/testing`) are skipped there with the lib.
 - `exposes` paths resolve from the workspace root (`./apps/<app>/src/...`), not the project root.
 - **Nothing but the exposed module belongs in `src/app/remote-entry/`.** Native Federation maps the whole _directory_ of an exposed file to the remote's public name, so a sibling file imported with a static `import` from outside that folder is rewritten to `<remote>/Routes` and its exports vanish at runtime. That is why each remote's bootstrap component sits in `src/app/`, not next to `entry.routes.ts`.
 - A remote also has to run standalone (its own e2e serves it that way), so check both: loaded through the shell _and_ opened on its own port.
