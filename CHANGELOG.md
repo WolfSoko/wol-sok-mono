@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.147.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.146.0...v74.147.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 7 — Teams of the Verein and the end of the Saison ([#2908](https://github.com/WolfSoko/wol-sok-mono/issues/2908)) ([287914d](https://github.com/WolfSoko/wol-sok-mono/commit/287914d5f3d1061d6fb939b5d4ae65889813a5c6)), closes [#2870](https://github.com/WolfSoko/wol-sok-mono/issues/2870), references [#2868](https://github.com/WolfSoko/wol-sok-mono/issues/2868) [#2870](https://github.com/WolfSoko/wol-sok-mono/issues/2870)
+
 ## [74.146.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.145.1...v74.146.0) (2026-11-08)
 
 ### Features
