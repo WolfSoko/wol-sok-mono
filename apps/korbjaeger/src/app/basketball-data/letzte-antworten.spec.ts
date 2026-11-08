@@ -242,6 +242,34 @@ describe('LokaleLetzteAntworten', () => {
   });
 
   describe('its index', () => {
+    it('parses the stored index once for writes in a row', () => {
+      const speicher = new KleinerSpeicher();
+      new LokaleLetzteAntworten(speicher).merken(
+        TEAM,
+        'team-spiele',
+        antwort(1000)
+      );
+      const antworten = new LokaleLetzteAntworten(speicher);
+      const geparst = vi.spyOn(JSON, 'parse');
+
+      antworten.merken(TABELLE, 'tabelle', antwort(2000));
+      antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+
+      expect(geparst).toHaveBeenCalledTimes(1);
+    });
+
+    it('reads the index again once another tab changed it', () => {
+      const speicher = new KleinerSpeicher();
+      const hier = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
+      const dort = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
+      hier.merken(TEAM, 'team-spiele', antwort(1000));
+      dort.merken(TABELLE, 'tabelle', antwort(2000));
+
+      hier.merken(SPIEL, 'spiel-info', antwort(3000));
+
+      expect(gemerkt(hier, [TEAM, TABELLE, SPIEL])).toEqual([TABELLE, SPIEL]);
+    });
+
     it('reads no stored answer for a write within the limits', () => {
       const speicher = new KleinerSpeicher();
       const antworten = new LokaleLetzteAntworten(speicher);

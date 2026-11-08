@@ -51,6 +51,6 @@
 }
 @if (saison.hasValue() && !beendet() && weitereTeams(); as stand) {
   <h2>Weitere Teams des Vereins</h2>
-  <korb-stand data-qa="vereins-stand" [stand]="vereinsStand()" />
+  <korb-stand data-qa="vereins-stand" [stand]="vereinsTeams.stand()" />
   <korb-vereins-teams data-qa="vereins-teams" [stand]="stand" />
 }

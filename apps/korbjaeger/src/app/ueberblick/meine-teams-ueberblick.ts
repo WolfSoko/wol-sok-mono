@@ -35,7 +35,7 @@ import { fehlerKarte, geladeneKarte, type TeamKarte } from './team-karte';
  * for the Halle, which starts once that Spiel is known; with the Verein
  * whose Teams to suggest once its Saison looks over.
  */
-interface Lesung {
+interface TeamLesungen {
   readonly saison: DatenResource<TeamSaison | undefined>;
   readonly naechsteDetails: DatenResource<SpielDetails | undefined>;
   /** The Team's Verein once its Saison looks over (`saisonBeendet`). */
@@ -54,7 +54,9 @@ export class MeineTeamsUeberblick {
   private readonly teams = inject(AUSWAHL).teams;
   private readonly heute = inject(HEUTE);
   private readonly injector = inject(Injector);
-  private readonly lesungen = signal<ReadonlyMap<TeamId, Lesung>>(new Map());
+  private readonly lesungen = signal<ReadonlyMap<TeamId, TeamLesungen>>(
+    new Map()
+  );
   private readonly vereinsLesungen = signal<
     ReadonlyMap<VereinId, DatenResource<VereinsTeams | undefined>>
   >(new Map());
@@ -120,7 +122,7 @@ export class MeineTeamsUeberblick {
     });
   }
 
-  private karte(teamId: TeamId, lesung: Lesung | undefined): TeamKarte {
+  private karte(teamId: TeamId, lesung: TeamLesungen | undefined): TeamKarte {
     const saison = lesung?.saison;
     if (lesung && saison?.hasValue()) {
       const verein = lesung.saisonEndeVerein();
@@ -147,7 +149,7 @@ export class MeineTeamsUeberblick {
    * The reads of `teamId`: its Saison, then its next Spiel's details; and
    * its Verein, once its Saison looks over.
    */
-  private lesen(teamId: TeamId): Lesung {
+  private lesen(teamId: TeamId): TeamLesungen {
     const saison = teamSaisonResource(() => teamId, this.injector);
     const naechsteDetails = spielDetailsResource(
       () =>
@@ -193,7 +195,7 @@ function vereinBeenden(read: DatenResource<VereinsTeams | undefined>): void {
 }
 
 /** Cancels and drops both reads of a Team. */
-function beenden(lesung: Lesung): void {
+function beenden(lesung: TeamLesungen): void {
   lesung.saison.destroy();
   lesung.naechsteDetails.destroy();
 }

@@ -25,7 +25,7 @@ import { standAlter, standGrundText, standZeit } from './stand-text';
         <span
           >{{ stand.grund }} ·
           <time [attr.datetime]="stand.iso" [title]="stand.zeit">{{
-            stand.alter
+            alter()
           }}</time></span
         >
       </p>
@@ -49,15 +49,23 @@ export class StandComponent {
 
   private readonly jetzt = inject(JETZT);
 
+  /** What stays with the Stand: why, and when its data came. */
   protected readonly anzeige = computed(() => {
     const stand = this.stand();
     return stand === undefined
       ? undefined
       : {
           grund: standGrundText(stand.grund),
-          alter: standAlter(stand.gespeichertAm, this.jetzt()),
           zeit: standZeit(stand.gespeichertAm),
           iso: new Date(stand.gespeichertAm).toISOString(),
         };
+  });
+
+  /** How old its data is: the one part that moves with the clock. */
+  protected readonly alter = computed(() => {
+    const stand = this.stand();
+    return stand === undefined
+      ? ''
+      : standAlter(stand.gespeichertAm, this.jetzt());
   });
 }

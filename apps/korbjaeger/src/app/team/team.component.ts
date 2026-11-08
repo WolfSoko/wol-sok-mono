@@ -134,7 +134,7 @@ export class TeamComponent {
     computation: (saison, vorher) => saison?.verein.id ?? vorher?.value,
   });
 
-  private readonly vereinsTeams = vereinsTeamsResource(() => this.vereinId());
+  protected readonly vereinsTeams = vereinsTeamsResource(() => this.vereinId());
 
   /** The Verein's Teams other than this one, as their read stands. */
   protected readonly weitereTeams = computed(() => {
@@ -155,9 +155,6 @@ export class TeamComponent {
       this.beendet() ? this.vereinsTeams.stand() : undefined
     )
   );
-
-  /** The Stand of the Verein's Teams in their own section below. */
-  protected readonly vereinsStand = computed(() => this.vereinsTeams.stand());
 
   protected readonly fehler = computed(() => {
     if (this.team() === undefined) {

@@ -101,6 +101,10 @@ interface Gespeichert {
  */
 export class LokaleLetzteAntworten implements LetzteAntworten {
   private readonly grenzen: AntwortGrenzen;
+  /** The index as this store last read or wrote it; read on first need. */
+  private bekannt: Index | undefined;
+  /** The stored index's text then, to notice another tab's changes. */
+  private bekannterText: string | null = null;
 
   public constructor(
     private readonly speicher: AntwortSpeicher | undefined,
@@ -117,8 +121,9 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
         return undefined;
       }
       if (zuAlt(gespeichert.am, jetzt)) {
-        // the index forgets it on its next pass
+        // the stored index forgets it on the next write
         this.speicher?.removeItem(schluessel);
+        this.bekannt?.delete(schluessel);
         return undefined;
       }
       return { antwort: gespeichert.antwort, gespeichertAm: gespeichert.am };
@@ -147,10 +152,11 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
     try {
       const index = this.index();
       index.delete(schluessel);
+      const aelteste = new Aelteste(index);
       const geschrieben =
         eintrag.zeichen <= this.grenzen.zeichen &&
-        this.innerhalbDerGrenzen(index, eintrag.zeichen) &&
-        this.schreiben(schluessel, text, index);
+        this.innerhalbDerGrenzen(index, aelteste, eintrag.zeichen) &&
+        this.schreiben(schluessel, text, index, aelteste);
       if (geschrieben) {
         index.set(schluessel, eintrag);
       } else {
@@ -172,8 +178,7 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
       const index = this.index();
       for (const [schluessel, { am, art }] of index) {
         if (zuAlt(am, jetzt) || !arten.has(art)) {
-          this.speicher?.removeItem(schluessel);
-          index.delete(schluessel);
+          this.entfernen(schluessel, index);
         }
       }
       this.indexSchreiben(index);
@@ -186,31 +191,42 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
    * Evicts the oldest of `index` until a new answer of `zeichen` fits the
    * limits beside them; whether it does.
    */
-  private innerhalbDerGrenzen(index: Index, zeichen: number): boolean {
+  private innerhalbDerGrenzen(
+    index: Index,
+    aelteste: Aelteste,
+    zeichen: number
+  ): boolean {
+    let belegt = summe(index) + zeichen;
     const passt = (): boolean =>
       index.size + 1 <= this.grenzen.eintraege &&
-      summe(index) + zeichen <= this.grenzen.zeichen;
-    for (const schluessel of nachAlter(index)) {
-      if (passt()) {
-        break;
+      belegt <= this.grenzen.zeichen;
+    while (!passt()) {
+      const aeltester = aelteste.naechster();
+      if (aeltester === undefined) {
+        return false;
       }
-      this.entfernen(schluessel, index);
+      belegt -= index.get(aeltester)?.zeichen ?? 0;
+      this.entfernen(aeltester, index);
     }
-    return passt();
+    return true;
   }
 
   /**
    * Writes `text`, evicting the oldest of `index` while the storage is
    * full; whether it was written.
    */
-  private schreiben(schluessel: string, text: string, index: Index): boolean {
-    const aelteste = nachAlter(index);
+  private schreiben(
+    schluessel: string,
+    text: string,
+    index: Index,
+    aelteste: Aelteste
+  ): boolean {
     for (;;) {
       try {
         this.speicher?.setItem(schluessel, text);
         return true;
       } catch (error) {
-        const aeltester = aelteste.shift();
+        const aeltester = aelteste.naechster();
         if (!istSpeicherVoll(error) || aeltester === undefined) {
           return false;
         }
@@ -225,40 +241,77 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
   }
 
   /**
-   * The index as the stored answers stand: its entries for keys still
-   * there, and each answer it does not know (all, where it cannot be read)
-   * read once.
+   * The index as the stored answers stand. The one this store knows, while
+   * the stored index is the one it last saw and names the answers there
+   * are; else read again: its entries for keys still there, and each answer
+   * it does not know (all, where it cannot be read) read once.
    */
   private index(): Index {
     const speicher = this.speicher;
     if (speicher === undefined) {
       return new Map();
     }
-    const bekannt = indexGelesen(speicher.getItem(ANTWORT_INDEX));
+    const text = speicher.getItem(ANTWORT_INDEX);
+    const schluessel = antwortSchluessel(speicher);
+    if (
+      this.bekannt !== undefined &&
+      text === this.bekannterText &&
+      gleicheSchluessel(this.bekannt, schluessel)
+    ) {
+      return this.bekannt;
+    }
+    const gespeichert =
+      this.bekannt !== undefined && text === this.bekannterText
+        ? this.bekannt
+        : indexGelesen(text);
     const index: Index = new Map();
-    for (const schluessel of antwortSchluessel(speicher)) {
+    for (const key of schluessel) {
       index.set(
-        schluessel,
-        bekannt.get(schluessel) ??
-          eintragVon(schluessel, speicher.getItem(schluessel) ?? '')
+        key,
+        gespeichert.get(key) ?? eintragVon(key, speicher.getItem(key) ?? '')
       );
     }
+    this.bekannt = index;
+    this.bekannterText = text;
     return index;
   }
 
   private indexSchreiben(index: Index): void {
+    const text = JSON.stringify({
+      v: INDEX_VERSION,
+      eintraege: Object.fromEntries(index),
+    });
     try {
-      this.speicher?.setItem(
-        ANTWORT_INDEX,
-        JSON.stringify({
-          v: INDEX_VERSION,
-          eintraege: Object.fromEntries(index),
-        })
-      );
+      this.speicher?.setItem(ANTWORT_INDEX, text);
+      this.bekannterText = text;
     } catch {
       // not kept: the next pass rebuilds it from the answers
+      this.bekannt = undefined;
     }
   }
+}
+
+/** The keys of an index, oldest first, taken one by one; sorted on first need. */
+class Aelteste {
+  private reihe: string[] | undefined;
+
+  public constructor(private readonly index: Index) {}
+
+  public naechster(): string | undefined {
+    this.reihe ??= nachAlter(this.index);
+    return this.reihe.shift();
+  }
+}
+
+/** Whether `index` names exactly the answers `schluessel` lists. */
+function gleicheSchluessel(
+  index: Index,
+  schluessel: readonly string[]
+): boolean {
+  return (
+    index.size === schluessel.length &&
+    schluessel.every((key) => index.has(key))
+  );
 }
 
 function schluesselVon(pfad: string): string {
