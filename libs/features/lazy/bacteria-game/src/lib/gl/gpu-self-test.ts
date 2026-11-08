@@ -1,4 +1,5 @@
 import {
+  GridWar,
   playScenario,
   scenarioRandom,
   SELF_TEST_GOLDEN,
@@ -6,7 +7,7 @@ import {
   selfTestVerdict,
   SelfTestVerdict,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { GpuSimulation } from './gpu-simulation';
+import { gpuSimulation } from './gpu-simulation';
 import { rendererOf } from './renderer';
 
 /** What the self-test found on this device's GPU. */
@@ -21,7 +22,7 @@ export interface GpuSelfTestResult extends SelfTestVerdict {
 }
 
 /**
- * Plays `SELF_TEST_SCENARIO` through a deterministic `GpuSimulation` on
+ * Plays `SELF_TEST_SCENARIO` through a deterministic `gpuSimulation` on
  * this context and compares every tick with the TypeScript reference's
  * hashes (`SELF_TEST_GOLDEN`, ADR 0015 step 7). A GPU passes only when all
  * of them agree: then it computes the deterministic simulation as every
@@ -34,14 +35,12 @@ export interface GpuSelfTestResult extends SelfTestVerdict {
 export function gpuSelfTest(gl: WebGL2RenderingContext): GpuSelfTestResult {
   const renderer = rendererOf(gl);
   const scenario = SELF_TEST_SCENARIO;
-  let simulation: GpuSimulation | null = null;
+  let simulation: GridWar | null = null;
   try {
-    simulation = new GpuSimulation(
-      gl,
-      scenario.balance,
-      scenarioRandom(scenario),
-      { deterministic: true, matchSeed: scenario.matchSeed }
-    );
+    simulation = gpuSimulation(gl, scenario.balance, scenarioRandom(scenario), {
+      deterministic: true,
+      matchSeed: scenario.matchSeed,
+    });
     const hashes = playScenario(scenario, simulation);
     return { ...selfTestVerdict(hashes, SELF_TEST_GOLDEN.hashes), renderer };
   } catch (error) {

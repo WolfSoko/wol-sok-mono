@@ -187,6 +187,12 @@ sits behind a flag; step 8 switches it on.
      passes; `IntSimulation` (`state/gpu-int/int-simulation.ts`) runs
      `intReferenceTick` and `intReport`, the report pass in TypeScript. So
      `IntSimulation` is the `gpu-int` ruleset on the CPU, bit for bit.
+   - Since [#2790](https://github.com/WolfSoko/wol-sok-mono/issues/2790)
+     these classes are gone: `GridWar` (`state/grid/grid-war.ts`) runs the
+     bookkeeping over the `CellPasses` port, filled by
+     `IntReferencePasses` (`intSimulation`) and the game's `GpuCellPasses`
+     with integer or float rules (`gpuSimulation`). The names below are
+     those of this record's time.
    - The self-test (`gl/gpu-self-test.ts`) plays one small whole match
      (`SELF_TEST_SCENARIO`: 48 x 32 cells, 16 ticks, every zone, a sliding
      wall, every weapon, pellets) through the real `GpuSimulation` and

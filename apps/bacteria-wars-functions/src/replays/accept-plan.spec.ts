@@ -1,5 +1,7 @@
 import {
   dailyLevelId,
+  LADDER_REPLAY_VERSION,
+  LADDER_VERSION,
   onlineReplayId,
   type Replay,
   type ReplayHeader,
@@ -73,6 +75,26 @@ describe('planAcceptance', () => {
         record: expect.objectContaining({ cells: 640 * 360 }),
       })
     );
+  });
+
+  it('keeps the ladder version of a match against the ladder computer, and none for one without', () => {
+    const ladder = planAcceptance(
+      replay({ version: LADDER_REPLAY_VERSION, ladder: LADDER_VERSION }),
+      submission()
+    );
+    expect(ladder).toEqual(
+      expect.objectContaining({
+        record: expect.objectContaining({
+          replayVersion: LADDER_REPLAY_VERSION,
+          ladder: LADDER_VERSION,
+        }),
+      })
+    );
+    const plain = planAcceptance(replay(), submission());
+    if (typeof plain === 'string') {
+      throw new Error(`Rejected: ${plain}`);
+    }
+    expect(plain.record).not.toHaveProperty('ladder');
   });
 
   it('stores an online match under the id both devices know', () => {

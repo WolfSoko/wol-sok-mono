@@ -3,7 +3,12 @@ import {
   Rect,
   WEAPON_CODE,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { boostRingRadius, crosshairBars, CursorShape } from '../arena-painter';
+import {
+  boostRing,
+  crosshairBars,
+  splitColor,
+  CursorShape,
+} from '../arena-painter';
 import {
   BLOB_ALPHA,
   blobColor,
@@ -344,23 +349,22 @@ export function pushForeground(
   }
 
   for (const cursor of cursors) {
-    const color: Rgb = [cursor.color[0], cursor.color[1], cursor.color[2]];
-    const alpha = (cursor.color[3] ?? 255) / 255;
+    const { rgb, alpha } = splitColor(cursor.color);
     for (const bar of crosshairBars(cursor, unit)) {
-      batch.push(SHAPE.rect, bar, color, alpha);
+      batch.push(SHAPE.rect, bar, rgb, alpha);
     }
-    if (cursor.boostLeft != null) {
-      const radius = boostRingRadius(cursor.boostLeft) * unit;
+    const ring = boostRing(cursor, unit);
+    if (ring) {
       // Room for the line around the circle.
       batch.push(
         SHAPE.ring,
-        square(cursor.x, cursor.y, radius + unit),
-        color,
+        square(cursor.x, cursor.y, ring.radius + unit),
+        rgb,
         alpha,
-        color,
+        rgb,
         alpha,
-        radius,
-        1.5 * unit
+        ring.radius,
+        ring.lineWidth
       );
     }
   }

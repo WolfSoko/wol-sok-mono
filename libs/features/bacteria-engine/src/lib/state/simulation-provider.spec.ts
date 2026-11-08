@@ -1,6 +1,6 @@
+import { GridWar } from './grid/grid-war';
 import { BacteriaSimulation } from './bacteria-simulation';
 import { gameBalance } from './game-balance';
-import { IntSimulation } from './gpu-int/int-simulation';
 import { Simulation, SimulationFactory } from './simulation';
 import {
   CPU_SIMULATIONS,
@@ -49,13 +49,13 @@ describe('createSimulationProvider', () => {
   });
 
   describe('without a GPU (CPU_SIMULATIONS)', () => {
-    it('plays cpu on BacteriaSimulation and gpu-int on IntSimulation', () => {
+    it('plays cpu on BacteriaSimulation and gpu-int on the integer reference', () => {
       expect(
         CPU_SIMULATIONS.simulationFor('cpu')(gameBalance, random, SEED)
       ).toBeInstanceOf(BacteriaSimulation);
       expect(
         CPU_SIMULATIONS.simulationFor('gpu-int')(gameBalance, random, SEED)
-      ).toBeInstanceOf(IntSimulation);
+      ).toMatchObject({ kind: 'int' });
     });
 
     it('plays the device on the CPU, offering and playing cpu only', () => {
@@ -192,11 +192,11 @@ describe('createSimulationProvider', () => {
       expect(simulations.gpuIntReady()).toBe(false);
       expect(
         simulations.simulationFor('gpu-int')(gameBalance, random, SEED)
-      ).toBeInstanceOf(IntSimulation);
+      ).toMatchObject({ kind: 'int' });
       expect(onFallback).toHaveBeenCalledTimes(1);
     });
 
-    it('keeps a gpu-int match on its ruleset with IntSimulation', () => {
+    it('keeps a gpu-int match on its ruleset on the integer reference', () => {
       const onFallback = jest.fn();
       const simulations = createSimulationProvider({
         gpu: { int: failing },
@@ -206,7 +206,7 @@ describe('createSimulationProvider', () => {
 
       expect(
         simulations.simulationFor('gpu-int')(gameBalance, random, SEED)
-      ).toBeInstanceOf(IntSimulation);
+      ).toMatchObject({ kind: 'int' });
       expect(onFallback).toHaveBeenCalledWith(expect.any(Error));
       expect(simulations.gpuIntReady()).toBe(false);
       expect(
@@ -230,7 +230,7 @@ describe('createSimulationProvider', () => {
       );
 
       expect(broken.disposed).toBe(true);
-      expect(simulation).toBeInstanceOf(IntSimulation);
+      expect(simulation).toMatchObject({ kind: 'int' });
       expect(simulations.gpuIntReady()).toBe(false);
     });
 
@@ -243,11 +243,9 @@ describe('createSimulationProvider', () => {
         gpu: { int: () => broken },
       });
       // The stand-in cannot be sized either: nothing is left to fall back to.
-      jest
-        .spyOn(IntSimulation.prototype, 'resize')
-        .mockImplementationOnce(() => {
-          throw new Error('No memory');
-        });
+      jest.spyOn(GridWar.prototype, 'resize').mockImplementationOnce(() => {
+        throw new Error('No memory');
+      });
 
       expect(() =>
         simulations.simulationFor('gpu-int', ARENA)(gameBalance, random, SEED)

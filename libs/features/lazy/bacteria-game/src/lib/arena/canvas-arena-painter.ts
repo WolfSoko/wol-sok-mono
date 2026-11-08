@@ -1,12 +1,8 @@
 import { Zone } from '@wolsok/feat-shared-bacteria-engine';
-import {
-  ArenaFrame,
-  ArenaPainter,
-  boostRingRadius,
-  crosshairBars,
-} from './arena-painter';
+import { ArenaFrame, ArenaPainter } from './arena-painter';
 import { ArenaRenderer } from './arena-renderer';
 import { ArenaTheme } from './arena-theme';
+import { drawCursors } from './canvas-cursors';
 import { ColonyRenderer } from './colony-renderer';
 import { drawJam } from './jam';
 import { WeaponFx } from './weapon-fx';
@@ -92,36 +88,6 @@ export class CanvasArenaPainter implements ArenaPainter {
       frame.timeSec,
       this.unit
     );
-    this.drawCursors(frame);
-  }
-
-  /**
-   * Draws each player's crosshair in their own colour, with a ring around it
-   * while the player's boost is running.
-   */
-  private drawCursors(frame: ArenaFrame): void {
-    const cx = this.cx;
-    // As big on every grid.
-    for (const cursor of frame.cursors) {
-      const css = `rgba(${cursor.color.join(',')})`;
-      cx.fillStyle = css;
-      for (const bar of crosshairBars(cursor, this.unit)) {
-        cx.fillRect(bar.x, bar.y, bar.width, bar.height);
-      }
-
-      if (cursor.boostLeft != null) {
-        cx.strokeStyle = css;
-        cx.lineWidth = 1.5 * this.unit;
-        cx.beginPath();
-        cx.arc(
-          cursor.x,
-          cursor.y,
-          boostRingRadius(cursor.boostLeft) * this.unit,
-          0,
-          Math.PI * 2
-        );
-        cx.stroke();
-      }
-    }
+    drawCursors(cx, frame.cursors, this.unit);
   }
 }

@@ -3,7 +3,7 @@
  * for this balance version: what a GPU has to land on to pass the
  * self-test (`gl/gpu-self-test.ts`). Kept here rather than worked out on
  * the device, where the reference would cost more than the test itself.
- * `self-test-golden.spec.ts` keeps them in line with `IntSimulation`; when
+ * `self-test-golden.spec.ts` keeps them in line with `intSimulation`; when
  * the integer passes or the balance change, write what it reports here and
  * bump {@link GPU_SELF_TEST_VERSION}.
  */

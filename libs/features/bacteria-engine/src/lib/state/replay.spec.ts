@@ -150,7 +150,7 @@ describe('replay', () => {
     const { header } = replay;
 
     it('lets a recorded match play back', () => {
-      expect(playbackRefusal(replay)).toBeNull();
+      expect(playbackRefusal(header)).toBeNull();
       expect(canPlayBack(replay)).toBe(true);
     });
 
@@ -181,7 +181,7 @@ describe('replay', () => {
       (_, change, refusal) => {
         const other = { ...replay, header: { ...header, ...change } };
 
-        expect(playbackRefusal(other)).toBe(refusal);
+        expect(playbackRefusal(other.header)).toBe(refusal);
         expect(canPlayBack(other)).toBe(false);
         expect(replayEngine(other)).toBeNull();
         expect(replayRun(other)).toBeNull();
@@ -215,7 +215,7 @@ describe('replay', () => {
   });
 
   describe('replayRun on a GPU that fails to set up', () => {
-    it('plays on IntSimulation, tells it once and asks the GPU no more', () => {
+    it('plays on intSimulation, tells it once and asks the GPU no more', () => {
       const { replay } = record(PLAN, 60);
       const gpuInt = {
         ...replay,

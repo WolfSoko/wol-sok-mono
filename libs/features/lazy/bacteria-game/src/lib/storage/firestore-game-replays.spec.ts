@@ -159,6 +159,7 @@ describe('FirestoreGameReplays', () => {
       levelId: 'petri-dish',
       balanceVersion: 3,
       replayVersion: 2,
+      simulation: 'cpu',
       createdAt: timestampAt(500),
       ticks: 120,
       endedBy: 'time',
@@ -190,6 +191,7 @@ describe('FirestoreGameReplays', () => {
         levelId: 'petri-dish',
         balanceVersion: 3,
         replayVersion: 2,
+        simulation: 'cpu',
         createdAt: 500,
         ticks: 120,
         endedBy: 'time',
@@ -314,6 +316,7 @@ describe('FirestoreGameReplays', () => {
         levelId: 'petri-dish',
         balanceVersion: 3,
         replayVersion: 5,
+        simulation: 'gpu-int',
         createdAt: 1_000,
         ticks: 900,
         endedBy: 'annihilation',
@@ -325,6 +328,30 @@ describe('FirestoreGameReplays', () => {
         publicId: 'AbCdEfGhIjKlMnOpQrSt',
       });
       expect(listingOf(online, 'host')?.seat).toBe(0);
+    });
+
+    it('keeps the ladder version, and lists a replay stored before it was kept', () => {
+      const local = (fields: Record<string, unknown>) =>
+        listingOf(
+          doc('l_1', {
+            ...record,
+            kind: 'computer',
+            state: 'submitted',
+            players: ['ada'],
+            ...fields,
+          }),
+          'ada'
+        );
+
+      expect(local({ replayVersion: 4, ladder: 2 })).toEqual(
+        expect.objectContaining({ replayVersion: 4, ladder: 2 })
+      );
+      const unladdered = local({ replayVersion: 4 });
+      expect(unladdered).not.toBeNull();
+      expect(unladdered).not.toHaveProperty('ladder');
+      expect(local({ ladder: 'two' })).not.toHaveProperty('ladder');
+      // Every writer stores a simulation: a record without one is no listing.
+      expect(local({ simulation: 7 })).toBeNull();
     });
 
     it('takes the hourly sweep\'s "not reported"', () => {

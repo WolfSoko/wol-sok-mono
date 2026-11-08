@@ -39,7 +39,7 @@ export function gpuSimulationsOf(gpu: GpuFactory): GpuSimulations {
  * - deterministic: the integer GPU passes where the GPU passed the
  *   self-test by the time a match starts, the CPU's ruleset else - a GPU
  *   not tested yet, or failed, plays the `cpu` ruleset (the owner's
- *   decision: `IntSimulation` replays and checks, it does not play live).
+ *   decision: `intSimulation` replays and checks, it does not play live).
  *
  * `deterministic` is the owner's toggle (`deterministicSimulation`, ADR
  * 0012), read afresh as each match starts and by `offers` as each online

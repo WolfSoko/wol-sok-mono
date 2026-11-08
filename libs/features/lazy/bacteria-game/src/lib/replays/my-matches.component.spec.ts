@@ -5,7 +5,13 @@ import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { recordingPainters } from '../../testing/recording-painter';
 import { ARMED_MS } from '../armed-tap';
 import { I18nService } from '../i18n/i18n.service';
-import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  BALANCE_VERSION,
+  GHOST_REPLAY_VERSION,
+  LADDER_REPLAY_VERSION,
+  LADDER_VERSION,
+  type StoredPlayback,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
 import { NEVER, of, throwError } from 'rxjs';
@@ -107,6 +113,41 @@ describe('MyMatchesComponent', () => {
     expect(page.textContent).toContain('older version');
     expect(page.querySelector('feat-lazy-bac-game-replay-viewer')).toBeNull();
   });
+
+  it('shows a playable match with the play icon', async () => {
+    await replays.submit({ replay: recordedReplay(), hint: 40 });
+    const { page } = await render();
+
+    expect(
+      page.querySelector('mat-list-item mat-icon')?.textContent?.trim()
+    ).toBe('smart_display');
+  });
+
+  it.each<[string, Partial<StoredPlayback>]>([
+    [
+      'another ladder computer',
+      { replayVersion: LADDER_REPLAY_VERSION, ladder: LADDER_VERSION - 1 },
+    ],
+    ['the ghost format', { replayVersion: GHOST_REPLAY_VERSION }],
+  ])(
+    'shows a match of %s on the current balance as older, without loading it',
+    async (_, change) => {
+      await replays.submit({ replay: recordedReplay(), hint: 40 });
+      replays.change('l_fake0', change);
+      const load = jest.spyOn(replays, 'replayBytes');
+      const { fixture, page } = await render();
+
+      expect(
+        page.querySelector('mat-list-item mat-icon')?.textContent?.trim()
+      ).toBe('history');
+      button(page, 'Watch').click();
+      await settle(fixture);
+
+      expect(page.textContent).toContain('older version');
+      expect(load).not.toHaveBeenCalled();
+      expect(page.querySelector('feat-lazy-bac-game-replay-viewer')).toBeNull();
+    }
+  );
 
   it("tells the result from the player's seat, and what the board said", async () => {
     await replays.submit({ replay: recordedReplay(), hint: 40 });

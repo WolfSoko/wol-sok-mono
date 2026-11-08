@@ -10,5 +10,5 @@
     "src/testing/**",
     "jest.*.ts"
   ],
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "deploy/**/*.ts"]
 }

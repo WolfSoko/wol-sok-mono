@@ -14,13 +14,13 @@ import { intStateHash } from './int-reference';
  * step 7): a map with walls, every kind of zone, a sliding wall and a gate,
  * colonies chasing crosshairs, weapons fired and pellets eaten. Played
  * through the public `Simulation` interface, they check a simulation as the
- * game drives it - `GpuSimulation`'s own uniforms and pass order, not only
- * the shaders - against `IntSimulation`, its TypeScript twin:
+ * game drives it - `gpuSimulation`'s own uniforms and pass order, not only
+ * the shaders - against `intSimulation`, its TypeScript twin:
  *
  * - the on-device self-test plays {@link SELF_TEST_SCENARIO} on the GPU it
  *   is about to trust;
  * - the CI cross-check plays all of {@link SIM_SCENARIOS} on SwiftShader;
- * - the Jest specs keep `IntSimulation`'s hashes at the goldens.
+ * - the Jest specs keep `intSimulation`'s hashes at the goldens.
  *
  * The scenarios use no `Math.sin` and the like, whose last bit may differ
  * between engines, and draw the pellets from a fixed stream of numbers.
@@ -40,7 +40,7 @@ export interface SimScenario {
   effects(tick: number): readonly ActiveEffect[];
 }
 
-/** A simulation the scenarios can look into - see `GpuSimulation.readState`. */
+/** A simulation the scenarios can look into - see `GridWar.readState`. */
 export interface InspectableSimulation extends Simulation {
   readState(): Uint16Array | null;
 }
@@ -244,7 +244,7 @@ export function skirmish(
  * budget and the pellets. Its bar slides once, early, a shove that runs
  * the whole arena; then it stands still, and the small colonies leave
  * room enough for the cell passes to run on the active area (see
- * `GpuSimulation.updateArea`) for the last eight ticks.
+ * `GpuCellPasses.updateArea`) for the last eight ticks.
  */
 export const SELF_TEST_SCENARIO: SimScenario = skirmish(
   'self-test',

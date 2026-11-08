@@ -88,7 +88,7 @@ function inputs(tick: number, budget: number[]): IntTickInputs {
 }
 
 /**
- * Plays ticks the way `GpuSimulation.step` runs them: the frame's uniforms
+ * Plays ticks the way `GridWar.step` runs them: the frame's uniforms
  * from the report in hand, the passes, then asking for the last tick's
  * report. The read backs due are taken in at the start of a tick with a
  * lag, at its end without one. `lateBy` says how many ticks after it was

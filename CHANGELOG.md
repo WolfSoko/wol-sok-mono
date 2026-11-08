@@ -2,6 +2,68 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.12](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.11...v74.139.12) (2026-11-08)
+
+### Bug Fixes
+
+* **angular-examples-cdk:** read the workspace version through utils-version ([#2843](https://github.com/WolfSoko/wol-sok-mono/issues/2843)) ([ebf614b](https://github.com/WolfSoko/wol-sok-mono/commit/ebf614b1edf9450d3a281ab5a719b8ff7936e900)), closes [#2841](https://github.com/WolfSoko/wol-sok-mono/issues/2841)
+* **feat-lazy-bacteria-game:** write simulation and ladder back to old local replays once ([#2880](https://github.com/WolfSoko/wol-sok-mono/issues/2880)) ([4df08a9](https://github.com/WolfSoko/wol-sok-mono/commit/4df08a9462a4d4c68e87132eaa0f103e91056c89)), closes [#2857](https://github.com/WolfSoko/wol-sok-mono/issues/2857), references [#2857](https://github.com/WolfSoko/wol-sok-mono/issues/2857) [#2857](https://github.com/WolfSoko/wol-sok-mono/issues/2857)
+
+## [74.139.11](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.10...v74.139.11) (2026-11-08)
+
+### Testing
+
+* **feat-shared-bacteria-engine:** type-check the engine's specs and fix the boss cooldown test ([#2881](https://github.com/WolfSoko/wol-sok-mono/issues/2881)) ([9ee95d9](https://github.com/WolfSoko/wol-sok-mono/commit/9ee95d91ebca20aafee3941abc27b93d1bfa691a)), closes [#2803](https://github.com/WolfSoko/wol-sok-mono/issues/2803) [#2803](https://github.com/WolfSoko/wol-sok-mono/issues/2803)
+
+## [74.139.10](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.9...v74.139.10) (2026-11-08)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** retry the functions deploy once on failure ([#2879](https://github.com/WolfSoko/wol-sok-mono/issues/2879)) ([c614abc](https://github.com/WolfSoko/wol-sok-mono/commit/c614abcd57052e25b8dd463ef1ebdb79f8dabf2a)), closes [#2838](https://github.com/WolfSoko/wol-sok-mono/issues/2838), references [#2748](https://github.com/WolfSoko/wol-sok-mono/issues/2748) [#2830](https://github.com/WolfSoko/wol-sok-mono/issues/2830)
+* **feat-lazy-bacteria-game:** share the crosshair colour and boost ring between both painters ([#2878](https://github.com/WolfSoko/wol-sok-mono/issues/2878)) ([789b703](https://github.com/WolfSoko/wol-sok-mono/commit/789b703309ce2ec413f41be0c2506eb14398e52d)), closes [#2855](https://github.com/WolfSoko/wol-sok-mono/issues/2855)
+
+## [74.139.9](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.8...v74.139.9) (2026-11-08)
+
+### Chore
+
+* **deps:** update dependency @firebase/rules-unit-testing to v6 ([#2863](https://github.com/WolfSoko/wol-sok-mono/issues/2863)) ([e9a3ec0](https://github.com/WolfSoko/wol-sok-mono/commit/e9a3ec0f837128b456143509ae627b1630a55431))
+
+## [74.139.8](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.7...v74.139.8) (2026-11-08)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** one playback rule for stored replays (My matches, gallery) ([#2856](https://github.com/WolfSoko/wol-sok-mono/issues/2856)) ([bd695a3](https://github.com/WolfSoko/wol-sok-mono/commit/bd695a3b6377b7cf8c69331d6b14d8b24793a10f)), references [#2828](https://github.com/WolfSoko/wol-sok-mono/issues/2828)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** run the grid war over a CellPasses port ([#2862](https://github.com/WolfSoko/wol-sok-mono/issues/2862)) ([4ac5264](https://github.com/WolfSoko/wol-sok-mono/commit/4ac5264c097a83bb4bdf19272eba437d6db8b747)), closes [#2790](https://github.com/WolfSoko/wol-sok-mono/issues/2790)
+
+## [74.139.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.6...v74.139.7) (2026-11-07)
+
+### Testing
+
+* **feat-lazy-bacteria-game:** pin the crosshair scaling of both painters ([#2853](https://github.com/WolfSoko/wol-sok-mono/issues/2853)) ([27841f2](https://github.com/WolfSoko/wol-sok-mono/commit/27841f26d80611f0b147e28403128bed1bafa828)), closes [#2851](https://github.com/WolfSoko/wol-sok-mono/issues/2851)
+
+## [74.139.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.5...v74.139.6) (2026-11-07)
+
+### Chore
+
+* **nx:** make no-unused-vars an error workspace-wide ([#2854](https://github.com/WolfSoko/wol-sok-mono/issues/2854)) ([3959cf9](https://github.com/WolfSoko/wol-sok-mono/commit/3959cf9544dfd2f5ad799b12f661e85d416a317e)), closes [#2847](https://github.com/WolfSoko/wol-sok-mono/issues/2847)
+
+## [74.139.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.4...v74.139.5) (2026-11-07)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** remove unused imports and fail lint on new ones ([#2850](https://github.com/WolfSoko/wol-sok-mono/issues/2850)) ([7b7cc69](https://github.com/WolfSoko/wol-sok-mono/commit/7b7cc6910b932eb5551b8759744b8e2ba795be9f)), references [#2814](https://github.com/WolfSoko/wol-sok-mono/issues/2814) [#2814](https://github.com/WolfSoko/wol-sok-mono/issues/2814) [#2821](https://github.com/WolfSoko/wol-sok-mono/issues/2821)
+
+### Chore
+
+* **release:** publish ([f3491d7](https://github.com/WolfSoko/wol-sok-mono/commit/f3491d7ae9c250cfe1f404148b6b6c921c3e7ef3))
+
+### Testing
+
+* **feat-lazy-bacteria-game:** pin pushForeground's unit scaling ([#2844](https://github.com/WolfSoko/wol-sok-mono/issues/2844)) ([503aee4](https://github.com/WolfSoko/wol-sok-mono/commit/503aee440c9a14804db21c5eeda4cdea2a7303ee)), closes [#2833](https://github.com/WolfSoko/wol-sok-mono/issues/2833)
+
 ## [74.139.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.3...v74.139.4) (2026-11-07)
 
 ### Bug Fixes

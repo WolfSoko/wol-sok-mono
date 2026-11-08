@@ -1,0 +1,87 @@
+import {
+  ergebnisVon,
+  gegnerVon,
+  isBasketballDataError,
+  seiteVon,
+  sonderfallVon,
+  type Liga,
+  type Spiel,
+  type SpielPartei,
+  type SpielSonderfall,
+  type TeamId,
+  type TeamSaison,
+} from '@wolsok/feat-shared-basketball-data';
+
+/** One line of a Team's Spiele, as the page shows it. */
+export interface SpielZeile {
+  readonly id: number;
+  /** The day, e.g. `Sa., 29.08.2026`. */
+  readonly datum: string;
+  /** The tip-off, `HH:mm`; absent where the DBB has none. */
+  readonly uhrzeit?: string;
+  readonly liga: string;
+  /** Absent where the DBB lists the Team on neither side. */
+  readonly ort?: 'Heim' | 'Auswärts';
+  /** The opponent, or both sides where `ort` is absent. */
+  readonly gegner: string;
+  /** The points, home first (`78:47`), once there are any. */
+  readonly ergebnis?: string;
+  readonly markierung?: SpielSonderfall;
+}
+
+/** What the page says for an id that names no Team. */
+export const KEIN_TEAM = 'Dieses Team kennt der DBB nicht.';
+
+const DATUM = new Intl.DateTimeFormat('de-DE', {
+  weekday: 'short',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+/** Every Spiel of `saison`, across its Ligen, in the port's date order. */
+export function spielZeilen(saison: TeamSaison): readonly SpielZeile[] {
+  const ligen = new Map(saison.ligen.map((liga) => [liga.id, liga]));
+  return saison.spiele.map((spiel) =>
+    spielZeile(spiel, saison.team.id, ligen.get(spiel.ligaId))
+  );
+}
+
+/** What the page says when the Team's Spiele could not be read. */
+export function fehlerText(error: unknown): string {
+  if (isBasketballDataError(error, 'not-found')) {
+    return KEIN_TEAM;
+  }
+  if (isBasketballDataError(error, 'unexpected-shape')) {
+    return 'Die Daten des DBB ließen sich nicht lesen. Bitte später noch einmal versuchen.';
+  }
+  return 'Der DBB ist gerade nicht erreichbar. Bitte später noch einmal versuchen.';
+}
+
+function spielZeile(
+  spiel: Spiel,
+  teamId: TeamId,
+  liga: Liga | undefined
+): SpielZeile {
+  const seite = seiteVon(spiel, teamId);
+  const ergebnis = ergebnisVon(spiel);
+  return {
+    id: spiel.id,
+    datum: DATUM.format(new Date(`${spiel.datum}T00:00:00Z`)),
+    uhrzeit: spiel.uhrzeit,
+    liga: liga?.name ?? '',
+    ort: seite && ORT[seite],
+    gegner: seite
+      ? name(gegnerVon(spiel, seite))
+      : `${name(spiel.heim)} – ${name(spiel.gast)}`,
+    ergebnis: ergebnis && `${ergebnis.heim}:${ergebnis.gast}`,
+    markierung: sonderfallVon(spiel),
+  };
+}
+
+const ORT = { heim: 'Heim', gast: 'Auswärts' } as const;
+
+function name(partei: SpielPartei): string {
+  return partei.art === 'team' ? partei.team.name : partei.bezeichnung;
+}

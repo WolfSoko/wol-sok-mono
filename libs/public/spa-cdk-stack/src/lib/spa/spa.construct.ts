@@ -8,7 +8,6 @@ import {
   AllowedMethods,
   Distribution,
   HttpVersion,
-  IDistribution,
   ResponseHeadersPolicy,
   SecurityPolicyProtocol,
   ViewerProtocolPolicy,

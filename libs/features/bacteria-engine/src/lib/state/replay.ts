@@ -68,7 +68,7 @@ export const LADDER_REPLAY_VERSION = 4;
  * 0015, `gpu-int`): version 2's header with `simulation: 'gpu-int'`,
  * version 3's loadouts and weapons fired where evolution played a part,
  * and version 4's `ladder` for a match against the ladder's computer. It
- * plays again on `IntSimulation`, bit for bit as on the GPU that ran it, so
+ * plays again on `intSimulation`, bit for bit as on the GPU that ran it, so
  * it is stored and checked like version 2 - and it is the only format a
  * ranked attempt takes (the owner's ruleset policy for the boards).
  */
@@ -391,12 +391,26 @@ export type PlaybackRefusal =
   | 'gpu';
 
 /**
- * Why a replay does not play back, null when it does. The balance table
- * comes first: a replay of another one is `balance`, whatever else is
- * wrong with it.
+ * The fields of a header that decide whether it plays back. `simulation`
+ * is any text, so a stored record passes what it holds unchecked: one this
+ * client does not know is refused as `ruleset`.
  */
-export function playbackRefusal(replay: Replay): PlaybackRefusal | null {
-  const { header } = replay;
+export interface PlaybackHeader extends Pick<
+  ReplayHeader,
+  'version' | 'balanceVersion' | 'ladder'
+> {
+  simulation: string;
+}
+
+/**
+ * Why a replay does not play back, null when it does - decided by its
+ * header alone, so a stored record of it asks the same (see
+ * `storedPlaybackRefusal`). The balance table comes first: a replay of
+ * another one is `balance`, whatever else is wrong with it.
+ */
+export function playbackRefusal(
+  header: PlaybackHeader
+): PlaybackRefusal | null {
   if (header.balanceVersion !== BALANCE_VERSION) {
     return 'balance';
   }
@@ -404,7 +418,7 @@ export function playbackRefusal(replay: Replay): PlaybackRefusal | null {
   if (rules?.playable !== true) {
     return 'format';
   }
-  if (!rules.simulations.includes(header.simulation)) {
+  if (!rules.simulations.some((ran) => ran === header.simulation)) {
     return 'ruleset';
   }
   if (header.ladder !== undefined && header.ladder !== LADDER_VERSION) {
@@ -418,19 +432,19 @@ export function playbackRefusal(replay: Replay): PlaybackRefusal | null {
  * {@link playbackRefusal}.
  */
 export function canPlayBack(replay: Replay): replay is PlayableReplay {
-  return playbackRefusal(replay) === null;
+  return playbackRefusal(replay.header) === null;
 }
 
 /**
  * The engine a recorded match plays again on: its plan, every human
  * played back from the recording as they were, the bot and the neutral
  * colonies simulated again from the seed, on its ruleset's simulation -
- * `BacteriaSimulation` for `cpu`, `IntSimulation` for `gpu-int`. Null for
+ * `BacteriaSimulation` for `cpu`, `intSimulation` for `gpu-int`. Null for
  * a replay that would not play out as it was played ({@link canPlayBack}).
  * The caller disposes of it. A viewer with a trusted GPU hands in
  * `simulations` with the integer passes on its GPU, which play a `gpu-int`
  * replay alike (ADR 0015) and much faster - and fall back to
- * `IntSimulation` should the GPU fail to start.
+ * `intSimulation` should the GPU fail to start.
  */
 export function replayEngine(
   replay: Replay,
@@ -454,7 +468,7 @@ export interface ReplayRunOptions {
    * The integer passes on a trusted GPU - see {@link replayEngine}. A GPU
    * that fails to set up - the factory throws (the `SimulationProvider`
    * steps down), or the engine's own setup on it - is let go of: the run
-   * plays on `IntSimulation` from then on, as a live match falls back, and
+   * plays on `intSimulation` from then on, as a live match falls back, and
    * tells {@link onGpuFailure}.
    */
   gpuInt?: SimulationFactory;

@@ -3,7 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/utils/version/src",
   "projectType": "library",
-  "tags": ["utils"],
+  "tags": ["utils", "infra-shared"],
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals", "workspaceVersion"],
     "workspaceVersion": ["{workspaceRoot}/version.json"]

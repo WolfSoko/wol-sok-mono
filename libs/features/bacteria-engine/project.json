@@ -5,6 +5,7 @@
   "projectType": "library",
   "tags": ["feat-shared"],
   "targets": {
+    "typecheck-specs": {},
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/bacteria-engine"],

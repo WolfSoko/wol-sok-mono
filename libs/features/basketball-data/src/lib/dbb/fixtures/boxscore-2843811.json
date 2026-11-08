@@ -1,0 +1,1157 @@
+{
+  "timestamp": "2026-11-08T13:45:37+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "ligaData": {
+      "seasonId": 2026,
+      "seasonName": "2026/2027",
+      "actualMatchDay": {
+        "spieltag": 5,
+        "bezeichnung": "5. Spieltag"
+      },
+      "ligaId": 54379,
+      "liganame": "M14 Vorrunde Nord",
+      "liganr": 2040,
+      "skName": "Bezirksliga",
+      "skNameSmall": null,
+      "skEbeneId": 1,
+      "skEbeneName": "Bezirk",
+      "akName": "U14",
+      "geschlechtId": 1,
+      "geschlecht": "männlich",
+      "verbandId": 10,
+      "verbandName": "Schleswig-Holstein",
+      "bezirknr": null,
+      "bezirkName": null,
+      "kreisnr": null,
+      "kreisname": null,
+      "statisticType": 1,
+      "vorabliga": false,
+      "tableExists": true,
+      "crossTableExists": true
+    },
+    "matchId": 2843811,
+    "matchDay": 2,
+    "matchNo": 3,
+    "kickoffDate": "2026-09-19",
+    "kickoffTime": "16:00",
+    "homeTeam": {
+      "seasonTeamId": 450503,
+      "teamCompetitionId": 450503,
+      "teamPermanentId": 281627,
+      "teamname": "BBC Rendsburg",
+      "teamnameSmall": "BBCR",
+      "clubId": 3582,
+      "verzicht": false
+    },
+    "guestTeam": {
+      "seasonTeamId": 449090,
+      "teamCompetitionId": 449090,
+      "teamPermanentId": 314384,
+      "teamname": "TSV Kronshagen",
+      "teamnameSmall": "KRON",
+      "clubId": 2639,
+      "verzicht": false
+    },
+    "result": "78:76",
+    "ergebnisbestaetigt": true,
+    "statisticType": 1,
+    "verzicht": false,
+    "abgesagt": false,
+    "matchResult": {
+      "heimEndstand": 78,
+      "gastEndstand": 76,
+      "heimHalbzeitstand": 26,
+      "gastHalbzeitstand": 23,
+      "heimV1stand": 19,
+      "gastV1stand": 11,
+      "heimV3stand": 20,
+      "gastV3stand": 20,
+      "heimV4stand": 13,
+      "gastV4stand": 22,
+      "heimOt1stand": null,
+      "gastOt1stand": null,
+      "heimOt2stand": null,
+      "gastOt2stand": null
+    },
+    "matchInfo": null,
+    "matchBoxscore": {
+      "homePlayerStats": [
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 94843261,
+            "no": "30",
+            "person": {
+              "id": 92256481,
+              "vorname": "Delon",
+              "nachname": "Nesselbach",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 94085582,
+            "no": "12",
+            "person": {
+              "id": 91252076,
+              "vorname": "Morvo",
+              "nachname": "Ilmenstedter",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 94786325,
+            "no": "17",
+            "person": {
+              "id": 97636212,
+              "vorname": "Eikko",
+              "nachname": "Wacholderberg",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 93177547,
+            "no": "11",
+            "person": {
+              "id": 97951479,
+              "vorname": "Delon",
+              "nachname": "Dornhagel",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 91785853,
+            "no": "10",
+            "person": {
+              "id": 92003947,
+              "vorname": "Kesto",
+              "nachname": "Ahornwiese",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 90732785,
+            "no": "14",
+            "person": {
+              "id": 92125796,
+              "vorname": "Hilka",
+              "nachname": "Schlehenau",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 91955166,
+            "no": "13",
+            "person": {
+              "id": 91730351,
+              "vorname": "Lumi",
+              "nachname": "Schlehenau",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 94230615,
+            "no": "4",
+            "person": {
+              "id": 96615735,
+              "vorname": "Catu",
+              "nachname": "Eschenbrink",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 97242855,
+            "no": "16",
+            "person": {
+              "id": 91932529,
+              "vorname": "Kesto",
+              "nachname": "Ginsterau",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 97794289,
+            "no": "8",
+            "person": {
+              "id": 94695560,
+              "vorname": "Morvo",
+              "nachname": "Weidenbrink",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 98067071,
+            "no": "5",
+            "person": {
+              "id": 91033086,
+              "vorname": "Gorun",
+              "nachname": "Ahornwiese",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        }
+      ],
+      "homeTeamStats": null,
+      "homeTotalStats": {
+        "esz": 0,
+        "pts": 0,
+        "twoPoints": {
+          "made": 0,
+          "attempted": 0,
+          "quota": null
+        },
+        "threePoints": {
+          "made": 0,
+          "attempted": 0,
+          "quota": null
+        },
+        "wt": {
+          "made": 0,
+          "attempted": 0,
+          "quota": null
+        },
+        "onePoints": {
+          "made": 0,
+          "attempted": 0,
+          "quota": null
+        },
+        "ro": 0,
+        "rd": 0,
+        "rt": 0,
+        "as": 0,
+        "st": 0,
+        "to": 0,
+        "bs": 0,
+        "fouls": 0,
+        "eff": 0,
+        "player": null,
+        "isf": null
+      },
+      "guestPlayerStats": [
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 91281520,
+            "no": "33",
+            "person": {
+              "id": 97901327,
+              "vorname": "Catu",
+              "nachname": "Holunderkamp",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 91574099,
+            "no": "40",
+            "person": {
+              "id": 94359018,
+              "vorname": "Rilla",
+              "nachname": "Farnweiler",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 94462194,
+            "no": "41",
+            "person": {
+              "id": 91204569,
+              "vorname": "Savo",
+              "nachname": "Quittenhof",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 98572670,
+            "no": "17",
+            "person": {
+              "id": 93729844,
+              "vorname": "Morvo",
+              "nachname": "Nesselbach",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 90059139,
+            "no": "38",
+            "person": {
+              "id": 95251941,
+              "vorname": "Orvin",
+              "nachname": "Kastanienbühl",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 97836758,
+            "no": "39",
+            "person": {
+              "id": 97673432,
+              "vorname": "Nelka",
+              "nachname": "Eschenbrink",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 91570366,
+            "no": "31",
+            "person": {
+              "id": 90155407,
+              "vorname": "Hilka",
+              "nachname": "Tannenrieder",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 90347985,
+            "no": "34",
+            "person": {
+              "id": 95211703,
+              "vorname": "Catu",
+              "nachname": "Quittenhof",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 91871948,
+            "no": "30",
+            "person": {
+              "id": 97256075,
+              "vorname": "Delon",
+              "nachname": "Wacholderberg",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 90649567,
+            "no": "37",
+            "person": {
+              "id": 91287145,
+              "vorname": "Delon",
+              "nachname": "Lindenbrücker",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        },
+        {
+          "esz": 0,
+          "pts": 0,
+          "twoPoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "threePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "wt": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "onePoints": {
+            "made": 0,
+            "attempted": 0,
+            "quota": null
+          },
+          "ro": 0,
+          "rd": 0,
+          "rt": 0,
+          "as": 0,
+          "st": 0,
+          "to": 0,
+          "bs": 0,
+          "fouls": 0,
+          "eff": 0,
+          "player": {
+            "playerId": 90791586,
+            "no": "32",
+            "person": {
+              "id": 94331104,
+              "vorname": "Jarna",
+              "nachname": "Zirbelstein",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "isf": null
+        }
+      ],
+      "guestTeamStats": null,
+      "guestTotalStats": {
+        "esz": 0,
+        "pts": 0,
+        "twoPoints": {
+          "made": 0,
+          "attempted": 0,
+          "quota": null
+        },
+        "threePoints": {
+          "made": 0,
+          "attempted": 0,
+          "quota": null
+        },
+        "wt": {
+          "made": 0,
+          "attempted": 0,
+          "quota": null
+        },
+        "onePoints": {
+          "made": 0,
+          "attempted": 0,
+          "quota": null
+        },
+        "ro": 0,
+        "rd": 0,
+        "rt": 0,
+        "as": 0,
+        "st": 0,
+        "to": 0,
+        "bs": 0,
+        "fouls": 0,
+        "eff": 0,
+        "player": null,
+        "isf": null
+      }
+    },
+    "playByPlay": null,
+    "hasPlayByPlay": false
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

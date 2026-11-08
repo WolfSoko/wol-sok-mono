@@ -1,56 +1,51 @@
-import type { ActiveEffect, EvolvedTraits } from './evolution';
-import { weaponOf } from './evolution';
-import { toughnessOf, WEAPON_CODE, WeaponEffects } from './weapon-effects';
-import { mapZones, stampZones, WALL_BIT, ZONE_SHIFT } from './zones';
+import { ArenaFixtures } from '../arena-fixtures';
+import { escapeReach } from '../arena-size';
+import type { ActiveEffect, EvolvedTraits } from '../evolution';
+import { weaponOf } from '../evolution';
+import { toughnessOf, WEAPON_CODE } from '../weapon-effects';
+import { mapZones, stampZones, WALL_BIT, ZONE_SHIFT } from '../zones';
 import {
   attackOf,
   ColonySpawn,
   colonyIntent,
   divideChanceOf,
   maxSteps,
-  noEvents,
   Nutrient,
   paceSteps,
   StepEvents,
-} from './bacteria-simulation';
-import { colonyCapacity, GameBalance, PLAIN_TRAITS } from './game-balance';
-import { CellBounds, clamp, Point } from './geometry';
-import { compareDynamicWalls, DynamicWall, GameMap, stampRect } from './maps';
-import { getMap } from './game-maps';
-import { NutrientPellets } from './nutrient-pellets';
-import { createBacteriaBlob, isBoosted, Player } from './player.model';
+} from '../bacteria-simulation';
+import { colonyCapacity, GameBalance, PLAIN_TRAITS } from '../game-balance';
+import { CellBounds, clamp, Point } from '../geometry';
+import { DynamicWall, GameMap, stampRect } from '../maps';
+import { createBacteriaBlob, isBoosted, Player } from '../player.model';
 import {
   BlockCounts,
   ColonyLayer,
   ColonySummary,
   Ruleset,
   Simulation,
-} from './simulation';
+} from '../simulation';
 import {
   ENERGY_SCALE,
   MAX_EFFECTS,
   MAX_GPU_COLONIES,
   MAX_PELLETS,
-} from './grid-format';
+} from '../grid-format';
 import {
+  decodeReport,
   nearestEnemyBlock,
   Report,
   ReportLayout,
   reportLayout,
-} from './simulation-report';
-import {
-  createIntFrameUniforms,
-  IntFrameUniforms,
-} from './gpu-int/int-frame-uniforms';
-import {
-  createIntEffectUniforms,
-  IntEffectUniforms,
-  setIntEffect,
-} from './gpu-int/int-effects';
-import {
-  DETERMINISTIC_REPORT_LAG,
-  divideBudgetOf,
-} from './gpu-int/int-readback';
+} from '../simulation-report';
+import { createIntEffectUniforms, setIntEffect } from '../gpu-int/int-effects';
+import { divideBudgetOf } from '../gpu-int/int-readback';
+import type {
+  CellPasses,
+  GridFrame,
+  GridTick,
+  ReportSink,
+} from './cell-passes';
 
 /**
  * The most cells a colony travels in one frame - each one is a claim and an
@@ -63,113 +58,102 @@ export const MAX_MOVE_STEPS = 12;
 /** Read backs in flight at once - the GPU is a step or two behind. */
 export const READBACK_SLOTS = 3;
 
-/** The uniform arrays of a frame, filled in place. */
-export interface FrameUniforms {
-  steps: Int32Array;
-  targets: Float32Array;
-  aggression: Float32Array;
-  attack: Float32Array;
-  divideChance: Float32Array;
-  divideBudget: Float32Array;
-  pellets: Float32Array;
-  toughness: Float32Array;
-  /**
-   * Per effect: its centre, its radius squared and 1 for a hostile one -
-   * acting on every colony but its owner's - else 0.
-   */
-  effects: Float32Array;
-  /** Per effect: the weapon's code and the owner's slot + 1. */
-  effectKinds: Int32Array;
-}
-
-/** How a grid simulation runs - see `GpuSimulationOptions`. */
-export interface GridSimulationOptions {
-  /** Runs the war as the integer passes of ADR 0015. */
-  deterministic?: boolean;
-  /** The match's seed - see `MatchPlan.seed`. */
-  matchSeed?: number;
-}
-
 /**
  * The colony war on the arena grid, as far as it is run on the CPU: the
  * walls, the zones, the pellets and the weapons' effects, the uniforms each
  * tick hands the cell passes, and what the CPU makes of a report. The cell
- * passes and the report themselves are the subclass's - `GpuSimulation`
- * runs them as WebGL2 shaders, `IntSimulation` (ADR 0015's CPU fallback)
- * as their TypeScript reference - so both read the same inputs.
+ * passes and the report themselves are a {@link CellPasses} adapter's - the
+ * game's GPU passes, or their TypeScript reference (`IntReferencePasses`,
+ * ADR 0015's CPU fallback) - so every adapter reads the same inputs.
  */
-export abstract class GridSimulation implements Simulation {
-  public abstract readonly kind: 'gpu' | 'int';
-  protected width = 0;
-  protected height = 0;
-  protected layout: ReportLayout;
-  protected map: GameMap = getMap('corridors');
-  protected elapsedSec = 0;
+export class GridWar implements Simulation {
+  public readonly kind: 'gpu' | 'int';
+  /** `gpu-int` on passes with a fixed report lag; the float ones have none. */
+  public readonly ruleset: Ruleset | null;
+  private width = 0;
+  private height = 0;
+  private layout: ReportLayout;
+  private elapsedSec = 0;
   /** Steps run in this match. */
-  protected steps = 0;
-  protected spawns: ColonySpawn[] = [];
-  protected dynamicWalls: DynamicWall[] = [];
-  protected mask = new Uint8Array(0);
-  protected staticMask = new Uint8Array(0);
-  protected maskDirty = true;
+  private steps = 0;
+  private spawns: ColonySpawn[] = [];
+  private mask = new Uint8Array(0);
+  private staticMask = new Uint8Array(0);
+  /** True while the passes hold an older mask than `mask`. */
+  private maskDirty = true;
   /** True on a map with a zone to hold, whose bacteria the report counts. */
-  protected hasHill = false;
-  protected escapePending = false;
-  protected readonly pellets: NutrientPellets;
-  /** The weapons' effects - none at all in a plain match. */
-  protected readonly weaponEffects = new WeaponEffects();
+  private hasHill = false;
+  /** True from a wall moving until the next tick's escape passes ran. */
+  private escapePending = false;
+  private readonly arena: ArenaFixtures;
   /** The part of a step each colony's flagella have made up - see `paceSteps`. */
-  protected readonly paces = new Float64Array(MAX_GPU_COLONIES);
-  protected events: StepEvents = noEvents();
-  protected report: Report | null = null;
+  private readonly paces = new Float64Array(MAX_GPU_COLONIES);
+  private report: Report | null = null;
   /** The step the report in hand was rendered in. */
-  protected reportStep = 0;
-  protected colonySummaries: ColonySummary[] = [];
+  private reportStep = 0;
+  private colonySummaries: ColonySummary[] = [];
   /** Totals of the last report, to turn them into this frame's events. */
-  protected reported = { captured: 0, lost: 0, poisoned: 0 };
+  private reported = { captured: 0, lost: 0, poisoned: 0 };
   /** Seconds the pellets have not been drained for, waiting on a report. */
-  protected undrainedSec = 0;
+  private undrainedSec = 0;
   /** The most cells each colony gets per frame, boosted - for its box. */
-  protected readonly reach = new Int32Array(MAX_GPU_COLONIES).fill(
+  private readonly reach = new Int32Array(MAX_GPU_COLONIES).fill(
     MAX_MOVE_STEPS
   );
-  protected readonly uniforms: FrameUniforms = {
-    steps: new Int32Array(MAX_GPU_COLONIES),
-    targets: new Float32Array(MAX_GPU_COLONIES * 2),
-    aggression: new Float32Array(MAX_GPU_COLONIES),
-    attack: new Float32Array(MAX_GPU_COLONIES),
-    divideChance: new Float32Array(MAX_GPU_COLONIES),
-    divideBudget: new Float32Array(MAX_GPU_COLONIES),
-    pellets: new Float32Array(MAX_PELLETS * 3),
-    toughness: new Float32Array(MAX_GPU_COLONIES),
-    effects: new Float32Array(MAX_EFFECTS * 4),
-    effectKinds: new Int32Array(MAX_EFFECTS * 2),
+  /** This tick's frame, filled in place - see `fillFrame`. */
+  private readonly frame: GridFrame = {
+    deltaTimeSec: 0,
+    uniforms: {
+      steps: new Int32Array(MAX_GPU_COLONIES),
+      targets: new Float32Array(MAX_GPU_COLONIES * 2),
+      aggression: new Float32Array(MAX_GPU_COLONIES),
+      attack: new Float32Array(MAX_GPU_COLONIES),
+      divideChance: new Float32Array(MAX_GPU_COLONIES),
+      divideBudget: new Float32Array(MAX_GPU_COLONIES),
+      pellets: new Float32Array(MAX_PELLETS * 3),
+      toughness: new Float32Array(MAX_GPU_COLONIES),
+      effects: new Float32Array(MAX_EFFECTS * 4),
+      effectKinds: new Int32Array(MAX_EFFECTS * 2),
+    },
+    intEffects: createIntEffectUniforms(),
+    pelletCount: 0,
+    effectCount: 0,
   };
-  /** The integer passes' share of the frame uniforms - see `deterministic`. */
-  protected readonly intUniforms: IntFrameUniforms = createIntFrameUniforms();
-  /** The integer passes' circles of the weapons' effects. */
-  protected readonly intEffects: IntEffectUniforms = createIntEffectUniforms();
-  protected readonly deterministic: boolean;
-  public readonly ruleset: Ruleset | null;
-  protected readonly matchSeed: number;
+  /** This tick's inputs of the passes, filled in place - see `step`. */
+  private readonly tick: GridTick = {
+    step: 0,
+    mostSteps: 0,
+    escapeSteps: 0,
+    colonies: 0,
+    report: null,
+    reportStep: 0,
+    generation: [],
+  };
+  /** `boundsOf` for the passes, made once rather than every frame. */
+  private readonly boundsOfSlot = (slot: number): CellBounds | null =>
+    this.boundsOf(slot);
+  /** Where the passes hand their reports - see `takeReport`. */
+  private readonly sink: ReportSink = {
+    take: (data, step, generation) => {
+      this.reportStep = step;
+      this.takeReport(
+        decodeReport(data, this.layout, this.spawns.length),
+        generation
+      );
+    },
+  };
 
-  protected constructor(
-    protected readonly balance: GameBalance,
-    random: () => number,
-    options: GridSimulationOptions
+  public constructor(
+    private readonly passes: CellPasses,
+    private readonly balance: GameBalance,
+    random: () => number
   ) {
-    this.deterministic = options.deterministic ?? false;
-    this.ruleset = this.deterministic ? 'gpu-int' : null;
-    this.matchSeed = options.matchSeed ?? 0;
-    this.pellets = new NutrientPellets(balance, random);
+    this.kind = passes.kind;
+    this.ruleset = passes.reportLag === null ? null : 'gpu-int';
+    this.arena = new ArenaFixtures(balance, random);
     this.layout = reportLayout(0, 0, balance.influenceCellSize);
+    passes.attach({ restart: () => this.restart() });
   }
-
-  public abstract colonyLayers(
-    boosts: ReadonlyMap<number, Point>
-  ): ColonyLayer[];
-
-  public abstract dispose(): void;
 
   public resize(width: number, height: number): void {
     if (this.width === width && this.height === height) {
@@ -178,10 +162,8 @@ export abstract class GridSimulation implements Simulation {
     this.width = width;
     this.height = height;
     this.layout = reportLayout(width, height, this.balance.influenceCellSize);
-    this.allocate();
-    if (this.spawns.length > 0) {
-      this.init(this.spawns);
-    }
+    this.passes.allocate({ width, height, layout: this.layout });
+    this.restart();
   }
 
   public init(spawns: ColonySpawn[]): void {
@@ -193,82 +175,61 @@ export abstract class GridSimulation implements Simulation {
     this.spawns = spawns;
     this.elapsedSec = 0;
     this.steps = 0;
-    this.events = noEvents();
+    this.arena.resetEvents();
     this.report = null;
     this.reported = { captured: 0, lost: 0, poisoned: 0 };
     this.undrainedSec = 0;
-    this.weaponEffects.clear();
+    this.arena.weaponEffects.clear();
     this.paces.fill(0);
-    this.startMatch();
+    this.passes.startMatch();
     this.buildMask();
-    this.pellets.reset(this.width, this.height, this.isOpenCell);
+    this.arena.pellets.reset(this.width, this.height, this.isOpenCell);
     this.loadSpawns(spawns);
   }
 
   public step(players: Player[], deltaTimeSec: number): void {
-    this.events = noEvents();
-    if (!this.ready() || this.spawns.length === 0 || deltaTimeSec <= 0) {
+    this.arena.resetEvents();
+    if (!this.passes.ready() || this.spawns.length === 0 || deltaTimeSec <= 0) {
       return;
     }
     this.elapsedSec += deltaTimeSec;
     this.steps++;
-    // The deterministic simulation takes the reports due before anything of
-    // the tick reads them - the pellets, the bots and the divide budget - so
-    // the one in hand is exactly `DETERMINISTIC_REPORT_LAG` ticks old.
-    if (this.deterministic) {
-      this.collectReports();
+    if (this.passes.reportLag !== null) {
+      this.takeDueReports();
     }
     this.advanceDynamicWalls();
     if (this.maskDirty) {
-      this.loadMask();
+      this.passes.loadMask(this.mask, this.hasHill);
+      this.maskDirty = false;
     }
     this.tickPellets(deltaTimeSec);
-    const mostSteps = this.fillFrameUniforms(
-      players,
-      deltaTimeSec,
-      this.weaponEffects.begin()
-    );
-    this.runTick(mostSteps, deltaTimeSec);
-    this.weaponEffects.end(deltaTimeSec);
+    const effects = this.arena.weaponEffects.begin();
+    this.passes.uploadFrame(this.fillFrame(players, deltaTimeSec, effects));
+    this.passes.runTick(this.fillTick(), this.sink);
+    this.escapePending = false;
+    this.arena.weaponEffects.end(deltaTimeSec);
   }
 
-  /** True once the cell passes can run - the GPU's resources are set up. */
-  protected abstract ready(): boolean;
-
-  /** Sets up what the cell passes need for an arena of the current size. */
-  protected abstract allocate(): void;
-
-  /** Starts a match over - what the subclass keeps of the last one goes. */
-  protected abstract startMatch(): void;
-
-  /** Hands the passes the mask, after a wall moved or a match started. */
-  protected abstract loadMask(): void;
-
-  /** Makes `state` the state the next tick starts from. */
-  protected abstract loadState(state: Uint16Array): void;
+  public colonyLayers(boosts: ReadonlyMap<number, Point>): ColonyLayer[] {
+    return this.passes.colonyLayers(this.spawns, boosts, this.boundsOfSlot);
+  }
 
   /**
-   * Hands this frame's uniforms - filled in place - to the passes: the
-   * integer ones when `deterministic`, the float ones else.
+   * The cell state after the last tick - for the self-test and the
+   * cross-check, never during a match: on the GPU it waits for the GPU.
+   * Null before the passes are set up.
    */
-  protected abstract uploadFrame(
-    deltaTimeSec: number,
-    pelletCount: number,
-    effectCount: number
-  ): void;
+  public readState(): Uint16Array | null {
+    return this.passes.readState();
+  }
 
-  /**
-   * Takes in the reports due: in a deterministic match every one
-   * `DETERMINISTIC_REPORT_LAG` ticks old, at the start of a tick.
-   */
-  protected abstract collectReports(): void;
+  public takeGpuWaitMs(): number {
+    return this.passes.takeGpuWaitMs?.() ?? 0;
+  }
 
-  /**
-   * Runs the tick's cell passes and renders its report, from the uniforms
-   * `uploadFrame` was handed; a match that is not deterministic takes in
-   * its reports here too.
-   */
-  protected abstract runTick(mostSteps: number, deltaTimeSec: number): void;
+  public dispose(): void {
+    this.passes.dispose();
+  }
 
   /** The state slot of a player's colony, null when it has none. */
   public slotOf(playerId: number): number | null {
@@ -278,27 +239,27 @@ export abstract class GridSimulation implements Simulation {
 
   /** Takes effect with the next `init`, which lays out walls and pellets. */
   public setMap(map: GameMap): void {
-    this.map = map;
+    this.arena.setMap(map);
   }
 
   public getNutrients(): Nutrient[] {
-    return this.pellets.nutrients;
+    return this.arena.pellets.nutrients;
   }
 
   public getActiveEffects(): readonly ActiveEffect[] {
-    return this.weaponEffects.active;
+    return this.arena.weaponEffects.active;
   }
 
   public addEffect(effect: ActiveEffect): void {
-    this.weaponEffects.add(effect);
+    this.arena.weaponEffects.add(effect);
   }
 
   public getDynamicWalls(): readonly DynamicWall[] {
-    return this.dynamicWalls;
+    return this.arena.dynamicWalls;
   }
 
   public getEvents(): StepEvents {
-    return this.events;
+    return this.arena.events;
   }
 
   public summaries(): readonly ColonySummary[] {
@@ -328,10 +289,45 @@ export abstract class GridSimulation implements Simulation {
   }
 
   /**
+   * After the passes were set up afresh: they hold no mask, and a match
+   * under way starts over.
+   */
+  private restart(): void {
+    this.maskDirty = true;
+    if (this.spawns.length > 0) {
+      this.init(this.spawns);
+    }
+  }
+
+  /**
+   * The deterministic war takes the reports due before anything of the
+   * tick reads them - the pellets, the bots and the divide budget - so the
+   * one in hand is exactly `DETERMINISTIC_REPORT_LAG` ticks old.
+   */
+  private takeDueReports(): void {
+    this.passes.collectReports(this.steps, this.sink);
+  }
+
+  /** What this tick's passes read of the war besides the frame. */
+  private fillTick(): GridTick {
+    const tick = this.tick;
+    tick.step = this.steps;
+    tick.mostSteps = Math.max(0, ...this.frame.uniforms.steps);
+    tick.escapeSteps = this.escapePending
+      ? escapeReach(this.width, this.arena.map.size)
+      : 0;
+    tick.colonies = this.spawns.length;
+    tick.report = this.report;
+    tick.reportStep = this.reportStep;
+    tick.generation = this.arena.pellets.generations;
+    return tick;
+  }
+
+  /**
    * The box around a colony, for the painter to scissor to. The report is a
    * few steps old, so the box is grown by how far the colony gets in them.
    */
-  protected boundsOf(slot: number): CellBounds | null {
+  private boundsOf(slot: number): CellBounds | null {
     const bounds =
       this.report == null
         ? this.spawnBounds(slot)
@@ -349,13 +345,15 @@ export abstract class GridSimulation implements Simulation {
   }
 
   /**
-   * Puts the effects that act on cells this step into the uniform arrays -
-   * not one that reaches the whole colony (the shield), which acts through
-   * the toughness instead. Returns how many there are; more than the
-   * shaders take are left out, the oldest first in.
+   * Puts the effects that act on cells this step into the frame - as
+   * circles for the float passes and for the integer ones; each reads only
+   * its own. Not one that reaches the whole colony (the shield), which acts
+   * through the toughness instead. Returns how many there are; more than
+   * the passes take are left out, the oldest first in.
    */
-  protected fillEffectUniforms(effects: readonly ActiveEffect[]): number {
-    const u = this.uniforms;
+  private fillEffects(effects: readonly ActiveEffect[]): number {
+    const u = this.frame.uniforms;
+    const intEffects = this.frame.intEffects;
     let count = 0;
     for (const effect of effects) {
       const slot = this.slotOf(effect.owner);
@@ -363,32 +361,28 @@ export abstract class GridSimulation implements Simulation {
       if (count >= MAX_EFFECTS || slot === null || weapon.reach === 'colony') {
         continue;
       }
-      // Each mode fills only the circles its passes read.
-      if (this.deterministic) {
-        setIntEffect(this.intEffects, count, {
-          x: effect.x,
-          y: effect.y,
-          radius: effect.radius,
-          hostile: weapon.hostile,
-          kind: WEAPON_CODE[effect.weapon],
-          owner: slot + 1,
-        });
-      } else {
-        u.effects[count * 4] = effect.x;
-        u.effects[count * 4 + 1] = effect.y;
-        u.effects[count * 4 + 2] = effect.radius * effect.radius;
-        u.effects[count * 4 + 3] = weapon.hostile ? 1 : 0;
-        u.effectKinds[count * 2] = WEAPON_CODE[effect.weapon];
-        u.effectKinds[count * 2 + 1] = slot + 1;
-      }
+      setIntEffect(intEffects, count, {
+        x: effect.x,
+        y: effect.y,
+        radius: effect.radius,
+        hostile: weapon.hostile,
+        kind: WEAPON_CODE[effect.weapon],
+        owner: slot + 1,
+      });
+      u.effects[count * 4] = effect.x;
+      u.effects[count * 4 + 1] = effect.y;
+      u.effects[count * 4 + 2] = effect.radius * effect.radius;
+      u.effects[count * 4 + 3] = weapon.hostile ? 1 : 0;
+      u.effectKinds[count * 2] = WEAPON_CODE[effect.weapon];
+      u.effectKinds[count * 2 + 1] = slot + 1;
       count++;
     }
-    this.intEffects.count = count;
+    intEffects.count = count;
     return count;
   }
 
   /** The most a bacterium of a colony may divide with - see `divideBudgetOf`. */
-  protected divideBudget(slot: number, capacity: number): number {
+  private divideBudget(slot: number, capacity: number): number {
     const count = this.colonySummaries[slot]?.count ?? 0;
     return divideBudgetOf(capacity, count, this.stepsBehind());
   }
@@ -396,19 +390,20 @@ export abstract class GridSimulation implements Simulation {
   /**
    * How many steps the report in hand lags behind the war - at least the
    * read backs in flight. A display frame may run several steps, and the GPU
-   * finishes no read back between the steps of one frame. The deterministic
-   * simulation's lag is fixed.
+   * finishes no read back between the steps of one frame. Passes with a
+   * fixed lag report exactly that late.
    */
-  protected stepsBehind(): number {
-    if (this.deterministic) {
-      return DETERMINISTIC_REPORT_LAG;
+  private stepsBehind(): number {
+    const lag = this.passes.reportLag;
+    if (lag !== null) {
+      return lag;
     }
     const behind = this.report == null ? 0 : this.steps - this.reportStep;
     return Math.max(READBACK_SLOTS, behind);
   }
 
   /** Turns a report into the scoreboard, the frame's events and the eaters. */
-  protected takeReport(report: Report, generation: readonly number[]): void {
+  private takeReport(report: Report, generation: readonly number[]): void {
     this.report = report;
     const before = this.colonySummaries;
     this.colonySummaries = this.spawns.map((spawn, index) => {
@@ -427,30 +422,32 @@ export abstract class GridSimulation implements Simulation {
       };
     });
 
+    const events = this.arena.events;
     const captured = report.colonies.reduce((sum, c) => sum + c.captured, 0);
     const lost = report.colonies.reduce((sum, c) => sum + c.lost, 0);
     const { poisoned } = report;
     const newCaptures = captured - this.reported.captured;
     const newLosses = lost - this.reported.lost;
     const newPoisoned = poisoned - this.reported.poisoned;
-    this.events.captures += newCaptures;
+    events.captures += newCaptures;
     // A loss nobody captured is a bacterium a wall crushed - or one an
     // antibiotic killed, which makes no noise.
-    this.events.crushed += Math.max(0, newLosses - newCaptures - newPoisoned);
+    events.crushed += Math.max(0, newLosses - newCaptures - newPoisoned);
     this.reported = { captured, lost, poisoned };
 
     // The eaters drain the pellets for all the time since the last report,
     // however many frames that was.
+    const pellets = this.arena.pellets;
     const gain = this.balance.nutrientDrainPerSec * this.undrainedSec;
     this.undrainedSec = 0;
-    this.pellets.nutrients.forEach((_, n) => {
-      if (generation[n] !== this.pellets.generations[n]) {
+    pellets.nutrients.forEach((_, n) => {
+      if (generation[n] !== pellets.generations[n]) {
         // The pellet moved since this report was taken.
         return;
       }
-      const eaten = this.pellets.drain(n, report.eaters[n] ?? [], gain);
+      const eaten = pellets.drain(n, report.eaters[n] ?? [], gain);
       if (eaten !== null) {
-        this.events.pelletsEaten++;
+        events.pelletsEaten++;
         if (eaten.by !== null) {
           this.colonySummaries[eaten.by].pellets++;
         }
@@ -459,65 +456,50 @@ export abstract class GridSimulation implements Simulation {
   }
 
   /** Counts eaten pellets' respawn delays down and brings them back. */
-  protected tickPellets(deltaTimeSec: number): void {
+  private tickPellets(deltaTimeSec: number): void {
+    const pellets = this.arena.pellets;
     this.undrainedSec += deltaTimeSec;
-    this.pellets.nutrients.forEach((nutrient, n) => {
+    pellets.nutrients.forEach((nutrient, n) => {
       if (nutrient.amount <= 0) {
-        this.pellets.tickEmpty(n, deltaTimeSec);
+        pellets.tickEmpty(n, deltaTimeSec);
       }
     });
   }
 
-  protected readonly isOpenCell = (x: number, y: number): boolean =>
+  private readonly isOpenCell = (x: number, y: number): boolean =>
     (this.mask[y * this.width + x] & WALL_BIT) === 0;
 
-  /** Moves the gates and sliding walls on and notes what they did. */
-  protected advanceDynamicWalls(): void {
-    if (this.map.createDynamicWalls == null) {
-      return;
-    }
-    const previous = this.dynamicWalls;
-    this.dynamicWalls = this.map.createDynamicWalls(
-      this.width,
-      this.height,
-      this.elapsedSec
-    );
-    const { changed, closed, warned } = compareDynamicWalls(
-      previous,
-      this.dynamicWalls
-    );
-    this.events.gatesClosed += closed;
-    this.events.gatesWarned += warned;
-    if (changed) {
+  /** Moves the gates and sliding walls on; the next passes escape them. */
+  private advanceDynamicWalls(): void {
+    if (this.arena.advanceWalls(this.width, this.height, this.elapsedSec)) {
       this.stampMask();
       this.escapePending = true;
     }
   }
 
   /** The static walls, and the moving ones as of the match time. */
-  protected buildMask(): void {
+  private buildMask(): void {
+    const map = this.arena.map;
     this.staticMask = new Uint8Array(this.width * this.height);
     // The zones above the wall bit - a wall covers the zone under it.
-    const zones = mapZones(this.map, this.width, this.height);
+    const zones = mapZones(map, this.width, this.height);
     stampZones(this.staticMask, this.width, this.height, zones, ZONE_SHIFT);
     this.hasHill = zones.some(({ kind }) => kind === 'hill');
-    for (const wall of this.map.createWalls(this.width, this.height)) {
+    for (const wall of map.createWalls(this.width, this.height)) {
       stampRect(this.staticMask, this.width, this.height, wall, WALL_BIT);
     }
-    this.dynamicWalls =
-      this.map.createDynamicWalls?.(this.width, this.height, this.elapsedSec) ??
-      [];
+    this.arena.startWalls(this.width, this.height, this.elapsedSec);
     this.stampMask();
   }
 
-  protected stampMask(): void {
+  private stampMask(): void {
     // A sliding wall changes it every few frames - a fresh copy each time
     // would keep the garbage collector busy, and its pauses show.
     if (this.mask.length !== this.staticMask.length) {
       this.mask = new Uint8Array(this.staticMask.length);
     }
     this.mask.set(this.staticMask);
-    for (const wall of this.dynamicWalls) {
+    for (const wall of this.arena.dynamicWalls) {
       if (wall.solid) {
         stampRect(this.mask, this.width, this.height, wall, WALL_BIT);
       }
@@ -526,7 +508,7 @@ export abstract class GridSimulation implements Simulation {
   }
 
   /** The box around a starting blob, before the first report is in. */
-  protected spawnBounds(slot: number): CellBounds | null {
+  private spawnBounds(slot: number): CellBounds | null {
     const spawn = this.spawns[slot];
     if (spawn == null) {
       return null;
@@ -540,20 +522,15 @@ export abstract class GridSimulation implements Simulation {
     };
   }
 
-  /**
-   * Fills the uniform arrays of this frame and hands them to the passes that
-   * read them - see `uploadFrame`. Returns the most cells a colony travels.
-   */
-  protected fillFrameUniforms(
+  /** Fills this tick's frame in place - see `GridFrame`. */
+  private fillFrame(
     players: Player[],
     deltaTimeSec: number,
     effects: readonly ActiveEffect[]
-  ): number {
+  ): GridFrame {
     const b = this.balance;
-    const u = this.uniforms;
-    if (!this.ready()) {
-      return 0;
-    }
+    const frame = this.frame;
+    const u = frame.uniforms;
     const capacity = colonyCapacity(b, this.spawns.length);
     u.steps.fill(0);
     u.targets.fill(NaN);
@@ -580,24 +557,23 @@ export abstract class GridSimulation implements Simulation {
         maxSteps(target, b, deltaTimeSec, traits)
       );
     });
-    const effectCount = this.fillEffectUniforms(effects);
+    frame.effectCount = this.fillEffects(effects);
 
-    const nutrients = this.pellets.nutrients;
+    const nutrients = this.arena.pellets.nutrients;
     u.pellets.fill(0);
     nutrients.slice(0, MAX_PELLETS).forEach((pellet, n) => {
       u.pellets[n * 3] = pellet.x;
       u.pellets[n * 3 + 1] = pellet.y;
       u.pellets[n * 3 + 2] = pellet.amount > 0 ? 1 : 0;
     });
-    const pelletCount = Math.min(nutrients.length, MAX_PELLETS);
-
-    this.uploadFrame(deltaTimeSec, pelletCount, effectCount);
-    return Math.max(0, ...u.steps);
+    frame.pelletCount = Math.min(nutrients.length, MAX_PELLETS);
+    frame.deltaTimeSec = deltaTimeSec;
+    return frame;
   }
 
   /** Puts each player's starting blob into a fresh state, at full energy. */
   private loadSpawns(spawns: ColonySpawn[]): void {
-    if (!this.ready()) {
+    if (!this.passes.ready()) {
       return;
     }
     const state = new Uint16Array(this.width * this.height * 4);
@@ -621,7 +597,7 @@ export abstract class GridSimulation implements Simulation {
         counts[slot]++;
       }
     });
-    this.loadState(state);
+    this.passes.loadState(state);
     this.colonySummaries = spawns.map((spawn, slot) => ({
       playerId: spawn.playerId,
       color: spawn.color,
