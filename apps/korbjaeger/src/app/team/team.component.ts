@@ -63,7 +63,6 @@ export class TeamComponent {
     if (this.team() === undefined) {
       return KEIN_TEAM;
     }
-    const error = this.saison.error();
-    return error === undefined ? undefined : fehlerText(error, KEIN_TEAM);
+    return fehlerText(this.saison.error(), KEIN_TEAM);
   });
 }

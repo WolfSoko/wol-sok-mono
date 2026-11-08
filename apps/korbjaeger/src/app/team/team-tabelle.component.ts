@@ -63,8 +63,7 @@ export class TeamTabelleComponent {
       : []
   );
 
-  protected readonly fehler = computed(() => {
-    const error = this.tabelle.error();
-    return error === undefined ? undefined : fehlerText(error, KEINE_TABELLE);
-  });
+  protected readonly fehler = computed(() =>
+    fehlerText(this.tabelle.error(), KEINE_TABELLE)
+  );
 }
