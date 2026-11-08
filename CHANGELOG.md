@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.146.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.145.1...v74.146.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 4 — Team einrichten (Verband → age group → Liga → Team) ([#2907](https://github.com/WolfSoko/wol-sok-mono/issues/2907)) ([f21bcdb](https://github.com/WolfSoko/wol-sok-mono/commit/f21bcdb68f91c6c997564b259024a761baab31f6)), closes [#2869](https://github.com/WolfSoko/wol-sok-mono/issues/2869), references [#2869](https://github.com/WolfSoko/wol-sok-mono/issues/2869) [#2875](https://github.com/WolfSoko/wol-sok-mono/issues/2875)
+
 ## [74.145.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.145.0...v74.145.1) (2026-11-08)
 
 ### Bug Fixes
