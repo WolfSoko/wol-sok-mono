@@ -80,7 +80,7 @@ describe('FakeFirebaseAuth', () => {
   it('signs in with a credential as the Google account it names', async () => {
     await auth.sdk.signInWithCredential(auth, 'ada');
 
-    expect(auth.currentUser).toEqual(googleUser('ada', 'Ada'));
+    expect(auth.currentUser).toEqual(googleUser('ada', 'ada'));
   });
 
   it('reads the credential of an error, null without one', () => {

@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { GameCloud } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import {
   type FakeDoc,
   FakeFirebase,
+  provideFakeGameCloud,
   settleSnapshots,
   timestampAt,
 } from '@wolsok/feat-lazy-bac-game/testing';
@@ -33,7 +33,7 @@ async function render(
   const fake = fakeStats(now);
   TestBed.configureTestingModule({
     providers: [
-      { provide: GameCloud, useValue: { firebase: () => fake.connection() } },
+      provideFakeGameCloud({ firebase: fake.connection() }),
       { provide: AdminCommandsService, useValue: { send } },
     ],
   });

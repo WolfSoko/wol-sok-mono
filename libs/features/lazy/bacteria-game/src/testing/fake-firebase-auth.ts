@@ -55,8 +55,8 @@ type UserListener = (user: FakeUser | null) => void;
  * hand ({@link become}) or by the SDK's sign-ins, the auth state and token
  * listeners told soon after they subscribe, guests `guest-1`, `guest-2`, …
  * The popups and the credential sign-in are jest mocks a spec answers;
- * `signInWithCredential` signs in by default as the Google user `Ada`
- * whose uid is the credential. It is also the `auth` instance the connection
+ * `signInWithCredential` signs in by default as the Google user whose
+ * uid and name are the credential. It is also the `auth` instance the connection
  * carries, so the adapter reads `currentUser` from it.
  */
 export class FakeFirebaseAuth {
@@ -74,7 +74,7 @@ export class FakeFirebaseAuth {
   public readonly signInWithPopup = jest.fn();
   public readonly signInWithCredential = jest.fn(
     async (_auth: unknown, credential: string) => {
-      this.become(googleUser(credential, 'Ada'));
+      this.become(googleUser(credential, credential));
       return { user: this.currentUser };
     }
   );
@@ -89,8 +89,7 @@ export class FakeFirebaseAuth {
       this.subscribe(this.stateListeners, listener),
     onIdTokenChanged: (_auth: unknown, listener: UserListener) =>
       this.subscribe(this.tokenListeners, listener),
-    getIdTokenResult: (user: FakeUser, forceRefresh?: boolean) =>
-      this.getIdTokenResult(user, forceRefresh),
+    getIdTokenResult: this.getIdTokenResult,
     signInAnonymously: async () => {
       if (this.refusesGuests !== null) {
         throw sdkError(this.refusesGuests);
@@ -99,10 +98,9 @@ export class FakeFirebaseAuth {
       return { user: this.currentUser };
     },
     signOut: async () => this.become(null),
-    linkWithPopup: (...args: unknown[]) => this.linkWithPopup(...args),
-    signInWithPopup: (...args: unknown[]) => this.signInWithPopup(...args),
-    signInWithCredential: (auth: unknown, credential: string) =>
-      this.signInWithCredential(auth, credential),
+    linkWithPopup: this.linkWithPopup,
+    signInWithPopup: this.signInWithPopup,
+    signInWithCredential: this.signInWithCredential,
     browserPopupRedirectResolver: {},
     GoogleAuthProvider: Object.assign(class {}, {
       credentialFromError: (error: { credential?: string }) =>

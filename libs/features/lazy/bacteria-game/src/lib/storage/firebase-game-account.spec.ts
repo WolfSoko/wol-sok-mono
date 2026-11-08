@@ -144,10 +144,9 @@ describe('FirebaseGameAccount', () => {
 
       expect(account.owner()).toBe(true);
       // No forced refresh: the admin area checks with a fresh one.
-      expect(auth.getIdTokenResult).toHaveBeenLastCalledWith(
-        expect.objectContaining({ uid: 'ada' }),
-        undefined
-      );
+      const [user, forceRefresh] = auth.getIdTokenResult.mock.lastCall ?? [];
+      expect(user).toMatchObject({ uid: 'ada' });
+      expect(forceRefresh).toBeUndefined();
     });
 
     it.each<[string, FakeToken]>([

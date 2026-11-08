@@ -49,10 +49,11 @@ export class FakeRealtimeDatabase {
   /** Paths the rules refuse to read or write, as `rtdb:<path>`. */
   public readonly refused: Set<string>;
 
+  /** Paths whose removal the server holds for a dropped connection. */
+  public readonly armed = new Set<string>();
+
   private readonly serverTime: () => number;
   private readonly listeners = new Map<string, Set<() => void>>();
-  /** Paths whose removal the server holds for a dropped connection. */
-  private readonly armed = new Set<string>();
 
   public constructor(options: FakeRealtimeDatabaseOptions = {}) {
     this.listened = options.listened ?? [];
@@ -117,9 +118,9 @@ export class FakeRealtimeDatabase {
     this.put('.info/connected', false);
   }
 
-  /** Whether the server holds a removal of the path for a disconnect. */
-  public armedFor(path: string): boolean {
-    return this.armed.has(path);
+  /** The device connects (again): `.info/connected` turns true. */
+  public connect(): void {
+    this.put('.info/connected', true);
   }
 
   private listen(

@@ -104,20 +104,20 @@ describe('FakeRealtimeDatabase', () => {
   it('removes what onDisconnect armed when the connection drops', async () => {
     const ada = sdk.ref({}, 'status/ada');
     const bob = sdk.ref({}, 'status/bob');
-    rtdb.put('.info/connected', true);
+    rtdb.connect();
     rtdb.put('status/ada', 1);
     rtdb.put('status/bob', 2);
     await sdk.onDisconnect(ada).remove();
     await sdk.onDisconnect(bob).remove();
     await sdk.onDisconnect(bob).cancel();
-    expect(rtdb.armedFor('status/ada')).toBe(true);
+    expect(rtdb.armed.has('status/ada')).toBe(true);
 
     rtdb.disconnect();
 
     expect(rtdb.values.has('status/ada')).toBe(false);
     expect(rtdb.values.get('status/bob')).toBe(2);
     expect(rtdb.values.get('.info/connected')).toBe(false);
-    expect(rtdb.armedFor('status/ada')).toBe(false);
+    expect(rtdb.armed.has('status/ada')).toBe(false);
     expect(rtdb.writes.map((write) => write.kind)).toEqual([
       'onDisconnect.remove',
       'onDisconnect.remove',

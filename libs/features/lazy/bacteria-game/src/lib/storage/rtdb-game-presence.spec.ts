@@ -100,7 +100,7 @@ describe('RtdbGamePresence', () => {
 
   describe('set', () => {
     async function connected(): Promise<RtdbGamePresence> {
-      fake.realtime.put('.info/connected', true);
+      fake.realtime.connect();
       const shared = presence();
       await settleSnapshots();
       return shared;
@@ -135,11 +135,11 @@ describe('RtdbGamePresence', () => {
       await settleSnapshots();
       expect(fake.realtime.writes).toEqual([]);
 
-      fake.realtime.put('.info/connected', true);
+      fake.realtime.connect();
       await settleSnapshots();
       fake.realtime.disconnect();
       await settleSnapshots();
-      fake.realtime.put('.info/connected', true);
+      fake.realtime.connect();
       await settleSnapshots();
 
       expect(fake.realtime.values.get('status/ada')).toMatchObject({
@@ -170,7 +170,7 @@ describe('RtdbGamePresence', () => {
       await settleSnapshots();
 
       expect(fake.realtime.values.has('status/ada')).toBe(false);
-      expect(fake.realtime.armedFor('status/ada')).toBe(false);
+      expect(fake.realtime.armed.has('status/ada')).toBe(false);
       expect(fake.realtime.writes.slice(2)).toEqual([
         { kind: 'remove', path: 'status/ada' },
         { kind: 'onDisconnect.cancel', path: 'status/ada' },
@@ -229,7 +229,7 @@ describe('RtdbGamePresence', () => {
         expect.objectContaining({ code: RTDB_PERMISSION_DENIED })
       );
       // The disconnect still clears it.
-      expect(fake.realtime.armedFor('status/ada')).toBe(true);
+      expect(fake.realtime.armed.has('status/ada')).toBe(true);
       warn.mockRestore();
     });
   });
