@@ -72,6 +72,25 @@
         "configFile": "vite.config.ts"
       }
     },
+    "firebase": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "firebase --config=firebase.korbjaeger.json --project=korbjaeger"
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/firebase.korbjaeger.json",
+        "{workspaceRoot}/.firebaserc"
+      ],
+      "dependsOn": ["build"],
+      "options": {
+        "command": "nx run korbjaeger:firebase deploy"
+      }
+    },
     "typecheck-specs": {}
   }
 }

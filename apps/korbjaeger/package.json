@@ -23,6 +23,7 @@
     "@wolsok/feat-shared-basketball-data": "*",
     "@wolsok/utils-version": "*",
     "normalize.css": "8.0.1",
-    "nitropack": "2.13.5"
+    "nitropack": "2.13.5",
+    "firebase": "12.19.0"
   }
 }

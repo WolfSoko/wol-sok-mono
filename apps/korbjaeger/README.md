@@ -2,9 +2,9 @@
 
 The basketball parents app ([#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861)):
 the Spiele, results and Tabellen of a youth Team, read from the German
-Basketball Federation (DBB). German UI. It will run at
-https://korb.wolsok.de (`SITE_URL` in `src/shared/site.ts`, the one place
-that names the domain); it is not deployed yet.
+Basketball Federation (DBB). German UI. It runs at
+https://korb.wolsok.de (`SITE_URL` in `src/shared/site.ts`; the CNAME's
+stack keeps its own copy, see Deploy).
 
 An Analog app on the Nitro `firebase` preset. Pages render in the browser
 only (`ssr: false`); Nitro serves the shell and the DBB proxy.
@@ -99,6 +99,36 @@ So CLAUDE.md's sitemap rule does not apply here.
 (`User-agent: *` with an empty `Disallow:`): a URL that robots.txt blocks
 is never fetched, so a crawler would never read its `noindex` and could
 still list the bare URL. `src/indexing.spec.ts` keeps both in place.
+
+## Deploy
+
+`npx nx run korbjaeger:deploy` (the `non-cdk` leg of `deploy.yml` on a
+release that affects the app, with `FIREBASE_TOKEN`) builds the app and
+deploys `firebase.korbjaeger.json` from the workspace root, not the
+`firebase.json` Nitro generates here:
+
+- **Firebase project** `korbjaeger`, named only in `.firebaserc` (alias
+  `korbjaeger`). The config names no site, so Hosting is the project's
+  default site, `korbjaeger.web.app`.
+- **Hosting** serves the build's public files; only `/api/**` goes to the
+  Nitro function, every other path to `/index.html`, so pages come from
+  the CDN without a function call. Every response carries
+  `X-Robots-Tag: noindex`, from Hosting and, for the proxy, from Nitro's
+  route rules too.
+- **Function** `server`, region `europe-central2`, at most 10 instances
+  (`vite.config.ts`, Nitro's `firebase` options).
+- **Domain** `korb.wolsok.de`: a CNAME to `<site>.web.app` in the CDK app
+  `korbjaeger-cdk` (stack `Korbjaeger`, `cdk` leg of `deploy.yml`), which
+  reads the site from `.firebaserc`. It keeps the domain as
+  `KORBJAEGER_DOMAIN`, since infra may import no app; its spec keeps it
+  equal to `SITE_URL`.
+- **Web config** of the project in `src/environments/environment.ts`,
+  read by nothing until sign-in (#2873); its spec keeps `projectId` equal
+  to `.firebaserc`.
+
+`src/firebase-deploy.spec.ts` keeps the config in shape, including the
+`--legacy-peer-deps=false` of the function's install (CLAUDE.md, Cloud
+Functions).
 
 ## Run it
 

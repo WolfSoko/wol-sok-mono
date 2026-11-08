@@ -1,0 +1,45 @@
+{
+  "name": "korbjaeger-cdk",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/korbjaeger-cdk/src",
+  "tags": ["infra", "cdk"],
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals",
+      "cdkTsconfig",
+      "korbjaegerSite"
+    ],
+    "cdkTsconfig": ["{workspaceRoot}/tsconfig.cdk.json"],
+    "korbjaegerSite": [
+      "{workspaceRoot}/.firebaserc",
+      "{workspaceRoot}/apps/korbjaeger/src/shared/site.ts"
+    ]
+  },
+  "targets": {
+    "deploy": {
+      "executor": "@wolsok/nx-aws-cdk-v2:deploy",
+      "options": {
+        "output": "{workspaceRoot}/dist/{projectRoot}",
+        "require-approval": "never"
+      }
+    },
+    "destroy": {
+      "executor": "@wolsok/nx-aws-cdk-v2:destroy",
+      "options": {}
+    },
+    "bootstrap": {
+      "executor": "@wolsok/nx-aws-cdk-v2:bootstrap",
+      "options": {}
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/korbjaeger-cdk/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  }
+}

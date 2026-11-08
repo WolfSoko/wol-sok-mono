@@ -42,4 +42,17 @@ test.describe('DBB proxy', () => {
       expect(response.headers()['cache-control']).toBeUndefined();
     });
   }
+
+  // ADR 0019: Hosting adds the header too; the function sets it itself, so
+  // it holds whether or not Hosting's headers reach a rewritten response.
+  for (const [what, path] of [
+    ['a read', '/api/dbb/team/313036/spiele'],
+    ['an unknown read', '/api/dbb/team/313036/spieler'],
+  ] as const) {
+    test(`marks ${what} noindex`, async ({ request }) => {
+      const response = await request.get(path);
+
+      expect(response.headers()['x-robots-tag']).toBe('noindex');
+    });
+  }
 });
