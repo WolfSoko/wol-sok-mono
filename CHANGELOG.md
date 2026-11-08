@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.8](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.7...v74.139.8) (2026-11-08)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** one playback rule for stored replays (My matches, gallery) ([#2856](https://github.com/WolfSoko/wol-sok-mono/issues/2856)) ([bd695a3](https://github.com/WolfSoko/wol-sok-mono/commit/bd695a3b6377b7cf8c69331d6b14d8b24793a10f)), references [#2828](https://github.com/WolfSoko/wol-sok-mono/issues/2828)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** run the grid war over a CellPasses port ([#2862](https://github.com/WolfSoko/wol-sok-mono/issues/2862)) ([4ac5264](https://github.com/WolfSoko/wol-sok-mono/commit/4ac5264c097a83bb4bdf19272eba437d6db8b747)), closes [#2790](https://github.com/WolfSoko/wol-sok-mono/issues/2790)
+
 ## [74.139.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.6...v74.139.7) (2026-11-07)
 
 ### Testing
