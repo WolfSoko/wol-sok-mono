@@ -13,7 +13,6 @@ const PATH_EXPRESSIONS = new Set([
   'TemplateLiteral',
   'BinaryExpression',
   'LogicalExpression',
-  'ConditionalExpression',
   'ParenthesizedExpression',
   'TSAsExpression',
   'TSSatisfiesExpression',
@@ -136,6 +135,11 @@ function reachesReadCall(node) {
       }
       if (parent.type === 'CallExpression' && isReadCallee(parent.callee)) {
         return true;
+      }
+    } else if (parent.type === 'ConditionalExpression') {
+      // `existsSync(path) ? … : …` only tests the path; the branches pass on.
+      if (parent.test === child) {
+        return false;
       }
     } else if (!PATH_EXPRESSIONS.has(parent.type)) {
       return false;

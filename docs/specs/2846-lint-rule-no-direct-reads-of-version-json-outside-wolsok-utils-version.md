@@ -53,8 +53,9 @@ Its message points to `WORKSPACE_VERSION` / `releaseName` from
   the one sanctioned reader (`version.ts`) and its spec (which reads the file
   to compare) stay visible in one place.
 - **`tools/version-handling` and `tools/bacteria-game/deploy-android.ts` stay
-  as they are.** Neither belongs to an Nx project, so `nx lint` never lints
-  them and the rule cannot reach them. Both run in release or deploy steps
+  as they are.** Neither belongs to an Nx project, so `nx lint` (CI, the
+  pre-commit hook) never lints them; only a direct `oxlint` run on them would
+  report them. Both run in release or deploy steps
   that are not cached on the file (`latest-*-deployed-tag.ts` are `runtime`
   inputs, evaluated on every run; `deploy-android` is an uncached deploy),
   so the reason for the rule does not apply. `tsx` would also need the

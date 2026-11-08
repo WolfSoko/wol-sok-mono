@@ -13,7 +13,9 @@ import { deepStrictEqual } from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const oxlint = join(here, '../../node_modules/.bin/oxlint');
+// The package's own entry, run by this Node: the `.bin` shim is no executable
+// on Windows.
+const oxlint = join(here, '../../node_modules/oxlint/bin/oxlint');
 const VERSION_RULE = 'wolsok(no-version-json-read)';
 
 let folder;
@@ -41,14 +43,18 @@ function reportedCodes(source) {
   let output;
   try {
     output = execFileSync(
-      oxlint,
-      ['-c', '.oxlintrc.json', '-f', 'json', file],
+      process.execPath,
+      [oxlint, '-c', '.oxlintrc.json', '-f', 'json', file],
       {
         cwd: folder,
         encoding: 'utf8',
       }
     );
   } catch (error) {
+    // A failed start (no oxlint, a crash) has no report: show its own error.
+    if (!error.stdout) {
+      throw error;
+    }
     output = error.stdout;
   }
   return JSON.parse(output).diagnostics.map((diagnostic) => diagnostic.code);
@@ -87,6 +93,7 @@ void describe('wolsok/no-version-json-read', () => {
     "readFileSync('version.json.bak');",
     'readFileSync(`version.json${extension}`);',
     "readme('version.json');",
+    "readFileSync(existsSync('version.json') ? 'a.json' : 'b.json');",
     "const path = 'version.json';",
     "writeFileSync('version.json', '{}');",
     '// readFileSync(version.json) is not allowed here',
