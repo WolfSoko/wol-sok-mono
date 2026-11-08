@@ -67,6 +67,8 @@ export type SetUniforms = (
  * everything that differs between them is here.
  */
 export interface GpuRules {
+  /** Which grid simulation the passes run by these rules. */
+  readonly variant: 'gpu-int' | 'gpu-float';
   /**
    * How old every report the war takes is, in ticks - waited for, none
    * skipped: the integer passes', which every GPU computes alike. Null takes
@@ -99,6 +101,7 @@ export interface GpuRules {
  * `DETERMINISTIC_REPORT_LAG` ticks old - waited for when the GPU is slow.
  */
 export class GpuIntRules implements GpuRules {
+  public readonly variant = 'gpu-int';
   public readonly reportLag = DETERMINISTIC_REPORT_LAG;
   private readonly ints = createIntFrameUniforms();
 
@@ -187,6 +190,7 @@ export class GpuIntRules implements GpuRules {
  * has it. No two GPUs need compute them alike.
  */
 export class GpuFloatRules implements GpuRules {
+  public readonly variant = 'gpu-float';
   public readonly reportLag = null;
 
   public constructor(private readonly balance: GameBalance) {}

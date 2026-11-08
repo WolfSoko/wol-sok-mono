@@ -178,8 +178,7 @@ export class GpuCellPasses implements CellPasses {
     private readonly rules: GpuRules
   ) {
     this.reportLag = rules.reportLag;
-    // Rules with a fixed report lag are the integer ones of ADR 0015.
-    this.variant = rules.reportLag === null ? 'gpu-float' : 'gpu-int';
+    this.variant = rules.variant;
     const canvas = gl.canvas;
     if (canvas instanceof HTMLCanvasElement) {
       canvas.addEventListener('webglcontextlost', this.onContextLost);

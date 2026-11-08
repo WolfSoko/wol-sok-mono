@@ -93,7 +93,10 @@ page views.
 Every match event carries `level_name` (the level id), `kind`
 (`vs_computer`, `training`, `daily`, `endless`, `two_players`, `online`,
 `ghost`), `difficulty`, `ranked` and `simulation` (`cpu`, `cpu-int`,
-`gpu-int`, `gpu-float`; the variant names the ruleset too).
+`gpu-int`, `gpu-float`; the variant names the ruleset too). Until
+[#2801](https://github.com/WolfSoko/wol-sok-mono/issues/2801) `simulation`
+was `cpu`, `gpu` or `int` beside a `ruleset` param; the `ruleset` custom
+dimension gets no data since and can be archived in GA4.
 
 | Event                                                                                                                | Parameters                                                                                                                                                        | Where                                                         |
 | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |

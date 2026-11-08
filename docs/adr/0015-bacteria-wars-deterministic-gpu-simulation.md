@@ -222,7 +222,9 @@ sits behind a flag; step 8 switches it on.
      too). The CPU's rules did not change: the CPU goldens keep their
      values under version 6.
    - Every simulation names its ruleset (`Simulation.ruleset`: `cpu`,
-     `gpu-int`, or null for the float GPU one). Replay version 5
+     `gpu-int`, or null for the float GPU one; since
+     [#2801](https://github.com/WolfSoko/wol-sok-mono/issues/2801) one
+     `Simulation.variant` names it, read by `rulesetOf`). Replay version 5
      (`GPU_INT_REPLAY_VERSION`, after ADR 0016 took 4 for the ladder) holds `gpu-int` matches, plain or evolved;
      `playReplay` plays them on `IntSimulation`. Old `gpu` recordings stay
      version 1 or 3, good for a ghost race only.

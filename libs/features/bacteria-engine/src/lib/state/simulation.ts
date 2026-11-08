@@ -128,21 +128,24 @@ export type SimulationVariant = 'cpu' | 'cpu-int' | 'gpu-int' | 'gpu-float';
 /** The variants that run on the arena grid (`GridWar`): all but `cpu`. */
 export type GridVariant = Exclude<SimulationVariant, 'cpu'>;
 
-const RULESET_OF: Readonly<Record<SimulationVariant, Ruleset | null>> = {
-  cpu: 'cpu',
-  'cpu-int': 'gpu-int',
-  'gpu-int': 'gpu-int',
-  'gpu-float': null,
+/** What each variant is: its ruleset, and whether its ticks run on the GPU. */
+const VARIANTS: Readonly<
+  Record<SimulationVariant, { ruleset: Ruleset | null; onGpu: boolean }>
+> = {
+  cpu: { ruleset: 'cpu', onGpu: false },
+  'cpu-int': { ruleset: 'gpu-int', onGpu: false },
+  'gpu-int': { ruleset: 'gpu-int', onGpu: true },
+  'gpu-float': { ruleset: null, onGpu: true },
 };
 
 /** The ruleset a variant plays by - null for `gpu-float`, which has none. */
 export function rulesetOf(variant: SimulationVariant): Ruleset | null {
-  return RULESET_OF[variant];
+  return VARIANTS[variant].ruleset;
 }
 
 /** True for a variant whose ticks run on the GPU. */
 export function runsOnGpu(variant: SimulationVariant): boolean {
-  return variant === 'gpu-int' || variant === 'gpu-float';
+  return VARIANTS[variant].onGpu;
 }
 
 /**

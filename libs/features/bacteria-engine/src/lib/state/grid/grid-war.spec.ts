@@ -77,10 +77,13 @@ class StubPasses implements CellPasses {
 
   public readonly reportLag: number | null;
 
-  public constructor(deterministic: boolean) {
-    this.reportLag = deterministic ? DETERMINISTIC_REPORT_LAG : null;
+  public constructor(
+    deterministic: boolean,
     // As the real adapters: a lag for the integer passes, none for the float.
-    this.variant = deterministic ? 'cpu-int' : 'gpu-float';
+    variant: GridVariant = deterministic ? 'cpu-int' : 'gpu-float'
+  ) {
+    this.reportLag = deterministic ? DETERMINISTIC_REPORT_LAG : null;
+    this.variant = variant;
   }
 
   public attach(host: CellPassesHost): void {
@@ -176,6 +179,24 @@ describe('GridWar', () => {
     expect(war(true).grid.variant).toBe('cpu-int');
     expect(war(false).grid.variant).toBe('gpu-float');
   });
+
+  it.each([
+    [true, 'gpu-float'],
+    [false, 'gpu-int'],
+    [false, 'cpu-int'],
+  ] as const)(
+    'refuses passes whose report lag (deterministic: %s) does not fit %s',
+    (deterministic, variant) => {
+      expect(
+        () =>
+          new GridWar(
+            new StubPasses(deterministic, variant),
+            gameBalance,
+            () => 0.5
+          )
+      ).toThrow(variant);
+    }
+  );
 
   it('collects a deterministic match’s reports before anything of the tick reads them', () => {
     const { passes, grid, players } = war(true);
