@@ -4,7 +4,9 @@ import {
   ergebnisVon,
   gegnerVon,
   seiteVon,
+  istEntschieden,
   sonderfallVon,
+  vergleicheAnwurf,
   type Spiel,
 } from './spiel';
 
@@ -127,5 +129,76 @@ describe('datumInDeutschland', () => {
     ['2027-01-05T08:00:00Z', '2027-01-05'],
   ])('dates %s as the DBB does: %s', (moment, datum) => {
     expect(datumInDeutschland(new Date(moment))).toBe(datum);
+  });
+});
+
+describe('vergleicheAnwurf', () => {
+  function anwurf(datum: string, uhrzeit?: string): Spiel {
+    return {
+      id: 1,
+      ligaId: 1,
+      spieltag: 1,
+      datum,
+      ...(uhrzeit && { uhrzeit }),
+      heim: UNS,
+      gast: GIFHORN,
+      status: { art: 'geplant' },
+    };
+  }
+
+  function reihe(...spiele: Spiel[]): readonly string[] {
+    return [...spiele]
+      .sort(vergleicheAnwurf)
+      .map(({ datum, uhrzeit }) => `${datum} ${uhrzeit ?? 'offen'}`);
+  }
+
+  it('orders by day, then by tip-off', () => {
+    expect(
+      reihe(
+        anwurf('2026-11-15', '09:00'),
+        anwurf('2026-11-14', '15:30'),
+        anwurf('2026-11-14', '09:30')
+      )
+    ).toEqual(['2026-11-14 09:30', '2026-11-14 15:30', '2026-11-15 09:00']);
+  });
+
+  it('puts a Spiel without a tip-off last on its day', () => {
+    expect(
+      reihe(
+        anwurf('2026-11-15', '09:00'),
+        anwurf('2026-11-14'),
+        anwurf('2026-11-14', '15:30')
+      )
+    ).toEqual(['2026-11-14 15:30', '2026-11-14 offen', '2026-11-15 09:00']);
+  });
+
+  it('ties Spiele of one tip-off', () => {
+    expect(vergleicheAnwurf(anwurf('2026-11-14'), anwurf('2026-11-14'))).toBe(
+      0
+    );
+  });
+});
+
+describe('istEntschieden', () => {
+  it.each([
+    [
+      { art: 'gespielt', ergebnis: { heim: 1, gast: 0 }, bestaetigt: true },
+      true,
+    ],
+    [{ art: 'kampflos', verzichtet: [] }, true],
+    [{ art: 'geplant' }, false],
+    [{ art: 'abgesagt' }, false],
+  ] as const)('%o: %s', (status, entschieden) => {
+    expect(
+      istEntschieden({
+        id: 1,
+        ligaId: 1,
+        spieltag: 1,
+        datum: '2026-11-14',
+        heim: UNS,
+        gast: GIFHORN,
+        status,
+      })
+    ).toBe(entschieden);
   });
 });

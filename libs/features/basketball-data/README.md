@@ -40,8 +40,14 @@ and tools are no Nx project.
   (`datumInDeutschland`). `partei.ts` tells a Team from a slot (`istTeam`,
   `parteiName`), for Spiele and Tabellen alike. `team-saison.ts` answers
   what a Team's page asks of its Saison: a Liga by id (`ligaVon`), the
-  next Spiel (`naechstesSpiel`, passing over cancelled ones) and its Ligen
-  with the current one first (`ligenAktuellZuerst`).
+  next Spiel to go to (`naechstesSpiel`: still to be played, so passing
+  over cancelled, played and forfeited ones) and its Ligen
+  with the current one first (`ligenAktuellZuerst`). `team-ueberblick.ts`
+  answers what the overview asks: a Team's next Spiel, the Spiele
+  before it that fall through (cancelled or forfeited) and its last
+  result up to today (`teamUeberblick`), and the
+  order of the overview's entries by next Spiel, those without one last
+  (`nachNaechstemSpiel`).
 - **`DbbBasketballData`** (`src/lib/dbb/`), the adapter over the DBB's
   undocumented JSON API (ADR 0018). It takes a `DbbTransport`, a function
   that answers one allowlisted `DbbRequest` with the DBB's JSON;

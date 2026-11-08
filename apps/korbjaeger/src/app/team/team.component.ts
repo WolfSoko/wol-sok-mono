@@ -4,31 +4,34 @@ import {
   computed,
   inject,
   input,
-  resource,
 } from '@angular/core';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
+import { AUSWAHL } from '../auswahl/auswahl';
+import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { HEUTE } from '../heute';
 import {
   ligenAktuellZuerst,
   parseDbbId,
 } from '@wolsok/feat-shared-basketball-data';
-import { fehlerText } from './fehler-text';
-import { KEIN_TEAM, spielZeilen } from './team-spiele';
+import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
+import { spielZeilen } from '../spiel/spiel-zeile';
+import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
+import { TeamFolgenComponent } from './team-folgen.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
 /**
  * The Team page: its Spiele of the Saison, across all its Ligen, by date,
- * then the Tabelle of each of those Ligen, the current one first.
+ * then the Tabelle of each of those Ligen, the current one first; with a
+ * control to follow the Team.
  */
 @Component({
   selector: 'korb-team',
   imports: [
-    MatChipsModule,
     MatListModule,
     MatProgressBarModule,
+    SpielZeileComponent,
+    TeamFolgenComponent,
     TeamTabelleComponent,
   ],
   templateUrl: './team.component.html',
@@ -39,14 +42,22 @@ export class TeamComponent {
   /** The Team's DBB id, as the route gives it. */
   public readonly teamId = input.required<string>();
 
-  private readonly data = inject(BASKETBALL_DATA);
   private readonly heute = inject(HEUTE);
+  private readonly meineTeams = inject(AUSWAHL).teams;
   private readonly team = computed(() => parseDbbId(this.teamId()));
 
-  protected readonly saison = resource({
-    params: () => this.team(),
-    loader: ({ params, abortSignal }) =>
-      this.data.teamSpiele(params, { signal: abortSignal }),
+  protected readonly saison = teamSaisonResource(() => this.team());
+
+  /**
+   * The Team to offer following: one the DBB knows, or one of Meine Teams
+   * whatever its read gave (a Saison may have ended for it).
+   */
+  protected readonly folgbar = computed(() => {
+    const team = this.team();
+    return team !== undefined &&
+      (this.saison.hasValue() || this.meineTeams()?.includes(team))
+      ? team
+      : undefined;
   });
 
   protected readonly zeilen = computed(() =>

@@ -5,14 +5,12 @@ import {
   parteiName,
   seiteVon,
   sonderfallVon,
-  type Liga,
   type Spiel,
   type SpielSonderfall,
-  type TeamId,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
 
-/** One line of a Team's Spiele, as the page shows it. */
+/** One Spiel seen from a Team, as the screens show it (`SpielZeileComponent`). */
 export interface SpielZeile {
   readonly id: number;
   /** The day, e.g. `Sa., 29.08.2026`. */
@@ -29,9 +27,6 @@ export interface SpielZeile {
   readonly markierung?: SpielSonderfall;
 }
 
-/** What the page says for an id that names no Team. */
-export const KEIN_TEAM = 'Dieses Team kennt der DBB nicht.';
-
 const DATUM = new Intl.DateTimeFormat('de-DE', {
   weekday: 'short',
   day: '2-digit',
@@ -42,23 +37,18 @@ const DATUM = new Intl.DateTimeFormat('de-DE', {
 
 /** Every Spiel of `saison`, across its Ligen, in the port's date order. */
 export function spielZeilen(saison: TeamSaison): readonly SpielZeile[] {
-  return saison.spiele.map((spiel) =>
-    spielZeile(spiel, saison.team.id, ligaVon(saison, spiel.ligaId))
-  );
+  return saison.spiele.map((spiel) => spielZeile(saison, spiel));
 }
 
-function spielZeile(
-  spiel: Spiel,
-  teamId: TeamId,
-  liga: Liga | undefined
-): SpielZeile {
-  const seite = seiteVon(spiel, teamId);
+/** `spiel` of `saison` as a line, seen from the Saison's Team. */
+export function spielZeile(saison: TeamSaison, spiel: Spiel): SpielZeile {
+  const seite = seiteVon(spiel, saison.team.id);
   const ergebnis = ergebnisVon(spiel);
   return {
     id: spiel.id,
     datum: DATUM.format(new Date(`${spiel.datum}T00:00:00Z`)),
     uhrzeit: spiel.uhrzeit,
-    liga: liga?.name ?? '',
+    liga: ligaVon(saison, spiel.ligaId)?.name ?? '',
     ort: seite && ORT[seite],
     gegner: seite
       ? parteiName(gegnerVon(spiel, seite))

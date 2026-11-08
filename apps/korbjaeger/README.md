@@ -22,6 +22,35 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Spiel once none is left (a cancelled Spiel decides nothing, a forfeited
   one does); the others follow by their last Spiel, newest first. Each
   Tabelle loads and fails on its own.
+  A toggle button ("Team folgen", `aria-pressed`) adds the Team to Meine
+  Teams or takes it out (`team-folgen.component.ts`).
+- **Meine Teams** (`src/app/auswahl/`): the `Auswahl` port (`AUSWAHL`),
+  Meine Teams as a signal (`undefined` until read) with `folgen` and
+  `entfolgen`. Its local adapter
+  `LokaleAuswahl` keeps them in `localStorage` (`korbjaeger-auswahl`) as
+  `{ version: 1, teams: [...] }` (`auswahl-dokument.ts`: ids only, Kinder
+  join version 1 as a field of their own, #2872). It reads the document again
+  before each write and on the `storage` event, so two tabs keep each
+  other's changes, and keeps fields it does not know. Storage that cannot
+  be read or holds something else counts as empty, storage that takes
+  nothing keeps them for the visit; a document of a newer version is left
+  alone and changes are refused (`AuswahlZuNeuError`, "Bitte die App neu
+  laden"). Every adapter runs the shared contract suite
+  `auswahlVertrag` (`testing/auswahl-vertrag.ts`), the Firestore adapter
+  of #2873 too.
+- **Overview** (`/`, `src/app/ueberblick/`): each of Meine Teams with its
+  next Spiel (day, time, home or away, opponent), the Spiele
+  before it that fall through (cancelled or forfeited) and its last result (the lib's `teamUeberblick`), the Team
+  that plays first first and Teams without a next Spiel last
+  (`nachNaechstemSpiel`), each linking to its Team page.
+  `MeineTeamsUeberblick` holds one read per followed Team
+  (`teamSaisonResource`, as the Team page), so each card loads and fails
+  on its own and a follow or unfollow reads no other Team again; the cards
+  (`ueberblick-team.component.ts`) only show what they are given, and one
+  whose read fails offers "Entfernen". Error texts are in
+  `src/app/fehler/`. Both screens
+  show a Spiel through `SpielZeileComponent` (`src/app/spiel/`). The
+  Team-id form below opens a Team to follow.
 - **Proxy:** `src/server/routes/api/dbb/` (thin route files) over
   `src/server/dbb/`; `src/shared/dbb-proxy-routes.ts` maps each read to
   its route and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists
@@ -72,5 +101,5 @@ npx nx e2e korbjaeger                        # Playwright, on the fake DBB
 The proxy specs mount the real route files in h3 where Nitro's file
 routing puts them, with the DBB faked; `e2e/dbb-proxy.spec.ts` checks that
 routing on the served app. The page specs run against a fake
-`BasketballData`. The e2e starts `fake-dbb`
+`BasketballData` and `LokaleAuswahl` without storage. The e2e starts `fake-dbb`
 and `serve-e2e` as Nx tasks (CLAUDE.md, Testing).

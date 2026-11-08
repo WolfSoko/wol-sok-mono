@@ -184,6 +184,22 @@ describe('ligenAktuellZuerst', () => {
     expect(namen(ligen)[0]).toBe(HAUPTRUNDE.name);
   });
 
+  it("keeps today's Liga first on match day, once the Spiel is played", () => {
+    const ligen = ligenAktuellZuerst(
+      saison(
+        spiel(1, VORRUNDE.id, '2026-11-08', {
+          art: 'gespielt',
+          ergebnis: { heim: 58, gast: 67 },
+          bestaetigt: false,
+        }),
+        spiel(2, HAUPTRUNDE.id, '2026-11-21')
+      ),
+      '2026-11-08'
+    );
+
+    expect(namen(ligen)[0]).toBe(VORRUNDE.name);
+  });
+
   it('still names a Liga whose Spiele are all cancelled', () => {
     const ligen = ligenAktuellZuerst(
       saison(spiel(1, VORRUNDE.id, '2026-11-15', { art: 'abgesagt' })),
@@ -206,21 +222,45 @@ describe('naechstesSpiel', () => {
     ).toBe(heute);
   });
 
-  it('passes over a cancelled Spiel, not over a forfeited one', () => {
-    const kampflos = spiel(3, VORRUNDE.id, '2026-11-15', {
-      art: 'kampflos',
-      verzichtet: [],
-    });
+  it('passes over a cancelled Spiel and a forfeited one, neither played', () => {
+    const geplant = spiel(4, VORRUNDE.id, '2026-11-21');
 
     expect(
       naechstesSpiel(
         saison(
           spiel(2, VORRUNDE.id, '2026-11-10', { art: 'abgesagt' }),
-          kampflos
+          spiel(3, VORRUNDE.id, '2026-11-15', {
+            art: 'kampflos',
+            verzichtet: [],
+          }),
+          spiel(5, VORRUNDE.id, '2026-11-16', {
+            art: 'kampflos',
+            verzichtet: ['gast'],
+            ergebnis: { heim: 20, gast: 0 },
+          }),
+          geplant
         ),
         '2026-11-08'
       )
-    ).toBe(kampflos);
+    ).toBe(geplant);
+  });
+
+  it("passes over today's Spiel once it has its result", () => {
+    const morgen = spiel(3, VORRUNDE.id, '2026-11-09');
+
+    expect(
+      naechstesSpiel(
+        saison(
+          spiel(2, VORRUNDE.id, '2026-11-08', {
+            art: 'gespielt',
+            ergebnis: { heim: 58, gast: 67 },
+            bestaetigt: false,
+          }),
+          morgen
+        ),
+        '2026-11-08'
+      )
+    ).toBe(morgen);
   });
 
   it('is none once the Saison is over', () => {

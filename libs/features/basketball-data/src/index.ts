@@ -93,5 +93,10 @@ export type {
   VereinsTeam,
   VereinsTeams,
 } from './lib/domain/team-saison';
+export {
+  nachNaechstemSpiel,
+  teamUeberblick,
+} from './lib/domain/team-ueberblick';
+export type { TeamUeberblick } from './lib/domain/team-ueberblick';
 export type { Verband } from './lib/domain/verband';
 export type { Verein } from './lib/domain/verein';

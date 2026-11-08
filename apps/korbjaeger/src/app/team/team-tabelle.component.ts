@@ -10,7 +10,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import type { Liga, TeamId } from '@wolsok/feat-shared-basketball-data';
 import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
-import { fehlerText } from './fehler-text';
+import { fehlerText } from '../fehler/fehler-text';
 import { tabelleZeilen } from './tabelle-zeilen';
 
 /** What the page says for a Liga the DBB does not know. */
