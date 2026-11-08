@@ -13,6 +13,11 @@ import type {
  * a Spiel still ahead stays first. The other Ligen follow by their last
  * Spiel, newest first. Relies on the port's date order of `saison.spiele`.
  *
+ * A cancelled (`abgesagt`) Spiel decides nothing, since it will not be
+ * played on that day; a forfeited (`kampflos`) one does, since its result
+ * counts in its Liga's Tabelle as a played one's. Only where every Spiel
+ * is cancelled does the last of them decide.
+ *
  * @param heute today's date, `YYYY-MM-DD`, as the DBB dates its Spiele
  */
 export function tabellenLigen(
@@ -36,5 +41,12 @@ function naechstesOderLetztes(
   spiele: readonly Spiel[],
   heute: string
 ): Spiel | undefined {
-  return spiele.find(({ datum }) => datum >= heute) ?? spiele.at(-1);
+  const stattfindende = spiele.filter(
+    ({ status }) => status.art !== 'abgesagt'
+  );
+  return (
+    stattfindende.find(({ datum }) => datum >= heute) ??
+    stattfindende.at(-1) ??
+    spiele.at(-1)
+  );
 }

@@ -23,7 +23,12 @@ const TESTSPIELE = liga(54689, 'Testspiele Braunschweig u12');
 const VORRUNDE = liga(54862, 'Regionsvorrunde Nord');
 const HAUPTRUNDE = liga(54900, 'Regionsliga');
 
-function spiel(id: number, ligaId: number, datum: string): Spiel {
+function spiel(
+  id: number,
+  ligaId: number,
+  datum: string,
+  status: Spiel['status'] = { art: 'geplant' }
+): Spiel {
   return {
     id,
     ligaId,
@@ -31,7 +36,7 @@ function spiel(id: number, ligaId: number, datum: string): Spiel {
     spieltag: 1,
     heim: { art: 'team', team: UNSER_TEAM },
     gast: { art: 'offen', bezeichnung: 'Gegner' },
-    status: { art: 'geplant' },
+    status,
   };
 }
 
@@ -132,5 +137,54 @@ describe('tabellenLigen', () => {
       VORRUNDE.name,
       TESTSPIELE.name,
     ]);
+  });
+  it('passes over a cancelled Spiel when looking for the next one', () => {
+    const ligen = tabellenLigen(
+      saison(
+        spiel(1, VORRUNDE.id, '2026-11-01'),
+        spiel(2, HAUPTRUNDE.id, '2026-11-10', { art: 'abgesagt' }),
+        spiel(3, VORRUNDE.id, '2026-11-15')
+      ),
+      '2026-11-08'
+    );
+
+    expect(namen(ligen)[0]).toBe(VORRUNDE.name);
+  });
+
+  it('passes over a cancelled last Spiel once the Saison is over', () => {
+    const ligen = tabellenLigen(
+      saison(
+        spiel(1, VORRUNDE.id, '2026-11-01'),
+        spiel(2, TESTSPIELE.id, '2026-11-20', { art: 'abgesagt' })
+      ),
+      '2027-06-01'
+    );
+
+    expect(namen(ligen)[0]).toBe(VORRUNDE.name);
+  });
+
+  it('counts a forfeited Spiel, whose result counts in its Liga', () => {
+    const ligen = tabellenLigen(
+      saison(
+        spiel(1, VORRUNDE.id, '2026-11-01'),
+        spiel(2, HAUPTRUNDE.id, '2026-11-10', {
+          art: 'kampflos',
+          verzichtet: ['gast'],
+        }),
+        spiel(3, VORRUNDE.id, '2026-11-15')
+      ),
+      '2026-11-08'
+    );
+
+    expect(namen(ligen)[0]).toBe(HAUPTRUNDE.name);
+  });
+
+  it('still names a Liga whose Spiele are all cancelled', () => {
+    const ligen = tabellenLigen(
+      saison(spiel(1, VORRUNDE.id, '2026-11-15', { art: 'abgesagt' })),
+      '2026-11-08'
+    );
+
+    expect(namen(ligen)).toEqual([VORRUNDE.name]);
   });
 });
