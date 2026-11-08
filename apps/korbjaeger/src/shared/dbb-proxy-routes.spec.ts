@@ -133,6 +133,21 @@ describe('DBB proxy routes', () => {
       }
     );
 
+    it.each(['anything=x', 'verband=7', 'start=10'])(
+      'name no read with a query, here %s',
+      (query) => {
+        for (const route of ID_ROUTES) {
+          const param = /:(\w+)/.exec(route.pattern)?.[1] ?? '';
+          expect(
+            route.readOf({
+              params: { [param]: '54862' },
+              query: new URLSearchParams(query),
+            })
+          ).toBeUndefined();
+        }
+      }
+    );
+
     it('name no read without their id', () => {
       for (const route of ID_ROUTES) {
         expect(

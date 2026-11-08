@@ -42,6 +42,7 @@ test.describe('DBB proxy', () => {
     ['a non-numeric Liga', 'GET', '/api/dbb/liga/abc/tabelle'],
     ['a POST to the Liga search', 'POST', '/api/dbb/ligen'],
     ['a malformed gender', 'GET', '/api/dbb/ligen?geschlecht=2'],
+    ['a read with a query', 'GET', '/api/dbb/team/313036/spiele?anything=x'],
   ] as const) {
     test(`answers ${what} with 404, not cached`, async ({ request }) => {
       const response = await request.fetch(path, { method });

@@ -104,7 +104,7 @@ const NOT_FOUND: ReadonlyArray<readonly [RegExp, unknown]> = [
 
 /**
  * How the DBB answers a call of `path` (relative to `DBB_BASE_URL`, as
- * `dbbHttpRequest` builds it) with `body` (a POST's JSON, spacing aside),
+ * `dbbHttpRequest` builds it) with `body` (a POST's JSON, spacing and key order aside),
  * from the anonymised fixtures: the recording of a recorded read, the DBB's
  * not-found envelope for a GET of any other id of a known read, and
  * `undefined` for a read the fake does not know. For specs and the app's
@@ -125,18 +125,29 @@ export function fakeDbbAnswer(
       const parsed = parsedOrUndefined(body);
       return parsed === undefined
         ? undefined
-        : RECORDED.get(`POST ${path} ${JSON.stringify(parsed)}`);
+        : RECORDED.get(`POST ${path} ${kanonisch(parsed)}`);
     }
     default:
       return undefined;
   }
 }
 
-/** One key per call: its method, its path and a POST's body as JSON. */
+/** One key per call: its method, its path and a POST's body's content. */
 function callKey(call: DbbHttpRequest): string {
   return call.method === 'POST'
-    ? `POST ${call.path} ${JSON.stringify(call.body)}`
+    ? `POST ${call.path} ${kanonisch(call.body)}`
     : `GET ${call.path}`;
+}
+
+/** `value` as JSON with every object's keys sorted: equal content, equal text. */
+function kanonisch(value: unknown): string {
+  return JSON.stringify(value, (_key, inner: unknown) =>
+    inner !== null && typeof inner === 'object' && !Array.isArray(inner)
+      ? Object.fromEntries(
+          Object.entries(inner).sort(([a], [b]) => a.localeCompare(b))
+        )
+      : inner
+  );
 }
 
 function parsedOrUndefined(body: string | undefined): unknown {

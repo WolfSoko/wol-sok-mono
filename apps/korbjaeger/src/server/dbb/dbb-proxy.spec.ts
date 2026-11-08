@@ -204,6 +204,16 @@ describe('DBB proxy', () => {
         expect(dbb).not.toHaveBeenCalled();
       });
 
+      it('answers the read with any query with 404, not cached', async () => {
+        const dbb = recordedDbb();
+
+        const response = await proxy(dbb)(`${path}?anything=x`);
+
+        expect(response.status).toBe(404);
+        expect(response.headers.get('cache-control')).toBeNull();
+        expect(dbb).not.toHaveBeenCalled();
+      });
+
       it('answers another method than GET with 404', async () => {
         const dbb = recordedDbb();
 

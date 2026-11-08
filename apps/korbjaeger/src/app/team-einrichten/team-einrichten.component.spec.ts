@@ -9,6 +9,10 @@ import {
   DbbBasketballData,
   dbbHttpRequest,
   type DbbTransport,
+  type LigaSeite,
+  type LigaSucheFilter,
+  type ReadOptions,
+  type ReadSignal,
 } from '@wolsok/feat-shared-basketball-data';
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
 import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
@@ -35,6 +39,34 @@ const recordedDbb: DbbTransport = async (request) => {
 
 @Component({ template: '' })
 class TeamSeiteAttrappe {}
+
+/** The recorded DBB, whose later pages of Ligen never come. */
+class HaengendeSeiten extends DbbBasketballData {
+  /** The signal of each later page asked for. */
+  public readonly signale: ReadSignal[] = [];
+
+  public constructor() {
+    super(recordedDbb);
+  }
+
+  public override ligaSeite(
+    _filter: LigaSucheFilter,
+    _startIndex: number,
+    options?: ReadOptions
+  ): Promise<LigaSeite> {
+    if (options?.signal !== undefined) {
+      this.signale.push(options.signal);
+    }
+    return new Promise(() => undefined);
+  }
+}
+
+/** The texts of the alerts within the element `qa` names. */
+function alarme(seite: HTMLElement, qa: string): string[] {
+  return [...seite.querySelectorAll(`[data-qa="${qa}"] [role="alert"]`)].map(
+    textOf
+  );
+}
 
 interface Assistent {
   readonly fixture: ComponentFixture<TeamEinrichtenComponent>;
@@ -325,5 +357,82 @@ describe('TeamEinrichtenComponent', () => {
     expect(textOf(assistent.seite.querySelector('[role="alert"]'))).toContain(
       'Der DBB ist gerade nicht erreichbar.'
     );
+  });
+
+  it('follows one Team only when two are tapped at once', async () => {
+    const assistent = await render();
+    await bisZumTeam(assistent);
+
+    const knoepfe = assistent.seite.querySelectorAll<HTMLButtonElement>(
+      'button[data-qa="team"]'
+    );
+    knoepfe[1].click();
+    knoepfe[0].click();
+    await assistent.stabil();
+
+    expect(assistent.auswahl.teams()).toEqual([313036]);
+    expect(TestBed.inject(Router).url).toBe('/team/313036');
+  });
+
+  it('cancels a later page of Ligen when a pick changes', async () => {
+    const data = new HaengendeSeiten();
+    const assistent = await render(data);
+    await bisZurLiga(assistent);
+    await (await assistent.knopf('Weitere Ligen'))?.click();
+    expect(data.signale).toHaveLength(1);
+    expect(data.signale[0].aborted).toBe(false);
+
+    await assistent.waehlen('geschlecht', 'Jugend weiblich');
+
+    expect(data.signale[0].aborted).toBe(true);
+  });
+
+  it('cancels a later page of Ligen when the page is left', async () => {
+    const data = new HaengendeSeiten();
+    const assistent = await render(data);
+    await bisZurLiga(assistent);
+    await (await assistent.knopf('Weitere Ligen'))?.click();
+
+    assistent.fixture.destroy();
+
+    expect(data.signale[0].aborted).toBe(true);
+  });
+
+  it('keeps the pages of Ligen read when another Liga is wanted', async () => {
+    const assistent = await render();
+    await bisZumTeam(assistent);
+
+    await (await assistent.knopf('Andere Liga'))?.click();
+    await assistent.stabil();
+
+    expect(assistent.eintraege('liga')).toHaveLength(20);
+    expect(assistent.eintraege('team')).toEqual([]);
+  });
+
+  it('says at the first step when the DBB names no Verband', async () => {
+    const assistent = await render(
+      new DbbBasketballData(async () => {
+        throw new BasketballDataError('not-found', 'DBB: status 1');
+      })
+    );
+
+    expect(alarme(assistent.seite, 'schritt-verband')).toEqual([
+      'Der DBB nennt gerade keine Verbände.',
+    ]);
+  });
+
+  it('says at the step that failed why, until its pick changes', async () => {
+    const assistent = await render();
+    await assistent.waehlen('verband', 'Niedersachsen');
+
+    // the fixtures have no search for Niedersachsen's U14
+    await assistent.waehlen('altersklasse', 'U14');
+    expect(alarme(assistent.seite, 'schritt-alter')).toEqual([
+      'Der DBB ist gerade nicht erreichbar. Bitte später noch einmal versuchen.',
+    ]);
+
+    await assistent.waehlen('altersklasse', 'U12');
+    expect(alarme(assistent.seite, 'schritt-alter')).toEqual([]);
+    expect(assistent.seite.querySelectorAll('[role="alert"]')).toHaveLength(0);
   });
 });

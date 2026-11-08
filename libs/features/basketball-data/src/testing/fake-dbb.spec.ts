@@ -84,6 +84,21 @@ describe('fakeDbbAnswer', () => {
     expect(fakeDbbAnswer('POST', 'wam/data', spaced)).toEqual(niedersachsen);
   });
 
+  it('takes a body with its keys in another order', () => {
+    const { body } = dbbFetchInput(
+      DBB_BASE_URL,
+      dbbHttpRequest({ kind: 'liga-suche', filter: NIEDERSACHSEN }),
+      {}
+    );
+    const umgekehrt = Object.fromEntries(
+      Object.entries(JSON.parse(body ?? '{}') as object).reverse()
+    );
+
+    expect(
+      fakeDbbAnswer('POST', 'wam/data', JSON.stringify(umgekehrt))
+    ).toEqual(niedersachsen);
+  });
+
   it.each([
     ['a filter it has no recording of', '{"token":0,"verbandIds":[2]}'],
     ['no body', undefined],

@@ -43,5 +43,17 @@ body {
   color: var(--mat-sys-error);
 }
 
+// a Material list whose items wrap long names (Teams, Ligen, Spiele)
+// rather than cut them off
+.umbrechende-liste .mat-mdc-list-item {
+  height: auto;
+  padding-block: 0.5rem;
+
+  [matListItemTitle] {
+    overflow: visible;
+    white-space: normal;
+  }
+}
+
 // `.cdk-visually-hidden`: text for screen readers only, e.g. "(dein Team)"
 @include cdk.a11y-visually-hidden();

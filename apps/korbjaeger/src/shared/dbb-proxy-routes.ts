@@ -125,7 +125,10 @@ export function proxyUrl(request: DbbRequest): string {
   return urlOf(request.kind, request);
 }
 
-/** A route reading by the one numeric id its pattern names as `:param`. */
+/**
+ * A route reading by the one numeric id its pattern names as `:param`,
+ * and nothing else: a request with any query names no read.
+ */
 function idRoute<K extends ProxyKind>(
   pattern: string,
   read: (id: number) => ProxyRead<K>,
@@ -137,8 +140,9 @@ function idRoute<K extends ProxyKind>(
   }
   return {
     pattern,
-    readOf: ({ params }) => {
-      const dbbId = parseDbbId(params[param]);
+    readOf: ({ params, query }) => {
+      // no query either: each new one would be a cache miss for the DBB
+      const dbbId = query.size === 0 ? parseDbbId(params[param]) : undefined;
       return dbbId === undefined ? undefined : read(dbbId);
     },
     urlOf: (request) => pattern.replace(`:${param}`, String(id(request))),

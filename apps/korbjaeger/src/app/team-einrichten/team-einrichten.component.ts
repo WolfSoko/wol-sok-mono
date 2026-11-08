@@ -19,7 +19,13 @@ import {
   type VerbandId,
 } from '@wolsok/feat-shared-basketball-data';
 import { ligaSucheResource } from '../basketball-data/liga-suche-resource';
-import { fehlerText, KEINE_LIGEN } from '../fehler/fehler-text';
+import {
+  fehlerText,
+  KEINE_LIGEN_IM_VERBAND,
+  KEINE_LIGEN_IN_ALTERSKLASSE,
+  KEINE_VERBAENDE,
+} from '../fehler/fehler-text';
+import { ligenSeiten } from './ligen-seiten';
 import { ligaBeschreibung } from './liga-beschreibung';
 import { LigaTeamsComponent } from './liga-teams.component';
 import { LigaWahlComponent } from './liga-wahl.component';
@@ -57,27 +63,26 @@ export class TeamEinrichtenComponent {
   >({ source: this.altersklasse, computation: () => undefined });
 
   /** Each step's filter: its pick added to the last; none until made. */
-  private readonly verbandFilter = computed(() => {
-    const verband = this.verband();
-    return verband === undefined
-      ? undefined
-      : { ...KEIN_LIGA_FILTER, verbandIds: [verband] };
-  });
-  private readonly altersklasseFilter = computed(() => {
-    const davor = this.verbandFilter();
-    const altersklasse = this.altersklasse();
-    return davor === undefined || altersklasse === undefined
-      ? undefined
-      : { ...davor, altersklasseIds: [altersklasse] };
-  });
+  private readonly verbandFilter = computed(() =>
+    eingeengt(KEIN_LIGA_FILTER, 'verbandIds', this.verband())
+  );
+  private readonly altersklasseFilter = computed(() =>
+    eingeengt(this.verbandFilter(), 'altersklasseIds', this.altersklasse())
+  );
   /** The filter the Ligen are listed for, once all three are picked. */
-  protected readonly ligaFilter = computed((): LigaSucheFilter | undefined => {
-    const davor = this.altersklasseFilter();
-    const geschlecht = this.geschlecht();
-    return davor === undefined || geschlecht === undefined
-      ? undefined
-      : { ...davor, altersgruppeGeschlechtIds: [geschlecht] };
-  });
+  protected readonly ligaFilter = computed(() =>
+    eingeengt(
+      this.altersklasseFilter(),
+      'altersgruppeGeschlechtIds',
+      this.geschlecht()
+    )
+  );
+
+  /**
+   * The Ligen of `ligaFilter`, page by page; kept here, so going back from
+   * a picked Liga shows the pages already read.
+   */
+  protected readonly ligen = ligenSeiten(() => this.ligaFilter());
 
   protected readonly liga = linkedSignal<
     LigaSucheFilter | undefined,
@@ -112,14 +117,33 @@ export class TeamEinrichtenComponent {
       this.imVerband.isLoading() ||
       this.inAltersklasse.isLoading()
   );
-  protected readonly fehler = computed(() =>
-    fehlerText(
-      this.alle.error() ??
-        this.imVerband.error() ??
-        this.inAltersklasse.error(),
-      KEINE_LIGEN
-    )
+  /**
+   * Why a step's search failed, at that step, with a text that fits it; a
+   * resource drops its error once its filter changes or it reads again.
+   */
+  protected readonly verbandFehler = computed(() =>
+    fehlerText(this.alle.error(), KEINE_VERBAENDE)
+  );
+  protected readonly altersklasseFehler = computed(() =>
+    fehlerText(this.imVerband.error(), KEINE_LIGEN_IM_VERBAND)
+  );
+  protected readonly geschlechtFehler = computed(() =>
+    fehlerText(this.inAltersklasse.error(), KEINE_LIGEN_IN_ALTERSKLASSE)
   );
 
   protected readonly beschreibung = ligaBeschreibung;
+}
+
+/**
+ * `davor` narrowed to `pick` in its list `liste`; none while either is
+ * missing, so a step's filter waits for the steps before it.
+ */
+function eingeengt<K extends keyof LigaSucheFilter>(
+  davor: LigaSucheFilter | undefined,
+  liste: K,
+  pick: LigaSucheFilter[K][number] | undefined
+): LigaSucheFilter | undefined {
+  return davor === undefined || pick === undefined
+    ? undefined
+    : { ...davor, [liste]: [pick] };
 }

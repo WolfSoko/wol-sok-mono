@@ -6,12 +6,11 @@
 @if (laedt()) {
   <mat-progress-bar mode="indeterminate" aria-label="Auswahl wird geladen" />
 }
-@if (fehler(); as text) {
-  <p class="fehler" role="alert">{{ text }}</p>
-}
-
-<section>
+<section data-qa="schritt-verband">
   <h2>1. Verband</h2>
+  @if (verbandFehler(); as text) {
+    <p class="fehler" role="alert">{{ text }}</p>
+  }
   @if (verbaende().length > 0) {
     <mat-form-field appearance="outline">
       <mat-label>Verband</mat-label>
@@ -29,8 +28,11 @@
 </section>
 
 @if (verband() !== undefined) {
-  <section>
+  <section data-qa="schritt-alter">
     <h2>2. Altersklasse und Geschlecht</h2>
+    @if (altersklasseFehler() ?? geschlechtFehler(); as text) {
+      <p class="fehler" role="alert">{{ text }}</p>
+    }
     <div class="nebeneinander">
       @if (altersklassen().length > 0) {
         <mat-form-field appearance="outline">
@@ -64,8 +66,8 @@
   </section>
 }
 
-@if (ligaFilter(); as filter) {
-  <section>
+@if (ligaFilter() !== undefined) {
+  <section data-qa="schritt-liga">
     <h2>3. Liga</h2>
     @if (liga(); as gewaehlt) {
       <div class="gewaehlt" data-qa="gewaehlte-liga">
@@ -79,7 +81,7 @@
         </button>
       </div>
     } @else {
-      <korb-liga-wahl [filter]="filter" (gewaehlt)="liga.set($event)" />
+      <korb-liga-wahl [seiten]="ligen" (gewaehlt)="liga.set($event)" />
     }
   </section>
 }

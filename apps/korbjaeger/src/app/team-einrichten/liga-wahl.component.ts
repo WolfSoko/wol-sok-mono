@@ -8,21 +8,23 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import type {
-  Liga,
-  LigaSucheFilter,
-} from '@wolsok/feat-shared-basketball-data';
+import type { Liga } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEINE_LIGEN } from '../fehler/fehler-text';
 import { ligaBeschreibung } from './liga-beschreibung';
-import { ligenSeiten } from './ligen-seiten';
+import type { LigenSeiten } from './ligen-seiten';
 
-/** The Ligen of a filter, page by page, to pick one of. */
+/**
+ * The Ligen of a filter, page by page, to pick one of. Shows the pages it
+ * is given (`ligenSeiten`), which outlive it: back from a picked Liga,
+ * the pages read are still there.
+ */
 @Component({
   selector: 'korb-liga-wahl',
   imports: [MatButtonModule, MatListModule, MatProgressBarModule],
   template: `
+    @let ligen = seiten();
     @if (ligen.ligen().length > 0) {
-      <mat-action-list class="ligen">
+      <mat-action-list class="umbrechende-liste">
         @for (liga of ligen.ligen(); track liga.id) {
           <button
             mat-list-item
@@ -50,30 +52,17 @@ import { ligenSeiten } from './ligen-seiten';
       <p class="fehler" role="alert">{{ text }}</p>
     }
   `,
-  styles: `
-    // Liga names are long: let them wrap rather than cut them off.
-    .ligen .mat-mdc-list-item {
-      height: auto;
-      padding-block: 0.5rem;
-
-      [matListItemTitle] {
-        overflow: visible;
-        white-space: normal;
-      }
-    }
-  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LigaWahlComponent {
-  /** The Verband, age group and gender to list the Ligen of. */
-  public readonly filter = input.required<LigaSucheFilter>();
+  /** The Ligen of the Verband, age group and gender picked. */
+  public readonly seiten = input.required<LigenSeiten>();
   /** The Liga tapped. */
   public readonly gewaehlt = output<Liga>();
 
-  protected readonly ligen = ligenSeiten(() => this.filter());
   protected readonly beschreibung = ligaBeschreibung;
 
   protected readonly fehler = computed(() =>
-    fehlerText(this.ligen.fehler(), KEINE_LIGEN)
+    fehlerText(this.seiten().fehler(), KEINE_LIGEN)
   );
 }

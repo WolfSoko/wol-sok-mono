@@ -1,8 +1,11 @@
 import {
   computed,
+  DestroyRef,
+  effect,
   inject,
   Injector,
   linkedSignal,
+  untracked,
   type Signal,
 } from '@angular/core';
 import {
@@ -44,8 +47,8 @@ const KEINE_FOLGESEITEN: FolgeSeiten = {
 /**
  * The Ligen of the filter `filter` gives: the first page with the search,
  * every later one through the DBB's list call on `mehr()`. A new filter
- * starts over; a page still read for the last is dropped. Created in an
- * injection context, or on `injector`.
+ * starts over and cancels a page still read for the last, as leaving the
+ * page does. Created in an injection context, or on `injector`.
  */
 export function ligenSeiten(
   filter: () => LigaSucheFilter | undefined,
@@ -66,6 +69,25 @@ export function ligenSeiten(
     const letzte = seiten().at(-1);
     return letzte === undefined ? undefined : naechsterStartIndex(letzte);
   });
+
+  /** The read of a later page under way, cancelled by a new filter. */
+  let laufend: AbortController | undefined;
+  const abbrechen = (): void => {
+    laufend?.abort();
+    laufend = undefined;
+  };
+  injector.get(DestroyRef).onDestroy(abbrechen);
+  let gesehen = untracked(aktuellerFilter);
+  effect(
+    () => {
+      const neu = aktuellerFilter();
+      if (neu !== gesehen) {
+        gesehen = neu;
+        untracked(abbrechen);
+      }
+    },
+    { injector }
+  );
 
   /** Applies `aenderung` while `fuer` is still the filter. */
   const solangeAktuell = (
@@ -93,15 +115,26 @@ export function ligenSeiten(
         laedt: true,
         fehler: undefined,
       }));
+      abbrechen();
+      const abbruch = new AbortController();
+      laufend = abbruch;
       try {
-        const seite = await data.ligaSeite(fuer, start);
+        const seite = await data.ligaSeite(fuer, start, {
+          signal: abbruch.signal,
+        });
         solangeAktuell(fuer, (bisher) => ({
           seiten: [...bisher.seiten, seite],
           laedt: false,
           fehler: undefined,
         }));
       } catch (fehler: unknown) {
-        solangeAktuell(fuer, (bisher) => ({ ...bisher, laedt: false, fehler }));
+        if (!abbruch.signal.aborted) {
+          solangeAktuell(fuer, (bisher) => ({
+            ...bisher,
+            laedt: false,
+            fehler,
+          }));
+        }
       }
     },
   };
