@@ -3,6 +3,7 @@ import geplant from './fixtures/matchinfo-2843814.json';
 import gespielt from './fixtures/matchinfo-2911141.json';
 import abgesagt from './fixtures/matchinfo-2930311.json';
 import kampflos from './fixtures/matchinfo-2930414.json';
+import ohneViertel from './fixtures/matchinfo-2861436.json';
 import { mapSpielDetails } from './map-spiel-details';
 
 describe('mapSpielDetails', () => {
@@ -73,6 +74,24 @@ describe('mapSpielDetails', () => {
     };
 
     expect(mapSpielDetails(partial).viertel).toEqual([]);
+  });
+
+  it('reads a played Spiel whose Verband records no quarters', () => {
+    const details = mapSpielDetails(readEnvelope(ohneViertel));
+
+    expect(details.spiel.status).toEqual({
+      art: 'gespielt',
+      ergebnis: { heim: 78, gast: 47 },
+      bestaetigt: false,
+    });
+    expect(details.viertel).toEqual([]);
+    expect(details.verlaengerungen).toEqual([]);
+    expect(details.halle).toEqual({
+      name: 'Schulsporthalle',
+      strasse: 'Schulstr. 12',
+      plz: '38553',
+      ort: 'Wasbüttel',
+    });
   });
 
   it('reads a planned Spiel without periods, with its Halle', () => {
