@@ -1,10 +1,14 @@
 import type { Liga } from './liga';
-import type { Team } from './team';
+import type { SpielPartei } from './spiel';
 
 /** One Team's line in a Liga's Tabelle. */
 export interface TabellenZeile {
   readonly rang: number;
-  readonly team: Team;
+  /**
+   * The Team, or the slot a Hauptrunde keeps for a Team its Vorrunden have
+   * yet to settle ("Nord 1. Platz"), as on either side of a Spiel.
+   */
+  readonly partei: SpielPartei;
   readonly spiele: number;
   readonly siege: number;
   readonly niederlagen: number;

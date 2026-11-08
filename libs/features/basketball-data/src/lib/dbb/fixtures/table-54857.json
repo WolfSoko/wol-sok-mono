@@ -1,0 +1,176 @@
+{
+  "timestamp": "2026-11-08T18:40:21+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "prevSpieltag": null,
+    "selSpieltag": null,
+    "selSpielDatum": null,
+    "nextSpieltag": null,
+    "ligaData": {
+      "seasonId": 2026,
+      "seasonName": "2026/2027",
+      "actualMatchDay": {
+        "spieltag": 6,
+        "bezeichnung": "6. Spieltag"
+      },
+      "ligaId": 54857,
+      "liganame": "Regionsliga Braunschweig mu12",
+      "liganr": 42161,
+      "skName": "Regionsliga",
+      "skNameSmall": "RL",
+      "skEbeneId": 1,
+      "skEbeneName": "Bezirk",
+      "akName": "U12",
+      "geschlechtId": 1,
+      "geschlecht": "männlich",
+      "verbandId": 7,
+      "verbandName": "Niedersachsen",
+      "bezirknr": 10,
+      "bezirkName": "Region Braunschweig",
+      "kreisnr": null,
+      "kreisname": null,
+      "statisticType": 0,
+      "vorabliga": false,
+      "tableExists": true,
+      "crossTableExists": true
+    },
+    "spieltage": null,
+    "matches": [],
+    "tabelle": {
+      "ligaData": null,
+      "entries": [
+        {
+          "rang": 1,
+          "team": {
+            "seasonTeamId": 454507,
+            "teamCompetitionId": 454507,
+            "teamPermanentId": null,
+            "teamname": "Mitte 1. Platz",
+            "teamnameSmall": "M1",
+            "clubId": null,
+            "verzicht": false
+          },
+          "anzspiele": 0,
+          "anzGewinnpunkte": 0,
+          "anzVerlustpunkte": 0,
+          "s": 0,
+          "n": 0,
+          "koerbe": 0,
+          "gegenKoerbe": 0,
+          "korbdiff": 0
+        },
+        {
+          "rang": 2,
+          "team": {
+            "seasonTeamId": 454508,
+            "teamCompetitionId": 454508,
+            "teamPermanentId": null,
+            "teamname": "Mitte 2. Platz",
+            "teamnameSmall": "M2",
+            "clubId": null,
+            "verzicht": false
+          },
+          "anzspiele": 0,
+          "anzGewinnpunkte": 0,
+          "anzVerlustpunkte": 0,
+          "s": 0,
+          "n": 0,
+          "koerbe": 0,
+          "gegenKoerbe": 0,
+          "korbdiff": 0
+        },
+        {
+          "rang": 3,
+          "team": {
+            "seasonTeamId": 454505,
+            "teamCompetitionId": 454505,
+            "teamPermanentId": null,
+            "teamname": "Nord 1. Platz",
+            "teamnameSmall": "N1",
+            "clubId": null,
+            "verzicht": false
+          },
+          "anzspiele": 0,
+          "anzGewinnpunkte": 0,
+          "anzVerlustpunkte": 0,
+          "s": 0,
+          "n": 0,
+          "koerbe": 0,
+          "gegenKoerbe": 0,
+          "korbdiff": 0
+        },
+        {
+          "rang": 4,
+          "team": {
+            "seasonTeamId": 454506,
+            "teamCompetitionId": 454506,
+            "teamPermanentId": null,
+            "teamname": "Nord 2. Platz",
+            "teamnameSmall": "N2",
+            "clubId": null,
+            "verzicht": false
+          },
+          "anzspiele": 0,
+          "anzGewinnpunkte": 0,
+          "anzVerlustpunkte": 0,
+          "s": 0,
+          "n": 0,
+          "koerbe": 0,
+          "gegenKoerbe": 0,
+          "korbdiff": 0
+        },
+        {
+          "rang": 5,
+          "team": {
+            "seasonTeamId": 454503,
+            "teamCompetitionId": 454503,
+            "teamPermanentId": null,
+            "teamname": "Süd 1. Platz",
+            "teamnameSmall": "S1",
+            "clubId": null,
+            "verzicht": false
+          },
+          "anzspiele": 0,
+          "anzGewinnpunkte": 0,
+          "anzVerlustpunkte": 0,
+          "s": 0,
+          "n": 0,
+          "koerbe": 0,
+          "gegenKoerbe": 0,
+          "korbdiff": 0
+        },
+        {
+          "rang": 6,
+          "team": {
+            "seasonTeamId": 454504,
+            "teamCompetitionId": 454504,
+            "teamPermanentId": null,
+            "teamname": "Süd 2. Platz",
+            "teamnameSmall": "S2",
+            "clubId": null,
+            "verzicht": false
+          },
+          "anzspiele": 0,
+          "anzGewinnpunkte": 0,
+          "anzVerlustpunkte": 0,
+          "s": 0,
+          "n": 0,
+          "koerbe": 0,
+          "gegenKoerbe": 0,
+          "korbdiff": 0
+        }
+      ],
+      "bbl": false
+    },
+    "kreuztabelle": null,
+    "teamStatistik": null
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

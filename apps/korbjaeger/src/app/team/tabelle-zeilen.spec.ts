@@ -13,7 +13,7 @@ function zeile(
 ): TabellenZeile {
   return {
     rang,
-    team: { id, name, vereinId: id },
+    partei: { art: 'team', team: { id, name, vereinId: id } },
     spiele: 5,
     siege: 5 - rang,
     niederlagen: rang,
@@ -44,7 +44,6 @@ describe('tabelleZeilen', () => {
   it('shows each line with its points for and against and the difference', () => {
     expect(tabelleZeilen(TABELLE, 313036)[0]).toEqual({
       rang: 1,
-      teamId: 313040,
       team: 'TV Jahn Wolfsburg',
       spiele: 5,
       siege: 4,
@@ -65,6 +64,17 @@ describe('tabelleZeilen', () => {
     expect(
       tabelleZeilen(TABELLE, 313036).map(({ eigenes }) => eigenes)
     ).toEqual([false, true, false]);
+  });
+
+  it('names a slot of a Hauptrunde, which is never the Team', () => {
+    const slot: TabellenZeile = {
+      ...zeile(1, 0, '', 0, 0),
+      partei: { art: 'offen', bezeichnung: 'Nord 1. Platz' },
+    };
+
+    expect(
+      tabelleZeilen({ ...TABELLE, zeilen: [slot] }, 313036)[0]
+    ).toMatchObject({ team: 'Nord 1. Platz', eigenes: false, differenz: '0' });
   });
 
   it('marks no line of a Tabelle without the Team', () => {

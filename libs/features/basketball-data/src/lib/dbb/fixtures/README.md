@@ -33,6 +33,7 @@ invented. Long lists are cut where `fixture-requests.ts` says (`trims`).
 | `table-54308.json`                                                       | Tabelle                                                                                                                |
 | `table-54862.json`                                                       | Tabelle of Team 313036's Vorrunde (the Team on rank 2), for the e2e                                                    |
 | `table-54689.json`                                                       | A friendly Liga: the DBB keeps no Tabelle (`tabelle: null`), for the e2e                                               |
+| `table-54857.json`                                                       | Tabelle of a Hauptrunde before its Vorrunden ended: every line a slot without a Team                                   |
 | `team-313036-matches.json`                                               | A Team in two Ligen (a friendly Liga, then its Vorrunde)                                                               |
 | `club-1476-actualmatches.json`                                           | A Verein's Spiele: two of its Teams against each other (listed twice), a Team in two Ligen                             |
 | `matchinfo-2911141.json`                                                 | Played Spiel: result, quarters, Halle, referees                                                                        |
@@ -53,7 +54,7 @@ How the DBB marks things, as seen in these responses:
 - A cancellation: `abgesagt: true`.
 - A slot of a Hauptrunde: a Team with a `seasonTeamId` but without
   `teamPermanentId` or `clubId` (both `null`), named after the place it
-  waits for.
+  waits for. A Tabelle lists such slots as lines of their own.
 - No Spielbericht yet: `matchBoxscore` with empty player lists.
 - A moved Spiel: no flag; the DBB just carries the new date.
 - Quarter scores (`heimV1stand`, `heimHalbzeitstand`, `heimV3stand`,

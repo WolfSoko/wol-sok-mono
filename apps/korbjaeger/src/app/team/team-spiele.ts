@@ -5,11 +5,11 @@ import {
   sonderfallVon,
   type Liga,
   type Spiel,
-  type SpielPartei,
   type SpielSonderfall,
   type TeamId,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
+import { parteiName } from './partei-name';
 
 /** One line of a Team's Spiele, as the page shows it. */
 export interface SpielZeile {
@@ -61,15 +61,11 @@ function spielZeile(
     liga: liga?.name ?? '',
     ort: seite && ORT[seite],
     gegner: seite
-      ? name(gegnerVon(spiel, seite))
-      : `${name(spiel.heim)} – ${name(spiel.gast)}`,
+      ? parteiName(gegnerVon(spiel, seite))
+      : `${parteiName(spiel.heim)} – ${parteiName(spiel.gast)}`,
     ergebnis: ergebnis && `${ergebnis.heim}:${ergebnis.gast}`,
     markierung: sonderfallVon(spiel),
   };
 }
 
 const ORT = { heim: 'Heim', gast: 'Auswärts' } as const;
-
-function name(partei: SpielPartei): string {
-  return partei.art === 'team' ? partei.team.name : partei.bezeichnung;
-}

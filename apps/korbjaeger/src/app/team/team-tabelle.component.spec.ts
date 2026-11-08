@@ -30,7 +30,7 @@ function zeile(
 ): TabellenZeile {
   return {
     rang,
-    team: { id, name, vereinId: id },
+    partei: { art: 'team', team: { id, name, vereinId: id } },
     spiele: 5,
     siege: 5 - rang,
     niederlagen: rang,

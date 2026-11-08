@@ -52,7 +52,7 @@ function spiel(overrides: Partial<Spiel> & Pick<Spiel, 'id' | 'datum'>): Spiel {
 function tabellenZeile(rang: number, team: Team): Tabelle['zeilen'][number] {
   return {
     rang,
-    team,
+    partei: { art: 'team', team },
     spiele: 2,
     siege: 2 - rang + 1,
     niederlagen: rang - 1,

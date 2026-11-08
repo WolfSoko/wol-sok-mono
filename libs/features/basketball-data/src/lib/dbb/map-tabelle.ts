@@ -1,7 +1,7 @@
 import type { Tabelle, TabellenZeile } from '../domain/tabelle';
 import { DbbObject } from './dbb-object';
 import { mapLiga } from './map-liga';
-import { mapTeam } from './map-team';
+import { mapSpielPartei } from './map-team';
 
 /** A Liga's Tabelle (`competition/table/id/{ligaId}`). */
 export function mapTabelle(data: unknown): Tabelle {
@@ -17,7 +17,7 @@ export function mapTabelle(data: unknown): Tabelle {
 function mapZeile(entry: DbbObject): TabellenZeile {
   return {
     rang: entry.number('rang'),
-    team: mapTeam(entry.object('team')),
+    partei: mapSpielPartei(entry.object('team')),
     spiele: entry.number('anzspiele'),
     siege: entry.number('s'),
     niederlagen: entry.number('n'),

@@ -75,6 +75,7 @@ export const FIXTURE_REQUESTS: readonly FixtureRequest[] = [
   // the Tabellen of Team 313036's two Ligen, for the e2e's Team page
   { name: 'table-54689', request: { kind: 'tabelle', ligaId: 54689 } },
   { name: 'table-54862', request: { kind: 'tabelle', ligaId: 54862 } },
+  { name: 'table-54857', request: { kind: 'tabelle', ligaId: 54857 } },
   { name: 'table-not-found', request: { kind: 'tabelle', ligaId: 1 } },
   {
     name: 'team-313036-matches',

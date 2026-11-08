@@ -3,11 +3,12 @@ import type {
   TabellenZeile,
   TeamId,
 } from '@wolsok/feat-shared-basketball-data';
+import { parteiName } from './partei-name';
 
 /** One line of a Liga's Tabelle, as the Team page shows it. */
-export interface TabelleZeile {
+export interface TabelleZeileAnsicht {
   readonly rang: number;
-  readonly teamId: TeamId;
+  /** The Team's name, or the slot's ("Nord 1. Platz"). */
   readonly team: string;
   readonly spiele: number;
   readonly siege: number;
@@ -24,21 +25,23 @@ export interface TabelleZeile {
 export function tabelleZeilen(
   tabelle: Tabelle,
   teamId: TeamId
-): readonly TabelleZeile[] {
+): readonly TabelleZeileAnsicht[] {
   return tabelle.zeilen.map((zeile) => tabelleZeile(zeile, teamId));
 }
 
-function tabelleZeile(zeile: TabellenZeile, teamId: TeamId): TabelleZeile {
+function tabelleZeile(
+  zeile: TabellenZeile,
+  teamId: TeamId
+): TabelleZeileAnsicht {
   return {
     rang: zeile.rang,
-    teamId: zeile.team.id,
-    team: zeile.team.name,
+    team: parteiName(zeile.partei),
     spiele: zeile.spiele,
     siege: zeile.siege,
     niederlagen: zeile.niederlagen,
     koerbe: `${zeile.koerbe}:${zeile.gegenkoerbe}`,
     differenz: vorzeichen(zeile.korbdifferenz),
-    eigenes: zeile.team.id === teamId,
+    eigenes: zeile.partei.art === 'team' && zeile.partei.team.id === teamId,
   };
 }
 
