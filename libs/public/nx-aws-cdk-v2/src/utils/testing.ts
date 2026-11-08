@@ -34,7 +34,7 @@ export function mockExecutorContext(
 }
 
 /** Stands in for the cdk process a mocked `child_process.exec` spawns. */
-export class FakeChildProcess extends EventEmitter {
+class FakeChildProcess extends EventEmitter {
   public readonly stdout = new EventEmitter();
   public readonly stderr = new EventEmitter();
 }
@@ -45,7 +45,7 @@ export function spawnFakeChildProcess(): ChildProcess {
 }
 
 /** The part of a mocked `exec` that tells which processes it returned. */
-export interface SpawningMock {
+interface SpawningMock {
   mock: { results: ReadonlyArray<{ value: unknown }> };
 }
 
