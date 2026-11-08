@@ -11,7 +11,7 @@ Six PRs, in order, each green on its own and merged through its own merge reques
 3. **Domain types and errors** — `src/lib/domain/*.ts` (Verband, Liga, Saison, Verein, Team, Spiel, Spielbericht, KaderEintrag = BenannterSpieler | AnonymerSpieler, Spielerwerte, TabellenZeile, Halle), `BasketballDataError` with `kind`. Commit `feat(...): add the domain types`.
 4. **Envelope** — `dbb/envelope.ts`: `status` `0`/`1`/`-1` → data / not-found / unavailable, wrong shape → unexpected-shape. Spec first. Commit.
 5. **Mappers, one per endpoint** — `dbb/map-*.ts` with specs on the fixtures: Liga search + paging, Liga teams, Verein teams, team matches merged across Ligen, Tabelle, matchInfo (score, quarters, Halle, cancelled/forfeited, moved), boxscore (Kader, Anonyme Spieler, all-zero → not recorded). One commit per mapper.
-6. **`BasketballData` port and `DbbBasketballData` adapter** — over an injected `fetchJson(path, init?)`; spec with a fake transport. Commit.
+6. **`BasketballData` port and `DbbBasketballData` adapter** — over an injected `DbbTransport` that takes one allowlisted `DbbRequest` (`dbbHttpRequest` maps it to method, path and body, for the proxy to reuse); `ligaSeite` pages the Liga list; spec with a fake transport. Commit.
 7. **ADRs 0018 and 0019**; they refer to the glossary of [#2860](https://github.com/WolfSoko/wol-sok-mono/pull/2860) without copying it. Commit `docs(...)`.
 
 ## PR 2 — App shell and proxy (`Refs #2861`)
