@@ -116,7 +116,9 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   It passes the DBB's body on unchanged, caches successes
   (`public, max-age=60, s-maxage=300`; a finished Spiel's Spielbericht,
   `/api/dbb/spiel/{id}/bericht` with a confirmed result and both Kader, by
-  the lib's `dbbBoxscoreFinished` on the body itself, `s-maxage=3600`) and nothing else, turns DBB
+  the lib's `dbbBoxscoreFinished` on the body itself, `s-maxage=3600`) and
+  sends every error (404, 502) `no-store`, since Hosting would add its
+  default `max-age=600` and a browser keep a DBB outage ten minutes; it turns DBB
   `status: "1"` into 404 and a timeout (5 s), a network error, a 5xx or
   `status: "-1"` into 502, and calls the DBB with its own User-Agent and
   no cookies. See [ADR 0018](../../docs/adr/0018-korbjaeger-dbb-data-behind-a-caching-proxy.md).

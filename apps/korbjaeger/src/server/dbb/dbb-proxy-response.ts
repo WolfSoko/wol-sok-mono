@@ -14,6 +14,13 @@ export interface ProxyResponse {
 
 const JSON_CONTENT_TYPE = 'application/json; charset=utf-8';
 
+/**
+ * What every error of the proxy is sent with: kept nowhere. Without a
+ * `Cache-Control` of its own Firebase Hosting adds `max-age=600`, so a
+ * browser would show a 404 or a DBB outage's 502 for ten minutes.
+ */
+export const PROXY_ERROR_CACHE_CONTROL = 'no-store';
+
 /** A JSON body as it is, a DBB body passed on or an error of the proxy. */
 export function jsonResponse(
   status: number,
@@ -27,14 +34,21 @@ export function jsonResponse(
   };
 }
 
-/** No such read, or no such id: 404 with a short JSON error, not cached. */
+/** An error of the proxy or the DBB's, `body` as it is: never stored. */
+export function errorResponse(status: number, body: string): ProxyResponse {
+  return jsonResponse(status, body, {
+    'cache-control': PROXY_ERROR_CACHE_CONTROL,
+  });
+}
+
+/** No such read, or no such id: 404 with a short JSON error. */
 export function notFound(): ProxyResponse {
-  return jsonResponse(404, JSON.stringify({ error: 'not-found' }));
+  return errorResponse(404, JSON.stringify({ error: 'not-found' }));
 }
 
 /** The DBB failed or was not reached: 502 with a short JSON error. */
 export function badGateway(): ProxyResponse {
-  return jsonResponse(502, JSON.stringify({ error: 'dbb-unavailable' }));
+  return errorResponse(502, JSON.stringify({ error: 'dbb-unavailable' }));
 }
 
 /** Writes `response` to `event`: only its own headers, never the DBB's. */
