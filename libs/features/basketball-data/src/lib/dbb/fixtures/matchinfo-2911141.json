@@ -1,0 +1,290 @@
+{
+  "timestamp": "2026-11-08T13:33:07+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "ligaData": {
+      "seasonId": 2026,
+      "seasonName": "2026/2027",
+      "actualMatchDay": {
+        "spieltag": 5,
+        "bezeichnung": "5. Spieltag"
+      },
+      "ligaId": 54308,
+      "liganame": "Bayernliga U14 männlich Einteilungsrunde Nord",
+      "liganr": 20141,
+      "skName": "Bayernliga",
+      "skNameSmall": null,
+      "skEbeneId": 0,
+      "skEbeneName": "Verband",
+      "akName": "U14",
+      "geschlechtId": 1,
+      "geschlecht": "männlich",
+      "verbandId": 2,
+      "verbandName": "Bayern",
+      "bezirknr": null,
+      "bezirkName": null,
+      "kreisnr": null,
+      "kreisname": null,
+      "statisticType": 1,
+      "vorabliga": false,
+      "tableExists": true,
+      "crossTableExists": true
+    },
+    "matchId": 2911141,
+    "matchDay": 3,
+    "matchNo": 14012,
+    "kickoffDate": "2026-10-18",
+    "kickoffTime": "14:30",
+    "homeTeam": {
+      "seasonTeamId": 448992,
+      "teamCompetitionId": 448992,
+      "teamPermanentId": 156618,
+      "teamname": "Post SV Nürnberg",
+      "teamnameSmall": "U14m1",
+      "clubId": 1476,
+      "verzicht": false
+    },
+    "guestTeam": {
+      "seasonTeamId": 448994,
+      "teamCompetitionId": 448994,
+      "teamPermanentId": 290989,
+      "teamname": "VR-Bank Würzburg Baskets Akademie",
+      "teamnameSmall": "Würzb",
+      "clubId": 4135,
+      "verzicht": false
+    },
+    "result": "99:90",
+    "ergebnisbestaetigt": true,
+    "statisticType": 1,
+    "verzicht": false,
+    "abgesagt": false,
+    "matchResult": {
+      "heimEndstand": 99,
+      "gastEndstand": 90,
+      "heimHalbzeitstand": 30,
+      "gastHalbzeitstand": 23,
+      "heimV1stand": 26,
+      "gastV1stand": 26,
+      "heimV3stand": 29,
+      "gastV3stand": 18,
+      "heimV4stand": 14,
+      "gastV4stand": 23,
+      "heimOt1stand": null,
+      "gastOt1stand": null,
+      "heimOt2stand": null,
+      "gastOt2stand": null
+    },
+    "matchInfo": {
+      "topPerformances": [
+        {
+          "performance": "Punkte",
+          "playerA": {
+            "playerId": 98628180,
+            "no": "0",
+            "person": {
+              "id": 92515694,
+              "vorname": "Alvo",
+              "nachname": "Lindenbrücker",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 91076994,
+            "no": "0",
+            "person": {
+              "id": 91692638,
+              "vorname": "Pirka",
+              "nachname": "Weidenbrink",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 35,
+          "performanceB": 29
+        },
+        {
+          "performance": "Rebounds",
+          "playerA": {
+            "playerId": 98628180,
+            "no": "0",
+            "person": {
+              "id": 92515694,
+              "vorname": "Alvo",
+              "nachname": "Lindenbrücker",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 91076994,
+            "no": "0",
+            "person": {
+              "id": 91692638,
+              "vorname": "Pirka",
+              "nachname": "Weidenbrink",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 0,
+          "performanceB": 0
+        },
+        {
+          "performance": "Assists",
+          "playerA": {
+            "playerId": 98628180,
+            "no": "0",
+            "person": {
+              "id": 92515694,
+              "vorname": "Alvo",
+              "nachname": "Lindenbrücker",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 91076994,
+            "no": "0",
+            "person": {
+              "id": 91692638,
+              "vorname": "Pirka",
+              "nachname": "Weidenbrink",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 0,
+          "performanceB": 0
+        },
+        {
+          "performance": "Steals",
+          "playerA": {
+            "playerId": 98628180,
+            "no": "0",
+            "person": {
+              "id": 92515694,
+              "vorname": "Alvo",
+              "nachname": "Lindenbrücker",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 91076994,
+            "no": "0",
+            "person": {
+              "id": 91692638,
+              "vorname": "Pirka",
+              "nachname": "Weidenbrink",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 0,
+          "performanceB": 0
+        },
+        {
+          "performance": "Blocked_Shots",
+          "playerA": {
+            "playerId": 98628180,
+            "no": "0",
+            "person": {
+              "id": 92515694,
+              "vorname": "Alvo",
+              "nachname": "Lindenbrücker",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 91076994,
+            "no": "0",
+            "person": {
+              "id": 91692638,
+              "vorname": "Pirka",
+              "nachname": "Weidenbrink",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 0,
+          "performanceB": 0
+        },
+        {
+          "performance": "Effektivitaet",
+          "playerA": {
+            "playerId": 98628180,
+            "no": "0",
+            "person": {
+              "id": 92515694,
+              "vorname": "Alvo",
+              "nachname": "Lindenbrücker",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 91076994,
+            "no": "0",
+            "person": {
+              "id": 91692638,
+              "vorname": "Pirka",
+              "nachname": "Weidenbrink",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 51,
+          "performanceB": 36
+        }
+      ],
+      "spielfeld": {
+        "id": 106899,
+        "bezeichnung": "Paul-Moor-Schule",
+        "strasse": "Schafhofstr. 27",
+        "plz": "90411",
+        "ort": "Nürnberg"
+      },
+      "srList": [
+        {
+          "rolle": {
+            "id": 1,
+            "name": "1. Schiedsrichter",
+            "kurzname": "SR1"
+          },
+          "personData": {
+            "id": 91573289,
+            "vorname": "Tavina",
+            "nachname": "Weidenbrink",
+            "anonym": false
+          }
+        },
+        {
+          "rolle": {
+            "id": 2,
+            "name": "2. Schiedsrichter",
+            "kurzname": "SR2"
+          },
+          "personData": {
+            "id": 94881726,
+            "vorname": "Kesto",
+            "nachname": "Tannenrieder",
+            "anonym": false
+          }
+        }
+      ]
+    },
+    "matchBoxscore": null,
+    "playByPlay": null,
+    "hasPlayByPlay": false
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

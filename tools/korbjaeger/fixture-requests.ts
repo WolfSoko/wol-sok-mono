@@ -1,0 +1,119 @@
+/**
+ * The DBB responses the basketball data lib's specs read, recorded by
+ * `record-fixtures.ts` and anonymised into
+ * `libs/features/basketball-data/src/lib/dbb/fixtures/` by
+ * `anonymise-fixtures.ts`. Each one is there for a case of the adapter; the
+ * fixtures' README says which.
+ */
+import type { DbbRequest } from '../../libs/features/basketball-data/src/lib/dbb/dbb-request';
+import type { LigaSucheFilter } from '../../libs/features/basketball-data/src/lib/domain/liga-suche';
+
+/** A list in a response cut down to its first `keep` items. */
+export interface FixtureTrim {
+  readonly path: readonly string[];
+  readonly keep: number;
+}
+
+export interface FixtureRequest {
+  /** The file name, without `.json`. */
+  readonly name: string;
+  readonly request: DbbRequest;
+  readonly trims?: readonly FixtureTrim[];
+}
+
+const BAYERN = 2;
+const SCHLESWIG_HOLSTEIN = 10;
+const U14 = 14;
+const JUGEND_MAENNLICH = '2_1';
+const JUGEND_WEIBLICH = '2_2';
+
+const BAYERN_U14: LigaSucheFilter = {
+  verbandIds: [BAYERN],
+  altersklasseIds: [U14],
+  altersgruppeGeschlechtIds: [],
+};
+
+const SCHLESWIG_HOLSTEIN_JUGEND: LigaSucheFilter = {
+  verbandIds: [SCHLESWIG_HOLSTEIN],
+  altersklasseIds: [],
+  altersgruppeGeschlechtIds: [JUGEND_MAENNLICH, JUGEND_WEIBLICH],
+};
+
+/** Facets the lib doesn't read, cut short to keep the file small. */
+const UNREAD_FACETS: readonly FixtureTrim[] = [
+  { path: ['data', 'gebiete'], keep: 3 },
+  { path: ['data', 'ligatypen'], keep: 3 },
+  { path: ['data', 'spielklassen'], keep: 3 },
+];
+
+export const FIXTURE_REQUESTS: readonly FixtureRequest[] = [
+  {
+    name: 'wam-data-bayern-u14',
+    request: { kind: 'liga-suche', filter: BAYERN_U14 },
+    trims: UNREAD_FACETS,
+  },
+  {
+    name: 'wam-liga-list-bayern-u14-10',
+    request: { kind: 'liga-seite', filter: BAYERN_U14, startIndex: 10 },
+  },
+  {
+    name: 'wam-liga-list-schleswig-holstein-jugend-30',
+    request: {
+      kind: 'liga-seite',
+      filter: SCHLESWIG_HOLSTEIN_JUGEND,
+      startIndex: 30,
+    },
+  },
+  { name: 'spielplan-54308', request: { kind: 'spielplan', ligaId: 54308 } },
+  { name: 'spielplan-54379', request: { kind: 'spielplan', ligaId: 54379 } },
+  {
+    name: 'spielplan-54857',
+    request: { kind: 'spielplan', ligaId: 54857 },
+    trims: [{ path: ['data', 'matches'], keep: 4 }],
+  },
+  { name: 'table-54308', request: { kind: 'tabelle', ligaId: 54308 } },
+  { name: 'table-not-found', request: { kind: 'tabelle', ligaId: 1 } },
+  {
+    name: 'team-313036-matches',
+    request: { kind: 'team-spiele', teamId: 313036 },
+  },
+  { name: 'team-not-found', request: { kind: 'team-spiele', teamId: 1 } },
+  {
+    name: 'club-1476-actualmatches',
+    request: { kind: 'vereins-spiele', vereinId: 1476, tage: 7 },
+    trims: [{ path: ['data', 'matches'], keep: 15 }],
+  },
+  {
+    name: 'matchinfo-2911141',
+    request: { kind: 'spiel-info', spielId: 2911141 },
+  },
+  {
+    name: 'matchinfo-2843814',
+    request: { kind: 'spiel-info', spielId: 2843814 },
+  },
+  {
+    name: 'matchinfo-2930311',
+    request: { kind: 'spiel-info', spielId: 2930311 },
+  },
+  {
+    name: 'matchinfo-2930414',
+    request: { kind: 'spiel-info', spielId: 2930414 },
+  },
+  {
+    name: 'boxscore-2911141',
+    request: { kind: 'spielbericht', spielId: 2911141 },
+  },
+  {
+    name: 'boxscore-2843811',
+    request: { kind: 'spielbericht', spielId: 2843811 },
+  },
+  {
+    name: 'boxscore-2843814',
+    request: { kind: 'spielbericht', spielId: 2843814 },
+  },
+  { name: 'boxscore-not-found', request: { kind: 'spielbericht', spielId: 1 } },
+];
+
+/** The lib's fixtures folder, relative to the workspace root. */
+export const FIXTURES_DIR =
+  'libs/features/basketball-data/src/lib/dbb/fixtures';

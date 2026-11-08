@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-11-08T13:47:50+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "ligaData": {
+      "seasonId": 2026,
+      "seasonName": "2026/2027",
+      "actualMatchDay": {
+        "spieltag": 6,
+        "bezeichnung": "6. Spieltag"
+      },
+      "ligaId": 56190,
+      "liganame": "MFR U12 mix Kreisliga 3",
+      "liganr": 23184,
+      "skName": "Kreisliga",
+      "skNameSmall": null,
+      "skEbeneId": 2,
+      "skEbeneName": "Kreis",
+      "akName": "U12",
+      "geschlechtId": 3,
+      "geschlecht": "mix",
+      "verbandId": 2,
+      "verbandName": "Bayern",
+      "bezirknr": 3,
+      "bezirkName": "Mittelfranken",
+      "kreisnr": null,
+      "kreisname": null,
+      "statisticType": 0,
+      "vorabliga": false,
+      "tableExists": true,
+      "crossTableExists": true
+    },
+    "matchId": 2930311,
+    "matchDay": 14,
+    "matchNo": 18453,
+    "kickoffDate": "2026-10-10",
+    "kickoffTime": "10:00",
+    "homeTeam": {
+      "seasonTeamId": 467068,
+      "teamCompetitionId": 467068,
+      "teamPermanentId": 316575,
+      "teamname": "TUSPO Nürnberg 2",
+      "teamnameSmall": null,
+      "clubId": 4839,
+      "verzicht": false
+    },
+    "guestTeam": {
+      "seasonTeamId": 467071,
+      "teamCompetitionId": 467071,
+      "teamPermanentId": 311450,
+      "teamname": "Post SV Nürnberg 6 (w)",
+      "teamnameSmall": null,
+      "clubId": 1476,
+      "verzicht": false
+    },
+    "result": null,
+    "ergebnisbestaetigt": false,
+    "statisticType": 0,
+    "verzicht": false,
+    "abgesagt": true,
+    "matchResult": null,
+    "matchInfo": {
+      "topPerformances": [],
+      "spielfeld": {
+        "id": 2193,
+        "bezeichnung": "Peter-Vischer-Schule",
+        "strasse": "Hufelandstr. 2",
+        "plz": "90419",
+        "ort": "Nürnberg"
+      },
+      "srList": null
+    },
+    "matchBoxscore": null,
+    "playByPlay": null,
+    "hasPlayByPlay": false
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

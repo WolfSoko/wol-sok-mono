@@ -1,0 +1,146 @@
+import type { LigaId, SpielId, TeamId, VereinId } from '../domain/ids';
+import type { LigaSucheFilter } from '../domain/liga-suche';
+
+/** Where the DBB's JSON API lives; `DbbHttpRequest.path` is relative to it. */
+export const DBB_BASE_URL = 'https://www.basketball-bund.net/rest';
+
+/** The widest window a Verein's Spiele are asked for, in days either way. */
+export const MAX_VEREINS_SPIELE_TAGE = 60;
+
+/**
+ * One read of the DBB this lib makes: the whole allowlist. A transport (a
+ * direct `fetch` in a tool, the app's own proxy in the browser) turns it
+ * into HTTP; `dbbHttpRequest` says how.
+ */
+export type DbbRequest =
+  | { readonly kind: 'liga-suche'; readonly filter: LigaSucheFilter }
+  | {
+      readonly kind: 'liga-seite';
+      readonly filter: LigaSucheFilter;
+      readonly startIndex: number;
+    }
+  | { readonly kind: 'tabelle'; readonly ligaId: LigaId }
+  | { readonly kind: 'spielplan'; readonly ligaId: LigaId }
+  | { readonly kind: 'team-spiele'; readonly teamId: TeamId }
+  | {
+      readonly kind: 'vereins-spiele';
+      readonly vereinId: VereinId;
+      readonly tage: number;
+    }
+  | { readonly kind: 'spiel-info'; readonly spielId: SpielId }
+  | { readonly kind: 'spielbericht'; readonly spielId: SpielId };
+
+/** The kinds of read the allowlist holds. */
+export type DbbRequestKind = DbbRequest['kind'];
+
+/** The body of the DBB's Liga search, as its own site sends it. */
+export interface DbbLigaFilterBody {
+  readonly token: 0;
+  readonly verbandIds: readonly number[];
+  readonly gebietIds: readonly string[];
+  readonly ligatypIds: readonly number[];
+  readonly akgGeschlechtIds: readonly string[];
+  readonly altersklasseIds: readonly number[];
+  readonly spielklasseIds: readonly number[];
+  readonly sortBy: 0;
+}
+
+/** One HTTP call to the DBB, relative to `DBB_BASE_URL`. */
+export type DbbHttpRequest =
+  | { readonly method: 'GET'; readonly path: string }
+  | {
+      readonly method: 'POST';
+      readonly path: string;
+      readonly body: DbbLigaFilterBody;
+    };
+
+/** How a transport answers one `DbbRequest`: the DBB's JSON, unread. */
+export type DbbTransport = (request: DbbRequest) => Promise<unknown>;
+
+const AKG_GESCHLECHT_ID = /^\d+_\d+$/;
+
+/**
+ * The DBB call that answers `request`. Throws a `RangeError` for an id that
+ * is no positive integer, so nothing but the allowlisted paths is built.
+ */
+export function dbbHttpRequest(request: DbbRequest): DbbHttpRequest {
+  switch (request.kind) {
+    case 'liga-suche':
+      return {
+        method: 'POST',
+        path: 'wam/data',
+        body: filterBody(request.filter),
+      };
+    case 'liga-seite':
+      return {
+        method: 'POST',
+        path: `wam/liga/list?startAtIndex=${index(request.startIndex)}`,
+        body: filterBody(request.filter),
+      };
+    case 'tabelle':
+      return get(`competition/table/id/${id(request.ligaId)}`);
+    case 'spielplan':
+      return get(`competition/spielplan/id/${id(request.ligaId)}`);
+    case 'team-spiele':
+      return get(`team/id/${id(request.teamId)}/matches`);
+    case 'vereins-spiele':
+      return get(
+        `club/id/${id(request.vereinId)}/actualmatches?rangeDays=${tage(request.tage)}`
+      );
+    case 'spiel-info':
+      return get(`match/id/${id(request.spielId)}/matchInfo`);
+    case 'spielbericht':
+      return get(`match/id/${id(request.spielId)}/boxscore`);
+  }
+}
+
+function get(path: string): DbbHttpRequest {
+  return { method: 'GET', path };
+}
+
+function filterBody(filter: LigaSucheFilter): DbbLigaFilterBody {
+  return {
+    token: 0,
+    verbandIds: filter.verbandIds.map(id),
+    gebietIds: [],
+    ligatypIds: [],
+    akgGeschlechtIds: filter.altersgruppeGeschlechtIds.map(akgGeschlechtId),
+    altersklasseIds: filter.altersklasseIds.map(id),
+    spielklasseIds: [],
+    sortBy: 0,
+  };
+}
+
+function id(value: number): number {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new RangeError(`not a DBB id: ${value}`);
+  }
+  return value;
+}
+
+function index(value: number): number {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new RangeError(`not a list index: ${value}`);
+  }
+  return value;
+}
+
+function tage(value: number): number {
+  if (
+    !Number.isSafeInteger(value) ||
+    value < 1 ||
+    value > MAX_VEREINS_SPIELE_TAGE
+  ) {
+    throw new RangeError(
+      `not a day range of 1 to ${MAX_VEREINS_SPIELE_TAGE}: ${value}`
+    );
+  }
+  return value;
+}
+
+function akgGeschlechtId(value: string): string {
+  if (!AKG_GESCHLECHT_ID.test(value)) {
+    throw new RangeError(`not an age group and gender id: ${value}`);
+  }
+  return value;
+}

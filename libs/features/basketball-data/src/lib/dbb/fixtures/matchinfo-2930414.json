@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-11-08T13:47:28+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "ligaData": {
+      "seasonId": 2026,
+      "seasonName": "2026/2027",
+      "actualMatchDay": {
+        "spieltag": 1,
+        "bezeichnung": "1. Spieltag"
+      },
+      "ligaId": 56168,
+      "liganame": "MFR U10 mix Bezirksoberliga Einteilungsrunde",
+      "liganr": 23187,
+      "skName": "Bezirksoberliga",
+      "skNameSmall": null,
+      "skEbeneId": 1,
+      "skEbeneName": "Bezirk",
+      "akName": "U10",
+      "geschlechtId": 3,
+      "geschlecht": "mix",
+      "verbandId": 2,
+      "verbandName": "Bayern",
+      "bezirknr": 3,
+      "bezirkName": "Mittelfranken",
+      "kreisnr": null,
+      "kreisname": null,
+      "statisticType": 0,
+      "vorabliga": false,
+      "tableExists": false,
+      "crossTableExists": true
+    },
+    "matchId": 2930414,
+    "matchDay": 10,
+    "matchNo": 18746,
+    "kickoffDate": "2026-10-18",
+    "kickoffTime": "10:00",
+    "homeTeam": {
+      "seasonTeamId": 467078,
+      "teamCompetitionId": 467078,
+      "teamPermanentId": 310864,
+      "teamname": "TSV Ansbach",
+      "teamnameSmall": "ANS 8",
+      "clubId": 718,
+      "verzicht": false
+    },
+    "guestTeam": {
+      "seasonTeamId": 466782,
+      "teamCompetitionId": 466782,
+      "teamPermanentId": 256922,
+      "teamname": "Post SV Nürnberg 1",
+      "teamnameSmall": null,
+      "clubId": 1476,
+      "verzicht": true
+    },
+    "result": null,
+    "ergebnisbestaetigt": false,
+    "statisticType": 0,
+    "verzicht": true,
+    "abgesagt": false,
+    "matchResult": null,
+    "matchInfo": {
+      "topPerformances": [],
+      "spielfeld": {
+        "id": 2158,
+        "bezeichnung": "Weinberghalle",
+        "strasse": "Herbartstr.",
+        "plz": "91522",
+        "ort": "Ansbach"
+      },
+      "srList": null
+    },
+    "matchBoxscore": null,
+    "playByPlay": null,
+    "hasPlayByPlay": false
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}
