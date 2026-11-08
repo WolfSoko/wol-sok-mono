@@ -4,7 +4,9 @@
     <mat-progress-bar mode="indeterminate" aria-label="Tabelle wird geladen" />
   }
   @if (fehler(); as text) {
-    <p class="fehler" role="alert">{{ text }}</p>
+    <!-- no live region: on a DBB outage every Tabelle fails at once, and
+         one alert each would repeat the same text; it sits under its Liga -->
+    <p class="fehler" data-qa="tabelle-fehler">{{ text }}</p>
   }
   @if (tabelle.hasValue()) {
     @if (zeilen().length === 0) {

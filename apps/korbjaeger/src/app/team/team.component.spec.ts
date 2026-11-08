@@ -485,9 +485,25 @@ describe('TeamComponent', () => {
       expect(
         vorrunde.querySelectorAll('[data-qa="tabelle-zeile"]')
       ).toHaveLength(2);
-      expect(testspiele.querySelector('[role="alert"]')?.textContent).toContain(
-        'Der DBB ist gerade nicht erreichbar.'
+      expect(
+        testspiele.querySelector('[data-qa="tabelle-fehler"]')?.textContent
+      ).toContain('Der DBB ist gerade nicht erreichbar.');
+    });
+
+    it('raises no alert per Tabelle when the DBB fails them all', async () => {
+      const page = await render(
+        fakeData(
+          async () => ZWEI_LIGEN,
+          async () => {
+            throw new BasketballDataError('unavailable', 'DBB: nope');
+          }
+        )
       );
+
+      expect(page.querySelectorAll('[data-qa="tabelle-fehler"]')).toHaveLength(
+        2
+      );
+      expect(page.querySelectorAll('[role="alert"]')).toHaveLength(0);
     });
 
     it('shows no Tabelle for a Team without Spiele', async () => {

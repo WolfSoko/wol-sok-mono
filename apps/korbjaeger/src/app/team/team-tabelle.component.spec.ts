@@ -191,9 +191,13 @@ describe('TeamTabelleComponent', () => {
     );
 
     expect(text(page.querySelector('h3'))).toBe(VORRUNDE.name);
-    expect(page.querySelector('[role="alert"]')?.textContent).toContain(
-      message
-    );
+    expect(
+      page.querySelector('[data-qa="tabelle-fehler"]')?.textContent
+    ).toContain(message);
     expect(page.querySelector('table')).toBeNull();
+    // the page holds a Tabelle per Liga: a DBB outage must not alert once each
+    expect(
+      page.querySelector('[role="alert"], [role="status"], [aria-live]')
+    ).toBeNull();
   });
 });
