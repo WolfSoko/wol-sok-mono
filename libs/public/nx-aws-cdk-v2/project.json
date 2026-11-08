@@ -54,6 +54,7 @@
         "jestConfig": "libs/public/nx-aws-cdk-v2/jest.config.ts",
         "passWithNoTests": false
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }
