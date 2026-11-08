@@ -1,6 +1,12 @@
 import type { SpielPartei } from './partei';
-import type { Spiel } from './spiel';
-import { ergebnisVon, gegnerVon, seiteVon, sonderfallVon } from './spiel';
+import {
+  datumInDeutschland,
+  ergebnisVon,
+  gegnerVon,
+  seiteVon,
+  sonderfallVon,
+  type Spiel,
+} from './spiel';
 
 const UNS: SpielPartei = {
   art: 'team',
@@ -108,5 +114,18 @@ describe('sonderfallVon', () => {
         })
       )
     ).toBeUndefined();
+  });
+});
+
+describe('datumInDeutschland', () => {
+  it.each([
+    ['2026-11-08T12:00:00Z', '2026-11-08'],
+    // after midnight in Germany, still the day before in UTC
+    ['2026-11-08T23:30:00Z', '2026-11-09'],
+    ['2026-07-31T22:30:00Z', '2026-08-01'],
+    ['2026-11-08T22:59:00Z', '2026-11-08'],
+    ['2027-01-05T08:00:00Z', '2027-01-05'],
+  ])('dates %s as the DBB does: %s', (moment, datum) => {
+    expect(datumInDeutschland(new Date(moment))).toBe(datum);
   });
 });

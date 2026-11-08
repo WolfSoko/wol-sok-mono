@@ -1,6 +1,7 @@
 import {
   ergebnisVon,
   gegnerVon,
+  ligaVon,
   parteiName,
   seiteVon,
   sonderfallVon,
@@ -41,9 +42,8 @@ const DATUM = new Intl.DateTimeFormat('de-DE', {
 
 /** Every Spiel of `saison`, across its Ligen, in the port's date order. */
 export function spielZeilen(saison: TeamSaison): readonly SpielZeile[] {
-  const ligen = new Map(saison.ligen.map((liga) => [liga.id, liga]));
   return saison.spiele.map((spiel) =>
-    spielZeile(spiel, saison.team.id, ligen.get(spiel.ligaId))
+    spielZeile(spiel, saison.team.id, ligaVon(saison, spiel.ligaId))
   );
 }
 

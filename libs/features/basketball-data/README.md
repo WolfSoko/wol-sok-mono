@@ -36,7 +36,12 @@ and tools are no Nx project.
   `spiel.ts` answers the questions a screen asks of a Spiel: the side a
   Team plays (`seiteVon`), its opponent (`gegnerVon`), the result
   (`ergebnisVon`) and whether it was cancelled or forfeited
-  (`sonderfallVon`).
+  (`sonderfallVon`); a Spiel's `datum` is the German calendar day
+  (`datumInDeutschland`). `partei.ts` tells a Team from a slot (`istTeam`,
+  `parteiName`), for Spiele and Tabellen alike. `team-saison.ts` answers
+  what a Team's page asks of its Saison: a Liga by id (`ligaVon`), the
+  next Spiel (`naechstesSpiel`, passing over cancelled ones) and its Ligen
+  with the current one first (`ligenAktuellZuerst`).
 - **`DbbBasketballData`** (`src/lib/dbb/`), the adapter over the DBB's
   undocumented JSON API (ADR 0018). It takes a `DbbTransport`, a function
   that answers one allowlisted `DbbRequest` with the DBB's JSON;

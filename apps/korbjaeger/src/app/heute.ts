@@ -5,25 +5,7 @@ import {
   signal,
   type Signal,
 } from '@angular/core';
-
-/** The DBB dates its Spiele by the German calendar day. */
-const DEUTSCHER_KALENDERTAG = new Intl.DateTimeFormat('de-DE', {
-  timeZone: 'Europe/Berlin',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
-
-/**
- * The German calendar day of `moment`, `YYYY-MM-DD`, as the DBB's dates.
- * Built from the parts, since a locale's own date pattern may change.
- */
-export function datumInDeutschland(moment: Date): string {
-  const parts = DEUTSCHER_KALENDERTAG.formatToParts(moment);
-  const part = (type: 'year' | 'month' | 'day'): string =>
-    parts.find((p) => p.type === type)?.value ?? '';
-  return `${part('year')}-${part('month')}-${part('day')}`;
-}
+import { datumInDeutschland } from '@wolsok/feat-shared-basketball-data';
 
 const STUNDE = 3_600_000;
 

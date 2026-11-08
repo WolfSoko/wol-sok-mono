@@ -41,13 +41,35 @@ export interface Spiel {
   readonly id: SpielId;
   readonly ligaId: LigaId;
   readonly spieltag: number;
-  /** The day, `YYYY-MM-DD`; a moved Spiel carries its new day. */
+  /**
+   * The German calendar day, `YYYY-MM-DD` (`datumInDeutschland`); a moved
+   * Spiel carries its new day.
+   */
   readonly datum: string;
   /** The tip-off, `HH:mm`; absent where the DBB has none yet. */
   readonly uhrzeit?: string;
   readonly heim: SpielPartei;
   readonly gast: SpielPartei;
   readonly status: SpielStatus;
+}
+
+/** The DBB dates its Spiele by the German calendar day. */
+const DEUTSCHER_KALENDERTAG = new Intl.DateTimeFormat('de-DE', {
+  timeZone: 'Europe/Berlin',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/**
+ * The German calendar day of `moment`, `YYYY-MM-DD`, as a Spiel's `datum`.
+ * Built from the parts, since a locale's own date pattern may change.
+ */
+export function datumInDeutschland(moment: Date): string {
+  const parts = DEUTSCHER_KALENDERTAG.formatToParts(moment);
+  const part = (type: 'year' | 'month' | 'day'): string =>
+    parts.find((p) => p.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
 /** A Spiel with its Liga, Halle and the points of each period. */

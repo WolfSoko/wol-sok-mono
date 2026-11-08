@@ -15,12 +15,12 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   app's own proxy, since the DBB sends no CORS headers.
 - **Team page** (`/team/{id}`, `src/app/team/`): the Team's Spiele of the
   Saison, then one Tabelle per Liga of those Spiele, the Team's own line
-  highlighted. The current Liga comes first: the Liga of the Team's next
-  Spiel from today on (the German calendar day, `HEUTE` in
-  `src/app/heute.ts`, which specs replace), or of its last Spiel once
-  none is left (a cancelled Spiel decides nothing, a forfeited one does);
-  the others follow by their last Spiel, newest first
-  (`tabellen-ligen.ts`). Each Tabelle loads and fails on its own.
+  highlighted. The current Liga comes first, by the lib's
+  `ligenAktuellZuerst`: the Liga of the Team's next Spiel from today on
+  (`HEUTE` in `src/app/heute.ts`, which specs replace), or of its last
+  Spiel once none is left (a cancelled Spiel decides nothing, a forfeited
+  one does); the others follow by their last Spiel, newest first. Each
+  Tabelle loads and fails on its own.
 - **Proxy:** `src/server/routes/api/dbb/` (thin route files) over
   `src/server/dbb/`; `src/shared/dbb-proxy-routes.ts` maps each read to
   its route and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists

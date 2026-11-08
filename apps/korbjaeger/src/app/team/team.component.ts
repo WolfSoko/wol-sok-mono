@@ -11,9 +11,11 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
 import { HEUTE } from '../heute';
-import { parseDbbId } from '@wolsok/feat-shared-basketball-data';
+import {
+  ligenAktuellZuerst,
+  parseDbbId,
+} from '@wolsok/feat-shared-basketball-data';
 import { fehlerText } from './fehler-text';
-import { tabellenLigen } from './tabellen-ligen';
 import { KEIN_TEAM, spielZeilen } from './team-spiele';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
@@ -53,7 +55,7 @@ export class TeamComponent {
 
   protected readonly ligen = computed(() =>
     this.saison.hasValue()
-      ? tabellenLigen(this.saison.value(), this.heute())
+      ? ligenAktuellZuerst(this.saison.value(), this.heute())
       : []
   );
 
