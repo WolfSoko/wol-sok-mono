@@ -6,10 +6,9 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   PROXY_ROUTES,
-  TABELLE_ROUTE,
-  TEAM_SPIELE_ROUTE,
-  routerPath,
-  type ProxyRoute,
+  paramOf,
+  type AnyProxyRoute,
+  type ProxyKind,
 } from '../../shared/dbb-proxy-routes';
 import { DBB_PROXY_CACHE_CONTROL } from './dbb-proxy';
 import { PROXY_USER_AGENT } from './dbb-upstream-config';
@@ -39,23 +38,26 @@ function dbbAnswering(body: string, status = 200): UpstreamFetch {
 }
 
 /** Each route's file, imported as Nitro's file routing would find it. */
-const ROUTE_FILES: ReadonlyMap<
-  ProxyRoute,
-  () => Promise<{ readonly default: EventHandler }>
-> = new Map([
-  [
-    TEAM_SPIELE_ROUTE,
-    () => import('../routes/api/dbb/team/[teamId]/spiele.get'),
-  ],
-  [TABELLE_ROUTE, () => import('../routes/api/dbb/liga/[ligaId]/tabelle.get')],
-]);
+const ROUTE_FILES: {
+  readonly [K in ProxyKind]: () => Promise<{ readonly default: EventHandler }>;
+} = {
+  'team-spiele': () => import('../routes/api/dbb/team/[teamId]/spiele.get'),
+  tabelle: () => import('../routes/api/dbb/liga/[ligaId]/tabelle.get'),
+};
+
+const KINDS = Object.keys(PROXY_ROUTES) as ProxyKind[];
+
+/** `route`'s path with `id` (a number, or anything a visitor types). */
+function pathWith(route: AnyProxyRoute, id: number | string): string {
+  return route.pattern.replace(`:${paramOf(route)}`, String(id));
+}
 
 /** Where Nitro's file routing looks for `route`'s file. */
-function routeFile(route: ProxyRoute): string {
+function routeFile(route: AnyProxyRoute): string {
   return join(
     __dirname,
     '../routes',
-    `${route.path(`[${route.param}]`)}.get.ts`
+    `${pathWith(route, `[${paramOf(route)}]`)}.get.ts`
   );
 }
 
@@ -65,12 +67,8 @@ function routeFile(route: ProxyRoute): string {
  */
 async function proxyRoutes(): Promise<(request: Request) => Promise<Response>> {
   const router = createRouter();
-  for (const route of PROXY_ROUTES) {
-    const file = ROUTE_FILES.get(route);
-    if (file === undefined) {
-      throw new Error(`no route file for ${routerPath(route)}`);
-    }
-    router.get(routerPath(route), (await file()).default);
+  for (const kind of KINDS) {
+    router.get(PROXY_ROUTES[kind].pattern, (await ROUTE_FILES[kind]()).default);
   }
   const [prefix, rest] = await Promise.all([
     import('../routes/api/dbb/index'),
@@ -82,12 +80,12 @@ async function proxyRoutes(): Promise<(request: Request) => Promise<Response>> {
 
 /** Each route with an id the fake DBB has a recording of. */
 const ROUTES = [
-  { name: "a Team's Spiele", route: TEAM_SPIELE_ROUTE, id: 313036 },
-  { name: "a Liga's Tabelle", route: TABELLE_ROUTE, id: 54862 },
+  { name: "a Team's Spiele", route: PROXY_ROUTES['team-spiele'], id: 313036 },
+  { name: "a Liga's Tabelle", route: PROXY_ROUTES.tabelle, id: 54862 },
 ] as const;
 
 /** The DBB path `route` reads for `id`. */
-function dbbPath(route: ProxyRoute, id: number): string {
+function dbbPath(route: AnyProxyRoute, id: number): string {
   return dbbHttpRequest(route.read(id)).path;
 }
 
@@ -126,16 +124,15 @@ function warnings(): () => readonly string[] {
 }
 
 describe('DBB proxy', () => {
-  it.each(PROXY_ROUTES.map((route) => [routerPath(route), route] as const))(
+  it.each(KINDS)(
     'serves %s from its route file where Nitro finds it',
-    (_path, route) => {
-      expect(existsSync(routeFile(route))).toBe(true);
-      expect(ROUTE_FILES.has(route)).toBe(true);
+    (kind) => {
+      expect(existsSync(routeFile(PROXY_ROUTES[kind]))).toBe(true);
     }
   );
 
   describe.each(ROUTES)('$name', ({ route, id }) => {
-    const path = route.path(id);
+    const path = pathWith(route, id);
     const unknown = 7;
 
     describe('allowlist', () => {
@@ -170,7 +167,7 @@ describe('DBB proxy', () => {
       ])('answers %s with 404 and never asks the DBB', async (_case, bad) => {
         const dbb = recordedDbb();
 
-        const response = await proxy(dbb)(route.path(bad));
+        const response = await proxy(dbb)(pathWith(route, bad));
 
         expect(response.status).toBe(404);
         expect(response.headers.get('cache-control')).toBeNull();
@@ -206,7 +203,9 @@ describe('DBB proxy', () => {
           fakeDbbAnswer('GET', dbbPath(route, unknown))
         );
 
-        const response = await proxy(dbbAnswering(body))(route.path(unknown));
+        const response = await proxy(dbbAnswering(body))(
+          pathWith(route, unknown)
+        );
 
         expect(response.status).toBe(404);
         expect(await response.text()).toBe(body);

@@ -1,47 +1,39 @@
 import {
   DbbBasketballData,
-  dbbHttpRequest,
   isBasketballDataError,
   type BasketballDataErrorKind,
 } from '@wolsok/feat-shared-basketball-data';
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
-import {
-  PROXY_ROUTES,
-  proxyRouteRead,
-  routerPath,
-} from '../../shared/dbb-proxy-routes';
+import { createApp, createRouter, toWebHandler } from 'h3';
+import { proxyRouteHandler } from '../../server/dbb/dbb-proxy';
+import type { DbbUpstream } from '../../server/dbb/dbb-upstream';
+import { PROXY_ROUTES } from '../../shared/dbb-proxy-routes';
 import { proxyTransport, type ProxyFetch } from './proxy-transport';
 
-/** The DBB path the proxy reads for `url`, by the shared routes. */
-function dbbPathOf(url: string): string | undefined {
-  for (const route of PROXY_ROUTES) {
-    const [vorher, nachher] = routerPath(route).split(`:${route.param}`);
-    if (url.startsWith(vorher) && url.endsWith(nachher)) {
-      const read = proxyRouteRead(
-        route,
-        url.slice(vorher.length, url.length - nachher.length)
-      );
-      return read && dbbHttpRequest(read).path;
-    }
-  }
-  return undefined;
-}
+/** The DBB as the fake DBB server answers it, from the recorded fixtures. */
+const recordedDbb: DbbUpstream = async ({ method, path }) => {
+  const answer = fakeDbbAnswer(method, path);
+  return answer === undefined
+    ? { ok: false, reason: 'not recorded' }
+    : { ok: true, body: JSON.stringify(answer) };
+};
+
+/** The app's proxy, its real routes in front of the recorded DBB. */
+const recordedProxyHandler = toWebHandler(
+  createApp().use(
+    Object.values(PROXY_ROUTES).reduce(
+      (router, route) =>
+        router.get(route.pattern, proxyRouteHandler(route, recordedDbb)),
+      createRouter()
+    )
+  )
+);
 
 /** The app's proxy, answering with the DBB's recorded bodies. */
 function recordedProxy(): ReturnType<typeof vi.fn<ProxyFetch>> {
-  return vi.fn<ProxyFetch>(async (url) => {
-    const path = dbbPathOf(url);
-    const answer = path === undefined ? undefined : fakeDbbAnswer('GET', path);
-    if (answer === undefined) {
-      return new Response('{"error":"not-found"}', { status: 404 });
-    }
-    const status = isNotFound(answer) ? 404 : 200;
-    return new Response(JSON.stringify(answer), { status });
-  });
-}
-
-function isNotFound(answer: unknown): boolean {
-  return (answer as { readonly status: string }).status === '1';
+  return vi.fn<ProxyFetch>((url) =>
+    recordedProxyHandler(new Request(`http://localhost${url}`))
+  );
 }
 
 /** The proxy answering every read with `status` and `body`. */

@@ -13,7 +13,11 @@ import {
   type ProxyResponse,
 } from './dbb-proxy-response';
 import type { DbbUpstream } from './dbb-upstream';
-import { proxyRouteRead, type ProxyRoute } from '../../shared/dbb-proxy-routes';
+import {
+  paramOf,
+  proxyRouteRead,
+  type AnyProxyRoute,
+} from '../../shared/dbb-proxy-routes';
 
 /**
  * How long a successful read may be reused: a minute in the browser, five
@@ -61,13 +65,14 @@ function failed(call: DbbHttpRequest, reason: string): ProxyResponse {
   return badGateway();
 }
 
-/** The handler of `route`'s file: its read, for the id its param names. */
-export function proxyRouteHandler(route: ProxyRoute, upstream: DbbUpstream) {
+/** `route`'s handler over `upstream`: its read, for the id its param names. */
+export function proxyRouteHandler(route: AnyProxyRoute, upstream: DbbUpstream) {
+  const param = paramOf(route);
   return defineEventHandler(async (event) =>
     sendProxyResponse(
       event,
       await proxyDbbRead(
-        proxyRouteRead(route, getRouterParam(event, route.param)),
+        proxyRouteRead(route, getRouterParam(event, param)),
         upstream
       )
     )

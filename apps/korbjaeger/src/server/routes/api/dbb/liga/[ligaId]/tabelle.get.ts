@@ -1,14 +1,5 @@
-import { useRuntimeConfig } from 'nitropack/runtime';
-import type { NitroRuntimeConfig } from 'nitropack/types';
-import { TABELLE_ROUTE } from '../../../../../../shared/dbb-proxy-routes';
-import { proxyRouteHandler } from '../../../../../dbb/dbb-proxy';
-import {
-  dbbUpstreamOf,
-  type DbbProxyConfig,
-} from '../../../../../dbb/dbb-upstream-config';
+import { PROXY_ROUTES } from '../../../../../../shared/dbb-proxy-routes';
+import { dbbRouteHandler } from '../../../../../dbb/dbb-route-handler';
 
 /** GET /api/dbb/liga/{ligaId}/tabelle: DBB `competition/table/id/{ligaId}`. */
-export default proxyRouteHandler(
-  TABELLE_ROUTE,
-  dbbUpstreamOf(useRuntimeConfig<NitroRuntimeConfig & DbbProxyConfig>())
-);
+export default dbbRouteHandler(PROXY_ROUTES.tabelle);
