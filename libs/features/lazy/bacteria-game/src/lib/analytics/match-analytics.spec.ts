@@ -32,7 +32,7 @@ const local: MatchState = {
   timePassed: 0,
 };
 
-const cpu = { kind: 'cpu', ruleset: 'cpu' } as const;
+const cpu = { variant: 'cpu' } as const;
 const human = { id: 0, isBot: false } as Player;
 const bot = { id: 1, isBot: true } as Player;
 
@@ -66,7 +66,6 @@ describe('MatchAnalytics', () => {
     difficulty: 'normal',
     ranked: false,
     simulation: 'cpu',
-    ruleset: 'cpu',
   };
 
   it('counts the start and the end of a match, with what it earned', () => {
@@ -182,11 +181,14 @@ describe('matchParams', () => {
     expect(matchParams(plan, { ...local, kind }, cpu).kind).toBe(name);
   });
 
-  it('names the ruleset of the float GPU, which has none', () => {
-    expect(
-      matchParams(plan, local, { kind: 'gpu', ruleset: null })
-    ).toMatchObject({ simulation: 'gpu', ruleset: 'float' });
-  });
+  it.each(['cpu', 'cpu-int', 'gpu-int', 'gpu-float'] as const)(
+    'names the simulation %s by its variant, with no ruleset of its own',
+    (variant) => {
+      const params = matchParams(plan, local, { variant });
+      expect(params.simulation).toBe(variant);
+      expect(params).not.toHaveProperty('ruleset');
+    }
+  );
 
   it('says whether the match is ranked', () => {
     const practice: RankedOutcome = {

@@ -706,7 +706,7 @@ export {
 export type { HeadStart, Series, SeriesLength } from './lib/state/rivalry';
 export { decodeReport } from './lib/state/simulation-report';
 export type { ReportLayout } from './lib/state/simulation-report';
-export { isRuleset } from './lib/state/simulation';
+export { isRuleset, rulesetOf, runsOnGpu } from './lib/state/simulation';
 export {
   CPU_SIMULATIONS,
   createSimulationProvider,
@@ -724,9 +724,11 @@ export type {
   CellsLayer,
   ColonyLayer,
   ColonySummary,
+  GridVariant,
   Ruleset,
   Simulation,
   SimulationFactory,
+  SimulationVariant,
   StateLayer,
 } from './lib/state/simulation';
 export {

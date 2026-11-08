@@ -285,7 +285,7 @@ test('should run the colony war on the GPU', async ({ page, browserName }) => {
   await expect(po.playArea).toHaveAttribute('data-renderer', 'webgl');
 
   await po.startMatch();
-  await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
+  await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu-int');
   // What the GPU painted reads back off the canvas, as the vaporize effect
   // does: the orange colony starts a quarter across, halfway down.
   await expect

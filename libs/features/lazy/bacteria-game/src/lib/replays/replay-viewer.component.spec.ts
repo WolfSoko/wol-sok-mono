@@ -54,7 +54,7 @@ function fakeGpu(
   return {
     createSimulation: jest.fn((balance, random, options) => {
       const simulation = intSimulation(balance, random, options.matchSeed);
-      Object.defineProperty(simulation, 'kind', { value: 'gpu' });
+      Object.defineProperty(simulation, 'variant', { value: 'gpu-int' });
       made(simulation);
       return simulation as never;
     }),

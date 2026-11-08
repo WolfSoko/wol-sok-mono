@@ -107,7 +107,7 @@ describe('IntReferencePasses in a GridWar', () => {
 
   it('is a CPU simulation with no state before it has a size', () => {
     const simulation = simulationOf(SELF_TEST_SCENARIO);
-    expect(simulation.kind).toBe('int');
+    expect(simulation.variant).toBe('cpu-int');
     expect(simulation.readState()).toBeNull();
   });
 });

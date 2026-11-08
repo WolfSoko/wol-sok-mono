@@ -1024,8 +1024,7 @@ describe('GameStateService local recordings', () => {
   function useGpu(): void {
     const float: SimulationFactory = (balance, random, seed) => {
       const simulation = cpuSimulation(balance, random, seed);
-      Object.defineProperty(simulation, 'kind', { value: 'gpu' });
-      Object.defineProperty(simulation, 'ruleset', { value: null });
+      Object.defineProperty(simulation, 'variant', { value: 'gpu-float' });
       return simulation;
     };
     players.useSimulations({
@@ -1093,7 +1092,7 @@ describe('GameStateService local recordings', () => {
 
     await play('vs-computer');
 
-    expect(players.getSimulation().kind).toBe('gpu');
+    expect(players.getSimulation().variant).toBe('gpu-float');
     expect(recorder.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
     // Still a run for a ghost race.
@@ -1155,7 +1154,7 @@ describe('GameStateService local recordings', () => {
       expect.anything(),
       expect.not.objectContaining({ recordedSeats: expect.anything() })
     );
-    expect(players.getSimulation().kind).toBe('gpu');
+    expect(players.getSimulation().variant).toBe('gpu-float');
     expect(recorder.lastRecording()).toBeNull();
     expect(replays.submissions).toEqual([]);
     expect(store.snapshot().lastReplay?.header.simulation).toBe('gpu');

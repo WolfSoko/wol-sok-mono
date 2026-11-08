@@ -2,12 +2,12 @@ import { perfMs, simulationLabel } from './hud-perf';
 
 describe('simulationLabel', () => {
   it.each([
-    ['gpu', 'gpu-int', 'GPU int'],
-    ['gpu', null, 'GPU float'],
-    ['int', 'gpu-int', 'CPU int'],
-    ['cpu', 'cpu', 'CPU'],
-  ] as const)('names %s on %s %s', (kind, ruleset, label) => {
-    expect(simulationLabel(kind, ruleset)).toBe(label);
+    ['gpu-int', 'GPU int'],
+    ['gpu-float', 'GPU float'],
+    ['cpu-int', 'CPU int'],
+    ['cpu', 'CPU'],
+  ] as const)('names %s %s', (variant, label) => {
+    expect(simulationLabel(variant)).toBe(label);
   });
 });
 

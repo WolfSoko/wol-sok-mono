@@ -422,8 +422,10 @@ play each other.
   and catch one far too small, not one a tick short.
 - Two rulesets (`Ruleset`, `state/simulation.ts`): `cpu`
   (`BacteriaSimulation`) and `gpu-int` (the integer passes: `gpuSimulation`
-  with `deterministic`, or `intSimulation`). `Simulation.ruleset` names a
-  simulation's; the float GPU one has none (null) and is never recorded.
+  with `deterministic`, or `intSimulation`). A simulation names what
+  runs it by `Simulation.variant` (`cpu`, `cpu-int`, `gpu-int`,
+  `gpu-float`), its ruleset is `rulesetOf(variant)`; the float GPU one has
+  none (null) and is never recorded.
 - Which simulation plays a ruleset, and what stands in when the GPU fails
   to start, is the engine's `SimulationProvider`
   (`state/simulation-provider.ts`, `createSimulationProvider`): a match asks

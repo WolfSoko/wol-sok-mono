@@ -8,6 +8,7 @@ import {
   GridArena,
   GridFrame,
   GridTick,
+  GridVariant,
   Point,
   INT_KIND,
   READBACK_SLOTS,
@@ -132,7 +133,7 @@ interface Resources {
  * old, waited for when the GPU is slow.
  */
 export class GpuCellPasses implements CellPasses {
-  public readonly kind = 'gpu';
+  public readonly variant: GridVariant;
   public readonly reportLag: number | null;
   /** Milliseconds the main thread waited for reports - see `takeGpuWaitMs`. */
   private gpuWaitMs = 0;
@@ -177,6 +178,7 @@ export class GpuCellPasses implements CellPasses {
     private readonly rules: GpuRules
   ) {
     this.reportLag = rules.reportLag;
+    this.variant = rules.variant;
     const canvas = gl.canvas;
     if (canvas instanceof HTMLCanvasElement) {
       canvas.addEventListener('webglcontextlost', this.onContextLost);

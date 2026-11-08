@@ -4,7 +4,7 @@ import { chooseSimulation, GpuFactory } from './simulation-choice';
 
 describe('chooseSimulation', () => {
   const random = () => 0.5;
-  const gpuSim = { kind: 'gpu' } as Simulation;
+  const gpuSim = { variant: 'gpu-float' } as Simulation;
   let asked: GpuSimulationOptions[];
   const gpu: GpuFactory = (_, __, options) => {
     asked.push(options);
