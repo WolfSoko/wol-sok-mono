@@ -45,13 +45,17 @@
           "buildTarget": "korbjaeger:build:development",
           "hmr": true
         },
-        "e2e": {
-          "buildTarget": "korbjaeger:build:e2e",
-          "port": 4304
-        },
         "production": {
           "buildTarget": "korbjaeger:build:production"
         }
+      }
+    },
+    "serve-e2e": {
+      "executor": "@analogjs/platform:vite-dev-server",
+      "continuous": true,
+      "options": {
+        "buildTarget": "korbjaeger:build:e2e",
+        "port": 4304
       }
     },
     "fake-dbb": {

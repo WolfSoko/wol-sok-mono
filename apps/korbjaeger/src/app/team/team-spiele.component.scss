@@ -22,3 +22,17 @@
   --mat-chip-elevated-container-color: var(--mat-sys-error-container);
   --mat-chip-label-text-color: var(--mat-sys-on-error-container);
 }
+
+// Team and Liga names are long: let them wrap rather than cut them off.
+.spiele {
+  .mat-mdc-list-item {
+    height: auto;
+    padding-block: 0.5rem;
+
+    [matListItemTitle],
+    [matListItemLine] {
+      overflow: visible;
+      white-space: normal;
+    }
+  }
+}

@@ -40,7 +40,8 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
     },
     server: {
       fs: {
-        allow: ['.'],
+        // the workspace: the app, its libs and the Fontsource files
+        allow: [workspaceFile('.')],
       },
     },
     optimizeDeps: {
