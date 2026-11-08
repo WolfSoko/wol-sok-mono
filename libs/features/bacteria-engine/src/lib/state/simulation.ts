@@ -114,24 +114,45 @@ export function isRuleset(value: unknown): value is Ruleset {
 }
 
 /**
+ * Which simulation runs a match's war, and so where and by which ruleset:
+ * - `cpu`: the float CPU simulation, `BacteriaSimulation` - the `cpu`
+ *   ruleset, the only one a `cpu` replay plays back on;
+ * - `cpu-int`: the deterministic integer passes' TypeScript reference on the
+ *   CPU (`intSimulation`, ADR 0015) - the `gpu-int` ruleset;
+ * - `gpu-int`: the same integer passes on the GPU - the `gpu-int` ruleset;
+ * - `gpu-float`: the float GPU passes, whose matches no device plays again
+ *   alike - no ruleset.
+ */
+export type SimulationVariant = 'cpu' | 'cpu-int' | 'gpu-int' | 'gpu-float';
+
+/** The variants that run on the arena grid (`GridWar`): all but `cpu`. */
+export type GridVariant = Exclude<SimulationVariant, 'cpu'>;
+
+const RULESET_OF: Readonly<Record<SimulationVariant, Ruleset | null>> = {
+  cpu: 'cpu',
+  'cpu-int': 'gpu-int',
+  'gpu-int': 'gpu-int',
+  'gpu-float': null,
+};
+
+/** The ruleset a variant plays by - null for `gpu-float`, which has none. */
+export function rulesetOf(variant: SimulationVariant): Ruleset | null {
+  return RULESET_OF[variant];
+}
+
+/** True for a variant whose ticks run on the GPU. */
+export function runsOnGpu(variant: SimulationVariant): boolean {
+  return variant === 'gpu-int' || variant === 'gpu-float';
+}
+
+/**
  * The colony war, whichever processor runs it. The CPU one is
  * `BacteriaSimulation`; the GPU one runs the same rules as WebGL2 shader
  * passes and reports its numbers a frame late.
  */
 export interface Simulation {
-  /**
-   * Which simulation runs the war: the float one on the CPU or the GPU, or
-   * the deterministic integer one on the CPU (`intSimulation`, ADR 0015).
-   * Only a `cpu` match replays on `BacteriaSimulation`.
-   */
-  readonly kind: 'cpu' | 'gpu' | 'int';
-  /**
-   * The ruleset its matches play by (ADR 0015): `cpu` for
-   * `BacteriaSimulation`, `gpu-int` for the deterministic integer passes on
-   * either processor - null for the float GPU one, whose matches no device
-   * plays again alike.
-   */
-  readonly ruleset: Ruleset | null;
+  /** Which simulation runs the war - see {@link SimulationVariant}. */
+  readonly variant: SimulationVariant;
   setMap(map: GameMap): void;
   resize(width: number, height: number): void;
   /** Replaces all colonies with a fresh blob per player. */

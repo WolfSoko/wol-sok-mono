@@ -251,8 +251,7 @@ const NEIGHBOUR_Y = Int8Array.from(NEIGHBOURS, ([, dy]) => dy);
  * 5. movement - follow your player, but hunt nearby enemies
  */
 export class BacteriaSimulation implements Simulation {
-  public readonly kind = 'cpu';
-  public readonly ruleset = 'cpu';
+  public readonly variant = 'cpu';
   private readonly balance: GameBalance;
   private readonly random: () => number;
 

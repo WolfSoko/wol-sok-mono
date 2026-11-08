@@ -51,7 +51,7 @@ interface PendingReport {
  * the one of tick `t` at the start of tick `t + DETERMINISTIC_REPORT_LAG`.
  */
 export class IntReferencePasses implements CellPasses {
-  public readonly kind = 'int';
+  public readonly variant = 'cpu-int';
   public readonly reportLag = DETERMINISTIC_REPORT_LAG;
   private arena: GridArena = {
     width: 0,

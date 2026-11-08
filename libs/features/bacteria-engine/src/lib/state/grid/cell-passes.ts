@@ -1,7 +1,7 @@
 import type { ColonySpawn } from '../bacteria-simulation';
 import type { CellBounds, Point } from '../geometry';
 import type { IntEffectUniforms } from '../gpu-int/int-effects';
-import type { ColonyLayer } from '../simulation';
+import type { ColonyLayer, GridVariant } from '../simulation';
 import type { Report, ReportLayout } from '../simulation-report';
 
 /** The uniform arrays of a frame, filled in place by `GridWar`. */
@@ -87,7 +87,8 @@ export interface CellPassesHost {
  * it, never a field of the war.
  */
 export interface CellPasses {
-  readonly kind: 'gpu' | 'int';
+  /** Which grid simulation these passes run - see `SimulationVariant`. */
+  readonly variant: GridVariant;
   /**
    * How old, in ticks, every report the war takes is - set only by the
    * integer passes of ADR 0015, which every device computes alike

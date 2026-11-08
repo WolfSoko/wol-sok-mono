@@ -16,8 +16,7 @@ const ARENA = { width: 64, height: 32 };
 /** A GPU simulation as far as the provider can tell. */
 function gpuSimulation(): Simulation & { disposed: boolean; size?: string } {
   const simulation = {
-    kind: 'gpu',
-    ruleset: null,
+    variant: 'gpu-float',
     disposed: false,
     size: undefined as string | undefined,
     resize(width: number, height: number) {
@@ -55,7 +54,7 @@ describe('createSimulationProvider', () => {
       ).toBeInstanceOf(BacteriaSimulation);
       expect(
         CPU_SIMULATIONS.simulationFor('gpu-int')(gameBalance, random, SEED)
-      ).toMatchObject({ kind: 'int' });
+      ).toMatchObject({ variant: 'cpu-int' });
     });
 
     it('plays the device on the CPU, offering and playing cpu only', () => {
@@ -192,7 +191,7 @@ describe('createSimulationProvider', () => {
       expect(simulations.gpuIntReady()).toBe(false);
       expect(
         simulations.simulationFor('gpu-int')(gameBalance, random, SEED)
-      ).toMatchObject({ kind: 'int' });
+      ).toMatchObject({ variant: 'cpu-int' });
       expect(onFallback).toHaveBeenCalledTimes(1);
     });
 
@@ -206,7 +205,7 @@ describe('createSimulationProvider', () => {
 
       expect(
         simulations.simulationFor('gpu-int')(gameBalance, random, SEED)
-      ).toMatchObject({ kind: 'int' });
+      ).toMatchObject({ variant: 'cpu-int' });
       expect(onFallback).toHaveBeenCalledWith(expect.any(Error));
       expect(simulations.gpuIntReady()).toBe(false);
       expect(
@@ -230,7 +229,7 @@ describe('createSimulationProvider', () => {
       );
 
       expect(broken.disposed).toBe(true);
-      expect(simulation).toMatchObject({ kind: 'int' });
+      expect(simulation).toMatchObject({ variant: 'cpu-int' });
       expect(simulations.gpuIntReady()).toBe(false);
     });
 

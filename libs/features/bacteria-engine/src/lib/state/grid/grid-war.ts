@@ -22,7 +22,7 @@ import {
   BlockCounts,
   ColonyLayer,
   ColonySummary,
-  Ruleset,
+  GridVariant,
   Simulation,
 } from '../simulation';
 import {
@@ -67,9 +67,7 @@ export const READBACK_SLOTS = 3;
  * ADR 0015's CPU fallback) - so every adapter reads the same inputs.
  */
 export class GridWar implements Simulation {
-  public readonly kind: 'gpu' | 'int';
-  /** `gpu-int` on passes with a fixed report lag; the float ones have none. */
-  public readonly ruleset: Ruleset | null;
+  public readonly variant: GridVariant;
   private width = 0;
   private height = 0;
   private layout: ReportLayout;
@@ -148,8 +146,7 @@ export class GridWar implements Simulation {
     private readonly balance: GameBalance,
     random: () => number
   ) {
-    this.kind = passes.kind;
-    this.ruleset = passes.reportLag === null ? null : 'gpu-int';
+    this.variant = passes.variant;
     this.arena = new ArenaFixtures(balance, random);
     this.layout = reportLayout(0, 0, balance.influenceCellSize);
     passes.attach({ restart: () => this.restart() });

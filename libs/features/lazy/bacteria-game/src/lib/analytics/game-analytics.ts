@@ -2,6 +2,7 @@ import { AppAnalytics, injectAnalytics } from '@wolsok/shared-analytics';
 import type {
   AchievementId,
   EndReason,
+  SimulationVariant,
 } from '@wolsok/feat-shared-bacteria-engine';
 
 /** How a match is played, as the statistics tell the modes apart. */
@@ -22,10 +23,11 @@ export type MatchParams = {
   /** The computer's difficulty, `none` without one. */
   difficulty: string;
   ranked: boolean;
-  /** What plays the war: `cpu`, `gpu` or `int` (the integer CPU twin). */
-  simulation: string;
-  /** The ruleset: `cpu`, `gpu-int` or `float` (the float GPU, unrecorded). */
-  ruleset: string;
+  /**
+   * What plays the war - its `SimulationVariant`: `cpu`, `cpu-int`,
+   * `gpu-int` or `gpu-float`, which also names the ruleset.
+   */
+  simulation: SimulationVariant;
 };
 
 /** For the people at this device: `decided` between two of them. */

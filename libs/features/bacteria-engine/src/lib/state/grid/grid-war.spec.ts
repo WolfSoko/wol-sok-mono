@@ -1,4 +1,5 @@
 import type { ColonySpawn } from '../bacteria-simulation';
+import type { GridVariant } from '../simulation';
 import { colonyCapacity, gameBalance } from '../game-balance';
 import {
   DETERMINISTIC_REPORT_LAG,
@@ -61,7 +62,7 @@ function rawReport(arena: GridArena, report: ReportCounts): Uint32Array {
 
 /** Cell passes that only note what the war asks of them. */
 class StubPasses implements CellPasses {
-  public readonly kind = 'int';
+  public readonly variant: GridVariant;
   public readonly calls: string[] = [];
   public readonly ticks: GridTick[] = [];
   public readonly frames: (Pick<GridFrame, 'pelletCount' | 'effectCount'> & {
@@ -78,6 +79,8 @@ class StubPasses implements CellPasses {
 
   public constructor(deterministic: boolean) {
     this.reportLag = deterministic ? DETERMINISTIC_REPORT_LAG : null;
+    // As the real adapters: a lag for the integer passes, none for the float.
+    this.variant = deterministic ? 'cpu-int' : 'gpu-float';
   }
 
   public attach(host: CellPassesHost): void {
@@ -169,9 +172,9 @@ function war(deterministic: boolean, map: GameMap = plainMap) {
 }
 
 describe('GridWar', () => {
-  it('takes its kind from the passes, and a ruleset only from deterministic ones', () => {
-    expect(war(true).grid).toMatchObject({ kind: 'int', ruleset: 'gpu-int' });
-    expect(war(false).grid).toMatchObject({ kind: 'int', ruleset: null });
+  it('takes its variant from the passes', () => {
+    expect(war(true).grid.variant).toBe('cpu-int');
+    expect(war(false).grid.variant).toBe('gpu-float');
   });
 
   it('collects a deterministic match’s reports before anything of the tick reads them', () => {

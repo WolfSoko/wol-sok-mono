@@ -27,6 +27,7 @@ import {
   GameFrame,
   Point,
   Rect,
+  runsOnGpu,
   seatLooks,
   type WeaponFire,
 } from '@wolsok/feat-shared-bacteria-engine';
@@ -241,7 +242,8 @@ export class StageFrame {
     const timer = perf === null ? null : (painter.gpuTimer?.() ?? null);
     // The ticks' GPU time where the war runs on the GPU.
     const simulation = this.playerService.getSimulation();
-    const simTimer = timer !== null && simulation.kind === 'gpu' ? timer : null;
+    const simTimer =
+      timer !== null && runsOnGpu(simulation.variant) ? timer : null;
     const adapting = painter.setRenderScale != null && untracked(this.adapts);
     // The main thread's time is taken where the HUD or the sharpness asks.
     const timed = perf !== null || adapting;
@@ -298,7 +300,7 @@ export class StageFrame {
     const { width, height } = this.stage.arena();
     this.hudPerf.set({
       ...report,
-      simulation: simulationLabel(simulation.kind, simulation.ruleset),
+      simulation: simulationLabel(simulation.variant),
       cells: arenaKey(width, height),
       // The Canvas 2D painter paints every pixel, whatever the scale says.
       // A share of the pixels: the scale goes for the width and the height.
@@ -433,8 +435,8 @@ export class StageFrame {
     // Which processor runs the war - for the e2e tests and for debugging.
     // The match picks it, so it can fall back to the CPU after a GPU error.
     const dataset = this.stage.arenaView()?.canvas()?.dataset;
-    if (dataset != null && dataset['simulation'] !== simulation.kind) {
-      dataset['simulation'] = simulation.kind;
+    if (dataset != null && dataset['simulation'] !== simulation.variant) {
+      dataset['simulation'] = simulation.variant;
     }
     const players = untracked(this.playerStore.entities);
     return {

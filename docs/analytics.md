@@ -92,8 +92,8 @@ page views.
 
 Every match event carries `level_name` (the level id), `kind`
 (`vs_computer`, `training`, `daily`, `endless`, `two_players`, `online`,
-`ghost`), `difficulty`, `ranked`, `simulation` (`cpu`, `gpu`, `int`) and
-`ruleset` (`cpu`, `gpu-int`, `float`).
+`ghost`), `difficulty`, `ranked` and `simulation` (`cpu`, `cpu-int`,
+`gpu-int`, `gpu-float`; the variant names the ruleset too).
 
 | Event                                                                                                                | Parameters                                                                                                                                                        | Where                                                         |
 | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
@@ -142,7 +142,7 @@ reports show none of their parameters, and page views may count twice.
    as needed; **Data retention**: 2 months, as the game's privacy policy
    says (section 11). Raising it to 14 months changes that text too.
 3. **Custom definitions → Custom dimensions** (event scope): `kind`,
-   `difficulty`, `ranked`, `simulation`, `ruleset`, `outcome`, `reason`,
+   `difficulty`, `ranked`, `simulation`, `outcome`, `reason`,
    `medal`, `new_best`, `mission_done`, `item_category`, `setting`, `value`
    (text), `role`, `matchmade`, `notice`, `source`, `product_id`, `first`,
    `accepted`, `found`, `online`, `cloud`, `passed`, `level_name`, and for
