@@ -1,0 +1,73 @@
+{
+  "name": "korbjaeger",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "{projectRoot}/src",
+  "tags": ["app", "type:firebase"],
+  "targets": {
+    "build": {
+      "executor": "@analogjs/platform:vite",
+      "defaultConfiguration": "production",
+      "options": {
+        "main": "{projectRoot}/src/main.ts",
+        "configFile": "{projectRoot}/vite.config.ts",
+        "outputPath": "{workspaceRoot}/dist/{projectRoot}/client",
+        "tsConfig": "{projectRoot}/tsconfig.app.json"
+      },
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "e2e": {
+          "mode": "e2e"
+        },
+        "production": {
+          "sourcemap": true,
+          "mode": "production"
+        }
+      },
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/{projectRoot}/.nitro",
+        "{workspaceRoot}/dist/{projectRoot}/analog"
+      ]
+    },
+    "serve": {
+      "executor": "@analogjs/platform:vite-dev-server",
+      "defaultConfiguration": "development",
+      "continuous": true,
+      "options": {
+        "buildTarget": "korbjaeger:build",
+        "port": 4302
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "korbjaeger:build:development",
+          "hmr": true
+        },
+        "e2e": {
+          "buildTarget": "korbjaeger:build:e2e",
+          "port": 4304
+        },
+        "production": {
+          "buildTarget": "korbjaeger:build:production"
+        }
+      }
+    },
+    "fake-dbb": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "command": "tsx apps/korbjaeger/e2e/fake-dbb/server.ts 4303",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "@analogjs/vitest-angular:test",
+      "options": {
+        "configFile": "vite.config.ts"
+      }
+    },
+    "typecheck-specs": {}
+  }
+}

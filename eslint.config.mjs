@@ -19,6 +19,7 @@ const selectorPrefixes = {
   'apps/angular-examples': ['app', 'app'],
   'apps/bacteria-game-remote': ['wolsok', 'wolsok'],
   'apps/fourier-analysis-remote': ['wolsok', 'wolsok'],
+  'apps/korbjaeger': ['korb', 'korb'],
   'apps/shader-examples-remote': ['app', 'app'],
   'apps/pacetrainer': ['pace', 'pace'],
   'apps/portfolio': ['wolsok', 'wolsok'],

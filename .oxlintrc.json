@@ -156,7 +156,7 @@
       }
     },
     {
-      "files": ["apps/{pacetrainer,rollapolla-analog}/**/*.spec.ts"],
+      "files": ["apps/{korbjaeger,pacetrainer,rollapolla-analog}/**/*.spec.ts"],
       "plugins": ["vitest"],
       "env": {
         "vitest": true
