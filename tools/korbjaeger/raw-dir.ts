@@ -1,4 +1,5 @@
-import { relative, resolve } from 'node:path';
+import { resolve } from 'node:path';
+import { isOutsideFolder } from '../../libs/features/basketball-data/src/testing/outside-folder';
 
 const WORKSPACE_ROOT = resolve(__dirname, '../..');
 
@@ -11,8 +12,7 @@ export function rawDirOutsideWorkspace(arg: string | undefined): string {
     throw new Error('usage: <raw-dir> (a folder outside the workspace)');
   }
   const rawDir = resolve(arg);
-  const fromRoot = relative(WORKSPACE_ROOT, rawDir);
-  if (!fromRoot.startsWith('..')) {
+  if (!isOutsideFolder(WORKSPACE_ROOT, rawDir)) {
     throw new Error(`raw responses must stay outside the workspace: ${rawDir}`);
   }
   return rawDir;
