@@ -1,3 +1,20 @@
+export type { BasketballData } from './lib/basketball-data';
+export {
+  DbbBasketballData,
+  VEREINS_SPIELE_TAGE,
+} from './lib/dbb/dbb-basketball-data';
+export {
+  DBB_BASE_URL,
+  MAX_VEREINS_SPIELE_TAGE,
+  dbbHttpRequest,
+} from './lib/dbb/dbb-request';
+export type {
+  DbbHttpRequest,
+  DbbLigaFilterBody,
+  DbbRequest,
+  DbbRequestKind,
+  DbbTransport,
+} from './lib/dbb/dbb-request';
 export {
   BasketballDataError,
   isBasketballDataError,
