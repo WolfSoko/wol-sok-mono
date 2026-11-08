@@ -10,13 +10,16 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
-import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
+import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
+import { SpielLinkComponent } from '../spiel/spiel-link.component';
 import type { TeamKarte } from './team-karte';
 
 /**
- * One of Meine Teams on the overview, as `karte` gives it: its next Spiel,
- * what falls through before it and its last result, or why its read
- * failed, with "Entfernen" to unfollow the Team. Reads no data itself.
+ * One of Meine Teams on the overview, as `karte` gives it: its next Spiel
+ * with its Halle, what falls through before it and its last result, each
+ * opening its Spiel page, or why its read failed, with "Entfernen" to
+ * unfollow the Team. Reads no data itself but the next Spiel's Halle
+ * (`NaechstesSpielComponent`), so each card's loads and fails on its own.
  */
 @Component({
   selector: 'korb-ueberblick-team',
@@ -24,8 +27,9 @@ import type { TeamKarte } from './team-karte';
     MatButtonModule,
     MatCardModule,
     MatProgressBarModule,
+    NaechstesSpielComponent,
     RouterLink,
-    SpielZeileComponent,
+    SpielLinkComponent,
   ],
   templateUrl: './ueberblick-team.component.html',
   styleUrl: './ueberblick-team.component.scss',

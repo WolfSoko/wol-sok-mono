@@ -10,26 +10,32 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { HEUTE } from '../heute';
+import { RouterLink } from '@angular/router';
 import {
   ligenAktuellZuerst,
+  naechstesSpiel,
   parseDbbId,
 } from '@wolsok/feat-shared-basketball-data';
+import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
-import { spielZeilen } from '../spiel/spiel-zeile';
+import { spielZeile, spielZeilen } from '../spiel/spiel-zeile';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
 import { TeamFolgenComponent } from './team-folgen.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
 /**
- * The Team page: its Spiele of the Saison, across all its Ligen, by date,
- * then the Tabelle of each of those Ligen, the current one first; with a
- * control to follow the Team.
+ * The Team page: its next Spiel with its Halle, its Spiele of the Saison
+ * (each opening its Spiel page), across all its Ligen, by date, then the
+ * Tabelle of each of those Ligen, the current one first; with a control
+ * to follow the Team.
  */
 @Component({
   selector: 'korb-team',
   imports: [
     MatListModule,
     MatProgressBarModule,
+    NaechstesSpielComponent,
+    RouterLink,
     SpielZeileComponent,
     TeamFolgenComponent,
     TeamTabelleComponent,
@@ -63,6 +69,16 @@ export class TeamComponent {
   protected readonly zeilen = computed(() =>
     this.saison.hasValue() ? spielZeilen(this.saison.value()) : []
   );
+
+  /** The next Spiel to go to, from today on. */
+  protected readonly naechstes = computed(() => {
+    if (!this.saison.hasValue()) {
+      return undefined;
+    }
+    const saison = this.saison.value();
+    const spiel = naechstesSpiel(saison, this.heute());
+    return spiel && spielZeile(saison, spiel);
+  });
 
   protected readonly ligen = computed(() =>
     this.saison.hasValue()

@@ -23,21 +23,20 @@
       }
       @case ("geladen") {
         @for (ausfall of team.ausfaelle; track ausfall.id) {
-          <korb-spiel-zeile
+          <korb-spiel-link
             titel="Fällt aus"
             [zeile]="ausfall"
             data-qa="ueberblick-ausfall"
           />
         }
         @if (team.naechstes; as naechstes) {
-          <korb-spiel-zeile
-            titel="Nächstes Spiel"
+          <korb-naechstes-spiel
             [zeile]="naechstes"
             data-qa="ueberblick-naechstes"
           />
         }
         @if (team.letztes; as letztes) {
-          <korb-spiel-zeile
+          <korb-spiel-link
             titel="Letztes Ergebnis"
             [zeile]="letztes"
             data-qa="ueberblick-letztes"

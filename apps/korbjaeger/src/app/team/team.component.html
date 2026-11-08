@@ -13,16 +13,25 @@
   <korb-team-folgen class="folgen" [teamId]="teamId" />
 }
 @if (saison.hasValue()) {
+  @if (naechstes(); as zeile) {
+    <korb-naechstes-spiel
+      class="naechstes"
+      data-qa="team-naechstes"
+      [zeile]="zeile"
+      mitLiga
+    />
+  }
   @if (zeilen().length === 0) {
     <p>Noch keine Spiele in dieser Saison.</p>
   } @else {
-    <mat-list class="spiele">
+    <h2>Spiele</h2>
+    <mat-nav-list class="spiele">
       @for (zeile of zeilen(); track zeile.id) {
-        <mat-list-item data-qa="spiel">
+        <a mat-list-item data-qa="spiel" [routerLink]="['/spiel', zeile.id]">
           <korb-spiel-zeile matListItemTitle [zeile]="zeile" mitLiga />
-        </mat-list-item>
+        </a>
       }
-    </mat-list>
+    </mat-nav-list>
   }
   @if (ligen().length > 0) {
     <h2>Tabellen</h2>
