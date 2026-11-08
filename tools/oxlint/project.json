@@ -4,5 +4,19 @@
   "sourceRoot": "tools/oxlint",
   "projectType": "library",
   "tags": ["tools"],
-  "targets": {}
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/**/*",
+        {
+          "externalDependencies": ["oxlint"]
+        }
+      ],
+      "options": {
+        "command": "node --test tools/oxlint/workspace-rules.spec.mjs"
+      }
+    }
+  }
 }
