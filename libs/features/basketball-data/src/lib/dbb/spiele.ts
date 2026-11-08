@@ -1,5 +1,5 @@
 import type { Liga } from '../domain/liga';
-import type { Spiel } from '../domain/spiel';
+import { vergleicheAnwurf, type Spiel } from '../domain/spiel';
 import type { DbbObject } from './dbb-object';
 import { mapLiga } from './map-liga';
 import { mapSpiel } from './map-spiel';
@@ -28,18 +28,12 @@ export function chronologisch<T extends { readonly spiel: Spiel }>(
   for (const eintrag of eintraege) {
     byId.set(eintrag.spiel.id, eintrag);
   }
-  return [...byId.values()].sort((a, b) => compareAnwurf(a.spiel, b.spiel));
+  return [...byId.values()].sort(
+    (a, b) => vergleicheAnwurf(a.spiel, b.spiel) || a.spiel.id - b.spiel.id
+  );
 }
 
 /** Each Liga once, in the order given. */
 export function distinctLigen(ligen: readonly Liga[]): readonly Liga[] {
   return [...new Map(ligen.map((liga) => [liga.id, liga] as const)).values()];
-}
-
-function compareAnwurf(a: Spiel, b: Spiel): number {
-  return (
-    a.datum.localeCompare(b.datum) ||
-    (a.uhrzeit ?? '').localeCompare(b.uhrzeit ?? '') ||
-    a.id - b.id
-  );
 }

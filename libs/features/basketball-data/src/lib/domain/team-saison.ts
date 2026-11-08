@@ -47,7 +47,12 @@ export function naechstesSpiel(
   saison: TeamSaison,
   heute: string
 ): Spiel | undefined {
-  return saison.spiele.find(
+  return saison.spiele[naechstesSpielIndex(saison, heute)];
+}
+
+/** Where `naechstesSpiel` stands in `saison.spiele`; -1 where none is left. */
+export function naechstesSpielIndex(saison: TeamSaison, heute: string): number {
+  return saison.spiele.findIndex(
     ({ datum, status }) => datum >= heute && status.art === 'geplant'
   );
 }
@@ -66,10 +71,7 @@ export function ligenAktuellZuerst(
   saison: TeamSaison,
   heute: string
 ): readonly Liga[] {
-  const aktuell =
-    stattfindende(saison).find(({ datum }) => datum >= heute) ??
-    stattfindende(saison).at(-1) ??
-    saison.spiele.at(-1);
+  const aktuell = aktuellesSpiel(saison, heute);
   if (aktuell === undefined) {
     return [];
   }
@@ -79,6 +81,20 @@ export function ligenAktuellZuerst(
   return [...new Set<LigaId>([aktuell.ligaId, ...neuesteZuerst])]
     .map((id) => ligaVon(saison, id))
     .filter((liga): liga is Liga => liga !== undefined);
+}
+
+/**
+ * The Spiel whose Liga is the current one (`ligenAktuellZuerst`): the
+ * first not cancelled from `heute` on, else the last not cancelled, else
+ * the last of all.
+ */
+function aktuellesSpiel(saison: TeamSaison, heute: string): Spiel | undefined {
+  const stattfindend = stattfindende(saison);
+  return (
+    stattfindend.find(({ datum }) => datum >= heute) ??
+    stattfindend.at(-1) ??
+    saison.spiele.at(-1)
+  );
 }
 
 function stattfindende(saison: TeamSaison): readonly Spiel[] {

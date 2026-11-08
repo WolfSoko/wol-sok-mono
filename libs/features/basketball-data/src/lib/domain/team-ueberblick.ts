@@ -1,5 +1,10 @@
-import { sonderfallVon, type Spiel } from './spiel';
-import { naechstesSpiel, type TeamSaison } from './team-saison';
+import {
+  istEntschieden,
+  sonderfallVon,
+  vergleicheAnwurf,
+  type Spiel,
+} from './spiel';
+import { naechstesSpielIndex, type TeamSaison } from './team-saison';
 
 /** What the overview shows of one Team on a given day. */
 export interface TeamUeberblick {
@@ -28,11 +33,10 @@ export function teamUeberblick(
   saison: TeamSaison,
   heute: string
 ): TeamUeberblick {
-  const naechstes = naechstesSpiel(saison, heute);
+  const index = naechstesSpielIndex(saison, heute);
+  const naechstes: Spiel | undefined = saison.spiele[index];
   const bisNaechstes =
-    naechstes === undefined
-      ? saison.spiele
-      : saison.spiele.slice(0, saison.spiele.indexOf(naechstes));
+    index === -1 ? saison.spiele : saison.spiele.slice(0, index);
   const letztes = saison.spiele.findLast(
     (spiel) => spiel.datum <= heute && istEntschieden(spiel)
   );
@@ -50,7 +54,7 @@ export function teamUeberblick(
 
 /**
  * `eintraege` by their next Spiel (`naechstes` of each), the first to tip
- * off first; on one day a Spiel without a time comes after the timed ones.
+ * off first (`vergleicheAnwurf`).
  * Entries without a next Spiel follow; ties keep the order given. Returns
  * a new list.
  */
@@ -59,28 +63,16 @@ export function nachNaechstemSpiel<T>(
   naechstes: (eintrag: T) => Spiel | undefined
 ): T[] {
   return [...eintraege].sort((a, b) =>
-    vergleicheAnpfiff(naechstes(a), naechstes(b))
+    vergleicheNaechstes(naechstes(a), naechstes(b))
   );
 }
 
-/** Sorts after every `HH:mm`, so a Spiel without a time ends its day. */
-const OHNE_UHRZEIT = '~';
-
-function anpfiff(spiel: Spiel): string {
-  return `${spiel.datum} ${spiel.uhrzeit ?? OHNE_UHRZEIT}`;
-}
-
-function vergleicheAnpfiff(a: Spiel | undefined, b: Spiel | undefined): number {
+function vergleicheNaechstes(
+  a: Spiel | undefined,
+  b: Spiel | undefined
+): number {
   if (a === undefined || b === undefined) {
     return Number(a === undefined) - Number(b === undefined);
   }
-  const [erster, zweiter] = [anpfiff(a), anpfiff(b)];
-  if (erster === zweiter) {
-    return 0;
-  }
-  return erster < zweiter ? -1 : 1;
-}
-
-function istEntschieden(spiel: Spiel): boolean {
-  return spiel.status.art === 'gespielt' || spiel.status.art === 'kampflos';
+  return vergleicheAnwurf(a, b);
 }

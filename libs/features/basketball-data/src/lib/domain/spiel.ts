@@ -122,3 +122,31 @@ export function sonderfallVon(spiel: Spiel): SpielSonderfall | undefined {
       return undefined;
   }
 }
+
+/** Whether `spiel` is decided: played with a result, or forfeited. */
+export function istEntschieden(spiel: Spiel): boolean {
+  return spiel.status.art === 'gespielt' || spiel.status.art === 'kampflos';
+}
+
+/**
+ * Sorts after every `HH:mm`: a Spiel without a tip-off is one the Liga has
+ * yet to time, so the known tip-offs of its day come first.
+ */
+const OHNE_UHRZEIT = '~';
+
+/**
+ * Orders Spiele by day, then tip-off, a Spiel without a tip-off last on
+ * its day; Spiele of one tip-off tie (0), so a stable sort keeps their
+ * order.
+ */
+export function vergleicheAnwurf(a: Spiel, b: Spiel): number {
+  const [erster, zweiter] = [anwurf(a), anwurf(b)];
+  if (erster === zweiter) {
+    return 0;
+  }
+  return erster < zweiter ? -1 : 1;
+}
+
+function anwurf(spiel: Spiel): string {
+  return `${spiel.datum} ${spiel.uhrzeit ?? OHNE_UHRZEIT}`;
+}
