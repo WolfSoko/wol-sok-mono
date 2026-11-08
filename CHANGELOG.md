@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.140.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.12...v74.140.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 1 — Team page with its Spiele of the Saison (tracer bullet) ([#2876](https://github.com/WolfSoko/wol-sok-mono/issues/2876)) ([ac50f73](https://github.com/WolfSoko/wol-sok-mono/commit/ac50f731b66acefa855e2458b26b1677376afd30)), references [#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861) [#2864](https://github.com/WolfSoko/wol-sok-mono/issues/2864) [#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861)
+
+### Bug Fixes
+
+* **nx-aws-cdk-v2-e2e:** fix the synth test and run the plugin e2e in CI ([#2845](https://github.com/WolfSoko/wol-sok-mono/issues/2845)) ([f17634b](https://github.com/WolfSoko/wol-sok-mono/commit/f17634b8d67692ec9ea5aaa2453dd6b00d5a84fe)), references [#2831](https://github.com/WolfSoko/wol-sok-mono/issues/2831) [#2831](https://github.com/WolfSoko/wol-sok-mono/issues/2831)
+
+### Chore
+
+* **release:** publish ([382fe42](https://github.com/WolfSoko/wol-sok-mono/commit/382fe425cdd658906e5461e4df16f42ec109657f))
+
 ## [74.139.12](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.11...v74.139.12) (2026-11-08)
 
 ### Bug Fixes
