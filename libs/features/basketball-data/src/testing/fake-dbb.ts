@@ -88,7 +88,7 @@ const RECORDINGS: ReadonlyArray<readonly [DbbRequest, unknown]> = [
 /** The recorded answers, by the call `dbbHttpRequest` builds for them. */
 const RECORDED: ReadonlyMap<string, unknown> = new Map(
   RECORDINGS.map(([request, answer]) => [
-    callKey(dbbHttpRequest(request)),
+    callKeyOf(dbbHttpRequest(request)),
     answer,
   ])
 );
@@ -118,14 +118,14 @@ export function fakeDbbAnswer(
   switch (method) {
     case 'GET':
       return (
-        RECORDED.get(callKey({ method, path })) ??
+        RECORDED.get(callKey('GET', path)) ??
         NOT_FOUND.find(([pattern]) => pattern.test(path))?.[1]
       );
     case 'POST': {
       const parsed = parsedOrUndefined(body);
       return parsed === undefined
         ? undefined
-        : RECORDED.get(`POST ${path} ${kanonisch(parsed)}`);
+        : RECORDED.get(callKey('POST', path, parsed));
     }
     default:
       return undefined;
@@ -133,10 +133,17 @@ export function fakeDbbAnswer(
 }
 
 /** One key per call: its method, its path and a POST's body's content. */
-function callKey(call: DbbHttpRequest): string {
+function callKey(method: string, path: string, body?: unknown): string {
+  return body === undefined
+    ? `${method} ${path}`
+    : `${method} ${path} ${kanonisch(body)}`;
+}
+
+/** The key of the call `dbbHttpRequest` builds. */
+function callKeyOf(call: DbbHttpRequest): string {
   return call.method === 'POST'
-    ? `POST ${call.path} ${kanonisch(call.body)}`
-    : `GET ${call.path}`;
+    ? callKey(call.method, call.path, call.body)
+    : callKey(call.method, call.path);
 }
 
 /** `value` as JSON with every object's keys sorted: equal content, equal text. */

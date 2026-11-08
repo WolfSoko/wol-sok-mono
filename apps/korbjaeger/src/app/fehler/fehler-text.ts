@@ -6,18 +6,21 @@ export const KEIN_TEAM = 'Dieses Team kennt der DBB nicht.';
 /** What a screen says for an id that names no Liga. */
 export const KEINE_LIGA = 'Diese Liga kennt der DBB nicht.';
 
-/** What the Team wizard says when the DBB names no Verband at all. */
+/** What the Team wizard says when the search offers no Verband at all. */
 export const KEINE_VERBAENDE = 'Der DBB nennt gerade keine Verbände.';
 
-/** What the Team wizard says when the DBB finds nothing in a Verband. */
+/** What the Team wizard says when a Verband offers no age group. */
 export const KEINE_LIGEN_IM_VERBAND =
   'Für diesen Verband kennt der DBB keine Ligen.';
 
-/** What the Team wizard says when the DBB finds nothing in an age group. */
+/** What the Team wizard says when an age group offers no gender. */
 export const KEINE_LIGEN_IN_ALTERSKLASSE =
   'Für diese Altersklasse kennt der DBB keine Ligen.';
 
-/** What the Liga search says for a filter the DBB finds nothing for. */
+/**
+ * What the Liga search says when the DBB answers it as not found, or
+ * finds no Liga for a filter.
+ */
 export const KEINE_LIGEN = 'Für diese Auswahl kennt der DBB keine Ligen.';
 
 /** What a screen says for an id that names no Spiel. */

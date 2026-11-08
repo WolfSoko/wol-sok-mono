@@ -8,59 +8,31 @@
 }
 <section data-qa="schritt-verband">
   <h2>1. Verband</h2>
-  @if (verbandFehler(); as text) {
-    <p class="fehler" role="alert">{{ text }}</p>
-  }
-  @if (verbaende().length > 0) {
-    <mat-form-field appearance="outline">
-      <mat-label>Verband</mat-label>
-      <mat-select
-        data-qa="verband"
-        [value]="verband()"
-        (valueChange)="verband.set($event)"
-      >
-        @for (facette of verbaende(); track facette.id) {
-          <mat-option [value]="facette.id">{{ facette.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-  }
+  <korb-facetten-select
+    label="Verband"
+    qa="verband"
+    [schritt]="verbaende"
+    [(wert)]="verband"
+  />
 </section>
 
 @if (verband() !== undefined) {
   <section data-qa="schritt-alter">
     <h2>2. Altersklasse und Geschlecht</h2>
-    @if (altersklasseFehler() ?? geschlechtFehler(); as text) {
-      <p class="fehler" role="alert">{{ text }}</p>
-    }
     <div class="nebeneinander">
-      @if (altersklassen().length > 0) {
-        <mat-form-field appearance="outline">
-          <mat-label>Altersklasse</mat-label>
-          <mat-select
-            data-qa="altersklasse"
-            [value]="altersklasse()"
-            (valueChange)="altersklasse.set($event)"
-          >
-            @for (facette of altersklassen(); track facette.id) {
-              <mat-option [value]="facette.id">{{ facette.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      }
-      @if (altersklasse() !== undefined && geschlechter().length > 0) {
-        <mat-form-field appearance="outline">
-          <mat-label>Geschlecht</mat-label>
-          <mat-select
-            data-qa="geschlecht"
-            [value]="geschlecht()"
-            (valueChange)="geschlecht.set($event)"
-          >
-            @for (facette of geschlechter(); track facette.id) {
-              <mat-option [value]="facette.id">{{ facette.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+      <korb-facetten-select
+        label="Altersklasse"
+        qa="altersklasse"
+        [schritt]="altersklassen"
+        [(wert)]="altersklasse"
+      />
+      @if (altersklasse() !== undefined) {
+        <korb-facetten-select
+          label="Geschlecht"
+          qa="geschlecht"
+          [schritt]="geschlechter"
+          [(wert)]="geschlecht"
+        />
       }
     </div>
   </section>

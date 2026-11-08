@@ -10,6 +10,7 @@ import {
   dbbHttpRequest,
   type DbbTransport,
   type LigaSeite,
+  type LigaSuche,
   type LigaSucheFilter,
   type ReadOptions,
   type ReadSignal,
@@ -58,6 +59,31 @@ class HaengendeSeiten extends DbbBasketballData {
       this.signale.push(options.signal);
     }
     return new Promise(() => undefined);
+  }
+}
+
+/** The recorded DBB, whose search finds nothing where `leer` holds. */
+class OhneFacetten extends DbbBasketballData {
+  public constructor(
+    private readonly leer: (filter: LigaSucheFilter) => boolean
+  ) {
+    super(recordedDbb);
+  }
+
+  public override ligaSuche(
+    filter: LigaSucheFilter,
+    options?: ReadOptions
+  ): Promise<LigaSuche> {
+    return this.leer(filter)
+      ? Promise.resolve({
+          facetten: {
+            verbaende: [],
+            altersklassen: [],
+            altersgruppenGeschlechter: [],
+          },
+          ersteSeite: { startIndex: 0, ligen: [], weitere: false },
+        })
+      : super.ligaSuche(filter, options);
   }
 }
 
@@ -409,7 +435,7 @@ describe('TeamEinrichtenComponent', () => {
     expect(assistent.eintraege('team')).toEqual([]);
   });
 
-  it('says at the first step when the DBB names no Verband', async () => {
+  it('says at the first step when the DBB finds no such search', async () => {
     const assistent = await render(
       new DbbBasketballData(async () => {
         throw new BasketballDataError('not-found', 'DBB: status 1');
@@ -417,8 +443,30 @@ describe('TeamEinrichtenComponent', () => {
     );
 
     expect(alarme(assistent.seite, 'schritt-verband')).toEqual([
-      'Der DBB nennt gerade keine Verbände.',
+      'Für diese Auswahl kennt der DBB keine Ligen.',
     ]);
+  });
+
+  it('says so when the DBB names no Verband', async () => {
+    const assistent = await render(new OhneFacetten(() => true));
+
+    expect(
+      textOf(assistent.seite.querySelector('[data-qa="schritt-verband"]'))
+    ).toContain('Der DBB nennt gerade keine Verbände.');
+    expect(await assistent.zeigt('verband')).toBe(false);
+  });
+
+  it('says so when a Verband has no age group', async () => {
+    const assistent = await render(
+      new OhneFacetten((filter) => filter.verbandIds.length > 0)
+    );
+
+    await assistent.waehlen('verband', 'Niedersachsen');
+
+    expect(
+      textOf(assistent.seite.querySelector('[data-qa="schritt-alter"]'))
+    ).toContain('Für diesen Verband kennt der DBB keine Ligen.');
+    expect(await assistent.zeigt('altersklasse')).toBe(false);
   });
 
   it('says at the step that failed why, until its pick changes', async () => {

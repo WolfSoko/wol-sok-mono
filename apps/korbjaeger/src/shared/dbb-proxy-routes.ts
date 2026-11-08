@@ -61,34 +61,20 @@ const DIGITS = /^\d+$/;
  * in `KorbjaegerData`.
  */
 export const PROXY_ROUTES: { readonly [K in ProxyKind]: ProxyRoute<K> } = {
-  'liga-suche': {
-    pattern: '/api/dbb/ligen',
-    readOf: ({ query }) => {
-      const filter = filterOf(query, []);
-      return filter === undefined
-        ? undefined
-        : validOrUndefined({ kind: 'liga-suche', filter });
-    },
-    urlOf: ({ filter }) => withQuery('/api/dbb/ligen', filterQuery(filter)),
-  },
-  'liga-seite': {
-    pattern: '/api/dbb/ligen/seite',
-    readOf: ({ query }) => {
-      const filter = filterOf(query, [START_PARAM]);
+  'liga-suche': filterRoute('/api/dbb/ligen', (filter) => ({
+    kind: 'liga-suche',
+    filter,
+  })),
+  'liga-seite': filterRoute(
+    '/api/dbb/ligen/seite',
+    (filter, query) => {
       const startIndex = startIndexOf(query);
-      return filter === undefined || startIndex === undefined
+      return startIndex === undefined
         ? undefined
-        : validOrUndefined({ kind: 'liga-seite', filter, startIndex });
+        : { kind: 'liga-seite', filter, startIndex };
     },
-    urlOf: ({ filter, startIndex }) =>
-      withQuery(
-        '/api/dbb/ligen/seite',
-        new URLSearchParams([
-          [START_PARAM, String(startIndex)],
-          ...filterQuery(filter),
-        ])
-      ),
-  },
+    { [START_PARAM]: ({ startIndex }) => String(startIndex) }
+  ),
   spielplan: idRoute(
     '/api/dbb/liga/:ligaId/spielplan',
     (ligaId) => ({ kind: 'spielplan', ligaId }),
@@ -147,6 +133,45 @@ function idRoute<K extends ProxyKind>(
     },
     urlOf: (request) => pattern.replace(`:${param}`, String(id(request))),
   };
+}
+
+/** The kinds of read by a Liga search filter in the query. */
+type FilterKind = 'liga-suche' | 'liga-seite';
+
+/**
+ * A route reading by the Liga search filter in its query, beside the
+ * parameters `extra` names, each with how a read gives its value. Parses
+ * and checks the query (`filterOf`, `validOrUndefined`) and builds a
+ * read's URL from the one `pattern`.
+ */
+function filterRoute<K extends FilterKind>(
+  pattern: string,
+  read: (
+    filter: LigaSucheFilter,
+    query: URLSearchParams
+  ) => ProxyRead<K> | undefined,
+  extra: Readonly<Record<string, (read: ProxyRead<K>) => string>> = {}
+): ProxyRoute<K> {
+  return {
+    pattern,
+    readOf: ({ query }) => {
+      const filter = filterOf(query, Object.keys(extra));
+      const request = filter === undefined ? undefined : read(filter, query);
+      return request === undefined ? undefined : validOrUndefined(request);
+    },
+    urlOf: (request) =>
+      withQuery(
+        pattern,
+        new URLSearchParams([
+          ...Object.entries(extra).map(([key, value]) => [key, value(request)]),
+          ...filterQuery(filterOfRead(request)),
+        ])
+      ),
+  };
+}
+
+function filterOfRead(request: ProxyRead<FilterKind>): LigaSucheFilter {
+  return request.filter;
 }
 
 /**

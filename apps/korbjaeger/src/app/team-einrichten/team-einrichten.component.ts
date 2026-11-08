@@ -6,11 +6,8 @@ import {
   signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import {
-  angeboten,
   KEIN_LIGA_FILTER,
   type AltersgruppeGeschlechtId,
   type AltersklasseId,
@@ -18,13 +15,13 @@ import {
   type LigaSucheFilter,
   type VerbandId,
 } from '@wolsok/feat-shared-basketball-data';
-import { ligaSucheResource } from '../basketball-data/liga-suche-resource';
 import {
-  fehlerText,
   KEINE_LIGEN_IM_VERBAND,
   KEINE_LIGEN_IN_ALTERSKLASSE,
   KEINE_VERBAENDE,
 } from '../fehler/fehler-text';
+import { FacettenSelectComponent } from './facetten-select.component';
+import { facettenSchritt } from './facetten-schritt';
 import { ligenSeiten } from './ligen-seiten';
 import { ligaBeschreibung } from './liga-beschreibung';
 import { LigaTeamsComponent } from './liga-teams.component';
@@ -40,12 +37,11 @@ import { LigaWahlComponent } from './liga-wahl.component';
 @Component({
   selector: 'korb-team-einrichten',
   imports: [
+    FacettenSelectComponent,
     LigaTeamsComponent,
     LigaWahlComponent,
     MatButtonModule,
-    MatFormFieldModule,
     MatProgressBarModule,
-    MatSelectModule,
   ],
   templateUrl: './team-einrichten.component.html',
   styleUrl: './team-einrichten.component.scss',
@@ -89,46 +85,26 @@ export class TeamEinrichtenComponent {
     Liga | undefined
   >({ source: this.ligaFilter, computation: () => undefined });
 
-  private readonly alle = ligaSucheResource(() => KEIN_LIGA_FILTER);
-  private readonly imVerband = ligaSucheResource(() => this.verbandFilter());
-  private readonly inAltersklasse = ligaSucheResource(() =>
-    this.altersklasseFilter()
+  protected readonly verbaende = facettenSchritt(
+    () => KEIN_LIGA_FILTER,
+    'verbaende',
+    KEINE_VERBAENDE
+  );
+  protected readonly altersklassen = facettenSchritt(
+    () => this.verbandFilter(),
+    'altersklassen',
+    KEINE_LIGEN_IM_VERBAND
+  );
+  protected readonly geschlechter = facettenSchritt(
+    () => this.altersklasseFilter(),
+    'altersgruppenGeschlechter',
+    KEINE_LIGEN_IN_ALTERSKLASSE
   );
 
-  protected readonly verbaende = computed(() =>
-    this.alle.hasValue() ? angeboten(this.alle.value().facetten.verbaende) : []
-  );
-  protected readonly altersklassen = computed(() =>
-    this.imVerband.hasValue()
-      ? angeboten(this.imVerband.value().facetten.altersklassen)
-      : []
-  );
-  protected readonly geschlechter = computed(() =>
-    this.inAltersklasse.hasValue()
-      ? angeboten(
-          this.inAltersklasse.value().facetten.altersgruppenGeschlechter
-        )
-      : []
-  );
-
-  protected readonly laedt = computed(
-    () =>
-      this.alle.isLoading() ||
-      this.imVerband.isLoading() ||
-      this.inAltersklasse.isLoading()
-  );
-  /**
-   * Why a step's search failed, at that step, with a text that fits it; a
-   * resource drops its error once its filter changes or it reads again.
-   */
-  protected readonly verbandFehler = computed(() =>
-    fehlerText(this.alle.error(), KEINE_VERBAENDE)
-  );
-  protected readonly altersklasseFehler = computed(() =>
-    fehlerText(this.imVerband.error(), KEINE_LIGEN_IM_VERBAND)
-  );
-  protected readonly geschlechtFehler = computed(() =>
-    fehlerText(this.inAltersklasse.error(), KEINE_LIGEN_IN_ALTERSKLASSE)
+  protected readonly laedt = computed(() =>
+    [this.verbaende, this.altersklassen, this.geschlechter].some((schritt) =>
+      schritt.laedt()
+    )
   );
 
   protected readonly beschreibung = ligaBeschreibung;

@@ -1,6 +1,6 @@
-import { inject, Injector, resource, type ResourceRef } from '@angular/core';
+import { inject, Injector, type ResourceRef } from '@angular/core';
 import type { LigaId, Team } from '@wolsok/feat-shared-basketball-data';
-import { BASKETBALL_DATA } from './basketball-data.provider';
+import { basketballDataResource } from './basketball-data-resource';
 
 /**
  * A resource reading the Teams of the Liga `ligaId` gives, none while it
@@ -11,11 +11,9 @@ export function ligaTeamsResource(
   ligaId: () => LigaId | undefined,
   injector: Injector = inject(Injector)
 ): ResourceRef<readonly Team[] | undefined> {
-  const data = injector.get(BASKETBALL_DATA);
-  return resource({
-    params: ligaId,
-    loader: ({ params, abortSignal }) =>
-      data.ligaTeams(params, { signal: abortSignal }),
-    injector,
-  });
+  return basketballDataResource(
+    ligaId,
+    (data, liga, signal) => data.ligaTeams(liga, { signal }),
+    injector
+  );
 }
