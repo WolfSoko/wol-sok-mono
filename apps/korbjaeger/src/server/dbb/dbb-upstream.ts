@@ -64,6 +64,24 @@ function requestBody(request: DbbHttpRequest): Pick<RequestInit, 'body'> {
     : {};
 }
 
+/**
+ * Why a call failed, for the logs: the error's name and message and its
+ * cause's (Node's fetch says "fetch failed" and names a refused redirect
+ * or connection only in the cause). A timeout is a `TimeoutError`.
+ */
 function failureReason(error: unknown): string {
-  return error instanceof Error ? `${error.name}: ${error.message}` : 'unknown';
+  const reason = describe(error);
+  const cause = describe((error as { readonly cause?: unknown } | null)?.cause);
+  return cause === undefined ? (reason ?? 'unknown') : `${reason} (${cause})`;
+}
+
+function describe(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null) {
+    return undefined;
+  }
+  const { name, message } = error as {
+    readonly name?: unknown;
+    readonly message?: unknown;
+  };
+  return `${String(name)}: ${String(message)}`;
 }

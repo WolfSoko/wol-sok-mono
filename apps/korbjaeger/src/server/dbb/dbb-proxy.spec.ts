@@ -1,12 +1,11 @@
 // @vitest-environment node
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
 import { createApp, createRouter, toWebHandler } from 'h3';
-import { DBB_PROXY_CACHE_CONTROL, teamSpieleHandler } from './dbb-proxy';
-import { unknownDbbPathHandler } from './dbb-proxy-response';
-import { dbbUpstream, type UpstreamFetch } from './dbb-upstream';
+import { DBB_PROXY_CACHE_CONTROL } from './dbb-proxy';
+import { PROXY_USER_AGENT } from './dbb-upstream-config';
+import type { UpstreamFetch } from './dbb-upstream';
 
 const BASE_URL = 'https://dbb.test/rest';
-const USER_AGENT = 'Korbjaeger/1.2.3 (+https://korb.wolsok.de)';
 
 /** The DBB, answering from the recorded fixtures with a cookie it sets. */
 function recordedDbb(): ReturnType<typeof vi.fn<UpstreamFetch>> {
@@ -29,20 +28,56 @@ function dbbAnswering(body: string, status = 200): UpstreamFetch {
   return async () => new Response(body, { status });
 }
 
-/** The proxy's routes, as Nitro mounts them, in front of `fetch`. */
-function proxy(fetch: UpstreamFetch, timeoutMs = 1000) {
-  const upstream = dbbUpstream({
-    baseUrl: BASE_URL,
-    fetch,
-    timeoutMs,
-    userAgent: USER_AGENT,
-  });
+/**
+ * The real route files, mounted where Nitro's file routing puts them:
+ * `spiele.get.ts` for GET only, `index.ts` and `[...].ts` for any method.
+ */
+async function proxyRoutes(): Promise<(request: Request) => Promise<Response>> {
+  const [spiele, prefix, rest] = await Promise.all([
+    import('../routes/api/dbb/team/[teamId]/spiele.get'),
+    import('../routes/api/dbb/index'),
+    import('../routes/api/dbb/[...]'),
+  ]);
   const router = createRouter()
-    .get('/api/dbb/team/:teamId/spiele', teamSpieleHandler(upstream))
-    .use('/api/dbb/**', unknownDbbPathHandler);
-  const handle = toWebHandler(createApp().use(router));
+    .get('/api/dbb/team/:teamId/spiele', spiele.default)
+    .use('/api/dbb', prefix.default)
+    .use('/api/dbb/**', rest.default);
+  return toWebHandler(createApp().use(router));
+}
+
+let handle: (request: Request) => Promise<Response>;
+
+beforeAll(async () => {
+  // read by the route files when they load, as in a deployed function
+  vi.stubEnv('DBB_BASE_URL', BASE_URL);
+  handle = await proxyRoutes();
+});
+
+afterAll(() => {
+  vi.unstubAllEnvs();
+});
+
+beforeEach(() => {
+  // a failed read warns; the specs below that care read it through warnings()
+  vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+/** The proxy's routes in front of `fetch` as the DBB. */
+function proxy(fetch: UpstreamFetch) {
+  vi.stubGlobal('fetch', fetch);
   return (path: string, init?: RequestInit): Promise<Response> =>
     handle(new Request(`http://localhost${path}`, init));
+}
+
+/** What the proxy warned about, one text per warning. */
+function warnings(): () => readonly string[] {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  return () => warn.mock.calls.map((args) => args.map(String).join(' '));
 }
 
 describe('DBB proxy', () => {
@@ -82,6 +117,7 @@ describe('DBB proxy', () => {
       ['an unknown read', '/api/dbb/team/313036/spieler'],
       ['a DBB path', '/api/dbb/team/id/313036/matches'],
       ['the bare prefix', '/api/dbb'],
+      ['the prefix with a slash', '/api/dbb/'],
     ])('answers %s with 404 and never asks the DBB', async (_case, path) => {
       const dbb = recordedDbb();
 
@@ -166,14 +202,11 @@ describe('DBB proxy', () => {
     );
 
     it('answers an upstream timeout with 502', async () => {
-      const hanging: UpstreamFetch = (_url, init) =>
-        new Promise((_resolve, reject) =>
-          init.signal?.addEventListener('abort', () =>
-            reject(init.signal?.reason)
-          )
-        );
+      const timedOut: UpstreamFetch = async () => {
+        throw new DOMException('The operation timed out.', 'TimeoutError');
+      };
 
-      const response = await proxy(hanging, 5)('/api/dbb/team/313036/spiele');
+      const response = await proxy(timedOut)('/api/dbb/team/313036/spiele');
 
       expect(response.status).toBe(502);
       expect(await response.json()).toEqual({ error: 'dbb-unavailable' });
@@ -231,7 +264,7 @@ describe('DBB proxy', () => {
       });
 
       const headers = new Headers(dbb.mock.calls[0][1].headers);
-      expect(headers.get('user-agent')).toBe(USER_AGENT);
+      expect(headers.get('user-agent')).toBe(PROXY_USER_AGENT);
     });
 
     it('sends no credentials and follows no cookie jar', async () => {
@@ -240,6 +273,64 @@ describe('DBB proxy', () => {
       await proxy(dbb)('/api/dbb/team/313036/spiele');
 
       expect(dbb.mock.calls[0][1].credentials).toBe('omit');
+    });
+  });
+
+  describe('logs', () => {
+    it.each([
+      ['an upstream 5xx', dbbAnswering('oops', 503), 'HTTP 503'],
+      [
+        'a timeout',
+        async () => {
+          throw new DOMException('The operation timed out.', 'TimeoutError');
+        },
+        'TimeoutError',
+      ],
+      [
+        'a redirect',
+        async () => {
+          throw new TypeError('fetch failed', {
+            cause: new Error('unexpected redirect'),
+          });
+        },
+        'unexpected redirect',
+      ],
+      ['DBB status "-1"', dbbAnswering('{"status":"-1"}'), 'DBB status -1'],
+      ['no envelope', dbbAnswering('<html>busy</html>'), 'no DBB envelope'],
+    ] as ReadonlyArray<[string, UpstreamFetch, string]>)(
+      'why the DBB failed on %s, naming the read',
+      async (_case, dbb, reason) => {
+        const logged = warnings();
+
+        await proxy(dbb)('/api/dbb/team/313036/spiele');
+
+        expect(logged()).toEqual([
+          expect.stringContaining('GET team/id/313036/matches'),
+        ]);
+        expect(logged()[0]).toContain(reason);
+      }
+    );
+
+    it("logs neither the DBB's body nor anything of the visitor", async () => {
+      const logged = warnings();
+
+      await proxy(dbbAnswering('<html>secret page</html>'))(
+        '/api/dbb/team/313036/spiele',
+        {
+          headers: { cookie: 'session=parent', 'user-agent': 'Parent Browser' },
+        }
+      );
+
+      expect(logged().join('\n')).not.toMatch(/secret|session|Parent/);
+    });
+
+    it('logs nothing on success or a Team the DBB does not know', async () => {
+      const logged = warnings();
+
+      await proxy(recordedDbb())('/api/dbb/team/313036/spiele');
+      await proxy(recordedDbb())('/api/dbb/team/7/spiele');
+
+      expect(logged()).toEqual([]);
     });
   });
 });
