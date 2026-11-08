@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.139.10](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.9...v74.139.10) (2026-11-08)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** retry the functions deploy once on failure ([#2879](https://github.com/WolfSoko/wol-sok-mono/issues/2879)) ([c614abc](https://github.com/WolfSoko/wol-sok-mono/commit/c614abcd57052e25b8dd463ef1ebdb79f8dabf2a)), closes [#2838](https://github.com/WolfSoko/wol-sok-mono/issues/2838), references [#2748](https://github.com/WolfSoko/wol-sok-mono/issues/2748) [#2830](https://github.com/WolfSoko/wol-sok-mono/issues/2830)
+* **feat-lazy-bacteria-game:** share the crosshair colour and boost ring between both painters ([#2878](https://github.com/WolfSoko/wol-sok-mono/issues/2878)) ([789b703](https://github.com/WolfSoko/wol-sok-mono/commit/789b703309ce2ec413f41be0c2506eb14398e52d)), closes [#2855](https://github.com/WolfSoko/wol-sok-mono/issues/2855)
+
 ## [74.139.9](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.8...v74.139.9) (2026-11-08)
 
 ### Chore
