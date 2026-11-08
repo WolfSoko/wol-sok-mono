@@ -1,0 +1,45 @@
+@if (saison.isLoading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Spiele werden geladen" />
+}
+@if (fehler(); as text) {
+  <p class="fehler" role="alert">{{ text }}</p>
+}
+@if (saison.hasValue()) {
+  <h1>{{ saison.value().team.name }}</h1>
+  <p class="verein">{{ saison.value().verein.name }} · Spiele der Saison</p>
+  @if (zeilen().length === 0) {
+    <p>Noch keine Spiele in dieser Saison.</p>
+  } @else {
+    <mat-list class="spiele">
+      @for (zeile of zeilen(); track zeile.id) {
+        <mat-list-item lines="3" data-qa="spiel">
+          <span matListItemTitle>
+            @if (zeile.ort) {
+              <span data-qa="spiel-ort">{{ zeile.ort }}</span> gegen
+            }
+            <span data-qa="spiel-gegner">{{ zeile.gegner }}</span>
+          </span>
+          <span matListItemLine>
+            <span data-qa="spiel-datum">{{ zeile.datum }}</span>
+            @if (zeile.uhrzeit) {
+              · <span data-qa="spiel-uhrzeit">{{ zeile.uhrzeit }}</span> Uhr
+            }
+          </span>
+          <span matListItemLine data-qa="spiel-liga">{{ zeile.liga }}</span>
+          <span matListItemMeta class="ausgang">
+            @if (zeile.ergebnis) {
+              <span class="ergebnis" data-qa="spiel-ergebnis">{{
+                zeile.ergebnis
+              }}</span>
+            }
+            @if (zeile.markierung) {
+              <mat-chip class="markierung" data-qa="spiel-markierung">{{
+                zeile.markierung
+              }}</mat-chip>
+            }
+          </span>
+        </mat-list-item>
+      }
+    </mat-list>
+  }
+}

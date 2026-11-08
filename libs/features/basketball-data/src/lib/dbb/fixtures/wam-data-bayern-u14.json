@@ -1,0 +1,553 @@
+{
+  "timestamp": "2026-11-08T13:57:00+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "wam": {
+      "token": "0",
+      "verbandIds": [2],
+      "gebietIds": [],
+      "ligatypIds": [],
+      "akgGeschlechtIds": [],
+      "altersklasseIds": [14],
+      "spielklasseIds": [],
+      "sortBy": 1
+    },
+    "verbaende": [
+      {
+        "id": 100,
+        "label": "Bundesligen",
+        "hits": 0
+      },
+      {
+        "id": 29,
+        "label": "Deutsche Meisterschaften",
+        "hits": 0
+      },
+      {
+        "id": 40,
+        "label": "Deutscher Rollstuhlbasketball",
+        "hits": 0
+      },
+      {
+        "id": 30,
+        "label": "Regionalliga Nord",
+        "hits": 0
+      },
+      {
+        "id": 32,
+        "label": "Regionalliga Südost",
+        "hits": 0
+      },
+      {
+        "id": 31,
+        "label": "Regionalliga Südwest",
+        "hits": 4
+      },
+      {
+        "id": 33,
+        "label": "Regionalliga West",
+        "hits": 2
+      },
+      {
+        "id": 1,
+        "label": "Baden-Württemberg",
+        "hits": 50
+      },
+      {
+        "id": 2,
+        "label": "Bayern",
+        "hits": 57
+      },
+      {
+        "id": 3,
+        "label": "Berlin",
+        "hits": 13
+      },
+      {
+        "id": 14,
+        "label": "Brandenburg",
+        "hits": 5
+      },
+      {
+        "id": 4,
+        "label": "Bremen",
+        "hits": 8
+      },
+      {
+        "id": 5,
+        "label": "Hamburg",
+        "hits": 12
+      },
+      {
+        "id": 6,
+        "label": "Hessen",
+        "hits": 21
+      },
+      {
+        "id": 12,
+        "label": "Mecklenburg-Vorpommern",
+        "hits": 2
+      },
+      {
+        "id": 7,
+        "label": "Niedersachsen",
+        "hits": 40
+      },
+      {
+        "id": 11,
+        "label": "Nordrhein-Westfalen",
+        "hits": 55
+      },
+      {
+        "id": 8,
+        "label": "Rheinland-Pfalz",
+        "hits": 15
+      },
+      {
+        "id": 9,
+        "label": "Saarland",
+        "hits": 4
+      },
+      {
+        "id": 15,
+        "label": "Sachsen",
+        "hits": 20
+      },
+      {
+        "id": 13,
+        "label": "Sachsen-Anhalt",
+        "hits": 12
+      },
+      {
+        "id": 10,
+        "label": "Schleswig-Holstein",
+        "hits": 9
+      },
+      {
+        "id": 16,
+        "label": "Thüringen",
+        "hits": 11
+      }
+    ],
+    "gebiete": [
+      {
+        "id": "_",
+        "bezirk": null,
+        "kreis": null,
+        "hits": 13
+      },
+      {
+        "id": "1_",
+        "bezirk": "Oberbayern",
+        "kreis": null,
+        "hits": 3
+      },
+      {
+        "id": "1_1",
+        "bezirk": "Oberbayern",
+        "kreis": "Kreis Mitte",
+        "hits": 5
+      }
+    ],
+    "ligatypen": [
+      {
+        "id": 1,
+        "label": "Ligaspielbetrieb",
+        "hits": 50
+      },
+      {
+        "id": 2,
+        "label": "Pokalrunde",
+        "hits": 0
+      },
+      {
+        "id": 3,
+        "label": "Auf-/Abstiegsspiele",
+        "hits": 7
+      }
+    ],
+    "agkGeschlechtList": [
+      {
+        "id": "2_1",
+        "akg": "Jugend",
+        "geschlecht": "m",
+        "hits": 41
+      },
+      {
+        "id": "2_2",
+        "akg": "Jugend",
+        "geschlecht": "w",
+        "hits": 16
+      }
+    ],
+    "altersklassen": [
+      {
+        "id": 1,
+        "label": "Senioren",
+        "hits": 91
+      },
+      {
+        "id": 32,
+        "label": "Ü35",
+        "hits": 4
+      },
+      {
+        "id": 40,
+        "label": "Ü40",
+        "hits": 8
+      },
+      {
+        "id": 45,
+        "label": "Ü45",
+        "hits": 1
+      },
+      {
+        "id": 50,
+        "label": "Ü50",
+        "hits": 1
+      },
+      {
+        "id": 55,
+        "label": "Ü55",
+        "hits": 1
+      },
+      {
+        "id": 20,
+        "label": "U20",
+        "hits": 13
+      },
+      {
+        "id": 18,
+        "label": "U18",
+        "hits": 40
+      },
+      {
+        "id": 17,
+        "label": "U17",
+        "hits": 2
+      },
+      {
+        "id": 16,
+        "label": "U16",
+        "hits": 47
+      },
+      {
+        "id": 14,
+        "label": "U14",
+        "hits": 57
+      },
+      {
+        "id": 13,
+        "label": "U13",
+        "hits": 6
+      },
+      {
+        "id": 12,
+        "label": "U12",
+        "hits": 66
+      },
+      {
+        "id": 11,
+        "label": "U11",
+        "hits": 1
+      },
+      {
+        "id": 10,
+        "label": "U10",
+        "hits": 44
+      },
+      {
+        "id": 9,
+        "label": "U9",
+        "hits": 3
+      },
+      {
+        "id": 8,
+        "label": "U8",
+        "hits": 6
+      }
+    ],
+    "spielklassen": [
+      {
+        "id": 315,
+        "label": "Bayernliga",
+        "hits": 8
+      },
+      {
+        "id": 337,
+        "label": "Bay. Meisterschaft",
+        "hits": 2
+      },
+      {
+        "id": 317,
+        "label": "Landesliga",
+        "hits": 3
+      }
+    ],
+    "ligaListe": {
+      "startAtIndex": 0,
+      "ligen": [
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54308,
+          "liganame": "Bayernliga U14 männlich Einteilungsrunde Nord",
+          "liganr": 20141,
+          "skName": "Bayernliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U14",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 2,
+          "verbandName": "Bayern",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54309,
+          "liganame": "Bayernliga U14 männlich Einteilungsrunde Süd",
+          "liganr": 20142,
+          "skName": "Bayernliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U14",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 2,
+          "verbandName": "Bayern",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54324,
+          "liganame": "Bayernliga U14 männlich Hauptrunde",
+          "liganr": 20143,
+          "skName": "Bayernliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U14",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 2,
+          "verbandName": "Bayern",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54325,
+          "liganame": "Bayernliga U14 männlich Platzierungsrunde",
+          "liganr": 20146,
+          "skName": "Bayernliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U14",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 2,
+          "verbandName": "Bayern",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54310,
+          "liganame": "Bayernliga U14 weiblich Einteilungsrunde Nord",
+          "liganr": 20131,
+          "skName": "Bayernliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U14",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 2,
+          "verbandName": "Bayern",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54311,
+          "liganame": "Bayernliga U14 weiblich Einteilungsrunde Süd",
+          "liganr": 20132,
+          "skName": "Bayernliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U14",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 2,
+          "verbandName": "Bayern",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54326,
+          "liganame": "Bayernliga U14 weiblich Hauptrunde",
+          "liganr": 20133,
+          "skName": "Bayernliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U14",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 2,
+          "verbandName": "Bayern",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54327,
+          "liganame": "Bayernliga U14 weiblich Platzierungsrunde",
+          "liganr": 20134,
+          "skName": "Bayernliga",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U14",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 2,
+          "verbandName": "Bayern",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54338,
+          "liganame": "Bayerische Meisterschaft U14m",
+          "liganr": 20144,
+          "skName": "Bay. Meisterschaft",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U14",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 2,
+          "verbandName": "Bayern",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54339,
+          "liganame": "Bayerische Meisterschaft U14w",
+          "liganr": 20145,
+          "skName": "Bay. Meisterschaft",
+          "skNameSmall": null,
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U14",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 2,
+          "verbandName": "Bayern",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        }
+      ],
+      "hasMoreData": true,
+      "size": 10
+    }
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

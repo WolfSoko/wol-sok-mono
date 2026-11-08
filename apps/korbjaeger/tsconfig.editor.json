@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["**/*.ts", "**/*.cts"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  }
+}
