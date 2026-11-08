@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.144.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.144.0...v74.144.1) (2026-11-08)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** fold the simulation's kind and ruleset into one variant ([#2902](https://github.com/WolfSoko/wol-sok-mono/issues/2902)) ([7c46d3d](https://github.com/WolfSoko/wol-sok-mono/commit/7c46d3d9a93d764f8add70028cac76b66e335bc6)), closes [#2801](https://github.com/WolfSoko/wol-sok-mono/issues/2801)
+
 ## [74.144.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.143.1...v74.144.0) (2026-11-08)
 
 ### Features
