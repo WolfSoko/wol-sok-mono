@@ -56,6 +56,25 @@ describe('mapSpielDetails', () => {
     });
   });
 
+  it.each([
+    'heimV1stand',
+    'gastV1stand',
+    'heimHalbzeitstand',
+    'gastHalbzeitstand',
+    'heimV3stand',
+    'gastV3stand',
+    'heimV4stand',
+    'gastV4stand',
+  ])('gives no quarters while %s is not recorded', (field) => {
+    const data = readEnvelope(gespielt) as { matchResult: object };
+    const partial = {
+      ...data,
+      matchResult: { ...data.matchResult, [field]: null },
+    };
+
+    expect(mapSpielDetails(partial).viertel).toEqual([]);
+  });
+
   it('reads a planned Spiel without periods, with its Halle', () => {
     const details = mapSpielDetails(readEnvelope(geplant));
 
