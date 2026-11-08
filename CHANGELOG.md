@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.142.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.141.0...v74.142.0) (2026-11-08)
+
+### Features
+
+* **nx-aws-cdk-v2:** migrate the failing starter test of apps generated before 4.1.3 ([#2849](https://github.com/WolfSoko/wol-sok-mono/issues/2849)) ([d73588f](https://github.com/WolfSoko/wol-sok-mono/commit/d73588f09ef1dc5bfd98992fbd09acbaa3ba8c15)), closes [#2842](https://github.com/WolfSoko/wol-sok-mono/issues/2842)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** drop the unused weapon cooldown trait ([#2889](https://github.com/WolfSoko/wol-sok-mono/issues/2889)) ([90be318](https://github.com/WolfSoko/wol-sok-mono/commit/90be318e415ce4dbed1283a7196cae9698827f59)), closes [#2877](https://github.com/WolfSoko/wol-sok-mono/issues/2877), references [#2877](https://github.com/WolfSoko/wol-sok-mono/issues/2877)
+
+### Chore
+
+* **release:** publish ([be1674b](https://github.com/WolfSoko/wol-sok-mono/commit/be1674b98eec63db6683dc7ac5b2da1599d4ff72))
+
 ## [74.141.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.140.0...v74.141.0) (2026-11-08)
 
 ### Features
