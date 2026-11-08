@@ -1,4 +1,5 @@
 import {
+  dbbBoxscoreFinished,
   dbbHttpRequest,
   dbbStatusOf,
   type DbbHttpRequest,
@@ -26,6 +27,14 @@ import {
 export const DBB_PROXY_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
 
 /**
+ * How long the CDN may keep a played Spiel's Spielbericht: an hour, since
+ * the DBB rarely changes it once its result and Kader are in (ADR 0018).
+ * The browser keeps it a minute, as every read.
+ */
+export const FINISHED_BOXSCORE_CACHE_CONTROL =
+  'public, max-age=60, s-maxage=3600';
+
+/**
  * Answers one allowlisted read (`undefined`: none, so 404) from the DBB:
  * its body unchanged, with the HTTP status its envelope's `status` stands
  * for.
@@ -42,10 +51,11 @@ export async function proxyDbbRead(
   if (!answer.ok) {
     return failed(call, answer.reason);
   }
-  switch (dbbStatusOf(parsedOrUndefined(answer.body))) {
+  const body = parsedOrUndefined(answer.body);
+  switch (dbbStatusOf(body)) {
     case 'ok':
       return jsonResponse(200, answer.body, {
-        'cache-control': DBB_PROXY_CACHE_CONTROL,
+        'cache-control': cacheControlOf(request, body),
       });
     case 'not-found':
       return jsonResponse(404, answer.body);
@@ -54,6 +64,13 @@ export async function proxyDbbRead(
     default:
       return failed(call, 'no DBB envelope');
   }
+}
+
+/** How long a success may be reused: a played Spiel's Spielbericht longer. */
+function cacheControlOf(request: DbbRequest, body: unknown): string {
+  return request.kind === 'spielbericht' && dbbBoxscoreFinished(body)
+    ? FINISHED_BOXSCORE_CACHE_CONTROL
+    : DBB_PROXY_CACHE_CONTROL;
 }
 
 /**

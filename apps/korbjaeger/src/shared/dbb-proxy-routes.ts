@@ -4,7 +4,11 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 
 /** The reads the app's proxy has a route for. */
-export type ProxyKind = 'team-spiele' | 'tabelle';
+export type ProxyKind =
+  | 'team-spiele'
+  | 'tabelle'
+  | 'spiel-info'
+  | 'spielbericht';
 
 /** The read of kind `K`. */
 export type ProxyRead<K extends ProxyKind> = Extract<DbbRequest, { kind: K }>;
@@ -43,6 +47,16 @@ export const PROXY_ROUTES: { readonly [K in ProxyKind]: ProxyRoute<K> } = {
     pattern: '/api/dbb/liga/:ligaId/tabelle',
     read: (ligaId) => ({ kind: 'tabelle', ligaId }),
     id: ({ ligaId }) => ligaId,
+  },
+  'spiel-info': {
+    pattern: '/api/dbb/spiel/:spielId',
+    read: (spielId) => ({ kind: 'spiel-info', spielId }),
+    id: ({ spielId }) => spielId,
+  },
+  spielbericht: {
+    pattern: '/api/dbb/spiel/:spielId/bericht',
+    read: (spielId) => ({ kind: 'spielbericht', spielId }),
+    id: ({ spielId }) => spielId,
   },
 };
 

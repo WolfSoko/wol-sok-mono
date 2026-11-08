@@ -5,6 +5,7 @@ test.describe('DBB proxy', () => {
   for (const [what, path] of [
     ["a Team's Spiele", '/api/dbb/team/313036/spiele'],
     ["a Liga's Tabelle", '/api/dbb/liga/54862/tabelle'],
+    ["a Spiel's match info", '/api/dbb/spiel/2861436'],
   ] as const) {
     test(`serves ${what}, cached`, async ({ request }) => {
       const response = await request.get(path);
@@ -15,6 +16,17 @@ test.describe('DBB proxy', () => {
       );
     });
   }
+
+  test("lets the CDN keep a played Spiel's Spielbericht an hour", async ({
+    request,
+  }) => {
+    const response = await request.get('/api/dbb/spiel/2861436/bericht');
+
+    expect(response.status()).toBe(200);
+    expect(response.headers()['cache-control']).toBe(
+      'public, max-age=60, s-maxage=3600'
+    );
+  });
 
   for (const [what, method, path] of [
     ['a POST to the read', 'POST', '/api/dbb/team/313036/spiele'],
