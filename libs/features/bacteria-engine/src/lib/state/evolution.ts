@@ -65,8 +65,6 @@ export interface EvolvedTraits extends ColonyTraits {
   toughnessFactor?: number;
   /** Times how fast its bacteria move. */
   speedFactor?: number;
-  /** Times its weapon's cooldown. */
-  weaponCooldownFactor?: number;
 }
 
 export const GENES: readonly Gene[] = [

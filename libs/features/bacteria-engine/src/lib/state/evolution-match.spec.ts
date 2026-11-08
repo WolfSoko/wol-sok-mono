@@ -296,17 +296,17 @@ describe('weapons in a match', () => {
     return { x, y, color: [255, 0, 0, 255], name: 'You', isBot: false };
   }
 
-  it('recharges once the effect has run out, by the weapon cooldown factor', () => {
+  it("recharges once the effect has run out, in the weapon's cooldown", () => {
     const spawns: PlayerSpawn[] = [
       {
         ...spawn(60, 70),
-        traits: { ...evolvedTraits(PLAIN_LOADOUT), weaponCooldownFactor: 0.5 },
+        traits: evolvedTraits(PLAIN_LOADOUT),
         weapon: 'toxin-bomb',
       },
       spawn(260, 70),
     ];
     const engine = new MatchEngine(spawns, { seed: 1 });
-    const cooldown = toxin.cooldownSec * 0.5;
+    const cooldown = toxin.cooldownSec;
     engine.fireWeapon(0);
     const tick = (count: number) => {
       for (let i = 0; i < count; i++) {
