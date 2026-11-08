@@ -2,7 +2,11 @@ import { rejectedError } from '../../testing/caught-error';
 import { BasketballDataError } from '../domain/basketball-data-error';
 import { KEIN_LIGA_FILTER, type LigaSucheFilter } from '../domain/liga-suche';
 import { DbbBasketballData, VEREINS_SPIELE_TAGE } from './dbb-basketball-data';
-import type { DbbRequest, DbbRequestKind } from './dbb-request';
+import {
+  dbbHttpRequest,
+  type DbbRequest,
+  type DbbRequestKind,
+} from './dbb-request';
 import boxscoreNotFound from './fixtures/boxscore-not-found.json';
 import keinBericht from './fixtures/boxscore-2843814.json';
 import mitWerten from './fixtures/boxscore-2911141.json';
@@ -31,12 +35,15 @@ class FakeTransport {
     private readonly responses: Partial<Record<DbbRequestKind, unknown>>
   ) {}
 
-  public readonly send = (request: DbbRequest): Promise<unknown> => {
+  /** Builds the DBB call as a real transport would, so bad requests throw. */
+  public readonly send = async (request: DbbRequest): Promise<unknown> => {
+    dbbHttpRequest(request);
     this.requests.push(request);
     const response = this.responses[request.kind];
-    return response === undefined
-      ? Promise.reject(new Error(`no fixture for ${request.kind}`))
-      : Promise.resolve(response);
+    if (response === undefined) {
+      throw new Error(`no fixture for ${request.kind}`);
+    }
+    return response;
   };
 }
 
@@ -142,6 +149,25 @@ describe('DbbBasketballData', () => {
       'not-found'
     );
     expect(transport.requests).toEqual([]);
+  });
+
+  it.each<[string, (data: DbbBasketballData) => Promise<unknown>]>([
+    ['a negative start index', (data) => data.ligaSeite(KEIN_LIGA_FILTER, -10)],
+    [
+      'a malformed age group and gender id',
+      (data) =>
+        data.ligaSuche({
+          ...KEIN_LIGA_FILTER,
+          altersgruppeGeschlechtIds: ['x'],
+        }),
+    ],
+  ])('lets %s, a caller’s bug, throw as it is', async (_case, read) => {
+    const { data } = dataWith({
+      'liga-suche': wamData,
+      'liga-seite': zweiteSeite,
+    });
+
+    await expect(read(data)).rejects.toBeInstanceOf(RangeError);
   });
 
   it('rejects a DBB server error as unavailable', async () => {

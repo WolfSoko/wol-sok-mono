@@ -59,6 +59,33 @@ export type DbbTransport = (request: DbbRequest) => Promise<unknown>;
 
 const AKG_GESCHLECHT_ID = /^\d+_\d+$/;
 
+/** Whether `value` can be a DBB id at all: a positive integer. */
+export function isDbbId(value: number): boolean {
+  return Number.isSafeInteger(value) && value > 0;
+}
+
+/**
+ * The id of the Liga, Team, Verein or Spiel `request` reads, or
+ * `undefined` for the Liga search, which reads none.
+ */
+export function dbbIdOf(request: DbbRequest): number | undefined {
+  switch (request.kind) {
+    case 'liga-suche':
+    case 'liga-seite':
+      return undefined;
+    case 'tabelle':
+    case 'spielplan':
+      return request.ligaId;
+    case 'team-spiele':
+      return request.teamId;
+    case 'vereins-spiele':
+      return request.vereinId;
+    case 'spiel-info':
+    case 'spielbericht':
+      return request.spielId;
+  }
+}
+
 /**
  * The DBB call that answers `request`. Throws a `RangeError` for an id that
  * is no positive integer, so nothing but the allowlisted paths is built.
@@ -112,7 +139,7 @@ function filterBody(filter: LigaSucheFilter): DbbLigaFilterBody {
 }
 
 function id(value: number): number {
-  if (!Number.isSafeInteger(value) || value <= 0) {
+  if (!isDbbId(value)) {
     throw new RangeError(`not a DBB id: ${value}`);
   }
   return value;

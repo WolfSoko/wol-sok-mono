@@ -15,7 +15,8 @@ import type { Tabelle } from '../domain/tabelle';
 import type { Team } from '../domain/team';
 import type { TeamSaison, VereinsTeams } from '../domain/team-saison';
 import {
-  dbbHttpRequest,
+  dbbIdOf,
+  isDbbId,
   type DbbRequest,
   type DbbTransport,
 } from './dbb-request';
@@ -81,7 +82,7 @@ export class DbbBasketballData implements BasketballData {
     request: DbbRequest,
     map: (data: unknown) => T
   ): Promise<T> {
-    assertAllowed(request);
+    assertKnowable(request);
     return map(readEnvelope(await this.fetch(request)));
   }
 
@@ -89,7 +90,7 @@ export class DbbBasketballData implements BasketballData {
     try {
       return await this.transport(request);
     } catch (error) {
-      if (isBasketballDataError(error)) {
+      if (isBasketballDataError(error) || error instanceof RangeError) {
         throw error;
       }
       throw new BasketballDataError(
@@ -103,16 +104,14 @@ export class DbbBasketballData implements BasketballData {
   }
 }
 
-/** An id the DBB cannot have names nothing it knows. */
-function assertAllowed(request: DbbRequest): void {
-  try {
-    dbbHttpRequest(request);
-  } catch (error) {
-    if (error instanceof RangeError) {
-      throw new BasketballDataError('not-found', error.message, {
-        cause: error,
-      });
-    }
-    throw error;
+/**
+ * An id the DBB cannot have names nothing it knows. Anything else wrong
+ * with a request (a negative start index, a malformed filter) is the
+ * caller's bug: the transport's `RangeError` reaches the caller as it is.
+ */
+function assertKnowable(request: DbbRequest): void {
+  const id = dbbIdOf(request);
+  if (id !== undefined && !isDbbId(id)) {
+    throw new BasketballDataError('not-found', `not a DBB id: ${id}`);
   }
 }

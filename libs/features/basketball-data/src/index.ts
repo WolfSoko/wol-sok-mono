@@ -7,6 +7,8 @@ export {
   DBB_BASE_URL,
   MAX_VEREINS_SPIELE_TAGE,
   dbbHttpRequest,
+  dbbIdOf,
+  isDbbId,
 } from './lib/dbb/dbb-request';
 export type {
   DbbHttpRequest,

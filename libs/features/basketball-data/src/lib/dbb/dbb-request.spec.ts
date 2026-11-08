@@ -1,5 +1,10 @@
 import { KEIN_LIGA_FILTER, type LigaSucheFilter } from '../domain/liga-suche';
-import { dbbHttpRequest, type DbbRequest } from './dbb-request';
+import {
+  dbbHttpRequest,
+  dbbIdOf,
+  isDbbId,
+  type DbbRequest,
+} from './dbb-request';
 
 const BAYERN_U14: LigaSucheFilter = {
   verbandIds: [2],
@@ -66,5 +71,32 @@ describe('dbbHttpRequest', () => {
     },
   ])('refuses %j', (request) => {
     expect(() => dbbHttpRequest(request)).toThrow(RangeError);
+  });
+});
+
+describe('dbbIdOf', () => {
+  it.each<[DbbRequest, number | undefined]>([
+    [{ kind: 'liga-suche', filter: KEIN_LIGA_FILTER }, undefined],
+    [
+      { kind: 'liga-seite', filter: KEIN_LIGA_FILTER, startIndex: 10 },
+      undefined,
+    ],
+    [{ kind: 'tabelle', ligaId: 54308 }, 54308],
+    [{ kind: 'spielplan', ligaId: 54379 }, 54379],
+    [{ kind: 'team-spiele', teamId: 313036 }, 313036],
+    [{ kind: 'vereins-spiele', vereinId: 1476, tage: 7 }, 1476],
+    [{ kind: 'spiel-info', spielId: 2911141 }, 2911141],
+    [{ kind: 'spielbericht', spielId: 2843811 }, 2843811],
+  ])('names the id %j reads', (request, id) => {
+    expect(dbbIdOf(request)).toBe(id);
+  });
+});
+
+describe('isDbbId', () => {
+  it('takes positive integers only', () => {
+    expect([1, 54308].map(isDbbId)).toEqual([true, true]);
+    expect(
+      [0, -1, 1.5, Number.NaN, Number.MAX_SAFE_INTEGER + 1].map(isDbbId)
+    ).toEqual([false, false, false, false, false]);
   });
 });
