@@ -82,12 +82,19 @@ describe('service worker', () => {
     ) as {
       targets: Record<
         string,
-        { dependsOn?: string[]; options: { commands?: string[] } }
+        {
+          dependsOn?: string[];
+          cache?: boolean;
+          options: { commands?: string[] };
+        }
       >;
     };
     const build = project.targets['build'];
 
     expect(build.dependsOn).toEqual(['build-app']);
+    // ngsw.json hashes build-app's files, which no input of its own covers:
+    // never taken from the cache, always written from the build at hand
+    expect(build.cache).toBe(false);
     expect(build.options.commands).toEqual([
       `cp node_modules/@angular/service-worker/ngsw-worker.js node_modules/@angular/service-worker/safety-worker.js ${HOSTING_PUBLIC}/`,
       `ngsw-config ${HOSTING_PUBLIC} apps/korbjaeger/ngsw-config.json /`,

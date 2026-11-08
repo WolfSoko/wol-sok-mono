@@ -8,6 +8,7 @@ export {
   VEREINS_SPIELE_TAGE,
 } from './lib/dbb/dbb-basketball-data';
 export { dbbBoxscoreFinished } from './lib/dbb/boxscore-finished';
+export { dbbOhnePersonen } from './lib/dbb/ohne-personen';
 export {
   DBB_BASE_URL,
   MAX_VEREINS_SPIELE_TAGE,

@@ -90,7 +90,6 @@
       <p data-qa="spielbericht-fehlt">{{ teil.text }}</p>
     }
     @case ("da") {
-      <korb-stand data-qa="spielbericht-stand" [stand]="bericht.stand()" />
       @for (kader of teil.kader; track kader.seite) {
         <korb-kader
           [titel]="kader.titel"

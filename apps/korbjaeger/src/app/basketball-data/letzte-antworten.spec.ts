@@ -1,5 +1,8 @@
 import {
+  ANTWORT_INDEX,
+  ANTWORT_PRAEFIX,
   LokaleLetzteAntworten,
+  MAX_ALTER_MS,
   type AntwortSpeicher,
   type LetzteAntwort,
 } from './letzte-antworten';
@@ -43,6 +46,10 @@ const TEAM = '/api/dbb/team/313036/spiele';
 const TABELLE = '/api/dbb/liga/54862/tabelle';
 const SPIEL = '/api/dbb/spiel/2861436';
 
+/** When the specs read: shortly after every answer they store. */
+const JETZT = 10_000;
+const MINUTE = 60_000;
+
 function antwort(
   gespeichertAm: number,
   daten: unknown = { status: '0' }
@@ -55,171 +62,280 @@ function gemerkt(
   antworten: LokaleLetzteAntworten,
   pfade: readonly string[]
 ): string[] {
-  return pfade.filter((pfad) => antworten.lesen(pfad) !== undefined);
+  return pfade.filter((pfad) => antworten.lesen(pfad, JETZT) !== undefined);
 }
 
 describe('LokaleLetzteAntworten', () => {
   it('gives back the last good answer of a path, with when it was stored', () => {
     const antworten = new LokaleLetzteAntworten(new KleinerSpeicher());
 
-    antworten.merken(TEAM, antwort(1000, { status: '0', data: [1] }));
-    antworten.merken(TEAM, antwort(2000, { status: '0', data: [2] }));
+    antworten.merken(TEAM, 'team-spiele', antwort(1000, { data: [1] }));
+    antworten.merken(TEAM, 'team-spiele', antwort(2000, { data: [2] }));
 
-    expect(antworten.lesen(TEAM)).toEqual(
-      antwort(2000, { status: '0', data: [2] })
-    );
-    expect(antworten.lesen(TABELLE)).toBeUndefined();
+    expect(antworten.lesen(TEAM, JETZT)).toEqual(antwort(2000, { data: [2] }));
+    expect(antworten.lesen(TABELLE, JETZT)).toBeUndefined();
   });
 
   it('keeps them across visits, in the device storage', () => {
     const speicher = new KleinerSpeicher();
-    new LokaleLetzteAntworten(speicher).merken(TEAM, antwort(1000));
+    new LokaleLetzteAntworten(speicher).merken(
+      TEAM,
+      'team-spiele',
+      antwort(1000)
+    );
 
-    expect(new LokaleLetzteAntworten(speicher).lesen(TEAM)).toEqual(
+    expect(new LokaleLetzteAntworten(speicher).lesen(TEAM, JETZT)).toEqual(
       antwort(1000)
     );
   });
 
-  it('evicts the oldest answers once it holds as many as it may', () => {
-    const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(), {
-      eintraege: 2,
+  describe('age', () => {
+    it('serves an answer up to seven days old', () => {
+      const antworten = new LokaleLetzteAntworten(new KleinerSpeicher());
+      antworten.merken(TEAM, 'team-spiele', antwort(0));
+
+      expect(antworten.lesen(TEAM, MAX_ALTER_MS)).toEqual(antwort(0));
+      expect(MAX_ALTER_MS).toBe(7 * 24 * 60 * MINUTE);
     });
 
-    antworten.merken(TABELLE, antwort(2000));
-    antworten.merken(TEAM, antwort(1000));
-    antworten.merken(SPIEL, antwort(3000));
+    it('serves no answer seven days and a minute old, and deletes it', () => {
+      const speicher = new KleinerSpeicher();
+      const antworten = new LokaleLetzteAntworten(speicher);
+      antworten.merken(TEAM, 'team-spiele', antwort(0));
 
-    expect(gemerkt(antworten, [TEAM, TABELLE, SPIEL])).toEqual([
-      TABELLE,
-      SPIEL,
-    ]);
-  });
-
-  it('counts a path stored again once', () => {
-    const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(), {
-      eintraege: 2,
+      expect(antworten.lesen(TEAM, MAX_ALTER_MS + MINUTE)).toBeUndefined();
+      expect(speicher.getItem(`${ANTWORT_PRAEFIX}${TEAM}`)).toBeNull();
     });
 
-    antworten.merken(TEAM, antwort(1000));
-    antworten.merken(TABELLE, antwort(2000));
-    antworten.merken(TEAM, antwort(3000));
+    it('clears answers too old, of kinds no longer kept and of older versions', () => {
+      const speicher = new KleinerSpeicher();
+      const antworten = new LokaleLetzteAntworten(speicher);
+      antworten.merken(TEAM, 'team-spiele', antwort(0));
+      antworten.merken(TABELLE, 'tabelle', antwort(MAX_ALTER_MS));
+      antworten.merken(SPIEL, 'spielbericht', antwort(MAX_ALTER_MS));
+      speicher.setItem(
+        `${ANTWORT_PRAEFIX}/api/dbb/liga/1/tabelle`,
+        JSON.stringify({ v: 1, am: MAX_ALTER_MS, antwort: {} })
+      );
 
-    expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TEAM, TABELLE]);
-  });
+      antworten.aufraeumen(MAX_ALTER_MS + MINUTE, new Set(['tabelle']));
 
-  it('evicts the oldest answers once they hold more characters than they may', () => {
-    const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(), {
-      zeichen: 250,
+      expect(
+        [...speicher.eintraege.keys()].filter((key) =>
+          key.startsWith(ANTWORT_PRAEFIX)
+        )
+      ).toEqual([`${ANTWORT_PRAEFIX}${TABELLE}`]);
     });
-    const gross = { status: '0', data: 'x'.repeat(100) };
-
-    antworten.merken(TEAM, antwort(1000, gross));
-    antworten.merken(TABELLE, antwort(2000, gross));
-
-    expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TABELLE]);
   });
 
-  it('keeps no answer larger than all of them may be', () => {
-    const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(), {
-      zeichen: 150,
-    });
-    antworten.merken(TABELLE, antwort(1000));
+  describe('limits', () => {
+    it('evicts the oldest answers once it holds as many as it may', () => {
+      const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(), {
+        eintraege: 2,
+      });
 
-    antworten.merken(TEAM, antwort(2000, { data: 'x'.repeat(100) }));
+      antworten.merken(TABELLE, 'tabelle', antwort(2000));
+      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      antworten.merken(SPIEL, 'spiel-info', antwort(3000));
 
-    expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TABELLE]);
-  });
-
-  it('makes room in a full storage by evicting its oldest answers', () => {
-    const speicher = new KleinerSpeicher(300);
-    const antworten = new LokaleLetzteAntworten(speicher);
-    const daten = { status: '0', data: 'x'.repeat(40) };
-
-    antworten.merken(TEAM, antwort(1000, daten));
-    antworten.merken(TABELLE, antwort(2000, daten));
-    antworten.merken(SPIEL, antwort(3000, daten));
-
-    expect(gemerkt(antworten, [TEAM, TABELLE, SPIEL])).toEqual([
-      TABELLE,
-      SPIEL,
-    ]);
-  });
-
-  it('never evicts what the app keeps beside them, and gives up when that fills the storage', () => {
-    const speicher = new KleinerSpeicher(120);
-    speicher.setItem('korbjaeger-auswahl', 'x'.repeat(100));
-    const antworten = new LokaleLetzteAntworten(speicher);
-
-    expect(() => antworten.merken(TEAM, antwort(1000))).not.toThrow();
-
-    expect(antworten.lesen(TEAM)).toBeUndefined();
-    expect(speicher.getItem('korbjaeger-auswahl')).toHaveLength(100);
-  });
-
-  it('evicts nothing for a storage that refuses writes for another reason', () => {
-    const speicher = new KleinerSpeicher();
-    const antworten = new LokaleLetzteAntworten(speicher);
-    antworten.merken(TABELLE, antwort(1000));
-    vi.spyOn(speicher, 'setItem').mockImplementation(() => {
-      throw new DOMException('denied', 'SecurityError');
+      expect(gemerkt(antworten, [TEAM, TABELLE, SPIEL])).toEqual([
+        TABELLE,
+        SPIEL,
+      ]);
     });
 
-    antworten.merken(TEAM, antwort(2000));
+    it('counts a path stored again once', () => {
+      const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(), {
+        eintraege: 2,
+      });
 
-    expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TABELLE]);
+      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      antworten.merken(TABELLE, 'tabelle', antwort(2000));
+      antworten.merken(TEAM, 'team-spiele', antwort(3000));
+
+      expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TEAM, TABELLE]);
+    });
+
+    it('evicts the oldest answers once they hold more characters than they may', () => {
+      const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(), {
+        zeichen: 250,
+      });
+      const gross = { data: 'x'.repeat(100) };
+
+      antworten.merken(TEAM, 'team-spiele', antwort(1000, gross));
+      antworten.merken(TABELLE, 'tabelle', antwort(2000, gross));
+
+      expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TABELLE]);
+    });
+
+    it('keeps no answer larger than all of them may be, and drops the older one of its path', () => {
+      const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(), {
+        zeichen: 250,
+      });
+      antworten.merken(TABELLE, 'tabelle', antwort(1000));
+      antworten.merken(TEAM, 'team-spiele', antwort(1500));
+
+      antworten.merken(
+        TEAM,
+        'team-spiele',
+        antwort(2000, { data: 'x'.repeat(300) })
+      );
+
+      expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TABELLE]);
+    });
+
+    it('makes room in a full storage by evicting its oldest answers', () => {
+      const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(2600));
+      const daten = { data: 'x'.repeat(1000) };
+
+      antworten.merken(TEAM, 'team-spiele', antwort(1000, daten));
+      antworten.merken(TABELLE, 'tabelle', antwort(2000, daten));
+      antworten.merken(SPIEL, 'spiel-info', antwort(3000, daten));
+
+      expect(gemerkt(antworten, [TEAM, TABELLE, SPIEL])).toEqual([
+        TABELLE,
+        SPIEL,
+      ]);
+    });
+
+    it('never evicts what the app keeps beside them, and gives up when that fills the storage', () => {
+      const speicher = new KleinerSpeicher(120);
+      speicher.setItem('korbjaeger-auswahl', 'x'.repeat(100));
+      const antworten = new LokaleLetzteAntworten(speicher);
+
+      expect(() =>
+        antworten.merken(TEAM, 'team-spiele', antwort(1000))
+      ).not.toThrow();
+
+      expect(antworten.lesen(TEAM, JETZT)).toBeUndefined();
+      expect(speicher.getItem('korbjaeger-auswahl')).toHaveLength(100);
+    });
+
+    it('drops the older answer of a path whose new one the full storage does not take', () => {
+      const speicher = new KleinerSpeicher(700);
+      speicher.setItem('korbjaeger-auswahl', 'x'.repeat(400));
+      const antworten = new LokaleLetzteAntworten(speicher);
+      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      expect(antworten.lesen(TEAM, JETZT)).toBeDefined();
+
+      antworten.merken(
+        TEAM,
+        'team-spiele',
+        antwort(2000, { data: 'x'.repeat(300) })
+      );
+
+      expect(antworten.lesen(TEAM, JETZT)).toBeUndefined();
+    });
+
+    it('evicts nothing for a storage that refuses writes for another reason', () => {
+      const speicher = new KleinerSpeicher();
+      const antworten = new LokaleLetzteAntworten(speicher);
+      antworten.merken(TABELLE, 'tabelle', antwort(1000));
+      vi.spyOn(speicher, 'setItem').mockImplementation(() => {
+        throw new DOMException('denied', 'SecurityError');
+      });
+
+      antworten.merken(TEAM, 'team-spiele', antwort(2000));
+
+      expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TABELLE]);
+    });
   });
 
-  it('reads a stored answer it cannot read as none, and evicts it first', () => {
-    const speicher = new KleinerSpeicher();
-    const antworten = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
-    antworten.merken(TABELLE, antwort(1000));
-    speicher.setItem(`korbjaeger-antwort:${TEAM}`, '{kaputt');
+  describe('its index', () => {
+    it('reads no stored answer for a write within the limits', () => {
+      const speicher = new KleinerSpeicher();
+      const antworten = new LokaleLetzteAntworten(speicher);
+      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      const gelesen = vi.spyOn(speicher, 'getItem');
 
-    antworten.merken(SPIEL, antwort(2000));
+      antworten.merken(TABELLE, 'tabelle', antwort(2000));
+      antworten.merken(SPIEL, 'spiel-info', antwort(3000));
 
-    expect(antworten.lesen(TEAM)).toBeUndefined();
-    expect(gemerkt(antworten, [TABELLE, SPIEL])).toEqual([TABELLE, SPIEL]);
+      expect(
+        gelesen.mock.calls.filter(([key]) => key !== ANTWORT_INDEX)
+      ).toEqual([]);
+    });
+
+    it('counts no answer deleted behind its back', () => {
+      const speicher = new KleinerSpeicher();
+      const antworten = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
+      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      antworten.merken(TABELLE, 'tabelle', antwort(2000));
+      speicher.removeItem(`${ANTWORT_PRAEFIX}${TEAM}`);
+
+      antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+
+      expect(gemerkt(antworten, [TABELLE, SPIEL])).toEqual([TABELLE, SPIEL]);
+    });
+
+    it('rebuilds itself from the answers when it cannot be read', () => {
+      const speicher = new KleinerSpeicher();
+      const antworten = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
+      antworten.merken(TABELLE, 'tabelle', antwort(2000));
+      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      speicher.setItem(ANTWORT_INDEX, '{kaputt');
+
+      antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+
+      expect(gemerkt(antworten, [TEAM, TABELLE, SPIEL])).toEqual([
+        TABELLE,
+        SPIEL,
+      ]);
+    });
+
+    it('evicts an answer it cannot read first', () => {
+      const speicher = new KleinerSpeicher();
+      const antworten = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
+      antworten.merken(TABELLE, 'tabelle', antwort(1000));
+      speicher.setItem(`${ANTWORT_PRAEFIX}${TEAM}`, '{kaputt');
+
+      antworten.merken(SPIEL, 'spiel-info', antwort(2000));
+
+      expect(antworten.lesen(TEAM, JETZT)).toBeUndefined();
+      expect(gemerkt(antworten, [TABELLE, SPIEL])).toEqual([TABELLE, SPIEL]);
+    });
   });
 
   it.each([
-    ['of another version', { v: 2, am: 1000, antwort: {} }],
-    ['without its time', { v: 1, antwort: {} }],
+    ['of another version', { v: 1, am: 1000, antwort: {} }],
+    ['without its time', { v: 2, art: 'tabelle', antwort: {} }],
   ])('reads a stored answer %s as none', (_fall, gespeichert) => {
     const speicher = new KleinerSpeicher();
-    speicher.setItem(`korbjaeger-antwort:${TEAM}`, JSON.stringify(gespeichert));
+    speicher.setItem(`${ANTWORT_PRAEFIX}${TEAM}`, JSON.stringify(gespeichert));
 
-    expect(new LokaleLetzteAntworten(speicher).lesen(TEAM)).toBeUndefined();
+    expect(
+      new LokaleLetzteAntworten(speicher).lesen(TEAM, JETZT)
+    ).toBeUndefined();
   });
 
   it('keeps nothing, and fails nothing, without a storage', () => {
     const antworten = new LokaleLetzteAntworten(undefined);
 
-    antworten.merken(TEAM, antwort(1000));
+    antworten.merken(TEAM, 'team-spiele', antwort(1000));
+    antworten.aufraeumen(JETZT, new Set());
 
-    expect(antworten.lesen(TEAM)).toBeUndefined();
+    expect(antworten.lesen(TEAM, JETZT)).toBeUndefined();
   });
 
   it('fails nothing where the storage throws on every access', () => {
-    const blockiert: AntwortSpeicher = {
-      get length(): number {
-        throw new DOMException('blocked', 'SecurityError');
-      },
-      key: () => {
-        throw new DOMException('blocked', 'SecurityError');
-      },
-      getItem: () => {
-        throw new DOMException('blocked', 'SecurityError');
-      },
-      setItem: () => {
-        throw new DOMException('blocked', 'SecurityError');
-      },
-      removeItem: () => {
-        throw new DOMException('blocked', 'SecurityError');
-      },
+    const blockiert = (): never => {
+      throw new DOMException('blocked', 'SecurityError');
     };
-    const antworten = new LokaleLetzteAntworten(blockiert);
+    const speicher: AntwortSpeicher = {
+      get length(): number {
+        return blockiert();
+      },
+      key: blockiert,
+      getItem: blockiert,
+      setItem: blockiert,
+      removeItem: blockiert,
+    };
+    const antworten = new LokaleLetzteAntworten(speicher);
 
-    expect(() => antworten.merken(TEAM, antwort(1000))).not.toThrow();
-    expect(antworten.lesen(TEAM)).toBeUndefined();
+    expect(() => {
+      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      antworten.aufraeumen(JETZT, new Set());
+    }).not.toThrow();
+    expect(antworten.lesen(TEAM, JETZT)).toBeUndefined();
   });
 });

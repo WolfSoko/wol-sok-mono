@@ -7,7 +7,6 @@ import {
   Injector,
   signal,
   untracked,
-  type ResourceRef,
   type Signal,
 } from '@angular/core';
 import {
@@ -22,6 +21,7 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import type { DatenResource } from '../basketball-data/basketball-data-resource';
+import { aeltesterStand } from '../basketball-data/stand';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
@@ -37,7 +37,7 @@ import { fehlerKarte, geladeneKarte, type TeamKarte } from './team-karte';
  */
 interface Lesung {
   readonly saison: DatenResource<TeamSaison | undefined>;
-  readonly naechsteDetails: ResourceRef<SpielDetails | undefined>;
+  readonly naechsteDetails: DatenResource<SpielDetails | undefined>;
   /** The Team's Verein once its Saison looks over (`saisonBeendet`). */
   readonly saisonEndeVerein: Signal<VereinId | undefined>;
 }
@@ -56,7 +56,7 @@ export class MeineTeamsUeberblick {
   private readonly injector = inject(Injector);
   private readonly lesungen = signal<ReadonlyMap<TeamId, Lesung>>(new Map());
   private readonly vereinsLesungen = signal<
-    ReadonlyMap<VereinId, ResourceRef<VereinsTeams | undefined>>
+    ReadonlyMap<VereinId, DatenResource<VereinsTeams | undefined>>
   >(new Map());
 
   /** The Vereine to suggest Teams from: of each Team whose Saison looks over. */
@@ -127,7 +127,12 @@ export class MeineTeamsUeberblick {
       const vereinsTeams =
         verein === undefined ? undefined : this.vereinsLesungen().get(verein);
       return geladeneKarte(saison.value(), this.heute(), {
-        stand: saison.stand(),
+        // the oldest of what the card shows
+        stand: aeltesterStand(
+          saison.stand(),
+          lesung.naechsteDetails.stand(),
+          vereinsTeams?.stand()
+        ),
         halle: hallenStand(lesung.naechsteDetails),
         saisonBeendet: verein !== undefined,
         vereinsTeams: vereinsTeams && vereinsTeamsStand(vereinsTeams, teamId),
@@ -183,7 +188,7 @@ function abgleichen<K, V>(
 }
 
 /** Cancels and drops the read of a Verein's Teams. */
-function vereinBeenden(read: ResourceRef<VereinsTeams | undefined>): void {
+function vereinBeenden(read: DatenResource<VereinsTeams | undefined>): void {
   read.destroy();
 }
 

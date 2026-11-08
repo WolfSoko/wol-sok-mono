@@ -1,14 +1,16 @@
 import {
   BasketballDataError,
+  dbbOhnePersonen,
   dbbStatusOf,
   isBasketballDataError,
+  type DbbRequestKind,
   type DbbTransport,
-  type ReadOptions,
   type ReadSignal,
 } from '@wolsok/feat-shared-basketball-data';
 import { proxyUrl } from '../../shared/dbb-proxy-routes';
 import type { LetzteAntwort, LetzteAntworten } from './letzte-antworten';
-import { beiStandVon, type StandGrund } from './stand';
+import type { KorbReadOptions, Lesung } from './lesung';
+import type { StandGrund } from './stand';
 
 /** The `fetch` the browser calls the app's proxy with; specs pass a fake. */
 export type ProxyFetch = (url: string, init: RequestInit) => Promise<Response>;
@@ -26,6 +28,19 @@ export interface ProxyTransportOptions {
   readonly jetzt?: () => number;
 }
 
+/**
+ * The reads whose last good answer is kept: public DBB data, kept without
+ * the persons a Spiel's match info names. Never a Spielbericht, whose Kader name children (ADR 0019),
+ * nor the wizard's Liga search and Liga Teams, so browsing it evicts no
+ * answer Meine Teams need offline.
+ */
+export const SPEICHERBARE_ARTEN: ReadonlySet<DbbRequestKind> = new Set([
+  'team-spiele',
+  'tabelle',
+  'spiel-info',
+  'vereins-spiele',
+]);
+
 /** Keeps nothing: a read that fails has no answer to fall back on. */
 const KEINE_ANTWORTEN: LetzteAntworten = {
   lesen: () => undefined,
@@ -40,10 +55,12 @@ const KEINE_ANTWORTEN: LetzteAntworten = {
  * call that never reaches the proxy, is `offline`; anything else (a 502,
  * no JSON) is `unavailable`.
  *
- * Each 200 is kept in `antworten` by its proxy path. A read that then
- * fails as `offline` or `unavailable` is answered from it instead, and
- * its options' `beiStand` (`StandReadOptions`) hears when it came and
- * why; a 404 (the thing is gone) and a cancelled read never are.
+ * The 200 of a read of `SPEICHERBARE_ARTEN` is kept in `antworten` by its
+ * proxy path, without the persons in it (`dbbOhnePersonen`), once its `Lesung` (`KorbReadOptions`) says the read mapped
+ * it. A read with a `Lesung` that then fails as `offline` or
+ * `unavailable` is answered from it instead, and the `Lesung` hears when
+ * it came and why; a 404 (the thing is gone) and a cancelled read never
+ * are.
  */
 export function proxyTransport(
   fetchProxy: ProxyFetch,
@@ -52,40 +69,56 @@ export function proxyTransport(
     antworten = KEINE_ANTWORTEN,
     jetzt = Date.now,
   }: ProxyTransportOptions = {}
-): DbbTransport {
+): DbbTransport<KorbReadOptions> {
   return async (request, options) => {
     const path = proxyUrl(request);
+    const lesung = SPEICHERBARE_ARTEN.has(request.kind)
+      ? options?.lesung
+      : undefined;
     try {
       return await readProxy(
         path,
         fetchProxy,
         online,
         options?.signal,
-        (body) =>
-          antworten.merken(path, { antwort: body, gespeichertAm: jetzt() })
+        (body) => {
+          const gespeichertAm = jetzt();
+          lesung?.vormerken(() =>
+            antworten.merken(path, request.kind, {
+              antwort: dbbOhnePersonen(body),
+              gespeichertAm,
+            })
+          );
+        }
       );
     } catch (error) {
-      return letzteAntwortStatt(error, antworten.lesen(path), options);
+      if (lesung === undefined) {
+        throw error;
+      }
+      return letzteAntwortStatt(
+        error,
+        antworten.lesen(path, jetzt()),
+        lesung,
+        options?.signal
+      );
     }
   };
 }
 
 /**
  * `letzte`'s answer for a read that failed with `error`, where it may take
- * one (telling its `beiStand`); else throws `error`.
+ * one (telling its `lesung`); else throws `error`.
  */
 function letzteAntwortStatt(
   error: unknown,
   letzte: LetzteAntwort | undefined,
-  options: ReadOptions | undefined
+  lesung: Lesung,
+  signal: ReadSignal | undefined
 ): unknown {
-  if (letzte === undefined || !ersetzbar(error, options?.signal)) {
+  if (letzte === undefined || !ersetzbar(error, signal)) {
     throw error;
   }
-  beiStandVon(options)?.({
-    gespeichertAm: letzte.gespeichertAm,
-    grund: error.kind,
-  });
+  lesung.ersetzt({ gespeichertAm: letzte.gespeichertAm, grund: error.kind });
   return letzte.antwort;
 }
 

@@ -19,7 +19,7 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import type { StandReadOptions } from '../basketball-data/stand';
+import type { KorbReadOptions } from '../basketball-data/lesung';
 import { HEUTE } from '../heute';
 import { JETZT } from '../jetzt';
 import { UeberblickComponent } from './ueberblick.component';
@@ -243,8 +243,8 @@ describe('UeberblickComponent', () => {
   it("labels a card with its Team's last good Spiele and their age", async () => {
     const data = fakeData([]);
     data.teamSpiele.mockImplementation(
-      async (_team, options?: StandReadOptions) => {
-        options?.beiStand?.({
+      async (_team, options?: KorbReadOptions) => {
+        options?.lesung?.ersetzt({
           gespeichertAm: JETZT_IM_SPEC - 3 * 60 * 60_000,
           grund: 'offline',
         });
@@ -256,6 +256,34 @@ describe('UeberblickComponent', () => {
 
     expect(text(teil(eintraege(seite)[0], 'stand'))).toContain(
       'Offline · Stand: vor 3 Std.'
+    );
+  });
+
+  it("labels a card with the oldest Stand of what it shows, its next Spiel's Halle too", async () => {
+    const STUNDE = 60 * 60_000;
+    const data = fakeData([], async (spielId, options?: KorbReadOptions) => {
+      options?.lesung?.ersetzt({
+        gespeichertAm: JETZT_IM_SPEC - 3 * STUNDE,
+        grund: 'unavailable',
+      });
+      return inDerSporthalle(spielId);
+    });
+    data.teamSpiele.mockImplementation(
+      async (_team, options?: KorbReadOptions) => {
+        options?.lesung?.ersetzt({
+          gespeichertAm: JETZT_IM_SPEC - STUNDE,
+          grund: 'offline',
+        });
+        return saison(WASBUETTEL, spiel(GIFHORN, WASBUETTEL, '2026-11-14'));
+      }
+    );
+
+    const { seite, stabil } = await render(data, [WASBUETTEL.id]);
+    // the Halle is read once its card is there
+    await stabil();
+
+    expect(text(teil(eintraege(seite)[0], 'stand'))).toContain(
+      'DBB nicht erreichbar · Stand: vor 3 Std.'
     );
   });
 

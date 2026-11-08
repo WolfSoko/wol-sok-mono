@@ -18,7 +18,7 @@ import {
 } from '../basketball-data/basketball-data.provider';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import type { StandReadOptions } from '../basketball-data/stand';
+import type { KorbReadOptions } from '../basketball-data/lesung';
 import { HEUTE } from '../heute';
 import { JETZT } from '../jetzt';
 import { TeamComponent } from './team.component';
@@ -198,8 +198,8 @@ describe('TeamComponent', () => {
   describe('the last good data', () => {
     it("shows the Team's last good Spiele with their age where the read fell back on them", async () => {
       const page = await render(
-        fakeData(async (_team, options?: StandReadOptions) => {
-          options?.beiStand?.({
+        fakeData(async (_team, options?: KorbReadOptions) => {
+          options?.lesung?.ersetzt({
             gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
             grund: 'offline',
           });
@@ -212,6 +212,50 @@ describe('TeamComponent', () => {
       ).toContain('Offline · Stand: vor 2 Std.');
       expect(spielZeilen(page)).toHaveLength(1);
       expect(page.querySelector('[role="alert"]')).toBeNull();
+    });
+
+    it("labels the Team's head with the oldest Stand of what it shows, the next Spiel's Halle too", async () => {
+      const page = await render(
+        fakeData(
+          async () => saison([spiel({ id: 1, datum: '2026-11-14' })]),
+          keineZeilen,
+          async (spielId, options?: KorbReadOptions) => {
+            options?.lesung?.ersetzt({
+              gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
+              grund: 'unavailable',
+            });
+            return inDerSchulsporthalle(spielId);
+          }
+        )
+      );
+
+      expect(
+        page.querySelector('[data-qa="team-stand"]')?.textContent
+      ).toContain('DBB nicht erreichbar · Stand: vor 2 Std.');
+    });
+
+    it("labels the Verein's other Teams with their own Stand", async () => {
+      const page = await render(
+        fakeData(
+          async () => saison([spiel({ id: 1, datum: '2026-11-14' })]),
+          keineZeilen,
+          inDerSchulsporthalle,
+          async (verein, options?: KorbReadOptions) => {
+            options?.lesung?.ersetzt({
+              gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
+              grund: 'offline',
+            });
+            return OHNE_TEAMS(verein);
+          }
+        )
+      );
+
+      expect(
+        page.querySelector('[data-qa="vereins-stand"]')?.textContent
+      ).toContain('Offline · Stand: vor 2 Std.');
+      expect(
+        page.querySelector('[data-qa="team-stand"] [data-qa="stand"]')
+      ).toBeNull();
     });
 
     it('labels no Stand for Spiele just read', async () => {

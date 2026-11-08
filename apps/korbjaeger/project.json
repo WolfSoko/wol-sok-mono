@@ -38,12 +38,7 @@
     "build": {
       "executor": "nx:run-commands",
       "dependsOn": ["build-app"],
-      "inputs": ["sharedGlobals", "production", "^production"],
-      "outputs": [
-        "{workspaceRoot}/dist/apps/korbjaeger/analog/public/ngsw.json",
-        "{workspaceRoot}/dist/apps/korbjaeger/analog/public/ngsw-worker.js",
-        "{workspaceRoot}/dist/apps/korbjaeger/analog/public/safety-worker.js"
-      ],
+      "cache": false,
       "defaultConfiguration": "production",
       "options": {
         "commands": [

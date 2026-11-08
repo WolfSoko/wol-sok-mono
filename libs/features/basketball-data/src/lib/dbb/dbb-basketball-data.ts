@@ -43,22 +43,22 @@ export const VEREINS_SPIELE_TAGE = 28;
 /**
  * `BasketballData` read from the DBB's JSON API through `transport`, which
  * answers each allowlisted `DbbRequest` with the DBB's JSON: directly in a
- * tool, through the app's caching proxy in the browser.
+ * tool, through the app's caching proxy in the browser. Each read hands
+ * its options (`O`) to the transport as they are.
  */
-export class DbbBasketballData implements BasketballData {
-  public constructor(private readonly transport: DbbTransport) {}
+export class DbbBasketballData<
+  O extends ReadOptions = ReadOptions,
+> implements BasketballData<O> {
+  public constructor(private readonly transport: DbbTransport<O>) {}
 
-  public ligaSuche(
-    filter: LigaSucheFilter,
-    options?: ReadOptions
-  ): Promise<LigaSuche> {
+  public ligaSuche(filter: LigaSucheFilter, options?: O): Promise<LigaSuche> {
     return this.read({ kind: 'liga-suche', filter }, mapLigaSuche, options);
   }
 
   public ligaSeite(
     filter: LigaSucheFilter,
     startIndex: number,
-    options?: ReadOptions
+    options?: O
   ): Promise<LigaSeite> {
     return this.read(
       { kind: 'liga-seite', filter, startIndex },
@@ -67,10 +67,7 @@ export class DbbBasketballData implements BasketballData {
     );
   }
 
-  public ligaTeams(
-    liga: LigaId,
-    options?: ReadOptions
-  ): Promise<readonly Team[]> {
+  public ligaTeams(liga: LigaId, options?: O): Promise<readonly Team[]> {
     return this.read(
       { kind: 'spielplan', ligaId: liga },
       mapLigaTeams,
@@ -78,10 +75,7 @@ export class DbbBasketballData implements BasketballData {
     );
   }
 
-  public vereinsTeams(
-    verein: VereinId,
-    options?: ReadOptions
-  ): Promise<VereinsTeams> {
+  public vereinsTeams(verein: VereinId, options?: O): Promise<VereinsTeams> {
     return this.read(
       { kind: 'vereins-spiele', vereinId: verein, tage: VEREINS_SPIELE_TAGE },
       mapVereinsTeams,
@@ -89,7 +83,7 @@ export class DbbBasketballData implements BasketballData {
     );
   }
 
-  public teamSpiele(team: TeamId, options?: ReadOptions): Promise<TeamSaison> {
+  public teamSpiele(team: TeamId, options?: O): Promise<TeamSaison> {
     return this.read(
       { kind: 'team-spiele', teamId: team },
       mapTeamSpiele,
@@ -97,11 +91,11 @@ export class DbbBasketballData implements BasketballData {
     );
   }
 
-  public tabelle(liga: LigaId, options?: ReadOptions): Promise<Tabelle> {
+  public tabelle(liga: LigaId, options?: O): Promise<Tabelle> {
     return this.read({ kind: 'tabelle', ligaId: liga }, mapTabelle, options);
   }
 
-  public spiel(spiel: SpielId, options?: ReadOptions): Promise<SpielDetails> {
+  public spiel(spiel: SpielId, options?: O): Promise<SpielDetails> {
     return this.read(
       { kind: 'spiel-info', spielId: spiel },
       mapSpielDetails,
@@ -111,7 +105,7 @@ export class DbbBasketballData implements BasketballData {
 
   public spielbericht(
     spiel: SpielId,
-    options?: ReadOptions
+    options?: O
   ): Promise<Spielbericht | undefined> {
     return this.read(
       { kind: 'spielbericht', spielId: spiel },
@@ -123,21 +117,21 @@ export class DbbBasketballData implements BasketballData {
   private async read<T>(
     request: DbbRequest,
     map: (data: unknown) => T,
-    options: ReadOptions = {}
+    options?: O
   ): Promise<T> {
     assertKnowable(request);
-    options.signal?.throwIfAborted();
+    options?.signal?.throwIfAborted();
     return map(readEnvelope(await this.fetch(request, options)));
   }
 
   private async fetch(
     request: DbbRequest,
-    options: ReadOptions
+    options: O | undefined
   ): Promise<unknown> {
     try {
       return await this.transport(request, options);
     } catch (error) {
-      options.signal?.throwIfAborted();
+      options?.signal?.throwIfAborted();
       if (isBasketballDataError(error)) {
         throw error;
       }

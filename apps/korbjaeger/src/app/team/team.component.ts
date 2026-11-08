@@ -31,6 +31,7 @@ import { TeamFolgenComponent } from './team-folgen.component';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
 import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
+import { aeltesterStand } from '../basketball-data/stand';
 import { StandComponent } from '../stand/stand.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
@@ -142,6 +143,21 @@ export class TeamComponent {
       ? undefined
       : vereinsTeamsStand(this.vereinsTeams, team);
   });
+
+  /**
+   * The oldest Stand of what the head shows: the Spiele, the next Spiel's
+   * Halle, and the Verein's Teams while the hint offers them up there.
+   */
+  protected readonly kopfStand = computed(() =>
+    aeltesterStand(
+      this.saison.stand(),
+      this.naechsteDetails.stand(),
+      this.beendet() ? this.vereinsTeams.stand() : undefined
+    )
+  );
+
+  /** The Stand of the Verein's Teams in their own section below. */
+  protected readonly vereinsStand = computed(() => this.vereinsTeams.stand());
 
   protected readonly fehler = computed(() => {
     if (this.team() === undefined) {

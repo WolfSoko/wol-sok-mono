@@ -58,11 +58,12 @@ export type DbbHttpRequest =
 /**
  * How a transport answers one `DbbRequest`: the DBB's JSON, unread. What it
  * throws, other than a `BasketballDataError`, counts as the DBB's or the
- * network's trouble (`unavailable`).
+ * network's trouble (`unavailable`). `O`: the read's options, as the read
+ * was given them.
  */
-export type DbbTransport = (
+export type DbbTransport<O extends ReadOptions = ReadOptions> = (
   request: DbbRequest,
-  options?: ReadOptions
+  options?: O
 ) => Promise<unknown>;
 
 /** The `fetch` arguments of one DBB call, without what a caller adds. */

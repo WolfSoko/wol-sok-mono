@@ -10,7 +10,7 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import type { StandReadOptions } from '../basketball-data/stand';
+import type { KorbReadOptions } from '../basketball-data/lesung';
 import { JETZT } from '../jetzt';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
@@ -99,8 +99,8 @@ function zellen(zeile: HTMLElement): (string | undefined)[] {
 describe('TeamTabelleComponent', () => {
   it('shows its last good Tabelle with its age where the read fell back on it', async () => {
     const page = await render(
-      fakeData(async (_liga, options?: StandReadOptions) => {
-        options?.beiStand?.({
+      fakeData(async (_liga, options?: KorbReadOptions) => {
+        options?.lesung?.ersetzt({
           gespeichertAm: JETZT_IM_SPEC - 30 * 60_000,
           grund: 'unavailable',
         });

@@ -13,7 +13,8 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import type { Stand, StandReadOptions } from '../basketball-data/stand';
+import type { KorbReadOptions } from '../basketball-data/lesung';
+import type { Stand } from '../basketball-data/stand';
 import { JETZT } from '../jetzt';
 import { SpielComponent } from './spiel.component';
 
@@ -179,26 +180,22 @@ describe('SpielComponent', () => {
       grund: 'unavailable',
     };
 
-    it('labels the Spiel and its Spielbericht each with the age of its last good data', async () => {
+    it('labels the Spiel with the age of its last good data', async () => {
       const page = await render(
         fakeData(
-          async (_spiel, options?: StandReadOptions) => {
-            options?.beiStand?.(VOR_EINER_STUNDE);
+          async (_spiel, options?: KorbReadOptions) => {
+            options?.lesung?.ersetzt(VOR_EINER_STUNDE);
             return GESPIELT;
           },
-          async (_spiel, options?: StandReadOptions) => {
-            options?.beiStand?.({ ...VOR_EINER_STUNDE, grund: 'offline' });
-            return bericht(MIT_WERTEN, OHNE_WERTE);
-          }
+          async () => bericht(MIT_WERTEN, OHNE_WERTE)
         )
       );
 
       expect(text(teil(page, 'spiel-stand'))).toContain(
         'DBB nicht erreichbar · Stand: vor 1 Std.'
       );
-      expect(text(teil(page, 'spielbericht-stand'))).toContain(
-        'Offline · Stand: vor 1 Std.'
-      );
+      // a Spielbericht names children: it is never kept, so never stale
+      expect(teil(page, 'spielbericht-stand')).toBeNull();
     });
 
     it('labels neither while both were just read', async () => {

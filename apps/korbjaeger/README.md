@@ -114,7 +114,8 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   answers navigations with the shell except files and `/api/**`
   (`navigationUrls`), and has no data group: it never caches the proxy,
   whose data is the app's own (below) and the CDN's. `build` runs
-  `build-app` (Analog) and then copies `ngsw-worker.js` and
+  `build-app` (Analog, cached) and then, never cached since its result
+  hashes `build-app`'s files, copies `ngsw-worker.js` and
   `safety-worker.js` into the Hosting folder and writes `ngsw.json` there
   (`ngsw-config`), from the hashed files of that very build. A worker that
   lost files of its release reloads the page; a new release is taken on
@@ -123,25 +124,39 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   servers (`serve`, `serve-e2e`) run no worker, so the e2e checks the last
   good data without one.
 - **Last good data** (`src/app/basketball-data/`): the browser transport
-  keeps each 200 of the proxy by its path (`LokaleLetzteAntworten`,
-  `localStorage` keys `korbjaeger-antwort:/api/dbb/...`, as
-  `{ v: 1, am, antwort }`): public DBB data only, nothing of the user. A
-  read that then fails as `offline` (fetch throws, or `navigator.onLine`
-  is false, when the proxy is not called at all) or `unavailable` (the
-  proxy's 502) is answered from it, never a 404 or a cancelled read, and
-  never is an error stored. The store keeps at most 60 answers and
-  1,000,000 characters (`ANTWORT_GRENZEN`, so Meine Teams always find
-  room): a write beyond either evicts the oldest answers first, by when
-  they were stored; a full storage (`QuotaExceededError`) evicts the
-  oldest until the write fits or gives up, and a blocked one keeps
-  nothing. The read's options carry `beiStand` (`StandReadOptions`, which
-  `DbbBasketballData` hands to the transport as they are), so each
-  resource of `basketballDataResource` has a `stand` beside its value;
-  `korb-stand` (`src/app/stand/`) shows it as "Offline · Stand: vor 2
-  Std.", aging with `JETZT` (`src/app/jetzt.ts`, the screens' one clock,
-  read every minute and on visibility changes; `HEUTE` is its German
-  date). The Team page, each Tabelle, the Spiel page (Spiel and
-  Spielbericht) and each overview card show it.
+  keeps the last good answer of a Team's Spiele, a Tabelle, a Spiel's
+  match info and a Verein's Spiele by its proxy path
+  (`SPEICHERBARE_ARTEN`, `LokaleLetzteAntworten`, `localStorage` keys
+  `korbjaeger-antwort:/api/dbb/...` as `{ v: 2, am, art, antwort }`, with
+  an index `korbjaeger-antworten` of each one's size, time and kind). Each
+  is kept without the persons it names (the lib's `dbbOhnePersonen`: a
+  match info names top players and referees). Never kept: a Spielbericht
+  (its Kader name children, ADR 0019), the wizard's Liga search and Liga
+  Teams (browsing them would evict what Meine Teams need), errors, and an
+  answer the adapter could not map: the transport only notes an answer in
+  the read's `Lesung`, and the resource keeps it once the read mapped it.
+  A read with a `Lesung` that fails as `offline` (fetch throws, or
+  `navigator.onLine` is false, when the proxy is not called at all) or
+  `unavailable` (the proxy's 502) is answered from it, never a 404 or a
+  cancelled read. An answer older than 7 days (`MAX_ALTER_MS`) is neither
+  served nor kept; at the app's start the store drops those and answers
+  of kinds no longer kept. At most 60 answers and 1,000,000 characters
+  (`ANTWORT_GRENZEN`, so Meine Teams always find room): a write beyond
+  either evicts the oldest answers first; a full storage
+  (`QuotaExceededError`) evicts the oldest until the write fits; an answer
+  that is not kept (too large, or the storage full) drops the older one of
+  its path too, and a blocked storage keeps nothing. Writes read the index,
+  not the answers; it forgets answers deleted behind its back and is
+  rebuilt from them when it cannot be read. The read's options are typed
+  (`KorbReadOptions`, `DbbBasketballData<KorbReadOptions>` hands them to
+  the transport as they are). Each resource of `basketballDataResource`
+  (a `DatenResource`) has a `stand` beside its value, cleared when a load
+  starts; `korb-stand` (`src/app/stand/`) shows it as "Offline · Stand:
+  vor 2 Std.", aging with `JETZT` (`src/app/jetzt.ts`, the screens' one
+  clock, read every minute and on visibility changes; `HEUTE` is its
+  German date). The Team page's head, its "Weitere Teams des Vereins",
+  each Tabelle, the Spiel page and each overview card show one Stand, the
+  oldest of the reads they show (the next Spiel's Halle included).
 - **Errors** (`src/app/fehler/`): `fehlerText` tells the three failures
   apart: offline ("Keine Verbindung zum Internet"), the DBB unreachable
   (the proxy's 502, "Der DBB ist gerade nicht erreichbar") and not found

@@ -1,5 +1,3 @@
-import type { ReadOptions } from '@wolsok/feat-shared-basketball-data';
-
 /** Why a read was answered from its last good answer. */
 export type StandGrund = 'offline' | 'unavailable';
 
@@ -13,29 +11,21 @@ export interface Stand {
   readonly grund: StandGrund;
 }
 
-/**
- * A read's options in the app: `beiStand` hears of each answer of the read
- * that came from the last good one. `DbbBasketballData` hands them to the
- * transport as they are.
- */
-export interface StandReadOptions extends ReadOptions {
-  readonly beiStand?: (stand: Stand) => void;
-}
-
-/** The `beiStand` of a read's options, where they carry one. */
-export function beiStandVon(
-  options: ReadOptions | undefined
-): ((stand: Stand) => void) | undefined {
-  const beiStand =
-    options !== undefined && 'beiStand' in options
-      ? options.beiStand
-      : undefined;
-  return typeof beiStand === 'function'
-    ? (beiStand as (stand: Stand) => void)
-    : undefined;
-}
-
 /** The older of two `Stand`s, where a read was answered from several. */
 export function aelterer(a: Stand | undefined, b: Stand): Stand {
   return a !== undefined && a.gespeichertAm <= b.gespeichertAm ? a : b;
+}
+
+/**
+ * The oldest of `staende`, for a screen or card that shows several reads:
+ * `undefined` while each was just read.
+ */
+export function aeltesterStand(
+  ...staende: ReadonlyArray<Stand | undefined>
+): Stand | undefined {
+  return staende.reduce<Stand | undefined>(
+    (aeltester, stand) =>
+      stand === undefined ? aeltester : aelterer(aeltester, stand),
+    undefined
+  );
 }
