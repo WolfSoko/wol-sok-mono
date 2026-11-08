@@ -54,8 +54,9 @@ about 1 MB) on every listing, until those entries age out.
    returns it with `simulation` and `ladder` from its bytes, as today.
 2. After that listing, the stored entry carries `simulation` (and `ladder`
    where the replay has one); its other fields and bytes are unchanged.
-3. A second listing reads no bytes: `replayFromBytes` is not called for it
-   (spied in the spec).
+3. A second listing reads no bytes: with the bytes spoiled after the
+   backfill, the entry is still listed (the engine's exports cannot be
+   spied on under ts-jest, so the spec checks it by behaviour).
 4. An old entry whose bytes do not read is left out of the listing, as
    today, and is gone from storage after it.
 5. Entries that already have `simulation` are neither re-read nor rewritten;
