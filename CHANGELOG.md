@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.144.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.143.1...v74.144.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 5 — Spiel page with Spielbericht and Halle ([#2901](https://github.com/WolfSoko/wol-sok-mono/issues/2901)) ([4aebe4b](https://github.com/WolfSoko/wol-sok-mono/commit/4aebe4bf4ec8fef1d6bae88f4aae40df99b8f59f)), references [#2868](https://github.com/WolfSoko/wol-sok-mono/issues/2868)
+
+### Refactorings
+
+* **bacteria-wars-functions:** map stored times through timestampMillis ([#2848](https://github.com/WolfSoko/wol-sok-mono/issues/2848)) ([592cdab](https://github.com/WolfSoko/wol-sok-mono/commit/592cdabd63be01b7e639ca9a56b869f4d9c69358)), closes [#2806](https://github.com/WolfSoko/wol-sok-mono/issues/2806)
+
 ## [74.143.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.143.0...v74.143.1) (2026-11-08)
 
 ### Refactorings
