@@ -9,7 +9,7 @@ import {
   type WeaponFire,
   Zone,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { ArenaTheme } from './arena-theme';
+import { ArenaTheme, Rgb } from './arena-theme';
 import type { PaintedColony } from './colony-renderer';
 
 export type { PaintedColony } from './colony-renderer';
@@ -154,7 +154,49 @@ export function crosshairBars(cursor: CursorShape, unit: number): [Rect, Rect] {
   ];
 }
 
-/** The radius of the ring around a boosted crosshair - it widens as the boost runs out. */
-export function boostRingRadius(boostLeft: number): number {
-  return 9 + 4 * (1 - boostLeft);
+/** The ring around a boosted crosshair, in arena cells. */
+export interface BoostRing {
+  radius: number;
+  lineWidth: number;
+}
+
+/** A colour as its channels and an alpha from 0 to 1. */
+export interface SplitColor {
+  rgb: Rgb;
+  alpha: number;
+}
+
+/** The largest alpha of an RGBA colour such as `CursorShape.color` - opaque. */
+const ALPHA_MAX = 255;
+/** The boost ring's radius at a fresh boost, in base cells. */
+const BOOST_RING_RADIUS = 9;
+/** How far the ring widens as the boost runs out, in base cells. */
+const BOOST_RING_GROWTH = 4;
+/** The boost ring's line width, in base cells. */
+const BOOST_RING_LINE_WIDTH = 1.5;
+
+/**
+ * The ring around a boosted crosshair, `unit` cells per base cell so it is as
+ * big on every grid - it widens as the boost runs out. Null without a running
+ * boost.
+ */
+export function boostRing(cursor: CursorShape, unit: number): BoostRing | null {
+  if (cursor.boostLeft == null) {
+    return null;
+  }
+  return {
+    radius:
+      (BOOST_RING_RADIUS + BOOST_RING_GROWTH * (1 - cursor.boostLeft)) * unit,
+    lineWidth: BOOST_RING_LINE_WIDTH * unit,
+  };
+}
+
+/**
+ * An RGBA colour, its alpha from 0 to 255 as in `CursorShape.color`, as its
+ * channels and the alpha from 0 to 1 a painter draws with. Without an alpha
+ * it is opaque.
+ */
+export function splitColor(color: readonly number[]): SplitColor {
+  const [r, g, b, alpha = ALPHA_MAX] = color;
+  return { rgb: [r, g, b], alpha: alpha / ALPHA_MAX };
 }

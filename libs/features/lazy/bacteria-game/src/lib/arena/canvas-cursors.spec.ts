@@ -39,8 +39,8 @@ function recordingContext() {
 describe('drawCursors on a grid of two cells per base cell', () => {
   /** Expected values below are worked out by hand for this unit. */
   const DOUBLE_UNIT = 2;
-  const red = 'rgba(255,0,0,255)';
-  const blue = 'rgba(0,0,255,255)';
+  const red = 'rgba(255,0,0,1)';
+  const blue = 'rgba(0,0,255,1)';
 
   /** Off the diagonal, so swapped coordinates show. */
   const plain: CursorShape = {
@@ -102,5 +102,16 @@ describe('drawCursors on a grid of two cells per base cell', () => {
     ];
     const styles = cx.calls.map((call) => `${call.op} ${call.style}`);
     expect(styles).toEqual([...ringed(blue), ...bars(red), ...ringed(blue)]);
+  });
+
+  it('fills and strokes a translucent crosshair with its alpha from 0 to 1', () => {
+    const cx = recordingContext();
+    const translucent: CursorShape = { ...boosted, color: [0, 0, 255, 51] };
+
+    drawCursors(cx, [translucent], DOUBLE_UNIT);
+
+    const styles = new Set(cx.calls.map((call) => call.style));
+    expect([...styles]).toEqual(['rgba(0,0,255,0.2)']);
+    expect(cx.calls).toHaveLength(5);
   });
 });
