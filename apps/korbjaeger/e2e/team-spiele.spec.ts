@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures/team-page.fixture';
+import { expect, test } from './fixtures/pages.fixture';
 
 /** In the fixtures, MTV Wasbüttel plays a friendly Liga, then a Vorrunde. */
 const TEAM_IN_ZWEI_LIGEN = 313036;

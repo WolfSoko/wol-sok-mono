@@ -15,11 +15,14 @@ export class TeamPage {
   public readonly spiele: Locator;
   /** One per Liga, the current one first. */
   public readonly tabellen: Locator;
+  /** Follows the Team, or unfollows it once pressed. */
+  public readonly folgen: Locator;
 
   public constructor(private readonly page: Page) {
     this.heading = page.getByRole('heading', { level: 1 });
     this.spiele = page.getByTestId('spiel');
     this.tabellen = page.getByTestId('tabelle');
+    this.folgen = page.getByRole('button', { name: 'Team folgen' });
   }
 
   /** The Tabelle headed by the Liga `liga`. */
