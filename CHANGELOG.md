@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.141.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.140.0...v74.141.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 2 — Tabelle of each Liga on the Team page ([#2887](https://github.com/WolfSoko/wol-sok-mono/issues/2887)) ([a3b478c](https://github.com/WolfSoko/wol-sok-mono/commit/a3b478c567fab20d334e21929c3c54780fa66c2e)), references [#2866](https://github.com/WolfSoko/wol-sok-mono/issues/2866)
+* **oxlint-workspace-rules:** forbid direct reads of version.json ([#2885](https://github.com/WolfSoko/wol-sok-mono/issues/2885)) ([8ef18b3](https://github.com/WolfSoko/wol-sok-mono/commit/8ef18b37a7d645156c2df4d5aad401911017e20f)), closes [#2846](https://github.com/WolfSoko/wol-sok-mono/issues/2846)
+
+### Bug Fixes
+
+* **github:** skip bot senders in the claude workflow ([#2890](https://github.com/WolfSoko/wol-sok-mono/issues/2890)) ([ee6da60](https://github.com/WolfSoko/wol-sok-mono/commit/ee6da60b5b6fbf07df272456ff912b40599640af)), closes [#2886](https://github.com/WolfSoko/wol-sok-mono/issues/2886), references [#2886](https://github.com/WolfSoko/wol-sok-mono/issues/2886)
+
+### Chore
+
+* **release:** publish ([bfce262](https://github.com/WolfSoko/wol-sok-mono/commit/bfce2626ba438bd604ed4fcf11f87ef1e56dd9a5))
+
 ## [74.140.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.12...v74.140.0) (2026-11-08)
 
 ### Features
