@@ -29,9 +29,12 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Spiele of four weeks either way show them (the lib's `vereinsTeams`,
   `vereinsTeamsResource`), each with its Ligen, a link to its page and the
   same follow button; `VereinsTeamsComponent` (`src/app/verein/`) only
-  shows the read's stand. Once the Team's Saison is over (the lib's
-  `saisonBeendet`: no Spiel left and the last more than two weeks past)
-  a hint says so and offers these Teams for the next Saison at the top.
+  shows the read's stand (it keeps them while a sibling Team of the same
+  Verein loads, so that reads the Verein no second time). Once the Team's
+  Saison looks over (the lib's `saisonBeendet`: no Spiel left and the last
+  more than two weeks past) a hint (`SaisonEndeHinweisComponent`, shared
+  with the overview) says no Spiel is set and asks whether the Saison is
+  over, since a break looks the same, and offers these Teams at the top.
 - **Spiel page** (`/spiel/{id}`, `src/app/spiel-seite/`): the result, the
   quarter scores (and overtimes) where the Verband records them, what
   became of the Spiel, both Teams linking to their Team pages, the Halle,
@@ -74,9 +77,10 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   `MeineTeamsUeberblick` holds the reads of each followed Team: its Saison
   (`teamSaisonResource`, as the Team page) and, once its next Spiel is
   known, that Spiel's details for the Halle (`spielDetailsResource`), both
-  ended when the Team is unfollowed. A card whose Team's Saison is over
-  (`saisonBeendet`) says so and suggests its Verein's current Teams to
-  follow; only then is the Verein read (`vereinsTeamsResource`). So each card loads and fails
+  ended when the Team is unfollowed. A card whose Team's Saison looks
+  over (`saisonBeendet`) shows the same hint with its Verein's current
+  Teams; only then is the Verein read (`vereinsTeamsResource`), once per
+  Verein however many of its Teams are followed. So each card loads and fails
   on its own and a follow or unfollow reads no other Team again; the cards
   (`ueberblick-team.component.ts`) only show what they are given, and one
   whose read fails offers "Entfernen". Error texts are in

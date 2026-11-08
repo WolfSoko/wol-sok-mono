@@ -10,12 +10,3 @@ mat-card-title a {
 p {
   margin: 0;
 }
-
-.saison-beendet {
-  display: grid;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: var(--mat-sys-corner-small);
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
-}

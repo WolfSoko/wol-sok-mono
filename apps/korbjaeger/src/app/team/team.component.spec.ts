@@ -782,6 +782,41 @@ describe('TeamComponent', () => {
       expect(knopf?.getAttribute('aria-pressed')).toBe('true');
     });
 
+    it('reads the Verein once when switching to a sibling Team of it', async () => {
+      const geschwister: Team = {
+        id: 317618,
+        name: 'MTV Wasbüttel 2',
+        vereinId: 1837,
+      };
+      const data = fakeData(
+        async (teamId) => ({
+          ...saison([]),
+          team: teamId === geschwister.id ? geschwister : UNSER_TEAM,
+        }),
+        keineZeilen,
+        inDerSchulsporthalle,
+        async () => UNSER_VEREIN
+      );
+      TestBed.configureTestingModule({ providers: providers(data) });
+      const fixture = TestBed.createComponent(TeamComponent);
+      fixture.componentRef.setInput('teamId', '313036');
+      await fixture.whenStable();
+
+      fixture.componentRef.setInput('teamId', String(geschwister.id));
+      await fixture.whenStable();
+
+      const page = fixture.nativeElement as HTMLElement;
+      expect(page.querySelector('h1')?.textContent).toContain(
+        'MTV Wasbüttel 2'
+      );
+      expect(data.vereinsTeams).toHaveBeenCalledTimes(1);
+      expect(
+        vereinsTeams(page).map((zeile) =>
+          zeile.querySelector('a')?.getAttribute('href')
+        )
+      ).toEqual(['/team/313036', '/team/270037']);
+    });
+
     it('says so where the Verein shows no other Team', async () => {
       const page = await render(fakeData(async () => saison([])));
 
@@ -831,13 +866,14 @@ describe('TeamComponent', () => {
       return page.querySelector('[data-qa="saison-beendet"]');
     }
 
-    it("says the Saison is over and suggests the Verein's current Teams", async () => {
+    it("asks whether the Saison is over and suggests the Verein's current Teams", async () => {
       // more than two weeks before 8 November
       const page = await render(mitLetztemSpielAm('2026-10-24'));
 
       expect(hinweis(page)?.textContent).toContain(
-        'Die Saison ist für dieses Team vorbei'
+        'Keine Spiele mehr angesetzt. Ist die Saison vorbei?'
       );
+      expect(hinweis(page)?.textContent).not.toContain('Saison ist vorbei');
       expect(
         [
           ...(hinweis(page)?.querySelectorAll(

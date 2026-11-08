@@ -13,17 +13,11 @@
   <korb-team-folgen class="folgen" [teamId]="teamId" />
 }
 @if (beendet()) {
-  <section class="saison-beendet" data-qa="saison-beendet">
-    <p>
-      Die Saison ist für dieses Team vorbei: kein Spiel mehr angesetzt, das
-      letzte liegt über zwei Wochen zurück.
-    </p>
-    @if (weitereTeams(); as stand) {
-      <h2>Für die nächste Saison</h2>
-      <p>Die aktuellen Teams des Vereins:</p>
-      <korb-vereins-teams data-qa="vereins-teams" [stand]="stand" />
-    }
-  </section>
+  <korb-saison-ende-hinweis
+    class="saison-ende"
+    data-qa="saison-beendet"
+    [stand]="weitereTeams()"
+  />
 }
 @if (saison.hasValue()) {
   @if (naechstes(); as zeile) {
@@ -54,7 +48,7 @@
     }
   }
 }
-@if (!beendet() && weitereTeams(); as stand) {
+@if (saison.hasValue() && !beendet() && weitereTeams(); as stand) {
   <h2>Weitere Teams des Vereins</h2>
   <korb-vereins-teams data-qa="vereins-teams" [stand]="stand" />
 }

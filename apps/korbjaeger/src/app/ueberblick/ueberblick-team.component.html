@@ -44,15 +44,10 @@
           />
         }
         @if (team.saisonBeendet) {
-          <section class="saison-beendet" data-qa="ueberblick-saison-beendet">
-            <p>
-              <strong>Saison vorbei.</strong> Für die nächste Saison: die
-              aktuellen Teams des Vereins.
-            </p>
-            @if (team.vereinsTeams; as stand) {
-              <korb-vereins-teams [stand]="stand" />
-            }
-          </section>
+          <korb-saison-ende-hinweis
+            data-qa="ueberblick-saison-beendet"
+            [stand]="team.vereinsTeams"
+          />
         }
         @if (!team.naechstes && !team.letztes && team.ausfaelle.length === 0) {
           <p>Noch keine Spiele in dieser Saison.</p>

@@ -12,17 +12,6 @@
   border-radius: var(--mat-sys-corner-medium);
 }
 
-.saison-beendet {
-  display: grid;
-  gap: 0.75rem;
+.saison-ende {
   margin-block-end: 1rem;
-  padding: 1rem;
-  border-radius: var(--mat-sys-corner-medium);
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
-
-  h2,
-  p {
-    margin: 0;
-  }
 }

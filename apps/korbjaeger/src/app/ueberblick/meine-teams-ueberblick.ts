@@ -8,6 +8,7 @@ import {
   signal,
   untracked,
   type ResourceRef,
+  type Signal,
 } from '@angular/core';
 import {
   nachNaechstemSpiel,
@@ -16,6 +17,7 @@ import {
   type SpielDetails,
   type TeamId,
   type TeamSaison,
+  type VereinId,
   type VereinsTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
@@ -28,21 +30,23 @@ import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
 import { fehlerKarte, geladeneKarte, type TeamKarte } from './team-karte';
 
 /**
- * The reads of one followed Team: its Saison; its next Spiel's details for
- * the Halle, which starts once that Spiel is known; and its Verein's Teams
- * to suggest, which starts once its Saison is over.
+ * The reads of one followed Team: its Saison, and its next Spiel's details
+ * for the Halle, which starts once that Spiel is known; with the Verein
+ * whose Teams to suggest once its Saison looks over.
  */
 interface Lesung {
   readonly saison: ResourceRef<TeamSaison | undefined>;
   readonly naechsteDetails: ResourceRef<SpielDetails | undefined>;
-  readonly vereinsTeams: ResourceRef<VereinsTeams | undefined>;
+  /** The Team's Verein once its Saison looks over (`saisonBeendet`). */
+  readonly saisonEndeVerein: Signal<VereinId | undefined>;
 }
 
 /**
  * The overview's data: per followed Team its Saison and its next Spiel's
- * Halle, each loading and failing on its own. A Team followed is read
- * once; one unfollowed has its reads cancelled and dropped, the others'
- * stay as they are.
+ * Halle, each loading and failing on its own, and the Teams of each
+ * Verein one of them suggests from (one read per Verein, however many of
+ * its Teams look done). A Team followed is read once; one unfollowed has
+ * its reads cancelled and dropped, the others' stay as they are.
  */
 @Injectable()
 export class MeineTeamsUeberblick {
@@ -50,6 +54,19 @@ export class MeineTeamsUeberblick {
   private readonly heute = inject(HEUTE);
   private readonly injector = inject(Injector);
   private readonly lesungen = signal<ReadonlyMap<TeamId, Lesung>>(new Map());
+  private readonly vereinsLesungen = signal<
+    ReadonlyMap<VereinId, ResourceRef<VereinsTeams | undefined>>
+  >(new Map());
+
+  /** The Vereine to suggest Teams from: of each Team whose Saison looks over. */
+  private readonly gesuchteVereine = computed(
+    () =>
+      new Set(
+        [...this.lesungen().values()]
+          .map((lesung) => lesung.saisonEndeVerein())
+          .filter((verein): verein is VereinId => verein !== undefined)
+      )
+  );
 
   /**
    * Each of Meine Teams as its card, the Team that plays first first
@@ -74,18 +91,29 @@ export class MeineTeamsUeberblick {
       const teams = this.teams() ?? [];
       untracked(() => this.lesungen.set(this.abgeglichen(teams)));
     });
-    inject(DestroyRef).onDestroy(() => this.lesungen().forEach(beenden));
+    effect(() => {
+      const vereine = this.gesuchteVereine();
+      untracked(() =>
+        this.vereinsLesungen.set(this.vereineAbgeglichen(vereine))
+      );
+    });
+    inject(DestroyRef).onDestroy(() => {
+      this.lesungen().forEach(beenden);
+      this.vereinsLesungen().forEach((read) => read.destroy());
+    });
   }
 
   private karte(teamId: TeamId, lesung: Lesung | undefined): TeamKarte {
     const saison = lesung?.saison;
     if (lesung && saison?.hasValue()) {
-      return geladeneKarte(
-        saison.value(),
-        this.heute(),
-        hallenStand(lesung.naechsteDetails),
-        vereinsTeamsStand(lesung.vereinsTeams, teamId)
-      );
+      const verein = lesung.saisonEndeVerein();
+      const vereinsTeams =
+        verein === undefined ? undefined : this.vereinsLesungen().get(verein);
+      return geladeneKarte(saison.value(), this.heute(), {
+        halle: hallenStand(lesung.naechsteDetails),
+        saisonBeendet: verein !== undefined,
+        vereinsTeams: vereinsTeams && vereinsTeamsStand(vereinsTeams, teamId),
+      });
     }
     return saison?.status() === 'error'
       ? fehlerKarte(teamId, saison.error())
@@ -105,9 +133,27 @@ export class MeineTeamsUeberblick {
     );
   }
 
+  /** A read for each of `vereine`: the ones there are kept, the rest ended. */
+  private vereineAbgeglichen(
+    vereine: ReadonlySet<VereinId>
+  ): ReadonlyMap<VereinId, ResourceRef<VereinsTeams | undefined>> {
+    const vorher = this.vereinsLesungen();
+    for (const [verein, read] of vorher) {
+      if (!vereine.has(verein)) {
+        read.destroy();
+      }
+    }
+    return new Map(
+      [...vereine].map((verein) => [
+        verein,
+        vorher.get(verein) ?? vereinsTeamsResource(() => verein, this.injector),
+      ])
+    );
+  }
+
   /**
-   * The reads of `teamId`: its Saison, then its next Spiel's details, or
-   * its Verein's Teams once its Saison is over.
+   * The reads of `teamId`: its Saison, then its next Spiel's details; and
+   * its Verein, once its Saison looks over.
    */
   private lesen(teamId: TeamId): Lesung {
     const saison = teamSaisonResource(() => teamId, this.injector);
@@ -118,20 +164,17 @@ export class MeineTeamsUeberblick {
           : undefined,
       this.injector
     );
-    const vereinsTeams = vereinsTeamsResource(
-      () =>
-        saison.hasValue() && saisonBeendet(saison.value(), this.heute())
-          ? saison.value().verein.id
-          : undefined,
-      this.injector
+    const saisonEndeVerein = computed(() =>
+      saison.hasValue() && saisonBeendet(saison.value(), this.heute())
+        ? saison.value().verein.id
+        : undefined
     );
-    return { saison, naechsteDetails, vereinsTeams };
+    return { saison, naechsteDetails, saisonEndeVerein };
   }
 }
 
-/** Cancels and drops every read of a Team. */
+/** Cancels and drops both reads of a Team. */
 function beenden(lesung: Lesung): void {
   lesung.saison.destroy();
   lesung.naechsteDetails.destroy();
-  lesung.vereinsTeams.destroy();
 }

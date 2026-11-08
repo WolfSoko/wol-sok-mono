@@ -319,7 +319,7 @@ describe('SpielComponent', () => {
         '2. Viertel',
         '3. Viertel',
         '4. Viertel',
-        'Gesamt',
+        'Endstand',
       ]);
       expect(zellen(viertel, 'viertel-zeile')).toEqual([
         ['MTV Wasbüttel', '20', '18', '22', '18', '–'],

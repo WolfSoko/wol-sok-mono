@@ -1,5 +1,4 @@
 import {
-  saisonBeendet,
   teamUeberblick,
   type Spiel,
   type TeamId,
@@ -25,22 +24,27 @@ export type TeamKarte =
       readonly halle?: HallenStand;
       readonly ausfaelle: readonly SpielZeile[];
       readonly letztes?: SpielZeile;
-      /** Whether the Team's Saison is over (`saisonBeendet`). */
+      /** Whether the Team's Saison looks over (`saisonBeendet`). */
       readonly saisonBeendet: boolean;
       /** The read of the Verein's other Teams, once it started. */
       readonly vereinsTeams?: VereinsTeamsStand;
     };
 
-/**
- * The card of a Team whose Saison was read, on `heute`, with the reads of
- * its next Spiel's Halle and of its Verein's other Teams where they
- * started.
- */
+/** What a card shows beside a Team's Saison, from the overview's reads. */
+export interface KartenZusatz {
+  /** The read of the next Spiel's Halle, once it started. */
+  readonly halle?: HallenStand;
+  /** Whether the Team's Saison looks over (`saisonBeendet`). */
+  readonly saisonBeendet: boolean;
+  /** The read of the Verein's Teams to suggest, once it started. */
+  readonly vereinsTeams?: VereinsTeamsStand;
+}
+
+/** The card of a Team whose Saison was read, on `heute`, with `zusatz`. */
 export function geladeneKarte(
   saison: TeamSaison,
   heute: string,
-  halle?: HallenStand,
-  vereinsTeams?: VereinsTeamsStand
+  { halle, saisonBeendet, vereinsTeams }: KartenZusatz
 ): TeamKarte {
   const { naechstes, ausfaelle, letztes } = teamUeberblick(saison, heute);
   return {
@@ -52,7 +56,7 @@ export function geladeneKarte(
     ...(halle && { halle }),
     ausfaelle: ausfaelle.map((spiel) => spielZeile(saison, spiel)),
     letztes: letztes && spielZeile(saison, letztes),
-    saisonBeendet: saisonBeendet(saison, heute),
+    saisonBeendet,
     ...(vereinsTeams && { vereinsTeams }),
   };
 }

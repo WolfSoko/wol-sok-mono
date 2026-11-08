@@ -58,12 +58,14 @@ export function naechstesSpielIndex(saison: TeamSaison, heute: string): number {
 }
 
 /** How many days after its last Spiel a Team's Saison counts as over. */
-export const SAISON_ENDE_NACH_TAGEN = 14;
+const SAISON_ENDE_NACH_TAGEN = 14;
 
 /**
- * Whether the Team's Saison is over on `heute`: no Spiel left to go to
+ * Whether the Team's Saison looks over on `heute`: no Spiel left to go to
  * (`naechstesSpiel`) and its last Spiel more than two weeks
- * (`SAISON_ENDE_NACH_TAGEN`) past. Relies on the date order of
+ * (`SAISON_ENDE_NACH_TAGEN`) past. A long break looks the same (between a
+ * Vorrunde and a Hauptrunde not yet scheduled, over the holidays), so a
+ * screen asks rather than claims. Relies on the date order of
  * `saison.spiele`.
  *
  * @param heute a German calendar day, `YYYY-MM-DD` (`datumInDeutschland`)

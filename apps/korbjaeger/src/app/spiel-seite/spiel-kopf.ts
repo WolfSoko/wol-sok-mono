@@ -42,8 +42,6 @@ export interface PeriodenSpalte {
 /** The quarter scores, with a column per period. */
 export interface Perioden {
   readonly spalten: readonly PeriodenSpalte[];
-  /** The heading of the total column: `Endstand` only with a result. */
-  readonly gesamtTitel: string;
   readonly zeilen: readonly [PeriodenZeile, PeriodenZeile];
 }
 
@@ -142,7 +140,6 @@ function periodenVon(
         kurz: `V${i + 1}`,
       })),
     ],
-    gesamtTitel: ergebnis === undefined ? 'Gesamt' : 'Endstand',
     zeilen: [zeile('heim'), zeile('gast')],
   };
 }

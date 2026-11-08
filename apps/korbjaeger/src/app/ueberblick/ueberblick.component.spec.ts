@@ -692,7 +692,7 @@ describe('UeberblickComponent', () => {
       );
     }
 
-    it("says a Team's Saison is over and suggests its Verein's current Teams", async () => {
+    it("says no Spiel is set for a Team and suggests its Verein's current Teams", async () => {
       // more than two weeks before 8 November
       const data = mitLetztemSpielAm('2026-10-17');
 
@@ -701,7 +701,7 @@ describe('UeberblickComponent', () => {
       await stabil();
 
       const hinweis = teil(eintraege(seite)[0], 'saison-beendet');
-      expect(text(hinweis)).toContain('Saison vorbei');
+      expect(text(hinweis)).toContain('Keine Spiele mehr angesetzt.');
       expect(data.vereinsTeams).toHaveBeenCalledWith(WASBUETTEL.vereinId, {
         signal: expect.any(AbortSignal),
       });
@@ -711,6 +711,37 @@ describe('UeberblickComponent', () => {
         ].map((name) => text(name))
       ).toEqual(['MTV Wasbüttel U14']);
       expect(text(teil(eintraege(seite)[0], 'letztes'))).toContain('78:47');
+    });
+
+    it('reads a Verein once for two of its Teams whose Saison looks over', async () => {
+      const u14: Team = { ...WASBUETTEL_U14, vereinId: WASBUETTEL.vereinId };
+      const data = fakeData(
+        [
+          saison(
+            WASBUETTEL,
+            spiel(WASBUETTEL, GIFHORN, '2026-10-17', { status: GESPIELT_78_47 })
+          ),
+          saison(
+            u14,
+            spiel(u14, OESINGEN, '2026-10-10', { status: GESPIELT_78_47 })
+          ),
+        ],
+        inDerSporthalle,
+        async () => WASBUETTELS_VEREIN
+      );
+
+      const { seite, stabil } = await render(data, [WASBUETTEL.id, u14.id]);
+      await stabil();
+
+      expect(data.vereinsTeams).toHaveBeenCalledTimes(1);
+      const vorschlaege = eintraege(seite).map((eintrag) =>
+        [
+          ...(teil(eintrag, 'saison-beendet')?.querySelectorAll(
+            '[data-qa="vereins-team-name"]'
+          ) ?? []),
+        ].map((name) => text(name))
+      );
+      expect(vorschlaege).toEqual([['MTV Wasbüttel U14'], ['MTV Wasbüttel']]);
     });
 
     it('follows a suggested Team from the card', async () => {
