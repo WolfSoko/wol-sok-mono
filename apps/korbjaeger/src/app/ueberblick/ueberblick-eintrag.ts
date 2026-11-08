@@ -5,8 +5,8 @@ import {
   type TeamId,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
-import { fehlerText } from '../team/fehler-text';
-import { KEIN_TEAM, spielZeile, type SpielZeile } from '../team/team-spiele';
+import { fehlerText, KEIN_TEAM } from '../team/fehler-text';
+import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
 
 /** What the read of one followed Team gave: its Saison, or why not. */
 export type TeamGelesen =

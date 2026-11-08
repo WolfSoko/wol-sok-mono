@@ -10,7 +10,7 @@ import {
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
 
-/** One line of a Team's Spiele, as the page shows it. */
+/** One Spiel seen from a Team, as the screens show it (`SpielZeileComponent`). */
 export interface SpielZeile {
   readonly id: number;
   /** The day, e.g. `Sa., 29.08.2026`. */
@@ -26,9 +26,6 @@ export interface SpielZeile {
   readonly ergebnis?: string;
   readonly markierung?: SpielSonderfall;
 }
-
-/** What the page says for an id that names no Team. */
-export const KEIN_TEAM = 'Dieses Team kennt der DBB nicht.';
 
 const DATUM = new Intl.DateTimeFormat('de-DE', {
   weekday: 'short',

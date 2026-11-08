@@ -13,7 +13,7 @@ import { AUSWAHL } from '../auswahl/auswahl';
 import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
 import { HEUTE } from '../heute';
 import { ueberblickEintraege, type TeamGelesen } from './ueberblick-eintrag';
-import { UeberblickSpielComponent } from './ueberblick-spiel.component';
+import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
 
 /**
  * The overview: each of Meine Teams with its next Spiel and its last
@@ -26,7 +26,7 @@ import { UeberblickSpielComponent } from './ueberblick-spiel.component';
     MatCardModule,
     MatProgressBarModule,
     RouterLink,
-    UeberblickSpielComponent,
+    SpielZeileComponent,
   ],
   templateUrl: './ueberblick.component.html',
   styleUrl: './ueberblick.component.scss',

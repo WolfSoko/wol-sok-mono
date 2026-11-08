@@ -6,7 +6,6 @@ import {
   input,
   resource,
 } from '@angular/core';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AUSWAHL } from '../auswahl/auswahl';
@@ -16,9 +15,10 @@ import {
   ligenAktuellZuerst,
   parseDbbId,
 } from '@wolsok/feat-shared-basketball-data';
-import { fehlerText } from './fehler-text';
+import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
+import { spielZeilen } from '../spiel/spiel-zeile';
+import { fehlerText, KEIN_TEAM } from './fehler-text';
 import { TeamFolgenComponent } from './team-folgen.component';
-import { KEIN_TEAM, spielZeilen } from './team-spiele';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
 /**
@@ -29,9 +29,9 @@ import { TeamTabelleComponent } from './team-tabelle.component';
 @Component({
   selector: 'korb-team',
   imports: [
-    MatChipsModule,
     MatListModule,
     MatProgressBarModule,
+    SpielZeileComponent,
     TeamFolgenComponent,
     TeamTabelleComponent,
   ],
