@@ -20,3 +20,9 @@ export interface VereinsTeam {
   readonly team: Team;
   readonly ligen: readonly Liga[];
 }
+
+/** A Verein with the Teams seen in its recent Spiele, by name. */
+export interface VereinsTeams {
+  readonly verein: Verein;
+  readonly teams: readonly VereinsTeam[];
+}

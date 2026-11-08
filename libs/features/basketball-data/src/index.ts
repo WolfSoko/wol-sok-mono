@@ -46,6 +46,10 @@ export type {
 } from './lib/domain/spielbericht';
 export type { Tabelle, TabellenZeile } from './lib/domain/tabelle';
 export type { Team } from './lib/domain/team';
-export type { TeamSaison, VereinsTeam } from './lib/domain/team-saison';
+export type {
+  TeamSaison,
+  VereinsTeam,
+  VereinsTeams,
+} from './lib/domain/team-saison';
 export type { Verband } from './lib/domain/verband';
 export type { Verein } from './lib/domain/verein';
