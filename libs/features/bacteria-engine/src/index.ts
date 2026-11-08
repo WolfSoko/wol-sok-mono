@@ -169,7 +169,7 @@ export type {
   EndlessAttempt,
 } from './lib/state/attempts';
 export { BacteriaSimulation } from './lib/state/bacteria-simulation';
-export type { Nutrient } from './lib/state/bacteria-simulation';
+export type { ColonySpawn, Nutrient } from './lib/state/bacteria-simulation';
 export { fromBase64, toBase64 } from './lib/state/base64';
 export {
   ANONYMOUS_NAME,
@@ -445,8 +445,8 @@ export type {
 } from './lib/state/gpu-int/int-reference';
 export {
   intSimulation,
-  IntSimulation,
-} from './lib/state/gpu-int/int-simulation';
+  IntReferencePasses,
+} from './lib/state/gpu-int/int-reference-passes';
 export {
   intColonyCounts,
   intReferenceTick,
@@ -485,8 +485,15 @@ export {
   REPORT_EXTRA_ROWS,
   REPORT_ROWS,
 } from './lib/state/grid-format';
-export { GridSimulation, READBACK_SLOTS } from './lib/state/grid-simulation';
-export type { GridSimulationOptions } from './lib/state/grid-simulation';
+export { GridWar, READBACK_SLOTS } from './lib/state/grid/grid-war';
+export type {
+  CellPasses,
+  CellPassesHost,
+  GridArena,
+  GridFrame,
+  GridTick,
+  ReportSink,
+} from './lib/state/grid/cell-passes';
 export { isInteger, isObject } from './lib/state/is-object';
 export {
   GENERATED_ADJECTIVES,

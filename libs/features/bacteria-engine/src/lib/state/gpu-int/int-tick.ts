@@ -61,7 +61,7 @@ export class IntStateBuffers {
 
 /**
  * One tick of the deterministic GPU simulation in TypeScript, in the order
- * `GpuSimulation.step` runs its passes: the hunt, escaping a wall, crushing,
+ * `GridWar.step` runs its passes: the hunt, escaping a wall, crushing,
  * combat, feeding, division and the steps of moving. Returns the new state.
  * A `trace` gets the state after combat.
  *

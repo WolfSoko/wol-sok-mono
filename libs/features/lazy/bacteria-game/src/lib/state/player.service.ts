@@ -102,7 +102,7 @@ export class PlayerService {
    * An online match runs on the `ruleset` both devices agreed on, a
    * simulation they play alike, and its ticks wait for the `lockstep`. A
    * local match given a `ruleset` - a ranked one, `gpu-int` - plays it the
-   * same way: on the integer GPU passes, `IntSimulation` standing in only
+   * same way: on the integer GPU passes, `intSimulation` standing in only
    * should the GPU fail to start. A
    * match with `recordedSeats` runs on a ruleset too, one a recording plays
    * back on as it was played (ADR 0011, 0015): the device's, where that is

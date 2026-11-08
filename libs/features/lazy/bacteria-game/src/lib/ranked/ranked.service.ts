@@ -111,7 +111,7 @@ export class RankedService {
   /**
    * True on a device that can play a ranked match: the integer GPU passes
    * on a GPU the self-test trusts (ADR 0015) - the owner's policy keeps
-   * `IntSimulation` from playing live.
+   * `intSimulation` from playing live.
    */
   private readonly deviceReady = computed(
     () => this.players.gpuIntReady() && gpuTrusted(this.selfTest.result())

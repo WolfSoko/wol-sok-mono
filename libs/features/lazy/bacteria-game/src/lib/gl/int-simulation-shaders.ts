@@ -4,7 +4,7 @@
  * and dividing - and combat and feeding, with no float on the state's path,
  * so every GPU and the TypeScript reference
  * (`state/gpu-int/int-reference.ts`) compute the same bits. They take the
- * place of the float passes of the same names when `GpuSimulation` runs
+ * place of the float passes of the same names when `gpuSimulation` runs
  * deterministic; the coarse counts, the crush and the report are integer
  * already.
  *

@@ -6,7 +6,7 @@ import {
 import { dailyReplay } from '../testing/daily-replay';
 import { TIMELINE_POINTS, verifyReplay } from './verify';
 
-// A whole match takes long on IntSimulation: the engine's own specs
+// A whole match takes long on intSimulation: the engine's own specs
 // (replay-verdict, golden-replay) check how it judges and plays; this
 // checks what the boards keep of the verdict.
 jest.mock('@wolsok/feat-shared-bacteria-engine', () => ({

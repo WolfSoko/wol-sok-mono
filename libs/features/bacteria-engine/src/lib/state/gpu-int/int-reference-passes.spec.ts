@@ -1,7 +1,8 @@
+import { intSimulation } from './int-reference-passes';
+import { GridWar } from '../grid/grid-war';
 import { TICK_SEC } from '../fixed-tick';
 import { colonyCapacity } from '../game-balance';
 import { createPlayer } from '../player.model';
-import { IntSimulation } from './int-simulation';
 import { DETERMINISTIC_REPORT_LAG } from './int-readback';
 import { intColonyCounts } from './int-tick';
 import {
@@ -12,8 +13,8 @@ import {
   SimScenario,
 } from './sim-scenarios';
 
-function simulationOf(scenario: SimScenario): IntSimulation {
-  return new IntSimulation(
+function simulationOf(scenario: SimScenario): GridWar {
+  return intSimulation(
     scenario.balance,
     scenarioRandom(scenario),
     scenario.matchSeed
@@ -31,7 +32,7 @@ function scenarioNamed(name: string): SimScenario {
 /** Plays a scenario tick by tick, handing each tick to `look`. */
 function play(
   scenario: SimScenario,
-  look: (tick: number, simulation: IntSimulation) => void
+  look: (tick: number, simulation: GridWar) => void
 ): void {
   const simulation = simulationOf(scenario);
   simulation.setMap(scenario.map);
@@ -51,7 +52,7 @@ function play(
   }
 }
 
-describe('IntSimulation', () => {
+describe('IntReferencePasses in a GridWar', () => {
   it('plays a scenario the same every time', () => {
     const scenario = SELF_TEST_SCENARIO;
     expect(playScenario(scenario, simulationOf(scenario))).toEqual(

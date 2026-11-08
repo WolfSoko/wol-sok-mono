@@ -121,7 +121,7 @@ export function isRuleset(value: unknown): value is Ruleset {
 export interface Simulation {
   /**
    * Which simulation runs the war: the float one on the CPU or the GPU, or
-   * the deterministic integer one on the CPU (`IntSimulation`, ADR 0015).
+   * the deterministic integer one on the CPU (`intSimulation`, ADR 0015).
    * Only a `cpu` match replays on `BacteriaSimulation`.
    */
   readonly kind: 'cpu' | 'gpu' | 'int';

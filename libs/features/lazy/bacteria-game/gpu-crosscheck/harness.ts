@@ -3,7 +3,7 @@
  * a scenario's ticks through the integer shaders, pass for pass in the
  * order of `intReferenceTick`, and hashes the state after every tick as
  * `intStateHash` does - and plays the whole-match scenarios through the
- * game's own `GpuSimulation`, whose uniforms and pass order the first part
+ * game's own GPU simulation (`gpuSimulation`), whose uniforms and pass order the first part
  * leaves out. Bundled by esbuild and run in Chromium on SwiftShader by
  * `gpu-int.crosscheck.ts`.
  */
@@ -32,7 +32,7 @@ import {
   INT_KIND,
   IntTickInputs,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { GpuSimulation } from '../src/lib/gl/gpu-simulation';
+import { gpuSimulation } from '../src/lib/gl/gpu-simulation';
 import { GpuSelfTestResult, runGpuSelfTest } from '../src/lib/gl/gpu-self-test';
 import {
   playScenario as playSimScenario,
@@ -332,14 +332,14 @@ export function crosscheck(name: string): number[] {
   return gpuHashes(SCENARIOS[name]());
 }
 
-/** A whole-match scenario's hashes, played by the game's `GpuSimulation`. */
+/** A whole-match scenario's hashes, played by the game's `gpuSimulation`. */
 export function simCrosscheck(name: string): number[] {
   const scenario = SIM_SCENARIOS.find((candidate) => candidate.name === name);
   const gl = document.createElement('canvas').getContext('webgl2');
   if (scenario == null || gl == null) {
     throw new Error(`No scenario ${name}, or no WebGL2`);
   }
-  const simulation = new GpuSimulation(
+  const simulation = gpuSimulation(
     gl,
     scenario.balance,
     scenarioRandom(scenario),

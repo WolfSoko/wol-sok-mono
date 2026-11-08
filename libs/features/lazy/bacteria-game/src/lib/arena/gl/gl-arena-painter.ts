@@ -3,6 +3,7 @@ import {
   type CellList,
   emptyBounds,
   GameBalance,
+  GridWar,
   growBounds,
   Rect,
   Zone,
@@ -17,7 +18,7 @@ import { hatchPattern, lookReach, LOOKS } from '../lattice-cells';
 import { jamDrops } from '../jam';
 import { StateLayer } from '../colony-renderer';
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
-import { GpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
+import { gpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
 import { rendererOf } from '../../gl/renderer';
 import { GpuTimer } from '../../gl/gpu-timer';
 import { Motes } from '../motes';
@@ -369,8 +370,8 @@ export class GlArenaPainter implements ArenaPainter {
     balance: GameBalance,
     random: () => number,
     options: GpuSimulationOptions = {}
-  ): GpuSimulation {
-    return new GpuSimulation(this.gl, balance, random, options);
+  ): GridWar {
+    return gpuSimulation(this.gl, balance, random, options);
   }
 
   /** The timer of the HUD's breakdown, once asked for. */

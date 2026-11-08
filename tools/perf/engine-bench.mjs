@@ -34,7 +34,7 @@ const CALIBRATION_RUNS = 15;
 
 /**
  * The replays timed: the golden replay, short and small, on both rulesets -
- * `cpu` as online matches play it, `gpu-int` on `IntSimulation` as ranked
+ * `cpu` as online matches play it, `gpu-int` on `intSimulation` as ranked
  * matches are checked - and the heavy case, the largest map with neutral
  * colonies on the online grid, ten seconds into a full arena.
  */

@@ -74,7 +74,7 @@ export interface IntFrameUniforms {
   pelletCount: number;
 }
 
-/** What the float passes take per frame - see `GpuSimulation`. */
+/** What the float passes take per frame - see `gpuSimulation`. */
 export interface FloatFrameUniforms {
   /** In cells, NaN for a colony that aims at nothing. */
   targets: ArrayLike<number>;
@@ -100,7 +100,7 @@ export function createIntFrameUniforms(): IntFrameUniforms {
 /**
  * Converts the float frame uniforms into the integer ones, on the CPU,
  * where doubles round the same on every device. The inputs are taken as
- * 32 bit floats (`Math.fround`), as `GpuSimulation` holds them, so a caller
+ * 32 bit floats (`Math.fround`), as `gpuSimulation` holds them, so a caller
  * with doubles - the reference, the server - gets the same integers.
  */
 export function fillIntFrameUniforms(
@@ -128,7 +128,7 @@ export function fillIntFrameUniforms(
   return into;
 }
 
-/** What the float combat pass takes per frame - see `GpuSimulation`. */
+/** What the float combat pass takes per frame - see `gpuSimulation`. */
 export interface FloatCombatUniforms {
   attack: ArrayLike<number>;
   /** Times the pressure on the colony. */
