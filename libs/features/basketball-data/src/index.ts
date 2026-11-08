@@ -18,6 +18,8 @@ export type {
   DbbRequestKind,
   DbbTransport,
 } from './lib/dbb/dbb-request';
+export { dbbStatusOf } from './lib/dbb/envelope';
+export type { DbbStatus } from './lib/dbb/envelope';
 export {
   BasketballDataError,
   isBasketballDataError,

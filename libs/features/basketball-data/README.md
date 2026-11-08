@@ -35,7 +35,8 @@ Nx project.
   that answers one allowlisted `DbbRequest` with the DBB's JSON;
   `dbbHttpRequest` turns a `DbbRequest` into the DBB's method, path and
   body, for the app's proxy to reuse. `readEnvelope` maps the DBB's
-  `status` (`"0"`, `"1"`, `"-1"`; it answers HTTP 200 regardless), one
+  `status` (`"0"`, `"1"`, `"-1"`; it answers HTTP 200 regardless, and
+  `dbbStatusOf` reads it for the proxy, which passes the body on), one
   `map-*.ts` per endpoint maps its JSON, and `DbbObject` checks each
   field's type on the way.
 

@@ -1,6 +1,7 @@
 import { caughtError } from '../../testing/caught-error';
-import { readEnvelope } from './envelope';
+import { dbbStatusOf, readEnvelope } from './envelope';
 import notFound from './fixtures/table-not-found.json';
+import teamSpiele from './fixtures/team-313036-matches.json';
 import unavailable from './fixtures/envelope-unavailable.json';
 
 describe('readEnvelope', () => {
@@ -41,5 +42,25 @@ describe('readEnvelope', () => {
     expect(caughtError(() => readEnvelope(envelope)).kind).toBe(
       'unexpected-shape'
     );
+  });
+});
+
+describe('dbbStatusOf', () => {
+  it.each([
+    ['ok', teamSpiele],
+    ['not-found', notFound],
+    ['server-error', unavailable],
+  ])('reads %s from a recorded envelope', (status, envelope) => {
+    expect(dbbStatusOf(envelope)).toBe(status);
+  });
+
+  it.each([
+    ['no object', 'oops'],
+    ['null', null],
+    ['no status', { data: {} }],
+    ['an unknown status', { status: '2' }],
+    ['a numeric status', { status: 0 }],
+  ])('reads no status from %s', (_case, envelope) => {
+    expect(dbbStatusOf(envelope)).toBeUndefined();
   });
 });

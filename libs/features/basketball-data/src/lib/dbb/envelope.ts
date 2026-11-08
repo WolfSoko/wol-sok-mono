@@ -1,8 +1,30 @@
 import { BasketballDataError } from '../domain/basketball-data-error';
 import { DbbObject, shapeError } from './dbb-object';
 
+/** What a DBB envelope's `status` says happened. */
+export type DbbStatus = 'ok' | 'not-found' | 'server-error';
+
 /** The DBB's `status` values: it answers HTTP 200 even when a read fails. */
-const DBB_STATUS = { ok: '0', notFound: '1', serverError: '-1' } as const;
+const DBB_STATUS: Readonly<Record<string, DbbStatus>> = {
+  '0': 'ok',
+  '1': 'not-found',
+  '-1': 'server-error',
+};
+
+/**
+ * The `status` of a DBB response envelope, or `undefined` where `response`
+ * is no envelope with a known status. For the app's proxy, which passes the
+ * body on unread and only picks its HTTP status by this.
+ */
+export function dbbStatusOf(response: unknown): DbbStatus | undefined {
+  if (typeof response !== 'object' || response === null) {
+    return undefined;
+  }
+  const status: unknown = (response as { readonly status?: unknown }).status;
+  return typeof status === 'string' && Object.hasOwn(DBB_STATUS, status)
+    ? DBB_STATUS[status]
+    : undefined;
+}
 
 /**
  * The `data` of a DBB response envelope (`{ status, message, data, ... }`).
@@ -13,15 +35,15 @@ export function readEnvelope(response: unknown): unknown {
   const envelope = DbbObject.of(response, 'envelope');
   const status = envelope.string('status');
   const message = envelope.optionalString('message') ?? '';
-  switch (status) {
-    case DBB_STATUS.ok:
+  switch (dbbStatusOf(response)) {
+    case 'ok':
       return envelope.value('data');
-    case DBB_STATUS.notFound:
+    case 'not-found':
       throw new BasketballDataError(
         'not-found',
         `DBB: ${message || 'not found'}`
       );
-    case DBB_STATUS.serverError:
+    case 'server-error':
       throw new BasketballDataError(
         'unavailable',
         `DBB: ${message || 'server error'}`
