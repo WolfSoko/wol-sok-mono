@@ -58,7 +58,7 @@
       "executor": "nx:run-commands",
       "continuous": true,
       "options": {
-        "command": "tsx apps/korbjaeger/e2e/fake-dbb/server.ts 4303",
+        "command": "tsx --tsconfig tsconfig.base.json apps/korbjaeger/e2e/fake-dbb/server.cts 4303",
         "cwd": "{workspaceRoot}"
       }
     },

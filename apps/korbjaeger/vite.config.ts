@@ -1,11 +1,24 @@
 import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import { fileURLToPath } from 'node:url';
 import { ConfigEnv, defineConfig } from 'vite';
 
 import { ViteUserConfig } from 'vitest/config';
 
 /** Where `nx run korbjaeger:fake-dbb` serves the recorded DBB answers. */
 const FAKE_DBB_BASE_URL = 'http://localhost:4303/rest';
+
+/**
+ * The workspace libs the proxy routes import. Nitro bundles the server
+ * without the tsconfig paths `nxViteTsPaths` gives Vite, so it gets them
+ * as aliases.
+ */
+const SERVER_LIBS = {
+  '@wolsok/feat-shared-basketball-data': workspaceFile(
+    'libs/features/basketball-data/src/index.ts'
+  ),
+  '@wolsok/utils-version': workspaceFile('libs/utils/version/src/index.ts'),
+};
 
 export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
   if (mode === 'e2e') {
@@ -44,6 +57,7 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
           inlineStylesExtension: 'scss',
         },
         nitro: {
+          alias: SERVER_LIBS,
           preset: 'firebase',
           // region and instances come with the Firebase project (#2875)
           firebase: {
@@ -71,3 +85,7 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
     },
   };
 });
+
+function workspaceFile(path: string): string {
+  return fileURLToPath(new URL(`../../${path}`, import.meta.url));
+}
