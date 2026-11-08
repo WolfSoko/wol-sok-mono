@@ -13,21 +13,61 @@ export interface AuswahlDokument {
   readonly teams: readonly TeamId[];
 }
 
+/** A stored document's fields, as read. */
+export type RohesDokument = Readonly<Record<string, unknown>>;
+
 /**
- * `gelesen` as an `AuswahlDokument`, or `undefined` where it is none: of
- * another version, or with a Team that is no DBB id.
+ * What a stored document turned out to be:
+ * - `aktuell`: this version's, with its fields as read (`roh`), which a
+ *   write keeps.
+ * - `neuer`: a newer version's, which this version leaves alone.
+ * - `keins`: nothing, or something that is no `AuswahlDokument`.
  */
-export function auswahlDokumentAus(
-  gelesen: unknown
-): AuswahlDokument | undefined {
-  if (typeof gelesen !== 'object' || gelesen === null) {
-    return undefined;
+export type GelesenesDokument =
+  | {
+      readonly art: 'aktuell';
+      readonly dokument: AuswahlDokument;
+      readonly roh: RohesDokument;
+    }
+  | { readonly art: 'neuer' }
+  | { readonly art: 'keins' };
+
+const KEINS: GelesenesDokument = { art: 'keins' };
+
+/** Tells what `gelesen`, a stored document, is. */
+export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
+  if (
+    typeof gelesen !== 'object' ||
+    gelesen === null ||
+    Array.isArray(gelesen)
+  ) {
+    return KEINS;
   }
-  const { version, teams } = gelesen as Record<string, unknown>;
+  const roh = gelesen as RohesDokument;
+  const { version, teams } = roh;
+  if (typeof version === 'number' && version > AUSWAHL_VERSION) {
+    return { art: 'neuer' };
+  }
   if (version !== AUSWAHL_VERSION || !sindTeamIds(teams)) {
-    return undefined;
+    return KEINS;
   }
-  return { version, teams: [...new Set(teams)] };
+  return {
+    art: 'aktuell',
+    dokument: { version, teams: [...new Set(teams)] },
+    roh,
+  };
+}
+
+/**
+ * The document to store for `teams`: `roh`, the fields read before, with
+ * this version and `teams`, so fields a later version added stay.
+ */
+export function auswahlDokumentMit(
+  teams: readonly TeamId[],
+  roh: RohesDokument = {}
+): RohesDokument {
+  const dokument: AuswahlDokument = { version: AUSWAHL_VERSION, teams };
+  return { ...roh, ...dokument };
 }
 
 function sindTeamIds(teams: unknown): teams is readonly TeamId[] {

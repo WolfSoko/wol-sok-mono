@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
+import { auswahlFehlerText } from '../auswahl/auswahl-fehler';
 
 /**
  * Follows a Team, or unfollows it: a toggle button (`aria-pressed`) whose
@@ -28,10 +29,8 @@ import { AUSWAHL } from '../auswahl/auswahl';
       <mat-icon aria-hidden="true">{{ folgt() ? 'check' : 'add' }}</mat-icon>
       Team folgen
     </button>
-    @if (fehler()) {
-      <p class="fehler" role="alert">
-        Das ließ sich nicht speichern. Bitte noch einmal versuchen.
-      </p>
+    @if (fehler(); as text) {
+      <p class="fehler" role="alert">{{ text }}</p>
     } @else if (folgt()) {
       <p class="hinweis">Steht in Meine Teams auf der Startseite.</p>
     }
@@ -64,17 +63,17 @@ export class TeamFolgenComponent {
     this.auswahl.teams().includes(this.teamId())
   );
 
-  protected readonly fehler = signal(false);
+  protected readonly fehler = signal<string | undefined>(undefined);
 
   protected async umschalten(): Promise<void> {
     const team = this.teamId();
-    this.fehler.set(false);
+    this.fehler.set(undefined);
     try {
       await (this.folgt()
         ? this.auswahl.entfolgen(team)
         : this.auswahl.folgen(team));
-    } catch {
-      this.fehler.set(true);
+    } catch (fehler: unknown) {
+      this.fehler.set(auswahlFehlerText(fehler));
     }
   }
 }

@@ -106,6 +106,29 @@ export function auswahlVertrag(
       expect(nachher.teams()).toEqual([MTV_WASBUETTEL]);
     });
 
+    it("keeps another instance's follow when it follows itself", async () => {
+      const tabA = await speicher.oeffnen();
+      const tabB = await speicher.oeffnen();
+
+      await tabA.folgen(MTV_WASBUETTEL);
+      await tabB.folgen(MTV_GIFHORN);
+
+      const nachher = await speicher.oeffnen();
+      expect(nachher.teams()).toEqual([MTV_WASBUETTEL, MTV_GIFHORN]);
+    });
+
+    it('unfollows a Team another instance followed since it opened', async () => {
+      const tabA = await speicher.oeffnen();
+      const tabB = await speicher.oeffnen();
+
+      await tabA.folgen(MTV_WASBUETTEL);
+      await tabA.folgen(MTV_GIFHORN);
+      await tabB.entfolgen(MTV_WASBUETTEL);
+
+      const nachher = await speicher.oeffnen();
+      expect(nachher.teams()).toEqual([MTV_GIFHORN]);
+    });
+
     it('starts empty from a corrupted store, and follows again', async () => {
       await speicher.verderben();
 

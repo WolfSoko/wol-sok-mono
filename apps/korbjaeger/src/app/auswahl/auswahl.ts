@@ -1,4 +1,10 @@
-import { InjectionToken, type Signal } from '@angular/core';
+import {
+  DestroyRef,
+  DOCUMENT,
+  inject,
+  InjectionToken,
+  type Signal,
+} from '@angular/core';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { geraeteSpeicher, LokaleAuswahl } from './lokale-auswahl';
 
@@ -13,15 +19,23 @@ export interface Auswahl {
   readonly teams: Signal<readonly TeamId[]>;
   /**
    * Adds `team` to the end of Meine Teams, unless it is in them already.
-   * Resolves once stored; rejects where the adapter could not store it.
+   * Resolves once stored; rejects where the adapter could not store it,
+   * with `AuswahlZuNeuError` where a newer version of the app stored them.
    */
   folgen(team: TeamId): Promise<void>;
-  /** Takes `team` out of Meine Teams, if it is in them. */
+  /** Takes `team` out of Meine Teams, if it is in them; rejects alike. */
   entfolgen(team: TeamId): Promise<void>;
 }
 
 /** The screens' `Auswahl`: on the device, for now. */
 export const AUSWAHL = new InjectionToken<Auswahl>('Auswahl', {
   providedIn: 'root',
-  factory: () => new LokaleAuswahl(geraeteSpeicher()),
+  factory: () => {
+    const auswahl = new LokaleAuswahl(
+      geraeteSpeicher(),
+      inject(DOCUMENT).defaultView ?? undefined
+    );
+    inject(DestroyRef).onDestroy(() => auswahl.beenden());
+    return auswahl;
+  },
 });

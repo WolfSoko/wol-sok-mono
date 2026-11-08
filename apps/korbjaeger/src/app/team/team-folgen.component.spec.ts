@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
+import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import { TeamFolgenComponent } from './team-folgen.component';
 
@@ -85,5 +86,20 @@ describe('TeamFolgenComponent', () => {
       'Das ließ sich nicht speichern.'
     );
     expect(knopf.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('asks to reload where a newer version of the app stored Meine Teams', async () => {
+    const auswahl: Auswahl = {
+      teams: signal([]),
+      folgen: () => Promise.reject(new AuswahlZuNeuError()),
+      entfolgen: () => Promise.resolve(),
+    };
+    const { seite, klicken } = await render(auswahl);
+
+    await klicken();
+
+    expect(seite.querySelector('[role="alert"]')?.textContent).toContain(
+      'Bitte die App neu laden.'
+    );
   });
 });
