@@ -1,6 +1,16 @@
 // @vitest-environment node
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
-import { createApp, createRouter, toWebHandler } from 'h3';
+import { dbbHttpRequest } from '@wolsok/feat-shared-basketball-data';
+import { createApp, createRouter, toWebHandler, type EventHandler } from 'h3';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  PROXY_ROUTES,
+  TABELLE_ROUTE,
+  TEAM_SPIELE_ROUTE,
+  routerPath,
+  type ProxyRoute,
+} from '../../shared/dbb-proxy-routes';
 import { DBB_PROXY_CACHE_CONTROL } from './dbb-proxy';
 import { PROXY_USER_AGENT } from './dbb-upstream-config';
 import type { UpstreamFetch } from './dbb-upstream';
@@ -28,23 +38,57 @@ function dbbAnswering(body: string, status = 200): UpstreamFetch {
   return async () => new Response(body, { status });
 }
 
+/** Each route's file, imported as Nitro's file routing would find it. */
+const ROUTE_FILES: ReadonlyMap<
+  ProxyRoute,
+  () => Promise<{ readonly default: EventHandler }>
+> = new Map([
+  [
+    TEAM_SPIELE_ROUTE,
+    () => import('../routes/api/dbb/team/[teamId]/spiele.get'),
+  ],
+  [TABELLE_ROUTE, () => import('../routes/api/dbb/liga/[ligaId]/tabelle.get')],
+]);
+
+/** Where Nitro's file routing looks for `route`'s file. */
+function routeFile(route: ProxyRoute): string {
+  return join(
+    __dirname,
+    '../routes',
+    `${route.path(`[${route.param}]`)}.get.ts`
+  );
+}
+
 /**
  * The real route files, mounted where Nitro's file routing puts them:
  * `*.get.ts` for GET only, `index.ts` and `[...].ts` for any method.
  */
 async function proxyRoutes(): Promise<(request: Request) => Promise<Response>> {
-  const [spiele, tabelle, prefix, rest] = await Promise.all([
-    import('../routes/api/dbb/team/[teamId]/spiele.get'),
-    import('../routes/api/dbb/liga/[ligaId]/tabelle.get'),
+  const router = createRouter();
+  for (const route of PROXY_ROUTES) {
+    const file = ROUTE_FILES.get(route);
+    if (file === undefined) {
+      throw new Error(`no route file for ${routerPath(route)}`);
+    }
+    router.get(routerPath(route), (await file()).default);
+  }
+  const [prefix, rest] = await Promise.all([
     import('../routes/api/dbb/index'),
     import('../routes/api/dbb/[...]'),
   ]);
-  const router = createRouter()
-    .get('/api/dbb/team/:teamId/spiele', spiele.default)
-    .get('/api/dbb/liga/:ligaId/tabelle', tabelle.default)
-    .use('/api/dbb', prefix.default)
-    .use('/api/dbb/**', rest.default);
+  router.use('/api/dbb', prefix.default).use('/api/dbb/**', rest.default);
   return toWebHandler(createApp().use(router));
+}
+
+/** Each route with an id the fake DBB has a recording of. */
+const ROUTES = [
+  { name: "a Team's Spiele", route: TEAM_SPIELE_ROUTE, id: 313036 },
+  { name: "a Liga's Tabelle", route: TABELLE_ROUTE, id: 54862 },
+] as const;
+
+/** The DBB path `route` reads for `id`. */
+function dbbPath(route: ProxyRoute, id: number): string {
+  return dbbHttpRequest(route.read(id)).path;
 }
 
 let handle: (request: Request) => Promise<Response>;
@@ -82,225 +126,140 @@ function warnings(): () => readonly string[] {
 }
 
 describe('DBB proxy', () => {
-  describe('allowlist', () => {
-    it("forwards a Team's Spiele to the DBB's team matches", async () => {
-      const dbb = recordedDbb();
+  it.each(PROXY_ROUTES.map((route) => [routerPath(route), route] as const))(
+    'serves %s from its route file where Nitro finds it',
+    (_path, route) => {
+      expect(existsSync(routeFile(route))).toBe(true);
+      expect(ROUTE_FILES.has(route)).toBe(true);
+    }
+  );
 
-      const response = await proxy(dbb)('/api/dbb/team/313036/spiele');
+  describe.each(ROUTES)('$name', ({ route, id }) => {
+    const path = route.path(id);
+    const unknown = 7;
 
-      expect(response.status).toBe(200);
-      expect(String(dbb.mock.calls[0][0])).toBe(
-        `${BASE_URL}/team/id/313036/matches`
-      );
-    });
-
-    it('passes the DBB body through unchanged', async () => {
-      const body = JSON.stringify(
-        fakeDbbAnswer('GET', 'team/id/313036/matches')
-      );
-
-      const response = await proxy(dbbAnswering(body))(
-        '/api/dbb/team/313036/spiele'
-      );
-
-      expect(await response.text()).toBe(body);
-      expect(response.headers.get('content-type')).toMatch(
-        /^application\/json/
-      );
-    });
-
-    it.each([
-      ['a non-numeric id', '/api/dbb/team/abc/spiele'],
-      ['a negative id', '/api/dbb/team/-1/spiele'],
-      ['a fractional id', '/api/dbb/team/1.5/spiele'],
-      ['an id of 0', '/api/dbb/team/0/spiele'],
-      ['an id too large', '/api/dbb/team/99999999999999999999/spiele'],
-      ['an unknown read', '/api/dbb/team/313036/spieler'],
-      ['a DBB path', '/api/dbb/team/id/313036/matches'],
-      ['the bare prefix', '/api/dbb'],
-      ['the prefix with a slash', '/api/dbb/'],
-    ])('answers %s with 404 and never asks the DBB', async (_case, path) => {
-      const dbb = recordedDbb();
-
-      const response = await proxy(dbb)(path);
-
-      expect(response.status).toBe(404);
-      expect(response.headers.get('cache-control')).toBeNull();
-      expect(dbb).not.toHaveBeenCalled();
-    });
-
-    it('answers another method than GET with 404', async () => {
-      const dbb = recordedDbb();
-
-      const response = await proxy(dbb)('/api/dbb/team/313036/spiele', {
-        method: 'POST',
-      });
-
-      expect(response.status).toBe(404);
-      expect(dbb).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('cache headers', () => {
-    it('lets browser and CDN cache a success', async () => {
-      const response = await proxy(recordedDbb())(
-        '/api/dbb/team/313036/spiele'
-      );
-
-      expect(response.headers.get('cache-control')).toBe(
-        'public, max-age=60, s-maxage=300'
-      );
-      expect(DBB_PROXY_CACHE_CONTROL).toBe('public, max-age=60, s-maxage=300');
-    });
-
-    it.each([
-      ['DBB status "1"', recordedDbb(), '/api/dbb/team/7/spiele'],
-      [
-        'DBB status "-1"',
-        dbbAnswering('{"status":"-1","data":null}'),
-        '/api/dbb/team/7/spiele',
-      ],
-      ['an upstream 5xx', dbbAnswering('', 503), '/api/dbb/team/7/spiele'],
-    ])('sets none on %s', async (_case, dbb, path) => {
-      const response = await proxy(dbb)(path);
-
-      expect(response.status).not.toBe(200);
-      expect(response.headers.get('cache-control')).toBeNull();
-    });
-  });
-
-  describe('errors', () => {
-    it('answers DBB status "1" with 404 and the DBB body', async () => {
-      const body = JSON.stringify(fakeDbbAnswer('GET', 'team/id/7/matches'));
-
-      const response = await proxy(dbbAnswering(body))(
-        '/api/dbb/team/7/spiele'
-      );
-
-      expect(response.status).toBe(404);
-      expect(await response.text()).toBe(body);
-    });
-
-    it('answers DBB status "-1" with 502', async () => {
-      const response = await proxy(
-        dbbAnswering('{"status":"-1","message":"Internal Server Error"}')
-      )('/api/dbb/team/313036/spiele');
-
-      expect(response.status).toBe(502);
-      expect(await response.json()).toEqual({ error: 'dbb-unavailable' });
-    });
-
-    it.each([500, 502, 503])(
-      'answers an upstream %i with 502',
-      async (status) => {
-        const response = await proxy(dbbAnswering('oops', status))(
-          '/api/dbb/team/313036/spiele'
-        );
-
-        expect(response.status).toBe(502);
-        expect(await response.json()).toEqual({ error: 'dbb-unavailable' });
-      }
-    );
-
-    it('answers an upstream timeout with 502', async () => {
-      const timedOut: UpstreamFetch = async () => {
-        throw new DOMException('The operation timed out.', 'TimeoutError');
-      };
-
-      const response = await proxy(timedOut)('/api/dbb/team/313036/spiele');
-
-      expect(response.status).toBe(502);
-      expect(await response.json()).toEqual({ error: 'dbb-unavailable' });
-    });
-
-    it('answers a network error with 502', async () => {
-      const unreachable: UpstreamFetch = async () => {
-        throw new TypeError('fetch failed');
-      };
-
-      const response = await proxy(unreachable)('/api/dbb/team/313036/spiele');
-
-      expect(response.status).toBe(502);
-    });
-
-    it.each([
-      ['no JSON', 'Service Unavailable'],
-      ['no envelope', '[]'],
-      ['an unknown status', '{"status":"2"}'],
-    ])('answers a DBB body with %s with 502', async (_case, body) => {
-      const response = await proxy(dbbAnswering(body))(
-        '/api/dbb/team/313036/spiele'
-      );
-
-      expect(response.status).toBe(502);
-    });
-  });
-
-  describe("a Liga's Tabelle", () => {
-    it("forwards to the DBB's competition table, cached", async () => {
-      const dbb = recordedDbb();
-
-      const response = await proxy(dbb)('/api/dbb/liga/54862/tabelle');
-
-      expect(response.status).toBe(200);
-      expect(String(dbb.mock.calls[0][0])).toBe(
-        `${BASE_URL}/competition/table/id/54862`
-      );
-      expect(await response.json()).toEqual(
-        fakeDbbAnswer('GET', 'competition/table/id/54862')
-      );
-      expect(response.headers.get('cache-control')).toBe(
-        DBB_PROXY_CACHE_CONTROL
-      );
-    });
-
-    it('answers DBB status "1" with 404, not cached', async () => {
-      const response = await proxy(recordedDbb())('/api/dbb/liga/7/tabelle');
-
-      expect(response.status).toBe(404);
-      expect(await response.json()).toEqual(
-        fakeDbbAnswer('GET', 'competition/table/id/7')
-      );
-      expect(response.headers.get('cache-control')).toBeNull();
-    });
-
-    it.each([
-      ['an upstream 5xx', dbbAnswering('oops', 503)],
-      ['DBB status "-1"', dbbAnswering('{"status":"-1"}')],
-      [
-        'a timeout',
-        async () => {
-          throw new DOMException('The operation timed out.', 'TimeoutError');
-        },
-      ],
-    ] as ReadonlyArray<[string, UpstreamFetch]>)(
-      'answers %s with 502, not cached',
-      async (_case, dbb) => {
-        const response = await proxy(dbb)('/api/dbb/liga/54862/tabelle');
-
-        expect(response.status).toBe(502);
-        expect(await response.json()).toEqual({ error: 'dbb-unavailable' });
-        expect(response.headers.get('cache-control')).toBeNull();
-      }
-    );
-
-    it.each([
-      ['a non-numeric id', 'GET', '/api/dbb/liga/abc/tabelle'],
-      ['an id of 0', 'GET', '/api/dbb/liga/0/tabelle'],
-      ['a DBB path', 'GET', '/api/dbb/competition/table/id/54862'],
-      ['a POST', 'POST', '/api/dbb/liga/54862/tabelle'],
-    ])(
-      'answers %s with 404 and never asks the DBB',
-      async (_case, method, path) => {
+    describe('allowlist', () => {
+      it("forwards to the DBB's read", async () => {
         const dbb = recordedDbb();
 
-        const response = await proxy(dbb)(path, { method });
+        const response = await proxy(dbb)(path);
+
+        expect(response.status).toBe(200);
+        expect(String(dbb.mock.calls[0][0])).toBe(
+          `${BASE_URL}/${dbbPath(route, id)}`
+        );
+      });
+
+      it('passes the DBB body through unchanged', async () => {
+        const body = JSON.stringify(fakeDbbAnswer('GET', dbbPath(route, id)));
+
+        const response = await proxy(dbbAnswering(body))(path);
+
+        expect(await response.text()).toBe(body);
+        expect(response.headers.get('content-type')).toMatch(
+          /^application\/json/
+        );
+      });
+
+      it.each([
+        ['a non-numeric id', 'abc'],
+        ['a negative id', '-1'],
+        ['a fractional id', '1.5'],
+        ['an id of 0', '0'],
+        ['an id too large', '99999999999999999999'],
+      ])('answers %s with 404 and never asks the DBB', async (_case, bad) => {
+        const dbb = recordedDbb();
+
+        const response = await proxy(dbb)(route.path(bad));
 
         expect(response.status).toBe(404);
         expect(response.headers.get('cache-control')).toBeNull();
         expect(dbb).not.toHaveBeenCalled();
-      }
-    );
+      });
+
+      it('answers another method than GET with 404', async () => {
+        const dbb = recordedDbb();
+
+        const response = await proxy(dbb)(path, { method: 'POST' });
+
+        expect(response.status).toBe(404);
+        expect(dbb).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('cache headers', () => {
+      it('lets browser and CDN cache a success', async () => {
+        const response = await proxy(recordedDbb())(path);
+
+        expect(response.headers.get('cache-control')).toBe(
+          'public, max-age=60, s-maxage=300'
+        );
+        expect(DBB_PROXY_CACHE_CONTROL).toBe(
+          'public, max-age=60, s-maxage=300'
+        );
+      });
+    });
+
+    describe('errors', () => {
+      it('answers DBB status "1" with 404 and the DBB body, not cached', async () => {
+        const body = JSON.stringify(
+          fakeDbbAnswer('GET', dbbPath(route, unknown))
+        );
+
+        const response = await proxy(dbbAnswering(body))(route.path(unknown));
+
+        expect(response.status).toBe(404);
+        expect(await response.text()).toBe(body);
+        expect(response.headers.get('cache-control')).toBeNull();
+      });
+
+      it.each([
+        ['DBB status "-1"', dbbAnswering('{"status":"-1","message":"x"}')],
+        ['an upstream 500', dbbAnswering('oops', 500)],
+        ['an upstream 502', dbbAnswering('oops', 502)],
+        ['an upstream 503', dbbAnswering('', 503)],
+        [
+          'an upstream timeout',
+          async () => {
+            throw new DOMException('The operation timed out.', 'TimeoutError');
+          },
+        ],
+        [
+          'a network error',
+          async () => {
+            throw new TypeError('fetch failed');
+          },
+        ],
+        ['a DBB body with no JSON', dbbAnswering('Service Unavailable')],
+        ['a DBB body with no envelope', dbbAnswering('[]')],
+        ['a DBB body with an unknown status', dbbAnswering('{"status":"2"}')],
+      ] as ReadonlyArray<[string, UpstreamFetch]>)(
+        'answers %s with 502, not cached',
+        async (_case, dbb) => {
+          const response = await proxy(dbb)(path);
+
+          expect(response.status).toBe(502);
+          expect(await response.json()).toEqual({ error: 'dbb-unavailable' });
+          expect(response.headers.get('cache-control')).toBeNull();
+        }
+      );
+    });
+  });
+
+  it.each([
+    ['an unknown read', '/api/dbb/team/313036/spieler'],
+    ['a DBB path', '/api/dbb/team/id/313036/matches'],
+    ['a DBB Tabelle path', '/api/dbb/competition/table/id/54862'],
+    ['the bare prefix', '/api/dbb'],
+    ['the prefix with a slash', '/api/dbb/'],
+  ])('answers %s with 404 and never asks the DBB', async (_case, path) => {
+    const dbb = recordedDbb();
+
+    const response = await proxy(dbb)(path);
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get('cache-control')).toBeNull();
+    expect(dbb).not.toHaveBeenCalled();
   });
 
   describe('upstream call', () => {

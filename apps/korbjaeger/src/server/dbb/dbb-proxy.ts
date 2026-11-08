@@ -13,11 +13,7 @@ import {
   type ProxyResponse,
 } from './dbb-proxy-response';
 import type { DbbUpstream } from './dbb-upstream';
-import {
-  tabelleRequest,
-  teamSpieleRequest,
-  type ProxyRouteRead,
-} from '../../shared/dbb-proxy-routes';
+import { proxyRouteRead, type ProxyRoute } from '../../shared/dbb-proxy-routes';
 
 /**
  * How long a successful read may be reused: a minute in the browser, five
@@ -65,26 +61,15 @@ function failed(call: DbbHttpRequest, reason: string): ProxyResponse {
   return badGateway();
 }
 
-/** `GET /api/dbb/team/{teamId}/spiele`: a Team's Spiele of the Saison. */
-export function teamSpieleHandler(upstream: DbbUpstream) {
-  return proxyRouteHandler('teamId', teamSpieleRequest, upstream);
-}
-
-/** `GET /api/dbb/liga/{ligaId}/tabelle`: a Liga's Tabelle. */
-export function tabelleHandler(upstream: DbbUpstream) {
-  return proxyRouteHandler('ligaId', tabelleRequest, upstream);
-}
-
-/** A route whose param `param` names the read `readOf` maps it to. */
-function proxyRouteHandler(
-  param: string,
-  readOf: ProxyRouteRead,
-  upstream: DbbUpstream
-) {
+/** The handler of `route`'s file: its read, for the id its param names. */
+export function proxyRouteHandler(route: ProxyRoute, upstream: DbbUpstream) {
   return defineEventHandler(async (event) =>
     sendProxyResponse(
       event,
-      await proxyDbbRead(readOf(getRouterParam(event, param)), upstream)
+      await proxyDbbRead(
+        proxyRouteRead(route, getRouterParam(event, route.param)),
+        upstream
+      )
     )
   );
 }

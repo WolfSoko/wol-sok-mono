@@ -1,22 +1,37 @@
 import {
   DbbBasketballData,
+  dbbHttpRequest,
   isBasketballDataError,
   type BasketballDataErrorKind,
 } from '@wolsok/feat-shared-basketball-data';
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
+import {
+  PROXY_ROUTES,
+  proxyRouteRead,
+  routerPath,
+} from '../../shared/dbb-proxy-routes';
 import { proxyTransport, type ProxyFetch } from './proxy-transport';
 
-/** The proxy's routes and the DBB path each one reads. */
-const PROXY_ROUTES: ReadonlyArray<readonly [RegExp, string]> = [
-  [/^\/api\/dbb\/team\/(\d+)\/spiele$/, 'team/id/$1/matches'],
-  [/^\/api\/dbb\/liga\/(\d+)\/tabelle$/, 'competition/table/id/$1'],
-];
+/** The DBB path the proxy reads for `url`, by the shared routes. */
+function dbbPathOf(url: string): string | undefined {
+  for (const route of PROXY_ROUTES) {
+    const [vorher, nachher] = routerPath(route).split(`:${route.param}`);
+    if (url.startsWith(vorher) && url.endsWith(nachher)) {
+      const read = proxyRouteRead(
+        route,
+        url.slice(vorher.length, url.length - nachher.length)
+      );
+      return read && dbbHttpRequest(read).path;
+    }
+  }
+  return undefined;
+}
 
 /** The app's proxy, answering with the DBB's recorded bodies. */
 function recordedProxy(): ReturnType<typeof vi.fn<ProxyFetch>> {
   return vi.fn<ProxyFetch>(async (url) => {
-    const route = PROXY_ROUTES.find(([pattern]) => pattern.test(url));
-    const answer = route && fakeDbbAnswer('GET', url.replace(...route));
+    const path = dbbPathOf(url);
+    const answer = path === undefined ? undefined : fakeDbbAnswer('GET', path);
     if (answer === undefined) {
       return new Response('{"error":"not-found"}', { status: 404 });
     }
