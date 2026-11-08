@@ -1,5 +1,4 @@
 import * as childProcess from 'child_process';
-import type { ChildProcess } from 'child_process';
 
 import { logger } from '@nx/devkit';
 
@@ -7,9 +6,9 @@ import { DestroyExecutorSchema } from './schema';
 import executor from './destroy';
 import { generateCommandString, LARGE_BUFFER } from '../../utils/executor.util';
 import {
-  FakeChildProcess,
   mockExecutorContext,
   runExecutorToExit,
+  spawnFakeChildProcess,
 } from '../../utils/testing';
 
 jest.mock('child_process', () => ({
@@ -30,9 +29,7 @@ describe('aws-cdk-v2 Destroy Executor', () => {
 
   beforeEach(() => {
     jest.spyOn(logger, 'debug');
-    execMock.mockImplementation(
-      () => new FakeChildProcess() as unknown as ChildProcess
-    );
+    execMock.mockImplementation(spawnFakeChildProcess);
   });
 
   afterEach(() => jest.clearAllMocks());

@@ -32,7 +32,8 @@ Today the command reports 16 errors, all in
 
 - **One fake child process and one run helper for all four specs**, in
   `src/utils/testing.ts` beside `mockExecutorContext`: `FakeChildProcess` (an
-  `EventEmitter` with `stdout` and `stderr`) and
+  `EventEmitter` with `stdout` and `stderr`), `spawnFakeChildProcess` (the
+  `exec` mock implementation, holding the one cast to `ChildProcess`) and
   `runExecutorToExit(exec, run, exitCode = 0)`, which starts the executor,
   takes the process the mocked `exec` spawned last and lets it close with the
   exit code. It throws when the executor spawned no fake process, rather than
