@@ -38,18 +38,27 @@ export interface AnonymerSpieler {
 export type KaderEintrag = BenannterSpieler | AnonymerSpieler;
 
 /** The players listed on a Spielbericht for one Team. */
-export type Kader = readonly KaderEintrag[];
+export interface Kader {
+  /**
+   * Whether this Kader's Spielerwerte were recorded. A Kader whose numbers
+   * are all 0 means they were not, never that nobody scored; its entries
+   * then carry none. Decided per Kader, since one side's can be filled in
+   * and the other's not.
+   */
+  readonly spielerwerteErfasst: boolean;
+  readonly eintraege: readonly KaderEintrag[];
+}
 
 /** What the DBB records about a played Spiel. */
 export interface Spielbericht {
   readonly spielId: SpielId;
-  /**
-   * Whether the Verband records Spielerwerte. A Kader whose numbers are all
-   * 0 means they were not recorded, never that nobody scored.
-   */
-  readonly spielerwerteErfasst: boolean;
   readonly heim: Kader;
   readonly gast: Kader;
+}
+
+/** Whether either Kader of a Spielbericht has Spielerwerte. */
+export function spielerwerteErfasst(bericht: Spielbericht): boolean {
+  return bericht.heim.spielerwerteErfasst || bericht.gast.spielerwerteErfasst;
 }
 
 /** Whether a Kader entry is a named player, so it can be marked as a Kind. */

@@ -12,40 +12,43 @@ const NO_SHIRT_NUMBER = '0';
 
 /**
  * A Spiel's Spielbericht (`match/id/{id}/boxscore`), or `undefined` while
- * the DBB has none (no Kader listed). Where every number is 0, the Verband
- * records no Spielerwerte: the Spielbericht says so and its entries carry
- * none, rather than zeros.
+ * the DBB has none (no Kader listed). A Kader whose numbers are all 0 was
+ * not recorded: it says so and its entries carry no Spielerwerte, rather
+ * than zeros.
  */
 export function mapSpielbericht(data: unknown): Spielbericht | undefined {
   const match = DbbObject.of(data, 'boxscore');
+  const spielId = match.number('matchId');
   const boxscore = match.optionalObject('matchBoxscore');
   const heim = boxscore?.optionalObjects('homePlayerStats') ?? [];
   const gast = boxscore?.optionalObjects('guestPlayerStats') ?? [];
   if (heim.length === 0 && gast.length === 0) {
     return undefined;
   }
-  const kader = { heim: mapKader(heim), gast: mapKader(gast) };
-  const spielerwerteErfasst = [...kader.heim, ...kader.gast].some(
+  return { spielId, heim: mapKader(heim), gast: mapKader(gast) };
+}
+
+/** Each row mapped once; the numbers kept only where any is not 0. */
+function mapKader(playerStats: readonly DbbObject[]): Kader {
+  const nummern = nummernErfasst(playerStats);
+  const eintraege = playerStats.map((stats) => mapEintrag(stats, nummern));
+  const spielerwerteErfasst = eintraege.some(
     (eintrag) =>
       eintrag.spielerwerte !== undefined && hatWerte(eintrag.spielerwerte)
   );
   return {
-    spielId: match.number('matchId'),
     spielerwerteErfasst,
-    heim: spielerwerteErfasst ? kader.heim : ohneSpielerwerte(kader.heim),
-    gast: spielerwerteErfasst ? kader.gast : ohneSpielerwerte(kader.gast),
+    eintraege: spielerwerteErfasst
+      ? eintraege
+      : eintraege.map(ohneSpielerwerte),
   };
 }
 
-/** Each row mapped once, with the numbers as the DBB lists them. */
-function mapKader(playerStats: readonly DbbObject[]): Kader {
-  const nummern = nummernErfasst(playerStats);
-  return playerStats.map((stats) => mapEintrag(stats, nummern));
-}
-
-/** The Kader of a Verband that records no Spielerwerte: none, not zeros. */
-function ohneSpielerwerte(kader: Kader): Kader {
-  return kader.map(({ spielerwerte: _keine, ...eintrag }) => eintrag);
+function ohneSpielerwerte({
+  spielerwerte: _keine,
+  ...eintrag
+}: KaderEintrag): KaderEintrag {
+  return eintrag;
 }
 
 /** Whether the Kader lists shirt numbers: not where every named player has 0. */

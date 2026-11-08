@@ -55,7 +55,7 @@ export type {
   SpielStatus,
   Spielstand,
 } from './lib/domain/spiel';
-export { istBenannt } from './lib/domain/spielbericht';
+export { istBenannt, spielerwerteErfasst } from './lib/domain/spielbericht';
 export type {
   AnonymerSpieler,
   BenannterSpieler,

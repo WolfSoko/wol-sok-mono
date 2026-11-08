@@ -108,7 +108,9 @@ describe('DbbBasketballData', () => {
 
     expect((await data.tabelle(54308)).zeilen).toHaveLength(7);
     expect((await data.spiel(2911141)).halle?.name).toBe('Paul-Moor-Schule');
-    expect((await data.spielbericht(2911141))?.spielerwerteErfasst).toBe(true);
+    expect((await data.spielbericht(2911141))?.heim.spielerwerteErfasst).toBe(
+      true
+    );
     expect(transport.requests.map((request) => request.kind)).toEqual([
       'tabelle',
       'spiel-info',

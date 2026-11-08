@@ -22,8 +22,9 @@ outside the lib imports a path inside it.
   a Team is its `teamPermanentId`, a Kind its `person.id`; the
   season-specific `seasonTeamId` stays in the adapter. A Kader entry is a
   `BenannterSpieler` or an `AnonymerSpieler`, which has no person id and so
-  cannot be marked. A Spielbericht whose numbers are all 0 has
-  `spielerwerteErfasst: false` and no Spielerwerte, never zeros.
+  cannot be marked. Each Kader of a Spielbericht says whether its
+  Spielerwerte were recorded (`spielerwerteErfasst`); one whose numbers are
+  all 0 has `false` and no Spielerwerte, never zeros.
 - **`DbbBasketballData`** (`src/lib/dbb/`), the adapter over the DBB's
   undocumented JSON API (ADR 0018). It takes a `DbbTransport`, a function
   that answers one allowlisted `DbbRequest` with the DBB's JSON;
