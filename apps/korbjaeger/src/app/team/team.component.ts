@@ -9,6 +9,7 @@ import {
 import { MatChipsModule } from '@angular/material/chips';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { AUSWAHL } from '../auswahl/auswahl';
 import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
 import { HEUTE } from '../heute';
 import {
@@ -44,12 +45,27 @@ export class TeamComponent {
 
   private readonly data = inject(BASKETBALL_DATA);
   private readonly heute = inject(HEUTE);
+  private readonly meineTeams = inject(AUSWAHL).teams;
   private readonly team = computed(() => parseDbbId(this.teamId()));
 
   protected readonly saison = resource({
     params: () => this.team(),
     loader: ({ params, abortSignal }) =>
       this.data.teamSpiele(params, { signal: abortSignal }),
+  });
+
+  /**
+   * The Team to offer following: one the DBB knows, or one of Meine Teams
+   * whatever its read gave (a Saison may have ended for it).
+   */
+  protected readonly folgbar = computed(() => {
+    const team = this.team();
+    if (team === undefined) {
+      return undefined;
+    }
+    return this.saison.hasValue() || this.meineTeams().includes(team)
+      ? team
+      : undefined;
   });
 
   protected readonly zeilen = computed(() =>

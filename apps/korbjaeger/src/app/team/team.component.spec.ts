@@ -338,6 +338,34 @@ describe('TeamComponent', () => {
     expect(page.querySelector('button[aria-pressed]')).toBeNull();
   });
 
+  it('offers to unfollow a followed Team whose read fails', async () => {
+    const auswahl = new LokaleAuswahl(undefined);
+    await auswahl.folgen(313036);
+    TestBed.configureTestingModule({
+      providers: [
+        ...providers(
+          fakeData(async () => {
+            throw new BasketballDataError('not-found', 'DBB: nope');
+          })
+        ),
+        { provide: AUSWAHL, useValue: auswahl },
+      ],
+    });
+    const fixture = TestBed.createComponent(TeamComponent);
+    fixture.componentRef.setInput('teamId', '313036');
+    await fixture.whenStable();
+    const knopf = (fixture.nativeElement as HTMLElement).querySelector(
+      'button[aria-pressed]'
+    ) as HTMLButtonElement | null;
+    expect(knopf?.getAttribute('aria-pressed')).toBe('true');
+
+    knopf?.click();
+    await new Promise((resolve) => setTimeout(resolve));
+    await fixture.whenStable();
+
+    expect(auswahl.teams()).toEqual([]);
+  });
+
   it('says so when the Team has no Spiele', async () => {
     const page = await render(fakeData(async () => saison([])));
 

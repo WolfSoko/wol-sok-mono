@@ -7,7 +7,12 @@
 @if (saison.hasValue()) {
   <h1>{{ saison.value().team.name }}</h1>
   <p class="verein">{{ saison.value().verein.name }} · Spiele der Saison</p>
-  <korb-team-folgen class="folgen" [teamId]="saison.value().team.id" />
+}
+@if (folgbar(); as teamId) {
+  <!-- also where the read fails, so a followed Team can be unfollowed -->
+  <korb-team-folgen class="folgen" [teamId]="teamId" />
+}
+@if (saison.hasValue()) {
   @if (zeilen().length === 0) {
     <p>Noch keine Spiele in dieser Saison.</p>
   } @else {
