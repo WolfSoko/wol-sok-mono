@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.143.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.143.0...v74.143.1) (2026-11-08)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** move the remaining Firebase spec fakes onto FakeFirebase ([#2896](https://github.com/WolfSoko/wol-sok-mono/issues/2896)) ([66cf8fe](https://github.com/WolfSoko/wol-sok-mono/commit/66cf8fe7dfdaeac001cce84d2b85137a4f562e29))
+
 ## [74.143.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.142.0...v74.143.0) (2026-11-08)
 
 ### Features
