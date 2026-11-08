@@ -789,7 +789,7 @@ describe('a boss with a weapon', () => {
     const [human, boss] = engine.players;
     // A boss's cooldownFactor speeds up its boost, not its weapon: the
     // weapon charges for its plain cooldown.
-    expect(getLevel('meltdown').boss?.traits.cooldownFactor).not.toBe(1);
+    expect(getLevel('meltdown').boss?.traits.cooldownFactor).toBeLessThan(1);
     const cooldown = weaponOf('toxin-bomb').cooldownSec;
 
     // The human's weapon is ready from the start, the boss's charging.
