@@ -4,6 +4,7 @@ import {
   assertValidDbbRequest,
   dbbIdOf,
   isDbbId,
+  parseDbbId,
   type DbbRequest,
 } from './dbb-request';
 
@@ -99,6 +100,28 @@ describe('isDbbId', () => {
     expect(
       [0, -1, 1.5, Number.NaN, Number.MAX_SAFE_INTEGER + 1].map(isDbbId)
     ).toEqual([false, false, false, false, false]);
+  });
+});
+
+describe('parseDbbId', () => {
+  it('reads the digits of a DBB id', () => {
+    expect(['1', '313036'].map(parseDbbId)).toEqual([1, 313036]);
+  });
+
+  it.each([
+    ['nothing', undefined],
+    ['an empty text', ''],
+    ['letters', 'abc'],
+    ['digits and letters', '313036abc'],
+    ['a sign', '-1'],
+    ['a plus', '+1'],
+    ['a fraction', '1.5'],
+    ['spaces', ' 1'],
+    ['an exponent', '1e3'],
+    ['0', '0'],
+    ['an id too large to be exact', '9007199254740993'],
+  ])('reads no id from %s', (_case, text) => {
+    expect(parseDbbId(text)).toBeUndefined();
   });
 });
 

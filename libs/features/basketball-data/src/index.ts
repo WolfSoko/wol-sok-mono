@@ -10,6 +10,7 @@ export {
   dbbHttpRequest,
   dbbIdOf,
   isDbbId,
+  parseDbbId,
 } from './lib/dbb/dbb-request';
 export type {
   DbbHttpRequest,

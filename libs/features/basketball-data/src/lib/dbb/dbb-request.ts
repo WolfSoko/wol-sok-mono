@@ -58,10 +58,23 @@ export type DbbHttpRequest =
 export type DbbTransport = (request: DbbRequest) => Promise<unknown>;
 
 const AKG_GESCHLECHT_ID = /^\d+_\d+$/;
+const DIGITS = /^\d+$/;
 
 /** Whether `value` can be a DBB id at all: a positive integer. */
 export function isDbbId(value: number): boolean {
   return Number.isSafeInteger(value) && value > 0;
+}
+
+/**
+ * The DBB id a text names (a route param, a form field): digits only, and
+ * a DBB id; `undefined` for anything else.
+ */
+export function parseDbbId(text: string | undefined): number | undefined {
+  if (text === undefined || !DIGITS.test(text)) {
+    return undefined;
+  }
+  const id = Number(text);
+  return isDbbId(id) ? id : undefined;
 }
 
 /**
