@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
+import { provideDarstellung } from '../darstellung/darstellung';
 import { EinstellungenComponent } from './einstellungen.component';
 import { nichtUebernommenText } from './nicht-uebernommen-text';
 import { PopupBlockiert } from './konto-dienst';
@@ -50,6 +51,7 @@ async function oeffnen(
   TestBed.configureTestingModule({
     providers: [
       { provide: KONTO_SITZUNG, useValue: sitzung },
+      provideDarstellung(),
       { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
     ],
   });
@@ -102,12 +104,11 @@ describe('EinstellungenComponent', () => {
     document.querySelector('.cdk-overlay-container')?.replaceChildren();
   });
 
-  it('has nothing to set where the build offers no sign-in', async () => {
+  it('offers only the look where the build offers no sign-in', async () => {
     const { element, knopf } = await oeffnen({ ohneAnmeldung: true });
 
-    expect(element.textContent).toContain(
-      'Hier gibt es noch nichts einzustellen.'
-    );
+    expect(element.querySelector('korb-darstellung-wahl')).not.toBeNull();
+    expect(element.textContent).not.toContain('Konto');
     expect(knopf('anmelden')).toBeNull();
   });
 

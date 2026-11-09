@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Locator, Page } from '@playwright/test';
 import type { SpielPage } from './pos/spiel.page';
 import type { StartPage } from './pos/start.page';
+import { mitDarstellung } from './darstellung';
 import { expect, test } from './fixtures/pages.fixture';
 
 /** In the fixtures, MTV Wasbüttel's Team, and one of its Spiele the fake DBB has the details of. */
@@ -36,8 +37,13 @@ async function kontrastFehler(page: Page): Promise<string[]> {
 
 for (const schema of ['light', 'dark'] as const) {
   test.describe(`contrast (${schema})`, () => {
+    // the look chosen in the settings (#2925), on a device set to the other
+    // scheme, so the switch, not the device, decides what axe reads
     test.beforeEach(async ({ page }) => {
-      await page.emulateMedia({ colorScheme: schema });
+      await page.emulateMedia({
+        colorScheme: schema === 'light' ? 'dark' : 'light',
+      });
+      await mitDarstellung(page, schema);
     });
 
     test("keeps every text readable in the app's own colours", async ({

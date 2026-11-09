@@ -28,6 +28,13 @@ export class EinstellungenPage {
     await this.page.goto('/einstellungen');
   }
 
+  /** The look `name` ("System", "Hell" or "Dunkel") in the card Darstellung. */
+  public darstellung(name: 'System' | 'Hell' | 'Dunkel'): Locator {
+    return this.page
+      .getByRole('radiogroup', { name: 'Darstellung' })
+      .getByRole('radio', { name, exact: true });
+  }
+
   /** Signs in as `konto`, adding it to the emulator where it is new. */
   public async anmeldenAls(
     konto: EmulatorKonto,

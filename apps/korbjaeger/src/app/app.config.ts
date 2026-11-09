@@ -7,6 +7,7 @@ import {
   withComponentInputBinding,
   withInMemoryScrolling,
 } from '@angular/router';
+import { provideDarstellung } from './darstellung/darstellung';
 import { provideBasketballData } from './basketball-data/basketball-data.provider';
 import { provideAppServiceWorker } from './pwa/app-service-worker';
 import { provideInstallationsHinweis } from './pwa/installations-hinweis';
@@ -24,5 +25,6 @@ export const appConfig: ApplicationConfig = {
     provideBasketballData(),
     provideAppServiceWorker(),
     provideInstallationsHinweis(),
+    provideDarstellung(),
   ],
 };

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { provideTheme } from '@wolsok/shared-theme';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AppComponent } from './app.component';
@@ -8,12 +9,13 @@ import { appRoutes } from './app.routes';
 import { I18nService } from './i18n/i18n.service';
 import { APPS, EXPERIMENTS, PACKAGES } from './projects';
 import { SeoService } from './seo.service';
+import { PORTFOLIO_THEME } from './theme/theme';
 
 describe('AppComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideRouter(appRoutes)],
+      providers: [provideRouter(appRoutes), provideTheme(PORTFOLIO_THEME)],
     });
   });
 

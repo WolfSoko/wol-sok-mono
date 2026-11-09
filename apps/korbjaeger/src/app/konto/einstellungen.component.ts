@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { DarstellungWahlComponent } from '../darstellung/darstellung-wahl.component';
 import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
 import { auswahlFehlerText } from '../fehler/auswahl-fehler-text';
 import { KONTO_SITZUNG } from './konto';
@@ -53,133 +54,140 @@ const KONTO_NICHT_GELOESCHT =
   'Deine Teams und Kinder sind gelöscht, dein Konto selbst noch nicht. Bitte lösche es noch einmal.';
 
 /**
- * The settings: the Google account, which keeps Meine Teams and Kinder the
- * same on every device signed in with it. Signing in, out and deleting go
+ * The settings: the look (`korb-darstellung-wahl`) and the Google account,
+ * which keeps Meine Teams and Kinder the same on every device signed in
+ * with it. Signing in, out and deleting go
  * through `KONTO_SITZUNG`, which loads Firebase as the page opens, so a
  * click opens Google's popup at once; a popup closed while signing in
  * shows nothing.
  */
 @Component({
   selector: 'korb-einstellungen',
-  imports: [MatButtonModule, MatCardModule, MatProgressBarModule],
+  imports: [
+    DarstellungWahlComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatProgressBarModule,
+  ],
   template: `
     <h1>Einstellungen</h1>
-    @switch (stand().art) {
-      @case ('aus') {
-        <p>Hier gibt es noch nichts einzustellen.</p>
-      }
-      @default {
-        <mat-card appearance="outlined">
-          <mat-card-header>
-            <mat-card-title>Konto</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            @switch (stand().art) {
-              @case ('abgemeldet') {
-                <p>
-                  Ohne Konto bleiben Meine Teams und Kinder auf diesem Gerät.
-                  Mit einem Google-Konto sind sie auf jedem Gerät gleich, auf
-                  dem ihr damit angemeldet seid.
-                </p>
-              }
-              @case ('laedt') {
-                <mat-progress-bar mode="indeterminate" />
-                <p>Dein Konto wird geöffnet …</p>
-              }
-              @case ('angemeldet') {
-                <p data-qa="konto-name">{{ angemeldetAls() }}</p>
-                <p>
-                  Meine Teams und Kinder sind in deinem Konto gespeichert.
-                  Abmelden nimmt sie von diesem Gerät.
-                </p>
-              }
-              @case ('nicht-erreichbar') {
-                <p role="alert">
-                  Dein Konto lässt sich gerade nicht öffnen. Bitte die App neu
-                  laden.
-                </p>
-              }
-            }
-            @if (uebrigText(); as text) {
-              <p class="hinweis" data-qa="nicht-uebernommen">{{ text }}</p>
-            }
-            @if (laufend() === 'loeschen') {
-              <p class="hinweis" data-qa="loeschen-laeuft">
-                Das Konto wird gelöscht. Ohne Internet wartet das, bis dein
-                Gerät wieder online ist; lass die App so lange offen.
+    <korb-darstellung-wahl />
+    @if (stand().art !== 'aus') {
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Konto</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @switch (stand().art) {
+            @case ('abgemeldet') {
+              <p>
+                Ohne Konto bleiben Meine Teams und Kinder auf diesem Gerät. Mit
+                einem Google-Konto sind sie auf jedem Gerät gleich, auf dem ihr
+                damit angemeldet seid.
               </p>
             }
-            @if (geraetBehalten()) {
-              <p class="hinweis" data-qa="geraet-behalten">
-                {{ GERAET_BEHALTEN }}
+            @case ('laedt') {
+              <mat-progress-bar mode="indeterminate" />
+              <p>Dein Konto wird geöffnet …</p>
+            }
+            @case ('angemeldet') {
+              <p data-qa="konto-name">{{ angemeldetAls() }}</p>
+              <p>
+                Meine Teams und Kinder sind in deinem Konto gespeichert.
+                Abmelden nimmt sie von diesem Gerät.
               </p>
             }
-            @if (fehler(); as text) {
-              <p class="fehler" role="alert">{{ text }}</p>
+            @case ('nicht-erreichbar') {
+              <p role="alert">
+                Dein Konto lässt sich gerade nicht öffnen. Bitte die App neu
+                laden.
+              </p>
             }
-          </mat-card-content>
-          <mat-card-actions>
-            @switch (stand().art) {
-              @case ('abgemeldet') {
-                <button
-                  matButton="filled"
-                  type="button"
-                  data-qa="anmelden"
-                  [disabled]="beschaeftigt() || !bereit()"
-                  (click)="anmelden()"
+          }
+          @if (uebrigText(); as text) {
+            <p class="hinweis" data-qa="nicht-uebernommen">{{ text }}</p>
+          }
+          @if (laufend() === 'loeschen') {
+            <p class="hinweis" data-qa="loeschen-laeuft">
+              Das Konto wird gelöscht. Ohne Internet wartet das, bis dein Gerät
+              wieder online ist; lass die App so lange offen.
+            </p>
+          }
+          @if (geraetBehalten()) {
+            <p class="hinweis" data-qa="geraet-behalten">
+              {{ GERAET_BEHALTEN }}
+            </p>
+          }
+          @if (fehler(); as text) {
+            <p class="fehler" role="alert">{{ text }}</p>
+          }
+        </mat-card-content>
+        <mat-card-actions>
+          @switch (stand().art) {
+            @case ('abgemeldet') {
+              <button
+                matButton="filled"
+                type="button"
+                data-qa="anmelden"
+                [disabled]="beschaeftigt() || !bereit()"
+                (click)="anmelden()"
+              >
+                Mit Google anmelden
+              </button>
+              @if (vorbereitenFehlgeschlagen()) {
+                <p
+                  class="fehler"
+                  role="alert"
+                  data-qa="vorbereiten-fehlgeschlagen"
                 >
-                  Mit Google anmelden
-                </button>
-                @if (vorbereitenFehlgeschlagen()) {
-                  <p
-                    class="fehler"
-                    role="alert"
-                    data-qa="vorbereiten-fehlgeschlagen"
-                  >
-                    Die Anmeldung ließ sich nicht laden. Bitte prüfe die
-                    Internetverbindung.
-                  </p>
-                  <button
-                    matButton
-                    type="button"
-                    data-qa="vorbereiten-erneut"
-                    (click)="vorbereiten()"
-                  >
-                    Erneut versuchen
-                  </button>
-                } @else if (!bereit()) {
-                  <p class="hinweis" data-qa="anmeldung-vorbereiten">
-                    Anmeldung wird vorbereitet …
-                  </p>
-                }
-              }
-              @case ('angemeldet') {
-                <button
-                  matButton="outlined"
-                  type="button"
-                  data-qa="abmelden"
-                  [disabled]="beschaeftigt()"
-                  (click)="abmelden()"
-                >
-                  Abmelden
-                </button>
+                  Die Anmeldung ließ sich nicht laden. Bitte prüfe die
+                  Internetverbindung.
+                </p>
                 <button
                   matButton
                   type="button"
-                  data-qa="konto-loeschen"
-                  [disabled]="beschaeftigt()"
-                  (click)="loeschen()"
+                  data-qa="vorbereiten-erneut"
+                  (click)="vorbereiten()"
                 >
-                  Konto löschen
+                  Erneut versuchen
                 </button>
+              } @else if (!bereit()) {
+                <p class="hinweis" data-qa="anmeldung-vorbereiten">
+                  Anmeldung wird vorbereitet …
+                </p>
               }
             }
-          </mat-card-actions>
-        </mat-card>
-      }
+            @case ('angemeldet') {
+              <button
+                matButton="outlined"
+                type="button"
+                data-qa="abmelden"
+                [disabled]="beschaeftigt()"
+                (click)="abmelden()"
+              >
+                Abmelden
+              </button>
+              <button
+                matButton
+                type="button"
+                data-qa="konto-loeschen"
+                [disabled]="beschaeftigt()"
+                (click)="loeschen()"
+              >
+                Konto löschen
+              </button>
+            }
+          }
+        </mat-card-actions>
+      </mat-card>
     }
   `,
   styles: `
+    :host {
+      display: grid;
+      gap: 1rem;
+      align-content: start;
+    }
     mat-card-actions {
       flex-wrap: wrap;
       gap: 0.5rem;
