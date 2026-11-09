@@ -42,7 +42,9 @@
       "inputs": [
         "default",
         "^default",
-        "{workspaceRoot}/tools/bacteria-game/balance/**/*"
+        "{workspaceRoot}/tools/bacteria-game/balance/**/*",
+        "{workspaceRoot}/tools/tsconfig.tools.json",
+        "{workspaceRoot}/tsconfig.base.json"
       ],
       "options": {
         "command": "tsx --tsconfig tools/tsconfig.tools.json ./tools/bacteria-game/balance/run.ts check"
