@@ -5,7 +5,7 @@
  * awaits itself, hence the `void`.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
@@ -17,6 +17,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 // on Windows.
 const oxlint = join(here, '../../node_modules/oxlint/bin/oxlint');
 const VERSION_RULE = 'wolsok(no-version-json-read)';
+const TESTING_RULE = 'wolsok(no-testing-import)';
 
 let folder;
 let caseCount = 0;
@@ -28,16 +29,24 @@ before(() => {
     JSON.stringify({
       categories: { correctness: 'off' },
       jsPlugins: [join(here, 'workspace-rules.mjs')],
-      rules: { 'wolsok/no-version-json-read': 'error' },
+      rules: {
+        'wolsok/no-version-json-read': 'error',
+        'wolsok/no-testing-import': 'error',
+      },
     })
   );
 });
 
 after(() => rmSync(folder, { recursive: true, force: true }));
 
-/** The codes oxlint reports for `source`, linted as a TypeScript file. */
-function reportedCodes(source) {
-  const file = `case-${caseCount++}.ts`;
+/**
+ * The codes oxlint reports for `source`, linted as a TypeScript file, or as
+ * `name` (a path inside the case's own folder, say `testing/fake.ts`) where
+ * the file's name matters.
+ */
+function reportedCodes(source, name = 'case.ts') {
+  const file = join(`case-${caseCount++}`, name);
+  mkdirSync(dirname(join(folder, file)), { recursive: true });
   writeFileSync(join(folder, file), source);
   // oxlint exits non-zero on an error; the JSON report is the same.
   let output;
@@ -101,6 +110,65 @@ void describe('wolsok/no-version-json-read', () => {
   for (const source of allowed) {
     void it(`allows ${source}`, () => {
       deepStrictEqual(reportedCodes(source), []);
+    });
+  }
+});
+
+void describe('wolsok/no-testing-import', () => {
+  const imports = [
+    "import { FakeFirebase } from '@wolsok/feat-lazy-bac-game/testing';",
+    "import type { FakeDoc } from '@wolsok/feat-lazy-bac-game/testing';",
+    "import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';",
+    "import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing/fake-dbb';",
+    "export { RecordingAnalytics } from '@wolsok/shared-analytics/testing';",
+    "export * from '@wolsok/feat-korbjaeger-auswahl/testing';",
+    "void import('@wolsok/feat-lazy-bac-game/testing');",
+    "require('@wolsok/feat-lazy-bac-game/testing');",
+    "import { useEmulatorDb } from '../testing/emulator';",
+    "import { fakeAuswahl } from './testing';",
+    "import { zeigen } from '../../testing/zeigen.ts';",
+  ];
+  for (const source of imports) {
+    void it(`reports ${source}`, () => {
+      deepStrictEqual(reportedCodes(source), [TESTING_RULE]);
+    });
+  }
+
+  const allowedImports = [
+    "import { TestBed } from '@angular/core/testing';",
+    "import { provideHttpClientTesting } from '@angular/common/http/testing';",
+    "import { GameCloud } from '@wolsok/feat-lazy-bac-game';",
+    "import { watch } from '@wolsok/feat-lazy-bac-game/watch';",
+    "import { testingMode } from './testing-mode';",
+    "import { x } from '../attesting/x';",
+    "const path = '../testing/emulator';",
+  ];
+  for (const source of allowedImports) {
+    void it(`allows ${source}`, () => {
+      deepStrictEqual(reportedCodes(source), []);
+    });
+  }
+
+  const testFiles = [
+    'game.component.spec.ts',
+    'replay.test.ts',
+    'boards.emulator.ts',
+    'draw-digit.component.cy.ts',
+    'repository.factory.mock.ts',
+    'test-setup.ts',
+    'testing.ts',
+    'testing/fake-game-cloud.ts',
+    'app/konto/testing/fake-konto-dienst.ts',
+  ];
+  for (const name of testFiles) {
+    void it(`allows testing imports in ${name}`, () => {
+      deepStrictEqual(
+        reportedCodes(
+          "import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';",
+          name
+        ),
+        []
+      );
     });
   }
 });

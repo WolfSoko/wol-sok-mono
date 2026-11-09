@@ -22,6 +22,18 @@ const PATH_EXPRESSIONS = new Set([
 const EXPRESSION_PLACEHOLDER = '\0';
 const DISABLE_DIRECTIVE =
   /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
+/** A workspace lib's testing entry: `@wolsok/<lib>/testing` and below it. */
+const WORKSPACE_TESTING_ENTRY = /^@wolsok\/[^/]+\/testing(?:\/|$)/;
+/** A relative path through a `testing` folder or to a `testing` module. */
+const RELATIVE_TESTING_PATH =
+  /^\.{1,2}\/(?:.*\/)?testing(?:\.[cm]?[jt]s)?(?:\/|$)/;
+/**
+ * Test code under a project's `src/` by its file name: specs, emulator
+ * specs, Cypress component tests, mocks, Jest's setup, a lib's `testing.ts`
+ * entry and everything below a `testing/` folder.
+ */
+const TEST_FILE =
+  /(?:\.(?:spec|test|emulator|cy|mock)\.[cm]?[jt]sx?|(?:^|\/)(?:test-setup|testing)\.[cm]?[jt]s)$|(?:^|\/)testing\//;
 
 /**
  * Boundaries are configured, not silenced: an import the tag rules refuse
@@ -161,10 +173,77 @@ function propertyName(member) {
   return member.computed ? staticText(member.property) : member.property.name;
 }
 
+/**
+ * The `/testing` entries and `testing/` folders hold fakes that call
+ * `jest.fn` or `vi.fn` at module load: pulled into a production chunk, they
+ * break it at runtime. The boundary rule cannot see this, since it counts
+ * `<lib>/testing` as `<lib>`. Enabled for production sources (`apps/*\/src`,
+ * `libs/**\/src`) by an override in `.oxlintrc.json`; test files there are
+ * recognised by their name (`TEST_FILE`).
+ */
+const noTestingImport = {
+  meta: {
+    type: 'problem',
+    docs: {
+      description: 'Forbids importing test-only code into production sources.',
+    },
+    messages: {
+      testing:
+        'Production code must not import test-only code ({{source}}): move what it needs out of the testing entry, or import it from a spec.',
+    },
+    schema: [],
+  },
+  create(context) {
+    if (TEST_FILE.test(context.filename.replaceAll('\\', '/'))) {
+      return {};
+    }
+    const report = (sourceNode) => {
+      const source = staticText(sourceNode);
+      if (source !== undefined && isTestingModule(source)) {
+        context.report({
+          node: sourceNode,
+          messageId: 'testing',
+          data: { source },
+        });
+      }
+    };
+    const reportModuleSource = (node) => {
+      if (node.source) {
+        report(node.source);
+      }
+    };
+    return {
+      ImportDeclaration: reportModuleSource,
+      ExportNamedDeclaration: reportModuleSource,
+      ExportAllDeclaration: reportModuleSource,
+      ImportExpression: reportModuleSource,
+      CallExpression(node) {
+        if (
+          node.callee.type === 'Identifier' &&
+          node.callee.name === 'require'
+        ) {
+          const [argument] = node.arguments;
+          if (argument) {
+            report(argument);
+          }
+        }
+      },
+    };
+  },
+};
+
+/** Whether a module specifier names the workspace's test-only code. */
+function isTestingModule(source) {
+  return (
+    WORKSPACE_TESTING_ENTRY.test(source) || RELATIVE_TESTING_PATH.test(source)
+  );
+}
+
 export default {
   meta: { name: 'wolsok' },
   rules: {
     'no-boundary-disable': noBoundaryDisable,
     'no-version-json-read': noVersionJsonRead,
+    'no-testing-import': noTestingImport,
   },
 };
