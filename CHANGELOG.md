@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.157.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.156.0...v74.157.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger-functions:** delete auswahl/{uid} server-side when the Auth user is deleted ([#2943](https://github.com/WolfSoko/wol-sok-mono/issues/2943)) ([931aae8](https://github.com/WolfSoko/wol-sok-mono/commit/931aae8ed67930b47a5a25d4c8f042faf63a88ca)), references [#2912](https://github.com/WolfSoko/wol-sok-mono/issues/2912)
+* **korbjaeger:** "Rückgängig" restores the Team's place in Meine Teams ([#2939](https://github.com/WolfSoko/wol-sok-mono/issues/2939)) ([8fb68f4](https://github.com/WolfSoko/wol-sok-mono/commit/8fb68f475dc73f6d64af59d5b8c9034ef25277b3))
+* **korbjaeger:** overview cards and the Spiel page wear the Vereinsfarben, axe checks ([#2940](https://github.com/WolfSoko/wol-sok-mono/issues/2940)) ([7972217](https://github.com/WolfSoko/wol-sok-mono/commit/79722172b9c3bed872f7d8ff6c6ffc37391c2fd7))
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** read a player colour's alpha through one shared helper ([#2938](https://github.com/WolfSoko/wol-sok-mono/issues/2938)) ([d37e347](https://github.com/WolfSoko/wol-sok-mono/commit/d37e34711159ce5d0e4ad63a9c09bd68f905a896)), closes [#2883](https://github.com/WolfSoko/wol-sok-mono/issues/2883), references [#2883](https://github.com/WolfSoko/wol-sok-mono/issues/2883)
+* **nx:** only wait for Nx-started web servers in every app's e2e ([#2941](https://github.com/WolfSoko/wol-sok-mono/issues/2941)) ([693f5c6](https://github.com/WolfSoko/wol-sok-mono/commit/693f5c66e703139349cc07637603df6d767472c4)), closes [#2915](https://github.com/WolfSoko/wol-sok-mono/issues/2915), references [#2915](https://github.com/WolfSoko/wol-sok-mono/issues/2915)
+
+### Refactorings
+
+* **tools:** drop the direct version.json reads in version-handling and deploy-android ([#2933](https://github.com/WolfSoko/wol-sok-mono/issues/2933)) ([ec48a7b](https://github.com/WolfSoko/wol-sok-mono/commit/ec48a7b267c1f96e75da48da72dd350989163741)), references [#2882](https://github.com/WolfSoko/wol-sok-mono/issues/2882)
+
+### Chore
+
+* **release:** publish ([953b944](https://github.com/WolfSoko/wol-sok-mono/commit/953b944312a5b4b5c20caee6bc535e33a77cf251))
+
+### Testing
+
+* **feat-lazy-bacteria-game:** wait for the replay viewer in My matches instead of a fixed number of turns ([#2942](https://github.com/WolfSoko/wol-sok-mono/issues/2942)) ([0b23b4a](https://github.com/WolfSoko/wol-sok-mono/commit/0b23b4a07576d2c588df32ca433299089a5bc733)), references [#2858](https://github.com/WolfSoko/wol-sok-mono/issues/2858)
+
 ## [74.156.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.155.0...v74.156.0) (2026-11-09)
 
 ### Features
