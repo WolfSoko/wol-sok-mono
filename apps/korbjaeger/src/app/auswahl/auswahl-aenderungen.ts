@@ -10,6 +10,7 @@ import {
   AUSWAHL_LISTEN,
   type GelesenesDokument,
   type TeamPlatz,
+  vorSeit,
 } from './auswahl-dokument';
 import {
   gleicheFarben,
@@ -30,8 +31,11 @@ export type AuswahlAenderung = (inhalt: AuswahlInhalt) => AuswahlInhalt;
 
 /**
  * Follows `team`, unless it is followed: at `platz`, its old place (before
- * the first Team with a later `seit`, or one whose `seit` is not known
- * yet), else at the end of Meine Teams.
+ * the first Team the reader orders after it; one whose `seit` is not known
+ * yet comes after), else at the end of Meine Teams, with no `seit` kept
+ * for it, so the write gives it a new one. The one place that sets or
+ * clears a Team's `teamsSeit`: one kept for a Team no longer followed is
+ * never read.
  */
 export function folgenAenderung(
   team: TeamId,
@@ -41,41 +45,31 @@ export function folgenAenderung(
     if (inhalt.teams.includes(team)) {
       return inhalt;
     }
+    const teamsSeit = new Map(inhalt.teamsSeit);
     if (platz === undefined) {
-      return { ...inhalt, teams: [...inhalt.teams, team] };
+      teamsSeit.delete(team);
+      return { ...inhalt, teams: [...inhalt.teams, team], teamsSeit };
     }
-    // as the reader orders: by `seit`, the id deciding a tie
-    const danach = inhalt.teams.findIndex((andere) => {
-      const seit = inhalt.teamsSeit?.get(andere) ?? Infinity;
-      return seit > platz.seit || (seit === platz.seit && andere > team);
-    });
+    const eintrag = { seit: platz.seit, sortierung: team };
+    const danach = inhalt.teams.findIndex(
+      (andere) =>
+        vorSeit(eintrag, {
+          seit: inhalt.teamsSeit?.get(andere) ?? Infinity,
+          sortierung: andere,
+        }) < 0
+    );
     const teams = [...inhalt.teams];
     teams.splice(danach === -1 ? teams.length : danach, 0, team);
-    return {
-      ...inhalt,
-      teams,
-      teamsSeit: new Map(inhalt.teamsSeit).set(team, platz.seit),
-    };
+    return { ...inhalt, teams, teamsSeit: teamsSeit.set(team, platz.seit) };
   };
 }
 
-/**
- * Unfollows `team`, if it is followed, forgetting its `seit`, so a plain
- * follow later puts it at the end.
- */
+/** Unfollows `team`, if it is followed. */
 export function entfolgenAenderung(team: TeamId): AuswahlAenderung {
-  return (inhalt) => {
-    if (!inhalt.teams.includes(team)) {
-      return inhalt;
-    }
-    const teamsSeit = new Map(inhalt.teamsSeit);
-    teamsSeit.delete(team);
-    return {
-      ...inhalt,
-      teams: inhalt.teams.filter((id) => id !== team),
-      teamsSeit,
-    };
-  };
+  return (inhalt) =>
+    inhalt.teams.includes(team)
+      ? { ...inhalt, teams: inhalt.teams.filter((id) => id !== team) }
+      : inhalt;
 }
 
 /**
@@ -189,17 +183,8 @@ export function abgebenAenderung(abgegeben: AuswahlInhalt): AuswahlAenderung {
       kinder.length === inhalt.kinder.length &&
       vereinsfarben.length === inhalt.vereinsfarben.length
       ? inhalt
-      : {
-          teams,
-          kinder,
-          vereinsfarben,
-          // the Teams that stay keep their places
-          ...(inhalt.teamsSeit && {
-            teamsSeit: new Map(
-              [...inhalt.teamsSeit].filter(([team]) => teams.includes(team))
-            ),
-          }),
-        };
+      : // the Teams that stay keep their places (`teamsSeit`)
+        { ...inhalt, teams, kinder, vereinsfarben };
   };
 }
 

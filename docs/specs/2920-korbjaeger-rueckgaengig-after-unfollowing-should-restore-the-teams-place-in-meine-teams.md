@@ -41,24 +41,26 @@ device, after a reload too.
 - **`AuswahlInhalt` gets an optional `teamsSeit`** (a map from a Team to its
   stored `seit`), filled by the reader (`auswahlDokumentLesen`; a version-1
   list counts its Teams 1, 2, 3 …, as the write that turns it into a map
-  does). The change functions keep it in step: `folgenAenderung(team, platz)`
-  inserts the Team before the first Team with a later `seit` (a Team without
-  a known `seit`, one followed and not yet stored, counts as later) and
-  records its `seit`; `entfolgenAenderung` drops the entry, so a later plain
-  follow never picks an old `seit` up. `auswahlFelder` writes a new Team's
-  `seit` from `teamsSeit` where it has one, else the next one as today.
-  Kept optional, so `LEERE_AUSWAHL`, the takeover and `zusammenfuehren` stay
-  as they are.
+  does). `folgenAenderung` alone sets or clears an entry: with a `platz` it
+  inserts the Team before the first Team the reader orders after it (by
+  `seit`, the id deciding a tie, `vorSeit`; a Team without a known `seit`
+  counts as later) and records the `seit`; without one it clears the
+  Team's entry, so a plain follow never picks an old `seit` up. An entry
+  of a Team no longer followed is never read (`teamPlatz` asks only for a
+  followed one), so no other change has to touch the map. `auswahlFelder`
+  writes a new Team's `seit` from `teamsSeit` where it has one, else the
+  next one as today. Kept optional, so `LEERE_AUSWAHL`, the takeover and
+  `zusammenfuehren` stay as they are.
 - **Adapters report the place from the state the change applied to.** Each
   adapter's change path returns the state it applied the change to;
   `entfolgen` reads the place from it, so a change of another tab or device
   that just arrived is taken into account and a change still to be stored
   (`offen`, `ausstehend`) is applied again without touching the place.
-- **`LokaleAuswahl` shows what it stored.** After a successful write it shows
-  the document it wrote (as read back), so a Team it just followed has its
-  `seit` and can be unfollowed and restored at once. `FirestoreAuswahl`
-  already gets the `seit` from its listener, which reports local writes at
-  once.
+- **A Team just followed has its place at once.** `LokaleAuswahl` reads
+  the storage at the start of every change, so the state an unfollow
+  applies to holds the `seit` of every stored Team. `FirestoreAuswahl` shows
+  a pending change that follows a Team with the `seit` it writes
+  (`geschriebeneTeamsSeit`, `mitTeamsSeit`), before the listener tells.
 - **A device restores what it has seen.** As with every change, an adapter
   acts on what it has seen: where another device followed the Team again
   meanwhile and this one has not heard of it yet (offline), the undo writes

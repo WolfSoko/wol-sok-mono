@@ -70,9 +70,11 @@ describe('folgenAenderung', () => {
   });
 });
 
-describe('entfolgenAenderung', () => {
-  it("forgets the Team's seit, so a plain follow later takes a new one", () => {
-    expect(entfolgenAenderung(B)(gelesen).teamsSeit?.has(B)).toBe(false);
+describe('a plain follow after an unfollow', () => {
+  it('keeps no old seit for the Team, so the write gives it a new one', () => {
+    const wieder = folgenAenderung(B)(entfolgenAenderung(B)(gelesen));
+
+    expect(wieder.teamsSeit?.has(B)).toBe(false);
   });
 });
 
@@ -80,11 +82,8 @@ describe('abgebenAenderung', () => {
   it('keeps the places of the Teams that stay', () => {
     const nachher = abgebenAenderung({ ...LEERE_AUSWAHL, teams: [B] })(gelesen);
 
-    expect(nachher.teamsSeit).toEqual(
-      new Map([
-        [A, 10],
-        [C, 30],
-      ])
-    );
+    expect(teamPlatz(nachher, A)).toEqual({ seit: 10 });
+    expect(teamPlatz(nachher, C)).toEqual({ seit: 30 });
+    expect(teamPlatz(nachher, B)).toBeUndefined();
   });
 });

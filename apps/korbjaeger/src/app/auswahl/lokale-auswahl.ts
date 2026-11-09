@@ -202,8 +202,8 @@ export class LokaleAuswahl implements Auswahl {
   /**
    * Applies `aenderung` to what is stored now, with the changes still
    * `offen`, and stores the result where it changed anything or something
-   * was still to be stored, showing what it stored. Returns the state it
-   * applied `aenderung` to.
+   * was still to be stored. Returns the state it applied `aenderung` to:
+   * read from storage at once, so it has the `seit` of every stored Team.
    */
   private aendernJetzt(aenderung: AuswahlAenderung): AuswahlInhalt {
     const gelesen = this.lesen();
@@ -223,13 +223,7 @@ export class LokaleAuswahl implements Auswahl {
       gelesen,
       auswahlFelder(gespeichert, nachher, naechsterSeit(gelesen))
     );
-    if (this.schreiben(dokument)) {
-      this.offen = [];
-      // as stored: with the `seit` each new entry got
-      this.anzeigen(auswahlDokumentLesen(dokument));
-    } else {
-      this.offen = [...this.offen, aenderung];
-    }
+    this.offen = this.schreiben(dokument) ? [] : [...this.offen, aenderung];
     return vorher;
   }
 

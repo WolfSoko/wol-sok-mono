@@ -3,6 +3,7 @@ import {
   auswahlFelder,
   LEERE_AUSWAHL,
   ENTFERNT,
+  geschriebeneTeamsSeit,
   mitTeamsSeit,
   type AuswahlInhalt,
 } from './auswahl-dokument';
@@ -61,16 +62,18 @@ describe('mitTeamsSeit', () => {
   it('gives the Teams it holds the seit a write stores for them', () => {
     const inhalt: AuswahlInhalt = { ...LEERE_AUSWAHL, teams: [313036, 201500] };
 
-    const mit = mitTeamsSeit(inhalt, {
-      teams: { 201500: 42, 201765: 43 },
+    const seiten = geschriebeneTeamsSeit({
+      teams: { 201500: 42, 201765: 43, 313036: ENTFERNT },
     });
 
-    expect(mit.teamsSeit).toEqual(new Map([[201500, 42]]));
-  });
-
-  it('is the same content where the write stores no Team', () => {
-    const inhalt: AuswahlInhalt = { ...LEERE_AUSWAHL, teams: [313036] };
-
-    expect(mitTeamsSeit(inhalt, { teams: { 313036: ENTFERNT } })).toBe(inhalt);
+    expect(seiten).toEqual(
+      new Map([
+        [201500, 42],
+        [201765, 43],
+      ])
+    );
+    expect(mitTeamsSeit(inhalt, seiten).teamsSeit).toEqual(
+      new Map([[201500, 42]])
+    );
   });
 });

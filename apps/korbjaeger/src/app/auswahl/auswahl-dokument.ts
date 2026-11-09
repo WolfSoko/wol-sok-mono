@@ -259,26 +259,34 @@ export function auswahlFelder(
   };
 }
 
+/** The `seit` a write of `felder` stores for each Team it follows. */
+export function geschriebeneTeamsSeit(
+  felder: AuswahlFelder
+): ReadonlyMap<TeamId, number> {
+  const seiten = new Map<TeamId, number>();
+  for (const [schluessel, feld] of Object.entries(felder.teams ?? {})) {
+    const team = idAus(schluessel);
+    if (team !== undefined && istZahl(feld)) {
+      seiten.set(team, feld);
+    }
+  }
+  return seiten;
+}
+
 /**
- * `inhalt` with the `seit` that `felder` gives each of its Teams, as the
- * write of `felder` stores them; so a Team just followed has its place
- * before the store answered.
+ * `inhalt` with `seiten` (`geschriebeneTeamsSeit`) for the Teams it
+ * follows; so a Team just followed has its place before the store
+ * answered.
  */
 export function mitTeamsSeit(
   inhalt: AuswahlInhalt,
-  felder: AuswahlFelder
+  seiten: ReadonlyMap<TeamId, number>
 ): AuswahlInhalt {
-  const neu = Object.entries(felder.teams ?? {}).filter(
-    (eintrag): eintrag is [string, number] =>
-      typeof eintrag[1] === 'number' &&
-      inhalt.teams.includes(Number(eintrag[0]))
-  );
-  if (neu.length === 0) {
-    return inhalt;
-  }
   const teamsSeit = new Map(inhalt.teamsSeit);
-  for (const [team, seit] of neu) {
-    teamsSeit.set(Number(team), seit);
+  for (const [team, seit] of seiten) {
+    if (inhalt.teams.includes(team)) {
+      teamsSeit.set(team, seit);
+    }
   }
   return { ...inhalt, teamsSeit };
 }
@@ -479,11 +487,19 @@ function vereinsfarbenLesen(
   return nachVerein(gelesen);
 }
 
-/** By `seit`, the id deciding a tie. */
+/**
+ * The order of the entries of a map, as the reader gives them: by `seit`,
+ * the id (`sortierung`) deciding a tie.
+ */
+export function vorSeit(
+  a: { readonly seit: number; readonly sortierung: number },
+  b: { readonly seit: number; readonly sortierung: number }
+): number {
+  return a.seit - b.seit || a.sortierung - b.sortierung;
+}
+
 function geordnet<T>(eintraege: Gelesen<T>[]): readonly Gelesen<T>[] {
-  return eintraege.sort(
-    (a, b) => a.seit - b.seit || a.sortierung - b.sortierung
-  );
+  return eintraege.sort(vorSeit);
 }
 
 /** A Kind as version 1 first stored it, in a list. */

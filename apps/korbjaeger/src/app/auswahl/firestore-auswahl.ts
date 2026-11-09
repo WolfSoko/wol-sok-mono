@@ -36,6 +36,7 @@ import {
   auswahlDokumentLesen,
   auswahlFelder,
   ENTFERNT,
+  geschriebeneTeamsSeit,
   mitTeamsSeit,
   naechsterSeit,
   type AuswahlFelder,
@@ -150,12 +151,13 @@ export class FirestoreAuswahl implements Auswahl {
       return gelesen;
     }
     const aktuell = gelesen.art === 'aktuell' ? gelesen : KEIN_DOKUMENT;
-    const { teams, teamsSeit, kinder, vereinsfarben } =
-      this.ausstehend().reduce<AuswahlInhalt>(
+    return {
+      ...aktuell,
+      ...this.ausstehend().reduce<AuswahlInhalt>(
         (stand, aenderung) => aenderung(stand),
         aktuell
-      );
-    return { ...aktuell, teams, teamsSeit, kinder, vereinsfarben };
+      ),
+    };
   });
   private readonly fehlgeschlagen = signal(false);
   /** Why it shows nothing more: its listener failed, or it was ended. */
@@ -305,10 +307,13 @@ export class FirestoreAuswahl implements Auswahl {
     const felder = auswahlFelder(vorher, nachher, seit);
     // at most one `seit` per entry
     this.letzterSeit = seit + nachher.teams.length + nachher.kinder.length;
-    // shown with the `seit`s it writes, so a Team just followed has its
+    // a Team it follows is shown with the `seit` it writes, so it has its
     // place before the listener tells
-    const gezeigt: AuswahlAenderung = (stand) =>
-      mitTeamsSeit(aenderung(stand), felder);
+    const seiten = geschriebeneTeamsSeit(felder);
+    const gezeigt: AuswahlAenderung =
+      seiten.size === 0
+        ? aenderung
+        : (stand) => mitTeamsSeit(aenderung(stand), seiten);
     this.ausstehend.update((alle) => [...alle, gezeigt]);
     // answered once online; a refusal takes the change back in the cache
     void setDoc(this.dokument, firestoreFelder(felder), { merge: true })
