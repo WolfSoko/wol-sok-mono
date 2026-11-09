@@ -15,6 +15,7 @@ import {
   saisonBeendet,
   teamUeberblick,
   zuletztGespielt,
+  type KaderFunde,
   type PersonId,
   type SpielDetails,
   type TeamId,
@@ -37,7 +38,6 @@ import {
   gleicherAuftrag,
   KADER_SUCHE_SPIELE,
   kaderSucheResource,
-  type KaderFunde,
 } from './kader-suche';
 import { fehlerKarte, geladeneKarte } from './team-karte';
 import {
