@@ -32,7 +32,7 @@
         ]
       },
       {
-        "source": "/team/*",
+        "source": "/!(api|*.*)",
         "headers": [
           {
             "key": "Cache-Control",
@@ -41,25 +41,7 @@
         ]
       },
       {
-        "source": "/spiel/*",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/team-einrichten",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/einstellungen",
+        "source": "/!(api)/**/!(*.*)",
         "headers": [
           {
             "key": "Cache-Control",

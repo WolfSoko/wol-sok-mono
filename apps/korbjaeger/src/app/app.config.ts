@@ -6,6 +6,7 @@ import {
 import { withComponentInputBinding } from '@angular/router';
 import { provideBasketballData } from './basketball-data/basketball-data.provider';
 import { provideAppServiceWorker } from './pwa/app-service-worker';
+import { provideInstallationsHinweis } from './pwa/installations-hinweis';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -13,5 +14,6 @@ export const appConfig: ApplicationConfig = {
     provideFileRouter(withComponentInputBinding()),
     provideBasketballData(),
     provideAppServiceWorker(),
+    provideInstallationsHinweis(),
   ],
 };

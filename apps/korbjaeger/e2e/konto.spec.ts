@@ -29,7 +29,7 @@ test.describe('the account', () => {
     const konto = neuesKonto('Muster');
     await teamPage.goto(MTV_WASBUETTEL);
     await teamPage.folgen.click();
-    await expect(teamPage.folgen).toHaveAttribute('aria-pressed', 'true');
+    await expect(teamPage.nichtMehrFolgen).toBeVisible();
 
     await page.getByRole('link', { name: 'Einstellungen' }).click();
     await einstellungenPage.anmeldenAls(konto, { neu: true });
@@ -56,8 +56,8 @@ test.describe('the account', () => {
     // what one device changes shows on the other
     const zweitesTeam = new TeamPage(zweiteSeite);
     await zweitesTeam.goto(MTV_WASBUETTEL);
-    await zweitesTeam.folgen.click();
-    await expect(zweitesTeam.folgen).toHaveAttribute('aria-pressed', 'false');
+    await zweitesTeam.nichtMehrFolgen.click();
+    await expect(zweitesTeam.folgen).toBeVisible();
     await startPage.goto();
     await expect(startPage.leer).toBeVisible();
 
@@ -78,7 +78,7 @@ test.describe('the account', () => {
   }) => {
     await teamPage.goto(MTV_WASBUETTEL);
     await teamPage.folgen.click();
-    await expect(teamPage.folgen).toHaveAttribute('aria-pressed', 'true');
+    await expect(teamPage.nichtMehrFolgen).toBeVisible();
     await einstellungenPage.goto();
     const konto = neuesKonto('Beispiel');
     await einstellungenPage.anmeldenAls(konto, { neu: true });

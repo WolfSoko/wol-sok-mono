@@ -12,7 +12,7 @@ import { aeltesterStand, type Stand } from '../basketball-data/stand';
 import type { HallenStand } from '../halle/hallen-stand';
 import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
 import type { KaderFunde } from './kader-suche';
-import type { TeamKarte } from './team-karte';
+import { kartenName, type TeamKarte } from './team-karte';
 
 /** A followed Team as the overview holds it: its card and its reads. */
 export interface TeamImUeberblick {
@@ -42,13 +42,16 @@ export type NichtGefunden =
    */
   | 'nicht-lesbar';
 
+/** A Team of a Kind's card, with the name the card shows (`kartenName`). */
+export type KindTeam = TeamKarte & { readonly name: string };
+
 /** One marked Kind on the overview, across the followed Teams it plays for. */
 export interface KindAbschnitt {
   readonly personId: PersonId;
   /** The Spitzname, else the first name its Kader gives, else "Mein Kind". */
   readonly titel: string;
   /** The cards of the Teams whose Kader named the Kind, as followed. */
-  readonly teams: readonly TeamKarte[];
+  readonly teams: readonly KindTeam[];
   /** Whether a Team's Kader is still read, which may add a Team. */
   readonly sucht: boolean;
   /** The first next Spiel of its Teams, by which the overview orders them. */
@@ -158,7 +161,7 @@ function kindAbschnitt(
       kind.spitzname ??
       seine.map((team) => vorname(team, kind.personId)).find(Boolean) ??
       MEIN_KIND,
-    teams: seine.map(({ karte }) => karte),
+    teams: seine.map(({ karte }) => ({ ...karte, name: kartenName(karte) })),
     sucht,
     ausfaelle: ausfaelle.map(zeile),
     spaetereAusfaelle: spaetereAusfaelle.map(zeile),

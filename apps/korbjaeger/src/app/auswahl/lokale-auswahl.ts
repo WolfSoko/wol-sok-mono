@@ -63,6 +63,8 @@ export class LokaleAuswahl implements Auswahl {
   public readonly kinder: Signal<readonly Kind[]>;
   /** The device's storage is always read, at worst as empty. */
   public readonly nichtLesbar: Signal<boolean> = signal(false).asReadonly();
+  /** The device's storage holds the choices, always this one. */
+  public readonly quelle: Signal<unknown> = signal(this).asReadonly();
 
   private readonly inhalt = signal<AuswahlInhalt>(LEERE_AUSWAHL);
 

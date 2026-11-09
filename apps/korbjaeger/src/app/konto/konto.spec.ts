@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { GESPERRTER_SPEICHER } from '../../testing/speicher';
 import { ANGEMELDET_SCHLUESSEL, geraeteMerker, KONTO_SITZUNG } from './konto';
 
 describe('geraeteMerker', () => {
@@ -30,16 +31,7 @@ describe('geraeteMerker', () => {
   });
 
   it('knows of no sign-in where the storage is blocked', () => {
-    const blockiert = {
-      getItem: () => {
-        throw new DOMException('blocked', 'SecurityError');
-      },
-      setItem: () => {
-        throw new DOMException('blocked', 'SecurityError');
-      },
-      removeItem: () => undefined,
-    };
-    const merker = geraeteMerker(blockiert);
+    const merker = geraeteMerker(GESPERRTER_SPEICHER);
 
     merker.setzen();
 

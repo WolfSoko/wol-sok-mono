@@ -11,6 +11,7 @@ export function fakeAuswahl(teile: Partial<Auswahl> = {}): Auswahl {
     teams: signal([]),
     kinder: signal([]),
     nichtLesbar: signal(false),
+    quelle: signal('fake'),
     folgen: () => Promise.resolve(),
     entfolgen: () => Promise.resolve(),
     markieren: () => Promise.resolve(),

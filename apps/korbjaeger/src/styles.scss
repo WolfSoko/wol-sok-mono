@@ -44,9 +44,20 @@ body {
 }
 
 // a Material list whose items wrap long names (Teams, Ligen, Spiele)
-// rather than cut them off
+// rather than cut them off: the items' heights through Material's own
+// tokens, since its fixed heights come with as specific a selector,
+// loaded after this file
+.umbrechende-liste {
+  @include mat.list-overrides(
+    (
+      list-item-one-line-container-height: auto,
+      list-item-two-line-container-height: auto,
+      list-item-three-line-container-height: auto,
+    )
+  );
+}
+
 .umbrechende-liste .mat-mdc-list-item {
-  height: auto;
   padding-block: 0.5rem;
 
   [matListItemTitle] {

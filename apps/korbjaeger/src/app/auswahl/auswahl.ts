@@ -31,6 +31,13 @@ export interface Auswahl {
    */
   readonly nichtLesbar: Signal<boolean>;
   /**
+   * Which store holds the choices now: the same value while one does, a
+   * new one once the device's and an account's take turns (a sign-in or
+   * sign-out, here or in another tab). An undo offered for a change keeps
+   * to the store it was made in.
+   */
+  readonly quelle: Signal<unknown>;
+  /**
    * Adds `team` to the end of Meine Teams, unless it is in them already.
    * Only once `teams` is read.
    */

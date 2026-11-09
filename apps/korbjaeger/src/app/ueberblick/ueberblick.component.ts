@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
+import { FokusNachEntfolgenDirective } from '../team/fokus-nach-entfolgen.directive';
+import { NachEntfolgen } from '../team/nach-entfolgen';
 import { MeineTeamsUeberblick } from './meine-teams-ueberblick';
 import { UeberblickKindComponent } from './ueberblick-kind.component';
 import { UeberblickTeamComponent } from './ueberblick-team.component';
@@ -11,17 +13,19 @@ import { UeberblickTeamComponent } from './ueberblick-team.component';
  * cards ("Weitere Teams"); while no Kind is marked, every Team's card and
  * how to mark one. Shows nothing until Meine Teams are read, then offers
  * to set up a first Team while there is none; says so where they cannot be
- * read at all.
+ * read at all. A Team unfollowed from a card takes its control away, so
+ * focus moves to the heading (`NachEntfolgen`).
  */
 @Component({
   selector: 'korb-ueberblick',
   imports: [
+    FokusNachEntfolgenDirective,
     MatButtonModule,
     RouterLink,
     UeberblickKindComponent,
     UeberblickTeamComponent,
   ],
-  providers: [MeineTeamsUeberblick],
+  providers: [MeineTeamsUeberblick, NachEntfolgen],
   templateUrl: './ueberblick.component.html',
   styleUrl: './ueberblick.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

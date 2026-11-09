@@ -3,7 +3,7 @@
   <mat-card-header>
     <mat-card-title>
       <a [routerLink]="['/team', team.teamId]" data-qa="ueberblick-name">{{
-        team.art === "geladen" ? team.name : "Team " + team.teamId
+        name()
       }}</a>
     </mat-card-title>
   </mat-card-header>
@@ -17,9 +17,6 @@
       }
       @case ("fehler") {
         <p class="fehler" data-qa="ueberblick-fehler">{{ team.text }}</p>
-        @if (aenderung.fehler(); as text) {
-          <p class="fehler" role="alert">{{ text }}</p>
-        }
       }
       @case ("geladen") {
         <korb-stand data-qa="ueberblick-stand" [stand]="team.stand" />
@@ -56,17 +53,11 @@
       }
     }
   </mat-card-content>
-  @if (team.art === "fehler") {
-    <mat-card-actions>
-      <button
-        matButton
-        type="button"
-        data-qa="ueberblick-entfernen"
-        [attr.aria-label]="'Team ' + team.teamId + ' entfernen'"
-        (click)="entfernen()"
-      >
-        Entfernen
-      </button>
-    </mat-card-actions>
-  }
+  <mat-card-actions align="end" data-qa="ueberblick-aktionen">
+    <korb-team-folgen
+      [teamId]="team.teamId"
+      [teamName]="name()"
+      verschwindetNachEntfolgen
+    />
+  </mat-card-actions>
 </mat-card>

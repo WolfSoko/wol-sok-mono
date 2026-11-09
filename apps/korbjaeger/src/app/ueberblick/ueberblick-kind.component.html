@@ -11,9 +11,7 @@
           @if (!$first) {
             ·
           }
-          <a [routerLink]="['/team', team.teamId]">{{
-            team.art === "geladen" ? team.name : "Team " + team.teamId
-          }}</a>
+          <a [routerLink]="['/team', team.teamId]">{{ team.name }}</a>
         }
       </mat-card-subtitle>
     }
@@ -93,4 +91,22 @@
       }
     }
   </mat-card-content>
+  @if (kind.teams.length > 0) {
+    <mat-card-actions
+      align="end"
+      class="aktionen"
+      data-qa="ueberblick-kind-aktionen"
+    >
+      @for (team of kind.teams; track team.teamId) {
+        <div class="aktion" data-qa="ueberblick-kind-aktion">
+          <span class="team-name" aria-hidden="true">{{ team.name }}</span>
+          <korb-team-folgen
+            [teamId]="team.teamId"
+            [teamName]="team.name"
+            verschwindetNachEntfolgen
+          />
+        </div>
+      }
+    </mat-card-actions>
+  }
 </mat-card>

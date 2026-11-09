@@ -33,7 +33,12 @@ import {
 } from '../auswahl/firestore-auswahl';
 import { geraetUebernehmen } from '../auswahl/geraet-uebernehmen';
 import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
-import { geraeteSpeicher } from '../geraete-speicher';
+import {
+  flagGesetzt,
+  flagSetzen,
+  geraeteSpeicher,
+  ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
+} from '../geraete-speicher';
 import {
   AnmeldungAbgebrochen,
   KontoGewechselt,
@@ -44,7 +49,6 @@ import {
 } from './konto-dienst';
 import { fehlerCode } from './fehler-code';
 import { mitZeitlimit } from './zeitlimit';
-import { ZWISCHENSPEICHER_LEEREN_SCHLUESSEL } from './zwischenspeicher-merker';
 
 /** Auth's codes for a popup the Elternteil closed or a second one superseded. */
 const ABGEBROCHEN = new Set([
@@ -56,7 +60,7 @@ const ABGEBROCHEN = new Set([
 /** The Firebase app's name: the app's own, apart from any default one. */
 const APP_NAME = 'korbjaeger';
 
-export { ZWISCHENSPEICHER_LEEREN_SCHLUESSEL } from './zwischenspeicher-merker';
+export { ZWISCHENSPEICHER_LEEREN_SCHLUESSEL } from '../geraete-speicher';
 
 /** How long signing out waits for the device's changes to be sent. */
 const SENDEN_WARTEN_MS = 5000;
@@ -257,26 +261,12 @@ async function mitPopup<T>(popup: () => Promise<T>): Promise<T> {
 
 /** Whether a sign-out left Firestore's copy on the device to clear. */
 function leerenAusstehend(): boolean {
-  try {
-    return (
-      geraeteSpeicher()?.getItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL) === '1'
-    );
-  } catch {
-    return false;
-  }
+  return flagGesetzt(geraeteSpeicher(), ZWISCHENSPEICHER_LEEREN_SCHLUESSEL);
 }
 
+/** Marks the copy as left to clear, or cleared; blocked: the next sign-out tries again. */
 function leerenAusstehendSetzen(offen: boolean): void {
-  try {
-    const speicher = geraeteSpeicher();
-    if (offen) {
-      speicher?.setItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL, '1');
-    } else {
-      speicher?.removeItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL);
-    }
-  } catch {
-    // blocked: the next sign-out tries again
-  }
+  flagSetzen(geraeteSpeicher(), ZWISCHENSPEICHER_LEEREN_SCHLUESSEL, offen);
 }
 
 function benutzerAus(user: User | null): Benutzer | null {

@@ -25,7 +25,7 @@ test.describe('Kinder', () => {
   }) => {
     await teamPage.goto(MTV_WASBUETTEL);
     await teamPage.folgen.click();
-    await expect(teamPage.folgen).toHaveAttribute('aria-pressed', 'true');
+    await expect(teamPage.nichtMehrFolgen).toBeVisible();
 
     await spielPage.goto(SPIEL);
     const heim = spielPage.kaderVon(HEIM);
