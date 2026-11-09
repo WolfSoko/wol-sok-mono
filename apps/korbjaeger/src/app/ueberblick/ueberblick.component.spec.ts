@@ -1160,6 +1160,20 @@ describe('UeberblickComponent', () => {
       expect(text(teil(lumi, 'kind-teams'))).toBe(
         'MTV Wasbüttel · MTV Wasbüttel U14'
       );
+      // each Team's "Nicht mehr folgen" beside its name, for all to see
+      expect(
+        [...lumi.querySelectorAll('[data-qa="ueberblick-kind-aktion"]')].map(
+          (aktion) => [
+            text(aktion.querySelector('.team-name')),
+            aktion
+              .querySelector('[data-qa="team-folgen"]')
+              ?.getAttribute('aria-label'),
+          ]
+        )
+      ).toEqual([
+        ['MTV Wasbüttel', 'Nicht mehr folgen: MTV Wasbüttel'],
+        ['MTV Wasbüttel U14', 'Nicht mehr folgen: MTV Wasbüttel U14'],
+      ]);
       expect(text(teil(lumi, 'naechstes'))).toContain('Sa., 14.11.2026');
       expect(text(teil(lumi, 'naechstes'))).toContain('SV Groß Oesingen');
       // which of its Teams plays
