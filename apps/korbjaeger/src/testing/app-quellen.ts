@@ -9,26 +9,46 @@ import { fileURLToPath } from 'node:url';
  */
 export const APP_ORDNER = fileURLToPath(new URL('../app', import.meta.url));
 
+/**
+ * The libs only the app uses, whose code is the app's as much as `src/app/`
+ * (`LokaleAuswahl`'s device key): walked with it, so no check misses them.
+ */
+export const EIGENE_LIB_ORDNER: readonly string[] = [
+  fileURLToPath(
+    new URL('../../../../libs/features/korbjaeger-auswahl/src', import.meta.url)
+  ),
+];
+
 /** A component's inline template. */
 export const INLINE_TEMPLATE = /\btemplate:\s*`([\s\S]*?)`/g;
 
 /** A source of the app, read once. */
 export interface AppQuelle {
-  /** Its path below `src/app/`. */
+  /** Its path below `src/app/`, or below a lib's `src/` (with the lib's folder). */
   readonly datei: string;
   readonly inhalt: string;
 }
 
 /**
- * The files below `src/app/` whose names end in one of `endungen` (`ts`,
- * `html`, `scss`), specs and emulator tests left out, read.
+ * The files below `src/app/` and the app's own libs (`EIGENE_LIB_ORDNER`)
+ * whose names end in one of `endungen` (`ts`, `html`, `scss`), specs and
+ * emulator tests left out, read.
  */
 export function appQuellen(endungen: readonly string[]): AppQuelle[] {
   const endung = new RegExp(`\\.(${endungen.join('|')})$`);
-  return dateienIn(APP_ORDNER)
+  return [
+    ...quellenIn(APP_ORDNER, APP_ORDNER, endung),
+    ...EIGENE_LIB_ORDNER.flatMap((ordner) =>
+      quellenIn(ordner, join(ordner, '..', '..'), endung)
+    ),
+  ];
+}
+
+function quellenIn(ordner: string, basis: string, endung: RegExp): AppQuelle[] {
+  return dateienIn(ordner)
     .filter((pfad) => endung.test(pfad) && !/\.(spec|emulator)\.ts$/.test(pfad))
     .map((pfad) => ({
-      datei: relative(APP_ORDNER, pfad),
+      datei: relative(basis, pfad),
       inhalt: readFileSync(pfad, 'utf8'),
     }));
 }

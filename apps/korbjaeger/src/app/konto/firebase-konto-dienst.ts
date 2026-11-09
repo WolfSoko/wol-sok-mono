@@ -26,13 +26,13 @@ import {
   waitForPendingWrites,
 } from 'firebase/firestore';
 import type { Environment } from '../../environments/environment.type';
-import type { AuswahlInhalt } from '../auswahl/auswahl-dokument';
 import {
+  type AuswahlInhalt,
   auswahlDokumentVon,
   FirestoreAuswahl,
-} from '../auswahl/firestore-auswahl';
-import { geraetUebernehmen } from '../auswahl/geraet-uebernehmen';
-import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
+  geraetUebernehmen,
+  type NichtUebernommen,
+} from '@wolsok/feat-korbjaeger-auswahl';
 import {
   flagGesetzt,
   flagSetzen,

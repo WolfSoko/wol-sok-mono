@@ -1,9 +1,10 @@
 import {
   AUSWAHL_GRENZEN,
   type AuswahlListe,
-} from '../auswahl/auswahl-dokument';
-import { AuswahlVollError, AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
-import { KeineFarbeError } from '../vereinsfarben/vereinsfarben';
+  AuswahlVollError,
+  AuswahlZuNeuError,
+  KeineFarbeError,
+} from '@wolsok/feat-korbjaeger-auswahl';
 
 /** What a screen says when a list is full, by the list. */
 const VOLL: Readonly<Record<AuswahlListe, string>> = {

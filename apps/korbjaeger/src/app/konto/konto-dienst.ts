@@ -1,6 +1,8 @@
-import type { Auswahl } from '../auswahl/auswahl';
-import type { AuswahlInhalt } from '../auswahl/auswahl-dokument';
-import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
+import type {
+  Auswahl,
+  AuswahlInhalt,
+  NichtUebernommen,
+} from '@wolsok/feat-korbjaeger-auswahl';
 
 /** The signed-in Elternteil, as Firebase Auth tells: kept in memory only. */
 export interface Benutzer {

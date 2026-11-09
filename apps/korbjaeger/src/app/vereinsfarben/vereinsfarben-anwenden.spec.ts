@@ -2,14 +2,16 @@ import { Component, input, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { VereinId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
-import type { VereinsfarbenWahl } from '../auswahl/vereinsfarben-wahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+import type {
+  VereinsfarbenWahl,
+  Vereinsfarben,
+} from '@wolsok/feat-korbjaeger-auswahl';
 import { farbschemaTokens } from './farbschema';
 import {
   FarbschemaDirective,
   vereinsfarbenAnwenden,
 } from './vereinsfarben-anwenden';
-import type { Vereinsfarben } from './vereinsfarben';
 
 /** A component wearing a Verein's colours, as the Team page does. */
 @Component({ selector: 'korb-im-verein', template: '' })

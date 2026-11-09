@@ -15,7 +15,7 @@ import {
 } from '../basketball-data/basketball-data-resource';
 import type { KorbjaegerData } from '../basketball-data/basketball-data.provider';
 import type { KorbReadOptions } from '../basketball-data/lesung';
-import { gleicheFolge } from '../gleiche-folge';
+import { gleicheFolge } from '@wolsok/feat-korbjaeger-auswahl';
 
 /**
  * How many of a Team's last played Spiele the overview looks into for the

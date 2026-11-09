@@ -6,14 +6,16 @@ import {
 } from '@angular/material/bottom-sheet';
 import type { VereinId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { AuswahlVollError } from '../auswahl/auswahl-fehler';
-import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
-import type { VereinsfarbenWahl } from '../auswahl/vereinsfarben-wahl';
+import {
+  AuswahlVollError,
+  type VereinsfarbenWahl,
+  type Vereinsfarben,
+} from '@wolsok/feat-korbjaeger-auswahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 import {
   VereinsfarbenBlattComponent,
   type VereinsfarbenBlattDaten,
 } from './vereinsfarben-blatt.component';
-import type { Vereinsfarben } from './vereinsfarben';
 
 const VEREIN: VereinsfarbenBlattDaten = {
   vereinId: 4242,

@@ -6,14 +6,14 @@ import {
   gespeichert as gespeichertIn,
   vorhanden as vorhandenIn,
 } from '../../testing/firestore-emulator';
-import { inhaltAus } from './auswahl-aenderungen';
 import {
+  inhaltAus,
   AUSWAHL_GRENZEN,
   auswahlDokumentLesen,
   type AuswahlInhalt,
-} from './auswahl-dokument';
-import { AuswahlZuNeuError } from './auswahl-fehler';
-import { geraetUebernehmen } from './geraet-uebernehmen';
+  AuswahlZuNeuError,
+  geraetUebernehmen,
+} from '@wolsok/feat-korbjaeger-auswahl';
 
 /** The merge at sign-in on the emulator, under the app's rules. */
 let env: RulesTestEnvironment;

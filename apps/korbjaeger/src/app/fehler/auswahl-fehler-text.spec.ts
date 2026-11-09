@@ -1,6 +1,9 @@
-import { AUSWAHL_GRENZEN } from '../auswahl/auswahl-dokument';
-import { AuswahlVollError, AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
-import { KeineFarbeError } from '../vereinsfarben/vereinsfarben';
+import {
+  AUSWAHL_GRENZEN,
+  AuswahlVollError,
+  AuswahlZuNeuError,
+  KeineFarbeError,
+} from '@wolsok/feat-korbjaeger-auswahl';
 import { auswahlFehlerText } from './auswahl-fehler-text';
 
 describe('auswahlFehlerText', () => {

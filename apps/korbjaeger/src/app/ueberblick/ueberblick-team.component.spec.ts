@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 import type { TeamKarte } from './team-karte';
 import { UeberblickTeamComponent } from './ueberblick-team.component';
 

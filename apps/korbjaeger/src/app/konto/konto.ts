@@ -1,6 +1,6 @@
 import { DestroyRef, DOCUMENT, inject, InjectionToken } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
+import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
 import {
   ANGEMELDET_SCHLUESSEL,
   flagGesetzt,

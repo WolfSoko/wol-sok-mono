@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 import { KindMarkierungComponent } from './kind-markierung.component';
 
 describe('KindMarkierungComponent', () => {

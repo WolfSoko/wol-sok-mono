@@ -10,7 +10,7 @@ import {
   nachVerein,
   type VereinsfarbenWahl,
 } from './vereinsfarben-wahl';
-import { gleicheFarben } from '../vereinsfarben/vereinsfarben';
+import { gleicheFarben } from './vereinsfarben';
 import { kindMit, type Kind } from './kind';
 
 /**

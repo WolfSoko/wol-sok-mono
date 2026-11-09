@@ -1,8 +1,10 @@
 import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
 import { REGIONEN } from '../../shared/regionen';
 import { zeigen } from '../../testing/zeigen';
-import { AUSWAHL_GRENZEN } from '../auswahl/auswahl-dokument';
-import { SPITZNAME_LAENGE } from '../auswahl/kind';
+import {
+  AUSWAHL_GRENZEN,
+  SPITZNAME_LAENGE,
+} from '@wolsok/feat-korbjaeger-auswahl';
 import {
   ANTWORT_GRENZEN,
   MAX_ALTER_TAGE,

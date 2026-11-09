@@ -14,8 +14,11 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
-import { AUSWAHL_GRENZEN } from './app/auswahl/auswahl-dokument';
-import { SPITZNAME_CODEPUNKTE, SPITZNAME_LAENGE } from './app/auswahl/kind';
+import {
+  AUSWAHL_GRENZEN,
+  SPITZNAME_CODEPUNKTE,
+  SPITZNAME_LAENGE,
+} from '@wolsok/feat-korbjaeger-auswahl';
 import {
   alsGeraet,
   APP_REGELN,

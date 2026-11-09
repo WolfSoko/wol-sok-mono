@@ -4,17 +4,19 @@ import type {
   TeamId,
   VereinId,
 } from '@wolsok/feat-shared-basketball-data';
-import type { Vereinsfarben } from '../vereinsfarben/vereinsfarben';
-import type { VereinsfarbenWahl } from '../auswahl/vereinsfarben-wahl';
-import type { Auswahl, TeamPlatz } from '../auswahl/auswahl';
 import {
+  type Vereinsfarben,
+  type VereinsfarbenWahl,
+  type Auswahl,
+  type TeamPlatz,
   AUSWAHL_LISTEN,
   LEERE_AUSWAHL,
   type AuswahlInhalt,
-} from '../auswahl/auswahl-dokument';
-import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
-import type { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
+  type Kind,
+  type MarkierbarerSpieler,
+  type LokaleAuswahl,
+  type NichtUebernommen,
+} from '@wolsok/feat-korbjaeger-auswahl';
 import {
   KontoGewechselt,
   KontoNichtGeloescht,

@@ -12,9 +12,10 @@ import { AUSWAHL } from '../auswahl/auswahl';
 import {
   vereinsfarbenVon,
   type VereinsfarbenWahl,
-} from '../auswahl/vereinsfarben-wahl';
+  gleicheFarben,
+  type Vereinsfarben,
+} from '@wolsok/feat-korbjaeger-auswahl';
 import { vereinsfarbenTokens } from './vereinsfarben-tokens';
-import { gleicheFarben, type Vereinsfarben } from './vereinsfarben';
 
 const gleicheOderKeine = (
   a: Vereinsfarben | undefined,

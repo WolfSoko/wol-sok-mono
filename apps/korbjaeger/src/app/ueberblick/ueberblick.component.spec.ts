@@ -19,8 +19,8 @@ import {
   type TeamSaison,
   type VereinsTeams,
 } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
-import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
+import { AUSWAHL } from '../auswahl/auswahl';
+import { type Auswahl, LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
@@ -30,7 +30,7 @@ import { HEUTE } from '../heute';
 import { JETZT } from '../jetzt';
 import { MEIN_KIND } from './ueberblick-ansicht';
 import { UeberblickComponent } from './ueberblick.component';
-import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 import { KontoSitzung } from '../konto/konto-sitzung';
 import {
   FakeKontoDienst,

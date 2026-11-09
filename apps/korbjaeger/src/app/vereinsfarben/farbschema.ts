@@ -6,7 +6,10 @@ import {
   TonalPalette,
   Variant,
 } from '@material/material-color-utilities';
-import { vereinsfarbenAus, type Vereinsfarben } from './vereinsfarben';
+import {
+  vereinsfarbenAus,
+  type Vereinsfarben,
+} from '@wolsok/feat-korbjaeger-auswahl';
 
 /**
  * Every Material system colour the theme in `styles.scss` emits as

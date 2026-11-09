@@ -1,4 +1,4 @@
-import { AUSWAHL_SCHLUESSEL } from '../auswahl/lokale-auswahl';
+import { AUSWAHL_SCHLUESSEL } from '@wolsok/feat-korbjaeger-auswahl';
 import {
   ANTWORT_INDEX,
   ANTWORT_PRAEFIX,

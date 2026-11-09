@@ -1,7 +1,7 @@
 import { inhaltAus } from './auswahl-aenderungen';
 import { auswahlDokumentLesen, type AuswahlInhalt } from './auswahl-dokument';
 import { AUSWAHL_SCHLUESSEL, LokaleAuswahl } from './lokale-auswahl';
-import { auswahlVertrag } from './testing/auswahl-vertrag';
+import { auswahlVertrag } from '../testing/auswahl-vertrag';
 
 /** What `geraet` stores, as the app reads it. */
 function gespeichert(geraet: Pick<Storage, 'getItem'>): AuswahlInhalt {

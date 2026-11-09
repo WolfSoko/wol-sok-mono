@@ -16,10 +16,10 @@ import {
   gleicheFarben,
   vereinsfarbenAus,
   type Vereinsfarben,
-} from '../vereinsfarben/vereinsfarben';
+} from './vereinsfarben';
 import { nachVerein, type VereinsfarbenWahl } from './vereinsfarben-wahl';
 import { AuswahlVollError } from './auswahl-fehler';
-import { gleicheFolge } from '../gleiche-folge';
+import { gleicheFolge } from './gleiche-folge';
 import { kindMit, type Kind, type MarkierbarerSpieler } from './kind';
 
 /**

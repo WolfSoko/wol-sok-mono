@@ -13,7 +13,10 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { SPITZNAME_LAENGE, spitznameZeichen } from '../auswahl/kind';
+import {
+  SPITZNAME_LAENGE,
+  spitznameZeichen,
+} from '@wolsok/feat-korbjaeger-auswahl';
 
 /** What the dialog asks about: whom, and whether to mark or rename. */
 export interface SpitznameFrage {

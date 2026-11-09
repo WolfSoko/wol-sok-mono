@@ -29,7 +29,7 @@ import { aeltesterStand } from '../basketball-data/stand';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
-import { gleicheFolge } from '../gleiche-folge';
+import { gleicheFolge } from '@wolsok/feat-korbjaeger-auswahl';
 import { hallenStand } from '../halle/hallen-stand';
 import { HEUTE } from '../heute';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
