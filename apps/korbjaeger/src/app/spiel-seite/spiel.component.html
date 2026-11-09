@@ -1,3 +1,7 @@
+@if (!kopf()) {
+  <!-- the page's heading until the Spiel names its Teams, above any failure -->
+  <h1>Spiel</h1>
+}
 @if (details.isLoading()) {
   <mat-progress-bar mode="indeterminate" aria-label="Spiel wird geladen" />
 }
@@ -71,8 +75,6 @@
   <korb-halle
     [halle]="details.hasValue() ? details.value().halle : undefined"
   />
-} @else {
-  <h1>Spiel</h1>
 }
 @if (spielbericht(); as teil) {
   <h2>Kader</h2>
