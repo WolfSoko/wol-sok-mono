@@ -8,6 +8,13 @@ import { ownValue } from './own-value';
 /** The DBB's `statisticType` of a Liga it keeps no Spielberichte for. */
 const NO_STATISTICS = 0;
 
+/**
+ * The DBB's Verband „Bundesligen". Within it, a Liga without Spielberichte
+ * is one of the men's professional leagues, whose results the DBB never
+ * confirms (#2953: 0 of 262 confirmed; elsewhere such Ligen confirm theirs).
+ */
+const BUNDESLIGEN_VERBAND = 100;
+
 const GESCHLECHTER: Readonly<Record<string, Geschlecht>> = {
   männlich: 'männlich',
   weiblich: 'weiblich',
@@ -31,11 +38,19 @@ export function mapLiga(ligaData: DbbObject): Liga {
     ...optionalField('bezirk', bezirk),
     ...optionalField('saison', saison),
     ...(keepsNoSpielberichte(ligaData) ? { ohneSpielberichte: true } : {}),
+    ...(confirmsNoResults(ligaData) ? { confirmsNoResults: true } : {}),
   };
 }
 
 function keepsNoSpielberichte(ligaData: DbbObject): boolean {
   return ligaData.optionalNumber('statisticType') === NO_STATISTICS;
+}
+
+function confirmsNoResults(ligaData: DbbObject): boolean {
+  return (
+    keepsNoSpielberichte(ligaData) &&
+    ligaData.number('verbandId') === BUNDESLIGEN_VERBAND
+  );
 }
 
 function mapSaison(ligaData: DbbObject): Saison | undefined {
