@@ -10,6 +10,8 @@ import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { parseDbbId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
+import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
+import { gefolgterVerein } from './gefolgter-verein';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { spielberichtResource } from '../basketball-data/spielbericht-resource';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
@@ -78,4 +80,13 @@ export class SpielComponent {
       ? undefined
       : spielberichtTeil(this.bericht, this.details, this.gefolgt())
   );
+
+  public constructor() {
+    // the colours of the followed side's Verein (#2918)
+    vereinsfarbenAnwenden(() =>
+      this.details.hasValue()
+        ? gefolgterVerein(this.details.value().spiel, this.gefolgt())
+        : undefined
+    );
+  }
 }

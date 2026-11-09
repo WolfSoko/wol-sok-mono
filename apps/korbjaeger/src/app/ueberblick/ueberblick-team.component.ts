@@ -13,6 +13,8 @@ import { StandComponent } from '../stand/stand.component';
 import { TeamFolgenComponent } from '../team/team-folgen.component';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
 import { kartenName, type TeamKarte } from './team-karte';
+import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
+import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knopf.component';
 
 /**
  * One of Meine Teams on the overview, as `karte` gives it: its next Spiel
@@ -20,7 +22,8 @@ import { kartenName, type TeamKarte } from './team-karte';
  * opening its Spiel page, and once its Saison looks over a hint with its
  * Verein's current Teams to follow; or why its read failed. Every card
  * ends with "Nicht mehr folgen", which takes the card away and offers to
- * undo it (`NachEntfolgen`, the overview's). Reads no data itself:
+ * undo it (`NachEntfolgen`, the overview's), beside "Vereinsfarben"; the
+ * card wears its Verein's colours. Reads no data itself:
  * `MeineTeamsUeberblick` holds every card's reads, the next Spiel's Halle
  * and the Verein's Teams included.
  */
@@ -35,6 +38,7 @@ import { kartenName, type TeamKarte } from './team-karte';
     SpielLinkComponent,
     StandComponent,
     TeamFolgenComponent,
+    VereinsfarbenKnopfComponent,
   ],
   templateUrl: './ueberblick-team.component.html',
   styleUrl: './ueberblick-team.component.scss',
@@ -45,4 +49,11 @@ export class UeberblickTeamComponent {
 
   /** The Team's name, or its id while its read has not given one. */
   protected readonly name = computed(() => kartenName(this.karte()));
+
+  public constructor() {
+    vereinsfarbenAnwenden(() => {
+      const karte = this.karte();
+      return karte.art === 'geladen' ? karte.verein.id : undefined;
+    });
+  }
 }
