@@ -19,7 +19,7 @@ A spike: findings and a recommendation, no build.
 | NBBL A Nord, 1                                | 1     | `false`         | `null`       |
 | Youth Bezirks- and Regionsligen (fixtures), 1 | 3     | `false`         | `null`       |
 
-So even the leagues with full Spielberichte have no play-by-play at the DBB this season. The game's result and Spielbericht reach TeamSL once the scorer uploads them after the game (the [Bavarian circular on the digital scoresheet](https://basketballverband-bayern.de/wp-content/uploads/2023/05/Rundschreiben-DSS.pdf): result and report as PDF go into TeamSL after the game); nothing reaches the DBB's API during the game. The DBB's Varnish adds up to five minutes on top (ADR 0018).
+So none of the 15 games sampled has play-by-play at the DBB, including the 7 DBBL and NBBL games whose Spielberichte are complete. The game's result and Spielbericht reach TeamSL once the scorer uploads them after the game (the [Bavarian circular on the digital scoresheet](https://basketballverband-bayern.de/wp-content/uploads/2023/05/Rundschreiben-DSS.pdf): result and report as PDF go into TeamSL after the game); nothing reaches the DBB's API during the game. The DBB's Varnish adds up to five minutes on top (ADR 0018).
 
 **The live source is NBN23's, not the DBB's site.** Since 2021/22 the DBB runs a digital scoresheet (DSS, „Digitaler Spielberichtsbogen") from the Spanish company NBN23 (NOTHINGBUTNET S.L.); scorers record the game in NBN23's „InGame" app ([NBN23, 2021](https://nbn23.com/the-future-is-digital-in-german-basketball/)). Its live view is the app **DBB.Scores** (published by NBN23, `com.nbn23.germanapp`, [App Store](https://apps.apple.com/us/app/-/id1592686052)): live score, box score, play-by-play, shot charts and push notifications, „from youth to amateur level", from the DBB's digital game report system.
 
@@ -29,10 +29,10 @@ So even the leagues with full Spielberichte have no play-by-play at the DBB this
 
 ### 2. What would the DBB allow?
 
-Nothing is published. basketball-bund.net has no terms of use for its API and no robots or rate rules; no rate limiting was seen (ADR 0018). The DBB's legal notice ([Impressum](https://www.basketball-bund.de/impressum/)) reserves the usual: „Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers." So any use beyond today's — and live data most of all — needs written permission:
+Nothing is published. basketball-bund.net has no terms of use for its API; its `robots.txt` disallows only a few legacy pages (`/index.jsp?Action=…`, `/statistik.do`, `/halleList.do`, an archive page), not `/rest/`, and names no crawl delay or rate; no rate limiting was seen (ADR 0018). The DBB's legal notice ([Impressum](https://www.basketball-bund.de/impressum/)) reserves the usual: „Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers." So any use beyond today's — and live data most of all — needs written permission:
 
-- **from the DBB** for the data of its Ligen (it already holds the consents for publishing player statistics on DBB.Scores and basketball-bund.net, e.g. the WNBL forms), and
-- **from NBN23** for its live feed, which it sells as part of its own app (with in-app purchases and advertising); a live view in Korbjäger would compete with it.
+- **from the DBB** for the data of its Ligen (for the WNBL, at least, it collects the players' consent to publishing their statistics on DBB.Scores and basketball-bund.net: [WNBL video rules with consent form](https://www.basketball-bund.de/wp-content/uploads/sites/2/2026/04/Anlage-WNBL-Videorichtlinien-mit-Einverstaendniserklaerung.docx)), and
+- **from NBN23** for its live feed, which it sells as part of its own app (with in-app purchases and advertising); a live view in Korbjäger may be seen as competing with it.
 
 The owner's planned request to the DBB (ADR 0018: before the app goes public) is the place to ask. No request rate is known; whatever the DBB names goes into the proxy's cache times.
 
@@ -43,9 +43,9 @@ The owner's planned request to the DBB (ADR 0018: before the app goes public) is
 **From a live source (NBN23 or a future DBB feed), only with permission:**
 
 - A second adapter (ADR 0018: an official source is a second adapter of `BasketballData`), or a new port for live state (`LiveSpiel`: score, period, clock, last actions), since `BasketballData` holds no live state today. The screens would poll the app's proxy, never the source.
-- **Never an uncached proxy path.** An uncached path multiplies the source's load by every parent watching. A short shared cache instead: `s-maxage` of 15 to 30 s on the live route (browser `max-age` at most as long), so the CDN collapses every viewer of a game into one request per period. Hosting's CDN already does that for today's routes.
-- Load on the source with a 30 s cache: at most two requests a minute per live game, however many viewers; a youth game takes about 90 minutes from tip-off to the end, so about 180 requests per game and route. A Saturday with every followed Team's game live stays in the hundreds of requests an hour. With 15 s, double that.
-- The privacy policy (ADR 0019) would gain the live source as a recipient or source; play-by-play names players per action, so the same `dbbOhnePersonen` care as for Spielberichte applies, and no live answer would be kept offline.
+- **Never an uncached proxy path.** An uncached path multiplies the source's load by every parent watching. A short shared cache instead: `s-maxage` of 15 to 30 s on the live route (browser `max-age` at most as long), so the CDN collapses every viewer of a game into one request per cache interval. Hosting's CDN already does that for today's routes.
+- Load on the source with a 30 s cache: about two requests a minute per live game and CDN edge (Hosting caches per edge), independent of the number of viewers. Assuming a youth game takes about 90 minutes from tip-off to the end (an estimate), that is about 180 requests per game, route and edge, or about 120 an hour per live game, times the games live at once. With 15 s, double that.
+- The privacy policy (ADR 0019) would gain the live source as a recipient or source; like a Spielbericht, a live answer names players (per action), so it would never be kept on the device (ADR 0019) and needs no `dbbOhnePersonen`.
 
 ## Goal
 
