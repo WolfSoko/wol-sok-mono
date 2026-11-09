@@ -922,6 +922,29 @@ describe('UeberblickComponent', () => {
       expect(auswahl.teams()).toEqual([WASBUETTEL.id, WASBUETTEL_U14.id]);
     });
 
+    it('unfollows a suggested Team from the card, focus left on its control, no undo', async () => {
+      const { seite, auswahl, stabil, leisten } = await render(
+        mitLetztemSpielAm('2026-10-17'),
+        [WASBUETTEL.id]
+      );
+      await stabil();
+      const knopf = () =>
+        teil(
+          eintraege(seite)[0],
+          'saison-beendet'
+        )?.querySelector<HTMLButtonElement>('[data-qa="team-folgen"]');
+      knopf()?.click();
+      await stabil();
+      knopf()?.focus();
+
+      knopf()?.click();
+      await stabil();
+
+      expect(auswahl.teams()).toEqual([WASBUETTEL.id]);
+      expect(document.activeElement).toBe(knopf());
+      expect(await leisten.getHarnessOrNull(MatSnackBarHarness)).toBeNull();
+    });
+
     it('says nothing and reads no Verein exactly two weeks after the last Spiel', async () => {
       const data = mitLetztemSpielAm('2026-10-25');
 

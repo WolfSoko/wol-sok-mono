@@ -25,24 +25,29 @@ interface Gerendert {
 
 interface Optionen {
   readonly teamName?: string;
-  /** The screen provides `NachEntfolgen`: the control disappears with the Team. */
+  /** The screen provides `NachEntfolgen`. */
+  readonly nachEntfolgen?: boolean;
+  /** The control says it disappears with its Team (`verschwindetNachEntfolgen`). */
   readonly verschwindet?: boolean;
 }
 
 async function render(
   auswahl: Auswahl,
-  { teamName, verschwindet }: Optionen = {}
+  { teamName, nachEntfolgen, verschwindet }: Optionen = {}
 ): Promise<Gerendert> {
   TestBed.configureTestingModule({
     providers: [
       { provide: AUSWAHL, useValue: auswahl },
-      ...(verschwindet ? [NachEntfolgen] : []),
+      ...((nachEntfolgen ?? verschwindet) ? [NachEntfolgen] : []),
     ],
   });
   const fixture = TestBed.createComponent(TeamFolgenComponent);
   fixture.componentRef.setInput('teamId', MTV_WASBUETTEL);
   if (teamName !== undefined) {
     fixture.componentRef.setInput('teamName', teamName);
+  }
+  if (verschwindet) {
+    fixture.componentRef.setInput('verschwindetNachEntfolgen', true);
   }
   await fixture.whenStable();
   const seite = fixture.nativeElement as HTMLElement;
@@ -180,6 +185,22 @@ describe('TeamFolgenComponent', () => {
       await klicken();
 
       expect(entfolgt).toHaveBeenCalledWith(MTV_WASBUETTEL, 'MTV Wasbüttel');
+    });
+
+    it('leaves focus and offers no undo for a control that stays (a Verein list on the screen)', async () => {
+      const auswahl = new LokaleAuswahl(undefined);
+      await auswahl.folgen(MTV_WASBUETTEL);
+      const { leisten, klicken } = await render(auswahl, {
+        teamName: 'MTV Wasbüttel',
+        nachEntfolgen: true,
+      });
+      const entfolgt = vi.spyOn(TestBed.inject(NachEntfolgen), 'entfolgt');
+
+      await klicken();
+
+      expect(auswahl.teams()).toEqual([]);
+      expect(entfolgt).not.toHaveBeenCalled();
+      expect(await leisten.getHarnessOrNull(MatSnackBarHarness)).toBeNull();
     });
 
     it('offers no undo where the unfollowing failed', async () => {

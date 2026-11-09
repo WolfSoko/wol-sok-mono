@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -18,8 +19,9 @@ import { NachEntfolgen } from './nach-entfolgen';
  * name after it), and no `aria-pressed`, so what it shows and what a
  * screen reader names agree. Alone on a page, a followed Team gets a line
  * saying so. Disabled, offering to follow, until Meine Teams are read.
- * Where the screen provides `NachEntfolgen` (the control disappears with
- * its Team), an unfollowing tells it, which moves focus and offers undo.
+ * A control that disappears with its Team (`verschwindetNachEntfolgen`)
+ * tells the screen's `NachEntfolgen` once it unfollowed, which moves
+ * focus and offers undo.
  */
 @Component({
   selector: 'korb-team-folgen',
@@ -78,6 +80,15 @@ export class TeamFolgenComponent {
    * wizard's followed rows); else read from Meine Teams.
    */
   public readonly gefolgt = input<boolean>();
+  /**
+   * Whether this control disappears once it unfollowed its Team (an
+   * overview card's, a Kind card's, the wizard's row): only then does it
+   * tell the screen's `NachEntfolgen`, which moves focus and offers undo.
+   * A control that stays (a Verein's Teams, also inside a card) leaves both.
+   */
+  public readonly verschwindetNachEntfolgen = input(false, {
+    transform: booleanAttribute,
+  });
 
   private readonly auswahl = inject(AUSWAHL);
 
@@ -110,7 +121,7 @@ export class TeamFolgenComponent {
       this.auswahl.entfolgen(team)
     );
     // a control that disappears is one of a list: it has the Team's name
-    if (entfolgt && name !== undefined) {
+    if (entfolgt && this.verschwindetNachEntfolgen() && name !== undefined) {
       this.nachEntfolgen?.entfolgt(team, name);
     }
   }

@@ -54,6 +54,10 @@
     }
   </mat-card-content>
   <mat-card-actions align="end" data-qa="ueberblick-aktionen">
-    <korb-team-folgen [teamId]="team.teamId" [teamName]="name()" />
+    <korb-team-folgen
+      [teamId]="team.teamId"
+      [teamName]="name()"
+      verschwindetNachEntfolgen
+    />
   </mat-card-actions>
 </mat-card>

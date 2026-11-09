@@ -77,6 +77,7 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
                   [teamId]="team.id"
                   [teamName]="team.name"
                   [gefolgt]="gefolgt"
+                  verschwindetNachEntfolgen
                 />
               }
             </div>

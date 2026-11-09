@@ -98,7 +98,11 @@
       data-qa="ueberblick-kind-aktionen"
     >
       @for (team of kind.teams; track team.teamId) {
-        <korb-team-folgen [teamId]="team.teamId" [teamName]="team.name" />
+        <korb-team-folgen
+          [teamId]="team.teamId"
+          [teamName]="team.name"
+          verschwindetNachEntfolgen
+        />
       }
     </mat-card-actions>
   }
