@@ -803,6 +803,8 @@ describe('UeberblickComponent', () => {
 
       expect(auswahl.teams()).toEqual([GIFHORN.id]);
       expect(teamNamen(seite)).toEqual(['MTV Gifhorn']);
+      // focus stays on the overview, not on the page's body
+      expect(document.activeElement?.textContent?.trim()).toBe('Meine Teams');
       const leiste = document.querySelector('mat-snack-bar-container');
       expect(leiste?.textContent).toContain(
         'MTV Wasbüttel steht nicht mehr in Meine Teams.'

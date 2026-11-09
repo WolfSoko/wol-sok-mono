@@ -11,6 +11,7 @@ import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { injectEntfolgenRueckgaengig } from './entfolgen-rueckgaengig';
+import { NACH_ENTFOLGEN } from './nach-entfolgen';
 
 /**
  * Follows a Team, or unfollows it: a button whose label says what a tap
@@ -18,6 +19,8 @@ import { injectEntfolgenRueckgaengig } from './entfolgen-rueckgaengig';
  * name after it), and no `aria-pressed`, so what it shows and what a
  * screen reader names agree. Alone on a page, a followed Team gets a line
  * saying so. Disabled, offering to follow, until Meine Teams are read.
+ * Where the screen provides `NACH_ENTFOLGEN` (the control goes with its
+ * Team), an unfollowing hands it the Team, for focus, and offers to undo.
  */
 @Component({
   selector: 'korb-team-folgen',
@@ -70,11 +73,6 @@ export class TeamFolgenComponent {
    * label, and the hint where a followed Team shows up is left out.
    */
   public readonly teamName = input<string>();
-  /**
-   * Whether a Team unfollowed here may be followed again from a snackbar:
-   * for a control that goes with the Team (a card of the overview).
-   */
-  public readonly rueckgaengig = input(false);
 
   private readonly auswahl = inject(AUSWAHL);
 
@@ -89,6 +87,8 @@ export class TeamFolgenComponent {
 
   protected readonly aenderung = auswahlAenderung();
   private readonly rueckgaengigAnbieten = injectEntfolgenRueckgaengig();
+  /** The screen's, where this control goes with its Team. */
+  private readonly nachEntfolgen = inject(NACH_ENTFOLGEN, { optional: true });
 
   protected umschalten(): Promise<void> {
     return this.folgt() ? this.entfolgen() : this.folgen();
@@ -103,7 +103,8 @@ export class TeamFolgenComponent {
     const team = this.teamId();
     const name = this.teamName() ?? 'Das Team';
     await this.aenderung.ausfuehren(() => this.auswahl.entfolgen(team));
-    if (this.rueckgaengig() && this.aenderung.fehler() === undefined) {
+    if (this.nachEntfolgen !== null && this.aenderung.fehler() === undefined) {
+      this.nachEntfolgen(team);
       this.rueckgaengigAnbieten(team, name);
     }
   }

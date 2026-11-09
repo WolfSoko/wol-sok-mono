@@ -1,3 +1,4 @@
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Component, signal } from '@angular/core';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
@@ -345,7 +346,21 @@ describe('TeamEinrichtenComponent', () => {
     expect(auswahl.teams()).toEqual([]);
     expect(TestBed.inject(Router).url).toBe('/');
     expect(assistent.eintraege('team')).toContain('MTV Wasbüttel -RST-');
+    // focus on the Team's row, where its control went
+    const zeile = document.activeElement as HTMLElement | null;
+    expect(zeile?.getAttribute('data-qa')).toBe('team');
+    expect(textOf(zeile)).toBe('MTV Wasbüttel -RST-');
     expect(assistent.seite.querySelector('[data-qa="team-folgen"]')).toBeNull();
+    const leiste = document.querySelector('mat-snack-bar-container');
+    expect(leiste?.textContent).toContain(
+      'MTV Wasbüttel -RST- steht nicht mehr in Meine Teams.'
+    );
+
+    leiste?.querySelector('button')?.click();
+    await assistent.stabil();
+
+    expect(auswahl.teams()).toEqual([313036]);
+    TestBed.inject(MatSnackBar).dismiss();
   });
 
   it('offers to unfollow only the Teams followed', async () => {

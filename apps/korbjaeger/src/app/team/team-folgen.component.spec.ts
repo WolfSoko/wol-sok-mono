@@ -5,6 +5,7 @@ import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
 import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
+import { NACH_ENTFOLGEN } from './nach-entfolgen';
 import { TeamFolgenComponent } from './team-folgen.component';
 import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
 
@@ -19,23 +20,26 @@ interface Gerendert {
 
 interface Optionen {
   readonly teamName?: string;
-  readonly rueckgaengig?: boolean;
+  /** The screen's `NACH_ENTFOLGEN`: the control goes with the Team. */
+  readonly nachEntfolgen?: (team: TeamId) => void;
 }
 
 async function render(
   auswahl: Auswahl,
-  { teamName, rueckgaengig }: Optionen = {}
+  { teamName, nachEntfolgen }: Optionen = {}
 ): Promise<Gerendert> {
   TestBed.configureTestingModule({
-    providers: [{ provide: AUSWAHL, useValue: auswahl }],
+    providers: [
+      { provide: AUSWAHL, useValue: auswahl },
+      ...(nachEntfolgen === undefined
+        ? []
+        : [{ provide: NACH_ENTFOLGEN, useValue: nachEntfolgen }]),
+    ],
   });
   const fixture = TestBed.createComponent(TeamFolgenComponent);
   fixture.componentRef.setInput('teamId', MTV_WASBUETTEL);
   if (teamName !== undefined) {
     fixture.componentRef.setInput('teamName', teamName);
-  }
-  if (rueckgaengig !== undefined) {
-    fixture.componentRef.setInput('rueckgaengig', rueckgaengig);
   }
   await fixture.whenStable();
   const seite = fixture.nativeElement as HTMLElement;
@@ -132,13 +136,13 @@ describe('TeamFolgenComponent', () => {
     expect(snackbar()).toBeUndefined();
   });
 
-  describe('where the control goes with the Team (rueckgaengig)', () => {
+  describe('where the control goes with the Team (NACH_ENTFOLGEN)', () => {
     it('offers to undo the unfollowing, and follows the Team again', async () => {
       const auswahl = new LokaleAuswahl(undefined);
       await auswahl.folgen(MTV_WASBUETTEL);
       const { klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
-        rueckgaengig: true,
+        nachEntfolgen: () => undefined,
       });
 
       await klicken();
@@ -162,7 +166,7 @@ describe('TeamFolgenComponent', () => {
       });
       const { klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
-        rueckgaengig: true,
+        nachEntfolgen: () => undefined,
       });
       await klicken();
 
@@ -173,19 +177,35 @@ describe('TeamFolgenComponent', () => {
       expect(snackbar()?.text).toContain('Das ließ sich nicht speichern.');
     });
 
+    it('hands the screen the Team unfollowed, to move focus', async () => {
+      const auswahl = new LokaleAuswahl(undefined);
+      await auswahl.folgen(MTV_WASBUETTEL);
+      const nachEntfolgen = vi.fn<(team: TeamId) => void>();
+      const { klicken } = await render(auswahl, {
+        teamName: 'MTV Wasbüttel',
+        nachEntfolgen,
+      });
+
+      await klicken();
+
+      expect(nachEntfolgen).toHaveBeenCalledWith(MTV_WASBUETTEL);
+    });
+
     it('offers no undo where the unfollowing failed', async () => {
       const auswahl: Auswahl = fakeAuswahl({
         teams: signal([MTV_WASBUETTEL]),
         entfolgen: () => Promise.reject(new Error('offline')),
       });
+      const nachEntfolgen = vi.fn<(team: TeamId) => void>();
       const { seite, klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
-        rueckgaengig: true,
+        nachEntfolgen,
       });
 
       await klicken();
 
       expect(snackbar()).toBeUndefined();
+      expect(nachEntfolgen).not.toHaveBeenCalled();
       expect(seite.querySelector('[role="alert"]')?.textContent).toContain(
         'Das ließ sich nicht speichern.'
       );

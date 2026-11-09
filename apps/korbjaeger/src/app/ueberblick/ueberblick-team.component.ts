@@ -20,7 +20,7 @@ import { kartenName, type TeamKarte } from './team-karte';
  * opening its Spiel page, and once its Saison looks over a hint with its
  * Verein's current Teams to follow; or why its read failed. Every card
  * ends with "Nicht mehr folgen", which takes the card away and offers to
- * undo it (`rueckgaengig`). Reads no data itself:
+ * undo it (`NACH_ENTFOLGEN`, the overview's). Reads no data itself:
  * `MeineTeamsUeberblick` holds every card's reads, the next Spiel's Halle
  * and the Verein's Teams included.
  */
