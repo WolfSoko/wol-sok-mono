@@ -114,12 +114,10 @@ export class SpielComponent {
     vereinsfarbenAnwenden(() => this.followedTeam()?.vereinId);
     breadcrumb(() => {
       const team = this.followedTeam();
-      return [
-        ...(team
-          ? [{ title: team.name, link: ['/team', String(team.id)] }]
-          : []),
-        { title: 'Spiel' },
-      ];
+      const spiel = { title: 'Spiel' };
+      return team
+        ? [{ title: team.name, link: ['/team', String(team.id)] }, spiel]
+        : [spiel];
     });
   }
 }

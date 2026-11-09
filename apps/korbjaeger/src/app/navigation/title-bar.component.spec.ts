@@ -1,9 +1,10 @@
 import { Location } from '@angular/common';
 import { provideLocationMocks } from '@angular/common/testing';
 import { Component } from '@angular/core';
-import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { routerIdle } from '../../testing/router-idle';
 import { breadcrumb } from './breadcrumb';
 import { TitleBarComponent } from './title-bar.component';
 
@@ -48,16 +49,13 @@ async function setup(start: string): Promise<Setup> {
   });
   const router = TestBed.inject(Router);
   const location = TestBed.inject(Location);
-  const fixture: ComponentFixture<TitleBarComponent> =
-    TestBed.createComponent(TitleBarComponent);
+  const fixture = TestBed.createComponent(TitleBarComponent);
   // the bar's pages need an outlet; the router's own test harness has one
   await RouterTestingHarness.create();
   location.replaceState(start);
   router.initialNavigation();
   const settle = async () => {
-    do {
-      await new Promise((resolve) => setTimeout(resolve));
-    } while (router.currentNavigation() !== null);
+    await routerIdle(router);
     await fixture.whenStable();
   };
   await settle();
@@ -119,6 +117,10 @@ describe('TitleBarComponent', () => {
 
     expect(location.path()).toBe('/team/1');
     expect(levels(bar)).toEqual(['Korbjäger', 'MTV Wasbüttel U12']);
+    // up is a new entry, so back returns to the Spiel
+    button(bar, 'Zurück').click();
+    await settle();
+    expect(location.path()).toBe('/spiel/2');
   });
 
   it('goes back and forward through the pages opened', async () => {

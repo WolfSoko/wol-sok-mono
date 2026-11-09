@@ -2,6 +2,9 @@ import { expect, test } from './fixtures/pages.fixture';
 
 /** In the fixtures, MTV Wasbüttel's Spiele; it beat MTV Gifhorn 78:47. */
 const MTV_WASBUETTEL = 313036;
+const TEAM_URL = new RegExp(`/team/${MTV_WASBUETTEL}$`);
+/** MTV Wasbüttel against MTV Gifhorn. */
+const SPIEL_URL = /\/spiel\/2861436$/;
 const TEAM = 'MTV Wasbüttel';
 /** How the Spiel names the Team, which the Spiel page's breadcrumb shows. */
 const TEAM_AS_SPIEL_NAMES_IT = 'MTV Wasbüttel -RST-';
@@ -28,7 +31,7 @@ test.describe('Title bar', () => {
     await startPage.team(TEAM).getByTestId('ueberblick-name').click();
     await expect(titleBar.levels).toHaveText(['Korbjäger', TEAM]);
     await teamPage.spielGegen(GAST).click();
-    await expect(page).toHaveURL(/\/spiel\/2861436$/);
+    await expect(page).toHaveURL(SPIEL_URL);
     await expect(titleBar.levels).toHaveText([
       'Korbjäger',
       TEAM_AS_SPIEL_NAMES_IT,
@@ -37,7 +40,7 @@ test.describe('Title bar', () => {
     await expect(titleBar.current).toHaveText('Spiel');
 
     await titleBar.level(TEAM_AS_SPIEL_NAMES_IT).click();
-    await expect(page).toHaveURL(new RegExp(`/team/${MTV_WASBUETTEL}$`));
+    await expect(page).toHaveURL(TEAM_URL);
     await titleBar.level('Korbjäger').click();
     await expect(page).toHaveURL(/\/$/);
   });
@@ -49,20 +52,20 @@ test.describe('Title bar', () => {
   }) => {
     await teamPage.goto(MTV_WASBUETTEL);
     await teamPage.spielGegen(GAST).click();
-    await expect(page).toHaveURL(/\/spiel\/2861436$/);
+    await expect(page).toHaveURL(SPIEL_URL);
     await expect(titleBar.forward).toBeDisabled();
 
     await titleBar.back.click();
-    await expect(page).toHaveURL(new RegExp(`/team/${MTV_WASBUETTEL}$`));
+    await expect(page).toHaveURL(TEAM_URL);
     await expect(titleBar.forward).toBeEnabled();
 
     await titleBar.forward.click();
-    await expect(page).toHaveURL(/\/spiel\/2861436$/);
+    await expect(page).toHaveURL(SPIEL_URL);
     await expect(titleBar.forward).toBeDisabled();
 
     // a second round finds the entries again
     await titleBar.back.click();
-    await expect(page).toHaveURL(new RegExp(`/team/${MTV_WASBUETTEL}$`));
+    await expect(page).toHaveURL(TEAM_URL);
     await expect(titleBar.forward).toBeEnabled();
   });
 

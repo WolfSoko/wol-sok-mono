@@ -22,6 +22,7 @@ import {
  * Back and forward within the app, for the title bar: an installed app
  * (`display: standalone`) has no browser buttons. It follows the router's
  * navigations, so it knows only the entries this start of the app made.
+ * Where nothing lies behind, the title bar goes up instead.
  */
 @Injectable({ providedIn: 'root' })
 export class AppHistory {
@@ -41,15 +42,10 @@ export class AppHistory {
       .subscribe((event) => this.follow(event));
   }
 
-  /**
-   * One entry back where this start made one, else up to `parentLink`
-   * (a page opened from a link or by a restart has nothing behind it).
-   */
-  public back(parentLink: readonly string[] | undefined): void {
+  /** One entry back, where this start made one. */
+  public back(): void {
     if (this.canGoBack()) {
       this.location.back();
-    } else if (parentLink !== undefined) {
-      void this.router.navigate(parentLink);
     }
   }
 
@@ -81,16 +77,20 @@ export class AppHistory {
   }
 
   private runningOf(event: NavigationStart): RunningNavigation {
+    if (event.navigationTrigger === 'popstate') {
+      return {
+        id: event.id,
+        kind: 'restore',
+        restoredId: event.restoredState?.navigationId ?? event.id,
+      };
+    }
     const extras = this.router.currentNavigation()?.extras;
-    return {
-      id: event.id,
-      restoredId:
-        event.navigationTrigger === 'popstate'
-          ? (event.restoredState?.navigationId ?? event.id)
-          : undefined,
-      replaceUrl: extras?.replaceUrl ?? false,
-      skipLocationChange: extras?.skipLocationChange ?? false,
-    };
+    const kind = extras?.skipLocationChange
+      ? 'none'
+      : extras?.replaceUrl
+        ? 'replace'
+        : 'push';
+    return { id: event.id, kind };
   }
 
   /**
@@ -101,17 +101,18 @@ export class AppHistory {
     running: RunningNavigation,
     succeeded: boolean
   ): HistoryStep | undefined {
-    if (running.restoredId !== undefined) {
-      return {
-        kind: 'restore',
-        restoredId: running.restoredId,
-        id: this.entryId() ?? running.id,
-      };
+    switch (running.kind) {
+      case 'restore':
+        return {
+          kind: 'restore',
+          restoredId: running.restoredId,
+          id: this.entryId() ?? running.id,
+        };
+      case 'none':
+        return undefined;
+      default:
+        return succeeded ? { kind: running.kind, id: running.id } : undefined;
     }
-    if (!succeeded || running.skipLocationChange) {
-      return undefined;
-    }
-    return { kind: running.replaceUrl ? 'replace' : 'push', id: running.id };
   }
 
   /** The navigation id Angular keeps in the browser's current entry. */
@@ -123,10 +124,11 @@ export class AppHistory {
   }
 }
 
-interface RunningNavigation {
-  readonly id: number;
-  /** The id the entry held that back or forward restores; none otherwise. */
-  readonly restoredId: number | undefined;
-  readonly replaceUrl: boolean;
-  readonly skipLocationChange: boolean;
-}
+/** The navigation running now: its id, and what it does to the history. */
+type RunningNavigation =
+  | {
+      readonly id: number;
+      readonly kind: 'restore';
+      readonly restoredId: number;
+    }
+  | { readonly id: number; readonly kind: 'push' | 'replace' | 'none' };

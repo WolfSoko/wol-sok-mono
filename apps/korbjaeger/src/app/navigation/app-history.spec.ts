@@ -3,6 +3,7 @@ import { provideLocationMocks } from '@angular/common/testing';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { routerIdle } from '../../testing/router-idle';
 import { AppHistory } from './app-history';
 
 @Component({ template: '' })
@@ -29,16 +30,9 @@ async function setup(start = '/'): Promise<Setup> {
   // listens to the browser's back and forward, as the app's start does
   location.replaceState(start);
   router.initialNavigation();
-  const settle = () => idle(router);
+  const settle = () => routerIdle(router);
   await settle();
   return { history, router, location, settle };
-}
-
-/** Waits until the router has no navigation running. */
-async function idle(router: Router): Promise<void> {
-  do {
-    await new Promise((resolve) => setTimeout(resolve));
-  } while (router.currentNavigation() !== null);
 }
 
 describe('AppHistory', () => {
@@ -56,7 +50,7 @@ describe('AppHistory', () => {
     expect(history.canGoBack()).toBe(true);
     expect(history.canGoForward()).toBe(false);
 
-    history.back(['/team/1']);
+    history.back();
     await settle();
     expect(location.path()).toBe('/team/1');
     expect(history.canGoForward()).toBe(true);
@@ -73,7 +67,7 @@ describe('AppHistory', () => {
     await router.navigateByUrl('/spiel/2');
 
     for (let round = 0; round < 3; round++) {
-      history.back(undefined);
+      history.back();
       await settle();
       expect(location.path()).toBe('/team/1');
       expect(history.canGoForward()).toBe(true);
@@ -81,9 +75,9 @@ describe('AppHistory', () => {
       await settle();
       expect(location.path()).toBe('/spiel/2');
     }
-    history.back(undefined);
+    history.back();
     await settle();
-    history.back(undefined);
+    history.back();
     await settle();
 
     expect(location.path()).toBe('/');
@@ -91,21 +85,10 @@ describe('AppHistory', () => {
     expect(history.canGoForward()).toBe(true);
   });
 
-  it('goes up to the parent where nothing lies behind', async () => {
-    const { history, location, settle } = await setup('/spiel/2');
-
-    history.back(['/team/1']);
-    await settle();
-
-    expect(location.path()).toBe('/team/1');
-    // up is a new entry, so the browser's back still returns to the Spiel
-    expect(history.canGoBack()).toBe(true);
-  });
-
-  it('stays where nothing lies behind and no parent is given', async () => {
+  it('stays where nothing lies behind or ahead', async () => {
     const { history, location, settle } = await setup();
 
-    history.back(undefined);
+    history.back();
     history.forward();
     await settle();
 
@@ -115,7 +98,7 @@ describe('AppHistory', () => {
   it('drops what lay ahead once a new page is opened after going back', async () => {
     const { history, router, settle } = await setup();
     await router.navigateByUrl('/team/1');
-    history.back(undefined);
+    history.back();
     await settle();
 
     await router.navigateByUrl('/impressum');

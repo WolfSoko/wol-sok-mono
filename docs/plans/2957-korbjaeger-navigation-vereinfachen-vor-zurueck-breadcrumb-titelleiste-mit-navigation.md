@@ -2,7 +2,7 @@
 
 Spec: `docs/specs/2957-korbjaeger-navigation-vereinfachen-vor-zurueck-breadcrumb-titelleiste-mit-navigation.md`.
 
-1. **History model.** `src/app/navigation/history.ts` (`History`, `historyAfter`) with `history.spec.ts` first (push, replace, popstate known and unknown, truncation); `app-history.ts` (router events → signal, `back(parentLink)`, `forward()`) with its spec on a test router. Commit `feat(korbjaeger): ...`.
+1. **History model.** `src/app/navigation/history.ts` (`History`, `historyAfter`) with `history.spec.ts` first (push, replace, popstate known and unknown, truncation); `app-history.ts` (router events → signal, `back()`, `forward()`; the title bar goes up where nothing lies behind) with its spec on a test router. Commit `feat(korbjaeger): ...`.
 2. **Breadcrumb model.** `breadcrumb.ts` (`Breadcrumb` root service, `Level`, `breadcrumb()` helper clearing on destroy) with its spec. Commit with 3.
 3. **Title bar.** `title-bar.component.ts` with spec (levels rendered, `aria-current`, back/forward enabled states and calls, settings button only with `anmeldung`); `app.component.ts` uses it. Commit `feat(korbjaeger): ...`.
 4. **Pages declare their levels.** Static pages (`team-einrichten`, `einstellungen`, `privacy`, `impressum`, not found) in their page files; Team page from `TeamComponent`'s Saison; Spiel page via `followedSide` (beside `gefolgterVerein` in `gefolgter-verein.ts`, spec extended). Specs per page level. Commit `feat(korbjaeger): ...`.

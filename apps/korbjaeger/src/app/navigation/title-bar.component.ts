@@ -7,7 +7,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { AppHistory } from './app-history';
 import { Breadcrumb } from './breadcrumb';
@@ -26,7 +26,6 @@ import { Breadcrumb } from './breadcrumb';
         matIconButton
         type="button"
         aria-label="Zurück"
-        data-qa="zurueck"
         [disabled]="!canGoBack()"
         (click)="back()"
       >
@@ -36,7 +35,6 @@ import { Breadcrumb } from './breadcrumb';
         matIconButton
         type="button"
         aria-label="Vor"
-        data-qa="vor"
         [disabled]="!history.canGoForward()"
         (click)="history.forward()"
       >
@@ -45,7 +43,7 @@ import { Breadcrumb } from './breadcrumb';
       <nav class="breadcrumb" aria-label="Seitenpfad">
         <ol>
           @for (level of breadcrumb.levels(); track $index) {
-            <li [class.root]="$first">
+            <li>
               @if ($last) {
                 <span class="level" aria-current="page">{{ level.title }}</span>
               } @else {
@@ -111,7 +109,8 @@ import { Breadcrumb } from './breadcrumb';
     a.level:focus-visible {
       text-decoration: underline;
     }
-    li:not(.root) {
+    li + li {
+      // the root keeps the toolbar's brand face
       font: var(--mat-sys-title-medium);
     }
     .actions {
@@ -122,6 +121,7 @@ import { Breadcrumb } from './breadcrumb';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TitleBarComponent {
+  private readonly router = inject(Router);
   protected readonly history = inject(AppHistory);
   protected readonly breadcrumb = inject(Breadcrumb);
 
@@ -133,7 +133,13 @@ export class TitleBarComponent {
     () => this.history.canGoBack() || this.breadcrumb.parentLink() !== undefined
   );
 
+  /** Back, or up to the breadcrumb's parent where nothing lies behind. */
   protected back(): void {
-    this.history.back(this.breadcrumb.parentLink());
+    const parentLink = this.breadcrumb.parentLink();
+    if (this.history.canGoBack()) {
+      this.history.back();
+    } else if (parentLink !== undefined) {
+      void this.router.navigate(parentLink);
+    }
   }
 }
