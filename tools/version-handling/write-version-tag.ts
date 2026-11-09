@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, sep } from 'node:path';
-import { latestVersionTag } from './latest-version-tag';
+import { DeployPrefix, latestVersionTag } from './latest-version-tag';
 
 /**
  * Writes the current version tag into a generated TypeScript module.
@@ -13,9 +13,6 @@ import { latestVersionTag } from './latest-version-tag';
  * Usage: tsx write-version-tag.ts <cdk-deployed|non-cdk-deployed> <outFile>
  * where <outFile> is relative to the workspace root.
  */
-
-const DEPLOY_PREFIXES = ['cdk-deployed', 'non-cdk-deployed'] as const;
-type DeployPrefix = (typeof DEPLOY_PREFIXES)[number];
 
 const USAGE =
   'Usage: write-version-tag.ts <cdk-deployed|non-cdk-deployed> <outFile>';
