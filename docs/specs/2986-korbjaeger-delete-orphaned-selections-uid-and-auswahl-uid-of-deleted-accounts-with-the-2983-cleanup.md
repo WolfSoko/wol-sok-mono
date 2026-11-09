@@ -51,6 +51,14 @@ deletes it, with a dry run that only counts first.
   fallback to an environment project) and refuses to run without it, so a
   run against production is always spelled out; against the emulators it
   runs inside `firebase emulators:exec`, which sets the hosts.
+- **Guards against a mixed setup** (review of PR #2993). The CLI refuses
+  `FIRESTORE_EMULATOR_HOST` without `FIREBASE_AUTH_EMULATOR_HOST` and the
+  other way round, prints which backend each service is (production or an
+  emulator), and a deletion refuses when Auth knows none of the accounts
+  with a document (`EveryAccountOrphanedError`): production Firestore
+  checked against an empty Auth would count every living account orphaned.
+  A failed deletion is counted, not thrown, so the report says how far it
+  got; the CLI then exits 1.
 - **Order with #2983's run.** The orphan cleanup runs first, then #2983's
   migration, so the migration never moves an orphan's `auswahl/{uid}` into
   `selections/{uid}`. #2983's step joins this CLI as a second step (one

@@ -26,10 +26,7 @@ export interface EmulatorProject {
  * every document before each test; call it once at the file's top level.
  */
 export function useEmulatorProject(): () => EmulatorProject {
-  const projectId = emulatorEnv('GCLOUD_PROJECT');
-  if (getApps().length === 0) {
-    initializeApp({ projectId });
-  }
+  const projectId = useEmulatorAdmin();
   let project: EmulatorProject | undefined;
 
   beforeAll(async () => {
@@ -49,4 +46,16 @@ export function useEmulatorProject(): () => EmulatorProject {
     }
     return project;
   };
+}
+
+/**
+ * Starts the admin app on the emulator project of `test-emulator`, once per
+ * spec file, for specs that need no devices (Auth only); returns its id.
+ */
+export function useEmulatorAdmin(): string {
+  const projectId = emulatorEnv('GCLOUD_PROJECT');
+  if (getApps().length === 0) {
+    initializeApp({ projectId });
+  }
+  return projectId;
 }

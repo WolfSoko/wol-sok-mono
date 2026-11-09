@@ -1,9 +1,8 @@
 import { getAuth } from 'firebase-admin/auth';
-import { useEmulatorProject } from '../testing/emulator';
+import { useEmulatorAdmin } from '../testing/emulator';
 import { authAccounts, GET_USERS_LIMIT } from './auth-accounts';
 
-// starts the admin app on the emulator project
-useEmulatorProject();
+useEmulatorAdmin();
 
 describe('authAccounts', () => {
   const auth = () => getAuth();

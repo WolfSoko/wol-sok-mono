@@ -7,6 +7,7 @@ import { reportText } from './cleanup-cli';
 import { useEmulatorProject } from '../testing/emulator';
 import {
   cleanUpOrphanedAccounts,
+  EveryAccountOrphanedError,
   type ExistingAccounts,
   findOrphanedAccounts,
 } from './orphaned-accounts';
@@ -60,7 +61,7 @@ describe('findOrphanedAccounts', () => {
     expect([...search.orphans].sort()).toEqual(
       [DELETED, DELETED_LEGACY].sort()
     );
-    expect(search.documentsRead).toEqual({
+    expect(search.documentsListed).toEqual({
       [CHOICES_COLLECTION]: 2,
       [LEGACY_CHOICES_COLLECTION]: 3,
     });
@@ -91,12 +92,13 @@ describe('cleanUpOrphanedAccounts', () => {
     );
 
     expect(report).toEqual({
-      documentsRead: {
+      documentsListed: {
         [CHOICES_COLLECTION]: 2,
         [LEGACY_CHOICES_COLLECTION]: 3,
       },
       orphansFound: 2,
       orphansDeleted: 0,
+      orphansFailed: 0,
     });
     expect(await exists(CHOICES_COLLECTION, DELETED)).toBe(true);
     expect(await exists(LEGACY_CHOICES_COLLECTION, DELETED_LEGACY)).toBe(true);
@@ -142,6 +144,31 @@ describe('cleanUpOrphanedAccounts', () => {
     expect(await exists(CHOICES_COLLECTION, LIVING)).toBe(true);
   });
 
+  it('refuses to delete when Auth knows none of the accounts', async () => {
+    await seed();
+
+    await expect(
+      cleanUpOrphanedAccounts(project().admin, fakeAccounts([]), {
+        deleteOrphans: true,
+      })
+    ).rejects.toThrow(EveryAccountOrphanedError);
+
+    expect(await exists(CHOICES_COLLECTION, LIVING)).toBe(true);
+    expect(await exists(CHOICES_COLLECTION, DELETED)).toBe(true);
+  });
+
+  it('counts every account orphaned in a dry run without refusing', async () => {
+    await seed();
+
+    const report = await cleanUpOrphanedAccounts(
+      project().admin,
+      fakeAccounts([]),
+      { deleteOrphans: false }
+    );
+
+    expect(report.orphansFound).toBe(3);
+  });
+
   it('deletes nothing when the account lookup fails', async () => {
     await seed();
     const failing: ExistingAccounts = {
@@ -166,7 +193,11 @@ describe('cleanUpOrphanedAccounts', () => {
       fakeAccounts([LIVING]),
       { deleteOrphans: true }
     );
-    const text = reportText('demo-korbjaeger', report, true);
+    const text = reportText(
+      { project: 'demo-korbjaeger', deleteOrphans: true },
+      { firestore: 'emulator', auth: 'emulator' },
+      report
+    );
 
     for (const uid of [LIVING, DELETED, DELETED_LEGACY]) {
       expect(text).not.toContain(uid);

@@ -8,21 +8,36 @@ import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { authAccounts } from './auth-accounts';
-import { parseCleanupArgs, reportText } from './cleanup-cli';
+import {
+  cleanupTargets,
+  errorText,
+  parseCleanupArgs,
+  reportText,
+} from './cleanup-cli';
 import { cleanUpOrphanedAccounts } from './orphaned-accounts';
 
+function fail(error: unknown): void {
+  console.error(errorText(error));
+  process.exitCode = 1;
+}
+
+// the SDK throws some errors (credentials) outside the promise chain
+process.on('uncaughtException', fail);
+process.on('unhandledRejection', fail);
+
 async function main(): Promise<void> {
-  const { project, deleteOrphans } = parseCleanupArgs(process.argv.slice(2));
-  initializeApp({ projectId: project });
+  const options = parseCleanupArgs(process.argv.slice(2));
+  const targets = cleanupTargets(process.env);
+  initializeApp({ projectId: options.project });
   const report = await cleanUpOrphanedAccounts(
     getFirestore(),
     authAccounts(getAuth()),
-    { deleteOrphans }
+    options
   );
-  console.log(reportText(project, report, deleteOrphans));
+  console.log(reportText(options, targets, report));
+  if (report.orphansFailed > 0) {
+    process.exitCode = 1;
+  }
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+main().catch(fail);
