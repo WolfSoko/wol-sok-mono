@@ -1,7 +1,11 @@
 import type { Spiel } from './spiel';
 import type { Team } from './team';
 import type { TeamSaison } from './team-saison';
-import { nachNaechstemSpiel, teamUeberblick } from './team-ueberblick';
+import {
+  gemeinsamerUeberblick,
+  nachNaechstemSpiel,
+  teamUeberblick,
+} from './team-ueberblick';
 
 const UNSER_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', vereinId: 1837 };
 
@@ -31,8 +35,12 @@ function spiel(
 
 /** A Saison with `spiele`, in date order as the port gives them. */
 function saison(...spiele: Spiel[]): TeamSaison {
+  return saisonVon(UNSER_TEAM, ...spiele);
+}
+
+function saisonVon(team: Team, ...spiele: Spiel[]): TeamSaison {
   return {
-    team: UNSER_TEAM,
+    team,
     verein: { id: 1837, name: 'MTV Wasbüttel' },
     ligen: [],
     spiele,
@@ -230,5 +238,82 @@ describe('nachNaechstemSpiel', () => {
     nachNaechstemSpiel(eintraege, ({ naechstes }) => naechstes);
 
     expect(namen(eintraege)).toEqual(['später', 'bald']);
+  });
+});
+
+describe('gemeinsamerUeberblick', () => {
+  const U14: Team = { id: 313040, name: 'MTV Wasbüttel U14', vereinId: 1837 };
+
+  function ueberblick(...saisons: TeamSaison[]) {
+    const gemeinsam = gemeinsamerUeberblick(saisons, HEUTE);
+    return {
+      naechstes: gemeinsam.naechstes && [
+        gemeinsam.naechstes.saison.team.id,
+        gemeinsam.naechstes.spiel.id,
+      ],
+      ausfaelle: gemeinsam.ausfaelle.map(({ spiel }) => spiel.id),
+      letztes: gemeinsam.letztes && [
+        gemeinsam.letztes.saison.team.id,
+        gemeinsam.letztes.spiel.id,
+      ],
+    };
+  }
+
+  it('has nothing for no Saison', () => {
+    expect(ueberblick()).toEqual({ ausfaelle: [] });
+  });
+
+  it("takes the first next Spiel and the latest result of all Teams', each with its Saison", () => {
+    expect(
+      ueberblick(
+        saison(spiel(1, '2026-11-01', GESPIELT), spiel(2, '2026-11-21')),
+        saisonVon(
+          U14,
+          spiel(3, '2026-11-07', GESPIELT),
+          spiel(4, '2026-11-14', { art: 'geplant' }, '18:00')
+        )
+      )
+    ).toEqual({ naechstes: [U14.id, 4], ausfaelle: [], letztes: [U14.id, 3] });
+  });
+
+  it('orders by tip-off within a day, the first Saison winning a tie', () => {
+    expect(
+      ueberblick(
+        saison(spiel(1, '2026-11-14', { art: 'geplant' }, '12:00')),
+        saisonVon(U14, spiel(2, '2026-11-14', { art: 'geplant' }, '10:00'))
+      ).naechstes
+    ).toEqual([U14.id, 2]);
+    expect(
+      ueberblick(
+        saison(spiel(1, '2026-11-14')),
+        saisonVon(U14, spiel(2, '2026-11-14'))
+      ).naechstes
+    ).toEqual([UNSER_TEAM.id, 1]);
+  });
+
+  it('lists the Spiele falling through before the first next Spiel, by day', () => {
+    expect(
+      ueberblick(
+        saison(
+          spiel(1, '2026-11-15', { art: 'abgesagt' }),
+          spiel(2, '2026-11-29')
+        ),
+        saisonVon(
+          U14,
+          spiel(3, '2026-11-08', { art: 'abgesagt' }),
+          spiel(4, '2026-11-21'),
+          spiel(5, '2026-11-28', { art: 'abgesagt' })
+        )
+      ).ausfaelle
+    ).toEqual([3, 1]);
+  });
+
+  it('lists every Spiel falling through where none is next', () => {
+    expect(
+      ueberblick(
+        saison(spiel(1, '2026-11-15', { art: 'abgesagt' })),
+        saisonVon(U14, spiel(2, '2026-11-08', { art: 'abgesagt' }))
+      ).ausfaelle
+    ).toEqual([2, 1]);
   });
 });
