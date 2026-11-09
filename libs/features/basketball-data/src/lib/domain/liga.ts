@@ -30,5 +30,5 @@ export interface Liga {
    * score shown is the official one. Absent where the DBB confirms them or
    * does not say, as in the Liga search.
    */
-  readonly confirmsNoResults?: true;
+  readonly resultsNeverConfirmed?: true;
 }

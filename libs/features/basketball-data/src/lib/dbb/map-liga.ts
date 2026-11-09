@@ -9,9 +9,11 @@ import { ownValue } from './own-value';
 const NO_STATISTICS = 0;
 
 /**
- * The DBB's Verband „Bundesligen". Within it, a Liga without Spielberichte
- * is one of the men's professional leagues, whose results the DBB never
- * confirms (#2953: 0 of 262 confirmed; elsewhere such Ligen confirm theirs).
+ * The DBB's Verband „Bundesligen". Within it, a men's Liga without
+ * Spielberichte is one of the professional leagues (BBL, ProA, ProB,
+ * BBL-Pokal), whose results the DBB never confirms (#2953: 0 of 262
+ * confirmed). Its women's and youth Ligen and such Ligen of other Verbände
+ * confirm theirs.
  */
 const BUNDESLIGEN_VERBAND = 100;
 
@@ -23,6 +25,13 @@ const GESCHLECHTER: Readonly<Record<string, Geschlecht>> = {
 
 /** A Liga from the DBB's `ligaData`, as every endpoint carries it. */
 export function mapLiga(ligaData: DbbObject): Liga {
+  const liga = mapLigaFields(ligaData);
+  return resultsNeverConfirmed(liga)
+    ? { ...liga, resultsNeverConfirmed: true }
+    : liga;
+}
+
+function mapLigaFields(ligaData: DbbObject): Liga {
   const bezirk = ligaData.optionalString('bezirkName');
   const saison = mapSaison(ligaData);
   return {
@@ -38,7 +47,6 @@ export function mapLiga(ligaData: DbbObject): Liga {
     ...optionalField('bezirk', bezirk),
     ...optionalField('saison', saison),
     ...(keepsNoSpielberichte(ligaData) ? { ohneSpielberichte: true } : {}),
-    ...(confirmsNoResults(ligaData) ? { confirmsNoResults: true } : {}),
   };
 }
 
@@ -46,10 +54,11 @@ function keepsNoSpielberichte(ligaData: DbbObject): boolean {
   return ligaData.optionalNumber('statisticType') === NO_STATISTICS;
 }
 
-function confirmsNoResults(ligaData: DbbObject): boolean {
+function resultsNeverConfirmed(liga: Liga): boolean {
   return (
-    keepsNoSpielberichte(ligaData) &&
-    ligaData.number('verbandId') === BUNDESLIGEN_VERBAND
+    liga.ohneSpielberichte === true &&
+    liga.verband.id === BUNDESLIGEN_VERBAND &&
+    liga.geschlecht === 'männlich'
   );
 }
 

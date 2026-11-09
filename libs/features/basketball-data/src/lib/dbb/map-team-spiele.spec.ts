@@ -76,15 +76,20 @@ describe('mapTeamSpiele', () => {
         const { ligaData } = match as { ligaData: object };
         return {
           ...match,
-          ligaData: { ...ligaData, verbandId: 100, statisticType: 0 },
+          ligaData: {
+            ...ligaData,
+            verbandId: 100,
+            statisticType: 0,
+            geschlecht: 'männlich',
+          },
         };
       }),
     };
 
     expect(
-      mapTeamSpiele(bundesliga).ligen.map((liga) => liga.confirmsNoResults)
+      mapTeamSpiele(bundesliga).ligen.map((liga) => liga.resultsNeverConfirmed)
     ).toEqual([true, true]);
-    expect(saison.ligen.map((liga) => liga.confirmsNoResults)).toEqual([
+    expect(saison.ligen.map((liga) => liga.resultsNeverConfirmed)).toEqual([
       undefined,
       undefined,
     ]);

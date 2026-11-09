@@ -30,7 +30,7 @@ export interface SpielZeile {
   readonly ergebnis?: string;
   /** How it ended for the Team, once decided (as its score shows it, confirmed or not). */
   readonly ausgang?: SpielAusgang;
-  /** Whether score and `ausgang` await the Verband's confirmation. */
+  /** Whether score and `ausgang` may still change (`ergebnisVorlaeufig`). */
   readonly vorlaeufig: boolean;
   readonly markierung?: SpielSonderfall;
 }

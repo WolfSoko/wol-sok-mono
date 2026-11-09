@@ -446,7 +446,7 @@ describe('TeamComponent', () => {
       ...liga(55802, '1. Bundesliga (easyCredit BBL)'),
       verband: { id: 100, name: 'Bundesligen' },
       ohneSpielberichte: true,
-      confirmsNoResults: true,
+      resultsNeverConfirmed: true,
     };
     const unbestaetigt = (id: number, ligaId: number): Spiel =>
       spiel({

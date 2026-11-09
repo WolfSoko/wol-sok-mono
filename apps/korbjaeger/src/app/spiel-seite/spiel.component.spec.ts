@@ -583,7 +583,7 @@ describe('SpielComponent', () => {
               name: '1. Bundesliga (easyCredit BBL)',
               verband: { id: 100, name: 'Bundesligen' },
               ohneSpielberichte: true,
-              confirmsNoResults: true,
+              resultsNeverConfirmed: true,
             },
           }),
           async () => undefined

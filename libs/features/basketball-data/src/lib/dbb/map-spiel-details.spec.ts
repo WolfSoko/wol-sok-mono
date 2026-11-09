@@ -149,23 +149,25 @@ describe('mapSpielDetails', () => {
       return { ...data, ligaData: { ...data.ligaData, ...fields } };
     }
 
-    it('marks a Liga of the Bundesligen without Spielberichte (BBL, ProA, ProB)', () => {
+    const BBL = { verbandId: 100, statisticType: 0, geschlecht: 'männlich' };
+
+    it('marks a men’s Liga of the Bundesligen without Spielberichte (BBL, ProA, ProB)', () => {
       expect(
-        mapSpielDetails(withLigaData({ verbandId: 100, statisticType: 0 })).liga
-          .confirmsNoResults
+        mapSpielDetails(withLigaData(BBL)).liga.resultsNeverConfirmed
       ).toBe(true);
     });
 
     it.each([
-      ['statisticType 0 of a Landesverband', { statisticType: 0 }],
+      ['statisticType 0 of a Landesverband', { ...BBL, verbandId: 2 }],
       [
-        'statisticType 1 of the Bundesligen',
-        { verbandId: 100, statisticType: 1 },
+        'a women’s Liga of the Bundesligen (DBBL-Pokal Top4)',
+        { ...BBL, geschlecht: 'weiblich' },
       ],
-      ['a null statisticType', { verbandId: 100, statisticType: null }],
+      ['statisticType 1 of the Bundesligen', { ...BBL, statisticType: 1 }],
+      ['a null statisticType', { ...BBL, statisticType: null }],
     ])('leaves it out for %s', (_case, fields) => {
       expect(mapSpielDetails(withLigaData(fields)).liga).not.toHaveProperty(
-        'confirmsNoResults'
+        'resultsNeverConfirmed'
       );
     });
 
@@ -177,9 +179,11 @@ describe('mapSpielDetails', () => {
       >;
 
       expect(
-        mapSpielDetails({ ...data, ligaData: { ...ligaData, verbandId: 100 } })
-          .liga
-      ).not.toHaveProperty('confirmsNoResults');
+        mapSpielDetails({
+          ...data,
+          ligaData: { ...ligaData, verbandId: 100, geschlecht: 'männlich' },
+        }).liga
+      ).not.toHaveProperty('resultsNeverConfirmed');
     });
   });
 

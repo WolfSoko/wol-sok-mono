@@ -25,7 +25,7 @@ export function ergebnisText(stand: Spielstand): string {
 }
 
 /**
- * The word beside a score the Verband has not confirmed yet
+ * The word beside a score a correction may still change
  * (`ergebnisVorlaeufig`), the same on every screen.
  */
 export const VORLAEUFIG = 'vorläufig';

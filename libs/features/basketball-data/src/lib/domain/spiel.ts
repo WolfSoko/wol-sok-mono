@@ -158,7 +158,7 @@ export function ausgangVon(
  * the Verband yet, so a correction may still change it (and the Sieg or
  * Niederlage read from it). A forfeit carries no confirmation and counts as
  * none, and neither does a Spiel of a `liga` whose results the DBB never
- * confirms (`confirmsNoResults`). Without its Liga (`undefined`) only the
+ * confirms (`resultsNeverConfirmed`). Without its Liga (`undefined`) only the
  * Spiel decides.
  */
 export function ergebnisVorlaeufig(
@@ -168,7 +168,7 @@ export function ergebnisVorlaeufig(
   return (
     spiel.status.art === 'gespielt' &&
     !spiel.status.bestaetigt &&
-    !liga?.confirmsNoResults
+    !liga?.resultsNeverConfirmed
   );
 }
 

@@ -12,7 +12,7 @@ import type { SpielZeile } from './spiel-zeile';
 /**
  * One Spiel as a line, on the Team page and the overview alike: home or
  * away and the opponent, day and time, the Liga where asked, and the
- * result (vorläufig until the Verband confirms it) and whether it was
+ * result (vorläufig while `ergebnisVorlaeufig` says so) and whether it was
  * cancelled or forfeited.
  */
 @Component({
