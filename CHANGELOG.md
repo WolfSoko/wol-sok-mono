@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.162.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.161.1...v74.162.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger-functions:** one-off cleanup of orphaned selections of deleted accounts ([#2993](https://github.com/WolfSoko/wol-sok-mono/issues/2993)) ([81ed951](https://github.com/WolfSoko/wol-sok-mono/commit/81ed951b4e6d06f4583d443f25f2e1cde5c4ab2d)), references [#2986](https://github.com/WolfSoko/wol-sok-mono/issues/2986)
+
+### Bug Fixes
+
+* **tools:** name each app's Firebase config literally in its deploy inputs ([#2992](https://github.com/WolfSoko/wol-sok-mono/issues/2992)) ([65eec4e](https://github.com/WolfSoko/wol-sok-mono/commit/65eec4e9b7def190fdd4ced4d35a00cc01840beb)), closes [#2904](https://github.com/WolfSoko/wol-sok-mono/issues/2904), references [#2904](https://github.com/WolfSoko/wol-sok-mono/issues/2904)
+
 ## [74.161.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.161.0...v74.161.1) (2026-11-09)
 
 ## [74.161.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.3...v74.161.0) (2026-11-09)
