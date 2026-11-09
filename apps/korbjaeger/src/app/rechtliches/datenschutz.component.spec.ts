@@ -1,5 +1,5 @@
 import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
-import { REGIONEN } from '../../shared/regionen';
+import { REGIONS } from '../../shared/regions';
 import { zeigen } from '../../testing/zeigen';
 import {
   AUSWAHL_GRENZEN,
@@ -70,8 +70,8 @@ describe('DatenschutzComponent', () => {
       `die Farben von ${AUSWAHL_GRENZEN.vereinsfarben} Vereinen`
     );
     expect(konto).toContain(`${SPITZNAME_LAENGE} Zeichen`);
-    const { firestore } = REGIONEN;
-    expect(konto).toContain(`${firestore.id} (${firestore.ort})`);
+    const { firestore } = REGIONS;
+    expect(konto).toContain(`${firestore.id} (${firestore.place})`);
     expect(konto).toContain('Google');
   });
 
@@ -80,8 +80,8 @@ describe('DatenschutzComponent', () => {
 
     const dbb = abschnitt(seite, 'dbb');
     expect(dbb).toContain('basketball-bund.net');
-    const { funktion } = REGIONEN;
-    expect(dbb).toContain(`${funktion.id} (${funktion.ort})`);
+    const { function: nitro } = REGIONS;
+    expect(dbb).toContain(`${nitro.id} (${nitro.place})`);
     expect(dbb).toContain(`bis zu ${PROXY_CACHE_SEKUNDEN.cdn / 60} Minuten`);
     expect(dbb).toContain(
       `bis zu ${PROXY_CACHE_SEKUNDEN.cdnFertigerSpielbericht / 60} Minuten`
@@ -105,7 +105,7 @@ describe('DatenschutzComponent', () => {
     expect(loeschen).toContain('einen Tag');
     // Firestore's TTL deletes within a day after `expireAt`
     expect(loeschen).toContain('spätestens einen weiteren Tag später');
-    expect(loeschen).toContain(REGIONEN.firestore.id);
+    expect(loeschen).toContain(REGIONS.firestore.id);
     expect(loeschen).not.toContain('E-Mail');
   });
 

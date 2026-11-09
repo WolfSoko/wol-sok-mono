@@ -6,7 +6,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 // what Firebase Hosting's emulator matches header rules with
 import { configMatcher } from 'superstatic/lib/utils/patterns';
-import { REGIONEN } from './shared/regionen';
+import { DELETED_ACCOUNTS_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
+import { FUNCTION_REGION } from './shared/function-region';
 import {
   assertDeployableBuild,
   buildKonfigurationMerken,
@@ -188,7 +189,7 @@ describe('the Firebase deploy', () => {
 
     expect(indexes.fieldOverrides).toContainEqual(
       expect.objectContaining({
-        collectionGroup: 'geloeschteKonten',
+        collectionGroup: DELETED_ACCOUNTS_COLLECTION,
         fieldPath: 'expireAt',
         ttl: true,
       })
@@ -222,12 +223,12 @@ describe('the Firebase deploy', () => {
    */
   it("sets the images' cleanup policy in the function's region before deploying", () => {
     const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
-    const region = REGIONEN.funktion.id;
+    const region = FUNCTION_REGION.id;
     const { commands, parallel } = project.targets['deploy'].options;
 
     expect(
       readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8')
-    ).toContain('region: REGIONEN.funktion.id');
+    ).toContain('region: FUNCTION_REGION.id');
     expect(parallel).toBe(false);
     expect(commands?.slice(1)).toEqual([
       `nx run korbjaeger:firebase functions:artifacts:setpolicy --location=${region} --days=1 --force`,
