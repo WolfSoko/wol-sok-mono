@@ -92,6 +92,7 @@ Long-term, strategic software engineering is required. A change that works but l
 7. **2-space indentation**, kebab-case filenames, `*.spec.ts` for tests
 8. **Explicit `public`/`private`** in class members
 9. **Strongly typed** — avoid `any`; use proper generics
+10. **English in code** — identifiers, file and folder names, persisted field and storage key names, comments, commit messages, specs, plans and ADRs are English; texts the user sees stay in the app's UI language (German in Korbjäger and Pacetrainer). A domain term from `CONTEXT.md` takes its `_Code_` name (Kind is `Child`, Spiel `Game`, Kader `Roster`), never an ad-hoc translation. Fields of an outside API keep its spelling (the DBB's `ligaData`, `spielplan`) and get English names at the adapter. Korbjäger's existing German identifiers and Firestore fields are renamed by their own issues ([#2966](https://github.com/WolfSoko/wol-sok-mono/issues/2966) the fields, then [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967) the identifiers), not piecemeal: persisted names need a migration. Until then the Korbjäger section below names them as the code spells them. Pacetrainer's few German identifiers (`Zusammenfassung`, `PlannedIntervall`) may be renamed by a change touching them, unless persisted. Every non-persisted name a change introduces or rewrites is English
 
 ## Linting & Formatting
 

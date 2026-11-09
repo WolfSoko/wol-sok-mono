@@ -44,6 +44,10 @@ When your output names a domain concept (in an issue title, a refactor proposal,
 
 If the concept you need isn't in the glossary yet, that's a signal: either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
 
+## Glossary terms in code
+
+`CONTEXT.md` keeps the domain's terms in the UI's language. Code is English (CLAUDE.md, Coding Rule 10): when you name a domain concept in an identifier, a file name, a persisted field or a test name, use the term's `_Code_` name from its entry (Kind is `Child`, Spielbericht `GameReport`). In issue titles, specs and prose about the domain, use the glossary term itself. A new term gets its `_Code_` line when it enters the glossary.
+
 ## Flag ADR conflicts
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
