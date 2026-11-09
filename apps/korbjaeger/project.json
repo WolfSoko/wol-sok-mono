@@ -140,7 +140,7 @@
     "test-emulator": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "firebase emulators:exec --config apps/korbjaeger/emulator/firebase.test.json --project demo-korbjaeger --only firestore \"npx vitest run --config apps/korbjaeger/vite.emulator.config.ts\""
+        "command": "firebase emulators:exec --config apps/korbjaeger/emulator/firebase.test.json --project demo-korbjaeger-test --only firestore \"npx vitest run --config apps/korbjaeger/vite.emulator.config.ts\""
       }
     },
     "emulatoren": {
