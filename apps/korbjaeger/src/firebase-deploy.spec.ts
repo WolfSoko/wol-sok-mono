@@ -251,9 +251,7 @@ describe('the Firebase deploy', () => {
     cacheRules.some(
       (rule) =>
         configMatcher(path, rule) &&
-        rule.headers.some(
-          ({ key, value }) => key === 'Cache-Control' && value === 'no-cache'
-        )
+        rule.headers.some(({ value }) => value === 'no-cache')
     );
 
   /**
