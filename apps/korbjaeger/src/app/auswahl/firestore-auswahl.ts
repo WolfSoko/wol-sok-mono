@@ -26,6 +26,7 @@ import {
   inhaltAus,
   markierenAenderung,
   spitznameAenderung,
+  teamPlatz,
   vereinsfarbenAenderung,
   vereinsfarbenZuruecksetzenAenderung,
   type AuswahlAenderung,
@@ -35,11 +36,13 @@ import {
   auswahlDokumentLesen,
   auswahlFelder,
   ENTFERNT,
+  mitTeamsSeit,
   naechsterSeit,
   type AuswahlFelder,
   type AuswahlInhalt,
   type GelesenesDokument,
   LEERE_AUSWAHL,
+  type TeamPlatz,
 } from './auswahl-dokument';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 import { gleicheFolge } from '../gleiche-folge';
@@ -147,12 +150,12 @@ export class FirestoreAuswahl implements Auswahl {
       return gelesen;
     }
     const aktuell = gelesen.art === 'aktuell' ? gelesen : KEIN_DOKUMENT;
-    const { teams, kinder, vereinsfarben } =
+    const { teams, teamsSeit, kinder, vereinsfarben } =
       this.ausstehend().reduce<AuswahlInhalt>(
         (stand, aenderung) => aenderung(stand),
         aktuell
       );
-    return { ...aktuell, teams, kinder, vereinsfarben };
+    return { ...aktuell, teams, teamsSeit, kinder, vereinsfarben };
   });
   private readonly fehlgeschlagen = signal(false);
   /** Why it shows nothing more: its listener failed, or it was ended. */
@@ -211,12 +214,14 @@ export class FirestoreAuswahl implements Auswahl {
     return this.erstesLesen;
   }
 
-  public folgen(team: TeamId): Promise<void> {
-    return this.aendern(folgenAenderung(team));
+  public folgen(team: TeamId, platz?: TeamPlatz): Promise<void> {
+    return this.aendern(folgenAenderung(team, platz));
   }
 
-  public entfolgen(team: TeamId): Promise<void> {
-    return this.aendern(entfolgenAenderung(team));
+  public entfolgen(team: TeamId): Promise<TeamPlatz | undefined> {
+    return this.ausfuehren(entfolgenAenderung(team), (vorher) =>
+      teamPlatz(vorher, team)
+    );
   }
 
   public markieren(
@@ -263,21 +268,29 @@ export class FirestoreAuswahl implements Auswahl {
    * entries it changes; shown at once, until the server answered.
    */
   private aendern(aenderung: AuswahlAenderung): Promise<void> {
+    return this.ausfuehren(aenderung, () => undefined);
+  }
+
+  /** As `aendern`, resolving with `ergebnis` of the state it applied to. */
+  private ausfuehren<T>(
+    aenderung: AuswahlAenderung,
+    ergebnis: (vorher: AuswahlInhalt) => T
+  ): Promise<T> {
     if (this.ende !== undefined) {
       return Promise.reject(this.ende);
     }
     if (this.vomListener() === undefined) {
-      return this.erstesLesen.then(() => this.aendern(aenderung));
+      return this.erstesLesen.then(() => this.ausfuehren(aenderung, ergebnis));
     }
     try {
-      this.schreiben(aenderung);
-      return Promise.resolve();
+      return Promise.resolve(ergebnis(this.schreiben(aenderung)));
     } catch (fehler) {
       return Promise.reject(fehler);
     }
   }
 
-  private schreiben(aenderung: AuswahlAenderung): void {
+  /** Writes what `aenderung` changes; returns the state it applied to. */
+  private schreiben(aenderung: AuswahlAenderung): AuswahlInhalt {
     const gelesen = this.gelesen();
     if (gelesen?.art !== 'aktuell') {
       throw new AuswahlZuNeuError();
@@ -285,19 +298,24 @@ export class FirestoreAuswahl implements Auswahl {
     const vorher = inhaltAus(gelesen);
     const nachher = aenderung(vorher);
     if (nachher === vorher) {
-      return;
+      return vorher;
     }
     grenzenPruefen(vorher, nachher);
     const seit = naechsterSeit(gelesen, this.letzterSeit);
     const felder = auswahlFelder(vorher, nachher, seit);
     // at most one `seit` per entry
     this.letzterSeit = seit + nachher.teams.length + nachher.kinder.length;
-    this.ausstehend.update((alle) => [...alle, aenderung]);
+    // shown with the `seit`s it writes, so a Team just followed has its
+    // place before the listener tells
+    const gezeigt: AuswahlAenderung = (stand) =>
+      mitTeamsSeit(aenderung(stand), felder);
+    this.ausstehend.update((alle) => [...alle, gezeigt]);
     // answered once online; a refusal takes the change back in the cache
     void setDoc(this.dokument, firestoreFelder(felder), { merge: true })
       .catch(() => undefined)
       .finally(() =>
-        this.ausstehend.update((alle) => alle.filter((a) => a !== aenderung))
+        this.ausstehend.update((alle) => alle.filter((a) => a !== gezeigt))
       );
+    return vorher;
   }
 }

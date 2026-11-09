@@ -259,6 +259,30 @@ export function auswahlFelder(
   };
 }
 
+/**
+ * `inhalt` with the `seit` that `felder` gives each of its Teams, as the
+ * write of `felder` stores them; so a Team just followed has its place
+ * before the store answered.
+ */
+export function mitTeamsSeit(
+  inhalt: AuswahlInhalt,
+  felder: AuswahlFelder
+): AuswahlInhalt {
+  const neu = Object.entries(felder.teams ?? {}).filter(
+    (eintrag): eintrag is [string, number] =>
+      typeof eintrag[1] === 'number' &&
+      inhalt.teams.includes(Number(eintrag[0]))
+  );
+  if (neu.length === 0) {
+    return inhalt;
+  }
+  const teamsSeit = new Map(inhalt.teamsSeit);
+  for (const [team, seit] of neu) {
+    teamsSeit.set(Number(team), seit);
+  }
+  return { ...inhalt, teamsSeit };
+}
+
 function vereinsfarbenFelder(
   vorher: readonly VereinsfarbenWahl[],
   nachher: readonly VereinsfarbenWahl[]

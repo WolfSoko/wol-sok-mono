@@ -13,7 +13,7 @@ export function fakeAuswahl(teile: Partial<Auswahl> = {}): Auswahl {
     nichtLesbar: signal(false),
     quelle: signal('fake'),
     folgen: () => Promise.resolve(),
-    entfolgen: () => Promise.resolve(),
+    entfolgen: () => Promise.resolve(undefined),
     markieren: () => Promise.resolve(),
     spitznameSetzen: () => Promise.resolve(),
     entmarkieren: () => Promise.resolve(),

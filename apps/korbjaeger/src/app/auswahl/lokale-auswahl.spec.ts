@@ -174,6 +174,24 @@ describe('LokaleAuswahl', () => {
     });
   });
 
+  it('restores an unfollowed Team at its place in a document of version 1, of lists', async () => {
+    const geraet = new SpeicherImSpec();
+    geraet.setzeLeise(
+      AUSWAHL_SCHLUESSEL,
+      JSON.stringify({
+        version: 1,
+        teams: [313036, 201765, 201500],
+        kinder: [],
+      })
+    );
+    const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
+
+    const platz = await auswahl.entfolgen(201765);
+    await auswahl.folgen(201765, platz);
+
+    expect(gespeichert(geraet).teams).toEqual([313036, 201765, 201500]);
+  });
+
   it('stores a change before the call returns, so leaving the page right after keeps it', () => {
     const geraet = new SpeicherImSpec();
     const auswahl = new LokaleAuswahl(geraet);
@@ -414,6 +432,23 @@ describe('LokaleAuswahl', () => {
         kinder: [{ personId: 4711, spitzname: 'Lu' }],
         vereinsfarben: [],
       });
+    });
+
+    it('restores a Team at its place while nothing can be stored', async () => {
+      const { geraet, voll } = zeitweiseVoll();
+      const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
+      await auswahl.folgen(313036);
+      await auswahl.folgen(201765);
+      await auswahl.folgen(201500);
+      voll.an = true;
+
+      const platz = await auswahl.entfolgen(201765);
+      await auswahl.folgen(201765, platz);
+
+      expect(auswahl.teams()).toEqual([313036, 201765, 201500]);
+      voll.an = false;
+      await auswahl.markieren(LUMI);
+      expect(gespeichert(geraet).teams).toEqual([313036, 201765, 201500]);
     });
 
     it('is dropped once another tab stored a newer version, which shows nothing', async () => {
