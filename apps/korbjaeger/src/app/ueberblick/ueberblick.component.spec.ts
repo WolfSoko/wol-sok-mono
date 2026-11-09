@@ -1,6 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
@@ -182,6 +185,8 @@ async function render(
   readonly auswahl: Auswahl;
   /** Waits for the reads that settle and the page. */
   readonly stabil: () => Promise<void>;
+  /** The snackbars, open over the page (`document`'s root). */
+  readonly leisten: HarnessLoader;
 }> {
   const auswahl = 'teams' in gefolgt ? gefolgt : await folgend(gefolgt);
   TestBed.configureTestingModule({
@@ -205,7 +210,12 @@ async function render(
     fixture.detectChanges();
   };
   await stabil();
-  return { seite: fixture.nativeElement as HTMLElement, auswahl, stabil };
+  return {
+    seite: fixture.nativeElement as HTMLElement,
+    auswahl,
+    stabil,
+    leisten: TestbedHarnessEnvironment.documentRootLoader(fixture),
+  };
 }
 
 async function folgend(teams: readonly TeamId[]): Promise<LokaleAuswahl> {
@@ -787,7 +797,7 @@ describe('UeberblickComponent', () => {
     });
 
     it('unfollows a Team that loaded from its card, offering to undo it', async () => {
-      const { seite, auswahl, stabil } = await render(
+      const { seite, auswahl, stabil, leisten } = await render(
         fakeData([saison(WASBUETTEL), saison(GIFHORN)]),
         [WASBUETTEL.id, GIFHORN.id]
       );
@@ -805,12 +815,12 @@ describe('UeberblickComponent', () => {
       expect(teamNamen(seite)).toEqual(['MTV Gifhorn']);
       // focus stays on the overview, not on the page's body
       expect(document.activeElement?.textContent?.trim()).toBe('Meine Teams');
-      const leiste = document.querySelector('mat-snack-bar-container');
-      expect(leiste?.textContent).toContain(
+      const leiste = await leisten.getHarness(MatSnackBarHarness);
+      expect(await leiste.getMessage()).toBe(
         'MTV Wasbüttel steht nicht mehr in Meine Teams.'
       );
 
-      leiste?.querySelector('button')?.click();
+      await leiste.dismissWithAction();
       await stabil();
 
       expect(auswahl.teams()).toEqual([GIFHORN.id, WASBUETTEL.id]);

@@ -1,4 +1,5 @@
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { Component, signal } from '@angular/core';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
@@ -351,12 +352,14 @@ describe('TeamEinrichtenComponent', () => {
     expect(zeile?.getAttribute('data-qa')).toBe('team');
     expect(textOf(zeile)).toBe('MTV Wasbüttel -RST-');
     expect(assistent.seite.querySelector('[data-qa="team-folgen"]')).toBeNull();
-    const leiste = document.querySelector('mat-snack-bar-container');
-    expect(leiste?.textContent).toContain(
+    const leiste = await TestbedHarnessEnvironment.documentRootLoader(
+      assistent.fixture
+    ).getHarness(MatSnackBarHarness);
+    expect(await leiste.getMessage()).toBe(
       'MTV Wasbüttel -RST- steht nicht mehr in Meine Teams.'
     );
 
-    leiste?.querySelector('button')?.click();
+    await leiste.dismissWithAction();
     await assistent.stabil();
 
     expect(auswahl.teams()).toEqual([313036]);

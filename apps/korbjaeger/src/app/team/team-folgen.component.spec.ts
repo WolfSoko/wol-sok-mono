@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
+import type { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
 import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
@@ -14,6 +17,8 @@ const MTV_WASBUETTEL: TeamId = 313036;
 interface Gerendert {
   readonly knopf: HTMLButtonElement;
   readonly seite: HTMLElement;
+  /** The snackbars, open over the page (`document`'s root). */
+  readonly leisten: HarnessLoader;
   /** Clicks the button and waits until the page shows what followed. */
   klicken(): Promise<void>;
 }
@@ -50,31 +55,16 @@ async function render(
   return {
     knopf,
     seite,
+    leisten: TestbedHarnessEnvironment.documentRootLoader(fixture),
     klicken: async () => {
       knopf.click();
-      // the adapter settles in a microtask, the page in the next round
-      await new Promise((resolve) => setTimeout(resolve));
+      await warten();
       await fixture.whenStable();
     },
   };
 }
 
-/** The latest snackbar's text and its action, where one is open. */
-function snackbar():
-  | { text: string; aktion: HTMLButtonElement | null }
-  | undefined {
-  const leiste = [...document.querySelectorAll('mat-snack-bar-container')].at(
-    -1
-  );
-  if (leiste === undefined) {
-    return undefined;
-  }
-  return {
-    text: leiste.textContent ?? '',
-    aktion: leiste.querySelector('button'),
-  };
-}
-
+/** Lets the adapter settle (microtasks), then the next round of the page. */
 async function warten(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve));
 }
@@ -123,7 +113,7 @@ describe('TeamFolgenComponent', () => {
     const auswahl = new LokaleAuswahl(undefined);
     await auswahl.folgen(201500);
     await auswahl.folgen(MTV_WASBUETTEL);
-    const { knopf, seite, klicken } = await render(auswahl);
+    const { knopf, seite, leisten, klicken } = await render(auswahl);
     expect(knopf.textContent).toContain('Nicht mehr folgen');
 
     await klicken();
@@ -131,14 +121,14 @@ describe('TeamFolgenComponent', () => {
     expect(auswahl.teams()).toEqual([201500]);
     expect(knopf.textContent).toContain('Team folgen');
     expect(seite.textContent).not.toContain('Steht in Meine Teams');
-    expect(snackbar()).toBeUndefined();
+    expect(await leisten.getHarnessOrNull(MatSnackBarHarness)).toBeNull();
   });
 
   describe('where the control disappears with the Team (NachEntfolgen)', () => {
     it('offers to undo the unfollowing, and follows the Team again', async () => {
       const auswahl = new LokaleAuswahl(undefined);
       await auswahl.folgen(MTV_WASBUETTEL);
-      const { klicken } = await render(auswahl, {
+      const { leisten, klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
         verschwindet: true,
       });
@@ -146,12 +136,13 @@ describe('TeamFolgenComponent', () => {
       await klicken();
 
       expect(auswahl.teams()).toEqual([]);
-      expect(snackbar()?.text).toContain(
+      const leiste = await leisten.getHarness(MatSnackBarHarness);
+      expect(await leiste.getMessage()).toBe(
         'MTV Wasbüttel steht nicht mehr in Meine Teams.'
       );
-      expect(snackbar()?.aktion?.textContent).toContain('Rückgängig');
+      expect(await leiste.getActionDescription()).toBe('Rückgängig');
 
-      snackbar()?.aktion?.click();
+      await leiste.dismissWithAction();
       await warten();
 
       expect(auswahl.teams()).toEqual([MTV_WASBUETTEL]);
@@ -162,17 +153,19 @@ describe('TeamFolgenComponent', () => {
         teams: signal([MTV_WASBUETTEL]),
         folgen: () => Promise.reject(new Error('offline')),
       });
-      const { klicken } = await render(auswahl, {
+      const { leisten, klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
         verschwindet: true,
       });
       await klicken();
 
-      snackbar()?.aktion?.click();
-      await warten();
+      await (await leisten.getHarness(MatSnackBarHarness)).dismissWithAction();
       await warten();
 
-      expect(snackbar()?.text).toContain('Das ließ sich nicht speichern.');
+      const leiste = await leisten.getHarness(MatSnackBarHarness);
+      expect(await leiste.getMessage()).toContain(
+        'Das ließ sich nicht speichern.'
+      );
     });
 
     it('hands the screen the Team unfollowed, to move focus', async () => {
@@ -194,7 +187,7 @@ describe('TeamFolgenComponent', () => {
         teams: signal([MTV_WASBUETTEL]),
         entfolgen: () => Promise.reject(new Error('offline')),
       });
-      const { seite, klicken } = await render(auswahl, {
+      const { seite, leisten, klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
         verschwindet: true,
       });
@@ -202,7 +195,7 @@ describe('TeamFolgenComponent', () => {
 
       await klicken();
 
-      expect(snackbar()).toBeUndefined();
+      expect(await leisten.getHarnessOrNull(MatSnackBarHarness)).toBeNull();
       expect(entfolgt).not.toHaveBeenCalled();
       expect(seite.querySelector('[role="alert"]')?.textContent).toContain(
         'Das ließ sich nicht speichern.'
