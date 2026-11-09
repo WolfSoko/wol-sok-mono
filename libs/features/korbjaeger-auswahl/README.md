@@ -7,7 +7,7 @@ marked Kinder and the Vereinsfarben, behind the `Auswahl` port
 - `@wolsok/feat-korbjaeger-auswahl`: the port (`Auswahl`), the stored
   document (`auswahl-dokument.ts`, caps `AUSWAHL_GRENZEN`), the errors, the
   adapters `LokaleAuswahl` (the device's `localStorage`) and
-  `FirestoreAuswahl` (`auswahl/{uid}`), the sign-in takeover
+  `FirestoreAuswahl` (`selections/{uid}`), the sign-in takeover
   (`geraetUebernehmen`, `zusammenfuehren`) and the colour values.
 - `@wolsok/feat-korbjaeger-auswahl/testing`: the contract suite every adapter
   runs (`auswahlVertrag`) and `fakeAuswahl` for specs that need an `Auswahl`

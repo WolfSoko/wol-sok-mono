@@ -1,8 +1,10 @@
 import { assertSucceeds } from '@firebase/rules-unit-testing';
 import { Timestamp } from 'firebase-admin/firestore';
 import {
-  CHOICES_COLLECTION,
   DELETED_ACCOUNTS_COLLECTION,
+  LEGACY_CHOICES_COLLECTION,
+  LEGACY_DELETED_ACCOUNTS_COLLECTION,
+  CHOICES_COLLECTION,
   TOMBSTONE_DURATION_MS,
 } from '@wolsok/feat-shared-korbjaeger-account';
 import { kontoGeloescht } from './konto-geloescht';
@@ -13,6 +15,13 @@ const ANDERES = 'elternteil-b';
 const JETZT = Date.UTC(2026, 10, 9, 12);
 
 const AUSWAHL_DOKUMENT = {
+  version: 3,
+  teams: { 313036: 1 },
+  children: { 4711: { since: 1, nickname: 'Mimi' } },
+};
+
+/** A selection of before #2966, never moved. */
+const LEGACY_DOKUMENT = {
   version: 2,
   teams: { 313036: 1 },
   kinder: { 4711: { seit: 1, spitzname: 'Mimi' } },
@@ -26,6 +35,9 @@ const auswahlVon = (uid: string) =>
 const grabsteinVon = (uid: string) =>
   project().admin.collection(DELETED_ACCOUNTS_COLLECTION).doc(uid);
 
+const legacyVon = (uid: string) =>
+  project().admin.collection(LEGACY_CHOICES_COLLECTION).doc(uid);
+
 /** A device signed in as `uid`, under the app's rules. */
 const geraet = (uid: string) =>
   project().devices.authenticatedContext(uid).firestore();
@@ -35,7 +47,7 @@ const folgen = (device: ReturnType<typeof geraet>, uid: string, id: number) =>
   device
     .collection(CHOICES_COLLECTION)
     .doc(uid)
-    .set({ version: 2, teams: { [id]: id } }, { merge: true });
+    .set({ version: 3, teams: { [id]: id } }, { merge: true });
 
 describe('kontoGeloescht', () => {
   it('leaves a tombstone of a day and no Auswahl of the account', async () => {
@@ -47,6 +59,29 @@ describe('kontoGeloescht', () => {
     expect((await grabsteinVon(ELTERNTEIL).get()).data()).toEqual({
       expireAt: Timestamp.fromMillis(JETZT + TOMBSTONE_DURATION_MS),
     });
+  });
+
+  it('writes the tombstone in the collection of before #2966 too', async () => {
+    await kontoGeloescht(project().admin, ELTERNTEIL, JETZT);
+
+    expect(
+      (
+        await project()
+          .admin.collection(LEGACY_DELETED_ACCOUNTS_COLLECTION)
+          .doc(ELTERNTEIL)
+          .get()
+      ).data()
+    ).toEqual({
+      expireAt: Timestamp.fromMillis(JETZT + TOMBSTONE_DURATION_MS),
+    });
+  });
+
+  it('deletes the selection of before #2966 too', async () => {
+    await legacyVon(ELTERNTEIL).set(LEGACY_DOKUMENT);
+
+    await kontoGeloescht(project().admin, ELTERNTEIL, JETZT);
+
+    expect((await legacyVon(ELTERNTEIL).get()).exists).toBe(false);
   });
 
   it("leaves other accounts' Auswahl as it is", async () => {

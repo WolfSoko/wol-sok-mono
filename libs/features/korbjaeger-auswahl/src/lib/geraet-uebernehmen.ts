@@ -7,6 +7,7 @@ import { inhaltAus } from './auswahl-aenderungen';
 import {
   auswahlDokumentLesen,
   auswahlFelder,
+  DOCUMENT_FIELD,
   naechsterSeit,
   LEERE_AUSWAHL,
   type AuswahlInhalt,
@@ -69,7 +70,7 @@ function listeUebernehmen(
       { ...konto, [liste]: zusammenfuehrung.inhalt[liste] },
       naechsterSeit(gelesen)
     );
-    if (felder[liste] !== undefined) {
+    if (felder[DOCUMENT_FIELD[liste]] !== undefined) {
       transaktion.set(dokument, firestoreFelder(felder), { merge: true });
     }
     return zusammenfuehrung.uebrig;

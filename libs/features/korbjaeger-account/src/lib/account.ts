@@ -18,17 +18,30 @@ interface Region {
 
 /**
  * The collection of the Elternteile's choices (Meine Teams, Kinder,
- * Vereinsfarben), one document per uid. Persisted: renamed only with a
- * migration (#2966).
+ * Vereinsfarben), one `AuswahlDokument` per uid. Persisted: renamed only with
+ * a migration (#2966 renamed it from `LEGACY_CHOICES_COLLECTION`).
  */
-export const CHOICES_COLLECTION = 'auswahl';
+export const CHOICES_COLLECTION = 'selections';
 
 /**
  * The tombstones of deleted accounts, one per uid: while one exists the
- * rules refuse every request on that uid's choices (`istBesitzer` in
+ * rules refuse every request on that uid's choices (`isOwner` in
  * `apps/korbjaeger/firestore.rules`). Persisted, like `CHOICES_COLLECTION`.
  */
-export const DELETED_ACCOUNTS_COLLECTION = 'geloeschteKonten';
+export const DELETED_ACCOUNTS_COLLECTION = 'deletedAccounts';
+
+/**
+ * The choices as versions 1 and 2 stored them, with German fields: read only
+ * by the migration into `CHOICES_COLLECTION` and deleted with the account,
+ * until the follow-up of #2966 removes it.
+ */
+export const LEGACY_CHOICES_COLLECTION = 'auswahl';
+
+/**
+ * The tombstones written before #2966: the rules still honour them, and the
+ * deletion still writes one, until the follow-up of #2966 removes it.
+ */
+export const LEGACY_DELETED_ACCOUNTS_COLLECTION = 'geloeschteKonten';
 
 /**
  * How many days a tombstone stays: longer than any ID token of the deleted

@@ -2,6 +2,12 @@
   "indexes": [],
   "fieldOverrides": [
     {
+      "collectionGroup": "deletedAccounts",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "geloeschteKonten",
       "fieldPath": "expireAt",
       "ttl": true,

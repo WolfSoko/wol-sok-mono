@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import {
   CHOICES_COLLECTION,
   DELETED_ACCOUNTS_COLLECTION,
+  LEGACY_CHOICES_COLLECTION,
+  LEGACY_DELETED_ACCOUNTS_COLLECTION,
 } from '@wolsok/feat-shared-korbjaeger-account';
 
 /** The rules as the deploy takes them: they cannot import the names. */
@@ -12,17 +14,21 @@ const RULES = readFileSync(
 );
 
 describe('the collections the Firestore rules name', () => {
-  it('are the account lib’s choices, the only collection a client may open', () => {
+  // the legacy choices only to read and delete, until #2966's follow-up
+  it('are the account lib’s choices and their legacy collection, the only ones a client may open', () => {
     const matched = [
       ...RULES.matchAll(/^\s*match \/(\w+)\/\{[\w=*]+\}\s*\{/gm),
     ].map(([, collection]) => collection);
 
-    expect(matched).toEqual([CHOICES_COLLECTION]);
+    expect(matched).toEqual([LEGACY_CHOICES_COLLECTION, CHOICES_COLLECTION]);
   });
 
-  it('look up the tombstones in the account lib’s collection', () => {
-    expect(RULES).toContain(
-      `exists(/databases/$(database)/documents/${DELETED_ACCOUNTS_COLLECTION}/$(uid))`
-    );
-  });
+  it.each([DELETED_ACCOUNTS_COLLECTION, LEGACY_DELETED_ACCOUNTS_COLLECTION])(
+    'look up the tombstones in %s',
+    (tombstones) => {
+      expect(RULES).toContain(
+        `exists(/databases/$(database)/documents/${tombstones}/$(uid))`
+      );
+    }
+  );
 });
