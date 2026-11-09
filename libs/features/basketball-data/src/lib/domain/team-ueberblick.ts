@@ -83,17 +83,23 @@ export interface SaisonSpiel {
   readonly spiel: Spiel;
 }
 
+/** A Team's Saison with its overview (`teamUeberblick`), computed once. */
+export interface SaisonMitUeberblick {
+  readonly saison: TeamSaison;
+  readonly ueberblick: TeamUeberblick;
+}
+
 /**
  * What the overview shows of several Teams together, as of a Kind playing
- * in each: `TeamUeberblick` over all of them, each Spiel with the Saison
- * it was seen in.
+ * in each: their `TeamUeberblick`s taken together, each Spiel with the
+ * Saison it was seen in.
  */
 export interface GemeinsamerUeberblick {
   /** The first next Spiel of all the Teams (`vergleicheAnwurf`). */
   readonly naechstes?: SaisonSpiel;
   /**
-   * What falls through of each Team (`TeamUeberblick.ausfaelle`) before
-   * `naechstes`, every one where none is next, by tip-off.
+   * What falls through of each Team, as its own overview has it
+   * (`TeamUeberblick.ausfaelle`), by tip-off.
    */
   readonly ausfaelle: readonly SaisonSpiel[];
   /** The latest last result of all the Teams. */
@@ -101,37 +107,30 @@ export interface GemeinsamerUeberblick {
 }
 
 /**
- * The overview of `saisons` together on `heute`: each Team's
- * `teamUeberblick`, the first next Spiel and the latest result taken.
- * A tie goes to the Saison listed first.
- *
- * @param heute a German calendar day, `YYYY-MM-DD` (`datumInDeutschland`)
+ * The overview of several Teams together, from each Team's own
+ * `teamUeberblick`: the first next Spiel, every Spiel falling through and
+ * the latest result. A tie goes to the Team listed first.
  */
 export function gemeinsamerUeberblick(
-  saisons: readonly TeamSaison[],
-  heute: string
+  teams: readonly SaisonMitUeberblick[]
 ): GemeinsamerUeberblick {
-  const einzeln = saisons.map((saison) => ({
-    saison,
-    ueberblick: teamUeberblick(saison, heute),
-  }));
   const mit = (
-    wahl: (ueberblick: TeamUeberblick) => readonly Spiel[]
+    wahl: (ueberblick: TeamUeberblick) => readonly (Spiel | undefined)[]
   ): SaisonSpiel[] =>
-    einzeln.flatMap(({ saison, ueberblick }) =>
-      wahl(ueberblick).map((spiel) => ({ saison, spiel }))
+    teams.flatMap(({ saison, ueberblick }) =>
+      wahl(ueberblick)
+        .filter((spiel): spiel is Spiel => spiel !== undefined)
+        .map((spiel) => ({ saison, spiel }))
     );
   const nachAnwurf = (a: SaisonSpiel, b: SaisonSpiel): number =>
     vergleicheAnwurf(a.spiel, b.spiel);
-  const naechstes = mit(({ naechstes }) => (naechstes ? [naechstes] : []))
+  const naechstes = mit(({ naechstes }) => [naechstes])
     .sort(nachAnwurf)
     .at(0);
-  const letztes = mit(({ letztes }) => (letztes ? [letztes] : []))
+  const letztes = mit(({ letztes }) => [letztes])
     .sort((a, b) => nachAnwurf(b, a))
     .at(0);
-  const ausfaelle = mit(({ ausfaelle }) => ausfaelle)
-    .filter((ausfall) => !naechstes || nachAnwurf(ausfall, naechstes) < 0)
-    .sort(nachAnwurf);
+  const ausfaelle = mit(({ ausfaelle }) => ausfaelle).sort(nachAnwurf);
   return {
     ...(naechstes && { naechstes }),
     ausfaelle,

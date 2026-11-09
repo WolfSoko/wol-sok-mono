@@ -113,6 +113,7 @@ export {
 } from './lib/domain/team-ueberblick';
 export type {
   GemeinsamerUeberblick,
+  SaisonMitUeberblick,
   SaisonSpiel,
   TeamUeberblick,
 } from './lib/domain/team-ueberblick';

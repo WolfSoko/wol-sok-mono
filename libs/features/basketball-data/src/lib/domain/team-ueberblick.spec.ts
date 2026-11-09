@@ -245,7 +245,9 @@ describe('gemeinsamerUeberblick', () => {
   const U14: Team = { id: 313040, name: 'MTV Wasbüttel U14', vereinId: 1837 };
 
   function ueberblick(...saisons: TeamSaison[]) {
-    const gemeinsam = gemeinsamerUeberblick(saisons, HEUTE);
+    const gemeinsam = gemeinsamerUeberblick(
+      saisons.map((s) => ({ saison: s, ueberblick: teamUeberblick(s, HEUTE) }))
+    );
     return {
       naechstes: gemeinsam.naechstes && [
         gemeinsam.naechstes.saison.team.id,
@@ -291,7 +293,7 @@ describe('gemeinsamerUeberblick', () => {
     ).toEqual([UNSER_TEAM.id, 1]);
   });
 
-  it('lists the Spiele falling through before the first next Spiel, by day', () => {
+  it("lists each Team's Spiele falling through, as its own overview does, by tip-off", () => {
     expect(
       ueberblick(
         saison(
@@ -301,11 +303,38 @@ describe('gemeinsamerUeberblick', () => {
         saisonVon(
           U14,
           spiel(3, '2026-11-08', { art: 'abgesagt' }),
-          spiel(4, '2026-11-21'),
-          spiel(5, '2026-11-28', { art: 'abgesagt' })
+          spiel(4, '2026-11-21')
         )
       ).ausfaelle
     ).toEqual([3, 1]);
+  });
+
+  it("keeps a Team's cancelled Spiel on the day of another Team's next one, without a tip-off", () => {
+    const gemeinsam = ueberblick(
+      saison(spiel(1, '2026-11-14', { art: 'geplant' }, '12:00')),
+      saisonVon(
+        U14,
+        { ...spiel(2, '2026-11-14', { art: 'abgesagt' }), uhrzeit: undefined },
+        spiel(3, '2026-11-21')
+      )
+    );
+
+    expect(gemeinsam.naechstes).toEqual([UNSER_TEAM.id, 1]);
+    expect(gemeinsam.ausfaelle).toEqual([2]);
+  });
+
+  it("keeps a Team's cancelled Spiel after another Team's next one", () => {
+    const gemeinsam = ueberblick(
+      saison(spiel(1, '2026-11-14')),
+      saisonVon(
+        U14,
+        spiel(2, '2026-11-21', { art: 'abgesagt' }),
+        spiel(3, '2026-11-28')
+      )
+    );
+
+    expect(gemeinsam.naechstes).toEqual([UNSER_TEAM.id, 1]);
+    expect(gemeinsam.ausfaelle).toEqual([2]);
   });
 
   it('lists every Spiel falling through where none is next', () => {
