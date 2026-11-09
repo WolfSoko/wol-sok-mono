@@ -35,8 +35,7 @@
         "^production",
         "{workspaceRoot}/jest.preset.cjs",
         "{workspaceRoot}/package.json",
-        "{workspaceRoot}/firebase.korbjaeger.json",
-        "{workspaceRoot}/apps/korbjaeger/src/shared/regionen.ts"
+        "{workspaceRoot}/firebase.korbjaeger.json"
       ],
       "options": {
         "jestConfig": "apps/korbjaeger-functions/jest.config.ts"

@@ -15,8 +15,8 @@ initializeApp();
 /**
  * Deletes a deleted account's Auswahl (#2912, ADR 0019). 1st gen, as 2nd-gen
  * functions have no Auth deletion event. Retried until it succeeds (Cloud
- * Functions gives up after 7 days), which `kontoGeloescht` allows: a rerun
- * ends the same.
+ * Functions gives up after `DELETION_RETRY_DAYS` of the account lib), which
+ * `kontoGeloescht` allows: a rerun ends the same.
  */
 export const auswahlLoeschen = v1
   .region(REGION)
