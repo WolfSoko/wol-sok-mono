@@ -5,36 +5,36 @@ import { UsageError, nextClaims, parseArgs } from './grant-admin.mjs';
 
 const EMULATOR = { FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099' };
 
-describe('parseArgs', () => {
-  it('refuses to run without an email', () => {
+void describe('parseArgs', () => {
+  void it('refuses to run without an email', () => {
     assert.throws(
       () => parseArgs(['--project', 'demo', '--prod'], {}),
       (error) => error instanceof UsageError && /email/.test(error.message)
     );
   });
 
-  it('refuses to run without --project', () => {
+  void it('refuses to run without --project', () => {
     assert.throws(
       () => parseArgs(['user@example.com', '--prod'], {}),
       (error) => error instanceof UsageError && /--project/.test(error.message)
     );
   });
 
-  it('refuses --project without a value', () => {
+  void it('refuses --project without a value', () => {
     assert.throws(
       () => parseArgs(['user@example.com', '--project', '--prod'], {}),
       UsageError
     );
   });
 
-  it('refuses to run without --prod and without the emulator', () => {
+  void it('refuses to run without --prod and without the emulator', () => {
     assert.throws(
       () => parseArgs(['user@example.com', '--project', 'demo'], {}),
       (error) => error instanceof UsageError && /--prod/.test(error.message)
     );
   });
 
-  it('refuses --prod while the emulator host is set', () => {
+  void it('refuses --prod while the emulator host is set', () => {
     assert.throws(
       () =>
         parseArgs(
@@ -45,7 +45,7 @@ describe('parseArgs', () => {
     );
   });
 
-  it('refuses unknown options', () => {
+  void it('refuses unknown options', () => {
     assert.throws(
       () =>
         parseArgs(
@@ -56,7 +56,7 @@ describe('parseArgs', () => {
     );
   });
 
-  it('accepts --prod without the emulator', () => {
+  void it('accepts --prod without the emulator', () => {
     assert.deepEqual(
       parseArgs(
         ['user@example.com', '--project', 'bacteria-wars', '--prod'],
@@ -73,7 +73,7 @@ describe('parseArgs', () => {
     );
   });
 
-  it('accepts the emulator host without --prod', () => {
+  void it('accepts the emulator host without --prod', () => {
     const options = parseArgs(
       ['--project=demo', 'user@example.com', '--revoke', '--dry-run'],
       EMULATOR
@@ -84,24 +84,24 @@ describe('parseArgs', () => {
     assert.equal(options.dryRun, true);
   });
 
-  it('returns help without further checks', () => {
+  void it('returns help without further checks', () => {
     assert.equal(parseArgs(['--help'], {}).help, true);
   });
 });
 
-describe('nextClaims', () => {
-  it('adds admin and keeps the other claims', () => {
+void describe('nextClaims', () => {
+  void it('adds admin and keeps the other claims', () => {
     assert.deepEqual(nextClaims({ tier: 'gold' }, { revoke: false }), {
       tier: 'gold',
       admin: true,
     });
   });
 
-  it('grants to a user without claims', () => {
+  void it('grants to a user without claims', () => {
     assert.deepEqual(nextClaims(undefined, { revoke: false }), { admin: true });
   });
 
-  it('revoke removes only admin', () => {
+  void it('revoke removes only admin', () => {
     assert.deepEqual(
       nextClaims({ tier: 'gold', admin: true }, { revoke: true }),
       {
