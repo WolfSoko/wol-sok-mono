@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.158.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.157.0...v74.158.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** light/dark switch: System, Hell, Dunkel ([#2944](https://github.com/WolfSoko/wol-sok-mono/issues/2944)) ([4f199cd](https://github.com/WolfSoko/wol-sok-mono/commit/4f199cd4de142cca36f49d9b8020aba0e1baca5b)), references [#2925](https://github.com/WolfSoko/wol-sok-mono/issues/2925)
+
+### Chore
+
+* **release:** publish ([eb1313e](https://github.com/WolfSoko/wol-sok-mono/commit/eb1313eb5a25735e875cc14c8a4af3072d02482d))
+
 ## [74.157.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.156.0...v74.157.0) (2026-11-09)
 
 ### Features
