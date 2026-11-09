@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "peerDependencies": {
     "@analogjs/router": "2.9.1",

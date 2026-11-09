@@ -1,17 +1,13 @@
-# Plan 2956: Proprietary licence for future versions
+# Plan 2956: Proprietary licence for RollaPolla and Korbjäger
 
 Spec: `docs/specs/2956-lizenz-proprietaer-alle-rechte-vorbehalten-nutzung-nur-mit-genehmigung-fuer-kuenftige-versionen.md`
 
-1. **Packages keep MIT on their own** (before the root changes, so no release ships without a licence).
-   - Files: `libs/public/{ws-thanos,nx-aws-cdk-v2,spa-cdk-stack}/LICENSE` (current MIT text), `libs/public/nx-aws-cdk-v2/project.json` (asset `LICENSE` from the package folder), `libs/public/ws-thanos/ng-package.json` (assets add `LICENSE`), `libs/public/spa-cdk-stack/project.json` (assets add `LICENSE`), `libs/public/spa-cdk-stack/package.json` (`"license": "MIT"`).
-   - Test: `nx build` each package, `LICENSE` with "MIT License" in each `dist/libs/public/*`.
-   - Commit: `chore(nx-aws-cdk-v2): ship the packages' own MIT licence` (scopes per touched project; one commit each if commitlint wants one scope).
-2. **Root licence proprietary.**
-   - Files: `LICENSE`, `package.json` (`UNLICENSED`), `README.md` (License section), `docs/CONTRIBUTING.md`.
-   - Test: `nx format:check`; read the texts.
-   - Commit: `chore(release): make the repository proprietary for future versions`.
-3. **Portfolio texts.**
-   - Files: `apps/portfolio/src/app/i18n/texts.en.ts`, `texts.de.ts`.
-   - Test: `nx test portfolio`.
-   - Commit: `fix(portfolio): stop calling the monorepo open source`.
-4. Spec and plan go in the first commit (`docs`), PR to `main` with `Closes #2956`.
+1. **Proprietary licence files.**
+   - Files: `LICENSE` in `apps/rollapolla-analog`, `apps/korbjaeger`, `apps/korbjaeger-functions`, `apps/korbjaeger-cdk`, `libs/features/basketball-data`, `libs/features/korbjaeger-auswahl`, `tools/korbjaeger`; `"license": "UNLICENSED"` in the five `package.json` files of those projects.
+   - Test: `cmp` over the copies; `nx test korbjaeger-functions` and `nx test korbjaeger` (`package-json.spec.ts`, `firebase-deploy.spec.ts`), `nx test rollapolla-analog`.
+   - Commit: `chore(release): make RollaPolla and Korbjäger proprietary`.
+2. **Root scope and docs.**
+   - Files: `LICENSE` (scope paragraph above the MIT text), `README.md` (License section), `docs/CONTRIBUTING.md`, `CLAUDE.md`.
+   - Test: `nx format:check`.
+   - Same commit as task 1, so no release carries the files without the root's list.
+3. PR to `main` with spec, plan and code, `Closes #2956`.

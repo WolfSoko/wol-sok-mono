@@ -1,3 +1,22 @@
+Scope
+
+The MIT License below covers this repository except the following
+directories, each of which holds its own proprietary LICENSE (all rights
+reserved, use only with the owner's written permission) for every version
+after 74.158.0:
+
+- apps/rollapolla-analog
+- apps/korbjaeger
+- apps/korbjaeger-functions
+- apps/korbjaeger-cdk
+- libs/features/basketball-data
+- libs/features/korbjaeger-auswahl
+- tools/korbjaeger
+
+Third-party code keeps its own licence and notices.
+
+---
+
 MIT License
 
 Copyright (c) 2022 Wolfram Sokollek

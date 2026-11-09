@@ -1,0 +1,50 @@
+Proprietary License
+
+Copyright (c) 2022-2026 Wolfram Sokollek. All rights reserved.
+
+This directory and everything in it (the "Software") is the property of
+Wolfram Sokollek. No licence is granted. Without the copyright holder's prior
+written permission you may not use, copy, modify, merge, publish, distribute,
+sublicense, sell, deploy or run the Software, in whole or in part, nor build
+other works from it. That the source code can be read on GitHub grants no right
+to any of these.
+
+Third-party code inside the Software keeps its own licence and notices.
+
+Versions of the Software up to and including 74.158.0 (Git tag v74.158.0) were
+published under the MIT License; whoever received such a version keeps the
+rights the MIT License grants for it. Every later version is covered by this
+licence only.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR ITS USE.
+
+Requests for permission: see the contact details at https://wolsok.de/impressum
+
+---
+
+Deutsche Übersetzung (verbindlich ist der englische Text oben)
+
+Proprietäre Lizenz
+
+Copyright (c) 2022-2026 Wolfram Sokollek. Alle Rechte vorbehalten.
+
+Dieses Verzeichnis mit allem, was es enthält (die „Software“), gehört Wolfram
+Sokollek. Es wird keine Lizenz erteilt. Ohne vorherige schriftliche Genehmigung
+des Rechteinhabers darf die Software weder ganz noch in Teilen genutzt,
+kopiert, verändert, zusammengeführt, veröffentlicht, verbreitet, unterlizenziert,
+verkauft, bereitgestellt oder ausgeführt werden, noch dürfen andere Werke aus
+ihr entstehen. Dass der Quellcode auf GitHub lesbar ist, gewährt keines dieser
+Rechte.
+
+Code Dritter in der Software behält seine eigene Lizenz und seine Hinweise.
+
+Versionen der Software bis einschließlich 74.158.0 (Git-Tag v74.158.0) wurden
+unter der MIT-Lizenz veröffentlicht; wer eine solche Version erhalten hat,
+behält die Rechte, die ihm die MIT-Lizenz für sie gewährt. Jede spätere Version
+steht allein unter dieser Lizenz.
+
+Anfragen zur Genehmigung: siehe die Kontaktangaben unter
+https://wolsok.de/impressum
