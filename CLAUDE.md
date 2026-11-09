@@ -269,6 +269,10 @@ Planned and phased in [ADR 0014](docs/adr/0014-performance-gates-in-ci.md); this
 - Review `SECURITY.md` for guidelines.
 - Don't commit `.env` files or Firebase service account keys.
 
+## Licence
+
+- The repository is MIT (`LICENSE`), except RollaPolla and Korbjäger, proprietary for every version released after #2956 added their `LICENSE` (earlier ones stay MIT): `apps/rollapolla-analog`, `apps/korbjaeger`, `apps/korbjaeger-functions`, `apps/korbjaeger-cdk`, `libs/features/basketball-data`, `libs/features/korbjaeger-auswahl` and `tools/korbjaeger`, listed at the top of the root `LICENSE` together with the root files `firebase.rollapolla-analog.json` and `firebase.korbjaeger.json`. Each holds the same proprietary `LICENSE` (copy it, don't reword one) and, where it has a `package.json`, `"license": "UNLICENSED"`. A new project or folder of either app gets both and its line in the root `LICENSE`; shared libs they use stay MIT. Third-party notices stay as they are.
+
 ## Agent skills
 
 ### Issue tracker

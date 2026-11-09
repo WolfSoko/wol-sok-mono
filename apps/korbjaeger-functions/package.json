@@ -1,6 +1,7 @@
 {
   "name": "korbjaeger-functions",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "main": "main.js",
   "engines": {
