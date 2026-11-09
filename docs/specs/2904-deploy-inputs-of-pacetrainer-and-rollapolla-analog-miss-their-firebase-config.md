@@ -18,6 +18,7 @@ Today `apps/pacetrainer/project.json` and `apps/rollapolla-analog/project.json` 
 
 - **Name the files literally** in each `deploy`'s inputs (`{workspaceRoot}/firebase.pacetrainer.json`, `{workspaceRoot}/firebase.rollapolla-analog.json`), as `korbjaeger` does. Reason: the only form Nx resolves.
 - **Include `bacteria-game-remote`**: give its `deploy` the same inputs as the other hosting apps (`production`, `^production`, `{workspaceRoot}/firebase.bacteria-game-remote.json`, `{workspaceRoot}/.firebaserc`). Reason: same root cause; fixing only the two named apps would leave the defect class open, and the guard below would fail on it.
+- **Include `bacteria-wars-functions`** (found while building): its `deploy` had no inputs either; its config reached it only through its `test` inputs. It gets the same deploy inputs, as the guard requires.
 - **One workspace-wide guard, not one spec per app**: a `node:test` file `tools/ci/deploy-inputs.test.mjs`, run by `nx test tools` beside `nx-cloud-workers.test.mjs`. It reads every `project.json` and fails when
   1. any target's `inputs` holds `{projectName}` (Nx leaves it unresolved, so the input silently matches nothing), or
   2. a project whose targets pass a root `firebase.*.json` to the Firebase CLI (`--config=firebase.<x>.json` / `--config firebase.<x>.json`, with `{projectName}` resolved to the project's name) has a `deploy` target that does not list `{workspaceRoot}/firebase.<x>.json` in its inputs.

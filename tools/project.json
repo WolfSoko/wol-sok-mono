@@ -18,7 +18,7 @@
       ]
     },
     "test": {
-      "command": "node --test tools/ci/nx-cloud-workers.test.mjs",
+      "command": "node --test \"tools/ci/*.test.mjs\"",
       "cache": true,
       "inputs": [
         "{workspaceRoot}/tools/ci/**/*",
