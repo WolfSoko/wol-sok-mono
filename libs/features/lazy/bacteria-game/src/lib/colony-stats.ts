@@ -10,6 +10,7 @@ import {
   TICKS_PER_SEC,
   type WeaponId,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { cssColor } from './player-color';
 
 /** Statistics of one colony, ready to be rendered by the template. */
 export interface ColonyStats {
@@ -164,7 +165,7 @@ export function toColonyStats(
     id: player.id,
     name: player.name,
     isBot: player.isBot,
-    css: `rgba(${player.color.join(',')})`,
+    css: cssColor(player.color),
     bacterias: player.bacteriaCount,
     captured: player.captured,
     lost: player.lost,

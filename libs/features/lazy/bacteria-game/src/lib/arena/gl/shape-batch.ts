@@ -3,12 +3,8 @@ import {
   Rect,
   WEAPON_CODE,
 } from '@wolsok/feat-shared-bacteria-engine';
-import {
-  boostRing,
-  crosshairBars,
-  splitColor,
-  CursorShape,
-} from '../arena-painter';
+import { splitColor } from '../../player-color';
+import { boostRing, crosshairBars, CursorShape } from '../arena-painter';
 import {
   BLOB_ALPHA,
   blobColor,

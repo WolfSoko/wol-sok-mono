@@ -1,9 +1,4 @@
-import {
-  boostRing,
-  crosshairBars,
-  splitColor,
-  CursorShape,
-} from './arena-painter';
+import { boostRing, crosshairBars, CursorShape } from './arena-painter';
 
 /** Expected values below are worked out by hand, not through the code. */
 describe('crosshairBars', () => {
@@ -53,22 +48,5 @@ describe('boostRing', () => {
   it('draws the ring twice as wide, with a line twice as thick, on a grid of two cells per base cell', () => {
     // Radius (9 + 4 * (1 - 0.25)) * 2 = 24, line 1.5 * 2 = 3.
     expect(boostRing(at(0.25), 2)).toEqual({ radius: 24, lineWidth: 3 });
-  });
-});
-
-describe('splitColor', () => {
-  it('splits an opaque colour into its channels and an alpha of 1', () => {
-    expect(splitColor([255, 0, 0, 255])).toEqual({
-      rgb: [255, 0, 0],
-      alpha: 1,
-    });
-  });
-
-  it('turns an alpha from 0 to 255 into one from 0 to 1', () => {
-    expect(splitColor([0, 0, 255, 51]).alpha).toBe(0.2);
-  });
-
-  it('takes a colour without an alpha as opaque', () => {
-    expect(splitColor([0, 0, 255]).alpha).toBe(1);
   });
 });
