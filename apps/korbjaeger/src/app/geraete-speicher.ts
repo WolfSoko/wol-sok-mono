@@ -27,6 +27,12 @@ export const ZWISCHENSPEICHER_LEEREN_SCHLUESSEL =
 export const INSTALLATION_ABGELEHNT_SCHLUESSEL =
   'korbjaeger-installation-abgelehnt';
 
+/**
+ * The look the Elternteil chose (`light` or `dark`; none for following the
+ * device), read by the pre-paint script in `index.html` too.
+ */
+export const DARSTELLUNG_SCHLUESSEL = 'korbjaeger-darstellung';
+
 /** Whether the flag `schluessel` is set (`'1'`); not where storage is withheld. */
 export function flagGesetzt(
   speicher: Pick<Storage, 'getItem'> | undefined,

@@ -43,6 +43,17 @@ html {
   );
 }
 
+// A look the Elternteil chose in the settings (`ThemeService` from
+// `@wolsok/shared-theme`, and before the first paint the script in
+// `index.html`) pins the scheme; without it the page follows the device.
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
 // The look "Hallenboden" (#2918), set once here: Material 3's system tokens
 // (`--mat-sys-*`) are the colours; components read them where they use
 // them, so a scope that sets its own scheme (`.anzeigetafel`, later a
@@ -64,6 +75,12 @@ body {
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+// links in the theme's colour, visited or not: an author rule overrides
+// the browser's purple `:visited`, and components' own link rules stay ahead
+a {
+  color: var(--mat-sys-primary);
 }
 
 // what went wrong, on every screen alike
