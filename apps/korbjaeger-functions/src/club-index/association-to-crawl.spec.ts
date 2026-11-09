@@ -1,10 +1,17 @@
-import { associationToCrawl, type CrawlSchedule } from './association-to-crawl';
+import {
+  associationToCrawl,
+  type ClubIndexSchedule,
+} from './association-to-crawl';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const WEEK = 7 * DAY;
 const NOW = 100 * DAY;
-const SCHEDULE: CrawlSchedule = { now: NOW, maxAgeMs: WEEK, retryAfterMs: DAY };
+const SCHEDULE: ClubIndexSchedule = {
+  maxAgeMs: WEEK,
+  retryAfterMs: DAY,
+  namesForMs: 20 * 60_000,
+};
 const BAYERN = { id: 2, name: 'Bayern' };
 const BERLIN = { id: 3, name: 'Berlin' };
 const HESSEN = { id: 6, name: 'Hessen' };
@@ -21,7 +28,8 @@ describe('associationToCrawl', () => {
         [BAYERN, BERLIN, HESSEN],
         [list(BAYERN, NOW)],
         NO_ATTEMPTS,
-        SCHEDULE
+        SCHEDULE,
+        NOW
       )
     ).toEqual(BERLIN);
   });
@@ -34,7 +42,13 @@ describe('associationToCrawl', () => {
     ];
 
     expect(
-      associationToCrawl([BAYERN, BERLIN, HESSEN], lists, NO_ATTEMPTS, SCHEDULE)
+      associationToCrawl(
+        [BAYERN, BERLIN, HESSEN],
+        lists,
+        NO_ATTEMPTS,
+        SCHEDULE,
+        NOW
+      )
     ).toEqual(BERLIN);
   });
 
@@ -42,7 +56,7 @@ describe('associationToCrawl', () => {
     const lists = [list(BAYERN, NOW - WEEK + 1), list(BERLIN, NOW)];
 
     expect(
-      associationToCrawl([BAYERN, BERLIN], lists, NO_ATTEMPTS, SCHEDULE)
+      associationToCrawl([BAYERN, BERLIN], lists, NO_ATTEMPTS, SCHEDULE, NOW)
     ).toBeUndefined();
   });
 
@@ -50,16 +64,13 @@ describe('associationToCrawl', () => {
     const attempts = new Map([[BERLIN.id, NOW - HOUR]]);
 
     expect(
-      associationToCrawl([BERLIN, HESSEN], [], attempts, SCHEDULE)
+      associationToCrawl([BERLIN, HESSEN], [], attempts, SCHEDULE, NOW)
     ).toEqual(HESSEN);
     expect(
-      associationToCrawl([BERLIN], [], attempts, SCHEDULE)
+      associationToCrawl([BERLIN], [], attempts, SCHEDULE, NOW)
     ).toBeUndefined();
     expect(
-      associationToCrawl([BERLIN], [], attempts, {
-        ...SCHEDULE,
-        now: NOW + DAY,
-      })
+      associationToCrawl([BERLIN], [], attempts, SCHEDULE, NOW + DAY)
     ).toEqual(BERLIN);
   });
 
@@ -68,7 +79,7 @@ describe('associationToCrawl', () => {
     const attempts = new Map([[BAYERN.id, NOW - HOUR]]);
 
     expect(
-      associationToCrawl([BAYERN, BERLIN], lists, attempts, SCHEDULE)
+      associationToCrawl([BAYERN, BERLIN], lists, attempts, SCHEDULE, NOW)
     ).toEqual(BERLIN);
   });
 
@@ -76,20 +87,43 @@ describe('associationToCrawl', () => {
     const lists = [list(BAYERN, NOW - WEEK)];
     const attempts = new Map([[BAYERN.id, NOW - WEEK - HOUR]]);
 
-    expect(associationToCrawl([BAYERN], lists, attempts, SCHEDULE)).toEqual(
-      BAYERN
-    );
+    expect(
+      associationToCrawl([BAYERN], lists, attempts, SCHEDULE, NOW)
+    ).toEqual(BAYERN);
   });
 
   it('ignores lists of Associations the DBB no longer offers', () => {
     const lists = [list(HESSEN, 0), list(BAYERN, NOW)];
 
     expect(
-      associationToCrawl([BAYERN], lists, NO_ATTEMPTS, SCHEDULE)
+      associationToCrawl([BAYERN], lists, NO_ATTEMPTS, SCHEDULE, NOW)
+    ).toBeUndefined();
+  });
+
+  it("takes a list a Team stood in for a Club's name in again after a day", () => {
+    const standIn = {
+      association: BAYERN,
+      clubs: [{ id: 1, name: 'TSV 2', nameFromTeam: true as const }],
+      updatedAt: NOW - DAY,
+    };
+
+    expect(
+      associationToCrawl([BAYERN], [standIn], NO_ATTEMPTS, SCHEDULE, NOW)
+    ).toEqual(BAYERN);
+    expect(
+      associationToCrawl(
+        [BAYERN],
+        [{ ...standIn, updatedAt: NOW - 1 }],
+        NO_ATTEMPTS,
+        SCHEDULE,
+        NOW
+      )
     ).toBeUndefined();
   });
 
   it('takes none without Associations', () => {
-    expect(associationToCrawl([], [], NO_ATTEMPTS, SCHEDULE)).toBeUndefined();
+    expect(
+      associationToCrawl([], [], NO_ATTEMPTS, SCHEDULE, NOW)
+    ).toBeUndefined();
   });
 });

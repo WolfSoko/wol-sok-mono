@@ -104,9 +104,7 @@ function runWith(
     store,
     now: () => NOW,
     pause: async () => undefined,
-    maxAgeMs: WEEK,
-    retryAfterMs: DAY,
-    namesForMs: 20 * 60_000,
+    schedule: { maxAgeMs: WEEK, retryAfterMs: DAY, namesForMs: 20 * 60_000 },
     ...more,
   };
 }

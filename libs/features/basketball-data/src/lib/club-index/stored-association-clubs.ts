@@ -1,3 +1,4 @@
+import { isJsonObject } from '../dbb/dbb-object';
 import { isDbbId } from '../dbb/dbb-request';
 import type { AssociationClubs, ClubIndexEntry } from './club-index';
 
@@ -32,7 +33,7 @@ export function storedAssociationClubs(
 export function parseAssociationClubs(
   data: unknown
 ): AssociationClubs | undefined {
-  if (!isRecord(data) || data['version'] !== CLUB_INDEX_VERSION) {
+  if (!isJsonObject(data) || data['version'] !== CLUB_INDEX_VERSION) {
     return undefined;
   }
   const { association, clubs, updatedAt } = data;
@@ -52,6 +53,15 @@ export function parseAssociationClubs(
   };
 }
 
+/** The lists of the stored documents `data`, skipping any it cannot read. */
+export function parseAssociationClubsList(
+  data: readonly unknown[]
+): readonly AssociationClubs[] {
+  return data
+    .map(parseAssociationClubs)
+    .filter((list): list is AssociationClubs => list !== undefined);
+}
+
 /** Only the fields an entry has, so nothing else reaches the store. */
 function entryOf({ id, name, nameFromTeam }: ClubIndexEntry): ClubIndexEntry {
   return nameFromTeam === true ? { id, name, nameFromTeam } : { id, name };
@@ -59,15 +69,11 @@ function entryOf({ id, name, nameFromTeam }: ClubIndexEntry): ClubIndexEntry {
 
 function isEntry(value: unknown): value is ClubIndexEntry {
   return (
-    isRecord(value) &&
+    isJsonObject(value) &&
     typeof value['id'] === 'number' &&
     isDbbId(value['id']) &&
     typeof value['name'] === 'string' &&
     value['name'].trim() !== '' &&
     (value['nameFromTeam'] === undefined || value['nameFromTeam'] === true)
   );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

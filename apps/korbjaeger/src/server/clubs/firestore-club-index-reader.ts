@@ -1,7 +1,4 @@
-import {
-  parseAssociationClubs,
-  type AssociationClubs,
-} from '@wolsok/feat-shared-basketball-data';
+import { parseAssociationClubsList } from '@wolsok/feat-shared-basketball-data';
 import { CLUB_INDEX_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
 import type { ClubIndexReader } from './club-index-response';
 
@@ -18,7 +15,7 @@ export const firestoreClubIndexReader: ClubIndexReader = async () => {
   ]);
   const app = getApps()[0] ?? initializeApp();
   const lists = await getFirestore(app).collection(CLUB_INDEX_COLLECTION).get();
-  return lists.docs
-    .map((document) => parseAssociationClubs(document.data()))
-    .filter((list): list is AssociationClubs => list !== undefined);
+  return parseAssociationClubsList(
+    lists.docs.map((document) => document.data())
+  );
 };

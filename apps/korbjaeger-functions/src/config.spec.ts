@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CLUB_INDEX_DBB, REGION } from './config';
+import { CLUB_INDEX_DBB, CLUB_INDEX_SCHEDULE, REGION } from './config';
 
 interface ProjectJson {
   targets: { deploy: { options: { commands: string[] } } };
@@ -36,6 +36,6 @@ describe('the club index', () => {
   // a week of every Association's Leagues at one request a second
   it('waits a second between two calls and refreshes weekly', () => {
     expect(CLUB_INDEX_DBB.pauseMs).toBeGreaterThanOrEqual(1000);
-    expect(CLUB_INDEX_DBB.maxAgeMs).toBe(7 * 86_400_000);
+    expect(CLUB_INDEX_SCHEDULE.maxAgeMs).toBe(7 * 86_400_000);
   });
 });

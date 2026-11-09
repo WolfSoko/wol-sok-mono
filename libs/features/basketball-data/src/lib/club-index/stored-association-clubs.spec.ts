@@ -2,6 +2,7 @@ import type { AssociationClubs } from './club-index';
 import {
   CLUB_INDEX_VERSION,
   parseAssociationClubs,
+  parseAssociationClubsList,
   storedAssociationClubs,
 } from './stored-association-clubs';
 
@@ -31,6 +32,15 @@ describe('the stored club index', () => {
       clubs: [{ id: 1, name: 'A' }],
       updatedAt: BAYERN.updatedAt,
     });
+  });
+
+  it('reads the lists of several documents, skipping one it cannot read', () => {
+    expect(
+      parseAssociationClubsList([
+        storedAssociationClubs(BAYERN),
+        { version: 9 },
+      ])
+    ).toEqual([BAYERN]);
   });
 
   it.each<[string, unknown]>([

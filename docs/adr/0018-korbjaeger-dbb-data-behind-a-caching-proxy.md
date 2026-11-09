@@ -119,7 +119,7 @@ eight reads:
   time, a second apart: about 2,600 requests a week once the names are
   known. The first fill reads one name per Verein too (Bayern: about 900
   requests); after 20 minutes of a run a Team's name stands in for a
-  Verein's and is read again next week, inside the run's 30 minutes. A
+  Verein's, and that Verband is due again a day later to read the missing names, so a run stays inside its 30 minutes. A
   Liga the DBB does not know or answers in another shape is skipped; any
   other failure writes nothing. Lists of a Verband the DBB no longer
   offers are deleted.
