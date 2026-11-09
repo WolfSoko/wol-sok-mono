@@ -6,40 +6,36 @@ import {
   Signal,
   signal,
 } from '@angular/core';
-import { readStored, writeStored } from '../stored-choice';
+import { THEME_SETTINGS } from './provide-theme';
+import { readStored, writeStored } from './stored-choice';
 
 /** The visitor's choice of theme: a fixed one, or whatever the system uses. */
 export type ThemeChoice = 'system' | 'light' | 'dark';
 
-const THEME_CHOICES: readonly ThemeChoice[] = ['system', 'light', 'dark'];
-
-/** Where the choice is kept between visits; `index.html` reads it too. */
-export const THEME_STORAGE_KEY = 'wolsok.theme';
-
-/**
- * The colour the browser chrome takes per theme: the `theme-color` metas
- * in `index.html` carry the same two, one per `prefers-color-scheme`.
- */
-export const THEME_COLORS: Readonly<Record<'light' | 'dark', string>> = {
-  light: '#f6f8fb',
-  dark: '#0b0f14',
-};
+/** Every choice, in the order a cycle or a toggle group offers them. */
+export const THEME_CHOICES: readonly ThemeChoice[] = [
+  'system',
+  'light',
+  'dark',
+];
 
 function isThemeChoice(value: unknown): value is ThemeChoice {
   return THEME_CHOICES.some((choice) => choice === value);
 }
 
 /**
- * The site's theme. The stylesheet follows `color-scheme` and `light-dark()`,
- * so with no choice it tracks the system, as do the two `theme-color` metas
- * through their media queries; a choice pins `data-theme` on the root
- * element, which the stylesheet turns into a fixed `color-scheme`, and both
- * metas to that theme's colour. A small script in `index.html` does the same
- * before the first paint, so a pinned theme never flashes the other one.
+ * The site's theme. The stylesheet follows `color-scheme` and
+ * `light-dark()`, so with no choice it tracks the system live; a choice
+ * pins `data-theme` on the root element, which the stylesheet turns into a
+ * fixed `color-scheme`, and, where the app gave theme colours, the
+ * `theme-color` metas to that theme's colour. The app's pre-paint script in
+ * `index.html` sets `data-theme` from the same key before the first paint,
+ * so a pinned theme never flashes the other one.
  */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly document = inject(DOCUMENT);
+  private readonly settings = inject(THEME_SETTINGS);
   private readonly chosen = signal<ThemeChoice>(this.stored());
 
   /** The visitor's choice. */
@@ -49,12 +45,16 @@ export class ThemeService {
     effect(() => this.apply(this.chosen()));
   }
 
+  /** Takes `choice` and keeps it on the device (none kept for `system`). */
+  public choose(choice: ThemeChoice): void {
+    this.chosen.set(choice);
+    writeStored(this.settings.storageKey, choice === 'system' ? null : choice);
+  }
+
   /** The next choice in the cycle system → light → dark → system. */
   public cycle(): void {
     const index = THEME_CHOICES.indexOf(this.chosen());
-    const choice = THEME_CHOICES[(index + 1) % THEME_CHOICES.length];
-    this.chosen.set(choice);
-    writeStored(THEME_STORAGE_KEY, choice === 'system' ? null : choice);
+    this.choose(THEME_CHOICES[(index + 1) % THEME_CHOICES.length]);
   }
 
   private apply(choice: ThemeChoice): void {
@@ -64,18 +64,26 @@ export class ThemeService {
     } else {
       root.setAttribute('data-theme', choice);
     }
+    this.applyThemeColors(choice);
+  }
+
+  private applyThemeColors(choice: ThemeChoice): void {
+    const colors = this.settings.themeColors;
+    if (!colors) {
+      return;
+    }
     for (const meta of this.document.querySelectorAll<HTMLMetaElement>(
       'meta[name="theme-color"]'
     )) {
       const own = meta.getAttribute('media')?.includes('dark')
         ? 'dark'
         : 'light';
-      meta.content = THEME_COLORS[choice === 'system' ? own : choice];
+      meta.content = colors[choice === 'system' ? own : choice];
     }
   }
 
   private stored(): ThemeChoice {
-    const value = readStored(THEME_STORAGE_KEY);
+    const value = readStored(this.settings.storageKey);
     return isThemeChoice(value) ? value : 'system';
   }
 }

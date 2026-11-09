@@ -3,7 +3,9 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { provideTheme } from '@wolsok/shared-theme';
 import { appRoutes } from './app.routes';
+import { PORTFOLIO_THEME } from './theme/theme';
 import {
   provideClientHydration,
   withEventReplay,
@@ -14,5 +16,6 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     provideBrowserGlobalErrorListeners(),
     provideRouter(appRoutes),
+    provideTheme(PORTFOLIO_THEME),
   ],
 };
