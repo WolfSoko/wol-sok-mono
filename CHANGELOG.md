@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.160.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.0...v74.160.1) (2026-11-09)
+
+### Bug Fixes
+
+* **tools:** download the Firebase emulators on the Nx Cloud workers before any task ([#2973](https://github.com/WolfSoko/wol-sok-mono/issues/2973)) ([b184df1](https://github.com/WolfSoko/wol-sok-mono/commit/b184df1121d8c48a2d65fe516627a84d20c64a8b)), closes [#2960](https://github.com/WolfSoko/wol-sok-mono/issues/2960)
+
+### Refactorings
+
+* **tools:** import the engine and basketball data lib through their public entries ([#2972](https://github.com/WolfSoko/wol-sok-mono/issues/2972)) ([c60ca07](https://github.com/WolfSoko/wol-sok-mono/commit/c60ca07a763974a908ecf2db8236eb73e667c26b))
+
+### Chore
+
+* **release:** make RollaPolla and Korbjäger proprietary ([#2965](https://github.com/WolfSoko/wol-sok-mono/issues/2965)) ([85ec982](https://github.com/WolfSoko/wol-sok-mono/commit/85ec9826b54c93ff3397e3f74dd55e0ab0b39014)), references [#2956](https://github.com/WolfSoko/wol-sok-mono/issues/2956) [#2956](https://github.com/WolfSoko/wol-sok-mono/issues/2956) [#2956](https://github.com/WolfSoko/wol-sok-mono/issues/2956) [#2956](https://github.com/WolfSoko/wol-sok-mono/issues/2956) [#2956](https://github.com/WolfSoko/wol-sok-mono/issues/2956)
+
 ## [74.160.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.159.0...v74.160.0) (2026-11-09)
 
 ### Features
