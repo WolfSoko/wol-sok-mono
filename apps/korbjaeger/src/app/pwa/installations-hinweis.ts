@@ -67,15 +67,22 @@ export interface InstallationsNavigator {
 
 /**
  * In-app web views on iOS (the Google app, Facebook, Instagram): they have
- * no share menu with "Zum Home-Bildschirm", unlike Safari and, since iOS
- * 16.4, every other iOS browser.
+ * no share menu with "Zum Home-Bildschirm". A plain web view of an app
+ * names no `Safari/` at all.
  */
 const IOS_IN_APP = /GSA\/|FBAN|FBAV|Instagram/;
 
+/** Other iOS browsers, which name themselves beside Safari's token. */
+const IOS_ANDERER_BROWSER = /CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|Ddg\/|DuckDuckGo/;
+
+/** Since iOS 16.4 other browsers offer "Zum Home-Bildschirm" too. */
+const ANDERE_BROWSER_AB: readonly [number, number] = [16, 4];
+
 /**
  * Whether the page runs on an iPhone or iPad in a browser whose share menu
- * offers "Zum Home-Bildschirm": an iPad's Safari says it is a Mac, but has
- * a touch screen; in-app views (`IOS_IN_APP`) have no such menu.
+ * offers "Zum Home-Bildschirm": Safari always (an iPad's says it is a Mac,
+ * but has a touch screen), another browser from iOS 16.4; never an app's
+ * web view (no `Safari/` token, or a named one: `IOS_IN_APP`).
  */
 export function istIosMitTeilenMenue(
   navigator: InstallationsNavigator
@@ -84,7 +91,25 @@ export function istIosMitTeilenMenue(
   const iosGeraet =
     /iPhone|iPad|iPod/.test(agent) ||
     (agent.includes('Macintosh') && navigator.maxTouchPoints > 1);
-  return iosGeraet && !IOS_IN_APP.test(agent);
+  if (!iosGeraet || !agent.includes('Safari/') || IOS_IN_APP.test(agent)) {
+    return false;
+  }
+  return (
+    !IOS_ANDERER_BROWSER.test(agent) || abIosVersion(agent, ANDERE_BROWSER_AB)
+  );
+}
+
+/** Whether `agent` names an iOS version (`OS 16_4`) of at least `ab`. */
+function abIosVersion(
+  agent: string,
+  [abHaupt, abNeben]: readonly [number, number]
+): boolean {
+  const treffer = /\bOS (\d+)_(\d+)/.exec(agent);
+  if (treffer === null) {
+    return false;
+  }
+  const [haupt, neben] = [Number(treffer[1]), Number(treffer[2])];
+  return haupt > abHaupt || (haupt === abHaupt && neben >= abNeben);
 }
 
 /** The browser's `beforeinstallprompt` event, which no DOM typing names. */

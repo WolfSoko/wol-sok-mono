@@ -181,6 +181,26 @@ describe('istIosMitTeilenMenue', () => {
     }
   );
 
+  it('takes another iOS browser only from iOS 16.4, Safari before it too', () => {
+    const chrome = (version: string) =>
+      `Mozilla/5.0 (iPhone; CPU iPhone OS ${version} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.6099.119 Mobile/15E148 Safari/604.1`;
+    const safari15 =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 15_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6.1 Mobile/15E148 Safari/604.1';
+
+    expect(istIosMitTeilenMenue(geraet(chrome('16_3')))).toBe(false);
+    expect(istIosMitTeilenMenue(geraet(chrome('15_8_3')))).toBe(false);
+    expect(istIosMitTeilenMenue(geraet(chrome('16_4')))).toBe(true);
+    expect(istIosMitTeilenMenue(geraet(chrome('17_0_1')))).toBe(true);
+    expect(istIosMitTeilenMenue(geraet(safari15))).toBe(true);
+  });
+
+  it('takes no plain web view of an app, which names no Safari', () => {
+    const webView =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148';
+
+    expect(istIosMitTeilenMenue(geraet(webView))).toBe(false);
+  });
+
   it('takes no Mac without a touch screen, nor Android', () => {
     expect(istIosMitTeilenMenue(geraet(SAFARI_IPAD, 0))).toBe(false);
     expect(istIosMitTeilenMenue(geraet(CHROME_ANDROID))).toBe(false);
@@ -316,7 +336,7 @@ describe('InstallationsHinweis', () => {
       hinweis.ablehnen();
 
       expect(hinweis.angebot()).toBe('keins');
-      expect(geraet.getItem(INSTALLATION_ABGELEHNT_SCHLUESSEL)).not.toBeNull();
+      expect(geraet.getItem(INSTALLATION_ABGELEHNT_SCHLUESSEL)).toBe('1');
     });
 
     it('stays hidden at the next start', () => {
