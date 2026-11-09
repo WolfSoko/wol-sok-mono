@@ -30,7 +30,6 @@ describe('cleanUpOrphanedAccounts, when a deletion fails', () => {
     expect(report).toMatchObject({
       orphansFound: 3,
       orphansDeleted: 2,
-      orphansFailed: 1,
     });
   });
 });

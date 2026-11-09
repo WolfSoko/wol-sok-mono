@@ -71,7 +71,6 @@ describe('reportText', () => {
       documentsListed: { selections: 3, auswahl: 2 },
       orphansFound: 2,
       orphansDeleted: 1,
-      orphansFailed: 1,
     };
 
     expect(

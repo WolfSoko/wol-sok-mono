@@ -13,25 +13,20 @@ export const USAGE =
 
 /** Reads the CLI's arguments; throws with `USAGE` on anything else. */
 export function parseCleanupArgs(args: readonly string[]): CleanupOptions {
-  let values: { project?: string; delete?: boolean };
   try {
-    ({ values } = parseArgs({
+    const { values } = parseArgs({
       args: [...args],
-      options: {
-        project: { type: 'string' },
-        delete: { type: 'boolean', default: false },
-      },
+      options: { project: { type: 'string' }, delete: { type: 'boolean' } },
       strict: true,
-      allowPositionals: false,
-    }));
+    });
+    const project = values.project?.trim();
+    if (!project) {
+      throw new Error('--project is required');
+    }
+    return { project, deleteOrphans: values.delete === true };
   } catch (error) {
-    throw new Error(`${(error as Error).message}\n${USAGE}`);
+    throw new Error(`${errorText(error)}\n${USAGE}`);
   }
-  const project = values.project?.trim();
-  if (!project) {
-    throw new Error(`--project is required\n${USAGE}`);
-  }
-  return { project, deleteOrphans: values.delete === true };
 }
 
 /** Where the run reads and deletes: production or an emulator per service. */
@@ -78,8 +73,16 @@ export function reportText(
     ...listed,
     `  orphaned accounts found: ${report.orphansFound}`,
     `  orphaned accounts deleted: ${report.orphansDeleted}`,
-    `  orphaned accounts failed: ${report.orphansFailed}`,
+    `  orphaned accounts failed: ${failedDeletions(report, deleteOrphans)}`,
   ].join('\n');
+}
+
+/** Orphans a deleting run did not delete; a rerun takes them again. */
+export function failedDeletions(
+  report: OrphanCleanupReport,
+  deleteOrphans: boolean
+): number {
+  return deleteOrphans ? report.orphansFound - report.orphansDeleted : 0;
 }
 
 /**

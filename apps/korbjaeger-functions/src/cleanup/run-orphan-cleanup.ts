@@ -11,6 +11,7 @@ import { authAccounts } from './auth-accounts';
 import {
   cleanupTargets,
   errorText,
+  failedDeletions,
   parseCleanupArgs,
   reportText,
 } from './cleanup-cli';
@@ -35,7 +36,7 @@ async function main(): Promise<void> {
     options
   );
   console.log(reportText(options, targets, report));
-  if (report.orphansFailed > 0) {
+  if (failedDeletions(report, options.deleteOrphans) > 0) {
     process.exitCode = 1;
   }
 }

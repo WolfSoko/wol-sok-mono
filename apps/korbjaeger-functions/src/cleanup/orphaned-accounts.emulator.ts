@@ -7,7 +7,6 @@ import { reportText } from './cleanup-cli';
 import { useEmulatorProject } from '../testing/emulator';
 import {
   cleanUpOrphanedAccounts,
-  EveryAccountOrphanedError,
   type ExistingAccounts,
   findOrphanedAccounts,
 } from './orphaned-accounts';
@@ -98,7 +97,6 @@ describe('cleanUpOrphanedAccounts', () => {
       },
       orphansFound: 2,
       orphansDeleted: 0,
-      orphansFailed: 0,
     });
     expect(await exists(CHOICES_COLLECTION, DELETED)).toBe(true);
     expect(await exists(LEGACY_CHOICES_COLLECTION, DELETED_LEGACY)).toBe(true);
@@ -151,7 +149,7 @@ describe('cleanUpOrphanedAccounts', () => {
       cleanUpOrphanedAccounts(project().admin, fakeAccounts([]), {
         deleteOrphans: true,
       })
-    ).rejects.toThrow(EveryAccountOrphanedError);
+    ).rejects.toThrow('Auth knows none');
 
     expect(await exists(CHOICES_COLLECTION, LIVING)).toBe(true);
     expect(await exists(CHOICES_COLLECTION, DELETED)).toBe(true);

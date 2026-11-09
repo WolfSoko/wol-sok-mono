@@ -6,15 +6,7 @@ import {
 import { kontoGeloescht } from '../konto-geloescht';
 
 /** The collections that hold an account's choices, keyed by its uid. */
-export const ACCOUNT_COLLECTIONS = [
-  CHOICES_COLLECTION,
-  LEGACY_CHOICES_COLLECTION,
-] as const;
-
-export type AccountCollection = (typeof ACCOUNT_COLLECTIONS)[number];
-
-/** Documents listed per collection of `ACCOUNT_COLLECTIONS`. */
-export type DocumentsListed = Readonly<Record<AccountCollection, number>>;
+const ACCOUNT_COLLECTIONS = [CHOICES_COLLECTION, LEGACY_CHOICES_COLLECTION];
 
 /**
  * Which accounts Auth still knows. Its one adapter is `authAccounts`; the
@@ -27,36 +19,20 @@ export interface ExistingAccounts {
 
 /** What a run found and did: counts only, never a uid (#2986). */
 export interface OrphanCleanupReport {
-  readonly documentsListed: DocumentsListed;
+  /** Documents listed, per collection. */
+  readonly documentsListed: Readonly<Record<string, number>>;
   /** Accounts with a document but no Auth user. */
   readonly orphansFound: number;
-  /** Orphans whose documents this run deleted: 0 in a dry run. */
+  /** Orphans whose documents this run deleted: 0 in a dry run, fewer where a deletion failed. */
   readonly orphansDeleted: number;
-  /** Orphans whose deletion failed; a rerun takes them again. */
-  readonly orphansFailed: number;
 }
 
-export interface OrphanSearch {
-  readonly documentsListed: DocumentsListed;
+interface OrphanSearch {
+  readonly documentsListed: Readonly<Record<string, number>>;
   /** How many accounts have a document, each counted once. */
   readonly accounts: number;
   /** Each orphaned uid once, also where it has documents in both collections. */
   readonly orphans: readonly string[];
-}
-
-/**
- * Refuses a deletion where Auth knows none of the accounts with a document:
- * Firestore and Auth then most likely are not the same project (one of
- * them an emulator), and deleting would empty every living account.
- */
-export class EveryAccountOrphanedError extends Error {
-  public constructor(accounts: number) {
-    super(
-      `Auth knows none of the ${accounts} accounts with a document: ` +
-        'are Firestore and Auth the same project? Nothing deleted.'
-    );
-    this.name = 'EveryAccountOrphanedError';
-  }
 }
 
 /**
@@ -73,12 +49,12 @@ export async function findOrphanedAccounts(
     ACCOUNT_COLLECTIONS.map(async (collection) => {
       const refs = await db.collection(collection).listDocuments();
       refs.forEach((ref) => uids.add(ref.id));
-      return [collection, refs.length] as const;
+      return [collection, refs.length];
     })
   );
   const missing = await accounts.missing([...uids]);
   return {
-    documentsListed: Object.fromEntries(listed) as DocumentsListed,
+    documentsListed: Object.fromEntries(listed),
     accounts: uids.size,
     orphans: [...uids].filter((uid) => missing.has(uid)),
   };
@@ -96,31 +72,30 @@ export async function cleanUpOrphanedAccounts(
   { deleteOrphans }: { readonly deleteOrphans: boolean }
 ): Promise<OrphanCleanupReport> {
   const search = await findOrphanedAccounts(db, accounts);
-  const { documentsListed, orphans } = search;
+  const report = (orphansDeleted: number): OrphanCleanupReport => ({
+    documentsListed: search.documentsListed,
+    orphansFound: search.orphans.length,
+    orphansDeleted,
+  });
   if (!deleteOrphans) {
-    return {
-      documentsListed,
-      orphansFound: orphans.length,
-      orphansDeleted: 0,
-      orphansFailed: 0,
-    };
+    return report(0);
   }
-  if (orphans.length > 0 && orphans.length === search.accounts) {
-    throw new EveryAccountOrphanedError(search.accounts);
+  if (search.orphans.length > 0 && search.orphans.length === search.accounts) {
+    // Firestore and Auth most likely are not the same project (one of them
+    // an emulator): deleting would empty every living account
+    throw new Error(
+      `Auth knows none of the ${search.accounts} accounts with a document: ` +
+        'are Firestore and Auth the same project? Nothing deleted.'
+    );
   }
   let orphansDeleted = 0;
-  for (const uid of orphans) {
+  for (const uid of search.orphans) {
     try {
       await kontoGeloescht(db, uid);
       orphansDeleted++;
     } catch {
-      // counted below; the error may name the uid, so it is not printed
+      // counted as not deleted; the error may name the uid, so it is not printed
     }
   }
-  return {
-    documentsListed,
-    orphansFound: orphans.length,
-    orphansDeleted,
-    orphansFailed: orphans.length - orphansDeleted,
-  };
+  return report(orphansDeleted);
 }

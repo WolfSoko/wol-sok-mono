@@ -70,11 +70,28 @@
         "parallel": false
       }
     },
+    "build-cleanup": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "main": "apps/korbjaeger-functions/src/cleanup/run-orphan-cleanup.ts",
+        "outputPath": "dist/apps/korbjaeger-functions-cleanup",
+        "outputFileName": "run-orphan-cleanup.js",
+        "tsConfig": "apps/korbjaeger-functions/tsconfig.app.json",
+        "platform": "node",
+        "format": ["esm"],
+        "bundle": true,
+        "thirdParty": false,
+        "generatePackageJson": false,
+        "declaration": false
+      }
+    },
     "cleanup-orphans": {
       "executor": "nx:run-commands",
+      "dependsOn": ["build-cleanup"],
       "cache": false,
       "options": {
-        "command": "esbuild apps/korbjaeger-functions/src/cleanup/run-orphan-cleanup.ts --bundle --platform=node --format=esm --external:firebase-admin --tsconfig=apps/korbjaeger-functions/tsconfig.app.json --log-level=warning --outfile=dist/apps/korbjaeger-functions-cleanup/run-orphan-cleanup.mjs && node dist/apps/korbjaeger-functions-cleanup/run-orphan-cleanup.mjs"
+        "command": "node dist/apps/korbjaeger-functions-cleanup/run-orphan-cleanup.js"
       }
     }
   }

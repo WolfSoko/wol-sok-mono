@@ -55,7 +55,7 @@ deletes it, with a dry run that only counts first.
   `FIRESTORE_EMULATOR_HOST` without `FIREBASE_AUTH_EMULATOR_HOST` and the
   other way round, prints which backend each service is (production or an
   emulator), and a deletion refuses when Auth knows none of the accounts
-  with a document (`EveryAccountOrphanedError`): production Firestore
+  with a document: production Firestore
   checked against an empty Auth would count every living account orphaned.
   A failed deletion is counted, not thrown, so the report says how far it
   got; the CLI then exits 1.
