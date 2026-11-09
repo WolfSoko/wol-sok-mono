@@ -1,0 +1,25 @@
+{
+  "name": "tools",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools",
+  "projectType": "application",
+  "tags": ["tools"],
+  "targets": {
+    "typecheck-tools": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/**/*.ts",
+        "{projectRoot}/tsconfig.tools.json",
+        "^production",
+        "{workspaceRoot}/tsconfig.base.json",
+        {
+          "externalDependencies": ["typescript"]
+        }
+      ],
+      "options": {
+        "command": "tsc -p tools/tsconfig.tools.json --noEmit"
+      }
+    }
+  }
+}

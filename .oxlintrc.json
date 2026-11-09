@@ -70,6 +70,15 @@
             ]
           },
           {
+            "sourceTag": "tools",
+            "onlyDependOnLibsWithTags": [
+              "feat-shared",
+              "shared",
+              "utils",
+              "tools"
+            ]
+          },
+          {
             "sourceTag": "infra",
             "onlyDependOnLibsWithTags": ["infra-shared"]
           },
@@ -290,6 +299,30 @@
               {
                 "sourceTag": "*",
                 "onlyDependOnLibsWithTags": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["tools/bacteria-game/balance/**", "tools/korbjaeger/**"],
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "allow": [
+              "^(\\.\\./)+libs/features/(bacteria-engine|basketball-data)/src/"
+            ],
+            "depConstraints": [
+              {
+                "sourceTag": "tools",
+                "onlyDependOnLibsWithTags": [
+                  "feat-shared",
+                  "shared",
+                  "utils",
+                  "tools"
+                ]
               }
             ]
           }
