@@ -31,10 +31,17 @@ and nothing runs `tsc -p tools/tsconfig.tools.json --noEmit`.
   project root, so the plugin's files stay with `oxlint-workspace-rules`.
   One project rather than one per folder: the scripts are a handful each,
   share one tsconfig and have no consumers inside the graph.
-- **No project depends on `tools`**: `apps/*/vite.config.ts` and
-  `apps/*/federation.config.js` import from it, but the graph (checked with
-  `nx graph`) has no edge into `tools`, so a change to a lib the scripts use
-  makes `tools` affected without dragging apps into a release.
+- **The modules apps import are nested projects of their own**:
+  `tools/federation` (`tools-federation`, required by every
+  `apps/*/federation.config.js`) and `tools/vite` (`tools-vite`, imported by
+  `apps/korbjaeger/vite.config.ts`). Nx records those imports as
+  dependencies, so inside `tools` they made every script's change affect the
+  shell, the remotes and `korbjaeger` (found in review). Split off, only a
+  change to them does, and no project depends on `tools`. Both are tagged
+  `tools`; `tools`' lint skips them as nested roots and they get their own.
+  `typecheck-tools` still checks their `.ts` files and hashes them
+  (its inputs are `{workspaceRoot}/tools/**/*.ts`, nested projects included,
+  and every external dependency, `@types/node` among them).
 - **Typecheck target `typecheck-tools`**: `tsc -p tools/tsconfig.tools.json
   --noEmit`, cached, added to CI's `nx affected -t` list. Not `typecheck`:
   that name is inferred by `@nx/vite` on five projects CI does not run yet
@@ -69,8 +76,10 @@ and nothing runs `tsc -p tools/tsconfig.tools.json --noEmit`.
    not committed).
 5. `.github/workflows/ci-cd.yml` runs `typecheck-tools` among the affected
    targets; a change under `tools/` makes `tools` affected.
-6. No project depends on `tools` in the graph; `oxlint-workspace-rules`
-   keeps its targets and its `test` is green.
+6. No project depends on `tools` in the graph (a change to
+   `tools/youtube/youtube-auth.ts` affects only `tools`); `tools-federation`
+   and `tools-vite` have their own `lint`; `oxlint-workspace-rules` keeps its
+   targets and its `test` is green.
 7. CLAUDE.md describes the `tools` project.
 
 ## Open questions

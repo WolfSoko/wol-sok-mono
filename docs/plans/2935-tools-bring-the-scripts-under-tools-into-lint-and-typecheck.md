@@ -3,7 +3,9 @@
 Spec: [docs/specs/2935-tools-bring-the-scripts-under-tools-into-lint-and-typecheck.md](../specs/2935-tools-bring-the-scripts-under-tools-into-lint-and-typecheck.md)
 
 1. **Project and boundaries** — `tools/project.json` (name `tools`, tag
-   `tools`, target `typecheck-tools`); `.oxlintrc.json`: depConstraint for
+   `tools`, target `typecheck-tools`); `tools/federation/project.json` and
+   `tools/vite/project.json` as nested projects (`tools-federation`,
+   `tools-vite`), since apps import them; `.oxlintrc.json`: depConstraint for
    `tools`, override with the `allow` pattern for
    `tools/{bacteria-game/balance,korbjaeger}/**`.
    Tests: `npx nx lint tools` red before the oxlintrc change (17 boundary

@@ -9,13 +9,10 @@
       "executor": "nx:run-commands",
       "cache": true,
       "inputs": [
-        "{projectRoot}/**/*.ts",
-        "{projectRoot}/tsconfig.tools.json",
+        "{workspaceRoot}/tools/**/*.ts",
+        "{workspaceRoot}/tools/tsconfig.tools.json",
         "^production",
-        "{workspaceRoot}/tsconfig.base.json",
-        {
-          "externalDependencies": ["typescript"]
-        }
+        "{workspaceRoot}/tsconfig.base.json"
       ],
       "options": {
         "command": "tsc -p tools/tsconfig.tools.json --noEmit"
