@@ -27,7 +27,7 @@ export interface SpielZeile {
   readonly gegner: string;
   /** The points, home first (`78:47`), once there are any. */
   readonly ergebnis?: string;
-  /** How it ended for the Team, once decided and confirmed. */
+  /** How it ended for the Team, once decided (as its score shows it, confirmed or not). */
   readonly ausgang?: SpielAusgang;
   readonly markierung?: SpielSonderfall;
 }

@@ -19,6 +19,23 @@ describe('the CSS targets of the build', () => {
     ).toEqual(['chrome154', 'edge154', 'firefox153', 'ios26.0', 'safari26.3']);
   });
 
+  it('names Opera where browserslist resolves to it', () => {
+    expect(cssZiele(['chrome 130', 'opera 81', 'opera 83'])).toEqual([
+      'chrome130',
+      'opera81',
+    ]);
+  });
+
+  it('builds again when the workspace’s browsers change', () => {
+    const projekt = JSON.parse(
+      readFileSync(new URL('../project.json', import.meta.url), 'utf8')
+    ) as { targets: Record<string, { inputs?: string[] }> };
+
+    expect(projekt.targets['build-app'].inputs).toContain(
+      '{workspaceRoot}/.browserslistrc'
+    );
+  });
+
   it('leaves out browsers the minifier has no target for', () => {
     expect(cssZiele(['op_mini all', 'chrome 154', 'kaios 3.1'])).toEqual([
       'chrome154',

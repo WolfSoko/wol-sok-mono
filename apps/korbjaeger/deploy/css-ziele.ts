@@ -5,6 +5,7 @@ const ZIEL_NAME: Readonly<Record<string, string>> = {
   firefox: 'firefox',
   safari: 'safari',
   ios_saf: 'ios',
+  opera: 'opera',
 };
 
 /**
