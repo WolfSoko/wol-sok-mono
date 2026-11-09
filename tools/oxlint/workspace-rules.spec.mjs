@@ -89,6 +89,8 @@ void describe('wolsok/no-version-json-read', () => {
     "export * from '../version.json';",
     "void import('../version.json');",
     "require('../../version.json');",
+    "import version = require('../../version.json');",
+    "export type Version = import('../../version.json').default;",
   ];
   for (const source of reads) {
     void it(`reports ${source}`, () => {
@@ -164,6 +166,18 @@ void describe('wolsok/no-testing-import', () => {
     'testing/fake-game-cloud.ts',
     'app/konto/testing/fake-konto-dienst.ts',
   ];
+  for (const name of testFiles) {
+    void it(`allows testing imports in ${name}`, () => {
+      deepStrictEqual(
+        reportedCodes(
+          "import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';",
+          name
+        ),
+        []
+      );
+    });
+  }
+
   void it('judges a file by its path inside the workspace, not above it', () => {
     // The temp folder itself may sit below a `testing` folder; the case's
     // own folder is named so here, which the rule must not take as test code.
@@ -176,16 +190,4 @@ void describe('wolsok/no-testing-import', () => {
       [TESTING_RULE]
     );
   });
-
-  for (const name of testFiles) {
-    void it(`allows testing imports in ${name}`, () => {
-      deepStrictEqual(
-        reportedCodes(
-          "import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';",
-          name
-        ),
-        []
-      );
-    });
-  }
 });

@@ -24,18 +24,22 @@ const PATH_EXPRESSIONS = new Set([
 const EXPRESSION_PLACEHOLDER = '\0';
 const DISABLE_DIRECTIVE =
   /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
-/** A workspace lib's testing entry: `@wolsok/<lib>/testing` and below it. */
-const WORKSPACE_TESTING_ENTRY = /^@wolsok\/[^/]+\/testing(?:\/|$)/;
-/** A relative path through a `testing` folder or to a `testing` module. */
-const RELATIVE_TESTING_PATH =
-  /^\.{1,2}\/(?:.*\/)?testing(?:\.[cm]?[jt]s)?(?:\/|$)/;
-/**
- * Test code under a project's `src/` by its file name: specs, emulator
- * specs, Cypress component tests, mocks, Jest's setup, a lib's `testing.ts`
- * entry and everything below a `testing/` folder.
- */
-const TEST_FILE =
-  /(?:\.(?:spec|test|emulator|cy|mock)\.[cm]?[jt]sx?|(?:^|\/)(?:test-setup|testing)\.[cm]?[jt]s)$|(?:^|\/)testing\//;
+/** Module specifiers of the workspace's test-only code. */
+const TESTING_MODULES = [
+  // A workspace lib's testing entry: `@wolsok/<lib>/testing` and below it.
+  /^@wolsok\/[^/]+\/testing(?:\/|$)/,
+  // A relative path through a `testing` folder or to a `testing` module.
+  /^\.{1,2}\/(?:.*\/)?testing(?:\.[cm]?[jt]s)?(?:\/|$)/,
+];
+/** Test code under a project's `src/`, by its path inside the workspace. */
+const TEST_FILES = [
+  // Specs, emulator specs, Cypress component tests and mocks.
+  /\.(?:spec|test|emulator|cy|mock)\.[cm]?[jt]sx?$/,
+  // Jest's setup and a lib's `testing.ts` entry.
+  /(?:^|\/)(?:test-setup|testing)\.[cm]?[jt]s$/,
+  // Everything below a `testing/` folder.
+  /(?:^|\/)testing\//,
+];
 
 /**
  * Boundaries are configured, not silenced: an import the tag rules refuse
@@ -95,26 +99,43 @@ const noVersionJsonRead = {
     schema: [],
   },
   create(context) {
-    const reportModuleSource = (node) => {
-      if (node.source && namesVersionFile(staticText(node.source))) {
-        context.report({ node: node.source, messageId: 'read' });
-      }
-    };
     const reportRead = (node) => {
       if (namesVersionFile(staticText(node)) && reachesReadCall(node)) {
         context.report({ node, messageId: 'read' });
       }
     };
     return {
-      ImportDeclaration: reportModuleSource,
-      ExportNamedDeclaration: reportModuleSource,
-      ExportAllDeclaration: reportModuleSource,
-      ImportExpression: reportModuleSource,
+      ...moduleSourceVisitors((source) => {
+        if (namesVersionFile(staticText(source))) {
+          context.report({ node: source, messageId: 'read' });
+        }
+      }),
       Literal: reportRead,
       TemplateLiteral: reportRead,
     };
   },
 };
+
+/**
+ * Visitors handing `check` the specifier of every way a module names another:
+ * `import`, `export … from`, `import()`, `import('…').Type` in a type
+ * position and `import x = require('…')`.
+ */
+function moduleSourceVisitors(check) {
+  const checkSource = (node) => {
+    if (node.source) {
+      check(node.source);
+    }
+  };
+  return {
+    ImportDeclaration: checkSource,
+    ExportNamedDeclaration: checkSource,
+    ExportAllDeclaration: checkSource,
+    ImportExpression: checkSource,
+    TSImportType: checkSource,
+    TSExternalModuleReference: (node) => check(node.expression),
+  };
+}
 
 /** The text of a string literal, or the static parts of a template literal. */
 function staticText(node) {
@@ -181,7 +202,7 @@ function propertyName(member) {
  * break it at runtime. The boundary rule cannot see this, since it counts
  * `<lib>/testing` as `<lib>`. Enabled for production sources (`apps/*\/src`,
  * `libs/**\/src`) by an override in `.oxlintrc.json`; test files there are
- * recognised by their name (`TEST_FILE`).
+ * recognised by their path (`TEST_FILES`).
  */
 const noTestingImport = {
   meta: {
@@ -199,12 +220,16 @@ const noTestingImport = {
     // Relative to the workspace, so a checkout inside a `testing` folder
     // exempts nothing.
     const file = relative(context.cwd, context.filename).replaceAll('\\', '/');
-    if (TEST_FILE.test(file)) {
+    // Most files name no testing module at all: skip their nodes.
+    if (
+      TEST_FILES.some((pattern) => pattern.test(file)) ||
+      !context.sourceCode.text.includes('testing')
+    ) {
       return {};
     }
     const report = (sourceNode) => {
       const source = staticText(sourceNode);
-      if (source !== undefined && isTestingModule(source)) {
+      if (TESTING_MODULES.some((pattern) => pattern.test(source ?? ''))) {
         context.report({
           node: sourceNode,
           messageId: 'testing',
@@ -212,41 +237,16 @@ const noTestingImport = {
         });
       }
     };
-    const reportModuleSource = (node) => {
-      if (node.source) {
-        report(node.source);
-      }
-    };
     return {
-      ImportDeclaration: reportModuleSource,
-      ExportNamedDeclaration: reportModuleSource,
-      ExportAllDeclaration: reportModuleSource,
-      ImportExpression: reportModuleSource,
-      // `import('…').Type` in a type position.
-      TSImportType: reportModuleSource,
-      // `import fake = require('…')`.
-      TSExternalModuleReference: (node) => report(node.expression),
+      ...moduleSourceVisitors(report),
       CallExpression(node) {
-        if (
-          node.callee.type === 'Identifier' &&
-          node.callee.name === 'require'
-        ) {
-          const [argument] = node.arguments;
-          if (argument) {
-            report(argument);
-          }
+        if (node.callee.name === 'require' && node.arguments[0]) {
+          report(node.arguments[0]);
         }
       },
     };
   },
 };
-
-/** Whether a module specifier names the workspace's test-only code. */
-function isTestingModule(source) {
-  return (
-    WORKSPACE_TESTING_ENTRY.test(source) || RELATIVE_TESTING_PATH.test(source)
-  );
-}
 
 export default {
   meta: { name: 'wolsok' },
