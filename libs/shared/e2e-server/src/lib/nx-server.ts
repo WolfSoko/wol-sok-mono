@@ -31,7 +31,8 @@ const NX_TASK_ENV = 'NX_TASK_TARGET_PROJECT';
  * same server, from Playwright, fails on its taken ports while the first
  * still boots ("Process from config.webServer exited early"). `@nx/playwright`
  * reads the config outside any task, so it still infers the dependency from
- * the `nx run` command.
+ * the `nx run` command. A hand-written target that runs Playwright needs
+ * that dependency too, or its servers never start.
  */
 export function nxServer(
   target: string,
