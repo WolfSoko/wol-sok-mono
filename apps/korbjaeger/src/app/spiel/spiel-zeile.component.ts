@@ -35,8 +35,16 @@ import type { SpielZeile } from './spiel-zeile';
     @if (mitLiga()) {
       <span class="liga" data-qa="spiel-liga">{{ spiel.liga }}</span>
     }
-    @if (spiel.ergebnis || spiel.markierung) {
+    @if (spiel.ergebnis || spiel.ausgang || spiel.markierung) {
       <span class="ausgang">
+        @if (spiel.ausgang; as ausgang) {
+          <span
+            class="ausgang-marke"
+            [attr.data-ausgang]="ausgang"
+            data-qa="spiel-ausgang"
+            >{{ ausgang }}</span
+          >
+        }
         @if (spiel.ergebnis) {
           <span class="ergebnis" data-qa="spiel-ergebnis">{{
             spiel.ergebnis
@@ -84,8 +92,25 @@ import type { SpielZeile } from './spiel-zeile';
       gap: 0.25rem;
     }
     .ergebnis {
-      font: var(--mat-sys-title-medium);
+      font: var(--mat-sys-title-large);
       font-variant-numeric: tabular-nums;
+    }
+    .ausgang-marke {
+      padding: 0.125rem 0.5rem;
+      border-radius: var(--korb-marke-rundung);
+      font: var(--mat-sys-label-large);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--korb-unentschieden-container);
+      color: var(--korb-unentschieden-on-container);
+    }
+    .ausgang-marke[data-ausgang='Sieg'] {
+      background: var(--korb-sieg-container);
+      color: var(--korb-sieg-on-container);
+    }
+    .ausgang-marke[data-ausgang='Niederlage'] {
+      background: var(--korb-niederlage-container);
+      color: var(--korb-niederlage-on-container);
     }
     .markierung {
       --mat-chip-elevated-container-color: var(--mat-sys-error-container);

@@ -35,6 +35,7 @@
     }
     @if (kind.naechstes; as naechstes) {
       <korb-naechstes-spiel
+        class="anzeigetafel"
         [zeile]="naechstes"
         [halle]="kind.halle"
         [titel]="kind.naechstesTitel"
@@ -50,6 +51,7 @@
     }
     @if (kind.letztes; as letztes) {
       <korb-spiel-link
+        class="anzeigetafel"
         [titel]="kind.letztesTitel"
         [zeile]="letztes"
         data-qa="ueberblick-letztes"

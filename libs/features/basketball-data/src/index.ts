@@ -65,6 +65,7 @@ export { istTeam, parteiName } from './lib/domain/partei';
 export type { SpielPartei } from './lib/domain/partei';
 export type { Saison } from './lib/domain/saison';
 export {
+  ausgangVon,
   datumInDeutschland,
   ergebnisVon,
   gegnerVon,
@@ -73,6 +74,7 @@ export {
 } from './lib/domain/spiel';
 export type {
   Spiel,
+  SpielAusgang,
   SpielDetails,
   SpielSeite,
   SpielSonderfall,

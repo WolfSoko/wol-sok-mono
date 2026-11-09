@@ -7,6 +7,9 @@
 @import '@fontsource/roboto/latin-400.css';
 @import '@fontsource/roboto/latin-500.css';
 @import '@fontsource/roboto/latin-700.css';
+// the display face of the look "Hallenboden": scores, Team names, headings
+@import '@fontsource/barlow-condensed/latin-600.css';
+@import '@fontsource/barlow-condensed/latin-700.css';
 @import 'material-icons/iconfont/filled.css';
 
 html {
@@ -19,9 +22,56 @@ html {
         primary: mat.$orange-palette,
         tertiary: mat.$blue-palette,
       ),
-      typography: Roboto,
+      typography: (
+        plain-family: Roboto,
+        brand-family: 'Barlow Condensed',
+        bold-weight: 700,
+        medium-weight: 600,
+        regular-weight: 400,
+      ),
       density: 0,
     )
+  );
+}
+
+// The look "Hallenboden" (#2918): the app's own tokens, set once here and
+// built from Material's system tokens, so dark mode (and later a Verein's
+// colours) reach every screen. Components take colours only from tokens
+// (`theme.spec.ts`).
+:root {
+  // a result in words, never by colour alone: "Sieg", "Niederlage"
+  --korb-sieg-container: var(--mat-sys-primary);
+  --korb-sieg-on-container: var(--mat-sys-on-primary);
+  --korb-niederlage-container: var(--mat-sys-surface-container-highest);
+  --korb-niederlage-on-container: var(--mat-sys-on-surface);
+  --korb-unentschieden-container: var(--mat-sys-secondary-container);
+  --korb-unentschieden-on-container: var(--mat-sys-on-secondary-container);
+  --korb-marke-rundung: var(--mat-sys-corner-extra-small);
+
+  // the court's lines: under headings, along the top of cards
+  --korb-linie: var(--mat-sys-primary);
+  --korb-linie-breite: 4px;
+
+  // the scoreboard (`.anzeigetafel`): dark in both schemes
+  --korb-anzeigetafel: light-dark(
+    var(--mat-sys-inverse-surface),
+    var(--mat-sys-surface-container-lowest)
+  );
+  --korb-anzeigetafel-text: light-dark(
+    var(--mat-sys-inverse-on-surface),
+    var(--mat-sys-on-surface)
+  );
+  --korb-anzeigetafel-text-leise: light-dark(
+    var(--mat-sys-inverse-on-surface),
+    var(--mat-sys-on-surface-variant)
+  );
+  --korb-anzeigetafel-akzent: light-dark(
+    var(--mat-sys-inverse-primary),
+    var(--mat-sys-primary)
+  );
+  --korb-anzeigetafel-hover: light-dark(
+    var(--mat-sys-on-surface-variant),
+    var(--mat-sys-surface-container-high)
   );
 }
 
@@ -68,3 +118,40 @@ body {
 
 // `.cdk-visually-hidden`: text for screen readers only, e.g. "(dein Team)"
 @include cdk.a11y-visually-hidden();
+
+// Headings in the display face, the page's title on a court line.
+h1,
+h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+h1 {
+  display: inline-block;
+  margin-block: 0.5rem 1rem;
+  padding-block-end: 0.25rem;
+  border-block-end: var(--korb-linie-breite) solid var(--korb-linie);
+  font: var(--mat-sys-headline-large);
+}
+
+h2 {
+  font: var(--mat-sys-title-large);
+}
+
+// The scoreboard for the next Spiel and the last result: Material's text
+// and accent tokens turned for its dark ground, so whatever it holds stays
+// readable. The `--korb-*` tokens it reads were resolved on `:root`.
+.anzeigetafel {
+  --mat-sys-on-surface: var(--korb-anzeigetafel-text);
+  --mat-sys-on-surface-variant: var(--korb-anzeigetafel-text-leise);
+  --mat-sys-primary: var(--korb-anzeigetafel-akzent);
+  --mat-sys-surface-container-high: var(--korb-anzeigetafel-hover);
+
+  display: block;
+  padding: 0.75rem 1rem;
+  border-block-start: var(--korb-linie-breite) solid
+    var(--korb-anzeigetafel-akzent);
+  border-radius: var(--mat-sys-corner-small);
+  background: var(--korb-anzeigetafel);
+  color: var(--mat-sys-on-surface);
+}

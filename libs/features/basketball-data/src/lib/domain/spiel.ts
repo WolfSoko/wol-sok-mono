@@ -123,6 +123,35 @@ export function sonderfallVon(spiel: Spiel): SpielSonderfall | undefined {
   }
 }
 
+/** How a decided Spiel ended for one side. */
+export type SpielAusgang = 'sieg' | 'niederlage' | 'unentschieden';
+
+/**
+ * How `spiel` ended for `seite`: by the points of a played Spiel; a forfeit
+ * goes to the side that did not forfeit (both lose where both did), and
+ * one naming no side by its points where it has any. None before a Spiel
+ * is decided.
+ */
+export function ausgangVon(
+  spiel: Spiel,
+  seite: SpielSeite
+): SpielAusgang | undefined {
+  const { status } = spiel;
+  if (status.art === 'kampflos' && status.verzichtet.length > 0) {
+    return status.verzichtet.includes(seite) ? 'niederlage' : 'sieg';
+  }
+  const ergebnis = ergebnisVon(spiel);
+  if (!ergebnis) {
+    return undefined;
+  }
+  const eigene = ergebnis[seite];
+  const andere = ergebnis[seite === 'heim' ? 'gast' : 'heim'];
+  if (eigene === andere) {
+    return 'unentschieden';
+  }
+  return eigene > andere ? 'sieg' : 'niederlage';
+}
+
 /** Whether `spiel` is decided: played with a result, or forfeited. */
 export function istEntschieden(spiel: Spiel): boolean {
   return spiel.status.art === 'gespielt' || spiel.status.art === 'kampflos';
