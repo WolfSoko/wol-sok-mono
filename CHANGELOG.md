@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.155.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.154.0...v74.155.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Vereinsfarben bottom sheet, worn by the Team page ([#2929](https://github.com/WolfSoko/wol-sok-mono/issues/2929)) ([d4252af](https://github.com/WolfSoko/wol-sok-mono/commit/d4252afec2685d2a8afb22249187784d514086b4)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#rrggbb](https://github.com/WolfSoko/wol-sok-mono/issues/rrggbb)
+
+### Bug Fixes
+
+* **github:** stand down the release before versioning when main moved on ([#2932](https://github.com/WolfSoko/wol-sok-mono/issues/2932)) ([1e6354f](https://github.com/WolfSoko/wol-sok-mono/commit/1e6354ff60ee1d3569f301d775239c50baf724b8)), closes [#2891](https://github.com/WolfSoko/wol-sok-mono/issues/2891), references [#2891](https://github.com/WolfSoko/wol-sok-mono/issues/2891)
+
+### Documentation
+
+* add glossary for the basketball parents app ([#2860](https://github.com/WolfSoko/wol-sok-mono/issues/2860)) ([8fec1de](https://github.com/WolfSoko/wol-sok-mono/commit/8fec1de00daca1036cde8bb2696a426a5c1420c7))
+* sync CLAUDE.md stack versions with package.json ([#2914](https://github.com/WolfSoko/wol-sok-mono/issues/2914)) ([44ff192](https://github.com/WolfSoko/wol-sok-mono/commit/44ff192105e44f5cdab7e87ce6566795d992ec39))
+
 ## [74.154.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.153.0...v74.154.0) (2026-11-09)
 
 ### Features
