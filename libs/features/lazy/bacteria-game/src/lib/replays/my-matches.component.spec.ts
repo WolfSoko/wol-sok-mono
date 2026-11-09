@@ -45,7 +45,7 @@ async function settleUntil(
 ): Promise<void> {
   const deadline = Date.now() + SETTLE_LIMIT_MS;
   while (!ready()) {
-    if (Date.now() > deadline) {
+    if (Date.now() >= deadline) {
       throw new Error(`Timed out waiting for ${what}`);
     }
     await settleTurn(fixture);
@@ -138,12 +138,14 @@ describe('MyMatchesComponent', () => {
   it('plays no match of an older balance', async () => {
     await replays.submit({ replay: recordedReplay(), hint: 40 });
     replays.change('l_fake0', { balanceVersion: BALANCE_VERSION - 1 });
+    const load = jest.spyOn(replays, 'replayBytes');
     const { fixture, page } = await render();
 
     button(page, 'Watch').click();
     await settleUntil(fixture, () => showsOlder(page), 'the older notice');
 
     expect(page.textContent).toContain('older version');
+    expect(load).not.toHaveBeenCalled();
     expect(viewer(page)).toBeNull();
   });
 
