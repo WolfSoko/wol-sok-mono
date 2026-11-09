@@ -65,6 +65,25 @@ export function spitznameAenderung(
       : inhalt;
 }
 
+/**
+ * Takes what `abgegeben` holds out: its Teams, and its Kinder as they were
+ * (one whose Spitzname changed since stays). What joined since stays too.
+ */
+export function abgebenAenderung(abgegeben: AuswahlInhalt): AuswahlAenderung {
+  return (inhalt) => {
+    const teams = inhalt.teams.filter(
+      (team) => !abgegeben.teams.includes(team)
+    );
+    const kinder = inhalt.kinder.filter(
+      (kind) => !abgegeben.kinder.some((alt) => gleichesKind(alt, kind))
+    );
+    return teams.length === inhalt.teams.length &&
+      kinder.length === inhalt.kinder.length
+      ? inhalt
+      : { teams, kinder };
+  };
+}
+
 /** Unmarks the Kind `person`, if it is marked. */
 export function entmarkierenAenderung(person: PersonId): AuswahlAenderung {
   return (inhalt) =>

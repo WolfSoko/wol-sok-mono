@@ -1,4 +1,3 @@
-import { AUSWAHL_SPERRE, geraeteSperre } from '../auswahl/geraete-sperre';
 import { DestroyRef, DOCUMENT, inject, InjectionToken } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
@@ -67,20 +66,16 @@ export const KONTO_SITZUNG = new InjectionToken<KontoSitzung>('KontoSitzung', {
   factory: () => {
     const speicher = geraeteSpeicher();
     const fenster = inject(DOCUMENT).defaultView ?? undefined;
-    const sperre = geraeteSperre(AUSWAHL_SPERRE);
     const lokal = new LokaleAuswahl(
       speicher,
       fenster,
-      inject(SPEICHER_FREIGEBEN),
-      sperre
+      inject(SPEICHER_FREIGEBEN)
     );
     inject(DestroyRef).onDestroy(() => lokal.beenden());
     const sitzung = new KontoSitzung(
       lokal,
       environment.anmeldung ? kontoDienstLaden : undefined,
-      geraeteMerker(speicher, fenster),
-      undefined,
-      sperre
+      geraeteMerker(speicher, fenster)
     );
     void sitzung.starten();
     return sitzung;

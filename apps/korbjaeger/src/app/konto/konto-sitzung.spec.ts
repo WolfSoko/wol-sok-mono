@@ -1,4 +1,3 @@
-import type { GeraeteSperre } from '../auswahl/geraete-sperre';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import {
   AnmeldungAbgebrochen,
@@ -27,7 +26,6 @@ async function aufbauen(
     ohneAnmeldung?: boolean;
     dienst?: FakeKontoDienst;
     lokal?: LokaleAuswahl;
-    sperre?: GeraeteSperre;
   } = {}
 ): Promise<Aufbau> {
   const dienst = optionen.dienst ?? new FakeKontoDienst();
@@ -49,8 +47,7 @@ async function aufbauen(
     lokal,
     optionen.ohneAnmeldung ? undefined : laden,
     merker,
-    () => aufbau.online,
-    optionen.sperre
+    () => aufbau.online
   );
   aufbau.sitzung = sitzung;
   await sitzung.starten();
@@ -233,7 +230,8 @@ describe('KontoSitzung', () => {
         'geraetUebernehmen uid-1',
         'auswahl uid-1',
       ]);
-      expect(dienst.uebernommen?.teams).toEqual([313036, 201500]);
+      // the second round takes what joined; the first took the rest
+      expect(dienst.uebernommen?.teams).toEqual([201500]);
       expect(lokal.teams()).toEqual([]);
     });
 
@@ -263,25 +261,26 @@ describe('KontoSitzung', () => {
       expect(sitzung.auswahl.teams()).toEqual(behalten);
     });
 
-    it('takes the device over under its lock, clearing included', async () => {
-      const ablauf: string[] = [];
-      const dienst = new FakeKontoDienst();
-      dienst.beiJederUebernahme = async () => void ablauf.push('uebernommen');
-      const { sitzung, lokal } = await aufbauen({
-        dienst,
-        sperre: async (tun) => {
-          ablauf.push('gesperrt');
-          const ergebnis = await tun();
-          ablauf.push(lokal.teams().length === 0 ? 'geleert' : 'voll');
-          return ergebnis;
-        },
-      });
+    it('takes off the device only what it took over, so a Kind renamed meanwhile goes over next', async () => {
+      const { sitzung, dienst, lokal } = await aufbauen();
       await lokal.folgen(313036);
-      ablauf.length = 0;
+      await lokal.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+      const uebernommen: unknown[] = [];
+      dienst.beiJederUebernahme = async () => {
+        uebernommen.push(dienst.uebernommen);
+        if (uebernommen.length === 1) {
+          await lokal.spitznameSetzen(4711, 'Mi');
+        }
+      };
 
       await sitzung.anmelden();
 
-      expect(ablauf).toEqual(['gesperrt', 'uebernommen', 'geleert']);
+      expect(dienst.uebernommen).toEqual({
+        teams: [],
+        kinder: [{ personId: 4711, spitzname: 'Mi' }],
+      });
+      expect(lokal.kinder()).toEqual([]);
+      expect(sitzung.geraetBehalten()).toBe(false);
     });
 
     it('takes over what another tab stored meanwhile, before its storage event', async () => {
@@ -305,7 +304,8 @@ describe('KontoSitzung', () => {
 
       await sitzung.anmelden();
 
-      expect(dienst.uebernommen?.teams).toEqual([313036, 201500]);
+      // the second round takes what joined; the first took the rest
+      expect(dienst.uebernommen?.teams).toEqual([201500]);
       expect(sitzung.geraetBehalten()).toBe(false);
       expect(lokal.teams()).toEqual([]);
     });

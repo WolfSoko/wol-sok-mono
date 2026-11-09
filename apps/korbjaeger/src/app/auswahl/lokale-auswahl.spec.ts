@@ -170,24 +170,18 @@ describe('LokaleAuswahl', () => {
     });
   });
 
-  it('runs each change under the device lock', async () => {
-    const reihenfolge: string[] = [];
-    const auswahl = new LokaleAuswahl(
-      new SpeicherImSpec(),
-      undefined,
-      undefined,
-      async (tun) => {
-        reihenfolge.push('gesperrt');
-        const ergebnis = await tun();
-        reihenfolge.push('frei');
-        return ergebnis;
-      }
-    );
+  it('stores a change before the call returns, so leaving the page right after keeps it', () => {
+    const geraet = new SpeicherImSpec();
+    const auswahl = new LokaleAuswahl(geraet);
+    void auswahl.folgen(313036);
+    void auswahl.markieren({ art: 'benannt', personId: 4711 });
 
-    await auswahl.folgen(313036);
+    void auswahl.entfolgen(313036);
 
-    expect(reihenfolge).toEqual(['gesperrt', 'frei']);
-    expect(auswahl.teams()).toEqual([313036]);
+    expect(gespeichert(geraet)).toEqual({
+      teams: [],
+      kinder: [{ personId: 4711 }],
+    });
   });
 
   it('writes nothing to mark a Kind marked already', async () => {

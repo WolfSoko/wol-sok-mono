@@ -1,13 +1,10 @@
 import { computed, signal, type Signal } from '@angular/core';
 import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
 import type { Auswahl } from '../auswahl/auswahl';
-import { gleicheKinder } from '../auswahl/auswahl-aenderungen';
 import type { AuswahlInhalt } from '../auswahl/auswahl-dokument';
-import { gleicheFolge } from '../gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
 import type { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
-import type { GeraeteSperre } from '../auswahl/geraete-sperre';
 import {
   NichtAllesGesendet,
   OhneInternet,
@@ -60,8 +57,8 @@ const UEBERNAHMEN_HOECHSTENS = 3;
  * Auth's state once Firebase is loaded, through the `merker` before.
  *
  * The device's choices leave it in one place only: a takeover into the
- * account that found them unchanged once written (`uebernehmen`, under the
- * device's lock). Nothing else clears them, a sign-out neither (here or in
+ * account, which takes off exactly what it wrote (`uebernehmen`), so what
+ * joined meanwhile, in any tab, stays. Nothing else clears them, a sign-out neither (here or in
  * another tab, after a takeover that failed too), so choices a takeover
  * kept stay for the next.
  */
@@ -106,16 +103,13 @@ export class KontoSitzung {
    * @param laden loads Firebase; `undefined` where this build offers no
    *   sign-in.
    * @param istOnline whether the device has a network (`navigator.onLine`).
-   * @param sperre the device's lock of the `Auswahl` (`AUSWAHL_SPERRE`),
-   *   which `lokal` writes under too.
    */
   public constructor(
     private readonly lokal: LokaleAuswahl,
     private readonly laden: (() => Promise<KontoDienst>) | undefined,
     private readonly merker: AnmeldeMerker,
     private readonly istOnline: () => boolean = () =>
-      globalThis.navigator?.onLine ?? true,
-    private readonly sperre: GeraeteSperre = async (tun) => tun()
+      globalThis.navigator?.onLine ?? true
   ) {
     this.stand = this.zustand.asReadonly();
     this.bereit = this.geladen.asReadonly();
@@ -243,31 +237,27 @@ export class KontoSitzung {
   }
 
   /**
-   * Takes the device's choices into the account and then off the device,
-   * under the device's lock, so no tab changes them between the reading and
-   * the clearing; where the browser has no lock, again where they changed
-   * meanwhile (here or, read from the storage itself, in another tab).
-   * Where they still changed during the last try, they stay on the device
-   * (`geraetBehalten`), for the next start to take over.
+   * Takes the device's choices into the account and then exactly those off
+   * the device (`abgeben`, in one read and write); what joined meanwhile, here
+   * or in another tab, goes over in another round. Where something still
+   * stays after the last, it stays on the device (`geraetBehalten`), for the
+   * next start to take over.
    */
-  private uebernehmen(
+  private async uebernehmen(
     dienst: KontoDienst,
     benutzer: Benutzer
   ): Promise<NichtUebernommen> {
-    return this.sperre(async () => {
-      let uebrig: NichtUebernommen = { teams: 0, kinder: 0 };
-      for (let mal = 0; mal < UEBERNAHMEN_HOECHSTENS; mal++) {
-        const geraet = this.lokal.neuGelesen();
-        uebrig = await dienst.geraetUebernehmen(benutzer.uid, geraet);
-        if (gleicherInhalt(geraet, this.lokal.neuGelesen())) {
-          this.lokal.leeren();
-          this.behalten.set(false);
-          return uebrig;
-        }
+    let uebrig: NichtUebernommen = { teams: 0, kinder: 0 };
+    let geraet = this.lokal.neuGelesen();
+    for (let mal = 0; mal < UEBERNAHMEN_HOECHSTENS; mal++) {
+      uebrig = await dienst.geraetUebernehmen(benutzer.uid, geraet);
+      geraet = this.lokal.abgeben(geraet);
+      if (istLeer(geraet)) {
+        break;
       }
-      this.behalten.set(true);
-      return uebrig;
-    });
+    }
+    this.behalten.set(!istLeer(geraet));
+    return uebrig;
   }
 
   /**
@@ -451,10 +441,6 @@ export class KontoSitzung {
     this.aktuell.set(this.lokal);
     this.zustand.set({ art });
   }
-}
-
-function gleicherInhalt(a: AuswahlInhalt, b: AuswahlInhalt): boolean {
-  return gleicheFolge(a.teams, b.teams) && gleicheKinder(a.kinder, b.kinder);
 }
 
 function istLeer(inhalt: AuswahlInhalt): boolean {

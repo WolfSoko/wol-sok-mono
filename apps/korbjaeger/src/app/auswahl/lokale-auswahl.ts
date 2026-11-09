@@ -2,6 +2,7 @@ import { computed, signal, type Signal } from '@angular/core';
 import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
 import type { Auswahl } from './auswahl';
 import {
+  abgebenAenderung,
   entfolgenAenderung,
   entmarkierenAenderung,
   folgenAenderung,
@@ -25,7 +26,6 @@ import { gleicheFolge } from '../gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from './kind';
 import { istSpeicherVoll } from '../geraete-speicher';
 import { AuswahlZuNeuError } from './auswahl-fehler';
-import type { GeraeteSperre } from './geraete-sperre';
 
 /** The key of the `AuswahlDokument` in the device's storage. */
 export const AUSWAHL_SCHLUESSEL = 'korbjaeger-auswahl';
@@ -51,9 +51,8 @@ export type Fenster = Pick<
  *   Kind marked, and every change rejects with `AuswahlZuNeuError`.
  * - A change over a list's cap (`AUSWAHL_GRENZEN`) rejects with
  *   `AuswahlVollError`, nothing stored.
- * - Each change runs under `sperre` (the device's `AUSWAHL_SPERRE`), so it
- *   reads and writes in one turn among the tabs, never between a sign-in's
- *   check of the stored choices and their clearing.
+ * - Each change reads and writes at once, in the call: stored before it
+ *   returns, so leaving the page right after keeps it.
  * - Where the storage is full, it has `platzSchaffen` free it (of the
  *   cached DBB answers) and tries once more. A change it still could not
  *   store (private mode, full, no storage) is kept as `offen`: applied on
@@ -87,8 +86,7 @@ export class LokaleAuswahl implements Auswahl {
   public constructor(
     private readonly speicher: GeraeteSpeicher | undefined,
     private readonly fenster?: Fenster,
-    private readonly platzSchaffen: () => void = () => undefined,
-    private readonly sperre: GeraeteSperre = async (tun) => tun()
+    private readonly platzSchaffen: () => void = () => undefined
   ) {
     // read at once, so `teams` and `kinder` are never undefined here
     this.anzeigen(this.lesen());
@@ -136,8 +134,23 @@ export class LokaleAuswahl implements Auswahl {
   }
 
   /**
-   * Takes the selection off the device, once an account holds it: only a
-   * sign-in's takeover calls it, under the device's lock. Changes still `offen` go
+   * Takes `uebernommen` off the device, once an account holds it, and
+   * resolves with what stays: what joined since it was read (here or in
+   * another tab) is left, read and written in one go, as every change is.
+   * Only a sign-in's takeover calls it; where nothing stays, the selection
+   * goes from the storage altogether (`leeren`).
+   */
+  public abgeben(uebernommen: AuswahlInhalt): AuswahlInhalt {
+    this.aendernJetzt(abgebenAenderung(uebernommen));
+    const rest = this.neuGelesen();
+    if (rest.teams.length === 0 && rest.kinder.length === 0) {
+      this.leeren();
+    }
+    return rest;
+  }
+
+  /**
+   * Takes the selection off the device. Changes still `offen` go
    * with it; a newer version's selection stays, as this version never
    * changes one. Where the storage removes nothing, an empty selection is
    * stored in its place.
@@ -164,9 +177,14 @@ export class LokaleAuswahl implements Auswahl {
     this.fenster?.removeEventListener('storage', this.beiAenderung);
   }
 
-  /** Runs `aenderung` under the device's lock (`aendernJetzt`). */
+  /** Runs `aenderung` now (`aendernJetzt`), its failure as the rejection. */
   private aendern(aenderung: AuswahlAenderung): Promise<void> {
-    return this.sperre(() => this.aendernJetzt(aenderung));
+    try {
+      this.aendernJetzt(aenderung);
+      return Promise.resolve();
+    } catch (fehler) {
+      return Promise.reject(fehler);
+    }
   }
 
   /**
