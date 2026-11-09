@@ -6,6 +6,17 @@ import { expect, test } from './fixtures/pages.fixture';
 const TEAM = 313036;
 const SPIEL_DES_TEAMS = 2861436;
 
+/** The overview's card, once it shows the Team's Spiele, not its loading state. */
+async function karteGeladen(page: Page): Promise<void> {
+  await expect(page.getByTestId('ueberblick-letztes')).toBeVisible();
+}
+
+/** The Spiel page, once its Spielbericht's Kader are there too. */
+async function spielGeladen(page: Page): Promise<void> {
+  await expect(page.getByTestId('spiel-ergebnis')).toBeVisible();
+  await expect(page.getByTestId('kader').first()).toBeVisible();
+}
+
 /** What axe finds wrong with the contrast of text on the page. */
 async function kontrastFehler(page: Page): Promise<string[]> {
   const { violations } = await new AxeBuilder({ page })
@@ -37,11 +48,11 @@ for (const schema of ['light', 'dark'] as const) {
 
       await teamPage.folgen.click();
       await startPage.goto();
-      await expect(page.getByTestId('ueberblick-team')).toHaveCount(1);
+      await karteGeladen(page);
       expect(await kontrastFehler(page)).toEqual([]);
 
       await spielPage.goto(SPIEL_DES_TEAMS);
-      await expect(spielPage.ergebnis).toBeVisible();
+      await spielGeladen(page);
       expect(await kontrastFehler(page)).toEqual([]);
     });
 
@@ -62,12 +73,22 @@ for (const schema of ['light', 'dark'] as const) {
         const vereinsfarbe = await teamPage.linienfarbe();
 
         await startPage.goto();
-        await expect(page.getByTestId('ueberblick-team')).toHaveCount(1);
+        await karteGeladen(page);
+        // the card wears the Verein's colours before axe looks
+        await expect
+          .poll(() =>
+            page
+              .locator('korb-ueberblick-team')
+              .evaluate((karte) =>
+                karte.style.getPropertyValue('--mat-sys-primary')
+              )
+          )
+          .toContain('light-dark(');
         expect(await kontrastFehler(page)).toEqual([]);
 
         // one of the followed Team's own Spiele: the page wears its colours
         await spielPage.goto(SPIEL_DES_TEAMS);
-        await expect(spielPage.ergebnis).toBeVisible();
+        await spielGeladen(page);
         await expect
           .poll(() =>
             page

@@ -21,7 +21,7 @@ describe('gefolgterVerein', () => {
     expect(gefolgterVerein(SPIEL, undefined)).toBeUndefined();
   });
 
-  it('names none for a side the Liga fills later', () => {
+  it('skips a side the Liga fills later', () => {
     const offen = {
       ...SPIEL,
       heim: { art: 'offen', bezeichnung: 'Nord 1. Platz' },

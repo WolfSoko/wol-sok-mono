@@ -11,10 +11,10 @@ import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielLinkComponent } from '../spiel/spiel-link.component';
 import { StandComponent } from '../stand/stand.component';
 import { TeamFolgenComponent } from '../team/team-folgen.component';
-import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
-import { kartenName, type TeamKarte } from './team-karte';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
 import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knopf.component';
+import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
+import { kartenName, type TeamKarte } from './team-karte';
 
 /**
  * One of Meine Teams on the overview, as `karte` gives it: its next Spiel

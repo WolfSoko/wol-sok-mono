@@ -1,7 +1,8 @@
-import type {
-  Spiel,
-  TeamId,
-  VereinId,
+import {
+  istTeam,
+  type Spiel,
+  type TeamId,
+  type VereinId,
 } from '@wolsok/feat-shared-basketball-data';
 
 /**
@@ -14,7 +15,10 @@ export function gefolgterVerein(
   gefolgt: readonly TeamId[] | undefined
 ): VereinId | undefined {
   for (const partei of [spiel.heim, spiel.gast]) {
-    if (partei.art === 'team' && gefolgt?.includes(partei.team.id)) {
+    if (
+      partei.art === 'team' &&
+      gefolgt?.some((team) => istTeam(partei, team))
+    ) {
       return partei.team.vereinId;
     }
   }
