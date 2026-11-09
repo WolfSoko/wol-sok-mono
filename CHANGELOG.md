@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.161.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.3...v74.161.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** English Firestore fields and storage keys, with a migration ([#2982](https://github.com/WolfSoko/wol-sok-mono/issues/2982)) ([825051a](https://github.com/WolfSoko/wol-sok-mono/commit/825051a29e838b05b7cbb384b5fd844780f3c244)), closes [#2966](https://github.com/WolfSoko/wol-sok-mono/issues/2966), references [#2980](https://github.com/WolfSoko/wol-sok-mono/issues/2980) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2980](https://github.com/WolfSoko/wol-sok-mono/issues/2980) [#2980](https://github.com/WolfSoko/wol-sok-mono/issues/2980) [#2966](https://github.com/WolfSoko/wol-sok-mono/issues/2966) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945)
+
 ## [74.160.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.2...v74.160.3) (2026-11-09)
 
 ### Refactorings
