@@ -4,9 +4,9 @@ Angular + Nx monorepo. Read this before touching anything.
 
 ## Stack
 
-- **Angular 20** — standalone components, zoneless change detection, Signals, `@if`/`@for`/`@switch` control flow
+- **Angular 22** — standalone components, zoneless change detection, Signals, `@if`/`@for`/`@switch` control flow
 - **Nx 23** — monorepo orchestration, caching, affected commands
-- **TypeScript 5.9** — strict mode
+- **TypeScript 6.0** — strict mode
 - **Build**: Vite (Analog/Vitest apps), Webpack + Module Federation (angular-examples)
 - **Testing**: Jest (most unit tests), Vitest (Vite projects), Playwright (E2E)
 - **Lint / Format**: oxlint (`.oxlintrc.json`, targets inferred by `@nx/oxlint`), angular-eslint for templates only (`eslint.config.mjs`, target `lint-templates`) and oxfmt (`.oxfmtrc.json`, driven by `nx format`)
