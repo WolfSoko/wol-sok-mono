@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { InstallationsHinweis } from './installations-hinweis';
@@ -73,4 +78,8 @@ import { InstallationsHinweis } from './installations-hinweis';
 })
 export class InstallationsHinweisComponent {
   protected readonly hinweis = inject(InstallationsHinweis);
+
+  public constructor() {
+    inject(DestroyRef).onDestroy(this.hinweis.anzeigen());
+  }
 }

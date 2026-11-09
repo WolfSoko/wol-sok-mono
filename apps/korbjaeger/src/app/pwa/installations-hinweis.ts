@@ -101,7 +101,9 @@ export const INSTALLATIONS_UMGEBUNG = new InjectionToken<
  * The install hint's state: which offer fits (`angebot`), the browser's
  * install dialog (`installieren`) and the dismissal (`ablehnen`), kept in
  * `localStorage` for good where the device lets it, else for the visit.
- * Never offers anything where the app already runs installed.
+ * Never offers anything where the app already runs installed, and keeps
+ * the browser's own install offer away only while a page shows the hint
+ * (`anzeigen`) that would offer it.
  */
 @Injectable({ providedIn: 'root' })
 export class InstallationsHinweis {
@@ -111,6 +113,8 @@ export class InstallationsHinweis {
   );
   private readonly abgelehnt = signal(this.liesAbgelehnt());
   private readonly installiert = signal(this.laeuftInstalliert());
+  /** How many pages show the hint now (`anzeigen`). */
+  private seitenMitHinweis = 0;
   private readonly iosSafari =
     this.umgebung !== undefined && istIosSafari(this.umgebung.navigator);
 
@@ -129,8 +133,11 @@ export class InstallationsHinweis {
       return;
     }
     const aufgefordert = (event: Event): void => {
-      // keeps the browser's own mini-infobar away; the hint offers it
-      event.preventDefault();
+      // the browser's own mini-infobar gives way only to a hint shown;
+      // its event stays usable either way, for a hint shown later
+      if (this.uebernimmtAufforderung()) {
+        event.preventDefault();
+      }
       this.aufforderung.set(event as InstallAufforderung);
     };
     const installiert = (): void => {
@@ -143,6 +150,21 @@ export class InstallationsHinweis {
       fenster.removeEventListener('beforeinstallprompt', aufgefordert);
       fenster.removeEventListener('appinstalled', installiert);
     });
+  }
+
+  /**
+   * A page shows the hint (from now until the returned function is called):
+   * only then does the hint take the browser's own install offer over.
+   */
+  public anzeigen(): () => void {
+    this.seitenMitHinweis++;
+    let verlassen = false;
+    return () => {
+      if (!verlassen) {
+        verlassen = true;
+        this.seitenMitHinweis--;
+      }
+    };
   }
 
   /**
@@ -173,6 +195,13 @@ export class InstallationsHinweis {
     } catch {
       // storage full or blocked: hidden for this visit only
     }
+  }
+
+  /** Whether the hint would offer the browser's dialog on a page now. */
+  private uebernimmtAufforderung(): boolean {
+    return (
+      this.seitenMitHinweis > 0 && !this.abgelehnt() && !this.installiert()
+    );
   }
 
   private liesAbgelehnt(): boolean {

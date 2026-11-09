@@ -63,6 +63,8 @@ interface Aufbau {
   /** Fires `beforeinstallprompt`, whose `prompt` the spec can watch. */
   auffordern(): ReturnType<typeof vi.fn<() => Promise<unknown>>>;
   installieren(): void;
+  /** Fires `beforeinstallprompt` and hands it back. */
+  aufforderungsEreignis(): Event;
 }
 
 function umgebungVon(
@@ -97,10 +99,17 @@ function auffordernAuf(
   ziel: EventTarget
 ): ReturnType<typeof vi.fn<() => Promise<unknown>>> {
   const prompt = vi.fn<() => Promise<unknown>>(() => Promise.resolve());
-  ziel.dispatchEvent(
-    Object.assign(new Event('beforeinstallprompt'), { prompt })
-  );
+  ziel.dispatchEvent(ereignis(prompt));
   return prompt;
+}
+
+/** A `beforeinstallprompt` as the browser fires it: cancelable. */
+function ereignis(
+  prompt: () => Promise<unknown> = () => Promise.resolve()
+): Event {
+  return Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+    prompt,
+  });
 }
 
 function starten(browser: Browser = {}): Aufbau {
@@ -115,6 +124,11 @@ function starten(browser: Browser = {}): Aufbau {
     hinweis,
     auffordern: () => auffordernAuf(ziel),
     installieren: () => ziel.dispatchEvent(new Event('appinstalled')),
+    aufforderungsEreignis: () => {
+      const event = ereignis();
+      ziel.dispatchEvent(event);
+      return event;
+    },
   };
 }
 
@@ -231,6 +245,42 @@ describe('InstallationsHinweis', () => {
     const { hinweis } = starten({ userAgent: SAFARI_IPHONE });
 
     expect(hinweis.angebot()).toBe('ios');
+  });
+
+  describe("the browser's own install offer", () => {
+    it('is taken over while a page shows the hint', () => {
+      const { hinweis, aufforderungsEreignis } = starten();
+      hinweis.anzeigen();
+
+      expect(aufforderungsEreignis().defaultPrevented).toBe(true);
+    });
+
+    it('is left alone while no page shows the hint, yet offered once one does', () => {
+      const { hinweis, aufforderungsEreignis } = starten();
+
+      expect(aufforderungsEreignis().defaultPrevented).toBe(false);
+
+      hinweis.anzeigen();
+      expect(hinweis.angebot()).toBe('installieren');
+    });
+
+    it('is left alone once the page showing the hint is gone', () => {
+      const { hinweis, aufforderungsEreignis } = starten();
+      const verlassen = hinweis.anzeigen();
+
+      verlassen();
+
+      expect(aufforderungsEreignis().defaultPrevented).toBe(false);
+    });
+
+    it('is left alone once the hint was dismissed', () => {
+      const geraet = speicher();
+      geraet.setItem(INSTALLATION_ABGELEHNT_SCHLUESSEL, '1');
+      const { hinweis, aufforderungsEreignis } = starten({ speicher: geraet });
+      hinweis.anzeigen();
+
+      expect(aufforderungsEreignis().defaultPrevented).toBe(false);
+    });
   });
 
   describe('where the app already runs installed', () => {

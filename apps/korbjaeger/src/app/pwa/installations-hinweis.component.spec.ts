@@ -9,20 +9,28 @@ import { InstallationsHinweisComponent } from './installations-hinweis.component
 interface Aufbau {
   readonly seite: HTMLElement;
   readonly installieren: ReturnType<typeof vi.fn<() => Promise<void>>>;
+  /** How many shown hints the service was told of. */
+  angezeigt(): number;
+  entfernen(): void;
   /** Clicks the button labelled `text` and waits for the page. */
   klicken(text: string): Promise<void>;
 }
 
 async function render(angebot: InstallationsAngebot): Promise<Aufbau> {
   const stand = signal(angebot);
+  let angezeigt = 0;
   const installieren = vi.fn<() => Promise<void>>(() => Promise.resolve());
   const hinweis: Pick<
     InstallationsHinweis,
-    'angebot' | 'installieren' | 'ablehnen'
+    'angebot' | 'installieren' | 'ablehnen' | 'anzeigen'
   > = {
     angebot: stand,
     installieren,
     ablehnen: () => stand.set('keins'),
+    anzeigen: () => {
+      angezeigt++;
+      return () => angezeigt--;
+    },
   };
   TestBed.configureTestingModule({
     providers: [{ provide: InstallationsHinweis, useValue: hinweis }],
@@ -33,6 +41,8 @@ async function render(angebot: InstallationsAngebot): Promise<Aufbau> {
   return {
     seite,
     installieren,
+    angezeigt: () => angezeigt,
+    entfernen: () => fixture.destroy(),
     klicken: async (text) => {
       const knopf = [...seite.querySelectorAll('button')].find(
         (element) => element.textContent?.trim() === text
@@ -74,6 +84,15 @@ describe('InstallationsHinweisComponent', () => {
     const { seite } = await render('keins');
 
     expect(hinweisText(seite)).toBeUndefined();
+  });
+
+  it('tells the service it shows the hint, until it is gone', async () => {
+    const { angezeigt, entfernen } = await render('keins');
+    expect(angezeigt()).toBe(1);
+
+    entfernen();
+
+    expect(angezeigt()).toBe(0);
   });
 
   it('goes once dismissed', async () => {
