@@ -51,7 +51,14 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      /*
+       * Chromium's new headless mode, not the headless shell: in the shell,
+       * Auth's helper frame from the Auth emulator now and then commits but
+       * never parses its page, so the sign-in popup's answer reaches no one
+       * and the popup stays open (konto.spec.ts failed about 1 run in 10
+       * with two workers; 0 in 120 in this mode).
+       */
+      use: { ...devices['Desktop Chrome'], channel: 'chromium' },
     },
   ],
 });
