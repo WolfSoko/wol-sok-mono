@@ -1,2 +1,2 @@
-import { latestVersionTag } from './latest-version-tag.ts';
+import { latestVersionTag } from './latest-version-tag';
 console.log(latestVersionTag('cdk-deployed'));
