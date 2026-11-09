@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.160.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.2...v74.160.3) (2026-11-09)
+
+### Refactorings
+
+* **korbjaeger:** one shared place for account constants and emulator helpers ([#2980](https://github.com/WolfSoko/wol-sok-mono/issues/2980)) ([2416079](https://github.com/WolfSoko/wol-sok-mono/commit/2416079a76b62c9f9ba356f03b0f40b5e170956a)), references [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945)
+
+### Documentation
+
+* **korbjaeger:** spike on DBB.Scores terms and NBN23 access ([#2978](https://github.com/WolfSoko/wol-sok-mono/issues/2978)) ([d9acee2](https://github.com/WolfSoko/wol-sok-mono/commit/d9acee2c50b29f2c2e7cfeaa213ec5af85c545e2)), references [#2977](https://github.com/WolfSoko/wol-sok-mono/issues/2977)
+
 ## [74.160.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.1...v74.160.2) (2026-11-09)
 
 ### Bug Fixes
