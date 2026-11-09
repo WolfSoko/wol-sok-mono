@@ -39,7 +39,7 @@ import { istSpeicherVoll } from './speicher-voll';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 
 /** The key of the `AuswahlDokument` in the device's storage. */
-export const AUSWAHL_SCHLUESSEL = 'korbjaeger-auswahl';
+export const AUSWAHL_SCHLUESSEL = 'korbjaeger-selection';
 
 /** The part of the device's storage (`localStorage`) the adapter uses. */
 export type GeraeteSpeicher = Pick<Storage, 'getItem' | 'setItem'>;

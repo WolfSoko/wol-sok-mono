@@ -1,6 +1,5 @@
 import {
   isDbbId,
-  type PersonId,
   type TeamId,
   type VereinId,
 } from '@wolsok/feat-shared-basketball-data';
@@ -15,18 +14,14 @@ import { kindMit, type Kind } from './kind';
 
 /**
  * The version of `AuswahlDokument` this app writes. Bumped only for a
- * change an older app would misread; a new field is none (Kinder joined
- * version 1 as a field of their own, the Vereinsfarben version 2), since
- * every write keeps the fields it does not know. Version 2 keys both lists by id: an app of version 1,
- * still open in a tab, takes it for a newer one and leaves it alone rather
- * than overwrite its maps with lists. The reader still takes version 1's
- * lists (the device's storage holds them), and a map stays a list until a
- * change touches it.
+ * change an older app would misread; a new field is none, since every
+ * write keeps the fields it does not know. Version 3 (#2966) names the
+ * fields in English and lives under new names (`selections/{uid}`,
+ * `korbjaeger-selection`); versions 1 and 2, with the German fields, are
+ * read only by the migration (`legacy-selection.ts`), which turns them into
+ * this version.
  */
-export const AUSWAHL_VERSION = 2;
-
-/** The first version, of lists, which this version still reads. */
-const ERSTE_VERSION = 1;
+export const AUSWAHL_VERSION = 3;
 
 /**
  * How many Teams, Kinder and Vereine with colours an `Auswahl` holds at
@@ -52,27 +47,35 @@ export const AUSWAHL_LISTEN: readonly AuswahlListe[] = [
 /** A marked Kind as stored: since when it is marked, and its Spitzname. */
 export interface KindEintrag {
   /** Milliseconds since 1970, the order of the Kinder. */
-  readonly seit: number;
-  readonly spitzname?: string;
+  readonly since: number;
+  readonly nickname?: string;
 }
 
 /**
  * What an adapter stores of an `Auswahl`: ids only, never names from the
  * DBB. Keyed by id, so each change writes its own entries and the server
  * merges them with another device's (a Team followed, a Kind unmarked, a
- * Spitzname changed: none overwrites the other); `seit` keeps the order.
+ * Spitzname changed: none overwrites the other); `since` keeps the order.
  */
 export interface AuswahlDokument {
   readonly version: typeof AUSWAHL_VERSION;
   /** Each Team's id, since when it is followed (ms since 1970). */
   readonly teams: Readonly<Record<string, number>>;
-  readonly kinder: Readonly<Record<string, KindEintrag>>;
+  /** The marked Kinder, by person id. */
+  readonly children: Readonly<Record<string, KindEintrag>>;
   /**
    * Each Verein's colours, by its id, as one text (`farbenText`); a Verein
    * without any has no entry.
    */
-  readonly vereinsfarben?: Readonly<Record<string, string>>;
+  readonly clubColors?: Readonly<Record<string, string>>;
 }
+
+/** The stored field of each list of an `Auswahl`. */
+export const DOCUMENT_FIELD = {
+  teams: 'teams',
+  kinder: 'children',
+  vereinsfarben: 'clubColors',
+} as const satisfies Record<AuswahlListe, keyof AuswahlDokument>;
 
 /**
  * What an `Auswahl` holds: Meine Teams and the marked Kinder, each once,
@@ -131,35 +134,30 @@ const KEINS: GelesenesDokument = { art: 'keins' };
  * Tells what `gelesen`, a stored document, is. Without Teams (a document
  * holding only Kinder) it has none; with Teams that are not all ids it is
  * none. Of its Kinder it keeps each entry it can read; where the field is
- * neither map nor list (missing, as before Kinder joined, or malformed) it
- * has none, the Teams kept all the same; so with its Vereinsfarben, which
- * come by the Verein's id. Entries come in the order of
- * their `seit`, the id deciding a tie; lists in their order.
+ * no map (missing or malformed) it has none, the Teams kept all the same;
+ * so with its Vereinsfarben, which come by the Verein's id. Entries come in
+ * the order of their `since`, the id deciding a tie. A document of another
+ * version than this one is none, of a newer one `neuer`.
  */
 export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   if (!istKarte(gelesen)) {
     return KEINS;
   }
-  const { version, teams, kinder, vereinsfarben } = gelesen;
+  const { version, teams, children, clubColors } = gelesen;
   if (typeof version === 'number' && version > AUSWAHL_VERSION) {
     return { art: 'neuer' };
   }
   const gelesenTeams = teams === undefined ? [] : teamsLesen(teams);
-  if (
-    typeof version !== 'number' ||
-    version < ERSTE_VERSION ||
-    !Number.isInteger(version) ||
-    gelesenTeams === undefined
-  ) {
+  if (version !== AUSWAHL_VERSION || gelesenTeams === undefined) {
     return KEINS;
   }
-  const gelesenKinder = kinderLesen(kinder);
+  const gelesenKinder = kinderLesen(children);
   return {
     art: 'aktuell',
     teams: gelesenTeams.map(({ id }) => id),
     teamsSeit: new Map(gelesenTeams.map(({ id, seit }) => [id, seit])),
     kinder: gelesenKinder.map(({ kind }) => kind),
-    vereinsfarben: vereinsfarbenLesen(vereinsfarben),
+    vereinsfarben: vereinsfarbenLesen(clubColors),
     hoechsterSeit: Math.max(
       0,
       ...gelesenTeams.map(({ seit }) => seit),
@@ -191,7 +189,7 @@ export type TeamFeld = number | typeof ENTFERNT;
 /** What a change writes of a Kind: all of it, its Spitzname, or that it goes. */
 export type KindFeld =
   | KindEintrag
-  | { readonly spitzname: string | typeof ENTFERNT }
+  | { readonly nickname: string | typeof ENTFERNT }
   | typeof ENTFERNT;
 
 /** What a change writes of a Verein's colours: their text, or that they go. */
@@ -203,8 +201,8 @@ export type VereinsfarbenFeld = string | typeof ENTFERNT;
  */
 export interface AuswahlFelder {
   readonly teams?: Readonly<Record<string, TeamFeld>>;
-  readonly kinder?: Readonly<Record<string, KindFeld>>;
-  readonly vereinsfarben?: Readonly<Record<string, VereinsfarbenFeld>>;
+  readonly children?: Readonly<Record<string, KindFeld>>;
+  readonly clubColors?: Readonly<Record<string, VereinsfarbenFeld>>;
 }
 
 /**
@@ -243,9 +241,12 @@ export function auswahlFelder(
   for (const { personId, spitzname } of nachher.kinder) {
     const alt = davor.get(personId);
     if (alt === undefined) {
-      kinder[personId] = { seit: seit++, ...(spitzname && { spitzname }) };
+      kinder[personId] = {
+        since: seit++,
+        ...(spitzname && { nickname: spitzname }),
+      };
     } else if (alt.spitzname !== spitzname) {
-      kinder[personId] = { spitzname: spitzname ?? ENTFERNT };
+      kinder[personId] = { nickname: spitzname ?? ENTFERNT };
     }
   }
   const vereinsfarben = vereinsfarbenFelder(
@@ -254,8 +255,8 @@ export function auswahlFelder(
   );
   return {
     ...(Object.keys(teams).length > 0 && { teams }),
-    ...(Object.keys(kinder).length > 0 && { kinder }),
-    ...(Object.keys(vereinsfarben).length > 0 && { vereinsfarben }),
+    ...(Object.keys(kinder).length > 0 && { children: kinder }),
+    ...(Object.keys(vereinsfarben).length > 0 && { clubColors: vereinsfarben }),
   };
 }
 
@@ -317,44 +318,26 @@ function vereinsfarbenFelder(
 /**
  * The document to store: `gelesen`'s fields with this version and `felder`
  * merged into its maps, as Firestore merges them. A map a change leaves
- * out stays as read; one stored as a list (earlier in version 1) becomes a
- * map once changed. A Spitzname for a Kind no longer marked is dropped.
+ * out stays as read. A Spitzname for a Kind no longer marked is dropped.
  */
 export function auswahlDokumentMit(
   gelesen: GelesenesDokument,
   felder: AuswahlFelder
 ): RohesDokument {
   const roh = gelesen.art === 'aktuell' ? gelesen.roh : {};
-  const inhalt = gelesen.art === 'aktuell' ? gelesen : LEERE_AUSWAHL;
+  const karte = (feld: keyof AuswahlFelder): RohesDokument => {
+    const wert = roh[feld];
+    return istKarte(wert) ? wert : {};
+  };
   return {
     ...roh,
     version: AUSWAHL_VERSION,
-    ...(felder.teams && {
-      teams: eintraegeMit(
-        istKarte(roh['teams'])
-          ? roh['teams']
-          : Object.fromEntries(inhalt.teams.map((team, i) => [team, i + 1])),
-        felder.teams
-      ),
+    ...(felder.teams && { teams: eintraegeMit(karte('teams'), felder.teams) }),
+    ...(felder.children && {
+      children: kinderMit(karte('children'), felder.children),
     }),
-    ...(felder.kinder && {
-      kinder: kinderMit(
-        istKarte(roh['kinder'])
-          ? roh['kinder']
-          : Object.fromEntries(
-              inhalt.kinder.map(({ personId, spitzname }, i) => [
-                personId,
-                { seit: i + 1, ...(spitzname && { spitzname }) },
-              ])
-            ),
-        felder.kinder
-      ),
-    }),
-    ...(felder.vereinsfarben && {
-      vereinsfarben: eintraegeMit(
-        istKarte(roh['vereinsfarben']) ? roh['vereinsfarben'] : {},
-        felder.vereinsfarben
-      ),
+    ...(felder.clubColors && {
+      clubColors: eintraegeMit(karte('clubColors'), felder.clubColors),
     }),
   };
 }
@@ -384,14 +367,14 @@ function kinderMit(
     const alt = neu[id];
     if (feld === ENTFERNT) {
       delete neu[id];
-    } else if ('seit' in feld) {
+    } else if ('since' in feld) {
       neu[id] = { ...(istKarte(alt) ? alt : {}), ...feld };
     } else if (istKarte(alt)) {
-      const { spitzname: _alt, ...ohne } = alt;
+      const { nickname: _alt, ...ohne } = alt;
       neu[id] =
-        feld.spitzname === ENTFERNT
+        feld.nickname === ENTFERNT
           ? ohne
-          : { ...ohne, spitzname: feld.spitzname };
+          : { ...ohne, nickname: feld.nickname };
     }
   }
   return neu;
@@ -403,19 +386,10 @@ interface Gelesen<T> {
   readonly wert: T;
 }
 
-/**
- * The Teams of a list or map; `undefined` where any is no id. A list's
- * Teams count 1, 2, 3 …, as `auswahlDokumentMit` stores them once it makes
- * the list a map.
- */
+/** The Teams of a map; `undefined` where any is no id. */
 function teamsLesen(
   teams: unknown
 ): readonly { readonly id: TeamId; readonly seit: number }[] | undefined {
-  if (Array.isArray(teams)) {
-    return teams.every(istId)
-      ? [...new Set(teams as TeamId[])].map((id, i) => ({ id, seit: i + 1 }))
-      : undefined;
-  }
   if (!istKarte(teams)) {
     return undefined;
   }
@@ -430,22 +404,10 @@ function teamsLesen(
   return geordnet(eintraege).map(({ wert, seit }) => ({ id: wert, seit }));
 }
 
-/** The readable Kinder of a list or map, each person once. */
+/** The readable Kinder of a map. */
 function kinderLesen(
   kinder: unknown
 ): readonly { readonly kind: Kind; readonly seit: number }[] {
-  if (Array.isArray(kinder)) {
-    const nachPerson = new Map<PersonId, Kind>();
-    for (const eintrag of kinder) {
-      if (istListenKind(eintrag) && !nachPerson.has(eintrag.personId)) {
-        nachPerson.set(
-          eintrag.personId,
-          kindMit(eintrag.personId, eintrag.spitzname)
-        );
-      }
-    }
-    return [...nachPerson.values()].map((kind) => ({ kind, seit: 0 }));
-  }
   if (!istKarte(kinder)) {
     return [];
   }
@@ -455,14 +417,14 @@ function kinderLesen(
     if (
       personId !== undefined &&
       istKarte(eintrag) &&
-      istZahl(eintrag['seit']) &&
-      (eintrag['spitzname'] === undefined ||
-        typeof eintrag['spitzname'] === 'string')
+      istZahl(eintrag['since']) &&
+      (eintrag['nickname'] === undefined ||
+        typeof eintrag['nickname'] === 'string')
     ) {
       eintraege.push({
-        seit: eintrag['seit'],
+        seit: eintrag['since'],
         sortierung: personId,
-        wert: kindMit(personId, eintrag['spitzname']),
+        wert: kindMit(personId, eintrag['nickname']),
       });
     }
   }
@@ -502,18 +464,6 @@ function geordnet<T>(eintraege: Gelesen<T>[]): readonly Gelesen<T>[] {
   return eintraege.sort(vorSeit);
 }
 
-/** A Kind as version 1 first stored it, in a list. */
-function istListenKind(eintrag: unknown): eintrag is Kind {
-  if (!istKarte(eintrag)) {
-    return false;
-  }
-  const { personId, spitzname } = eintrag;
-  return (
-    istId(personId) &&
-    (spitzname === undefined || typeof spitzname === 'string')
-  );
-}
-
 /** The DBB id a map's key holds; `undefined` where it holds none. */
 function idAus(schluessel: string): number | undefined {
   const id = Number(schluessel);
@@ -528,6 +478,7 @@ function istZahl(wert: unknown): wert is number {
   return typeof wert === 'number' && Number.isFinite(wert);
 }
 
-function istKarte(wert: unknown): wert is RohesDokument {
+/** Whether `wert` is a map: an object that is no list. */
+export function istKarte(wert: unknown): wert is RohesDokument {
   return typeof wert === 'object' && wert !== null && !Array.isArray(wert);
 }

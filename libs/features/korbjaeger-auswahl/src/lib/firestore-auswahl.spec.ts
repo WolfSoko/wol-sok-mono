@@ -36,7 +36,7 @@ describe('FirestoreAuswahl', () => {
 
   it('shows nothing and takes no change once its listener failed after a read', async () => {
     const auswahl = oeffnen();
-    listener.weiter?.(stand({ version: 2, teams: { 313036: 1 } }));
+    listener.weiter?.(stand({ version: 3, teams: { 313036: 1 } }));
     expect(auswahl.teams()).toEqual([313036]);
 
     listener.fehler?.({ code: 'unavailable' });

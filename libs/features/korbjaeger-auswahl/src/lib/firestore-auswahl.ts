@@ -1,4 +1,5 @@
 import { computed, signal, type Signal } from '@angular/core';
+import { SELECTIONS_COLLECTION } from '@wolsok/feat-korbjaeger-collections';
 import type {
   PersonId,
   TeamId,
@@ -49,15 +50,12 @@ import { AuswahlZuNeuError } from './auswahl-fehler';
 import { gleicheFolge } from './gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from './kind';
 
-/** The collection of the signed-in Elternteile's `AuswahlDokument`s, one per uid. */
-export const AUSWAHL_SAMMLUNG = 'auswahl';
-
 /** The document of the Elternteil `uid` in `firestore`. */
 export function auswahlDokumentVon(
   firestore: Firestore,
   uid: string
 ): DocumentReference {
-  return doc(firestore, AUSWAHL_SAMMLUNG, uid);
+  return doc(firestore, SELECTIONS_COLLECTION, uid);
 }
 
 /**
@@ -82,10 +80,8 @@ export function firestoreFelder(
   return {
     version: AUSWAHL_VERSION,
     ...(felder.teams && { teams: alsFeld(felder.teams) }),
-    ...(felder.kinder && { kinder: alsFeld(felder.kinder) }),
-    ...(felder.vereinsfarben && {
-      vereinsfarben: alsFeld(felder.vereinsfarben),
-    }),
+    ...(felder.children && { children: alsFeld(felder.children) }),
+    ...(felder.clubColors && { clubColors: alsFeld(felder.clubColors) }),
   };
 }
 
@@ -105,7 +101,7 @@ export interface FirestoreAuswahlOptionen {
 
 /**
  * The `Auswahl` of a signed-in Elternteil: their `AuswahlDokument` in
- * Firestore, `auswahl/{uid}`, the same on every device signed in with the
+ * Firestore, `selections/{uid}`, the same on every device signed in with the
  * account.
  * - It shows what the document holds, as Firestore tells it (other devices'
  *   changes too, until `beenden`), with this device's changes on top until
