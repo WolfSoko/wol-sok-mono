@@ -4,6 +4,8 @@
  * task, so a change here reruns them).
  */
 
+import { relative } from 'node:path';
+
 const BOUNDARY_RULE = 'enforce-module-boundaries';
 const VERSION_FILE = 'version.json';
 /** `read`, `readFile`, `readJson`: not `readme` or `ready`. */
@@ -194,7 +196,10 @@ const noTestingImport = {
     schema: [],
   },
   create(context) {
-    if (TEST_FILE.test(context.filename.replaceAll('\\', '/'))) {
+    // Relative to the workspace, so a checkout inside a `testing` folder
+    // exempts nothing.
+    const file = relative(context.cwd, context.filename).replaceAll('\\', '/');
+    if (TEST_FILE.test(file)) {
       return {};
     }
     const report = (sourceNode) => {
@@ -217,6 +222,10 @@ const noTestingImport = {
       ExportNamedDeclaration: reportModuleSource,
       ExportAllDeclaration: reportModuleSource,
       ImportExpression: reportModuleSource,
+      // `import('…').Type` in a type position.
+      TSImportType: reportModuleSource,
+      // `import fake = require('…')`.
+      TSExternalModuleReference: (node) => report(node.expression),
       CallExpression(node) {
         if (
           node.callee.type === 'Identifier' &&

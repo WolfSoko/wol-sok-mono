@@ -42,20 +42,22 @@ after(() => rmSync(folder, { recursive: true, force: true }));
 /**
  * The codes oxlint reports for `source`, linted as a TypeScript file, or as
  * `name` (a path inside the case's own folder, say `testing/fake.ts`) where
- * the file's name matters.
+ * the file's name matters; `parent` is a folder above the workspace oxlint
+ * runs in.
  */
-function reportedCodes(source, name = 'case.ts') {
+function reportedCodes(source, name = 'case.ts', parent = '') {
   const file = join(`case-${caseCount++}`, name);
-  mkdirSync(dirname(join(folder, file)), { recursive: true });
-  writeFileSync(join(folder, file), source);
+  const root = join(folder, parent);
+  mkdirSync(dirname(join(root, file)), { recursive: true });
+  writeFileSync(join(root, file), source);
   // oxlint exits non-zero on an error; the JSON report is the same.
   let output;
   try {
     output = execFileSync(
       process.execPath,
-      [oxlint, '-c', '.oxlintrc.json', '-f', 'json', file],
+      [oxlint, '-c', join(folder, '.oxlintrc.json'), '-f', 'json', file],
       {
-        cwd: folder,
+        cwd: root,
         encoding: 'utf8',
       }
     );
@@ -124,6 +126,8 @@ void describe('wolsok/no-testing-import', () => {
     "export * from '@wolsok/feat-korbjaeger-auswahl/testing';",
     "void import('@wolsok/feat-lazy-bac-game/testing');",
     "require('@wolsok/feat-lazy-bac-game/testing');",
+    "export type Fake = import('@wolsok/feat-lazy-bac-game/testing').FakeDoc;",
+    "import fake = require('@wolsok/feat-lazy-bac-game/testing');",
     "import { useEmulatorDb } from '../testing/emulator';",
     "import { fakeAuswahl } from './testing';",
     "import { zeigen } from '../../testing/zeigen.ts';",
@@ -160,6 +164,19 @@ void describe('wolsok/no-testing-import', () => {
     'testing/fake-game-cloud.ts',
     'app/konto/testing/fake-konto-dienst.ts',
   ];
+  void it('judges a file by its path inside the workspace, not above it', () => {
+    // The temp folder itself may sit below a `testing` folder; the case's
+    // own folder is named so here, which the rule must not take as test code.
+    deepStrictEqual(
+      reportedCodes(
+        "import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';",
+        'prod.ts',
+        'testing'
+      ),
+      [TESTING_RULE]
+    );
+  });
+
   for (const name of testFiles) {
     void it(`allows testing imports in ${name}`, () => {
       deepStrictEqual(
