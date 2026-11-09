@@ -271,7 +271,7 @@ Planned and phased in [ADR 0014](docs/adr/0014-performance-gates-in-ci.md); this
 
 ## Licence
 
-- The repository is MIT (`LICENSE`), except RollaPolla and Korbjäger, proprietary from the version after 74.158.1 on (#2956): `apps/rollapolla-analog`, `apps/korbjaeger`, `apps/korbjaeger-functions`, `apps/korbjaeger-cdk`, `libs/features/basketball-data`, `libs/features/korbjaeger-auswahl` and `tools/korbjaeger`, listed at the top of the root `LICENSE` together with the root files `firebase.rollapolla-analog.json` and `firebase.korbjaeger.json`. Each holds the same proprietary `LICENSE` (copy it, don't reword one) and, where it has a `package.json`, `"license": "UNLICENSED"`. A new project or folder of either app gets both and its line in the root `LICENSE`; shared libs they use stay MIT. Third-party notices stay as they are.
+- The repository is MIT (`LICENSE`), except RollaPolla and Korbjäger, proprietary from the version after 74.159.0 on (#2956): `apps/rollapolla-analog`, `apps/korbjaeger`, `apps/korbjaeger-functions`, `apps/korbjaeger-cdk`, `libs/features/basketball-data`, `libs/features/korbjaeger-auswahl` and `tools/korbjaeger`, listed at the top of the root `LICENSE` together with the root files `firebase.rollapolla-analog.json` and `firebase.korbjaeger.json`. Each holds the same proprietary `LICENSE` (copy it, don't reword one) and, where it has a `package.json`, `"license": "UNLICENSED"`. A new project or folder of either app gets both and its line in the root `LICENSE`; shared libs they use stay MIT. Third-party notices stay as they are.
 
 ## Agent skills
 
