@@ -15,8 +15,10 @@ export class TeamPage {
   public readonly spiele: Locator;
   /** One per Liga, the current one first. */
   public readonly tabellen: Locator;
-  /** Follows the Team, or unfollows it once pressed. */
+  /** Follows the Team, offered while it is not followed. */
   public readonly folgen: Locator;
+  /** Unfollows the Team, offered while it is followed. */
+  public readonly nichtMehrFolgen: Locator;
   /** The Verein's other Teams, each with its Ligen and a follow button. */
   public readonly vereinsTeams: Locator;
   /** Where the Spiele are the last good data: why, and how old. */
@@ -28,6 +30,10 @@ export class TeamPage {
     this.tabellen = page.getByTestId('tabelle');
     this.folgen = page.getByRole('button', {
       name: 'Team folgen',
+      exact: true,
+    });
+    this.nichtMehrFolgen = page.getByRole('button', {
+      name: 'Nicht mehr folgen',
       exact: true,
     });
     this.vereinsTeams = page.getByTestId('vereins-team');

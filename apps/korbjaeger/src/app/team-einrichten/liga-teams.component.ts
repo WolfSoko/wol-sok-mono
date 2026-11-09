@@ -15,16 +15,24 @@ import { AUSWAHL } from '../auswahl/auswahl';
 import { ligaTeamsResource } from '../basketball-data/liga-teams-resource';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { fehlerText, KEINE_LIGA } from '../fehler/fehler-text';
+import { TeamFolgenComponent } from '../team/team-folgen.component';
 
 /**
  * Every Team of a Liga, by name as the DBB writes it (with the Verein's
  * team number, "TSV X 2"). One tap adds the Team to Meine Teams and opens
  * its page; disabled until Meine Teams are read and while a tap is
- * following one.
+ * following one. A Team followed already says so ("Gefolgt"), opens on a
+ * tap and has "Nicht mehr folgen" beside its row (`korb-team-folgen`,
+ * outside the row's button, since a button holds no other).
  */
 @Component({
   selector: 'korb-liga-teams',
-  imports: [MatIconModule, MatListModule, MatProgressBarModule],
+  imports: [
+    MatIconModule,
+    MatListModule,
+    MatProgressBarModule,
+    TeamFolgenComponent,
+  ],
   template: `
     @if (teams.isLoading()) {
       <mat-progress-bar
@@ -41,28 +49,48 @@ import { fehlerText, KEINE_LIGA } from '../fehler/fehler-text';
       } @else {
         <mat-action-list class="umbrechende-liste">
           @for (team of teams.value(); track team.id) {
-            <button
-              mat-list-item
-              type="button"
-              data-qa="team"
-              [disabled]="meineTeams() === undefined || folgtGerade()"
-              (click)="folgenUndOeffnen(team)"
-            >
-              @let gefolgt = meineTeams()?.includes(team.id);
-              <mat-icon matListItemIcon aria-hidden="true">{{
-                gefolgt ? 'check' : 'add'
-              }}</mat-icon>
-              <span matListItemTitle>{{ team.name }}</span>
+            @let gefolgt = meineTeams()?.includes(team.id);
+            <div class="zeile">
+              <button
+                mat-list-item
+                type="button"
+                data-qa="team"
+                [disabled]="meineTeams() === undefined || folgtGerade()"
+                (click)="folgenUndOeffnen(team)"
+              >
+                <mat-icon matListItemIcon aria-hidden="true">{{
+                  gefolgt ? 'check' : 'add'
+                }}</mat-icon>
+                <span matListItemTitle>{{ team.name }}</span>
+                @if (gefolgt) {
+                  <span matListItemLine>Gefolgt</span>
+                }
+              </button>
               @if (gefolgt) {
-                <span matListItemLine>Folgst du schon</span>
+                <korb-team-folgen [teamId]="team.id" [teamName]="team.name" />
               }
-            </button>
+            </div>
           }
         </mat-action-list>
       }
     }
     @if (aenderung.fehler(); as text) {
       <p class="fehler" role="alert">{{ text }}</p>
+    }
+  `,
+  styles: `
+    .zeile {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0 0.5rem;
+    }
+    .zeile > button {
+      flex: 1 1 12rem;
+      width: auto;
+    }
+    korb-team-folgen {
+      padding-inline: 1rem;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

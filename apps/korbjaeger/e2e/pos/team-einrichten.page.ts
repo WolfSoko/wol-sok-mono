@@ -41,6 +41,14 @@ export class TeamEinrichtenPage {
     });
   }
 
+  /** The control beside a followed Team's row that unfollows it. */
+  public nichtMehrFolgen(name: string): Locator {
+    return this.page.getByRole('button', {
+      name: `Nicht mehr folgen: ${name}`,
+      exact: true,
+    });
+  }
+
   /** The Team named `name` in the list of the picked Liga's Teams. */
   public team(name: string): Locator {
     return this.teams.filter({

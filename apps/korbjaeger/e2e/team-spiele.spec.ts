@@ -79,11 +79,15 @@ test.describe('Team page', () => {
     const folgen = geschwister.getByRole('button', {
       name: 'Team folgen: MTV Wasbüttel -RST-',
     });
-    await expect(folgen).toHaveAttribute('aria-pressed', 'false');
+    await expect(folgen).toBeVisible();
     await folgen.click();
 
-    await expect(folgen).toHaveAttribute('aria-pressed', 'true');
-    await expect(teamPage.folgen).toHaveAttribute('aria-pressed', 'false');
+    await expect(
+      geschwister.getByRole('button', {
+        name: 'Nicht mehr folgen: MTV Wasbüttel -RST-',
+      })
+    ).toBeVisible();
+    await expect(teamPage.folgen).toBeVisible();
   });
 
   test('says when the DBB knows no such Team', async ({ page, teamPage }) => {

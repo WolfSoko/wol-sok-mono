@@ -543,9 +543,9 @@ describe('TeamComponent', () => {
   it('offers to follow the Team', async () => {
     const page = await render(fakeData(async () => saison([])));
 
-    expect(page.querySelector('button[aria-pressed]')?.textContent).toContain(
-      'Team folgen'
-    );
+    expect(
+      page.querySelector('[data-qa="team-folgen"]')?.textContent
+    ).toContain('Team folgen');
   });
 
   it('offers no Team to follow for an id the DBB does not know', async () => {
@@ -555,7 +555,7 @@ describe('TeamComponent', () => {
       })
     );
 
-    expect(page.querySelector('button[aria-pressed]')).toBeNull();
+    expect(page.querySelector('[data-qa="team-folgen"]')).toBeNull();
   });
 
   it('offers to unfollow a followed Team whose read fails', async () => {
@@ -575,9 +575,9 @@ describe('TeamComponent', () => {
     fixture.componentRef.setInput('teamId', '313036');
     await fixture.whenStable();
     const knopf = (fixture.nativeElement as HTMLElement).querySelector(
-      'button[aria-pressed]'
+      '[data-qa="team-folgen"]'
     ) as HTMLButtonElement | null;
-    expect(knopf?.getAttribute('aria-pressed')).toBe('true');
+    expect(knopf?.textContent).toContain('Nicht mehr folgen');
 
     knopf?.click();
     await new Promise((resolve) => setTimeout(resolve));
@@ -859,7 +859,9 @@ describe('TeamComponent', () => {
       await fixture.whenStable();
 
       expect(auswahl.teams()).toEqual([317618]);
-      expect(knopf?.getAttribute('aria-pressed')).toBe('true');
+      expect(knopf?.getAttribute('aria-label')).toBe(
+        'Nicht mehr folgen: MTV Wasbüttel 2'
+      );
     });
 
     it('reads the Verein once when switching to a sibling Team of it', async () => {

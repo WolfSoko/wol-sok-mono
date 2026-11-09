@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
@@ -753,7 +754,14 @@ describe('UeberblickComponent', () => {
       expect(teamNamen(seite)).toEqual(['MTV Gifhorn', 'MTV Wasbüttel']);
     });
 
-    it('removes a Team whose read fails from Meine Teams on request', async () => {
+    /** The card's control to unfollow its Team. */
+    function nichtMehrFolgen(eintrag: Element): HTMLButtonElement | null {
+      return eintrag.querySelector<HTMLButtonElement>(
+        '[data-qa="ueberblick-aktionen"] [data-qa="team-folgen"]'
+      );
+    }
+
+    it('unfollows a Team whose read fails from its card', async () => {
       const { seite, auswahl, stabil } = await render(
         fakeData([
           saison(WASBUETTEL),
@@ -766,26 +774,45 @@ describe('UeberblickComponent', () => {
       );
       const [gifhorn] = eintraege(seite);
       expect(text(teil(gifhorn, 'name'))).toBe('Team 201500');
-      const entfernen = gifhorn.querySelector<HTMLButtonElement>(
-        '[data-qa="ueberblick-entfernen"]'
+      const knopf = nichtMehrFolgen(gifhorn);
+      expect(knopf?.getAttribute('aria-label')).toBe(
+        'Nicht mehr folgen: Team 201500'
       );
-      expect(text(entfernen)).toBe('Entfernen');
 
-      entfernen?.click();
+      knopf?.click();
       await stabil();
 
       expect(auswahl.teams()).toEqual([WASBUETTEL.id]);
       expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
     });
 
-    it('offers no removal for a Team that loaded', async () => {
-      const { seite } = await render(fakeData([saison(WASBUETTEL)]), [
-        WASBUETTEL.id,
-      ]);
+    it('unfollows a Team that loaded from its card, offering to undo it', async () => {
+      const { seite, auswahl, stabil } = await render(
+        fakeData([saison(WASBUETTEL), saison(GIFHORN)]),
+        [WASBUETTEL.id, GIFHORN.id]
+      );
+      await stabil();
+      const [wasbuettel] = eintraege(seite);
+      const knopf = nichtMehrFolgen(wasbuettel);
+      expect(knopf?.getAttribute('aria-label')).toBe(
+        'Nicht mehr folgen: MTV Wasbüttel'
+      );
 
-      expect(
-        eintraege(seite)[0].querySelector('[data-qa="ueberblick-entfernen"]')
-      ).toBeNull();
+      knopf?.click();
+      await stabil();
+
+      expect(auswahl.teams()).toEqual([GIFHORN.id]);
+      expect(teamNamen(seite)).toEqual(['MTV Gifhorn']);
+      const leiste = document.querySelector('mat-snack-bar-container');
+      expect(leiste?.textContent).toContain(
+        'MTV Wasbüttel steht nicht mehr in Meine Teams.'
+      );
+
+      leiste?.querySelector('button')?.click();
+      await stabil();
+
+      expect(auswahl.teams()).toEqual([GIFHORN.id, WASBUETTEL.id]);
+      TestBed.inject(MatSnackBar).dismiss();
     });
   });
 
@@ -876,7 +903,7 @@ describe('UeberblickComponent', () => {
       await stabil();
 
       teil(eintraege(seite)[0], 'saison-beendet')
-        ?.querySelector<HTMLButtonElement>('button[aria-pressed]')
+        ?.querySelector<HTMLButtonElement>('[data-qa="team-folgen"]')
         ?.click();
       await stabil();
 

@@ -1,18 +1,16 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  inject,
+  computed,
   input,
 } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
-import { AUSWAHL } from '../auswahl/auswahl';
-import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielLinkComponent } from '../spiel/spiel-link.component';
 import { StandComponent } from '../stand/stand.component';
+import { TeamFolgenComponent } from '../team/team-folgen.component';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
 import type { TeamKarte } from './team-karte';
 
@@ -20,15 +18,15 @@ import type { TeamKarte } from './team-karte';
  * One of Meine Teams on the overview, as `karte` gives it: its next Spiel
  * with its Halle, what falls through before it and its last result, each
  * opening its Spiel page, and once its Saison looks over a hint with its
- * Verein's current Teams to follow; or why its read failed, with
- * "Entfernen" to unfollow the Team. Reads no data itself:
+ * Verein's current Teams to follow; or why its read failed. Every card
+ * ends with "Nicht mehr folgen", which takes the card away and offers to
+ * undo it (`rueckgaengig`). Reads no data itself:
  * `MeineTeamsUeberblick` holds every card's reads, the next Spiel's Halle
  * and the Verein's Teams included.
  */
 @Component({
   selector: 'korb-ueberblick-team',
   imports: [
-    MatButtonModule,
     MatCardModule,
     MatProgressBarModule,
     NaechstesSpielComponent,
@@ -36,6 +34,7 @@ import type { TeamKarte } from './team-karte';
     SaisonEndeHinweisComponent,
     SpielLinkComponent,
     StandComponent,
+    TeamFolgenComponent,
   ],
   templateUrl: './ueberblick-team.component.html',
   styleUrl: './ueberblick-team.component.scss',
@@ -44,12 +43,9 @@ import type { TeamKarte } from './team-karte';
 export class UeberblickTeamComponent {
   public readonly karte = input.required<TeamKarte>();
 
-  private readonly auswahl = inject(AUSWAHL);
-
-  protected readonly aenderung = auswahlAenderung();
-
-  protected entfernen(): Promise<void> {
-    const teamId = this.karte().teamId;
-    return this.aenderung.ausfuehren(() => this.auswahl.entfolgen(teamId));
-  }
+  /** The Team's name, or its id while its read has not given one. */
+  protected readonly name = computed(() => {
+    const team = this.karte();
+    return team.art === 'geladen' ? team.name : `Team ${team.teamId}`;
+  });
 }

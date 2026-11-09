@@ -19,9 +19,9 @@ test.describe('Meine Teams', () => {
     await expect(startPage.leer).toBeVisible();
 
     await teamPage.goto(MTV_WASBUETTEL);
-    await expect(teamPage.folgen).toHaveAttribute('aria-pressed', 'false');
+    await expect(teamPage.folgen).toBeVisible();
     await teamPage.folgen.click();
-    await expect(teamPage.folgen).toHaveAttribute('aria-pressed', 'true');
+    await expect(teamPage.nichtMehrFolgen).toBeVisible();
 
     await page.getByRole('link', { name: 'Korbjäger' }).click();
     const team = startPage.team('MTV Wasbüttel');
@@ -41,8 +41,33 @@ test.describe('Meine Teams', () => {
 
     await team.getByRole('link', { name: 'MTV Wasbüttel' }).click();
     await expect(teamPage.heading).toHaveText('MTV Wasbüttel');
+    await teamPage.nichtMehrFolgen.click();
+    await expect(teamPage.folgen).toBeVisible();
+    await page.reload();
+    await expect(teamPage.folgen).toBeVisible();
+    await startPage.goto();
+    await expect(startPage.leer).toBeVisible();
+  });
+
+  test('a Team unfollowed from its card is gone, after a reload too, unless undone', async ({
+    page,
+    startPage,
+    teamPage,
+  }) => {
+    await teamPage.goto(MTV_WASBUETTEL);
     await teamPage.folgen.click();
     await startPage.goto();
+    const team = startPage.team('MTV Wasbüttel');
+    await expect(startPage.letztesErgebnis(team)).toContainText('58:67');
+
+    await startPage.nichtMehrFolgen(team).click();
+    await expect(startPage.leer).toBeVisible();
+    await startPage.rueckgaengig.click();
+    await expect(startPage.teams).toHaveCount(1);
+
+    await startPage.nichtMehrFolgen(team).click();
+    await expect(startPage.leer).toBeVisible();
+    await page.reload();
     await expect(startPage.leer).toBeVisible();
   });
 });

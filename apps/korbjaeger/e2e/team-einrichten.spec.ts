@@ -34,11 +34,40 @@ test.describe('Team einrichten', () => {
 
     await expect(page).toHaveURL(/\/team\/313036$/);
     await expect(teamPage.heading).toHaveText('MTV Wasbüttel');
-    await expect(teamPage.folgen).toHaveAttribute('aria-pressed', 'true');
+    await expect(teamPage.nichtMehrFolgen).toBeVisible();
 
     await page.getByRole('link', { name: 'Korbjäger' }).click();
     await expect(startPage.teams).toHaveCount(1);
     await expect(startPage.team('MTV Wasbüttel')).toHaveCount(1);
     await expect(startPage.teamEinrichten).toHaveCount(0);
+  });
+
+  test('unfollows a Team from its row in the wizard', async ({
+    page,
+    startPage,
+    teamEinrichtenPage: wizard,
+    teamPage,
+  }) => {
+    await teamPage.goto(313036);
+    await teamPage.folgen.click();
+    await expect(teamPage.nichtMehrFolgen).toBeVisible();
+
+    await wizard.goto();
+    await wizard.waehlen('Verband', 'Niedersachsen');
+    await wizard.waehlen('Altersklasse', 'U12');
+    await wizard.waehlen('Geschlecht', 'Jugend männlich');
+    await wizard.weitereLigen.click();
+    await wizard.liga('Regionsvorrunde Nord Braunschweig mu12').click();
+    await expect(wizard.team('MTV Wasbüttel -RST-')).toContainText('Gefolgt');
+
+    await wizard.nichtMehrFolgen('MTV Wasbüttel -RST-').click();
+    await expect(wizard.team('MTV Wasbüttel -RST-')).not.toContainText(
+      'Gefolgt'
+    );
+    await expect(page).toHaveURL(/\/team-einrichten$/);
+
+    await page.reload();
+    await startPage.goto();
+    await expect(startPage.leer).toBeVisible();
   });
 });

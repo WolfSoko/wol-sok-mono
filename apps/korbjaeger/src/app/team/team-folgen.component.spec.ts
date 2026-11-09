@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
 import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
@@ -16,7 +17,15 @@ interface Gerendert {
   klicken(): Promise<void>;
 }
 
-async function render(auswahl: Auswahl, teamName?: string): Promise<Gerendert> {
+interface Optionen {
+  readonly teamName?: string;
+  readonly rueckgaengig?: boolean;
+}
+
+async function render(
+  auswahl: Auswahl,
+  { teamName, rueckgaengig }: Optionen = {}
+): Promise<Gerendert> {
   TestBed.configureTestingModule({
     providers: [{ provide: AUSWAHL, useValue: auswahl }],
   });
@@ -25,9 +34,14 @@ async function render(auswahl: Auswahl, teamName?: string): Promise<Gerendert> {
   if (teamName !== undefined) {
     fixture.componentRef.setInput('teamName', teamName);
   }
+  if (rueckgaengig !== undefined) {
+    fixture.componentRef.setInput('rueckgaengig', rueckgaengig);
+  }
   await fixture.whenStable();
   const seite = fixture.nativeElement as HTMLElement;
-  const knopf = seite.querySelector('button');
+  const knopf = seite.querySelector<HTMLButtonElement>(
+    '[data-qa="team-folgen"]'
+  );
   if (knopf === null) {
     throw new Error('no button');
   }
@@ -43,50 +57,140 @@ async function render(auswahl: Auswahl, teamName?: string): Promise<Gerendert> {
   };
 }
 
+/** The latest snackbar's text and its action, where one is open. */
+function snackbar():
+  | { text: string; aktion: HTMLButtonElement | null }
+  | undefined {
+  const leiste = [...document.querySelectorAll('mat-snack-bar-container')].at(
+    -1
+  );
+  if (leiste === undefined) {
+    return undefined;
+  }
+  return {
+    text: leiste.textContent ?? '',
+    aktion: leiste.querySelector('button'),
+  };
+}
+
+async function warten(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve));
+}
+
 describe('TeamFolgenComponent', () => {
+  afterEach(() => {
+    TestBed.inject(MatSnackBar).dismiss();
+  });
+
   it('offers to follow a Team not followed yet', async () => {
     const { knopf } = await render(new LokaleAuswahl(undefined));
 
     expect(knopf.textContent).toContain('Team folgen');
-    expect(knopf.getAttribute('aria-pressed')).toBe('false');
+    expect(knopf.hasAttribute('aria-pressed')).toBe(false);
   });
 
-  it('follows the Team, then shows it as followed', async () => {
+  it('follows the Team, then says so and offers to unfollow it', async () => {
     const auswahl = new LokaleAuswahl(undefined);
     const { knopf, seite, klicken } = await render(auswahl);
 
     await klicken();
 
     expect(auswahl.teams()).toEqual([MTV_WASBUETTEL]);
-    expect(knopf.getAttribute('aria-pressed')).toBe('true');
+    expect(knopf.textContent).toContain('Nicht mehr folgen');
+    expect(knopf.textContent).not.toContain('Team folgen');
+    expect(seite.textContent).toContain('Du folgst diesem Team.');
     expect(seite.textContent).toContain('Steht in Meine Teams');
   });
 
   it('names the Team in its label in a list, without the hint', async () => {
     const auswahl = new LokaleAuswahl(undefined);
-    const { knopf, seite, klicken } = await render(auswahl, 'MTV Wasbüttel');
+    const { knopf, seite, klicken } = await render(auswahl, {
+      teamName: 'MTV Wasbüttel',
+    });
     expect(knopf.getAttribute('aria-label')).toBe('Team folgen: MTV Wasbüttel');
 
     await klicken();
 
-    expect(knopf.getAttribute('aria-pressed')).toBe('true');
+    expect(knopf.getAttribute('aria-label')).toBe(
+      'Nicht mehr folgen: MTV Wasbüttel'
+    );
     expect(seite.textContent).not.toContain('Steht in Meine Teams');
   });
 
-  it('shows a followed Team as followed, and unfollows it', async () => {
+  it('unfollows a followed Team, then offers to follow it again', async () => {
     const auswahl = new LokaleAuswahl(undefined);
     await auswahl.folgen(201500);
     await auswahl.folgen(MTV_WASBUETTEL);
     const { knopf, seite, klicken } = await render(auswahl);
-    expect(knopf.getAttribute('aria-pressed')).toBe('true');
+    expect(knopf.textContent).toContain('Nicht mehr folgen');
 
     await klicken();
 
     expect(auswahl.teams()).toEqual([201500]);
-    expect(knopf.getAttribute('aria-pressed')).toBe('false');
+    expect(knopf.textContent).toContain('Team folgen');
     expect(seite.textContent).not.toContain('Steht in Meine Teams');
+    expect(snackbar()).toBeUndefined();
   });
 
+  describe('where the control goes with the Team (rueckgaengig)', () => {
+    it('offers to undo the unfollowing, and follows the Team again', async () => {
+      const auswahl = new LokaleAuswahl(undefined);
+      await auswahl.folgen(MTV_WASBUETTEL);
+      const { klicken } = await render(auswahl, {
+        teamName: 'MTV Wasbüttel',
+        rueckgaengig: true,
+      });
+
+      await klicken();
+
+      expect(auswahl.teams()).toEqual([]);
+      expect(snackbar()?.text).toContain(
+        'MTV Wasbüttel steht nicht mehr in Meine Teams.'
+      );
+      expect(snackbar()?.aktion?.textContent).toContain('Rückgängig');
+
+      snackbar()?.aktion?.click();
+      await warten();
+
+      expect(auswahl.teams()).toEqual([MTV_WASBUETTEL]);
+    });
+
+    it('says so where the undo could not be stored', async () => {
+      const auswahl: Auswahl = fakeAuswahl({
+        teams: signal([MTV_WASBUETTEL]),
+        folgen: () => Promise.reject(new Error('offline')),
+      });
+      const { klicken } = await render(auswahl, {
+        teamName: 'MTV Wasbüttel',
+        rueckgaengig: true,
+      });
+      await klicken();
+
+      snackbar()?.aktion?.click();
+      await warten();
+      await warten();
+
+      expect(snackbar()?.text).toContain('Das ließ sich nicht speichern.');
+    });
+
+    it('offers no undo where the unfollowing failed', async () => {
+      const auswahl: Auswahl = fakeAuswahl({
+        teams: signal([MTV_WASBUETTEL]),
+        entfolgen: () => Promise.reject(new Error('offline')),
+      });
+      const { seite, klicken } = await render(auswahl, {
+        teamName: 'MTV Wasbüttel',
+        rueckgaengig: true,
+      });
+
+      await klicken();
+
+      expect(snackbar()).toBeUndefined();
+      expect(seite.querySelector('[role="alert"]')?.textContent).toContain(
+        'Das ließ sich nicht speichern.'
+      );
+    });
+  });
   it('says so when the choice could not be stored', async () => {
     const auswahl: Auswahl = fakeAuswahl({
       teams: signal([]),
@@ -99,7 +203,7 @@ describe('TeamFolgenComponent', () => {
     expect(seite.querySelector('[role="alert"]')?.textContent).toContain(
       'Das ließ sich nicht speichern.'
     );
-    expect(knopf.getAttribute('aria-pressed')).toBe('false');
+    expect(knopf.textContent).toContain('Team folgen');
   });
 
   it('asks to reload where a newer version of the app stored Meine Teams', async () => {
@@ -125,7 +229,7 @@ describe('TeamFolgenComponent', () => {
     await klicken();
 
     expect(knopf.disabled).toBe(true);
-    expect(knopf.hasAttribute('aria-pressed')).toBe(false);
+    expect(knopf.textContent).toContain('Team folgen');
     expect(folgen).not.toHaveBeenCalled();
     expect(seite.textContent).not.toContain('Steht in Meine Teams');
   });

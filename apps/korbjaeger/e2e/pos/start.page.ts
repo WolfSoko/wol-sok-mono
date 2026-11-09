@@ -57,6 +57,16 @@ export class StartPage {
     return team.getByTestId('ueberblick-naechstes');
   }
 
+  /** The control on a Team's card, as `team(name)` finds it, that unfollows it. */
+  public nichtMehrFolgen(team: Locator): Locator {
+    return team.getByRole('button', { name: /^Nicht mehr folgen: / });
+  }
+
+  /** The snackbar's "Rückgängig", offered once a card unfollowed its Team. */
+  public get rueckgaengig(): Locator {
+    return this.page.getByRole('button', { name: 'Rückgängig' });
+  }
+
   /** The last result of an entry, as `team(name)` or `kind(name)` finds it. */
   public letztesErgebnis(team: Locator): Locator {
     return team.getByTestId('ueberblick-letztes');

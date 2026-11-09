@@ -321,12 +321,43 @@ describe('TeamEinrichtenComponent', () => {
     await bisZumTeam(assistent);
 
     expect(assistent.eintraege('team')).toContain(
-      'MTV Wasbüttel -RST- Folgst du schon'
+      'MTV Wasbüttel -RST- Gefolgt'
     );
     await assistent.tippen('team', 'MTV Wasbüttel -RST-');
 
     expect(auswahl.teams()).toEqual([313036]);
     expect(TestBed.inject(Router).url).toBe('/team/313036');
+  });
+
+  it('unfollows a followed Team from its row, staying in the list', async () => {
+    const auswahl = new LokaleAuswahl(undefined);
+    await auswahl.folgen(313036);
+    const assistent = await render(undefined, auswahl);
+    await bisZumTeam(assistent);
+    const knopf = assistent.seite.querySelector<HTMLButtonElement>(
+      '[aria-label="Nicht mehr folgen: MTV Wasbüttel -RST-"]'
+    );
+    expect(knopf).not.toBeNull();
+
+    knopf?.click();
+    await assistent.stabil();
+
+    expect(auswahl.teams()).toEqual([]);
+    expect(TestBed.inject(Router).url).toBe('/');
+    expect(assistent.eintraege('team')).toContain('MTV Wasbüttel -RST-');
+    expect(assistent.seite.querySelector('[data-qa="team-folgen"]')).toBeNull();
+  });
+
+  it('offers to unfollow only the Teams followed', async () => {
+    const auswahl = new LokaleAuswahl(undefined);
+    await auswahl.folgen(201500);
+    const assistent = await render(undefined, auswahl);
+    await bisZumTeam(assistent);
+
+    const knoepfe = [
+      ...assistent.seite.querySelectorAll('[data-qa="team-folgen"]'),
+    ].map((knopf) => knopf.getAttribute('aria-label'));
+    expect(knoepfe).toEqual(['Nicht mehr folgen: MTV Gifhorn']);
   });
 
   it('stays and says so when the Team could not be followed', async () => {
