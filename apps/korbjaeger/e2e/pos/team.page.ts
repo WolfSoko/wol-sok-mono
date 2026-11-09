@@ -73,6 +73,38 @@ export class TeamPage {
     });
   }
 
+  /** The bottom sheet "Vereinsfarben", while it is open. */
+  public get vereinsfarbenBlatt(): Locator {
+    return this.page.getByRole('dialog', { name: /Vereinsfarben/ });
+  }
+
+  /** The colour the court line under the heading takes, as the browser computes it. */
+  public linienfarbe(): Promise<string> {
+    return this.heading.evaluate(
+      (h1) => getComputedStyle(h1).borderBlockEndColor
+    );
+  }
+
+  /** Gives the Team's Verein the preset `hauptfarbe` through the bottom sheet. */
+  public async vereinsfarbenWaehlen(hauptfarbe: string): Promise<void> {
+    await this.page.getByRole('button', { name: 'Vereinsfarben' }).click();
+    await this.vereinsfarbenBlatt
+      .getByRole('radiogroup', { name: 'Hauptfarbe' })
+      .getByRole('radio', { name: hauptfarbe })
+      .click();
+    await this.vereinsfarbenBlatt
+      .getByRole('button', { name: 'Übernehmen' })
+      .click();
+  }
+
+  /** Takes the Verein's colours away through the bottom sheet. */
+  public async vereinsfarbenZuruecksetzen(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Vereinsfarben' }).click();
+    await this.vereinsfarbenBlatt
+      .getByRole('button', { name: 'Zurücksetzen' })
+      .click();
+  }
+
   public async goto(teamId: number): Promise<void> {
     await this.page.goto(`/team/${teamId}`);
   }

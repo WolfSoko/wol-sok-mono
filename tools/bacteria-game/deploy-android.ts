@@ -26,7 +26,8 @@
  * - YOUTUBE_OAUTH_CLIENT_ID, YOUTUBE_OAUTH_CLIENT_SECRET,
  *   YOUTUBE_OAUTH_REFRESH_TOKEN: optional, to upload the promo videos
  *
- * The version code is the one of version.json, as in app/build.gradle.kts.
+ * The version code is the workspace version's (`WORKSPACE_VERSION`), as in
+ * app/build.gradle.kts.
  * A run for a release whose bundle is on Play already skips the upload, so
  * a failed deploy can simply run again.
  */
@@ -42,6 +43,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { WORKSPACE_VERSION } from '@wolsok/utils-version';
 import { publishTips, storeTips, Tip } from './play-tips';
 import {
   publishVideos,
@@ -436,7 +438,6 @@ async function publishToPlay(
 
 async function main(): Promise<void> {
   const tag = env('RELEASE_VERSION');
-  const { version } = readJson<{ version: string }>('version.json');
   const [assetLink] = readJson<{ target: { package_name: string } }[]>(
     'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
   );
@@ -459,7 +460,7 @@ async function main(): Promise<void> {
     const errors = await publishToPlay(
       assetLink.target.package_name,
       bundle,
-      versionCode(version),
+      versionCode(WORKSPACE_VERSION),
       tag,
       tips
     );

@@ -26,6 +26,11 @@ h1 a {
   font-variant-numeric: tabular-nums;
 }
 
+.vorlaeufig {
+  font: var(--mat-sys-title-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
 // the quarters scroll on their own on a narrow phone rather than the page
 .tabelle {
   overflow-x: auto;

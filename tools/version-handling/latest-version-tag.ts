@@ -1,22 +1,21 @@
 import { execSync } from 'node:child_process';
-import { version } from '../../version.json';
 
 /** Escapes a string so it matches literally inside a regular expression. */
 function escapeForRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/**
- * @returns {string} An app version like v1.0.0 a githash or a timestamp
- *
- * @param appDeployedPrefix filter to find the appropriate version tag, e.g.
- *   'non-cdk-deployed' or 'cdk-deployed'
- *
- */
-export function latestVersionTag(appDeployedPrefix: string): string {
-  // read version from version.json
-  if (!appDeployedPrefix) return version;
+/** The suffixes the deploy workflow tags a deployed release with. */
+export const DEPLOY_PREFIXES = ['cdk-deployed', 'non-cdk-deployed'] as const;
+export type DeployPrefix = (typeof DEPLOY_PREFIXES)[number];
 
+/**
+ * @returns {string} The latest release tag (v1.0.0), the next one (v1.0.1-next)
+ *   when the latest is already deployed, else the commit hash or a timestamp
+ *
+ * @param appDeployedPrefix filter to find the appropriate version tag
+ */
+export function latestVersionTag(appDeployedPrefix: DeployPrefix): string {
   // Get latest version tag like v1.0.0 that matches the glob pattern
   try {
     const latestVersionTag = execSync(

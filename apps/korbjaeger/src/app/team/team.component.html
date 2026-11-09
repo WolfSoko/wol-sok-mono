@@ -7,6 +7,7 @@
 @if (saison.hasValue()) {
   <h1>{{ saison.value().team.name }}</h1>
   <p class="verein">{{ saison.value().verein.name }} · Spiele der Saison</p>
+  <korb-vereinsfarben-knopf class="farben" [verein]="saison.value().verein" />
   <korb-stand data-qa="team-stand" [stand]="kopfStand()" />
 }
 @if (folgbar(); as teamId) {

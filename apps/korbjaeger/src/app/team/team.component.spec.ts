@@ -408,6 +408,38 @@ describe('TeamComponent', () => {
     expect(feld(geplant, 'ergebnis')).toBeUndefined();
   });
 
+  it('marks a result the Verband has not confirmed yet as vorläufig', async () => {
+    const page = await render(
+      fakeData(async () =>
+        saison([
+          spiel({
+            id: 1,
+            datum: '2026-09-12',
+            status: {
+              art: 'gespielt',
+              ergebnis: { heim: 99, gast: 46 },
+              bestaetigt: false,
+            },
+          }),
+          spiel({
+            id: 2,
+            datum: '2026-09-19',
+            status: {
+              art: 'gespielt',
+              ergebnis: { heim: 60, gast: 50 },
+              bestaetigt: true,
+            },
+          }),
+        ])
+      )
+    );
+
+    const [vorlaeufig, bestaetigt] = spielZeilen(page);
+    expect(feld(vorlaeufig, 'ausgang')).toBe('Sieg');
+    expect(feld(vorlaeufig, 'vorlaeufig')).toBe('vorläufig');
+    expect(feld(bestaetigt, 'vorlaeufig')).toBeUndefined();
+  });
+
   it('says in words how each decided Spiel ended for the Team', async () => {
     const gespielt = (heim: number, gast: number) =>
       ({
