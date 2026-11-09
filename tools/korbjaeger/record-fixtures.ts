@@ -3,7 +3,7 @@
  * workspace, raw: they hold real children's names, so they never enter the
  * repo. `anonymise-fixtures.ts` turns them into the lib's fixtures.
  *
- *   NODE_USE_ENV_PROXY=1 npx tsx tools/korbjaeger/record-fixtures.ts <raw-dir> [name...]
+ *   NODE_USE_ENV_PROXY=1 npx tsx --tsconfig tools/tsconfig.tools.json tools/korbjaeger/record-fixtures.ts <raw-dir> [name...]
  *
  * With names, it records only those fixtures, so adding one leaves the
  * others' recordings as they were.
@@ -19,7 +19,7 @@ import {
   dbbFetchInput,
   dbbHttpRequest,
   type DbbRequest,
-} from '../../libs/features/basketball-data/src/lib/dbb/dbb-request';
+} from '@wolsok/feat-shared-basketball-data';
 import { FIXTURE_REQUESTS, type FixtureRequest } from './fixture-requests';
 import { rawDirOutsideWorkspace } from './raw-dir';
 

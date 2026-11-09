@@ -5,11 +5,11 @@
  * `anonymise-fixtures.ts`. Each one is there for a case of the adapter; the
  * fixtures' README says which.
  */
-import type { DbbRequest } from '../../libs/features/basketball-data/src/lib/dbb/dbb-request';
 import {
+  type DbbRequest,
   KEIN_LIGA_FILTER,
   type LigaSucheFilter,
-} from '../../libs/features/basketball-data/src/lib/domain/liga-suche';
+} from '@wolsok/feat-shared-basketball-data';
 
 /** A list in a response cut down to its first `keep` items. */
 export interface FixtureTrim {
