@@ -51,15 +51,18 @@ export interface KindAbschnitt {
   /** The first next Spiel of its Teams, by which the overview orders them. */
   readonly naechstesSpiel?: Spiel;
   readonly naechstes?: SpielZeile;
-  /** Which of its Teams plays `naechstes`; named only where it has several. */
-  readonly naechstesTeam?: string;
+  /** The heading of `naechstes`, naming its Team where the Kind has several. */
+  readonly naechstesTitel: string;
   /** The read of that Spiel's Halle. */
   readonly halle?: HallenStand;
+  /** What falls through before `naechstes` (all of it where none is next). */
   readonly ausfaelle: readonly SpielZeile[];
+  /** What falls through after `naechstes`, shown below it. */
+  readonly spaetereAusfaelle: readonly SpielZeile[];
   /** The latest result of its Teams. */
   readonly letztes?: SpielZeile;
-  /** Which of its Teams played `letztes`; named only where it has several. */
-  readonly letztesTeam?: string;
+  /** The heading of `letztes`, naming its Team where the Kind has several. */
+  readonly letztesTitel: string;
   /**
    * Whether the Kind was on the Kader of `letztes`; none where no
    * Spielbericht tells (none yet, not read, a forfeit).
@@ -134,18 +137,18 @@ function kindAbschnitt(
     (team) => vorname(team, kind.personId) !== undefined
   );
   const sucht = teams.some((team) => team.sucht);
-  const { naechstes, ausfaelle, letztes } = gemeinsamerUeberblick(
-    seine.flatMap(({ saison }) => (saison ? [saison] : []))
-  );
+  const { naechstes, ausfaelle, spaetereAusfaelle, letztes } =
+    gemeinsamerUeberblick(
+      seine.flatMap(({ saison }) => (saison ? [saison] : []))
+    );
   const vonTeam = (spiel: SaisonSpiel | undefined) =>
     spiel && seine.find(({ saison }) => saison?.saison === spiel.saison);
   const imKader = letztes && imKaderVon(vonTeam(letztes), letztes.spiel, kind);
   const nichtGefunden =
     seine.length === 0 && !sucht ? warumNicht(teams) : undefined;
-  const teamName = (spiel: SaisonSpiel) =>
-    seine.length > 1 ? spiel.saison.team.name : undefined;
-  const naechstesTeam = naechstes && teamName(naechstes);
-  const letztesTeam = letztes && teamName(letztes);
+  // a Kind with several Teams: which of them plays
+  const titel = (text: string, spiel: SaisonSpiel | undefined) =>
+    spiel && seine.length > 1 ? `${text} · ${spiel.saison.team.name}` : text;
   return {
     personId: kind.personId,
     titel:
@@ -155,14 +158,15 @@ function kindAbschnitt(
     teams: seine.map(({ karte }) => karte),
     sucht,
     ausfaelle: ausfaelle.map(zeile),
+    spaetereAusfaelle: spaetereAusfaelle.map(zeile),
+    naechstesTitel: titel('Nächstes Spiel', naechstes),
+    letztesTitel: titel('Letztes Ergebnis', letztes),
     ...(naechstes && {
       naechstesSpiel: naechstes.spiel,
       naechstes: zeile(naechstes),
       halle: vonTeam(naechstes)?.halle,
     }),
-    ...(naechstesTeam && { naechstesTeam }),
     ...(letztes && { letztes: zeile(letztes) }),
-    ...(letztesTeam && { letztesTeam }),
     ...(imKader !== undefined && { imKader }),
     stand: aeltesterStand(...seine.map(({ stand }) => stand)),
     ...(nichtGefunden && { nichtGefunden }),

@@ -103,6 +103,10 @@ const OHNE_BERICHT: BerichtRead = async () => undefined;
 /** A Spielbericht read that never settles. */
 const NIE_BERICHT = new Promise<never>(() => undefined);
 
+/** What a Kind's card says where not every Team could be read. */
+const VIELLEICHT_MEHR =
+  'Nicht alles zu deinen Teams ließ sich lesen: Vielleicht spielt dein Kind noch in einem weiteren.';
+
 /** A Verein whose recent Spiele show no Team. */
 const OHNE_TEAMS: VereinsTeamsRead = async (vereinId) => ({
   verein: { id: vereinId, name: 'Verein' },
@@ -1230,7 +1234,7 @@ describe('UeberblickComponent', () => {
 
       const [lumi] = kinderAbschnitte(seite);
       expect(text(teil(lumi, 'kind-fehlt'))).toBe(
-        'Die Spielberichte deiner Teams lassen sich gerade nicht lesen.'
+        'Die Spiele deiner Teams lassen sich gerade nicht alle lesen.'
       );
       expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
     });
@@ -1282,7 +1286,7 @@ describe('UeberblickComponent', () => {
       const [lumi] = kinderAbschnitte(seite);
       expect(lumi.querySelector('mat-progress-bar')).toBeNull();
       expect(text(teil(lumi, 'kind-fehlt'))).toBe(
-        'Die Spielberichte deiner Teams lassen sich gerade nicht lesen.'
+        'Die Spiele deiner Teams lassen sich gerade nicht alle lesen.'
       );
       expect(eintraege(seite)).toHaveLength(2);
     });
@@ -1322,6 +1326,22 @@ describe('UeberblickComponent', () => {
 
         zeigtLumi(seite);
         expect(kindNamen(seite)).toEqual(['Lu', MEIN_KIND]);
+        expect(teamNamen(seite)).toEqual([]);
+      });
+
+      it('keeps what was found where a search run again fails as a whole', async () => {
+        const { data, seite, auswahl, stabil } = await mitLumiGefunden();
+        // a Kader without entries breaks the search off as a whole
+        data.spielbericht.mockResolvedValue({
+          spielId: GESPIELT_SPIEL.id,
+          heim: {},
+          gast: {},
+        } as unknown as Spielbericht);
+
+        await auswahl.markieren(MORVO);
+        await stabil();
+
+        zeigtLumi(seite);
         expect(teamNamen(seite)).toEqual([]);
       });
 
@@ -1367,9 +1387,81 @@ describe('UeberblickComponent', () => {
 
       const [lumi] = kinderAbschnitte(seite);
       expect(text(teil(lumi, 'kind-teams'))).toBe('MTV Wasbüttel');
-      expect(text(teil(lumi, 'kind-unvollstaendig'))).toBe(
-        'Nicht alle Spielberichte deiner Teams ließen sich lesen: Vielleicht spielt dein Kind noch in einem weiteren.'
+      expect(text(teil(lumi, 'kind-unvollstaendig'))).toBe(VIELLEICHT_MEHR);
+    });
+
+    it("says a Kind's Teams may be more where another Team's Saison can't be read", async () => {
+      const gelesen = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [
+          saison(WASBUETTEL, gelesen),
+          {
+            teamId: OESINGEN.id,
+            fehler: new BasketballDataError('offline', ''),
+          },
+        ],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [gelesen.id]: [LUMI] })
       );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id, OESINGEN.id], [[LUMI, 'Lu']])
+      );
+
+      expect(
+        text(teil(kinderAbschnitte(seite)[0], 'kind-unvollstaendig'))
+      ).toBe(VIELLEICHT_MEHR);
+    });
+
+    it('shows what falls through around the next Spiel in tip-off order', async () => {
+      const gespielt = [WASBUETTEL, WASBUETTEL_U14].map((von) =>
+        spiel(von, GIFHORN, '2026-11-01', { status: GESPIELT_78_47 })
+      );
+      const frueherAus = spiel(WASBUETTEL_U14, OESINGEN, '2026-11-14', {
+        status: { art: 'abgesagt' },
+      });
+      const naechstes = spiel(WASBUETTEL, OESINGEN, '2026-11-21');
+      const spaeterAus = spiel(WASBUETTEL_U14, OESINGEN, '2026-11-28', {
+        status: { art: 'abgesagt' },
+      });
+      const data = fakeData(
+        [
+          saison(WASBUETTEL, gespielt[0], naechstes),
+          saison(
+            WASBUETTEL_U14,
+            gespielt[1],
+            frueherAus,
+            spaeterAus,
+            spiel(WASBUETTEL_U14, OESINGEN, '2026-12-05')
+          ),
+        ],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [gespielt[0].id]: [LUMI], [gespielt[1].id]: [LUMI] })
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id, WASBUETTEL_U14.id], [[LUMI]])
+      );
+
+      const teile = [
+        ...kinderAbschnitte(seite)[0].querySelectorAll(
+          '[data-qa="ueberblick-ausfall"], [data-qa="ueberblick-naechstes"]'
+        ),
+      ].map((element) => [
+        element.getAttribute('data-qa'),
+        text(element.querySelector('[data-qa="spiel-datum"]')),
+      ]);
+      expect(teile).toEqual([
+        ['ueberblick-ausfall', 'Sa., 14.11.2026'],
+        ['ueberblick-naechstes', 'Sa., 21.11.2026'],
+        ['ueberblick-ausfall', 'Sa., 28.11.2026'],
+      ]);
     });
 
     it('says nothing of more Teams where every Spielbericht was read', async () => {

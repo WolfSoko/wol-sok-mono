@@ -12,6 +12,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom } from 'rxjs';
 import { AUSWAHL } from '../auswahl/auswahl';
 import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
+import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { KIND_AENDERUNG } from './kind-aenderung';
 import {
   SpitznameDialogComponent,
@@ -24,7 +25,8 @@ import {
  * Kind, asking for an optional Spitzname first; a marked one offers to
  * change its Spitzname or to take the mark away. Takes only a
  * `MarkierbarerSpieler`, so an Anonymer Spieler gets none. A failed change
- * shows on the page (`KIND_AENDERUNG`), which outlives the control; a
+ * shows on the page where it provides `KIND_AENDERUNG`, which outlives
+ * the control, else in the control itself; a
  * dialog still open when the control goes (the Team unfollowed in another
  * tab) is closed, and changes nothing.
  */
@@ -64,12 +66,19 @@ import {
         <mat-icon aria-hidden="true">star_outline</mat-icon>
       </button>
     }
+    @if (eigenerFehler?.(); as text) {
+      <p class="fehler" role="alert">{{ text }}</p>
+    }
   `,
   styles: `
     :host {
       display: inline-flex;
       flex-wrap: wrap;
       align-items: center;
+    }
+    .fehler {
+      margin: 0;
+      white-space: normal;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -84,7 +93,12 @@ export class KindMarkierungComponent {
   private readonly auswahl = inject(AUSWAHL);
   private readonly dialog = inject(MatDialog);
 
-  private readonly aenderung = inject(KIND_AENDERUNG);
+  private readonly seite = inject(KIND_AENDERUNG, { optional: true });
+  private readonly aenderung = this.seite ?? auswahlAenderung();
+  /** The failures it shows itself: where no page does (`KIND_AENDERUNG`). */
+  protected readonly eigenerFehler = this.seite
+    ? undefined
+    : this.aenderung.fehler;
   /** The dialog open now, closed with the control. */
   private offenerDialog?: MatDialogRef<
     SpitznameDialogComponent,

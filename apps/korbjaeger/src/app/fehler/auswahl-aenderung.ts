@@ -9,7 +9,10 @@ export interface AuswahlAenderung {
   ausfuehren(aenderung: () => Promise<void>): Promise<void>;
 }
 
-/** Changes to Meine Teams or Kinder for one control (`auswahlFehlerText`). */
+/**
+ * Changes to Meine Teams or Kinder for one control or one page (the Spiel
+ * page's `KIND_AENDERUNG`), with what each failure says (`auswahlFehlerText`).
+ */
 export function auswahlAenderung(): AuswahlAenderung {
   const fehler = signal<string | undefined>(undefined);
   return {

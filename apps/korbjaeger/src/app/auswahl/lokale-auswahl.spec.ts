@@ -284,6 +284,22 @@ describe('LokaleAuswahl', () => {
       });
     });
 
+    it('is dropped once another tab stored a newer version, which shows nothing', async () => {
+      const { geraet, voll } = zeitweiseVoll();
+      const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
+      voll.an = true;
+      await auswahl.markieren(LUMI);
+      voll.an = false;
+
+      geraet.setItem(
+        AUSWAHL_SCHLUESSEL,
+        JSON.stringify({ version: 99, teams: [201500] })
+      );
+
+      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.teams()).toEqual([]);
+    });
+
     it("keeps what another tab stored meanwhile, with this tab's change", async () => {
       const { geraet, voll } = zeitweiseVoll();
       const tabA = new LokaleAuswahl(geraet, geraet.fenster);

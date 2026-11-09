@@ -98,28 +98,27 @@ describe('kaderSuchen', () => {
     expect(quelle.spielbericht).toHaveBeenCalledTimes(1);
   });
 
-  it('reads the rest at once where the last Spiel left a Kind missing, newest first', async () => {
+  it('reads on two at a time, newest first, until each Kind was found', async () => {
     const quelle = data({
-      3: bericht(3, [LUMI]),
-      1: bericht(1, [MORVO]),
+      5: bericht(5, [LUMI]),
+      3: bericht(3, [MORVO]),
     });
 
     const funde = await kaderSuchen(quelle, {
       team: WASBUETTEL.id,
-      spiele: [spiel(3), spiel(2), spiel(1), spiel(0)],
+      spiele: [spiel(5), spiel(4), spiel(3), spiel(2), spiel(1)],
       kinder: [LUMI.personId, MORVO.personId],
     });
 
     expect(gelesen(funde)).toEqual([
-      [3, { [LUMI.personId]: 'Lumi' }],
-      [2, undefined],
-      [1, { [MORVO.personId]: 'Morvo' }],
-      [0, undefined],
+      [5, { [LUMI.personId]: 'Lumi' }],
+      [4, undefined],
+      [3, { [MORVO.personId]: 'Morvo' }],
     ]);
-    expect(quelle.spielbericht).toHaveBeenCalledTimes(4);
+    expect(quelle.spielbericht).toHaveBeenCalledTimes(3);
   });
 
-  it('reads the rest side by side, not one after the other', async () => {
+  it('reads every Spiel given, two at a time at most, where a Kind is in none', async () => {
     const quelle = data({});
     let laufend = 0;
     let hoechstens = 0;
@@ -137,7 +136,30 @@ describe('kaderSuchen', () => {
       kinder: [LUMI.personId],
     });
 
-    expect(hoechstens).toBe(4);
+    expect(quelle.spielbericht).toHaveBeenCalledTimes(5);
+    expect(hoechstens).toBe(2);
+  });
+
+  it('reads no further after a batch with a failed read', async () => {
+    const quelle = data({
+      5: bericht(5, []),
+      4: new BasketballDataError('offline', 'no network'),
+      3: bericht(3, []),
+      2: bericht(2, [LUMI]),
+    });
+
+    const funde = await kaderSuchen(quelle, {
+      team: WASBUETTEL.id,
+      spiele: [spiel(5), spiel(4), spiel(3), spiel(2)],
+      kinder: [LUMI.personId],
+    });
+
+    expect(gelesen(funde)).toEqual([
+      [5, {}],
+      [3, {}],
+    ]);
+    expect(funde.unvollstaendig).toBe(true);
+    expect(quelle.spielbericht).toHaveBeenCalledTimes(3);
   });
 
   it('passes over a Spielbericht the DBB does not know, as one not there yet', async () => {

@@ -2,7 +2,6 @@ import {
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
-  computed,
   input,
 } from '@angular/core';
 import type { HallenStand } from '../halle/hallen-stand';
@@ -42,11 +41,6 @@ export class NaechstesSpielComponent {
   public readonly halle = input<HallenStand>();
   /** Whether to name the Spiel's Liga. */
   public readonly mitLiga = input(false, { transform: booleanAttribute });
-  /** The Team that plays it, where the screen shows several. */
-  public readonly team = input<string>();
-
-  protected readonly titel = computed(() => {
-    const team = this.team();
-    return team ? `Nächstes Spiel · ${team}` : 'Nächstes Spiel';
-  });
+  /** The heading above it, e.g. naming the Team that plays it. */
+  public readonly titel = input('Nächstes Spiel');
 }

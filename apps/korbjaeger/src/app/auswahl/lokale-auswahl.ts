@@ -54,7 +54,7 @@ export class LokaleAuswahl implements Auswahl {
       event instanceof StorageEvent &&
       (event.key === null || event.key === AUSWAHL_SCHLUESSEL)
     ) {
-      this.inhalt.set(this.mitOffenen(inhaltAus(this.lesen())));
+      this.anzeigen(this.lesen());
     }
   };
 
@@ -68,7 +68,7 @@ export class LokaleAuswahl implements Auswahl {
     private readonly platzSchaffen: () => void = () => undefined
   ) {
     // read at once, so `teams` and `kinder` are never undefined here
-    this.inhalt.set(inhaltAus(this.lesen()));
+    this.anzeigen(this.lesen());
     this.teams = computed(() => this.inhalt().teams, { equal: gleicheFolge });
     this.kinder = computed(() => this.inhalt().kinder, {
       equal: (a, b) => gleicheFolge(a, b, gleichesKind),
@@ -149,8 +149,7 @@ export class LokaleAuswahl implements Auswahl {
   private aendern(aenderung: (inhalt: AuswahlInhalt) => AuswahlInhalt): void {
     const gelesen = this.lesen();
     if (gelesen.art === 'neuer') {
-      this.offen = [];
-      this.inhalt.set(LEERE_AUSWAHL);
+      this.anzeigen(gelesen);
       throw new AuswahlZuNeuError();
     }
     const gespeichert = inhaltAus(gelesen);
@@ -165,6 +164,18 @@ export class LokaleAuswahl implements Auswahl {
         ? auswahlDokumentMit(geaendert(gespeichert, nachher), gelesen.roh)
         : auswahlDokumentMit(nachher);
     this.offen = this.schreiben(dokument) ? [] : [...this.offen, aenderung];
+  }
+
+  /**
+   * Shows what `gelesen` holds, with the changes still `offen`; a newer
+   * version's document shows nothing, and those changes are dropped, as
+   * they could never be stored over it.
+   */
+  private anzeigen(gelesen: GelesenesDokument): void {
+    if (gelesen.art === 'neuer') {
+      this.offen = [];
+    }
+    this.inhalt.set(this.mitOffenen(inhaltAus(gelesen)));
   }
 
   /** `inhalt` with the changes still `offen` applied, in their order. */

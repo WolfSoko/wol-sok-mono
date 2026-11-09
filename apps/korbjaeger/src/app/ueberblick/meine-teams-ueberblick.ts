@@ -19,6 +19,7 @@ import {
   type SpielDetails,
   type TeamId,
   type TeamSaison,
+  type TeamUeberblick,
   type VereinId,
   type VereinsTeams,
 } from '@wolsok/feat-shared-basketball-data';
@@ -53,10 +54,15 @@ import {
  */
 interface TeamLesungen {
   readonly saison: DatenResource<TeamSaison | undefined>;
+  /** Its overview (`teamUeberblick`) on `HEUTE`, once its Saison is read. */
+  readonly ueberblick: Signal<TeamUeberblick | undefined>;
   readonly naechsteDetails: DatenResource<SpielDetails | undefined>;
   /** None while no Kind is marked. */
   readonly kaderSuche: DatenResource<KaderFunde | undefined>;
-  /** What the last search that ended found, kept while it runs again. */
+  /**
+   * What the last search that ended found, kept while it runs again; a run
+   * that failed as a whole keeps those too, marked `unvollstaendig`.
+   */
   readonly funde: Signal<KaderFunde | undefined>;
   /** The Team's Verein once its Saison looks over (`saisonBeendet`). */
   readonly saisonEndeVerein: Signal<VereinId | undefined>;
@@ -167,14 +173,14 @@ export class MeineTeamsUeberblick {
         sucht: false,
       };
     }
-    if (!lesung || !saison?.hasValue()) {
+    const ueberblick = lesung?.ueberblick();
+    if (!lesung || !saison?.hasValue() || ueberblick === undefined) {
       return { karte: { art: 'laedt', teamId }, sucht: mitKindern };
     }
     const verein = lesung.saisonEndeVerein();
     const vereinsTeams =
       verein === undefined ? undefined : this.vereinsLesungen().get(verein);
     const halle = hallenStand(lesung.naechsteDetails);
-    const ueberblick = teamUeberblick(saison.value(), this.heute());
     const karte = geladeneKarte(saison.value(), ueberblick, {
       // the oldest of what the card shows
       stand: aeltesterStand(
@@ -234,11 +240,23 @@ export class MeineTeamsUeberblick {
     );
     const kaderSuche = kaderSucheResource(() => auftrag(), this.injector);
     // a new order clears the resource's value: the last finds stay shown
-    const funde = linkedSignal<KaderFunde | undefined, KaderFunde | undefined>({
-      source: () => beendeteSuche(kaderSuche),
-      computation: (neu, vorher) => neu ?? vorher?.value,
+    const funde = linkedSignal<SuchEnde | undefined, KaderFunde | undefined>({
+      source: () => suchEnde(kaderSuche),
+      computation: (ende, vorher) => fundeNach(ende, vorher?.value),
     });
-    return { saison, naechsteDetails, kaderSuche, funde, saisonEndeVerein };
+    const ueberblick = computed(() =>
+      saison.hasValue()
+        ? teamUeberblick(saison.value(), this.heute())
+        : undefined
+    );
+    return {
+      saison,
+      ueberblick,
+      naechsteDetails,
+      kaderSuche,
+      funde,
+      saisonEndeVerein,
+    };
   }
 }
 
@@ -279,20 +297,41 @@ function beenden(lesung: TeamLesungen): void {
 /** A search that could read nothing: its Team's Saison failed. */
 const NICHT_LESBAR: KaderFunde = { spiele: new Map(), unvollstaendig: true };
 
-/**
- * What a search of a Team's Kader found once it ended; none while it
- * runs. A search that failed as a whole counts as one that read nothing.
- */
-function beendeteSuche(
+/** How a search of a Team's Kader ended: with its finds, or failed. */
+type SuchEnde =
+  | { readonly art: 'gefunden'; readonly funde: KaderFunde }
+  | { readonly art: 'gescheitert' };
+
+/** How a search of a Team's Kader ended; none while it runs. */
+function suchEnde(
   suche: DatenResource<KaderFunde | undefined>
-): KaderFunde | undefined {
+): SuchEnde | undefined {
   if (suche.hasValue()) {
-    return suche.value();
+    return { art: 'gefunden', funde: suche.value() };
   }
-  return suche.status() === 'error' ? NICHT_LESBAR : undefined;
+  return suche.status() === 'error' ? { art: 'gescheitert' } : undefined;
+}
+
+/**
+ * The finds to show after `ende`, the last ones being `vorher`: a run that
+ * failed as a whole keeps them, marked `unvollstaendig`, or reads as one
+ * that read nothing; one still running keeps them as they are.
+ */
+function fundeNach(
+  ende: SuchEnde | undefined,
+  vorher: KaderFunde | undefined
+): KaderFunde | undefined {
+  switch (ende?.art) {
+    case 'gefunden':
+      return ende.funde;
+    case 'gescheitert':
+      return vorher ? { ...vorher, unvollstaendig: true } : NICHT_LESBAR;
+    case undefined:
+      return vorher;
+  }
 }
 
 /** Whether a search of a Team's Kader still runs, or has yet to start. */
 function sucht(suche: DatenResource<KaderFunde | undefined>): boolean {
-  return suche.isLoading() || beendeteSuche(suche) === undefined;
+  return suche.isLoading() || suchEnde(suche) === undefined;
 }

@@ -55,48 +55,55 @@ type Lesen =
   | { readonly gelesen: true; readonly kinder: KinderImKader | undefined }
   | { readonly gelesen: false };
 
+/** How many Spielberichte of one Team the search reads side by side. */
+const ZUGLEICH = 2;
+
 /**
  * Looks for `auftrag.kinder` in the Team's own Kader of its Spiele, never
- * anywhere else (ADR 0019). Reads the newest Spiel first, which mostly
- * names every Kind already; where one is still missing, it reads the rest
- * side by side, so a Kind in no Kader costs one round trip more, not one
- * per Spiel. A Spielbericht the DBB does not know counts as none yet; a
- * read that fails otherwise (offline, the DBB down) leaves the search
- * `unvollstaendig`, and where the newest failed nothing more is read.
+ * anywhere else (ADR 0019). Reads the newest Spiel alone, which mostly
+ * names every Kind already, then the others `ZUGLEICH` at a time, newest
+ * first, and stops once each Kind was found. A Spielbericht the DBB does
+ * not know counts as none yet; a read that fails otherwise (offline, the
+ * DBB down) leaves the search `unvollstaendig` and ends it after its batch.
  */
 export async function kaderSuchen(
   data: Pick<KorbjaegerData, 'spielbericht'>,
   auftrag: KaderSucheAuftrag,
   options?: KorbReadOptions
 ): Promise<KaderFunde> {
-  const [neuestes, ...rest] = auftrag.spiele;
-  if (neuestes === undefined || auftrag.kinder.length === 0) {
-    return { spiele: new Map(), unvollstaendig: false };
-  }
-  const lesen = (spiel: Spiel): Promise<Lesen> =>
-    kinderIn(data, auftrag, spiel, options);
-  const erstes = await lesen(neuestes);
-  const weitere =
-    erstes.gelesen && !alleGefunden(erstes.kinder, auftrag.kinder)
-      ? await Promise.all(rest.map(lesen))
-      : rest.map(() => undefined);
   const spiele = new Map<SpielId, KinderImKader | undefined>();
-  let unvollstaendig = false;
-  [erstes, ...weitere].forEach((ergebnis, i) => {
-    if (ergebnis?.gelesen) {
-      spiele.set(auftrag.spiele[i].id, ergebnis.kinder);
-    } else if (ergebnis) {
-      unvollstaendig = true;
+  const offen = new Set(auftrag.kinder);
+  for (const stapel of stapelVon(auftrag.spiele)) {
+    if (offen.size === 0) {
+      break;
     }
-  });
-  return { spiele, unvollstaendig };
+    const gelesen = await Promise.all(
+      stapel.map((spiel) => kinderIn(data, auftrag, spiel, options))
+    );
+    gelesen.forEach((lesen, i) => {
+      if (lesen.gelesen) {
+        spiele.set(stapel[i].id, lesen.kinder);
+        lesen.kinder?.forEach((_vorname, person) => offen.delete(person));
+      }
+    });
+    if (gelesen.some((lesen) => !lesen.gelesen)) {
+      return { spiele, unvollstaendig: true };
+    }
+  }
+  return { spiele, unvollstaendig: false };
 }
 
-function alleGefunden(
-  gefunden: KinderImKader | undefined,
-  kinder: readonly PersonId[]
-): boolean {
-  return kinder.every((person) => gefunden?.has(person));
+/** `spiele` as the search reads them: the newest alone, then `ZUGLEICH` each. */
+function stapelVon(spiele: readonly Spiel[]): readonly (readonly Spiel[])[] {
+  const [neuestes, ...rest] = spiele;
+  if (neuestes === undefined) {
+    return [];
+  }
+  const stapel: Spiel[][] = [[neuestes]];
+  for (let i = 0; i < rest.length; i += ZUGLEICH) {
+    stapel.push(rest.slice(i, i + ZUGLEICH));
+  }
+  return stapel;
 }
 
 /**
