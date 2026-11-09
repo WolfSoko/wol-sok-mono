@@ -17,7 +17,7 @@ import { vereinsfarbenVon } from '../auswahl/vereinsfarben-wahl';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { FarbwahlComponent } from './farbwahl.component';
 import { FarbschemaDirective } from './vereinsfarben-anwenden';
-import type { Vereinsfarben } from './vereinsfarben';
+import { vereinsfarbenAus, type Vereinsfarben } from './vereinsfarben';
 
 /** What the bottom sheet is opened for: a Verein, with its name to show. */
 export interface VereinsfarbenBlattDaten {
@@ -154,29 +154,30 @@ export class VereinsfarbenBlattComponent {
     vereinsfarbenVon(this.auswahl.vereinsfarben(), this.daten.vereinId)
   );
 
-  protected readonly primaer = signal(untracked(this.gesetzt)?.primaer);
-  protected readonly zweite = signal(untracked(this.gesetzt)?.zweite);
+  private readonly anfang = untracked(this.gesetzt);
+  protected readonly primaer = signal(this.anfang?.primaer);
+  protected readonly zweite = signal(this.anfang?.zweite);
 
   /** What the choice looks like; none before a first colour is chosen. */
   protected readonly vorschau = computed((): Vereinsfarben | undefined => {
     const primaer = this.primaer();
-    const zweite = this.zweite();
+    // presets and the colour picker both give #rrggbb
     return primaer === undefined
       ? undefined
-      : { primaer, ...(zweite !== undefined && { zweite }) };
+      : vereinsfarbenAus(primaer, this.zweite());
   });
 
   protected readonly aenderung = auswahlAenderung();
   /** Whether a change runs: the buttons wait for it, so a double tap writes once. */
   protected readonly laeuft = signal(false);
 
-  protected uebernehmen(): Promise<void> {
+  protected async uebernehmen(): Promise<void> {
     const farben = this.vorschau();
-    return farben === undefined
-      ? Promise.resolve()
-      : this.aendern(() =>
-          this.auswahl.vereinsfarbenSetzen(this.daten.vereinId, farben)
-        );
+    if (farben !== undefined) {
+      await this.aendern(() =>
+        this.auswahl.vereinsfarbenSetzen(this.daten.vereinId, farben)
+      );
+    }
   }
 
   protected zuruecksetzen(): Promise<void> {

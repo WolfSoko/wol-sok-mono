@@ -45,11 +45,11 @@ async function oeffnen(
   const fixture = TestBed.createComponent(VereinsfarbenBlattComponent);
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
+  /** A button by its label, or its text where it has none. */
+  const benannt = (name: string) => (b: Element) =>
+    b.getAttribute('aria-label') === name || b.textContent?.trim() === name;
   const knopf = (name: string) =>
-    [...element.querySelectorAll('button')].find(
-      (b) =>
-        b.textContent?.trim() === name || b.getAttribute('aria-label') === name
-    );
+    [...element.querySelectorAll('button')].find(benannt(name));
   const klicken = async (name: string) => {
     knopf(name)?.click();
     await fixture.whenStable();
@@ -61,13 +61,7 @@ async function oeffnen(
     ),
   ];
   const waehlen = async (gruppe: string, name: string) => {
-    inGruppe(gruppe)
-      .find(
-        (b) =>
-          b.getAttribute('aria-label') === name ||
-          b.textContent?.trim() === name
-      )
-      ?.click();
+    inGruppe(gruppe).find(benannt(name))?.click();
     await fixture.whenStable();
   };
   const gewaehlt = (gruppe: string) =>

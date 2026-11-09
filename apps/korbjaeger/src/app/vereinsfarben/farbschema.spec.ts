@@ -92,10 +92,13 @@ const FARBEN = [
   '#33ffdd', // fell to 4.47:1 at Material's standard contrast
 ];
 
-/** Six values per channel, 51 apart: 216 colours across the whole space. */
-const STREUUNG = [0, 51, 102, 153, 204, 255].flatMap((r) =>
-  [0, 51, 102, 153, 204, 255].flatMap((g) =>
-    [0, 51, 102, 153, 204, 255].map(
+/** Six values per channel, 51 apart. */
+const STUFEN = [0, 51, 102, 153, 204, 255];
+
+/** Every combination of `STUFEN`: 216 colours across the whole space. */
+const STREUUNG = STUFEN.flatMap((r) =>
+  STUFEN.flatMap((g) =>
+    STUFEN.map(
       (b) =>
         `#${[r, g, b].map((kanal) => kanal.toString(16).padStart(2, '0')).join('')}`
     )
@@ -123,21 +126,18 @@ describe('farbschema', () => {
   it.each([false, true])(
     'keeps every text readable for a spread of 216 colours, first and second (dark: %s)',
     (dunkel) => {
-      const fehler = STREUUNG.flatMap((farbe) =>
-        [
-          ...paarePruefen(
-            farbschema({ primaer: farbe }, dunkel),
-            TEXT_PAARE,
-            4.5
-          ),
-          ...paarePruefen(farbschema({ primaer: farbe }, dunkel), UI_PAARE, 3),
-          ...paarePruefen(
-            farbschema({ primaer: '#c8102e', zweite: farbe }, dunkel),
-            TEXT_PAARE,
-            4.5
-          ),
-        ].map((paar) => `${farbe}: ${paar}`)
-      );
+      const fehler = STREUUNG.flatMap((farbe) => {
+        const erste = farbschema({ primaer: farbe }, dunkel);
+        const zweite = farbschema(
+          { primaer: '#c8102e', zweite: farbe },
+          dunkel
+        );
+        return [
+          ...paarePruefen(erste, TEXT_PAARE, 4.5),
+          ...paarePruefen(erste, UI_PAARE, 3),
+          ...paarePruefen(zweite, TEXT_PAARE, 4.5),
+        ].map((paar) => `${farbe}: ${paar}`);
+      });
 
       expect(fehler).toEqual([]);
     }

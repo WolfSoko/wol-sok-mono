@@ -6,9 +6,6 @@ import {
   input,
   linkedSignal,
 } from '@angular/core';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AUSWAHL } from '../auswahl/auswahl';
@@ -24,7 +21,6 @@ import {
   parseDbbId,
   saisonBeendet,
   type TeamSaison,
-  type Verein,
   type VereinId,
 } from '@wolsok/feat-shared-basketball-data';
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
@@ -39,6 +35,7 @@ import { aeltesterStand } from '../basketball-data/stand';
 import { StandComponent } from '../stand/stand.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
+import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knopf.component';
 
 /**
  * The Team page: its next Spiel with its Halle, its Spiele of the Saison
@@ -52,8 +49,6 @@ import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
 @Component({
   selector: 'korb-team',
   imports: [
-    MatButtonModule,
-    MatIconModule,
     MatListModule,
     MatProgressBarModule,
     NaechstesSpielComponent,
@@ -63,6 +58,7 @@ import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
     StandComponent,
     TeamFolgenComponent,
     TeamTabelleComponent,
+    VereinsfarbenKnopfComponent,
     VereinsTeamsComponent,
   ],
   templateUrl: './team.component.html',
@@ -171,25 +167,10 @@ export class TeamComponent {
     return fehlerText(this.saison.error(), KEIN_TEAM);
   });
 
-  private readonly blatt = inject(MatBottomSheet);
-
   public constructor() {
     // this Team's Verein only: `vereinId` keeps the last one while the next loads
     vereinsfarbenAnwenden(() =>
       this.saison.hasValue() ? this.saison.value().verein.id : undefined
     );
-  }
-
-  /**
-   * Opens the bottom sheet "Vereinsfarben" for the Team's Verein, its code
-   * loaded on the first tap, not with the page.
-   */
-  protected async farbenWaehlen(verein: Verein): Promise<void> {
-    const { VereinsfarbenBlattComponent } =
-      await import('../vereinsfarben/vereinsfarben-blatt.component');
-    this.blatt.open(VereinsfarbenBlattComponent, {
-      data: { vereinId: verein.id, vereinName: verein.name },
-      ariaLabel: `Vereinsfarben von ${verein.name}`,
-    });
   }
 }

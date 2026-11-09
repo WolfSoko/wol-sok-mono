@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { VereinId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
@@ -7,14 +7,24 @@ import type { VereinsfarbenWahl } from '../auswahl/vereinsfarben-wahl';
 import { farbschemaTokens } from './farbschema';
 import {
   FarbschemaDirective,
-  VereinsfarbenDirective,
+  vereinsfarbenAnwenden,
 } from './vereinsfarben-anwenden';
 import type { Vereinsfarben } from './vereinsfarben';
 
+/** A component wearing a Verein's colours, as the Team page does. */
+@Component({ selector: 'korb-im-verein', template: '' })
+class ImVerein {
+  public readonly verein = input<VereinId | undefined>();
+
+  public constructor() {
+    vereinsfarbenAnwenden(this.verein);
+  }
+}
+
 @Component({
-  imports: [VereinsfarbenDirective, FarbschemaDirective],
+  imports: [ImVerein, FarbschemaDirective],
   template: `
-    <section data-qa="verein" [korbVereinsfarben]="verein()"></section>
+    <korb-im-verein data-qa="verein" [verein]="verein()" />
     <section data-qa="vorschau" [korbFarbschema]="farben()"></section>
   `,
 })
@@ -49,7 +59,7 @@ async function oeffnen(vereinsfarben: readonly VereinsfarbenWahl[] = [ROT]) {
 
 const PRIMAER = '--mat-sys-primary';
 
-describe('VereinsfarbenDirective', () => {
+describe('vereinsfarbenAnwenden', () => {
   it("sets every system colour of the Verein's colours, light and dark", async () => {
     const { teil } = await oeffnen();
 
