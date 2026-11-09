@@ -15,6 +15,9 @@ const FAKE_DBB_URL = 'http://localhost:4303/rest/team/id/313036/matches';
 /** `korbjaeger:emulatoren`: the Auth emulator answers here once up. */
 const AUTH_EMULATOR_URL = 'http://127.0.0.1:9199';
 
+/** The sign-in through the Auth emulator's popup, on its own browser mode. */
+const KONTO_SPEC = /konto\.spec\.ts/;
+
 const SERVER_TIMEOUT_MS = (process.env['CI'] ? 360 : 120) * 1000;
 const SERVER = { cwd: workspaceRoot, timeout: SERVER_TIMEOUT_MS };
 
@@ -51,6 +54,12 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: KONTO_SPEC,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'chromium-anmeldung',
+      testMatch: KONTO_SPEC,
       /*
        * Chromium's new headless mode, not the headless shell: in the shell,
        * Auth's helper frame from the Auth emulator now and then commits but
