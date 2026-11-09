@@ -222,6 +222,12 @@
     },
     "deploy": {
       "executor": "nx:run-commands",
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/firebase.bacteria-game-remote.json",
+        "{workspaceRoot}/.firebaserc"
+      ],
       "dependsOn": ["build"],
       "options": {
         "command": "nx run {projectName}:firebase deploy --only hosting,firestore,database"

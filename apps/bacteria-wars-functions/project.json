@@ -60,6 +60,12 @@
     },
     "deploy": {
       "executor": "nx:run-commands",
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/firebase.bacteria-game-remote.json",
+        "{workspaceRoot}/.firebaserc"
+      ],
       "dependsOn": ["build"],
       "options": {
         "command": "tsx apps/bacteria-wars-functions/deploy/retry-once.ts firebase deploy --config=firebase.bacteria-game-remote.json --project=bacteria-game-remote --only functions:bacteria --force --non-interactive"
