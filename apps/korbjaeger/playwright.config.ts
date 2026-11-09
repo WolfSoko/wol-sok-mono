@@ -4,7 +4,7 @@ import { nxE2EPreset } from '@nx/playwright/preset';
 import { workspaceRoot } from '@nx/devkit';
 
 import { fileURLToPath } from 'node:url';
-import { nxServer } from './e2e/server/nx-server';
+import { nxServer } from '@wolsok/shared-e2e-server';
 
 const __filename = fileURLToPath(import.meta.url);
 
