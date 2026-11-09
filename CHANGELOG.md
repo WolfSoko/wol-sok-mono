@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.150.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.149.0...v74.150.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Korbjäger 8 — Google sign-in and sync across devices ([#2911](https://github.com/WolfSoko/wol-sok-mono/issues/2911)) ([1d1b09f](https://github.com/WolfSoko/wol-sok-mono/commit/1d1b09f3d5bc4b6251110683ad57a29ef21c7a2c)), closes [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873), references [#2874](https://github.com/WolfSoko/wol-sok-mono/issues/2874) [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873) [#2874](https://github.com/WolfSoko/wol-sok-mono/issues/2874)
+
 ## [74.149.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.148.0...v74.149.0) (2026-11-09)
 
 ### Features
