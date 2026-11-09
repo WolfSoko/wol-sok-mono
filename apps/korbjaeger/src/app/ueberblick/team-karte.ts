@@ -37,6 +37,11 @@ export type TeamKarte =
       readonly letztes?: SpielZeile;
     } & KartenZusatz);
 
+/** The Team's name on a card, or its id while no read has given a name. */
+export function kartenName(karte: TeamKarte): string {
+  return karte.art === 'geladen' ? karte.name : `Team ${karte.teamId}`;
+}
+
 /**
  * The card of a Team whose Saison was read, from its overview
  * (`teamUeberblick`), with `zusatz`.

@@ -12,7 +12,7 @@ import { SpielLinkComponent } from '../spiel/spiel-link.component';
 import { StandComponent } from '../stand/stand.component';
 import { TeamFolgenComponent } from '../team/team-folgen.component';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
-import type { TeamKarte } from './team-karte';
+import { kartenName, type TeamKarte } from './team-karte';
 
 /**
  * One of Meine Teams on the overview, as `karte` gives it: its next Spiel
@@ -44,8 +44,5 @@ export class UeberblickTeamComponent {
   public readonly karte = input.required<TeamKarte>();
 
   /** The Team's name, or its id while its read has not given one. */
-  protected readonly name = computed(() => {
-    const team = this.karte();
-    return team.art === 'geladen' ? team.name : `Team ${team.teamId}`;
-  });
+  protected readonly name = computed(() => kartenName(this.karte()));
 }
