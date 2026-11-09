@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { REGION } from './config';
+import { CLUB_INDEX_DBB, REGION } from './config';
 
 interface ProjectJson {
   targets: { deploy: { options: { commands: string[] } } };
@@ -17,5 +17,25 @@ describe('the functions config', () => {
 
     expect(setPolicy).toContain('functions:artifacts:setpolicy');
     expect(setPolicy).toContain(`--location=${REGION} `);
+  });
+});
+
+describe('the club index', () => {
+  const site = readFileSync(
+    join(__dirname, '../../korbjaeger/src/shared/site.ts'),
+    'utf8'
+  );
+
+  // functions may import no app, so the URL is written out twice
+  it('names the app’s URL in its User-Agent', () => {
+    const [, siteUrl] = /SITE_URL = '([^']+)'/.exec(site) ?? [];
+
+    expect(CLUB_INDEX_DBB.userAgent).toContain(`(+${siteUrl})`);
+  });
+
+  // a week of every Association's Leagues at one request a second
+  it('waits a second between two calls and refreshes weekly', () => {
+    expect(CLUB_INDEX_DBB.pauseMs).toBeGreaterThanOrEqual(1000);
+    expect(CLUB_INDEX_DBB.maxAgeMs).toBe(7 * 86_400_000);
   });
 });
