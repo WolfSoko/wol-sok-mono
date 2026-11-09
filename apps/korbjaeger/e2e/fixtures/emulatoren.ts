@@ -1,4 +1,5 @@
 import type { APIRequestContext } from '@playwright/test';
+import { SELECTIONS_COLLECTION } from '@wolsok/feat-korbjaeger-collections';
 import { readFileSync } from 'node:fs';
 
 const emulatoren = JSON.parse(
@@ -48,7 +49,7 @@ export async function hatAuswahl(
   uid: string
 ): Promise<boolean> {
   const antwort = await request.get(
-    `${FIRESTORE}/v1/projects/${PROJEKT}/databases/(default)/documents/auswahl/${uid}`,
+    `${FIRESTORE}/v1/projects/${PROJEKT}/databases/(default)/documents/${SELECTIONS_COLLECTION}/${uid}`,
     { headers: ALS_BESITZER }
   );
   if (antwort.status() === 404) {
