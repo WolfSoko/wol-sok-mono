@@ -6,7 +6,7 @@ import type {
 } from '@wolsok/feat-shared-basketball-data';
 import type { Vereinsfarben } from '../vereinsfarben/vereinsfarben';
 import type { VereinsfarbenWahl } from '../auswahl/vereinsfarben-wahl';
-import type { Auswahl } from '../auswahl/auswahl';
+import type { Auswahl, TeamPlatz } from '../auswahl/auswahl';
 import {
   AUSWAHL_LISTEN,
   LEERE_AUSWAHL,
@@ -623,11 +623,11 @@ class AktuelleAuswahl implements Auswahl {
     this.quelle = computed(() => aktuell()?.quelle());
   }
 
-  public folgen(team: TeamId): Promise<void> {
-    return this.mit((auswahl) => auswahl.folgen(team));
+  public folgen(team: TeamId, platz?: TeamPlatz): Promise<void> {
+    return this.mit((auswahl) => auswahl.folgen(team, platz));
   }
 
-  public entfolgen(team: TeamId): Promise<void> {
+  public entfolgen(team: TeamId): Promise<TeamPlatz | undefined> {
     return this.mit((auswahl) => auswahl.entfolgen(team));
   }
 
@@ -661,7 +661,7 @@ class AktuelleAuswahl implements Auswahl {
   }
 
   /** Changes only once `teams` is read, as `Auswahl` asks. */
-  private mit(aendern: (auswahl: Auswahl) => Promise<void>): Promise<void> {
+  private mit<T>(aendern: (auswahl: Auswahl) => Promise<T>): Promise<T> {
     const auswahl = this.aktuell();
     return auswahl === undefined || this.teams() === undefined
       ? Promise.reject(new Error('Meine Teams sind nicht gelesen.'))

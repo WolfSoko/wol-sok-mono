@@ -8,6 +8,9 @@ import { KONTO_SITZUNG } from '../konto/konto';
 import type { Vereinsfarben } from '../vereinsfarben/vereinsfarben';
 import type { VereinsfarbenWahl } from './vereinsfarben-wahl';
 import type { Kind, MarkierbarerSpieler } from './kind';
+import type { TeamPlatz } from './auswahl-dokument';
+
+export type { TeamPlatz } from './auswahl-dokument';
 
 /**
  * What an Elternteil follows: Meine Teams and the Kinder they marked, and
@@ -45,12 +48,17 @@ export interface Auswahl {
    */
   readonly quelle: Signal<unknown>;
   /**
-   * Adds `team` to the end of Meine Teams, unless it is in them already.
-   * Only once `teams` is read.
+   * Adds `team` to Meine Teams, unless it is in them already: at `platz`,
+   * the place `entfolgen` gave for it (an undo), else at the end. Only once
+   * `teams` is read.
    */
-  folgen(team: TeamId): Promise<void>;
-  /** Takes `team` out of Meine Teams, if it is in them. */
-  entfolgen(team: TeamId): Promise<void>;
+  folgen(team: TeamId, platz?: TeamPlatz): Promise<void>;
+  /**
+   * Takes `team` out of Meine Teams, if it is in them; resolves with the
+   * place it had, for `folgen` to put it back there, or `undefined` where
+   * it was not followed.
+   */
+  entfolgen(team: TeamId): Promise<TeamPlatz | undefined>;
   /**
    * The marked Kinder, in the order they were marked, each person once;
    * `undefined` until the adapter has read them. A Spitzname is trimmed

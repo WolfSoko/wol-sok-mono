@@ -18,6 +18,7 @@ import {
   inhaltAus,
   markierenAenderung,
   spitznameAenderung,
+  teamPlatz,
   vereinsfarbenAenderung,
   vereinsfarbenZuruecksetzenAenderung,
   type AuswahlAenderung,
@@ -30,6 +31,7 @@ import {
   naechsterSeit,
   type AuswahlInhalt,
   type GelesenesDokument,
+  type TeamPlatz,
 } from './auswahl-dokument';
 import { gleicheFolge } from '../gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from './kind';
@@ -111,12 +113,14 @@ export class LokaleAuswahl implements Auswahl {
     fenster?.addEventListener('storage', this.beiAenderung);
   }
 
-  public folgen(team: TeamId): Promise<void> {
-    return this.aendern(folgenAenderung(team));
+  public folgen(team: TeamId, platz?: TeamPlatz): Promise<void> {
+    return this.aendern(folgenAenderung(team, platz));
   }
 
-  public entfolgen(team: TeamId): Promise<void> {
-    return this.aendern(entfolgenAenderung(team));
+  public entfolgen(team: TeamId): Promise<TeamPlatz | undefined> {
+    return this.ausfuehren(entfolgenAenderung(team), (vorher) =>
+      teamPlatz(vorher, team)
+    );
   }
 
   public markieren(
@@ -177,9 +181,19 @@ export class LokaleAuswahl implements Auswahl {
 
   /** Runs `aenderung` now (`aendernJetzt`), its failure as the rejection. */
   private aendern(aenderung: AuswahlAenderung): Promise<void> {
+    return this.ausfuehren(aenderung, () => undefined);
+  }
+
+  /**
+   * Runs `aenderung` now, resolving with `ergebnis` of the state it applied
+   * to; its failure as the rejection.
+   */
+  private ausfuehren<T>(
+    aenderung: AuswahlAenderung,
+    ergebnis: (vorher: AuswahlInhalt) => T
+  ): Promise<T> {
     try {
-      this.aendernJetzt(aenderung);
-      return Promise.resolve();
+      return Promise.resolve(ergebnis(this.aendernJetzt(aenderung)));
     } catch (fehler) {
       return Promise.reject(fehler);
     }
@@ -188,9 +202,10 @@ export class LokaleAuswahl implements Auswahl {
   /**
    * Applies `aenderung` to what is stored now, with the changes still
    * `offen`, and stores the result where it changed anything or something
-   * was still to be stored.
+   * was still to be stored. Returns the state it applied `aenderung` to:
+   * read from storage at once, so it has the `seit` of every stored Team.
    */
-  private aendernJetzt(aenderung: AuswahlAenderung): void {
+  private aendernJetzt(aenderung: AuswahlAenderung): AuswahlInhalt {
     const gelesen = this.lesen();
     if (gelesen.art === 'neuer') {
       this.anzeigen(gelesen);
@@ -202,13 +217,14 @@ export class LokaleAuswahl implements Auswahl {
     grenzenPruefen(vorher, nachher);
     this.inhalt.set(nachher);
     if (nachher === vorher && this.offen.length === 0) {
-      return;
+      return vorher;
     }
     const dokument = auswahlDokumentMit(
       gelesen,
       auswahlFelder(gespeichert, nachher, naechsterSeit(gelesen))
     );
     this.offen = this.schreiben(dokument) ? [] : [...this.offen, aenderung];
+    return vorher;
   }
 
   /**

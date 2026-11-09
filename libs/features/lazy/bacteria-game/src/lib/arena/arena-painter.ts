@@ -5,11 +5,12 @@ import {
   DynamicWall,
   GameBalance,
   Nutrient,
+  type PlayerColorArray,
   Rect,
   type WeaponFire,
   Zone,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { ArenaTheme, Rgb } from './arena-theme';
+import { ArenaTheme } from './arena-theme';
 import type { PaintedColony } from './colony-renderer';
 
 export type { PaintedColony } from './colony-renderer';
@@ -50,8 +51,8 @@ export function layoutKey(layout: ArenaLayout): string {
 export interface CursorShape {
   x: number;
   y: number;
-  /** RGBA, the alpha from 0 to 255. */
-  color: readonly number[];
+  /** The player's colour, RGBA with the alpha from 0 to 255. */
+  color: Readonly<PlayerColorArray>;
   /** How much of a running boost is left, 0 to 1 - null without a boost. */
   boostLeft: number | null;
 }
@@ -160,14 +161,6 @@ export interface BoostRing {
   lineWidth: number;
 }
 
-/** A colour as its channels and an alpha from 0 to 1. */
-export interface SplitColor {
-  rgb: Rgb;
-  alpha: number;
-}
-
-/** The largest alpha of an RGBA colour such as `CursorShape.color` - opaque. */
-const ALPHA_MAX = 255;
 /** The boost ring's radius at a fresh boost, in base cells. */
 const BOOST_RING_RADIUS = 9;
 /** How far the ring widens as the boost runs out, in base cells. */
@@ -189,14 +182,4 @@ export function boostRing(cursor: CursorShape, unit: number): BoostRing | null {
       (BOOST_RING_RADIUS + BOOST_RING_GROWTH * (1 - cursor.boostLeft)) * unit,
     lineWidth: BOOST_RING_LINE_WIDTH * unit,
   };
-}
-
-/**
- * An RGBA colour, its alpha from 0 to 255 as in `CursorShape.color`, as its
- * channels and the alpha from 0 to 1 a painter draws with. Without an alpha
- * it is opaque.
- */
-export function splitColor(color: readonly number[]): SplitColor {
-  const [r, g, b, alpha = ALPHA_MAX] = color;
-  return { rgb: [r, g, b], alpha: alpha / ALPHA_MAX };
 }

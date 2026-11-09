@@ -8,7 +8,7 @@ function colony(id: number, weapon: ColonyStats['weapon'] = null): ColonyStats {
     id,
     name: `Colony ${id}`,
     isBot: false,
-    css: 'rgba(255,100,20,255)',
+    css: 'rgba(255,100,20,1)',
     bacterias: 420,
     captured: 0,
     lost: 0,

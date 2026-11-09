@@ -20,6 +20,7 @@ import { StateLayer } from '../colony-renderer';
 import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
 import { gpuSimulation, GpuSimulationOptions } from '../../gl/gpu-simulation';
 import { rendererOf } from '../../gl/renderer';
+import { splitColor } from '../../player-color';
 import { GpuTimer } from '../../gl/gpu-timer';
 import { Motes } from '../motes';
 import {
@@ -764,13 +765,14 @@ export class GlArenaPainter implements ArenaPainter {
     bindTexture(gl, 1, targets.cells.texture, program.uniforms['uCells']);
     this.setView(program);
     gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
+    const { rgb, alpha } = splitColor(color);
     gl.uniform3f(
       program.uniforms['uColor'],
-      color[0] / 255,
-      color[1] / 255,
-      color[2] / 255
+      rgb[0] / 255,
+      rgb[1] / 255,
+      rgb[2] / 255
     );
-    gl.uniform1f(program.uniforms['uAlpha'], (color[3] ?? 255) / 255);
+    gl.uniform1f(program.uniforms['uAlpha'], alpha);
     gl.uniform1i(program.uniforms['uLook'], LOOKS[look].glIndex);
     gl.uniform1f(program.uniforms['uUnit'], this.unit);
     gl.uniform1f(

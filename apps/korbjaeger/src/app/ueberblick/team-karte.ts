@@ -3,6 +3,7 @@ import type {
   TeamId,
   TeamSaison,
   TeamUeberblick,
+  Verein,
 } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
 import type { Stand } from '../basketball-data/stand';
@@ -30,6 +31,8 @@ export type TeamKarte =
       readonly art: 'geladen';
       readonly teamId: TeamId;
       readonly name: string;
+      /** The Team's Verein, whose colours the card wears. */
+      readonly verein: Verein;
       /** The next Spiel, by which the overview orders the cards. */
       readonly naechstesSpiel?: Spiel;
       readonly naechstes?: SpielZeile;
@@ -55,6 +58,7 @@ export function geladeneKarte(
     art: 'geladen',
     teamId: saison.team.id,
     name: saison.team.name,
+    verein: saison.verein,
     naechstesSpiel: naechstes,
     naechstes: naechstes && spielZeile(saison, naechstes),
     ausfaelle: ausfaelle.map((spiel) => spielZeile(saison, spiel)),

@@ -8,7 +8,7 @@ const orange: ColonyStats = {
   id: 0,
   name: 'Orange',
   isBot: false,
-  css: 'rgba(255,100,20,255)',
+  css: 'rgba(255,100,20,1)',
   bacterias: 420,
   captured: 3,
   lost: 1,
