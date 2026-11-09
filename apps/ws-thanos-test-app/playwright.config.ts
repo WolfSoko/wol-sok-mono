@@ -1,6 +1,7 @@
 import { workspaceRoot } from '@nx/devkit';
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { defineConfig, devices } from '@playwright/test';
+import { nxServer } from '@wolsok/shared-e2e-server';
 
 const baseURL = process.env['BASE_URL'] || 'http://localhost:4350';
 
@@ -15,14 +16,11 @@ export default defineConfig({
     testIdAttribute: 'data-testid',
     trace: 'on-first-retry',
   },
-  webServer: {
-    command: 'npx nx serve ws-thanos-test-app',
-    url: 'http://localhost:4350',
-    // an Nx task that e2e-ci depends on and waits for (see CLAUDE.md, Testing)
-    reuseExistingServer: true,
+  // an Nx task that e2e-ci depends on and waits for (see CLAUDE.md, Testing)
+  webServer: nxServer('ws-thanos-test-app:serve', 'http://localhost:4350', {
     cwd: workspaceRoot,
     timeout: 120 * 1000,
-  },
+  }),
   projects: [
     {
       name: 'chromium',
