@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { nxE2EPreset } from '@nx/playwright/preset';
+import { nxServer } from '@wolsok/shared-e2e-server';
 
 import { workspaceRoot } from '@nx/devkit';
 
@@ -35,25 +36,20 @@ export default defineConfig({
    * Both servers are Nx tasks, and reused: the inferred e2e and e2e-ci tasks
    * then depend on `serve` and `auth-emulator` (continuous) and wait for both,
    * so every e2e file on a CI agent shares one dev server and one Auth
-   * emulator. A plain `playwright test` starts them itself.
+   * emulator; inside such a task Playwright only waits for them
+   * (`nxServer`). A plain `playwright test` starts them itself.
    */
   webServer: [
-    {
-      command: 'npx nx serve rollapolla-analog',
-      url: 'http://localhost:4300',
-      reuseExistingServer: true,
+    nxServer('rollapolla-analog:serve', 'http://localhost:4300', {
       cwd: workspaceRoot,
       timeout: (process.env['CI'] ? 720 : 120) * 1000,
-    },
-    {
-      // Voting and creating polls sign in anonymously. The Auth emulator runs on
-      // Node alone; Firestore stays offline in e2e and applies writes locally.
-      command: 'npx nx run rollapolla-analog:auth-emulator',
-      url: 'http://127.0.0.1:9099',
-      reuseExistingServer: true,
+    }),
+    // Voting and creating polls sign in anonymously. The Auth emulator runs on
+    // Node alone; Firestore stays offline in e2e and applies writes locally.
+    nxServer('rollapolla-analog:auth-emulator', 'http://127.0.0.1:9099', {
       cwd: workspaceRoot,
       timeout: 120 * 1000,
-    },
+    }),
   ],
 
   projects: [

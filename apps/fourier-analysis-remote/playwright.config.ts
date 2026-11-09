@@ -1,6 +1,7 @@
 import { workspaceRoot } from '@nx/devkit';
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { defineConfig, devices } from '@playwright/test';
+import { nxServer } from '@wolsok/shared-e2e-server';
 
 // For CI, you may want to set BASE_URL to the deployed application.
 const baseURL = process.env['BASE_URL'] || 'http://localhost:4201';
@@ -17,15 +18,11 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npx nx run fourier-analysis-remote:serve-static',
-    url: baseURL,
-    // an Nx task that e2e-ci depends on and waits for (see CLAUDE.md, Testing)
-    reuseExistingServer: true,
+  // an Nx task that e2e-ci depends on and waits for (see CLAUDE.md, Testing)
+  webServer: nxServer('fourier-analysis-remote:serve-static', baseURL, {
     cwd: workspaceRoot,
     timeout: process.env['CI'] ? 360_000 : 120_000,
-  },
+  }),
   projects: [
     {
       name: 'chromium',

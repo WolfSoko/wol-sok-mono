@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { nxE2EPreset } from '@nx/playwright/preset';
+import { nxServer } from '@wolsok/shared-e2e-server';
 
 import { workspaceRoot } from '@nx/devkit';
 
@@ -32,15 +33,11 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npx nx serve pacetrainer',
-    url: 'http://localhost:4301',
-    // an Nx task that e2e-ci depends on and waits for (see CLAUDE.md, Testing)
-    reuseExistingServer: true,
+  // an Nx task that e2e-ci depends on and waits for (see CLAUDE.md, Testing)
+  webServer: nxServer('pacetrainer:serve', 'http://localhost:4301', {
     cwd: workspaceRoot,
     timeout: (process.env['CI'] ? 360 : 120) * 1000,
-  },
+  }),
   projects: [
     {
       name: 'chromium',
