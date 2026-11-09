@@ -44,9 +44,11 @@ export function folgenAenderung(
     if (platz === undefined) {
       return { ...inhalt, teams: [...inhalt.teams, team] };
     }
-    const danach = inhalt.teams.findIndex(
-      (andere) => (inhalt.teamsSeit?.get(andere) ?? Infinity) > platz.seit
-    );
+    // as the reader orders: by `seit`, the id deciding a tie
+    const danach = inhalt.teams.findIndex((andere) => {
+      const seit = inhalt.teamsSeit?.get(andere) ?? Infinity;
+      return seit > platz.seit || (seit === platz.seit && andere > team);
+    });
     const teams = [...inhalt.teams];
     teams.splice(danach === -1 ? teams.length : danach, 0, team);
     return {
@@ -187,7 +189,17 @@ export function abgebenAenderung(abgegeben: AuswahlInhalt): AuswahlAenderung {
       kinder.length === inhalt.kinder.length &&
       vereinsfarben.length === inhalt.vereinsfarben.length
       ? inhalt
-      : { teams, kinder, vereinsfarben };
+      : {
+          teams,
+          kinder,
+          vereinsfarben,
+          // the Teams that stay keep their places
+          ...(inhalt.teamsSeit && {
+            teamsSeit: new Map(
+              [...inhalt.teamsSeit].filter(([team]) => teams.includes(team))
+            ),
+          }),
+        };
   };
 }
 

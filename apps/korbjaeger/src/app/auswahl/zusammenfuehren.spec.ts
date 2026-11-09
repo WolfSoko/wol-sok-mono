@@ -18,6 +18,24 @@ describe('zusammenfuehren', () => {
     });
   });
 
+  it("gives the device's Teams no place of their own: they join after the account's", () => {
+    const konto: AuswahlInhalt = {
+      ...LEER,
+      teams: [201765],
+      teamsSeit: new Map([[201765, 50]]),
+    };
+    const geraet: AuswahlInhalt = {
+      ...LEER,
+      teams: [313036],
+      teamsSeit: new Map([[313036, 1]]),
+    };
+
+    const { inhalt } = zusammenfuehren(konto, geraet);
+
+    expect(inhalt.teams).toEqual([201765, 313036]);
+    expect(inhalt.teamsSeit?.has(313036) ?? false).toBe(false);
+  });
+
   it("keeps an account's choices where the device holds none", () => {
     const konto: AuswahlInhalt = {
       teams: [313036],

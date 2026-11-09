@@ -2,6 +2,8 @@ import {
   auswahlDokumentLesen,
   auswahlFelder,
   LEERE_AUSWAHL,
+  ENTFERNT,
+  mitTeamsSeit,
   type AuswahlInhalt,
 } from './auswahl-dokument';
 
@@ -52,5 +54,23 @@ describe('auswahlFelder', () => {
     expect(auswahlFelder(vorher, nachher, 100)).toEqual({
       teams: { 201765: 5, 201500: 100 },
     });
+  });
+});
+
+describe('mitTeamsSeit', () => {
+  it('gives the Teams it holds the seit a write stores for them', () => {
+    const inhalt: AuswahlInhalt = { ...LEERE_AUSWAHL, teams: [313036, 201500] };
+
+    const mit = mitTeamsSeit(inhalt, {
+      teams: { 201500: 42, 201765: 43 },
+    });
+
+    expect(mit.teamsSeit).toEqual(new Map([[201500, 42]]));
+  });
+
+  it('is the same content where the write stores no Team', () => {
+    const inhalt: AuswahlInhalt = { ...LEERE_AUSWAHL, teams: [313036] };
+
+    expect(mitTeamsSeit(inhalt, { teams: { 313036: ENTFERNT } })).toBe(inhalt);
   });
 });

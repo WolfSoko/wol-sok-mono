@@ -59,6 +59,11 @@ device, after a reload too.
   `seit` and can be unfollowed and restored at once. `FirestoreAuswahl`
   already gets the `seit` from its listener, which reports local writes at
   once.
+- **A device restores what it has seen.** As with every change, an adapter
+  acts on what it has seen: where another device followed the Team again
+  meanwhile and this one has not heard of it yet (offline), the undo writes
+  the old `seit` over the new one, and the Team goes back to its old place
+  everywhere. No data is lost; the Team stays followed.
 - **Caps unchanged:** restoring a Team over the cap still rejects with
   `AuswahlVollError`; the snackbar says so, as today.
 

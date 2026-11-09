@@ -1,4 +1,5 @@
 import {
+  abgebenAenderung,
   entfolgenAenderung,
   folgenAenderung,
   teamPlatz,
@@ -49,6 +50,17 @@ describe('folgenAenderung', () => {
     expect(folgenAenderung(B, { seit: 20 })(mitD).teams).toEqual([A, B, C, D]);
   });
 
+  it('puts a Team before one with the same seit and a larger id, as the reader orders', () => {
+    const gleich: AuswahlInhalt = {
+      ...LEERE_AUSWAHL,
+      teams: [B],
+      teamsSeit: new Map([[B, 20]]),
+    };
+
+    expect(folgenAenderung(C, { seit: 20 })(gleich).teams).toEqual([C, B]);
+    expect(folgenAenderung(A, { seit: 20 })(gleich).teams).toEqual([B, A]);
+  });
+
   it('follows at the end without a place', () => {
     expect(folgenAenderung(B)(ohneB).teams).toEqual([A, C, B]);
   });
@@ -61,5 +73,18 @@ describe('folgenAenderung', () => {
 describe('entfolgenAenderung', () => {
   it("forgets the Team's seit, so a plain follow later takes a new one", () => {
     expect(entfolgenAenderung(B)(gelesen).teamsSeit?.has(B)).toBe(false);
+  });
+});
+
+describe('abgebenAenderung', () => {
+  it('keeps the places of the Teams that stay', () => {
+    const nachher = abgebenAenderung({ ...LEERE_AUSWAHL, teams: [B] })(gelesen);
+
+    expect(nachher.teamsSeit).toEqual(
+      new Map([
+        [A, 10],
+        [C, 30],
+      ])
+    );
   });
 });
