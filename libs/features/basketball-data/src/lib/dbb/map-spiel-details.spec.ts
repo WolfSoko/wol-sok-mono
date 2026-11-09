@@ -156,7 +156,7 @@ describe('mapSpielDetails', () => {
     });
 
     it('goes by the Liga, not by the Spiel’s own statisticType', () => {
-      // this Spiel says 0 itself, its Liga 1, and its boxscore lists both Kader
+      // this Spiel says 0 itself, its Liga 1
       expect(mapSpielDetails(readEnvelope(geplant)).liga).not.toHaveProperty(
         'ohneSpielberichte'
       );

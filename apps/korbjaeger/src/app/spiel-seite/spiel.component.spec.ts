@@ -682,8 +682,8 @@ describe('SpielComponent', () => {
       );
 
       expect(kader(seite)).toEqual([]);
-      expect(text(teil(seite, 'spielbericht-fehlt'))).toMatch(
-        /noch kein Spielbericht/i
+      expect(text(teil(seite, 'spielbericht-fehlt'))).toBe(
+        'Noch kein Spielbericht. Schau später noch einmal vorbei.'
       );
     });
 

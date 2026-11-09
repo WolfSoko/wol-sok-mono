@@ -24,7 +24,7 @@ What the Spiel page shows for a BBL or ProA game (e.g. ALBA BERLIN – NINERS Ch
 
 **Cause.** The men's professional leagues (BBL, ProA, ProB) keep their game statistics in their own systems; at the DBB they hold only the schedule, the result and the Halle. The DBB marks such a Liga with `statisticType: 0` in its `ligaData`, which every `matchInfo`, `boxscore`, Spielplan and Tabelle answer carries. Some local youth leagues are marked the same way (results only, no Spielbericht online). The women's leagues (DBBL, 2. DBBL) and the youth Bundesligen (NBBL, JBBL) are `statisticType: 1` and have Kader and quarters. The app has no rule for Bundesligen: it hides what is missing, as it should, but its text promises a Spielbericht that never comes.
 
-The game's own `statisticType` is not the signal: a recorded M14 game (`matchinfo-2843814.json`) has `0` there with a full boxscore, while its `ligaData` says `1`. The Liga search sends `statisticType: null` for every Liga.
+The game's own `statisticType` is not the signal: every Spielplan sends `null` there, and a planned M14 game (`matchinfo-2843814.json`) has `0` there while its `ligaData` says `1`. The Liga search sends `statisticType: null` for every Liga.
 
 ## Goal
 
