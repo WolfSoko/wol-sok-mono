@@ -7,18 +7,9 @@
  */
 export const REGION = 'europe-west3';
 
-/** The collection of the Elternteile's choices, one document per uid. */
-export const AUSWAHL = 'auswahl';
-
 /**
- * The tombstones of deleted accounts, one per uid: while one exists the
- * rules refuse every request on that uid's Auswahl (`istBesitzer` in
- * `apps/korbjaeger/firestore.rules`).
- */
-export const GELOESCHTE_KONTEN = 'geloeschteKonten';
-
-/**
- * How long a tombstone stays: longer than any ID token of the deleted
+ * How long a tombstone (`DELETED_ACCOUNTS_COLLECTION` of
+ * `@wolsok/feat-korbjaeger-collections`) stays: longer than any ID token of the deleted
  * account lives (an hour), as none can be refreshed once the account is
  * gone. Firestore's TTL deletes it after its `expireAt`.
  */

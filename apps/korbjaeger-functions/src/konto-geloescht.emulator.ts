@@ -1,6 +1,11 @@
 import { assertSucceeds } from '@firebase/rules-unit-testing';
 import { Timestamp } from 'firebase-admin/firestore';
-import { AUSWAHL, GELOESCHTE_KONTEN, GRABSTEIN_DAUER_MS } from './config';
+import {
+  DELETED_ACCOUNTS_COLLECTION,
+  LEGACY_SELECTIONS_COLLECTION,
+  SELECTIONS_COLLECTION,
+} from '@wolsok/feat-korbjaeger-collections';
+import { GRABSTEIN_DAUER_MS } from './config';
 import { kontoGeloescht } from './konto-geloescht';
 import { useEmulatorProject } from './testing/emulator';
 
@@ -9,6 +14,13 @@ const ANDERES = 'elternteil-b';
 const JETZT = Date.UTC(2026, 10, 9, 12);
 
 const AUSWAHL_DOKUMENT = {
+  version: 3,
+  teams: { 313036: 1 },
+  children: { 4711: { since: 1, nickname: 'Mimi' } },
+};
+
+/** A selection of before #2966, never moved. */
+const LEGACY_DOKUMENT = {
   version: 2,
   teams: { 313036: 1 },
   kinder: { 4711: { seit: 1, spitzname: 'Mimi' } },
@@ -17,10 +29,13 @@ const AUSWAHL_DOKUMENT = {
 const project = useEmulatorProject();
 
 const auswahlVon = (uid: string) =>
-  project().admin.collection(AUSWAHL).doc(uid);
+  project().admin.collection(SELECTIONS_COLLECTION).doc(uid);
 
 const grabsteinVon = (uid: string) =>
-  project().admin.collection(GELOESCHTE_KONTEN).doc(uid);
+  project().admin.collection(DELETED_ACCOUNTS_COLLECTION).doc(uid);
+
+const legacyVon = (uid: string) =>
+  project().admin.collection(LEGACY_SELECTIONS_COLLECTION).doc(uid);
 
 /** A device signed in as `uid`, under the app's rules. */
 const geraet = (uid: string) =>
@@ -29,9 +44,9 @@ const geraet = (uid: string) =>
 /** What a device writes when the Elternteil follows the Team `id`. */
 const folgen = (device: ReturnType<typeof geraet>, uid: string, id: number) =>
   device
-    .collection(AUSWAHL)
+    .collection(SELECTIONS_COLLECTION)
     .doc(uid)
-    .set({ version: 2, teams: { [id]: id } }, { merge: true });
+    .set({ version: 3, teams: { [id]: id } }, { merge: true });
 
 describe('kontoGeloescht', () => {
   it('leaves a tombstone of a day and no Auswahl of the account', async () => {
@@ -43,6 +58,14 @@ describe('kontoGeloescht', () => {
     expect((await grabsteinVon(ELTERNTEIL).get()).data()).toEqual({
       expireAt: Timestamp.fromMillis(JETZT + GRABSTEIN_DAUER_MS),
     });
+  });
+
+  it('deletes the selection of before #2966 too', async () => {
+    await legacyVon(ELTERNTEIL).set(LEGACY_DOKUMENT);
+
+    await kontoGeloescht(project().admin, ELTERNTEIL, JETZT);
+
+    expect((await legacyVon(ELTERNTEIL).get()).exists).toBe(false);
   });
 
   it("leaves other accounts' Auswahl as it is", async () => {
@@ -90,7 +113,7 @@ describe('kontoGeloescht', () => {
 
     // the deleting device deletes the document; the other one writes it anew
     await assertSucceeds(
-      loeschendes.collection(AUSWAHL).doc(ELTERNTEIL).delete()
+      loeschendes.collection(SELECTIONS_COLLECTION).doc(ELTERNTEIL).delete()
     );
     await assertSucceeds(folgen(anderes, ELTERNTEIL, 99));
     expect((await auswahlVon(ELTERNTEIL).get()).exists).toBe(true);
