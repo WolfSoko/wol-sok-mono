@@ -55,6 +55,7 @@ describe('geraetUebernehmen', () => {
     expect(await gelesen(uid)).toEqual({
       teams: [313036],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     });
   });
 
@@ -70,6 +71,7 @@ describe('geraetUebernehmen', () => {
     expect(await gelesen(uid)).toEqual({
       teams: [],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
   });
 
@@ -90,6 +92,38 @@ describe('geraetUebernehmen', () => {
     expect(await gelesen(uid)).toEqual({
       teams: [313036, 201500],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }, { personId: 4712 }],
+      vereinsfarben: [],
+    });
+  });
+
+  it("takes the device's Vereinsfarben for the other Vereine, the account's winning", async () => {
+    const uid = konto();
+    await vorhanden(uid, {
+      version: 2,
+      teams: teamsRoh(313036),
+      vereinsfarben: { 4343: '#1d4ed8' },
+    });
+
+    const uebrig = await geraetUebernehmen(db(uid), uid, {
+      teams: [],
+      kinder: [],
+      vereinsfarben: [
+        { vereinId: 4242, primaer: '#c8102e', zweite: '#ffffff' },
+        { vereinId: 4343, primaer: '#007a3d' },
+      ],
+    });
+
+    expect(uebrig.vereinsfarben).toEqual([]);
+    expect(await gelesen(uid)).toEqual({
+      teams: [313036],
+      kinder: [],
+      vereinsfarben: [
+        { vereinId: 4242, primaer: '#c8102e', zweite: '#ffffff' },
+        { vereinId: 4343, primaer: '#1d4ed8' },
+      ],
+    });
+    expect(await gespeichert(uid)).toMatchObject({
+      vereinsfarben: { 4242: '#c8102e,#ffffff', 4343: '#1d4ed8' },
     });
   });
 
@@ -121,7 +155,7 @@ describe('geraetUebernehmen', () => {
 
     await geraetUebernehmen(db(uid), uid, { teams, kinder, vereinsfarben: [] });
 
-    expect(await gelesen(uid)).toEqual({ teams, kinder });
+    expect(await gelesen(uid)).toEqual({ teams, kinder, vereinsfarben: [] });
   });
 
   it("leaves a newer version's selection alone", async () => {
@@ -153,10 +187,15 @@ describe('geraetUebernehmen', () => {
       vereinsfarben: [],
     });
 
-    expect(uebrig).toEqual({ teams: [9002, 9003], kinder: [] });
+    expect(uebrig).toEqual({
+      teams: [9002, 9003],
+      kinder: [],
+      vereinsfarben: [],
+    });
     expect(await gelesen(uid)).toEqual({
       teams: [...teams, 9001],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
   });
 
@@ -169,6 +208,6 @@ describe('geraetUebernehmen', () => {
         kinder: [],
         vereinsfarben: [],
       })
-    ).toEqual({ teams: [], kinder: [] });
+    ).toEqual({ teams: [], kinder: [], vereinsfarben: [] });
   });
 });

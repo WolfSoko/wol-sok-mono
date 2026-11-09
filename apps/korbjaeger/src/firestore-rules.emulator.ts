@@ -31,7 +31,11 @@ import {
  */
 let env: RulesTestEnvironment;
 
-const { teams: TEAMS_HOECHSTENS, kinder: KINDER_HOECHSTENS } = AUSWAHL_GRENZEN;
+const {
+  teams: TEAMS_HOECHSTENS,
+  kinder: KINDER_HOECHSTENS,
+  vereinsfarben: VEREINE_HOECHSTENS,
+} = AUSWAHL_GRENZEN;
 
 const ELTERNTEIL = 'elternteil-a';
 const ANDERES = 'elternteil-b';
@@ -84,6 +88,10 @@ const volleKinder = (anzahl: number) =>
       { seit, spitzname: 'x'.repeat(SPITZNAME_CODEPUNKTE) },
     ])
   );
+
+/** Vereinsfarben, each Verein with both colours. */
+const volleVereinsfarben = (anzahl: number) =>
+  Object.fromEntries(zahlen(anzahl).map((id) => [id, '#c8102e,#1d4ed8']));
 
 /** Documents the rules refuse, whether created or changed into. */
 const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
@@ -156,6 +164,61 @@ const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
   [
     'a name of the DBB beside a Kind',
     { version: 2, kinder: { 4711: { seit: 1, vorname: 'Mimi' } } },
+  ],
+  [
+    'more Vereinsfarben than the cap',
+    { version: 2, vereinsfarben: volleVereinsfarben(VEREINE_HOECHSTENS + 1) },
+  ],
+  ['Vereinsfarben that are no map', { version: 2, vereinsfarben: '#c8102e' }],
+  [
+    'a colour in upper case',
+    { version: 2, vereinsfarben: { 4242: '#C8102E' } },
+  ],
+  ['a colour by its name', { version: 2, vereinsfarben: { 4242: 'red' } }],
+  ['a colour of three digits', { version: 2, vereinsfarben: { 4242: '#c81' } }],
+  [
+    'a second colour without a first',
+    { version: 2, vereinsfarben: { 4242: ',#1d4ed8' } },
+  ],
+  [
+    'a second colour that is no colour',
+    {
+      version: 2,
+      vereinsfarben: { 4242: '#c8102e,7' },
+    },
+  ],
+  [
+    "a name beside a Verein's colours",
+    {
+      version: 2,
+      vereinsfarben: { 4242: '#c8102e,TSV Muster' },
+    },
+  ],
+  [
+    'three colours',
+    { version: 2, vereinsfarben: { 4242: '#c8102e,#1d4ed8,#007a3d' } },
+  ],
+  [
+    "two Vereine's colours in one value",
+    { version: 2, vereinsfarben: { 4242: '#c8102e;#1d4ed8' } },
+  ],
+  [
+    'colours as a map',
+    { version: 2, vereinsfarben: { 4242: { primaer: '#c8102e' } } },
+  ],
+  [
+    'a Verein whose id is no number',
+    { version: 2, vereinsfarben: { TSV: '#c8102e' } },
+  ],
+  [
+    'invalid colours at the end',
+    {
+      version: 2,
+      vereinsfarben: {
+        ...volleVereinsfarben(VEREINE_HOECHSTENS - 1),
+        999999: 'x',
+      },
+    },
   ],
   [
     'an invalid Kind at the end',
@@ -249,6 +312,54 @@ describe('the Auswahl document', () => {
       await assertSucceeds(
         updateDoc(eigene, { kinder: volleKinder(KINDER_HOECHSTENS - 1) })
       );
+      await assertSucceeds(
+        updateDoc(eigene, {
+          vereinsfarben: volleVereinsfarben(VEREINE_HOECHSTENS),
+        })
+      );
+    });
+
+    it('takes a full map of Vereinsfarben in the write that creates it', async () => {
+      await assertSucceeds(
+        speichern({
+          version: 2,
+          vereinsfarben: volleVereinsfarben(VEREINE_HOECHSTENS),
+        })
+      );
+    });
+
+    it("takes a Verein's colours set and changed entry by entry, as the app writes them", async () => {
+      await vorhanden(ELTERNTEIL, {
+        ...GUELTIG,
+        vereinsfarben: volleVereinsfarben(VEREINE_HOECHSTENS - 1),
+      });
+      const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
+
+      await assertSucceeds(
+        setDoc(
+          eigene,
+          {
+            version: 2,
+            vereinsfarben: { 4242: '#c8102e,#1d4ed8' },
+          },
+          { merge: true }
+        )
+      );
+      await assertSucceeds(
+        setDoc(
+          eigene,
+          {
+            version: 2,
+            vereinsfarben: {
+              4242: '#007a3d',
+            },
+          },
+          { merge: true }
+        )
+      );
+      await assertSucceeds(
+        updateDoc(eigene, { 'vereinsfarben.4242': deleteField() })
+      );
     });
 
     it('takes a change of single entries, as the app writes them', async () => {
@@ -335,6 +446,7 @@ describe('the Auswahl document', () => {
     it.each([
       ['Teams', { 'teams.313036': 'Mimi Muster' }],
       ['Kinder', { 'kinder.4711.vorname': 'Mimi' }],
+      ['Vereinsfarben', { 'vereinsfarben.4242': 'rot' }],
     ])('refuses to change one map into invalid %s', async (_, aenderung) => {
       await vorhanden(ELTERNTEIL);
 

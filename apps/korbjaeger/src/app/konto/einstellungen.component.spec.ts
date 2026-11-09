@@ -307,7 +307,7 @@ describe('EinstellungenComponent', () => {
         .querySelector('[data-qa="nicht-uebernommen"]')
         ?.textContent?.trim()
     ).toBe(
-      '2 Teams und 1 Kind dieses Geräts passten nicht mehr in dein Konto: Es hält höchstens 50 Teams und 20 Kinder.'
+      '2 Teams und 1 Kind dieses Geräts passten nicht mehr in dein Konto: Es hält höchstens 50 Teams, 20 Kinder und die Farben von 50 Vereinen.'
     );
   });
 
@@ -429,7 +429,31 @@ describe('nichtUebernommenText', () => {
     expect(
       nichtUebernommenText({ teams: [313036], kinder: [], vereinsfarben: [] })
     ).toBe(
-      '1 Team dieses Geräts passte nicht mehr in dein Konto: Es hält höchstens 50 Teams und 20 Kinder.'
+      '1 Team dieses Geräts passte nicht mehr in dein Konto: Es hält höchstens 50 Teams, 20 Kinder und die Farben von 50 Vereinen.'
+    );
+  });
+
+  it('names Vereinsfarben among the rest, the verb in the plural', () => {
+    expect(
+      nichtUebernommenText({
+        teams: [313036],
+        kinder: [],
+        vereinsfarben: [{ vereinId: 4242, primaer: '#c8102e' }],
+      })
+    ).toBe(
+      '1 Team und die Farben eines Vereins dieses Geräts passten nicht mehr in dein Konto: Es hält höchstens 50 Teams, 20 Kinder und die Farben von 50 Vereinen.'
+    );
+    expect(
+      nichtUebernommenText({
+        teams: [],
+        kinder: [],
+        vereinsfarben: [
+          { vereinId: 4242, primaer: '#c8102e' },
+          { vereinId: 4343, primaer: '#1d4ed8' },
+        ],
+      })
+    ).toBe(
+      'Die Farben von 2 Vereinen dieses Geräts passten nicht mehr in dein Konto: Es hält höchstens 50 Teams, 20 Kinder und die Farben von 50 Vereinen.'
     );
   });
 });

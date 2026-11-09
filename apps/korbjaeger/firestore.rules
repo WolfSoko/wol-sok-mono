@@ -3,14 +3,15 @@ rules_version = '2';
 // The Firestore rules of Korbjäger (ADR 0019): one document per signed-in
 // Elternteil, auswahl/{uid}, holding Meine Teams and the Kinder as maps
 // keyed by their DBB id (a Team: since when it is followed; a Kind: since
-// when it is marked, and an optional Spitzname), nothing else and only
-// theirs. Keyed by id, every change is a write of its own entries, which
+// when it is marked, and an optional Spitzname), the Vereinsfarben by the
+// Verein's DBB id (a colour and an optional second one, as one text), nothing else and
+// only theirs. Keyed by id, every change is a write of its own entries, which
 // the server merges with other devices' (auswahl-dokument.ts). Specs:
 // src/firestore-rules.emulator.ts (`nx run korbjaeger:test-emulator`).
 //
 // A request may evaluate at most 1000 expressions, and each read of a map
-// through a function counts again: 50 Teams and 20 Kinder are more than one
-// request can check. So a create checks both maps, an update only the maps
+// through a function counts again: 50 Teams, 20 Kinder and the colours of
+// 50 Vereine are more than one request can check. So a create checks both maps, an update only the maps
 // it changes, and the app changes one map a write (the merge at sign-in in
 // two steps): each holds up to its cap.
 service cloud.firestore {
@@ -22,7 +23,9 @@ service cloud.firestore {
         && (!("teams" in request.resource.data)
           || sindTeams(request.resource.data.teams))
         && (!("kinder" in request.resource.data)
-          || sindKinder(request.resource.data.kinder));
+          || sindKinder(request.resource.data.kinder))
+        && (!("vereinsfarben" in request.resource.data)
+          || sindVereinsfarben(request.resource.data.vereinsfarben));
       // an update is checked in the maps it changes only; one that only
       // loses entries is taken as it is, so a map over its cap shrinks
       allow update: if istBesitzer(uid)
@@ -34,7 +37,11 @@ service cloud.firestore {
         && (!("kinder" in request.resource.data)
           || !request.resource.data.diff(resource.data).affectedKeys().hasAny(["kinder"])
           || nurWeniger(request.resource.data.kinder, resource.data.kinder)
-          || sindKinder(request.resource.data.kinder));
+          || sindKinder(request.resource.data.kinder))
+        && (!("vereinsfarben" in request.resource.data)
+          || !request.resource.data.diff(resource.data).affectedKeys().hasAny(["vereinsfarben"])
+          || nurWeniger(request.resource.data.vereinsfarben, resource.data.vereinsfarben)
+          || sindVereinsfarben(request.resource.data.vereinsfarben));
     }
   }
 
@@ -43,13 +50,14 @@ service cloud.firestore {
   }
 
   // Version 2 of the app's AuswahlDokument (auswahl-dokument.ts: both
-  // lists as maps keyed by id; version 1's lists never reached Firestore),
-  // with no other fields; a newer version changes these rules in the same
+  // lists as maps keyed by id; version 1's lists never reached Firestore,
+  // and the Vereinsfarben joined as a field of their own), with no other
+  // fields; a newer version changes these rules in the same
   // release. The maps are checked in the rules above, not through a
   // function of the document: every read through one more argument counts
   // again.
   function istVersion2(daten) {
-    return daten.keys().hasOnly(["version", "teams", "kinder"])
+    return daten.keys().hasOnly(["version", "teams", "kinder", "vereinsfarben"])
       && daten.version is int && daten.version == 2;
   }
 
@@ -124,5 +132,19 @@ service cloud.firestore {
   function istKind(kind) {
     return kind.keys().hasOnly(["seit", "spitzname"]) && kind.seit is int
       && (kind.size() == 1 || kind.spitzname.matches("(?s).{0,330}"));
+  }
+
+  // The Vereinsfarben: each Verein's DBB id to its colours as one text
+  // (farbenText in vereinsfarben.ts): #rrggbb in lower case, a second one
+  // after a comma. All values at once, joined, as the keys: a check per
+  // entry costs more than a request may evaluate for 50 Vereine. As many
+  // parts as values, so no value holds the joining ";", and a value that is
+  // no text fails the join.
+  function sindVereinsfarben(vereinsfarben) {
+    return vereinsfarben is map && vereinsfarben.size() <= 50
+      && sindIds(vereinsfarben)
+      && (vereinsfarben.size() == 0
+        || (vereinsfarben.values().join(";").matches("#[0-9a-f]{6}(,#[0-9a-f]{6})?(;#[0-9a-f]{6}(,#[0-9a-f]{6})?)*")
+          && vereinsfarben.values().join(";").split(";").size() == vereinsfarben.size()));
   }
 }

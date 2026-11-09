@@ -152,6 +152,7 @@ describe('FirestoreAuswahl', () => {
     expect(await gespeicherterInhalt(uid)).toEqual({
       teams: [313036, 201500],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
   });
 
@@ -169,6 +170,7 @@ describe('FirestoreAuswahl', () => {
     expect(await gespeicherterInhalt(uid)).toEqual({
       teams: [313036],
       kinder: [],
+      vereinsfarben: [],
     });
 
     await enableNetwork(firestore);
@@ -176,6 +178,7 @@ describe('FirestoreAuswahl', () => {
     expect(await gespeicherterInhalt(uid)).toEqual({
       teams: [313036, 201500],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
   });
 
@@ -217,6 +220,7 @@ describe('FirestoreAuswahl', () => {
       expect(await gespeicherterInhalt(uid)).toEqual({
         teams: [313036, 201500, 201765],
         kinder: [],
+        vereinsfarben: [],
       });
       expect(a.teams()).toEqual([313036, 201500, 201765]);
     });
@@ -234,6 +238,7 @@ describe('FirestoreAuswahl', () => {
       expect(await gespeicherterInhalt(uid)).toEqual({
         teams: [],
         kinder: [{ personId: 4711, spitzname: 'Mi' }, { personId: 4712 }],
+        vereinsfarben: [],
       });
     });
 
@@ -253,6 +258,7 @@ describe('FirestoreAuswahl', () => {
       expect(await gespeicherterInhalt(uid)).toEqual({
         teams: [201765],
         kinder: [{ personId: 4712 }],
+        vereinsfarben: [],
       });
     });
 
@@ -267,7 +273,11 @@ describe('FirestoreAuswahl', () => {
       await bGesendet();
       await wiederOnline();
 
-      expect(await gespeicherterInhalt(uid)).toEqual({ teams: [], kinder: [] });
+      expect(await gespeicherterInhalt(uid)).toEqual({
+        teams: [],
+        kinder: [],
+        vereinsfarben: [],
+      });
     });
 
     it("refuses the other's Spitzname for a Kind unmarked offline and sent first", async () => {
@@ -282,7 +292,11 @@ describe('FirestoreAuswahl', () => {
       await b.spitznameSetzen(MIMI.personId, 'Mi').catch(() => undefined);
       await bGesendet();
 
-      expect(await gespeicherterInhalt(uid)).toEqual({ teams: [], kinder: [] });
+      expect(await gespeicherterInhalt(uid)).toEqual({
+        teams: [],
+        kinder: [],
+        vereinsfarben: [],
+      });
     });
 
     it('refuses, rather than cuts, a Team the other filled the last place for', async () => {
@@ -302,6 +316,7 @@ describe('FirestoreAuswahl', () => {
       expect(await gespeicherterInhalt(uid)).toEqual({
         teams: [...vorher, 201765],
         kinder: [],
+        vereinsfarben: [],
       });
       expect(a.teams()).toEqual([...vorher, 201765]);
     });
@@ -353,6 +368,7 @@ describe('FirestoreAuswahl', () => {
     expect(await gespeicherterInhalt(uid)).toEqual({
       teams: [313036, 201500],
       kinder: [],
+      vereinsfarben: [],
     });
   });
 

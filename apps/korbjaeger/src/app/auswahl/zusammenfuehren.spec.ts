@@ -14,7 +14,7 @@ describe('zusammenfuehren', () => {
 
     expect(zusammenfuehren(LEER, geraet)).toEqual({
       inhalt: geraet,
-      uebrig: { teams: [], kinder: [] },
+      uebrig: LEER,
     });
   });
 
@@ -52,6 +52,7 @@ describe('zusammenfuehren', () => {
         { personId: 4712, spitzname: 'Mo' },
         { personId: 4713 },
       ],
+      vereinsfarben: [],
     });
   });
 
@@ -111,6 +112,50 @@ describe('zusammenfuehren', () => {
     expect(uebrig).toEqual({
       teams: [9003, 9004],
       kinder: [{ personId: 9001 }],
+      vereinsfarben: [],
     });
+  });
+
+  it("takes the device's Vereinsfarben for the other Vereine, the account's winning", () => {
+    const konto: AuswahlInhalt = {
+      ...LEER,
+      vereinsfarben: [{ vereinId: 4343, primaer: '#1d4ed8' }],
+    };
+    const geraet: AuswahlInhalt = {
+      ...LEER,
+      vereinsfarben: [
+        { vereinId: 4242, primaer: '#c8102e' },
+        { vereinId: 4343, primaer: '#007a3d' },
+      ],
+    };
+
+    const { inhalt, uebrig } = zusammenfuehren(konto, geraet);
+
+    expect(inhalt.vereinsfarben).toEqual([
+      { vereinId: 4242, primaer: '#c8102e' },
+      { vereinId: 4343, primaer: '#1d4ed8' },
+    ]);
+    expect(uebrig.vereinsfarben).toEqual([]);
+    expect(zusammenfuehren(inhalt, geraet).inhalt).toBe(inhalt);
+  });
+
+  it("takes the device's Vereinsfarben only up to their cap", () => {
+    const farben = (anzahl: number, ab: number) =>
+      Array.from({ length: anzahl }, (_, i) => ({
+        vereinId: ab + i,
+        primaer: '#c8102e',
+      }));
+    const konto: AuswahlInhalt = {
+      ...LEER,
+      vereinsfarben: farben(AUSWAHL_GRENZEN.vereinsfarben - 1, 1),
+    };
+    const geraet: AuswahlInhalt = { ...LEER, vereinsfarben: farben(2, 9001) };
+
+    const { inhalt, uebrig } = zusammenfuehren(konto, geraet);
+
+    expect(inhalt.vereinsfarben).toHaveLength(AUSWAHL_GRENZEN.vereinsfarben);
+    expect(uebrig.vereinsfarben).toEqual([
+      { vereinId: 9002, primaer: '#c8102e' },
+    ]);
   });
 });

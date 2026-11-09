@@ -5,8 +5,8 @@ import {
   type VereinId,
 } from '@wolsok/feat-shared-basketball-data';
 import {
-  istFarbe,
-  type Vereinsfarben,
+  farbenAusText,
+  farbenText,
   type VereinsfarbenWahl,
 } from '../vereinsfarben/vereinsfarben';
 import { kindMit, type Kind } from './kind';
@@ -58,8 +58,11 @@ export interface AuswahlDokument {
   /** Each Team's id, since when it is followed (ms since 1970). */
   readonly teams: Readonly<Record<string, number>>;
   readonly kinder: Readonly<Record<string, KindEintrag>>;
-  /** Each Verein's colours, by its id; a Verein without any has no entry. */
-  readonly vereinsfarben?: Readonly<Record<string, Vereinsfarben>>;
+  /**
+   * Each Verein's colours, by its id, as one text (`farbenText`); a Verein
+   * without any has no entry.
+   */
+  readonly vereinsfarben?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -166,14 +169,8 @@ export type KindFeld =
   | { readonly spitzname: string | typeof ENTFERNT }
   | typeof ENTFERNT;
 
-/**
- * What a change writes of a Verein's colours: all of them (a second colour
- * that goes as `ENTFERNT`, as Firestore merges a map into the stored one),
- * or that they go.
- */
-export type VereinsfarbenFeld =
-  | { readonly primaer: string; readonly zweite: string | typeof ENTFERNT }
-  | typeof ENTFERNT;
+/** What a change writes of a Verein's colours: their text, or that they go. */
+export type VereinsfarbenFeld = string | typeof ENTFERNT;
 
 /**
  * The entries a change writes, by id; a map it does not change is left
@@ -248,10 +245,11 @@ function vereinsfarbenFelder(
     }
   }
   const davor = new Map(vorher.map((wahl) => [wahl.vereinId, wahl]));
-  for (const { vereinId, primaer, zweite } of nachher) {
-    const alt = davor.get(vereinId);
-    if (alt?.primaer !== primaer || alt.zweite !== zweite) {
-      felder[vereinId] = { primaer, zweite: zweite ?? ENTFERNT };
+  for (const wahl of nachher) {
+    const text = farbenText(wahl);
+    const alt = davor.get(wahl.vereinId);
+    if (alt === undefined || farbenText(alt) !== text) {
+      felder[wahl.vereinId] = text;
     }
   }
   return felder;
@@ -273,7 +271,7 @@ export function auswahlDokumentMit(
     ...roh,
     version: AUSWAHL_VERSION,
     ...(felder.teams && {
-      teams: teamsMit(
+      teams: eintraegeMit(
         istKarte(roh['teams'])
           ? roh['teams']
           : Object.fromEntries(inhalt.teams.map((team, i) => [team, i + 1])),
@@ -294,7 +292,7 @@ export function auswahlDokumentMit(
       ),
     }),
     ...(felder.vereinsfarben && {
-      vereinsfarben: vereinsfarbenMit(
+      vereinsfarben: eintraegeMit(
         istKarte(roh['vereinsfarben']) ? roh['vereinsfarben'] : {},
         felder.vereinsfarben
       ),
@@ -302,29 +300,12 @@ export function auswahlDokumentMit(
   };
 }
 
-function vereinsfarbenMit(
-  vereinsfarben: RohesDokument,
-  felder: Readonly<Record<string, VereinsfarbenFeld>>
+/** `eintraege` with each of `felder` set, or deleted where it goes. */
+function eintraegeMit(
+  eintraege: RohesDokument,
+  felder: Readonly<Record<string, TeamFeld | VereinsfarbenFeld>>
 ): RohesDokument {
-  const neu: Record<string, unknown> = { ...vereinsfarben };
-  for (const [id, feld] of Object.entries(felder)) {
-    if (feld === ENTFERNT) {
-      delete neu[id];
-    } else {
-      neu[id] = {
-        primaer: feld.primaer,
-        ...(feld.zweite !== ENTFERNT && { zweite: feld.zweite }),
-      };
-    }
-  }
-  return neu;
-}
-
-function teamsMit(
-  teams: RohesDokument,
-  felder: Readonly<Record<string, TeamFeld>>
-): RohesDokument {
-  const neu: Record<string, unknown> = { ...teams };
+  const neu: Record<string, unknown> = { ...eintraege };
   for (const [id, feld] of Object.entries(felder)) {
     if (feld === ENTFERNT) {
       delete neu[id];
@@ -434,20 +415,11 @@ function vereinsfarbenLesen(
     return [];
   }
   const gelesen: VereinsfarbenWahl[] = [];
-  for (const [schluessel, eintrag] of Object.entries(vereinsfarben)) {
+  for (const [schluessel, text] of Object.entries(vereinsfarben)) {
     const vereinId: VereinId = Number(schluessel);
-    if (
-      istId(vereinId) &&
-      String(vereinId) === schluessel &&
-      istKarte(eintrag) &&
-      istFarbe(eintrag['primaer']) &&
-      (eintrag['zweite'] === undefined || istFarbe(eintrag['zweite']))
-    ) {
-      gelesen.push({
-        vereinId,
-        primaer: eintrag['primaer'],
-        ...(eintrag['zweite'] !== undefined && { zweite: eintrag['zweite'] }),
-      });
+    const farben = farbenAusText(text);
+    if (istId(vereinId) && String(vereinId) === schluessel && farben) {
+      gelesen.push({ vereinId, ...farben });
     }
   }
   return gelesen.sort((a, b) => a.vereinId - b.vereinId);

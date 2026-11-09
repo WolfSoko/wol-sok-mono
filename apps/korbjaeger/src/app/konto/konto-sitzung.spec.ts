@@ -179,6 +179,7 @@ describe('KontoSitzung', () => {
       expect(dienst.uebernommen).toEqual({
         teams: [313036],
         kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+        vereinsfarben: [],
       });
       expect(lokal.teams()).toEqual([]);
       expect(merker.gesetzt()).toBe(true);
@@ -197,9 +198,14 @@ describe('KontoSitzung', () => {
       expect(await sitzung.anmelden()).toEqual({
         teams: [9001, 9002],
         kinder: [{ personId: 4711 }],
+        vereinsfarben: [],
       });
       expect(sitzung.uebernahme()).toEqual({
-        uebrig: { teams: [9001, 9002], kinder: [{ personId: 4711 }] },
+        uebrig: {
+          teams: [9001, 9002],
+          kinder: [{ personId: 4711 }],
+          vereinsfarben: [],
+        },
         behalten: false,
       });
     });
@@ -334,6 +340,7 @@ describe('KontoSitzung', () => {
       expect(dienst.uebernommen).toEqual({
         teams: [],
         kinder: [{ personId: 4711, spitzname: 'Mi' }],
+        vereinsfarben: [],
       });
       expect(lokal.kinder()).toEqual([]);
       expect(sitzung.uebernahme()?.behalten).toBe(false);

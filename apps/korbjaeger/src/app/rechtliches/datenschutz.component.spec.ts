@@ -64,6 +64,9 @@ describe('DatenschutzComponent', () => {
 
     expect(konto).toContain(`${AUSWAHL_GRENZEN.teams} Teams`);
     expect(konto).toContain(`${AUSWAHL_GRENZEN.kinder} Kinder`);
+    expect(konto).toContain(
+      `die Farben von ${AUSWAHL_GRENZEN.vereinsfarben} Vereinen`
+    );
     expect(konto).toContain(`${SPITZNAME_LAENGE} Zeichen`);
     const { firestore } = REGIONEN;
     expect(konto).toContain(`${firestore.id} (${firestore.ort})`);

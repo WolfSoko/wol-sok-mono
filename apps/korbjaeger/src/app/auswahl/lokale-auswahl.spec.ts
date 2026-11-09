@@ -66,7 +66,11 @@ describe('LokaleAuswahl', () => {
         JSON.stringify({ version: 1, teams: [201500], kinder: [] })
       );
 
-      expect(auswahl.neuGelesen()).toEqual({ teams: [201500], kinder: [] });
+      expect(auswahl.neuGelesen()).toEqual({
+        teams: [201500],
+        kinder: [],
+        vereinsfarben: [],
+      });
       expect(auswahl.teams()).toEqual([201500]);
     });
 
@@ -92,8 +96,13 @@ describe('LokaleAuswahl', () => {
       expect(auswahl.abgeben(uebernommen)).toEqual({
         teams: [201500],
         kinder: [],
+        vereinsfarben: [],
       });
-      expect(gespeichert(geraet)).toEqual({ teams: [201500], kinder: [] });
+      expect(gespeichert(geraet)).toEqual({
+        teams: [201500],
+        kinder: [],
+        vereinsfarben: [],
+      });
     });
 
     it('keeps a Kind whose Spitzname changed since it was taken over', async () => {
@@ -117,6 +126,7 @@ describe('LokaleAuswahl', () => {
       expect(auswahl.abgeben(auswahl.neuGelesen())).toEqual({
         teams: [],
         kinder: [],
+        vereinsfarben: [],
       });
       expect(geraet.schreibvorgaenge).toBe(schreibvorgaenge + 1);
       expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
@@ -160,6 +170,7 @@ describe('LokaleAuswahl', () => {
     expect(gespeichert(geraet)).toEqual({
       teams: [313036, 201500, 201765],
       kinder: [{ personId: 4712 }, { personId: 4711, spitzname: 'Mi' }],
+      vereinsfarben: [],
     });
   });
 
@@ -174,6 +185,7 @@ describe('LokaleAuswahl', () => {
     expect(gespeichert(geraet)).toEqual({
       teams: [],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
   });
 
@@ -250,7 +262,11 @@ describe('LokaleAuswahl', () => {
       await new LokaleAuswahl(geraet, undefined, platzSchaffen).folgen(313036);
 
       expect(platzSchaffen).toHaveBeenCalledTimes(1);
-      expect(gespeichert(geraet)).toEqual({ teams: [313036], kinder: [] });
+      expect(gespeichert(geraet)).toEqual({
+        teams: [313036],
+        kinder: [],
+        vereinsfarben: [],
+      });
     });
 
     it('asks for room only on a full storage, and tries once more only', async () => {
@@ -396,6 +412,7 @@ describe('LokaleAuswahl', () => {
       expect(gespeichert(geraet)).toEqual({
         teams: [313036, 201500],
         kinder: [{ personId: 4711, spitzname: 'Lu' }],
+        vereinsfarben: [],
       });
     });
 
@@ -433,6 +450,7 @@ describe('LokaleAuswahl', () => {
       expect(gespeichert(geraet)).toEqual({
         teams: [201500, 313036],
         kinder: [{ personId: 4711 }],
+        vereinsfarben: [],
       });
     });
   });

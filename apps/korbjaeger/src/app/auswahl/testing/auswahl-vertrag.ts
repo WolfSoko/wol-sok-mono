@@ -526,7 +526,7 @@ export function auswahlVertrag(
         expect(await speicher.liesRoh()).toEqual({
           version: 2,
           vereinsfarben: {
-            [VEREIN_ROT]: { primaer: '#c8102e', zweite: '#1d4ed8' },
+            [VEREIN_ROT]: '#c8102e,#1d4ed8',
           },
         });
       });
@@ -609,8 +609,8 @@ export function auswahlVertrag(
           version: 2,
           teams: teamsRoh(MTV_GIFHORN),
           vereinsfarben: {
-            [VEREIN_ROT]: { primaer: '#c8102e' },
-            [VEREIN_BLAU]: { primaer: 'blau' },
+            [VEREIN_ROT]: '#c8102e',
+            [VEREIN_BLAU]: 'blau',
           },
         });
 
@@ -625,7 +625,7 @@ export function auswahlVertrag(
       it('sets no colours from a newer version', async () => {
         const neuer = {
           version: 99,
-          vereinsfarben: { [VEREIN_ROT]: { primaer: '#c8102e' } },
+          vereinsfarben: { [VEREIN_ROT]: '#c8102e' },
         };
         await speicher.schreibeRoh(neuer);
 
@@ -680,9 +680,7 @@ export function auswahlVertrag(
         const voll = ids(AUSWAHL_GRENZEN.vereinsfarben);
         await speicher.schreibeRoh({
           version: 2,
-          vereinsfarben: Object.fromEntries(
-            voll.map((id) => [id, { primaer: '#c8102e' }])
-          ),
+          vereinsfarben: Object.fromEntries(voll.map((id) => [id, '#c8102e'])),
         });
         const auswahl = await speicher.oeffnen();
 
