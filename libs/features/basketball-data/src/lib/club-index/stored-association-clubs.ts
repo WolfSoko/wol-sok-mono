@@ -20,7 +20,7 @@ export function storedAssociationClubs(
   return {
     version: CLUB_INDEX_VERSION,
     association: { id: list.association.id, name: list.association.name },
-    clubs: list.clubs.map(({ id, name }) => ({ id, name })),
+    clubs: list.clubs.map(entryOf),
     updatedAt: list.updatedAt,
   };
 }
@@ -47,9 +47,14 @@ export function parseAssociationClubs(
   }
   return {
     association: { id: association.id, name: association.name },
-    clubs: clubs.map(({ id, name }) => ({ id, name })),
+    clubs: clubs.map(entryOf),
     updatedAt,
   };
+}
+
+/** Only the fields an entry has, so nothing else reaches the store. */
+function entryOf({ id, name, nameFromTeam }: ClubIndexEntry): ClubIndexEntry {
+  return nameFromTeam === true ? { id, name, nameFromTeam } : { id, name };
 }
 
 function isEntry(value: unknown): value is ClubIndexEntry {
@@ -58,7 +63,8 @@ function isEntry(value: unknown): value is ClubIndexEntry {
     typeof value['id'] === 'number' &&
     isDbbId(value['id']) &&
     typeof value['name'] === 'string' &&
-    value['name'].trim() !== ''
+    value['name'].trim() !== '' &&
+    (value['nameFromTeam'] === undefined || value['nameFromTeam'] === true)
   );
 }
 

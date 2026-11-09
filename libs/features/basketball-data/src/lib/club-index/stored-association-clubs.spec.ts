@@ -7,7 +7,10 @@ import {
 
 const BAYERN: AssociationClubs = {
   association: { id: 2, name: 'Bayern' },
-  clubs: [{ id: 1476, name: 'Post SV Nürnberg' }],
+  clubs: [
+    { id: 1476, name: 'Post SV Nürnberg' },
+    { id: 1932, name: 'Freak City Bamberg 2', nameFromTeam: true },
+  ],
   updatedAt: 1_700_000_000_000,
 };
 
@@ -50,6 +53,13 @@ describe('the stored club index', () => {
       { ...storedAssociationClubs(BAYERN), clubs: {} },
     ],
     ['no time', { ...storedAssociationClubs(BAYERN), updatedAt: 'gestern' }],
+    [
+      'a stand-in mark that is not true',
+      {
+        ...storedAssociationClubs(BAYERN),
+        clubs: [{ id: 1, name: 'A', nameFromTeam: false }],
+      },
+    ],
   ])('skips a document with %s', (_case, data) => {
     expect(parseAssociationClubs(data)).toBeUndefined();
   });

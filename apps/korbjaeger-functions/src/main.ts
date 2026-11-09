@@ -38,7 +38,8 @@ export const auswahlLoeschen = v1
 
 /**
  * The club index (#2988): hourly, it crawls the one Association whose list
- * is missing or a week old (`runClubIndex`) from the DBB's public Leagues,
+ * is missing or a week old (`runClubIndex`; one whose crawl failed waits a
+ * day, so it holds up no other) from the DBB's public Leagues,
  * one request a second, and stores its Clubs' ids and names in `clubIndex`,
  * which the app's `/api/clubs` serves. Not retried: the next hour picks the
  * same Association again. Its log names no Club. Off with `CLUB_INDEX_ON`.
@@ -71,6 +72,8 @@ export const clubIndex = CLUB_INDEX_ON
               setTimeout(resolve, CLUB_INDEX_DBB.pauseMs)
             ),
           maxAgeMs: CLUB_INDEX_DBB.maxAgeMs,
+          retryAfterMs: CLUB_INDEX_DBB.retryAfterMs,
+          namesForMs: CLUB_INDEX_DBB.namesForMs,
         });
         logger.info('Club index run', result);
       }

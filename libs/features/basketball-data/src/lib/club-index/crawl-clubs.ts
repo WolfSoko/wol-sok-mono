@@ -1,25 +1,38 @@
 import type { BasketballData } from '../basketball-data';
-import { isBasketballDataError } from '../domain/basketball-data-error';
+import {
+  BasketballDataError,
+  isBasketballDataError,
+} from '../domain/basketball-data-error';
 import type { LigaId, VerbandId, VereinId } from '../domain/ids';
 import type { Liga } from '../domain/liga';
-import { KEIN_LIGA_FILTER, naechsterStartIndex } from '../domain/liga-suche';
+import {
+  KEIN_LIGA_FILTER,
+  naechsterStartIndex,
+  type LigaSeite,
+} from '../domain/liga-suche';
 import type { Team } from '../domain/team';
-import type { ClubIndexEntry } from './club-index';
+import { byClubName, type ClubIndexEntry } from './club-index';
 
 /** What a crawl takes beside the source and the Association. */
 export interface ClubCrawlOptions {
-  /** Names of Clubs an earlier crawl found; these are not read again. */
+  /** Clubs' own names an earlier crawl read; these are not read again. */
   readonly knownNames: ReadonlyMap<VereinId, string>;
   /** Waits between two reads, so the source sees one request at a time, spaced. */
   readonly pause: () => Promise<void>;
+  /**
+   * Whether there is still time to read a Club's name; once not, a Team's
+   * name stands in (`nameFromTeam`). Always, where left out.
+   */
+  readonly timeForNames?: () => boolean;
 }
 
 /**
- * Every Club playing in a League of `association`, each once, by id: its
+ * Every Club playing in a League of `association`, each once, by name: its
  * Leagues page by page, each League's Teams, and the name of each Club no
- * earlier crawl named (where the source knows no such Club, the name of
- * one of its Teams). A League the source does not know (any longer) is
- * skipped; any other failure rejects, so the caller keeps what it had.
+ * earlier crawl read. Where that name cannot be read (in time), one of the
+ * Club's Teams' names stands in, marked `nameFromTeam`. A League the
+ * source does not know or cannot map is skipped; a League list or Teams
+ * the source cannot deliver now reject, so the caller keeps what it had.
  * Waits `pause` before every read but the first.
  */
 export async function crawlClubs(
@@ -37,15 +50,19 @@ export async function crawlClubs(
       }
     }
   }
+  const timeForNames = options.timeForNames ?? (() => true);
   const clubs: ClubIndexEntry[] = [];
   for (const [id, teamName] of teamNames) {
     const name =
       options.knownNames.get(id) ??
-      (await clubName(data, id, read)) ??
-      teamName;
-    clubs.push({ id, name });
+      (timeForNames() ? await clubName(data, id, read) : undefined);
+    clubs.push(
+      name === undefined
+        ? { id, name: teamName, nameFromTeam: true }
+        : { id, name }
+    );
   }
-  return clubs.sort((a, b) => a.id - b.id);
+  return clubs.sort(byClubName);
 }
 
 type PacedRead = <T>(read: () => Promise<T>) => Promise<T>;
@@ -67,7 +84,7 @@ async function leaguesOf(
   read: PacedRead
 ): Promise<readonly Liga[]> {
   const filter = { ...KEIN_LIGA_FILTER, verbandIds: [association] };
-  let page = (await read(() => data.ligaSuche(filter))).ersteSeite;
+  let page: LigaSeite = (await read(() => data.ligaSuche(filter))).ersteSeite;
   const leagues = [...page.ligen];
   for (
     let start = naechsterStartIndex(page);
@@ -76,6 +93,13 @@ async function leaguesOf(
   ) {
     const from = start;
     page = await read(() => data.ligaSeite(filter, from));
+    if (page.ligen.length === 0 && page.weitere) {
+      // the same page again would follow, and again
+      throw new BasketballDataError(
+        'unexpected-shape',
+        `League list of ${association}: an empty page at ${from} with more to come`
+      );
+    }
     leagues.push(...page.ligen);
   }
   return leagues;
@@ -86,29 +110,29 @@ async function teamsOf(
   league: LigaId,
   read: PacedRead
 ): Promise<readonly Team[]> {
-  return orUndefinedIfNotFound(read(() => data.ligaTeams(league))).then(
-    (teams) => teams ?? []
-  );
+  try {
+    return await read(() => data.ligaTeams(league));
+  } catch (error) {
+    if (
+      isBasketballDataError(error, 'not-found') ||
+      isBasketballDataError(error, 'unexpected-shape')
+    ) {
+      return [];
+    }
+    throw error;
+  }
 }
 
+/** The Club's own name, or `undefined` where the source does not give it. */
 async function clubName(
   data: BasketballData,
   club: VereinId,
   read: PacedRead
 ): Promise<string | undefined> {
-  const teams = await orUndefinedIfNotFound(
-    read(() => data.vereinsTeams(club))
-  );
-  return teams?.verein.name;
-}
-
-async function orUndefinedIfNotFound<T>(
-  reading: Promise<T>
-): Promise<T | undefined> {
   try {
-    return await reading;
+    return (await read(() => data.vereinsTeams(club))).verein.name;
   } catch (error) {
-    if (isBasketballDataError(error, 'not-found')) {
+    if (isBasketballDataError(error)) {
       return undefined;
     }
     throw error;

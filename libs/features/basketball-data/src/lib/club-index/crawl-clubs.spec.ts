@@ -29,7 +29,10 @@ const PAGES: Record<number, LigaSeite> = {
   2: { startIndex: 2, ligen: [league(3)], weitere: false },
 };
 
-const TEAMS: Record<LigaId, readonly Team[] | 'not-found' | 'unavailable'> = {
+const TEAMS: Record<
+  LigaId,
+  readonly Team[] | 'not-found' | 'unavailable' | 'unexpected-shape'
+> = {
   1: [team(11, 100, 'MTV Wasbüttel'), team(12, 200, 'MTV Gifhorn 2')],
   2: [team(13, 100, 'MTV Wasbüttel 2'), team(14, 300, 'SG Unbekannt')],
   3: 'not-found',
@@ -97,10 +100,57 @@ describe('crawlClubs', () => {
     });
 
     expect(clubs).toEqual([
-      { id: 100, name: 'MTV Wasbüttel' },
       { id: 200, name: 'MTV Gifhorn' },
-      { id: 300, name: 'SG Unbekannt' },
+      { id: 100, name: 'MTV Wasbüttel' },
+      { id: 300, name: 'SG Unbekannt', nameFromTeam: true },
     ]);
+  });
+
+  it("lets a Team's name stand in once there is no time left to read names", async () => {
+    const { data, reads } = fakeData();
+
+    const clubs = await crawlClubs(data, 7, {
+      knownNames: new Map([[100, 'MTV Wasbüttel']]),
+      pause: async () => undefined,
+      timeForNames: () => false,
+    });
+
+    expect(reads.filter((read) => read.startsWith('vereinsTeams'))).toEqual([]);
+    expect(clubs).toEqual([
+      { id: 200, name: 'MTV Gifhorn 2', nameFromTeam: true },
+      { id: 100, name: 'MTV Wasbüttel' },
+      { id: 300, name: 'SG Unbekannt', nameFromTeam: true },
+    ]);
+  });
+
+  it('skips a League the source cannot map', async () => {
+    const { data } = fakeData({ ...TEAMS, 2: 'unexpected-shape' });
+
+    const clubs = await crawlClubs(data, 7, {
+      knownNames: new Map(),
+      pause: async () => undefined,
+    });
+
+    expect(clubs.map(({ id }) => id)).toEqual([200, 100]);
+  });
+
+  it('rejects an empty page that promises more, rather than reading it forever', async () => {
+    const { data } = fakeData();
+    const stuck: BasketballData = {
+      ...data,
+      ligaSeite: async (_filter, startIndex) => ({
+        startIndex,
+        ligen: [],
+        weitere: true,
+      }),
+    };
+
+    await expect(
+      crawlClubs(stuck, 7, {
+        knownNames: new Map(),
+        pause: async () => undefined,
+      })
+    ).rejects.toMatchObject({ kind: 'unexpected-shape' });
   });
 
   it("reads every page of the Association's Leagues and skips a League the source does not know", async () => {
@@ -134,7 +184,7 @@ describe('crawlClubs', () => {
     expect(reads.filter((read) => read.startsWith('vereinsTeams'))).toEqual([
       'vereinsTeams 300',
     ]);
-    expect(clubs[0]).toEqual({ id: 100, name: 'MTV Wasbüttel e.V.' });
+    expect(clubs[1]).toEqual({ id: 100, name: 'MTV Wasbüttel e.V.' });
   });
 
   it('pauses before every read but the first', async () => {

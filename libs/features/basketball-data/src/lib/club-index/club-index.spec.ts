@@ -87,6 +87,20 @@ describe('mergeAssociationClubs', () => {
     expect(merged.map(({ name }) => name)).toEqual(['Neu']);
   });
 
+  it("prefers a Club's own name to a Team's that stood in for it", () => {
+    const merged = mergeAssociationClubs([
+      {
+        ...list(BAYERN, [{ id: 1, name: 'Post SV 2', nameFromTeam: true }]),
+        updatedAt: 2,
+      },
+      { ...list(REGIONALLIGA, [{ id: 1, name: 'Post SV' }]), updatedAt: 1 },
+    ]);
+
+    expect(merged).toEqual([
+      { id: 1, name: 'Post SV', associations: [BAYERN, REGIONALLIGA] },
+    ]);
+  });
+
   it('gives an empty list for no lists', () => {
     expect(mergeAssociationClubs([])).toEqual([]);
   });
