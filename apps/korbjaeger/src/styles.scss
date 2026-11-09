@@ -48,9 +48,13 @@ body {
 // tokens, since its fixed heights come with as specific a selector,
 // loaded after this file
 .umbrechende-liste {
-  --mat-list-list-item-one-line-container-height: auto;
-  --mat-list-list-item-two-line-container-height: auto;
-  --mat-list-list-item-three-line-container-height: auto;
+  @include mat.list-overrides(
+    (
+      list-item-one-line-container-height: auto,
+      list-item-two-line-container-height: auto,
+      list-item-three-line-container-height: auto,
+    )
+  );
 }
 
 .umbrechende-liste .mat-mdc-list-item {
