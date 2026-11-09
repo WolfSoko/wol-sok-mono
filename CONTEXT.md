@@ -42,3 +42,69 @@ _Avoid_: Cue, peep, sound
 - A **Trainingslauf** moves through its **Phasen**: bereit → Vorlauf → läuft ⇄ pausiert → beendet
 - A beendet **Trainingslauf** has exactly one **Zusammenfassung**
 - **Ansagen** follow the Trainingslauf; they never change it
+
+## Basketball-Eltern-App (Arbeitstitel)
+
+Shows parents the games, results and league standings of the teams their children play in, from the public data of the German Basketball Federation (DBB).
+
+### Language
+
+**Elternteil**:
+A signed-in person who follows any number of Teams and marks any number of Kinder, possibly none; anyone following a child counts, grandparents included.
+_Avoid_: User, Nutzer, Account
+
+**Verband**:
+The body a Liga is listed under, as the DBB groups them: a Landesverband (e.g. Schleswig-Holstein), the organiser of a Regionalliga (e.g. Regionalliga Nord) or the Bundesligen; not the Liga itself.
+_Avoid_: Landesverband (too narrow), Federation
+
+**Verein**:
+A basketball club that registers Teams.
+_Avoid_: Club
+
+**Saison**:
+One playing year, e.g. 2026/2027; only the current Saison is available.
+_Avoid_: Season, Spielzeit
+
+**Team**:
+One squad of a Verein for one Saison, fixed by age group, gender and team number (e.g. "U14 männlich 2").
+_Avoid_: Mannschaft, season team
+
+**Liga**:
+A competition a Verband runs within a Saison, with its own schedule and table; a Vorrunde is a Liga of its own.
+_Avoid_: Wettbewerb, Staffel, competition
+
+**Spiel**:
+One game between two Teams within a Liga.
+_Avoid_: Match, Partie
+
+**Spielbericht**:
+What the DBB records about a played Spiel: the Kader of both Teams and, where the Verband records them, Spielerwerte.
+_Avoid_: Boxscore, Statistik
+
+**Kader**:
+The players listed on a Spielbericht for one Team.
+_Avoid_: Roster, Aufstellung
+
+**Spielerwerte**:
+A player's numbers in one Spiel (points, fouls, free throws, ...); only some Verbände record them.
+_Avoid_: Stats, Statistik
+
+**Anonymer Spieler**:
+A player on a Kader whose name the DBB hides because the family objected; cannot be told apart or followed.
+_Avoid_: Unknown player
+
+**Mein Team**:
+A Team an Elternteil follows.
+_Avoid_: Favorit, Abo
+
+**Kind**:
+A player an Elternteil marked as their own in a Kader; the same Kind can play in several Teams.
+_Avoid_: Spieler (for the marked one), Profil
+
+### Relationships
+
+- A **Verein** has many **Teams** per **Saison**; a **Team** belongs to exactly one **Verein**
+- A **Team** plays in one or more **Ligen** per **Saison** (e.g. a Vorrunde, then a Hauptrunde) and stays the same **Team** throughout
+- A **Spiel** belongs to one **Liga** and has at most one **Spielbericht**
+- A **Kind** appears in the **Kader** of some, not necessarily all, **Spielberichte** of each of its **Teams**; a new **Saison** usually means a new **Team** for the same **Kind**
+- An **Elternteil** has any number of **Meine Teams** and **Kinder**; an **Anonymer Spieler** can never become a **Kind**

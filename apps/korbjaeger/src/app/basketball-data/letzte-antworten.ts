@@ -48,7 +48,10 @@ export const ANTWORT_GRENZEN: AntwortGrenzen = {
  * How old an answer may be served: a week, about a Spieltag's rhythm.
  * Older is neither shown nor kept (ADR 0019: keep as little as serves).
  */
-export const MAX_ALTER_MS = 7 * 24 * 60 * 60_000;
+export const MAX_ALTER_TAGE = 7;
+
+/** `MAX_ALTER_TAGE` in milliseconds, as the store compares ages. */
+export const MAX_ALTER_MS = MAX_ALTER_TAGE * 24 * 60 * 60_000;
 
 /** The prefix of every answer's key; the store touches no other key but its index. */
 export const ANTWORT_PRAEFIX = 'korbjaeger-antwort:';

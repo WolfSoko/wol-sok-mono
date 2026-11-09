@@ -16,6 +16,8 @@ import type { SpielZeile } from './spiel-zeile';
  */
 @Component({
   selector: 'korb-naechstes-spiel',
+  // on the scoreboard, wherever it shows (`.anzeigetafel` in styles.scss)
+  host: { class: 'anzeigetafel' },
   imports: [SpielHalleComponent, SpielLinkComponent],
   template: `
     <korb-spiel-link

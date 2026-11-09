@@ -2,6 +2,10 @@ import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { fileURLToPath } from 'node:url';
 import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases';
+import browserslist from 'browserslist';
+import { buildKonfigurationMerken } from './deploy/build-configuration';
+import { cssZiele } from './deploy/css-ziele';
+import { REGIONEN } from './src/shared/regionen';
 import { ConfigEnv, defineConfig } from 'vite';
 
 import { ViteUserConfig } from 'vitest/config';
@@ -18,6 +22,9 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
       outDir: '../../dist/apps/korbjaeger/client',
       reportCompressedSize: true,
       target: ['es2020'],
+      // the CSS for the browsers .browserslistrc names, not for es2020: so
+      // light-dark() stays native and a part of a page can set a scheme
+      cssTarget: cssZiele(browserslist()),
     },
     resolve: {
       mainFields: ['module', 'main'],
@@ -62,7 +69,7 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
             gen: 2,
             httpsOptions: {
               // as pacetrainer and rollapolla-analog
-              region: 'europe-central2',
+              region: REGIONEN.funktion.id,
               // only the DBB proxy runs here, cached by the CDN: a few
               // instances serve it and keep a burst off the DBB and the bill
               maxInstances: 10,
@@ -71,6 +78,8 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
         },
       }),
       nxViteTsPaths(),
+      // the deploy refuses a build of any other mode than production
+      buildKonfigurationMerken(workspaceFile('dist/apps/korbjaeger')),
     ],
     test: {
       globals: true,
@@ -78,6 +87,8 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
       setupFiles: ['src/test-setup.ts'],
       include: ['src/**/*.spec.ts'],
       reporters: ['default'],
+      // 0.4.0's ESM imports some files without `.js`, which only a bundler resolves
+      server: { deps: { inline: ['@material/material-color-utilities'] } },
       coverage: {
         reportsDirectory: '../../coverage/apps/korbjaeger',
         provider: 'v8',

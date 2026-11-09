@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -10,32 +11,41 @@ import { MatIconModule } from '@angular/material/icon';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
+import { NachEntfolgen } from './nach-entfolgen';
 
 /**
- * Follows a Team, or unfollows it: a toggle button (`aria-pressed`) whose
- * label stays the same (in a list, with the Team's name after it), so a
- * screen reader names it alike in both states. Disabled, and neither
- * pressed nor not, until Meine Teams are read.
+ * Follows a Team, or unfollows it: a button whose label says what a tap
+ * does, "Team folgen" or "Nicht mehr folgen" (in a list, with the Team's
+ * name after it), and no `aria-pressed`, so what it shows and what a
+ * screen reader names agree. Alone on a page, a followed Team gets a line
+ * saying so. Disabled, offering to follow, until Meine Teams are read.
+ * A control that disappears with its Team (`verschwindetNachEntfolgen`)
+ * tells the screen's `NachEntfolgen` once it unfollowed, which moves
+ * focus and offers undo.
  */
 @Component({
   selector: 'korb-team-folgen',
   imports: [MatButtonModule, MatIconModule],
   template: `
+    @if (folgt() && !teamName()) {
+      <p class="hinweis">
+        <mat-icon aria-hidden="true">check</mat-icon>
+        Du folgst diesem Team. Steht in Meine Teams auf der Startseite.
+      </p>
+    }
     <button
-      [matButton]="folgt() ? 'filled' : 'outlined'"
+      [matButton]="folgt() ? 'outlined' : 'filled'"
       type="button"
+      data-qa="team-folgen"
       [disabled]="folgt() === undefined"
-      [attr.aria-pressed]="folgt() ?? null"
-      [attr.aria-label]="teamName() ? 'Team folgen: ' + teamName() : null"
+      [attr.aria-label]="teamName() ? label() + ': ' + teamName() : null"
       (click)="umschalten()"
     >
-      <mat-icon aria-hidden="true">{{ folgt() ? 'check' : 'add' }}</mat-icon>
-      Team folgen
+      <mat-icon aria-hidden="true">{{ folgt() ? 'remove' : 'add' }}</mat-icon>
+      {{ label() }}
     </button>
     @if (aenderung.fehler(); as text) {
       <p class="fehler" role="alert">{{ text }}</p>
-    } @else if (folgt() && !teamName()) {
-      <p class="hinweis">Steht in Meine Teams auf der Startseite.</p>
     }
   `,
   styles: `
@@ -49,6 +59,9 @@ import { auswahlAenderung } from '../fehler/auswahl-aenderung';
       margin: 0;
     }
     .hinweis {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
       color: var(--mat-sys-on-surface-variant);
     }
   `,
@@ -62,19 +75,54 @@ export class TeamFolgenComponent {
    */
   public readonly teamName = input<string>();
 
+  /**
+   * Whether the Team is followed, where the screen knows it already (the
+   * wizard's followed rows); else read from Meine Teams.
+   */
+  public readonly gefolgt = input<boolean>();
+  /**
+   * Whether this control disappears once it unfollowed its Team (an
+   * overview card's, a Kind card's, the wizard's row): only then does it
+   * tell the screen's `NachEntfolgen`, which moves focus and offers undo.
+   * A control that stays (a Verein's Teams, also inside a card) leaves both.
+   */
+  public readonly verschwindetNachEntfolgen = input(false, {
+    transform: booleanAttribute,
+  });
+
   private readonly auswahl = inject(AUSWAHL);
 
   /** Whether the Team is in Meine Teams; `undefined` until they are read. */
-  protected readonly folgt = computed(() =>
-    this.auswahl.teams()?.includes(this.teamId())
+  protected readonly folgt = computed(
+    () => this.gefolgt() ?? this.auswahl.teams()?.includes(this.teamId())
+  );
+
+  protected readonly label = computed(() =>
+    this.folgt() ? 'Nicht mehr folgen' : 'Team folgen'
   );
 
   protected readonly aenderung = auswahlAenderung();
+  /** The screen's, where this control disappears with its Team. */
+  private readonly nachEntfolgen = inject(NachEntfolgen, { optional: true });
 
-  protected umschalten(): Promise<void> {
+  protected async umschalten(): Promise<void> {
+    await (this.folgt() ? this.entfolgen() : this.folgen());
+  }
+
+  private folgen(): Promise<boolean> {
     const team = this.teamId();
-    return this.aenderung.ausfuehren(() =>
-      this.folgt() ? this.auswahl.entfolgen(team) : this.auswahl.folgen(team)
+    return this.aenderung.ausfuehren(() => this.auswahl.folgen(team));
+  }
+
+  private async entfolgen(): Promise<void> {
+    const team = this.teamId();
+    const name = this.teamName();
+    const entfolgt = await this.aenderung.ausfuehren(() =>
+      this.auswahl.entfolgen(team)
     );
+    // a control that disappears is one of a list: it has the Team's name
+    if (entfolgt && this.verschwindetNachEntfolgen() && name !== undefined) {
+      this.nachEntfolgen?.entfolgt(team, name);
+    }
   }
 }

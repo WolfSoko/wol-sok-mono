@@ -1,5 +1,19 @@
 // @vitest-environment node
-import { readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+// what Firebase Hosting's emulator matches header rules with
+import { configMatcher } from 'superstatic/lib/utils/patterns';
+import { REGIONEN } from './shared/regionen';
+import {
+  assertDeployableBuild,
+  buildKonfigurationMerken,
+  recordBuildConfiguration,
+} from '../deploy/build-configuration';
+
+const WORKSPACE = fileURLToPath(new URL('../../../', import.meta.url));
 
 /** A file of the workspace, read as the deploy reads it. */
 function workspaceJson<T>(path: string): T {
@@ -10,24 +24,146 @@ function workspaceJson<T>(path: string): T {
 
 interface FirebaseConfig {
   functions: { source: string; predeploy: string[] };
+  firestore?: { rules: string };
   hosting: {
     site?: string;
     public: string;
     rewrites: unknown[];
-    headers: { source: string; headers: { key: string; value: string }[] }[];
+    headers: HeaderRule[];
   };
+}
+
+/** A Hosting header rule: a glob (`source`) or an RE2 `regex`. */
+interface HeaderRule {
+  source?: string;
+  regex?: string;
+  headers: { key: string; value: string }[];
 }
 
 interface ProjectJson {
   targets: Record<
     string,
-    { options: { command?: string; commands?: string[]; parallel?: boolean } }
+    {
+      options: { command?: string; commands?: string[]; parallel?: boolean };
+      dependsOn?: unknown[];
+      configurations?: Record<string, unknown>;
+      outputs?: string[];
+      defaultConfiguration?: string;
+    }
   >;
 }
 
 const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
 
 describe('the Firebase deploy', () => {
+  // a development or e2e build offers the sign-in and talks to the local
+  // emulators (environment.ts): only a production build may go live. Nx hands
+  // `deploy -c development` on to the build, so the deploy checks what it got
+  describe('only a production build', () => {
+    const CHECK =
+      'tsx ./apps/korbjaeger/deploy/build-configuration.ts check dist/apps/korbjaeger';
+    let dist: string;
+
+    beforeEach(() => {
+      dist = mkdtempSync(join(tmpdir(), 'korbjaeger-dist-'));
+    });
+
+    afterEach(() => rmSync(dist, { recursive: true, force: true }));
+
+    it('is built by default, and checked before anything is deployed', () => {
+      const { targets } = workspaceJson<ProjectJson>(
+        'apps/korbjaeger/project.json'
+      );
+
+      expect(targets['deploy'].dependsOn).toEqual(['build']);
+      expect(targets['deploy'].options.commands?.[0]).toBe(CHECK);
+      expect(targets['build'].defaultConfiguration).toBe('production');
+      expect(targets['build-app'].defaultConfiguration).toBe('production');
+    });
+
+    it('is recorded by build-app with the artifacts it builds, so its cache holds it too', () => {
+      const { targets } = workspaceJson<ProjectJson>(
+        'apps/korbjaeger/project.json'
+      );
+
+      expect(targets['build-app'].outputs).toContain(
+        '{workspaceRoot}/dist/{projectRoot}/build-configuration'
+      );
+      // `build` only adds the service worker; it records nothing itself
+      expect(JSON.stringify(targets['build'])).not.toContain(
+        'build-configuration'
+      );
+    });
+
+    it('records the mode the build ran in once Vite wrote the build', () => {
+      const plugin = buildKonfigurationMerken(dist);
+
+      (plugin.configResolved as (c: { mode: string }) => void)({
+        mode: 'development',
+      });
+      (plugin.writeBundle as () => void)();
+
+      expect(() => assertDeployableBuild(dist)).toThrow(
+        'Refusing to deploy a "development" build of Korbjäger'
+      );
+    });
+
+    it.each([
+      ['production', 0],
+      ['development', 1],
+    ])(
+      'lets the deploy command go on only for a %s build',
+      (konfiguration, code) => {
+        recordBuildConfiguration(dist, konfiguration);
+
+        const pruefung = spawnSync(
+          'npx',
+          [
+            'tsx',
+            './apps/korbjaeger/deploy/build-configuration.ts',
+            'check',
+            dist,
+          ],
+          { cwd: WORKSPACE, encoding: 'utf8' }
+        );
+
+        expect(pruefung.status).toBe(code);
+      }
+    );
+
+    it('goes live', () => {
+      recordBuildConfiguration(dist, 'production');
+
+      expect(() => assertDeployableBuild(dist)).not.toThrow();
+    });
+
+    it.each(['development', 'e2e'])('refuses a %s build', (configuration) => {
+      recordBuildConfiguration(dist, configuration);
+
+      expect(() => assertDeployableBuild(dist)).toThrow(
+        `Refusing to deploy a "${configuration}" build of Korbjäger`
+      );
+    });
+
+    it('refuses a build that recorded nothing', () => {
+      expect(() => assertDeployableBuild(dist)).toThrow(
+        'Refusing to deploy a "unknown" build of Korbjäger'
+      );
+    });
+  });
+
+  it("deploys the app's Firestore rules with it, the ones its emulator specs test", () => {
+    const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
+    const { commands } = workspaceJson<ProjectJson>(
+      'apps/korbjaeger/project.json'
+    ).targets['deploy'].options;
+
+    expect(config.firestore).toEqual({
+      rules: 'apps/korbjaeger/firestore.rules',
+    });
+    expect(commands?.at(-1)).toContain('firestore:rules');
+  });
+
   it('deploys the root config, not the file Nitro generates in the app', () => {
     // apps/korbjaeger/firebase.json is Nitro's, with a placeholder site
     const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
@@ -36,7 +172,7 @@ describe('the Firebase deploy', () => {
       'firebase --config=firebase.korbjaeger.json --project=korbjaeger'
     );
     expect(project.targets['deploy'].options.commands?.at(-1)).toBe(
-      'nx run korbjaeger:firebase deploy'
+      'nx run korbjaeger:firebase deploy --only functions,hosting,firestore:rules'
     );
   });
 
@@ -48,16 +184,16 @@ describe('the Firebase deploy', () => {
    */
   it("sets the images' cleanup policy in the function's region before deploying", () => {
     const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
-    const region = /region: '([a-z0-9-]+)'/.exec(
-      readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8')
-    )?.[1];
+    const region = REGIONEN.funktion.id;
     const { commands, parallel } = project.targets['deploy'].options;
 
-    expect(region).toBeDefined();
+    expect(
+      readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8')
+    ).toContain('region: REGIONEN.funktion.id');
     expect(parallel).toBe(false);
-    expect(commands).toEqual([
+    expect(commands?.slice(1)).toEqual([
       `nx run korbjaeger:firebase functions:artifacts:setpolicy --location=${region} --days=1 --force`,
-      'nx run korbjaeger:firebase deploy',
+      'nx run korbjaeger:firebase deploy --only functions,hosting,firestore:rules',
     ]);
   });
 
@@ -87,9 +223,12 @@ describe('the Firebase deploy', () => {
    * A tab opened before a release still asks for the old hashed chunks. Only
    * paths without a file extension fall back to the shell, so a chunk that
    * is gone answers 404 instead of HTML, and the shell itself is revalidated
-   * on every load, so a reload picks up the new release.
+   * on every load (every path it answers, unknown ones too), so a reload
+   * picks up the new release. Three globs name them, in the extglob the
+   * rewrite uses: `/`, a single segment that is neither `api` nor a file,
+   * and any deeper path not under `api` whose last segment is no file.
    */
-  /** The Hosting path of each page file Analog routes (`src/app/pages`). */
+  /** A path of each page file Analog routes (`src/app/pages`), ids as `1`. */
   function pagePaths(): string[] {
     const pages = new URL('./app/pages/', import.meta.url);
     return readdirSync(pages, { recursive: true, encoding: 'utf8' })
@@ -98,21 +237,23 @@ describe('the Firebase deploy', () => {
         file
           .replace(/\.page\.ts$/, '')
           .replace(/\(home\)$/, '')
-          .replace(/\[[^\]]+\]/g, '*')
+          .replace(/\[[^\]]+\]/g, '1')
       )
       .map((route) => `/${route}`)
       .sort();
   }
 
-  const noCacheSources = () =>
-    config.hosting.headers
-      .filter((rule) =>
-        rule.headers.some(
-          ({ key, value }) => key === 'Cache-Control' && value === 'no-cache'
-        )
-      )
-      .map((rule) => rule.source)
-      .sort();
+  const cacheRules = config.hosting.headers.filter((rule) =>
+    rule.headers.some(({ key }) => key.toLowerCase() === 'cache-control')
+  );
+
+  /** Whether Hosting sends `path` with `Cache-Control: no-cache`. */
+  const revalidiert = (path: string): boolean =>
+    cacheRules.some(
+      (rule) =>
+        configMatcher(path, rule) &&
+        rule.headers.some(({ value }) => value === 'no-cache')
+    );
 
   /**
    * The service worker's own files too: an old worker or manifest of the
@@ -124,27 +265,37 @@ describe('the Firebase deploy', () => {
     '/safety-worker.js',
   ];
 
-  it('revalidates the shell on every page and the service worker, so none asks for chunks a release removed', () => {
-    expect(noCacheSources()).toEqual(
-      [...pagePaths(), '/index.html', ...SERVICE_WORKER_FILES].sort()
-    );
+  it.each([
+    ...pagePaths(),
+    '/team/1',
+    '/gibtsnicht',
+    '/team/1/gibtsnicht',
+    '/x/y.z/w',
+    '/x.y/z',
+    '/apix',
+    '/a',
+    '/index.html',
+    ...SERVICE_WORKER_FILES,
+  ])('revalidates %s, so none asks for chunks a release removed', (path) => {
+    expect(revalidiert(path)).toBe(true);
   });
 
   /**
    * Hosting's header rules override what the function sends, and a
    * catch-all no-cache rule once turned the proxy's
    * `public, max-age=60, s-maxage=300` into `no-cache`, so the CDN cached
-   * no DBB answer at all on its first live release.
+   * no DBB answer at all on its first live release. Hashed files keep
+   * Hosting's caching.
    */
-  it("leaves the proxy's Cache-Control to the function", () => {
-    const cacheRules = config.hosting.headers.filter((rule) =>
-      rule.headers.some(({ key }) => key.toLowerCase() === 'cache-control')
-    );
-
-    for (const { source } of cacheRules) {
-      expect(source.startsWith('/api')).toBe(false);
-      expect(source).not.toContain('**');
-    }
+  it.each([
+    '/api',
+    '/api/dbb/x',
+    '/api/dbb/team/313036/spiele',
+    '/assets/a.js',
+    '/main-ABC123.js',
+    '/icons/icon-192.png',
+  ])('leaves the caching of %s alone', (path) => {
+    expect(cacheRules.filter((rule) => configMatcher(path, rule))).toEqual([]);
   });
 
   /**

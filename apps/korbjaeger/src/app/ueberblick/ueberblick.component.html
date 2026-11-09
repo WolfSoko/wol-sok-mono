@@ -1,4 +1,4 @@
-<h2>Meine Teams</h2>
+<h2 korbFokusNachEntfolgen tabindex="-1">Meine Teams</h2>
 @if (ansicht(); as ansicht) {
   @if (ansicht.kinder.length === 0 && ansicht.teams.length === 0) {
     <div class="leer" data-qa="ueberblick-leer">
@@ -39,4 +39,9 @@
       <li><korb-ueberblick-team [karte]="karte" /></li>
     }
   </ul>
+} @else if (nichtLesbar()) {
+  <p class="hinweis" role="alert" data-qa="ueberblick-nicht-lesbar">
+    Meine Teams und Kinder lassen sich gerade nicht lesen. Bitte die App neu
+    laden.
+  </p>
 }

@@ -16,21 +16,21 @@ import {
 } from './dbb-proxy-response';
 import type { DbbUpstream } from './dbb-upstream';
 import type { AnyProxyRoute } from '../../shared/dbb-proxy-routes';
+import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
+
+const { browser, cdn, cdnFertigerSpielbericht } = PROXY_CACHE_SEKUNDEN;
 
 /**
- * How long a successful read may be reused: a minute in the browser, five
- * minutes in Firebase Hosting's CDN (ADR 0018). Errors are never stored
- * (`PROXY_ERROR_CACHE_CONTROL`).
+ * How long a successful read may be reused, in the browser and in Firebase
+ * Hosting's CDN. Errors are never stored (`PROXY_ERROR_CACHE_CONTROL`).
  */
-export const DBB_PROXY_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
+export const DBB_PROXY_CACHE_CONTROL = `public, max-age=${browser}, s-maxage=${cdn}`;
 
 /**
- * How long the CDN may keep a played Spiel's Spielbericht: an hour, since
- * the DBB rarely changes it once its result and Kader are in (ADR 0018).
- * The browser keeps it a minute, as every read.
+ * How long the CDN may keep a played Spiel's Spielbericht; the browser
+ * keeps it as long as every read.
  */
-export const FINISHED_BOXSCORE_CACHE_CONTROL =
-  'public, max-age=60, s-maxage=3600';
+export const FINISHED_BOXSCORE_CACHE_CONTROL = `public, max-age=${browser}, s-maxage=${cdnFertigerSpielbericht}`;
 
 /**
  * Answers one allowlisted read (`undefined`: none, so 404) from the DBB:

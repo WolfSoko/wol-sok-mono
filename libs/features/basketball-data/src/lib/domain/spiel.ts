@@ -94,9 +94,14 @@ export function seiteVon(spiel: Spiel, team: TeamId): SpielSeite | undefined {
   return istTeam(spiel.gast, team) ? 'gast' : undefined;
 }
 
+/** The side opposite `seite`. */
+export function andereSeite(seite: SpielSeite): SpielSeite {
+  return seite === 'heim' ? 'gast' : 'heim';
+}
+
 /** Who plays against `seite`. */
 export function gegnerVon(spiel: Spiel, seite: SpielSeite): SpielPartei {
-  return seite === 'heim' ? spiel.gast : spiel.heim;
+  return spiel[andereSeite(seite)];
 }
 
 /** The final points of `spiel`, once there are any (a forfeit may have). */
@@ -121,6 +126,31 @@ export function sonderfallVon(spiel: Spiel): SpielSonderfall | undefined {
     case 'gespielt':
       return undefined;
   }
+}
+
+/** How a decided Spiel ended for one side; basketball has no draws. */
+export type SpielAusgang = 'sieg' | 'niederlage';
+
+/**
+ * How `spiel` ended for `seite`: by the points of a played Spiel, as the
+ * score shows them (confirmed by the Verband or not yet); a forfeit goes to
+ * the side that did not forfeit (both lose where both did), and one naming
+ * no side by its points where it has any. None before a Spiel is decided,
+ * or for equal points, which in basketball mean no result yet.
+ */
+export function ausgangVon(
+  spiel: Spiel,
+  seite: SpielSeite
+): SpielAusgang | undefined {
+  const { status } = spiel;
+  if (status.art === 'kampflos' && status.verzichtet.length > 0) {
+    return status.verzichtet.includes(seite) ? 'niederlage' : 'sieg';
+  }
+  const ergebnis = ergebnisVon(spiel);
+  if (!ergebnis || ergebnis.heim === ergebnis.gast) {
+    return undefined;
+  }
+  return ergebnis[seite] > ergebnis[andereSeite(seite)] ? 'sieg' : 'niederlage';
 }
 
 /** Whether `spiel` is decided: played with a result, or forfeited. */

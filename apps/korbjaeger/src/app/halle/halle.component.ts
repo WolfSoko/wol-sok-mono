@@ -37,8 +37,8 @@ import {
       >
         <mat-icon aria-hidden="true">directions</mat-icon>
         Route planen
-        <span class="cdk-visually-hidden"
-          >: {{ ort.name }} (öffnet neuen Tab)</span
+        <span class="cdk-visually-hidden">
+          zur Halle {{ ort.name }} (öffnet neuen Tab)</span
         >
       </a>
     } @else {

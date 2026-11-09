@@ -12,6 +12,53 @@ export function geraeteSpeicher(): Storage | undefined {
   }
 }
 
+/** Tells, on the device, that an Elternteil is signed in. */
+export const ANGEMELDET_SCHLUESSEL = 'korbjaeger-angemeldet';
+
+/**
+ * Set where signing out could not clear Firestore's copy on the device
+ * (another tab held it, or clearing failed): the next start clears it,
+ * signed in or not, without loading Firebase to read this.
+ */
+export const ZWISCHENSPEICHER_LEEREN_SCHLUESSEL =
+  'korbjaeger-zwischenspeicher-leeren';
+
+/** Set once the install hint was dismissed, for good. */
+export const INSTALLATION_ABGELEHNT_SCHLUESSEL =
+  'korbjaeger-installation-abgelehnt';
+
+/** Whether the flag `schluessel` is set (`'1'`); not where storage is withheld. */
+export function flagGesetzt(
+  speicher: Pick<Storage, 'getItem'> | undefined,
+  schluessel: string
+): boolean {
+  try {
+    return speicher?.getItem(schluessel) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Sets the flag `schluessel` (`'1'`) or clears it; where storage is full
+ * or withheld, nothing is kept and the caller carries on.
+ */
+export function flagSetzen(
+  speicher: Pick<Storage, 'setItem' | 'removeItem'> | undefined,
+  schluessel: string,
+  gesetzt: boolean
+): void {
+  try {
+    if (gesetzt) {
+      speicher?.setItem(schluessel, '1');
+    } else {
+      speicher?.removeItem(schluessel);
+    }
+  } catch {
+    // full or blocked: the flag lasts no longer than this visit's state
+  }
+}
+
 /**
  * Whether `error` says the device's storage is full (Firefox names it its
  * own way).

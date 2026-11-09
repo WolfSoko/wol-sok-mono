@@ -5,6 +5,7 @@ import {
   input,
 } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
+import type { SpielAusgang } from '@wolsok/feat-shared-basketball-data';
 import type { SpielZeile } from './spiel-zeile';
 
 /**
@@ -35,8 +36,16 @@ import type { SpielZeile } from './spiel-zeile';
     @if (mitLiga()) {
       <span class="liga" data-qa="spiel-liga">{{ spiel.liga }}</span>
     }
-    @if (spiel.ergebnis || spiel.markierung) {
+    @if (spiel.ergebnis || spiel.ausgang || spiel.markierung) {
       <span class="ausgang">
+        @if (spiel.ausgang; as ausgang) {
+          <span
+            class="ausgang-marke"
+            [class]="ausgang"
+            data-qa="spiel-ausgang"
+            >{{ ausgangText[ausgang] }}</span
+          >
+        }
         @if (spiel.ergebnis) {
           <span class="ergebnis" data-qa="spiel-ergebnis">{{
             spiel.ergebnis
@@ -84,8 +93,24 @@ import type { SpielZeile } from './spiel-zeile';
       gap: 0.25rem;
     }
     .ergebnis {
-      font: var(--mat-sys-title-medium);
+      font: var(--mat-sys-title-large);
+      font-weight: var(--mat-sys-title-large-weight);
       font-variant-numeric: tabular-nums;
+    }
+    .ausgang-marke {
+      padding: 0.125rem 0.5rem;
+      border-radius: var(--mat-sys-corner-extra-small);
+      font: var(--mat-sys-label-large);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .sieg {
+      background: var(--mat-sys-primary);
+      color: var(--mat-sys-on-primary);
+    }
+    .niederlage {
+      background: var(--mat-sys-surface-container-highest);
+      color: var(--mat-sys-on-surface);
     }
     .markierung {
       --mat-chip-elevated-container-color: var(--mat-sys-error-container);
@@ -100,4 +125,10 @@ export class SpielZeileComponent {
   public readonly titel = input<string>();
   /** Whether to name the Spiel's Liga. */
   public readonly mitLiga = input(false, { transform: booleanAttribute });
+
+  /** How a result reads: in words, never by colour alone. */
+  protected readonly ausgangText: Record<SpielAusgang, string> = {
+    sieg: 'Sieg',
+    niederlage: 'Niederlage',
+  };
 }

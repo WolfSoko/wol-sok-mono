@@ -2,12 +2,22 @@ import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
 import { auswahlAenderung } from './auswahl-aenderung';
 
 describe('auswahlAenderung', () => {
-  it('says nothing while the change succeeds', async () => {
+  it('says nothing while the change succeeds, and tells it succeeded', async () => {
     const aenderung = auswahlAenderung();
 
-    await aenderung.ausfuehren(() => Promise.resolve());
+    await expect(aenderung.ausfuehren(() => Promise.resolve())).resolves.toBe(
+      true
+    );
 
     expect(aenderung.fehler()).toBeUndefined();
+  });
+
+  it('tells a change failed', async () => {
+    const aenderung = auswahlAenderung();
+
+    await expect(
+      aenderung.ausfuehren(() => Promise.reject(new Error('offline')))
+    ).resolves.toBe(false);
   });
 
   it('asks to try again where the change was not stored', async () => {

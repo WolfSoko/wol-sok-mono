@@ -1065,9 +1065,15 @@ describe('SpielComponent', () => {
         )
       );
 
-      expect(text(seite.querySelector('[role="alert"]'))).toBe(
-        'Dieses Spiel kennt der DBB nicht.'
-      );
+      const meldung = seite.querySelector('[role="alert"]');
+      expect(text(meldung)).toBe('Dieses Spiel kennt der DBB nicht.');
+      // the page's heading first, then what went wrong: no heading after it
+      const ueberschriften = seite.querySelectorAll('h1');
+      expect(ueberschriften).toHaveLength(1);
+      expect(
+        ueberschriften[0].compareDocumentPosition(meldung as Node) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
     });
 
     it.each([

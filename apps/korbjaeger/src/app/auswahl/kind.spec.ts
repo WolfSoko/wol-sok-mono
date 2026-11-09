@@ -1,5 +1,7 @@
 import {
+  codepunkteVon,
   kindMit,
+  SPITZNAME_CODEPUNKTE,
   SPITZNAME_LAENGE,
   spitznameAus,
   spitznameZeichen,
@@ -18,6 +20,27 @@ describe('spitznameAus', () => {
     const lang = `🏀👨‍👧${'a'.repeat(40)}`;
 
     expect(spitznameAus(lang)).toBe(`🏀👨‍👧${'a'.repeat(SPITZNAME_LAENGE - 2)}`);
+  });
+
+  it(`keeps ${SPITZNAME_LAENGE} of the longest emoji the rules know of`, () => {
+    // a family with skin tones: 11 code points, one character
+    const familie = '👨🏽‍👩🏽‍👧🏽‍👦🏽';
+    const voll = familie.repeat(SPITZNAME_LAENGE);
+
+    expect(spitznameAus(voll)).toBe(voll);
+    expect(codepunkteVon(voll)).toBeLessThanOrEqual(SPITZNAME_CODEPUNKTE);
+  });
+
+  it(`never keeps more than ${SPITZNAME_CODEPUNKTE} code points, the rules' cap`, () => {
+    // a character of 20 code points is no emoji, but typed all the same
+    const riesig = `a${'\u0301'.repeat(19)}`;
+
+    const gekuerzt = spitznameAus(riesig.repeat(SPITZNAME_LAENGE));
+
+    expect(codepunkteVon(gekuerzt ?? '')).toBeLessThanOrEqual(
+      SPITZNAME_CODEPUNKTE
+    );
+    expect(gekuerzt).toBe(riesig.repeat(Math.floor(SPITZNAME_CODEPUNKTE / 20)));
   });
 });
 

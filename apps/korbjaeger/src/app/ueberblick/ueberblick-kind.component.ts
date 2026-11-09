@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielLinkComponent } from '../spiel/spiel-link.component';
 import { StandComponent } from '../stand/stand.component';
+import { TeamFolgenComponent } from '../team/team-folgen.component';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
 import type { KindAbschnitt } from './ueberblick-ansicht';
 
@@ -14,7 +15,8 @@ import type { KindAbschnitt } from './ueberblick-ansicht';
  * plays for, each linking to its Team page, their first next Spiel with
  * its Halle, what falls through before it, the latest result and whether
  * the Kind was on its Kader; the hint of a Team whose Saison looks over;
- * or why no Team shows. Reads no data itself.
+ * or why no Team shows; and "Nicht mehr folgen" for each of its Teams,
+ * which only show here. Reads no data itself.
  */
 @Component({
   selector: 'korb-ueberblick-kind',
@@ -27,6 +29,7 @@ import type { KindAbschnitt } from './ueberblick-ansicht';
     SaisonEndeHinweisComponent,
     SpielLinkComponent,
     StandComponent,
+    TeamFolgenComponent,
   ],
   templateUrl: './ueberblick-kind.component.html',
   styleUrl: './ueberblick-kind.component.scss',

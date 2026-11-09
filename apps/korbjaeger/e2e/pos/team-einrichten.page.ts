@@ -1,4 +1,5 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
+import { folgenKnopf } from './folgen';
 
 /** `/team-einrichten`: from Verband to Team, step by step. */
 export class TeamEinrichtenPage {
@@ -39,6 +40,34 @@ export class TeamEinrichtenPage {
     return this.ligen.filter({
       has: this.page.getByText(name, { exact: true }),
     });
+  }
+
+  /** The control beside a followed Team's row that unfollows it. */
+  public nichtMehrFolgen(name: string): Locator {
+    return folgenKnopf(this.page, name, { gefolgt: true });
+  }
+
+  /**
+   * Walks the wizard to the Teams of the Liga `liga`: picks Verband,
+   * Altersklasse and Geschlecht, then reads further pages of Ligen until
+   * `liga` is listed, and opens it.
+   */
+  public async ligaOeffnen(auswahl: {
+    readonly verband: string;
+    readonly altersklasse: string;
+    readonly geschlecht: string;
+    readonly liga: string;
+  }): Promise<void> {
+    await this.waehlen('Verband', auswahl.verband);
+    await this.waehlen('Altersklasse', auswahl.altersklasse);
+    await this.waehlen('Geschlecht', auswahl.geschlecht);
+    await expect(this.ligen.first()).toBeVisible();
+    while ((await this.liga(auswahl.liga).count()) === 0) {
+      const bisher = await this.ligen.count();
+      await this.weitereLigen.click();
+      await expect(this.ligen).not.toHaveCount(bisher);
+    }
+    await this.liga(auswahl.liga).click();
   }
 
   /** The Team named `name` in the list of the picked Liga's Teams. */

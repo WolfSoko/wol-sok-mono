@@ -1,4 +1,5 @@
 import {
+  ausgangVon,
   ergebnisVon,
   gegnerVon,
   ligaVon,
@@ -6,6 +7,7 @@ import {
   seiteVon,
   sonderfallVon,
   type Spiel,
+  type SpielAusgang,
   type SpielSonderfall,
   type TeamSaison,
 } from '@wolsok/feat-shared-basketball-data';
@@ -25,6 +27,8 @@ export interface SpielZeile {
   readonly gegner: string;
   /** The points, home first (`78:47`), once there are any. */
   readonly ergebnis?: string;
+  /** How it ended for the Team, once decided (as its score shows it, confirmed or not). */
+  readonly ausgang?: SpielAusgang;
   readonly markierung?: SpielSonderfall;
 }
 
@@ -47,6 +51,7 @@ export function spielZeile(saison: TeamSaison, spiel: Spiel): SpielZeile {
       ? parteiName(gegnerVon(spiel, seite))
       : `${parteiName(spiel.heim)} – ${parteiName(spiel.gast)}`,
     ergebnis: ergebnis && ergebnisText(ergebnis),
+    ausgang: seite && ausgangVon(spiel, seite),
     markierung: sonderfallVon(spiel),
   };
 }

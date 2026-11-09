@@ -11,6 +11,7 @@ export { dbbBoxscoreFinished } from './lib/dbb/boxscore-finished';
 export { dbbOhnePersonen } from './lib/dbb/ohne-personen';
 export {
   DBB_BASE_URL,
+  DBB_WEBSITE_URL,
   MAX_VEREINS_SPIELE_TAGE,
   assertValidDbbRequest,
   dbbFetchInput,
@@ -64,6 +65,7 @@ export { istTeam, parteiName } from './lib/domain/partei';
 export type { SpielPartei } from './lib/domain/partei';
 export type { Saison } from './lib/domain/saison';
 export {
+  ausgangVon,
   datumInDeutschland,
   ergebnisVon,
   gegnerVon,
@@ -72,6 +74,7 @@ export {
 } from './lib/domain/spiel';
 export type {
   Spiel,
+  SpielAusgang,
   SpielDetails,
   SpielSeite,
   SpielSonderfall,

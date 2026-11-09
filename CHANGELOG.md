@@ -2,6 +2,54 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.154.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.153.0...v74.154.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Vereinsfarben in the Auswahl, device and account ([#2927](https://github.com/WolfSoko/wol-sok-mono/issues/2927)) ([572c988](https://github.com/WolfSoko/wol-sok-mono/commit/572c98881a66e9de931628f34d5830dea1fa22e3)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#rrggbb](https://github.com/WolfSoko/wol-sok-mono/issues/rrggbb)
+
+## [74.153.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.152.0...v74.153.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** colour scheme from a Verein's colours ([#2924](https://github.com/WolfSoko/wol-sok-mono/issues/2924)) ([327e893](https://github.com/WolfSoko/wol-sok-mono/commit/327e893d390f3364d09765e6286b2ce110cedace)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#rrggbb](https://github.com/WolfSoko/wol-sok-mono/issues/rrggbb) [#33ffdd](https://github.com/WolfSoko/wol-sok-mono/issues/33ffdd)
+
+### Chore
+
+* **release:** publish ([a36d1bb](https://github.com/WolfSoko/wol-sok-mono/commit/a36d1bbd49ae061f9956cf32ddf1bba5df92708e))
+
+## [74.152.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.151.0...v74.152.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** the look "Hallenboden" (display face, scoreboard, court lines, worded results) ([#2922](https://github.com/WolfSoko/wol-sok-mono/issues/2922)) ([2b01002](https://github.com/WolfSoko/wol-sok-mono/commit/2b01002dc10ecae542ef0ea77637a62afd858d98)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918)
+
+### Chore
+
+* **release:** publish ([6e1e06a](https://github.com/WolfSoko/wol-sok-mono/commit/6e1e06a631bfc7da8fa485d9ead02fb093c95eda))
+
+## [74.151.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.150.1...v74.151.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** privacy policy, Impressum and DBB source note ([#2921](https://github.com/WolfSoko/wol-sok-mono/issues/2921)) ([cd66ace](https://github.com/WolfSoko/wol-sok-mono/commit/cd66acee5e8ec576c6a001a898de99ba7adadf13)), closes [#2874](https://github.com/WolfSoko/wol-sok-mono/issues/2874)
+
+## [74.150.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.150.0...v74.150.1) (2026-11-09)
+
+### Bug Fixes
+
+* **korbjaeger:** unfollow everywhere, German-text guard, install hint, small fixes ([#2919](https://github.com/WolfSoko/wol-sok-mono/issues/2919)) ([e9946b1](https://github.com/WolfSoko/wol-sok-mono/commit/e9946b1c7cfe613b78a9086eb07a864ed8a79510))
+
+### Chore
+
+* **release:** publish ([171fabc](https://github.com/WolfSoko/wol-sok-mono/commit/171fabc74e83e60431df889b5e965f23233ee1c1))
+
+## [74.150.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.149.0...v74.150.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Korbjäger 8 — Google sign-in and sync across devices ([#2911](https://github.com/WolfSoko/wol-sok-mono/issues/2911)) ([1d1b09f](https://github.com/WolfSoko/wol-sok-mono/commit/1d1b09f3d5bc4b6251110683ad57a29ef21c7a2c)), closes [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873), references [#2874](https://github.com/WolfSoko/wol-sok-mono/issues/2874) [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873) [#2874](https://github.com/WolfSoko/wol-sok-mono/issues/2874)
+
 ## [74.149.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.148.0...v74.149.0) (2026-11-09)
 
 ### Features

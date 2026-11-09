@@ -1,0 +1,156 @@
+rules_version = '2';
+
+// The Firestore rules of Korbjäger (ADR 0019): one document per signed-in
+// Elternteil, auswahl/{uid}, holding Meine Teams and the Kinder as maps
+// keyed by their DBB id (a Team: since when it is followed; a Kind: since
+// when it is marked, and an optional Spitzname), the Vereinsfarben by the
+// Verein's DBB id (a colour and an optional second one, as one text), nothing else and
+// only theirs. Keyed by id, every change is a write of its own entries, which
+// the server merges with other devices' (auswahl-dokument.ts). Specs:
+// src/firestore-rules.emulator.ts (`nx run korbjaeger:test-emulator`).
+//
+// A request may evaluate at most 1000 expressions, and each read of a map
+// through a function counts again: 50 Teams, 20 Kinder and the colours of
+// 50 Vereine are more than one request can check. So a create checks both maps, an update only the maps
+// it changes, and the app changes one map a write (the merge at sign-in in
+// one step a map): each holds up to its cap.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /auswahl/{uid} {
+      allow get, delete: if istBesitzer(uid);
+      allow create: if istBesitzer(uid)
+        && istVersion2(request.resource.data)
+        && (!("teams" in request.resource.data)
+          || sindTeams(request.resource.data.teams))
+        && (!("kinder" in request.resource.data)
+          || sindKinder(request.resource.data.kinder))
+        && (!("vereinsfarben" in request.resource.data)
+          || sindVereinsfarben(request.resource.data.vereinsfarben));
+      // an update is checked in the maps it changes only; one that only
+      // loses entries is taken as it is, so a map over its cap shrinks
+      allow update: if istBesitzer(uid)
+        && istVersion2(request.resource.data)
+        && (!("teams" in request.resource.data)
+          || !request.resource.data.diff(resource.data).affectedKeys().hasAny(["teams"])
+          || nurWeniger(request.resource.data.teams, resource.data.teams)
+          || sindTeams(request.resource.data.teams))
+        && (!("kinder" in request.resource.data)
+          || !request.resource.data.diff(resource.data).affectedKeys().hasAny(["kinder"])
+          || nurWeniger(request.resource.data.kinder, resource.data.kinder)
+          || sindKinder(request.resource.data.kinder))
+        && (!("vereinsfarben" in request.resource.data)
+          || !request.resource.data.diff(resource.data).affectedKeys().hasAny(["vereinsfarben"])
+          || nurWeniger(request.resource.data.vereinsfarben, resource.data.vereinsfarben)
+          || sindVereinsfarben(request.resource.data.vereinsfarben));
+    }
+  }
+
+  function istBesitzer(uid) {
+    return request.auth != null && request.auth.uid == uid;
+  }
+
+  // Version 2 of the app's AuswahlDokument (auswahl-dokument.ts: both
+  // lists as maps keyed by id; version 1's lists never reached Firestore,
+  // and the Vereinsfarben joined as a field of their own), with no other
+  // fields; a newer version changes these rules in the same
+  // release. The maps are checked in the rules above, not through a
+  // function of the document: every read through one more argument counts
+  // again.
+  function istVersion2(daten) {
+    return daten.keys().hasOnly(["version", "teams", "kinder", "vereinsfarben"])
+      && daten.version is int && daten.version == 2;
+  }
+
+  // Whether the map `neu` only lost entries of the same map in `alt`.
+  function nurWeniger(neu, alt) {
+    return neu is map && alt.size() > 0 && neu.size() < alt.size()
+      && alt.keys().hasAll(neu.keys())
+      && neu.diff(alt).changedKeys().size() == 0;
+  }
+
+  // The rules know no loop: each value of a map is checked by its index, up
+  // to the map's cap, `n` its size; the keys all at once, joined, as DBB
+  // ids, which costs a few expressions instead of some per entry: as many
+  // parts as keys, so no key holds a comma, each of at most 15 digits, so
+  // within JavaScript's safe integers (DBB ids have 6 or 7).
+  function sindIds(karte) {
+    return karte.size() == 0
+      || (karte.keys().join(",").matches("[1-9][0-9]{0,14}(,[1-9][0-9]{0,14})*")
+        && karte.keys().join(",").split(",").size() == karte.size());
+  }
+
+  // Meine Teams: each Team's DBB id, since when it is followed.
+  function sindTeams(teams) {
+    return teams is map && teams.size() <= 50 && sindIds(teams)
+      && teamsBis(teams.values(), teams.size());
+  }
+
+  function teamsBis(seit, n) {
+    return (n <= 0 || seit[0] is int) && (n <= 1 || seit[1] is int) && (n <= 2 || seit[2] is int)
+      && (n <= 3 || seit[3] is int) && (n <= 4 || seit[4] is int) && (n <= 5 || seit[5] is int)
+      && (n <= 6 || seit[6] is int) && (n <= 7 || seit[7] is int) && (n <= 8 || seit[8] is int)
+      && (n <= 9 || seit[9] is int) && (n <= 10 || seit[10] is int) && (n <= 11 || seit[11] is int)
+      && (n <= 12 || seit[12] is int) && (n <= 13 || seit[13] is int) && (n <= 14 || seit[14] is int)
+      && (n <= 15 || seit[15] is int) && (n <= 16 || seit[16] is int) && (n <= 17 || seit[17] is int)
+      && (n <= 18 || seit[18] is int) && (n <= 19 || seit[19] is int) && (n <= 20 || seit[20] is int)
+      && (n <= 21 || seit[21] is int) && (n <= 22 || seit[22] is int) && (n <= 23 || seit[23] is int)
+      && (n <= 24 || seit[24] is int) && (n <= 25 || seit[25] is int) && (n <= 26 || seit[26] is int)
+      && (n <= 27 || seit[27] is int) && (n <= 28 || seit[28] is int) && (n <= 29 || seit[29] is int)
+      && (n <= 30 || seit[30] is int) && (n <= 31 || seit[31] is int) && (n <= 32 || seit[32] is int)
+      && (n <= 33 || seit[33] is int) && (n <= 34 || seit[34] is int) && (n <= 35 || seit[35] is int)
+      && (n <= 36 || seit[36] is int) && (n <= 37 || seit[37] is int) && (n <= 38 || seit[38] is int)
+      && (n <= 39 || seit[39] is int) && (n <= 40 || seit[40] is int) && (n <= 41 || seit[41] is int)
+      && (n <= 42 || seit[42] is int) && (n <= 43 || seit[43] is int) && (n <= 44 || seit[44] is int)
+      && (n <= 45 || seit[45] is int) && (n <= 46 || seit[46] is int) && (n <= 47 || seit[47] is int)
+      && (n <= 48 || seit[48] is int) && (n <= 49 || seit[49] is int);
+  }
+
+  // The Kinder: each one's person id, since when it is marked and its
+  // Spitzname.
+  function sindKinder(kinder) {
+    return kinder is map && kinder.size() <= 20 && sindIds(kinder)
+      && kinderBis(kinder.values(), kinder.size());
+  }
+
+  function kinderBis(kinder, n) {
+    return (n <= 0 || istKind(kinder[0])) && (n <= 1 || istKind(kinder[1])) && (n <= 2 || istKind(kinder[2]))
+      && (n <= 3 || istKind(kinder[3])) && (n <= 4 || istKind(kinder[4])) && (n <= 5 || istKind(kinder[5]))
+      && (n <= 6 || istKind(kinder[6])) && (n <= 7 || istKind(kinder[7])) && (n <= 8 || istKind(kinder[8]))
+      && (n <= 9 || istKind(kinder[9])) && (n <= 10 || istKind(kinder[10])) && (n <= 11 || istKind(kinder[11]))
+      && (n <= 12 || istKind(kinder[12])) && (n <= 13 || istKind(kinder[13])) && (n <= 14 || istKind(kinder[14]))
+      && (n <= 15 || istKind(kinder[15])) && (n <= 16 || istKind(kinder[16])) && (n <= 17 || istKind(kinder[17]))
+      && (n <= 18 || istKind(kinder[18])) && (n <= 19 || istKind(kinder[19]));
+  }
+
+  // A Kind: since when it is marked and, optionally, the Spitzname the app
+  // keeps to 30 characters (an emoji as one), here at most 330 code points
+  // (SPITZNAME_CODEPUNKTE in kind.ts: 30 of the longest emoji); a regular
+  // expression, as it costs fewer expressions than a type and a size check,
+  // and fails on anything but text. Without `seit` it is none: a Spitzname
+  // written to a Kind another device unmarked meanwhile is refused, not
+  // made a Kind again.
+  function istKind(kind) {
+    return kind.keys().hasOnly(["seit", "spitzname"]) && kind.seit is int
+      && (kind.size() == 1 || kind.spitzname.matches("(?s).{0,330}"));
+  }
+
+  // The Vereinsfarben: each Verein's DBB id to its colours as one text
+  // (farbenText in vereinsfarben.ts): #rrggbb in lower case, a second one
+  // after a comma. All values at once, joined, as the keys: a check per
+  // entry costs more than a request may evaluate for 50 Vereine. As many
+  // parts as values, so no value holds the joining ";", and a value that is
+  // no text fails the join.
+  function sindVereinsfarben(vereinsfarben) {
+    return vereinsfarben is map && vereinsfarben.size() <= 50
+      && sindIds(vereinsfarben)
+      && (vereinsfarben.size() == 0 || sindFarbtexte(vereinsfarben.values().join(";"), vereinsfarben.size()));
+  }
+
+  // `texte`, the values joined, as colours: `n` of them, each #rrggbb in
+  // lower case with an optional second after a comma. Bound once, as each
+  // join counts as expressions again.
+  function sindFarbtexte(texte, n) {
+    return texte.matches("#[0-9a-f]{6}(,#[0-9a-f]{6})?(;#[0-9a-f]{6}(,#[0-9a-f]{6})?)*")
+      && texte.split(";").size() == n;
+  }
+}

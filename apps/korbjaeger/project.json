@@ -8,7 +8,12 @@
     "build-app": {
       "executor": "@analogjs/platform:vite",
       "dependsOn": ["^build"],
-      "inputs": ["sharedGlobals", "production", "^production"],
+      "inputs": [
+        "sharedGlobals",
+        "production",
+        "^production",
+        "{workspaceRoot}/.browserslistrc"
+      ],
       "cache": true,
       "defaultConfiguration": "production",
       "options": {
@@ -32,7 +37,8 @@
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/{projectRoot}/.nitro",
-        "{workspaceRoot}/dist/{projectRoot}/analog"
+        "{workspaceRoot}/dist/{projectRoot}/analog",
+        "{workspaceRoot}/dist/{projectRoot}/build-configuration"
       ]
     },
     "build": {
@@ -111,17 +117,32 @@
         "production",
         "^production",
         "{workspaceRoot}/firebase.korbjaeger.json",
-        "{workspaceRoot}/.firebaserc"
+        "{workspaceRoot}/.firebaserc",
+        "{projectRoot}/firestore.rules"
       ],
       "dependsOn": ["build"],
       "options": {
         "commands": [
+          "tsx ./apps/korbjaeger/deploy/build-configuration.ts check dist/apps/korbjaeger",
           "nx run korbjaeger:firebase functions:artifacts:setpolicy --location=europe-central2 --days=1 --force",
-          "nx run korbjaeger:firebase deploy"
+          "nx run korbjaeger:firebase deploy --only functions,hosting,firestore:rules"
         ],
         "parallel": false
       }
     },
-    "typecheck-specs": {}
+    "typecheck-specs": {},
+    "test-emulator": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "firebase emulators:exec --config apps/korbjaeger/emulator/firebase.test.json --project demo-korbjaeger-test --only firestore \"npx vitest run --config apps/korbjaeger/vite.emulator.config.ts\""
+      }
+    },
+    "emulatoren": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "command": "firebase emulators:start --config apps/korbjaeger/firebase.emulatoren.json --project demo-korbjaeger --only auth,firestore"
+      }
+    }
   }
 }

@@ -15,3 +15,21 @@
 .hinweis {
   color: var(--mat-sys-on-surface-variant);
 }
+
+.aktionen {
+  display: grid;
+  gap: 0.5rem;
+}
+
+// each Team's control beside its name, so several don't look alike
+.aktion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+
+.team-name {
+  font: var(--mat-sys-body-medium);
+}

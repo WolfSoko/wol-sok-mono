@@ -1,5 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
@@ -27,6 +31,11 @@ import { JETZT } from '../jetzt';
 import { MEIN_KIND } from './ueberblick-ansicht';
 import { UeberblickComponent } from './ueberblick.component';
 import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
+import { KontoSitzung } from '../konto/konto-sitzung';
+import {
+  FakeKontoDienst,
+  MerkerImSpec,
+} from '../konto/testing/fake-konto-dienst';
 
 /** The day the specs run on. */
 const HEUTE_IM_SPEC = '2026-11-08';
@@ -176,6 +185,8 @@ async function render(
   readonly auswahl: Auswahl;
   /** Waits for the reads that settle and the page. */
   readonly stabil: () => Promise<void>;
+  /** The snackbars, open over the page (`document`'s root). */
+  readonly leisten: HarnessLoader;
 }> {
   const auswahl = 'teams' in gefolgt ? gefolgt : await folgend(gefolgt);
   TestBed.configureTestingModule({
@@ -199,7 +210,12 @@ async function render(
     fixture.detectChanges();
   };
   await stabil();
-  return { seite: fixture.nativeElement as HTMLElement, auswahl, stabil };
+  return {
+    seite: fixture.nativeElement as HTMLElement,
+    auswahl,
+    stabil,
+    leisten: TestbedHarnessEnvironment.documentRootLoader(fixture),
+  };
 }
 
 async function folgend(teams: readonly TeamId[]): Promise<LokaleAuswahl> {
@@ -243,6 +259,33 @@ describe('UeberblickComponent', () => {
     expect(seite.querySelector('[data-qa="ueberblick-leer"]')).toBeNull();
     expect(eintraege(seite)).toEqual([]);
     expect(data.teamSpiele).not.toHaveBeenCalled();
+  });
+
+  it('says the account cannot be read, rather than show what it read before', async () => {
+    const dienst = new FakeKontoDienst();
+    const sitzung = new KontoSitzung(
+      new LokaleAuswahl(undefined),
+      async () => dienst,
+      new MerkerImSpec()
+    );
+    await sitzung.starten();
+    await sitzung.anmelden();
+    await dienst.kontoAuswahl.folgen(WASBUETTEL.id);
+    const { seite, stabil } = await render(
+      fakeData([saison(WASBUETTEL)]),
+      sitzung.auswahl
+    );
+    expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
+
+    dienst.lesefehler?.({ code: 'unavailable' });
+    await stabil();
+
+    expect(
+      text(seite.querySelector('[data-qa="ueberblick-nicht-lesbar"]'))
+    ).toBe(
+      'Meine Teams und Kinder lassen sich gerade nicht lesen. Bitte die App neu laden.'
+    );
+    expect(eintraege(seite)).toEqual([]);
   });
 
   it('invites to follow a first Team while none is followed', async () => {
@@ -721,7 +764,14 @@ describe('UeberblickComponent', () => {
       expect(teamNamen(seite)).toEqual(['MTV Gifhorn', 'MTV Wasbüttel']);
     });
 
-    it('removes a Team whose read fails from Meine Teams on request', async () => {
+    /** The card's control to unfollow its Team. */
+    function nichtMehrFolgen(eintrag: Element): HTMLButtonElement | null {
+      return eintrag.querySelector<HTMLButtonElement>(
+        '[data-qa="ueberblick-aktionen"] [data-qa="team-folgen"]'
+      );
+    }
+
+    it('unfollows a Team whose read fails from its card', async () => {
       const { seite, auswahl, stabil } = await render(
         fakeData([
           saison(WASBUETTEL),
@@ -734,26 +784,47 @@ describe('UeberblickComponent', () => {
       );
       const [gifhorn] = eintraege(seite);
       expect(text(teil(gifhorn, 'name'))).toBe('Team 201500');
-      const entfernen = gifhorn.querySelector<HTMLButtonElement>(
-        '[data-qa="ueberblick-entfernen"]'
+      const knopf = nichtMehrFolgen(gifhorn);
+      expect(knopf?.getAttribute('aria-label')).toBe(
+        'Nicht mehr folgen: Team 201500'
       );
-      expect(text(entfernen)).toBe('Entfernen');
 
-      entfernen?.click();
+      knopf?.click();
       await stabil();
 
       expect(auswahl.teams()).toEqual([WASBUETTEL.id]);
       expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
     });
 
-    it('offers no removal for a Team that loaded', async () => {
-      const { seite } = await render(fakeData([saison(WASBUETTEL)]), [
-        WASBUETTEL.id,
-      ]);
+    it('unfollows a Team that loaded from its card, offering to undo it', async () => {
+      const { seite, auswahl, stabil, leisten } = await render(
+        fakeData([saison(WASBUETTEL), saison(GIFHORN)]),
+        [WASBUETTEL.id, GIFHORN.id]
+      );
+      await stabil();
+      const [wasbuettel] = eintraege(seite);
+      const knopf = nichtMehrFolgen(wasbuettel);
+      expect(knopf?.getAttribute('aria-label')).toBe(
+        'Nicht mehr folgen: MTV Wasbüttel'
+      );
 
-      expect(
-        eintraege(seite)[0].querySelector('[data-qa="ueberblick-entfernen"]')
-      ).toBeNull();
+      knopf?.click();
+      await stabil();
+
+      expect(auswahl.teams()).toEqual([GIFHORN.id]);
+      expect(teamNamen(seite)).toEqual(['MTV Gifhorn']);
+      // focus stays on the overview, not on the page's body
+      expect(document.activeElement?.textContent?.trim()).toBe('Meine Teams');
+      const leiste = await leisten.getHarness(MatSnackBarHarness);
+      expect(await leiste.getMessage()).toBe(
+        'MTV Wasbüttel steht nicht mehr in Meine Teams.'
+      );
+
+      await leiste.dismissWithAction();
+      await stabil();
+
+      expect(auswahl.teams()).toEqual([GIFHORN.id, WASBUETTEL.id]);
+      TestBed.inject(MatSnackBar).dismiss();
     });
   });
 
@@ -844,11 +915,34 @@ describe('UeberblickComponent', () => {
       await stabil();
 
       teil(eintraege(seite)[0], 'saison-beendet')
-        ?.querySelector<HTMLButtonElement>('button[aria-pressed]')
+        ?.querySelector<HTMLButtonElement>('[data-qa="team-folgen"]')
         ?.click();
       await stabil();
 
       expect(auswahl.teams()).toEqual([WASBUETTEL.id, WASBUETTEL_U14.id]);
+    });
+
+    it('unfollows a suggested Team from the card, focus left on its control, no undo', async () => {
+      const { seite, auswahl, stabil, leisten } = await render(
+        mitLetztemSpielAm('2026-10-17'),
+        [WASBUETTEL.id]
+      );
+      await stabil();
+      const knopf = () =>
+        teil(
+          eintraege(seite)[0],
+          'saison-beendet'
+        )?.querySelector<HTMLButtonElement>('[data-qa="team-folgen"]');
+      knopf()?.click();
+      await stabil();
+      knopf()?.focus();
+
+      knopf()?.click();
+      await stabil();
+
+      expect(auswahl.teams()).toEqual([WASBUETTEL.id]);
+      expect(document.activeElement).toBe(knopf());
+      expect(await leisten.getHarnessOrNull(MatSnackBarHarness)).toBeNull();
     });
 
     it('says nothing and reads no Verein exactly two weeks after the last Spiel', async () => {
@@ -997,6 +1091,38 @@ describe('UeberblickComponent', () => {
       expect(teamNamen(seite)).toEqual(['SV Groß Oesingen']);
     });
 
+    it("unfollows a Kind's Team from its card, focus on the overview", async () => {
+      const letztesWas = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [saison(WASBUETTEL, letztesWas), saison(OESINGEN)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [letztesWas.id]: [LUMI] })
+      );
+      const { seite, auswahl, stabil } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id, OESINGEN.id], [[LUMI, 'Lu']])
+      );
+      const [lumi] = kinderAbschnitte(seite);
+      const knoepfe = [
+        ...lumi.querySelectorAll<HTMLButtonElement>(
+          '[data-qa="ueberblick-kind-aktionen"] [data-qa="team-folgen"]'
+        ),
+      ];
+      expect(knoepfe.map((knopf) => knopf.getAttribute('aria-label'))).toEqual([
+        'Nicht mehr folgen: MTV Wasbüttel',
+      ]);
+
+      knoepfe[0].click();
+      await stabil();
+
+      expect(auswahl.teams()).toEqual([OESINGEN.id]);
+      expect(document.activeElement?.textContent?.trim()).toBe('Meine Teams');
+      TestBed.inject(MatSnackBar).dismiss();
+    });
+
     it('shows the same Kind once across two Teams, with the first next Spiel of both', async () => {
       const letztesU12 = spiel(WASBUETTEL, GIFHORN, '2026-10-31', {
         status: GESPIELT_78_47,
@@ -1034,6 +1160,20 @@ describe('UeberblickComponent', () => {
       expect(text(teil(lumi, 'kind-teams'))).toBe(
         'MTV Wasbüttel · MTV Wasbüttel U14'
       );
+      // each Team's "Nicht mehr folgen" beside its name, for all to see
+      expect(
+        [...lumi.querySelectorAll('[data-qa="ueberblick-kind-aktion"]')].map(
+          (aktion) => [
+            text(aktion.querySelector('.team-name')),
+            aktion
+              .querySelector('[data-qa="team-folgen"]')
+              ?.getAttribute('aria-label'),
+          ]
+        )
+      ).toEqual([
+        ['MTV Wasbüttel', 'Nicht mehr folgen: MTV Wasbüttel'],
+        ['MTV Wasbüttel U14', 'Nicht mehr folgen: MTV Wasbüttel U14'],
+      ]);
       expect(text(teil(lumi, 'naechstes'))).toContain('Sa., 14.11.2026');
       expect(text(teil(lumi, 'naechstes'))).toContain('SV Groß Oesingen');
       // which of its Teams plays

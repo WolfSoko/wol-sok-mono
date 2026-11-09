@@ -9,6 +9,7 @@ function workspaceFile(path: string): string {
 interface AssetGroup {
   readonly name: string;
   readonly installMode: 'prefetch' | 'lazy';
+  readonly updateMode?: 'prefetch' | 'lazy';
   readonly resources: { readonly files: readonly string[] };
 }
 
@@ -68,6 +69,24 @@ describe('service worker', () => {
         '/assets/*.css',
       ])
     );
+  });
+
+  // Firebase (Auth, Firestore) is its own chunk, loaded only to sign in
+  // (`konto.ts`): a visitor without an account never fetches it; once
+  // cached, a release fetches its new version ahead, so a signed-in
+  // Elternteil opens the account offline after an update too
+  it("fetches the account's Firebase only once used, and its updates ahead", () => {
+    const chunk = '/assets/firebase-konto-dienst-*.js';
+    const app = config.assetGroups.find((group) => group.name === 'app');
+    const konto = config.assetGroups.find((group) => group.name === 'konto');
+
+    expect(workspaceFile('apps/korbjaeger/src/app/konto/konto.ts')).toContain(
+      "import('./firebase-konto-dienst')"
+    );
+    expect(app?.resources.files).toContain(`!${chunk}`);
+    expect(konto?.installMode).toBe('lazy');
+    expect(konto?.updateMode).toBe('prefetch');
+    expect(konto?.resources.files).toEqual([chunk]);
   });
 
   it('keeps no source map', () => {
