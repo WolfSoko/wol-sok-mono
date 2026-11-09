@@ -21,6 +21,7 @@ function workspaceJson<T>(path: string): T {
 
 interface FirebaseConfig {
   functions: { source: string; predeploy: string[] };
+  firestore?: { rules: string };
   hosting: {
     site?: string;
     public: string;
@@ -141,6 +142,18 @@ describe('the Firebase deploy', () => {
     });
   });
 
+  it("deploys the app's Firestore rules with it, the ones its emulator specs test", () => {
+    const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
+    const { commands } = workspaceJson<ProjectJson>(
+      'apps/korbjaeger/project.json'
+    ).targets['deploy'].options;
+
+    expect(config.firestore).toEqual({
+      rules: 'apps/korbjaeger/firestore.rules',
+    });
+    expect(commands?.at(-1)).toContain('firestore:rules');
+  });
+
   it('deploys the root config, not the file Nitro generates in the app', () => {
     // apps/korbjaeger/firebase.json is Nitro's, with a placeholder site
     const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
@@ -149,7 +162,7 @@ describe('the Firebase deploy', () => {
       'firebase --config=firebase.korbjaeger.json --project=korbjaeger'
     );
     expect(project.targets['deploy'].options.commands?.at(-1)).toBe(
-      'nx run korbjaeger:firebase deploy'
+      'nx run korbjaeger:firebase deploy --only functions,hosting,firestore:rules'
     );
   });
 
@@ -170,7 +183,7 @@ describe('the Firebase deploy', () => {
     expect(parallel).toBe(false);
     expect(commands?.slice(1)).toEqual([
       `nx run korbjaeger:firebase functions:artifacts:setpolicy --location=${region} --days=1 --force`,
-      'nx run korbjaeger:firebase deploy',
+      'nx run korbjaeger:firebase deploy --only functions,hosting,firestore:rules',
     ]);
   });
 

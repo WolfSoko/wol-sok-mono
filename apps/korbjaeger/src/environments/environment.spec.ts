@@ -44,10 +44,10 @@ describe('the environment', () => {
     });
   });
 
-  it('keeps the sign-in off and the emulators away in production', () => {
+  it('offers the sign-in in production, on the real project, no emulator near it', () => {
     const produktion = environmentFuer('production');
 
-    expect(produktion.anmeldung).toBe(false);
+    expect(produktion.anmeldung).toBe(true);
     expect(produktion.emulatoren).toBeUndefined();
     expect(produktion.firebase).toEqual(environment.firebase);
   });

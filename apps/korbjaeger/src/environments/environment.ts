@@ -8,8 +8,9 @@ const EMULATOREN: FirebaseEmulatoren = {
 };
 
 /**
- * The environment of a build in `modus`: `production` deploys; development,
- * e2e and the specs sign in against the emulators.
+ * The environment of a build in `modus`: `production` deploys and signs in
+ * on the real project; development, e2e and the specs sign in against the
+ * emulators.
  */
 export function environmentFuer(modus: string): Environment {
   const produktion = modus === 'production';
@@ -25,8 +26,8 @@ export function environmentFuer(modus: string): Environment {
       messagingSenderId: '1062488240786',
       appId: '1:1062488240786:web:659a49b051aa953cab2c4b',
     },
-    // the sign-in goes live with its privacy policy (#2874): then `true`
-    anmeldung: !produktion,
+    // live since #2873; its privacy policy follows with #2874
+    anmeldung: true,
     emulatoren: produktion ? undefined : EMULATOREN,
   };
 }

@@ -73,8 +73,14 @@ that is not from the invented lists.
 - The privacy policy covers the Google sign-in, the Firestore document
   (Team ids, person ids, nicknames), device storage, Hosting logs and
   deletion; the portfolio does not link the app until the DBB has agreed.
-  The sign-in is built switched off in production (`environment.anmeldung`)
-  until that policy is live, and a visitor who never opens the settings
+  The sign-in is live in production since #2873 (the owner's decision of
+  2026-11-09), with the Firestore rules (`apps/korbjaeger/firestore.rules`)
+  deployed with the app; the privacy policy that covers it is the open
+  item #2874. The Firestore database of the project `korbjaeger` is in
+  `europe-west3` (Frankfurt), while the Nitro function serving the DBB
+  proxy runs in `europe-central2`: a function that reads or writes
+  Firestore (as the Auth-deletion function of #2912) belongs in
+  `europe-west3`, next to the data. A visitor who never opens the settings
   loads no part of Firebase, so Google learns nothing of them; opening the
   settings loads Firebase Auth ahead of the click (on Safari and mobile
   with Google's sign-in frame), as Safari opens a popup only then.
