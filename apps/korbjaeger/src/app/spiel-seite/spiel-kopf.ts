@@ -68,14 +68,15 @@ export function spielKopf(details: SpielDetails): SpielKopf {
   const { spiel } = details;
   const ergebnis = ergebnisVon(spiel);
   const perioden = periodenVon(details, ergebnis);
-  const status = statusText(spiel);
+  const vorlaeufig = ergebnisVorlaeufig(spiel, details.liga);
+  const status = statusText(spiel, vorlaeufig);
   return {
     heim: partner(spiel.heim),
     gast: partner(spiel.gast),
     wann: spielTagUndUhrzeit(spiel.datum, spiel.uhrzeit),
     liga: details.liga.name,
     ...(ergebnis && { ergebnis: ergebnisText(ergebnis) }),
-    vorlaeufig: ergebnisVorlaeufig(spiel),
+    vorlaeufig,
     ...(status && { status }),
     ...(perioden && { perioden }),
   };
@@ -87,7 +88,7 @@ function partner(partei: SpielPartei): SpielPartner {
     : { name: partei.bezeichnung };
 }
 
-function statusText(spiel: Spiel): string | undefined {
+function statusText(spiel: Spiel, vorlaeufig: boolean): string | undefined {
   switch (spiel.status.art) {
     case 'geplant':
       return 'Noch kein Ergebnis';
@@ -98,9 +99,7 @@ function statusText(spiel: Spiel): string | undefined {
       return verzicht === undefined ? 'kampflos' : `kampflos · ${verzicht}`;
     }
     case 'gespielt':
-      return ergebnisVorlaeufig(spiel)
-        ? 'Ergebnis noch nicht bestätigt'
-        : undefined;
+      return vorlaeufig ? 'Ergebnis noch nicht bestätigt' : undefined;
   }
 }
 

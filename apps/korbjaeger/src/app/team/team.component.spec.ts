@@ -441,6 +441,38 @@ describe('TeamComponent', () => {
     expect(feld(bestaetigt, 'vorlaeufig')).toBeUndefined();
   });
 
+  it('shows a result the DBB never confirms (BBL, ProA, ProB) as final', async () => {
+    const bbl: Liga = {
+      ...liga(55802, '1. Bundesliga (easyCredit BBL)'),
+      verband: { id: 100, name: 'Bundesligen' },
+      ohneSpielberichte: true,
+      confirmsNoResults: true,
+    };
+    const unbestaetigt = (id: number, ligaId: number): Spiel =>
+      spiel({
+        id,
+        ligaId,
+        datum: `2026-09-1${id}`,
+        status: {
+          art: 'gespielt',
+          ergebnis: { heim: 99, gast: 46 },
+          bestaetigt: false,
+        },
+      });
+    const page = await render(
+      fakeData(async () => ({
+        ...saison([unbestaetigt(1, bbl.id), unbestaetigt(2, VORRUNDE.id)]),
+        ligen: [bbl, VORRUNDE],
+      }))
+    );
+
+    const [inDerBbl, inDerVorrunde] = spielZeilen(page);
+    expect(feld(inDerBbl, 'ergebnis')).toBe('99:46');
+    expect(feld(inDerBbl, 'ausgang')).toBe('Sieg');
+    expect(feld(inDerBbl, 'vorlaeufig')).toBeUndefined();
+    expect(feld(inDerVorrunde, 'vorlaeufig')).toBe('vorläufig');
+  });
+
   it('says in words how each decided Spiel ended for the Team', async () => {
     const gespielt = (heim: number, gast: number) =>
       ({

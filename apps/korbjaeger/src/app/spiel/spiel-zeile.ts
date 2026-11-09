@@ -44,18 +44,19 @@ export function spielZeilen(saison: TeamSaison): readonly SpielZeile[] {
 export function spielZeile(saison: TeamSaison, spiel: Spiel): SpielZeile {
   const seite = seiteVon(spiel, saison.team.id);
   const ergebnis = ergebnisVon(spiel);
+  const liga = ligaVon(saison, spiel.ligaId);
   return {
     id: spiel.id,
     datum: spielTag(spiel.datum),
     uhrzeit: spiel.uhrzeit,
-    liga: ligaVon(saison, spiel.ligaId)?.name ?? '',
+    liga: liga?.name ?? '',
     ort: seite && ORT[seite],
     gegner: seite
       ? parteiName(gegnerVon(spiel, seite))
       : `${parteiName(spiel.heim)} – ${parteiName(spiel.gast)}`,
     ergebnis: ergebnis && ergebnisText(ergebnis),
     ausgang: seite && ausgangVon(spiel, seite),
-    vorlaeufig: ergebnisVorlaeufig(spiel),
+    vorlaeufig: ergebnisVorlaeufig(spiel, liga),
     markierung: sonderfallVon(spiel),
   };
 }
