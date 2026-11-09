@@ -4,6 +4,8 @@
  * task, so a change here reruns them).
  */
 
+import { relative } from 'node:path';
+
 const BOUNDARY_RULE = 'enforce-module-boundaries';
 const VERSION_FILE = 'version.json';
 /** `read`, `readFile`, `readJson`: not `readme` or `ready`. */
@@ -22,6 +24,22 @@ const PATH_EXPRESSIONS = new Set([
 const EXPRESSION_PLACEHOLDER = '\0';
 const DISABLE_DIRECTIVE =
   /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
+/** Module specifiers of the workspace's test-only code. */
+const TESTING_MODULES = [
+  // A workspace lib's testing entry: `@wolsok/<lib>/testing` and below it.
+  /^@wolsok\/[^/]+\/testing(?:\/|$)/,
+  // A relative path through a `testing` folder or to a `testing` module.
+  /^\.{1,2}\/(?:.*\/)?testing(?:\.[cm]?[jt]s)?(?:\/|$)/,
+];
+/** Test code under a project's `src/`, by its path inside the workspace. */
+const TEST_FILES = [
+  // Specs, emulator specs, Cypress component tests and mocks.
+  /\.(?:spec|test|emulator|cy|mock)\.[cm]?[jt]sx?$/,
+  // Jest's setup and a lib's `testing.ts` entry.
+  /(?:^|\/)(?:test-setup|testing)\.[cm]?[jt]s$/,
+  // Everything below a `testing/` folder.
+  /(?:^|\/)testing\//,
+];
 
 /**
  * Boundaries are configured, not silenced: an import the tag rules refuse
@@ -81,26 +99,43 @@ const noVersionJsonRead = {
     schema: [],
   },
   create(context) {
-    const reportModuleSource = (node) => {
-      if (node.source && namesVersionFile(staticText(node.source))) {
-        context.report({ node: node.source, messageId: 'read' });
-      }
-    };
     const reportRead = (node) => {
       if (namesVersionFile(staticText(node)) && reachesReadCall(node)) {
         context.report({ node, messageId: 'read' });
       }
     };
     return {
-      ImportDeclaration: reportModuleSource,
-      ExportNamedDeclaration: reportModuleSource,
-      ExportAllDeclaration: reportModuleSource,
-      ImportExpression: reportModuleSource,
+      ...moduleSourceVisitors((source) => {
+        if (namesVersionFile(staticText(source))) {
+          context.report({ node: source, messageId: 'read' });
+        }
+      }),
       Literal: reportRead,
       TemplateLiteral: reportRead,
     };
   },
 };
+
+/**
+ * Visitors handing `check` the specifier of every way a module names another:
+ * `import`, `export … from`, `import()`, `import('…').Type` in a type
+ * position and `import x = require('…')`.
+ */
+function moduleSourceVisitors(check) {
+  const checkSource = (node) => {
+    if (node.source) {
+      check(node.source);
+    }
+  };
+  return {
+    ImportDeclaration: checkSource,
+    ExportNamedDeclaration: checkSource,
+    ExportAllDeclaration: checkSource,
+    ImportExpression: checkSource,
+    TSImportType: checkSource,
+    TSExternalModuleReference: (node) => check(node.expression),
+  };
+}
 
 /** The text of a string literal, or the static parts of a template literal. */
 function staticText(node) {
@@ -161,10 +196,63 @@ function propertyName(member) {
   return member.computed ? staticText(member.property) : member.property.name;
 }
 
+/**
+ * The `/testing` entries and `testing/` folders hold fakes that call
+ * `jest.fn` or `vi.fn` at module load: pulled into a production chunk, they
+ * break it at runtime. The boundary rule cannot see this, since it counts
+ * `<lib>/testing` as `<lib>`. Enabled for production sources (`apps/*\/src`,
+ * `libs/**\/src`) by an override in `.oxlintrc.json`; test files there are
+ * recognised by their path (`TEST_FILES`).
+ */
+const noTestingImport = {
+  meta: {
+    type: 'problem',
+    docs: {
+      description: 'Forbids importing test-only code into production sources.',
+    },
+    messages: {
+      testing:
+        'Production code must not import test-only code ({{source}}): move what it needs out of the testing entry, or import it from a spec.',
+    },
+    schema: [],
+  },
+  create(context) {
+    // Relative to the workspace, so a checkout inside a `testing` folder
+    // exempts nothing.
+    const file = relative(context.cwd, context.filename).replaceAll('\\', '/');
+    // Most files name no testing module at all: skip their nodes.
+    if (
+      TEST_FILES.some((pattern) => pattern.test(file)) ||
+      !context.sourceCode.text.includes('testing')
+    ) {
+      return {};
+    }
+    const report = (sourceNode) => {
+      const source = staticText(sourceNode);
+      if (TESTING_MODULES.some((pattern) => pattern.test(source ?? ''))) {
+        context.report({
+          node: sourceNode,
+          messageId: 'testing',
+          data: { source },
+        });
+      }
+    };
+    return {
+      ...moduleSourceVisitors(report),
+      CallExpression(node) {
+        if (node.callee.name === 'require' && node.arguments[0]) {
+          report(node.arguments[0]);
+        }
+      },
+    };
+  },
+};
+
 export default {
   meta: { name: 'wolsok' },
   rules: {
     'no-boundary-disable': noBoundaryDisable,
     'no-version-json-read': noVersionJsonRead,
+    'no-testing-import': noTestingImport,
   },
 };

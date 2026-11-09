@@ -180,6 +180,12 @@
       }
     },
     {
+      "files": ["apps/*/src/**", "libs/**/src/**"],
+      "rules": {
+        "wolsok/no-testing-import": "error"
+      }
+    },
+    {
       "files": ["libs/features/bacteria-engine/src/**/*.ts"],
       "rules": {
         "no-restricted-imports": [
