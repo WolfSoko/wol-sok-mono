@@ -10,15 +10,22 @@ import { MatIconModule } from '@angular/material/icon';
 import type { Verein } from '@wolsok/feat-shared-basketball-data';
 
 /**
- * The button "Vereinsfarben": opens the bottom sheet for `verein`, its code
- * loaded on the first tap, not with the screen. The one control every
- * screen offering a Verein's colours uses.
+ * The button "Vereinsfarben" (named "Vereinsfarben von …" for screen
+ * readers, as several cards may offer one): opens the bottom sheet for
+ * `verein`, its code loaded on the first tap, not with the screen. The one
+ * control every screen offering a Verein's colours uses.
  */
 @Component({
   selector: 'korb-vereinsfarben-knopf',
   imports: [MatButtonModule, MatIconModule],
   template: `
-    <button matButton type="button" data-qa="vereinsfarben" (click)="oeffnen()">
+    <button
+      matButton
+      type="button"
+      data-qa="vereinsfarben"
+      [attr.aria-label]="'Vereinsfarben von ' + verein().name"
+      (click)="oeffnen()"
+    >
       <mat-icon aria-hidden="true">palette</mat-icon>
       Vereinsfarben
     </button>

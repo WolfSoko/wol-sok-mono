@@ -4,11 +4,17 @@ import {
   computed,
   inject,
   input,
+  linkedSignal,
 } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { parseDbbId } from '@wolsok/feat-shared-basketball-data';
+import {
+  parseDbbId,
+  type Spiel,
+  type TeamId,
+  type VereinId,
+} from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { spielberichtResource } from '../basketball-data/spielbericht-resource';
@@ -20,6 +26,8 @@ import { KaderComponent } from './kader.component';
 import { spielKopf } from './spiel-kopf';
 import { spielberichtTeil } from './spielbericht-teil';
 import { StandComponent } from '../stand/stand.component';
+import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
+import { gefolgterVerein } from './gefolgter-verein';
 
 /**
  * The Spiel page: the result and quarter scores, the Halle, and both
@@ -80,4 +88,27 @@ export class SpielComponent {
       ? undefined
       : spielberichtTeil(this.bericht, this.details, this.gefolgt())
   );
+
+  /**
+   * The Verein whose colours the page wears (#2918): the followed side's.
+   * While Meine Teams are read again (a sign-in or sign-out switches
+   * stores), the last one stays, so the page does not flash the app's own.
+   */
+  private readonly verein = linkedSignal<
+    { spiel: Spiel | undefined; gefolgt: readonly TeamId[] | undefined },
+    VereinId | undefined
+  >({
+    source: () => ({
+      spiel: this.details.hasValue() ? this.details.value().spiel : undefined,
+      gefolgt: this.gefolgt(),
+    }),
+    computation: ({ spiel, gefolgt }, vorher) =>
+      gefolgt === undefined
+        ? vorher?.value
+        : spiel && gefolgterVerein(spiel, gefolgt),
+  });
+
+  public constructor() {
+    vereinsfarbenAnwenden(this.verein);
+  }
 }
