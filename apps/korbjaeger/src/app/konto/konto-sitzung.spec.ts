@@ -1,3 +1,4 @@
+import type { GeraeteSperre } from '../auswahl/geraete-sperre';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import {
   AnmeldungAbgebrochen,
@@ -26,6 +27,7 @@ async function aufbauen(
     ohneAnmeldung?: boolean;
     dienst?: FakeKontoDienst;
     lokal?: LokaleAuswahl;
+    sperre?: GeraeteSperre;
   } = {}
 ): Promise<Aufbau> {
   const dienst = optionen.dienst ?? new FakeKontoDienst();
@@ -47,7 +49,8 @@ async function aufbauen(
     lokal,
     optionen.ohneAnmeldung ? undefined : laden,
     merker,
-    () => aufbau.online
+    () => aufbau.online,
+    optionen.sperre
   );
   aufbau.sitzung = sitzung;
   await sitzung.starten();
@@ -175,10 +178,7 @@ describe('KontoSitzung', () => {
       dienst.uebrig = { teams: 2, kinder: 1 };
       const { sitzung } = await aufbauen({ dienst });
 
-      expect(await sitzung.anmelden()).toEqual({
-        uebrig: { teams: 2, kinder: 1 },
-        geraetBehalten: false,
-      });
+      expect(await sitzung.anmelden()).toEqual({ teams: 2, kinder: 1 });
     });
 
     it("shows the account's choices once signed in", async () => {
@@ -242,11 +242,46 @@ describe('KontoSitzung', () => {
       let team = 900000;
       dienst.beiJederUebernahme = () => lokal.folgen(team++);
 
-      const ergebnis = await sitzung.anmelden();
+      await sitzung.anmelden();
 
-      expect(ergebnis.geraetBehalten).toBe(true);
+      expect(sitzung.geraetBehalten()).toBe(true);
       expect(lokal.teams()?.length).toBeGreaterThan(0);
       expect(sitzung.stand()).toEqual(ANGEMELDET);
+    });
+
+    it('keeps choices a takeover kept on the device when signing out before the next start', async () => {
+      const { sitzung, dienst, lokal } = await aufbauen();
+      let team = 900000;
+      dienst.beiJederUebernahme = () => lokal.folgen(team++);
+      await sitzung.anmelden();
+      dienst.beiJederUebernahme = undefined;
+      const behalten = lokal.teams();
+
+      await sitzung.abmelden();
+
+      expect(lokal.teams()).toEqual(behalten);
+      expect(sitzung.auswahl.teams()).toEqual(behalten);
+    });
+
+    it('takes the device over under its lock, clearing included', async () => {
+      const ablauf: string[] = [];
+      const dienst = new FakeKontoDienst();
+      dienst.beiJederUebernahme = async () => void ablauf.push('uebernommen');
+      const { sitzung, lokal } = await aufbauen({
+        dienst,
+        sperre: async (tun) => {
+          ablauf.push('gesperrt');
+          const ergebnis = await tun();
+          ablauf.push(lokal.teams().length === 0 ? 'geleert' : 'voll');
+          return ergebnis;
+        },
+      });
+      await lokal.folgen(313036);
+      ablauf.length = 0;
+
+      await sitzung.anmelden();
+
+      expect(ablauf).toEqual(['gesperrt', 'uebernommen', 'geleert']);
     });
 
     it('takes over what another tab stored meanwhile, before its storage event', async () => {
@@ -268,10 +303,10 @@ describe('KontoSitzung', () => {
         );
       };
 
-      const ergebnis = await sitzung.anmelden();
+      await sitzung.anmelden();
 
       expect(dienst.uebernommen?.teams).toEqual([313036, 201500]);
-      expect(ergebnis.geraetBehalten).toBe(false);
+      expect(sitzung.geraetBehalten()).toBe(false);
       expect(lokal.teams()).toEqual([]);
     });
 
@@ -290,6 +325,25 @@ describe('KontoSitzung', () => {
       expect(dienst.uebernommen?.teams).toEqual([201500]);
       expect(lokal.teams()).toEqual([]);
       expect(sitzung.stand()).toEqual(ANGEMELDET);
+    });
+
+    it('keeps the account open, and the kept choices, where taking them over at the start fails', async () => {
+      const dienst = new FakeKontoDienst();
+      dienst.wiederhergestellt = MIMI_ELTERN;
+      dienst.uebernahmeScheitert = true;
+      const lokal = new LokaleAuswahl(undefined);
+      await lokal.folgen(201500);
+
+      const { sitzung } = await aufbauen({
+        angemeldetGewesen: true,
+        dienst,
+        lokal,
+      });
+
+      expect(sitzung.stand()).toEqual(ANGEMELDET);
+      expect(sitzung.auswahl.nichtLesbar()).toBe(false);
+      expect(sitzung.geraetBehalten()).toBe(true);
+      expect(lokal.teams()).toEqual([201500]);
     });
 
     it('runs one sign-in at a time: a second click joins the first', async () => {
@@ -397,14 +451,23 @@ describe('KontoSitzung', () => {
       expect(aufbau.sitzung.stand()).toEqual(ANGEMELDET);
     });
 
-    it('keeps the account where the server does not confirm the document gone', async () => {
+    it('deletes the account only once the server confirmed its document gone, however long that takes', async () => {
       const { sitzung, dienst } = await angemeldet();
-      dienst.loeschenOhneServer = true;
+      const bestaetigt = Promise.withResolvers<void>();
+      dienst.loeschenBestaetigt = bestaetigt.promise;
 
-      await expect(sitzung.loeschen()).rejects.toBeInstanceOf(OhneInternet);
-
-      expect(dienst.aufrufe).not.toContain('benutzerLoeschen');
+      const loeschen = sitzung.loeschen();
+      await abwarten();
+      expect(dienst.aufrufe).toEqual([
+        'erneutAnmelden',
+        'auswahlLoeschen uid-1',
+      ]);
       expect(sitzung.stand()).toEqual(ANGEMELDET);
+
+      bestaetigt.resolve();
+      await loeschen;
+      expect(dienst.aufrufe).toContain('benutzerLoeschen');
+      expect(sitzung.stand()).toEqual({ art: 'abgemeldet' });
     });
   });
 
@@ -466,6 +529,78 @@ describe('KontoSitzung', () => {
       expect(sitzung.stand()).toEqual({
         art: 'angemeldet',
         name: 'Familie Beispiel',
+      });
+    });
+
+    it("keeps the device's choices when another tab's sign-in fails and signs out", async () => {
+      const { sitzung, dienst, lokal } = await aufbauen();
+      await sitzung.vorbereiten();
+      await lokal.folgen(313036);
+
+      // the other tab signs in, cannot take the choices over, signs out
+      dienst.authMeldet(MIMI_ELTERN);
+      await abwarten();
+      dienst.authMeldet(null);
+      await abwarten();
+
+      expect(lokal.teams()).toEqual([313036]);
+      expect(sitzung.auswahl.teams()).toEqual([313036]);
+    });
+
+    describe('while an account opens', () => {
+      async function oeffnetGerade() {
+        const aufbau = await aufbauen();
+        await aufbau.sitzung.vorbereiten();
+        const bereit = Promise.withResolvers<void>();
+        aufbau.dienst.auswahlBereit = bereit.promise;
+        const zaehlen = (aufruf: string) =>
+          aufbau.dienst.aufrufe.filter((a) => a === aufruf).length;
+        return { ...aufbau, bereit: bereit.resolve, zaehlen };
+      }
+
+      it('shows nothing of it where another tab signed out meanwhile', async () => {
+        const { sitzung, dienst, bereit, zaehlen } = await oeffnetGerade();
+        dienst.authMeldet(MIMI_ELTERN);
+        await abwarten();
+
+        dienst.authMeldet(null);
+        bereit();
+        await abwarten();
+
+        expect(sitzung.stand()).toEqual({ art: 'abgemeldet' });
+        expect(sitzung.auswahl.teams()).toEqual([]);
+        expect(zaehlen('beenden')).toBe(zaehlen('auswahl uid-1'));
+      });
+
+      it('shows the account another tab switched to meanwhile, the first closed', async () => {
+        const { sitzung, dienst, bereit, zaehlen } = await oeffnetGerade();
+        dienst.authMeldet(MIMI_ELTERN);
+        await abwarten();
+
+        dienst.authMeldet({ uid: 'uid-2', name: 'Familie Beispiel' });
+        bereit();
+        await abwarten();
+
+        expect(sitzung.stand()).toEqual({
+          art: 'angemeldet',
+          name: 'Familie Beispiel',
+        });
+        expect(zaehlen('beenden')).toBe(1);
+      });
+
+      it('opens it once where another tab tells twice, the other opening closed', async () => {
+        const { sitzung, dienst, merker, bereit, zaehlen } =
+          await oeffnetGerade();
+        dienst.wiederhergestellt = MIMI_ELTERN;
+
+        merker.vonAnderemTab(true);
+        merker.vonAnderemTab(true);
+        await abwarten();
+        bereit();
+        await abwarten();
+
+        expect(sitzung.stand()).toEqual(ANGEMELDET);
+        expect(zaehlen('auswahl uid-1') - zaehlen('beenden')).toBe(1);
       });
     });
 

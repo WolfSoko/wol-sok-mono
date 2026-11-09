@@ -36,13 +36,13 @@ import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
 import { geraeteSpeicher } from '../geraete-speicher';
 import {
   AnmeldungAbgebrochen,
-  OhneInternet,
   PopupBlockiert,
   type Benutzer,
   type KontoAuswahl,
   type KontoDienst,
 } from './konto-dienst';
 import { fehlerCode } from './fehler-code';
+import { mitZeitlimit } from './zeitlimit';
 
 /** Auth's codes for a popup the Elternteil closed or a second one superseded. */
 const ABGEBROCHEN = new Set([
@@ -60,9 +60,6 @@ const APP_NAME = 'korbjaeger';
  */
 export const ZWISCHENSPEICHER_LEEREN_SCHLUESSEL =
   'korbjaeger-zwischenspeicher-leeren';
-
-/** How long deleting the account's document waits for the server. */
-const LOESCHEN_WARTEN_MS = 10_000;
 
 /** How long signing out waits for the device's changes to be sent. */
 const SENDEN_WARTEN_MS = 5000;
@@ -153,12 +150,13 @@ class FirebaseKontoDienst implements KontoDienst {
     return geraetUebernehmen(await this.db(), uid, geraet);
   }
 
+  /**
+   * Resolves once the server confirmed the deletion, however long that
+   * takes: once queued, Firestore deletes the document even where this
+   * gave up, so giving up would leave the account without its choices.
+   */
   public async auswahlLoeschen(uid: string): Promise<void> {
-    const geloescht = deleteDoc(auswahlDokumentVon(await this.db(), uid));
-    const zuSpaet = new Promise<never>((_, abbrechen) =>
-      setTimeout(() => abbrechen(new OhneInternet()), LOESCHEN_WARTEN_MS)
-    );
-    await Promise.race([geloescht, zuSpaet]);
+    await deleteDoc(auswahlDokumentVon(await this.db(), uid));
   }
 
   public async allesGesendet(): Promise<boolean> {
@@ -166,20 +164,25 @@ class FirebaseKontoDienst implements KontoDienst {
       return true;
     }
     const firestore = await this.firestore;
-    return Promise.race([
+    return mitZeitlimit(
       waitForPendingWrites(firestore).then(() => true),
-      new Promise<boolean>((weiter) =>
-        setTimeout(() => weiter(false), SENDEN_WARTEN_MS)
-      ),
-    ]);
+      SENDEN_WARTEN_MS,
+      () => false
+    );
   }
 
   public async zwischenspeicherLeeren(): Promise<void> {
-    // a Firestore that never started still clears what an earlier visit kept
-    const firestore = await this.db();
-    this.firestore = undefined;
-    await terminate(firestore);
-    await this.speicherLeeren(firestore);
+    try {
+      // a Firestore that never started still clears what an earlier visit kept
+      const firestore = await this.db();
+      this.firestore = undefined;
+      await terminate(firestore);
+      await this.speicherLeeren(firestore);
+    } catch (fehler) {
+      // the next start clears it before reading
+      console.warn('Korbjäger: Firestore cache not cleared', fehler);
+      leerenAusstehendSetzen(true);
+    }
   }
 
   private db(): Promise<Firestore> {

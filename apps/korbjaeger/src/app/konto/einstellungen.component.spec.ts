@@ -25,6 +25,8 @@ async function oeffnen(
     lokal?: LokaleAuswahl;
     /** Holds Firebase's chunk back until it resolves. */
     ladenWartetAuf?: Promise<void>;
+    /** How many loads of Firebase's chunk fail first (offline). */
+    ladenScheitert?: number;
   } = {}
 ): Promise<Seite> {
   const dienst = optionen.dienst ?? new FakeKontoDienst();
@@ -36,6 +38,9 @@ async function oeffnen(
       : async () => {
           ladevorgaenge++;
           await optionen.ladenWartetAuf;
+          if (ladevorgaenge <= (optionen.ladenScheitert ?? 0)) {
+            throw new Error('Failed to fetch dynamically imported module');
+          }
           return dienst;
         },
     new MerkerImSpec(),
@@ -171,6 +176,58 @@ describe('EinstellungenComponent', () => {
     ).toBeNull();
   });
 
+  it('says where the sign-in could not be loaded, and loads it again on asking', async () => {
+    const { knopf, stabil, element, geladen } = await oeffnen({
+      ladenScheitert: 1,
+    });
+
+    expect(knopf('anmelden')?.disabled).toBe(true);
+    expect(
+      element
+        .querySelector('[data-qa="vorbereiten-fehlgeschlagen"]')
+        ?.textContent?.trim()
+    ).toBe(
+      'Die Anmeldung ließ sich nicht laden. Bitte prüfe die Internetverbindung.'
+    );
+
+    knopf('vorbereiten-erneut')?.click();
+    await stabil();
+
+    expect(geladen()).toBe(2);
+    expect(knopf('anmelden')?.disabled).toBe(false);
+    expect(
+      element.querySelector('[data-qa="vorbereiten-fehlgeschlagen"]')
+    ).toBeNull();
+  });
+
+  it('says the account is being deleted until the server confirmed it', async () => {
+    const dienst = new FakeKontoDienst();
+    const seite = await angemeldet(dienst);
+    const bestaetigt = Promise.withResolvers<void>();
+    dienst.loeschenBestaetigt = bestaetigt.promise;
+
+    seite.knopf('konto-loeschen')?.click();
+    await seite.stabil();
+    imDialog('konto-loeschen-bestaetigen');
+    await seite.stabil();
+
+    expect(
+      seite.element
+        .querySelector('[data-qa="loeschen-laeuft"]')
+        ?.textContent?.trim()
+    ).toBe(
+      'Das Konto wird gelöscht. Ohne Internet wartet das, bis dein Gerät wieder online ist; lass die App so lange offen.'
+    );
+    expect(seite.knopf('abmelden')?.disabled).toBe(true);
+
+    bestaetigt.resolve();
+    await seite.stabil();
+    expect(
+      seite.element.querySelector('[data-qa="loeschen-laeuft"]')
+    ).toBeNull();
+    expect(seite.knopf('anmelden')).not.toBeNull();
+  });
+
   it('says when choices made during sign-in stay on the device for the next start', async () => {
     const dienst = new FakeKontoDienst();
     const lokal = new LokaleAuswahl(undefined);
@@ -184,7 +241,7 @@ describe('EinstellungenComponent', () => {
     expect(
       element.querySelector('[data-qa="geraet-behalten"]')?.textContent?.trim()
     ).toBe(
-      'Einige Änderungen kamen während der Anmeldung dazu. Sie bleiben auf diesem Gerät und kommen beim nächsten Öffnen der App in dein Konto.'
+      'Einige Änderungen dieses Geräts sind noch nicht in deinem Konto. Sie bleiben auf dem Gerät und kommen beim nächsten Öffnen der App dazu.'
     );
   });
 
@@ -277,11 +334,6 @@ describe('EinstellungenComponent', () => {
       'Google was cancelled',
       (dienst: FakeKontoDienst) => (dienst.abgebrochen = true),
       'Das Konto ist nicht gelöscht: Die Bestätigung bei Google wurde abgebrochen.',
-    ],
-    [
-      'the server did not confirm it',
-      (dienst: FakeKontoDienst) => (dienst.loeschenOhneServer = true),
-      'Ohne Internet lässt sich das Konto nicht löschen. Bitte versuche es mit Internet noch einmal.',
     ],
   ])(
     'says why the account is not deleted where %s',

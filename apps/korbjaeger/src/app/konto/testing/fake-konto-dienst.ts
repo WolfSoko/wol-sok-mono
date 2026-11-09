@@ -4,7 +4,6 @@ import { fakeAuswahl } from '../../auswahl/testing/fake-auswahl';
 import type { NichtUebernommen } from '../../auswahl/zusammenfuehren';
 import {
   AnmeldungAbgebrochen,
-  OhneInternet,
   type Benutzer,
   type KontoAuswahl,
   type KontoDienst,
@@ -28,7 +27,8 @@ export class FakeKontoDienst implements KontoDienst {
   public popupFehler?: Error;
   public uebernahmeScheitert = false;
   public abmeldenScheitert = false;
-  public loeschenOhneServer = false;
+  /** Holds the server's confirmation of the deleted document back until it resolves. */
+  public loeschenBestaetigt?: Promise<void>;
   public uebrig: NichtUebernommen = { teams: 0, kinder: 0 };
   /** Changes on the device not yet sent to the account (offline). */
   public nichtGesendet = false;
@@ -124,9 +124,7 @@ export class FakeKontoDienst implements KontoDienst {
 
   public async auswahlLoeschen(uid: string): Promise<void> {
     this.aufrufe.push(`auswahlLoeschen ${uid}`);
-    if (this.loeschenOhneServer) {
-      throw new OhneInternet();
-    }
+    await this.loeschenBestaetigt;
   }
 
   public async allesGesendet(): Promise<boolean> {

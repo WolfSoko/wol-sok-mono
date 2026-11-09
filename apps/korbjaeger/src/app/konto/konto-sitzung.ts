@@ -7,6 +7,7 @@ import { gleicheFolge } from '../gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
 import type { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
+import type { GeraeteSperre } from '../auswahl/geraete-sperre';
 import {
   NichtAllesGesendet,
   OhneInternet,
@@ -30,17 +31,6 @@ export type KontoStand =
   | { readonly art: 'laedt' }
   | { readonly art: 'angemeldet'; readonly name: string | null }
   | { readonly art: 'nicht-erreichbar' };
-
-/** What a sign-in ends with. */
-export interface AnmeldeErgebnis {
-  /** How many of the device's Teams and Kinder did not fit under the caps. */
-  readonly uebrig: NichtUebernommen;
-  /**
-   * Whether the device's choices stay on it: they kept changing while they
-   * were taken over, so the next start takes them over again.
-   */
-  readonly geraetBehalten: boolean;
-}
 
 /** Remembers on the device that an Elternteil is signed in. */
 export interface AnmeldeMerker {
@@ -68,6 +58,12 @@ const UEBERNAHMEN_HOECHSTENS = 3;
  * in before (`merker`), so a visitor without an account never contacts
  * Google. Every tab follows a sign-in or sign-out in another: through
  * Auth's state once Firebase is loaded, through the `merker` before.
+ *
+ * The device's choices leave it in one place only: a takeover into the
+ * account that found them unchanged once written (`uebernehmen`, under the
+ * device's lock). Nothing else clears them, a sign-out neither (here or in
+ * another tab, after a takeover that failed too), so choices a takeover
+ * kept stay for the next.
  */
 export class KontoSitzung {
   public readonly stand: Signal<KontoStand>;
@@ -78,10 +74,21 @@ export class KontoSitzung {
    * the settings offer the sign-in only then.
    */
   public readonly bereit: Signal<boolean>;
+  /**
+   * Whether choices of the device are not in the account yet: they changed
+   * while a sign-in took them over, or the takeover failed at a start. The
+   * next start takes them over again.
+   */
+  public readonly geraetBehalten: Signal<boolean>;
 
   private readonly zustand = signal<KontoStand>({ art: 'aus' });
   private readonly geladen = signal(false);
   private readonly aktuell = signal<Auswahl | undefined>(undefined);
+  private readonly behalten = signal(false);
+  /** The uid whose account is shown or opening; none signed out. */
+  private geoeffnetFuer?: string;
+  /** Counts the openings: only the latest shows its account. */
+  private oeffnung = 0;
   private dienst?: KontoDienst;
   private dienstLaden?: Promise<KontoDienst>;
   private konto?: {
@@ -99,16 +106,20 @@ export class KontoSitzung {
    * @param laden loads Firebase; `undefined` where this build offers no
    *   sign-in.
    * @param istOnline whether the device has a network (`navigator.onLine`).
+   * @param sperre the device's lock of the `Auswahl` (`AUSWAHL_SPERRE`),
+   *   which `lokal` writes under too.
    */
   public constructor(
     private readonly lokal: LokaleAuswahl,
     private readonly laden: (() => Promise<KontoDienst>) | undefined,
     private readonly merker: AnmeldeMerker,
     private readonly istOnline: () => boolean = () =>
-      globalThis.navigator?.onLine ?? true
+      globalThis.navigator?.onLine ?? true,
+    private readonly sperre: GeraeteSperre = async (tun) => tun()
   ) {
     this.stand = this.zustand.asReadonly();
     this.bereit = this.geladen.asReadonly();
+    this.geraetBehalten = this.behalten.asReadonly();
     this.auswahl = new AktuelleAuswahl(
       this.aktuell,
       computed(() => this.zustand().art === 'nicht-erreichbar')
@@ -148,23 +159,24 @@ export class KontoSitzung {
    * not be taken over, it signs out again and rejects with that failure,
    * the device's choices kept.
    */
-  public anmelden(): Promise<AnmeldeErgebnis> {
+  public anmelden(): Promise<NichtUebernommen> {
     return this.einzeln('anmelden', async () => {
       const dienst = this.dienst ?? (await this.dienstHolen());
       const benutzer = await dienst.mitGoogleAnmelden();
-      let ergebnis: AnmeldeErgebnis;
+      let uebrig: NichtUebernommen;
       try {
-        ergebnis = await this.uebernehmen(dienst, benutzer);
+        uebrig = await this.uebernehmen(dienst, benutzer);
       } catch (fehler) {
         // the failure to report is the takeover's, whatever signing out
-        // does; nothing the takeover read of the account stays
+        // does (`zwischenspeicherLeeren` never rejects); nothing the
+        // takeover read of the account stays, the device's choices do
         await dienst.abmelden().catch(() => undefined);
         await dienst.zwischenspeicherLeeren();
         throw fehler;
       }
       this.merker.setzen();
       await this.oeffnen(dienst, benutzer);
-      return ergebnis;
+      return uebrig;
     });
   }
 
@@ -231,25 +243,31 @@ export class KontoSitzung {
   }
 
   /**
-   * Takes the device's choices into the account, again where they changed
-   * meanwhile (here or, read from the storage itself, in another tab), and
-   * then off the device; where they still changed during the last try, they
-   * stay on it (`geraetBehalten`), for the next start to take over.
+   * Takes the device's choices into the account and then off the device,
+   * under the device's lock, so no tab changes them between the reading and
+   * the clearing; where the browser has no lock, again where they changed
+   * meanwhile (here or, read from the storage itself, in another tab).
+   * Where they still changed during the last try, they stay on the device
+   * (`geraetBehalten`), for the next start to take over.
    */
-  private async uebernehmen(
+  private uebernehmen(
     dienst: KontoDienst,
     benutzer: Benutzer
-  ): Promise<AnmeldeErgebnis> {
-    let uebrig: NichtUebernommen = { teams: 0, kinder: 0 };
-    for (let mal = 0; mal < UEBERNAHMEN_HOECHSTENS; mal++) {
-      const geraet = this.lokal.neuGelesen();
-      uebrig = await dienst.geraetUebernehmen(benutzer.uid, geraet);
-      if (gleicherInhalt(geraet, this.lokal.neuGelesen())) {
-        this.lokal.leeren();
-        return { uebrig, geraetBehalten: false };
+  ): Promise<NichtUebernommen> {
+    return this.sperre(async () => {
+      let uebrig: NichtUebernommen = { teams: 0, kinder: 0 };
+      for (let mal = 0; mal < UEBERNAHMEN_HOECHSTENS; mal++) {
+        const geraet = this.lokal.neuGelesen();
+        uebrig = await dienst.geraetUebernehmen(benutzer.uid, geraet);
+        if (gleicherInhalt(geraet, this.lokal.neuGelesen())) {
+          this.lokal.leeren();
+          this.behalten.set(false);
+          return uebrig;
+        }
       }
-    }
-    return { uebrig, geraetBehalten: true };
+      this.behalten.set(true);
+      return uebrig;
+    });
   }
 
   /**
@@ -276,13 +294,32 @@ export class KontoSitzung {
         return;
       }
       await this.oeffnen(dienst, benutzer);
-      if (!istLeer(this.lokal.neuGelesen())) {
-        // a sign-in kept them, as they changed while it took them over
-        await this.uebernehmen(dienst, benutzer);
-      }
     } catch {
       // the account's choices stay unshown rather than the device's
       this.zustand.set({ art: 'nicht-erreichbar' });
+      return;
+    }
+    await this.behalteneUebernehmen();
+  }
+
+  /**
+   * Takes over the choices a sign-in kept on the device, as they changed
+   * while it took them over; where that fails, they stay for the next start
+   * and the settings say so, the account open all the same.
+   */
+  private async behalteneUebernehmen(): Promise<void> {
+    const { dienst, konto } = this;
+    if (dienst === undefined || konto === undefined) {
+      return;
+    }
+    if (istLeer(this.lokal.neuGelesen())) {
+      this.behalten.set(false);
+      return;
+    }
+    try {
+      await this.uebernehmen(dienst, konto.benutzer);
+    } catch {
+      this.behalten.set(true);
     }
   }
 
@@ -306,18 +343,17 @@ export class KontoSitzung {
     return this.dienstLaden;
   }
 
-  /** Auth's Elternteil changed: in another tab, or as the account went. */
+  /**
+   * Auth's Elternteil changed: in another tab, or as the account went. Also
+   * while an account opens: a newer opening or a sign-out supersedes it.
+   */
   private authGeaendert(benutzer: Benutzer | null): void {
     if (this.schritt !== undefined || this.dienst === undefined) {
       return;
     }
-    if (benutzer === null && this.konto !== undefined) {
+    if (benutzer === null && this.geoeffnetFuer !== undefined) {
       void this.vomGeraetNehmen(this.dienst);
-    } else if (
-      benutzer !== null &&
-      this.konto?.benutzer.uid !== benutzer.uid &&
-      this.zustand().art !== 'laedt'
-    ) {
+    } else if (benutzer !== null && this.geoeffnetFuer !== benutzer.uid) {
       // another tab signed in and took this device's choices over
       void this.oeffnen(this.dienst, benutzer);
     }
@@ -328,29 +364,41 @@ export class KontoSitzung {
     if (this.schritt !== undefined) {
       return;
     }
-    if (this.merker.gesetzt() && this.konto === undefined) {
+    if (this.merker.gesetzt() && this.geoeffnetFuer === undefined) {
       await this.wiederOeffnen();
     } else if (
       !this.merker.gesetzt() &&
-      this.konto !== undefined &&
+      this.geoeffnetFuer !== undefined &&
       this.dienst !== undefined
     ) {
       await this.vomGeraetNehmen(this.dienst);
     }
   }
 
+  /**
+   * Shows the account of `benutzer`; nothing of the one before while it
+   * opens. Superseded by a later opening or a sign-out, or where Auth's
+   * Elternteil changed meanwhile, it closes what it opened and shows nothing
+   * (Auth's news, ignored during a step, is caught up with as it ends).
+   */
   private async oeffnen(
     dienst: KontoDienst,
     benutzer: Benutzer
   ): Promise<void> {
-    // nothing of the account before shows while the next one opens
-    this.konto?.auswahl.beenden();
-    this.konto = undefined;
+    const nummer = this.schliessen();
+    this.geoeffnetFuer = benutzer.uid;
     this.aktuell.set(undefined);
     this.zustand.set({ art: 'laedt' });
     const auswahl = await dienst.auswahl(benutzer.uid, (fehler) =>
       this.lesenFehlgeschlagen(fehler)
     );
+    if (nummer !== this.oeffnung || dienst.jetzt()?.uid !== benutzer.uid) {
+      auswahl.beenden();
+      if (nummer === this.oeffnung) {
+        this.abgleichen();
+      }
+      return;
+    }
     this.konto = { benutzer, auswahl };
     this.aktuell.set(auswahl);
     this.zustand.set({ art: 'angemeldet', name: benutzer.name });
@@ -376,14 +424,27 @@ export class KontoSitzung {
     }
   }
 
-  /** After signing out or deleting: nothing of the account stays. */
+  /**
+   * After signing out or deleting: nothing of the account stays; the
+   * device's choices do, as only a takeover clears them.
+   */
   private async vomGeraetNehmen(dienst: KontoDienst): Promise<void> {
-    this.konto?.auswahl.beenden();
-    this.konto = undefined;
+    this.schliessen();
     this.merker.loeschen();
-    this.lokal.leeren();
+    this.behalten.set(false);
     this.aufDemGeraet('abgemeldet');
     await dienst.zwischenspeicherLeeren();
+  }
+
+  /**
+   * Closes the account shown or opening, superseding any opening still
+   * running; returns the number of the next opening.
+   */
+  private schliessen(): number {
+    this.konto?.auswahl.beenden();
+    this.konto = undefined;
+    this.geoeffnetFuer = undefined;
+    return ++this.oeffnung;
   }
 
   private aufDemGeraet(art: 'aus' | 'abgemeldet'): void {

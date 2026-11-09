@@ -58,7 +58,7 @@ export interface KontoDienst {
   ): Promise<NichtUebernommen>;
   /**
    * Deletes the account's document, resolving once the server confirmed
-   * it; rejects with `OhneInternet` where it does not in time.
+   * it, however long that takes: once queued, the deletion runs anyway.
    */
   auswahlLoeschen(uid: string): Promise<void>;
   /**
