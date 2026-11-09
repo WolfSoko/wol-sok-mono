@@ -1,4 +1,7 @@
-import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
+import {
+  CLUB_INDEX_CACHE_SECONDS,
+  PROXY_CACHE_SEKUNDEN,
+} from '../../shared/proxy-cache';
 import { REGIONS } from '../../shared/regions';
 import { zeigen } from '../../testing/zeigen';
 import {
@@ -102,6 +105,19 @@ describe('DatenschutzComponent', () => {
       `bis zu ${PROXY_CACHE_SEKUNDEN.cdnFertigerSpielbericht / 60} Minuten`
     );
     expect(abschnitt(seite, 'hosting')).toContain('Firebase Hosting');
+  });
+
+  it('covers the club index: its source, no persons, the search on the device and its cache times', () => {
+    const dbb = abschnitt(zeigen(DatenschutzComponent), 'dbb');
+
+    const { firestore } = REGIONS;
+    expect(dbb).toContain('Liste aller Vereine');
+    expect(dbb).toContain(`Region ${firestore.id} (${firestore.place})`);
+    expect(dbb).toContain('keine Personen');
+    expect(dbb).toContain('verlässt dein Gerät nicht');
+    expect(dbb).toContain(
+      `bis zu ${CLUB_INDEX_CACHE_SECONDS.cdn / 3600} Stunden vor, dein Browser bis zu ${CLUB_INDEX_CACHE_SECONDS.browser / 60} Minuten`
+    );
   });
 
   it('says how to delete the account and its data', () => {
