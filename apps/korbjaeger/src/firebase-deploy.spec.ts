@@ -23,8 +23,8 @@ function workspaceJson<T>(path: string): T {
 }
 
 interface FirebaseConfig {
-  functions: { source: string; predeploy: string[] };
-  firestore?: { rules: string };
+  functions: { codebase: string; source: string; predeploy: string[] }[];
+  firestore?: { rules: string; indexes: string };
   hosting: {
     site?: string;
     public: string;
@@ -54,6 +54,21 @@ interface ProjectJson {
 }
 
 const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
+
+/**
+ * The function of codebase `codebase`: `default` is Nitro's server, which
+ * this app deploys; `konto` is korbjaeger-functions', deployed by that app.
+ */
+const codebase = (name: string) => {
+  const found = config.functions.find((entry) => entry.codebase === name);
+  if (found === undefined) {
+    throw new Error(`firebase.korbjaeger.json has no codebase ${name}`);
+  }
+  return found;
+};
+
+const DEPLOY =
+  'nx run korbjaeger:firebase deploy --only functions:default,hosting,firestore:rules,firestore:indexes';
 
 describe('the Firebase deploy', () => {
   // a development or e2e build offers the sign-in and talks to the local
@@ -152,7 +167,7 @@ describe('the Firebase deploy', () => {
     });
   });
 
-  it("deploys the app's Firestore rules with it, the ones its emulator specs test", () => {
+  it("deploys the app's Firestore rules and indexes with it, the ones its emulator specs test", () => {
     const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
     const { commands } = workspaceJson<ProjectJson>(
       'apps/korbjaeger/project.json'
@@ -160,8 +175,38 @@ describe('the Firebase deploy', () => {
 
     expect(config.firestore).toEqual({
       rules: 'apps/korbjaeger/firestore.rules',
+      indexes: 'apps/korbjaeger/firestore.indexes.json',
     });
-    expect(commands?.at(-1)).toContain('firestore:rules');
+    expect(commands?.at(-1)).toContain('firestore:rules,firestore:indexes');
+  });
+
+  // the rules refuse a deleted account while its tombstone exists; the TTL
+  // takes it away after a day (korbjaeger-functions, `kontoGeloescht`)
+  it("lets Firestore's TTL delete the deleted accounts' tombstones", () => {
+    const indexes = workspaceJson<{
+      fieldOverrides: {
+        collectionGroup: string;
+        fieldPath: string;
+        ttl?: boolean;
+      }[];
+    }>('apps/korbjaeger/firestore.indexes.json');
+
+    expect(indexes.fieldOverrides).toContainEqual(
+      expect.objectContaining({
+        collectionGroup: 'geloeschteKonten',
+        fieldPath: 'expireAt',
+        ttl: true,
+      })
+    );
+  });
+
+  it('leaves the functions of codebase konto to korbjaeger-functions', () => {
+    expect(config.functions.map((entry) => entry.codebase)).toEqual([
+      'default',
+      'konto',
+    ]);
+    expect(codebase('konto').source).toBe('dist/apps/korbjaeger-functions');
+    expect(DEPLOY).toContain('--only functions:default,');
   });
 
   it('deploys the root config, not the file Nitro generates in the app', () => {
@@ -171,9 +216,7 @@ describe('the Firebase deploy', () => {
     expect(project.targets['firebase'].options.command).toBe(
       'firebase --config=firebase.korbjaeger.json --project=korbjaeger'
     );
-    expect(project.targets['deploy'].options.commands?.at(-1)).toBe(
-      'nx run korbjaeger:firebase deploy --only functions,hosting,firestore:rules'
-    );
+    expect(project.targets['deploy'].options.commands?.at(-1)).toBe(DEPLOY);
   });
 
   /**
@@ -193,7 +236,7 @@ describe('the Firebase deploy', () => {
     expect(parallel).toBe(false);
     expect(commands?.slice(1)).toEqual([
       `nx run korbjaeger:firebase functions:artifacts:setpolicy --location=${region} --days=1 --force`,
-      'nx run korbjaeger:firebase deploy --only functions,hosting,firestore:rules',
+      DEPLOY,
     ]);
   });
 
@@ -208,7 +251,9 @@ describe('the Firebase deploy', () => {
 
   it("serves the build's public files and Nitro's server", () => {
     expect(config.hosting.public).toBe('dist/apps/korbjaeger/analog/public');
-    expect(config.functions.source).toBe('dist/apps/korbjaeger/analog/server');
+    expect(codebase('default').source).toBe(
+      'dist/apps/korbjaeger/analog/server'
+    );
   });
 
   it('calls the function for the proxy only, every page comes from the CDN', () => {
@@ -306,7 +351,7 @@ describe('the Firebase deploy', () => {
    * the install turns the setting off itself.
    */
   it('writes a lock file with the peers that npm ci in Cloud Build expects', () => {
-    const installs = config.functions.predeploy.filter((command) =>
+    const installs = codebase('default').predeploy.filter((command) =>
       /^npm .*\binstall\b/.test(command)
     );
 

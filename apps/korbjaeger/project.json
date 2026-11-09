@@ -118,14 +118,15 @@
         "^production",
         "{workspaceRoot}/firebase.korbjaeger.json",
         "{workspaceRoot}/.firebaserc",
-        "{projectRoot}/firestore.rules"
+        "{projectRoot}/firestore.rules",
+        "{projectRoot}/firestore.indexes.json"
       ],
       "dependsOn": ["build"],
       "options": {
         "commands": [
           "tsx ./apps/korbjaeger/deploy/build-configuration.ts check dist/apps/korbjaeger",
           "nx run korbjaeger:firebase functions:artifacts:setpolicy --location=europe-central2 --days=1 --force",
-          "nx run korbjaeger:firebase deploy --only functions,hosting,firestore:rules"
+          "nx run korbjaeger:firebase deploy --only functions:default,hosting,firestore:rules,firestore:indexes"
         ],
         "parallel": false
       }
