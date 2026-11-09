@@ -1,5 +1,6 @@
 import type { SpielPartei } from './partei';
 import {
+  ausgangVon,
   datumInDeutschland,
   ergebnisVon,
   gegnerVon,
@@ -201,4 +202,95 @@ describe('istEntschieden', () => {
       })
     ).toBe(entschieden);
   });
+});
+
+describe('ausgangVon', () => {
+  const gespielt = (heim: number, gast: number): Spiel['status'] => ({
+    art: 'gespielt',
+    ergebnis: { heim, gast },
+    bestaetigt: true,
+  });
+
+  it('tells a win from a loss from either side', () => {
+    const spielMit = spiel({ status: gespielt(78, 47) });
+
+    expect(ausgangVon(spielMit, 'heim')).toBe('sieg');
+    expect(ausgangVon(spielMit, 'gast')).toBe('niederlage');
+  });
+
+  it('has none for equal points: basketball has no draws, so no result yet', () => {
+    expect(
+      ausgangVon(spiel({ status: gespielt(0, 0) }), 'heim')
+    ).toBeUndefined();
+    expect(
+      ausgangVon(
+        spiel({
+          status: {
+            art: 'kampflos',
+            verzichtet: [],
+            ergebnis: { heim: 0, gast: 0 },
+          },
+        }),
+        'gast'
+      )
+    ).toBeUndefined();
+  });
+
+  it('reads a result the Verband has not confirmed yet, as its points show', () => {
+    expect(
+      ausgangVon(
+        spiel({
+          status: {
+            art: 'gespielt',
+            ergebnis: { heim: 78, gast: 47 },
+            bestaetigt: false,
+          },
+        }),
+        'heim'
+      )
+    ).toBe('sieg');
+  });
+
+  it('gives a forfeit to the side that did not forfeit', () => {
+    const verzicht = spiel({
+      status: { art: 'kampflos', verzichtet: ['gast'] },
+    });
+
+    expect(ausgangVon(verzicht, 'heim')).toBe('sieg');
+    expect(ausgangVon(verzicht, 'gast')).toBe('niederlage');
+  });
+
+  it('counts a forfeit of both sides as a loss for each', () => {
+    const beide = spiel({
+      status: { art: 'kampflos', verzichtet: ['heim', 'gast'] },
+    });
+
+    expect(ausgangVon(beide, 'heim')).toBe('niederlage');
+    expect(ausgangVon(beide, 'gast')).toBe('niederlage');
+  });
+
+  it('reads a forfeit naming no side by its points, where it has any', () => {
+    expect(
+      ausgangVon(
+        spiel({
+          status: {
+            art: 'kampflos',
+            verzichtet: [],
+            ergebnis: { heim: 0, gast: 20 },
+          },
+        }),
+        'gast'
+      )
+    ).toBe('sieg');
+    expect(
+      ausgangVon(spiel({ status: { art: 'kampflos', verzichtet: [] } }), 'heim')
+    ).toBeUndefined();
+  });
+
+  it.each([{ art: 'geplant' }, { art: 'abgesagt' }] as const)(
+    'has none while $art',
+    (status) => {
+      expect(ausgangVon(spiel({ status }), 'heim')).toBeUndefined();
+    }
+  );
 });

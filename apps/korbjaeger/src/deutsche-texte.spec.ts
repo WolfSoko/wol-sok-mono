@@ -1,7 +1,5 @@
 // @vitest-environment node
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { appQuellen, INLINE_TEMPLATE, treffer } from './testing/app-quellen';
 
 /*
  * The app speaks German. A cheap guard against English slipping into what
@@ -33,14 +31,12 @@ const ENGLISCHE_WOERTER = [
 
 const ENGLISCH = new RegExp(`\\b(${ENGLISCHE_WOERTER.join('|')})\\b`, 'g');
 const ICON_LIGATUR = /<mat-icon\b[^>]*>[\s\S]*?<\/mat-icon>/g;
-const INLINE_TEMPLATE = /\btemplate:\s*`([\s\S]*?)`/g;
-
 /** The templates in a source file: the file itself, or its inline ones. */
 function templatesIn(pfad: string, inhalt: string): string[] {
   if (pfad.endsWith('.html')) {
     return [inhalt];
   }
-  return [...inhalt.matchAll(INLINE_TEMPLATE)].map((treffer) => treffer[1]);
+  return treffer(inhalt, INLINE_TEMPLATE);
 }
 
 /** The English words of the denylist in `template`, icon names left out. */
@@ -49,26 +45,9 @@ function englischeWoerter(template: string): string[] {
   return [...ohneIcons.matchAll(ENGLISCH)].map((treffer) => treffer[1]);
 }
 
-function quelldateien(ordner: string): string[] {
-  return readdirSync(ordner, { withFileTypes: true }).flatMap((eintrag) => {
-    const pfad = join(ordner, eintrag.name);
-    if (eintrag.isDirectory()) {
-      return quelldateien(pfad);
-    }
-    const istQuelle =
-      /\.(ts|html)$/.test(eintrag.name) && !eintrag.name.endsWith('.spec.ts');
-    return istQuelle ? [pfad] : [];
-  });
-}
-
-const APP = fileURLToPath(new URL('./app', import.meta.url));
-
 /** Every template of the app, with the file it is in, read once. */
-const APP_TEMPLATES = quelldateien(APP).flatMap((pfad) =>
-  templatesIn(pfad, readFileSync(pfad, 'utf8')).map((template) => ({
-    datei: relative(APP, pfad),
-    template,
-  }))
+const APP_TEMPLATES = appQuellen(['ts', 'html']).flatMap(({ datei, inhalt }) =>
+  templatesIn(datei, inhalt).map((template) => ({ datei, template }))
 );
 
 describe('German texts', () => {

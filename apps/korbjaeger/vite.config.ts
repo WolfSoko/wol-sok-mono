@@ -2,7 +2,9 @@ import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { fileURLToPath } from 'node:url';
 import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases';
+import browserslist from 'browserslist';
 import { buildKonfigurationMerken } from './deploy/build-configuration';
+import { cssZiele } from './deploy/css-ziele';
 import { REGIONEN } from './src/shared/regionen';
 import { ConfigEnv, defineConfig } from 'vite';
 
@@ -20,6 +22,9 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
       outDir: '../../dist/apps/korbjaeger/client',
       reportCompressedSize: true,
       target: ['es2020'],
+      // the CSS for the browsers .browserslistrc names, not for es2020: so
+      // light-dark() stays native and a part of a page can set a scheme
+      cssTarget: cssZiele(browserslist()),
     },
     resolve: {
       mainFields: ['module', 'main'],

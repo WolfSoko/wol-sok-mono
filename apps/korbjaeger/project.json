@@ -8,7 +8,12 @@
     "build-app": {
       "executor": "@analogjs/platform:vite",
       "dependsOn": ["^build"],
-      "inputs": ["sharedGlobals", "production", "^production"],
+      "inputs": [
+        "sharedGlobals",
+        "production",
+        "^production",
+        "{workspaceRoot}/.browserslistrc"
+      ],
       "cache": true,
       "defaultConfiguration": "production",
       "options": {
