@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.151.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.150.1...v74.151.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** privacy policy, Impressum and DBB source note ([#2921](https://github.com/WolfSoko/wol-sok-mono/issues/2921)) ([cd66ace](https://github.com/WolfSoko/wol-sok-mono/commit/cd66acee5e8ec576c6a001a898de99ba7adadf13)), closes [#2874](https://github.com/WolfSoko/wol-sok-mono/issues/2874)
+
 ## [74.150.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.150.0...v74.150.1) (2026-11-09)
 
 ### Bug Fixes
