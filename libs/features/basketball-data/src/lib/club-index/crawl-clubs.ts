@@ -17,13 +17,13 @@ import { byClubName, type ClubIndexEntry } from './club-index';
 export interface ClubCrawlOptions {
   /** Clubs' own names an earlier crawl read; these are not read again. */
   readonly knownNames: ReadonlyMap<VereinId, string>;
-  /** Waits between two reads, so the source sees one request at a time, spaced. */
+  /** Waits before each read, so the source sees one request at a time, spaced. */
   readonly pause: () => Promise<void>;
   /**
    * Whether there is still time to read a Club's name; once not, a Team's
-   * name stands in (`nameFromTeam`). Always, where left out.
+   * name stands in (`nameFromTeam`).
    */
-  readonly timeForNames?: () => boolean;
+  readonly timeForNames: () => boolean;
 }
 
 /**
@@ -33,14 +33,17 @@ export interface ClubCrawlOptions {
  * Club's Teams' names stands in, marked `nameFromTeam`. A League the
  * source does not know or cannot map is skipped; a League list or Teams
  * the source cannot deliver now reject, so the caller keeps what it had.
- * Waits `pause` before every read but the first.
+ * Waits `pause` before every read.
  */
 export async function crawlClubs(
   data: BasketballData,
   association: VerbandId,
   options: ClubCrawlOptions
 ): Promise<readonly ClubIndexEntry[]> {
-  const read = pacedReads(options.pause);
+  const read: PacedRead = async (reading) => {
+    await options.pause();
+    return reading();
+  };
   const leagues = await leaguesOf(data, association, read);
   const teamNames = new Map<VereinId, string>();
   for (const league of leagues) {
@@ -50,12 +53,11 @@ export async function crawlClubs(
       }
     }
   }
-  const timeForNames = options.timeForNames ?? (() => true);
   const clubs: ClubIndexEntry[] = [];
   for (const [id, teamName] of teamNames) {
     const name =
       options.knownNames.get(id) ??
-      (timeForNames() ? await clubName(data, id, read) : undefined);
+      (options.timeForNames() ? await clubName(data, id, read) : undefined);
     clubs.push(
       name === undefined
         ? { id, name: teamName, nameFromTeam: true }
@@ -66,17 +68,6 @@ export async function crawlClubs(
 }
 
 type PacedRead = <T>(read: () => Promise<T>) => Promise<T>;
-
-function pacedReads(pause: () => Promise<void>): PacedRead {
-  let first = true;
-  return async (read) => {
-    if (!first) {
-      await pause();
-    }
-    first = false;
-    return read();
-  };
-}
 
 async function leaguesOf(
   data: BasketballData,

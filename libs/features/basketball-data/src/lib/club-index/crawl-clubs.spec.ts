@@ -97,6 +97,7 @@ describe('crawlClubs', () => {
     const clubs = await crawlClubs(data, 7, {
       knownNames: new Map(),
       pause: async () => undefined,
+      timeForNames: () => true,
     });
 
     expect(clubs).toEqual([
@@ -129,6 +130,7 @@ describe('crawlClubs', () => {
     const clubs = await crawlClubs(data, 7, {
       knownNames: new Map(),
       pause: async () => undefined,
+      timeForNames: () => true,
     });
 
     expect(clubs.map(({ id }) => id)).toEqual([200, 100]);
@@ -149,6 +151,7 @@ describe('crawlClubs', () => {
       crawlClubs(stuck, 7, {
         knownNames: new Map(),
         pause: async () => undefined,
+        timeForNames: () => true,
       })
     ).rejects.toMatchObject({ kind: 'unexpected-shape' });
   });
@@ -159,6 +162,7 @@ describe('crawlClubs', () => {
     await crawlClubs(data, 7, {
       knownNames: new Map(),
       pause: async () => undefined,
+      timeForNames: () => true,
     });
 
     expect(reads.slice(0, 5)).toEqual([
@@ -179,6 +183,7 @@ describe('crawlClubs', () => {
         [200, 'MTV Gifhorn'],
       ]),
       pause: async () => undefined,
+      timeForNames: () => true,
     });
 
     expect(reads.filter((read) => read.startsWith('vereinsTeams'))).toEqual([
@@ -187,19 +192,20 @@ describe('crawlClubs', () => {
     expect(clubs[1]).toEqual({ id: 100, name: 'MTV Wasbüttel e.V.' });
   });
 
-  it('pauses before every read but the first', async () => {
+  it('pauses before every read', async () => {
     const { data, reads } = fakeData();
     let pauses = 0;
 
     await crawlClubs(data, 7, {
       knownNames: new Map(),
       pause: async () => {
-        expect(reads.length).toBe(pauses + 1);
+        expect(reads.length).toBe(pauses);
         pauses++;
       },
+      timeForNames: () => true,
     });
 
-    expect(pauses).toBe(reads.length - 1);
+    expect(pauses).toBe(reads.length);
   });
 
   it('rejects when a League cannot be read for another reason', async () => {
@@ -209,6 +215,7 @@ describe('crawlClubs', () => {
       crawlClubs(data, 7, {
         knownNames: new Map(),
         pause: async () => undefined,
+        timeForNames: () => true,
       })
     ).rejects.toMatchObject({ kind: 'unavailable' });
   });

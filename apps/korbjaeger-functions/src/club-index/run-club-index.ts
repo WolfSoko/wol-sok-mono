@@ -6,7 +6,10 @@ import {
   type BasketballData,
   type VerbandId,
 } from '@wolsok/feat-shared-basketball-data';
-import { associationToCrawl } from './association-to-crawl';
+import {
+  associationToCrawl,
+  type ClubIndexSchedule,
+} from './association-to-crawl';
 
 /** What the index holds: its lists, and crawls that left none yet. */
 export interface ClubIndexState {
@@ -32,14 +35,9 @@ export interface ClubIndexRun {
   readonly data: BasketballData;
   readonly store: ClubIndexStore;
   readonly now: () => number;
-  /** Waits between two reads of `data`. */
+  /** Waits before each read of `data` but the run's first. */
   readonly pause: () => Promise<void>;
-  /** How old a list may grow before a run crawls its Association again. */
-  readonly maxAgeMs: number;
-  /** How long after a crawl that left no list it is tried again. */
-  readonly retryAfterMs: number;
-  /** How long into a crawl Clubs' names are still read (`timeForNames`). */
-  readonly namesForMs: number;
+  readonly schedule: ClubIndexSchedule;
 }
 
 /** What a run did, for the log: no Club named. */
@@ -76,7 +74,8 @@ export async function runClubIndex(
     associations,
     state.lists,
     state.attempts,
-    { now: start, maxAgeMs: run.maxAgeMs, retryAfterMs: run.retryAfterMs }
+    run.schedule,
+    start
   );
   if (association === undefined) {
     return { removed };
@@ -89,11 +88,10 @@ export async function runClubIndex(
         .map(({ id, name }) => [id, name] as const)
     )
   );
-  await run.pause();
   const clubs = await crawlClubs(run.data, association.id, {
     knownNames,
     pause: run.pause,
-    timeForNames: () => run.now() - start < run.namesForMs,
+    timeForNames: () => run.now() - start < run.schedule.namesForMs,
   });
   await run.store.save({ association, clubs, updatedAt: run.now() });
   return {

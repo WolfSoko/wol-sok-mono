@@ -1,7 +1,6 @@
 import {
-  parseAssociationClubs,
+  parseAssociationClubsList,
   storedAssociationClubs,
-  type AssociationClubs,
 } from '@wolsok/feat-shared-basketball-data';
 import { CLUB_INDEX_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
 import type { Firestore } from 'firebase-admin/firestore';
@@ -21,9 +20,9 @@ export function firestoreClubIndex(db: Firestore): ClubIndexStore {
     read: async () => {
       const { docs } = await lists.get();
       return {
-        lists: docs
-          .map((document) => parseAssociationClubs(document.data()))
-          .filter((list): list is AssociationClubs => list !== undefined),
+        lists: parseAssociationClubsList(
+          docs.map((document) => document.data())
+        ),
         attempts: new Map(
           docs.flatMap((document) => {
             const at: unknown = document.get(ATTEMPTED_AT);

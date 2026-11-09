@@ -15,7 +15,12 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { directDbbTransport } from './club-index/dbb-transport';
 import { firestoreClubIndex } from './club-index/firestore-club-index';
 import { runClubIndex } from './club-index/run-club-index';
-import { CLUB_INDEX_DBB, CLUB_INDEX_ON, REGION } from './config';
+import {
+  CLUB_INDEX_DBB,
+  CLUB_INDEX_ON,
+  CLUB_INDEX_SCHEDULE,
+  REGION,
+} from './config';
 import { kontoGeloescht } from './konto-geloescht';
 
 initializeApp();
@@ -71,9 +76,7 @@ export const clubIndex = CLUB_INDEX_ON
             new Promise((resolve) =>
               setTimeout(resolve, CLUB_INDEX_DBB.pauseMs)
             ),
-          maxAgeMs: CLUB_INDEX_DBB.maxAgeMs,
-          retryAfterMs: CLUB_INDEX_DBB.retryAfterMs,
-          namesForMs: CLUB_INDEX_DBB.namesForMs,
+          schedule: CLUB_INDEX_SCHEDULE,
         });
         logger.info('Club index run', result);
       }

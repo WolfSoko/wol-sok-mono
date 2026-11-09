@@ -1,4 +1,5 @@
 import { FIRESTORE_REGION } from '@wolsok/feat-shared-korbjaeger-account';
+import { days, dToMs, minutes, mToMs } from '@wolsok/utils-time';
 
 /**
  * Where Korbjäger's functions run: next to the Firestore database they
@@ -14,22 +15,27 @@ export const REGION = FIRESTORE_REGION.id;
  */
 export const CLUB_INDEX_ON = true;
 
-/** How the club index calls the DBB (ADR 0018, its amendment of #2988). */
+/**
+ * How the club index calls the DBB (ADR 0018, its amendment of #2988). The
+ * User-Agent carries no version, unlike the proxy's: `@wolsok/utils-version`
+ * would redeploy the functions with every release.
+ */
 export const CLUB_INDEX_DBB = {
   /** Names the app, as the proxy's User-Agent does, with the app's URL. */
   userAgent: 'Korbjaeger-ClubIndex (+https://korb.wolsok.de)',
   /** One request at a time, this far apart. */
   pauseMs: 1000,
   timeoutMs: 15_000,
-  /** How old a list grows before its Association is crawled again. */
-  maxAgeMs: 7 * 24 * 60 * 60 * 1000,
-  /** How long after a crawl that left no list it is tried again. */
-  retryAfterMs: 24 * 60 * 60 * 1000,
+} as const;
+
+/** When the club index crawls an Association (`ClubIndexSchedule`). */
+export const CLUB_INDEX_SCHEDULE = {
+  maxAgeMs: dToMs(days(7)),
+  retryAfterMs: dToMs(days(1)),
   /**
-   * How long into a run Clubs' names are still read: the first fill of a
-   * large Association reads one per Club (Bayern: about 900 requests in
-   * all), so after this a Team's name stands in, read again next week,
-   * well inside the run's 30 minutes.
+   * The first fill of a large Association reads one name per Club (Bayern:
+   * about 900 requests in all), so after this a Team's name stands in,
+   * read again a day later, well inside the run's 30 minutes.
    */
-  namesForMs: 20 * 60 * 1000,
+  namesForMs: mToMs(minutes(20)),
 } as const;

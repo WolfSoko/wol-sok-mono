@@ -20,6 +20,7 @@ export { crawlClubs } from './lib/club-index/crawl-clubs';
 export {
   CLUB_INDEX_VERSION,
   parseAssociationClubs,
+  parseAssociationClubsList,
   storedAssociationClubs,
 } from './lib/club-index/stored-association-clubs';
 export type { StoredAssociationClubs } from './lib/club-index/stored-association-clubs';
