@@ -1,10 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import {
-  EinstellungenComponent,
-  nichtUebernommenText,
-} from './einstellungen.component';
+import { EinstellungenComponent } from './einstellungen.component';
+import { nichtUebernommenText } from './nicht-uebernommen-text';
 import { PopupBlockiert } from './konto-dienst';
 import { KONTO_SITZUNG } from './konto';
 import { KontoSitzung } from './konto-sitzung';

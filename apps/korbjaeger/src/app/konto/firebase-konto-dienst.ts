@@ -41,6 +41,7 @@ import {
   type KontoAuswahl,
   type KontoDienst,
 } from './konto-dienst';
+import { fehlerCode } from './fehler-code';
 
 /** Auth's codes for a popup the Elternteil closed or a second one superseded. */
 const ABGEBROCHEN = new Set([
@@ -222,7 +223,7 @@ async function mitPopup<T>(popup: () => Promise<T>): Promise<T> {
   try {
     return await popup();
   } catch (fehler) {
-    const code = codeVon(fehler) ?? '';
+    const code = fehlerCode(fehler) ?? '';
     if (ABGEBROCHEN.has(code)) {
       throw new AnmeldungAbgebrochen();
     }
@@ -252,12 +253,6 @@ function leerenAusstehendSetzen(offen: boolean): void {
   } catch {
     // blocked: the next sign-out tries again
   }
-}
-
-function codeVon(fehler: unknown): string | undefined {
-  return typeof fehler === 'object' && fehler !== null && 'code' in fehler
-    ? String(fehler.code)
-    : undefined;
 }
 
 function benutzerAus(user: User | null): Benutzer | null {

@@ -74,7 +74,9 @@ that is not from the invented lists.
   (Team ids, person ids, nicknames), device storage, Hosting logs and
   deletion; the portfolio does not link the app until the DBB has agreed.
   The sign-in is built switched off in production (`environment.anmeldung`)
-  until that policy is live, and a visitor without an account loads no
-  part of Firebase, so Google learns nothing of them.
+  until that policy is live, and a visitor who never opens the settings
+  loads no part of Firebase, so Google learns nothing of them; opening the
+  settings loads Firebase Auth ahead of the click (on Safari and mobile
+  with Google's sign-in frame), as Safari opens a popup only then.
 - New fixtures go through the anonymiser; a hand-written one uses names
   from the invented lists.

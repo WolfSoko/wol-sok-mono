@@ -5,8 +5,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { AUSWAHL_GRENZEN } from '../auswahl/auswahl-dokument';
-import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
@@ -14,6 +12,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
 import { auswahlFehlerText } from '../fehler/auswahl-fehler-text';
 import { KONTO_SITZUNG } from './konto';
+import { nichtUebernommenText } from './nicht-uebernommen-text';
 import {
   AnmeldungAbgebrochen,
   OhneInternet,
@@ -225,20 +224,4 @@ function fehlerText(schritt: Schritt, fehler: unknown): string | undefined {
   return fehler instanceof AuswahlZuNeuError
     ? auswahlFehlerText(fehler)
     : FEHLER[schritt];
-}
-
-/** What the settings say of the device's choices that did not fit; none where all did. */
-export function nichtUebernommenText({
-  teams,
-  kinder,
-}: NichtUebernommen): string | undefined {
-  const teile = [
-    teams === 1 ? '1 Team' : teams > 1 ? `${teams} Teams` : undefined,
-    kinder === 1 ? '1 Kind' : kinder > 1 ? `${kinder} Kinder` : undefined,
-  ].filter((teil) => teil !== undefined);
-  if (teile.length === 0) {
-    return undefined;
-  }
-  const passten = teams + kinder === 1 ? 'passte' : 'passten';
-  return `${teile.join(' und ')} dieses Geräts ${passten} nicht mehr in dein Konto: Es hält höchstens ${AUSWAHL_GRENZEN.teams} Teams und ${AUSWAHL_GRENZEN.kinder} Kinder.`;
 }

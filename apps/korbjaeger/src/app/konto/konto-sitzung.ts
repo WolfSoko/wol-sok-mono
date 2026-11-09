@@ -10,6 +10,7 @@ import {
   type KontoAuswahl,
   type KontoDienst,
 } from './konto-dienst';
+import { fehlerCode } from './fehler-code';
 
 /**
  * Where the account stands, for the settings:
@@ -277,7 +278,7 @@ export class KontoSitzung {
     if (dienst === undefined || this.konto === undefined) {
       return;
     }
-    if (codeVon(fehler) === NICHT_ERLAUBT) {
+    if (fehlerCode(fehler) === NICHT_ERLAUBT) {
       void dienst
         .abmelden()
         .catch(() => undefined)
@@ -301,12 +302,6 @@ export class KontoSitzung {
     this.aktuell.set(this.lokal);
     this.zustand.set({ art });
   }
-}
-
-function codeVon(fehler: unknown): string | undefined {
-  return typeof fehler === 'object' && fehler !== null && 'code' in fehler
-    ? String(fehler.code)
-    : undefined;
 }
 
 /** The `Auswahl` that holds the choices now; nothing while none does yet. */
