@@ -8,6 +8,7 @@ import {
   auswahlDokumentLesen,
   auswahlFelder,
   naechsterSeit,
+  LEERE_AUSWAHL,
   type AuswahlInhalt,
   type AuswahlListe,
 } from './auswahl-dokument';
@@ -21,7 +22,8 @@ import { type NichtUebernommen, zusammenfuehren } from './zusammenfuehren';
  * second one with the same choices changes nothing. Written as every
  * change is (`auswahlFelder`): only the entries the device adds, by id. One
  * transaction a map; a map the device adds nothing to is not written. Only what fits under the caps joins; resolves
- * with the device's Teams and Kinder that did not. Rejects with
+ * with the device's Teams, Kinder and Vereinsfarben that did not; a list
+ * the device holds nothing of is not read. Rejects with
  * `AuswahlZuNeuError` where a newer version of the app stored the
  * account's selection, which it leaves alone.
  */
@@ -31,12 +33,15 @@ export async function geraetUebernehmen(
   geraet: AuswahlInhalt
 ): Promise<NichtUebernommen> {
   const dokument = auswahlDokumentVon(firestore, uid);
-  // one map a transaction; each tells what of its map did not fit
-  const [{ teams }, { kinder }, { vereinsfarben }] = [
-    await listeUebernehmen(firestore, dokument, geraet, 'teams'),
-    await listeUebernehmen(firestore, dokument, geraet, 'kinder'),
-    await listeUebernehmen(firestore, dokument, geraet, 'vereinsfarben'),
-  ];
+  // a list the device holds nothing of adds nothing: no round trip
+  const uebernehmen = (liste: AuswahlListe): Promise<NichtUebernommen> =>
+    geraet[liste].length === 0
+      ? Promise.resolve(LEERE_AUSWAHL)
+      : listeUebernehmen(firestore, dokument, geraet, liste);
+  // one map a transaction, one after the other
+  const { teams } = await uebernehmen('teams');
+  const { kinder } = await uebernehmen('kinder');
+  const { vereinsfarben } = await uebernehmen('vereinsfarben');
   return { teams, kinder, vereinsfarben };
 }
 

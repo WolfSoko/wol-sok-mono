@@ -13,7 +13,7 @@ rules_version = '2';
 // through a function counts again: 50 Teams, 20 Kinder and the colours of
 // 50 Vereine are more than one request can check. So a create checks both maps, an update only the maps
 // it changes, and the app changes one map a write (the merge at sign-in in
-// two steps): each holds up to its cap.
+// one step a map): each holds up to its cap.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /auswahl/{uid} {

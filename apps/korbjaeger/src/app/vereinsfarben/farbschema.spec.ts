@@ -6,6 +6,7 @@ import {
   type Farbschema,
   type Systemfarbe,
 } from './farbschema';
+import { KeineFarbeError } from './vereinsfarben';
 
 /** WCAG 2.x contrast of two `#rrggbb` colours. */
 function kontrast(a: string, b: string): number {
@@ -175,10 +176,12 @@ describe('farbschema', () => {
   });
 
   it('refuses what is no #rrggbb colour', () => {
-    expect(() => farbschema({ primaer: 'red' }, false)).toThrow();
+    expect(() => farbschema({ primaer: 'red' }, false)).toThrow(
+      KeineFarbeError
+    );
     expect(() =>
       farbschema({ primaer: '#c8102e', zweite: '#12' }, false)
-    ).toThrow();
+    ).toThrow(KeineFarbeError);
   });
 });
 
