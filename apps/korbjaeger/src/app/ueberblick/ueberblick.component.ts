@@ -10,7 +10,8 @@ import { UeberblickTeamComponent } from './ueberblick-team.component';
  * it plays for, the one that plays first first, then the other Teams as
  * cards ("Weitere Teams"); while no Kind is marked, every Team's card and
  * how to mark one. Shows nothing until Meine Teams are read, then offers
- * to set up a first Team while there is none.
+ * to set up a first Team while there is none; says so where they cannot be
+ * read at all.
  */
 @Component({
   selector: 'korb-ueberblick',
@@ -26,5 +27,7 @@ import { UeberblickTeamComponent } from './ueberblick-team.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UeberblickComponent {
-  protected readonly ansicht = inject(MeineTeamsUeberblick).ansicht;
+  private readonly ueberblick = inject(MeineTeamsUeberblick);
+  protected readonly ansicht = this.ueberblick.ansicht;
+  protected readonly nichtLesbar = this.ueberblick.nichtLesbar;
 }

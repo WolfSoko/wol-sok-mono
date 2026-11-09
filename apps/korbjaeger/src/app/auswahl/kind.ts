@@ -23,6 +23,13 @@ export type MarkierbarerSpieler = Pick<BenannterSpieler, 'art' | 'personId'>;
 /** How long a Spitzname may be, in characters. */
 export const SPITZNAME_LAENGE = 30;
 
+/**
+ * How long a Spitzname may be in code points: the Firestore rules' cap
+ * (`firestore.rules`, whose spec takes this number). 30 of the longest
+ * emoji (a family with skin tones, 11 code points) fit.
+ */
+export const SPITZNAME_CODEPUNKTE = 330;
+
 /** Tells the characters of a text as a reader sees them, an emoji as one. */
 const ZEICHEN = new Intl.Segmenter('de', { granularity: 'grapheme' });
 
@@ -41,15 +48,36 @@ export function spitznameZeichen(eingabe: string): number {
 
 /**
  * The Spitzname to keep of `eingabe`: trimmed and cut to
- * `SPITZNAME_LAENGE` characters (`spitznameZeichen`); none where nothing
- * is left.
+ * `SPITZNAME_LAENGE` characters (`spitznameZeichen`), and to whole
+ * characters within `SPITZNAME_CODEPUNKTE`; none where nothing is left.
  */
 export function spitznameAus(eingabe: string | undefined): string | undefined {
-  const spitzname = zeichenVon(eingabe?.trim() ?? '')
-    .slice(0, SPITZNAME_LAENGE)
-    .join('')
-    .trim();
+  let codepunkte = 0;
+  const behalten: string[] = [];
+  for (const zeichen of zeichenVon(eingabe?.trim() ?? '').slice(
+    0,
+    SPITZNAME_LAENGE
+  )) {
+    codepunkte += codepunkteVon(zeichen);
+    if (codepunkte > SPITZNAME_CODEPUNKTE) {
+      break;
+    }
+    behalten.push(zeichen);
+  }
+  const spitzname = behalten.join('').trim();
   return spitzname === '' ? undefined : spitzname;
+}
+
+/**
+ * How many code points `text` has, as the Firestore rules count it (an
+ * emoji of a family is several): unlike its characters (`spitznameZeichen`).
+ */
+export function codepunkteVon(text: string): number {
+  let anzahl = 0;
+  for (const _codepunkt of text) {
+    anzahl++;
+  }
+  return anzahl;
 }
 
 /** `personId` as a Kind with `spitzname`, the field left out where none. */

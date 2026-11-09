@@ -6,6 +6,9 @@
       "npm --prefix $RESOURCE_DIR install --omit dev --legacy-peer-deps=false"
     ]
   },
+  "firestore": {
+    "rules": "apps/korbjaeger/firestore.rules"
+  },
   "hosting": {
     "public": "dist/apps/korbjaeger/analog/public",
     "cleanUrls": true,
@@ -48,6 +51,15 @@
       },
       {
         "source": "/team-einrichten",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/einstellungen",
         "headers": [
           {
             "key": "Cache-Control",

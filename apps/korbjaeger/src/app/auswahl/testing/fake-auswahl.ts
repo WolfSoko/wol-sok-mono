@@ -10,6 +10,7 @@ export function fakeAuswahl(teile: Partial<Auswahl> = {}): Auswahl {
   return {
     teams: signal([]),
     kinder: signal([]),
+    nichtLesbar: signal(false),
     folgen: () => Promise.resolve(),
     entfolgen: () => Promise.resolve(),
     markieren: () => Promise.resolve(),

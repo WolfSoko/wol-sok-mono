@@ -39,4 +39,9 @@
       <li><korb-ueberblick-team [karte]="karte" /></li>
     }
   </ul>
+} @else if (nichtLesbar()) {
+  <p class="hinweis" role="alert" data-qa="ueberblick-nicht-lesbar">
+    Meine Teams und Kinder lassen sich gerade nicht lesen. Bitte die App neu
+    laden.
+  </p>
 }

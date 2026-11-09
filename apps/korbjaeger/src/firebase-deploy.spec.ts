@@ -1,5 +1,16 @@
 // @vitest-environment node
-import { readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import {
+  assertDeployableBuild,
+  buildKonfigurationMerken,
+  recordBuildConfiguration,
+} from '../deploy/build-configuration';
+
+const WORKSPACE = fileURLToPath(new URL('../../../', import.meta.url));
 
 /** A file of the workspace, read as the deploy reads it. */
 function workspaceJson<T>(path: string): T {
@@ -10,6 +21,7 @@ function workspaceJson<T>(path: string): T {
 
 interface FirebaseConfig {
   functions: { source: string; predeploy: string[] };
+  firestore?: { rules: string };
   hosting: {
     site?: string;
     public: string;
@@ -21,13 +33,127 @@ interface FirebaseConfig {
 interface ProjectJson {
   targets: Record<
     string,
-    { options: { command?: string; commands?: string[]; parallel?: boolean } }
+    {
+      options: { command?: string; commands?: string[]; parallel?: boolean };
+      dependsOn?: unknown[];
+      configurations?: Record<string, unknown>;
+      outputs?: string[];
+      defaultConfiguration?: string;
+    }
   >;
 }
 
 const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
 
 describe('the Firebase deploy', () => {
+  // a development or e2e build offers the sign-in and talks to the local
+  // emulators (environment.ts): only a production build may go live. Nx hands
+  // `deploy -c development` on to the build, so the deploy checks what it got
+  describe('only a production build', () => {
+    const CHECK =
+      'tsx ./apps/korbjaeger/deploy/build-configuration.ts check dist/apps/korbjaeger';
+    let dist: string;
+
+    beforeEach(() => {
+      dist = mkdtempSync(join(tmpdir(), 'korbjaeger-dist-'));
+    });
+
+    afterEach(() => rmSync(dist, { recursive: true, force: true }));
+
+    it('is built by default, and checked before anything is deployed', () => {
+      const { targets } = workspaceJson<ProjectJson>(
+        'apps/korbjaeger/project.json'
+      );
+
+      expect(targets['deploy'].dependsOn).toEqual(['build']);
+      expect(targets['deploy'].options.commands?.[0]).toBe(CHECK);
+      expect(targets['build'].defaultConfiguration).toBe('production');
+      expect(targets['build-app'].defaultConfiguration).toBe('production');
+    });
+
+    it('is recorded by build-app with the artifacts it builds, so its cache holds it too', () => {
+      const { targets } = workspaceJson<ProjectJson>(
+        'apps/korbjaeger/project.json'
+      );
+
+      expect(targets['build-app'].outputs).toContain(
+        '{workspaceRoot}/dist/{projectRoot}/build-configuration'
+      );
+      // `build` only adds the service worker; it records nothing itself
+      expect(JSON.stringify(targets['build'])).not.toContain(
+        'build-configuration'
+      );
+    });
+
+    it('records the mode the build ran in once Vite wrote the build', () => {
+      const plugin = buildKonfigurationMerken(dist);
+
+      (plugin.configResolved as (c: { mode: string }) => void)({
+        mode: 'development',
+      });
+      (plugin.writeBundle as () => void)();
+
+      expect(() => assertDeployableBuild(dist)).toThrow(
+        'Refusing to deploy a "development" build of Korbjäger'
+      );
+    });
+
+    it.each([
+      ['production', 0],
+      ['development', 1],
+    ])(
+      'lets the deploy command go on only for a %s build',
+      (konfiguration, code) => {
+        recordBuildConfiguration(dist, konfiguration);
+
+        const pruefung = spawnSync(
+          'npx',
+          [
+            'tsx',
+            './apps/korbjaeger/deploy/build-configuration.ts',
+            'check',
+            dist,
+          ],
+          { cwd: WORKSPACE, encoding: 'utf8' }
+        );
+
+        expect(pruefung.status).toBe(code);
+      }
+    );
+
+    it('goes live', () => {
+      recordBuildConfiguration(dist, 'production');
+
+      expect(() => assertDeployableBuild(dist)).not.toThrow();
+    });
+
+    it.each(['development', 'e2e'])('refuses a %s build', (configuration) => {
+      recordBuildConfiguration(dist, configuration);
+
+      expect(() => assertDeployableBuild(dist)).toThrow(
+        `Refusing to deploy a "${configuration}" build of Korbjäger`
+      );
+    });
+
+    it('refuses a build that recorded nothing', () => {
+      expect(() => assertDeployableBuild(dist)).toThrow(
+        'Refusing to deploy a "unknown" build of Korbjäger'
+      );
+    });
+  });
+
+  it("deploys the app's Firestore rules with it, the ones its emulator specs test", () => {
+    const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
+    const { commands } = workspaceJson<ProjectJson>(
+      'apps/korbjaeger/project.json'
+    ).targets['deploy'].options;
+
+    expect(config.firestore).toEqual({
+      rules: 'apps/korbjaeger/firestore.rules',
+    });
+    expect(commands?.at(-1)).toContain('firestore:rules');
+  });
+
   it('deploys the root config, not the file Nitro generates in the app', () => {
     // apps/korbjaeger/firebase.json is Nitro's, with a placeholder site
     const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
@@ -36,7 +162,7 @@ describe('the Firebase deploy', () => {
       'firebase --config=firebase.korbjaeger.json --project=korbjaeger'
     );
     expect(project.targets['deploy'].options.commands?.at(-1)).toBe(
-      'nx run korbjaeger:firebase deploy'
+      'nx run korbjaeger:firebase deploy --only functions,hosting,firestore:rules'
     );
   });
 
@@ -55,9 +181,9 @@ describe('the Firebase deploy', () => {
 
     expect(region).toBeDefined();
     expect(parallel).toBe(false);
-    expect(commands).toEqual([
+    expect(commands?.slice(1)).toEqual([
       `nx run korbjaeger:firebase functions:artifacts:setpolicy --location=${region} --days=1 --force`,
-      'nx run korbjaeger:firebase deploy',
+      'nx run korbjaeger:firebase deploy --only functions,hosting,firestore:rules',
     ]);
   });
 

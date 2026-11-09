@@ -8,3 +8,15 @@ export class AuswahlZuNeuError extends Error {
     this.name = 'AuswahlZuNeuError';
   }
 }
+
+/**
+ * A change would take a list of the `Auswahl` over its cap
+ * (`AUSWAHL_GRENZEN`, which the Firestore rules hold too): it is refused,
+ * nothing stored.
+ */
+export class AuswahlVollError extends Error {
+  public constructor(public readonly liste: 'teams' | 'kinder') {
+    super(`Auswahl: ${liste} full`);
+    this.name = 'AuswahlVollError';
+  }
+}
