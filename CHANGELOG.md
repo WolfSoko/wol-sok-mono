@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.159.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.158.1...v74.159.0) (2026-11-09)
+
+### Features
+
+* **tools:** lint and typecheck the scripts under tools/ ([#2951](https://github.com/WolfSoko/wol-sok-mono/issues/2951)) ([7d8fa07](https://github.com/WolfSoko/wol-sok-mono/commit/7d8fa077c3ce21f5228b0c2da450ac90d4f23adc)), closes [#2935](https://github.com/WolfSoko/wol-sok-mono/issues/2935)
+
+### Refactorings
+
+* **korbjaeger:** split the overview's orchestration, Kader search into the lib ([#2954](https://github.com/WolfSoko/wol-sok-mono/issues/2954)) ([db07b47](https://github.com/WolfSoko/wol-sok-mono/commit/db07b47f56994cf31ddfc0f946780016a2ca1d75)), references [#2931](https://github.com/WolfSoko/wol-sok-mono/issues/2931) [#2931](https://github.com/WolfSoko/wol-sok-mono/issues/2931) [#2937](https://github.com/WolfSoko/wol-sok-mono/issues/2937)
+
+### Chore
+
+* **release:** publish ([75fbec0](https://github.com/WolfSoko/wol-sok-mono/commit/75fbec0419b6f08d91290721e3126dbf1e7f1035))
+
+### Documentation
+
+* **korbjaeger:** spike findings on a live DBB data source ([#2962](https://github.com/WolfSoko/wol-sok-mono/issues/2962)) ([3b85009](https://github.com/WolfSoko/wol-sok-mono/commit/3b85009c6c23c3f7fa9f57a1063a770510d7bb50)), references [#2947](https://github.com/WolfSoko/wol-sok-mono/issues/2947)
+
 ## [74.158.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.158.0...v74.158.1) (2026-11-09)
 
 ### Bug Fixes
