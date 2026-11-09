@@ -18,9 +18,9 @@ import { UeberblickComponent } from '../ueberblick/ueberblick.component';
     UeberblickComponent,
   ],
   template: `
-    <h1>Korbjäger</h1>
+    <h1 #start tabindex="-1">Korbjäger</h1>
     <p>Die Spiele deiner Basketball-Teams der laufenden Saison.</p>
-    <korb-installations-hinweis />
+    <korb-installations-hinweis [fokusDanach]="start" />
     <korb-ueberblick />
     <h2>Team öffnen</h2>
     <korb-team-id-form />

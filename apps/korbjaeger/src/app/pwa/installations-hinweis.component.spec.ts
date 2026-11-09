@@ -16,6 +16,13 @@ interface Aufbau {
   klicken(text: string): Promise<void>;
 }
 
+/** What stays on the page once the hint goes, as the home page's heading. */
+const DANACH = Object.assign(document.createElement('h1'), {
+  tabIndex: -1,
+  textContent: 'Korbjäger',
+});
+document.body.append(DANACH);
+
 async function render(angebot: InstallationsAngebot): Promise<Aufbau> {
   const stand = signal(angebot);
   let angezeigt = 0;
@@ -36,6 +43,7 @@ async function render(angebot: InstallationsAngebot): Promise<Aufbau> {
     providers: [{ provide: InstallationsHinweis, useValue: hinweis }],
   });
   const fixture = TestBed.createComponent(InstallationsHinweisComponent);
+  fixture.componentRef.setInput('fokusDanach', DANACH);
   await fixture.whenStable();
   const seite = fixture.nativeElement as HTMLElement;
   return {
@@ -70,6 +78,8 @@ describe('InstallationsHinweisComponent', () => {
     await klicken('Installieren');
 
     expect(installieren).toHaveBeenCalledTimes(1);
+    // the hint goes with the browser's dialog open
+    expect(document.activeElement).toBe(DANACH);
   });
 
   it("explains the share menu on iOS, in no browser's name, with no install button", async () => {
@@ -96,11 +106,12 @@ describe('InstallationsHinweisComponent', () => {
     expect(angezeigt()).toBe(0);
   });
 
-  it('goes once dismissed', async () => {
+  it('goes once dismissed, focus on what stays', async () => {
     const { seite, klicken } = await render('ios');
 
     await klicken('Ausblenden');
 
     expect(hinweisText(seite)).toBeUndefined();
+    expect(document.activeElement).toBe(DANACH);
   });
 });

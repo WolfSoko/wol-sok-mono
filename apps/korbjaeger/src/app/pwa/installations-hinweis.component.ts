@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   inject,
+  input,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -39,15 +40,11 @@ import { InstallationsHinweis } from './installations-hinweis';
         }
         <div class="knoepfe">
           @if (angebot === 'installieren') {
-            <button
-              matButton="filled"
-              type="button"
-              (click)="hinweis.installieren()"
-            >
+            <button matButton="filled" type="button" (click)="installieren()">
               Installieren
             </button>
           }
-          <button matButton type="button" (click)="hinweis.ablehnen()">
+          <button matButton type="button" (click)="ablehnen()">
             Ausblenden
           </button>
         </div>
@@ -77,9 +74,26 @@ import { InstallationsHinweis } from './installations-hinweis';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InstallationsHinweisComponent {
+  /**
+   * What stays on the page once the hint goes with the focused button (the
+   * home page's heading, with `tabindex="-1"`): focus moves there.
+   */
+  public readonly fokusDanach = input<HTMLElement>();
+
   protected readonly hinweis = inject(InstallationsHinweis);
 
   public constructor() {
     inject(DestroyRef).onDestroy(this.hinweis.anzeigen());
+  }
+
+  protected installieren(): Promise<void> {
+    const fertig = this.hinweis.installieren();
+    this.fokusDanach()?.focus();
+    return fertig;
+  }
+
+  protected ablehnen(): void {
+    this.hinweis.ablehnen();
+    this.fokusDanach()?.focus();
   }
 }
