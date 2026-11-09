@@ -1,5 +1,11 @@
 import { computed, signal, type Signal } from '@angular/core';
-import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
+import type {
+  PersonId,
+  TeamId,
+  VereinId,
+} from '@wolsok/feat-shared-basketball-data';
+import type { Vereinsfarben } from '../vereinsfarben/vereinsfarben';
+import type { VereinsfarbenWahl } from './vereinsfarben-wahl';
 import {
   deleteField,
   doc,
@@ -15,10 +21,13 @@ import {
   entmarkierenAenderung,
   folgenAenderung,
   gleicheKinder,
+  gleicheVereinsfarben,
   grenzenPruefen,
   inhaltAus,
   markierenAenderung,
   spitznameAenderung,
+  vereinsfarbenAenderung,
+  vereinsfarbenZuruecksetzenAenderung,
   type AuswahlAenderung,
 } from './auswahl-aenderungen';
 import {
@@ -70,6 +79,9 @@ export function firestoreFelder(
     version: AUSWAHL_VERSION,
     ...(felder.teams && { teams: alsFeld(felder.teams) }),
     ...(felder.kinder && { kinder: alsFeld(felder.kinder) }),
+    ...(felder.vereinsfarben && {
+      vereinsfarben: alsFeld(felder.vereinsfarben),
+    }),
   };
 }
 
@@ -112,6 +124,9 @@ export interface FirestoreAuswahlOptionen {
 export class FirestoreAuswahl implements Auswahl {
   public readonly teams: Signal<readonly TeamId[] | undefined>;
   public readonly kinder: Signal<readonly Kind[] | undefined>;
+  public readonly vereinsfarben: Signal<
+    readonly VereinsfarbenWahl[] | undefined
+  >;
   public readonly nichtLesbar: Signal<boolean>;
   /** The account's document holds the choices, always this one. */
   public readonly quelle: Signal<unknown> = signal(this).asReadonly();
@@ -132,11 +147,12 @@ export class FirestoreAuswahl implements Auswahl {
       return gelesen;
     }
     const aktuell = gelesen.art === 'aktuell' ? gelesen : KEIN_DOKUMENT;
-    const { teams, kinder } = this.ausstehend().reduce<AuswahlInhalt>(
-      (stand, aenderung) => aenderung(stand),
-      aktuell
-    );
-    return { ...aktuell, teams, kinder };
+    const { teams, kinder, vereinsfarben } =
+      this.ausstehend().reduce<AuswahlInhalt>(
+        (stand, aenderung) => aenderung(stand),
+        aktuell
+      );
+    return { ...aktuell, teams, kinder, vereinsfarben };
   });
   private readonly fehlgeschlagen = signal(false);
   /** Why it shows nothing more: its listener failed, or it was ended. */
@@ -163,6 +179,9 @@ export class FirestoreAuswahl implements Auswahl {
     });
     this.kinder = computed(() => inhalt()?.kinder, {
       equal: (a, b) => a === b || (!!a && !!b && gleicheKinder(a, b)),
+    });
+    this.vereinsfarben = computed(() => inhalt()?.vereinsfarben, {
+      equal: (a, b) => a === b || (!!a && !!b && gleicheVereinsfarben(a, b)),
     });
     this.nichtLesbar = this.fehlgeschlagen.asReadonly();
     const { promise, resolve, reject } = Promise.withResolvers<void>();
@@ -216,6 +235,17 @@ export class FirestoreAuswahl implements Auswahl {
 
   public entmarkieren(person: PersonId): Promise<void> {
     return this.aendern(entmarkierenAenderung(person));
+  }
+
+  public vereinsfarbenSetzen(
+    verein: VereinId,
+    farben: Vereinsfarben
+  ): Promise<void> {
+    return this.aendern(vereinsfarbenAenderung(verein, farben));
+  }
+
+  public vereinsfarbenZuruecksetzen(verein: VereinId): Promise<void> {
+    return this.aendern(vereinsfarbenZuruecksetzenAenderung(verein));
   }
 
   /**

@@ -1,10 +1,21 @@
-import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
+import type {
+  PersonId,
+  TeamId,
+  VereinId,
+} from '@wolsok/feat-shared-basketball-data';
 import {
   AUSWAHL_GRENZEN,
   LEERE_AUSWAHL,
   type AuswahlInhalt,
+  AUSWAHL_LISTEN,
   type GelesenesDokument,
 } from './auswahl-dokument';
+import {
+  gleicheFarben,
+  vereinsfarbenAus,
+  type Vereinsfarben,
+} from '../vereinsfarben/vereinsfarben';
+import { nachVerein, type VereinsfarbenWahl } from './vereinsfarben-wahl';
 import { AuswahlVollError } from './auswahl-fehler';
 import { gleicheFolge } from '../gleiche-folge';
 import { kindMit, type Kind, type MarkierbarerSpieler } from './kind';
@@ -66,8 +77,52 @@ export function spitznameAenderung(
 }
 
 /**
- * Takes what `abgegeben` holds out: its Teams, and its Kinder as they were
- * (one whose Spitzname changed since stays). What joined since stays too.
+ * Sets the colours of `verein` to `farben` (as stored: `vereinsfarbenAus`,
+ * which throws `KeineFarbeError` for what is no colour), in place of any
+ * it has.
+ */
+export function vereinsfarbenAenderung(
+  verein: VereinId,
+  farben: Vereinsfarben
+): AuswahlAenderung {
+  let neu: VereinsfarbenWahl | undefined;
+  return (inhalt) => {
+    // checked as it first applies, so an adapter rejects a colour as any
+    // failure; applied again (a change still to be stored), it is not
+    neu ??= {
+      vereinId: verein,
+      ...vereinsfarbenAus(farben.primaer, farben.zweite),
+    };
+    const andere = inhalt.vereinsfarben.filter(
+      ({ vereinId }) => vereinId !== verein
+    );
+    const alt = inhalt.vereinsfarben.find(
+      ({ vereinId }) => vereinId === verein
+    );
+    return alt !== undefined && gleicheFarben(alt, neu)
+      ? inhalt
+      : { ...inhalt, vereinsfarben: nachVerein([...andere, neu]) };
+  };
+}
+
+/** Takes the colours of `verein` away, so the app's own apply again. */
+export function vereinsfarbenZuruecksetzenAenderung(
+  verein: VereinId
+): AuswahlAenderung {
+  return (inhalt) => {
+    const andere = inhalt.vereinsfarben.filter(
+      ({ vereinId }) => vereinId !== verein
+    );
+    return andere.length === inhalt.vereinsfarben.length
+      ? inhalt
+      : { ...inhalt, vereinsfarben: andere };
+  };
+}
+
+/**
+ * Takes what `abgegeben` holds out: its Teams, and its Kinder and
+ * Vereinsfarben as they were (one changed since stays). What joined since
+ * stays too.
  */
 export function abgebenAenderung(abgegeben: AuswahlInhalt): AuswahlAenderung {
   return (inhalt) => {
@@ -77,10 +132,15 @@ export function abgebenAenderung(abgegeben: AuswahlInhalt): AuswahlAenderung {
     const kinder = inhalt.kinder.filter(
       (kind) => !abgegeben.kinder.some((alt) => gleichesKind(alt, kind))
     );
+    const vereinsfarben = inhalt.vereinsfarben.filter(
+      (wahl) =>
+        !abgegeben.vereinsfarben.some((alt) => gleicheVereinsfarbe(alt, wahl))
+    );
     return teams.length === inhalt.teams.length &&
-      kinder.length === inhalt.kinder.length
+      kinder.length === inhalt.kinder.length &&
+      vereinsfarben.length === inhalt.vereinsfarben.length
       ? inhalt
-      : { teams, kinder };
+      : { teams, kinder, vereinsfarben };
   };
 }
 
@@ -104,7 +164,7 @@ export function grenzenPruefen(
   vorher: AuswahlInhalt,
   nachher: AuswahlInhalt
 ): void {
-  for (const liste of ['teams', 'kinder'] as const) {
+  for (const liste of AUSWAHL_LISTEN) {
     if (
       nachher[liste].length > vorher[liste].length &&
       nachher[liste].length > AUSWAHL_GRENZEN[liste]
@@ -122,6 +182,21 @@ export function inhaltAus(gelesen: GelesenesDokument): AuswahlInhalt {
 /** Whether two lists of Kinder hold the same Kinder in the same order. */
 export function gleicheKinder(a: readonly Kind[], b: readonly Kind[]): boolean {
   return gleicheFolge(a, b, gleichesKind);
+}
+
+/** Whether two lists of Vereinsfarben hold the same colours of the same Vereine. */
+export function gleicheVereinsfarben(
+  a: readonly VereinsfarbenWahl[],
+  b: readonly VereinsfarbenWahl[]
+): boolean {
+  return gleicheFolge(a, b, gleicheVereinsfarbe);
+}
+
+function gleicheVereinsfarbe(
+  a: VereinsfarbenWahl,
+  b: VereinsfarbenWahl
+): boolean {
+  return a.vereinId === b.vereinId && gleicheFarben(a, b);
 }
 
 function istMarkiert(inhalt: AuswahlInhalt, person: PersonId): boolean {

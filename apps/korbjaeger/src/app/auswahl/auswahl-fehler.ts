@@ -1,3 +1,5 @@
+import type { AuswahlListe } from './auswahl-dokument';
+
 /**
  * The stored `Auswahl` was written by a newer version of the app. It is
  * left as it is: this version neither reads nor overwrites it.
@@ -15,7 +17,7 @@ export class AuswahlZuNeuError extends Error {
  * nothing stored.
  */
 export class AuswahlVollError extends Error {
-  public constructor(public readonly liste: 'teams' | 'kinder') {
+  public constructor(public readonly liste: AuswahlListe) {
     super(`Auswahl: ${liste} full`);
     this.name = 'AuswahlVollError';
   }

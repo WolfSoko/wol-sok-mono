@@ -2,18 +2,19 @@ import type { AuswahlInhalt } from './auswahl-dokument';
 import { AUSWAHL_GRENZEN } from './auswahl-dokument';
 import { zusammenfuehren } from './zusammenfuehren';
 
-const LEER: AuswahlInhalt = { teams: [], kinder: [] };
+const LEER: AuswahlInhalt = { teams: [], kinder: [], vereinsfarben: [] };
 
 describe('zusammenfuehren', () => {
   it("takes the device's choices into an empty account", () => {
     const geraet: AuswahlInhalt = {
       teams: [313036, 201500],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     };
 
     expect(zusammenfuehren(LEER, geraet)).toEqual({
       inhalt: geraet,
-      uebrig: { teams: [], kinder: [] },
+      uebrig: LEER,
     });
   });
 
@@ -21,6 +22,7 @@ describe('zusammenfuehren', () => {
     const konto: AuswahlInhalt = {
       teams: [313036],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     };
 
     expect(zusammenfuehren(konto, LEER).inhalt).toBe(konto);
@@ -30,6 +32,7 @@ describe('zusammenfuehren', () => {
     const konto: AuswahlInhalt = {
       teams: [313036, 201765],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }, { personId: 4712 }],
+      vereinsfarben: [],
     };
     const geraet: AuswahlInhalt = {
       teams: [201500, 313036],
@@ -38,6 +41,7 @@ describe('zusammenfuehren', () => {
         { personId: 4711, spitzname: 'Mia' },
         { personId: 4712, spitzname: 'Mo' },
       ],
+      vereinsfarben: [],
     };
 
     expect(zusammenfuehren(konto, geraet).inhalt).toEqual({
@@ -48,6 +52,7 @@ describe('zusammenfuehren', () => {
         { personId: 4712, spitzname: 'Mo' },
         { personId: 4713 },
       ],
+      vereinsfarben: [],
     });
   });
 
@@ -55,11 +60,13 @@ describe('zusammenfuehren', () => {
     const konto: AuswahlInhalt = {
       teams: [313036, 201500],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     };
 
     const { inhalt: zusammen } = zusammenfuehren(konto, {
       teams: [201500],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
 
     expect(zusammen.teams).toBe(konto.teams);
@@ -67,10 +74,15 @@ describe('zusammenfuehren', () => {
   });
 
   it('gives the same on a second sign-in as on the first', () => {
-    const konto: AuswahlInhalt = { teams: [313036], kinder: [] };
+    const konto: AuswahlInhalt = {
+      teams: [313036],
+      kinder: [],
+      vereinsfarben: [],
+    };
     const geraet: AuswahlInhalt = {
       teams: [201500],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     };
     const einmal = zusammenfuehren(konto, geraet).inhalt;
 
@@ -83,10 +95,12 @@ describe('zusammenfuehren', () => {
     const konto: AuswahlInhalt = {
       teams: ids(AUSWAHL_GRENZEN.teams - 2, 1),
       kinder: ids(AUSWAHL_GRENZEN.kinder, 1).map((personId) => ({ personId })),
+      vereinsfarben: [],
     };
     const geraet: AuswahlInhalt = {
       teams: [1, 9001, 9002, 9003, 9004],
       kinder: [{ personId: 9001 }, { personId: 1, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     };
 
     const { inhalt, uebrig } = zusammenfuehren(konto, geraet);
@@ -98,6 +112,50 @@ describe('zusammenfuehren', () => {
     expect(uebrig).toEqual({
       teams: [9003, 9004],
       kinder: [{ personId: 9001 }],
+      vereinsfarben: [],
     });
+  });
+
+  it("takes the device's Vereinsfarben for the other Vereine, the account's winning", () => {
+    const konto: AuswahlInhalt = {
+      ...LEER,
+      vereinsfarben: [{ vereinId: 4343, primaer: '#1d4ed8' }],
+    };
+    const geraet: AuswahlInhalt = {
+      ...LEER,
+      vereinsfarben: [
+        { vereinId: 4242, primaer: '#c8102e' },
+        { vereinId: 4343, primaer: '#007a3d' },
+      ],
+    };
+
+    const { inhalt, uebrig } = zusammenfuehren(konto, geraet);
+
+    expect(inhalt.vereinsfarben).toEqual([
+      { vereinId: 4242, primaer: '#c8102e' },
+      { vereinId: 4343, primaer: '#1d4ed8' },
+    ]);
+    expect(uebrig.vereinsfarben).toEqual([]);
+    expect(zusammenfuehren(inhalt, geraet).inhalt).toBe(inhalt);
+  });
+
+  it("takes the device's Vereinsfarben only up to their cap", () => {
+    const farben = (anzahl: number, ab: number) =>
+      Array.from({ length: anzahl }, (_, i) => ({
+        vereinId: ab + i,
+        primaer: '#c8102e',
+      }));
+    const konto: AuswahlInhalt = {
+      ...LEER,
+      vereinsfarben: farben(AUSWAHL_GRENZEN.vereinsfarben - 1, 1),
+    };
+    const geraet: AuswahlInhalt = { ...LEER, vereinsfarben: farben(2, 9001) };
+
+    const { inhalt, uebrig } = zusammenfuehren(konto, geraet);
+
+    expect(inhalt.vereinsfarben).toHaveLength(AUSWAHL_GRENZEN.vereinsfarben);
+    expect(uebrig.vereinsfarben).toEqual([
+      { vereinId: 9002, primaer: '#c8102e' },
+    ]);
   });
 });

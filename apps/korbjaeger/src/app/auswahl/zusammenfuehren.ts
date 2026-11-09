@@ -1,7 +1,8 @@
 import { AUSWAHL_GRENZEN, type AuswahlInhalt } from './auswahl-dokument';
+import { nachVerein, type VereinsfarbenWahl } from './vereinsfarben-wahl';
 import type { Kind } from './kind';
 
-/** The device's Teams and Kinder that did not fit into the account. */
+/** The device's Teams, Kinder and Vereinsfarben that did not fit into the account. */
 export type NichtUebernommen = AuswahlInhalt;
 
 /** What `zusammenfuehren` gives: the account's choices, and what was left out. */
@@ -14,6 +15,7 @@ export interface Zusammenfuehrung {
  * What an account holds once the device's choices joined it at sign-in:
  * the account's Teams, then the device's others; the account's Kinder,
  * a missing Spitzname filled from the device's, then the device's others;
+ * the account's Vereinsfarben, then the device's for the other Vereine;
  * the device's only up to the caps (`AUSWAHL_GRENZEN`), in their order,
  * the ones left out in `uebrig`. Each list, and `konto` itself,
  * comes back as it was where the device adds nothing, so a second sign-in
@@ -30,14 +32,47 @@ export function zusammenfuehren(
       ? konto.teams
       : [...konto.teams, ...neueTeams.slice(0, teamsPlatz)];
   const kinder = kinderZusammen(konto.kinder, geraet.kinder);
+  const vereinsfarben = vereinsfarbenZusammen(
+    konto.vereinsfarben,
+    geraet.vereinsfarben
+  );
   const uebrig = {
     teams: neueTeams.slice(teamsPlatz),
     kinder: kinder.uebrig,
+    vereinsfarben: vereinsfarben.uebrig,
   };
-  if (teams === konto.teams && kinder.liste === konto.kinder) {
+  if (
+    teams === konto.teams &&
+    kinder.liste === konto.kinder &&
+    vereinsfarben.liste === konto.vereinsfarben
+  ) {
     return { inhalt: konto, uebrig };
   }
-  return { inhalt: { teams, kinder: kinder.liste }, uebrig };
+  return {
+    inhalt: {
+      teams,
+      kinder: kinder.liste,
+      vereinsfarben: vereinsfarben.liste,
+    },
+    uebrig,
+  };
+}
+
+function vereinsfarbenZusammen(
+  konto: readonly VereinsfarbenWahl[],
+  geraet: readonly VereinsfarbenWahl[]
+): {
+  readonly liste: readonly VereinsfarbenWahl[];
+  readonly uebrig: readonly VereinsfarbenWahl[];
+} {
+  const imKonto = new Set(konto.map(({ vereinId }) => vereinId));
+  const neue = geraet.filter(({ vereinId }) => !imKonto.has(vereinId));
+  const frei = platz(konto.length, AUSWAHL_GRENZEN.vereinsfarben);
+  const dazu = neue.slice(0, frei);
+  return {
+    liste: dazu.length === 0 ? konto : nachVerein([...konto, ...dazu]),
+    uebrig: neue.slice(frei),
+  };
 }
 
 function kinderZusammen(

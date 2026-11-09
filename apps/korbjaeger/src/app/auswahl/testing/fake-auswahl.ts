@@ -17,6 +17,9 @@ export function fakeAuswahl(teile: Partial<Auswahl> = {}): Auswahl {
     markieren: () => Promise.resolve(),
     spitznameSetzen: () => Promise.resolve(),
     entmarkieren: () => Promise.resolve(),
+    vereinsfarben: signal([]),
+    vereinsfarbenSetzen: () => Promise.resolve(),
+    vereinsfarbenZuruecksetzen: () => Promise.resolve(),
     ...teile,
   };
 }

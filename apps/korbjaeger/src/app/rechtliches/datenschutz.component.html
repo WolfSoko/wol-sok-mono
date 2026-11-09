@@ -7,12 +7,13 @@
     >, im Browser und als installierte App. Kurz gesagt: Korbjäger zeigt
     Spielpläne, Ergebnisse und Kader, die der Deutsche Basketball Bund (DBB)
     öffentlich zeigt, und liest sie für dich über unseren Server beim DBB ab
-    (Abschnitt 3). Welche Teams du verfolgst und welche Kinder du markierst,
-    bleibt auf deinem Gerät (Abschnitt 4), bis du dich freiwillig mit Google
-    anmeldest; dann liegt es in deinem Konto (Abschnitt 5). Gespeichert werden
-    dabei nur Kennungen des DBB und ein Spitzname, den du selbst wählst, keine
-    Namen aus den Kadern. Die App setzt keine Cookies, zeigt keine Werbung,
-    misst keine Nutzung und verkauft keine Daten.
+    (Abschnitt 3). Welche Teams du verfolgst, welche Kinder du markierst und
+    welche Farben du Vereinen gibst, bleibt auf deinem Gerät (Abschnitt 4), bis
+    du dich freiwillig mit Google anmeldest; dann liegt es in deinem Konto
+    (Abschnitt 5). Gespeichert werden dabei nur Kennungen des DBB, ein
+    Spitzname, den du selbst wählst, und Farbcodes, keine Namen aus den Kadern.
+    Die App setzt keine Cookies, zeigt keine Werbung, misst keine Nutzung und
+    verkauft keine Daten.
   </p>
 
   <h2 id="verantwortlich">1. Verantwortlicher</h2>
@@ -93,10 +94,11 @@
       >: Meine Teams und deine markierten Kinder, als Kennungen des DBB (die
       Kennung eines Teams, die Personen-ID eines Kindes), jeweils mit dem
       Zeitpunkt, zu dem du sie hinzugefügt hast, und mit dem Spitznamen, den du
-      einem Kind gibst. Die Einträge bleiben, bis du einem Team nicht mehr
-      folgst oder eine Markierung entfernst. Meldest du dich an, übernimmt dein
-      Konto sie, soweit sie hineinpassen, und die App löscht sie hier (Abschnitt
-      5).
+      einem Kind gibst, und die Farben, die du einem Verein gibst (die Kennung
+      des Vereins beim DBB mit einem oder zwei Farbcodes). Die Einträge bleiben,
+      bis du einem Team nicht mehr folgst, eine Markierung entfernst oder die
+      Farben eines Vereins zurücksetzt. Meldest du dich an, übernimmt dein Konto
+      sie, soweit sie hineinpassen, und die App löscht sie hier (Abschnitt 5).
     </li>
     <li>
       <code>{{ schluessel.antwortPraefix }}…</code> und
@@ -173,12 +175,15 @@
     In Cloud Firestore liegt zu deinem Konto ein einziges Dokument mit Meine
     Teams und deinen Kindern, genau so wie auf dem Gerät (Abschnitt 4): die
     Kennungen der Teams, die Personen-IDs der Kinder, jeweils mit dem Zeitpunkt
-    des Hinzufügens, und die Spitznamen, die du vergibst (höchstens
-    {{ spitznameLaenge }} Zeichen), sonst nichts; höchstens
-    {{ grenzen.teams }} Teams und {{ grenzen.kinder }} Kinder. Lesen und ändern
-    kann es nur dein Konto. Die Datenbank liegt in Googles Region
-    {{ regionen.firestore.id }} ({{ regionen.firestore.ort }}). Den Spitznamen
-    siehst nur du; den vollen Namen eines Kindes brauchst du dafür nicht.
+    des Hinzufügens, die Spitznamen, die du vergibst (höchstens
+    {{ spitznameLaenge }} Zeichen), und die Farbcodes, die du Vereinen gibst,
+    mit der Kennung des Vereins, sonst nichts; höchstens
+    {{ grenzen.teams }} Teams, {{ grenzen.kinder }} Kinder und die Farben von
+    {{ grenzen.vereinsfarben }} Vereinen. Lesen und ändern kann es nur dein
+    Konto. Die Datenbank liegt in Googles Region {{ regionen.firestore.id }} ({{
+      regionen.firestore.ort
+    }}). Den Spitznamen siehst nur du; den vollen Namen eines Kindes brauchst du
+    dafür nicht.
   </p>
   <p>
     Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO: Du meldest dich an, damit

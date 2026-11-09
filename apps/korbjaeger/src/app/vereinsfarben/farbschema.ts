@@ -6,6 +6,7 @@ import {
   TonalPalette,
   Variant,
 } from '@material/material-color-utilities';
+import { vereinsfarbenAus, type Vereinsfarben } from './vereinsfarben';
 
 /**
  * Every Material system colour the theme in `styles.scss` emits as
@@ -89,14 +90,6 @@ export type FarbschemaTokens = Readonly<
   Record<`--mat-sys-${Systemfarbe}`, string>
 >;
 
-/** A Verein's colours as an Elternteil picked them, each `#rrggbb`. */
-export interface Vereinsfarben {
-  readonly primaer: string;
-  readonly zweite?: string;
-}
-
-const HEX_FARBE = /^#[0-9a-f]{6}$/i;
-
 /**
  * A little above Material's standard contrast (0), so every text on its
  * ground reaches 4.5:1 and every outline 3:1 (WCAG AA) for any colour, by
@@ -134,22 +127,17 @@ export function farbschemaTokens(farben: Vereinsfarben): FarbschemaTokens {
 }
 
 function schemaVon(farben: Vereinsfarben, dunkel: boolean): DynamicScheme {
+  // checked as stored: what is no #rrggbb throws `KeineFarbeError`
+  const { primaer, zweite } = vereinsfarbenAus(farben.primaer, farben.zweite);
   return new DynamicScheme({
-    sourceColorHct: Hct.fromInt(argbAus(farben.primaer)),
+    sourceColorHct: Hct.fromInt(argbFromHex(primaer)),
     variant: Variant.CONTENT,
     contrastLevel: KONTRAST_STUFE,
     isDark: dunkel,
     // left out, the content scheme derives it from the first colour
     secondaryPalette:
-      farben.zweite === undefined
+      zweite === undefined
         ? undefined
-        : TonalPalette.fromInt(argbAus(farben.zweite)),
+        : TonalPalette.fromInt(argbFromHex(zweite)),
   });
-}
-
-function argbAus(hex: string): number {
-  if (!HEX_FARBE.test(hex)) {
-    throw new Error(`Keine Farbe im Format #rrggbb: ${hex}`);
-  }
-  return argbFromHex(hex);
 }

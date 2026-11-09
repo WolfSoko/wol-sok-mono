@@ -231,7 +231,7 @@ describe('EinstellungenComponent', () => {
 
   it('drops what did not fit once another tab switched to another account', async () => {
     const dienst = new FakeKontoDienst();
-    dienst.uebrig = { teams: [9001], kinder: [] };
+    dienst.uebrig = { teams: [9001], kinder: [], vereinsfarben: [] };
     const { knopf, stabil, element } = await oeffnen({ dienst });
     knopf('anmelden')?.click();
     await stabil();
@@ -292,7 +292,11 @@ describe('EinstellungenComponent', () => {
 
   it("tells which of the device's choices did not fit into the account", async () => {
     const dienst = new FakeKontoDienst();
-    dienst.uebrig = { teams: [9001, 9002], kinder: [{ personId: 4711 }] };
+    dienst.uebrig = {
+      teams: [9001, 9002],
+      kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
+    };
     const { knopf, stabil, element } = await oeffnen({ dienst });
 
     knopf('anmelden')?.click();
@@ -416,12 +420,40 @@ describe('EinstellungenComponent', () => {
 
 describe('nichtUebernommenText', () => {
   it('says nothing where all fitted', () => {
-    expect(nichtUebernommenText({ teams: [], kinder: [] })).toBeUndefined();
+    expect(
+      nichtUebernommenText({ teams: [], kinder: [], vereinsfarben: [] })
+    ).toBeUndefined();
   });
 
   it('names one Team in the singular', () => {
-    expect(nichtUebernommenText({ teams: [313036], kinder: [] })).toBe(
-      '1 Team dieses Geräts passte nicht mehr in dein Konto: Es hält höchstens 50 Teams und 20 Kinder.'
+    expect(
+      nichtUebernommenText({ teams: [313036], kinder: [], vereinsfarben: [] })
+    ).toBe(
+      '1 Team dieses Geräts passte nicht mehr in dein Konto: Es hält höchstens 50 Teams.'
+    );
+  });
+
+  it('names Vereinsfarben among the rest, the verb in the plural', () => {
+    expect(
+      nichtUebernommenText({
+        teams: [313036],
+        kinder: [],
+        vereinsfarben: [{ vereinId: 4242, primaer: '#c8102e' }],
+      })
+    ).toBe(
+      '1 Team und die Farben eines Vereins dieses Geräts passten nicht mehr in dein Konto: Es hält höchstens 50 Teams und die Farben von 50 Vereinen.'
+    );
+    expect(
+      nichtUebernommenText({
+        teams: [],
+        kinder: [],
+        vereinsfarben: [
+          { vereinId: 4242, primaer: '#c8102e' },
+          { vereinId: 4343, primaer: '#1d4ed8' },
+        ],
+      })
+    ).toBe(
+      'Die Farben von 2 Vereinen dieses Geräts passten nicht mehr in dein Konto: Es hält höchstens die Farben von 50 Vereinen.'
     );
   });
 });

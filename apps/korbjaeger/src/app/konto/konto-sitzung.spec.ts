@@ -179,6 +179,7 @@ describe('KontoSitzung', () => {
       expect(dienst.uebernommen).toEqual({
         teams: [313036],
         kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+        vereinsfarben: [],
       });
       expect(lokal.teams()).toEqual([]);
       expect(merker.gesetzt()).toBe(true);
@@ -187,15 +188,24 @@ describe('KontoSitzung', () => {
 
     it('tells what did not fit into the account', async () => {
       const dienst = new FakeKontoDienst();
-      dienst.uebrig = { teams: [9001, 9002], kinder: [{ personId: 4711 }] };
+      dienst.uebrig = {
+        teams: [9001, 9002],
+        kinder: [{ personId: 4711 }],
+        vereinsfarben: [],
+      };
       const { sitzung } = await aufbauen({ dienst });
 
       expect(await sitzung.anmelden()).toEqual({
         teams: [9001, 9002],
         kinder: [{ personId: 4711 }],
+        vereinsfarben: [],
       });
       expect(sitzung.uebernahme()).toEqual({
-        uebrig: { teams: [9001, 9002], kinder: [{ personId: 4711 }] },
+        uebrig: {
+          teams: [9001, 9002],
+          kinder: [{ personId: 4711 }],
+          vereinsfarben: [],
+        },
         behalten: false,
       });
     });
@@ -205,7 +215,7 @@ describe('KontoSitzung', () => {
       const lokal = new LokaleAuswahl(undefined);
       await lokal.folgen(313036);
       await lokal.folgen(9001);
-      dienst.uebrig = { teams: [9001], kinder: [] };
+      dienst.uebrig = { teams: [9001], kinder: [], vereinsfarben: [] };
       const { sitzung } = await aufbauen({ dienst, lokal });
 
       await sitzung.anmelden();
@@ -220,7 +230,7 @@ describe('KontoSitzung', () => {
 
     it("drops the takeover's notice once another tab switched to another account", async () => {
       const dienst = new FakeKontoDienst();
-      dienst.uebrig = { teams: [9001], kinder: [] };
+      dienst.uebrig = { teams: [9001], kinder: [], vereinsfarben: [] };
       const { sitzung } = await aufbauen({ dienst });
       await sitzung.anmelden();
 
@@ -330,6 +340,7 @@ describe('KontoSitzung', () => {
       expect(dienst.uebernommen).toEqual({
         teams: [],
         kinder: [{ personId: 4711, spitzname: 'Mi' }],
+        vereinsfarben: [],
       });
       expect(lokal.kinder()).toEqual([]);
       expect(sitzung.uebernahme()?.behalten).toBe(false);

@@ -1,8 +1,9 @@
-import type { TeamId } from '@wolsok/feat-shared-basketball-data';
+import type { TeamId, VereinId } from '@wolsok/feat-shared-basketball-data';
 import type { MarkierbarerSpieler } from '../kind';
 import type { Auswahl } from '../auswahl';
 import { AUSWAHL_GRENZEN } from '../auswahl-dokument';
 import { AuswahlVollError, AuswahlZuNeuError } from '../auswahl-fehler';
+import { KeineFarbeError } from '../../vereinsfarben/vereinsfarben';
 
 /**
  * Where one adapter of `Auswahl` keeps its data, for `auswahlVertrag`: the
@@ -50,6 +51,10 @@ const IRGENDWANN = expect.any(Number);
 const MTV_WASBUETTEL: TeamId = 313036;
 const MTV_GIFHORN: TeamId = 201500;
 const SV_GROSS_OESINGEN: TeamId = 201765;
+
+/** Vereine by their DBB id, of invented clubs. */
+const VEREIN_ROT: VereinId = 4242;
+const VEREIN_BLAU: VereinId = 4343;
 
 /** Named players, as a Kader gives them, of invented persons. */
 const LUMI: MarkierbarerSpieler = { art: 'benannt', personId: 4711 };
@@ -498,6 +503,145 @@ export function auswahlVertrag(
       });
     });
 
+    describe('Vereinsfarben', () => {
+      it('holds no colours at first', async () => {
+        const auswahl = await speicher.oeffnen();
+
+        expect(auswahl.vereinsfarben()).toEqual([]);
+      });
+
+      it("keeps a Verein's colours in lower case across a reload, and only them", async () => {
+        const auswahl = await speicher.oeffnen();
+
+        await auswahl.vereinsfarbenSetzen(VEREIN_ROT, {
+          primaer: '#C8102E',
+          zweite: '#1d4ed8',
+        });
+
+        const erwartet = [
+          { vereinId: VEREIN_ROT, primaer: '#c8102e', zweite: '#1d4ed8' },
+        ];
+        expect(auswahl.vereinsfarben()).toEqual(erwartet);
+        expect((await speicher.oeffnen()).vereinsfarben()).toEqual(erwartet);
+        expect(await speicher.liesRoh()).toEqual({
+          version: 2,
+          vereinsfarben: {
+            [VEREIN_ROT]: '#c8102e,#1d4ed8',
+          },
+        });
+      });
+
+      it("replaces a Verein's colours, a second colour left out dropped", async () => {
+        const auswahl = await speicher.oeffnen();
+        await auswahl.vereinsfarbenSetzen(VEREIN_ROT, {
+          primaer: '#c8102e',
+          zweite: '#1d4ed8',
+        });
+
+        await auswahl.vereinsfarbenSetzen(VEREIN_ROT, { primaer: '#007a3d' });
+
+        expect((await speicher.oeffnen()).vereinsfarben()).toEqual([
+          { vereinId: VEREIN_ROT, primaer: '#007a3d' },
+        ]);
+      });
+
+      it("resets a Verein's colours and keeps the others' and Meine Teams", async () => {
+        const auswahl = await speicher.oeffnen();
+        await auswahl.folgen(MTV_GIFHORN);
+        await auswahl.vereinsfarbenSetzen(VEREIN_ROT, { primaer: '#c8102e' });
+        await auswahl.vereinsfarbenSetzen(VEREIN_BLAU, { primaer: '#1d4ed8' });
+
+        await auswahl.vereinsfarbenZuruecksetzen(VEREIN_ROT);
+        await auswahl.vereinsfarbenZuruecksetzen(VEREIN_ROT);
+
+        const nachher = await speicher.oeffnen();
+        expect(nachher.vereinsfarben()).toEqual([
+          { vereinId: VEREIN_BLAU, primaer: '#1d4ed8' },
+        ]);
+        expect(nachher.teams()).toEqual([MTV_GIFHORN]);
+      });
+
+      it('refuses what is no #rrggbb colour, and stores nothing', async () => {
+        const auswahl = await speicher.oeffnen();
+
+        await expect(
+          auswahl.vereinsfarbenSetzen(VEREIN_ROT, { primaer: 'red' })
+        ).rejects.toBeInstanceOf(KeineFarbeError);
+        await expect(
+          auswahl.vereinsfarbenSetzen(VEREIN_ROT, {
+            primaer: '#c8102e',
+            zweite: '#12',
+          })
+        ).rejects.toBeInstanceOf(KeineFarbeError);
+
+        expect(auswahl.vereinsfarben()).toEqual([]);
+        expect((await speicher.oeffnen()).vereinsfarben()).toEqual([]);
+      });
+
+      it("keeps another instance's colours when it sets its own", async () => {
+        const tabA = await speicher.oeffnen();
+        const tabB = await speicher.oeffnen();
+
+        await tabA.vereinsfarbenSetzen(VEREIN_ROT, { primaer: '#c8102e' });
+        await speicher.bisStabil();
+        await tabB.vereinsfarbenSetzen(VEREIN_BLAU, { primaer: '#1d4ed8' });
+
+        expect((await speicher.oeffnen()).vereinsfarben()).toEqual([
+          { vereinId: VEREIN_ROT, primaer: '#c8102e' },
+          { vereinId: VEREIN_BLAU, primaer: '#1d4ed8' },
+        ]);
+      });
+
+      it("shows another instance's colours while open", async () => {
+        const tabA = await speicher.oeffnen();
+        const tabB = await speicher.oeffnen();
+
+        await tabB.vereinsfarbenSetzen(VEREIN_ROT, { primaer: '#c8102e' });
+        await speicher.bisStabil();
+
+        expect(tabA.vereinsfarben()).toEqual([
+          { vereinId: VEREIN_ROT, primaer: '#c8102e' },
+        ]);
+      });
+
+      it('keeps the readable colours where one entry is malformed', async () => {
+        await speicher.schreibeRoh({
+          version: 2,
+          teams: teamsRoh(MTV_GIFHORN),
+          vereinsfarben: {
+            [VEREIN_ROT]: '#c8102e',
+            [VEREIN_BLAU]: 'blau',
+          },
+        });
+
+        const auswahl = await speicher.oeffnen();
+
+        expect(auswahl.vereinsfarben()).toEqual([
+          { vereinId: VEREIN_ROT, primaer: '#c8102e' },
+        ]);
+        expect(auswahl.teams()).toEqual([MTV_GIFHORN]);
+      });
+
+      it('sets no colours from a newer version', async () => {
+        const neuer = {
+          version: 99,
+          vereinsfarben: { [VEREIN_ROT]: '#c8102e' },
+        };
+        await speicher.schreibeRoh(neuer);
+
+        const auswahl = await speicher.oeffnen();
+        expect(auswahl.vereinsfarben()).toEqual([]);
+        await expect(
+          auswahl.vereinsfarbenSetzen(VEREIN_BLAU, { primaer: '#1d4ed8' })
+        ).rejects.toBeInstanceOf(AuswahlZuNeuError);
+        await expect(
+          auswahl.vereinsfarbenZuruecksetzen(VEREIN_ROT)
+        ).rejects.toBeInstanceOf(AuswahlZuNeuError);
+
+        expect(await speicher.liesRoh()).toEqual(neuer);
+      });
+    });
+
     describe('caps', () => {
       const ids = (anzahl: number) =>
         Array.from({ length: anzahl }, (_, i) => 1000 + i);
@@ -530,6 +674,27 @@ export function auswahlVertrag(
         );
 
         expect(auswahl.kinder()).toEqual(voll);
+      });
+
+      it("refuses one Verein's colours more than their cap", async () => {
+        const voll = ids(AUSWAHL_GRENZEN.vereinsfarben);
+        await speicher.schreibeRoh({
+          version: 2,
+          vereinsfarben: Object.fromEntries(voll.map((id) => [id, '#c8102e'])),
+        });
+        const auswahl = await speicher.oeffnen();
+
+        await expect(
+          auswahl.vereinsfarbenSetzen(VEREIN_ROT, { primaer: '#1d4ed8' })
+        ).rejects.toEqual(new AuswahlVollError('vereinsfarben'));
+        // a Verein holding colours already may still change them
+        await auswahl.vereinsfarbenSetzen(voll[0], { primaer: '#1d4ed8' });
+
+        expect(auswahl.vereinsfarben()?.[0]).toEqual({
+          vereinId: voll[0],
+          primaer: '#1d4ed8',
+        });
+        expect(auswahl.vereinsfarben()).toHaveLength(voll.length);
       });
 
       it('still unfollows where the stored Teams are over their cap', async () => {

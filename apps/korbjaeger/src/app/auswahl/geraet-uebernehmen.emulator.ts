@@ -32,10 +32,10 @@ const gespeichert = (uid: string) => gespeichertIn(env, uid);
 
 /** What the account's document holds, as the app reads it. */
 async function gelesen(uid: string): Promise<AuswahlInhalt> {
-  const { teams, kinder } = inhaltAus(
+  const { teams, kinder, vereinsfarben } = inhaltAus(
     auswahlDokumentLesen(await gespeichert(uid))
   );
-  return { teams, kinder };
+  return { teams, kinder, vereinsfarben };
 }
 
 /** Teams as stored, followed in the order given. */
@@ -49,11 +49,13 @@ describe('geraetUebernehmen', () => {
     await geraetUebernehmen(db(uid), uid, {
       teams: [313036],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     });
 
     expect(await gelesen(uid)).toEqual({
       teams: [313036],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     });
   });
 
@@ -63,11 +65,13 @@ describe('geraetUebernehmen', () => {
     await geraetUebernehmen(db(uid), uid, {
       teams: [],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
 
     expect(await gelesen(uid)).toEqual({
       teams: [],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
   });
 
@@ -82,11 +86,44 @@ describe('geraetUebernehmen', () => {
     await geraetUebernehmen(db(uid), uid, {
       teams: [201500, 313036],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }, { personId: 4712 }],
+      vereinsfarben: [],
     });
 
     expect(await gelesen(uid)).toEqual({
       teams: [313036, 201500],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }, { personId: 4712 }],
+      vereinsfarben: [],
+    });
+  });
+
+  it("takes the device's Vereinsfarben for the other Vereine, the account's winning", async () => {
+    const uid = konto();
+    await vorhanden(uid, {
+      version: 2,
+      teams: teamsRoh(313036),
+      vereinsfarben: { 4343: '#1d4ed8' },
+    });
+
+    const uebrig = await geraetUebernehmen(db(uid), uid, {
+      teams: [],
+      kinder: [],
+      vereinsfarben: [
+        { vereinId: 4242, primaer: '#c8102e', zweite: '#ffffff' },
+        { vereinId: 4343, primaer: '#007a3d' },
+      ],
+    });
+
+    expect(uebrig.vereinsfarben).toEqual([]);
+    expect(await gelesen(uid)).toEqual({
+      teams: [313036],
+      kinder: [],
+      vereinsfarben: [
+        { vereinId: 4242, primaer: '#c8102e', zweite: '#ffffff' },
+        { vereinId: 4343, primaer: '#1d4ed8' },
+      ],
+    });
+    expect(await gespeichert(uid)).toMatchObject({
+      vereinsfarben: { 4242: '#c8102e,#ffffff', 4343: '#1d4ed8' },
     });
   });
 
@@ -102,6 +139,7 @@ describe('geraetUebernehmen', () => {
     await geraetUebernehmen(db(uid), uid, {
       teams: [201500],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
 
     expect(await gespeichert(uid)).toEqual(eingerichtet);
@@ -115,9 +153,9 @@ describe('geraetUebernehmen', () => {
     }));
     const teams = Array.from({ length: 50 }, (_, i) => i + 1);
 
-    await geraetUebernehmen(db(uid), uid, { teams, kinder });
+    await geraetUebernehmen(db(uid), uid, { teams, kinder, vereinsfarben: [] });
 
-    expect(await gelesen(uid)).toEqual({ teams, kinder });
+    expect(await gelesen(uid)).toEqual({ teams, kinder, vereinsfarben: [] });
   });
 
   it("leaves a newer version's selection alone", async () => {
@@ -126,7 +164,11 @@ describe('geraetUebernehmen', () => {
     await vorhanden(uid, neuer);
 
     await expect(
-      geraetUebernehmen(db(uid), uid, { teams: [313036], kinder: [] })
+      geraetUebernehmen(db(uid), uid, {
+        teams: [313036],
+        kinder: [],
+        vereinsfarben: [],
+      })
     ).rejects.toBeInstanceOf(AuswahlZuNeuError);
     expect(await gespeichert(uid)).toEqual(neuer);
   });
@@ -142,12 +184,18 @@ describe('geraetUebernehmen', () => {
     const uebrig = await geraetUebernehmen(db(uid), uid, {
       teams: [9001, 9002, 9003],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
 
-    expect(uebrig).toEqual({ teams: [9002, 9003], kinder: [] });
+    expect(uebrig).toEqual({
+      teams: [9002, 9003],
+      kinder: [],
+      vereinsfarben: [],
+    });
     expect(await gelesen(uid)).toEqual({
       teams: [...teams, 9001],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
   });
 
@@ -155,7 +203,11 @@ describe('geraetUebernehmen', () => {
     const uid = konto();
 
     expect(
-      await geraetUebernehmen(db(uid), uid, { teams: [313036], kinder: [] })
-    ).toEqual({ teams: [], kinder: [] });
+      await geraetUebernehmen(db(uid), uid, {
+        teams: [313036],
+        kinder: [],
+        vereinsfarben: [],
+      })
+    ).toEqual({ teams: [], kinder: [], vereinsfarben: [] });
   });
 });

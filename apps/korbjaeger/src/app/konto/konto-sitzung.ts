@@ -1,7 +1,17 @@
 import { computed, signal, type Signal } from '@angular/core';
-import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
+import type {
+  PersonId,
+  TeamId,
+  VereinId,
+} from '@wolsok/feat-shared-basketball-data';
+import type { Vereinsfarben } from '../vereinsfarben/vereinsfarben';
+import type { VereinsfarbenWahl } from '../auswahl/vereinsfarben-wahl';
 import type { Auswahl } from '../auswahl/auswahl';
-import type { AuswahlInhalt } from '../auswahl/auswahl-dokument';
+import {
+  AUSWAHL_LISTEN,
+  LEERE_AUSWAHL,
+  type AuswahlInhalt,
+} from '../auswahl/auswahl-dokument';
 import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
 import type { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
@@ -52,7 +62,7 @@ export interface UebernahmeHinweis {
   readonly behalten: boolean;
 }
 
-const NICHTS: NichtUebernommen = { teams: [], kinder: [] };
+const NICHTS: NichtUebernommen = LEERE_AUSWAHL;
 
 /** Remembers on the device that an Elternteil is signed in. */
 export interface AnmeldeMerker {
@@ -552,31 +562,42 @@ export class KontoSitzung {
   }
 }
 
-/** `inhalt` without the entries of `ohneDiese` (Kinder by person). */
+/** `inhalt` without the entries of `ohneDiese` (Kinder by person, Vereinsfarben by Verein). */
 function ohne(inhalt: AuswahlInhalt, ohneDiese: AuswahlInhalt): AuswahlInhalt {
   const personen = new Set(ohneDiese.kinder.map(({ personId }) => personId));
+  const vereine = new Set(
+    ohneDiese.vereinsfarben.map(({ vereinId }) => vereinId)
+  );
   return {
     teams: inhalt.teams.filter((team) => !ohneDiese.teams.includes(team)),
     kinder: inhalt.kinder.filter(({ personId }) => !personen.has(personId)),
+    vereinsfarben: inhalt.vereinsfarben.filter(
+      ({ vereinId }) => !vereine.has(vereinId)
+    ),
   };
 }
 
 /** The entries of both, each once. */
 function vereint(a: AuswahlInhalt, b: AuswahlInhalt): AuswahlInhalt {
+  const nurB = ohne(b, a);
   return {
-    teams: [...a.teams, ...ohne(b, a).teams],
-    kinder: [...a.kinder, ...ohne(b, a).kinder],
+    teams: [...a.teams, ...nurB.teams],
+    kinder: [...a.kinder, ...nurB.kinder],
+    vereinsfarben: [...a.vereinsfarben, ...nurB.vereinsfarben],
   };
 }
 
 function istLeer(inhalt: AuswahlInhalt): boolean {
-  return inhalt.teams.length === 0 && inhalt.kinder.length === 0;
+  return AUSWAHL_LISTEN.every((liste) => inhalt[liste].length === 0);
 }
 
 /** The `Auswahl` that holds the choices now; nothing while none does yet. */
 class AktuelleAuswahl implements Auswahl {
   public readonly teams: Signal<readonly TeamId[] | undefined>;
   public readonly kinder: Signal<readonly Kind[] | undefined>;
+  public readonly vereinsfarben: Signal<
+    readonly VereinsfarbenWahl[] | undefined
+  >;
   public readonly nichtLesbar: Signal<boolean>;
   /** The store behind it: the device's, an account's, or none while it switches. */
   public readonly quelle: Signal<unknown>;
@@ -592,6 +613,9 @@ class AktuelleAuswahl implements Auswahl {
     );
     this.kinder = computed(() =>
       kontoNichtLesbar() ? undefined : aktuell()?.kinder()
+    );
+    this.vereinsfarben = computed(() =>
+      kontoNichtLesbar() ? undefined : aktuell()?.vereinsfarben()
     );
     this.nichtLesbar = computed(
       () => kontoNichtLesbar() || (aktuell()?.nichtLesbar() ?? false)
@@ -623,6 +647,17 @@ class AktuelleAuswahl implements Auswahl {
 
   public entmarkieren(person: PersonId): Promise<void> {
     return this.mit((auswahl) => auswahl.entmarkieren(person));
+  }
+
+  public vereinsfarbenSetzen(
+    verein: VereinId,
+    farben: Vereinsfarben
+  ): Promise<void> {
+    return this.mit((auswahl) => auswahl.vereinsfarbenSetzen(verein, farben));
+  }
+
+  public vereinsfarbenZuruecksetzen(verein: VereinId): Promise<void> {
+    return this.mit((auswahl) => auswahl.vereinsfarbenZuruecksetzen(verein));
   }
 
   /** Changes only once `teams` is read, as `Auswahl` asks. */
