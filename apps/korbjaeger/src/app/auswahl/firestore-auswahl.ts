@@ -113,6 +113,8 @@ export class FirestoreAuswahl implements Auswahl {
   public readonly teams: Signal<readonly TeamId[] | undefined>;
   public readonly kinder: Signal<readonly Kind[] | undefined>;
   public readonly nichtLesbar: Signal<boolean>;
+  /** The account's document holds the choices, always this one. */
+  public readonly quelle: Signal<unknown> = signal(this).asReadonly();
 
   /** What the listener told last. */
   private readonly vomListener = signal<GelesenesDokument | undefined>(

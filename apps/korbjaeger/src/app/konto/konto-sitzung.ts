@@ -578,6 +578,8 @@ class AktuelleAuswahl implements Auswahl {
   public readonly teams: Signal<readonly TeamId[] | undefined>;
   public readonly kinder: Signal<readonly Kind[] | undefined>;
   public readonly nichtLesbar: Signal<boolean>;
+  /** The store behind it: the device's, an account's, or none while it switches. */
+  public readonly quelle: Signal<unknown>;
 
   /** @param kontoNichtLesbar whether the account could not be opened at all. */
   public constructor(
@@ -594,6 +596,7 @@ class AktuelleAuswahl implements Auswahl {
     this.nichtLesbar = computed(
       () => kontoNichtLesbar() || (aktuell()?.nichtLesbar() ?? false)
     );
+    this.quelle = computed(() => aktuell()?.quelle());
   }
 
   public folgen(team: TeamId): Promise<void> {

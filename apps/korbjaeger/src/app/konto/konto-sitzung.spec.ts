@@ -129,6 +129,19 @@ describe('KontoSitzung', () => {
     });
   });
 
+  it("names another store once the account's holds the choices, and the device's again after signing out", async () => {
+    const { sitzung } = await aufbauen();
+    const geraet = sitzung.auswahl.quelle();
+
+    await sitzung.anmelden();
+    const konto = sitzung.auswahl.quelle();
+    expect(konto).toBeDefined();
+    expect(konto).not.toBe(geraet);
+
+    await sitzung.abmelden();
+    expect(sitzung.auswahl.quelle()).toBe(geraet);
+  });
+
   describe('getting ready', () => {
     it('is ready for the click once Firebase is loaded', async () => {
       const { sitzung } = await aufbauen();

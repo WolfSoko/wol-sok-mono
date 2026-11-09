@@ -1,8 +1,12 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import type { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { TestBed } from '@angular/core/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
+import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
 import { FokusNachEntfolgenDirective } from './fokus-nach-entfolgen.directive';
 import { NachEntfolgen } from './nach-entfolgen';
 
@@ -17,20 +21,32 @@ import { NachEntfolgen } from './nach-entfolgen';
 })
 class Bildschirm {}
 
-async function render(): Promise<NachEntfolgen> {
+interface Aufbau {
+  readonly nachEntfolgen: NachEntfolgen;
+  readonly leisten: HarnessLoader;
+  readonly stabil: () => Promise<void>;
+}
+
+async function render(
+  auswahl: Auswahl = new LokaleAuswahl(undefined)
+): Promise<Aufbau> {
   TestBed.configureTestingModule({
-    providers: [{ provide: AUSWAHL, useValue: new LokaleAuswahl(undefined) }],
+    providers: [{ provide: AUSWAHL, useValue: auswahl }],
   });
   const fixture = TestBed.createComponent(Bildschirm);
   await fixture.whenStable();
-  return fixture.debugElement.injector.get(NachEntfolgen);
+  return {
+    nachEntfolgen: fixture.debugElement.injector.get(NachEntfolgen),
+    leisten: TestbedHarnessEnvironment.documentRootLoader(fixture),
+    stabil: () => fixture.whenStable(),
+  };
 }
 
 describe('NachEntfolgen', () => {
   afterEach(() => TestBed.inject(MatSnackBar).dismiss());
 
   it("moves focus to the Team's own target", async () => {
-    const nachEntfolgen = await render();
+    const { nachEntfolgen } = await render();
 
     nachEntfolgen.entfolgt(313036, 'MTV Wasbüttel');
 
@@ -38,10 +54,26 @@ describe('NachEntfolgen', () => {
   });
 
   it("moves focus to the screen's target for a Team without one", async () => {
-    const nachEntfolgen = await render();
+    const { nachEntfolgen } = await render();
 
     nachEntfolgen.entfolgt(201500, 'MTV Gifhorn');
 
     expect(document.activeElement?.textContent).toBe('Meine Teams');
+  });
+
+  it('takes the undo back once another store holds the choices (signed in or out elsewhere)', async () => {
+    const quelle = signal<object>({ art: 'konto' });
+    const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
+    const { nachEntfolgen, leisten, stabil } = await render(
+      fakeAuswahl({ quelle, folgen })
+    );
+    nachEntfolgen.entfolgt(313036, 'MTV Wasbüttel');
+    expect(await leisten.getHarnessOrNull(MatSnackBarHarness)).not.toBeNull();
+
+    quelle.set({ art: 'geraet' });
+    await stabil();
+
+    expect(await leisten.getHarnessOrNull(MatSnackBarHarness)).toBeNull();
+    expect(folgen).not.toHaveBeenCalled();
   });
 });

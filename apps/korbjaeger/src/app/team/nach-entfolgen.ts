@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { effect, inject, Injectable, Injector } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
@@ -20,12 +20,14 @@ export interface FokusZiel {
  * control unfollowed a Team (`entfolgt`), focus moves to what stays: the
  * element marked `korbFokusNachEntfolgen` for that Team, else the one for
  * the screen; and a snackbar, which outlives the control, offers
- * "Rückgängig" to follow the Team again, saying why where that fails.
+ * "Rückgängig" to follow the Team again, saying why where that fails, as
+ * long as the same store holds the choices.
  */
 @Injectable()
 export class NachEntfolgen {
   private readonly snackBar = inject(MatSnackBar);
   private readonly auswahl = inject(AUSWAHL);
+  private readonly injector = inject(Injector);
   private readonly ziele = new Set<FokusZiel>();
 
   /** Adds `ziel` until the returned function is called. */
@@ -41,17 +43,36 @@ export class NachEntfolgen {
       ziele.find((kandidat) => kandidat.team() === team) ??
       ziele.find((kandidat) => kandidat.team() === undefined);
     ziel?.element.focus();
-    this.snackBar
-      .open(`${name} steht nicht mehr in Meine Teams.`, 'Rückgängig', {
-        duration: RUECKGAENGIG_MS,
-      })
-      .onAction()
-      .subscribe(() => {
-        this.auswahl.folgen(team).catch((grund: unknown) => {
-          this.snackBar.open(auswahlFehlerText(grund), 'Schließen', {
-            duration: RUECKGAENGIG_MS,
-          });
+    this.rueckgaengigAnbieten(team, name);
+  }
+
+  /**
+   * The snackbar with "Rückgängig", for the store the Team was unfollowed
+   * in only: it goes once another holds the choices (`Auswahl.quelle`), so
+   * the undo never follows in the wrong one.
+   */
+  private rueckgaengigAnbieten(team: TeamId, name: string): void {
+    const quelle = this.auswahl.quelle();
+    const leiste = this.snackBar.open(
+      `${name} steht nicht mehr in Meine Teams.`,
+      'Rückgängig',
+      { duration: RUECKGAENGIG_MS }
+    );
+    const wache = effect(
+      () => {
+        if (this.auswahl.quelle() !== quelle) {
+          leiste.dismiss();
+        }
+      },
+      { injector: this.injector }
+    );
+    leiste.afterDismissed().subscribe(() => wache.destroy());
+    leiste.onAction().subscribe(() => {
+      this.auswahl.folgen(team).catch((grund: unknown) => {
+        this.snackBar.open(auswahlFehlerText(grund), 'Schließen', {
+          duration: RUECKGAENGIG_MS,
         });
       });
+    });
   }
 }
