@@ -41,8 +41,11 @@ export interface KontoDienst {
   /** Asks Google again, as Auth wants before a deletion; as above. */
   erneutAnmelden(): Promise<void>;
   abmelden(): Promise<void>;
-  /** Deletes the account, which Auth allows shortly after a sign-in. */
-  benutzerLoeschen(): Promise<void>;
+  /**
+   * Deletes the account `uid`, which Auth allows shortly after a sign-in;
+   * rejects with `KontoGewechselt` where Auth's Elternteil is another now.
+   */
+  benutzerLoeschen(uid: string): Promise<void>;
   /**
    * The account's selection, its document `auswahl/{uid}`; `beiFehler`
    * hears where it cannot be read.
@@ -51,7 +54,10 @@ export interface KontoDienst {
     uid: string,
     beiFehler: (fehler: unknown) => void
   ): Promise<KontoAuswahl>;
-  /** Joins the device's choices into the account (`geraetUebernehmen`). */
+  /**
+   * Joins the device's choices into the account (`geraetUebernehmen`);
+   * resolves with those that did not fit under the caps.
+   */
   geraetUebernehmen(
     uid: string,
     geraet: AuswahlInhalt
@@ -95,6 +101,26 @@ export class NichtAllesGesendet extends Error {
   public constructor() {
     super('Nicht alles gesendet');
     this.name = 'NichtAllesGesendet';
+  }
+}
+
+/** Auth's Elternteil changed while the account was being deleted: nothing more is. */
+export class KontoGewechselt extends Error {
+  public constructor() {
+    super('Konto gewechselt');
+    this.name = 'KontoGewechselt';
+  }
+}
+
+/**
+ * The account's document is deleted, the account itself is not (Auth
+ * refused, as the question to Google lay too long back): deleting again
+ * finishes it.
+ */
+export class KontoNichtGeloescht extends Error {
+  public constructor(public readonly grund: unknown) {
+    super('Konto nicht gelöscht');
+    this.name = 'KontoNichtGeloescht';
   }
 }
 

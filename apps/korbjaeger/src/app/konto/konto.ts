@@ -1,3 +1,4 @@
+import { ZWISCHENSPEICHER_LEEREN_SCHLUESSEL } from './zwischenspeicher-merker';
 import { DestroyRef, DOCUMENT, inject, InjectionToken } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
@@ -33,14 +34,16 @@ export function geraeteMerker(
       // blocked: the sign-in lasts for this visit, as Auth's session may
     }
   };
+  const gelesen = (schluessel: string): boolean => {
+    try {
+      return speicher?.getItem(schluessel) === '1';
+    } catch {
+      return false;
+    }
+  };
   return {
-    gesetzt: () => {
-      try {
-        return speicher?.getItem(ANGEMELDET_SCHLUESSEL) === '1';
-      } catch {
-        return false;
-      }
-    },
+    gesetzt: () => gelesen(ANGEMELDET_SCHLUESSEL),
+    aufraeumenOffen: () => gelesen(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL),
     setzen: () =>
       versuchen(() => speicher?.setItem(ANGEMELDET_SCHLUESSEL, '1')),
     loeschen: () =>

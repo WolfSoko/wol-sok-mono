@@ -16,7 +16,11 @@ const ALS_BESITZER = { Authorization: 'Bearer owner' };
 const AUTH = `http://${emulatoren.emulators.auth.host}:${emulatoren.emulators.auth.port}`;
 const FIRESTORE = `http://${emulatoren.emulators.firestore.host}:${emulatoren.emulators.firestore.port}`;
 
-/** The uid of the Auth emulator's account with `email`; none where it has none. */
+/**
+ * The uid of the Auth emulator's account with `email`; none where it has
+ * none. Throws where the emulator does not answer as it should, so a check
+ * that an account is gone never passes on a failed query.
+ */
 export async function uidVon(
   request: APIRequestContext,
   email: string
@@ -26,13 +30,19 @@ export async function uidVon(
     // the emulator filters no query: every account, found here by email
     { headers: ALS_BESITZER, data: {} }
   );
+  if (!antwort.ok()) {
+    throw new Error(`Auth emulator: HTTP ${antwort.status()}`);
+  }
   const { userInfo } = (await antwort.json()) as {
     userInfo?: { localId: string; email?: string }[];
   };
   return userInfo?.find((konto) => konto.email === email)?.localId;
 }
 
-/** Whether the Firestore emulator holds the `AuswahlDokument` of `uid`. */
+/**
+ * Whether the Firestore emulator holds the `AuswahlDokument` of `uid`:
+ * false only for none (404); throws for any other failure.
+ */
 export async function hatAuswahl(
   request: APIRequestContext,
   uid: string
@@ -41,5 +51,11 @@ export async function hatAuswahl(
     `${FIRESTORE}/v1/projects/${PROJEKT}/databases/(default)/documents/auswahl/${uid}`,
     { headers: ALS_BESITZER }
   );
-  return antwort.ok();
+  if (antwort.status() === 404) {
+    return false;
+  }
+  if (!antwort.ok()) {
+    throw new Error(`Firestore emulator: HTTP ${antwort.status()}`);
+  }
+  return true;
 }

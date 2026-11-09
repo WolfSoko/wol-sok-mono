@@ -2,6 +2,7 @@ import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { fileURLToPath } from 'node:url';
 import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases';
+import { buildKonfigurationMerken } from './deploy/build-configuration';
 import { ConfigEnv, defineConfig } from 'vite';
 
 import { ViteUserConfig } from 'vitest/config';
@@ -71,6 +72,8 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
         },
       }),
       nxViteTsPaths(),
+      // the deploy refuses a build of any other mode than production
+      buildKonfigurationMerken(workspaceFile('dist/apps/korbjaeger')),
     ],
     test: {
       globals: true,

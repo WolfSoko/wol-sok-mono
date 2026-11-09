@@ -15,10 +15,13 @@ import { KONTO_SITZUNG } from './konto';
 import { nichtUebernommenText } from './nicht-uebernommen-text';
 import {
   AnmeldungAbgebrochen,
+  KontoGewechselt,
+  KontoNichtGeloescht,
   NichtAllesGesendet,
   OhneInternet,
   PopupBlockiert,
 } from './konto-dienst';
+import type { Schritt } from './konto-sitzung';
 import {
   KontoLoeschenDialogComponent,
   type KontoLoeschenFrage,
@@ -43,7 +46,11 @@ const NICHT_ALLES_GESENDET =
 const LOESCHEN_ABGEBROCHEN =
   'Das Konto ist nicht gelöscht: Die Bestätigung bei Google wurde abgebrochen.';
 
-type Schritt = keyof typeof FEHLER;
+const KONTO_GEWECHSELT =
+  'Das Konto ist nicht gelöscht: In einem anderen Tab ist inzwischen ein anderes Konto angemeldet.';
+
+const KONTO_NICHT_GELOESCHT =
+  'Deine Teams und Kinder sind gelöscht, dein Konto selbst noch nicht. Bitte lösche es noch einmal.';
 
 /**
  * The settings: the Google account, which keeps Meine Teams and Kinder the
@@ -191,16 +198,25 @@ export class EinstellungenComponent {
   private readonly dialog = inject(MatDialog);
 
   protected readonly stand = this.sitzung.stand;
-  protected readonly fehler = signal<string | undefined>(undefined);
-  /** The step running now, started here. */
-  protected readonly laufend = signal<Schritt | undefined>(undefined);
+  /** The step running, also one started before this page opened. */
+  protected readonly laufend = this.sitzung.laeuft;
   protected readonly beschaeftigt = computed(
     () => this.laufend() !== undefined
   );
-  /** What of the device's choices did not fit into the account at sign-in. */
-  protected readonly uebrigText = signal<string | undefined>(undefined);
-  /** Choices of the device not in the account yet, for the next start. */
-  protected readonly geraetBehalten = this.sitzung.geraetBehalten;
+  /** What the last step that failed says, also one before this page opened. */
+  protected readonly fehler = computed(() => {
+    const fehlschlag = this.sitzung.fehlschlag();
+    return fehlschlag && fehlerText(fehlschlag.art, fehlschlag.fehler);
+  });
+  /** What of the device's choices did not fit into the account shown. */
+  protected readonly uebrigText = computed(() => {
+    const uebernahme = this.sitzung.uebernahme();
+    return uebernahme && nichtUebernommenText(uebernahme.uebrig);
+  });
+  /** Choices of the device not in the account shown yet, for the next start. */
+  protected readonly geraetBehalten = computed(
+    () => this.sitzung.uebernahme()?.behalten ?? false
+  );
   /** Firebase is loaded, so a click opens Google's popup at once. */
   protected readonly bereit = this.sitzung.bereit;
   /** Firebase could not be loaded (offline, a chunk a release removed). */
@@ -229,15 +245,16 @@ export class EinstellungenComponent {
     }
   }
 
+  // each step's failure shows through `fehler`, from the session
   protected anmelden(): Promise<void> {
-    this.uebrigText.set(undefined);
-    return this.ausfuehren('anmelden', async () =>
-      this.uebrigText.set(nichtUebernommenText(await this.sitzung.anmelden()))
+    return this.sitzung.anmelden().then(
+      () => undefined,
+      () => undefined
     );
   }
 
   protected abmelden(): Promise<void> {
-    return this.ausfuehren('abmelden', () => this.sitzung.abmelden());
+    return this.sitzung.abmelden().catch(() => undefined);
   }
 
   protected loeschen(): void {
@@ -245,31 +262,27 @@ export class EinstellungenComponent {
       KontoLoeschenDialogComponent,
       {
         data: {
-          loeschen: () =>
-            void this.ausfuehren('loeschen', () => this.sitzung.loeschen()),
+          loeschen: () => void this.sitzung.loeschen().catch(() => undefined),
         },
       }
     );
   }
-
-  private async ausfuehren(
-    schritt: Schritt,
-    tun: () => Promise<void>
-  ): Promise<void> {
-    this.fehler.set(undefined);
-    this.laufend.set(schritt);
-    try {
-      await tun();
-    } catch (fehler) {
-      this.fehler.set(fehlerText(schritt, fehler));
-    } finally {
-      this.laufend.set(undefined);
-    }
-  }
 }
 
-/** What to say of `fehler` in `schritt`; nothing for a popup closed while signing in. */
+/**
+ * What to say of `fehler` in `schritt`; nothing for a popup closed while
+ * signing in, nor for a takeover at the start, whose notice tells it.
+ */
 function fehlerText(schritt: Schritt, fehler: unknown): string | undefined {
+  if (schritt === 'uebernehmen') {
+    return undefined;
+  }
+  if (fehler instanceof KontoGewechselt) {
+    return KONTO_GEWECHSELT;
+  }
+  if (fehler instanceof KontoNichtGeloescht) {
+    return KONTO_NICHT_GELOESCHT;
+  }
   if (fehler instanceof AnmeldungAbgebrochen) {
     return schritt === 'loeschen' ? LOESCHEN_ABGEBROCHEN : undefined;
   }

@@ -1,9 +1,11 @@
 import { signal } from '@angular/core';
+import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import type { AuswahlInhalt } from '../../auswahl/auswahl-dokument';
 import { fakeAuswahl } from '../../auswahl/testing/fake-auswahl';
 import type { NichtUebernommen } from '../../auswahl/zusammenfuehren';
 import {
   AnmeldungAbgebrochen,
+  KontoGewechselt,
   type Benutzer,
   type KontoAuswahl,
   type KontoDienst,
@@ -29,7 +31,13 @@ export class FakeKontoDienst implements KontoDienst {
   public abmeldenScheitert = false;
   /** Holds the server's confirmation of the deleted document back until it resolves. */
   public loeschenBestaetigt?: Promise<void>;
-  public uebrig: NichtUebernommen = { teams: 0, kinder: 0 };
+  public uebrig: NichtUebernommen = { teams: [], kinder: [] };
+  /** Opening an account's selection fails. */
+  public auswahlScheitert = false;
+  /** Auth refuses to delete the account (an old sign-in). */
+  public benutzerLoeschenScheitert = false;
+  /** Holds `zwischenspeicherLeeren` back until it resolves. */
+  public zwischenspeicherBereit?: Promise<void>;
   /** Changes on the device not yet sent to the account (offline). */
   public nichtGesendet = false;
   /** Runs while the takeover runs, as an Elternteil changing the device meanwhile. */
@@ -43,12 +51,11 @@ export class FakeKontoDienst implements KontoDienst {
   public uebernommen?: AuswahlInhalt;
   /** What the account's selection told of its failure (`auswahl`'s `beiFehler`). */
   public lesefehler?: (fehler: unknown) => void;
-  public readonly kontoAuswahl: KontoAuswahl = {
-    ...fakeAuswahl(),
-    nichtLesbar: signal(false),
-    geladen: () => Promise.resolve(),
-    beenden: () => this.aufrufe.push('beenden'),
-  };
+  /** The selection of `MIMI_ELTERN`'s account; others get their own (`auswahlVon`). */
+  public readonly kontoAuswahl: KontoAuswahl = this.neueAuswahl();
+  private readonly auswahlen = new Map<string, KontoAuswahl>([
+    [MIMI_ELTERN.uid, this.kontoAuswahl],
+  ]);
   private readonly zuhoerer: Array<(benutzer: Benutzer | null) => void> = [];
 
   /** Auth's Elternteil changes, as when another tab signs in or out. */
@@ -91,9 +98,22 @@ export class FakeKontoDienst implements KontoDienst {
     this.wiederhergestellt = null;
   }
 
-  public async benutzerLoeschen(): Promise<void> {
-    this.aufrufe.push('benutzerLoeschen');
+  public async benutzerLoeschen(uid: string): Promise<void> {
+    this.aufrufe.push(`benutzerLoeschen ${uid}`);
+    if (this.benutzerLoeschenScheitert) {
+      throw new Error('auth/requires-recent-login');
+    }
+    if (this.wiederhergestellt?.uid !== uid) {
+      throw new KontoGewechselt();
+    }
     this.wiederhergestellt = null;
+  }
+
+  /** The selection of the account `uid`, its own for each account. */
+  public auswahlVon(uid: string): KontoAuswahl {
+    const auswahl = this.auswahlen.get(uid) ?? this.neueAuswahl();
+    this.auswahlen.set(uid, auswahl);
+    return auswahl;
   }
 
   public async auswahl(
@@ -102,8 +122,11 @@ export class FakeKontoDienst implements KontoDienst {
   ): Promise<KontoAuswahl> {
     this.aufrufe.push(`auswahl ${uid}`);
     await this.auswahlBereit;
+    if (this.auswahlScheitert) {
+      throw new Error('unavailable');
+    }
     this.lesefehler = beiFehler;
-    return this.kontoAuswahl;
+    return this.auswahlVon(uid);
   }
 
   public async geraetUebernehmen(
@@ -134,6 +157,21 @@ export class FakeKontoDienst implements KontoDienst {
 
   public async zwischenspeicherLeeren(): Promise<void> {
     this.aufrufe.push('zwischenspeicherLeeren');
+    await this.zwischenspeicherBereit;
+  }
+
+  /** An account's selection: Teams followed stay; the rest as `fakeAuswahl`. */
+  private neueAuswahl(): KontoAuswahl {
+    const teams = signal<readonly TeamId[]>([]);
+    return {
+      ...fakeAuswahl({
+        teams,
+        folgen: async (team) => teams.update((alle) => [...alle, team]),
+      }),
+      nichtLesbar: signal(false),
+      geladen: () => Promise.resolve(),
+      beenden: () => this.aufrufe.push('beenden'),
+    };
   }
 
   private popupPruefen(): void {
@@ -150,8 +188,14 @@ export class FakeKontoDienst implements KontoDienst {
 /** An `AnmeldeMerker` in memory; `vonAnderemTab` plays another tab's change. */
 export class MerkerImSpec implements AnmeldeMerker {
   private readonly zuhoerer: Array<() => void> = [];
+  /** A sign-out left Firestore's copy on the device to clear. */
+  public aufraeumen = false;
 
   public constructor(public angemeldet = false) {}
+
+  public aufraeumenOffen(): boolean {
+    return this.aufraeumen;
+  }
 
   public gesetzt(): boolean {
     return this.angemeldet;

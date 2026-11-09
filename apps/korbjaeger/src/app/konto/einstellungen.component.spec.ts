@@ -200,6 +200,51 @@ describe('EinstellungenComponent', () => {
     ).toBeNull();
   });
 
+  it('shows a deletion still running, and its failure, on settings opened again meanwhile', async () => {
+    const dienst = new FakeKontoDienst();
+    const seite = await angemeldet(dienst);
+    const bestaetigt = Promise.withResolvers<void>();
+    dienst.loeschenBestaetigt = bestaetigt.promise;
+    dienst.benutzerLoeschenScheitert = true;
+    seite.knopf('konto-loeschen')?.click();
+    await seite.stabil();
+    imDialog('konto-loeschen-bestaetigen');
+    await seite.stabil();
+
+    const wieder = TestBed.createComponent(EinstellungenComponent);
+    wieder.detectChanges();
+    const element = wieder.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-qa="loeschen-laeuft"]')).not.toBeNull();
+    expect(
+      element.querySelector<HTMLButtonElement>('[data-qa="abmelden"]')?.disabled
+    ).toBe(true);
+
+    bestaetigt.resolve();
+    await seite.stabil();
+    wieder.detectChanges();
+    expect(
+      element.querySelector('.fehler[role="alert"]')?.textContent?.trim()
+    ).toBe(
+      'Deine Teams und Kinder sind gelöscht, dein Konto selbst noch nicht. Bitte lösche es noch einmal.'
+    );
+  });
+
+  it('drops what did not fit once another tab switched to another account', async () => {
+    const dienst = new FakeKontoDienst();
+    dienst.uebrig = { teams: [9001], kinder: [] };
+    const { knopf, stabil, element } = await oeffnen({ dienst });
+    knopf('anmelden')?.click();
+    await stabil();
+    expect(
+      element.querySelector('[data-qa="nicht-uebernommen"]')
+    ).not.toBeNull();
+
+    dienst.authMeldet({ uid: 'uid-2', name: 'Familie Beispiel' });
+    await stabil();
+
+    expect(element.querySelector('[data-qa="nicht-uebernommen"]')).toBeNull();
+  });
+
   it('says the account is being deleted until the server confirmed it', async () => {
     const dienst = new FakeKontoDienst();
     const seite = await angemeldet(dienst);
@@ -247,7 +292,7 @@ describe('EinstellungenComponent', () => {
 
   it("tells which of the device's choices did not fit into the account", async () => {
     const dienst = new FakeKontoDienst();
-    dienst.uebrig = { teams: 2, kinder: 1 };
+    dienst.uebrig = { teams: [9001, 9002], kinder: [{ personId: 4711 }] };
     const { knopf, stabil, element } = await oeffnen({ dienst });
 
     knopf('anmelden')?.click();
@@ -310,7 +355,7 @@ describe('EinstellungenComponent', () => {
     expect(dienst.aufrufe.slice(0, 3)).toEqual([
       'erneutAnmelden',
       'auswahlLoeschen uid-1',
-      'benutzerLoeschen',
+      'benutzerLoeschen uid-1',
     ]);
     expect(document.querySelector('korb-konto-loeschen-dialog')).toBeNull();
     expect(knopf('anmelden')).not.toBeNull();
@@ -371,11 +416,11 @@ describe('EinstellungenComponent', () => {
 
 describe('nichtUebernommenText', () => {
   it('says nothing where all fitted', () => {
-    expect(nichtUebernommenText({ teams: 0, kinder: 0 })).toBeUndefined();
+    expect(nichtUebernommenText({ teams: [], kinder: [] })).toBeUndefined();
   });
 
   it('names one Team in the singular', () => {
-    expect(nichtUebernommenText({ teams: 1, kinder: 0 })).toBe(
+    expect(nichtUebernommenText({ teams: [313036], kinder: [] })).toBe(
       '1 Team dieses Geräts passte nicht mehr in dein Konto: Es hält höchstens 50 Teams und 20 Kinder.'
     );
   });

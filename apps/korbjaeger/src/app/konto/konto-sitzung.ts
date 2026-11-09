@@ -6,6 +6,8 @@ import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
 import type { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
 import {
+  KontoGewechselt,
+  KontoNichtGeloescht,
   NichtAllesGesendet,
   OhneInternet,
   type Benutzer,
@@ -29,11 +31,36 @@ export type KontoStand =
   | { readonly art: 'angemeldet'; readonly name: string | null }
   | { readonly art: 'nicht-erreichbar' };
 
+/** A step of the session; one runs at a time (`laeuft`). */
+export type Schritt = 'anmelden' | 'abmelden' | 'loeschen' | 'uebernehmen';
+
+/** The last step that failed, and how, for whichever page shows it. */
+export interface Fehlschlag {
+  readonly art: Schritt;
+  readonly fehler: unknown;
+}
+
+/** What the last takeover into the account shown left on the device. */
+export interface UebernahmeHinweis {
+  /** The device's Teams and Kinder that did not fit; they stay on it. */
+  readonly uebrig: NichtUebernommen;
+  /**
+   * Whether other choices of the device are not in the account yet: they
+   * changed while it took them over, or it failed at a start. The next
+   * start takes them over.
+   */
+  readonly behalten: boolean;
+}
+
+const NICHTS: NichtUebernommen = { teams: [], kinder: [] };
+
 /** Remembers on the device that an Elternteil is signed in. */
 export interface AnmeldeMerker {
   gesetzt(): boolean;
   setzen(): void;
   loeschen(): void;
+  /** Whether a sign-out left Firestore's copy on the device to clear. */
+  aufraeumenOffen(): boolean;
   /** Calls `rueckruf` when another tab sets or clears it; returns how to stop. */
   beobachten(rueckruf: () => void): () => void;
 }
@@ -71,17 +98,23 @@ export class KontoSitzung {
    * the settings offer the sign-in only then.
    */
   public readonly bereit: Signal<boolean>;
-  /**
-   * Whether choices of the device are not in the account yet: they changed
-   * while a sign-in took them over, or the takeover failed at a start. The
-   * next start takes them over again.
-   */
-  public readonly geraetBehalten: Signal<boolean>;
+  /** What the last takeover into the account shown left on the device. */
+  public readonly uebernahme: Signal<UebernahmeHinweis | undefined>;
+  /** The step running in this tab, for whichever page shows it. */
+  public readonly laeuft: Signal<Schritt | undefined>;
+  /** The last step that failed; cleared as the next starts. */
+  public readonly fehlschlag: Signal<Fehlschlag | undefined>;
 
   private readonly zustand = signal<KontoStand>({ art: 'aus' });
   private readonly geladen = signal(false);
   private readonly aktuell = signal<Auswahl | undefined>(undefined);
-  private readonly behalten = signal(false);
+  private readonly hinweis = signal<
+    { readonly uid: string; readonly hinweis: UebernahmeHinweis } | undefined
+  >(undefined);
+  /** The uid of the account shown. */
+  private readonly kontoUid = signal<string | undefined>(undefined);
+  private readonly laufend = signal<Schritt | undefined>(undefined);
+  private readonly gescheitert = signal<Fehlschlag | undefined>(undefined);
   /** The uid whose account is shown or opening; none signed out. */
   private geoeffnetFuer?: string;
   /** Counts the openings: only the latest shows its account. */
@@ -97,7 +130,7 @@ export class KontoSitzung {
    * a second call of the same joins it. Auth's news is this tab's own
    * while one runs.
    */
-  private schritt?: { readonly art: string; readonly lauf: Promise<unknown> };
+  private schritt?: { readonly art: Schritt; readonly lauf: Promise<unknown> };
 
   /**
    * @param laden loads Firebase; `undefined` where this build offers no
@@ -113,7 +146,14 @@ export class KontoSitzung {
   ) {
     this.stand = this.zustand.asReadonly();
     this.bereit = this.geladen.asReadonly();
-    this.geraetBehalten = this.behalten.asReadonly();
+    this.uebernahme = computed(() => {
+      const hinweis = this.hinweis();
+      return hinweis !== undefined && hinweis.uid === this.kontoUid()
+        ? hinweis.hinweis
+        : undefined;
+    });
+    this.laeuft = this.laufend.asReadonly();
+    this.fehlschlag = this.gescheitert.asReadonly();
     this.auswahl = new AktuelleAuswahl(
       this.aktuell,
       computed(() => this.zustand().art === 'nicht-erreichbar')
@@ -132,9 +172,24 @@ export class KontoSitzung {
     this.merker.beobachten(() => void this.merkerGeaendert());
     if (!this.merker.gesetzt()) {
       this.aufDemGeraet('abgemeldet');
+      if (this.merker.aufraeumenOffen()) {
+        void this.aufraeumen();
+      }
       return;
     }
     await this.wiederOeffnen();
+  }
+
+  /**
+   * Clears Firestore's copy a sign-out left on the device, signed out as
+   * the device is now; a failure leaves it for the next start.
+   */
+  private async aufraeumen(): Promise<void> {
+    try {
+      await (await this.dienstHolen()).zwischenspeicherLeeren();
+    } catch {
+      // the marker stays: the next start tries again
+    }
   }
 
   /**
@@ -197,7 +252,10 @@ export class KontoSitzung {
    * Deletes the account: asks Google first (Auth deletes an account only
    * shortly after a sign-in), so nothing is deleted where the Elternteil
    * cancels; then its document, which only a server can confirm (refused
-   * offline with `OhneInternet`), then the account itself. Call it in the
+   * offline with `OhneInternet`), then the account itself, both by the uid
+   * Google was asked about (`KontoGewechselt` where Auth's Elternteil is
+   * another by then; `KontoNichtGeloescht` where Auth refuses the account
+   * after its document went, so deleting again finishes it). Call it in the
    * click: the popup opens at once.
    */
   public loeschen(): Promise<void> {
@@ -209,9 +267,20 @@ export class KontoSitzung {
       if (!this.istOnline()) {
         throw new OhneInternet();
       }
+      const { uid } = konto.benutzer;
       await dienst.erneutAnmelden();
-      await dienst.auswahlLoeschen(konto.benutzer.uid);
-      await dienst.benutzerLoeschen();
+      // another tab may have switched accounts while Google asked
+      if (dienst.jetzt()?.uid !== uid) {
+        throw new KontoGewechselt();
+      }
+      await dienst.auswahlLoeschen(uid);
+      try {
+        await dienst.benutzerLoeschen(uid);
+      } catch (fehler) {
+        throw fehler instanceof KontoGewechselt
+          ? fehler
+          : new KontoNichtGeloescht(fehler);
+      }
       await this.vomGeraetNehmen(dienst);
     });
   }
@@ -221,43 +290,57 @@ export class KontoSitzung {
    * joins it, one while another runs is refused. `tun` starts at once, in
    * the click, as its popup must.
    */
-  private einzeln<T>(art: string, tun: () => Promise<T>): Promise<T> {
+  private einzeln<T>(art: Schritt, tun: () => Promise<T>): Promise<T> {
     if (this.schritt !== undefined) {
       return this.schritt.art === art
         ? (this.schritt.lauf as Promise<T>)
         : Promise.reject(new Error(`${this.schritt.art} läuft noch.`));
     }
-    const lauf = tun().finally(() => {
-      this.schritt = undefined;
-      // Auth's news while it ran was ignored: catch up with it now
-      this.abgleichen();
-    });
+    this.gescheitert.set(undefined);
+    this.laufend.set(art);
+    const lauf = tun()
+      .catch((fehler: unknown) => {
+        this.gescheitert.set({ art, fehler });
+        throw fehler;
+      })
+      .finally(() => {
+        this.schritt = undefined;
+        this.laufend.set(undefined);
+        // Auth's news while it ran was ignored: catch up with it now
+        this.abgleichen();
+      });
     this.schritt = { art, lauf };
     return lauf;
   }
 
   /**
-   * Takes the device's choices into the account and then exactly those off
-   * the device (`abgeben`, in one read and write); what joined meanwhile, here
-   * or in another tab, goes over in another round. Where something still
-   * stays after the last, it stays on the device (`geraetBehalten`), for the
-   * next start to take over.
+   * Takes the device's choices into the account and then those the account
+   * took off the device (`abgeben`, in one read and write); what did not
+   * fit stays on the device, and what joined meanwhile, here or in another
+   * tab, goes over in another round. Where something new still stays after
+   * the last, the next start takes it over (`behalten`). Tells the account
+   * shown what it left (`uebernahme`).
    */
   private async uebernehmen(
     dienst: KontoDienst,
     benutzer: Benutzer
   ): Promise<NichtUebernommen> {
-    let uebrig: NichtUebernommen = { teams: 0, kinder: 0 };
-    let geraet = this.lokal.neuGelesen();
+    let uebrig = NICHTS;
+    let neu = this.lokal.neuGelesen();
     for (let mal = 0; mal < UEBERNAHMEN_HOECHSTENS; mal++) {
-      uebrig = await dienst.geraetUebernehmen(benutzer.uid, geraet);
-      geraet = this.lokal.abgeben(geraet);
-      if (istLeer(geraet)) {
+      const passtNicht = await dienst.geraetUebernehmen(benutzer.uid, neu);
+      uebrig = vereint(uebrig, passtNicht);
+      neu = ohne(this.lokal.abgeben(ohne(neu, passtNicht)), uebrig);
+      if (istLeer(neu)) {
         break;
       }
     }
-    this.behalten.set(!istLeer(geraet));
+    this.hinweisSetzen(benutzer.uid, { uebrig, behalten: !istLeer(neu) });
     return uebrig;
+  }
+
+  private hinweisSetzen(uid: string, hinweis: UebernahmeHinweis): void {
+    this.hinweis.set({ uid, hinweis });
   }
 
   /**
@@ -270,46 +353,60 @@ export class KontoSitzung {
     }
   }
 
+  /**
+   * Opens the account of the Elternteil signed in before; gives way where an
+   * opening or a sign-out (another tab's) came meanwhile, leaving the marker
+   * and the account it shows alone.
+   */
   private async wiederOeffnen(): Promise<void> {
+    const nummer = this.oeffnung;
     this.zustand.set({ art: 'laedt' });
     this.aktuell.set(undefined);
+    let benutzer: Benutzer | null;
     try {
       const dienst = await this.dienstHolen();
-      const benutzer = await dienst.angemeldet();
+      benutzer = await dienst.angemeldet();
+      if (nummer !== this.oeffnung) {
+        return;
+      }
       if (benutzer === null) {
         // the marker goes last: a start that fails before clears again
         await dienst.zwischenspeicherLeeren();
-        this.merker.loeschen();
-        this.aufDemGeraet('abgemeldet');
+        if (nummer === this.oeffnung) {
+          this.merker.loeschen();
+          this.aufDemGeraet('abgemeldet');
+        }
         return;
       }
       await this.oeffnen(dienst, benutzer);
     } catch {
       // the account's choices stay unshown rather than the device's
-      this.zustand.set({ art: 'nicht-erreichbar' });
+      if (nummer === this.oeffnung) {
+        this.zustand.set({ art: 'nicht-erreichbar' });
+      }
       return;
     }
-    await this.behalteneUebernehmen();
+    if (this.konto?.benutzer.uid === benutzer.uid) {
+      await this.behalteneUebernehmen(this.konto.benutzer);
+    }
   }
 
   /**
-   * Takes over the choices a sign-in kept on the device, as they changed
-   * while it took them over; where that fails, they stay for the next start
-   * and the settings say so, the account open all the same.
+   * Takes over the choices a sign-in left on the device, as a step of its
+   * own (no deletion runs meanwhile); where that fails, they stay for the
+   * next start and the settings say so, the account open all the same.
    */
-  private async behalteneUebernehmen(): Promise<void> {
-    const { dienst, konto } = this;
-    if (dienst === undefined || konto === undefined) {
-      return;
-    }
-    if (istLeer(this.lokal.neuGelesen())) {
-      this.behalten.set(false);
+  private async behalteneUebernehmen(benutzer: Benutzer): Promise<void> {
+    const dienst = this.dienst;
+    if (dienst === undefined || istLeer(this.lokal.neuGelesen())) {
       return;
     }
     try {
-      await this.uebernehmen(dienst, konto.benutzer);
+      await this.einzeln('uebernehmen', () =>
+        this.uebernehmen(dienst, benutzer)
+      );
     } catch {
-      this.behalten.set(true);
+      this.hinweisSetzen(benutzer.uid, { uebrig: NICHTS, behalten: true });
     }
   }
 
@@ -344,8 +441,9 @@ export class KontoSitzung {
     if (benutzer === null && this.geoeffnetFuer !== undefined) {
       void this.vomGeraetNehmen(this.dienst);
     } else if (benutzer !== null && this.geoeffnetFuer !== benutzer.uid) {
-      // another tab signed in and took this device's choices over
-      void this.oeffnen(this.dienst, benutzer);
+      // another tab signed in and took this device's choices over; a
+      // failure shows as `nicht-erreichbar`
+      this.oeffnen(this.dienst, benutzer).catch(() => undefined);
     }
   }
 
@@ -379,9 +477,19 @@ export class KontoSitzung {
     this.geoeffnetFuer = benutzer.uid;
     this.aktuell.set(undefined);
     this.zustand.set({ art: 'laedt' });
-    const auswahl = await dienst.auswahl(benutzer.uid, (fehler) =>
-      this.lesenFehlgeschlagen(fehler)
-    );
+    let auswahl: KontoAuswahl;
+    try {
+      auswahl = await dienst.auswahl(benutzer.uid, (fehler) =>
+        this.lesenFehlgeschlagen(fehler)
+      );
+    } catch (fehler) {
+      if (nummer === this.oeffnung) {
+        // Auth's next word about this Elternteil opens it again
+        this.geoeffnetFuer = undefined;
+        this.zustand.set({ art: 'nicht-erreichbar' });
+      }
+      throw fehler;
+    }
     if (nummer !== this.oeffnung || dienst.jetzt()?.uid !== benutzer.uid) {
       auswahl.beenden();
       if (nummer === this.oeffnung) {
@@ -390,6 +498,7 @@ export class KontoSitzung {
       return;
     }
     this.konto = { benutzer, auswahl };
+    this.kontoUid.set(benutzer.uid);
     this.aktuell.set(auswahl);
     this.zustand.set({ art: 'angemeldet', name: benutzer.name });
   }
@@ -421,7 +530,6 @@ export class KontoSitzung {
   private async vomGeraetNehmen(dienst: KontoDienst): Promise<void> {
     this.schliessen();
     this.merker.loeschen();
-    this.behalten.set(false);
     this.aufDemGeraet('abgemeldet');
     await dienst.zwischenspeicherLeeren();
   }
@@ -433,6 +541,7 @@ export class KontoSitzung {
   private schliessen(): number {
     this.konto?.auswahl.beenden();
     this.konto = undefined;
+    this.kontoUid.set(undefined);
     this.geoeffnetFuer = undefined;
     return ++this.oeffnung;
   }
@@ -441,6 +550,23 @@ export class KontoSitzung {
     this.aktuell.set(this.lokal);
     this.zustand.set({ art });
   }
+}
+
+/** `inhalt` without the entries of `ohneDiese` (Kinder by person). */
+function ohne(inhalt: AuswahlInhalt, ohneDiese: AuswahlInhalt): AuswahlInhalt {
+  const personen = new Set(ohneDiese.kinder.map(({ personId }) => personId));
+  return {
+    teams: inhalt.teams.filter((team) => !ohneDiese.teams.includes(team)),
+    kinder: inhalt.kinder.filter(({ personId }) => !personen.has(personId)),
+  };
+}
+
+/** The entries of both, each once. */
+function vereint(a: AuswahlInhalt, b: AuswahlInhalt): AuswahlInhalt {
+  return {
+    teams: [...a.teams, ...ohne(b, a).teams],
+    kinder: [...a.kinder, ...ohne(b, a).kinder],
+  };
 }
 
 function istLeer(inhalt: AuswahlInhalt): boolean {
@@ -458,8 +584,13 @@ class AktuelleAuswahl implements Auswahl {
     private readonly aktuell: Signal<Auswahl | undefined>,
     kontoNichtLesbar: Signal<boolean>
   ) {
-    this.teams = computed(() => aktuell()?.teams());
-    this.kinder = computed(() => aktuell()?.kinder());
+    // an account that cannot be read shows none of what it read before
+    this.teams = computed(() =>
+      kontoNichtLesbar() ? undefined : aktuell()?.teams()
+    );
+    this.kinder = computed(() =>
+      kontoNichtLesbar() ? undefined : aktuell()?.kinder()
+    );
     this.nichtLesbar = computed(
       () => kontoNichtLesbar() || (aktuell()?.nichtLesbar() ?? false)
     );
@@ -494,8 +625,8 @@ class AktuelleAuswahl implements Auswahl {
   /** Changes only once `teams` is read, as `Auswahl` asks. */
   private mit(aendern: (auswahl: Auswahl) => Promise<void>): Promise<void> {
     const auswahl = this.aktuell();
-    return auswahl === undefined
-      ? Promise.reject(new Error('Meine Teams sind noch nicht gelesen.'))
+    return auswahl === undefined || this.teams() === undefined
+      ? Promise.reject(new Error('Meine Teams sind nicht gelesen.'))
       : aendern(auswahl);
   }
 }

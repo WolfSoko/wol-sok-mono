@@ -2,10 +2,11 @@ import { AUSWAHL_GRENZEN } from '../auswahl/auswahl-dokument';
 import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
 
 /** What the settings say of the device's choices that did not fit; none where all did. */
-export function nichtUebernommenText({
-  teams,
-  kinder,
-}: NichtUebernommen): string | undefined {
+export function nichtUebernommenText(
+  uebrig: NichtUebernommen
+): string | undefined {
+  const teams = uebrig.teams.length;
+  const kinder = uebrig.kinder.length;
   const teile = [
     teams === 1 ? '1 Team' : teams > 1 ? `${teams} Teams` : undefined,
     kinder === 1 ? '1 Kind' : kinder > 1 ? `${kinder} Kinder` : undefined,

@@ -114,8 +114,7 @@ describe('service worker', () => {
     // ngsw.json hashes build-app's files, which no input of its own covers:
     // never taken from the cache, always written from the build at hand
     expect(build.cache).toBe(false);
-    // the last command records the build's configuration for the deploy
-    expect(build.options.commands?.slice(0, -1)).toEqual([
+    expect(build.options.commands).toEqual([
       `cp node_modules/@angular/service-worker/ngsw-worker.js node_modules/@angular/service-worker/safety-worker.js ${HOSTING_PUBLIC}/`,
       `ngsw-config ${HOSTING_PUBLIC} apps/korbjaeger/ngsw-config.json /`,
     ]);

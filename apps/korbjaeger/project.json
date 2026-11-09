@@ -32,7 +32,8 @@
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/{projectRoot}/.nitro",
-        "{workspaceRoot}/dist/{projectRoot}/analog"
+        "{workspaceRoot}/dist/{projectRoot}/analog",
+        "{workspaceRoot}/dist/{projectRoot}/build-configuration"
       ]
     },
     "build": {
@@ -43,27 +44,14 @@
       "options": {
         "commands": [
           "cp node_modules/@angular/service-worker/ngsw-worker.js node_modules/@angular/service-worker/safety-worker.js dist/apps/korbjaeger/analog/public/",
-          "ngsw-config dist/apps/korbjaeger/analog/public apps/korbjaeger/ngsw-config.json /",
-          "tsx ./apps/korbjaeger/deploy/build-configuration.ts record dist/apps/korbjaeger $KORB_BUILD_CONFIGURATION"
+          "ngsw-config dist/apps/korbjaeger/analog/public apps/korbjaeger/ngsw-config.json /"
         ],
         "parallel": false
       },
       "configurations": {
-        "production": {
-          "env": {
-            "KORB_BUILD_CONFIGURATION": "production"
-          }
-        },
-        "development": {
-          "env": {
-            "KORB_BUILD_CONFIGURATION": "development"
-          }
-        },
-        "e2e": {
-          "env": {
-            "KORB_BUILD_CONFIGURATION": "e2e"
-          }
-        }
+        "production": {},
+        "development": {},
+        "e2e": {}
       }
     },
     "serve": {

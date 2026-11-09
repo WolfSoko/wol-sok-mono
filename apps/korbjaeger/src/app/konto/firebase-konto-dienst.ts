@@ -36,6 +36,7 @@ import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
 import { geraeteSpeicher } from '../geraete-speicher';
 import {
   AnmeldungAbgebrochen,
+  KontoGewechselt,
   PopupBlockiert,
   type Benutzer,
   type KontoAuswahl,
@@ -43,6 +44,7 @@ import {
 } from './konto-dienst';
 import { fehlerCode } from './fehler-code';
 import { mitZeitlimit } from './zeitlimit';
+import { ZWISCHENSPEICHER_LEEREN_SCHLUESSEL } from './zwischenspeicher-merker';
 
 /** Auth's codes for a popup the Elternteil closed or a second one superseded. */
 const ABGEBROCHEN = new Set([
@@ -54,12 +56,7 @@ const ABGEBROCHEN = new Set([
 /** The Firebase app's name: the app's own, apart from any default one. */
 const APP_NAME = 'korbjaeger';
 
-/**
- * Set where signing out could not clear Firestore's copy on the device
- * (another tab held it): the next start clears it before reading.
- */
-export const ZWISCHENSPEICHER_LEEREN_SCHLUESSEL =
-  'korbjaeger-zwischenspeicher-leeren';
+export { ZWISCHENSPEICHER_LEEREN_SCHLUESSEL } from './zwischenspeicher-merker';
 
 /** How long signing out waits for the device's changes to be sent. */
 const SENDEN_WARTEN_MS = 5000;
@@ -132,8 +129,11 @@ class FirebaseKontoDienst implements KontoDienst {
     return signOut(this.auth);
   }
 
-  public benutzerLoeschen(): Promise<void> {
-    return deleteUser(this.angemeldeterBenutzer());
+  public benutzerLoeschen(uid: string): Promise<void> {
+    const user = this.angemeldeterBenutzer();
+    return user.uid === uid
+      ? deleteUser(user)
+      : Promise.reject(new KontoGewechselt());
   }
 
   public async auswahl(

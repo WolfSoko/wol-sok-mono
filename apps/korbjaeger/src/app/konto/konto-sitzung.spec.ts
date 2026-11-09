@@ -1,6 +1,8 @@
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import {
   AnmeldungAbgebrochen,
+  KontoGewechselt,
+  KontoNichtGeloescht,
   NichtAllesGesendet,
   OhneInternet,
 } from './konto-dienst';
@@ -172,10 +174,47 @@ describe('KontoSitzung', () => {
 
     it('tells what did not fit into the account', async () => {
       const dienst = new FakeKontoDienst();
-      dienst.uebrig = { teams: 2, kinder: 1 };
+      dienst.uebrig = { teams: [9001, 9002], kinder: [{ personId: 4711 }] };
       const { sitzung } = await aufbauen({ dienst });
 
-      expect(await sitzung.anmelden()).toEqual({ teams: 2, kinder: 1 });
+      expect(await sitzung.anmelden()).toEqual({
+        teams: [9001, 9002],
+        kinder: [{ personId: 4711 }],
+      });
+      expect(sitzung.uebernahme()).toEqual({
+        uebrig: { teams: [9001, 9002], kinder: [{ personId: 4711 }] },
+        behalten: false,
+      });
+    });
+
+    it("keeps the device's choices that did not fit on the device, and tells again at the next start", async () => {
+      const dienst = new FakeKontoDienst();
+      const lokal = new LokaleAuswahl(undefined);
+      await lokal.folgen(313036);
+      await lokal.folgen(9001);
+      dienst.uebrig = { teams: [9001], kinder: [] };
+      const { sitzung } = await aufbauen({ dienst, lokal });
+
+      await sitzung.anmelden();
+
+      expect(lokal.teams()).toEqual([9001]);
+      expect(sitzung.uebernahme()?.uebrig.teams).toEqual([9001]);
+      expect(sitzung.uebernahme()?.behalten).toBe(false);
+
+      const neu = await aufbauen({ dienst, lokal, angemeldetGewesen: true });
+      expect(neu.sitzung.uebernahme()?.uebrig.teams).toEqual([9001]);
+    });
+
+    it("drops the takeover's notice once another tab switched to another account", async () => {
+      const dienst = new FakeKontoDienst();
+      dienst.uebrig = { teams: [9001], kinder: [] };
+      const { sitzung } = await aufbauen({ dienst });
+      await sitzung.anmelden();
+
+      dienst.authMeldet({ uid: 'uid-2', name: 'Familie Beispiel' });
+      await abwarten();
+
+      expect(sitzung.uebernahme()).toBeUndefined();
     });
 
     it("shows the account's choices once signed in", async () => {
@@ -242,7 +281,7 @@ describe('KontoSitzung', () => {
 
       await sitzung.anmelden();
 
-      expect(sitzung.geraetBehalten()).toBe(true);
+      expect(sitzung.uebernahme()?.behalten).toBe(true);
       expect(lokal.teams()?.length).toBeGreaterThan(0);
       expect(sitzung.stand()).toEqual(ANGEMELDET);
     });
@@ -280,7 +319,7 @@ describe('KontoSitzung', () => {
         kinder: [{ personId: 4711, spitzname: 'Mi' }],
       });
       expect(lokal.kinder()).toEqual([]);
-      expect(sitzung.geraetBehalten()).toBe(false);
+      expect(sitzung.uebernahme()?.behalten).toBe(false);
     });
 
     it('takes over what another tab stored meanwhile, before its storage event', async () => {
@@ -306,7 +345,7 @@ describe('KontoSitzung', () => {
 
       // the second round takes what joined; the first took the rest
       expect(dienst.uebernommen?.teams).toEqual([201500]);
-      expect(sitzung.geraetBehalten()).toBe(false);
+      expect(sitzung.uebernahme()?.behalten).toBe(false);
       expect(lokal.teams()).toEqual([]);
     });
 
@@ -342,7 +381,7 @@ describe('KontoSitzung', () => {
 
       expect(sitzung.stand()).toEqual(ANGEMELDET);
       expect(sitzung.auswahl.nichtLesbar()).toBe(false);
-      expect(sitzung.geraetBehalten()).toBe(true);
+      expect(sitzung.uebernahme()?.behalten).toBe(true);
       expect(lokal.teams()).toEqual([201500]);
     });
 
@@ -410,6 +449,83 @@ describe('KontoSitzung', () => {
   });
 
   describe('deleting the account', () => {
+    it("deletes nothing where another tab switched the account during Google's question", async () => {
+      const { sitzung, dienst } = await angemeldet();
+      dienst.waehrendPopup = () => {
+        dienst.wiederhergestellt = { uid: 'uid-2', name: 'Familie Beispiel' };
+      };
+
+      await expect(sitzung.loeschen()).rejects.toBeInstanceOf(KontoGewechselt);
+
+      expect(dienst.aufrufe).not.toContain('auswahlLoeschen uid-1');
+      expect(dienst.aufrufe.some((a) => a.startsWith('benutzerLoeschen'))).toBe(
+        false
+      );
+    });
+
+    it('deletes the account it asked Google about, by its uid', async () => {
+      const { sitzung, dienst } = await angemeldet();
+
+      await sitzung.loeschen();
+
+      expect(dienst.aufrufe).toContain('benutzerLoeschen uid-1');
+    });
+
+    it('says the account is still there where Auth refuses it after its document went', async () => {
+      const { sitzung, dienst } = await angemeldet();
+      dienst.benutzerLoeschenScheitert = true;
+
+      await expect(sitzung.loeschen()).rejects.toBeInstanceOf(
+        KontoNichtGeloescht
+      );
+
+      expect(sitzung.stand()).toEqual(ANGEMELDET);
+    });
+
+    it('is refused while the start takes kept choices over', async () => {
+      const dienst = new FakeKontoDienst();
+      dienst.wiederhergestellt = MIMI_ELTERN;
+      const uebernahme = Promise.withResolvers<void>();
+      dienst.waehrendUebernahme = () => uebernahme.promise;
+      const lokal = new LokaleAuswahl(undefined);
+      await lokal.folgen(201500);
+      const sitzung = new KontoSitzung(
+        lokal,
+        async () => dienst,
+        new MerkerImSpec(true)
+      );
+      const gestartet = sitzung.starten();
+      await abwarten();
+
+      await expect(sitzung.loeschen()).rejects.toThrow();
+
+      uebernahme.resolve();
+      await gestartet;
+      expect(dienst.aufrufe).not.toContain('auswahlLoeschen uid-1');
+    });
+
+    it('tells the step running, and the failure of the last one, to any page', async () => {
+      const { sitzung, dienst } = await angemeldet();
+      const bestaetigt = Promise.withResolvers<void>();
+      dienst.loeschenBestaetigt = bestaetigt.promise;
+      dienst.benutzerLoeschenScheitert = true;
+
+      const loeschen = sitzung.loeschen().catch(() => undefined);
+      await abwarten();
+      expect(sitzung.laeuft()).toBe('loeschen');
+
+      bestaetigt.resolve();
+      await loeschen;
+      expect(sitzung.laeuft()).toBeUndefined();
+      expect(sitzung.fehlschlag()?.art).toBe('loeschen');
+      expect(sitzung.fehlschlag()?.fehler).toBeInstanceOf(KontoNichtGeloescht);
+
+      dienst.benutzerLoeschenScheitert = false;
+      const zweiterVersuch = sitzung.loeschen();
+      expect(sitzung.fehlschlag()).toBeUndefined();
+      await zweiterVersuch;
+    });
+
     it('asks Google first, then deletes the document, then the account', async () => {
       const { sitzung, dienst, merker } = await angemeldet();
 
@@ -418,7 +534,7 @@ describe('KontoSitzung', () => {
       expect(dienst.aufrufe).toEqual([
         'erneutAnmelden',
         'auswahlLoeschen uid-1',
-        'benutzerLoeschen',
+        'benutzerLoeschen uid-1',
         'beenden',
         'zwischenspeicherLeeren',
       ]);
@@ -466,7 +582,7 @@ describe('KontoSitzung', () => {
 
       bestaetigt.resolve();
       await loeschen;
-      expect(dienst.aufrufe).toContain('benutzerLoeschen');
+      expect(dienst.aufrufe).toContain('benutzerLoeschen uid-1');
       expect(sitzung.stand()).toEqual({ art: 'abgemeldet' });
     });
   });
@@ -487,10 +603,12 @@ describe('KontoSitzung', () => {
     it('switches to the account another tab signed in to instead', async () => {
       const { sitzung, dienst } = await angemeldet();
 
+      await dienst.auswahlVon('uid-2').folgen(201765);
       dienst.authMeldet({ uid: 'uid-2', name: 'Familie Beispiel' });
       await abwarten();
 
       expect(dienst.aufrufe).toEqual(['beenden', 'auswahl uid-2']);
+      expect(sitzung.auswahl.teams()).toEqual([201765]);
       expect(sitzung.stand()).toEqual({
         art: 'angemeldet',
         name: 'Familie Beispiel',
@@ -640,13 +758,72 @@ describe('KontoSitzung', () => {
       expect(sitzung.stand()).toEqual({ art: 'abgemeldet' });
     });
 
-    it('says it cannot read where the account fails otherwise', async () => {
+    it('says it cannot read where the account fails otherwise, its choices unshown', async () => {
       const { sitzung, dienst } = await angemeldet();
+      await dienst.kontoAuswahl.folgen(313036);
+      expect(sitzung.auswahl.teams()).toEqual([313036]);
 
       dienst.lesefehler?.({ code: 'unavailable' });
 
       expect(sitzung.stand()).toEqual({ art: 'nicht-erreichbar' });
       expect(sitzung.auswahl.nichtLesbar()).toBe(true);
+      expect(sitzung.auswahl.teams()).toBeUndefined();
+      expect(sitzung.auswahl.kinder()).toBeUndefined();
+      await expect(sitzung.auswahl.folgen(201500)).rejects.toThrow();
+    });
+
+    it("says it cannot open an account another tab signed in to, and tries again on Auth's next word", async () => {
+      const { sitzung, dienst } = await aufbauen();
+      await sitzung.vorbereiten();
+      dienst.auswahlScheitert = true;
+
+      dienst.authMeldet(MIMI_ELTERN);
+      await abwarten();
+      expect(sitzung.stand()).toEqual({ art: 'nicht-erreichbar' });
+
+      dienst.auswahlScheitert = false;
+      dienst.authMeldet(MIMI_ELTERN);
+      await abwarten();
+      expect(sitzung.stand()).toEqual(ANGEMELDET);
+    });
+
+    it('lets a start that found nobody signed in give way to a sign-in in another tab meanwhile', async () => {
+      const dienst = new FakeKontoDienst();
+      const geleert = Promise.withResolvers<void>();
+      dienst.zwischenspeicherBereit = geleert.promise;
+      const merker = new MerkerImSpec(true);
+      const sitzung = new KontoSitzung(
+        new LokaleAuswahl(undefined),
+        async () => dienst,
+        merker
+      );
+      const gestartet = sitzung.starten();
+      await abwarten();
+
+      dienst.authMeldet(MIMI_ELTERN);
+      await abwarten();
+      geleert.resolve();
+      await gestartet;
+
+      expect(sitzung.stand()).toEqual(ANGEMELDET);
+      expect(merker.gesetzt()).toBe(true);
+    });
+
+    it('clears the cache a sign-out left at a start without anyone signed in', async () => {
+      const merker = new MerkerImSpec(false);
+      merker.aufraeumen = true;
+      const dienst = new FakeKontoDienst();
+      const sitzung = new KontoSitzung(
+        new LokaleAuswahl(undefined),
+        async () => dienst,
+        merker
+      );
+
+      await sitzung.starten();
+      await abwarten();
+
+      expect(dienst.aufrufe).toEqual(['zwischenspeicherLeeren']);
+      expect(sitzung.stand()).toEqual({ art: 'abgemeldet' });
     });
   });
 });

@@ -2,10 +2,15 @@
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import {
   assertDeployableBuild,
+  buildKonfigurationMerken,
   recordBuildConfiguration,
 } from '../deploy/build-configuration';
+
+const WORKSPACE = fileURLToPath(new URL('../../../', import.meta.url));
 
 /** A file of the workspace, read as the deploy reads it. */
 function workspaceJson<T>(path: string): T {
@@ -31,6 +36,7 @@ interface ProjectJson {
       options: { command?: string; commands?: string[]; parallel?: boolean };
       dependsOn?: unknown[];
       configurations?: Record<string, unknown>;
+      outputs?: string[];
       defaultConfiguration?: string;
     }
   >;
@@ -64,22 +70,55 @@ describe('the Firebase deploy', () => {
       expect(targets['build-app'].defaultConfiguration).toBe('production');
     });
 
-    it('is what every build records, under the name of its configuration', () => {
-      const { build } = workspaceJson<ProjectJson>(
+    it('is recorded by build-app with the artifacts it builds, so its cache holds it too', () => {
+      const { targets } = workspaceJson<ProjectJson>(
         'apps/korbjaeger/project.json'
-      ).targets;
-
-      expect(build.options.commands?.at(-1)).toBe(
-        'tsx ./apps/korbjaeger/deploy/build-configuration.ts record dist/apps/korbjaeger $KORB_BUILD_CONFIGURATION'
       );
-      for (const [name, configuration] of Object.entries(
-        build.configurations ?? {}
-      )) {
-        expect(configuration).toEqual({
-          env: { KORB_BUILD_CONFIGURATION: name },
-        });
-      }
+
+      expect(targets['build-app'].outputs).toContain(
+        '{workspaceRoot}/dist/{projectRoot}/build-configuration'
+      );
+      // `build` only adds the service worker; it records nothing itself
+      expect(JSON.stringify(targets['build'])).not.toContain(
+        'build-configuration'
+      );
     });
+
+    it('records the mode the build ran in once Vite wrote the build', () => {
+      const plugin = buildKonfigurationMerken(dist);
+
+      (plugin.configResolved as (c: { mode: string }) => void)({
+        mode: 'development',
+      });
+      (plugin.writeBundle as () => void)();
+
+      expect(() => assertDeployableBuild(dist)).toThrow(
+        'Refusing to deploy a "development" build of Korbjäger'
+      );
+    });
+
+    it.each([
+      ['production', 0],
+      ['development', 1],
+    ])(
+      'lets the deploy command go on only for a %s build',
+      (konfiguration, code) => {
+        recordBuildConfiguration(dist, konfiguration);
+
+        const pruefung = spawnSync(
+          'npx',
+          [
+            'tsx',
+            './apps/korbjaeger/deploy/build-configuration.ts',
+            'check',
+            dist,
+          ],
+          { cwd: WORKSPACE, encoding: 'utf8' }
+        );
+
+        expect(pruefung.status).toBe(code);
+      }
+    );
 
     it('goes live', () => {
       recordBuildConfiguration(dist, 'production');
