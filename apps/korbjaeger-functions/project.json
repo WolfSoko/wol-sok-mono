@@ -1,0 +1,75 @@
+{
+  "name": "korbjaeger-functions",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/korbjaeger-functions/src",
+  "tags": ["app", "type:firebase", "type:functions"],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "main": "apps/korbjaeger-functions/src/main.ts",
+        "outputPath": "dist/apps/korbjaeger-functions",
+        "outputFileName": "main.js",
+        "tsConfig": "apps/korbjaeger-functions/tsconfig.app.json",
+        "platform": "node",
+        "format": ["esm"],
+        "bundle": true,
+        "thirdParty": false,
+        "generatePackageJson": false,
+        "declaration": false,
+        "assets": [
+          {
+            "input": "apps/korbjaeger-functions",
+            "glob": "package.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.cjs",
+        "{workspaceRoot}/package.json",
+        "{workspaceRoot}/firebase.korbjaeger.json",
+        "{workspaceRoot}/apps/korbjaeger/src/shared/regionen.ts"
+      ],
+      "options": {
+        "jestConfig": "apps/korbjaeger-functions/jest.config.ts"
+      }
+    },
+    "typecheck-specs": {},
+    "test-emulator": {
+      "executor": "nx:run-commands",
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/apps/korbjaeger/firestore.rules"
+      ],
+      "options": {
+        "command": "firebase emulators:exec --config apps/korbjaeger-functions/emulator.json --project demo-korbjaeger-functions-test --only firestore \"jest -c apps/korbjaeger-functions/jest.emulator.config.ts\""
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/firebase.korbjaeger.json",
+        "{workspaceRoot}/.firebaserc"
+      ],
+      "options": {
+        "commands": [
+          "firebase --config=firebase.korbjaeger.json --project=korbjaeger functions:artifacts:setpolicy --location=europe-west3 --days=1 --force",
+          "firebase deploy --config=firebase.korbjaeger.json --project=korbjaeger --only functions:konto --force --non-interactive"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}

@@ -16,6 +16,17 @@ rules_version = '2';
 // one step a map): each holds up to its cap.
 service cloud.firestore {
   match /databases/{database}/documents {
+    // The owner, unless their account was deleted: the Auth deletion's
+    // trigger (korbjaeger-functions, `kontoGeloescht`) writes
+    // geloeschteKonten/{uid} before it deletes auswahl/{uid}, as another
+    // device's token stays valid for up to an hour. The tombstone is closed to
+    // clients (no rule matches it) and expires after a day (TTL on
+    // `expireAt`, firestore.indexes.json), longer than any token lives.
+    function istBesitzer(uid) {
+      return request.auth != null && request.auth.uid == uid
+        && !exists(/databases/$(database)/documents/geloeschteKonten/$(uid));
+    }
+
     match /auswahl/{uid} {
       allow get, delete: if istBesitzer(uid);
       allow create: if istBesitzer(uid)
@@ -43,10 +54,6 @@ service cloud.firestore {
           || nurWeniger(request.resource.data.vereinsfarben, resource.data.vereinsfarben)
           || sindVereinsfarben(request.resource.data.vereinsfarben));
     }
-  }
-
-  function istBesitzer(uid) {
-    return request.auth != null && request.auth.uid == uid;
   }
 
   // Version 2 of the app's AuswahlDokument (auswahl-dokument.ts: both

@@ -1,13 +1,24 @@
 {
-  "functions": {
-    "source": "dist/apps/korbjaeger/analog/server",
-    "predeploy": [
-      "rm -rf $RESOURCE_DIR/node_modules",
-      "npm --prefix $RESOURCE_DIR install --omit dev --legacy-peer-deps=false"
-    ]
-  },
+  "functions": [
+    {
+      "codebase": "default",
+      "source": "dist/apps/korbjaeger/analog/server",
+      "predeploy": [
+        "rm -rf $RESOURCE_DIR/node_modules",
+        "npm --prefix $RESOURCE_DIR install --omit dev --legacy-peer-deps=false"
+      ]
+    },
+    {
+      "codebase": "konto",
+      "source": "dist/apps/korbjaeger-functions",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" install --omit dev --legacy-peer-deps=false"
+      ]
+    }
+  ],
   "firestore": {
-    "rules": "apps/korbjaeger/firestore.rules"
+    "rules": "apps/korbjaeger/firestore.rules",
+    "indexes": "apps/korbjaeger/firestore.indexes.json"
   },
   "hosting": {
     "public": "dist/apps/korbjaeger/analog/public",
