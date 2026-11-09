@@ -17,11 +17,38 @@ import { GameReplays } from '../storage/game-replays';
 import { NEVER, of, throwError } from 'rxjs';
 import { COMMAND_TIMEOUT_MS, MyMatchesComponent } from './my-matches.component';
 
+/** How long `settleUntil` waits: below Jest's 5 s, so its message shows. */
+const SETTLE_LIMIT_MS = 3_000;
+
+/** One macrotask turn, then change detection. */
+async function settleTurn(fixture: ComponentFixture<unknown>): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await fixture.whenStable();
+  fixture.detectChanges();
+}
+
+/** Enough turns for what finishes within a few: taps and commands. */
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
   for (let i = 0; i < 10; i++) {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settleTurn(fixture);
+  }
+}
+
+/**
+ * Settles until `ready` holds. Loading a replay runs the compression
+ * streams on Node's thread pool, which finish on no fixed turn.
+ */
+async function settleUntil(
+  fixture: ComponentFixture<unknown>,
+  ready: () => boolean,
+  what: string
+): Promise<void> {
+  const deadline = Date.now() + SETTLE_LIMIT_MS;
+  while (!ready()) {
+    if (Date.now() >= deadline) {
+      throw new Error(`Timed out waiting for ${what}`);
+    }
+    await settleTurn(fixture);
   }
 }
 
@@ -59,6 +86,14 @@ describe('MyMatchesComponent', () => {
     return found;
   }
 
+  function viewer(page: HTMLElement): Element | null {
+    return page.querySelector('feat-lazy-bac-game-replay-viewer');
+  }
+
+  function showsOlder(page: HTMLElement): boolean {
+    return page.textContent?.includes('older version') ?? false;
+  }
+
   /** "Delete" takes two taps: the first arms it, the second deletes. */
   async function deleteByTwoTaps(
     page: HTMLElement,
@@ -83,11 +118,9 @@ describe('MyMatchesComponent', () => {
 
     expect(page.textContent).toContain('Vs computer');
     button(page, 'Watch').click();
-    await settle(fixture);
+    await settleUntil(fixture, () => viewer(page) !== null, 'the viewer');
 
-    expect(
-      page.querySelector('feat-lazy-bac-game-replay-viewer')
-    ).not.toBeNull();
+    expect(viewer(page)).not.toBeNull();
     // The viewer is the screen: the list, the intro and the header step aside.
     expect(page.textContent).not.toContain('Vs computer');
     expect(fixture.nativeElement.classList.contains('playing')).toBe(true);
@@ -97,7 +130,7 @@ describe('MyMatchesComponent', () => {
       ) as HTMLButtonElement
     ).click();
     await settle(fixture);
-    expect(page.querySelector('feat-lazy-bac-game-replay-viewer')).toBeNull();
+    expect(viewer(page)).toBeNull();
     expect(page.textContent).toContain('Vs computer');
     expect(fixture.nativeElement.classList.contains('playing')).toBe(false);
   });
@@ -105,13 +138,15 @@ describe('MyMatchesComponent', () => {
   it('plays no match of an older balance', async () => {
     await replays.submit({ replay: recordedReplay(), hint: 40 });
     replays.change('l_fake0', { balanceVersion: BALANCE_VERSION - 1 });
+    const load = jest.spyOn(replays, 'replayBytes');
     const { fixture, page } = await render();
 
     button(page, 'Watch').click();
-    await settle(fixture);
+    await settleUntil(fixture, () => showsOlder(page), 'the older notice');
 
     expect(page.textContent).toContain('older version');
-    expect(page.querySelector('feat-lazy-bac-game-replay-viewer')).toBeNull();
+    expect(load).not.toHaveBeenCalled();
+    expect(viewer(page)).toBeNull();
   });
 
   it('shows a playable match with the play icon', async () => {
@@ -141,11 +176,11 @@ describe('MyMatchesComponent', () => {
         page.querySelector('mat-list-item mat-icon')?.textContent?.trim()
       ).toBe('history');
       button(page, 'Watch').click();
-      await settle(fixture);
+      await settleUntil(fixture, () => showsOlder(page), 'the older notice');
 
       expect(page.textContent).toContain('older version');
       expect(load).not.toHaveBeenCalled();
-      expect(page.querySelector('feat-lazy-bac-game-replay-viewer')).toBeNull();
+      expect(viewer(page)).toBeNull();
     }
   );
 
