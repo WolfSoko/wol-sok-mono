@@ -224,8 +224,8 @@ describe('the Firebase deploy', () => {
    * is gone answers 404 instead of HTML, and the shell itself is revalidated
    * on every load (every path it answers, unknown ones too), so a reload
    * picks up the new release. Three globs name them, in the extglob the
-   * rewrite uses: `/`, a first segment that is neither `api` nor a file,
-   * and below it any path whose last segment is no file.
+   * rewrite uses: `/`, a single segment that is neither `api` nor a file,
+   * and any deeper path not under `api` whose last segment is no file.
    */
   /** A path of each page file Analog routes (`src/app/pages`), ids as `1`. */
   function pagePaths(): string[] {
@@ -270,6 +270,7 @@ describe('the Firebase deploy', () => {
     '/gibtsnicht',
     '/team/1/gibtsnicht',
     '/x/y.z/w',
+    '/x.y/z',
     '/apix',
     '/a',
     '/index.html',
