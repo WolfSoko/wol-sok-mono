@@ -87,6 +87,8 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
       setupFiles: ['src/test-setup.ts'],
       include: ['src/**/*.spec.ts'],
       reporters: ['default'],
+      // its ESM imports some files without `.js`, which only a bundler resolves
+      server: { deps: { inline: ['@material/material-color-utilities'] } },
       coverage: {
         reportsDirectory: '../../coverage/apps/korbjaeger',
         provider: 'v8',
