@@ -78,9 +78,9 @@ describe('geraetUebernehmen', () => {
   it("joins overlapping choices, the account's first", async () => {
     const uid = konto();
     await vorhanden(uid, {
-      version: 2,
+      version: 3,
       teams: teamsRoh(313036),
-      kinder: { 4711: { seit: 1 } },
+      children: { 4711: { since: 1 } },
     });
 
     await geraetUebernehmen(db(uid), uid, {
@@ -99,9 +99,9 @@ describe('geraetUebernehmen', () => {
   it("takes the device's Vereinsfarben for the other Vereine, the account's winning", async () => {
     const uid = konto();
     await vorhanden(uid, {
-      version: 2,
+      version: 3,
       teams: teamsRoh(313036),
-      vereinsfarben: { 4343: '#1d4ed8' },
+      clubColors: { 4343: '#1d4ed8' },
     });
 
     const uebrig = await geraetUebernehmen(db(uid), uid, {
@@ -123,16 +123,16 @@ describe('geraetUebernehmen', () => {
       ],
     });
     expect(await gespeichert(uid)).toMatchObject({
-      vereinsfarben: { 4242: '#c8102e,#ffffff', 4343: '#1d4ed8' },
+      clubColors: { 4242: '#c8102e,#ffffff', 4343: '#1d4ed8' },
     });
   });
 
   it('leaves an account already set up with these choices as it is', async () => {
     const uid = konto();
     const eingerichtet = {
-      version: 2,
+      version: 3,
       teams: teamsRoh(313036, 201500),
-      kinder: { 4711: { seit: 1, spitzname: 'Mimi' } },
+      children: { 4711: { since: 1, nickname: 'Mimi' } },
     };
     await vorhanden(uid, eingerichtet);
 
@@ -160,7 +160,7 @@ describe('geraetUebernehmen', () => {
 
   it("leaves a newer version's selection alone", async () => {
     const uid = konto();
-    const neuer = { version: 3, teams: {} };
+    const neuer = { version: 4, teams: {} };
     await vorhanden(uid, neuer);
 
     await expect(
@@ -179,7 +179,7 @@ describe('geraetUebernehmen', () => {
       { length: AUSWAHL_GRENZEN.teams - 1 },
       (_, i) => i + 1
     );
-    await vorhanden(uid, { version: 2, teams: teamsRoh(...teams) });
+    await vorhanden(uid, { version: 3, teams: teamsRoh(...teams) });
 
     const uebrig = await geraetUebernehmen(db(uid), uid, {
       teams: [9001, 9002, 9003],

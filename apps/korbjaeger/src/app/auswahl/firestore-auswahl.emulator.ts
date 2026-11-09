@@ -134,9 +134,9 @@ describe('FirestoreAuswahl', () => {
     await waitForPendingWrites(firestore);
 
     expect(await gespeichert(regelProjekt, uid)).toEqual({
-      version: 2,
+      version: 3,
       teams: { 201500: expect.any(Number) },
-      kinder: { [OTTO.personId]: { seit: expect.any(Number) } },
+      children: { [OTTO.personId]: { since: expect.any(Number) } },
     });
   });
 
@@ -307,7 +307,7 @@ describe('FirestoreAuswahl', () => {
       const uid = 'offline-voll';
       const vorher = Array.from({ length: 49 }, (_, i) => 300000 + i);
       await vorhanden(regelProjekt, uid, {
-        version: 2,
+        version: 3,
         teams: Object.fromEntries(vorher.map((id, i) => [id, i + 1])),
       });
       const { a, b, offline, wiederOnline } = await zweiGeraete(uid);
@@ -360,7 +360,7 @@ describe('FirestoreAuswahl', () => {
 
   it("merges a change made offline by a device that never read the account's document", async () => {
     const uid = 'nie-gelesen';
-    await vorhanden(regelProjekt, uid, { version: 2, teams: { 313036: 1 } });
+    await vorhanden(regelProjekt, uid, { version: 3, teams: { 313036: 1 } });
     const firestore = alsGeraet(regelProjekt, uid);
     await disableNetwork(firestore);
     const auswahl = await oeffnen(uid, firestore);
