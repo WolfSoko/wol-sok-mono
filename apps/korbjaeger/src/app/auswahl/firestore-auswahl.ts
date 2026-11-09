@@ -4,10 +4,8 @@ import type {
   TeamId,
   VereinId,
 } from '@wolsok/feat-shared-basketball-data';
-import type {
-  Vereinsfarben,
-  VereinsfarbenWahl,
-} from '../vereinsfarben/vereinsfarben';
+import type { Vereinsfarben } from '../vereinsfarben/vereinsfarben';
+import type { VereinsfarbenWahl } from './vereinsfarben-wahl';
 import {
   deleteField,
   doc,

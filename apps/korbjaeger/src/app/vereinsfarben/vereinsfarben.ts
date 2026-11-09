@@ -1,14 +1,7 @@
-import type { VereinId } from '@wolsok/feat-shared-basketball-data';
-
 /** A Verein's colours as an Elternteil picked them, each `#rrggbb` in lower case. */
 export interface Vereinsfarben {
   readonly primaer: string;
   readonly zweite?: string;
-}
-
-/** A Verein's colours, as the `Auswahl` holds them: by the Verein's DBB id. */
-export interface VereinsfarbenWahl extends Vereinsfarben {
-  readonly vereinId: VereinId;
 }
 
 /** A colour as the app stores it; the Firestore rules take the same. */
@@ -40,29 +33,6 @@ export function vereinsfarbenAus(
     primaer: farbeAus(primaer),
     ...(zweite !== undefined && { zweite: farbeAus(zweite) }),
   };
-}
-
-/**
- * How the `Auswahl` stores a Verein's colours: as one text, `#rrggbb` or
- * `#rrggbb,#rrggbb` with the second, so the Firestore rules check every
- * Verein's at once with one regular expression (a check per entry would
- * take more expressions than a request may evaluate).
- */
-export function farbenText({ primaer, zweite }: Vereinsfarben): string {
-  return zweite === undefined ? primaer : `${primaer},${zweite}`;
-}
-
-/** The colours `farbenText` stored in `text`; `undefined` where it is none. */
-export function farbenAusText(text: unknown): Vereinsfarben | undefined {
-  if (typeof text !== 'string') {
-    return undefined;
-  }
-  const [primaer, zweite, ...mehr] = text.split(',');
-  return istFarbe(primaer) &&
-    (zweite === undefined || istFarbe(zweite)) &&
-    mehr.length === 0
-    ? { primaer, ...(zweite !== undefined && { zweite }) }
-    : undefined;
 }
 
 /** Whether `a` and `b` are the same colours. */

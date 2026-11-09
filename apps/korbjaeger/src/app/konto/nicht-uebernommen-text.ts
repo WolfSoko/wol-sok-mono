@@ -1,19 +1,34 @@
 import {
   AUSWAHL_GRENZEN,
+  AUSWAHL_LISTEN,
   type AuswahlListe,
 } from '../auswahl/auswahl-dokument';
 import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
 
-/** How the text names `anzahl` entries of each list, and the list's cap. */
-const WIE_GENANNT: Readonly<Record<AuswahlListe, (anzahl: number) => string>> =
-  {
-    teams: (anzahl) => (anzahl === 1 ? '1 Team' : `${anzahl} Teams`),
-    kinder: (anzahl) => (anzahl === 1 ? '1 Kind' : `${anzahl} Kinder`),
-    vereinsfarben: (anzahl) =>
+/** How the text names `anzahl` entries of a list, and whether that is singular. */
+const WIE_GENANNT: Readonly<
+  Record<AuswahlListe, (anzahl: number) => { text: string; einzahl: boolean }>
+> = {
+  teams: (anzahl) => ({
+    text: anzahl === 1 ? '1 Team' : `${anzahl} Teams`,
+    einzahl: anzahl === 1,
+  }),
+  kinder: (anzahl) => ({
+    text: anzahl === 1 ? '1 Kind' : `${anzahl} Kinder`,
+    einzahl: anzahl === 1,
+  }),
+  // "die Farben" are plural, however many Vereine
+  vereinsfarben: (anzahl) => ({
+    text:
       anzahl === 1
         ? 'die Farben eines Vereins'
         : `die Farben von ${anzahl} Vereinen`,
-  };
+    einzahl: false,
+  }),
+};
+
+/** `a`, `a und b`, `a, b und c`. */
+const AUFZAEHLUNG = new Intl.ListFormat('de', { type: 'conjunction' });
 
 /**
  * What the settings say of the device's choices that did not fit, with the
@@ -22,33 +37,15 @@ const WIE_GENANNT: Readonly<Record<AuswahlListe, (anzahl: number) => string>> =
 export function nichtUebernommenText(
   uebrig: NichtUebernommen
 ): string | undefined {
-  const voll = (Object.keys(WIE_GENANNT) as AuswahlListe[]).filter(
-    (liste) => uebrig[liste].length > 0
-  );
+  const voll = AUSWAHL_LISTEN.filter((liste) => uebrig[liste].length > 0);
   if (voll.length === 0) {
     return undefined;
   }
-  const was = aufgezaehlt(
-    voll.map((liste) => WIE_GENANNT[liste](uebrig[liste].length))
+  const was = voll.map((liste) => WIE_GENANNT[liste](uebrig[liste].length));
+  const grenzen = voll.map(
+    (liste) => WIE_GENANNT[liste](AUSWAHL_GRENZEN[liste]).text
   );
-  const grenzen = aufgezaehlt(
-    voll.map((liste) => WIE_GENANNT[liste](AUSWAHL_GRENZEN[liste]))
-  );
-  // one Team or one Kind alone is singular; Farben are plural
-  const einzeln =
-    voll.length === 1 &&
-    voll[0] !== 'vereinsfarben' &&
-    uebrig[voll[0]].length === 1;
-  return `${gross(was)} dieses Geräts ${einzeln ? 'passte' : 'passten'} nicht mehr in dein Konto: Es hält höchstens ${grenzen}.`;
-}
-
-/** `a`, `a und b`, `a, b und c`. */
-function aufgezaehlt(teile: readonly string[]): string {
-  return teile.length < 2
-    ? teile.join('')
-    : `${teile.slice(0, -1).join(', ')} und ${teile[teile.length - 1]}`;
-}
-
-function gross(satz: string): string {
-  return `${satz[0].toUpperCase()}${satz.slice(1)}`;
+  const satz = AUFZAEHLUNG.format(was.map(({ text }) => text));
+  const passte = was.length === 1 && was[0].einzahl ? 'passte' : 'passten';
+  return `${satz[0].toUpperCase()}${satz.slice(1)} dieses Geräts ${passte} nicht mehr in dein Konto: Es hält höchstens ${AUFZAEHLUNG.format(grenzen)}.`;
 }

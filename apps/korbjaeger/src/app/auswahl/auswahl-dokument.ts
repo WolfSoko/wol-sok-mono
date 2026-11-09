@@ -7,8 +7,10 @@ import {
 import {
   farbenAusText,
   farbenText,
+  nachVerein,
   type VereinsfarbenWahl,
-} from '../vereinsfarben/vereinsfarben';
+} from './vereinsfarben-wahl';
+import { gleicheFarben } from '../vereinsfarben/vereinsfarben';
 import { kindMit, type Kind } from './kind';
 
 /**
@@ -39,6 +41,13 @@ export const AUSWAHL_GRENZEN = {
 
 /** The lists of an `Auswahl`, each with its cap. */
 export type AuswahlListe = keyof typeof AUSWAHL_GRENZEN;
+
+/** Every list of an `Auswahl`, for code that treats each the same way. */
+export const AUSWAHL_LISTEN: readonly AuswahlListe[] = [
+  'teams',
+  'kinder',
+  'vereinsfarben',
+];
 
 /** A marked Kind as stored: since when it is marked, and its Spitzname. */
 export interface KindEintrag {
@@ -238,19 +247,20 @@ function vereinsfarbenFelder(
   nachher: readonly VereinsfarbenWahl[]
 ): Readonly<Record<string, VereinsfarbenFeld>> {
   const felder: Record<string, VereinsfarbenFeld> = {};
-  const danach = new Set(nachher.map(({ vereinId }) => vereinId));
-  for (const { vereinId } of vorher) {
-    if (!danach.has(vereinId)) {
-      felder[vereinId] = ENTFERNT;
-    }
+  if (vorher === nachher) {
+    return felder;
   }
   const davor = new Map(vorher.map((wahl) => [wahl.vereinId, wahl]));
   for (const wahl of nachher) {
-    const text = farbenText(wahl);
     const alt = davor.get(wahl.vereinId);
-    if (alt === undefined || farbenText(alt) !== text) {
-      felder[wahl.vereinId] = text;
+    davor.delete(wahl.vereinId);
+    if (alt === undefined || !gleicheFarben(alt, wahl)) {
+      felder[wahl.vereinId] = farbenText(wahl);
     }
+  }
+  // what is left was there before and is gone now
+  for (const vereinId of davor.keys()) {
+    felder[vereinId] = ENTFERNT;
   }
   return felder;
 }
@@ -358,8 +368,8 @@ function teamsLesen(
   }
   const eintraege: Gelesen<TeamId>[] = [];
   for (const [schluessel, seit] of Object.entries(teams)) {
-    const id = Number(schluessel);
-    if (!istId(id) || String(id) !== schluessel || !istZahl(seit)) {
+    const id = idAus(schluessel);
+    if (id === undefined || !istZahl(seit)) {
       return undefined;
     }
     eintraege.push({ seit, sortierung: id, wert: id });
@@ -388,10 +398,9 @@ function kinderLesen(
   }
   const eintraege: Gelesen<Kind>[] = [];
   for (const [schluessel, eintrag] of Object.entries(kinder)) {
-    const personId = Number(schluessel);
+    const personId = idAus(schluessel);
     if (
-      istId(personId) &&
-      String(personId) === schluessel &&
+      personId !== undefined &&
       istKarte(eintrag) &&
       istZahl(eintrag['seit']) &&
       (eintrag['spitzname'] === undefined ||
@@ -416,13 +425,13 @@ function vereinsfarbenLesen(
   }
   const gelesen: VereinsfarbenWahl[] = [];
   for (const [schluessel, text] of Object.entries(vereinsfarben)) {
-    const vereinId: VereinId = Number(schluessel);
+    const vereinId: VereinId | undefined = idAus(schluessel);
     const farben = farbenAusText(text);
-    if (istId(vereinId) && String(vereinId) === schluessel && farben) {
+    if (vereinId !== undefined && farben) {
       gelesen.push({ vereinId, ...farben });
     }
   }
-  return gelesen.sort((a, b) => a.vereinId - b.vereinId);
+  return nachVerein(gelesen);
 }
 
 /** By `seit`, the id deciding a tie. */
@@ -442,6 +451,12 @@ function istListenKind(eintrag: unknown): eintrag is Kind {
     istId(personId) &&
     (spitzname === undefined || typeof spitzname === 'string')
   );
+}
+
+/** The DBB id a map's key holds; `undefined` where it holds none. */
+function idAus(schluessel: string): number | undefined {
+  const id = Number(schluessel);
+  return istId(id) && String(id) === schluessel ? id : undefined;
 }
 
 function istId(wert: unknown): wert is number {

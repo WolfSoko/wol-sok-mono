@@ -5,10 +5,8 @@ import type {
   VereinId,
 } from '@wolsok/feat-shared-basketball-data';
 import { KONTO_SITZUNG } from '../konto/konto';
-import type {
-  Vereinsfarben,
-  VereinsfarbenWahl,
-} from '../vereinsfarben/vereinsfarben';
+import type { Vereinsfarben } from '../vereinsfarben/vereinsfarben';
+import type { VereinsfarbenWahl } from './vereinsfarben-wahl';
 import type { Kind, MarkierbarerSpieler } from './kind';
 
 /**

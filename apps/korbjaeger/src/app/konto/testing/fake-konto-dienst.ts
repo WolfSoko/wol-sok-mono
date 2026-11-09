@@ -1,6 +1,9 @@
 import { signal } from '@angular/core';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import type { AuswahlInhalt } from '../../auswahl/auswahl-dokument';
+import {
+  LEERE_AUSWAHL,
+  type AuswahlInhalt,
+} from '../../auswahl/auswahl-dokument';
 import { fakeAuswahl } from '../../auswahl/testing/fake-auswahl';
 import type { NichtUebernommen } from '../../auswahl/zusammenfuehren';
 import {
@@ -31,11 +34,7 @@ export class FakeKontoDienst implements KontoDienst {
   public abmeldenScheitert = false;
   /** Holds the server's confirmation of the deleted document back until it resolves. */
   public loeschenBestaetigt?: Promise<void>;
-  public uebrig: NichtUebernommen = {
-    teams: [],
-    kinder: [],
-    vereinsfarben: [],
-  };
+  public uebrig: NichtUebernommen = LEERE_AUSWAHL;
   /** Opening an account's selection fails. */
   public auswahlScheitert = false;
   /** Auth refuses to delete the account (an old sign-in). */

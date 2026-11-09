@@ -7,15 +7,15 @@ import {
   AUSWAHL_GRENZEN,
   LEERE_AUSWAHL,
   type AuswahlInhalt,
-  type AuswahlListe,
+  AUSWAHL_LISTEN,
   type GelesenesDokument,
 } from './auswahl-dokument';
 import {
   gleicheFarben,
   vereinsfarbenAus,
   type Vereinsfarben,
-  type VereinsfarbenWahl,
 } from '../vereinsfarben/vereinsfarben';
+import { nachVerein, type VereinsfarbenWahl } from './vereinsfarben-wahl';
 import { AuswahlVollError } from './auswahl-fehler';
 import { gleicheFolge } from '../gleiche-folge';
 import { kindMit, type Kind, type MarkierbarerSpieler } from './kind';
@@ -85,25 +85,23 @@ export function vereinsfarbenAenderung(
   verein: VereinId,
   farben: Vereinsfarben
 ): AuswahlAenderung {
+  let neu: VereinsfarbenWahl | undefined;
   return (inhalt) => {
-    // checked as it applies, so an adapter rejects a colour as any failure
-    const neu: VereinsfarbenWahl = {
+    // checked as it first applies, so an adapter rejects a colour as any
+    // failure; applied again (a change still to be stored), it is not
+    neu ??= {
       vereinId: verein,
       ...vereinsfarbenAus(farben.primaer, farben.zweite),
     };
+    const andere = inhalt.vereinsfarben.filter(
+      ({ vereinId }) => vereinId !== verein
+    );
     const alt = inhalt.vereinsfarben.find(
       ({ vereinId }) => vereinId === verein
     );
-    if (alt !== undefined && gleicheFarben(alt, neu)) {
-      return inhalt;
-    }
-    return {
-      ...inhalt,
-      vereinsfarben: [
-        ...inhalt.vereinsfarben.filter(({ vereinId }) => vereinId !== verein),
-        neu,
-      ].sort((a, b) => a.vereinId - b.vereinId),
-    };
+    return alt !== undefined && gleicheFarben(alt, neu)
+      ? inhalt
+      : { ...inhalt, vereinsfarben: nachVerein([...andere, neu]) };
   };
 }
 
@@ -111,15 +109,14 @@ export function vereinsfarbenAenderung(
 export function vereinsfarbenZuruecksetzenAenderung(
   verein: VereinId
 ): AuswahlAenderung {
-  return (inhalt) =>
-    inhalt.vereinsfarben.some(({ vereinId }) => vereinId === verein)
-      ? {
-          ...inhalt,
-          vereinsfarben: inhalt.vereinsfarben.filter(
-            ({ vereinId }) => vereinId !== verein
-          ),
-        }
-      : inhalt;
+  return (inhalt) => {
+    const andere = inhalt.vereinsfarben.filter(
+      ({ vereinId }) => vereinId !== verein
+    );
+    return andere.length === inhalt.vereinsfarben.length
+      ? inhalt
+      : { ...inhalt, vereinsfarben: andere };
+  };
 }
 
 /**
@@ -167,7 +164,7 @@ export function grenzenPruefen(
   vorher: AuswahlInhalt,
   nachher: AuswahlInhalt
 ): void {
-  for (const liste of Object.keys(AUSWAHL_GRENZEN) as AuswahlListe[]) {
+  for (const liste of AUSWAHL_LISTEN) {
     if (
       nachher[liste].length > vorher[liste].length &&
       nachher[liste].length > AUSWAHL_GRENZEN[liste]

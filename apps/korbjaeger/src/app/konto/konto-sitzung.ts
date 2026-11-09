@@ -4,12 +4,14 @@ import type {
   TeamId,
   VereinId,
 } from '@wolsok/feat-shared-basketball-data';
-import type {
-  Vereinsfarben,
-  VereinsfarbenWahl,
-} from '../vereinsfarben/vereinsfarben';
+import type { Vereinsfarben } from '../vereinsfarben/vereinsfarben';
+import type { VereinsfarbenWahl } from '../auswahl/vereinsfarben-wahl';
 import type { Auswahl } from '../auswahl/auswahl';
-import type { AuswahlInhalt } from '../auswahl/auswahl-dokument';
+import {
+  AUSWAHL_LISTEN,
+  LEERE_AUSWAHL,
+  type AuswahlInhalt,
+} from '../auswahl/auswahl-dokument';
 import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
 import type { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
@@ -60,7 +62,7 @@ export interface UebernahmeHinweis {
   readonly behalten: boolean;
 }
 
-const NICHTS: NichtUebernommen = { teams: [], kinder: [], vereinsfarben: [] };
+const NICHTS: NichtUebernommen = LEERE_AUSWAHL;
 
 /** Remembers on the device that an Elternteil is signed in. */
 export interface AnmeldeMerker {
@@ -586,11 +588,7 @@ function vereint(a: AuswahlInhalt, b: AuswahlInhalt): AuswahlInhalt {
 }
 
 function istLeer(inhalt: AuswahlInhalt): boolean {
-  return (
-    inhalt.teams.length === 0 &&
-    inhalt.kinder.length === 0 &&
-    inhalt.vereinsfarben.length === 0
-  );
+  return AUSWAHL_LISTEN.every((liste) => inhalt[liste].length === 0);
 }
 
 /** The `Auswahl` that holds the choices now; nothing while none does yet. */

@@ -143,8 +143,14 @@ service cloud.firestore {
   function sindVereinsfarben(vereinsfarben) {
     return vereinsfarben is map && vereinsfarben.size() <= 50
       && sindIds(vereinsfarben)
-      && (vereinsfarben.size() == 0
-        || (vereinsfarben.values().join(";").matches("#[0-9a-f]{6}(,#[0-9a-f]{6})?(;#[0-9a-f]{6}(,#[0-9a-f]{6})?)*")
-          && vereinsfarben.values().join(";").split(";").size() == vereinsfarben.size()));
+      && (vereinsfarben.size() == 0 || sindFarbtexte(vereinsfarben.values().join(";"), vereinsfarben.size()));
+  }
+
+  // `texte`, the values joined, as colours: `n` of them, each #rrggbb in
+  // lower case with an optional second after a comma. Bound once, as each
+  // join counts as expressions again.
+  function sindFarbtexte(texte, n) {
+    return texte.matches("#[0-9a-f]{6}(,#[0-9a-f]{6})?(;#[0-9a-f]{6}(,#[0-9a-f]{6})?)*")
+      && texte.split(";").size() == n;
   }
 }

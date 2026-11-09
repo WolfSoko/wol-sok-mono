@@ -1,5 +1,5 @@
 import { AUSWAHL_GRENZEN, type AuswahlInhalt } from './auswahl-dokument';
-import type { VereinsfarbenWahl } from '../vereinsfarben/vereinsfarben';
+import { nachVerein, type VereinsfarbenWahl } from './vereinsfarben-wahl';
 import type { Kind } from './kind';
 
 /** The device's Teams, Kinder and Vereinsfarben that did not fit into the account. */
@@ -70,10 +70,7 @@ function vereinsfarbenZusammen(
   const frei = platz(konto.length, AUSWAHL_GRENZEN.vereinsfarben);
   const dazu = neue.slice(0, frei);
   return {
-    liste:
-      dazu.length === 0
-        ? konto
-        : [...konto, ...dazu].sort((a, b) => a.vereinId - b.vereinId),
+    liste: dazu.length === 0 ? konto : nachVerein([...konto, ...dazu]),
     uebrig: neue.slice(frei),
   };
 }
