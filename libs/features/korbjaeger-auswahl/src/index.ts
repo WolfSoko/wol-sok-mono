@@ -7,6 +7,7 @@ export {
   AUSWAHL_LISTEN,
   type AuswahlInhalt,
   type AuswahlListe,
+  type TeamPlatz,
   LEERE_AUSWAHL,
   auswahlDokumentLesen,
 } from './lib/auswahl-dokument';
