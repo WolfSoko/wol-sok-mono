@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.158.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.158.0...v74.158.1) (2026-11-09)
+
+### Bug Fixes
+
+* **korbjaeger:** say when the DBB keeps no Spielberichte for a Liga ([#2952](https://github.com/WolfSoko/wol-sok-mono/issues/2952)) ([7405a92](https://github.com/WolfSoko/wol-sok-mono/commit/7405a92f1def41d4339c99b1f6a49e87d62630a0)), closes [#2948](https://github.com/WolfSoko/wol-sok-mono/issues/2948)
+
+### Refactorings
+
+* **feat-korbjaeger-auswahl:** move the Auswahl port out of korbjaeger ([#2937](https://github.com/WolfSoko/wol-sok-mono/issues/2937)) ([d733b51](https://github.com/WolfSoko/wol-sok-mono/commit/d733b517c32888df91ed5b1c0fb586d469a5cd68)), references [#2917](https://github.com/WolfSoko/wol-sok-mono/issues/2917) [#2939](https://github.com/WolfSoko/wol-sok-mono/issues/2939)
+
 ## [74.158.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.157.0...v74.158.0) (2026-11-09)
 
 ### Features
