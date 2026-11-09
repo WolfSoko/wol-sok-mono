@@ -484,7 +484,7 @@ describe('SpielComponent', () => {
       expect(text(teil(seite, 'spiel-status'))).toBe(anzeige);
     });
 
-    it('shows no status line for a confirmed result', async () => {
+    it('shows no status line and no vorläufig for a confirmed result', async () => {
       const seite = await render(
         fakeData(
           async () => GESPIELT,
@@ -493,6 +493,59 @@ describe('SpielComponent', () => {
       );
 
       expect(teil(seite, 'spiel-status')).toBeNull();
+      expect(teil(seite, 'spiel-vorlaeufig')).toBeNull();
+    });
+
+    it('marks a result not confirmed yet as vorläufig beside the score', async () => {
+      const seite = await render(
+        fakeData(
+          async () => ({
+            ...GESPIELT,
+            spiel: {
+              ...GESPIELT.spiel,
+              status: {
+                art: 'gespielt',
+                ergebnis: { heim: 78, gast: 47 },
+                bestaetigt: false,
+              },
+            },
+          }),
+          async () => undefined
+        )
+      );
+
+      expect(text(teil(seite, 'spiel-ergebnis'))).toBe('78:47');
+      expect(text(teil(seite, 'spiel-vorlaeufig'))).toBe('vorläufig');
+      expect(
+        seite
+          .querySelector('.ergebnis')
+          ?.textContent?.replace(/\s+/g, ' ')
+          .trim()
+      ).toBe('78:47 vorläufig');
+      expect(text(teil(seite, 'spiel-status'))).toBe(
+        'Ergebnis noch nicht bestätigt'
+      );
+    });
+
+    it.each([
+      ['a planned Spiel', { art: 'geplant' }],
+      [
+        'a forfeit',
+        {
+          art: 'kampflos',
+          verzichtet: ['gast'],
+          ergebnis: { heim: 20, gast: 0 },
+        },
+      ],
+    ] as const)('does not mark %s as vorläufig', async (_case, status) => {
+      const seite = await render(
+        fakeData(
+          async () => ({ ...GESPIELT, spiel: { ...GESPIELT.spiel, status } }),
+          async () => undefined
+        )
+      );
+
+      expect(teil(seite, 'spiel-vorlaeufig')).toBeNull();
     });
   });
 

@@ -1,5 +1,6 @@
 import {
   ergebnisVon,
+  ergebnisVorlaeufig,
   parteiName,
   type Spiel,
   type SpielDetails,
@@ -54,6 +55,8 @@ export interface SpielKopf {
   readonly liga: string;
   /** The points, home first (`78:47`), once there are any. */
   readonly ergebnis?: string;
+  /** Whether `ergebnis` awaits the Verband's confirmation. */
+  readonly vorlaeufig: boolean;
   /** What became of the Spiel where it is no confirmed result. */
   readonly status?: string;
   /** Absent where the Verband records no quarters. */
@@ -72,6 +75,7 @@ export function spielKopf(details: SpielDetails): SpielKopf {
     wann: spielTagUndUhrzeit(spiel.datum, spiel.uhrzeit),
     liga: details.liga.name,
     ...(ergebnis && { ergebnis: ergebnisText(ergebnis) }),
+    vorlaeufig: ergebnisVorlaeufig(spiel),
     ...(status && { status }),
     ...(perioden && { perioden }),
   };
@@ -94,9 +98,9 @@ function statusText(spiel: Spiel): string | undefined {
       return verzicht === undefined ? 'kampflos' : `kampflos · ${verzicht}`;
     }
     case 'gespielt':
-      return spiel.status.bestaetigt
-        ? undefined
-        : 'Ergebnis noch nicht bestätigt';
+      return ergebnisVorlaeufig(spiel)
+        ? 'Ergebnis noch nicht bestätigt'
+        : undefined;
   }
 }
 
