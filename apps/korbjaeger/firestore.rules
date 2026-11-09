@@ -56,7 +56,6 @@ service cloud.firestore {
     }
   }
 
-
   // Version 2 of the app's AuswahlDokument (auswahl-dokument.ts: both
   // lists as maps keyed by id; version 1's lists never reached Firestore,
   // and the Vereinsfarben joined as a field of their own), with no other

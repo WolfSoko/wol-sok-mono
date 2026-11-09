@@ -24,5 +24,6 @@ export const auswahlLoeschen = v1
   .auth.user()
   .onDelete(async (user) => {
     await kontoGeloescht(getFirestore(), user.uid);
-    logger.info('Auswahl of a deleted account deleted', { uid: user.uid });
+    // no uid: Cloud Logging keeps it 30 days, the privacy policy promises one
+    logger.info('Auswahl of a deleted account deleted');
   });

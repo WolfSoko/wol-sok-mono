@@ -101,6 +101,8 @@ describe('DatenschutzComponent', () => {
 
     expect(loeschen).toContain('bis zu 7 Tage');
     expect(loeschen).toContain('einen Tag');
+    // Firestore's TTL deletes within a day after `expireAt`
+    expect(loeschen).toContain('spätestens einen weiteren Tag später');
     expect(loeschen).toContain(REGIONEN.firestore.id);
     expect(loeschen).not.toContain('E-Mail');
   });

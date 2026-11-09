@@ -61,14 +61,22 @@ without the "write me an e-mail" exception.
   `auswahl/{uid}` while `geloeschteKonten/{uid}` exists (`exists()` in
   `istBesitzer`), and clients can neither read nor write
   `geloeschteKonten`. A write evaluated before the tombstone is deleted by
-  the step after it; every write after it is refused. A day is longer than
+  the step after it; every write after it is refused. This rests on
+  Firestore committing a write together with the documents its rules read
+  (the `exists()` belongs to the write's transaction), which the serial
+  emulator cannot show. A day is longer than
   any ID token lives (an hour), and a deleted user's token cannot be
   refreshed, so once the tombstone expires no token of that uid is left.
 - **The tombstone expires by Firestore's TTL**: a `fieldOverrides` entry
   with `ttl: true` on `geloeschteKonten.expireAt` in a new
   `apps/korbjaeger/firestore.indexes.json`, deployed with the rules
   (`firestore:rules,firestore:indexes`). It holds the uid only, no
-  choices, and the privacy policy names it.
+  choices, and the privacy policy names it, with the up to one more day
+  TTL takes to delete an expired document. The function's log line names no
+  uid, as Cloud Logging keeps it 30 days.
+- **`korbjaeger-functions` depends implicitly on `korbjaeger`**: its
+  emulator spec runs the app's rules and its config spec reads the app's
+  regions, so a change to either reruns them in `nx affected`.
 - **Retries on**: the trigger runs with `failurePolicy: true` (retried for
   up to 7 days) and is idempotent: `set` of the tombstone and `delete` of a
   document that may be gone already both succeed on a rerun.

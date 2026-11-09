@@ -4,6 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/korbjaeger-functions/src",
   "tags": ["app", "type:firebase", "type:functions"],
+  "implicitDependencies": ["korbjaeger"],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",
