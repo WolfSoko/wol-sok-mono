@@ -1,4 +1,7 @@
-import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import {
+  AUSWAHL_SCHLUESSEL,
+  LokaleAuswahl,
+} from '@wolsok/feat-korbjaeger-auswahl';
 import {
   AnmeldungAbgebrochen,
   KontoGewechselt,
@@ -360,8 +363,8 @@ describe('KontoSitzung', () => {
       dienst.waehrendUebernahme = async () => {
         // another tab, its storage event not here yet
         speicher.set(
-          'korbjaeger-auswahl',
-          JSON.stringify({ version: 1, teams: [313036, 201500], kinder: [] })
+          AUSWAHL_SCHLUESSEL,
+          JSON.stringify({ version: 3, teams: { 313036: 1, 201500: 2 } })
         );
       };
 

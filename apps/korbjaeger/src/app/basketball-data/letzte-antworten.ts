@@ -54,10 +54,10 @@ export const MAX_ALTER_TAGE = 7;
 export const MAX_ALTER_MS = MAX_ALTER_TAGE * 24 * 60 * 60_000;
 
 /** The prefix of every answer's key; the store touches no other key but its index. */
-export const ANTWORT_PRAEFIX = 'korbjaeger-antwort:';
+export const ANTWORT_PRAEFIX = 'korbjaeger-answer:';
 
 /** The key of the index: per answer its size, time and kind. */
-export const ANTWORT_INDEX = 'korbjaeger-antworten';
+export const ANTWORT_INDEX = 'korbjaeger-answers';
 
 const VERSION = 2;
 const INDEX_VERSION = 1;

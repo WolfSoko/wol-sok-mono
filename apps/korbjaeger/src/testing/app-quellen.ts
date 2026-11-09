@@ -17,6 +17,12 @@ export const EIGENE_LIB_ORDNER: readonly string[] = [
   fileURLToPath(
     new URL('../../../../libs/features/korbjaeger-auswahl/src', import.meta.url)
   ),
+  fileURLToPath(
+    new URL(
+      '../../../../libs/features/korbjaeger-collections/src',
+      import.meta.url
+    )
+  ),
 ];
 
 /** A component's inline template. */

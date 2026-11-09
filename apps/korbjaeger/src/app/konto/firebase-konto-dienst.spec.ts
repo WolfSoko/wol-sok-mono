@@ -9,6 +9,7 @@ const firebase = vi.hoisted(() => ({
   terminate: vi.fn<() => Promise<void>>(),
   clearIndexedDbPersistence: vi.fn<() => Promise<void>>(),
   deleteDoc: vi.fn<() => Promise<void>>(),
+  getDocFromServer: vi.fn<() => Promise<{ exists: () => boolean }>>(),
   waitForPendingWrites: vi.fn<() => Promise<void>>(),
 }));
 
@@ -49,6 +50,7 @@ describe('FirebaseKontoDienst', () => {
     firebase.terminate.mockResolvedValue(undefined);
     firebase.clearIndexedDbPersistence.mockResolvedValue(undefined);
     firebase.deleteDoc.mockResolvedValue(undefined);
+    firebase.getDocFromServer.mockResolvedValue({ exists: () => false });
     firebase.waitForPendingWrites.mockResolvedValue(undefined);
   });
 
@@ -97,6 +99,67 @@ describe('FirebaseKontoDienst', () => {
     await loeschen;
     expect(fertig).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('deletes the legacy document of the account too', async () => {
+    await firebaseKontoDienst(UMGEBUNG).auswahlLoeschen('uid-1');
+
+    expect(firebase.deleteDoc).toHaveBeenCalledTimes(2);
+  });
+
+  // #2966: the move itself is tested on the emulator
+  // (legacy-account-migration.emulator.ts)
+  describe("moving the account's legacy selection", () => {
+    beforeEach(() => {
+      firebase.getDocFromServer.mockClear();
+    });
+
+    it('looks for it once a visit, before it opens the account or takes the device in', async () => {
+      const dienst = firebaseKontoDienst(UMGEBUNG);
+
+      await dienst.geraetUebernehmen('uid-1', {
+        teams: [],
+        kinder: [],
+        vereinsfarben: [],
+      });
+      await dienst.auswahl('uid-1', () => undefined);
+      await dienst.auswahl('uid-2', () => undefined);
+
+      expect(firebase.getDocFromServer).toHaveBeenCalledTimes(2);
+    });
+
+    it('opens the account where it fails, and tries again next time', async () => {
+      const warnen = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => undefined);
+      firebase.getDocFromServer.mockRejectedValueOnce(new Error('offline'));
+      const dienst = firebaseKontoDienst(UMGEBUNG);
+
+      await expect(
+        dienst.auswahl('uid-1', () => undefined)
+      ).resolves.toBeDefined();
+      await dienst.auswahl('uid-1', () => undefined);
+
+      expect(firebase.getDocFromServer).toHaveBeenCalledTimes(2);
+      expect(warnen).toHaveBeenCalled();
+      warnen.mockRestore();
+    });
+
+    it('opens the account after five seconds where the move hangs', async () => {
+      vi.useFakeTimers();
+      firebase.getDocFromServer.mockReturnValue(new Promise(() => undefined));
+      let offen = false;
+
+      const oeffnen = firebaseKontoDienst(UMGEBUNG)
+        .auswahl('uid-1', () => undefined)
+        .then(() => (offen = true));
+      await vi.advanceTimersByTimeAsync(4999);
+      expect(offen).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1);
+      await oeffnen;
+      expect(offen).toBe(true);
+    });
   });
 
   describe('whether all was sent', () => {
