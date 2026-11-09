@@ -20,6 +20,10 @@ import {
   SPITZNAME_LAENGE,
 } from '@wolsok/feat-korbjaeger-auswahl';
 import {
+  CHOICES_COLLECTION,
+  DELETED_ACCOUNTS_COLLECTION,
+} from '@wolsok/feat-shared-korbjaeger-account';
+import {
   alsGeraet,
   APP_REGELN,
   emulatorProjekt,
@@ -64,7 +68,7 @@ const ohneKonto = (): Firestore =>
   env.unauthenticatedContext().firestore() as unknown as Firestore;
 
 const auswahlVon = (firestore: Firestore, uid: string) =>
-  doc(firestore, 'auswahl', uid);
+  doc(firestore, CHOICES_COLLECTION, uid);
 
 /** Writes past the rules, as an earlier write did. */
 const vorhanden = (uid: string, data: object = GUELTIG) =>
@@ -270,7 +274,9 @@ describe('the Auswahl document', () => {
     it('lists nobody the documents of all', async () => {
       await vorhanden(ELTERNTEIL);
 
-      await assertFails(getDocs(collection(db(ELTERNTEIL), 'auswahl')));
+      await assertFails(
+        getDocs(collection(db(ELTERNTEIL), CHOICES_COLLECTION))
+      );
     });
 
     it('keeps every other collection closed', async () => {
@@ -285,7 +291,7 @@ describe('the Auswahl document', () => {
   describe('once the account is deleted', () => {
     const grabstein = (uid: string) =>
       ohneRegeln(env, (firestore) =>
-        setDoc(doc(firestore, 'geloeschteKonten', uid), {
+        setDoc(doc(firestore, DELETED_ACCOUNTS_COLLECTION, uid), {
           expireAt: new Date(),
         })
       );
@@ -315,12 +321,16 @@ describe('the Auswahl document', () => {
 
     it('lets no client read or write the tombstone', async () => {
       await grabstein(ELTERNTEIL);
-      const eigener = doc(db(ELTERNTEIL), 'geloeschteKonten', ELTERNTEIL);
+      const eigener = doc(
+        db(ELTERNTEIL),
+        DELETED_ACCOUNTS_COLLECTION,
+        ELTERNTEIL
+      );
 
       await assertFails(getDoc(eigener));
       await assertFails(deleteDoc(eigener));
       await assertFails(
-        setDoc(doc(db(ANDERES), 'geloeschteKonten', ANDERES), {})
+        setDoc(doc(db(ANDERES), DELETED_ACCOUNTS_COLLECTION, ANDERES), {})
       );
     });
   });

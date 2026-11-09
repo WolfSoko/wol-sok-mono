@@ -1,6 +1,10 @@
 import { assertSucceeds } from '@firebase/rules-unit-testing';
 import { Timestamp } from 'firebase-admin/firestore';
-import { AUSWAHL, GELOESCHTE_KONTEN, GRABSTEIN_DAUER_MS } from './config';
+import {
+  CHOICES_COLLECTION,
+  DELETED_ACCOUNTS_COLLECTION,
+  TOMBSTONE_DURATION_MS,
+} from '@wolsok/feat-shared-korbjaeger-account';
 import { kontoGeloescht } from './konto-geloescht';
 import { useEmulatorProject } from './testing/emulator';
 
@@ -17,10 +21,10 @@ const AUSWAHL_DOKUMENT = {
 const project = useEmulatorProject();
 
 const auswahlVon = (uid: string) =>
-  project().admin.collection(AUSWAHL).doc(uid);
+  project().admin.collection(CHOICES_COLLECTION).doc(uid);
 
 const grabsteinVon = (uid: string) =>
-  project().admin.collection(GELOESCHTE_KONTEN).doc(uid);
+  project().admin.collection(DELETED_ACCOUNTS_COLLECTION).doc(uid);
 
 /** A device signed in as `uid`, under the app's rules. */
 const geraet = (uid: string) =>
@@ -29,7 +33,7 @@ const geraet = (uid: string) =>
 /** What a device writes when the Elternteil follows the Team `id`. */
 const folgen = (device: ReturnType<typeof geraet>, uid: string, id: number) =>
   device
-    .collection(AUSWAHL)
+    .collection(CHOICES_COLLECTION)
     .doc(uid)
     .set({ version: 2, teams: { [id]: id } }, { merge: true });
 
@@ -41,7 +45,7 @@ describe('kontoGeloescht', () => {
 
     expect((await auswahlVon(ELTERNTEIL).get()).exists).toBe(false);
     expect((await grabsteinVon(ELTERNTEIL).get()).data()).toEqual({
-      expireAt: Timestamp.fromMillis(JETZT + GRABSTEIN_DAUER_MS),
+      expireAt: Timestamp.fromMillis(JETZT + TOMBSTONE_DURATION_MS),
     });
   });
 
@@ -73,7 +77,7 @@ describe('kontoGeloescht', () => {
 
     expect((await auswahlVon(ELTERNTEIL).get()).exists).toBe(false);
     expect((await grabsteinVon(ELTERNTEIL).get()).data()).toEqual({
-      expireAt: Timestamp.fromMillis(JETZT + GRABSTEIN_DAUER_MS),
+      expireAt: Timestamp.fromMillis(JETZT + TOMBSTONE_DURATION_MS),
     });
   });
 
@@ -90,7 +94,7 @@ describe('kontoGeloescht', () => {
 
     // the deleting device deletes the document; the other one writes it anew
     await assertSucceeds(
-      loeschendes.collection(AUSWAHL).doc(ELTERNTEIL).delete()
+      loeschendes.collection(CHOICES_COLLECTION).doc(ELTERNTEIL).delete()
     );
     await assertSucceeds(folgen(anderes, ELTERNTEIL, 99));
     expect((await auswahlVon(ELTERNTEIL).get()).exists).toBe(true);

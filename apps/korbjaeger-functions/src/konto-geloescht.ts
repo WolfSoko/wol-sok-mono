@@ -1,5 +1,9 @@
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
-import { AUSWAHL, GELOESCHTE_KONTEN, GRABSTEIN_DAUER_MS } from './config';
+import {
+  CHOICES_COLLECTION,
+  DELETED_ACCOUNTS_COLLECTION,
+  TOMBSTONE_DURATION_MS,
+} from '@wolsok/feat-shared-korbjaeger-account';
 
 /**
  * Deletes what Korbjäger keeps of the account `uid` once its Auth user is
@@ -19,8 +23,8 @@ export async function kontoGeloescht(
   now: number = Date.now()
 ): Promise<void> {
   await db
-    .collection(GELOESCHTE_KONTEN)
+    .collection(DELETED_ACCOUNTS_COLLECTION)
     .doc(uid)
-    .set({ expireAt: Timestamp.fromMillis(now + GRABSTEIN_DAUER_MS) });
-  await db.collection(AUSWAHL).doc(uid).delete();
+    .set({ expireAt: Timestamp.fromMillis(now + TOMBSTONE_DURATION_MS) });
+  await db.collection(CHOICES_COLLECTION).doc(uid).delete();
 }

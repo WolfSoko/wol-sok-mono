@@ -1,6 +1,11 @@
 import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
-import { REGIONEN } from '../../shared/regionen';
+import { REGIONS } from '../../shared/regions';
 import { zeigen } from '../../testing/zeigen';
+import {
+  DELETION_RETRY_DAYS,
+  TOMBSTONE_DAYS,
+  TTL_DELETION_DAYS,
+} from '@wolsok/feat-shared-korbjaeger-account';
 import {
   AUSWAHL_GRENZEN,
   SPITZNAME_LAENGE,
@@ -11,6 +16,7 @@ import {
 } from '../basketball-data/letzte-antworten';
 import { DatenschutzComponent } from './datenschutz.component';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
+import { germanDays } from './german-days';
 
 describe('DatenschutzComponent', () => {
   function abschnitt(seite: HTMLElement, id: string): string {
@@ -70,8 +76,8 @@ describe('DatenschutzComponent', () => {
       `die Farben von ${AUSWAHL_GRENZEN.vereinsfarben} Vereinen`
     );
     expect(konto).toContain(`${SPITZNAME_LAENGE} Zeichen`);
-    const { firestore } = REGIONEN;
-    expect(konto).toContain(`${firestore.id} (${firestore.ort})`);
+    const { firestore } = REGIONS;
+    expect(konto).toContain(`${firestore.id} (${firestore.place})`);
     expect(konto).toContain('Google');
   });
 
@@ -80,8 +86,8 @@ describe('DatenschutzComponent', () => {
 
     const dbb = abschnitt(seite, 'dbb');
     expect(dbb).toContain('basketball-bund.net');
-    const { funktion } = REGIONEN;
-    expect(dbb).toContain(`${funktion.id} (${funktion.ort})`);
+    const { function: nitro } = REGIONS;
+    expect(dbb).toContain(`${nitro.id} (${nitro.place})`);
     expect(dbb).toContain(`bis zu ${PROXY_CACHE_SEKUNDEN.cdn / 60} Minuten`);
     expect(dbb).toContain(
       `bis zu ${PROXY_CACHE_SEKUNDEN.cdnFertigerSpielbericht / 60} Minuten`
@@ -96,16 +102,26 @@ describe('DatenschutzComponent', () => {
     expect(loeschen).toContain('Konto löschen');
   });
 
-  // korbjaeger-functions' `kontoGeloescht` (#2912): the tombstone first, a
-  // day long, then the document; retried for up to 7 days
+  // korbjaeger-functions' `kontoGeloescht` (#2912): the tombstone first,
+  // then the document; retried by Cloud Functions, the tombstone deleted by
+  // Firestore's TTL
   it('says what the server deletes once the account is gone, and what it keeps', () => {
     const loeschen = abschnitt(zeigen(DatenschutzComponent), 'loeschen');
 
-    expect(loeschen).toContain('bis zu 7 Tage');
-    expect(loeschen).toContain('einen Tag');
-    // Firestore's TTL deletes within a day after `expireAt`
-    expect(loeschen).toContain('spätestens einen weiteren Tag später');
-    expect(loeschen).toContain(REGIONEN.firestore.id);
+    expect(loeschen).toContain(
+      `bis zu ${germanDays(DELETION_RETRY_DAYS)} lang erneut`
+    );
+    expect(loeschen).toContain(
+      `noch ${germanDays(TOMBSTONE_DAYS)} lang, ohne deine Auswahl`
+    );
+    expect(loeschen).toContain(
+      `spätestens ${germanDays(TTL_DELETION_DAYS, { further: true })} später`
+    );
+    // the published wording for today's values, pinned
+    expect(loeschen).toContain(
+      'versucht er es bis zu 7 Tage lang erneut. Damit dieses Gerät danach nichts mehr speichern kann, behält er nur die Kennung deines Kontos noch einen Tag lang, ohne deine Auswahl; danach löscht die Datenbank sie von selbst, spätestens einen weiteren Tag später.'
+    );
+    expect(loeschen).toContain(REGIONS.firestore.id);
     expect(loeschen).not.toContain('E-Mail');
   });
 

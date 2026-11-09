@@ -1,0 +1,17 @@
+{
+  "name": "shared-firebase-emulator",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/firebase-emulator/src",
+  "projectType": "library",
+  "tags": ["shared"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/shared/firebase-emulator/jest.config.ts"
+      }
+    },
+    "typecheck-specs": {}
+  }
+}

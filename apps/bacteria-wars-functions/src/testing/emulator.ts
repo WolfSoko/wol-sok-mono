@@ -1,3 +1,4 @@
+import { emulatorEnv } from '@wolsok/shared-firebase-emulator';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { type Firestore, getFirestore } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
@@ -18,15 +19,6 @@ export function useEmulatorDb(): Firestore {
     await clearFirestore(project);
   });
   return getFirestore();
-}
-
-/** A variable `firebase emulators:exec` sets: missing outside test-emulator. */
-function emulatorEnv(name: string): string {
-  const value = process.env[name];
-  if (value === undefined) {
-    throw new Error(`${name} is not set: run test-emulator`);
-  }
-  return value;
 }
 
 async function clearFirestore(project: string): Promise<void> {
