@@ -79,8 +79,9 @@ interface TeamLesungen {
  */
 @Injectable()
 export class MeineTeamsUeberblick {
-  private readonly teams = inject(AUSWAHL).teams;
-  private readonly kinder = inject(AUSWAHL).kinder;
+  private readonly auswahl = inject(AUSWAHL);
+  private readonly teams = this.auswahl.teams;
+  private readonly kinder = this.auswahl.kinder;
   /** The marked Kinder's persons: a new Spitzname starts no search. */
   private readonly kinderPersonen = computed<readonly PersonId[]>(
     () => (this.kinder() ?? []).map(({ personId }) => personId),

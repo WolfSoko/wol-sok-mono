@@ -93,11 +93,8 @@ export function auswahlDokumentMit(
     ...roh,
     version: AUSWAHL_VERSION,
     ...(teams && { teams }),
-    ...(kinder && {
-      kinder: kinder.map(({ personId, spitzname }) =>
-        kindMit(personId, spitzname)
-      ),
-    }),
+    // each Kind came through `kindMit`: its person id and Spitzname only
+    ...(kinder && { kinder }),
   };
 }
 

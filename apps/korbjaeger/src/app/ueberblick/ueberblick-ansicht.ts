@@ -36,7 +36,10 @@ export interface TeamImUeberblick {
 export type NichtGefunden =
   /** Not on any followed Team's Kader of its last played Spiele. */
   | 'nicht-im-kader'
-  /** A Spielbericht could not be read, so the Kind may be on one unread. */
+  /**
+   * A Team's Spiele or Spielberichte could not all be read, so the Kind
+   * may be on a Kader unread.
+   */
   | 'nicht-lesbar';
 
 /** One marked Kind on the overview, across the followed Teams it plays for. */
@@ -73,8 +76,8 @@ export interface KindAbschnitt {
   /** Why it shows no Team, once no Kader is still read. */
   readonly nichtGefunden?: NichtGefunden;
   /**
-   * Whether another Team's Spielberichte could not all be read, so the Kind
-   * may play for more Teams than it shows.
+   * Whether another Team's Spiele or Spielberichte could not all be read,
+   * so the Kind may play for more Teams than it shows.
    */
   readonly vielleichtMehrTeams: boolean;
 }
