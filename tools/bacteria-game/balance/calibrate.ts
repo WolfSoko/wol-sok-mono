@@ -6,24 +6,26 @@
  * (the computer's DNA budget) takes the rest. Prints both tables to paste
  * over the old ones.
  *
- *   tsx tools/bacteria-game/balance/run.ts full --gain-seeds 0
- *   tsx tools/bacteria-game/balance/calibrate.ts [dist/balance/balance-report.json]
+ *   tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/balance/run.ts full --gain-seeds 0
+ *   tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/balance/calibrate.ts [dist/balance/balance-report.json]
  *
  * Repeat until the curve holds, then take a new baseline with
  * `run.ts full --update` and raise `LADDER_VERSION`.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { BalanceReport } from '../../../libs/features/bacteria-engine/src/lib/state/balance/report';
-import { expectedStats } from '../../../libs/features/bacteria-engine/src/lib/state/balance/report';
-import { BOT_DIFFICULTIES } from '../../../libs/features/bacteria-engine/src/lib/state/bot-controller';
 import {
+  BOT_DIFFICULTIES,
+  clamp,
+  LEVELS,
+  targetWinRate,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
+  type BalanceReport,
+  expectedStats,
   SKILL,
   strengthOf,
-  targetWinRate,
-} from '../../../libs/features/bacteria-engine/src/lib/state/difficulty-curve';
-import { clamp } from '../../../libs/features/bacteria-engine/src/lib/state/geometry';
-import { LEVELS } from '../../../libs/features/bacteria-engine/src/lib/state/levels';
+} from '@wolsok/feat-shared-bacteria-engine/balance';
 
 /** Skill moved per point of win rate off the target. */
 const STEP = Number(process.env['CALIBRATION_STEP'] ?? 1.2);

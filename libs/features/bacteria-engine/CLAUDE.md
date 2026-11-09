@@ -15,11 +15,14 @@ determinism, replays, balance and texts hold here too.
   (`testEnvironment: 'node'`), and `engine-bundle.spec.ts` bundles
   `src/index.ts` to prove it. Browser-only code (WebGL, Web Audio, canvas)
   stays in the game lib.
-- `src/index.ts` is the only entry (`@wolsok/feat-shared-bacteria-engine`):
+- `src/index.ts` is the main entry (`@wolsok/feat-shared-bacteria-engine`):
   named exports, no `export *`. Nothing outside this lib imports a path
   inside it; a new export goes into the index. Spec fixtures (`aMatchRecord`,
   `recordedReplay`) are `@wolsok/feat-shared-bacteria-engine/testing`, for
-  specs only.
+  specs only. The balance lab (`state/balance/`, with the calibration's
+  `SKILL` and `strengthOf`) is `@wolsok/feat-shared-bacteria-engine/balance`
+  (`src/balance.ts`), for the scripts in `tools/bacteria-game/balance/`
+  only; what they share with the game comes from the main entry.
 - The targets `balance-check`, `balance` (ADR 0016) and `perf` (ADR 0014,
   `tools/perf/engine-bench.mjs`) live here, since they play the engine.
 - The goldens (`state/golden-replay.json`, `SELF_TEST_GOLDEN`) are guarded

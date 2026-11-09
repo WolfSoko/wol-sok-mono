@@ -4,14 +4,14 @@
  * replaced by an invented one (`anonymiseFixtures`), and written only if no
  * original name or person id survives.
  *
- *   npx tsx tools/korbjaeger/anonymise-fixtures.ts <raw-dir>
+ *   npx tsx --tsconfig tools/tsconfig.tools.json tools/korbjaeger/anonymise-fixtures.ts <raw-dir>
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import {
   anonymiseFixtures,
   survivingPersonData,
-} from '../../libs/features/basketball-data/src/testing/anonymise-fixtures';
+} from '@wolsok/feat-shared-basketball-data/testing';
 import {
   FIXTURE_REQUESTS,
   FIXTURES_DIR,

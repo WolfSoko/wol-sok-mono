@@ -3,10 +3,10 @@
  * time, and sends each result back. Started by `run.ts` through `fork`.
  */
 import {
-  LabMatch,
+  type LabMatch,
+  type NamedCell,
   playLabMatch,
-} from '../../../libs/features/bacteria-engine/src/lib/state/balance/lab-match';
-import type { NamedCell } from '../../../libs/features/bacteria-engine/src/lib/state/balance/report';
+} from '@wolsok/feat-shared-bacteria-engine/balance';
 
 export interface WorkerResult {
   index: number;
