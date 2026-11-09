@@ -58,6 +58,7 @@ launch-templates:
         script: |
           npx firebase setup:emulators:firestore
           npx firebase setup:emulators:database
+          npx firebase setup:emulators:ui
 
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/install-browsers/main.yaml'

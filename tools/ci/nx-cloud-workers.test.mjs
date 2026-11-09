@@ -11,14 +11,15 @@ const WORKERS = '.nx/workflows/workers.yml';
 const CI_CONFIG = '.nx/ci-config.yaml';
 const CI_WORKFLOW = '.github/workflows/ci-cd.yml';
 
-// The emulators the Firebase CLI downloads on first use (a jar or a binary);
-// auth, functions, hosting and the hub run from the CLI itself.
+// The emulators the Firebase CLI downloads on first use (a jar, a binary or
+// the UI's zip); auth, functions, hosting and the hub run from the CLI itself.
 const DOWNLOADED_EMULATORS = [
   'firestore',
   'database',
   'pubsub',
   'storage',
   'dataconnect',
+  'ui',
 ];
 
 function sorted(names) {
@@ -37,7 +38,11 @@ function firebaseConfigs() {
     .split('\n')
     .filter((path) => path !== '' && !path.includes('node_modules/'))
     .map((path) => ({ path, json: parseJson(path) }))
-    .filter(({ json }) => typeof json?.emulators === 'object');
+    .filter(({ json }) => isObject(json?.emulators));
+}
+
+function isObject(value) {
+  return typeof value === 'object' && value !== null;
 }
 
 function parseJson(path) {
@@ -51,11 +56,17 @@ function parseJson(path) {
 function emulatorsInUse() {
   const used = new Set();
   for (const { json } of firebaseConfigs()) {
-    for (const name of Object.keys(json.emulators)) {
-      if (DOWNLOADED_EMULATORS.includes(name)) used.add(name);
-    }
+    for (const name of downloadedBy(json.emulators)) used.add(name);
   }
   return sorted(used);
+}
+
+function downloadedBy(emulators) {
+  const names = Object.keys(emulators).filter(
+    (name) => name !== 'ui' && DOWNLOADED_EMULATORS.includes(name)
+  );
+  // The CLI starts the UI unless a config switches it off.
+  return emulators.ui?.enabled === false ? names : [...names, 'ui'];
 }
 
 function stopAfterTargets() {

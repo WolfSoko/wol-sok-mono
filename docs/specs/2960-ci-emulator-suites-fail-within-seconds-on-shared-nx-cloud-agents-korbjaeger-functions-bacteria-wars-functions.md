@@ -48,7 +48,9 @@ download, and the workers stay until every target of the CI call is done.
    `npm install` (so the Firebase CLI of `package-lock.json` picks the jar
    versions): `npx firebase setup:emulators:firestore` and
    `npx firebase setup:emulators:database` (the Realtime Database emulator of
-   `firebase-emulators` is a jar too). The init steps run before the worker
+   `firebase-emulators` is a jar too) and `npx firebase setup:emulators:ui`
+   (a zip the CLI fetches for every config that does not switch the UI off,
+   such as `rollapolla-analog:auth-emulator`'s). The init steps run before the worker
    takes any task, so no two downloads overlap. The Auth emulator needs no
    download.
 2. **Sync `stop-after` with the CI call**: add `typecheck-specs`,
@@ -66,8 +68,8 @@ download, and the workers stay until every target of the CI call is done.
 
 ## Acceptance
 
-1. `workers.yml` downloads the Firestore and Database emulators in an init
-   step after `npm install`.
+1. `workers.yml` downloads the Firestore and Database emulators and the
+   Emulator UI in an init step after `npm install`.
 2. `ci-config.yaml`'s `stop-after` equals the targets of `ci-cd.yml`'s
    `nx affected -t` call.
 3. `npx nx test tools` passes, and fails when a step or a target is removed.

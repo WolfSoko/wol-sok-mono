@@ -25,10 +25,7 @@
         "{workspaceRoot}/.nx/workflows/workers.yml",
         "{workspaceRoot}/.nx/ci-config.yaml",
         "{workspaceRoot}/.github/workflows/ci-cd.yml",
-        "{workspaceRoot}/**/firebase*.json",
-        "{workspaceRoot}/apps/*/emulator.json",
-        "{workspaceRoot}/apps/*/emulator/*.json",
-        "{workspaceRoot}/apps/*/rules-test/*.json"
+        "{workspaceRoot}/**/*.json"
       ]
     }
   }
