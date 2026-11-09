@@ -27,7 +27,8 @@ import { spielKopf } from './spiel-kopf';
 import { spielberichtTeil } from './spielbericht-teil';
 import { StandComponent } from '../stand/stand.component';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
-import { gefolgterVerein } from './gefolgter-verein';
+import { breadcrumb } from '../navigation/breadcrumb';
+import { followedSide, gefolgterVerein } from './gefolgter-verein';
 
 /**
  * The Spiel page: the result and quarter scores, the Halle, and both
@@ -110,5 +111,16 @@ export class SpielComponent {
 
   public constructor() {
     vereinsfarbenAnwenden(this.verein);
+    breadcrumb(() => {
+      const team =
+        this.details.hasValue() &&
+        followedSide(this.details.value().spiel, this.gefolgt());
+      return [
+        ...(team
+          ? [{ title: team.name, link: ['/team', String(team.id)] }]
+          : []),
+        { title: 'Spiel' },
+      ];
+    });
   }
 }

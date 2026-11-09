@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { breadcrumb } from '../navigation/breadcrumb';
 import { TeamEinrichtenComponent } from '../team-einrichten/team-einrichten.component';
 
 /**
@@ -11,4 +12,8 @@ import { TeamEinrichtenComponent } from '../team-einrichten/team-einrichten.comp
   template: `<korb-team-einrichten />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export default class TeamEinrichtenPage {}
+export default class TeamEinrichtenPage {
+  public constructor() {
+    breadcrumb(() => [{ title: 'Team einrichten' }]);
+  }
+}

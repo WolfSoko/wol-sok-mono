@@ -1,5 +1,5 @@
 import type { Spiel } from '@wolsok/feat-shared-basketball-data';
-import { gefolgterVerein } from './gefolgter-verein';
+import { followedSide, gefolgterVerein } from './gefolgter-verein';
 
 const SPIEL = {
   heim: { art: 'team', team: { id: 1, name: 'Heim', vereinId: 10 } },
@@ -28,5 +28,17 @@ describe('gefolgterVerein', () => {
     } as unknown as Spiel;
 
     expect(gefolgterVerein(offen, [1, 2])).toBe(20);
+  });
+});
+
+describe('followedSide', () => {
+  it('names the Team of the side whose Team is followed, the home side where both are', () => {
+    expect(followedSide(SPIEL, [2])?.name).toBe('Gast');
+    expect(followedSide(SPIEL, [2, 1])?.name).toBe('Heim');
+  });
+
+  it('names none where no side is followed, or Meine Teams are not read', () => {
+    expect(followedSide(SPIEL, [3])).toBeUndefined();
+    expect(followedSide(SPIEL, undefined)).toBeUndefined();
   });
 });
