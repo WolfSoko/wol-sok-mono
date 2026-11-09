@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.160.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.159.0...v74.160.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** back, forward and breadcrumb in the title bar ([#2970](https://github.com/WolfSoko/wol-sok-mono/issues/2970)) ([9ce5277](https://github.com/WolfSoko/wol-sok-mono/commit/9ce5277eed4718d9379017cf90797b29f7988aa7)), references [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957) [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957) [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957) [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957) [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957) [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957)
+
+### Documentation
+
+* English in code, rule and glossary code names ([#2971](https://github.com/WolfSoko/wol-sok-mono/issues/2971)) ([6e348bc](https://github.com/WolfSoko/wol-sok-mono/commit/6e348bc84ea4a42f05b1e9fd7888a7f99746b797)), references [#2961](https://github.com/WolfSoko/wol-sok-mono/issues/2961)
+
 ## [74.159.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.158.1...v74.159.0) (2026-11-09)
 
 ### Features
