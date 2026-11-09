@@ -99,7 +99,7 @@ jobs:
           merge-multiple: true
 
       - name: Sum up, check and compare with the baseline
-        run: npx tsx tools/bacteria-game/balance/run.ts merge dist/balance/part-*.json
+        run: npx tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/balance/run.ts merge dist/balance/part-*.json
 
       - uses: actions/upload-artifact@v7
         with:

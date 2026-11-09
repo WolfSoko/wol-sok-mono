@@ -45,14 +45,14 @@
         "{workspaceRoot}/tools/bacteria-game/balance/**/*"
       ],
       "options": {
-        "command": "tsx ./tools/bacteria-game/balance/run.ts check"
+        "command": "tsx --tsconfig tools/tsconfig.tools.json ./tools/bacteria-game/balance/run.ts check"
       }
     },
     "balance": {
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/dist/balance"],
       "options": {
-        "command": "tsx ./tools/bacteria-game/balance/run.ts full"
+        "command": "tsx --tsconfig tools/tsconfig.tools.json ./tools/bacteria-game/balance/run.ts full"
       }
     },
     "perf": {
