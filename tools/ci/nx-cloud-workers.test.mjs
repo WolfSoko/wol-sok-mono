@@ -69,6 +69,15 @@ function downloadedBy(emulators) {
   return emulators.ui?.enabled === false ? names : [...names, 'ui'];
 }
 
+// The template's lines without comments, so a commented-out command counts as
+// missing.
+function executableLines(yaml) {
+  return yaml
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line !== '' && !line.startsWith('#'));
+}
+
 function stopAfterTargets() {
   const block = read(CI_CONFIG).match(/stop-after:\n((?:\s+(?:-.*|#.*)\n?)+)/);
   assert.ok(block, `${CI_CONFIG} has no stop-after list`);
@@ -87,11 +96,11 @@ describe('Nx Cloud workers', () => {
   });
 
   it('download every emulator a Firebase config uses after npm install, before any task', () => {
-    const workers = read(WORKERS);
-    const install = workers.indexOf('npm install');
+    const commands = executableLines(read(WORKERS));
+    const install = commands.indexOf('npm install');
     assert.ok(install >= 0, `${WORKERS} runs no npm install`);
     for (const name of emulatorsInUse()) {
-      const download = workers.indexOf(`firebase setup:emulators:${name}`);
+      const download = commands.indexOf(`npx firebase setup:emulators:${name}`);
       assert.ok(
         download > install,
         `${WORKERS} must run "npx firebase setup:emulators:${name}" after npm install`
