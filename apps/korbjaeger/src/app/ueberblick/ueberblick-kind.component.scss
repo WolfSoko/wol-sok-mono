@@ -15,3 +15,8 @@
 .hinweis {
   color: var(--mat-sys-on-surface-variant);
 }
+
+.aktionen {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

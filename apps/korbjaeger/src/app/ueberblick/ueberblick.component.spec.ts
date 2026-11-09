@@ -1058,6 +1058,38 @@ describe('UeberblickComponent', () => {
       expect(teamNamen(seite)).toEqual(['SV Groß Oesingen']);
     });
 
+    it("unfollows a Kind's Team from its card, focus on the overview", async () => {
+      const letztesWas = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [saison(WASBUETTEL, letztesWas), saison(OESINGEN)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [letztesWas.id]: [LUMI] })
+      );
+      const { seite, auswahl, stabil } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id, OESINGEN.id], [[LUMI, 'Lu']])
+      );
+      const [lumi] = kinderAbschnitte(seite);
+      const knoepfe = [
+        ...lumi.querySelectorAll<HTMLButtonElement>(
+          '[data-qa="ueberblick-kind-aktionen"] [data-qa="team-folgen"]'
+        ),
+      ];
+      expect(knoepfe.map((knopf) => knopf.getAttribute('aria-label'))).toEqual([
+        'Nicht mehr folgen: MTV Wasbüttel',
+      ]);
+
+      knoepfe[0].click();
+      await stabil();
+
+      expect(auswahl.teams()).toEqual([OESINGEN.id]);
+      expect(document.activeElement?.textContent?.trim()).toBe('Meine Teams');
+      TestBed.inject(MatSnackBar).dismiss();
+    });
+
     it('shows the same Kind once across two Teams, with the first next Spiel of both', async () => {
       const letztesU12 = spiel(WASBUETTEL, GIFHORN, '2026-10-31', {
         status: GESPIELT_78_47,

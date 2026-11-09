@@ -91,4 +91,18 @@
       }
     }
   </mat-card-content>
+  @if (kind.teams.length > 0) {
+    <mat-card-actions
+      align="end"
+      class="aktionen"
+      data-qa="ueberblick-kind-aktionen"
+    >
+      @for (team of kind.teams; track team.teamId) {
+        <korb-team-folgen
+          [teamId]="team.teamId"
+          [teamName]="kartenName(team)"
+        />
+      }
+    </mat-card-actions>
+  }
 </mat-card>
