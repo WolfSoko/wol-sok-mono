@@ -26,6 +26,7 @@ import type { KorbReadOptions } from '../basketball-data/lesung';
 import type { Stand } from '../basketball-data/stand';
 import { JETZT } from '../jetzt';
 import { SpielComponent } from './spiel.component';
+import { Breadcrumb } from '../navigation/breadcrumb';
 
 /** Noon on the day of the Spiel, in Germany. */
 const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
@@ -235,6 +236,40 @@ describe('SpielComponent', () => {
       );
 
       expect(page.querySelector('[data-qa="stand"]')).toBeNull();
+    });
+  });
+
+  describe('the breadcrumb', () => {
+    async function levelsWith(teams: readonly number[]) {
+      const auswahl = new LokaleAuswahl(undefined);
+      for (const team of teams) {
+        await auswahl.folgen(team);
+      }
+      await renderMit(
+        fakeData(
+          async () => GESPIELT,
+          async () => undefined
+        ),
+        auswahl
+      );
+      return TestBed.inject(Breadcrumb).levels().slice(1);
+    }
+
+    it("leads up to the followed side's Team", async () => {
+      expect(await levelsWith([201500])).toEqual([
+        { title: 'MTV Gifhorn', link: ['/team', '201500'] },
+        { title: 'Spiel' },
+      ]);
+    });
+
+    it('takes the home side where both are followed', async () => {
+      expect((await levelsWith([201500, 313036]))[0]?.title).toBe(
+        'MTV Wasbüttel'
+      );
+    });
+
+    it('names the Spiel right below the overview where no side is followed', async () => {
+      expect(await levelsWith([])).toEqual([{ title: 'Spiel' }]);
     });
   });
 

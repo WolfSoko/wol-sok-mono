@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { breadcrumb } from '../navigation/breadcrumb';
 import { ImpressumComponent } from '../rechtliches/impressum.component';
 
 /** `/impressum`: the legal notice, linked from the footer. */
@@ -8,4 +9,8 @@ import { ImpressumComponent } from '../rechtliches/impressum.component';
   template: `<korb-impressum />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export default class ImpressumPage {}
+export default class ImpressumPage {
+  public constructor() {
+    breadcrumb(() => [{ title: 'Impressum' }]);
+  }
+}

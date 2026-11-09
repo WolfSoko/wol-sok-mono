@@ -35,6 +35,7 @@ import { aeltesterStand } from '../basketball-data/stand';
 import { StandComponent } from '../stand/stand.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
+import { breadcrumb } from '../navigation/breadcrumb';
 import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knopf.component';
 
 /**
@@ -172,5 +173,10 @@ export class TeamComponent {
     vereinsfarbenAnwenden(() =>
       this.saison.hasValue() ? this.saison.value().verein.id : undefined
     );
+    breadcrumb(() => [
+      {
+        title: this.saison.hasValue() ? this.saison.value().team.name : 'Team',
+      },
+    ]);
   }
 }

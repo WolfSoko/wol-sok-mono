@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { breadcrumb } from '../navigation/breadcrumb';
 import { DatenschutzComponent } from '../rechtliches/datenschutz.component';
 
 /** `/privacy`: the privacy policy, linked from the footer. */
@@ -8,4 +9,8 @@ import { DatenschutzComponent } from '../rechtliches/datenschutz.component';
   template: `<korb-datenschutz />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export default class PrivacyPage {}
+export default class PrivacyPage {
+  public constructor() {
+    breadcrumb(() => [{ title: 'Datenschutz' }]);
+  }
+}
