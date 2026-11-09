@@ -11,7 +11,7 @@
           @if (!$first) {
             ·
           }
-          <a [routerLink]="['/team', team.teamId]">{{ kartenName(team) }}</a>
+          <a [routerLink]="['/team', team.teamId]">{{ team.name }}</a>
         }
       </mat-card-subtitle>
     }
@@ -98,10 +98,7 @@
       data-qa="ueberblick-kind-aktionen"
     >
       @for (team of kind.teams; track team.teamId) {
-        <korb-team-folgen
-          [teamId]="team.teamId"
-          [teamName]="kartenName(team)"
-        />
+        <korb-team-folgen [teamId]="team.teamId" [teamName]="team.name" />
       }
     </mat-card-actions>
   }

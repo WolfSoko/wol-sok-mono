@@ -8,7 +8,6 @@ import { SpielLinkComponent } from '../spiel/spiel-link.component';
 import { StandComponent } from '../stand/stand.component';
 import { TeamFolgenComponent } from '../team/team-folgen.component';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
-import { kartenName } from './team-karte';
 import type { KindAbschnitt } from './ueberblick-ansicht';
 
 /**
@@ -38,6 +37,4 @@ import type { KindAbschnitt } from './ueberblick-ansicht';
 })
 export class UeberblickKindComponent {
   public readonly abschnitt = input.required<KindAbschnitt>();
-
-  protected readonly kartenName = kartenName;
 }
