@@ -18,6 +18,9 @@ async function render(halle: Halle | undefined): Promise<HTMLElement> {
 
 /** What a screen reader reads of `element`: its text without what it hides. */
 function vorgelesen(element: Element | null): string {
+  if (element?.getAttribute('aria-hidden') === 'true') {
+    return '';
+  }
   const kopie = element?.cloneNode(true) as Element | undefined;
   kopie
     ?.querySelectorAll('[aria-hidden="true"]')

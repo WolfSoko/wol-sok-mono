@@ -45,24 +45,44 @@ test.describe('Team page', () => {
     await teamPage.goto(TEAM_IN_ZWEI_LIGEN);
     await expect(teamPage.spiele).toHaveCount(6);
 
-    // each row's own box and its content's, all at once
+    // each row's own box, its content's and its texts', all at once
     const kaesten = await teamPage.spiele.evaluateAll((zeilen) =>
       zeilen.map((zeile) => {
         const reihe = zeile.getBoundingClientRect();
-        const inhalt = zeile
-          .querySelector('korb-spiel-zeile')
-          ?.getBoundingClientRect();
+        const inhalt = zeile.querySelector('korb-spiel-zeile');
+        const texte = [
+          ...(inhalt?.querySelectorAll<HTMLElement>('[data-qa^="spiel-"]') ??
+            []),
+        ];
         return {
           reihe: { oben: reihe.top, unten: reihe.bottom },
-          inhalt: inhalt && { oben: inhalt.top, unten: inhalt.bottom },
+          inhalt: inhalt && {
+            oben: inhalt.getBoundingClientRect().top,
+            unten: inhalt.getBoundingClientRect().bottom,
+          },
+          texte: texte.map((text) => {
+            const kasten = text.getBoundingClientRect();
+            return {
+              oben: kasten.top,
+              unten: kasten.bottom,
+              // cut off sideways where it holds more than it shows
+              abgeschnitten: text.scrollWidth > text.clientWidth + 1,
+            };
+          }),
         };
       })
     );
     expect(kaesten).toHaveLength(6);
-    for (const { reihe, inhalt } of kaesten) {
+    for (const { reihe, inhalt, texte } of kaesten) {
       expect(inhalt).toBeDefined();
       expect(inhalt?.oben).toBeGreaterThanOrEqual(reihe.oben);
       expect(inhalt?.unten).toBeLessThanOrEqual(reihe.unten);
+      expect(texte.length).toBeGreaterThan(0);
+      for (const text of texte) {
+        expect(text.oben).toBeGreaterThanOrEqual(reihe.oben);
+        expect(text.unten).toBeLessThanOrEqual(reihe.unten);
+        expect(text.abgeschnitten).toBe(false);
+      }
     }
   });
 
