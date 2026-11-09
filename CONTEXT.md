@@ -32,7 +32,7 @@ _Avoid_: Training state, status
 
 **Vorlauf**:
 The short countdown before the first Intervall, giving the runner time to get ready.
-_Code_: `Countdown`
+_Code_: `LeadIn`
 _Avoid_: Start countdown, getready
 
 **Zusammenfassung**:
@@ -42,7 +42,7 @@ _Avoid_: Summary, result, stats
 
 **Ansage**:
 A beep or spoken cue that announces the next Intervall or the end of the Trainingslauf.
-_Code_: `Cue`
+_Code_: `Announcement`
 _Avoid_: Cue, peep, sound
 
 ### Relationships

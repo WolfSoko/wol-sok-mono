@@ -25,8 +25,9 @@ own, as the issue allows.
   as a DBB field), and the rename issues would make it noisy until they land.
 - No change to `deutsche-texte.spec.ts` (UI texts stay German).
 - Pacetrainer's few German identifiers (`ZusammenfassungComponent`,
-  `PlannedIntervall`, `Zusammenfassung`) are not renamed here; raised to the
-  manager as a follow-up.
+  `PlannedIntervall`, `Zusammenfassung`, `intervalle`) are not renamed here;
+  raised to the manager as a follow-up. Until then a change touching them
+  may rename them, unless they are persisted.
 
 ## Decisions
 
@@ -50,8 +51,10 @@ own, as the issue allows.
   and the glossary avoids it.
 - **Translations (Pacetrainer)**, from what its code already calls them where
   it does: Konfiguration `TrainingConfig`, Intervall `Interval`,
-  Trainingslauf `TrainingRun`, Phase `RunPhase`, Vorlauf `Countdown`,
-  Zusammenfassung `Summary`, Ansage `Cue`.
+  Trainingslauf `TrainingRun`, Phase `RunPhase`, Vorlauf `LeadIn`,
+  Zusammenfassung `Summary`, Ansage `Announcement`
+  (`Countdown` is the Intervall's countdown there, and `Cue` is on Ansage's
+  `_Avoid_` list).
 - **Existing German identifiers** stay until their rename issue lands; new
   code (#2957, #2958 included) is English from now on. A file touched for
   another reason does not rename its persisted German names piecemeal: they
