@@ -101,6 +101,73 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Spielplan), by the DBB's Team name, which carries the Verein's team
   number ("TSV X 2"). One tap follows the Team (`Auswahl.folgen`) and
   opens its Team page. Changing a pick starts over below it.
+- **Installable and offline:** `src/public/manifest.webmanifest` (name,
+  German, `standalone`, the theme's orange `#e37100`, linked from
+  `index.html` with the icons) makes the app installable; its icons
+  (`src/public/icons/`, `favicon.ico`) come from
+  `npx nx run korbjaeger:icons` (`tools/korbjaeger/generate-icons.ts`, a
+  basketball in the theme's orange, maskable): don't draw them by hand.
+  Angular's service worker (`ngsw-config.json`, registered by
+  `provideAppServiceWorker` in `src/app/pwa/`, production builds only)
+  prefetches the shell (`index.html`, the manifest, `assets/*.js` and
+  `*.css`, no source maps), so every page opens without a network; it
+  answers navigations with the shell except files and `/api/**`
+  (`navigationUrls`), and has no data group: it never caches the proxy,
+  whose data is the app's own (below) and the CDN's. `build` runs
+  `build-app` (Analog, cached) and then, never cached since its result
+  hashes `build-app`'s files, copies `ngsw-worker.js` and
+  `safety-worker.js` into the Hosting folder and writes `ngsw.json` there
+  (`ngsw-config`), from the hashed files of that very build. A worker that
+  lost files of its release reloads the page; a new release is taken on
+  the next load. Hosting sends the worker's files `no-cache` like the
+  shell. `src/pwa/` specs the manifest and the worker's config. The dev
+  servers (`serve`, `serve-e2e`) run no worker, so the e2e checks the last
+  good data without one.
+- **Last good data** (`src/app/basketball-data/`): the browser transport
+  keeps the last good answer of a Team's Spiele, a Tabelle, a Spiel's
+  match info and a Verein's Spiele by its proxy path
+  (`SPEICHERBARE_ARTEN`, `LokaleLetzteAntworten`, `localStorage` keys
+  `korbjaeger-antwort:/api/dbb/...` as `{ v: 2, am, art, antwort }`, with
+  an index `korbjaeger-antworten` of each one's size, time and kind). Each
+  is kept without the persons it names (the lib's `dbbOhnePersonen`: a
+  match info names top players and referees). Never kept: a Spielbericht
+  (its Kader name children, ADR 0019), the wizard's Liga search and Liga
+  Teams (browsing them would evict what Meine Teams need), errors, and an
+  answer the adapter could not map: the transport only notes an answer in
+  the read's `Lesung`, and the resource keeps it once the read mapped it.
+  A read with a `Lesung` that fails as `offline` (fetch throws or the
+  proxy does not answer within 8 s, `PROXY_ZEITLIMIT_MS`; or
+  `navigator.onLine` is false, `KeinInternetError`, when the proxy is not
+  called at all) or `unavailable` (the proxy's 502) is answered from it,
+  never a 404 or a cancelled read. An answer older than 7 days
+  (`MAX_ALTER_MS`) is neither served nor kept; `LETZTE_ANTWORTEN`
+  (`letzte-antworten-pflege.ts`) drops those and answers of kinds no
+  longer kept at the start, when the page comes back into view and hourly
+  while it stays open. When Meine Teams find the storage full, the
+  answers give way (`SPEICHER_FREIGEBEN`) and `LokaleAuswahl` writes once
+  more. At most 60 answers and 1,000,000 characters
+  (`ANTWORT_GRENZEN`, so Meine Teams always find room): a write beyond
+  either evicts the oldest answers first, once the new one is stored (a
+  write the storage refuses evicts nothing); a full storage
+  (`QuotaExceededError`) evicts the oldest until the write fits; an answer
+  that is not kept (too large, or the storage full) drops the older one of
+  its path too, and a blocked storage keeps nothing. Writes read the index,
+  not the answers; it forgets answers deleted behind its back and is
+  rebuilt from them when it cannot be read. The read's options are typed
+  (`KorbReadOptions`, `DbbBasketballData<KorbReadOptions>` hands them to
+  the transport as they are). Each resource of `basketballDataResource`
+  (a `DatenResource`) has a `stand` beside its value, changing with it (a
+  value shown while reloading keeps its Stand); `korb-stand` (`src/app/stand/`) shows it as "Offline · Stand: vor 2 Std." ("Offline" only where the browser says so, else "Keine Verbindung" or "DBB nicht erreichbar"), aging with `JETZT` (`src/app/jetzt.ts`, the screens' one
+  clock, read every minute and on visibility changes; `HEUTE` is its
+  German date). The Team page's head, its "Weitere Teams des Vereins",
+  each Tabelle, the Spiel page and each overview card show one Stand, the
+  oldest of the reads they show (the next Spiel's Halle included).
+- **Errors** (`src/app/fehler/`): `fehlerText` tells the three failures
+  apart: no connection ("Kein Internet" where the browser says it is
+  offline, else "Keine Verbindung. Internet oder Server nicht
+  erreichbar"), the DBB unreachable
+  (the proxy's 502, "Der DBB ist gerade nicht erreichbar") and not found
+  (the screen's own text, a 404).
 - **Proxy:** `src/server/routes/api/dbb/` (thin route files) over
   `src/server/dbb/`; `src/shared/dbb-proxy-routes.ts` maps each read to
   its URL and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists
@@ -116,7 +183,9 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   It passes the DBB's body on unchanged, caches successes
   (`public, max-age=60, s-maxage=300`; a finished Spiel's Spielbericht,
   `/api/dbb/spiel/{id}/bericht` with a confirmed result and both Kader, by
-  the lib's `dbbBoxscoreFinished` on the body itself, `s-maxage=3600`) and nothing else, turns DBB
+  the lib's `dbbBoxscoreFinished` on the body itself, `s-maxage=3600`) and
+  sends every error (404, 502) `no-store`, since Hosting would add its
+  default `max-age=600` and a browser keep a DBB outage ten minutes; it turns DBB
   `status: "1"` into 404 and a timeout (5 s), a network error, a 5xx or
   `status: "-1"` into 502, and calls the DBB with its own User-Agent and
   no cookies. See [ADR 0018](../../docs/adr/0018-korbjaeger-dbb-data-behind-a-caching-proxy.md).

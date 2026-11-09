@@ -31,6 +31,8 @@ import { TeamFolgenComponent } from './team-folgen.component';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
 import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
+import { aeltesterStand } from '../basketball-data/stand';
+import { StandComponent } from '../stand/stand.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
 /**
@@ -50,6 +52,7 @@ import { TeamTabelleComponent } from './team-tabelle.component';
     RouterLink,
     SaisonEndeHinweisComponent,
     SpielZeileComponent,
+    StandComponent,
     TeamFolgenComponent,
     TeamTabelleComponent,
     VereinsTeamsComponent,
@@ -131,7 +134,7 @@ export class TeamComponent {
     computation: (saison, vorher) => saison?.verein.id ?? vorher?.value,
   });
 
-  private readonly vereinsTeams = vereinsTeamsResource(() => this.vereinId());
+  protected readonly vereinsTeams = vereinsTeamsResource(() => this.vereinId());
 
   /** The Verein's Teams other than this one, as their read stands. */
   protected readonly weitereTeams = computed(() => {
@@ -140,6 +143,18 @@ export class TeamComponent {
       ? undefined
       : vereinsTeamsStand(this.vereinsTeams, team);
   });
+
+  /**
+   * The oldest Stand of what the head shows: the Spiele, the next Spiel's
+   * Halle, and the Verein's Teams while the hint offers them up there.
+   */
+  protected readonly kopfStand = computed(() =>
+    aeltesterStand(
+      this.saison.stand(),
+      this.naechsteDetails.stand(),
+      this.beendet() ? this.vereinsTeams.stand() : undefined
+    )
+  );
 
   protected readonly fehler = computed(() => {
     if (this.team() === undefined) {

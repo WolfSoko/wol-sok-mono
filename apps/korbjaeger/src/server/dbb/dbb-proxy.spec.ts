@@ -207,17 +207,17 @@ describe('DBB proxy', () => {
         const response = await proxy(dbb)(pathWith(route, bad));
 
         expect(response.status).toBe(404);
-        expect(response.headers.get('cache-control')).toBeNull();
+        expect(response.headers.get('cache-control')).toBe('no-store');
         expect(dbb).not.toHaveBeenCalled();
       });
 
-      it('answers the read with any query with 404, not cached', async () => {
+      it('answers the read with any query with 404, not stored', async () => {
         const dbb = recordedDbb();
 
         const response = await proxy(dbb)(`${path}?anything=x`);
 
         expect(response.status).toBe(404);
-        expect(response.headers.get('cache-control')).toBeNull();
+        expect(response.headers.get('cache-control')).toBe('no-store');
         expect(dbb).not.toHaveBeenCalled();
       });
 
@@ -227,6 +227,7 @@ describe('DBB proxy', () => {
         const response = await proxy(dbb)(path, { method: 'POST' });
 
         expect(response.status).toBe(404);
+        expect(response.headers.get('cache-control')).toBe('no-store');
         expect(dbb).not.toHaveBeenCalled();
       });
     });
@@ -245,7 +246,7 @@ describe('DBB proxy', () => {
     });
 
     describe('errors', () => {
-      it('answers DBB status "1" with 404 and the DBB body, not cached', async () => {
+      it('answers DBB status "1" with 404 and the DBB body, not stored', async () => {
         const body = JSON.stringify(
           fakeDbbAnswer('GET', dbbPath(route, unknown))
         );
@@ -256,7 +257,7 @@ describe('DBB proxy', () => {
 
         expect(response.status).toBe(404);
         expect(await response.text()).toBe(body);
-        expect(response.headers.get('cache-control')).toBeNull();
+        expect(response.headers.get('cache-control')).toBe('no-store');
       });
 
       it.each([
@@ -280,13 +281,13 @@ describe('DBB proxy', () => {
         ['a DBB body with no envelope', dbbAnswering('[]')],
         ['a DBB body with an unknown status', dbbAnswering('{"status":"2"}')],
       ] as ReadonlyArray<[string, UpstreamFetch]>)(
-        'answers %s with 502, not cached',
+        'answers %s with 502, not stored',
         async (_case, dbb) => {
           const response = await proxy(dbb)(path);
 
           expect(response.status).toBe(502);
           expect(await response.json()).toEqual({ error: 'dbb-unavailable' });
-          expect(response.headers.get('cache-control')).toBeNull();
+          expect(response.headers.get('cache-control')).toBe('no-store');
         }
       );
     });
@@ -399,7 +400,7 @@ describe('DBB proxy', () => {
       const response = await proxy(dbb)(path);
 
       expect(response.status).toBe(404);
-      expect(response.headers.get('cache-control')).toBeNull();
+      expect(response.headers.get('cache-control')).toBe('no-store');
       expect(dbb).not.toHaveBeenCalled();
     });
 
@@ -418,11 +419,11 @@ describe('DBB proxy', () => {
       }
     );
 
-    it('answers a filter the DBB fails on with 502, not cached', async () => {
+    it('answers a filter the DBB fails on with 502, not stored', async () => {
       const response = await proxy(dbbAnswering('oops', 503))(SUCHE);
 
       expect(response.status).toBe(502);
-      expect(response.headers.get('cache-control')).toBeNull();
+      expect(response.headers.get('cache-control')).toBe('no-store');
     });
   });
 
@@ -478,7 +479,7 @@ describe('DBB proxy', () => {
     const response = await proxy(dbb)(path);
 
     expect(response.status).toBe(404);
-    expect(response.headers.get('cache-control')).toBeNull();
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect(dbb).not.toHaveBeenCalled();
   });
 

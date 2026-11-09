@@ -6,6 +6,7 @@ import {
   naechsterStartIndex,
   type LigaSucheFilter,
 } from '../domain/liga-suche';
+import type { ReadOptions } from '../basketball-data';
 import { DbbBasketballData } from './dbb-basketball-data';
 import {
   type DbbRequest,
@@ -318,12 +319,15 @@ describe('DbbBasketballData', () => {
     expect(error.cause).toBe(cause);
   });
 
-  it('passes on a typed error the transport throws itself', async () => {
-    const own = new BasketballDataError('not-found', 'proxy: 404');
-    const data = new DbbBasketballData(() => Promise.reject(own));
+  it.each(['not-found', 'offline'] as const)(
+    'passes on a typed %s error the transport throws itself',
+    async (kind) => {
+      const own = new BasketballDataError(kind, 'proxy: nope');
+      const data = new DbbBasketballData(() => Promise.reject(own));
 
-    expect(await rejectedError(() => data.spiel(2911141))).toBe(own);
-  });
+      expect(await rejectedError(() => data.spiel(2911141))).toBe(own);
+    }
+  );
 
   it('rejects a response of the wrong shape as unexpected', async () => {
     const { data } = dataWith({
@@ -374,6 +378,29 @@ describe('DbbBasketballData', () => {
         expect(transport).toHaveBeenCalledWith(expect.anything(), { signal });
       }
     );
+
+    it("hands the read's options to the transport as they are, typed fields of the transport's own too", async () => {
+      interface EigeneOptions extends ReadOptions {
+        readonly eigenes: number;
+      }
+      const transport = jest.fn<
+        Promise<unknown>,
+        Parameters<DbbTransport<EigeneOptions>>
+      >(async () => {
+        throw new TypeError('fetch failed');
+      });
+      const options: EigeneOptions = {
+        signal: new AbortController().signal,
+        eigenes: 1,
+      };
+
+      await new DbbBasketballData<EigeneOptions>(transport)
+        .teamSpiele(313036, options)
+        .catch(() => undefined);
+
+      expect(transport.mock.calls[0][1]).toBe(options);
+      expect(transport.mock.calls[0][1]?.eigenes).toBe(1);
+    });
 
     it('rejects a cancelled read with the reason it was cancelled for', async () => {
       const controller = new AbortController();

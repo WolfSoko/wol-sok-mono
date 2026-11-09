@@ -6,7 +6,8 @@ import {
   type Signal,
 } from '@angular/core';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import { geraeteSpeicher, LokaleAuswahl } from './lokale-auswahl';
+import { geraeteSpeicher, SPEICHER_FREIGEBEN } from '../geraete-speicher';
+import { LokaleAuswahl } from './lokale-auswahl';
 
 /**
  * What an Elternteil follows: Meine Teams (Kinder join with #2872). Kept
@@ -43,7 +44,8 @@ export const AUSWAHL = new InjectionToken<Auswahl>('Auswahl', {
   factory: () => {
     const auswahl = new LokaleAuswahl(
       geraeteSpeicher(),
-      inject(DOCUMENT).defaultView ?? undefined
+      inject(DOCUMENT).defaultView ?? undefined,
+      inject(SPEICHER_FREIGEBEN)
     );
     inject(DestroyRef).onDestroy(() => auswahl.beenden());
     return auswahl;

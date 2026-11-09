@@ -5,8 +5,11 @@
   "sourceRoot": "{projectRoot}/src",
   "tags": ["app", "type:firebase"],
   "targets": {
-    "build": {
+    "build-app": {
       "executor": "@analogjs/platform:vite",
+      "dependsOn": ["^build"],
+      "inputs": ["sharedGlobals", "production", "^production"],
+      "cache": true,
       "defaultConfiguration": "production",
       "options": {
         "main": "{projectRoot}/src/main.ts",
@@ -32,21 +35,39 @@
         "{workspaceRoot}/dist/{projectRoot}/analog"
       ]
     },
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build-app"],
+      "cache": false,
+      "defaultConfiguration": "production",
+      "options": {
+        "commands": [
+          "cp node_modules/@angular/service-worker/ngsw-worker.js node_modules/@angular/service-worker/safety-worker.js dist/apps/korbjaeger/analog/public/",
+          "ngsw-config dist/apps/korbjaeger/analog/public apps/korbjaeger/ngsw-config.json /"
+        ],
+        "parallel": false
+      },
+      "configurations": {
+        "production": {},
+        "development": {},
+        "e2e": {}
+      }
+    },
     "serve": {
       "executor": "@analogjs/platform:vite-dev-server",
       "defaultConfiguration": "development",
       "continuous": true,
       "options": {
-        "buildTarget": "korbjaeger:build",
+        "buildTarget": "korbjaeger:build-app",
         "port": 4302
       },
       "configurations": {
         "development": {
-          "buildTarget": "korbjaeger:build:development",
+          "buildTarget": "korbjaeger:build-app:development",
           "hmr": true
         },
         "production": {
-          "buildTarget": "korbjaeger:build:production"
+          "buildTarget": "korbjaeger:build-app:production"
         }
       }
     },
@@ -54,7 +75,7 @@
       "executor": "@analogjs/platform:vite-dev-server",
       "continuous": true,
       "options": {
-        "buildTarget": "korbjaeger:build:e2e",
+        "buildTarget": "korbjaeger:build-app:e2e",
         "port": 4304
       }
     },
@@ -64,6 +85,12 @@
       "options": {
         "command": "tsx --tsconfig tsconfig.base.json apps/korbjaeger/e2e/fake-dbb/server.cts",
         "cwd": "{workspaceRoot}"
+      }
+    },
+    "icons": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx ./tools/korbjaeger/generate-icons.ts"
       }
     },
     "test": {

@@ -4,6 +4,8 @@ import type { Locator, Page } from '@playwright/test';
 export class SpielPage {
   /** Both Teams, home first, each linking to its Team page. */
   public readonly heading: Locator;
+  /** Why the Spiel could not be read. */
+  public readonly fehler: Locator;
   public readonly ergebnis: Locator;
   public readonly status: Locator;
   /** The quarter scores' lines, home first. */
@@ -18,6 +20,7 @@ export class SpielPage {
 
   public constructor(private readonly page: Page) {
     this.heading = page.getByRole('heading', { level: 1 });
+    this.fehler = page.getByTestId('spiel-fehler');
     this.ergebnis = page.getByTestId('spiel-ergebnis');
     this.status = page.getByTestId('spiel-status');
     this.viertel = page.getByTestId('viertel-zeile');

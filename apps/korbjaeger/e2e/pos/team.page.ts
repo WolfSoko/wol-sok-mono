@@ -19,6 +19,8 @@ export class TeamPage {
   public readonly folgen: Locator;
   /** The Verein's other Teams, each with its Ligen and a follow button. */
   public readonly vereinsTeams: Locator;
+  /** Where the Spiele are the last good data: why, and how old. */
+  public readonly stand: Locator;
 
   public constructor(private readonly page: Page) {
     this.heading = page.getByRole('heading', { level: 1 });
@@ -29,6 +31,7 @@ export class TeamPage {
       exact: true,
     });
     this.vereinsTeams = page.getByTestId('vereins-team');
+    this.stand = page.getByTestId('team-stand');
   }
 
   /** The Verein's other Team that plays in the Liga `liga`. */

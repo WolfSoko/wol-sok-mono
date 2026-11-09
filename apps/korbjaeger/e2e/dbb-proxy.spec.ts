@@ -44,11 +44,12 @@ test.describe('DBB proxy', () => {
     ['a malformed gender', 'GET', '/api/dbb/ligen?geschlecht=2'],
     ['a read with a query', 'GET', '/api/dbb/team/313036/spiele?anything=x'],
   ] as const) {
-    test(`answers ${what} with 404, not cached`, async ({ request }) => {
+    test(`answers ${what} with 404, never stored`, async ({ request }) => {
       const response = await request.fetch(path, { method });
 
       expect(response.status()).toBe(404);
-      expect(response.headers()['cache-control']).toBeUndefined();
+      // no-store, or Hosting's default max-age=600 would keep it ten minutes
+      expect(response.headers()['cache-control']).toBe('no-store');
     });
   }
 

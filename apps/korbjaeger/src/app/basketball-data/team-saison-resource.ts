@@ -1,6 +1,9 @@
-import { inject, Injector, type ResourceRef } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import type { TeamId, TeamSaison } from '@wolsok/feat-shared-basketball-data';
-import { basketballDataResource } from './basketball-data-resource';
+import {
+  basketballDataResource,
+  type DatenResource,
+} from './basketball-data-resource';
 
 /**
  * A resource reading the Saison of the Team `teamId` gives, none while it
@@ -10,10 +13,10 @@ import { basketballDataResource } from './basketball-data-resource';
 export function teamSaisonResource(
   teamId: () => TeamId | undefined,
   injector: Injector = inject(Injector)
-): ResourceRef<TeamSaison | undefined> {
+): DatenResource<TeamSaison | undefined> {
   return basketballDataResource(
     teamId,
-    (data, team, signal) => data.teamSpiele(team, { signal }),
+    (data, team, options) => data.teamSpiele(team, options),
     injector
   );
 }

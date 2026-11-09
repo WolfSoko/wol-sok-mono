@@ -9,6 +9,7 @@
     <p class="fehler" data-qa="tabelle-fehler">{{ text }}</p>
   }
   @if (tabelle.hasValue()) {
+    <korb-stand [stand]="tabelle.stand()" />
     @if (zeilen().length === 0) {
       <p>Für diese Liga führt der DBB keine Tabelle.</p>
     } @else {

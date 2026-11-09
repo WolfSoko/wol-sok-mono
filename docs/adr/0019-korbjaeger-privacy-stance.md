@@ -46,7 +46,10 @@ or in one Firestore document per signed-in uid, is the Team ids of Meine
 Teams and the person ids of the Kinder, each with an optional nickname.
 No names or Spielerwerte from the DBB are stored; they are read fresh,
 through the proxy (ADR 0018), whenever they are shown. Deleting the account
-deletes the document.
+deletes the document. For offline use the device keeps the last good
+answer of a Team's Spiele, a Tabelle, a Spiel's match info and a Verein's
+Spiele for at most 7 days, with every person in it dropped; a Spielbericht
+is never kept.
 
 **No real child's name in the repo.** The fixtures are DBB responses with
 every person name and id (players, referees, season player ids) replaced

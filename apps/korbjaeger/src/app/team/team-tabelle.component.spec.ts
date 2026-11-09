@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import {
   BasketballDataError,
@@ -9,9 +10,12 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
+import type { KorbReadOptions } from '../basketball-data/lesung';
+import { JETZT } from '../jetzt';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
 const UNSER_TEAM_ID = 313036;
+const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 
 const VORRUNDE: Liga = {
   id: 54862,
@@ -63,7 +67,10 @@ function create(
   data: ReturnType<typeof fakeData>
 ): ComponentFixture<TeamTabelleComponent> {
   TestBed.configureTestingModule({
-    providers: [{ provide: BASKETBALL_DATA, useValue: data }],
+    providers: [
+      { provide: BASKETBALL_DATA, useValue: data },
+      { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
+    ],
   });
   const fixture = TestBed.createComponent(TeamTabelleComponent);
   fixture.componentRef.setInput('liga', VORRUNDE);
@@ -90,14 +97,32 @@ function zellen(zeile: HTMLElement): (string | undefined)[] {
 }
 
 describe('TeamTabelleComponent', () => {
+  it('shows its last good Tabelle with its age where the read fell back on it', async () => {
+    const page = await render(
+      fakeData(async (_liga, options?: KorbReadOptions) => {
+        options?.lesung?.ersetzt({
+          gespeichertAm: JETZT_IM_SPEC - 30 * 60_000,
+          grund: 'unavailable',
+        });
+        return TABELLE;
+      })
+    );
+
+    expect(page.querySelector('[data-qa="stand"]')?.textContent).toContain(
+      'DBB nicht erreichbar · Stand: vor 30 Min.'
+    );
+    expect(zeilen(page)).toHaveLength(3);
+  });
+
   it('reads the Tabelle of its Liga', async () => {
     const data = fakeData(async () => TABELLE);
 
     await render(data);
 
-    expect(data.tabelle).toHaveBeenCalledWith(54862, {
-      signal: expect.any(AbortSignal),
-    });
+    expect(data.tabelle).toHaveBeenCalledWith(
+      54862,
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
   });
 
   it('is headed by the Liga', async () => {

@@ -8,6 +8,7 @@ import {
 import { defineEventHandler, getRequestURL, getRouterParams } from 'h3';
 import {
   badGateway,
+  errorResponse,
   jsonResponse,
   notFound,
   sendProxyResponse,
@@ -18,7 +19,8 @@ import type { AnyProxyRoute } from '../../shared/dbb-proxy-routes';
 
 /**
  * How long a successful read may be reused: a minute in the browser, five
- * minutes in Firebase Hosting's CDN (ADR 0018). Errors are never cached.
+ * minutes in Firebase Hosting's CDN (ADR 0018). Errors are never stored
+ * (`PROXY_ERROR_CACHE_CONTROL`).
  */
 export const DBB_PROXY_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
 
@@ -54,7 +56,7 @@ export async function proxyDbbRead(
         'cache-control': cacheControlOf(request, body),
       });
     case 'not-found':
-      return jsonResponse(404, answer.body);
+      return errorResponse(404, answer.body);
     case 'server-error':
       return failed(call, 'DBB status -1');
     default:

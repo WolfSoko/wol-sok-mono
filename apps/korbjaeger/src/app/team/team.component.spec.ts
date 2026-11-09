@@ -18,7 +18,9 @@ import {
 } from '../basketball-data/basketball-data.provider';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
+import type { KorbReadOptions } from '../basketball-data/lesung';
 import { HEUTE } from '../heute';
+import { JETZT } from '../jetzt';
 import { TeamComponent } from './team.component';
 
 const UNSER_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', vereinId: 1837 };
@@ -85,6 +87,9 @@ type VereinsTeamsRead = KorbjaegerData['vereinsTeams'];
 
 /** The day the specs run on: after the last Spiel of the fixtures below. */
 const HEUTE_IM_SPEC = '2026-11-08';
+/** Noon of `HEUTE_IM_SPEC` in Germany. */
+const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
+const ZWEI_STUNDEN = 2 * 60 * 60_000;
 
 /** An empty Tabelle of Liga `ligaId`. */
 const keineZeilen: TabelleRead = async (ligaId) => ({
@@ -161,6 +166,7 @@ function providers(
     provideRouter([]),
     { provide: BASKETBALL_DATA, useValue: data },
     { provide: HEUTE, useValue: heute },
+    { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
     // in memory: nothing reaches the device's storage
     { provide: AUSWAHL, useFactory: () => new LokaleAuswahl(undefined) },
   ];
@@ -189,14 +195,85 @@ function feld(zeile: HTMLElement, name: string): string | undefined {
 }
 
 describe('TeamComponent', () => {
+  describe('the last good data', () => {
+    it("shows the Team's last good Spiele with their age where the read fell back on them", async () => {
+      const page = await render(
+        fakeData(async (_team, options?: KorbReadOptions) => {
+          options?.lesung?.ersetzt({
+            gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
+            grund: 'kein-internet',
+          });
+          return saison([spiel({ id: 1, datum: '2026-09-20' })]);
+        })
+      );
+
+      expect(
+        page.querySelector('[data-qa="team-stand"]')?.textContent
+      ).toContain('Offline · Stand: vor 2 Std.');
+      expect(spielZeilen(page)).toHaveLength(1);
+      expect(page.querySelector('[role="alert"]')).toBeNull();
+    });
+
+    it("labels the Team's head with the oldest Stand of what it shows, the next Spiel's Halle too", async () => {
+      const page = await render(
+        fakeData(
+          async () => saison([spiel({ id: 1, datum: '2026-11-14' })]),
+          keineZeilen,
+          async (spielId, options?: KorbReadOptions) => {
+            options?.lesung?.ersetzt({
+              gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
+              grund: 'unavailable',
+            });
+            return inDerSchulsporthalle(spielId);
+          }
+        )
+      );
+
+      expect(
+        page.querySelector('[data-qa="team-stand"]')?.textContent
+      ).toContain('DBB nicht erreichbar · Stand: vor 2 Std.');
+    });
+
+    it("labels the Verein's other Teams with their own Stand", async () => {
+      const page = await render(
+        fakeData(
+          async () => saison([spiel({ id: 1, datum: '2026-11-14' })]),
+          keineZeilen,
+          inDerSchulsporthalle,
+          async (verein, options?: KorbReadOptions) => {
+            options?.lesung?.ersetzt({
+              gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
+              grund: 'kein-internet',
+            });
+            return OHNE_TEAMS(verein);
+          }
+        )
+      );
+
+      expect(
+        page.querySelector('[data-qa="vereins-stand"]')?.textContent
+      ).toContain('Offline · Stand: vor 2 Std.');
+      expect(
+        page.querySelector('[data-qa="team-stand"] [data-qa="stand"]')
+      ).toBeNull();
+    });
+
+    it('labels no Stand for Spiele just read', async () => {
+      const page = await render(fakeData(async () => saison([])));
+
+      expect(page.querySelector('[data-qa="stand"]')).toBeNull();
+    });
+  });
+
   it("reads the Team of the page's id", async () => {
     const data = fakeData(async () => saison([]));
 
     await render(data, '313036');
 
-    expect(data.teamSpiele).toHaveBeenCalledWith(313036, {
-      signal: expect.any(AbortSignal),
-    });
+    expect(data.teamSpiele).toHaveBeenCalledWith(
+      313036,
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
   });
 
   it('names the Team', async () => {
@@ -531,6 +608,7 @@ describe('TeamComponent', () => {
 
   it.each([
     ['not-found', 'Dieses Team kennt der DBB nicht.'],
+    ['offline', 'Keine Verbindung. Internet oder Server nicht erreichbar.'],
     ['unavailable', 'Der DBB ist gerade nicht erreichbar.'],
     ['unexpected-shape', 'Die Daten des DBB ließen sich nicht lesen.'],
   ] as const)('explains a %s error', async (kind, text) => {
@@ -569,9 +647,10 @@ describe('TeamComponent', () => {
     fixture.componentRef.setInput('teamId', '201500');
     fixture.detectChanges();
 
-    expect(data.teamSpiele).toHaveBeenLastCalledWith(201500, {
-      signal: expect.any(AbortSignal),
-    });
+    expect(data.teamSpiele).toHaveBeenLastCalledWith(
+      201500,
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
     expect(erster?.aborted).toBe(true);
   });
   describe('Tabellen', () => {
@@ -733,9 +812,10 @@ describe('TeamComponent', () => {
 
       await render(data);
 
-      expect(data.vereinsTeams).toHaveBeenCalledWith(1837, {
-        signal: expect.any(AbortSignal),
-      });
+      expect(data.vereinsTeams).toHaveBeenCalledWith(
+        1837,
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
+      );
     });
 
     it('lists the other Teams with their Ligen, each linking to its page, the Team itself left out', async () => {

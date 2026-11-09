@@ -6,6 +6,7 @@ import {
   auswahlDokumentMit,
   type GelesenesDokument,
 } from './auswahl-dokument';
+import { istSpeicherVoll } from '../geraete-speicher';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 
 /** The key of the `AuswahlDokument` in the device's storage. */
@@ -21,18 +22,6 @@ export type Fenster = Pick<
 >;
 
 /**
- * The device's `localStorage`, or `undefined` where the browser withholds
- * it (blocked site data may throw on the mere access).
- */
-export function geraeteSpeicher(): GeraeteSpeicher | undefined {
-  try {
-    return globalThis.localStorage ?? undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-/**
  * The `Auswahl` on the device, for Elternteile without an account.
  * - It reads the stored `AuswahlDokument` at start, whenever another tab
  *   changed it (the `storage` event on `fenster`, until `beenden`), and
@@ -41,8 +30,9 @@ export function geraeteSpeicher(): GeraeteSpeicher | undefined {
  *   does not know are kept on a write.
  * - A document of a newer version is left alone: no Team is followed, and
  *   `folgen` and `entfolgen` reject with `AuswahlZuNeuError`.
- * - Where the storage takes nothing (private mode, full), Meine Teams
- *   last for this visit only.
+ * - Where the storage is full, it has `platzSchaffen` free it (of the
+ *   cached DBB answers) and tries once more. Where it still takes nothing
+ *   (private mode, full), Meine Teams last for this visit only.
  */
 export class LokaleAuswahl implements Auswahl {
   public readonly teams: Signal<readonly TeamId[]>;
@@ -58,9 +48,14 @@ export class LokaleAuswahl implements Auswahl {
     }
   };
 
+  /**
+   * @param platzSchaffen frees the device's storage of what may give way
+   *   (the cached DBB answers) when it is full; Meine Teams always win.
+   */
   public constructor(
     private readonly speicher: GeraeteSpeicher | undefined,
-    private readonly fenster?: Fenster
+    private readonly fenster?: Fenster,
+    private readonly platzSchaffen: () => void = () => undefined
   ) {
     // read at once, so `teams` is never undefined here
     this.gefolgt = signal<readonly TeamId[]>(teamsAus(this.lesen()), {
@@ -117,10 +112,24 @@ export class LokaleAuswahl implements Auswahl {
   }
 
   private schreiben(dokument: unknown): void {
+    const text = JSON.stringify(dokument);
     try {
-      this.speicher?.setItem(AUSWAHL_SCHLUESSEL, JSON.stringify(dokument));
+      this.speicher?.setItem(AUSWAHL_SCHLUESSEL, text);
+    } catch (error) {
+      if (istSpeicherVoll(error)) {
+        this.nachPlatzSchreiben(text);
+      }
+      // blocked: Meine Teams last for this visit only
+    }
+  }
+
+  /** Has the cached data give way, then tries once more. */
+  private nachPlatzSchreiben(text: string): void {
+    try {
+      this.platzSchaffen();
+      this.speicher?.setItem(AUSWAHL_SCHLUESSEL, text);
     } catch {
-      // storage full or blocked: Meine Teams last for this visit only
+      // still full: Meine Teams last for this visit only
     }
   }
 }

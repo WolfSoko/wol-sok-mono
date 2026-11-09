@@ -114,8 +114,20 @@ describe('the Firebase deploy', () => {
       .map((rule) => rule.source)
       .sort();
 
-  it('revalidates the shell on every page, so none asks for chunks a release removed', () => {
-    expect(noCacheSources()).toEqual([...pagePaths(), '/index.html'].sort());
+  /**
+   * The service worker's own files too: an old worker or manifest of the
+   * cache would keep serving the release before.
+   */
+  const SERVICE_WORKER_FILES = [
+    '/ngsw-worker.js',
+    '/ngsw.json',
+    '/safety-worker.js',
+  ];
+
+  it('revalidates the shell on every page and the service worker, so none asks for chunks a release removed', () => {
+    expect(noCacheSources()).toEqual(
+      [...pagePaths(), '/index.html', ...SERVICE_WORKER_FILES].sort()
+    );
   });
 
   /**

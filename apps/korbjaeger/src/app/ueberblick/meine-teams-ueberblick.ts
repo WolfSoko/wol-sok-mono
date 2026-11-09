@@ -7,7 +7,6 @@ import {
   Injector,
   signal,
   untracked,
-  type ResourceRef,
   type Signal,
 } from '@angular/core';
 import {
@@ -21,6 +20,8 @@ import {
   type VereinsTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
+import type { DatenResource } from '../basketball-data/basketball-data-resource';
+import { aeltesterStand } from '../basketball-data/stand';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
@@ -34,9 +35,9 @@ import { fehlerKarte, geladeneKarte, type TeamKarte } from './team-karte';
  * for the Halle, which starts once that Spiel is known; with the Verein
  * whose Teams to suggest once its Saison looks over.
  */
-interface Lesung {
-  readonly saison: ResourceRef<TeamSaison | undefined>;
-  readonly naechsteDetails: ResourceRef<SpielDetails | undefined>;
+interface TeamLesungen {
+  readonly saison: DatenResource<TeamSaison | undefined>;
+  readonly naechsteDetails: DatenResource<SpielDetails | undefined>;
   /** The Team's Verein once its Saison looks over (`saisonBeendet`). */
   readonly saisonEndeVerein: Signal<VereinId | undefined>;
 }
@@ -53,9 +54,11 @@ export class MeineTeamsUeberblick {
   private readonly teams = inject(AUSWAHL).teams;
   private readonly heute = inject(HEUTE);
   private readonly injector = inject(Injector);
-  private readonly lesungen = signal<ReadonlyMap<TeamId, Lesung>>(new Map());
+  private readonly lesungen = signal<ReadonlyMap<TeamId, TeamLesungen>>(
+    new Map()
+  );
   private readonly vereinsLesungen = signal<
-    ReadonlyMap<VereinId, ResourceRef<VereinsTeams | undefined>>
+    ReadonlyMap<VereinId, DatenResource<VereinsTeams | undefined>>
   >(new Map());
 
   /** The Vereine to suggest Teams from: of each Team whose Saison looks over. */
@@ -119,13 +122,19 @@ export class MeineTeamsUeberblick {
     });
   }
 
-  private karte(teamId: TeamId, lesung: Lesung | undefined): TeamKarte {
+  private karte(teamId: TeamId, lesung: TeamLesungen | undefined): TeamKarte {
     const saison = lesung?.saison;
     if (lesung && saison?.hasValue()) {
       const verein = lesung.saisonEndeVerein();
       const vereinsTeams =
         verein === undefined ? undefined : this.vereinsLesungen().get(verein);
       return geladeneKarte(saison.value(), this.heute(), {
+        // the oldest of what the card shows
+        stand: aeltesterStand(
+          saison.stand(),
+          lesung.naechsteDetails.stand(),
+          vereinsTeams?.stand()
+        ),
         halle: hallenStand(lesung.naechsteDetails),
         saisonBeendet: verein !== undefined,
         vereinsTeams: vereinsTeams && vereinsTeamsStand(vereinsTeams, teamId),
@@ -140,7 +149,7 @@ export class MeineTeamsUeberblick {
    * The reads of `teamId`: its Saison, then its next Spiel's details; and
    * its Verein, once its Saison looks over.
    */
-  private lesen(teamId: TeamId): Lesung {
+  private lesen(teamId: TeamId): TeamLesungen {
     const saison = teamSaisonResource(() => teamId, this.injector);
     const naechsteDetails = spielDetailsResource(
       () =>
@@ -181,12 +190,12 @@ function abgleichen<K, V>(
 }
 
 /** Cancels and drops the read of a Verein's Teams. */
-function vereinBeenden(read: ResourceRef<VereinsTeams | undefined>): void {
+function vereinBeenden(read: DatenResource<VereinsTeams | undefined>): void {
   read.destroy();
 }
 
 /** Cancels and drops both reads of a Team. */
-function beenden(lesung: Lesung): void {
+function beenden(lesung: TeamLesungen): void {
   lesung.saison.destroy();
   lesung.naechsteDetails.destroy();
 }
