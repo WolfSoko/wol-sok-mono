@@ -27,6 +27,11 @@ import { JETZT } from '../jetzt';
 import { MEIN_KIND } from './ueberblick-ansicht';
 import { UeberblickComponent } from './ueberblick.component';
 import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
+import { KontoSitzung } from '../konto/konto-sitzung';
+import {
+  FakeKontoDienst,
+  MerkerImSpec,
+} from '../konto/testing/fake-konto-dienst';
 
 /** The day the specs run on. */
 const HEUTE_IM_SPEC = '2026-11-08';
@@ -243,6 +248,33 @@ describe('UeberblickComponent', () => {
     expect(seite.querySelector('[data-qa="ueberblick-leer"]')).toBeNull();
     expect(eintraege(seite)).toEqual([]);
     expect(data.teamSpiele).not.toHaveBeenCalled();
+  });
+
+  it('says the account cannot be read, rather than show what it read before', async () => {
+    const dienst = new FakeKontoDienst();
+    const sitzung = new KontoSitzung(
+      new LokaleAuswahl(undefined),
+      async () => dienst,
+      new MerkerImSpec()
+    );
+    await sitzung.starten();
+    await sitzung.anmelden();
+    await dienst.kontoAuswahl.folgen(WASBUETTEL.id);
+    const { seite, stabil } = await render(
+      fakeData([saison(WASBUETTEL)]),
+      sitzung.auswahl
+    );
+    expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
+
+    dienst.lesefehler?.({ code: 'unavailable' });
+    await stabil();
+
+    expect(
+      text(seite.querySelector('[data-qa="ueberblick-nicht-lesbar"]'))
+    ).toBe(
+      'Meine Teams und Kinder lassen sich gerade nicht lesen. Bitte die App neu laden.'
+    );
+    expect(eintraege(seite)).toEqual([]);
   });
 
   it('invites to follow a first Team while none is followed', async () => {
