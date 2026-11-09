@@ -21,6 +21,7 @@ import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
 import type { KorbReadOptions } from '../basketball-data/lesung';
 import { HEUTE } from '../heute';
 import { JETZT } from '../jetzt';
+import { Breadcrumb } from '../navigation/breadcrumb';
 import { TeamComponent } from './team.component';
 
 const UNSER_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', vereinId: 1837 };
@@ -652,6 +653,29 @@ describe('TeamComponent', () => {
     await fixture.whenStable();
 
     expect(auswahl.teams()).toEqual([]);
+  });
+
+  it('names the Team in the breadcrumb, below the overview', async () => {
+    await render(fakeData(async () => saison([])));
+
+    const levels = TestBed.inject(Breadcrumb).levels();
+    expect(levels.map((level) => level.title)).toEqual([
+      'Korbjäger',
+      'MTV Wasbüttel',
+    ]);
+  });
+
+  it("names the page 'Team' in the breadcrumb until the Team is read", async () => {
+    TestBed.configureTestingModule({
+      providers: providers(
+        fakeData(() => new Promise<TeamSaison>(() => undefined))
+      ),
+    });
+    const fixture = TestBed.createComponent(TeamComponent);
+    fixture.componentRef.setInput('teamId', '313036');
+    fixture.detectChanges();
+
+    expect(TestBed.inject(Breadcrumb).levels().at(-1)?.title).toBe('Team');
   });
 
   it('says so when the Team has no Spiele', async () => {

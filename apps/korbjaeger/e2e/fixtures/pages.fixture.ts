@@ -4,10 +4,11 @@ import { SpielPage } from '../pos/spiel.page';
 import { StartPage } from '../pos/start.page';
 import { TeamEinrichtenPage } from '../pos/team-einrichten.page';
 import { TeamPage } from '../pos/team.page';
+import { TitleBar } from '../pos/title-bar';
 
 /**
  * `test` with the page objects of the start, wizard, Team, Spiel and
- * settings pages.
+ * settings pages, and of the title bar above them.
  */
 export const test = base.extend<{
   startPage: StartPage;
@@ -15,6 +16,7 @@ export const test = base.extend<{
   teamPage: TeamPage;
   spielPage: SpielPage;
   einstellungenPage: EinstellungenPage;
+  titleBar: TitleBar;
 }>({
   startPage: async ({ page }, use) => {
     await use(new StartPage(page));
@@ -30,6 +32,9 @@ export const test = base.extend<{
   },
   einstellungenPage: async ({ page }, use) => {
     await use(new EinstellungenPage(page));
+  },
+  titleBar: async ({ page }, use) => {
+    await use(new TitleBar(page));
   },
 });
 
