@@ -45,19 +45,20 @@ import {
   LEERE_AUSWAHL,
   type TeamPlatz,
 } from './auswahl-dokument';
+import { CHOICES_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 import { gleicheFolge } from './gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from './kind';
 
-/** The collection of the signed-in Elternteile's `AuswahlDokument`s, one per uid. */
-export const AUSWAHL_SAMMLUNG = 'auswahl';
-
-/** The document of the Elternteil `uid` in `firestore`. */
+/**
+ * The document of the Elternteil `uid` in `firestore`, in the collection of
+ * the signed-in Elternteile's `AuswahlDokument`s.
+ */
 export function auswahlDokumentVon(
   firestore: Firestore,
   uid: string
 ): DocumentReference {
-  return doc(firestore, AUSWAHL_SAMMLUNG, uid);
+  return doc(firestore, CHOICES_COLLECTION, uid);
 }
 
 /**
