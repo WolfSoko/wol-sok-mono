@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.154.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.153.0...v74.154.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Vereinsfarben in the Auswahl, device and account ([#2927](https://github.com/WolfSoko/wol-sok-mono/issues/2927)) ([572c988](https://github.com/WolfSoko/wol-sok-mono/commit/572c98881a66e9de931628f34d5830dea1fa22e3)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#rrggbb](https://github.com/WolfSoko/wol-sok-mono/issues/rrggbb)
+
 ## [74.153.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.152.0...v74.153.0) (2026-11-09)
 
 ### Features
