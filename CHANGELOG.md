@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.152.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.151.0...v74.152.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** the look "Hallenboden" (display face, scoreboard, court lines, worded results) ([#2922](https://github.com/WolfSoko/wol-sok-mono/issues/2922)) ([2b01002](https://github.com/WolfSoko/wol-sok-mono/commit/2b01002dc10ecae542ef0ea77637a62afd858d98)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918)
+
+### Chore
+
+* **release:** publish ([6e1e06a](https://github.com/WolfSoko/wol-sok-mono/commit/6e1e06a631bfc7da8fa485d9ead02fb093c95eda))
+
 ## [74.151.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.150.1...v74.151.0) (2026-11-09)
 
 ### Features
