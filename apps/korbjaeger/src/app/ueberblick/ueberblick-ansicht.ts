@@ -2,6 +2,7 @@ import {
   gemeinsamerUeberblick,
   nachNaechstemSpiel,
   zuletztGespielt,
+  type KaderFunde,
   type PersonId,
   type SaisonMitUeberblick,
   type SaisonSpiel,
@@ -11,7 +12,6 @@ import type { Kind } from '@wolsok/feat-korbjaeger-auswahl';
 import { aeltesterStand, type Stand } from '../basketball-data/stand';
 import type { HallenStand } from '../halle/hallen-stand';
 import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
-import type { KaderFunde } from './kader-suche';
 import { kartenName, type TeamKarte } from './team-karte';
 
 /** A followed Team as the overview holds it: its card and its reads. */
