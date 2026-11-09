@@ -16,8 +16,8 @@ import type { TeamImUeberblick } from './ueberblick-ansicht';
  * `teamId` as the overview holds it, from its reads (`lesung`, none yet
  * while it was just followed) and, where its Saison looks over, the read
  * of its Verein's Teams (`vereinsTeamsVon`); `mitKindern` where a Kind is
- * marked, so its Kader is searched. A Team whose Saison failed ends its search there, unable to
- * tell (`unvollstaendig`).
+ * marked, so its Kader is searched. A Team whose Saison failed ends its
+ * search there, unable to tell (`unvollstaendig`).
  */
 export function teamImUeberblick(
   teamId: TeamId,

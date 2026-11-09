@@ -1,11 +1,5 @@
-import type { Resource } from '@angular/core';
 import type { KaderFunde } from '@wolsok/feat-shared-basketball-data';
-
-/** What the overview reads of a running Kader search (`kaderSucheResource`). */
-export type KaderSuchStand = Pick<
-  Resource<KaderFunde | undefined>,
-  'value' | 'status' | 'isLoading'
-> & { hasValue(): boolean };
+import type { DatenResource } from '../basketball-data/basketball-data-resource';
 
 /** A search that could read nothing: its Team's Saison failed. */
 export const NICHT_LESBAR: KaderFunde = {
@@ -19,12 +13,11 @@ export type SuchEnde =
   | { readonly art: 'gescheitert' };
 
 /** How a search of a Team's Kader ended; none while it runs. */
-export function suchEnde(suche: KaderSuchStand): SuchEnde | undefined {
+export function suchEnde(
+  suche: DatenResource<KaderFunde | undefined>
+): SuchEnde | undefined {
   if (suche.hasValue()) {
-    const funde = suche.value();
-    if (funde !== undefined) {
-      return { art: 'gefunden', funde };
-    }
+    return { art: 'gefunden', funde: suche.value() };
   }
   return suche.status() === 'error' ? { art: 'gescheitert' } : undefined;
 }
@@ -49,6 +42,6 @@ export function fundeNach(
 }
 
 /** Whether a search of a Team's Kader still runs, or has yet to start. */
-export function sucht(suche: KaderSuchStand): boolean {
+export function sucht(suche: DatenResource<KaderFunde | undefined>): boolean {
   return suche.isLoading() || suchEnde(suche) === undefined;
 }

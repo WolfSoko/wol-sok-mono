@@ -2,10 +2,10 @@ import {
   gemeinsamerUeberblick,
   nachNaechstemSpiel,
   zuletztGespielt,
+  type KaderFunde,
   type PersonId,
   type SaisonMitUeberblick,
   type SaisonSpiel,
-  type KaderFunde,
   type Spiel,
 } from '@wolsok/feat-shared-basketball-data';
 import type { Kind } from '@wolsok/feat-korbjaeger-auswahl';

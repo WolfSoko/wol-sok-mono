@@ -58,9 +58,10 @@ only the wiring. What the overview shows does not change.
   and `lesungenBeenden`. No signal of the service leaks in; the factory
   takes plain `() => …` getters.
 - **A Team as the overview holds it becomes `team-im-ueberblick.ts`:**
-  `teamImUeberblick(teamId, lesung, vereinsTeams, mitKindern)`, the former
-  private `imUeberblick`, a plain function reading the given reads. It sits
-  beside `TeamImUeberblick`'s consumers, not inside the service.
+  `teamImUeberblick(teamId, lesung, vereinsTeamsVon, mitKindern)`, the
+  former private `imUeberblick`, a plain function reading the given reads,
+  with a spec of its own. It takes the Verein's read as a lookup, so the
+  Verein map is read only where the Saison looks over, as before.
 - **Keyed reconciling becomes `abgleichen.ts`:** the generic
   `abgleichen(vorher, keys, lesen, ende)`, with a spec (kept entries keep
   their identity, new ones made once, dropped ones ended, key order kept).
@@ -78,8 +79,8 @@ only the wiring. What the overview shows does not change.
 2. The app's `kader-suche.ts` holds only `KADER_SUCHE_SPIELE`,
    `kaderSucheResource` and `gleicherAuftrag`; `gleicherAuftrag`'s specs pass.
 3. `abgleichen.ts`, `kader-funde.ts`, `team-lesungen.ts` and
-   `team-im-ueberblick.ts` exist; `abgleichen` and `fundeNach`/`suchEnde`
-   have specs of their own.
+   `team-im-ueberblick.ts` exist; `abgleichen`, `fundeNach`/`suchEnde` and
+   `teamImUeberblick` have specs of their own.
 4. `meine-teams-ueberblick.ts` is at most 130 lines and holds no function
    outside the class.
 5. `ueberblick.component.spec.ts` is unchanged and green; the app's other

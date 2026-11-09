@@ -1,25 +1,19 @@
-import { signal, type ResourceStatus } from '@angular/core';
+import type { ResourceStatus } from '@angular/core';
 import type { KaderFunde } from '@wolsok/feat-shared-basketball-data';
-import {
-  fundeNach,
-  NICHT_LESBAR,
-  suchEnde,
-  sucht,
-  type KaderSuchStand,
-} from './kader-funde';
+import { fundeNach, NICHT_LESBAR, suchEnde, sucht } from './kader-funde';
+import { fakeDatenResource } from '../../testing/fake-daten-resource';
+import type { DatenResource } from '../basketball-data/basketball-data-resource';
 
 const FUNDE: KaderFunde = {
   spiele: new Map([[3, new Map([[4711, 'Lumi']])]]),
   unvollstaendig: false,
 };
 
-function suche(status: ResourceStatus, funde?: KaderFunde): KaderSuchStand {
-  return {
-    hasValue: () => funde !== undefined,
-    value: signal(funde),
-    status: signal(status),
-    isLoading: signal(status === 'loading' || status === 'reloading'),
-  };
+function suche(
+  status: ResourceStatus,
+  value?: KaderFunde
+): DatenResource<KaderFunde | undefined> {
+  return fakeDatenResource({ status, value });
 }
 
 describe('suchEnde', () => {
