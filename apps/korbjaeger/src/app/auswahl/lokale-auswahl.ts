@@ -1,11 +1,14 @@
-import { signal, type Signal } from '@angular/core';
-import type { TeamId } from '@wolsok/feat-shared-basketball-data';
+import { computed, signal, type Signal } from '@angular/core';
+import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
 import type { Auswahl } from './auswahl';
 import {
   auswahlDokumentLesen,
   auswahlDokumentMit,
+  LEERE_AUSWAHL,
+  type AuswahlInhalt,
   type GelesenesDokument,
 } from './auswahl-dokument';
+import { kindMit, type Kind, type MarkierbarerSpieler } from './kind';
 import { istSpeicherVoll } from '../geraete-speicher';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 
@@ -28,50 +31,102 @@ export type Fenster = Pick<
  *   again before each write, so two tabs keep each other's changes.
  * - A document that cannot be read or is none counts as empty; fields it
  *   does not know are kept on a write.
- * - A document of a newer version is left alone: no Team is followed, and
- *   `folgen` and `entfolgen` reject with `AuswahlZuNeuError`.
+ * - A document of a newer version is left alone: no Team is followed, no
+ *   Kind marked, and every change rejects with `AuswahlZuNeuError`.
  * - Where the storage is full, it has `platzSchaffen` free it (of the
  *   cached DBB answers) and tries once more. Where it still takes nothing
- *   (private mode, full), Meine Teams last for this visit only.
+ *   (private mode, full), the selection lasts for this visit only.
  */
 export class LokaleAuswahl implements Auswahl {
   public readonly teams: Signal<readonly TeamId[]>;
+  public readonly kinder: Signal<readonly Kind[]>;
 
-  private readonly gefolgt;
+  private readonly inhalt = signal<AuswahlInhalt>(LEERE_AUSWAHL);
 
   private readonly beiAenderung = (event: Event): void => {
     if (
       event instanceof StorageEvent &&
       (event.key === null || event.key === AUSWAHL_SCHLUESSEL)
     ) {
-      this.gefolgt.set(teamsAus(this.lesen()));
+      this.inhalt.set(inhaltAus(this.lesen()));
     }
   };
 
   /**
    * @param platzSchaffen frees the device's storage of what may give way
-   *   (the cached DBB answers) when it is full; Meine Teams always win.
+   *   (the cached DBB answers) when it is full; the selection always wins.
    */
   public constructor(
     private readonly speicher: GeraeteSpeicher | undefined,
     private readonly fenster?: Fenster,
     private readonly platzSchaffen: () => void = () => undefined
   ) {
-    // read at once, so `teams` is never undefined here
-    this.gefolgt = signal<readonly TeamId[]>(teamsAus(this.lesen()), {
-      equal: gleicheTeams,
+    // read at once, so `teams` and `kinder` are never undefined here
+    this.inhalt.set(inhaltAus(this.lesen()));
+    this.teams = computed(() => this.inhalt().teams, { equal: gleicheTeams });
+    this.kinder = computed(() => this.inhalt().kinder, {
+      equal: gleicheKinder,
     });
-    this.teams = this.gefolgt.asReadonly();
     fenster?.addEventListener('storage', this.beiAenderung);
   }
 
   public async folgen(team: TeamId): Promise<void> {
-    this.aendern((teams) => (teams.includes(team) ? teams : [...teams, team]));
+    this.aendern((inhalt) =>
+      inhalt.teams.includes(team)
+        ? inhalt
+        : { ...inhalt, teams: [...inhalt.teams, team] }
+    );
   }
 
   public async entfolgen(team: TeamId): Promise<void> {
-    this.aendern((teams) =>
-      teams.includes(team) ? teams.filter((id) => id !== team) : teams
+    this.aendern((inhalt) =>
+      inhalt.teams.includes(team)
+        ? { ...inhalt, teams: inhalt.teams.filter((id) => id !== team) }
+        : inhalt
+    );
+  }
+
+  public async markieren(
+    spieler: MarkierbarerSpieler,
+    spitzname?: string
+  ): Promise<void> {
+    this.aendern((inhalt) =>
+      istMarkiert(inhalt, spieler.personId)
+        ? inhalt
+        : {
+            ...inhalt,
+            kinder: [...inhalt.kinder, kindMit(spieler.personId, spitzname)],
+          }
+    );
+  }
+
+  public async spitznameSetzen(
+    person: PersonId,
+    spitzname: string | undefined
+  ): Promise<void> {
+    const neu = kindMit(person, spitzname);
+    this.aendern((inhalt) =>
+      inhalt.kinder.some(
+        (kind) => kind.personId === person && kind.spitzname !== neu.spitzname
+      )
+        ? {
+            ...inhalt,
+            kinder: inhalt.kinder.map((kind) =>
+              kind.personId === person ? neu : kind
+            ),
+          }
+        : inhalt
+    );
+  }
+
+  public async entmarkieren(person: PersonId): Promise<void> {
+    this.aendern((inhalt) =>
+      istMarkiert(inhalt, person)
+        ? {
+            ...inhalt,
+            kinder: inhalt.kinder.filter((kind) => kind.personId !== person),
+          }
+        : inhalt
     );
   }
 
@@ -84,19 +139,17 @@ export class LokaleAuswahl implements Auswahl {
    * Applies `aenderung` to what is stored now and stores the result, if
    * it changed anything.
    */
-  private aendern(
-    aenderung: (teams: readonly TeamId[]) => readonly TeamId[]
-  ): void {
+  private aendern(aenderung: (inhalt: AuswahlInhalt) => AuswahlInhalt): void {
     const gelesen = this.lesen();
     if (gelesen.art === 'neuer') {
-      this.gefolgt.set([]);
+      this.inhalt.set(LEERE_AUSWAHL);
       throw new AuswahlZuNeuError();
     }
-    // where nothing could be read, what this visit followed stands
-    const { teams: vorher, roh } =
-      gelesen.art === 'aktuell' ? gelesen : { teams: this.gefolgt(), roh: {} };
+    // where nothing could be read, what this visit chose stands
+    const [vorher, roh] =
+      gelesen.art === 'aktuell' ? [gelesen, gelesen.roh] : [this.inhalt(), {}];
     const nachher = aenderung(vorher);
-    this.gefolgt.set(nachher);
+    this.inhalt.set(nachher);
     if (nachher !== vorher) {
       this.schreiben(auswahlDokumentMit(nachher, roh));
     }
@@ -119,7 +172,7 @@ export class LokaleAuswahl implements Auswahl {
       if (istSpeicherVoll(error)) {
         this.nachPlatzSchreiben(text);
       }
-      // blocked: Meine Teams last for this visit only
+      // blocked: the selection lasts for this visit only
     }
   }
 
@@ -129,15 +182,29 @@ export class LokaleAuswahl implements Auswahl {
       this.platzSchaffen();
       this.speicher?.setItem(AUSWAHL_SCHLUESSEL, text);
     } catch {
-      // still full: Meine Teams last for this visit only
+      // still full: the selection lasts for this visit only
     }
   }
 }
 
-function teamsAus(gelesen: GelesenesDokument): readonly TeamId[] {
-  return gelesen.art === 'aktuell' ? gelesen.teams : [];
+function inhaltAus(gelesen: GelesenesDokument): AuswahlInhalt {
+  return gelesen.art === 'aktuell' ? gelesen : LEERE_AUSWAHL;
+}
+
+function istMarkiert(inhalt: AuswahlInhalt, person: PersonId): boolean {
+  return inhalt.kinder.some((kind) => kind.personId === person);
 }
 
 function gleicheTeams(a: readonly TeamId[], b: readonly TeamId[]): boolean {
   return a.length === b.length && a.every((team, i) => team === b[i]);
+}
+
+function gleicheKinder(a: readonly Kind[], b: readonly Kind[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every(
+      (kind, i) =>
+        kind.personId === b[i].personId && kind.spitzname === b[i].spitzname
+    )
+  );
 }

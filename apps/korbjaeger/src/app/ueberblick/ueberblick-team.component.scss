@@ -3,10 +3,23 @@ mat-card-content {
   gap: 0.75rem;
 }
 
-mat-card-title a {
+mat-card-title a,
+mat-card-subtitle a {
   color: inherit;
 }
 
 p {
   margin: 0;
+}
+
+.stern {
+  display: grid;
+  place-items: center;
+  color: var(--mat-sys-primary);
+}
+
+.kader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }

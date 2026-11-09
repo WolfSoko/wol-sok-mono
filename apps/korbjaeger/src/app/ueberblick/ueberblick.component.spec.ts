@@ -3,11 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
+  type BenannterSpieler,
   type Halle,
   type Liga,
   type SpielDetails,
   type Spiel,
   type SpielPartei,
+  type Spielbericht,
   type Team,
   type TeamId,
   type TeamSaison,
@@ -23,6 +25,7 @@ import type { KorbReadOptions } from '../basketball-data/lesung';
 import { HEUTE } from '../heute';
 import { JETZT } from '../jetzt';
 import { UeberblickComponent } from './ueberblick.component';
+import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
 
 /** The day the specs run on. */
 const HEUTE_IM_SPEC = '2026-11-08';
@@ -91,6 +94,13 @@ function saison(von: Team, ...spiele: Spiel[]): TeamSaison {
 type TeamSpieleRead = KorbjaegerData['teamSpiele'];
 type SpielRead = KorbjaegerData['spiel'];
 type VereinsTeamsRead = KorbjaegerData['vereinsTeams'];
+type BerichtRead = KorbjaegerData['spielbericht'];
+
+/** No Spiel has a Spielbericht yet. */
+const OHNE_BERICHT: BerichtRead = async () => undefined;
+
+/** A Spielbericht read that never settles. */
+const NIE_BERICHT = new Promise<never>(() => undefined);
 
 /** A Verein whose recent Spiele show no Team. */
 const OHNE_TEAMS: VereinsTeamsRead = async (vereinId) => ({
@@ -122,15 +132,18 @@ const inDerSporthalle: SpielRead = async (spielId) => ({
 function fakeData(
   saisons: readonly (TeamSaison | { teamId: TeamId; fehler: Error })[],
   details: SpielRead = inDerSporthalle,
-  vereinsTeams: VereinsTeamsRead = OHNE_TEAMS
+  vereinsTeams: VereinsTeamsRead = OHNE_TEAMS,
+  spielbericht: BerichtRead = OHNE_BERICHT
 ): {
   readonly teamSpiele: ReturnType<typeof vi.fn<TeamSpieleRead>>;
   readonly spiel: ReturnType<typeof vi.fn<SpielRead>>;
   readonly vereinsTeams: ReturnType<typeof vi.fn<VereinsTeamsRead>>;
+  readonly spielbericht: ReturnType<typeof vi.fn<BerichtRead>>;
 } {
   return {
     spiel: vi.fn<SpielRead>(details),
     vereinsTeams: vi.fn<VereinsTeamsRead>(vereinsTeams),
+    spielbericht: vi.fn<BerichtRead>(spielbericht),
     teamSpiele: vi.fn<TeamSpieleRead>(async (teamId) => {
       const gefunden = saisons.find((s) =>
         'fehler' in s ? s.teamId === teamId : s.team.id === teamId
@@ -148,7 +161,10 @@ function fakeData(
  * `Auswahl`), once the reads that settle have settled.
  */
 async function render(
-  data: Pick<KorbjaegerData, 'teamSpiele' | 'spiel' | 'vereinsTeams'>,
+  data: Pick<
+    KorbjaegerData,
+    'teamSpiele' | 'spiel' | 'vereinsTeams' | 'spielbericht'
+  >,
   gefolgt: readonly TeamId[] | Auswahl
 ): Promise<{
   readonly seite: HTMLElement;
@@ -169,8 +185,12 @@ async function render(
   const fixture = TestBed.createComponent(UeberblickComponent);
   // not whenStable: it waits for every read, and some never settle here
   const stabil = async (): Promise<void> => {
-    fixture.detectChanges();
-    await new Promise((resolve) => setTimeout(resolve));
+    // the Kader search starts once a Saison is read, reading on a Spiel
+    // at a time: a few rounds let it settle
+    for (let runde = 0; runde < 8; runde++) {
+      fixture.detectChanges();
+      await new Promise((resolve) => setTimeout(resolve));
+    }
     fixture.detectChanges();
   };
   await stabil();
@@ -207,11 +227,13 @@ describe('UeberblickComponent', () => {
   it('claims nothing before Meine Teams are read', async () => {
     const data = fakeData([]);
 
-    const { seite } = await render(data, {
-      teams: signal(undefined),
-      folgen: () => Promise.resolve(),
-      entfolgen: () => Promise.resolve(),
-    });
+    const { seite } = await render(
+      data,
+      fakeAuswahl({
+        teams: signal(undefined),
+        kinder: signal(undefined),
+      })
+    );
 
     expect(seite.querySelector('[data-qa="ueberblick-leer"]')).toBeNull();
     expect(eintraege(seite)).toEqual([]);
@@ -593,6 +615,7 @@ describe('UeberblickComponent', () => {
         {
           spiel: inDerSporthalle,
           vereinsTeams: OHNE_TEAMS,
+          spielbericht: OHNE_BERICHT,
           teamSpiele: async (teamId) =>
             teamId === GIFHORN.id
               ? NIE
@@ -675,6 +698,7 @@ describe('UeberblickComponent', () => {
         {
           spiel: inDerSporthalle,
           vereinsTeams: OHNE_TEAMS,
+          spielbericht: OHNE_BERICHT,
           teamSpiele: (teamId) =>
             teamId === GIFHORN.id
               ? new Promise((resolve) => (gifhornLaden = resolve))
@@ -865,6 +889,447 @@ describe('UeberblickComponent', () => {
       expect(
         text(eintrag.querySelector('[data-qa="vereins-teams-fehler"]'))
       ).toContain('Der DBB ist gerade nicht erreichbar.');
+    });
+  });
+
+  describe('the Kinder', () => {
+    function benannt(personId: number, vorname: string): BenannterSpieler {
+      return { art: 'benannt', personId, vorname, nachname: 'Ahornwiese' };
+    }
+
+    const LUMI = benannt(4711, 'Lumi');
+    const MORVO = benannt(4712, 'Morvo');
+    const NELKA = benannt(4713, 'Nelka');
+
+    /**
+     * Spielberichte by Spiel: the home Kader as given, an Anonymer Spieler
+     * and a player of the other Team on the away side.
+     */
+    function berichte(
+      heimKader: Readonly<Record<number, readonly BenannterSpieler[]>>,
+      gastKader: Readonly<Record<number, readonly BenannterSpieler[]>> = {}
+    ): BerichtRead {
+      return async (spielId): Promise<Spielbericht | undefined> => {
+        const heim = heimKader[spielId];
+        const gast = gastKader[spielId];
+        if (heim === undefined && gast === undefined) {
+          return undefined;
+        }
+        return {
+          spielId,
+          heim: {
+            spielerwerteErfasst: false,
+            eintraege: [...(heim ?? []), { art: 'anonym' }],
+          },
+          gast: { spielerwerteErfasst: false, eintraege: [...(gast ?? [])] },
+        };
+      };
+    }
+
+    async function mitKindern(
+      teams: readonly TeamId[],
+      kinder: readonly (readonly [BenannterSpieler, string?])[]
+    ): Promise<LokaleAuswahl> {
+      const auswahl = await folgend(teams);
+      for (const [spieler, spitzname] of kinder) {
+        await auswahl.markieren(spieler, spitzname);
+      }
+      return auswahl;
+    }
+
+    function kinderAbschnitte(seite: HTMLElement): HTMLElement[] {
+      return [
+        ...seite.querySelectorAll<HTMLElement>('[data-qa="ueberblick-kind"]'),
+      ];
+    }
+
+    function kindNamen(seite: HTMLElement): (string | undefined)[] {
+      return kinderAbschnitte(seite).map((abschnitt) =>
+        text(teil(abschnitt, 'kind-name'))
+      );
+    }
+
+    const GESPIELT_AM = (datum: string) =>
+      ({ status: GESPIELT_78_47, uhrzeit: '10:00', datum }) as const;
+
+    it('groups the overview by Kind, with the Teams it plays for, and lists the others below', async () => {
+      const letztesWas = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const letztesOes = spiel(OESINGEN, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [
+          saison(
+            WASBUETTEL,
+            letztesWas,
+            spiel(WASBUETTEL, OESINGEN, '2026-11-21')
+          ),
+          saison(OESINGEN, letztesOes, spiel(OESINGEN, GIFHORN, '2026-11-14')),
+        ],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [letztesWas.id]: [LUMI], [letztesOes.id]: [NELKA] })
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id, OESINGEN.id], [[LUMI, 'Lu']])
+      );
+
+      const [lumi] = kinderAbschnitte(seite);
+      expect(kindNamen(seite)).toEqual(['Lu']);
+      expect(text(teil(lumi, 'kind-teams'))).toBe('MTV Wasbüttel');
+      expect(text(teil(lumi, 'naechstes'))).toContain('Sa., 21.11.2026');
+      expect(text(teil(lumi, 'letztes'))).toContain('78:47');
+      expect(text(teil(lumi, 'kader'))).toBe('check_circle Im Kader');
+      expect(text(seite.querySelector('[data-qa="ueberblick-weitere"]'))).toBe(
+        'Weitere Teams'
+      );
+      expect(teamNamen(seite)).toEqual(['SV Groß Oesingen']);
+    });
+
+    it('shows the same Kind once across two Teams, with the first next Spiel of both', async () => {
+      const letztesU12 = spiel(WASBUETTEL, GIFHORN, '2026-10-31', {
+        status: GESPIELT_78_47,
+      });
+      const letztesU14 = spiel(WASBUETTEL_U14, GIFHORN, '2026-11-07', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [
+          saison(
+            WASBUETTEL,
+            letztesU12,
+            spiel(WASBUETTEL, GIFHORN, '2026-11-21')
+          ),
+          saison(
+            WASBUETTEL_U14,
+            letztesU14,
+            spiel(WASBUETTEL_U14, OESINGEN, '2026-11-14')
+          ),
+        ],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [letztesU12.id]: [LUMI], [letztesU14.id]: [LUMI] })
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id, WASBUETTEL_U14.id], [[LUMI]])
+      );
+
+      expect(kinderAbschnitte(seite)).toHaveLength(1);
+      const [lumi] = kinderAbschnitte(seite);
+      // no Spitzname: the first name its Kader gives, read fresh
+      expect(text(teil(lumi, 'kind-name'))).toBe('Lumi');
+      expect(text(teil(lumi, 'kind-teams'))).toBe(
+        'MTV Wasbüttel · MTV Wasbüttel U14'
+      );
+      expect(text(teil(lumi, 'naechstes'))).toContain('Sa., 14.11.2026');
+      expect(text(teil(lumi, 'naechstes'))).toContain('SV Groß Oesingen');
+      expect(text(teil(lumi, 'letztes'))).toContain('Sa., 07.11.2026');
+      expect(teamNamen(seite)).toEqual([]);
+      expect(seite.querySelector('[data-qa="ueberblick-weitere"]')).toBeNull();
+    });
+
+    it('orders the Kinder by their next Spiel, a Kind without one last', async () => {
+      const gespielt = [WASBUETTEL, GIFHORN, OESINGEN].map((von) =>
+        spiel(von, WASBUETTEL_U14, '2026-11-01', { status: GESPIELT_78_47 })
+      );
+      const data = fakeData(
+        [
+          saison(
+            WASBUETTEL,
+            gespielt[0],
+            spiel(WASBUETTEL, OESINGEN, '2026-11-28')
+          ),
+          saison(GIFHORN, gespielt[1], spiel(GIFHORN, OESINGEN, '2026-11-14')),
+          saison(OESINGEN, gespielt[2]),
+        ],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({
+          [gespielt[0].id]: [LUMI],
+          [gespielt[1].id]: [MORVO],
+          [gespielt[2].id]: [NELKA],
+        })
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern(
+          [WASBUETTEL.id, GIFHORN.id, OESINGEN.id],
+          [[NELKA], [LUMI], [MORVO]]
+        )
+      );
+
+      expect(kindNamen(seite)).toEqual(['Morvo', 'Lumi', 'Nelka']);
+    });
+
+    it('says when the Kind was not on the Kader of the last Spiel', async () => {
+      const davor = spiel(WASBUETTEL, GIFHORN, '2026-10-25', {
+        status: GESPIELT_78_47,
+      });
+      const zuletzt = spiel(WASBUETTEL, OESINGEN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [saison(WASBUETTEL, davor, zuletzt)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [davor.id]: [LUMI], [zuletzt.id]: [MORVO] })
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id], [[LUMI]])
+      );
+
+      const [lumi] = kinderAbschnitte(seite);
+      expect(text(teil(lumi, 'letztes'))).toContain('SV Groß Oesingen');
+      expect(text(teil(lumi, 'kader'))).toBe(
+        'remove_circle_outline Nicht im Kader'
+      );
+    });
+
+    it('reads only the last Spielbericht where it names every Kind', async () => {
+      const gespielt = ['2026-10-18', '2026-10-25', '2026-11-01'].map((datum) =>
+        spiel(WASBUETTEL, GIFHORN, datum, { status: GESPIELT_78_47 })
+      );
+      const data = fakeData(
+        [saison(WASBUETTEL, ...gespielt)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte(Object.fromEntries(gespielt.map(({ id }) => [id, [LUMI]])))
+      );
+
+      await render(data, await mitKindern([WASBUETTEL.id], [[LUMI]]));
+
+      expect(data.spielbericht.mock.calls.map(([id]) => id)).toEqual([
+        gespielt[2].id,
+      ]);
+    });
+
+    it("never looks into the opponent's Kader for a Kind", async () => {
+      const gespielt = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [saison(WASBUETTEL, gespielt)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [gespielt.id]: [] }, { [gespielt.id]: [LUMI] })
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id], [[LUMI, 'Lu']])
+      );
+
+      const [lumi] = kinderAbschnitte(seite);
+      expect(text(teil(lumi, 'kind-fehlt'))).toContain(
+        'In den letzten Spielberichten deiner Teams steht dieses Kind nicht.'
+      );
+      expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
+    });
+
+    it('puts a Team among the others once the Kind missed its last 5 played Spiele', async () => {
+      const gespielt = [
+        '2026-10-04',
+        '2026-10-11',
+        '2026-10-18',
+        '2026-10-25',
+        '2026-11-01',
+        '2026-11-07',
+      ].map((datum) => spiel(WASBUETTEL, GIFHORN, datum, GESPIELT_AM(datum)));
+      // the Kind played only in the oldest, the sixth Spiel back
+      const data = fakeData(
+        [saison(WASBUETTEL, ...gespielt)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte(
+          Object.fromEntries(
+            gespielt.map(({ id }, i) => [id, i === 0 ? [LUMI] : [MORVO]])
+          )
+        )
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id], [[LUMI]])
+      );
+
+      expect(data.spielbericht).toHaveBeenCalledTimes(5);
+      expect(data.spielbericht).not.toHaveBeenCalledWith(
+        gespielt[0].id,
+        expect.anything()
+      );
+      expect(kindNamen(seite)).toEqual(['Mein Kind']);
+      expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
+    });
+
+    it('finds the Kind in the fifth played Spiel back', async () => {
+      const gespielt = [
+        '2026-10-11',
+        '2026-10-18',
+        '2026-10-25',
+        '2026-11-01',
+        '2026-11-07',
+      ].map((datum) => spiel(WASBUETTEL, GIFHORN, datum, GESPIELT_AM(datum)));
+      const data = fakeData(
+        [saison(WASBUETTEL, ...gespielt)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte(
+          Object.fromEntries(
+            gespielt.map(({ id }, i) => [id, i === 0 ? [LUMI] : [MORVO]])
+          )
+        )
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id], [[LUMI]])
+      );
+
+      const [lumi] = kinderAbschnitte(seite);
+      expect(text(teil(lumi, 'kind-teams'))).toBe('MTV Wasbüttel');
+      // played that Spiel, but not the last one
+      expect(text(teil(lumi, 'kader'))).toContain('Nicht im Kader');
+    });
+
+    it("says the Spielberichte can't be read where the search failed, and lists the Team below", async () => {
+      const gespielt = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [saison(WASBUETTEL, gespielt)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        async () => {
+          throw new BasketballDataError('offline', 'no network');
+        }
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id], [[LUMI, 'Lu']])
+      );
+
+      const [lumi] = kinderAbschnitte(seite);
+      expect(text(teil(lumi, 'kind-fehlt'))).toBe(
+        'Die Spielberichte deiner Teams lassen sich gerade nicht lesen.'
+      );
+      expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
+    });
+
+    it('shows a Team in neither list while its Kader is still read', async () => {
+      const gespielt = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [saison(WASBUETTEL, gespielt)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        () => NIE_BERICHT
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id], [[LUMI, 'Lu']])
+      );
+
+      const [lumi] = kinderAbschnitte(seite);
+      expect(lumi.querySelector('mat-progress-bar')).not.toBeNull();
+      expect(teil(lumi, 'kind-fehlt')).toBeNull();
+      expect(teamNamen(seite)).toEqual([]);
+    });
+
+    it('reads no Spielbericht while no Kind is marked', async () => {
+      const data = fakeData([
+        saison(
+          WASBUETTEL,
+          spiel(WASBUETTEL, GIFHORN, '2026-11-01', { status: GESPIELT_78_47 })
+        ),
+      ]);
+
+      await render(data, [WASBUETTEL.id]);
+
+      expect(data.spielbericht).not.toHaveBeenCalled();
+    });
+
+    it('starts the search once a Kind is marked, and groups the Team under it', async () => {
+      const gespielt = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [saison(WASBUETTEL, gespielt)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [gespielt.id]: [LUMI] })
+      );
+      const { seite, auswahl, stabil } = await render(data, [WASBUETTEL.id]);
+
+      await auswahl.markieren(LUMI, 'Lu');
+      await stabil();
+
+      expect(kindNamen(seite)).toEqual(['Lu']);
+      expect(teamNamen(seite)).toEqual([]);
+    });
+
+    describe('while no Kind is marked', () => {
+      function hinweis(seite: HTMLElement): string | undefined {
+        return text(seite.querySelector('[data-qa="ueberblick-hinweis"]'));
+      }
+
+      it('explains that a Kind can be marked after its first Spiel, while no Team has played', async () => {
+        const { seite } = await render(
+          fakeData([
+            saison(WASBUETTEL, spiel(WASBUETTEL, GIFHORN, '2026-11-14')),
+          ]),
+          [WASBUETTEL.id]
+        );
+
+        expect(hinweis(seite)).toBe(
+          'Dein Kind kannst du markieren, sobald es nach seinem ersten Spiel in einem Spielbericht steht: Öffne dann das Spiel und markiere es im Kader.'
+        );
+        expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
+      });
+
+      it('asks to open a played Spiel once a Team has played', async () => {
+        const { seite } = await render(
+          fakeData([
+            saison(WASBUETTEL, spiel(WASBUETTEL, GIFHORN, '2026-11-14')),
+            saison(
+              GIFHORN,
+              spiel(GIFHORN, OESINGEN, '2026-11-01', { status: GESPIELT_78_47 })
+            ),
+          ]),
+          [WASBUETTEL.id, GIFHORN.id]
+        );
+
+        expect(hinweis(seite)).toBe(
+          'Öffne ein gespieltes Spiel, um dein Kind im Kader zu markieren.'
+        );
+      });
+
+      it('says neither while no Team is followed', async () => {
+        const { seite } = await render(fakeData([]), []);
+        expect(hinweis(seite)).toBeUndefined();
+      });
+
+      it('says neither once a Kind is marked', async () => {
+        const { seite } = await render(
+          fakeData([
+            saison(WASBUETTEL, spiel(WASBUETTEL, GIFHORN, '2026-11-14')),
+          ]),
+          await mitKindern([WASBUETTEL.id], [[LUMI]])
+        );
+
+        expect(hinweis(seite)).toBeUndefined();
+      });
     });
   });
 });

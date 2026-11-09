@@ -1,10 +1,12 @@
 import type { Resource } from '@angular/core';
 import {
+  istTeam,
   parteiName,
   type Kader,
   type SpielDetails,
   type SpielSeite,
   type Spielbericht,
+  type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
 
@@ -14,6 +16,11 @@ export interface KaderTeil {
   /** The Team's name, or its side while the Spiel cannot be read. */
   readonly titel: string;
   readonly kader: Kader;
+  /**
+   * Whether the Team of this side is one of Meine Teams: only there can a
+   * Kind be marked and is it highlighted (ADR 0019).
+   */
+  readonly gefolgt: boolean;
 }
 
 /** What the Spiel page shows of the Spielbericht. */
@@ -31,12 +38,14 @@ const SEITE: Readonly<Record<SpielSeite, string>> = {
 
 /**
  * The Spielbericht part of the page, from its read (`bericht`) and the
- * Spiel's (`spiel`), which names the Kader. `undefined` where the
- * Spielbericht failed with the Spiel: the page's alert says why, once.
+ * Spiel's (`spiel`), which names the Kader and tells whose Team is one of
+ * Meine Teams (`gefolgt`, none while they are not read). `undefined` where
+ * the Spielbericht failed with the Spiel: the page's alert says why, once.
  */
 export function spielberichtTeil(
   bericht: Resource<Spielbericht | undefined>,
-  spiel: Resource<SpielDetails | undefined>
+  spiel: Resource<SpielDetails | undefined>,
+  gefolgt: readonly TeamId[] = []
 ): SpielberichtTeil | undefined {
   const details = spiel.hasValue() ? spiel.value() : undefined;
   switch (bericht.status()) {
@@ -55,8 +64,8 @@ export function spielberichtTeil(
         : {
             art: 'da',
             kader: [
-              teil('heim', gelesen, details),
-              teil('gast', gelesen, details),
+              teil('heim', gelesen, details, gefolgt),
+              teil('gast', gelesen, details, gefolgt),
             ],
           };
     }
@@ -68,12 +77,16 @@ export function spielberichtTeil(
 function teil(
   seite: SpielSeite,
   bericht: Spielbericht,
-  details: SpielDetails | undefined
+  details: SpielDetails | undefined,
+  gefolgt: readonly TeamId[]
 ): KaderTeil {
+  const partei = details?.spiel[seite];
   return {
     seite,
-    titel: details ? parteiName(details.spiel[seite]) : SEITE[seite],
+    titel: partei ? parteiName(partei) : SEITE[seite],
     kader: bericht[seite],
+    gefolgt:
+      partei !== undefined && gefolgt.some((team) => istTeam(partei, team)),
   };
 }
 

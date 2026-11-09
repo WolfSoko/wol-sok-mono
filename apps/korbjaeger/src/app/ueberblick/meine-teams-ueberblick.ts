@@ -10,9 +10,10 @@ import {
   type Signal,
 } from '@angular/core';
 import {
-  nachNaechstemSpiel,
   naechstesSpiel,
   saisonBeendet,
+  zuletztGespielt,
+  type PersonId,
   type SpielDetails,
   type TeamId,
   type TeamSaison,
@@ -28,30 +29,52 @@ import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource'
 import { hallenStand } from '../halle/hallen-stand';
 import { HEUTE } from '../heute';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
-import { fehlerKarte, geladeneKarte, type TeamKarte } from './team-karte';
+import {
+  gleicherAuftrag,
+  KADER_SUCHE_SPIELE,
+  kaderSucheResource,
+  type KaderFunde,
+} from './kader-suche';
+import { fehlerKarte, geladeneKarte } from './team-karte';
+import {
+  ueberblickAnsicht,
+  type TeamImUeberblick,
+  type UeberblickAnsicht,
+} from './ueberblick-ansicht';
 
 /**
  * The reads of one followed Team: its Saison, and its next Spiel's details
- * for the Halle, which starts once that Spiel is known; with the Verein
+ * for the Halle, which starts once that Spiel is known; the search of its
+ * Kader for the marked Kinder, once its Saison is read; with the Verein
  * whose Teams to suggest once its Saison looks over.
  */
 interface TeamLesungen {
   readonly saison: DatenResource<TeamSaison | undefined>;
   readonly naechsteDetails: DatenResource<SpielDetails | undefined>;
+  /** None while no Kind is marked. */
+  readonly kaderSuche: DatenResource<KaderFunde | undefined>;
   /** The Team's Verein once its Saison looks over (`saisonBeendet`). */
   readonly saisonEndeVerein: Signal<VereinId | undefined>;
 }
 
 /**
  * The overview's data: per followed Team its Saison and its next Spiel's
- * Halle, each loading and failing on its own, and the Teams of each
- * Verein one of them suggests from (one read per Verein, however many of
- * its Teams look done). A Team followed is read once; one unfollowed has
- * its reads cancelled and dropped, the others' stay as they are.
+ * Halle, each loading and failing on its own; once a Kind is marked, the
+ * Spielberichte of its last played Spiele (`kaderSuchen`), to tell which
+ * Kind plays for it; and the Teams of each Verein one of them suggests
+ * from (one read per Verein, however many of its Teams look done). A Team
+ * followed is read once; one unfollowed has its reads cancelled and
+ * dropped, the others' stay as they are.
  */
 @Injectable()
 export class MeineTeamsUeberblick {
   private readonly teams = inject(AUSWAHL).teams;
+  private readonly kinder = inject(AUSWAHL).kinder;
+  /** The marked Kinder's persons: a new Spitzname starts no search. */
+  private readonly kinderPersonen = computed<readonly PersonId[]>(
+    () => (this.kinder() ?? []).map(({ personId }) => personId),
+    { equal: gleichePersonen }
+  );
   private readonly heute = inject(HEUTE);
   private readonly injector = inject(Injector);
   private readonly lesungen = signal<ReadonlyMap<TeamId, TeamLesungen>>(
@@ -72,21 +95,20 @@ export class MeineTeamsUeberblick {
   );
 
   /**
-   * Each of Meine Teams as its card, the Team that plays first first
-   * (`nachNaechstemSpiel`); cards still loading or failed follow, in the
-   * order they were followed. `undefined` until Meine Teams are read.
+   * The overview: each marked Kind with the Teams it plays for, and the
+   * other Teams as cards (`ueberblickAnsicht`). `undefined` until Meine
+   * Teams and the Kinder are read.
    */
-  public readonly karten = computed<readonly TeamKarte[] | undefined>(() => {
+  public readonly ansicht = computed<UeberblickAnsicht | undefined>(() => {
     const teams = this.teams();
-    if (teams === undefined) {
+    const kinder = this.kinder();
+    if (teams === undefined || kinder === undefined) {
       return undefined;
     }
-    const karten = teams.map((teamId) =>
-      this.karte(teamId, this.lesungen().get(teamId))
+    const imUeberblick = teams.map((teamId) =>
+      this.imUeberblick(teamId, this.lesungen().get(teamId), kinder.length > 0)
     );
-    return nachNaechstemSpiel(karten, (karte) =>
-      karte.art === 'geladen' ? karte.naechstesSpiel : undefined
-    );
+    return ueberblickAnsicht(kinder, imUeberblick, this.heute());
   });
 
   public constructor() {
@@ -122,27 +144,47 @@ export class MeineTeamsUeberblick {
     });
   }
 
-  private karte(teamId: TeamId, lesung: TeamLesungen | undefined): TeamKarte {
+  /**
+   * `teamId` with its card and reads; `mitKindern` where a Kind is marked,
+   * so its Kader is searched.
+   */
+  private imUeberblick(
+    teamId: TeamId,
+    lesung: TeamLesungen | undefined,
+    mitKindern: boolean
+  ): TeamImUeberblick {
     const saison = lesung?.saison;
-    if (lesung && saison?.hasValue()) {
-      const verein = lesung.saisonEndeVerein();
-      const vereinsTeams =
-        verein === undefined ? undefined : this.vereinsLesungen().get(verein);
-      return geladeneKarte(saison.value(), this.heute(), {
-        // the oldest of what the card shows
-        stand: aeltesterStand(
-          saison.stand(),
-          lesung.naechsteDetails.stand(),
-          vereinsTeams?.stand()
-        ),
-        halle: hallenStand(lesung.naechsteDetails),
-        saisonBeendet: verein !== undefined,
-        vereinsTeams: vereinsTeams && vereinsTeamsStand(vereinsTeams, teamId),
-      });
+    if (!lesung || !saison?.hasValue()) {
+      return {
+        karte:
+          saison?.status() === 'error'
+            ? fehlerKarte(teamId, saison.error())
+            : { art: 'laedt', teamId },
+        ...(mitKindern && { funde: 'laeuft' as const }),
+      };
     }
-    return saison?.status() === 'error'
-      ? fehlerKarte(teamId, saison.error())
-      : { art: 'laedt', teamId };
+    const verein = lesung.saisonEndeVerein();
+    const vereinsTeams =
+      verein === undefined ? undefined : this.vereinsLesungen().get(verein);
+    const halle = hallenStand(lesung.naechsteDetails);
+    const karte = geladeneKarte(saison.value(), this.heute(), {
+      // the oldest of what the card shows
+      stand: aeltesterStand(
+        saison.stand(),
+        lesung.naechsteDetails.stand(),
+        vereinsTeams?.stand()
+      ),
+      halle,
+      saisonBeendet: verein !== undefined,
+      vereinsTeams: vereinsTeams && vereinsTeamsStand(vereinsTeams, teamId),
+    });
+    return {
+      karte,
+      saison: saison.value(),
+      halle,
+      stand: aeltesterStand(saison.stand(), lesung.naechsteDetails.stand()),
+      ...(mitKindern && { funde: funde(lesung.kaderSuche) }),
+    };
   }
 
   /**
@@ -163,7 +205,25 @@ export class MeineTeamsUeberblick {
         ? saison.value().verein.id
         : undefined
     );
-    return { saison, naechsteDetails, saisonEndeVerein };
+    const auftrag = computed(
+      () => {
+        const kinder = this.kinderPersonen();
+        return saison.hasValue() && kinder.length > 0
+          ? {
+              team: teamId,
+              spiele: zuletztGespielt(
+                saison.value(),
+                this.heute(),
+                KADER_SUCHE_SPIELE
+              ),
+              kinder,
+            }
+          : undefined;
+      },
+      { equal: gleicherAuftrag }
+    );
+    const kaderSuche = kaderSucheResource(() => auftrag(), this.injector);
+    return { saison, naechsteDetails, kaderSuche, saisonEndeVerein };
   }
 }
 
@@ -194,8 +254,31 @@ function vereinBeenden(read: DatenResource<VereinsTeams | undefined>): void {
   read.destroy();
 }
 
-/** Cancels and drops both reads of a Team. */
+/** Cancels and drops every read of a Team. */
 function beenden(lesung: TeamLesungen): void {
   lesung.saison.destroy();
   lesung.naechsteDetails.destroy();
+  lesung.kaderSuche.destroy();
+}
+
+/**
+ * What the search of a Team's Kader found; `laeuft` until it is done. A
+ * search that failed as a whole counts as one stopped before any read.
+ */
+function funde(
+  suche: DatenResource<KaderFunde | undefined>
+): KaderFunde | 'laeuft' {
+  if (suche.hasValue()) {
+    return suche.value();
+  }
+  return suche.status() === 'error'
+    ? { spiele: new Map(), unvollstaendig: true }
+    : 'laeuft';
+}
+
+function gleichePersonen(
+  a: readonly PersonId[],
+  b: readonly PersonId[]
+): boolean {
+  return a.length === b.length && a.every((person, i) => person === b[i]);
 }

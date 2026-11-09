@@ -1,7 +1,7 @@
 import { signal, type Signal } from '@angular/core';
 import { auswahlFehlerText } from './auswahl-fehler-text';
 
-/** A screen's changes to Meine Teams, with what it says when one fails. */
+/** A screen's changes to Meine Teams or Kinder, with what it says when one fails. */
 export interface AuswahlAenderung {
   /** The text of the last change's failure; none while it succeeded. */
   readonly fehler: Signal<string | undefined>;
@@ -9,7 +9,7 @@ export interface AuswahlAenderung {
   ausfuehren(aenderung: () => Promise<void>): Promise<void>;
 }
 
-/** Changes to Meine Teams for one control (`auswahlFehlerText`). */
+/** Changes to Meine Teams or Kinder for one control (`auswahlFehlerText`). */
 export function auswahlAenderung(): AuswahlAenderung {
   const fehler = signal<string | undefined>(undefined);
   return {

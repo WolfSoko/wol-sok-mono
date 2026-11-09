@@ -45,7 +45,7 @@ auswahlVertrag('local', () => {
 });
 
 describe('LokaleAuswahl', () => {
-  it('stores a versioned document, which Kinder can join later', async () => {
+  it('stores a versioned document, with Meine Teams and the Kinder', async () => {
     const geraet = new SpeicherImSpec();
 
     await new LokaleAuswahl(geraet).folgen(313036);
@@ -53,7 +53,32 @@ describe('LokaleAuswahl', () => {
     expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
       version: 1,
       teams: [313036],
+      kinder: [],
     });
+  });
+
+  it('writes nothing to mark a Kind marked already', async () => {
+    const geraet = new SpeicherImSpec();
+    const auswahl = new LokaleAuswahl(geraet);
+    await auswahl.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+    const vorher = geraet.schreibvorgaenge;
+
+    await auswahl.markieren({ art: 'benannt', personId: 4711 });
+    await auswahl.spitznameSetzen(4711, ' Mimi ');
+    await auswahl.entmarkieren(4799);
+
+    expect(geraet.schreibvorgaenge).toBe(vorher);
+  });
+
+  it('keeps its Kinder as they are where another tab stored the same', async () => {
+    const geraet = new SpeicherImSpec();
+    const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
+    await auswahl.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+    const vorher = auswahl.kinder();
+
+    await auswahl.folgen(313036);
+
+    expect(auswahl.kinder()).toBe(vorher);
   });
 
   it('starts empty from storage that holds no JSON', () => {
@@ -108,6 +133,7 @@ describe('LokaleAuswahl', () => {
       expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? 'null')).toEqual({
         version: 1,
         teams: [313036],
+        kinder: [],
       });
     });
 

@@ -30,7 +30,10 @@ DBB responses to test against, and those name real children.
   Team someone follows.
 - The app never searches Spielberichte for a person: a marked Kind is
   highlighted where their person id appears in a followed Team's Kader,
-  nowhere else.
+  nowhere else. To group the overview by Kind, it looks only into the
+  followed Teams' own Kader of their last five played Spiele, newest first,
+  and stops once each Kind was found; the first name it shows there is read
+  fresh and never stored.
 - The app is `noindex` everywhere (meta tag and `X-Robots-Tag` header) and
   has no sitemap. `robots.txt` deliberately allows crawling: a URL it blocks
   is never fetched, so its `noindex` would never be read and a linked URL
@@ -48,8 +51,10 @@ No names or Spielerwerte from the DBB are stored; they are read fresh,
 through the proxy (ADR 0018), whenever they are shown. Deleting the account
 deletes the document. For offline use the device keeps the last good
 answer of a Team's Spiele, a Tabelle, a Spiel's match info and a Verein's
-Spiele for at most 7 days, with every person in it dropped; a Spielbericht
-is never kept.
+Spiele, with every person in it dropped; a Spielbericht is never kept. An
+answer older than 7 days is never shown, and one nobody read is deleted
+within about an hour after that (at start, on returning to the page and
+hourly).
 
 **No real child's name in the repo.** The fixtures are DBB responses with
 every person name and id (players, referees, season player ids) replaced

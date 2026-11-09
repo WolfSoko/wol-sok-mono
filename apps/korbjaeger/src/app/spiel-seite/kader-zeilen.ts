@@ -4,6 +4,7 @@ import {
   type KaderEintrag,
   type Spielerwerte,
 } from '@wolsok/feat-shared-basketball-data';
+import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
 
 /** What the Kader table shows of a player's Spielerwerte. */
 export interface SpielerwerteZeile {
@@ -23,14 +24,41 @@ export interface KaderZeile {
   readonly anonym: boolean;
   /** Absent where the Verband records no Spielerwerte. */
   readonly werte?: SpielerwerteZeile;
+  /**
+   * The player to mark as a Kind: a named one of a followed Team's Kader
+   * only (ADR 0019).
+   */
+  readonly spieler?: MarkierbarerSpieler;
+  /** The player as a marked Kind, shown highlighted; only where `spieler` is. */
+  readonly kind?: Kind;
 }
 
 /** What the page calls a player the DBB hides (ADR 0019). */
 export const ANONYMER_SPIELER = 'Anonymer Spieler';
 
-/** The lines of `kader`, in the Spielbericht's order. */
-export function kaderZeilen(kader: Kader): readonly KaderZeile[] {
-  return kader.eintraege.map(kaderZeile);
+/**
+ * The lines of `kader`, in the Spielbericht's order. Where the Kader is a
+ * followed Team's, `kinder` are the marked Kinder: its named players can
+ * be marked, and those marked are highlighted. Without `kinder` (another
+ * Team's Kader) nobody is.
+ */
+export function kaderZeilen(
+  kader: Kader,
+  kinder?: readonly Kind[]
+): readonly KaderZeile[] {
+  return kader.eintraege.map((eintrag) => {
+    const zeile = kaderZeile(eintrag);
+    if (kinder === undefined || eintrag.art === 'anonym') {
+      return zeile;
+    }
+    const { personId } = eintrag;
+    const kind = kinder.find((markiert) => markiert.personId === personId);
+    return {
+      ...zeile,
+      spieler: { art: 'benannt', personId },
+      ...(kind && { kind }),
+    };
+  });
 }
 
 function kaderZeile(eintrag: KaderEintrag): KaderZeile {

@@ -23,6 +23,7 @@ import {
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
 import { TeamEinrichtenComponent } from './team-einrichten.component';
+import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
 
 /** The DBB as the recorded fixtures answer it (`fakeDbbAnswer`). */
 const recordedDbb: DbbTransport = async (request) => {
@@ -329,11 +330,10 @@ describe('TeamEinrichtenComponent', () => {
   });
 
   it('stays and says so when the Team could not be followed', async () => {
-    const auswahl: Auswahl = {
+    const auswahl: Auswahl = fakeAuswahl({
       teams: signal([]),
       folgen: () => Promise.reject(new Error('offline')),
-      entfolgen: () => Promise.resolve(),
-    };
+    });
     const assistent = await render(undefined, auswahl);
     await bisZumTeam(assistent);
 
@@ -346,11 +346,9 @@ describe('TeamEinrichtenComponent', () => {
   });
 
   it('offers no Team before Meine Teams are read', async () => {
-    const auswahl: Auswahl = {
+    const auswahl: Auswahl = fakeAuswahl({
       teams: signal(undefined),
-      folgen: () => Promise.resolve(),
-      entfolgen: () => Promise.resolve(),
-    };
+    });
     const assistent = await render(undefined, auswahl);
 
     await bisZumTeam(assistent);

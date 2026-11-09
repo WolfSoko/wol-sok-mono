@@ -46,6 +46,31 @@ export class SpielPage {
     return kader.getByTestId('kader-zeile');
   }
 
+  /** The line of the player named `name` in a Kader, as `kaderVon(team)` finds it. */
+  public spielerNamens(kader: Locator, name: string): Locator {
+    return this.spieler(kader).filter({ hasText: name });
+  }
+
+  /**
+   * Marks the player named `name` in a followed Team's Kader as the Kind,
+   * giving it `spitzname` in the dialog.
+   */
+  public async alsKindMarkieren(
+    kader: Locator,
+    name: string,
+    spitzname: string
+  ): Promise<void> {
+    await this.spielerNamens(kader, name)
+      .getByRole('button', { name: 'Als mein Kind markieren' })
+      .click();
+    const dialog = this.page.getByRole('dialog', {
+      name: 'Als mein Kind markieren',
+    });
+    await dialog.getByLabel('Spitzname (freiwillig)').fill(spitzname);
+    await dialog.getByRole('button', { name: 'Markieren' }).click();
+    await dialog.waitFor({ state: 'detached' });
+  }
+
   /** What a Kader says when the Verband records no Spielerwerte. */
   public ohneWerte(kader: Locator): Locator {
     return kader.getByTestId('kader-ohne-werte');

@@ -1,0 +1,82 @@
+@let kind = abschnitt();
+<mat-card appearance="outlined" data-qa="ueberblick-kind">
+  <mat-card-header>
+    <mat-icon mat-card-avatar class="stern" aria-hidden="true">star</mat-icon>
+    <mat-card-title data-qa="ueberblick-kind-name">{{
+      kind.titel
+    }}</mat-card-title>
+    @if (kind.teams.length > 0) {
+      <mat-card-subtitle data-qa="ueberblick-kind-teams">
+        @for (team of kind.teams; track team.teamId) {
+          @if (!$first) {
+            ·
+          }
+          <a [routerLink]="['/team', team.teamId]">{{
+            team.art === "geladen" ? team.name : "Team " + team.teamId
+          }}</a>
+        }
+      </mat-card-subtitle>
+    }
+  </mat-card-header>
+  <mat-card-content>
+    @if (kind.sucht && kind.teams.length === 0) {
+      <mat-progress-bar
+        mode="indeterminate"
+        aria-label="Spielberichte werden gelesen"
+      />
+    }
+    @if (kind.teams.length > 0) {
+      <korb-stand data-qa="ueberblick-stand" [stand]="kind.stand" />
+    }
+    @for (ausfall of kind.ausfaelle; track ausfall.id) {
+      <korb-spiel-link
+        titel="Fällt aus"
+        [zeile]="ausfall"
+        data-qa="ueberblick-ausfall"
+      />
+    }
+    @if (kind.naechstes; as naechstes) {
+      <korb-naechstes-spiel
+        [zeile]="naechstes"
+        [halle]="kind.halle"
+        data-qa="ueberblick-naechstes"
+      />
+    }
+    @if (kind.letztes; as letztes) {
+      <korb-spiel-link
+        titel="Letztes Ergebnis"
+        [zeile]="letztes"
+        data-qa="ueberblick-letztes"
+      />
+      @if (kind.imKader !== undefined) {
+        <p class="kader" data-qa="ueberblick-kader">
+          <mat-icon aria-hidden="true">{{
+            kind.imKader ? "check_circle" : "remove_circle_outline"
+          }}</mat-icon>
+          {{ kind.imKader ? "Im Kader" : "Nicht im Kader" }}
+        </p>
+      }
+    }
+    @for (team of kind.teams; track team.teamId) {
+      @if (team.art === "geladen" && team.saisonBeendet) {
+        <korb-saison-ende-hinweis
+          data-qa="ueberblick-saison-beendet"
+          [stand]="team.vereinsTeams"
+        />
+      }
+    }
+    @switch (kind.nichtGefunden) {
+      @case ("nicht-im-kader") {
+        <p data-qa="ueberblick-kind-fehlt">
+          In den letzten Spielberichten deiner Teams steht dieses Kind nicht.
+          Folge dem Team, für das es spielt.
+        </p>
+      }
+      @case ("nicht-lesbar") {
+        <p data-qa="ueberblick-kind-fehlt">
+          Die Spielberichte deiner Teams lassen sich gerade nicht lesen.
+        </p>
+      }
+    }
+  </mat-card-content>
+</mat-card>
