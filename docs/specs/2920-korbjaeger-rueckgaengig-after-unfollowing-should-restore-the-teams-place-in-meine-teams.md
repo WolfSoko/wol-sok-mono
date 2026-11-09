@@ -77,10 +77,13 @@ device, after a reload too.
    no write (the change stays `offen`).
 7. A Team just followed and unfollowed at once comes back at the end (its
    place), on both adapters.
-8. A version-1 document (Teams as a list) restores the Team in place.
+8. A version-1 document on the device (Teams as a list) restores the Team in
+   place (`LokaleAuswahl`; the account's document was never version 1).
 9. The overview's "Rückgängig" calls `folgen` with the place `entfolgen`
-   gave (`NachEntfolgen`, `TeamFolgenComponent` specs); the e2e follows two
-   Teams, unfollows the first from its card, undoes, and finds it first again.
+   gave (`NachEntfolgen`, `TeamFolgenComponent` specs), and a
+   `TeamFolgenComponent` on a real `LokaleAuswahl` with two Teams puts the
+   first back first. (Not as an e2e: the DBB fixtures hold the Spiele of one
+   Team only, so the overview cannot show a second card.)
 10. `CLAUDE.md` no longer says the undo follows "at the end of Meine Teams".
 
 ## Open questions

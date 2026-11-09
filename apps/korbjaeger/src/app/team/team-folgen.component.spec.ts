@@ -153,6 +153,28 @@ describe('TeamFolgenComponent', () => {
       expect(auswahl.teams()).toEqual([MTV_WASBUETTEL]);
     });
 
+    it('puts the Team back at its place in Meine Teams, not at the end', async () => {
+      const MTV_GIFHORN = 201500;
+      const geraet = new Map<string, string>();
+      const auswahl = new LokaleAuswahl({
+        getItem: (key) => geraet.get(key) ?? null,
+        setItem: (key, value) => void geraet.set(key, value),
+      });
+      await auswahl.folgen(MTV_WASBUETTEL);
+      await auswahl.folgen(MTV_GIFHORN);
+      const { leisten, klicken } = await render(auswahl, {
+        teamName: 'MTV Wasbüttel',
+        verschwindet: true,
+      });
+
+      await klicken();
+      expect(auswahl.teams()).toEqual([MTV_GIFHORN]);
+      await (await leisten.getHarness(MatSnackBarHarness)).dismissWithAction();
+      await warten();
+
+      expect(auswahl.teams()).toEqual([MTV_WASBUETTEL, MTV_GIFHORN]);
+    });
+
     it('says so where the undo could not be stored', async () => {
       const auswahl: Auswahl = fakeAuswahl({
         teams: signal([MTV_WASBUETTEL]),
@@ -184,7 +206,32 @@ describe('TeamFolgenComponent', () => {
 
       await klicken();
 
-      expect(entfolgt).toHaveBeenCalledWith(MTV_WASBUETTEL, 'MTV Wasbüttel');
+      expect(entfolgt).toHaveBeenCalledWith(
+        MTV_WASBUETTEL,
+        'MTV Wasbüttel',
+        undefined
+      );
+    });
+
+    it('hands the screen the place the Team had, for the undo', async () => {
+      const platz = { seit: 7 };
+      const auswahl: Auswahl = fakeAuswahl({
+        teams: signal([MTV_WASBUETTEL]),
+        entfolgen: () => Promise.resolve(platz),
+      });
+      const { klicken } = await render(auswahl, {
+        teamName: 'MTV Wasbüttel',
+        verschwindet: true,
+      });
+      const entfolgt = vi.spyOn(TestBed.inject(NachEntfolgen), 'entfolgt');
+
+      await klicken();
+
+      expect(entfolgt).toHaveBeenCalledWith(
+        MTV_WASBUETTEL,
+        'MTV Wasbüttel',
+        platz
+      );
     });
 
     it('leaves focus and offers no undo for a control that stays (a Verein list on the screen)', async () => {

@@ -9,7 +9,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { AUSWAHL, type TeamPlatz } from '../auswahl/auswahl';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { NachEntfolgen } from './nach-entfolgen';
 
@@ -20,8 +20,8 @@ import { NachEntfolgen } from './nach-entfolgen';
  * screen reader names agree. Alone on a page, a followed Team gets a line
  * saying so. Disabled, offering to follow, until Meine Teams are read.
  * A control that disappears with its Team (`verschwindetNachEntfolgen`)
- * tells the screen's `NachEntfolgen` once it unfollowed, which moves
- * focus and offers undo.
+ * tells the screen's `NachEntfolgen` once it unfollowed, with the place
+ * the Team had, which moves focus and offers to undo it there.
  */
 @Component({
   selector: 'korb-team-folgen',
@@ -117,12 +117,13 @@ export class TeamFolgenComponent {
   private async entfolgen(): Promise<void> {
     const team = this.teamId();
     const name = this.teamName();
-    const entfolgt = await this.aenderung.ausfuehren(() =>
-      this.auswahl.entfolgen(team)
-    );
+    let platz: TeamPlatz | undefined;
+    const entfolgt = await this.aenderung.ausfuehren(async () => {
+      platz = await this.auswahl.entfolgen(team);
+    });
     // a control that disappears is one of a list: it has the Team's name
     if (entfolgt && this.verschwindetNachEntfolgen() && name !== undefined) {
-      this.nachEntfolgen?.entfolgt(team, name);
+      this.nachEntfolgen?.entfolgt(team, name, platz);
     }
   }
 }
