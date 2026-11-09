@@ -74,6 +74,9 @@
       "@wolsok/feat-korbjaeger-auswahl/testing": [
         "./libs/features/korbjaeger-auswahl/src/testing.ts"
       ],
+      "@wolsok/feat-shared-korbjaeger-account": [
+        "./libs/features/korbjaeger-account/src/index.ts"
+      ],
       "@wolsok/feat-shared-basketball-data": [
         "./libs/features/basketball-data/src/index.ts"
       ],

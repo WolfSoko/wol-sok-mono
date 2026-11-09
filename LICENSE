@@ -10,6 +10,7 @@ released after that LICENSE was added; earlier versions stay under MIT:
 - apps/korbjaeger-functions
 - apps/korbjaeger-cdk
 - libs/features/basketball-data
+- libs/features/korbjaeger-account
 - libs/features/korbjaeger-auswahl
 - tools/korbjaeger
 
