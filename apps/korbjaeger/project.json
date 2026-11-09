@@ -122,6 +122,19 @@
         "parallel": false
       }
     },
-    "typecheck-specs": {}
+    "typecheck-specs": {},
+    "test-emulator": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "firebase emulators:exec --config apps/korbjaeger/emulator/firebase.test.json --project demo-korbjaeger --only firestore \"npx vitest run --config apps/korbjaeger/vite.emulator.config.ts\""
+      }
+    },
+    "emulatoren": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "command": "firebase emulators:start --config apps/korbjaeger/firebase.emulatoren.json --project demo-korbjaeger --only auth,firestore"
+      }
+    }
   }
 }

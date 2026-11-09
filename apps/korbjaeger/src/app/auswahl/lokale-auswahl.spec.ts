@@ -45,6 +45,32 @@ auswahlVertrag('local', () => {
 });
 
 describe('LokaleAuswahl', () => {
+  describe('leeren', () => {
+    it('takes Meine Teams and the Kinder off the device', async () => {
+      const geraet = new SpeicherImSpec();
+      const auswahl = new LokaleAuswahl(geraet);
+      await auswahl.folgen(313036);
+      await auswahl.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+
+      auswahl.leeren();
+
+      expect(auswahl.teams()).toEqual([]);
+      expect(auswahl.kinder()).toEqual([]);
+      expect(geraet.getItem(AUSWAHL_SCHLUESSEL)).toBeNull();
+      expect(new LokaleAuswahl(geraet).teams()).toEqual([]);
+    });
+
+    it('drops the changes no write could store yet', async () => {
+      const auswahl = new LokaleAuswahl(undefined);
+      await auswahl.folgen(313036);
+
+      auswahl.leeren();
+      await auswahl.folgen(201500);
+
+      expect(auswahl.teams()).toEqual([201500]);
+    });
+  });
+
   it('stores a versioned document, with Meine Teams and the Kinder', async () => {
     const geraet = new SpeicherImSpec();
 

@@ -70,6 +70,21 @@ describe('service worker', () => {
     );
   });
 
+  // Firebase (Auth, Firestore) is its own chunk, loaded only to sign in
+  // (`konto.ts`): a visitor without an account never fetches it
+  it("fetches the account's Firebase only once used, never at install", () => {
+    const chunk = '/assets/firebase-konto-dienst-*.js';
+    const app = config.assetGroups.find((group) => group.name === 'app');
+    const konto = config.assetGroups.find((group) => group.name === 'konto');
+
+    expect(workspaceFile('apps/korbjaeger/src/app/konto/konto.ts')).toContain(
+      "import('./firebase-konto-dienst')"
+    );
+    expect(app?.resources.files).toContain(`!${chunk}`);
+    expect(konto?.installMode).toBe('lazy');
+    expect(konto?.resources.files).toEqual([chunk]);
+  });
+
   it('keeps no source map', () => {
     const files = config.assetGroups.flatMap((group) => group.resources.files);
 

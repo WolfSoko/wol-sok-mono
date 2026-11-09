@@ -73,5 +73,8 @@ that is not from the invented lists.
 - The privacy policy covers the Google sign-in, the Firestore document
   (Team ids, person ids, nicknames), device storage, Hosting logs and
   deletion; the portfolio does not link the app until the DBB has agreed.
+  The sign-in is built switched off in production (`environment.anmeldung`)
+  until that policy is live, and a visitor without an account loads no
+  part of Firebase, so Google learns nothing of them.
 - New fixtures go through the anonymiser; a hand-written one uses names
   from the invented lists.

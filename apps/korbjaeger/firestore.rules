@@ -1,0 +1,99 @@
+rules_version = '2';
+
+// The Firestore rules of Korbjäger (ADR 0019): one document per signed-in
+// Elternteil, auswahl/{uid}, holding the ids of Meine Teams and the Kinder
+// (person id, optional Spitzname), nothing else and only theirs. Specs:
+// src/firestore-rules.emulator.ts (`nx run korbjaeger:test-emulator`).
+//
+// A request may evaluate at most 1000 expressions, and each read of a list
+// through a function counts again: 50 Teams and 20 Kinder are more than one
+// request can check. So a create checks both lists, an update only the
+// lists it changes, and the app writes one list at a time (the merge at
+// sign-in in two steps): each list holds up to its cap.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /auswahl/{uid} {
+      allow get, delete: if istBesitzer(uid);
+      allow create: if istBesitzer(uid)
+        && istVersion1(request.resource.data)
+        && (!("teams" in request.resource.data)
+          || sindTeams(request.resource.data.teams))
+        && (!("kinder" in request.resource.data)
+          || sindKinder(request.resource.data.kinder));
+      // an update is checked in the lists it changes only
+      allow update: if istBesitzer(uid)
+        && istVersion1(request.resource.data)
+        && (!("teams" in request.resource.data)
+          || !request.resource.data.diff(resource.data).affectedKeys().hasAny(["teams"])
+          || sindTeams(request.resource.data.teams))
+        && (!("kinder" in request.resource.data)
+          || !request.resource.data.diff(resource.data).affectedKeys().hasAny(["kinder"])
+          || sindKinder(request.resource.data.kinder));
+    }
+  }
+
+  function istBesitzer(uid) {
+    return request.auth != null && request.auth.uid == uid;
+  }
+
+  // Version 1 of the app's AuswahlDokument (auswahl-dokument.ts), with no
+  // other fields; a newer version changes these rules in the same release.
+  // The lists are checked in the rules above, not through a function of
+  // the document: every read through one more argument counts again.
+  function istVersion1(daten) {
+    return daten.keys().hasOnly(["version", "teams", "kinder"])
+      && daten.version is int && daten.version == 1;
+  }
+
+  // The rules know no loop: each place of a list is checked by its index,
+  // up to the list's cap, `n` its size.
+  function sindTeams(teams) {
+    return teams is list && teams.size() <= 50
+      && teamsBis(teams, teams.size());
+  }
+
+  function teamsBis(teams, n) {
+    return (n <= 0 || teams[0] is int) && (n <= 1 || teams[1] is int) && (n <= 2 || teams[2] is int)
+      && (n <= 3 || teams[3] is int) && (n <= 4 || teams[4] is int) && (n <= 5 || teams[5] is int)
+      && (n <= 6 || teams[6] is int) && (n <= 7 || teams[7] is int) && (n <= 8 || teams[8] is int)
+      && (n <= 9 || teams[9] is int) && (n <= 10 || teams[10] is int) && (n <= 11 || teams[11] is int)
+      && (n <= 12 || teams[12] is int) && (n <= 13 || teams[13] is int) && (n <= 14 || teams[14] is int)
+      && (n <= 15 || teams[15] is int) && (n <= 16 || teams[16] is int) && (n <= 17 || teams[17] is int)
+      && (n <= 18 || teams[18] is int) && (n <= 19 || teams[19] is int) && (n <= 20 || teams[20] is int)
+      && (n <= 21 || teams[21] is int) && (n <= 22 || teams[22] is int) && (n <= 23 || teams[23] is int)
+      && (n <= 24 || teams[24] is int) && (n <= 25 || teams[25] is int) && (n <= 26 || teams[26] is int)
+      && (n <= 27 || teams[27] is int) && (n <= 28 || teams[28] is int) && (n <= 29 || teams[29] is int)
+      && (n <= 30 || teams[30] is int) && (n <= 31 || teams[31] is int) && (n <= 32 || teams[32] is int)
+      && (n <= 33 || teams[33] is int) && (n <= 34 || teams[34] is int) && (n <= 35 || teams[35] is int)
+      && (n <= 36 || teams[36] is int) && (n <= 37 || teams[37] is int) && (n <= 38 || teams[38] is int)
+      && (n <= 39 || teams[39] is int) && (n <= 40 || teams[40] is int) && (n <= 41 || teams[41] is int)
+      && (n <= 42 || teams[42] is int) && (n <= 43 || teams[43] is int) && (n <= 44 || teams[44] is int)
+      && (n <= 45 || teams[45] is int) && (n <= 46 || teams[46] is int) && (n <= 47 || teams[47] is int)
+      && (n <= 48 || teams[48] is int) && (n <= 49 || teams[49] is int);
+  }
+
+  function sindKinder(kinder) {
+    return kinder is list && kinder.size() <= 20
+      && kinderBis(kinder, kinder.size());
+  }
+
+  function kinderBis(kinder, n) {
+    return (n <= 0 || istKind(kinder[0])) && (n <= 1 || istKind(kinder[1])) && (n <= 2 || istKind(kinder[2]))
+      && (n <= 3 || istKind(kinder[3])) && (n <= 4 || istKind(kinder[4])) && (n <= 5 || istKind(kinder[5]))
+      && (n <= 6 || istKind(kinder[6])) && (n <= 7 || istKind(kinder[7])) && (n <= 8 || istKind(kinder[8]))
+      && (n <= 9 || istKind(kinder[9])) && (n <= 10 || istKind(kinder[10])) && (n <= 11 || istKind(kinder[11]))
+      && (n <= 12 || istKind(kinder[12])) && (n <= 13 || istKind(kinder[13])) && (n <= 14 || istKind(kinder[14]))
+      && (n <= 15 || istKind(kinder[15])) && (n <= 16 || istKind(kinder[16])) && (n <= 17 || istKind(kinder[17]))
+      && (n <= 18 || istKind(kinder[18])) && (n <= 19 || istKind(kinder[19]));
+  }
+
+  // A Kind is its person id and, optionally, the Spitzname the app keeps to
+  // 30 characters (an emoji as one), here at most 120 characters; a regular
+  // expression, as it costs fewer expressions than a type and a size check,
+  // and fails on anything but text.
+  function istKind(kind) {
+    return kind.keys().hasOnly(["personId", "spitzname"])
+      && kind.personId is int && kind.personId > 0
+      && (kind.size() == 1 || kind.spitzname.matches("(?s).{0,120}"));
+  }
+}

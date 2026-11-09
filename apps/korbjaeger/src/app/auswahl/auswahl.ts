@@ -1,19 +1,12 @@
-import {
-  DestroyRef,
-  DOCUMENT,
-  inject,
-  InjectionToken,
-  type Signal,
-} from '@angular/core';
+import { inject, InjectionToken, type Signal } from '@angular/core';
 import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
-import { geraeteSpeicher, SPEICHER_FREIGEBEN } from '../geraete-speicher';
+import { KONTO_SITZUNG } from '../konto/konto';
 import type { Kind, MarkierbarerSpieler } from './kind';
-import { LokaleAuswahl } from './lokale-auswahl';
 
 /**
  * What an Elternteil follows: Meine Teams and the Kinder they marked. Kept
- * on the device by `LokaleAuswahl`; a Firestore adapter for signed-in
- * Elternteile follows with #2873. Every adapter passes the shared
+ * on the device by `LokaleAuswahl`, in the account of a signed-in
+ * Elternteil by `FirestoreAuswahl`. Every adapter passes the shared
  * contract, `auswahlVertrag` (`testing/auswahl-vertrag.ts`).
  *
  * Errors: a change shows in `teams` or `kinder` once its promise resolves. Where an
@@ -62,16 +55,11 @@ export interface Auswahl {
   entmarkieren(person: PersonId): Promise<void>;
 }
 
-/** The screens' `Auswahl`: on the device, for now. */
+/**
+ * The screens' `Auswahl`: the device's, or the account's once signed in
+ * (`KONTO_SITZUNG`); `teams` and `kinder` are `undefined` while it switches.
+ */
 export const AUSWAHL = new InjectionToken<Auswahl>('Auswahl', {
   providedIn: 'root',
-  factory: () => {
-    const auswahl = new LokaleAuswahl(
-      geraeteSpeicher(),
-      inject(DOCUMENT).defaultView ?? undefined,
-      inject(SPEICHER_FREIGEBEN)
-    );
-    inject(DestroyRef).onDestroy(() => auswahl.beenden());
-    return auswahl;
-  },
+  factory: () => inject(KONTO_SITZUNG).auswahl,
 });
