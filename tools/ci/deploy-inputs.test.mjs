@@ -11,7 +11,8 @@ import { describe, it } from 'node:test';
 const ROOT = join(import.meta.dirname, '..', '..');
 const PROJECT_NAME = '{projectName}';
 // A root config only: one under apps/ (emulators) is a file of its project.
-const ROOT_FIREBASE_CONFIG = /--config[= ](firebase\.[^\s/"']+\.json)/g;
+const ROOT_FIREBASE_CONFIG =
+  /(?:--config[=\s]+|-c\s+)(?:\.\/)?(firebase\.[^\s/"']+\.json)/g;
 
 function projects() {
   return execFileSync('git', ['ls-files', 'project.json', '**/project.json'], {
@@ -47,6 +48,7 @@ function commandsOf(target) {
 
 function rootFirebaseConfigsOf(project) {
   const name = project.json.name;
+  assert.ok(name, `${project.path} has no name to resolve ${PROJECT_NAME}`);
   const configs = targetsOf(project)
     .flatMap(([, target]) => commandsOf(target))
     .flatMap((command) => [...command.matchAll(ROOT_FIREBASE_CONFIG)])
