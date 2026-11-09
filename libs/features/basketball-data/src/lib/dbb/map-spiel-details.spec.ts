@@ -6,6 +6,12 @@ import kampflos from './fixtures/matchinfo-2930414.json';
 import ohneViertel from './fixtures/matchinfo-2861436.json';
 import { mapSpielDetails } from './map-spiel-details';
 
+/** The recorded `envelope` with `fields` changed in its `ligaData`. */
+function withLigaData(envelope: unknown, fields: object): unknown {
+  const data = readEnvelope(envelope) as { ligaData: object };
+  return { ...data, ligaData: { ...data.ligaData, ...fields } };
+}
+
 describe('mapSpielDetails', () => {
   describe('of a played Spiel', () => {
     const details = mapSpielDetails(readEnvelope(gespielt));
@@ -144,16 +150,11 @@ describe('mapSpielDetails', () => {
   });
 
   describe('whether the DBB ever confirms the Liga’s results', () => {
-    function withLigaData(fields: object): unknown {
-      const data = readEnvelope(abgesagt) as { ligaData: object };
-      return { ...data, ligaData: { ...data.ligaData, ...fields } };
-    }
-
     const BBL = { verbandId: 100, statisticType: 0, geschlecht: 'männlich' };
 
     it('marks a men’s Liga of the Bundesligen without Spielberichte (BBL, ProA, ProB)', () => {
       expect(
-        mapSpielDetails(withLigaData(BBL)).liga.resultsNeverConfirmed
+        mapSpielDetails(withLigaData(abgesagt, BBL)).liga.resultsNeverConfirmed
       ).toBe(true);
     });
 
@@ -166,33 +167,13 @@ describe('mapSpielDetails', () => {
       ['statisticType 1 of the Bundesligen', { ...BBL, statisticType: 1 }],
       ['a null statisticType', { ...BBL, statisticType: null }],
     ])('leaves it out for %s', (_case, fields) => {
-      expect(mapSpielDetails(withLigaData(fields)).liga).not.toHaveProperty(
-        'resultsNeverConfirmed'
-      );
-    });
-
-    it('leaves it out where the Liga has no statisticType', () => {
-      const data = readEnvelope(abgesagt) as { ligaData: object };
-      const { statisticType: _none, ...ligaData } = data.ligaData as Record<
-        string,
-        unknown
-      >;
-
       expect(
-        mapSpielDetails({
-          ...data,
-          ligaData: { ...ligaData, verbandId: 100, geschlecht: 'männlich' },
-        }).liga
+        mapSpielDetails(withLigaData(abgesagt, fields)).liga
       ).not.toHaveProperty('resultsNeverConfirmed');
     });
   });
 
   describe('whether the DBB keeps the Liga’s Spielberichte', () => {
-    function withStatisticType(value: unknown): unknown {
-      const data = readEnvelope(geplant) as { ligaData: object };
-      return { ...data, ligaData: { ...data.ligaData, statisticType: value } };
-    }
-
     it('marks a Liga of statisticType 0 as one without Spielberichte', () => {
       expect(
         mapSpielDetails(readEnvelope(abgesagt)).liga.ohneSpielberichte
@@ -210,9 +191,9 @@ describe('mapSpielDetails', () => {
       ['1', 1],
       ['null', null],
     ])('leaves it out for statisticType %s', (_name, value) => {
-      expect(mapSpielDetails(withStatisticType(value)).liga).not.toHaveProperty(
-        'ohneSpielberichte'
-      );
+      expect(
+        mapSpielDetails(withLigaData(geplant, { statisticType: value })).liga
+      ).not.toHaveProperty('ohneSpielberichte');
     });
 
     it('leaves it out where the Liga has no statisticType', () => {

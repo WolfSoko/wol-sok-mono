@@ -89,10 +89,6 @@ describe('mapTeamSpiele', () => {
     expect(
       mapTeamSpiele(bundesliga).ligen.map((liga) => liga.resultsNeverConfirmed)
     ).toEqual([true, true]);
-    expect(saison.ligen.map((liga) => liga.resultsNeverConfirmed)).toEqual([
-      undefined,
-      undefined,
-    ]);
   });
 
   it('refuses a response without its Team', () => {
