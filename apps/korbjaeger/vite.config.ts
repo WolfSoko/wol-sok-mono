@@ -3,6 +3,7 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { fileURLToPath } from 'node:url';
 import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases';
 import { buildKonfigurationMerken } from './deploy/build-configuration';
+import { REGIONEN } from './src/shared/regionen';
 import { ConfigEnv, defineConfig } from 'vite';
 
 import { ViteUserConfig } from 'vitest/config';
@@ -63,7 +64,7 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
             gen: 2,
             httpsOptions: {
               // as pacetrainer and rollapolla-analog
-              region: 'europe-central2',
+              region: REGIONEN.funktion.id,
               // only the DBB proxy runs here, cached by the CDN: a few
               // instances serve it and keep a burst off the DBB and the bill
               maxInstances: 10,

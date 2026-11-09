@@ -2,8 +2,11 @@ import type { LigaId, SpielId, TeamId, VereinId } from '../domain/ids';
 import type { ReadOptions } from '../basketball-data';
 import type { LigaSucheFilter } from '../domain/liga-suche';
 
+/** The DBB's public site, which shows the data the app reads. */
+export const DBB_WEBSITE_URL = 'https://www.basketball-bund.net';
+
 /** Where the DBB's JSON API lives; `DbbHttpRequest.path` is relative to it. */
-export const DBB_BASE_URL = 'https://www.basketball-bund.net/rest';
+export const DBB_BASE_URL = `${DBB_WEBSITE_URL}/rest`;
 
 /** The widest window a Verein's Spiele are asked for, in days either way. */
 export const MAX_VEREINS_SPIELE_TAGE = 60;

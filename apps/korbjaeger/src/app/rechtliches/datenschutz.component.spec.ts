@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { SITE_OWNER } from '@wolsok/shared-legal';
+import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
+import { REGIONEN } from '../../shared/regionen';
 import { AUSWAHL_GRENZEN } from '../auswahl/auswahl-dokument';
 import { SPITZNAME_LAENGE } from '../auswahl/kind';
 import { AUSWAHL_SCHLUESSEL } from '../auswahl/lokale-auswahl';
 import {
+  ANTWORT_GRENZEN,
   ANTWORT_INDEX,
   ANTWORT_PRAEFIX,
   MAX_ALTER_MS,
@@ -66,6 +69,18 @@ describe('DatenschutzComponent', () => {
       expect(geraet).toContain(schluessel);
     }
     expect(geraet).toContain(`${MAX_ALTER_MS / (24 * 60 * 60_000)} Tage`);
+    expect(geraet).toContain(
+      `Höchstens ${ANTWORT_GRENZEN.eintraege} Antworten`
+    );
+  });
+
+  it('names the entries Firebase keeps in localStorage while signed in', () => {
+    const geraet = abschnitt(zeigen(), 'geraet');
+
+    // Firestore's tab manager (persistentMultipleTabManager) and Auth's
+    // fallback persistence (browserLocalPersistence)
+    expect(geraet).toContain('firestore_');
+    expect(geraet).toContain('firebase:');
   });
 
   it('says what the account’s document holds, its caps and where it lies', () => {
@@ -74,15 +89,22 @@ describe('DatenschutzComponent', () => {
     expect(konto).toContain(`${AUSWAHL_GRENZEN.teams} Teams`);
     expect(konto).toContain(`${AUSWAHL_GRENZEN.kinder} Kinder`);
     expect(konto).toContain(`${SPITZNAME_LAENGE} Zeichen`);
-    expect(konto).toContain('europe-west3 (Frankfurt am Main)');
+    const { firestore } = REGIONEN;
+    expect(konto).toContain(`${firestore.id} (${firestore.ort})`);
     expect(konto).toContain('Google');
   });
 
   it('covers the DBB as the source, the proxy and the hosting', () => {
     const seite = zeigen();
 
-    expect(abschnitt(seite, 'dbb')).toContain('basketball-bund.net');
-    expect(abschnitt(seite, 'dbb')).toContain('europe-central2 (Warschau)');
+    const dbb = abschnitt(seite, 'dbb');
+    expect(dbb).toContain('basketball-bund.net');
+    const { funktion } = REGIONEN;
+    expect(dbb).toContain(`${funktion.id} (${funktion.ort})`);
+    expect(dbb).toContain(`bis zu ${PROXY_CACHE_SEKUNDEN.cdn / 60} Minuten`);
+    expect(dbb).toContain(
+      `bis zu ${PROXY_CACHE_SEKUNDEN.cdnFertigerSpielbericht / 60} Minuten`
+    );
     expect(abschnitt(seite, 'hosting')).toContain('Firebase Hosting');
   });
 
@@ -91,6 +113,14 @@ describe('DatenschutzComponent', () => {
 
     expect(loeschen).toContain('Einstellungen');
     expect(loeschen).toContain('Konto löschen');
+  });
+
+  it('tells Google’s own part from what it processes for us', () => {
+    const usa = abschnitt(zeigen(), 'usa');
+
+    expect(usa).toContain('Auftragsverarbeiter');
+    expect(usa).toContain('Google selbst verantwortlich');
+    expect(usa).toContain('Weiterleitungsdienst');
   });
 
   it('links the legal notice', () => {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { DBB_SEITE } from './dbb-seite';
 import { DATENSCHUTZ_PFAD, IMPRESSUM_PFAD } from './rechtliche-pfade';
 
 /**
@@ -13,8 +14,8 @@ import { DATENSCHUTZ_PFAD, IMPRESSUM_PFAD } from './rechtliche-pfade';
     <footer>
       <p>
         Die Spieldaten stammen vom Deutschen Basketball Bund (<a
-          href="https://www.basketball-bund.net"
-          >basketball-bund.net</a
+          [href]="dbb.url"
+          >{{ dbb.name }}</a
         >) und können einige Minuten hinterherhinken.
       </p>
       <nav aria-label="Rechtliches">
@@ -51,6 +52,7 @@ import { DATENSCHUTZ_PFAD, IMPRESSUM_PFAD } from './rechtliche-pfade';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FusszeileComponent {
+  protected readonly dbb = DBB_SEITE;
   protected readonly datenschutz = DATENSCHUTZ_PFAD;
   protected readonly impressum = IMPRESSUM_PFAD;
 }

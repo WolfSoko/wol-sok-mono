@@ -1,6 +1,6 @@
 <article>
   <h1>Impressum</h1>
-  <p class="stand">
+  <p class="einleitung">
     Angaben gemäß § 5 DDG für die App Korbjäger unter
     <a [href]="seite">{{ host }}</a
     >.
@@ -32,8 +32,7 @@
   <h2 id="daten">Herkunft der Daten</h2>
   <p>
     Spielpläne, Ergebnisse, Tabellen, Hallen und Kader stammen vom Deutschen
-    Basketball Bund (<a href="https://www.basketball-bund.net"
-      >basketball-bund.net</a
+    Basketball Bund (<a [href]="dbb.url">{{ dbb.name }}</a
     >), der sie öffentlich zeigt. Die App liest sie dort ab, wenn du sie
     aufrufst, und kann einige Minuten hinter dem Stand des DBB liegen. Der DBB
     betreibt die App nicht und ist für sie nicht verantwortlich; maßgeblich sind

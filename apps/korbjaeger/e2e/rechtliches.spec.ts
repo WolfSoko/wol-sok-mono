@@ -14,10 +14,11 @@ test.describe('The legal pages', () => {
       page.getByRole('heading', { level: 1, name: 'Datenschutzerklärung' })
     ).toBeVisible();
 
+    // the footer sits below the long policy: the next page opens at its top
     await fusszeile.getByRole('link', { name: 'Impressum' }).click();
     await expect(
       page.getByRole('heading', { level: 1, name: 'Impressum' })
-    ).toBeVisible();
+    ).toBeInViewport();
   });
 
   for (const pfad of ['/privacy', '/impressum']) {

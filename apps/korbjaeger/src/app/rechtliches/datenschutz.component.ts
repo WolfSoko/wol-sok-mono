@@ -4,7 +4,9 @@ import {
   EmailForwardingComponent,
   SiteOwnerComponent,
 } from '@wolsok/shared-legal';
-import { SITE_URL } from '../../shared/site';
+import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
+import { REGIONEN } from '../../shared/regionen';
+import { SITE_HOST, SITE_URL } from '../../shared/site';
 import { AUSWAHL_GRENZEN } from '../auswahl/auswahl-dokument';
 import { SPITZNAME_LAENGE } from '../auswahl/kind';
 import { AUSWAHL_SCHLUESSEL } from '../auswahl/lokale-auswahl';
@@ -19,6 +21,7 @@ import {
   INSTALLATION_ABGELEHNT_SCHLUESSEL,
   ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
 } from '../geraete-speicher';
+import { DBB_SEITE } from './dbb-seite';
 import { IMPRESSUM_PFAD } from './rechtliche-pfade';
 
 const TAG_MS = 24 * 60 * 60_000;
@@ -37,7 +40,12 @@ const TAG_MS = 24 * 60 * 60_000;
 })
 export class DatenschutzComponent {
   protected readonly seite = SITE_URL;
-  protected readonly host = new URL(SITE_URL).host;
+  protected readonly host = SITE_HOST;
+  protected readonly dbb = DBB_SEITE;
+  protected readonly regionen = REGIONEN;
+  protected readonly cdnMinuten = PROXY_CACHE_SEKUNDEN.cdn / 60;
+  protected readonly spielberichtMinuten =
+    PROXY_CACHE_SEKUNDEN.cdnFertigerSpielbericht / 60;
   protected readonly impressum = IMPRESSUM_PFAD;
 
   protected readonly schluessel = {
