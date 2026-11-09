@@ -7,7 +7,7 @@ import type { DatenResource } from '../basketball-data/basketball-data-resource'
 import { aeltesterStand } from '../basketball-data/stand';
 import { hallenStand } from '../halle/hallen-stand';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
-import { NICHT_LESBAR, sucht } from './kader-funde';
+import { NICHT_LESBAR } from './kader-funde';
 import { fehlerKarte, geladeneKarte } from './team-karte';
 import type { TeamLesungen } from './team-lesungen';
 import type { TeamImUeberblick } from './ueberblick-ansicht';
@@ -43,13 +43,10 @@ export function teamImUeberblick(
   const vereinsTeams =
     verein === undefined ? undefined : vereinsTeamsVon(verein);
   const halle = hallenStand(lesung.naechsteDetails);
+  const stand = aeltesterStand(saison.stand(), lesung.naechsteDetails.stand());
   const karte = geladeneKarte(saison.value(), ueberblick, {
     // the oldest of what the card shows
-    stand: aeltesterStand(
-      saison.stand(),
-      lesung.naechsteDetails.stand(),
-      vereinsTeams?.stand()
-    ),
+    stand: aeltesterStand(stand, vereinsTeams?.stand()),
     halle,
     saisonBeendet: verein !== undefined,
     vereinsTeams: vereinsTeams && vereinsTeamsStand(vereinsTeams, teamId),
@@ -59,8 +56,8 @@ export function teamImUeberblick(
     karte,
     saison: { saison: saison.value(), ueberblick },
     halle,
-    stand: aeltesterStand(saison.stand(), lesung.naechsteDetails.stand()),
+    stand,
     ...(funde && { funde }),
-    sucht: mitKindern && sucht(lesung.kaderSuche),
+    sucht: mitKindern && lesung.sucht(),
   };
 }

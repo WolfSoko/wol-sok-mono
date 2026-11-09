@@ -8,9 +8,9 @@ import type {
   VereinsTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import {
-  fakeDatenResource,
+  FakeDatenResource,
   type FakeLesung,
-} from '../../testing/fake-daten-resource';
+} from '../basketball-data/testing/fake-daten-resource';
 import type { Stand } from '../basketball-data/stand';
 import { NICHT_LESBAR } from './kader-funde';
 import { teamImUeberblick } from './team-im-ueberblick';
@@ -38,7 +38,7 @@ const AELTER: Stand = { gespeichertAm: 500, grund: 'unavailable' };
 
 interface Lesungen {
   readonly saison?: FakeLesung<TeamSaison>;
-  readonly kaderSuche?: FakeLesung<KaderFunde>;
+  readonly sucht?: boolean;
   readonly funde?: KaderFunde;
   readonly saisonEndeVerein?: VereinId;
 }
@@ -46,15 +46,16 @@ interface Lesungen {
 /** A Team's reads as `lesungen` shows them; its Saison read, by default. */
 function lesung({
   saison = { status: 'resolved', value: SAISON },
-  kaderSuche = { status: 'idle' },
+  sucht = false,
   funde,
   saisonEndeVerein,
 }: Lesungen = {}): TeamLesungen {
   return {
-    saison: fakeDatenResource(saison),
+    saison: new FakeDatenResource(saison),
     ueberblick: signal(saison.value && UEBERBLICK),
-    naechsteDetails: fakeDatenResource<SpielDetails>({ status: 'idle' }),
-    kaderSuche: fakeDatenResource(kaderSuche),
+    naechsteDetails: new FakeDatenResource<SpielDetails>({ status: 'idle' }),
+    kaderSuche: new FakeDatenResource<KaderFunde>({ status: 'idle' }),
+    sucht: signal(sucht),
     funde: signal(funde),
     saisonEndeVerein: signal(saisonEndeVerein),
   };
@@ -98,7 +99,6 @@ describe('teamImUeberblick', () => {
 
   it('gives a read Team its card and Saison, and its finds only where a Kind is marked', () => {
     const gelesen = lesung({
-      kaderSuche: { status: 'resolved', value: FUNDE },
       funde: FUNDE,
     });
 
@@ -122,9 +122,14 @@ describe('teamImUeberblick', () => {
   });
 
   it('says a Team is still searched while its search runs', () => {
-    const sucht = lesung({ kaderSuche: { status: 'loading' } });
+    const suchend = lesung({ sucht: true });
 
-    expect(teamImUeberblick(TEAM, sucht, keineVereine, true).sucht).toBe(true);
+    expect(teamImUeberblick(TEAM, suchend, keineVereine, true).sucht).toBe(
+      true
+    );
+    expect(teamImUeberblick(TEAM, suchend, keineVereine, false).sucht).toBe(
+      false
+    );
   });
 
   it("reads its Verein's Teams only once its Saison looks over", () => {
@@ -143,7 +148,7 @@ describe('teamImUeberblick', () => {
   });
 
   it("dates the card by its Verein's Teams too, the Team itself by its own reads", () => {
-    const vereinsTeams = fakeDatenResource<VereinsTeams>({
+    const vereinsTeams = new FakeDatenResource<VereinsTeams>({
       status: 'resolved',
       value: { verein: SAISON.verein, teams: [] },
       stand: AELTER,

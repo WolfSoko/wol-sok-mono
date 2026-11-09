@@ -26,11 +26,7 @@ export function kaderSucheResource(
   auftrag: () => KaderSucheAuftrag | undefined,
   injector: Injector = inject(Injector)
 ): DatenResource<KaderFunde | undefined> {
-  return basketballDataResource(
-    auftrag,
-    (data, gegeben, options) => kaderSuchen(data, gegeben, options),
-    injector
-  );
+  return basketballDataResource(auftrag, kaderSuchen, injector);
 }
 
 /**

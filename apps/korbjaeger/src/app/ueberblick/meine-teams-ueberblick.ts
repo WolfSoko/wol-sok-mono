@@ -19,7 +19,7 @@ import type { DatenResource } from '../basketball-data/basketball-data-resource'
 import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
 import { gleicheFolge } from '../gleiche-folge';
 import { HEUTE } from '../heute';
-import { abgleichen } from './abgleichen';
+import { abgleichen } from '../abgleichen';
 import { teamImUeberblick } from './team-im-ueberblick';
 import {
   lesungenBeenden,

@@ -1,19 +1,22 @@
 import type { ResourceStatus } from '@angular/core';
 import type { KaderFunde } from '@wolsok/feat-shared-basketball-data';
-import { fundeNach, NICHT_LESBAR, suchEnde, sucht } from './kader-funde';
-import { fakeDatenResource } from '../../testing/fake-daten-resource';
-import type { DatenResource } from '../basketball-data/basketball-data-resource';
+import {
+  fundeNach,
+  NICHT_LESBAR,
+  suchEnde,
+  sucht,
+  type KaderSuchStand,
+} from './kader-funde';
 
 const FUNDE: KaderFunde = {
   spiele: new Map([[3, new Map([[4711, 'Lumi']])]]),
   unvollstaendig: false,
 };
 
-function suche(
-  status: ResourceStatus,
-  value?: KaderFunde
-): DatenResource<KaderFunde | undefined> {
-  return fakeDatenResource({ status, value });
+function suche(status: ResourceStatus, value?: KaderFunde): KaderSuchStand {
+  return status === 'error'
+    ? { status, error: new Error('offline') }
+    : { status, value };
 }
 
 describe('suchEnde', () => {

@@ -1,5 +1,8 @@
+import type { ResourceSnapshot } from '@angular/core';
 import type { KaderFunde } from '@wolsok/feat-shared-basketball-data';
-import type { DatenResource } from '../basketball-data/basketball-data-resource';
+
+/** Where a search of a Team's Kader stands (`kaderSucheResource`'s snapshot). */
+export type KaderSuchStand = ResourceSnapshot<KaderFunde | undefined>;
 
 /** A search that could read nothing: its Team's Saison failed. */
 export const NICHT_LESBAR: KaderFunde = {
@@ -13,13 +16,13 @@ export type SuchEnde =
   | { readonly art: 'gescheitert' };
 
 /** How a search of a Team's Kader ended; none while it runs. */
-export function suchEnde(
-  suche: DatenResource<KaderFunde | undefined>
-): SuchEnde | undefined {
-  if (suche.hasValue()) {
-    return { art: 'gefunden', funde: suche.value() };
+export function suchEnde(suche: KaderSuchStand): SuchEnde | undefined {
+  if (suche.status === 'error') {
+    return { art: 'gescheitert' };
   }
-  return suche.status() === 'error' ? { art: 'gescheitert' } : undefined;
+  return suche.value === undefined
+    ? undefined
+    : { art: 'gefunden', funde: suche.value };
 }
 
 /**
@@ -42,6 +45,10 @@ export function fundeNach(
 }
 
 /** Whether a search of a Team's Kader still runs, or has yet to start. */
-export function sucht(suche: DatenResource<KaderFunde | undefined>): boolean {
-  return suche.isLoading() || suchEnde(suche) === undefined;
+export function sucht(suche: KaderSuchStand): boolean {
+  return (
+    suche.status === 'loading' ||
+    suche.status === 'reloading' ||
+    suchEnde(suche) === undefined
+  );
 }

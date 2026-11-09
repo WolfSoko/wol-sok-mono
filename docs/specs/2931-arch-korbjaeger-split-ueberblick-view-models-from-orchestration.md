@@ -78,7 +78,7 @@ only the wiring. What the overview shows does not change.
    `kaderSuchen` had passes there (`nx test feat-shared-basketball-data`).
 2. The app's `kader-suche.ts` holds only `KADER_SUCHE_SPIELE`,
    `kaderSucheResource` and `gleicherAuftrag`; `gleicherAuftrag`'s specs pass.
-3. `abgleichen.ts`, `kader-funde.ts`, `team-lesungen.ts` and
+3. `abgleichen.ts` (in `src/app/`, beside `gleiche-folge.ts`), `kader-funde.ts`, `team-lesungen.ts` and
    `team-im-ueberblick.ts` exist; `abgleichen`, `fundeNach`/`suchEnde` and
    `teamImUeberblick` have specs of their own.
 4. `meine-teams-ueberblick.ts` is at most 130 lines and holds no function

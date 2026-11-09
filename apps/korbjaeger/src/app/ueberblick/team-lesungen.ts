@@ -20,7 +20,7 @@ import {
 import type { DatenResource } from '../basketball-data/basketball-data-resource';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
-import { fundeNach, suchEnde, type SuchEnde } from './kader-funde';
+import { fundeNach, suchEnde, sucht, type SuchEnde } from './kader-funde';
 import {
   gleicherAuftrag,
   KADER_SUCHE_SPIELE,
@@ -40,6 +40,8 @@ export interface TeamLesungen {
   readonly naechsteDetails: DatenResource<SpielDetails | undefined>;
   /** None while no Kind is marked. */
   readonly kaderSuche: DatenResource<KaderFunde | undefined>;
+  /** Whether its Kader is still searched, or has yet to be. */
+  readonly sucht: Signal<boolean>;
   /**
    * What the last search that ended found, kept while it runs again; a run
    * that failed as a whole keeps those too, marked `unvollstaendig`.
@@ -101,7 +103,7 @@ export function teamLesungen(
   const kaderSuche = kaderSucheResource(() => auftrag(), injector);
   // a new order clears the resource's value: the last finds stay shown
   const funde = linkedSignal<SuchEnde | undefined, KaderFunde | undefined>({
-    source: () => suchEnde(kaderSuche),
+    source: () => suchEnde(kaderSuche.snapshot()),
     computation: (ende, vorher) => fundeNach(ende, vorher?.value),
   });
   const ueberblick = computed(() =>
@@ -112,6 +114,7 @@ export function teamLesungen(
     ueberblick,
     naechsteDetails,
     kaderSuche,
+    sucht: computed(() => sucht(kaderSuche.snapshot())),
     funde,
     saisonEndeVerein,
   };
