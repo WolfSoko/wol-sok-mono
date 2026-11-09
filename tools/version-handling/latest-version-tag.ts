@@ -6,10 +6,12 @@ function escapeForRegExp(value: string): string {
 }
 
 /** The suffixes the deploy workflow tags a deployed release with. */
-export type DeployPrefix = 'cdk-deployed' | 'non-cdk-deployed';
+export const DEPLOY_PREFIXES = ['cdk-deployed', 'non-cdk-deployed'] as const;
+export type DeployPrefix = (typeof DEPLOY_PREFIXES)[number];
 
 /**
- * @returns {string} An app version like v1.0.0 a githash or a timestamp
+ * @returns {string} The latest release tag (v1.0.0), the next one (v1.0.1-next)
+ *   when the latest is already deployed, else the commit hash or a timestamp
  *
  * @param appDeployedPrefix filter to find the appropriate version tag
  */

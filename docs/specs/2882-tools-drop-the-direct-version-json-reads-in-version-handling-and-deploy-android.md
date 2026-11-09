@@ -31,7 +31,7 @@ lint rule:
 
 - **Drop the dead branch and the import** in `latest-version-tag.ts`, and type
   the parameter as the deploy-prefix union. The union moves into
-  `latest-version-tag.ts` (`DeployPrefix`), and
+  `latest-version-tag.ts` (`DEPLOY_PREFIXES`, `DeployPrefix` derived from it), and
   `write-version-tag.ts` imports it instead of declaring its own copy, so the
   type the function takes and the values the CLI accepts are defined once.
 - **`deploy-android.ts` imports `WORKSPACE_VERSION` from
@@ -42,8 +42,8 @@ lint rule:
   the `@wolsok/*` paths come with it); checked locally: the alias resolves
   and prints the workspace version. No root `tsconfig.json` is added: it
   would change what every other tool picks up.
-- **`tools/tsconfig.tools.json` loses its `rootDir: "."`**: nothing emits
-  from it, and the import of `libs/utils/version` would fail it (TS6059).
+- **`tools/tsconfig.tools.json` loses its `rootDir: "."` and `outDir` for
+  `noEmit: true`**: nothing emits from it, and the import of `libs/utils/version` would fail it (TS6059).
   While touching the folder, `latest-cdk-deployed-tag.ts` drops the `.ts`
   extension in its import, the one other error the config reported (TS5097),
   so `tsc -p tools/tsconfig.tools.json --noEmit` is clean.

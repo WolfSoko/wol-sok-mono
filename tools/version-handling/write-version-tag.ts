@@ -1,6 +1,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, sep } from 'node:path';
-import { DeployPrefix, latestVersionTag } from './latest-version-tag';
+import {
+  DEPLOY_PREFIXES,
+  DeployPrefix,
+  latestVersionTag,
+} from './latest-version-tag';
 
 /**
  * Writes the current version tag into a generated TypeScript module.
@@ -14,17 +18,15 @@ import { DeployPrefix, latestVersionTag } from './latest-version-tag';
  * where <outFile> is relative to the workspace root.
  */
 
-const USAGE =
-  'Usage: write-version-tag.ts <cdk-deployed|non-cdk-deployed> <outFile>';
+const USAGE = `Usage: write-version-tag.ts <${DEPLOY_PREFIXES.join('|')}> <outFile>`;
 
 function parsePrefix(value: string | undefined): DeployPrefix {
-  // Returns a literal rather than the argument itself: the prefix reaches a
-  // RegExp in latestVersionTag, so nothing may flow there from the command line.
-  if (value === 'cdk-deployed') {
-    return 'cdk-deployed';
-  }
-  if (value === 'non-cdk-deployed') {
-    return 'non-cdk-deployed';
+  // Returns the listed literal rather than the argument itself: the prefix
+  // reaches a RegExp in latestVersionTag, so nothing may flow there from the
+  // command line.
+  const prefix = DEPLOY_PREFIXES.find((known) => known === value);
+  if (prefix) {
+    return prefix;
   }
   throw new Error(`Unknown deploy prefix "${value}". ${USAGE}`);
 }
