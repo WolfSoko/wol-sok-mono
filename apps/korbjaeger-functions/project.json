@@ -4,7 +4,6 @@
   "projectType": "application",
   "sourceRoot": "apps/korbjaeger-functions/src",
   "tags": ["app", "type:firebase", "type:functions"],
-  "implicitDependencies": ["korbjaeger"],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",
@@ -31,11 +30,10 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "inputs": [
         "default",
         "^production",
-        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.preset.cjs",
         "{workspaceRoot}/package.json",
         "{workspaceRoot}/firebase.korbjaeger.json",
         "{workspaceRoot}/apps/korbjaeger/src/shared/regionen.ts"

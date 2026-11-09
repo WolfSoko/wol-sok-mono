@@ -56,8 +56,8 @@ interface ProjectJson {
 const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
 
 /**
- * The function of codebase `codebase`: `default` is Nitro's server, which
- * this app deploys; `konto` is korbjaeger-functions', deployed by that app.
+ * The function of codebase `name`: `default` is Nitro's server, which this
+ * app deploys (`konto` is korbjaeger-functions').
  */
 const codebase = (name: string) => {
   const found = config.functions.find((entry) => entry.codebase === name);
@@ -167,17 +167,12 @@ describe('the Firebase deploy', () => {
     });
   });
 
+  // DEPLOY, the deploy's last command, takes both (see below)
   it("deploys the app's Firestore rules and indexes with it, the ones its emulator specs test", () => {
-    const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
-    const { commands } = workspaceJson<ProjectJson>(
-      'apps/korbjaeger/project.json'
-    ).targets['deploy'].options;
-
     expect(config.firestore).toEqual({
       rules: 'apps/korbjaeger/firestore.rules',
       indexes: 'apps/korbjaeger/firestore.indexes.json',
     });
-    expect(commands?.at(-1)).toContain('firestore:rules,firestore:indexes');
   });
 
   // the rules refuse a deleted account while its tombstone exists; the TTL
@@ -200,13 +195,13 @@ describe('the Firebase deploy', () => {
     );
   });
 
-  it('leaves the functions of codebase konto to korbjaeger-functions', () => {
+  // codebase konto is korbjaeger-functions', checked by its own spec; this
+  // app's DEPLOY takes only `functions:default`
+  it('shares the config with the codebase of korbjaeger-functions', () => {
     expect(config.functions.map((entry) => entry.codebase)).toEqual([
       'default',
       'konto',
     ]);
-    expect(codebase('konto').source).toBe('dist/apps/korbjaeger-functions');
-    expect(DEPLOY).toContain('--only functions:default,');
   });
 
   it('deploys the root config, not the file Nitro generates in the app', () => {

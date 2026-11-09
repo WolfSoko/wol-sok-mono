@@ -74,9 +74,10 @@ without the "write me an e-mail" exception.
   choices, and the privacy policy names it, with the up to one more day
   TTL takes to delete an expired document. The function's log line names no
   uid, as Cloud Logging keeps it 30 days.
-- **`korbjaeger-functions` depends implicitly on `korbjaeger`**: its
-  emulator spec runs the app's rules and its config spec reads the app's
-  regions, so a change to either reruns them in `nx affected`.
+- **No implicit dependency on `korbjaeger`**: it would redeploy the
+  functions with every app release. The tombstone's rules cases stay in the
+  app's own rules suite, which a rules change reruns; the functions' race
+  spec reads the rules file as a target input.
 - **Retries on**: the trigger runs with `failurePolicy: true` (retried for
   up to 7 days) and is idempotent: `set` of the tombstone and `delete` of a
   document that may be gone already both succeed on a rerun.
