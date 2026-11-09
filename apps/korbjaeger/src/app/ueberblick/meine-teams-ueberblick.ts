@@ -17,7 +17,7 @@ import type {
 import { AUSWAHL } from '../auswahl/auswahl';
 import type { DatenResource } from '../basketball-data/basketball-data-resource';
 import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
-import { gleicheFolge } from '../gleiche-folge';
+import { gleicheFolge } from '@wolsok/feat-korbjaeger-auswahl';
 import { HEUTE } from '../heute';
 import { abgleichen } from '../abgleichen';
 import { teamImUeberblick } from './team-im-ueberblick';
