@@ -1,3 +1,4 @@
+import { argbFromHex, Hct } from '@material/material-color-utilities';
 import {
   farbschema,
   farbschemaTokens,
@@ -21,6 +22,11 @@ function kontrast(a: string, b: string): number {
   return (hell + 0.05) / (dunkel + 0.05);
 }
 
+/** The hue in degrees (HCT, as Material keeps it). */
+function farbton(hex: string): number {
+  return Hct.fromInt(argbFromHex(hex)).hue;
+}
+
 const FLAECHEN: readonly Systemfarbe[] = [
   'background',
   'surface',
@@ -41,6 +47,11 @@ const TEXT_PAARE: readonly (readonly [Systemfarbe, Systemfarbe])[] = [
   ['on-secondary-container', 'secondary-container'],
   ['on-tertiary', 'tertiary'],
   ['on-tertiary-container', 'tertiary-container'],
+  ...(['primary', 'secondary', 'tertiary'] as const).flatMap((familie) =>
+    (['', '-variant'] as const).map(
+      (art) => [`on-${familie}-fixed${art}`, `${familie}-fixed`] as const
+    )
+  ),
   ['on-error', 'error'],
   ['on-error-container', 'error-container'],
   ['on-background', 'background'],
@@ -122,16 +133,14 @@ describe('farbschema', () => {
   it('shifts the tone of a colour too light for a light ground', () => {
     const hell = farbschema({ primaer: '#ffd700' }, false);
 
+    // that it still reads on its ground, the contrast check above shows
     expect(hell.primary).not.toBe('#ffd700');
-    expect(kontrast(hell.primary, hell.surface)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('keeps the club’s hue', () => {
     const rot = farbschema({ primaer: '#c8102e' }, false).primary;
-    const [r, g, b] = [1, 3, 5].map((i) => parseInt(rot.slice(i, i + 2), 16));
 
-    expect(r).toBeGreaterThan(g + 60);
-    expect(r).toBeGreaterThan(b + 40);
+    expect(Math.abs(farbton(rot) - farbton('#c8102e'))).toBeLessThan(5);
   });
 
   it('takes the second colour for the secondary family', () => {
@@ -140,10 +149,9 @@ describe('farbschema', () => {
 
     expect(mit.primary).toBe(ohne.primary);
     expect(mit.secondary).not.toBe(ohne.secondary);
-    const [r, , b] = [1, 3, 5].map((i) =>
-      parseInt(mit.secondary.slice(i, i + 2), 16)
+    expect(Math.abs(farbton(mit.secondary) - farbton('#1d4ed8'))).toBeLessThan(
+      5
     );
-    expect(b).toBeGreaterThan(r);
   });
 
   it('refuses what is no #rrggbb colour', () => {

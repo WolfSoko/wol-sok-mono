@@ -3,13 +3,14 @@ import {
   DynamicScheme,
   Hct,
   hexFromArgb,
-  SchemeContent,
   TonalPalette,
+  Variant,
 } from '@material/material-color-utilities';
 
 /**
- * The Material system colours the theme in `styles.scss` emits as
- * `light-dark()`, each a `--mat-sys-*` token: the ones a club's colours set.
+ * Every Material system colour the theme in `styles.scss` emits as
+ * `light-dark()`, each a `--mat-sys-*` token, so a Verein's colours set them
+ * all (`systemfarben.spec.ts` compiles the theme and keeps the list equal).
  */
 export const SYSTEMFARBEN = [
   'background',
@@ -23,18 +24,30 @@ export const SYSTEMFARBEN = [
   'on-error-container',
   'on-primary',
   'on-primary-container',
+  'on-primary-fixed',
+  'on-primary-fixed-variant',
   'on-secondary',
   'on-secondary-container',
+  'on-secondary-fixed',
+  'on-secondary-fixed-variant',
   'on-surface',
   'on-surface-variant',
   'on-tertiary',
   'on-tertiary-container',
+  'on-tertiary-fixed',
+  'on-tertiary-fixed-variant',
   'outline',
   'outline-variant',
   'primary',
   'primary-container',
+  'primary-fixed',
+  'primary-fixed-dim',
+  'scrim',
   'secondary',
   'secondary-container',
+  'secondary-fixed',
+  'secondary-fixed-dim',
+  'shadow',
   'surface',
   'surface-bright',
   'surface-container',
@@ -47,12 +60,34 @@ export const SYSTEMFARBEN = [
   'surface-variant',
   'tertiary',
   'tertiary-container',
+  'tertiary-fixed',
+  'tertiary-fixed-dim',
 ] as const;
 
 export type Systemfarbe = (typeof SYSTEMFARBEN)[number];
 
+/** The scheme's getters that give a colour (as ARGB). */
+type FarbGetter = {
+  [K in keyof DynamicScheme]: DynamicScheme[K] extends number ? K : never;
+}[keyof DynamicScheme];
+
+/** The scheme's getter of each system colour: `surface-container-high` → `surfaceContainerHigh`. */
+const GETTER = Object.fromEntries(
+  SYSTEMFARBEN.map((farbe) => [
+    farbe,
+    farbe.replace(/-([a-z])/g, (_, buchstabe: string) =>
+      buchstabe.toUpperCase()
+    ),
+  ])
+) as Record<Systemfarbe, FarbGetter>;
+
 /** Each system colour as `#rrggbb`. */
 export type Farbschema = Readonly<Record<Systemfarbe, string>>;
+
+/** Each system colour's token, as `light-dark(hell, dunkel)`. */
+export type FarbschemaTokens = Readonly<
+  Record<`--mat-sys-${Systemfarbe}`, string>
+>;
 
 /** A Verein's colours as an Elternteil picked them, each `#rrggbb`. */
 export interface Vereinsfarben {
@@ -76,17 +111,15 @@ const STANDARD_KONTRAST = 0;
 export function farbschema(farben: Vereinsfarben, dunkel: boolean): Farbschema {
   const schema = schemaVon(farben, dunkel);
   return Object.fromEntries(
-    SYSTEMFARBEN.map((farbe) => [farbe, hexFromArgb(schema[getterVon(farbe)])])
-  ) as Record<Systemfarbe, string>;
+    SYSTEMFARBEN.map((farbe) => [farbe, hexFromArgb(schema[GETTER[farbe]])])
+  ) as Farbschema;
 }
 
 /**
  * The `--mat-sys-*` declarations of a Verein's colours for light and dark at
  * once, so a scope's own `color-scheme` (`.anzeigetafel`) still turns them.
  */
-export function farbschemaTokens(
-  farben: Vereinsfarben
-): Readonly<Record<`--mat-sys-${Systemfarbe}`, string>> {
+export function farbschemaTokens(farben: Vereinsfarben): FarbschemaTokens {
   const hell = farbschema(farben, false);
   const dunkel = farbschema(farben, true);
   return Object.fromEntries(
@@ -94,26 +127,20 @@ export function farbschemaTokens(
       `--mat-sys-${farbe}`,
       `light-dark(${hell[farbe]}, ${dunkel[farbe]})`,
     ])
-  ) as Record<`--mat-sys-${Systemfarbe}`, string>;
+  ) as FarbschemaTokens;
 }
 
 function schemaVon(farben: Vereinsfarben, dunkel: boolean): DynamicScheme {
-  const quelle = Hct.fromInt(argbAus(farben.primaer));
-  const inhalt = new SchemeContent(quelle, dunkel, STANDARD_KONTRAST);
-  if (farben.zweite === undefined) {
-    return inhalt;
-  }
   return new DynamicScheme({
-    sourceColorHct: quelle,
-    variant: inhalt.variant,
+    sourceColorHct: Hct.fromInt(argbAus(farben.primaer)),
+    variant: Variant.CONTENT,
     contrastLevel: STANDARD_KONTRAST,
     isDark: dunkel,
-    primaryPalette: inhalt.primaryPalette,
-    secondaryPalette: TonalPalette.fromInt(argbAus(farben.zweite)),
-    tertiaryPalette: inhalt.tertiaryPalette,
-    neutralPalette: inhalt.neutralPalette,
-    neutralVariantPalette: inhalt.neutralVariantPalette,
-    errorPalette: inhalt.errorPalette,
+    // left out, the content scheme derives it from the first colour
+    secondaryPalette:
+      farben.zweite === undefined
+        ? undefined
+        : TonalPalette.fromInt(argbAus(farben.zweite)),
   });
 }
 
@@ -122,15 +149,4 @@ function argbAus(hex: string): number {
     throw new Error(`Keine Farbe im Format #rrggbb: ${hex}`);
   }
   return argbFromHex(hex);
-}
-
-type Getter = {
-  [K in keyof DynamicScheme]: DynamicScheme[K] extends number ? K : never;
-}[keyof DynamicScheme];
-
-/** `surface-container-high` → `surfaceContainerHigh`. */
-function getterVon(farbe: Systemfarbe): Getter {
-  return farbe.replace(/-([a-z])/g, (_, buchstabe: string) =>
-    buchstabe.toUpperCase()
-  ) as Getter;
 }
