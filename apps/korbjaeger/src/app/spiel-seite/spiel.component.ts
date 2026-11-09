@@ -15,6 +15,7 @@ import { spielberichtResource } from '../basketball-data/spielbericht-resource';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
 import { HalleComponent } from '../halle/halle.component';
 import { KIND_AENDERUNG, provideKindAenderung } from '../kind/kind-aenderung';
+import { VORLAEUFIG } from '../spiel/spiel-format';
 import { KaderComponent } from './kader.component';
 import { spielKopf } from './spiel-kopf';
 import { spielberichtTeil } from './spielbericht-teil';
@@ -51,6 +52,7 @@ export class SpielComponent {
 
   /** What the page says when marking a Kind failed. */
   protected readonly kindFehler = inject(KIND_AENDERUNG).fehler;
+  protected readonly vorlaeufigText = VORLAEUFIG;
 
   protected readonly details = spielDetailsResource(() => this.spiel());
 

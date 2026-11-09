@@ -68,6 +68,7 @@ export {
   ausgangVon,
   datumInDeutschland,
   ergebnisVon,
+  ergebnisVorlaeufig,
   gegnerVon,
   seiteVon,
   sonderfallVon,
