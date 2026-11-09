@@ -9,6 +9,7 @@ import {
   type AuswahlInhalt,
   AUSWAHL_LISTEN,
   type GelesenesDokument,
+  type TeamPlatz,
 } from './auswahl-dokument';
 import {
   gleicheFarben,
@@ -27,20 +28,66 @@ import { kindMit, type Kind, type MarkierbarerSpieler } from './kind';
  */
 export type AuswahlAenderung = (inhalt: AuswahlInhalt) => AuswahlInhalt;
 
-/** Follows `team`, at the end of Meine Teams, unless it is in them. */
-export function folgenAenderung(team: TeamId): AuswahlAenderung {
-  return (inhalt) =>
-    inhalt.teams.includes(team)
-      ? inhalt
-      : { ...inhalt, teams: [...inhalt.teams, team] };
+/**
+ * Follows `team`, unless it is followed: at `platz`, its old place (before
+ * the first Team with a later `seit`, or one whose `seit` is not known
+ * yet), else at the end of Meine Teams.
+ */
+export function folgenAenderung(
+  team: TeamId,
+  platz?: TeamPlatz
+): AuswahlAenderung {
+  return (inhalt) => {
+    if (inhalt.teams.includes(team)) {
+      return inhalt;
+    }
+    if (platz === undefined) {
+      return { ...inhalt, teams: [...inhalt.teams, team] };
+    }
+    const danach = inhalt.teams.findIndex(
+      (andere) => (inhalt.teamsSeit?.get(andere) ?? Infinity) > platz.seit
+    );
+    const teams = [...inhalt.teams];
+    teams.splice(danach === -1 ? teams.length : danach, 0, team);
+    return {
+      ...inhalt,
+      teams,
+      teamsSeit: new Map(inhalt.teamsSeit).set(team, platz.seit),
+    };
+  };
 }
 
-/** Unfollows `team`, if it is followed. */
+/**
+ * Unfollows `team`, if it is followed, forgetting its `seit`, so a plain
+ * follow later puts it at the end.
+ */
 export function entfolgenAenderung(team: TeamId): AuswahlAenderung {
-  return (inhalt) =>
-    inhalt.teams.includes(team)
-      ? { ...inhalt, teams: inhalt.teams.filter((id) => id !== team) }
-      : inhalt;
+  return (inhalt) => {
+    if (!inhalt.teams.includes(team)) {
+      return inhalt;
+    }
+    const teamsSeit = new Map(inhalt.teamsSeit);
+    teamsSeit.delete(team);
+    return {
+      ...inhalt,
+      teams: inhalt.teams.filter((id) => id !== team),
+      teamsSeit,
+    };
+  };
+}
+
+/**
+ * The place `team` has in `inhalt`; none where it is not followed, or its
+ * `seit` is not known yet.
+ */
+export function teamPlatz(
+  inhalt: AuswahlInhalt,
+  team: TeamId
+): TeamPlatz | undefined {
+  const seit = inhalt.teams.includes(team)
+    ? inhalt.teamsSeit?.get(team)
+    : undefined;
+  return seit === undefined ? undefined : { seit };
 }
 
 /** Marks `spieler` with `spitzname`, at the end, unless marked already. */

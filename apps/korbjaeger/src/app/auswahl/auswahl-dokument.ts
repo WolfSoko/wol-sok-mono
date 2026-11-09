@@ -82,6 +82,21 @@ export interface AuswahlInhalt {
   readonly teams: readonly TeamId[];
   readonly kinder: readonly Kind[];
   readonly vereinsfarben: readonly VereinsfarbenWahl[];
+  /**
+   * Each Team's `seit`, where it is known: as read for a stored Team, as
+   * given for one followed at its old place (`folgenAenderung`). A Team
+   * without one (followed, not stored yet) counts as the newest.
+   */
+  readonly teamsSeit?: ReadonlyMap<TeamId, number>;
+}
+
+/**
+ * The place a Team had among Meine Teams, which `Auswahl.entfolgen` hands
+ * out so an undo can follow it there again; only an adapter makes one.
+ */
+export interface TeamPlatz {
+  /** The Team's `seit`, which orders Meine Teams. */
+  readonly seit: number;
 }
 
 /** An `Auswahl` that holds nothing. */
@@ -142,6 +157,7 @@ export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   return {
     art: 'aktuell',
     teams: gelesenTeams.map(({ id }) => id),
+    teamsSeit: new Map(gelesenTeams.map(({ id, seit }) => [id, seit])),
     kinder: gelesenKinder.map(({ kind }) => kind),
     vereinsfarben: vereinsfarbenLesen(vereinsfarben),
     hoechsterSeit: Math.max(
@@ -196,7 +212,8 @@ export interface AuswahlFelder {
  * the new ones (since `seitAb`, one millisecond each, in their order), the
  * Spitznamen changed and the Vereine whose colours changed or went. Every adapter writes them: the device's merged
  * into its document (`auswahlDokumentMit`), Firestore as fields the server
- * merges.
+ * merges. A new Team whose `seit` `nachher` knows (`teamsSeit`, one followed
+ * at its old place) gets that one.
  */
 export function auswahlFelder(
   vorher: AuswahlInhalt,
@@ -212,7 +229,7 @@ export function auswahlFelder(
   }
   for (const team of nachher.teams) {
     if (!vorher.teams.includes(team)) {
-      teams[team] = seit++;
+      teams[team] = nachher.teamsSeit?.get(team) ?? seit++;
     }
   }
   const kinder: Record<string, KindFeld> = {};
@@ -354,13 +371,17 @@ interface Gelesen<T> {
   readonly wert: T;
 }
 
-/** The Teams of a list or map; `undefined` where any is no id. */
+/**
+ * The Teams of a list or map; `undefined` where any is no id. A list's
+ * Teams count 1, 2, 3 …, as `auswahlDokumentMit` stores them once it makes
+ * the list a map.
+ */
 function teamsLesen(
   teams: unknown
 ): readonly { readonly id: TeamId; readonly seit: number }[] | undefined {
   if (Array.isArray(teams)) {
     return teams.every(istId)
-      ? [...new Set(teams as TeamId[])].map((id) => ({ id, seit: 0 }))
+      ? [...new Set(teams as TeamId[])].map((id, i) => ({ id, seit: i + 1 }))
       : undefined;
   }
   if (!istKarte(teams)) {
