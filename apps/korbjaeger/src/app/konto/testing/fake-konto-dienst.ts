@@ -31,7 +31,11 @@ export class FakeKontoDienst implements KontoDienst {
   public abmeldenScheitert = false;
   /** Holds the server's confirmation of the deleted document back until it resolves. */
   public loeschenBestaetigt?: Promise<void>;
-  public uebrig: NichtUebernommen = { teams: [], kinder: [] };
+  public uebrig: NichtUebernommen = {
+    teams: [],
+    kinder: [],
+    vereinsfarben: [],
+  };
   /** Opening an account's selection fails. */
   public auswahlScheitert = false;
   /** Auth refuses to delete the account (an old sign-in). */

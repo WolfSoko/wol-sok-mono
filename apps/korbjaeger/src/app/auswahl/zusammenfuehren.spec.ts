@@ -2,13 +2,14 @@ import type { AuswahlInhalt } from './auswahl-dokument';
 import { AUSWAHL_GRENZEN } from './auswahl-dokument';
 import { zusammenfuehren } from './zusammenfuehren';
 
-const LEER: AuswahlInhalt = { teams: [], kinder: [] };
+const LEER: AuswahlInhalt = { teams: [], kinder: [], vereinsfarben: [] };
 
 describe('zusammenfuehren', () => {
   it("takes the device's choices into an empty account", () => {
     const geraet: AuswahlInhalt = {
       teams: [313036, 201500],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     };
 
     expect(zusammenfuehren(LEER, geraet)).toEqual({
@@ -21,6 +22,7 @@ describe('zusammenfuehren', () => {
     const konto: AuswahlInhalt = {
       teams: [313036],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     };
 
     expect(zusammenfuehren(konto, LEER).inhalt).toBe(konto);
@@ -30,6 +32,7 @@ describe('zusammenfuehren', () => {
     const konto: AuswahlInhalt = {
       teams: [313036, 201765],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }, { personId: 4712 }],
+      vereinsfarben: [],
     };
     const geraet: AuswahlInhalt = {
       teams: [201500, 313036],
@@ -38,6 +41,7 @@ describe('zusammenfuehren', () => {
         { personId: 4711, spitzname: 'Mia' },
         { personId: 4712, spitzname: 'Mo' },
       ],
+      vereinsfarben: [],
     };
 
     expect(zusammenfuehren(konto, geraet).inhalt).toEqual({
@@ -55,11 +59,13 @@ describe('zusammenfuehren', () => {
     const konto: AuswahlInhalt = {
       teams: [313036, 201500],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     };
 
     const { inhalt: zusammen } = zusammenfuehren(konto, {
       teams: [201500],
       kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
     });
 
     expect(zusammen.teams).toBe(konto.teams);
@@ -67,10 +73,15 @@ describe('zusammenfuehren', () => {
   });
 
   it('gives the same on a second sign-in as on the first', () => {
-    const konto: AuswahlInhalt = { teams: [313036], kinder: [] };
+    const konto: AuswahlInhalt = {
+      teams: [313036],
+      kinder: [],
+      vereinsfarben: [],
+    };
     const geraet: AuswahlInhalt = {
       teams: [201500],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     };
     const einmal = zusammenfuehren(konto, geraet).inhalt;
 
@@ -83,10 +94,12 @@ describe('zusammenfuehren', () => {
     const konto: AuswahlInhalt = {
       teams: ids(AUSWAHL_GRENZEN.teams - 2, 1),
       kinder: ids(AUSWAHL_GRENZEN.kinder, 1).map((personId) => ({ personId })),
+      vereinsfarben: [],
     };
     const geraet: AuswahlInhalt = {
       teams: [1, 9001, 9002, 9003, 9004],
       kinder: [{ personId: 9001 }, { personId: 1, spitzname: 'Mimi' }],
+      vereinsfarben: [],
     };
 
     const { inhalt, uebrig } = zusammenfuehren(konto, geraet);

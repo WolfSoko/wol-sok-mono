@@ -9,6 +9,7 @@ import {
   auswahlFelder,
   naechsterSeit,
   type AuswahlInhalt,
+  type AuswahlListe,
 } from './auswahl-dokument';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 import { auswahlDokumentVon, firestoreFelder } from './firestore-auswahl';
@@ -31,11 +32,12 @@ export async function geraetUebernehmen(
 ): Promise<NichtUebernommen> {
   const dokument = auswahlDokumentVon(firestore, uid);
   // one map a transaction; each tells what of its map did not fit
-  const [{ teams }, { kinder }] = [
+  const [{ teams }, { kinder }, { vereinsfarben }] = [
     await listeUebernehmen(firestore, dokument, geraet, 'teams'),
     await listeUebernehmen(firestore, dokument, geraet, 'kinder'),
+    await listeUebernehmen(firestore, dokument, geraet, 'vereinsfarben'),
   ];
-  return { teams, kinder };
+  return { teams, kinder, vereinsfarben };
 }
 
 /**
@@ -46,7 +48,7 @@ function listeUebernehmen(
   firestore: Firestore,
   dokument: DocumentReference,
   geraet: AuswahlInhalt,
-  liste: 'teams' | 'kinder'
+  liste: AuswahlListe
 ): Promise<NichtUebernommen> {
   return runTransaction(firestore, async (transaktion) => {
     const gelesen = auswahlDokumentLesen(

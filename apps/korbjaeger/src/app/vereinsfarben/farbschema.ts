@@ -6,6 +6,7 @@ import {
   TonalPalette,
   Variant,
 } from '@material/material-color-utilities';
+import type { Vereinsfarben } from './vereinsfarben';
 
 /**
  * Every Material system colour the theme in `styles.scss` emits as
@@ -88,12 +89,6 @@ export type Farbschema = Readonly<Record<Systemfarbe, string>>;
 export type FarbschemaTokens = Readonly<
   Record<`--mat-sys-${Systemfarbe}`, string>
 >;
-
-/** A Verein's colours as an Elternteil picked them, each `#rrggbb`. */
-export interface Vereinsfarben {
-  readonly primaer: string;
-  readonly zweite?: string;
-}
 
 const HEX_FARBE = /^#[0-9a-f]{6}$/i;
 

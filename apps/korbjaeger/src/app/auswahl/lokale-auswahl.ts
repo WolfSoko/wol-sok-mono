@@ -1,5 +1,13 @@
 import { computed, signal, type Signal } from '@angular/core';
-import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
+import type {
+  PersonId,
+  TeamId,
+  VereinId,
+} from '@wolsok/feat-shared-basketball-data';
+import type {
+  Vereinsfarben,
+  VereinsfarbenWahl,
+} from '../vereinsfarben/vereinsfarben';
 import type { Auswahl } from './auswahl';
 import {
   abgebenAenderung,
@@ -7,10 +15,13 @@ import {
   entmarkierenAenderung,
   folgenAenderung,
   gleicheKinder,
+  gleicheVereinsfarben,
   grenzenPruefen,
   inhaltAus,
   markierenAenderung,
   spitznameAenderung,
+  vereinsfarbenAenderung,
+  vereinsfarbenZuruecksetzenAenderung,
   type AuswahlAenderung,
 } from './auswahl-aenderungen';
 import {
@@ -61,6 +72,7 @@ export type Fenster = Pick<
 export class LokaleAuswahl implements Auswahl {
   public readonly teams: Signal<readonly TeamId[]>;
   public readonly kinder: Signal<readonly Kind[]>;
+  public readonly vereinsfarben: Signal<readonly VereinsfarbenWahl[]>;
   /** The device's storage is always read, at worst as empty. */
   public readonly nichtLesbar: Signal<boolean> = signal(false).asReadonly();
   /** The device's storage holds the choices, always this one. */
@@ -95,6 +107,9 @@ export class LokaleAuswahl implements Auswahl {
     this.kinder = computed(() => this.inhalt().kinder, {
       equal: gleicheKinder,
     });
+    this.vereinsfarben = computed(() => this.inhalt().vereinsfarben, {
+      equal: gleicheVereinsfarben,
+    });
     fenster?.addEventListener('storage', this.beiAenderung);
   }
 
@@ -124,14 +139,25 @@ export class LokaleAuswahl implements Auswahl {
     return this.aendern(entmarkierenAenderung(person));
   }
 
+  public vereinsfarbenSetzen(
+    verein: VereinId,
+    farben: Vereinsfarben
+  ): Promise<void> {
+    return this.aendern(vereinsfarbenAenderung(verein, farben));
+  }
+
+  public vereinsfarbenZuruecksetzen(verein: VereinId): Promise<void> {
+    return this.aendern(vereinsfarbenZuruecksetzenAenderung(verein));
+  }
+
   /**
    * Reads the stored selection now, not waiting for another tab's `storage`
    * event, with the changes still `offen`: what a sign-in takes over.
    */
   public neuGelesen(): AuswahlInhalt {
     this.anzeigen(this.lesen());
-    const { teams, kinder } = this.inhalt();
-    return { teams, kinder };
+    const { teams, kinder, vereinsfarben } = this.inhalt();
+    return { teams, kinder, vereinsfarben };
   }
 
   /**

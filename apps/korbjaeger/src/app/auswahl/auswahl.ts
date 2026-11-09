@@ -1,10 +1,19 @@
 import { inject, InjectionToken, type Signal } from '@angular/core';
-import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
+import type {
+  PersonId,
+  TeamId,
+  VereinId,
+} from '@wolsok/feat-shared-basketball-data';
 import { KONTO_SITZUNG } from '../konto/konto';
+import type {
+  Vereinsfarben,
+  VereinsfarbenWahl,
+} from '../vereinsfarben/vereinsfarben';
 import type { Kind, MarkierbarerSpieler } from './kind';
 
 /**
- * What an Elternteil follows: Meine Teams and the Kinder they marked. Kept
+ * What an Elternteil follows: Meine Teams and the Kinder they marked, and
+ * the colours they gave Vereine (#2918). Kept
  * on the device by `LokaleAuswahl`, in the account of a signed-in
  * Elternteil by `FirestoreAuswahl`. Every adapter passes the shared
  * contract, `auswahlVertrag` (`testing/auswahl-vertrag.ts`).
@@ -66,6 +75,20 @@ export interface Auswahl {
   ): Promise<void>;
   /** Unmarks the Kind `person`, if it is marked. */
   entmarkieren(person: PersonId): Promise<void>;
+  /**
+   * The colours given to Vereine, one entry a Verein, by its id;
+   * `undefined` until the adapter has read them. A Verein without an entry
+   * shows the app's own colours.
+   */
+  readonly vereinsfarben: Signal<readonly VereinsfarbenWahl[] | undefined>;
+  /**
+   * Gives `verein` the colours `farben`, in place of any it has; each is
+   * stored in lower case, and what is no `#rrggbb` rejects with
+   * `KeineFarbeError`. Only once `vereinsfarben` is read.
+   */
+  vereinsfarbenSetzen(verein: VereinId, farben: Vereinsfarben): Promise<void>;
+  /** Takes the colours of `verein` away, if it has any. */
+  vereinsfarbenZuruecksetzen(verein: VereinId): Promise<void>;
 }
 
 /**

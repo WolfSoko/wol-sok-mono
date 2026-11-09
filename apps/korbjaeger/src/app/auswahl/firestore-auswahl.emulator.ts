@@ -99,10 +99,10 @@ describe('FirestoreAuswahl', () => {
 
   /** What the account's stored document holds, as the app reads it. */
   async function gespeicherterInhalt(uid: string): Promise<AuswahlInhalt> {
-    const { teams, kinder } = inhaltAus(
+    const { teams, kinder, vereinsfarben } = inhaltAus(
       auswahlDokumentLesen(await gespeichert(regelProjekt, uid))
     );
-    return { teams, kinder };
+    return { teams, kinder, vereinsfarben };
   }
 
   it("writes what the app's rules take, entry by entry", async () => {

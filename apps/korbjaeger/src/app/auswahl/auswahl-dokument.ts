@@ -2,14 +2,20 @@ import {
   isDbbId,
   type PersonId,
   type TeamId,
+  type VereinId,
 } from '@wolsok/feat-shared-basketball-data';
+import {
+  istFarbe,
+  type Vereinsfarben,
+  type VereinsfarbenWahl,
+} from '../vereinsfarben/vereinsfarben';
 import { kindMit, type Kind } from './kind';
 
 /**
  * The version of `AuswahlDokument` this app writes. Bumped only for a
  * change an older app would misread; a new field is none (Kinder joined
- * version 1 as a field of their own), since every write keeps the fields
- * it does not know. Version 2 keys both lists by id: an app of version 1,
+ * version 1 as a field of their own, the Vereinsfarben version 2), since
+ * every write keeps the fields it does not know. Version 2 keys both lists by id: an app of version 1,
  * still open in a tab, takes it for a newer one and leaves it alone rather
  * than overwrite its maps with lists. The reader still takes version 1's
  * lists (the device's storage holds them), and a map stays a list until a
@@ -21,10 +27,18 @@ export const AUSWAHL_VERSION = 2;
 const ERSTE_VERSION = 1;
 
 /**
- * How many Teams and Kinder an `Auswahl` holds at most: the Firestore rules
- * (`firestore.rules`) refuse more, and their spec checks these numbers.
+ * How many Teams, Kinder and Vereine with colours an `Auswahl` holds at
+ * most: the Firestore rules (`firestore.rules`) refuse more, and their spec
+ * checks these numbers.
  */
-export const AUSWAHL_GRENZEN = { teams: 50, kinder: 20 } as const;
+export const AUSWAHL_GRENZEN = {
+  teams: 50,
+  kinder: 20,
+  vereinsfarben: 50,
+} as const;
+
+/** The lists of an `Auswahl`, each with its cap. */
+export type AuswahlListe = keyof typeof AUSWAHL_GRENZEN;
 
 /** A marked Kind as stored: since when it is marked, and its Spitzname. */
 export interface KindEintrag {
@@ -44,16 +58,26 @@ export interface AuswahlDokument {
   /** Each Team's id, since when it is followed (ms since 1970). */
   readonly teams: Readonly<Record<string, number>>;
   readonly kinder: Readonly<Record<string, KindEintrag>>;
+  /** Each Verein's colours, by its id; a Verein without any has no entry. */
+  readonly vereinsfarben?: Readonly<Record<string, Vereinsfarben>>;
 }
 
-/** What an `Auswahl` holds: Meine Teams and the marked Kinder, each once. */
+/**
+ * What an `Auswahl` holds: Meine Teams and the marked Kinder, each once,
+ * and the Vereine's colours, one entry a Verein, by its id.
+ */
 export interface AuswahlInhalt {
   readonly teams: readonly TeamId[];
   readonly kinder: readonly Kind[];
+  readonly vereinsfarben: readonly VereinsfarbenWahl[];
 }
 
 /** An `Auswahl` that holds nothing. */
-export const LEERE_AUSWAHL: AuswahlInhalt = { teams: [], kinder: [] };
+export const LEERE_AUSWAHL: AuswahlInhalt = {
+  teams: [],
+  kinder: [],
+  vereinsfarben: [],
+};
 
 /** A stored document's fields, as read. */
 export type RohesDokument = Readonly<Record<string, unknown>>;
@@ -81,14 +105,15 @@ const KEINS: GelesenesDokument = { art: 'keins' };
  * holding only Kinder) it has none; with Teams that are not all ids it is
  * none. Of its Kinder it keeps each entry it can read; where the field is
  * neither map nor list (missing, as before Kinder joined, or malformed) it
- * has none, the Teams kept all the same. Entries come in the order of
+ * has none, the Teams kept all the same; so with its Vereinsfarben, which
+ * come by the Verein's id. Entries come in the order of
  * their `seit`, the id deciding a tie; lists in their order.
  */
 export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   if (!istKarte(gelesen)) {
     return KEINS;
   }
-  const { version, teams, kinder } = gelesen;
+  const { version, teams, kinder, vereinsfarben } = gelesen;
   if (typeof version === 'number' && version > AUSWAHL_VERSION) {
     return { art: 'neuer' };
   }
@@ -106,6 +131,7 @@ export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
     art: 'aktuell',
     teams: gelesenTeams.map(({ id }) => id),
     kinder: gelesenKinder.map(({ kind }) => kind),
+    vereinsfarben: vereinsfarbenLesen(vereinsfarben),
     hoechsterSeit: Math.max(
       0,
       ...gelesenTeams.map(({ seit }) => seit),
@@ -141,18 +167,28 @@ export type KindFeld =
   | typeof ENTFERNT;
 
 /**
+ * What a change writes of a Verein's colours: all of them (a second colour
+ * that goes as `ENTFERNT`, as Firestore merges a map into the stored one),
+ * or that they go.
+ */
+export type VereinsfarbenFeld =
+  | { readonly primaer: string; readonly zweite: string | typeof ENTFERNT }
+  | typeof ENTFERNT;
+
+/**
  * The entries a change writes, by id; a map it does not change is left
  * out, so a write keeps it as stored (Kinder this version cannot read too).
  */
 export interface AuswahlFelder {
   readonly teams?: Readonly<Record<string, TeamFeld>>;
   readonly kinder?: Readonly<Record<string, KindFeld>>;
+  readonly vereinsfarben?: Readonly<Record<string, VereinsfarbenFeld>>;
 }
 
 /**
  * The entries that take `vorher` to `nachher`: the Teams and Kinder gone,
- * the new ones (since `seitAb`, one millisecond each, in their order) and
- * the Spitznamen changed. Every adapter writes them: the device's merged
+ * the new ones (since `seitAb`, one millisecond each, in their order), the
+ * Spitznamen changed and the Vereine whose colours changed or went. Every adapter writes them: the device's merged
  * into its document (`auswahlDokumentMit`), Firestore as fields the server
  * merges.
  */
@@ -189,10 +225,36 @@ export function auswahlFelder(
       kinder[personId] = { spitzname: spitzname ?? ENTFERNT };
     }
   }
+  const vereinsfarben = vereinsfarbenFelder(
+    vorher.vereinsfarben,
+    nachher.vereinsfarben
+  );
   return {
     ...(Object.keys(teams).length > 0 && { teams }),
     ...(Object.keys(kinder).length > 0 && { kinder }),
+    ...(Object.keys(vereinsfarben).length > 0 && { vereinsfarben }),
   };
+}
+
+function vereinsfarbenFelder(
+  vorher: readonly VereinsfarbenWahl[],
+  nachher: readonly VereinsfarbenWahl[]
+): Readonly<Record<string, VereinsfarbenFeld>> {
+  const felder: Record<string, VereinsfarbenFeld> = {};
+  const danach = new Set(nachher.map(({ vereinId }) => vereinId));
+  for (const { vereinId } of vorher) {
+    if (!danach.has(vereinId)) {
+      felder[vereinId] = ENTFERNT;
+    }
+  }
+  const davor = new Map(vorher.map((wahl) => [wahl.vereinId, wahl]));
+  for (const { vereinId, primaer, zweite } of nachher) {
+    const alt = davor.get(vereinId);
+    if (alt?.primaer !== primaer || alt.zweite !== zweite) {
+      felder[vereinId] = { primaer, zweite: zweite ?? ENTFERNT };
+    }
+  }
+  return felder;
 }
 
 /**
@@ -231,7 +293,31 @@ export function auswahlDokumentMit(
         felder.kinder
       ),
     }),
+    ...(felder.vereinsfarben && {
+      vereinsfarben: vereinsfarbenMit(
+        istKarte(roh['vereinsfarben']) ? roh['vereinsfarben'] : {},
+        felder.vereinsfarben
+      ),
+    }),
   };
+}
+
+function vereinsfarbenMit(
+  vereinsfarben: RohesDokument,
+  felder: Readonly<Record<string, VereinsfarbenFeld>>
+): RohesDokument {
+  const neu: Record<string, unknown> = { ...vereinsfarben };
+  for (const [id, feld] of Object.entries(felder)) {
+    if (feld === ENTFERNT) {
+      delete neu[id];
+    } else {
+      neu[id] = {
+        primaer: feld.primaer,
+        ...(feld.zweite !== ENTFERNT && { zweite: feld.zweite }),
+      };
+    }
+  }
+  return neu;
 }
 
 function teamsMit(
@@ -338,6 +424,33 @@ function kinderLesen(
     }
   }
   return geordnet(eintraege).map(({ wert, seit }) => ({ kind: wert, seit }));
+}
+
+/** The readable colours of a map, by the Verein's id. */
+function vereinsfarbenLesen(
+  vereinsfarben: unknown
+): readonly VereinsfarbenWahl[] {
+  if (!istKarte(vereinsfarben)) {
+    return [];
+  }
+  const gelesen: VereinsfarbenWahl[] = [];
+  for (const [schluessel, eintrag] of Object.entries(vereinsfarben)) {
+    const vereinId: VereinId = Number(schluessel);
+    if (
+      istId(vereinId) &&
+      String(vereinId) === schluessel &&
+      istKarte(eintrag) &&
+      istFarbe(eintrag['primaer']) &&
+      (eintrag['zweite'] === undefined || istFarbe(eintrag['zweite']))
+    ) {
+      gelesen.push({
+        vereinId,
+        primaer: eintrag['primaer'],
+        ...(eintrag['zweite'] !== undefined && { zweite: eintrag['zweite'] }),
+      });
+    }
+  }
+  return gelesen.sort((a, b) => a.vereinId - b.vereinId);
 }
 
 /** By `seit`, the id deciding a tie. */

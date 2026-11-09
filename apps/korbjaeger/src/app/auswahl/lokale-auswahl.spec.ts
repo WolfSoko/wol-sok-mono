@@ -5,12 +5,12 @@ import { auswahlVertrag } from './testing/auswahl-vertrag';
 
 /** What `geraet` stores, as the app reads it. */
 function gespeichert(geraet: Pick<Storage, 'getItem'>): AuswahlInhalt {
-  const { teams, kinder } = inhaltAus(
+  const { teams, kinder, vereinsfarben } = inhaltAus(
     auswahlDokumentLesen(
       JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? 'null')
     )
   );
-  return { teams, kinder };
+  return { teams, kinder, vereinsfarben };
 }
 
 /**

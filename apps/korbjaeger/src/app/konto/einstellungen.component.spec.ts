@@ -231,7 +231,7 @@ describe('EinstellungenComponent', () => {
 
   it('drops what did not fit once another tab switched to another account', async () => {
     const dienst = new FakeKontoDienst();
-    dienst.uebrig = { teams: [9001], kinder: [] };
+    dienst.uebrig = { teams: [9001], kinder: [], vereinsfarben: [] };
     const { knopf, stabil, element } = await oeffnen({ dienst });
     knopf('anmelden')?.click();
     await stabil();
@@ -292,7 +292,11 @@ describe('EinstellungenComponent', () => {
 
   it("tells which of the device's choices did not fit into the account", async () => {
     const dienst = new FakeKontoDienst();
-    dienst.uebrig = { teams: [9001, 9002], kinder: [{ personId: 4711 }] };
+    dienst.uebrig = {
+      teams: [9001, 9002],
+      kinder: [{ personId: 4711 }],
+      vereinsfarben: [],
+    };
     const { knopf, stabil, element } = await oeffnen({ dienst });
 
     knopf('anmelden')?.click();
@@ -416,11 +420,15 @@ describe('EinstellungenComponent', () => {
 
 describe('nichtUebernommenText', () => {
   it('says nothing where all fitted', () => {
-    expect(nichtUebernommenText({ teams: [], kinder: [] })).toBeUndefined();
+    expect(
+      nichtUebernommenText({ teams: [], kinder: [], vereinsfarben: [] })
+    ).toBeUndefined();
   });
 
   it('names one Team in the singular', () => {
-    expect(nichtUebernommenText({ teams: [313036], kinder: [] })).toBe(
+    expect(
+      nichtUebernommenText({ teams: [313036], kinder: [], vereinsfarben: [] })
+    ).toBe(
       '1 Team dieses Geräts passte nicht mehr in dein Konto: Es hält höchstens 50 Teams und 20 Kinder.'
     );
   });
